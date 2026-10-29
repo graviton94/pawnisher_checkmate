@@ -12,8 +12,8 @@
 | 3 | [전투 판정 (공격 처리·피해·파괴)](03_combat_resolution.md) | ✅ |
 | 4 | [적 AI](04_enemy_ai.md) | ✅ |
 | 5 | [전략적 요충지](05_stronghold.md) | ✅ |
-| 6 | [덱 & 기물 성장](06_deck_and_growth.md) | 💬 |
-| 7 | 패시브 증강 & 액티브 카드 | — |
+| 6 | [덱 & 기물 성장](06_deck_and_growth.md) | ✅ |
+| 7 | [인챈트 & 액티브 카드](07_enchants_and_cards.md) | 💬 |
 | 8 | 등반 구조 | — |
 | 9 | 아트 & UI/UX | — |
 | 10 | 기술 스택 & 아키텍처 | — |
