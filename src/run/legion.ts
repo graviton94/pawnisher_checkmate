@@ -1,5 +1,7 @@
 import { ENCHANTS, type EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, boardFor, enemyCount, enemyForge, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, ELITE_BONUS, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { createBattle } from '../engine/setup';
+import type { BattleState } from '../engine/types';
 import type { Rng } from '../engine/rng';
 import type { Deck } from '../engine/setup';
 import type { Loadout, PieceType } from '../engine/types';
@@ -17,15 +19,16 @@ export interface Encounter {
   tier: number;
   boss?: BossId;
   seed: number;
+  floor: number;
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */
 const pieceWeights = (floor: number): [PieceType, number][] => [
   ['P', Math.max(14, 50 - floor * 3)],
-  ['N', 14 + floor],
-  ['B', 14 + floor],
-  ['R', floor >= 4 ? 4 + floor : 0],
-  ['Q', floor >= 6 ? 2 + floor / 2 : 0],
+  ['N', floor <= 3 ? 6 : 10 + floor],
+  ['B', floor <= 3 ? 6 : 10 + floor],
+  ['R', floor >= 5 ? 2 + floor : 0],
+  ['Q', floor >= 8 ? floor / 2 : 0],
 ];
 
 const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
@@ -62,6 +65,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
       tier,
       boss,
       seed,
+      floor,
     };
   }
 
@@ -98,5 +102,18 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     loadout: { enchants, cards: [], forge },
     tier,
     seed,
+    floor,
   };
+};
+
+/** 런 전투를 만든다: 플레이어 덱·장비 대 군단 (+ 층별 적 킹 보정) */
+export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
+  const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
+  const scale = enemyKingScale(e.floor);
+  for (const p of s.pieces) {
+    if (p.side !== 1 || p.type !== 'K') continue;
+    p.maxHp = p.hp = Math.round(p.maxHp * scale.hp);
+    p.atk = Math.round(p.atk * scale.atk);
+  }
+  return s;
 };

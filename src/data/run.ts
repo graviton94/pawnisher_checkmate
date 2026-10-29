@@ -13,7 +13,7 @@ export const START_DECKS: Deck[] = [
   ['K', 'P', 'B'],
   ['K', 'P', 'P', 'P'],
 ];
-export const START_GOLD = 40;
+export const START_GOLD = 50;
 
 export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' | 'event';
 
@@ -43,12 +43,12 @@ export const boardFor = (floor: number): { width: number; height: number } =>
   floor <= 3 ? { width: 6, height: 6 } : { width: 8, height: 8 };
 
 // ---------- 보상 ----------
-export const GOLD_REWARD = { battle: 18, elite: 40, boss: 80, perFloor: 2 };
+export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3 };
 /** 3지선다 건너뛰기 보상 */
 export const SKIP_GOLD = 10;
-/** 랜덤 기물 보상: 첫·둘째 전투 확정, 이후 3전투마다 */
-export const PIECE_REWARD_FIRST = 2;
-export const PIECE_REWARD_EVERY = 3;
+/** 랜덤 기물 보상: 첫 3전투 확정, 이후 2전투마다 (런 시뮬레이션으로 조정) */
+export const PIECE_REWARD_FIRST = 3;
+export const PIECE_REWARD_EVERY = 2;
 export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 38, N: 22, B: 22, R: 12, Q: 6 };
 
 /** 희귀 인챈트 (나머지는 일반). 엘리트·보스는 희귀 가중, 보스는 희귀 1장 확정. */
@@ -89,14 +89,21 @@ export const ALTAR = {
 };
 
 // ---------- 적 군단 ----------
-/** 일반 전투 적 기물 수 (킹 포함). 1~3층 3~5, 4~11층 6~10 (GDD 8장 §8.3) */
-export const enemyCount = (floor: number): number => (floor <= 3 ? 2 + floor : Math.min(10, 2 + Math.ceil(floor * 0.75)));
-/** 엘리트는 기물 +2, 인챈트 1~2개, 강화 +1 */
-export const ELITE_BONUS = { pieces: 2, enchants: 2, forge: 1 };
-/** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 엘리트·보스 2 */
-export const enemyTier = (floor: number, kind: NodeKind): number => (kind === 'elite' || kind === 'boss' ? 2 : floor <= 3 ? 0 : 1);
-/** 적 대장간 강화: 8층부터 전 유형 +1 */
-export const enemyForge = (floor: number): number => (floor >= 8 ? 1 : 0);
+/**
+ * 일반 전투 적 기물 수 (킹 포함). 플레이어 덱보다 조금 적게 시작해 따라 오른다.
+ * 1층 2 · 2층 3 · 3층 4 · 4층 4 · 6층 5 · 8층 6 · 10층 7 (11층 7) (GDD 8장 §8.3의 3~5 / 6~10에서 조정, 런 시뮬레이션)
+ */
+export const enemyCount = (floor: number): number => (floor <= 3 ? 1 + floor : Math.min(10, 2 + Math.floor(floor / 2)));
+/** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, 보스 100% (HP 기준).
+ * 1~3층 적 킹은 특히 약하다 (도입 구간: 작은 덱으로 100 HP 킹을 끝내지 못해 킹 맞대결 동전 던지기가 되는 것을 막는다) */
+export const enemyKingScale = (floor: number): { hp: number; atk: number } =>
+  floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.7, atk: 0.85 } : floor <= 11 ? { hp: 0.85, atk: 1 } : { hp: 1, atk: 1 };
+/** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩) */
+export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
+/** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2 */
+export const enemyTier = (floor: number, kind: NodeKind): number => (kind === 'boss' || (kind === 'elite' && floor >= 8) ? 2 : floor <= 3 ? 0 : 1);
+/** 적 대장간 강화: Act 2(13층)부터 전 유형 +1 */
+export const enemyForge = (floor: number): number => (floor >= 13 ? 1 : 0);
 
 /** 중간 보스 컨셉 (사용자 결정: 나이트·비숍·룩 컨셉 중 런마다 2개가 Act 1·2 보스) */
 export type BossId = 'knight' | 'bishop' | 'rook';
@@ -114,7 +121,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     name: '기병 군주',
     title: '나이트 4기 · 천둥기병',
     // 나이트 4 = 초과 2 × (25 + 세금 10) = 70 → 비숍 2(50) + 폰 2(20) 희생
-    deck: ['K', 'Q', 'R', 'R', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
+    deck: ['K', 'Q', 'R', 'R', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E01: 3 },
     cards: ['A01'],
     forge: { N: 2 },
@@ -122,7 +129,7 @@ export const BOSSES: Record<BossId, BossDef> = {
   bishop: {
     name: '사선의 대주교',
     title: '비숍 4기 · 프리즘 레이저',
-    deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
+    deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
     enchants: { E02: 3 },
     cards: ['A03'],
     forge: { B: 2 },
@@ -131,9 +138,9 @@ export const BOSSES: Record<BossId, BossDef> = {
     name: '강철 성주',
     title: '룩 3기 · 폭주 기관차',
     // 룩 3 = 초과 1 × (40 + 세금 10) = 50 → 나이트 2(50) 희생
-    deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+    deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
     enchants: { E03: 3 },
     cards: ['A06'],
-    forge: { R: 2 },
+    forge: { R: 1 },
   },
 };
