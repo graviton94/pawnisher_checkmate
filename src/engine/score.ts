@@ -1,7 +1,7 @@
 import { STRONGHOLD } from '../data/battle';
 import { PIECE_STATS } from '../data/pieces';
 import { kingOf } from './board';
-import { otherSide, type BattleState, type Side } from './types';
+import { otherSide, type BattleState, type Side, type Standing } from './types';
 
 /** 전황 스코어 S (GDD 5장 §5.3) */
 export const battleScore = (s: BattleState, side: Side): number => {
@@ -27,8 +27,6 @@ export const kingHpRatio = (s: BattleState, side: Side): number => {
 };
 
 /** 진영의 형편: 우세·동률이면 'leading', 아니면 열세 단계 (GDD 5장 §5.5 기준) */
-export type Standing = 'leading' | 'tier1' | 'tier2' | 'tier3';
-
 export const standingOf = (s: BattleState, side: Side): Standing => {
   const inf = inferiority(s, side);
   if (inf >= STRONGHOLD.tier3At || kingHpRatio(s, side) <= STRONGHOLD.tier3KingHp) return 'tier3';

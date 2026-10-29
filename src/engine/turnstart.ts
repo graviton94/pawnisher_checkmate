@@ -2,7 +2,7 @@ import { COLLAPSE, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
 import { attackArea, legalMoves } from './rules';
-import { battleScore, inferiority, kingHpRatio, strongholdTerms } from './score';
+import { battleScore, inferiority, kingHpRatio, standingOf, strongholdTerms } from './score';
 import type { BattleEvent, BattleState, Pos, Side } from './types';
 
 const rngFor = (s: BattleState) => new Rng((s.seed ^ Math.imul(s.turnNumber, 2654435761)) >>> 0);
@@ -142,7 +142,7 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
       if (pos) {
         s.stronghold = { ...pos, holderId: null, hold: 0 };
         s.strongholdsSpawned += 1;
-        events.push({ type: 'strongholdSpawn', pos });
+        events.push({ type: 'strongholdSpawn', pos, standings: [standingOf(s, 0), standingOf(s, 1)] });
       }
     }
   }

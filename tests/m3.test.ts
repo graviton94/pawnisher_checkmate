@@ -44,7 +44,7 @@ describe('요충지 (GDD 5장)', () => {
     expect(toMine).toBeLessThan(toTheirs);
   });
 
-  it('엄폐: 요충지 위 기물은 받는 피해가 30% 줄어든다', () => {
+  it('엄폐: 요충지 위 기물은 받는 피해가 줄어든다 (조금 열세 30%)', () => {
     const s = board([['R', 0, 'a1'], ['N', 1, 'a5'], ['K', 0, 'h1'], ['K', 1, 'h8']]);
     const rook = findPiece(s, 1)!;
     const knight = findPiece(s, 2)!;
@@ -84,9 +84,35 @@ describe('요충지 (GDD 5장)', () => {
     let s = board([['N', 0, 'b1'], ['K', 0, 'h1', { hp: 20 }], ['K', 1, 'h8']]);
     s.stronghold = { x: 2, y: 2, holderId: null, hold: 0 };
     s = resolveTurn(s, [{ pieceId: 1, to: sq('c3') }]).state;
-    s = passTurns(s, 3).s;
-    expect(findPiece(s, 2)!.shield).toBe(30);
-    expect(availableAp(s)).toBe(7);
+    // 크게 열세(T3)는 상대 턴 1번만 버티면 점령: 나(착지) → 상대 → 나(시작 시 점령)
+    const r = resolveTurn(s, []);
+    expect(r.events.some((e) => e.type === 'strongholdCapture')).toBe(true);
+    expect(findPiece(r.state, 2)!.shield).toBe(30);
+    expect(availableAp(r.state)).toBe(7);
+  });
+
+  it('우세·동률이면 상대 턴 3번을 버텨야 점령한다', () => {
+    // 플레이어 N+K vs 적 K → 플레이어 우세
+    let s = board([['N', 0, 'b1'], ['K', 0, 'h1'], ['K', 1, 'h8']]);
+    s.stronghold = { x: 2, y: 2, holderId: null, hold: 0 };
+    s = resolveTurn(s, [{ pieceId: 1, to: sq('c3') }]).state;
+    s = passTurns(s, 4).s; // 상대 턴 2번 경과
+    expect(s.stronghold).not.toBeNull();
+    expect(s.stronghold!.hold).toBe(2);
+    const r = passTurns(s, 2); // 상대 턴 3번째 → 점령
+    expect(r.events.some((e) => e.type === 'strongholdCapture')).toBe(true);
+  });
+
+  it('엄폐는 보유 진영의 형편에 따라 다르다 (우세 20% · 크게 열세 50%)', () => {
+    const s = board([['R', 0, 'a1'], ['N', 1, 'a5'], ['K', 0, 'h1'], ['K', 1, 'h8']]);
+    const rook = findPiece(s, 1)!;
+    const knight = findPiece(s, 2)!;
+    s.stronghold = { x: 0, y: 4, holderId: 2, hold: 0 };
+    const plain = 22 - 3;
+    // 적(나이트 쪽)은 열세: 플레이어 R(40)+K(100) vs 적 N(25)+K(100) → 열세율 약 11% → T1 30%
+    expect(damageOf(s, rook, knight)).toBe(Math.floor(plain * 0.7));
+    findPiece(s, 4)!.hp = 20; // 적 킹 HP 20% → T3 50%
+    expect(damageOf(s, rook, knight)).toBe(Math.floor(plain * 0.5));
   });
 
   it('Tier 2 버프는 자기 턴 2번이 지나면 끝난다', () => {

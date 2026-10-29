@@ -28,14 +28,14 @@ type Outcome = 'died' | 'left' | 'captured' | 'lost' | 'ended';
 interface Attempt { side: Side; standing: Standing; outcome?: Outcome; captureWin?: boolean; withReward?: Side | null; noReward?: Side | null }
 
 type Terms = typeof STRONGHOLD.terms;
-const audit = (label: string, terms: Terms, games: number) => {
+const audit = (label: string, terms: Terms, games: number, width = 8, height = 8) => {
   STRONGHOLD.terms = terms;
   setRewards(true);
   const attempts: Attempt[] = [];
   const maxTurns = 100;
   for (let g = 0; g < games; g++) {
     const seed = 500 + g;
-    let s = createBattle({ width: 8, height: 8, decks: [FULL_DECK, FULL_DECK], seed });
+    let s = createBattle({ width, height, decks: [FULL_DECK, FULL_DECK], seed });
     let cur: Attempt | null = null;
     let holderId: number | null = null;
     for (let t = 0; t < maxTurns && s.winner === null; t++) {
@@ -93,8 +93,14 @@ const audit = (label: string, terms: Terms, games: number) => {
   }
 };
 
+const t = (cover: number, hold: number) => ({ cover, hold });
+const OLD: Terms = { leading: t(0.3, 2), tier1: t(0.3, 2), tier2: t(0.3, 2), tier3: t(0.3, 2) };
+const NEW: Terms = { leading: t(0.2, 3), tier1: t(0.3, 2), tier2: t(0.4, 2), tier3: t(0.5, 1) };
+const GAMES = Number(process.env.SIM_GAMES ?? 80);
+
 it('stronghold audit', () => {
-  const t = (cover: number, hold: number) => ({ cover, hold });
-  audit('현재: 모두 엄폐 30% · 2턴', { leading: t(0.3, 2), tier1: t(0.3, 2), tier2: t(0.3, 2), tier3: t(0.3, 2) }, 80);
-  audit('형편별: 우세 20%·3턴 / T1 30%·2턴 / T2 40%·2턴 / T3 50%·1턴', { leading: t(0.2, 3), tier1: t(0.3, 2), tier2: t(0.4, 2), tier3: t(0.5, 1) }, 80);
+  audit('이전: 모두 엄폐 30% · 2턴 (8×8)', OLD, GAMES);
+  audit('형편별 (8×8)', NEW, GAMES);
+  audit('형편별 (10×8 가로로 긴 맵)', NEW, Math.round(GAMES / 2), 10, 8);
+  audit('형편별 (8×10 세로로 긴 맵)', NEW, Math.round(GAMES / 2), 8, 10);
 });

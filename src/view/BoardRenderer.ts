@@ -1,6 +1,15 @@
 import Phaser from 'phaser';
 import type { BoardModel, BoardView } from '../game/controller';
-import type { BattleEvent, BattleState, Piece, PieceType, Plan, Pos } from '../engine';
+import { STRONGHOLD } from '../data/battle';
+import { findPiece, standingOf, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type Pos, type Standing } from '../engine';
+
+/** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
+export const GRADE: Record<Standing, { color: number; name: string }> = {
+  leading: { color: 0x9aa3b5, name: '강철' },
+  tier1: { color: 0xc89b3c, name: '황동' },
+  tier2: { color: 0xe07b39, name: '구리' },
+  tier3: { color: 0xfacc15, name: '황금' },
+};
 
 /** 플레이스홀더 기물 글리프. 도트 스프라이트는 M6에서 교체한다. */
 const GLYPH: Record<0 | 1, Record<PieceType, string>> = {
@@ -118,18 +127,25 @@ class BoardScene extends Phaser.Scene {
     if (sh) {
       const w = this.world(sh);
       const c = { x: w.x + t / 2, y: w.y + t / 2 };
-      g.fillStyle(C.brass, 0.25).fillRect(w.x, w.y, t, t);
-      g.lineStyle(Math.max(2, t * 0.06), C.brass, 1).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
+      // 색 = 플레이어 기준 등급. 점은 지금 보유 진영(없으면 플레이어)이 버텨야 하는 상대 턴 수
+      const grade = GRADE[standingOf(state, 0)].color;
+      const holder = sh.holderId !== null ? findPiece(state, sh.holderId) : undefined;
+      const need = STRONGHOLD.terms[standingOf(state, holder ? holder.side : 0)].hold;
+      g.fillStyle(grade, 0.28).fillRect(w.x, w.y, t, t);
+      g.lineStyle(Math.max(2, t * 0.06), grade, 1).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
       // 톱니 모양 링
-      g.lineStyle(Math.max(2, t * 0.05), C.brass, 0.9).strokeCircle(c.x, c.y, t * 0.3);
+      g.lineStyle(Math.max(2, t * 0.05), grade, 0.9).strokeCircle(c.x, c.y, t * 0.3);
       for (let i = 0; i < 8; i++) {
         const a = (Math.PI / 4) * i;
         g.lineBetween(c.x + Math.cos(a) * t * 0.3, c.y + Math.sin(a) * t * 0.3, c.x + Math.cos(a) * t * 0.4, c.y + Math.sin(a) * t * 0.4);
       }
-      // 유지 카운트
-      for (let i = 0; i < 2; i++) {
+      // 유지 진행 / 필요 턴
+      const step = t * 0.2;
+      const x0 = w.x + t / 2 - ((need - 1) * step) / 2;
+      for (let i = 0; i < need; i++) {
         const filled = i < sh.hold;
-        g.fillStyle(filled ? C.brass : C.ink, 1).fillCircle(w.x + t * (0.38 + i * 0.24), w.y + t * 0.12, t * 0.06);
+        g.fillStyle(filled ? grade : C.ink, 1).fillCircle(x0 + i * step, w.y + t * 0.12, t * 0.06);
+        g.lineStyle(1, grade, 1).strokeCircle(x0 + i * step, w.y + t * 0.12, t * 0.06);
       }
     }
   }
@@ -393,7 +409,8 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'strongholdSpawn') {
         cur.stronghold = { ...e.pos, holderId: null, hold: 0 };
         this.drawTiles(cur);
-        this.announce('요충지가 나타났습니다 — 2턴 버티면 점령');
+        const mine = e.standings[0];
+        this.announce(`${GRADE[mine].name} 요충지 — 상대 턴 ${STRONGHOLD.terms[mine].hold}번 버티면 점령 · 받는 피해 −${Math.round(STRONGHOLD.terms[mine].cover * 100)}%`);
         await this.wait(500);
         continue;
       }

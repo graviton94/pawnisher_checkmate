@@ -95,6 +95,17 @@ export class Hud implements HudView {
     el.style.top = `${Math.max(8, clientY - h - 24)}px`;
   }
 
+  /** 요충지 길게 누르기: 등급 · 필요 턴 · 엄폐 */
+  showStrongholdInfo(text: string, clientX: number, clientY: number): void {
+    const el = $('info');
+    el.innerHTML = text;
+    el.hidden = false;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    el.style.left = `${Math.min(window.innerWidth - w - 8, Math.max(8, clientX - w / 2))}px`;
+    el.style.top = `${Math.max(8, clientY - h - 24)}px`;
+  }
+
   hideInfo(): void {
     $('info').hidden = true;
   }

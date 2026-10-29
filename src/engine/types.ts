@@ -1,6 +1,9 @@
 /** 0 = 플레이어(보드 아래), 1 = 적(보드 위). 엔진은 두 진영을 같은 규칙으로 다룬다. */
 export type Side = 0 | 1;
 
+/** 진영의 형편: 우세·동률 / 열세 단계 (GDD 5장) */
+export type Standing = 'leading' | 'tier1' | 'tier2' | 'tier3';
+
 export type PieceType = 'P' | 'N' | 'B' | 'R' | 'Q' | 'K';
 
 export interface Pos {
@@ -94,7 +97,7 @@ export type BattleEvent =
   | { type: 'gameOver'; winner: Side }
   | { type: 'lastStrike'; pieceId: number }
   | { type: 'awaken'; side: Side; pieceId: number }
-  | { type: 'strongholdSpawn'; pos: Pos }
+  | { type: 'strongholdSpawn'; pos: Pos; standings: [Standing, Standing] }
   | { type: 'strongholdCapture'; side: Side; pieceId: number; tier: 1 | 2 | 3; behind: boolean }
   | { type: 'strongholdLost' }
   | { type: 'collapse'; ring: number; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] };

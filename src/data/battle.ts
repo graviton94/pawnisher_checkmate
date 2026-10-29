@@ -7,10 +7,10 @@ export const STRONGHOLD = {
    * leading = 우세·동률, tier1~3 = 열세 단계 (보상 단계와 같은 기준).
    */
   terms: {
-    leading: { cover: 0.3, hold: 2 },
+    leading: { cover: 0.2, hold: 3 },
     tier1: { cover: 0.3, hold: 2 },
-    tier2: { cover: 0.3, hold: 2 },
-    tier3: { cover: 0.3, hold: 2 },
+    tier2: { cover: 0.4, hold: 2 },
+    tier3: { cover: 0.5, hold: 1 },
   },
   /** 열세 단계 경계 (열세율) */
   tier2At: 0.15,
