@@ -15,11 +15,13 @@ export interface Weights {
   threat: number;
   /** 전진 정도 (교착 방지) */
   advance: number;
+  /** 폰 승급 잠재력 — 끝줄에 가까운 폰일수록 크게 (내 폰은 밀고, 상대 폰은 막는다) */
+  promotion: number;
 }
 
-export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6 };
-export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1 };
-export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3 };
+export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5 };
+export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5 };
+export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5 };
 
 export const WIN_SCORE = 1_000_000;
 
@@ -62,6 +64,22 @@ export const threatEstimate = (s: BattleState, side: Side): number => {
   return total;
 };
 
+/**
+ * 폰의 승급 잠재력. 끝줄에 가까울수록 제곱으로 커지고, 바로 앞이 막혀 있으면 절반, 다친 만큼 줄여 본다.
+ * 한 턴만 내다보는 탐색이 여러 턴짜리 승급 계획을 세우고, 상대 폰의 승급을 막게 하기 위한 항이다.
+ */
+const promotionPotential = (s: BattleState, p: Piece, grid: ReturnType<typeof buildGrid>): number => {
+  if (p.type !== 'P') return 0;
+  const f = forward(p.side);
+  const start = p.side === 0 ? 1 : s.height - 2;
+  const goal = p.side === 0 ? s.height - 1 : 0;
+  const total = Math.abs(goal - start) || 1;
+  const progress = Math.min(1, Math.abs(p.y - start) / total);
+  const blocked = grid[(p.y + f) * s.width + p.x] !== undefined;
+  // 다친 폰일수록 끝줄에 닿기 전에 잡힐 가능성이 크므로 HP 비율을 곱한다
+  return (PIECE_STATS.Q.value - PIECE_STATS.P.value) * progress * progress * (blocked ? 0.5 : 1) * (p.hp / p.maxHp);
+};
+
 /** `side` 관점의 보드 점수. 높을수록 좋다. */
 export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
   if (s.winner === side) return WIN_SCORE;
@@ -72,7 +90,11 @@ export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
 
   let material = 0;
   let advance = 0;
+  let promotion = 0;
+  const grid = buildGrid(s);
   for (const p of s.pieces) {
+    const pp = promotionPotential(s, p, grid);
+    promotion += p.side === side ? pp : -pp;
     const v = valueOf(p) * (p.hp / p.maxHp);
     if (p.side === side) {
       material += v;
@@ -88,6 +110,7 @@ export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
     w.ownKing * (1 - myKing.hp / myKing.maxHp) * 100 +
     w.material * material -
     w.threat * threatEstimate(s, enemy) +
-    w.advance * advance
+    w.advance * advance +
+    w.promotion * promotion
   );
 };

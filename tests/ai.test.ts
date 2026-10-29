@@ -14,6 +14,31 @@ describe('적 AI (GDD 4장)', () => {
     expect(resolveTurn(s, plan).state.winner).toBe(1);
   });
 
+  it('승급할 수 있으면 폰을 끝줄로 보낸다', () => {
+    // 적(1) 폰이 b2에 있고 b1이 비어 있다. 끝줄(1줄)에 닿으면 퀸.
+    const s = board([['K', 0, 'h1'], ['P', 1, 'b2', { moved: true }], ['K', 1, 'h8']], 8, 8, 1);
+    const plan = choosePlan(s, { tier: AI_TIERS[2] });
+    expect(plan.some((m) => m.pieceId === 2 && m.to.y === 0)).toBe(true);
+  });
+
+  it('여러 턴 앞의 승급을 위해 막히지 않은 폰을 민다', () => {
+    const s = board([['K', 0, 'a1'], ['P', 1, 'e4', { moved: true }], ['K', 1, 'h8']], 8, 8, 1);
+    const plan = choosePlan(s, { tier: AI_TIERS[2] });
+    expect(plan.some((m) => m.pieceId === 2)).toBe(true);
+  });
+
+  it('상대 폰의 승급을 막으려 한다: 끝줄 직전의 적 폰을 공격한다', () => {
+    // 플레이어(0) 폰이 g7에서 승급 직전. 적 룩은 g4나 c7로 가서 칠 수 있다. 플레이어 킹은 아군 폰 뒤에 숨어 있다.
+    const s = board(
+      [['K', 0, 'e1'], ['P', 0, 'g7', { moved: true }], ['R', 1, 'c4'], ['K', 1, 'a8'], ['P', 0, 'e2', { moved: true }], ['P', 0, 'd1', { moved: true }]],
+      8, 8, 1,
+    );
+    const after = resolveTurn(s, choosePlan(s, { tier: AI_TIERS[2] })).state;
+    const pawn = after.pieces.find((p) => p.id === 2);
+    const front = after.pieces.find((p) => p.x === 6 && p.y === 7);
+    expect(!pawn || pawn.hp < 25 || front !== undefined).toBe(true);
+  });
+
   it('항상 유효한 계획을 낸다', () => {
     const s = createBattle({ width: 8, height: 8, decks: [FULL_DECK, FULL_DECK] });
     const plan = choosePlan(s);
