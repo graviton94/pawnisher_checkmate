@@ -14,9 +14,9 @@
 | 5 | [전략적 요충지](05_stronghold.md) | ✅ |
 | 6 | [덱 & 기물 성장](06_deck_and_growth.md) | ✅ |
 | 7 | [인챈트 & 액티브 카드](07_enchants_and_cards.md) | ✅ |
-| 8 | [등반 구조 & 경제](08_climb_and_economy.md) | 💬 |
-| 9 | 아트 & UI/UX | — |
-| 10 | 기술 스택 & 아키텍처 | — |
+| 8 | [등반 구조 & 경제](08_climb_and_economy.md) | ✅ |
+| 9 | [아트 & UI/UX](09_art_and_ui.md) | 💬 |
+| 10 | [기술 스택 · 아키텍처 · 로드맵](10_tech_and_roadmap.md) | 💬 |
 
 ## 용어
 
