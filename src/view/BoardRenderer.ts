@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
-import { findPiece, standingOf, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type Pos, type Standing } from '../engine';
+import { findPiece, isMove, standingOf, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
 export const GRADE: Record<Standing, { color: number; name: string }> = {
@@ -42,6 +42,25 @@ const tileSize = (): number => {
   if (window.matchMedia('(pointer: coarse)').matches) return 48;
   const h = window.innerHeight;
   return h >= 1000 ? 96 : h >= 760 ? 72 : 56;
+};
+
+/** 예약 하나를 그릴 화살표 (이동·순간이동·캐슬링) */
+const stepArrows = (s: BattleState, step: PlanStep): { piece: Piece; from: Pos; to: Pos; knight: boolean }[] => {
+  const p = findPiece(s, step.pieceId);
+  if (!p) return [];
+  if (isMove(step) || step.kind === 'gate') return [{ piece: p, from: p, to: step.to, knight: step.kind !== 'gate' && p.type === 'N' && !p.fused }];
+  if (step.kind === 'castle') {
+    const q = findPiece(s, step.partnerId);
+    return q ? [{ piece: p, from: p, to: q, knight: false }, { piece: q, from: q, to: p, knight: false }] : [];
+  }
+  return [];
+};
+
+/** 예약 순번 배지를 붙일 칸 */
+const stepBadge = (s: BattleState, virtual: BattleState, step: PlanStep): Pos => {
+  if (isMove(step) || step.kind === 'gate') return step.to;
+  if (step.kind === 'castle') return findPiece(s, step.partnerId) ?? findPiece(s, step.pieceId)!;
+  return findPiece(virtual, step.pieceId) ?? findPiece(s, step.pieceId) ?? { x: 0, y: 0 };
 };
 
 interface PieceSprite {
@@ -329,12 +348,13 @@ class BoardScene extends Phaser.Scene {
 
     // 원래 자리 잔상 + 화살표 + 순번
     full.forEach((mv, i) => {
-      const orig = m.state.pieces.find((p) => p.id === mv.pieceId)!;
-      const ghost = this.makePiece(orig, orig, 0.28);
-      ghost.hp.setVisible(false);
-      this.dynamic.push(ghost.root);
       const isPending = m.pending !== null && i === full.length - 1;
-      this.arrow(orig, mv.to, orig.type === 'N', C.cyan, isPending ? 0.5 : 1);
+      for (const a of stepArrows(m.state, mv)) {
+        const ghost = this.makePiece(a.piece, a.from, 0.28);
+        ghost.hp.setVisible(false);
+        this.dynamic.push(ghost.root);
+        this.arrow(a.from, a.to, a.knight, C.cyan, isPending ? 0.5 : 1);
+      }
     });
 
     // 기물 (가상 보드 위치) + 이번 계획으로 파괴될 기물 (파괴 시점 위치)
@@ -355,7 +375,7 @@ class BoardScene extends Phaser.Scene {
       this.sprites.set(p.id, sprite);
     }
 
-    full.forEach((mv, i) => this.badge(mv.to, i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1));
+    full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1));
   }
 
   // ---------- 연출 ----------
@@ -369,9 +389,8 @@ class BoardScene extends Phaser.Scene {
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
     this.arrowsG.clear();
     plan.forEach((mv, i) => {
-      const orig = state.pieces.find((p) => p.id === mv.pieceId)!;
-      this.arrow(orig, mv.to, orig.type === 'N', C.crimson, 0.9);
-      this.badge(mv.to, i + 1, 1, C.crimson);
+      for (const a of stepArrows(state, mv)) this.arrow(a.from, a.to, a.knight, C.crimson, 0.9);
+      this.badge(stepBadge(state, state, mv), i + 1, 1, C.crimson);
     });
     await this.wait(plan.length ? 900 : 400);
     this.arrowsG.clear();

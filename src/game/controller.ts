@@ -187,7 +187,7 @@ export class BattleController {
       } else {
         this.selectedId = p.id;
         const left = this.apTotal - this.apUsed;
-        if (moveCost(p) > left) this.hud.toast(`AP가 부족합니다 (필요 ${moveCost(p)})`);
+        if (moveCost(this.state, p) > left) this.hud.toast(`AP가 부족합니다 (필요 ${moveCost(this.state, p)})`);
         else if (!plannableMoves(this.state, this.plan, p.id).length) this.hud.toast('갈 수 있는 칸이 없습니다');
       }
     } else {

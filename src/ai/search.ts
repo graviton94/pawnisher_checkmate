@@ -36,7 +36,7 @@ interface Scored {
   key: string;
 }
 
-const planKey = (plan: Plan): string => plan.map((m) => `${m.pieceId}:${m.to.x},${m.to.y}`).join('|');
+const planKey = (plan: Plan): string => JSON.stringify(plan);
 
 /**
  * 빔 서치로 이번 턴 계획을 고른다 (GDD 4장 §4.2).
@@ -63,7 +63,7 @@ export const choosePlan = (s: BattleState, opts: AiOptions = {}): Plan => {
       const used = new Set(cur.plan.map((m) => m.pieceId));
       for (const p of check.virtual.pieces) {
         if (p.side !== side || used.has(p.id)) continue;
-        if (check.apUsed + moveCost(p) > budget) continue;
+        if (check.apUsed + moveCost(check.virtual, p) > budget) continue;
         for (const to of legalMoves(check.virtual, p, grid)) {
           const plan = [...cur.plan, { pieceId: p.id, to }];
           const key = planKey(plan);

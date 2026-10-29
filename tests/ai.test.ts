@@ -18,7 +18,7 @@ describe('적 AI (GDD 4장)', () => {
     // 적(1) 폰이 b2에 있고 b1이 비어 있다. 끝줄(1줄)에 닿으면 퀸.
     const s = board([['K', 0, 'h1'], ['P', 1, 'b2', { moved: true }], ['K', 1, 'h8']], 8, 8, 1);
     const plan = choosePlan(s, { tier: AI_TIERS[2] });
-    expect(plan.some((m) => m.pieceId === 2 && m.to.y === 0)).toBe(true);
+    expect(plan.some((m) => m.pieceId === 2 && 'to' in m && m.to.y === 0)).toBe(true);
   });
 
   it('여러 턴 앞의 승급을 위해 막히지 않은 폰을 민다', () => {

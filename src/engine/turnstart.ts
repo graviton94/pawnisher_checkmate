@@ -1,7 +1,8 @@
 import { COLLAPSE, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
-import { attackArea, legalMoves } from './rules';
+import { availableAp } from './plan';
+import { attackArea, ench, legalMoves } from './rules';
 import { battleScore, inferiority, kingHpRatio, standingOf, strongholdTerms } from './score';
 import type { BattleEvent, BattleState, Pos, Side } from './types';
 
@@ -131,6 +132,26 @@ const capture = (s: BattleState, side: Side, holderId: number, events: BattleEve
  * 라운드 시작(플레이어 턴)에는 붕괴·요충지 생성을, 매 턴에는 요충지 유지·점령을 확인한다.
  */
 export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
+  // 이월된 AP (마공학 축전기 2장 · 연쇄 지휘 체계 2장)
+  const side = s.turnSide;
+  if (s.apCarry[side] > 0) {
+    s.apBonus[side] += s.apCarry[side];
+    events.push({ type: 'apGain', side, amount: s.apCarry[side] });
+    s.apCarry[side] = 0;
+  }
+  // 근위대 결속 2장: 킹과 붙어 있는 아군에 보호막 +10
+  if (ench(s, side, 'E08') >= 2) {
+    const k = kingOf(s, side);
+    if (k) {
+      for (const p of s.pieces) {
+        if (p.side === side && p.id !== k.id && chebyshev(p, k) === 1) {
+          p.shield += 10;
+          events.push({ type: 'shield', pieceId: p.id, amount: 10 });
+        }
+      }
+    }
+  }
+
   if (s.turnSide === 0) {
     const round = roundOf(s);
     const { collapseStart, collapseInterval, strongholdRounds } = s.rules;
@@ -160,9 +181,15 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
   }
 };
 
-/** 턴 종료 처리: 이 진영의 일시 버프 턴 수를 줄이고, 이번 턴 추가 AP를 비운다. */
-export const endTurn = (s: BattleState): void => {
+/** 턴 종료 처리: 버프·카드 쿨타임·폼 시프트를 정리하고, 이번 턴 추가 AP를 비운다 (축전기 2장이면 1까지 이월). */
+export const endTurn = (s: BattleState, apUsed = 0): void => {
   const side = s.turnSide;
+  if (ench(s, side, 'E06') >= 2) {
+    const left = availableAp(s) - apUsed;
+    if (left > 0) s.apCarry[side] += 1;
+  }
+  for (const c of s.cards[side]) if (c.cooldown > 0) c.cooldown -= 1;
+  for (const p of s.pieces) if (p.side === side) p.formAs = null;
   for (const p of s.pieces) {
     if (p.side !== side || p.buffTurns <= 0) continue;
     p.buffTurns -= 1;

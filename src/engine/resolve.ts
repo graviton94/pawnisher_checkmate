@@ -18,7 +18,7 @@ export const resolveTurn = (input: BattleState, plan: Plan): TurnResult => {
   const s = sim.state;
   const events = sim.events;
   if (s.winner === null) {
-    endTurn(s);
+    endTurn(s, sim.apUsed);
     s.turnSide = otherSide(s.turnSide);
     s.turnNumber += 1;
     beginTurn(s, events);

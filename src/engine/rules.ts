@@ -1,6 +1,7 @@
 import { at, buildGrid, forward, inBounds, onStronghold, type Grid } from './board';
 import { strongholdTerms } from './score';
-import type { BattleState, Piece, PieceType, Pos } from './types';
+import type { EnchantId } from '../data/enchants';
+import type { BattleState, Piece, PieceType, Pos, Side } from './types';
 
 const ORTHO: Pos[] = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
 const DIAG: Pos[] = [{ x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }];
@@ -12,131 +13,164 @@ const KNIGHT: Pos[] = [
 
 const SLIDE_DIRS: Partial<Record<PieceType, Pos[]>> = { B: DIAG, R: ORTHO, Q: ALL8 };
 
+/** 진영이 보유한 인챈트 중첩 수 (없으면 0) */
+export const ench = (s: BattleState, side: Side, id: EnchantId): number => s.loadouts?.[side]?.enchants[id] ?? 0;
+
+/** 이번 턴 이 기물의 행마·공격 유형들: 폼 시프트 > 합체 구성 > 자기 유형 */
+export const moveTypes = (piece: Piece): PieceType[] => (piece.formAs ? [piece.formAs] : (piece.fused ?? [piece.type]));
+
+/** 유효 보드 가장자리 칸인가 (E10) */
+export const onEdge = (s: BattleState, p: Pos): boolean =>
+  p.x === s.ring || p.y === s.ring || p.x === s.width - 1 - s.ring || p.y === s.height - 1 - s.ring;
+
 /**
  * 기물이 갈 수 있는 빈 칸 (GDD 2장 §2.2, §2.4).
  * 정통 체스 행마. 착지는 빈 칸만, 슬라이딩은 모든 기물에 막히고, 나이트는 도약한다.
+ * 합체 기물은 구성 유형의 행마를 모두 가진다. 증기 기관 장갑 2장이면 룩 행마가 아군을 뛰어넘는다.
  */
 export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Pos[] => {
   const out: Pos[] = [];
-  const empty = (x: number, y: number) => inBounds(s, x, y) && !at(s, grid, x, y);
-
-  switch (piece.type) {
-    case 'P': {
-      const f = forward(piece.side);
-      if (empty(piece.x, piece.y + f)) {
-        out.push({ x: piece.x, y: piece.y + f });
-        if (!piece.moved && empty(piece.x, piece.y + 2 * f)) out.push({ x: piece.x, y: piece.y + 2 * f });
-      }
-      break;
+  const seen = new Set<string>();
+  const push = (x: number, y: number) => {
+    const k = `${x},${y}`;
+    if (!seen.has(k)) {
+      seen.add(k);
+      out.push({ x, y });
     }
-    case 'N':
-      for (const d of KNIGHT) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
-      break;
-    case 'K':
-      if (strikeReady(s, piece)) {
+  };
+  const empty = (x: number, y: number) => inBounds(s, x, y) && !at(s, grid, x, y);
+  const slide = (dirs: Pos[], jumpAllies: boolean) => {
+    for (const d of dirs) {
+      let x = piece.x + d.x;
+      let y = piece.y + d.y;
+      while (inBounds(s, x, y)) {
+        const o = at(s, grid, x, y);
+        if (!o) push(x, y);
+        else if (!(jumpAllies && o.side === piece.side)) break;
+        x += d.x;
+        y += d.y;
+      }
+    }
+  };
+
+  for (const type of moveTypes(piece)) {
+    switch (type) {
+      case 'P': {
+        const f = forward(piece.side);
+        if (empty(piece.x, piece.y + f)) {
+          push(piece.x, piece.y + f);
+          if (!piece.moved && empty(piece.x, piece.y + 2 * f)) push(piece.x, piece.y + 2 * f);
+        }
+        break;
+      }
+      case 'N':
+        for (const d of KNIGHT) if (empty(piece.x + d.x, piece.y + d.y)) push(piece.x + d.x, piece.y + d.y);
+        break;
+      case 'K':
         // 최후의 일격: 퀸처럼 끝까지 미끄러져 이동할 수 있다 (D-015)
-        for (const d of ALL8) {
+        if (strikeReady(s, piece)) slide(ALL8, false);
+        else for (const d of ALL8) if (empty(piece.x + d.x, piece.y + d.y)) push(piece.x + d.x, piece.y + d.y);
+        break;
+      default:
+        slide(SLIDE_DIRS[type]!, type === 'R' && ench(s, piece.side, 'E03') >= 2);
+    }
+  }
+  return out;
+};
+
+export interface AttackOptions {
+  /** 사선에서 첫 적을 지나 더 칠 적의 수 (관통 마법탄 등) */
+  pierce?: number;
+}
+
+/**
+ * 착지 칸 기준 공격 대상과 공격 범위 (GDD 2장 §2.3, §2.4).
+ * 지점 공격(폰·나이트·킹)은 지정 칸의 적을 모두, 사선 공격(비숍·룩·퀸)은 방향마다 처음 만난 기물이 적일 때만 친다.
+ * 인챈트: 폰 부채꼴(E04), 비숍 아군 통과·관통(E02), 좌우 연결(E10 ★).
+ */
+export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s), opts: AttackOptions = {}) => {
+  const targets: Piece[] = [];
+  const area: Pos[] = [];
+  const tSeen = new Set<number>();
+  const aSeen = new Set<string>();
+  const addArea = (x: number, y: number) => {
+    const k = `${x},${y}`;
+    if (!aSeen.has(k)) {
+      aSeen.add(k);
+      area.push({ x, y });
+    }
+  };
+  const addTarget = (p: Piece) => {
+    if (!tSeen.has(p.id)) {
+      tSeen.add(p.id);
+      targets.push(p);
+    }
+  };
+  const point = (x: number, y: number) => {
+    if (!inBounds(s, x, y)) return;
+    addArea(x, y);
+    const p = at(s, grid, x, y);
+    if (p && p.side !== piece.side) addTarget(p);
+  };
+  const wrap = ench(s, piece.side, 'E10') >= 3;
+  const minX = s.ring;
+  const maxX = s.width - 1 - s.ring;
+
+  for (const type of moveTypes(piece)) {
+    switch (type) {
+      case 'P': {
+        const f = forward(piece.side);
+        point(piece.x - 1, piece.y + f);
+        point(piece.x + 1, piece.y + f);
+        if (ench(s, piece.side, 'E04') >= 1) point(piece.x, piece.y + f);
+        break;
+      }
+      case 'N':
+        for (const d of KNIGHT) point(piece.x + d.x, piece.y + d.y);
+        break;
+      case 'K':
+        for (const d of ALL8) point(piece.x + d.x, piece.y + d.y);
+        break;
+      default: {
+        const bishopLevel = type === 'B' ? ench(s, piece.side, 'E02') : 0;
+        const basePierce = (opts.pierce ?? 0) + (bishopLevel >= 3 ? Infinity : bishopLevel >= 2 ? 1 : 0);
+        for (const d of SLIDE_DIRS[type]!) {
           let x = piece.x + d.x;
           let y = piece.y + d.y;
-          while (empty(x, y)) {
-            out.push({ x, y });
+          let pierce = basePierce;
+          let allyPass = bishopLevel >= 1 ? 1 : 0;
+          let steps = 0;
+          while (steps++ < s.width * s.height) {
+            if (wrap && d.x !== 0 && (x < minX || x > maxX)) x = x < minX ? maxX : minX;
+            if (!inBounds(s, x, y) || (x === piece.x && y === piece.y)) break;
+            addArea(x, y);
+            const p = at(s, grid, x, y);
+            if (p) {
+              if (p.side !== piece.side) {
+                addTarget(p);
+                if (pierce <= 0) break;
+                pierce -= 1;
+              } else {
+                if (allyPass <= 0) break;
+                allyPass -= 1;
+              }
+            }
             x += d.x;
             y += d.y;
           }
         }
-      } else {
-        for (const d of ALL8) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
       }
-      break;
-    default:
-      for (const d of SLIDE_DIRS[piece.type]!) {
-        let x = piece.x + d.x;
-        let y = piece.y + d.y;
-        while (empty(x, y)) {
-          out.push({ x, y });
-          x += d.x;
-          y += d.y;
-        }
-      }
-  }
-  return out;
-};
-
-/**
- * 착지 칸 기준 공격 대상 (GDD 2장 §2.3, §2.4).
- * 지점 공격(폰·나이트·킹)은 지정 칸의 적을 모두, 사선 공격(비숍·룩·퀸)은 방향마다 처음 만난 기물이 적일 때만 친다.
- */
-export const attackTargets = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Piece[] => {
-  const out: Piece[] = [];
-  const enemyAt = (x: number, y: number) => {
-    const p = at(s, grid, x, y);
-    if (p && p.side !== piece.side) out.push(p);
-  };
-
-  switch (piece.type) {
-    case 'P': {
-      const f = forward(piece.side);
-      enemyAt(piece.x - 1, piece.y + f);
-      enemyAt(piece.x + 1, piece.y + f);
-      break;
     }
-    case 'N':
-      for (const d of KNIGHT) enemyAt(piece.x + d.x, piece.y + d.y);
-      break;
-    case 'K':
-      for (const d of ALL8) enemyAt(piece.x + d.x, piece.y + d.y);
-      break;
-    default:
-      for (const d of SLIDE_DIRS[piece.type]!) {
-        let x = piece.x + d.x;
-        let y = piece.y + d.y;
-        while (inBounds(s, x, y)) {
-          const p = at(s, grid, x, y);
-          if (p) {
-            if (p.side !== piece.side) out.push(p);
-            break;
-          }
-          x += d.x;
-          y += d.y;
-        }
-      }
   }
-  return out;
+  return { targets, area };
 };
+
+export const attackTargets = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s), opts: AttackOptions = {}): Piece[] =>
+  attackScan(s, piece, grid, opts).targets;
 
 /** 공격 범위로 표시할 칸 (미리보기용). 사선은 처음 만난 기물 칸까지 포함한다. */
-export const attackArea = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Pos[] => {
-  const out: Pos[] = [];
-  const add = (x: number, y: number) => {
-    if (inBounds(s, x, y)) out.push({ x, y });
-  };
-  switch (piece.type) {
-    case 'P': {
-      const f = forward(piece.side);
-      add(piece.x - 1, piece.y + f);
-      add(piece.x + 1, piece.y + f);
-      break;
-    }
-    case 'N':
-      for (const d of KNIGHT) add(piece.x + d.x, piece.y + d.y);
-      break;
-    case 'K':
-      for (const d of ALL8) add(piece.x + d.x, piece.y + d.y);
-      break;
-    default:
-      for (const d of SLIDE_DIRS[piece.type]!) {
-        let x = piece.x + d.x;
-        let y = piece.y + d.y;
-        while (inBounds(s, x, y)) {
-          out.push({ x, y });
-          if (at(s, grid, x, y)) break;
-          x += d.x;
-          y += d.y;
-        }
-      }
-  }
-  return out;
-};
+export const attackArea = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s), opts: AttackOptions = {}): Pos[] =>
+  attackScan(s, piece, grid, opts).area;
 
 /** 이 킹이 최후의 일격을 쓸 수 있는가 */
 export const strikeReady = (s: BattleState, piece: Piece): boolean =>
@@ -151,10 +185,20 @@ export const isStrikeMove = (s: BattleState, piece: Piece, to: Pos): boolean =>
  * max(1, floor(ATK × (1 + 버프) × 배율) − (DEF + 버프)), 요충지 위의 대상은 그 뒤 엄폐 감소를 적용한다.
  */
 export const damageOf = (s: BattleState, attacker: Piece, target: Piece, multiplier = 1): number => {
-  const atk = Math.floor(attacker.atk * (1 + attacker.buffAtkPct) * multiplier);
-  let dmg = Math.max(1, atk - (target.def + target.buffDef));
+  let mult = multiplier;
+  // 공간 왜곡 기어 1장: 가장자리 칸에서 공격하면 ATK +30%
+  if (ench(s, attacker.side, 'E10') >= 1 && onEdge(s, attacker)) mult *= 1.3;
+  const atk = Math.floor(attacker.atk * (1 + attacker.buffAtkPct) * mult);
+  // 과부하 원자로(E06 ★): DEF 5 무시
+  const ignore = ench(s, attacker.side, 'E06') >= 3 ? 5 : 0;
+  let dmg = Math.max(1, atk - Math.max(0, target.def + target.buffDef - ignore));
   if (onStronghold(s, target)) {
     dmg = Math.max(1, Math.floor(dmg * (1 - strongholdTerms(s, target.side).cover)));
+  }
+  // 근위대 결속 1장: 킹과 붙어 있는 아군은 받는 피해 −20%
+  if (target.type !== 'K' && ench(s, target.side, 'E08') >= 1) {
+    const k = s.pieces.find((p) => p.side === target.side && p.type === 'K');
+    if (k && Math.max(Math.abs(k.x - target.x), Math.abs(k.y - target.y)) === 1) dmg = Math.max(1, Math.floor(dmg * 0.8));
   }
   return dmg;
 };

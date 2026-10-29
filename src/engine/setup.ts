@@ -1,6 +1,7 @@
 import { defaultRules } from '../data/battle';
+import { FORGE_GAIN, FORGE_MASTERY_SHIELD, FORGE_MAX } from '../data/forge';
 import { PIECE_STATS } from '../data/pieces';
-import type { BattleRules, BattleState, Piece, PieceType, Side } from './types';
+import type { BattleRules, BattleState, Loadout, Piece, PieceType, Side } from './types';
 
 /** 덱 = 보유 기물 유형 목록 (GDD 6장 §6.1) */
 export type Deck = PieceType[];
@@ -21,7 +22,25 @@ export interface BattleSetup {
   /** 생략하면 보드 크기별 기본 규칙 (data/battle.ts) */
   rules?: BattleRules;
   seed?: number;
+  /** 진영별 인챈트·카드·대장간. 생략하면 없음 */
+  loadouts?: [Loadout, Loadout];
 }
+
+export const EMPTY_LOADOUT: Loadout = { enchants: {}, cards: [], forge: {} };
+
+/** 대장간 유형 강화를 기물에 반영한다. +5 완전 강화면 전투 시작 보호막 (GDD 6장 §6.5) */
+const applyForge = (pieces: Piece[], loadout: Loadout): void => {
+  for (const p of pieces) {
+    const lv = Math.min(FORGE_MAX, loadout.forge[p.type] ?? 0);
+    if (!lv) continue;
+    const g = FORGE_GAIN[p.type];
+    p.maxHp += g.hp * lv;
+    p.hp = p.maxHp;
+    p.atk += g.atk * lv;
+    p.def += g.def * lv;
+    if (lv >= FORGE_MAX) p.shield += Math.round(p.maxHp * FORGE_MASTERY_SHIELD);
+  }
+};
 
 const makePiece = (id: number, type: PieceType, side: Side, x: number, y: number): Piece => {
   const st = PIECE_STATS[type];
@@ -91,13 +110,18 @@ const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: (
   return out;
 };
 
-export const createBattle = ({ width, height, decks, rules, seed }: BattleSetup): BattleState => {
+export const createBattle = ({ width, height, decks, rules, seed, loadouts }: BattleSetup): BattleState => {
   let id = 1;
   const nextId = () => id++;
+  const lo: [Loadout, Loadout] = loadouts ?? [EMPTY_LOADOUT, EMPTY_LOADOUT];
+  const mine = deploy(width, height, decks[0], 0, nextId);
+  const theirs = deploy(width, height, decks[1], 1, nextId);
+  applyForge(mine, lo[0]);
+  applyForge(theirs, lo[1]);
   return {
     width,
     height,
-    pieces: [...deploy(width, height, decks[0], 0, nextId), ...deploy(width, height, decks[1], 1, nextId)],
+    pieces: [...mine, ...theirs],
     turnSide: 0,
     turnNumber: 1,
     winner: null,
@@ -108,5 +132,8 @@ export const createBattle = ({ width, height, decks, rules, seed }: BattleSetup)
     ring: 0,
     apBonus: [0, 0],
     lastStrike: ['none', 'none'],
+    loadouts: lo,
+    cards: [lo[0].cards.map((id) => ({ id, cooldown: 0, spent: false })), lo[1].cards.map((id) => ({ id, cooldown: 0, spent: false }))],
+    apCarry: [0, 0],
   };
 };

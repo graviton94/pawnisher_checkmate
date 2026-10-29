@@ -17,6 +17,9 @@ export const board = (specs: Spec[], width = 8, height = 8, turnSide: Side = 0):
   ring: 0,
   apBonus: [0, 0],
   lastStrike: ['none', 'none'],
+  loadouts: [{ enchants: {}, cards: [], forge: {} }, { enchants: {}, cards: [], forge: {} }],
+  cards: [[], []],
+  apCarry: [0, 0],
   pieces: specs.map(([type, side, sq, over], i) => {
     const st = PIECE_STATS[type];
     const { x, y } = fromSquare(sq);

@@ -20,6 +20,8 @@ export const cloneState = (s: BattleState): BattleState => ({
   ...s,
   stronghold: s.stronghold ? { ...s.stronghold } : null,
   apBonus: [...s.apBonus] as [number, number],
+  apCarry: [...s.apCarry] as [number, number],
+  cards: [s.cards[0].map((c) => ({ ...c })), s.cards[1].map((c) => ({ ...c }))],
   lastStrike: [...s.lastStrike] as BattleState['lastStrike'],
   pieces: s.pieces.map((p) => ({ ...p })),
 });

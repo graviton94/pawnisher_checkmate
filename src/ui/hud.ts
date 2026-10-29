@@ -1,6 +1,7 @@
 import { BASE_AP, PIECE_NAMES_KO } from '../data/pieces';
 import { AI_STYLES, SCENARIOS, type BattleController, type HudView, type Scenario } from '../game/controller';
-import { checkPlan, findPiece, toSquare, type Piece, type PieceType, type Side } from '../engine';
+import { CARDS } from '../data/cards';
+import { checkPlan, findPiece, toSquare, type BattleState, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 
 const GLYPH: Record<0 | 1, Record<PieceType, string>> = {
   0: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
@@ -9,6 +10,32 @@ const GLYPH: Record<0 | 1, Record<PieceType, string>> = {
 const VS15 = '︎';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+/** 예약 목록 한 줄: 좌표 이동 또는 특수 행동 이름 (+붙인 카드) */
+const describeStep = (s: BattleState, m: PlanStep): string => {
+  const p = findPiece(s, m.pieceId);
+  const from = p ? toSquare(p) : '?';
+  const cardName = (idx?: number) => (idx !== undefined && s.cards[s.turnSide][idx] ? ` · ${CARDS[s.cards[s.turnSide][idx].id].name}` : '');
+  switch (m.kind) {
+    case undefined:
+    case 'move':
+      return `${from} → ${toSquare(m.to)}${cardName(m.card)}`;
+    case 'stand':
+      return `${from} 제자리 공격`;
+    case 'castle':
+      return `${from} ⇄ ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })}${cardName(m.card)}`;
+    case 'shield':
+      return `${from} 보호막${cardName(m.card)}`;
+    case 'gate':
+      return `${from} ⇢ ${toSquare(m.to)}${cardName(m.card)}`;
+    case 'promote':
+      return `${from} 퀸 승급${cardName(m.card)}`;
+    case 'fuse':
+      return `${from} + ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })} 합체${cardName(m.card)}`;
+    case 'formShift':
+      return `${from} ⇄ 폼 시프트${cardName(m.card)}`;
+  }
+};
 
 export class Hud implements HudView {
   private c!: BattleController;
@@ -58,7 +85,7 @@ export class Hud implements HudView {
       if (!p) return;
       const pending = c.pending !== null && i === full.length - 1;
       rows.push(
-        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${GLYPH[p.side][p.type]}${VS15}</span><span>${toSquare(p)} → ${toSquare(m.to)}</span></li>`,
+        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${GLYPH[p.side][p.type]}${VS15}</span><span>${describeStep(c.state, m)}</span></li>`,
       );
     });
     if (!rows.length && mine) rows.push('<li class="empty">기물을 눌러 이동을 예약하세요</li>');

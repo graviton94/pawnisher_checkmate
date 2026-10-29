@@ -1,3 +1,6 @@
+import type { CardId } from '../data/cards';
+import type { EnchantId } from '../data/enchants';
+
 /** 0 = 플레이어(보드 아래), 1 = 적(보드 위). 엔진은 두 진영을 같은 규칙으로 다룬다. */
 export type Side = 0 | 1;
 
@@ -28,6 +31,25 @@ export interface Piece {
   buffAtkPct: number;
   buffDef: number;
   buffTurns: number;
+  /** 합체 기물이면 구성 유형들 (행마·공격 범위를 모두 가진다, GDD 7장 §7.4) */
+  fused?: PieceType[];
+  /** 이번 턴만 다른 유형처럼 움직이고 공격한다 (기어 폼 시프트) */
+  formAs?: PieceType | null;
+}
+
+/** 진영의 전투 장비: 인챈트 중첩, 액티브 카드, 대장간 유형 강화 (GDD 6·7장) */
+export interface Loadout {
+  enchants: Partial<Record<EnchantId, number>>;
+  cards: CardId[];
+  forge: Partial<Record<PieceType, number>>;
+}
+
+export interface CardSlot {
+  id: CardId;
+  /** 남은 쿨타임 (자기 턴 수) */
+  cooldown: number;
+  /** 이번 라운드에 이미 썼거나(라운드당 1회) 소멸한 카드 */
+  spent: boolean;
 }
 
 /** 전투별 규칙 설정 (스테이지 데이터로 정한다) */
@@ -72,15 +94,46 @@ export interface BattleState {
   /** 이번 턴에만 쓰는 추가 AP (진영별) */
   apBonus: [number, number];
   lastStrike: [LastStrike, LastStrike];
+  loadouts: [Loadout, Loadout];
+  cards: [CardSlot[], CardSlot[]];
+  /** 다음 턴으로 넘어가는 AP (축전기 이월, 연쇄 지휘 보너스) */
+  apCarry: [number, number];
 }
 
-/** 계획 단계의 이동 예약 한 건. 배열 순서가 곧 순번(#1, #2, …)이다. */
+/**
+ * 계획 단계의 예약 한 건. 배열 순서가 곧 순번(#1, #2, …)이다.
+ * 기본은 이동이고, 카드·인챈트로 생기는 특수 행동은 kind로 구분한다.
+ * card = 내 카드 슬롯 번호.
+ */
 export interface PlannedMove {
+  kind?: 'move';
   pieceId: number;
   to: Pos;
+  /** 이 이동에 붙인 카드 (A01·A03·A04·C01·C03·C06) */
+  card?: number;
 }
 
-export type Plan = PlannedMove[];
+export type SpecialStep =
+  /** 정면이 막힌 폰의 제자리 공격 (E04 2장) */
+  | { kind: 'stand'; pieceId: number }
+  /** 캐슬링 스왑 (A02): 두 기물 위치 교환 후 둘 다 공격 */
+  | { kind: 'castle'; pieceId: number; partnerId: number; card: number }
+  /** 강철 바리케이드 (A06): 대상에 보호막 */
+  | { kind: 'shield'; pieceId: number; card: number }
+  /** 차원 도약문 (C02) */
+  | { kind: 'gate'; pieceId: number; to: Pos; card: number }
+  /** 비상의 대관식 (C04) */
+  | { kind: 'promote'; pieceId: number; card: number }
+  /** 합체 (C05 또는 E11): pieceId 자리에 합체, partner는 흡수된다 */
+  | { kind: 'fuse'; pieceId: number; partnerId: number; card?: number }
+  /** 기어 폼 시프트 (A05): pieceId(나이트) ↔ partnerId(비숍) */
+  | { kind: 'formShift'; pieceId: number; partnerId: number; card: number };
+
+export type PlanStep = PlannedMove | SpecialStep;
+
+export type Plan = PlanStep[];
+
+export const isMove = (step: PlanStep): step is PlannedMove => step.kind === undefined || step.kind === 'move';
 
 export interface HitResult {
   targetId: number;
@@ -88,6 +141,10 @@ export interface HitResult {
   shieldAbsorbed: number;
   hpAfter: number;
   killed: boolean;
+  /** 번개·연쇄·돌진 등 부가 피해 */
+  splash?: boolean;
+  /** 넉백으로 밀려난 위치 */
+  pushedTo?: Pos;
 }
 
 export type BattleEvent =
@@ -100,6 +157,11 @@ export type BattleEvent =
   | { type: 'strongholdSpawn'; pos: Pos; standings: [Standing, Standing] }
   | { type: 'strongholdCapture'; side: Side; pieceId: number; tier: 1 | 2 | 3; behind: boolean }
   | { type: 'strongholdLost' }
-  | { type: 'collapse'; ring: number; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] };
+  | { type: 'collapse'; ring: number; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] }
+  | { type: 'card'; side: Side; card: CardId; pieceId: number }
+  | { type: 'shield'; pieceId: number; amount: number }
+  | { type: 'fuse'; pieceId: number; partnerId: number; types: PieceType[] }
+  | { type: 'heal'; pieceId: number; amount: number }
+  | { type: 'apGain'; side: Side; amount: number };
 
 export const otherSide = (side: Side): Side => (side === 0 ? 1 : 0);
