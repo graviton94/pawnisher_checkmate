@@ -1,6 +1,7 @@
 import './style.css';
 import { BattleController } from './game/controller';
 import { Hud } from './ui/hud';
+import { RunUi } from './ui/runUi';
 import { STRONGHOLD } from './data/battle';
 import { standingOf } from './engine';
 import { BoardRenderer, GRADE } from './view/BoardRenderer';
@@ -33,7 +34,9 @@ const renderer = new BoardRenderer(document.getElementById('board')!, {
 
 controller = new BattleController(renderer, hud);
 hud.bind(controller);
-hud.showStart();
+const runUi = new RunUi(hud, controller);
+hud.onMenu = () => runUi.showMenu();
+runUi.showMenu();
 
 if (new URLSearchParams(location.search).has('debug')) {
   (window as unknown as { pawnisher: BattleController }).pawnisher = controller;

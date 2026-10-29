@@ -46,6 +46,8 @@ export class Hud implements HudView {
   private lastTier = 1;
   private lastStyle = 'scenario';
   private loadout: Loadout = { enchants: {}, cards: [], forge: {} };
+  /** 메인 메뉴로 (등반 화면이 설정) */
+  onMenu: (() => void) | null = null;
   private enemyMirror = false;
 
   bind(c: BattleController): void {
@@ -186,14 +188,14 @@ export class Hud implements HudView {
     $('info').hidden = true;
   }
 
-  private openOverlay(html: string): HTMLElement {
+  openOverlay(html: string): HTMLElement {
     const panel = $('overlay-panel');
     panel.innerHTML = html;
     $('overlay').hidden = false;
     return panel;
   }
 
-  private closeOverlay(): void {
+  closeOverlay(): void {
     $('overlay').hidden = true;
   }
 
@@ -317,7 +319,8 @@ export class Hud implements HudView {
       <div class="row">${[0, 1, 2].map(tier).join('')}</div>
       <div class="row">${AI_STYLES.map(style).join('')}</div>
       <button class="choice" type="button" data-loadout>장비 (시험용)<small>${this.loadoutSummary()}</small></button>
-      <button class="choice primary" type="button" data-go>전투 시작</button>`);
+      <div class="row"><button class="choice" type="button" data-back>메뉴</button><button class="choice primary" type="button" data-go>전투 시작</button></div>`);
+    panel.querySelector('[data-back]')!.addEventListener('click', () => this.onMenu?.());
     panel.querySelector('[data-loadout]')!.addEventListener('click', () => this.showLoadout());
     const press = (attr: string, value: string) =>
       panel.querySelectorAll(`[${attr}]`).forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute(attr) === value)));
@@ -352,10 +355,10 @@ export class Hud implements HudView {
       <h1>${win ? 'CHECKMATE' : 'DEFEAT'}</h1>
       <h2>${win ? '승리 — 적 킹을 쓰러뜨렸습니다' : '패배 — 내 킹이 쓰러졌습니다'}</h2>
       <div class="row">
-        <button class="choice" type="button" data-menu>전투 선택</button>
+        <button class="choice" type="button" data-menu>메뉴</button>
         <button class="choice primary" type="button" data-again>다시 하기</button>
       </div>`);
-    panel.querySelector('[data-menu]')!.addEventListener('click', () => this.showStart());
+    panel.querySelector('[data-menu]')!.addEventListener('click', () => (this.onMenu ? this.onMenu() : this.showStart()));
     panel.querySelector('[data-again]')!.addEventListener('click', () => {
       this.closeOverlay();
       const weights = AI_STYLES.find((s) => s.id === this.lastStyle)!.weights;

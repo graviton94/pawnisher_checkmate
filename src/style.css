@@ -262,3 +262,24 @@ html, body {
 .chip.on { border-color: var(--brass); background: #2a2418; }
 .chip.small { min-height: 44px; }
 .panel { width: min(640px, 94vw); }
+
+/* M5 등반 목업 */
+.run-status { font-size: 13px; line-height: 1.6; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.run-status b { color: var(--text); }
+.run-status .gold, .price { color: var(--brass); }
+.run-status .g, .chip .g { font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', 'Apple Symbols', serif; font-size: 16px; }
+.map { display: flex; flex-direction: column; gap: 4px; }
+.floor { display: flex; align-items: center; gap: 8px; opacity: 0.55; }
+.floor.current { opacity: 1; }
+.floor.done { opacity: 0.4; }
+.floor .fl { width: 24px; flex: none; text-align: right; font-family: Cinzel, serif; color: var(--muted); }
+.floor .nodes { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
+.chip.node { flex: 1; min-width: 90px; min-height: 40px; display: flex; align-items: center; }
+.floor.current .chip.node { border-color: var(--brass); min-height: 48px; }
+.chip.node.elite b { color: #fda4af; }
+.chip.node.boss b { color: #facc15; }
+.chip.node.shop b, .chip.node.forge b { color: #7dd3fc; }
+.chip.node.altar b { color: #c4b5fd; }
+.chip.past { opacity: 0.45; }
+.chip:disabled { opacity: 0.4; cursor: default; }
+.panel .choice:disabled { opacity: 0.4; cursor: default; }

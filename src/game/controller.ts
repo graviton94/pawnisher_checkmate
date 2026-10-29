@@ -132,9 +132,27 @@ export class BattleController {
   aiTier = 1;
   enemyWeights: Weights = TUNED;
 
+  /** 런 전투용 훅: 내 차례가 시작될 때마다(자동 저장), 전투가 끝났을 때 */
+  onPlayerTurn: ((s: BattleState) => void) | null = null;
+  onBattleEnd: ((s: BattleState) => void) | null = null;
+
   constructor(private view: BoardView, private hud: HudView) {}
 
+  /** 이미 만든 전투 상태로 시작한다 (런 전투·이어하기) */
+  startState(state: BattleState, aiTier: number, weights: Weights): void {
+    this.state = state;
+    this.aiTier = aiTier;
+    this.enemyWeights = weights;
+    this.plan = [];
+    this.clearPick();
+    this.phase = 'plan';
+    this.view.setup(this.state);
+    this.refresh();
+  }
+
   start(sc: Scenario, aiTier: number, weights: Weights | null, loadouts: [Loadout, Loadout] = [EMPTY_LOADOUT, EMPTY_LOADOUT]): void {
+    this.onPlayerTurn = null;
+    this.onBattleEnd = null;
     this.state = createBattle({ width: sc.width, height: sc.height, decks: sc.decks, loadouts });
     this.aiTier = aiTier;
     this.enemyWeights = weights ?? sc.weights;
@@ -394,7 +412,8 @@ export class BattleController {
     if (state.winner !== null) {
       this.phase = 'over';
       this.refresh();
-      this.hud.showResult(state.winner);
+      if (this.onBattleEnd) this.onBattleEnd(state);
+      else this.hud.showResult(state.winner);
       return;
     }
     this.refresh();
@@ -410,6 +429,7 @@ export class BattleController {
     await this.runTurn(plan);
     if (!this.isOver()) {
       this.phase = 'plan';
+      this.onPlayerTurn?.(this.state);
       this.refresh();
     }
   }
