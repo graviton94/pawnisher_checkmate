@@ -1,4 +1,4 @@
-# 정본 기획서 (GDD)
+# Pawnisher : Checkmate — 정본 기획서 (GDD)
 
 `docs/ideation/`의 아이디어를 바탕으로 Q&A를 거쳐 확정한 정본 기획서이다.
 구현은 **확정된 장만** 기준으로 삼는다. 각 장의 상태는 아래 표에서 관리한다.
@@ -16,7 +16,7 @@
 | 7 | [인챈트 & 액티브 카드](07_enchants_and_cards.md) | ✅ |
 | 8 | [등반 구조 & 경제](08_climb_and_economy.md) | ✅ |
 | 9 | [아트 & UI/UX](09_art_and_ui.md) | 💬 |
-| 10 | [기술 스택 · 아키텍처 · 로드맵](10_tech_and_roadmap.md) | 💬 |
+| 10 | [기술 스택 · 아키텍처 · 로드맵](10_tech_and_roadmap.md) | ✅ |
 
 ## 용어
 
