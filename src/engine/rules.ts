@@ -1,6 +1,5 @@
-import { STRONGHOLD } from '../data/battle';
 import { at, buildGrid, forward, inBounds, onStronghold, type Grid } from './board';
-import { inferiority } from './score';
+import { strongholdTerms } from './score';
 import type { BattleState, Piece, PieceType, Pos } from './types';
 
 const ORTHO: Pos[] = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
@@ -155,8 +154,7 @@ export const damageOf = (s: BattleState, attacker: Piece, target: Piece, multipl
   const atk = Math.floor(attacker.atk * (1 + attacker.buffAtkPct) * multiplier);
   let dmg = Math.max(1, atk - (target.def + target.buffDef));
   if (onStronghold(s, target)) {
-    const cover = inferiority(s, target.side) > 0 ? STRONGHOLD.coverTrailing : STRONGHOLD.coverLeading;
-    dmg = Math.max(1, Math.floor(dmg * (1 - cover)));
+    dmg = Math.max(1, Math.floor(dmg * (1 - strongholdTerms(s, target.side).cover)));
   }
   return dmg;
 };

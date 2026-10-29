@@ -2,12 +2,16 @@ import type { BattleRules } from '../engine/types';
 
 /** 요충지 수치 (GDD 5장, 초기값) */
 export const STRONGHOLD = {
-  /** 엄폐: 받는 피해 감소율 — 보유 진영이 우세(또는 동률)일 때 / 열세일 때 */
-  coverLeading: 0.3,
-  coverTrailing: 0.3,
-  /** 점령까지 버텨야 하는 자기 턴 수 — 우세 / 열세 */
-  holdLeading: 2,
-  holdTrailing: 2,
+  /**
+   * 보유 진영의 형편별 조건: 엄폐(받는 피해 감소율)와 점령까지 버텨야 하는 상대 턴 수.
+   * leading = 우세·동률, tier1~3 = 열세 단계 (보상 단계와 같은 기준).
+   */
+  terms: {
+    leading: { cover: 0.3, hold: 2 },
+    tier1: { cover: 0.3, hold: 2 },
+    tier2: { cover: 0.3, hold: 2 },
+    tier3: { cover: 0.3, hold: 2 },
+  },
   /** 열세 단계 경계 (열세율) */
   tier2At: 0.15,
   tier3At: 0.35,

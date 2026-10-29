@@ -1,3 +1,4 @@
+import { STRONGHOLD } from '../data/battle';
 import { PIECE_STATS } from '../data/pieces';
 import { kingOf } from './board';
 import { otherSide, type BattleState, type Side } from './types';
@@ -24,3 +25,15 @@ export const kingHpRatio = (s: BattleState, side: Side): number => {
   const k = kingOf(s, side);
   return k ? k.hp / k.maxHp : 0;
 };
+
+/** 진영의 형편: 우세·동률이면 'leading', 아니면 열세 단계 (GDD 5장 §5.5 기준) */
+export type Standing = 'leading' | 'tier1' | 'tier2' | 'tier3';
+
+export const standingOf = (s: BattleState, side: Side): Standing => {
+  const inf = inferiority(s, side);
+  if (inf >= STRONGHOLD.tier3At || kingHpRatio(s, side) <= STRONGHOLD.tier3KingHp) return 'tier3';
+  if (inf <= 0) return 'leading';
+  return inf >= STRONGHOLD.tier2At ? 'tier2' : 'tier1';
+};
+
+export const strongholdTerms = (s: BattleState, side: Side) => STRONGHOLD.terms[standingOf(s, side)];

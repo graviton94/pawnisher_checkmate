@@ -2,7 +2,7 @@ import { COLLAPSE, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
 import { attackArea, legalMoves } from './rules';
-import { battleScore, inferiority, kingHpRatio } from './score';
+import { battleScore, inferiority, kingHpRatio, strongholdTerms } from './score';
 import type { BattleEvent, BattleState, Pos, Side } from './types';
 
 const rngFor = (s: BattleState) => new Rng((s.seed ^ Math.imul(s.turnNumber, 2654435761)) >>> 0);
@@ -155,8 +155,7 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
       sh.hold = 0;
     } else if (holder.side === s.turnSide) {
       sh.hold += 1;
-      const need = inferiority(s, holder.side) > 0 ? STRONGHOLD.holdTrailing : STRONGHOLD.holdLeading;
-      if (sh.hold >= need) capture(s, holder.side, holder.id, events);
+      if (sh.hold >= strongholdTerms(s, holder.side).hold) capture(s, holder.side, holder.id, events);
     }
   }
 };
