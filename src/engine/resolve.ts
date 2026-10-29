@@ -1,6 +1,6 @@
 import { buildGrid, cloneState, findPiece, kingOf } from './board';
 import { applyMove, checkPlan } from './plan';
-import { attackTargets, damageOf } from './rules';
+import { attackArea, attackTargets, damageOf } from './rules';
 import { otherSide, type BattleEvent, type BattleState, type HitResult, type Plan } from './types';
 
 export interface TurnResult {
@@ -35,7 +35,9 @@ export const resolveTurn = (input: BattleState, plan: Plan): TurnResult => {
   for (let order = 0; order < plan.length; order++) {
     const attacker = findPiece(s, plan[order].pieceId);
     if (!attacker) continue; // 자기 턴에 자기 기물은 파괴되지 않지만, 방어적으로 둔다
-    const targets = attackTargets(s, attacker, buildGrid(s));
+    const grid = buildGrid(s);
+    const area = attackArea(s, attacker, grid);
+    const targets = attackTargets(s, attacker, grid);
     const hits: HitResult[] = targets.map((t) => {
       const damage = damageOf(attacker, t);
       const shieldAbsorbed = Math.min(t.shield, damage);
@@ -43,7 +45,7 @@ export const resolveTurn = (input: BattleState, plan: Plan): TurnResult => {
       t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
       return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0 };
     });
-    events.push({ type: 'attack', order, attackerId: attacker.id, hits });
+    events.push({ type: 'attack', order, attackerId: attacker.id, area, hits });
     if (hits.some((h) => h.killed)) {
       s.pieces = s.pieces.filter((p) => p.hp > 0);
       const winner = !kingOf(s, otherSide(s.turnSide)) ? s.turnSide : !kingOf(s, s.turnSide) ? otherSide(s.turnSide) : null;

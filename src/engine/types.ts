@@ -54,7 +54,7 @@ export interface HitResult {
 export type BattleEvent =
   | { type: 'move'; order: number; pieceId: number; from: Pos; to: Pos }
   | { type: 'promote'; pieceId: number; from: PieceType; to: PieceType }
-  | { type: 'attack'; order: number; attackerId: number; hits: HitResult[] }
+  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[] }
   | { type: 'gameOver'; winner: Side };
 
 export const otherSide = (side: Side): Side => (side === 0 ? 1 : 0);
