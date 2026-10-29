@@ -1,6 +1,6 @@
 # 5장. 전략적 요충지 (Dynamic Stronghold)
 
-> 상태: 💬 검토 중
+> 상태: ✅ 확정
 > 출처: ideation 01 §4, GDD 1~4장
 
 ## 5.1 목적
