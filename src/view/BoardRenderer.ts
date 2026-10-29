@@ -398,6 +398,19 @@ class BoardScene extends Phaser.Scene {
       this.marksG.lineStyle(strong ? 2 : 1, C.crimson, strong ? 1 : 0.6).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
     }
 
+    // 누른 적 기물의 다음 턴 위협: 칠 수 있는 칸(붉은 빗금)과 갈 수 있는 칸(붉은 점)
+    if (m.threat) {
+      for (const a of m.threat.hits) {
+        const w = this.world(a);
+        this.marksG.fillStyle(C.crimson, 0.18).fillRect(w.x + 1, w.y + 1, t - 2, t - 2);
+        this.marksG.lineStyle(1, C.crimson, 0.5).lineBetween(w.x + 4, w.y + t - 4, w.x + t - 4, w.y + 4);
+      }
+      for (const d of m.threat.moves) {
+        const c = this.center(d);
+        this.marksG.fillStyle(C.crimson, 0.9).fillCircle(c.x, c.y, t * 0.09);
+      }
+    }
+
     // 선택 기물과 갈 수 있는 칸
     if (m.selectedId !== null) {
       const sel = m.virtual.pieces.find((p) => p.id === m.selectedId);

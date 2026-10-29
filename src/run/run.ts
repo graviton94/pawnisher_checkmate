@@ -16,8 +16,9 @@ import {
   FORGE_COST,
   battleGold,
   NODE_WEIGHTS,
-  PIECE_REWARD_EVERY,
-  PIECE_REWARD_FIRST,
+  pieceRewardDue,
+  STACK_WEIGHT,
+  TYPE_MATCH_WEIGHT,
   PIECE_REWARD_WEIGHTS,
   RARE_ENCHANTS,
   RARE_WEIGHT,
@@ -25,7 +26,6 @@ import {
   SKIP_GOLD,
   START_DECKS,
   START_GOLD,
-  THIRD_STACK_WEIGHT,
   type BossId,
   type NodeKind,
 } from '../data/run';
@@ -47,7 +47,7 @@ export interface MapNode {
 }
 
 /** 3지선다 (인챈트·카드). 건너뛰면 골드 소량 */
-export type Choice = { type: 'enchant'; options: EnchantId[] } | { type: 'card'; options: CardId[] };
+export type Choice = { type: 'enchant'; options: EnchantId[] } | { type: 'card'; options: CardId[] } | { type: 'piece'; options: PieceType[] };
 
 export interface ShopItem<T> {
   item: T;
@@ -101,7 +101,18 @@ export interface RunOptions {
   ascension?: number;
   /** 메타 해금으로 늘어난 시작 덱 후보 */
   extraDecks?: Deck[];
+  /** 플레이어가 고른 시작 덱 (없으면 후보 중 무작위) */
+  deck?: Deck;
 }
+
+/** 시작 덱 3지선다 후보 (기본 3종 + 해금 덱 중 3개) */
+export const startDeckOptions = (seed: number, extra: Deck[] = []): Deck[] => {
+  const rng = new Rng(seed ^ 0x5bd1e995);
+  const pool = [...START_DECKS, ...extra];
+  const out: Deck[] = [];
+  while (out.length < 3 && pool.length) out.push(pool.splice(rng.int(pool.length), 1)[0]);
+  return out;
+};
 
 // ---------- 난수 ----------
 const rngOf = (run: RunState) => new Rng(run.rng);
@@ -166,7 +177,8 @@ export const bossName = (run: RunState, floor: number): string => (floor === TOT
 export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
   const rng = new Rng(seed);
   const candidates = [...START_DECKS, ...(opts.extraDecks ?? [])];
-  const deck = [...candidates[rng.int(candidates.length)]];
+  const randomDeck = candidates[rng.int(candidates.length)];
+  const deck = [...(opts.deck ?? randomDeck)];
   const bossPool: BossId[] = ['knight', 'bishop', 'rook'];
   const bosses = [bossPool.splice(rng.int(3), 1)[0], bossPool.splice(rng.int(2), 1)[0]];
   const map = generateMap(rng);
@@ -257,11 +269,13 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   lines.push(`골드 +${gold}`);
 
   // 랜덤 기물 보상: 첫·둘째 승리 확정, 이후 3승마다 (GDD 6장 §6.6)
-  if (run.wins <= PIECE_REWARD_FIRST || (run.wins - PIECE_REWARD_FIRST) % PIECE_REWARD_EVERY === 0) {
-    lines.push(withRng(run, (rng) => grantRandomPiece(run, rng)));
-  }
-
   const choices: Choice[] = [];
+  // 기물 3지선다 (GDD 6장 §6.6 개정: 무작위 지급 → 고르는 덱빌딩)
+  if (pieceRewardDue(run.floor, run.wins)) {
+    const options = withRng(run, (rng) => rollPieces(run, rng));
+    if (options.length) choices.push({ type: 'piece', options });
+    else lines.push('덱에 더 들일 수 있는 기물이 없습니다');
+  }
   const source = kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'battle';
   choices.push({ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, source)) });
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
@@ -287,14 +301,29 @@ const grantRandomPiece = (run: RunState, rng: Rng, weights = PIECE_REWARD_WEIGHT
 };
 
 // ---------- 3지선다 ----------
+/** 기물 3지선다: 덱에 들일 수 있는 유형 중 서로 다른 3개 */
+const rollPieces = (run: RunState, rng: Rng): PieceType[] =>
+  pickDistinct(
+    rng,
+    (Object.entries(PIECE_REWARD_WEIGHTS) as [PieceType, number][]).filter(([t]) => canAdd(run.deck, t)),
+    3,
+  );
+
+/** 인챈트가 대상으로 삼는 기물 유형 */
+export const ENCHANT_TYPE: Partial<Record<EnchantId, PieceType>> = { E01: 'N', E02: 'B', E03: 'R', E04: 'P', E08: 'K' };
+
 const rollEnchants = (run: RunState, rng: Rng, source: 'battle' | 'elite' | 'boss' | 'altar', rareOnly = false): EnchantId[] => {
+  const act = Math.min(3, actOf(Math.min(run.floor, TOTAL_FLOORS))) - 1;
   const table = (Object.keys(ENCHANTS) as EnchantId[]).flatMap((id): [EnchantId, number][] => {
     const n = run.loadout.enchants[id] ?? 0;
     if (n >= ENCHANT_MAX_STACK) return [];
     const rare = RARE_ENCHANTS.includes(id);
     if (rareOnly && !rare) return [];
     let w = rare ? RARE_WEIGHT[source === 'altar' ? 'boss' : source] : 1;
-    if (n === 2) w *= THIRD_STACK_WEIGHT;
+    if (n === 1) w *= STACK_WEIGHT.second[act];
+    if (n === 2) w *= STACK_WEIGHT.third[act];
+    const t = ENCHANT_TYPE[id];
+    if (t && t !== 'K' && run.deck.filter((x) => x === t).length >= 3) w *= TYPE_MATCH_WEIGHT;
     return [[id, w]];
   });
   const out = pickDistinct(rng, table, 3);
@@ -340,6 +369,13 @@ export const takeChoice = (run: RunState, option: string, discard?: EnchantId | 
   if (run.stage.at !== 'reward' || !run.stage.choices.length) return '고를 보상이 없습니다';
   const ch = run.stage.choices[0];
   if (!(ch.options as string[]).includes(option)) return '없는 선택지';
+  if (ch.type === 'piece') {
+    const t = option as PieceType;
+    if (!canAdd(run.deck, t)) return '덱 한도를 넘습니다';
+    run.deck.push(t);
+    run.stage.choices.shift();
+    return;
+  }
   const err =
     ch.type === 'enchant'
       ? addEnchant(run, option as EnchantId, discard as EnchantId | undefined)

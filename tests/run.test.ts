@@ -78,10 +78,13 @@ describe('보상과 노드', () => {
     finishBattle(run, b);
     expect(run.loadout.cards).toEqual(['A01']);
     expect(run.gold).toBeGreaterThan(gold);
-    expect(run.deck.length).toBe(deck + 1);
     expect(run.stage.at).toBe('reward');
     if (run.stage.at !== 'reward') return;
+    // Act 1은 매 승리마다 기물 3지선다 → 인챈트 3지선다
+    expect(run.stage.choices.map((c) => c.type)).toEqual(['piece', 'enchant']);
     expect(run.stage.choices[0].options).toHaveLength(3);
+    expect(takeChoice(run, run.stage.choices[0].options[0])).toBeUndefined();
+    expect(run.deck.length).toBe(deck + 1);
     const pick = run.stage.choices[0].options[0];
     expect(takeChoice(run, pick)).toBeUndefined();
     expect(finishReward(run)).toBeUndefined();

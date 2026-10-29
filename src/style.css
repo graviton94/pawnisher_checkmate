@@ -283,3 +283,5 @@ html, body {
 .chip.past { opacity: 0.45; }
 .chip:disabled { opacity: 0.4; cursor: default; }
 .panel .choice:disabled { opacity: 0.4; cursor: default; }
+.chip .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 2px; }
+.chip .tags i { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 9px; background: #2a2418; color: var(--brass); border: 1px solid var(--copper); }

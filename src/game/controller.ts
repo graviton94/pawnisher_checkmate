@@ -11,6 +11,8 @@ import {
   plannableMoves,
   resolveTurn,
   samePos,
+  legalMoves,
+  attackArea,
   specialSteps,
   undoLast,
   EMPTY_LOADOUT,
@@ -102,6 +104,8 @@ export interface BoardModel {
   preview: BattleEvent[];
   /** 미리보기에서 파괴되는 기물 (파괴 시점 위치) — 보드에서 사라지기 전 모습으로 X 표시와 함께 그린다 */
   removed: Piece[];
+  /** 누른 적 기물이 다음 턴에 갈 수 있는 칸과 칠 수 있는 칸 */
+  threat: { moves: Pos[]; hits: Pos[] } | null;
 }
 
 export interface BoardView {
@@ -127,6 +131,8 @@ export class BattleController {
   pending: PlanStep | null = null;
   pendingPos: Pos | null = null;
   selectedId: number | null = null;
+  /** 위협 범위를 보고 있는 적 기물 */
+  inspectId: number | null = null;
   mode: Mode = null;
   phase: Phase = 'idle';
   aiTier = 1;
@@ -177,6 +183,7 @@ export class BattleController {
   }
 
   private clearPick(): void {
+    this.inspectId = null;
     this.pending = null;
     this.pendingPos = null;
     this.selectedId = null;
@@ -252,7 +259,21 @@ export class BattleController {
       destinations: this.options().map((o) => o.pos),
       preview: check.ok ? check.events : [],
       removed: check.ok ? check.removed : [],
+      threat: this.threatOf(),
     };
+  }
+
+  /** 적 기물의 다음 턴 위협: 이동할 수 있는 칸과, 그 칸들에서 칠 수 있는 칸 전부 */
+  private threatOf(): { moves: Pos[]; hits: Pos[] } | null {
+    if (this.inspectId === null) return null;
+    const v = this.virtual;
+    const p = findPiece(v, this.inspectId);
+    if (!p || p.side === v.turnSide) return null;
+    const enemyView = { ...v, turnSide: p.side };
+    const moves = legalMoves(enemyView, p);
+    const hits = new Map<string, Pos>();
+    for (const to of moves) for (const a of attackArea(enemyView, { ...p, x: to.x, y: to.y })) hits.set(`${a.x},${a.y}`, a);
+    return { moves, hits: [...hits.values()] };
   }
 
   private refresh(): void {
@@ -315,6 +336,14 @@ export class BattleController {
     this.pending = null;
     this.pendingPos = null;
     const mine = p && p.side === this.state.turnSide;
+    // 적 기물을 누르면 다음 턴 위협 범위를 보여 준다 (다시 누르면 끈다)
+    if (p && !mine) {
+      this.inspectId = this.inspectId === p.id ? null : p.id;
+      this.selectedId = null;
+      this.refresh();
+      return;
+    }
+    this.inspectId = null;
     if (mine && this.selectedId === p.id) {
       this.selectedId = null;
     } else if (mine && this.mode && this.attachCard === undefined) {
@@ -401,7 +430,7 @@ export class BattleController {
     const before = this.state;
     const { state, events } = resolveTurn(before, plan);
     this.plan = [];
-    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [] });
+    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], threat: null });
     this.hud.update(this);
     await this.view.play(before, events);
     this.state = state;

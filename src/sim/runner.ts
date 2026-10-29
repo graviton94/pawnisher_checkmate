@@ -126,7 +126,12 @@ export const autoRun = (seed: number): RunLog => {
           finishReward(run);
           break;
         }
-        if (ch.type === 'enchant') {
+        if (ch.type === 'piece') {
+          // 덱 주력 유형을 늘린다 (같은 유형이 많을수록 대장간·인챈트 효율이 오른다), 없으면 가치 높은 것
+          const count = (t: PieceType) => run.deck.filter((x) => x === t).length;
+          const best = [...ch.options].sort((a, b) => count(b) * 20 + PIECE_STATS[b].value - (count(a) * 20 + PIECE_STATS[a].value))[0];
+          takeChoice(run, best);
+        } else if (ch.type === 'enchant') {
           const id = pickEnchant(run, ch.options);
           const full = !run.loadout.enchants[id] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
           if (full) skipChoice(run);

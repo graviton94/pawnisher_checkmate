@@ -57,14 +57,15 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   if (kind === 'boss' && (boss || floor === TOTAL_FLOORS)) {
     const def = floor === TOTAL_FLOORS ? FINAL_BOSS : BOSSES[boss!];
     const forge: Partial<Record<PieceType, number>> = {};
-    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + (ascension >= 5 ? 1 : 0));
+    const actBonus = actOf(floor) === 2 ? 1 : 0; // Act 2 보스는 강화 +1 더
+    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0));
     return {
       kind,
       name: `${def.name} — ${def.title}`,
       ...boardFor(floor, 'boss'),
       // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
       deck: actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck],
-      loadout: { enchants: { ...def.enchants }, cards: [...def.cards], forge },
+      loadout: { enchants: { ...def.enchants }, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge },
       tier,
       boss,
       seed,

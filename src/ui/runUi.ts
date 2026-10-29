@@ -14,6 +14,8 @@ import {
   altarGamble,
   altarPick,
   bossName,
+  ENCHANT_TYPE,
+  startDeckOptions,
   buyCard,
   buyEnchant,
   buyPiece,
@@ -44,8 +46,20 @@ const GLYPH: Record<PieceType, string> = { K: '♔', Q: '♕', R: '♖', B: '♗
 const VS15 = '︎';
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 
-const enchantLine = (id: EnchantId, next: number) =>
-  `<b>${ENCHANTS[id].name}</b><small>${ENCHANTS[id].target} · ${next}장째${next >= 3 ? ' ★' : ''}: ${ENCHANTS[id].levels[next - 1]}</small>`;
+/** 시너지 태그: 덱에 그 유형이 몇 기인지, ★까지 몇 장 남았는지 (고르는 이유가 바로 보이게) */
+const synergyTags = (run: RunState | null, id: EnchantId, next: number): string => {
+  const tags: string[] = [];
+  const t = ENCHANT_TYPE[id];
+  if (run && t) {
+    const n = run.deck.filter((x) => x === t).length;
+    tags.push(n ? `내 ${PIECE_NAMES_KO[t]} ${n}기` : `${PIECE_NAMES_KO[t]} 없음`);
+  }
+  if (next === 2) tags.push('★까지 1장 더');
+  if (next === 3) tags.push('★ 각성!');
+  return tags.length ? `<span class="tags">${tags.map((x) => `<i>${x}</i>`).join('')}</span>` : '';
+};
+const enchantLine = (id: EnchantId, next: number, run: RunState | null = null) =>
+  `<b>${ENCHANTS[id].name}</b>${synergyTags(run, id, next)}<small>${ENCHANTS[id].target} · ${next}장째${next >= 3 ? ' ★' : ''}: ${ENCHANTS[id].levels[next - 1]}</small>`;
 const cardLine = (id: CardId) => {
   const c = CARDS[id];
   const lim = c.limit.type === 'consume' ? '1회용' : c.limit.type === 'round' ? '라운드 1회' : `쿨타임 ${c.limit.turns}`;
@@ -102,11 +116,32 @@ export class RunUi {
   // ---------- 메뉴 ----------
   private ascension = 0;
 
+  /** 새 등반: 시작 덱 3지선다부터 (초반 덱빌딩 고민) */
   private startNew(): void {
     const meta = loadMeta();
-    this.run = newRun((Date.now() % 1_000_000_000) + 1, { ascension: Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta) });
-    this.save();
-    this.show();
+    const seed = (Date.now() % 1_000_000_000) + 1;
+    const decks = startDeckOptions(seed, unlockedDecks(meta));
+    const deckHtml = (d: string[]) => d.map((t) => `<span class="g">${GLYPH[t as PieceType]}${VS15}</span>`).join(' ');
+    const desc: Record<string, string> = { N: '나이트 — L자로 뛰어넘어 친다', B: '비숍 — 대각선 먼 거리', R: '룩 — 직선 먼 거리, 튼튼함', P: '폰 — 싸고 많다, 끝줄에서 퀸' };
+    const panel = this.hud.openOverlay(`
+      <h2>시작 덱을 고르세요</h2>
+      <p>덱은 등반하며 기물 3지선다·상점으로 키웁니다. 어떤 유형을 중심으로 키울지가 첫 고민입니다.</p>
+      <div class="choices">${decks
+        .map((d, i) => {
+          const main = d.filter((t) => t !== 'K');
+          const kinds = [...new Set(main)].map((t) => desc[t]).join(' · ');
+          return `<button class="choice" type="button" data-deck="${i}"><b>${deckHtml(d)}</b><small>${kinds}</small></button>`;
+        })
+        .join('')}</div>
+      <button class="choice" type="button" data-menu>메뉴</button>`);
+    this.wire(panel, {
+      deck: (el) => {
+        this.run = newRun(seed, { ascension: Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta), deck: decks[Number(el.dataset.deck)] });
+        this.save();
+        this.show();
+      },
+      menu: () => this.showMenu(),
+    });
   }
 
   showMenu(): void {
@@ -231,9 +266,26 @@ export class RunUi {
     const st = run.stage;
     const ch = st.choices[0];
     let body = '';
-    if (ch?.type === 'enchant') {
+    if (ch?.type === 'piece') {
+      const pieceDesc: Record<PieceType, string> = {
+        P: '이동 1 AP · 싸고 많다, 끝줄에서 퀸',
+        N: '이동 2 AP · L자로 뛰어넘어 L자로 친다',
+        B: '이동 2 AP · 대각선 먼 거리 공격',
+        R: '이동 3 AP · 직선 먼 거리, 튼튼함',
+        Q: '이동 4 AP · 가장 강하다',
+        K: '',
+      };
+      body = `<p class="sub">기물 3지선다 — 덱에 넣을 1기</p><div class="chips">${ch.options
+        .map((t) => {
+          const n = run.deck.filter((x) => x === t).length;
+          const forge = run.loadout.forge[t] ?? 0;
+          const tags = [n ? `보유 ${n}기` : '새 유형', forge ? `강화 +${forge} 적용` : ''].filter(Boolean);
+          return `<button class="chip" type="button" data-pick="${t}"><b><span class="g">${GLYPH[t]}${VS15}</span> ${PIECE_NAMES_KO[t]}</b><span class="tags">${tags.map((x) => `<i>${x}</i>`).join('')}</span><small>${pieceDesc[t]}</small></button>`;
+        })
+        .join('')}</div>`;
+    } else if (ch?.type === 'enchant') {
       body = `<p class="sub">인챈트 3지선다</p><div class="chips">${ch.options
-        .map((id) => `<button class="chip" type="button" data-pick="${id}">${enchantLine(id, (run.loadout.enchants[id] ?? 0) + 1)}</button>`)
+        .map((id) => `<button class="chip" type="button" data-pick="${id}">${enchantLine(id, (run.loadout.enchants[id] ?? 0) + 1, run)}</button>`)
         .join('')}</div>`;
     } else if (ch?.type === 'card') {
       body = `<p class="sub">액티브 카드 3지선다</p><div class="chips">${ch.options.map((id) => `<button class="chip" type="button" data-pick="${id}">${cardLine(id)}</button>`).join('')}</div>`;
@@ -247,7 +299,7 @@ export class RunUi {
     this.wire(panel, {
       pick: (el) => {
         const id = el.dataset.pick!;
-        this.act(takeChoice(run, id), () => this.discardPicker(run, ch!.type, (d) => this.act(takeChoice(run, id, d))));
+        this.act(takeChoice(run, id), () => this.discardPicker(run, ch!.type as 'enchant' | 'card', (d) => this.act(takeChoice(run, id, d))));
       },
       skip: () => {
         skipChoice(run);
@@ -285,7 +337,7 @@ export class RunUi {
       ${this.status(run)}
       <p class="sub">기물</p><div class="chips">${s.pieces.map((p, i) => item('piece', i, `<b><span class="g">${GLYPH[p.item]}${VS15}</span> ${PIECE_NAMES_KO[p.item]}</b>`, p.price, p.sold)).join('')}</div>
       <p class="sub">액티브 카드</p><div class="chips">${s.cards.map((p, i) => item('card', i, cardLine(p.item), p.price, p.sold)).join('')}</div>
-      <p class="sub">인챈트</p><div class="chips">${s.enchants.map((p, i) => item('ench', i, enchantLine(p.item, (run.loadout.enchants[p.item] ?? 0) + 1), p.price, p.sold)).join('')}</div>
+      <p class="sub">인챈트</p><div class="chips">${s.enchants.map((p, i) => item('ench', i, enchantLine(p.item, (run.loadout.enchants[p.item] ?? 0) + 1, run), p.price, p.sold)).join('')}</div>
       <p class="sub">판매</p><div class="chips">${sellTypes.map((t) => `<button class="chip" type="button" data-sell="${t}"><b><span class="g">${GLYPH[t]}${VS15}</span> ${PIECE_NAMES_KO[t]} 팔기</b><small class="price">+${sellPrice(t)} 골드</small></button>`).join('')}</div>
       <div class="row">
         <button class="choice" type="button" data-reroll>새로고침 (${s.rerollPrice} 골드)</button>
@@ -341,7 +393,7 @@ export class RunUi {
       const panel = this.hud.openOverlay(`
         <h2>크랙 제단 — 게이지 해방</h2>
         <p>원하는 인챈트 1장을 확정으로 고릅니다 (★각성 포함).</p>
-        <div class="chips">${all.map((id) => `<button class="chip" type="button" data-pick="${id}">${enchantLine(id, (run.loadout.enchants[id] ?? 0) + 1)}</button>`).join('')}</div>`);
+        <div class="chips">${all.map((id) => `<button class="chip" type="button" data-pick="${id}">${enchantLine(id, (run.loadout.enchants[id] ?? 0) + 1, run)}</button>`).join('')}</div>`);
       this.wire(panel, {
         pick: (el) => {
           const id = el.dataset.pick as EnchantId;

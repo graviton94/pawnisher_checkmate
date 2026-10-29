@@ -66,16 +66,20 @@ export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): nu
   GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor + (actOf(floor) - 1) * GOLD_REWARD.perAct;
 /** 3지선다 건너뛰기 보상 */
 export const SKIP_GOLD = 10;
-/** 랜덤 기물 보상: 첫 3전투 확정, 이후 2전투마다 (런 시뮬레이션으로 조정) */
-export const PIECE_REWARD_FIRST = 3;
-export const PIECE_REWARD_EVERY = 2;
+/** 기물 3지선다 보상: Act 1은 매 승리 (초반은 덱빌딩 고민이 중심), Act 2·3은 2승마다 */
+export const pieceRewardDue = (floor: number, wins: number): boolean => actOf(floor) === 1 || wins % 2 === 0;
 export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 38, N: 22, B: 22, R: 12, Q: 6 };
 
 /** 희귀 인챈트 (나머지는 일반). 엘리트·보스는 희귀 가중, 보스는 희귀 1장 확정. */
 export const RARE_ENCHANTS: EnchantId[] = ['E05', 'E06', 'E07', 'E09', 'E11'];
 export const RARE_WEIGHT = { battle: 0.5, elite: 1.5, boss: 2 };
-/** 이미 2장인 인챈트의 등장 가중치 배율 (3장째는 드물게, GDD 7장 §7.2) */
-export const THIRD_STACK_WEIGHT = 0.3;
+/**
+ * 인챈트 3지선다가 이미 가진 인챈트 쪽으로 모이게 한다 (중반 "파츠 모으기" → 후반 시너지).
+ * 1장 보유 → 2장째 가중치, 2장 보유 → ★3장째 가중치. Act 1에서는 ★이 드물고 Act 3에서 흔해진다.
+ */
+export const STACK_WEIGHT = { second: [1.6, 2.2, 2.5], third: [0.3, 1.0, 1.5] };
+/** 덱 주력 유형(3기 이상)의 유형 인챈트 가중치 */
+export const TYPE_MATCH_WEIGHT = 1.5;
 
 /** 카드 3지선다는 엘리트·보스에서만. 소멸형은 희소하게 (사용자 결정: "이걸로 고비를 넘긴다"는 한 방) */
 export const CONSUME_CARD_WEIGHT = { elite: 0.35, boss: 0.6, shop: 0.4 };
@@ -116,16 +120,16 @@ export const ALTAR = {
 export const enemyCount = (floor: number): number => {
   const act = actOf(floor);
   const f = inAct(floor);
-  if (act === 1) return floor <= 3 ? 1 + floor : Math.min(10, 2 + Math.floor(floor / 2));
-  if (act === 2) return Math.min(14, 8 + Math.floor(f / 2)); // 10~14 (GDD) 에서 Act 1 곡선에 이어 8~13
-  return Math.min(16, 12 + Math.floor(f / 3)); // 12~15
+  if (act === 1) return floor <= 3 ? 1 + floor : Math.min(10, 3 + Math.floor(floor / 2)); // 4층 5 → 11층 8
+  if (act === 2) return Math.min(15, 9 + Math.floor(f / 2)); // 9~14
+  return Math.min(16, 13 + Math.floor(f / 3)); // 13~16
 };
 /** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, Act 2 90%, Act 3·보스 100% (HP 기준).
  * 1~3층 적 킹은 특히 약하다 (도입 구간: 작은 덱으로 100 HP 킹을 끝내지 못해 킹 맞대결 동전 던지기가 되는 것을 막는다) */
 export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
-  if (actOf(floor) === 2) return { hp: 0.9, atk: 1 };
+  if (actOf(floor) === 2) return { hp: 1, atk: 1 };
   if (actOf(floor) === 3) return { hp: 1, atk: 1 };
-  return floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.7, atk: 0.85 } : floor <= 11 ? { hp: 0.85, atk: 1 } : { hp: 1, atk: 1 };
+  return floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.8, atk: 0.9 } : { hp: 0.95, atk: 1 };
 };
 /** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
 export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
@@ -145,14 +149,15 @@ export const enemyEnchantStack = (floor: number, kind: NodeKind): number => {
 };
 /** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2, Act 3 전부 2 */
 export const enemyTier = (floor: number, kind: NodeKind): number => {
-  if (actOf(floor) === 3 || kind === 'boss' || (kind === 'elite' && floor >= 8)) return 2;
+  // 중반부터는 실수하지 않는 AI: 머리를 써야 이긴다
+  if (actOf(floor) >= 2 || kind === 'boss' || kind === 'elite' || floor >= 6) return 2;
   return floor <= 3 ? 0 : 1;
 };
-/** 적 대장간 강화: Act 1 없음, Act 2 +1~+3, Act 3 +3~+5 (플레이어 강화 곡선을 따라간다) */
+/** 적 대장간 강화: Act 1 없음, Act 2 +1~+3, Act 3 +4~+5 (후반에도 긴장이 남도록) */
 export const enemyForge = (floor: number): number => {
   const act = actOf(floor);
   if (act === 1) return 0;
-  return Math.min(5, (act === 2 ? 1 : 3) + Math.floor((inAct(floor) - 1) / 4));
+  return Math.min(5, (act === 2 ? 1 : 4) + Math.floor((inAct(floor) - 1) / 4));
 };
 
 /** 중간 보스 컨셉 (사용자 결정: 나이트·비숍·룩 컨셉 중 런마다 2개가 Act 1·2 보스) */
@@ -201,7 +206,7 @@ export const FINAL_BOSS: BossDef = {
   title: '퀸 2기 · 그랜드 피날레 · 근위대 결속',
   // 퀸 2 = 초과 1 × (60 + 세금 10) = 70 → 나이트 1(25) + 비숍 1(25) + 폰 2(20) 희생
   deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
-  enchants: { E05: 3, E08: 2, E06: 1 },
+  enchants: { E05: 3, E08: 3, E06: 2 },
   cards: ['A06', 'C03'],
-  forge: { Q: 3, R: 2, K: 2 },
+  forge: { Q: 5, R: 3, K: 3 },
 };
