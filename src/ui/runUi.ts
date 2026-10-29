@@ -258,7 +258,7 @@ export class RunUi {
       window.setTimeout(() => this.show(), 600);
     };
     this.c.startState(state, e.tier, TUNED);
-    this.hud.toast(`${run.floor}층 · ${e.name}`);
+    this.hud.toast(run.floor <= 2 ? '이동한 기물만 공격합니다 — 붉은 과녁 칸으로 가면 칩니다' : `${run.floor}층 · ${e.name}`);
   }
 
   private showReward(run: RunState): void {

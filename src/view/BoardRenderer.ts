@@ -421,8 +421,14 @@ class BoardScene extends Phaser.Scene {
       for (const d of m.destinations) {
         const c = this.center(d);
         const isPending = m.pendingPos && m.pendingPos.x === d.x && m.pendingPos.y === d.y;
+        const hit = m.hitDests.find((h) => h.pos.x === d.x && h.pos.y === d.y);
         if (isPending) this.marksG.lineStyle(3, C.cyan, 1).strokeCircle(c.x, c.y, t * 0.36);
-        else this.marksG.fillStyle(C.cyan, 0.85).fillCircle(c.x, c.y, t * 0.12);
+        if (hit) {
+          // 도착하면 적을 친다: 붉은 과녁 (처치까지면 금색)
+          const col = hit.kill ? 0xfacc15 : C.crimson;
+          this.marksG.lineStyle(3, col, 1).strokeCircle(c.x, c.y, t * 0.3);
+          this.marksG.lineStyle(2, col, 1).lineBetween(c.x - t * 0.14, c.y, c.x + t * 0.14, c.y).lineBetween(c.x, c.y - t * 0.14, c.x, c.y + t * 0.14);
+        } else if (!isPending) this.marksG.fillStyle(C.cyan, 0.85).fillCircle(c.x, c.y, t * 0.12);
       }
     }
 

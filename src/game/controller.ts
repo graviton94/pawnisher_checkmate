@@ -100,6 +100,8 @@ export interface BoardModel {
   pendingPos: Pos | null;
   selectedId: number | null;
   destinations: Pos[];
+  /** 갈 수 있는 칸 중 도착하면 적을 치는 칸 (kill = 처치까지) — 누르기 전에 결과가 보이게 */
+  hitDests: { pos: Pos; kill: boolean }[];
   /** 미리보기 결과 */
   preview: BattleEvent[];
   /** 미리보기에서 파괴되는 기물 (파괴 시점 위치) — 보드에서 사라지기 전 모습으로 X 표시와 함께 그린다 */
@@ -257,10 +259,25 @@ export class BattleController {
       pendingPos: this.pendingPos,
       selectedId: this.selectedId,
       destinations: this.options().map((o) => o.pos),
+      hitDests: this.hitDests(),
       preview: check.ok ? check.events : [],
       removed: check.ok ? check.removed : [],
       threat: this.threatOf(),
     };
+  }
+
+  /** 선택 기물의 각 후보를 실행해 보고, 그 순번 공격이 적을 맞히는 칸만 고른다 */
+  private hitDests(): { pos: Pos; kill: boolean }[] {
+    if (this.selectedId === null) return [];
+    const order = this.plan.length;
+    const out: { pos: Pos; kill: boolean }[] = [];
+    for (const o of this.options()) {
+      const sim = checkPlan(this.state, [...this.plan, o.step]);
+      if (!sim.ok) continue;
+      const hits = sim.events.flatMap((e) => (e.type === 'attack' && e.order === order ? e.hits : []));
+      if (hits.length) out.push({ pos: o.pos, kill: hits.some((h) => h.killed) });
+    }
+    return out;
   }
 
   /** 적 기물의 다음 턴 위협: 이동할 수 있는 칸과, 그 칸들에서 칠 수 있는 칸 전부 */
@@ -430,7 +447,7 @@ export class BattleController {
     const before = this.state;
     const { state, events } = resolveTurn(before, plan);
     this.plan = [];
-    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], threat: null });
+    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null });
     this.hud.update(this);
     await this.view.play(before, events);
     this.state = state;
