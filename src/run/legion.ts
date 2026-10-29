@@ -1,5 +1,5 @@
 import { ENCHANTS, type EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, FINAL_BOSS, TOTAL_FLOORS, actEnchants, actOf, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, ELITE_BONUS, FINAL_BOSS, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
 import type { BattleState } from '../engine/types';
@@ -62,7 +62,8 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
       kind,
       name: `${def.name} — ${def.title}`,
       ...boardFor(floor, 'boss'),
-      deck: [...def.deck],
+      // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
+      deck: actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck],
       loadout: { enchants: { ...def.enchants }, cards: [...def.cards], forge },
       tier,
       boss,
@@ -91,7 +92,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   const pool = [...new Set(deck.map((t) => TYPE_ENCHANT[t]).filter((e): e is EnchantId => !!e)), ...GENERAL];
   for (let i = 0; i < actEnchants(floor, kind) + (ascension >= 3 && kind === 'elite' ? 1 : 0) && pool.length; i++) {
     const id = pool.splice(rng.int(pool.length), 1)[0];
-    enchants[id] = actOf(floor) === 3 && kind === 'elite' ? 3 : floor >= 8 ? 2 : 1;
+    enchants[id] = enemyEnchantStack(floor, kind);
   }
   // Act 3 엘리트는 지속형 카드 1장
   const cards: CardId[] = [];

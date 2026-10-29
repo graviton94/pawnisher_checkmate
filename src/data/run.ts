@@ -60,7 +60,10 @@ export const boardFor = (floor: number, kind: NodeKind = 'battle', coin = 0): { 
 };
 
 // ---------- 보상 ----------
-export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3 };
+export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3, perAct: 10 };
+/** 전투 골드: 기본 + Act 안 층 × 3 + (Act − 1) × 10 (층 전체로 키우면 Act 3에서 골드가 넘쳐 강화가 4~5유형 완성된다) */
+export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): number =>
+  GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor + (actOf(floor) - 1) * GOLD_REWARD.perAct;
 /** 3지선다 건너뛰기 보상 */
 export const SKIP_GOLD = 10;
 /** 랜덤 기물 보상: 첫 3전투 확정, 이후 2전투마다 (런 시뮬레이션으로 조정) */
@@ -129,16 +132,28 @@ export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
 /** Act 3 일반 군단도 인챈트 1개를 가진다 (GDD 8장: "14~16기 + 카드·인챈트") */
 export const actEnchants = (floor: number, kind: NodeKind): number => {
   const act = actOf(floor);
-  if (kind === 'elite') return act === 3 ? 2 : ELITE_BONUS.enchants;
-  return act === 3 ? 1 : 0;
+  if (kind === 'elite') return act === 3 ? 3 : act === 2 ? 2 : ELITE_BONUS.enchants;
+  if (act === 3) return 2;
+  return act === 2 && inAct(floor) >= 6 ? 1 : 0;
+};
+/** 적 인챈트 중첩: Act 1 1장(8층부터 2장), Act 2 2장, Act 3 엘리트 3장(★)·일반 2장 */
+export const enemyEnchantStack = (floor: number, kind: NodeKind): number => {
+  const act = actOf(floor);
+  if (act === 3) return kind === 'elite' ? 3 : 2;
+  if (act === 2) return 2;
+  return floor >= 8 ? 2 : 1;
 };
 /** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2, Act 3 전부 2 */
 export const enemyTier = (floor: number, kind: NodeKind): number => {
   if (actOf(floor) === 3 || kind === 'boss' || (kind === 'elite' && floor >= 8)) return 2;
   return floor <= 3 ? 0 : 1;
 };
-/** 적 대장간 강화: Act 2 전 유형 +1, Act 3 +2 */
-export const enemyForge = (floor: number): number => actOf(floor) - 1;
+/** 적 대장간 강화: Act 1 없음, Act 2 +1~+3, Act 3 +3~+5 (플레이어 강화 곡선을 따라간다) */
+export const enemyForge = (floor: number): number => {
+  const act = actOf(floor);
+  if (act === 1) return 0;
+  return Math.min(5, (act === 2 ? 1 : 3) + Math.floor((inAct(floor) - 1) / 4));
+};
 
 /** 중간 보스 컨셉 (사용자 결정: 나이트·비숍·룩 컨셉 중 런마다 2개가 Act 1·2 보스) */
 export type BossId = 'knight' | 'bishop' | 'rook';

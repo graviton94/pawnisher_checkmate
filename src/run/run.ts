@@ -14,7 +14,7 @@ import {
   eliteFrom,
   inAct,
   FORGE_COST,
-  GOLD_REWARD,
+  battleGold,
   NODE_WEIGHTS,
   PIECE_REWARD_EVERY,
   PIECE_REWARD_FIRST,
@@ -252,7 +252,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
 
   run.wins += 1;
   const lines: string[] = [];
-  const gold = Math.round((GOLD_REWARD[kind as 'battle' | 'elite' | 'boss'] + run.floor * GOLD_REWARD.perFloor) * ((run.ascension ?? 0) >= 2 ? 0.85 : 1));
+  const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1));
   run.gold += gold;
   lines.push(`골드 +${gold}`);
 
