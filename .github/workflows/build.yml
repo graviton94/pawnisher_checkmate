@@ -22,6 +22,8 @@ jobs:
 
   android:
     needs: test
+    permissions:
+      contents: write
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/claude/hopeful-hamilton-em7jaw'
     runs-on: ubuntu-latest
     steps:
@@ -38,6 +40,14 @@ jobs:
         with:
           name: pawnisher-android-debug
           path: android/app/build/outputs/apk/debug/*.apk
+      # 항상 같은 주소로 받을 수 있게 'apk-latest' 프리릴리스에 최신 APK를 올린다
+      - name: Publish latest APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk pawnisher-checkmate.apk
+          gh release view apk-latest >/dev/null 2>&1 || gh release create apk-latest --prerelease --target "$GITHUB_SHA" --title "최신 테스트 APK" --notes "브랜치에 푸시할 때마다 자동으로 갱신되는 디버그 APK"
+          gh release upload apk-latest pawnisher-checkmate.apk --clobber
 
   pc:
     needs: test
