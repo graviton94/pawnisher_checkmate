@@ -95,7 +95,7 @@ export type BattleEvent =
   | { type: 'lastStrike'; pieceId: number }
   | { type: 'awaken'; side: Side; pieceId: number }
   | { type: 'strongholdSpawn'; pos: Pos }
-  | { type: 'strongholdCapture'; side: Side; pieceId: number; tier: 1 | 2 | 3 }
+  | { type: 'strongholdCapture'; side: Side; pieceId: number; tier: 1 | 2 | 3; behind: boolean }
   | { type: 'strongholdLost' }
   | { type: 'collapse'; ring: number; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] };
 

@@ -22,7 +22,7 @@ export interface GameStats {
   winner: Side | null;
   turns: number;
   promotions: number;
-  captures: { side: Side; tier: number }[];
+  captures: { side: Side; tier: number; behind: boolean }[];
   strikes: number;
   collapses: number;
 }
@@ -36,7 +36,7 @@ export const playGame = (m: Matchup, players: [Player, Player], seed: number): G
     const r = resolveTurn(s, plan);
     for (const e of r.events) {
       if (e.type === 'promote') stats.promotions++;
-      else if (e.type === 'strongholdCapture') stats.captures.push({ side: e.side, tier: e.tier });
+      else if (e.type === 'strongholdCapture') stats.captures.push({ side: e.side, tier: e.tier, behind: e.behind });
       else if (e.type === 'lastStrike') stats.strikes++;
       else if (e.type === 'collapse') stats.collapses++;
     }

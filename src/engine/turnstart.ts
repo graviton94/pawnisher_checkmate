@@ -123,7 +123,7 @@ const capture = (s: BattleState, side: Side, holderId: number, events: BattleEve
     if (k) k.shield += STRONGHOLD.tier3.kingShield;
   }
   s.stronghold = null;
-  events.push({ type: 'strongholdCapture', side, pieceId: holderId, tier });
+  events.push({ type: 'strongholdCapture', side, pieceId: holderId, tier, behind: inf > 0 });
 };
 
 /**
@@ -155,7 +155,8 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
       sh.hold = 0;
     } else if (holder.side === s.turnSide) {
       sh.hold += 1;
-      if (sh.hold >= STRONGHOLD.holdTurns) capture(s, holder.side, holder.id, events);
+      const need = inferiority(s, holder.side) > 0 ? STRONGHOLD.holdTrailing : STRONGHOLD.holdLeading;
+      if (sh.hold >= need) capture(s, holder.side, holder.id, events);
     }
   }
 };
