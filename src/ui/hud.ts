@@ -1,4 +1,4 @@
-import { PIECE_NAMES_KO } from '../data/pieces';
+import { BASE_AP, PIECE_NAMES_KO } from '../data/pieces';
 import { AI_STYLES, SCENARIOS, type BattleController, type HudView, type Scenario } from '../game/controller';
 import { checkPlan, findPiece, toSquare, type Piece, type PieceType, type Side } from '../engine';
 
@@ -67,7 +67,8 @@ export class Hud implements HudView {
     // AP 진공관 (숫자 없이)
     const total = c.apTotal;
     const left = total - checkPlan(c.state, full).apUsed;
-    $('vials').innerHTML = Array.from({ length: total }, (_, i) => `<div class="vial${i < left ? ' full' : ''}"></div>`).join('');
+    // 기본 AP를 넘는 칸은 이번 턴 보너스(요충지 등) — 황동색
+    $('vials').innerHTML = Array.from({ length: total }, (_, i) => `<div class="vial${i < left ? ' full' : ''}${i >= BASE_AP ? ' bonus' : ''}"></div>`).join('');
 
     ($('btn-undo') as HTMLButtonElement).disabled = !mine || !c.plan.length;
     ($('btn-reset') as HTMLButtonElement).disabled = !mine || !c.plan.length;
@@ -85,7 +86,8 @@ export class Hud implements HudView {
   showInfo(p: Piece, clientX: number, clientY: number): void {
     const el = $('info');
     const side = p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>';
-    el.innerHTML = `<b><span class="g">${GLYPH[p.side][p.type]}${VS15}</span> ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}`;
+    const buff = p.buffTurns > 0 ? `<br>버프: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
+    el.innerHTML = `<b><span class="g">${GLYPH[p.side][p.type]}${VS15}</span> ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}`;
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;

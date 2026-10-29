@@ -54,6 +54,7 @@ class BoardScene extends Phaser.Scene {
   private dynamic: Phaser.GameObjects.GameObject[] = [];
   private sprites = new Map<number, PieceSprite>();
   ready!: () => void;
+  announce: (text: string) => void = () => {};
 
   constructor() {
     super('board');
@@ -92,15 +93,45 @@ class BoardScene extends Phaser.Scene {
   setupBoard(state: BattleState): void {
     this.state = state;
     this.tile = tileSize();
+    this.drawTiles(state);
+    this.fitCamera(true);
+  }
+
+  /** 타일 · 무너진 테두리 · 요충지 */
+  drawTiles(state: BattleState): void {
     const t = this.tile;
-    this.tilesG.clear();
+    const g = this.tilesG;
+    g.clear();
     for (let y = 0; y < state.height; y++) {
       for (let x = 0; x < state.width; x++) {
         const w = this.world({ x, y });
-        this.tilesG.fillStyle((x + y) % 2 === 0 ? C.dark : C.light, 1).fillRect(w.x, w.y, t, t);
+        const fallen = x < state.ring || y < state.ring || x >= state.width - state.ring || y >= state.height - state.ring;
+        if (fallen) {
+          g.fillStyle(0x0b0a0e, 1).fillRect(w.x, w.y, t, t);
+          g.lineStyle(1, C.crimson, 0.35).lineBetween(w.x + t * 0.2, w.y + t * 0.3, w.x + t * 0.55, w.y + t * 0.6).lineBetween(w.x + t * 0.55, w.y + t * 0.6, w.x + t * 0.8, w.y + t * 0.45);
+        } else {
+          g.fillStyle((x + y) % 2 === 0 ? C.dark : C.light, 1).fillRect(w.x, w.y, t, t);
+        }
       }
     }
-    this.fitCamera(true);
+    const sh = state.stronghold;
+    if (sh) {
+      const w = this.world(sh);
+      const c = { x: w.x + t / 2, y: w.y + t / 2 };
+      g.fillStyle(C.brass, 0.25).fillRect(w.x, w.y, t, t);
+      g.lineStyle(Math.max(2, t * 0.06), C.brass, 1).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
+      // 톱니 모양 링
+      g.lineStyle(Math.max(2, t * 0.05), C.brass, 0.9).strokeCircle(c.x, c.y, t * 0.3);
+      for (let i = 0; i < 8; i++) {
+        const a = (Math.PI / 4) * i;
+        g.lineBetween(c.x + Math.cos(a) * t * 0.3, c.y + Math.sin(a) * t * 0.3, c.x + Math.cos(a) * t * 0.4, c.y + Math.sin(a) * t * 0.4);
+      }
+      // 유지 카운트
+      for (let i = 0; i < 2; i++) {
+        const filled = i < sh.hold;
+        g.fillStyle(filled ? C.brass : C.ink, 1).fillCircle(w.x + t * (0.38 + i * 0.24), w.y + t * 0.12, t * 0.06);
+      }
+    }
   }
 
   /** 카메라가 보는 월드 중심. 보드가 화면보다 작으면 가운데, 크면 보드 밖으로 나가지 않게 제한한다. */
@@ -141,6 +172,10 @@ class BoardScene extends Phaser.Scene {
       base.lineStyle(Math.max(2, t * 0.045), C.crimson, 1);
       base.strokePoints([{ x: t / 2, y: t * 0.8 - s }, { x: t / 2 + s, y: t * 0.8 }, { x: t / 2, y: t * 0.8 + s }, { x: t / 2 - s, y: t * 0.8 }], true);
     }
+    if (p.type === 'K' && this.state?.lastStrike?.[p.side] === 'ready') {
+      base.lineStyle(Math.max(2, t * 0.05), C.brass, 1).strokeCircle(t / 2, t * 0.45, t * 0.44);
+    }
+    if (p.buffTurns > 0) base.fillStyle(C.brass, 1).fillTriangle(t * 0.86, t * 0.2, t * 0.78, t * 0.32, t * 0.94, t * 0.32);
     const glyph = this.add
       .text(t / 2, t * 0.42, GLYPH[p.side][p.type] + VS15, {
         fontFamily: GLYPH_FONT,
@@ -231,6 +266,7 @@ class BoardScene extends Phaser.Scene {
 
   render(m: BoardModel): void {
     this.clearDynamic();
+    this.drawTiles(m.state);
     const t = this.tile;
     const full = m.pending ? [...m.plan, m.pending] : m.plan;
 
@@ -331,8 +367,58 @@ class BoardScene extends Phaser.Scene {
     for (const o of this.dynamic) o.destroy();
     this.dynamic = [];
     const t = this.tile;
-    // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5)
+    // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
+    const cur: BattleState = { ...this.state, stronghold: this.state.stronghold ? { ...this.state.stronghold } : null };
+    // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
     for (const e of events) {
+      if (e.type === 'collapse') {
+        cur.ring = e.ring;
+        if (cur.stronghold && (cur.stronghold.x < e.ring || cur.stronghold.y < e.ring || cur.stronghold.x >= cur.width - e.ring || cur.stronghold.y >= cur.height - e.ring)) cur.stronghold = null;
+        this.announce('대성당이 무너집니다 — 테두리 붕괴');
+        this.cameras.main.shake(300, 0.008);
+        this.drawTiles(cur);
+        await Promise.all(
+          e.pushes.map((p) => {
+            const sp = this.sprites.get(p.pieceId);
+            if (!sp) return Promise.resolve();
+            sp.piece = { ...sp.piece, hp: sp.piece.hp - p.damage };
+            this.drawHp(sp, sp.piece.hp, sp.piece.hp);
+            const w = this.world(p.to);
+            return this.tween({ targets: sp.root, x: w.x, y: w.y, duration: 260, ease: 'Back.easeOut' });
+          }),
+        );
+        await this.wait(250);
+        continue;
+      }
+      if (e.type === 'strongholdSpawn') {
+        cur.stronghold = { ...e.pos, holderId: null, hold: 0 };
+        this.drawTiles(cur);
+        this.announce('요충지가 나타났습니다 — 2턴 버티면 점령');
+        await this.wait(500);
+        continue;
+      }
+      if (e.type === 'strongholdCapture') {
+        cur.stronghold = null;
+        this.drawTiles(cur);
+        this.announce(`${e.side === 0 ? '아군' : '적'} 요충지 점령 — Tier ${e.tier} 보상`);
+        await this.wait(600);
+        continue;
+      }
+      if (e.type === 'strongholdLost') {
+        cur.stronghold = null;
+        this.drawTiles(cur);
+        continue;
+      }
+      if (e.type === 'awaken') {
+        this.announce(`${e.side === 0 ? '내' : '적'} 킹 각성 — 최후의 일격 1회`);
+        const sp = this.sprites.get(e.pieceId);
+        if (sp) await this.tween({ targets: sp.root, scale: { from: 1, to: 1.25 }, yoyo: true, duration: 220 });
+        continue;
+      }
+      if (e.type === 'lastStrike') {
+        this.announce('최후의 일격!');
+        continue;
+      }
       if (e.type === 'move') {
         const s = this.sprites.get(e.pieceId);
         if (!s) continue;
@@ -477,9 +563,10 @@ export class BoardRenderer implements BoardView {
   private game: Phaser.Game;
   private whenReady: Promise<void>;
 
-  constructor(private host: HTMLElement, input: BoardInput) {
+  constructor(private host: HTMLElement, input: BoardInput, announce: (text: string) => void = () => {}) {
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     this.scene = new BoardScene();
+    this.scene.announce = announce;
     this.scene.dpr = dpr;
     this.scene.input2 = input;
     this.whenReady = new Promise((r) => (this.scene.ready = r));

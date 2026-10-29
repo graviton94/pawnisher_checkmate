@@ -14,7 +14,7 @@ const renderer = new BoardRenderer(document.getElementById('board')!, {
     if (p) hud.showInfo(p, x, y);
   },
   longPressEnd: () => hud.hideInfo(),
-});
+}, (text) => hud.toast(text));
 
 controller = new BattleController(renderer, hud);
 hud.bind(controller);

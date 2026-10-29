@@ -120,6 +120,8 @@ html, body {
   box-shadow: inset 0 -3px 0 #1e3a4a;
 }
 .vial.full { box-shadow: inset 0 -18px 0 var(--cyan); }
+.vial.bonus { border-color: var(--brass); }
+.vial.bonus.full { box-shadow: inset 0 -18px 0 var(--brass); }
 
 .actions { display: flex; gap: 8px; height: 64px; flex: none; }
 
