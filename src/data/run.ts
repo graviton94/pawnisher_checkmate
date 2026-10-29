@@ -6,6 +6,12 @@ import type { Deck } from '../engine/setup';
 /** 등반 구조와 경제 초기값 (GDD 8장). 모두 🔧 — 런 시뮬레이션으로 조정한다. */
 
 export const FLOORS_PER_ACT = 12;
+export const ACTS = 3;
+export const TOTAL_FLOORS = FLOORS_PER_ACT * ACTS;
+/** 층(1~36)이 속한 Act (1~3)와 Act 안에서의 층 (1~12) */
+export const actOf = (floor: number): number => Math.ceil(floor / FLOORS_PER_ACT);
+export const inAct = (floor: number): number => ((floor - 1) % FLOORS_PER_ACT) + 1;
+export const ACT_NAMES = ['서막', '격돌', '초월'];
 
 /** 런 시작 덱 후보 (GDD 6장 §6.3) */
 export const START_DECKS: Deck[] = [
@@ -27,7 +33,7 @@ export const NODE_NAMES: Record<NodeKind, string> = {
   event: '이벤트',
 };
 
-/** 노드 등장 가중치 (층마다 2~3개를 뽑는다). 엘리트는 5층부터. */
+/** 노드 등장 가중치 (층마다 2~3개를 뽑는다). */
 export const NODE_WEIGHTS: Record<Exclude<NodeKind, 'boss'>, number> = {
   battle: 46,
   elite: 12,
@@ -36,11 +42,22 @@ export const NODE_WEIGHTS: Record<Exclude<NodeKind, 'boss'>, number> = {
   altar: 8,
   event: 10,
 };
-export const ELITE_FROM_FLOOR = 5;
+/** 엘리트가 나오기 시작하는 Act 안 층 (Act 1은 5층, Act 2·3은 2층) */
+export const eliteFrom = (floor: number): number => (actOf(floor) === 1 ? 5 : 2);
 
-/** 층별 보드 (Act 1): 1~3층 6×6, 이후 8×8 */
-export const boardFor = (floor: number): { width: number; height: number } =>
-  floor <= 3 ? { width: 6, height: 6 } : { width: 8, height: 8 };
+/**
+ * 층별 보드 (GDD 8장 §8.3). coin(0~1)은 비대칭 보드 방향.
+ * Act 1: 1~3층 6×6, 이후 8×8 · Act 2: 8×8, 엘리트 8×10/10×8 · Act 3: 8×10/10×8 · 36층 10×10
+ */
+export const boardFor = (floor: number, kind: NodeKind = 'battle', coin = 0): { width: number; height: number } => {
+  const act = actOf(floor);
+  const long = coin < 0.5 ? { width: 8, height: 10 } : { width: 10, height: 8 };
+  if (floor === TOTAL_FLOORS) return { width: 10, height: 10 };
+  if (kind === 'boss' && act < 3) return { width: 8, height: 8 };
+  if (act === 1) return floor <= 3 ? { width: 6, height: 6 } : { width: 8, height: 8 };
+  if (act === 2) return kind === 'elite' ? long : { width: 8, height: 8 };
+  return kind === 'boss' ? { width: 10, height: 10 } : long;
+};
 
 // ---------- 보상 ----------
 export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3 };
@@ -93,17 +110,35 @@ export const ALTAR = {
  * 일반 전투 적 기물 수 (킹 포함). 플레이어 덱보다 조금 적게 시작해 따라 오른다.
  * 1층 2 · 2층 3 · 3층 4 · 4층 4 · 6층 5 · 8층 6 · 10층 7 (11층 7) (GDD 8장 §8.3의 3~5 / 6~10에서 조정, 런 시뮬레이션)
  */
-export const enemyCount = (floor: number): number => (floor <= 3 ? 1 + floor : Math.min(10, 2 + Math.floor(floor / 2)));
-/** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, 보스 100% (HP 기준).
+export const enemyCount = (floor: number): number => {
+  const act = actOf(floor);
+  const f = inAct(floor);
+  if (act === 1) return floor <= 3 ? 1 + floor : Math.min(10, 2 + Math.floor(floor / 2));
+  if (act === 2) return Math.min(14, 8 + Math.floor(f / 2)); // 10~14 (GDD) 에서 Act 1 곡선에 이어 8~13
+  return Math.min(16, 12 + Math.floor(f / 3)); // 12~15
+};
+/** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, Act 2 90%, Act 3·보스 100% (HP 기준).
  * 1~3층 적 킹은 특히 약하다 (도입 구간: 작은 덱으로 100 HP 킹을 끝내지 못해 킹 맞대결 동전 던지기가 되는 것을 막는다) */
-export const enemyKingScale = (floor: number): { hp: number; atk: number } =>
-  floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.7, atk: 0.85 } : floor <= 11 ? { hp: 0.85, atk: 1 } : { hp: 1, atk: 1 };
-/** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩) */
+export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
+  if (actOf(floor) === 2) return { hp: 0.9, atk: 1 };
+  if (actOf(floor) === 3) return { hp: 1, atk: 1 };
+  return floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.7, atk: 0.85 } : floor <= 11 ? { hp: 0.85, atk: 1 } : { hp: 1, atk: 1 };
+};
+/** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
 export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
-/** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2 */
-export const enemyTier = (floor: number, kind: NodeKind): number => (kind === 'boss' || (kind === 'elite' && floor >= 8) ? 2 : floor <= 3 ? 0 : 1);
-/** 적 대장간 강화: Act 2(13층)부터 전 유형 +1 */
-export const enemyForge = (floor: number): number => (floor >= 13 ? 1 : 0);
+/** Act 3 일반 군단도 인챈트 1개를 가진다 (GDD 8장: "14~16기 + 카드·인챈트") */
+export const actEnchants = (floor: number, kind: NodeKind): number => {
+  const act = actOf(floor);
+  if (kind === 'elite') return act === 3 ? 2 : ELITE_BONUS.enchants;
+  return act === 3 ? 1 : 0;
+};
+/** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2, Act 3 전부 2 */
+export const enemyTier = (floor: number, kind: NodeKind): number => {
+  if (actOf(floor) === 3 || kind === 'boss' || (kind === 'elite' && floor >= 8)) return 2;
+  return floor <= 3 ? 0 : 1;
+};
+/** 적 대장간 강화: Act 2 전 유형 +1, Act 3 +2 */
+export const enemyForge = (floor: number): number => actOf(floor) - 1;
 
 /** 중간 보스 컨셉 (사용자 결정: 나이트·비숍·룩 컨셉 중 런마다 2개가 Act 1·2 보스) */
 export type BossId = 'knight' | 'bishop' | 'rook';
@@ -143,4 +178,15 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A06'],
     forge: { R: 1 },
   },
+};
+
+/** 36층 최종 보스 (10×10 대성당 전면전). 퀸 2기 · 연쇄 지휘 ★ · 근위대 결속 */
+export const FINAL_BOSS: BossDef = {
+  name: '균열의 왕',
+  title: '퀸 2기 · 그랜드 피날레 · 근위대 결속',
+  // 퀸 2 = 초과 1 × (60 + 세금 10) = 70 → 나이트 1(25) + 비숍 1(25) + 폰 2(20) 희생
+  deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
+  enchants: { E05: 3, E08: 2, E06: 1 },
+  cards: ['A06', 'C03'],
+  forge: { Q: 3, R: 2, K: 2 },
 };

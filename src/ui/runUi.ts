@@ -3,7 +3,8 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO } from '../data/pieces';
-import { ALTAR, BOSSES, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD } from '../data/run';
+import { ACT_NAMES, ALTAR, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct } from '../data/run';
+import { ASCENSIONS, UNLOCK_DECKS, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import type { BattleController } from '../game/controller';
 import type { BattleState, PieceType } from '../engine';
 import { EVENTS } from '../run/events';
@@ -12,6 +13,7 @@ import {
   altarCanPick,
   altarGamble,
   altarPick,
+  bossName,
   buyCard,
   buyEnchant,
   buyPiece,
@@ -88,7 +90,7 @@ export class RunUi {
     const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `${ENCHANTS[id].name} ${n}${n >= 3 ? '★' : ''}`);
     const cards = run.loadout.cards.map((id) => CARDS[id].name);
     return `<div class="run-status">
-      <div><b>${Math.min(run.floor, FLOORS_PER_ACT)}층 / ${FLOORS_PER_ACT}</b> · 골드 <b class="gold">${run.gold}</b> · 크랙 게이지 ${run.crackGauge}/${ALTAR.gaugeMax}</div>
+      <div><b>Act ${actOf(Math.min(run.floor, TOTAL_FLOORS))} ${ACT_NAMES[actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1]} · ${inAct(Math.min(run.floor, TOTAL_FLOORS))}층 / ${FLOORS_PER_ACT}</b> (전체 ${Math.min(run.floor, TOTAL_FLOORS)}/${TOTAL_FLOORS})${run.ascension ? ` · 승천 ${run.ascension}` : ''} · 골드 <b class="gold">${run.gold}</b> · 크랙 게이지 ${run.crackGauge}/${ALTAR.gaugeMax}</div>
       <div>덱 ${run.deck.length}기: ${deck}</div>
       ${forge.length ? `<div>대장간: ${forge.join(' · ')}</div>` : ''}
       <div>인챈트: ${ench.length ? ench.join(' · ') : '없음'}</div>
@@ -97,23 +99,43 @@ export class RunUi {
   }
 
   // ---------- 메뉴 ----------
+  private ascension = 0;
+
+  private startNew(): void {
+    const meta = loadMeta();
+    this.run = newRun((Date.now() % 1_000_000_000) + 1, { ascension: Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta) });
+    this.save();
+    this.show();
+  }
+
   showMenu(): void {
     const saved = loadRun();
+    const meta = loadMeta();
+    this.ascension = Math.min(this.ascension, meta.ascension);
+    const live = saved && saved.stage.at !== 'over';
+    const asc = meta.ascension
+      ? `<p class="sub">승천 단계</p><div class="chips">${ASCENSIONS.slice(0, meta.ascension + 1)
+          .map((d, i) => `<button class="chip${i === this.ascension ? ' on' : ''}" type="button" data-asc="${i}"><b>승천 ${i}</b><small>${d}</small></button>`)
+          .join('')}</div>`
+      : '';
+    const unlocks = UNLOCK_DECKS.map((u) => `${u.ok(meta) ? '✓' : '·'} ${u.name} (${u.need})`).join(' &nbsp; ');
     const panel = this.hud.openOverlay(`
       <h1>PAWNISHER : CHECKMATE</h1>
-      <p>M5 등반 목업 — Act 1 (1~12층). 1~3층은 6×6, 4층부터 8×8, 12층은 보스.</p>
-      ${saved && saved.stage.at !== 'over' ? `<button class="choice primary" type="button" data-continue>이어하기<small>${Math.min(saved.floor, FLOORS_PER_ACT)}층 · 골드 ${saved.gold} · 덱 ${saved.deck.length}기</small></button>` : ''}
-      <button class="choice${saved && saved.stage.at !== 'over' ? '' : ' primary'}" type="button" data-new>새 등반 시작${saved && saved.stage.at !== 'over' ? '<small>진행 중인 등반은 지워집니다</small>' : ''}</button>
+      <p>3 Act × 12층 = 36층 등반. 기록: ${meta.runs}회 · 최고 ${meta.bestFloor}층 · 완료 ${meta.clears}회</p>
+      ${live ? `<button class="choice primary" type="button" data-continue>이어하기<small>${Math.min(saved!.floor, TOTAL_FLOORS)}층 · 골드 ${saved!.gold} · 덱 ${saved!.deck.length}기</small></button>` : ''}
+      <button class="choice${live ? '' : ' primary'}" type="button" data-new>새 등반 시작${live ? '<small>진행 중인 등반은 지워집니다</small>' : ''}</button>
+      ${asc}
+      <p>시작 덱 해금: ${unlocks}</p>
       <button class="choice" type="button" data-test>단판 전투 (시험용)<small>시나리오·장비를 골라 한 판</small></button>`);
     this.wire(panel, {
       continue: () => {
         this.run = loadRun();
         this.show();
       },
-      new: () => {
-        this.run = newRun((Date.now() % 1_000_000_000) + 1);
-        this.save();
-        this.show();
+      new: () => this.startNew(),
+      asc: (el) => {
+        this.ascension = Number(el.dataset.asc);
+        this.showMenu();
       },
       test: () => this.hud.showStart(),
     });
@@ -144,27 +166,30 @@ export class RunUi {
   }
 
   private showMap(run: RunState): void {
+    const act = actOf(run.floor);
     const rows = run.map
-      .map((nodes, i) => {
+      .map((nodes, i) => ({ nodes, i }))
+      .filter(({ i }) => actOf(i + 1) === act)
+      .map(({ nodes, i }) => {
         const f = i + 1;
         const cur = f === run.floor;
         const chips = nodes
           .map((n, k) => {
-            const label = n.kind === 'boss' ? `보스 · ${BOSSES[run.bosses[0]].name}` : n.kind === 'event' && n.event ? `이벤트 · ${EVENTS[n.event].title}` : NODE_NAMES[n.kind];
+            const label = n.kind === 'boss' ? `보스 · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `이벤트 · ${EVENTS[n.event].title}` : NODE_NAMES[n.kind];
             const chosen = run.path[i] === k;
             return cur
               ? `<button class="chip node ${n.kind}" type="button" data-node="${k}"><b>${label}</b></button>`
               : `<span class="chip node ${n.kind}${chosen ? ' on' : ''}${f < run.floor && !chosen ? ' past' : ''}"><b>${label}</b></span>`;
           })
           .join('');
-        return `<div class="floor${cur ? ' current' : ''}${f < run.floor ? ' done' : ''}"><span class="fl">${f}</span><div class="nodes">${chips}</div></div>`;
+        return `<div class="floor${cur ? ' current' : ''}${f < run.floor ? ' done' : ''}"><span class="fl">${inAct(f)}</span><div class="nodes">${chips}</div></div>`;
       })
       .reverse()
       .join('');
     const panel = this.hud.openOverlay(`
-      <h2>등반 — Act 1</h2>
+      <h2>Act ${act} — ${ACT_NAMES[act - 1]}</h2>
       ${this.status(run)}
-      <p class="sub">${run.floor}층: 갈 곳을 고르세요</p>
+      <p class="sub">${inAct(run.floor)}층: 갈 곳을 고르세요</p>
       <div class="map">${rows}</div>
       <div class="row"><button class="choice" type="button" data-menu>메뉴</button><button class="choice" type="button" data-abandon>등반 포기</button></div>`);
     const cur = panel.querySelector('.floor.current');
@@ -173,6 +198,7 @@ export class RunUi {
       node: (el) => this.act(enterNode(run, Number(el.dataset.node))),
       menu: () => this.showMenu(),
       abandon: () => {
+        saveMeta(recordRunEnd(loadMeta(), run.floor, false, run.ascension ?? 0));
         clearRun();
         this.run = null;
         this.showMenu();
@@ -374,11 +400,17 @@ export class RunUi {
 
   private showOver(run: RunState): void {
     const won = run.stage.at === 'over' && run.stage.won;
+    const floor = Math.min(run.floor, TOTAL_FLOORS);
+    const before = loadMeta();
+    const meta = recordRunEnd(before, floor, won, run.ascension ?? 0);
+    saveMeta(meta);
     clearRun();
+    const newly = UNLOCK_DECKS.filter((u) => u.ok(meta) && !u.ok(before)).map((u) => `시작 덱 해금: ${u.name}`);
+    if (meta.ascension > before.ascension) newly.push(`승천 ${meta.ascension} 해금: ${ASCENSIONS[meta.ascension]}`);
     const panel = this.hud.openOverlay(`
-      <h1>${won ? 'ACT 1 CLEAR' : 'DEFEAT'}</h1>
-      <h2>${won ? `${BOSSES[run.bosses[0]].name}를 쓰러뜨렸습니다` : `${Math.min(run.floor, FLOORS_PER_ACT)}층에서 쓰러졌습니다`}</h2>
-      <p>${won ? 'Act 2 이후는 M8에서 이어집니다.' : '라운드 패배 = 런 종료.'}</p>
+      <h1>${won ? 'CHECKMATE' : 'DEFEAT'}</h1>
+      <h2>${won ? '36층 — 균열의 왕을 쓰러뜨렸습니다' : `Act ${actOf(floor)} ${inAct(floor)}층에서 쓰러졌습니다`}</h2>
+      ${newly.length ? `<p class="sub">${newly.join('<br>')}</p>` : ''}
       ${this.status(run)}
       <div class="row">
         <button class="choice" type="button" data-menu>메뉴</button>
@@ -387,11 +419,7 @@ export class RunUi {
     this.run = null;
     this.wire(panel, {
       menu: () => this.showMenu(),
-      new: () => {
-        this.run = newRun((Date.now() % 1_000_000_000) + 1);
-        this.save();
-        this.show();
-      },
+      new: () => this.startNew(),
     });
   }
 }

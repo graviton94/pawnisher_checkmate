@@ -198,7 +198,7 @@ export const autoRun = (seed: number): RunLog => {
         break;
       }
     }
-    log.floor = Math.min(run.floor, 12);
+    log.floor = Math.min(run.floor, 36);
   }
   log.won = run.stage.at === 'over' && run.stage.won;
   return log;

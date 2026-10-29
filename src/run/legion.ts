@@ -1,5 +1,6 @@
 import { ENCHANTS, type EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, ELITE_BONUS, FINAL_BOSS, TOTAL_FLOORS, actEnchants, actOf, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
 import type { BattleState } from '../engine/types';
 import type { Rng } from '../engine/rng';
@@ -20,6 +21,8 @@ export interface Encounter {
   boss?: BossId;
   seed: number;
   floor: number;
+  /** 승천 단계 (적 킹 보정 축소에 쓴다) */
+  ascension?: number;
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */
@@ -46,31 +49,31 @@ const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
 const TYPE_ENCHANT: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04' };
 const GENERAL: EnchantId[] = ['E05', 'E07', 'E08', 'E09'];
 
-export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId): Encounter => {
+export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0): Encounter => {
   const seed = rng.int(1_000_000_000);
-  const tier = enemyTier(floor, kind);
+  const tier = ascension >= 3 && kind === 'elite' ? 2 : enemyTier(floor, kind);
   const baseForge = enemyForge(floor);
 
-  if (kind === 'boss' && boss) {
-    const def = BOSSES[boss];
+  if (kind === 'boss' && (boss || floor === TOTAL_FLOORS)) {
+    const def = floor === TOTAL_FLOORS ? FINAL_BOSS : BOSSES[boss!];
     const forge: Partial<Record<PieceType, number>> = {};
-    for (const t of new Set(def.deck)) forge[t] = (def.forge[t] ?? 0) + baseForge;
+    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + (ascension >= 5 ? 1 : 0));
     return {
       kind,
       name: `${def.name} — ${def.title}`,
-      width: 8,
-      height: 8,
+      ...boardFor(floor, 'boss'),
       deck: [...def.deck],
       loadout: { enchants: { ...def.enchants }, cards: [...def.cards], forge },
       tier,
       boss,
       seed,
       floor,
+      ascension,
     };
   }
 
-  const { width, height } = boardFor(floor);
-  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0);
+  const { width, height } = boardFor(floor, kind, rng.next());
+  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0);
   const deck: Deck = ['K'];
   let guard = 0;
   while (deck.length < count && guard++ < 200) {
@@ -85,24 +88,29 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   if (lv > 0) for (const t of new Set(deck)) forge[t] = lv;
 
   const enchants: Partial<Record<EnchantId, number>> = {};
-  if (kind === 'elite') {
-    const pool = [...new Set(deck.map((t) => TYPE_ENCHANT[t]).filter((e): e is EnchantId => !!e)), ...GENERAL];
-    for (let i = 0; i < ELITE_BONUS.enchants && pool.length; i++) {
-      const id = pool.splice(rng.int(pool.length), 1)[0];
-      enchants[id] = floor >= 8 ? 2 : 1;
-    }
+  const pool = [...new Set(deck.map((t) => TYPE_ENCHANT[t]).filter((e): e is EnchantId => !!e)), ...GENERAL];
+  for (let i = 0; i < actEnchants(floor, kind) + (ascension >= 3 && kind === 'elite' ? 1 : 0) && pool.length; i++) {
+    const id = pool.splice(rng.int(pool.length), 1)[0];
+    enchants[id] = actOf(floor) === 3 && kind === 'elite' ? 3 : floor >= 8 ? 2 : 1;
+  }
+  // Act 3 엘리트는 지속형 카드 1장
+  const cards: CardId[] = [];
+  if (kind === 'elite' && actOf(floor) === 3) {
+    const sustain = (Object.keys(CARDS) as CardId[]).filter((c) => CARDS[c].limit.type !== 'consume');
+    cards.push(sustain[rng.int(sustain.length)]);
   }
   const names = Object.keys(enchants).map((id) => ENCHANTS[id as EnchantId].name);
   return {
     kind,
-    name: kind === 'elite' ? `정예 군단${names.length ? ` — ${names.join(' · ')}` : ''}` : `${floor}층 군단`,
+    name: `${kind === 'elite' ? '정예 군단' : `${floor}층 군단`}${names.length ? ` — ${names.join(' · ')}` : ''}`,
     width,
     height,
     deck,
-    loadout: { enchants, cards: [], forge },
+    loadout: { enchants, cards, forge },
     tier,
     seed,
     floor,
+    ascension,
   };
 };
 
@@ -110,9 +118,10 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
 export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
   const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
   const scale = enemyKingScale(e.floor);
+  const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0));
   for (const p of s.pieces) {
     if (p.side !== 1 || p.type !== 'K') continue;
-    p.maxHp = p.hp = Math.round(p.maxHp * scale.hp);
+    p.maxHp = p.hp = Math.round(p.maxHp * hpScale);
     p.atk = Math.round(p.atk * scale.atk);
   }
   return s;

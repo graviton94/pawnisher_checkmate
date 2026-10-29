@@ -9,13 +9,13 @@ it('run', () => {
   for (let i = 0; i < n; i++) logs.push(autoRun(1000 + i));
   const pct = (x: number) => `${Math.round((x / n) * 100)}%`;
   console.log(`런 ${n}회, 런당 ${((Date.now() - t0) / n / 1000).toFixed(1)}초`);
-  console.log(`Act 1 클리어: ${pct(logs.filter((l) => l.won).length)}`);
-  const reach = Array.from({ length: 12 }, (_, f) => logs.filter((l) => l.floor >= f + 1).length);
-  console.log(`층 도달: ${reach.map((c, f) => `${f + 1}층 ${pct(c)}`).join(' · ')}`);
+  console.log(`36층 완료: ${pct(logs.filter((l) => l.won).length)}`);
+  const at = [4, 8, 12, 13, 18, 24, 25, 30, 36];
+  console.log(`층 도달: ${at.map((f) => `${f}층 ${pct(logs.filter((l) => l.floor >= f && (f < 36 || l.won || l.floor === 36)).length)}`).join(' · ')}`);
   const died = new Map<string, number>();
   for (const l of logs) if (!l.won) died.set(`${l.floor}층 ${l.diedAt}`, (died.get(`${l.floor}층 ${l.diedAt}`) ?? 0) + 1);
   console.log(`사망 위치: ${[...died.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
-  for (const [label, lo, hi] of [['1~3층', 1, 3], ['4~7층', 4, 7], ['8~11층', 8, 11], ['12층', 12, 12]] as const) {
+  for (const [label, lo, hi] of [['1~3층', 1, 3], ['4~11층', 4, 11], ['12층', 12, 12], ['13~23층', 13, 23], ['24층', 24, 24], ['25~35층', 25, 35], ['36층', 36, 36]] as const) {
     for (const kind of ['battle', 'elite', 'boss']) {
       const bs = logs.flatMap((l) => l.battles).filter((b) => b.floor >= lo && b.floor <= hi && b.kind === kind);
       if (!bs.length) continue;
@@ -23,11 +23,7 @@ it('run', () => {
       console.log(`${label} ${kind}: ${bs.length}판 승률 ${Math.round((w / bs.length) * 100)}% 평균 ${(bs.reduce((a, b) => a + b.turns, 0) / bs.length).toFixed(1)}턴`);
     }
   }
-  for (const boss of ['knight', 'bishop', 'rook']) {
-    const bs = logs.filter((l) => l.boss === boss && l.battles.some((b) => b.kind === 'boss'));
-    if (bs.length) console.log(`보스 ${boss}: 도전 ${bs.length} · 격파 ${bs.filter((l) => l.won).length}`);
-  }
-  for (const f of [1, 4, 8, 12]) {
+  for (const f of [1, 4, 8, 12, 18, 24, 30, 36]) {
     const tr = logs.flatMap((l) => l.trace.filter((t) => t.floor === f));
     if (!tr.length) continue;
     const avg = (k: 'gold' | 'deck' | 'forge' | 'enchants' | 'cards') => (tr.reduce((a, t) => a + t[k], 0) / tr.length).toFixed(1);

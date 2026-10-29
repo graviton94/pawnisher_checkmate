@@ -6,8 +6,13 @@ import {
   ALTAR,
   BOSSES,
   CONSUME_CARD_WEIGHT,
-  ELITE_FROM_FLOOR,
+  ACT_NAMES,
+  FINAL_BOSS,
   FLOORS_PER_ACT,
+  TOTAL_FLOORS,
+  actOf,
+  eliteFrom,
+  inAct,
   FORGE_COST,
   GOLD_REWARD,
   NODE_WEIGHTS,
@@ -87,7 +92,15 @@ export interface RunState {
   crackGauge: number;
   /** 이번 런의 Act 1·2 보스 (나이트·비숍·룩 컨셉 중 2개) */
   bosses: BossId[];
+  /** 승천 단계 (0 = 기본, 메타 진행) */
+  ascension: number;
   stage: Stage;
+}
+
+export interface RunOptions {
+  ascension?: number;
+  /** 메타 해금으로 늘어난 시작 덱 후보 */
+  extraDecks?: Deck[];
 }
 
 // ---------- 난수 ----------
@@ -128,12 +141,13 @@ const pickDistinct = <T>(rng: Rng, items: [T, number][], n: number): T[] => {
 // ---------- 시작 ----------
 const generateMap = (rng: Rng): MapNode[][] => {
   const map: MapNode[][] = [];
-  for (let f = 1; f <= FLOORS_PER_ACT; f++) {
+  for (let floor = 1; floor <= TOTAL_FLOORS; floor++) {
+    const f = inAct(floor);
     if (f === 1) map.push([{ kind: 'battle' }]);
     else if (f === FLOORS_PER_ACT) map.push([{ kind: 'boss' }]);
     else {
       const n = 2 + rng.int(2);
-      const table = (Object.entries(NODE_WEIGHTS) as [Exclude<NodeKind, 'boss'>, number][]).filter(([k]) => k !== 'elite' || f >= ELITE_FROM_FLOOR);
+      const table = (Object.entries(NODE_WEIGHTS) as [Exclude<NodeKind, 'boss'>, number][]).filter(([k]) => k !== 'elite' || f >= eliteFrom(floor));
       // 전투는 층마다 최소 1개
       const kinds: NodeKind[] = ['battle', ...pickDistinct(rng, table.filter(([k]) => k !== 'battle'), n - 1)];
       for (let i = kinds.length - 1; i > 0; i--) {
@@ -146,9 +160,13 @@ const generateMap = (rng: Rng): MapNode[][] => {
   return map;
 };
 
-export const newRun = (seed: number): RunState => {
+/** 이 층 보스의 이름 */
+export const bossName = (run: RunState, floor: number): string => (floor === TOTAL_FLOORS ? FINAL_BOSS.name : BOSSES[run.bosses[actOf(floor) - 1]].name);
+
+export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
   const rng = new Rng(seed);
-  const deck = [...START_DECKS[rng.int(START_DECKS.length)]];
+  const candidates = [...START_DECKS, ...(opts.extraDecks ?? [])];
+  const deck = [...candidates[rng.int(candidates.length)]];
   const bossPool: BossId[] = ['knight', 'bishop', 'rook'];
   const bosses = [bossPool.splice(rng.int(3), 1)[0], bossPool.splice(rng.int(2), 1)[0]];
   const map = generateMap(rng);
@@ -165,16 +183,17 @@ export const newRun = (seed: number): RunState => {
     wins: 0,
     crackGauge: 0,
     bosses,
+    ascension: opts.ascension ?? 0,
     stage: { at: 'map' },
   };
 };
 
 export const currentNodes = (run: RunState): MapNode[] => run.map[run.floor - 1] ?? [];
 
-/** 다음 층으로 (12층 보스를 넘기면 Act 1 클리어) */
+/** 다음 층으로 (36층 최종 보스를 넘기면 등반 완료) */
 const advance = (run: RunState): void => {
   run.floor += 1;
-  run.stage = run.floor > FLOORS_PER_ACT ? { at: 'over', won: true } : { at: 'map' };
+  run.stage = run.floor > TOTAL_FLOORS ? { at: 'over', won: true } : { at: 'map' };
 };
 
 // ---------- 노드 진입 ----------
@@ -187,7 +206,7 @@ export const enterNode = (run: RunState, index: number): string | void => {
     case 'battle':
     case 'elite':
     case 'boss': {
-      const encounter = withRng(run, (rng) => generateEncounter(run.floor, node.kind, rng, run.bosses[0]));
+      const encounter = withRng(run, (rng) => generateEncounter(run.floor, node.kind, rng, run.bosses[actOf(run.floor) - 1], run.ascension ?? 0));
       run.stage = { at: 'battle', encounter };
       return;
     }
@@ -233,7 +252,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
 
   run.wins += 1;
   const lines: string[] = [];
-  const gold = GOLD_REWARD[kind as 'battle' | 'elite' | 'boss'] + run.floor * GOLD_REWARD.perFloor;
+  const gold = Math.round((GOLD_REWARD[kind as 'battle' | 'elite' | 'boss'] + run.floor * GOLD_REWARD.perFloor) * ((run.ascension ?? 0) >= 2 ? 0.85 : 1));
   run.gold += gold;
   lines.push(`골드 +${gold}`);
 
@@ -248,7 +267,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
   run.stage = {
     at: 'reward',
-    title: kind === 'boss' ? `${BOSSES[run.bosses[0]].name} 격파!` : kind === 'elite' ? '정예 군단 격파' : `${run.floor}층 승리`,
+    title: kind === 'boss' ? `${bossName(run, run.floor)} 격파! — Act ${actOf(run.floor)} ${ACT_NAMES[actOf(run.floor) - 1]} 완료` : kind === 'elite' ? '정예 군단 격파' : `${run.floor}층 승리`,
     lines,
     choices: choices.filter((c) => c.options.length),
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOSSES, FLOORS_PER_ACT, FORGE_COST, type BossId } from '../src/data/run';
+import { BOSSES, FINAL_BOSS, FORGE_COST, TOTAL_FLOORS, type BossId } from '../src/data/run';
 import { createBattle, Rng } from '../src/engine';
 import { checkDeck } from '../src/run/deck';
 import { generateEncounter } from '../src/run/legion';
@@ -29,16 +29,19 @@ const toNode = (run: RunState, kind: string) => {
 describe('런 구조 (GDD 8장)', () => {
   it('보스 덱은 덱 규칙을 지킨다', () => {
     for (const id of Object.keys(BOSSES) as BossId[]) expect(checkDeck(BOSSES[id].deck).ok, id).toBe(true);
+    expect(checkDeck(FINAL_BOSS.deck).ok).toBe(true);
   });
   it('같은 시드면 같은 런', () => {
     expect(JSON.stringify(newRun(42))).toBe(JSON.stringify(newRun(42)));
   });
-  it('맵: 1층 전투 · 12층 보스 · 층마다 전투 1개 이상 · 엘리트는 5층부터', () => {
+  it('맵: Act마다 첫 층 전투 · 12층 보스 · 층마다 전투 1개 이상 · Act 1 엘리트는 5층부터', () => {
     for (let seed = 1; seed < 30; seed++) {
       const run = newRun(seed);
-      expect(run.map).toHaveLength(FLOORS_PER_ACT);
-      expect(run.map[0]).toEqual([{ kind: 'battle' }]);
-      expect(run.map[11]).toEqual([{ kind: 'boss' }]);
+      expect(run.map).toHaveLength(TOTAL_FLOORS);
+      for (const a of [0, 12, 24]) {
+        expect(run.map[a]).toEqual([{ kind: 'battle' }]);
+        expect(run.map[a + 11]).toEqual([{ kind: 'boss' }]);
+      }
       run.map.slice(1, 11).forEach((floor, i) => {
         expect(floor.length).toBeGreaterThanOrEqual(2);
         expect(floor.some((n) => n.kind === 'battle')).toBe(true);
@@ -49,7 +52,7 @@ describe('런 구조 (GDD 8장)', () => {
   });
   it('모든 층·종류의 적 군단이 보드에 배치된다', () => {
     const rng = new Rng(7);
-    for (let f = 1; f <= 12; f++)
+    for (let f = 1; f <= TOTAL_FLOORS; f++)
       for (const kind of ['battle', 'elite', 'boss'] as const) {
         for (const boss of ['knight', 'bishop', 'rook'] as BossId[]) {
           const e = generateEncounter(f, kind, rng, boss);
