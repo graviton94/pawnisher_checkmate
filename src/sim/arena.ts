@@ -1,12 +1,16 @@
 import type { Weights } from '../ai/evaluate';
 import { choosePlan, type AiTier } from '../ai/search';
-import { createBattle, resolveTurn, type BattleRules, type Deck, type Side } from '../engine';
+import { createBattle, EMPTY_LOADOUT, resolveTurn, type BattleRules, type Deck, type Loadout, type Side } from '../engine';
 
 /** AI 대 AI 대량 대전 도구 (D-018). 밸런스 검증과 가중치 튜닝에 쓴다. */
 
 export interface Player {
   weights: Weights;
   tier: AiTier;
+  /** 이 플레이어의 인챈트·카드·대장간 (없으면 빈 장비) */
+  loadout?: Loadout;
+  /** false면 카드·특수 행동을 쓰지 않는다 */
+  cards?: boolean;
 }
 
 export interface Matchup {
@@ -28,11 +32,18 @@ export interface GameStats {
 }
 
 export const playGame = (m: Matchup, players: [Player, Player], seed: number): GameStats => {
-  let s = createBattle({ width: m.width, height: m.height, decks: m.decks, rules: m.rules, seed });
+  let s = createBattle({
+    width: m.width,
+    height: m.height,
+    decks: m.decks,
+    rules: m.rules,
+    seed,
+    loadouts: [players[0].loadout ?? EMPTY_LOADOUT, players[1].loadout ?? EMPTY_LOADOUT],
+  });
   const stats: GameStats = { winner: null, turns: 0, promotions: 0, captures: [], strikes: 0, collapses: 0 };
   for (; stats.turns < m.maxTurns && s.winner === null; stats.turns++) {
     const p = players[s.turnSide];
-    const plan = choosePlan(s, { tier: p.tier, weights: p.weights, seed: seed * 7919 + stats.turns });
+    const plan = choosePlan(s, { tier: p.tier, weights: p.weights, cards: p.cards, seed: seed * 7919 + stats.turns });
     const r = resolveTurn(s, plan);
     for (const e of r.events) {
       if (e.type === 'promote') stats.promotions++;

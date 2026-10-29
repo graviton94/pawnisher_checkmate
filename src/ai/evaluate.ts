@@ -99,7 +99,8 @@ export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
   for (const p of s.pieces) {
     const pp = promotionPotential(s, p, grid);
     promotion += p.side === side ? pp : -pp;
-    const v = valueOf(p) * (p.hp / p.maxHp);
+    // 보호막은 HP의 절반 가치로 본다 (한 번 막고 사라지므로)
+    const v = valueOf(p) * (Math.min(p.maxHp, p.hp + p.shield * 0.5) / p.maxHp);
     if (p.side === side) {
       material += v;
       if (p.type !== 'K') {

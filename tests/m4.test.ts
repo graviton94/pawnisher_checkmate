@@ -17,6 +17,7 @@ import {
 } from '../src/engine';
 import { checkDeck } from '../src/run/deck';
 import { board, sq } from './helpers';
+import { AI_TIERS, choosePlan } from '../src/ai/search';
 
 /** 장비를 붙인다 */
 const equip = (s: BattleState, side: Side, enchants: Partial<Record<EnchantId, number>> = {}, cards: CardId[] = []) => {
@@ -200,5 +201,24 @@ describe('액티브 카드 (GDD 7장 §7.3)', () => {
     const s = equip(board([['K', 0, 'e1'], ['K', 1, 'e8']]), 0, {}, ['A06']);
     s.cards[0][0].cooldown = 2;
     expect(checkPlan(s, [{ kind: 'shield', pieceId: 1, card: 0 }]).ok).toBe(false);
+  });
+});
+
+describe('AI의 카드 사용 (GDD 4장 §4-B)', () => {
+  it('끝줄 근처 폰을 대관식(C04)으로 승급해 킹을 친다', () => {
+    const s = equip(board([['P', 0, 'd6', { moved: true }], ['K', 0, 'a1'], ['K', 1, 'e8', { hp: 20 }]]), 0, {}, ['C04']);
+    const plan = choosePlan(s, { tier: AI_TIERS[2] });
+    expect(plan.some((st) => st.kind === 'promote')).toBe(true);
+  });
+  it('처형 가능한 적이 있으면 처형자의 진격(C06)을 쓴다', () => {
+    const s = equip(board([['N', 0, 'a1'], ['Q', 1, 'b3', { hp: 19 }], ['K', 0, 'h1'], ['K', 1, 'h8']]), 0, {}, ['C06']);
+    const plan = choosePlan(s, { tier: AI_TIERS[2] });
+    const r = resolveTurn(s, plan);
+    expect(r.state.pieces.some((p) => p.type === 'Q')).toBe(false);
+  });
+  it('cards: false면 카드를 쓰지 않는다', () => {
+    const s = equip(board([['P', 0, 'd6', { moved: true }], ['K', 0, 'a1'], ['K', 1, 'e8', { hp: 20 }]]), 0, {}, ['C04']);
+    const plan = choosePlan(s, { tier: AI_TIERS[2], cards: false });
+    expect(plan.every((st) => st.kind === undefined || st.kind === 'move')).toBe(true);
   });
 });
