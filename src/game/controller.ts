@@ -1,5 +1,6 @@
-import { AGGRESSIVE, BALANCED, DEFENSIVE, type Weights } from '../ai/evaluate';
+import { AGGRESSIVE, DEFENSIVE, type Weights } from '../ai/evaluate';
 import { AI_TIERS, choosePlan } from '../ai/search';
+import { TUNED } from '../data/aiWeights';
 import {
   addToPlan,
   availableAp,
@@ -34,7 +35,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'trainA',
     title: '온보딩 A · 6×6',
-    desc: '폰 3 + 킹 vs 폰 2 + 킹. 폰의 대각선 공격과 킹의 위험·보상.',
+    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4라운드부터 대성당이 무너집니다.',
     width: 6,
     height: 6,
     decks: [['K', 'P', 'P', 'P'], ['K', 'P', 'P']],
@@ -52,14 +53,14 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'full',
     title: '정규 교전 · 8×8',
-    desc: '정통 체스 16기 대 16기.',
+    desc: '정통 체스 16기 대 16기. 3·6·9라운드에 요충지, 15라운드부터 붕괴.',
     width: 8,
     height: 8,
     decks: [
       ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
       ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
     ],
-    weights: BALANCED,
+    weights: TUNED,
   },
 ];
 
@@ -108,7 +109,7 @@ export class BattleController {
   selectedId: number | null = null;
   phase: Phase = 'idle';
   aiTier = 1;
-  enemyWeights: Weights = BALANCED;
+  enemyWeights: Weights = TUNED;
 
   constructor(private view: BoardView, private hud: HudView) {}
 

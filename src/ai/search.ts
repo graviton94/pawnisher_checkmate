@@ -4,7 +4,8 @@ import { resolveTurn } from '../engine/resolve';
 import { legalMoves } from '../engine/rules';
 import { Rng } from '../engine/rng';
 import type { BattleState, Plan } from '../engine/types';
-import { BALANCED, evaluate, WIN_SCORE, type Weights } from './evaluate';
+import { TUNED } from '../data/aiWeights';
+import { evaluate, WIN_SCORE, type Weights } from './evaluate';
 
 /** AI 지능 단계 (GDD 4장 §4.7). 높을수록 넓게 보고 실수가 적다. */
 export interface AiTier {
@@ -13,9 +14,13 @@ export interface AiTier {
   mistakeRate: number;
 }
 
+/**
+ * 시뮬레이션 결과(8×8, 60판): 실력 차이는 탐색 폭보다 실수율에서 크게 난다.
+ * 단계 3 vs 단계 1 = 65%. 상대 응수까지 보는 2수 탐색은 오히려 약해져(38%) 넣지 않았다 — D-018 참고.
+ */
 export const AI_TIERS: AiTier[] = [
-  { beamWidth: 3, mistakeRate: 0.25 },
-  { beamWidth: 6, mistakeRate: 0.1 },
+  { beamWidth: 3, mistakeRate: 0.3 },
+  { beamWidth: 6, mistakeRate: 0.12 },
   { beamWidth: 10, mistakeRate: 0 },
 ];
 
@@ -39,7 +44,7 @@ const planKey = (plan: Plan): string => plan.map((m) => `${m.pieceId}:${m.to.x},
  */
 export const choosePlan = (s: BattleState, opts: AiOptions = {}): Plan => {
   const tier = opts.tier ?? AI_TIERS[1];
-  const weights = opts.weights ?? BALANCED;
+  const weights = opts.weights ?? TUNED;
   const rng = new Rng(opts.seed ?? s.turnNumber * 7919);
   const side = s.turnSide;
   const budget = availableAp(s);

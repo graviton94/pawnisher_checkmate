@@ -31,6 +31,6 @@ export const LAST_STRIKE_MULT = 2;
 export const defaultRules = (width: number, height: number): BattleRules => {
   const small = Math.min(width, height) <= 6;
   return small
-    ? { strongholdRounds: [], collapseStart: 8, collapseInterval: 3 }
+    ? { strongholdRounds: [], collapseStart: 4, collapseInterval: 3 }
     : { strongholdRounds: [3, 6, 9], collapseStart: 15, collapseInterval: 3 };
 };
