@@ -1,6 +1,7 @@
 import { AGGRESSIVE, DEFENSIVE, type Weights } from '../ai/evaluate';
 import { AI_TIERS, choosePlan } from '../ai/search';
 import { TUNED } from '../data/aiWeights';
+import { CARDS } from '../data/cards';
 import {
   addToPlan,
   availableAp,
@@ -10,13 +11,18 @@ import {
   plannableMoves,
   resolveTurn,
   samePos,
+  specialSteps,
   undoLast,
+  EMPTY_LOADOUT,
+  ench,
+  findPiece,
+  type Loadout,
+  type PlanStep,
   type BattleEvent,
   type BattleState,
   type Deck,
   type Piece,
   type Plan,
-  type PlannedMove,
   type Pos,
   type Side,
 } from '../engine';
@@ -72,13 +78,24 @@ export const AI_STYLES: { id: string; label: string; weights: Weights | null }[]
 
 export type Phase = 'idle' | 'plan' | 'busy' | 'over';
 
+/** 카드 모드: 왼쪽 카드를 눌러 고른 상태. fuse = 인챈트(E11) 합체 (카드 없음) */
+export type Mode = { kind: 'card'; card: number } | { kind: 'fuse' } | null;
+
+/** 선택 기물에서 고를 수 있는 다음 예약 하나와, 그 예약을 고르려고 누를 칸 */
+export interface StepOption {
+  step: PlanStep;
+  pos: Pos;
+}
+
 /** 보드 렌더러에 넘기는 화면 모델 */
 export interface BoardModel {
   state: BattleState;
   /** 계획(+미확정 미리보기)을 반영한 가상 보드 — 기물은 이 위치에 그린다 */
   virtual: BattleState;
   plan: Plan;
-  pending: PlannedMove | null;
+  pending: PlanStep | null;
+  /** 미확정 예약을 고른 칸 */
+  pendingPos: Pos | null;
   selectedId: number | null;
   destinations: Pos[];
   /** 미리보기 결과 */
@@ -102,24 +119,27 @@ export interface HudView {
   showResult(winner: Side): void;
 }
 
+const sameStep = (a: PlanStep | null, b: PlanStep | null) => JSON.stringify(a) === JSON.stringify(b);
+
 export class BattleController {
   state!: BattleState;
   plan: Plan = [];
-  pending: PlannedMove | null = null;
+  pending: PlanStep | null = null;
+  pendingPos: Pos | null = null;
   selectedId: number | null = null;
+  mode: Mode = null;
   phase: Phase = 'idle';
   aiTier = 1;
   enemyWeights: Weights = TUNED;
 
   constructor(private view: BoardView, private hud: HudView) {}
 
-  start(sc: Scenario, aiTier: number, weights: Weights | null): void {
-    this.state = createBattle({ width: sc.width, height: sc.height, decks: sc.decks });
+  start(sc: Scenario, aiTier: number, weights: Weights | null, loadouts: [Loadout, Loadout] = [EMPTY_LOADOUT, EMPTY_LOADOUT]): void {
+    this.state = createBattle({ width: sc.width, height: sc.height, decks: sc.decks, loadouts });
     this.aiTier = aiTier;
     this.enemyWeights = weights ?? sc.weights;
     this.plan = [];
-    this.pending = null;
-    this.selectedId = null;
+    this.clearPick();
     this.phase = 'plan';
     this.view.setup(this.state);
     this.refresh();
@@ -133,9 +153,72 @@ export class BattleController {
     return checkPlan(this.state, this.plan).apUsed;
   }
 
+  /** 지금까지 예약을 반영한 가상 보드 (카드 사용 상태 포함) */
+  get virtual(): BattleState {
+    return checkPlan(this.state, this.plan).virtual;
+  }
+
+  private clearPick(): void {
+    this.pending = null;
+    this.pendingPos = null;
+    this.selectedId = null;
+    this.mode = null;
+  }
+
   /** 미확정 미리보기까지 포함한 계획 */
   private get fullPlan(): Plan {
     return this.pending ? [...this.plan, this.pending] : this.plan;
+  }
+
+  /** 지금 모드에서 이 카드 슬롯이 붙는 attach 카드인가 */
+  private get attachCard(): number | undefined {
+    const m = this.mode;
+    if (m?.kind !== 'card') return undefined;
+    return CARDS[this.state.cards[this.state.turnSide][m.card].id].use === 'attach' ? m.card : undefined;
+  }
+
+  /** 모드의 특수 예약 후보 전부 (attach 카드·일반 모드면 제자리 공격만) */
+  private specials(): PlanStep[] {
+    const m = this.mode;
+    const all = specialSteps(this.state, this.plan, Infinity);
+    if (!m) return all.filter((st) => st.kind === 'stand');
+    if (m.kind === 'fuse') return all.filter((st) => st.kind === 'fuse' && st.card === undefined);
+    return all.filter((st) => 'card' in st && st.card === m.card);
+  }
+
+  /** 선택 기물의 다음 예약 후보 (GDD 1장 §1.4, 7장 카드 사용) */
+  options(): StepOption[] {
+    const sel = this.selectedId;
+    if (sel === null) return [];
+    const v = this.virtual;
+    const posOf = (id: number) => findPiece(v, id) ?? { x: -1, y: -1 };
+    const out: StepOption[] = [];
+    const card = this.attachCard;
+    if (!this.mode || card !== undefined) {
+      for (const to of plannableMoves(this.state, this.plan, sel, card)) out.push({ step: card !== undefined ? { pieceId: sel, to, card } : { pieceId: sel, to }, pos: to });
+      if (card !== undefined) return out;
+    }
+    for (const st of this.specials()) {
+      switch (st.kind) {
+        case 'stand':
+        case 'shield':
+        case 'promote':
+          if (st.pieceId === sel) out.push({ step: st, pos: posOf(sel) });
+          break;
+        case 'gate':
+          if (st.pieceId === sel) out.push({ step: st, pos: st.to });
+          break;
+        case 'fuse':
+          if (st.pieceId === sel) out.push({ step: st, pos: posOf(st.partnerId) });
+          break;
+        case 'castle':
+        case 'formShift':
+          if (st.pieceId === sel) out.push({ step: st, pos: posOf(st.partnerId) });
+          else if (st.partnerId === sel) out.push({ step: st, pos: posOf(st.pieceId) });
+          break;
+      }
+    }
+    return out;
   }
 
   model(): BoardModel {
@@ -146,8 +229,9 @@ export class BattleController {
       virtual: check.virtual,
       plan: this.plan,
       pending: this.pending,
+      pendingPos: this.pendingPos,
       selectedId: this.selectedId,
-      destinations: this.selectedId !== null ? plannableMoves(this.state, this.plan, this.selectedId) : [],
+      destinations: this.options().map((o) => o.pos),
       preview: check.ok ? check.events : [],
       removed: check.ok ? check.removed : [],
     };
@@ -160,8 +244,37 @@ export class BattleController {
 
   /** 계획 중인 가상 보드 기준으로 그 칸의 기물 */
   private pieceAtVirtual(pos: Pos) {
-    const v = checkPlan(this.state, this.plan).virtual;
-    return v.pieces.find((p) => p.x === pos.x && p.y === pos.y);
+    return this.virtual.pieces.find((p) => p.x === pos.x && p.y === pos.y);
+  }
+
+  /** 카드(또는 인챈트 합체)를 고른다. 같은 것을 다시 누르면 해제. */
+  arm(mode: Mode): void {
+    if (this.phase !== 'plan') return;
+    const same = JSON.stringify(mode) === JSON.stringify(this.mode);
+    this.pending = null;
+    this.pendingPos = null;
+    this.selectedId = null;
+    this.mode = same ? null : mode;
+    if (this.mode) {
+      const anchors = this.anchorIds();
+      if (this.attachCard === undefined && !anchors.size) {
+        this.hud.toast('지금은 쓸 수 있는 대상이 없습니다');
+        this.mode = null;
+      } else if (this.mode.kind === 'card') {
+        this.hud.toast(CARDS[this.state.cards[this.state.turnSide][this.mode.card].id].desc);
+      } else this.hud.toast('합체할 두 기물을 차례로 누르세요');
+    }
+    this.refresh();
+  }
+
+  /** 지금 모드에서 고를 수 있는 기물 */
+  private anchorIds(): Set<number> {
+    const ids = new Set<number>();
+    for (const st of this.specials()) {
+      ids.add(st.pieceId);
+      if (st.kind === 'castle' || st.kind === 'formShift') ids.add(st.partnerId);
+    }
+    return ids;
   }
 
   /** 칸을 눌렀다. touch = 투탭(미리보기 → 확정), mouse = 클릭 즉시 확정 (GDD 9장 §9.6) */
@@ -169,11 +282,15 @@ export class BattleController {
     if (this.phase !== 'plan') return;
 
     if (this.selectedId !== null) {
-      const dests = plannableMoves(this.state, this.plan, this.selectedId);
-      if (dests.some((d) => samePos(d, pos))) {
-        const move = { pieceId: this.selectedId, to: pos };
-        if (!touch || (this.pending && samePos(this.pending.to, pos))) this.confirm(move);
-        else this.pending = move;
+      const opts = this.options().filter((o) => samePos(o.pos, pos));
+      if (opts.length) {
+        // 같은 칸에 후보가 여럿이면(예: 캐슬링 방향) 첫 후보
+        const step = opts.find((o) => sameStep(o.step, this.pending))?.step ?? opts[0].step;
+        if (!touch || sameStep(this.pending, step)) this.confirm(step);
+        else {
+          this.pending = step;
+          this.pendingPos = pos;
+        }
         this.refresh();
         return;
       }
@@ -181,15 +298,22 @@ export class BattleController {
 
     const p = this.pieceAtVirtual(pos);
     this.pending = null;
-    if (p && p.side === this.state.turnSide && !this.plan.some((m) => m.pieceId === p.id)) {
-      if (this.selectedId === p.id) {
+    this.pendingPos = null;
+    const mine = p && p.side === this.state.turnSide;
+    if (mine && this.selectedId === p.id) {
+      this.selectedId = null;
+    } else if (mine && this.mode && this.attachCard === undefined) {
+      // 카드 모드: 그 카드를 쓸 수 있는 기물만 고른다 (보호막·폼 시프트는 이미 행동한 기물도 가능)
+      if (this.anchorIds().has(p.id)) this.selectedId = p.id;
+      else {
         this.selectedId = null;
-      } else {
-        this.selectedId = p.id;
-        const left = this.apTotal - this.apUsed;
-        if (moveCost(this.state, p) > left) this.hud.toast(`AP가 부족합니다 (필요 ${moveCost(this.state, p)})`);
-        else if (!plannableMoves(this.state, this.plan, p.id).length) this.hud.toast('갈 수 있는 칸이 없습니다');
+        this.hud.toast('이 기물에는 쓸 수 없습니다');
       }
+    } else if (mine && !this.plan.some((st) => 'pieceId' in st && st.pieceId === p.id && st.kind !== 'shield' && st.kind !== 'formShift')) {
+      this.selectedId = p.id;
+      const left = this.apTotal - this.apUsed;
+      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`AP가 부족합니다 (필요 ${moveCost(this.virtual, p)})`);
+      else if (!this.options().length) this.hud.toast('갈 수 있는 칸이 없습니다');
     } else {
       this.selectedId = null;
     }
@@ -199,41 +323,43 @@ export class BattleController {
   /** 마우스 호버 미리보기 */
   hover(pos: Pos | null): void {
     if (this.phase !== 'plan' || this.selectedId === null) return;
-    const dests = plannableMoves(this.state, this.plan, this.selectedId);
-    const next = pos && dests.some((d) => samePos(d, pos)) ? { pieceId: this.selectedId, to: pos } : null;
-    if ((next?.to.x ?? -1) === (this.pending?.to.x ?? -1) && (next?.to.y ?? -1) === (this.pending?.to.y ?? -1)) return;
+    const opt = pos ? this.options().find((o) => samePos(o.pos, pos)) : undefined;
+    const next = opt?.step ?? null;
+    if (sameStep(next, this.pending)) return;
     this.pending = next;
+    this.pendingPos = opt?.pos ?? null;
     this.refresh();
   }
 
-  private confirm(move: PlannedMove): void {
-    const next = addToPlan(this.state, this.plan, move);
+  private confirm(step: PlanStep): void {
+    const next = addToPlan(this.state, this.plan, step);
     if (next) this.plan = next;
-    this.pending = null;
-    this.selectedId = null;
+    this.clearPick();
+  }
+
+  /** 인챈트 합체(E11)를 쓸 수 있는가 — 카드 레일에 합체 버튼을 띄운다 */
+  get canEnchantFuse(): boolean {
+    return !!this.state && ench(this.state, 0, 'E11') >= 1;
   }
 
   /** 디버그: 플레이어 차례를 AI가 대신 예약한다 (?debug) */
   autoPlan(): void {
     if (this.phase !== 'plan') return;
-    this.pending = null;
-    this.selectedId = null;
+    this.clearPick();
     this.plan = choosePlan(this.state, { tier: AI_TIERS[1], weights: AGGRESSIVE });
     this.refresh();
   }
 
   undo(): void {
     if (this.phase !== 'plan') return;
-    this.pending = null;
-    this.selectedId = null;
+    this.clearPick();
     this.plan = undoLast(this.plan);
     this.refresh();
   }
 
   reset(): void {
     if (this.phase !== 'plan') return;
-    this.pending = null;
-    this.selectedId = null;
+    this.clearPick();
     this.plan = [];
     this.refresh();
   }
@@ -249,8 +375,7 @@ export class BattleController {
 
   async submit(): Promise<void> {
     if (this.phase !== 'plan') return;
-    this.pending = null;
-    this.selectedId = null;
+    this.clearPick();
     await this.runTurn(this.plan);
     if (this.isOver()) return;
     await this.enemyTurn();

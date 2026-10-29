@@ -212,3 +212,53 @@ html, body {
     font-size: 18px;
   }
 }
+
+/* M4 액티브 카드 */
+.card {
+  aspect-ratio: 63 / 88;
+  max-height: 44vh;
+  min-width: 0;
+  padding: 7px 7px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: linear-gradient(180deg, #2a2530, #1c1a24);
+  border: 1px solid var(--copper);
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.card.consume { border-color: #9f5ad6; background: linear-gradient(180deg, #2c2238, #1c1a24); }
+.card.armed { border: 2px solid var(--brass); box-shadow: 0 0 0 2px rgba(200, 155, 60, 0.35); }
+.card:disabled { opacity: 0.38; cursor: default; }
+.card-name { font-size: 13px; font-weight: 700; line-height: 1.25; color: var(--parchment); }
+.card-desc { font-size: 11px; line-height: 1.35; color: var(--muted); flex: 1; overflow: hidden; }
+.card-tag { font-size: 11px; color: var(--brass); }
+.card.wide { grid-column: span 2; aspect-ratio: auto; min-height: 44px; flex-direction: row; align-items: center; justify-content: space-between; }
+
+/* 인챈트 팝업 · 장비 편집 */
+.ench { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.ench small { color: var(--muted); }
+.ench ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: #6f6979; line-height: 1.5; }
+.ench li.on { color: var(--text); }
+.panel .sub { color: var(--brass); font-size: 13px; margin-top: 4px; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.chip {
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 6px 9px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.chip b { display: block; font-size: 13px; }
+.chip small { display: block; font-size: 11px; color: var(--muted); line-height: 1.35; }
+.chip.on { border-color: var(--brass); background: #2a2418; }
+.chip.small { min-height: 44px; }
+.panel { width: min(640px, 94vw); }

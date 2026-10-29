@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
-import { findPiece, isMove, standingOf, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
+import { CARDS } from '../data/cards';
+import type { EnchantId } from '../data/enchants';
+import { findPiece, isMove, moveTypes, standingOf, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
 export const GRADE: Record<Standing, { color: number; name: string }> = {
@@ -17,6 +19,8 @@ const GLYPH: Record<0 | 1, Record<PieceType, string>> = {
   1: { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟' },
 };
 const VS15 = '︎';
+/** 기물 유형에 붙는 인챈트 — 그 기물 위에 표식으로 보인다 (GDD 9장: 인챈트는 유닛에 표시) */
+const TYPE_ENCHANTS: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04', K: 'E08' };
 const GLYPH_FONT = "'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', 'Apple Symbols', serif";
 
 const C = {
@@ -52,6 +56,10 @@ const stepArrows = (s: BattleState, step: PlanStep): { piece: Piece; from: Pos; 
   if (step.kind === 'castle') {
     const q = findPiece(s, step.partnerId);
     return q ? [{ piece: p, from: p, to: q, knight: false }, { piece: q, from: q, to: p, knight: false }] : [];
+  }
+  if (step.kind === 'fuse') {
+    const q = findPiece(s, step.partnerId);
+    return q ? [{ piece: q, from: q, to: p, knight: false }] : [];
   }
   return [];
 };
@@ -211,8 +219,45 @@ class BoardScene extends Phaser.Scene {
       base.lineStyle(Math.max(2, t * 0.05), C.brass, 1).strokeCircle(t / 2, t * 0.45, t * 0.44);
     }
     if (p.buffTurns > 0) base.fillStyle(C.brass, 1).fillTriangle(t * 0.86, t * 0.2, t * 0.78, t * 0.32, t * 0.94, t * 0.32);
+    // 인챈트 표식: 왼쪽 위 황동 점 (장 수), ★ 각성
+    const lo = this.state?.loadouts?.[p.side];
+    const stacks = [...new Set(moveTypes(p).map((ty) => TYPE_ENCHANTS[ty]).filter((e): e is EnchantId => !!e))].map((e) => lo?.enchants[e] ?? 0);
+    const marks: Phaser.GameObjects.GameObject[] = [];
+    let my = t * 0.12;
+    for (const n of stacks.filter((n) => n > 0)) {
+      if (n >= 3) {
+        base.fillStyle(C.brass, 1).fillCircle(t * 0.12, my, t * 0.075);
+        base.fillStyle(C.ink, 1).fillCircle(t * 0.12, my, t * 0.03);
+      } else for (let i = 0; i < n; i++) base.fillStyle(C.brass, 1).fillCircle(t * (0.1 + i * 0.1), my, t * 0.045);
+      my += t * 0.14;
+    }
+    // 대장간 강화: 왼쪽 아래 +n
+    const forge = lo?.forge[p.type] ?? 0;
+    if (forge > 0) {
+      marks.push(
+        this.add
+          .text(t * 0.04, t * 0.62, `+${forge}`, { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(t * 0.22)}px`, color: '#E0A060', stroke: '#16141C', strokeThickness: 3 })
+          .setResolution(this.dpr),
+      );
+    }
+    // 합체: 오른쪽 위에 흡수한 유형 작은 글리프 · 폼 시프트: 바뀐 행마
+    const extra = p.formAs ? [p.type] : (p.fused ?? []).filter((ty) => ty !== p.type);
+    extra.forEach((ty, i) => {
+      marks.push(
+        this.add
+          .text(t * 0.84, t * (0.14 + i * 0.22), GLYPH[p.side][ty] + VS15, {
+            fontFamily: GLYPH_FONT,
+            fontSize: `${Math.round(t * 0.26)}px`,
+            color: p.formAs ? '#C89B3C' : p.side === 0 ? '#F4F7FB' : '#120F17',
+            stroke: p.side === 0 ? '#1E3A8A' : '#F43F5E',
+            strokeThickness: 2,
+          })
+          .setOrigin(0.5)
+          .setResolution(this.dpr),
+      );
+    });
     const glyph = this.add
-      .text(t / 2, t * 0.42, GLYPH[p.side][p.type] + VS15, {
+      .text(t / 2, t * 0.42, GLYPH[p.side][p.formAs ?? p.type] + VS15, {
         fontFamily: GLYPH_FONT,
         fontSize: `${Math.round(t * 0.78)}px`,
         color: p.side === 0 ? '#F4F7FB' : '#120F17',
@@ -222,7 +267,7 @@ class BoardScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setResolution(this.dpr);
     const hp = this.add.graphics();
-    root.add([base, glyph, hp]);
+    root.add([base, glyph, ...marks, hp]);
     root.setAlpha(alpha);
     const sprite = { root, glyph, hp, piece: p };
     this.drawHp(sprite, p.hp, p.hp);
@@ -242,6 +287,18 @@ class BoardScene extends Phaser.Scene {
     s.hp.fillStyle(C.ink, 1).fillRect(x, y, bw, bh);
     s.hp.fillStyle(s.piece.side === 0 ? C.cyan : C.crimson, 1).fillRect(x, y, bw * keep, bh);
     if (lose > 0) s.hp.fillStyle(C.lose, 1).fillRect(x + bw * keep, y, bw * lose, bh);
+    // 보호막: HP 바 위 강철색 띠
+    if (s.piece.shield > 0) s.hp.fillStyle(0xe2e8f0, 1).fillRect(x, y - bh - 1, bw * Math.min(1, s.piece.shield / s.piece.maxHp), bh - 1);
+  }
+
+  private floatText(sp: PieceSprite, text: string, color: string): void {
+    const t = this.tile;
+    const o = this.add
+      .text(sp.root.x + t / 2, sp.root.y + t * 0.1, text, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color, stroke: '#16141C', strokeThickness: 4 })
+      .setOrigin(0.5)
+      .setDepth(8)
+      .setResolution(this.dpr);
+    this.tweens.add({ targets: o, y: o.y - t * 0.5, alpha: 0, duration: 650, onComplete: () => o.destroy() });
   }
 
   private clearDynamic(): void {
@@ -340,7 +397,7 @@ class BoardScene extends Phaser.Scene {
       }
       for (const d of m.destinations) {
         const c = this.center(d);
-        const isPending = m.pending && m.pending.to.x === d.x && m.pending.to.y === d.y;
+        const isPending = m.pendingPos && m.pendingPos.x === d.x && m.pendingPos.y === d.y;
         if (isPending) this.marksG.lineStyle(3, C.cyan, 1).strokeCircle(c.x, c.y, t * 0.36);
         else this.marksG.fillStyle(C.cyan, 0.85).fillCircle(c.x, c.y, t * 0.12);
       }
@@ -464,6 +521,32 @@ class BoardScene extends Phaser.Scene {
         await this.wait(70);
         continue;
       }
+      if (e.type === 'card') {
+        this.announce(`${e.side === 0 ? '' : '적 · '}${CARDS[e.card].name}`);
+        continue;
+      }
+      if (e.type === 'shield' || e.type === 'heal') {
+        const sp = this.sprites.get(e.pieceId);
+        if (!sp) continue;
+        if (e.type === 'shield') sp.piece = { ...sp.piece, shield: sp.piece.shield + e.amount };
+        else sp.piece = { ...sp.piece, hp: Math.min(sp.piece.maxHp, sp.piece.hp + e.amount) };
+        this.drawHp(sp, sp.piece.hp, sp.piece.hp);
+        this.floatText(sp, `+${e.amount}`, e.type === 'shield' ? '#E2E8F0' : '#86EFAC');
+        await this.wait(160);
+        continue;
+      }
+      if (e.type === 'fuse') {
+        const a = this.sprites.get(e.pieceId);
+        const b = this.sprites.get(e.partnerId);
+        this.announce('합체!');
+        if (a && b) {
+          await this.tween({ targets: b.root, x: a.root.x, y: a.root.y, alpha: 0.2, duration: 260, ease: 'Quad.easeIn' });
+          b.root.destroy();
+          this.sprites.delete(e.partnerId);
+          await this.tween({ targets: a.root, scale: { from: 1, to: 1.25 }, yoyo: true, duration: 200 });
+        }
+        continue;
+      }
       if (e.type === 'promote') {
         const s = this.sprites.get(e.pieceId);
         if (s) s.glyph.setText(GLYPH[s.piece.side][e.to] + VS15);
@@ -505,6 +588,10 @@ class BoardScene extends Phaser.Scene {
           .setDepth(8)
           .setResolution(this.dpr);
         this.tweens.add({ targets: dmg, y: dmg.y - t * 0.5, alpha: 0, duration: 650, onComplete: () => dmg.destroy() });
+        if (h.pushedTo) {
+          const w = this.world(h.pushedTo);
+          this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
+        }
       }
       if (e.hits.length) this.cameras.main.shake(90, 0.005);
       await this.wait(60);
