@@ -38,6 +38,7 @@ import {
   type RunState,
 } from '../run/run';
 import type { Hud } from './hud';
+import { unlockAchievement } from '../platform';
 
 const GLYPH: Record<PieceType, string> = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' };
 const VS15 = '︎';
@@ -216,6 +217,7 @@ export class RunUi {
       this.save();
     };
     this.c.onBattleEnd = (s) => {
+      if (s.winner === 0 && e.kind === 'boss') unlockAchievement(`ACT${actOf(run.floor)}_CLEAR`);
       finishBattle(run, s);
       this.save();
       window.setTimeout(() => this.show(), 600);
@@ -403,6 +405,7 @@ export class RunUi {
     const floor = Math.min(run.floor, TOTAL_FLOORS);
     const before = loadMeta();
     const meta = recordRunEnd(before, floor, won, run.ascension ?? 0);
+    if (won) unlockAchievement(`ASCENSION_${run.ascension ?? 0}_CLEAR`);
     saveMeta(meta);
     clearRun();
     const newly = UNLOCK_DECKS.filter((u) => u.ok(meta) && !u.ok(before)).map((u) => `시작 덱 해금: ${u.name}`);
