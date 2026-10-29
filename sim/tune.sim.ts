@@ -5,7 +5,7 @@ import { FULL_DECK, Rng } from '../src/engine';
 import { score, series, type Matchup } from '../src/sim/arena';
 
 /** 자체 대전 가중치 튜닝 (D-018): (1+1) 진화 전략. 후보가 현 최강을 60% 이상 이기면 교체한다. */
-const KEYS: (keyof Weights)[] = ['enemyKing', 'ownKing', 'material', 'threat', 'advance', 'promotion', 'stronghold'];
+const KEYS: (keyof Weights)[] = ['enemyKing', 'ownKing', 'material', 'threat', 'advance', 'promotion', 'stronghold', 'kill'];
 const tier = { beamWidth: 4, mistakeRate: 0.1 };
 const m: Matchup = { width: 8, height: 8, decks: [FULL_DECK, FULL_DECK], maxTurns: 80 };
 

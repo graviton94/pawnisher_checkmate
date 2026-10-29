@@ -29,6 +29,8 @@ export interface GameStats {
   captures: { side: Side; tier: number; behind: boolean }[];
   strikes: number;
   collapses: number;
+  /** 체크메이트로 킹이 HP 1에서 버틴 횟수 */
+  checks?: number;
 }
 
 export const playGame = (m: Matchup, players: [Player, Player], seed: number): GameStats => {
@@ -40,7 +42,7 @@ export const playGame = (m: Matchup, players: [Player, Player], seed: number): G
     seed,
     loadouts: [players[0].loadout ?? EMPTY_LOADOUT, players[1].loadout ?? EMPTY_LOADOUT],
   });
-  const stats: GameStats = { winner: null, turns: 0, promotions: 0, captures: [], strikes: 0, collapses: 0 };
+  const stats: GameStats = { winner: null, turns: 0, promotions: 0, captures: [], strikes: 0, collapses: 0, checks: 0 };
   for (; stats.turns < m.maxTurns && s.winner === null; stats.turns++) {
     const p = players[s.turnSide];
     const plan = choosePlan(s, { tier: p.tier, weights: p.weights, cards: p.cards, seed: seed * 7919 + stats.turns });
@@ -50,6 +52,7 @@ export const playGame = (m: Matchup, players: [Player, Player], seed: number): G
       else if (e.type === 'strongholdCapture') stats.captures.push({ side: e.side, tier: e.tier, behind: e.behind });
       else if (e.type === 'lastStrike') stats.strikes++;
       else if (e.type === 'collapse') stats.collapses++;
+      else if (e.type === 'attack') stats.checks! += e.hits.filter((h) => h.checked).length;
     }
     s = r.state;
   }

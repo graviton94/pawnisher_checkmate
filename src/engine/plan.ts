@@ -156,6 +156,12 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
 };
 
 /** 대상에 피해를 준다. 근위대 결속 ★이면 킹 피해를 붙어 있는 아군이 대신 받는다. */
+/**
+ * 체크메이트 보호: 공격받는 쪽 킹이 이번 턴 시작 때 HP 2 이상이었는가.
+ * 시뮬레이션 시작 시 s.checkGuard에 기록한다.
+ */
+const checkGuarded = (s: BattleState, king: Piece): boolean => !!s.rules.checkmate && !!s.checkGuard?.includes(king.id);
+
 const applyDamage = (s: BattleState, target: Piece, damage: number, splash = false): HitResult => {
   let t = target;
   if (t.type === 'K' && ench(s, t.side, 'E08') >= 3) {
@@ -167,7 +173,10 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
   const shieldAbsorbed = Math.min(t.shield, damage);
   t.shield -= shieldAbsorbed;
   t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
-  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}) };
+  // 체크메이트 (D-022): 이번 턴 보호받는 킹은 HP 1에서 버틴다 — 다음 상대 턴에 맞으면 끝
+  const checked = t.hp <= 0 && t.type === 'K' && checkGuarded(s, t);
+  if (checked) t.hp = 1;
+  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}) };
 };
 
 const SLIDERS: PieceType[] = ['B', 'R', 'Q'];
@@ -292,6 +301,7 @@ export const canFuse = (s: BattleState, a: Piece, b: Piece, withCard: boolean): 
 export const simulate = (input: BattleState, plan: Plan): Simulation => {
   const s = cloneState(input);
   const side = input.turnSide;
+  s.checkGuard = s.pieces.filter((p) => p.type === 'K' && p.side !== side && p.hp > 1).map((p) => p.id);
   const ctx: TurnCtx = {
     side,
     events: [],

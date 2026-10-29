@@ -218,6 +218,10 @@ class BoardScene extends Phaser.Scene {
     if (p.type === 'K' && this.state?.lastStrike?.[p.side] === 'ready') {
       base.lineStyle(Math.max(2, t * 0.05), C.brass, 1).strokeCircle(t / 2, t * 0.45, t * 0.44);
     }
+    // 체크: HP 1로 버틴 킹 — 다음에 맞으면 끝 (D-022)
+    if (p.type === 'K' && p.hp === 1 && this.state?.rules.checkmate) {
+      base.lineStyle(Math.max(2, t * 0.05), C.crimson, 1).strokeCircle(t / 2, t * 0.45, t * 0.47);
+    }
     if (p.buffTurns > 0) base.fillStyle(C.brass, 1).fillTriangle(t * 0.86, t * 0.2, t * 0.78, t * 0.32, t * 0.94, t * 0.32);
     // 인챈트 표식: 왼쪽 위 황동 점 (장 수), ★ 각성
     const lo = this.state?.loadouts?.[p.side];
@@ -594,6 +598,8 @@ class BoardScene extends Phaser.Scene {
         }
       }
       if (e.hits.length) this.cameras.main.shake(90, 0.005);
+      const checked = e.hits.find((h) => h.checked);
+      if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버팁니다 — 다음 공격이면 끝`);
       await this.wait(60);
       for (const h of e.hits) this.sprites.get(h.targetId)?.glyph.clearTint();
       this.fxG.clear();

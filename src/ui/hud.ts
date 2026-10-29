@@ -163,7 +163,7 @@ export class Hud implements HudView {
     if (forge) extra.push(`대장간 +${forge}`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';
     const buff = p.buffTurns > 0 ? `<br>버프: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
-    el.innerHTML = `<b><span class="g">${GLYPH[p.side][p.type]}${VS15}</span> ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}`;
+    el.innerHTML = `<b><span class="g">${GLYPH[p.side][p.type]}${VS15}</span> ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크메이트: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;

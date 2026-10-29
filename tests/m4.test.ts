@@ -222,3 +222,31 @@ describe('AI의 카드 사용 (GDD 4장 §4-B)', () => {
     expect(plan.every((st) => st.kind === undefined || st.kind === 'move')).toBe(true);
   });
 });
+
+describe('체크메이트 (D-022)', () => {
+  const mk = (kingHp: number, checkmate: boolean) => {
+    const s = board([['Q', 0, 'd1'], ['K', 0, 'a1'], ['K', 1, 'd8', { hp: kingHp }]]);
+    s.rules = { ...s.rules, checkmate };
+    return s;
+  };
+  const kill: Plan = [{ pieceId: 1, to: sq('d7') }];
+  it('HP 2 이상인 킹은 치명타를 맞아도 HP 1로 버틴다 (체크)', () => {
+    const r = resolveTurn(mk(10, true), kill);
+    expect(r.state.winner).toBeNull();
+    expect(findPiece(r.state, 3)?.hp).toBe(1);
+    expect(r.events.some((e) => e.type === 'attack' && e.hits.some((h) => h.checked))).toBe(true);
+  });
+  it('턴 시작 때 이미 HP 1이면 맞는 순간 끝난다 (메이트)', () => {
+    expect(resolveTurn(mk(1, true), kill).state.winner).toBe(0);
+  });
+  it('규칙을 끄면 바로 쓰러진다', () => {
+    expect(resolveTurn(mk(10, false), kill).state.winner).toBe(0);
+  });
+  it('체크 당한 AI 킹은 도망친다', () => {
+    const s = board([['R', 0, 'a7'], ['K', 0, 'h1'], ['K', 1, 'e8', { hp: 1 }], ['P', 1, 'b7']]);
+    s.rules = { ...s.rules, checkmate: true };
+    s.turnSide = 1;
+    const plan = choosePlan(s, { tier: AI_TIERS[2] });
+    expect(plan.some((st) => st.pieceId === 3)).toBe(true);
+  });
+});

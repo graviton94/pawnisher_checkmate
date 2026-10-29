@@ -8,5 +8,6 @@ export const TUNED: Weights = {
   threat: 0.363,
   advance: 0.532,
   promotion: 0.744,
-  stronghold: 0.564
+  stronghold: 0.564,
+  kill: 0.6
 };

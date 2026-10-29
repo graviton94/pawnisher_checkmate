@@ -60,6 +60,8 @@ export interface BattleRules {
   collapseStart: number | null;
   /** 붕괴 간격 (라운드) */
   collapseInterval: number;
+  /** 체크메이트: 턴 시작 때 HP가 2 이상인 킹은 그 턴에 HP 1 아래로 떨어지지 않는다 (D-022) */
+  checkmate?: boolean;
 }
 
 export interface Stronghold {
@@ -98,6 +100,8 @@ export interface BattleState {
   cards: [CardSlot[], CardSlot[]];
   /** 다음 턴으로 넘어가는 AP (축전기 이월, 연쇄 지휘 보너스) */
   apCarry: [number, number];
+  /** 이번 턴 체크메이트 보호를 받는 킹 id (시뮬레이션 중에만 쓴다) */
+  checkGuard?: number[];
 }
 
 /**
@@ -145,6 +149,8 @@ export interface HitResult {
   splash?: boolean;
   /** 넉백으로 밀려난 위치 */
   pushedTo?: Pos;
+  /** 체크메이트 규칙으로 킹이 HP 1에서 버텼다 (체크) */
+  checked?: boolean;
 }
 
 export type BattleEvent =

@@ -20,21 +20,31 @@ export interface Weights {
   promotion: number;
   /** 요충지 점유·접근 (GDD 5장) */
   stronghold: number;
+  /** 살아 있는 것 자체의 가치 (기물 가치 배수). 깎는 것과 처치하는 것의 차이를 키운다 */
+  kill: number;
 }
 
-export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5, stronghold: 1 };
-export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5, stronghold: 0.6 };
-export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5, stronghold: 1.4 };
+export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5, stronghold: 1, kill: 0.6 };
+export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5, stronghold: 0.6, kill: 0.6 };
+export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5, stronghold: 1.4, kill: 0.6 };
 
 export const WIN_SCORE = 1_000_000;
 
 const valueOf = (p: Piece): number => (p.type === 'K' ? 0 : PIECE_STATS[p.type].value);
 
-/** 피격 가치: 킹 피해는 HP 비율로, 나머지는 가치 × 잃는 HP 비율 + 처치 보너스 */
-const hitWorth = (target: Piece, damage: number): number => {
-  const dealt = Math.min(target.hp + target.shield, damage);
-  if (target.type === 'K') return (dealt / target.maxHp) * 100 * 4;
-  const kill = dealt >= target.hp + target.shield ? valueOf(target) * 0.5 : 0;
+/** 킹 처치 위협의 가치 — 사실상 패배 */
+const KING_KILL = 2000;
+
+/**
+ * 피격 가치: 킹 피해는 HP 비율로, 나머지는 가치 × 잃는 HP 비율 + 처치 보너스.
+ * 체크메이트 규칙이면 HP 2 이상인 킹은 HP 1까지만 깎인다 (D-022).
+ */
+const hitWorth = (s: BattleState, target: Piece, damage: number): number => {
+  const pool = target.hp + target.shield;
+  const guarded = target.type === 'K' && !!s.rules.checkmate && target.hp > 1;
+  const dealt = Math.min(guarded ? pool - 1 : pool, damage);
+  if (target.type === 'K') return dealt >= pool ? KING_KILL : (dealt / target.maxHp) * 100 * 4;
+  const kill = dealt >= pool ? valueOf(target) : 0;
   return valueOf(target) * (dealt / target.maxHp) + kill;
 };
 
@@ -52,7 +62,7 @@ export const threatEstimate = (s: BattleState, side: Side): number => {
       const ghost = { ...p, x: to.x, y: to.y };
       let worth = 0;
       const mult = isStrikeMove(s, p, to) ? LAST_STRIKE_MULT : 1;
-      for (const t of attackTargets(s, ghost, grid)) worth += hitWorth(t, damageOf(s, ghost, t, mult));
+      for (const t of attackTargets(s, ghost, grid)) worth += hitWorth(s, t, damageOf(s, ghost, t, mult));
       if (worth > best) best = worth;
     }
     if (best > 0) options.push({ worth: best, ap: PIECE_STATS[p.type].ap });
@@ -99,8 +109,8 @@ export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
   for (const p of s.pieces) {
     const pp = promotionPotential(s, p, grid);
     promotion += p.side === side ? pp : -pp;
-    // 보호막은 HP의 절반 가치로 본다 (한 번 막고 사라지므로)
-    const v = valueOf(p) * (Math.min(p.maxHp, p.hp + p.shield * 0.5) / p.maxHp);
+    // 보호막은 HP의 절반 가치로 본다 (한 번 막고 사라지므로). 살아 있는 것 자체에 kill만큼 더 준다
+    const v = valueOf(p) * (Math.min(p.maxHp, p.hp + p.shield * 0.5) / p.maxHp + w.kill);
     if (p.side === side) {
       material += v;
       if (p.type !== 'K') {
