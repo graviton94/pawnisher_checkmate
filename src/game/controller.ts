@@ -13,6 +13,7 @@ import {
   type BattleEvent,
   type BattleState,
   type Deck,
+  type Piece,
   type Plan,
   type PlannedMove,
   type Pos,
@@ -81,6 +82,8 @@ export interface BoardModel {
   destinations: Pos[];
   /** 미리보기 결과 */
   preview: BattleEvent[];
+  /** 미리보기에서 파괴되는 기물 (파괴 시점 위치) — 보드에서 사라지기 전 모습으로 X 표시와 함께 그린다 */
+  removed: Piece[];
 }
 
 export interface BoardView {
@@ -137,7 +140,6 @@ export class BattleController {
   model(): BoardModel {
     const full = this.fullPlan;
     const check = checkPlan(this.state, full);
-    const preview = check.ok && full.length ? resolveTurn(this.state, full).events : [];
     return {
       state: this.state,
       virtual: check.virtual,
@@ -145,7 +147,8 @@ export class BattleController {
       pending: this.pending,
       selectedId: this.selectedId,
       destinations: this.selectedId !== null ? plannableMoves(this.state, this.plan, this.selectedId) : [],
-      preview,
+      preview: check.ok ? check.events : [],
+      removed: check.ok ? check.removed : [],
     };
   }
 
@@ -257,7 +260,7 @@ export class BattleController {
     const before = this.state;
     const { state, events } = resolveTurn(before, plan);
     this.plan = [];
-    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], destinations: [] });
+    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [] });
     this.hud.update(this);
     await this.view.play(before, events);
     this.state = state;

@@ -41,7 +41,7 @@ describe('계획 단계 (GDD 1장 §1.4)', () => {
   });
 });
 
-describe('실행 단계 (GDD 1장 §1.5, 3장)', () => {
+describe('실행 단계: 예약 순서대로 이동 → 공격 (GDD 1장 §1.5, 3장)', () => {
   it('이동한 기물만 공격한다', () => {
     // 비숍은 제자리, 킹만 이동. 비숍 사선 위의 적은 맞지 않는다.
     const s = board([['B', 0, 'c1'], ['K', 0, 'h1'], ['P', 1, 'e3'], ['K', 1, 'h8']]);
@@ -105,17 +105,49 @@ describe('실행 단계 (GDD 1장 §1.5, 3장)', () => {
     expect(findPiece(r.state, 4)!.hp).toBe(70 - (16 - 5) - (22 - 5));
   });
 
-  it('킹이 파괴되면 남은 공격을 생략하고 즉시 끝난다', () => {
+  it('킹이 파괴되면 즉시 끝나고, 그 뒤 순번은 실행되지 않는다', () => {
     const s = board([
       ['Q', 0, 'd1'], // 1
       ['K', 0, 'e1'], // 2
       ['K', 1, 'd8', { hp: 5 }], // 3
       ['P', 1, 'g3'], // 4 — 킹이 f2로 가면 칠 수 있는 위치
     ]);
-    const r = resolveTurn(s, [{ pieceId: 1, to: sq('d2') }, { pieceId: 2, to: sq('f2') }]);
+    const r = resolveTurn(s, [{ pieceId: 1, to: sq('d2') }]);
     expect(r.state.winner).toBe(0);
     expect(r.events.at(-1)).toEqual({ type: 'gameOver', winner: 0 });
-    expect(findPiece(r.state, 4)!.hp).toBe(25); // #2 킹의 공격은 생략됨
+    // 승부가 난 뒤의 예약은 받지 않는다
+    expect(checkPlan(s, [{ pieceId: 1, to: sq('d2') }, { pieceId: 2, to: sq('f2') }]).ok).toBe(false);
+    expect(plannableMoves(s, [{ pieceId: 1, to: sq('d2') }], 2)).toEqual([]);
+  });
+
+  it('예약 순서대로 이동 → 공격: #1이 파괴해 비운 칸으로 #2가 이동할 수 있다', () => {
+    // #1 룩이 a4로 가며 a5의 적 폰(HP 5)을 파괴 → #2 나이트가 b3에서 그 빈 a5로 도약
+    const s = board([
+      ['R', 0, 'a1'], // 1
+      ['N', 0, 'b3'], // 2
+      ['K', 0, 'h1'], // 3
+      ['P', 1, 'a5', { hp: 5 }], // 4
+      ['K', 1, 'h8'], // 5
+    ]);
+    expect(plannableMoves(s, [], 2).map(toSquare)).not.toContain('a5');
+    const plan = addToPlan(s, [], { pieceId: 1, to: sq('a4') })!;
+    expect(plannableMoves(s, plan, 2).map(toSquare)).toContain('a5');
+    const r = resolveTurn(s, [...plan, { pieceId: 2, to: sq('a5') }]);
+    expect(findPiece(r.state, 4)).toBeUndefined();
+    expect(toSquare(findPiece(r.state, 2)!)).toBe('a5');
+  });
+
+  it('뒤 순번 기물은 앞 순번의 공격 시점에 아직 이동 전이다', () => {
+    // #1 룩 a1→a2 공격 시 a-파일이 열려 있어 a7을 친다. #2 나이트가 그 뒤에 a3으로 들어와도 #1 공격은 이미 끝났다.
+    const s = board([
+      ['R', 0, 'a1'], // 1
+      ['N', 0, 'b1'], // 2
+      ['K', 0, 'h1'], // 3
+      ['R', 1, 'a7'], // 4
+      ['K', 1, 'h8'], // 5
+    ]);
+    const r = resolveTurn(s, [{ pieceId: 1, to: sq('a2') }, { pieceId: 2, to: sq('a3') }]);
+    expect(findPiece(r.state, 4)!.hp).toBe(70 - (22 - 5));
   });
 
   it('승급: 끝줄에 닿은 폰은 퀸이 되고 HP 비율을 유지하며, 그 턴에 퀸으로 공격한다', () => {

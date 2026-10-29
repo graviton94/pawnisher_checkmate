@@ -247,7 +247,8 @@ class BoardScene extends Phaser.Scene {
         if (h.killed) killed.add(h.targetId);
       }
     }
-    for (const p of m.virtual.pieces) if (hpAfter.has(p.id)) hitTiles.set(`${p.x},${p.y}`, p);
+    const shown = [...m.virtual.pieces, ...m.removed];
+    for (const p of shown) if (hpAfter.has(p.id)) hitTiles.set(`${p.x},${p.y}`, p);
     // 아군이 선 칸은 공격 범위 표시에서 뺀다 (아군은 맞지 않는다)
     for (const p of m.virtual.pieces) if (p.side === m.state.turnSide) area.delete(`${p.x},${p.y}`);
 
@@ -284,8 +285,8 @@ class BoardScene extends Phaser.Scene {
       this.arrow(orig, mv.to, orig.type === 'N', C.cyan, isPending ? 0.5 : 1);
     });
 
-    // 기물 (가상 보드 위치)
-    for (const p of m.virtual.pieces) {
+    // 기물 (가상 보드 위치) + 이번 계획으로 파괴될 기물 (파괴 시점 위치)
+    for (const p of shown) {
       const sprite = this.makePiece(p, p);
       const after = hpAfter.get(p.id);
       if (after !== undefined) this.drawHp(sprite, p.hp, after);
@@ -330,31 +331,22 @@ class BoardScene extends Phaser.Scene {
     for (const o of this.dynamic) o.destroy();
     this.dynamic = [];
     const t = this.tile;
-
-    // Phase 1 — 일괄 이동 (0.25초, 동시에)
-    const moves = events.filter((e): e is Extract<BattleEvent, { type: 'move' }> => e.type === 'move');
-    if (moves.length) {
-      await Promise.all(
-        moves.map((e) => {
-          const s = this.sprites.get(e.pieceId);
-          if (!s) return Promise.resolve();
-          const w = this.world(e.to);
-          return this.tween({ targets: s.root, x: w.x, y: w.y, duration: 250, ease: 'Quad.easeIn' });
-        }),
-      );
-      this.cameras.main.shake(70, 0.002);
-      await this.wait(120);
-    }
+    // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5)
     for (const e of events) {
-      if (e.type !== 'promote') continue;
-      const s = this.sprites.get(e.pieceId);
-      if (s) s.glyph.setText(GLYPH[s.piece.side][e.to] + VS15);
-    }
-
-    // Phase 2 — 순차 공격
-    const hp = new Map<number, number>();
-    for (const s of this.sprites.values()) hp.set(s.piece.id, s.piece.hp);
-    for (const e of events) {
+      if (e.type === 'move') {
+        const s = this.sprites.get(e.pieceId);
+        if (!s) continue;
+        const w = this.world(e.to);
+        await this.tween({ targets: s.root, x: w.x, y: w.y, duration: 220, ease: 'Quad.easeIn' });
+        this.cameras.main.shake(60, 0.002);
+        await this.wait(70);
+        continue;
+      }
+      if (e.type === 'promote') {
+        const s = this.sprites.get(e.pieceId);
+        if (s) s.glyph.setText(GLYPH[s.piece.side][e.to] + VS15);
+        continue;
+      }
       if (e.type !== 'attack') continue;
       const atk = this.sprites.get(e.attackerId);
       if (!atk) continue;
@@ -382,12 +374,11 @@ class BoardScene extends Phaser.Scene {
         const ts = this.sprites.get(h.targetId);
         if (!ts) continue;
         ts.glyph.setTintFill(0xffffff);
-        const before = hp.get(h.targetId) ?? h.hpAfter;
-        hp.set(h.targetId, h.hpAfter);
+        const dealt = ts.piece.hp - h.hpAfter;
         this.drawHp(ts, h.hpAfter, h.hpAfter);
         ts.piece = { ...ts.piece, hp: h.hpAfter };
         const dmg = this.add
-          .text(ts.root.x + t / 2, ts.root.y + t * 0.1, `-${before - h.hpAfter}`, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34)}px`, color: '#FDE68A', stroke: '#16141C', strokeThickness: 4 })
+          .text(ts.root.x + t / 2, ts.root.y + t * 0.1, `-${dealt}`, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34)}px`, color: '#FDE68A', stroke: '#16141C', strokeThickness: 4 })
           .setOrigin(0.5)
           .setDepth(8)
           .setResolution(this.dpr);
