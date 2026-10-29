@@ -566,7 +566,15 @@ export const loadRun = (): RunState | null => {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const run = JSON.parse(raw) as RunState;
-    return run.version === 1 ? run : null;
+    if (run.version !== 1) return null;
+    // 예전 저장(테두리 줄 단위 붕괴)을 칸 단위로 옮긴다
+    const b = run.stage.at === 'battle' ? run.stage.battle : undefined;
+    if (b && b.ring > 0 && !b.fallen?.length) {
+      b.fallen = [];
+      for (let y = 0; y < b.height; y++)
+        for (let x = 0; x < b.width; x++) if (x < b.ring || y < b.ring || x >= b.width - b.ring || y >= b.height - b.ring) b.fallen.push(y * b.width + x);
+    }
+    return run;
   } catch {
     return null;
   }
