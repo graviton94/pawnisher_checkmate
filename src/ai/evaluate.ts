@@ -24,9 +24,9 @@ export interface Weights {
   kill: number;
 }
 
-export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5, stronghold: 1, kill: 0.6 };
-export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5, stronghold: 0.6, kill: 0.6 };
-export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5, stronghold: 1.4, kill: 0.6 };
+export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5, stronghold: 1, kill: 0.3 };
+export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5, stronghold: 0.6, kill: 0.3 };
+export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5, stronghold: 1.4, kill: 0.3 };
 
 export const WIN_SCORE = 1_000_000;
 
