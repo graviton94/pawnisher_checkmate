@@ -295,20 +295,17 @@ export class BattleController {
     return ids;
   }
 
-  /** 칸을 눌렀다. touch = 투탭(미리보기 → 확정), mouse = 클릭 즉시 확정 (GDD 9장 §9.6) */
-  tap(pos: Pos, touch: boolean): void {
+  /** 칸을 눌렀다. 갈 수 있는 칸이면 바로 예약 (마우스는 호버로 미리보기) */
+  tap(pos: Pos, _touch: boolean): void {
     if (this.phase !== 'plan') return;
 
     if (this.selectedId !== null) {
       const opts = this.options().filter((o) => samePos(o.pos, pos));
       if (opts.length) {
         // 같은 칸에 후보가 여럿이면(예: 캐슬링 방향) 첫 후보
+        // 한 번 누르면 바로 예약된다 (모바일 투탭 미리보기는 예약이 조용히 사라지는 문제가 있어 없앴다 — 잘못 누르면 되돌리기)
         const step = opts.find((o) => sameStep(o.step, this.pending))?.step ?? opts[0].step;
-        if (!touch || sameStep(this.pending, step)) this.confirm(step);
-        else {
-          this.pending = step;
-          this.pendingPos = pos;
-        }
+        this.confirm(step);
         this.refresh();
         return;
       }

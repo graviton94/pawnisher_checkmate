@@ -28,6 +28,10 @@ export const COLLAPSE = {
   damagePct: 0.15,
   /** 유효 보드의 짧은 변이 이 값보다 작아지면 더 무너지지 않는다 */
   minSize: 4,
+  /** 한 번에 무너지는 칸 수: 마주 보는 칸 한 쌍 (양 진영에 공평하게, 사용자 피드백 "한 칸씩") */
+  tilesPerEvent: 2,
+  /** 더 무너질 곳이 없으면 매 라운드 킹이 받는 피해 (최대 HP 비율, 치명상 가능) — 끝나지 않는 판 방지 */
+  suddenDeathPct: 0.1,
 };
 
 /** 최후의 일격 ATK 배율 (D-015) */
@@ -37,6 +41,6 @@ export const LAST_STRIKE_MULT = 2;
 export const defaultRules = (width: number, height: number): BattleRules => {
   const small = Math.min(width, height) <= 6;
   return small
-    ? { strongholdRounds: [], collapseStart: 4, collapseInterval: 3, checkmate: false }
-    : { strongholdRounds: [3, 6, 9], collapseStart: 15, collapseInterval: 3, checkmate: true };
+    ? { strongholdRounds: [], collapseStart: 4, collapseInterval: 1, checkmate: false }
+    : { strongholdRounds: [3, 6, 9], collapseStart: 15, collapseInterval: 1, checkmate: true };
 };

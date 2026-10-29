@@ -3,7 +3,7 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
-import { findPiece, isMove, moveTypes, standingOf, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
+import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
 export const GRADE: Record<Standing, { color: number; name: string }> = {
@@ -141,7 +141,7 @@ class BoardScene extends Phaser.Scene {
     for (let y = 0; y < state.height; y++) {
       for (let x = 0; x < state.width; x++) {
         const w = this.world({ x, y });
-        const fallen = x < state.ring || y < state.ring || x >= state.width - state.ring || y >= state.height - state.ring;
+        const fallen = isFallen(state, x, y);
         if (fallen) {
           g.fillStyle(0x0b0a0e, 1).fillRect(w.x, w.y, t, t);
           g.lineStyle(1, C.crimson, 0.35).lineBetween(w.x + t * 0.2, w.y + t * 0.3, w.x + t * 0.55, w.y + t * 0.6).lineBetween(w.x + t * 0.55, w.y + t * 0.6, w.x + t * 0.8, w.y + t * 0.45);
@@ -149,6 +149,12 @@ class BoardScene extends Phaser.Scene {
           g.fillStyle((x + y) % 2 === 0 ? C.dark : C.light, 1).fillRect(w.x, w.y, t, t);
         }
       }
+    }
+    // 다음 라운드에 무너질 칸 예고: 붉은 금
+    for (const p of upcomingCollapse(state)) {
+      const w = this.world(p);
+      g.lineStyle(2, C.crimson, 0.9).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
+      g.lineStyle(2, C.crimson, 0.7).lineBetween(w.x + t * 0.2, w.y + t * 0.25, w.x + t * 0.5, w.y + t * 0.55).lineBetween(w.x + t * 0.5, w.y + t * 0.55, w.x + t * 0.75, w.y + t * 0.4).lineBetween(w.x + t * 0.5, w.y + t * 0.55, w.x + t * 0.45, w.y + t * 0.85);
     }
     const sh = state.stronghold;
     if (sh) {
@@ -468,9 +474,9 @@ class BoardScene extends Phaser.Scene {
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
     for (const e of events) {
       if (e.type === 'collapse') {
-        cur.ring = e.ring;
-        if (cur.stronghold && (cur.stronghold.x < e.ring || cur.stronghold.y < e.ring || cur.stronghold.x >= cur.width - e.ring || cur.stronghold.y >= cur.height - e.ring)) cur.stronghold = null;
-        this.announce('대성당이 무너집니다 — 테두리 붕괴');
+        cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
+        if (cur.stronghold && isFallen(cur, cur.stronghold.x, cur.stronghold.y)) cur.stronghold = null;
+        this.announce('대성당이 무너집니다 — 칸 한 쌍 붕괴');
         this.cameras.main.shake(300, 0.008);
         this.drawTiles(cur);
         await Promise.all(
@@ -484,6 +490,19 @@ class BoardScene extends Phaser.Scene {
           }),
         );
         await this.wait(250);
+        continue;
+      }
+      if (e.type === 'suddenDeath') {
+        this.announce('더 무너질 곳이 없다 — 대성당이 킹을 짓누릅니다');
+        this.cameras.main.shake(250, 0.006);
+        for (const h of e.hits) {
+          const sp = this.sprites.get(h.pieceId);
+          if (!sp) continue;
+          sp.piece = { ...sp.piece, hp: h.hpAfter };
+          this.drawHp(sp, h.hpAfter, h.hpAfter);
+          this.floatText(sp, `-${h.damage}`, '#FDE68A');
+        }
+        await this.wait(500);
         continue;
       }
       if (e.type === 'strongholdSpawn') {

@@ -16,7 +16,7 @@ import { board, sq } from './helpers';
 /** 두 진영 모두 패스하며 n번 턴을 넘긴다 */
 const passTurns = (s: BattleState, n: number) => {
   const events = [];
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n && s.winner === null; i++) {
     const r = resolveTurn(s, []);
     s = r.state;
     events.push(...r.events);
@@ -132,32 +132,45 @@ describe('요충지 (GDD 5장)', () => {
 });
 
 describe('붕괴하는 대성당 (D-014)', () => {
-  it('지정 라운드에 테두리가 무너지고, 그 위 기물은 피해를 입고 안쪽으로 밀린다', () => {
-    let s = board([['K', 0, 'a1'], ['P', 0, 'c3'], ['K', 1, 'f6']], 6, 6);
-    s.rules = { strongholdRounds: [], collapseStart: 2, collapseInterval: 3 };
+  it('지정 라운드에 모서리 칸 한 쌍(맞은편끼리)이 무너지고, 그 위 기물은 피해를 입고 안쪽으로 밀린다', () => {
+    let s = board([['K', 0, 'a1'], ['P', 0, 'c3'], ['K', 1, 'f5']], 6, 6);
+    s.rules = { strongholdRounds: [], collapseStart: 2, collapseInterval: 1 };
     const r = passTurns(s, 2); // 턴 3 = 라운드 2 플레이어 차례
     s = r.s;
-    expect(s.ring).toBe(1);
     const col = r.events.find((e) => e.type === 'collapse');
-    expect(col).toBeDefined();
+    expect(col && col.type === 'collapse' && col.tiles).toEqual([{ x: 0, y: 0 }, { x: 5, y: 5 }]);
+    expect(s.fallen).toHaveLength(2);
+    expect(inBounds(s, 0, 0)).toBe(false);
+    expect(inBounds(s, 5, 5)).toBe(false);
+    expect(inBounds(s, 1, 0)).toBe(true);
     const king = findPiece(s, 1)!;
     expect(inBounds(s, king.x, king.y)).toBe(true);
     expect(king.hp).toBe(100 - 15);
-    expect(inBounds(s, 0, 0)).toBe(false);
   });
 
   it('붕괴 피해로는 죽지 않는다', () => {
-    let s = board([['K', 0, 'a1', { hp: 3 }], ['K', 1, 'f6']], 6, 6);
-    s.rules = { strongholdRounds: [], collapseStart: 2, collapseInterval: 3 };
+    let s = board([['K', 0, 'a1', { hp: 3 }], ['K', 1, 'f5']], 6, 6);
+    s.rules = { strongholdRounds: [], collapseStart: 2, collapseInterval: 1 };
     s = passTurns(s, 2).s;
     expect(findPiece(s, 1)!.hp).toBe(1);
   });
 
-  it('유효 보드가 4보다 작아지면 더 무너지지 않는다', () => {
+  it('6×6은 바깥 테두리(20칸)만 무너지고, 그 뒤에는 킹이 짓눌려 판이 반드시 끝난다', () => {
     let s = board([['K', 0, 'c3'], ['K', 1, 'd4']], 6, 6);
     s.rules = { strongholdRounds: [], collapseStart: 1, collapseInterval: 1 };
-    s = passTurns(s, 10).s;
+    s = passTurns(s, 20).s; // 라운드 10까지: 10번 × 2칸
+    expect(s.fallen).toHaveLength(20);
     expect(s.ring).toBe(1);
+    const r = passTurns(s, 40);
+    expect(r.events.some((e) => e.type === 'suddenDeath')).toBe(true);
+    expect(r.s.winner).not.toBeNull();
+  });
+
+  it('끝줄이 무너지면 남은 보드의 끝에서 폰이 승급한다', () => {
+    const s = board([['P', 0, 'c4', { moved: true }], ['K', 0, 'a1'], ['K', 1, 'f5']], 6, 6);
+    s.fallen = [5 * 6 + 2, 5 * 6 + 3]; // c6, d6
+    const r = resolveTurn(s, [{ pieceId: 1, to: sq('c5') }]);
+    expect(findPiece(r.state, 1)?.type).toBe('Q');
   });
 });
 

@@ -1,8 +1,11 @@
 import type { BattleState, Piece, Pos, Side } from './types';
 
-/** 유효 보드 안인가. 붕괴로 무너진 테두리(ring)는 보드 밖으로 본다 (D-014). */
+/** 무너진 칸인가 (D-014) */
+export const isFallen = (s: BattleState, x: number, y: number): boolean => !!s.fallen?.length && s.fallen.includes(y * s.width + x);
+
+/** 유효 보드 안인가. 붕괴로 무너진 칸은 보드 밖으로 본다 (D-014). */
 export const inBounds = (s: BattleState, x: number, y: number): boolean =>
-  x >= s.ring && y >= s.ring && x < s.width - s.ring && y < s.height - s.ring;
+  x >= 0 && y >= 0 && x < s.width && y < s.height && !isFallen(s, x, y);
 
 /** 칸 → 기물 조회표. 상태가 바뀔 때마다 새로 만든다 (보드가 작아 비용이 무시할 만하다). */
 export type Grid = (Piece | undefined)[];
@@ -24,6 +27,7 @@ export const cloneState = (s: BattleState): BattleState => ({
   cards: [s.cards[0].map((c) => ({ ...c })), s.cards[1].map((c) => ({ ...c }))],
   lastStrike: [...s.lastStrike] as BattleState['lastStrike'],
   pieces: s.pieces.map((p) => ({ ...p })),
+  fallen: s.fallen ? [...s.fallen] : [],
 });
 
 export const findPiece = (s: BattleState, id: number): Piece | undefined =>

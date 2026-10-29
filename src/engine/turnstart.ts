@@ -1,10 +1,10 @@
 import { COLLAPSE, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
-import { availableAp } from './plan';
+import { applyPromotion, availableAp } from './plan';
 import { attackArea, ench, legalMoves } from './rules';
 import { battleScore, inferiority, kingHpRatio, standingOf, strongholdTerms } from './score';
-import type { BattleEvent, BattleState, Pos, Side } from './types';
+import { otherSide, type BattleEvent, type BattleState, type Pos, type Side } from './types';
 
 const rngFor = (s: BattleState) => new Rng((s.seed ^ Math.imul(s.turnNumber, 2654435761)) >>> 0);
 
@@ -12,11 +12,54 @@ const center = (s: BattleState): Pos => ({ x: (s.width - 1) / 2, y: (s.height - 
 
 // ---------- 붕괴하는 대성당 (D-014) ----------
 
-const canCollapse = (s: BattleState): boolean => Math.min(s.width, s.height) - 2 * (s.ring + 1) >= COLLAPSE.minSize;
+/**
+ * 다음에 무너질 칸 한 쌍: 바깥 테두리부터, 각 테두리 안에서는 모서리에 가까운 칸부터.
+ * 180° 회전한 맞은편 칸과 한 쌍으로 무너져 양 진영에 공평하다. 짧은 변이 minSize보다 작아지는 줄은 무너뜨리지 않는다.
+ */
+const nextCollapse = (s: BattleState): Pos[] => {
+  const fallen = new Set(s.fallen ?? []);
+  for (let k = 0; Math.min(s.width, s.height) - 2 * (k + 1) >= COLLAPSE.minSize; k++) {
+    const x0 = k;
+    const y0 = k;
+    const x1 = s.width - 1 - k;
+    const y1 = s.height - 1 - k;
+    const tiles: Pos[] = [];
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if ((x === x0 || x === x1 || y === y0 || y === y1) && !fallen.has(y * s.width + x)) tiles.push({ x, y });
+    if (!tiles.length) continue;
+    const cornerDist = (p: Pos) => Math.min(Math.abs(p.x - x0), Math.abs(p.x - x1)) + Math.min(Math.abs(p.y - y0), Math.abs(p.y - y1));
+    tiles.sort((a, b) => cornerDist(a) - cornerDist(b) || a.y * s.width + a.x - (b.y * s.width + b.x));
+    const first = tiles[0];
+    const twin = { x: s.width - 1 - first.x, y: s.height - 1 - first.y };
+    const out = [first];
+    if (!fallen.has(twin.y * s.width + twin.x) && (twin.x !== first.x || twin.y !== first.y)) out.push(twin);
+    return out.slice(0, COLLAPSE.tilesPerEvent);
+  }
+  return [];
+};
 
-/** 테두리 한 줄을 무너뜨리고, 그 위의 기물을 안쪽 가장 가까운 빈칸으로 밀어낸다. 치명상은 주지 않는다. */
-export const collapseRing = (s: BattleState, events: BattleEvent[]): void => {
-  s.ring += 1;
+/** 다음 라운드 시작에 무너질 칸 (화면 예고용). 붕괴가 아직 멀었으면 빈 배열 */
+export const upcomingCollapse = (s: BattleState): Pos[] => {
+  const start = s.rules.collapseStart;
+  if (start === null || roundOf(s) + 1 < start) return [];
+  return nextCollapse(s);
+};
+
+/** 완전히 무너진 테두리 줄 수 */
+const fullRings = (s: BattleState): number => {
+  let k = 0;
+  for (; k < Math.min(s.width, s.height) / 2; k++) {
+    for (let y = k; y < s.height - k; y++)
+      for (let x = k; x < s.width - k; x++) if ((x === k || x === s.width - 1 - k || y === k || y === s.height - 1 - k) && inBounds(s, x, y)) return k;
+  }
+  return k;
+};
+
+/** 칸 한 쌍을 무너뜨리고, 그 위의 기물을 가장 가까운 빈칸으로 밀어낸다. 치명상은 주지 않는다. 무너질 곳이 없으면 false */
+export const collapseStep = (s: BattleState, events: BattleEvent[]): boolean => {
+  const tiles = nextCollapse(s);
+  if (!tiles.length) return false;
+  s.fallen = [...(s.fallen ?? []), ...tiles.map((p) => p.y * s.width + p.x)];
+  s.ring = fullRings(s);
   const pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] = [];
   const outside = s.pieces.filter((p) => !inBounds(s, p.x, p.y)).sort((a, b) => a.id - b.id);
   for (const p of outside) {
@@ -24,9 +67,9 @@ export const collapseRing = (s: BattleState, events: BattleEvent[]): void => {
     const c = center(s);
     let best: Pos | null = null;
     let bestKey = Infinity;
-    for (let y = s.ring; y < s.height - s.ring; y++) {
-      for (let x = s.ring; x < s.width - s.ring; x++) {
-        if (grid[y * s.width + x]) continue;
+    for (let y = 0; y < s.height; y++) {
+      for (let x = 0; x < s.width; x++) {
+        if (!inBounds(s, x, y) || grid[y * s.width + x]) continue;
         const key = chebyshev(p, { x, y }) * 1000 + Math.abs(x - c.x) + Math.abs(y - c.y) + (y * s.width + x) / 1e4;
         if (key < bestKey) {
           bestKey = key;
@@ -43,11 +86,36 @@ export const collapseRing = (s: BattleState, events: BattleEvent[]): void => {
     }
     pushes.push({ pieceId: p.id, from, to: { x: p.x, y: p.y }, damage: Math.max(0, damage) });
   }
-  events.push({ type: 'collapse', ring: s.ring, pushes });
+  events.push({ type: 'collapse', ring: s.ring, tiles, pushes });
+  // 끝줄이 무너져 더 나아갈 수 없게 된 폰은 그 자리에서 승급한다
+  for (const p of s.pieces) {
+    const before = p.type;
+    if (applyPromotion(s, p)) events.push({ type: 'promote', pieceId: p.id, from: before, to: p.type });
+  }
   if (s.stronghold && !inBounds(s, s.stronghold.x, s.stronghold.y)) {
     s.stronghold = null;
     events.push({ type: 'strongholdLost' });
   }
+  return true;
+};
+
+/** 더 무너질 곳이 없으면 대성당이 킹을 짓누른다: HP 비율이 낮은 킹부터 최대 HP의 10% (치명상 가능) */
+const suddenDeath = (s: BattleState, events: BattleEvent[]): void => {
+  const kings = s.pieces.filter((p) => p.type === 'K').sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp || a.side - b.side);
+  const hits: { pieceId: number; damage: number; hpAfter: number }[] = [];
+  for (const k of kings) {
+    const damage = Math.max(1, Math.ceil(k.maxHp * COLLAPSE.suddenDeathPct));
+    k.hp = Math.max(0, k.hp - damage);
+    hits.push({ pieceId: k.id, damage, hpAfter: k.hp });
+    if (k.hp <= 0) {
+      s.pieces = s.pieces.filter((p) => p !== k);
+      s.winner = otherSide(k.side);
+      events.push({ type: 'suddenDeath', hits });
+      events.push({ type: 'gameOver', winner: s.winner });
+      return;
+    }
+  }
+  events.push({ type: 'suddenDeath', hits });
 };
 
 // ---------- 요충지 (GDD 5장) ----------
@@ -79,9 +147,9 @@ export const strongholdSpot = (s: BattleState): Pos | null => {
   const dist = (pos: Pos, list: Pos[]) => list.reduce((m, q) => Math.min(m, chebyshev(pos, q)), Infinity);
 
   const cands: { pos: Pos; key: number[] }[] = [];
-  for (let y = s.ring; y < s.height - s.ring; y++) {
-    for (let x = s.ring; x < s.width - s.ring; x++) {
-      if (grid[y * s.width + x]) continue;
+  for (let y = 0; y < s.height; y++) {
+    for (let x = 0; x < s.width; x++) {
+      if (!inBounds(s, x, y) || grid[y * s.width + x]) continue;
       const pos = { x, y };
       const dl = dist(pos, mine);
       const dw = dist(pos, theirs);
@@ -91,7 +159,7 @@ export const strongholdSpot = (s: BattleState): Pos | null => {
   }
   if (!cands.length) {
     const mid = Math.floor((s.height - 1) / 2);
-    for (let x = s.ring; x < s.width - s.ring; x++) if (!grid[mid * s.width + x]) cands.push({ pos: { x, y: mid }, key: [0, 0, 0, rng.next()] });
+    for (let x = 0; x < s.width; x++) if (inBounds(s, x, mid) && !grid[mid * s.width + x]) cands.push({ pos: { x, y: mid }, key: [0, 0, 0, rng.next()] });
   }
   if (!cands.length) return null;
   cands.sort((a, b) => {
@@ -155,8 +223,9 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
   if (s.turnSide === 0) {
     const round = roundOf(s);
     const { collapseStart, collapseInterval, strongholdRounds } = s.rules;
-    if (collapseStart !== null && round >= collapseStart && (round - collapseStart) % collapseInterval === 0 && canCollapse(s)) {
-      collapseRing(s, events);
+    if (collapseStart !== null && round >= collapseStart && (round - collapseStart) % collapseInterval === 0) {
+      if (!collapseStep(s, events)) suddenDeath(s, events);
+      if (s.winner !== null) return;
     }
     if (!s.stronghold && strongholdRounds.includes(round)) {
       const pos = strongholdSpot(s);

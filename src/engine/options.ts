@@ -1,5 +1,5 @@
 import { CARDS, type CardUse } from '../data/cards';
-import { buildGrid, chebyshev } from './board';
+import { buildGrid, chebyshev, inBounds } from './board';
 import { actedInPlan, checkPlan, simulate } from './plan';
 import { ench, legalMoves } from './rules';
 import type { BattleState, PlannedMove, Plan, PlanStep, Pos, Side, SpecialStep } from './types';
@@ -15,7 +15,7 @@ export const gateSquares = (v: BattleState, side: Side): Pos[] => {
   for (let y = 0; y < v.height; y++) {
     if (side === 0 ? y >= v.height / 2 : y < v.height / 2) continue;
     for (let x = 0; x < v.width; x++) {
-      if (v.ring > 0 && (x < v.ring || y < v.ring || x >= v.width - v.ring || y >= v.height - v.ring)) continue;
+      if (!inBounds(v, x, y)) continue;
       if (grid[y * v.width + x] === undefined) out.push({ x, y });
     }
   }

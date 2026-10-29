@@ -92,7 +92,10 @@ export interface BattleState {
   stronghold: Stronghold | null;
   strongholdsSpawned: number;
   /** 무너진 테두리 줄 수. 유효 보드 = [ring, width−1−ring] × [ring, height−1−ring] */
+  /** 완전히 무너진 테두리 줄 수 (표시용) */
   ring: number;
+  /** 무너진 칸 (y × width + x). 한 쌍씩 무너진다 (D-014 개정) */
+  fallen?: number[];
   /** 이번 턴에만 쓰는 추가 AP (진영별) */
   apBonus: [number, number];
   lastStrike: [LastStrike, LastStrike];
@@ -163,7 +166,9 @@ export type BattleEvent =
   | { type: 'strongholdSpawn'; pos: Pos; standings: [Standing, Standing] }
   | { type: 'strongholdCapture'; side: Side; pieceId: number; tier: 1 | 2 | 3; behind: boolean }
   | { type: 'strongholdLost' }
-  | { type: 'collapse'; ring: number; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] }
+  | { type: 'collapse'; ring: number; tiles: Pos[]; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] }
+  /** 더 무너질 곳이 없을 때 킹이 받는 피해 */
+  | { type: 'suddenDeath'; hits: { pieceId: number; damage: number; hpAfter: number }[] }
   | { type: 'card'; side: Side; card: CardId; pieceId: number }
   | { type: 'shield'; pieceId: number; amount: number }
   | { type: 'fuse'; pieceId: number; partnerId: number; types: PieceType[] }

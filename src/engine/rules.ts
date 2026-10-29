@@ -21,7 +21,16 @@ export const moveTypes = (piece: Piece): PieceType[] => (piece.formAs ? [piece.f
 
 /** 유효 보드 가장자리 칸인가 (E10) */
 export const onEdge = (s: BattleState, p: Pos): boolean =>
-  p.x === s.ring || p.y === s.ring || p.x === s.width - 1 - s.ring || p.y === s.height - 1 - s.ring;
+  !inBounds(s, p.x - 1, p.y) || !inBounds(s, p.x + 1, p.y) || !inBounds(s, p.x, p.y - 1) || !inBounds(s, p.x, p.y + 1);
+
+/** 그 줄에서 남아 있는 가장 왼쪽·오른쪽 칸 (E10 ★ 좌우 연결용) */
+const rowEnds = (s: BattleState, y: number): [number, number] => {
+  let lo = 0;
+  let hi = s.width - 1;
+  while (lo < s.width && !inBounds(s, lo, y)) lo++;
+  while (hi >= 0 && !inBounds(s, hi, y)) hi--;
+  return [lo, hi];
+};
 
 /**
  * 기물이 갈 수 있는 빈 칸 (GDD 2장 §2.2, §2.4).
@@ -113,8 +122,6 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
     if (p && p.side !== piece.side) addTarget(p);
   };
   const wrap = ench(s, piece.side, 'E10') >= 3;
-  const minX = s.ring;
-  const maxX = s.width - 1 - s.ring;
 
   for (const type of moveTypes(piece)) {
     switch (type) {
@@ -141,7 +148,10 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
           let allyPass = bishopLevel >= 1 ? 1 : 0;
           let steps = 0;
           while (steps++ < s.width * s.height) {
-            if (wrap && d.x !== 0 && (x < minX || x > maxX)) x = x < minX ? maxX : minX;
+            if (wrap && d.x !== 0 && y >= 0 && y < s.height && !inBounds(s, x, y)) {
+              const [minX, maxX] = rowEnds(s, y);
+              if (x < minX || x > maxX) x = x < minX ? maxX : minX;
+            }
             if (!inBounds(s, x, y) || (x === piece.x && y === piece.y)) break;
             addArea(x, y);
             const p = at(s, grid, x, y);

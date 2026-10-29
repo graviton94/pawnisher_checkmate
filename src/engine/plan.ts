@@ -32,9 +32,13 @@ export const moveCost = (s: BattleState, piece: Piece): number => {
   return Math.max(...types.map((t) => PIECE_STATS[t].ap));
 };
 
-/** 정통 체스 승급: 폰이 상대 끝줄에 닿으면 퀸. HP 비율은 유지한다 (GDD 2장 §2.6). */
+/**
+ * 정통 체스 승급: 폰이 상대 끝줄에 닿으면 퀸. HP 비율은 유지한다 (GDD 2장 §2.6).
+ * 붕괴로 끝줄이 무너졌으면 남은 보드의 끝(바로 앞 칸이 보드 밖)이 끝줄이다.
+ */
 export const applyPromotion = (s: BattleState, piece: Piece): boolean => {
-  if (piece.type !== 'P' || piece.fused || piece.y !== lastRank(s, piece.side)) return false;
+  if (piece.type !== 'P' || piece.fused) return false;
+  if (piece.y !== lastRank(s, piece.side) && inBounds(s, piece.x, piece.y + forward(piece.side))) return false;
   transform(piece, 'Q');
   return true;
 };
