@@ -4,3 +4,4 @@
 
 - `docs/ideation/` — 초기 아이디에이션 문서 (정본 아님)
 - `docs/DECISIONS.md` — Q&A로 확정된 결정 로그 (구현 기준)
+- `docs/gdd/` — 정본 기획서 (확정된 장만 구현 기준)
