@@ -1,4 +1,5 @@
-import { at, buildGrid, forward, inBounds, type Grid } from './board';
+import { STRONGHOLD } from '../data/battle';
+import { at, buildGrid, forward, inBounds, onStronghold, type Grid } from './board';
 import type { BattleState, Piece, PieceType, Pos } from './types';
 
 const ORTHO: Pos[] = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
@@ -32,7 +33,20 @@ export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
       for (const d of KNIGHT) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
       break;
     case 'K':
-      for (const d of ALL8) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
+      if (strikeReady(s, piece)) {
+        // 최후의 일격: 퀸처럼 끝까지 미끄러져 이동할 수 있다 (D-015)
+        for (const d of ALL8) {
+          let x = piece.x + d.x;
+          let y = piece.y + d.y;
+          while (empty(x, y)) {
+            out.push({ x, y });
+            x += d.x;
+            y += d.y;
+          }
+        }
+      } else {
+        for (const d of ALL8) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
+      }
       break;
     default:
       for (const d of SLIDE_DIRS[piece.type]!) {
@@ -124,6 +138,21 @@ export const attackArea = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
   return out;
 };
 
-/** 최종 피해량 = max(1, floor(ATK × 배율) − DEF) (GDD 3장 §3.2) */
-export const damageOf = (attacker: Piece, target: Piece, multiplier = 1): number =>
-  Math.max(1, Math.floor(attacker.atk * multiplier) - target.def);
+/** 이 킹이 최후의 일격을 쓸 수 있는가 */
+export const strikeReady = (s: BattleState, piece: Piece): boolean =>
+  piece.type === 'K' && s.lastStrike[piece.side] === 'ready';
+
+/** 이 이동이 최후의 일격인가 (킹 보통 이동 범위를 넘는 이동) */
+export const isStrikeMove = (s: BattleState, piece: Piece, to: Pos): boolean =>
+  strikeReady(s, piece) && Math.max(Math.abs(to.x - piece.x), Math.abs(to.y - piece.y)) > 1;
+
+/**
+ * 최종 피해량 (GDD 3장 §3.2).
+ * max(1, floor(ATK × (1 + 버프) × 배율) − (DEF + 버프)), 요충지 위의 대상은 그 뒤 엄폐 감소를 적용한다.
+ */
+export const damageOf = (s: BattleState, attacker: Piece, target: Piece, multiplier = 1): number => {
+  const atk = Math.floor(attacker.atk * (1 + attacker.buffAtkPct) * multiplier);
+  let dmg = Math.max(1, atk - (target.def + target.buffDef));
+  if (onStronghold(s, target)) dmg = Math.max(1, Math.floor(dmg * (1 - STRONGHOLD.coverReduction)));
+  return dmg;
+};

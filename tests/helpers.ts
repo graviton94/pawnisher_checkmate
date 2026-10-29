@@ -10,10 +10,17 @@ export const board = (specs: Spec[], width = 8, height = 8, turnSide: Side = 0):
   turnSide,
   turnNumber: 1,
   winner: null,
+  seed: 1,
+  rules: { strongholdRounds: [], collapseStart: null, collapseInterval: 3 },
+  stronghold: null,
+  strongholdsSpawned: 0,
+  ring: 0,
+  apBonus: [0, 0],
+  lastStrike: ['none', 'none'],
   pieces: specs.map(([type, side, sq, over], i) => {
     const st = PIECE_STATS[type];
     const { x, y } = fromSquare(sq);
-    return { id: i + 1, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false, ...over };
+    return { id: i + 1, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false, buffAtkPct: 0, buffDef: 0, buffTurns: 0, ...over };
   }),
 });
 

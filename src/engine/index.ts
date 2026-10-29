@@ -5,3 +5,5 @@ export * from './plan';
 export * from './resolve';
 export * from './setup';
 export { Rng } from './rng';
+export * from './score';
+export * from './turnstart';

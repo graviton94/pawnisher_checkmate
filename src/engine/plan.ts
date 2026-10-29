@@ -1,10 +1,11 @@
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { buildGrid, cloneState, findPiece, kingOf, lastRank, samePos } from './board';
-import { attackArea, attackTargets, damageOf, legalMoves } from './rules';
+import { LAST_STRIKE_MULT } from '../data/battle';
+import { attackArea, attackTargets, damageOf, isStrikeMove, legalMoves } from './rules';
 import { otherSide, type BattleEvent, type BattleState, type HitResult, type Piece, type Plan, type PlannedMove, type Pos } from './types';
 
-/** 이번 턴 가용 AP. 패시브·요충지 보너스는 이후 단계에서 더한다. */
-export const availableAp = (_s: BattleState): number => BASE_AP;
+/** 이번 턴 가용 AP = 기본 + 이번 턴 보너스(요충지 등). 패시브 보너스는 M4에서 더한다. */
+export const availableAp = (s: BattleState): number => BASE_AP + s.apBonus[s.turnSide];
 
 export const moveCost = (piece: Piece): number => PIECE_STATS[piece.type].ap;
 
@@ -29,13 +30,32 @@ export const applyMove = (s: BattleState, piece: Piece, to: Pos): void => {
   applyPromotion(s, piece);
 };
 
+/** 진영에 킹만 남았으면 최후의 일격을 준비시킨다 (D-015) */
+export const checkAwaken = (s: BattleState, events: BattleEvent[]): void => {
+  for (const side of [0, 1] as const) {
+    if (s.lastStrike[side] !== 'none') continue;
+    const mine = s.pieces.filter((p) => p.side === side);
+    if (mine.length === 1 && mine[0].type === 'K') {
+      s.lastStrike[side] = 'ready';
+      events.push({ type: 'awaken', side, pieceId: mine[0].id });
+    }
+  }
+};
+
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 파괴된 기물은 즉시 제거하고 승패를 확인한다. */
-const applyAttack = (s: BattleState, attacker: Piece, order: number, events: BattleEvent[], removed: Piece[]): void => {
+const applyAttack = (
+  s: BattleState,
+  attacker: Piece,
+  order: number,
+  events: BattleEvent[],
+  removed: Piece[],
+  multiplier = 1,
+): void => {
   const grid = buildGrid(s);
   const area = attackArea(s, attacker, grid);
   const targets = attackTargets(s, attacker, grid);
   const hits: HitResult[] = targets.map((t) => {
-    const damage = damageOf(attacker, t);
+    const damage = damageOf(s, attacker, t, multiplier);
     const shieldAbsorbed = Math.min(t.shield, damage);
     t.shield -= shieldAbsorbed;
     t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
@@ -45,10 +65,29 @@ const applyAttack = (s: BattleState, attacker: Piece, order: number, events: Bat
   if (!hits.some((h) => h.killed)) return;
   for (const p of s.pieces) if (p.hp <= 0) removed.push({ ...p });
   s.pieces = s.pieces.filter((p) => p.hp > 0);
+  if (s.stronghold && s.stronghold.holderId !== null && !findPiece(s, s.stronghold.holderId)) {
+    s.stronghold.holderId = null;
+    s.stronghold.hold = 0;
+  }
   const winner = !kingOf(s, otherSide(s.turnSide)) ? s.turnSide : !kingOf(s, s.turnSide) ? otherSide(s.turnSide) : null;
   if (winner !== null) {
     s.winner = winner;
     events.push({ type: 'gameOver', winner });
+    return;
+  }
+  checkAwaken(s, events);
+};
+
+/** 요충지에 올라섰거나 떠났을 때 점령 상태를 갱신한다 (GDD 5장 §5.4) */
+const updateHolder = (s: BattleState, piece: Piece): void => {
+  const sh = s.stronghold;
+  if (!sh) return;
+  if (piece.x === sh.x && piece.y === sh.y) {
+    sh.holderId = piece.id;
+    sh.hold = 0;
+  } else if (sh.holderId === piece.id) {
+    sh.holderId = null;
+    sh.hold = 0;
   }
 };
 
@@ -89,13 +128,19 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
 
     const from = { x: piece.x, y: piece.y };
     const before = piece.type;
+    const strike = isStrikeMove(s, piece, m.to);
     applyMove(s, piece, m.to);
+    updateHolder(s, piece);
     used.add(piece.id);
     apUsed += cost;
     events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...m.to } });
     if (piece.type !== before) events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
 
-    applyAttack(s, piece, order, events, removed);
+    if (strike) {
+      s.lastStrike[piece.side] = 'used';
+      events.push({ type: 'lastStrike', pieceId: piece.id });
+    }
+    applyAttack(s, piece, order, events, removed, strike ? LAST_STRIKE_MULT : 1);
   }
   return { ok: true, state: s, events, apUsed, removed };
 };

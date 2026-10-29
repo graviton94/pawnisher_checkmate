@@ -1,5 +1,6 @@
+import { defaultRules } from '../data/battle';
 import { PIECE_STATS } from '../data/pieces';
-import type { BattleState, Piece, PieceType, Side } from './types';
+import type { BattleRules, BattleState, Piece, PieceType, Side } from './types';
 
 /** 덱 = 보유 기물 유형 목록 (GDD 6장 §6.1) */
 export type Deck = PieceType[];
@@ -17,11 +18,14 @@ export interface BattleSetup {
   width: number;
   height: number;
   decks: [Deck, Deck];
+  /** 생략하면 보드 크기별 기본 규칙 (data/battle.ts) */
+  rules?: BattleRules;
+  seed?: number;
 }
 
 const makePiece = (id: number, type: PieceType, side: Side, x: number, y: number): Piece => {
   const st = PIECE_STATS[type];
-  return { id, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false };
+  return { id, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false, buffAtkPct: 0, buffDef: 0, buffTurns: 0 };
 };
 
 /** 덱을 정통 체스 배치 규칙으로 자기 진영 끝 두 줄에 놓는다. */
@@ -87,7 +91,7 @@ const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: (
   return out;
 };
 
-export const createBattle = ({ width, height, decks }: BattleSetup): BattleState => {
+export const createBattle = ({ width, height, decks, rules, seed }: BattleSetup): BattleState => {
   let id = 1;
   const nextId = () => id++;
   return {
@@ -97,5 +101,12 @@ export const createBattle = ({ width, height, decks }: BattleSetup): BattleState
     turnSide: 0,
     turnNumber: 1,
     winner: null,
+    seed: seed ?? 1,
+    rules: rules ?? defaultRules(width, height),
+    stronghold: null,
+    strongholdsSpawned: 0,
+    ring: 0,
+    apBonus: [0, 0],
+    lastStrike: ['none', 'none'],
   };
 };

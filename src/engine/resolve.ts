@@ -1,4 +1,5 @@
 import { simulate } from './plan';
+import { beginTurn, endTurn } from './turnstart';
 import { otherSide, type BattleEvent, type BattleState, type Plan } from './types';
 
 export interface TurnResult {
@@ -15,9 +16,12 @@ export const resolveTurn = (input: BattleState, plan: Plan): TurnResult => {
   const sim = simulate(input, plan);
   if (!sim.ok) throw new Error(`잘못된 계획: ${sim.reason}`);
   const s = sim.state;
+  const events = sim.events;
   if (s.winner === null) {
+    endTurn(s);
     s.turnSide = otherSide(s.turnSide);
     s.turnNumber += 1;
+    beginTurn(s, events);
   }
-  return { state: s, events: sim.events };
+  return { state: s, events };
 };

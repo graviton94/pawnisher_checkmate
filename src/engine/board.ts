@@ -1,7 +1,8 @@
 import type { BattleState, Piece, Pos, Side } from './types';
 
+/** 유효 보드 안인가. 붕괴로 무너진 테두리(ring)는 보드 밖으로 본다 (D-014). */
 export const inBounds = (s: BattleState, x: number, y: number): boolean =>
-  x >= 0 && y >= 0 && x < s.width && y < s.height;
+  x >= s.ring && y >= s.ring && x < s.width - s.ring && y < s.height - s.ring;
 
 /** 칸 → 기물 조회표. 상태가 바뀔 때마다 새로 만든다 (보드가 작아 비용이 무시할 만하다). */
 export type Grid = (Piece | undefined)[];
@@ -17,6 +18,9 @@ export const at = (s: BattleState, grid: Grid, x: number, y: number): Piece | un
 
 export const cloneState = (s: BattleState): BattleState => ({
   ...s,
+  stronghold: s.stronghold ? { ...s.stronghold } : null,
+  apBonus: [...s.apBonus] as [number, number],
+  lastStrike: [...s.lastStrike] as BattleState['lastStrike'],
   pieces: s.pieces.map((p) => ({ ...p })),
 });
 
@@ -41,3 +45,10 @@ export const fromSquare = (sq: string): Pos => ({
   x: sq.charCodeAt(0) - 97,
   y: parseInt(sq.slice(1), 10) - 1,
 });
+
+export const chebyshev = (a: Pos, b: Pos): number => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+
+export const roundOf = (s: BattleState): number => Math.ceil(s.turnNumber / 2);
+
+export const onStronghold = (s: BattleState, p: Pos): boolean =>
+  !!s.stronghold && s.stronghold.x === p.x && s.stronghold.y === p.y;

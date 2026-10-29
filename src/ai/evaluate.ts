@@ -1,6 +1,7 @@
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
-import { buildGrid, forward, kingOf } from '../engine/board';
-import { attackTargets, damageOf, legalMoves } from '../engine/rules';
+import { LAST_STRIKE_MULT } from '../data/battle';
+import { buildGrid, chebyshev, findPiece, forward, kingOf } from '../engine/board';
+import { attackTargets, damageOf, isStrikeMove, legalMoves } from '../engine/rules';
 import { otherSide, type BattleState, type Piece, type Side } from '../engine/types';
 
 /** 평가 가중치 묶음 = 군단 성향 (GDD 4장 §4.4) */
@@ -17,11 +18,13 @@ export interface Weights {
   advance: number;
   /** 폰 승급 잠재력 — 끝줄에 가까운 폰일수록 크게 (내 폰은 밀고, 상대 폰은 막는다) */
   promotion: number;
+  /** 요충지 점유·접근 (GDD 5장) */
+  stronghold: number;
 }
 
-export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5 };
-export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5 };
-export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5 };
+export const BALANCED: Weights = { enemyKing: 6, ownKing: 6, material: 2, threat: 1.2, advance: 0.6, promotion: 1.5, stronghold: 1 };
+export const AGGRESSIVE: Weights = { enemyKing: 9, ownKing: 5, material: 2, threat: 0.7, advance: 1, promotion: 1.5, stronghold: 0.6 };
+export const DEFENSIVE: Weights = { enemyKing: 5, ownKing: 8, material: 2.5, threat: 2, advance: 0.3, promotion: 1.5, stronghold: 1.4 };
 
 export const WIN_SCORE = 1_000_000;
 
@@ -48,7 +51,8 @@ export const threatEstimate = (s: BattleState, side: Side): number => {
     for (const to of legalMoves(s, p, grid)) {
       const ghost = { ...p, x: to.x, y: to.y };
       let worth = 0;
-      for (const t of attackTargets(s, ghost, grid)) worth += hitWorth(t, damageOf(ghost, t));
+      const mult = isStrikeMove(s, p, to) ? LAST_STRIKE_MULT : 1;
+      for (const t of attackTargets(s, ghost, grid)) worth += hitWorth(t, damageOf(s, ghost, t, mult));
       if (worth > best) best = worth;
     }
     if (best > 0) options.push({ worth: best, ap: PIECE_STATS[p.type].ap });
@@ -105,7 +109,19 @@ export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
     } else material -= v;
   }
 
+  // 요충지: 올라선 기물은 유지 카운트만큼, 그 외에는 가장 가까운 기물의 거리만큼
+  let stronghold = 0;
+  const sh = s.stronghold;
+  if (sh) {
+    const holder = sh.holderId !== null ? findPiece(s, sh.holderId) : undefined;
+    if (holder) stronghold += (holder.side === side ? 1 : -1) * 25 * (sh.hold + 1);
+    const near = (sd: Side) =>
+      s.pieces.filter((p) => p.side === sd && p.type !== 'K').reduce((m, p) => Math.min(m, chebyshev(p, sh)), 99);
+    stronghold += (near(enemy) - near(side)) * 2;
+  }
+
   return (
+    w.stronghold * stronghold +
     w.enemyKing * (1 - theirKing.hp / theirKing.maxHp) * 100 -
     w.ownKing * (1 - myKing.hp / myKing.maxHp) * 100 +
     w.material * material -
