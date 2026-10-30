@@ -137,6 +137,8 @@ export const enemyCount = (floor: number): number => {
 };
 /** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, Act 2 90%, Act 3·보스 100% (HP 기준).
  * 1~3층 적 킹은 특히 약하다 (도입 구간: 작은 덱으로 100 HP 킹을 끝내지 못해 킹 맞대결 동전 던지기가 되는 것을 막는다) */
+/** 킹 노출 완화 (D-077, Shotgun King류): 2·3막 일반·엘리트 군단 킹 HP 배율 — 노릴 만한 목표가 빨리 보이게. 군주(보스)는 그대로 */
+export const KING_EXPOSE = 0.85;
 export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
   if (actOf(floor) === 2) return { hp: 1, atk: 1 };
   if (actOf(floor) === 3) return { hp: 1, atk: 1 };

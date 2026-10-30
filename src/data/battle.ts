@@ -45,6 +45,18 @@ export const STALL = { grace: 3, rounds: 2 };
 /** 적 다음 수 미리보기 (D-076, Into the Breach식 의도 공개): 이 승천 단계 미만이면 적의 첫 수를 기본으로 보여 준다 */
 export const FORESIGHT_UNTIL_ASCENSION = 3;
 
+/**
+ * 연쇄 보너스 (D-077, 발라트로·페글식): 한 턴 안에서 앞 순번이 처치할 때마다 뒤 순번 공격 피해 +perKill (최대 cap번).
+ * 순차 공격이라 "누가 먼저 쳐서 길을 열고 누가 마무리하나"가 최선의 수 고민이 된다. 양 진영 같은 규칙.
+ */
+export const CHAIN = { perKill: 0.1, cap: 4 };
+
+/**
+ * 명예로운 항복 (D-077, GDD 12장 F4 수정): 적 킹이 왕관을 내려놓고 스스로 끝낸다. 가망 없는 끝판에서만 — 매 판 나오지 않게 좁게.
+ * 적에게 킹만 남았고 · 폭주(최후의 일격)를 이미 썼고 · 내 일반 기물이 minMine기 이상 남았을 때, 적 차례 시작에.
+ */
+export const RESIGN = { minMine: 3 };
+
 /** 최후의 일격 ATK 배율 (D-015) */
 export const LAST_STRIKE_MULT = 2;
 

@@ -41,3 +41,19 @@ describe('정체 압박 (GDD 12장 F1, D-072)', () => {
     expect(JSON.stringify(s)).toBe(snap);
   });
 });
+
+describe('명예로운 항복 (D-077)', () => {
+  it('적에게 킹만 남고 폭주를 썼고 내 일반 기물이 3기 이상이면, 적 차례가 시작될 때 항복한다', () => {
+    const s0 = board([['K', 0, 'a1'], ['R', 0, 'a2'], ['N', 0, 'b1'], ['P', 0, 'c2'], ['K', 1, 'h8']]);
+    s0.lastStrike = ['none', 'used'];
+    const r = resolveTurn(s0, []);
+    expect(r.state.winner).toBe(0);
+    expect(r.events.some((e) => e.type === 'resign')).toBe(true);
+  });
+
+  it('폭주를 아직 안 썼으면 항복하지 않는다 (역전수)', () => {
+    const s0 = board([['K', 0, 'a1'], ['R', 0, 'a2'], ['N', 0, 'b1'], ['P', 0, 'c2'], ['K', 1, 'h8']]);
+    s0.lastStrike = ['none', 'ready'];
+    expect(resolveTurn(s0, []).state.winner).toBeNull();
+  });
+});

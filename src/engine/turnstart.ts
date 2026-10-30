@@ -1,4 +1,4 @@
-import { COLLAPSE, STALL, STRONGHOLD } from '../data/battle';
+import { COLLAPSE, RESIGN, STALL, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
 import { applyPromotion, availableAp } from './plan';
@@ -216,6 +216,17 @@ const capture = (s: BattleState, side: Side, holderId: number, events: BattleEve
  * 라운드 시작(플레이어 턴)에는 붕괴·요충지 생성을, 매 턴에는 요충지 유지·점령을 확인한다.
  */
 export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
+  // 명예로운 항복 (D-077): 적(1) 차례가 시작될 때, 가망 없는 끝판이면 적 킹이 스스로 끝낸다
+  if (s.turnSide === 1 && s.lastStrike[1] === 'used') {
+    const theirs = s.pieces.filter((p) => p.side === 1);
+    const mine = s.pieces.filter((p) => p.side === 0 && p.type !== 'K').length;
+    if (theirs.length === 1 && theirs[0].type === 'K' && mine >= RESIGN.minMine) {
+      events.push({ type: 'resign', side: 1, pieceId: theirs[0].id });
+      s.winner = 0;
+      events.push({ type: 'gameOver', winner: 0 });
+      return;
+    }
+  }
   // 이월된 AP (마공학 축전기 2장 · 연쇄 지휘 체계 2장)
   const side = s.turnSide;
   if (s.apCarry[side] > 0) {

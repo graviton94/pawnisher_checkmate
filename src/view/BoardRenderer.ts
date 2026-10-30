@@ -137,12 +137,13 @@ class BoardScene extends Phaser.Scene {
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
     this.load.image(boardKey('sword'), 'ui/icons/sword.png');
+    this.load.image(boardKey('king-crown'), 'ui/hud/king-crown.png');
   }
 
   create(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
-    for (const n of [...BOARD_IMAGES, 'skull', 'sword']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const n of [...BOARD_IMAGES, 'skull', 'sword', 'king-crown']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0.1);
@@ -312,7 +313,13 @@ class BoardScene extends Phaser.Scene {
       marks.push(img);
     });
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
+    // 주인공 킹 = 왕관을 쓴 아홉째 폰 (D-077, 사용자 시안 — 반듯이): 흰 폰 그림 + 머리 위 왕관
+    const hero = p.side === 0 && (p.formAs ?? p.type) === 'K';
+    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(hero ? 'P' : (p.formAs ?? p.type), p.side)).setDisplaySize(t * 0.82, t * 0.82);
+    if (hero) {
+      const k = (t * 0.82) / 86; // 폰 그림 1px의 화면 크기 (그림 86px = 칸의 0.82)
+      marks.push(this.add.image(t / 2, t * 0.02 + 9 * k, boardKey('king-crown')).setOrigin(0.5, 1).setDisplaySize(54 * k, 44 * k));
+    }
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -739,6 +746,19 @@ class BoardScene extends Phaser.Scene {
           this.floatText(sp, `-${h.damage}`, '#FDE68A');
         }
         await this.wait(500);
+        continue;
+      }
+      if (e.type === 'resign') {
+        // 명예로운 항복 (D-077): 적 킹이 왕관을 내려놓고 재가 되어 물러난다
+        this.announce(`${e.side === 1 ? '적' : '내'} 킹이 왕관을 내려놓습니다 — 명예로운 항복`);
+        const k = this.sprites.get(e.pieceId);
+        if (k) {
+          await this.tween({ targets: k.root, alpha: { from: 1, to: 0.6 }, duration: 300, yoyo: true });
+          const ash = this.playCrumble(k);
+          k.root.destroy();
+          this.sprites.delete(e.pieceId);
+          await ash;
+        }
         continue;
       }
       if (e.type === 'stall') {

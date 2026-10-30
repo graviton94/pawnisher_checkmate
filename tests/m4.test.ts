@@ -266,6 +266,6 @@ describe('곱연산 시너지 인챈트 (D-026)', () => {
     const s = equip(board([['R', 0, 'a1'], ['B', 0, 'f1'], ['P', 1, 'a5', { hp: 1 }], ['R', 1, 'd3'], ['K', 0, 'h1'], ['K', 1, 'h8']]), 0, { E15: 3 });
     const r = resolveTurn(s, [{ pieceId: 1, to: sq('a4') }, { pieceId: 2, to: sq('e2') }]);
     const second = r.events.find((e) => e.type === 'attack' && e.order === 1);
-    expect(second && second.type === 'attack' && second.mult).toBe(1.5);
+    expect(second && second.type === 'attack' && second.mult).toBe(1.65); // E15 ×1.5 · 기본 연쇄 ×1.1 (D-077)
   });
 });

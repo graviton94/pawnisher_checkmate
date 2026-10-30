@@ -1,4 +1,4 @@
-import { LAST_STRIKE_MULT } from '../data/battle';
+import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, type CardUse } from '../data/cards';
 import { SYNERGY } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
@@ -202,6 +202,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   if (lv('E13') && types.includes('N')) mult *= 1 + ctx.knightAttacks * SYNERGY.E13[lv('E13') - 1];
   if (lv('E14') && types.includes('B')) mult *= 1 + Math.max(0, own('B') - (attacker.type === 'B' ? 1 : 0)) * SYNERGY.E14[lv('E14') - 1];
   if (lv('E15') && ctx.kills > 0) mult *= SYNERGY.E15[lv('E15') - 1] ** ctx.kills;
+  // 연쇄 보너스 (D-077): 이번 턴 앞 순번 처치 수만큼 (모두에게, 연쇄 처형 인챈트와 따로 곱)
+  if (ctx.kills > 0) mult *= 1 + Math.min(ctx.kills, CHAIN.cap) * CHAIN.perKill;
   if (types.includes('N')) ctx.knightAttacks += 1;
 
   // 전술적 사선 개척 (E09): 이번 턴 비켜 준 아군 덕에 열린 사선으로 치면 보너스

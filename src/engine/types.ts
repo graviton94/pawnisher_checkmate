@@ -166,6 +166,8 @@ export type BattleEvent =
   | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number }
   | { type: 'gameOver'; winner: Side }
   | { type: 'lastStrike'; pieceId: number }
+  /** 명예로운 항복: 그 진영 킹이 왕관을 내려놓았다 (D-077) */
+  | { type: 'resign'; side: Side; pieceId: number }
   | { type: 'awaken'; side: Side; pieceId: number }
   | { type: 'strongholdSpawn'; pos: Pos; standings: [Standing, Standing] }
   /** 정체 압박: 피해 없는 라운드가 count번 이어졌다 (need번이면 붕괴 시작) */

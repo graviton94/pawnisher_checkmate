@@ -1,5 +1,5 @@
 import { ENCHANTS, type EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, FINAL_BOSS, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, ELITE_BONUS, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
@@ -123,7 +123,8 @@ export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): Bat
   // 적 다음 수 미리보기: 낮은 승천에서만 기본 제공 (D-076)
   s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION ? 1 : 0 };
   const scale = enemyKingScale(e.floor);
-  const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0));
+  const expose = actOf(e.floor) >= 2 && e.kind !== 'boss' ? KING_EXPOSE : 1; // D-077
+  const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0)) * expose;
   for (const p of s.pieces) {
     if (p.side !== 1 || p.type !== 'K') continue;
     p.maxHp = p.hp = Math.round(p.maxHp * hpScale);
