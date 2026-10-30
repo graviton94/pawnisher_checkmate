@@ -625,7 +625,7 @@ const renderGallery = () => {
       if (!kc) return;
       kgC.save();
       kgC.imageSmoothingEnabled = deg !== 0;
-      kgC.translate(ox + 40, 40 + 4.5 * S); // 왕관 아랫단이 폰 머리 위쪽을 살짝 덮는다
+      kgC.translate(ox + 40, 40 + 3.5 * S); // 왕관 아랫단 검정 선이 폰 머리 꼭대기 흰 테두리에 얹힌다 (눌러쓰지 않음)
       kgC.rotate((deg * Math.PI) / 180);
       kgC.drawImage(kc, -kc.width / 2, -kc.height);
       kgC.restore();

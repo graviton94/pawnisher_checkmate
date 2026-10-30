@@ -233,7 +233,7 @@ for y, row in enumerate(CROWN_ART):
             crown.putpixel((x, y), CROWN_COLORS[ch] + (255,))
 save(grow_rim(crown), 'public/ui/hud/paper-crown.png')
 
-# 킹 왕관 (D-074, 사용자 시안): 뾰족 셋(가운데가 높다) + 몸통 + 어두운 띠. 폰 머리 폭(몸통 7도트). 아래쪽 흰 테두리는 빼서
+# 킹 왕관 (D-074, 사용자 시안): 뾰족 셋(가운데가 높다) + 몸통 + 어두운 띠. 몸통 7×4 (예전 7×5보다 낮게) — 머리 위에 얹는다(눌러쓰지 않음). 아래쪽 흰 테두리는 빼서
 # 폰 머리에 얹으면 검정 선이 바로 머리에 닿는다 (두 그림의 테두리가 하나로 이어진다)
 C['G'] = (0xF7, 0xC9, 0x48)
 C['g'] = (0xD9, 0x9A, 0x1E)
@@ -241,7 +241,6 @@ KING_CROWN = [
     '...G...',
     'G.GGG.G',
     'GGGGGGG',
-    'GGGGGGg',
     'ggggggg',
 ]
 kc = outline(art(KING_CROWN))
