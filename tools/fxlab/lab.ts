@@ -366,7 +366,7 @@ const play = () => {
         popups.push({
           x: c.x,
           y: x.l.y + T * 0.3,
-          art: buildPopupArt(`-${dealt}`, x.h.killed ? 0xfacc15 : x.l.p.side === 0 ? 0xff6b6b : 0xf4f1ea, !!x.h.killed),
+          art: buildPopupArt(`-${dealt}`, x.h.killed ? 0xfacc15 : x.l.p.side === 0 ? 0xff6b6b : 0xf4f1ea),
           at: ms,
         });
         if (x.h.killed) {
@@ -458,7 +458,7 @@ const renderGallery = () => {
       items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
-      items += item('피해 숫자 · 처치 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
+      items += item('피해 숫자 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
     } else {
       for (const e of GALLERY.filter((x) => x.dir === g)) {
         if (/^badge-[ae][2-8]$/.test(e.name)) continue;
@@ -540,8 +540,8 @@ const renderGallery = () => {
     const dt = (now % 1400) - 300;
     if (dt < 0) for (const c of dtCells) dtPen.px(c.x + 2, c.y + 2, c.c, 1);
     else drawCrumble(dtPen, dtCells, dt);
-    // 피해 숫자 견본: 적 피격(흰) · 내 기물 피격(붉음) · 처치(금 + 해골)를 번갈아
-    if (!ppArts.length && document.fonts.check('700 12px Galmuri11')) ppArts = [buildPopupArt('-3', 0xf4f1ea, false), buildPopupArt('-2', 0xff6b6b, false), buildPopupArt('-5', 0xfacc15, true)];
+    // 피해 숫자 견본: 적 피격(흰) · 내 기물 피격(붉음) · 처치(금)를 번갈아
+    if (!ppArts.length && document.fonts.check('700 12px Galmuri11')) ppArts = [buildPopupArt('-3', 0xf4f1ea), buildPopupArt('-2', 0xff6b6b), buildPopupArt('-5', 0xfacc15)];
     ppC.clearRect(0, 0, 200, 120);
     if (ppArts.length) drawPopup(ppSink, ppArts[Math.floor(now / 1300) % 3], 100, 100, S, (now % 1300) - 150, 30);
     requestAnimationFrame(loop);

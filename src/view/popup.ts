@@ -1,8 +1,8 @@
 import { easeInCubic, type RectSink } from './pixel';
 
 /**
- * 피해 숫자 팝업 (D-051): 숫자와 처치 해골을 한 장의 도트 그림으로 만들어 같은 검정 테두리를 두른다.
- * 숫자는 갈무리11 굵게 12px(숫자 높이 10도트, 획 2도트)를 도트로 찍고, 해골도 같은 높이·같은 굵기로 맞춘다.
+ * 피해 숫자 팝업 (D-051): 숫자를 도트 그림으로 만들어 검정 테두리를 두른다 (처치 해골은 붙이지 않는다 — D-053, 처치는 금색으로).
+ * 숫자는 갈무리11 굵게 12px(숫자 높이 10도트, 획 2도트)를 도트로 찍는다.
  * 사라질 때는 아래에서 위로 잘리는 선이 올라가며 도트가 파스스 지워진다.
  */
 
@@ -25,27 +25,12 @@ export const POPUP_FONT = '700 12px Galmuri11';
 /** 팝업 박자 (ms): 전체 길이 · 지워지기 시작하는 때 · 지워지는 시간 */
 export const POPUP_MS = { life: 950, fadeAt: 640, fade: 260 };
 
-/** 처치 해골: 숫자와 같은 높이 10도트, 같은 2도트 획 (좌우 대칭) */
-const SKULL = [
-  '..#####..',
-  '.#######.',
-  '#########',
-  '##..#..##',
-  '##..#..##',
-  '#########',
-  '####.####',
-  '.#######.',
-  '..#####..',
-  '..#.#.#..',
-];
-
 const INK = 0x0b0b0e;
 
 /**
- * 글자(+ 해골)를 도트 그림으로. 글자는 캔버스에 1px = 1도트로 그린 뒤 문턱값으로 자르고,
- * 바깥에 8방향 1도트 검정 테두리를 두른다 (숫자와 해골이 테두리를 함께 쓴다).
+ * 글자를 도트 그림으로. 캔버스에 1px = 1도트로 그린 뒤 문턱값으로 자르고, 바깥에 8방향 1도트 검정 테두리를 두른다.
  */
-export const buildPopupArt = (text: string, color: number, skull: boolean, skullColor = 0xfacc15): PopupArt => {
+export const buildPopupArt = (text: string, color: number): PopupArt => {
   const W = text.length * 9 + 16;
   const H = 14;
   const cv = document.createElement('canvas');
@@ -58,19 +43,11 @@ export const buildPopupArt = (text: string, color: number, skull: boolean, skull
   g.fillText(text, 1, 1);
   const a = g.getImageData(0, 0, W, H).data;
   const grid = new Map<string, number>();
-  let right = 0;
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++)
       if (a[(y * W + x) * 4 + 3] > 128) {
         grid.set(`${x},${y}`, color);
-        right = Math.max(right, x);
       }
-  let top = H;
-  for (const k of grid.keys()) top = Math.min(top, +k.split(',')[1]);
-  if (skull) {
-    const sx = right + 3; // 숫자와 2도트 띄움
-    SKULL.forEach((row, j) => [...row].forEach((ch, i) => ch === '#' && grid.set(`${sx + i},${top + j}`, skullColor)));
-  }
   // 8방향 1도트 검정 테두리
   const ring = new Set<string>();
   for (const k of grid.keys()) {
