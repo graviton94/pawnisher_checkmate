@@ -3,8 +3,11 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
-import { MOVE_TOTAL, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, playHitSpark, playShatter, type Pose } from './attackFx';
+import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, playHitSpark, type CrumbleCell, type Pose } from './attackFx';
+import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
+import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
+import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
@@ -43,12 +46,18 @@ export interface BoardInput {
   longPressEnd(): void;
 }
 
-/** 기기 종류별 타일 크기 (CSS px = dp). GDD 9장 §9.2: 모바일 약 48dp(128 기기px), PC는 화면 높이에 맞춘 정수배 */
-const tileSize = (): number => {
-  if (window.matchMedia('(pointer: coarse)').matches) return 48;
-  const h = window.innerHeight;
-  return h >= 1000 ? 96 : h >= 760 ? 72 : 56;
+/**
+ * 기기 종류별 타일 크기 (CSS px = dp). GDD 9장 §9.2: 모바일 약 48dp, PC는 화면 높이에 맞춘 크기.
+ * 판 그림은 칸 = 20도트라, 기기 픽셀로 한 도트가 정수 px가 되게 올림한다 (도트 굵기가 고르게 — D-071).
+ */
+const tileSize = (dpr: number): number => {
+  const want = window.matchMedia('(pointer: coarse)').matches ? 48 : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
+  return (Math.ceil((want * dpr) / BOARD_DOTS) * BOARD_DOTS) / dpr;
 };
+
+/** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const boardKey = (name: string) => `ui-${name}`;
 
 /** 예약 하나를 그릴 화살표 (이동·순간이동·캐슬링) */
 const stepArrows = (s: BattleState, step: PlanStep): { piece: Piece; from: Pos; to: Pos; knight: boolean }[] => {
@@ -80,6 +89,15 @@ interface PieceSprite {
   piece: Piece;
 }
 
+/** 매 프레임 다시 찍는 판 표식 (흐르는 화살표 · 철컥 도는 과녁 · 위협 깜빡임 · 잃을 HP 반짝임) */
+interface AnimMarks {
+  arrows: { a: { x: number; y: number }; b: { x: number; y: number }; knight: boolean; color: number; alpha: number }[];
+  gears: { x: number; y: number; kind: 'ally' | 'kill' }[];
+  threat: { x: number; y: number }[];
+  glints: { s: PieceSprite; hp: number; after: number }[];
+}
+const noMarks = (): AnimMarks => ({ arrows: [], gears: [], threat: [], glints: [] });
+
 class BoardScene extends Phaser.Scene {
   input2!: BoardInput;
   tile = 48;
@@ -89,6 +107,13 @@ class BoardScene extends Phaser.Scene {
   private marksG!: Phaser.GameObjects.Graphics;
   private arrowsG!: Phaser.GameObjects.Graphics;
   private fxG!: Phaser.GameObjects.Graphics;
+  /** 판 칸 그림 (기물 아래) · 요충지 깃발·눈금 (기물 위) */
+  private tilesC!: Phaser.GameObjects.Container;
+  private boardTopC!: Phaser.GameObjects.Container;
+  /** 매 프레임 그리는 표식: 기물 아래(화살표·과녁·위협) / 기물 위(잃을 HP 반짝임) */
+  private animG!: Phaser.GameObjects.Graphics;
+  private animTopG!: Phaser.GameObjects.Graphics;
+  private anim: AnimMarks = noMarks();
   private dynamic: Phaser.GameObjects.GameObject[] = [];
   private sprites = new Map<number, PieceSprite>();
   ready!: () => void;
@@ -102,16 +127,23 @@ class BoardScene extends Phaser.Scene {
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
+    for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
+    this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
   }
 
   create(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
-    this.tilesG = this.add.graphics().setDepth(0);
+    this.tilesG = this.add.graphics().setDepth(0.1);
+    this.tilesC = this.add.container(0, 0).setDepth(0);
     this.marksG = this.add.graphics().setDepth(1);
-    this.arrowsG = this.add.graphics().setDepth(3);
+    this.animG = this.add.graphics().setDepth(1.5);
+    this.arrowsG = this.add.graphics().setDepth(1.6);
+    this.boardTopC = this.add.container(0, 0).setDepth(4.5);
+    this.animTopG = this.add.graphics().setDepth(4.6);
     this.fxG = this.add.graphics().setDepth(6);
     this.bindInput();
     this.scale.on('resize', (size: Phaser.Structs.Size) => {
@@ -119,6 +151,29 @@ class BoardScene extends Phaser.Scene {
       this.fitCamera();
     });
     this.ready();
+  }
+
+  /** 매 프레임: 흐르는 화살표 · 철컥 도는 과녁 · 위협 깜빡임 · 잃을 HP 반짝임 */
+  update(time: number): void {
+    const g = this.animG;
+    const top = this.animTopG;
+    g.clear();
+    top.clear();
+    const t = this.tile;
+    const pen = new PixelPen(g, t / BOARD_DOTS);
+    const ms = this.calm ? 0 : time;
+    if (this.anim.threat.length) {
+      // 위협: 반투명 붉은 칸이 천천히 깜빡인다 (D-045)
+      const a = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(time / 260));
+      for (const w of this.anim.threat) g.fillStyle(C.crimson, a).fillRect(w.x, w.y, t, t);
+    }
+    for (const r of this.anim.gears) drawGearTarget(pen, r.x + t / 2 + pen.dot / 2, r.y + t / 2 + pen.dot / 2, r.kind, ms);
+    for (const r of this.anim.arrows) drawArrow(pen, r.a, r.b, r.knight, r.color, ms, r.alpha);
+    const tp = new PixelPen(top, t / BOARD_DOTS);
+    for (const r of this.anim.glints) {
+      if (!r.s.root.active) continue;
+      drawGauge(tp, r.s.root.x + 3 * tp.dot, r.s.root.y + 16 * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms);
+    }
   }
 
   // ---------- 좌표 ----------
@@ -138,61 +193,46 @@ class BoardScene extends Phaser.Scene {
   // ---------- 보드 ----------
   setupBoard(state: BattleState): void {
     this.state = state;
-    this.tile = tileSize();
+    this.tile = tileSize(this.dpr);
     this.drawTiles(state);
     this.fitCamera(true);
   }
 
-  /** 타일 · 무너진 테두리 · 요충지 */
+  /** 판 칸 · 무너진 칸 · 붕락 균열 · 요충지 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
   drawTiles(state: BattleState): void {
     const t = this.tile;
-    const g = this.tilesG;
-    g.clear();
-    for (let y = 0; y < state.height; y++) {
+    const d = t / BOARD_DOTS;
+    this.tilesG.clear();
+    this.tilesC.removeAll(true);
+    this.boardTopC.removeAll(true);
+    const put = (c: Phaser.GameObjects.Container, name: string, x: number, y: number) =>
+      c.add(this.add.image(x, y, boardKey(name)).setOrigin(0, 0).setDisplaySize(t, t));
+    for (let y = 0; y < state.height; y++)
       for (let x = 0; x < state.width; x++) {
         const w = this.world({ x, y });
-        const fallen = isFallen(state, x, y);
-        if (fallen) {
-          g.fillStyle(0x0b0a0e, 1).fillRect(w.x, w.y, t, t);
-          g.lineStyle(1, C.crimson, 0.35).lineBetween(w.x + t * 0.2, w.y + t * 0.3, w.x + t * 0.55, w.y + t * 0.6).lineBetween(w.x + t * 0.55, w.y + t * 0.6, w.x + t * 0.8, w.y + t * 0.45);
-        } else {
-          g.fillStyle((x + y) % 2 === 0 ? C.dark : C.light, 1).fillRect(w.x, w.y, t, t);
-          // 도트 느낌의 1픽셀 윗면 빛·아랫면 그늘
-          const px = Math.max(1, Math.round(t / 24));
-          g.fillStyle(0xffffff, 0.06).fillRect(w.x, w.y, t, px);
-          g.fillStyle(0x000000, 0.18).fillRect(w.x, w.y + t - px, t, px);
-        }
+        put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? 'tile-dark' : 'tile-light', w.x, w.y);
       }
-    }
-    // 다음 라운드에 무너질 칸 예고: 붉은 금
+    // 다음 라운드에 무너질 칸 예고: 철판에 간 금 (D-045)
     for (const p of upcomingCollapse(state)) {
       const w = this.world(p);
-      g.lineStyle(2, C.crimson, 0.9).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
-      g.lineStyle(2, C.crimson, 0.7).lineBetween(w.x + t * 0.2, w.y + t * 0.25, w.x + t * 0.5, w.y + t * 0.55).lineBetween(w.x + t * 0.5, w.y + t * 0.55, w.x + t * 0.75, w.y + t * 0.4).lineBetween(w.x + t * 0.5, w.y + t * 0.55, w.x + t * 0.45, w.y + t * 0.85);
+      put(this.tilesC, 'crack', w.x, w.y);
     }
+    // 요충지 (D-068·D-069): 점선 테두리는 기물 아래, 깃발·점거 눈금은 기물 위. 빈 = 흰, 내가 점거 = 청록, 적 = 진홍
     const sh = state.stronghold;
     if (sh) {
       const w = this.world(sh);
-      const c = { x: w.x + t / 2, y: w.y + t / 2 };
-      // 색 = 플레이어 기준 등급. 점은 지금 보유 진영(없으면 플레이어)이 버텨야 하는 상대 턴 수
-      const grade = GRADE[standingOf(state, 0)].color;
       const holder = sh.holderId !== null ? findPiece(state, sh.holderId) : undefined;
-      const need = STRONGHOLD.terms[standingOf(state, holder ? holder.side : 0)].hold;
-      g.fillStyle(grade, 0.28).fillRect(w.x, w.y, t, t);
-      g.lineStyle(Math.max(2, t * 0.06), grade, 1).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
-      // 톱니 모양 링
-      g.lineStyle(Math.max(2, t * 0.05), grade, 0.9).strokeCircle(c.x, c.y, t * 0.3);
-      for (let i = 0; i < 8; i++) {
-        const a = (Math.PI / 4) * i;
-        g.lineBetween(c.x + Math.cos(a) * t * 0.3, c.y + Math.sin(a) * t * 0.3, c.x + Math.cos(a) * t * 0.4, c.y + Math.sin(a) * t * 0.4);
-      }
-      // 유지 진행 / 필요 턴
-      const step = t * 0.2;
-      const x0 = w.x + t / 2 - ((need - 1) * step) / 2;
-      for (let i = 0; i < need; i++) {
-        const filled = i < sh.hold;
-        g.fillStyle(filled ? grade : C.ink, 1).fillCircle(x0 + i * step, w.y + t * 0.12, t * 0.06);
-        g.lineStyle(1, grade, 1).strokeCircle(x0 + i * step, w.y + t * 0.12, t * 0.06);
+      const name = holder ? (holder.side === 0 ? 'stronghold-ally' : 'stronghold-enemy') : 'stronghold';
+      put(this.tilesC, name, w.x, w.y);
+      put(this.boardTopC, `${name}-flag`, w.x, w.y);
+      if (holder) {
+        // 점거 눈금: 버텨야 하는 상대 턴 수만큼, 칸 오른쪽 위 (아래는 HP 게이지 자리)
+        const need = STRONGHOLD.terms[standingOf(state, holder.side)].hold;
+        const g = this.add.graphics();
+        const x0 = w.x + (19 - 3 * need) * d;
+        g.fillStyle(0x0b0b0e, 1).fillRect(x0 - d, w.y + 2 * d, (3 * need + 1) * d, 4 * d);
+        for (let i = 0; i < need; i++) g.fillStyle(i < sh.hold ? (holder.side === 0 ? C.cyan : C.crimson) : C.dark, 1).fillRect(x0 + i * 3 * d, w.y + 3 * d, 2 * d, 2 * d);
+        this.boardTopC.add(g);
       }
     }
   }
@@ -227,21 +267,13 @@ class BoardScene extends Phaser.Scene {
     const t = this.tile;
     const w = this.world(pos);
     const root = this.add.container(w.x, w.y).setDepth(2 + pos.y * -0.001 + 0.5);
+    // 발밑 받침은 쓰지 않는다 (D-048) — 진영은 흰/검은 기물 + HP 게이지 색
     const base = this.add.graphics();
-    if (p.side === 0) {
-      base.lineStyle(Math.max(2, t * 0.045), C.cyan, 1).strokeEllipse(t / 2, t * 0.8, t * 0.62, t * 0.2);
-    } else {
-      const s = t * 0.13;
-      base.lineStyle(Math.max(2, t * 0.045), C.crimson, 1);
-      base.strokePoints([{ x: t / 2, y: t * 0.8 - s }, { x: t / 2 + s, y: t * 0.8 }, { x: t / 2, y: t * 0.8 + s }, { x: t / 2 - s, y: t * 0.8 }], true);
-    }
-    if (p.type === 'K' && this.state?.lastStrike?.[p.side] === 'ready') {
-      base.lineStyle(Math.max(2, t * 0.05), C.brass, 1).strokeCircle(t / 2, t * 0.45, t * 0.44);
-    }
-    // 체크: HP 1로 버틴 킹 — 다음에 맞으면 끝 (D-022)
-    if (p.type === 'K' && p.hp === 1 && this.state?.rules.checkmate) {
-      base.lineStyle(Math.max(2, t * 0.05), C.crimson, 1).strokeCircle(t / 2, t * 0.45, t * 0.47);
-    }
+    const pen = new PixelPen(base, t / BOARD_DOTS);
+    if (p.type === 'K' && this.state?.lastStrike?.[p.side] === 'ready') pen.ring(t / 2, t * 0.45, t * 0.44, C.brass, 1);
+    const rings: Phaser.GameObjects.GameObject[] = [];
+    // 체크: HP 1로 버틴 킹 — 다음에 맞으면 끝 (D-022). 위 가운데가 터진 붉은 톱니 고리
+    if (p.type === 'K' && p.hp === 1 && this.state?.rules.checkmate) rings.push(this.add.image(t / 2, t / 2, boardKey('check')).setDisplaySize((t * 21) / 20, (t * 21) / 20));
     if (p.buffTurns > 0) base.fillStyle(C.brass, 1).fillTriangle(t * 0.86, t * 0.2, t * 0.78, t * 0.32, t * 0.94, t * 0.32);
     // 인챈트 표식: 왼쪽 위 황동 점 (장 수), ★ 각성
     const lo = this.state?.loadouts?.[p.side];
@@ -274,28 +306,25 @@ class BoardScene extends Phaser.Scene {
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
-    root.add([base, glyph, ...marks, hp]);
+    root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
     const sprite = { root, glyph, hp, piece: p };
     this.drawHp(sprite, p.hp, p.hp);
     return sprite;
   }
 
-  /** HP 바: 남는 HP(진영 색) + 잃을 HP(노랑) — GDD 9장 §9.5 */
+  /** HP 게이지 14×4 도트 (D-054): 남는 HP(진영 색) + 잃을 HP(금색, 반짝임은 update가) — GDD 9장 §9.5 */
   private drawHp(s: PieceSprite, hpNow: number, hpAfter: number): void {
-    const t = this.tile;
-    const bw = t * 0.62;
-    const bh = Math.max(3, Math.round(t * 0.08));
-    const x = (t - bw) / 2;
-    const y = t * 0.92;
-    const keep = Math.max(0, hpAfter) / s.piece.maxHp;
-    const lose = Math.max(0, hpNow - Math.max(0, hpAfter)) / s.piece.maxHp;
+    const pen = new PixelPen(s.hp, this.tile / BOARD_DOTS);
+    const d = pen.dot;
     s.hp.clear();
-    s.hp.fillStyle(C.ink, 1).fillRect(x, y, bw, bh);
-    s.hp.fillStyle(s.piece.side === 0 ? C.cyan : C.crimson, 1).fillRect(x, y, bw * keep, bh);
-    if (lose > 0) s.hp.fillStyle(C.lose, 1).fillRect(x + bw * keep, y, bw * lose, bh);
-    // 보호막: HP 바 위 강철색 띠
-    if (s.piece.shield > 0) s.hp.fillStyle(0xe2e8f0, 1).fillRect(x, y - bh - 1, bw * Math.min(1, s.piece.shield / s.piece.maxHp), bh - 1);
+    drawGauge(pen, 3 * d, 16 * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp);
+    // 보호막: 게이지 바로 위 흰 도트 줄
+    if (s.piece.shield > 0) {
+      const n = Math.max(1, Math.round(12 * Math.min(1, s.piece.shield / s.piece.maxHp)));
+      for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, 15 * d + d / 2, 0xf4f1ea, 1, 1);
+    }
+    if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
   }
 
   private floatText(sp: PieceSprite, text: string, color: string): void {
@@ -316,67 +345,26 @@ class BoardScene extends Phaser.Scene {
     this.marksG.clear();
     this.arrowsG.clear();
     this.fxG.clear();
+    this.anim = noMarks();
   }
 
-  /** 적 의도용 작은 순번 (칸 왼쪽 아래) */
-  private smallBadge(pos: Pos, n: number, alpha: number): void {
+  /** 순번 배지 (톱니 토큰 + 도트 숫자, 11×11): 내 예약 = 청록, 적 = 진홍. 칸 왼쪽 위에 걸친다 */
+  private badge(pos: Pos, n: number, alpha = 1, enemy = false): void {
     const t = this.tile;
+    const d = t / BOARD_DOTS;
     const w = this.world(pos);
-    const r = t * 0.13;
-    this.arrowsG.fillStyle(0x0b0b0e, alpha).fillCircle(w.x + r + 3, w.y + t - r - 3, r);
-    this.arrowsG.lineStyle(1.5, C.crimson, alpha).strokeCircle(w.x + r + 3, w.y + t - r - 3, r);
-    const txt = this.add
-      .text(w.x + r + 3, w.y + t - r - 3, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.3)}px`, color: '#FF6B6B' })
-      .setOrigin(0.5)
-      .setAlpha(alpha)
+    const img = this.add
+      .image(w.x - 2 * d, w.y - 3 * d, boardKey(`badge-${enemy ? 'e' : 'a'}${Math.min(9, n)}`))
+      .setOrigin(0, 0)
+      .setDisplaySize(11 * d, 11 * d)
       .setDepth(4)
-      .setResolution(this.dpr);
-    this.dynamic.push(txt);
+      .setAlpha(alpha);
+    this.dynamic.push(img);
   }
 
-  private badge(pos: Pos, n: number, alpha = 1, color = C.brass): void {
-    const t = this.tile;
-    const w = this.world(pos);
-    const r = Math.max(10, t * 0.21);
-    const g = this.add.graphics().setDepth(4).setAlpha(alpha);
-    g.fillStyle(color, 1).fillCircle(w.x + r * 0.7, w.y - r * 0.2, r).lineStyle(1.5, C.ink, 1).strokeCircle(w.x + r * 0.7, w.y - r * 0.2, r);
-    const txt = this.add
-      .text(w.x + r * 0.7, w.y - r * 0.2, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.1)}px`, color: '#16141C' })
-      .setOrigin(0.5)
-      .setDepth(4)
-      .setAlpha(alpha)
-      .setResolution(this.dpr);
-    this.dynamic.push(g, txt);
-  }
-
+  /** 흐르는 화살표 예약 (update가 매 프레임 그린다) */
   private arrow(from: Pos, to: Pos, knight: boolean, color: number, alpha: number): void {
-    const a = this.center(from);
-    const b = this.center(to);
-    const g = this.arrowsG;
-    const w = Math.max(3, this.tile * 0.08);
-    g.lineStyle(w, color, alpha);
-    const pts: { x: number; y: number }[] = [a];
-    if (knight) {
-      const dx = Math.abs(to.x - from.x);
-      pts.push(dx > 1 ? { x: b.x, y: a.y } : { x: a.x, y: b.y });
-    }
-    // 끝을 조금 줄여 기물을 가리지 않게 한다
-    const last = pts[pts.length - 1];
-    const len = Math.hypot(b.x - last.x, b.y - last.y) || 1;
-    const shrink = this.tile * 0.28;
-    const end = { x: b.x - ((b.x - last.x) / len) * shrink, y: b.y - ((b.y - last.y) / len) * shrink };
-    pts.push(end);
-    g.beginPath();
-    g.moveTo(pts[0].x, pts[0].y);
-    for (const p of pts.slice(1)) g.lineTo(p.x, p.y);
-    g.strokePath();
-    const ang = Math.atan2(end.y - last.y, end.x - last.x);
-    const hs = this.tile * 0.16;
-    g.fillStyle(color, alpha).fillTriangle(
-      end.x + Math.cos(ang) * hs, end.y + Math.sin(ang) * hs,
-      end.x + Math.cos(ang + 2.4) * hs, end.y + Math.sin(ang + 2.4) * hs,
-      end.x + Math.cos(ang - 2.4) * hs, end.y + Math.sin(ang - 2.4) * hs,
-    );
+    this.anim.arrows.push({ a: this.center(from), b: this.center(to), knight, color, alpha });
   }
 
   render(m: BoardModel): void {
@@ -403,69 +391,68 @@ class BoardScene extends Phaser.Scene {
     // 아군이 선 칸은 공격 범위 표시에서 뺀다 (아군은 맞지 않는다)
     for (const p of m.virtual.pieces) if (p.side === m.state.turnSide) area.delete(`${p.x},${p.y}`);
 
-    // 공격 범위 · 대상 칸
+    const d = t / BOARD_DOTS;
+    const mine = m.state.turnSide === 0;
+    const img = (name: string, x: number, y: number, size = t, depth = 1, alpha = 1) => {
+      const o = this.add.image(x, y, boardKey(name)).setOrigin(0, 0).setDisplaySize(size, size).setDepth(depth).setAlpha(alpha);
+      this.dynamic.push(o);
+      return o;
+    };
+
+    // 공격 범위: 도트 테두리 + 옅은 채움 (내 공격 = 청록, 적 = 진홍 — D-047). 맞을 기물이 선 칸은 채움을 짙게
     for (const a of area.values()) {
       const w = this.world(a);
       const strong = hitTiles.has(`${a.x},${a.y}`);
-      this.marksG.fillStyle(C.crimson, strong ? 0.32 : 0.13).fillRect(w.x + 2, w.y + 2, t - 4, t - 4);
-      this.marksG.lineStyle(strong ? 2 : 1, C.crimson, strong ? 1 : 0.6).strokeRect(w.x + 2, w.y + 2, t - 4, t - 4);
+      this.marksG.fillStyle(mine ? C.cyan : C.crimson, strong ? 0.22 : 0.12).fillRect(w.x, w.y, t, t);
+      img(mine ? 'range' : 'range-enemy', w.x, w.y);
     }
 
-    // 누른 적 기물의 다음 턴 위협: 칠 수 있는 칸(붉은 빗금)과 갈 수 있는 칸(붉은 점)
+    // 누른 적 기물의 다음 턴 위협: 칠 수 있는 칸(반투명 붉은 깜빡임)과 갈 수 있는 칸(붉은 방울)
     if (m.threat) {
-      for (const a of m.threat.hits) {
-        const w = this.world(a);
-        this.marksG.fillStyle(C.crimson, 0.18).fillRect(w.x + 1, w.y + 1, t - 2, t - 2);
-        this.marksG.lineStyle(1, C.crimson, 0.5).lineBetween(w.x + 4, w.y + t - 4, w.x + t - 4, w.y + 4);
-      }
-      for (const d of m.threat.moves) {
-        const c = this.center(d);
-        this.marksG.fillStyle(C.crimson, 0.9).fillCircle(c.x, c.y, t * 0.09);
+      for (const a of m.threat.hits) this.anim.threat.push(this.world(a));
+      const pen = new PixelPen(this.marksG, d);
+      for (const p of m.threat.moves) {
+        const c = this.center(p);
+        drawDropDot(pen, c.x, c.y, C.crimson, 0xffb4b4);
       }
     }
 
-    // 선택 기물과 갈 수 있는 칸
+    // 선택 기물(청록 모서리)과 갈 수 있는 칸(증기 방울) · 도착하면 치는 칸(철컥 도는 과녁, 처치면 금)
     if (m.selectedId !== null) {
       const sel = m.virtual.pieces.find((p) => p.id === m.selectedId);
       if (sel) {
         const w = this.world(sel);
-        this.marksG.lineStyle(3, C.cyan, 1).strokeRect(w.x + 1.5, w.y + 1.5, t - 3, t - 3);
+        img('select', w.x, w.y, t, 1.7);
       }
-      for (const d of m.destinations) {
-        const c = this.center(d);
-        const isPending = m.pendingPos && m.pendingPos.x === d.x && m.pendingPos.y === d.y;
-        const hit = m.hitDests.find((h) => h.pos.x === d.x && h.pos.y === d.y);
-        if (isPending) this.marksG.lineStyle(3, C.cyan, 1).strokeCircle(c.x, c.y, t * 0.36);
+      for (const p of m.destinations) {
+        const w = this.world(p);
+        const isPending = m.pendingPos && m.pendingPos.x === p.x && m.pendingPos.y === p.y;
+        const hit = m.hitDests.find((h) => h.pos.x === p.x && h.pos.y === p.y);
         if (hit) {
-          // 도착하면 적을 친다: 붉은 과녁 (처치까지면 금색)
-          const col = hit.kill ? 0xfacc15 : C.crimson;
-          this.marksG.lineStyle(3, col, 1).strokeCircle(c.x, c.y, t * 0.3);
-          this.marksG.lineStyle(2, col, 1).lineBetween(c.x - t * 0.14, c.y, c.x + t * 0.14, c.y).lineBetween(c.x, c.y - t * 0.14, c.x, c.y + t * 0.14);
-        } else if (!isPending) this.marksG.fillStyle(C.cyan, 0.85).fillCircle(c.x, c.y, t * 0.12);
+          this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
+          if (hit.kill) img('skull', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTint(0xfacc15);
+        } else if (isPending) img('select', w.x, w.y, t, 1.7, 0.6);
+        else img('move-dot', w.x + 8 * d, w.y + 8 * d, 4 * d);
       }
     }
 
-    // 적 의도 예고: 지금 제출하면 적이 둘 수 (옅은 붉은 화살표 + 붉은 순번), 맞을 내 기물에 붉은 테두리
+    // 적 의도 예고: 지금 제출하면 적이 둘 수 (옅은 붉은 흐르는 화살표 + 붉은 순번), 맞을 내 기물엔 적 과녁 + 예상 피해
     if (m.intent) {
-      const faint = m.selectedId !== null ? 0.25 : 0.55;
+      const faint = m.selectedId !== null ? 0.3 : 0.6;
       m.intent.plan.forEach((st, i) => {
         for (const a of stepArrows(m.intent!.state, st)) this.arrow(a.from, a.to, a.knight, C.crimson, faint);
-        const b = stepBadge(m.intent!.state, m.intent!.state, st);
-        this.smallBadge(b, i + 1, faint + 0.2);
+        this.badge(stepBadge(m.intent!.state, m.intent!.state, st), i + 1, faint + 0.25, true);
       });
       for (const h of m.intent.hits) {
         const w = this.world(h.pos);
-        this.marksG.lineStyle(2, h.killed ? 0xfacc15 : C.crimson, 0.95).strokeRect(w.x + 3, w.y + 3, t - 6, t - 6);
-        const label = this.add
-          .text(w.x + t - 4, w.y + t - 4, h.killed ? '☠' : `-${h.damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.24)}px`, color: h.killed ? '#FACC15' : '#FF6B6B', stroke: '#0B0B0E', strokeThickness: 3 })
-          .setOrigin(1, 1)
-          .setDepth(7)
-          .setResolution(this.dpr);
-        this.dynamic.push(label);
+        img('target-enemy', w.x + 2.5 * d, w.y + 2.5 * d, 15 * d, 1.7, 0.9);
+        const g = this.add.graphics().setDepth(7);
+        drawPopup(g, buildPopupArt(`-${h.damage}`, h.killed ? 0xfacc15 : 0xff6b6b), w.x + t * 0.72, w.y + t, d * 0.6, 400, 0);
+        this.dynamic.push(g);
       }
     }
 
-    // 원래 자리 잔상 + 화살표 + 순번
+    // 원래 자리 잔상 + 흐르는 화살표 + 순번
     full.forEach((mv, i) => {
       const isPending = m.pending !== null && i === full.length - 1;
       for (const a of stepArrows(m.state, mv)) {
@@ -476,25 +463,19 @@ class BoardScene extends Phaser.Scene {
       }
     });
 
-    // 기물 (가상 보드 위치) + 이번 계획으로 파괴될 기물 (파괴 시점 위치)
+    // 기물 (가상 보드 위치) + 이번 계획으로 처치될 기물 — 처치 X는 기물 위 레이어 (D-049)
     for (const p of shown) {
       const sprite = this.makePiece(p, p);
       const after = hpAfter.get(p.id);
       if (after !== undefined) this.drawHp(sprite, p.hp, after);
       if (killed.has(p.id)) {
-        const x = this.add.graphics().setDepth(5);
         const w = this.world(p);
-        const r = t * 0.17;
-        const cx = w.x + t * 0.78;
-        const cy = w.y + t * 0.24;
-        x.fillStyle(0x120f17, 1).fillCircle(cx, cy, r).lineStyle(2, C.crimson, 1).strokeCircle(cx, cy, r);
-        x.lineStyle(2, C.crimson, 1).lineBetween(cx - r * 0.45, cy - r * 0.45, cx + r * 0.45, cy + r * 0.45).lineBetween(cx + r * 0.45, cy - r * 0.45, cx - r * 0.45, cy + r * 0.45);
-        this.dynamic.push(x);
+        img('kill', w.x + 13 * d, w.y + d, 7 * d, 5);
       }
       this.sprites.set(p.id, sprite);
     }
 
-    full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1));
+    full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
   }
 
   // ---------- 연출 ----------
@@ -537,46 +518,108 @@ class BoardScene extends Phaser.Scene {
     this.time.delayedCall(70, () => ts.glyph.clearTint());
     playHitSpark(this, ts.root.x + t / 2, ts.root.y + t * 0.45, t, ts.piece.side === 0 ? 1 : 0, this.speed);
     const dealt = ts.piece.hp - h.hpAfter;
+    const before = ts.piece.hp;
     this.drawHp(ts, h.hpAfter, h.hpAfter);
     ts.piece = { ...ts.piece, hp: h.hpAfter };
-    // 피해가 클수록 크게, 내 기물이 맞으면 붉게 (GDD 12장 §12.3 ④)
-    const size = Math.round(t * (0.4 + 0.25 * Math.min(1, dealt / ts.piece.maxHp)));
-    const dmg = this.add
-      .text(ts.root.x + t / 2, ts.root.y + t * 0.15, h.killed ? `-${dealt}☠` : `-${dealt}`, {
-        fontFamily: 'Galmuri14, Galmuri11, sans-serif',
-        fontStyle: '700',
-        fontSize: `${size}px`,
-        color: h.killed ? '#FACC15' : ts.piece.side === 0 ? '#FF6B6B' : '#FFFFFF',
-        stroke: '#0B0B0E',
-        strokeThickness: 5,
-      })
-      .setOrigin(0.5)
-      .setDepth(8)
-      .setResolution(this.dpr);
-    // 크게 튀어나왔다가 지수형으로 자리 잡는다
-    dmg.setScale(1.7);
-    this.tweens.add({ targets: dmg, scale: 1, duration: 260, ease: 'Expo.easeOut' });
-    this.tweens.add({ targets: dmg, y: dmg.y - t * 0.35, duration: 260, ease: 'Back.easeOut' });
-    this.tweens.add({ targets: dmg, alpha: 0, delay: 650, duration: 300, onComplete: () => dmg.destroy() });
+    const d = t / BOARD_DOTS;
+    const x0 = ts.root.x;
+    const y0 = ts.root.y;
+    // 잃은 HP 칸: 그 자리에서 하얗게 → 오른쪽 끝부터 파도처럼 솟아 도트로 흩어진다 (D-047·D-049)
+    const was = Math.round((12 * Math.max(0, before)) / ts.piece.maxHp);
+    const now = Math.round((12 * Math.max(0, h.hpAfter)) / ts.piece.maxHp);
+    // 피해 숫자 (D-051·D-053): 도트 그림 숫자, 튀어나와 떠올랐다가 아래부터 지워진다. 처치 = 금, 내 기물 = 붉음
+    const art = buildPopupArt(`-${dealt}`, h.killed ? 0xfacc15 : ts.piece.side === 0 ? 0xff6b6b : 0xf4f1ea);
+    const g = this.add.graphics().setDepth(8);
+    this.tweens.addCounter({
+      from: 0,
+      to: POPUP_MS.life,
+      duration: POPUP_MS.life / this.speed,
+      onUpdate: (tw) => {
+        const ms = tw.getValue() ?? 0;
+        g.clear();
+        g.fillStyle(0xf4f1ea, 1);
+        for (let i = now; i < was; i++) {
+          const u = ms - (was - 1 - i) * 32;
+          const cx = x0 + (4 + i) * d;
+          const cy = y0 + 17 * d;
+          if (u < 0) {
+            g.fillRect(cx, cy, d, d * 2);
+            continue;
+          }
+          const q = u / 420;
+          if (q >= 1 || (q > 0.45 && Math.floor(u / 40) % 2)) continue;
+          const rise = 1 - (1 - q) ** 3;
+          const size = q > 0.75 ? d / 2 : d;
+          g.fillRect(Math.round(cx + (i % 2 ? 1 : -1) * d * 0.6 * q), Math.round(cy - 9 * d * rise), size, size * 2);
+        }
+        drawPopup(g, art, x0 + t / 2, y0 + t * 0.3, d, ms, t * 0.35);
+      },
+      onComplete: () => g.destroy(),
+    });
     if (h.pushedTo) {
       const w = this.world(h.pushedTo);
       this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
     }
   }
 
+  /** 기물 그림을 판 도트 격자로 뽑은 칸들 (기물 칸 왼쪽 위 기준, 도트 단위) — 바스라짐용, 그림마다 한 번 */
+  private cellCache = new Map<string, { i: number; j: number; c: number }[]>();
+  private pieceCells(key: string): { i: number; j: number; c: number }[] {
+    const hit = this.cellCache.get(key);
+    if (hit) return hit;
+    const src = this.textures.get(key).getSourceImage() as HTMLImageElement;
+    const N = 200; // 도트당 10px로 그려서 가운데를 읽는다
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = N;
+    const g = cv.getContext('2d')!;
+    g.imageSmoothingEnabled = false;
+    const s = N * 0.82;
+    g.drawImage(src, (N - s) / 2, N * 0.43 - s / 2, s, s);
+    const a = g.getImageData(0, 0, N, N).data;
+    const out: { i: number; j: number; c: number }[] = [];
+    for (let j = 0; j < BOARD_DOTS; j++)
+      for (let i = 0; i < BOARD_DOTS; i++) {
+        const k = ((j * 10 + 5) * N + i * 10 + 5) * 4;
+        if (a[k + 3] > 128) out.push({ i, j, c: (a[k] << 16) | (a[k + 1] << 8) | a[k + 2] });
+      }
+    this.cellCache.set(key, out);
+    return out;
+  }
+
+  /** 처치된 기물이 재가 되어 무너진다 */
+  private playCrumble(s: PieceSprite): Promise<void> {
+    const d = this.tile / BOARD_DOTS;
+    const cells: CrumbleCell[] = this.pieceCells(s.glyph.texture.key).map((c) => ({ x: s.root.x + c.i * d, y: s.root.y + c.j * d, c: c.c }));
+    const g = this.add.graphics().setDepth(2.6);
+    const pen = new PixelPen(g, d);
+    const total = CRUMBLE_MS.cut + CRUMBLE_MS.life;
+    return new Promise((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: total,
+        duration: total / this.speed,
+        onUpdate: (tw) => (g.clear(), drawCrumble(pen, cells, tw.getValue() ?? 0)),
+        onComplete: () => (g.destroy(), done()),
+      }),
+    );
+  }
+
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
-    this.arrowsG.clear();
+    this.anim.arrows = [];
+    const before = this.dynamic.length;
     plan.forEach((mv, i) => {
       for (const a of stepArrows(state, mv)) this.arrow(a.from, a.to, a.knight, C.crimson, 0.9);
-      this.badge(stepBadge(state, state, mv), i + 1, 1, C.crimson);
+      this.badge(stepBadge(state, state, mv), i + 1, 1, true);
     });
     await this.wait(plan.length ? 900 : 400);
-    this.arrowsG.clear();
+    this.anim.arrows = [];
+    for (const o of this.dynamic.splice(before)) o.destroy();
   }
 
   async play(_before: BattleState, events: BattleEvent[]): Promise<void> {
     this.arrowsG.clear();
     this.marksG.clear();
+    this.anim = noMarks();
     for (const o of this.dynamic) o.destroy();
     this.dynamic = [];
     const t = this.tile;
@@ -759,15 +802,15 @@ class BoardScene extends Phaser.Scene {
       const checked = e.hits.find((h) => h.checked);
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버팁니다 — 다음 공격이면 끝`);
 
-      // 처치: 톱니·스프링 파편으로 부서진다
+      // 처치: 위에서부터 한 줄씩 검은 재가 되어 기물 발밑에 쌓였다 꺼진다 (D-048·D-050·D-052)
       const deaths = e.hits.filter((h) => h.killed).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);
       if (deaths.length) {
-        const shards = deaths.map((s) => playShatter(this, s.root.x + t / 2, s.root.y + t / 2, t, s.piece.side, this.speed));
+        const ashes = deaths.map((s) => this.playCrumble(s));
         for (const s of deaths) {
           s.root.destroy();
           this.sprites.delete(s.piece.id);
         }
-        await Promise.race([Promise.all(shards), this.after(200)]);
+        await Promise.race([Promise.all(ashes), this.after(260)]);
       }
       order.destroy();
       await this.wait(140);
@@ -856,7 +899,7 @@ export class BoardRenderer implements BoardView {
     this.scene.dpr = dpr;
     this.scene.input2 = input;
     // 보드 위 글자(피해 숫자·순번)가 대체 글꼴로 먼저 그려지지 않게 갈무리를 먼저 불러 둔다
-    const fonts = Promise.all([document.fonts.load('12px Galmuri11'), document.fonts.load('15px Galmuri14')]).catch(() => undefined);
+    const fonts = Promise.all([document.fonts.load('12px Galmuri11'), document.fonts.load('700 12px Galmuri11'), document.fonts.load('15px Galmuri14')]).catch(() => undefined);
     this.whenReady = Promise.all([new Promise<void>((r) => (this.scene.ready = r)), fonts]).then(() => undefined);
     const { w, h } = this.size();
     this.game = new Phaser.Game({

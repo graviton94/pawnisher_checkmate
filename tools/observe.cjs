@@ -41,6 +41,37 @@ const scenarios = {
     await page.waitForTimeout(300);
     return ['battle-8x8-planned'];
   },
+  // 판 그래픽 (D-071): 기물을 골랐을 때 — 선택 모서리 · 갈 수 있는 칸 방울 · 치는 칸 과녁
+  async 'battle-select'(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    await page.evaluate(async () => { window.pawnisher.autoPlan(); await window.pawnisher.submit(); });
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      const c = window.pawnisher;
+      const s = c.model().virtual;
+      const p = s.pieces.find((q) => q.side === 0 && q.type === 'N') ?? s.pieces.find((q) => q.side === 0);
+      c.tap({ x: p.x, y: p.y }, true);
+    });
+    await page.waitForTimeout(400);
+    return ['battle-select'];
+  },
+  // 공격 재생 중간 (4배 느리게): 이동 · 공격 이펙트 · 피해 숫자 · 재가 되는 처치
+  async 'battle-attack'(page) {
+    await page.goto(URL + '&fxslow'); await page.waitForTimeout(500);
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    await page.evaluate(() => { window.pawnisher.autoPlan(); void window.pawnisher.submit(); });
+    const shots = [];
+    for (const at of [1500, 3000, 4500]) {
+      await page.waitForTimeout(1500);
+      const file = `battle-attack-${at}`;
+      await page.screenshot({ path: path.join(OUT, `${stamp}-${file}.png`) });
+      shots.push(file);
+    }
+    await page.goto(URL); await page.waitForTimeout(300);
+    return [];
+  },
   async reward(page) {
     await page.evaluate((run) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); },
       runFixture({ at: 'reward', title: '3층 승리', lines: ['골드 +34'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] }));

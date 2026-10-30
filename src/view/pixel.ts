@@ -37,7 +37,7 @@ export class PixelPen {
    * 흐르는 도트 길 (D-052): 꺾은선 pts를 따라 흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐 · 2칸 꺼짐)이
    * 끝 쪽으로 흘러간다 — 화살표가 "이쪽으로 간다"를 움직임으로 말한다. ms = 흐름 시계, 한 칸 지나는 데 FLOW_STEP_MS.
    */
-  flow(pts: { x: number; y: number }[], color: number, ms: number, thick = 2, trackAlpha = 0.35): void {
+  flow(pts: { x: number; y: number }[], color: number, ms: number, thick = 2, trackAlpha = 0.35, alpha = 1): void {
     const d = this.dot;
     const cells: [number, number][] = [];
     for (let i = 0; i < pts.length - 1; i++) {
@@ -54,7 +54,7 @@ export class PixelPen {
     const phase = Math.floor(ms / FLOW_STEP_MS);
     this.g.fillStyle(color, trackAlpha);
     for (const [x, y] of cells) this.g.fillRect((x - off) * d, (y - off) * d, d * thick, d * thick);
-    this.g.fillStyle(color, 1);
+    this.g.fillStyle(color, alpha);
     cells.forEach(([x, y], i) => {
       if ((((i - phase) % 5) + 5) % 5 < 3) this.g.fillRect((x - off) * d, (y - off) * d, d * thick, d * thick);
     });
