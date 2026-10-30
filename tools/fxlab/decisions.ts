@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 15, date: '2026-10-30' };
+export const VERSION = { n: 16, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,8 +48,8 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '단순해진 종이 왕관 · 태엽 3종 · 지형 소품 5종 (에셋 목록)',
-  '재가 되어 발밑에 쌓이는 처치 (에셋 목록 "처치" 견본)',
+  '흐르는 화살표 (에셋 목록 "화살표" 견본 · 장면 계획 화면)',
+  '검은 재 처치 (에셋 목록 "처치" 견본)',
   '피해 숫자 + 해골 한 장 그림 · 아래부터 지워짐 (에셋 목록 "피해 숫자" 견본, 장면 재생)',
   '기물 외곽선 패치 (그림은 그대로, 얇은 검정만 채우고 흰 테두리 고르게)',
 ];
@@ -62,8 +62,9 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '피해 숫자', rule: '숫자(갈무리11 굵게 12px = 10도트 높이, 2도트 획)와 처치 해골(같은 높이·같은 획)을 한 장의 도트 그림으로, 8방향 1도트 검정 테두리를 함께 두른다. 크게 튀어나왔다가 지수형으로 자리 잡고, 사라질 땐 아래에서 위로 잘리는 선이 올라가며 도트가 파스스 지워짐. 내 기물이 맞으면 붉게, 처치는 금색 + 해골', status: 'review' },
   { item: '기물 외곽선', rule: '사용자 그림은 그대로, 테두리만 패치: 실루엣(원래 도트 계단) 유지 · 얇은 검정만 안쪽으로 채움 · 흰 테두리는 바깥으로 고른 굵기 (`tools/patch-piece-outlines.py`, 원본 build-res/pieces-original)', status: 'review' },
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
-  { item: '처치', rule: '위에서부터 한 줄씩 재가 된다 — 잘리는 선 아래는 체크무늬로 듬성듬성, 선을 지난 도트는 재 색으로 바래 곧장 떨어져 기물 발밑에 쌓였다가 한 도트씩 꺼짐. 기물 폭·발밑 밖으로 나가지 않는다', status: 'review' },
-  { item: '소품·HUD 화풍', rule: '단순한 덩어리 + 납작한 색 1~2개 + 강조 1개 + 검정 1도트·흰 1도트 테두리, 좌우 대칭 (종이 왕관·태엽·지형 소품)', status: 'review' },
+  { item: '처치', rule: '위에서부터 한 줄씩 재가 된다 — 잘리는 선 아래는 체크무늬로 듬성듬성, 선을 지난 도트는 검은 재가 되어 곧장 떨어져 기물 발밑에 쌓였다가 한 도트씩 꺼짐. 기물 폭·발밑 밖으로 나가지 않는다', status: 'review' },
+  { item: '지형 소품·태엽·종이 왕관', rule: '코드 도트로는 답이 없음 → 제미나이 (발주서 B7·H·I v3: 단순한 덩어리 + 납작한 색 + 강조 1개). 지금 그림은 자리 표시', status: 'wait' },
+  { item: '화살표', rule: '흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐·2칸 꺼짐)이 0.07초에 한 칸씩 끝 쪽으로 흐른다 + 도트 화살촉', status: 'review' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로 충분', status: 'done' },
   { item: '피격', rule: '흰 점멸 0.07초 + 8방향 스파크', status: 'review' },
   { item: '발밑 받침·선택 테두리·이동 점·과녁·순번 배지', rule: 'A1 게임 적용은 되돌림 — 도트 크기가 기물과 달라 섞이고, 옛 벡터 화면 위에 얹혀 지저분했다. 도트 크기 통일 후 판 전체를 한꺼번에 바꾼다', status: 'review' },
@@ -74,10 +75,11 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '발밑·선택·이동 점·과녁·배지·화살표·HP·처치 X·잔해·체크 고리', rule: '코드 도트 (`tools/draw-board.py`, 20×20 격자, 14색). 배지 숫자도 3×5 도트', status: 'review' },
   { item: '이펙트 격자', rule: '공격 이펙트도 판과 같은 칸당 20도트 격자로 (게임·랩 공통 BOARD_DOTS)', status: 'done' },
   { item: '이펙트 스프라이트', rule: '발주 시트 E가 오면 같은 박자에 그림만 갈아 끼운다', status: 'wait' },
-  { item: '태엽 (AP)', rule: '둥근 날개 두 장 + 축 + 이 두 개, 코드 도트 3종 (가득 = 축 청록 / 쓴 것 = 회색 / 보너스 = 금 테두리)', status: 'review' },
+
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 16, date: '2026-10-30', items: ['처치 재: 회색 → 검은 재', '화살표: 흐르는 도트 토막', '지형 소품·태엽·종이 왕관은 제미나이 발주로 (지금 그림은 자리 표시)'] },
   { v: 15, date: '2026-10-30', items: ['피해 숫자와 처치 해골을 한 장 도트 그림으로 (같은 높이·같은 테두리)', '피해 숫자 사라짐: 아래에서 위로 도트가 지워짐', '기물 외곽선 패치: 얇은 검정 채움 · 흰 테두리 고르게 (그림은 그대로)'] },
   { v: 14, date: '2026-10-30', items: ['처치: 칸 밖으로 튀던 파편 → 재가 되어 기물 발밑까지만 떨어져 쌓였다 꺼짐', '종이 왕관·태엽 3종·지형 소품 5종을 단순한 덩어리 화풍으로 다시 (납작한 색 + 강조 1개)'] },
   { v: 13, date: '2026-10-30', items: ['좌우 대칭: 과녁·처치 과녁·체크 고리·배지 고리·지형 소품 (홀수 크기로 가운데 정렬)', '아이콘 30종·종이 왕관·처치 해골 = 공개 픽토그램(game-icons CC BY 3.0 · Tabler MIT) 도트화', '태엽 새 디자인 (꽉 찬 나비 날개)', 'HP 잃는 칸: 오른쪽 끝부터', '처치 X를 기물 위 레이어로', '처치 숫자 옆 ☠ 글자 → 우리 해골 도트'] },

@@ -175,57 +175,60 @@ Cell 4: vent open — the hatch fully open, a column of steam (#BFEFFF and #F4F1
 Cell 5: hold counter pip — a tiny round gauge light 3x3 pixels in #C8C8C8 (color added by code).
 ```
 
-### B7. 지형 소품 5종
+### B7. 지형 소품 5종 (v3 — 단순한 덩어리 화풍, D-052)
+
+> 코드로 찍은 소품·태엽·왕관은 사용자 판정 "답이 없다" → 제미나이로. 코드 그림은 받을 때까지 자리 표시로만 남는다.
 
 ```
-Pixel art terrain props that stand on a board square of a steampunk chess-factory game. Copy the exact pixel size, outline style (1 black + 1 white outline) and palette of the attached chess pieces.
+Pixel art terrain props that stand on one board square of a steampunk chess-factory game. Copy the exact pixel size and outline style of the attached chess pieces.
 
-GRID RULE: a board square is exactly 20x20 pixels; props are at most 16 pixels tall. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+STYLE: very simple chunky pixel icon. Big simple block shapes that read at a glance, like a classic 8-bit item icon. Outline = 1 pixel solid black #0B0B0E, then 1 pixel white #F4F1EA outside it, exactly like the attached pieces. Inside: flat fills, at most 2 shades per material (base + one shadow on the bottom/right), NO texture, NO dithering, NO noise, NO tiny details. Exactly ONE small accent (a single square of a contrasting color) per item.
 PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
 BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
-LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each item centered in its cell and sitting on the same baseline, all at the same pixel size. Each prop is at most 16 pixels wide and 14 pixels tall.
 
-Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
-Cell 2: scrap heap — pipes, plates and a broken gear piled up.
-Cell 3: lift platform — a raised brass platform on a short piston.
-Cell 4: heat shield — an upright riveted iron plate with a small vent.
-Cell 5: gear trap — an open toothed trap set into the floor, crimson teeth.
-Cell 6: screw box — a small brass box with steel screws spilling out.
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly, same size, same pixels.
+Cell 2: scrap heap — a low rounded pile of grey iron (#56545E, shadow #2F2E36) with one gear sticking out of the top; accent: one #C8C8C8 pixel shine.
+Cell 3: lift platform — a flat light-grey plate (#C8C8C8, shadow #8A8794) on one thick short piston and a wide base; perfectly left-right symmetrical; accent: one #38BDF8 indicator pixel on the base.
+Cell 4: heat shield — an upright iron plate shaped like a heater shield (#56545E, shadow #2F2E36) with two rivets; perfectly left-right symmetrical; accent: one #BFEFFF steam pixel at the top.
+Cell 5: gear trap — a flat low trap in the floor, a row of 4 big triangle teeth (#C8C8C8) on a crimson band (#E5262F, shadow #7A1218); perfectly left-right symmetrical.
+Cell 6: screw box — a small cardboard box (#C89B3C, shadow #8C6239) with one big steel screw head (#C8C8C8) on the front; perfectly left-right symmetrical.
 ```
 
 ---
 
-## H. 주인공 — 종이 왕관 킹 2종
+## H. 주인공 — 종이 왕관 (v3, D-052)
 
 ```
-Pixel art sprites for the hero of a steampunk chess-factory game: a white pawn that wears a paper crown cut out of a cardboard box and plays the king.
-Copy the exact pixel size, outline style (1 black + 1 white outline) and palette of the attached chess pieces.
+Pixel art paper crown for the hero of a steampunk chess-factory game: a white pawn that wears a crown cut out of a cardboard box and plays the king. Copy the exact pixel size and outline style of the attached chess pieces.
 
-GRID RULE: the pawn is about 16 pixels tall exactly like the attached pawn; the crown adds about 5 pixels on top. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+STYLE: very simple chunky pixel icon. Big simple block shapes that read at a glance, like a classic 8-bit item icon. Outline = 1 pixel solid black #0B0B0E, then 1 pixel white #F4F1EA outside it, exactly like the attached pieces. Inside: flat fills, at most 2 shades per material (base + one shadow on the bottom/right), NO texture, NO dithering, NO noise, NO tiny details. Exactly ONE small accent (a single square of a contrasting color) per item.
 PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
 BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
 LAYOUT: 3 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
 
-Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
-Cell 2: the same white pawn wearing a paper crown: cardboard brown (#8C6239 / #C89B3C), rough zigzag top with 3 points, slightly too big and tilted to one side. The crown must make it clearly different from a normal pawn at a glance.
-Cell 3: the paper crown alone (no pawn), same pixels as in cell 2.
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly, same size, same pixels.
+Cell 2: the paper crown alone — about 13 pixels wide and 8 pixels tall: three big square-ish points on top (the middle point a little taller), a straight band below. Cardboard colors only: body #C89B3C, bottom band #8C6239. Perfectly left-right symmetrical. Accent: one 3x2 cyan #38BDF8 gem in the center of the band.
+Cell 3: the white pawn from cell 1 wearing exactly the crown from cell 2 on its head (crown on top, slightly overlapping the head, not tilted).
 ```
 
-## I. 태엽 (AP) 3종 — 지금의 날개 그림 대체
+## I. 태엽 (AP) 3종 (v3, D-052)
 
 ```
-Pixel art action-point icons for a steampunk chess-factory game: a butterfly-shaped wind-up key (the key used to wind clockwork toys), side view, standing upright.
-Copy the exact pixel size, outline style (1 black + 1 white outline) and palette of the attached chess pieces.
+Pixel art action-point icons for a steampunk chess-factory game: a wind-up key (the butterfly key used to wind clockwork toys), front view, standing upright with the two round wings on top and the short stem with teeth pointing down. Copy the exact pixel size and outline style of the attached chess pieces.
 
-GRID RULE: each key is 12 pixels wide and 16 pixels tall. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text, no numbers.
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+STYLE: very simple chunky pixel icon. Big simple block shapes that read at a glance, like a classic 8-bit item icon. Outline = 1 pixel solid black #0B0B0E, then 1 pixel white #F4F1EA outside it, exactly like the attached pieces. Inside: flat fills, at most 2 shades per material (base + one shadow on the bottom/right), NO texture, NO dithering, NO noise, NO tiny details. Exactly ONE small accent (a single square of a contrasting color) per item.
 PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
 BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
-LAYOUT: 4 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+LAYOUT: 4 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size. Each key is 13 pixels wide and 12 pixels tall, perfectly left-right symmetrical.
 
-Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
-Cell 2: full — polished brass key (#C89B3C, #FACC15 highlights), one cyan glint pixel.
-Cell 3: spent — the same key in dull iron (#56545E, #8A8794), no glint.
-Cell 4: bonus — the brass key with a 1-pixel gold ring around it.
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly, same size, same pixels.
+Cell 2: full — brass key (#C89B3C, shadow #8C6239); accent: the round hub between the wings is one cyan #38BDF8 square.
+Cell 3: spent — the exact same key in dull iron (#56545E, shadow #2F2E36); accent: hub #2F2E36 (no glow).
+Cell 4: bonus — the exact same brass key as cell 2, but its outer white outline is replaced by gold #FACC15.
 ```
 
 ---

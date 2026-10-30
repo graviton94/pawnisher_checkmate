@@ -209,8 +209,8 @@ const drawPiece = (l: Live, now: number, hpAfter?: number) => {
   ctx.fillRect(l.x + (T - bw) / 2, l.y + T * 0.9, (bw * Math.max(0, l.hp)) / l.p.maxHp, 6);
 };
 
-/** 도트 화살표: 2도트 청록 선 + 도트 화살촉. 나이트는 ㄱ자 */
-const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight: boolean, color = 0x38bdf8) => {
+/** 도트 화살표: 흐르는 2도트 길(끝 쪽으로 토막이 흘러감) + 도트 화살촉. 나이트는 ㄱ자 */
+const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight: boolean, color = 0x38bdf8, ms = performance.now()) => {
   const A = center(a.x, a.y);
   const B = center(b.x, b.y);
   const pts = [A];
@@ -221,7 +221,7 @@ const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight:
   const uy = (B.y - last.y) / len;
   const tip = { x: B.x - ux * T * 0.32, y: B.y - uy * T * 0.32 };
   pts.push(tip);
-  for (let i = 0; i < pts.length - 1; i++) pen.line(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, color, 1, 2);
+  pen.flow(pts, color, ms);
   // 화살촉: 뒤로 갈수록 넓어지는 도트 줄
   for (let k = 0; k < 4; k++) {
     const bx = tip.x - ux * D * k;
@@ -454,7 +454,7 @@ const renderGallery = () => {
       for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const sd of [0, 1]) items += item(`${t}${sd === 0 ? ' 아군' : ' 적'}`, 16, 16, `<img src="${SPRITES[`${t}${sd}`]}" width="${16 * S}" height="${16 * S}" alt="">`);
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 3, '<canvas data-live="hp" width="112" height="72"></canvas>');
-      items += item('화살표 (직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
+      items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
       items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
@@ -519,10 +519,9 @@ const renderGallery = () => {
     tile(arC, true, 80, 0);
     tile(arC, false, 160, 0);
     const ap = new PixelPen({ fillStyle: (c: number, a = 1) => (arC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => arC.fillRect(x, y, w, h) }, S);
-    ap.line(8, 40, 64, 40, 0x38bdf8, 1, 2);
-    ap.line(88, 72, 144, 16, 0x38bdf8, 1, 2);
-    ap.line(176, 72, 176, 24, 0xe5262f, 1, 2);
-    ap.line(176, 24, 228, 24, 0xe5262f, 1, 2);
+    ap.flow([{ x: 8, y: 40 }, { x: 64, y: 40 }], 0x38bdf8, now);
+    ap.flow([{ x: 88, y: 72 }, { x: 144, y: 16 }], 0x38bdf8, now);
+    ap.flow([{ x: 176, y: 72 }, { x: 176, y: 24 }, { x: 228, y: 24 }], 0xe5262f, now);
     // 종이 왕관 킹: 사용자 폰 + 왕관
     kgC.clearRect(0, 0, 80, 96);
     const pawn = sprites.P0;

@@ -1,5 +1,7 @@
 /** 판 칸 하나의 도트 수 — 기물·판 칸·이펙트가 모두 같은 격자 (발주서 v2, D-042) */
 export const BOARD_DOTS = 20;
+/** 흐르는 화살표에서 밝은 토막이 한 칸 나아가는 시간 (ms) */
+export const FLOW_STEP_MS = 70;
 
 /**
  * 도트 펜: 모든 도형을 "도트" 격자(칸 = 20도트)에 맞춰 사각 점으로 찍는다.
@@ -29,6 +31,33 @@ export class PixelPen {
     const cy = this.cell(y) - Math.floor((size - 1) / 2);
     this.g.fillStyle(color, alpha);
     this.g.fillRect(cx * d, cy * d, d * size, d * size);
+  }
+
+  /**
+   * 흐르는 도트 길 (D-052): 꺾은선 pts를 따라 흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐 · 2칸 꺼짐)이
+   * 끝 쪽으로 흘러간다 — 화살표가 "이쪽으로 간다"를 움직임으로 말한다. ms = 흐름 시계, 한 칸 지나는 데 FLOW_STEP_MS.
+   */
+  flow(pts: { x: number; y: number }[], color: number, ms: number, thick = 2, trackAlpha = 0.35): void {
+    const d = this.dot;
+    const cells: [number, number][] = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / (d / 2)));
+      for (let k = 0; k <= n; k++) {
+        const c: [number, number] = [this.cell(a.x + ((b.x - a.x) * k) / n), this.cell(a.y + ((b.y - a.y) * k) / n)];
+        const last = cells[cells.length - 1];
+        if (!last || last[0] !== c[0] || last[1] !== c[1]) cells.push(c);
+      }
+    }
+    const off = Math.floor((thick - 1) / 2);
+    const phase = Math.floor(ms / FLOW_STEP_MS);
+    this.g.fillStyle(color, trackAlpha);
+    for (const [x, y] of cells) this.g.fillRect((x - off) * d, (y - off) * d, d * thick, d * thick);
+    this.g.fillStyle(color, 1);
+    cells.forEach(([x, y], i) => {
+      if ((((i - phase) % 5) + 5) % 5 < 3) this.g.fillRect((x - off) * d, (y - off) * d, d * thick, d * thick);
+    });
   }
 
   /** 도트 직선 (브레젠험) */
