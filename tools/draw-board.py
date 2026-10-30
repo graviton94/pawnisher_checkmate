@@ -133,19 +133,30 @@ def ring(size, r0, r1, color, teeth=0, tooth_r=0.0, gap=None, shade=None):
                 on = k < 0.28 or k > 0.72
             if on:
                 dot(im, x, y, shade if shade and d < r0 + 0.7 else color)
+    return mirror(im)
+
+
+def mirror(im):
+    """좌우 대칭: 왼쪽 절반을 오른쪽에 그대로 비춘다 (사용자 피드백 — 대칭이어야 할 그림은 정확히 대칭)"""
+    w, h = im.size
+    px = im.load()
+    for y in range(h):
+        for x in range(w // 2):
+            px[w - 1 - x, y] = px[x, y]
     return im
 
 
 def target(kill, ally=True):
-    """치는 칸: 톱니 과녁 14×14 — 내 공격 청록 / 적 공격 진홍, 처치면 금색 + 가운데 해골 (금색은 처치에만, D-047)"""
+    """치는 칸: 톱니 과녁 15×15 (홀수 — 가운데가 정확히 한 도트) — 내 공격 청록 / 적 공격 진홍, 처치면 금색 + 가운데 해골 (금색은 처치에만, D-047)"""
     main, dark = ('CY', 'CY2') if ally else ('CR', 'CR2')
-    im = ring(14, 3.9, 5.7, 'GO' if kill else main, teeth=8, tooth_r=1.4, shade='BR2' if kill else dark)
+    im = ring(15, 4.4, 6.2, 'GO' if kill else main, teeth=8, tooth_r=1.4, shade='BR2' if kill else dark)
     if kill:
-        skull = ['.###.', '#.#.#', '#####', '.#.#.']
-        for y, row in enumerate(skull):
-            for x, ch in enumerate(row):
-                if ch == '#':
-                    dot(im, 5 + x, 5 + y, 'GO')
+        # 가운데 해골: 처치 숫자 옆과 같은 픽토그램 해골 (public/ui/hud/skull-small.png, tools/pixelize-icons.cjs)
+        sk = mirror(Image.open('public/ui/hud/skull-small.png').convert('RGBA'))
+        for y in range(sk.size[1]):
+            for x in range(sk.size[0]):
+                if sk.getpixel((x, y))[3]:
+                    dot(im, 4 + x, 4 + y, 'GO')
     return im
 
 
@@ -177,9 +188,9 @@ def kill_mark():
 
 
 def check_ring():
-    """체크: 킹 주위의 끊긴 붉은 톱니 고리 20×20 (오른쪽 위가 터져 있다)"""
+    """체크: 킹 주위의 끊긴 붉은 톱니 고리 21×21 (정확히 위 가운데가 터져 있다, 좌우 대칭)"""
     import math
-    return ring(N, 7.6, 9.2, 'CR', teeth=10, tooth_r=0.9, gap=(-math.pi / 2 + 0.2, -math.pi / 4 + 0.15), shade='CR2')
+    return ring(N + 1, 7.8, 9.4, 'CR', teeth=10, tooth_r=0.9, gap=(-math.pi / 2 - 0.42, -math.pi / 2 + 0.42), shade='CR2')
 
 
 def wreck():

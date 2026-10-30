@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 12, date: '2026-10-30' };
+export const VERSION = { n: 13, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,8 +48,8 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '처치 바스라짐 (퀸 장면에서 잘 보인다) · 발밑 받침 없앤 모습',
-  '에셋 목록에서 바꿀 것 / 제미나이로 넘길 것 고르기',
+  '픽토그램 도트화 아이콘 30종 · 종이 왕관 · 새 태엽이 괜찮은지 (에셋 목록)',
+  '좌우 대칭 맞춘 과녁·고리·소품',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
@@ -74,6 +74,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 13, date: '2026-10-30', items: ['좌우 대칭: 과녁·처치 과녁·체크 고리·배지 고리·지형 소품 (홀수 크기로 가운데 정렬)', '아이콘 30종·종이 왕관·처치 해골 = 공개 픽토그램(game-icons CC BY 3.0 · Tabler MIT) 도트화', '태엽 새 디자인 (꽉 찬 나비 날개)', 'HP 잃는 칸: 오른쪽 끝부터', '처치 X를 기물 위 레이어로', '처치 숫자 옆 ☠ 글자 → 우리 해골 도트'] },
   { v: 12, date: '2026-10-30', items: ['처치: 톱니 파편 → 위에서부터 도트로 바스라짐 (에셋 목록 "처치" 견본)', '발밑 받침 제거'] },
   { v: 11, date: '2026-10-30', items: ['색 규칙 정리: 내 것 청록·흰, 적 진홍·검정, 금 = 처치만 (선택·배지·범위·과녁·이펙트 다시 칠함)', 'HP 잃는 연출: 하얗게 → 파도처럼 솟아 도트로 사라짐', '나머지 에셋 직접 그림: 분출구·지형 5·종이 왕관·태엽 3·눈금·UI 프레임 6·아이콘 30', '에셋 목록 추가 (그림만 따로 보기)'] },
   { v: 10, date: '2026-10-30', items: ['발밑 받침·선택 모서리·이동 점·과녁(일반/처치)·순번 배지 1~9(도트 숫자)·처치 X·체크 고리·잔해를 코드 도트로', '계획 화면 재현: 화살표·배지·과녁·범위·HP 게이지(잃을 HP 금색)', '이펙트 격자를 칸당 20도트로 통일'] },

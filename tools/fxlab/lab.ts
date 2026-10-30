@@ -249,6 +249,26 @@ const cellsOf = (l: { p: Piece; x: number; y: number }, img: HTMLImageElement | 
   return cells;
 };
 
+/** 흰색 도트 그림에 색을 입힌 사본 (캐시) */
+const tintCache = new Map<string, HTMLCanvasElement>();
+const tinted = (key: string, color: string): HTMLCanvasElement | null => {
+  const id = `${key}|${color}`;
+  const hit = tintCache.get(id);
+  if (hit) return hit;
+  const im = sprites[key];
+  if (!im?.complete) return null;
+  const c = document.createElement('canvas');
+  c.width = im.naturalWidth;
+  c.height = im.naturalHeight;
+  const x = c.getContext('2d')!;
+  x.drawImage(im, 0, 0);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = color;
+  x.fillRect(0, 0, c.width, c.height);
+  tintCache.set(id, c);
+  return c;
+};
+
 // ---------- 재생 ----------
 interface Popup {
   x: number;
@@ -257,6 +277,7 @@ interface Popup {
   color: string;
   at: number;
   size: number;
+  skull?: boolean;
 }
 interface Burst {
   kind: 'spark';
@@ -312,10 +333,13 @@ const play = () => {
     arrow(mv.from, mv.to, me.p.type === 'N', opt.side === 0 ? 0x38bdf8 : 0xe5262f);
     blit(kills ? 'target-kill' : opt.side === 0 ? 'target' : 'target-enemy', to.x + 3 * D, to.y + 3 * D);
     blit(opt.side === 0 ? 'badge-a1' : 'badge-e1', to.x - 2 * D, to.y - 3 * D);
+  };
+  /** 처치될 기물 X: 기물 위 레이어 (기물을 그린 뒤에) */
+  const drawKillMarks = () => {
     for (const h of atk?.hits ?? []) {
       if (!h.killed) continue;
       const l = lives.get(h.targetId)!;
-      blit('kill', l.x + 13 * D, l.y);
+      blit('kill', l.x + 13 * D, l.y + D);
     }
   };
   const end = FX0 + (fx?.duration ?? 0) + 900;
@@ -335,7 +359,7 @@ const play = () => {
         // 잃은 HP: 게이지에서 떨어져 나간 칸들이 하얗게 → 파도처럼 하나씩 솟아오르며 도트로 흩어진다
         const before = Math.round((12 * Math.max(0, x.l.hp)) / x.l.p.maxHp);
         const after = Math.round((12 * Math.max(0, x.h.hpAfter)) / x.l.p.maxHp);
-        for (let i = after; i < before; i++) chips.push({ x: x.l.x + (4 + i) * D, y: x.l.y + 18 * D, at: ms + (i - after) * 32, i });
+        for (let i = after; i < before; i++) chips.push({ x: x.l.x + (4 + i) * D, y: x.l.y + 18 * D, at: ms + (before - 1 - i) * 32, i }); // 오른쪽 끝부터
         x.l.hp = x.h.hpAfter;
         x.l.flashUntil = now + 70 / opt.speed;
         const c = { x: x.l.x + T / 2, y: x.l.y + T * 0.45 };
@@ -344,7 +368,8 @@ const play = () => {
         popups.push({
           x: c.x,
           y: x.l.y + T * 0.15,
-          text: x.h.killed ? `-${dealt}☠` : `-${dealt}`,
+          text: `-${dealt}`,
+          skull: !!x.h.killed,
           color: x.h.killed ? '#FACC15' : x.l.p.side === 0 ? '#FF6B6B' : '#FFFFFF',
           at: ms,
           size: Math.round(T * (0.4 + 0.25 * Math.min(1, dealt / x.l.p.maxHp))),
@@ -366,6 +391,7 @@ const play = () => {
     if (ms < 0 && opt.board !== 'flat') drawPlan();
     for (const w of wrecks) blit('wreck', w.x + 5 * D, w.y + 14 * D);
     for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
+    if (ms < 0 && opt.board !== 'flat') drawKillMarks();
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {
@@ -403,6 +429,12 @@ const play = () => {
       ctx.strokeText(p.text, p.x, p.y - T * 0.35 * rise);
       ctx.fillStyle = p.color;
       ctx.fillText(p.text, p.x, p.y - T * 0.35 * rise);
+      if (p.skull) {
+        // 처치: 우리 해골 도트(금색)를 숫자 오른쪽에
+        const sk = tinted('hud/skull-small', '#facc15');
+        const w = ctx.measureText(p.text).width;
+        if (sk) ctx.drawImage(sk, p.x + w / 2 + D, p.y - T * 0.35 * rise - sk.height * D * 1.6, sk.width * D * 1.6, sk.height * D * 1.6);
+      }
       ctx.globalAlpha = 1;
     }
     if (ms < end) requestAnimationFrame(frame);
@@ -418,7 +450,7 @@ const KO: Record<string, string> = {
   'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리', wreck: '잔해',
   'vent-closed': '분출구 닫힘', 'vent-opening': '분출구 열림 중', 'vent-open': '분출구 열림', 'vent-steam': '분출 증기',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
-  'hud/paper-crown': '종이 왕관', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
+  'hud/paper-crown': '종이 왕관 (픽토그램 바탕)', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
   'frames/panel': '패널', 'frames/button': '버튼', 'frames/button-pressed': '버튼 눌림', 'frames/card-iron': '철 카드', 'frames/card-paper': '종이 카드', 'frames/slot': '빈 슬롯',
   'icons/sword': '칼날', 'icons/pierce': '관통', 'icons/fork': '포크', 'icons/wave': '충격파', 'icons/flame': '열기', 'icons/shield': '방패', 'icons/bricks': '성벽',
   'icons/chain': '사슬', 'icons/oil': '기름 방울', 'icons/skull': '해골', 'icons/horseshoe': '편자', 'icons/portal': '소용돌이 문', 'icons/swap': '맞바꿈',
@@ -490,7 +522,7 @@ const renderGallery = () => {
     cell(13, 1, '#8a8794');
     for (let i = 0; i < 12; i++) cell(1 + i, 1, i < 7 || !lost ? '#e5262f' : '#2f2e36');
     for (let i = 7; i < 12 && lost; i++) {
-      const u = t - 300 - (i - 7) * 32;
+      const u = t - 300 - (11 - i) * 32; // 오른쪽 끝부터
       hpC.fillStyle = '#f4f1ea';
       if (u < 0) {
         cell(1 + i, 1, '#f4f1ea');
