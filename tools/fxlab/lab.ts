@@ -3,6 +3,7 @@
  * `node tools/fxlab/build.cjs <출력.html>`로 한 장짜리 HTML을 만든다.
  */
 import { createBattle, EMPTY_LOADOUT, legalMoves, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
+import { drawGearTarget } from '../../src/view/target';
 import { buildPopupArt, drawPopup, type PopupArt } from '../../src/view/popup';
 import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
 import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
@@ -89,7 +90,13 @@ const px = (x: number, y: number) => ({ x: x * T, y: (N - 1 - y) * T });
 const center = (x: number, y: number) => ({ x: x * T + T / 2, y: (N - 1 - y) * T + T / 2 });
 
 /** 판 위 덧그림 시연 자리 (어느 장면의 공격 범위와도 겹치지 않는 칸) */
-const DEMO = { fallen: [7, 3], crack: [0, 5], hatch: [[5, 7], [6, 7]] } as const;
+const DEMO = {
+  fallen: [7, 3],
+  crack: [0, 5],
+  hatch: [[5, 7], [6, 7]],
+  vents: [[2, 0], [0, 2]],
+  props: [['scrap', 0, 7], ['lift', 2, 7], ['shield', 7, 5], ['trap', 4, 0], ['screwbox', 6, 0]],
+} as const;
 
 const drawBoard = () => {
   const img = (k: string) => (sprites[k]?.complete ? sprites[k] : null);
@@ -119,6 +126,27 @@ const drawBoard = () => {
   };
   at('fallen', DEMO.fallen[0], DEMO.fallen[1]);
   at('crack', DEMO.crack[0], DEMO.crack[1]);
+  // 증기 분출구: 닫힘 → 열리는 중 → 열림(증기가 솟는다)을 2.4초마다
+  const vt = performance.now() % 2400;
+  DEMO.vents.forEach(([x, y], i) => {
+    const st = i === 1 ? 'closed' : vt < 1200 ? 'closed' : vt < 1500 ? 'opening' : 'open';
+    at(`vent-${st}`, x, y);
+    const steam = img('vent-steam');
+    if (st === 'open' && steam) {
+      const w = px(x, y);
+      const q = (vt - 1500) / 900;
+      ctx.globalAlpha = 1 - q;
+      ctx.drawImage(steam, w.x + 5 * D, Math.round(w.y - 2 * D - q * 6 * D), 10 * D, 10 * D);
+      ctx.globalAlpha = 1;
+    }
+  });
+  // 지형 소품: 칸 가운데, 발밑을 칸 아래에서 2도트 위에 맞춘다
+  for (const [k, x, y] of DEMO.props) {
+    const im = img(`props/${k}`);
+    if (!im) continue;
+    const w = px(x, y);
+    ctx.drawImage(im, w.x + Math.floor((20 - im.naturalWidth) / 2) * D, w.y + (18 - im.naturalHeight) * D, im.naturalWidth * D, im.naturalHeight * D);
+  }
   // 위협: 반투명 붉은 칸이 천천히 깜빡인다 (빗금 대신, 사용자 피드백)
   const pulse = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(performance.now() / 260));
   for (const [x, y] of DEMO.hatch) {
@@ -289,6 +317,16 @@ const tinted = (key: string, color: string): HTMLCanvasElement | null => {
   return c;
 };
 
+/** 톱니 과녁 (철컥철컥 도는 태엽 고리) — 칸 왼쪽 위 (x, y), 내 과녁·처치 과녁만 돈다 (D-062). 처치면 가운데 금 해골 */
+const gearTarget = (c: CanvasRenderingContext2D, g: PixelPen, x: number, y: number, kind: 'ally' | 'kill' | 'enemy', ms: number) => {
+  const dot = g.dot;
+  drawGearTarget(g, x + 10.5 * dot, y + 10.5 * dot, kind, kind === 'enemy' ? 0 : ms);
+  if (kind === 'kill') {
+    const sk = tinted('hud/skull-small', '#facc15');
+    if (sk) c.drawImage(sk, x + 7 * dot, y + 7 * dot, 7 * dot, 7 * dot);
+  }
+};
+
 // ---------- 재생 ----------
 interface Popup {
   x: number;
@@ -348,7 +386,7 @@ const play = () => {
       blit('move-dot', w.x + 8 * D, w.y + 8 * D);
     }
     arrow(mv.from, mv.to, me.p.type === 'N', opt.side === 0 ? 0x38bdf8 : 0xe5262f);
-    blit(kills ? 'target-kill' : opt.side === 0 ? 'target' : 'target-enemy', to.x + 3 * D, to.y + 3 * D);
+    gearTarget(ctx, pen, to.x, to.y, kills ? 'kill' : opt.side === 0 ? 'ally' : 'enemy', performance.now());
     blit(opt.side === 0 ? 'badge-a1' : 'badge-e1', to.x - 2 * D, to.y - 3 * D);
   };
   /** 처치될 기물 X: 기물 위 레이어 (기물을 그린 뒤에) */
@@ -444,7 +482,7 @@ const KO: Record<string, string> = {
   'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리', wreck: '잔해',
   'vent-closed': '분출구 닫힘', 'vent-opening': '분출구 열림 중', 'vent-open': '분출구 열림', 'vent-steam': '분출 증기',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
-  'hud/paper-crown': '종이 왕관', 'hud/paper-crown-tilt': '종이 왕관 (기운)', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
+  'hud/paper-crown': '종이 왕관', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
   'frames/panel': '패널', 'frames/button': '버튼', 'frames/button-pressed': '버튼 눌림', 'frames/card-iron': '철 카드', 'frames/card-paper': '종이 카드', 'frames/slot': '빈 슬롯',
   'icons/sword': '칼날', 'icons/pierce': '관통', 'icons/fork': '포크', 'icons/wave': '충격파', 'icons/flame': '열기', 'icons/shield': '방패', 'icons/bricks': '성벽',
   'icons/chain': '사슬', 'icons/oil': '기름 방울', 'icons/skull': '해골', 'icons/horseshoe': '편자', 'icons/portal': '소용돌이 문', 'icons/swap': '맞바꿈',
@@ -474,8 +512,9 @@ const renderGallery = () => {
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
-      items += item('종이 왕관 킹 (조합)', 24, 30, '<canvas data-live="king" width="96" height="120"></canvas>');
+      items += item('종이 왕관 킹 (조합 · 15도)', 24, 30, '<canvas data-live="king" width="96" height="120"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
+      items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
       items += item('피해 숫자 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
     } else {
@@ -495,13 +534,15 @@ const renderGallery = () => {
   const arC = cv('arrows').getContext('2d')!;
   const kgC = cv('king').getContext('2d')!;
   const thC = cv('threat').getContext('2d')!;
+  const gtC = cv('gear').getContext('2d')!;
+  const gtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (gtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => gtC.fillRect(x, y, w, h) }, S);
   const dtC = cv('death').getContext('2d')!;
   const ppC = cv('pop').getContext('2d')!;
   const ppSink = { fillStyle: (c: number, a = 1) => (ppC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => ppC.fillRect(x, y, w, h) };
   let ppArts: PopupArt[] = [];
   const dtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (dtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => dtC.fillRect(x, y, w, h) }, S);
   let dtCells: CrumbleCell[] = [];
-  for (const c of [hpC, arC, kgC, thC]) c.imageSmoothingEnabled = false;
+  for (const c of [hpC, arC, kgC, thC, gtC]) c.imageSmoothingEnabled = false;
   const tile = (c: CanvasRenderingContext2D, dark: boolean, x: number, y: number) => {
     const im = sprites[dark ? 'tile-dark' : 'tile-light'];
     if (im?.complete) c.drawImage(im, x, y, 20 * S, 20 * S);
@@ -542,10 +583,22 @@ const renderGallery = () => {
     // 종이 왕관 킹: 사용자 폰 + 왕관
     kgC.clearRect(0, 0, 96, 120);
     const pawn = sprites.P0;
-    const crown = sprites['hud/paper-crown-tilt'];
+    const crown = sprites['hud/paper-crown'];
     if (pawn?.complete) kgC.drawImage(pawn, 16, 52, 64, 64);
-    // 기울여 씌운 왕관 (D-061): 왕관 그림 자체를 15도 돌린 판, 아랫단이 머리 위쪽을 덮는다
-    if (crown?.complete) kgC.drawImage(crown, 48 - (crown.naturalWidth * S) / 2 + S, 52 + 5 * S - crown.naturalHeight * S, crown.naturalWidth * S, crown.naturalHeight * S);
+    // 왕관 (D-063): 사용자 7×5 그림 그대로, 그림을 시계 방향 15도 돌려 머리 위에 얹는다 (아랫단 가운데 = 머리 꼭대기)
+    if (crown?.complete) {
+      kgC.save();
+      kgC.translate(48 + S, 52 + 3 * S);
+      kgC.rotate((15 * Math.PI) / 180);
+      kgC.drawImage(crown, -3.5 * S, -5 * S, 7 * S, 5 * S);
+      kgC.restore();
+    }
+    // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤
+    gtC.clearRect(0, 0, 240, 80);
+    (['ally', 'kill', 'enemy'] as const).forEach((k, i) => {
+      tile(gtC, i % 2 === 1, i * 80, 0);
+      gearTarget(gtC, gtPen, i * 80, 0, k, now);
+    });
     // 위협 깜빡임
     thC.clearRect(0, 0, 80, 80);
     tile(thC, true, 0, 0);
