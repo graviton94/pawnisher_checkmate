@@ -89,7 +89,7 @@ export const TEXT = {
     leave: '떠나기',
   },
   altar: {
-    title: '운명 기관',
+    title: '뽑기 기계',
     lead: '나사를 넣고 레버를 당기면 무엇이 나올지 모른다.',
     pull: '레버를 당긴다',
     release: '행운 톱니 해방 — 원하는 개조 고르기',

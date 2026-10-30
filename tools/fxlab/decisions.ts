@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 44, date: '2026-10-30' };
+export const VERSION = { n: 45, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -78,13 +78,14 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '박자', rule: '예비 동작(느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
   { item: '이동', rule: '들기 → 지수형 이동 → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
   { item: '기물 공격', rule: '폰 초승달 칼날 · 나이트 번개 · 비숍 응축 광선 · 룩 십자 폭발 · 퀸 톱날 부메랑 · 킹 종소리 파동 (위 장면에서 재생)', status: 'done' },
-  { item: '기물 외곽선', rule: '사용자 그림 그대로, 얇은 검정만 안쪽으로 채우고 흰 테두리 고르게 (tools/patch-piece-outlines.py)', status: 'done' },
+  { item: '기물 그림', rule: '정본 = tools/pixel/pieces.txt 격자 (사용자 원본을 5px 격자로 옮김). maker.py가 흰·흑 진영 · 가는 흰 테두리 · 흑 빛 테로 찍는다. 이형 기물 그림도 같은 파일에', status: 'review' },
   { item: '흰 킹', rule: '원래 킹 기물 그림 (왕관 쓴 폰 안은 접음, D-079)', status: 'done' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로', status: 'done' },
   { item: '기록 줄', rule: '판 위 흔적 대신 오른쪽 레일에 하스스톤식 기록 줄 (누르면 그 수를 다시 보여 줌)', status: 'done' },
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 45, date: '2026-10-30', items: ['기물 그림을 도트 메이커로 다시 찍음 (tools/pixel — 원본을 5px 격자로 옮긴 정본, 흰 테두리 도트 반 개)', '용어: 대국 · 검문 · 뽑기 기계 · 돌발'] },
   { v: 44, date: '2026-10-30', items: ['화면 디자인 전체 (D-085): 인트로·타이틀·메뉴·시작 세트·공정 지도·보상·고물상·공방·운명 기관·사건·전투 레일·일시 정지·결과 — 「화면 디자인」 갤러리', 'UI 부품 도트 (버튼 4색·철판 패널·황동 이름판·명령 테이프), 태엽 감개로 행동력 표시, 세계 용어 전면 적용'] },
   { v: 43, date: '2026-10-30', items: ['이형 거푸집 표식 4종 (판 칸 · 판 위 표식 목록)'] },
   { v: 42, date: '2026-10-30', items: ['판 정보 줄이기: 칼·해골 토큰 삭제, 적 의도는 과녁·숫자 대신 HP 게이지 + 처치만 금색 숫자, 적을 누르면 숫자, 내 기물 고르는 중엔 의도 거의 숨김'] },

@@ -383,7 +383,7 @@ img { image-rendering: pixelated; }
 .forge-card .btn { width: 100%; min-height: 48px; font-size: 13px; }
 .forge-card .vname { font-size: 12px; color: var(--brass-hi); min-height: 14px; }
 
-/* 운명 기관 · 사건: 왼쪽 그림 칸 + 오른쪽 글 */
+/* 뽑기 기계 · 돌발: 왼쪽 그림 칸 + 오른쪽 글 */
 .art { width: min(36vw, 280px); flex: none; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
 .art .icon.xl { width: 96px; height: 96px; }
 .art .caption { position: absolute; left: 10px; right: 10px; bottom: 8px; font-size: 12px; color: var(--muted); text-align: center; }

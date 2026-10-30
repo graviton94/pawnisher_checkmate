@@ -105,7 +105,7 @@ const pieceOffer = (run: RunState, t: PieceType): string => {
 };
 
 /**
- * 출하(런) 화면들 (D-085 화면 디자인): 타이틀 · 메인 메뉴 · 시작 세트 · 공정 지도 · 보상 · 고물상 · 공방 · 운명 기관 · 사건 · 결과.
+ * 출하(런) 화면들 (D-085 화면 디자인): 타이틀 · 메인 메뉴 · 시작 세트 · 공정 지도 · 보상 · 고물상 · 공방 · 뽑기 기계 · 돌발 · 결과.
  * 모두 공장 배경 위 전체 화면 장면. 대국은 전투 화면을 쓴다.
  */
 export class RunUi {
@@ -344,10 +344,10 @@ export class RunUi {
       const btns = nodes
         .map((n, j) => {
           const chosen = run.path[i] === j;
-          const label = n.kind === 'event' && n.event ? '사건' : NODE_NAMES[n.kind];
+          const label = NODE_NAMES[n.kind];
           const state = cur ? 'open' : f < run.floor ? (chosen ? 'chosen past' : 'past') : 'future';
           const ic = n.kind === 'event' && n.event && f <= run.floor ? EVENT_ICON[n.event] : NODE_ICON[n.kind];
-          const title = n.kind === 'boss' ? `${NODE_NAMES.boss} · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `사건 · ${EVENTS[n.event].title}` : NODE_NAMES[n.kind];
+          const title = n.kind === 'boss' ? `${NODE_NAMES.boss} · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `${NODE_NAMES.event} · ${EVENTS[n.event].title}` : NODE_NAMES[n.kind];
           return `<button class="node ${n.kind} ${state}" type="button" ${cur ? `data-node="${j}"` : 'disabled'} data-f="${f}" data-j="${j}" aria-label="${title}" title="${title}">${icon(ic)}<span>${label}</span></button>`;
         })
         .join('');
@@ -691,7 +691,7 @@ export class RunUi {
     const el = this.hud.openScene(
       `${this.bar(run)}
       <div class="stage">
-        <div class="art panel9">${icon(EVENT_ICON[st.id], 'xl', 'var(--paper)')}<span class="caption">사건</span></div>
+        <div class="art panel9">${icon(EVENT_ICON[st.id], 'xl', 'var(--paper)')}<span class="caption">${NODE_NAMES.event}</span></div>
         <div class="col grow">
           <div class="title-line"><h2>${ev.title}</h2></div>
           <p class="lead" style="font-size:15px">${ev.text}</p>

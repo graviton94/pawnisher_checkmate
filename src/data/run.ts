@@ -24,13 +24,13 @@ export const START_GOLD = 50;
 export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' | 'event';
 
 export const NODE_NAMES: Record<NodeKind, string> = {
-  battle: '검수 대국',
-  elite: '정밀 검수',
+  battle: '대국',
+  elite: '검문',
   boss: '반장 대국',
   shop: '고물상',
   forge: '공방',
-  altar: '운명 기관',
-  event: '사건',
+  altar: '뽑기 기계',
+  event: '돌발',
 };
 
 /** 노드 등장 가중치 (층마다 2~3개를 뽑는다). */

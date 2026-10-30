@@ -503,7 +503,7 @@ const KO: Record<string, string> = {
   'icons/chain': '사슬', 'icons/oil': '기름 방울', 'icons/skull': '해골', 'icons/horseshoe': '편자', 'icons/portal': '소용돌이 문', 'icons/swap': '맞바꿈',
   'icons/flag': '깃발', 'icons/claw': '집게', 'icons/windkey': '태엽 열쇠', 'icons/watch': '회중시계', 'icons/bell': '종', 'icons/crown': '왕관',
   'icons/star': '별', 'icons/eye': '렌즈 눈', 'icons/scale': '저울', 'icons/reticle': '과녁', 'icons/card': '천공 카드', 'icons/anvil': '모루 (공방)',
-  'icons/screw': '나사 (고물상)', 'icons/question': '물음표 (사건)', 'icons/crate': '부품 상자', 'icons/wrench': '렌치 (정비소)', 'icons/lever': '레버 (운명 기관)',
+  'icons/screw': '나사 (고물상)', 'icons/question': '물음표 (돌발)', 'icons/crate': '부품 상자', 'icons/wrench': '렌치 (정비소)', 'icons/lever': '레버 (뽑기 기계)',
 };
 const GROUPS: [string, string, string][] = [
   ['pieces', '기물 (사용자 도트)', '판 위 모든 그림의 크기 기준'],

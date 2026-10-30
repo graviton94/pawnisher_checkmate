@@ -508,7 +508,7 @@ export const forgeVariant = (run: RunState, t: PieceType, id: VariantId): string
   run.loadout.variants = { ...run.loadout.variants, [t]: id };
 };
 
-/** 운명 기관 대박: 덱에 있고 아직 이형이 없는 유형 하나에 이형 거푸집 (없으면 null) */
+/** 뽑기 기계 대박: 덱에 있고 아직 이형이 없는 유형 하나에 이형 거푸집 (없으면 null) */
 const grantVariant = (run: RunState, rng: Rng): VariantId | null => {
   const pool = [...new Set(run.deck)].filter((t) => !run.loadout.variants?.[t]).flatMap((t) => variantsFor(t));
   if (!pool.length) return null;
@@ -535,7 +535,7 @@ export const altarGamble = (run: RunState): string | void => {
     const options = withRng(run, (rng) => rollEnchants(run, rng, 'altar', true));
     run.stage.result = { kind: 'enchant' };
     if (options.length) {
-      run.stage = { at: 'reward', title: '운명 기관 — 희귀 개조', lines: [], choices: [{ type: 'enchant', options }] };
+      run.stage = { at: 'reward', title: '뽑기 기계 — 희귀 개조', lines: [], choices: [{ type: 'enchant', options }] };
       return;
     }
   }
