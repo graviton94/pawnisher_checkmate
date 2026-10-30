@@ -1,3 +1,4 @@
+import { vignette } from '../ui/juice';
 import { TERRAIN } from '../data/terrain';
 import { AFFIXES } from '../data/legions';
 import { TACTICS } from '../data/tactics';
@@ -977,6 +978,16 @@ class BoardScene extends Phaser.Scene {
           }
           sfx('hit', this.combo++);
           this.applyHit(ts, h);
+          // 쾌감 · 아픔 (D-104): 내 기물이 맞으면 화면 가장자리가 붉게 (피해 비율만큼), 쓰러지면 둔탁한 소리.
+          // 처치는 아주 짧게 멈췄다 간다 (히트스톱)
+          if (ts.piece.side === 0 && h.damage > 0) {
+            vignette('bad', Math.min(1, (h.damage / Math.max(1, ts.piece.maxHp)) * 2.2 + (h.killed ? 0.4 : 0)));
+            if (h.killed) sfx('hurt');
+          }
+          if (h.killed && !this.calm) {
+            this.tweens.timeScale = 0.08;
+            window.setTimeout(() => (this.tweens.timeScale = 1), 90);
+          }
         });
       });
       await Promise.all([...hitsDone, this.after(fx.duration)]);

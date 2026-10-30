@@ -11,6 +11,7 @@ import { VARIANTS } from '../data/variants';
 import { TEXT } from '../data/text';
 import { NODE_NAMES } from '../data/run';
 import { AFFIXES } from '../data/legions';
+import { pop, stamp } from './juice';
 import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
@@ -148,7 +149,9 @@ export class Hud implements HudView {
 
   setOrder(order: { id: OrderId; deck: PieceType[] } | null): void {
     this.order = order;
+    this.orderDone = false;
   }
+  private orderDone = false;
 
   /** 묘수풀이 목표 한 줄 (주문서 자리를 쓴다) */
   private goal: string | null = null;
@@ -169,6 +172,15 @@ export class Hud implements HudView {
     if (!this.order) return;
     const def = ORDERS[this.order.id];
     const pr = orderProgress(this.order.id, c.state, this.order.deck);
+    // 완수하는 순간 (D-104): 줄이 금빛으로 튀고 도장
+    if (pr.done && !this.orderDone) {
+      this.orderDone = true;
+      window.setTimeout(() => {
+        stamp('완수', 'good');
+        sfx('coin');
+        pop($('order'), 'good');
+      }, 200);
+    } else if (!pr.done) this.orderDone = false;
     el.className = `order${pr.done ? ' done' : pr.failed ? ' failed' : ''}`;
     const mark = def.tactic ? icon(TACTICS[def.tactic].icon, 's', TACTICS[def.tactic].color) : icon('flag', 's');
     el.innerHTML = `${mark}<span class="what"><b>${TEXT.battle.order}</b> ${def.text}</span>${pr.done ? icon('star', 's') : pr.count ? `<span class="count">${pr.count}</span>` : ''}`;

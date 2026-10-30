@@ -514,3 +514,37 @@ img { image-rendering: pixelated; }
 /* 진형 고르기 (D-102) */
 .formations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .formations .chip { min-height: 48px; text-align: left; }
+
+/* ---------- 쾌감 · 아픔 연출 (D-104) ---------- */
+.juice-vignette { position: fixed; inset: 0; z-index: 90; pointer-events: none; animation: juice-vig 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.juice-vignette.bad { box-shadow: inset 0 0 calc(90px * var(--s)) calc(14px * var(--s)) rgba(220, 38, 38, 0.85); }
+.juice-vignette.good { box-shadow: inset 0 0 calc(90px * var(--s)) calc(14px * var(--s)) rgba(250, 204, 21, 0.7); }
+.juice-vignette.rare { box-shadow: inset 0 0 calc(90px * var(--s)) calc(14px * var(--s)) rgba(196, 181, 253, 0.7); }
+@keyframes juice-vig { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+.juice-shake { animation: juice-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes juice-shake { 10%, 90% { transform: translateX(calc(var(--p) * -0.5)); } 20%, 80% { transform: translateX(var(--p)); } 30%, 50%, 70% { transform: translateX(calc(var(--p) * -1)); } 40%, 60% { transform: translateX(var(--p)); } }
+.juice-pop { animation: juice-pop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.juice-pop.good { filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.9)); }
+@keyframes juice-pop { 0% { transform: scale(1); } 25% { transform: scale(1.22); } 55% { transform: scale(0.96); } 100% { transform: scale(1); } }
+.juice-float { position: fixed; z-index: 91; pointer-events: none; transform: translate(-50%, 0); font-family: Galmuri14, Galmuri11, sans-serif; font-weight: 700; font-size: 20px; text-shadow: 0 2px 0 #000, 0 0 6px #000; animation: juice-float 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.juice-float.good { color: #facc15; }
+.juice-float.bad { color: #f87171; animation-name: juice-sink; }
+.juice-float.rare { color: #c4b5fd; }
+@keyframes juice-float { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.6); } 20% { opacity: 1; transform: translate(-50%, -10px) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1); } }
+@keyframes juice-sink { 0% { opacity: 0; transform: translate(-50%, -6px); } 20% { opacity: 1; transform: translate(-50%, 4px) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, 34px); } }
+.juice-bit { position: fixed; z-index: 91; width: 5px; height: 5px; pointer-events: none; animation: juice-bit 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.juice-bit.bad { animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.5); }
+@keyframes juice-bit { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+.juice-stamp { position: fixed; left: 50%; top: 42%; z-index: 92; pointer-events: none; padding: 6px 18px; font-family: Galmuri14, Galmuri11, sans-serif; font-weight: 700; font-size: 40px; letter-spacing: 4px; border: 5px solid currentColor; background: rgba(10, 8, 14, 0.75); animation: juice-stamp 1.05s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.juice-stamp.good { color: #facc15; }
+.juice-stamp.bad { color: #f87171; }
+.juice-stamp.rare { color: #c4b5fd; }
+@keyframes juice-stamp { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); } 18% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(0.92); } 30% { transform: translate(-50%, -50%) rotate(-8deg) scale(1.04); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
+/* 희귀 · ★ 고르기 카드: 빛이 한 번 쓸고 지나간다 */
+.offer.rare { position: relative; overflow: hidden; }
+.offer.rare::after { content: ''; position: absolute; inset: -20% auto -20% -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent); transform: skewX(-15deg); animation: juice-sheen 2.4s ease-in-out 0.2s infinite; pointer-events: none; }
+@keyframes juice-sheen { 0% { left: -60%; } 45%, 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) {
+  .juice-stamp, .juice-float { animation-duration: 0.5s; }
+  .offer.rare::after { animation: none; }
+}

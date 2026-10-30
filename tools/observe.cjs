@@ -311,6 +311,35 @@ const scenarios = {
     await page.tap('[data-node="0"]'); await page.waitForTimeout(1500);
     return ['formation-battle'];
   },
+  // 쾌감 · 아픔 (D-104): 연출이 한창일 때를 찍는다
+  async juice(page) {
+    await loadRun(page, { at: 'event', id: 'jam' });
+    await page.tap('[data-ev="2"]'); await page.waitForTimeout(220);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-juice-loss.png`) });
+    await loadRun(page, { at: 'map' }, { floor: 14, gold: 400, path: Array(13).fill(0), loadout: { enchants: { E01: 2 }, cards: [], forge: {}, variants: {} }, map: Array.from({ length: 36 }, () => [{ kind: 'shop' }]) });
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-juice-shop.png`) });
+    await page.tap('[data-polish="0"]'); await page.waitForTimeout(260);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-juice-awaken.png`) });
+    await loadRun(page, { at: 'event', id: 'gambler' }, { gold: 200, rng: 7 });
+    await page.tap('[data-ev="0"]'); await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-juice-gamble.png`) });
+    return [];
+  },
+  async 'juice-battle'(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    for (let t = 0; t < 10; t++) {
+      await page.evaluate(() => { window.pawnisher.autoPlan(); void window.pawnisher.submit(); });
+      for (let k = 0; k < 60; k++) {
+        await page.waitForTimeout(100);
+        const red = await page.evaluate(() => !!document.querySelector('.juice-vignette.bad'));
+        if (red) { await page.waitForTimeout(110); await page.screenshot({ path: path.join(OUT, `${stamp}-juice-hurt.png`) }); return []; }
+      }
+      await page.waitForFunction(() => window.pawnisher.phase === 'plan', null, { timeout: 20000 });
+    }
+    return [];
+  },
   async over(page) {
     await scenarios.menu(page);
     await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });

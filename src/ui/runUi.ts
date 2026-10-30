@@ -4,6 +4,7 @@ import { puzzleBattle, puzzleFor } from '../run/puzzle';
 import { freshSeed, parseSeed, seedCode } from '../run/seed';
 import { DEFECT } from '../data/defects';
 import { FORMATIONS, FORMATION_ORDER, type FormationId } from '../data/formations';
+import { runFeedback, shake, stamp, vignette, type RunDelta } from './juice';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -78,6 +79,24 @@ const defectStats = (run: RunState): string => {
   if (run.sealed) parts.push(`<span class="stat bad">${icon('claw', 's')}${TEXT.defect.seal} <b>${run.sealed}</b></span>`);
   return parts.join('');
 };
+
+/** 연출 비교용 출하 상태 (D-104) */
+interface RunSnap {
+  gold: number;
+  deck: number;
+  star: number;
+  damage: number;
+  sealed: number;
+  stage: string;
+}
+const snapOf = (run: RunState): RunSnap => ({
+  gold: run.gold,
+  deck: run.deck.length,
+  star: Object.values(run.loadout.enchants).filter((n) => (n ?? 0) >= 3).length,
+  damage: Object.values(run.loadout.damage ?? {}).reduce((a: number, n) => a + (n ?? 0), 0),
+  sealed: run.sealed ?? 0,
+  stage: run.stage.at === 'altar' && run.stage.result ? 'altar-result' : run.stage.at,
+});
 
 /** 시작 세트 이름 (해금 세트는 meta의 이름) */
 const setName = (deck: Deck): string => {
@@ -356,7 +375,36 @@ export class RunUi {
   }
 
   // ---------- 단계별 화면 ----------
+  /** 화면을 그리고, 지난 화면 이후 바뀐 출하 상태로 쾌감·아픔 연출 (D-104) */
   show(): void {
+    this.render();
+    const run = this.run;
+    if (!run) {
+      this.snap = null;
+      return;
+    }
+    const now = snapOf(run);
+    const before = this.snap;
+    this.snap = now;
+    if (!before) return;
+    const d: RunDelta = { gold: now.gold - before.gold, deck: now.deck - before.deck, awakened: Math.max(0, now.star - before.star), damaged: Math.max(0, now.damage - before.damage), sealed: Math.max(0, now.sealed - before.sealed) };
+    runFeedback(document, d, before.gold);
+    // 뽑기 기계 결과: 이형 대박 · 꽝
+    if (run.stage.at === 'altar' && run.stage.result && before.stage !== 'altar-result') {
+      if (run.stage.result.kind === 'variant') {
+        sfx('jackpot');
+        vignette('good', 1);
+        stamp('이형!', 'good');
+      } else if (run.stage.result.kind === 'miss') shake(document.querySelector('.result-stamp'), 1);
+    }
+    // 희귀가 걸린 고르기 화면: 반짝
+    if (run.stage.at === 'reward' && run.stage.choices.length && document.querySelector('.offer.rare')) sfx('rare');
+  }
+
+  /** 지난 화면의 출하 상태 (연출 비교용) */
+  private snap: RunSnap | null = null;
+
+  private render(): void {
     const run = this.run;
     if (!run) return this.showMenu();
     switch (run.stage.at) {

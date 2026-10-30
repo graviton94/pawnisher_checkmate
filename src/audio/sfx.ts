@@ -3,7 +3,7 @@
  * 나중에 필요한 것만 녹음·에셋으로 바꾼다 (사용자 결정). 켜고 끄기는 메인 메뉴, 값은 localStorage에.
  */
 
-export type SfxKind = 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 'threat' | 'win' | 'lose';
+export type SfxKind = 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 'threat' | 'win' | 'lose' | 'coin' | 'spend' | 'rare' | 'jackpot' | 'hurt' | 'loss' | 'stamp' | 'awaken';
 
 const KEY = 'pawnisher.sfx';
 let ctx: AudioContext | null = null;
@@ -121,6 +121,42 @@ export const sfx = (kind: SfxKind, combo = 0): void => {
       break;
     case 'lose':
       [0, -3, -6, -12].forEach((n, i) => tone(a, t + i * 0.16, semi(392, n), semi(392, n - 1), 0.24, 'triangle', 0.14));
+      break;
+    // ---- 쾌감 · 아픔 (D-104) ----
+    case 'coin':
+      // 나사가 쏟아진다: 높은 틱 셋이 올라간다
+      [0, 5, 9].forEach((n, i) => tone(a, t + i * 0.045, semi(1046, n), semi(1046, n), 0.05, 'square', 0.06));
+      break;
+    case 'spend':
+      [0, -3].forEach((n, i) => tone(a, t + i * 0.05, semi(784, n), semi(784, n - 1), 0.05, 'square', 0.05));
+      break;
+    case 'rare':
+      // 반짝: 장3화음을 빠르게 흩뿌린다
+      [0, 4, 7, 12, 16].forEach((n, i) => tone(a, t + i * 0.035, semi(880, n), semi(880, n), 0.18, 'triangle', 0.06));
+      break;
+    case 'jackpot':
+      noise(a, t, 0.2, 0.2, 1500);
+      [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => tone(a, t + 0.05 + i * 0.05, semi(523, n), semi(523, n), 0.22, 'square', 0.09));
+      break;
+    case 'hurt':
+      // 둔탁한 쿵 + 금속 찌그러짐
+      tone(a, t, 140, 55, 0.22, 'square', 0.22);
+      noise(a, t, 0.14, 0.32, 200);
+      break;
+    case 'loss':
+      tone(a, t, 330, 247, 0.18, 'square', 0.1);
+      tone(a, t + 0.16, 247, 175, 0.3, 'square', 0.1);
+      noise(a, t + 0.16, 0.12, 0.15, 400);
+      break;
+    case 'stamp':
+      noise(a, t, 0.05, 0.4, 150);
+      tone(a, t, 120, 60, 0.12, 'square', 0.18);
+      break;
+    case 'awaken':
+      // 아래에서 위로 쓸어 올리는 소리 + 종
+      tone(a, t, 220, 1760, 0.45, 'sawtooth', 0.06);
+      tone(a, t + 0.4, 1318, 1318, 0.5, 'triangle', 0.12);
+      tone(a, t + 0.4, 1976, 1976, 0.4, 'sine', 0.06);
       break;
   }
 };
