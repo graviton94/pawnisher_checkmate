@@ -119,6 +119,7 @@ export const TEXT = {
     running: '가동 중',
     over: '대국 종료',
     stall: '정체',
+    order: '주문서',
     hintPlan: '기물을 눌러 명령을 새긴다',
     hintIntent: '붉은 화살표 = 지금 가동하면 적이 둘 수 · 깜빡이는 HP = 잃을 몫 · 적을 누르면 피해 숫자',
     hintThreat: '적 기물을 누르면 위협 범위가 보인다',

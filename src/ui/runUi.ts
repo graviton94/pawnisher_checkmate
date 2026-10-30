@@ -420,6 +420,7 @@ export class RunUi {
       this.save();
       window.setTimeout(() => this.show(), 600);
     };
+    this.hud.setOrder(e.order ? { id: e.order, deck: [...run.deck] } : null);
     this.c.startState(state, e.tier, TUNED);
     // 대국 시작 한 줄: 반장은 자기 대사, 검문!은 경고, 그 밖엔 공정과 군단 이름
     const opening =

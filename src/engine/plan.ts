@@ -2,6 +2,7 @@ import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, type CardUse } from '../data/cards';
 import { SYNERGY } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
+import { CHAIN_KILLS, type TacticId } from '../data/tactics';
 import { VARIANTS } from '../data/variants';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
 import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge, variantOn } from './rules';
@@ -104,7 +105,19 @@ interface TurnCtx {
   knightApGiven: boolean;
   /** 이번 턴 공격한 아군 나이트 수 (기병 편대 E13) */
   knightAttacks: number;
+  /** 지금 실행 중인 순번 */
+  order: number;
+  /** 이번 턴 처치로 빈 적 칸과 그 순번 (돌파 키워드) */
+  vacated: { pos: Pos; order: number }[];
+  chainDone: boolean;
 }
+
+/** 전술 키워드를 기록한다 (D-094): 사건 + 진영별 횟수 */
+const tally = (s: BattleState, ctx: TurnCtx, pieceId: number, tactic: TacticId): void => {
+  const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[ctx.side];
+  rec.tactics[tactic] = (rec.tactics[tactic] ?? 0) + 1;
+  ctx.events.push({ type: 'tactic', side: ctx.side, order: ctx.order, pieceId, tactic });
+};
 
 interface AttackMods {
   mult: number;
@@ -126,6 +139,15 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
   }
   const enemyKills = dead.filter((p) => p.side !== ctx.side).length;
   ctx.kills += enemyKills;
+  for (const p of dead) if (p.side !== ctx.side) ctx.vacated.push({ pos: { x: p.x, y: p.y }, order: ctx.order });
+  if (killer && dead.some((p) => p.type === 'K' && p.side !== killer.side)) {
+    const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[killer.side];
+    rec.finisher = killer.type;
+  }
+  if (killer && !ctx.chainDone && ctx.kills >= CHAIN_KILLS) {
+    ctx.chainDone = true;
+    tally(s, ctx, killer.id, 'chain');
+  }
 
   if (killer && enemyKills && findPiece(s, killer.id)) {
     const side = killer.side;
@@ -193,7 +215,7 @@ const SLIDERS: PieceType[] = ['B', 'R', 'Q'];
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 파괴된 기물은 즉시 제거한다. 처치 수를 돌려준다. */
 const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: TurnCtx, mods: AttackMods): number => {
   const grid = buildGrid(s);
-  const { targets, area } = attackScan(s, attacker, grid, { pierce: mods.pierce });
+  const { targets, area, pierced } = attackScan(s, attacker, grid, { pierce: mods.pierce });
   let mult = mods.mult;
 
   // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
@@ -208,14 +230,14 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   if (ctx.kills > 0) mult *= 1 + Math.min(ctx.kills, CHAIN.cap) * CHAIN.perKill;
   if (types.includes('N')) ctx.knightAttacks += 1;
 
-  // 전술적 사선 개척 (E09): 이번 턴 비켜 준 아군 덕에 열린 사선으로 치면 보너스
+  // 사선 개척: 이번 턴 비켜 준 아군 덕에 열린 사선으로 친다 (키워드 · 전술적 사선 개척 E09 보너스)
   const e09 = ench(s, attacker.side, 'E09');
-  if (e09 >= 1 && moveTypes(attacker).some((t) => SLIDERS.includes(t))) {
-    const opened = [...ctx.startPos.entries()].some(
-      ([id, pos]) => id !== attacker.id && ctx.acted.has(id) && area.some((a) => samePos(a, pos)) && !at(s, grid, pos.x, pos.y),
-    );
-    if (opened) mult *= e09 >= 2 ? 1.6 : 1.3;
-  }
+  const opened =
+    moveTypes(attacker).some((t) => SLIDERS.includes(t)) &&
+    [...ctx.startPos.entries()].some(([id, pos]) => id !== attacker.id && ctx.acted.has(id) && area.some((a) => samePos(a, pos)) && !at(s, grid, pos.x, pos.y));
+  if (e09 >= 1 && opened) mult *= e09 >= 2 ? 1.6 : 1.3;
+  // 돌파: 앞 순번이 처치해 비운 칸에 내려앉아 친다
+  const breach = ctx.vacated.some((v) => v.order < ctx.order && samePos(v.pos, attacker));
 
   const hits: HitResult[] = [];
   const primary = new Set(targets.map((t) => t.id));
@@ -253,6 +275,15 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     }
   }
   ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  // 전술 키워드 (D-094): 피해 공식은 그대로, 이름만 붙인다
+  const direct = hits.filter((h) => !h.splash);
+  if (direct.length) {
+    if (new Set(direct.map((h) => h.targetId)).size >= 2) tally(s, ctx, attacker.id, 'fork');
+    if (direct.some((h) => pierced.has(h.targetId))) tally(s, ctx, attacker.id, 'pierce');
+    if (opened) tally(s, ctx, attacker.id, 'discover');
+    if (breach) tally(s, ctx, attacker.id, 'breach');
+  }
+  if (hits.some((h) => h.checked)) tally(s, ctx, attacker.id, 'check');
   return resolveDeaths(s, ctx, attacker);
 };
 
@@ -333,6 +364,9 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     kills: 0,
     knightApGiven: false,
     knightAttacks: 0,
+    order: 0,
+    vacated: [],
+    chainDone: false,
   };
   let apUsed = 0;
   let prevKilled = false;
@@ -346,6 +380,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
 
   for (let order = 0; order < plan.length; order++) {
     const step = plan[order];
+    ctx.order = order;
     if (s.winner !== null) return fail('전투 종료');
     const piece = own(step.pieceId);
     if (!piece) return fail('없는 기물');

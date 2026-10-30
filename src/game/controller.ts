@@ -1,3 +1,4 @@
+import type { TacticId } from '../data/tactics';
 import { AGGRESSIVE, DEFENSIVE, type Weights } from '../ai/evaluate';
 import { AI_TIERS, choosePlan } from '../ai/search';
 import { TUNED } from '../data/aiWeights';
@@ -126,6 +127,8 @@ export interface LogEntry {
   order: number;
   attacker: { type: PieceType; side: Side; pos: Pos };
   targets: { type: PieceType; side: Side; pos: Pos; damage: number; killed: boolean }[];
+  /** 이 공격에 붙은 전술 키워드 (D-094) */
+  tactics: TacticId[];
 }
 
 /** 한 턴의 실행 기록을 기록 줄로 바꾼다 (이동을 따라가며 공격 순간의 칸을 잡는다) */
@@ -147,7 +150,11 @@ export const buildLog = (before: BattleState, events: BattleEvent[]): LogEntry[]
           const t = at.get(h.targetId);
           return t ? [{ type: t.type, side: t.side, pos: { ...t.pos }, damage: h.damage, killed: !!h.killed }] : [];
         }),
+        tactics: [],
       });
+    } else if (e.type === 'tactic') {
+      const last = [...out].reverse().find((x) => x.side === e.side && x.order === e.order);
+      if (last && !last.tactics.includes(e.tactic)) last.tactics.push(e.tactic);
     }
   }
   return out;

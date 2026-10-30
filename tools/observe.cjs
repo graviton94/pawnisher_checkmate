@@ -112,6 +112,40 @@ const scenarios = {
     await page.waitForTimeout(300);
     return ['battle-variant-tap'];
   },
+  // 전술 키워드 · 주문서 (D-094): 나이트 포크를 예약 → 명령 테이프 칩 · 레일 주문서 줄 → 가동 중 판 위 배너 → 기록 줄 칩
+  async 'battle-tactic'(page) {
+    await page.goto(URL + '&fxslow'); await page.waitForTimeout(500);
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    await page.evaluate(() => {
+      const c = window.pawnisher;
+      const s = c.state;
+      const foes = s.pieces.filter((p) => p.side === 1 && p.type === 'P');
+      Object.assign(foes[0], { x: 0, y: 3, hp: 400, maxHp: 400 });
+      Object.assign(foes[1], { x: 4, y: 3, hp: 400, maxHp: 400 });
+      window.runUi.hud.setOrder({ id: 'fork2', deck: s.pieces.filter((p) => p.side === 0).map((p) => p.type) });
+      c.setup?.(s);
+      const n = s.pieces.find((p) => p.side === 0 && p.type === 'N' && p.x === 1);
+      c.tap({ x: n.x, y: n.y }, true);
+      c.tap({ x: 2, y: 2 }, true);
+    });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-battle-tactic-plan.png`) });
+    await page.evaluate(() => { void window.pawnisher.submit(); });
+    const shots = [];
+    await page.waitForTimeout(3000);
+    for (const at of [3400, 3800, 4200, 4600, 5000, 5400]) {
+      await page.waitForTimeout(400);
+      const file = `battle-tactic-${at}`;
+      await page.screenshot({ path: path.join(OUT, `${stamp}-${file}.png`) });
+      shots.push(file);
+    }
+    await page.waitForFunction(() => window.pawnisher.phase === 'plan', null, { timeout: 30000 });
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-battle-tactic-log.png`) });
+    await page.goto(URL); await page.waitForTimeout(300);
+    return [];
+  },
   // 공격 재생 중간 (4배 느리게): 이동 · 공격 이펙트 · 피해 숫자 · 재가 되는 처치
   async 'battle-attack'(page) {
     await page.goto(URL + '&fxslow'); await page.waitForTimeout(500);
@@ -159,7 +193,7 @@ const scenarios = {
   },
   // 출하 화면들 (D-085): 저장된 출하를 심고 → 타이틀 → 이어서 출하
   async reward(page) {
-    await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] });
+    await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });
     await page.tap('[data-pick="N"]'); await page.waitForTimeout(400);
     return ['reward-enchant'];
@@ -167,6 +201,12 @@ const scenarios = {
   async map(page) {
     await loadRun(page, { at: 'map' }, { floor: 4, path: [0, 1, 0], map: Array.from({ length: 36 }, (_, i) => (i % 4 === 0 ? [{ kind: 'battle' }, { kind: 'elite' }, { kind: 'event', event: 'gambler' }] : i % 4 === 1 ? [{ kind: 'battle' }, { kind: 'shop' }] : i % 4 === 2 ? [{ kind: 'forge' }, { kind: 'battle' }, { kind: 'altar' }] : [{ kind: 'battle' }, { kind: 'event', event: 'smith' }])).map((f, i) => ((i + 1) % 12 === 0 ? [{ kind: 'boss' }] : f)) });
     return ['map'];
+  },
+  // 출하 대국 시작: 레일에 주문서 한 줄 (D-094)
+  async 'battle-run'(page) {
+    await loadRun(page, { at: 'map' });
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(1200);
+    return ['battle-run'];
   },
   async shop(page) {
     await loadRun(page, { at: 'map' });

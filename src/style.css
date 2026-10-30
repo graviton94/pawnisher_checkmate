@@ -475,3 +475,19 @@ img { image-rendering: pixelated; }
 .title-line { flex-wrap: wrap; row-gap: 2px; }
 .title-line .tag { align-self: center; }
 .offer { padding-top: 8px; }
+
+/* 주문서 한 줄 (D-094): 이 대국에 붙은 보너스 목표 · 진행 */
+.order { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 8px; flex: none; background: #1b1922; border: 2px solid #34303e; color: var(--text); font-size: 14px; line-height: 1.25; }
+.order[hidden] { display: none; }
+.order .what { flex: 1; min-width: 0; }
+.order .what b { color: var(--brass, #c89b3c); font-weight: 700; margin-right: 2px; }
+.order .count { font-family: Galmuri14, Galmuri11, sans-serif; color: var(--text2); }
+.order.done { border-color: #a8730a; }
+.order.done .icon:last-child { color: #facc15; }
+.order.failed .what { color: var(--muted); text-decoration: line-through; }
+
+/* 전술 키워드 칩: 명령 테이프·기록 줄 (색 + 아이콘, 원칙 4) */
+.queue li > .chips { margin: 0 0 0 auto; display: flex; gap: 3px; align-self: center; }
+.queue li.log > .chips + .dmg { margin-left: 4px; }
+.queue .tac { display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 4px; background: #16141c; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.queue .tac .icon.s { width: 14px; height: 14px; }

@@ -1,3 +1,4 @@
+import { TACTICS } from '../data/tactics';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
@@ -711,6 +712,7 @@ class BoardScene extends Phaser.Scene {
     // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
     const cur: BattleState = { ...this.state, stronghold: this.state.stronghold ? { ...this.state.stronghold } : null };
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
+    let tacticStack = 0;
     for (const e of events) {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
@@ -863,6 +865,25 @@ class BoardScene extends Phaser.Scene {
         }
         continue;
       }
+      if (e.type === 'tactic') {
+        // 전술 키워드 배너 (D-094): 친 기물 위에 이름이 튀어 오른다. 체크는 아래 안내가 맡는다
+        const sp = this.sprites.get(e.pieceId);
+        if (sp && e.tactic !== 'check') {
+          const def = TACTICS[e.tactic];
+          const stack = tacticStack++;
+          const label = this.add
+            .text(sp.root.x + t / 2, sp.root.y - t * (0.2 + stack * 0.32), def.name, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: def.color, stroke: '#0B0B0E', strokeThickness: 5 })
+            .setOrigin(0.5)
+            .setDepth(10)
+            .setScale(this.calm ? 1 : 0.4)
+            .setResolution(this.dpr);
+          if (!this.calm) this.tweens.add({ targets: label, scale: 1, duration: 160, ease: 'Back.easeOut' });
+          this.tweens.add({ targets: label, y: label.y - t * 0.3, alpha: 0, delay: 520, duration: 360, ease: 'Quad.easeIn', onComplete: () => label.destroy() });
+          await this.wait(180);
+        }
+        continue;
+      }
+      tacticStack = 0;
       if (e.type !== 'attack') continue;
       const atk = this.sprites.get(e.attackerId);
       if (!atk) continue;

@@ -1,3 +1,5 @@
+import { ORDERS, ORDER_GOLD_MULT } from '../data/tactics';
+import { orderProgress, pickOrder } from './orders';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
@@ -224,6 +226,7 @@ export const enterNode = (run: RunState, index: number): string | void => {
     case 'elite':
     case 'boss': {
       const encounter = withRng(run, (rng) => generateEncounter(run.floor, node.kind, rng, run.bosses[actOf(run.floor) - 1], run.ascension ?? 0));
+      encounter.order = withRng(run, (rng) => pickOrder(run.deck, rng));
       run.stage = { at: 'battle', encounter };
       return;
     }
@@ -279,6 +282,16 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     const extra = Math.round(gold * PAR.bonus);
     run.gold += extra;
     lines.push(`빠른 승리 (${rounds}/${par}턴) 나사 +${extra}`);
+  }
+  // 주문서 (D-094): 완수하면 나사
+  const order = run.stage.encounter.order;
+  if (order) {
+    const def = ORDERS[order];
+    if (orderProgress(order, final, run.deck, true).done) {
+      const g = Math.round(def.gold * ORDER_GOLD_MULT[kind as 'battle' | 'elite' | 'boss']);
+      run.gold += g;
+      lines.push(`주문서 완수 · 나사 +${g}`);
+    } else lines.push('주문서 미완');
   }
 
   // 랜덤 기물 보상: 첫·둘째 승리 확정, 이후 3승마다 (GDD 6장 §6.6)

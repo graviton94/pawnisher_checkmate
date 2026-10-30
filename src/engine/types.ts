@@ -1,5 +1,6 @@
 import type { CardId } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
+import type { TacticId } from '../data/tactics';
 import type { VariantId } from '../data/variants';
 
 /** 0 = 플레이어(보드 아래), 1 = 적(보드 위). 엔진은 두 진영을 같은 규칙으로 다룬다. */
@@ -116,6 +117,14 @@ export interface BattleState {
   apCarry: [number, number];
   /** 이번 턴 체크메이트 보호를 받는 킹 id (시뮬레이션 중에만 쓴다) */
   checkGuard?: number[];
+  /** 진영별 대국 기록 (전술 키워드 횟수 · 결정타) — 주문서 판정용 (D-094). 옛 저장에는 없다 */
+  record?: [BattleRecord, BattleRecord];
+}
+
+export interface BattleRecord {
+  tactics: Partial<Record<TacticId, number>>;
+  /** 상대 킹을 쓰러뜨린 기물의 유형 (그 순간의 유형) */
+  finisher?: PieceType;
 }
 
 /**
@@ -188,6 +197,8 @@ export type BattleEvent =
   | { type: 'shield'; pieceId: number; amount: number }
   | { type: 'fuse'; pieceId: number; partnerId: number; types: PieceType[] }
   | { type: 'heal'; pieceId: number; amount: number }
-  | { type: 'apGain'; side: Side; amount: number };
+  | { type: 'apGain'; side: Side; amount: number }
+  /** 전술 키워드 (D-094): 이 공격·이 턴에 난 수의 이름 */
+  | { type: 'tactic'; side: Side; order: number; pieceId: number; tactic: TacticId };
 
 export const otherSide = (side: Side): Side => (side === 0 ? 1 : 0);

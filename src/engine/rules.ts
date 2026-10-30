@@ -105,6 +105,8 @@ export interface AttackOptions {
 export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s), opts: AttackOptions = {}) => {
   const targets: Piece[] = [];
   const area: Pos[] = [];
+  /** 사선이 앞의 적을 꿰뚫고 맞힌 대상 (관통 키워드) */
+  const pierced = new Set<number>();
   const tSeen = new Set<number>();
   const aSeen = new Set<string>();
   const addArea = (x: number, y: number) => {
@@ -157,6 +159,7 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
           let allyPass = bishopLevel >= 1 ? 1 : 0;
           let bounce = mirror ? 1 : 0;
           let steps = 0;
+          let passed = false;
           while (steps++ < s.width * s.height) {
             if (wrap && dx !== 0 && y >= 0 && y < s.height && !inBounds(s, x, y)) {
               const [minX, maxX] = rowEnds(s, y);
@@ -177,6 +180,8 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
             if (p) {
               if (p.side !== piece.side) {
                 addTarget(p);
+                if (passed) pierced.add(p.id);
+                passed = true;
                 if (pierce <= 0) break;
                 pierce -= 1;
               } else {
@@ -191,7 +196,7 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
       }
     }
   }
-  return { targets, area };
+  return { targets, area, pierced };
 };
 
 export const attackTargets = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s), opts: AttackOptions = {}): Piece[] =>

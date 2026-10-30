@@ -9,6 +9,8 @@ import { FORGE_MAX } from '../data/forge';
 import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 import { VARIANTS } from '../data/variants';
 import { TEXT } from '../data/text';
+import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
+import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
 import { button, icon } from './chrome';
 import { setSfx, sfxOn } from '../audio/sfx';
@@ -40,6 +42,15 @@ const describeStep = (s: BattleState, m: PlanStep): string => {
     case 'formShift':
       return `${from} ⇄ 거푸집 교환${cardName(m.card)}`;
   }
+};
+
+/** 전술 키워드 칩: 이름까지(명령 테이프) 또는 아이콘만(기록 줄) */
+const tacticChips = (list: TacticId[], named: boolean): string => {
+  const uniq = [...new Set(list)];
+  if (!uniq.length) return '';
+  return `<span class="chips">${uniq
+    .map((t) => `<span class="tac" style="color:${TACTICS[t].color}" title="${TACTICS[t].name} — ${TACTICS[t].desc}">${icon(TACTICS[t].icon, 's')}${named ? TACTICS[t].name : ''}</span>`)
+    .join('')}</span>`;
 };
 
 export class Hud implements HudView {
@@ -130,8 +141,29 @@ export class Hud implements HudView {
     $('cards').innerHTML = slots.join('');
   }
 
+  /** 이 대국의 주문서 (출하 대국만, 시운전은 없음) — D-094 */
+  private order: { id: OrderId; deck: PieceType[] } | null = null;
+
+  setOrder(order: { id: OrderId; deck: PieceType[] } | null): void {
+    this.order = order;
+  }
+
+  /** 레일 한 줄: 주문서 · 진행 (완수 ✓ / 실패 줄 긋기) */
+  private renderOrder(c: BattleController): void {
+    const el = $('order');
+    el.hidden = !this.order;
+    if (!this.order) return;
+    const def = ORDERS[this.order.id];
+    const pr = orderProgress(this.order.id, c.state, this.order.deck);
+    el.className = `order${pr.done ? ' done' : pr.failed ? ' failed' : ''}`;
+    const mark = def.tactic ? icon(TACTICS[def.tactic].icon, 's', TACTICS[def.tactic].color) : icon('flag', 's');
+    el.innerHTML = `${mark}<span class="what"><b>${TEXT.battle.order}</b> ${def.text}</span>${pr.done ? icon('star', 's') : pr.count ? `<span class="count">${pr.count}</span>` : ''}`;
+    el.setAttribute('aria-label', `${TEXT.battle.order}: ${def.text}${pr.done ? ' 완수' : pr.failed ? ' 실패' : ''}`);
+  }
+
   update(c: BattleController): void {
     this.renderCards(c);
+    this.renderOrder(c);
     const label = $('turn-label');
     const mine = c.phase === 'plan';
     // 정체 압박 (D-072): 피해 없는 라운드가 이어지면 "정체 n/2" — 다 차면 판이 무너지기 시작한다
@@ -145,12 +177,15 @@ export class Hud implements HudView {
     const q = $('queue');
     const rows: string[] = [];
     const full = c.pending ? [...c.plan, c.pending] : c.plan;
+    // 미리보기 키워드 칩 (D-094): 이 순서로 두면 무슨 수가 나는지 누르기 전에 보인다
+    const check = checkPlan(c.state, full);
+    const chipsAt = (i: number) => tacticChips(check.events.flatMap((e) => (e.type === 'tactic' && e.order === i && e.side === c.state.turnSide ? [e.tactic] : [])), true);
     full.forEach((m, i) => {
       const p = findPiece(c.state, m.pieceId);
       if (!p) return;
       const pending = c.pending !== null && i === full.length - 1;
       rows.push(
-        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 24)}</span><span>${describeStep(c.state, m)}</span></li>`,
+        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 24)}</span><span>${describeStep(c.state, m)}</span>${chipsAt(i)}</li>`,
       );
     });
     if (!rows.length && mine && c.log.length) {
@@ -161,7 +196,7 @@ export class Hud implements HudView {
         const kill = e.targets.some((t) => t.killed);
         const tg = e.targets.slice(0, 2).map((t) => pieceImg(t.type, t.side, 'small', 22)).join('') + (e.targets.length > 2 ? `<small>+${e.targets.length - 2}</small>` : '');
         rows.push(
-          `<li class="log ${e.side === 0 ? 'mine' : 'enemy'}" data-log="${i}"><span class="who">${e.side === 0 ? '내' : '적'} #${e.order + 1}</span><span class="glyph">${pieceImg(e.attacker.type, e.attacker.side, 'small', 22)}</span><span class="to">→</span><span class="glyph">${tg}</span><span class="dmg${kill ? ' kill' : ''}">-${dmg}${kill ? '<i class="skull" aria-label="처치"></i>' : ''}</span></li>`,
+          `<li class="log ${e.side === 0 ? 'mine' : 'enemy'}" data-log="${i}"><span class="who">${e.side === 0 ? '내' : '적'} #${e.order + 1}</span><span class="glyph">${pieceImg(e.attacker.type, e.attacker.side, 'small', 22)}</span><span class="to">→</span><span class="glyph">${tg}</span>${tacticChips(e.tactics, false)}<span class="dmg${kill ? ' kill' : ''}">-${dmg}${kill ? '<i class="skull" aria-label="처치"></i>' : ''}</span></li>`,
         );
       });
     }
@@ -175,7 +210,7 @@ export class Hud implements HudView {
 
     // 태엽 (숫자 없이): 남음 = 감긴 태엽, 씀 = 풀린 태엽, 기본을 넘는 칸 = 이번 턴 보너스(요충지 등)
     const total = c.apTotal;
-    const left = total - checkPlan(c.state, full).apUsed;
+    const left = total - check.apUsed;
     $('vials').innerHTML = Array.from({ length: total }, (_, i) => {
       const k = i >= left ? 'spent' : i >= BASE_AP ? 'bonus' : 'full';
       return `<img class="${k}" src="ui/hud/key-${k}.png" alt="">`;
@@ -453,6 +488,7 @@ export class Hud implements HudView {
       this.closeOverlay();
       this.closeScene();
       const weights = AI_STYLES.find((s) => s.id === this.lastStyle)!.weights;
+      this.order = null;
       this.c.start(this.lastScenario, this.lastTier, weights, this.loadouts());
     });
   }
@@ -470,6 +506,7 @@ export class Hud implements HudView {
     panel.querySelector('[data-again]')!.addEventListener('click', () => {
       this.closeOverlay();
       const weights = AI_STYLES.find((s) => s.id === this.lastStyle)!.weights;
+      this.order = null;
       this.c.start(this.lastScenario, this.lastTier, weights, this.loadouts());
     });
   }

@@ -1,3 +1,6 @@
+import { ORDERS } from '../src/data/tactics';
+import { orderProgress, pickOrder } from '../src/run/orders';
+import type { PieceType } from '../src/engine/types';
 import { describe, expect, it } from 'vitest';
 import { BOSSES, FINAL_BOSS, FORGE_COST, TOTAL_FLOORS, type BossId } from '../src/data/run';
 import { createBattle, Rng } from '../src/engine';
@@ -89,6 +92,52 @@ describe('보상과 노드', () => {
     expect(takeChoice(run, pick)).toBeUndefined();
     expect(finishReward(run)).toBeUndefined();
     expect(run.floor).toBe(2);
+  });
+  it('주문서: 전투마다 하나, 완수하면 나사 · 못 하면 미완 줄 (D-094)', () => {
+    const run = newRun(3);
+    enterNode(run, 0);
+    const st = run.stage.at === 'battle' ? run.stage.encounter : null;
+    expect(st!.order).toBeDefined();
+    st!.order = 'fork2';
+    const b = createBattle({ width: st!.width, height: st!.height, decks: [run.deck, st!.deck], loadouts: [run.loadout, st!.loadout] });
+    b.winner = 0;
+    b.record = [{ tactics: { fork: 2 } }, { tactics: {} }];
+    const gold = run.gold;
+    finishBattle(run, b);
+    if (run.stage.at !== 'reward') throw new Error('보상 단계가 아님');
+    expect(run.stage.lines.some((l) => l.startsWith('주문서 완수') && l.endsWith(`+${ORDERS.fork2.gold}`))).toBe(true);
+    expect(run.gold).toBeGreaterThanOrEqual(gold + ORDERS.fork2.gold);
+
+    const run2 = newRun(3);
+    enterNode(run2, 0);
+    if (run2.stage.at !== 'battle') throw new Error('대국이 아님');
+    run2.stage.encounter.order = 'fork2';
+    const b2 = createBattle({ width: 6, height: 6, decks: [run2.deck, ['K']] });
+    b2.winner = 0;
+    b2.record = [{ tactics: { fork: 1 } }, { tactics: {} }];
+    finishBattle(run2, b2);
+    const after = run2.stage as unknown as { at: string; lines: string[] };
+    if (after.at !== 'reward') throw new Error('보상 단계가 아님');
+    expect(after.lines).toContain('주문서 미완');
+  });
+
+  it('주문서 판정: 무손실 · 킹 무상처 · 폰 결정타', () => {
+    const deck: PieceType[] = ['K', 'P', 'N'];
+    const b = createBattle({ width: 6, height: 6, decks: [deck, ['K']] });
+    b.winner = 0;
+    expect(orderProgress('flawless', b, deck).done).toBe(true);
+    expect(orderProgress('ironKing', b, deck).done).toBe(true);
+    b.pieces = b.pieces.filter((p) => !(p.side === 0 && p.type === 'N'));
+    expect(orderProgress('flawless', b, deck).failed).toBe(true);
+    b.pieces.find((p) => p.side === 0 && p.type === 'K')!.hp -= 1;
+    expect(orderProgress('ironKing', b, deck).failed).toBe(true);
+    expect(orderProgress('pawnMate', b, deck).done).toBe(false);
+    b.record = [{ tactics: {}, finisher: 'P' }, { tactics: {} }];
+    expect(orderProgress('pawnMate', b, deck).done).toBe(true);
+  });
+
+  it('주문서는 군단으로 할 수 있는 것만 (폰이 없으면 폰 결정타 없음)', () => {
+    for (let seed = 1; seed < 200; seed++) expect(pickOrder(['K', 'N', 'N'], new Rng(seed))).not.toBe('pawnMate');
   });
   it('패배하면 런 종료', () => {
     const run = newRun(4);

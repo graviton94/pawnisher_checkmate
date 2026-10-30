@@ -1,3 +1,4 @@
+import type { OrderId } from '../data/tactics';
 import { ENCHANTS, type EnchantId } from '../data/enchants';
 import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
@@ -25,6 +26,8 @@ export interface Encounter {
   floor: number;
   /** 승천 단계 (적 킹 보정 축소에 쓴다) */
   ascension?: number;
+  /** 이 대국의 주문서 (D-094). 옛 저장에는 없다 */
+  order?: OrderId;
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */

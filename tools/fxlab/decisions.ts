@@ -81,6 +81,8 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '기물 그림', rule: '정본 = tools/pixel/pieces64.txt 64×64 격자 (사용자 원본을 1.5px = 1칸으로, 흰 테두리 2칸). maker.py가 배경 없는 PNG로 찍는다. P·R·Q·K는 좌우 대칭 — 원래 십자가 · 룩 머리 모양을 살리고 비뚤어진 칸만 맞춤, R 윗머리 세 칸 같은 폭 (D-092, symmetry.py). 이형 기물 그림도 같은 파일에', status: 'review' },
   { item: '흰 킹', rule: '원래 킹 기물 그림 (왕관 쓴 폰 안은 접음, D-079)', status: 'done' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로', status: 'done' },
+  { item: '전술 키워드', rule: '공격 순간 친 기물 위에 이름 배너 (포크 하늘 · 관통 주황 · 사선 개척 보라 · 돌파 분홍 · 연쇄 금, 0.5초). 명령 테이프에 미리보기 칩, 기록 줄에 아이콘 칩 (D-094)', status: 'review' },
+  { item: '주문서', rule: '레일 한 줄: 아이콘 + 주문서 + 지시문 + 진행 (1/2 · 완수 ★ · 실패 줄 긋기) (D-094)', status: 'review' },
   { item: '기록 줄', rule: '판 위 흔적 대신 오른쪽 레일에 하스스톤식 기록 줄 (누르면 그 수를 다시 보여 줌)', status: 'done' },
 ];
 
