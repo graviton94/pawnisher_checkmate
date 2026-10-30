@@ -59,6 +59,19 @@ def outline(im, inner='k', outer='w'):
     return grow(grow(im, inner), outer)
 
 
+def grow_rim(im):
+    """바깥 1도트 흰 테두리만 두른다 (검정 틀은 그림에 이미 있다)"""
+    w, h = im.size
+    out = Image.new('RGBA', (w + 2, h + 2), (0, 0, 0, 0))
+    out.paste(im, (1, 1))
+    px = out.load()
+    add = [(x, y) for y in range(h + 2) for x in range(w + 2) if not px[x, y][3] and any(
+        0 <= x + dx < w + 2 and 0 <= y + dy < h + 2 and px[x + dx, y + dy][3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+    for x, y in add:
+        px[x, y] = C['w'] + (255,)
+    return out
+
+
 def mirror(im):
     """좌우 대칭: 왼쪽 절반을 오른쪽에 비춘다"""
     w, h = im.size
@@ -175,9 +188,10 @@ PROPS = {
 
 # ---------------- 주인공·HUD ----------------
 
-# 종이 왕관 (D-063): 사용자가 준 7×5 도트 그림 그대로 (검정 틀 + 노랑 + 청록 끝·보석). 기울이기는 화면이 그림을 돌려 그린다.
+# 종이 왕관 (D-063·D-065): 사용자가 준 7×5 도트 그림 (검정 틀 + 노랑 + 가운데 청록 보석), 양 위 끝은 검정, 바깥 1도트 흰 테두리.
+# 기울이기는 화면이 이 그림을 크게 구운 뒤 부드럽게 돌려 그린다 (계단 없이).
 CROWN_ART = [
-    'c.....c',
+    'k.....k',
     'kk.k.kk',
     'kykykyk',
     'kyycyyk',
@@ -266,7 +280,7 @@ for y, row in enumerate(CROWN_ART):
     for x, ch in enumerate(row):
         if ch != '.':
             crown.putpixel((x, y), CROWN_COLORS[ch] + (255,))
-save(crown, 'public/ui/hud/paper-crown.png')
+save(grow_rim(crown), 'public/ui/hud/paper-crown.png')
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')
 save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')

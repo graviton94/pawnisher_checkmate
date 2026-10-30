@@ -317,6 +317,24 @@ const tinted = (key: string, color: string): HTMLCanvasElement | null => {
   return c;
 };
 
+/** 도트 그림을 k배로 구워 둔 캔버스 (반듯한 사각 도트 그대로) — 이걸 돌리면 계단이 생기지 않는다 (D-065) */
+const bakeCache = new Map<string, HTMLCanvasElement>();
+const bake = (key: string, k: number): HTMLCanvasElement | null => {
+  const id = `${key}|${k}`;
+  const hit = bakeCache.get(id);
+  if (hit) return hit;
+  const im = sprites[key];
+  if (!im?.complete) return null;
+  const c = document.createElement('canvas');
+  c.width = im.naturalWidth * k;
+  c.height = im.naturalHeight * k;
+  const g = c.getContext('2d')!;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(im, 0, 0, c.width, c.height);
+  bakeCache.set(id, c);
+  return c;
+};
+
 /** 톱니 과녁 (철컥철컥 도는 태엽 고리) — 칸 왼쪽 위 (x, y), 내 과녁·처치 과녁만 돈다 (D-062). 처치면 가운데 금 해골 */
 const gearTarget = (c: CanvasRenderingContext2D, g: PixelPen, x: number, y: number, kind: 'ally' | 'kill' | 'enemy', ms: number) => {
   const dot = g.dot;
@@ -599,12 +617,15 @@ const renderGallery = () => {
     const pawn = sprites.P0;
     const crown = sprites['hud/paper-crown'];
     if (pawn?.complete) kgC.drawImage(pawn, 16, 52, 64, 64);
-    // 왕관 (D-063): 사용자 7×5 그림 그대로, 그림을 시계 방향 15도 돌려 머리 위에 얹는다 (아랫단 가운데 = 머리 꼭대기)
-    if (crown?.complete) {
+    // 왕관 (D-063·D-065): 도트 그림을 화면 크기로 먼저 굽고(도트는 반듯한 사각형), 구운 그림을 부드럽게 15도 돌려 얹는다 → 계단 없음
+    const baked = bake('hud/paper-crown', S);
+    if (baked) {
       kgC.save();
+      kgC.imageSmoothingEnabled = true;
+      kgC.imageSmoothingQuality = 'high';
       kgC.translate(48 + S, 52 + 3 * S);
       kgC.rotate((15 * Math.PI) / 180);
-      kgC.drawImage(crown, -3.5 * S, -5 * S, 7 * S, 5 * S);
+      kgC.drawImage(baked, -baked.width / 2, -baked.height + S);
       kgC.restore();
     }
     // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤
