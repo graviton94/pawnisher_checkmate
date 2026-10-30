@@ -9,6 +9,7 @@ import { canAdd } from '../run/deck';
 import { EVENTS } from '../run/events';
 import { encounterBattle } from '../run/legion';
 import { puzzleBattle, puzzleFor, solvePuzzle } from '../run/puzzle';
+import { orderProgress } from '../run/orders';
 import {
   altarGamble,
   altarPick,
@@ -41,7 +42,21 @@ export interface RunLog {
   /** 진 층의 노드 종류 */
   diedAt?: string;
   boss: string;
-  battles: { floor: number; kind: string; turns: number; won: boolean }[];
+  battles: {
+    floor: number;
+    kind: string;
+    turns: number;
+    won: boolean;
+    /** D-094~097 요소: 군단 원형 · 접사 · 주문서와 완수 · 내 전술 키워드 횟수 · 지형 칸 수 */
+    archetype?: string;
+    affixes?: string[];
+    order?: string;
+    orderDone?: boolean;
+    tactics?: Partial<Record<string, number>>;
+    terrain?: number;
+  }[];
+  /** 묘수: 문제 번호별 풀었는가 */
+  puzzles: boolean[];
   /** 층별 (도착 시) 골드·덱 크기 */
   trace: { floor: number; gold: number; deck: number; forge: number; enchants: number; cards: number }[];
   goldEarned: number;
@@ -80,7 +95,7 @@ const pickEnchant = (run: RunState, options: EnchantId[]): EnchantId => {
 
 export const autoRun = (seed: number): RunLog => {
   const run = newRun(seed);
-  const log: RunLog = { won: false, floor: 1, boss: run.bosses[0], battles: [], trace: [], goldEarned: 0, goldSpent: 0 };
+  const log: RunLog = { won: false, floor: 1, boss: run.bosses[0], battles: [], puzzles: [], trace: [], goldEarned: 0, goldSpent: 0 };
   let lastGold = run.gold;
   const track = () => {
     const d = run.gold - lastGold;
@@ -116,7 +131,19 @@ export const autoRun = (seed: number): RunLog => {
       }
       case 'battle': {
         const { state, turns } = playBattle(run, seed * 1000 + run.floor);
-        log.battles.push({ floor: run.floor, kind: st.encounter.kind, turns, won: state.winner === 0 });
+        const e = st.encounter;
+        log.battles.push({
+          floor: run.floor,
+          kind: e.kind,
+          turns,
+          won: state.winner === 0,
+          archetype: e.archetype,
+          affixes: e.affixes?.map((a) => a.id),
+          order: e.order,
+          orderDone: e.order ? state.winner === 0 && orderProgress(e.order, state, run.deck, true).done : undefined,
+          tactics: state.record?.[0].tactics,
+          terrain: encounterBattle(run.deck, run.loadout, e).terrain?.length ?? 0,
+        });
         if (state.winner !== 0) log.diedAt = st.encounter.kind;
         finishBattle(run, state);
         track();
@@ -201,6 +228,7 @@ export const autoRun = (seed: number): RunLog => {
         const def = puzzleFor(st.id);
         const s = puzzleBattle(def);
         const sol = solvePuzzle(s, def.steps);
+        log.puzzles.push(!!sol);
         finishPuzzle(run, sol ? resolveTurn(s, sol).state : s);
         break;
       }
