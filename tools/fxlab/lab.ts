@@ -444,7 +444,7 @@ const KO: Record<string, string> = {
   'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리', wreck: '잔해',
   'vent-closed': '분출구 닫힘', 'vent-opening': '분출구 열림 중', 'vent-open': '분출구 열림', 'vent-steam': '분출 증기',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
-  'hud/paper-crown': '종이 왕관', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
+  'hud/paper-crown': '종이 왕관', 'hud/paper-crown-tilt': '종이 왕관 (기운)', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
   'frames/panel': '패널', 'frames/button': '버튼', 'frames/button-pressed': '버튼 눌림', 'frames/card-iron': '철 카드', 'frames/card-paper': '종이 카드', 'frames/slot': '빈 슬롯',
   'icons/sword': '칼날', 'icons/pierce': '관통', 'icons/fork': '포크', 'icons/wave': '충격파', 'icons/flame': '열기', 'icons/shield': '방패', 'icons/bricks': '성벽',
   'icons/chain': '사슬', 'icons/oil': '기름 방울', 'icons/skull': '해골', 'icons/horseshoe': '편자', 'icons/portal': '소용돌이 문', 'icons/swap': '맞바꿈',
@@ -542,9 +542,10 @@ const renderGallery = () => {
     // 종이 왕관 킹: 사용자 폰 + 왕관
     kgC.clearRect(0, 0, 80, 96);
     const pawn = sprites.P0;
-    const crown = sprites['hud/paper-crown'];
+    const crown = sprites['hud/paper-crown-tilt'];
     if (pawn?.complete) kgC.drawImage(pawn, 8, 28, 64, 64);
-    if (crown?.complete) kgC.drawImage(crown, 40 - (crown.naturalWidth * S) / 2 + 2, 10, crown.naturalWidth * S, crown.naturalHeight * S);
+    // 비스듬히 씌운 왕관: 띠가 머리 위 4도트를 덮고, 한 도트 오른쪽으로 (D-060)
+    if (crown?.complete) kgC.drawImage(crown, 40 - (crown.naturalWidth * S) / 2 + S, 28 + 4 * S - crown.naturalHeight * S + 2 * S, crown.naturalWidth * S, crown.naturalHeight * S);
     // 위협 깜빡임
     thC.clearRect(0, 0, 80, 80);
     tile(thC, true, 0, 0);

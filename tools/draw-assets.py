@@ -175,17 +175,24 @@ PROPS = {
 
 # ---------------- 주인공·HUD ----------------
 
-# 종이 왕관: 뾰족 셋 + 판지 몸통 + 아래 어두운 띠 + 가운데 청록 보석 하나 (내 것 = 청록)
+# 종이 왕관 (D-060): 아주 단순한 왕관 아이콘 화풍 — 뾰족 셋 + 아래로 좁아지는 몸통 + 한 줄 틈(테두리가 검정 선으로 메운다) + 띠.
+# 폰 머리 폭에 맞춘 7도트 몸통(테두리 포함 11). 폰에 비스듬히 씌우는 기운 판도 같이 만든다.
 CROWN = [
-    'y......y......y',
-    'yy....yyy....yy',
-    'yyy..yyyyy..yyy',
-    'yyyyyyyyyyyyyyy',
-    'yyyyyycccyyyyyy',
-    'yyyyyycccyyyyyy',
-    'yyyyyyyyyyyyyyy',
-    'bbbbbbbbbbbbbbb',
+    'y..y..y',
+    'yy.y.yy',
+    'yyyyyyb',
+    '.......',
+    '.yyyyb.',
 ]
+
+
+def tilt(rows, step=3):
+    """오른쪽으로 기울이기: 아래에서 step줄 올라갈 때마다 한 도트씩 오른쪽으로 민다 (도트 격자 그대로)"""
+    h = len(rows)
+    shift = [(h - 1 - y) // step for y in range(h)]
+    w = len(rows[0]) + max(shift)
+    return [('.' * s + r).ljust(w, '.') for r, s in zip(rows, shift)]
+
 
 # 태엽 감개 (D-058·D-059): 제미나이 I 시트의 디자인(큰 구멍 뚫린 고리 날개 둘 — 구멍이 작으면 하트처럼 보였다 + 가운데 청록 축 + 이 달린 막대)을
 # 우리 격자에 옮겨 찍음 (날개는 대칭, 막대는 곧고 길게 · 이는 한쪽만 — 진짜 열쇠처럼). 제미나이 원본은 두 배 해상도·막대 치우침이라 그대로 못 씀 (build-res/order/I.png).
@@ -262,7 +269,8 @@ for name, rows in PROPS.items():
     save(outline(mirror(art(rows))), f'public/ui/props/{name}.png')
 
 
-save(outline(mirror(art(CROWN))), 'public/ui/hud/paper-crown.png')
+save(outline(art(CROWN)), 'public/ui/hud/paper-crown.png')
+save(outline(art(tilt(CROWN, 2))), 'public/ui/hud/paper-crown-tilt.png')
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')
 save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
