@@ -431,3 +431,8 @@ img { image-rendering: pixelated; }
 .panel .row .choice { flex: 1; text-align: center; }
 .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .panel .choice:disabled, .chip:disabled { filter: grayscale(1) brightness(0.6); cursor: default; }
+
+/* 화자 있는 대사 · 서술 한 줄 (D-087, 다키스트 던전·슬레이 더 스파이어식) */
+.say { font-size: 22px; text-shadow: 0 2px 0 #000; }
+.say small { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); font-weight: 400; }
+.tell { color: var(--text2); font-size: 15px; max-width: 560px; line-height: 1.6; margin: 0; }

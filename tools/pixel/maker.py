@@ -106,11 +106,51 @@ def render_thin(grid, side, scale, canvas=CANVAS):
     return out
 
 
+PAL64 = {
+    '.': None, 'O': (0xF4, 0xF1, 0xEA), 'K': (0x0B, 0x0B, 0x0E),
+    'W': (0xF1, 0xEE, 0xEC), 'S': (0xC5, 0xC3, 0xC3), 'G': (0x85, 0x84, 0x88), 'D': None,
+    'B': (0x32, 0x34, 0x3D), 'M': (0x48, 0x4A, 0x55), 'H': (0x6E, 0x71, 0x7E), 'L': (0xA8, 0xAB, 0xB8),
+}
+DARK = {0: (0x3A, 0x39, 0x3E), 1: (0x1C, 0x1D, 0x22)}
+
+
+def load64(path=os.path.join(HERE, 'pieces64.txt')):
+    """pieces64.txt → {(이름, 진영): [줄...]}"""
+    out, cur = {}, None
+    for raw in open(path, encoding='utf-8'):
+        line = raw.rstrip('\n')
+        if line.startswith('#') or not line.strip():
+            continue
+        if line.startswith('['):
+            name, side = line.strip()[1:-1].split()
+            cur = (name, int(side))
+            out[cur] = []
+        elif cur:
+            out[cur].append(line)
+    return out
+
+
+def render64(grid, side, scale=1):
+    """64×64 정본 격자 → 배경 투명 PNG (흰 테두리까지 격자에 들어 있다)"""
+    n = len(grid)
+    img = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    for y, row in enumerate(grid):
+        for x, ch in enumerate(row):
+            if ch == '.':
+                continue
+            c = DARK[side] if ch == 'D' else PAL64[ch]
+            img.putpixel((x, y), c + (255,))
+    return img.resize((n * scale, n * scale), Image.NEAREST) if scale != 1 else img
+
+
 def piece(name, side, scale=1):
     """유형(또는 유형:이형) · 진영 → 그림"""
+    hi = load64()
+    if (name, side) in hi:
+        return render64(hi[(name, side)], side, scale)
     data = load()
     if name not in data:
-        raise SystemExit(f'pieces.txt에 [{name}] 블록이 없습니다')
+        raise SystemExit(f'pieces64.txt · pieces.txt에 [{name}] 블록이 없습니다')
     return render(data[name], side, scale)
 
 
@@ -119,18 +159,18 @@ def export():
     out = os.path.join(ROOT, 'public', 'pieces')
     for t in 'PNBRQK':
         for side in (0, 1):
-            piece(t, side, 5).save(os.path.join(out, f's-{t}{side}.png'))
-            piece(t, side, 8).save(os.path.join(out, f'l-{t}{side}.png'))
-    print('public/pieces/s-*.png (90px) · l-*.png (144px) — 12종씩')
+            piece(t, side, 2).save(os.path.join(out, f's-{t}{side}.png'))
+            piece(t, side, 3).save(os.path.join(out, f'l-{t}{side}.png'))
+    print('public/pieces/s-*.png (128px) · l-*.png (192px) — 64×64 정본에서 12종씩')
 
 
-def sheet(path, scale=6):
-    data = load()
-    names = [n for n in data]
-    im = Image.new('RGBA', (CANVAS * scale * len(names), CANVAS * scale * 2), (0, 0, 0, 0))
+def sheet(path, scale=3):
+    names = list('PNBRQK')
+    size = 64 * scale
+    im = Image.new('RGBA', (size * len(names), size * 2), (0, 0, 0, 0))
     for i, n in enumerate(names):
         for side in (0, 1):
-            im.alpha_composite(render(data[n], side, scale), (i * CANVAS * scale, side * CANVAS * scale))
+            im.alpha_composite(piece(n, side, scale), (i * size, side * size))
     im.save(path)
     print(path)
 

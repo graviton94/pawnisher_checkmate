@@ -715,7 +715,7 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         if (cur.stronghold && isFallen(cur, cur.stronghold.x, cur.stronghold.y)) cur.stronghold = null;
-        this.announce('작업대가 무너집니다 — 칸 한 쌍 붕락');
+        this.announce('작업대가 무너진다 — 칸 한 쌍이 톱니 아래로');
         this.shake(300, 0.008);
         this.drawTiles(cur);
         await Promise.all(
@@ -732,7 +732,7 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'suddenDeath') {
-        this.announce('더 무너질 곳이 없다 — 작업대이 킹을 짓누릅니다');
+        this.announce('더 무너질 곳이 없다 — 과열이 킹을 짓누른다');
         this.shake(250, 0.006);
         for (const h of e.hits) {
           const sp = this.sprites.get(h.pieceId);
@@ -746,7 +746,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'resign') {
         // 명예로운 항복 (D-077): 적 킹이 왕관을 내려놓고 재가 되어 물러난다
-        this.announce(`${e.side === 1 ? '적' : '내'} 킹이 왕관을 내려놓습니다 — 명예로운 항복`);
+        this.announce(`${e.side === 1 ? '적' : '내'} 킹이 왕관을 내려놓는다 — 명예로운 항복`);
         const k = this.sprites.get(e.pieceId);
         if (k) {
           await this.tween({ targets: k.root, alpha: { from: 1, to: 0.6 }, duration: 300, yoyo: true });
@@ -758,7 +758,7 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'stall') {
-        this.announce(e.count >= e.need ? '정체 — 작업대가 무너지기 시작합니다' : `정체 ${e.count}/${e.need} — 이번 턴도 피해가 없으면 판이 무너지기 시작합니다`);
+        this.announce(e.count >= e.need ? '정체 — 작업대가 무너지기 시작한다' : `정체 ${e.count}/${e.need} — 이번 턴도 아무도 안 맞으면 판이 무너진다`);
         continue;
       }
       if (e.type === 'strongholdSpawn') {
@@ -908,7 +908,7 @@ class BoardScene extends Phaser.Scene {
       await Promise.all([...hitsDone, this.after(fx.duration)]);
       const checked = e.hits.find((h) => h.checked);
       if (checked) sfx('check');
-      if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버팁니다 — 다음 공격이면 끝`);
+      if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버틴다 — 한 대면 끝`);
 
       // 처치: 위에서부터 한 줄씩 검은 재가 되어 기물 발밑에 쌓였다 꺼진다 (D-048·D-050·D-052)
       const deaths = e.hits.filter((h) => h.killed).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);

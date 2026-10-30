@@ -24,7 +24,7 @@ const renderer = new BoardRenderer(document.getElementById('board')!, {
       const st = standingOf(controller.state, 0);
       const terms = STRONGHOLD.terms[st];
       hud.showStrongholdInfo(
-        `<b>${GRADE[st].name} 요충지</b><br>지금 형편 기준: 상대 턴 ${terms.hold}번 버티면 점령<br>위에 선 기물이 받는 피해 −${Math.round(terms.cover * 100)}%<br><span style="color:var(--muted)">밀릴수록 등급이 올라 더 쉽게 점령합니다</span>`,
+        `<b>${GRADE[st].name} 요충지</b><br>지금 형편 기준: 상대 턴 ${terms.hold}번 버티면 점거<br>위에 선 기물이 받는 피해 −${Math.round(terms.cover * 100)}%<br><span style="color:var(--muted)">밀릴수록 등급이 올라 더 쉽게 점거한다</span>`,
         x,
         y,
       );

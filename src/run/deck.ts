@@ -34,7 +34,7 @@ export const checkDeck = (deck: Deck): DeckCheck => {
   const fail = (reason: string): DeckCheck => ({ ok: false, reason, freeValue, overValue });
   if (count('K') !== 1) return fail('킹은 정확히 1기');
   if (deck.length > DECK_MAX) return fail(`군단은 최대 ${DECK_MAX}기`);
-  if (overValue > freeValue) return fail('한도 초과 기물의 희생이 부족합니다');
+  if (overValue > freeValue) return fail('규격 초과야. 다른 기물을 더 빼야 해.');
   return { ok: true, freeValue, overValue };
 };
 

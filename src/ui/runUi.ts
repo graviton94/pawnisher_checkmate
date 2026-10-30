@@ -101,7 +101,7 @@ const pieceOffer = (run: RunState, t: PieceType): string => {
   const forge = run.loadout.forge[t] ?? 0;
   const v = run.loadout.variants?.[t];
   const tags = [n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>', forge ? `<i class="tag">개량 +${forge}</i>` : '', v ? `<i class="tag gold">${VARIANTS[v].name}</i>` : ''].join('');
-  return `<span class="kind">${icon('crate', 's')} 기물 · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 64)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_DESC[t]}</p>`;
+  return `<span class="kind">${icon('crate', 's')} 기물 · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 84)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_DESC[t]}</p>`;
 };
 
 /**
@@ -168,7 +168,7 @@ export class RunUi {
       const n = run.deck.filter((x) => x === t).length;
       const v = run.loadout.variants?.[t];
       const f = run.loadout.forge[t] ?? 0;
-      return `<div class="unit panel9">${pieceImg(t, 0, 'large', 44)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]} ×${n}</b><small>${f ? `개량 +${f}` : '개량 없음'}</small></div>`;
+      return `<div class="unit panel9">${pieceImg(t, 0, 'large', 56)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]} ×${n}</b><small>${f ? `개량 +${f}` : '개량 없음'}</small></div>`;
     });
     const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<i class="tag${n >= 3 ? ' gold' : ''}">${ENCHANTS[id].name} ${n}단${n >= 3 ? '★' : ''}</i>`);
     const cards = run.loadout.cards.map((id) => `<i class="tag${CARDS[id].limit.type === 'consume' ? ' gold' : ''}">${CARDS[id].name}</i>`);
@@ -294,7 +294,7 @@ export class RunUi {
       <div class="stage"><div class="offers">${decks
         .map((d, i) => {
           const kinds = [...new Set(d.filter((t) => t !== 'K'))].map((t) => desc[t]).join('<br>');
-          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트</span><b>${setName(d)}</b><span>${d.map((t) => pieceImg(t, 0, 'large', 52)).join('')}</span><p>${kinds}</p></button>`;
+          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트</span><b>${setName(d)}</b><span>${d.map((t) => pieceImg(t, 0, 'large', 64)).join('')}</span><p>${kinds}</p></button>`;
         })
         .join('')}</div></div>`,
     );
@@ -363,7 +363,7 @@ export class RunUi {
         <div class="map-wrap grow scroll-x" data-scroll><div class="map"><svg class="links"></svg>${cols.join('')}</div></div>
         <div class="boss-card panel9">
           <span class="kind" style="font-size:12px;color:var(--crimson-soft)">${icon('crown', 's')} ${TEXT.map.bossAhead} · ${inAct(bossF)}층</span>
-          <div class="portrait">${pieceImg(bossPiece, 1, 'large', 64)}</div>
+          <div class="portrait">${pieceImg(bossPiece, 1, 'large', 80)}</div>
           <b>${bossName(run, bossF)}</b>
           <small class="lead" style="font-size:12px">${bossId ? BOSSES[bossId].title : '퀸 2기 · 대단원 · 호위 리벳'}</small>
         </div>
@@ -427,7 +427,7 @@ export class RunUi {
       window.setTimeout(() => this.show(), 600);
     };
     this.c.startState(state, e.tier, TUNED);
-    this.hud.toast(run.floor <= 2 ? '이동한 기물만 공격합니다 — 붉은 과녁 칸으로 가면 칩니다' : `${inAct(run.floor)}층 · ${e.name}`);
+    this.hud.toast(run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`);
   }
 
   private showReward(run: RunState): void {
@@ -455,7 +455,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${ch ? `<p>${kind} 3지선다 — 하나를 고르세요</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${ch ? `<p>검수관이 서류를 넘긴다. “${kind} 중에 하나만 가져가.”</p>` : ''}</div>
       ${lines ? `<div class="unlocks">${lines}</div>` : ''}
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
@@ -481,11 +481,11 @@ export class RunUi {
   private discardPicker(run: RunState, type: 'enchant' | 'card', done: (discard: EnchantId | number) => void): void {
     const items =
       type === 'enchant'
-        ? (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<button class="chip" type="button" data-d="${id}"><b>${ENCHANTS[id].name}</b><small>${n}단 — 단째 사라집니다</small></button>`)
+        ? (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<button class="chip" type="button" data-d="${id}"><b>${ENCHANTS[id].name}</b><small>${n}단 — 단째 사라진다</small></button>`)
         : run.loadout.cards.map((id, i) => `<button class="chip" type="button" data-d="${i}"><b>${CARDS[id].name}</b><small>${CARDS[id].desc}</small></button>`);
     const panel = this.hud.openOverlay(`
-      <h2>${type === 'enchant' ? '개조 칸이 가득 찼습니다' : `천공 카드 칸(${CARD_SLOTS})이 가득 찼습니다`}</h2>
-      <p>버릴 것을 고르세요.</p>
+      <h2>${type === 'enchant' ? '“개조 칸이 꽉 찼어.”' : `“천공 카드 칸(${CARD_SLOTS})이 꽉 찼어.”`}</h2>
+      <p>하나를 빼야 들어간다.</p>
       <div class="chips">${items.join('')}</div>
       ${button('취소', 'data-cancel', { cls: 'wide' })}`);
     this.wire(panel, {
@@ -545,7 +545,7 @@ export class RunUi {
     const types = ORDER.filter((t) => t !== 'K' && run.deck.includes(t));
     const panel = this.hud.openOverlay(`
       <h2>${icon('scale')} ${TEXT.shop.sell}</h2>
-      <p>판 기물은 군단에서 빠집니다.</p>
+      <p>“판 건 돌려 달래도 안 돼.”</p>
       <div class="chips">${types.map((t) => `<button class="chip" type="button" data-sell="${t}"><b>${pieceImg(t, 0, 'small', 24)} ${PIECE_NAMES_KO[t]} ×${run.deck.filter((x) => x === t).length}</b><small>1기 팔기 · 나사 +${sellPrice(t)}</small></button>`).join('')}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     this.wire(panel, {
@@ -571,7 +571,7 @@ export class RunUi {
       const opts = forgeVariantOptions(run, t);
       const lvPips = Array.from({ length: FORGE_MAX }, (_, i) => `<i class="${i < lv ? 'on' : ''}${i === VARIANT_FORGE_LEVEL - 1 ? ' v' : ''}"></i>`).join('');
       return `<div class="forge-card panel9">
-        ${pieceImg(t, 0, 'large', 56)}
+        ${pieceImg(t, 0, 'large', 72)}
         <b>${PIECE_NAMES_KO[t]} ×${n}</b>
         <span class="vname">${v ? `이형 · ${VARIANTS[v].name}` : lv >= VARIANT_FORGE_LEVEL ? '' : `+${VARIANT_FORGE_LEVEL} 이형 가능`}</span>
         <span class="lv">${lvPips}</span>
@@ -607,7 +607,7 @@ export class RunUi {
     const v = VARIANTS[id];
     const panel = this.hud.openOverlay(`
       <h2>${icon('anvil')} 이형 거푸집 — ${v.name}</h2>
-      <p>${PIECE_NAMES_KO[t]} 거푸집 전체를 바꿉니다. 되돌릴 수 없습니다.</p>
+      <p>“${PIECE_NAMES_KO[t]} 거푸집을 통째로 바꾼다. 되돌릴 순 없어.”</p>
       <div class="panel9"><p><b style="color:var(--cyan)">강점</b> ${v.gain}</p><p><b style="color:var(--crimson-soft)">대가</b> ${v.cost}</p></div>
       <div class="row">${button('그만두기', 'data-no')}${button('바꾼다', 'data-yes', { tone: 'brass' })}</div>`);
     this.wire(panel, {
@@ -627,7 +627,7 @@ export class RunUi {
       const all = (Object.keys(ENCHANTS) as EnchantId[]).filter((id) => (run.loadout.enchants[id] ?? 0) < ENCHANT_MAX_STACK);
       const el = this.hud.openScene(
         `${this.bar(run)}
-        <div class="title-line"><h2>${icon('lever')} 행운 톱니 해방</h2><p>원하는 개조 1단을 확정으로 고릅니다 (★걸작 포함)</p></div>
+        <div class="title-line"><h2>${icon('lever')} 행운 톱니 해방</h2><p>행운 톱니가 다 찼다. “원하는 걸 골라. 이번엔 꽝 없어.”</p></div>
         <div class="stage"><div class="offers scroll-x grow">${all
           .map((id) => {
             const next = (run.loadout.enchants[id] ?? 0) + 1;
@@ -729,7 +729,8 @@ export class RunUi {
     const ench = Object.keys(run.loadout.enchants).length;
     const el = this.hud.openScene(
       `<div class="stamp-big ${won ? 'good' : 'bad'}">${won ? O.win : O.lose}</div>
-      <h2>${won ? O.winLine : `${ACT_NAMES[actOf(floor) - 1]} ${inAct(floor)}층에서 쓰러졌습니다`}</h2>
+      <h2 class="say">“${won ? O.winSay : O.loseSay}”<small>— 검수관</small></h2>
+      <p class="tell">${won ? O.winTell : `${ACT_NAMES[actOf(floor) - 1]} ${inAct(floor)}층. ${O.loseTell}`}</p>
       <div class="records" style="width:min(520px,90vw)">
         <div class="panel9"><span class="num">${floor}</span><small>도달 층</small></div>
         <div class="panel9"><span class="num">${run.deck.length}</span><small>군단</small></div>

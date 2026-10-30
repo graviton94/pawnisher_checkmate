@@ -22,7 +22,7 @@
 - 위험/적 = 붉은색, 내 조작 = 청록, 보상·강함 = 황동/금. 이 세 의미를 섞지 않는다.
 
 ## 3. 기물
-- **도트, 머리 강조형** (사용자 제공 `build-res/pieces-*-source.png`). D-086부터 정본은 격자 도트 `tools/pixel/pieces.txt` — 원본을 5px 격자로 옮겨 폭 11~12 · 높이 14~16 도트 + 흰 테두리(배율 2 이상이면 도트 반 개 두께). `tools/pixel/maker.py`가 흰·흑 진영 색(흑은 위·왼쪽 빛 테)으로 찍는다.
+- **도트, 머리 강조형** (사용자 제공 `build-res/pieces-*-source.png`). D-087부터 정본은 64×64 격자 `tools/pixel/pieces64.txt` (`tools/pixel/extract.py`로 원본을 1.5px = 1칸으로 옮기고 잡티 정리, 흰 바깥 테두리 2칸). 18칸 격자(`pieces.txt`, D-086)는 디테일이 부족해 대체. `tools/pixel/maker.py`가 흰·흑 진영 색(흑은 위·왼쪽 빛 테)으로 찍는다.
   - 작은 세트(흑백 12종) → 보드·목록 (`public/pieces/s-{P,N,B,R,Q,K}{0,1}.png`)
   - 큰 세트(흰 6종) → 기물 고르기·시작 덱 등 크게 보이는 곳 (`public/pieces/l-*.png`)
 - 확대는 최근접(픽셀 그대로). 흐리게 보간하지 않는다.

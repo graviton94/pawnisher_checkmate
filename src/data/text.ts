@@ -29,7 +29,7 @@ export const TEXT = {
   menu: {
     continue: '이어서 출하',
     newRun: '새 출하',
-    newRunWarn: '진행 중인 출하는 폐기됩니다',
+    newRunWarn: '진행 중인 출하는 폐기된다',
     trial: '시운전',
     trialDesc: '시나리오·장비를 골라 한 판',
     settings: '설정',
@@ -50,18 +50,18 @@ export const TEXT = {
     title: '일시 정지',
     resume: '계속',
     toMenu: '메인 메뉴로',
-    toMenuDesc: '출하는 이 턴부터 이어서 할 수 있습니다',
+    toMenuDesc: '출하는 이 턴부터 이어서 한다',
     enchants: '개조 보기',
   },
   start: {
     title: '시작 세트',
-    lead: '군단은 공정을 오르며 3지선다 · 고물상으로 키웁니다. 어떤 기물을 중심으로 키울지가 첫 고민입니다.',
+    lead: '“세트 하나 골라. 나머지는 공정을 오르면서 주워 모으고.” — 어떤 기물을 중심으로 키울지가 첫 고민이다.',
     back: '뒤로',
   },
   map: {
-    choose: '갈 곳을 고르세요',
+    choose: '컨베이어가 덜컹거린다. 갈 곳을 고른다.',
     abandon: '출하 포기',
-    abandonDesc: '이번 출하를 폐기합니다',
+    abandonDesc: '“포기한다고? 그럼 폐기다.”',
     bossAhead: '이 공정의 반장',
   },
   reward: {
@@ -73,7 +73,7 @@ export const TEXT = {
   },
   shop: {
     title: '고물상',
-    lead: '쓸 만한 부품, 싸게는 안 팝니다.',
+    lead: '“쓸 만한 부품이지. 싸게는 안 줘.”',
     pieces: '기물',
     cards: '천공 카드',
     enchants: '개조',
@@ -84,13 +84,13 @@ export const TEXT = {
   },
   forge: {
     title: '공방',
-    lead: '거푸집을 개량하면 그 유형의 기물이 모두 강해집니다. +5 완성 거푸집은 대국 시작 방열판 20%.',
-    variantLead: '+3부터 이형 거푸집으로 바꿀 수 있습니다 (무료, 되돌릴 수 없음).',
+    lead: '“거푸집 가져와. 고쳐 주지.” — 개량하면 그 유형이 모두 강해진다. +5 완성 거푸집은 대국 시작 방열판 20%.',
+    variantLead: '+3부터 이형 거푸집으로 바꿀 수 있다 (무료, 되돌릴 수 없음).',
     leave: '떠나기',
   },
   altar: {
     title: '뽑기 기계',
-    lead: '나사를 넣고 레버를 당기면 무엇이 나올지 모른다.',
+    lead: '“레버를 당겨 봐. 뭐가 나올지는 나도 몰라.”',
     pull: '레버를 당긴다',
     release: '행운 톱니 해방 — 원하는 개조 고르기',
     leave: '떠나기',
@@ -99,7 +99,11 @@ export const TEXT = {
   over: {
     win: '정품 출하',
     lose: '불량 폐기',
-    winLine: '포장대까지 — 공장장을 체크메이트했습니다',
+    /** 검수관의 말 (화자 있는 대사) + 서술 한 줄 (다키스트 던전·슬레이 더 스파이어식) */
+    winSay: '…정품이다. 도장 찍어.',
+    winTell: '포장 상자의 뚜껑이 닫힌다. 처음으로, 조용하다.',
+    loseSay: '불량품이군. 폐기해야겠어.',
+    loseTell: '컨베이어가 당신을 용광로 쪽으로 천천히 밀어 간다.',
     menu: '메인 메뉴',
     again: '새 출하',
   },
@@ -109,8 +113,8 @@ export const TEXT = {
     running: '가동 중',
     over: '대국 종료',
     stall: '정체',
-    hintPlan: '기물을 눌러 명령을 새기세요',
+    hintPlan: '기물을 눌러 명령을 새긴다',
     hintIntent: '붉은 화살표 = 지금 가동하면 적이 둘 수 · 깜빡이는 HP = 잃을 몫 · 적을 누르면 피해 숫자',
-    hintThreat: '적 기물을 누르면 위협 범위가 보입니다',
+    hintThreat: '적 기물을 누르면 위협 범위가 보인다',
   },
 };

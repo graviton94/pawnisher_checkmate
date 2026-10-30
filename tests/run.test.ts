@@ -126,9 +126,9 @@ describe('보상과 노드', () => {
     expect(run.stage.at).toBe('shop');
     run.gold = 1000;
     expect(buyPiece(run, 0)).toBeUndefined();
-    expect(buyPiece(run, 0)).toBe('없는 상품');
+    expect(buyPiece(run, 0)).toBe('그런 물건 없어.');
     const before = run.gold;
-    expect(sellPiece(run, 'K')).toBe('킹은 팔 수 없습니다');
+    expect(sellPiece(run, 'K')).toBe('킹은 안 사. 그건 네 목이잖아.');
     expect(sellPiece(run, run.deck.find((t) => t !== 'K')!)).toBeUndefined();
     expect(run.gold).toBeGreaterThan(before);
     leaveNode(run);
@@ -140,7 +140,7 @@ describe('보상과 노드', () => {
     toNode(run, 'forge');
     run.gold = 10000;
     for (let i = 0; i < 5; i++) expect(forgeUp(run, 'K')).toBeUndefined();
-    expect(forgeUp(run, 'K')).toBe('이미 완성 거푸집(+5)');
+    expect(forgeUp(run, 'K')).toBe('더 손댈 데가 없어. 완성 거푸집이야.');
     expect(run.gold).toBe(10000 - FORGE_COST.reduce((a, b) => a + b, 0));
   });
   it('크랙 제단: 꽝이 쌓이면 다음 제단에서 원하는 인챈트 확정', () => {

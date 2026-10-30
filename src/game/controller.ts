@@ -44,7 +44,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'trainA',
     title: '온보딩 A · 6×6',
-    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4턴부터 작업대가 무너집니다.',
+    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4턴부터 작업대가 무너진다.',
     width: 6,
     height: 6,
     decks: [['K', 'P', 'P', 'P'], ['K', 'P', 'P']],
@@ -403,11 +403,11 @@ export class BattleController {
     if (this.mode) {
       const anchors = this.anchorIds();
       if (this.attachCard === undefined && !anchors.size) {
-        this.hud.toast('지금은 쓸 수 있는 대상이 없습니다');
+        this.hud.toast('지금은 쓸 데가 없어.');
         this.mode = null;
       } else if (this.mode.kind === 'card') {
         this.hud.toast(CARDS[this.state.cards[this.state.turnSide][this.mode.card].id].desc);
-      } else this.hud.toast('결합할 두 기물을 차례로 누르세요');
+      } else this.hud.toast('결합할 두 기물을 차례로 누른다.');
     }
     this.refresh();
   }
@@ -457,13 +457,13 @@ export class BattleController {
       if (this.anchorIds().has(p.id)) this.selectedId = p.id;
       else {
         this.selectedId = null;
-        this.hud.toast('이 기물에는 쓸 수 없습니다');
+        this.hud.toast('이 기물엔 안 맞아.');
       }
     } else if (mine && !this.plan.some((st) => 'pieceId' in st && st.pieceId === p.id && st.kind !== 'shield' && st.kind !== 'formShift')) {
       this.selectedId = p.id;
       const left = this.apTotal - this.apUsed;
-      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 부족합니다 (필요 ${moveCost(this.virtual, p)})`);
-      else if (!this.options().length) this.hud.toast('갈 수 있는 칸이 없습니다');
+      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 모자라. (${moveCost(this.virtual, p)} 필요)`);
+      else if (!this.options().length) this.hud.toast('갈 칸이 없어.');
     } else {
       this.selectedId = null;
     }
