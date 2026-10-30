@@ -544,7 +544,7 @@ const renderGallery = () => {
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
-      items += item('흰 킹 시안 (폰 + 왕관: 반듯 / 15도)', 0, 0, '<canvas data-live="king" width="200" height="120"></canvas>');
+      items += item('주인공 킹 (왕관 쓴 폰, 반듯) · 훑기 토큰', 0, 0, '<canvas data-live="king" width="200" height="120"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
@@ -614,23 +614,19 @@ const renderGallery = () => {
     ap.flow([{ x: 8, y: 40 }, { x: 64, y: 40 }], 0x38bdf8, now);
     ap.flow([{ x: 88, y: 72 }, { x: 144, y: 16 }], 0x38bdf8, now);
     ap.flow([{ x: 176, y: 72 }, { x: 176, y: 24 }, { x: 228, y: 24 }], 0xe5262f, now);
-    // 흰 킹 시안 (D-074): 우리 흰 폰 + 왕관(사용자 시안을 도트로). 왕관 아랫단 검정 선이 폰 머리 꼭대기에 닿게 얹는다
+    // 주인공 킹 (D-078): 흰 폰 + 사용자 시안 왕관을 한 장으로 구운 hero-s.png, 반듯이. 오른쪽 칸 = 훑기 토큰(칼·해골, 게임과 같은 칸의 11/20)
     kgC.clearRect(0, 0, 200, 120);
-    const pawn = sprites.P0;
-    // 왕관 = 사용자 시안 왕관 그대로 (D-076): 폰 그림과 같은 해상도(그림 86px = 칸의 0.82)로 줄여 둔 것을 폰과 같은 배율로 그린다
-    const kc = sprites['hud/king-crown'];
-    const k = (0.82 * 80) / 86; // 폰 그림 1px의 화면 크기
-    [0, 15].forEach((deg, i) => {
+    const hero = sprites.hero;
+    const hs = 0.82 * 80;
+    [0, 1].forEach((i) => {
       const ox = 12 + i * 100;
       tile(kgC, i === 1, ox, 40);
-      if (pawn?.complete) kgC.drawImage(pawn, ox + 0.09 * 80, 40 + 0.43 * 80 - 0.41 * 80, 0.82 * 80, 0.82 * 80);
-      if (!kc?.complete) return;
-      kgC.save();
-      kgC.imageSmoothingEnabled = deg !== 0;
-      kgC.translate(ox + 40, 40 + 0.02 * 80 + 9 * k); // 왕관 아랫단 흰 테두리가 폰 머리 꼭대기 흰 테두리와 겹친다
-      kgC.rotate((deg * Math.PI) / 180);
-      kgC.drawImage(kc, (-kc.naturalWidth * k) / 2, -kc.naturalHeight * k, kc.naturalWidth * k, kc.naturalHeight * k);
-      kgC.restore();
+      if (hero?.complete) kgC.drawImage(hero, ox + 0.09 * 80, 40 + 0.84 * 80 - hs * (hero.naturalHeight / hero.naturalWidth), hs, hs * (hero.naturalHeight / hero.naturalWidth));
+      if (i !== 1) return;
+      const sw = sprites['scan-sword'];
+      const sk = sprites['scan-skull'];
+      if (sw?.complete) kgC.drawImage(sw, ox, 40, 44, 44);
+      if (sk?.complete) kgC.drawImage(sk, ox + 36, 40, 44, 44);
     });
     // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤
     gtC.clearRect(0, 0, 240, 80);

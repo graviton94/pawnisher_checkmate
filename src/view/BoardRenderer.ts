@@ -61,8 +61,11 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'scan-sword', 'scan-skull', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
+/** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
+const HERO_KEY = 'hero-s';
+const HERO_ASPECT = 98 / 86;
 
 /** 예약 하나를 그릴 화살표 (이동·순간이동·캐슬링) */
 const stepArrows = (s: BattleState, step: PlanStep): { piece: Piece; from: Pos; to: Pos; knight: boolean }[] => {
@@ -136,14 +139,14 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
-    this.load.image(boardKey('sword'), 'ui/icons/sword.png');
-    this.load.image(boardKey('king-crown'), 'ui/hud/king-crown.png');
+    this.load.image(HERO_KEY, 'pieces/hero-s.png');
   }
 
   create(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
-    for (const n of [...BOARD_IMAGES, 'skull', 'sword', 'king-crown']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.textures.get(HERO_KEY).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0.1);
@@ -313,13 +316,11 @@ class BoardScene extends Phaser.Scene {
       marks.push(img);
     });
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    // 주인공 킹 = 왕관을 쓴 아홉째 폰 (D-077, 사용자 시안 — 반듯이): 흰 폰 그림 + 머리 위 왕관
+    // 주인공 킹 = 왕관을 쓴 아홉째 폰 (D-078, tools/compose-hero.py): 폰 부분은 다른 기물과 같은 자리·크기, 왕관만큼 위로 크다
     const hero = p.side === 0 && (p.formAs ?? p.type) === 'K';
-    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(hero ? 'P' : (p.formAs ?? p.type), p.side)).setDisplaySize(t * 0.82, t * 0.82);
-    if (hero) {
-      const k = (t * 0.82) / 86; // 폰 그림 1px의 화면 크기 (그림 86px = 칸의 0.82)
-      marks.push(this.add.image(t / 2, t * 0.02 + 9 * k, boardKey('king-crown')).setOrigin(0.5, 1).setDisplaySize(54 * k, 44 * k));
-    }
+    const glyph = hero
+      ? this.add.image(t / 2, t * 0.84, HERO_KEY).setOrigin(0.5, 1).setDisplaySize(t * 0.82, t * 0.82 * HERO_ASPECT)
+      : this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -490,15 +491,15 @@ class BoardScene extends Phaser.Scene {
       this.sprites.set(p.id, sprite);
     }
 
-    // 훑기 보조 (F6, D-075): 칠 수 있는 내 기물 = 왼쪽 위 청록 칼 (기물을 고르기 전에만), 처치될 수 있는 내 기물 = 오른쪽 위 붉은 해골
+    // 훑기 보조 (F6, D-075·D-078): 칠 수 있는 내 기물 = 왼쪽 위 청록 칼 토큰 (기물을 고르기 전에만), 처치될 내 기물 = 오른쪽 위 붉은 해골 토큰 (순번 배지와 같은 11도트 톱니 토큰)
     if (m.selectedId === null)
       for (const p of m.scan.strike) {
         const w = this.world(p);
-        img('sword', w.x + d, w.y + d, 6 * d, 5).setTint(C.cyan);
+        img('scan-sword', w.x, w.y, 11 * d, 5);
       }
     for (const p of m.scan.danger) {
       const w = this.world(p);
-      img('skull', w.x + 13 * d, w.y + d, 6 * d, 5).setTint(0xff6b6b);
+      img('scan-skull', w.x + 9 * d, w.y, 11 * d, 5);
     }
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
@@ -659,7 +660,8 @@ class BoardScene extends Phaser.Scene {
     const g = cv.getContext('2d')!;
     g.imageSmoothingEnabled = false;
     const s = N * 0.82;
-    g.drawImage(src, (N - s) / 2, N * 0.43 - s / 2, s, s);
+    const sh = (s * src.height) / src.width; // 주인공 킹은 키가 크다 — 아래(발밑)를 맞춘다
+    g.drawImage(src, (N - s) / 2, N * 0.84 - sh, s, sh);
     const a = g.getImageData(0, 0, N, N).data;
     const out: { i: number; j: number; c: number }[] = [];
     for (let j = 0; j < BOARD_DOTS; j++)

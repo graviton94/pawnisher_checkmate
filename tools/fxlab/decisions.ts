@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 38, date: '2026-10-30' };
+export const VERSION = { n: 39, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,7 +48,7 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '흰 킹 시안: 폰 + 왕관 반듯이 vs 15도 (에셋 목록 "흰 킹 시안")',
+  '주인공 킹: 왕관 크기·씌운 깊이 (에셋 목록 "주인공 킹")',
   '흐르는 화살표 (에셋 목록 "화살표" 견본 · 장면 계획 화면)',
   '검은 재 처치 (에셋 목록 "처치" 견본)',
   '피해 숫자 아래부터 지워짐 (에셋 목록 "피해 숫자" 견본, 장면 재생)',
@@ -66,7 +66,8 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '처치', rule: '위에서부터 한 줄씩 재가 된다 — 잘리는 선 아래는 체크무늬로 듬성듬성, 선을 지난 도트는 검은 재가 되어 곧장 떨어져 기물 발밑에 쌓였다가 한 도트씩 꺼짐. 기물 폭·발밑 밖으로 나가지 않는다', status: 'review' },
   { item: '지형 소품', rule: '불합격 (사용자: 디자인 자체가 별로) — 방향을 다시 정한다. 지금 그림은 자리 표시', status: 'pick' },
   { item: '태엽', rule: '제미나이 I 디자인을 우리 격자에 대칭으로 옮김 (12×12 몸통 + 테두리): 큰 구멍 고리 날개 둘 · 청록 축 2×2 · 아래 평평 · 곧은 막대에 이는 한쪽만. 쓴 것 = 회색, 보너스 = 금 테두리', status: 'review' },
-  { item: '흰 킹 (폰 + 종이 왕관)', rule: '사용자가 폰·왕관을 합친 그림을 만들어 흰 킹 그림을 대체한다 (부품 전달함)', status: 'wait' },
+  { item: '주인공 킹 (폰 + 왕관)', rule: '흰 폰 + 사용자 시안 왕관(close to concept)을 반듯이 한 장으로 굽는다 — 왕관 폭 = 머리 폭 0.8, 머리 꼭대기를 덮게 씌움. 판 위·목록 아이콘 모두 같은 그림 (tools/compose-hero.py)', status: 'review' },
+  { item: '훑기 토큰', rule: '칠 수 있는 내 기물 = 왼쪽 위 청록 칼 토큰, 처치될 내 기물 = 오른쪽 위 붉은 해골 토큰 — 순번 배지와 같은 11도트 톱니 토큰. 적 의도가 보이면 해골 = 의도에서 실제 처치되는 기물만', status: 'review' },
   { item: '요충지', rule: '증기 분출구 폐기 → 이름도 요충지 그대로. 칸 안쪽 점선 테두리 + 왼쪽 위 제비꼬리 깃발 (빈 요충지 = 흰색, 내가 점거 = 청록, 적 = 진홍). 점거 진행은 오른쪽 위 눈금 2칸(검정 테두리)이 차오른다. 점선 테두리는 기물 아래, 깃발·눈금은 기물 위 레이어', status: 'review' },
   { item: '종이 왕관', rule: '사용자 7×5 도트 그림 (검정 틀 · 노랑 · 가운데 청록 보석, 양 위 끝 검정) + 흰 테두리 1도트. 화면 크기로 먼저 구운 뒤 부드럽게 15도 돌려 폰 머리 위에 얹는다 (계단 없음)', status: 'review' },
   { item: '공격 세기', rule: '세기 = 피해 합 × 0.08 + 처치 × 0.3 (최대 1). 기물 고유 예비 동작을 "뛰어올라 모으기"로 바꿔 끼운다: 최대 0.28초 더 길게, 0.32칸 뛰어오르며 고유 예비 자세로 서서히 들어가고 빛 알갱이가 빨려 듦 → 원래 공격이 그 자세에서 이어지며 공중 높이만 지수형으로 떨어지고 고리가 터짐. 1초 상한을 넘으면 덜 모은다', status: 'review' },
@@ -87,6 +88,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 39, date: '2026-10-30', items: ['주인공 킹: 사용자 시안 왕관을 조금 줄여(머리 폭 0.8) 머리에 반듯이 씌움 — 판 위·아이콘 같은 그림', '훑기 칼·해골을 순번 배지와 같은 톱니 토큰으로, 해골은 적 의도와 일치'] },
   { v: 38, date: '2026-10-30', items: ['흰 킹 시안: 사용자 시안 왕관을 도트로(뾰족 셋, 가운데 높게, 어두운 띠) 폰 머리에 얹음 — 반듯 / 15도'] },
   { v: 37, date: '2026-10-30', items: ['흔적: B 기록 줄 채택(게임 오른쪽 레일), A 판 위 흔적 폐기'] },
   { v: 36, date: '2026-10-30', items: ['흔적 시안 A: 실행 후 출발·도착 칸 옅게 + 맞은 기물 피해 꼬리표', '흔적 시안 B: 하스스톤식 기록 줄 (에셋 목록)'] },
