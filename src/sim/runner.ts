@@ -20,6 +20,7 @@ import {
   eventChoose,
   finishBattle,
   finishPuzzle,
+  battleDeck,
   finishReward,
   forgeCost,
   forgeUp,
@@ -71,7 +72,7 @@ const TYPE_ENCHANT: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02'
 export const playBattle = (run: RunState, seed: number): { state: BattleState; turns: number } => {
   if (run.stage.at !== 'battle') throw new Error('not in battle');
   const e = run.stage.encounter;
-  let s = encounterBattle(run.deck, run.loadout, e);
+  let s = encounterBattle(battleDeck(run).deck, run.loadout, e);
   let turns = 0;
   for (; turns < MAX_TURNS && s.winner === null; turns++) {
     const tier = s.turnSide === 0 ? AI_TIERS[1] : AI_TIERS[e.tier];

@@ -56,6 +56,8 @@ export interface Loadout {
   forge: Partial<Record<PieceType, number>>;
   /** 이형 거푸집: 유형마다 하나 (GDD 13장 P2) */
   variants?: Partial<Record<PieceType, VariantId>>;
+  /** 결함 · 손상 단수 (D-101): 그 유형 최대 HP −15% × 단 */
+  damage?: Partial<Record<PieceType, number>>;
 }
 
 export interface CardSlot {

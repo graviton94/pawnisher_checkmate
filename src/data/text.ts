@@ -107,6 +107,12 @@ export const TEXT = {
     leave: '떠나기',
     outcomes: ['희귀 개조 3지선다', '상위 기물', '이형 거푸집', '꽝'],
   },
+  defect: {
+    damage: '손상',
+    seal: '봉인',
+    repair: '손상 수리',
+    sealedBattle: (name: string) => `* 봉인된 ${name} 하나가 상자에 남았다. 이번 대국엔 없다.`,
+  },
   luck: {
     overload: '과적! * 군단이 한 상자 더 실렸다. 개량도 한 번 더 받았다.',
     defective: '* 이 군단은 불량이다. 다들 어딘가 금이 가 있다.',

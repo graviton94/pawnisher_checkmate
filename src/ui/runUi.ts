@@ -2,6 +2,7 @@ import { TACTICS } from '../data/tactics';
 import { ARENAS } from '../data/terrain';
 import { puzzleBattle, puzzleFor } from '../run/puzzle';
 import { freshSeed, parseSeed, seedCode } from '../run/seed';
+import { DEFECT } from '../data/defects';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -32,6 +33,8 @@ import {
   eventChoose,
   finishBattle,
   finishPuzzle,
+  battleDeck,
+  repairDamage,
   finishReward,
   forgeCost,
   forgeUp,
@@ -59,9 +62,18 @@ const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
 const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
-const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame' };
+const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame', safe: 'crate', press: 'anvil', forgery: 'question', jam: 'claw' };
 const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R' };
 
+
+/** 결함 표시 (D-101): 손상 단 합계 · 봉인 남은 대국 — 상단 바 */
+const defectStats = (run: RunState): string => {
+  const dmg = Object.entries(run.loadout.damage ?? {}).filter(([, n]) => (n ?? 0) > 0);
+  const parts: string[] = [];
+  if (dmg.length) parts.push(`<span class="stat bad" title="${dmg.map(([t, n]) => `${PIECE_NAMES_KO[t as PieceType]} ${n}단`).join(' · ')}">${icon('wrench', 's')}${TEXT.defect.damage} <b>${dmg.map(([t, n]) => `${PIECE_NAMES_KO[t as PieceType]}${n}`).join(' ')}</b></span>`);
+  if (run.sealed) parts.push(`<span class="stat bad">${icon('claw', 's')}${TEXT.defect.seal} <b>${run.sealed}</b></span>`);
+  return parts.join('');
+};
 
 /** 시작 세트 이름 (해금 세트는 meta의 이름) */
 const setName = (deck: Deck): string => {
@@ -154,6 +166,7 @@ export class RunUi {
       <span class="stat screw">${icon('screw', 's')}<b>${run.gold}</b></span>
       <span class="stat" title="행운 톱니">${icon('windkey', 's')}${pips(run.crackGauge, ALTAR.gaugeMax)}</span>
       ${run.ascension ? `<span class="stat">${icon('flame', 's')}압력 <b>${run.ascension}</b></span>` : ''}
+      ${defectStats(run)}
       <span class="spacer"></span>
       <button class="btn army" type="button" data-army aria-label="군단 보기">${army}</button>
       <button class="btn sq" type="button" data-runmenu aria-label="메뉴">${icon('watch')}</button>
@@ -450,7 +463,8 @@ export class RunUi {
   private startBattle(run: RunState): void {
     if (run.stage.at !== 'battle') return;
     const e = run.stage.encounter;
-    const state: BattleState = run.stage.battle ?? encounterBattle(run.deck, run.loadout, e);
+    const bd = battleDeck(run);
+    const state: BattleState = run.stage.battle ?? encounterBattle(bd.deck, run.loadout, e);
     this.hud.closeOverlay();
     this.hud.closeScene();
     this.c.onPlayerTurn = (s) => {
@@ -470,8 +484,11 @@ export class RunUi {
     const opening =
       e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`;
     this.hud.toast(opening);
-    // 억까·억빠 (D-099): 대국 시작 한 줄 다음에
-    if (e.luck) window.setTimeout(() => this.hud.toast(TEXT.luck[e.luck!]), 1700);
+    // 억까·억빠 (D-099): 대국 시작 한 줄 다음에 · 봉인 (D-101)
+    const later: string[] = [];
+    if (e.luck) later.push(TEXT.luck[e.luck]);
+    if (bd.sealed && !run.stage.battle) later.push(TEXT.defect.sealedBattle(PIECE_NAMES_KO[bd.sealed]));
+    later.forEach((m, i) => window.setTimeout(() => this.hud.toast(m), 1700 * (i + 1)));
     // 반장 전장 규칙 (D-097): 대사 다음에 규칙 한 줄
     if (e.kind === 'boss') {
       const arena = ARENAS[bossOf(run, run.floor).arena];
@@ -622,12 +639,19 @@ export class RunUi {
       const opts = forgeVariantOptions(run, t);
       const lvPips = Array.from({ length: FORGE_MAX }, (_, i) => `<i class="${i < lv ? 'on' : ''}${i === VARIANT_FORGE_LEVEL - 1 ? ' v' : ''}"></i>`).join('');
       return `<div class="forge-card panel9">
-        ${pieceImg(t, 0, 'large', 72)}
+        ${pieceImg(t, 0, 'large', 52)}
         <b>${PIECE_NAMES_KO[t]} ×${n}</b>
         <span class="vname">${v ? `이형 · ${VARIANTS[v].name}` : lv >= VARIANT_FORGE_LEVEL ? '' : `+${VARIANT_FORGE_LEVEL} 이형 가능`}</span>
         <span class="lv">${lvPips}</span>
         ${cost === null ? `<span class="tag gold">완성 거푸집</span>` : `<button class="btn${run.gold >= cost ? ' brass' : ' poor'}" type="button" data-up="${t}">+${lv + 1} ${screws(cost)}</button>`}
-        ${opts.length ? opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('') : '<span class="slot-v"></span>'}
+        ${
+          // 이형 버튼 자리 하나를 같이 쓴다 (카드 높이가 같게): 이형 > 손상 수리 > 빈 자리
+          opts.length
+            ? opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('')
+            : (run.loadout.damage?.[t] ?? 0) > 0
+              ? `<button class="btn crimson${run.gold >= DEFECT.repairCost ? '' : ' poor'}" type="button" data-repair="${t}">${TEXT.defect.repair} ${run.loadout.damage![t]}단 ${screws(DEFECT.repairCost)}</button>`
+              : '<span class="slot-v"></span>'
+        }
       </div>`;
     });
     const el = this.hud.openScene(
@@ -641,6 +665,10 @@ export class RunUi {
       up: (b) => {
         sfx('hit', 3);
         this.act(forgeUp(run, b.dataset.up as PieceType));
+      },
+      repair: (b) => {
+        sfx('land');
+        this.act(repairDamage(run, b.dataset.repair as PieceType));
       },
       variant: (b) => {
         const [t, id] = b.dataset.variant!.split(':') as [PieceType, VariantId];

@@ -2,6 +2,7 @@ import { ORDERS, ORDER_GOLD_MULT } from '../data/tactics';
 import { orderProgress, pickOrder } from './orders';
 import { TEXT } from '../data/text';
 import { LUCK, RECRUIT_OPTIONS } from '../data/legions';
+import { DEFECT } from '../data/defects';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
@@ -109,6 +110,8 @@ export interface RunState {
   bosses: BossId[];
   /** 승천 단계 (0 = 기본, 메타 진행) */
   ascension: number;
+  /** 결함 · 봉인: 남은 대국 수 (D-101) */
+  sealed?: number;
   stage: Stage;
 }
 
@@ -270,6 +273,38 @@ export const recordBattle = (run: RunState, battle: BattleState): void => {
   if (run.stage.at === 'battle') run.stage.battle = battle;
 };
 
+// ---------- 결함 (D-101) ----------
+/** 그 유형 손상 1단 (최대 3단) — 결과 한 줄 */
+const damageType = (run: RunState, t: PieceType): string => {
+  const dmg = (run.loadout.damage ??= {});
+  dmg[t] = Math.min(DEFECT.damageMax, (dmg[t] ?? 0) + 1);
+  return `${PIECE_NAMES_KO[t]} 손상 ${dmg[t]}단 (최대 HP −${Math.round(DEFECT.damageCut * dmg[t]! * 100)}%)`;
+};
+/** 군단의 무작위 유형(킹 제외) 손상 */
+const damageRandom = (run: RunState): string => {
+  const types = [...new Set(run.deck)].filter((t) => t !== 'K');
+  if (!types.length) return '';
+  return damageType(run, types[withRng(run, (rng) => rng.int(types.length))]);
+};
+
+/** 공방 손상 수리: 1단 */
+export const repairDamage = (run: RunState, t: PieceType): string | void => {
+  const n = run.loadout.damage?.[t] ?? 0;
+  if (!n) return '“멀쩡한데.”';
+  if (run.gold < DEFECT.repairCost) return '“나사가 부족해.”';
+  run.gold -= DEFECT.repairCost;
+  run.loadout.damage![t] = n - 1;
+};
+
+/** 이번 대국에 나갈 군단: 봉인 중이면 킹 말고 한 기가 상자에 남는다 (대국 시드로 정해져 이어하기에도 같다) */
+export const battleDeck = (run: RunState): { deck: PieceType[]; sealed?: PieceType } => {
+  if (!run.sealed || run.stage.at !== 'battle') return { deck: run.deck };
+  const idx = run.deck.map((t, k) => [t, k] as const).filter(([t]) => t !== 'K');
+  if (!idx.length) return { deck: run.deck };
+  const [t, k] = idx[new Rng((run.stage.encounter.seed ^ 0x5ea1ed) >>> 0).int(idx.length)];
+  return { deck: run.deck.filter((_, j) => j !== k), sealed: t };
+};
+
 /** 묘수풀이가 끝났다 (D-097): 풀면 나사 + 개조 3지선다, 못 풀어도 출하는 이어진다 */
 export const finishPuzzle = (run: RunState, final: BattleState): void => {
   if (run.stage.at !== 'puzzle') return;
@@ -283,6 +318,7 @@ export const finishPuzzle = (run: RunState, final: BattleState): void => {
 export const finishBattle = (run: RunState, final: BattleState): void => {
   if (run.stage.at !== 'battle') return;
   const kind = run.stage.encounter.kind;
+  if (run.sealed) run.sealed -= 1;
   if (final.winner !== 0) {
     run.stage = { at: 'over', won: false };
     return;
@@ -637,6 +673,8 @@ export const eventChoiceAvailable = (run: RunState, id: EventId, i: number): boo
   if (id === 'gambler' && i === 0) return run.gold >= 30;
   if (id === 'pilgrim' && i === 0) return run.deck.includes('P');
   if (id === 'pact' && i === 0) return run.deck.some((t) => PACT_VICTIMS.includes(t));
+  if (id === 'press' && i === 0) return run.deck.length > 1;
+  if (id === 'jam' && i === 1) return run.gold >= 40;
   return true;
 };
 
@@ -670,6 +708,29 @@ export const eventChoose = (run: RunState, i: number): string | void => {
         run.gold += 35;
         result = '폰 1기가 길을 떠났다. 나사 +35';
         break;
+      case 'safe': {
+        run.gold += 70;
+        result = `나사 +70. ${damageRandom(run)}`;
+        break;
+      }
+      case 'press': {
+        const types = [...new Set(run.deck)].filter((t) => t !== 'K');
+        const t = types[withRng(run, (rng) => rng.int(types.length))];
+        if (withRng(run, (rng) => rng.next()) < 0.6 && (run.loadout.forge[t] ?? 0) < FORGE_MAX) {
+          run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
+          result = `쿵. 제대로 찍혔다. ${PIECE_NAMES_KO[t]} 개량 +${run.loadout.forge[t]}`;
+        } else result = `쿵. 찌그러졌다. ${damageType(run, t)}`;
+        break;
+      }
+      case 'forgery': {
+        run.sealed = (run.sealed ?? 0) + DEFECT.sealBattles;
+        const options = withRng(run, (rng) => rollEnchants(run, rng, 'altar', true));
+        run.stage = { at: 'reward', title: '검수 누락', lines: [`봉인 — 다음 ${DEFECT.sealBattles}대국 기물 하나가 상자에 남는다`], choices: options.length ? [{ type: 'enchant', options }] : [] };
+        return;
+      }
+      case 'jam':
+        result = damageRandom(run);
+        break;
       case 'pact': {
         const victims = run.deck.map((t, k) => [t, k] as const).filter(([t]) => PACT_VICTIMS.includes(t));
         const [t, k] = victims[withRng(run, (rng) => rng.int(victims.length))];
@@ -678,6 +739,16 @@ export const eventChoose = (run: RunState, i: number): string | void => {
         run.stage = { at: 'reward', title: '쇳물 앞의 거래', lines: [`${PIECE_NAMES_KO[t]} 1기를 잃었다`], choices: options.length ? [{ type: 'enchant', options }] : [] };
         return;
       }
+    }
+  } else if (id === 'jam' && i === 1) {
+    run.gold -= 40;
+    result = '기계가 멈췄다. 나사 −40.';
+  } else if (id === 'jam' && i === 2) {
+    const victims = run.deck.map((t, k) => [t, k] as const).filter(([t]) => t !== 'K');
+    if (victims.length) {
+      const [t, k] = victims[withRng(run, (rng) => rng.int(victims.length))];
+      run.deck.splice(k, 1);
+      result = `상자가 용광로 쪽으로 사라졌다. ${PIECE_NAMES_KO[t]} 1기를 잃었다.`;
     }
   } else if (id === 'armory') {
     const pool = (Object.keys(CARDS) as CardId[]).filter((c) => CARDS[c].limit.type !== 'consume' && !run.loadout.cards.includes(c));

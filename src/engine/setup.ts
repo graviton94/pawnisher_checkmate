@@ -1,3 +1,4 @@
+import { DEFECT } from '../data/defects';
 import { defaultRules } from '../data/battle';
 import { FORGE_GAIN, FORGE_MASTERY_SHIELD, FORGE_MAX } from '../data/forge';
 import { PIECE_STATS } from '../data/pieces';
@@ -40,6 +41,13 @@ const applyForge = (pieces: Piece[], loadout: Loadout): void => {
     p.atk += g.atk * lv;
     p.def += g.def * lv;
     if (lv >= FORGE_MAX) p.shield += Math.round(p.maxHp * FORGE_MASTERY_SHIELD);
+  }
+  // 결함 · 손상 (D-101): 그 유형 최대 HP가 깎인 채로 나온다
+  for (const p of pieces) {
+    const n = Math.min(DEFECT.damageMax, loadout.damage?.[p.type] ?? 0);
+    if (!n) continue;
+    p.maxHp = Math.max(1, Math.round(p.maxHp * (1 - DEFECT.damageCut * n)));
+    p.hp = p.maxHp;
   }
 };
 

@@ -374,7 +374,7 @@ img { image-rendering: pixelated; }
 
 /* 공방 · 이형 */
 .forge-row { display: flex; gap: 8px; flex: 1; min-height: 0; }
-.forge-card { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 6px 8px; text-align: center; }
+.forge-card { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 6px 6px; text-align: center; }
 .forge-card b { font-size: 15px; }
 .forge-card .lv { display: flex; gap: 3px; }
 .forge-card .lv i { width: 10px; height: 10px; background: #3a3542; box-shadow: 0 0 0 2px #000; }
@@ -506,3 +506,7 @@ img { image-rendering: pixelated; }
 .seed-row .seed { flex: 1; }
 .seed-input { width: 190px; height: 48px; padding: 0 10px; font: inherit; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; color: var(--text); background: #16141c; border: 2px solid #34303e; }
 .seed-row .btn { min-height: 48px; }
+
+/* 결함 (D-101) */
+.bar .stat.bad { color: var(--crimson-soft); }
+.bar .stat.bad b { color: var(--crimson-soft); }

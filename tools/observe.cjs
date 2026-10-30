@@ -292,6 +292,16 @@ const scenarios = {
     await loadRun(page, { at: 'event', id: 'gambler' });
     return ['event'];
   },
+  // 결함 (D-101): 끼인 컨베이어(셋 다 대가) · 손상 수리 공방 · 봉인 대국
+  async defect(page) {
+    await loadRun(page, { at: 'event', id: 'jam' }, { sealed: 2, loadout: { enchants: {}, cards: [], forge: { N: 1 }, variants: {}, damage: { N: 2 } } });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-defect-event.png`) });
+    await loadRun(page, { at: 'forge' }, { gold: 200, loadout: { enchants: {}, cards: [], forge: { N: 1 }, variants: {}, damage: { N: 2, P: 1 } } });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-defect-forge.png`) });
+    await loadRun(page, { at: 'map' }, { sealed: 2 });
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(3600);
+    return ['defect-sealed'];
+  },
   async over(page) {
     await scenarios.menu(page);
     await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });
