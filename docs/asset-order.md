@@ -294,7 +294,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art overlays matching the attached chess piece sprites (thick white outline, same pixel size).
 Layout: 2 columns x 1 row, each cell 256x256 px, each sprite on a 16x16 pixel grid scaled 16x.
 Background: solid flat magenta #FF00FF.
-1. A small brass crown that sits on top of a chess piece's head, 16 wide x 8 tall, at the top of the cell.
+1. A paper crown cut out of a cardboard box (rough zigzag edges, a bit too big, slightly crooked, light brown cardboard with a printed box-line on it) that sits on a chess pawn's head, 16 wide x 8 tall, at the top of the cell. Also, in the same style as the attached pawn sprites: a white pawn wearing this paper crown (the player's king), full sprite.
 2. A supercharger: a small brass boiler with a pressure gauge and a crimson valve, centered.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
