@@ -359,7 +359,7 @@ const rollCards = (run: RunState, rng: Rng, source: 'elite' | 'boss'): CardId[] 
 export const addEnchant = (run: RunState, id: EnchantId, discard?: EnchantId): string | void => {
   const e = run.loadout.enchants;
   const n = e[id] ?? 0;
-  if (n >= ENCHANT_MAX_STACK) return '“이미 걸작이야. 더 붙일 데 없어.”';
+  if (n >= ENCHANT_MAX_STACK) return '“이미 걸작이다.”';
   if (!n && Object.keys(e).length >= ENCHANT_SLOTS) {
     if (!discard || !e[discard]) return 'full';
     delete e[discard];
@@ -384,7 +384,7 @@ export const takeChoice = (run: RunState, option: string, discard?: EnchantId | 
   if (!(ch.options as string[]).includes(option)) return '없는 선택지';
   if (ch.type === 'piece') {
     const t = option as PieceType;
-    if (!canAdd(run.deck, t)) return '“규격 초과. 더는 안 들어가.”';
+    if (!canAdd(run.deck, t)) return '“규격 초과.”';
     run.deck.push(t);
     run.stage.choices.shift();
     return;
@@ -407,7 +407,7 @@ export const skipChoice = (run: RunState): void => {
 /** 보상 단계를 마친다 (선택지를 다 처리한 뒤) */
 export const finishReward = (run: RunState): string | void => {
   if (run.stage.at !== 'reward') return;
-  if (run.stage.choices.length) return '“아직 남았어. 고르든지 넘기든지.”';
+  if (run.stage.choices.length) return '“아직 고를 게 남았다.”';
   advance(run);
 };
 
@@ -438,8 +438,8 @@ const shopOf = (run: RunState): ShopStock | null => (run.stage.at === 'shop' ? r
 export const buyPiece = (run: RunState, i: number): string | void => {
   const it = shopOf(run)?.pieces[i];
   if (!it || it.sold) return '“그런 물건 없어.”';
-  if (run.gold < it.price) return '“나사가 모자라잖아. 외상? 웃기지 마.”';
-  if (!canAdd(run.deck, it.item)) return '“규격 초과야. 하나 팔고 오면 넣어 주지.”';
+  if (run.gold < it.price) return '“나사가 부족해.”';
+  if (!canAdd(run.deck, it.item)) return '“규격 초과. 하나 빼고 와.”';
   run.gold -= it.price;
   run.deck.push(it.item);
   it.sold = true;
@@ -448,7 +448,7 @@ export const buyPiece = (run: RunState, i: number): string | void => {
 export const buyCard = (run: RunState, i: number, discard?: number): string | void => {
   const it = shopOf(run)?.cards[i];
   if (!it || it.sold) return '“그런 물건 없어.”';
-  if (run.gold < it.price) return '“나사가 모자라잖아. 외상? 웃기지 마.”';
+  if (run.gold < it.price) return '“나사가 부족해.”';
   const err = addCard(run, it.item, discard);
   if (err) return err;
   run.gold -= it.price;
@@ -458,7 +458,7 @@ export const buyCard = (run: RunState, i: number, discard?: number): string | vo
 export const buyEnchant = (run: RunState, i: number, discard?: EnchantId): string | void => {
   const it = shopOf(run)?.enchants[i];
   if (!it || it.sold) return '“그런 물건 없어.”';
-  if (run.gold < it.price) return '“나사가 모자라잖아. 외상? 웃기지 마.”';
+  if (run.gold < it.price) return '“나사가 부족해.”';
   const err = addEnchant(run, it.item, discard);
   if (err) return err;
   run.gold -= it.price;
@@ -468,7 +468,7 @@ export const buyEnchant = (run: RunState, i: number, discard?: EnchantId): strin
 /** 기물 판매 (킹 제외). 상점에서만. */
 export const sellPiece = (run: RunState, t: PieceType): string | void => {
   if (!shopOf(run)) return '여긴 고물상이 아니야.';
-  if (t === 'K') return '“킹을 팔겠다고? 그럼 넌 뭐가 되는데.”';
+  if (t === 'K') return '“킹은 안 받아.”';
   const i = run.deck.indexOf(t);
   if (i < 0) return '없는 기물';
   run.deck.splice(i, 1);
@@ -478,7 +478,7 @@ export const sellPiece = (run: RunState, t: PieceType): string | void => {
 export const reroll = (run: RunState): string | void => {
   const shop = shopOf(run);
   if (!shop) return;
-  if (run.gold < shop.rerollPrice) return '“나사가 모자라잖아. 외상? 웃기지 마.”';
+  if (run.gold < shop.rerollPrice) return '“나사가 부족해.”';
   run.gold -= shop.rerollPrice;
   run.stage = { at: 'shop', stock: withRng(run, (rng) => makeStock(run, rng, shop.rerollPrice + SHOP.rerollStep)) };
 };
@@ -493,8 +493,8 @@ export const forgeUp = (run: RunState, t: PieceType): string | void => {
   if (run.stage.at !== 'forge') return '공방에 가서 해.';
   if (!run.deck.includes(t)) return '군단에 없는 유형';
   const cost = forgeCost(run, t);
-  if (cost === null) return '“더 두드리면 금 간다. 완성이야.”';
-  if (run.gold < cost) return '“나사가 모자라잖아. 외상? 웃기지 마.”';
+  if (cost === null) return '“완성품이다. 더 손댈 데 없어.”';
+  if (run.gold < cost) return '“나사가 부족해.”';
   run.gold -= cost;
   run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
 };
@@ -506,7 +506,7 @@ export const forgeVariantOptions = (run: RunState, t: PieceType): VariantId[] =>
 /** 공방: 그 유형의 거푸집을 이형으로 바꾼다 (무료, 되돌릴 수 없음) */
 export const forgeVariant = (run: RunState, t: PieceType, id: VariantId): string | void => {
   if (run.stage.at !== 'forge') return '공방에 가서 해.';
-  if (!forgeVariantOptions(run, t).includes(id)) return `“+${VARIANT_FORGE_LEVEL}도 안 된 걸 뜯어고치라고? 돌아가.”`;
+  if (!forgeVariantOptions(run, t).includes(id)) return `“+${VARIANT_FORGE_LEVEL}부터다.”`;
   run.loadout.variants = { ...run.loadout.variants, [t]: id };
 };
 
@@ -530,7 +530,7 @@ export const altarGamble = (run: RunState): string | void => {
     run.stage.result = { kind: 'pick' };
     return;
   }
-  if (run.gold < ALTAR.cost) return '“나사가 모자라잖아. 외상? 웃기지 마.”';
+  if (run.gold < ALTAR.cost) return '“나사가 부족해.”';
   run.gold -= ALTAR.cost;
   const r = withRng(run, (rng) => rng.next());
   if (r < ALTAR.odds.enchant) {

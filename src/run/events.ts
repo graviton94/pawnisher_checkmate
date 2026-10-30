@@ -20,9 +20,9 @@ export interface EventDef {
 export const EVENTS: Record<EventId, EventDef> = {
   smith: {
     title: '떠돌이 정비공',
-    text: '공구 수레를 끄는 정비공이 렌치를 들어 보인다. "거푸집 하나만, 싸게 고쳐 주지."',
+    text: '공구 수레 옆의 정비공. "거푸집 하나. 나사 25. 고르는 건 나다."',
     choices: [
-      { label: '나사 25 — 어느 거푸집이 걸릴지, 맡겨 볼까?', desc: '군단에 있는 유형 중 하나 (완성 거푸집 제외)' },
+      { label: '나사 25를 맡길까?', desc: '군단에 있는 유형 중 하나 (완성 거푸집 제외)' },
       { label: '지나간다', desc: '' },
     ],
   },
@@ -30,15 +30,15 @@ export const EVENTS: Record<EventId, EventDef> = {
     title: '반품 창고',
     text: '반품 딱지가 붙은 상자들. 아직 쓸 만한 것이 섞여 있다.',
     choices: [
-      { label: '기물을 챙겨 볼까?', desc: '무작위 나이트 또는 비숍 1기 (군단 규격 안에서)' },
-      { label: '천공 카드를 챙겨 볼까?', desc: '무작위 철 카드 1장 (빈 칸이 있을 때)' },
+      { label: '기물을 챙길까?', desc: '무작위 나이트 또는 비숍 1기 (군단 규격 안에서)' },
+      { label: '천공 카드를 챙길까?', desc: '무작위 철 카드 1장 (빈 칸이 있을 때)' },
     ],
   },
   gambler: {
     title: '태엽 도박꾼',
-    text: '"동전 한 번이면 돼. 앞면이면 두 배, 뒷면이면 내 거."',
+    text: '"앞면이면 두 배. 뒷면이면 내 거."',
     choices: [
-      { label: '앞면에 나사 30개, 걸어 볼까?', desc: '50%: +30 / 50%: −30' },
+      { label: '나사 30을 걸까?', desc: '50%: +30 / 50%: −30' },
       { label: '거절한다', desc: '' },
     ],
   },
@@ -52,9 +52,9 @@ export const EVENTS: Record<EventId, EventDef> = {
   },
   pact: {
     title: '쇳물 앞의 거래',
-    text: '용광로 앞, 쇳물빛에 그림자가 말한다. "가장 아끼는 부품을 녹여라. 대가는 주지."',
+    text: '용광로 앞의 그림자. "하나 녹여라. 대가는 준다."',
     choices: [
-      { label: '가장 아끼는 걸, 녹여 볼까?', desc: '킹·폰을 뺀 무작위 기물 1기를 잃고 희귀 개조 3지선다' },
+      { label: '하나를 녹일까?', desc: '킹·폰을 뺀 무작위 기물 1기를 잃고 희귀 개조 3지선다' },
       { label: '거절한다', desc: '' },
     ],
   },

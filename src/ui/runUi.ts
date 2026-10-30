@@ -452,7 +452,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>검수관이 서류를 넘긴다. “통과. …아직은. ${kind}, 하나만.”</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>“통과. ${kind} 하나.”</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
@@ -541,7 +541,7 @@ export class RunUi {
     const types = ORDER.filter((t) => t !== 'K' && run.deck.includes(t));
     const panel = this.hud.openOverlay(`
       <h2>${icon('scale')} ${TEXT.shop.sell}</h2>
-      <p>“팔면 끝이야. 울면서 돌려 달래도 안 돼, 종이 왕관.”</p>
+      <p>판 기물은 돌아오지 않는다.</p>
       <div class="chips">${types.map((t) => `<button class="chip" type="button" data-sell="${t}"><b>${pieceImg(t, 0, 'small', 24)} ${PIECE_NAMES_KO[t]} ×${run.deck.filter((x) => x === t).length}</b><small>1기 팔기 · 나사 +${sellPrice(t)}</small></button>`).join('')}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     this.wire(panel, {
@@ -623,7 +623,7 @@ export class RunUi {
       const all = (Object.keys(ENCHANTS) as EnchantId[]).filter((id) => (run.loadout.enchants[id] ?? 0) < ENCHANT_MAX_STACK);
       const el = this.hud.openScene(
         `${this.bar(run)}
-        <div class="title-line"><h2>${icon('lever')} 행운 톱니 해방</h2><p>행운 톱니가 다 찼다. “원하는 걸 골라. 이번엔 꽝 없어.”</p></div>
+        <div class="title-line"><h2>${icon('lever')} 행운 톱니 해방</h2><p>행운 톱니가 다 찼다. 이번엔 꽝이 없다.</p></div>
         <div class="stage"><div class="offers scroll-x grow">${all
           .map((id) => {
             const next = (run.loadout.enchants[id] ?? 0) + 1;
