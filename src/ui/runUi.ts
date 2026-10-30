@@ -5,7 +5,7 @@ import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { ACT_NAMES, ALTAR, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
-import { TEXT } from '../data/text';
+import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { ASCENSIONS, UNLOCK_DECKS, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import type { BattleController } from '../game/controller';
 import type { BattleState, Deck, PieceType } from '../engine';
@@ -57,15 +57,6 @@ const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', b
 const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame' };
 const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R' };
 
-/** 기물 한 줄 설명 (보상·고물상) */
-const PIECE_DESC: Record<PieceType, string> = {
-  P: '싸고 많다. 끝줄에 닿으면 퀸',
-  N: 'L자로 뛰어넘어 L자로 친다',
-  B: '대각선 먼 거리를 친다',
-  R: '직선 먼 거리, 튼튼하다',
-  Q: '가장 강하다',
-  K: '',
-};
 
 /** 시작 세트 이름 (해금 세트는 meta의 이름) */
 const setName = (deck: Deck): string => {
@@ -102,7 +93,7 @@ const pieceOffer = (run: RunState, t: PieceType): string => {
   const forge = run.loadout.forge[t] ?? 0;
   const v = run.loadout.variants?.[t];
   const tags = [n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>', forge ? `<i class="tag">개량 +${forge}</i>` : '', v ? `<i class="tag gold">${VARIANTS[v].name}</i>` : ''].join('');
-  return `<span class="kind">${icon('crate', 's')} 기물 · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 84)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_DESC[t]}</p>`;
+  return `<span class="kind">${icon('crate', 's')} 기물 · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_LORE[t]}</p>`;
 };
 
 /**
@@ -288,14 +279,13 @@ export class RunUi {
     const meta = loadMeta();
     const seed = (Date.now() % 1_000_000_000) + 1;
     const decks = startDeckOptions(seed, unlockedDecks(meta));
-    const desc: Record<string, string> = { N: '나이트 — L자로 뛰어넘어 친다', B: '비숍 — 대각선 먼 거리', R: '룩 — 직선 먼 거리, 튼튼함', P: '폰 — 싸고 많다, 끝줄에서 퀸' };
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('flag', 's')}${TEXT.start.title}</span><span class="spacer"></span>${button(TEXT.start.back, 'data-menu')}</div>
       <p class="lead">${TEXT.start.lead}</p>
       <div class="stage"><div class="offers">${decks
         .map((d, i) => {
-          const kinds = [...new Set(d.filter((t) => t !== 'K'))].map((t) => desc[t]).join('<br>');
-          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트</span><b>${setName(d)}</b><span>${d.map((t) => pieceImg(t, 0, 'large', 64)).join('')}</span><p>${kinds}</p></button>`;
+          const kinds = SET_LORE[[...d].sort().join('')] ?? '';
+          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트</span><b>${setName(d)}</b><span class="pieces">${d.map((t) => pieceImg(t, 0, 'large', 56)).join('')}</span><p>${kinds}</p></button>`;
         })
         .join('')}</div></div>`,
     );
@@ -462,8 +452,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${ch ? `<p>검수관이 서류를 넘긴다. “통과. …아직은. ${kind}, 하나만.”</p>` : ''}</div>
-      ${lines ? `<div class="unlocks">${lines}</div>` : ''}
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>검수관이 서류를 넘긴다. “통과. …아직은. ${kind}, 하나만.”</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}

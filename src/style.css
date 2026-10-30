@@ -463,3 +463,15 @@ img { image-rendering: pixelated; }
 /* 공방 카드: 개량 버튼 줄과 이형 버튼 줄을 카드마다 같은 높이에 (이형이 없으면 빈 자리) */
 .forge-card .slot-v { height: 48px; flex: none; }
 .title-line { margin-top: 6px; }
+/* 고르기 카드: 같은 줄 카드들의 머리·그림·이름이 같은 높이에 오도록 위에서부터 쌓고 값은 맨 아래 (D-090) */
+.offer { justify-content: flex-start; padding-top: 14px; }
+.offer .pieces { display: flex; justify-content: center; flex-wrap: nowrap; min-height: 64px; align-items: flex-end; }
+.offer .pieces img { width: 56px; height: 56px; }
+.offer .price { margin-top: auto; padding-top: 4px; }
+/* 좁은 진열 카드: 소개는 3줄까지 (전체는 보상 화면에서) */
+.scroll-x .offer p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.offer { gap: 4px; }
+.offer p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.title-line { flex-wrap: wrap; row-gap: 2px; }
+.title-line .tag { align-self: center; }
+.offer { padding-top: 8px; }
