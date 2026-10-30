@@ -175,23 +175,47 @@ PROPS = {
 
 # ---------------- 주인공·HUD ----------------
 
-# 종이 왕관 (D-060): 아주 단순한 왕관 아이콘 화풍 — 뾰족 셋 + 아래로 좁아지는 몸통 + 한 줄 틈(테두리가 검정 선으로 메운다) + 띠.
-# 폰 머리 폭에 맞춘 7도트 몸통(테두리 포함 11). 폰에 비스듬히 씌우는 기운 판도 같이 만든다.
+# 종이 왕관 (D-060·D-061): 아주 단순한 왕관 아이콘 화풍 — 뾰족 셋 + 몸통 + 한 줄 틈(테두리가 검정 선으로 메운다) + 띠.
+# 킹은 다른 기물보다 커도 된다 (사용자) → 몸통 9도트. 폰에 씌울 땐 그림 자체를 기울인 판을 쓴다.
 CROWN = [
-    'y..y..y',
-    'yy.y.yy',
-    'yyyyyyb',
-    '.......',
-    '.yyyyb.',
+    'y...y...y',
+    'yy.yyy.yy',
+    'yyyyyyyyy',
+    'yyyyyyyyb',
+    'yyyyyyyyb',
+    '.........',
+    'yyyyyyyyb',
 ]
 
 
-def tilt(rows, step=3):
-    """오른쪽으로 기울이기: 아래에서 step줄 올라갈 때마다 한 도트씩 오른쪽으로 민다 (도트 격자 그대로)"""
-    h = len(rows)
-    shift = [(h - 1 - y) // step for y in range(h)]
-    w = len(rows[0]) + max(shift)
-    return [('.' * s + r).ljust(w, '.') for r, s in zip(rows, shift)]
+def crown_tilted(deg, k=1.0):
+    """기운 왕관: 왕관 모양(다각형)을 돌린 뒤 도트 칸 가운데로 다시 찍는다 — 그림을 돌리면 뾰족·틈이 깨진다.
+    몸통(뾰족 셋 + 몸통) · 띠 두 조각, 오른쪽 끝 한 도트는 그늘"""
+    body = [(0, -2), (1, -2), (3.5, 1), (5, -2.6), (6, -2.6), (7.5, 1), (10, -2), (11, -2), (11, 3), (0, 3)]
+    band = [(0, 4), (11, 4), (11, 5.6), (0, 5.6)]
+    body = [(x * k, y * k) for x, y in body]
+    band = [(x * k, y * k) for x, y in band]
+    cx, cy = 5.5 * k, 1.5 * k
+    t = math.radians(deg)
+    ct, st = math.cos(t), math.sin(t)
+
+    def inside(poly, x, y):
+        hit = False
+        for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]):
+            if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+                hit = not hit
+        return hit
+
+    n = 30
+    im = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    for Y in range(n):
+        for X in range(n):
+            # 화면 칸 가운데 → 왕관 좌표 (거꾸로 돌림)
+            dx, dy = X + 0.5 - n / 2, Y + 0.5 - n / 2
+            lx, ly = cx + dx * ct + dy * st, cy - dx * st + dy * ct
+            if inside(body, lx, ly) or inside(band, lx, ly):
+                im.putpixel((X, Y), C['b' if lx > 10.2 * k else 'y'] + (255,))
+    return im.crop(im.getbbox())
 
 
 # 태엽 감개 (D-058·D-059): 제미나이 I 시트의 디자인(큰 구멍 뚫린 고리 날개 둘 — 구멍이 작으면 하트처럼 보였다 + 가운데 청록 축 + 이 달린 막대)을
@@ -270,7 +294,7 @@ for name, rows in PROPS.items():
 
 
 save(outline(art(CROWN)), 'public/ui/hud/paper-crown.png')
-save(outline(art(tilt(CROWN, 2))), 'public/ui/hud/paper-crown-tilt.png')
+save(outline(crown_tilted(15)), 'public/ui/hud/paper-crown-tilt.png')  # 시계 방향 15도
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')
 save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')

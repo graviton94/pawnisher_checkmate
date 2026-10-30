@@ -474,7 +474,7 @@ const renderGallery = () => {
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
-      items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
+      items += item('종이 왕관 킹 (조합)', 24, 30, '<canvas data-live="king" width="96" height="120"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
       items += item('피해 숫자 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
@@ -540,12 +540,12 @@ const renderGallery = () => {
     ap.flow([{ x: 88, y: 72 }, { x: 144, y: 16 }], 0x38bdf8, now);
     ap.flow([{ x: 176, y: 72 }, { x: 176, y: 24 }, { x: 228, y: 24 }], 0xe5262f, now);
     // 종이 왕관 킹: 사용자 폰 + 왕관
-    kgC.clearRect(0, 0, 80, 96);
+    kgC.clearRect(0, 0, 96, 120);
     const pawn = sprites.P0;
     const crown = sprites['hud/paper-crown-tilt'];
-    if (pawn?.complete) kgC.drawImage(pawn, 8, 28, 64, 64);
-    // 비스듬히 씌운 왕관: 띠가 머리 위 4도트를 덮고, 한 도트 오른쪽으로 (D-060)
-    if (crown?.complete) kgC.drawImage(crown, 40 - (crown.naturalWidth * S) / 2 + S, 28 + 4 * S - crown.naturalHeight * S + 2 * S, crown.naturalWidth * S, crown.naturalHeight * S);
+    if (pawn?.complete) kgC.drawImage(pawn, 16, 52, 64, 64);
+    // 기울여 씌운 왕관 (D-061): 왕관 그림 자체를 15도 돌린 판, 아랫단이 머리 위쪽을 덮는다
+    if (crown?.complete) kgC.drawImage(crown, 48 - (crown.naturalWidth * S) / 2 + S, 52 + 5 * S - crown.naturalHeight * S, crown.naturalWidth * S, crown.naturalHeight * S);
     // 위협 깜빡임
     thC.clearRect(0, 0, 80, 80);
     tile(thC, true, 0, 0);
