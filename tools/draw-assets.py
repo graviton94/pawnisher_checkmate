@@ -187,19 +187,21 @@ CROWN = [
     'bbbbbbbbbbbbbbb',
 ]
 
-# 태엽 감개: 둥근 날개 두 장 + 가운데 축(강조 1도트) + 막대 + 이 두 개
+# 태엽 감개 (D-058): 제미나이 I 시트의 디자인(구멍 뚫린 둥근 날개 둘 + 가운데 청록 축 + 이 달린 막대)을
+# 우리 격자에 대칭으로 옮겨 찍음. 제미나이 원본은 두 배 해상도·막대 치우침이라 그대로 못 씀 (build-res/order/I.png).
 KEY = [
-    '.yyy.....yyy.',
-    'yyyyy...yyyyy',
-    'yyyyyy.yyyyyy',
-    'yyyyyyoyyyyyy',
-    'yyyyyy.yyyyyy',
-    'yyyyy...yyyyy',
-    '.yyy..y..yyy.',
-    '......y......',
-    '.....yyy.....',
-    '......y......',
-    '.....yyy.....',
+    '.yyy....yyy.',
+    'yyyyy..yyyyy',
+    'ykyyyooyyyky',
+    'yyyyyooyyyyb',
+    '.bbbbyybbbb.',
+    '.....yb.....',
+    '.....yb.....',
+    '.....yb.....',
+    '....yybb....',
+    '.....yb.....',
+    '....yybb....',
+    '.....bb.....',
 ]
 
 PIP = art(['.h.', 'hhh', '.h.'])
@@ -261,10 +263,10 @@ for name, rows in PROPS.items():
 
 
 save(outline(mirror(art(CROWN))), 'public/ui/hud/paper-crown.png')
-full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록으로 빛난다 (내 것 = 청록)
+full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')
-save(outline(art(recolor(KEY, {'y': 'l', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
-save(outline(art(recolor(KEY, {'o': 'w'})), 'k', 'o'), 'public/ui/hud/key-bonus.png')
+save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
+save(outline(art(full), 'k', 'o'), 'public/ui/hud/key-bonus.png')
 save(PIP, 'public/ui/hud/pip.png')
 for kind in ('panel', 'button', 'button-pressed', 'card-iron', 'card-paper', 'slot'):
     save(frame(kind), f'public/ui/frames/{kind}.png')
