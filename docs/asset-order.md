@@ -1,329 +1,305 @@
-# 에셋 발주서 — Gemini 나노바나나용
+# 에셋 발주서 v2 — Gemini 나노바나나용
 
-> 세계관: `docs/world.md` v2 (태엽 자동인형 체스) 기준. 무엇을 조합하고 무엇을 그리는지: `docs/art-assets.md`.
-> 각 시트의 **회색 상자(코드 블록)를 통째로 복사해 붙여넣으면** 된다. 프롬프트는 영어가 결과가 안정적이라 영어로 썼다.
+> v1(2026-10-30 오전)은 폐기. A1을 받아 넣어 보니 **도트 크기가 기물과 달라** 판이 엉망이 됐다 (D-041).
+> v2의 핵심: **모든 판 위 그림을 기물과 같은 도트 크기로**, 그리고 **매 시트 1번 칸에 기준 폰을 같이 그리게** 해서 크기가 맞는지 바로 보이게 한다.
 
-## 0. 쓰는 법 (먼저 읽기)
+## 0. 쓰는 법
 
-1. **첨부 이미지**: 모든 시트에 아래 2장을 같이 첨부한다 (스타일 맞추기용).
-   - `build-res/pieces-small-source.png` (기물 도트)
-   - `build-res/icon-source.png` (앱 아이콘 — 흑·백·붉은 톤)
-2. **S0 스타일 시험 시트를 먼저** 뽑는다. ✅ 2026-10-30 통과 — 그 결과 그림을 이후 모든 시트에 세 번째로 첨부한다. 마음에 드는 결과 1장을 고르면, 이후 시트마다 그 결과도 **세 번째 첨부**로 넣는다 → 시트끼리 화풍이 맞는다.
-3. **배경은 마젠타(#FF00FF)**, 그리고 **그림 아래 15%·오른쪽 10%는 비워 둔다** — 제미나이 워터마크(오른쪽 아래 별)가 그 자리에 찍힌다 (2026-10-30 A1에서 확인). 모든 프롬프트에 문구를 넣었다. 그래도 겹치면 잘라 내기 도구가 워터마크를 지운다. 나노바나나는 "투명 배경"을 요청하면 체크무늬를 그려 넣는 경우가 많다. 마젠타는 코드가 지운다.
-4. **도트 크기**: 프롬프트마다 "32×32 도트를 8배 확대" 식으로 써 두었다. 결과가 흐리거나 칸이 어긋나면 같은 프롬프트로 다시 뽑는다 (보통 2~4번 안에 나온다).
-5. **흰색·회색으로만** 그리라고 한 시트(화살표·게이지·이펙트·문양)는 코드가 진영 색(아군 청록/황동, 적 붉은색)을 입힌다. 색을 넣어 오면 그대로 못 쓴다.
-6. 받은 그림은 `build-res/order/<시트ID>.png`로 넣어 주면 개발 측이 잘라서 연결한다: `python3 -I tools/slice-sheet.py <시트> <열> <행> <출력> <이름…> [--dot N]` (마젠타·분홍 번짐·워터마크 제거 → 원래 도트로 축소).
-7. 한 장에 너무 많이 넣으면 망가진다. 시트당 4~8개로 나눠 두었다.
+1. **매번 첨부 2장**: `build-res/pieces-small-source.png`(기물 도트) · `build-res/icon-source.png`(앱 아이콘).
+2. **아래 회색 상자 하나 = 한 번 생성.** 통째로 복사해 붙여넣는다. 상자마다 공통 규칙이 다 들어 있다.
+3. **1번 칸의 기준 폰을 먼저 본다.** 첨부한 흰 폰과 크기·도트 굵기가 같으면 합격, 다르면 같은 프롬프트로 다시 뽑는다. 기준 폰보다 도트가 가늘거나 굵은 시트는 쓰지 않는다.
+4. 받은 그림은 `build-res/order/<시트ID>.png`로 넣어 주면 개발 측이 자른다 (`tools/slice-sheet.py` — 기준 폰으로 도트 크기를 재고, 마젠타·번짐·워터마크를 지운다).
+5. 받은 시트는 **게임에 바로 넣지 않는다.** FX 랩에서 지금 화면과 나란히 보여 드리고, 판 위 그림(B1~B6)이 **다 모이면 한꺼번에** 바꾼다.
 
-### 스타일 시험에서 나온 보정 (아래 프롬프트에 반영됨)
-- 결과: 도트 간격이 고르다 (칸당 약 48도트) → 원래 해상도로 깨끗이 줄일 수 있다. 가장자리에 분홍빛 번짐이 약간(1% 미만) — 잘라 낼 때 지운다.
-- **판 칸은 흰 바깥 테두리 없이** 칸 끝까지 꽉 채운다 (이어 붙이는 타일이라서). 흰 테두리는 기물·소품·아이콘에만.
-- **발밑 받침에는 증기를 넣지 않는다** — 기물을 가린다. 증기는 이펙트 시트(E7)에서 따로.
-- 가장자리 번짐 줄이기: 프롬프트마다 *"no pink or magenta tint on sprite edges"* 추가.
+## 1. 도트 규격 (모든 판 위 그림의 기준)
 
-### 공통 규칙 (모든 프롬프트에 이미 들어 있음)
-pixel art · hard square pixels · no anti-aliasing · no blur · no gradients · no text · no numbers · solid magenta #FF00FF background · evenly spaced grid · each sprite centered in its cell · gothic clockwork steampunk chess
+| 항목 | 규격 |
+| :--- | :--- |
+| 기준 | 첨부한 기물 도트와 **같은 도트 크기** — 기물 하나가 약 16도트 높이 |
+| 판 칸 1개 | **20 × 20 도트** |
+| 테두리 | 기물처럼 **바깥 1도트 검정 + 그 바깥 1도트 흰색** (판 칸·덧칠 그림은 테두리 없음) |
+| 색 | 아래 14색만. 그라데이션·반투명·흐림 없음 |
+| 배경 | 마젠타 #FF00FF. **그림 전체의 아래 15%와 오른쪽 10%는 비워 둔다** (제미나이 워터마크 자리) |
 
----
+### 팔레트 (14색)
+`#0B0B0E` 검정 · `#16141C` 먹색 · `#2F2E36` 어두운 철 · `#56545E` 밝은 철 · `#8A8794` 회색 · `#C8C8C8` 밝은 회색 · `#F4F1EA` 백자 흰색 · `#8C6239` 어두운 황동 · `#C89B3C` 황동 · `#FACC15` 금색 · `#7A1218` 어두운 진홍 · `#E5262F` 진홍 · `#38BDF8` 청록 · `#BFEFFF` 증기 흰청록
 
-## S0. 스타일 시험 (가장 먼저)
-
-```
-Pixel art style test sheet for a gothic clockwork steampunk chess game. Match the attached chess piece sprites exactly: chunky 16x16-style pixels, thick white outline around dark shapes, black/white/crimson palette with brass accents.
-Layout: 4 columns x 1 row, each cell 256x256 px, each sprite drawn on a 32x32 pixel grid scaled up 8x so every pixel is a crisp square block.
-Background: solid flat magenta #FF00FF everywhere outside the sprites. No checkerboard, no shadows on the background. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Cells, left to right:
-1. A riveted dark iron floor tile, square, with a thin brass edge.
-2. A small steel screw with a brass head, lying slightly tilted (the game's currency).
-3. A white porcelain ring base that a chess piece stands on, seen slightly from above (flat ellipse), with a faint cyan steam glow.
-4. A crimson targeting reticle made of a gear ring with four inward teeth.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
-```
+### 우선순위
+| 순서 | 시트 | 내용 | 이유 |
+| :-: | :--- | :--- | :--- |
+| 1 | **S0** | 크기 시험 | 도트 크기가 맞는지 먼저 확인 |
+| 2 | **B1~B6** | 판 칸 · 발밑 · 과녁 · 화살표 · HP · 분출구 | 판 위 벡터 도형 전부 — 한꺼번에 바꾼다 |
+| 3 | B7 · H · I | 지형 · 종이 왕관 킹 · 태엽 | 판 분위기 · 주인공 · AP |
+| 4 | F · G | 아이콘 문양 · UI 프레임 | 판 밖 화면 |
+| (보류) | E | 공격 이펙트 | 지금은 코드 도트 이펙트로 확정 (FX 랩). 필요해지면 발주 |
 
 ---
 
-## A. 보드 표식 (지금의 매끈한 벡터 도형 대체)
-
-### A1. 발밑·선택·과녁 — 8개, 색 있음 ✅ 받음·게임 적용 (2026-10-30, `public/ui/marks/`)
+## S0. 크기 시험 (가장 먼저, 4칸)
 
 ```
-Pixel art sprite sheet for a gothic clockwork steampunk chess game, matching the attached piece sprites and style reference.
-Layout: 4 columns x 2 rows, each cell 256x256 px, each sprite on a 32x32 pixel grid scaled 8x (crisp square pixels).
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Row 1:
-1. Ally base: flat elliptical ring under a chess piece, white porcelain with a thin cyan (#38BDF8) rim light, empty center. NO steam, nothing rising above the ring (it must not cover the piece).
-2. Enemy base: flat diamond-shaped ring under a chess piece, black iron with a thin crimson (#E5262F) glow, empty center.
-3. Selection frame: four brass corner brackets forming a square tile border, cyan glowing rivets on each corner, empty center.
-4. Move marker: a small round cyan steam puff dot with a brass rivet center (small, about 8x8 pixels inside the 32x32 cell).
-Row 2:
-5. Attack target: crimson gear-ring reticle with four inward teeth, empty center.
-6. Kill target: same reticle in gold (#FACC15) with a tiny skull-shaped gear in the center.
-7. Order badge: round brass gear token with a flat empty center plate (a number will be printed on it later by code).
-8. Enemy order badge: round black iron gear token with crimson rim and flat empty center plate.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
-```
+Pixel art scale test for a steampunk chess-factory game. The attached image shows the chess piece sprites: copy their exact pixel size, outline style and palette.
 
-### A2. 화살표 조각 — 7개, 흰색만
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 4 equal cells in one row, lots of magenta space between cells, each item centered in its cell, all items drawn at the same pixel size.
 
-```
-Pixel art tile pieces for drawing movement arrows on a chess board, gothic clockwork steampunk style (a line of small brass rivets / chain links).
-Draw ONLY in white and light gray (#FFFFFF, #C8C8C8) — color will be added later by code.
-Layout: 4 columns x 2 rows, each cell 256x256 px, each piece on a 16x16 pixel grid scaled 16x (crisp square pixels). Every piece must touch the cell edges exactly where it connects so pieces tile seamlessly.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. Straight segment, horizontal, crossing the cell from left edge to right edge, 3 pixels thick.
-2. Diagonal segment, from bottom-left corner to top-right corner, 3 pixels thick.
-3. Corner segment: enters from the left edge, turns 90 degrees, exits through the top edge.
-4. Arrow head pointing right (flat chevron, 3 pixels thick lines), tip touching the right edge.
-5. Arrow head pointing up-right diagonally.
-6. Start cap: a small hollow ring (where the move begins).
-7. Knight hop: a small arc bump to show a jump, left edge to right edge.
-8. Empty cell (leave magenta).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
-
-### A3. 게이지·상태 — 8개, 흰색만
-
-```
-Pixel art UI parts for a health gauge under chess pieces, styled as a tiny brass pressure tube, gothic clockwork steampunk.
-Draw ONLY in white, light gray and dark gray (#FFFFFF, #C8C8C8, #505050, #1A1A1A) — color will be added later by code.
-Layout: 4 columns x 2 rows, each cell 256x256 px, each part on a 16x16 pixel grid scaled 16x.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. Gauge left end cap (rounded tube end with a rivet), 4 pixels tall, touching the right cell edge.
-2. Gauge middle section (empty glass tube), 4 pixels tall, touching left and right edges, tileable.
-3. Gauge right end cap, touching the left cell edge.
-4. Gauge fill block (solid, 2 pixels tall, fits inside the tube), tileable horizontally.
-5. Shield plate: a thin riveted metal plate strip that sits on top of the gauge, tileable.
-6. Check ring: a thick broken gear ring with steam venting from one gap, 16x16.
-7. Damage chip background: small rounded tag with a pin, empty center (a number goes on it later).
-8. Wreck marker: a small pile of broken gears and a spring, top-down, 16x16.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly, same size, same pixels.
+Cell 2: one board square, 20x20 pixels, riveted pale iron plate (#56545E with #8A8794 rivets in the 4 corners), fills the square edge to edge, no outline.
+Cell 3: one board square, 20x20 pixels, riveted dark iron plate (#2F2E36 with #56545E rivets), same design, no outline.
+Cell 4: the white pawn from cell 1 standing on the square from cell 2, with a thin flat white-porcelain oval base ring (14x4 pixels) under its feet.
 ```
 
 ---
 
-## D. 판·지형
+## B. 판 위 그림 (한 세트로 바꾼다)
 
-### D1. 체스판 칸 — 6개, 색 있음
-
-```
-Pixel art floor tiles for a mechanical chess board inside a gothic clockwork tower, matching the attached style.
-Layout: 3 columns x 2 rows, each cell 256x256 px, each tile on a 32x32 pixel grid scaled 8x, tile fills the whole cell edge to edge (seamless square tiles). NO white outline around tiles 1-3 and 5-6 — tiles must butt against each other seamlessly.
-Background: solid flat magenta #FF00FF only between cells. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. Light square: pale gray riveted metal plate (#56545E family), subtle plate seams, 4 corner rivets.
-2. Dark square: charcoal riveted metal plate (#2F2E36 family), same design as 1.
-3. Fallen square: the plate is gone, revealing dark gears and a faint crimson glow deep below.
-4. Crack warning overlay: thin crimson hot cracks only, on magenta (to be drawn over a normal tile).
-5. Steam vent (closed): a round brass hatch set into a plate, gauge needle, ready to burst.
-6. Steam vent (open): the same hatch opened with white steam rising in pixel clouds.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
-
-### D2. 지형 소품 — 5개, 색 있음
+### B1. 판 칸 6종
 
 ```
-Pixel art terrain props that sit on top of a chess board square, gothic clockwork steampunk, matching the attached style (white outline like the pieces).
-Layout: 5 columns x 1 row, each cell 256x256 px, each prop on a 32x32 pixel grid scaled 8x, prop sits in the lower 2/3 of the cell.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. Scrap heap: a pile of iron scrap, pipes and a broken gear (blocks movement).
-2. Lift platform: a raised square brass platform on a piston.
-3. Heat shield: an upright riveted iron plate barrier with a small vent.
-4. Gear trap: an open toothed gear trap set into the floor, slightly crimson.
-5. Screw box: a small brass box with steel screws spilling out.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
+Pixel art board tiles for a steampunk chess-factory game. Copy the exact pixel size and style of the attached chess pieces.
+
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 7 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: light square 20x20 — pale riveted iron plate, rivet in each corner, fills edge to edge, no outline.
+Cell 3: dark square 20x20 — dark riveted iron plate, same design, no outline.
+Cell 4: fallen square 20x20 — the plate is gone: black pit with two dark gear teeth and a faint crimson glow at the bottom.
+Cell 5: crack warning overlay 20x20 — only thin crimson hot cracks (#E5262F) on magenta, nothing else.
+Cell 6: attack-range overlay 20x20 — a crimson riveted frame 1 pixel thick around the square edge with 4 small crimson corner bolts, center left magenta.
+Cell 7: threat overlay 20x20 — diagonal crimson hatch lines every 4 pixels, center otherwise magenta.
+```
+
+### B2. 발밑·선택·이동 5종
+
+```
+Pixel art board markers for a steampunk chess-factory game. Copy the exact pixel size and style of the attached chess pieces.
+
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: ally base — a flat oval ring 14 pixels wide and 4 pixels tall, white porcelain (#F4F1EA) with a 1-pixel cyan (#38BDF8) lower edge, hollow center. Nothing above it.
+Cell 3: enemy base — a flat diamond ring 14 pixels wide and 4 pixels tall, black iron (#16141C) with a 1-pixel crimson (#E5262F) lower edge, hollow center.
+Cell 4: selection frame — four small brass L-shaped corner brackets (each 4x4 pixels) at the corners of a 20x20 square, empty center. Thin, must not cover a piece standing inside.
+Cell 5: move marker — a tiny cyan steam dot, 4x4 pixels, with a 1-pixel white highlight.
+Cell 6: planned-move marker — a thin cyan ring 8x8 pixels, hollow.
+```
+
+### B3. 과녁·순번·처치 5종
+
+```
+Pixel art board markers for a steampunk chess-factory game. Copy the exact pixel size and style of the attached chess pieces.
+
+GRID RULE: a board square is exactly 20x20 pixels; a chess piece is about 16 pixels tall, exactly like the attached pieces. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: attack target — a crimson gear ring 12x12 pixels with 8 short teeth, 1 pixel thick, hollow center.
+Cell 3: kill target — the same gear ring in gold (#FACC15) with a tiny 4x4 skull in the center.
+Cell 4: order badge — a round brass gear token 9x9 pixels with a flat dark center plate 5x5 (#16141C) where a white number will be printed later. No number.
+Cell 5: enemy order badge — the same token in black iron with a crimson rim, dark center plate. No number.
+Cell 6: kill mark — a small crimson X made of two bolts, 6x6 pixels, with a black 1-pixel outline.
+```
+
+### B4. 화살표 조각 7종 (흰색만 — 색은 코드가 입힌다)
+
+```
+Pixel art arrow pieces for showing chess moves on a 20x20-pixel board square, steampunk chess-factory style (a line of tiny rivets).
+Copy the exact pixel size of the attached chess pieces. Draw ONLY in #F4F1EA and #C8C8C8 — color is added later by code.
+
+GRID RULE: every piece is drawn inside a 20x20-pixel square. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 8 equal cells in one row, lots of magenta space between cells; in each cell draw a faint 20x20 square guide in #8A8794 so the square edges are visible.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: straight segment — 2 pixels thick, horizontal, from the left edge to the right edge of the 20x20 square, rivets every 4 pixels.
+Cell 3: diagonal segment — 2 pixels thick, from the bottom-left corner to the top-right corner.
+Cell 4: corner — enters from the left edge, turns 90 degrees, exits the top edge (for knight moves).
+Cell 5: arrow head pointing right — a 6x6 chevron touching the right edge.
+Cell 6: arrow head pointing up-right diagonally.
+Cell 7: start mark — a hollow 6x6 rivet ring in the center.
+Cell 8: knight hop arc — a small arch from the left edge to the right edge.
+```
+
+### B5. HP 게이지·상태 8종 (흰·회색만)
+
+```
+Pixel art health gauge parts for chess pieces in a steampunk chess-factory game: a tiny pressure tube under each piece.
+Copy the exact pixel size of the attached chess pieces. Draw ONLY in #F4F1EA #C8C8C8 #8A8794 #16141C — color is added later by code.
+
+GRID RULE: the full gauge is 14 pixels wide and 3 pixels tall. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text, no numbers.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 9 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: gauge left cap — 2x3 pixels, dark (#16141C) with a light rivet pixel.
+Cell 3: gauge middle — 1x3 pixels empty tube (dark), tileable.
+Cell 4: gauge right cap — 2x3 pixels.
+Cell 5: gauge fill — 1x1 pixel solid #F4F1EA (fits inside the tube), tileable.
+Cell 6: shield strip — 1x1 pixel #C8C8C8 riveted plate strip that sits on top of the gauge, tileable.
+Cell 7: check ring — a broken gear ring 18x18 pixels with a small steam puff from one gap.
+Cell 8: wreck marker — a tiny pile of broken gears and a spring, 8x6 pixels.
+Cell 9: damage tag — a small 7x5 tag with a pin hole, empty center (a number goes on it later).
+```
+
+### B6. 증기 분출구 (요충지) 4종
+
+```
+Pixel art steam vent that opens in a board square of a steampunk chess-factory game (a capture point).
+Copy the exact pixel size and style of the attached chess pieces.
+
+GRID RULE: a board square is exactly 20x20 pixels. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 5 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: vent closed — a round brass hatch (14x14) set into a dark iron 20x20 square, a tiny pressure gauge on its rim.
+Cell 3: vent opening — the hatch split in two halves, a little steam leaking.
+Cell 4: vent open — the hatch fully open, a column of steam (#BFEFFF and #F4F1EA) rising 10 pixels above the square.
+Cell 5: hold counter pip — a tiny round gauge light 3x3 pixels in #C8C8C8 (color added by code).
+```
+
+### B7. 지형 소품 5종
+
+```
+Pixel art terrain props that stand on a board square of a steampunk chess-factory game. Copy the exact pixel size, outline style (1 black + 1 white outline) and palette of the attached chess pieces.
+
+GRID RULE: a board square is exactly 20x20 pixels; props are at most 16 pixels tall. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: scrap heap — pipes, plates and a broken gear piled up.
+Cell 3: lift platform — a raised brass platform on a short piston.
+Cell 4: heat shield — an upright riveted iron plate with a small vent.
+Cell 5: gear trap — an open toothed trap set into the floor, crimson teeth.
+Cell 6: screw box — a small brass box with steel screws spilling out.
 ```
 
 ---
 
-## E. 공격 이펙트 (기물별) — 흰색·회색만, 코드가 진영 색을 입힘
-
-> 지금 게임에는 같은 동작을 코드 도트로 넣어 두었다 (`src/view/attackFx.ts`, 증거 `production/qa/evidence/2026-10-30-attack-fx-*.png`). 이 시트가 오면 같은 박자에 그림만 갈아 끼운다.
-> 프레임 그림은 왼쪽 → 오른쪽 순서. 프레임마다 중심 위치가 같아야 한다.
-
-### E1. 폰 — 칼 휘두르기 (6프레임)
+## H. 주인공 — 종이 왕관 킹 2종
 
 ```
-Pixel art attack effect animation strip: a short sword slash arc swung forward by a small clockwork soldier (chess pawn).
-Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0) — color is added later by code.
-Layout: 6 columns x 1 row, each cell 256x256 px, each frame on a 32x32 pixel grid scaled 8x. The attacker stands at the bottom center of every cell; the slash sweeps across the TOP half of the cell from the upper-left diagonal to the upper-right diagonal.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Frames: 1 a thin spark at upper-left, 2 the crescent slash grows toward the top center, 3 full bright crescent from upper-left to upper-right (thickest), 4 the crescent thins with small sparks at both ends, 5 fading broken pixels of the arc, 6 a few last sparks.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
+Pixel art sprites for the hero of a steampunk chess-factory game: a white pawn that wears a paper crown cut out of a cardboard box and plays the king.
+Copy the exact pixel size, outline style (1 black + 1 white outline) and palette of the attached chess pieces.
+
+GRID RULE: the pawn is about 16 pixels tall exactly like the attached pawn; the crown adds about 5 pixels on top. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 3 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
+
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: the same white pawn wearing a paper crown: cardboard brown (#8C6239 / #C89B3C), rough zigzag top with 3 points, slightly too big and tilted to one side. The crown must make it clearly different from a normal pawn at a glance.
+Cell 3: the paper crown alone (no pawn), same pixels as in cell 2.
 ```
 
-### E2. 나이트 — 피스톤 내려찍기 + 발굽 충격 (6프레임)
+## I. 태엽 (AP) 3종 — 지금의 날개 그림 대체
 
 ```
-Pixel art attack effect animation strip: a clockwork horse (chess knight) stamps the ground with a piston hoof, sending a shock ring and a burst of steam.
-Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0).
-Layout: 6 columns x 1 row, each cell 256x256 px, each frame on a 32x32 pixel grid scaled 8x, impact point at the center of every cell.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Frames: 1 small dust puff, 2 a flat elliptical shock ring appears, 3 ring expands with four short spark spikes, 4 ring at full size breaking into dashes, 5 steam clouds drifting up, 6 last thin wisps.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
+Pixel art action-point icons for a steampunk chess-factory game: a butterfly-shaped wind-up key (the key used to wind clockwork toys), side view, standing upright.
+Copy the exact pixel size, outline style (1 black + 1 white outline) and palette of the attached chess pieces.
 
-### E3. 나이트 — 착탄 별 (4프레임)
+GRID RULE: each key is 12 pixels wide and 16 pixels tall. Every pixel is a crisp solid square block. No anti-aliasing, no blur, no gradients, no transparency, no text, no numbers.
+PALETTE (use only these): #0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 4 equal cells in one row, lots of magenta space between cells, each item centered, all at the same pixel size.
 
-```
-Pixel art impact star animation strip (where a knight's L-shaped strike lands).
-Draw ONLY in white and light gray. Layout: 4 columns x 1 row, each cell 256x256 px, each frame on a 16x16 pixel grid scaled 16x, centered.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Frames: 1 single bright pixel cross, 2 eight-point star with long and short rays, 3 star larger with hollow center, 4 scattered fading dots.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
-
-### E4. 비숍 — 렌즈 응축 → 광선 (응축 4 + 광선 조각 3)
-
-```
-Pixel art effect parts for a bishop that focuses light through a brass lens and fires a beam.
-Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0).
-Layout: 7 columns x 1 row, each cell 256x256 px, each part on a 16x16 pixel grid scaled 16x.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1-4. Charge animation, centered: 1 eight dots far apart on a circle, 2 dots spiral closer, 3 dots almost merged around a bright core, 4 a dense bright core with a short flare cross.
-5. Beam segment, DIAGONAL from the bottom-left corner to the top-right corner of the cell: bright 2-pixel core with 1-pixel dim edges on both sides, must tile seamlessly corner to corner.
-6. Beam segment, HORIZONTAL from left edge to right edge, same design, tileable.
-7. Beam end flare: small burst where the beam hits, centered.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
-
-### E5. 룩 — 쿵 내려찍기 + 십자 연쇄 폭발 (먼지 4 + 폭발 6)
-
-```
-Pixel art effect strips for a heavy clockwork tower (chess rook) that slams down and sends explosions running outward square by square.
-Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0, #606060).
-Layout: 10 columns x 1 row, each cell 192x192 px, each frame on a 32x32 pixel grid scaled 6x, centered.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1-4. Slam dust: 1 flat dust line at the bottom, 2 dust and small rocks bouncing up to both sides, 3 square shock outline, 4 settling dust.
-5-10. One-square explosion: 5 tiny bright core, 6 solid round blast, 7 bigger blast with hollow ring and flying bolts, 8 ring breaking apart with gear bits, 9 smoke puffs, 10 fading smoke dots.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
-
-### E6. 킹 — 홀(笏) 내려치기 충격파 (5프레임)
-
-```
-Pixel art attack effect animation strip: a clockwork king strikes the floor with a scepter and a square shockwave spreads to the eight surrounding squares.
-Draw ONLY in white and light gray. Layout: 5 columns x 1 row, each cell 256x256 px, each frame on a 48x48 pixel grid scaled 5x (the king's square is the middle third of the cell).
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Frames: 1 small square ring around the center square, 2 ring grows with rivet sparks at corners, 3 ring reaches the cell edge (covers all 8 neighbors), 4 ring breaks into dashed pieces, 5 faint corner sparks.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
-
-### E7. 공통 — 피격·처치·증기·열기 (4가지 × 4~6프레임)
-
-```
-Pixel art common effect strips for a clockwork chess game. Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0, #606060).
-Layout: 6 columns x 4 rows, each cell 160x160 px, each frame on a 16x16 pixel grid scaled 10x, centered. Leave unused cells magenta.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Row 1 — Hit spark (4 frames): a white flash star, smaller star with sparks flying, scattered sparks, two last dots.
-Row 2 — Shatter (6 frames): a small machine bursts into gears, springs and bolts flying outward and falling down.
-Row 3 — Steam puff (5 frames): a round pixel cloud puffs out, grows, splits, thins and vanishes.
-Row 4 — Heat haze (4 frames): wavy vertical heat lines rising and fading.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
+Cell 1: REFERENCE — copy the white pawn from the attached image exactly.
+Cell 2: full — polished brass key (#C89B3C, #FACC15 highlights), one cyan glint pixel.
+Cell 3: spent — the same key in dull iron (#56545E, #8A8794), no glint.
+Cell 4: bonus — the brass key with a 1-pixel gold ring around it.
 ```
 
 ---
 
-## F. 문양 (아이콘 원본) — 흰색 단색 실루엣, 4장
+## F. 아이콘 문양 (판 밖 화면용) — 흰색 한 가지, 4장
 
-> 코드가 이 문양으로 개조·천공 카드·특수 부품·맵 노드·수(키워드) 아이콘을 전부 조합한다 (`docs/art-assets.md` §3).
+> 판 위가 아니라 카드·개조·맵 노드에 쓰는 아이콘. 코드가 색·테두리를 입힌다. 아이콘끼리 **16 × 16 도트**로 통일.
 
 ### F1. 공격·수비 (8)
 
 ```
-Pixel art icon sheet: pure white single-color silhouettes, gothic clockwork steampunk chess theme.
-Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel empty margin inside the 16x16.
-Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Icons: 1 sword blade, 2 piercing arrow passing through a ring, 3 forked double arrow (two heads), 4 shock wave arcs, 5 heat flame / hot crack, 6 shield, 7 stacked wall bricks, 8 chain link.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
+Pixel art icon sheet for a steampunk chess-factory game. Pure white single-color silhouettes.
+
+GRID RULE: each icon is drawn on a 16x16 pixel grid with a 1-pixel empty margin. Every pixel is a crisp solid square block. Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color, no anti-aliasing, no blur, no text.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 8 equal cells in one row, lots of magenta space between cells, each icon centered, all at the same pixel size.
+
+Icons: 1 sword blade, 2 arrow piercing through a ring, 3 forked double arrow, 4 shock wave arcs, 5 hot crack / flame, 6 shield, 7 stacked wall bricks, 8 chain link.
 ```
 
 ### F2. 생명·이동 (8)
 
 ```
-Pixel art icon sheet: pure white single-color silhouettes, gothic clockwork steampunk chess theme.
-Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
-Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Icons: 1 oil drop, 2 skull made of a gear, 3 horseshoe with a piston, 4 swirl portal door, 5 two curved swap arrows, 6 banner flag, 7 reaching hand / grabber claw, 8 wind-up key.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
+Pixel art icon sheet for a steampunk chess-factory game. Pure white single-color silhouettes.
+
+GRID RULE: each icon is drawn on a 16x16 pixel grid with a 1-pixel empty margin. Every pixel is a crisp solid square block. Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color, no anti-aliasing, no blur, no text.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 8 equal cells in one row, lots of magenta space between cells, each icon centered, all at the same pixel size.
+
+Icons: 1 oil drop, 2 skull made of a gear, 3 horseshoe with a piston, 4 swirl portal door, 5 two curved swap arrows, 6 banner flag, 7 grabber claw, 8 wind-up key.
 ```
 
 ### F3. 장치·규칙 (8)
 
 ```
-Pixel art icon sheet: pure white single-color silhouettes, gothic clockwork steampunk chess theme.
-Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
-Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Icons: 1 pocket watch, 2 bell, 3 small crown, 4 four-point star, 5 eye with a lens rim, 6 balance scale, 7 target reticle, 8 punched paper card (rectangle with holes).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
+Pixel art icon sheet for a steampunk chess-factory game. Pure white single-color silhouettes.
+
+GRID RULE: each icon is drawn on a 16x16 pixel grid with a 1-pixel empty margin. Every pixel is a crisp solid square block. Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color, no anti-aliasing, no blur, no text.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 8 equal cells in one row, lots of magenta space between cells, each icon centered, all at the same pixel size.
+
+Icons: 1 pocket watch, 2 bell, 3 small paper crown, 4 four-point star, 5 eye with a lens rim, 6 balance scale, 7 target reticle, 8 punched paper card.
 ```
 
-### F4. 등정 (맵 노드) (6)
+### F4. 맵 노드 (6)
 
 ```
-Pixel art icon sheet: pure white single-color silhouettes for map nodes, gothic clockwork steampunk.
-Layout: 3 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
-Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-Icons: 1 hammer on anvil (workshop), 2 screw (shop / currency), 3 question mark made of a bent pipe (event), 4 parts crate (storeroom), 5 wrench (repair station), 6 slot-machine lever (fortune machine).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
+Pixel art icon sheet for map nodes of a steampunk chess-factory game. Pure white single-color silhouettes.
+
+GRID RULE: each icon is drawn on a 16x16 pixel grid with a 1-pixel empty margin. Every pixel is a crisp solid square block. Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color, no anti-aliasing, no blur, no text.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each icon centered, all at the same pixel size.
+
+Icons: 1 hammer on anvil (workshop), 2 screw (shop / currency), 3 question mark bent like a pipe (event), 4 parts crate (storeroom), 5 wrench (repair station), 6 slot-machine lever (fortune machine).
 ```
 
----
-
-## G. UI 프레임 — 회색 4단계, 9-slice
+## G. UI 프레임 6종 — 회색 4단계, 9-slice
 
 ```
-Pixel art UI frames for a gothic clockwork steampunk game, to be used as 9-slice panels (corners stay fixed, edges stretch).
-Use ONLY these four grays: #1A1A1A, #4A4A4A, #8A8A8A, #D0D0D0 — color is added later by code. Square corners (no rounded corners).
-Layout: 3 columns x 2 rows, each cell 320x320 px, each frame on a 40x40 pixel grid scaled 8x, the frame border fills the cell edges, center left flat #4A4A4A.
-Background: solid flat magenta #FF00FF only between cells. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. Panel: riveted iron frame, 4-pixel border, rivet in each corner.
-2. Button (normal): thick riveted plate with a 3-pixel hard drop shadow at the bottom.
-3. Button (pressed): same plate pushed down, no bottom shadow.
-4. Card frame — iron card: tall rectangle 30x40 inside the cell, riveted metal border, punched holes along the top edge.
-5. Card frame — paper card: same size, torn paper edge, punched holes along the top edge.
-6. Slot frame: thin recessed socket border for an empty card slot.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
-```
+Pixel art UI frames for a steampunk chess-factory game, used as 9-slice panels (corners stay fixed, edges stretch).
 
-## H. 왕관·과급기 (2)
+GRID RULE: each frame is 24x24 pixels with a 3-pixel border; square corners. Every pixel is a crisp solid square block. Use ONLY #1A1A1A #4A4A4A #8A8A8A #D0D0D0 (color is added later by code). No anti-aliasing, no blur, no gradients, no transparency, no text.
+BACKGROUND: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta.
+LAYOUT: 6 equal cells in one row, lots of magenta space between cells, each frame centered, all at the same pixel size; the frame center is flat #4A4A4A.
 
-```
-Pixel art overlays matching the attached chess piece sprites (thick white outline, same pixel size).
-Layout: 2 columns x 1 row, each cell 256x256 px, each sprite on a 16x16 pixel grid scaled 16x.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. A paper crown cut out of a cardboard box (rough zigzag edges, a bit too big, slightly crooked, light brown cardboard with a printed box-line on it) that sits on a chess pawn's head, 16 wide x 8 tall, at the top of the cell. Also, in the same style as the attached pawn sprites: a white pawn wearing this paper crown (the player's king), full sprite.
-2. A supercharger: a small brass boiler with a pressure gauge and a crimson valve, centered.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
+1 panel: riveted iron frame, a rivet in each corner.
+2 button normal: thick plate with a 2-pixel hard drop shadow at the bottom.
+3 button pressed: the same plate pushed down, no shadow.
+4 iron card frame: 18x24, riveted border, 3 punched holes along the top.
+5 paper card frame: 18x24, torn paper edge, 3 punched holes along the top.
+6 empty slot: thin recessed socket border.
 ```
 
 ---
 
-## I. 태엽 (AP) — 3개, 색 있음 (지금의 날개 그림 대체)
+## E. 공격 이펙트 — 보류
+지금은 코드로 그리는 도트 이펙트를 확정해 쓰고 있다 (FX 랩, `src/view/attackFx.ts`). 스프라이트가 필요해지면 B 시트와 같은 규칙(20×20 칸 · 14색 · 기준 폰)으로 다시 쓴다.
 
-```
-Pixel art UI icons for action points in a gothic clockwork steampunk chess game: a wind-up key (the butterfly-shaped key used to wind clockwork toys), seen from the side, standing upright. Match the attached piece sprites (thick white outline, same pixel density).
-Layout: 3 columns x 1 row, each cell 256x256 px, each icon on a 24x24 pixel grid scaled 10x, centered.
-Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
-1. Full: polished brass wind-up key, bright gold highlights, a tiny cyan glint (#38BDF8) on the key's grip.
-2. Spent: the same key in dull dark iron gray, no glow.
-3. Bonus: the brass key with an extra glowing gold ring around it (extra action point from a reward).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
-```
-
----
-
-## 발주 순서 요약
-
-| 순서 | 시트 | 개수 | 우선 이유 |
-| :-: | :--- | :-: | :--- |
-| 1 | S0 스타일 시험 | 4 | 화풍 고정 |
-| 2 | A1 발밑·선택·과녁 · A2 화살표 · A3 게이지 | 23 | 매 판 계속 보이는 벡터 도형 교체 (사용자 피드백) |
-| 3 | E1~E7 공격 이펙트 | ~60프레임 | 기물별 공격 연출 (코드 임시판 대체) |
-| 4 | D1 판 · D2 지형 | 11 | 보드 분위기 |
-| 5 | F1~F4 문양 · G 프레임 · H 왕관 · I 태엽 | 41 | 아이콘·UI 전체 |
-
-- 받는 즉시 개발 측: 마젠타 제거 → 도트 크기 자동 검출 → 원래 도트 해상도로 축소 → `public/` 연결 → `/run-and-observe` 증거.
-- 나중 발주 (후순위): 컷신 11컷·인물 초상 8장 (`docs/story.md` §6), Act 배경(장미창 시계).
+## 받은 뒤 개발 측이 하는 일
+1. 1번 칸 기준 폰으로 도트 크기를 재고 첨부 폰과 같은지 확인 → 다르면 다시 요청.
+2. 마젠타·번짐·워터마크 제거 → 원래 도트로 축소 (`tools/slice-sheet.py`).
+3. B1~B6가 다 모이면 FX 랩에 **지금 화면 / 바뀐 화면**을 나란히 올려 확인받는다.
+4. 확인되면 판 위 그림을 한꺼번에 교체하고, 코드 이펙트의 도트 크기도 같은 격자(칸당 20도트)로 맞춘다.
