@@ -21,9 +21,9 @@ const CASES: Record<PieceType, { from: [number, number]; to: [number, number]; f
   K: { from: [4, 0], to: [4, 1], foes: [[3, 2], [5, 2]] },
 };
 
-const T = 96; // 캔버스 내부 칸 크기 (도트 6px)
+const T = 100; // 캔버스 내부 칸 크기 (판 칸 20도트 × 5px — 정수배라야 도트가 고르다)
 const N = 8;
-const opt = { type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
+const opt = { board: 's0' as 'flat' | 's0', type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
 
 // ---------- 장면 만들기 (게임과 같은 엔진) ----------
 interface Scene {
@@ -89,6 +89,12 @@ const drawBoard = () => {
   for (let y = 0; y < N; y++)
     for (let x = 0; x < N; x++) {
       const w = px(x, y);
+      // 발주 S0 철판 칸 (사용자 에셋)
+      const tile = sprites[(x + y) % 2 === 0 ? 'tile-dark' : 'tile-light'];
+      if (opt.board === 's0' && tile?.complete) {
+        ctx.drawImage(tile, w.x, w.y, T, T);
+        continue;
+      }
       ctx.fillStyle = (x + y) % 2 === 0 ? '#2f2e36' : '#56545e';
       ctx.fillRect(w.x, w.y, T, T);
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
@@ -292,6 +298,7 @@ const init = () => {
       }),
     );
   bindSeg('data-side', (v) => (opt.side = Number(v) as Side));
+  bindSeg('data-board', (v) => (opt.board = v as 'flat' | 's0'));
   bindSeg('data-speed', (v) => (opt.speed = Number(v)));
   $('#replay').addEventListener('click', play);
   ($('#loop') as HTMLInputElement).addEventListener('change', (e) => {

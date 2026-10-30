@@ -35,7 +35,9 @@
 
 ---
 
-## S0. 크기 시험 (가장 먼저, 4칸)
+## S0. 크기 시험 (가장 먼저, 4칸) ✅ 통과 (2026-10-30)
+
+> 결과: 폰 높이 = 칸의 0.82 (목표 0.80), 도트 약 40px로 폰·칸이 같다, 워터마크는 비운 자리에 찍혔다. 4번 칸(칸 위 폰)은 폰이 20% 크게, 고리가 가는 선으로 나와 무시. 칸 2종은 `public/ui/board/`로 잘라 FX 랩 판에 올렸다.
 
 ```
 Pixel art scale test for a steampunk chess-factory game. The attached image shows the chess piece sprites: copy their exact pixel size, outline style and palette.

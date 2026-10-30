@@ -21,6 +21,11 @@ const path = require('node:path');
   const b64 = (p) => fs.readFileSync(path.join(root, p)).toString('base64');
   const sprites = {};
   for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const s of [0, 1]) sprites[`${t}${s}`] = `data:image/png;base64,${b64(`public/pieces/s-${t}${s}.png`)}`;
+  // 발주로 받은 판 칸 (있을 때만)
+  for (const n of ['tile-light', 'tile-dark']) {
+    const f = path.join(root, 'public', 'ui', 'board', `${n}.png`);
+    if (fs.existsSync(f)) sprites[n] = `data:image/png;base64,${fs.readFileSync(f).toString('base64')}`;
+  }
   const html = fs
     .readFileSync(path.join(__dirname, 'template.html'), 'utf8')
     .replace('{{FONT11}}', b64('node_modules/galmuri/dist/Galmuri11.woff2'))

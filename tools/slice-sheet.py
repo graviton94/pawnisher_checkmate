@@ -7,12 +7,16 @@
 
 사용: python3 -I tools/slice-sheet.py <시트.png> <열> <행> <출력 폴더> <이름1> <이름2> ... [--dot N]
 나노바나나는 테두리를 반 도트 굵기로 그리는 일이 많다 — 테두리가 점선처럼 끊기면 --dot에 자동값의 절반을 준다.
-이름을 '-'로 주면 그 칸은 건너뛴다. 출력 폴더에 _preview.png(8배 확대 미리보기)도 남긴다.
+이름을 '-'로 주면 그 칸은 건너뛴다. --palette: 14색으로 맞춤. 출력 폴더에 _preview.png(8배 확대 미리보기)도 남긴다.
 """
 import sys
 from collections import Counter
 
 from PIL import Image
+
+
+# 발주서 v2 팔레트 14색 (docs/asset-order.md §1)
+PALETTE = [tuple(int(h[i : i + 2], 16) for i in (1, 3, 5)) for h in '#0B0B0E #16141C #2F2E36 #56545E #8A8794 #C8C8C8 #F4F1EA #8C6239 #C89B3C #FACC15 #7A1218 #E5262F #38BDF8 #BFEFFF'.split()]
 
 
 def is_bg(r, g, b, x, y, w, h):
@@ -49,6 +53,9 @@ def dot_size(im):
 def main():
     argv = sys.argv[1:]
     dot_arg = None
+    snap = '--palette' in argv
+    if snap:
+        argv.remove('--palette')
     if '--dot' in argv:
         i = argv.index('--dot')
         dot_arg = float(argv[i + 1])
@@ -77,19 +84,41 @@ def main():
             print(f'  {name}: 빈 칸')
             continue
         x0, y0, x1, y1 = bbox
-        ow, oh = max(1, round((x1 - x0) / dot)), max(1, round((y1 - y0) / dot))
-        sx, sy = (x1 - x0) / ow, (y1 - y0) / oh
+        # 색 잡음 줄이기: 그림마다 12색으로 줄인 뒤 도트를 읽는다
+        q = cell.convert('RGB').quantize(colors=12, method=Image.Quantize.MEDIANCUT).convert('RGB')
+        qp, ap = q.load(), cell.load()
+        # 격자 위상 맞추기: 시작점을 도트 안에서 옮겨 보며, 도트 안 색이 가장 고른 위치를 고른다
+        def score(ox, oy):
+            bad = 0
+            for j in range(int((y1 - y0 - oy) / dot)):
+                for k in range(int((x1 - x0 - ox) / dot)):
+                    bx, by = x0 + ox + k * dot, y0 + oy + j * dot
+                    c = qp[int(bx + dot * 0.5), int(by + dot * 0.5)]
+                    for fx, fy in ((0.2, 0.2), (0.8, 0.2), (0.2, 0.8), (0.8, 0.8)):
+                        if qp[int(bx + dot * fx), int(by + dot * fy)] != c:
+                            bad += 1
+            return bad
+        steps = [i * dot / 6 for i in range(6)]
+        ox, oy = min(((a, b) for a in steps for b in steps), key=lambda o: score(*o))
+        ow, oh = max(1, round((x1 - x0 - ox) / dot)), max(1, round((y1 - y0 - oy) / dot))
         res = Image.new('RGBA', (ow, oh))
-        cp, rp = cell.load(), res.load()
+        rp = res.load()
         for j in range(oh):
             for k in range(ow):
-                # 도트 가운데 3×3 중 가장 흔한 색 (경계 번짐에 덜 흔들린다)
-                cxp, cyp = x0 + (k + 0.5) * sx, y0 + (j + 0.5) * sy
+                cxp, cyp = x0 + ox + (k + 0.5) * dot, y0 + oy + (j + 0.5) * dot
                 votes = Counter()
-                for dy in (-sy / 4, 0, sy / 4):
-                    for dx in (-sx / 4, 0, sx / 4):
-                        votes[cp[int(cxp + dx), int(cyp + dy)]] += 1
+                for dy in (-dot / 4, 0, dot / 4):
+                    for dx in (-dot / 4, 0, dot / 4):
+                        X, Y = min(cell.size[0] - 1, int(cxp + dx)), min(cell.size[1] - 1, int(cyp + dy))
+                        votes[qp[X, Y] + (ap[X, Y][3],)] += 1
                 rp[k, j] = votes.most_common(1)[0][0]
+        if snap:
+            # 발주서 14색으로 맞춘다 (나노바나나가 섞는 미세한 색 잡음 제거)
+            for j in range(oh):
+                for k in range(ow):
+                    r, g, b, a = rp[k, j]
+                    if a:
+                        rp[k, j] = min(PALETTE, key=lambda c: (c[0] - r) ** 2 + (c[1] - g) ** 2 + (c[2] - b) ** 2) + (255,)
         res.save(f'{out}/{name}.png')
         outs.append((name, res))
         print(f'  {name}: {ow}x{oh}')

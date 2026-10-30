@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 6, date: '2026-10-30' };
+export const VERSION = { n: 7, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,7 +48,8 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '발주 시트가 오면: 보드 표식(A1~A3) → 공격 이펙트(E) 순으로 이 랩에 먼저 올려 비교',
+  '판: "지금 / S0 철판"을 바꿔 보며, 철판 칸(모서리 리벳·테두리 음영)으로 가도 될지',
+  '괜찮으면 B1~B6 발주 진행 — 판 위 그림이 다 모이면 한꺼번에 게임에 넣는다',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
@@ -61,12 +62,15 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '처치', rule: '기물이 톱니·스프링 파편으로 부서져 아래로 떨어진다', status: 'review' },
   { item: '피격', rule: '흰 점멸 0.07초 + 8방향 스파크', status: 'review' },
   { item: '발밑 받침·선택 테두리·이동 점·과녁·순번 배지', rule: 'A1 게임 적용은 되돌림 — 도트 크기가 기물과 달라 섞이고, 옛 벡터 화면 위에 얹혀 지저분했다. 도트 크기 통일 후 판 전체를 한꺼번에 바꾼다', status: 'review' },
-  { item: '화살표·HP 바', rule: '발주 시트 A2·A3 대기', status: 'wait' },
+  { item: '도트 크기', rule: '판 칸 20×20 도트, 기물 약 16도트 높이 (발주서 v2). S0 시험: 폰 높이 = 칸의 0.82 — 통과', status: 'done' },
+  { item: '판 칸 (S0 철판)', rule: '모서리 리벳 4개 + 테두리 음영의 철판. 랩에서 지금 판과 비교 중', status: 'review' },
+  { item: '화살표·HP 바·과녁 등', rule: '발주 B1~B6 대기 — 모이면 한꺼번에', status: 'wait' },
   { item: '이펙트 스프라이트', rule: '발주 시트 E가 오면 같은 박자에 그림만 갈아 끼운다', status: 'wait' },
   { item: '태엽 (AP)', rule: '날개 → 태엽 감개 3종 (발주 시트 I)', status: 'wait' },
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 7, date: '2026-10-30', items: ['발주 S0 크기 시험 통과 → 철판 칸을 랩 판에 적용 (지금 판과 바꿔 보기)', '랩 칸 크기 100px (20도트 × 5) — 도트가 고르게'] },
   { v: 6, date: '2026-10-30', items: ['보드 표식 A1 게임 적용 → 되돌림 (도트 크기 불일치 · 벡터 화면과 섞임)'] },
   { v: 5, date: '2026-10-30', items: ['연출 속도 옵션 없음 (한 가지 속도, 공격 1회 최대 1초)'] },
   { v: 4, date: '2026-10-30', items: ['퀸 D 톱날 부메랑 · 킹 B 종소리 파동 확정, 게임 기본값으로 적용', '폰·나이트·비숍·룩 연출과 이동·박자 확정'] },
