@@ -193,12 +193,6 @@ def check_ring():
     return ring(N + 1, 7.8, 9.4, 'CR', teeth=10, tooth_r=0.9, gap=(-math.pi / 2 - 0.42, -math.pi / 2 + 0.42), shade='CR2')
 
 
-def wreck():
-    """처치된 자리의 잔해 9×5: 부서진 톱니와 스프링 (먹색 테두리)"""
-    rows = ['.kggk....', 'kg..gk.s.', 'kg..gks.s', '.kggk..s.', 'kkkkkkkkk']
-    return from_ascii(rows, {'g': 'G', 's': 'LG', 'k': 'INK'})
-
-
 def stronghold(kind, part):
     """요충지 칸 표시 (D-068): 칸 안쪽 한 도트 점선 테두리 + 왼쪽 위 깃발. 빈 요충지 = 흰색, 내가 점거 중 = 청록, 적 = 진홍.
     점거 진행 눈금은 코드가 칸 오른쪽 아래에 찍는다. part = 'frame'(기물 아래) / 'flag'(기물 위 레이어)"""
@@ -253,7 +247,6 @@ for n in range(1, 10):
     badge(False, n).save(f'{OUT}/badge-e{n}.png')
 kill_mark().save(f'{OUT}/kill.png')
 check_ring().save(f'{OUT}/check.png')
-wreck().save(f'{OUT}/wreck.png')
 for kind, name in (('neutral', 'stronghold'), ('ally', 'stronghold-ally'), ('enemy', 'stronghold-enemy')):
     stronghold(kind, 'frame').save(f'{OUT}/{name}.png')  # 점선 테두리 — 기물 아래
     stronghold(kind, 'flag').save(f'{OUT}/{name}-flag.png')  # 깃발 — 기물 위

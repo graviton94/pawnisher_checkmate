@@ -398,7 +398,6 @@ const play = () => {
   });
   const PRE = 1100; // 계획 화면처럼 공격 범위·화살표·예상 피해를 먼저 보여 준다
   const preview = new Map((atk?.hits ?? []).map((h) => [h.targetId, h.hpAfter]));
-  const wrecks: { x: number; y: number }[] = [];
   const chips: { x: number; y: number; at: number; i: number }[] = [];
   const crumbles: { cells: CrumbleCell[]; at: number }[] = [];
   const dests = legalMoves(sc.start, sc.start.pieces.find((p) => p.id === sc.attackerId)!).filter((d) => d.x !== mv.to.x || d.y !== mv.to.y);
@@ -460,7 +459,6 @@ const play = () => {
         });
         if (x.h.killed) {
           x.l.dead = true;
-          wrecks.push({ x: x.l.x, y: x.l.y });
           crumbles.push({ cells: cellsOf(x.l), at: ms });
         }
       }
@@ -479,7 +477,6 @@ const play = () => {
     ctx.strokeRect(from.x + 3, from.y + 3, T - 6, T - 6);
     if (ms < 0 && atk) drawRange(atk.area);
     if (ms < 0 && opt.board !== 'flat') drawPlan();
-    for (const w of wrecks) blit('wreck', w.x + 5 * D, w.y + 14 * D);
     for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
     drawBoardTop();
     if (ms < 0 && opt.board !== 'flat') drawKillMarks();
@@ -519,7 +516,7 @@ const play = () => {
 const KO: Record<string, string> = {
   'tile-light': '밝은 칸', 'tile-dark': '어두운 칸', 's0-tile-light': '제미나이 밝은 칸', 's0-tile-dark': '제미나이 어두운 칸', fallen: '무너진 칸 (제미나이)',
   crack: '붕락 균열', stronghold: '요충지 (빈)', 'stronghold-ally': '요충지 (내가 점거)', 'stronghold-enemy': '요충지 (적이 점거)', 'stronghold-flag': '요충지 깃발 (빈)', 'stronghold-ally-flag': '요충지 깃발 (내 점거)', 'stronghold-enemy-flag': '요충지 깃발 (적 점거)', range: '내 공격 범위', 'range-enemy': '적 공격 범위', 'base-ally': '아군 발밑', 'base-enemy': '적 발밑', select: '선택',
-  'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리', wreck: '잔해',
+  'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
   'hud/paper-crown': '종이 왕관', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
   'frames/panel': '패널', 'frames/button': '버튼', 'frames/button-pressed': '버튼 눌림', 'frames/card-iron': '철 카드', 'frames/card-paper': '종이 카드', 'frames/slot': '빈 슬롯',

@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 34, date: '2026-10-30' };
+export const VERSION = { n: 35, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -79,13 +79,14 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '판 칸', rule: '코드 도트로 직접 찍은 20×20 철판 (위·왼쪽 빛, 아래·오른쪽 그늘, 리벳 4개, 얼룩 없음). 제미나이 S0와 비교 중', status: 'review' },
   { item: '공격 범위·위협 빗금·균열', rule: '범위 = 1도트 붉은 테두리 + 볼트 + 옅은 채움 · 위협 = 반투명 붉은 칸이 천천히 깜빡임 (빗금 폐기) · 균열 = 1도트 검은 금 + 틈 속 붉은 빛', status: 'review' },
   { item: '무너진 칸', rule: '제미나이 B1 4번 (구덩이 + 톱니 + 붉은 빛)', status: 'review' },
-  { item: '발밑·선택·이동 점·과녁·배지·화살표·HP·처치 X·잔해·체크 고리', rule: '코드 도트 (`tools/draw-board.py`, 20×20 격자, 14색). 배지 숫자도 3×5 도트', status: 'review' },
+  { item: '발밑·선택·이동 점·과녁·배지·화살표·HP·처치 X·체크 고리', rule: '코드 도트 (`tools/draw-board.py`, 20×20 격자, 14색). 배지 숫자도 3×5 도트', status: 'review' },
   { item: '이펙트 격자', rule: '공격 이펙트도 판과 같은 칸당 20도트 격자로 (게임·랩 공통 BOARD_DOTS)', status: 'done' },
   { item: '이펙트 스프라이트', rule: '발주 시트 E가 오면 같은 박자에 그림만 갈아 끼운다', status: 'wait' },
 
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 35, date: '2026-10-30', items: ['처치 자리 잔해 표식 없앰'] },
   { v: 34, date: '2026-10-30', items: ['요충지: 점선 테두리만 기물 아래, 깃발·점거 눈금은 기물 위 레이어', '점거 눈금: 검정 테두리가 네 면을 다 감싸게, 자리는 오른쪽 위(아래는 HP 게이지)'] },
   { v: 33, date: '2026-10-30', items: ['증기 분출구 → 요충지 깃발 칸 표시 (빈 · 내 점거 · 적 점거 3종 + 점거 눈금)'] },
   { v: 32, date: '2026-10-30', items: ['증기 분출구: 열고 닫는 연출 없앰 — 열린 구멍 하나, 증기가 도트 단위로 솟으며 도트가 하나씩 꺼져 사라짐 (반투명 흐려짐 없음)'] },
