@@ -159,7 +159,7 @@ export interface HitResult {
 export type BattleEvent =
   | { type: 'move'; order: number; pieceId: number; from: Pos; to: Pos }
   | { type: 'promote'; pieceId: number; from: PieceType; to: PieceType }
-  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[] }
+  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number }
   | { type: 'gameOver'; winner: Side }
   | { type: 'lastStrike'; pieceId: number }
   | { type: 'awaken'; side: Side; pieceId: number }

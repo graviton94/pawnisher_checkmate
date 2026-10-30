@@ -310,7 +310,7 @@ const rollPieces = (run: RunState, rng: Rng): PieceType[] =>
   );
 
 /** 인챈트가 대상으로 삼는 기물 유형 */
-export const ENCHANT_TYPE: Partial<Record<EnchantId, PieceType>> = { E01: 'N', E02: 'B', E03: 'R', E04: 'P', E08: 'K' };
+export const ENCHANT_TYPE: Partial<Record<EnchantId, PieceType>> = { E01: 'N', E02: 'B', E03: 'R', E04: 'P', E08: 'K', E12: 'P', E13: 'N', E14: 'B' };
 
 const rollEnchants = (run: RunState, rng: Rng, source: 'battle' | 'elite' | 'boss' | 'altar', rareOnly = false): EnchantId[] => {
   const act = Math.min(3, actOf(Math.min(run.floor, TOTAL_FLOORS))) - 1;

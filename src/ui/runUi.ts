@@ -156,7 +156,7 @@ export class RunUi {
       : '';
     const unlocks = UNLOCK_DECKS.map((u) => `${u.ok(meta) ? '✓' : '·'} ${u.name} (${u.need})`).join(' &nbsp; ');
     const panel = this.hud.openOverlay(`
-      <h1>PAWNISHER : CHECKMATE</h1>
+      <img class="logo" src="./logo.png" alt="Pawnisher : Checkmate">
       <p>3 Act × 12층 = 36층 등반. 기록: ${meta.runs}회 · 최고 ${meta.bestFloor}층 · 완료 ${meta.clears}회</p>
       ${live ? `<button class="choice primary" type="button" data-continue>이어하기<small>${Math.min(saved!.floor, TOTAL_FLOORS)}층 · 골드 ${saved!.gold} · 덱 ${saved!.deck.length}기</small></button>` : ''}
       <button class="choice${live ? '' : ' primary'}" type="button" data-new>새 등반 시작${live ? '<small>진행 중인 등반은 지워집니다</small>' : ''}</button>

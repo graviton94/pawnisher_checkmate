@@ -48,6 +48,7 @@
     },
     "linux": {
       "target": "AppImage"
-    }
+    },
+    "icon": "build-res/icon.png"
   }
 }

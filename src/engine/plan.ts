@@ -1,5 +1,6 @@
 import { LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, type CardUse } from '../data/cards';
+import { SYNERGY } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
 import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge } from './rules';
@@ -99,6 +100,8 @@ interface TurnCtx {
   acted: Set<number>;
   kills: number;
   knightApGiven: boolean;
+  /** 이번 턴 공격한 아군 나이트 수 (기병 편대 E13) */
+  knightAttacks: number;
 }
 
 interface AttackMods {
@@ -191,6 +194,16 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   const { targets, area } = attackScan(s, attacker, grid, { pierce: mods.pierce });
   let mult = mods.mult;
 
+  // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
+  const types = moveTypes(attacker);
+  const lv = (id: 'E12' | 'E13' | 'E14' | 'E15') => ench(s, attacker.side, id);
+  const own = (t: PieceType) => s.pieces.filter((p) => p.side === attacker.side && p.hp > 0 && p.type === t).length;
+  if (lv('E12') && types.includes('P')) mult *= 1 + own('P') * SYNERGY.E12[lv('E12') - 1];
+  if (lv('E13') && types.includes('N')) mult *= 1 + ctx.knightAttacks * SYNERGY.E13[lv('E13') - 1];
+  if (lv('E14') && types.includes('B')) mult *= 1 + Math.max(0, own('B') - (attacker.type === 'B' ? 1 : 0)) * SYNERGY.E14[lv('E14') - 1];
+  if (lv('E15') && ctx.kills > 0) mult *= SYNERGY.E15[lv('E15') - 1] ** ctx.kills;
+  if (types.includes('N')) ctx.knightAttacks += 1;
+
   // 전술적 사선 개척 (E09): 이번 턴 비켜 준 아군 덕에 열린 사선으로 치면 보너스
   const e09 = ench(s, attacker.side, 'E09');
   if (e09 >= 1 && moveTypes(attacker).some((t) => SLIDERS.includes(t))) {
@@ -235,7 +248,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
       }
     }
   }
-  ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits });
+  ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
   return resolveDeaths(s, ctx, attacker);
 };
 
@@ -315,6 +328,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     acted: new Set(),
     kills: 0,
     knightApGiven: false,
+    knightAttacks: 0,
   };
   let apUsed = 0;
   let prevKilled = false;

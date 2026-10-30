@@ -133,7 +133,7 @@ export class Hud implements HudView {
         `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${GLYPH[p.side][p.type]}${VS15}</span><span>${describeStep(c.state, m)}</span></li>`,
       );
     });
-    if (!rows.length && mine) rows.push('<li class="empty">기물을 눌러 이동을 예약하세요</li>');
+    if (!rows.length && mine) rows.push('<li class="empty">기물을 눌러 이동을 예약하세요<br><span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수</span></li>');
     q.innerHTML = rows.join('');
 
     // AP 진공관 (숫자 없이)

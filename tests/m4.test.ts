@@ -250,3 +250,22 @@ describe('체크메이트 (D-022)', () => {
     expect(plan.some((st) => st.pieceId === 3)).toBe(true);
   });
 });
+
+describe('곱연산 시너지 인챈트 (D-026)', () => {
+  const dmgOf = (r: ReturnType<typeof resolveTurn>, id: number) =>
+    r.events.flatMap((e) => (e.type === 'attack' ? e.hits : [])).filter((h) => h.targetId === id).reduce((a, h) => a + h.damage, 0);
+  it('E12 보병 군단: 아군 폰이 많을수록 폰 피해가 커진다', () => {
+    const mk = (lv: number) =>
+      equip(board([['P', 0, 'd3', { moved: true }], ['P', 0, 'a2'], ['P', 0, 'b2'], ['R', 1, 'e5'], ['K', 0, 'h1'], ['K', 1, 'h8']]), 0, lv ? { E12: lv } : {});
+    const plan: Plan = [{ pieceId: 1, to: sq('d4') }];
+    const base = dmgOf(resolveTurn(mk(0), plan), 4);
+    const boosted = dmgOf(resolveTurn(mk(3), plan), 4);
+    expect(boosted).toBeGreaterThan(base * 1.5); // 폰 3기 × 20% = ×1.6
+  });
+  it('E15 연쇄 반응: 처치 뒤의 공격은 배율이 붙고, 화면용 mult가 기록된다', () => {
+    const s = equip(board([['R', 0, 'a1'], ['B', 0, 'f1'], ['P', 1, 'a5', { hp: 1 }], ['R', 1, 'd3'], ['K', 0, 'h1'], ['K', 1, 'h8']]), 0, { E15: 3 });
+    const r = resolveTurn(s, [{ pieceId: 1, to: sq('a4') }, { pieceId: 2, to: sq('e2') }]);
+    const second = r.events.find((e) => e.type === 'attack' && e.order === 1);
+    expect(second && second.type === 'attack' && second.mult).toBe(1.5);
+  });
+});

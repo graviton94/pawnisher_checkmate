@@ -108,6 +108,15 @@ export interface BoardModel {
   removed: Piece[];
   /** 누른 적 기물이 다음 턴에 갈 수 있는 칸과 칠 수 있는 칸 */
   threat: { moves: Pos[]; hits: Pos[] } | null;
+  /** 적 의도: 지금 예약대로 제출하면 적이 둘 수와 내 기물이 받을 피해 */
+  intent: Intent | null;
+}
+
+export interface Intent {
+  /** 내 턴이 끝난 뒤(적 차례 시작) 보드 */
+  state: BattleState;
+  plan: Plan;
+  hits: { pieceId: number; pos: Pos; damage: number; killed: boolean }[];
 }
 
 export interface BoardView {
@@ -263,7 +272,42 @@ export class BattleController {
       preview: check.ok ? check.events : [],
       removed: check.ok ? check.removed : [],
       threat: this.threatOf(),
+      intent: this.intent(),
     };
+  }
+
+  private intentCache: { key: string; value: Intent | null } | null = null;
+
+  /**
+   * 적 의도 예고 (Into the Breach·슬서식): AI는 결정적이라, 지금 예약대로 제출하면 적이 둘 수를 정확히 계산해 보여 준다.
+   * 확정된 예약이 바뀔 때만 다시 계산한다.
+   */
+  private intent(): Intent | null {
+    if (this.phase !== 'plan' || !this.state || this.state.winner !== null) return null;
+    const key = `${this.state.turnNumber}|${JSON.stringify(this.plan)}`;
+    if (this.intentCache?.key === key) return this.intentCache.value;
+    let value: Intent | null = null;
+    const mine = resolveTurn(this.state, this.plan);
+    if (mine.state.winner === null) {
+      const next = mine.state;
+      const plan = choosePlan(next, { tier: AI_TIERS[this.aiTier], weights: this.enemyWeights });
+      const after = resolveTurn(next, plan);
+      const dmg = new Map<number, { damage: number; killed: boolean }>();
+      for (const e of after.events) {
+        if (e.type !== 'attack') continue;
+        for (const h of e.hits) {
+          const cur = dmg.get(h.targetId) ?? { damage: 0, killed: false };
+          dmg.set(h.targetId, { damage: cur.damage + h.damage, killed: cur.killed || h.killed });
+        }
+      }
+      const hits = [...dmg.entries()].flatMap(([id, d]) => {
+        const p = findPiece(next, id);
+        return p && p.side === this.state.turnSide ? [{ pieceId: id, pos: { x: p.x, y: p.y }, ...d }] : [];
+      });
+      value = { state: next, plan, hits };
+    }
+    this.intentCache = { key, value };
+    return value;
   }
 
   /** 선택 기물의 각 후보를 실행해 보고, 그 순번 공격이 적을 맞히는 칸만 고른다 */
@@ -447,7 +491,7 @@ export class BattleController {
     const before = this.state;
     const { state, events } = resolveTurn(before, plan);
     this.plan = [];
-    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null });
+    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null, intent: null });
     this.hud.update(this);
     await this.view.play(before, events);
     this.state = state;

@@ -3,7 +3,8 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
-import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
+import { drawPixelPiece, pieceKey } from './pixelPieces';
+import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
 export const GRADE: Record<Standing, { color: number; name: string }> = {
@@ -13,22 +14,17 @@ export const GRADE: Record<Standing, { color: number; name: string }> = {
   tier3: { color: 0xfacc15, name: '황금' },
 };
 
-/** 플레이스홀더 기물 글리프. 도트 스프라이트는 M6에서 교체한다. */
-const GLYPH: Record<0 | 1, Record<PieceType, string>> = {
-  0: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
-  1: { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟' },
-};
-const VS15 = '︎';
+
 /** 기물 유형에 붙는 인챈트 — 그 기물 위에 표식으로 보인다 (GDD 9장: 인챈트는 유닛에 표시) */
-const TYPE_ENCHANTS: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04', K: 'E08' };
-const GLYPH_FONT = "'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', 'Apple Symbols', serif";
+const TYPE_ENCHANTS: Partial<Record<PieceType, EnchantId[]>> = { N: ['E01', 'E13'], B: ['E02', 'E14'], R: ['E03'], P: ['E04', 'E12'], K: ['E08'] };
 
 const C = {
-  light: 0xd8cfc2,
-  dark: 0x3a3542,
-  bg: 0x110f15,
+  // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
+  light: 0x56545e,
+  dark: 0x2f2e36,
+  bg: 0x0b0b0e,
   cyan: 0x38bdf8,
-  crimson: 0xf43f5e,
+  crimson: 0xe5262f,
   brass: 0xc89b3c,
   lose: 0xfde68a,
   ink: 0x16141c,
@@ -73,7 +69,7 @@ const stepBadge = (s: BattleState, virtual: BattleState, step: PlanStep): Pos =>
 
 interface PieceSprite {
   root: Phaser.GameObjects.Container;
-  glyph: Phaser.GameObjects.Text;
+  glyph: Phaser.GameObjects.Image;
   hp: Phaser.GameObjects.Graphics;
   piece: Piece;
 }
@@ -97,6 +93,13 @@ class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 도트 기물 텍스처 12종 (최근접 필터로 또렷하게)
+    for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
+      for (const side of [0, 1] as Side[]) {
+        const key = pieceKey(type, side);
+        if (this.textures.exists(key)) continue;
+        this.textures.addCanvas(key, drawPixelPiece(type, side))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0);
@@ -147,6 +150,10 @@ class BoardScene extends Phaser.Scene {
           g.lineStyle(1, C.crimson, 0.35).lineBetween(w.x + t * 0.2, w.y + t * 0.3, w.x + t * 0.55, w.y + t * 0.6).lineBetween(w.x + t * 0.55, w.y + t * 0.6, w.x + t * 0.8, w.y + t * 0.45);
         } else {
           g.fillStyle((x + y) % 2 === 0 ? C.dark : C.light, 1).fillRect(w.x, w.y, t, t);
+          // 도트 느낌의 1픽셀 윗면 빛·아랫면 그늘
+          const px = Math.max(1, Math.round(t / 24));
+          g.fillStyle(0xffffff, 0.06).fillRect(w.x, w.y, t, px);
+          g.fillStyle(0x000000, 0.18).fillRect(w.x, w.y + t - px, t, px);
         }
       }
     }
@@ -231,7 +238,7 @@ class BoardScene extends Phaser.Scene {
     if (p.buffTurns > 0) base.fillStyle(C.brass, 1).fillTriangle(t * 0.86, t * 0.2, t * 0.78, t * 0.32, t * 0.94, t * 0.32);
     // 인챈트 표식: 왼쪽 위 황동 점 (장 수), ★ 각성
     const lo = this.state?.loadouts?.[p.side];
-    const stacks = [...new Set(moveTypes(p).map((ty) => TYPE_ENCHANTS[ty]).filter((e): e is EnchantId => !!e))].map((e) => lo?.enchants[e] ?? 0);
+    const stacks = [...new Set(moveTypes(p).flatMap((ty) => TYPE_ENCHANTS[ty] ?? []))].map((e) => lo?.enchants[e] ?? 0);
     const marks: Phaser.GameObjects.GameObject[] = [];
     let my = t * 0.12;
     for (const n of stacks.filter((n) => n > 0)) {
@@ -253,29 +260,12 @@ class BoardScene extends Phaser.Scene {
     // 합체: 오른쪽 위에 흡수한 유형 작은 글리프 · 폼 시프트: 바뀐 행마
     const extra = p.formAs ? [p.type] : (p.fused ?? []).filter((ty) => ty !== p.type);
     extra.forEach((ty, i) => {
-      marks.push(
-        this.add
-          .text(t * 0.84, t * (0.14 + i * 0.22), GLYPH[p.side][ty] + VS15, {
-            fontFamily: GLYPH_FONT,
-            fontSize: `${Math.round(t * 0.26)}px`,
-            color: p.formAs ? '#C89B3C' : p.side === 0 ? '#F4F7FB' : '#120F17',
-            stroke: p.side === 0 ? '#1E3A8A' : '#F43F5E',
-            strokeThickness: 2,
-          })
-          .setOrigin(0.5)
-          .setResolution(this.dpr),
-      );
+      const img = this.add.image(t * 0.84, t * (0.16 + i * 0.24), pieceKey(ty, p.side)).setDisplaySize(t * 0.3, t * 0.3);
+      if (p.formAs) img.setTint(0xc89b3c);
+      marks.push(img);
     });
-    const glyph = this.add
-      .text(t / 2, t * 0.42, GLYPH[p.side][p.formAs ?? p.type] + VS15, {
-        fontFamily: GLYPH_FONT,
-        fontSize: `${Math.round(t * 0.78)}px`,
-        color: p.side === 0 ? '#F4F7FB' : '#120F17',
-        stroke: p.side === 0 ? '#1E3A8A' : '#F43F5E',
-        strokeThickness: Math.max(2, Math.round(t * 0.05)),
-      })
-      .setOrigin(0.5)
-      .setResolution(this.dpr);
+    // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
+    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
     root.add([base, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -319,6 +309,22 @@ class BoardScene extends Phaser.Scene {
     this.marksG.clear();
     this.arrowsG.clear();
     this.fxG.clear();
+  }
+
+  /** 적 의도용 작은 순번 (칸 왼쪽 아래) */
+  private smallBadge(pos: Pos, n: number, alpha: number): void {
+    const t = this.tile;
+    const w = this.world(pos);
+    const r = t * 0.13;
+    this.arrowsG.fillStyle(0x0b0b0e, alpha).fillCircle(w.x + r + 3, w.y + t - r - 3, r);
+    this.arrowsG.lineStyle(1.5, C.crimson, alpha).strokeCircle(w.x + r + 3, w.y + t - r - 3, r);
+    const txt = this.add
+      .text(w.x + r + 3, w.y + t - r - 3, String(n), { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(r * 1.3)}px`, color: '#FF6B6B' })
+      .setOrigin(0.5)
+      .setAlpha(alpha)
+      .setDepth(4)
+      .setResolution(this.dpr);
+    this.dynamic.push(txt);
   }
 
   private badge(pos: Pos, n: number, alpha = 1, color = C.brass): void {
@@ -429,6 +435,26 @@ class BoardScene extends Phaser.Scene {
           this.marksG.lineStyle(3, col, 1).strokeCircle(c.x, c.y, t * 0.3);
           this.marksG.lineStyle(2, col, 1).lineBetween(c.x - t * 0.14, c.y, c.x + t * 0.14, c.y).lineBetween(c.x, c.y - t * 0.14, c.x, c.y + t * 0.14);
         } else if (!isPending) this.marksG.fillStyle(C.cyan, 0.85).fillCircle(c.x, c.y, t * 0.12);
+      }
+    }
+
+    // 적 의도 예고: 지금 제출하면 적이 둘 수 (옅은 붉은 화살표 + 붉은 순번), 맞을 내 기물에 붉은 테두리
+    if (m.intent) {
+      const faint = m.selectedId !== null ? 0.25 : 0.55;
+      m.intent.plan.forEach((st, i) => {
+        for (const a of stepArrows(m.intent!.state, st)) this.arrow(a.from, a.to, a.knight, C.crimson, faint);
+        const b = stepBadge(m.intent!.state, m.intent!.state, st);
+        this.smallBadge(b, i + 1, faint + 0.2);
+      });
+      for (const h of m.intent.hits) {
+        const w = this.world(h.pos);
+        this.marksG.lineStyle(2, h.killed ? 0xfacc15 : C.crimson, 0.95).strokeRect(w.x + 3, w.y + 3, t - 6, t - 6);
+        const label = this.add
+          .text(w.x + t - 4, w.y + t - 4, h.killed ? '☠' : `-${h.damage}`, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.24)}px`, color: h.killed ? '#FACC15' : '#FF6B6B', stroke: '#0B0B0E', strokeThickness: 3 })
+          .setOrigin(1, 1)
+          .setDepth(7)
+          .setResolution(this.dpr);
+        this.dynamic.push(label);
       }
     }
 
@@ -591,7 +617,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'promote') {
         const s = this.sprites.get(e.pieceId);
-        if (s) s.glyph.setText(GLYPH[s.piece.side][e.to] + VS15);
+        if (s) s.glyph.setTexture(pieceKey(e.to, s.piece.side));
         continue;
       }
       if (e.type !== 'attack') continue;
@@ -603,6 +629,16 @@ class BoardScene extends Phaser.Scene {
         .setDepth(7)
         .setResolution(this.dpr);
       await this.tween({ targets: atk.root, scale: { from: 1, to: 1.12 }, yoyo: true, duration: 110 });
+      // 시너지 배율: 커질수록 크게 (발라트로식 숫자 폭발)
+      if (e.mult) {
+        const big = Math.min(1.8, 0.8 + (e.mult - 1) * 0.6);
+        const m = this.add
+          .text(atk.root.x + t / 2, atk.root.y - t * 0.35, `×${e.mult.toFixed(e.mult >= 10 ? 0 : 1)}`, { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34 * big)}px`, color: e.mult >= 2 ? '#FACC15' : '#FDBA74', stroke: '#0B0B0E', strokeThickness: 4 })
+          .setOrigin(0.5)
+          .setDepth(9)
+          .setResolution(this.dpr);
+        this.tweens.add({ targets: m, y: m.y - t * 0.4, alpha: 0, scale: 1.3, duration: 900, onComplete: () => m.destroy() });
+      }
 
       this.fxG.clear();
       for (const a of e.area) {
