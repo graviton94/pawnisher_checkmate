@@ -21,7 +21,8 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  font-family: Galmuri11, 'Noto Sans KR', system-ui, sans-serif;
+  -webkit-font-smoothing: none;
   overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
@@ -50,7 +51,7 @@ html, body {
   aspect-ratio: 63 / 88;
   max-height: 44vh;
   border: 1px dashed var(--line-strong);
-  border-radius: 6px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,7 +68,7 @@ html, body {
 .btn {
   font: inherit;
   color: var(--text);
-  border-radius: 8px;
+  border-radius: 0;
   min-height: 48px;
   cursor: pointer;
 }
@@ -81,7 +82,7 @@ html, body {
   background: var(--brass);
   color: #16141c;
   border: 2px solid var(--copper);
-  font-family: Cinzel, serif;
+  font-family: Galmuri14, Galmuri11, sans-serif;
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 2px;
@@ -97,14 +98,14 @@ html, body {
   gap: 8px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 14px;
 }
 .queue li.pending { border-style: dashed; opacity: 0.7; }
 .queue .no {
-  width: 22px; height: 22px; flex: none; border-radius: 11px;
+  width: 22px; height: 22px; flex: none; border-radius: 0;
   background: var(--brass); color: #16141c;
-  font-family: Cinzel, serif; font-weight: 700; font-size: 12px;
+  font-family: Galmuri14, Galmuri11, sans-serif; font-weight: 700; font-size: 12px;
   display: flex; align-items: center; justify-content: center;
 }
 .queue .glyph { font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', 'Apple Symbols', serif; font-size: 22px; line-height: 22px; }
@@ -115,7 +116,7 @@ html, body {
   flex: 1;
   height: 26px;
   border: 1px solid var(--copper);
-  border-radius: 8px 8px 3px 3px;
+  border-radius: 0;
   background: var(--bg);
   box-shadow: inset 0 -3px 0 #1e3a4a;
 }
@@ -132,7 +133,7 @@ html, body {
   padding: 12px 14px;
   background: var(--panel);
   border: 1px solid var(--brass);
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 14px;
   line-height: 1.5;
   pointer-events: none;
@@ -151,7 +152,7 @@ html, body {
   padding: 6px 14px;
   background: var(--panel);
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 14px;
   pointer-events: none;
 }
@@ -173,12 +174,12 @@ html, body {
   padding: 20px 22px;
   background: var(--panel);
   border: 1px solid var(--copper);
-  border-radius: 10px;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.panel h1 { margin: 0; font-family: Cinzel, serif; font-size: 22px; letter-spacing: 2px; color: var(--brass); }
+.panel h1 { margin: 0; font-family: Galmuri14, Galmuri11, sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--brass); }
 .panel h2 { margin: 0; font-size: 20px; }
 .panel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .panel .choices { display: flex; flex-direction: column; gap: 8px; }
@@ -187,7 +188,7 @@ html, body {
   padding: 10px 14px;
   background: transparent;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--text);
   font: inherit;
   min-height: 52px;
@@ -225,13 +226,13 @@ html, body {
   text-align: left;
   font: inherit;
   color: var(--text);
-  background: linear-gradient(180deg, #2a2530, #1c1a24);
+  background: #211f29;
   border: 1px solid var(--copper);
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   overflow: hidden;
 }
-.card.consume { border-color: #9f5ad6; background: linear-gradient(180deg, #2c2238, #1c1a24); }
+.card.consume { border-color: #9f5ad6; background: #261f31; }
 .card.armed { border: 2px solid var(--brass); box-shadow: 0 0 0 2px rgba(200, 155, 60, 0.35); }
 .card:disabled { opacity: 0.38; cursor: default; }
 .card-name { font-size: 13px; font-weight: 700; line-height: 1.25; color: var(--parchment); }
@@ -240,7 +241,7 @@ html, body {
 .card.wide { grid-column: span 2; aspect-ratio: auto; min-height: 48px; flex-direction: row; align-items: center; justify-content: space-between; }
 
 /* 인챈트 팝업 · 장비 편집 */
-.ench { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.ench { border: 1px solid var(--line); border-radius: 0; padding: 8px 10px; }
 .ench small { color: var(--muted); }
 .ench ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: #6f6979; line-height: 1.5; }
 .ench li.on { color: var(--text); }
@@ -252,7 +253,7 @@ html, body {
   color: var(--text);
   background: transparent;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 6px 9px;
   min-height: 48px;
   cursor: pointer;
@@ -264,7 +265,7 @@ html, body {
 .panel { width: min(640px, 94vw); }
 
 /* M5 등반 목업 */
-.run-status { font-size: 13px; line-height: 1.6; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.run-status { font-size: 13px; line-height: 1.6; color: var(--muted); border: 1px solid var(--line); border-radius: 0; padding: 8px 10px; }
 .run-status b { color: var(--text); }
 .run-status .gold, .price { color: var(--brass); }
 .run-status .g, .chip .g { font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', 'Apple Symbols', serif; font-size: 16px; }
@@ -272,7 +273,7 @@ html, body {
 .floor { display: flex; align-items: center; gap: 8px; opacity: 0.55; }
 .floor.current { opacity: 1; }
 .floor.done { opacity: 0.4; }
-.floor .fl { width: 24px; flex: none; text-align: right; font-family: Cinzel, serif; color: var(--muted); }
+.floor .fl { width: 24px; flex: none; text-align: right; font-family: Galmuri14, Galmuri11, sans-serif; color: var(--muted); }
 .floor .nodes { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
 .chip.node { flex: 1; min-width: 90px; min-height: 40px; display: flex; align-items: center; }
 .floor.current .chip.node { border-color: var(--brass); min-height: 48px; }
@@ -284,7 +285,7 @@ html, body {
 .chip:disabled { opacity: 0.4; cursor: default; }
 .panel .choice:disabled { opacity: 0.4; cursor: default; }
 .chip .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 2px; }
-.chip .tags i { font-style: normal; font-size: 12px; padding: 1px 6px; border-radius: 9px; background: #2a2418; color: var(--brass); border: 1px solid var(--copper); }
+.chip .tags i { font-style: normal; font-size: 12px; padding: 1px 6px; border-radius: 0; background: #2a2418; color: var(--brass); border: 1px solid var(--copper); }
 .panel .logo { width: auto; max-height: 30vh; max-width: 60%; align-self: center; image-rendering: auto; margin: -6px 0 -4px; }
 .piece-img { image-rendering: pixelated; vertical-align: middle; object-fit: contain; }
 .queue .glyph { display: flex; align-items: center; }
@@ -292,3 +293,20 @@ html, body {
 .chip .big-piece { display: block; margin: 2px auto 4px; }
 .chip:has(.big-piece) .tags { justify-content: center; }
 .queue li.empty { display: block; height: auto; line-height: 1.5; }
+
+/* ---- 도트 UI 패스 (art-bible: 각진 모서리 · 2px 테두리 · 아래로 떨어지는 단단한 그림자) ---- */
+.btn, .panel .choice, .chip, .card { border-width: 2px; box-shadow: 0 3px 0 #000; }
+.btn:active:not(:disabled), .panel .choice:active, .chip:active, .card:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+.btn-submit { box-shadow: 0 4px 0 #6b4c12, 0 4px 0 2px #000; font-size: 20px; letter-spacing: 1px; }
+.panel { border-width: 3px; box-shadow: 0 0 0 3px #000, 0 6px 0 3px #000; }
+.queue li { border-width: 2px; }
+.queue .no { border-radius: 0; }
+.toast, .info { border-width: 2px; box-shadow: 0 3px 0 #000; }
+/* 빈 카드 슬롯: 글자 없이 점선 실루엣만 (보드가 주인공) */
+.card-slot { border: 2px dashed #2c2a34; color: transparent; }
+/* 행동력: 날개 (금색 = 남은 AP, 회색 = 쓴 AP, 보너스는 금빛 테) */
+.vials { gap: 2px; align-items: flex-end; }
+.wing { flex: 1; height: 40px; background: url('./assets/ui/ap-empty.png') center / contain no-repeat; image-rendering: pixelated; }
+.wing.full { background-image: url('./assets/ui/ap-full.png'); }
+.wing.bonus.full { filter: drop-shadow(0 0 3px #facc15); }
+.toast { max-width: calc(100vw - 2 * var(--rail) - 16px); text-align: center; }

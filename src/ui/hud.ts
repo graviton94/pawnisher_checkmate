@@ -98,7 +98,7 @@ export class Hud implements HudView {
     });
     if (c.canEnchantFuse) {
       const armed = c.mode?.kind === 'fuse';
-      while (slots.length < CARD_SLOTS) slots.push('<div class="card-slot">빈 슬롯</div>');
+      while (slots.length < CARD_SLOTS) slots.push('<div class="card-slot" aria-label="빈 카드 슬롯"></div>');
       slots.push(
         `<button type="button" class="card wide${armed ? ' armed' : ''}" data-card="fuse" ${c.phase !== 'plan' ? 'disabled' : ''}>
           <span class="card-name">합체 · ${ENCHANTS.E11.name}</span>
@@ -106,7 +106,7 @@ export class Hud implements HudView {
         </button>`,
       );
     }
-    while (slots.length < CARD_SLOTS) slots.push('<div class="card-slot">빈 슬롯</div>');
+    while (slots.length < CARD_SLOTS) slots.push('<div class="card-slot" aria-label="빈 카드 슬롯"></div>');
     $('cards').innerHTML = slots.join('');
   }
 
@@ -141,7 +141,7 @@ export class Hud implements HudView {
     const total = c.apTotal;
     const left = total - checkPlan(c.state, full).apUsed;
     // 기본 AP를 넘는 칸은 이번 턴 보너스(요충지 등) — 황동색
-    $('vials').innerHTML = Array.from({ length: total }, (_, i) => `<div class="vial${i < left ? ' full' : ''}${i >= BASE_AP ? ' bonus' : ''}"></div>`).join('');
+    $('vials').innerHTML = Array.from({ length: total }, (_, i) => `<div class="wing${i < left ? ' full' : ''}${i >= BASE_AP ? ' bonus' : ''}"></div>`).join('');
 
     ($('btn-undo') as HTMLButtonElement).disabled = !mine || !c.plan.length;
     ($('btn-reset') as HTMLButtonElement).disabled = !mine || !c.plan.length;

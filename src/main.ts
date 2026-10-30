@@ -1,3 +1,4 @@
+import './fonts.css';
 import './style.css';
 import { BattleController } from './game/controller';
 import { Hud } from './ui/hud';

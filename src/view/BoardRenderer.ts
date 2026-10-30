@@ -256,7 +256,7 @@ class BoardScene extends Phaser.Scene {
     if (forge > 0) {
       marks.push(
         this.add
-          .text(t * 0.04, t * 0.62, `+${forge}`, { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(t * 0.22)}px`, color: '#E0A060', stroke: '#16141C', strokeThickness: 3 })
+          .text(t * 0.04, t * 0.62, `+${forge}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.22)}px`, color: '#E0A060', stroke: '#16141C', strokeThickness: 3 })
           .setResolution(this.dpr),
       );
     }
@@ -297,7 +297,7 @@ class BoardScene extends Phaser.Scene {
   private floatText(sp: PieceSprite, text: string, color: string): void {
     const t = this.tile;
     const o = this.add
-      .text(sp.root.x + t / 2, sp.root.y + t * 0.1, text, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color, stroke: '#16141C', strokeThickness: 4 })
+      .text(sp.root.x + t / 2, sp.root.y + t * 0.1, text, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color, stroke: '#16141C', strokeThickness: 4 })
       .setOrigin(0.5)
       .setDepth(8)
       .setResolution(this.dpr);
@@ -322,7 +322,7 @@ class BoardScene extends Phaser.Scene {
     this.arrowsG.fillStyle(0x0b0b0e, alpha).fillCircle(w.x + r + 3, w.y + t - r - 3, r);
     this.arrowsG.lineStyle(1.5, C.crimson, alpha).strokeCircle(w.x + r + 3, w.y + t - r - 3, r);
     const txt = this.add
-      .text(w.x + r + 3, w.y + t - r - 3, String(n), { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(r * 1.3)}px`, color: '#FF6B6B' })
+      .text(w.x + r + 3, w.y + t - r - 3, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.3)}px`, color: '#FF6B6B' })
       .setOrigin(0.5)
       .setAlpha(alpha)
       .setDepth(4)
@@ -337,7 +337,7 @@ class BoardScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(4).setAlpha(alpha);
     g.fillStyle(color, 1).fillCircle(w.x + r * 0.7, w.y - r * 0.2, r).lineStyle(1.5, C.ink, 1).strokeCircle(w.x + r * 0.7, w.y - r * 0.2, r);
     const txt = this.add
-      .text(w.x + r * 0.7, w.y - r * 0.2, String(n), { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(r * 1.1)}px`, color: '#16141C' })
+      .text(w.x + r * 0.7, w.y - r * 0.2, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.1)}px`, color: '#16141C' })
       .setOrigin(0.5)
       .setDepth(4)
       .setAlpha(alpha)
@@ -453,7 +453,7 @@ class BoardScene extends Phaser.Scene {
         const w = this.world(h.pos);
         this.marksG.lineStyle(2, h.killed ? 0xfacc15 : C.crimson, 0.95).strokeRect(w.x + 3, w.y + 3, t - 6, t - 6);
         const label = this.add
-          .text(w.x + t - 4, w.y + t - 4, h.killed ? '☠' : `-${h.damage}`, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.24)}px`, color: h.killed ? '#FACC15' : '#FF6B6B', stroke: '#0B0B0E', strokeThickness: 3 })
+          .text(w.x + t - 4, w.y + t - 4, h.killed ? '☠' : `-${h.damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.24)}px`, color: h.killed ? '#FACC15' : '#FF6B6B', stroke: '#0B0B0E', strokeThickness: 3 })
           .setOrigin(1, 1)
           .setDepth(7)
           .setResolution(this.dpr);
@@ -633,7 +633,7 @@ class BoardScene extends Phaser.Scene {
       const atk = this.sprites.get(e.attackerId);
       if (!atk) continue;
       const order = this.add
-        .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 3 })
+        .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 3 })
         .setOrigin(0.5)
         .setDepth(7)
         .setResolution(this.dpr);
@@ -642,7 +642,7 @@ class BoardScene extends Phaser.Scene {
       if (e.mult) {
         const big = Math.min(1.8, 0.8 + (e.mult - 1) * 0.6);
         const m = this.add
-          .text(atk.root.x + t / 2, atk.root.y - t * 0.35, `×${e.mult.toFixed(e.mult >= 10 ? 0 : 1)}`, { fontFamily: 'Cinzel, serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34 * big)}px`, color: e.mult >= 2 ? '#FACC15' : '#FDBA74', stroke: '#0B0B0E', strokeThickness: 4 })
+          .text(atk.root.x + t / 2, atk.root.y - t * 0.35, `×${e.mult.toFixed(e.mult >= 10 ? 0 : 1)}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34 * big)}px`, color: e.mult >= 2 ? '#FACC15' : '#FDBA74', stroke: '#0B0B0E', strokeThickness: 4 })
           .setOrigin(0.5)
           .setDepth(9)
           .setResolution(this.dpr);
@@ -670,7 +670,7 @@ class BoardScene extends Phaser.Scene {
         this.drawHp(ts, h.hpAfter, h.hpAfter);
         ts.piece = { ...ts.piece, hp: h.hpAfter };
         const dmg = this.add
-          .text(ts.root.x + t / 2, ts.root.y + t * 0.1, `-${dealt}`, { fontFamily: 'Noto Sans KR, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34)}px`, color: '#FDE68A', stroke: '#16141C', strokeThickness: 4 })
+          .text(ts.root.x + t / 2, ts.root.y + t * 0.1, `-${dealt}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34)}px`, color: '#FDE68A', stroke: '#16141C', strokeThickness: 4 })
           .setOrigin(0.5)
           .setDepth(8)
           .setResolution(this.dpr);
@@ -781,7 +781,9 @@ export class BoardRenderer implements BoardView {
     this.scene.announce = announce;
     this.scene.dpr = dpr;
     this.scene.input2 = input;
-    this.whenReady = new Promise((r) => (this.scene.ready = r));
+    // 보드 위 글자(피해 숫자·순번)가 대체 글꼴로 먼저 그려지지 않게 갈무리를 먼저 불러 둔다
+    const fonts = Promise.all([document.fonts.load('12px Galmuri11'), document.fonts.load('15px Galmuri14')]).catch(() => undefined);
+    this.whenReady = Promise.all([new Promise<void>((r) => (this.scene.ready = r)), fonts]).then(() => undefined);
     const { w, h } = this.size();
     this.game = new Phaser.Game({
       type: Phaser.AUTO,

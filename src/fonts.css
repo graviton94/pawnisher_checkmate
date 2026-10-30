@@ -1,0 +1,4 @@
+/* 갈무리 (Galmuri, SIL OFL 1.1, © Lee Minseo) — 한글·영문·숫자 도트 서체. 쓰는 3종만 woff2로 내장 (APK 오프라인) */
+@font-face { font-family: Galmuri11; font-weight: 400; font-display: swap; src: url('../node_modules/galmuri/dist/Galmuri11.woff2') format('woff2'); }
+@font-face { font-family: Galmuri11; font-weight: 700; font-display: swap; src: url('../node_modules/galmuri/dist/Galmuri11-Bold.woff2') format('woff2'); }
+@font-face { font-family: Galmuri14; font-weight: 400; font-display: swap; src: url('../node_modules/galmuri/dist/Galmuri14.woff2') format('woff2'); }
