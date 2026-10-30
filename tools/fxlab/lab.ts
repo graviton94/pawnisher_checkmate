@@ -21,9 +21,10 @@ const CASES: Record<PieceType, { from: [number, number]; to: [number, number]; f
   K: { from: [4, 0], to: [4, 1], foes: [[3, 2], [5, 2]] },
 };
 
+type Board = 'flat' | 's0' | 'dot';
 const T = 100; // 캔버스 내부 칸 크기 (판 칸 20도트 × 5px — 정수배라야 도트가 고르다)
 const N = 8;
-const opt = { board: 's0' as 'flat' | 's0', type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
+const opt = { board: 'dot' as Board, type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
 
 // ---------- 장면 만들기 (게임과 같은 엔진) ----------
 interface Scene {
@@ -85,23 +86,57 @@ const pen = new PixelPen({ fillStyle: (c: number, a = 1) => (ctx.fillStyle = hex
 const px = (x: number, y: number) => ({ x: x * T, y: (N - 1 - y) * T });
 const center = (x: number, y: number) => ({ x: x * T + T / 2, y: (N - 1 - y) * T + T / 2 });
 
+/** 판 위 덧그림 시연 자리 (어느 장면의 공격 범위와도 겹치지 않는 칸) */
+const DEMO = { fallen: [7, 3], crack: [0, 5], hatch: [[5, 7], [6, 7]] } as const;
+
 const drawBoard = () => {
+  const img = (k: string) => (sprites[k]?.complete ? sprites[k] : null);
   for (let y = 0; y < N; y++)
     for (let x = 0; x < N; x++) {
       const w = px(x, y);
-      // 발주 S0 철판 칸 (사용자 에셋)
-      const tile = sprites[(x + y) % 2 === 0 ? 'tile-dark' : 'tile-light'];
-      if (opt.board === 's0' && tile?.complete) {
-        ctx.drawImage(tile, w.x, w.y, T, T);
-        continue;
+      const dark = (x + y) % 2 === 0;
+      const tile = opt.board === 'dot' ? img(dark ? 'tile-dark' : 'tile-light') : opt.board === 's0' ? img(dark ? 's0-tile-dark' : 's0-tile-light') : null;
+      if (tile) ctx.drawImage(tile, w.x, w.y, T, T);
+      else {
+        ctx.fillStyle = dark ? '#2f2e36' : '#56545e';
+        ctx.fillRect(w.x, w.y, T, T);
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(w.x, w.y, T, 4);
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillRect(w.x, w.y + T - 4, T, 4);
       }
-      ctx.fillStyle = (x + y) % 2 === 0 ? '#2f2e36' : '#56545e';
-      ctx.fillRect(w.x, w.y, T, T);
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.fillRect(w.x, w.y, T, 4);
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.fillRect(w.x, w.y + T - 4, T, 4);
     }
+  if (opt.board === 'flat') return;
+  const at = (k: string, x: number, y: number, a = 1) => {
+    const im = img(k);
+    if (!im) return;
+    const w = px(x, y);
+    ctx.globalAlpha = a;
+    ctx.drawImage(im, w.x, w.y, T, T);
+    ctx.globalAlpha = 1;
+  };
+  at('fallen', DEMO.fallen[0], DEMO.fallen[1]);
+  at('crack', DEMO.crack[0], DEMO.crack[1]);
+  for (const [x, y] of DEMO.hatch) at('hatch', x, y, 0.75);
+};
+
+/** 계획 화면의 공격 범위 (실행 전 잠깐 보여 준다): 지금 = 붉은 반투명 사각형, 새 그림 = 도트 테두리 + 옅은 채움 */
+const drawRange = (area: { x: number; y: number }[]) => {
+  for (const a of area) {
+    const w = px(a.x, a.y);
+    if (opt.board === 'flat') {
+      ctx.fillStyle = 'rgba(229,38,47,0.22)';
+      ctx.fillRect(w.x + 2, w.y + 2, T - 4, T - 4);
+      ctx.strokeStyle = 'rgba(229,38,47,0.9)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(w.x + 2, w.y + 2, T - 4, T - 4);
+    } else {
+      ctx.fillStyle = 'rgba(229,38,47,0.12)';
+      ctx.fillRect(w.x, w.y, T, T);
+      const im = sprites.range;
+      if (im?.complete) ctx.drawImage(im, w.x, w.y, T, T);
+    }
+  }
 };
 
 interface Live {
@@ -183,14 +218,15 @@ const play = () => {
     const key = `${l.p.x},${l.p.y}`;
     return { h, l, at: FX0 + (fx?.impact.get(key) ?? 0), done: false };
   });
+  const PRE = 700; // 계획 화면처럼 공격 범위를 먼저 보여 준다
   const end = FX0 + (fx?.duration ?? 0) + 900;
   const t0 = performance.now();
 
   const frame = (now: number) => {
     if (my !== token) return;
-    const ms = (now - t0) * opt.speed;
+    const ms = (now - t0) * opt.speed - PRE;
     // 이동(들기 → 지수형 이동 → 착지 출렁임) → 공격 자세 (게임과 같은 함수)
-    const mm = moveMotion(Math.min(ms, MOVE), me.p.type === 'N');
+    const mm = moveMotion(Math.max(0, Math.min(ms, MOVE)), me.p.type === 'N');
     me.x = from.x + (to.x - from.x) * mm.p;
     me.y = from.y + (to.y - from.y) * mm.p;
     me.pose = ms < MOVE ? mm.pose : fx && ms < FX0 + fx.duration ? fx.actor(ms - FX0) : { dx: 0, dy: 0, sx: 1, sy: 1 };
@@ -222,6 +258,7 @@ const play = () => {
     ctx.strokeStyle = 'rgba(56,189,248,0.6)';
     ctx.lineWidth = 3;
     ctx.strokeRect(from.x + 3, from.y + 3, T - 6, T - 6);
+    if (ms < 0 && atk) drawRange(atk.area);
     for (const l of lives.values()) drawPiece(l, now);
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
@@ -298,7 +335,7 @@ const init = () => {
       }),
     );
   bindSeg('data-side', (v) => (opt.side = Number(v) as Side));
-  bindSeg('data-board', (v) => (opt.board = v as 'flat' | 's0'));
+  bindSeg('data-board', (v) => (opt.board = v as Board));
   bindSeg('data-speed', (v) => (opt.speed = Number(v)));
   $('#replay').addEventListener('click', play);
   ($('#loop') as HTMLInputElement).addEventListener('change', (e) => {
