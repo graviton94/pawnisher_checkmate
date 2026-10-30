@@ -166,19 +166,33 @@ const blit = (k: string, x: number, y: number, a = 1) => {
   ctx.drawImage(im, x, y, im.width * D, im.height * D);
   ctx.globalAlpha = 1;
 };
-/** HP 게이지 14×3 도트: 먹색 관 + 리벳 끝 + 진영 색 채움, 잃을 HP는 금색 (코드 도트) */
-const gauge = (x: number, y: number, side: Side, hp: number, after: number, max: number) => {
-  const cell = (i: number, j: number, c: string) => {
-    ctx.fillStyle = c;
-    ctx.fillRect(x + i * D, y + j * D, D, D);
-  };
-  for (let i = 0; i < 14; i++) for (let j = 0; j < 3; j++) cell(i, j, '#16141c');
-  cell(0, 1, '#8a8794');
-  cell(13, 1, '#8a8794');
+/**
+ * HP 게이지 14×4 도트 (D-054): 검정 1도트 테두리(네 모서리는 비워 둥글게) + 안쪽 12×2 채움(밝은 줄 + 그늘 줄).
+ * 채움이 테두리 끝까지 닿는다 — 예전 14×3은 양 끝이 리벳 칸이라 비어 보였다. 잃을 HP는 금색.
+ */
+const GAUGE_COL: Record<string, [string, string]> = { a: ['#38bdf8', '#1e6e94'], e: ['#e5262f', '#7a1218'], lose: ['#facc15', '#facc15'], empty: ['#2f2e36', '#16141c'] };
+const gaugeCells = (side: Side, hp: number, after: number, max: number, cell: (i: number, j: number, c: string) => void) => {
+  for (let i = 1; i < 13; i++) {
+    cell(i, 0, '#0b0b0e');
+    cell(i, 3, '#0b0b0e');
+  }
+  for (const j of [1, 2]) {
+    cell(0, j, '#0b0b0e');
+    cell(13, j, '#0b0b0e');
+  }
   const keep = Math.round((12 * Math.max(0, after)) / max);
   const now = Math.round((12 * Math.max(0, hp)) / max);
-  for (let i = 0; i < 12; i++) cell(1 + i, 1, i < keep ? (side === 0 ? '#38bdf8' : '#e5262f') : i < now ? '#facc15' : '#2f2e36');
+  for (let i = 0; i < 12; i++) {
+    const [top, low] = GAUGE_COL[i < keep ? (side === 0 ? 'a' : 'e') : i < now ? 'lose' : 'empty'];
+    cell(1 + i, 1, top);
+    cell(1 + i, 2, low);
+  }
 };
+const gauge = (x: number, y: number, side: Side, hp: number, after: number, max: number) =>
+  gaugeCells(side, hp, after, max, (i, j, c) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(x + i * D, y + j * D, D, D);
+  });
 
 const drawPiece = (l: Live, now: number, hpAfter?: number) => {
   if (l.dead) return;
@@ -195,7 +209,7 @@ const drawPiece = (l: Live, now: number, hpAfter?: number) => {
   const h = s * sy;
   ctx.drawImage(img, ax - w / 2, ay - (T * 0.85 - T * 0.43 + s / 2) * sy, w, h);
   if (pixel) {
-    gauge(l.x + 3 * D, l.y + 17 * D, l.p.side, l.hp, hpAfter ?? l.hp, l.p.maxHp);
+    gauge(l.x + 3 * D, l.y + 16 * D, l.p.side, l.hp, hpAfter ?? l.hp, l.p.maxHp);
     return;
   }
   // (지금) 발밑 받침
@@ -357,7 +371,7 @@ const play = () => {
         // 잃은 HP: 게이지에서 떨어져 나간 칸들이 하얗게 → 파도처럼 하나씩 솟아오르며 도트로 흩어진다
         const before = Math.round((12 * Math.max(0, x.l.hp)) / x.l.p.maxHp);
         const after = Math.round((12 * Math.max(0, x.h.hpAfter)) / x.l.p.maxHp);
-        for (let i = after; i < before; i++) chips.push({ x: x.l.x + (4 + i) * D, y: x.l.y + 18 * D, at: ms + (before - 1 - i) * 32, i }); // 오른쪽 끝부터
+        for (let i = after; i < before; i++) chips.push({ x: x.l.x + (4 + i) * D, y: x.l.y + 17 * D, at: ms + (before - 1 - i) * 32, i }); // 오른쪽 끝부터
         x.l.hp = x.h.hpAfter;
         x.l.flashUntil = now + 70 / opt.speed;
         const c = { x: x.l.x + T / 2, y: x.l.y + T * 0.45 };
@@ -402,14 +416,14 @@ const play = () => {
       if (t > 420) continue;
       ctx.fillStyle = '#f4f1ea';
       if (t < 0) {
-        ctx.fillRect(c.x, c.y, D, D); // 아직 떠나기 전: 그 자리에서 하얗게
+        ctx.fillRect(c.x, c.y, D, D * 2); // 아직 떠나기 전: 그 자리(2줄)에서 하얗게
         continue;
       }
       const q = t / 420;
       if (q > 0.45 && Math.floor(t / 40) % 2) continue; // 도트처럼 깜빡이며 사라짐
       const rise = 1 - (1 - q) ** 3;
       const size = q > 0.75 ? D / 2 : D;
-      ctx.fillRect(Math.round(c.x + (c.i % 2 ? 1 : -1) * D * 0.6 * q), Math.round(c.y - 9 * D * rise), size, size);
+      ctx.fillRect(Math.round(c.x + (c.i % 2 ? 1 : -1) * D * 0.6 * q), Math.round(c.y - 9 * D * rise), size, size * 2);
     }
     for (const p of popups) drawPopup(pen.g, p.art, p.x, p.y, D, ms - p.at, T * 0.35);
     if (ms < end) requestAnimationFrame(frame);
@@ -453,7 +467,7 @@ const renderGallery = () => {
     if (g === 'pieces') {
       for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const sd of [0, 1]) items += item(`${t}${sd === 0 ? ' 아군' : ' 적'}`, 16, 16, `<img src="${SPRITES[`${t}${sd}`]}" width="${16 * S}" height="${16 * S}" alt="">`);
     } else if (g === 'code') {
-      items += item('HP 게이지 (잃는 순간)', 14, 3, '<canvas data-live="hp" width="112" height="72"></canvas>');
+      items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
       items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
@@ -496,22 +510,20 @@ const renderGallery = () => {
       hpC.fillRect(8 + i * S * 1.5, 48 + j * S * 1.5, S * 1.5, S * 1.5);
     };
     const lost = t > 300;
-    for (let i = 0; i < 14; i++) for (let j = 0; j < 3; j++) cell(i, j, '#16141c');
-    cell(0, 1, '#8a8794');
-    cell(13, 1, '#8a8794');
-    for (let i = 0; i < 12; i++) cell(1 + i, 1, i < 7 || !lost ? '#e5262f' : '#2f2e36');
+    gaugeCells(1, lost ? 7 : 12, lost ? 7 : 12, 12, cell);
     for (let i = 7; i < 12 && lost; i++) {
       const u = t - 300 - (11 - i) * 32; // 오른쪽 끝부터
       hpC.fillStyle = '#f4f1ea';
       if (u < 0) {
         cell(1 + i, 1, '#f4f1ea');
+        cell(1 + i, 2, '#f4f1ea');
         continue;
       }
       const q = u / 420;
       if (q >= 1 || (q > 0.45 && Math.floor(u / 40) % 2)) continue;
       const rise = 1 - (1 - q) ** 3;
       const sz = q > 0.75 ? S * 0.75 : S * 1.5;
-      hpC.fillRect(8 + (1 + i) * S * 1.5 + (i % 2 ? 1 : -1) * 3 * q, 48 + S * 1.5 - 40 * rise, sz, sz);
+      hpC.fillRect(8 + (1 + i) * S * 1.5 + (i % 2 ? 1 : -1) * 3 * q, 48 + S * 1.5 - 40 * rise, sz, sz * 2);
     }
     // 화살표
     arC.clearRect(0, 0, 240, 80);
