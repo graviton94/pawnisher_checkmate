@@ -24,10 +24,9 @@ const CASES: Record<PieceType, { from: [number, number]; to: [number, number]; f
   K: { from: [4, 0], to: [4, 1], foes: [[3, 2], [5, 2]] },
 };
 
-type Board = 'flat' | 's0' | 'dot';
 const T = 100; // 캔버스 내부 칸 크기 (판 칸 20도트 × 5px — 정수배라야 도트가 고르다)
 const N = 8;
-const opt = { board: 'dot' as Board, type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
+const opt = { type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
 
 // ---------- 장면 만들기 (게임과 같은 엔진) ----------
 interface Scene {
@@ -95,7 +94,6 @@ const DEMO = {
   crack: [0, 5],
   hatch: [[5, 7], [6, 7]],
   strongholds: [[2, 0, 'neutral'], [0, 2, 'ally'], [2, 2, 'enemy']],
-  props: [['scrap', 0, 7], ['lift', 2, 7], ['shield', 7, 5], ['trap', 4, 0], ['screwbox', 6, 0]],
 } as const;
 
 const drawBoard = () => {
@@ -104,7 +102,7 @@ const drawBoard = () => {
     for (let x = 0; x < N; x++) {
       const w = px(x, y);
       const dark = (x + y) % 2 === 0;
-      const tile = opt.board === 'dot' ? img(dark ? 'tile-dark' : 'tile-light') : opt.board === 's0' ? img(dark ? 's0-tile-dark' : 's0-tile-light') : null;
+      const tile = img(dark ? 'tile-dark' : 'tile-light');
       if (tile) ctx.drawImage(tile, w.x, w.y, T, T);
       else {
         ctx.fillStyle = dark ? '#2f2e36' : '#56545e';
@@ -115,7 +113,6 @@ const drawBoard = () => {
         ctx.fillRect(w.x, w.y + T - 4, T, 4);
       }
     }
-  if (opt.board === 'flat') return;
   const at = (k: string, x: number, y: number, a = 1) => {
     const im = img(k);
     if (!im) return;
@@ -128,13 +125,6 @@ const drawBoard = () => {
   at('crack', DEMO.crack[0], DEMO.crack[1]);
   // 요충지 (D-068): 점선 테두리만 기물 아래. 깃발·점거 눈금은 기물 위 (drawBoardTop)
   for (const [x, y, kind] of DEMO.strongholds) at(kind === 'neutral' ? 'stronghold' : `stronghold-${kind}`, x, y);
-  // 지형 소품: 칸 가운데, 발밑을 칸 아래에서 2도트 위에 맞춘다
-  for (const [k, x, y] of DEMO.props) {
-    const im = img(`props/${k}`);
-    if (!im) continue;
-    const w = px(x, y);
-    ctx.drawImage(im, w.x + Math.floor((20 - im.naturalWidth) / 2) * D, w.y + (18 - im.naturalHeight) * D, im.naturalWidth * D, im.naturalHeight * D);
-  }
   // 위협: 반투명 붉은 칸이 천천히 깜빡인다 (빗금 대신, 사용자 피드백)
   const pulse = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(performance.now() / 260));
   for (const [x, y] of DEMO.hatch) {
@@ -146,7 +136,6 @@ const drawBoard = () => {
 
 /** 기물 위 레이어 판 표시 (D-069): 요충지 깃발 + 점거 눈금 2칸 (검정 테두리가 네 면을 다 감싼다) */
 const drawBoardTop = () => {
-  if (opt.board === 'flat') return;
   const sh = Math.floor(performance.now() / 900) % 3; // 견본: 0 → 1 → 2칸
   for (const [x, y, kind] of DEMO.strongholds) {
     const w = px(x, y);
@@ -163,17 +152,11 @@ const drawBoardTop = () => {
   }
 };
 
-/** 계획 화면의 공격 범위 (실행 전 잠깐 보여 준다): 지금 = 붉은 반투명 사각형, 새 그림 = 도트 테두리 + 옅은 채움 */
+/** 계획 화면의 공격 범위 (실행 전 잠깐 보여 준다): 도트 테두리 + 옅은 채움 */
 const drawRange = (area: { x: number; y: number }[]) => {
   for (const a of area) {
     const w = px(a.x, a.y);
-    if (opt.board === 'flat') {
-      ctx.fillStyle = 'rgba(229,38,47,0.22)';
-      ctx.fillRect(w.x + 2, w.y + 2, T - 4, T - 4);
-      ctx.strokeStyle = 'rgba(229,38,47,0.9)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(w.x + 2, w.y + 2, T - 4, T - 4);
-    } else {
+    {
       // 색 규칙 (D-047): 내 공격 = 청록, 적 공격 = 진홍
       ctx.fillStyle = opt.side === 0 ? 'rgba(56,189,248,0.12)' : 'rgba(229,38,47,0.12)';
       ctx.fillRect(w.x, w.y, T, T);
@@ -239,7 +222,7 @@ const drawPiece = (l: Live, now: number, hpAfter?: number) => {
   const k = `${l.p.type}${l.p.side}`;
   const img = now < l.flashUntil ? whites[k] : sprites[k];
   if (!img) return;
-  const pixel = opt.board !== 'flat';
+  const pixel = true;
   const s = T * 0.82;
   const { dx, dy, sx, sy } = l.pose;
   // 받침 아래 중심(0.85칸)을 기준으로 늘이고 누른다 — 게임과 같은 자세
@@ -472,10 +455,10 @@ const play = () => {
     }
     drawBoard();
     if (ms < 0 && atk) drawRange(atk.area);
-    if (ms < 0 && opt.board !== 'flat') drawPlan();
+    if (ms < 0) drawPlan();
     for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
     drawBoardTop();
-    if (ms < 0 && opt.board !== 'flat') drawKillMarks();
+    if (ms < 0) drawKillMarks();
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {
@@ -510,7 +493,7 @@ const play = () => {
 
 // ---------- 에셋 목록 ----------
 const KO: Record<string, string> = {
-  'tile-light': '밝은 칸', 'tile-dark': '어두운 칸', 's0-tile-light': '제미나이 밝은 칸', 's0-tile-dark': '제미나이 어두운 칸', fallen: '무너진 칸 (제미나이)',
+  'tile-light': '밝은 칸', 'tile-dark': '어두운 칸', fallen: '무너진 칸 (제미나이)',
   crack: '붕락 균열', stronghold: '요충지 (빈)', 'stronghold-ally': '요충지 (내가 점거)', 'stronghold-enemy': '요충지 (적이 점거)', 'stronghold-flag': '요충지 깃발 (빈)', 'stronghold-ally-flag': '요충지 깃발 (내 점거)', 'stronghold-enemy-flag': '요충지 깃발 (적 점거)', range: '내 공격 범위', 'range-enemy': '적 공격 범위', 'base-ally': '아군 발밑', 'base-enemy': '적 발밑', select: '선택',
   'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
@@ -526,12 +509,14 @@ const GROUPS: [string, string, string][] = [
   ['pieces', '기물 (사용자 도트)', '판 위 모든 그림의 크기 기준'],
   ['board', '판 칸 · 판 위 표식', '칸 = 20×20 도트. 숫자 배지는 1~9 중 일부만 표시'],
   ['code', '코드로 찍는 요소', '그 자리에서 계산해 찍는 것 — 움직임 포함'],
-  ['props', '지형 소품', '기물과 같은 검정 + 흰 테두리'],
-  ['hud', '주인공 · 태엽 · 눈금', '종이 왕관은 HUD 아이콘 후보 (킹 기물은 원래 그림, D-079)'],
+  ['props', '지형 소품 (불합격 — 다시 정할 때까지 자리 표시)', '판에는 올리지 않는다'],
+  ['hud', '태엽 · 눈금 · 해골', '판 밖 HUD 장치'],
   ['frames', 'UI 프레임', '회색 4단계 — 쓰임에 따라 코드가 색을 입힌다 (9-slice)'],
   ['icons', '아이콘 문양 30종', '흰색 한 가지 — 쓰임에 따라 코드가 색을 입힌다'],
 ];
 const S = 4; // 목록 확대 배율
+/** 목록에서 뺀 그림: 폐기된 시안 · 게임이 코드로 다시 찍는 것(움직이는 견본으로 보여 줌) */
+const HIDDEN = new Set(['s0-tile-light', 's0-tile-dark', 'target', 'target-kill', 'scan-sword', 'scan-skull', 'hud/king-crown', 'hud/paper-crown']);
 
 const renderGallery = () => {
   const box = document.getElementById('gallery')!;
@@ -549,10 +534,10 @@ const renderGallery = () => {
       items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
       items += item('피해 숫자 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
-      items += item('흔적 시안 B · 기록 줄 (하스스톤식)', 0, 0, '<canvas data-live="log" width="132" height="300"></canvas>');
+      items += item('기록 줄 (하스스톤식)', 0, 0, '<canvas data-live="log" width="132" height="300"></canvas>');
     } else {
       for (const e of GALLERY.filter((x) => x.dir === g)) {
-        if (/^badge-[ae][2-8]$/.test(e.name)) continue;
+        if (/^badge-[ae][2-8]$/.test(e.name) || HIDDEN.has(e.key)) continue;
         const { w, h } = e;
         const label = KO[e.key] ?? (e.name.startsWith('badge-a') ? `내 순번 ${e.name.slice(-1)}` : e.name.startsWith('badge-e') ? `적 순번 ${e.name.slice(-1)}` : e.name);
         items += item(label, w, h, `<img src="${SPRITES[e.key]}" width="${w * S}" height="${h * S}" alt="">`);
@@ -729,7 +714,6 @@ const init = () => {
       }),
     );
   bindSeg('data-side', (v) => (opt.side = Number(v) as Side));
-  bindSeg('data-board', (v) => (opt.board = v as Board));
   bindSeg('data-speed', (v) => (opt.speed = Number(v)));
   $('#replay').addEventListener('click', play);
   ($('#loop') as HTMLInputElement).addEventListener('change', (e) => {
@@ -737,8 +721,12 @@ const init = () => {
     if (opt.loop) play();
   });
   $('#questions').innerHTML = OPEN_QUESTIONS.map((q) => `<li>${q}</li>`).join('');
-  $('#decisions').innerHTML = DECISIONS.map((d) => `<tr><th scope="row">${d.item}</th><td>${d.rule}</td><td>${chip(d.status)}</td></tr>`).join('');
-  $('#log').innerHTML = CHANGELOG.map((c) => `<li><b>v${c.v}</b> <span class="muted">${c.date}</span><ul>${c.items.map((i) => `<li>${i}</li>`).join('')}</ul></li>`).join('');
+  const row = (d: (typeof DECISIONS)[number]) => `<tr><th scope="row">${d.item}</th><td>${d.rule}</td><td>${chip(d.status)}</td></tr>`;
+  $('#decisions').innerHTML = DECISIONS.filter((d) => d.status !== 'done').map(row).join('');
+  $('#decisions-done').innerHTML = DECISIONS.filter((d) => d.status === 'done').map(row).join('');
+  const entry = (c: (typeof CHANGELOG)[number]) => `<li><b>v${c.v}</b> <span class="muted">${c.date}</span><ul>${c.items.map((i) => `<li>${i}</li>`).join('')}</ul></li>`;
+  $('#log').innerHTML = CHANGELOG.slice(0, 4).map(entry).join('');
+  $('#log-old').innerHTML = CHANGELOG.slice(4).map(entry).join('');
   renderGallery();
   renderPanel();
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

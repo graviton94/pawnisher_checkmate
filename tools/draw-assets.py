@@ -233,7 +233,7 @@ for y, row in enumerate(CROWN_ART):
             crown.putpixel((x, y), CROWN_COLORS[ch] + (255,))
 save(grow_rim(crown), 'public/ui/hud/paper-crown.png')
 
-# 킹 왕관은 사용자 시안 그림을 그대로 잘라 쓴다 (D-076, public/ui/hud/king-crown.png — 직접 찍은 왕관은 폐기)
+# 왕관 쓴 폰 킹은 폐기 (D-079) — 킹은 원래 기물 그림
 
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')

@@ -20,12 +20,13 @@
 - 그래픽·세계관·에셋 디자인과 유저 테스트는 사용자 담당. 사용자 에셋은 직접 그리지 말고 그대로 쓴다 (`public/pieces/`).
   예외(사용자 결정 D-044·D-047·D-049): 판 칸·표식·소품·프레임은 **코드로 직접 찍고** (`tools/draw-board.py`, `tools/draw-assets.py`), 아이콘은 **공개 픽토그램을 도트화**한다 (`tools/pixelize-icons.cjs`, 출처 `docs/CREDITS.md`). 정 안 되는 것만 제미나이.
 - 커밋·푸시는 작업 단위마다. PR은 요청할 때만. **아티팩트(웹 플레이 링크)는 사용자가 말할 때만 갱신.**
+- **APK 빌드(workflow_dispatch)는 사용자가 요청할 때만 돌린다** (사용자 결정 D-080). 한 번 요청받았다고 다음 작업마다 돌리지 않는다.
 - **그래픽 결정은 FX 랩 아티팩트에 모은다** (https://claude.ai/artifact/KTe3M59GKkEVhubSKppZ7x, 사용자 결정 D-035). 이펙트·표식·색을 바꾸면 `tools/fxlab/decisions.ts`(상태·바뀐 점)를 고치고 `node tools/fxlab/build.cjs <scratchpad>/fxlab.html`로 만들어 같은 아티팩트에 다시 올린다. 사용자는 거기서 보고 피드백한다 — 매번 게임 화면을 찍어 보내지 않는다.
 - 사용자가 "왜 이렇게 됐냐"고 물으면 먼저 실제 화면에서 재현한다 (자동 플레이만으로 "된다"고 하지 않는다).
 
 ## 품질 게이트 (Claude Code Game Studios 방식을 우리 스택에 맞춤)
 - **로직**: 규칙·공식·AI는 Vitest 단위 테스트가 통과해야 끝 (`npm test`).
-- **밸런스**: 수치를 바꾸면 `/balance-check` (자동 등반 시뮬레이션) 결과를 D-025 곡선 목표와 비교해 보고.
+- **밸런스**: 핵심 재미 요소가 다 들어가기 전에는 난이도 수치 조정·승률 보고를 하지 않는다 (사용자 결정 D-080). 판 길이·피로도처럼 구조를 바꿀 때만 `/balance-check`로 확인.
 - **화면**: 플레이어가 보는 것을 바꾸면 `/run-and-observe`로 실제 모바일 해상도(915×412, DPR 2.625)에서
   탭으로 조작하고 스크린샷을 `production/qa/evidence/`에 남긴다. 파싱·타입체크는 실행 확인이 아니다.
 - **UI/UX**: 새 화면·HUD를 만들거나 바꾸면 `/ux-review`. 판정은 APPROVED / NOT ASSESSED / NEEDS REVISION / MAJOR REVISION.
@@ -46,7 +47,7 @@
 ## 코드 규칙
 - 게임 수치는 `src/data/`에 (하드코딩 금지), 근거는 주석·DECISIONS에.
 - 공개 함수에 짧은 한국어 문서 주석. 주변 코드 스타일을 따른다.
-- 커밋 메시지는 무엇을 왜 바꿨는지 영어 한 줄 + 필요 시 본문.
+- 커밋 메시지는 영어 한 줄 제목 + **한국어 요약 본문**(무엇을 왜 바꿨는지, 사용자가 읽는다 — 사용자 결정 D-080).
 
 ## 사용할 스킬
 - `/ui-ux-pro-max` — UI/UX 검색 DB (`python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<질의>" --domain ux`)

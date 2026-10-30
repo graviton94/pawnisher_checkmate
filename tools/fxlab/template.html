@@ -74,7 +74,7 @@ table { border-collapse: collapse; width: 100%; min-width: 520px; }
 th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-top: 1px solid var(--line); }
 th { color: var(--fg); font-weight: 700; white-space: nowrap; }
 td:last-child { width: 1%; }
-.sections { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.sections { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 860px) { .sections { grid-template-columns: minmax(0, 1fr); } }
 .ask { border-color: var(--crimson); }
 .gallery { display: grid; gap: 16px; }
@@ -98,11 +98,6 @@ td:last-child { width: 1%; }
       <div class="tabs" id="tabs" role="group" aria-label="기물"></div>
       <canvas id="stage" aria-label="공격 장면"></canvas>
       <div class="controls">
-        <div class="segs" role="group" aria-label="판 칸"><span class="label">판</span>
-          <button type="button" data-board="flat" aria-pressed="false">지금</button>
-          <button type="button" data-board="s0" aria-pressed="false">제미나이 S0</button>
-          <button type="button" data-board="dot" aria-pressed="true">코드 도트</button>
-        </div>
         <div class="segs" role="group" aria-label="진영"><span class="label">진영</span>
           <button type="button" data-side="0" aria-pressed="true">아군</button>
           <button type="button" data-side="1" aria-pressed="false">적</button>
@@ -125,8 +120,9 @@ td:last-child { width: 1%; }
       <ol id="questions"></ol>
     </section>
     <section class="panel">
-      <h3>바뀐 기록</h3>
+      <h3>최근 바뀐 것</h3>
       <ul id="log"></ul>
+      <details><summary class="muted">이전 기록</summary><ul id="log-old"></ul></details>
     </section>
   </div>
 
@@ -136,8 +132,9 @@ td:last-child { width: 1%; }
   </section>
 
   <section class="panel">
-    <h3>그래픽 결정</h3>
+    <h3>그래픽 결정 <span class="muted">— 확정은 접어 두고, 보는 중·대기만 펼침</span></h3>
     <div class="table"><table><tbody id="decisions"></tbody></table></div>
+    <details><summary class="muted">확정된 것</summary><div class="table"><table><tbody id="decisions-done"></tbody></table></div></details>
   </section>
 </div>
 
