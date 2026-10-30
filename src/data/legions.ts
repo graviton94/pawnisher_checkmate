@@ -53,7 +53,7 @@ export interface ArchetypeDef {
 export const ARCHETYPES: Record<ArchetypeId, ArchetypeDef> = {
   horde: { name: '폰 행렬', weight: { P: 3, N: 0.5, B: 0.5 }, enchants: ['E04', 'E12'], extra: 1, from: 1 },
   cavalry: { name: '기병 기습대', weight: { N: 4, P: 0.6 }, enchants: ['E01', 'E13', 'E17'], extra: 0, from: 2 },
-  battery: { name: '사선 포대', weight: { B: 4, Q: 2, P: 0.6 }, enchants: ['E02', 'E14', 'E18'], extra: 0, from: 2 },
+  battery: { name: '사선 포대', weight: { B: 4, Q: 1, P: 0.6 }, enchants: ['E02', 'E14', 'E18'], extra: 0, from: 2 },
   rampart: { name: '방벽 대열', weight: { R: 4, P: 1.2, N: 0.4, B: 0.4 }, enchants: ['E03', 'E08'], extra: 0, from: 4 },
 };
 

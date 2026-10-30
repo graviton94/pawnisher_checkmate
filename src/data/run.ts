@@ -66,7 +66,8 @@ export const boardFor = (floor: number, kind: NodeKind = 'battle', coin = 0): { 
 };
 
 // ---------- 보상 ----------
-export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3, perAct: 10 };
+/** D-099: perAct 10 → 0 — 주문서·나사 더미·나사 자루가 더해진 뒤 36층 도착 나사가 557로 남아돌았다 */
+export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3, perAct: 0 };
 /** 전투 골드: 기본 + Act 안 층 × 3 + (Act − 1) × 10 (층 전체로 키우면 Act 3에서 골드가 넘쳐 강화가 4~5유형 완성된다) */
 export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): number =>
   GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor + (actOf(floor) - 1) * GOLD_REWARD.perAct;
@@ -210,7 +211,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E01: 3 },
     cards: ['A01'],
-    forge: { N: 2 },
+    forge: { N: 3 }, // D-099: 첫 반장 승률 86% → 목표 65~80%
     arena: 'hooves',
   },
   bishop: {
@@ -221,7 +222,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
     enchants: { E02: 3 },
     cards: ['A03'],
-    forge: { B: 2 },
+    forge: { B: 3 },
     arena: 'lens',
   },
   rook: {
@@ -233,7 +234,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
     enchants: { E03: 3 },
     cards: ['A06'],
-    forge: { R: 1 },
+    forge: { R: 2 },
     arena: 'wall',
   },
 };

@@ -162,6 +162,10 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
     const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[killer.side];
     rec.finisher = killer.type;
   }
+  if (killer && killer.type === 'P' && enemyKills) {
+    const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[killer.side];
+    rec.pawnKills = (rec.pawnKills ?? 0) + enemyKills;
+  }
   if (killer && !ctx.chainDone && ctx.kills >= CHAIN_KILLS) {
     ctx.chainDone = true;
     tally(s, ctx, killer.id, 'chain');
@@ -328,7 +332,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   // 키워드 연계 개조 (D-095): 공격 전에 알 수 있는 수에 배율
   const lvT = (id: 'E17' | 'E18' | 'E19' | 'E20') => ench(s, attacker.side, id);
   const live = targets.filter((t) => t.hp > 0);
-  const forking = live.length >= 2;
+  // 포크 (D-099): 둘 이상 — 폰만 둘은 아니다 (시뮬에서 대국당 3.7회로 너무 흔했다)
+  const forking = live.length >= 2 && live.some((t) => t.type !== 'P');
   if (forking && lvT('E17') >= 1) mult *= 1 + live.length * TACTIC_ENCHANT.forkPerTarget;
   if (breach && lvT('E19') >= 1) mult *= TACTIC_ENCHANT.breachMult;
 
@@ -375,7 +380,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   // 전술 키워드 (D-094): 피해 공식은 그대로, 이름만 붙인다
   const direct = hits.filter((h) => !h.splash);
   if (direct.length) {
-    if (new Set(direct.map((h) => h.targetId)).size >= 2) tally(s, ctx, attacker.id, 'fork');
+    if (forking && new Set(direct.map((h) => h.targetId)).size >= 2) tally(s, ctx, attacker.id, 'fork');
     if (direct.some((h) => pierced.has(h.targetId))) tally(s, ctx, attacker.id, 'pierce');
     if (opened) tally(s, ctx, attacker.id, 'discover');
     if (breach) tally(s, ctx, attacker.id, 'breach');

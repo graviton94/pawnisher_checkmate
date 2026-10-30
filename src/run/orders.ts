@@ -10,7 +10,7 @@ import type { Rng } from '../engine/rng';
 export const pickOrder = (deck: PieceType[], rng: Rng): OrderId => {
   const pool = (Object.keys(ORDERS) as OrderId[]).filter((id) => {
     const needs = ORDERS[id].needs;
-    return !needs || needs.some((t) => deck.includes(t));
+    return !ORDERS[id].retired && (!needs || needs.some((t) => deck.includes(t)));
   });
   return pool[rng.int(pool.length)];
 };
@@ -47,6 +47,10 @@ export const orderProgress = (id: OrderId, s: BattleState, deck: PieceType[], ov
       const k = s.pieces.find((p) => p.side === 0 && p.type === 'K');
       const hurt = !k || k.hp < k.maxHp;
       return { done: over && won && !hurt, failed: hurt, count: '' };
+    }
+    case 'pawnWork': {
+      const n = rec?.pawnKills ?? 0;
+      return { done: n >= 3, failed: false, count: `${Math.min(n, 3)}/3` };
     }
     case 'pawnMate':
       return { done: won && rec?.finisher === 'P', failed: over && rec?.finisher !== 'P', count: '' };

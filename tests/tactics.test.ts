@@ -11,10 +11,13 @@ const withEnchant = (s: BattleState, id: 'E02', n: number) => {
 
 describe('전술 키워드 (GDD 11장 A1, D-094)', () => {
   it('포크: 한 공격이 적 둘 이상을 친다', () => {
-    const s = board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', tough], ['P', 1, 'e4', tough], ['K', 1, 'h8']]);
+    const s = board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', tough], ['B', 1, 'e4', tough], ['K', 1, 'h8']]);
     const r = simulate(s, [{ pieceId: 2, to: sq('c3') }]);
     expect(r.ok).toBe(true);
     expect(tactics(r.events)).toContain('fork');
+    // 폰만 둘은 포크가 아니다
+    const pawns = board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', tough], ['P', 1, 'e4', tough], ['K', 1, 'h8']]);
+    expect(tactics(simulate(pawns, [{ pieceId: 2, to: sq('c3') }]).events)).not.toContain('fork');
     expect(r.state.record?.[0].tactics.fork).toBe(1);
   });
 
@@ -74,7 +77,7 @@ describe('키워드 연계 개조 (GDD 11장 B4, D-095)', () => {
   };
   const dmgTo = (events: BattleEvent[], id: number) =>
     events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.targetId === id && !h.splash).map((h) => h.damage) : []))[0] ?? 0;
-  const fork = () => board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', tough], ['P', 1, 'e4', tough], ['K', 1, 'h8']]);
+  const fork = () => board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', tough], ['B', 1, 'e4', tough], ['K', 1, 'h8']]);
 
   it('갈래 톱날: 포크 피해가 늘고, 2단이면 태엽 +1, ★이면 한 번 더 친다', () => {
     const base = dmgTo(simulate(fork(), [{ pieceId: 2, to: sq('c3') }]).events, 3);

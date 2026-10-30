@@ -18,7 +18,7 @@ export interface TacticDef {
 
 /** 판정 순서 = 칩 표시 순서 */
 export const TACTICS: Record<TacticId, TacticDef> = {
-  fork: { name: '포크', icon: 'fork', color: '#7DD3FC', desc: '한 번에 적 둘 이상을 친다.' },
+  fork: { name: '포크', icon: 'fork', color: '#7DD3FC', desc: '한 번에 적 둘 이상을 친다. 폰만 둘은 포크가 아니다.' },
   pierce: { name: '관통', icon: 'pierce', color: '#FDBA74', desc: '사선이 첫 적을 꿰뚫고 뒤의 적까지 친다.' },
   discover: { name: '사선 개척', icon: 'eye', color: '#C4B5FD', desc: '앞 순번이 비켜 연 사선으로 친다.' },
   breach: { name: '돌파', icon: 'sword', color: '#FCA5A5', desc: '앞 순번이 처치해 비운 칸에 내려 친다.' },
@@ -29,7 +29,7 @@ export const TACTICS: Record<TacticId, TacticDef> = {
 /** 연쇄: 한 턴 처치 수 */
 export const CHAIN_KILLS = 3;
 
-export type OrderId = 'fork2' | 'pierce' | 'discover' | 'breach' | 'chain' | 'flawless' | 'ironKing' | 'pawnMate';
+export type OrderId = 'fork2' | 'pierce' | 'discover' | 'breach' | 'chain' | 'flawless' | 'ironKing' | 'pawnMate' | 'pawnWork';
 
 export interface OrderDef {
   /** 주문서 한 줄 (지시문, ~할 것) */
@@ -41,17 +41,21 @@ export interface OrderDef {
   gold: number;
   /** 이 주문을 낼 수 있는 군단 조건: 필요한 유형 중 하나라도 있어야 한다 */
   needs?: PieceType[];
+  /** 더 이상 내지 않는 주문 (옛 저장 호환용으로만 남김) */
+  retired?: boolean;
 }
 
 export const ORDERS: Record<OrderId, OrderDef> = {
   fork2: { text: '포크 2번.', tactic: 'fork', count: 2, gold: 20 },
   pierce: { text: '관통 1번.', tactic: 'pierce', count: 1, gold: 25, needs: ['B', 'R', 'Q'] },
   discover: { text: '사선 개척 1번.', tactic: 'discover', count: 1, gold: 20, needs: ['B', 'R', 'Q'] },
-  breach: { text: '돌파 1번.', tactic: 'breach', count: 1, gold: 20 },
+  breach: { text: '돌파 1번.', tactic: 'breach', count: 1, gold: 30 },
   chain: { text: '한 턴에 셋을 처치할 것.', tactic: 'chain', count: 1, gold: 30 },
   flawless: { text: '기물을 하나도 잃지 말 것.', gold: 25 },
   ironKing: { text: '킹은 흠집 없이.', gold: 20 },
-  pawnMate: { text: '마지막 일격은 폰으로.', gold: 30, needs: ['P'] },
+  // D-099: 시뮬 완수 1% — 폰으로 킹을 끝내는 판이 거의 없다 → 「폰으로 셋 처치」로 바꿈
+  pawnMate: { text: '마지막 일격은 폰으로.', gold: 30, needs: ['P'], retired: true },
+  pawnWork: { text: '폰으로 적 셋을 처치할 것.', gold: 25, needs: ['P'] },
 };
 
 /** 검문!·반장 대국은 주문 보상이 크다 */

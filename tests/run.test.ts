@@ -137,7 +137,7 @@ describe('보상과 노드', () => {
   });
 
   it('주문서는 군단으로 할 수 있는 것만 (폰이 없으면 폰 결정타 없음)', () => {
-    for (let seed = 1; seed < 200; seed++) expect(pickOrder(['K', 'N', 'N'], new Rng(seed))).not.toBe('pawnMate');
+    for (let seed = 1; seed < 200; seed++) { const o = pickOrder(['K', 'N', 'N'], new Rng(seed)); expect(o).not.toBe('pawnWork'); expect(o).not.toBe('pawnMate'); }
   });
   it('패배하면 런 종료', () => {
     const run = newRun(4);
