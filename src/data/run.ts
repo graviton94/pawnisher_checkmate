@@ -98,6 +98,8 @@ export const SHOP = {
   enchants: 1,
   /** 기물 가격 = 가치 × 이 배율 */
   pieceMult: 1.6,
+  /** 공정(Act)마다 고물상 값 +25% (D-099) */
+  actPriceStep: 0.25,
   /** 판매가 = 가치 × 이 배율 */
   sellMult: 0.6,
   cardPrice: { sustain: 55, consume: 85 },
@@ -150,7 +152,8 @@ export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
   return floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.8, atk: 0.9 } : { hp: 0.95, atk: 1 };
 };
 /** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
-export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
+/** D-099: 검문! 승률 88~92% → 목표 65~85%: 개량 +1 */
+export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 1 };
 /** 적 군단의 이형 거푸집 수 (GDD 13장 P2, D-084): 정예는 Act 1부터 1개 · Act 3 정예 2개, 일반은 Act 2부터 확률로 1개 (Act 3은 항상) */
 export const enemyVariantCount = (floor: number, kind: NodeKind, roll: number): number => {
   const act = actOf(floor);
@@ -249,6 +252,6 @@ export const FINAL_BOSS: BossDef = {
   deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
   enchants: { E05: 3, E08: 3, E06: 2 },
   cards: ['A06', 'C03'],
-  forge: { Q: 5, R: 3, K: 3 },
+  forge: { Q: 5, R: 4, K: 4 }, // D-099: 83% → 목표 55~80%
   arena: 'final',
 };

@@ -101,7 +101,7 @@ describe('보상과 노드', () => {
     st!.order = 'fork2';
     const b = createBattle({ width: st!.width, height: st!.height, decks: [run.deck, st!.deck], loadouts: [run.loadout, st!.loadout] });
     b.winner = 0;
-    b.record = [{ tactics: { fork: 2 } }, { tactics: {} }];
+    b.record = [{ tactics: { fork: 3 } }, { tactics: {} }];
     const gold = run.gold;
     finishBattle(run, b);
     if (run.stage.at !== 'reward') throw new Error('보상 단계가 아님');

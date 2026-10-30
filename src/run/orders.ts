@@ -1,5 +1,8 @@
 import { ORDERS, type OrderId } from '../data/tactics';
 import type { BattleState, PieceType } from '../engine/types';
+
+/** 「폰으로 적 둘」 (D-099: 셋은 완수 4%) */
+const PAWN_WORK = 2;
 import type { Rng } from '../engine/rng';
 
 /**
@@ -50,7 +53,7 @@ export const orderProgress = (id: OrderId, s: BattleState, deck: PieceType[], ov
     }
     case 'pawnWork': {
       const n = rec?.pawnKills ?? 0;
-      return { done: n >= 3, failed: false, count: `${Math.min(n, 3)}/3` };
+      return { done: n >= PAWN_WORK, failed: false, count: `${Math.min(n, PAWN_WORK)}/${PAWN_WORK}` };
     }
     case 'pawnMate':
       return { done: won && rec?.finisher === 'P', failed: over && rec?.finisher !== 'P', count: '' };

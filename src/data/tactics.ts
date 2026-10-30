@@ -46,7 +46,8 @@ export interface OrderDef {
 }
 
 export const ORDERS: Record<OrderId, OrderDef> = {
-  fork2: { text: '포크 2번.', tactic: 'fork', count: 2, gold: 20 },
+  // D-099: 포크 2번은 완수 70%로 공짜에 가까웠다 → 3번
+  fork2: { text: '포크 3번.', tactic: 'fork', count: 3, gold: 20 },
   pierce: { text: '관통 1번.', tactic: 'pierce', count: 1, gold: 25, needs: ['B', 'R', 'Q'] },
   discover: { text: '사선 개척 1번.', tactic: 'discover', count: 1, gold: 20, needs: ['B', 'R', 'Q'] },
   breach: { text: '돌파 1번.', tactic: 'breach', count: 1, gold: 30 },
@@ -55,8 +56,8 @@ export const ORDERS: Record<OrderId, OrderDef> = {
   ironKing: { text: '킹은 흠집 없이.', gold: 20 },
   // D-099: 시뮬 완수 1% — 폰으로 킹을 끝내는 판이 거의 없다 → 「폰으로 셋 처치」로 바꿈
   pawnMate: { text: '마지막 일격은 폰으로.', gold: 30, needs: ['P'], retired: true },
-  pawnWork: { text: '폰으로 적 셋을 처치할 것.', gold: 25, needs: ['P'] },
+  pawnWork: { text: '폰으로 적 둘을 처치할 것.', gold: 25, needs: ['P'] },
 };
 
 /** 검문!·반장 대국은 주문 보상이 크다 */
-export const ORDER_GOLD_MULT = { battle: 1, elite: 1.5, boss: 2 } as const;
+export const ORDER_GOLD_MULT = { battle: 1, elite: 1.3, boss: 1.6 } as const;

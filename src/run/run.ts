@@ -487,10 +487,13 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
     SHOP.cards,
   );
   const enchants = rollEnchants(run, rng, 'battle').slice(0, SHOP.enchants);
+  // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
+  const k = 1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep;
+  const at = (n: number) => Math.round(n * k);
   return {
-    pieces: pieces.map((item) => ({ item, price: piecePrice(item), sold: false })),
-    cards: cards.map((item) => ({ item, price: cardPrice(item), sold: false })),
-    enchants: enchants.map((item) => ({ item, price: enchantPrice(item), sold: false })),
+    pieces: pieces.map((item) => ({ item, price: at(piecePrice(item)), sold: false })),
+    cards: cards.map((item) => ({ item, price: at(cardPrice(item)), sold: false })),
+    enchants: enchants.map((item) => ({ item, price: at(enchantPrice(item)), sold: false })),
     rerollPrice,
   };
 };
