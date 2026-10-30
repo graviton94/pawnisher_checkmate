@@ -232,6 +232,29 @@ const scenarios = {
     }
     return [];
   },
+  // 반장 전장 규칙 (D-097): 비숍 반장 렌즈 조명 · 룩 반장 성벽
+  async 'battle-boss'(page) {
+    for (const boss of ['bishop', 'rook']) {
+      await loadRun(page, { at: 'map' }, { floor: 12, bosses: [boss, 'knight'], path: Array(11).fill(0), map: Array.from({ length: 36 }, () => [{ kind: 'boss' }]) });
+      await page.tap('[data-node="0"]'); await page.waitForTimeout(2200);
+      await page.screenshot({ path: path.join(OUT, `${stamp}-battle-boss-${boss}.png`) });
+    }
+    return [];
+  },
+  // 지형 (D-097): 2막 검문! 판
+  async 'battle-terrain'(page) {
+    await loadRun(page, { at: 'map' }, { floor: 15, path: Array(14).fill(0), map: Array.from({ length: 36 }, () => [{ kind: 'elite' }]) });
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(1400);
+    return ['battle-terrain'];
+  },
+  // 묘수풀이 (D-097): 고정 판 · 레일 목표 줄 → 해법대로 가동
+  async 'battle-puzzle'(page) {
+    await loadRun(page, { at: 'puzzle', id: 0 });
+    await page.waitForTimeout(1200);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-battle-puzzle.png`) });
+    await page.tap('#btn-submit'); await page.waitForTimeout(2500);
+    return ['battle-puzzle-fail'];
+  },
   // 영입 (D-096): 검문! 보상 — 쓰러뜨린 적 기물 하나, 이형이면 거푸집도
   async 'reward-recruit'(page) {
     await loadRun(page, { at: 'reward', title: '검문 통과!', lines: ['나사 +60'], choices: [{ type: 'recruit', options: ['N', 'B', 'R'], variants: { N: 'hammer' } }] });

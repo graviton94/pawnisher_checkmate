@@ -1,4 +1,5 @@
 import type { OrderId } from '../data/tactics';
+import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
 import { AFFIXES, ARCHETYPES, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import type { EnchantId } from '../data/enchants';
 import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
@@ -6,7 +7,7 @@ import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
 import type { BattleState } from '../engine/types';
-import type { Rng } from '../engine/rng';
+import { Rng } from '../engine/rng';
 import type { Deck } from '../engine/setup';
 import type { Loadout, PieceType } from '../engine/types';
 import { canAdd } from './deck';
@@ -155,9 +156,54 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   };
 };
 
+/**
+ * 지형 깔기 (D-097): 점대칭 쌍(양 진영 공평) · 진영 끝 두 줄 제외 · 나사 더미는 대칭 없이 한 칸.
+ * 반장 판은 전장 규칙(BossDef.arena)이 깐다.
+ */
+export const layTerrain = (s: BattleState, e: Encounter): void => {
+  const act = actOf(e.floor);
+  if (e.kind === 'boss') {
+    const def = e.floor === TOTAL_FLOORS ? FINAL_BOSS : e.boss ? BOSSES[e.boss] : null;
+    if (!def) return;
+    const arena = ARENAS[def.arena];
+    const tiles = arena.terrain(s.width, s.height);
+    if (tiles.length) s.terrain = tiles;
+    const ruins = arena.ruins?.(s.width, s.height) ?? [];
+    if (ruins.length) s.fallen = [...(s.fallen ?? []), ...ruins.map((r) => r.y * s.width + r.x)];
+    if (arena.collapseDelay && s.rules.collapseStart !== null) s.rules = { ...s.rules, collapseStart: s.rules.collapseStart + arena.collapseDelay };
+    return;
+  }
+  const rng = new Rng((e.seed ^ 0x7e11a) >>> 0);
+  const tiles: NonNullable<BattleState['terrain']> = [];
+  const free = (x: number, y: number) => y >= 2 && y <= s.height - 3 && !tiles.some((t) => t.x === x && t.y === y);
+  const kinds: TerrainId[] = ['platform', 'shelter', 'magnet'];
+  for (let n = terrainPairs(act, e.kind as 'battle' | 'elite'), guard = 0; n > 0 && guard < 50; guard++) {
+    const x = rng.int(s.width);
+    const y = 2 + rng.int(Math.max(1, s.height - 4));
+    const mx = s.width - 1 - x;
+    const my = s.height - 1 - y;
+    if (!free(x, y) || !free(mx, my) || (x === mx && y === my)) continue;
+    const kind = kinds[rng.int(kinds.length)];
+    tiles.push({ x, y, kind }, { x: mx, y: my, kind });
+    n--;
+  }
+  if (act >= 2 && rng.next() < SCREWS_CHANCE) {
+    for (let guard = 0; guard < 30; guard++) {
+      const x = rng.int(s.width);
+      const y = Math.floor(s.height / 2) + rng.int(Math.max(1, Math.floor(s.height / 2) - 2));
+      if (free(x, y)) {
+        tiles.push({ x, y, kind: 'screws' });
+        break;
+      }
+    }
+  }
+  if (tiles.length) s.terrain = tiles;
+};
+
 /** 런 전투를 만든다: 플레이어 덱·장비 대 군단 (+ 층별 적 킹 보정) */
 export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
   const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
+  layTerrain(s, e);
   // 정예 접사: 그 유형의 적 기물 한 기씩
   for (const a of e.affixes ?? []) {
     const p = s.pieces.find((q) => q.side === 1 && q.type === a.type && !q.affix);

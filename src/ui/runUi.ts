@@ -1,4 +1,6 @@
 import { TACTICS } from '../data/tactics';
+import { ARENAS } from '../data/terrain';
+import { puzzleBattle, puzzleFor } from '../run/puzzle';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -28,6 +30,7 @@ import {
   eventChoiceAvailable,
   eventChoose,
   finishBattle,
+  finishPuzzle,
   finishReward,
   forgeCost,
   forgeUp,
@@ -54,7 +57,7 @@ import { VARIANTS, VARIANT_FORGE_LEVEL, type VariantId } from '../data/variants'
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
-const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question' };
+const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
 const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame' };
 const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R' };
 
@@ -331,7 +334,28 @@ export class RunUi {
         return this.showEvent(run);
       case 'over':
         return this.showOver(run);
+      case 'puzzle':
+        return this.startPuzzle(run);
     }
+  }
+
+  /** 묘수풀이 (D-097): 고정 판 · 한 번 가동하면 끝 */
+  private startPuzzle(run: RunState): void {
+    if (run.stage.at !== 'puzzle') return;
+    const state = puzzleBattle(puzzleFor(run.stage.id));
+    this.hud.closeOverlay();
+    this.hud.closeScene();
+    this.hud.setOrder(null);
+    this.hud.setGoal(TEXT.puzzle.goal);
+    this.c.onPlayerTurn = null;
+    this.c.onBattleEnd = (s) => {
+      this.hud.setGoal(null);
+      finishPuzzle(run, s);
+      this.save();
+      window.setTimeout(() => this.show(), 600);
+    };
+    this.c.startState(state, 0, TUNED, { singleTurn: true });
+    this.hud.toast(TEXT.puzzle.opening);
   }
 
   /** 공정 지도: 1층 → 12층(반장)이 가로로 흐른다. 지금 층의 노드만 누를 수 있다 */
@@ -369,10 +393,11 @@ export class RunUi {
           <b>${boss.name}</b>
           <small class="lead dim">${boss.role}</small>
           <p class="quote">“${boss.quote}”</p>
+          <small class="lead arena">${icon('flag', 's')} ${ARENAS[boss.arena].name} — ${ARENAS[boss.arena].desc}</small>
           <small class="lead dim">${boss.title}</small>
         </div>
       </div>
-      <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'altar', 'event'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
+      <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'altar', 'event', 'puzzle'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
     );
     this.wireBar(el, run);
     this.wire(el, { node: (b) => this.act(enterNode(run, Number(b.dataset.node))) });
@@ -431,11 +456,17 @@ export class RunUi {
       window.setTimeout(() => this.show(), 600);
     };
     this.hud.setOrder(e.order ? { id: e.order, deck: [...run.deck] } : null);
+    this.hud.setGoal(null);
     this.c.startState(state, e.tier, TUNED);
     // 대국 시작 한 줄: 반장은 자기 대사, 검문!은 경고, 그 밖엔 공정과 군단 이름
     const opening =
       e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`;
     this.hud.toast(opening);
+    // 반장 전장 규칙 (D-097): 대사 다음에 규칙 한 줄
+    if (e.kind === 'boss') {
+      const arena = ARENAS[bossOf(run, run.floor).arena];
+      window.setTimeout(() => this.hud.toast(`전장 · ${arena.name} — ${arena.desc}`), 1700);
+    }
   }
 
   private showReward(run: RunState): void {

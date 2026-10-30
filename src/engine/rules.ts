@@ -44,6 +44,8 @@ const rowEnds = (s: BattleState, y: number): [number, number] => {
  */
 export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Pos[] => {
   const out: Pos[] = [];
+  // 자석판에 붙잡힌 턴에는 못 움직인다 (D-097)
+  if (piece.stuckTurn === s.turnNumber) return out;
   const seen = new Set<string>();
   const push = (x: number, y: number) => {
     const k = `${x},${y}`;

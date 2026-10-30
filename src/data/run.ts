@@ -1,3 +1,4 @@
+import type { ArenaId } from './terrain';
 import type { CardId } from './cards';
 import type { EnchantId } from './enchants';
 import type { PieceType } from '../engine/types';
@@ -21,7 +22,7 @@ export const START_DECKS: Deck[] = [
 ];
 export const START_GOLD = 50;
 
-export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' | 'event';
+export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' | 'event' | 'puzzle';
 
 export const NODE_NAMES: Record<NodeKind, string> = {
   battle: '대국',
@@ -31,6 +32,7 @@ export const NODE_NAMES: Record<NodeKind, string> = {
   forge: '공방',
   altar: '뽑기 기계',
   event: '돌발',
+  puzzle: '묘수',
 };
 
 /** 노드 등장 가중치 (층마다 2~3개를 뽑는다). */
@@ -41,6 +43,8 @@ export const NODE_WEIGHTS: Record<Exclude<NodeKind, 'boss'>, number> = {
   forge: 11,
   altar: 8,
   event: 10,
+  /** 묘수풀이 (D-097): 한 번의 가동으로 킹을 쓰러뜨리는 고정 판 */
+  puzzle: 7,
 };
 /** 엘리트가 나오기 시작하는 Act 안 층 (Act 1은 5층, Act 2·3은 2층) */
 export const eliteFrom = (floor: number): number => (actOf(floor) === 1 ? 5 : 2);
@@ -192,6 +196,8 @@ export interface BossDef {
   enchants: Partial<Record<EnchantId, number>>;
   cards: CardId[];
   forge: Partial<Record<PieceType, number>>;
+  /** 전장 규칙 (D-097, data/terrain.ts ARENAS) */
+  arena: ArenaId;
 }
 
 export const BOSSES: Record<BossId, BossDef> = {
@@ -205,6 +211,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     enchants: { E01: 3 },
     cards: ['A01'],
     forge: { N: 2 },
+    arena: 'hooves',
   },
   bishop: {
     name: '비숍 반장',
@@ -215,6 +222,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     enchants: { E02: 3 },
     cards: ['A03'],
     forge: { B: 2 },
+    arena: 'lens',
   },
   rook: {
     name: '룩 반장',
@@ -226,6 +234,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     enchants: { E03: 3 },
     cards: ['A06'],
     forge: { R: 1 },
+    arena: 'wall',
   },
 };
 
@@ -240,4 +249,5 @@ export const FINAL_BOSS: BossDef = {
   enchants: { E05: 3, E08: 3, E06: 2 },
   cards: ['A06', 'C03'],
   forge: { Q: 5, R: 3, K: 3 },
+  arena: 'final',
 };

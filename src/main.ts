@@ -1,3 +1,4 @@
+import { TERRAIN } from './data/terrain';
 import './fonts.css';
 import './style.css';
 import { BattleController } from './game/controller';
@@ -17,6 +18,12 @@ const renderer = new BoardRenderer(document.getElementById('board')!, {
     const p = controller.pieceInfo(pos);
     if (p) {
       hud.showInfo(p, x, y);
+      return;
+    }
+    // 지형 칸 (D-097): 이름 · 효과
+    const tr = controller.state?.terrain?.find((t) => t.x === pos.x && t.y === pos.y);
+    if (tr) {
+      hud.showStrongholdInfo(`<b style="color:${TERRAIN[tr.kind].color}">${TERRAIN[tr.kind].name}</b><br>${TERRAIN[tr.kind].desc}`, x, y);
       return;
     }
     const sh = controller.state?.stronghold;

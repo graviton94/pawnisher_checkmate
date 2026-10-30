@@ -199,11 +199,14 @@ export class BattleController {
   /** 런 전투용 훅: 내 차례가 시작될 때마다(자동 저장), 전투가 끝났을 때 */
   onPlayerTurn: ((s: BattleState) => void) | null = null;
   onBattleEnd: ((s: BattleState) => void) | null = null;
+  /** 묘수풀이: 한 번 가동하면 끝 (D-097) */
+  singleTurn = false;
 
   constructor(private view: BoardView, private hud: HudView) {}
 
   /** 이미 만든 전투 상태로 시작한다 (런 전투·이어하기) */
-  startState(state: BattleState, aiTier: number, weights: Weights): void {
+  startState(state: BattleState, aiTier: number, weights: Weights, opts: { singleTurn?: boolean } = {}): void {
+    this.singleTurn = !!opts.singleTurn;
     this.state = state;
     this.aiTier = aiTier;
     this.enemyWeights = weights;
@@ -217,6 +220,7 @@ export class BattleController {
   start(sc: Scenario, aiTier: number, weights: Weights | null, loadouts: [Loadout, Loadout] = [EMPTY_LOADOUT, EMPTY_LOADOUT]): void {
     this.onPlayerTurn = null;
     this.onBattleEnd = null;
+    this.singleTurn = false;
     this.state = createBattle({ width: sc.width, height: sc.height, decks: sc.decks, loadouts });
     this.aiTier = aiTier;
     this.enemyWeights = weights ?? sc.weights;
@@ -541,6 +545,13 @@ export class BattleController {
     this.clearPick();
     await this.runTurn(this.plan);
     if (this.isOver()) return;
+    // 묘수풀이: 가동은 한 번 — 못 쓰러뜨렸으면 거기서 끝
+    if (this.singleTurn) {
+      this.phase = 'over';
+      this.refresh();
+      this.onBattleEnd?.(this.state);
+      return;
+    }
     await this.enemyTurn();
   }
 

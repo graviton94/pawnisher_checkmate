@@ -9,6 +9,7 @@ import { FORGE_MAX } from '../data/forge';
 import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 import { VARIANTS } from '../data/variants';
 import { TEXT } from '../data/text';
+import { NODE_NAMES } from '../data/run';
 import { AFFIXES } from '../data/legions';
 import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
@@ -149,9 +150,21 @@ export class Hud implements HudView {
     this.order = order;
   }
 
+  /** 묘수풀이 목표 한 줄 (주문서 자리를 쓴다) */
+  private goal: string | null = null;
+  setGoal(text: string | null): void {
+    this.goal = text;
+  }
+
   /** 레일 한 줄: 주문서 · 진행 (완수 ✓ / 실패 줄 긋기) */
   private renderOrder(c: BattleController): void {
     const el = $('order');
+    if (this.goal) {
+      el.hidden = false;
+      el.className = `order${c.state.winner === 0 ? ' done' : ''}`;
+      el.innerHTML = `${icon('reticle', 's')}<span class="what"><b>${NODE_NAMES.puzzle}</b> ${this.goal}</span>`;
+      return;
+    }
     el.hidden = !this.order;
     if (!this.order) return;
     const def = ORDERS[this.order.id];
@@ -238,6 +251,7 @@ export class Hud implements HudView {
     if (p.fused) extra.push(`결합: ${p.fused.map((ty) => PIECE_NAMES_KO[ty]).join(' + ')}`);
     if (p.formAs) extra.push(`거푸집 교환: ${PIECE_NAMES_KO[p.formAs]} 행마`);
     if (p.variant && p.type === VARIANTS[p.variant].base) extra.push(`<span class="variant">이형 · ${VARIANTS[p.variant].name}</span><br><small>${VARIANTS[p.variant].gain} (${VARIANTS[p.variant].cost})</small>`);
+    if (p.stuckTurn !== undefined && p.stuckTurn >= (this.c.state?.turnNumber ?? 0)) extra.push('<span class="enemy">자석판에 붙잡혔다 — 다음 자기 턴에 못 움직인다</span>');
     if (p.affix) extra.push(`<span class="enemy">${AFFIXES[p.affix].name}</span><br><small>${AFFIXES[p.affix].desc}</small>`);
     const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
     if (forge) extra.push(`거푸집 개량 +${forge}`);

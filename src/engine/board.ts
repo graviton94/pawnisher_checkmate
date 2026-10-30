@@ -28,8 +28,12 @@ export const cloneState = (s: BattleState): BattleState => ({
   lastStrike: [...s.lastStrike] as BattleState['lastStrike'],
   pieces: s.pieces.map((p) => ({ ...p })),
   fallen: s.fallen ? [...s.fallen] : [],
+  terrain: s.terrain ? s.terrain.map((t) => ({ ...t })) : undefined,
   record: s.record ? [{ ...s.record[0], tactics: { ...s.record[0].tactics } }, { ...s.record[1], tactics: { ...s.record[1].tactics } }] : undefined,
 });
+
+/** 그 칸의 지형 (D-097) */
+export const terrainAt = (s: BattleState, x: number, y: number) => s.terrain?.find((t) => t.x === x && t.y === y)?.kind;
 
 export const findPiece = (s: BattleState, id: number): Piece | undefined =>
   s.pieces.find((p) => p.id === id);

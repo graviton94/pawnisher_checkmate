@@ -8,6 +8,7 @@ import { resolveTurn, type BattleState, type PieceType } from '../engine';
 import { canAdd } from '../run/deck';
 import { EVENTS } from '../run/events';
 import { encounterBattle } from '../run/legion';
+import { puzzleBattle, puzzleFor, solvePuzzle } from '../run/puzzle';
 import {
   altarGamble,
   altarPick,
@@ -17,6 +18,7 @@ import {
   eventChoiceAvailable,
   eventChoose,
   finishBattle,
+  finishPuzzle,
   finishReward,
   forgeCost,
   forgeUp,
@@ -126,11 +128,11 @@ export const autoRun = (seed: number): RunLog => {
           finishReward(run);
           break;
         }
-        if (ch.type === 'piece') {
+        if (ch.type === 'piece' || ch.type === 'recruit') {
           // 덱 주력 유형을 늘린다 (같은 유형이 많을수록 대장간·인챈트 효율이 오른다), 없으면 가치 높은 것
           const count = (t: PieceType) => run.deck.filter((x) => x === t).length;
           const best = [...ch.options].sort((a, b) => count(b) * 20 + PIECE_STATS[b].value - (count(a) * 20 + PIECE_STATS[a].value))[0];
-          takeChoice(run, best);
+          if (takeChoice(run, best)) skipChoice(run); // 군단이 꽉 찼으면 넘긴다
         } else if (ch.type === 'enchant') {
           const id = pickEnchant(run, ch.options);
           const full = !run.loadout.enchants[id] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
@@ -192,6 +194,14 @@ export const autoRun = (seed: number): RunLog => {
             if (altarPick(run, id)) leaveNode(run);
           } else if (now.at === 'altar') leaveNode(run);
         } else leaveNode(run);
+        break;
+      }
+      case 'puzzle': {
+        // 묘수풀이 (D-097): 자동 등반은 검증된 해법 길이까지 찾아 둔다 (잘 두는 사람 기준)
+        const def = puzzleFor(st.id);
+        const s = puzzleBattle(def);
+        const sol = solvePuzzle(s, def.steps);
+        finishPuzzle(run, sol ? resolveTurn(s, sol).state : s);
         break;
       }
       case 'event': {

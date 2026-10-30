@@ -1,6 +1,7 @@
 import { ORDERS, ORDER_GOLD_MULT } from '../data/tactics';
 import { orderProgress, pickOrder } from './orders';
 import { RECRUIT_OPTIONS } from '../data/legions';
+import { PUZZLE_GOLD } from '../data/puzzles';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
@@ -83,6 +84,8 @@ export type Stage =
   | { at: 'forge' }
   | { at: 'altar'; result?: AltarResult }
   | { at: 'event'; id: EventId; result?: string }
+  /** 묘수풀이 (D-097): 문제 번호 */
+  | { at: 'puzzle'; id: number }
   | { at: 'over'; won: boolean };
 
 export interface RunState {
@@ -248,6 +251,9 @@ export const enterNode = (run: RunState, index: number): string | void => {
     case 'event':
       run.stage = { at: 'event', id: node.event ?? 'gambler' };
       return;
+    case 'puzzle':
+      run.stage = { at: 'puzzle', id: withRng(run, (rng) => rng.int(1_000_000)) };
+      return;
   }
 };
 
@@ -261,6 +267,15 @@ export const leaveNode = (run: RunState): void => {
 /** 진행 중인 전투 상태를 런에 기록한다 (자동 저장용, GDD 8장 §8.1) */
 export const recordBattle = (run: RunState, battle: BattleState): void => {
   if (run.stage.at === 'battle') run.stage.battle = battle;
+};
+
+/** 묘수풀이가 끝났다 (D-097): 풀면 나사 + 개조 3지선다, 못 풀어도 출하는 이어진다 */
+export const finishPuzzle = (run: RunState, final: BattleState): void => {
+  if (run.stage.at !== 'puzzle') return;
+  if (final.winner === 0) {
+    run.gold += PUZZLE_GOLD;
+    run.stage = { at: 'reward', title: '묘수 풀이', lines: [`나사 +${PUZZLE_GOLD}`], choices: [{ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, 'battle')) }] };
+  } else run.stage = { at: 'reward', title: '묘수 실패', lines: ['킹이 버틴다. 판이 치워진다.'], choices: [] };
 };
 
 /** 전투가 끝났다. 패배면 런 종료, 승리면 보상 단계로. */
@@ -288,6 +303,12 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     const extra = Math.round(gold * PAR.bonus);
     run.gold += extra;
     lines.push(`빠른 승리 (${rounds}/${par}턴) 나사 +${extra}`);
+  }
+  // 나사 더미 (지형, D-097): 대국 중 주운 나사
+  const picked = final.record?.[0].gold ?? 0;
+  if (picked) {
+    run.gold += picked;
+    lines.push(`주운 나사 +${picked}`);
   }
   // 주문서 (D-094): 완수하면 나사
   const order = run.stage.encounter.order;

@@ -1,3 +1,4 @@
+import { TERRAIN } from '../data/terrain';
 import { AFFIXES } from '../data/legions';
 import { TACTICS } from '../data/tactics';
 import { sfx } from '../audio/sfx';
@@ -140,7 +141,7 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
-    for (const a of Object.values(AFFIXES)) this.load.image(`icon-${a.icon}`, `ui/icons/${a.icon}.png`);
+    for (const a of [...Object.values(AFFIXES), ...Object.values(TERRAIN)]) if (!this.textures.exists(`icon-${a.icon}`)) this.load.image(`icon-${a.icon}`, `ui/icons/${a.icon}.png`);
   }
 
   create(): void {
@@ -224,6 +225,18 @@ class BoardScene extends Phaser.Scene {
         const w = this.world({ x, y });
         put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? 'tile-dark' : 'tile-light', w.x, w.y);
       }
+    // 지형 (D-097): 칸 안쪽 색 테두리 + 가운데 흐린 아이콘 — 기물 아래에 깔린다
+    for (const tr of state.terrain ?? []) {
+      if (isFallen(state, tr.x, tr.y)) continue;
+      const w = this.world(tr);
+      const def = TERRAIN[tr.kind];
+      const col = Phaser.Display.Color.HexStringToColor(def.color).color;
+      const g = this.add.graphics();
+      g.fillStyle(col, 0.16).fillRect(w.x + 2 * d, w.y + 2 * d, t - 4 * d, t - 4 * d);
+      g.lineStyle(Math.max(1, d), col, 0.85).strokeRect(w.x + 2 * d, w.y + 2 * d, t - 4 * d, t - 4 * d);
+      this.tilesC.add(g);
+      this.tilesC.add(this.add.image(w.x + t / 2, w.y + t / 2, `icon-${def.icon}`).setDisplaySize(t * 0.42, t * 0.42).setTint(col).setAlpha(0.55));
+    }
     // 다음 라운드에 무너질 칸 예고: 철판에 간 금 (D-045)
     for (const p of upcomingCollapse(state)) {
       const w = this.world(p);
@@ -874,6 +887,16 @@ class BoardScene extends Phaser.Scene {
           s.glyph.setTexture(pieceKey(e.to, s.piece.side));
           s.piece = { ...s.piece, type: e.to };
         }
+        continue;
+      }
+      if (e.type === 'terrain') {
+        // 지형 발동: 자석판에 붙잡힘 · 나사 줍기
+        const sp = this.sprites.get(e.pieceId);
+        const def = TERRAIN[e.terrain];
+        if (sp) this.floatText(sp, e.gold ? `나사 +${e.gold}` : e.terrain === 'screws' ? '흩어졌다' : `${def.name}!`, def.color);
+        cur.terrain = (cur.terrain ?? []).filter((x) => !(x.x === e.pos.x && x.y === e.pos.y));
+        this.drawTiles(cur);
+        await this.wait(220);
         continue;
       }
       if (e.type === 'affix') {

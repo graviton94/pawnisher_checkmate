@@ -5,7 +5,8 @@ import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
 import { VARIANTS } from '../data/variants';
 import { AFFIX } from '../data/legions';
-import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
+import { TERRAIN_FX } from '../data/terrain';
+import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos, terrainAt } from './board';
 import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge, variantOn } from './rules';
 import {
   isMove,
@@ -225,6 +226,10 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
     const k = kingOf(s, t.side);
     if (k && k.id !== t.id && chebyshev(k, t) === 1) damage = Math.max(1, Math.round(damage * AFFIX.guardCut));
   }
+  // 지형 (D-097): 방호판 −20% · 조명 칸 +20%
+  const ground = terrainAt(s, t.x, t.y);
+  if (ground === 'shelter') damage = Math.max(1, Math.round(damage * TERRAIN_FX.shelterCut));
+  else if (ground === 'lit') damage = Math.round(damage * TERRAIN_FX.litMult);
   const shieldAbsorbed = Math.min(t.shield, damage);
   t.shield -= shieldAbsorbed;
   t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
@@ -271,12 +276,35 @@ const tacticAfter = (s: BattleState, ctx: TurnCtx, attacker: Piece, hits: HitRes
   }
 };
 
+/** 내려앉은 칸의 지형 (D-097): 자석판은 붙잡고 사라지고, 나사 더미는 내 기물이 주우면 나사 · 적이 밟으면 흩어진다 */
+const landOn = (s: BattleState, ctx: TurnCtx, piece: Piece): void => {
+  const i = s.terrain?.findIndex((t) => t.x === piece.x && t.y === piece.y) ?? -1;
+  if (i < 0) return;
+  const tile = s.terrain![i];
+  const pos = { x: tile.x, y: tile.y };
+  if (tile.kind === 'magnet') {
+    piece.stuckTurn = s.turnNumber + 2;
+    s.terrain!.splice(i, 1);
+    ctx.events.push({ type: 'terrain', pieceId: piece.id, terrain: 'magnet', pos });
+  } else if (tile.kind === 'screws') {
+    s.terrain!.splice(i, 1);
+    const gold = piece.side === 0 ? TERRAIN_FX.screwsGold : 0;
+    if (gold) {
+      const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[0];
+      rec.gold = (rec.gold ?? 0) + gold;
+    }
+    ctx.events.push({ type: 'terrain', pieceId: piece.id, terrain: 'screws', pos, ...(gold ? { gold } : {}) });
+  }
+};
+
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 파괴된 기물은 즉시 제거한다. 처치 수를 돌려준다. */
 const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: TurnCtx, mods: AttackMods): number => {
   const grid = buildGrid(s);
   const { targets, area, pierced } = attackScan(s, attacker, grid, { pierce: mods.pierce });
   let mult = mods.mult;
 
+  // 발판 (지형): 여기서 치면 피해 +30%
+  if (terrainAt(s, attacker.x, attacker.y) === 'platform') mult *= TERRAIN_FX.platformMult;
   // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
   const types = moveTypes(attacker);
   const lv = (id: 'E12' | 'E13' | 'E14' | 'E15') => ench(s, attacker.side, id);
@@ -502,6 +530,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         applyMove(s, piece, step.to);
         piece.movedTurn = s.turnNumber;
         updateHolder(s, piece);
+        landOn(s, ctx, piece);
         ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
         if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
         if (strike) {
