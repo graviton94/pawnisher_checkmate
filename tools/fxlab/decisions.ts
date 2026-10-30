@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 37, date: '2026-10-30' };
+export const VERSION = { n: 38, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,6 +48,7 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
+  '흰 킹 시안: 폰 + 왕관 반듯이 vs 15도 (에셋 목록 "흰 킹 시안")',
   '흐르는 화살표 (에셋 목록 "화살표" 견본 · 장면 계획 화면)',
   '검은 재 처치 (에셋 목록 "처치" 견본)',
   '피해 숫자 아래부터 지워짐 (에셋 목록 "피해 숫자" 견본, 장면 재생)',
@@ -86,6 +87,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 38, date: '2026-10-30', items: ['흰 킹 시안: 사용자 시안 왕관을 도트로(뾰족 셋, 가운데 높게, 어두운 띠) 폰 머리에 얹음 — 반듯 / 15도'] },
   { v: 37, date: '2026-10-30', items: ['흔적: B 기록 줄 채택(게임 오른쪽 레일), A 판 위 흔적 폐기'] },
   { v: 36, date: '2026-10-30', items: ['흔적 시안 A: 실행 후 출발·도착 칸 옅게 + 맞은 기물 피해 꼬리표', '흔적 시안 B: 하스스톤식 기록 줄 (에셋 목록)'] },
   { v: 35, date: '2026-10-30', items: ['처치 자리 잔해 표식 없앰'] },

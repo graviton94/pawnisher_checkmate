@@ -8,6 +8,7 @@ import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower,
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
+import { TURN_SUMMARY } from '../data/fx';
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
@@ -51,9 +52,12 @@ export interface BoardInput {
  * 기기 종류별 타일 크기 (CSS px = dp). GDD 9장 §9.2: 모바일 약 48dp, PC는 화면 높이에 맞춘 크기.
  * 판 그림은 칸 = 20도트라, 기기 픽셀로 한 도트가 정수 px가 되게 올림한다 (도트 굵기가 고르게 — D-071).
  */
-const tileSize = (dpr: number): number => {
+const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   const want = window.matchMedia('(pointer: coarse)').matches ? 48 : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
-  return (Math.ceil((want * dpr) / BOARD_DOTS) * BOARD_DOTS) / dpr;
+  // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
+  const fit = Math.min(want, viewH / (rows + 0.9), viewW / (cols + 0.5));
+  const dots = Math.max(5, Math.floor((fit * dpr) / BOARD_DOTS)); // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게)
+  return (dots * BOARD_DOTS) / dpr;
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
@@ -196,7 +200,7 @@ class BoardScene extends Phaser.Scene {
   // ---------- 보드 ----------
   setupBoard(state: BattleState): void {
     this.state = state;
-    this.tile = tileSize(this.dpr);
+    this.tile = tileSize(this.dpr, state.width, state.height, this.scale.width / this.dpr, this.scale.height / this.dpr);
     this.drawTiles(state);
     this.fitCamera(true);
   }
@@ -567,14 +571,16 @@ class BoardScene extends Phaser.Scene {
 
   /**
    * 턴 합계 (D-073, 발라트로식): 내 턴이면 판 가운데에 준 피해가 0부터 세어 올라가며 커졌다가 자리 잡고, 처치 수가 붙는다.
-   * 적 턴이면 위쪽에 작게 "잃음 −n".
+   * 적 턴이거나 작은 턴(처치 없음 · 피해 TURN_SUMMARY.bigDamage 미만)이면 위쪽에 작게.
    */
   async summary(side: Side, damage: number, kills: number): Promise<void> {
     const t = this.tile;
     const { x, y } = this.camCenter;
     const font = (px: number) => ({ fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(px)}px`, stroke: '#0B0B0E', strokeThickness: Math.max(4, px / 6) });
-    if (side === 1) {
-      const lost = this.add.text(x, y - t * 2.2, `잃음 −${damage}`, { ...font(t * 0.42), color: '#FF6B6B' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
+    if (side === 1 || (kills === 0 && damage < TURN_SUMMARY.bigDamage)) {
+      // 적 턴, 또는 작은 내 턴: 위쪽에 작게 (판을 가리지 않고 기다림도 짧게)
+      const text = side === 1 ? `잃음 −${damage}` : `피해 ${damage}`;
+      const lost = this.add.text(x, y - t * 2.2, text, { ...font(t * 0.42), color: side === 1 ? '#FF6B6B' : '#7DD3FC' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
       await this.tween({ targets: lost, y: lost.y - t * 0.3, alpha: { from: 1, to: 0 }, delay: 500, duration: 300 });
       lost.destroy();
       return;

@@ -59,3 +59,6 @@ export const FX_POWER = {
 
 /** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
 export const FX_SHAKE = { damage: 4, ms: 160, intensity: 0.005, killIntensity: 0.009, vibrateHit: 25, vibrateKill: 45 };
+
+/** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
+export const TURN_SUMMARY = { bigDamage: 40 };

@@ -232,6 +232,26 @@ for y, row in enumerate(CROWN_ART):
         if ch != '.':
             crown.putpixel((x, y), CROWN_COLORS[ch] + (255,))
 save(grow_rim(crown), 'public/ui/hud/paper-crown.png')
+
+# 킹 왕관 (D-074, 사용자 시안): 뾰족 셋(가운데가 높다) + 몸통 + 어두운 띠. 폰 머리 폭(몸통 7도트). 아래쪽 흰 테두리는 빼서
+# 폰 머리에 얹으면 검정 선이 바로 머리에 닿는다 (두 그림의 테두리가 하나로 이어진다)
+C['G'] = (0xF7, 0xC9, 0x48)
+C['g'] = (0xD9, 0x9A, 0x1E)
+KING_CROWN = [
+    '...G...',
+    'G.GGG.G',
+    'GGGGGGG',
+    'GGGGGGg',
+    'ggggggg',
+]
+kc = outline(art(KING_CROWN))
+px = kc.load()
+w, h = kc.size
+for x in range(w):
+    if px[x, h - 1][:3] == C['w']:
+        px[x, h - 1] = (0, 0, 0, 0)
+save(kc.crop(kc.getbbox()), 'public/ui/hud/king-crown.png')
+
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')
 save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')

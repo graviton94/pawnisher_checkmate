@@ -544,7 +544,7 @@ const renderGallery = () => {
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
-      items += item('종이 왕관 킹 (조합 · 15도)', 24, 30, '<canvas data-live="king" width="96" height="120"></canvas>');
+      items += item('흰 킹 시안 (폰 + 왕관: 반듯 / 15도)', 0, 0, '<canvas data-live="king" width="200" height="120"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
@@ -614,22 +614,22 @@ const renderGallery = () => {
     ap.flow([{ x: 8, y: 40 }, { x: 64, y: 40 }], 0x38bdf8, now);
     ap.flow([{ x: 88, y: 72 }, { x: 144, y: 16 }], 0x38bdf8, now);
     ap.flow([{ x: 176, y: 72 }, { x: 176, y: 24 }, { x: 228, y: 24 }], 0xe5262f, now);
-    // 종이 왕관 킹: 사용자 폰 + 왕관
-    kgC.clearRect(0, 0, 96, 120);
+    // 흰 킹 시안 (D-074): 우리 흰 폰 + 왕관(사용자 시안을 도트로). 왕관 아랫단 검정 선이 폰 머리 꼭대기에 닿게 얹는다
+    kgC.clearRect(0, 0, 200, 120);
     const pawn = sprites.P0;
-    const crown = sprites['hud/paper-crown'];
-    if (pawn?.complete) kgC.drawImage(pawn, 16, 52, 64, 64);
-    // 왕관 (D-063·D-065): 도트 그림을 화면 크기로 먼저 굽고(도트는 반듯한 사각형), 구운 그림을 부드럽게 15도 돌려 얹는다 → 계단 없음
-    const baked = bake('hud/paper-crown', S);
-    if (baked) {
+    const kc = bake('hud/king-crown', S);
+    [0, 15].forEach((deg, i) => {
+      const ox = 12 + i * 100;
+      tile(kgC, i === 1, ox, 40);
+      if (pawn?.complete) kgC.drawImage(pawn, ox + 0.09 * 80, 40 + 0.43 * 80 - 0.41 * 80, 0.82 * 80, 0.82 * 80);
+      if (!kc) return;
       kgC.save();
-      kgC.imageSmoothingEnabled = true;
-      kgC.imageSmoothingQuality = 'high';
-      kgC.translate(48 + S, 52 + 3 * S);
-      kgC.rotate((15 * Math.PI) / 180);
-      kgC.drawImage(baked, -baked.width / 2, -baked.height + S);
+      kgC.imageSmoothingEnabled = deg !== 0;
+      kgC.translate(ox + 40, 40 + 4.5 * S); // 왕관 아랫단이 폰 머리 위쪽을 살짝 덮는다
+      kgC.rotate((deg * Math.PI) / 180);
+      kgC.drawImage(kc, -kc.width / 2, -kc.height);
       kgC.restore();
-    }
+    });
     // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤
     gtC.clearRect(0, 0, 240, 80);
     (['ally', 'kill', 'enemy'] as const).forEach((k, i) => {
