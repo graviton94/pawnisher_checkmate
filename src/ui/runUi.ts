@@ -1,3 +1,4 @@
+import { TACTICS } from '../data/tactics';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -77,7 +78,10 @@ const enchantOffer = (id: EnchantId, next: number, run: RunState | null): string
   }
   if (next === 2) tags.push('<i class="tag">★까지 1단</i>');
   if (next === 3) tags.push('<i class="tag gold">★ 걸작!</i>');
-  return `<span class="kind">${icon('wrench', 's')} 개조 · ${def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
+  // 키워드 연계 개조 (D-095): 그 수의 아이콘·색으로
+  const tac = def.tactic ? TACTICS[def.tactic] : null;
+  const kindIcon = tac ? icon(tac.icon, 's', tac.color) : icon('wrench', 's');
+  return `<span class="kind">${kindIcon} 개조 · ${tac ? `<span style="color:${tac.color}">${def.target}</span>` : def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
 };
 
 const cardOffer = (id: CardId): string => {

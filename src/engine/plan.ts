@@ -1,6 +1,6 @@
 import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, type CardUse } from '../data/cards';
-import { SYNERGY } from '../data/enchants';
+import { SYNERGY, TACTIC_ENCHANT } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
 import { VARIANTS } from '../data/variants';
@@ -110,6 +110,8 @@ interface TurnCtx {
   /** 이번 턴 처치로 빈 적 칸과 그 순번 (돌파 키워드) */
   vacated: { pos: Pos; order: number }[];
   chainDone: boolean;
+  /** 키워드 연계 개조의 턴당 1회 태엽 (갈래 톱날 · 돌파 쐐기) */
+  tacticAp: Set<string>;
 }
 
 /** 전술 키워드를 기록한다 (D-094): 사건 + 진영별 횟수 */
@@ -212,6 +214,38 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
 
 const SLIDERS: PieceType[] = ['B', 'R', 'Q'];
 
+/** 키워드 연계 개조의 공격 뒤 효과 (D-095): 태엽 · 방열판 · 주변 타격 */
+const tacticAfter = (s: BattleState, ctx: TurnCtx, attacker: Piece, hits: HitResult[], got: { fork: boolean; breach: boolean; mult: number }): void => {
+  const side = attacker.side;
+  const lv = (id: 'E17' | 'E19' | 'E20') => ench(s, side, id);
+  const apOnce = (key: string) => {
+    if (ctx.tacticAp.has(key)) return;
+    ctx.tacticAp.add(key);
+    s.apBonus[side] += 1;
+    ctx.events.push({ type: 'apGain', side, amount: 1 });
+  };
+  if (got.fork && lv('E17') >= 2) apOnce('fork');
+  if (got.breach && lv('E19') >= 2) apOnce('breach');
+  // 주변 8칸 적에게 이 공격의 50% (돌파 쐐기 ★ · 비상 경보 ★)
+  const ring = (cx: number, cy: number) => {
+    const out: HitResult[] = [];
+    for (const n of s.pieces.filter((p) => p.side !== side && p.hp > 0 && chebyshev(p, { x: cx, y: cy }) === 1)) {
+      out.push(applyDamage(s, n, Math.max(1, Math.floor(damageOf(s, attacker, n, got.mult) * TACTIC_ENCHANT.extraHit)), true));
+    }
+    if (out.length) ctx.events.push({ type: 'attack', order: ctx.order, attackerId: attacker.id, area: [], hits: out });
+  };
+  if (got.breach && lv('E19') >= 3) ring(attacker.x, attacker.y);
+  const checked = hits.find((h) => h.checked);
+  if (checked && lv('E20') >= 1) {
+    attacker.shield += TACTIC_ENCHANT.checkShield;
+    ctx.events.push({ type: 'shield', pieceId: attacker.id, amount: TACTIC_ENCHANT.checkShield });
+  }
+  if (checked && lv('E20') >= 3) {
+    const k = findPiece(s, checked.targetId);
+    if (k) ring(k.x, k.y);
+  }
+};
+
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 파괴된 기물은 즉시 제거한다. 처치 수를 돌려준다. */
 const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: TurnCtx, mods: AttackMods): number => {
   const grid = buildGrid(s);
@@ -238,6 +272,12 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   if (e09 >= 1 && opened) mult *= e09 >= 2 ? 1.6 : 1.3;
   // 돌파: 앞 순번이 처치해 비운 칸에 내려앉아 친다
   const breach = ctx.vacated.some((v) => v.order < ctx.order && samePos(v.pos, attacker));
+  // 키워드 연계 개조 (D-095): 공격 전에 알 수 있는 수에 배율
+  const lvT = (id: 'E17' | 'E18' | 'E19' | 'E20') => ench(s, attacker.side, id);
+  const live = targets.filter((t) => t.hp > 0);
+  const forking = live.length >= 2;
+  if (forking && lvT('E17') >= 1) mult *= 1 + live.length * TACTIC_ENCHANT.forkPerTarget;
+  if (breach && lvT('E19') >= 1) mult *= TACTIC_ENCHANT.breachMult;
 
   const hits: HitResult[] = [];
   const primary = new Set(targets.map((t) => t.id));
@@ -245,6 +285,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     if (t.hp <= 0) continue;
     let dmg = damageOf(s, attacker, t, mult);
     if (e09 >= 3 && (ctx.hitCount.get(t.id) ?? 0) >= 1) dmg *= 2;
+    if (pierced.has(t.id) && lvT('E18') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.pierceMult);
+    if (t.type === 'K' && lvT('E20') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.kingMult);
     const origin = { x: t.x, y: t.y };
     const hit = applyDamage(s, t, dmg);
     ctx.hitCount.set(t.id, (ctx.hitCount.get(t.id) ?? 0) + 1);
@@ -263,6 +305,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
       }
     }
     hits.push(hit);
+    // 갈래 톱날 ★: 포크로 맞힌 적마다 한 번 더
+    if (forking && lvT('E17') >= 3 && victim.hp > 0) hits.push(applyDamage(s, victim, Math.max(1, Math.floor(dmg * TACTIC_ENCHANT.extraHit)), true));
 
     // 번개·연쇄 (E01 2장·★, C03): 맞은 적의 상하좌우 적에게 부가 피해
     if (mods.splash > 0) {
@@ -284,6 +328,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     if (breach) tally(s, ctx, attacker.id, 'breach');
   }
   if (hits.some((h) => h.checked)) tally(s, ctx, attacker.id, 'check');
+  tacticAfter(s, ctx, attacker, hits, { fork: direct.length > 0 && forking, breach: direct.length > 0 && breach, mult });
   return resolveDeaths(s, ctx, attacker);
 };
 
@@ -367,6 +412,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     order: 0,
     vacated: [],
     chainDone: false,
+    tacticAp: new Set(),
   };
   let apUsed = 0;
   let prevKilled = false;

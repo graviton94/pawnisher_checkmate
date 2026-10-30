@@ -1,11 +1,15 @@
 /** 개조 카탈로그 (GDD 7장 §7.2, 코드 이름 enchant). 1단 · 2단 · ★걸작. 이름은 world.md §6 「무엇을 + 어떻게 고쳤나」 (D-085). */
-export type EnchantId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07' | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13' | 'E14' | 'E15' | 'E16';
+import type { TacticId } from './tactics';
+
+export type EnchantId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07' | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13' | 'E14' | 'E15' | 'E16' | 'E17' | 'E18' | 'E19' | 'E20';
 
 export interface EnchantDef {
   name: string;
   /** 대상 표시용 */
   target: string;
   levels: [string, string, string];
+  /** 전술 키워드 연계 개조 (D-095): 이 키워드가 나야 효과가 난다 */
+  tactic?: TacticId;
 }
 
 export const ENCHANTS: Record<EnchantId, EnchantDef> = {
@@ -51,7 +55,8 @@ export const ENCHANTS: Record<EnchantId, EnchantDef> = {
   },
   E09: {
     name: '사선 개방 밸브',
-    target: '군단 전체',
+    target: '사선 개척',
+    tactic: 'discover',
     levels: ['이번 턴 아군이 비켜 줘서 열린 사선으로 공격하면 ATK +30%', '그 보너스가 +60%', '★ 십자 포화: 한 턴에 두 번째 이후로 맞는 적은 피해 2배'],
   },
   E10: {
@@ -81,7 +86,8 @@ export const ENCHANTS: Record<EnchantId, EnchantDef> = {
   },
   E15: {
     name: '연쇄 점화',
-    target: '군단 전체',
+    target: '연쇄',
+    tactic: 'chain',
     levels: ['이번 턴 처치할 때마다 이후 모든 공격 피해 ×1.2 (누적)', '처치마다 ×1.3', '★ 연쇄 폭발: 처치마다 ×1.5'],
   },
   E16: {
@@ -89,6 +95,46 @@ export const ENCHANTS: Record<EnchantId, EnchantDef> = {
     target: '기관',
     levels: ['적의 다음 턴 첫 수를 미리 본다 (지금 가동하면 둘 수)', '첫 2수를 미리 본다', '★ 전부 감청: 적의 다음 턴 수를 전부 본다'],
   },
+  // 키워드 연계 개조 (GDD 11장 B4, D-095): 수에 이름이 붙으면 힘이 붙는다
+  E17: {
+    name: '갈래 톱날',
+    target: '포크',
+    tactic: 'fork',
+    levels: ['포크 피해 +15% (맞힌 적 1기당)', '포크가 나면 그 턴 태엽 +1 (턴당 1회)', '★ 세 갈래: 포크로 맞힌 적마다 한 번 더 50% 타격'],
+  },
+  E18: {
+    name: '천공 드릴',
+    target: '관통',
+    tactic: 'pierce',
+    levels: ['사선 기물이 첫 적을 꿰뚫는다', '관통으로 맞힌 적 피해 +50%', '★ 관통 드릴: 사선 끝까지 모든 적을 꿰뚫는다'],
+  },
+  E19: {
+    name: '돌파 쐐기',
+    target: '돌파',
+    tactic: 'breach',
+    levels: ['돌파 공격 피해 +40%', '돌파가 나면 그 턴 태엽 +1 (턴당 1회)', '★ 쐐기 박기: 돌파 착지 칸 주변 8칸 적에게 50% 피해'],
+  },
+  E20: {
+    name: '체크 경보기',
+    target: '체크',
+    tactic: 'check',
+    levels: ['체크를 건 기물 방열판 +15', '적 킹을 치는 공격 피해 +30%', '★ 비상 경보: 체크가 나면 그 킹 주변 8칸 적에게 50% 피해'],
+  },
+};
+
+/** 키워드 연계 개조 수치 (D-095) 🔧 */
+export const TACTIC_ENCHANT = {
+  /** 갈래 톱날 1단: 포크로 맞힌 적 1기당 피해 배율 가산 */
+  forkPerTarget: 0.15,
+  /** 갈래 톱날 ★ · 돌파 쐐기 ★ · 체크 경보기 ★: 추가 타격 비율 */
+  extraHit: 0.5,
+  /** 천공 드릴 2단: 관통으로 맞힌 적 피해 배율 */
+  pierceMult: 1.5,
+  /** 돌파 쐐기 1단 */
+  breachMult: 1.4,
+  /** 체크 경보기 1단: 방열판 · 2단: 킹 피해 배율 */
+  checkShield: 15,
+  kingMult: 1.3,
 };
 
 /**

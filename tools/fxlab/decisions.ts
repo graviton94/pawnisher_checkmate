@@ -82,6 +82,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '흰 킹', rule: '원래 킹 기물 그림 (왕관 쓴 폰 안은 접음, D-079)', status: 'done' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로', status: 'done' },
   { item: '전술 키워드', rule: '공격 순간 친 기물 위에 이름 배너 (포크 하늘 · 관통 주황 · 사선 개척 보라 · 돌파 분홍 · 연쇄 금, 0.5초). 명령 테이프에 미리보기 칩, 기록 줄에 아이콘 칩 (D-094)', status: 'review' },
+  { item: '키워드 개조 카드', rule: '개조 고르기 카드의 대상 줄에 그 수의 아이콘 + 색 (갈래 톱날 = 포크 하늘색 등, D-095)', status: 'review' },
   { item: '주문서', rule: '레일 한 줄: 아이콘 + 주문서 + 지시문 + 진행 (1/2 · 완수 ★ · 실패 줄 긋기) (D-094)', status: 'review' },
   { item: '기록 줄', rule: '판 위 흔적 대신 오른쪽 레일에 하스스톤식 기록 줄 (누르면 그 수를 다시 보여 줌)', status: 'done' },
 ];

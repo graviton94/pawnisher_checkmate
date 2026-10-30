@@ -66,3 +66,56 @@ describe('전술 키워드 (GDD 11장 A1, D-094)', () => {
     expect(r.state.record?.[0].finisher).toBe('P');
   });
 });
+
+describe('키워드 연계 개조 (GDD 11장 B4, D-095)', () => {
+  const ench = (s: BattleState, id: 'E17' | 'E18' | 'E19' | 'E20', n: number) => {
+    s.loadouts[0].enchants[id] = n;
+    return s;
+  };
+  const dmgTo = (events: BattleEvent[], id: number) =>
+    events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.targetId === id && !h.splash).map((h) => h.damage) : []))[0] ?? 0;
+  const fork = () => board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', tough], ['P', 1, 'e4', tough], ['K', 1, 'h8']]);
+
+  it('갈래 톱날: 포크 피해가 늘고, 2단이면 태엽 +1, ★이면 한 번 더 친다', () => {
+    const base = dmgTo(simulate(fork(), [{ pieceId: 2, to: sq('c3') }]).events, 3);
+    const r1 = simulate(ench(fork(), 'E17', 1), [{ pieceId: 2, to: sq('c3') }]);
+    expect(dmgTo(r1.events, 3)).toBeGreaterThan(base);
+    const r2 = simulate(ench(fork(), 'E17', 2), [{ pieceId: 2, to: sq('c3') }]);
+    expect(r2.events.some((e) => e.type === 'apGain')).toBe(true);
+    const r3 = simulate(ench(fork(), 'E17', 3), [{ pieceId: 2, to: sq('c3') }]);
+    const extra = r3.events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.splash) : []));
+    expect(extra).toHaveLength(2);
+  });
+
+  it('천공 드릴: 룩 사선도 첫 적을 꿰뚫고(관통), 2단이면 뒤의 적 피해가 크다', () => {
+    const rook = () => board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a5', tough], ['P', 1, 'a7', tough], ['K', 1, 'h8']]);
+    expect(tactics(simulate(rook(), [{ pieceId: 2, to: sq('a2') }]).events)).not.toContain('pierce');
+    const r1 = simulate(ench(rook(), 'E18', 1), [{ pieceId: 2, to: sq('a2') }]);
+    expect(tactics(r1.events)).toContain('pierce');
+    const r2 = simulate(ench(rook(), 'E18', 2), [{ pieceId: 2, to: sq('a2') }]);
+    expect(dmgTo(r2.events, 4)).toBeGreaterThan(dmgTo(r1.events, 4));
+  });
+
+  it('돌파 쐐기: 돌파 피해가 늘고, ★이면 착지 칸 주변 적도 맞는다', () => {
+    const land = () => board([['K', 0, 'h1'], ['R', 0, 'a1'], ['N', 0, 'c4'], ['P', 1, 'a5', { hp: 1, maxHp: 1 }], ['P', 1, 'b7', tough], ['P', 1, 'b6', tough], ['K', 1, 'h8']]);
+    const plan = [{ pieceId: 2, to: sq('a2') }, { pieceId: 3, to: sq('a5') }];
+    const base = dmgTo(simulate(land(), plan).events, 5);
+    expect(dmgTo(simulate(ench(land(), 'E19', 1), plan).events, 5)).toBeGreaterThan(base);
+    const r3 = simulate(ench(land(), 'E19', 3), plan);
+    expect(r3.events.some((e) => e.type === 'attack' && e.hits.some((h) => h.targetId === 6 && h.splash))).toBe(true);
+  });
+
+  it('체크 경보기: 체크를 건 기물 방열판, 2단이면 킹 피해 +30%', () => {
+    const chk = () => {
+      const s = board([['K', 0, 'h1'], ['R', 0, 'a1'], ['K', 1, 'a6', { hp: 5, maxHp: 50 }]]);
+      s.rules.checkmate = true;
+      return s;
+    };
+    const r1 = simulate(ench(chk(), 'E20', 1), [{ pieceId: 2, to: sq('a2') }]);
+    expect(tactics(r1.events)).toContain('check');
+    expect(r1.state.pieces.find((p) => p.id === 2)!.shield).toBe(15);
+    const plain = board([['K', 0, 'h1'], ['R', 0, 'a1'], ['K', 1, 'a6', { hp: 500, maxHp: 500 }]]);
+    const hit = (s: BattleState) => dmgTo(simulate(s, [{ pieceId: 2, to: sq('a2') }]).events, 3);
+    expect(hit(ench(board([['K', 0, 'h1'], ['R', 0, 'a1'], ['K', 1, 'a6', { hp: 500, maxHp: 500 }]]), 'E20', 2))).toBeGreaterThan(hit(plain));
+  });
+});

@@ -193,7 +193,7 @@ const scenarios = {
   },
   // 출하 화면들 (D-085): 저장된 출하를 심고 → 타이틀 → 이어서 출하
   async reward(page) {
-    await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] });
+    await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });
     await page.tap('[data-pick="N"]'); await page.waitForTimeout(400);
     return ['reward-enchant'];

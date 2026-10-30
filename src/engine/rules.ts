@@ -147,7 +147,9 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
         break;
       default: {
         const bishopLevel = type === 'B' ? ench(s, piece.side, 'E02') : 0;
-        const basePierce = (opts.pierce ?? 0) + (bishopLevel >= 3 ? Infinity : bishopLevel >= 2 ? 1 : 0);
+        // 천공 드릴 (E18): 사선 기물 모두 관통 1 · ★ 끝까지
+        const drill = ench(s, piece.side, 'E18');
+        const basePierce = (opts.pierce ?? 0) + (bishopLevel >= 3 ? Infinity : bishopLevel >= 2 ? 1 : 0) + (drill >= 3 ? Infinity : drill >= 1 ? 1 : 0);
         // 반사경 비숍 (이형): 대각 사선이 판 가장자리에 닿으면 한 번 꺾인다
         const mirror = type === 'B' && variantOn(piece, 'mirror');
         for (const d of SLIDE_DIRS[type]!) {
