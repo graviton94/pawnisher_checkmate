@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 4, date: '2026-10-30' };
+export const VERSION = { n: 5, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,14 +48,13 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '공격 1회 최대 1초 — 속도 옵션(2×·4×·결과만)과 함께 가는 방향이 괜찮은지',
   '발주 시트가 오면: 보드 표식(A1~A3) → 공격 이펙트(E) 순으로 이 랩에 먼저 올려 비교',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '진영 색', rule: '아군 = 흰 백자 + 황동 스파크 · 적 = 붉은 과열광. 내 조작(선택·이동)은 청록', status: 'done' },
   { item: '도트 격자', rule: '모든 이펙트를 칸당 16도트 격자에 찍는다. 매끈한 선·원 금지', status: 'done' },
-  { item: '박자', rule: '예비 동작(모으기, 느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 이펙트가 칸에 닿는 순간 그 칸이 맞는다. 공격 1회 최대 1초', status: 'done' },
+  { item: '박자', rule: '예비 동작(모으기, 느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 이펙트가 칸에 닿는 순간 그 칸이 맞는다. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
   { item: '이동', rule: '들기 → 지수형 이동(가운데서 가장 빠름) → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
   { item: '피해 숫자', rule: '크게 튀어나왔다가 지수형으로 자리 잡음. 피해가 클수록 크게, 내 기물이 맞으면 붉게, 처치는 금색 ☠', status: 'review' },
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
@@ -67,6 +66,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 5, date: '2026-10-30', items: ['연출 속도 옵션 없음 (한 가지 속도, 공격 1회 최대 1초)'] },
   { v: 4, date: '2026-10-30', items: ['퀸 D 톱날 부메랑 · 킹 B 종소리 파동 확정, 게임 기본값으로 적용', '폰·나이트·비숍·룩 연출과 이동·박자 확정'] },
   {
     v: 3,
