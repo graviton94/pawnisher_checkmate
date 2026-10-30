@@ -24,8 +24,8 @@ def put(im, x, y, c):
         im.putpixel((x, y), P[c] + (255,))
 
 
-def plate(base, hi, lo, rivet, rivet_lo, scratch):
-    """철판 칸: 위·왼쪽 1도트 빛, 아래·오른쪽 1도트 그늘, 모서리 리벳 4개, 잔 긁힘 몇 개"""
+def plate(base, hi, lo, rivet, rivet_lo):
+    """철판 칸: 위·왼쪽 1도트 빛, 아래·오른쪽 1도트 그늘, 모서리 리벳 4개 (얼룩 없음)"""
     im = canvas()
     for y in range(N):
         for x in range(N):
@@ -40,24 +40,26 @@ def plate(base, hi, lo, rivet, rivet_lo, scratch):
         put(im, rx + 1, ry, rivet)
         put(im, rx, ry + 1, rivet)
         put(im, rx + 1, ry + 1, rivet_lo)
-    # 긁힘: 칸마다 같은 자리 — 판 전체에 규칙적인 무늬가 생기지 않게 짧게
-    for x, y in ((6, 7), (7, 7), (12, 12), (13, 13)):
-        put(im, x, y, scratch)
     return im
 
 
 def crack():
-    """붕락 예고: 가운데서 갈라지는 붉은 금 (그늘 1도트)"""
+    """붕락 예고: 철판에 간 가는 금 (1도트 검정 선이 지그재그로 갈라지고, 틈 사이로 붉은 쇳물 빛이 드문드문)"""
     im = canvas()
-    pts = [(10, 10), (9, 9), (8, 9), (7, 8), (6, 8), (5, 7), (4, 7), (3, 6), (2, 6),
-           (11, 9), (12, 8), (12, 7), (13, 6), (14, 6), (15, 5), (16, 4),
-           (11, 11), (12, 12), (12, 13), (13, 14), (13, 15), (14, 16), (15, 17),
-           (9, 11), (8, 12), (8, 13), (7, 14), (6, 15), (6, 16), (5, 17),
-           (7, 7), (7, 6), (14, 13), (15, 13)]
-    for x, y in pts:
-        put(im, x, y + 1, 'CR2')
-    for x, y in pts:
+    # 본줄기: 왼쪽 위 → 오른쪽 아래로 한 칸씩 꺾이며 내려간다 (손으로 정한 경로 — 매번 같은 모양)
+    main = [(3, 4), (4, 5), (5, 5), (6, 6), (7, 7), (7, 8), (8, 9), (9, 9), (10, 10), (11, 11), (11, 12), (12, 13), (13, 13), (14, 14), (15, 15), (16, 16)]
+    # 가지: 본줄기에서 짧게 갈라져 가늘게 끝난다
+    branches = [[(9, 9), (10, 8), (11, 7), (12, 7), (13, 6)], [(11, 12), (10, 13), (9, 14), (9, 15)], [(6, 6), (6, 5), (5, 3)], [(14, 14), (15, 13), (16, 13)]]
+    for x, y in main:
+        put(im, x, y, 'K')
+    for br in branches:
+        for x, y in br:
+            put(im, x, y, 'K')
+    # 틈 속 붉은 빛: 본줄기 가운데 몇 도트만
+    for x, y in ((7, 7), (9, 9), (10, 10), (11, 11), (13, 13)):
         put(im, x, y, 'CR')
+    for x, y in ((8, 9), (12, 13)):
+        put(im, x, y, 'CR2')
     return im
 
 
@@ -76,19 +78,8 @@ def range_frame():
     return im
 
 
-def hatch():
-    """위협: 4도트 간격의 정확한 대각 빗금 (칸끼리 이어 붙여도 선이 이어진다)"""
-    im = canvas()
-    for y in range(N):
-        for x in range(N):
-            if (x + y) % 4 == 0:
-                put(im, x, y, 'CR')
-    return im
-
-
-plate('L', 'G', 'D', 'G', 'D', 'D').save(f'{OUT}/tile-light.png')
-plate('D', 'L', 'INK', 'L', 'INK', 'INK').save(f'{OUT}/tile-dark.png')
+plate('L', 'G', 'D', 'G', 'D').save(f'{OUT}/tile-light.png')
+plate('D', 'L', 'INK', 'L', 'INK').save(f'{OUT}/tile-dark.png')
 crack().save(f'{OUT}/crack.png')
 range_frame().save(f'{OUT}/range.png')
-hatch().save(f'{OUT}/hatch.png')
 print('ok')

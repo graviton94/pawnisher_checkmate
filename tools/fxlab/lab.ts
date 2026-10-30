@@ -117,7 +117,13 @@ const drawBoard = () => {
   };
   at('fallen', DEMO.fallen[0], DEMO.fallen[1]);
   at('crack', DEMO.crack[0], DEMO.crack[1]);
-  for (const [x, y] of DEMO.hatch) at('hatch', x, y, 0.75);
+  // 위협: 반투명 붉은 칸이 천천히 깜빡인다 (빗금 대신, 사용자 피드백)
+  const pulse = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(performance.now() / 260));
+  for (const [x, y] of DEMO.hatch) {
+    const w = px(x, y);
+    ctx.fillStyle = `rgba(229,38,47,${pulse.toFixed(3)})`;
+    ctx.fillRect(w.x, w.y, T, T);
+  }
 };
 
 /** 계획 화면의 공격 범위 (실행 전 잠깐 보여 준다): 지금 = 붉은 반투명 사각형, 새 그림 = 도트 테두리 + 옅은 채움 */

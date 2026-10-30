@@ -22,7 +22,7 @@ const path = require('node:path');
   const sprites = {};
   for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const s of [0, 1]) sprites[`${t}${s}`] = `data:image/png;base64,${b64(`public/pieces/s-${t}${s}.png`)}`;
   // 발주로 받은 판 칸 (있을 때만)
-  for (const n of ['tile-light', 'tile-dark', 's0-tile-light', 's0-tile-dark', 'crack', 'range', 'hatch', 'fallen']) {
+  for (const n of ['tile-light', 'tile-dark', 's0-tile-light', 's0-tile-dark', 'crack', 'range', 'fallen']) {
     const f = path.join(root, 'public', 'ui', 'board', `${n}.png`);
     if (fs.existsSync(f)) sprites[n] = `data:image/png;base64,${fs.readFileSync(f).toString('base64')}`;
   }
