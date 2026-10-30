@@ -34,6 +34,14 @@ export const COLLAPSE = {
   suddenDeathPct: 0.1,
 };
 
+/**
+ * 정체 압박 (GDD 12장 F1, D-072 — Gambonanza의 무너지는 판): 첫 grace 라운드(서로 다가가는 시간)가 지난 뒤
+ * 양 진영 모두 피해를 주지 못한 라운드가 rounds번 이어지면, 그다음 라운드부터 대성당 붕괴를 앞당겨 시작한다.
+ * 정체가 이어지면 붕괴도 빨라진다: 라운드마다 무너지는 칸 쌍이 1 → 2 → 3… (끝판 킹 숨바꼭질 방지).
+ * 피해가 한 번이라도 나면 정체 카운트는 0으로.
+ */
+export const STALL = { grace: 3, rounds: 2 };
+
 /** 최후의 일격 ATK 배율 (D-015) */
 export const LAST_STRIKE_MULT = 2;
 

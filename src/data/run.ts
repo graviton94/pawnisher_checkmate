@@ -55,8 +55,10 @@ export const boardFor = (floor: number, kind: NodeKind = 'battle', coin = 0): { 
   if (floor === TOTAL_FLOORS) return { width: 10, height: 10 };
   if (kind === 'boss' && act < 3) return { width: 8, height: 8 };
   if (act === 1) return floor <= 3 ? { width: 6, height: 6 } : { width: 8, height: 8 };
-  if (act === 2) return kind === 'elite' ? long : { width: 8, height: 8 };
-  return kind === 'boss' ? { width: 10, height: 10 } : long;
+  // D-072 (GDD 12장 F2): 2막 일반 대국은 10×8 — 폭이 넓으면 측면이 열려 정체판이 사라진다 (8×8 풀 덱 1/3이 정체판).
+  // 세로로 긴 8×10도 정체가 잦아 3막은 4판 중 1판만
+  if (act === 2) return kind === 'elite' ? long : { width: 10, height: 8 };
+  return kind === 'boss' ? { width: 10, height: 10 } : coin < 0.25 ? { width: 8, height: 10 } : { width: 10, height: 8 };
 };
 
 // ---------- 보상 ----------
@@ -117,12 +119,21 @@ export const ALTAR = {
  * 일반 전투 적 기물 수 (킹 포함). 플레이어 덱보다 조금 적게 시작해 따라 오른다.
  * 1층 2 · 2층 3 · 3층 4 · 4층 4 · 6층 5 · 8층 6 · 10층 7 (11층 7) (GDD 8장 §8.3의 3~5 / 6~10에서 조정, 런 시뮬레이션)
  */
+/** 일반 군단 기물 상한 (D-072) */
+export const LEGION_CAP = 12;
+/**
+ * 빠른 승리 보너스 (D-072, Into the Breach · 파이어 엠블렘의 기준 턴): 내 턴 기준 안에 이기면 전투 골드에 bonus만큼 더.
+ * 기준 = GDD 12장 F7 판 길이 예산 (양측 합 턴 Act 1 ≤ 16 · Act 2 ≤ 20 · Act 3 ≤ 24 → 내 턴 8 · 10 · 12)
+ */
+export const PAR = { rounds: [8, 10, 12], bonus: 0.3 };
+export const parRounds = (floor: number, kind: NodeKind): number => PAR.rounds[actOf(floor) - 1] + (kind === 'battle' ? 0 : 2);
 export const enemyCount = (floor: number): number => {
   const act = actOf(floor);
   const f = inAct(floor);
   if (act === 1) return floor <= 3 ? 1 + floor : Math.min(10, 3 + Math.floor(floor / 2)); // 4층 5 → 11층 8
-  if (act === 2) return Math.min(15, 9 + Math.floor(f / 2)); // 9~14
-  return Math.min(16, 13 + Math.floor(f / 3)); // 13~16
+  // D-072 (GDD 12장 F3): 일반 군단 상한 12기 — 더 강하게는 수 대신 개량·접사로. 엘리트·군주만 13기 이상
+  if (act === 2) return Math.min(LEGION_CAP, 9 + Math.floor(f / 2)); // 9~12
+  return LEGION_CAP;
 };
 /** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, Act 2 90%, Act 3·보스 100% (HP 기준).
  * 1~3층 적 킹은 특히 약하다 (도입 구간: 작은 덱으로 100 HP 킹을 끝내지 못해 킹 맞대결 동전 던지기가 되는 것을 막는다) */

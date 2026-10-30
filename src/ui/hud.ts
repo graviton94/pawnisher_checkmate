@@ -1,3 +1,4 @@
+import { STALL } from '../data/battle';
 import { BASE_AP, PIECE_NAMES_KO } from '../data/pieces';
 import { pieceImg } from './sprites';
 import { AI_STYLES, SCENARIOS, type BattleController, type HudView, type Scenario } from '../game/controller';
@@ -114,7 +115,10 @@ export class Hud implements HudView {
     this.renderCards(c);
     const label = $('turn-label');
     const mine = c.phase === 'plan';
-    label.textContent = c.phase === 'over' ? '전투 종료' : mine ? `${Math.ceil(c.state.turnNumber / 2)}턴 · 내 차례` : c.state.turnSide === 1 ? '적 차례' : '실행 중';
+    // 정체 압박 (D-072): 피해 없는 라운드가 이어지면 "정체 n/2" — 다 차면 판이 무너지기 시작한다
+    const stall = c.state.stall?.count ?? 0;
+    const stallTag = stall > 0 && c.phase !== 'over' ? ` · 정체 ${Math.min(stall, STALL.rounds)}/${STALL.rounds}` : '';
+    label.textContent = (c.phase === 'over' ? '전투 종료' : mine ? `${Math.ceil(c.state.turnNumber / 2)}턴 · 내 차례` : c.state.turnSide === 1 ? '적 차례' : '실행 중') + stallTag;
     label.classList.toggle('enemy', !mine && c.phase !== 'over');
 
     // 예약 목록 (순번 · 기물 · 좌표 이동)

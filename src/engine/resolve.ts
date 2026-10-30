@@ -17,6 +17,8 @@ export const resolveTurn = (input: BattleState, plan: Plan): TurnResult => {
   if (!sim.ok) throw new Error(`잘못된 계획: ${sim.reason}`);
   const s = sim.state;
   const events = sim.events;
+  // 정체 압박 (F1): 이번 턴에 누구든 피해를 줬는지 기록한다
+  if (events.some((e) => e.type === 'attack' && e.hits.some((h) => h.damage > 0))) s.stall = { count: s.stall?.count ?? 0, dealt: true };
   if (s.winner === null) {
     endTurn(s, sim.apUsed);
     s.turnSide = otherSide(s.turnSide);

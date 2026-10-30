@@ -91,6 +91,8 @@ export interface BattleState {
   rules: BattleRules;
   stronghold: Stronghold | null;
   strongholdsSpawned: number;
+  /** 정체 압박 (F1, D-072): 피해 없이 지난 라운드 수 · 이번 라운드에 피해가 났는가. 옛 저장에는 없다 */
+  stall?: { count: number; dealt: boolean };
   /** 무너진 테두리 줄 수. 유효 보드 = [ring, width−1−ring] × [ring, height−1−ring] */
   /** 완전히 무너진 테두리 줄 수 (표시용) */
   ring: number;
@@ -164,6 +166,8 @@ export type BattleEvent =
   | { type: 'lastStrike'; pieceId: number }
   | { type: 'awaken'; side: Side; pieceId: number }
   | { type: 'strongholdSpawn'; pos: Pos; standings: [Standing, Standing] }
+  /** 정체 압박: 피해 없는 라운드가 count번 이어졌다 (need번이면 붕괴 시작) */
+  | { type: 'stall'; count: number; need: number }
   | { type: 'strongholdCapture'; side: Side; pieceId: number; tier: 1 | 2 | 3; behind: boolean }
   | { type: 'strongholdLost' }
   | { type: 'collapse'; ring: number; tiles: Pos[]; pushes: { pieceId: number; from: Pos; to: Pos; damage: number }[] }

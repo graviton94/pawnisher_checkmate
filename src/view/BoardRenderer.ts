@@ -659,6 +659,10 @@ class BoardScene extends Phaser.Scene {
         await this.wait(500);
         continue;
       }
+      if (e.type === 'stall') {
+        this.announce(e.count >= e.need ? '정체 — 대성당이 무너지기 시작합니다' : `정체 ${e.count}/${e.need} — 이번 라운드도 피해가 없으면 판이 무너지기 시작합니다`);
+        continue;
+      }
       if (e.type === 'strongholdSpawn') {
         cur.stronghold = { ...e.pos, holderId: null, hold: 0 };
         this.drawTiles(cur);

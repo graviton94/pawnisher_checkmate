@@ -24,6 +24,8 @@ import {
   RARE_WEIGHT,
   SHOP,
   SKIP_GOLD,
+  PAR,
+  parRounds,
   START_DECKS,
   START_GOLD,
   type BossId,
@@ -267,6 +269,14 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1));
   run.gold += gold;
   lines.push(`골드 +${gold}`);
+  // 빠른 승리 보너스 (D-072): 기준 턴 안에 이기면 골드를 더 준다
+  const rounds = Math.ceil(final.turnNumber / 2);
+  const par = parRounds(run.floor, kind as NodeKind);
+  if (rounds <= par) {
+    const extra = Math.round(gold * PAR.bonus);
+    run.gold += extra;
+    lines.push(`빠른 승리 (${rounds}/${par}턴) 골드 +${extra}`);
+  }
 
   // 랜덤 기물 보상: 첫·둘째 승리 확정, 이후 3승마다 (GDD 6장 §6.6)
   const choices: Choice[] = [];

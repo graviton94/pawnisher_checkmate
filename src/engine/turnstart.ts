@@ -1,4 +1,4 @@
-import { COLLAPSE, STRONGHOLD } from '../data/battle';
+import { COLLAPSE, STALL, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
 import { applyPromotion, availableAp } from './plan';
@@ -35,6 +35,22 @@ const nextCollapse = (s: BattleState): Pos[] => {
     return out.slice(0, COLLAPSE.tilesPerEvent);
   }
   return [];
+};
+
+/**
+ * 정체 압박 (GDD 12장 F1, D-072): 새 라운드가 시작될 때 지난 라운드를 판정한다.
+ * 서로 다가가는 첫 STALL.grace 라운드는 세지 않는다. 피해 없는 라운드가 STALL.rounds번 이어지면 이번 라운드부터 붕괴를 시작한다.
+ */
+const stallCheck = (s: BattleState, round: number, events: BattleEvent[]): void => {
+  const st = { count: 0, dealt: false, ...s.stall }; // 새 객체 — 입력 상태를 바꾸지 않는다 (결정론)
+  if (round - 1 > STALL.grace) {
+    st.count = st.dealt ? 0 : st.count + 1;
+    if (st.count > 0) events.push({ type: 'stall', count: Math.min(st.count, STALL.rounds), need: STALL.rounds });
+    const start = s.rules.collapseStart;
+    if (st.count >= STALL.rounds && start !== null && start > round) s.rules = { ...s.rules, collapseStart: round };
+  }
+  st.dealt = false;
+  s.stall = st;
 };
 
 /** 다음 라운드 시작에 무너질 칸 (화면 예고용). 붕괴가 아직 멀었으면 빈 배열 */
@@ -222,9 +238,12 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
 
   if (s.turnSide === 0) {
     const round = roundOf(s);
+    stallCheck(s, round, events);
     const { collapseStart, collapseInterval, strongholdRounds } = s.rules;
     if (collapseStart !== null && round >= collapseStart && (round - collapseStart) % collapseInterval === 0) {
-      if (!collapseStep(s, events)) suddenDeath(s, events);
+      // 정체가 이어지면 붕괴가 빨라진다: 피해 없는 라운드가 STALL.rounds를 넘을 때마다 한 쌍씩 더 (D-072 — 끝판 킹 숨바꼭질 방지)
+      const steps = 1 + Math.max(0, (s.stall?.count ?? 0) - STALL.rounds + 1);
+      for (let i = 0; i < steps && s.winner === null; i++) if (!collapseStep(s, events)) suddenDeath(s, events);
       if (s.winner !== null) return;
     }
     if (!s.stronghold && strongholdRounds.includes(round)) {

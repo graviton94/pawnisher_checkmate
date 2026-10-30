@@ -158,10 +158,10 @@ describe('붕괴하는 대성당 (D-014)', () => {
   it('6×6은 바깥 테두리(20칸)만 무너지고, 그 뒤에는 킹이 짓눌려 판이 반드시 끝난다', () => {
     let s = board([['K', 0, 'c3'], ['K', 1, 'd4']], 6, 6);
     s.rules = { strongholdRounds: [], collapseStart: 1, collapseInterval: 1 };
-    s = passTurns(s, 20).s; // 라운드 10까지: 10번 × 2칸
-    expect(s.fallen).toHaveLength(20);
-    expect(s.ring).toBe(1);
-    const r = passTurns(s, 40);
+    // 정체 압박(D-072)으로 붕괴가 점점 빨라지므로 라운드 수 대신 결과를 본다
+    const r = passTurns(s, 60);
+    expect(r.s.fallen).toHaveLength(20);
+    expect(r.s.ring).toBe(1);
     expect(r.events.some((e) => e.type === 'suddenDeath')).toBe(true);
     expect(r.s.winner).not.toBeNull();
   });
