@@ -6,59 +6,57 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 3, date: '2026-10-30' };
+export const VERSION = { n: 4, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
     name: '폰',
-    status: 'review',
+    status: 'done',
     idea: '뒤로 당겨 웅크렸다가 앞으로 찌르듯 튀어 나가며, 칼끝이 지수형으로 빠르게 지나가는 초승달 칼날.',
     beat: '예비 0.19초 · 칼날 0.23초',
     changed: '예비 동작(뒤로 당김)과 지수형 칼끝 추가',
   },
   N: {
     name: '나이트',
-    status: 'review',
+    status: 'done',
     idea: '앞발을 들고 방전 불꽃을 빨아들인다(느리게→빠르게) → 내리찍기 → 11시 방향 칸부터 시계 방향으로 번개가 실제처럼 친다: 어둡고 가는 선도가 툭툭 내려오고 → 본줄기 전체가 하얗게 번쩍(칸도 번쩍) → 두 번 깜빡이고 꺼진다. 가지 번개 2갈래.',
     beat: '예비 0.23초 · 번개 간격 0.05초 · 번개 한 줄기 0.29초',
     changed: '완성된 번개 조각 → 선도·귀환 섬광·깜빡임으로 "치는" 번개',
   },
   B: {
     name: '비숍',
-    status: 'review',
+    status: 'done',
     idea: '떠오르며 빛을 모은다 — 처음엔 천천히, 끝으로 갈수록 빠르게 빨려 들고 몸이 떨린다 → 사거리 전체에 한 번에 9도트 굵기 → 지수형으로 가늘어지며 사그라든다.',
     beat: '응축 0.38초 · 사그라듦 0.24초',
     changed: '응축 시간을 늘리고 지수형 곡선으로',
   },
-  R: { name: '룩', status: 'review', idea: '높이 들어 올려 멈칫 → 지수형으로 내리꽂고 크게 출렁 → 십자 방향으로 한 칸씩 폭발.', beat: '예비 0.31초 · 칸당 0.07초', changed: '들어 올림·멈칫·출렁임 추가' },
+  R: { name: '룩', status: 'done', idea: '높이 들어 올려 멈칫 → 지수형으로 내리꽂고 크게 출렁 → 십자 방향으로 한 칸씩 폭발.', beat: '예비 0.31초 · 칸당 0.07초', changed: '들어 올림·멈칫·출렁임 추가' },
   Q: {
     name: '퀸',
-    status: 'pick',
+    status: 'done',
     idea: 'C 회전 광선: 떠올라 톱니 고리가 점점 빨리 돌다가, 11시에서 등대처럼 광선 하나가 한 바퀴 휩쓴다 — 느리게 시작해 채찍처럼 빨라졌다 멈춘다. 지나가는 방향마다 끝에서 폭발. / D 톱날 부메랑: 톱날들을 돌려 띄웠다가 8방향으로 던진다(빠르게→느리게), 끝에서 잠깐 돌고 되돌아와(느리게→빠르게) 손에 잡힌다. 지나가는 칸마다 베인다. / A는 이전 안(비숍과 비슷해서 비교용).',
     beat: 'C 0.83초 · D 0.70초',
-    changed: '기존과 다른 새 안 C·D',
+    changed: 'D 톱날 부메랑으로 확정 (게임에 적용)',
   },
   K: {
     name: '킹',
-    status: 'pick',
+    status: 'done',
     idea: 'B 종소리 파동: 홀을 치켜들며 왕관 빛이 점점 밝아짐 → 내려치면 종소리 파동 두 겹 → 이웃 칸마다 "땡". / A 사각 충격파.',
     beat: '예비 0.26초 · 파동 0.24초',
-    changed: '치켜들기 예비 동작 추가',
+    changed: 'B 종소리 파동으로 확정 (게임에 적용)',
   },
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '퀸: C 회전 광선 / D 톱날 부메랑 중 고르기',
-  '킹: B 종소리 파동 / A 사각 충격파 중 고르기',
-  '예비 동작 길이와 지수형 곡선의 느낌 (공격 1회가 0.6초 → 최대 1초로 늘었다 — 속도 옵션 2×·4×로 줄일 예정)',
-  '스타일 시험 결과대로 나머지 시트 발주 (판 칸은 바깥 흰 테두리 없이, 발밑 받침은 증기 없이 — 발주서 보정 반영)',
+  '공격 1회 최대 1초 — 속도 옵션(2×·4×·결과만)과 함께 가는 방향이 괜찮은지',
+  '발주 시트가 오면: 보드 표식(A1~A3) → 공격 이펙트(E) 순으로 이 랩에 먼저 올려 비교',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '진영 색', rule: '아군 = 흰 백자 + 황동 스파크 · 적 = 붉은 과열광. 내 조작(선택·이동)은 청록', status: 'done' },
   { item: '도트 격자', rule: '모든 이펙트를 칸당 16도트 격자에 찍는다. 매끈한 선·원 금지', status: 'done' },
-  { item: '박자', rule: '예비 동작(모으기, 느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 이펙트가 칸에 닿는 순간 그 칸이 맞는다. 공격 1회 최대 1초', status: 'review' },
-  { item: '이동', rule: '들기 → 지수형 이동(가운데서 가장 빠름) → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'review' },
+  { item: '박자', rule: '예비 동작(모으기, 느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 이펙트가 칸에 닿는 순간 그 칸이 맞는다. 공격 1회 최대 1초', status: 'done' },
+  { item: '이동', rule: '들기 → 지수형 이동(가운데서 가장 빠름) → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
   { item: '피해 숫자', rule: '크게 튀어나왔다가 지수형으로 자리 잡음. 피해가 클수록 크게, 내 기물이 맞으면 붉게, 처치는 금색 ☠', status: 'review' },
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
   { item: '처치', rule: '기물이 톱니·스프링 파편으로 부서져 아래로 떨어진다', status: 'review' },
@@ -69,6 +67,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 4, date: '2026-10-30', items: ['퀸 D 톱날 부메랑 · 킹 B 종소리 파동 확정, 게임 기본값으로 적용', '폰·나이트·비숍·룩 연출과 이동·박자 확정'] },
   {
     v: 3,
     date: '2026-10-30',

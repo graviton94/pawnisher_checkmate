@@ -31,8 +31,8 @@ export const FX_MS = {
 export type QueenFx = 'A' | 'C' | 'D';
 export type KingFx = 'A' | 'B';
 
-/** 퀸·킹 안 — 사용자 결정 전까지 기본값 */
-export const FX_CHOICE: { Q: QueenFx; K: KingFx } = { Q: 'C', K: 'B' };
+/** 퀸·킹 안 — 사용자 결정 (D-038): 퀸 D 톱날 부메랑, 킹 B 종소리 파동 */
+export const FX_CHOICE: { Q: QueenFx; K: KingFx } = { Q: 'D', K: 'B' };
 
 /** 안 이름 (FX 랩 표시용) */
 export const FX_VARIANT_NAMES: { Q: Record<QueenFx, string>; K: Record<KingFx, string> } = {
