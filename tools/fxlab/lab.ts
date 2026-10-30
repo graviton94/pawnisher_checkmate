@@ -6,7 +6,7 @@ import { createBattle, EMPTY_LOADOUT, legalMoves, resolveTurn, type BattleEvent,
 import { drawGearTarget } from '../../src/view/target';
 import { buildPopupArt, drawPopup, type PopupArt } from '../../src/view/popup';
 import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, fxPower, impactFeedback, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
-import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
+import { BOARD_DOTS, PixelPen, easeOutCubic } from '../../src/view/pixel';
 import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
 import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
 
@@ -94,7 +94,7 @@ const DEMO = {
   fallen: [7, 3],
   crack: [0, 5],
   hatch: [[5, 7], [6, 7]],
-  vents: [[2, 0], [0, 2]],
+  vents: [[2, 0]],
   props: [['scrap', 0, 7], ['lift', 2, 7], ['shield', 7, 5], ['trap', 4, 0], ['screwbox', 6, 0]],
 } as const;
 
@@ -126,20 +126,22 @@ const drawBoard = () => {
   };
   at('fallen', DEMO.fallen[0], DEMO.fallen[1]);
   at('crack', DEMO.crack[0], DEMO.crack[1]);
-  // 증기 분출구: 닫힘 → 열리는 중 → 열림(증기가 솟는다)을 2.4초마다
+  // 증기 분출구 (요충지, D-067): 열고 닫는 연출 없이 열린 구멍 하나. 2.4초마다 증기 한 덩이가
+  // 한 도트씩 계단처럼 솟으며 도트가 하나씩 꺼져 사라진다 (반투명으로 흐려지지 않는다)
   const vt = performance.now() % 2400;
-  DEMO.vents.forEach(([x, y], i) => {
-    const st = i === 1 ? 'closed' : vt < 1200 ? 'closed' : vt < 1500 ? 'opening' : 'open';
-    at(`vent-${st}`, x, y);
-    const steam = img('vent-steam');
-    if (st === 'open' && steam) {
-      const w = px(x, y);
-      const q = (vt - 1500) / 900;
-      ctx.globalAlpha = 1 - q;
-      ctx.drawImage(steam, w.x + 5 * D, Math.round(w.y - 2 * D - q * 6 * D), 10 * D, 10 * D);
-      ctx.globalAlpha = 1;
+  for (const [x, y] of DEMO.vents) {
+    at('vent-open', x, y);
+    const dots = steamDots();
+    if (!dots.length || vt > 1100) continue;
+    const w = px(x, y);
+    const q = vt / 1100;
+    const lift = Math.floor(easeOutCubic(q) * 6); // 솟는 높이 (도트, 정수)
+    for (const d of dots) {
+      if (d.h < q * 1.25 - (1 - d.y / 10) * 0.25) continue; // 위쪽부터 먼저, 도트마다 다른 때에 꺼진다
+      ctx.fillStyle = d.c;
+      ctx.fillRect(w.x + (5 + d.x) * D, w.y + (d.y - 1 - lift) * D, D, D); // 증기 아래쪽이 구멍 가운데에서 시작
     }
-  });
+  }
   // 지형 소품: 칸 가운데, 발밑을 칸 아래에서 2도트 위에 맞춘다
   for (const [k, x, y] of DEMO.props) {
     const im = img(`props/${k}`);
@@ -315,6 +317,26 @@ const tinted = (key: string, color: string): HTMLCanvasElement | null => {
   x.fillRect(0, 0, c.width, c.height);
   tintCache.set(id, c);
   return c;
+};
+
+/** 증기 그림의 도트 목록 (x, y, 색, 꺼지는 순서 값) — 한 번만 뽑는다 */
+let steamCache: { x: number; y: number; c: string; h: number }[] = [];
+const steamDots = () => {
+  if (steamCache.length) return steamCache;
+  const im = sprites['vent-steam'];
+  if (!im?.complete) return steamCache;
+  const c = document.createElement('canvas');
+  c.width = im.naturalWidth;
+  c.height = im.naturalHeight;
+  const g = c.getContext('2d')!;
+  g.drawImage(im, 0, 0);
+  const a = g.getImageData(0, 0, c.width, c.height).data;
+  for (let y = 0; y < c.height; y++)
+    for (let x = 0; x < c.width; x++) {
+      const k = (y * c.width + x) * 4;
+      if (a[k + 3] > 128) steamCache.push({ x, y, c: `rgb(${a[k]},${a[k + 1]},${a[k + 2]})`, h: ((x * 7 + y * 13) % 11) / 11 });
+    }
+  return steamCache;
 };
 
 /** 도트 그림을 k배로 구워 둔 캔버스 (반듯한 사각 도트 그대로) — 이걸 돌리면 계단이 생기지 않는다 (D-065) */
