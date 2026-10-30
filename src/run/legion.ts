@@ -1,6 +1,6 @@
 import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
-import { AFFIXES, ARCHETYPES, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
+import { AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import type { EnchantId } from '../data/enchants';
 import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
@@ -91,7 +91,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   const archetype = archOptions[rng.int(archOptions.length)];
   const arch = ARCHETYPES[archetype];
   const weights = pieceWeights(floor).map(([t, w]): [PieceType, number] => [t, (t === 'R' && archetype === 'rampart' ? Math.max(w, RAMPART_ROOK_MIN) : w) * (arch.weight[t] ?? 1)]);
-  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + arch.extra;
+  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0);
   const deck: Deck = ['K'];
   let guard = 0;
   while (deck.length < count && guard++ < 200) {

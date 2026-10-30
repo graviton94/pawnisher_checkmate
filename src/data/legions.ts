@@ -57,6 +57,9 @@ export const ARCHETYPES: Record<ArchetypeId, ArchetypeDef> = {
   rampart: { name: '방벽 대열', weight: { R: 4, P: 1.2, N: 0.4, B: 0.4 }, enchants: ['E03', 'E08'], extra: 0, from: 4 },
 };
 
+/** 원형의 기물 가감(폰 행렬 +1)은 이 층 다음부터 — 1~3층 작은 판에 적 1기 추가는 1층 승률을 99% → 74%로 떨어뜨렸다 (D-099) */
+export const ARCHETYPE_EXTRA_FROM = 3;
+
 /** 방벽 대열은 룩이 원래 나오기 전 층에서도 룩을 쓴다 (가중치 바닥값) */
 export const RAMPART_ROOK_MIN = 6;
 

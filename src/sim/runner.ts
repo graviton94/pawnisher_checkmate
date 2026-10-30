@@ -67,7 +67,7 @@ const MAX_TURNS = 160;
 
 const TYPE_ENCHANT: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04', K: 'E08' };
 
-const playBattle = (run: RunState, seed: number): { state: BattleState; turns: number } => {
+export const playBattle = (run: RunState, seed: number): { state: BattleState; turns: number } => {
   if (run.stage.at !== 'battle') throw new Error('not in battle');
   const e = run.stage.encounter;
   let s = encounterBattle(run.deck, run.loadout, e);
