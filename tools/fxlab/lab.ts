@@ -5,7 +5,7 @@
 import { createBattle, EMPTY_LOADOUT, legalMoves, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
 import { drawGearTarget } from '../../src/view/target';
 import { buildPopupArt, drawPopup, type PopupArt } from '../../src/view/popup';
-import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
+import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, fxPower, impactFeedback, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
 import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
 import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
 import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
@@ -359,7 +359,7 @@ const play = () => {
   const to = px(mv.to.x, mv.to.y);
   const o = center(mv.to.x, mv.to.y);
   const fx = atk
-    ? buildAttackFx({ kinds, side: opt.side, origin: o, tiles: atk.area.map((a) => ({ key: `${a.x},${a.y}`, ...center(a.x, a.y) })), tile: T, variant: { Q: opt.Q, K: opt.K } })
+    ? buildAttackFx({ kinds, side: opt.side, origin: o, tiles: atk.area.map((a) => ({ key: `${a.x},${a.y}`, ...center(a.x, a.y) })), tile: T, variant: { Q: opt.Q, K: opt.K }, power: fxPower(atk.hits) })
     : null;
   const MOVE = MOVE_TOTAL;
   const FX0 = MOVE + 60;
@@ -399,6 +399,8 @@ const play = () => {
   };
   const end = FX0 + (fx?.duration ?? 0) + 900;
   const t0 = performance.now();
+  // 화면 흔들림 (D-064): 큰 피해·처치 순간
+  const shake = { at: -1, ms: 0, amp: 0 };
 
   const frame = (now: number) => {
     if (my !== token) return;
@@ -411,6 +413,11 @@ const play = () => {
     for (const x of hits)
       if (!x.done && ms >= x.at) {
         x.done = true;
+        const fb = impactFeedback(x.h.damage, !!x.h.killed);
+        if (fb && fb.intensity * canvas.width > shake.amp * (shake.at >= 0 && ms - shake.at < shake.ms ? 1 : 0)) {
+          Object.assign(shake, { at: ms, ms: fb.ms, amp: fb.intensity * canvas.width });
+          navigator.vibrate?.(fb.vibrate); // 휴대폰에서 열면 진동
+        }
         // 잃은 HP: 게이지에서 떨어져 나간 칸들이 하얗게 → 파도처럼 하나씩 솟아오르며 도트로 흩어진다
         const before = Math.round((12 * Math.max(0, x.l.hp)) / x.l.p.maxHp);
         const after = Math.round((12 * Math.max(0, x.h.hpAfter)) / x.l.p.maxHp);
@@ -434,6 +441,12 @@ const play = () => {
       }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    if (shake.at >= 0 && ms - shake.at < shake.ms) {
+      const q = (ms - shake.at) / shake.ms;
+      const a = shake.amp * (1 - q);
+      ctx.translate(Math.round(Math.sin(ms * 0.13) * a), Math.round(Math.cos(ms * 0.17) * a * 0.6));
+    }
     drawBoard();
     // 이동 칸 표시
     ctx.strokeStyle = 'rgba(56,189,248,0.6)';
@@ -469,6 +482,7 @@ const play = () => {
       ctx.fillRect(Math.round(c.x + (c.i % 2 ? 1 : -1) * D * 0.6 * q), Math.round(c.y - 9 * D * rise), size, size * 2);
     }
     for (const p of popups) drawPopup(pen.g, p.art, p.x, p.y, D, ms - p.at, T * 0.35);
+    ctx.restore();
     if (ms < end) requestAnimationFrame(frame);
     else if (opt.loop) setTimeout(() => my === token && play(), 500);
   };

@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 28, date: '2026-10-30' };
+export const VERSION = { n: 29, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -66,6 +66,8 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '지형 소품', rule: '제미나이 그림 5종 (기준 폰 17도트로 잘라 테두리 다시 두름)', status: 'review' },
   { item: '태엽', rule: '제미나이 I 디자인을 우리 격자에 대칭으로 옮김 (12×12 몸통 + 테두리): 큰 구멍 고리 날개 둘 · 청록 축 2×2 · 아래 평평 · 곧은 막대에 이는 한쪽만. 쓴 것 = 회색, 보너스 = 금 테두리', status: 'review' },
   { item: '종이 왕관', rule: '사용자 7×5 도트 그림 그대로 (검정 틀 · 노랑 · 청록 끝과 보석). 화면이 그림을 시계 방향 15도 돌려 폰 머리 위에 얹는다', status: 'review' },
+  { item: '공격 세기', rule: '세기 = 피해 합 × 0.08 + 처치 × 0.3 (최대 1). 세기만큼 최대 0.28초 더 모은다: 0.32칸 뛰어오르며 움츠리고 빛 알갱이가 빨려 듦(느리게→빠르게) → 원래 공격 시작에 지수형으로 내려찍고 고리가 터짐 → 짓눌림. 1초 상한을 넘으면 덜 모은다', status: 'review' },
+  { item: '흔들림·진동', rule: '한 칸에 4 이상 피해 또는 처치: 화면 흔들림 0.16초 (처치가 더 세게) + 진동 25ms / 처치 45ms. 작은 피해는 흔들지 않는다. 움직임 줄이기 설정이면 둘 다 끔', status: 'review' },
   { item: '과녁', rule: '내 과녁·처치 과녁은 톱니가 0.32초마다 1/4칸씩 튕기듯 넘어간다 (그림을 돌리지 않고 톱니 위치를 다시 찍음, src/view/target.ts). 적 과녁은 멈춤', status: 'review' },
   { item: '화살표', rule: '흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐·2칸 꺼짐)이 0.07초에 한 칸씩 끝 쪽으로 흐른다 + 도트 화살촉', status: 'review' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로 충분', status: 'done' },
@@ -82,6 +84,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 29, date: '2026-10-30', items: ['공격 세기: 피해·처치가 클수록 뛰어올라 빛을 모았다가 내려찍고 고리가 터짐 (공격 1회 1초 상한 안)', '큰 피해(4 이상)·처치 순간 화면 흔들림 + 휴대폰 진동 (랩도 휴대폰으로 열면 진동)'] },
   { v: 28, date: '2026-10-30', items: ['내 과녁·처치 과녁: 태엽처럼 0.32초마다 톱니 1/4칸씩 철컥 (적 과녁은 멈춤)', '판에 증기 분출구 2개(하나는 열렸다 닫혔다 + 증기)와 지형 소품 5종을 깔아 둠', '왕관: 사용자 7×5 그림 그대로, 그림을 15도 돌려 폰 머리에 얹음'] },
   { v: 27, date: '2026-10-30', items: ['기운 왕관: 줄 밀기 → 왕관 모양 자체를 15도 돌려 다시 찍음, 폭 11로 키움 (킹은 다른 기물보다 커도 됨)'] },
   { v: 26, date: '2026-10-30', items: ['종이 왕관: 아주 단순한 아이콘 화풍(뾰족 셋 + 몸통 + 검정 틈 + 띠), 폰 머리 폭, 비스듬히 기운 판을 폰에 씌움'] },

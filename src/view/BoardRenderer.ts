@@ -3,7 +3,7 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
-import { MOVE_TOTAL, drawLandPuff, moveMotion, playAttackFx, playHitSpark, playShatter, type Pose } from './attackFx';
+import { MOVE_TOTAL, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, playHitSpark, playShatter, type Pose } from './attackFx';
 import { BOARD_DOTS, PixelPen } from './pixel';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
@@ -737,18 +737,20 @@ class BoardScene extends Phaser.Scene {
       const kinds = atk.piece.fused?.length ? [...new Set(atk.piece.fused)] : [atk.piece.formAs ?? atk.piece.type];
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
       const base = { x: atk.root.x, y: atk.root.y };
-      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t }, this.speed, (pose) =>
+      // 세기(피해·처치)가 클수록 뛰어올라 모았다가 터뜨린다 (D-064)
+      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
       );
-      let shook = false;
       const hitsDone = e.hits.map((h) => {
         const ts = this.sprites.get(h.targetId);
         if (!ts) return Promise.resolve();
         const key = `${Math.round(ts.root.x / t)},${this.state.height - 1 - Math.round(ts.root.y / t)}`;
         return this.after(fx.impact.get(key) ?? fx.duration * 0.6).then(() => {
-          if (!shook) {
-            this.shake(90, ts.piece.side === 0 ? 0.007 : 0.005);
-            shook = true;
+          // 큰 피해·처치: 화면 흔들림 + 휴대폰 진동 (D-064)
+          const fb = impactFeedback(h.damage, !!h.killed);
+          if (fb) {
+            this.shake(fb.ms, fb.intensity);
+            if (!this.calm) navigator.vibrate?.(fb.vibrate);
           }
           this.applyHit(ts, h);
         });

@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { PieceType, Side } from '../engine/types';
-import { FX_CHOICE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
+import { FX_CHOICE, FX_POWER, FX_SHAKE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
 import { BOARD_DOTS, PixelPen, easeInCubic, easeInExpo, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
 
 /**
@@ -48,6 +48,8 @@ export interface FxRequest {
   tile: number;
   /** 퀸·킹 안 (없으면 data/fx.ts의 고른 안) */
   variant?: { Q?: QueenFx; K?: KingFx };
+  /** 공격 세기 0~1 (fxPower) — 클수록 뛰어올라 모았다가 터뜨린다 */
+  power?: number;
 }
 
 /** 재생 준비가 된 공격: 전체 길이, 칸별 타격 시점(ms, 1배속), 공격자 자세, 한 장면 그리기 */
@@ -233,7 +235,64 @@ export const buildAttackFx = (req: FxRequest): FxBuilt => {
     duration = Math.max(duration, at + FX_MS.splash.burst);
   }
   const act = actor ?? (() => REST);
-  return { duration, impact, actor: act, draw: (pen, ms) => draws.forEach((d) => d(pen, ms)) };
+  return withPower({ duration, impact, actor: act, draw: (pen, ms) => draws.forEach((d) => d(pen, ms)) }, req);
+};
+
+/** 공격 세기 (0~1): 준 피해 합과 처치 수로 (D-064) */
+export const fxPower = (hits: { damage: number; killed?: boolean }[]): number =>
+  Math.min(1, hits.reduce((a, h) => a + h.damage * FX_POWER.perDamage + (h.killed ? FX_POWER.perKill : 0), 0));
+
+/** 피격 순간의 화면 흔들림·진동 (D-064): 기준 미만이면 null */
+export const impactFeedback = (damage: number, killed: boolean): { ms: number; intensity: number; vibrate: number } | null => {
+  if (!killed && damage < FX_SHAKE.damage) return null;
+  return { ms: FX_SHAKE.ms, intensity: killed ? FX_SHAKE.killIntensity : FX_SHAKE.intensity, vibrate: killed ? FX_SHAKE.vibrateKill : FX_SHAKE.vibrateHit };
+};
+
+/**
+ * 세기만큼 앞에 "뛰어올라 모으기"를 붙인다: 뛰어오르며 몸을 움츠리고 빛 알갱이가 빨려 든다(느리게→빠르게) →
+ * 원래 공격이 시작될 때 지수형으로 내려찍고 고리가 터진다. 공격 1회 1초 상한을 넘기지 않는다.
+ */
+const withPower = (fx: FxBuilt, req: FxRequest): FxBuilt => {
+  const p = Math.max(0, Math.min(1, req.power ?? 0));
+  const pre = Math.round(Math.min(FX_POWER.charge * p, Math.max(0, FX_POWER.maxTotal - fx.duration)));
+  if (pre < 40) return fx;
+  const t = req.tile;
+  const pal = PAL[req.side];
+  const leap = FX_POWER.leap * p;
+  const actor = (ms: number): Pose => {
+    if (ms < pre) {
+      const q = ms / pre;
+      const up = easeOutCubic(Math.min(1, q / 0.7));
+      const tremble = q > 0.6 ? Math.sin(ms * 0.9) * 0.012 * p : 0; // 꽉 모았을 때 떨림
+      return { dx: tremble, dy: -leap * up, sx: 1 - 0.1 * p * up, sy: 1 + 0.14 * p * up };
+    }
+    const base = fx.actor(ms - pre);
+    const r = Math.min(1, (ms - pre) / FX_POWER.release);
+    const drop = leap * (1 - easeInExpo(r));
+    const squash = r >= 1 ? Math.max(0, 1 - (ms - pre - FX_POWER.release) / 120) * 0.16 * p : 0; // 내려찍은 뒤 짓눌림
+    return { dx: base.dx, dy: base.dy - drop, sx: base.sx * (1 + squash), sy: base.sy * (1 - squash) };
+  };
+  const draw = (pen: PixelPen, ms: number) => {
+    if (ms < pre) {
+      // 빛 알갱이가 사방에서 공격자에게 빨려 든다 (느리게→빠르게)
+      const q = ms / pre;
+      const cy = req.origin.y - leap * t * easeOutCubic(Math.min(1, q / 0.7));
+      const n = 6 + Math.round(10 * p);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + i * 0.7;
+        const k = (q + (i % 3) * 0.17) % 1;
+        const r = t * (0.95 - 0.8 * easeInExpo(k));
+        pen.px(req.origin.x + Math.cos(a) * r, cy + Math.sin(a) * r, i % 3 ? pal.glow : pal.edge, 0.4 + 0.6 * k, 1);
+      }
+      if (q > 0.5) pen.disc(req.origin.x, cy, t * 0.1 * p * (q - 0.5) * 2, pal.core, 0.8);
+      return;
+    }
+    // 내려찍는 순간 고리가 터진다
+    const e = span(ms, pre + FX_POWER.release * 0.8, pre + FX_POWER.release + 220);
+    if (e > 0 && e < 1) pen.ring(req.origin.x, req.origin.y + t * 0.3, t * (0.3 + 0.9 * p) * easeOutExpo(e), pal.edge, 1 - e);
+    fx.draw(pen, ms - pre);
+  };
+  return { duration: fx.duration + pre, impact: new Map([...fx.impact].map(([k, v]) => [k, v + pre])), actor, draw };
 };
 
 const dirIndex = (c: Claimed) => DIRS.findIndex(([x, y]) => x === Math.sign(c.dx) && y === Math.sign(c.dy));

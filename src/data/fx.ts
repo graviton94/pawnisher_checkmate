@@ -39,3 +39,23 @@ export const FX_VARIANT_NAMES: { Q: Record<QueenFx, string>; K: Record<KingFx, s
   Q: { C: '회전 광선 (등대)', D: '톱날 부메랑', A: '8방향 섬광 (이전 안)' },
   K: { B: '종소리 파동', A: '사각 충격파' },
 };
+
+/**
+ * 공격 세기 연출 (D-064): 피해가 크고 처치가 많을수록 기물이 뛰어올라 더 오래 모았다가 내려찍으며 터뜨린다.
+ * 세기(0~1) = 준 피해 합 × perDamage + 처치 수 × perKill. 모으는 시간은 공격 1회 1초 상한 안에서만 늘린다 (D-036).
+ */
+export const FX_POWER = {
+  perDamage: 0.08,
+  perKill: 0.3,
+  /** 세기 1일 때 더 모으는 시간 (ms) */
+  charge: 280,
+  /** 세기 1일 때 뛰어오르는 높이 (칸) */
+  leap: 0.32,
+  /** 내려찍는 시간 (ms) — 원래 공격이 시작되는 순간에 땅에 닿는다 */
+  release: 90,
+  /** 공격 1회 상한 (ms) */
+  maxTotal: 1000,
+};
+
+/** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
+export const FX_SHAKE = { damage: 4, ms: 160, intensity: 0.005, killIntensity: 0.009, vibrateHit: 25, vibrateKill: 45 };
