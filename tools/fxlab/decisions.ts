@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 20, date: '2026-10-30' };
+export const VERSION = { n: 21, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -79,6 +79,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 21, date: '2026-10-30', items: ['잃을 HP: 전체 번쩍임 없앰 — 흰 반짝임 한 칸이 천천히 훑는 것만'] },
   { v: 20, date: '2026-10-30', items: ['잃을 HP 깜빡임 느리게: 0.6초 → 1.6초에 한 번, 밝아지는 순간도 짧게'] },
   { v: 19, date: '2026-10-30', items: ['잃을 HP: 납작한 금색 → 금 2줄(밝은 줄 + 그늘 줄) + 0.6초마다 밝게 깜빡 + 흰 반짝임이 오른쪽→왼쪽으로 훑음'] },
   { v: 18, date: '2026-10-30', items: ['HP 게이지 14×3 → 14×4: 양 끝 리벳 칸 없앰, 검정 테두리 + 2줄 채움이 끝까지'] },
