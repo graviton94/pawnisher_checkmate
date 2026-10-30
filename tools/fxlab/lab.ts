@@ -170,8 +170,10 @@ const blit = (k: string, x: number, y: number, a = 1) => {
  * HP 게이지 14×4 도트 (D-054): 검정 1도트 테두리(네 모서리는 비워 둥글게) + 안쪽 12×2 채움(밝은 줄 + 그늘 줄).
  * 채움이 테두리 끝까지 닿는다 — 예전 14×3은 양 끝이 리벳 칸이라 비어 보였다. 잃을 HP는 금색.
  */
-const GAUGE_COL: Record<string, [string, string]> = { a: ['#38bdf8', '#1e6e94'], e: ['#e5262f', '#7a1218'], lose: ['#facc15', '#facc15'], empty: ['#2f2e36', '#16141c'] };
-const gaugeCells = (side: Side, hp: number, after: number, max: number, cell: (i: number, j: number, c: string) => void) => {
+const GAUGE_COL: Record<string, [string, string]> = { a: ['#38bdf8', '#1e6e94'], e: ['#e5262f', '#7a1218'], lose: ['#facc15', '#c89b3c'], loseHi: ['#f4f1ea', '#facc15'], empty: ['#2f2e36', '#16141c'] };
+/** 잃을 HP 칸: 금색 2줄(밝은 줄 + 그늘 줄, 다른 색과 같은 규칙) + 0.6초마다 밝게 깜빡이고, 그 사이 흰 반짝임이 오른쪽→왼쪽으로 훑는다 (D-055) */
+const LOSE_BLINK_MS = 600;
+const gaugeCells = (side: Side, hp: number, after: number, max: number, cell: (i: number, j: number, c: string) => void, now = performance.now()) => {
   for (let i = 1; i < 13; i++) {
     cell(i, 0, '#0b0b0e');
     cell(i, 3, '#0b0b0e');
@@ -181,10 +183,13 @@ const gaugeCells = (side: Side, hp: number, after: number, max: number, cell: (i
     cell(13, j, '#0b0b0e');
   }
   const keep = Math.round((12 * Math.max(0, after)) / max);
-  const now = Math.round((12 * Math.max(0, hp)) / max);
+  const cur = Math.round((12 * Math.max(0, hp)) / max);
+  const ph = (now % LOSE_BLINK_MS) / LOSE_BLINK_MS;
+  const sweep = Math.floor(cur - 1 - ph * (cur - keep + 2)); // 훑는 반짝임이 지금 있는 칸
   for (let i = 0; i < 12; i++) {
-    const [top, low] = GAUGE_COL[i < keep ? (side === 0 ? 'a' : 'e') : i < now ? 'lose' : 'empty'];
-    cell(1 + i, 1, top);
+    const lose = i >= keep && i < cur;
+    const [top, low] = GAUGE_COL[!lose ? (i < keep ? (side === 0 ? 'a' : 'e') : 'empty') : ph < 0.18 ? 'loseHi' : 'lose'];
+    cell(1 + i, 1, lose && i === sweep ? '#f4f1ea' : top);
     cell(1 + i, 2, low);
   }
 };
@@ -502,17 +507,17 @@ const renderGallery = () => {
     if (im?.complete) c.drawImage(im, x, y, 20 * S, 20 * S);
   };
   const loop = (now: number) => {
-    // HP: 12칸 중 5칸을 잃는 장면을 1.6초마다
-    const t = now % 1600;
+    // HP: 잃을 5칸이 0.9초 깜빡이다가 실제로 잃는 장면을 2.2초마다
+    const t = now % 2200;
     hpC.clearRect(0, 0, 112, 72);
     const cell = (i: number, j: number, col: string) => {
       hpC.fillStyle = col;
       hpC.fillRect(8 + i * S * 1.5, 48 + j * S * 1.5, S * 1.5, S * 1.5);
     };
-    const lost = t > 300;
-    gaugeCells(1, lost ? 7 : 12, lost ? 7 : 12, 12, cell);
+    const lost = t > 900;
+    gaugeCells(1, lost ? 7 : 12, 7, 12, cell, now); // 잃기 전엔 잃을 칸이 금색으로 깜빡인다
     for (let i = 7; i < 12 && lost; i++) {
-      const u = t - 300 - (11 - i) * 32; // 오른쪽 끝부터
+      const u = t - 900 - (11 - i) * 32; // 오른쪽 끝부터
       hpC.fillStyle = '#f4f1ea';
       if (u < 0) {
         cell(1 + i, 1, '#f4f1ea');

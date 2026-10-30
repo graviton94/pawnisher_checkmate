@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 18, date: '2026-10-30' };
+export const VERSION = { n: 19, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -79,6 +79,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 19, date: '2026-10-30', items: ['잃을 HP: 납작한 금색 → 금 2줄(밝은 줄 + 그늘 줄) + 0.6초마다 밝게 깜빡 + 흰 반짝임이 오른쪽→왼쪽으로 훑음'] },
   { v: 18, date: '2026-10-30', items: ['HP 게이지 14×3 → 14×4: 양 끝 리벳 칸 없앰, 검정 테두리 + 2줄 채움이 끝까지'] },
   { v: 17, date: '2026-10-30', items: ['피해 숫자에서 해골 뺌 (처치는 금색 숫자로만)'] },
   { v: 16, date: '2026-10-30', items: ['처치 재: 회색 → 검은 재', '화살표: 흐르는 도트 토막', '지형 소품·태엽·종이 왕관은 제미나이 발주로 (지금 그림은 자리 표시)'] },
