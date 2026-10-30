@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 14, date: '2026-10-30' };
+export const VERSION = { n: 15, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -50,7 +50,8 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 export const OPEN_QUESTIONS: string[] = [
   '단순해진 종이 왕관 · 태엽 3종 · 지형 소품 5종 (에셋 목록)',
   '재가 되어 발밑에 쌓이는 처치 (에셋 목록 "처치" 견본)',
-  '기물 그림 외곽선: 자동 정리는 무늬가 뭉개져 폐기 — 원본을 판 격자(16도트 높이, 검정 1 + 흰 1)로 다시 받을지',
+  '피해 숫자 + 해골 한 장 그림 · 아래부터 지워짐 (에셋 목록 "피해 숫자" 견본, 장면 재생)',
+  '기물 외곽선 패치 (그림은 그대로, 얇은 검정만 채우고 흰 테두리 고르게)',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
@@ -58,7 +59,8 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '도트 격자', rule: '모든 이펙트를 칸당 16도트 격자에 찍는다. 매끈한 선·원 금지', status: 'done' },
   { item: '박자', rule: '예비 동작(모으기, 느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 이펙트가 칸에 닿는 순간 그 칸이 맞는다. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
   { item: '이동', rule: '들기 → 지수형 이동(가운데서 가장 빠름) → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
-  { item: '피해 숫자', rule: '크게 튀어나왔다가 지수형으로 자리 잡음. 피해가 클수록 크게, 내 기물이 맞으면 붉게, 처치는 금색 ☠', status: 'review' },
+  { item: '피해 숫자', rule: '숫자(갈무리11 굵게 12px = 10도트 높이, 2도트 획)와 처치 해골(같은 높이·같은 획)을 한 장의 도트 그림으로, 8방향 1도트 검정 테두리를 함께 두른다. 크게 튀어나왔다가 지수형으로 자리 잡고, 사라질 땐 아래에서 위로 잘리는 선이 올라가며 도트가 파스스 지워짐. 내 기물이 맞으면 붉게, 처치는 금색 + 해골', status: 'review' },
+  { item: '기물 외곽선', rule: '사용자 그림은 그대로, 테두리만 패치: 실루엣(원래 도트 계단) 유지 · 얇은 검정만 안쪽으로 채움 · 흰 테두리는 바깥으로 고른 굵기 (`tools/patch-piece-outlines.py`, 원본 build-res/pieces-original)', status: 'review' },
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
   { item: '처치', rule: '위에서부터 한 줄씩 재가 된다 — 잘리는 선 아래는 체크무늬로 듬성듬성, 선을 지난 도트는 재 색으로 바래 곧장 떨어져 기물 발밑에 쌓였다가 한 도트씩 꺼짐. 기물 폭·발밑 밖으로 나가지 않는다', status: 'review' },
   { item: '소품·HUD 화풍', rule: '단순한 덩어리 + 납작한 색 1~2개 + 강조 1개 + 검정 1도트·흰 1도트 테두리, 좌우 대칭 (종이 왕관·태엽·지형 소품)', status: 'review' },
@@ -76,6 +78,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 15, date: '2026-10-30', items: ['피해 숫자와 처치 해골을 한 장 도트 그림으로 (같은 높이·같은 테두리)', '피해 숫자 사라짐: 아래에서 위로 도트가 지워짐', '기물 외곽선 패치: 얇은 검정 채움 · 흰 테두리 고르게 (그림은 그대로)'] },
   { v: 14, date: '2026-10-30', items: ['처치: 칸 밖으로 튀던 파편 → 재가 되어 기물 발밑까지만 떨어져 쌓였다 꺼짐', '종이 왕관·태엽 3종·지형 소품 5종을 단순한 덩어리 화풍으로 다시 (납작한 색 + 강조 1개)'] },
   { v: 13, date: '2026-10-30', items: ['좌우 대칭: 과녁·처치 과녁·체크 고리·배지 고리·지형 소품 (홀수 크기로 가운데 정렬)', '아이콘 30종·종이 왕관·처치 해골 = 공개 픽토그램(game-icons CC BY 3.0 · Tabler MIT) 도트화', '태엽 새 디자인 (꽉 찬 나비 날개)', 'HP 잃는 칸: 오른쪽 끝부터', '처치 X를 기물 위 레이어로', '처치 숫자 옆 ☠ 글자 → 우리 해골 도트'] },
   { v: 12, date: '2026-10-30', items: ['처치: 톱니 파편 → 위에서부터 도트로 바스라짐 (에셋 목록 "처치" 견본)', '발밑 받침 제거'] },

@@ -3,6 +3,7 @@
  * `node tools/fxlab/build.cjs <출력.html>`로 한 장짜리 HTML을 만든다.
  */
 import { createBattle, EMPTY_LOADOUT, legalMoves, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
+import { buildPopupArt, drawPopup, type PopupArt } from '../../src/view/popup';
 import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
 import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
 import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
@@ -273,11 +274,8 @@ const tinted = (key: string, color: string): HTMLCanvasElement | null => {
 interface Popup {
   x: number;
   y: number;
-  text: string;
-  color: string;
+  art: PopupArt;
   at: number;
-  size: number;
-  skull?: boolean;
 }
 interface Burst {
   kind: 'spark';
@@ -367,12 +365,9 @@ const play = () => {
         const dealt = x.l.p.hp - x.h.hpAfter;
         popups.push({
           x: c.x,
-          y: x.l.y + T * 0.15,
-          text: `-${dealt}`,
-          skull: !!x.h.killed,
-          color: x.h.killed ? '#FACC15' : x.l.p.side === 0 ? '#FF6B6B' : '#FFFFFF',
+          y: x.l.y + T * 0.3,
+          art: buildPopupArt(`-${dealt}`, x.h.killed ? 0xfacc15 : x.l.p.side === 0 ? 0xff6b6b : 0xf4f1ea, !!x.h.killed),
           at: ms,
-          size: Math.round(T * (0.4 + 0.25 * Math.min(1, dealt / x.l.p.maxHp))),
         });
         if (x.h.killed) {
           x.l.dead = true;
@@ -416,27 +411,7 @@ const play = () => {
       const size = q > 0.75 ? D / 2 : D;
       ctx.fillRect(Math.round(c.x + (c.i % 2 ? 1 : -1) * D * 0.6 * q), Math.round(c.y - 9 * D * rise), size, size);
     }
-    for (const p of popups) {
-      const q = (ms - p.at) / 950;
-      if (q < 0 || q >= 1) continue;
-      const rise = 1 - (1 - Math.min(1, q * 3.5)) ** 3;
-      const pop = 1 + 0.7 * 2 ** (-10 * Math.min(1, q * 3.5));
-      ctx.globalAlpha = q < 0.68 ? 1 : 1 - (q - 0.68) / 0.32;
-      ctx.font = `700 ${Math.round(p.size * pop)}px Galmuri11, monospace`;
-      ctx.textAlign = 'center';
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = '#0b0b0e';
-      ctx.strokeText(p.text, p.x, p.y - T * 0.35 * rise);
-      ctx.fillStyle = p.color;
-      ctx.fillText(p.text, p.x, p.y - T * 0.35 * rise);
-      if (p.skull) {
-        // 처치: 우리 해골 도트(금색)를 숫자 오른쪽에
-        const sk = tinted('hud/skull-small', '#facc15');
-        const w = ctx.measureText(p.text).width;
-        if (sk) ctx.drawImage(sk, p.x + w / 2 + D, p.y - T * 0.35 * rise - sk.height * D * 1.6, sk.width * D * 1.6, sk.height * D * 1.6);
-      }
-      ctx.globalAlpha = 1;
-    }
+    for (const p of popups) drawPopup(pen.g, p.art, p.x, p.y, D, ms - p.at, T * 0.35);
     if (ms < end) requestAnimationFrame(frame);
     else if (opt.loop) setTimeout(() => my === token && play(), 500);
   };
@@ -483,6 +458,7 @@ const renderGallery = () => {
       items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
+      items += item('피해 숫자 · 처치 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
     } else {
       for (const e of GALLERY.filter((x) => x.dir === g)) {
         if (/^badge-[ae][2-8]$/.test(e.name)) continue;
@@ -501,6 +477,9 @@ const renderGallery = () => {
   const kgC = cv('king').getContext('2d')!;
   const thC = cv('threat').getContext('2d')!;
   const dtC = cv('death').getContext('2d')!;
+  const ppC = cv('pop').getContext('2d')!;
+  const ppSink = { fillStyle: (c: number, a = 1) => (ppC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => ppC.fillRect(x, y, w, h) };
+  let ppArts: PopupArt[] = [];
   const dtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (dtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => dtC.fillRect(x, y, w, h) }, S);
   let dtCells: CrumbleCell[] = [];
   for (const c of [hpC, arC, kgC, thC]) c.imageSmoothingEnabled = false;
@@ -562,6 +541,10 @@ const renderGallery = () => {
     const dt = (now % 1400) - 300;
     if (dt < 0) for (const c of dtCells) dtPen.px(c.x + 2, c.y + 2, c.c, 1);
     else drawCrumble(dtPen, dtCells, dt);
+    // 피해 숫자 견본: 적 피격(흰) · 내 기물 피격(붉음) · 처치(금 + 해골)를 번갈아
+    if (!ppArts.length && document.fonts.check('700 12px Galmuri11')) ppArts = [buildPopupArt('-3', 0xf4f1ea, false), buildPopupArt('-2', 0xff6b6b, false), buildPopupArt('-5', 0xfacc15, true)];
+    ppC.clearRect(0, 0, 200, 120);
+    if (ppArts.length) drawPopup(ppSink, ppArts[Math.floor(now / 1300) % 3], 100, 100, S, (now % 1300) - 150, 30);
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
