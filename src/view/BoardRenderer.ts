@@ -494,11 +494,17 @@ class BoardScene extends Phaser.Scene {
   }
 
   // ---------- 연출 ----------
+  /** 동작 줄이기 설정이면 연출 시간을 30%로 줄이고 흔들림을 끈다 (CLAUDE.md UI/UX 원칙 6) */
+  private readonly calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
   private wait(ms: number): Promise<void> {
-    return new Promise((r) => this.time.delayedCall(ms, r));
+    return new Promise((r) => this.time.delayedCall(this.calm ? ms * 0.3 : ms, r));
   }
   private tween(cfg: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
-    return new Promise((r) => this.tweens.add({ ...cfg, onComplete: () => r() }));
+    const duration = typeof cfg.duration === 'number' && this.calm ? cfg.duration * 0.3 : cfg.duration;
+    return new Promise((r) => this.tweens.add({ ...cfg, duration, onComplete: () => r() }));
+  }
+  private shake(ms: number, intensity: number): void {
+    if (!this.calm) this.cameras.main.shake(ms, intensity);
   }
 
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
@@ -525,7 +531,7 @@ class BoardScene extends Phaser.Scene {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         if (cur.stronghold && isFallen(cur, cur.stronghold.x, cur.stronghold.y)) cur.stronghold = null;
         this.announce('대성당이 무너집니다 — 칸 한 쌍 붕괴');
-        this.cameras.main.shake(300, 0.008);
+        this.shake(300, 0.008);
         this.drawTiles(cur);
         await Promise.all(
           e.pushes.map((p) => {
@@ -542,7 +548,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'suddenDeath') {
         this.announce('더 무너질 곳이 없다 — 대성당이 킹을 짓누릅니다');
-        this.cameras.main.shake(250, 0.006);
+        this.shake(250, 0.006);
         for (const h of e.hits) {
           const sp = this.sprites.get(h.pieceId);
           if (!sp) continue;
@@ -588,7 +594,7 @@ class BoardScene extends Phaser.Scene {
         if (!s) continue;
         const w = this.world(e.to);
         await this.tween({ targets: s.root, x: w.x, y: w.y, duration: 220, ease: 'Quad.easeIn' });
-        this.cameras.main.shake(60, 0.002);
+        this.shake(60, 0.002);
         await this.wait(70);
         continue;
       }
@@ -674,7 +680,7 @@ class BoardScene extends Phaser.Scene {
           this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
         }
       }
-      if (e.hits.length) this.cameras.main.shake(90, 0.005);
+      if (e.hits.length) this.shake(90, 0.005);
       const checked = e.hits.find((h) => h.checked);
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버팁니다 — 다음 공격이면 끝`);
       await this.wait(60);

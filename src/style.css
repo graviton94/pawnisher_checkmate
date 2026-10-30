@@ -68,7 +68,7 @@ html, body {
   font: inherit;
   color: var(--text);
   border-radius: 8px;
-  min-height: 44px;
+  min-height: 48px;
   cursor: pointer;
 }
 .btn:disabled { opacity: 0.4; cursor: default; }
@@ -235,9 +235,9 @@ html, body {
 .card.armed { border: 2px solid var(--brass); box-shadow: 0 0 0 2px rgba(200, 155, 60, 0.35); }
 .card:disabled { opacity: 0.38; cursor: default; }
 .card-name { font-size: 13px; font-weight: 700; line-height: 1.25; color: var(--parchment); }
-.card-desc { font-size: 11px; line-height: 1.35; color: var(--muted); flex: 1; overflow: hidden; }
-.card-tag { font-size: 11px; color: var(--brass); }
-.card.wide { grid-column: span 2; aspect-ratio: auto; min-height: 44px; flex-direction: row; align-items: center; justify-content: space-between; }
+.card-desc { font-size: 12px; line-height: 1.35; color: var(--muted); flex: 1; overflow: hidden; }
+.card-tag { font-size: 12px; color: var(--brass); }
+.card.wide { grid-column: span 2; aspect-ratio: auto; min-height: 48px; flex-direction: row; align-items: center; justify-content: space-between; }
 
 /* 인챈트 팝업 · 장비 편집 */
 .ench { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
@@ -254,13 +254,13 @@ html, body {
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   padding: 6px 9px;
-  min-height: 44px;
+  min-height: 48px;
   cursor: pointer;
 }
 .chip b { display: block; font-size: 13px; }
-.chip small { display: block; font-size: 11px; color: var(--muted); line-height: 1.35; }
+.chip small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
 .chip.on { border-color: var(--brass); background: #2a2418; }
-.chip.small { min-height: 44px; }
+.chip.small { min-height: 48px; }
 .panel { width: min(640px, 94vw); }
 
 /* M5 등반 목업 */
@@ -284,9 +284,11 @@ html, body {
 .chip:disabled { opacity: 0.4; cursor: default; }
 .panel .choice:disabled { opacity: 0.4; cursor: default; }
 .chip .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 2px; }
-.chip .tags i { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 9px; background: #2a2418; color: var(--brass); border: 1px solid var(--copper); }
+.chip .tags i { font-style: normal; font-size: 12px; padding: 1px 6px; border-radius: 9px; background: #2a2418; color: var(--brass); border: 1px solid var(--copper); }
 .panel .logo { width: auto; max-height: 30vh; max-width: 60%; align-self: center; image-rendering: auto; margin: -6px 0 -4px; }
 .piece-img { image-rendering: pixelated; vertical-align: middle; object-fit: contain; }
 .queue .glyph { display: flex; align-items: center; }
-.chip .big-piece { float: left; margin: 0 8px 0 -2px; }
+.chip:has(.big-piece) { text-align: center; }
+.chip .big-piece { display: block; margin: 2px auto 4px; }
+.chip:has(.big-piece) .tags { justify-content: center; }
 .queue li.empty { display: block; height: auto; line-height: 1.5; }
