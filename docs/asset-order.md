@@ -9,10 +9,10 @@
    - `build-res/pieces-small-source.png` (기물 도트)
    - `build-res/icon-source.png` (앱 아이콘 — 흑·백·붉은 톤)
 2. **S0 스타일 시험 시트를 먼저** 뽑는다. ✅ 2026-10-30 통과 — 그 결과 그림을 이후 모든 시트에 세 번째로 첨부한다. 마음에 드는 결과 1장을 고르면, 이후 시트마다 그 결과도 **세 번째 첨부**로 넣는다 → 시트끼리 화풍이 맞는다.
-3. **배경은 마젠타(#FF00FF)**. 나노바나나는 "투명 배경"을 요청하면 체크무늬를 그려 넣는 경우가 많다. 마젠타는 코드가 지운다.
+3. **배경은 마젠타(#FF00FF)**, 그리고 **그림 아래 15%·오른쪽 10%는 비워 둔다** — 제미나이 워터마크(오른쪽 아래 별)가 그 자리에 찍힌다 (2026-10-30 A1에서 확인). 모든 프롬프트에 문구를 넣었다. 그래도 겹치면 잘라 내기 도구가 워터마크를 지운다. 나노바나나는 "투명 배경"을 요청하면 체크무늬를 그려 넣는 경우가 많다. 마젠타는 코드가 지운다.
 4. **도트 크기**: 프롬프트마다 "32×32 도트를 8배 확대" 식으로 써 두었다. 결과가 흐리거나 칸이 어긋나면 같은 프롬프트로 다시 뽑는다 (보통 2~4번 안에 나온다).
 5. **흰색·회색으로만** 그리라고 한 시트(화살표·게이지·이펙트·문양)는 코드가 진영 색(아군 청록/황동, 적 붉은색)을 입힌다. 색을 넣어 오면 그대로 못 쓴다.
-6. 받은 그림은 `build-res/order/<시트ID>.png`로 넣어 주면 개발 측이 잘라서 연결한다 (잘라 내기 도구는 첫 시트가 오면 만든다).
+6. 받은 그림은 `build-res/order/<시트ID>.png`로 넣어 주면 개발 측이 잘라서 연결한다: `python3 -I tools/slice-sheet.py <시트> <열> <행> <출력> <이름…> [--dot N]` (마젠타·분홍 번짐·워터마크 제거 → 원래 도트로 축소).
 7. 한 장에 너무 많이 넣으면 망가진다. 시트당 4~8개로 나눠 두었다.
 
 ### 스타일 시험에서 나온 보정 (아래 프롬프트에 반영됨)
@@ -31,7 +31,7 @@ pixel art · hard square pixels · no anti-aliasing · no blur · no gradients �
 ```
 Pixel art style test sheet for a gothic clockwork steampunk chess game. Match the attached chess piece sprites exactly: chunky 16x16-style pixels, thick white outline around dark shapes, black/white/crimson palette with brass accents.
 Layout: 4 columns x 1 row, each cell 256x256 px, each sprite drawn on a 32x32 pixel grid scaled up 8x so every pixel is a crisp square block.
-Background: solid flat magenta #FF00FF everywhere outside the sprites. No checkerboard, no shadows on the background.
+Background: solid flat magenta #FF00FF everywhere outside the sprites. No checkerboard, no shadows on the background. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Cells, left to right:
 1. A riveted dark iron floor tile, square, with a thin brass edge.
 2. A small steel screw with a brass head, lying slightly tilted (the game's currency).
@@ -44,12 +44,12 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 
 ## A. 보드 표식 (지금의 매끈한 벡터 도형 대체)
 
-### A1. 발밑·선택·과녁 — 8개, 색 있음
+### A1. 발밑·선택·과녁 — 8개, 색 있음 ✅ 받음·게임 적용 (2026-10-30, `public/ui/marks/`)
 
 ```
 Pixel art sprite sheet for a gothic clockwork steampunk chess game, matching the attached piece sprites and style reference.
 Layout: 4 columns x 2 rows, each cell 256x256 px, each sprite on a 32x32 pixel grid scaled 8x (crisp square pixels).
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Row 1:
 1. Ally base: flat elliptical ring under a chess piece, white porcelain with a thin cyan (#38BDF8) rim light, empty center. NO steam, nothing rising above the ring (it must not cover the piece).
 2. Enemy base: flat diamond-shaped ring under a chess piece, black iron with a thin crimson (#E5262F) glow, empty center.
@@ -69,7 +69,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art tile pieces for drawing movement arrows on a chess board, gothic clockwork steampunk style (a line of small brass rivets / chain links).
 Draw ONLY in white and light gray (#FFFFFF, #C8C8C8) — color will be added later by code.
 Layout: 4 columns x 2 rows, each cell 256x256 px, each piece on a 16x16 pixel grid scaled 16x (crisp square pixels). Every piece must touch the cell edges exactly where it connects so pieces tile seamlessly.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. Straight segment, horizontal, crossing the cell from left edge to right edge, 3 pixels thick.
 2. Diagonal segment, from bottom-left corner to top-right corner, 3 pixels thick.
 3. Corner segment: enters from the left edge, turns 90 degrees, exits through the top edge.
@@ -87,7 +87,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art UI parts for a health gauge under chess pieces, styled as a tiny brass pressure tube, gothic clockwork steampunk.
 Draw ONLY in white, light gray and dark gray (#FFFFFF, #C8C8C8, #505050, #1A1A1A) — color will be added later by code.
 Layout: 4 columns x 2 rows, each cell 256x256 px, each part on a 16x16 pixel grid scaled 16x.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. Gauge left end cap (rounded tube end with a rivet), 4 pixels tall, touching the right cell edge.
 2. Gauge middle section (empty glass tube), 4 pixels tall, touching left and right edges, tileable.
 3. Gauge right end cap, touching the left cell edge.
@@ -108,7 +108,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art floor tiles for a mechanical chess board inside a gothic clockwork tower, matching the attached style.
 Layout: 3 columns x 2 rows, each cell 256x256 px, each tile on a 32x32 pixel grid scaled 8x, tile fills the whole cell edge to edge (seamless square tiles). NO white outline around tiles 1-3 and 5-6 — tiles must butt against each other seamlessly.
-Background: solid flat magenta #FF00FF only between cells.
+Background: solid flat magenta #FF00FF only between cells. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. Light square: pale gray riveted metal plate (#56545E family), subtle plate seams, 4 corner rivets.
 2. Dark square: charcoal riveted metal plate (#2F2E36 family), same design as 1.
 3. Fallen square: the plate is gone, revealing dark gears and a faint crimson glow deep below.
@@ -123,7 +123,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art terrain props that sit on top of a chess board square, gothic clockwork steampunk, matching the attached style (white outline like the pieces).
 Layout: 5 columns x 1 row, each cell 256x256 px, each prop on a 32x32 pixel grid scaled 8x, prop sits in the lower 2/3 of the cell.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. Scrap heap: a pile of iron scrap, pipes and a broken gear (blocks movement).
 2. Lift platform: a raised square brass platform on a piston.
 3. Heat shield: an upright riveted iron plate barrier with a small vent.
@@ -145,7 +145,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art attack effect animation strip: a short sword slash arc swung forward by a small clockwork soldier (chess pawn).
 Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0) — color is added later by code.
 Layout: 6 columns x 1 row, each cell 256x256 px, each frame on a 32x32 pixel grid scaled 8x. The attacker stands at the bottom center of every cell; the slash sweeps across the TOP half of the cell from the upper-left diagonal to the upper-right diagonal.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Frames: 1 a thin spark at upper-left, 2 the crescent slash grows toward the top center, 3 full bright crescent from upper-left to upper-right (thickest), 4 the crescent thins with small sparks at both ends, 5 fading broken pixels of the arc, 6 a few last sparks.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
@@ -156,7 +156,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art attack effect animation strip: a clockwork horse (chess knight) stamps the ground with a piston hoof, sending a shock ring and a burst of steam.
 Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0).
 Layout: 6 columns x 1 row, each cell 256x256 px, each frame on a 32x32 pixel grid scaled 8x, impact point at the center of every cell.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Frames: 1 small dust puff, 2 a flat elliptical shock ring appears, 3 ring expands with four short spark spikes, 4 ring at full size breaking into dashes, 5 steam clouds drifting up, 6 last thin wisps.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
@@ -166,7 +166,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art impact star animation strip (where a knight's L-shaped strike lands).
 Draw ONLY in white and light gray. Layout: 4 columns x 1 row, each cell 256x256 px, each frame on a 16x16 pixel grid scaled 16x, centered.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Frames: 1 single bright pixel cross, 2 eight-point star with long and short rays, 3 star larger with hollow center, 4 scattered fading dots.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
@@ -177,7 +177,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art effect parts for a bishop that focuses light through a brass lens and fires a beam.
 Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0).
 Layout: 7 columns x 1 row, each cell 256x256 px, each part on a 16x16 pixel grid scaled 16x.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1-4. Charge animation, centered: 1 eight dots far apart on a circle, 2 dots spiral closer, 3 dots almost merged around a bright core, 4 a dense bright core with a short flare cross.
 5. Beam segment, DIAGONAL from the bottom-left corner to the top-right corner of the cell: bright 2-pixel core with 1-pixel dim edges on both sides, must tile seamlessly corner to corner.
 6. Beam segment, HORIZONTAL from left edge to right edge, same design, tileable.
@@ -191,7 +191,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art effect strips for a heavy clockwork tower (chess rook) that slams down and sends explosions running outward square by square.
 Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0, #606060).
 Layout: 10 columns x 1 row, each cell 192x192 px, each frame on a 32x32 pixel grid scaled 6x, centered.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1-4. Slam dust: 1 flat dust line at the bottom, 2 dust and small rocks bouncing up to both sides, 3 square shock outline, 4 settling dust.
 5-10. One-square explosion: 5 tiny bright core, 6 solid round blast, 7 bigger blast with hollow ring and flying bolts, 8 ring breaking apart with gear bits, 9 smoke puffs, 10 fading smoke dots.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
@@ -202,7 +202,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art attack effect animation strip: a clockwork king strikes the floor with a scepter and a square shockwave spreads to the eight surrounding squares.
 Draw ONLY in white and light gray. Layout: 5 columns x 1 row, each cell 256x256 px, each frame on a 48x48 pixel grid scaled 5x (the king's square is the middle third of the cell).
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Frames: 1 small square ring around the center square, 2 ring grows with rivet sparks at corners, 3 ring reaches the cell edge (covers all 8 neighbors), 4 ring breaks into dashed pieces, 5 faint corner sparks.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
@@ -212,7 +212,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art common effect strips for a clockwork chess game. Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0, #606060).
 Layout: 6 columns x 4 rows, each cell 160x160 px, each frame on a 16x16 pixel grid scaled 10x, centered. Leave unused cells magenta.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Row 1 — Hit spark (4 frames): a white flash star, smaller star with sparks flying, scattered sparks, two last dots.
 Row 2 — Shatter (6 frames): a small machine bursts into gears, springs and bolts flying outward and falling down.
 Row 3 — Steam puff (5 frames): a round pixel cloud puffs out, grows, splits, thins and vanishes.
@@ -232,7 +232,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 Pixel art icon sheet: pure white single-color silhouettes, gothic clockwork steampunk chess theme.
 Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel empty margin inside the 16x16.
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Icons: 1 sword blade, 2 piercing arrow passing through a ring, 3 forked double arrow (two heads), 4 shock wave arcs, 5 heat flame / hot crack, 6 shield, 7 stacked wall bricks, 8 chain link.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
@@ -243,7 +243,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pin
 Pixel art icon sheet: pure white single-color silhouettes, gothic clockwork steampunk chess theme.
 Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Icons: 1 oil drop, 2 skull made of a gear, 3 horseshoe with a piston, 4 swirl portal door, 5 two curved swap arrows, 6 banner flag, 7 reaching hand / grabber claw, 8 wind-up key.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
@@ -254,7 +254,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pin
 Pixel art icon sheet: pure white single-color silhouettes, gothic clockwork steampunk chess theme.
 Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Icons: 1 pocket watch, 2 bell, 3 small crown, 4 four-point star, 5 eye with a lens rim, 6 balance scale, 7 target reticle, 8 punched paper card (rectangle with holes).
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
@@ -265,7 +265,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pin
 Pixel art icon sheet: pure white single-color silhouettes for map nodes, gothic clockwork steampunk.
 Layout: 3 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 Icons: 1 hammer on anvil (workshop), 2 screw (shop / currency), 3 question mark made of a bent pipe (event), 4 parts crate (storeroom), 5 wrench (repair station), 6 slot-machine lever (fortune machine).
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
@@ -278,7 +278,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pin
 Pixel art UI frames for a gothic clockwork steampunk game, to be used as 9-slice panels (corners stay fixed, edges stretch).
 Use ONLY these four grays: #1A1A1A, #4A4A4A, #8A8A8A, #D0D0D0 — color is added later by code. Square corners (no rounded corners).
 Layout: 3 columns x 2 rows, each cell 320x320 px, each frame on a 40x40 pixel grid scaled 8x, the frame border fills the cell edges, center left flat #4A4A4A.
-Background: solid flat magenta #FF00FF only between cells.
+Background: solid flat magenta #FF00FF only between cells. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. Panel: riveted iron frame, 4-pixel border, rivet in each corner.
 2. Button (normal): thick riveted plate with a 3-pixel hard drop shadow at the bottom.
 3. Button (pressed): same plate pushed down, no bottom shadow.
@@ -293,7 +293,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art overlays matching the attached chess piece sprites (thick white outline, same pixel size).
 Layout: 2 columns x 1 row, each cell 256x256 px, each sprite on a 16x16 pixel grid scaled 16x.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. A paper crown cut out of a cardboard box (rough zigzag edges, a bit too big, slightly crooked, light brown cardboard with a printed box-line on it) that sits on a chess pawn's head, 16 wide x 8 tall, at the top of the cell. Also, in the same style as the attached pawn sprites: a white pawn wearing this paper crown (the player's king), full sprite.
 2. A supercharger: a small brass boiler with a pressure gauge and a crimson valve, centered.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
@@ -306,7 +306,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 ```
 Pixel art UI icons for action points in a gothic clockwork steampunk chess game: a wind-up key (the butterfly-shaped key used to wind clockwork toys), seen from the side, standing upright. Match the attached piece sprites (thick white outline, same pixel density).
 Layout: 3 columns x 1 row, each cell 256x256 px, each icon on a 24x24 pixel grid scaled 10x, centered.
-Background: solid flat magenta #FF00FF.
+Background: solid flat magenta #FF00FF. Leave the bottom 15% and the right 10% of the whole image completely empty magenta (no sprites there).
 1. Full: polished brass wind-up key, bright gold highlights, a tiny cyan glint (#38BDF8) on the key's grip.
 2. Spent: the same key in dull dark iron gray, no glow.
 3. Bonus: the brass key with an extra glowing gold ring around it (extra action point from a reward).

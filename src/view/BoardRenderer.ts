@@ -24,6 +24,9 @@ const TYPE_ENCHANTS: Partial<Record<PieceType, EnchantId[]>> = { N: ['E01', 'E13
 /** 기물 텍스처 키 */
 const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
 
+/** 보드 표식 도트 (public/ui/marks) */
+const MARKS = ['base-ally', 'base-enemy', 'select', 'move-dot', 'target', 'target-kill', 'badge', 'badge-enemy'] as const;
+
 const C = {
   // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
   light: 0x56545e,
@@ -102,11 +105,14 @@ class BoardScene extends Phaser.Scene {
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
+    // 사용자 발주 보드 표식 (docs/asset-order.md 시트 A1, tools/slice-sheet.py로 자름)
+    for (const m of MARKS) this.load.image(`mk-${m}`, `ui/marks/${m}.png`);
   }
 
   create(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const m of MARKS) this.textures.get(`mk-${m}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0);
@@ -228,13 +234,8 @@ class BoardScene extends Phaser.Scene {
     const w = this.world(pos);
     const root = this.add.container(w.x, w.y).setDepth(2 + pos.y * -0.001 + 0.5);
     const base = this.add.graphics();
-    if (p.side === 0) {
-      base.lineStyle(Math.max(2, t * 0.045), C.cyan, 1).strokeEllipse(t / 2, t * 0.8, t * 0.62, t * 0.2);
-    } else {
-      const s = t * 0.13;
-      base.lineStyle(Math.max(2, t * 0.045), C.crimson, 1);
-      base.strokePoints([{ x: t / 2, y: t * 0.8 - s }, { x: t / 2 + s, y: t * 0.8 }, { x: t / 2, y: t * 0.8 + s }, { x: t / 2 - s, y: t * 0.8 }], true);
-    }
+    // 발밑 받침: 아군 = 흰 고리, 적 = 검은 마름모 (색 + 모양, UI 원칙 4)
+    const foot = p.side === 0 ? this.add.image(t / 2, t * 0.8, 'mk-base-ally').setDisplaySize(t * 0.66, t * 0.47) : this.add.image(t / 2, t * 0.8, 'mk-base-enemy').setDisplaySize(t * 0.5, t * 0.5);
     if (p.type === 'K' && this.state?.lastStrike?.[p.side] === 'ready') {
       base.lineStyle(Math.max(2, t * 0.05), C.brass, 1).strokeCircle(t / 2, t * 0.45, t * 0.44);
     }
@@ -274,7 +275,7 @@ class BoardScene extends Phaser.Scene {
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
-    root.add([base, glyph, ...marks, hp]);
+    root.add([foot, base, glyph, ...marks, hp]);
     root.setAlpha(alpha);
     const sprite = { root, glyph, hp, piece: p };
     this.drawHp(sprite, p.hp, p.hp);
@@ -322,9 +323,8 @@ class BoardScene extends Phaser.Scene {
   private smallBadge(pos: Pos, n: number, alpha: number): void {
     const t = this.tile;
     const w = this.world(pos);
-    const r = t * 0.13;
-    this.arrowsG.fillStyle(0x0b0b0e, alpha).fillCircle(w.x + r + 3, w.y + t - r - 3, r);
-    this.arrowsG.lineStyle(1.5, C.crimson, alpha).strokeCircle(w.x + r + 3, w.y + t - r - 3, r);
+    const r = t * 0.15;
+    this.dynamic.push(this.add.image(w.x + r + 3, w.y + t - r - 3, 'mk-badge-enemy').setDisplaySize(r * 2, r * 2).setDepth(4).setAlpha(alpha));
     const txt = this.add
       .text(w.x + r + 3, w.y + t - r - 3, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.3)}px`, color: '#FF6B6B' })
       .setOrigin(0.5)
@@ -337,11 +337,11 @@ class BoardScene extends Phaser.Scene {
   private badge(pos: Pos, n: number, alpha = 1, color = C.brass): void {
     const t = this.tile;
     const w = this.world(pos);
-    const r = Math.max(10, t * 0.21);
-    const g = this.add.graphics().setDepth(4).setAlpha(alpha);
-    g.fillStyle(color, 1).fillCircle(w.x + r * 0.7, w.y - r * 0.2, r).lineStyle(1.5, C.ink, 1).strokeCircle(w.x + r * 0.7, w.y - r * 0.2, r);
+    const r = Math.max(12, t * 0.27);
+    const enemy = color === C.crimson;
+    const g = this.add.image(w.x + r * 0.7, w.y - r * 0.2, enemy ? 'mk-badge-enemy' : 'mk-badge').setDisplaySize(r * 2, r * 2).setDepth(4).setAlpha(alpha);
     const txt = this.add
-      .text(w.x + r * 0.7, w.y - r * 0.2, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.1)}px`, color: '#16141C' })
+      .text(w.x + r * 0.7, w.y - r * 0.2, String(n), { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(r * 1.05)}px`, color: enemy ? '#FF8A8A' : '#16141C' })
       .setOrigin(0.5)
       .setDepth(4)
       .setAlpha(alpha)
@@ -429,7 +429,7 @@ class BoardScene extends Phaser.Scene {
       const sel = m.virtual.pieces.find((p) => p.id === m.selectedId);
       if (sel) {
         const w = this.world(sel);
-        this.marksG.lineStyle(3, C.cyan, 1).strokeRect(w.x + 1.5, w.y + 1.5, t - 3, t - 3);
+        this.dynamic.push(this.add.image(w.x + t / 2, w.y + t / 2, 'mk-select').setDisplaySize(t, t).setDepth(1.5));
       }
       for (const d of m.destinations) {
         const c = this.center(d);
@@ -437,11 +437,9 @@ class BoardScene extends Phaser.Scene {
         const hit = m.hitDests.find((h) => h.pos.x === d.x && h.pos.y === d.y);
         if (isPending) this.marksG.lineStyle(3, C.cyan, 1).strokeCircle(c.x, c.y, t * 0.36);
         if (hit) {
-          // 도착하면 적을 친다: 붉은 과녁 (처치까지면 금색)
-          const col = hit.kill ? 0xfacc15 : C.crimson;
-          this.marksG.lineStyle(3, col, 1).strokeCircle(c.x, c.y, t * 0.3);
-          this.marksG.lineStyle(2, col, 1).lineBetween(c.x - t * 0.14, c.y, c.x + t * 0.14, c.y).lineBetween(c.x, c.y - t * 0.14, c.x, c.y + t * 0.14);
-        } else if (!isPending) this.marksG.fillStyle(C.cyan, 0.85).fillCircle(c.x, c.y, t * 0.12);
+          // 도착하면 적을 친다: 붉은 톱니 과녁 (처치까지면 금색 해골 과녁)
+          this.dynamic.push(this.add.image(c.x, c.y, hit.kill ? 'mk-target-kill' : 'mk-target').setDisplaySize(t * 0.78, t * 0.78).setDepth(1.5));
+        } else if (!isPending) this.dynamic.push(this.add.image(c.x, c.y, 'mk-move-dot').setDisplaySize(t * 0.32, t * 0.32).setDepth(1.5));
       }
     }
 
