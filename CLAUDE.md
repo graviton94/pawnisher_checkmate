@@ -10,7 +10,7 @@
 
 ## 문서
 - 정본 기획: `docs/gdd/` · 결정 로그: `docs/DECISIONS.md` (D-번호) · 시뮬레이션 보고: `docs/reports/`
-- 세계관·테마: `docs/world.md` · 아트 바이블: `docs/art-bible.md` · 에셋 생산(원본 vs 조합): `docs/art-assets.md` · 발주 프롬프트: `docs/asset-order.md`
+- 세계관·테마: `docs/world.md` · 스토리보드: `docs/story.md` · 아트 바이블: `docs/art-bible.md` · 에셋 생산(원본 vs 조합): `docs/art-assets.md` · 발주 프롬프트: `docs/asset-order.md`
 - 레퍼런스 스터디: `docs/reference/reference-study.md` · 외부 도구 목록: `docs/reference/tools.md`
 - 새 이름·문구는 `docs/world.md` 이름 규칙을, 새 그림은 `docs/art-assets.md` §1 순서(조합 → 문양 → 전용 그림)를 따른다.
 - 기획을 바꾸면 해당 GDD 장 + DECISIONS에 같이 남긴다.

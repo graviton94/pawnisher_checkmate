@@ -28,7 +28,7 @@ Layout: 4 columns x 1 row, each cell 256x256 px, each sprite drawn on a 32x32 pi
 Background: solid flat magenta #FF00FF everywhere outside the sprites. No checkerboard, no shadows on the background.
 Cells, left to right:
 1. A riveted dark iron floor tile, square, with a thin brass edge.
-2. A small brass gear coin token, front view.
+2. A small steel screw with a brass head, lying slightly tilted (the game's currency).
 3. A white porcelain ring base that a chess piece stands on, seen slightly from above (flat ellipse), with a faint cyan steam glow.
 4. A crimson targeting reticle made of a gear ring with four inward teeth.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers.
@@ -122,7 +122,7 @@ Background: solid flat magenta #FF00FF.
 2. Lift platform: a raised square brass platform on a piston.
 3. Heat shield: an upright riveted iron plate barrier with a small vent.
 4. Gear trap: an open toothed gear trap set into the floor, slightly crimson.
-5. Brass chest: a small brass coin box with gear-coins spilling out.
+5. Screw box: a small brass box with steel screws spilling out.
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
 ```
 
@@ -260,7 +260,7 @@ Pixel art icon sheet: pure white single-color silhouettes for map nodes, gothic 
 Layout: 3 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel grid scaled 16x, 1-pixel margin.
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
 Background: solid flat magenta #FF00FF.
-Icons: 1 hammer on anvil (workshop), 2 gear-shaped coin (shop / currency), 3 question mark made of a bent pipe (event), 4 parts crate (storeroom), 5 wrench (repair station), 6 slot-machine lever (fortune machine).
+Icons: 1 hammer on anvil (workshop), 2 screw (shop / currency), 3 question mark made of a bent pipe (event), 4 parts crate (storeroom), 5 wrench (repair station), 6 slot-machine lever (fortune machine).
 Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text.
 ```
 
@@ -295,6 +295,20 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 
 ---
 
+## I. 태엽 (AP) — 3개, 색 있음 (지금의 날개 그림 대체)
+
+```
+Pixel art UI icons for action points in a gothic clockwork steampunk chess game: a wind-up key (the butterfly-shaped key used to wind clockwork toys), seen from the side, standing upright. Match the attached piece sprites (thick white outline, same pixel density).
+Layout: 3 columns x 1 row, each cell 256x256 px, each icon on a 24x24 pixel grid scaled 10x, centered.
+Background: solid flat magenta #FF00FF.
+1. Full: polished brass wind-up key, bright gold highlights, a tiny cyan glint (#38BDF8) on the key's grip.
+2. Spent: the same key in dull dark iron gray, no glow.
+3. Bonus: the brass key with an extra glowing gold ring around it (extra action point from a reward).
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers.
+```
+
+---
+
 ## 발주 순서 요약
 
 | 순서 | 시트 | 개수 | 우선 이유 |
@@ -303,7 +317,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 | 2 | A1 발밑·선택·과녁 · A2 화살표 · A3 게이지 | 23 | 매 판 계속 보이는 벡터 도형 교체 (사용자 피드백) |
 | 3 | E1~E7 공격 이펙트 | ~60프레임 | 기물별 공격 연출 (코드 임시판 대체) |
 | 4 | D1 판 · D2 지형 | 11 | 보드 분위기 |
-| 5 | F1~F4 문양 · G 프레임 · H 왕관 | 38 | 아이콘·UI 전체 |
+| 5 | F1~F4 문양 · G 프레임 · H 왕관 · I 태엽 | 41 | 아이콘·UI 전체 |
 
 - 받는 즉시 개발 측: 마젠타 제거 → 도트 크기 자동 검출 → 원래 도트 해상도로 축소 → `public/` 연결 → `/run-and-observe` 증거.
-- 나중 발주 (후순위): 보스·기관사 초상, Act 배경(장미창 시계), 태엽 감개 모양 AP 아이콘 (`world.md` §7-3 결정 후).
+- 나중 발주 (후순위): 컷신 11컷·인물 초상 8장 (`docs/story.md` §6), Act 배경(장미창 시계).
