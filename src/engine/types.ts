@@ -1,6 +1,7 @@
 import type { CardId } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
 import type { TacticId } from '../data/tactics';
+import type { AffixId } from '../data/legions';
 import type { VariantId } from '../data/variants';
 
 /** 0 = 플레이어(보드 아래), 1 = 적(보드 위). 엔진은 두 진영을 같은 규칙으로 다룬다. */
@@ -41,6 +42,8 @@ export interface Piece {
   variant?: VariantId;
   /** 마지막으로 이동한 턴 번호 (방열 룩) */
   movedTurn?: number;
+  /** 검문! 정예 접사 (D-096) */
+  affix?: AffixId;
 }
 
 /** 진영의 전투 장비: 인챈트 중첩, 액티브 카드, 대장간 유형 강화 (GDD 6·7장) */
@@ -174,6 +177,8 @@ export interface HitResult {
   pushedTo?: Pos;
   /** 체크메이트 규칙으로 킹이 HP 1에서 버텼다 (체크) */
   checked?: boolean;
+  /** 최후의 리벳 접사로 HP 1에서 버텼다 */
+  held?: boolean;
 }
 
 export type BattleEvent =
@@ -198,6 +203,8 @@ export type BattleEvent =
   | { type: 'fuse'; pieceId: number; partnerId: number; types: PieceType[] }
   | { type: 'heal'; pieceId: number; amount: number }
   | { type: 'apGain'; side: Side; amount: number }
+  /** 정예 접사가 움직였다 (D-096): 같은 틀 ATK 상승 · 반동 스프링 되받기(hit) */
+  | { type: 'affix'; pieceId: number; affix: AffixId; hit?: HitResult }
   /** 전술 키워드 (D-094): 이 공격·이 턴에 난 수의 이름 */
   | { type: 'tactic'; side: Side; order: number; pieceId: number; tactic: TacticId };
 

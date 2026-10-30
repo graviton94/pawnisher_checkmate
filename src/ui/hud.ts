@@ -9,6 +9,7 @@ import { FORGE_MAX } from '../data/forge';
 import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 import { VARIANTS } from '../data/variants';
 import { TEXT } from '../data/text';
+import { AFFIXES } from '../data/legions';
 import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
@@ -237,6 +238,7 @@ export class Hud implements HudView {
     if (p.fused) extra.push(`결합: ${p.fused.map((ty) => PIECE_NAMES_KO[ty]).join(' + ')}`);
     if (p.formAs) extra.push(`거푸집 교환: ${PIECE_NAMES_KO[p.formAs]} 행마`);
     if (p.variant && p.type === VARIANTS[p.variant].base) extra.push(`<span class="variant">이형 · ${VARIANTS[p.variant].name}</span><br><small>${VARIANTS[p.variant].gain} (${VARIANTS[p.variant].cost})</small>`);
+    if (p.affix) extra.push(`<span class="enemy">${AFFIXES[p.affix].name}</span><br><small>${AFFIXES[p.affix].desc}</small>`);
     const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
     if (forge) extra.push(`거푸집 개량 +${forge}`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';

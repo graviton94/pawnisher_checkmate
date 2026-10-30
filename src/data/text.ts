@@ -74,6 +74,8 @@ export const TEXT = {
     piece: '새 기물',
     enchant: '개조',
     card: '천공 카드',
+    recruit: '영입',
+    recruitLead: '쓰러진 적 기물 하나가 상자에 실린다. 고른 것만 따라온다.',
     skip: '건너뛰기',
     next: '계속',
   },

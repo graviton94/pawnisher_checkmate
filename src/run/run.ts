@@ -1,5 +1,6 @@
 import { ORDERS, ORDER_GOLD_MULT } from '../data/tactics';
 import { orderProgress, pickOrder } from './orders';
+import { RECRUIT_OPTIONS } from '../data/legions';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
@@ -52,7 +53,12 @@ export interface MapNode {
 }
 
 /** 3지선다 (인챈트·카드). 건너뛰면 골드 소량 */
-export type Choice = { type: 'enchant'; options: EnchantId[] } | { type: 'card'; options: CardId[] } | { type: 'piece'; options: PieceType[] };
+export type Choice =
+  | { type: 'enchant'; options: EnchantId[] }
+  | { type: 'card'; options: CardId[] }
+  | { type: 'piece'; options: PieceType[] }
+  /** 영입 (D-096): 쓰러뜨린 적 기물 하나. 적의 이형이면 그 이형 거푸집도 따라온다 */
+  | { type: 'recruit'; options: PieceType[]; variants: Partial<Record<PieceType, VariantId>> };
 
 export interface ShopItem<T> {
   item: T;
@@ -303,6 +309,22 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     else lines.push('군단에 더 들일 자리가 없다.');
   }
   const source = kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'battle';
+  // 영입 (GDD 13장 P3, D-096): 검문!·반장 대국은 쓰러뜨린 적 기물 하나를 데려올 수 있다
+  if (source !== 'battle') {
+    const e = run.stage.encounter;
+    const types = [...new Set(e.deck.filter((t) => t !== 'K' && canAdd(run.deck, t)))];
+    const options = withRng(run, (rng) => {
+      const out: PieceType[] = [];
+      while (out.length < RECRUIT_OPTIONS && types.length) out.push(types.splice(rng.int(types.length), 1)[0]);
+      return out;
+    });
+    const variants: Partial<Record<PieceType, VariantId>> = {};
+    for (const t of options) {
+      const v = e.loadout.variants?.[t];
+      if (v && !run.loadout.variants?.[t]) variants[t] = v;
+    }
+    if (options.length) choices.push({ type: 'recruit', options, variants });
+  }
   choices.push({ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, source)) });
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
   run.stage = {
@@ -395,10 +417,13 @@ export const takeChoice = (run: RunState, option: string, discard?: EnchantId | 
   if (run.stage.at !== 'reward' || !run.stage.choices.length) return '고를 게 없는데.';
   const ch = run.stage.choices[0];
   if (!(ch.options as string[]).includes(option)) return '없는 선택지';
-  if (ch.type === 'piece') {
+  if (ch.type === 'piece' || ch.type === 'recruit') {
     const t = option as PieceType;
     if (!canAdd(run.deck, t)) return '“규격 초과.”';
     run.deck.push(t);
+    // 영입한 적이 이형이었으면 그 이형 거푸집도 (아직 이형이 없는 유형만)
+    const v = ch.type === 'recruit' ? ch.variants[t] : undefined;
+    if (v && !run.loadout.variants?.[t]) (run.loadout.variants ??= {})[t] = v;
     run.stage.choices.shift();
     return;
   }

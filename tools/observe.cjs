@@ -208,6 +208,35 @@ const scenarios = {
     await page.tap('[data-node="0"]'); await page.waitForTimeout(1200);
     return ['battle-run'];
   },
+  // 검문! 정예 (D-096): 접사 딱지(왼쪽 위) + 길게 누르면 접사 설명
+  async 'battle-elite'(page) {
+    await loadRun(page, { at: 'map' }, { floor: 8, path: [0, 0, 0, 0, 0, 0, 0], map: Array.from({ length: 36 }, () => [{ kind: 'elite' }]) });
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(1400);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-battle-elite.png`) });
+    await page.evaluate(() => {
+      const c = window.pawnisher;
+      const p = c.state.pieces.find((q) => q.affix);
+      if (p) c.tap({ x: p.x, y: p.y }, true);
+    });
+    const pos = await page.evaluate(() => { const p = window.pawnisher.state.pieces.find((q) => q.affix); return p ? { x: p.x, y: p.y, w: window.pawnisher.state.width, h: window.pawnisher.state.height } : null; });
+    if (pos) {
+      const box = await page.locator('#board canvas').boundingBox();
+      const cell = Math.min(box.width / pos.w, box.height / pos.h);
+      const ox = box.x + (box.width - cell * pos.w) / 2;
+      const oy = box.y + (box.height - cell * pos.h) / 2;
+      const cx = ox + (pos.x + 0.5) * cell;
+      const cy = oy + (pos.h - 1 - pos.y + 0.5) * cell;
+      await page.evaluate(({ cx, cy }) => { const p = window.pawnisher.state.pieces.find((q) => q.affix); window.runUi.hud.showInfo(p, cx, cy); }, { cx, cy });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: path.join(OUT, `${stamp}-battle-elite-info.png`) });
+    }
+    return [];
+  },
+  // 영입 (D-096): 검문! 보상 — 쓰러뜨린 적 기물 하나, 이형이면 거푸집도
+  async 'reward-recruit'(page) {
+    await loadRun(page, { at: 'reward', title: '검문 통과!', lines: ['나사 +60'], choices: [{ type: 'recruit', options: ['N', 'B', 'R'], variants: { N: 'hammer' } }] });
+    return ['reward-recruit'];
+  },
   async shop(page) {
     await loadRun(page, { at: 'map' });
     await page.tap('[data-node="1"]'); await page.waitForTimeout(400);

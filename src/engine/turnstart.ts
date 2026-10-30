@@ -1,3 +1,4 @@
+import { AFFIX } from '../data/legions';
 import { COLLAPSE, RESIGN, STALL, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
@@ -234,6 +235,13 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
     s.apBonus[side] += s.apCarry[side];
     events.push({ type: 'apGain', side, amount: s.apCarry[side] });
     s.apCarry[side] = 0;
+  }
+  // 덧댄 철판 (정예 접사, D-096): 자기 턴 시작마다 방열판
+  for (const p of s.pieces) {
+    if (p.side === side && p.affix === 'plate') {
+      p.shield += AFFIX.plateShield;
+      events.push({ type: 'shield', pieceId: p.id, amount: AFFIX.plateShield });
+    }
   }
   // 방열 룩 (이형): 지난 자기 턴에 움직이지 않았으면 상하좌우 아군에 방열판
   for (const r of s.pieces) {

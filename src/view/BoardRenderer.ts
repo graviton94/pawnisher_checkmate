@@ -1,3 +1,4 @@
+import { AFFIXES } from '../data/legions';
 import { TACTICS } from '../data/tactics';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
@@ -139,6 +140,7 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
+    for (const a of Object.values(AFFIXES)) this.load.image(`icon-${a.icon}`, `ui/icons/${a.icon}.png`);
   }
 
   create(): void {
@@ -317,6 +319,15 @@ class BoardScene extends Phaser.Scene {
     if (p.variant && p.type === VARIANTS[p.variant].base && !p.fused && !p.formAs) {
       const d = t / BOARD_DOTS;
       marks.push(this.add.image(13 * d, d, boardKey(`variant-${p.variant}`)).setOrigin(0, 0).setDisplaySize(7 * d, 7 * d));
+    }
+    // 검문! 정예 접사 (D-096): 왼쪽 위 검은 딱지 + 접사 색 아이콘 — 늘 보이고, 길게 누르면 이름·효과
+    if (p.affix) {
+      const a = AFFIXES[p.affix];
+      const size = t * 0.34;
+      const tag = this.add.graphics();
+      tag.fillStyle(0x16141c, 1).fillRect(t * 0.02, t * 0.02, size, size);
+      tag.lineStyle(Math.max(1, t * 0.03), Phaser.Display.Color.HexStringToColor(a.color).color, 1).strokeRect(t * 0.02, t * 0.02, size, size);
+      marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, `icon-${a.icon}`).setDisplaySize(size * 0.72, size * 0.72).setTint(Phaser.Display.Color.HexStringToColor(a.color).color));
     }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
@@ -865,6 +876,25 @@ class BoardScene extends Phaser.Scene {
         }
         continue;
       }
+      if (e.type === 'affix') {
+        // 정예 접사 발동: 이름이 떠오르고, 반동 스프링이면 쓰러뜨린 쪽이 맞는다
+        const sp = this.sprites.get(e.pieceId);
+        const a = AFFIXES[e.affix];
+        if (sp) {
+          this.floatText(sp, a.name, a.color);
+          if (e.hit) {
+            sfx('hit', this.combo++);
+            this.applyHit(sp, e.hit);
+            if (e.hit.killed) {
+              await Promise.race([this.playCrumble(sp), this.after(260)]);
+              sp.root.destroy();
+              this.sprites.delete(sp.piece.id);
+            }
+          }
+          await this.wait(260);
+        }
+        continue;
+      }
       if (e.type === 'tactic') {
         // 전술 키워드 배너 (D-094): 친 기물 위에 이름이 튀어 오른다. 체크는 아래 안내가 맡는다
         const sp = this.sprites.get(e.pieceId);
@@ -927,6 +957,11 @@ class BoardScene extends Phaser.Scene {
         });
       });
       await Promise.all([...hitsDone, this.after(fx.duration)]);
+      // 최후의 리벳: HP 1에서 버틴 기물 위에 접사 이름
+      for (const h of e.hits.filter((x) => x.held)) {
+        const sp = this.sprites.get(h.targetId);
+        if (sp) this.floatText(sp, AFFIXES.lastRivet.name, AFFIXES.lastRivet.color);
+      }
       const checked = e.hits.find((h) => h.checked);
       if (checked) sfx('check');
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버틴다 — 한 대면 끝`);

@@ -4,6 +4,7 @@ import { SYNERGY, TACTIC_ENCHANT } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
 import { VARIANTS } from '../data/variants';
+import { AFFIX } from '../data/legions';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
 import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge, variantOn } from './rules';
 import {
@@ -33,7 +34,8 @@ export const moveCost = (s: BattleState, piece: Piece): number => {
   const types = moveTypes(piece);
   if (types.length === 1 && types[0] === 'P' && ench(s, piece.side, 'E04') >= 3) return 0;
   const extra = piece.variant && variantOn(piece, piece.variant) ? (VARIANTS[piece.variant].apDelta ?? 0) : 0;
-  return Math.max(...types.map((t) => PIECE_STATS[t].ap)) + extra;
+  const oiled = piece.affix === 'oiled' ? 1 : 0; // 기름칠한 관절 (접사)
+  return Math.max(0, Math.max(...types.map((t) => PIECE_STATS[t].ap)) + extra - oiled);
 };
 
 /**
@@ -135,6 +137,19 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
   if (!dead.length) return 0;
   for (const p of dead) ctx.removed.push({ ...p });
   s.pieces = s.pieces.filter((p) => p.hp > 0);
+  // 정예 접사 (D-096): 같은 틀 — 붙어 있던 아군이 쓰러지면 ATK 상승 · 반동 스프링 — 쓰러뜨린 기물이 되받는다
+  for (const d of dead) {
+    for (const a of s.pieces) {
+      if (a.side === d.side && a.affix === 'mold' && chebyshev(a, d) === 1) {
+        a.atk = Math.round(a.atk * AFFIX.moldAtk);
+        ctx.events.push({ type: 'affix', pieceId: a.id, affix: 'mold' });
+      }
+    }
+    if (d.affix === 'recoil' && killer && killer.side !== d.side && findPiece(s, killer.id)) {
+      const hit = applyDamage(s, killer, Math.max(1, Math.round(d.atk * AFFIX.recoilRatio)), true);
+      ctx.events.push({ type: 'affix', pieceId: killer.id, affix: 'recoil', hit });
+    }
+  }
   if (s.stronghold && s.stronghold.holderId !== null && !findPiece(s, s.stronghold.holderId)) {
     s.stronghold.holderId = null;
     s.stronghold.hold = 0;
@@ -185,6 +200,8 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
     return enemyKills;
   }
   checkAwaken(s, ctx.events);
+  // 반동으로 쓰러진 기물 정리 (쓰러뜨린 쪽 기물)
+  if (s.pieces.some((p) => p.hp <= 0)) resolveDeaths(s, ctx, undefined);
   return enemyKills;
 };
 
@@ -203,13 +220,21 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
       .sort((a, b) => b.hp - a.hp || a.id - b.id)[0];
     if (guard) t = guard;
   }
+  // 근위 볼트 (접사): 자기 킹과 붙어 있으면 받는 피해 감소
+  if (t.affix === 'guardBolt') {
+    const k = kingOf(s, t.side);
+    if (k && k.id !== t.id && chebyshev(k, t) === 1) damage = Math.max(1, Math.round(damage * AFFIX.guardCut));
+  }
   const shieldAbsorbed = Math.min(t.shield, damage);
   t.shield -= shieldAbsorbed;
   t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
   // 체크메이트 (D-022): 이번 턴 보호받는 킹은 HP 1에서 버틴다 — 다음 상대 턴에 맞으면 끝
   const checked = t.hp <= 0 && t.type === 'K' && checkGuarded(s, t);
   if (checked) t.hp = 1;
-  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}) };
+  // 최후의 리벳 (접사): 다른 일반 기물이 남아 있으면 HP 1에서 버틴다
+  const held = !checked && t.hp <= 0 && t.affix === 'lastRivet' && s.pieces.some((p) => p.side === t.side && p.id !== t.id && p.type !== 'K' && p.hp > 0);
+  if (held) t.hp = 1;
+  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(held ? { held } : {}) };
 };
 
 const SLIDERS: PieceType[] = ['B', 'R', 'Q'];

@@ -1,5 +1,6 @@
 import type { OrderId } from '../data/tactics';
-import { ENCHANTS, type EnchantId } from '../data/enchants';
+import { AFFIXES, ARCHETYPES, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
+import type { EnchantId } from '../data/enchants';
 import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
@@ -28,6 +29,10 @@ export interface Encounter {
   ascension?: number;
   /** 이 대국의 주문서 (D-094). 옛 저장에는 없다 */
   order?: OrderId;
+  /** 군단 원형 (D-096) */
+  archetype?: ArchetypeId;
+  /** 검문! 정예 접사: 그 유형의 적 기물 한 기씩 (D-096) */
+  affixes?: { type: PieceType; id: AffixId }[];
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */
@@ -80,11 +85,16 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   }
 
   const { width, height } = boardFor(floor, kind, rng.next());
-  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0);
+  // 군단 원형 (D-096): 판마다 다른 문제
+  const archOptions = (Object.keys(ARCHETYPES) as ArchetypeId[]).filter((id) => ARCHETYPES[id].from <= floor);
+  const archetype = archOptions[rng.int(archOptions.length)];
+  const arch = ARCHETYPES[archetype];
+  const weights = pieceWeights(floor).map(([t, w]): [PieceType, number] => [t, (t === 'R' && archetype === 'rampart' ? Math.max(w, RAMPART_ROOK_MIN) : w) * (arch.weight[t] ?? 1)]);
+  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + arch.extra;
   const deck: Deck = ['K'];
   let guard = 0;
   while (deck.length < count && guard++ < 200) {
-    const options = pieceWeights(floor).filter(([t]) => canAdd(deck, t));
+    const options = weights.filter(([t]) => canAdd(deck, t));
     const t = pick(rng, options);
     if (!t) break;
     deck.push(t);
@@ -96,8 +106,13 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
 
   const enchants: Partial<Record<EnchantId, number>> = {};
   const pool = [...new Set(deck.map((t) => TYPE_ENCHANT[t]).filter((e): e is EnchantId => !!e)), ...GENERAL];
-  for (let i = 0; i < actEnchants(floor, kind) + (ascension >= 3 && kind === 'elite' ? 1 : 0) && pool.length; i++) {
-    const id = pool.splice(rng.int(pool.length), 1)[0];
+  const own = arch.enchants.filter((e) => !pool.includes(e));
+  for (let i = 0; i < actEnchants(floor, kind) + (ascension >= 3 && kind === 'elite' ? 1 : 0) && (pool.length || own.length); i++) {
+    // 첫 개조는 원형의 개조 (기병 기습대 = 기병 개조 …)
+    const fromArch = i === 0 && (own.length || arch.enchants.some((e) => pool.includes(e)));
+    const src = fromArch ? [...own, ...arch.enchants.filter((e) => pool.includes(e))] : pool.length ? pool : own;
+    const id = src[rng.int(src.length)];
+    for (const list of [pool, own]) if (list.includes(id)) list.splice(list.indexOf(id), 1);
     enchants[id] = enemyEnchantStack(floor, kind);
   }
   // Act 3 엘리트는 지속형 카드 1장
@@ -113,10 +128,22 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     const id = vPool.splice(rng.int(vPool.length), 1)[0];
     variants[VARIANTS[id].base] = id;
   }
-  const names = [...Object.keys(enchants).map((id) => ENCHANTS[id as EnchantId].name), ...Object.values(variants).map((id) => VARIANTS[id].name)];
+  // 검문! 정예 접사 (D-096): 일반 기물 중 무작위 유형에 하나씩
+  const affixes: { type: PieceType; id: AffixId }[] = [];
+  if (kind === 'elite') {
+    const ids = Object.keys(AFFIXES) as AffixId[];
+    const bodies = deck.filter((t) => t !== 'K');
+    for (let i = affixCount(actOf(floor)); i > 0 && bodies.length && ids.length; i--) {
+      const type = bodies.splice(rng.int(bodies.length), 1)[0];
+      affixes.push({ type, id: ids.splice(rng.int(ids.length), 1)[0] });
+    }
+  }
+  const names = [...affixes.map((a) => AFFIXES[a.id].name), ...Object.values(variants).map((id) => VARIANTS[id].name)];
   return {
     kind,
-    name: `${kind === 'elite' ? '정예 군단' : `${floor}층 군단`}${names.length ? ` — ${names.join(' · ')}` : ''}`,
+    archetype,
+    ...(affixes.length ? { affixes } : {}),
+    name: `${kind === 'elite' ? `정예 ${arch.name}` : arch.name}${names.length ? ` — ${names.join(' · ')}` : ''}`,
     width,
     height,
     deck,
@@ -131,6 +158,11 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
 /** 런 전투를 만든다: 플레이어 덱·장비 대 군단 (+ 층별 적 킹 보정) */
 export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
   const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
+  // 정예 접사: 그 유형의 적 기물 한 기씩
+  for (const a of e.affixes ?? []) {
+    const p = s.pieces.find((q) => q.side === 1 && q.type === a.type && !q.affix);
+    if (p) p.affix = a.id;
+  }
   // 적 다음 수 미리보기: 낮은 승천에서만 기본 제공 (D-076)
   s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION ? 1 : 0 };
   const scale = enemyKingScale(e.floor);

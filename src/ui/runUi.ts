@@ -80,7 +80,8 @@ const enchantOffer = (id: EnchantId, next: number, run: RunState | null): string
   if (next === 3) tags.push('<i class="tag gold">★ 걸작!</i>');
   // 키워드 연계 개조 (D-095): 그 수의 아이콘·색으로
   const tac = def.tactic ? TACTICS[def.tactic] : null;
-  const kindIcon = tac ? icon(tac.icon, 's', tac.color) : icon('wrench', 's');
+  // 아이콘은 색 딱지 위 어두운 도트 (가는 선 아이콘이 카드 위에서 묻히지 않게)
+  const kindIcon = `<span class="kbadge" style="background:${tac ? tac.color : 'var(--brass)'}">${icon(tac ? tac.icon : 'wrench', '', '#16141c')}</span>`;
   return `<span class="kind">${kindIcon} 개조 · ${tac ? `<span style="color:${tac.color}">${def.target}</span>` : def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
 };
 
@@ -92,12 +93,17 @@ const cardOffer = (id: CardId): string => {
   return `<span class="kind">${icon('card', 's')} ${paper ? '종이 카드' : '철 카드'}</span><b>${c.name}</b><p>${c.desc}</p><span class="tags"><i class="tag${paper ? ' gold' : ''}">${lim}</i>${c.ap ? `<i class="tag">태엽 ${c.ap}</i>` : ''}</span>`;
 };
 
-const pieceOffer = (run: RunState, t: PieceType): string => {
+const pieceOffer = (run: RunState, t: PieceType, recruitVariant?: VariantId): string => {
   const n = run.deck.filter((x) => x === t).length;
   const forge = run.loadout.forge[t] ?? 0;
-  const v = run.loadout.variants?.[t];
-  const tags = [n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>', forge ? `<i class="tag">개량 +${forge}</i>` : '', v ? `<i class="tag gold">${VARIANTS[v].name}</i>` : ''].join('');
-  return `<span class="kind">${icon('crate', 's')} 기물 · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_LORE[t]}</p>`;
+  const v = recruitVariant ?? run.loadout.variants?.[t];
+  const tags = [
+    n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>',
+    forge ? `<i class="tag">개량 +${forge}</i>` : '',
+    v ? `<i class="tag gold">${VARIANTS[v].name}${recruitVariant ? ' 거푸집' : ''}</i>` : '',
+  ].join('');
+  const head = recruitVariant !== undefined || run.stage.at === 'reward' && run.stage.choices[0]?.type === 'recruit' ? `${icon('flag', 's')} ${TEXT.reward.recruit}` : `${icon('crate', 's')} 기물`;
+  return `<span class="kind">${head} · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_LORE[t]}</p>`;
 };
 
 /**
@@ -450,6 +456,9 @@ export class RunUi {
           return `<button class="offer${next >= 3 ? ' rare' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
         })
         .join('');
+    } else if (ch?.type === 'recruit') {
+      kind = R.recruit;
+      offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t, ch.variants[t])}</button>`).join('');
     } else if (ch?.type === 'card') {
       kind = R.card;
       offers = ch.options.map((id) => `<button class="offer${CARDS[id].limit.type === 'consume' ? ' rare' : ''}" type="button" data-pick="${id}">${cardOffer(id)}</button>`).join('');
@@ -457,7 +466,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>“통과. ${kind} 하나.”</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
