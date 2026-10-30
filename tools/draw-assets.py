@@ -256,6 +256,8 @@ for st in ('closed', 'opening', 'open'):
     save(vent(st), f'public/ui/board/vent-{st}.png')
 save(STEAM, 'public/ui/board/vent-steam.png')
 for name, rows in PROPS.items():
+    if name in ('lift', 'shield', 'screwbox'):
+        continue  # D-056: 제미나이 B7 5차를 잘라 쓴다 (tools/order/cut-on-squares.py)
     save(outline(mirror(art(rows))), f'public/ui/props/{name}.png')
 
 
