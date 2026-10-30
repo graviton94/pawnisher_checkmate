@@ -495,7 +495,7 @@ const play = () => {
 const KO: Record<string, string> = {
   'tile-light': '밝은 칸', 'tile-dark': '어두운 칸', fallen: '무너진 칸 (제미나이)',
   crack: '붕락 균열', stronghold: '요충지 (빈)', 'stronghold-ally': '요충지 (내가 점거)', 'stronghold-enemy': '요충지 (적이 점거)', 'stronghold-flag': '요충지 깃발 (빈)', 'stronghold-ally-flag': '요충지 깃발 (내 점거)', 'stronghold-enemy-flag': '요충지 깃발 (적 점거)', range: '내 공격 범위', 'range-enemy': '적 공격 범위', 'base-ally': '아군 발밑', 'base-enemy': '적 발밑', select: '선택',
-  'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리',
+  'variant-conveyor': '이형 · 컨베이어 폰', 'variant-hammer': '이형 · 쇠망치 나이트', 'variant-mirror': '이형 · 반사경 비숍', 'variant-radiator': '이형 · 방열 룩', 'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
   'hud/paper-crown': '종이 왕관', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
   'frames/panel': '패널', 'frames/button': '버튼', 'frames/button-pressed': '버튼 눌림', 'frames/card-iron': '철 카드', 'frames/card-paper': '종이 카드', 'frames/slot': '빈 슬롯',

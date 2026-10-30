@@ -72,6 +72,28 @@ const scenarios = {
     await page.waitForTimeout(400);
     return ['battle-intent-inspect'];
   },
+  // 이형 거푸집 (D-084): 양 진영에 이형 4종 — 오른쪽 위 황동 문양 + 길게 누르기 설명
+  async 'battle-variant'(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(800);
+    await page.evaluate(() => {
+      const c = window.pawnisher;
+      const variants = { P: 'conveyor', N: 'hammer', B: 'mirror', R: 'radiator' };
+      const lo = { enchants: {}, cards: [], forge: {}, variants };
+      const s = c.state;
+      c.start({ width: s.width, height: s.height, decks: [s.pieces.filter((p) => p.side === 0).map((p) => p.type), s.pieces.filter((p) => p.side === 1).map((p) => p.type)], weights: null }, 1, null, [lo, lo]);
+    });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-battle-variant.png`) });
+    // 적 쇠망치 나이트 길게 누르기 → 설명
+    const box = await page.locator('#board canvas').boundingBox();
+    const s = await page.evaluate(() => { const st = window.pawnisher.state; const n = st.pieces.find((p) => p.side === 1 && p.type === 'N'); return { w: st.width, h: st.height, x: n.x, y: n.y }; });
+    const cell = Math.min(box.width / s.w, box.height / s.h);
+    void cell;
+    await page.evaluate((pos) => window.pawnisher.tap(pos, true), { x: s.x, y: s.y });
+    await page.waitForTimeout(300);
+    return ['battle-variant-tap'];
+  },
   // 공격 재생 중간 (4배 느리게): 이동 · 공격 이펙트 · 피해 숫자 · 재가 되는 처치
   async 'battle-attack'(page) {
     await page.goto(URL + '&fxslow'); await page.waitForTimeout(500);

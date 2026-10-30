@@ -28,6 +28,8 @@ import {
   finishReward,
   forgeCost,
   forgeUp,
+  forgeVariant,
+  forgeVariantOptions,
   leaveNode,
   loadRun,
   newRun,
@@ -43,6 +45,7 @@ import {
 import type { Hud } from './hud';
 import { pieceImg } from './sprites';
 import { unlockAchievement } from '../platform';
+import { VARIANTS, VARIANT_FORGE_LEVEL, type VariantId } from '../data/variants';
 
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 
@@ -102,12 +105,14 @@ export class RunUi {
     const counts = ORDER.map((t) => [t, run.deck.filter((x) => x === t).length] as const).filter(([, n]) => n);
     const deck = counts.map(([t, n]) => `${pieceImg(t)}${n}`).join(' ');
     const forge = (Object.entries(run.loadout.forge) as [PieceType, number][]).filter(([, n]) => n).map(([t, n]) => `${PIECE_NAMES_KO[t]}+${n}`);
+    const variants = Object.values(run.loadout.variants ?? {}).map((id) => VARIANTS[id].name);
     const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `${ENCHANTS[id].name} ${n}${n >= 3 ? '★' : ''}`);
     const cards = run.loadout.cards.map((id) => CARDS[id].name);
     return `<div class="run-status">
       <div><b>Act ${actOf(Math.min(run.floor, TOTAL_FLOORS))} ${ACT_NAMES[actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1]} · ${inAct(Math.min(run.floor, TOTAL_FLOORS))}층 / ${FLOORS_PER_ACT}</b> (전체 ${Math.min(run.floor, TOTAL_FLOORS)}/${TOTAL_FLOORS})${run.ascension ? ` · 승천 ${run.ascension}` : ''} · 골드 <b class="gold">${run.gold}</b> · 크랙 게이지 ${run.crackGauge}/${ALTAR.gaugeMax}</div>
       <div>덱 ${run.deck.length}기: ${deck}</div>
       ${forge.length ? `<div>대장간: ${forge.join(' · ')}</div>` : ''}
+      ${variants.length ? `<div>이형: ${variants.join(' · ')}</div>` : ''}
       <div>인챈트: ${ench.length ? ench.join(' · ') : '없음'}</div>
       <div>카드: ${cards.length ? cards.join(' · ') : '없음'}</div>
     </div>`;
@@ -374,16 +379,27 @@ export class RunUi {
       const lv = run.loadout.forge[t] ?? 0;
       const cost = forgeCost(run, t);
       const n = run.deck.filter((x) => x === t).length;
-      return `<button class="chip" type="button" data-up="${t}" ${cost === null ? 'disabled' : ''}><b>${pieceImg(t, 0, 'large', 30)} ${PIECE_NAMES_KO[t]} ×${n} · +${lv}/${FORGE_MAX}</b><small class="price">${cost === null ? '완전 강화' : `+${lv + 1}: ${cost} 골드`}</small></button>`;
+      const v = run.loadout.variants?.[t];
+      const name = v ? VARIANTS[v].name : PIECE_NAMES_KO[t];
+      const up = `<button class="chip" type="button" data-up="${t}" ${cost === null ? 'disabled' : ''}><b>${pieceImg(t, 0, 'large', 30)} ${name} ×${n} · +${lv}/${FORGE_MAX}</b><small class="price">${cost === null ? '완전 강화' : `+${lv + 1}: ${cost} 골드`}</small></button>`;
+      // 이형 거푸집 (GDD 13장 P2): +3부터 그 유형 전체를 이형으로 바꿀 수 있다
+      const alt = forgeVariantOptions(run, t)
+        .map((id) => `<button class="chip variant" type="button" data-variant="${t}:${id}"><b>이형 거푸집 → ${VARIANTS[id].name}</b><small>${VARIANTS[id].gain}<br>대가: ${VARIANTS[id].cost}</small></button>`)
+        .join('');
+      return up + alt;
     });
     const panel = this.hud.openOverlay(`
       <h2>대장간</h2>
-      <p>유형 단위 강화 — 그 유형의 모든 기물이 강해집니다. +5 완전 강화 시 전투 시작 보호막 20%.</p>
+      <p>유형 단위 강화 — 그 유형의 모든 기물이 강해집니다. +5 완전 강화 시 전투 시작 보호막 20%. +${VARIANT_FORGE_LEVEL}부터 이형 거푸집으로 바꿀 수 있습니다(무료, 되돌릴 수 없음).</p>
       ${this.status(run)}
       <div class="chips">${rows.join('')}</div>
       <button class="choice primary" type="button" data-leave>떠나기</button>`);
     this.wire(panel, {
       up: (el) => this.act(forgeUp(run, el.dataset.up as PieceType)),
+      variant: (el) => {
+        const [t, id] = el.dataset.variant!.split(':') as [PieceType, VariantId];
+        this.act(forgeVariant(run, t, id));
+      },
       leave: () => {
         leaveNode(run);
         this.act();
@@ -411,7 +427,9 @@ export class RunUi {
     const resultText =
       r?.kind === 'miss'
         ? `꽝 — 크랙 게이지 +1 (${run.crackGauge}/${ALTAR.gaugeMax})`
-        : r?.kind === 'piece'
+        : r?.kind === 'variant'
+          ? `대박 — 이형 거푸집: ${VARIANTS[r.variant].name} (${VARIANTS[r.variant].gain})`
+          : r?.kind === 'piece'
           ? r.piece
             ? `상위 기물 획득: ${PIECE_NAMES_KO[r.piece]}`
             : '기물이 나왔지만 덱에 자리가 없어 골드로 바뀌었다'
@@ -419,7 +437,7 @@ export class RunUi {
     const canPick = altarCanPick(run);
     const panel = this.hud.openOverlay(`
       <h2>크랙 제단</h2>
-      <p>${ALTAR.cost}골드를 바쳐 균열을 엽니다: 희귀 인챈트 3지선다 ${Math.round(ALTAR.odds.enchant * 100)}% · 상위 기물 ${Math.round(ALTAR.odds.piece * 100)}% · 꽝 ${Math.round((1 - ALTAR.odds.enchant - ALTAR.odds.piece) * 100)}%.
+      <p>${ALTAR.cost}골드를 바쳐 균열을 엽니다: 희귀 인챈트 3지선다 ${Math.round(ALTAR.odds.enchant * 100)}% · 상위 기물 ${Math.round(ALTAR.odds.piece * 100)}% · 이형 거푸집 ${Math.round(ALTAR.odds.variant * 100)}% · 꽝 ${Math.round((1 - ALTAR.odds.enchant - ALTAR.odds.piece - ALTAR.odds.variant) * 100)}%.
       꽝이 ${ALTAR.gaugeMax}번 쌓이면 다음 제단에서 원하는 인챈트를 확정으로 고릅니다.</p>
       ${this.status(run)}
       ${resultText ? `<p class="sub">${resultText}</p>` : ''}

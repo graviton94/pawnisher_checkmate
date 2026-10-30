@@ -1,5 +1,6 @@
 import type { CardId } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
+import type { VariantId } from '../data/variants';
 
 /** 0 = 플레이어(보드 아래), 1 = 적(보드 위). 엔진은 두 진영을 같은 규칙으로 다룬다. */
 export type Side = 0 | 1;
@@ -35,6 +36,10 @@ export interface Piece {
   fused?: PieceType[];
   /** 이번 턴만 다른 유형처럼 움직이고 공격한다 (기어 폼 시프트) */
   formAs?: PieceType | null;
+  /** 이형 거푸집 (GDD 13장 P2) — 기물의 원래 유형일 때만 효과가 있다 (승급하면 꺼진다) */
+  variant?: VariantId;
+  /** 마지막으로 이동한 턴 번호 (방열 룩) */
+  movedTurn?: number;
 }
 
 /** 진영의 전투 장비: 인챈트 중첩, 액티브 카드, 대장간 유형 강화 (GDD 6·7장) */
@@ -42,6 +47,8 @@ export interface Loadout {
   enchants: Partial<Record<EnchantId, number>>;
   cards: CardId[];
   forge: Partial<Record<PieceType, number>>;
+  /** 이형 거푸집: 유형마다 하나 (GDD 13장 P2) */
+  variants?: Partial<Record<PieceType, VariantId>>;
 }
 
 export interface CardSlot {

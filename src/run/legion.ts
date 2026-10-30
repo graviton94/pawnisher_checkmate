@@ -1,5 +1,5 @@
 import { ENCHANTS, type EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
@@ -8,6 +8,7 @@ import type { Rng } from '../engine/rng';
 import type { Deck } from '../engine/setup';
 import type { Loadout, PieceType } from '../engine/types';
 import { canAdd } from './deck';
+import { VARIANTS, variantsFor, type VariantId } from '../data/variants';
 
 /** 한 라운드(전투)의 적 군단 (GDD 8장 §8.3) */
 export interface Encounter {
@@ -102,14 +103,21 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     const sustain = (Object.keys(CARDS) as CardId[]).filter((c) => CARDS[c].limit.type !== 'consume');
     cards.push(sustain[rng.int(sustain.length)]);
   }
-  const names = Object.keys(enchants).map((id) => ENCHANTS[id as EnchantId].name);
+  // 이형 거푸집: 군단에 있는 유형 중에서 (같은 규칙 — 플레이어도 얻을 수 있는 것만)
+  const variants: Partial<Record<PieceType, VariantId>> = {};
+  const vPool = [...new Set(deck)].flatMap((t) => variantsFor(t));
+  for (let i = enemyVariantCount(floor, kind, rng.next()); i > 0 && vPool.length; i--) {
+    const id = vPool.splice(rng.int(vPool.length), 1)[0];
+    variants[VARIANTS[id].base] = id;
+  }
+  const names = [...Object.keys(enchants).map((id) => ENCHANTS[id as EnchantId].name), ...Object.values(variants).map((id) => VARIANTS[id].name)];
   return {
     kind,
     name: `${kind === 'elite' ? '정예 군단' : `${floor}층 군단`}${names.length ? ` — ${names.join(' · ')}` : ''}`,
     width,
     height,
     deck,
-    loadout: { enchants, cards, forge },
+    loadout: { enchants, cards, forge, variants },
     tier,
     seed,
     floor,

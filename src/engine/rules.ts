@@ -1,6 +1,7 @@
 import { at, buildGrid, forward, inBounds, onStronghold, type Grid } from './board';
 import { strongholdTerms } from './score';
 import type { EnchantId } from '../data/enchants';
+import { VARIANTS, type VariantId } from '../data/variants';
 import type { BattleState, Piece, PieceType, Pos, Side } from './types';
 
 const ORTHO: Pos[] = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
@@ -18,6 +19,10 @@ export const ench = (s: BattleState, side: Side, id: EnchantId): number => s.loa
 
 /** 이번 턴 이 기물의 행마·공격 유형들: 폼 시프트 > 합체 구성 > 자기 유형 */
 export const moveTypes = (piece: Piece): PieceType[] => (piece.formAs ? [piece.formAs] : (piece.fused ?? [piece.type]));
+
+/** 이 기물에 이형 거푸집이 살아 있는가: 원래 유형 그대로일 때만 (승급·합체·폼 시프트 중엔 꺼짐) */
+export const variantOn = (piece: Piece, id: VariantId): boolean =>
+  piece.variant === id && piece.type === VARIANTS[id].base && !piece.fused && !piece.formAs;
 
 /** 유효 보드 가장자리 칸인가 (E10) */
 export const onEdge = (s: BattleState, p: Pos): boolean =>
@@ -68,7 +73,7 @@ export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
         const f = forward(piece.side);
         if (empty(piece.x, piece.y + f)) {
           push(piece.x, piece.y + f);
-          if (!piece.moved && empty(piece.x, piece.y + 2 * f)) push(piece.x, piece.y + 2 * f);
+          if (!piece.moved && !variantOn(piece, 'conveyor') && empty(piece.x, piece.y + 2 * f)) push(piece.x, piece.y + 2 * f);
         }
         break;
       }
@@ -141,16 +146,30 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
       default: {
         const bishopLevel = type === 'B' ? ench(s, piece.side, 'E02') : 0;
         const basePierce = (opts.pierce ?? 0) + (bishopLevel >= 3 ? Infinity : bishopLevel >= 2 ? 1 : 0);
+        // 반사경 비숍 (이형): 대각 사선이 판 가장자리에 닿으면 한 번 꺾인다
+        const mirror = type === 'B' && variantOn(piece, 'mirror');
         for (const d of SLIDE_DIRS[type]!) {
-          let x = piece.x + d.x;
-          let y = piece.y + d.y;
+          let dx = d.x;
+          let dy = d.y;
+          let x = piece.x + dx;
+          let y = piece.y + dy;
           let pierce = basePierce;
           let allyPass = bishopLevel >= 1 ? 1 : 0;
+          let bounce = mirror ? 1 : 0;
           let steps = 0;
           while (steps++ < s.width * s.height) {
-            if (wrap && d.x !== 0 && y >= 0 && y < s.height && !inBounds(s, x, y)) {
+            if (wrap && dx !== 0 && y >= 0 && y < s.height && !inBounds(s, x, y)) {
               const [minX, maxX] = rowEnds(s, y);
               if (x < minX || x > maxX) x = x < minX ? maxX : minX;
+            }
+            if (!inBounds(s, x, y) && bounce > 0) {
+              bounce -= 1;
+              const px = x - dx;
+              const py = y - dy;
+              if (!inBounds(s, px + dx, py)) dx = -dx;
+              if (!inBounds(s, px, py + dy)) dy = -dy;
+              x = px + dx;
+              y = py + dy;
             }
             if (!inBounds(s, x, y) || (x === piece.x && y === piece.y)) break;
             addArea(x, y);
@@ -165,8 +184,8 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
                 allyPass -= 1;
               }
             }
-            x += d.x;
-            y += d.y;
+            x += dx;
+            y += dy;
           }
         }
       }

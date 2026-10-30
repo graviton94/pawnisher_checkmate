@@ -2,8 +2,9 @@ import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, type CardUse } from '../data/cards';
 import { SYNERGY } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
+import { VARIANTS } from '../data/variants';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
-import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge } from './rules';
+import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge, variantOn } from './rules';
 import {
   isMove,
   otherSide,
@@ -30,7 +31,8 @@ export const availableAp = (s: BattleState): number => {
 export const moveCost = (s: BattleState, piece: Piece): number => {
   const types = moveTypes(piece);
   if (types.length === 1 && types[0] === 'P' && ench(s, piece.side, 'E04') >= 3) return 0;
-  return Math.max(...types.map((t) => PIECE_STATS[t].ap));
+  const extra = piece.variant && variantOn(piece, piece.variant) ? (VARIANTS[piece.variant].apDelta ?? 0) : 0;
+  return Math.max(...types.map((t) => PIECE_STATS[t].ap)) + extra;
 };
 
 /**
@@ -334,6 +336,8 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
   };
   let apUsed = 0;
   let prevKilled = false;
+  /** 바로 앞 명령이 이동이었으면 그 기물의 유형 (컨베이어 폰) */
+  let prevMoveType: PieceType | null = null;
   const fail = (reason: string): Simulation => ({ ok: false, reason, state: s, events: ctx.events, apUsed, removed: ctx.removed });
   const own = (id: number) => {
     const p = findPiece(s, id);
@@ -356,6 +360,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
       if (e01 >= 2) mods.splash = e01 >= 3 ? 1 : 0.5;
     }
     let attackers: Piece[] = [];
+    let moveType: PieceType | null = null;
     let repeats = 1;
     let cost = 0;
     let cardIdx: number | null = null;
@@ -370,6 +375,8 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         const execute = cardId === 'C06';
         if (!moveReachable(s, piece, step.to, execute)) return fail('갈 수 없는 칸');
         cost = moveCost(s, piece);
+        // 컨베이어 폰 (이형): 바로 앞 명령도 폰 이동이면 태엽 0
+        if (variantOn(piece, 'conveyor') && prevMoveType === 'P') cost = 0;
         if (ench(s, side, 'E10') >= 2 && onEdge(s, piece) && onEdge(s, step.to)) cost -= 1;
         if (cardId === 'A01') cost -= 1;
         cost = Math.max(0, cost);
@@ -385,7 +392,9 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         const from = { x: piece.x, y: piece.y };
         const before = piece.type;
         const strike = isStrikeMove(s, piece, step.to);
+        moveType = piece.type;
         applyMove(s, piece, step.to);
+        piece.movedTurn = s.turnNumber;
         updateHolder(s, piece);
         ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
         if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
@@ -422,7 +431,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
           }
         }
         if (cardId === 'A03') mods.pierce = 1;
-        if (cardId === 'A04') mods.knockback = true;
+        if (cardId === 'A04' || variantOn(piece, 'hammer')) mods.knockback = true;
         if (cardId === 'C01') repeats += 1;
         if (cardId === 'C03') {
           mods.mult *= 1.8;
@@ -546,6 +555,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
 
     if (cardIdx !== null) spendCard(s, side, cardIdx, piece.id, ctx.events);
     apUsed += cost;
+    prevMoveType = moveType;
     if (s.winner !== null) continue;
 
     // 그랜드 피날레 (E05 ★): 두 기 이상 예약했을 때 마지막 순번의 공격 2회

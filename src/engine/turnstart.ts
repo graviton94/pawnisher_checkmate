@@ -2,7 +2,8 @@ import { COLLAPSE, RESIGN, STALL, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
 import { Rng } from './rng';
 import { applyPromotion, availableAp } from './plan';
-import { attackArea, ench, legalMoves } from './rules';
+import { attackArea, ench, legalMoves, variantOn } from './rules';
+import { RADIATOR_SHIELD } from '../data/variants';
 import { battleScore, inferiority, kingHpRatio, standingOf, strongholdTerms } from './score';
 import { otherSide, type BattleEvent, type BattleState, type Pos, type Side } from './types';
 
@@ -233,6 +234,16 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
     s.apBonus[side] += s.apCarry[side];
     events.push({ type: 'apGain', side, amount: s.apCarry[side] });
     s.apCarry[side] = 0;
+  }
+  // 방열 룩 (이형): 지난 자기 턴에 움직이지 않았으면 상하좌우 아군에 방열판
+  for (const r of s.pieces) {
+    if (r.side !== side || !variantOn(r, 'radiator') || r.movedTurn === s.turnNumber - 2) continue;
+    for (const p of s.pieces) {
+      if (p.side === side && p.id !== r.id && Math.abs(p.x - r.x) + Math.abs(p.y - r.y) === 1) {
+        p.shield += RADIATOR_SHIELD;
+        events.push({ type: 'shield', pieceId: p.id, amount: RADIATOR_SHIELD });
+      }
+    }
   }
   // 근위대 결속 2장: 킹과 붙어 있는 아군에 보호막 +10
   if (ench(s, side, 'E08') >= 2) {

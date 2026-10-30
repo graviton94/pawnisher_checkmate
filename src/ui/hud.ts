@@ -7,6 +7,7 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
+import { VARIANTS } from '../data/variants';
 
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -189,11 +190,13 @@ export class Hud implements HudView {
     const extra: string[] = [];
     if (p.fused) extra.push(`합체: ${p.fused.map((ty) => PIECE_NAMES_KO[ty]).join(' + ')}`);
     if (p.formAs) extra.push(`폼 시프트: ${PIECE_NAMES_KO[p.formAs]} 행마`);
+    if (p.variant && p.type === VARIANTS[p.variant].base) extra.push(`<span class="variant">이형 · ${VARIANTS[p.variant].name}</span><br><small>${VARIANTS[p.variant].gain} (${VARIANTS[p.variant].cost})</small>`);
     const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
     if (forge) extra.push(`대장간 +${forge}`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';
     const buff = p.buffTurns > 0 ? `<br>버프: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
-    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크메이트: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
+    const name = p.variant && p.type === VARIANTS[p.variant].base ? VARIANTS[p.variant].name : PIECE_NAMES_KO[p.type];
+    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${name}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크메이트: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;

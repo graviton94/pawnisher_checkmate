@@ -2,6 +2,7 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
+import { VARIANTS, VARIANT_FORGE_LEVEL, variantsFor, type VariantId } from '../data/variants';
 import {
   ALTAR,
   BOSSES,
@@ -64,7 +65,7 @@ export interface ShopStock {
   rerollPrice: number;
 }
 
-export type AltarResult = { kind: 'piece'; piece: PieceType | null } | { kind: 'miss' } | { kind: 'enchant' } | { kind: 'pick' };
+export type AltarResult = { kind: 'piece'; piece: PieceType | null } | { kind: 'variant'; variant: VariantId } | { kind: 'miss' } | { kind: 'enchant' } | { kind: 'pick' };
 
 export type Stage =
   | { at: 'map' }
@@ -193,7 +194,7 @@ export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
     path: [],
     gold: START_GOLD,
     deck,
-    loadout: { enchants: {}, cards: [], forge: {} },
+    loadout: { enchants: {}, cards: [], forge: {}, variants: {} },
     wins: 0,
     crackGauge: 0,
     bosses,
@@ -496,6 +497,26 @@ export const forgeUp = (run: RunState, t: PieceType): string | void => {
   run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
 };
 
+/** 이형 거푸집으로 바꿀 수 있는 이형들 (공방, 개량 +3 이상, 아직 이형이 없는 유형 — GDD 13장 P2) */
+export const forgeVariantOptions = (run: RunState, t: PieceType): VariantId[] =>
+  run.deck.includes(t) && (run.loadout.forge[t] ?? 0) >= VARIANT_FORGE_LEVEL && !run.loadout.variants?.[t] ? variantsFor(t) : [];
+
+/** 공방: 그 유형의 거푸집을 이형으로 바꾼다 (무료, 되돌릴 수 없음) */
+export const forgeVariant = (run: RunState, t: PieceType, id: VariantId): string | void => {
+  if (run.stage.at !== 'forge') return '공방에서만 바꿀 수 있습니다';
+  if (!forgeVariantOptions(run, t).includes(id)) return `개량 +${VARIANT_FORGE_LEVEL}부터 바꿀 수 있습니다`;
+  run.loadout.variants = { ...run.loadout.variants, [t]: id };
+};
+
+/** 운명 기관 대박: 덱에 있고 아직 이형이 없는 유형 하나에 이형 거푸집 (없으면 null) */
+const grantVariant = (run: RunState, rng: Rng): VariantId | null => {
+  const pool = [...new Set(run.deck)].filter((t) => !run.loadout.variants?.[t]).flatMap((t) => variantsFor(t));
+  if (!pool.length) return null;
+  const id = pool[rng.int(pool.length)];
+  run.loadout.variants = { ...run.loadout.variants, [VARIANTS[id].base]: id };
+  return id;
+};
+
 // ---------- 크랙 제단 ----------
 /** 게이지가 가득 찼으면 원하는 인챈트를 확정으로 고를 수 있다 (GDD 8장 §8.5) */
 export const altarCanPick = (run: RunState): boolean => run.crackGauge >= ALTAR.gaugeMax;
@@ -523,6 +544,13 @@ export const altarGamble = (run: RunState): string | void => {
     withRng(run, (rng) => grantRandomPiece(run, rng, { P: 0, N: 30, B: 30, R: 25, Q: 15 }));
     if (run.stage.at === 'altar') run.stage.result = { kind: 'piece', piece: run.deck.length > before ? run.deck[run.deck.length - 1] : null };
     return;
+  }
+  if (r < ALTAR.odds.enchant + ALTAR.odds.piece + ALTAR.odds.variant) {
+    const v = withRng(run, (rng) => grantVariant(run, rng));
+    if (v) {
+      if (run.stage.at === 'altar') run.stage.result = { kind: 'variant', variant: v };
+      return;
+    }
   }
   run.crackGauge += 1;
   if (run.stage.at === 'altar') run.stage.result = { kind: 'miss' };

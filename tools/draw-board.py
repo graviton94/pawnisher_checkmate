@@ -187,6 +187,20 @@ def kill_mark():
     return from_ascii(rows, {'K': 'K', 'r': 'CR'})
 
 
+VARIANT_GLYPHS = {
+    'conveyor': ['#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..'],
+    'hammer': ['#####', '#####', '..#..', '..#..', '..#..'],
+    'mirror': ['#...#', '#...#', '.#.#.', '.#.#.', '..#..'],
+    'radiator': ['#####', '.....', '#####', '.....', '#####'],
+}
+
+
+def variant_mark(kind):
+    """이형 거푸집 표식 (D-084): 7×7 검정 바탕에 황동 5×5 문양 — 기물 오른쪽 위에 작게"""
+    rows = ['K' * 7] + ['K' + ''.join('b' if ch == '#' else 'K' for ch in r) + 'K' for r in VARIANT_GLYPHS[kind]] + ['K' * 7]
+    return from_ascii(rows, {'K': 'INK', 'b': 'BR'})
+
+
 def check_ring():
     """체크: 킹 주위의 끊긴 붉은 톱니 고리 21×21 (정확히 위 가운데가 터져 있다, 좌우 대칭)"""
     import math
@@ -246,6 +260,8 @@ for n in range(1, 10):
     badge(True, n).save(f'{OUT}/badge-a{n}.png')
     badge(False, n).save(f'{OUT}/badge-e{n}.png')
 kill_mark().save(f'{OUT}/kill.png')
+for _k in VARIANT_GLYPHS:
+    variant_mark(_k).save(f'{OUT}/variant-{_k}.png')
 check_ring().save(f'{OUT}/check.png')
 for kind, name in (('neutral', 'stronghold'), ('ally', 'stronghold-ally'), ('enemy', 'stronghold-enemy')):
     stronghold(kind, 'frame').save(f'{OUT}/{name}.png')  # 점선 테두리 — 기물 아래

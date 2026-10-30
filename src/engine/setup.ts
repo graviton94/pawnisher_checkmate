@@ -1,6 +1,7 @@
 import { defaultRules } from '../data/battle';
 import { FORGE_GAIN, FORGE_MASTERY_SHIELD, FORGE_MAX } from '../data/forge';
 import { PIECE_STATS } from '../data/pieces';
+import { VARIANTS } from '../data/variants';
 import type { BattleRules, BattleState, Loadout, Piece, PieceType, Side } from './types';
 
 /** 덱 = 보유 기물 유형 목록 (GDD 6장 §6.1) */
@@ -39,6 +40,21 @@ const applyForge = (pieces: Piece[], loadout: Loadout): void => {
     p.atk += g.atk * lv;
     p.def += g.def * lv;
     if (lv >= FORGE_MAX) p.shield += Math.round(p.maxHp * FORGE_MASTERY_SHIELD);
+  }
+};
+
+/** 이형 거푸집을 입힌다: 표식 + 스탯 배율 (개량 뒤에 곱한다) */
+const applyVariants = (pieces: Piece[], loadout: Loadout): void => {
+  for (const p of pieces) {
+    const id = loadout.variants?.[p.type];
+    if (!id) continue;
+    const v = VARIANTS[id];
+    p.variant = id;
+    if (v.hpMul) {
+      p.maxHp = Math.max(1, Math.round(p.maxHp * v.hpMul));
+      p.hp = p.maxHp;
+    }
+    if (v.atkMul) p.atk = Math.max(1, Math.round(p.atk * v.atkMul));
   }
 };
 
@@ -118,6 +134,8 @@ export const createBattle = ({ width, height, decks, rules, seed, loadouts }: Ba
   const theirs = deploy(width, height, decks[1], 1, nextId);
   applyForge(mine, lo[0]);
   applyForge(theirs, lo[1]);
+  applyVariants(mine, lo[0]);
+  applyVariants(theirs, lo[1]);
   return {
     width,
     height,

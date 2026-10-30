@@ -108,8 +108,8 @@ export const FORGE_COST = [30, 45, 70, 105, 150];
 // ---------- 크랙 제단 ----------
 export const ALTAR = {
   cost: 40,
-  /** 결과 확률: 희귀 인챈트 3지선다 / 상위 기물 / 꽝 */
-  odds: { enchant: 0.45, piece: 0.25 },
+  /** 결과 확률: 희귀 인챈트 3지선다 / 상위 기물 / 이형 거푸집 (대박, D-084) / 꽝 */
+  odds: { enchant: 0.45, piece: 0.25, variant: 0.1 },
   /** 꽝일 때 쌓이는 크랙 게이지. 가득 차면 다음 제단에서 원하는 인챈트 확정 */
   gaugeMax: 3,
 };
@@ -146,6 +146,13 @@ export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
 };
 /** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
 export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
+/** 적 군단의 이형 거푸집 수 (GDD 13장 P2, D-084): 정예는 Act 1부터 1개 · Act 3 정예 2개, 일반은 Act 2부터 확률로 1개 (Act 3은 항상) */
+export const enemyVariantCount = (floor: number, kind: NodeKind, roll: number): number => {
+  const act = actOf(floor);
+  if (kind === 'elite') return act === 3 ? 2 : 1;
+  if (act === 3) return 1;
+  return act === 2 && roll < 0.4 ? 1 : 0;
+};
 /** Act 3 일반 군단도 인챈트 1개를 가진다 (GDD 8장: "14~16기 + 카드·인챈트") */
 export const actEnchants = (floor: number, kind: NodeKind): number => {
   const act = actOf(floor);
