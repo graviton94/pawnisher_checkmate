@@ -5,7 +5,7 @@
 출력:
   public/ui/board/  vent-*.png (증기 분출구)
   public/ui/props/  지형 소품 5종 (기물처럼 검정 + 흰 테두리 자동)
-  public/ui/hud/    종이 왕관 · 태엽 3종 · 점령 눈금
+  public/ui/hud/    종이 왕관 · 태엽 3종 · 점령 눈금 (D-050: 단순한 덩어리 + 납작한 색 + 강조 1개)
   public/ui/frames/ UI 9-slice 프레임 6종 (회색 4단계 — 색은 코드가)
 
 사용: python3 -I tools/draw-assets.py
@@ -120,98 +120,87 @@ STEAM = art([
 ])
 
 # ---------------- 지형 소품 (기물처럼 테두리 자동) ----------------
+# D-050: 단순한 덩어리 + 납작한 색 1~2개 + 강조 1개. 검정 테두리·흰 테두리는 outline()이 두른다. 모두 좌우 대칭.
 
 PROPS = {
+    # 고철 더미: 회색 더미 위에 톱니 하나 (가운데 구멍)
     'scrap': [
-        '......gg......',
-        '.....g..g.....',
-        '..ll.g..g.dd..',
-        '.lhhl.gg.dhhd.',
-        '.lhhl...dhhhd.',
-        'dddddlllddddd.',
-        'dlllldhhhhddll',
-        'dlllldhhhhdlll',
-        'ddddddddddllld',
-        '.dlllllddllld.',
-        '..ddddddddddd.',
+        '.....g.g.....',
+        '....ggggg....',
+        '...gggdggg...',
+        '....ggggg....',
+        '..llllgllll..',
+        '.lllllllllll.',
+        'lllllllllllll',
     ],
+    # 승강판: 밝은 철판 + 기둥 + 받침
     'lift': [
-        'yyyyyyyyyyyyyy',
-        'yooooooooooooy',
-        'bbbbbbbbbbbbbb',
-        '.....dhhd.....',
-        '.....dlld.....',
-        '.....dhhd.....',
-        '.....dlld.....',
-        '....dddddd....',
-        '..dllllllllld.',
-        '..dhhhhhhhhhd.',
-        '..ddddddddddd.',
+        'hhhhhhhhhhhhh',
+        'hhhhhhhhhhhhh',
+        '.....lll.....',
+        '.....lll.....',
+        '.....lll.....',
+        '...lllllll...',
+        '..lllllllll..',
     ],
+    # 방패벽: 철판 방패 + 가운데 이음줄 하나
     'shield': [
-        '.dddddddddd.',
-        'dhlllllllhld',
-        'dlllllllllld',
-        'dlkkkkkkklld',
-        'dlllllllllld',
-        'dlkkkkkkklld',
-        'dlllllllllld',
-        'dlkkkkkkklld',
-        'dlllllllllld',
-        'dhlllllllhld',
-        '.dddddddddd.',
-        '...dd..dd...',
-        '..dddd.dddd.',
+        'lllllllllll',
+        'lllllglllll',
+        'lllllglllll',
+        'lllllglllll',
+        '.llllgllll.',
+        '..lllglll..',
+        '...llgll...',
+        '....lgl....',
+        '.....g.....',
     ],
+    # 덫: 가시 넷 + 붉은 띠 (위험 = 붉은색)
     'trap': [
-        'R.R.R.R.R.R.R.',
-        'RRRRRRRRRRRRRR',
-        'rrrrrrrrrrrrrr',
-        'dlllllggllllld',
-        'dddddddddddddd',
+        '.h...h...h...h.',
+        'hhh.hhh.hhh.hhh',
+        'RRRRRRRRRRRRRRR',
+        'lllllllllllllll',
     ],
+    # 나사 상자: 판지 상자 + 앞면 나사 하나
     'screwbox': [
-        '...h..h.......',
-        '..hlh.hlh.....',
-        '...l...l..h...',
-        '.bbbbbbbbbhlh.',
-        '.byyyyyyyyb.l.',
-        '.byoyyyyoyb...',
-        '.byyyyyyyyb...',
-        '.bbbbbbbbbb...',
+        'yyyyyyyyyyy',
+        'bbbbbbbbbbb',
+        'bbbbhhhbbbb',
+        'bbbbbhbbbbb',
+        'bbbbbhbbbbb',
+        'bbbbbbbbbbb',
     ],
 }
 
 # ---------------- 주인공·HUD ----------------
 
+# 종이 왕관: 뾰족 셋 + 판지 몸통 + 아래 어두운 띠 + 가운데 청록 보석 하나 (내 것 = 청록)
 CROWN = [
-    'y.....y.....y',
-    'yy...yby...yy',
-    'yby.yb.by.yby',
-    'yybyybbbyybyy',
-    'ybbbbbbbbbbby',
-    'yyyyyyyyyyyyy',
-    'bbbbbbbbbbbbb',
+    'y......y......y',
+    'yy....yyy....yy',
+    'yyy..yyyyy..yyy',
+    'yyyyyyyyyyyyyyy',
+    'yyyyyycccyyyyyy',
+    'yyyyyycccyyyyyy',
+    'yyyyyyyyyyyyyyy',
+    'bbbbbbbbbbbbbbb',
 ]
 
-# 태엽 감개: 꽉 찬 나비 날개 두 장 + 가운데 축 + 목걸이 고리 (왼쪽 절반 + 가운데 열 → 대칭)
-KEY_HALF = [
-    '.yyy...',
-    'yooyy..',
-    'yoyyyy.',
-    'yyyyyyy',
-    'byyyyyy',
-    '.bbyyyb',
-    '...bbyb',
-    '.....yo',
-    '.....yb',
-    '....yyy',
-    '....bbb',
-    '.....yo',
-    '.....yb',
-    '.....yy',
+# 태엽 감개: 둥근 날개 두 장 + 가운데 축(강조 1도트) + 막대 + 이 두 개
+KEY = [
+    '.yyy.....yyy.',
+    'yyyyy...yyyyy',
+    'yyyyyy.yyyyyy',
+    'yyyyyyoyyyyyy',
+    'yyyyyy.yyyyyy',
+    'yyyyy...yyyyy',
+    '.yyy..y..yyy.',
+    '......y......',
+    '.....yyy.....',
+    '......y......',
+    '.....yyy.....',
 ]
-KEY = [r + r[-2::-1] for r in KEY_HALF]
 
 PIP = art(['.h.', 'hhh', '.h.'])
 
@@ -270,28 +259,11 @@ for name, rows in PROPS.items():
     save(outline(mirror(art(rows))), f'public/ui/props/{name}.png')
 
 
-def paper_crown():
-    """종이 왕관: 공개 픽토그램 왕관 실루엣(game-icons 'crown', tools/pixelize-icons.cjs) → 상자 판지 색.
-    윗부분 밝은 판지, 아래 두 줄 어두운 판지, 가운데 접힌 선 한 줄"""
-    base = Image.open('build-res/_base/crown.png').convert('RGBA')
-    bb = base.getbbox()
-    base = base.crop(bb)
-    w, h = base.size
-    im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    for y in range(h):
-        for x in range(w):
-            if base.getpixel((x, y))[3]:
-                col = 'b' if y >= h - 2 else ('b' if y == h - 4 else 'y')
-                im.putpixel((x, y), C[col] + (255,))
-    return mirror(im)
-
-
-save(outline(paper_crown()), 'public/ui/hud/paper-crown.png')
-full = KEY[:]
-full[1] = full[1][:2] + 'c' + full[1][3:]  # 청록 반짝임 1도트 (왼쪽 날개)
+save(outline(mirror(art(CROWN))), 'public/ui/hud/paper-crown.png')
+full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록으로 빛난다 (내 것 = 청록)
 save(outline(art(full)), 'public/ui/hud/key-full.png')
-save(outline(art(recolor(KEY, {'y': 'l', 'o': 'g', 'b': 'd'}))), 'public/ui/hud/key-spent.png')
-save(outline(art(full), 'k', 'o'), 'public/ui/hud/key-bonus.png')
+save(outline(art(recolor(KEY, {'y': 'l', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
+save(outline(art(recolor(KEY, {'o': 'w'})), 'k', 'o'), 'public/ui/hud/key-bonus.png')
 save(PIP, 'public/ui/hud/pip.png')
 for kind in ('panel', 'button', 'button-pressed', 'card-iron', 'card-paper', 'slot'):
     save(frame(kind), f'public/ui/frames/{kind}.png')

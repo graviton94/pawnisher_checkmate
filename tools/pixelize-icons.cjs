@@ -43,8 +43,6 @@ const LIST = [
   ['icons/lever', G, 'lever', 16],
   // 판 위에 쓰는 작은 해골 (처치 숫자 옆 · 처치 과녁 안)
   ['hud/skull-small', G, 'death-skull', 7],
-  // 종이 왕관·태엽 실루엣 (색은 draw-assets.py가 입힌다)
-  ['_base/crown', G, 'crown', 14],
 ];
 
 const svgOf = (set, name) => {

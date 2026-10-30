@@ -687,24 +687,32 @@ export interface CrumbleCell {
   y: number;
   c: number;
 }
-/** 바스라짐 길이 (ms): 잘리는 선이 위에서 아래로 내려가는 시간 + 마지막 조각이 사라지는 시간 */
-export const CRUMBLE_MS = { cut: 420, life: 300 };
+/** 바스라짐 길이 (ms): 잘리는 선이 위에서 아래로 내려가는 시간 + 마지막 재가 바닥에서 사라지는 시간 */
+export const CRUMBLE_MS = { cut: 420, life: 480 };
+/** 재 색 (밝은 재 · 어두운 재) */
+const ASH = [0xc8c8c8, 0x8a8794];
 
 /**
- * 처치: 기물이 위에서부터 한 줄씩 도트로 바스라진다 (D-048).
- * 잘리는 선이 지수형으로 빨라지며 내려가고, 선 바로 아래 한두 줄은 체크무늬로 듬성듬성,
- * 선을 지난 도트는 살짝 튀었다가 떨어지며 깜빡이고 사라진다.
+ * 처치: 기물이 위에서부터 한 줄씩 재가 되어 무너진다 (D-048 → D-050).
+ * 잘리는 선이 지수형으로 빨라지며 내려가고, 선 바로 아래 한두 줄은 체크무늬로 듬성듬성.
+ * 선을 지난 도트는 잠깐 제 색으로 남았다가 재 색으로 바래며 곧장 아래로 떨어진다 —
+ * 기물 자기 폭 밖으로도, 기물 발밑(맨 아랫줄)보다 아래로도 나가지 않고 바닥에 쌓였다가 한 도트씩 꺼진다.
  */
 export const drawCrumble = (pen: PixelPen, cells: CrumbleCell[], ms: number): void => {
   if (!cells.length || ms < 0) return;
   const d = pen.dot;
   let top = Infinity;
   let bottom = -Infinity;
+  let left = Infinity;
+  let right = -Infinity;
   for (const c of cells) {
     top = Math.min(top, c.y);
     bottom = Math.max(bottom, c.y + d);
+    left = Math.min(left, c.x);
+    right = Math.max(right, c.x + d);
   }
   const H = bottom - top;
+  const floor = bottom - d / 2; // 재가 멈추는 줄 = 기물 발밑
   const cut = top + H * easeInCubic(Math.min(1, ms / CRUMBLE_MS.cut));
   cells.forEach((c, i) => {
     const r = Math.round((c.x + c.y) / d);
@@ -716,12 +724,15 @@ export const drawCrumble = (pen: PixelPen, cells: CrumbleCell[], ms: number): vo
     // 이 줄을 선이 지난 시각 (easeInCubic의 역함수)
     const born = Math.cbrt((c.y - top) / H) * CRUMBLE_MS.cut;
     const t = ms - born;
-    if (t < 0 || t > CRUMBLE_MS.life) return;
-    const q = t / CRUMBLE_MS.life;
-    if (q > 0.45 && Math.floor(t / 40) % 2) return; // 도트처럼 깜빡이며 사라짐
-    const h = ((i * 7919) % 13) / 13 - 0.5; // 칸마다 다른 흩어짐 (결정적)
-    const u = t / 100;
-    pen.px(c.x + d / 2 + h * d * 3 * u, c.y + d / 2 + d * (-1.4 * u + 2.2 * u * u), c.c, 1, q > 0.7 ? 1 : 1);
+    const hash = ((i * 7919) % 13) / 13; // 칸마다 다른 값 (결정적)
+    // 바닥에 쌓인 재는 칸마다 다른 때에 한 도트씩 꺼진다
+    if (t < 0 || t > CRUMBLE_MS.life * (0.55 + 0.45 * hash)) return;
+    const fall = Math.max(0, t - 50); // 잠깐 제자리에서 바랜 뒤 떨어진다
+    // 재는 발밑에 한두 줄로 쌓인다 (먼저 떨어진 재 위에 얹히듯 칸마다 바닥이 다르다)
+    const y = Math.min(floor - (hash < 0.4 ? d : 0), c.y + d / 2 + H * 1.6 * (fall / 300) ** 2);
+    // 옆으로는 반 도트까지만 흔들리고, 기물 폭 안에 머문다
+    const x = Math.max(left + d / 2, Math.min(right - d / 2, c.x + d / 2 + (hash - 0.5) * d * Math.min(1, fall / 150)));
+    pen.px(x, y, t < 50 ? c.c : ASH[(i + r) % 2], 1);
   });
 };
 
