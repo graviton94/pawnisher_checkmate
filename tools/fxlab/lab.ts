@@ -421,7 +421,7 @@ const play = () => {
       blit('kill', l.x + 13 * D, l.y + D);
     }
   };
-  const end = FX0 + (fx?.duration ?? 0) + 2400; // 끝난 뒤 흔적 시안을 1.5초 보여 준다
+  const end = FX0 + (fx?.duration ?? 0) + 900;
   const t0 = performance.now();
   // 화면 흔들림 (D-064): 큰 피해·처치 순간
   const shake = { at: -1, ms: 0, amp: 0 };
@@ -471,25 +471,11 @@ const play = () => {
       ctx.translate(Math.round(Math.sin(ms * 0.13) * a), Math.round(Math.cos(ms * 0.17) * a * 0.6));
     }
     drawBoard();
-    // 흔적 시안 A (D-073, lichess·chess.com 마지막 수 강조): 실행이 끝나면 출발·도착 칸을 진영 색으로 옅게, 맞은 기물엔 피해 꼬리표
-    const done = fx ? ms > FX0 + fx.duration : ms > MOVE;
-    if (done && opt.board !== 'flat') {
-      const tint = opt.side === 0 ? 'rgba(56,189,248,0.2)' : 'rgba(229,38,47,0.2)';
-      ctx.fillStyle = tint;
-      ctx.fillRect(from.x, from.y, T, T);
-      ctx.fillRect(to.x, to.y, T, T);
-    }
     if (ms < 0 && atk) drawRange(atk.area);
     if (ms < 0 && opt.board !== 'flat') drawPlan();
     for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
     drawBoardTop();
     if (ms < 0 && opt.board !== 'flat') drawKillMarks();
-    if (done && opt.board !== 'flat')
-      for (const h of atk?.hits ?? []) {
-        // 맞은 기물 꼬리표: 칸 왼쪽 위 작은 도트 피해 숫자 (처치 = 금)
-        const l = lives.get(h.targetId)!;
-        drawPopup(pen.g, buildPopupArt(`-${h.damage}`, h.killed ? 0xfacc15 : opt.side === 0 ? 0xf4f1ea : 0xff6b6b), l.x + T * 0.28, l.y + T * 0.36, D * 0.6, 400, 0);
-      }
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {

@@ -109,6 +109,15 @@ html, body {
   display: flex; align-items: center; justify-content: center;
 }
 .queue .glyph { font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'DejaVu Sans', 'Apple Symbols', serif; font-size: 22px; line-height: 22px; }
+.queue li.log { cursor: pointer; gap: 6px; border-left: 4px solid var(--cyan, #38bdf8); }
+.queue li.log.enemy { border-left-color: #e5262f; }
+.queue li.log .who { font-family: Galmuri11, sans-serif; font-weight: 700; font-size: 12px; color: #38bdf8; min-width: 34px; }
+.queue li.log.enemy .who { color: #ff6b6b; }
+.queue li.log .to { color: var(--muted); font-size: 12px; }
+.queue li.log .dmg { margin-left: auto; font-family: Galmuri11, sans-serif; font-weight: 700; font-size: 14px; color: #f4f1ea; }
+.queue li.log .dmg.kill { color: #facc15; }
+/* 처치 해골: 우리 해골 도트(7×7)를 금색으로 — 글꼴에 ☠가 없는 기기가 있다 */
+.queue li.log .skull { display: inline-block; width: 14px; height: 14px; margin-left: 4px; vertical-align: -1px; background: #facc15; -webkit-mask: url('./assets/ui/skull-small.png') center / contain no-repeat; mask: url('./assets/ui/skull-small.png') center / contain no-repeat; image-rendering: pixelated; }
 .queue .empty { color: var(--muted); font-size: 13px; padding: 4px 2px; background: none; border: none; height: auto; }
 
 .vials { display: flex; gap: 4px; }

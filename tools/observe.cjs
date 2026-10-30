@@ -72,6 +72,26 @@ const scenarios = {
     await page.goto(URL); await page.waitForTimeout(300);
     return [];
   },
+  // 기록 줄 (D-073): 내 턴 + 적 턴이 끝난 뒤 오른쪽 레일
+  async 'battle-log'(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    for (let i = 0; i < 3; i++) await page.evaluate(async () => { window.pawnisher.autoPlan(); await window.pawnisher.submit(); });
+    await page.waitForTimeout(400);
+    return ['battle-log'];
+  },
+  // 턴 합계 (D-073): 내 실행이 끝나는 순간 판 가운데 큰 숫자 — 여러 번 찍어 잡는다
+  async 'battle-summary'(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    await page.evaluate(async () => { window.pawnisher.autoPlan(); await window.pawnisher.submit(); });
+    await page.evaluate(() => { window.pawnisher.autoPlan(); void window.pawnisher.submit(); });
+    for (let i = 0; i < 16; i++) {
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: path.join(OUT, `${stamp}-battle-summary-${String(i).padStart(2, '0')}.png`) });
+    }
+    return [];
+  },
   async reward(page) {
     await page.evaluate((run) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); },
       runFixture({ at: 'reward', title: '3층 승리', lines: ['골드 +34'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] }));

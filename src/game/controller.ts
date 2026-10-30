@@ -27,6 +27,7 @@ import {
   type Plan,
   type Pos,
   type Side,
+  type PieceType,
 } from '../engine';
 
 export interface Scenario {
@@ -119,6 +120,39 @@ export interface Intent {
   hits: { pieceId: number; pos: Pos; damage: number; killed: boolean }[];
 }
 
+/** 기록 줄 한 칸 (D-073, 하스스톤식): 누가 → 누구를, 얼마나. 내 지난 턴 + 적 지난 턴만 남긴다 */
+export interface LogEntry {
+  side: Side;
+  order: number;
+  attacker: { type: PieceType; side: Side; pos: Pos };
+  targets: { type: PieceType; side: Side; pos: Pos; damage: number; killed: boolean }[];
+}
+
+/** 한 턴의 실행 기록을 기록 줄로 바꾼다 (이동을 따라가며 공격 순간의 칸을 잡는다) */
+export const buildLog = (before: BattleState, events: BattleEvent[]): LogEntry[] => {
+  const at = new Map(before.pieces.map((p) => [p.id, { type: p.type, side: p.side, pos: { x: p.x, y: p.y } }]));
+  const out: LogEntry[] = [];
+  for (const e of events) {
+    if (e.type === 'move') {
+      const a = at.get(e.pieceId);
+      if (a) a.pos = { ...e.to };
+    } else if (e.type === 'attack') {
+      const a = at.get(e.attackerId);
+      if (!a || !e.hits.length) continue;
+      out.push({
+        side: a.side,
+        order: e.order,
+        attacker: { ...a, pos: { ...a.pos } },
+        targets: e.hits.flatMap((h) => {
+          const t = at.get(h.targetId);
+          return t ? [{ type: t.type, side: t.side, pos: { ...t.pos }, damage: h.damage, killed: !!h.killed }] : [];
+        }),
+      });
+    }
+  }
+  return out;
+};
+
 export interface BoardView {
   setup(state: BattleState): void;
   render(model: BoardModel): void;
@@ -126,6 +160,10 @@ export interface BoardView {
   play(before: BattleState, events: BattleEvent[]): Promise<void>;
   /** 적 계획을 잠깐 보여 준다 */
   showPlan(state: BattleState, plan: Plan): Promise<void>;
+  /** 턴 합계 (D-073, 발라트로식): 준 피해 합계가 세어 올라가고 처치 수가 붙는다 */
+  summary?(side: Side, damage: number, kills: number): Promise<void>;
+  /** 기록 줄 한 칸을 판 위에 다시 보여 준다 */
+  flashLog?(entry: LogEntry): void;
 }
 
 export interface HudView {
@@ -148,6 +186,8 @@ export class BattleController {
   phase: Phase = 'idle';
   aiTier = 1;
   enemyWeights: Weights = TUNED;
+  /** 기록 줄: 내 지난 턴 + 적 지난 턴 (D-073) */
+  log: LogEntry[] = [];
 
   /** 런 전투용 훅: 내 차례가 시작될 때마다(자동 저장), 전투가 끝났을 때 */
   onPlayerTurn: ((s: BattleState) => void) | null = null;
@@ -482,6 +522,12 @@ export class BattleController {
     return this.state ? this.pieceAtVirtual(pos) : undefined;
   }
 
+  /** 기록 줄 한 칸을 판 위에 다시 보여 준다 */
+  showLog(i: number): void {
+    const e = this.log[i];
+    if (e) this.view.flashLog?.(e);
+  }
+
   async submit(): Promise<void> {
     if (this.phase !== 'plan') return;
     this.clearPick();
@@ -498,6 +544,11 @@ export class BattleController {
     this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null, intent: null });
     this.hud.update(this);
     await this.view.play(before, events);
+    // 기록 줄: 내 턴이 시작되면 새로, 적 턴은 이어 붙인다 → 다음 내 차례에 "내 지난 턴 + 적 지난 턴"
+    const entries = buildLog(before, events);
+    this.log = before.turnSide === 0 ? entries : [...this.log, ...entries];
+    const damage = entries.reduce((a, e) => a + e.targets.reduce((b, t) => b + t.damage, 0), 0);
+    if (damage > 0 && state.winner === null) await this.view.summary?.(before.turnSide, damage, entries.reduce((a, e) => a + e.targets.filter((t) => t.killed).length, 0));
     this.state = state;
     this.view.setup(this.state);
     if (state.winner !== null) {

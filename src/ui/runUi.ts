@@ -1,3 +1,4 @@
+import { setSfx, sfx, sfxOn } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
@@ -161,7 +162,8 @@ export class RunUi {
       <button class="choice${live ? '' : ' primary'}" type="button" data-new>새 등반 시작${live ? '<small>진행 중인 등반은 지워집니다</small>' : ''}</button>
       ${asc}
       <p>시작 덱 해금: ${unlocks}</p>
-      <button class="choice" type="button" data-test>단판 전투 (시험용)<small>시나리오·장비를 골라 한 판</small></button>`);
+      <button class="choice" type="button" data-test>단판 전투 (시험용)<small>시나리오·장비를 골라 한 판</small></button>
+      <button class="choice" type="button" data-sfx>효과음 ${sfxOn() ? '켜짐' : '꺼짐'}<small>누르면 ${sfxOn() ? '끕니다' : '켭니다'}</small></button>`);
     this.wire(panel, {
       continue: () => {
         this.run = loadRun();
@@ -173,6 +175,11 @@ export class RunUi {
         this.showMenu();
       },
       test: () => this.hud.showStart(),
+      sfx: () => {
+        setSfx(!sfxOn());
+        if (sfxOn()) sfx('submit');
+        this.showMenu();
+      },
     });
   }
 

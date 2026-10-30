@@ -1,3 +1,4 @@
+import { sfx } from '../audio/sfx';
 import { STALL } from '../data/battle';
 import { BASE_AP, PIECE_NAMES_KO } from '../data/pieces';
 import { pieceImg } from './sprites';
@@ -51,7 +52,14 @@ export class Hud implements HudView {
     this.c = c;
     $('btn-undo').addEventListener('click', () => c.undo());
     $('btn-reset').addEventListener('click', () => c.reset());
-    $('btn-submit').addEventListener('click', () => void c.submit());
+    $('btn-submit').addEventListener('click', () => {
+      if (c.phase === 'plan') sfx('submit');
+      void c.submit();
+    });
+    $('queue').addEventListener('click', (e) => {
+      const li = (e.target as HTMLElement).closest('[data-log]') as HTMLElement | null;
+      if (li) c.showLog(Number(li.dataset.log));
+    });
     $('btn-enchant').addEventListener('click', () => this.showEnchants());
     $('overlay').addEventListener('click', (e) => {
       if (e.target === $('overlay') && c.phase !== 'idle' && c.phase !== 'over') this.closeOverlay();
@@ -62,6 +70,7 @@ export class Hud implements HudView {
       else if (e.key === 'r' || e.key === 'R') c.reset();
       else if (e.key === ' ') {
         e.preventDefault();
+        if (c.phase === 'plan') sfx('submit');
         void c.submit();
       }
     });
@@ -133,6 +142,18 @@ export class Hud implements HudView {
         `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 26)}</span><span>${describeStep(c.state, m)}</span></li>`,
       );
     });
+    if (!rows.length && mine && c.log.length) {
+      // 기록 줄 (D-073, 하스스톤식): 내 지난 턴 + 적 지난 턴 — 누르면 그 수를 판에 다시 보여 준다
+      c.log.slice(-6).forEach((e, k) => {
+        const i = c.log.length - Math.min(6, c.log.length) + k;
+        const dmg = e.targets.reduce((a, t) => a + t.damage, 0);
+        const kill = e.targets.some((t) => t.killed);
+        const tg = e.targets.slice(0, 2).map((t) => pieceImg(t.type, t.side, 'small', 22)).join('') + (e.targets.length > 2 ? `<small>+${e.targets.length - 2}</small>` : '');
+        rows.push(
+          `<li class="log ${e.side === 0 ? 'mine' : 'enemy'}" data-log="${i}"><span class="who">${e.side === 0 ? '내' : '적'} #${e.order + 1}</span><span class="glyph">${pieceImg(e.attacker.type, e.attacker.side, 'small', 22)}</span><span class="to">→</span><span class="glyph">${tg}</span><span class="dmg${kill ? ' kill' : ''}">-${dmg}${kill ? '<i class="skull" aria-label="처치"></i>' : ''}</span></li>`,
+        );
+      });
+    }
     if (!rows.length && mine) {
       const hint = ench(c.state, 0, 'E16')
         ? '<span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수 (미래 예지)</span>'

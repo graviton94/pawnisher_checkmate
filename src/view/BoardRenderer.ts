@@ -1,5 +1,6 @@
+import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
-import type { BoardModel, BoardView } from '../game/controller';
+import type { BoardModel, BoardView, LogEntry } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
@@ -114,6 +115,8 @@ class BoardScene extends Phaser.Scene {
   private animG!: Phaser.GameObjects.Graphics;
   private animTopG!: Phaser.GameObjects.Graphics;
   private anim: AnimMarks = noMarks();
+  /** 이번 실행에서 몇 번째 타격인지 — 효과음 음높이 (D-073) */
+  private combo = 0;
   private dynamic: Phaser.GameObjects.GameObject[] = [];
   private sprites = new Map<number, PieceSprite>();
   ready!: () => void;
@@ -562,6 +565,63 @@ class BoardScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * 턴 합계 (D-073, 발라트로식): 내 턴이면 판 가운데에 준 피해가 0부터 세어 올라가며 커졌다가 자리 잡고, 처치 수가 붙는다.
+   * 적 턴이면 위쪽에 작게 "잃음 −n".
+   */
+  async summary(side: Side, damage: number, kills: number): Promise<void> {
+    const t = this.tile;
+    const { x, y } = this.camCenter;
+    const font = (px: number) => ({ fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(px)}px`, stroke: '#0B0B0E', strokeThickness: Math.max(4, px / 6) });
+    if (side === 1) {
+      const lost = this.add.text(x, y - t * 2.2, `잃음 −${damage}`, { ...font(t * 0.42), color: '#FF6B6B' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
+      await this.tween({ targets: lost, y: lost.y - t * 0.3, alpha: { from: 1, to: 0 }, delay: 500, duration: 300 });
+      lost.destroy();
+      return;
+    }
+    const label = this.add.text(x, y - t * 0.75, '이번 턴 피해', { ...font(t * 0.3), color: '#F4F1EA' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
+    const num = this.add.text(x, y, '0', { ...font(t * 0.9), color: '#FACC15' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
+    const parts: Phaser.GameObjects.Text[] = [label, num];
+    await new Promise<void>((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: damage,
+        duration: Math.min(700, 250 + damage * 12) / this.speed,
+        ease: 'Expo.easeOut',
+        onUpdate: (tw) => {
+          num.setText(String(Math.round(tw.getValue() ?? 0)));
+          num.setScale(1 + 0.25 * (1 - tw.progress));
+        },
+        onComplete: () => done(),
+      }),
+    );
+    num.setScale(1.35);
+    this.tweens.add({ targets: num, scale: 1, duration: 220, ease: 'Back.easeOut' });
+    if (kills > 0) parts.push(this.add.text(x, y + t * 0.75, `처치 ${kills}`, { ...font(t * 0.36), color: '#FACC15' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr));
+    await this.wait(450);
+    await this.tween({ targets: parts, alpha: 0, duration: 200 });
+    for (const o of parts) o.destroy();
+  }
+
+  /** 기록 줄 한 칸을 판 위에 1.4초 다시 보여 준다: 공격자 선택 모서리 + 대상으로 흐르는 화살표 + 대상 과녁 */
+  flashLog(e: LogEntry): void {
+    const t = this.tile;
+    const d = t / BOARD_DOTS;
+    const color = e.side === 0 ? C.cyan : C.crimson;
+    const items: AnimMarks['arrows'] = e.targets.map((g) => ({ a: this.center(e.attacker.pos), b: this.center(g.pos), knight: false, color, alpha: 1 }));
+    this.anim.arrows.push(...items);
+    const w = this.world(e.attacker.pos);
+    const objs: Phaser.GameObjects.Image[] = [this.add.image(w.x, w.y, boardKey('select')).setOrigin(0, 0).setDisplaySize(t, t).setDepth(4.4)];
+    for (const g of e.targets) {
+      const v = this.world(g.pos);
+      objs.push(this.add.image(v.x + 2.5 * d, v.y + 2.5 * d, boardKey('target-enemy')).setOrigin(0, 0).setDisplaySize(15 * d, 15 * d).setDepth(4.4));
+    }
+    this.time.delayedCall(1400, () => {
+      this.anim.arrows = this.anim.arrows.filter((a) => !items.includes(a));
+      for (const o of objs) o.destroy();
+    });
+  }
+
   /** 기물 그림을 판 도트 격자로 뽑은 칸들 (기물 칸 왼쪽 위 기준, 도트 단위) — 바스라짐용, 그림마다 한 번 */
   private cellCache = new Map<string, { i: number; j: number; c: number }[]>();
   private pieceCells(key: string): { i: number; j: number; c: number }[] {
@@ -606,6 +666,7 @@ class BoardScene extends Phaser.Scene {
 
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
     this.anim.arrows = [];
+    if (plan.length) sfx('threat');
     const before = this.dynamic.length;
     plan.forEach((mv, i) => {
       for (const a of stepArrows(state, mv)) this.arrow(a.from, a.to, a.knight, C.crimson, 0.9);
@@ -622,6 +683,9 @@ class BoardScene extends Phaser.Scene {
     this.anim = noMarks();
     for (const o of this.dynamic) o.destroy();
     this.dynamic = [];
+    this.combo = 0;
+    const over = events.find((e) => e.type === 'gameOver') as Extract<BattleEvent, { type: 'gameOver' }> | undefined;
+    if (over) this.time.delayedCall(200, () => sfx(over.winner === 0 ? 'win' : 'lose'));
     const t = this.tile;
     // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
     const cur: BattleState = { ...this.state, stronghold: this.state.stronghold ? { ...this.state.stronghold } : null };
@@ -703,6 +767,7 @@ class BoardScene extends Phaser.Scene {
         const g = this.add.graphics().setDepth(6.4);
         const pen = new PixelPen(g, t / BOARD_DOTS);
         let landed = false;
+        sfx('lift');
         await new Promise<void>((done) =>
           this.tweens.addCounter({
             from: 0,
@@ -713,7 +778,10 @@ class BoardScene extends Phaser.Scene {
               this.applyPose(s, from.x + (w.x - from.x) * m.p, from.y + (w.y - from.y) * m.p, m.pose);
               g.clear();
               if (m.landQ >= 0) {
-                if (!landed) this.shake(60, 0.002);
+                if (!landed) {
+                  this.shake(60, 0.002);
+                  sfx('land');
+                }
                 landed = true;
                 drawLandPuff(pen, w.x + t / 2, w.y + t / 2, t, m.landQ);
               }
@@ -799,16 +867,19 @@ class BoardScene extends Phaser.Scene {
             this.shake(fb.ms, fb.intensity);
             if (!this.calm) navigator.vibrate?.(fb.vibrate);
           }
+          sfx('hit', this.combo++);
           this.applyHit(ts, h);
         });
       });
       await Promise.all([...hitsDone, this.after(fx.duration)]);
       const checked = e.hits.find((h) => h.checked);
+      if (checked) sfx('check');
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버팁니다 — 다음 공격이면 끝`);
 
       // 처치: 위에서부터 한 줄씩 검은 재가 되어 기물 발밑에 쌓였다 꺼진다 (D-048·D-050·D-052)
       const deaths = e.hits.filter((h) => h.killed).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);
       if (deaths.length) {
+        sfx('kill');
         const ashes = deaths.map((s) => this.playCrumble(s));
         for (const s of deaths) {
           s.root.destroy();
@@ -948,5 +1019,14 @@ export class BoardRenderer implements BoardView {
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
     await this.whenReady;
     await this.scene.showPlan(state, plan);
+  }
+
+  async summary(side: Side, damage: number, kills: number): Promise<void> {
+    await this.whenReady;
+    await this.scene.summary(side, damage, kills);
+  }
+
+  flashLog(entry: LogEntry): void {
+    void this.whenReady.then(() => this.scene.flashLog(entry));
   }
 }
