@@ -21,6 +21,10 @@ import {
   finishBattle,
   finishPuzzle,
   battleDeck,
+  buyPolish,
+  buyEnchant,
+  altarPremium,
+  altarPremiumOpen,
   finishReward,
   forgeCost,
   forgeUp,
@@ -187,6 +191,12 @@ export const autoRun = (seed: number): RunLog => {
             bought = true;
           }
         }
+        // 후반 나사 쓸 곳 (D-103): 다듬기 · 희귀 진열은 여유가 있으면
+        if (st.stock.polish && !st.stock.polish.sold && run.gold - st.stock.polish.price >= 30) buyPolish(run);
+        st.stock.enchants.forEach((e, i) => {
+          const full = !run.loadout.enchants[e.item] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
+          if (!e.sold && !full && run.gold - e.price >= 60) buyEnchant(run, i);
+        });
         st.stock.cards.forEach((c, i) => {
           if (!c.sold && run.gold - c.price >= 40 && run.loadout.cards.length < CARD_SLOTS) buyCard(run, i);
         });
@@ -214,6 +224,11 @@ export const autoRun = (seed: number): RunLog => {
         break;
       }
       case 'altar': {
+        if (!st.result && altarPremiumOpen(run) && run.crackGauge < ALTAR.gaugeMax && run.gold >= ALTAR.premiumCost + 60) {
+          altarPremium(run);
+          track();
+          break;
+        }
         if (!st.result && (run.gold >= ALTAR.cost || run.crackGauge >= ALTAR.gaugeMax)) {
           altarGamble(run);
           track();

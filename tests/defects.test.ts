@@ -71,3 +71,38 @@ describe('진형 (D-102)', () => {
     expect(mine.find((p) => p.type === 'K')!.y).toBe(0);
   });
 });
+
+describe('후반 나사 쓸 곳 (D-103)', () => {
+  it('Act 2 고물상: 희귀 진열 + 개조 다듬기, 다듬으면 한 단 오른다', async () => {
+    const { buyPolish } = await import('../src/run/run');
+    const run = newRun(4);
+    run.floor = 14;
+    run.loadout.enchants = { E01: 1 };
+    run.gold = 999;
+    run.map[13] = [{ kind: 'shop' }];
+    enterNode(run, 0);
+    if (run.stage.at !== 'shop') throw new Error('고물상 아님');
+    expect(run.stage.stock.enchants.length).toBe(2);
+    expect(run.stage.stock.polish?.item).toBe('E01');
+    expect(buyPolish(run)).toBeUndefined();
+    expect(run.loadout.enchants.E01).toBe(2);
+  });
+  it('Act 1 고물상에는 없다 · 고급 레버는 꽝 없이 희귀 개조 3지선다', async () => {
+    const { altarPremium } = await import('../src/run/run');
+    const run = newRun(4);
+    run.loadout.enchants = { E01: 1 };
+    run.map[0] = [{ kind: 'shop' }];
+    enterNode(run, 0);
+    if (run.stage.at !== 'shop') throw new Error('고물상 아님');
+    expect(run.stage.stock.polish).toBeUndefined();
+    const r2 = newRun(5);
+    r2.floor = 14;
+    r2.gold = 500;
+    r2.map[13] = [{ kind: 'altar' }];
+    enterNode(r2, 0);
+    expect(altarPremium(r2)).toBeUndefined();
+    const st = r2.stage as unknown as { at: string; choices: { type: string; options: string[] }[] };
+    expect(st.at).toBe('reward');
+    expect(st.choices[0].options.length).toBeGreaterThan(0);
+  });
+});

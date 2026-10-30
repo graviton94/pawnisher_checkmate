@@ -91,6 +91,7 @@ export const TEXT = {
     reroll: '새로 진열',
     leave: '떠나기',
     sold: '팔림',
+    polish: '개조 다듬기',
   },
   forge: {
     title: '공방',
@@ -103,6 +104,8 @@ export const TEXT = {
     title: '뽑기 기계',
     lead: '* 나사를 먹는 기계. 배가 고파 보인다.',
     pull: '레버를 당길까?',
+    premium: '고급 레버',
+    premiumDesc: '꽝 없음',
     release: '행운 톱니가 꽉 찼다 — 원하는 개조를 꺼낸다',
     leave: '떠나기',
     outcomes: ['희귀 개조 3지선다', '상위 기물', '이형 거푸집', '꽝'],

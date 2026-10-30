@@ -106,6 +106,9 @@ export const SHOP = {
   enchantPrice: { common: 70, rare: 110 },
   reroll: 15,
   rerollStep: 5,
+  /** 후반 나사 쓸 곳 (D-103): Act 2부터 「희귀 진열」 1칸 + 「개조 다듬기」(가진 개조 한 단 올리기) — 값 = 기본 + 단 × 가산, 공정 배율 적용 */
+  lateFrom: 2,
+  polish: { base: 80, perLevel: 40 },
 };
 
 // ---------- 대장간 ----------
@@ -119,6 +122,9 @@ export const ALTAR = {
   odds: { enchant: 0.45, piece: 0.25, variant: 0.1 },
   /** 꽝일 때 쌓이는 크랙 게이지. 가득 차면 다음 제단에서 원하는 인챈트 확정 */
   gaugeMax: 3,
+  /** 고급 레버 (D-103, Act 2부터): 꽝 없이 희귀 개조 3지선다 */
+  premiumCost: 120,
+  premiumFrom: 2,
 };
 
 // ---------- 적 군단 ----------

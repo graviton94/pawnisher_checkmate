@@ -35,6 +35,9 @@ import {
   finishBattle,
   finishPuzzle,
   battleDeck,
+  buyPolish,
+  altarPremium,
+  altarPremiumOpen,
   repairDamage,
   finishReward,
   forgeCost,
@@ -100,6 +103,12 @@ const enchantOffer = (id: EnchantId, next: number, run: RunState | null): string
   // 아이콘은 색 딱지 위 어두운 도트 (가는 선 아이콘이 카드 위에서 묻히지 않게)
   const kindIcon = `<span class="kbadge" style="background:${tac ? tac.color : 'var(--brass)'}">${icon(tac ? tac.icon : 'wrench', '', '#16141c')}</span>`;
   return `<span class="kind">${kindIcon} 개조 · ${tac ? `<span style="color:${tac.color}">${def.target}</span>` : def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
+};
+
+/** 개조 다듬기 카드 (D-103): 가진 개조의 다음 단 */
+const polishOffer = (run: RunState, id: EnchantId): string => {
+  const n = run.loadout.enchants[id] ?? 0;
+  return `<span class="kind">${icon('wrench', 's')} ${TEXT.shop.polish}</span><b>${ENCHANTS[id].name}</b><span class="tags"><i class="tag${n + 1 >= 3 ? ' gold' : ''}">${n}단 → ${n + 1}단${n + 1 >= 3 ? ' ★' : ''}</i></span><p>${ENCHANTS[id].levels[n]}</p>`;
 };
 
 const cardOffer = (id: CardId): string => {
@@ -587,6 +596,8 @@ export class RunUi {
         return item('ench', i, enchantOffer(p.item, next, run), p.price, p.sold, next >= 3);
       }),
       ...s.cards.map((p, i) => item('card', i, cardOffer(p.item), p.price, p.sold, CARDS[p.item].limit.type === 'consume')),
+      // 개조 다듬기 (D-103): 가진 개조 한 단 올리기
+      ...(s.polish ? [item('polish', 0, polishOffer(run, s.polish.item), s.polish.price, s.polish.sold, (run.loadout.enchants[s.polish.item] ?? 0) + 1 >= 3)] : []),
     ];
     const el = this.hud.openScene(
       `${this.bar(run)}
@@ -610,6 +621,10 @@ export class RunUi {
       ench: (b) => {
         const i = Number(b.dataset.ench);
         this.act(buyEnchant(run, i), () => this.discardPicker(run, 'enchant', (d) => this.act(buyEnchant(run, i, d as EnchantId))));
+      },
+      polish: () => {
+        sfx('land');
+        this.act(buyPolish(run));
       },
       sellmenu: () => this.showSell(run),
       reroll: () => this.act(reroll(run)),
@@ -738,7 +753,7 @@ export class RunUi {
     const odds = [ALTAR.odds.enchant, ALTAR.odds.piece, ALTAR.odds.variant, 1 - ALTAR.odds.enchant - ALTAR.odds.piece - ALTAR.odds.variant];
     const result =
       r?.kind === 'miss'
-        ? `<span class="result-stamp bad">꽝</span><p class="lead">기계가 나사를 삼키고 트림을 한다. 행운 톱니가 한 칸 돈다 (${run.crackGauge}/${ALTAR.gaugeMax}) — 다음엔 될 것 같지 않아?</p>`
+        ? `<span class="result-stamp bad">꽝</span><p class="lead">* 기계가 나사를 삼키고 트림을 한다. 행운 톱니가 한 칸 돈다 (${run.crackGauge}/${ALTAR.gaugeMax}).</p>`
         : r?.kind === 'variant'
           ? `<span class="result-stamp good">드르르륵— 쾅! 이형 거푸집!</span><p class="lead"><b>${VARIANTS[r.variant].name}</b> · ${VARIANTS[r.variant].gain}</p>`
           : r?.kind === 'piece'
@@ -757,6 +772,7 @@ export class RunUi {
           ${result}
           <div style="display:flex;gap:8px;margin-top:auto">
             ${!r ? button(canPick ? A.release : `${A.pull}`, 'data-gamble', { tone: 'brass', icon: 'lever', small: canPick ? undefined : `나사 ${ALTAR.cost}`, cls: !canPick && run.gold < ALTAR.cost ? 'poor' : undefined }) : ''}
+            ${!r && !canPick && altarPremiumOpen(run) ? button(A.premium, 'data-premium', { tone: 'cyan', icon: 'star', small: `나사 ${ALTAR.premiumCost} · ${A.premiumDesc}`, cls: run.gold < ALTAR.premiumCost ? 'poor' : undefined }) : ''}
             ${button(A.leave, 'data-leave', { tone: r ? 'brass' : undefined })}
           </div>
         </div>
@@ -767,6 +783,10 @@ export class RunUi {
       gamble: () => {
         sfx('submit');
         this.act(altarGamble(run));
+      },
+      premium: () => {
+        sfx('submit');
+        this.act(altarPremium(run));
       },
       leave: () => {
         leaveNode(run);

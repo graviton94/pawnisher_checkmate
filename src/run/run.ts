@@ -75,6 +75,8 @@ export interface ShopStock {
   cards: ShopItem<CardId>[];
   enchants: ShopItem<EnchantId>[];
   rerollPrice: number;
+  /** 개조 다듬기 (D-103): 가진 개조 한 단 올리기 */
+  polish?: ShopItem<EnchantId>;
 }
 
 export type AltarResult = { kind: 'piece'; piece: PieceType | null } | { kind: 'variant'; variant: VariantId } | { kind: 'miss' } | { kind: 'enchant' } | { kind: 'pick' };
@@ -523,7 +525,15 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
     (Object.keys(CARDS) as CardId[]).filter((id) => !run.loadout.cards.includes(id)).map((id): [CardId, number] => [id, CARDS[id].limit.type === 'consume' ? CONSUME_CARD_WEIGHT.shop : 1]),
     SHOP.cards,
   );
+  const late = actOf(Math.min(run.floor, TOTAL_FLOORS)) >= SHOP.lateFrom;
   const enchants = rollEnchants(run, rng, 'battle').slice(0, SHOP.enchants);
+  // 후반 나사 쓸 곳 (D-103): 희귀 진열 1칸 + 개조 다듬기
+  if (late) {
+    const rare = rollEnchants(run, rng, 'boss', true).find((id) => !enchants.includes(id));
+    if (rare) enchants.push(rare);
+  }
+  const owned = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).filter(([, n]) => n < ENCHANT_MAX_STACK);
+  const polishId = late && owned.length ? owned[rng.int(owned.length)][0] : undefined;
   // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
   const k = 1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep;
   const at = (n: number) => Math.round(n * k);
@@ -531,6 +541,7 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
     pieces: pieces.map((item) => ({ item, price: at(piecePrice(item)), sold: false })),
     cards: cards.map((item) => ({ item, price: at(cardPrice(item)), sold: false })),
     enchants: enchants.map((item) => ({ item, price: at(enchantPrice(item)), sold: false })),
+    ...(polishId ? { polish: { item: polishId, price: at(SHOP.polish.base + SHOP.polish.perLevel * (run.loadout.enchants[polishId] ?? 0)), sold: false } } : {}),
     rerollPrice,
   };
 };
@@ -624,6 +635,30 @@ const grantVariant = (run: RunState, rng: Rng): VariantId | null => {
 // ---------- 크랙 제단 ----------
 /** 게이지가 가득 찼으면 원하는 인챈트를 확정으로 고를 수 있다 (GDD 8장 §8.5) */
 export const altarCanPick = (run: RunState): boolean => run.crackGauge >= ALTAR.gaugeMax;
+
+/** 개조 다듬기 (D-103): 가진 개조 한 단 올리기 */
+export const buyPolish = (run: RunState): string | void => {
+  const it = shopOf(run)?.polish;
+  if (!it || it.sold) return '“그런 물건 없어.”';
+  if (run.gold < it.price) return '“나사가 부족해.”';
+  const n = run.loadout.enchants[it.item] ?? 0;
+  if (!n || n >= ENCHANT_MAX_STACK) return '“이미 걸작이다.”';
+  run.gold -= it.price;
+  run.loadout.enchants[it.item] = n + 1;
+  it.sold = true;
+};
+
+/** 고급 레버 (D-103, Act 2부터): 꽝 없이 희귀 개조 3지선다 */
+export const altarPremiumOpen = (run: RunState): boolean => actOf(Math.min(run.floor, TOTAL_FLOORS)) >= ALTAR.premiumFrom;
+export const altarPremium = (run: RunState): string | void => {
+  if (run.stage.at !== 'altar' || run.stage.result) return;
+  if (!altarPremiumOpen(run)) return '“아직 안 열려.”';
+  if (run.gold < ALTAR.premiumCost) return '“나사가 부족해.”';
+  const options = withRng(run, (rng) => rollEnchants(run, rng, 'altar', true));
+  if (!options.length) return '“꺼낼 게 없다.”';
+  run.gold -= ALTAR.premiumCost;
+  run.stage = { at: 'reward', title: '뽑기 기계 — 고급 레버', lines: [], choices: [{ type: 'enchant', options }] };
+};
 
 export const altarGamble = (run: RunState): string | void => {
   if (run.stage.at !== 'altar' || run.stage.result) return;
