@@ -3,6 +3,7 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
+import { playAttackFx, playHitSpark, playShatter } from './attackFx';
 import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
@@ -507,6 +508,63 @@ class BoardScene extends Phaser.Scene {
     if (!this.calm) this.cameras.main.shake(ms, intensity);
   }
 
+  /** 연출 속도 배율 (동작 줄이기 = 약 3배 빠르게) */
+  private get speed(): number {
+    return this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : 1;
+  }
+  /** QA용: 주소에 ?fxslow를 붙이면 공격 이펙트를 4배 느리게 (스크린샷 증거용) */
+  private readonly slowFx = new URLSearchParams(window.location.search).has('fxslow');
+  /** 이미 배율이 적용된 시간만큼 기다린다 */
+  private after(ms: number): Promise<void> {
+    return new Promise((r) => this.time.delayedCall(ms, r));
+  }
+
+  /** 공격 전 몸짓: 룩·킹은 들었다가 쿵, 나이트는 깡충, 나머지는 살짝 부풀기 */
+  private async windUp(s: PieceSprite, kinds: PieceType[]): Promise<void> {
+    const t = this.tile;
+    const y0 = s.root.y;
+    if (kinds.includes('R') || kinds.includes('K')) {
+      await this.tween({ targets: s.root, y: y0 - t * 0.22, duration: 80, ease: 'Quad.easeOut' });
+      await this.tween({ targets: s.root, y: y0, duration: 50, ease: 'Quad.easeIn' });
+      this.shake(70, 0.004);
+    } else if (kinds.includes('N')) {
+      await this.tween({ targets: s.root, y: y0 - t * 0.15, duration: 70, yoyo: true, ease: 'Quad.easeOut' });
+    } else {
+      await this.tween({ targets: s.root, scale: { from: 1, to: 1.1 }, yoyo: true, duration: 70 });
+    }
+  }
+
+  /** 피격 한 건: 흰 점멸 · 스파크 · 큰 피해 숫자 · HP · 밀려남 */
+  private applyHit(ts: PieceSprite, h: { targetId: number; hpAfter: number; killed?: boolean; pushedTo?: Pos }): void {
+    const t = this.tile;
+    ts.glyph.setTintFill(0xffffff);
+    this.time.delayedCall(70, () => ts.glyph.clearTint());
+    playHitSpark(this, ts.root.x + t / 2, ts.root.y + t * 0.45, t, ts.piece.side === 0 ? 1 : 0, this.speed);
+    const dealt = ts.piece.hp - h.hpAfter;
+    this.drawHp(ts, h.hpAfter, h.hpAfter);
+    ts.piece = { ...ts.piece, hp: h.hpAfter };
+    // 피해가 클수록 크게, 내 기물이 맞으면 붉게 (GDD 12장 §12.3 ④)
+    const size = Math.round(t * (0.4 + 0.25 * Math.min(1, dealt / ts.piece.maxHp)));
+    const dmg = this.add
+      .text(ts.root.x + t / 2, ts.root.y + t * 0.15, h.killed ? `-${dealt}☠` : `-${dealt}`, {
+        fontFamily: 'Galmuri14, Galmuri11, sans-serif',
+        fontStyle: '700',
+        fontSize: `${size}px`,
+        color: h.killed ? '#FACC15' : ts.piece.side === 0 ? '#FF6B6B' : '#FFFFFF',
+        stroke: '#0B0B0E',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setDepth(8)
+      .setResolution(this.dpr);
+    this.tweens.add({ targets: dmg, y: dmg.y - t * 0.35, duration: 260, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: dmg, alpha: 0, delay: 650, duration: 300, onComplete: () => dmg.destroy() });
+    if (h.pushedTo) {
+      const w = this.world(h.pushedTo);
+      this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
+    }
+  }
+
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
     this.arrowsG.clear();
     plan.forEach((mv, i) => {
@@ -626,18 +684,20 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'promote') {
         const s = this.sprites.get(e.pieceId);
-        if (s) s.glyph.setTexture(pieceKey(e.to, s.piece.side));
+        if (s) {
+          s.glyph.setTexture(pieceKey(e.to, s.piece.side));
+          s.piece = { ...s.piece, type: e.to };
+        }
         continue;
       }
       if (e.type !== 'attack') continue;
       const atk = this.sprites.get(e.attackerId);
       if (!atk) continue;
       const order = this.add
-        .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 3 })
+        .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.4)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 4 })
         .setOrigin(0.5)
         .setDepth(7)
         .setResolution(this.dpr);
-      await this.tween({ targets: atk.root, scale: { from: 1, to: 1.12 }, yoyo: true, duration: 110 });
       // 시너지 배율: 커질수록 크게 (발라트로식 숫자 폭발)
       if (e.mult) {
         const big = Math.min(1.8, 0.8 + (e.mult - 1) * 0.6);
@@ -649,54 +709,40 @@ class BoardScene extends Phaser.Scene {
         this.tweens.add({ targets: m, y: m.y - t * 0.4, alpha: 0, scale: 1.3, duration: 900, onComplete: () => m.destroy() });
       }
 
-      this.fxG.clear();
-      for (const a of e.area) {
-        const w = this.world(a);
-        this.fxG.fillStyle(C.crimson, 0.22).fillRect(w.x, w.y, t, t);
-      }
-      for (const h of e.hits) {
+      // 몸짓 → 기물별 공격 이펙트 (기물 중심에서 공격 범위로) → 이펙트가 닿는 순간 피격
+      const kinds = atk.piece.fused?.length ? [...new Set(atk.piece.fused)] : [atk.piece.formAs ?? atk.piece.type];
+      await this.windUp(atk, kinds);
+      const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
+      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: atk.root.x + t / 2, y: atk.root.y + t / 2 }, tiles, tile: t, speed: this.speed });
+      let shook = false;
+      const hitsDone = e.hits.map((h) => {
         const ts = this.sprites.get(h.targetId);
-        if (!ts) continue;
-        this.fxG.lineStyle(Math.max(2, t * 0.06), C.crimson, 0.9).lineBetween(atk.root.x + t / 2, atk.root.y + t / 2, ts.root.x + t / 2, ts.root.y + t / 2);
-      }
-      await this.wait(90);
-
-      // 피격: 흰 점멸 · 히트스톱 · 흔들림 · 피해 숫자
-      for (const h of e.hits) {
-        const ts = this.sprites.get(h.targetId);
-        if (!ts) continue;
-        ts.glyph.setTintFill(0xffffff);
-        const dealt = ts.piece.hp - h.hpAfter;
-        this.drawHp(ts, h.hpAfter, h.hpAfter);
-        ts.piece = { ...ts.piece, hp: h.hpAfter };
-        const dmg = this.add
-          .text(ts.root.x + t / 2, ts.root.y + t * 0.1, `-${dealt}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34)}px`, color: '#FDE68A', stroke: '#16141C', strokeThickness: 4 })
-          .setOrigin(0.5)
-          .setDepth(8)
-          .setResolution(this.dpr);
-        this.tweens.add({ targets: dmg, y: dmg.y - t * 0.5, alpha: 0, duration: 650, onComplete: () => dmg.destroy() });
-        if (h.pushedTo) {
-          const w = this.world(h.pushedTo);
-          this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
-        }
-      }
-      if (e.hits.length) this.shake(90, 0.005);
+        if (!ts) return Promise.resolve();
+        const key = `${Math.round(ts.root.x / t)},${this.state.height - 1 - Math.round(ts.root.y / t)}`;
+        return this.after(fx.impact.get(key) ?? fx.duration * 0.6).then(() => {
+          if (!shook) {
+            this.shake(90, ts.piece.side === 0 ? 0.007 : 0.005);
+            shook = true;
+          }
+          this.applyHit(ts, h);
+        });
+      });
+      await Promise.all([...hitsDone, this.after(fx.duration)]);
       const checked = e.hits.find((h) => h.checked);
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버팁니다 — 다음 공격이면 끝`);
-      await this.wait(60);
-      for (const h of e.hits) this.sprites.get(h.targetId)?.glyph.clearTint();
-      this.fxG.clear();
 
+      // 처치: 톱니·스프링 파편으로 부서진다
       const deaths = e.hits.filter((h) => h.killed).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);
       if (deaths.length) {
-        await Promise.all(deaths.map((s) => this.tween({ targets: s.root, alpha: 0, scale: 0.5, duration: 220 })));
+        const shards = deaths.map((s) => playShatter(this, s.root.x + t / 2, s.root.y + t / 2, t, s.piece.side, this.speed));
         for (const s of deaths) {
           s.root.destroy();
           this.sprites.delete(s.piece.id);
         }
+        await Promise.race([Promise.all(shards), this.after(200)]);
       }
       order.destroy();
-      await this.wait(240);
+      await this.wait(140);
     }
     if (events.some((e) => e.type === 'gameOver')) await this.wait(400);
   }
