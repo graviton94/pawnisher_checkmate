@@ -114,10 +114,10 @@ export const TEXT = {
   },
   seed: {
     label: '시드',
-    placeholder: '시드 6자리',
+    placeholder: 'XXXXX-XXXXX',
     apply: '이 시드로',
     again: '같은 시드로',
-    bad: '* 시드는 영문·숫자 6자리다.',
+    bad: '* 공장 도장이 없는 시드다. 받아 주지 않는다.',
   },
   puzzle: {
     goal: '이번 가동 한 번에 적 킹을 쓰러뜨린다.',

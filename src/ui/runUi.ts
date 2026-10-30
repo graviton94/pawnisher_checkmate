@@ -297,7 +297,7 @@ export class RunUi {
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('flag', 's')}${TEXT.start.title}</span><span class="spacer"></span>${button(TEXT.start.back, 'data-menu')}</div>
       <p class="lead">${TEXT.start.lead}</p>
-      <div class="seed-row"><span class="seed">${TEXT.seed.label} <b>${seedCode(seed)}</b></span><input id="seed-input" class="seed-input" maxlength="6" autocomplete="off" spellcheck="false" placeholder="${TEXT.seed.placeholder}" aria-label="${TEXT.seed.placeholder}">${button(TEXT.seed.apply, 'data-seed')}</div>
+      <div class="seed-row"><span class="seed">${TEXT.seed.label} <b>${seedCode(seed)}</b></span><input id="seed-input" class="seed-input" maxlength="11" autocomplete="off" spellcheck="false" placeholder="${TEXT.seed.placeholder}" aria-label="${TEXT.seed.placeholder}">${button(TEXT.seed.apply, 'data-seed')}</div>
       <div class="stage"><div class="offers">${decks
         .map((d, i) => {
           const kinds = SET_LORE[[...d].sort().join('')] ?? '';

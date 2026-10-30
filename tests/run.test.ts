@@ -206,7 +206,22 @@ describe('보상과 노드', () => {
 describe('시드 코드 (D-099)', () => {
   it('코드 ↔ 시드가 오가고, 같은 시드면 같은 지도', async () => {
     const { seedCode, parseSeed } = await import('../src/run/seed');
-    for (const n of [1, 42, 123456789, 2_000_000_000]) expect(parseSeed(seedCode(n))).toBe(n % 36 ** 6);
+    for (const n of [1, 2, 42, 123456789, 2 ** 30 - 1]) expect(parseSeed(seedCode(n))).toBe(n);
+    expect(seedCode(1)).toMatch(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/);
+    // 소문자·하이픈 없이도 읽힌다
+    expect(parseSeed(seedCode(77).toLowerCase().replace('-', ''))).toBe(77);
+    // 이웃 시드는 전혀 다른 코드 (앞 다섯 자리가 같지 않다)
+    expect(seedCode(1).slice(0, 5)).not.toBe(seedCode(2).slice(0, 5));
+    // 지어낸 코드는 거의 통과하지 못한다 (검증값 20비트)
+    const { Rng } = await import('../src/engine');
+    const rng = new Rng(9);
+    const A = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    let pass = 0;
+    for (let i = 0; i < 20000; i++) if (parseSeed(Array.from({ length: 10 }, () => A[rng.int(32)]).join('')) !== null) pass++;
+    expect(pass).toBeLessThanOrEqual(2);
+    // 한 글자만 바꿔도 걸린다
+    const c = seedCode(424242);
+    expect(parseSeed((c[0] === 'A' ? 'B' : 'A') + c.slice(1))).toBeNull();
     expect(parseSeed('ab-12')).toBeNull();
     expect(JSON.stringify(newRun(777).map)).toBe(JSON.stringify(newRun(777).map));
   });

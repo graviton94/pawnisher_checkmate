@@ -44,6 +44,19 @@ const scenarios = {
     await page.tap('[data-new]'); await page.waitForTimeout(400);
     return ['start-deck'];
   },
+  // 시드 (D-100): 지어낸 코드는 거절, 받은 코드는 그 출하로
+  async seed(page) {
+    await scenarios.start(page);
+    const code = await page.locator('.seed b').first().textContent();
+    await page.fill('#seed-input', 'ABCDE-12345'); await page.tap('[data-seed]'); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-seed-bad.png`) });
+    await page.tap('[data-menu]'); await page.waitForTimeout(300);
+    await page.tap('[data-new]'); await page.waitForTimeout(300);
+    await page.fill('#seed-input', code.toLowerCase()); await page.tap('[data-seed]'); await page.waitForTimeout(400);
+    const now = await page.locator('.seed b').first().textContent();
+    console.log(`seed ${code} → ${now} ${code === now ? 'OK' : 'MISMATCH'}`);
+    return ['seed-ok'];
+  },
   async battle(page) {
     await scenarios.start(page);
     await page.tap('[data-deck="0"]'); await page.waitForTimeout(300);
