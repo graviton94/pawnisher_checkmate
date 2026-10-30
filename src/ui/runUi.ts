@@ -622,7 +622,7 @@ export class RunUi {
     });
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2><p>${F.lead} ${F.variantLead}</p></div>
+      <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2><p>${F.lead}</p><small class="dim">${F.rule} ${F.variantLead}</small></div>
       <div class="stage"><div class="forge-row">${cards.join('')}</div></div>
       <div style="display:flex;justify-content:flex-end;padding-bottom:8px">${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
     );

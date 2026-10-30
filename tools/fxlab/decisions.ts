@@ -79,6 +79,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '이동', rule: '들기 → 지수형 이동 → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
   { item: '기물 공격', rule: '폰 초승달 칼날 · 나이트 번개 · 비숍 응축 광선 · 룩 십자 폭발 · 퀸 톱날 부메랑 · 킹 종소리 파동 (위 장면에서 재생)', status: 'done' },
   { item: '기물 그림', rule: '정본 = tools/pixel/pieces64.txt 64×64 격자 (사용자 원본을 1.5px = 1칸으로, 흰 테두리 2칸). maker.py가 배경 없는 PNG로 찍는다. P·R·Q·K는 좌우 대칭 — 원래 십자가 · 룩 머리 모양을 살리고 비뚤어진 칸만 맞춤, R 윗머리 세 칸 같은 폭 (D-092, symmetry.py). 이형 기물 그림도 같은 파일에', status: 'review' },
+  { item: '작은 기물 도트판', rule: 'm-*.png 22px — 정본을 줄이고 외곽선을 다시 두른 판. 인트로·배경 컨베이어 폰에 원래 크기로 (D-098)', status: 'review' },
   { item: '흰 킹', rule: '원래 킹 기물 그림 (왕관 쓴 폰 안은 접음, D-079)', status: 'done' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로', status: 'done' },
   { item: '전술 키워드', rule: '공격 순간 친 기물 위에 이름 배너 (포크 하늘 · 관통 주황 · 사선 개척 보라 · 돌파 분홍 · 연쇄 금, 0.5초). 명령 테이프에 미리보기 칩, 기록 줄에 아이콘 칩 (D-094)', status: 'review' },

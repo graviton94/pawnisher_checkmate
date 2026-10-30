@@ -275,7 +275,7 @@ export const finishPuzzle = (run: RunState, final: BattleState): void => {
   if (final.winner === 0) {
     run.gold += PUZZLE_GOLD;
     run.stage = { at: 'reward', title: '묘수 풀이', lines: [`나사 +${PUZZLE_GOLD}`], choices: [{ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, 'battle')) }] };
-  } else run.stage = { at: 'reward', title: '묘수 실패', lines: ['킹이 버틴다. 판이 치워진다.'], choices: [] };
+  } else run.stage = { at: 'reward', title: '묘수 실패', lines: ['* 킹이 버틴다. 판이 조용히 치워진다.'], choices: [] };
 };
 
 /** 전투가 끝났다. 패배면 런 종료, 승리면 보상 단계로. */

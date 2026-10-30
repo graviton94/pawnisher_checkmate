@@ -1,7 +1,7 @@
 """
 도트 메이커 (D-086): tools/pixel/pieces.txt 격자 → 배경 없는 PNG. 기물 그림은 전부 여기서 다시 찍을 수 있다.
 
-  python3 -I tools/pixel/maker.py export              게임 그림 갱신 (public/pieces/s-*.png 5배 · l-*.png 8배)
+  python3 -I tools/pixel/maker.py export              게임 그림 갱신 (public/pieces/s-*.png 128px · l-*.png 192px · m-*.png 22px 작은 도트판)
   python3 -I tools/pixel/maker.py one N 1 8 out.png   기물 하나 (유형 · 진영 0흰/1흑 · 배율 · 파일), 배경 투명
   python3 -I tools/pixel/maker.py sheet out.png 6     전체 시트 (흰/흑 × 6종, 배율)
   유형에 이형을 붙이면 그 그림: N:hammer (pieces.txt에 [N:hammer] 블록이 있을 때)
@@ -143,6 +143,33 @@ def render64(grid, side, scale=1):
     return img.resize((n * scale, n * scale), Image.NEAREST) if scale != 1 else img
 
 
+def mini(grid, side, n=22):
+    """작은 도트판 (D-098): 64×64 정본을 n×n으로 줄이고 외곽선을 다시 두른다 — 배경·인트로처럼 작게 그릴 때.
+    몸(흰 테두리 안쪽)은 칸 면적 절반 이상이면 칠하고 색은 그 칸에서 가장 많은 색, 가장자리 몸 칸은 검정 외곽선 1칸, 바깥 1칸은 흰 테두리."""
+    N = len(grid)
+    s = N / n
+    body = [[False] * n for _ in range(n)]
+    col = [['.'] * n for _ in range(n)]
+    for j in range(n):
+        for i in range(n):
+            cells = [grid[y][x] for y in range(int(j * s), int((j + 1) * s)) for x in range(int(i * s), int((i + 1) * s))]
+            inside = [c for c in cells if c not in '.O']
+            if len(inside) * 2 >= len(cells):
+                body[j][i] = True
+                fill = [c for c in inside if c != 'K'] or inside
+                col[j][i] = max(set(fill), key=fill.count)
+    out = [['.'] * n for _ in range(n)]
+    o4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    for j in range(n):
+        for i in range(n):
+            if body[j][i]:
+                edge = any(not (0 <= j + dy < n and 0 <= i + dx < n) or not body[j + dy][i + dx] for dy, dx in o4)
+                out[j][i] = 'K' if edge else col[j][i]
+            elif any(0 <= j + dy < n and 0 <= i + dx < n and body[j + dy][i + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)):
+                out[j][i] = 'O'
+    return render64([''.join(r) for r in out], side)
+
+
 def piece(name, side, scale=1):
     """유형(또는 유형:이형) · 진영 → 그림"""
     hi = load64()
@@ -161,7 +188,8 @@ def export():
         for side in (0, 1):
             piece(t, side, 2).save(os.path.join(out, f's-{t}{side}.png'))
             piece(t, side, 3).save(os.path.join(out, f'l-{t}{side}.png'))
-    print('public/pieces/s-*.png (128px) · l-*.png (192px) — 64×64 정본에서 12종씩')
+            mini(load64()[(t, side)], side).save(os.path.join(out, f'm-{t}{side}.png'))
+    print('public/pieces/s-*.png (128px) · l-*.png (192px) · m-*.png (22px 작은 도트판) — 64×64 정본에서 12종씩')
 
 
 def sheet(path, scale=3):

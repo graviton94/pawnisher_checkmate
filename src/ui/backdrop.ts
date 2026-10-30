@@ -50,7 +50,8 @@ export class Backdrop {
     host.prepend(this.cv);
     this.g = this.cv.getContext('2d')!;
     this.g.imageSmoothingEnabled = false;
-    this.pawn.src = 'pieces/s-P0.png';
+    // 작은 도트판 (D-098): 22px 그대로 찍는다 — 큰 그림을 줄이면 외곽선이 뭉개진다
+    this.pawn.src = 'pieces/m-P0.png';
   }
 
   /** 보이기 · 모드 바꾸기 */
@@ -251,7 +252,7 @@ export class Backdrop {
     g.fillStyle = '#0d0c11';
     for (let x = 20; x < W; x += 60) g.fillRect(x, y + 12, 4, H - y - 12);
     if (!this.pawn.complete) return;
-    const size = 18;
+    const size = 22;
     // 지나가는 폰들 (인트로 중엔 박자에 맞춰 8기 + 아홉째)
     if (intro >= 0) {
       const n = Math.max(0, Math.floor((intro - INTRO.pawnsFrom) / INTRO.beat));
@@ -268,7 +269,7 @@ export class Backdrop {
         // 정품 도장 자국 (지나간 폰 이마에 황동 점)
         if (age > 1 && !ninth) {
           g.fillStyle = COL.brass;
-          g.fillRect(Math.round(x) + 8, y - size + 6, 2, 2);
+          g.fillRect(Math.round(x) + 10, y - size + 6, 2, 2);
         }
       }
       return;
