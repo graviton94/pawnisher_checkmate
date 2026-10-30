@@ -292,7 +292,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
   run.stage = {
     at: 'reward',
-    title: kind === 'boss' ? `${bossName(run, run.floor)} 격파 — ${ACT_NAMES[actOf(run.floor) - 1]} 끝` : kind === 'elite' ? '검문 통과' : `${inAct(run.floor)}층 통과`,
+    title: kind === 'boss' ? `${bossName(run, run.floor)} 격파 — ${ACT_NAMES[actOf(run.floor) - 1]} 끝` : kind === 'elite' ? '검문 통과!' : `${inAct(run.floor)}층 통과`,
     lines,
     choices: choices.filter((c) => c.options.length),
   };

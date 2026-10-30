@@ -99,6 +99,62 @@ def clean(grid):
                 grid[j][i] = max(set(around), key=around.count)
 
 
+K_RING = 3  # 검정 외곽선 두께 (칸) — 원본의 검정 띠 평균
+
+
+def tidy_outline(grid):
+    """외곽선 영역 다듬기 (D-088, 사용자: 검정 + 흰 외곽선 영역의 불필요한 대각선 · 회색 정리):
+    ① 실루엣에서 대각선으로만 붙은 칸 · 한 칸짜리 혹을 깎고 오목한 한 칸은 메워 계단을 고르게
+    ② 실루엣 가장자리에서 K_RING칸 안쪽까지는 검정으로 (두께 고르게)
+    ③ 그 바로 안쪽에서 검정에 둘러싸인 회색 잡티(D·G)는 검정으로"""
+    n = len(grid)
+    sil = [[grid[j][i] != '.' for i in range(n)] for j in range(n)]
+    o4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    for _ in range(4):
+        changed = False
+        for j in range(n):
+            for i in range(n):
+                k = sum(1 for dy, dx in o4 if 0 <= j + dy < n and 0 <= i + dx < n and sil[j + dy][i + dx])
+                if sil[j][i] and k <= 1:
+                    sil[j][i] = False
+                    changed = True
+                elif not sil[j][i] and k >= 3:
+                    sil[j][i] = True
+                    changed = True
+        if not changed:
+            break
+    # 바깥에서의 거리 (8방향 → 대각선 쪽도 같은 두께)
+    dist = [[0 if not sil[j][i] else 99 for i in range(n)] for j in range(n)]
+    q = deque((j, i) for j in range(n) for i in range(n) if not sil[j][i])
+    for j in range(n):
+        for i in range(n):
+            if sil[j][i] and (j in (0, n - 1) or i in (0, n - 1)):
+                dist[j][i] = 1
+                q.append((j, i))
+    while q:
+        j, i = q.popleft()
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                jj, ii = j + dy, i + dx
+                if 0 <= jj < n and 0 <= ii < n and dist[jj][ii] > dist[j][i] + 1:
+                    dist[jj][ii] = dist[j][i] + 1
+                    q.append((jj, ii))
+    for j in range(n):
+        for i in range(n):
+            if not sil[j][i]:
+                grid[j][i] = '.'
+            elif dist[j][i] <= K_RING:
+                grid[j][i] = 'K'
+            elif grid[j][i] == '.':
+                grid[j][i] = 'K'
+    for j in range(n):
+        for i in range(n):
+            if sil[j][i] and dist[j][i] <= K_RING + 3 and grid[j][i] in 'DG':
+                ks = sum(1 for dy, dx in o4 if grid[j + dy][i + dx] == 'K')
+                if ks >= 2:
+                    grid[j][i] = 'K'
+
+
 def extract(t, side):
     a, b = BOXES[(t, side)]
     cx = (a + b) / 2
@@ -120,11 +176,7 @@ def extract(t, side):
             col = tuple(sum(px[c][k] for c in inside) / len(inside) for k in range(3))
             grid[j][i] = nearest(col, pal)
     clean(grid)
-    # 몸의 가장 바깥 칸은 검정 외곽선으로 (원본처럼 끊김 없이)
-    for j in range(N):
-        for i in range(N):
-            if grid[j][i] != '.' and any(not (0 <= j + dy < N and 0 <= i + dx < N) or grid[j + dy][i + dx] == '.' for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                grid[j][i] = 'K'
+    tidy_outline(grid)
     # 흰 바깥 테두리 OUTLINE칸 (네모 팽창)
     body = [[grid[j][i] != '.' for i in range(N)] for j in range(N)]
     for j in range(N):

@@ -78,7 +78,7 @@ export const TEXT = {
     cards: '천공 카드',
     enchants: '개조',
     sell: '팔기',
-    reroll: '진열 바꾸기',
+    reroll: '진열을 바꿔 볼까?',
     leave: '떠나기',
     sold: '팔림',
   },
@@ -91,7 +91,7 @@ export const TEXT = {
   altar: {
     title: '뽑기 기계',
     lead: '“레버를 당겨 봐. 뭐가 나올지는 나도 몰라.”',
-    pull: '레버를 당긴다',
+    pull: '레버를 당겨 볼까?',
     release: '행운 톱니 해방 — 원하는 개조 고르기',
     leave: '떠나기',
     outcomes: ['희귀 개조 3지선다', '상위 기물', '이형 거푸집', '꽝'],

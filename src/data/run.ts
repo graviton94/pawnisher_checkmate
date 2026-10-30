@@ -25,7 +25,7 @@ export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' 
 
 export const NODE_NAMES: Record<NodeKind, string> = {
   battle: '대국',
-  elite: '검문',
+  elite: '검문!',
   boss: '반장 대국',
   shop: '고물상',
   forge: '공방',
