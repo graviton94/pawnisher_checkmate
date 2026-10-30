@@ -3,7 +3,6 @@
 도트 1개 = 1px로 저장하고 화면에서 정수배로 키운다. 색은 발주서 팔레트 + 청록 그늘.
 
 출력:
-  public/ui/board/  vent-*.png (증기 분출구)
   public/ui/props/  지형 소품 5종 (기물처럼 검정 + 흰 테두리 자동)
   public/ui/hud/    종이 왕관 · 태엽 3종 · 점령 눈금 (D-050: 단순한 덩어리 + 납작한 색 + 강조 1개)
   public/ui/frames/ UI 9-slice 프레임 6종 (회색 4단계 — 색은 코드가)
@@ -86,51 +85,6 @@ def save(im, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     im.save(path)
 
-
-# ---------------- 증기 분출구 (요충지) 20×20, 칸 위에 덧그림 ----------------
-
-def vent(state):
-    im = Image.new('RGBA', (20, 20), (0, 0, 0, 0))
-    px = im.load()
-    c = 9.5
-    for y in range(20):
-        for x in range(20):
-            dx = x - c + (2 if state == 'opening' and x < 10 else -2 if state == 'opening' else 0)
-            d = math.hypot(dx, y - c)
-            if state == 'opening' and 9 <= x <= 10:
-                if math.hypot(x - c, y - c) <= 6.5:
-                    px[x, y] = C['k'] + (255,)
-                continue
-            if 5.4 <= d <= 7.0:
-                px[x, y] = C['b' if (dx + (y - c)) > 2 else 'y'] + (255,)
-            elif d < 5.4:
-                if state == 'open':
-                    px[x, y] = C['k'] + (255,)
-                elif abs(dx) < 0.6 or abs(y - c) < 0.6:
-                    px[x, y] = C['l'] + (255,)
-                else:
-                    px[x, y] = C['i'] + (255,)
-    # 압력계: 오른쪽 위 3×3
-    for x, y, ch in ((15, 2, 'h'), (16, 2, 'h'), (17, 2, 'h'), (15, 3, 'h'), (16, 3, 'R'), (17, 3, 'h'), (15, 4, 'h'), (16, 4, 'h'), (17, 4, 'h')):
-        px[x, y] = C[ch] + (255,)
-    if state == 'opening':
-        for x, y in ((9, 2), (10, 1), (9, 0)):
-            px[x, y] = C['s'] + (255,)
-    return im
-
-
-STEAM = art([
-    '....ss....',
-    '..sswws...',
-    '.swwwwws..',
-    '..swwss...',
-    '...ss.ss..',
-    '..swws.s..',
-    '.swwwws...',
-    '..swws....',
-    '...sss....',
-    '....s.....',
-])
 
 # ---------------- 지형 소품 (기물처럼 테두리 자동) ----------------
 # D-050: 단순한 덩어리 + 납작한 색 1~2개 + 강조 1개. 검정 테두리·흰 테두리는 outline()이 두른다. 모두 좌우 대칭.
@@ -267,9 +221,6 @@ def recolor(rows, table):
     return [''.join(table.get(ch, ch) for ch in r) for r in rows]
 
 
-for st in ('closed', 'opening', 'open'):
-    save(vent(st), f'public/ui/board/vent-{st}.png')
-save(STEAM, 'public/ui/board/vent-steam.png')
 for name, rows in PROPS.items():
     continue  # D-056·D-057: 지형 소품 5종은 모두 제미나이 그림을 잘라 쓴다 (tools/order/) — 아래 코드 그림은 쓰지 않음
     save(outline(mirror(art(rows))), f'public/ui/props/{name}.png')

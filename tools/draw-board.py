@@ -199,6 +199,43 @@ def wreck():
     return from_ascii(rows, {'g': 'G', 's': 'LG', 'k': 'INK'})
 
 
+def stronghold(kind):
+    """요충지 칸 표시 (D-068): 칸 안쪽 한 도트 점선 테두리 + 왼쪽 위 깃발. 빈 요충지 = 흰색, 내가 점거 중 = 청록, 적 = 진홍.
+    점거 진행 눈금은 코드가 칸 오른쪽 아래에 찍는다"""
+    main, dark = {'neutral': ('W', 'LG'), 'ally': ('CY', 'CY2'), 'enemy': ('CR', 'CR2')}[kind]
+    im = canvas()
+    # 점선 테두리: 안쪽 1도트, 두 칸 켜고 한 칸 끈다 (공격 범위의 실선 테두리와 구분)
+    for i in range(1, N - 1):
+        on = (i % 3) != 0
+        for x, y in ((i, 1), (1, i), (i, N - 2), (N - 2, i)):
+            if on:
+                put(im, x, y, main)
+    # 깃발: 깃대 + 제비꼬리 깃발, 바깥 먹색 테두리 (어느 칸 색 위에서도 보이게)
+    flag = [
+        'pFFFFF',
+        'pFFFFd',
+        'pFFFd.',
+        'pFFFFd',
+        'pddddd',
+        'p.....',
+        'p.....',
+        'b.....',
+    ]
+    ox, oy = 4, 3
+    cells = {}
+    for y, row in enumerate(flag):
+        for x, ch in enumerate(row):
+            if ch != '.':
+                cells[(ox + x, oy + y)] = {'p': 'LG', 'F': main, 'd': dark, 'b': 'G'}[ch]
+    for (x, y) in list(cells):
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if (x + dx, y + dy) not in cells:
+                put(im, x + dx, y + dy, 'INK')
+    for (x, y), c in cells.items():
+        put(im, x, y, c)
+    return im
+
+
 plate('L', 'G', 'D', 'G', 'D').save(f'{OUT}/tile-light.png')
 plate('D', 'L', 'INK', 'L', 'INK').save(f'{OUT}/tile-dark.png')
 crack().save(f'{OUT}/crack.png')
@@ -215,4 +252,7 @@ for n in range(1, 10):
 kill_mark().save(f'{OUT}/kill.png')
 check_ring().save(f'{OUT}/check.png')
 wreck().save(f'{OUT}/wreck.png')
+stronghold('neutral').save(f'{OUT}/stronghold.png')
+stronghold('ally').save(f'{OUT}/stronghold-ally.png')
+stronghold('enemy').save(f'{OUT}/stronghold-enemy.png')
 print('ok')

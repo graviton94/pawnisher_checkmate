@@ -29,7 +29,7 @@
 | :-: | :--- | :--- | :--- |
 | 1 | **S0** | 크기 시험 | 도트 크기가 맞는지 먼저 확인 |
 | ~~2~~ | ~~B1~B5~~ | 판 칸 · 발밑 · 과녁 · 화살표 · HP | **발주 취소 — 코드로 직접 찍는다** (D-044, `tools/draw-board.py`). 기하 도형은 생성 AI보다 격자에 찍는 게 정확하다. B1은 무너진 칸만 받아 쓴다 |
-| 2 | **B6** | 증기 분출구 | 장치 그림이라 생성 AI가 낫다 |
+| ~~2~~ | ~~B6~~ | ~~증기 분출구~~ | **취소 (D-068)** — 요충지는 깃발 칸 표시로 코드가 찍는다 |
 | 3 | B7 · H · I | 지형 · 종이 왕관 킹 · 태엽 | 판 분위기 · 주인공 · AP |
 | 4 | F · G | 아이콘 문양 · UI 프레임 | 판 밖 화면 |
 | (보류) | E | 공격 이펙트 | 지금은 코드 도트 이펙트로 확정 (FX 랩). 필요해지면 발주 |
@@ -157,7 +157,7 @@ Cell 8: wreck marker — a tiny pile of broken gears and a spring, 8x6 pixels.
 Cell 9: damage tag — a small 7x5 tag with a pin hole, empty center (a number goes on it later).
 ```
 
-### B6. 증기 분출구 (요충지) 4종
+### ~~B6. 증기 분출구 (요충지) 4종~~ — 취소 (D-068, 요충지 = 깃발 칸 표시)
 
 ```
 Pixel art steam vent that opens in a board square of a steampunk chess-factory game (a capture point).
