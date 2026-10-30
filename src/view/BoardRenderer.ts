@@ -713,7 +713,7 @@ class BoardScene extends Phaser.Scene {
       const kinds = atk.piece.fused?.length ? [...new Set(atk.piece.fused)] : [atk.piece.formAs ?? atk.piece.type];
       await this.windUp(atk, kinds);
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
-      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: atk.root.x + t / 2, y: atk.root.y + t / 2 }, tiles, tile: t, speed: this.speed });
+      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: atk.root.x + t / 2, y: atk.root.y + t / 2 }, tiles, tile: t }, this.speed);
       let shook = false;
       const hitsDone = e.hits.map((h) => {
         const ts = this.sprites.get(h.targetId);

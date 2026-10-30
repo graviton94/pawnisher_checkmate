@@ -1,12 +1,16 @@
-import type Phaser from 'phaser';
-
 /**
  * 도트 펜: 모든 도형을 "도트" 격자(타일 = 16도트)에 맞춰 사각 점으로 찍는다.
  * 매끈한 벡터 도형이 도트 기물과 어울리지 않는 문제(사용자 피드백)를 코드 이펙트 쪽에서 막는다.
  */
+/** 사각형만 칠할 수 있으면 된다 — Phaser Graphics, 캔버스 어댑터 모두 */
+export interface RectSink {
+  fillStyle(color: number, alpha?: number): unknown;
+  fillRect(x: number, y: number, w: number, h: number): unknown;
+}
+
 export class PixelPen {
   constructor(
-    public g: Phaser.GameObjects.Graphics,
+    public g: RectSink,
     /** 도트 한 칸의 화면 크기 (월드 px) */
     public dot: number,
   ) {}
@@ -20,7 +24,8 @@ export class PixelPen {
     const d = this.dot;
     const cx = this.cell(x) - Math.floor((size - 1) / 2);
     const cy = this.cell(y) - Math.floor((size - 1) / 2);
-    this.g.fillStyle(color, alpha).fillRect(cx * d, cy * d, d * size, d * size);
+    this.g.fillStyle(color, alpha);
+    this.g.fillRect(cx * d, cy * d, d * size, d * size);
   }
 
   /** 도트 직선 (브레젠험) */

@@ -1,32 +1,23 @@
 import type Phaser from 'phaser';
-import type { PieceType, Side } from '../engine';
+import type { PieceType, Side } from '../engine/types';
+import { FX_CHOICE, FX_MS } from '../data/fx';
 import { PixelPen, easeOut, span } from './pixel';
 
 /**
- * 기물별 공격 이펙트 (GDD 12장 §12.3, 사용자 피드백 "기물 중심에서 공격 범위로 뻗는 공격").
- * 지금은 코드로 찍는 도트 이펙트다. 발주한 이펙트 스프라이트(docs/asset-order.md 시트 E)가 오면 같은 박자에 갈아 끼운다.
+ * 기물별 공격 이펙트 (GDD 12장 §12.3, D-033·D-035).
+ * 그리는 부분(buildAttackFx)은 렌더러와 무관하다 — 게임(Phaser)과 FX 랩 아티팩트(캔버스)가 같은 코드를 쓴다.
  *
- * 폰 = 앞으로 칼 휘두르기 · 나이트 = 굴러 내려찍고 L자로 뻗는 발굽 · 비숍 = 빛을 응축했다 대각선으로 발사
- * 룩 = 쿵 내려찍고 십자로 한 칸씩 폭발 · 퀸 = 응축 후 8방향 발사 · 킹 = 주변 8칸 충격파
+ * 폰 = 앞으로 칼 휘두르기 · 나이트 = 11시 방향부터 시계 방향으로 L자 8칸에 번개
+ * 비숍 = 응축 → 사거리 전체에 한 번에 굵은 광선 → 사그라듦 · 룩 = 쿵 + 십자로 한 칸씩 폭발
+ * 퀸 = A 8방향 섬광 / B 십자 연쇄 + 대각 섬광 · 킹 = A 사각 충격파 / B 종소리 파동
  */
-
-/** 이펙트 박자 (ms, 1배속). 공격 1회 ≤ 0.6초 (CLAUDE.md UI/UX 원칙 6) */
-export const FX_MS = {
-  pawn: { total: 200, impact: 110 },
-  knight: { total: 240, impact: 170 },
-  bishop: { charge: 140, travel: 60, total: 300 },
-  rook: { first: 40, step: 60, burst: 170 },
-  queen: { charge: 100, travel: 60, total: 270 },
-  king: { total: 200, impact: 90 },
-  splash: { burst: 170 },
-};
 
 interface Palette {
   core: number;
   glow: number;
   edge: number;
 }
-const PAL: Record<Side, Palette> = {
+export const PAL: Record<Side, Palette> = {
   // 아군: 흰 백자 + 황동 스파크 · 적: 붉은 과열광 (docs/world.md §4)
   0: { core: 0xf4f1ea, glow: 0xc89b3c, edge: 0xfacc15 },
   1: { core: 0xff8a8a, glow: 0xe5262f, edge: 0x7a1218 },
@@ -45,17 +36,16 @@ export interface FxRequest {
   origin: { x: number; y: number };
   tiles: FxTile[];
   tile: number;
-  /** 시간 배율 (동작 줄이기 = 0.3) */
-  speed: number;
+  /** 퀸·킹 안 (없으면 data/fx.ts의 고른 안) */
+  variant?: Partial<typeof FX_CHOICE>;
 }
 
-/** 재생 계획: 전체 길이와 칸별 타격 시점 (ms) — 피격 연출을 이 시점에 맞춘다 */
-export interface FxPlan {
+/** 그릴 준비가 된 이펙트: 전체 길이, 칸별 타격 시점(ms, 1배속), 시점 ms의 한 장면을 그리는 함수 */
+export interface FxBuilt {
   duration: number;
   impact: Map<string, number>;
+  draw: (pen: PixelPen, ms: number) => void;
 }
-
-type Draw = (pen: PixelPen, ms: number) => void;
 
 interface Claimed {
   t: FxTile;
@@ -64,13 +54,15 @@ interface Claimed {
   dist: number;
 }
 
-const sgn = Math.sign;
+/** 나이트 번개 순서: 화면 기준 11시 방향부터 시계 방향 */
+const KNIGHT_CLOCK: [number, number][] = [[-1, -2], [1, -2], [2, -1], [2, 1], [1, 2], [-1, 2], [-2, 1], [-2, -1]];
 
-/** 이펙트를 재생하고 계획을 돌려준다 (이펙트는 스스로 끝나고 지워진다) */
-export const playAttackFx = (scene: Phaser.Scene, req: FxRequest): FxPlan => {
+/** 이펙트를 만든다 (그리지는 않는다) */
+export const buildAttackFx = (req: FxRequest): FxBuilt => {
   const t = req.tile;
   const o = req.origin;
   const pal = PAL[req.side];
+  const choice = { ...FX_CHOICE, ...req.variant };
   const fwd = req.side === 0 ? -1 : 1; // 화면 좌표에서 전방
   const rel: Claimed[] = req.tiles.map((tt) => {
     const dx = Math.round((tt.x - o.x) / t);
@@ -79,20 +71,37 @@ export const playAttackFx = (scene: Phaser.Scene, req: FxRequest): FxPlan => {
   });
   const claimed = new Set<string>();
   const impact = new Map<string, number>();
-  const draws: Draw[] = [];
+  const draws: ((pen: PixelPen, ms: number) => void)[] = [];
   let duration = 0;
   const hit = (c: Claimed, ms: number) => {
     claimed.add(c.t.key);
     impact.set(c.t.key, Math.min(impact.get(c.t.key) ?? Infinity, ms));
   };
-
+  const diag = (c: Claimed) => c.dist > 0 && Math.abs(c.dx) === Math.abs(c.dy);
+  const orth = (c: Claimed) => c.dist > 0 && (c.dx === 0) !== (c.dy === 0);
   const geo: Record<PieceType, (c: Claimed) => boolean> = {
     P: (c) => c.dy === fwd && Math.abs(c.dx) <= 1,
     N: (c) => (Math.abs(c.dx) === 1 && Math.abs(c.dy) === 2) || (Math.abs(c.dx) === 2 && Math.abs(c.dy) === 1),
-    B: (c) => c.dist > 0 && Math.abs(c.dx) === Math.abs(c.dy),
-    R: (c) => c.dist > 0 && (c.dx === 0) !== (c.dy === 0),
-    Q: (c) => c.dist > 0 && (Math.abs(c.dx) === Math.abs(c.dy) || c.dx === 0 || c.dy === 0),
+    B: diag,
+    R: orth,
+    Q: (c) => diag(c) || orth(c),
     K: (c) => c.dist === 1,
+  };
+
+  /** 광선 섬광 (비숍·퀸): 응축 후 모든 광선이 한 번에 */
+  const flash = (cs: Claimed[], M: { charge: number; fade: number }, queen: boolean) => {
+    cs.forEach((c) => hit(c, M.charge + 10));
+    const rays = raysOf(cs);
+    draws.push((pen, ms) => beamFlash(pen, o, t, rays, ms, M, pal, queen));
+    duration = Math.max(duration, M.charge + M.fade);
+  };
+  /** 십자 연쇄 폭발 (룩·퀸 B) */
+  const chain = (cs: Claimed[]) => {
+    const M = FX_MS.rook;
+    cs.forEach((c) => hit(c, M.first + M.step * (c.dist - 1) + 40));
+    const last = Math.max(1, ...cs.map((c) => c.dist));
+    draws.push((pen, ms) => slamChain(pen, o, t, cs, ms, pal));
+    duration = Math.max(duration, M.first + M.step * (last - 1) + M.burst);
   };
 
   for (const kind of new Set(req.kinds)) {
@@ -104,26 +113,29 @@ export const playAttackFx = (scene: Phaser.Scene, req: FxRequest): FxPlan => {
       duration = Math.max(duration, M.total);
     } else if (kind === 'N') {
       const M = FX_MS.knight;
-      mine.forEach((c) => hit(c, M.impact));
-      draws.push((pen, ms) => hooves(pen, o, t, mine, ms, pal));
-      duration = Math.max(duration, M.total);
-    } else if (kind === 'B' || kind === 'Q') {
-      const M = kind === 'B' ? FX_MS.bishop : FX_MS.queen;
-      const rays = raysOf(mine);
-      const far = Math.max(1, ...mine.map((c) => c.dist));
-      mine.forEach((c) => hit(c, M.charge + (M.travel * c.dist) / far));
-      draws.push((pen, ms) => beams(pen, o, t, rays, far, ms, M, pal, kind === 'Q'));
-      duration = Math.max(duration, M.total);
+      const order = (c: Claimed) => KNIGHT_CLOCK.findIndex(([x, y]) => x === c.dx && y === c.dy);
+      const bolts = mine.map((c) => ({ c, at: 40 + order(c) * M.gap, seed: order(c) + 1 }));
+      bolts.forEach((b) => hit(b.c, b.at + 20));
+      draws.push((pen, ms) => {
+        // 피스톤이 방전을 모으는 짧은 불꽃
+        const ch = span(ms, 0, 60);
+        if (ch < 1) pen.ring(o.x, o.y, t * (0.45 - 0.3 * ch), pal.edge, 1 - ch);
+        for (const b of bolts) bolt(pen, b.c.t.x, b.c.t.y, t, span(ms, b.at, b.at + M.strike), b.seed, pal);
+      });
+      duration = Math.max(duration, 40 + 7 * M.gap + M.strike);
+    } else if (kind === 'B') {
+      flash(mine, FX_MS.bishop, false);
     } else if (kind === 'R') {
-      const M = FX_MS.rook;
-      mine.forEach((c) => hit(c, M.first + M.step * (c.dist - 1) + 40));
-      const last = Math.max(1, ...mine.map((c) => c.dist));
-      draws.push((pen, ms) => slamChain(pen, o, t, mine, ms, pal));
-      duration = Math.max(duration, M.first + M.step * (last - 1) + M.burst);
+      chain(mine);
+    } else if (kind === 'Q') {
+      if (choice.Q === 'B') {
+        chain(mine.filter(orth));
+        flash(mine.filter(diag), FX_MS.queen, true);
+      } else flash(mine, FX_MS.queen, true);
     } else if (kind === 'K') {
       const M = FX_MS.king;
       mine.forEach((c) => hit(c, M.impact));
-      draws.push((pen, ms) => pound(pen, o, t, span(ms, 0, M.total), pal));
+      draws.push(choice.K === 'B' ? (pen, ms) => bells(pen, o, t, mine, ms, pal) : (pen, ms) => pound(pen, o, t, span(ms, 0, M.total), pal));
       duration = Math.max(duration, M.total);
     }
   }
@@ -135,23 +147,25 @@ export const playAttackFx = (scene: Phaser.Scene, req: FxRequest): FxPlan => {
     draws.push((pen, ms) => rest.forEach((c) => burst(pen, c.t.x, c.t.y, t, span(ms, at, at + FX_MS.splash.burst), pal)));
     duration = Math.max(duration, at + FX_MS.splash.burst);
   }
+  return { duration, impact, draw: (pen, ms) => draws.forEach((d) => d(pen, ms)) };
+};
 
+/** 게임에서 재생 (Phaser). speed: 시간 배율 (동작 줄이기 = 약 3배 빠르게) */
+export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number): { duration: number; impact: Map<string, number> } => {
+  const fx = buildAttackFx(req);
   const g = scene.add.graphics().setDepth(6.5);
-  const pen = new PixelPen(g, t / 16);
-  const total = duration / req.speed;
+  const pen = new PixelPen(g, req.tile / 16);
   scene.tweens.addCounter({
     from: 0,
-    to: duration,
-    duration: total,
+    to: fx.duration,
+    duration: fx.duration / speed,
     onUpdate: (tw) => {
       g.clear();
-      const ms = tw.getValue() ?? 0;
-      for (const d of draws) d(pen, ms);
+      fx.draw(pen, tw.getValue() ?? 0);
     },
     onComplete: () => g.destroy(),
   });
-  const scaled = new Map([...impact].map(([k, v]) => [k, v / req.speed]));
-  return { duration: total, impact: scaled };
+  return { duration: fx.duration / speed, impact: new Map([...fx.impact].map(([k, v]) => [k, v / speed])) };
 };
 
 // ---------------- 기물별 그림 ----------------
@@ -179,24 +193,37 @@ const slash = (pen: PixelPen, o: { x: number; y: number }, t: number, fwd: numbe
   }
 };
 
-/** 나이트: 발밑 충격 고리 → L자 궤적을 따라 뻗는 발굽 → 착탄 별 */
-const hooves = (pen: PixelPen, o: { x: number; y: number }, t: number, cs: Claimed[], ms: number, pal: Palette) => {
-  const ringP = span(ms, 0, 70);
-  if (ringP > 0 && ringP < 1) pen.ring(o.x, o.y + t * 0.25, t * (0.2 + 0.35 * ringP), pal.glow, 1 - ringP);
-  const trailP = easeOut(span(ms, 50, 170));
-  const fade = 1 - span(ms, 170, 240);
-  for (const c of cs) {
-    // 긴 다리 먼저, 짧은 다리 나중 (실제 L자 행마 모양)
-    const longX = Math.abs(c.dx) === 2;
-    const mid = { x: o.x + (longX ? c.dx * t : 0), y: o.y + (longX ? 0 : c.dy * t) };
-    const end = { x: c.t.x, y: c.t.y };
-    const seg1 = Math.min(1, trailP * 1.5);
-    const seg2 = Math.max(0, trailP * 1.5 - 1) * 2;
-    if (fade <= 0) continue;
-    pen.line(o.x, o.y, o.x + (mid.x - o.x) * seg1, o.y + (mid.y - o.y) * seg1, pal.glow, 0.5 * fade, 1, true);
-    if (seg2 > 0) pen.line(mid.x, mid.y, mid.x + (end.x - mid.x) * Math.min(1, seg2), mid.y + (end.y - mid.y) * Math.min(1, seg2), pal.edge, 0.9 * fade, 2);
-    const b = span(ms, 160, 240);
-    if (b > 0 && b < 1) star(pen, end.x, end.y, t, b, pal);
+/** 결정적인 지그재그 (같은 장면은 항상 같게 보인다) */
+const jag = (seed: number, i: number) => {
+  const v = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453;
+  return (v - Math.floor(v)) * 2 - 1;
+};
+
+/** 나이트: 하늘에서 대상 칸으로 내리꽂히는 번개 한 줄기 */
+const bolt = (pen: PixelPen, x: number, y: number, t: number, q: number, seed: number, pal: Palette) => {
+  if (q <= 0 || q >= 1) return;
+  const top = y - t * 2.2;
+  const segs = 6;
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i <= segs; i++) {
+    const f = i / segs;
+    const wob = i === 0 || i === segs ? 0 : jag(seed, i) * t * 0.22;
+    pts.push({ x: x + wob, y: top + (y - top) * f });
+  }
+  // 번개는 한 번에 떨어진다: 0~0.15 내리꽂힘, 0.15~0.5 깜빡임, 이후 잔광
+  const reach = Math.min(1, q / 0.15);
+  const flick = q < 0.5 ? (Math.floor(q * 20) % 2 ? 0.55 : 1) : 1 - span(q, 0.5, 1);
+  const shown = Math.ceil(segs * reach);
+  for (let i = 0; i < shown; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    pen.line(a.x, a.y, b.x, b.y, pal.glow, 0.8 * flick, 3);
+    pen.line(a.x, a.y, b.x, b.y, pal.core, flick, 1);
+  }
+  if (reach >= 1) {
+    const s = span(q, 0.15, 0.7);
+    if (s < 1) star(pen, x, y, t, s, pal);
+    if (q < 0.35) pen.disc(x, y, t * 0.16, pal.core, 1 - q / 0.35);
   }
 };
 
@@ -208,52 +235,58 @@ interface Ray {
 const raysOf = (cs: Claimed[]): Ray[] => {
   const m = new Map<string, Ray>();
   for (const c of cs) {
-    const k = `${sgn(c.dx)},${sgn(c.dy)}`;
+    const k = `${Math.sign(c.dx)},${Math.sign(c.dy)}`;
     const r = m.get(k);
-    if (!r || r.len < c.dist) m.set(k, { dx: sgn(c.dx), dy: sgn(c.dy), len: c.dist });
+    if (!r || r.len < c.dist) m.set(k, { dx: Math.sign(c.dx), dy: Math.sign(c.dy), len: c.dist });
   }
   return [...m.values()];
 };
 
-/** 비숍·퀸: 빛 알갱이가 몸 중심으로 모였다가 사선으로 발사, 잠깐 남아 깜빡이고 사라진다 */
-const beams = (
+/** 비숍·퀸: 빛을 몸 중심에 응축 → 사거리 전체에 한 번에 굵게 → 가늘어지며 사그라든다 (빛의 속도) */
+const beamFlash = (
   pen: PixelPen,
   o: { x: number; y: number },
   t: number,
   rays: Ray[],
-  far: number,
   ms: number,
-  M: { charge: number; travel: number; total: number },
+  M: { charge: number; fade: number },
   pal: Palette,
   queen: boolean,
 ) => {
   const ch = span(ms, 0, M.charge);
   if (ch < 1) {
-    // 응축: 8알갱이가 원을 그리며 중심으로
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2 + ch * 2.4;
-      const r = t * 0.85 * (1 - easeOut(ch));
+    const n = queen ? 12 : 8;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + ch * 3;
+      const r = t * 0.9 * (1 - easeOut(ch));
       pen.px(o.x + Math.cos(a) * r, o.y + Math.sin(a) * r, i % 2 ? pal.edge : pal.core, 0.5 + 0.5 * ch);
     }
     pen.disc(o.x, o.y, pen.dot * (1 + 2.5 * ch), pal.glow, 0.85);
-    pen.disc(o.x, o.y, pen.dot * (0.5 + 1.2 * ch), pal.core, 1);
-    if (queen) pen.ring(o.x, o.y, t * 0.45 * (1 - ch) + pen.dot * 3, pal.glow, 0.6);
+    pen.disc(o.x, o.y, pen.dot * (0.5 + 1.5 * ch), pal.core, 1);
+    if (queen) {
+      // 퀸: 응축하는 동안 톱니 고리가 돈다
+      const teeth = 10;
+      for (let i = 0; i < teeth; i++) {
+        const a = (i / teeth) * Math.PI * 2 - ch * 4;
+        pen.px(o.x + Math.cos(a) * t * 0.45, o.y + Math.sin(a) * t * 0.45, pal.edge, 0.9, 2);
+      }
+    }
     return;
   }
-  const go = easeOut(span(ms, M.charge, M.charge + M.travel));
-  const hold = span(ms, M.charge + M.travel, M.total);
-  const flicker = hold > 0 ? (Math.floor(ms / 30) % 2 ? 0.65 : 1) * (1 - hold) : 1;
-  const thin = hold > 0.5 ? 1 : 0;
+  const f = span(ms, M.charge, M.charge + M.fade);
+  if (f >= 1) return;
+  // 굵기: 첫 순간 가장 굵고(7도트) 빠르게 가늘어진다. 처음 몇 프레임은 흰 섬광
+  const thick = Math.max(1, Math.round(7 * (1 - easeOut(f))));
+  const alpha = 1 - f * f;
+  const hot = f < 0.12;
   for (const r of rays) {
-    // 모든 광선이 같은 속도로 뻗고, 각자 첫 기물에서 멈춘다
-    const len = Math.min(r.len, far * go) * t;
-    const ex = o.x + r.dx * len;
-    const ey = o.y + r.dy * len;
-    pen.line(o.x, o.y, ex, ey, pal.glow, 0.75 * flicker, 3 - thin);
-    pen.line(o.x, o.y, ex, ey, pal.core, flicker, 1);
-    if (go >= 1) pen.disc(ex, ey, pen.dot * (2 - hold * 1.5), pal.edge, flicker);
+    const ex = o.x + r.dx * r.len * t;
+    const ey = o.y + r.dy * r.len * t;
+    pen.line(o.x, o.y, ex, ey, hot ? pal.core : pal.glow, alpha * 0.85, thick + 2);
+    pen.line(o.x, o.y, ex, ey, pal.core, alpha, Math.max(1, thick - 2));
+    pen.disc(ex, ey, pen.dot * (1 + thick * 0.6), pal.edge, alpha);
   }
-  pen.disc(o.x, o.y, pen.dot * 2 * (1 - hold), pal.core, 1 - hold);
+  pen.disc(o.x, o.y, pen.dot * (2 + thick * 0.5), pal.core, alpha);
 };
 
 /** 룩: 쿵 — 발밑 충격, 그리고 십자 방향으로 한 칸씩 이어지는 폭발 */
@@ -273,12 +306,30 @@ const slamChain = (pen: PixelPen, o: { x: number; y: number }, t: number, cs: Cl
   }
 };
 
-/** 킹: 주변 8칸으로 퍼지는 사각 충격파 */
+/** 킹 A: 주변 8칸으로 퍼지는 사각 충격파 */
 const pound = (pen: PixelPen, o: { x: number; y: number }, t: number, p: number, pal: Palette) => {
   if (p <= 0 || p >= 1) return;
   const r = t * (0.35 + 1.05 * easeOut(p));
   pen.square(o.x, o.y, r, pal.glow, 1 - p);
   pen.square(o.x, o.y, r - pen.dot * 2, pal.core, (1 - p) * 0.7);
+};
+
+/** 킹 B: 왕관이 번쩍 → 종소리 둥근 파동 두 겹 → 파동이 지나는 이웃 칸마다 땡 */
+const bells = (pen: PixelPen, o: { x: number; y: number }, t: number, cs: Claimed[], ms: number, pal: Palette) => {
+  const glint = span(ms, 0, 70);
+  if (glint < 1) {
+    const cy = o.y - t * 0.42;
+    pen.line(o.x - t * 0.18 * glint, cy, o.x + t * 0.18 * glint, cy, pal.edge, 1 - glint);
+    pen.line(o.x, cy - t * 0.18 * glint, o.x, cy + t * 0.18 * glint, pal.edge, 1 - glint);
+  }
+  for (const [start, col] of [[40, pal.core], [100, pal.glow]] as [number, number][]) {
+    const p = span(ms, start, start + 140);
+    if (p > 0 && p < 1) pen.ring(o.x, o.y, t * (0.3 + 1.3 * easeOut(p)), col, 1 - p);
+  }
+  for (const c of cs) {
+    const p = span(ms, 90, 200);
+    if (p > 0 && p < 1) star(pen, c.t.x, c.t.y, t * 0.7, p, pal);
+  }
 };
 
 /** 칸 하나의 폭발: 흰 핵 → 고리 + 파편 */
@@ -309,41 +360,38 @@ const star = (pen: PixelPen, x: number, y: number, t: number, q: number, pal: Pa
   }
 };
 
-/** 피격 스파크 (모든 기물 공통) */
+/** 피격 스파크 한 장면 (q = 0~1, 160ms) */
+export const drawHitSpark = (pen: PixelPen, x: number, y: number, t: number, side: Side, q: number): void => star(pen, x, y, t, q, PAL[side]);
+
+/** 처치 파편 한 장면 (q = 0~1, 380ms): 기물이 톱니·스프링 파편으로 부서져 튄다 (docs/world.md §4) */
+export const drawShatter = (pen: PixelPen, x: number, y: number, t: number, pieceSide: Side, q: number): void => {
+  const body = pieceSide === 0 ? 0xf4f1ea : 0x2a2830;
+  const rim = pieceSide === 0 ? 0xc89b3c : 0xe5262f;
+  for (let i = 0; i < 12; i++) {
+    const a = -Math.PI / 2 + ((i - 5.5) / 6) * 1.5 + (i % 3) * 0.13;
+    const v = t * (0.9 + (i % 4) * 0.25);
+    pen.px(x + Math.cos(a) * v * q, y + Math.sin(a) * v * q + t * 1.6 * q * q, i % 3 === 0 ? rim : body, 1 - q * q, i % 4 === 0 ? 2 : 1);
+  }
+  if (q < 0.3) pen.ring(x, y, t * (0.2 + q), rim, 1 - q / 0.3);
+};
+
+/** 피격 스파크 (게임) */
 export const playHitSpark = (scene: Phaser.Scene, x: number, y: number, tile: number, side: Side, speed: number): void => {
   const g = scene.add.graphics().setDepth(7.5);
   const pen = new PixelPen(g, tile / 16);
-  const pal = PAL[side];
-  scene.tweens.addCounter({ from: 0, to: 1, duration: 160 / speed, onUpdate: (tw) => (g.clear(), star(pen, x, y, tile, tw.getValue() ?? 0, pal)), onComplete: () => g.destroy() });
+  scene.tweens.addCounter({ from: 0, to: 1, duration: 160 / speed, onUpdate: (tw) => (g.clear(), drawHitSpark(pen, x, y, tile, side, tw.getValue() ?? 0)), onComplete: () => g.destroy() });
 };
 
-/** 처치: 기물이 톱니·스프링 파편으로 부서져 튄다 (docs/world.md §4 이펙트 문법) */
+/** 처치 파편 (게임) */
 export const playShatter = (scene: Phaser.Scene, x: number, y: number, tile: number, pieceSide: Side, speed: number): Promise<void> => {
   const g = scene.add.graphics().setDepth(7);
   const pen = new PixelPen(g, tile / 16);
-  const body = pieceSide === 0 ? 0xf4f1ea : 0x2a2830;
-  const rim = pieceSide === 0 ? 0xc89b3c : 0xe5262f;
-  // 결정적인 파편 궤적 (무작위 없음 — 같은 장면은 같게 보인다)
-  const bits = Array.from({ length: 12 }, (_, i) => {
-    const a = -Math.PI / 2 + ((i - 5.5) / 6) * 1.5 + (i % 3) * 0.13;
-    const v = tile * (0.9 + (i % 4) * 0.25);
-    return { vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: i % 4 === 0 ? 2 : 1, gear: i % 3 === 0 };
-  });
   return new Promise((done) =>
     scene.tweens.addCounter({
       from: 0,
       to: 1,
       duration: 380 / speed,
-      onUpdate: (tw) => {
-        const q = tw.getValue() ?? 0;
-        g.clear();
-        for (const b of bits) {
-          const px = x + b.vx * q;
-          const py = y + b.vy * q + tile * 1.6 * q * q;
-          pen.px(px, py, b.gear ? rim : body, 1 - q * q, b.size);
-        }
-        if (q < 0.3) pen.ring(x, y, tile * (0.2 + q), rim, 1 - q / 0.3);
-      },
+      onUpdate: (tw) => (g.clear(), drawShatter(pen, x, y, tile, pieceSide, tw.getValue() ?? 0)),
       onComplete: () => {
         g.destroy();
         done();

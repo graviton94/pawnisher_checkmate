@@ -1,0 +1,127 @@
+<title>Pawnisher FX 랩</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 레이아웃: 왼쪽 무대(게임 보드) · 오른쪽 결정 패널, 좁으면 위아래. 게임 화면과 같은 어두운 한 가지 톤으로 고정 */
+@font-face { font-family: Galmuri11; font-weight: 400; src: url(data:font/woff2;base64,{{FONT11}}) format('woff2'); }
+@font-face { font-family: Galmuri11; font-weight: 700; src: url(data:font/woff2;base64,{{FONT11B}}) format('woff2'); }
+:root {
+  --bg: #0b0b0e;
+  --panel: #16141c;
+  --line: #2f2e36;
+  --fg: #f4f1ea;
+  --muted: #a29eae;
+  --brass: #c89b3c;
+  --gold: #facc15;
+  --crimson: #ff5a63;
+  --cyan: #38bdf8;
+  --pixel: Galmuri11, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--pixel);
+  font-size: 14px;
+  line-height: 1.6;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; border-bottom: 2px solid var(--line); padding-bottom: 12px; }
+h1 { margin: 0; font-size: 22px; letter-spacing: 0.02em; text-wrap: balance; }
+h1 b { color: var(--brass); }
+.muted { color: var(--muted); }
+#ver { font-variant-numeric: tabular-nums; }
+.main { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage-box { display: grid; gap: 12px; min-width: 0; }
+canvas { width: 100%; max-width: 560px; aspect-ratio: 1; image-rendering: pixelated; border: 3px solid #000; box-shadow: 0 0 0 2px var(--line); background: #110f15; }
+.tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+button {
+  font: inherit; color: var(--fg); background: var(--panel); border: 2px solid var(--line);
+  min-height: 44px; padding: 6px 10px; cursor: pointer; box-shadow: 0 3px 0 #000; position: relative;
+}
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+button[aria-pressed="true"] { border-color: var(--brass); color: var(--gold); }
+button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background: var(--crimson); }
+.dot-new { background: var(--cyan); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.segs { display: flex; flex-wrap: wrap; gap: 6px; }
+.label { color: var(--muted); font-size: 12px; margin-right: 2px; }
+.loop { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brass); }
+.panel { background: var(--panel); border: 2px solid var(--line); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.detail-head { display: flex; align-items: center; gap: 10px; }
+h2 { margin: 0; font-size: 20px; }
+h3 { margin: 0; font-size: 15px; color: var(--brass); letter-spacing: 0.04em; }
+p { margin: 0; max-width: 62ch; }
+dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+dt { color: var(--muted); }
+dd { margin: 0; }
+dd.new { color: var(--cyan); }
+.chip { font-size: 12px; padding: 2px 8px; border: 2px solid currentColor; white-space: nowrap; }
+.chip-done { color: var(--brass); }
+.chip-review { color: var(--cyan); }
+.chip-pick { color: var(--crimson); }
+.chip-wait { color: var(--muted); }
+ol, ul { margin: 0; padding-left: 20px; }
+li + li { margin-top: 4px; }
+.table { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 520px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-top: 1px solid var(--line); }
+th { color: var(--fg); font-weight: 700; white-space: nowrap; }
+td:last-child { width: 1%; }
+.sections { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .sections { grid-template-columns: minmax(0, 1fr); } }
+.ask { border-color: var(--crimson); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><b>Pawnisher</b> FX 랩</h1>
+    <span class="muted">게임과 같은 이펙트 코드로 재생합니다 · <span id="ver"></span></span>
+  </header>
+
+  <div class="main">
+    <div class="stage-box">
+      <div class="tabs" id="tabs" role="group" aria-label="기물"></div>
+      <canvas id="stage" aria-label="공격 장면"></canvas>
+      <div class="controls">
+        <div class="segs" role="group" aria-label="진영"><span class="label">진영</span>
+          <button type="button" data-side="0" aria-pressed="true">아군</button>
+          <button type="button" data-side="1" aria-pressed="false">적</button>
+        </div>
+        <div class="segs" role="group" aria-label="속도"><span class="label">속도</span>
+          <button type="button" data-speed="1" aria-pressed="true">1×</button>
+          <button type="button" data-speed="0.5" aria-pressed="false">½×</button>
+          <button type="button" data-speed="0.25" aria-pressed="false">¼×</button>
+        </div>
+        <button type="button" id="replay">다시 보기</button>
+        <label class="loop"><input type="checkbox" id="loop" checked> 반복</label>
+      </div>
+    </div>
+    <section class="panel" id="detail" aria-live="polite"></section>
+  </div>
+
+  <div class="sections">
+    <section class="panel ask">
+      <h3>정해 주실 것</h3>
+      <ol id="questions"></ol>
+    </section>
+    <section class="panel">
+      <h3>바뀐 기록</h3>
+      <ul id="log"></ul>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h3>그래픽 결정</h3>
+    <div class="table"><table><tbody id="decisions"></tbody></table></div>
+  </section>
+</div>
+
+<script>window.SPRITES = {{SPRITES}};</script>
+<script>{{JS}}</script>
