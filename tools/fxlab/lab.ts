@@ -94,7 +94,7 @@ const DEMO = {
   fallen: [7, 3],
   crack: [0, 5],
   hatch: [[5, 7], [6, 7]],
-  strongholds: [[2, 0, 'neutral'], [0, 2, 'ally']],
+  strongholds: [[2, 0, 'neutral'], [0, 2, 'ally'], [2, 2, 'enemy']],
   props: [['scrap', 0, 7], ['lift', 2, 7], ['shield', 7, 5], ['trap', 4, 0], ['screwbox', 6, 0]],
 } as const;
 
@@ -126,19 +126,8 @@ const drawBoard = () => {
   };
   at('fallen', DEMO.fallen[0], DEMO.fallen[1]);
   at('crack', DEMO.crack[0], DEMO.crack[1]);
-  // 요충지 (D-068): 깃발 칸 표시. 점거 중이면 진영 색 + 오른쪽 아래 점거 눈금(2칸)이 차오른다
-  const sh = Math.floor(performance.now() / 900) % 3; // 견본: 0 → 1 → 2칸
-  for (const [x, y, kind] of DEMO.strongholds) {
-    at(kind === 'neutral' ? 'stronghold' : `stronghold-${kind}`, x, y);
-    if (kind === 'neutral') continue;
-    const w = px(x, y);
-    for (let i = 0; i < 2; i++) {
-      ctx.fillStyle = '#16141c';
-      ctx.fillRect(w.x + (12 + i * 3) * D, w.y + 14 * D, 3 * D, 3 * D);
-      ctx.fillStyle = i < sh ? (kind === 'ally' ? '#38bdf8' : '#e5262f') : '#2f2e36';
-      ctx.fillRect(w.x + (13 + i * 3) * D, w.y + 15 * D, 2 * D, 2 * D);
-    }
-  }
+  // 요충지 (D-068): 점선 테두리만 기물 아래. 깃발·점거 눈금은 기물 위 (drawBoardTop)
+  for (const [x, y, kind] of DEMO.strongholds) at(kind === 'neutral' ? 'stronghold' : `stronghold-${kind}`, x, y);
   // 지형 소품: 칸 가운데, 발밑을 칸 아래에서 2도트 위에 맞춘다
   for (const [k, x, y] of DEMO.props) {
     const im = img(`props/${k}`);
@@ -152,6 +141,25 @@ const drawBoard = () => {
     const w = px(x, y);
     ctx.fillStyle = `rgba(229,38,47,${pulse.toFixed(3)})`;
     ctx.fillRect(w.x, w.y, T, T);
+  }
+};
+
+/** 기물 위 레이어 판 표시 (D-069): 요충지 깃발 + 점거 눈금 2칸 (검정 테두리가 네 면을 다 감싼다) */
+const drawBoardTop = () => {
+  if (opt.board === 'flat') return;
+  const sh = Math.floor(performance.now() / 900) % 3; // 견본: 0 → 1 → 2칸
+  for (const [x, y, kind] of DEMO.strongholds) {
+    const w = px(x, y);
+    const im = sprites[kind === 'neutral' ? 'stronghold-flag' : `stronghold-${kind}-flag`];
+    if (im?.complete) ctx.drawImage(im, w.x, w.y, T, T);
+    if (kind === 'neutral') continue;
+    ctx.fillStyle = '#0b0b0e';
+    // 눈금은 오른쪽 위 (아래쪽은 HP 게이지 자리)
+    ctx.fillRect(w.x + 12 * D, w.y + 2 * D, 7 * D, 4 * D);
+    for (let i = 0; i < 2; i++) {
+      ctx.fillStyle = i < sh ? (kind === 'ally' ? '#38bdf8' : '#e5262f') : '#2f2e36';
+      ctx.fillRect(w.x + (13 + i * 3) * D, w.y + 3 * D, 2 * D, 2 * D);
+    }
   }
 };
 
@@ -473,6 +481,7 @@ const play = () => {
     if (ms < 0 && opt.board !== 'flat') drawPlan();
     for (const w of wrecks) blit('wreck', w.x + 5 * D, w.y + 14 * D);
     for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
+    drawBoardTop();
     if (ms < 0 && opt.board !== 'flat') drawKillMarks();
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
@@ -509,7 +518,7 @@ const play = () => {
 // ---------- 에셋 목록 ----------
 const KO: Record<string, string> = {
   'tile-light': '밝은 칸', 'tile-dark': '어두운 칸', 's0-tile-light': '제미나이 밝은 칸', 's0-tile-dark': '제미나이 어두운 칸', fallen: '무너진 칸 (제미나이)',
-  crack: '붕락 균열', stronghold: '요충지 (빈)', 'stronghold-ally': '요충지 (내가 점거)', 'stronghold-enemy': '요충지 (적이 점거)', range: '내 공격 범위', 'range-enemy': '적 공격 범위', 'base-ally': '아군 발밑', 'base-enemy': '적 발밑', select: '선택',
+  crack: '붕락 균열', stronghold: '요충지 (빈)', 'stronghold-ally': '요충지 (내가 점거)', 'stronghold-enemy': '요충지 (적이 점거)', 'stronghold-flag': '요충지 깃발 (빈)', 'stronghold-ally-flag': '요충지 깃발 (내 점거)', 'stronghold-enemy-flag': '요충지 깃발 (적 점거)', range: '내 공격 범위', 'range-enemy': '적 공격 범위', 'base-ally': '아군 발밑', 'base-enemy': '적 발밑', select: '선택',
   'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리', wreck: '잔해',
   'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
   'hud/paper-crown': '종이 왕관', 'hud/skull-small': '처치 해골', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',

@@ -199,13 +199,13 @@ def wreck():
     return from_ascii(rows, {'g': 'G', 's': 'LG', 'k': 'INK'})
 
 
-def stronghold(kind):
+def stronghold(kind, part):
     """요충지 칸 표시 (D-068): 칸 안쪽 한 도트 점선 테두리 + 왼쪽 위 깃발. 빈 요충지 = 흰색, 내가 점거 중 = 청록, 적 = 진홍.
-    점거 진행 눈금은 코드가 칸 오른쪽 아래에 찍는다"""
+    점거 진행 눈금은 코드가 칸 오른쪽 아래에 찍는다. part = 'frame'(기물 아래) / 'flag'(기물 위 레이어)"""
     main, dark = {'neutral': ('W', 'LG'), 'ally': ('CY', 'CY2'), 'enemy': ('CR', 'CR2')}[kind]
     im = canvas()
     # 점선 테두리: 안쪽 1도트, 두 칸 켜고 한 칸 끈다 (공격 범위의 실선 테두리와 구분)
-    for i in range(1, N - 1):
+    for i in range(1, N - 1) if part == 'frame' else ():
         on = (i % 3) != 0
         for x, y in ((i, 1), (1, i), (i, N - 2), (N - 2, i)):
             if on:
@@ -222,6 +222,8 @@ def stronghold(kind):
         'b.....',
     ]
     ox, oy = 4, 3
+    if part == 'frame':
+        return im
     cells = {}
     for y, row in enumerate(flag):
         for x, ch in enumerate(row):
@@ -252,7 +254,7 @@ for n in range(1, 10):
 kill_mark().save(f'{OUT}/kill.png')
 check_ring().save(f'{OUT}/check.png')
 wreck().save(f'{OUT}/wreck.png')
-stronghold('neutral').save(f'{OUT}/stronghold.png')
-stronghold('ally').save(f'{OUT}/stronghold-ally.png')
-stronghold('enemy').save(f'{OUT}/stronghold-enemy.png')
+for kind, name in (('neutral', 'stronghold'), ('ally', 'stronghold-ally'), ('enemy', 'stronghold-enemy')):
+    stronghold(kind, 'frame').save(f'{OUT}/{name}.png')  # 점선 테두리 — 기물 아래
+    stronghold(kind, 'flag').save(f'{OUT}/{name}-flag.png')  # 깃발 — 기물 위
 print('ok')

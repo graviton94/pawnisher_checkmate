@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 33, date: '2026-10-30' };
+export const VERSION = { n: 34, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -66,7 +66,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '지형 소품', rule: '불합격 (사용자: 디자인 자체가 별로) — 방향을 다시 정한다. 지금 그림은 자리 표시', status: 'pick' },
   { item: '태엽', rule: '제미나이 I 디자인을 우리 격자에 대칭으로 옮김 (12×12 몸통 + 테두리): 큰 구멍 고리 날개 둘 · 청록 축 2×2 · 아래 평평 · 곧은 막대에 이는 한쪽만. 쓴 것 = 회색, 보너스 = 금 테두리', status: 'review' },
   { item: '흰 킹 (폰 + 종이 왕관)', rule: '사용자가 폰·왕관을 합친 그림을 만들어 흰 킹 그림을 대체한다 (부품 전달함)', status: 'wait' },
-  { item: '요충지', rule: '증기 분출구 폐기 → 이름도 요충지 그대로. 칸 안쪽 점선 테두리 + 왼쪽 위 제비꼬리 깃발 (빈 요충지 = 흰색, 내가 점거 = 청록, 적 = 진홍). 점거 진행은 오른쪽 아래 눈금 2칸이 차오른다', status: 'review' },
+  { item: '요충지', rule: '증기 분출구 폐기 → 이름도 요충지 그대로. 칸 안쪽 점선 테두리 + 왼쪽 위 제비꼬리 깃발 (빈 요충지 = 흰색, 내가 점거 = 청록, 적 = 진홍). 점거 진행은 오른쪽 위 눈금 2칸(검정 테두리)이 차오른다. 점선 테두리는 기물 아래, 깃발·눈금은 기물 위 레이어', status: 'review' },
   { item: '종이 왕관', rule: '사용자 7×5 도트 그림 (검정 틀 · 노랑 · 가운데 청록 보석, 양 위 끝 검정) + 흰 테두리 1도트. 화면 크기로 먼저 구운 뒤 부드럽게 15도 돌려 폰 머리 위에 얹는다 (계단 없음)', status: 'review' },
   { item: '공격 세기', rule: '세기 = 피해 합 × 0.08 + 처치 × 0.3 (최대 1). 기물 고유 예비 동작을 "뛰어올라 모으기"로 바꿔 끼운다: 최대 0.28초 더 길게, 0.32칸 뛰어오르며 고유 예비 자세로 서서히 들어가고 빛 알갱이가 빨려 듦 → 원래 공격이 그 자세에서 이어지며 공중 높이만 지수형으로 떨어지고 고리가 터짐. 1초 상한을 넘으면 덜 모은다', status: 'review' },
   { item: '흔들림·진동', rule: '한 칸에 4 이상 피해 또는 처치: 화면 흔들림 0.16초 (처치가 더 세게) + 진동 25ms / 처치 45ms. 작은 피해는 흔들지 않는다. 움직임 줄이기 설정이면 둘 다 끔', status: 'review' },
@@ -86,6 +86,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 34, date: '2026-10-30', items: ['요충지: 점선 테두리만 기물 아래, 깃발·점거 눈금은 기물 위 레이어', '점거 눈금: 검정 테두리가 네 면을 다 감싸게, 자리는 오른쪽 위(아래는 HP 게이지)'] },
   { v: 33, date: '2026-10-30', items: ['증기 분출구 → 요충지 깃발 칸 표시 (빈 · 내 점거 · 적 점거 3종 + 점거 눈금)'] },
   { v: 32, date: '2026-10-30', items: ['증기 분출구: 열고 닫는 연출 없앰 — 열린 구멍 하나, 증기가 도트 단위로 솟으며 도트가 하나씩 꺼져 사라짐 (반투명 흐려짐 없음)'] },
   { v: 31, date: '2026-10-30', items: ['공격 응축 버벅임 고침: 세기 연출이 기물 고유 예비 동작을 대신(두 번 웅크리지 않음) · 넘어가는 순간 자세가 튀지 않게 · 25ms마다 뚝뚝 바뀌던 떨림 → 부드러운 사인파 · 폰 찌르기 자세 이음새'] },
