@@ -78,7 +78,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '박자', rule: '예비 동작(느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
   { item: '이동', rule: '들기 → 지수형 이동 → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
   { item: '기물 공격', rule: '폰 초승달 칼날 · 나이트 번개 · 비숍 응축 광선 · 룩 십자 폭발 · 퀸 톱날 부메랑 · 킹 종소리 파동 (위 장면에서 재생)', status: 'done' },
-  { item: '기물 그림', rule: '정본 = tools/pixel/pieces64.txt 64×64 격자 (사용자 원본을 1.5px = 1칸으로, 흰 테두리 2칸). maker.py가 배경 없는 PNG로 찍는다. P·R·Q·K는 좌우 대칭 · Q·K 십자가 다시 그림 · R 윗머리 세 칸 같은 폭 (D-092, symmetry.py). 이형 기물 그림도 같은 파일에', status: 'review' },
+  { item: '기물 그림', rule: '정본 = tools/pixel/pieces64.txt 64×64 격자 (사용자 원본을 1.5px = 1칸으로, 흰 테두리 2칸). maker.py가 배경 없는 PNG로 찍는다. P·R·Q·K는 좌우 대칭 — 원래 십자가 · 룩 머리 모양을 살리고 비뚤어진 칸만 맞춤, R 윗머리 세 칸 같은 폭 (D-092, symmetry.py). 이형 기물 그림도 같은 파일에', status: 'review' },
   { item: '흰 킹', rule: '원래 킹 기물 그림 (왕관 쓴 폰 안은 접음, D-079)', status: 'done' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로', status: 'done' },
   { item: '기록 줄', rule: '판 위 흔적 대신 오른쪽 레일에 하스스톤식 기록 줄 (누르면 그 수를 다시 보여 줌)', status: 'done' },

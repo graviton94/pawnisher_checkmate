@@ -4,7 +4,8 @@
 pieces64.txt의 P·R·Q·K 블록을 제자리에서 고친다 (여러 번 돌려도 같다):
   ① 모양(빈칸 · 검정 외곽선 · 몸)을 한쪽 절반을 거울로 옮겨 좌우 대칭으로
   ② 몸 칸의 색(빛·그늘)은 원래 자리 색을 그대로 둔다 — 새로 몸이 된 칸만 거울 쪽 색을 빌린다
-  ③ Q·K 꼭대기 십자가는 정해 둔 모양으로 다시 그리고, R 윗머리 세 칸은 같은 폭으로
+  ③ 거울로 옮기다 생긴 한 칸짜리 홈은 메운다 — 십자가 · 룩 윗머리는 원래 그림을 살리고 비뚤어진 칸만 맞춘다
+     (R은 축을 반 칸 옮겨(65) 머리 셋 · 틈 둘이 모두 6칸 폭이 된다)
   ④ 흰 바깥 테두리 2칸을 다시 두른다
 
   python3 -I tools/pixel/symmetry.py && python3 -I tools/pixel/maker.py export
@@ -47,44 +48,15 @@ def mirror(grid, axis2, src):
     return out
 
 
-# 꼭대기 십자가: 유형 → (머리 띠가 시작하는 줄, 기둥 첫 줄, 팔 첫 줄, 팔 반폭). 기둥 3칸 · 팔 3줄, 검정 테 2칸.
-# 원본 십자가는 자동 추출에서 뭉개져 있어서 (D-092) 머리 띠 위를 통째로 지우고 다시 그린다.
-CROSS = {'Q': (17, 7, 9, 4), 'K': (19, 5, 8, 5)}
-CROSS_FILL = {0: ('W', 'W', 'S'), 1: ('H', 'M', 'B')}  # (왼쪽 빛, 몸, 오른쪽 그늘) — 원래 기물처럼 왼쪽이 밝다
-
-
-def cross(grid, t, side, axis2):
-    """머리 띠 위를 지우고 반듯한 십자가를 다시 그린다"""
-    band, top, arm, half = CROSS[t]
-    c = axis2 // 2
-    for j in range(band):
-        grid[j] = ['.'] * N
-    fill = {(j, i) for j in range(top, band) for i in range(c - 1, c + 2)}
-    fill |= {(j, i) for j in range(arm, arm + 3) for i in range(c - half, c + half + 1)}
-    for (j, i) in fill:
-        for dy in range(-2, 3):
-            for dx in range(-2, 3):
-                jj, ii = j + dy, i + dx
-                if (jj, ii) not in fill and jj < band:
-                    grid[jj][ii] = 'K'
-    lit, body, dark = CROSS_FILL[side]
-    for (j, i) in fill:
-        edge_l = (j, i - 1) not in fill
-        edge_r = (j, i + 1) not in fill
-        edge_b = (j + 1, i) not in fill and j < band - 1
-        grid[j][i] = lit if edge_l and side == 1 else (dark if edge_r or edge_b else body)
-
-
-# 룩 윗머리: (첫 줄, 끝 줄, 왼쪽 칸, 머리·틈 폭). 왼쪽 머리+틈(원본 색) 한 벌을 되풀이 → 머리 셋 · 틈 둘이 모두 같은 폭
-CRENEL = {'R': (18, 21, 18, 6)}
-
-
-def crenel(grid, t):
-    first, last, left, w = CRENEL[t]
-    src = [row[:] for row in grid]
-    for j in range(first, last + 1):
-        for k in range(w * 5):
-            grid[j][left + k] = src[j][left + k % (w * 2)]
+def fill_notches(grid):
+    """거울로 옮기다 생긴 한 칸짜리 홈(양옆이 외곽선인 빈칸)을 외곽선으로 메운다"""
+    for _ in range(2):
+        for j in range(1, N - 1):
+            for i in range(1, N - 1):
+                if grid[j][i] in '.O':
+                    k = sum(grid[j + dy][i + dx] not in '.O' for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+                    if k >= 3:
+                        grid[j][i] = 'K'
 
 
 def border(grid):
@@ -130,10 +102,7 @@ def main():
             continue
         axis2, src = AXIS[t]
         g = mirror(b[1], axis2, src)
-        if t in CRENEL:
-            crenel(g, t)
-        if t in CROSS:
-            cross(g, t, int(b[0].strip()[1:-1].split()[1]), axis2)
+        fill_notches(g)
         b[1] = [''.join(r) for r in border(g)]
     save(head, blocks)
     print('tools/pixel/pieces64.txt — P·R·Q·K 좌우 대칭')
