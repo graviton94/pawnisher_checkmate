@@ -284,7 +284,11 @@ export class BattleController {
    */
   private intent(): Intent | null {
     if (this.phase !== 'plan' || !this.state || this.state.winner !== null) return null;
-    const key = `${this.state.turnNumber}|${JSON.stringify(this.plan)}`;
+    // 미래 예지 (E16): 1장 첫 수 · 2장 2수 · ★ 전부. 없으면 예고하지 않는다 (사용자: 무조건 예고는 너무 쉽다)
+    const sight = ench(this.state, this.state.turnSide, 'E16');
+    if (!sight) return null;
+    const shown = sight >= 3 ? Infinity : sight;
+    const key = `${this.state.turnNumber}|${sight}|${JSON.stringify(this.plan)}`;
     if (this.intentCache?.key === key) return this.intentCache.value;
     let value: Intent | null = null;
     const mine = resolveTurn(this.state, this.plan);
@@ -294,7 +298,7 @@ export class BattleController {
       const after = resolveTurn(next, plan);
       const dmg = new Map<number, { damage: number; killed: boolean }>();
       for (const e of after.events) {
-        if (e.type !== 'attack') continue;
+        if (e.type !== 'attack' || e.order >= shown) continue;
         for (const h of e.hits) {
           const cur = dmg.get(h.targetId) ?? { damage: 0, killed: false };
           dmg.set(h.targetId, { damage: cur.damage + h.damage, killed: cur.killed || h.killed });
@@ -304,7 +308,7 @@ export class BattleController {
         const p = findPiece(next, id);
         return p && p.side === this.state.turnSide ? [{ pieceId: id, pos: { x: p.x, y: p.y }, ...d }] : [];
       });
-      value = { state: next, plan, hits };
+      value = { state: next, plan: plan.slice(0, shown === Infinity ? plan.length : shown), hits };
     }
     this.intentCache = { key, value };
     return value;

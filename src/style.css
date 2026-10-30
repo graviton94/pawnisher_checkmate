@@ -286,3 +286,7 @@ html, body {
 .chip .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 2px; }
 .chip .tags i { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 9px; background: #2a2418; color: var(--brass); border: 1px solid var(--copper); }
 .panel .logo { width: auto; max-height: 30vh; max-width: 60%; align-self: center; image-rendering: auto; margin: -6px 0 -4px; }
+.piece-img { image-rendering: pixelated; vertical-align: middle; object-fit: contain; }
+.queue .glyph { display: flex; align-items: center; }
+.chip .big-piece { float: left; margin: 0 8px 0 -2px; }
+.queue li.empty { display: block; height: auto; line-height: 1.5; }

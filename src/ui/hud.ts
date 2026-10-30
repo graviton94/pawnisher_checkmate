@@ -1,15 +1,11 @@
 import { BASE_AP, PIECE_NAMES_KO } from '../data/pieces';
+import { pieceImg } from './sprites';
 import { AI_STYLES, SCENARIOS, type BattleController, type HudView, type Scenario } from '../game/controller';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
-import { checkPlan, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
+import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 
-const GLYPH: Record<0 | 1, Record<PieceType, string>> = {
-  0: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
-  1: { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟' },
-};
-const VS15 = '︎';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -130,10 +126,15 @@ export class Hud implements HudView {
       if (!p) return;
       const pending = c.pending !== null && i === full.length - 1;
       rows.push(
-        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${GLYPH[p.side][p.type]}${VS15}</span><span>${describeStep(c.state, m)}</span></li>`,
+        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 26)}</span><span>${describeStep(c.state, m)}</span></li>`,
       );
     });
-    if (!rows.length && mine) rows.push('<li class="empty">기물을 눌러 이동을 예약하세요<br><span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수</span></li>');
+    if (!rows.length && mine) {
+      const hint = ench(c.state, 0, 'E16')
+        ? '<span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수 (미래 예지)</span>'
+        : '<span style="color:var(--muted)">적 기물을 누르면 위협 범위가 보입니다</span>';
+      rows.push(`<li class="empty">기물을 눌러 이동을 예약하세요<br>${hint}</li>`);
+    }
     q.innerHTML = rows.join('');
 
     // AP 진공관 (숫자 없이)
@@ -165,7 +166,7 @@ export class Hud implements HudView {
     if (forge) extra.push(`대장간 +${forge}`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';
     const buff = p.buffTurns > 0 ? `<br>버프: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
-    el.innerHTML = `<b><span class="g">${GLYPH[p.side][p.type]}${VS15}</span> ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크메이트: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
+    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크메이트: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;

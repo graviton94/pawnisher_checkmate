@@ -3,7 +3,6 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
-import { drawPixelPiece, pieceKey } from './pixelPieces';
 import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
@@ -17,6 +16,9 @@ export const GRADE: Record<Standing, { color: number; name: string }> = {
 
 /** 기물 유형에 붙는 인챈트 — 그 기물 위에 표식으로 보인다 (GDD 9장: 인챈트는 유닛에 표시) */
 const TYPE_ENCHANTS: Partial<Record<PieceType, EnchantId[]>> = { N: ['E01', 'E13'], B: ['E02', 'E14'], R: ['E03'], P: ['E04', 'E12'], K: ['E08'] };
+
+/** 기물 텍스처 키 */
+const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
 
 const C = {
   // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
@@ -92,14 +94,15 @@ class BoardScene extends Phaser.Scene {
     super('board');
   }
 
-  create(): void {
-    // 도트 기물 텍스처 12종 (최근접 필터로 또렷하게)
+  /** 사용자 제공 도트 기물 12종 (public/pieces/s-{유형}{진영}.png) */
+  preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
-      for (const side of [0, 1] as Side[]) {
-        const key = pieceKey(type, side);
-        if (this.textures.exists(key)) continue;
-        this.textures.addCanvas(key, drawPixelPiece(type, side))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-      }
+      for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
+  }
+
+  create(): void {
+    for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
+      for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0);

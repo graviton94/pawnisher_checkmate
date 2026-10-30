@@ -1,5 +1,5 @@
 /** 인챈트 카탈로그 (GDD 7장 §7.2, 초안 수치). 1장 · 2장 · ★3장(각성). */
-export type EnchantId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07' | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13' | 'E14' | 'E15';
+export type EnchantId = 'E01' | 'E02' | 'E03' | 'E04' | 'E05' | 'E06' | 'E07' | 'E08' | 'E09' | 'E10' | 'E11' | 'E12' | 'E13' | 'E14' | 'E15' | 'E16';
 
 export interface EnchantDef {
   name: string;
@@ -87,6 +87,11 @@ export const ENCHANTS: Record<EnchantId, EnchantDef> = {
     name: '연쇄 반응',
     target: '전체',
     levels: ['이번 턴 처치할 때마다 이후 모든 공격 피해 ×1.2 (누적)', '처치마다 ×1.3', '★ 연쇄 폭발: 처치마다 ×1.5'],
+  },
+  E16: {
+    name: '미래 예지',
+    target: '시스템',
+    levels: ['적의 다음 턴 첫 수를 미리 본다 (지금 제출하면 둘 수)', '첫 2수를 미리 본다', '★ 천리안: 적의 다음 턴 수를 전부 본다'],
   },
 };
 

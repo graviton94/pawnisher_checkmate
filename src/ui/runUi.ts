@@ -40,10 +40,9 @@ import {
   type RunState,
 } from '../run/run';
 import type { Hud } from './hud';
+import { pieceImg } from './sprites';
 import { unlockAchievement } from '../platform';
 
-const GLYPH: Record<PieceType, string> = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' };
-const VS15 = '︎';
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 
 /** 시너지 태그: 덱에 그 유형이 몇 기인지, ★까지 몇 장 남았는지 (고르는 이유가 바로 보이게) */
@@ -100,7 +99,7 @@ export class RunUi {
 
   private status(run: RunState): string {
     const counts = ORDER.map((t) => [t, run.deck.filter((x) => x === t).length] as const).filter(([, n]) => n);
-    const deck = counts.map(([t, n]) => `<span class="g">${GLYPH[t]}${VS15}</span>${n}`).join(' ');
+    const deck = counts.map(([t, n]) => `${pieceImg(t)}${n}`).join(' ');
     const forge = (Object.entries(run.loadout.forge) as [PieceType, number][]).filter(([, n]) => n).map(([t, n]) => `${PIECE_NAMES_KO[t]}+${n}`);
     const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `${ENCHANTS[id].name} ${n}${n >= 3 ? '★' : ''}`);
     const cards = run.loadout.cards.map((id) => CARDS[id].name);
@@ -121,7 +120,7 @@ export class RunUi {
     const meta = loadMeta();
     const seed = (Date.now() % 1_000_000_000) + 1;
     const decks = startDeckOptions(seed, unlockedDecks(meta));
-    const deckHtml = (d: string[]) => d.map((t) => `<span class="g">${GLYPH[t as PieceType]}${VS15}</span>`).join(' ');
+    const deckHtml = (d: string[]) => d.map((t) => pieceImg(t as PieceType, 0, 'large', 40)).join('');
     const desc: Record<string, string> = { N: '나이트 — L자로 뛰어넘어 친다', B: '비숍 — 대각선 먼 거리', R: '룩 — 직선 먼 거리, 튼튼함', P: '폰 — 싸고 많다, 끝줄에서 퀸' };
     const panel = this.hud.openOverlay(`
       <h2>시작 덱을 고르세요</h2>
@@ -280,7 +279,7 @@ export class RunUi {
           const n = run.deck.filter((x) => x === t).length;
           const forge = run.loadout.forge[t] ?? 0;
           const tags = [n ? `보유 ${n}기` : '새 유형', forge ? `강화 +${forge} 적용` : ''].filter(Boolean);
-          return `<button class="chip" type="button" data-pick="${t}"><b><span class="g">${GLYPH[t]}${VS15}</span> ${PIECE_NAMES_KO[t]}</b><span class="tags">${tags.map((x) => `<i>${x}</i>`).join('')}</span><small>${pieceDesc[t]}</small></button>`;
+          return `<button class="chip" type="button" data-pick="${t}"><span class="big-piece">${pieceImg(t, 0, 'large', 56)}</span><b>${PIECE_NAMES_KO[t]}</b><span class="tags">${tags.map((x) => `<i>${x}</i>`).join('')}</span><small>${pieceDesc[t]}</small></button>`;
         })
         .join('')}</div>`;
     } else if (ch?.type === 'enchant') {
@@ -335,10 +334,10 @@ export class RunUi {
     const panel = this.hud.openOverlay(`
       <h2>상점</h2>
       ${this.status(run)}
-      <p class="sub">기물</p><div class="chips">${s.pieces.map((p, i) => item('piece', i, `<b><span class="g">${GLYPH[p.item]}${VS15}</span> ${PIECE_NAMES_KO[p.item]}</b>`, p.price, p.sold)).join('')}</div>
+      <p class="sub">기물</p><div class="chips">${s.pieces.map((p, i) => item('piece', i, `<b>${pieceImg(p.item, 0, 'large', 30)} ${PIECE_NAMES_KO[p.item]}</b>`, p.price, p.sold)).join('')}</div>
       <p class="sub">액티브 카드</p><div class="chips">${s.cards.map((p, i) => item('card', i, cardLine(p.item), p.price, p.sold)).join('')}</div>
       <p class="sub">인챈트</p><div class="chips">${s.enchants.map((p, i) => item('ench', i, enchantLine(p.item, (run.loadout.enchants[p.item] ?? 0) + 1, run), p.price, p.sold)).join('')}</div>
-      <p class="sub">판매</p><div class="chips">${sellTypes.map((t) => `<button class="chip" type="button" data-sell="${t}"><b><span class="g">${GLYPH[t]}${VS15}</span> ${PIECE_NAMES_KO[t]} 팔기</b><small class="price">+${sellPrice(t)} 골드</small></button>`).join('')}</div>
+      <p class="sub">판매</p><div class="chips">${sellTypes.map((t) => `<button class="chip" type="button" data-sell="${t}"><b>${pieceImg(t)} ${PIECE_NAMES_KO[t]} 팔기</b><small class="price">+${sellPrice(t)} 골드</small></button>`).join('')}</div>
       <div class="row">
         <button class="choice" type="button" data-reroll>새로고침 (${s.rerollPrice} 골드)</button>
         <button class="choice primary" type="button" data-leave>떠나기</button>
@@ -368,7 +367,7 @@ export class RunUi {
       const lv = run.loadout.forge[t] ?? 0;
       const cost = forgeCost(run, t);
       const n = run.deck.filter((x) => x === t).length;
-      return `<button class="chip" type="button" data-up="${t}" ${cost === null ? 'disabled' : ''}><b><span class="g">${GLYPH[t]}${VS15}</span> ${PIECE_NAMES_KO[t]} ×${n} · +${lv}/${FORGE_MAX}</b><small class="price">${cost === null ? '완전 강화' : `+${lv + 1}: ${cost} 골드`}</small></button>`;
+      return `<button class="chip" type="button" data-up="${t}" ${cost === null ? 'disabled' : ''}><b>${pieceImg(t, 0, 'large', 30)} ${PIECE_NAMES_KO[t]} ×${n} · +${lv}/${FORGE_MAX}</b><small class="price">${cost === null ? '완전 강화' : `+${lv + 1}: ${cost} 골드`}</small></button>`;
     });
     const panel = this.hud.openOverlay(`
       <h2>대장간</h2>
