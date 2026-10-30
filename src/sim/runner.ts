@@ -237,7 +237,13 @@ export const autoRun = (seed: number): RunLog => {
       }
       case 'event': {
         if (!st.result) {
-          const i = EVENTS[st.id].choices.findIndex((_, k) => eventChoiceAvailable(run, st.id, k) && !(st.id === 'pact' && run.deck.length < 9));
+          // 사람처럼 (D-101): 끼인 컨베이어는 나사가 있으면 돈으로, 녹슨 금고는 나사가 모자랄 때만, 검수 누락은 군단이 클 때만
+          const skip = (k: number) =>
+            (st.id === 'pact' && run.deck.length < 9) ||
+            (st.id === 'jam' && k === 0 && run.gold >= 40) ||
+            (st.id === 'safe' && k === 0 && run.gold >= 80) ||
+            (st.id === 'forgery' && k === 0 && run.deck.length < 10);
+          const i = EVENTS[st.id].choices.findIndex((_, k) => eventChoiceAvailable(run, st.id, k) && !skip(k));
           eventChoose(run, i < 0 ? EVENTS[st.id].choices.length - 1 : i);
           track();
         } else leaveNode(run);
