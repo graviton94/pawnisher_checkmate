@@ -2,7 +2,7 @@ import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
 import { AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import type { EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
@@ -108,7 +108,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   }
 
   const forge: Partial<Record<PieceType, number>> = {};
-  const lv = baseForge + (kind === 'elite' ? ELITE_BONUS.forge : 0) + (luck === 'overload' ? 1 : 0);
+  const lv = baseForge + (kind === 'elite' ? eliteForge(floor) : 0) + (luck === 'overload' ? 1 : 0);
   if (lv > 0) for (const t of new Set(deck)) forge[t] = lv;
 
   const enchants: Partial<Record<EnchantId, number>> = {};

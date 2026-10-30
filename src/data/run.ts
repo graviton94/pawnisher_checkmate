@@ -152,8 +152,9 @@ export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
   return floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.8, atk: 0.9 } : { hp: 0.95, atk: 1 };
 };
 /** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
-/** D-099: 검문! 승률 88~92% → 목표 65~85%: 개량 +1 */
+/** D-099: 검문! 승률 88~92% → 목표 65~85%: 개량 +1. 단 Act 1은 8층부터 (5~7층까지 붙이니 46%로 떨어졌다) */
 export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 1 };
+export const eliteForge = (floor: number): number => (actOf(floor) === 1 && inAct(floor) < 8 ? 0 : ELITE_BONUS.forge);
 /** 적 군단의 이형 거푸집 수 (GDD 13장 P2, D-084): 정예는 Act 1부터 1개 · Act 3 정예 2개, 일반은 Act 2부터 확률로 1개 (Act 3은 항상) */
 export const enemyVariantCount = (floor: number, kind: NodeKind, roll: number): number => {
   const act = actOf(floor);

@@ -56,7 +56,8 @@ export const ORDERS: Record<OrderId, OrderDef> = {
   ironKing: { text: '킹은 흠집 없이.', gold: 20 },
   // D-099: 시뮬 완수 1% — 폰으로 킹을 끝내는 판이 거의 없다 → 「폰으로 셋 처치」로 바꿈
   pawnMate: { text: '마지막 일격은 폰으로.', gold: 30, needs: ['P'], retired: true },
-  pawnWork: { text: '폰으로 적 둘을 처치할 것.', gold: 25, needs: ['P'] },
+  // D-099: 셋 4% · 둘 3% — 폰이 마무리하는 판 자체가 드물다 → 내지 않는다
+  pawnWork: { text: '폰으로 적 둘을 처치할 것.', gold: 25, needs: ['P'], retired: true },
 };
 
 /** 검문!·반장 대국은 주문 보상이 크다 */
