@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 35, date: '2026-10-30' };
+export const VERSION = { n: 36, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,6 +48,7 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
+  '흔적 시안 A (판 위: 마지막 수 출발·도착 칸 옅게 + 맞은 기물 피해 꼬리표 — 장면이 끝나면 1.5초) vs B (에셋 목록 "기록 줄": 최근 행동이 쌓이는 줄) vs 둘 다',
   '흐르는 화살표 (에셋 목록 "화살표" 견본 · 장면 계획 화면)',
   '검은 재 처치 (에셋 목록 "처치" 견본)',
   '피해 숫자 아래부터 지워짐 (에셋 목록 "피해 숫자" 견본, 장면 재생)',
@@ -86,6 +87,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 36, date: '2026-10-30', items: ['흔적 시안 A: 실행 후 출발·도착 칸 옅게 + 맞은 기물 피해 꼬리표', '흔적 시안 B: 하스스톤식 기록 줄 (에셋 목록)'] },
   { v: 35, date: '2026-10-30', items: ['처치 자리 잔해 표식 없앰'] },
   { v: 34, date: '2026-10-30', items: ['요충지: 점선 테두리만 기물 아래, 깃발·점거 눈금은 기물 위 레이어', '점거 눈금: 검정 테두리가 네 면을 다 감싸게, 자리는 오른쪽 위(아래는 HP 게이지)'] },
   { v: 33, date: '2026-10-30', items: ['증기 분출구 → 요충지 깃발 칸 표시 (빈 · 내 점거 · 적 점거 3종 + 점거 눈금)'] },

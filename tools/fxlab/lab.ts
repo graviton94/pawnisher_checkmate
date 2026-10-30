@@ -421,7 +421,7 @@ const play = () => {
       blit('kill', l.x + 13 * D, l.y + D);
     }
   };
-  const end = FX0 + (fx?.duration ?? 0) + 900;
+  const end = FX0 + (fx?.duration ?? 0) + 2400; // 끝난 뒤 흔적 시안을 1.5초 보여 준다
   const t0 = performance.now();
   // 화면 흔들림 (D-064): 큰 피해·처치 순간
   const shake = { at: -1, ms: 0, amp: 0 };
@@ -471,15 +471,25 @@ const play = () => {
       ctx.translate(Math.round(Math.sin(ms * 0.13) * a), Math.round(Math.cos(ms * 0.17) * a * 0.6));
     }
     drawBoard();
-    // 이동 칸 표시
-    ctx.strokeStyle = 'rgba(56,189,248,0.6)';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(from.x + 3, from.y + 3, T - 6, T - 6);
+    // 흔적 시안 A (D-073, lichess·chess.com 마지막 수 강조): 실행이 끝나면 출발·도착 칸을 진영 색으로 옅게, 맞은 기물엔 피해 꼬리표
+    const done = fx ? ms > FX0 + fx.duration : ms > MOVE;
+    if (done && opt.board !== 'flat') {
+      const tint = opt.side === 0 ? 'rgba(56,189,248,0.2)' : 'rgba(229,38,47,0.2)';
+      ctx.fillStyle = tint;
+      ctx.fillRect(from.x, from.y, T, T);
+      ctx.fillRect(to.x, to.y, T, T);
+    }
     if (ms < 0 && atk) drawRange(atk.area);
     if (ms < 0 && opt.board !== 'flat') drawPlan();
     for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
     drawBoardTop();
     if (ms < 0 && opt.board !== 'flat') drawKillMarks();
+    if (done && opt.board !== 'flat')
+      for (const h of atk?.hits ?? []) {
+        // 맞은 기물 꼬리표: 칸 왼쪽 위 작은 도트 피해 숫자 (처치 = 금)
+        const l = lives.get(h.targetId)!;
+        drawPopup(pen.g, buildPopupArt(`-${h.damage}`, h.killed ? 0xfacc15 : opt.side === 0 ? 0xf4f1ea : 0xff6b6b), l.x + T * 0.28, l.y + T * 0.36, D * 0.6, 400, 0);
+      }
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {
@@ -553,6 +563,7 @@ const renderGallery = () => {
       items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
       items += item('피해 숫자 (아래부터 지워짐)', 7, 10, '<canvas data-live="pop" width="200" height="120"></canvas>');
+      items += item('흔적 시안 B · 기록 줄 (하스스톤식)', 0, 0, '<canvas data-live="log" width="132" height="300"></canvas>');
     } else {
       for (const e of GALLERY.filter((x) => x.dir === g)) {
         if (/^badge-[ae][2-8]$/.test(e.name)) continue;
@@ -574,6 +585,7 @@ const renderGallery = () => {
   const gtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (gtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => gtC.fillRect(x, y, w, h) }, S);
   const dtC = cv('death').getContext('2d')!;
   const ppC = cv('pop').getContext('2d')!;
+  const lgC = cv('log').getContext('2d')!;
   const ppSink = { fillStyle: (c: number, a = 1) => (ppC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => ppC.fillRect(x, y, w, h) };
   let ppArts: PopupArt[] = [];
   const dtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (dtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => dtC.fillRect(x, y, w, h) }, S);
@@ -650,6 +662,37 @@ const renderGallery = () => {
     const dt = (now % 1400) - 300;
     if (dt < 0) for (const c of dtCells) dtPen.px(c.x + 2, c.y + 2, c.c, 1);
     else drawCrumble(dtPen, dtCells, dt);
+    // 흔적 시안 B (D-073, 하스스톤 기록 줄): 최근 행동이 위에서부터 쌓인다 — 공격자 → 대상, 피해(처치 = 금 해골). 누르면 그 수를 판에 다시 보여 준다
+    lgC.clearRect(0, 0, 132, 300);
+    lgC.imageSmoothingEnabled = false;
+    const rows: [string, string, string, string, boolean][] = [
+      ['내 #1', 'N0', 'P1', '-12', false],
+      ['내 #2', 'R0', 'P1', '-26', true],
+      ['적 #1', 'B1', 'P0', '-8', false],
+      ['적 #2', 'Q1', 'N0', '-14', false],
+    ];
+    rows.forEach(([who, a, b, dmg, kill], i) => {
+      const y = 6 + i * 72;
+      const mine = who.startsWith('내');
+      lgC.fillStyle = '#16141c';
+      lgC.fillRect(4, y, 124, 64);
+      lgC.fillStyle = mine ? '#38bdf8' : '#e5262f';
+      lgC.fillRect(4, y, 4, 64);
+      lgC.font = '700 12px Galmuri11';
+      lgC.fillText(who, 12, y + 14);
+      const sa = sprites[a];
+      const sb = sprites[b];
+      if (sa?.complete) lgC.drawImage(sa, 10, y + 18, 40, 40);
+      lgC.fillStyle = '#8a8794';
+      lgC.fillText('→', 52, y + 44);
+      if (sb?.complete) lgC.drawImage(sb, 66, y + 18, 40, 40);
+      lgC.fillStyle = kill ? '#facc15' : '#f4f1ea';
+      lgC.fillText(dmg, 98, y + 14);
+      if (kill) {
+        const sk = tinted('hud/skull-small', '#facc15');
+        if (sk) lgC.drawImage(sk, 106, y + 40, 14, 14);
+      }
+    });
     // 피해 숫자 견본: 적 피격(흰) · 내 기물 피격(붉음) · 처치(금)를 번갈아
     if (!ppArts.length && document.fonts.check('700 12px Galmuri11')) ppArts = [buildPopupArt('-3', 0xf4f1ea), buildPopupArt('-2', 0xff6b6b), buildPopupArt('-5', 0xfacc15)];
     ppC.clearRect(0, 0, 200, 120);
