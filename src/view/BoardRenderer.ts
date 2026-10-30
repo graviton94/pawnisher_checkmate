@@ -136,12 +136,13 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
+    this.load.image(boardKey('sword'), 'ui/icons/sword.png');
   }
 
   create(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
-    for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const n of [...BOARD_IMAGES, 'skull', 'sword']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0.1);
@@ -480,6 +481,17 @@ class BoardScene extends Phaser.Scene {
         img('kill', w.x + 13 * d, w.y + d, 7 * d, 5);
       }
       this.sprites.set(p.id, sprite);
+    }
+
+    // 훑기 보조 (F6, D-075): 칠 수 있는 내 기물 = 왼쪽 위 청록 칼 (기물을 고르기 전에만), 처치될 수 있는 내 기물 = 오른쪽 위 붉은 해골
+    if (m.selectedId === null)
+      for (const p of m.scan.strike) {
+        const w = this.world(p);
+        img('sword', w.x + d, w.y + d, 6 * d, 5).setTint(C.cyan);
+      }
+    for (const p of m.scan.danger) {
+      const w = this.world(p);
+      img('skull', w.x + 13 * d, w.y + d, 6 * d, 5).setTint(0xff6b6b);
     }
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));

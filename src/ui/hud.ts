@@ -79,6 +79,9 @@ export class Hud implements HudView {
       if (!el) return;
       const v = el.dataset.card!;
       c.arm(v === 'fuse' ? { kind: 'fuse' } : { kind: 'card', card: Number(v) });
+      // 카드 설명은 패널에 다 못 싣는다 — 고를 때 안내로 (D-075)
+      const slot = v === 'fuse' ? null : c.virtual.cards[0][Number(v)];
+      if (slot && c.mode) this.toast(`${CARDS[slot.id].name} — ${CARDS[slot.id].desc}`);
     });
   }
 
@@ -108,7 +111,6 @@ export class Hud implements HudView {
     });
     if (c.canEnchantFuse) {
       const armed = c.mode?.kind === 'fuse';
-      while (slots.length < CARD_SLOTS) slots.push('<div class="card-slot" aria-label="빈 카드 슬롯"></div>');
       slots.push(
         `<button type="button" class="card wide${armed ? ' armed' : ''}" data-card="fuse" ${c.phase !== 'plan' ? 'disabled' : ''}>
           <span class="card-name">합체 · ${ENCHANTS.E11.name}</span>
@@ -116,7 +118,7 @@ export class Hud implements HudView {
         </button>`,
       );
     }
-    while (slots.length < CARD_SLOTS) slots.push('<div class="card-slot" aria-label="빈 카드 슬롯"></div>');
+    // 빈 슬롯은 그리지 않는다 (오른쪽 패널 공간 절약, D-075)
     $('cards').innerHTML = slots.join('');
   }
 

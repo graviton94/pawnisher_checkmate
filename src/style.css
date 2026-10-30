@@ -11,7 +11,7 @@
   --parchment: #e6d6b4;
   --cyan: #38bdf8;
   --crimson: #e5262f;
-  --rail: clamp(220px, 29vw, 340px);
+  --rail: clamp(240px, 31vw, 360px);
 }
 
 * { box-sizing: border-box; }
@@ -34,7 +34,8 @@ html, body {
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-columns: var(--rail) 1fr var(--rail);
+  /* 오른쪽 한 패널 (D-075, 발라트로 모바일류): 왼쪽 레일을 없애 판에 화면 폭을 더 준다 */
+  grid-template-columns: 1fr var(--rail);
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
@@ -43,10 +44,13 @@ html, body {
 
 .rail { display: flex; flex-direction: column; gap: 8px; padding: 14px 12px; min-height: 0; }
 #right { padding-right: max(12px, env(safe-area-inset-right)); }
-#left { padding-left: max(12px, env(safe-area-inset-left)); justify-content: center; }
 
-/* 액티브 카드 (TCG 비율, 2×2) */
-.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+
+/* 액티브 카드: 오른쪽 패널 안 작은 한 줄 (D-075). 이름 + 상태만, 설명은 고를 때 안내로 */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.cards:empty { display: none; }
+.cards .card { aspect-ratio: auto; min-height: 48px; padding: 4px 8px; }
+.cards .card-desc { display: none; }
 .card-slot {
   aspect-ratio: 63 / 88;
   max-height: 44vh;
@@ -318,4 +322,4 @@ html, body {
 .wing { flex: 1; height: 40px; background: url('./assets/ui/ap-empty.png') center / contain no-repeat; image-rendering: pixelated; }
 .wing.full { background-image: url('./assets/ui/ap-full.png'); }
 .wing.bonus.full { filter: drop-shadow(0 0 3px #facc15); }
-.toast { max-width: calc(100vw - 2 * var(--rail) - 16px); text-align: center; }
+.toast { max-width: calc(100vw - var(--rail) - 16px); text-align: center; }
