@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { PieceType, Side } from '../engine/types';
 import { FX_CHOICE, FX_POWER, FX_SHAKE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
-import { BOARD_DOTS, PixelPen, easeInCubic, easeInExpo, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
+import { BOARD_DOTS, PixelPen, easeInCubic, easeInExpo, easeInOutCubic, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
 
 /**
  * 기물별 이동·공격 연출 (GDD 12장 §12.3, D-033·D-035·D-036).
@@ -248,51 +248,71 @@ export const impactFeedback = (damage: number, killed: boolean): { ms: number; i
   return { ms: FX_SHAKE.ms, intensity: killed ? FX_SHAKE.killIntensity : FX_SHAKE.intensity, vibrate: killed ? FX_SHAKE.vibrateKill : FX_SHAKE.vibrateHit };
 };
 
+/** 기물별 예비 동작(모으기) 길이 (ms) — 세기 연출이 이 부분을 대신한다 */
+const windOf = (k: PieceType, choice: { Q: QueenFx; K: KingFx }): number => {
+  const M = FX_MS;
+  switch (k) {
+    case 'P': return M.pawn.wind;
+    case 'N': return M.knight.wind;
+    case 'B': return M.bishop.charge * 0.8;
+    case 'R': return M.rook.lift + M.rook.hang;
+    case 'Q': return choice.Q === 'D' ? M.queenSaw.wind : choice.Q === 'C' ? M.queenSweep.wind : M.queen.charge * 0.8;
+    case 'K': return M.king.wind;
+  }
+};
+
+const lerpPose = (a: Pose, b: Pose, u: number): Pose => ({ dx: a.dx + (b.dx - a.dx) * u, dy: a.dy + (b.dy - a.dy) * u, sx: a.sx + (b.sx - a.sx) * u, sy: a.sy + (b.sy - a.sy) * u });
+
 /**
- * 세기만큼 앞에 "뛰어올라 모으기"를 붙인다: 뛰어오르며 몸을 움츠리고 빛 알갱이가 빨려 든다(느리게→빠르게) →
- * 원래 공격이 시작될 때 지수형으로 내려찍고 고리가 터진다. 공격 1회 1초 상한을 넘기지 않는다.
+ * 세기 연출 (D-064 → D-066): 기물 자신의 예비 동작을 "뛰어올라 모으기"로 바꿔 끼운다.
+ * 모으기: 뛰어오르며 기물 고유의 예비 자세로 서서히 들어가고, 빛 알갱이가 빨려 든다(느리게→빠르게).
+ * 그다음 원래 공격을 예비 동작이 끝난 지점부터 이어 재생하면서, 공중 높이만 지수형으로 떨어뜨린다 → 자세가 끊기지 않는다.
+ * (예전: 모으기를 앞에 덧붙여 기물이 두 번 웅크렸고, 넘어가는 순간 자세가 튀었다 — 사용자 "버벅거린다")
  */
 const withPower = (fx: FxBuilt, req: FxRequest): FxBuilt => {
   const p = Math.max(0, Math.min(1, req.power ?? 0));
-  const pre = Math.round(Math.min(FX_POWER.charge * p, Math.max(0, FX_POWER.maxTotal - fx.duration)));
-  if (pre < 40) return fx;
+  if (p <= 0.05) return fx;
+  const choice = { ...FX_CHOICE, ...req.variant };
+  const skip = Math.min(...req.kinds.map((k) => windOf(k, choice)));
+  const pre = Math.round(Math.min(skip + FX_POWER.charge * p, FX_POWER.maxTotal - (fx.duration - skip)));
+  if (pre <= skip * 0.5) return fx;
   const t = req.tile;
   const pal = PAL[req.side];
   const leap = FX_POWER.leap * p;
+  const wound = fx.actor(skip); // 기물 고유 예비 동작이 끝났을 때의 자세
+  const rise = (ms: number) => easeInOutCubic(Math.min(1, ms / (pre * 0.75)));
   const actor = (ms: number): Pose => {
     if (ms < pre) {
-      const q = ms / pre;
-      const up = easeOutCubic(Math.min(1, q / 0.7));
-      const tremble = q > 0.6 ? Math.sin(ms * 0.9) * 0.012 * p : 0; // 꽉 모았을 때 떨림
-      return { dx: tremble, dy: -leap * up, sx: 1 - 0.1 * p * up, sy: 1 + 0.14 * p * up };
+      const u = rise(ms);
+      const pose = lerpPose(REST, wound, u);
+      return { ...pose, dy: pose.dy - leap * u };
     }
-    const base = fx.actor(ms - pre);
+    const base = fx.actor(ms - pre + skip);
     const r = Math.min(1, (ms - pre) / FX_POWER.release);
-    const drop = leap * (1 - easeInExpo(r));
-    const squash = r >= 1 ? Math.max(0, 1 - (ms - pre - FX_POWER.release) / 120) * 0.16 * p : 0; // 내려찍은 뒤 짓눌림
-    return { dx: base.dx, dy: base.dy - drop, sx: base.sx * (1 + squash), sy: base.sy * (1 - squash) };
+    return { ...base, dy: base.dy - leap * (1 - easeInExpo(r)) };
   };
   const draw = (pen: PixelPen, ms: number) => {
     if (ms < pre) {
       // 빛 알갱이가 사방에서 공격자에게 빨려 든다 (느리게→빠르게)
       const q = ms / pre;
-      const cy = req.origin.y - leap * t * easeOutCubic(Math.min(1, q / 0.7));
+      const cy = req.origin.y - leap * t * rise(ms);
       const n = 6 + Math.round(10 * p);
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + i * 0.7;
-        const k = (q + (i % 3) * 0.17) % 1;
+        const k = (q * 1.6 + (i % 4) * 0.25) % 1;
         const r = t * (0.95 - 0.8 * easeInExpo(k));
-        pen.px(req.origin.x + Math.cos(a) * r, cy + Math.sin(a) * r, i % 3 ? pal.glow : pal.edge, 0.4 + 0.6 * k, 1);
+        pen.px(req.origin.x + Math.cos(a) * r, cy + Math.sin(a) * r, i % 3 ? pal.glow : pal.edge, 0.3 + 0.7 * k, 1);
       }
-      if (q > 0.5) pen.disc(req.origin.x, cy, t * 0.1 * p * (q - 0.5) * 2, pal.core, 0.8);
+      if (q > 0.4) pen.disc(req.origin.x, cy, t * 0.12 * p * easeInExpo((q - 0.4) / 0.6), pal.core, 0.85);
       return;
     }
-    // 내려찍는 순간 고리가 터진다
+    // 떨어져 닿는 순간 고리가 터진다
     const e = span(ms, pre + FX_POWER.release * 0.8, pre + FX_POWER.release + 220);
     if (e > 0 && e < 1) pen.ring(req.origin.x, req.origin.y + t * 0.3, t * (0.3 + 0.9 * p) * easeOutExpo(e), pal.edge, 1 - e);
-    fx.draw(pen, ms - pre);
+    fx.draw(pen, ms - pre + skip);
   };
-  return { duration: fx.duration + pre, impact: new Map([...fx.impact].map(([k, v]) => [k, v + pre])), actor, draw };
+  const shift = pre - skip;
+  return { duration: fx.duration + shift, impact: new Map([...fx.impact].map(([k, v]) => [k, Math.max(pre, v + shift)])), actor, draw };
 };
 
 const dirIndex = (c: Claimed) => DIRS.findIndex(([x, y]) => x === Math.sign(c.dx) && y === Math.sign(c.dy));
@@ -336,12 +356,13 @@ const pawnPose = (ms: number, fwd: number): Pose => {
     return { dx: 0, dy: -fwd * 0.12 * e, sx: 1 + 0.08 * e, sy: 1 - 0.1 * e };
   }
   const u = ms - M.wind;
+  // 찌르기: 웅크린 자세(1.08×0.90)에서 늘어난 자세(0.94×1.10)로 이어진다 — 자세가 순간 튀지 않게 (D-066)
   if (u < 90) {
     const e = easeOutExpo(u / 90);
-    return { dx: 0, dy: -fwd * 0.12 + fwd * 0.26 * e, sx: 1 - 0.06 * e, sy: 1 + 0.1 * e };
+    return { dx: 0, dy: -fwd * 0.12 + fwd * 0.26 * e, sx: 1.08 - 0.14 * e, sy: 0.9 + 0.2 * e };
   }
   const e = easeOutCubic(Math.min(1, (u - 90) / 200));
-  return { dx: 0, dy: fwd * 0.14 * (1 - e), sx: 1, sy: 1 };
+  return { dx: 0, dy: fwd * 0.14 * (1 - e), sx: 0.94 + 0.06 * e, sy: 1.1 - 0.1 * e };
 };
 
 /** 나이트: 앞발 들기(늘어남) → 내리찍기(지수) → 출렁임 */
@@ -349,7 +370,8 @@ const knightPose = (ms: number): Pose => {
   const M = FX_MS.knight;
   if (ms < M.wind) {
     const e = easeOutCubic(ms / M.wind);
-    const tremble = ms > M.wind * 0.6 ? (Math.floor(ms / 25) % 2 ? 0.015 : -0.015) : 0;
+    // 떨림: 부드러운 사인파 (예전 25ms마다 좌우로 뚝뚝 바뀌던 떨림은 버벅임처럼 보였다 — D-066)
+    const tremble = 0.012 * Math.sin((ms / 90) * Math.PI * 2) * span(ms, M.wind * 0.5, M.wind);
     return { dx: tremble, dy: -0.22 * e, sx: 1 - 0.08 * e, sy: 1 + 0.12 * e };
   }
   if (ms < M.wind + M.slam) {
@@ -363,7 +385,7 @@ const knightPose = (ms: number): Pose => {
 const floatPose = (ms: number, wind: number, after: number): Pose => {
   if (ms < wind) {
     const p = ms / wind;
-    const tremble = p > 0.7 ? (Math.floor(ms / 28) % 2 ? 0.02 : -0.02) : 0;
+    const tremble = 0.014 * Math.sin((ms / 90) * Math.PI * 2) * span(p, 0.6, 1);
     return { dx: tremble, dy: -0.12 * easeOutCubic(p), sx: 1, sy: 1 + 0.04 * easeInExpo(p) };
   }
   const q = Math.min(1, (ms - wind) / after);

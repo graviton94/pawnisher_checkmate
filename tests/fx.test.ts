@@ -29,7 +29,18 @@ describe('공격 세기 연출 (D-064)', () => {
 
   it('모으는 동안 기물이 뛰어오른다 (dy < 0)', () => {
     const big = buildAttackFx(req(1));
-    expect(big.actor(150).dy).toBeLessThan(-0.1);
+    expect(big.actor(400).dy).toBeLessThan(-0.15);
+  });
+
+  it('자세가 끊기지 않는다: 이웃한 두 순간의 자세 차이가 작다 (D-066 버벅임)', () => {
+    for (const k of ['P', 'Q'] as const) {
+      const fx = buildAttackFx(req(1, [k]));
+      for (let ms = 0; ms < fx.duration; ms += 4) {
+        const a = fx.actor(ms);
+        const b = fx.actor(ms + 4);
+        expect(Math.abs(b.sx - a.sx) + Math.abs(b.sy - a.sy)).toBeLessThan(0.08);
+      }
+    }
   });
 
   it('공격 1회는 상한(1초)을 넘기지 않는다 — 원래 긴 공격은 덜 모은다', () => {

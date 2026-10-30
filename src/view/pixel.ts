@@ -124,6 +124,8 @@ export const easeOut = (p: number): number => 1 - (1 - p) * (1 - p);
 
 // 지수·로그형 곡선 — 선형 움직임 대신 "모았다가 터지는" 쾌감 (사용자 피드백, D-036)
 export const easeOutCubic = (p: number): number => 1 - (1 - p) ** 3;
+/** 느리게→빠르게→느리게 (3차) */
+export const easeInOutCubic = (q: number): number => (q < 0.5 ? 4 * q * q * q : 1 - (-2 * q + 2) ** 3 / 2);
 export const easeInCubic = (p: number): number => p * p * p;
 export const easeInExpo = (p: number): number => (p <= 0 ? 0 : 2 ** (10 * p - 10));
 export const easeOutExpo = (p: number): number => (p >= 1 ? 1 : 1 - 2 ** (-10 * p));
