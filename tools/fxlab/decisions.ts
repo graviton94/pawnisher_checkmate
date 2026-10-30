@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 24, date: '2026-10-30' };
+export const VERSION = { n: 25, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -64,7 +64,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
   { item: '처치', rule: '위에서부터 한 줄씩 재가 된다 — 잘리는 선 아래는 체크무늬로 듬성듬성, 선을 지난 도트는 검은 재가 되어 곧장 떨어져 기물 발밑에 쌓였다가 한 도트씩 꺼짐. 기물 폭·발밑 밖으로 나가지 않는다', status: 'review' },
   { item: '지형 소품', rule: '제미나이 그림 5종 (기준 폰 17도트로 잘라 테두리 다시 두름)', status: 'review' },
-  { item: '태엽', rule: '제미나이 I 디자인을 우리 격자에 대칭으로 옮김 (12×12 몸통 + 테두리): 구멍 뚫린 날개 둘 · 청록 축 2×2 · 이 두 쌍 달린 막대. 쓴 것 = 회색, 보너스 = 금 테두리', status: 'review' },
+  { item: '태엽', rule: '제미나이 I 디자인을 우리 격자에 대칭으로 옮김 (12×12 몸통 + 테두리): 큰 구멍 고리 날개 둘 · 청록 축 2×2 · 아래 평평 · 곧은 막대에 이는 한쪽만. 쓴 것 = 회색, 보너스 = 금 테두리', status: 'review' },
   { item: '종이 왕관', rule: '제미나이 대기 (발주서 H, 폰 머리 폭). 지금 그림은 자리 표시', status: 'wait' },
   { item: '화살표', rule: '흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐·2칸 꺼짐)이 0.07초에 한 칸씩 끝 쪽으로 흐른다 + 도트 화살촉', status: 'review' },
   { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로 충분', status: 'done' },
@@ -81,6 +81,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 25, date: '2026-10-30', items: ['태엽: 날개 구멍 크게(고리처럼), 날개 아래 평평하게, 막대 곧고 길게 + 이는 한쪽만 — 하트처럼 보이던 실루엣 정리'] },
   { v: 24, date: '2026-10-30', items: ['태엽 3종: 제미나이 I 디자인(구멍 날개 + 청록 축 + 이 달린 막대)을 대칭으로 다시 찍음'] },
   { v: 23, date: '2026-10-30', items: ['지형 소품 5종 모두 제미나이 그림: 고철 더미·덫 6차 추가', '승강판·방패벽·나사 상자 빠진 흰·검정 테두리 메움'] },
   { v: 22, date: '2026-10-30', items: ['지형 소품 승강판·방패벽·나사 상자 = 제미나이 B7 5차 (고철 더미·덫은 폭이 칸보다 커서 대기)'] },
