@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 43, date: '2026-10-30' };
+export const VERSION = { n: 44, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,6 +48,7 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
+  '화면 디자인 (「화면 디자인」 갤러리): 버튼·패널 재질, 지도 가로 흐름, 인트로 연출 — 인트로 배경은 목업 (사용자 에셋으로 교체 예정)',
   '이형 표식 문양 (컨베이어 ≫ · 쇠망치 T · 반사경 V · 방열 ≡) — 알아보기 쉬운지, 이형 기물 그림을 따로 줄지',
   '지형 소품: 지금 그림은 불합격 — 방향(쓸지 말지, 어떤 모양)을 다시 정해 주세요',
   '흐르는 화살표 · 검은 재 처치 · 아래부터 지워지는 피해 숫자 — 게임에 들어가 있음, 이상하면 말해 주세요',
@@ -56,6 +57,9 @@ export const OPEN_QUESTIONS: string[] = [
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   // 보는 중 · 대기
   { item: '지형 소품', rule: '불합격 (사용자: 디자인 자체가 별로) — 방향을 다시 정할 때까지 판에 올리지 않는다', status: 'pick' },
+  { item: 'UI 부품', rule: '9-slice 도트 (tools/draw-ui.py): 버튼 철·황동·진홍·청록 (위 빛·아래 깊이 2도트, 누르면 내려감) · 리벳 철판 패널 · 황동 이름판 · 누런 명령 테이프 · 움푹한 칸. 아이콘 = 공개 픽토그램 도트를 색으로 칠함', status: 'review' },
+  { item: '행동력 표시', rule: '날개 → 태엽 감개 (남음 · 씀 · 이번 턴 보너스)', status: 'review' },
+  { item: '타이틀·인트로', rule: '공장 배경 도트 목업(시계 문자판·톱니·도장 프레스·컨베이어·용광로 불티) — 정품 폰 8기가 「규격」 도장 → 아홉째 폰에서 붉은 사선 → 로고. 누르면 건너뜀, 움직임 줄이기면 바로 타이틀', status: 'review' },
   { item: '이형 표식', rule: '이형 거푸집 기물: 오른쪽 위 7도트 검정 바탕 + 황동 문양 (컨베이어 ≫ · 쇠망치 T · 반사경 V · 방열 ≡). 길게 누르면 이름·효과·대가', status: 'review' },
   { item: '적 의도 표시', rule: '기본 = 붉은 흐르는 화살표 + 순번 + 맞을 내 기물의 HP 게이지 잃을 몫 + 처치될 기물만 금색 숫자. 적 기물을 누르면 모든 피해 숫자. 내 기물을 고르는 동안은 거의 숨김(0.12). 칼·해골 토큰은 없앰 (정보 중복·기물 가림)', status: 'review' },
   { item: '화살표', rule: '흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐·2칸 꺼짐)이 0.07초에 한 칸씩 끝 쪽으로 흐른다 + 도트 화살촉', status: 'review' },
@@ -81,6 +85,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 44, date: '2026-10-30', items: ['화면 디자인 전체 (D-085): 인트로·타이틀·메뉴·시작 세트·공정 지도·보상·고물상·공방·운명 기관·사건·전투 레일·일시 정지·결과 — 「화면 디자인」 갤러리', 'UI 부품 도트 (버튼 4색·철판 패널·황동 이름판·명령 테이프), 태엽 감개로 행동력 표시, 세계 용어 전면 적용'] },
   { v: 43, date: '2026-10-30', items: ['이형 거푸집 표식 4종 (판 칸 · 판 위 표식 목록)'] },
   { v: 42, date: '2026-10-30', items: ['판 정보 줄이기: 칼·해골 토큰 삭제, 적 의도는 과녁·숫자 대신 HP 게이지 + 처치만 금색 숫자, 적을 누르면 숫자, 내 기물 고르는 중엔 의도 거의 숨김'] },
   { v: 41, date: '2026-10-30', items: ['FX 랩 정리: 판 바꾸기(지금·제미나이 S0) 없앰 · 판 위 지형 소품 뺌 · 폐기 시안(왕관·제미나이 칸) 목록에서 뺌 · 결정표 중복 정리(확정은 접음) · 기록은 최근 4개만'] },

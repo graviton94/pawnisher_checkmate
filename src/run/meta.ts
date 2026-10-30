@@ -16,20 +16,20 @@ export interface MetaState {
 
 /** 승천 단계별 제약 (누적). 0 = 기본 */
 export const ASCENSIONS = [
-  '기본',
-  '적 일반 군단 +1기',
-  '전투 골드 보상 −15%',
-  '엘리트 인챈트 +1 · 엘리트 AI 최고 단계 · 적 다음 수 미리보기 없음',
+  '기본 압력',
+  '시험용 흑 세트 +1기',
+  '대국 보상 나사 −15%',
+  '정밀 검수 개조 +1 · 정밀 검수 솜씨 최고 · 테이프 감청(적 다음 수) 없음',
   '적 킹 약화 보정 축소 (+10%p)',
-  '보스 대장간 전 유형 +1',
+  '반장 거푸집 전 유형 +1',
 ];
 export const MAX_ASCENSION = ASCENSIONS.length - 1;
 
 /** 해금되는 시작 덱 후보 (기본 3종은 run.ts의 START_DECKS) */
 export const UNLOCK_DECKS: { id: string; name: string; deck: Deck; need: string; ok: (m: MetaState) => boolean }[] = [
-  { id: 'cavalry', name: '기병 출발', deck: ['K', 'N', 'N'], need: 'Act 2 도달', ok: (m) => m.bestFloor >= 13 },
-  { id: 'clergy', name: '사제 출발', deck: ['K', 'B', 'B'], need: 'Act 3 도달', ok: (m) => m.bestFloor >= 25 },
-  { id: 'tower', name: '성탑 출발', deck: ['K', 'R', 'P'], need: '등반 완료', ok: (m) => m.clears >= 1 },
+  { id: 'cavalry', name: '기병 세트', deck: ['K', 'N', 'N'], need: '조립 공정 도달', ok: (m) => m.bestFloor >= 13 },
+  { id: 'clergy', name: '사제 세트', deck: ['K', 'B', 'B'], need: '검수 공정 도달', ok: (m) => m.bestFloor >= 25 },
+  { id: 'tower', name: '성채 세트', deck: ['K', 'R', 'P'], need: '출하 완료', ok: (m) => m.clears >= 1 },
 ];
 
 const KEY = 'pawnisher.meta.v1';

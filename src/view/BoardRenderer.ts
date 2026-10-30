@@ -715,7 +715,7 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         if (cur.stronghold && isFallen(cur, cur.stronghold.x, cur.stronghold.y)) cur.stronghold = null;
-        this.announce('대성당이 무너집니다 — 칸 한 쌍 붕괴');
+        this.announce('작업대가 무너집니다 — 칸 한 쌍 붕락');
         this.shake(300, 0.008);
         this.drawTiles(cur);
         await Promise.all(
@@ -732,7 +732,7 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'suddenDeath') {
-        this.announce('더 무너질 곳이 없다 — 대성당이 킹을 짓누릅니다');
+        this.announce('더 무너질 곳이 없다 — 작업대이 킹을 짓누릅니다');
         this.shake(250, 0.006);
         for (const h of e.hits) {
           const sp = this.sprites.get(h.pieceId);
@@ -758,7 +758,7 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'stall') {
-        this.announce(e.count >= e.need ? '정체 — 대성당이 무너지기 시작합니다' : `정체 ${e.count}/${e.need} — 이번 라운드도 피해가 없으면 판이 무너지기 시작합니다`);
+        this.announce(e.count >= e.need ? '정체 — 작업대가 무너지기 시작합니다' : `정체 ${e.count}/${e.need} — 이번 턴도 피해가 없으면 판이 무너지기 시작합니다`);
         continue;
       }
       if (e.type === 'strongholdSpawn') {
@@ -782,13 +782,13 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'awaken') {
-        this.announce(`${e.side === 0 ? '내' : '적'} 킹 각성 — 최후의 일격 1회`);
+        this.announce(`${e.side === 0 ? '내' : '적'} 킹 폭주 준비 — 폭주 1회`);
         const sp = this.sprites.get(e.pieceId);
         if (sp) await this.tween({ targets: sp.root, scale: { from: 1, to: 1.25 }, yoyo: true, duration: 220 });
         continue;
       }
       if (e.type === 'lastStrike') {
-        this.announce('최후의 일격!');
+        this.announce('폭주!');
         continue;
       }
       if (e.type === 'move') {
@@ -846,7 +846,7 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'fuse') {
         const a = this.sprites.get(e.pieceId);
         const b = this.sprites.get(e.partnerId);
-        this.announce('합체!');
+        this.announce('결합!');
         if (a && b) {
           await this.tween({ targets: b.root, x: a.root.x, y: a.root.y, alpha: 0.2, duration: 260, ease: 'Quad.easeIn' });
           b.root.destroy();

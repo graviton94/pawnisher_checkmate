@@ -140,7 +140,7 @@ describe('보상과 노드', () => {
     toNode(run, 'forge');
     run.gold = 10000;
     for (let i = 0; i < 5; i++) expect(forgeUp(run, 'K')).toBeUndefined();
-    expect(forgeUp(run, 'K')).toBe('이미 완전 강화(+5)');
+    expect(forgeUp(run, 'K')).toBe('이미 완성 거푸집(+5)');
     expect(run.gold).toBe(10000 - FORGE_COST.reduce((a, b) => a + b, 0));
   });
   it('크랙 제단: 꽝이 쌓이면 다음 제단에서 원하는 인챈트 확정', () => {

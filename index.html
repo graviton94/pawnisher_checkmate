@@ -7,35 +7,32 @@
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <title>Pawnisher : Checkmate</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="app">
     <main id="board"></main>
     <aside id="right" class="rail">
       <div class="rail-head">
-        <span id="turn-label" class="turn-label">내 차례 · 예약</span>
-        <button id="btn-enchant" class="btn btn-ghost btn-enchant" type="button">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.5 L9.8 6 L14.5 6.2 L10.8 9.1 L12.1 13.8 L8 11.1 L3.9 13.8 L5.2 9.1 L1.5 6.2 L6.2 6 Z"/></svg>
-          인챈트
-        </button>
+        <span id="turn-label" class="plate turn-label">내 차례</span>
+        <button id="btn-enchant" class="btn sq" type="button" aria-label="개조 보기"><i class="icon" style="-webkit-mask-image:url(ui/icons/wrench.png);mask-image:url(ui/icons/wrench.png)"></i></button>
+        <button id="btn-pause" class="btn sq" type="button" aria-label="일시 정지"><i class="icon" style="-webkit-mask-image:url(ui/icons/watch.png);mask-image:url(ui/icons/watch.png)"></i></button>
       </div>
       <ol id="queue" class="queue"></ol>
       <div id="cards" class="cards"></div>
-      <div id="vials" class="vials" aria-label="남은 AP"></div>
+      <div id="vials" class="springs" aria-label="남은 태엽"></div>
       <div class="actions">
-        <button id="btn-undo" class="btn btn-ghost btn-icon" type="button" aria-label="마지막 예약 되돌리기" title="되돌리기 (Z)">
-          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5 L3 10 L8 15"/><path d="M3 10 H13 A5 5 0 0 1 13 20 H9"/></svg>
+        <button id="btn-undo" class="btn sq" type="button" aria-label="마지막 명령 되돌리기" title="되돌리기 (Z)">
+          <svg width="24" height="24" viewBox="0 0 12 12" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M4 2h1v1H4zM3 3h1v1H3zM2 4h1v1H2zM3 5h1v1H3zM4 6h1v1H4zM3 4h6v1H3zM9 5h1v1H9zM10 6h1v3h-1zM9 9h1v1H9zM5 10h4v1H5z"/></svg>
         </button>
-        <button id="btn-reset" class="btn btn-ghost btn-icon" type="button" aria-label="예약 전체 초기화" title="초기화 (R)">
-          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5 L17 17 M17 5 L5 17"/></svg>
+        <button id="btn-reset" class="btn sq" type="button" aria-label="명령 테이프 비우기" title="초기화 (R)">
+          <svg width="24" height="24" viewBox="0 0 12 12" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M2 2h2v1H2zM3 3h2v1H3zM4 4h2v1H4zM5 5h2v2H5zM6 4h2v1H6zM7 3h2v1H7zM8 2h2v1H8zM4 7h2v1H4zM3 8h2v1H3zM2 9h2v1H2zM6 7h2v1H6zM7 8h2v1H7zM8 9h2v1H8z"/></svg>
         </button>
-        <button id="btn-submit" class="btn btn-submit" type="button" title="제출 (Space)">SUBMIT</button>
+        <button id="btn-submit" class="btn brass btn-go" type="button" title="가동 (Space)"><i class="icon" style="-webkit-mask-image:url(ui/icons/lever.png);mask-image:url(ui/icons/lever.png)"></i>가동</button>
       </div>
     </aside>
   </div>
 
+  <div id="scene" class="scene" hidden></div>
   <div id="info" class="info" hidden></div>
   <div id="toast" class="toast" hidden></div>
 

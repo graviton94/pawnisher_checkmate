@@ -11,7 +11,7 @@ export const TOTAL_FLOORS = FLOORS_PER_ACT * ACTS;
 /** 층(1~36)이 속한 Act (1~3)와 Act 안에서의 층 (1~12) */
 export const actOf = (floor: number): number => Math.ceil(floor / FLOORS_PER_ACT);
 export const inAct = (floor: number): number => ((floor - 1) % FLOORS_PER_ACT) + 1;
-export const ACT_NAMES = ['서막', '격돌', '초월'];
+export const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'];
 
 /** 런 시작 덱 후보 (GDD 6장 §6.3) */
 export const START_DECKS: Deck[] = [
@@ -24,13 +24,13 @@ export const START_GOLD = 50;
 export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' | 'event';
 
 export const NODE_NAMES: Record<NodeKind, string> = {
-  battle: '전투',
-  elite: '엘리트',
-  boss: '보스',
-  shop: '상점',
-  forge: '대장간',
-  altar: '크랙 제단',
-  event: '이벤트',
+  battle: '검수 대국',
+  elite: '정밀 검수',
+  boss: '반장 대국',
+  shop: '고물상',
+  forge: '공방',
+  altar: '운명 기관',
+  event: '사건',
 };
 
 /** 노드 등장 가중치 (층마다 2~3개를 뽑는다). */
@@ -193,8 +193,8 @@ export interface BossDef {
 
 export const BOSSES: Record<BossId, BossDef> = {
   knight: {
-    name: '기병 군주',
-    title: '나이트 4기 · 천둥기병',
+    name: '나이트 반장',
+    title: '나이트 4기 · 방전 기병',
     // 나이트 4 = 초과 2 × (25 + 세금 10) = 70 → 비숍 2(50) + 폰 2(20) 희생
     deck: ['K', 'Q', 'R', 'R', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E01: 3 },
@@ -202,15 +202,15 @@ export const BOSSES: Record<BossId, BossDef> = {
     forge: { N: 2 },
   },
   bishop: {
-    name: '사선의 대주교',
-    title: '비숍 4기 · 프리즘 레이저',
+    name: '비숍 반장',
+    title: '비숍 4기 · 집광 렌즈',
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
     enchants: { E02: 3 },
     cards: ['A03'],
     forge: { B: 2 },
   },
   rook: {
-    name: '강철 성주',
+    name: '룩 반장',
     title: '룩 3기 · 폭주 기관차',
     // 룩 3 = 초과 1 × (40 + 세금 10) = 50 → 나이트 2(50) 희생
     deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
@@ -222,8 +222,8 @@ export const BOSSES: Record<BossId, BossDef> = {
 
 /** 36층 최종 보스 (10×10 대성당 전면전). 퀸 2기 · 연쇄 지휘 ★ · 근위대 결속 */
 export const FINAL_BOSS: BossDef = {
-  name: '균열의 왕',
-  title: '퀸 2기 · 그랜드 피날레 · 근위대 결속',
+  name: '공장장',
+  title: '퀸 2기 · 대단원 · 호위 리벳',
   // 퀸 2 = 초과 1 × (60 + 세금 10) = 70 → 나이트 1(25) + 비숍 1(25) + 폰 2(20) 희생
   deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
   enchants: { E05: 3, E08: 3, E06: 2 },

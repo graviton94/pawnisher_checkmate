@@ -37,8 +37,10 @@ controller = new BattleController(renderer, hud);
 hud.bind(controller);
 const runUi = new RunUi(hud, controller);
 hud.onMenu = () => runUi.showMenu();
-runUi.showMenu();
+// 앱을 열면 인트로 → 타이틀 (관찰 도구는 ?nointro로 바로 타이틀)
+runUi.showTitle(!new URLSearchParams(location.search).has('nointro'));
 
 if (new URLSearchParams(location.search).has('debug')) {
-  (window as unknown as { pawnisher: BattleController }).pawnisher = controller;
+  (window as unknown as { pawnisher: BattleController; runUi: RunUi }).pawnisher = controller;
+  (window as unknown as { runUi: RunUi }).runUi = runUi;
 }

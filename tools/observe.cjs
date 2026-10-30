@@ -6,20 +6,38 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const OUT = path.join(__dirname, '..', 'production', 'qa', 'evidence');
-const URL = process.env.OBSERVE_URL || 'http://localhost:4173/?debug';
+const URL = process.env.OBSERVE_URL || 'http://localhost:4173/?debug&nointro';
 const stamp = new Date().toISOString().slice(0, 10);
 
 const runFixture = (stage) => ({
   version: 1, seed: 5, rng: 5, floor: 3, map: Array.from({ length: 36 }, () => [{ kind: 'battle' }, { kind: 'shop' }]), path: [],
-  gold: 120, deck: ['K', 'N', 'N', 'P', 'P', 'B'], loadout: { enchants: { E01: 1, E13: 2 }, cards: ['A01', 'C03'], forge: { N: 1 } },
+  gold: 120, deck: ['K', 'N', 'N', 'P', 'P', 'B'], loadout: { enchants: { E01: 1, E13: 2 }, cards: ['A01', 'C03'], forge: { N: 1 }, variants: {} },
   wins: 2, crackGauge: 1, bosses: ['knight', 'rook'], ascension: 0, stage,
 });
+
+/** 저장된 출하를 심고 타이틀 → 이어서 출하 */
+const loadRun = async (page, stage, extra = {}) => {
+  await page.evaluate((run) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); }, { ...runFixture(stage), ...extra });
+  await page.reload(); await page.waitForTimeout(600);
+  await page.tap('[data-title]'); await page.waitForTimeout(300);
+  await page.tap('[data-continue]'); await page.waitForTimeout(500);
+};
 
 const scenarios = {
   async menu(page) {
     await page.evaluate(() => localStorage.clear());
-    await page.reload(); await page.waitForTimeout(800);
+    await page.reload(); await page.waitForTimeout(600);
+    await page.tap('[data-title]'); await page.waitForTimeout(400);
     return ['menu'];
+  },
+  // 타이틀 · 인트로 (D-085): 인트로 중간(도장 · 붉은 사선) · 끝난 타이틀
+  async title(page) {
+    await page.goto(URL.replace('&nointro', '')); await page.waitForTimeout(2400);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-intro-mid.png`) });
+    await page.waitForTimeout(2140);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-intro-slash.png`) });
+    await page.waitForTimeout(1600);
+    return ['title'];
   },
   async start(page) {
     await scenarios.menu(page);
@@ -130,19 +148,53 @@ const scenarios = {
     }
     return [];
   },
+  // 일시 정지 · 시운전 (D-085)
+  async pause(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-trial.png`) });
+    await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(800);
+    await page.tap('#btn-pause'); await page.waitForTimeout(300);
+    return ['pause'];
+  },
+  // 출하 화면들 (D-085): 저장된 출하를 심고 → 타이틀 → 이어서 출하
   async reward(page) {
-    await page.evaluate((run) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); },
-      runFixture({ at: 'reward', title: '3층 승리', lines: ['골드 +34'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] }));
-    await page.reload(); await page.waitForTimeout(700);
-    await page.tap('[data-continue]'); await page.waitForTimeout(300);
-    return ['reward-piece'];
+    await loadRun(page, { at: 'reward', title: '3층 승리', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E13', 'E15', 'E16'] }] });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });
+    await page.tap('[data-pick="N"]'); await page.waitForTimeout(400);
+    return ['reward-enchant'];
+  },
+  async map(page) {
+    await loadRun(page, { at: 'map' }, { floor: 4, path: [0, 1, 0], map: Array.from({ length: 36 }, (_, i) => (i % 4 === 0 ? [{ kind: 'battle' }, { kind: 'elite' }, { kind: 'event', event: 'gambler' }] : i % 4 === 1 ? [{ kind: 'battle' }, { kind: 'shop' }] : i % 4 === 2 ? [{ kind: 'forge' }, { kind: 'battle' }, { kind: 'altar' }] : [{ kind: 'battle' }, { kind: 'event', event: 'smith' }])).map((f, i) => ((i + 1) % 12 === 0 ? [{ kind: 'boss' }] : f)) });
+    return ['map'];
   },
   async shop(page) {
-    await page.evaluate((run) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); }, runFixture({ at: 'map' }));
-    await page.reload(); await page.waitForTimeout(700);
-    await page.tap('[data-continue]'); await page.waitForTimeout(300);
-    await page.tap('[data-node="1"]'); await page.waitForTimeout(300);
+    await loadRun(page, { at: 'map' });
+    await page.tap('[data-node="1"]'); await page.waitForTimeout(400);
     return ['shop'];
+  },
+  async forge(page) {
+    await loadRun(page, { at: 'forge' }, { gold: 300, loadout: { enchants: { E01: 1 }, cards: ['A01'], forge: { N: 3, P: 1 }, variants: {} } });
+    return ['forge'];
+  },
+  async altar(page) {
+    await loadRun(page, { at: 'altar' });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-altar.png`) });
+    await page.tap('[data-gamble]'); await page.waitForTimeout(400);
+    return ['altar-result'];
+  },
+  async event(page) {
+    await loadRun(page, { at: 'event', id: 'gambler' });
+    return ['event'];
+  },
+  async over(page) {
+    await scenarios.menu(page);
+    await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-over-lose.png`) });
+    await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: true }), floor: 36 });
+    await page.waitForTimeout(600);
+    return ['over-win'];
   },
 };
 

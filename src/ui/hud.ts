@@ -8,6 +8,10 @@ import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../d
 import { FORGE_MAX } from '../data/forge';
 import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 import { VARIANTS } from '../data/variants';
+import { TEXT } from '../data/text';
+import { Backdrop } from './backdrop';
+import { button, icon } from './chrome';
+import { setSfx, sfxOn } from '../audio/sfx';
 
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -26,15 +30,15 @@ const describeStep = (s: BattleState, m: PlanStep): string => {
     case 'castle':
       return `${from} ⇄ ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })}${cardName(m.card)}`;
     case 'shield':
-      return `${from} 보호막${cardName(m.card)}`;
+      return `${from} 방열판${cardName(m.card)}`;
     case 'gate':
       return `${from} ⇢ ${toSquare(m.to)}${cardName(m.card)}`;
     case 'promote':
       return `${from} 퀸 승급${cardName(m.card)}`;
     case 'fuse':
-      return `${from} + ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })} 합체${cardName(m.card)}`;
+      return `${from} + ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })} 결합${cardName(m.card)}`;
     case 'formShift':
-      return `${from} ⇄ 폼 시프트${cardName(m.card)}`;
+      return `${from} ⇄ 거푸집 교환${cardName(m.card)}`;
   }
 };
 
@@ -48,9 +52,12 @@ export class Hud implements HudView {
   /** 메인 메뉴로 (등반 화면이 설정) */
   onMenu: (() => void) | null = null;
   private enemyMirror = false;
+  /** 타이틀·메뉴·출하 화면 뒤 공장 배경 */
+  readonly backdrop = new Backdrop(document.body);
 
   bind(c: BattleController): void {
     this.c = c;
+    $('btn-pause').addEventListener('click', () => this.showPause());
     $('btn-undo').addEventListener('click', () => c.undo());
     $('btn-reset').addEventListener('click', () => c.reset());
     $('btn-submit').addEventListener('click', () => {
@@ -97,16 +104,16 @@ export class Hud implements HudView {
       const armed = c.mode?.kind === 'card' && c.mode.card === i;
       const lim = def.limit;
       const status = slot.spent
-        ? lim.type === 'consume' ? '사용함' : '이번 라운드 사용함'
+        ? lim.type === 'consume' ? '탔음' : '이번 대국 씀'
         : slot.cooldown > 0
-          ? `쿨타임 ${slot.cooldown}`
-          : lim.type === 'consume' ? '1회용' : lim.type === 'round' ? '라운드 1회' : `쿨타임 ${lim.turns}`;
+          ? `냉각 ${slot.cooldown}`
+          : lim.type === 'consume' ? '종이 · 한 번' : lim.type === 'round' ? '대국당 1회' : `냉각 ${lim.turns}턴`;
       const off = slot.spent || slot.cooldown > 0 || c.phase !== 'plan';
       slots.push(
         `<button type="button" class="card ${slot.id[0] === 'C' ? 'consume' : ''}${armed ? ' armed' : ''}" data-card="${i}" ${off ? 'disabled' : ''}>
           <span class="card-name">${def.name}</span>
           <span class="card-desc">${def.desc}</span>
-          <span class="card-tag">${def.ap ? `AP ${def.ap} · ` : ''}${status}</span>
+          <span class="card-tag">${def.ap ? `태엽 ${def.ap} · ` : ''}${status}</span>
         </button>`,
       );
     });
@@ -114,8 +121,8 @@ export class Hud implements HudView {
       const armed = c.mode?.kind === 'fuse';
       slots.push(
         `<button type="button" class="card wide${armed ? ' armed' : ''}" data-card="fuse" ${c.phase !== 'plan' ? 'disabled' : ''}>
-          <span class="card-name">합체 · ${ENCHANTS.E11.name}</span>
-          <span class="card-tag">AP ${(c.state.loadouts[0].enchants.E11 ?? 0) >= 3 ? 0 : CARDS.C05.ap}</span>
+          <span class="card-name">결합 · ${ENCHANTS.E11.name}</span>
+          <span class="card-tag">태엽 ${(c.state.loadouts[0].enchants.E11 ?? 0) >= 3 ? 0 : CARDS.C05.ap}</span>
         </button>`,
       );
     }
@@ -129,8 +136,9 @@ export class Hud implements HudView {
     const mine = c.phase === 'plan';
     // 정체 압박 (D-072): 피해 없는 라운드가 이어지면 "정체 n/2" — 다 차면 판이 무너지기 시작한다
     const stall = c.state.stall?.count ?? 0;
-    const stallTag = stall > 0 && c.phase !== 'over' ? ` · 정체 ${Math.min(stall, STALL.rounds)}/${STALL.rounds}` : '';
-    label.textContent = (c.phase === 'over' ? '전투 종료' : mine ? `${Math.ceil(c.state.turnNumber / 2)}턴 · 내 차례` : c.state.turnSide === 1 ? '적 차례' : '실행 중') + stallTag;
+    const stallTag = stall > 0 && c.phase !== 'over' ? ` · ${TEXT.battle.stall} ${Math.min(stall, STALL.rounds)}/${STALL.rounds}` : '';
+    const B = TEXT.battle;
+    label.textContent = (c.phase === 'over' ? B.over : mine ? `${Math.ceil(c.state.turnNumber / 2)}턴 · ${B.mine}` : c.state.turnSide === 1 ? B.enemy : B.running) + stallTag;
     label.classList.toggle('enemy', !mine && c.phase !== 'over');
 
     // 예약 목록 (순번 · 기물 · 좌표 이동)
@@ -142,7 +150,7 @@ export class Hud implements HudView {
       if (!p) return;
       const pending = c.pending !== null && i === full.length - 1;
       rows.push(
-        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 26)}</span><span>${describeStep(c.state, m)}</span></li>`,
+        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 24)}</span><span>${describeStep(c.state, m)}</span></li>`,
       );
     });
     if (!rows.length && mine && c.log.length) {
@@ -159,17 +167,20 @@ export class Hud implements HudView {
     }
     if (!rows.length && mine) {
       const hint = ench(c.state, 0, 'E16') || (c.state.rules.foresight ?? 0) > 0
-        ? '<span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수 · 깜빡이는 HP = 잃을 몫 · 적을 누르면 피해 숫자</span>'
-        : '<span style="color:var(--muted)">적 기물을 누르면 위협 범위가 보입니다</span>';
-      rows.push(`<li class="empty">기물을 눌러 이동을 예약하세요<br>${hint}</li>`);
+        ? `<span class="hint">${TEXT.battle.hintIntent}</span>`
+        : `<span class="hint muted">${TEXT.battle.hintThreat}</span>`;
+      rows.push(`<li class="empty">${TEXT.battle.hintPlan}<br>${hint}</li>`);
     }
     q.innerHTML = rows.join('');
 
-    // AP 진공관 (숫자 없이)
+    // 태엽 (숫자 없이): 남음 = 감긴 태엽, 씀 = 풀린 태엽, 기본을 넘는 칸 = 이번 턴 보너스(요충지 등)
     const total = c.apTotal;
     const left = total - checkPlan(c.state, full).apUsed;
-    // 기본 AP를 넘는 칸은 이번 턴 보너스(요충지 등) — 황동색
-    $('vials').innerHTML = Array.from({ length: total }, (_, i) => `<div class="wing${i < left ? ' full' : ''}${i >= BASE_AP ? ' bonus' : ''}"></div>`).join('');
+    $('vials').innerHTML = Array.from({ length: total }, (_, i) => {
+      const k = i >= left ? 'spent' : i >= BASE_AP ? 'bonus' : 'full';
+      return `<img class="${k}" src="ui/hud/key-${k}.png" alt="">`;
+    }).join('');
+    $('vials').setAttribute('aria-label', `남은 태엽 ${left} / ${total}`);
 
     ($('btn-undo') as HTMLButtonElement).disabled = !mine || !c.plan.length;
     ($('btn-reset') as HTMLButtonElement).disabled = !mine || !c.plan.length;
@@ -188,15 +199,15 @@ export class Hud implements HudView {
     const el = $('info');
     const side = p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>';
     const extra: string[] = [];
-    if (p.fused) extra.push(`합체: ${p.fused.map((ty) => PIECE_NAMES_KO[ty]).join(' + ')}`);
-    if (p.formAs) extra.push(`폼 시프트: ${PIECE_NAMES_KO[p.formAs]} 행마`);
+    if (p.fused) extra.push(`결합: ${p.fused.map((ty) => PIECE_NAMES_KO[ty]).join(' + ')}`);
+    if (p.formAs) extra.push(`거푸집 교환: ${PIECE_NAMES_KO[p.formAs]} 행마`);
     if (p.variant && p.type === VARIANTS[p.variant].base) extra.push(`<span class="variant">이형 · ${VARIANTS[p.variant].name}</span><br><small>${VARIANTS[p.variant].gain} (${VARIANTS[p.variant].cost})</small>`);
     const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
-    if (forge) extra.push(`대장간 +${forge}`);
+    if (forge) extra.push(`거푸집 개량 +${forge}`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';
-    const buff = p.buffTurns > 0 ? `<br>버프: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
+    const buff = p.buffTurns > 0 ? `<br>요충지 가호: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
     const name = p.variant && p.type === VARIANTS[p.variant].base ? VARIANTS[p.variant].name : PIECE_NAMES_KO[p.type];
-    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${name}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 보호막 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크메이트: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
+    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${name}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '안전 밸브: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
@@ -230,21 +241,86 @@ export class Hud implements HudView {
     $('overlay').hidden = true;
   }
 
+  /** 전체 화면 장면 (타이틀·메뉴·출하 화면): 공장 배경 위에 그린다 */
+  openScene(html: string, cls = '', backdrop: 'title' | 'dim' = 'dim'): HTMLElement {
+    const el = $('scene');
+    el.className = `scene fade-in ${cls}`;
+    el.innerHTML = html;
+    el.hidden = false;
+    this.closeOverlay();
+    if (backdrop === 'title' && this.backdrop.introTime() >= 0) {
+      // 인트로가 돌고 있으면 그대로 둔다
+    } else this.backdrop.show(backdrop);
+    return el;
+  }
+
+  /** 장면을 닫고 전투 화면으로 */
+  closeScene(): void {
+    $('scene').hidden = true;
+    this.backdrop.hide();
+  }
+
+  /** 일시 정지 (전투 중): 계속 · 개조 보기 · 설정 · 메인 메뉴로 */
+  private showPause(): void {
+    const P = TEXT.pause;
+    const panel = this.openOverlay(`
+      <h2>${P.title}</h2>
+      <div class="col">
+        ${button(P.resume, 'data-resume', { tone: 'brass', cls: 'wide' })}
+        ${button(P.enchants, 'data-ench', { icon: 'wrench', cls: 'wide' })}
+        ${button(TEXT.menu.settings, 'data-settings', { icon: 'watch', cls: 'wide' })}
+        ${button(P.toMenu, 'data-menu', { small: P.toMenuDesc, cls: 'wide' })}
+      </div>`);
+    panel.querySelector('[data-resume]')!.addEventListener('click', () => this.closeOverlay());
+    panel.querySelector('[data-ench]')!.addEventListener('click', () => this.showEnchants());
+    panel.querySelector('[data-settings]')!.addEventListener('click', () => this.showSettings(() => this.showPause()));
+    panel.querySelector('[data-menu]')!.addEventListener('click', () => {
+      this.closeOverlay();
+      this.onMenu?.();
+    });
+  }
+
+  /** 설정: 효과음 · 인트로 다시 보기 */
+  showSettings(back: () => void): void {
+    const S = TEXT.settings;
+    const panel = this.openOverlay(`
+      <h2>${S.title}</h2>
+      <div class="col">
+        ${button(`${S.sfx}: ${sfxOn() ? S.on : S.off}`, 'data-sfx', { icon: 'bell', cls: 'wide' })}
+        ${this.onIntro ? button(S.intro, 'data-intro', { icon: 'watch', cls: 'wide' }) : ''}
+        ${button(S.close, 'data-close', { tone: 'brass', cls: 'wide' })}
+      </div>`);
+    panel.querySelector('[data-sfx]')!.addEventListener('click', () => {
+      setSfx(!sfxOn());
+      if (sfxOn()) sfx('submit');
+      this.showSettings(back);
+    });
+    panel.querySelector('[data-intro]')?.addEventListener('click', () => {
+      this.closeOverlay();
+      this.onIntro?.();
+    });
+    panel.querySelector('[data-close]')!.addEventListener('click', back);
+  }
+  /** 인트로 다시 보기 (등반 화면이 설정) */
+  onIntro: (() => void) | null = null;
+
   private showEnchants(): void {
     const lo = this.c.state?.loadouts?.[0];
     const held = lo ? (Object.entries(lo.enchants) as [EnchantId, number][]).filter(([, n]) => n > 0) : [];
     const rows = held.map(([id, n]) => {
       const def = ENCHANTS[id];
-      const lv = def.levels.map((d, i) => `<li class="${i < n ? 'on' : ''}">${i + 1}장 · ${d}</li>`).join('');
-      return `<div class="ench"><b>${def.name}</b> <small>${def.target} · ${n}/${ENCHANT_MAX_STACK}${n >= 3 ? ' ★' : ''}</small><ul>${lv}</ul></div>`;
+      const lv = def.levels.map((d, i) => `<li class="${i < n ? 'on' : ''}">${i + 1}단 · ${d}</li>`).join('');
+      return `<div class="ench panel9"><b>${def.name}</b> <small>${def.target} · ${n}/${ENCHANT_MAX_STACK}단${n >= 3 ? ' ★걸작' : ''}</small><ul>${lv}</ul></div>`;
     });
     const forge = lo ? (Object.entries(lo.forge) as [PieceType, number][]).filter(([, n]) => n > 0) : [];
-    const forgeLine = forge.length ? `<p>대장간: ${forge.map(([ty, n]) => `${PIECE_NAMES_KO[ty]} +${n}`).join(' · ')}</p>` : '';
+    const forgeLine = forge.length ? `<p>거푸집 개량: ${forge.map(([ty, n]) => `${PIECE_NAMES_KO[ty]} +${n}`).join(' · ')}</p>` : '';
+    const variants = lo?.variants ? Object.values(lo.variants).map((id) => VARIANTS[id].name) : [];
     const panel = this.openOverlay(`
-      <h2>인챈트</h2>
-      ${rows.length ? rows.join('') : '<p>보유한 인챈트가 없습니다. 전투 선택 화면의 「장비」에서 시험용 인챈트를 고를 수 있습니다.</p>'}
+      <h2>${icon('wrench')} 개조</h2>
+      ${rows.length ? rows.join('') : '<p>달린 개조가 없습니다. 대국에서 이기면 3지선다로 얻습니다.</p>'}
       ${forgeLine}
-      <button class="choice primary" type="button" data-close>닫기</button>`);
+      ${variants.length ? `<p>이형 거푸집: ${variants.join(' · ')}</p>` : ''}
+      ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     panel.querySelector('[data-close]')!.addEventListener('click', () => this.closeOverlay());
   }
 
@@ -256,7 +332,7 @@ export class Hud implements HudView {
       const ench = (Object.keys(ENCHANTS) as EnchantId[])
         .map((id) => {
           const n = lo.enchants[id] ?? 0;
-          return `<button class="chip${n ? ' on' : ''}" type="button" data-ench="${id}"><b>${ENCHANTS[id].name}</b><small>${ENCHANTS[id].target} · ${n ? `${n}장${n >= 3 ? ' ★' : ''}` : '없음'}</small></button>`;
+          return `<button class="chip${n ? ' on' : ''}" type="button" data-ench="${id}"><b>${ENCHANTS[id].name}</b><small>${ENCHANTS[id].target} · ${n ? `${n}단${n >= 3 ? ' ★' : ''}` : '없음'}</small></button>`;
         })
         .join('');
       const cards = (Object.keys(CARDS) as CardId[])
@@ -269,11 +345,11 @@ export class Hud implements HudView {
         })
         .join('');
       const panel = this.openOverlay(`
-        <h2>장비 (시험용)</h2>
-        <p>누를 때마다 단계가 오릅니다. 인챈트 최대 ${ENCHANT_SLOTS}종 · 카드 ${CARD_SLOTS}장.</p>
-        <p class="sub">인챈트 (${enchCount()}/${ENCHANT_SLOTS})</p><div class="chips">${ench}</div>
-        <p class="sub">액티브 카드 (${lo.cards.length}/${CARD_SLOTS})</p><div class="chips">${cards}</div>
-        <p class="sub">대장간</p><div class="chips">${forge}</div>
+        <h2>장비 (시운전)</h2>
+        <p>누를 때마다 단계가 오릅니다. 개조 최대 ${ENCHANT_SLOTS}종 · 천공 카드 ${CARD_SLOTS}장.</p>
+        <p class="sub">개조 (${enchCount()}/${ENCHANT_SLOTS})</p><div class="chips">${ench}</div>
+        <p class="sub">천공 카드 (${lo.cards.length}/${CARD_SLOTS})</p><div class="chips">${cards}</div>
+        <p class="sub">거푸집 개량</p><div class="chips">${forge}</div>
         <div class="row">
           <button class="choice" type="button" data-enemy aria-pressed="${this.enemyMirror}">적도 같은 장비</button>
           <button class="choice" type="button" data-clear>모두 비우기</button>
@@ -283,7 +359,7 @@ export class Hud implements HudView {
         b.addEventListener('click', () => {
           const id = b.dataset.ench as EnchantId;
           const n = lo.enchants[id] ?? 0;
-          if (!n && enchCount() >= ENCHANT_SLOTS) return this.toast(`인챈트는 ${ENCHANT_SLOTS}종까지`);
+          if (!n && enchCount() >= ENCHANT_SLOTS) return this.toast(`개조는 ${ENCHANT_SLOTS}종까지`);
           const next = (n + 1) % (ENCHANT_MAX_STACK + 1);
           if (next) lo.enchants[id] = next;
           else delete lo.enchants[id];
@@ -294,7 +370,7 @@ export class Hud implements HudView {
         b.addEventListener('click', () => {
           const id = b.dataset.cardpick as CardId;
           if (lo.cards.includes(id)) lo.cards = lo.cards.filter((x) => x !== id);
-          else if (lo.cards.length >= CARD_SLOTS) return this.toast(`카드는 ${CARD_SLOTS}장까지`);
+          else if (lo.cards.length >= CARD_SLOTS) return this.toast(`천공 카드는 ${CARD_SLOTS}장까지`);
           else lo.cards.push(id);
           draw();
         }),
@@ -335,7 +411,7 @@ export class Hud implements HudView {
     return all.length ? all.join(' · ') + (this.enemyMirror ? ' (적도 동일)' : '') : '없음';
   }
 
-  /** 전투 선택 화면 (그레이박스 테스트용) */
+  /** 시운전: 단판 대국 고르기 (개발·시험용) */
   showStart(): void {
     const sc = (s: Scenario) =>
       `<button class="choice" type="button" data-sc="${s.id}" aria-pressed="${s.id === this.lastScenario.id}">${s.title}<small>${s.desc}</small></button>`;
@@ -343,14 +419,14 @@ export class Hud implements HudView {
     const style = (s: (typeof AI_STYLES)[number]) =>
       `<button class="choice" type="button" data-style="${s.id}" aria-pressed="${s.id === this.lastStyle}">${s.label}</button>`;
     const panel = this.openOverlay(`
-      <h1>PAWNISHER : CHECKMATE</h1>
-      <p>그레이박스 단판 전투 (M4). 기물을 눌러 이동을 예약하고, 같은 칸을 한 번 더 누르면 확정됩니다. 예약한 순서대로 공격합니다. 왼쪽 카드를 누르면 카드 예약을 할 수 있습니다.</p>
+      <h2>${icon('lever')} 시운전</h2>
+      <p>단판 대국. 기물을 눌러 명령을 새기고, 같은 칸을 한 번 더 누르면 확정됩니다. 새긴 순서대로 공격합니다.</p>
       <div class="choices">${SCENARIOS.map(sc).join('')}</div>
-      <p>적 AI</p>
+      <p class="sub">시험용 흑 세트의 솜씨</p>
       <div class="row">${[0, 1, 2].map(tier).join('')}</div>
       <div class="row">${AI_STYLES.map(style).join('')}</div>
-      <button class="choice" type="button" data-loadout>장비 (시험용)<small>${this.loadoutSummary()}</small></button>
-      <div class="row"><button class="choice" type="button" data-back>메뉴</button><button class="choice primary" type="button" data-go>전투 시작</button></div>`);
+      <button class="choice" type="button" data-loadout>장비<small>${this.loadoutSummary()}</small></button>
+      <div class="row"><button class="choice" type="button" data-back>메뉴</button><button class="choice primary" type="button" data-go>대국 시작</button></div>`);
     panel.querySelector('[data-back]')!.addEventListener('click', () => this.onMenu?.());
     panel.querySelector('[data-loadout]')!.addEventListener('click', () => this.showLoadout());
     const press = (attr: string, value: string) =>
@@ -375,6 +451,7 @@ export class Hud implements HudView {
     );
     panel.querySelector('[data-go]')!.addEventListener('click', () => {
       this.closeOverlay();
+      this.closeScene();
       const weights = AI_STYLES.find((s) => s.id === this.lastStyle)!.weights;
       this.c.start(this.lastScenario, this.lastTier, weights, this.loadouts());
     });
@@ -383,7 +460,7 @@ export class Hud implements HudView {
   showResult(winner: Side): void {
     const win = winner === 0;
     const panel = this.openOverlay(`
-      <h1>${win ? 'CHECKMATE' : 'DEFEAT'}</h1>
+      <div class="stamp-big ${win ? 'good' : 'bad'}">${win ? 'CHECKMATE' : '불량 판정'}</div>
       <h2>${win ? '승리 — 적 킹을 쓰러뜨렸습니다' : '패배 — 내 킹이 쓰러졌습니다'}</h2>
       <div class="row">
         <button class="choice" type="button" data-menu>메뉴</button>

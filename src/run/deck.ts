@@ -33,7 +33,7 @@ export const checkDeck = (deck: Deck): DeckCheck => {
   }
   const fail = (reason: string): DeckCheck => ({ ok: false, reason, freeValue, overValue });
   if (count('K') !== 1) return fail('킹은 정확히 1기');
-  if (deck.length > DECK_MAX) return fail(`덱은 최대 ${DECK_MAX}기`);
+  if (deck.length > DECK_MAX) return fail(`군단은 최대 ${DECK_MAX}기`);
   if (overValue > freeValue) return fail('한도 초과 기물의 희생이 부족합니다');
   return { ok: true, freeValue, overValue };
 };
@@ -44,10 +44,10 @@ export const canAdd = (deck: Deck, t: PieceType): boolean => checkDeck([...deck,
 /** 장비 판정: 인챈트 6칸·중첩 3, 카드 4칸, 대장간 +5 (GDD 6·7장) */
 export const checkLoadout = (lo: Loadout): { ok: boolean; reason?: string } => {
   const ench = Object.entries(lo.enchants) as [EnchantId, number][];
-  if (ench.filter(([, n]) => n > 0).length > ENCHANT_SLOTS) return { ok: false, reason: `인챈트는 ${ENCHANT_SLOTS}칸` };
-  if (ench.some(([, n]) => n > ENCHANT_MAX_STACK)) return { ok: false, reason: `인챈트 중첩은 최대 ${ENCHANT_MAX_STACK}` };
+  if (ench.filter(([, n]) => n > 0).length > ENCHANT_SLOTS) return { ok: false, reason: `개조는 ${ENCHANT_SLOTS}칸` };
+  if (ench.some(([, n]) => n > ENCHANT_MAX_STACK)) return { ok: false, reason: `개조 중첩은 최대 ${ENCHANT_MAX_STACK}` };
   if (lo.cards.length > CARD_SLOTS) return { ok: false, reason: `카드는 ${CARD_SLOTS}칸` };
-  if (Object.values(lo.forge).some((n) => (n ?? 0) > FORGE_MAX)) return { ok: false, reason: `강화는 최대 +${FORGE_MAX}` };
+  if (Object.values(lo.forge).some((n) => (n ?? 0) > FORGE_MAX)) return { ok: false, reason: `개량은 최대 +${FORGE_MAX}` };
   return { ok: true };
 };
 

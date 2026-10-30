@@ -44,7 +44,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'trainA',
     title: '온보딩 A · 6×6',
-    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4라운드부터 대성당이 무너집니다.',
+    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4턴부터 작업대가 무너집니다.',
     width: 6,
     height: 6,
     decks: [['K', 'P', 'P', 'P'], ['K', 'P', 'P']],
@@ -62,7 +62,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'full',
     title: '정규 교전 · 8×8',
-    desc: '정통 체스 16기 대 16기. 3·6·9라운드에 요충지, 15라운드부터 붕괴.',
+    desc: '정통 체스 16기 대 16기. 3·6·9턴에 요충지, 15턴부터 붕락.',
     width: 8,
     height: 8,
     decks: [
@@ -407,7 +407,7 @@ export class BattleController {
         this.mode = null;
       } else if (this.mode.kind === 'card') {
         this.hud.toast(CARDS[this.state.cards[this.state.turnSide][this.mode.card].id].desc);
-      } else this.hud.toast('합체할 두 기물을 차례로 누르세요');
+      } else this.hud.toast('결합할 두 기물을 차례로 누르세요');
     }
     this.refresh();
   }
@@ -462,7 +462,7 @@ export class BattleController {
     } else if (mine && !this.plan.some((st) => 'pieceId' in st && st.pieceId === p.id && st.kind !== 'shield' && st.kind !== 'formShift')) {
       this.selectedId = p.id;
       const left = this.apTotal - this.apUsed;
-      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`AP가 부족합니다 (필요 ${moveCost(this.virtual, p)})`);
+      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 부족합니다 (필요 ${moveCost(this.virtual, p)})`);
       else if (!this.options().length) this.hud.toast('갈 수 있는 칸이 없습니다');
     } else {
       this.selectedId = null;

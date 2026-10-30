@@ -78,6 +78,10 @@ td:last-child { width: 1%; }
 @media (max-width: 860px) { .sections { grid-template-columns: minmax(0, 1fr); } }
 .ask { border-color: var(--crimson); }
 .gallery { display: grid; gap: 16px; }
+.screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 12px; }
+.screens figure { margin: 0; display: grid; gap: 6px; }
+.screens img { width: 100%; height: auto; display: block; border: 2px solid #000; image-rendering: auto; }
+.screens figcaption { font-size: 13px; color: var(--muted, #a9a3b5); }
 .g-group h4 { margin: 0 0 8px; font-size: 14px; color: var(--fg); }
 .g-group p { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
 .g-items { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -125,6 +129,11 @@ td:last-child { width: 1%; }
       <details><summary class="muted">이전 기록</summary><ul id="log-old"></ul></details>
     </section>
   </div>
+
+  <section class="panel">
+    <h3>화면 디자인 <span class="muted">— 실제 게임 화면 (모바일 가로 915×412, D-085)</span></h3>
+    <div class="screens">{{SCREENS}}</div>
+  </section>
 
   <section class="panel">
     <h3>에셋 목록 <span class="muted">— 화면 없이 그림만, 도트 1개 = 화면 4px</span></h3>
