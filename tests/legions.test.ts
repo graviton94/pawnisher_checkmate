@@ -161,3 +161,22 @@ describe('반장 전장 규칙 (GDD 11장 A5, D-097)', () => {
     expect(encounterBattle(['K'], lo, e).rules.collapseStart).toBe((plain.rules.collapseStart ?? 0) + 3);
   });
 });
+
+describe('억까·억빠 (D-099)', () => {
+  it('과적은 군단이 1기 많고, 불량 군단은 적 일반 기물이 HP 60%로 시작한다. 1~3층에는 없다', () => {
+    let over = 0;
+    let bad = 0;
+    for (let seed = 1; seed < 600; seed++) {
+      const e = generateEncounter(8, 'battle', new Rng(seed));
+      if (e.luck === 'overload') over++;
+      if (e.luck === 'defective') {
+        bad++;
+        const s = encounterBattle(['K', 'P'], { enchants: {}, cards: [], forge: {} }, e);
+        expect(s.pieces.filter((p) => p.side === 1 && p.type !== 'K').every((p) => p.hp < p.maxHp)).toBe(true);
+      }
+      expect(generateEncounter(2, 'battle', new Rng(seed)).luck).toBeUndefined();
+    }
+    expect(over).toBeGreaterThan(10);
+    expect(bad).toBeGreaterThan(10);
+  });
+});

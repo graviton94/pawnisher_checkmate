@@ -49,6 +49,7 @@ export interface RunLog {
     won: boolean;
     /** D-094~097 요소: 군단 원형 · 접사 · 주문서와 완수 · 내 전술 키워드 횟수 · 지형 칸 수 */
     archetype?: string;
+    luck?: string;
     affixes?: string[];
     order?: string;
     orderDone?: boolean;
@@ -138,6 +139,7 @@ export const autoRun = (seed: number): RunLog => {
           turns,
           won: state.winner === 0,
           archetype: e.archetype,
+          luck: e.luck,
           affixes: e.affixes?.map((a) => a.id),
           order: e.order,
           orderDone: e.order ? state.winner === 0 && orderProgress(e.order, state, run.deck, true).done : undefined,

@@ -1,6 +1,7 @@
 import { TACTICS } from '../data/tactics';
 import { ARENAS } from '../data/terrain';
 import { puzzleBattle, puzzleFor } from '../run/puzzle';
+import { freshSeed, parseSeed, seedCode } from '../run/seed';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -190,6 +191,7 @@ export class RunUi {
   private showRunMenu(run: RunState): void {
     const panel = this.hud.openOverlay(`
       <h2>${TEXT.pause.title}</h2>
+      <p class="seed">${TEXT.seed.label} <b>${seedCode(run.seed)}</b></p>
       <div class="col">
         ${button(TEXT.pause.resume, 'data-close', { tone: 'brass', cls: 'wide' })}
         ${button(TEXT.menu.settings, 'data-settings', { icon: 'watch', cls: 'wide' })}
@@ -288,13 +290,14 @@ export class RunUi {
   }
 
   /** 새 출하: 시작 세트 3지선다 */
-  private startNew(): void {
+  private startNew(fixed?: number): void {
     const meta = loadMeta();
-    const seed = (Date.now() % 1_000_000_000) + 1;
+    const seed = fixed ?? freshSeed();
     const decks = startDeckOptions(seed, unlockedDecks(meta));
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('flag', 's')}${TEXT.start.title}</span><span class="spacer"></span>${button(TEXT.start.back, 'data-menu')}</div>
       <p class="lead">${TEXT.start.lead}</p>
+      <div class="seed-row"><span class="seed">${TEXT.seed.label} <b>${seedCode(seed)}</b></span><input id="seed-input" class="seed-input" maxlength="6" autocomplete="off" spellcheck="false" placeholder="${TEXT.seed.placeholder}" aria-label="${TEXT.seed.placeholder}">${button(TEXT.seed.apply, 'data-seed')}</div>
       <div class="stage"><div class="offers">${decks
         .map((d, i) => {
           const kinds = SET_LORE[[...d].sort().join('')] ?? '';
@@ -310,6 +313,11 @@ export class RunUi {
         this.show();
       },
       menu: () => this.showMenu(),
+      seed: () => {
+        const n = parseSeed((el.querySelector('#seed-input') as HTMLInputElement).value);
+        if (n === null) return this.hud.toast(TEXT.seed.bad);
+        this.startNew(n);
+      },
     });
   }
 
@@ -462,6 +470,8 @@ export class RunUi {
     const opening =
       e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`;
     this.hud.toast(opening);
+    // 억까·억빠 (D-099): 대국 시작 한 줄 다음에
+    if (e.luck) window.setTimeout(() => this.hud.toast(TEXT.luck[e.luck!]), 1700);
     // 반장 전장 규칙 (D-097): 대사 다음에 규칙 한 줄
     if (e.kind === 'boss') {
       const arena = ARENAS[bossOf(run, run.floor).arena];
@@ -779,13 +789,15 @@ export class RunUi {
         <div class="panel9"><span class="num">${run.wins}</span><small>이긴 대국</small></div>
       </div>
       ${newly.length ? `<div class="unlocks">${newly.map((n) => `<i class="tag gold">${n}</i>`).join('')}</div>` : ''}
-      <div style="display:flex;gap:8px">${button(O.menu, 'data-menu')}${button(O.again, 'data-new', { tone: 'brass', icon: 'flag' })}</div>`,
+      <div style="display:flex;gap:8px;align-items:center"><span class="seed">${TEXT.seed.label} <b>${seedCode(run.seed)}</b></span>${button(O.menu, 'data-menu')}${button(TEXT.seed.again, 'data-same')}${button(O.again, 'data-new', { tone: 'brass', icon: 'flag' })}</div>`,
       'ending',
     );
+    const same = run.seed;
     this.run = null;
     this.wire(el, {
       menu: () => this.showMenu(),
       new: () => this.startNew(),
+      same: () => this.startNew(same),
     });
   }
 }

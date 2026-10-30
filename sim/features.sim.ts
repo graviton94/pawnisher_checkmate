@@ -26,6 +26,9 @@ it('features', () => {
   const withT = bs.filter((b) => (b.terrain ?? 0) > 0);
   const noT = bs.filter((b) => !b.terrain && b.floor >= 13 && b.kind !== 'boss');
   console.log(`지형 있는 판 ${withT.length} 승률 ${pct(withT.filter((b) => b.won).length, withT.length)} 평균 ${(withT.reduce((a, b) => a + b.turns, 0) / Math.max(1, withT.length)).toFixed(1)}턴 · (참고) 13층+ 맨바닥 ${noT.length}판`);
+  const byLuck = new Map<string, [number, number]>();
+  for (const b of bs) { const k = b.luck ?? 'none'; const v = byLuck.get(k) ?? [0, 0]; v[1]++; if (b.won) v[0]++; byLuck.set(k, v); }
+  console.log(`억까·억빠별 승률: ${[...byLuck.entries()].map(([k, [w, t]]) => `${k} ${pct(w, t)}(${t})`).join(' · ')}`);
   const pz = logs.flatMap((l) => l.puzzles);
   console.log(`묘수 ${pz.length}회 · 해법 ${pct(pz.filter(Boolean).length, pz.length)}`);
 }, 7_200_000);

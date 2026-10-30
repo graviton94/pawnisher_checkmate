@@ -202,3 +202,12 @@ describe('보상과 노드', () => {
     expect(run.crackGauge).toBe(0);
   });
 });
+
+describe('시드 코드 (D-099)', () => {
+  it('코드 ↔ 시드가 오가고, 같은 시드면 같은 지도', async () => {
+    const { seedCode, parseSeed } = await import('../src/run/seed');
+    for (const n of [1, 42, 123456789, 2_000_000_000]) expect(parseSeed(seedCode(n))).toBe(n % 36 ** 6);
+    expect(parseSeed('ab-12')).toBeNull();
+    expect(JSON.stringify(newRun(777).map)).toBe(JSON.stringify(newRun(777).map));
+  });
+});

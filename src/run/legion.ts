@@ -1,6 +1,6 @@
 import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
-import { AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
+import { AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import type { EnchantId } from '../data/enchants';
 import { BOSSES, ELITE_BONUS, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
@@ -32,6 +32,8 @@ export interface Encounter {
   order?: OrderId;
   /** 군단 원형 (D-096) */
   archetype?: ArchetypeId;
+  /** 억까·억빠 (D-099) */
+  luck?: LuckId;
   /** 검문! 정예 접사: 그 유형의 적 기물 한 기씩 (D-096) */
   affixes?: { type: PieceType; id: AffixId }[];
 }
@@ -91,7 +93,11 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   const archetype = archOptions[rng.int(archOptions.length)];
   const arch = ARCHETYPES[archetype];
   const weights = pieceWeights(floor).map(([t, w]): [PieceType, number] => [t, (t === 'R' && archetype === 'rampart' ? Math.max(w, RAMPART_ROOK_MIN) : w) * (arch.weight[t] ?? 1)]);
-  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0);
+  // 억까·억빠 (D-099): 4층부터 가끔. 과적 = 1기 더 + 개량 +1, 불량 군단 = 적 일반 기물 HP 60%로 시작
+  const roll = rng.next();
+  const act = actOf(floor) - 1;
+  const luck: LuckId | undefined = floor <= ARCHETYPE_EXTRA_FROM ? undefined : roll < LUCK.overload[act] ? 'overload' : roll < LUCK.overload[act] + LUCK.defective[act] ? 'defective' : undefined;
+  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0) + (luck === 'overload' ? 1 : 0);
   const deck: Deck = ['K'];
   let guard = 0;
   while (deck.length < count && guard++ < 200) {
@@ -102,7 +108,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   }
 
   const forge: Partial<Record<PieceType, number>> = {};
-  const lv = baseForge + (kind === 'elite' ? ELITE_BONUS.forge : 0);
+  const lv = baseForge + (kind === 'elite' ? ELITE_BONUS.forge : 0) + (luck === 'overload' ? 1 : 0);
   if (lv > 0) for (const t of new Set(deck)) forge[t] = lv;
 
   const enchants: Partial<Record<EnchantId, number>> = {};
@@ -143,6 +149,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   return {
     kind,
     archetype,
+    ...(luck ? { luck } : {}),
     ...(affixes.length ? { affixes } : {}),
     name: `${kind === 'elite' ? `정예 ${arch.name}` : arch.name}${names.length ? ` — ${names.join(' · ')}` : ''}`,
     width,
@@ -204,6 +211,7 @@ export const layTerrain = (s: BattleState, e: Encounter): void => {
 export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
   const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
   layTerrain(s, e);
+  if (e.luck === 'defective') for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.hp = Math.max(1, Math.round(p.maxHp * LUCK.defectiveHp));
   // 정예 접사: 그 유형의 적 기물 한 기씩
   for (const a of e.affixes ?? []) {
     const p = s.pieces.find((q) => q.side === 1 && q.type === a.type && !q.affix);

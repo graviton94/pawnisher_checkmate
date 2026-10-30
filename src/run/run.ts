@@ -1,6 +1,7 @@
 import { ORDERS, ORDER_GOLD_MULT } from '../data/tactics';
 import { orderProgress, pickOrder } from './orders';
-import { RECRUIT_OPTIONS } from '../data/legions';
+import { TEXT } from '../data/text';
+import { LUCK, RECRUIT_OPTIONS } from '../data/legions';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
@@ -293,9 +294,11 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
 
   run.wins += 1;
   const lines: string[] = [];
-  const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1));
+  // 나사 자루 (억빠, D-099): 가끔 대국 나사가 세 배
+  const jackpot = withRng(run, (rng) => rng.next()) < LUCK.jackpot;
+  const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1) * (jackpot ? LUCK.jackpotMult : 1));
   run.gold += gold;
-  lines.push(`나사 +${gold}`);
+  lines.push(jackpot ? `${TEXT.luck.jackpot} 나사 +${gold}` : `나사 +${gold}`);
   // 빠른 승리 보너스 (D-072): 기준 턴 안에 이기면 골드를 더 준다
   const rounds = Math.ceil(final.turnNumber / 2);
   const par = parRounds(run.floor, kind as NodeKind);

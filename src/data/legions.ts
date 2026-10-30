@@ -65,3 +65,18 @@ export const RAMPART_ROOK_MIN = 6;
 
 /** 영입 (GDD 13장 P3): 검문!·반장 대국 보상에 "쓰러뜨린 적 기물 하나 데려오기" 칸. 후보 수 */
 export const RECRUIT_OPTIONS = 3;
+
+/**
+ * 억까·억빠 (D-099, 사용자: 너무 쉬워도 안 되고 억까·억빠도 가끔 나와야 할 맛) — 시드로 정해지고, 대국 시작에 보인다.
+ * 과적(억까): 군단 1기 더 + 개량 +1 · 불량 군단(억빠): 적 일반 기물이 HP 60%로 시작 · 나사 자루(억빠): 대국 나사 ×3.
+ */
+export type LuckId = 'overload' | 'defective';
+export const LUCK = {
+  /** Act별 확률 (4층부터, 반장 제외) 🔧 */
+  overload: [0.05, 0.07, 0.09],
+  defective: [0.06, 0.06, 0.06],
+  defectiveHp: 0.6,
+  /** 대국 나사 보상이 세 배가 될 확률 */
+  jackpot: 0.04,
+  jackpotMult: 3,
+} as const;

@@ -498,3 +498,11 @@ img { image-rendering: pixelated; }
 
 /* 반장 카드 전장 규칙 줄 (D-097) */
 .boss-card .arena { display: block; word-break: keep-all; color: var(--brass-hi, #e8c060); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+
+/* 시드 (D-099): 같은 시드 = 같은 출하 — 리뷰·공유용 */
+.seed { margin: 0; color: var(--text2); font-size: 14px; letter-spacing: 1px; }
+.seed b { font-family: Galmuri14, Galmuri11, sans-serif; color: var(--brass-hi, #e8c060); }
+.seed-row { display: flex; align-items: center; gap: 8px; padding: 0 0 6px; }
+.seed-row .seed { flex: 1; }
+.seed-input { width: 120px; height: 48px; padding: 0 10px; font: inherit; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; color: var(--text); background: #16141c; border: 2px solid #34303e; }
+.seed-row .btn { min-height: 48px; }
