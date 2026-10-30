@@ -2,9 +2,9 @@
  * FX 랩: 게임과 같은 이펙트 코드(src/view/attackFx.ts)와 같은 엔진으로 공격 장면을 캔버스에 재생한다.
  * `node tools/fxlab/build.cjs <출력.html>`로 한 장짜리 HTML을 만든다.
  */
-import { createBattle, EMPTY_LOADOUT, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
+import { createBattle, EMPTY_LOADOUT, legalMoves, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
 import { MOVE_TOTAL, buildAttackFx, drawHitSpark, drawLandPuff, drawShatter, moveMotion, type Pose } from '../../src/view/attackFx';
-import { PixelPen } from '../../src/view/pixel';
+import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
 import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
 import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
 
@@ -82,7 +82,7 @@ for (const [k, url] of Object.entries(SPRITES)) {
 }
 
 const hex = (c: number, a = 1) => `rgba(${(c >> 16) & 255},${(c >> 8) & 255},${c & 255},${a})`;
-const pen = new PixelPen({ fillStyle: (c: number, a = 1) => (ctx.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => ctx.fillRect(x, y, w, h) }, T / 16);
+const pen = new PixelPen({ fillStyle: (c: number, a = 1) => (ctx.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => ctx.fillRect(x, y, w, h) }, T / BOARD_DOTS);
 const px = (x: number, y: number) => ({ x: x * T, y: (N - 1 - y) * T });
 const center = (x: number, y: number) => ({ x: x * T + T / 2, y: (N - 1 - y) * T + T / 2 });
 
@@ -154,11 +154,36 @@ interface Live {
   dead: boolean;
   pose: Pose;
 }
-const drawPiece = (l: Live, now: number) => {
+const D = T / 20; // 판 도트 1개 (px)
+/** 도트 그림을 판 도트 격자에 맞춰 그린다 (dx·dy = 칸 안 도트 좌표) */
+const blit = (k: string, x: number, y: number, a = 1) => {
+  const im = sprites[k];
+  if (!im?.complete) return;
+  ctx.globalAlpha = a;
+  ctx.drawImage(im, x, y, im.width * D, im.height * D);
+  ctx.globalAlpha = 1;
+};
+/** HP 게이지 14×3 도트: 먹색 관 + 리벳 끝 + 진영 색 채움, 잃을 HP는 금색 (코드 도트) */
+const gauge = (x: number, y: number, side: Side, hp: number, after: number, max: number) => {
+  const cell = (i: number, j: number, c: string) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(x + i * D, y + j * D, D, D);
+  };
+  for (let i = 0; i < 14; i++) for (let j = 0; j < 3; j++) cell(i, j, '#16141c');
+  cell(0, 1, '#8a8794');
+  cell(13, 1, '#8a8794');
+  const keep = Math.round((12 * Math.max(0, after)) / max);
+  const now = Math.round((12 * Math.max(0, hp)) / max);
+  for (let i = 0; i < 12; i++) cell(1 + i, 1, i < keep ? (side === 0 ? '#38bdf8' : '#e5262f') : i < now ? '#facc15' : '#2f2e36');
+};
+
+const drawPiece = (l: Live, now: number, hpAfter?: number) => {
   if (l.dead) return;
   const k = `${l.p.type}${l.p.side}`;
   const img = now < l.flashUntil ? whites[k] : sprites[k];
   if (!img) return;
+  const pixel = opt.board !== 'flat';
+  if (pixel) blit(l.p.side === 0 ? 'base-ally' : 'base-enemy', l.x + 3 * D, l.y + 12 * D);
   const s = T * 0.82;
   const { dx, dy, sx, sy } = l.pose;
   // 받침 아래 중심(0.85칸)을 기준으로 늘이고 누른다 — 게임과 같은 자세
@@ -167,15 +192,41 @@ const drawPiece = (l: Live, now: number) => {
   const w = s * sx;
   const h = s * sy;
   ctx.drawImage(img, ax - w / 2, ay - (T * 0.85 - T * 0.43 + s / 2) * sy, w, h);
-  // 발밑 받침 (지금 게임과 같은 임시 모양)
+  if (pixel) {
+    gauge(l.x + 3 * D, l.y + 17 * D, l.p.side, l.hp, hpAfter ?? l.hp, l.p.maxHp);
+    return;
+  }
+  // (지금) 발밑 받침
   ctx.fillStyle = l.p.side === 0 ? '#38bdf8' : '#e5262f';
   ctx.fillRect(l.x + T * 0.22, l.y + T * 0.8, T * 0.56, 4);
-  // HP 바
+  // (지금) HP 바
   const bw = T * 0.62;
   ctx.fillStyle = '#16141c';
   ctx.fillRect(l.x + (T - bw) / 2, l.y + T * 0.9, bw, 6);
   ctx.fillStyle = l.p.side === 0 ? '#38bdf8' : '#e5262f';
   ctx.fillRect(l.x + (T - bw) / 2, l.y + T * 0.9, (bw * Math.max(0, l.hp)) / l.p.maxHp, 6);
+};
+
+/** 도트 화살표: 2도트 청록 선 + 도트 화살촉. 나이트는 ㄱ자 */
+const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight: boolean) => {
+  const A = center(a.x, a.y);
+  const B = center(b.x, b.y);
+  const pts = [A];
+  if (knight) pts.push(Math.abs(b.x - a.x) > 1 ? { x: B.x, y: A.y } : { x: A.x, y: B.y });
+  const last = pts[pts.length - 1];
+  const len = Math.hypot(B.x - last.x, B.y - last.y) || 1;
+  const ux = (B.x - last.x) / len;
+  const uy = (B.y - last.y) / len;
+  const tip = { x: B.x - ux * T * 0.32, y: B.y - uy * T * 0.32 };
+  pts.push(tip);
+  for (let i = 0; i < pts.length - 1; i++) pen.line(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, 0x38bdf8, 1, 2);
+  // 화살촉: 뒤로 갈수록 넓어지는 도트 줄
+  for (let k = 0; k < 4; k++) {
+    const bx = tip.x - ux * D * k;
+    const by = tip.y - uy * D * k;
+    for (let s2 = -k; s2 <= k; s2++) pen.px(bx - uy * D * s2, by + ux * D * s2, 0x38bdf8, 1, 1);
+  }
+  pen.px(A.x, A.y, 0xbfefff, 1, 2);
 };
 
 // ---------- 재생 ----------
@@ -224,7 +275,27 @@ const play = () => {
     const key = `${l.p.x},${l.p.y}`;
     return { h, l, at: FX0 + (fx?.impact.get(key) ?? 0), done: false };
   });
-  const PRE = 700; // 계획 화면처럼 공격 범위를 먼저 보여 준다
+  const PRE = 1100; // 계획 화면처럼 공격 범위·화살표·예상 피해를 먼저 보여 준다
+  const preview = new Map((atk?.hits ?? []).map((h) => [h.targetId, h.hpAfter]));
+  const wrecks: { x: number; y: number }[] = [];
+  const dests = legalMoves(sc.start, sc.start.pieces.find((p) => p.id === sc.attackerId)!).filter((d) => d.x !== mv.to.x || d.y !== mv.to.y);
+  const kills = (atk?.hits ?? []).some((h) => h.killed);
+  /** 계획 화면: 선택 모서리 · 갈 수 있는 칸 점 · 화살표 · 착지 칸 과녁 · 순번 배지 · 처치 표시 */
+  const drawPlan = () => {
+    blit('select', from.x, from.y);
+    for (const d of dests) {
+      const w = px(d.x, d.y);
+      blit('move-dot', w.x + 8 * D, w.y + 8 * D);
+    }
+    arrow(mv.from, mv.to, me.p.type === 'N');
+    blit(kills ? 'target-kill' : 'target', to.x + 3 * D, to.y + 3 * D);
+    blit('badge-a1', to.x - 2 * D, to.y - 3 * D);
+    for (const h of atk?.hits ?? []) {
+      if (!h.killed) continue;
+      const l = lives.get(h.targetId)!;
+      blit('kill', l.x + 13 * D, l.y);
+    }
+  };
   const end = FX0 + (fx?.duration ?? 0) + 900;
   const t0 = performance.now();
 
@@ -254,6 +325,7 @@ const play = () => {
         });
         if (x.h.killed) {
           x.l.dead = true;
+          wrecks.push({ x: x.l.x, y: x.l.y });
           bursts.push({ kind: 'shatter', x: c.x, y: c.y, side: x.l.p.side, at: ms });
         }
       }
@@ -265,7 +337,9 @@ const play = () => {
     ctx.lineWidth = 3;
     ctx.strokeRect(from.x + 3, from.y + 3, T - 6, T - 6);
     if (ms < 0 && atk) drawRange(atk.area);
-    for (const l of lives.values()) drawPiece(l, now);
+    if (ms < 0 && opt.board !== 'flat') drawPlan();
+    for (const w of wrecks) blit('wreck', w.x + 5 * D, w.y + 14 * D);
+    for (const l of lives.values()) drawPiece(l, now, ms < 0 ? preview.get(l.p.id) : undefined);
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {

@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { PieceType, Side } from '../engine/types';
 import { FX_CHOICE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
-import { PixelPen, easeInCubic, easeInExpo, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
+import { BOARD_DOTS, PixelPen, easeInCubic, easeInExpo, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
 
 /**
  * 기물별 이동·공격 연출 (GDD 12장 §12.3, D-033·D-035·D-036).
@@ -242,7 +242,7 @@ const dirIndex = (c: Claimed) => DIRS.findIndex(([x, y]) => x === Math.sign(c.dx
 export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number, onPose: (p: Pose) => void): { duration: number; impact: Map<string, number> } => {
   const fx = buildAttackFx(req);
   const g = scene.add.graphics().setDepth(6.5);
-  const pen = new PixelPen(g, req.tile / 16);
+  const pen = new PixelPen(g, req.tile / BOARD_DOTS);
   scene.tweens.addCounter({
     from: 0,
     to: fx.duration,
@@ -684,14 +684,14 @@ export const drawShatter = (pen: PixelPen, x: number, y: number, t: number, piec
 /** 피격 스파크 (게임) */
 export const playHitSpark = (scene: Phaser.Scene, x: number, y: number, tile: number, side: Side, speed: number): void => {
   const g = scene.add.graphics().setDepth(7.5);
-  const pen = new PixelPen(g, tile / 16);
+  const pen = new PixelPen(g, tile / BOARD_DOTS);
   scene.tweens.addCounter({ from: 0, to: 1, duration: 160 / speed, onUpdate: (tw) => (g.clear(), drawHitSpark(pen, x, y, tile, side, tw.getValue() ?? 0)), onComplete: () => g.destroy() });
 };
 
 /** 처치 파편 (게임) */
 export const playShatter = (scene: Phaser.Scene, x: number, y: number, tile: number, pieceSide: Side, speed: number): Promise<void> => {
   const g = scene.add.graphics().setDepth(7);
-  const pen = new PixelPen(g, tile / 16);
+  const pen = new PixelPen(g, tile / BOARD_DOTS);
   return new Promise((done) =>
     scene.tweens.addCounter({
       from: 0,

@@ -11,6 +11,7 @@ P = {
     'K': (0x0B, 0x0B, 0x0E), 'INK': (0x16, 0x14, 0x1C), 'D': (0x2F, 0x2E, 0x36), 'L': (0x56, 0x54, 0x5E),
     'G': (0x8A, 0x87, 0x94), 'LG': (0xC8, 0xC8, 0xC8), 'W': (0xF4, 0xF1, 0xEA), 'BR2': (0x8C, 0x62, 0x39),
     'BR': (0xC8, 0x9B, 0x3C), 'GO': (0xFA, 0xCC, 0x15), 'CR2': (0x7A, 0x12, 0x18), 'CR': (0xE5, 0x26, 0x2F),
+    'CY': (0x38, 0xBD, 0xF8), 'ST': (0xBF, 0xEF, 0xFF),
 }
 N = 20
 
@@ -78,8 +79,136 @@ def range_frame():
     return im
 
 
+def sprite(w, h):
+    return Image.new('RGBA', (w, h), (0, 0, 0, 0))
+
+
+def dot(im, x, y, c):
+    if 0 <= x < im.size[0] and 0 <= y < im.size[1]:
+        im.putpixel((x, y), P[c] + (255,))
+
+
+def from_ascii(rows, colors):
+    """글자 그림 → 도트 ('.' = 비움)"""
+    im = sprite(len(rows[0]), len(rows))
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != '.':
+                dot(im, x, y, colors[ch])
+    return im
+
+
+def base(ally):
+    """발밑 받침 14×5: 아군 = 흰 타원 고리 + 청록 아랫단, 적 = 검은 마름모 고리 + 진홍 아랫단 (색 + 모양, UI 원칙 4)"""
+    if ally:
+        rows = ['....######....', '..##......##..', '.#..........#.', '..cc......cc..', '....cccccc....']
+        return from_ascii(rows, {'#': 'W', 'c': 'CY'})
+    rows = ['......##......', '...###..###...', '.##........##.', '...rrr..rrr...', '......rr......']
+    return from_ascii(rows, {'#': 'INK', 'r': 'CR'})
+
+
+def select():
+    """선택: 칸 네 모서리의 황동 ㄱ자 (2도트 굵기, 안쪽은 어두운 황동) — 기물을 가리지 않게 4×4"""
+    im = sprite(N, N)
+    for cx, cy, sx, sy in ((0, 0, 1, 1), (N - 1, 0, -1, 1), (0, N - 1, 1, -1), (N - 1, N - 1, -1, -1)):
+        for i in range(5):
+            dot(im, cx + sx * i, cy, 'GO' if i < 4 else 'BR2')
+            dot(im, cx, cy + sy * i, 'GO' if i < 4 else 'BR2')
+            dot(im, cx + sx * i, cy + sy, 'BR2' if i else 'GO')
+            dot(im, cx + sx, cy + sy * i, 'BR2' if i else 'GO')
+    return im
+
+
+def move_dot():
+    """갈 수 있는 칸: 작은 증기 방울 4×4"""
+    return from_ascii(['.cc.', 'cwcc', 'cccc', '.cc.'], {'c': 'CY', 'w': 'W'})
+
+
+def ring(size, r0, r1, color, teeth=0, tooth_r=0.0, gap=None, shade=None):
+    """도트 고리 (선택적으로 톱니·틈·안쪽 그늘)"""
+    import math
+    im = sprite(size, size)
+    c = (size - 1) / 2
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - c, y - c)
+            a = math.atan2(y - c, x - c)
+            if gap and gap[0] <= a <= gap[1]:
+                continue
+            on = r0 <= d <= r1
+            if teeth and r1 < d <= r1 + tooth_r:
+                k = (a / (2 * math.pi) * teeth) % 1
+                on = k < 0.28 or k > 0.72
+            if on:
+                dot(im, x, y, shade if shade and d < r0 + 0.7 else color)
+    return im
+
+
+def target(kill):
+    """치는 칸: 톱니 과녁 14×14 (처치면 금색 + 가운데 해골)"""
+    im = ring(14, 3.9, 5.7, 'GO' if kill else 'CR', teeth=8, tooth_r=1.4, shade='BR2' if kill else 'CR2')
+    if kill:
+        skull = ['.###.', '#.#.#', '#####', '.#.#.']
+        for y, row in enumerate(skull):
+            for x, ch in enumerate(row):
+                if ch == '#':
+                    dot(im, 5 + x, 5 + y, 'GO')
+    return im
+
+
+DIGITS = {
+    '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['##.', '..#', '.#.', '#..', '###'], '3': ['##.', '..#', '.#.', '..#', '##.'],
+    '4': ['#.#', '#.#', '###', '..#', '..#'], '5': ['###', '#..', '##.', '..#', '##.'], '6': ['.##', '#..', '###', '#.#', '###'],
+    '7': ['###', '..#', '.#.', '.#.', '.#.'], '8': ['###', '#.#', '###', '#.#', '###'], '9': ['###', '#.#', '###', '..#', '##.'],
+}
+
+
+def badge(ally, n):
+    """순번 배지 11×11: 톱니 토큰 + 어두운 판 + 3×5 도트 숫자 (글꼴 대신 도트로 — 판과 같은 격자)"""
+    im = ring(11, 3.3, 4.7, 'BR' if ally else 'CR', teeth=8, tooth_r=1.0, shade='BR2' if ally else 'CR2')
+    for y in range(2, 9):
+        for x in range(2, 9):
+            if (x - 5) ** 2 + (y - 5) ** 2 <= 11:
+                dot(im, x, y, 'INK')
+    for y, row in enumerate(DIGITS[str(n)]):
+        for x, ch in enumerate(row):
+            if ch == '#':
+                dot(im, 4 + x, 3 + y, 'W' if ally else 'CR')
+    return im
+
+
+def kill_mark():
+    """처치될 기물 표시: 검은 테두리의 붉은 X 7×7"""
+    rows = ['KK...KK', 'KrK.KrK', '.KrKrK.', '..KrK..', '.KrKrK.', 'KrK.KrK', 'KK...KK']
+    return from_ascii(rows, {'K': 'K', 'r': 'CR'})
+
+
+def check_ring():
+    """체크: 킹 주위의 끊긴 붉은 톱니 고리 20×20 (오른쪽 위가 터져 있다)"""
+    import math
+    return ring(N, 7.6, 9.2, 'CR', teeth=10, tooth_r=0.9, gap=(-math.pi / 2 + 0.2, -math.pi / 4 + 0.15), shade='CR2')
+
+
+def wreck():
+    """처치된 자리의 잔해 9×5: 부서진 톱니와 스프링 (먹색 테두리)"""
+    rows = ['.kggk....', 'kg..gk.s.', 'kg..gks.s', '.kggk..s.', 'kkkkkkkkk']
+    return from_ascii(rows, {'g': 'G', 's': 'LG', 'k': 'INK'})
+
+
 plate('L', 'G', 'D', 'G', 'D').save(f'{OUT}/tile-light.png')
 plate('D', 'L', 'INK', 'L', 'INK').save(f'{OUT}/tile-dark.png')
 crack().save(f'{OUT}/crack.png')
 range_frame().save(f'{OUT}/range.png')
+base(True).save(f'{OUT}/base-ally.png')
+base(False).save(f'{OUT}/base-enemy.png')
+select().save(f'{OUT}/select.png')
+move_dot().save(f'{OUT}/move-dot.png')
+target(False).save(f'{OUT}/target.png')
+target(True).save(f'{OUT}/target-kill.png')
+for n in range(1, 10):
+    badge(True, n).save(f'{OUT}/badge-a{n}.png')
+    badge(False, n).save(f'{OUT}/badge-e{n}.png')
+kill_mark().save(f'{OUT}/kill.png')
+check_ring().save(f'{OUT}/check.png')
+wreck().save(f'{OUT}/wreck.png')
 print('ok')

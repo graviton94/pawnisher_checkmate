@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 9, date: '2026-10-30' };
+export const VERSION = { n: 10, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,8 +48,8 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '판: 지금 / 제미나이 S0 / 코드 도트 — 어느 칸으로 갈지 (기본은 코드 도트)',
-  '덧그림: 고친 균열(왼쪽), 깜빡이는 위협 칸(오른쪽 위), 공격 범위 테두리(이동 직전 0.7초), 무너진 칸(오른쪽)이 괜찮은지',
+  '코드 도트 표식 전체 (장면마다 처음 1.1초 = 계획 화면): 선택 모서리 · 갈 수 있는 칸 점 · 도트 화살표 · 순번 배지(도트 숫자) · 착지 칸 과녁 · 공격 범위 · 발밑 받침 · HP 게이지(잃을 HP 금색) · 처치 표시 X · 처치 뒤 잔해',
+  '괜찮으면 판 위 그림을 게임에 한꺼번에 넣는다 (제미나이 B6·B7·H·I가 오면 그때 추가)',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
@@ -66,12 +66,14 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '판 칸', rule: '코드 도트로 직접 찍은 20×20 철판 (위·왼쪽 빛, 아래·오른쪽 그늘, 리벳 4개, 얼룩 없음). 제미나이 S0와 비교 중', status: 'review' },
   { item: '공격 범위·위협 빗금·균열', rule: '범위 = 1도트 붉은 테두리 + 볼트 + 옅은 채움 · 위협 = 반투명 붉은 칸이 천천히 깜빡임 (빗금 폐기) · 균열 = 1도트 검은 금 + 틈 속 붉은 빛', status: 'review' },
   { item: '무너진 칸', rule: '제미나이 B1 4번 (구덩이 + 톱니 + 붉은 빛)', status: 'review' },
-  { item: '화살표·HP 바·과녁 등', rule: '발주 B1~B6 대기 — 모이면 한꺼번에', status: 'wait' },
+  { item: '발밑·선택·이동 점·과녁·배지·화살표·HP·처치 X·잔해·체크 고리', rule: '코드 도트 (`tools/draw-board.py`, 20×20 격자, 14색). 배지 숫자도 3×5 도트', status: 'review' },
+  { item: '이펙트 격자', rule: '공격 이펙트도 판과 같은 칸당 20도트 격자로 (게임·랩 공통 BOARD_DOTS)', status: 'done' },
   { item: '이펙트 스프라이트', rule: '발주 시트 E가 오면 같은 박자에 그림만 갈아 끼운다', status: 'wait' },
   { item: '태엽 (AP)', rule: '날개 → 태엽 감개 3종 (발주 시트 I)', status: 'wait' },
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 10, date: '2026-10-30', items: ['발밑 받침·선택 모서리·이동 점·과녁(일반/처치)·순번 배지 1~9(도트 숫자)·처치 X·체크 고리·잔해를 코드 도트로', '계획 화면 재현: 화살표·배지·과녁·범위·HP 게이지(잃을 HP 금색)', '이펙트 격자를 칸당 20도트로 통일'] },
   { v: 9, date: '2026-10-30', items: ['칸 얼룩(긁힘) 제거', '균열: 굵은 붉은 선 → 1도트 검은 금 + 틈 속 붉은 빛', '위협 빗금 폐기 → 반투명 붉은 칸 깜빡임'] },
   { v: 8, date: '2026-10-30', items: ['판 칸·균열·범위 테두리·빗금을 코드 도트로 직접 찍음 (제미나이 B1은 무너진 칸만 사용)', '판 토글: 지금 / 제미나이 S0 / 코드 도트', '이동 전 0.7초 공격 범위 표시'] },
   { v: 7, date: '2026-10-30', items: ['발주 S0 크기 시험 통과 → 철판 칸을 랩 판에 적용 (지금 판과 바꿔 보기)', '랩 칸 크기 100px (20도트 × 5) — 도트가 고르게'] },

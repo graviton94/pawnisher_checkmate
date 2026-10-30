@@ -4,7 +4,7 @@ import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
 import { MOVE_TOTAL, drawLandPuff, moveMotion, playAttackFx, playHitSpark, playShatter, type Pose } from './attackFx';
-import { PixelPen } from './pixel';
+import { BOARD_DOTS, PixelPen } from './pixel';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
@@ -654,7 +654,7 @@ class BoardScene extends Phaser.Scene {
         const from = { x: s.root.x, y: s.root.y };
         const jump = s.piece.type === 'N' && !s.piece.fused;
         const g = this.add.graphics().setDepth(6.4);
-        const pen = new PixelPen(g, t / 16);
+        const pen = new PixelPen(g, t / BOARD_DOTS);
         let landed = false;
         await new Promise<void>((done) =>
           this.tweens.addCounter({
