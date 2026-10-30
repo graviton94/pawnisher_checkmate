@@ -4,7 +4,8 @@
 원본(build-res/pieces-small-source.png)은 도트 크기가 일정하지 않은 "픽셀풍" 그림이라, 원본 해상도에 가깝게(1.5px = 1칸)
 옮기고 색을 팔레트로 정리한다. 흰 바깥 테두리는 원본의 들쭉날쭉한 띠 대신 검정 외곽선 바깥 2칸으로 다시 그린다.
 
-  python3 -I tools/pixel/extract.py      (원본이 바뀌었을 때만. 평소에는 pieces64.txt를 직접 고친다)
+  python3 -I tools/pixel/extract.py && python3 -I tools/pixel/symmetry.py
+      (원본이 바뀌었을 때만. 평소에는 pieces64.txt를 직접 고친다. 대칭 다듬기는 D-092)
 """
 import os
 from collections import deque
