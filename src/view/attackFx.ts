@@ -681,6 +681,50 @@ export const drawShatter = (pen: PixelPen, x: number, y: number, t: number, piec
   if (q < 0.3) pen.ring(x, y, t * (0.2 + q), rim, 1 - q / 0.3);
 };
 
+/** 바스라짐에 쓰는 기물 도트 한 칸 (월드 px 왼쪽 위, 색) — 렌더러가 기물 그림에서 뽑아 준다 */
+export interface CrumbleCell {
+  x: number;
+  y: number;
+  c: number;
+}
+/** 바스라짐 길이 (ms): 잘리는 선이 위에서 아래로 내려가는 시간 + 마지막 조각이 사라지는 시간 */
+export const CRUMBLE_MS = { cut: 420, life: 300 };
+
+/**
+ * 처치: 기물이 위에서부터 한 줄씩 도트로 바스라진다 (D-048).
+ * 잘리는 선이 지수형으로 빨라지며 내려가고, 선 바로 아래 한두 줄은 체크무늬로 듬성듬성,
+ * 선을 지난 도트는 살짝 튀었다가 떨어지며 깜빡이고 사라진다.
+ */
+export const drawCrumble = (pen: PixelPen, cells: CrumbleCell[], ms: number): void => {
+  if (!cells.length || ms < 0) return;
+  const d = pen.dot;
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const c of cells) {
+    top = Math.min(top, c.y);
+    bottom = Math.max(bottom, c.y + d);
+  }
+  const H = bottom - top;
+  const cut = top + H * easeInCubic(Math.min(1, ms / CRUMBLE_MS.cut));
+  cells.forEach((c, i) => {
+    const r = Math.round((c.x + c.y) / d);
+    if (c.y >= cut) {
+      if (c.y < cut + d * 2 && r % 2 === 0) return; // 갈라지는 가장자리: 체크무늬로 듬성듬성
+      pen.px(c.x + d / 2, c.y + d / 2, c.c, 1);
+      return;
+    }
+    // 이 줄을 선이 지난 시각 (easeInCubic의 역함수)
+    const born = Math.cbrt((c.y - top) / H) * CRUMBLE_MS.cut;
+    const t = ms - born;
+    if (t < 0 || t > CRUMBLE_MS.life) return;
+    const q = t / CRUMBLE_MS.life;
+    if (q > 0.45 && Math.floor(t / 40) % 2) return; // 도트처럼 깜빡이며 사라짐
+    const h = ((i * 7919) % 13) / 13 - 0.5; // 칸마다 다른 흩어짐 (결정적)
+    const u = t / 100;
+    pen.px(c.x + d / 2 + h * d * 3 * u, c.y + d / 2 + d * (-1.4 * u + 2.2 * u * u), c.c, 1, q > 0.7 ? 1 : 1);
+  });
+};
+
 /** 피격 스파크 (게임) */
 export const playHitSpark = (scene: Phaser.Scene, x: number, y: number, tile: number, side: Side, speed: number): void => {
   const g = scene.add.graphics().setDepth(7.5);

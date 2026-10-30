@@ -99,15 +99,6 @@ def from_ascii(rows, colors):
     return im
 
 
-def base(ally):
-    """발밑 받침 14×5: 아군 = 흰 타원 고리 + 청록 아랫단, 적 = 검은 마름모 고리 + 진홍 아랫단 (색 + 모양, UI 원칙 4)"""
-    if ally:
-        rows = ['....######....', '..##......##..', '.#..........#.', '..cc......cc..', '....cccccc....']
-        return from_ascii(rows, {'#': 'W', 'c': 'CY'})
-    rows = ['......##......', '...###..###...', '.##........##.', '...rrr..rrr...', '......rr......']
-    return from_ascii(rows, {'#': 'INK', 'r': 'CR'})
-
-
 def select():
     """선택: 칸 네 모서리의 청록 ㄱ자 (내 조작 = 청록, D-047) (2도트 굵기, 안쪽은 어두운 황동) — 기물을 가리지 않게 4×4"""
     im = sprite(N, N)
@@ -202,8 +193,6 @@ plate('D', 'L', 'INK', 'L', 'INK').save(f'{OUT}/tile-dark.png')
 crack().save(f'{OUT}/crack.png')
 range_frame(True).save(f'{OUT}/range.png')
 range_frame(False).save(f'{OUT}/range-enemy.png')
-base(True).save(f'{OUT}/base-ally.png')
-base(False).save(f'{OUT}/base-enemy.png')
 select().save(f'{OUT}/select.png')
 move_dot().save(f'{OUT}/move-dot.png')
 target(False).save(f'{OUT}/target.png')

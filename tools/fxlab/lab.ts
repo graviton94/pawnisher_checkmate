@@ -3,7 +3,7 @@
  * `node tools/fxlab/build.cjs <출력.html>`로 한 장짜리 HTML을 만든다.
  */
 import { createBattle, EMPTY_LOADOUT, legalMoves, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
-import { MOVE_TOTAL, buildAttackFx, drawHitSpark, drawLandPuff, drawShatter, moveMotion, type Pose } from '../../src/view/attackFx';
+import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
 import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
 import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
 import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
@@ -185,7 +185,6 @@ const drawPiece = (l: Live, now: number, hpAfter?: number) => {
   const img = now < l.flashUntil ? whites[k] : sprites[k];
   if (!img) return;
   const pixel = opt.board !== 'flat';
-  if (pixel) blit(l.p.side === 0 ? 'base-ally' : 'base-enemy', l.x + 3 * D, l.y + 12 * D);
   const s = T * 0.82;
   const { dx, dy, sx, sy } = l.pose;
   // 받침 아래 중심(0.85칸)을 기준으로 늘이고 누른다 — 게임과 같은 자세
@@ -231,6 +230,25 @@ const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight:
   pen.px(A.x, A.y, 0xbfefff, 1, 2);
 };
 
+/** 기물 그림을 판 도트 격자(D px)로 뽑는다 — 바스라짐용 (drawPiece와 같은 자리·크기) */
+const cellsOf = (l: { p: Piece; x: number; y: number }, img: HTMLImageElement | undefined = sprites[`${l.p.type}${l.p.side}`], size = T, step = D): CrumbleCell[] => {
+  if (!img?.complete) return [];
+  const off = document.createElement('canvas');
+  off.width = off.height = size;
+  const o = off.getContext('2d')!;
+  o.imageSmoothingEnabled = false;
+  const s = size * 0.82;
+  o.drawImage(img, (size - s) / 2, size * 0.43 - s / 2, s, s);
+  const data = o.getImageData(0, 0, size, size).data;
+  const cells: CrumbleCell[] = [];
+  for (let y = 0; y < size; y += step)
+    for (let x = 0; x < size; x += step) {
+      const k = ((y + Math.floor(step / 2)) * size + x + Math.floor(step / 2)) * 4;
+      if (data[k + 3] > 128) cells.push({ x: l.x + x, y: l.y + y, c: (data[k] << 16) | (data[k + 1] << 8) | data[k + 2] });
+    }
+  return cells;
+};
+
 // ---------- 재생 ----------
 interface Popup {
   x: number;
@@ -241,7 +259,7 @@ interface Popup {
   size: number;
 }
 interface Burst {
-  kind: 'spark' | 'shatter';
+  kind: 'spark';
   x: number;
   y: number;
   side: Side;
@@ -281,6 +299,7 @@ const play = () => {
   const preview = new Map((atk?.hits ?? []).map((h) => [h.targetId, h.hpAfter]));
   const wrecks: { x: number; y: number }[] = [];
   const chips: { x: number; y: number; at: number; i: number }[] = [];
+  const crumbles: { cells: CrumbleCell[]; at: number }[] = [];
   const dests = legalMoves(sc.start, sc.start.pieces.find((p) => p.id === sc.attackerId)!).filter((d) => d.x !== mv.to.x || d.y !== mv.to.y);
   const kills = (atk?.hits ?? []).some((h) => h.killed);
   /** 계획 화면: 선택 모서리 · 갈 수 있는 칸 점 · 화살표 · 착지 칸 과녁 · 순번 배지 · 처치 표시 */
@@ -333,7 +352,7 @@ const play = () => {
         if (x.h.killed) {
           x.l.dead = true;
           wrecks.push({ x: x.l.x, y: x.l.y });
-          bursts.push({ kind: 'shatter', x: c.x, y: c.y, side: x.l.p.side, at: ms });
+          crumbles.push({ cells: cellsOf(x.l), at: ms });
         }
       }
 
@@ -350,9 +369,12 @@ const play = () => {
     if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {
-      const len = b.kind === 'spark' ? 160 : 380;
+      const len = 160;
       const q = (ms - b.at) / len;
-      if (q >= 0 && q < 1) (b.kind === 'spark' ? drawHitSpark : drawShatter)(pen, b.x, b.y, T, b.side, q);
+      if (q >= 0 && q < 1) drawHitSpark(pen, b.x, b.y, T, b.side, q);
+    }
+    for (const cr of crumbles) {
+      if (ms - cr.at < CRUMBLE_MS.cut + CRUMBLE_MS.life) drawCrumble(pen, cr.cells, ms - cr.at);
     }
     for (const c of chips) {
       const t = ms - c.at;
@@ -428,6 +450,7 @@ const renderGallery = () => {
       items += item('화살표 (직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
       items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
+      items += item('처치 (위에서부터 바스라짐)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
     } else {
       for (const e of GALLERY.filter((x) => x.dir === g)) {
         if (/^badge-[ae][2-8]$/.test(e.name)) continue;
@@ -445,6 +468,9 @@ const renderGallery = () => {
   const arC = cv('arrows').getContext('2d')!;
   const kgC = cv('king').getContext('2d')!;
   const thC = cv('threat').getContext('2d')!;
+  const dtC = cv('death').getContext('2d')!;
+  const dtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (dtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => dtC.fillRect(x, y, w, h) }, S);
+  let dtCells: CrumbleCell[] = [];
   for (const c of [hpC, arC, kgC, thC]) c.imageSmoothingEnabled = false;
   const tile = (c: CanvasRenderingContext2D, dark: boolean, x: number, y: number) => {
     const im = sprites[dark ? 'tile-dark' : 'tile-light'];
@@ -497,6 +523,13 @@ const renderGallery = () => {
     tile(thC, true, 0, 0);
     thC.fillStyle = `rgba(229,38,47,${(0.14 + 0.16 * (0.5 + 0.5 * Math.sin(now / 260))).toFixed(3)})`;
     thC.fillRect(0, 0, 80, 80);
+    // 처치 견본: 적 폰이 1.4초마다 바스라진다
+    if (!dtCells.length) dtCells = cellsOf({ p: { type: 'P', side: 1 } as Piece, x: 0, y: 30 }, sprites.P1, 80, S);
+    dtC.clearRect(0, 0, 80, 120);
+    tile(dtC, false, 0, 30);
+    const dt = (now % 1400) - 300;
+    if (dt < 0) for (const c of dtCells) dtPen.px(c.x + 2, c.y + 2, c.c, 1);
+    else drawCrumble(dtPen, dtCells, dt);
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);

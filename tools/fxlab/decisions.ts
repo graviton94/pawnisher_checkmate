@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 11, date: '2026-10-30' };
+export const VERSION = { n: 12, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,9 +48,8 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '색 규칙: 내 것 = 청록·흰색만, 적 = 진홍·검정만, 금색 = 처치에만 — 판·이펙트에 다 적용했다',
-  'HP: 잃은 칸이 하얗게 → 파도처럼 하나씩 솟아 도트로 깜빡이며 사라진다 (에셋 목록 "HP 게이지" 견본)',
-  '에셋 목록에서 하나씩 봐 주세요 — 직접 그린 것 중 바꿀 것 / 제미나이에 맡길 것',
+  '처치 바스라짐 (퀸 장면에서 잘 보인다) · 발밑 받침 없앤 모습',
+  '에셋 목록에서 바꿀 것 / 제미나이로 넘길 것 고르기',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
@@ -60,7 +59,8 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '이동', rule: '들기 → 지수형 이동(가운데서 가장 빠름) → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
   { item: '피해 숫자', rule: '크게 튀어나왔다가 지수형으로 자리 잡음. 피해가 클수록 크게, 내 기물이 맞으면 붉게, 처치는 금색 ☠', status: 'review' },
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
-  { item: '처치', rule: '기물이 톱니·스프링 파편으로 부서져 아래로 떨어진다', status: 'review' },
+  { item: '처치', rule: '위에서부터 한 줄씩 도트로 바스라진다 — 잘리는 선 아래는 체크무늬로 듬성듬성, 떨어진 도트는 튀었다 떨어지며 깜빡이고 사라짐', status: 'review' },
+  { item: '발밑 받침', rule: '쓰지 않는다 — 진영은 흰/검은 기물과 HP 게이지 색으로 충분', status: 'done' },
   { item: '피격', rule: '흰 점멸 0.07초 + 8방향 스파크', status: 'review' },
   { item: '발밑 받침·선택 테두리·이동 점·과녁·순번 배지', rule: 'A1 게임 적용은 되돌림 — 도트 크기가 기물과 달라 섞이고, 옛 벡터 화면 위에 얹혀 지저분했다. 도트 크기 통일 후 판 전체를 한꺼번에 바꾼다', status: 'review' },
   { item: '도트 크기', rule: '판 칸 20×20 도트, 기물 약 16도트 높이 (발주서 v2). S0 시험: 폰 높이 = 칸의 0.82 — 통과', status: 'done' },
@@ -74,6 +74,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 12, date: '2026-10-30', items: ['처치: 톱니 파편 → 위에서부터 도트로 바스라짐 (에셋 목록 "처치" 견본)', '발밑 받침 제거'] },
   { v: 11, date: '2026-10-30', items: ['색 규칙 정리: 내 것 청록·흰, 적 진홍·검정, 금 = 처치만 (선택·배지·범위·과녁·이펙트 다시 칠함)', 'HP 잃는 연출: 하얗게 → 파도처럼 솟아 도트로 사라짐', '나머지 에셋 직접 그림: 분출구·지형 5·종이 왕관·태엽 3·눈금·UI 프레임 6·아이콘 30', '에셋 목록 추가 (그림만 따로 보기)'] },
   { v: 10, date: '2026-10-30', items: ['발밑 받침·선택 모서리·이동 점·과녁(일반/처치)·순번 배지 1~9(도트 숫자)·처치 X·체크 고리·잔해를 코드 도트로', '계획 화면 재현: 화살표·배지·과녁·범위·HP 게이지(잃을 HP 금색)', '이펙트 격자를 칸당 20도트로 통일'] },
   { v: 9, date: '2026-10-30', items: ['칸 얼룩(긁힘) 제거', '균열: 굵은 붉은 선 → 1도트 검은 금 + 틈 속 붉은 빛', '위협 빗금 폐기 → 반투명 붉은 칸 깜빡임'] },
