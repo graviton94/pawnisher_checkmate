@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 10, date: '2026-10-30' };
+export const VERSION = { n: 11, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -48,12 +48,13 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 };
 
 export const OPEN_QUESTIONS: string[] = [
-  '코드 도트 표식 전체 (장면마다 처음 1.1초 = 계획 화면): 선택 모서리 · 갈 수 있는 칸 점 · 도트 화살표 · 순번 배지(도트 숫자) · 착지 칸 과녁 · 공격 범위 · 발밑 받침 · HP 게이지(잃을 HP 금색) · 처치 표시 X · 처치 뒤 잔해',
-  '괜찮으면 판 위 그림을 게임에 한꺼번에 넣는다 (제미나이 B6·B7·H·I가 오면 그때 추가)',
+  '색 규칙: 내 것 = 청록·흰색만, 적 = 진홍·검정만, 금색 = 처치에만 — 판·이펙트에 다 적용했다',
+  'HP: 잃은 칸이 하얗게 → 파도처럼 하나씩 솟아 도트로 깜빡이며 사라진다 (에셋 목록 "HP 게이지" 견본)',
+  '에셋 목록에서 하나씩 봐 주세요 — 직접 그린 것 중 바꿀 것 / 제미나이에 맡길 것',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
-  { item: '진영 색', rule: '아군 = 흰 백자 + 황동 스파크 · 적 = 붉은 과열광. 내 조작(선택·이동)은 청록', status: 'done' },
+  { item: '진영 색', rule: '내 것(선택·이동·화살표·배지·범위·과녁·공격 이펙트·HP) = 청록·흰색, 적 = 진홍·검정, 금색 = 처치에만, 황동 = UI 장치에만', status: 'review' },
   { item: '도트 격자', rule: '모든 이펙트를 칸당 16도트 격자에 찍는다. 매끈한 선·원 금지', status: 'done' },
   { item: '박자', rule: '예비 동작(모으기, 느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 이펙트가 칸에 닿는 순간 그 칸이 맞는다. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
   { item: '이동', rule: '들기 → 지수형 이동(가운데서 가장 빠름) → 착지 출렁임 + 증기 먼지. 나이트는 높게 뛴다', status: 'done' },
@@ -73,6 +74,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 11, date: '2026-10-30', items: ['색 규칙 정리: 내 것 청록·흰, 적 진홍·검정, 금 = 처치만 (선택·배지·범위·과녁·이펙트 다시 칠함)', 'HP 잃는 연출: 하얗게 → 파도처럼 솟아 도트로 사라짐', '나머지 에셋 직접 그림: 분출구·지형 5·종이 왕관·태엽 3·눈금·UI 프레임 6·아이콘 30', '에셋 목록 추가 (그림만 따로 보기)'] },
   { v: 10, date: '2026-10-30', items: ['발밑 받침·선택 모서리·이동 점·과녁(일반/처치)·순번 배지 1~9(도트 숫자)·처치 X·체크 고리·잔해를 코드 도트로', '계획 화면 재현: 화살표·배지·과녁·범위·HP 게이지(잃을 HP 금색)', '이펙트 격자를 칸당 20도트로 통일'] },
   { v: 9, date: '2026-10-30', items: ['칸 얼룩(긁힘) 제거', '균열: 굵은 붉은 선 → 1도트 검은 금 + 틈 속 붉은 빛', '위협 빗금 폐기 → 반투명 붉은 칸 깜빡임'] },
   { v: 8, date: '2026-10-30', items: ['판 칸·균열·범위 테두리·빗금을 코드 도트로 직접 찍음 (제미나이 B1은 무너진 칸만 사용)', '판 토글: 지금 / 제미나이 S0 / 코드 도트', '이동 전 0.7초 공격 범위 표시'] },

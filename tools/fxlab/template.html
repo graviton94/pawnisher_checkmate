@@ -77,6 +77,14 @@ td:last-child { width: 1%; }
 .sections { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
 @media (max-width: 860px) { .sections { grid-template-columns: minmax(0, 1fr); } }
 .ask { border-color: var(--crimson); }
+.gallery { display: grid; gap: 16px; }
+.g-group h4 { margin: 0 0 8px; font-size: 14px; color: var(--fg); }
+.g-group p { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+.g-items { display: flex; flex-wrap: wrap; gap: 10px; }
+.g-item { display: grid; justify-items: center; gap: 4px; padding: 8px; background: #23212b; border: 1px solid var(--line); min-width: 72px; }
+.g-item canvas, .g-item img { image-rendering: pixelated; max-width: 100%; aspect-ratio: auto; border: 0; box-shadow: none; background: transparent; width: auto; }
+.g-item span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.g-item b { font-size: 12px; font-weight: 400; color: var(--fg); }
 </style>
 
 <div class="wrap">
@@ -123,10 +131,15 @@ td:last-child { width: 1%; }
   </div>
 
   <section class="panel">
+    <h3>에셋 목록 <span class="muted">— 화면 없이 그림만, 도트 1개 = 화면 4px</span></h3>
+    <div id="gallery" class="gallery"></div>
+  </section>
+
+  <section class="panel">
     <h3>그래픽 결정</h3>
     <div class="table"><table><tbody id="decisions"></tbody></table></div>
   </section>
 </div>
 
-<script>window.SPRITES = {{SPRITES}};</script>
+<script>window.SPRITES = {{SPRITES}}; window.GALLERY = {{GALLERY}};</script>
 <script>{{JS}}</script>

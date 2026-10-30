@@ -16,6 +16,7 @@ const { chromium } = require('playwright');
   await page.click('[data-t="Q"]');
   await page.waitForTimeout(2900);
   await page.locator('#stage').screenshot({ path: `${out}/lab-Q.png` });
+  await page.locator('#gallery').screenshot({ path: `${out}/lab-gallery.png` });
   await page.setViewportSize({ width: 400, height: 800 });
   await page.waitForTimeout(200);
   const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

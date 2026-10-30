@@ -11,7 +11,7 @@ P = {
     'K': (0x0B, 0x0B, 0x0E), 'INK': (0x16, 0x14, 0x1C), 'D': (0x2F, 0x2E, 0x36), 'L': (0x56, 0x54, 0x5E),
     'G': (0x8A, 0x87, 0x94), 'LG': (0xC8, 0xC8, 0xC8), 'W': (0xF4, 0xF1, 0xEA), 'BR2': (0x8C, 0x62, 0x39),
     'BR': (0xC8, 0x9B, 0x3C), 'GO': (0xFA, 0xCC, 0x15), 'CR2': (0x7A, 0x12, 0x18), 'CR': (0xE5, 0x26, 0x2F),
-    'CY': (0x38, 0xBD, 0xF8), 'ST': (0xBF, 0xEF, 0xFF),
+    'CY': (0x38, 0xBD, 0xF8), 'CY2': (0x1E, 0x6E, 0x94), 'ST': (0xBF, 0xEF, 0xFF),
 }
 N = 20
 
@@ -64,18 +64,19 @@ def crack():
     return im
 
 
-def range_frame():
-    """공격 범위: 칸 가장자리 1도트 붉은 테두리 + 모서리 볼트 (안쪽은 비움 — 옅은 채움은 코드가 알파로)"""
+def range_frame(ally=True):
+    """공격 범위: 칸 가장자리 1도트 테두리 + 모서리 볼트 (내 공격 = 청록, 적 공격 = 진홍. 안쪽 옅은 채움은 코드가 알파로)"""
+    main, dark = ('CY', 'CY2') if ally else ('CR', 'CR2')
     im = canvas()
     for i in range(N):
         for x, y in ((i, 1), (1, i), (i, N - 2), (N - 2, i)):
             if 1 <= x <= N - 2 and 1 <= y <= N - 2:
-                put(im, x, y, 'CR')
+                put(im, x, y, main)
     for bx, by in ((1, 1), (N - 3, 1), (1, N - 3), (N - 3, N - 3)):
-        put(im, bx, by, 'CR')
-        put(im, bx + 1, by, 'CR')
-        put(im, bx, by + 1, 'CR')
-        put(im, bx + 1, by + 1, 'CR2')
+        put(im, bx, by, main)
+        put(im, bx + 1, by, main)
+        put(im, bx, by + 1, main)
+        put(im, bx + 1, by + 1, dark)
     return im
 
 
@@ -108,14 +109,14 @@ def base(ally):
 
 
 def select():
-    """선택: 칸 네 모서리의 황동 ㄱ자 (2도트 굵기, 안쪽은 어두운 황동) — 기물을 가리지 않게 4×4"""
+    """선택: 칸 네 모서리의 청록 ㄱ자 (내 조작 = 청록, D-047) (2도트 굵기, 안쪽은 어두운 황동) — 기물을 가리지 않게 4×4"""
     im = sprite(N, N)
     for cx, cy, sx, sy in ((0, 0, 1, 1), (N - 1, 0, -1, 1), (0, N - 1, 1, -1), (N - 1, N - 1, -1, -1)):
         for i in range(5):
-            dot(im, cx + sx * i, cy, 'GO' if i < 4 else 'BR2')
-            dot(im, cx, cy + sy * i, 'GO' if i < 4 else 'BR2')
-            dot(im, cx + sx * i, cy + sy, 'BR2' if i else 'GO')
-            dot(im, cx + sx, cy + sy * i, 'BR2' if i else 'GO')
+            dot(im, cx + sx * i, cy, 'CY' if i < 4 else 'CY2')
+            dot(im, cx, cy + sy * i, 'CY' if i < 4 else 'CY2')
+            dot(im, cx + sx * i, cy + sy, 'CY2' if i else 'CY')
+            dot(im, cx + sx, cy + sy * i, 'CY2' if i else 'CY')
     return im
 
 
@@ -144,9 +145,10 @@ def ring(size, r0, r1, color, teeth=0, tooth_r=0.0, gap=None, shade=None):
     return im
 
 
-def target(kill):
-    """치는 칸: 톱니 과녁 14×14 (처치면 금색 + 가운데 해골)"""
-    im = ring(14, 3.9, 5.7, 'GO' if kill else 'CR', teeth=8, tooth_r=1.4, shade='BR2' if kill else 'CR2')
+def target(kill, ally=True):
+    """치는 칸: 톱니 과녁 14×14 — 내 공격 청록 / 적 공격 진홍, 처치면 금색 + 가운데 해골 (금색은 처치에만, D-047)"""
+    main, dark = ('CY', 'CY2') if ally else ('CR', 'CR2')
+    im = ring(14, 3.9, 5.7, 'GO' if kill else main, teeth=8, tooth_r=1.4, shade='BR2' if kill else dark)
     if kill:
         skull = ['.###.', '#.#.#', '#####', '.#.#.']
         for y, row in enumerate(skull):
@@ -165,7 +167,7 @@ DIGITS = {
 
 def badge(ally, n):
     """순번 배지 11×11: 톱니 토큰 + 어두운 판 + 3×5 도트 숫자 (글꼴 대신 도트로 — 판과 같은 격자)"""
-    im = ring(11, 3.3, 4.7, 'BR' if ally else 'CR', teeth=8, tooth_r=1.0, shade='BR2' if ally else 'CR2')
+    im = ring(11, 3.3, 4.7, 'CY' if ally else 'CR', teeth=8, tooth_r=1.0, shade='CY2' if ally else 'CR2')
     for y in range(2, 9):
         for x in range(2, 9):
             if (x - 5) ** 2 + (y - 5) ** 2 <= 11:
@@ -198,13 +200,15 @@ def wreck():
 plate('L', 'G', 'D', 'G', 'D').save(f'{OUT}/tile-light.png')
 plate('D', 'L', 'INK', 'L', 'INK').save(f'{OUT}/tile-dark.png')
 crack().save(f'{OUT}/crack.png')
-range_frame().save(f'{OUT}/range.png')
+range_frame(True).save(f'{OUT}/range.png')
+range_frame(False).save(f'{OUT}/range-enemy.png')
 base(True).save(f'{OUT}/base-ally.png')
 base(False).save(f'{OUT}/base-enemy.png')
 select().save(f'{OUT}/select.png')
 move_dot().save(f'{OUT}/move-dot.png')
 target(False).save(f'{OUT}/target.png')
 target(True).save(f'{OUT}/target-kill.png')
+target(False, False).save(f'{OUT}/target-enemy.png')
 for n in range(1, 10):
     badge(True, n).save(f'{OUT}/badge-a{n}.png')
     badge(False, n).save(f'{OUT}/badge-e{n}.png')

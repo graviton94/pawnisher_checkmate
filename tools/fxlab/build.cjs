@@ -21,17 +21,26 @@ const path = require('node:path');
   const b64 = (p) => fs.readFileSync(path.join(root, p)).toString('base64');
   const sprites = {};
   for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const s of [0, 1]) sprites[`${t}${s}`] = `data:image/png;base64,${b64(`public/pieces/s-${t}${s}.png`)}`;
-  // 발주로 받은 판 칸 (있을 때만)
-  const boardFiles = fs.readdirSync(path.join(root, 'public', 'ui', 'board')).filter((f) => f.endsWith('.png')).map((f) => f.slice(0, -4));
-  for (const n of boardFiles) {
-    const f = path.join(root, 'public', 'ui', 'board', `${n}.png`);
-    if (fs.existsSync(f)) sprites[n] = `data:image/png;base64,${fs.readFileSync(f).toString('base64')}`;
+  // 판 위 도트·소품·HUD·프레임·아이콘 (tools/draw-board.py · draw-assets.py · 발주 결과). 판 칸 덧그림은 이름만, 나머지는 '폴더/이름'
+  const gallery = [];
+  for (const dir of ['board', 'props', 'hud', 'frames', 'icons']) {
+    const d = path.join(root, 'public', 'ui', dir);
+    if (!fs.existsSync(d)) continue;
+    for (const f of fs.readdirSync(d).filter((f) => f.endsWith('.png')).sort()) {
+      const name = f.slice(0, -4);
+      const key = dir === 'board' ? name : `${dir}/${name}`;
+      const buf = fs.readFileSync(path.join(d, f));
+      sprites[key] = `data:image/png;base64,${buf.toString('base64')}`;
+      // PNG 머리에서 크기를 읽는다 (그림이 뜨기 전에 목록을 그리므로)
+      gallery.push({ dir, name, key, w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) });
+    }
   }
   const html = fs
     .readFileSync(path.join(__dirname, 'template.html'), 'utf8')
     .replace('{{FONT11}}', b64('node_modules/galmuri/dist/Galmuri11.woff2'))
     .replace('{{FONT11B}}', b64('node_modules/galmuri/dist/Galmuri11-Bold.woff2'))
     .replace('{{SPRITES}}', JSON.stringify(sprites))
+    .replace('{{GALLERY}}', JSON.stringify(gallery))
     .replace('{{JS}}', () => js.replace(/<\/script/gi, '<\\/script'));
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, html);

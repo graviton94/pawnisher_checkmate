@@ -9,6 +9,7 @@ import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../sr
 import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
 
 declare const SPRITES: Record<string, string>;
+declare const GALLERY: { dir: string; name: string; key: string; w: number; h: number }[];
 
 /** 엔진 좌표 (아군 아래쪽). 공격자 출발 → 도착, 상대 폰 자리 */
 const CASES: Record<PieceType, { from: [number, number]; to: [number, number]; foes: [number, number][] }> = {
@@ -137,9 +138,10 @@ const drawRange = (area: { x: number; y: number }[]) => {
       ctx.lineWidth = 2;
       ctx.strokeRect(w.x + 2, w.y + 2, T - 4, T - 4);
     } else {
-      ctx.fillStyle = 'rgba(229,38,47,0.12)';
+      // 색 규칙 (D-047): 내 공격 = 청록, 적 공격 = 진홍
+      ctx.fillStyle = opt.side === 0 ? 'rgba(56,189,248,0.12)' : 'rgba(229,38,47,0.12)';
       ctx.fillRect(w.x, w.y, T, T);
-      const im = sprites.range;
+      const im = sprites[opt.side === 0 ? 'range' : 'range-enemy'];
       if (im?.complete) ctx.drawImage(im, w.x, w.y, T, T);
     }
   }
@@ -208,7 +210,7 @@ const drawPiece = (l: Live, now: number, hpAfter?: number) => {
 };
 
 /** 도트 화살표: 2도트 청록 선 + 도트 화살촉. 나이트는 ㄱ자 */
-const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight: boolean) => {
+const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight: boolean, color = 0x38bdf8) => {
   const A = center(a.x, a.y);
   const B = center(b.x, b.y);
   const pts = [A];
@@ -219,12 +221,12 @@ const arrow = (a: { x: number; y: number }, b: { x: number; y: number }, knight:
   const uy = (B.y - last.y) / len;
   const tip = { x: B.x - ux * T * 0.32, y: B.y - uy * T * 0.32 };
   pts.push(tip);
-  for (let i = 0; i < pts.length - 1; i++) pen.line(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, 0x38bdf8, 1, 2);
+  for (let i = 0; i < pts.length - 1; i++) pen.line(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, color, 1, 2);
   // 화살촉: 뒤로 갈수록 넓어지는 도트 줄
   for (let k = 0; k < 4; k++) {
     const bx = tip.x - ux * D * k;
     const by = tip.y - uy * D * k;
-    for (let s2 = -k; s2 <= k; s2++) pen.px(bx - uy * D * s2, by + ux * D * s2, 0x38bdf8, 1, 1);
+    for (let s2 = -k; s2 <= k; s2++) pen.px(bx - uy * D * s2, by + ux * D * s2, color, 1, 1);
   }
   pen.px(A.x, A.y, 0xbfefff, 1, 2);
 };
@@ -278,6 +280,7 @@ const play = () => {
   const PRE = 1100; // 계획 화면처럼 공격 범위·화살표·예상 피해를 먼저 보여 준다
   const preview = new Map((atk?.hits ?? []).map((h) => [h.targetId, h.hpAfter]));
   const wrecks: { x: number; y: number }[] = [];
+  const chips: { x: number; y: number; at: number; i: number }[] = [];
   const dests = legalMoves(sc.start, sc.start.pieces.find((p) => p.id === sc.attackerId)!).filter((d) => d.x !== mv.to.x || d.y !== mv.to.y);
   const kills = (atk?.hits ?? []).some((h) => h.killed);
   /** 계획 화면: 선택 모서리 · 갈 수 있는 칸 점 · 화살표 · 착지 칸 과녁 · 순번 배지 · 처치 표시 */
@@ -287,9 +290,9 @@ const play = () => {
       const w = px(d.x, d.y);
       blit('move-dot', w.x + 8 * D, w.y + 8 * D);
     }
-    arrow(mv.from, mv.to, me.p.type === 'N');
-    blit(kills ? 'target-kill' : 'target', to.x + 3 * D, to.y + 3 * D);
-    blit('badge-a1', to.x - 2 * D, to.y - 3 * D);
+    arrow(mv.from, mv.to, me.p.type === 'N', opt.side === 0 ? 0x38bdf8 : 0xe5262f);
+    blit(kills ? 'target-kill' : opt.side === 0 ? 'target' : 'target-enemy', to.x + 3 * D, to.y + 3 * D);
+    blit(opt.side === 0 ? 'badge-a1' : 'badge-e1', to.x - 2 * D, to.y - 3 * D);
     for (const h of atk?.hits ?? []) {
       if (!h.killed) continue;
       const l = lives.get(h.targetId)!;
@@ -310,6 +313,10 @@ const play = () => {
     for (const x of hits)
       if (!x.done && ms >= x.at) {
         x.done = true;
+        // 잃은 HP: 게이지에서 떨어져 나간 칸들이 하얗게 → 파도처럼 하나씩 솟아오르며 도트로 흩어진다
+        const before = Math.round((12 * Math.max(0, x.l.hp)) / x.l.p.maxHp);
+        const after = Math.round((12 * Math.max(0, x.h.hpAfter)) / x.l.p.maxHp);
+        for (let i = after; i < before; i++) chips.push({ x: x.l.x + (4 + i) * D, y: x.l.y + 18 * D, at: ms + (i - after) * 32, i });
         x.l.hp = x.h.hpAfter;
         x.l.flashUntil = now + 70 / opt.speed;
         const c = { x: x.l.x + T / 2, y: x.l.y + T * 0.45 };
@@ -347,6 +354,20 @@ const play = () => {
       const q = (ms - b.at) / len;
       if (q >= 0 && q < 1) (b.kind === 'spark' ? drawHitSpark : drawShatter)(pen, b.x, b.y, T, b.side, q);
     }
+    for (const c of chips) {
+      const t = ms - c.at;
+      if (t > 420) continue;
+      ctx.fillStyle = '#f4f1ea';
+      if (t < 0) {
+        ctx.fillRect(c.x, c.y, D, D); // 아직 떠나기 전: 그 자리에서 하얗게
+        continue;
+      }
+      const q = t / 420;
+      if (q > 0.45 && Math.floor(t / 40) % 2) continue; // 도트처럼 깜빡이며 사라짐
+      const rise = 1 - (1 - q) ** 3;
+      const size = q > 0.75 ? D / 2 : D;
+      ctx.fillRect(Math.round(c.x + (c.i % 2 ? 1 : -1) * D * 0.6 * q), Math.round(c.y - 9 * D * rise), size, size);
+    }
     for (const p of popups) {
       const q = (ms - p.at) / 950;
       if (q < 0 || q >= 1) continue;
@@ -366,6 +387,119 @@ const play = () => {
     else if (opt.loop) setTimeout(() => my === token && play(), 500);
   };
   requestAnimationFrame(frame);
+};
+
+// ---------- 에셋 목록 ----------
+const KO: Record<string, string> = {
+  'tile-light': '밝은 칸', 'tile-dark': '어두운 칸', 's0-tile-light': '제미나이 밝은 칸', 's0-tile-dark': '제미나이 어두운 칸', fallen: '무너진 칸 (제미나이)',
+  crack: '붕락 균열', range: '내 공격 범위', 'range-enemy': '적 공격 범위', 'base-ally': '아군 발밑', 'base-enemy': '적 발밑', select: '선택',
+  'move-dot': '갈 수 있는 칸', target: '내 과녁', 'target-enemy': '적 과녁', 'target-kill': '처치 과녁', kill: '처치될 기물', check: '체크 고리', wreck: '잔해',
+  'vent-closed': '분출구 닫힘', 'vent-opening': '분출구 열림 중', 'vent-open': '분출구 열림', 'vent-steam': '분출 증기',
+  'props/scrap': '고철 더미', 'props/lift': '승강판', 'props/shield': '방열 철판', 'props/trap': '톱니 덫', 'props/screwbox': '나사 상자',
+  'hud/paper-crown': '종이 왕관', 'hud/key-full': '태엽 (남음)', 'hud/key-spent': '태엽 (씀)', 'hud/key-bonus': '태엽 (보너스)', 'hud/pip': '점령 눈금',
+  'frames/panel': '패널', 'frames/button': '버튼', 'frames/button-pressed': '버튼 눌림', 'frames/card-iron': '철 카드', 'frames/card-paper': '종이 카드', 'frames/slot': '빈 슬롯',
+  'icons/sword': '칼날', 'icons/pierce': '관통', 'icons/fork': '포크', 'icons/wave': '충격파', 'icons/flame': '열기', 'icons/shield': '방패', 'icons/bricks': '성벽',
+  'icons/chain': '사슬', 'icons/oil': '기름 방울', 'icons/skull': '해골', 'icons/horseshoe': '편자', 'icons/portal': '소용돌이 문', 'icons/swap': '맞바꿈',
+  'icons/flag': '깃발', 'icons/claw': '집게', 'icons/windkey': '태엽 열쇠', 'icons/watch': '회중시계', 'icons/bell': '종', 'icons/crown': '왕관',
+  'icons/star': '별', 'icons/eye': '렌즈 눈', 'icons/scale': '저울', 'icons/reticle': '과녁', 'icons/card': '천공 카드', 'icons/anvil': '모루 (공방)',
+  'icons/screw': '나사 (고물상)', 'icons/question': '물음표 (사건)', 'icons/crate': '부품 상자', 'icons/wrench': '렌치 (정비소)', 'icons/lever': '레버 (운명 기관)',
+};
+const GROUPS: [string, string, string][] = [
+  ['pieces', '기물 (사용자 도트)', '판 위 모든 그림의 크기 기준'],
+  ['board', '판 칸 · 판 위 표식', '칸 = 20×20 도트. 숫자 배지는 1~9 중 일부만 표시'],
+  ['code', '코드로 찍는 요소', '그 자리에서 계산해 찍는 것 — 움직임 포함'],
+  ['props', '지형 소품', '기물과 같은 검정 + 흰 테두리'],
+  ['hud', '주인공 · 태엽 · 눈금', '종이 왕관은 내 킹(아홉째 폰) 머리에 얹는다'],
+  ['frames', 'UI 프레임', '회색 4단계 — 쓰임에 따라 코드가 색을 입힌다 (9-slice)'],
+  ['icons', '아이콘 문양 30종', '흰색 한 가지 — 쓰임에 따라 코드가 색을 입힌다'],
+];
+const S = 4; // 목록 확대 배율
+
+const renderGallery = () => {
+  const box = document.getElementById('gallery')!;
+  const item = (label: string, w: number, h: number, inner: string) => `<div class="g-item">${inner}<b>${label}</b><span>${w}×${h}</span></div>`;
+  const parts: string[] = [];
+  for (const [g, title, note] of GROUPS) {
+    let items = '';
+    if (g === 'pieces') {
+      for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const sd of [0, 1]) items += item(`${t}${sd === 0 ? ' 아군' : ' 적'}`, 16, 16, `<img src="${SPRITES[`${t}${sd}`]}" width="${16 * S}" height="${16 * S}" alt="">`);
+    } else if (g === 'code') {
+      items += item('HP 게이지 (잃는 순간)', 14, 3, '<canvas data-live="hp" width="112" height="72"></canvas>');
+      items += item('화살표 (직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
+      items += item('종이 왕관 킹 (조합)', 20, 24, '<canvas data-live="king" width="80" height="96"></canvas>');
+      items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
+    } else {
+      for (const e of GALLERY.filter((x) => x.dir === g)) {
+        if (/^badge-[ae][2-8]$/.test(e.name)) continue;
+        const { w, h } = e;
+        const label = KO[e.key] ?? (e.name.startsWith('badge-a') ? `내 순번 ${e.name.slice(-1)}` : e.name.startsWith('badge-e') ? `적 순번 ${e.name.slice(-1)}` : e.name);
+        items += item(label, w, h, `<img src="${SPRITES[e.key]}" width="${w * S}" height="${h * S}" alt="">`);
+      }
+    }
+    parts.push(`<div class="g-group"><h4>${title}</h4><p>${note}</p><div class="g-items">${items}</div></div>`);
+  }
+  box.innerHTML = parts.join('');
+  // 움직이는 견본
+  const cv = (k: string) => box.querySelector<HTMLCanvasElement>(`[data-live="${k}"]`)!;
+  const hpC = cv('hp').getContext('2d')!;
+  const arC = cv('arrows').getContext('2d')!;
+  const kgC = cv('king').getContext('2d')!;
+  const thC = cv('threat').getContext('2d')!;
+  for (const c of [hpC, arC, kgC, thC]) c.imageSmoothingEnabled = false;
+  const tile = (c: CanvasRenderingContext2D, dark: boolean, x: number, y: number) => {
+    const im = sprites[dark ? 'tile-dark' : 'tile-light'];
+    if (im?.complete) c.drawImage(im, x, y, 20 * S, 20 * S);
+  };
+  const loop = (now: number) => {
+    // HP: 12칸 중 5칸을 잃는 장면을 1.6초마다
+    const t = now % 1600;
+    hpC.clearRect(0, 0, 112, 72);
+    const cell = (i: number, j: number, col: string) => {
+      hpC.fillStyle = col;
+      hpC.fillRect(8 + i * S * 1.5, 48 + j * S * 1.5, S * 1.5, S * 1.5);
+    };
+    const lost = t > 300;
+    for (let i = 0; i < 14; i++) for (let j = 0; j < 3; j++) cell(i, j, '#16141c');
+    cell(0, 1, '#8a8794');
+    cell(13, 1, '#8a8794');
+    for (let i = 0; i < 12; i++) cell(1 + i, 1, i < 7 || !lost ? '#e5262f' : '#2f2e36');
+    for (let i = 7; i < 12 && lost; i++) {
+      const u = t - 300 - (i - 7) * 32;
+      hpC.fillStyle = '#f4f1ea';
+      if (u < 0) {
+        cell(1 + i, 1, '#f4f1ea');
+        continue;
+      }
+      const q = u / 420;
+      if (q >= 1 || (q > 0.45 && Math.floor(u / 40) % 2)) continue;
+      const rise = 1 - (1 - q) ** 3;
+      const sz = q > 0.75 ? S * 0.75 : S * 1.5;
+      hpC.fillRect(8 + (1 + i) * S * 1.5 + (i % 2 ? 1 : -1) * 3 * q, 48 + S * 1.5 - 40 * rise, sz, sz);
+    }
+    // 화살표
+    arC.clearRect(0, 0, 240, 80);
+    tile(arC, false, 0, 0);
+    tile(arC, true, 80, 0);
+    tile(arC, false, 160, 0);
+    const ap = new PixelPen({ fillStyle: (c: number, a = 1) => (arC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => arC.fillRect(x, y, w, h) }, S);
+    ap.line(8, 40, 64, 40, 0x38bdf8, 1, 2);
+    ap.line(88, 72, 144, 16, 0x38bdf8, 1, 2);
+    ap.line(176, 72, 176, 24, 0xe5262f, 1, 2);
+    ap.line(176, 24, 228, 24, 0xe5262f, 1, 2);
+    // 종이 왕관 킹: 사용자 폰 + 왕관
+    kgC.clearRect(0, 0, 80, 96);
+    const pawn = sprites.P0;
+    const crown = sprites['hud/paper-crown'];
+    if (pawn?.complete) kgC.drawImage(pawn, 8, 28, 64, 64);
+    if (crown?.complete) kgC.drawImage(crown, 40 - (crown.naturalWidth * S) / 2 + 2, 10, crown.naturalWidth * S, crown.naturalHeight * S);
+    // 위협 깜빡임
+    thC.clearRect(0, 0, 80, 80);
+    tile(thC, true, 0, 0);
+    thC.fillStyle = `rgba(229,38,47,${(0.14 + 0.16 * (0.5 + 0.5 * Math.sin(now / 260))).toFixed(3)})`;
+    thC.fillRect(0, 0, 80, 80);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
 };
 
 // ---------- 화면 (조작 · 결정 목록) ----------
@@ -425,6 +559,7 @@ const init = () => {
   $('#questions').innerHTML = OPEN_QUESTIONS.map((q) => `<li>${q}</li>`).join('');
   $('#decisions').innerHTML = DECISIONS.map((d) => `<tr><th scope="row">${d.item}</th><td>${d.rule}</td><td>${chip(d.status)}</td></tr>`).join('');
   $('#log').innerHTML = CHANGELOG.map((c) => `<li><b>v${c.v}</b> <span class="muted">${c.date}</span><ul>${c.items.map((i) => `<li>${i}</li>`).join('')}</ul></li>`).join('');
+  renderGallery();
   renderPanel();
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     opt.loop = false;

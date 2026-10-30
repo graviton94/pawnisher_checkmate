@@ -19,8 +19,8 @@ interface Palette {
   edge: number;
 }
 export const PAL: Record<Side, Palette> = {
-  // 아군: 흰 백자 + 황동 스파크 · 적: 붉은 과열광 (docs/world.md §4)
-  0: { core: 0xf4f1ea, glow: 0xc89b3c, edge: 0xfacc15 },
+  // 색 규칙 (D-047): 아군 = 흰 + 청록 + 증기빛, 적 = 붉은 과열광. 금색은 처치에만
+  0: { core: 0xf4f1ea, glow: 0x38bdf8, edge: 0xbfefff },
   1: { core: 0xff8a8a, glow: 0xe5262f, edge: 0x7a1218 },
 };
 
@@ -671,7 +671,7 @@ export const drawHitSpark = (pen: PixelPen, x: number, y: number, t: number, sid
 /** 처치 파편 한 장면 (q = 0~1, 380ms): 기물이 톱니·스프링 파편으로 부서져 튄다 (docs/world.md §4) */
 export const drawShatter = (pen: PixelPen, x: number, y: number, t: number, pieceSide: Side, q: number): void => {
   const body = pieceSide === 0 ? 0xf4f1ea : 0x2a2830;
-  const rim = pieceSide === 0 ? 0xc89b3c : 0xe5262f;
+  const rim = pieceSide === 0 ? 0x38bdf8 : 0xe5262f;
   const e = easeOutExpo(q);
   for (let i = 0; i < 12; i++) {
     const a = -Math.PI / 2 + ((i - 5.5) / 6) * 1.5 + (i % 3) * 0.13;
