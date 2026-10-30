@@ -357,8 +357,8 @@ export class RunUi {
           <span class="kind" style="font-size:12px;color:var(--crimson-soft)">${icon('crown', 's')} ${TEXT.map.bossAhead} · ${inAct(bossF)}층</span>
           <div class="portrait">${pieceImg(bossPiece, 1, 'large', 80)}</div>
           <b>${boss.name}</b>
+          <small class="lead dim">${boss.role}</small>
           <p class="quote">“${boss.quote}”</p>
-          <small class="lead">${boss.role}</small>
           <small class="lead dim">${boss.title}</small>
         </div>
       </div>
