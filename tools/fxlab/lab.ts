@@ -171,8 +171,8 @@ const blit = (k: string, x: number, y: number, a = 1) => {
  * 채움이 테두리 끝까지 닿는다 — 예전 14×3은 양 끝이 리벳 칸이라 비어 보였다. 잃을 HP는 금색.
  */
 const GAUGE_COL: Record<string, [string, string]> = { a: ['#38bdf8', '#1e6e94'], e: ['#e5262f', '#7a1218'], lose: ['#facc15', '#c89b3c'], loseHi: ['#f4f1ea', '#facc15'], empty: ['#2f2e36', '#16141c'] };
-/** 잃을 HP 칸: 금색 2줄(밝은 줄 + 그늘 줄, 다른 색과 같은 규칙) + 0.6초마다 밝게 깜빡이고, 그 사이 흰 반짝임이 오른쪽→왼쪽으로 훑는다 (D-055) */
-const LOSE_BLINK_MS = 600;
+/** 잃을 HP 칸: 금색 2줄(밝은 줄 + 그늘 줄, 다른 색과 같은 규칙) + 1.6초마다 한 번 짧게 밝아지고, 그 사이 흰 반짝임이 천천히 오른쪽→왼쪽으로 훑는다 (D-055) */
+const LOSE_BLINK_MS = 1600;
 const gaugeCells = (side: Side, hp: number, after: number, max: number, cell: (i: number, j: number, c: string) => void, now = performance.now()) => {
   for (let i = 1; i < 13; i++) {
     cell(i, 0, '#0b0b0e');
@@ -188,7 +188,7 @@ const gaugeCells = (side: Side, hp: number, after: number, max: number, cell: (i
   const sweep = Math.floor(cur - 1 - ph * (cur - keep + 2)); // 훑는 반짝임이 지금 있는 칸
   for (let i = 0; i < 12; i++) {
     const lose = i >= keep && i < cur;
-    const [top, low] = GAUGE_COL[!lose ? (i < keep ? (side === 0 ? 'a' : 'e') : 'empty') : ph < 0.18 ? 'loseHi' : 'lose'];
+    const [top, low] = GAUGE_COL[!lose ? (i < keep ? (side === 0 ? 'a' : 'e') : 'empty') : ph < 0.08 ? 'loseHi' : 'lose'];
     cell(1 + i, 1, lose && i === sweep ? '#f4f1ea' : top);
     cell(1 + i, 2, low);
   }
