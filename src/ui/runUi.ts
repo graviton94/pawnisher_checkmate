@@ -4,7 +4,7 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { ACT_NAMES, ALTAR, BOSSES, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
+import { ACT_NAMES, ALTAR, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { TEXT } from '../data/text';
 import { ASCENSIONS, UNLOCK_DECKS, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import type { BattleController } from '../game/controller';
@@ -16,6 +16,7 @@ import {
   altarGamble,
   altarPick,
   bossName,
+  bossOf,
   ENCHANT_TYPE,
   startDeckOptions,
   buyCard,
@@ -355,6 +356,7 @@ export class RunUi {
     });
     const bossF = act * FLOORS_PER_ACT;
     const bossId = act < 3 ? run.bosses[act - 1] : null;
+    const boss = bossOf(run, bossF);
     const bossPiece: PieceType = bossId ? BOSS_PIECE[bossId] : 'Q';
     const el = this.hud.openScene(
       `${this.bar(run)}
@@ -364,8 +366,10 @@ export class RunUi {
         <div class="boss-card panel9">
           <span class="kind" style="font-size:12px;color:var(--crimson-soft)">${icon('crown', 's')} ${TEXT.map.bossAhead} · ${inAct(bossF)}층</span>
           <div class="portrait">${pieceImg(bossPiece, 1, 'large', 80)}</div>
-          <b>${bossName(run, bossF)}</b>
-          <small class="lead" style="font-size:12px">${bossId ? BOSSES[bossId].title : '퀸 2기 · 대단원 · 호위 리벳'}</small>
+          <b>${boss.name}</b>
+          <p class="quote">“${boss.quote}”</p>
+          <small class="lead">${boss.role}</small>
+          <small class="lead dim">${boss.title}</small>
         </div>
       </div>
       <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'altar', 'event'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
@@ -427,7 +431,10 @@ export class RunUi {
       window.setTimeout(() => this.show(), 600);
     };
     this.c.startState(state, e.tier, TUNED);
-    this.hud.toast(run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`);
+    // 대국 시작 한 줄: 반장은 자기 대사, 검문!은 경고, 그 밖엔 공정과 군단 이름
+    const opening =
+      e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`;
+    this.hud.toast(opening);
   }
 
   private showReward(run: RunState): void {
@@ -455,7 +462,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${ch ? `<p>검수관이 서류를 넘긴다. “${kind} 중에 하나만 가져가.”</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${ch ? `<p>검수관이 서류를 넘긴다. “통과. …아직은. ${kind}, 하나만.”</p>` : ''}</div>
       ${lines ? `<div class="unlocks">${lines}</div>` : ''}
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
@@ -484,8 +491,8 @@ export class RunUi {
         ? (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<button class="chip" type="button" data-d="${id}"><b>${ENCHANTS[id].name}</b><small>${n}단 — 단째 사라진다</small></button>`)
         : run.loadout.cards.map((id, i) => `<button class="chip" type="button" data-d="${i}"><b>${CARDS[id].name}</b><small>${CARDS[id].desc}</small></button>`);
     const panel = this.hud.openOverlay(`
-      <h2>${type === 'enchant' ? '“개조 칸이 꽉 찼어.”' : `“천공 카드 칸(${CARD_SLOTS})이 꽉 찼어.”`}</h2>
-      <p>하나를 빼야 들어간다.</p>
+      <h2>${type === 'enchant' ? '개조 칸이 꽉 찼다' : `천공 카드 칸(${CARD_SLOTS})이 꽉 찼다`}</h2>
+      <p>하나를 뜯어내야 새 것이 들어간다. 뜯은 건 돌아오지 않는다.</p>
       <div class="chips">${items.join('')}</div>
       ${button('취소', 'data-cancel', { cls: 'wide' })}`);
     this.wire(panel, {
@@ -545,7 +552,7 @@ export class RunUi {
     const types = ORDER.filter((t) => t !== 'K' && run.deck.includes(t));
     const panel = this.hud.openOverlay(`
       <h2>${icon('scale')} ${TEXT.shop.sell}</h2>
-      <p>“판 건 돌려 달래도 안 돼.”</p>
+      <p>“팔면 끝이야. 울면서 돌려 달래도 안 돼, 종이 왕관.”</p>
       <div class="chips">${types.map((t) => `<button class="chip" type="button" data-sell="${t}"><b>${pieceImg(t, 0, 'small', 24)} ${PIECE_NAMES_KO[t]} ×${run.deck.filter((x) => x === t).length}</b><small>1기 팔기 · 나사 +${sellPrice(t)}</small></button>`).join('')}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     this.wire(panel, {
@@ -576,7 +583,7 @@ export class RunUi {
         <span class="vname">${v ? `이형 · ${VARIANTS[v].name}` : lv >= VARIANT_FORGE_LEVEL ? '' : `+${VARIANT_FORGE_LEVEL} 이형 가능`}</span>
         <span class="lv">${lvPips}</span>
         ${cost === null ? `<span class="tag gold">완성 거푸집</span>` : `<button class="btn${run.gold >= cost ? ' brass' : ' poor'}" type="button" data-up="${t}">+${lv + 1} ${screws(cost)}</button>`}
-        ${opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('')}
+        ${opts.length ? opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('') : '<span class="slot-v"></span>'}
       </div>`;
     });
     const el = this.hud.openScene(
@@ -607,7 +614,7 @@ export class RunUi {
     const v = VARIANTS[id];
     const panel = this.hud.openOverlay(`
       <h2>${icon('anvil')} 이형 거푸집 — ${v.name}</h2>
-      <p>“${PIECE_NAMES_KO[t]} 거푸집을 통째로 바꾼다. 되돌릴 순 없어.”</p>
+      <p>“${PIECE_NAMES_KO[t]} 거푸집을 통째로 뜯는다. 무르기 없다.”</p>
       <div class="panel9"><p><b style="color:var(--cyan)">강점</b> ${v.gain}</p><p><b style="color:var(--crimson-soft)">대가</b> ${v.cost}</p></div>
       <div class="row">${button('그만두기', 'data-no')}${button('바꾼다', 'data-yes', { tone: 'brass' })}</div>`);
     this.wire(panel, {
@@ -647,13 +654,13 @@ export class RunUi {
     const odds = [ALTAR.odds.enchant, ALTAR.odds.piece, ALTAR.odds.variant, 1 - ALTAR.odds.enchant - ALTAR.odds.piece - ALTAR.odds.variant];
     const result =
       r?.kind === 'miss'
-        ? `<span class="result-stamp bad">꽝</span><p class="lead">행운 톱니가 한 칸 돌았다 (${run.crackGauge}/${ALTAR.gaugeMax}). 다 차면 원하는 개조를 고른다.</p>`
+        ? `<span class="result-stamp bad">꽝</span><p class="lead">기계가 나사를 삼키고 트림을 한다. 행운 톱니가 한 칸 돈다 (${run.crackGauge}/${ALTAR.gaugeMax}) — 다음엔 될 것 같지 않아?</p>`
         : r?.kind === 'variant'
-          ? `<span class="result-stamp good">대박 — 이형 거푸집</span><p class="lead"><b>${VARIANTS[r.variant].name}</b> · ${VARIANTS[r.variant].gain}</p>`
+          ? `<span class="result-stamp good">드르르륵— 쾅! 이형 거푸집!</span><p class="lead"><b>${VARIANTS[r.variant].name}</b> · ${VARIANTS[r.variant].gain}</p>`
           : r?.kind === 'piece'
             ? r.piece
-              ? `<span class="result-stamp cyan">상위 기물</span><p class="lead">${pieceImg(r.piece, 0, 'large', 40)} ${PIECE_NAMES_KO[r.piece]}이(가) 군단에 들어왔다</p>`
-              : `<span class="result-stamp cyan">상위 기물</span><p class="lead">군단에 자리가 없어 나사로 바꿨다</p>`
+              ? `<span class="result-stamp cyan">상위 기물</span><p class="lead">${pieceImg(r.piece, 0, 'large', 40)} ${PIECE_NAMES_KO[r.piece]}가 굴러 나와 군단 뒤에 줄을 선다</p>`
+              : `<span class="result-stamp cyan">상위 기물</span><p class="lead">자리가 없다. 고물상이 냉큼 나사로 바꿔 갔다</p>`
             : '';
     const canPick = altarCanPick(run);
     const el = this.hud.openScene(

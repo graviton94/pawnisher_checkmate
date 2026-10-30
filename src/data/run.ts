@@ -185,6 +185,9 @@ export type BossId = 'knight' | 'bishop' | 'rook';
 export interface BossDef {
   name: string;
   title: string;
+  /** 세계관 (docs/story.md §2): 맡은 일 · 대사 */
+  role: string;
+  quote: string;
   deck: Deck;
   enchants: Partial<Record<EnchantId, number>>;
   cards: CardId[];
@@ -195,6 +198,8 @@ export const BOSSES: Record<BossId, BossDef> = {
   knight: {
     name: '나이트 반장',
     title: '나이트 4기 · 방전 기병',
+    role: '피스톤 다리의 대형 흑마. 몸에 새긴 값 3. 값이 안 맞는 기물은 거푸집째 녹인다.',
+    quote: '값 3. 너는 1. 계산 끝.',
     // 나이트 4 = 초과 2 × (25 + 세금 10) = 70 → 비숍 2(50) + 폰 2(20) 희생
     deck: ['K', 'Q', 'R', 'R', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E01: 3 },
@@ -204,6 +209,8 @@ export const BOSSES: Record<BossId, BossDef> = {
   bishop: {
     name: '비숍 반장',
     title: '비숍 4기 · 집광 렌즈',
+    role: '렌즈를 박은 대형 흑 비숍. 규격에서 한 도트라도 어긋난 기물을 빛으로 태워 걸러 낸다.',
+    quote: '규격은 빛과 같다. 굽지 않는다.',
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
     enchants: { E02: 3 },
     cards: ['A03'],
@@ -212,6 +219,8 @@ export const BOSSES: Record<BossId, BossDef> = {
   rook: {
     name: '룩 반장',
     title: '룩 3기 · 폭주 기관차',
+    role: '보일러를 진 대형 흑 룩. 이 라인의 문. 불량이 섞인 세트는 한 상자도 지나가지 못한다.',
+    quote: '통과 불가. 불량은 지나갈 수 없다.',
     // 룩 3 = 초과 1 × (40 + 세금 10) = 50 → 나이트 2(50) 희생
     deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
     enchants: { E03: 3 },
@@ -224,6 +233,8 @@ export const BOSSES: Record<BossId, BossDef> = {
 export const FINAL_BOSS: BossDef = {
   name: '공장장',
   title: '퀸 2기 · 대단원 · 호위 리벳',
+  role: '모든 킹을 찍어 낸 첫 번째 킹. 진짜 금 왕관. 포장대 끝에서 마지막 도장을 쥐고 있다.',
+  quote: '자리에 맞지 않는 것은 자리를 떠나라.',
   // 퀸 2 = 초과 1 × (60 + 세금 10) = 70 → 나이트 1(25) + 비숍 1(25) + 폰 2(20) 희생
   deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
   enchants: { E05: 3, E08: 3, E06: 2 },

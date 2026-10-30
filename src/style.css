@@ -436,3 +436,30 @@ img { image-rendering: pixelated; }
 .say { font-size: 22px; text-shadow: 0 2px 0 #000; }
 .say small { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); font-weight: 400; }
 .tell { color: var(--text2); font-size: 15px; max-width: 560px; line-height: 1.6; margin: 0; }
+
+/* ---- 높이 통일 (D-089, 사용자: 같은 줄의 버튼·요소는 높이를 맞춘다) ----
+ * 버튼은 한 줄이든 설명 두 줄이든 52px 고정 · 상태 띠와 전투 레일 머리는 이름판·통계·버튼 모두 48px · 가동 줄 60px */
+.btn, .btn.col { height: 52px; min-height: 52px; }
+.btn.col { justify-content: center; }
+.btn.col small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bar .plate, .bar .btn, .bar .stat { height: 48px; min-height: 48px; }
+.bar .btn.sq { width: 48px; }
+.rail-head .plate, .rail-head .btn.sq { height: 48px; min-height: 48px; }
+.actions .btn { height: 60px; }
+.forge-card .btn { height: 48px; min-height: 48px; }
+.forge-card .lv { margin-bottom: auto; }
+.forge-card > .btn:first-of-type, .forge-card > .tag { margin-top: 6px; }
+.panel .row .btn, .ending .btn { height: 52px; }
+.boss-card .quote { margin: 2px 0 0; font-size: 14px; color: var(--crimson-soft); line-height: 1.4; }
+.boss-card .lead { font-size: 12px; line-height: 1.45; }
+.boss-card .dim { color: var(--muted); }
+.boss-card { width: 220px; overflow: hidden; }
+.boss-card .portrait { flex: none; }
+/* 설명 달린 버튼: 아이콘 왼쪽 + 글 두 줄 (가로 배치) */
+.btn.col { flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; }
+.btn.col > span { display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; line-height: 1.25; }
+.title-line h2 { flex: none; }
+.title-line p { min-width: 0; }
+/* 공방 카드: 개량 버튼 줄과 이형 버튼 줄을 카드마다 같은 높이에 (이형이 없으면 빈 자리) */
+.forge-card .slot-v { height: 48px; flex: none; }
+.title-line { margin-top: 6px; }

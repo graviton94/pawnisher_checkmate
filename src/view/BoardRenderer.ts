@@ -715,7 +715,7 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         if (cur.stronghold && isFallen(cur, cur.stronghold.x, cur.stronghold.y)) cur.stronghold = null;
-        this.announce('붕락! 작업대가 톱니 아래로 꺼진다');
+        this.announce('바닥이 꺼진다! 칸 한 쌍이 톱니 아래로');
         this.shake(300, 0.008);
         this.drawTiles(cur);
         await Promise.all(
@@ -758,7 +758,7 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'stall') {
-        this.announce(e.count >= e.need ? '정체 — 작업대가 무너지기 시작한다' : `정체 ${e.count}/${e.need} — 이번 턴도 아무도 안 맞으면 판이 무너진다`);
+        this.announce(e.count >= e.need ? '정체 — 이제부터 바닥이 꺼진다' : `정체 ${e.count}/${e.need} — 이번 턴도 아무도 안 맞으면 바닥이 꺼진다`);
         continue;
       }
       if (e.type === 'strongholdSpawn') {

@@ -22,7 +22,7 @@ export const EVENTS: Record<EventId, EventDef> = {
     title: '떠돌이 정비공',
     text: '공구 수레를 끄는 정비공이 렌치를 들어 보인다. "거푸집 하나만, 싸게 고쳐 주지."',
     choices: [
-      { label: '나사 25 — 아무 거푸집이나 고쳐 볼까?', desc: '군단에 있는 유형 중 하나 (완성 거푸집 제외)' },
+      { label: '나사 25 — 어느 거푸집이 걸릴지, 맡겨 볼까?', desc: '군단에 있는 유형 중 하나 (완성 거푸집 제외)' },
       { label: '지나간다', desc: '' },
     ],
   },
@@ -38,7 +38,7 @@ export const EVENTS: Record<EventId, EventDef> = {
     title: '태엽 도박꾼',
     text: '"동전 한 번이면 돼. 앞면이면 두 배, 뒷면이면 내 거."',
     choices: [
-      { label: '나사 30개를 걸어 볼까?', desc: '50%: +30 / 50%: −30' },
+      { label: '앞면에 나사 30개, 걸어 볼까?', desc: '50%: +30 / 50%: −30' },
       { label: '거절한다', desc: '' },
     ],
   },
@@ -54,7 +54,7 @@ export const EVENTS: Record<EventId, EventDef> = {
     title: '쇳물 앞의 거래',
     text: '용광로 앞, 쇳물빛에 그림자가 말한다. "가장 아끼는 부품을 녹여라. 대가는 주지."',
     choices: [
-      { label: '녹여 볼까?', desc: '킹·폰을 뺀 무작위 기물 1기를 잃고 희귀 개조 3지선다' },
+      { label: '가장 아끼는 걸, 녹여 볼까?', desc: '킹·폰을 뺀 무작위 기물 1기를 잃고 희귀 개조 3지선다' },
       { label: '거절한다', desc: '' },
     ],
   },

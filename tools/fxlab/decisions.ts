@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 47, date: '2026-10-30' };
+export const VERSION = { n: 48, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -85,6 +85,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 48, date: '2026-10-30', items: ['같은 줄 높이 통일: 버튼 52px · 상태 띠/레일 머리 48px · 공방 카드 버튼 줄 맞춤 · 설명 달린 버튼 가로 배치', '반장 카드에 세계관 (역할 · 대사), 인물별 대사 다시 씀, 판 붕락 → 바닥 꺼짐'] },
   { v: 47, date: '2026-10-30', items: ['기물 외곽선 다듬기: 대각선 잡계단 · 외톨이 칸 정리, 검정 3칸 · 흰 2칸 고르게, 외곽선 근처 회색 잡티 → 검정', '느낌표(검문! · 붕락! · 폭주!) · 물음표(무작위 선택: 레버를 당겨 볼까?)'] },
   { v: 46, date: '2026-10-30', items: ['기물 그림 64×64 격자로 다시 (18칸은 디테일 부족 — 사용자) · 원본 갈기·눈·음영 그대로', '화면 말투: 존댓말 → 인물 대사(반말) · 서술 한 줄'] },
   { v: 45, date: '2026-10-30', items: ['기물 그림을 도트 메이커로 다시 찍음 (tools/pixel — 원본을 5px 격자로 옮긴 정본, 흰 테두리 도트 반 개)', '용어: 대국 · 검문 · 뽑기 기계 · 돌발'] },

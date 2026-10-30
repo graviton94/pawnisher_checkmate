@@ -62,7 +62,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'full',
     title: '정규 교전 · 8×8',
-    desc: '정통 체스 16기 대 16기. 3·6·9턴에 요충지, 15턴부터 붕락.',
+    desc: '정통 체스 16기 대 16기. 3·6·9턴에 요충지, 15턴부터 바닥이 꺼진다.',
     width: 8,
     height: 8,
     decks: [
@@ -462,7 +462,7 @@ export class BattleController {
     } else if (mine && !this.plan.some((st) => 'pieceId' in st && st.pieceId === p.id && st.kind !== 'shield' && st.kind !== 'formShift')) {
       this.selectedId = p.id;
       const left = this.apTotal - this.apUsed;
-      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 모자라. (${moveCost(this.virtual, p)} 필요)`);
+      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 다 풀렸다. (${moveCost(this.virtual, p)} 필요)`);
       else if (!this.options().length) this.hud.toast('갈 칸이 없어.');
     } else {
       this.selectedId = null;
