@@ -252,6 +252,7 @@ export class Hud implements HudView {
     if (p.formAs) extra.push(`거푸집 교환: ${PIECE_NAMES_KO[p.formAs]} 행마`);
     if (p.variant && p.type === VARIANTS[p.variant].base) extra.push(`<span class="variant">이형 · ${VARIANTS[p.variant].name}</span><br><small>${VARIANTS[p.variant].gain} (${VARIANTS[p.variant].cost})</small>`);
     if (p.stuckTurn !== undefined && p.stuckTurn >= (this.c.state?.turnNumber ?? 0)) extra.push('<span class="enemy">자석판에 붙잡혔다 — 다음 자기 턴에 못 움직인다</span>');
+    if (p.type === 'P' && !p.fused) extra.push(`<small>${TEXT.battle.counter}</small>`);
     if (p.affix) extra.push(`<span class="enemy">${AFFIXES[p.affix].name}</span><br><small>${AFFIXES[p.affix].desc}</small>`);
     const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
     if (forge) extra.push(`거푸집 개량 +${forge}`);

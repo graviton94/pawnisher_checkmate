@@ -122,3 +122,21 @@ describe('키워드 연계 개조 (GDD 11장 B4, D-095)', () => {
     expect(hit(ench(board([['K', 0, 'h1'], ['R', 0, 'a1'], ['K', 1, 'a6', { hp: 500, maxHp: 500 }]]), 'E20', 2))).toBeGreaterThan(hit(plain));
   });
 });
+
+describe('폰 받아치기 (D-102)', () => {
+  it('대각선에 적이 있는 폰은 움직이지 않고 태엽 1로 친다', () => {
+    const s = board([['K', 0, 'h1'], ['P', 0, 'd4'], ['P', 1, 'e5', { hp: 500, maxHp: 500 }], ['K', 1, 'h8']]);
+    const r = simulate(s, [{ kind: 'stand', pieceId: 2 }]);
+    expect(r.ok).toBe(true);
+    expect(r.apUsed).toBe(1);
+    expect(r.events.some((e) => e.type === 'attack' && e.hits.some((h) => h.targetId === 3))).toBe(true);
+    // 대각선이 비어 있으면 못 한다
+    const empty = board([['K', 0, 'h1'], ['P', 0, 'd4'], ['P', 1, 'd5'], ['K', 1, 'h8']]);
+    expect(simulate(empty, [{ kind: 'stand', pieceId: 2 }]).ok).toBe(false);
+  });
+  it('적도 같은 규칙으로 받아친다 (AI 후보에 들어간다)', async () => {
+    const { specialSteps } = await import('../src/engine/options');
+    const s = board([['K', 0, 'h1'], ['P', 0, 'd4'], ['P', 1, 'e5'], ['K', 1, 'h8']], 8, 8, 1);
+    expect(specialSteps(s, []).some((st) => st.kind === 'stand' && st.pieceId === 3)).toBe(true);
+  });
+});

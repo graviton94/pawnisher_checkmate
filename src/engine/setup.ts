@@ -1,4 +1,5 @@
 import { DEFECT } from '../data/defects';
+import { LANE_BLOCK, type FormationId } from '../data/formations';
 import { defaultRules } from '../data/battle';
 import { FORGE_GAIN, FORGE_MASTERY_SHIELD, FORGE_MAX } from '../data/forge';
 import { PIECE_STATS } from '../data/pieces';
@@ -72,7 +73,7 @@ const makePiece = (id: number, type: PieceType, side: Side, x: number, y: number
 };
 
 /** 덱을 정통 체스 배치 규칙으로 자기 진영 끝 두 줄에 놓는다. */
-const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: () => number): Piece[] => {
+const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: () => number, formation: FormationId = 'classic'): Piece[] => {
   const template = BACK_ROW[width];
   if (!template) throw new Error(`지원하지 않는 보드 폭: ${width}`);
   if (deck.filter((t) => t === 'K').length !== 1) throw new Error('덱에는 킹이 정확히 1기 있어야 한다');
@@ -116,8 +117,11 @@ const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: (
     }
   }
 
-  // 3) 폰: 킹 앞 열부터 중앙에서 바깥쪽으로
-  const pawnOrder = byNearness(kingX);
+  // 3) 폰: 킹 앞 열부터 중앙에서 바깥쪽으로. 길 튼 진형이면 비숍·룩·퀸 앞을 마지막에 (D-102)
+  const pawnOrder =
+    formation === 'lanes'
+      ? byNearness(kingX).sort((a, b) => (LANE_BLOCK[back[a] ?? 'empty'] ?? 1) - (LANE_BLOCK[back[b] ?? 'empty'] ?? 1))
+      : byNearness(kingX);
   for (let i = 0; i < pawns; i++) {
     const fx = pawnOrder.find((x) => !front[x]);
     if (fx !== undefined) front[fx] = 'P';
@@ -125,6 +129,23 @@ const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: (
       const bx = pawnOrder.find((x) => !back[x]);
       if (bx === undefined) throw new Error('덱이 보드에 다 들어가지 않는다');
       back[bx] = 'P';
+    }
+  }
+
+  // 선봉 진형: 킹 말고 앞뒤를 바꾼다 (앞줄 = 기물, 뒷줄 = 폰)
+  if (formation === 'vanguard') {
+    for (let x = 0; x < width; x++) {
+      if (back[x] === 'K') continue;
+      [back[x], front[x]] = [front[x], back[x]];
+    }
+    // 킹 앞 폰도 뒷줄 빈칸으로 (앞줄은 기물만)
+    for (let x = 0; x < width; x++) {
+      if (front[x] !== 'P') continue;
+      const bx = byNearness(x).find((c) => !back[c]);
+      if (bx !== undefined) {
+        back[bx] = 'P';
+        front[x] = undefined;
+      }
     }
   }
 
@@ -138,8 +159,8 @@ export const createBattle = ({ width, height, decks, rules, seed, loadouts }: Ba
   let id = 1;
   const nextId = () => id++;
   const lo: [Loadout, Loadout] = loadouts ?? [EMPTY_LOADOUT, EMPTY_LOADOUT];
-  const mine = deploy(width, height, decks[0], 0, nextId);
-  const theirs = deploy(width, height, decks[1], 1, nextId);
+  const mine = deploy(width, height, decks[0], 0, nextId, lo[0].formation);
+  const theirs = deploy(width, height, decks[1], 1, nextId, lo[1].formation);
   applyForge(mine, lo[0]);
   applyForge(theirs, lo[1]);
   applyVariants(mine, lo[0]);

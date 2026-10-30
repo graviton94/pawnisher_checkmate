@@ -3,6 +3,7 @@ import type { EnchantId } from '../data/enchants';
 import type { TacticId } from '../data/tactics';
 import type { AffixId } from '../data/legions';
 import type { TerrainId } from '../data/terrain';
+import type { FormationId } from '../data/formations';
 import type { VariantId } from '../data/variants';
 
 /** 0 = 플레이어(보드 아래), 1 = 적(보드 위). 엔진은 두 진영을 같은 규칙으로 다룬다. */
@@ -56,6 +57,8 @@ export interface Loadout {
   forge: Partial<Record<PieceType, number>>;
   /** 이형 거푸집: 유형마다 하나 (GDD 13장 P2) */
   variants?: Partial<Record<PieceType, VariantId>>;
+  /** 진형 (D-102): 대국 시작 배치. 없으면 정통 */
+  formation?: FormationId;
   /** 결함 · 손상 단수 (D-101): 그 유형 최대 HP −15% × 단 */
   damage?: Partial<Record<PieceType, number>>;
 }

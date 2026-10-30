@@ -302,6 +302,15 @@ const scenarios = {
     await page.tap('[data-node="0"]'); await page.waitForTimeout(3600);
     return ['defect-sealed'];
   },
+  // 진형 (D-102): 군단 보기에서 고르기 → 대국에 그대로
+  async formation(page) {
+    await loadRun(page, { at: 'map' }, { deck: ['K', 'Q', 'R', 'B', 'N', 'P', 'P', 'P', 'P'], loadout: { enchants: {}, cards: [], forge: {}, variants: {}, formation: 'lanes' } });
+    await page.tap('[data-army]'); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-formation-pick.png`) });
+    await page.tap('[data-close]'); await page.waitForTimeout(200);
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(1500);
+    return ['formation-battle'];
+  },
   async over(page) {
     await scenarios.menu(page);
     await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });

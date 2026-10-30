@@ -107,6 +107,10 @@ export const TEXT = {
     leave: '떠나기',
     outcomes: ['희귀 개조 3지선다', '상위 기물', '이형 거푸집', '꽝'],
   },
+  formation: {
+    title: '진형',
+    lead: '다음 대국부터 이대로 놓인다.',
+  },
   defect: {
     damage: '손상',
     seal: '봉인',
@@ -146,6 +150,7 @@ export const TEXT = {
     running: '가동 중',
     over: '대국 종료',
     stall: '정체',
+    counter: '받아치기: 대각선에 적이 있으면 움직이지 않고 친다 (태엽 1). 폰을 눌러 그 자리를 다시 누른다.',
     order: '주문서',
     hintPlan: '기물을 눌러 명령을 새긴다',
     hintIntent: '붉은 화살표 = 지금 가동하면 적이 둘 수 · 깜빡이는 HP = 잃을 몫 · 적을 누르면 피해 숫자',

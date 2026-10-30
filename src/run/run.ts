@@ -3,6 +3,7 @@ import { orderProgress, pickOrder } from './orders';
 import { TEXT } from '../data/text';
 import { LUCK, RECRUIT_OPTIONS } from '../data/legions';
 import { DEFECT } from '../data/defects';
+import { DEFAULT_FORMATION } from '../data/formations';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
@@ -211,7 +212,7 @@ export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
     path: [],
     gold: START_GOLD,
     deck,
-    loadout: { enchants: {}, cards: [], forge: {}, variants: {} },
+    loadout: { enchants: {}, cards: [], forge: {}, variants: {}, formation: DEFAULT_FORMATION },
     wins: 0,
     crackGauge: 0,
     bosses,

@@ -510,3 +510,7 @@ img { image-rendering: pixelated; }
 /* 결함 (D-101) */
 .bar .stat.bad { color: var(--crimson-soft); }
 .bar .stat.bad b { color: var(--crimson-soft); }
+
+/* 진형 고르기 (D-102) */
+.formations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.formations .chip { min-height: 48px; text-align: left; }

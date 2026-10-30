@@ -51,3 +51,23 @@ describe('결함: 손상 · 봉인 (D-101)', () => {
     expect(run2.deck).toContain('K');
   });
 });
+
+describe('진형 (D-102)', () => {
+  const lo = (formation: 'lanes' | 'classic' | 'vanguard') => ({ enchants: {}, cards: [], forge: {}, formation });
+  const deck = ['K', 'B', 'R', 'N', 'P', 'P', 'P'] as const;
+  const front = (s: ReturnType<typeof createBattle>, x: number) => s.pieces.find((p) => p.side === 0 && p.x === x && p.y === 1);
+  const back = (s: ReturnType<typeof createBattle>, t: string) => s.pieces.find((p) => p.side === 0 && p.y === 0 && p.type === t)!;
+  it('길 튼 진형: 비숍·룩 앞에는 폰을 세우지 않는다 (자리가 남으면)', () => {
+    const s = createBattle({ width: 8, height: 8, decks: [[...deck], ['K']], loadouts: [lo('lanes'), lo('classic')] });
+    expect(front(s, back(s, 'B').x)?.type).not.toBe('P');
+    expect(front(s, back(s, 'R').x)?.type).not.toBe('P');
+    expect(s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(3);
+  });
+  it('선봉 진형: 킹 말고 기물이 앞줄, 폰이 뒷줄', () => {
+    const s = createBattle({ width: 8, height: 8, decks: [[...deck], ['K']], loadouts: [lo('vanguard'), lo('classic')] });
+    const mine = s.pieces.filter((p) => p.side === 0);
+    expect(mine.filter((p) => p.type === 'P').every((p) => p.y === 0)).toBe(true);
+    expect(mine.filter((p) => p.type !== 'P' && p.type !== 'K').every((p) => p.y === 1)).toBe(true);
+    expect(mine.find((p) => p.type === 'K')!.y).toBe(0);
+  });
+});

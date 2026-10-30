@@ -3,6 +3,7 @@ import { ARENAS } from '../data/terrain';
 import { puzzleBattle, puzzleFor } from '../run/puzzle';
 import { freshSeed, parseSeed, seedCode } from '../run/seed';
 import { DEFECT } from '../data/defects';
+import { FORMATIONS, FORMATION_ORDER, type FormationId } from '../data/formations';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -193,11 +194,22 @@ export class RunUi {
     const cards = run.loadout.cards.map((id) => `<i class="tag${CARDS[id].limit.type === 'consume' ? ' gold' : ''}">${CARDS[id].name}</i>`);
     const panel = this.hud.openOverlay(`
       <h2>${icon('flag')} 군단 ${run.deck.length}기</h2>
+      <p class="sub">${TEXT.formation.title} <small class="dim">${TEXT.formation.lead}</small></p>
+      <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
       <div class="army-list">${units.join('')}</div>
       <p class="sub">개조 (${ench.length}/6)</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
       <p class="sub">천공 카드 (${cards.length}/${CARD_SLOTS})</p><div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     panel.querySelector('[data-close]')!.addEventListener('click', () => this.hud.closeOverlay());
+    // 진형 (D-102): 고르면 다음 대국부터 그대로 놓인다
+    panel.querySelectorAll<HTMLElement>('[data-formation]').forEach((b) =>
+      b.addEventListener('click', () => {
+        run.loadout.formation = b.dataset.formation as FormationId;
+        sfx('land');
+        this.save();
+        this.showArmy(run);
+      }),
+    );
   }
 
   /** 출하 중 메뉴 (모달): 계속 · 설정 · 메인 메뉴 · 출하 포기 */

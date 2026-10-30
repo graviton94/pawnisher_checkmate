@@ -1,6 +1,6 @@
 import { CARDS, type CardUse } from '../data/cards';
 import { buildGrid, chebyshev, inBounds } from './board';
-import { actedInPlan, checkPlan, simulate } from './plan';
+import { actedInPlan, checkPlan, pawnCounter, simulate } from './plan';
 import { ench, legalMoves } from './rules';
 import type { BattleState, PlannedMove, Plan, PlanStep, Pos, Side, SpecialStep } from './types';
 
@@ -29,7 +29,8 @@ export const gateSquares = (v: BattleState, side: Side): Pos[] => {
  */
 export const specialSteps = (s: BattleState, plan: Plan, maxGate = 6): SpecialStep[] => {
   const side0 = s.turnSide;
-  if (!usableCards(s, side0).length && ench(s, side0, 'E04') < 2 && ench(s, side0, 'E11') < 1) return [];
+  const counters = s.pieces.some((p) => p.side === side0 && pawnCounter(s, p));
+  if (!counters && !usableCards(s, side0).length && ench(s, side0, 'E04') < 2 && ench(s, side0, 'E11') < 1) return [];
   const check = checkPlan(s, plan);
   if (!check.ok || check.virtual.winner !== null) return [];
   const v = check.virtual;
@@ -38,7 +39,8 @@ export const specialSteps = (s: BattleState, plan: Plan, maxGate = 6): SpecialSt
   const free = mine.filter((p) => !actedInPlan(plan, p.id));
   const cands: SpecialStep[] = [];
 
-  if (ench(v, side, 'E04') >= 2) for (const p of free) if (p.type === 'P') cands.push({ kind: 'stand', pieceId: p.id });
+  // 제자리 공격: 폰 받아치기 (기본 규칙, D-102) 또는 행진 태엽 2단 (막힌 폰)
+  for (const p of free) if (p.type === 'P' && (pawnCounter(v, p) || ench(v, side, 'E04') >= 2)) cands.push({ kind: 'stand', pieceId: p.id });
   for (const card of usableCards(v, side)) {
     switch (CARDS[v.cards[side][card].id].use) {
       case 'castle':

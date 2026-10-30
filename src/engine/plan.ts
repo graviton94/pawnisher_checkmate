@@ -436,6 +436,13 @@ const moveReachable = (s: BattleState, piece: Piece, to: Pos, execute: boolean):
 const ownHalf = (s: BattleState, side: Side, y: number) => (side === 0 ? y < s.height / 2 : y >= s.height / 2);
 
 /** 정면이 막혀 이동할 수 없는 폰인가 (E04 2장 제자리 공격 조건) */
+/**
+ * 폰 받아치기 (D-102): 대각선 공격 칸에 적이 있는 폰은 움직이지 않고 그 자리에서 친다 (태엽 1).
+ * "움직인 기물만 공격"의 폰 예외 — 2칸 전진한 폰 옆으로 먼저 들어온 적을 받아칠 수 있게 (먼저 들어온 쪽이 무조건 지던 문제).
+ */
+export const pawnCounter = (s: BattleState, piece: Piece): boolean =>
+  piece.type === 'P' && !piece.fused && !piece.formAs && attackScan(s, piece).targets.some((t) => t.hp > 0);
+
 export const pawnBlocked = (s: BattleState, piece: Piece): boolean =>
   piece.type === 'P' && !piece.fused && !piece.formAs && !legalMoves(s, piece).some((p) => p.x === piece.x && p.y === piece.y + forward(piece.side));
 
@@ -582,7 +589,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         break;
       }
       case 'stand': {
-        if (ench(s, side, 'E04') < 2 || !pawnBlocked(s, piece)) return fail('제자리 공격 불가');
+        if (!pawnCounter(s, piece) && (ench(s, side, 'E04') < 2 || !pawnBlocked(s, piece))) return fail('제자리 공격 불가');
         cost = ench(s, side, 'E04') >= 3 ? 0 : 1;
         if (apUsed + cost > availableAp(s)) return fail('AP 부족');
         attackers = [piece];
