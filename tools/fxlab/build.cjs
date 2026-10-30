@@ -21,7 +21,6 @@ const path = require('node:path');
   const b64 = (p) => fs.readFileSync(path.join(root, p)).toString('base64');
   const sprites = {};
   for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const s of [0, 1]) sprites[`${t}${s}`] = `data:image/png;base64,${b64(`public/pieces/s-${t}${s}.png`)}`;
-  sprites.hero = `data:image/png;base64,${b64('public/pieces/hero-s.png')}`;
   // 판 위 도트·소품·HUD·프레임·아이콘 (tools/draw-board.py · draw-assets.py · 발주 결과). 판 칸 덧그림은 이름만, 나머지는 '폴더/이름'
   const gallery = [];
   for (const dir of ['board', 'props', 'hud', 'frames', 'icons']) {

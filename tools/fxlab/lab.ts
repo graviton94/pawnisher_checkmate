@@ -527,7 +527,7 @@ const GROUPS: [string, string, string][] = [
   ['board', '판 칸 · 판 위 표식', '칸 = 20×20 도트. 숫자 배지는 1~9 중 일부만 표시'],
   ['code', '코드로 찍는 요소', '그 자리에서 계산해 찍는 것 — 움직임 포함'],
   ['props', '지형 소품', '기물과 같은 검정 + 흰 테두리'],
-  ['hud', '주인공 · 태엽 · 눈금', '종이 왕관은 내 킹(아홉째 폰) 머리에 얹는다'],
+  ['hud', '주인공 · 태엽 · 눈금', '종이 왕관은 HUD 아이콘 후보 (킹 기물은 원래 그림, D-079)'],
   ['frames', 'UI 프레임', '회색 4단계 — 쓰임에 따라 코드가 색을 입힌다 (9-slice)'],
   ['icons', '아이콘 문양 30종', '흰색 한 가지 — 쓰임에 따라 코드가 색을 입힌다'],
 ];
@@ -544,7 +544,7 @@ const renderGallery = () => {
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
-      items += item('주인공 킹 (왕관 쓴 폰, 반듯) · 훑기 토큰', 0, 0, '<canvas data-live="king" width="200" height="120"></canvas>');
+      items += item('훑기 토큰 (칼 · 해골)', 0, 0, '<canvas data-live="king" width="200" height="120"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
@@ -614,19 +614,15 @@ const renderGallery = () => {
     ap.flow([{ x: 8, y: 40 }, { x: 64, y: 40 }], 0x38bdf8, now);
     ap.flow([{ x: 88, y: 72 }, { x: 144, y: 16 }], 0x38bdf8, now);
     ap.flow([{ x: 176, y: 72 }, { x: 176, y: 24 }, { x: 228, y: 24 }], 0xe5262f, now);
-    // 주인공 킹 (D-078): 흰 폰 + 사용자 시안 왕관을 한 장으로 구운 hero-s.png, 반듯이. 오른쪽 칸 = 훑기 토큰(칼·해골, 게임과 같은 칸의 11/20)
+    // 훑기 토큰 (D-078): 칠 수 있는 내 기물 = 왼쪽 위 칼, 처치될 내 기물 = 오른쪽 위 해골 (게임과 같은 칸의 11/20)
     kgC.clearRect(0, 0, 200, 120);
-    const hero = sprites.hero;
-    const hs = 0.82 * 80;
+    const king = sprites.K0;
     [0, 1].forEach((i) => {
       const ox = 12 + i * 100;
       tile(kgC, i === 1, ox, 40);
-      if (hero?.complete) kgC.drawImage(hero, ox + 0.09 * 80, 40 + 0.84 * 80 - hs * (hero.naturalHeight / hero.naturalWidth), hs, hs * (hero.naturalHeight / hero.naturalWidth));
-      if (i !== 1) return;
-      const sw = sprites['scan-sword'];
-      const sk = sprites['scan-skull'];
-      if (sw?.complete) kgC.drawImage(sw, ox, 40, 44, 44);
-      if (sk?.complete) kgC.drawImage(sk, ox + 36, 40, 44, 44);
+      if (king?.complete) kgC.drawImage(king, ox + 0.09 * 80, 40 + 0.02 * 80, 0.82 * 80, 0.82 * 80);
+      const tok = sprites[i === 0 ? 'scan-sword' : 'scan-skull'];
+      if (tok?.complete) kgC.drawImage(tok, ox + (i === 0 ? 0 : 36), 40, 44, 44);
     });
     // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤
     gtC.clearRect(0, 0, 240, 80);
