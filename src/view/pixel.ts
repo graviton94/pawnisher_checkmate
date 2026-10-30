@@ -89,3 +89,12 @@ export class PixelPen {
 /** 0~1 사이로 자른 구간 진행도 */
 export const span = (p: number, a: number, b: number): number => Math.min(1, Math.max(0, (p - a) / (b - a)));
 export const easeOut = (p: number): number => 1 - (1 - p) * (1 - p);
+
+// 지수·로그형 곡선 — 선형 움직임 대신 "모았다가 터지는" 쾌감 (사용자 피드백, D-036)
+export const easeOutCubic = (p: number): number => 1 - (1 - p) ** 3;
+export const easeInCubic = (p: number): number => p * p * p;
+export const easeInExpo = (p: number): number => (p <= 0 ? 0 : 2 ** (10 * p - 10));
+export const easeOutExpo = (p: number): number => (p >= 1 ? 1 : 1 - 2 ** (-10 * p));
+export const easeInOutExpo = (p: number): number => (p <= 0 ? 0 : p >= 1 ? 1 : p < 0.5 ? 2 ** (20 * p - 10) / 2 : (2 - 2 ** (-20 * p + 10)) / 2);
+/** 살짝 넘쳤다 돌아오는 곡선 (착지 출렁임) */
+export const easeOutBack = (p: number, c = 1.9): number => 1 + (c + 1) * (p - 1) ** 3 + c * (p - 1) ** 2;

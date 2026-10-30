@@ -8,12 +8,18 @@
 1. **첨부 이미지**: 모든 시트에 아래 2장을 같이 첨부한다 (스타일 맞추기용).
    - `build-res/pieces-small-source.png` (기물 도트)
    - `build-res/icon-source.png` (앱 아이콘 — 흑·백·붉은 톤)
-2. **S0 스타일 시험 시트를 먼저** 뽑는다. 마음에 드는 결과 1장을 고르면, 이후 시트마다 그 결과도 **세 번째 첨부**로 넣는다 → 시트끼리 화풍이 맞는다.
+2. **S0 스타일 시험 시트를 먼저** 뽑는다. ✅ 2026-10-30 통과 — 그 결과 그림을 이후 모든 시트에 세 번째로 첨부한다. 마음에 드는 결과 1장을 고르면, 이후 시트마다 그 결과도 **세 번째 첨부**로 넣는다 → 시트끼리 화풍이 맞는다.
 3. **배경은 마젠타(#FF00FF)**. 나노바나나는 "투명 배경"을 요청하면 체크무늬를 그려 넣는 경우가 많다. 마젠타는 코드가 지운다.
 4. **도트 크기**: 프롬프트마다 "32×32 도트를 8배 확대" 식으로 써 두었다. 결과가 흐리거나 칸이 어긋나면 같은 프롬프트로 다시 뽑는다 (보통 2~4번 안에 나온다).
 5. **흰색·회색으로만** 그리라고 한 시트(화살표·게이지·이펙트·문양)는 코드가 진영 색(아군 청록/황동, 적 붉은색)을 입힌다. 색을 넣어 오면 그대로 못 쓴다.
 6. 받은 그림은 `build-res/order/<시트ID>.png`로 넣어 주면 개발 측이 잘라서 연결한다 (잘라 내기 도구는 첫 시트가 오면 만든다).
 7. 한 장에 너무 많이 넣으면 망가진다. 시트당 4~8개로 나눠 두었다.
+
+### 스타일 시험에서 나온 보정 (아래 프롬프트에 반영됨)
+- 결과: 도트 간격이 고르다 (칸당 약 48도트) → 원래 해상도로 깨끗이 줄일 수 있다. 가장자리에 분홍빛 번짐이 약간(1% 미만) — 잘라 낼 때 지운다.
+- **판 칸은 흰 바깥 테두리 없이** 칸 끝까지 꽉 채운다 (이어 붙이는 타일이라서). 흰 테두리는 기물·소품·아이콘에만.
+- **발밑 받침에는 증기를 넣지 않는다** — 기물을 가린다. 증기는 이펙트 시트(E7)에서 따로.
+- 가장자리 번짐 줄이기: 프롬프트마다 *"no pink or magenta tint on sprite edges"* 추가.
 
 ### 공통 규칙 (모든 프롬프트에 이미 들어 있음)
 pixel art · hard square pixels · no anti-aliasing · no blur · no gradients · no text · no numbers · solid magenta #FF00FF background · evenly spaced grid · each sprite centered in its cell · gothic clockwork steampunk chess
@@ -31,7 +37,7 @@ Cells, left to right:
 2. A small steel screw with a brass head, lying slightly tilted (the game's currency).
 3. A white porcelain ring base that a chess piece stands on, seen slightly from above (flat ellipse), with a faint cyan steam glow.
 4. A crimson targeting reticle made of a gear ring with four inward teeth.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
 ```
 
 ---
@@ -45,7 +51,7 @@ Pixel art sprite sheet for a gothic clockwork steampunk chess game, matching the
 Layout: 4 columns x 2 rows, each cell 256x256 px, each sprite on a 32x32 pixel grid scaled 8x (crisp square pixels).
 Background: solid flat magenta #FF00FF.
 Row 1:
-1. Ally base: flat elliptical ring under a chess piece, white porcelain with a thin cyan (#38BDF8) steam glow, empty center.
+1. Ally base: flat elliptical ring under a chess piece, white porcelain with a thin cyan (#38BDF8) rim light, empty center. NO steam, nothing rising above the ring (it must not cover the piece).
 2. Enemy base: flat diamond-shaped ring under a chess piece, black iron with a thin crimson (#E5262F) glow, empty center.
 3. Selection frame: four brass corner brackets forming a square tile border, cyan glowing rivets on each corner, empty center.
 4. Move marker: a small round cyan steam puff dot with a brass rivet center (small, about 8x8 pixels inside the 32x32 cell).
@@ -54,7 +60,7 @@ Row 2:
 6. Kill target: same reticle in gold (#FACC15) with a tiny skull-shaped gear in the center.
 7. Order badge: round brass gear token with a flat empty center plate (a number will be printed on it later by code).
 8. Enemy order badge: round black iron gear token with crimson rim and flat empty center plate.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
 ```
 
 ### A2. 화살표 조각 — 7개, 흰색만
@@ -72,7 +78,7 @@ Background: solid flat magenta #FF00FF.
 6. Start cap: a small hollow ring (where the move begins).
 7. Knight hop: a small arc bump to show a jump, left edge to right edge.
 8. Empty cell (leave magenta).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### A3. 게이지·상태 — 8개, 흰색만
@@ -90,7 +96,7 @@ Background: solid flat magenta #FF00FF.
 6. Check ring: a thick broken gear ring with steam venting from one gap, 16x16.
 7. Damage chip background: small rounded tag with a pin, empty center (a number goes on it later).
 8. Wreck marker: a small pile of broken gears and a spring, top-down, 16x16.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
 ```
 
 ---
@@ -101,7 +107,7 @@ Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, n
 
 ```
 Pixel art floor tiles for a mechanical chess board inside a gothic clockwork tower, matching the attached style.
-Layout: 3 columns x 2 rows, each cell 256x256 px, each tile on a 32x32 pixel grid scaled 8x, tile fills the whole cell edge to edge (seamless square tiles).
+Layout: 3 columns x 2 rows, each cell 256x256 px, each tile on a 32x32 pixel grid scaled 8x, tile fills the whole cell edge to edge (seamless square tiles). NO white outline around tiles 1-3 and 5-6 — tiles must butt against each other seamlessly.
 Background: solid flat magenta #FF00FF only between cells.
 1. Light square: pale gray riveted metal plate (#56545E family), subtle plate seams, 4 corner rivets.
 2. Dark square: charcoal riveted metal plate (#2F2E36 family), same design as 1.
@@ -109,7 +115,7 @@ Background: solid flat magenta #FF00FF only between cells.
 4. Crack warning overlay: thin crimson hot cracks only, on magenta (to be drawn over a normal tile).
 5. Steam vent (closed): a round brass hatch set into a plate, gauge needle, ready to burst.
 6. Steam vent (open): the same hatch opened with white steam rising in pixel clouds.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### D2. 지형 소품 — 5개, 색 있음
@@ -123,7 +129,7 @@ Background: solid flat magenta #FF00FF.
 3. Heat shield: an upright riveted iron plate barrier with a small vent.
 4. Gear trap: an open toothed gear trap set into the floor, slightly crimson.
 5. Screw box: a small brass box with steel screws spilling out.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ---
@@ -141,7 +147,7 @@ Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0) — color is added
 Layout: 6 columns x 1 row, each cell 256x256 px, each frame on a 32x32 pixel grid scaled 8x. The attacker stands at the bottom center of every cell; the slash sweeps across the TOP half of the cell from the upper-left diagonal to the upper-right diagonal.
 Background: solid flat magenta #FF00FF.
 Frames: 1 a thin spark at upper-left, 2 the crescent slash grows toward the top center, 3 full bright crescent from upper-left to upper-right (thickest), 4 the crescent thins with small sparks at both ends, 5 fading broken pixels of the arc, 6 a few last sparks.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### E2. 나이트 — 피스톤 내려찍기 + 발굽 충격 (6프레임)
@@ -152,7 +158,7 @@ Draw ONLY in white and light gray (#FFFFFF, #E0E0E0, #A0A0A0).
 Layout: 6 columns x 1 row, each cell 256x256 px, each frame on a 32x32 pixel grid scaled 8x, impact point at the center of every cell.
 Background: solid flat magenta #FF00FF.
 Frames: 1 small dust puff, 2 a flat elliptical shock ring appears, 3 ring expands with four short spark spikes, 4 ring at full size breaking into dashes, 5 steam clouds drifting up, 6 last thin wisps.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### E3. 나이트 — 착탄 별 (4프레임)
@@ -162,7 +168,7 @@ Pixel art impact star animation strip (where a knight's L-shaped strike lands).
 Draw ONLY in white and light gray. Layout: 4 columns x 1 row, each cell 256x256 px, each frame on a 16x16 pixel grid scaled 16x, centered.
 Background: solid flat magenta #FF00FF.
 Frames: 1 single bright pixel cross, 2 eight-point star with long and short rays, 3 star larger with hollow center, 4 scattered fading dots.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### E4. 비숍 — 렌즈 응축 → 광선 (응축 4 + 광선 조각 3)
@@ -176,7 +182,7 @@ Background: solid flat magenta #FF00FF.
 5. Beam segment, DIAGONAL from the bottom-left corner to the top-right corner of the cell: bright 2-pixel core with 1-pixel dim edges on both sides, must tile seamlessly corner to corner.
 6. Beam segment, HORIZONTAL from left edge to right edge, same design, tileable.
 7. Beam end flare: small burst where the beam hits, centered.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### E5. 룩 — 쿵 내려찍기 + 십자 연쇄 폭발 (먼지 4 + 폭발 6)
@@ -188,7 +194,7 @@ Layout: 10 columns x 1 row, each cell 192x192 px, each frame on a 32x32 pixel gr
 Background: solid flat magenta #FF00FF.
 1-4. Slam dust: 1 flat dust line at the bottom, 2 dust and small rocks bouncing up to both sides, 3 square shock outline, 4 settling dust.
 5-10. One-square explosion: 5 tiny bright core, 6 solid round blast, 7 bigger blast with hollow ring and flying bolts, 8 ring breaking apart with gear bits, 9 smoke puffs, 10 fading smoke dots.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### E6. 킹 — 홀(笏) 내려치기 충격파 (5프레임)
@@ -198,7 +204,7 @@ Pixel art attack effect animation strip: a clockwork king strikes the floor with
 Draw ONLY in white and light gray. Layout: 5 columns x 1 row, each cell 256x256 px, each frame on a 48x48 pixel grid scaled 5x (the king's square is the middle third of the cell).
 Background: solid flat magenta #FF00FF.
 Frames: 1 small square ring around the center square, 2 ring grows with rivet sparks at corners, 3 ring reaches the cell edge (covers all 8 neighbors), 4 ring breaks into dashed pieces, 5 faint corner sparks.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### E7. 공통 — 피격·처치·증기·열기 (4가지 × 4~6프레임)
@@ -211,7 +217,7 @@ Row 1 — Hit spark (4 frames): a white flash star, smaller star with sparks fly
 Row 2 — Shatter (6 frames): a small machine bursts into gears, springs and bolts flying outward and falling down.
 Row 3 — Steam puff (5 frames): a round pixel cloud puffs out, grows, splits, thins and vanishes.
 Row 4 — Heat haze (4 frames): wavy vertical heat lines rising and fading.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ---
@@ -228,7 +234,7 @@ Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel gri
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading, no second color.
 Background: solid flat magenta #FF00FF.
 Icons: 1 sword blade, 2 piercing arrow passing through a ring, 3 forked double arrow (two heads), 4 shock wave arcs, 5 heat flame / hot crack, 6 shield, 7 stacked wall bricks, 8 chain link.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### F2. 생명·이동 (8)
@@ -239,7 +245,7 @@ Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel gri
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
 Background: solid flat magenta #FF00FF.
 Icons: 1 oil drop, 2 skull made of a gear, 3 horseshoe with a piston, 4 swirl portal door, 5 two curved swap arrows, 6 banner flag, 7 reaching hand / grabber claw, 8 wind-up key.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### F3. 장치·규칙 (8)
@@ -250,7 +256,7 @@ Layout: 4 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel gri
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
 Background: solid flat magenta #FF00FF.
 Icons: 1 pocket watch, 2 bell, 3 small crown, 4 four-point star, 5 eye with a lens rim, 6 balance scale, 7 target reticle, 8 punched paper card (rectangle with holes).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
 
 ### F4. 등정 (맵 노드) (6)
@@ -261,7 +267,7 @@ Layout: 3 columns x 2 rows, each cell 256x256 px, each icon on a 16x16 pixel gri
 Draw ONLY pure white #FFFFFF pixels. No outline, no shading.
 Background: solid flat magenta #FF00FF.
 Icons: 1 hammer on anvil (workshop), 2 screw (shop / currency), 3 question mark made of a bent pipe (event), 4 parts crate (storeroom), 5 wrench (repair station), 6 slot-machine lever (fortune machine).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no text, no pink or magenta tint on sprite edges.
 ```
 
 ---
@@ -279,7 +285,7 @@ Background: solid flat magenta #FF00FF only between cells.
 4. Card frame — iron card: tall rectangle 30x40 inside the cell, riveted metal border, punched holes along the top edge.
 5. Card frame — paper card: same size, torn paper edge, punched holes along the top edge.
 6. Slot frame: thin recessed socket border for an empty card slot.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ## H. 왕관·과급기 (2)
@@ -290,7 +296,7 @@ Layout: 2 columns x 1 row, each cell 256x256 px, each sprite on a 16x16 pixel gr
 Background: solid flat magenta #FF00FF.
 1. A small brass crown that sits on top of a chess piece's head, 16 wide x 8 tall, at the top of the cell.
 2. A supercharger: a small brass boiler with a pressure gauge and a crimson valve, centered.
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no pink or magenta tint on sprite edges.
 ```
 
 ---
@@ -304,7 +310,7 @@ Background: solid flat magenta #FF00FF.
 1. Full: polished brass wind-up key, bright gold highlights, a tiny cyan glint (#38BDF8) on the key's grip.
 2. Spent: the same key in dull dark iron gray, no glow.
 3. Bonus: the brass key with an extra glowing gold ring around it (extra action point from a reward).
-Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers.
+Rules: pixel art, hard square pixels, no anti-aliasing, no blur, no gradients, no text, no numbers, no pink or magenta tint on sprite edges.
 ```
 
 ---

@@ -3,9 +3,9 @@
  * `node tools/fxlab/build.cjs <출력.html>`로 한 장짜리 HTML을 만든다.
  */
 import { createBattle, EMPTY_LOADOUT, resolveTurn, type BattleEvent, type BattleState, type Piece, type PieceType, type Side } from '../../src/engine';
-import { buildAttackFx, drawHitSpark, drawShatter } from '../../src/view/attackFx';
+import { MOVE_TOTAL, buildAttackFx, drawHitSpark, drawLandPuff, drawShatter, moveMotion, type Pose } from '../../src/view/attackFx';
 import { PixelPen } from '../../src/view/pixel';
-import { FX_CHOICE, FX_VARIANT_NAMES } from '../../src/data/fx';
+import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
 import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
 
 declare const SPRITES: Record<string, string>;
@@ -23,7 +23,7 @@ const CASES: Record<PieceType, { from: [number, number]; to: [number, number]; f
 
 const T = 96; // 캔버스 내부 칸 크기 (도트 6px)
 const N = 8;
-const opt = { type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q, K: FX_CHOICE.K };
+const opt = { type: 'N' as PieceType, side: 0 as Side, speed: 1, loop: true, Q: FX_CHOICE.Q as QueenFx, K: FX_CHOICE.K as KingFx };
 
 // ---------- 장면 만들기 (게임과 같은 엔진) ----------
 interface Scene {
@@ -105,6 +105,7 @@ interface Live {
   hp: number;
   flashUntil: number;
   dead: boolean;
+  pose: Pose;
 }
 const drawPiece = (l: Live, now: number) => {
   if (l.dead) return;
@@ -112,7 +113,13 @@ const drawPiece = (l: Live, now: number) => {
   const img = now < l.flashUntil ? whites[k] : sprites[k];
   if (!img) return;
   const s = T * 0.82;
-  ctx.drawImage(img, l.x + (T - s) / 2, l.y + T * 0.43 - s / 2, s, s);
+  const { dx, dy, sx, sy } = l.pose;
+  // 받침 아래 중심(0.85칸)을 기준으로 늘이고 누른다 — 게임과 같은 자세
+  const ax = l.x + T / 2 + dx * T;
+  const ay = l.y + T * 0.85 + dy * T;
+  const w = s * sx;
+  const h = s * sy;
+  ctx.drawImage(img, ax - w / 2, ay - (T * 0.85 - T * 0.43 + s / 2) * sy, w, h);
   // 발밑 받침 (지금 게임과 같은 임시 모양)
   ctx.fillStyle = l.p.side === 0 ? '#38bdf8' : '#e5262f';
   ctx.fillRect(l.x + T * 0.22, l.y + T * 0.8, T * 0.56, 4);
@@ -148,7 +155,7 @@ const play = () => {
   const lives = new Map<number, Live>();
   for (const p of sc.start.pieces) {
     const w = px(p.x, p.y);
-    lives.set(p.id, { p, x: w.x, y: w.y, hp: p.hp, flashUntil: 0, dead: false });
+    lives.set(p.id, { p, x: w.x, y: w.y, hp: p.hp, flashUntil: 0, dead: false, pose: { dx: 0, dy: 0, sx: 1, sy: 1 } });
   }
   const mv = sc.events.find((e) => e.type === 'move' && e.pieceId === sc.attackerId) as Extract<BattleEvent, { type: 'move' }>;
   const atk = sc.events.find((e) => e.type === 'attack' && e.attackerId === sc.attackerId) as Extract<BattleEvent, { type: 'attack' }> | undefined;
@@ -160,9 +167,8 @@ const play = () => {
   const fx = atk
     ? buildAttackFx({ kinds, side: opt.side, origin: o, tiles: atk.area.map((a) => ({ key: `${a.x},${a.y}`, ...center(a.x, a.y) })), tile: T, variant: { Q: opt.Q, K: opt.K } })
     : null;
-  const MOVE = 180;
-  const WIND = 140;
-  const FX0 = MOVE + WIND;
+  const MOVE = MOVE_TOTAL;
+  const FX0 = MOVE + 60;
   const popups: Popup[] = [];
   const bursts: Burst[] = [];
   // 피격 일정 (이펙트가 칸에 닿는 순간)
@@ -177,15 +183,11 @@ const play = () => {
   const frame = (now: number) => {
     if (my !== token) return;
     const ms = (now - t0) * opt.speed;
-    // 이동 → 몸짓
-    const mq = Math.min(1, ms / MOVE);
-    me.x = from.x + (to.x - from.x) * mq;
-    me.y = from.y + (to.y - from.y) * mq;
-    const wq = Math.min(1, Math.max(0, (ms - MOVE) / WIND));
-    if (wq > 0 && wq < 1) {
-      const lift = me.p.type === 'R' || me.p.type === 'K' ? (wq < 0.6 ? wq / 0.6 : (1 - wq) / 0.4) * 0.22 : me.p.type === 'N' ? Math.sin(wq * Math.PI) * 0.15 : 0;
-      me.y = to.y - lift * T;
-    }
+    // 이동(들기 → 지수형 이동 → 착지 출렁임) → 공격 자세 (게임과 같은 함수)
+    const mm = moveMotion(Math.min(ms, MOVE), me.p.type === 'N');
+    me.x = from.x + (to.x - from.x) * mm.p;
+    me.y = from.y + (to.y - from.y) * mm.p;
+    me.pose = ms < MOVE ? mm.pose : fx && ms < FX0 + fx.duration ? fx.actor(ms - FX0) : { dx: 0, dy: 0, sx: 1, sy: 1 };
     for (const x of hits)
       if (!x.done && ms >= x.at) {
         x.done = true;
@@ -215,6 +217,7 @@ const play = () => {
     ctx.lineWidth = 3;
     ctx.strokeRect(from.x + 3, from.y + 3, T - 6, T - 6);
     for (const l of lives.values()) drawPiece(l, now);
+    if (mm.landQ >= 0 && ms < MOVE) drawLandPuff(pen, o.x, o.y, T, mm.landQ);
     if (fx && ms >= FX0) fx.draw(pen, ms - FX0);
     for (const b of bursts) {
       const len = b.kind === 'spark' ? 160 : 380;
@@ -224,9 +227,10 @@ const play = () => {
     for (const p of popups) {
       const q = (ms - p.at) / 950;
       if (q < 0 || q >= 1) continue;
-      const rise = Math.min(1, q * 3.5);
+      const rise = 1 - (1 - Math.min(1, q * 3.5)) ** 3;
+      const pop = 1 + 0.7 * 2 ** (-10 * Math.min(1, q * 3.5));
       ctx.globalAlpha = q < 0.68 ? 1 : 1 - (q - 0.68) / 0.32;
-      ctx.font = `700 ${p.size}px Galmuri11, monospace`;
+      ctx.font = `700 ${Math.round(p.size * pop)}px Galmuri11, monospace`;
       ctx.textAlign = 'center';
       ctx.lineWidth = 8;
       ctx.strokeStyle = '#0b0b0e';
@@ -248,7 +252,9 @@ const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as
 
 const renderPanel = () => {
   const d = PIECES[opt.type];
-  const variant = opt.type === 'Q' || opt.type === 'K' ? (['A', 'B'] as const).map((v) => `<button type="button" class="seg" data-v="${v}" aria-pressed="${opt[opt.type as 'Q' | 'K'] === v}">${v} · ${FX_VARIANT_NAMES[opt.type as 'Q' | 'K'][v]}</button>`).join('') : '';
+  const names: Record<string, string> | null = opt.type === 'Q' ? FX_VARIANT_NAMES.Q : opt.type === 'K' ? FX_VARIANT_NAMES.K : null;
+  const cur = opt.type === 'Q' ? opt.Q : opt.K;
+  const variant = names ? Object.entries(names).map(([v, n]) => `<button type="button" class="seg" data-v="${v}" aria-pressed="${cur === v}">${v} · ${n}</button>`).join('') : '';
   $('#detail').innerHTML = `
     <div class="detail-head"><h2>${d.name}</h2>${chip(d.status)}</div>
     ${variant ? `<div class="segs" role="group" aria-label="${d.name} 안">${variant}</div>` : ''}
@@ -256,7 +262,8 @@ const renderPanel = () => {
     <dl><dt>박자</dt><dd>${d.beat}</dd>${d.changed ? `<dt>이번에 바뀐 점</dt><dd class="new">${d.changed}</dd>` : ''}</dl>`;
   document.querySelectorAll<HTMLButtonElement>('[data-v]').forEach((b) =>
     b.addEventListener('click', () => {
-      opt[opt.type as 'Q' | 'K'] = b.dataset.v as 'A' | 'B';
+      if (opt.type === 'Q') opt.Q = b.dataset.v as QueenFx;
+      else opt.K = b.dataset.v as KingFx;
       renderPanel();
       play();
     }),

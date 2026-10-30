@@ -3,7 +3,10 @@ import type { BoardModel, BoardView } from '../game/controller';
 import { STRONGHOLD } from '../data/battle';
 import { CARDS } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
-import { playAttackFx, playHitSpark, playShatter } from './attackFx';
+import { MOVE_TOTAL, drawLandPuff, moveMotion, playAttackFx, playHitSpark, playShatter, type Pose } from './attackFx';
+import { PixelPen } from './pixel';
+
+const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
@@ -519,19 +522,12 @@ class BoardScene extends Phaser.Scene {
     return new Promise((r) => this.time.delayedCall(ms, r));
   }
 
-  /** 공격 전 몸짓: 룩·킹은 들었다가 쿵, 나이트는 깡충, 나머지는 살짝 부풀기 */
-  private async windUp(s: PieceSprite, kinds: PieceType[]): Promise<void> {
+  /** 기물 자세 적용: 받침 아래 중심을 기준으로 늘이고 눌러야 바닥에 붙어 보인다 */
+  private applyPose(s: PieceSprite, baseX: number, baseY: number, p: Pose): void {
     const t = this.tile;
-    const y0 = s.root.y;
-    if (kinds.includes('R') || kinds.includes('K')) {
-      await this.tween({ targets: s.root, y: y0 - t * 0.22, duration: 80, ease: 'Quad.easeOut' });
-      await this.tween({ targets: s.root, y: y0, duration: 50, ease: 'Quad.easeIn' });
-      this.shake(70, 0.004);
-    } else if (kinds.includes('N')) {
-      await this.tween({ targets: s.root, y: y0 - t * 0.15, duration: 70, yoyo: true, ease: 'Quad.easeOut' });
-    } else {
-      await this.tween({ targets: s.root, scale: { from: 1, to: 1.1 }, yoyo: true, duration: 70 });
-    }
+    s.root.setScale(p.sx, p.sy);
+    s.root.x = baseX + p.dx * t + (t / 2) * (1 - p.sx);
+    s.root.y = baseY + p.dy * t + t * 0.85 * (1 - p.sy);
   }
 
   /** 피격 한 건: 흰 점멸 · 스파크 · 큰 피해 숫자 · HP · 밀려남 */
@@ -557,6 +553,9 @@ class BoardScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(8)
       .setResolution(this.dpr);
+    // 크게 튀어나왔다가 지수형으로 자리 잡는다
+    dmg.setScale(1.7);
+    this.tweens.add({ targets: dmg, scale: 1, duration: 260, ease: 'Expo.easeOut' });
     this.tweens.add({ targets: dmg, y: dmg.y - t * 0.35, duration: 260, ease: 'Back.easeOut' });
     this.tweens.add({ targets: dmg, alpha: 0, delay: 650, duration: 300, onComplete: () => dmg.destroy() });
     if (h.pushedTo) {
@@ -650,10 +649,35 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'move') {
         const s = this.sprites.get(e.pieceId);
         if (!s) continue;
+        // 들기 → 지수형 이동 → 착지 출렁임 + 증기 먼지 (D-036)
         const w = this.world(e.to);
-        await this.tween({ targets: s.root, x: w.x, y: w.y, duration: 220, ease: 'Quad.easeIn' });
-        this.shake(60, 0.002);
-        await this.wait(70);
+        const from = { x: s.root.x, y: s.root.y };
+        const jump = s.piece.type === 'N' && !s.piece.fused;
+        const g = this.add.graphics().setDepth(6.4);
+        const pen = new PixelPen(g, t / 16);
+        let landed = false;
+        await new Promise<void>((done) =>
+          this.tweens.addCounter({
+            from: 0,
+            to: MOVE_TOTAL,
+            duration: MOVE_TOTAL / this.speed,
+            onUpdate: (tw) => {
+              const m = moveMotion(tw.getValue() ?? 0, jump);
+              this.applyPose(s, from.x + (w.x - from.x) * m.p, from.y + (w.y - from.y) * m.p, m.pose);
+              g.clear();
+              if (m.landQ >= 0) {
+                if (!landed) this.shake(60, 0.002);
+                landed = true;
+                drawLandPuff(pen, w.x + t / 2, w.y + t / 2, t, m.landQ);
+              }
+            },
+            onComplete: () => {
+              g.destroy();
+              this.applyPose(s, w.x, w.y, REST_POSE);
+              done();
+            },
+          }),
+        );
         continue;
       }
       if (e.type === 'card') {
@@ -711,9 +735,11 @@ class BoardScene extends Phaser.Scene {
 
       // 몸짓 → 기물별 공격 이펙트 (기물 중심에서 공격 범위로) → 이펙트가 닿는 순간 피격
       const kinds = atk.piece.fused?.length ? [...new Set(atk.piece.fused)] : [atk.piece.formAs ?? atk.piece.type];
-      await this.windUp(atk, kinds);
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
-      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: atk.root.x + t / 2, y: atk.root.y + t / 2 }, tiles, tile: t }, this.speed);
+      const base = { x: atk.root.x, y: atk.root.y };
+      const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t }, this.speed, (pose) =>
+        this.applyPose(atk, base.x, base.y, pose),
+      );
       let shook = false;
       const hitsDone = e.hits.map((h) => {
         const ts = this.sprites.get(h.targetId);
