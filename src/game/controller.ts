@@ -367,7 +367,8 @@ export class BattleController {
   private intent(): Intent | null {
     if (this.phase !== 'plan' || !this.state || this.state.winner !== null) return null;
     // 미래 예지 (E16): 1장 첫 수 · 2장 2수 · ★ 전부. 없으면 예고하지 않는다 (사용자: 무조건 예고는 너무 쉽다)
-    const sight = ench(this.state, this.state.turnSide, 'E16');
+    // 낮은 승천은 적 첫 수를 기본으로 보여 준다 (D-076, rules.foresight) — 미래 예지가 더 많으면 그쪽
+    const sight = Math.max(ench(this.state, this.state.turnSide, 'E16'), this.state.rules.foresight ?? 0);
     if (!sight) return null;
     const shown = sight >= 3 ? Infinity : sight;
     const key = `${this.state.turnNumber}|${sight}|${JSON.stringify(this.plan)}`;

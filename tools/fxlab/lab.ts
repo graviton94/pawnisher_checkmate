@@ -617,17 +617,19 @@ const renderGallery = () => {
     // 흰 킹 시안 (D-074): 우리 흰 폰 + 왕관(사용자 시안을 도트로). 왕관 아랫단 검정 선이 폰 머리 꼭대기에 닿게 얹는다
     kgC.clearRect(0, 0, 200, 120);
     const pawn = sprites.P0;
-    const kc = bake('hud/king-crown', S);
+    // 왕관 = 사용자 시안 왕관 그대로 (D-076): 폰 그림과 같은 해상도(그림 86px = 칸의 0.82)로 줄여 둔 것을 폰과 같은 배율로 그린다
+    const kc = sprites['hud/king-crown'];
+    const k = (0.82 * 80) / 86; // 폰 그림 1px의 화면 크기
     [0, 15].forEach((deg, i) => {
       const ox = 12 + i * 100;
       tile(kgC, i === 1, ox, 40);
       if (pawn?.complete) kgC.drawImage(pawn, ox + 0.09 * 80, 40 + 0.43 * 80 - 0.41 * 80, 0.82 * 80, 0.82 * 80);
-      if (!kc) return;
+      if (!kc?.complete) return;
       kgC.save();
       kgC.imageSmoothingEnabled = deg !== 0;
-      kgC.translate(ox + 40, 40 + 3.5 * S); // 왕관 아랫단 검정 선이 폰 머리 꼭대기 흰 테두리에 얹힌다 (눌러쓰지 않음)
+      kgC.translate(ox + 40, 40 + 0.02 * 80 + 9 * k); // 왕관 아랫단 흰 테두리가 폰 머리 꼭대기 흰 테두리와 겹친다
       kgC.rotate((deg * Math.PI) / 180);
-      kgC.drawImage(kc, -kc.width / 2, -kc.height);
+      kgC.drawImage(kc, (-kc.naturalWidth * k) / 2, -kc.naturalHeight * k, kc.naturalWidth * k, kc.naturalHeight * k);
       kgC.restore();
     });
     // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤

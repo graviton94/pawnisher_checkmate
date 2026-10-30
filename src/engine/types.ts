@@ -62,6 +62,8 @@ export interface BattleRules {
   collapseInterval: number;
   /** 체크메이트: 턴 시작 때 HP가 2 이상인 킹은 그 턴에 HP 1 아래로 떨어지지 않는다 (D-022) */
   checkmate?: boolean;
+  /** 적 다음 수 미리보기 기본 제공 수 (D-076): 낮은 승천에서 1 — 미래 예지(E16)와 큰 쪽을 쓴다 */
+  foresight?: number;
 }
 
 export interface Stronghold {

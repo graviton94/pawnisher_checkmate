@@ -42,6 +42,9 @@ export const COLLAPSE = {
  */
 export const STALL = { grace: 3, rounds: 2 };
 
+/** 적 다음 수 미리보기 (D-076, Into the Breach식 의도 공개): 이 승천 단계 미만이면 적의 첫 수를 기본으로 보여 준다 */
+export const FORESIGHT_UNTIL_ASCENSION = 3;
+
 /** 최후의 일격 ATK 배율 (D-015) */
 export const LAST_STRIKE_MULT = 2;
 
@@ -49,6 +52,6 @@ export const LAST_STRIKE_MULT = 2;
 export const defaultRules = (width: number, height: number): BattleRules => {
   const small = Math.min(width, height) <= 6;
   return small
-    ? { strongholdRounds: [], collapseStart: 4, collapseInterval: 1, checkmate: false }
-    : { strongholdRounds: [3, 6, 9], collapseStart: 15, collapseInterval: 1, checkmate: true };
+    ? { strongholdRounds: [], collapseStart: 4, collapseInterval: 1, checkmate: false, foresight: 1 }
+    : { strongholdRounds: [3, 6, 9], collapseStart: 15, collapseInterval: 1, checkmate: true, foresight: 1 };
 };

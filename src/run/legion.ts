@@ -1,5 +1,6 @@
 import { ENCHANTS, type EnchantId } from '../data/enchants';
 import { BOSSES, ELITE_BONUS, FINAL_BOSS, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
 import type { BattleState } from '../engine/types';
@@ -119,6 +120,8 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
 /** 런 전투를 만든다: 플레이어 덱·장비 대 군단 (+ 층별 적 킹 보정) */
 export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
   const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
+  // 적 다음 수 미리보기: 낮은 승천에서만 기본 제공 (D-076)
+  s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION ? 1 : 0 };
   const scale = enemyKingScale(e.floor);
   const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0));
   for (const p of s.pieces) {
