@@ -60,14 +60,14 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '에셋 화풍', rule: '스타일 시험(S0) 통과 — 흰 바깥 테두리 · 굵은 도트 · 흑백적+황동. 도트 간격이 고르게 나와 원래 해상도로 줄일 수 있다', status: 'done' },
   { item: '처치', rule: '기물이 톱니·스프링 파편으로 부서져 아래로 떨어진다', status: 'review' },
   { item: '피격', rule: '흰 점멸 0.07초 + 8방향 스파크', status: 'review' },
-  { item: '발밑 받침·선택 테두리·이동 점·과녁·순번 배지', rule: '발주 시트 A1 받아 게임에 적용 (흰 고리 / 검은 마름모 / 황동 모서리 / 증기 점 / 톱니 과녁 / 황동 톱니 배지)', status: 'done' },
+  { item: '발밑 받침·선택 테두리·이동 점·과녁·순번 배지', rule: 'A1 게임 적용은 되돌림 — 도트 크기가 기물과 달라 섞이고, 옛 벡터 화면 위에 얹혀 지저분했다. 도트 크기 통일 후 판 전체를 한꺼번에 바꾼다', status: 'review' },
   { item: '화살표·HP 바', rule: '발주 시트 A2·A3 대기', status: 'wait' },
   { item: '이펙트 스프라이트', rule: '발주 시트 E가 오면 같은 박자에 그림만 갈아 끼운다', status: 'wait' },
   { item: '태엽 (AP)', rule: '날개 → 태엽 감개 3종 (발주 시트 I)', status: 'wait' },
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
-  { v: 6, date: '2026-10-30', items: ['보드 표식 A1 (발밑 받침·선택·이동 점·과녁·순번 배지) 게임 적용'] },
+  { v: 6, date: '2026-10-30', items: ['보드 표식 A1 게임 적용 → 되돌림 (도트 크기 불일치 · 벡터 화면과 섞임)'] },
   { v: 5, date: '2026-10-30', items: ['연출 속도 옵션 없음 (한 가지 속도, 공격 1회 최대 1초)'] },
   { v: 4, date: '2026-10-30', items: ['퀸 D 톱날 부메랑 · 킹 B 종소리 파동 확정, 게임 기본값으로 적용', '폰·나이트·비숍·룩 연출과 이동·박자 확정'] },
   {
