@@ -56,6 +56,22 @@ const scenarios = {
     await page.waitForTimeout(400);
     return ['battle-select'];
   },
+  // 적 의도 (D-081): 아무것도 안 눌렀을 때 = 붉은 화살표 + 잃을 HP + 처치만 금색 숫자 / 적을 누르면 모든 피해 숫자
+  async 'battle-intent'(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    await page.evaluate(async () => { window.pawnisher.autoPlan(); await window.pawnisher.submit(); });
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-battle-intent.png`) });
+    await page.evaluate(() => {
+      const c = window.pawnisher;
+      const s = c.model().virtual;
+      const p = s.pieces.find((q) => q.side === 1 && q.type === 'Q') ?? s.pieces.find((q) => q.side === 1);
+      c.tap({ x: p.x, y: p.y }, true);
+    });
+    await page.waitForTimeout(400);
+    return ['battle-intent-inspect'];
+  },
   // 공격 재생 중간 (4배 느리게): 이동 · 공격 이펙트 · 피해 숫자 · 재가 되는 처치
   async 'battle-attack'(page) {
     await page.goto(URL + '&fxslow'); await page.waitForTimeout(500);

@@ -181,27 +181,6 @@ def badge(ally, n):
     return im
 
 
-GLYPHS = {
-    'sword': ['..#..', '..#..', '..#..', '.###.', '..#..'],
-    'skull': ['.###.', '#.#.#', '#####', '.###.', '.#.#.'],
-}
-
-
-def scan_badge(kind):
-    """훑기 보조 표식 (D-078): 순번 배지와 같은 톱니 토큰 11×11 + 5×5 도트 문양. 칼 = 청록(이번 턴 칠 수 있음), 해골 = 진홍(다음 적 턴에 처치됨)"""
-    ally = kind == 'sword'
-    im = ring(11, 3.3, 4.7, 'CY' if ally else 'CR', teeth=8, tooth_r=1.0, shade='CY2' if ally else 'CR2')
-    for y in range(2, 9):
-        for x in range(2, 9):
-            if (x - 5) ** 2 + (y - 5) ** 2 <= 11:
-                dot(im, x, y, 'INK')
-    for y, row in enumerate(GLYPHS[kind]):
-        for x, ch in enumerate(row):
-            if ch == '#':
-                dot(im, 3 + x, 3 + y, 'W')
-    return im
-
-
 def kill_mark():
     """처치될 기물 표시: 검은 테두리의 붉은 X 7×7"""
     rows = ['KK...KK', 'KrK.KrK', '.KrKrK.', '..KrK..', '.KrKrK.', 'KrK.KrK', 'KK...KK']
@@ -267,8 +246,6 @@ for n in range(1, 10):
     badge(True, n).save(f'{OUT}/badge-a{n}.png')
     badge(False, n).save(f'{OUT}/badge-e{n}.png')
 kill_mark().save(f'{OUT}/kill.png')
-scan_badge('sword').save(f'{OUT}/scan-sword.png')
-scan_badge('skull').save(f'{OUT}/scan-skull.png')
 check_ring().save(f'{OUT}/check.png')
 for kind, name in (('neutral', 'stronghold'), ('ally', 'stronghold-ally'), ('enemy', 'stronghold-enemy')):
     stronghold(kind, 'frame').save(f'{OUT}/{name}.png')  # 점선 테두리 — 기물 아래

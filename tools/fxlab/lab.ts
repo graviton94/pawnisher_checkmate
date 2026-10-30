@@ -516,7 +516,7 @@ const GROUPS: [string, string, string][] = [
 ];
 const S = 4; // 목록 확대 배율
 /** 목록에서 뺀 그림: 폐기된 시안 · 게임이 코드로 다시 찍는 것(움직이는 견본으로 보여 줌) */
-const HIDDEN = new Set(['s0-tile-light', 's0-tile-dark', 'target', 'target-kill', 'scan-sword', 'scan-skull', 'hud/king-crown', 'hud/paper-crown']);
+const HIDDEN = new Set(['s0-tile-light', 's0-tile-dark', 'target', 'target-kill', 'hud/king-crown', 'hud/paper-crown']);
 
 const renderGallery = () => {
   const box = document.getElementById('gallery')!;
@@ -529,7 +529,6 @@ const renderGallery = () => {
     } else if (g === 'code') {
       items += item('HP 게이지 (잃는 순간)', 14, 4, '<canvas data-live="hp" width="112" height="72"></canvas>');
       items += item('화살표 (흐름 · 직선·대각·나이트)', 60, 20, '<canvas data-live="arrows" width="240" height="80"></canvas>');
-      items += item('훑기 토큰 (칼 · 해골)', 0, 0, '<canvas data-live="king" width="200" height="120"></canvas>');
       items += item('적 위협 (깜빡임)', 20, 20, '<canvas data-live="threat" width="80" height="80"></canvas>');
       items += item('과녁 (철컥철컥 · 내 / 처치 / 적)', 60, 20, '<canvas data-live="gear" width="240" height="80"></canvas>');
       items += item('처치 (재가 되어 발밑에)', 20, 20, '<canvas data-live="death" width="80" height="120"></canvas>');
@@ -550,7 +549,6 @@ const renderGallery = () => {
   const cv = (k: string) => box.querySelector<HTMLCanvasElement>(`[data-live="${k}"]`)!;
   const hpC = cv('hp').getContext('2d')!;
   const arC = cv('arrows').getContext('2d')!;
-  const kgC = cv('king').getContext('2d')!;
   const thC = cv('threat').getContext('2d')!;
   const gtC = cv('gear').getContext('2d')!;
   const gtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (gtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => gtC.fillRect(x, y, w, h) }, S);
@@ -561,7 +559,7 @@ const renderGallery = () => {
   let ppArts: PopupArt[] = [];
   const dtPen = new PixelPen({ fillStyle: (c: number, a = 1) => (dtC.fillStyle = hex(c, a)), fillRect: (x: number, y: number, w: number, h: number) => dtC.fillRect(x, y, w, h) }, S);
   let dtCells: CrumbleCell[] = [];
-  for (const c of [hpC, arC, kgC, thC, gtC]) c.imageSmoothingEnabled = false;
+  for (const c of [hpC, arC, thC, gtC]) c.imageSmoothingEnabled = false;
   const tile = (c: CanvasRenderingContext2D, dark: boolean, x: number, y: number) => {
     const im = sprites[dark ? 'tile-dark' : 'tile-light'];
     if (im?.complete) c.drawImage(im, x, y, 20 * S, 20 * S);
@@ -599,16 +597,6 @@ const renderGallery = () => {
     ap.flow([{ x: 8, y: 40 }, { x: 64, y: 40 }], 0x38bdf8, now);
     ap.flow([{ x: 88, y: 72 }, { x: 144, y: 16 }], 0x38bdf8, now);
     ap.flow([{ x: 176, y: 72 }, { x: 176, y: 24 }, { x: 228, y: 24 }], 0xe5262f, now);
-    // 훑기 토큰 (D-078): 칠 수 있는 내 기물 = 왼쪽 위 칼, 처치될 내 기물 = 오른쪽 위 해골 (게임과 같은 칸의 11/20)
-    kgC.clearRect(0, 0, 200, 120);
-    const king = sprites.K0;
-    [0, 1].forEach((i) => {
-      const ox = 12 + i * 100;
-      tile(kgC, i === 1, ox, 40);
-      if (king?.complete) kgC.drawImage(king, ox + 0.09 * 80, 40 + 0.02 * 80, 0.82 * 80, 0.82 * 80);
-      const tok = sprites[i === 0 ? 'scan-sword' : 'scan-skull'];
-      if (tok?.complete) kgC.drawImage(tok, ox + (i === 0 ? 0 : 36), 40, 44, 44);
-    });
     // 톱니 과녁: 내 과녁·처치 과녁은 철컥철컥, 적 과녁은 멈춤
     gtC.clearRect(0, 0, 240, 80);
     (['ally', 'kill', 'enemy'] as const).forEach((k, i) => {

@@ -158,7 +158,7 @@ export class Hud implements HudView {
     }
     if (!rows.length && mine) {
       const hint = ench(c.state, 0, 'E16') || (c.state.rules.foresight ?? 0) > 0
-        ? '<span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수</span>'
+        ? '<span style="color:#ff6b6b">붉은 화살표 = 지금 제출하면 적이 둘 수 · 깜빡이는 HP = 잃을 몫 · 적을 누르면 피해 숫자</span>'
         : '<span style="color:var(--muted)">적 기물을 누르면 위협 범위가 보입니다</span>';
       rows.push(`<li class="empty">기물을 눌러 이동을 예약하세요<br>${hint}</li>`);
     }

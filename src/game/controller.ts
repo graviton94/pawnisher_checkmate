@@ -13,8 +13,6 @@ import {
   samePos,
   legalMoves,
   attackArea,
-  damageOf,
-  otherSide,
   specialSteps,
   undoLast,
   EMPTY_LOADOUT,
@@ -111,8 +109,6 @@ export interface BoardModel {
   removed: Piece[];
   /** 누른 적 기물이 다음 턴에 갈 수 있는 칸과 칠 수 있는 칸 */
   threat: { moves: Pos[]; hits: Pos[] } | null;
-  /** 훑기 보조 (GDD 12장 F6, D-075): 이번 턴 칠 수 있는 내 기물 · 다음 적 턴에 처치될 수 있는 내 기물 (공개 정보만) */
-  scan: { strike: Pos[]; danger: Pos[] };
   /** 적 의도: 지금 예약대로 제출하면 적이 둘 수와 내 기물이 받을 피해 */
   intent: Intent | null;
 }
@@ -317,52 +313,7 @@ export class BattleController {
       removed: check.ok ? check.removed : [],
       threat: this.threatOf(),
       intent: this.intent(),
-      scan: this.scan(),
     };
-  }
-
-  private scanCache: { key: string; value: BoardModel['scan'] } | null = null;
-
-  /**
-   * 훑기 보조 (F6): 기물이 많을 때 "어디부터 볼까"를 줄인다. 정답(최선의 수)은 알려 주지 않고 공개 정보만.
-   * 칠 수 있음 = 아직 움직이지 않은 내 기물이 이번 턴 갈 수 있는 칸 중 하나에서 적을 공격 범위에 넣는다.
-   * 처치될 수 있음 = 적 의도 예고가 있으면 그 예고에서 처치되는 기물만. 없으면 예약대로 둔 뒤의 판에서, 적 기물 하나가 다음 턴에 그 칸을 칠 수 있고 한 방 피해가 남은 HP 이상.
-   */
-  private scan(): BoardModel['scan'] {
-    if (this.phase !== 'plan' || !this.state || this.state.winner !== null) return { strike: [], danger: [] };
-    const key = `${this.state.turnNumber}|${JSON.stringify(this.plan)}`;
-    if (this.scanCache?.key === key) return this.scanCache.value;
-    const side = this.state.turnSide;
-    const v = checkPlan(this.state, this.plan).virtual;
-    const strike: Pos[] = [];
-    for (const p of v.pieces) {
-      if (p.side !== side) continue;
-      const dests = plannableMoves(this.state, this.plan, p.id);
-      const hits = dests.some((d) => attackArea(v, { ...p, x: d.x, y: d.y }).some((a) => v.pieces.some((q) => q.side !== side && q.x === a.x && q.y === a.y)));
-      if (hits) strike.push({ x: p.x, y: p.y });
-    }
-    // 적 의도가 보이면 해골은 그 예고와 똑같이 (실제로 처치될 기물만) — 둘이 다르면 믿을 수 없다 (D-078)
-    const intent = this.intent();
-    if (intent) {
-      const value = { strike, danger: intent.hits.filter((h) => h.killed).map((h) => h.pos) };
-      this.scanCache = { key, value };
-      return value;
-    }
-    const enemyView = { ...v, turnSide: otherSide(side) };
-    const danger = new Map<string, Pos>();
-    for (const e of v.pieces) {
-      if (e.side === side) continue;
-      for (const to of [{ x: e.x, y: e.y }, ...legalMoves(enemyView, e)]) {
-        const at = { ...e, x: to.x, y: to.y };
-        for (const a of attackArea(enemyView, at)) {
-          const mine = v.pieces.find((q) => q.side === side && q.x === a.x && q.y === a.y);
-          if (mine && damageOf(enemyView, at, mine) >= mine.hp + mine.shield) danger.set(`${a.x},${a.y}`, a);
-        }
-      }
-    }
-    const value = { strike, danger: [...danger.values()] };
-    this.scanCache = { key, value };
-    return value;
   }
 
   private intentCache: { key: string; value: Intent | null } | null = null;
@@ -591,7 +542,7 @@ export class BattleController {
     const before = this.state;
     const { state, events } = resolveTurn(before, plan);
     this.plan = [];
-    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null, intent: null, scan: { strike: [], danger: [] } });
+    this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null, intent: null });
     this.hud.update(this);
     await this.view.play(before, events);
     // 기록 줄: 내 턴이 시작되면 새로, 적 턴은 이어 붙인다 → 다음 내 차례에 "내 지난 턴 + 적 지난 턴"

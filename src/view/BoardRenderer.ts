@@ -61,7 +61,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'scan-sword', 'scan-skull', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -444,20 +444,14 @@ class BoardScene extends Phaser.Scene {
       }
     }
 
-    // 적 의도 예고: 지금 제출하면 적이 둘 수 (옅은 붉은 흐르는 화살표 + 붉은 순번), 맞을 내 기물엔 적 과녁 + 예상 피해
+    // 적 의도 예고: 지금 제출하면 적이 둘 수 (옅은 붉은 흐르는 화살표 + 붉은 순번). 맞을 내 기물은 아래 HP 게이지로 (D-081)
+    // 한 번에 한 겹: 내 기물을 고르는 동안은 거의 숨긴다
     if (m.intent) {
-      const faint = m.selectedId !== null ? 0.3 : 0.6;
+      const faint = m.selectedId !== null ? 0.12 : 0.6;
       m.intent.plan.forEach((st, i) => {
         for (const a of stepArrows(m.intent!.state, st)) this.arrow(a.from, a.to, a.knight, C.crimson, faint);
         this.badge(stepBadge(m.intent!.state, m.intent!.state, st), i + 1, faint + 0.25, true);
       });
-      for (const h of m.intent.hits) {
-        const w = this.world(h.pos);
-        img('target-enemy', w.x + 2.5 * d, w.y + 2.5 * d, 15 * d, 1.7, 0.9);
-        const g = this.add.graphics().setDepth(7);
-        drawPopup(g, buildPopupArt(`-${h.damage}`, h.killed ? 0xfacc15 : 0xff6b6b), w.x + t * 0.72, w.y + t, d * 0.6, 400, 0);
-        this.dynamic.push(g);
-      }
     }
 
     // 원래 자리 잔상 + 흐르는 화살표 + 순번
@@ -483,16 +477,19 @@ class BoardScene extends Phaser.Scene {
       this.sprites.set(p.id, sprite);
     }
 
-    // 훑기 보조 (F6, D-075·D-078): 칠 수 있는 내 기물 = 왼쪽 위 청록 칼 토큰 (기물을 고르기 전에만), 처치될 내 기물 = 오른쪽 위 붉은 해골 토큰 (순번 배지와 같은 11도트 톱니 토큰)
-    if (m.selectedId === null)
-      for (const p of m.scan.strike) {
-        const w = this.world(p);
-        img('scan-sword', w.x, w.y, 11 * d, 5);
+    // 적 의도로 맞을 내 기물: 과녁·숫자 대신 HP 게이지에 잃을 몫만. 숫자는 처치될 기물에만 금색 하나,
+    // 적 기물을 누르고 있을 때(위협 보기)만 모든 피해 숫자 (D-081)
+    if (m.intent && m.selectedId === null)
+      for (const h of m.intent.hits) {
+        const sp = this.sprites.get(h.pieceId);
+        if (!sp) continue;
+        this.drawHp(sp, sp.piece.hp, Math.max(0, Math.min(sp.piece.hp, sp.piece.hp + sp.piece.shield - h.damage)));
+        if (!h.killed && !m.threat) continue;
+        const w = this.world(h.pos);
+        const g = this.add.graphics().setDepth(7);
+        drawPopup(g, buildPopupArt(`-${h.damage}`, h.killed ? 0xfacc15 : 0xff6b6b), w.x + t * 0.72, w.y + t, d * 0.6, 400, 0);
+        this.dynamic.push(g);
       }
-    for (const p of m.scan.danger) {
-      const w = this.world(p);
-      img('scan-skull', w.x + 9 * d, w.y, 11 * d, 5);
-    }
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
   }

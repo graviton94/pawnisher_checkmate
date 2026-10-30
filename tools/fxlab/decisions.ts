@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 41, date: '2026-10-30' };
+export const VERSION = { n: 42, date: '2026-10-30' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -49,14 +49,13 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
 
 export const OPEN_QUESTIONS: string[] = [
   '지형 소품: 지금 그림은 불합격 — 방향(쓸지 말지, 어떤 모양)을 다시 정해 주세요',
-  '훑기 토큰: 해골이 기물 머리를 조금 가린다 — 이대로 / 조금 작게 / 더 구석으로 (에셋 목록 "훑기 토큰")',
   '흐르는 화살표 · 검은 재 처치 · 아래부터 지워지는 피해 숫자 — 게임에 들어가 있음, 이상하면 말해 주세요',
 ];
 
 export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   // 보는 중 · 대기
   { item: '지형 소품', rule: '불합격 (사용자: 디자인 자체가 별로) — 방향을 다시 정할 때까지 판에 올리지 않는다', status: 'pick' },
-  { item: '훑기 토큰', rule: '칠 수 있는 내 기물 = 왼쪽 위 청록 칼, 처치될 내 기물 = 오른쪽 위 붉은 해골 — 순번 배지와 같은 11도트 톱니 토큰. 적 의도가 보이면 해골 = 의도에서 실제 처치되는 기물만', status: 'review' },
+  { item: '적 의도 표시', rule: '기본 = 붉은 흐르는 화살표 + 순번 + 맞을 내 기물의 HP 게이지 잃을 몫 + 처치될 기물만 금색 숫자. 적 기물을 누르면 모든 피해 숫자. 내 기물을 고르는 동안은 거의 숨김(0.12). 칼·해골 토큰은 없앰 (정보 중복·기물 가림)', status: 'review' },
   { item: '화살표', rule: '흐린 바탕 줄 위로 밝은 도트 토막(3칸 켜짐·2칸 꺼짐)이 0.07초에 한 칸씩 끝 쪽으로 흐른다 + 도트 화살촉', status: 'review' },
   { item: '처치', rule: '위에서부터 한 줄씩 검은 재가 되어 기물 발밑까지만 떨어져 쌓였다 꺼진다 (칸 밖으로 안 나감)', status: 'review' },
   { item: '피해 숫자', rule: '갈무리11 굵게를 도트 그림으로, 8방향 1도트 검정 테두리. 크게 튀어나왔다 자리 잡고, 아래에서 위로 도트가 지워지며 사라짐. 처치는 금색 숫자 (해골 없음)', status: 'review' },
@@ -80,6 +79,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 42, date: '2026-10-30', items: ['판 정보 줄이기: 칼·해골 토큰 삭제, 적 의도는 과녁·숫자 대신 HP 게이지 + 처치만 금색 숫자, 적을 누르면 숫자, 내 기물 고르는 중엔 의도 거의 숨김'] },
   { v: 41, date: '2026-10-30', items: ['FX 랩 정리: 판 바꾸기(지금·제미나이 S0) 없앰 · 판 위 지형 소품 뺌 · 폐기 시안(왕관·제미나이 칸) 목록에서 뺌 · 결정표 중복 정리(확정은 접음) · 기록은 최근 4개만'] },
   { v: 40, date: '2026-10-30', items: ['왕관 쓴 폰 킹 폐기 — 원래 킹 기물로'] },
   { v: 39, date: '2026-10-30', items: ['주인공 킹: 사용자 시안 왕관을 조금 줄여(머리 폭 0.8) 머리에 반듯이 씌움 — 판 위·아이콘 같은 그림', '훑기 칼·해골을 순번 배지와 같은 톱니 토큰으로, 해골은 적 의도와 일치'] },
