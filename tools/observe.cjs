@@ -258,7 +258,7 @@ const scenarios = {
     await freeze(); await page.tap('[data-skip]'); await at(160); await shot('6-skip'); await thaw(); await page.waitForTimeout(600);
     return ['motion-7-after'];
   },
-  // 볼륨 4 (D-112): 등급 딱지 · 황금 3지선다 · 황금 진열 · 군단 보기 황금 슬롯 · 카드 레일 황금 카드
+  // 볼륨 4 (D-112): 등급 딱지 · 에픽 3지선다 · 에픽 진열 · 군단 보기 에픽 슬롯 · 카드 레일 에픽 카드
   async legend(page) {
     const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-legend-${n}.png`) });
     await loadRun(page, { at: 'reward', title: '나이트 반장 격파 — 주조 공정 끝', lines: ['나사 +60', TEXT_FOUND], choices: [{ type: 'legend', options: ['L01', 'L06', 'C07'] }, { type: 'enchant', options: ['E01', 'E17', 'E05'] }, { type: 'card', options: ['A07', 'C10', 'C04'] }] });
@@ -270,6 +270,27 @@ const scenarios = {
     await loadRun(page, { at: 'shop', stock: { pieces: [{ item: 'N', price: 75, sold: false }, { item: 'P', price: 25, sold: false }], cards: [{ item: 'A08', price: 55, sold: false }], enchants: [{ item: 'E26', price: 110, sold: false }], rerollPrice: 20, legend: { item: 'L09', price: 336, sold: false } } }, { floor: 15, gold: 400 });
     await page.waitForTimeout(700); await shot('5-shop');
     return ['legend-6-end'];
+  },
+  // 등급 연출 (D-113): 등장 중간 · 오라 · 고름 + 폰 반장 약점
+  async grades(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-grades-${n}.png`) });
+    const freeze = () => page.evaluate(() => { window.__held = []; window.__st = window.__st || window.setTimeout; window.setTimeout = (f, ms, ...a) => { window.__held.push(() => f(...a)); return 0; }; });
+    const thaw = () => page.evaluate(() => { window.setTimeout = window.__st; window.__held.forEach((f) => f()); window.__held = []; document.getAnimations().forEach((a) => a.play()); });
+    const at = (ms) => page.evaluate((t) => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = t; }), ms);
+    const stage = { at: 'reward', title: '검문 통과!', lines: ['나사 +40'], choices: [{ type: 'enchant', options: ['E21', 'E17', 'E26'] }, { type: 'legend', options: ['L06', 'L01', 'C09'] }] };
+    await page.evaluate((st) => { localStorage.clear(); }, stage);
+    await loadRun(page, stage, {});
+    await page.reload(); await page.waitForTimeout(600); await page.tap('[data-title]'); await page.waitForTimeout(300);
+    await freeze(); await page.tap('[data-continue]'); await at(260); await shot('1-enter-mid'); await thaw(); await page.waitForTimeout(900);
+    await shot('2-settled');
+    await freeze(); await page.tap('[data-pick="E26"]'); await at(120); await shot('3-pick-unique'); await thaw(); await page.waitForTimeout(150);
+    await at(700); await shot('4-epic-enter'); await page.evaluate(() => document.getAnimations().forEach((a) => a.play())); await page.waitForTimeout(1600);
+    await shot('5-epic-aura');
+    await freeze(); await page.tap('[data-pick="L06"]'); await at(150); await shot('6-pick-epic'); await thaw(); await page.waitForTimeout(800);
+    // 폰 반장 약점 (지도 반장 카드 · 누르면 준비할 것)
+    await loadRun(page, { at: 'map' }, { bosses: ['pawn', 'rook'] });
+    await page.tap('[data-bossinfo]'); await page.waitForTimeout(300);
+    return ['grades-7-pawn-weak'];
   },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });

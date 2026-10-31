@@ -28,7 +28,7 @@ describe('등급 (D-112)', () => {
   });
 });
 
-describe('황금 부품 (D-112)', () => {
+describe('에픽 부품 (D-112)', () => {
   it('무한 궤도: 나이트가 처치하면 같은 나이트가 한 번 더 움직인다', () => {
     const s = () => board([['K', 0, 'h1'], ['N', 0, 'b1'], ['P', 1, 'b5', weak], ['P', 1, 'e7', tough], ['K', 1, 'a8']]);
     const plan = [{ pieceId: 2, to: sq('c3') }];
@@ -96,7 +96,7 @@ describe('황금 부품 (D-112)', () => {
     expect(simulate(gild(s(), 'L10'), [st]).apUsed).toBe(0);
   });
 
-  it('황금 슬롯은 둘', () => {
+  it('에픽 슬롯은 둘', () => {
     const run: RunState = newRun(3);
     expect(addGold(run, 'L01')).toBeUndefined();
     expect(addGold(run, 'L02')).toBeUndefined();
@@ -140,5 +140,19 @@ describe('천공 카드 +9 (D-112)', () => {
     expect(dmgTo(r.events, 5)).toBeGreaterThan(0);
     // 쏜 기물은 그 턴 다시 못 움직인다
     expect(simulate(s, [{ kind: 'shield', pieceId: 1, card: 0 }, { pieceId: 2, to: sq('a2') }]).ok).toBe(false);
+  });
+});
+
+describe('반장 약점 (D-113)', () => {
+  it('폰 반장의 폰은 전부 얇은 양산 철판 — 관통 · 부가 피해 두 배', async () => {
+    const { generateEncounter } = await import('../src/run/legion');
+    const { Rng } = await import('../src/engine');
+    const e = generateEncounter(12, 'boss', new Rng(1), 'pawn');
+    expect(e.affixes?.filter((a) => a.id === 'brittle')).toHaveLength(e.deck.filter((t) => t === 'P').length);
+    const s = (affix?: 'brittle') => board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a5', tough], ['P', 1, 'a7', { ...tough, ...(affix ? { affix } : {}) }], ['K', 1, 'h8']]);
+    const plan = [{ pieceId: 2, to: sq('a2'), card: 0 }];
+    const plain = dmgTo(simulate(withCard(s(), 'A03'), plan).events, 4);
+    const brittle = dmgTo(simulate(withCard(s('brittle'), 'A03'), plan).events, 4);
+    expect(brittle).toBe(plain * 2);
   });
 });

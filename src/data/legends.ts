@@ -1,8 +1,8 @@
 import type { PieceType } from '../engine/types';
 
 /**
- * 황금 부품 (D-112): 하나만 얻어도 "이번 출하는 이걸로 간다"가 되는 규칙 바꾸기.
- * 단계(1·2·★) 없이 한 번에 완성. 황금 슬롯 2칸 (개조 6칸과 따로). 얻는 곳은 data/grades.ts LEGEND_CHANCE.
+ * 에픽 부품 (D-112): 하나만 얻어도 "이번 출하는 이걸로 간다"가 되는 규칙 바꾸기.
+ * 단계(1·2·★) 없이 한 번에 완성. 에픽 슬롯 2칸 (개조 6칸과 따로). 얻는 곳은 data/grades.ts LEGEND_CHANCE.
  */
 export type LegendId = 'L01' | 'L02' | 'L03' | 'L04' | 'L05' | 'L06' | 'L07' | 'L08' | 'L09' | 'L10';
 
@@ -23,12 +23,12 @@ export const LEGENDS: Record<LegendId, LegendDef> = {
   L05: { name: '폭군 왕관', concept: '킹 전투', type: 'K', desc: '킹 ATK 두 배. 킹이 적을 쓰러뜨리면 아군 전체 방열판 +10' },
   L06: { name: '도미노 공장', concept: '연쇄 폭발', desc: '적이 쓰러지면 그 상하좌우의 적에게 쓰러진 기물 최대 HP 25% 피해 (연쇄된다)' },
   L07: { name: '단독 출하', concept: '소수 정예', desc: '대국을 6기 이하로 시작하면 주는 피해 +40% · 받는 피해 −25%' },
-  L08: { name: '황금 나사', concept: '나사 경제', desc: '대국 나사 ×1.6 · 고물상 값 −20%' },
+  L08: { name: '조폐 프레스', concept: '나사 경제', desc: '대국 나사 ×1.6 · 고물상 값 −20%' },
   L09: { name: '양산 명령서', concept: '폰 대대', type: 'P', desc: '폰이 공격하면 그 적과 붙어 있는 다른 아군 폰들도 같은 적을 50%로 친다' },
   L10: { name: '합체 공정', concept: '결합 군단', desc: '붙어 있는 두 기물(킹 제외)을 카드 없이 태엽 0으로 결합. 결합 기물 피해 +50%' },
 };
 
-/** 황금 부품 수치 (D-112) */
+/** 에픽 부품 수치 (D-112) */
 export const LEGEND_FX = {
   railStandAp: 1,
   railMult: 1.2,

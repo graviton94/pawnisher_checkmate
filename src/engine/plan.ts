@@ -120,7 +120,7 @@ interface TurnCtx {
   twice: Set<number>;
   marked: Set<number>;
   freeNext: boolean;
-  /** 여왕 거푸집 (황금): 이번 턴 받은 태엽 */
+  /** 여왕 거푸집 (에픽): 이번 턴 받은 태엽 */
   queenAp: number;
 }
 
@@ -167,7 +167,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
         ctx.events.push({ type: 'affix', pieceId: a.id, affix: 'mold' });
       }
     }
-    // 도미노 공장 (황금, D-112): 쓰러진 적의 상하좌우 적에게 — 연쇄된다
+    // 도미노 공장 (에픽, D-112): 쓰러진 적의 상하좌우 적에게 — 연쇄된다
     if (depth < LEGEND_FX.dominoDepth && legend(s, (1 - d.side) as Side, 'L06')) {
       const hits = s.pieces
         .filter((p) => p.side === d.side && p.hp > 0 && Math.abs(p.x - d.x) + Math.abs(p.y - d.y) === 1)
@@ -222,7 +222,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
         ctx.events.push({ type: 'promote', pieceId: killer.id, from, to });
       }
     }
-    // 폭군 왕관 (황금, D-112): 킹이 쓰러뜨리면 아군 전체 방열판
+    // 폭군 왕관 (에픽, D-112): 킹이 쓰러뜨리면 아군 전체 방열판
     if (killer.type === 'K' && legend(s, side, 'L05')) {
       for (const p of s.pieces) if (p.side === side) p.shield += LEGEND_FX.tyrantShield;
       ctx.events.push({ type: 'shield', pieceId: killer.id, amount: LEGEND_FX.tyrantShield });
@@ -283,7 +283,8 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
     const mates = s.pieces.filter((p) => p.side === t.side && p.type === 'P' && p.hp > 0 && p.y === t.y && Math.abs(p.x - t.x) === 1).length;
     if (mates) damage = Math.max(1, Math.round(damage * Math.max(0.5, 1 - mates * tier(MORE.E40, e40))));
   }
-  if (s.solo?.[t.side]) damage = Math.max(1, Math.round(damage * LEGEND_FX.soloTake)); // 단독 출하 (황금)
+  if (s.solo?.[t.side]) damage = Math.max(1, Math.round(damage * LEGEND_FX.soloTake)); // 단독 출하 (에픽)
+  if (splash && t.affix === 'brittle') damage = Math.round(damage * AFFIX.brittleMult); // 얇은 양산 철판 (폰 반장 약점, D-113)
   const e29 = ench(s, t.side, 'E29');
   if (e29) damage = Math.min(damage, Math.max(1, Math.ceil(t.maxHp * tier(MORE.E29, e29))));
   const shieldAbsorbed = Math.min(t.shield, damage);
@@ -382,7 +383,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   if (attacker.type === 'R' && !attacker.fused && (mods.dist ?? 0) >= 3 && lvM('E43')) mult *= tier(MORE.E43, lvM('E43'));
   if (mods.strike && lvM('E44')) mult *= tier(MORE.E44, lvM('E44'));
   if (attacker.fused && lvM('E45')) mult *= tier(MORE.E45, lvM('E45'));
-  // 황금 부품 (D-112): 단독 출하 · 합체 공정
+  // 에픽 부품 (D-112): 단독 출하 · 합체 공정
   if (s.solo?.[attacker.side]) mult *= LEGEND_FX.soloDeal;
   if (attacker.fused && legend(s, attacker.side, 'L10')) mult *= LEGEND_FX.fusionMult;
   // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
@@ -421,6 +422,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     let dmg = damageOf(s, attacker, t, mult);
     if (e09 >= 3 && (ctx.hitCount.get(t.id) ?? 0) >= 1) dmg *= 2;
     if (pierced.has(t.id) && lvT('E18') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.pierceMult);
+    if (pierced.has(t.id) && t.affix === 'brittle') dmg = Math.round(dmg * AFFIX.brittleMult);
     if (t.type === 'K' && lvT('E20') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.kingMult);
     // 볼륨 1 개조 (D-105): 대상에 따라 — 킹 사냥 · 처형 날 · 정밀 렌즈
     const e25 = ench(s, attacker.side, 'E25');
@@ -469,7 +471,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     }
   }
   ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
-  // 양산 명령서 (황금, D-112): 폰이 치면 그 적과 붙은 다른 아군 폰들도 같은 적을 50%로
+  // 양산 명령서 (에픽, D-112): 폰이 치면 그 적과 붙은 다른 아군 폰들도 같은 적을 50%로
   if (attacker.type === 'P' && !attacker.fused && legend(s, attacker.side, 'L09')) {
     for (const h of hits.filter((x) => !x.splash)) {
       const t = findPiece(s, h.targetId);
@@ -561,7 +563,7 @@ export const pawnCounter = (s: BattleState, piece: Piece): boolean =>
 /** 포탑 룩 (이형, D-106): 움직이지 않고 그 자리에서 칠 수 있다 — 칠 적이 있을 때 */
 export const turretReady = (s: BattleState, piece: Piece): boolean =>
   (variantOn(piece, 'turret') || railReady(s, piece)) && attackScan(s, piece, undefined, railReady(s, piece) ? { pierce: 8 } : undefined).targets.some((t) => t.hp > 0);
-/** 레일 캐논 (황금, D-112): 룩이 제자리에서 직선 끝까지 */
+/** 레일 캐논 (에픽, D-112): 룩이 제자리에서 직선 끝까지 */
 const railReady = (s: BattleState, piece: Piece): boolean => piece.type === 'R' && !piece.fused && !piece.formAs && legend(s, piece.side, 'L03');
 
 export const pawnBlocked = (s: BattleState, piece: Piece): boolean =>
@@ -571,7 +573,7 @@ export const pawnBlocked = (s: BattleState, piece: Piece): boolean =>
 export const canFuse = (s: BattleState, a: Piece, b: Piece, withCard: boolean): boolean => {
   if (a.side !== b.side || a.id === b.id || a.type === 'K' || b.type === 'K' || a.fused || b.fused) return false;
   if (chebyshev(a, b) !== 1) return false;
-  if (withCard || legend(s, a.side, 'L10')) return true; // 합체 공정 (황금): 카드 없이 아무 조합
+  if (withCard || legend(s, a.side, 'L10')) return true; // 합체 공정 (에픽): 카드 없이 아무 조합
   const lv = ench(s, a.side, 'E11');
   const pair = [a.type, b.type].sort().join('');
   return (lv >= 1 && pair === 'BN') || (lv >= 2 && pair === 'NR');
@@ -893,7 +895,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     // 그랜드 피날레 (E05 ★): 두 기 이상 예약했을 때 마지막 순번의 공격 2회
     if (ench(s, side, 'E05') >= 3 && plan.length >= 2 && order === plan.length - 1) repeats += 1;
 
-    // 프리즘 코어 (황금, D-112): 비숍 사선이 끝까지 꿰뚫는다
+    // 프리즘 코어 (에픽, D-112): 비숍 사선이 끝까지 꿰뚫는다
     if (attackers.length === 1 && moveTypes(attackers[0]).includes('B') && legend(s, side, 'L02')) mods.pierce = 8;
     let killed = 0;
     for (const a of attackers) {
@@ -903,12 +905,12 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
       }
     }
     prevKilled = killed > 0;
-    // 무한 궤도 (황금): 나이트가 쓰러뜨리면 한 번 더 움직인다 (기물마다 턴당 1번)
+    // 무한 궤도 (에픽): 나이트가 쓰러뜨리면 한 번 더 움직인다 (기물마다 턴당 1번)
     if (killed && isMoveStep && moveTypes(piece).includes('N') && legend(s, side, 'L01') && findPiece(s, piece.id) && !s.relaunch!.includes(piece.id)) {
       s.relaunch!.push(piece.id);
       ctx.acted.delete(piece.id);
     }
-    // 여왕 거푸집 (황금): 퀸이 쓰러뜨릴 때마다 태엽 +1 (턴당 3번)
+    // 여왕 거푸집 (에픽): 퀸이 쓰러뜨릴 때마다 태엽 +1 (턴당 3번)
     if (killed && attackers.some((a) => a.type === 'Q' && !a.fused) && legend(s, side, 'L04')) {
       const n = Math.min(killed, LEGEND_FX.queenApCap - ctx.queenAp);
       if (n > 0) {
@@ -956,7 +958,7 @@ export const actedInPlan = (plan: Plan, pieceId: number, s?: BattleState): boole
     return (st.kind === 'castle' || st.kind === 'fuse') && st.partnerId === pieceId;
   });
   if (!steps.length) return false;
-  // 무한 궤도 (황금): 처치로 다시 움직일 수 있게 된 나이트 (가상 보드 s에 기록)
+  // 무한 궤도 (에픽): 처치로 다시 움직일 수 있게 된 나이트 (가상 보드 s에 기록)
   if (s?.relaunch?.includes(pieceId) && steps.length < 2) return false;
   // 용수철 나이트: 이동 명령 하나뿐이면 한 번 더 움직일 수 있다
   const p = s ? findPiece(s, pieceId) : undefined;

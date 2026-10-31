@@ -1,3 +1,4 @@
+import { TEXT } from '../data/text';
 import { sfx } from '../audio/sfx';
 
 /**
@@ -5,11 +6,11 @@ import { sfx } from '../audio/sfx';
  * 원칙 (CLAUDE.md UI 6): 예비 동작 → 터짐 → 출렁임, 한 번 1초 이내, prefers-reduced-motion이면 흔들림·파편을 빼고 색만 짧게.
  * 화면은 게임 상태를 바꾸지 않는다 — 바뀐 상태를 보고 연출만 한다.
  */
-export type Tone = 'good' | 'rare' | 'bad';
+export type Tone = 'good' | 'rare' | 'bad' | 'blue' | 'epic';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-const COLOR: Record<Tone, string> = { good: '#FACC15', rare: '#C4B5FD', bad: '#F87171' };
+const COLOR: Record<Tone, string> = { good: '#FACC15', rare: '#B06CFF', bad: '#F87171', blue: '#4DA3FF', epic: '#FF8A1F' };
 
 /** 화면 가장자리가 번쩍 (금 = 대박, 붉음 = 아픔). strength 0~1 */
 export const vignette = (tone: Tone, strength = 0.6): void => {
@@ -33,7 +34,7 @@ export const shake = (el: Element | null, power = 1): void => {
 /** 요소가 통통 튄다 (쾌감) */
 export const pop = (el: Element | null, tone: Tone = 'good'): void => {
   if (!el) return;
-  el.classList.remove('juice-pop', 'good', 'rare', 'bad');
+  el.classList.remove('juice-pop', 'good', 'rare', 'bad', 'blue', 'epic');
   void (el as HTMLElement).offsetWidth;
   el.classList.add('juice-pop', tone);
   window.setTimeout(() => el.classList.remove('juice-pop', tone), 650);
@@ -109,7 +110,7 @@ export interface RunDelta {
   /** 손상 단 증가 · 봉인 증가 */
   damaged: number;
   sealed: number;
-  /** 새로 얻은 황금 부품 (D-112) */
+  /** 새로 얻은 에픽 부품 (D-112) */
   legend?: number;
 }
 
@@ -131,11 +132,11 @@ export const runFeedback = (root: ParentNode, d: RunDelta, goldBefore: number): 
     return;
   }
   if (d.legend) {
-    // 황금 부품: 가장 큰 쾌감 — 금빛 가장자리 끝까지 + 파편 + 도장
+    // 에픽 부품: 가장 큰 쾌감 — 금빛 가장자리 끝까지 + 파편 + 도장
     sfx('jackpot');
-    vignette('good', 1);
-    burst(root.querySelector('.bar .btn.army'), 'good', 24);
-    stamp('황금!', 'good');
+    vignette('epic', 1);
+    burst(root.querySelector('.bar .btn.army'), 'epic', 24);
+    stamp(TEXT.legend.stamp, 'good');
     return;
   }
   if (d.awakened > 0) {

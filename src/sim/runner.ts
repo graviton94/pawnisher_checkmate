@@ -75,7 +75,7 @@ export interface RunLog {
   trace: { floor: number; gold: number; deck: number; forge: number; enchants: number; cards: number }[];
   goldEarned: number;
   goldSpent: number;
-  /** 황금 부품 (D-112): 본 3지선다 수 · 가진 것 */
+  /** 에픽 부품 (D-112): 본 3지선다 수 · 가진 것 */
   goldSeen?: number;
   legends?: string[];
   /** 본 희귀 칸 수 · 전체 칸 수 */
@@ -186,7 +186,7 @@ export const autoRun = (seed: number): RunLog => {
           // 군단에 있는 유형의 도면 먼저
           takeChoice(run, ch.options.find((id) => run.deck.includes(VARIANTS[id].base)) ?? ch.options[0]);
         } else if (ch.type === 'legend') {
-          // 황금 (D-112): 군단 주력 유형을 미는 부품 > 유형 없는 부품 > 황금 카드
+          // 에픽 (D-112): 군단 주력 유형을 미는 부품 > 유형 없는 부품 > 에픽 카드
           log.goldSeen = (log.goldSeen ?? 0) + 1;
           const count = (t?: PieceType) => (t ? run.deck.filter((x) => x === t).length : 0);
           const score = (id: string) => (id.startsWith('C') ? 1 : LEGENDS[id as LegendId].type ? count(LEGENDS[id as LegendId].type) : id === 'L07' ? (run.deck.length <= 6 ? 4 : -1) : 2.5);
@@ -194,7 +194,7 @@ export const autoRun = (seed: number): RunLog => {
           if (takeChoice(run, best)) skipChoice(run);
         } else if (ch.type === 'enchant') {
           log.slotsSeen = (log.slotsSeen ?? 0) + ch.options.length;
-          log.rareSeen = (log.rareSeen ?? 0) + ch.options.filter((id) => ENCHANT_GRADE[id] === 'rare').length;
+          log.rareSeen = (log.rareSeen ?? 0) + ch.options.filter((id) => ENCHANT_GRADE[id] === 'unique').length;
           const id = pickEnchant(run, ch.options);
           const full = !run.loadout.enchants[id] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
           if (full) skipChoice(run);

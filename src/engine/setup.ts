@@ -166,9 +166,9 @@ export const createBattle = ({ width, height, decks, rules, seed, loadouts }: Ba
   applyForge(theirs, lo[1]);
   applyVariants(mine, lo[0]);
   applyVariants(theirs, lo[1]);
-  // 폭군 왕관 (황금, D-112): 킹 ATK 두 배
+  // 폭군 왕관 (에픽, D-112): 킹 ATK 두 배
   for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.legends?.includes('L05')) for (const p of list) if (p.type === 'K') p.atk *= LEGEND_FX.tyrantAtk;
-  // 단독 출하 (황금): 6기 이하로 시작했나
+  // 단독 출하 (에픽): 6기 이하로 시작했나
   const solo: [boolean, boolean] = [!!lo[0].legends?.includes('L07') && mine.length <= LEGEND_FX.soloMax, !!lo[1].legends?.includes('L07') && theirs.length <= LEGEND_FX.soloMax];
   return {
     ...(solo[0] || solo[1] ? { solo } : {}),

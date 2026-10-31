@@ -62,7 +62,7 @@ export interface Loadout {
   formation?: FormationId;
   /** 결함 · 손상 단수 (D-101): 그 유형 최대 HP −15% × 단 */
   damage?: Partial<Record<PieceType, number>>;
-  /** 황금 부품 (D-112): 최대 2 */
+  /** 에픽 부품 (D-112): 최대 2 */
   legends?: LegendId[];
 }
 
@@ -129,9 +129,9 @@ export interface BattleState {
   cards: [CardSlot[], CardSlot[]];
   /** 다음 턴으로 넘어가는 AP (축전기 이월, 연쇄 지휘 보너스) */
   apCarry: [number, number];
-  /** 단독 출하 (황금, D-112): 진영별로 켜졌나 */
+  /** 단독 출하 (에픽, D-112): 진영별로 켜졌나 */
   solo?: [boolean, boolean];
-  /** 무한 궤도 (황금): 이번 턴 한 번 더 움직일 수 있게 된 기물 (계획 미리보기용, 턴마다 비운다) */
+  /** 무한 궤도 (에픽): 이번 턴 한 번 더 움직일 수 있게 된 기물 (계획 미리보기용, 턴마다 비운다) */
   relaunch?: number[];
   /** 이번 턴 체크메이트 보호를 받는 킹 id (시뮬레이션 중에만 쓴다) */
   checkGuard?: number[];

@@ -41,7 +41,7 @@ export const CARDS: Record<CardId, CardDef> = {
   A10: { name: '자석 족쇄', use: 'attach', limit: { type: 'cooldown', turns: 3 }, ap: 0, desc: '맞은 적은 다음 자기 턴에 움직이지 못함' },
   C10: { name: '태엽 충전', use: 'shield', limit: { type: 'consume' }, ap: 0, desc: '이번 턴 태엽 +2' },
   C11: { name: '폐품 장갑', use: 'shield', limit: { type: 'consume' }, ap: 0, desc: '아군 전체 방열판 +12' },
-  // 황금 카드 (대국마다 한 번)
+  // 에픽 카드 (대국마다 한 번)
   C07: { name: '총동원령', use: 'shield', limit: { type: 'round' }, ap: 0, desc: '이번 턴 태엽 +3' },
   C08: { name: '긴급 재조립', use: 'shield', limit: { type: 'round' }, ap: 0, desc: '아군 전체 HP를 최대 HP 35%만큼 수리하고 방열판 +10' },
   C09: { name: '일제 사격', use: 'shield', limit: { type: 'round' }, ap: 2, desc: '아직 행동하지 않은 아군 전부가 제자리에서 공격 (피해 80%)' },

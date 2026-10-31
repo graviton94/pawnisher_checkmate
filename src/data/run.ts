@@ -81,7 +81,7 @@ export const pieceRewardDue = (floor: number, wins: number): boolean => actOf(fl
 export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 38, N: 22, B: 22, R: 12, Q: 6 };
 
 /** 희귀 개조 — 등급표(data/grades.ts, D-112)에서. 보스는 희귀 1장 확정 */
-export const RARE_ENCHANTS: EnchantId[] = (Object.keys(ENCHANT_GRADE) as EnchantId[]).filter((id) => ENCHANT_GRADE[id] === 'rare');
+export const RARE_ENCHANTS: EnchantId[] = (Object.keys(ENCHANT_GRADE) as EnchantId[]).filter((id) => ENCHANT_GRADE[id] === 'unique');
 /**
  * 인챈트 3지선다가 이미 가진 인챈트 쪽으로 모이게 한다 (중반 "파츠 모으기" → 후반 시너지).
  * 1장 보유 → 2장째 가중치, 2장 보유 → ★3장째 가중치. Act 1에서는 ★이 드물고 Act 3에서 흔해진다.
@@ -105,7 +105,7 @@ export const SHOP = {
   /** 판매가 = 가치 × 이 배율 */
   sellMult: 0.6,
   cardPrice: { sustain: 55, consume: 85 },
-  enchantPrice: { common: 70, uncommon: 90, rare: 110 },
+  enchantPrice: { common: 70, rare: 90, unique: 110 },
   reroll: 15,
   rerollStep: 5,
   /** 후반 나사 쓸 곳 (D-103): Act 2부터 「희귀 진열」 1칸 + 「개조 다듬기」(가진 개조 한 단 올리기) — 값 = 기본 + 단 × 가산, 공정 배율 적용 */
@@ -216,6 +216,11 @@ export interface BossDef {
   /** 이형 거푸집 · 정예 접사 (D-106 이형 반장 · 검문 반장) */
   variants?: Partial<Record<PieceType, VariantId>>;
   affixes?: { type: PieceType; id: AffixId }[];
+  /**
+   * 약점 (D-113): 그 유형 전부에 약점 접사가 붙는다. 지도에서 공정 시작부터 보이니 미리 준비할 수 있다.
+   * 그냥 붙으면 어렵고, 준비하면 확연히 쉬운 반장.
+   */
+  weakness?: { type: PieceType; affix: AffixId; label: string; prep: string };
 }
 
 export const BOSSES: Record<BossId, BossDef> = {
@@ -261,10 +266,11 @@ export const BOSSES: Record<BossId, BossDef> = {
     role: '물량 라인의 감독',
     quote: '하나 부서지면 둘 찍는다.',
     deck: ['K', 'Q', 'R', 'R', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-    enchants: { E12: 2, E04: 2 }, // D-111: 첫 반장 41% → 개조 한 단 · 개량 한 단 낮춤
+    enchants: { E12: 3, E04: 2 }, // D-113: 약점이 생겨 원래 세기로 (준비 없으면 어렵다)
     cards: ['A06'],
-    forge: { P: 1 },
+    forge: { P: 2 },
     arena: 'belt',
+    weakness: { type: 'P', affix: 'brittle', label: '얇은 양산 철판 (관통 · 부가 피해 ×2). 누르면 준비할 것', prep: '관통(비숍 · 관통 철갑탄 · 천공 드릴) · 방전(피스톤 박차 2단 · 과충전 방전) · 폭발(보일러 폰 · 도미노 공장)' },
   },
   variant: {
     name: '이형 반장',
@@ -286,7 +292,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E08: 2 },
     cards: ['A06'],
-    forge: { K: 1 },
+    forge: {}, // D-113: 첫 반장 60% → 킹 개량 뺌
     arena: 'checkpoint',
     affixes: [
       { type: 'Q', id: 'lastRivet' },

@@ -5,7 +5,7 @@
 import type { EnchantId } from './enchants';
 import type { PieceType } from '../engine/types';
 
-export type AffixId = 'lastRivet' | 'recoil' | 'plate' | 'oiled' | 'mold' | 'guardBolt';
+export type AffixId = 'lastRivet' | 'recoil' | 'plate' | 'oiled' | 'mold' | 'guardBolt' | 'brittle';
 
 export interface AffixDef {
   name: string;
@@ -23,10 +23,16 @@ export const AFFIXES: Record<AffixId, AffixDef> = {
   oiled: { name: '기름칠한 관절', icon: 'oil', color: '#FDE68A', desc: '이동 태엽 −1.' },
   mold: { name: '같은 틀', icon: 'chain', color: '#C4B5FD', desc: '붙어 있던 아군이 쓰러지면 ATK +30% (그 대국 내내).' },
   guardBolt: { name: '근위 볼트', icon: 'crown', color: '#FACC15', desc: '자기 킹과 붙어 있으면 받는 피해 −30%.' },
+  // 반장 약점 (D-113): 무작위 검문 접사에는 나오지 않는다
+  brittle: { name: '얇은 양산 철판', icon: 'pierce', color: '#7DD3FC', desc: '관통 · 부가 피해(방전 · 연쇄 · 폭발 · 충격)를 두 배로 받는다.' },
 };
+/** 검문!에 무작위로 붙는 접사 (반장 약점 접사는 빼고) */
+export const ELITE_AFFIXES: AffixId[] = ['lastRivet', 'recoil', 'plate', 'oiled', 'mold', 'guardBolt'];
 
 export const AFFIX = {
   recoilRatio: 0.5,
+  /** 얇은 양산 철판: 관통 · 부가 피해 배율 */
+  brittleMult: 2,
   plateShield: 10,
   moldAtk: 1.3,
   guardCut: 0.7,

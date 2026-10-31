@@ -1,5 +1,6 @@
 import { sfx } from '../audio/sfx';
 import { MOTION } from '../data/motion';
+import { burst, vignette } from './juice';
 
 /**
  * 조작 반응 모션 (D-109): 누름 · 화면 전환 · 카드 등장 · 고름(고른 것은 들리고 나머지는 사라짐).
@@ -45,6 +46,15 @@ export const choose = (el: HTMLElement, then: () => void, dismissPeers = true): 
   if (calm()) return then();
   const peers = dismissPeers ? ([...(el.parentElement?.children ?? [])].filter((x) => x !== el && x.tagName === el.tagName) as HTMLElement[]) : [];
   el.classList.add('picked');
+  // 등급별 고름 (D-113): 레어 청색 파편 · 유니크 보라 파편 + 소리 · 에픽 주황 파편 + 가장자리 빛
+  if (el.classList.contains('g-rare')) burst(el, 'blue', 10);
+  else if (el.classList.contains('g-unique')) {
+    burst(el, 'rare', 18);
+    sfx('rare');
+  } else if (el.classList.contains('g-epic')) {
+    burst(el, 'epic', 30);
+    vignette('epic', 0.7);
+  }
   peers.forEach((p, i) => {
     p.style.setProperty('--d', `${i * MOTION.dismissStagger}ms`);
     p.classList.add('dismissed');

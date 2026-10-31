@@ -102,14 +102,14 @@ interface RunSnap {
   damage: number;
   sealed: number;
   stage: string;
-  /** 황금 부품 + 황금 카드 수 (D-112) */
+  /** 에픽 부품 + 에픽 카드 수 (D-112) */
   gold2: number;
 }
 const snapOf = (run: RunState): RunSnap => ({
   gold: run.gold,
   deck: run.deck.length,
   star: Object.values(run.loadout.enchants).filter((n) => (n ?? 0) >= 3).length,
-  gold2: legendCount(run) + run.loadout.cards.filter((id) => CARD_GRADE[id] === 'legend').length,
+  gold2: legendCount(run) + run.loadout.cards.filter((id) => CARD_GRADE[id] === 'epic').length,
   damage: Object.values(run.loadout.damage ?? {}).reduce((a: number, n) => a + (n ?? 0), 0),
   sealed: run.sealed ?? 0,
   stage: run.stage.at === 'altar' && run.stage.result ? 'altar-result' : run.stage.at,
@@ -126,17 +126,17 @@ const setName = (deck: Deck): string => {
 /** 등급 딱지 (D-112): 색 + 글자 (색만으로 구분하지 않는다) */
 const gradeChip = (g: Grade): string => `<i class="grade g-${g}">${GRADE_NAME[g]}</i>`;
 
-/** 유형이 없는 황금 부품의 그림 */
+/** 유형이 없는 에픽 부품의 그림 */
 const LEGEND_ICON: Partial<Record<LegendId, string>> = { L06: 'flame', L07: 'flag', L08: 'screw', L10: 'chain' };
 
-/** 황금 3지선다 카드 (D-112): 컨셉 · 효과 */
+/** 에픽 3지선다 카드 (D-112): 컨셉 · 효과 */
 const goldOffer = (run: RunState, id: GoldId): string => {
   if (id.startsWith('C')) return cardOffer(id as CardId);
   const L = LEGENDS[id as LegendId];
   const t = L.type;
   const n = t ? run.deck.filter((x) => x === t).length : 0;
   const tag = t ? `<i class="tag${n ? '' : ' red'}">${n ? `내 ${PIECE_NAMES_KO[t]} ${n}기` : `${PIECE_NAMES_KO[t]} 없음`}</i>` : '';
-  return `<span class="kind">${gradeChip('legend')} ${TEXT.legend.name} · ${L.concept}</span>${t ? pieceImg(t, 0, 'large', 44) : icon(LEGEND_ICON[id as LegendId] ?? 'crown', 'xl', '#3a2a08')}<b>${L.name}</b><span class="tags">${tag}</span><p>${L.desc}</p>`;
+  return `<span class="kind">${gradeChip('epic')} ${TEXT.legend.name} · ${L.concept}</span>${t ? pieceImg(t, 0, 'large', 44) : icon(LEGEND_ICON[id as LegendId] ?? 'crown', 'xl', '#ffb35c')}<b>${L.name}</b><span class="tags">${tag}</span><p>${L.desc}</p>`;
 };
 
 /** 개조 고르기 카드 내용: 대상 · 몇 단째 · 효과 · 시너지 태그 */
@@ -275,7 +275,7 @@ export class RunUi {
       <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
       <div class="army-list">${units.join('')}</div>
       <p class="sub">${TEXT.blueprint.name} (${ownedBlueprints(run).length})</p><div class="unlocks">${ownedBlueprints(run).map((id) => `<i class="tag${run.loadout.variants?.[VARIANTS[id].base] === id ? ' gold' : ''}"><img src="ui/board/variant-${id}.png" alt="" style="width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px"> ${VARIANTS[id].name}</i>`).join('') || `<small class="lead">${TEXT.blueprint.empty}</small>`}</div>
-      <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-legend">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}
+      <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-epic">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}
       <p class="sub">개조 (${ench.length}/6)</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
       <p class="sub">천공 카드 (${cards.length}/${CARD_SLOTS})</p><div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
@@ -430,13 +430,13 @@ export class RunUi {
       name: CARDS[id].name,
       info: `${GRADE_NAME[CARD_GRADE[id]]} · ${CARDS[id].name} — ${CARDS[id].desc}`,
       img: gradeChip(CARD_GRADE[id]),
-      gold: CARD_GRADE[id] === 'legend',
+      gold: CARD_GRADE[id] === 'epic',
     }));
     const legends: Entry[] = (Object.keys(LEGENDS) as LegendId[]).map((id) => ({
       known: (seen.legends ?? []).includes(id),
       name: LEGENDS[id].name,
       info: `${LEGENDS[id].name} · ${LEGENDS[id].concept} — ${LEGENDS[id].desc}`,
-      img: gradeChip('legend'),
+      img: gradeChip('epic'),
       gold: true,
     }));
     const events: Entry[] = EVENT_IDS.map((id) => ({ known: seen.events.includes(id), name: EVENTS[id].title, info: EVENTS[id].text, img: icon(EVENT_ICON[id], 's') }));
@@ -516,7 +516,13 @@ export class RunUi {
       } else if (run.stage.result.kind === 'miss') shake(document.querySelector('.result-stamp'), 1);
     }
     // 희귀가 걸린 고르기 화면: 반짝
-    if (run.stage.at === 'reward' && run.stage.choices.length && document.querySelector('.offer.rare')) sfx('rare');
+    // 등급별 등장 소리 (D-113): 에픽은 내리꽂히는 순간 · 유니크는 뒤집힐 때
+    if ((run.stage.at === 'reward' || run.stage.at === 'shop') && document.querySelector('.scene.enter .offer.g-epic')) {
+      window.setTimeout(() => {
+        sfx('jackpot');
+        vignette('epic', 0.5);
+      }, 700);
+    } else if (run.stage.at === 'reward' && run.stage.choices.length && document.querySelector('.offer.g-unique, .offer.plate')) sfx('rare');
   }
 
   /** 지난 화면의 출하 상태 (연출 비교용) */
@@ -601,20 +607,25 @@ export class RunUi {
       <div class="title-line"><h2>${ACT_NAMES[act - 1]}</h2><p>${inAct(run.floor)}층 · ${TEXT.map.choose}</p></div>
       <div class="stage">
         <div class="map-wrap grow scroll-x" data-scroll><div class="map"><svg class="links"></svg>${cols.join('')}</div></div>
-        <div class="boss-card panel9">
+        <div class="boss-card panel9"${boss.weakness ? ' data-bossinfo role="button" tabindex="0"' : ''}>
           <span class="kind" style="font-size:12px;color:var(--crimson-soft)">${icon('crown', 's')} ${TEXT.map.bossAhead} · ${inAct(bossF)}층</span>
           <div class="portrait">${pieceImg(bossPiece, 1, 'large', 80)}</div>
           <b>${boss.name}</b>
           <small class="lead dim">${boss.role}</small>
           <p class="quote">“${boss.quote}”</p>
-          <small class="lead arena">${icon('flag', 's')} ${ARENAS[boss.arena].name} — ${ARENAS[boss.arena].desc}</small>
-          <small class="lead dim">${boss.title}</small>
+          ${boss.weakness ? `<small class="lead weak">${icon('reticle', 's')} ${TEXT.map.weakness} · ${boss.weakness.label}</small>` : ''}
+          <small class="lead arena">${icon('flag', 's')} ${ARENAS[boss.arena].name}${boss.weakness ? '' : ` — ${ARENAS[boss.arena].desc}`}</small>
+          ${boss.weakness ? '' : `<small class="lead dim">${boss.title}</small>`}
         </div>
       </div>
       <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'altar', 'event', 'puzzle'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
     );
     this.wireBar(el, run);
-    this.wire(el, { node: (b) => this.act(enterNode(run, Number(b.dataset.node))) });
+    this.wire(el, {
+      node: (b) => this.act(enterNode(run, Number(b.dataset.node))),
+      // 반장 약점 (D-113): 누르면 무엇을 준비하면 좋은지
+      bossinfo: () => boss.weakness && this.hud.toast(`${TEXT.map.prep} — ${boss.weakness.prep}`),
+    });
     requestAnimationFrame(() => {
       const wrap = el.querySelector<HTMLElement>('[data-scroll]')!;
       const cur = el.querySelector<HTMLElement>('.floor-col.current');
@@ -685,7 +696,9 @@ export class RunUi {
     // 반장 전장 규칙 (D-097): 대사 다음에 규칙 한 줄
     if (e.kind === 'boss') {
       const arena = ARENAS[bossOf(run, run.floor).arena];
+      const weak = bossOf(run, run.floor).weakness;
       window.setTimeout(() => this.hud.toast(`전장 · ${arena.name} — ${arena.desc}`), 1700);
+      if (weak) window.setTimeout(() => this.hud.toast(`${TEXT.map.weakness} · ${weak.label}`), 3500);
     }
   }
 
@@ -704,12 +717,12 @@ export class RunUi {
       offers = ch.options
         .map((id) => {
           const next = (run.loadout.enchants[id] ?? 0) + 1;
-          return `<button class="offer g-${ENCHANT_GRADE[id]}${next >= 3 ? ' rare' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
+          return `<button class="offer g-${ENCHANT_GRADE[id]}${next >= 3 ? ' plate' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
         })
         .join('');
     } else if (ch?.type === 'legend') {
       kind = TEXT.legend.name;
-      offers = ch.options.map((id) => `<button class="offer legend rare" type="button" data-pick="${id}">${goldOffer(run, id)}</button>`).join('');
+      offers = ch.options.map((id) => `<button class="offer g-epic" type="button" data-pick="${id}">${goldOffer(run, id)}</button>`).join('');
     } else if (ch?.type === 'blueprint') {
       kind = TEXT.blueprint.name;
       offers = ch.options.map((id) => `<button class="offer" type="button" data-pick="${id}">${blueprintOffer(run, id)}</button>`).join('');
@@ -718,7 +731,7 @@ export class RunUi {
       offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t, ch.variants[t])}</button>`).join('');
     } else if (ch?.type === 'card') {
       kind = R.card;
-      offers = ch.options.map((id) => `<button class="offer g-${CARD_GRADE[id]}${CARDS[id].limit.type === 'consume' ? ' rare' : ''}" type="button" data-pick="${id}">${cardOffer(id)}</button>`).join('');
+      offers = ch.options.map((id) => `<button class="offer g-${CARD_GRADE[id]}${CARDS[id].limit.type === 'consume' ? ' plate' : ''}" type="button" data-pick="${id}">${cardOffer(id)}</button>`).join('');
     }
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
@@ -784,16 +797,16 @@ export class RunUi {
     const s = run.stage.stock;
     const S = TEXT.shop;
     const item = (attr: string, i: number, html: string, price: number, sold: boolean, rare = false) =>
-      `<button class="offer${rare ? ' rare' : ''}${!sold && run.gold < price ? ' poor' : ''}" style="flex:0 0 150px" type="button" data-${attr}="${i}" ${sold ? 'disabled' : ''}>${html}<span class="price">${sold ? S.sold : `${icon('screw', 's')}${price}`}</span></button>`;
+      `<button class="offer${rare ? ' plate' : ''}${!sold && run.gold < price ? ' poor' : ''}" style="flex:0 0 150px" type="button" data-${attr}="${i}" ${sold ? 'disabled' : ''}>${html}<span class="price">${sold ? S.sold : `${icon('screw', 's')}${price}`}</span></button>`;
     const goods = [
-      // 황금 진열 (D-112): 맨 앞 칸
-      ...(s.legend ? [item('gold', 0, goldOffer(run, s.legend.item), s.legend.price, s.legend.sold, true).replace('class="offer', 'class="offer legend')] : []),
+      // 에픽 진열 (D-112): 맨 앞 칸
+      ...(s.legend ? [item('gold', 0, goldOffer(run, s.legend.item), s.legend.price, s.legend.sold).replace('class="offer', 'class="offer g-epic')] : []),
       ...s.pieces.map((p, i) => item('piece', i, pieceOffer(run, p.item), p.price, p.sold)),
       ...s.enchants.map((p, i) => {
         const next = (run.loadout.enchants[p.item] ?? 0) + 1;
-        return item('ench', i, enchantOffer(p.item, next, run), p.price, p.sold, next >= 3);
+        return item('ench', i, enchantOffer(p.item, next, run), p.price, p.sold, next >= 3).replace('class="offer', `class="offer g-${ENCHANT_GRADE[p.item]}`);
       }),
-      ...s.cards.map((p, i) => item('card', i, cardOffer(p.item), p.price, p.sold, CARDS[p.item].limit.type === 'consume')),
+      ...s.cards.map((p, i) => item('card', i, cardOffer(p.item), p.price, p.sold, CARDS[p.item].limit.type === 'consume').replace('class="offer', `class="offer g-${CARD_GRADE[p.item]}`)),
       // 도면 진열 (D-107)
       ...(s.blueprint ? [item('bp', 0, blueprintOffer(run, s.blueprint.item), s.blueprint.price, s.blueprint.sold)] : []),
       // 개조 다듬기 (D-103): 가진 개조 한 단 올리기
@@ -947,7 +960,7 @@ export class RunUi {
         <div class="stage"><div class="offers scroll-x grow">${all
           .map((id) => {
             const next = (run.loadout.enchants[id] ?? 0) + 1;
-            return `<button class="offer${next >= 3 ? ' rare' : ''}" style="flex:0 0 170px" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
+            return `<button class="offer${next >= 3 ? ' plate' : ''}" style="flex:0 0 170px" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
           })
           .join('')}</div></div>`,
       );

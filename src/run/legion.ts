@@ -1,6 +1,6 @@
 import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
-import { AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
+import { AFFIXES, ELITE_AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import { ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { ASC, ascOn } from '../data/ascension';
 import { BOSSES, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
@@ -77,14 +77,15 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     // 압력 12 (D-108): 반장 개조 +1단
     const enchants = { ...def.enchants };
     if (ascOn(ascension, 'bossEnchant')) for (const id of Object.keys(enchants) as EnchantId[]) enchants[id] = Math.min(ENCHANT_MAX_STACK, (enchants[id] ?? 0) + ASC.bossEnchant.add);
+    const bossDeck: Deck = actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck];
     return {
       kind,
       name: `${def.name} — ${def.title}`,
       ...boardFor(floor, 'boss'),
       // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
-      deck: actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck],
+      deck: bossDeck,
       loadout: { enchants, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge, ...(def.variants ? { variants: { ...def.variants } } : {}) },
-      ...(def.affixes ? { affixes: def.affixes.map((a) => ({ ...a })) } : {}),
+      ...(def.affixes || def.weakness ? { affixes: [...(def.affixes ?? []).map((a) => ({ ...a })), ...bossDeck.filter((t) => t === def.weakness?.type).map((type) => ({ type, id: def.weakness!.affix }))] } : {}),
       tier,
       boss,
       seed,
@@ -155,7 +156,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   // 검문! 정예 접사 (D-096): 일반 기물 중 무작위 유형에 하나씩
   const affixes: { type: PieceType; id: AffixId }[] = [];
   if (kind === 'elite') {
-    const ids = Object.keys(AFFIXES) as AffixId[];
+    const ids = [...ELITE_AFFIXES];
     const bodies = deck.filter((t) => t !== 'K');
     for (let i = affixCount(actOf(floor)) + (ascOn(ascension, 'eliteAffix') ? ASC.eliteAffix.add : 0); i > 0 && bodies.length && ids.length; i--) {
       const type = bodies.splice(rng.int(bodies.length), 1)[0];
