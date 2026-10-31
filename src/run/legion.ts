@@ -4,7 +4,7 @@ import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/ter
 import { AFFIXES, ELITE_AFFIXES, type WeakId, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import { ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { ASC, ascOn } from '../data/ascension';
-import { BOSSES, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, BOSS_FORGE_SHIFT, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
@@ -76,7 +76,8 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     const forge: Partial<Record<PieceType, number>> = {};
     const actBonus = actOf(floor) === 2 ? 1 : 0; // Act 2 보스는 강화 +1 더
     const finalAsc = floor === TOTAL_FLOORS && ascOn(ascension, 'finalForge') ? ASC.finalForge.add : 0;
-    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0) + finalAsc);
+    const shift = floor === TOTAL_FLOORS ? 0 : BOSS_FORGE_SHIFT;
+    for (const t of new Set(def.deck)) forge[t] = Math.max(0, Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0) + finalAsc + shift));
     // 압력 12 (D-108): 반장 개조 +1단
     const enchants = { ...def.enchants };
     if (ascOn(ascension, 'bossEnchant')) for (const id of Object.keys(enchants) as EnchantId[]) enchants[id] = Math.min(ENCHANT_MAX_STACK, (enchants[id] ?? 0) + ASC.bossEnchant.add);

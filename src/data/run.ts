@@ -71,7 +71,10 @@ export const boardFor = (floor: number, kind: NodeKind = 'battle', coin = 0): { 
 
 // ---------- 보상 ----------
 /** D-099: perAct 10 → 0 — 주문서·나사 더미·나사 자루가 더해진 뒤 36층 도착 나사가 557로 남아돌았다 */
-export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3, perAct: 0 };
+/** D-124: 공정이 10층으로 짧아져 같은 공정 위치에서 플레이어가 약했다 (첫 반장 56%) → 대국 나사 +20% · 층 가산 3→4 */
+export const GOLD_REWARD = { battle: 30, elite: 65, boss: 110, perFloor: 4, perAct: 0 };
+/** D-124: 1·2공정 반장 거푸집 −1 (공정이 짧아진 만큼) */
+export const BOSS_FORGE_SHIFT = -1;
 /** 전투 골드: 기본 + Act 안 층 × 3 + (Act − 1) × 10 (층 전체로 키우면 Act 3에서 골드가 넘쳐 강화가 4~5유형 완성된다) */
 export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): number =>
   GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor + (actOf(floor) - 1) * GOLD_REWARD.perAct;
