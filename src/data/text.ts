@@ -137,6 +137,7 @@ export const TEXT = {
   shop: {
     title: '고물상',
     lead: '* 녹슨 선반. 부품마다 나사 값이 붙어 있다. 녹슨 룩은 값만 말한다.',
+    say: '“값은 붙어 있다. 깎지 않는다.”',
     pieces: '기물',
     cards: '천공 카드',
     enchants: '개조',

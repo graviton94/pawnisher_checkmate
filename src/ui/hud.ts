@@ -19,6 +19,7 @@ import { LEGENDS } from '../data/legends';
 import { coach, coachOn, resetCoach, setCoach } from './coach';
 import { musicOn, setMusic } from '../audio/music';
 import { exportLog, logSummary } from '../run/telemetry';
+import { paintPortraits } from './portrait';
 import { CARD_GRADE } from '../data/grades';
 import { ghostOut, replay } from './motion';
 import { MOTION } from '../data/motion';
@@ -330,6 +331,7 @@ export class Hud implements HudView {
     const panel = $('overlay-panel');
     const wasOpen = !$('overlay').hidden;
     panel.innerHTML = html;
+    paintPortraits(panel);
     $('overlay').hidden = false;
     if (!wasOpen) replay($('overlay'), 'in');
     return panel;
@@ -357,6 +359,7 @@ export class Hud implements HudView {
     el.dataset.key = key;
     el.innerHTML = html;
     el.hidden = false;
+    paintPortraits(el); // 말하는 기물 초상화 (D-134)
     this.closeOverlay();
     if (backdrop === 'title' && this.backdrop.introTime() >= 0) {
       // 인트로가 돌고 있으면 그대로 둔다

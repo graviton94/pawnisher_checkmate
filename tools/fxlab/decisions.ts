@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 49, date: '2026-10-31' };
+export const VERSION = { n: 50, date: '2026-10-31' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -52,6 +52,14 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
  * shots = tools/fxlab/screens/의 파일 이름 (index.tsv에 이름표). 확정되면 DECISIONS의 done으로 옮기고 화면은 지운다.
  */
 export const TOPICS: { id: string; name: string; status: Status; rule: string; changed?: string; shots: string[] }[] = [
+  {
+    id: 'npc',
+    name: '말하는 기물',
+    status: 'review',
+    rule: '기물 몸 + 큰 눈(흰자 · 검은 눈동자 · 눈꺼풀로 연기) + 소품 하나. 지금은 기물 도트에 코드로 눈 · 소품을 얹은 임시 초상화 — 검수 저울(접시마다 눈) · 녹슨 룩(가격표 · 녹) · 외눈 비숍(확대경) · 떠돌이 정비 폰(렌치) · 동전 나이트(외알 안경 · 동전) · 견습 폰(거꾸로 든 망치) · 다른 공장의 흑 비숍(도장) · 아홉째 폰(큰 종이 왕관). 가끔 깜빡인다. 그림이 오면 같은 자리에 바꿔 끼운다 (D-134)',
+    changed: '새로 들어감',
+    shots: ['53-npc-shop.jpg', '54-npc-coin-knight.jpg', '55-npc-scale.jpg', '56-npc-reward.jpg'],
+  },
   {
     id: 'hitcam',
     name: '타격 카메라',
@@ -141,6 +149,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 50, date: '2026-10-31', items: ['말하는 기물 임시 초상화 (큰 눈 + 소품) — 고물상 · 공방 · 돌발 · 보상 · 결과 · 시험대', '용어: 사람 없는 공장 (검수 저울 · 녹슨 룩 · 외눈 비숍), 최종 보스 도금왕'] },
   { v: 49, date: '2026-10-31', items: ['랩 정리: 보는 중인 주제를 위 탭으로 (기물 공격 옆) · 오래된 결정은 확정으로 접음 · 확정된 화면 스크린샷은 뺌 · 기록은 최근 3개만', '타격 카메라 · 등급 연출 · 반장 약점 탭 새로'] },
   { v: 48, date: '2026-10-30', items: ['같은 줄 높이 통일 · 반장 카드 세계관 · 인물별 대사'] },
   { v: 47, date: '2026-10-30', items: ['기물 외곽선 다듬기 · 느낌표/물음표 규칙'] },

@@ -778,3 +778,13 @@ body.busy .scene, body.busy .overlay { pointer-events: none; }
 .rb-page ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .rb-page .bad { color: var(--crimson-soft); }
 .rb-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 8px; }
+
+/* 말하는 기물 (D-134): 초상화 + 이름 + 대사 한 줄 */
+.speaker { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 2px 10px 2px 2px; background: rgba(10, 8, 14, 0.7); box-shadow: 0 0 0 2px #000; }
+.speaker .portrait { width: 48px; height: 48px; flex: none; image-rendering: pixelated; background: #1d1a24; box-shadow: inset 0 0 0 2px #2f2b38; }
+.speaker .speech { display: grid; gap: 1px; min-width: 0; }
+.speaker .speech b { font-size: 12px; color: var(--brass-hi); letter-spacing: 1px; }
+.speaker .speech p { margin: 0; font-size: 14px; line-height: 1.4; color: var(--text); }
+.speaker .tell { color: var(--text2); }
+.portrait.big { width: 112px; height: 112px; image-rendering: pixelated; }
+.ending .speaker { margin: 4px 0; }

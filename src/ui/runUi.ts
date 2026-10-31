@@ -15,6 +15,8 @@ import { ACT_NAMES, ALTAR, DAILY, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, 
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
 import { coach, coachLines } from './coach';
+import { portraitBig, speaker } from './portrait';
+import { NPCS, type NpcId } from '../data/npcs';
 import { playMusic } from '../audio/music';
 import { CONTRACTS, type ContractId } from '../data/contracts';
 import { LINES, lineOf } from '../data/lines';
@@ -95,6 +97,8 @@ const CHOOSE_ATTRS = new Set(['pick', 'deck', 'node', 'd', 'v', 'sell', ...BUY_A
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
 const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
+/** 돌발마다 나오는 말하는 기물 (D-133 · D-134) — 없으면 아이콘 */
+const EVENT_NPC: Partial<Record<EventId, NpcId>> = { smith: 'tinkerPawn', gambler: 'coinKnight', apprentice: 'apprentice', scout: 'blackBishop', napping: 'scale', nightShift: 'monoBishop' };
 const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame', safe: 'crate', press: 'anvil', forgery: 'question', jam: 'claw',
   nightShift: 'anvil', moldBin: 'crate', recheck: 'eye', dipping: 'flame', screwRain: 'screw', stampForge: 'question', swapDealer: 'swap', oilLeak: 'oil', brokenGacha: 'lever', apprentice: 'wrench', lostBox: 'crate', welding: 'flame', scout: 'scale', auction: 'bell', napping: 'watch' };
 const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R', pawn: 'P', variant: 'Q', affix: 'K' };
@@ -443,7 +447,7 @@ export class RunUi {
     const O = TEXT.onboarding;
     const panel = this.hud.openOverlay(`
       <h2>${icon('flag')} ${O.title}</h2>
-      <p>${O.offer}</p>
+      ${speaker('scale', O.offer)}
       <div class="row">${button(O.skip, 'data-skip')}${button(O.go, 'data-go', { tone: 'brass', icon: 'lever' })}</div>`);
     this.wire(panel, {
       go: () => this.showOnboarding(0),
@@ -843,7 +847,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : ch.type === 'legend' ? TEXT.legend.lead : ch.type === 'contract' ? TEXT.contract.lead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch && !['recruit', 'blueprint', 'legend', 'contract'].includes(ch.type) ? speaker('scale', `“통과. ${kind} 하나.”`, 'calm') : ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : ch.type === 'legend' ? TEXT.legend.lead : ch.type === 'contract' ? TEXT.contract.lead : ''}</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
@@ -924,7 +928,7 @@ export class RunUi {
     ];
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${icon('screw')} ${S.title}</h2><p>${S.lead}</p></div>
+      <div class="title-line"><h2>${icon('screw')} ${S.title}</h2>${speaker('rustRook', `${S.say} <span class="tell">${S.lead}</span>`)}</div>
       <div class="stage">
         <div class="offers scroll-x grow">${goods.join('')}</div>
         <div class="col" style="width:170px;flex:none;justify-content:flex-end">
@@ -1016,7 +1020,7 @@ export class RunUi {
     });
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2><p>${F.lead}</p><small class="dim">${F.rule} ${F.variantLead}</small></div>
+      <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2>${speaker('monoBishop', F.lead)}<small class="dim">${F.rule} ${F.variantLead}</small></div>
       <div class="stage"><div class="forge-row">${cards.join('')}</div></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">${button(F.tidy, 'data-tidy', { icon: 'wrench', small: F.tidySmall })}${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
     );
@@ -1185,7 +1189,7 @@ export class RunUi {
     const el = this.hud.openScene(
       `${this.bar(run)}
       <div class="stage">
-        <div class="art panel9">${icon(EVENT_ICON[st.id], 'xl', 'var(--paper)')}<span class="caption">${NODE_NAMES.event}</span></div>
+        <div class="art panel9">${EVENT_NPC[st.id] ? portraitBig(EVENT_NPC[st.id]!) : icon(EVENT_ICON[st.id], 'xl', 'var(--paper)')}<span class="caption">${EVENT_NPC[st.id] ? NPCS[EVENT_NPC[st.id]!].name : NODE_NAMES.event}</span></div>
         <div class="col grow">
           <div class="title-line"><h2>${ev.title}</h2></div>
           <p class="lead" style="font-size:15px">${ev.text}</p>
@@ -1225,7 +1229,7 @@ export class RunUi {
     const ench = Object.keys(run.loadout.enchants).length;
     const el = this.hud.openScene(
       `<div class="stamp-big ${won ? 'good' : 'bad'}">${won ? O.win : O.lose}</div>
-      <h2 class="say">“${won ? O.winSay : O.loseSay}”<small>— 검수 저울</small></h2>
+      ${speaker('scale', `“${won ? O.winSay : O.loseSay}”`, won ? 'calm' : 'glare')}
       <p class="tell">${won ? O.winTell : `${ACT_NAMES[actOf(floor) - 1]} ${inAct(floor)}층. ${O.loseTell}`}</p>
       <div class="records" style="width:min(520px,90vw)">
         <div class="panel9"><span class="num">${floor}</span><small>도달 층</small></div>

@@ -351,6 +351,18 @@ const scenarios = {
     await page.tap('[data-go]'); await page.waitForTimeout(1500); await shot('5-lesson1');
     return ['onboard-6-end'];
   },
+  // 말하는 기물 초상화 (D-134): 고물상 · 공방 · 돌발 · 보상 · 결과
+  async npcs(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-npc-${n}.png`) });
+    await page.evaluate(() => localStorage.setItem('pawnisher.coach.v1', JSON.stringify({ off: true, seen: [] })));
+    await loadRun(page, { at: 'shop', stock: { pieces: [{ item: 'N', price: 75, sold: false }], cards: [{ item: 'A08', price: 55, sold: false }], enchants: [{ item: 'E26', price: 110, sold: false }], rerollPrice: 20 } });
+    await page.waitForTimeout(700); await shot('1-shop');
+    await loadRun(page, { at: 'forge' }, { gold: 300 }); await page.waitForTimeout(700); await shot('2-forge');
+    for (const ev of ['gambler', 'smith', 'napping']) { await loadRun(page, { at: 'event', id: ev }); await page.waitForTimeout(700); await shot(`3-event-${ev}`); }
+    await loadRun(page, { at: 'reward', title: '4층 통과', lines: ['나사 +34'], choices: [{ type: 'enchant', options: ['E21', 'E17', 'E26'] }] }); await page.waitForTimeout(900); await shot('4-reward');
+    await loadRun(page, { at: 'over', won: false }); await page.waitForTimeout(900); await shot('5-over');
+    return ['npc-6-end'];
+  },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });
