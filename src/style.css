@@ -548,3 +548,6 @@ img { image-rendering: pixelated; }
   .juice-stamp, .juice-float { animation-duration: 0.5s; }
   .offer.rare::after { animation: none; }
 }
+
+/* 이형 고르기 대가 줄 (D-106) */
+.chip small.bad { color: var(--crimson-soft); }

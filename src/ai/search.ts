@@ -66,7 +66,7 @@ export const choosePlan = (s: BattleState, opts: AiOptions = {}): Plan => {
       const grid = buildGrid(check.virtual);
       const steps: PlanStep[] = [];
       for (const p of check.virtual.pieces) {
-        if (p.side !== side || actedInPlan(cur.plan, p.id)) continue;
+        if (p.side !== side || actedInPlan(cur.plan, p.id, s)) continue;
         if (check.apUsed + moveCost(check.virtual, p) > budget) continue;
         for (const to of legalMoves(check.virtual, p, grid)) steps.push({ pieceId: p.id, to });
       }

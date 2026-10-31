@@ -202,8 +202,9 @@ export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
   const candidates = [...START_DECKS, ...(opts.extraDecks ?? [])];
   const randomDeck = candidates[rng.int(candidates.length)];
   const deck = [...(opts.deck ?? randomDeck)];
-  const bossPool: BossId[] = ['knight', 'bishop', 'rook'];
-  const bosses = [bossPool.splice(rng.int(3), 1)[0], bossPool.splice(rng.int(2), 1)[0]];
+  // 반장 여섯 중 둘 (D-106)
+  const bossPool = Object.keys(BOSSES) as BossId[];
+  const bosses = [bossPool.splice(rng.int(bossPool.length), 1)[0], bossPool.splice(rng.int(bossPool.length), 1)[0]];
   const map = generateMap(rng);
   return {
     version: 1,

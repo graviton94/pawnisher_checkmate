@@ -227,6 +227,8 @@ export type BattleEvent =
   | { type: 'affix'; pieceId: number; affix: AffixId; hit?: HitResult }
   /** 지형 발동 (D-097): 자석판에 붙잡힘 · 나사 더미 줍기(gold) · 흩어짐 */
   | { type: 'terrain'; pieceId: number; terrain: TerrainId; pos: Pos; gold?: number }
+  /** 터짐 (D-106 보일러 폰): 그 칸에서 주변으로 */
+  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[] }
   /** 전술 키워드 (D-094): 이 공격·이 턴에 난 수의 이름 */
   | { type: 'tactic'; side: Side; order: number; pieceId: number; tactic: TacticId };
 

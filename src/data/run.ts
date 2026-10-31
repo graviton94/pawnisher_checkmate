@@ -1,4 +1,6 @@
 import type { ArenaId } from './terrain';
+import type { VariantId } from './variants';
+import type { AffixId } from './legions';
 import type { CardId } from './cards';
 import type { EnchantId } from './enchants';
 import type { PieceType } from '../engine/types';
@@ -196,7 +198,7 @@ export const enemyForge = (floor: number): number => {
 };
 
 /** 중간 보스 컨셉 (사용자 결정: 나이트·비숍·룩 컨셉 중 런마다 2개가 Act 1·2 보스) */
-export type BossId = 'knight' | 'bishop' | 'rook';
+export type BossId = 'knight' | 'bishop' | 'rook' | 'pawn' | 'variant' | 'affix';
 export interface BossDef {
   name: string;
   title: string;
@@ -209,6 +211,9 @@ export interface BossDef {
   forge: Partial<Record<PieceType, number>>;
   /** 전장 규칙 (D-097, data/terrain.ts ARENAS) */
   arena: ArenaId;
+  /** 이형 거푸집 · 정예 접사 (D-106 이형 반장 · 검문 반장) */
+  variants?: Partial<Record<PieceType, VariantId>>;
+  affixes?: { type: PieceType; id: AffixId }[];
 }
 
 export const BOSSES: Record<BossId, BossDef> = {
@@ -246,6 +251,47 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A06'],
     forge: { R: 2 },
     arena: 'wall',
+  },
+  // ---- 볼륨 2 (D-106): 반장 셋 더 — 한 출하에 둘이 나오니 여섯 중 둘 ----
+  pawn: {
+    name: '폰 반장',
+    title: '폰 10기 · 양산 라인',
+    role: '물량 라인의 감독',
+    quote: '하나 부서지면 둘 찍는다.',
+    deck: ['K', 'Q', 'R', 'R', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+    enchants: { E12: 3, E04: 2 },
+    cards: ['A06'],
+    forge: { P: 2 },
+    arena: 'belt',
+  },
+  variant: {
+    name: '이형 반장',
+    title: '이형 거푸집 다섯',
+    role: '규격 외 부품 감독',
+    quote: '규격? 그건 네 사정이고.',
+    deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P'],
+    enchants: { E09: 2 },
+    cards: ['A04'],
+    forge: { N: 1, B: 1 },
+    arena: 'scrapyard',
+    variants: { P: 'boiler', N: 'spring', B: 'scope', R: 'turret', Q: 'command' },
+  },
+  affix: {
+    name: '검문 반장',
+    title: '정예 접사 넷',
+    role: '검문소의 끝',
+    quote: '서류는 네 장. 너는 한 장도 못 넘긴다.',
+    deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P'],
+    enchants: { E08: 2 },
+    cards: ['A06'],
+    forge: { K: 1 },
+    arena: 'checkpoint',
+    affixes: [
+      { type: 'Q', id: 'lastRivet' },
+      { type: 'R', id: 'plate' },
+      { type: 'N', id: 'recoil' },
+      { type: 'B', id: 'guardBolt' },
+    ],
   },
 };
 

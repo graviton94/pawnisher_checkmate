@@ -66,7 +66,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -888,6 +888,24 @@ class BoardScene extends Phaser.Scene {
           s.glyph.setTexture(pieceKey(e.to, s.piece.side));
           s.piece = { ...s.piece, type: e.to };
         }
+        continue;
+      }
+      if (e.type === 'blast') {
+        // 터짐 (D-106 보일러 폰): 그 칸에서 둘레로 — 맞은 기물마다 피격, 쓰러지면 재
+        this.shake(220, 0.006);
+        sfx('kill');
+        for (const h of e.hits) {
+          const sp = this.sprites.get(h.targetId);
+          if (!sp) continue;
+          this.applyHit(sp, h);
+          this.floatText(sp, e.label, '#FDBA74');
+          if (h.killed) {
+            void this.playCrumble(sp);
+            sp.root.destroy();
+            this.sprites.delete(sp.piece.id);
+          }
+        }
+        await this.wait(260);
         continue;
       }
       if (e.type === 'terrain') {

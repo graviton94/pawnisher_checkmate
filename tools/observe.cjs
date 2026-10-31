@@ -349,6 +349,18 @@ const scenarios = {
     await loadRun(page, { at: 'reward', title: '4층 통과', lines: ['나사 +37'], choices: [{ type: 'enchant', options: ['E22', 'E31', 'E41'] }] });
     return ['reward-volume'];
   },
+  // 볼륨 2 (D-106): 새 반장 셋 · 공방 이형 고르기
+  async boss2(page) {
+    for (const boss of ['pawn', 'variant', 'affix']) {
+      await loadRun(page, { at: 'map' }, { floor: 12, bosses: [boss, 'knight'], path: Array(11).fill(0), map: Array.from({ length: 36 }, () => [{ kind: 'boss' }]) });
+      if (boss === 'pawn') await page.screenshot({ path: path.join(OUT, `${stamp}-boss2-map.png`) });
+      await page.tap('[data-node="0"]'); await page.waitForTimeout(1500);
+      await page.screenshot({ path: path.join(OUT, `${stamp}-boss2-${boss}.png`) });
+    }
+    await loadRun(page, { at: 'forge' }, { gold: 300, loadout: { enchants: {}, cards: [], forge: { N: 3 }, variants: {} } });
+    await page.tap('[data-vpick="N"]'); await page.waitForTimeout(300);
+    return ['forge-vpick'];
+  },
   async over(page) {
     await scenarios.menu(page);
     await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });

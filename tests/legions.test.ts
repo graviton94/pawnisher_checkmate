@@ -143,7 +143,7 @@ describe('지형 (GDD 11장 A2, D-097)', () => {
 describe('반장 전장 규칙 (GDD 11장 A5, D-097)', () => {
   const deck = ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'] as const;
   const lo = { enchants: {}, cards: [], forge: {} };
-  const cases: [string, number, 'knight' | 'bishop' | 'rook' | undefined][] = [['knight', 12, 'knight'], ['bishop', 12, 'bishop'], ['rook', 24, 'rook'], ['final', 36, undefined]];
+  const cases: [string, number, 'knight' | 'bishop' | 'rook' | 'pawn' | 'variant' | 'affix' | undefined][] = [['knight', 12, 'knight'], ['bishop', 12, 'bishop'], ['rook', 24, 'rook'], ['pawn', 12, 'pawn'], ['variant', 24, 'variant'], ['affix', 12, 'affix'], ['final', 36, undefined]];
   for (const [label, floor, boss] of cases) {
     it(`${label}: 전장이 깔리고 AI 대국이 끝까지 돈다`, () => {
       const e = generateEncounter(floor, 'boss', new Rng(3), boss);
@@ -178,5 +178,21 @@ describe('억까·억빠 (D-099)', () => {
     }
     expect(over).toBeGreaterThan(10);
     expect(bad).toBeGreaterThan(10);
+  });
+});
+
+describe('반장 셋 더 (D-106)', () => {
+  it('이형 반장은 다섯 이형, 검문 반장은 접사 넷이 판에 올라온다', () => {
+    const lo = { enchants: {}, cards: [], forge: {} };
+    const v = encounterBattle(['K', 'P'], lo, generateEncounter(12, 'boss', new Rng(2), 'variant'));
+    expect(new Set(v.pieces.filter((p) => p.side === 1 && p.variant).map((p) => p.variant)).size).toBe(5);
+    const a = encounterBattle(['K', 'P'], lo, generateEncounter(12, 'boss', new Rng(2), 'affix'));
+    expect(a.pieces.filter((p) => p.side === 1 && p.affix)).toHaveLength(4);
+  });
+  it('출하마다 반장 여섯 중 둘', async () => {
+    const { newRun } = await import('../src/run/run');
+    const seen = new Set<string>();
+    for (let seed = 1; seed < 80; seed++) for (const b of newRun(seed).bosses) seen.add(b);
+    expect(seen.size).toBe(6);
   });
 });

@@ -1,6 +1,6 @@
 import { CARDS, type CardUse } from '../data/cards';
 import { buildGrid, chebyshev, inBounds } from './board';
-import { actedInPlan, checkPlan, pawnCounter, simulate } from './plan';
+import { actedInPlan, checkPlan, pawnCounter, simulate, turretReady } from './plan';
 import { ench, legalMoves } from './rules';
 import type { BattleState, PlannedMove, Plan, PlanStep, Pos, Side, SpecialStep } from './types';
 
@@ -29,18 +29,18 @@ export const gateSquares = (v: BattleState, side: Side): Pos[] => {
  */
 export const specialSteps = (s: BattleState, plan: Plan, maxGate = 6): SpecialStep[] => {
   const side0 = s.turnSide;
-  const counters = s.pieces.some((p) => p.side === side0 && pawnCounter(s, p));
+  const counters = s.pieces.some((p) => p.side === side0 && (pawnCounter(s, p) || turretReady(s, p)));
   if (!counters && !usableCards(s, side0).length && ench(s, side0, 'E04') < 2 && ench(s, side0, 'E11') < 1) return [];
   const check = checkPlan(s, plan);
   if (!check.ok || check.virtual.winner !== null) return [];
   const v = check.virtual;
   const side = s.turnSide;
   const mine = v.pieces.filter((p) => p.side === side);
-  const free = mine.filter((p) => !actedInPlan(plan, p.id));
+  const free = mine.filter((p) => !actedInPlan(plan, p.id, v));
   const cands: SpecialStep[] = [];
 
   // 제자리 공격: 폰 받아치기 (기본 규칙, D-102) 또는 행진 태엽 2단 (막힌 폰)
-  for (const p of free) if (p.type === 'P' && (pawnCounter(v, p) || ench(v, side, 'E04') >= 2)) cands.push({ kind: 'stand', pieceId: p.id });
+  for (const p of free) if ((p.type === 'P' && (pawnCounter(v, p) || ench(v, side, 'E04') >= 2)) || turretReady(v, p)) cands.push({ kind: 'stand', pieceId: p.id });
   for (const card of usableCards(v, side)) {
     switch (CARDS[v.cards[side][card].id].use) {
       case 'castle':
@@ -103,7 +103,7 @@ export const executeMoves = (s: BattleState, plan: Plan): PlannedMove[] => {
     if (victim.side === side || victim.type === 'K' || victim.hp > victim.maxHp * 0.3) continue;
     const without = { ...v, pieces: v.pieces.filter((p) => p !== victim) };
     for (const p of v.pieces) {
-      if (p.side !== side || actedInPlan(plan, p.id)) continue;
+      if (p.side !== side || actedInPlan(plan, p.id, s)) continue;
       if (!legalMoves(without, p).some((m) => m.x === victim.x && m.y === victim.y)) continue;
       const step: PlannedMove = { pieceId: p.id, to: { x: victim.x, y: victim.y }, card };
       if (simulate(s, [...plan, step]).ok) out.push(step);

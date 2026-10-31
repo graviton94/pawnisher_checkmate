@@ -37,7 +37,7 @@ export const terrainPairs = (act: number, kind: 'battle' | 'elite' | 'boss'): nu
 /** 나사 더미가 깔릴 확률 (Act 2부터, 대칭 아님) */
 export const SCREWS_CHANCE = 0.5;
 
-export type ArenaId = 'hooves' | 'lens' | 'wall' | 'final';
+export type ArenaId = 'hooves' | 'lens' | 'wall' | 'final' | 'belt' | 'scrapyard' | 'checkpoint';
 
 type Tile = { x: number; y: number };
 
@@ -84,6 +84,27 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
     terrain: () => [],
     ruins: (w, h) => mirror(w, h, [{ x: 1, y: Math.floor(h / 2) - 1 }, { x: 2, y: Math.floor(h / 2) - 1 }]),
     collapseDelay: 3,
+  },
+  // 폰 반장 (D-106): 가운데 두 줄에 방호판 — 물량 행렬이 그 뒤에 숨는다
+  belt: {
+    name: '방호 라인',
+    desc: '가운데 두 줄 방호판 6칸(−20%). 물량이 그 뒤에 숨는다.',
+    terrain: (w, h) => mirror(w, h, [1, 3, 5].filter((x) => x < w).map((x) => ({ x, y: Math.floor(h / 2) - 1, kind: 'shelter' as const }))),
+  },
+  // 이형 반장: 고철장 — 발판 두 쌍 · 자석판 한 쌍
+  scrapyard: {
+    name: '고철장',
+    desc: '발판 두 쌍(+30%), 자석판 한 쌍(붙잡히면 한 턴 쉰다).',
+    terrain: (w, h) => [
+      ...mirror(w, h, [{ x: 1, y: 2, kind: 'platform' as const }, { x: w - 3, y: 3, kind: 'platform' as const }]),
+      ...mirror(w, h, [{ x: Math.floor(w / 2), y: Math.floor(h / 2) - 1, kind: 'magnet' as const }]),
+    ],
+  },
+  // 검문 반장: 검문선 — 가운데 가로로 자석판 두 쌍
+  checkpoint: {
+    name: '검문선',
+    desc: '가운데에 자석판 두 쌍. 넘어오면 한 턴 붙잡힌다.',
+    terrain: (w, h) => mirror(w, h, [2, w - 3].map((x) => ({ x, y: Math.floor(h / 2) - 1, kind: 'magnet' as const }))),
   },
   // 공장장: 네 귀퉁이 방호판 + 한가운데 조명 칸 — 숨을 곳과 드러나는 곳
   final: {

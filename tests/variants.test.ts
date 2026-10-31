@@ -45,3 +45,52 @@ describe('이형 거푸집 (GDD 13장 P2, D-084)', () => {
     expect(s.pieces.find((p) => p.type === 'P')!.variant).toBeUndefined();
   });
 });
+
+describe('이형 2차 (D-106)', () => {
+  it('보일러 폰: 쓰러지면 주변 8칸 적에게 터진다', () => {
+    const s = board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a6', { hp: 1, maxHp: 1, variant: 'boiler', atk: 30 }], ['P', 1, 'b7', { hp: 500, maxHp: 500 }], ['K', 1, 'h8']]);
+    // 터짐은 보일러 폰의 적(여기선 내 기물)만 친다 — 옆의 같은 편 b7은 안 맞는다
+    const r = simulate(s, [{ pieceId: 2, to: sq('a2') }]);
+    expect(r.events.some((e) => e.type === 'blast')).toBe(false);
+    const s2 = board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a6', { hp: 1, maxHp: 1, variant: 'boiler', atk: 30 }], ['N', 0, 'b7', { hp: 500, maxHp: 500 }], ['K', 1, 'h8']]);
+    const r2 = simulate(s2, [{ pieceId: 2, to: sq('a2') }]);
+    expect(r2.events.some((e) => e.type === 'blast' && e.hits.some((h) => h.targetId === 4))).toBe(true);
+  });
+  it('용수철 나이트: 한 턴에 두 번, 두 번째는 태엽 +1', () => {
+    const s = board([['K', 0, 'h1'], ['N', 0, 'b1', { variant: 'spring' }], ['K', 1, 'h8']]);
+    const r = simulate(s, [{ pieceId: 2, to: sq('c3') }, { pieceId: 2, to: sq('d5') }]);
+    expect(r.ok).toBe(true);
+    const one = simulate(s, [{ pieceId: 2, to: sq('c3') }]).apUsed;
+    expect(r.apUsed).toBe(one * 2 + 1);
+    expect(simulate(s, [{ pieceId: 2, to: sq('c3') }, { pieceId: 2, to: sq('d5') }, { pieceId: 2, to: sq('e7') }]).ok).toBe(false);
+    const plain = board([['K', 0, 'h1'], ['N', 0, 'b1'], ['K', 1, 'h8']]);
+    expect(simulate(plain, [{ pieceId: 2, to: sq('c3') }, { pieceId: 2, to: sq('d5') }]).ok).toBe(false);
+  });
+  it('조준경 비숍: 맞힌 적에게 뒤 순번 공격이 더 아프다', () => {
+    const mk = (variant?: 'scope') => {
+      const st = board([['K', 0, 'h1'], ['B', 0, 'c1', variant ? { variant } : {}], ['R', 0, 'a1'], ['P', 1, 'a5', { hp: 900, maxHp: 900 }], ['K', 1, 'h8']]);
+      st.apBonus[0] = 5;
+      return st;
+    };
+    // 비숍 c1 → d2 (사선 c3·b4·a5로 조준) → 룩 a1 → a2 (같은 a5를 친다)
+    const plan2 = [{ pieceId: 2, to: sq('d2') }, { pieceId: 3, to: sq('a2') }];
+    const rookDmg = (st: ReturnType<typeof mk>) => simulate(st, plan2).events.filter((e) => e.type === 'attack' && e.attackerId === 3).flatMap((e) => (e.type === 'attack' ? e.hits.map((h) => h.damage) : [])).reduce((a, b) => a + b, 0);
+    expect(rookDmg(mk('scope'))).toBeGreaterThan(rookDmg(mk()));
+  });
+  it('포탑 룩: 움직이지 않고 태엽 2로 친다', () => {
+    const s = board([['K', 0, 'h1'], ['R', 0, 'a1', { variant: 'turret' }], ['P', 1, 'a6', { hp: 500, maxHp: 500 }], ['K', 1, 'h8']]);
+    const r = simulate(s, [{ kind: 'stand', pieceId: 2 }]);
+    expect(r.ok).toBe(true);
+    expect(r.apUsed).toBe(2);
+    expect(r.events.some((e) => e.type === 'attack' && e.hits.some((h) => h.targetId === 3))).toBe(true);
+    const plain = board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a6'], ['K', 1, 'h8']]);
+    expect(simulate(plain, [{ kind: 'stand', pieceId: 2 }]).ok).toBe(false);
+  });
+  it('지휘 퀸: 이동해 치면 다음 명령 태엽 0', () => {
+    const s = board([['K', 0, 'h1'], ['Q', 0, 'd1', { variant: 'command' }], ['R', 0, 'a1'], ['K', 1, 'h8']]);
+    const q = simulate(s, [{ pieceId: 2, to: sq('d3') }]).apUsed;
+    const r = simulate(s, [{ pieceId: 2, to: sq('d3') }, { pieceId: 3, to: sq('a4') }]);
+    expect(r.ok).toBe(true);
+    expect(r.apUsed).toBe(q);
+  });
+});

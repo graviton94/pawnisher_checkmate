@@ -3,7 +3,7 @@ import { AGGRESSIVE, DEFENSIVE, type Weights } from '../ai/evaluate';
 import { AI_TIERS, choosePlan } from '../ai/search';
 import { TUNED } from '../data/aiWeights';
 import { CARDS } from '../data/cards';
-import {
+import { actedInPlan,
   addToPlan,
   availableAp,
   checkPlan,
@@ -470,7 +470,7 @@ export class BattleController {
         this.selectedId = null;
         this.hud.toast('이 기물엔 안 맞아.');
       }
-    } else if (mine && !this.plan.some((st) => 'pieceId' in st && st.pieceId === p.id && st.kind !== 'shield' && st.kind !== 'formShift')) {
+    } else if (mine && !actedInPlan(this.plan, p.id, this.state)) {
       this.selectedId = p.id;
       const left = this.apTotal - this.apUsed;
       if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 다 풀렸다. (${moveCost(this.virtual, p)} 필요)`);

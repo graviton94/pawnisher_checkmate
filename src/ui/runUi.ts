@@ -69,7 +69,7 @@ const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
 const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame', safe: 'crate', press: 'anvil', forgery: 'question', jam: 'claw',
   nightShift: 'anvil', moldBin: 'crate', recheck: 'eye', dipping: 'flame', screwRain: 'screw', stampForge: 'question', swapDealer: 'swap', oilLeak: 'oil', brokenGacha: 'lever', apprentice: 'wrench', lostBox: 'crate', welding: 'flame', scout: 'scale', auction: 'bell', napping: 'watch' };
-const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R' };
+const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R', pawn: 'P', variant: 'Q', affix: 'K' };
 
 
 /** 결함 표시 (D-101): 손상 단 합계 · 봉인 남은 대국 — 상단 바 */
@@ -615,6 +615,24 @@ export class RunUi {
     });
   }
 
+  /** 이형 거푸집 고르기 (D-106): 유형마다 둘 — 강점 · 대가를 나란히 보고 하나 */
+  private showVariantPick(run: RunState, t: PieceType): void {
+    const opts = forgeVariantOptions(run, t);
+    const panel = this.hud.openOverlay(`
+      <h2>${pieceImg(t, 0, 'small', 28)} ${PIECE_NAMES_KO[t]} — ${TEXT.forge.variantPick}</h2>
+      <p>${TEXT.forge.variantLead}</p>
+      <div class="chips">${opts.map((id) => `<button class="chip" type="button" data-v="${id}"><b>${VARIANTS[id].name}</b><small>${VARIANTS[id].gain}</small><small class="bad">대가: ${VARIANTS[id].cost}</small></button>`).join('')}</div>
+      ${button('취소', 'data-cancel', { cls: 'wide' })}`);
+    this.wire(panel, {
+      v: (b) => {
+        sfx('land');
+        this.hud.closeOverlay();
+        this.act(forgeVariant(run, t, b.dataset.v as VariantId));
+      },
+      cancel: () => this.hud.closeOverlay(),
+    });
+  }
+
   /** 칸이 가득 찼을 때 버릴 것을 고른다 (모달) */
   private discardPicker(run: RunState, type: 'enchant' | 'card', done: (discard: EnchantId | number) => void): void {
     const items =
@@ -722,7 +740,9 @@ export class RunUi {
         ${cost === null ? `<span class="tag gold">완성 거푸집</span>` : `<button class="btn${run.gold >= cost ? ' brass' : ' poor'}" type="button" data-up="${t}">+${lv + 1} ${screws(cost)}</button>`}
         ${
           // 이형 버튼 자리 하나를 같이 쓴다 (카드 높이가 같게): 이형 > 손상 수리 > 빈 자리
-          opts.length
+          opts.length > 1
+            ? `<button class="btn cyan" type="button" data-vpick="${t}">${TEXT.forge.variantPick} (${opts.length})</button>`
+            : opts.length
             ? opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('')
             : (run.loadout.damage?.[t] ?? 0) > 0
               ? `<button class="btn crimson${run.gold >= DEFECT.repairCost ? '' : ' poor'}" type="button" data-repair="${t}">${TEXT.defect.repair} ${run.loadout.damage![t]}단 ${screws(DEFECT.repairCost)}</button>`
@@ -742,6 +762,7 @@ export class RunUi {
         sfx('hit', 3);
         this.act(forgeUp(run, b.dataset.up as PieceType));
       },
+      vpick: (b) => this.showVariantPick(run, b.dataset.vpick as PieceType),
       repair: (b) => {
         sfx('land');
         this.act(repairDamage(run, b.dataset.repair as PieceType));

@@ -57,7 +57,7 @@ describe('런 구조 (GDD 8장)', () => {
     const rng = new Rng(7);
     for (let f = 1; f <= TOTAL_FLOORS; f++)
       for (const kind of ['battle', 'elite', 'boss'] as const) {
-        for (const boss of ['knight', 'bishop', 'rook'] as BossId[]) {
+        for (const boss of Object.keys(BOSSES) as BossId[]) {
           const e = generateEncounter(f, kind, rng, boss);
           expect(checkDeck(e.deck).ok).toBe(true);
           expect(() => createBattle({ width: e.width, height: e.height, decks: [(['K', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'N', 'N', 'B', 'B', 'R', 'R', 'Q'] as const).slice(0, e.width * 2), e.deck] })).not.toThrow();

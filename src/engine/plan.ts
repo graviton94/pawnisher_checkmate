@@ -3,7 +3,7 @@ import { CARDS, type CardUse } from '../data/cards';
 import { MORE, SYNERGY, TACTIC_ENCHANT, tier } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
-import { VARIANTS } from '../data/variants';
+import { VARIANTS, VARIANT2 } from '../data/variants';
 import { AFFIX } from '../data/legions';
 import { TERRAIN_FX } from '../data/terrain';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos, terrainAt } from './board';
@@ -115,6 +115,10 @@ interface TurnCtx {
   chainDone: boolean;
   /** 키워드 연계 개조의 턴당 1회 태엽 (갈래 톱날 · 돌파 쐐기) */
   tacticAp: Set<string>;
+  /** 이형 2차 (D-106): 두 번째로 움직인 용수철 나이트 · 조준경이 조준한 적 · 지휘 퀸이 연 다음 명령 */
+  twice: Set<number>;
+  marked: Set<number>;
+  freeNext: boolean;
 }
 
 /** 전술 키워드를 기록한다 (D-094): 사건 + 진영별 횟수 */
@@ -144,6 +148,13 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
   s.pieces = s.pieces.filter((p) => p.hp > 0);
   // 정예 접사 (D-096): 같은 틀 — 붙어 있던 아군이 쓰러지면 ATK 상승 · 반동 스프링 — 쓰러뜨린 기물이 되받는다
   for (const d of dead) {
+    // 보일러 폰 (이형, D-106): 터지며 주변 8칸 적에게
+    if (variantOn(d, 'boiler')) {
+      const hits = s.pieces
+        .filter((p) => p.side !== d.side && p.hp > 0 && chebyshev(p, d) === 1)
+        .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.atk * VARIANT2.boilerRatio) - p.def), true));
+      if (hits.length) ctx.events.push({ type: 'blast', pos: { x: d.x, y: d.y }, label: VARIANTS.boiler.name, hits });
+    }
     for (const a of s.pieces) {
       if (a.side === d.side && a.affix === 'mold' && chebyshev(a, d) === 1) {
         a.atk = Math.round(a.atk * AFFIX.moldAtk);
@@ -395,6 +406,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     const e26 = ench(s, attacker.side, 'E26');
     if (e26 && t.hp <= t.maxHp * MORE.woundedAt) dmg = Math.round(dmg * tier(MORE.E26, e26));
     if (e26 >= 3 && t.type !== 'K' && t.hp <= t.maxHp * MORE.executeAt) dmg = Math.max(dmg, t.hp + t.shield);
+    // 조준경 비숍 (이형): 이번 턴 조준된 적은 더 아프다
+    if (ctx.marked.has(t.id)) dmg = Math.round(dmg * VARIANT2.scopeMult);
     const e42 = ench(s, attacker.side, 'E42');
     if (e42 && attacker.type === 'B' && !attacker.fused && chebyshev(attacker, t) >= 2) dmg = Math.round(dmg * tier(MORE.E42, e42));
     const origin = { x: t.x, y: t.y };
@@ -432,6 +445,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     }
   }
   ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  // 조준경 비숍: 맞힌 적에 조준 (이 공격 뒤부터)
+  if (variantOn(attacker, 'scope')) for (const h of hits) if (!h.splash && h.hpAfter > 0) ctx.marked.add(h.targetId);
   // 반격 톱니: 맞은 기물이 공격자를 친다 (화면에는 맞은 쪽의 공격으로)
   for (const c of counters) ctx.events.push({ type: 'attack', order, attackerId: c.by, area: [], hits: [c.hit] });
   // 착지 충격판 (D-105): 나이트가 이동해 치면 내려앉은 칸 주변 적에게
@@ -507,6 +522,9 @@ const ownHalf = (s: BattleState, side: Side, y: number) => (side === 0 ? y < s.h
 export const pawnCounter = (s: BattleState, piece: Piece): boolean =>
   piece.type === 'P' && !piece.fused && !piece.formAs && attackScan(s, piece).targets.some((t) => t.hp > 0);
 
+/** 포탑 룩 (이형, D-106): 움직이지 않고 그 자리에서 칠 수 있다 — 칠 적이 있을 때 */
+export const turretReady = (s: BattleState, piece: Piece): boolean => variantOn(piece, 'turret') && attackScan(s, piece).targets.some((t) => t.hp > 0);
+
 export const pawnBlocked = (s: BattleState, piece: Piece): boolean =>
   piece.type === 'P' && !piece.fused && !piece.formAs && !legalMoves(s, piece).some((p) => p.x === piece.x && p.y === piece.y + forward(piece.side));
 
@@ -542,6 +560,9 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     vacated: [],
     chainDone: false,
     tacticAp: new Set(),
+    twice: new Set(),
+    marked: new Set(),
+    freeNext: false,
   };
   let apUsed = 0;
   let prevKilled = false;
@@ -560,7 +581,14 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     const piece = own(step.pieceId);
     if (!piece) return fail('없는 기물');
     const acting = step.kind !== 'shield' && step.kind !== 'formShift';
-    if (acting && ctx.acted.has(piece.id)) return fail('이미 행동한 기물');
+    // 용수철 나이트 (이형): 한 턴에 두 번 움직인다 — 두 번째는 태엽 가산
+    const isMoveStep = step.kind === undefined || step.kind === 'move';
+    const secondSpring = acting && ctx.acted.has(piece.id) && isMoveStep && variantOn(piece, 'spring') && !ctx.twice.has(piece.id);
+    if (acting && ctx.acted.has(piece.id) && !secondSpring) return fail('이미 행동한 기물');
+    if (secondSpring) ctx.twice.add(piece.id);
+    // 지휘 퀸 (이형): 앞 명령이 연 무료 명령
+    const free = ctx.freeNext;
+    ctx.freeNext = false;
 
     // 기본 배율: 연쇄 지휘 체계 1장 (앞 순번이 처치했으면 +30%)
     const baseMult = ench(s, side, 'E05') >= 1 && prevKilled ? 1.3 : 1;
@@ -589,7 +617,9 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         if (variantOn(piece, 'conveyor') && prevMoveType === 'P') cost = 0;
         if (ench(s, side, 'E10') >= 2 && onEdge(s, piece) && onEdge(s, step.to)) cost -= 1;
         if (cardId === 'A01') cost -= 1;
+        if (secondSpring) cost += VARIANT2.springExtra;
         cost = Math.max(0, cost);
+        if (free) cost = 0;
         if (apUsed + cost > availableAp(s)) return fail('AP 부족');
 
         if (execute) {
@@ -655,8 +685,10 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         break;
       }
       case 'stand': {
-        if (!pawnCounter(s, piece) && (ench(s, side, 'E04') < 2 || !pawnBlocked(s, piece))) return fail('제자리 공격 불가');
-        cost = ench(s, side, 'E04') >= 3 || ench(s, side, 'E22') >= 2 ? 0 : 1;
+        const turret = turretReady(s, piece);
+        if (!turret && !pawnCounter(s, piece) && (ench(s, side, 'E04') < 2 || !pawnBlocked(s, piece))) return fail('제자리 공격 불가');
+        cost = turret ? VARIANT2.turretAp : ench(s, side, 'E04') >= 3 || ench(s, side, 'E22') >= 2 ? 0 : 1;
+        if (free) cost = 0;
         if (apUsed + cost > availableAp(s)) return fail('AP 부족');
         mods.stand = true;
         attackers = [piece];
@@ -772,6 +804,8 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     prevMoveType = moveType;
     if (s.winner !== null) continue;
 
+    // 지휘 퀸 (이형, D-106): 이동해 치면 바로 다음 명령 태엽 0
+    if (isMoveStep && variantOn(piece, 'command')) ctx.freeNext = true;
     // 퀸 왕관 톱니 ★ (D-105): 퀸이 이동해 치면 두 번
     if (ench(s, side, 'E38') >= 3 && mods.dist && piece.type === 'Q' && !piece.fused) repeats += 1;
     // 그랜드 피날레 (E05 ★): 두 기 이상 예약했을 때 마지막 순번의 공격 2회
@@ -817,12 +851,17 @@ export const checkPlan = (s: BattleState, plan: Plan): PlanCheck => {
 };
 
 /** 이미 이번 계획에서 행동한 기물인가 */
-export const actedInPlan = (plan: Plan, pieceId: number): boolean =>
-  plan.some((st) => {
+export const actedInPlan = (plan: Plan, pieceId: number, s?: BattleState): boolean => {
+  const steps = plan.filter((st) => {
     if (st.kind === 'shield' || st.kind === 'formShift') return false;
     if (st.pieceId === pieceId) return true;
     return (st.kind === 'castle' || st.kind === 'fuse') && st.partnerId === pieceId;
   });
+  if (!steps.length) return false;
+  // 용수철 나이트: 이동 명령 하나뿐이면 한 번 더 움직일 수 있다
+  const p = s ? findPiece(s, pieceId) : undefined;
+  return !(p && variantOn(p, 'spring') && steps.length === 1 && (steps[0].kind === undefined || steps[0].kind === 'move'));
+};
 
 /**
  * 현재 계획에 이어 이 기물이 예약할 수 있는 칸 (붙일 카드 포함).
@@ -830,7 +869,7 @@ export const actedInPlan = (plan: Plan, pieceId: number): boolean =>
  */
 export const plannableMoves = (s: BattleState, plan: Plan, pieceId: number, card?: number): Pos[] => {
   const check = checkPlan(s, plan);
-  if (!check.ok || check.virtual.winner !== null || actedInPlan(plan, pieceId)) return [];
+  if (!check.ok || check.virtual.winner !== null || actedInPlan(plan, pieceId, s)) return [];
   const piece = findPiece(check.virtual, pieceId);
   if (!piece || piece.side !== s.turnSide) return [];
   const v = check.virtual;

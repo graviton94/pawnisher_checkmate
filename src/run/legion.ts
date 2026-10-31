@@ -78,7 +78,8 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
       ...boardFor(floor, 'boss'),
       // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
       deck: actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck],
-      loadout: { enchants: { ...def.enchants }, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge },
+      loadout: { enchants: { ...def.enchants }, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge, ...(def.variants ? { variants: { ...def.variants } } : {}) },
+      ...(def.affixes ? { affixes: def.affixes.map((a) => ({ ...a })) } : {}),
       tier,
       boss,
       seed,

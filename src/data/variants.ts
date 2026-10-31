@@ -5,7 +5,7 @@ import type { PieceType } from '../engine/types';
  * 체스 변형을 빌리지 않고 우리 규칙(명령 순서 · 착지 공격 · 태엽 · 방열판)을 하나씩 비튼다. 강점마다 대가가 있다.
  * 거푸집 단위라 그 유형의 기물 전체가 바뀐다 (6장 유형 단위 원칙). 덱 한도·가치·거푸집 개량은 그대로.
  */
-export type VariantId = 'conveyor' | 'hammer' | 'mirror' | 'radiator';
+export type VariantId = 'conveyor' | 'hammer' | 'mirror' | 'radiator' | 'boiler' | 'spring' | 'scope' | 'turret' | 'command';
 
 export interface VariantDef {
   /** 바뀌는 기물 유형 */
@@ -50,7 +50,55 @@ export const VARIANTS: Record<VariantId, VariantDef> = {
     cost: '이동 태엽 +1',
     apDelta: 1,
   },
+  // ---- 이형 2차 (D-106): 공방 +3에서 유형마다 둘 중 하나를 고른다 ----
+  boiler: {
+    base: 'P',
+    name: '보일러 폰',
+    gain: '쓰러지면 터져 주변 8칸 적에게 그 폰 ATK만큼 피해 — 적이 함부로 못 친다',
+    cost: '최대 HP −30%',
+    hpMul: 0.7,
+  },
+  spring: {
+    base: 'N',
+    name: '용수철 나이트',
+    gain: '한 턴에 두 번 움직여 친다 — 두 번째 명령은 태엽 +1',
+    cost: 'ATK −10%',
+    atkMul: 0.9,
+  },
+  scope: {
+    base: 'B',
+    name: '조준경 비숍',
+    gain: '맞힌 적에 조준 — 이번 턴 뒤 순번 공격이 그 적에게 +50%',
+    cost: '자기 피해 −40%',
+    atkMul: 0.6,
+  },
+  turret: {
+    base: 'R',
+    name: '포탑 룩',
+    gain: '움직이지 않고 그 자리에서 친다 (태엽 2) — "움직인 기물만 공격"을 깬다',
+    cost: '이동 태엽 +1',
+    apDelta: 1,
+  },
+  command: {
+    base: 'Q',
+    name: '지휘 퀸',
+    gain: '이동해 친 뒤 바로 다음 명령은 태엽 0',
+    cost: '이동 태엽 +1',
+    apDelta: 1,
+  },
 };
+
+/** 이형 2차 수치 (D-106) 🔧 */
+export const VARIANT2 = {
+  /** 보일러 폰: 터질 때 주변 피해 = ATK × */
+  boilerRatio: 1,
+  /** 용수철 나이트: 두 번째 명령 태엽 가산 */
+  springExtra: 1,
+  /** 조준경 비숍: 조준된 적이 받는 피해 × */
+  scopeMult: 1.5,
+  /** 포탑 룩: 제자리 공격 태엽 */
+  turretAp: 2,
+} as const;
 
 /** 방열 룩이 주는 방열판 */
 export const RADIATOR_SHIELD = 8;
