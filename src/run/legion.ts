@@ -1,3 +1,4 @@
+import { CONTRACT_FX } from '../data/contracts';
 import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
 import { AFFIXES, ELITE_AFFIXES, type WeakId, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
@@ -240,13 +241,14 @@ export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): Bat
   }
   if (e.weak) s.weak = { side: 1, id: e.weak };
   // 적 다음 수 미리보기: 낮은 승천에서만 기본 제공 (D-076)
-  s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION ? 1 : 0 };
+  s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION && !loadout.contracts?.includes('K2') ? 1 : 0 }; // 검사 면제 도장 (계약): 감청 꺼짐
   const scale = enemyKingScale(e.floor);
   const expose = actOf(e.floor) >= 2 && e.kind !== 'boss' ? KING_EXPOSE : 1; // D-077
   const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0)) * expose;
   for (const p of s.pieces) {
     // 압력 8 (D-108): 내 킹 최대 HP −10%
     if (p.side === 0 && p.type === 'K' && ascOn(e.ascension, 'myKingHp')) p.maxHp = p.hp = Math.round(p.maxHp * ASC.myKingHp.mult);
+    if (p.side === 0 && p.type === 'K' && loadout.contracts?.includes('K3')) p.maxHp = p.hp = Math.round(p.maxHp * CONTRACT_FX.kingHp); // 야간 근무 (계약)
     if (p.side !== 1 || p.type !== 'K') continue;
     p.maxHp = p.hp = Math.round(p.maxHp * hpScale);
     p.atk = Math.round(p.atk * scale.atk);

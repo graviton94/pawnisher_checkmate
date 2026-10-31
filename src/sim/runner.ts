@@ -186,6 +186,11 @@ export const autoRun = (seed: number): RunLog => {
         } else if (ch.type === 'blueprint') {
           // 군단에 있는 유형의 도면 먼저
           takeChoice(run, ch.options.find((id) => run.deck.includes(VARIANTS[id].base)) ?? ch.options[0]);
+        } else if (ch.type === 'contract') {
+          // 계약 (D-120): 공방을 막는 과급기 · 3지선다를 줄이는 밀수는 피한다
+          const pick = ch.options.find((id) => id !== 'K1' && id !== 'K5');
+          if (pick) takeChoice(run, pick);
+          else skipChoice(run);
         } else if (ch.type === 'legend') {
           // 에픽 (D-112): 군단 주력 유형을 미는 부품 > 유형 없는 부품 > 에픽 카드
           log.goldSeen = (log.goldSeen ?? 0) + 1;

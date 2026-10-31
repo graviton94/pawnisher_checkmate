@@ -11,10 +11,11 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { ACT_NAMES, ALTAR, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
+import { ACT_NAMES, ALTAR, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
 import { coach } from './coach';
+import { CONTRACTS, type ContractId } from '../data/contracts';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
 import { TUTORIAL_SEED } from '../data/coach';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
@@ -45,6 +46,12 @@ import {
   battleDeck,
   buyBlueprint,
   buyLegend,
+  cardSlots,
+  enchantSlots,
+  dismantleEnchant,
+  reforgeCost,
+  reforgeEnchant,
+  scrapCard,
   legendCount,
   type GoldId,
   ownedBlueprints,
@@ -128,6 +135,12 @@ const setName = (deck: Deck): string => {
 
 /** 등급 딱지 (D-112): 색 + 글자 (색만으로 구분하지 않는다) */
 const gradeChip = (g: Grade): string => `<i class="grade g-${g}">${GRADE_NAME[g]}</i>`;
+
+/** 계약 부품 카드 (D-120): 이득 · 대가 */
+const contractOffer = (id: ContractId): string => {
+  const c = CONTRACTS[id];
+  return `<span class="kind"><i class="grade g-contract">${TEXT.contract.name}</i></span>${icon('scale', 'xl', '#e8c060')}<b>${c.name}</b><p class="good-line">${c.gain}</p><p class="bad-line">대가: ${c.cost}</p>`;
+};
 
 /** 유형이 없는 에픽 부품의 그림 */
 const LEGEND_ICON: Partial<Record<LegendId, string>> = { L06: 'flame', L07: 'flag', L08: 'screw', L10: 'chain' };
@@ -279,8 +292,8 @@ export class RunUi {
       <div class="army-list">${units.join('')}</div>
       <p class="sub">${TEXT.blueprint.name} (${ownedBlueprints(run).length})</p><div class="unlocks">${ownedBlueprints(run).map((id) => `<i class="tag${run.loadout.variants?.[VARIANTS[id].base] === id ? ' gold' : ''}"><img src="ui/board/variant-${id}.png" alt="" style="width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px"> ${VARIANTS[id].name}</i>`).join('') || `<small class="lead">${TEXT.blueprint.empty}</small>`}</div>
       <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-epic">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}
-      <p class="sub">개조 (${ench.length}/6)</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
-      <p class="sub">천공 카드 (${cards.length}/${CARD_SLOTS})</p><div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
+      <p class="sub">개조 (${ench.length}/${enchantSlots(run)})</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
+      <p class="sub">천공 카드 (${cards.length}/${cardSlots(run)})</p>${(run.loadout.contracts ?? []).map((id) => `<p class="legend-line"><i class="grade g-contract">${CONTRACTS[id].name}</i> ${CONTRACTS[id].gain} · <span class="bad">${CONTRACTS[id].cost}</span></p>`).join('')}<div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     panel.querySelector('[data-close]')!.addEventListener('click', () => this.hud.closeOverlay());
     // 진형 (D-102): 고르면 다음 대국부터 그대로 놓인다
@@ -733,6 +746,9 @@ export class RunUi {
           return `<button class="offer g-${ENCHANT_GRADE[id]}${next >= 3 ? ' plate' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
         })
         .join('');
+    } else if (ch?.type === 'contract') {
+      kind = TEXT.contract.name;
+      offers = ch.options.map((id) => `<button class="offer g-contract" type="button" data-pick="${id}">${contractOffer(id)}</button>`).join('');
     } else if (ch?.type === 'legend') {
       kind = TEXT.legend.name;
       offers = ch.options.map((id) => `<button class="offer g-epic" type="button" data-pick="${id}">${goldOffer(run, id)}</button>`).join('');
@@ -749,13 +765,13 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : ch.type === 'legend' ? TEXT.legend.lead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : ch.type === 'legend' ? TEXT.legend.lead : ch.type === 'contract' ? TEXT.contract.lead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
       </div>`,
     );
-    coach(ch?.type === 'legend' ? 'epic' : 'reward');
+    coach(ch?.type === 'legend' ? 'epic' : ch?.type === 'contract' ? 'contract' : 'reward');
     this.wireBar(el, run);
     this.wire(el, {
       pick: (b) => {
@@ -924,7 +940,7 @@ export class RunUi {
       `${this.bar(run)}
       <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2><p>${F.lead}</p><small class="dim">${F.rule} ${F.variantLead}</small></div>
       <div class="stage"><div class="forge-row">${cards.join('')}</div></div>
-      <div style="display:flex;justify-content:flex-end;padding-bottom:8px">${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">${button(F.tidy, 'data-tidy', { icon: 'wrench', small: F.tidySmall })}${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
     );
     coach('forge');
     this.wireBar(el, run);
@@ -934,6 +950,7 @@ export class RunUi {
         this.act(forgeUp(run, b.dataset.up as PieceType));
       },
       vpick: (b) => this.showVariantPick(run, b.dataset.vpick as PieceType),
+      tidy: () => this.showTidy(run),
       repair: (b) => {
         sfx('land');
         this.act(repairDamage(run, b.dataset.repair as PieceType));
@@ -946,6 +963,52 @@ export class RunUi {
         leaveNode(run);
         this.act();
       },
+    });
+  }
+
+  /** 공방 덜어내기 (D-118, 모달): 개조 분해 · 재주조 (방문마다 한 번) · 카드 파쇄 */
+  private showTidy(run: RunState): void {
+    const F = TEXT.forge;
+    const cost = reforgeCost(run);
+    const done = run.stage.at === 'forge' && !!run.stage.reforged;
+    const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(
+      ([id, n]) => `<div class="tidy-row">${gradeChip(ENCHANT_GRADE[id])}<b>${ENCHANTS[id].name}</b><small>${n}단</small><span class="spacer"></span>
+        <button class="btn" type="button" data-dis="${id}">${F.dismantle} +${n * FORGE_EXTRA.salvagePerLevel}</button>
+        <button class="btn cyan${done || run.gold < cost ? ' poor' : ''}" type="button" data-ref="${id}">${F.reforge} ${screws(cost)}</button></div>`,
+    );
+    const cards = run.loadout.cards.map((id, i) => `<div class="tidy-row">${gradeChip(CARD_GRADE[id])}<b>${CARDS[id].name}</b><span class="spacer"></span><button class="btn" type="button" data-scrap="${i}">${F.scrap} +${FORGE_EXTRA.cardSalvage}</button></div>`);
+    const panel = this.hud.openOverlay(`
+      <h2>${icon('wrench')} ${F.tidy}</h2>
+      <p>${F.tidyLead}</p>
+      ${ench.join('') || `<p class="dim">${F.none}</p>`}
+      ${cards.length ? `<p class="sub">천공 카드</p>${cards.join('')}` : ''}
+      ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
+    const after = (err: string | void) => {
+      if (err) this.hud.toast(err);
+      this.save();
+      this.show();
+      this.showTidy(run);
+    };
+    this.wire(panel, {
+      dis: (b) => {
+        sfx('coin');
+        after(dismantleEnchant(run, b.dataset.dis as EnchantId));
+      },
+      ref: (b) => {
+        const before = Object.keys(run.loadout.enchants);
+        const err = reforgeEnchant(run, b.dataset.ref as EnchantId);
+        if (!err) {
+          const to = Object.keys(run.loadout.enchants).find((x) => !before.includes(x)) as EnchantId | undefined;
+          sfx('rare');
+          if (to) window.setTimeout(() => this.hud.toast(`* ${ENCHANTS[b.dataset.ref as EnchantId].name} → ${ENCHANTS[to].name}`), 50);
+        }
+        after(err);
+      },
+      scrap: (b) => {
+        sfx('coin');
+        after(scrapCard(run, Number(b.dataset.scrap)));
+      },
+      close: () => this.hud.closeOverlay(),
     });
   }
 

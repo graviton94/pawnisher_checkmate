@@ -4,7 +4,7 @@
  */
 export type CoachKey =
   | 'start' | 'map' | 'select' | 'targets' | 'tape' | 'ap' | 'intent' | 'chain' | 'check' | 'win'
-  | 'reward' | 'shop' | 'forge' | 'altar' | 'event' | 'puzzle' | 'elite' | 'boss' | 'epic';
+  | 'reward' | 'shop' | 'forge' | 'altar' | 'event' | 'puzzle' | 'elite' | 'boss' | 'epic' | 'contract';
 
 export const COACH: Record<CoachKey, string> = {
   start: '* 시작 세트. 불량 판정을 받은 기물들이다. 셋 중 하나를 고른다.',
@@ -26,6 +26,7 @@ export const COACH: Record<CoachKey, string> = {
   elite: '* 검문! 접사가 붙은 정예 군단이다. 이기면 도면과 영입이 따라온다.',
   boss: '* 반장. 약점을 준비했다면 지금 쓴다. 기물 오른쪽 아래 청색 과녁이 약점이다.',
   epic: '* 에픽 부품. 출하의 방향을 정하는 한 장이다. 슬롯은 둘뿐이다.',
+  contract: '* 계약. 이득과 대가가 함께 온다. 내 군단이 그 대가를 버틸지 보고 서명한다. 건너뛰어도 된다.',
 };
 
 /** 첫 출하 고정 시드: 1~3층이 무난한 판 (D-116) */

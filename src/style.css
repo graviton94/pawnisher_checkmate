@@ -753,3 +753,14 @@ body.busy .scene, body.busy .overlay { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .coach.in { animation: none; } }
 .coach.side { left: auto; right: max(8px, env(safe-area-inset-right)); transform: none; width: min(330px, 36vw); bottom: auto; top: 30%; }
 .coach.side.in { animation: fadeIn 200ms ease-out both; }
+/* 공방 덜어내기 (D-118) */
+.tidy-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.tidy-row b { font-size: 14px; }
+.tidy-row small { color: var(--muted); }
+.tidy-row .spacer { flex: 1; }
+.tidy-row .btn { min-height: 44px; font-size: 13px; }
+/* 계약 부품 (D-120): 놋쇠 딱지 + 저울 — 등급 밖의 따로 된 부품 */
+.grade.g-contract { background: #e8c060; color: #1a1408; }
+.offer.g-contract { box-shadow: inset 0 0 0 2px #e8c060, 0 0 0 2px #000; }
+.offer .good-line { color: var(--cyan); }
+.legend-line .bad { color: var(--crimson-soft); }

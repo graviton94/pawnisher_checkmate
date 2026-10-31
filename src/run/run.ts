@@ -6,6 +6,7 @@ import { DEFECT } from '../data/defects';
 import { DEFAULT_FORMATION } from '../data/formations';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { ASC, ascOn } from '../data/ascension';
+import { CONTRACTS, CONTRACT_FX, CONTRACT_OPTIONS, type ContractId } from '../data/contracts';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_WEIGHT, LEGEND_CHANCE, LEGEND_PRICE, LEGEND_SLOTS, PITY, type Grade } from '../data/grades';
 import { LEGENDS, LEGEND_FX, type LegendId } from '../data/legends';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -25,6 +26,8 @@ import {
   eliteFrom,
   inAct,
   FORGE_COST,
+  FORGE_EXTRA,
+  INTEREST,
   battleGold,
   NODE_WEIGHTS,
   pieceRewardDue,
@@ -69,7 +72,9 @@ export type Choice =
   /** 도면 (D-107): 쓰러뜨린 군단이 단 이형 중 하나 */
   | { type: 'blueprint'; options: VariantId[] }
   /** 에픽 부품 (D-112): 에픽 개조(L..) 또는 에픽 카드(C07~C09) */
-  | { type: 'legend'; options: GoldId[] };
+  | { type: 'legend'; options: GoldId[] }
+  /** 계약 부품 (D-120): 반장 해체 상자, 이득 + 대가 */
+  | { type: 'contract'; options: ContractId[] };
 
 /** 에픽 3지선다 칸: 에픽 부품 또는 에픽 천공 카드 */
 export type GoldId = LegendId | 'C07' | 'C08' | 'C09';
@@ -101,7 +106,7 @@ export type Stage =
   | { at: 'battle'; encounter: Encounter; battle?: BattleState }
   | { at: 'reward'; title: string; lines: string[]; choices: Choice[] }
   | { at: 'shop'; stock: ShopStock }
-  | { at: 'forge' }
+  | { at: 'forge'; reforged?: boolean }
   | { at: 'altar'; result?: AltarResult }
   | { at: 'event'; id: EventId; result?: string }
   /** 묘수풀이 (D-097): 문제 번호 */
@@ -511,12 +516,22 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
 
   run.wins += 1;
   const lines: string[] = [];
+  // 보관 이자 (D-119): 대국 나사를 받기 전 들고 있던 나사로
+  const interest = Math.min(INTEREST.cap, Math.floor(run.gold / INTEREST.per) * INTEREST.gain);
   // 나사 자루 (억빠, D-099): 가끔 대국 나사가 세 배
   const jackpot = withRng(run, (rng) => rng.next()) < LUCK.jackpot;
-  const magnet = (run.loadout.enchants.E32 ? tier(MORE.E32, run.loadout.enchants.E32) : 1) * (run.loadout.legends?.includes('L08') ? LEGEND_FX.goldMult : 1); // 나사 자석 (D-105) · 조폐 프레스 (D-112)
+  const magnet =
+    (run.loadout.enchants.E32 ? tier(MORE.E32, run.loadout.enchants.E32) : 1) *
+    (run.loadout.legends?.includes('L08') ? LEGEND_FX.goldMult : 1) *
+    (hasContract(run, 'K3') ? CONTRACT_FX.gold : 1) *
+    (hasContract(run, 'K6') ? CONTRACT_FX.shelfGold : 1); // 나사 자석 (D-105) · 조폐 프레스 (D-112) · 야간 근무 · 예비 부품 선반 (D-120)
   const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1) * (jackpot ? LUCK.jackpotMult : 1) * magnet);
   run.gold += gold;
   lines.push(jackpot ? `${TEXT.luck.jackpot} 나사 +${gold}` : `나사 +${gold}`);
+  if (interest) {
+    run.gold += interest;
+    lines.push(`보관 이자 +${interest}`);
+  }
   // 빠른 승리 보너스 (D-072): 기준 턴 안에 이기면 골드를 더 준다
   const rounds = Math.ceil(final.turnNumber / 2);
   const par = parRounds(run.floor, kind as NodeKind);
@@ -586,13 +601,24 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     const bps = (Object.values(e.loadout.variants ?? {}) as VariantId[]).filter((id) => !ownedBlueprints(run).includes(id));
     if (bps.length) choices.unshift({ type: 'blueprint', options: bps.slice(0, 3) });
   }
-  choices.push({ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, source)) });
+  // 부품 밀수 (계약): 개조 3지선다가 둘만
+  choices.push({ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, source)).slice(0, hasContract(run, 'K5') ? 2 : 3) });
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
   // 에픽 3지선다 (D-112): 반장 해체는 공정마다 확률(둘째 반장은 확정), 검문!은 드물게 + 보정
   const goldRoll = withRng(run, (rng) => rng.next());
   const act = actOf(run.floor) - 1;
   const goldChance = source === 'boss' ? (LEGEND_CHANCE.boss[act] ?? 0) : source === 'elite' ? Math.min(LEGEND_CHANCE.eliteMax, LEGEND_CHANCE.elite + (run.goldPity ?? 0)) : 0;
   if (source === 'elite') run.goldPity = goldRoll < goldChance ? 0 : (run.goldPity ?? 0) + LEGEND_CHANCE.elitePity;
+  // 계약 부품 (D-120): 반장 해체 상자 (공장장 제외 — 36층 뒤엔 쓸 데가 없다)
+  if (source === 'boss' && run.floor < TOTAL_FLOORS) {
+    const pool = (Object.keys(CONTRACTS) as ContractId[]).filter((id) => !hasContract(run, id));
+    const options = withRng(run, (rng) => {
+      const out: ContractId[] = [];
+      while (out.length < CONTRACT_OPTIONS && pool.length) out.push(pool.splice(rng.int(pool.length), 1)[0]);
+      return out;
+    });
+    if (options.length) choices.push({ type: 'contract', options });
+  }
   if (goldRoll < goldChance) {
     const options = withRng(run, (rng) => rollGold(run, rng));
     if (options.length) {
@@ -732,17 +758,28 @@ export const addEnchant = (run: RunState, id: EnchantId, discard?: EnchantId): s
   const e = run.loadout.enchants;
   const n = e[id] ?? 0;
   if (n >= ENCHANT_MAX_STACK) return '“이미 걸작이다.”';
-  if (!n && Object.keys(e).length >= ENCHANT_SLOTS) {
+  if (!n && Object.keys(e).length >= enchantSlots(run)) {
     if (!discard || !e[discard]) return 'full';
     delete e[discard];
   }
   e[id] = n + 1;
 };
 
+/** 개조 칸 (검사 면제 도장 계약이면 +1) · 천공 카드 칸 (예비 부품 선반이면 +1) */
+export const enchantSlots = (run: RunState): number => ENCHANT_SLOTS + (hasContract(run, 'K2') ? 1 : 0);
+export const cardSlots = (run: RunState): number => CARD_SLOTS + (hasContract(run, 'K6') ? 1 : 0);
+export const hasContract = (run: RunState, id: ContractId): boolean => !!run.loadout.contracts?.includes(id);
+
+/** 계약 부품을 단다 (D-120) */
+export const addContract = (run: RunState, id: ContractId): string | void => {
+  if (hasContract(run, id)) return '“이미 서명했다.”';
+  run.loadout.contracts = [...(run.loadout.contracts ?? []), id];
+};
+
 /** 카드를 얻는다. 4칸이 차 있으면 discard번째 카드를 버려야 한다. */
 export const addCard = (run: RunState, id: CardId, discard?: number): string | void => {
   const c = run.loadout.cards;
-  if (c.length >= CARD_SLOTS) {
+  if (c.length >= cardSlots(run)) {
     if (discard === undefined || !c[discard]) return 'full';
     c.splice(discard, 1);
   }
@@ -766,6 +803,11 @@ export const takeChoice = (run: RunState, option: string, discard?: EnchantId | 
     // 영입한 적이 이형이었으면 그 도면도 따라온다 (D-107: 공방에서 부어 쓴다)
     const v = ch.type === 'recruit' ? ch.variants[t] : undefined;
     if (v) addBlueprint(run, v);
+    run.stage.choices.shift();
+    return;
+  }
+  if (ch.type === 'contract') {
+    addContract(run, option as ContractId);
     run.stage.choices.shift();
     return;
   }
@@ -819,7 +861,12 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
   const bpId = bpPool.length ? bpPool[rng.int(bpPool.length)] : undefined;
   // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
   const appraisal = run.loadout.enchants.E33 ? tier(MORE.E33, run.loadout.enchants.E33) : 1; // 고물 감정서 (D-105)
-  const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal * (ascOn(run.ascension, 'shopPrice') ? ASC.shopPrice.mult : 1) * (run.loadout.legends?.includes('L08') ? LEGEND_FX.goldShop : 1);
+  const k =
+    (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) *
+    appraisal *
+    (ascOn(run.ascension, 'shopPrice') ? ASC.shopPrice.mult : 1) *
+    (run.loadout.legends?.includes('L08') ? LEGEND_FX.goldShop : 1) *
+    (hasContract(run, 'K5') ? CONTRACT_FX.shop : 1);
   // 에픽 진열 (D-112): 공정 2부터 가끔
   const goldId = actOf(Math.min(run.floor, TOTAL_FLOORS)) >= LEGEND_CHANCE.shopFrom && rng.next() < LEGEND_CHANCE.shop ? rollGold(run, rng, 1)[0] : undefined;
   const at = (n: number) => Math.round(n * k);
@@ -895,9 +942,48 @@ export const forgeUp = (run: RunState, t: PieceType): string | void => {
   if (!run.deck.includes(t)) return '군단에 없는 유형';
   const cost = forgeCost(run, t);
   if (cost === null) return '“완성품이다. 더 손댈 데 없어.”';
+  if (hasContract(run, 'K1')) return '“과급기 계약. 거푸집은 못 만진다.”';
   if (run.gold < cost) return '“나사가 부족해.”';
   run.gold -= cost;
   run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
+};
+
+/** 공방 분해 (D-118): 개조 하나를 떼어 내고 단마다 나사를 돌려받는다 */
+export const dismantleEnchant = (run: RunState, id: EnchantId): string | void => {
+  if (run.stage.at !== 'forge') return '공방에 가서 해.';
+  const n = run.loadout.enchants[id] ?? 0;
+  if (!n) return '“그런 개조 없다.”';
+  delete run.loadout.enchants[id];
+  run.gold += n * FORGE_EXTRA.salvagePerLevel;
+};
+
+/** 공방 카드 파쇄 (D-118): 천공 카드 한 장을 버린다 */
+export const scrapCard = (run: RunState, i: number): string | void => {
+  if (run.stage.at !== 'forge') return '공방에 가서 해.';
+  if (!run.loadout.cards[i]) return '“그런 카드 없다.”';
+  run.loadout.cards.splice(i, 1);
+  run.gold += FORGE_EXTRA.cardSalvage;
+};
+
+/** 재주조 값 (공정 배율) */
+export const reforgeCost = (run: RunState): number => Math.round(FORGE_EXTRA.reforgeCost * (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep));
+
+/** 공방 재주조 (D-118): 개조 하나를 같은 등급의 다른 개조로, 단 수 그대로. 방문마다 한 번. 바뀐 개조 id를 돌려준다 */
+export const reforgeEnchant = (run: RunState, id: EnchantId): string | void => {
+  if (run.stage.at !== 'forge') return '공방에 가서 해.';
+  if (run.stage.reforged) return '“한 번이면 됐다.”';
+  const n = run.loadout.enchants[id] ?? 0;
+  if (!n) return '“그런 개조 없다.”';
+  const cost = reforgeCost(run);
+  if (run.gold < cost) return '“나사가 부족해.”';
+  const g = ENCHANT_GRADE[id];
+  const pool = (Object.keys(ENCHANTS) as EnchantId[]).filter((x) => x !== id && !run.loadout.enchants[x] && ENCHANT_GRADE[x] === g);
+  if (!pool.length) return '“바꿀 게 없다.”';
+  const to = withRng(run, (rng) => pool[rng.int(pool.length)]);
+  run.gold -= cost;
+  delete run.loadout.enchants[id];
+  run.loadout.enchants[to] = n;
+  run.stage.reforged = true;
 };
 
 /** 이형 거푸집으로 바꿀 수 있는 이형들 (공방, 개량 +3 이상, 아직 이형이 없는 유형 — GDD 13장 P2) */

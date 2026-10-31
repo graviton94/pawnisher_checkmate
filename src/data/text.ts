@@ -47,6 +47,11 @@ export const TEXT = {
     pressure: '보일러 압력',
     codex: '도감',
   },
+  /** 계약 부품 (D-120) */
+  contract: {
+    name: '계약',
+    lead: '“서명하면 빠르다. 대신 조항이 하나 붙는다.” * 반장의 책상 서랍. 계약서가 두 장 있다.',
+  },
   /** 에픽 부품 (D-112 · D-113) */
   legend: {
     name: '에픽 부품',
@@ -132,6 +137,13 @@ export const TEXT = {
     variantLead: '+3부터 가진 도면으로 이형을 부을 수 있다 (무료, 되돌릴 수 없음). 도면은 검문!·반장·뽑기·고물상에서 줍는다.',
     variantPick: '이형 고르기',
     leave: '떠나기',
+    tidy: '덜어내기',
+    tidySmall: '분해 · 재주조 · 파쇄',
+    tidyLead: '“안 맞는 건 떼. 무거우면 못 뛴다.” * 분해는 나사를 돌려준다. 재주조는 같은 등급의 다른 개조로, 단은 그대로 — 방문마다 한 번.',
+    dismantle: '분해',
+    reforge: '재주조',
+    scrap: '파쇄',
+    none: '* 단 개조가 없다.',
   },
   altar: {
     title: '뽑기 기계',

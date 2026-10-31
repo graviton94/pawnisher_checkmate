@@ -1,6 +1,7 @@
 import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, CARD_FX, type CardUse } from '../data/cards';
 import { LEGEND_FX } from '../data/legends';
+import { CONTRACT_FX } from '../data/contracts';
 import { MORE, SYNERGY, TACTIC_ENCHANT, tier } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
@@ -8,7 +9,7 @@ import { VARIANTS, VARIANT2 } from '../data/variants';
 import { AFFIX, WEAK } from '../data/legions';
 import { TERRAIN_FX } from '../data/terrain';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos, terrainAt } from './board';
-import { attackScan, damageOf, ench, isStrikeMove, legalMoves, legend, moveTypes, onEdge, variantOn, weakOn } from './rules';
+import { attackScan, contract, damageOf, ench, isStrikeMove, legalMoves, legend, moveTypes, onEdge, variantOn, weakOn } from './rules';
 import {
   isMove,
   otherSide,
@@ -28,7 +29,7 @@ import {
 export const availableAp = (s: BattleState): number => {
   const side = s.turnSide;
   const e06 = ench(s, side, 'E06');
-  return BASE_AP + s.apBonus[side] + (e06 >= 1 ? 1 : 0) + (e06 >= 3 ? 1 : 0);
+  return BASE_AP + s.apBonus[side] + (e06 >= 1 ? 1 : 0) + (e06 >= 3 ? 1 : 0) + (contract(s, side, 'K1') ? CONTRACT_FX.ap : 0); // 과급기 (계약)
 };
 
 /** 기물의 기본 이동 AP. 합체·폼 시프트면 가진 유형 중 가장 비싼 값, 태엽 행군(E04 ★)이면 폰은 0 */
@@ -284,6 +285,7 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
     if (mates) damage = Math.max(1, Math.round(damage * Math.max(0.5, 1 - mates * tier(MORE.E40, e40))));
   }
   if (s.solo?.[t.side]) damage = Math.max(1, Math.round(damage * LEGEND_FX.soloTake)); // 단독 출하 (에픽)
+  if (contract(s, t.side, 'K4')) damage = Math.round(damage * CONTRACT_FX.taken); // 날림 공정 (계약): 받는 피해 +15%
   if (splash && weakOn(s, t, 'brittle')) damage = Math.round(damage * WEAK.brittleMult); // 얇은 양산 철판 (폰 반장 약점, D-113)
   const e29 = ench(s, t.side, 'E29');
   if (e29) damage = Math.min(damage, Math.max(1, Math.ceil(t.maxHp * tier(MORE.E29, e29))));

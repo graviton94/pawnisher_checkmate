@@ -321,3 +321,13 @@ export const FINAL_BOSS: BossDef = {
   forge: { Q: 5, R: 4, K: 3 }, // D-099: 83% → 목표 55~80% · D-114: 53% → 킹 4→3
   arena: 'final',
 };
+
+/**
+ * 공방 덜어내기 (D-118, 제안서 P1 2.3): StS의 "제거가 가장 강한 성장"을 우리 식으로.
+ * 분해 = 개조 하나를 떼고 단마다 나사 환급 · 카드 파쇄 = 천공 카드 한 장 버리고 환급 ·
+ * 재주조 = 개조 하나를 같은 등급의 다른 개조로 (단 수 유지, 방문마다 한 번, 공정 배율).
+ */
+export const FORGE_EXTRA = { salvagePerLevel: 15, cardSalvage: 10, reforgeCost: 45 };
+
+/** 보관 이자 (D-119, 제안서 P1 2.6 · Gambonanza 이자): 대국을 이길 때 들고 있던 나사 per마다 gain, 최대 cap — 저축 vs 투자 */
+export const INTEREST = { per: 50, gain: 5, cap: 25 };

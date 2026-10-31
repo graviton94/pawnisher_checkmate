@@ -1,3 +1,4 @@
+import type { ContractId } from '../data/contracts';
 import type { LegendId } from '../data/legends';
 import type { CardId } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
@@ -64,6 +65,8 @@ export interface Loadout {
   damage?: Partial<Record<PieceType, number>>;
   /** 에픽 부품 (D-112): 최대 2 */
   legends?: LegendId[];
+  /** 계약 부품 (D-120): 이득 + 대가 */
+  contracts?: ContractId[];
 }
 
 export interface CardSlot {
