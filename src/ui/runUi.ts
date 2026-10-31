@@ -331,7 +331,6 @@ export class RunUi {
     const unlocks = UNLOCK_DECKS.map((u) => `<span class="unlock panel9${u.ok(meta) ? ' ok' : ''}">${u.deck.map((t) => pieceImg(t, 0, 'small', 20)).join('')} ${u.name}${u.ok(meta) ? '' : ` · ${u.need}`}</span>`).join('');
     const el = this.hud.openScene(
       `<div class="left">
-        <img class="logo" src="./logo.png" alt="Pawnisher : Checkmate">
         ${live ? button(M.continue, 'data-continue', { tone: 'brass', icon: 'lever', small: `${ACT_NAMES[actOf(Math.min(saved!.floor, TOTAL_FLOORS)) - 1]} ${inAct(Math.min(saved!.floor, TOTAL_FLOORS))}층 · 나사 ${saved!.gold} · 군단 ${saved!.deck.length}기` }) : ''}
         ${button(M.newRun, 'data-new', { tone: live ? undefined : 'brass', icon: 'flag', small: live ? M.newRunWarn : undefined })}
         ${button(M.trial, 'data-test', { icon: 'sword', small: M.trialDesc })}
