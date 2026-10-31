@@ -232,7 +232,7 @@ const generateMap = (rng: Rng): MapNode[][] => {
 
 /** 이 층 보스의 이름 */
 export const bossName = (run: RunState, floor: number): string => bossOf(run, floor).name;
-/** 그 공정의 반장 (36층 = 공장장) */
+/** 그 공정의 반장 (마지막 층 = 도금왕) */
 export const bossOf = (run: RunState, floor: number) => (floor === TOTAL_FLOORS ? FINAL_BOSS : BOSSES[run.bosses[actOf(floor) - 1]]);
 
 export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
@@ -612,7 +612,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   const act = actOf(run.floor) - 1;
   const goldChance = source === 'boss' ? (LEGEND_CHANCE.boss[act] ?? 0) : source === 'elite' ? Math.min(LEGEND_CHANCE.eliteMax, LEGEND_CHANCE.elite + (run.goldPity ?? 0)) : 0;
   if (source === 'elite') run.goldPity = goldRoll < goldChance ? 0 : (run.goldPity ?? 0) + LEGEND_CHANCE.elitePity;
-  // 계약 부품 (D-120): 반장 해체 상자 (공장장 제외 — 36층 뒤엔 쓸 데가 없다)
+  // 계약 부품 (D-120): 반장 해체 상자 (도금왕 제외 — 마지막 층 뒤엔 쓸 데가 없다)
   if (source === 'boss' && run.floor < TOTAL_FLOORS) {
     const pool = (Object.keys(CONTRACTS) as ContractId[]).filter((id) => !hasContract(run, id));
     const options = withRng(run, (rng) => {

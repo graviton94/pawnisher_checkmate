@@ -16,7 +16,7 @@ export const ASCENSIONS = [
   '과적! 확률 두 배',
   '주문서 보상 −50%',
   '반장 개조 +1단',
-  '공장장 거푸집 전 유형 +1 · 시작 나사 0',
+  '도금왕 거푸집 전 유형 +1 · 시작 나사 0',
 ];
 export const MAX_ASCENSION = ASCENSIONS.length - 1;
 
@@ -36,7 +36,7 @@ export const ASC = {
   orderGold: { from: 11, mult: 0.5 },
   /** 12: 반장 개조 단 + (최대 3단) */
   bossEnchant: { from: 12, add: 1 },
-  /** 13: 공장장 거푸집 + · 시작 나사 */
+  /** 13: 도금왕 거푸집 + · 시작 나사 */
   finalForge: { from: 13, add: 1, startGold: 0 },
 } as const;
 

@@ -106,7 +106,7 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
     desc: '가운데에 자석판 두 쌍. 넘어오면 한 턴 붙잡힌다.',
     terrain: (w, h) => mirror(w, h, [2, w - 3].map((x) => ({ x, y: Math.floor(h / 2) - 1, kind: 'magnet' as const }))),
   },
-  // 공장장: 네 귀퉁이 방호판 + 한가운데 조명 칸 — 숨을 곳과 드러나는 곳
+  // 도금왕: 네 귀퉁이 방호판 + 한가운데 조명 칸 — 숨을 곳과 드러나는 곳
   final: {
     name: '최종 검수대',
     desc: '귀퉁이 넷은 방호판(−20%), 한가운데 넷은 조명 칸(+20%).',

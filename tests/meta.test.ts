@@ -33,7 +33,7 @@ describe('압력 6~13 (D-108)', () => {
     expect(lv(9, 'elite')).toBe(lv(8, 'elite'));
   });
 
-  it('12: 반장 개조 +1단 (최대 3) · 13: 공장장 거푸집 +1 · 시작 나사 0', () => {
+  it('12: 반장 개조 +1단 (최대 3) · 13: 도금왕 거푸집 +1 · 시작 나사 0', () => {
     const boss = (a: number) => generateEncounter(FLOORS_PER_ACT, 'boss', new Rng(5), 'knight', a).loadout.enchants;
     for (const [id, n] of Object.entries(BOSSES.knight.enchants)) expect(boss(12)[id as keyof typeof BOSSES.knight.enchants]).toBe(Math.min(3, (n ?? 0) + 1));
     const final = (a: number) => generateEncounter(36, 'boss', new Rng(5), undefined, a).loadout.forge.K ?? 0;

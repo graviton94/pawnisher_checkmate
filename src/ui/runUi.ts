@@ -627,7 +627,7 @@ export class RunUi {
     if (!run) return this.showMenu();
     // 같은 화면 다시 그리기(고물상에서 사기 등)는 전환 연출 없이 (D-109)
     const st = run.stage;
-    // 배경 음악 (D-123): 공정마다 · 반장 대국 · 공장장
+    // 배경 음악 (D-123): 공정마다 · 반장 대국 · 도금왕
     const floor = Math.min(run.floor, TOTAL_FLOORS);
     const bossFight = st.at === 'battle' && st.encounter.kind === 'boss';
     playMusic(st.at === 'over' ? 'menu' : bossFight ? (floor === TOTAL_FLOORS ? 'final' : 'boss') : (['act1', 'act2', 'act3'] as const)[actOf(floor) - 1]);

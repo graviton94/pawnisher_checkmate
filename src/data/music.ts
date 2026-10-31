@@ -28,7 +28,7 @@ export const TRACKS: Record<TrackId, TrackDef> = {
   act3: { bpm: 124, root: 103.83, prog: [[0, 3], [1, 4], [0, 3], [-2, 4]], arp: [0, 2, 3, 1, 0, 2, 3, 2], lead: 'sawtooth', drums: 'march' },
   // 반장전: 빠르고 북이 앞에
   boss: { bpm: 140, root: 110, prog: [[0, 3], [1, 4], [-4, 4], [-5, 4]], arp: [0, 0, 2, 0, 3, 0, 2, 1], lead: 'square', drums: 'drive' },
-  // 공장장: 가장 빠르게
+  // 도금왕: 가장 빠르게
   final: { bpm: 152, root: 98, prog: [[0, 3], [3, 4], [1, 4], [-2, 4]], arp: [0, 3, 2, 3, 1, 3, 2, 3], lead: 'sawtooth', drums: 'drive' },
 };
 
