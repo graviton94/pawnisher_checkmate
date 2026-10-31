@@ -15,6 +15,7 @@ import { ACT_NAMES, ALTAR, DAILY, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, 
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
 import { coach } from './coach';
+import { playMusic } from '../audio/music';
 import { CONTRACTS, type ContractId } from '../data/contracts';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
 import { TUTORIAL_SEED } from '../data/coach';
@@ -362,6 +363,7 @@ export class RunUi {
   private ascension = 0;
 
   showMenu(): void {
+    playMusic('menu');
     this.hud.closeOverlay();
     const saved = loadRun();
     const meta = loadMeta();
@@ -557,6 +559,10 @@ export class RunUi {
     if (!run) return this.showMenu();
     // 같은 화면 다시 그리기(고물상에서 사기 등)는 전환 연출 없이 (D-109)
     const st = run.stage;
+    // 배경 음악 (D-123): 공정마다 · 반장 대국 · 공장장
+    const floor = Math.min(run.floor, TOTAL_FLOORS);
+    const bossFight = st.at === 'battle' && st.encounter.kind === 'boss';
+    playMusic(st.at === 'over' ? 'menu' : bossFight ? (floor === TOTAL_FLOORS ? 'final' : 'boss') : (['act1', 'act2', 'act3'] as const)[actOf(floor) - 1]);
     this.hud.sceneKey = `${st.at}:${run.floor}:${st.at === 'reward' ? st.choices.length : st.at === 'event' ? ('result' in st ? 1 : 0) : ''}`;
     switch (run.stage.at) {
       case 'map':

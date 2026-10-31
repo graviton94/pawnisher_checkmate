@@ -79,6 +79,7 @@ export const TEXT = {
   settings: {
     title: '설정',
     sfx: '효과음',
+    music: '음악',
     intro: '인트로 다시 보기',
     coach: '안내',
     coachReset: '안내 처음부터',

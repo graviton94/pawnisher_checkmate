@@ -17,6 +17,7 @@ import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
 import { LEGENDS } from '../data/legends';
 import { coach, coachOn, resetCoach, setCoach } from './coach';
+import { musicOn, setMusic } from '../audio/music';
 import { exportLog, logSummary } from '../run/telemetry';
 import { CARD_GRADE } from '../data/grades';
 import { ghostOut, replay } from './motion';
@@ -396,6 +397,7 @@ export class Hud implements HudView {
       <h2>${S.title}</h2>
       <div class="col">
         ${button(`${S.sfx}: ${sfxOn() ? S.on : S.off}`, 'data-sfx', { icon: 'bell', cls: 'wide' })}
+        ${button(`${S.music}: ${musicOn() ? S.on : S.off}`, 'data-music', { icon: 'bell', cls: 'wide' })}
         ${button(`${S.coach}: ${coachOn() ? S.on : S.off}`, 'data-coach', { icon: 'question', cls: 'wide' })}
         ${button(S.coachReset, 'data-coachreset', { icon: 'swap', cls: 'wide' })}
         ${button(S.log, 'data-log', { icon: 'crate', cls: 'wide', small: S.logSmall(logSummary()) })}
@@ -405,6 +407,10 @@ export class Hud implements HudView {
     panel.querySelector('[data-sfx]')!.addEventListener('click', () => {
       setSfx(!sfxOn());
       if (sfxOn()) sfx('submit');
+      this.showSettings(back);
+    });
+    panel.querySelector('[data-music]')!.addEventListener('click', () => {
+      setMusic(!musicOn());
       this.showSettings(back);
     });
     panel.querySelector('[data-coach]')!.addEventListener('click', () => {
