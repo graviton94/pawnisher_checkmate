@@ -317,6 +317,28 @@ const scenarios = {
     }
     return ['weak-end'];
   },
+  // 출시판 (D-116~D-125): 안내 · 메뉴(오늘의 출하) · 설정 · 시작 세트 라인 · 공방 덜어내기 · 계약 · 대국 안내
+  async release(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-release-${n}.png`) });
+    await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(600);
+    await page.tap('[data-title]'); await page.waitForTimeout(500); await shot('1-menu');
+    await page.tap('[data-settings]'); await page.waitForTimeout(400); await shot('2-settings');
+    await page.tap('[data-close]'); await page.waitForTimeout(300);
+    await page.tap('[data-new]'); await page.waitForTimeout(600); await shot('3-start-coach');
+    await page.tap('[data-coach-ok]'); await page.waitForTimeout(200);
+    await page.tap('[data-deck="0"]'); await page.waitForTimeout(800); await shot('4-map-coach');
+    await page.tap('[data-coach-ok]'); await page.waitForTimeout(200);
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(1500); await shot('5-battle-coach');
+    await loadRun(page, { at: 'forge' }, { gold: 300, loadout: { enchants: { E01: 2, E17: 1, E26: 1 }, cards: ['A01', 'C03'], forge: { N: 3, P: 1 }, variants: {}, line: 'assault' } });
+    await page.waitForTimeout(400);
+    await page.evaluate(() => document.querySelector('[data-coach-ok]')?.click());
+    await page.tap('[data-tidy]'); await page.waitForTimeout(500); await shot('6-forge-tidy');
+    await loadRun(page, { at: 'reward', title: '나이트 반장 격파 — 주조 공정 끝', lines: ['나사 +100', '보관 이자 +10'], choices: [{ type: 'contract', options: ['K1', 'K4'] }] }, { floor: 10 });
+    await page.waitForTimeout(900);
+    await page.evaluate(() => document.querySelector('[data-coach-ok]')?.click());
+    await page.waitForTimeout(200); await shot('7-contract');
+    return ['release-8-end'];
+  },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });

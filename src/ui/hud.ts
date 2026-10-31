@@ -395,7 +395,7 @@ export class Hud implements HudView {
     const S = TEXT.settings;
     const panel = this.openOverlay(`
       <h2>${S.title}</h2>
-      <div class="col">
+      <div class="settings-grid">
         ${button(`${S.sfx}: ${sfxOn() ? S.on : S.off}`, 'data-sfx', { icon: 'bell', cls: 'wide' })}
         ${button(`${S.music}: ${musicOn() ? S.on : S.off}`, 'data-music', { icon: 'bell', cls: 'wide' })}
         ${button(`${S.coach}: ${coachOn() ? S.on : S.off}`, 'data-coach', { icon: 'question', cls: 'wide' })}
