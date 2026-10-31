@@ -333,7 +333,7 @@ export const FINAL_BOSS: BossDef = {
  */
 export const FORGE_EXTRA = { salvagePerLevel: 15, cardSalvage: 10, reforgeCost: 45 };
 
-/** 보관 이자 (D-119, 제안서 P1 2.6 · Gambonanza 이자): 대국을 이길 때 들고 있던 나사 per마다 gain, 최대 cap — 저축 vs 투자 */
+/** 나사통 적립 (D-119 · D-133 이름, 제안서 P1 2.6 · Gambonanza 이자): 대국을 이길 때 들고 있던 나사 per마다 gain, 최대 cap — 저축 vs 투자 */
 export const INTEREST = { per: 60, gain: 5, cap: 20 }; // D-124: 3공정 나사가 쌓여 50·25 → 60·20
 
 /** 오늘의 출하 (D-122): 압력 고정 — 같은 날 같은 조건으로 비교 */

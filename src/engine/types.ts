@@ -157,7 +157,7 @@ export interface BattleRecord {
   finisher?: PieceType;
   /** 나사 더미에서 주운 나사 (D-097) */
   gold?: number;
-  /** 처치한 적 수 (처치 수당, D-105) */
+  /** 처치한 적 수 (노획 집게, D-105) */
   kills?: number;
   /** 폰이 처치한 적 수 (주문서 「폰으로 셋」, D-099) */
   pawnKills?: number;

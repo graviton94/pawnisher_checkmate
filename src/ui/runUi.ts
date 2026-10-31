@@ -1225,7 +1225,7 @@ export class RunUi {
     const ench = Object.keys(run.loadout.enchants).length;
     const el = this.hud.openScene(
       `<div class="stamp-big ${won ? 'good' : 'bad'}">${won ? O.win : O.lose}</div>
-      <h2 class="say">“${won ? O.winSay : O.loseSay}”<small>— 검수관</small></h2>
+      <h2 class="say">“${won ? O.winSay : O.loseSay}”<small>— 검수 저울</small></h2>
       <p class="tell">${won ? O.winTell : `${ACT_NAMES[actOf(floor) - 1]} ${inAct(floor)}층. ${O.loseTell}`}</p>
       <div class="records" style="width:min(520px,90vw)">
         <div class="panel9"><span class="num">${floor}</span><small>도달 층</small></div>

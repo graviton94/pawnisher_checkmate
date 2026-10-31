@@ -151,7 +151,7 @@ export class Hud implements HudView {
     $('cards').innerHTML = slots.join('');
   }
 
-  /** 이 대국의 주문서 (출하 대국만, 시운전은 없음) — D-094 */
+  /** 이 대국의 주문서 (출하 대국만, 연습판은 없음) — D-094 */
   private order: { id: OrderId; deck: PieceType[] } | null = null;
 
   setOrder(order: { id: OrderId; deck: PieceType[] } | null): void {
@@ -478,7 +478,7 @@ export class Hud implements HudView {
         })
         .join('');
       const panel = this.openOverlay(`
-        <h2>장비 (시운전)</h2>
+        <h2>장비 (연습판)</h2>
         <p>누를 때마다 단계가 오른다. 개조 최대 ${ENCHANT_SLOTS}종 · 천공 카드 ${CARD_SLOTS}장.</p>
         <p class="sub">개조 (${enchCount()}/${ENCHANT_SLOTS})</p><div class="chips">${ench}</div>
         <p class="sub">천공 카드 (${lo.cards.length}/${CARD_SLOTS})</p><div class="chips">${cards}</div>
@@ -544,7 +544,7 @@ export class Hud implements HudView {
     return all.length ? all.join(' · ') + (this.enemyMirror ? ' (적도 동일)' : '') : '없음';
   }
 
-  /** 시운전: 단판 대국 고르기 (개발·시험용) */
+  /** 연습판: 단판 대국 고르기 (개발·시험용) */
   showStart(): void {
     const sc = (s: Scenario) =>
       `<button class="choice" type="button" data-sc="${s.id}" aria-pressed="${s.id === this.lastScenario.id}">${s.title}<small>${s.desc}</small></button>`;
@@ -552,7 +552,7 @@ export class Hud implements HudView {
     const style = (s: (typeof AI_STYLES)[number]) =>
       `<button class="choice" type="button" data-style="${s.id}" aria-pressed="${s.id === this.lastStyle}">${s.label}</button>`;
     const panel = this.openOverlay(`
-      <h2>${icon('lever')} 시운전</h2>
+      <h2>${icon('lever')} 연습판</h2>
       <p>단판 대국. 기물을 눌러 명령을 새기고, 같은 칸을 한 번 더 누르면 확정. 새긴 순서대로 공격한다.</p>
       <div class="choices">${SCENARIOS.map(sc).join('')}</div>
       <p class="sub">시험용 흑 세트의 솜씨</p>
@@ -595,7 +595,7 @@ export class Hud implements HudView {
     const win = winner === 0;
     const panel = this.openOverlay(`
       <div class="stamp-big ${win ? 'good' : 'bad'}">${win ? 'CHECKMATE' : '불량 판정'}</div>
-      <h2 class="say">“${win ? TEXT.over.winSay : TEXT.over.loseSay}”<small>— 검수관</small></h2>
+      <h2 class="say">“${win ? TEXT.over.winSay : TEXT.over.loseSay}”<small>— 검수 저울</small></h2>
       <div class="row">
         <button class="choice" type="button" data-menu>메뉴</button>
         <button class="choice primary" type="button" data-again>다시 하기</button>

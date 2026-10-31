@@ -20,8 +20,8 @@ export interface EventDef {
 
 export const EVENTS: Record<EventId, EventDef> = {
   smith: {
-    title: '떠돌이 정비공',
-    text: '* 공구 수레 옆에 정비공이 서 있다. 렌치가 수레보다 크다. "거푸집 하나. 나사 25. 고르는 건 나다."',
+    title: '떠돌이 정비 폰',
+    text: '* 공구 수레 옆에 폰 하나가 서 있다. 등에 진 렌치가 몸보다 크다. "거푸집 하나. 나사 25. 고르는 건 나다."',
     choices: [
       { label: '나사 25를 맡길까?', desc: '군단에 있는 유형 중 하나 (완성 거푸집 제외)' },
       { label: '지나간다', desc: '' },
@@ -36,8 +36,8 @@ export const EVENTS: Record<EventId, EventDef> = {
     ],
   },
   gambler: {
-    title: '태엽 도박꾼',
-    text: '* 태엽 감는 손이 동전을 굴린다. "앞면이면 두 배. 뒷면이면 내 거."',
+    title: '동전 나이트',
+    text: '* 외알 안경을 낀 나이트가 발굽으로 동전을 굴린다. "앞면이면 두 배. 뒷면이면 내 거."',
     choices: [
       { label: '나사 30을 걸까?', desc: '50%: +30 / 50%: −30' },
       { label: '거절한다', desc: '' },
@@ -96,7 +96,7 @@ export const EVENTS: Record<EventId, EventDef> = {
   // ---- 볼륨 1 (D-105): 돌발 15종 — 대가 · 확률 · 이득을 하나씩 ----
   nightShift: {
     title: '야간 교대',
-    text: '* 공방 불이 아직 켜져 있다. 장인이 졸고 있다. 망치는 깨어 있다.',
+    text: '* 공방 불이 아직 켜져 있다. 외눈 비숍이 졸고 있다. 망치는 깨어 있다.',
     choices: [
       { label: '몰래 두드린다', desc: '무작위 유형 개량 +1 · 봉인 1대국' },
       { label: '지나간다', desc: '' },
@@ -167,8 +167,8 @@ export const EVENTS: Record<EventId, EventDef> = {
     ],
   },
   apprentice: {
-    title: '견습공',
-    text: '* 견습공이 망치를 거꾸로 들고 있다. 본인은 모른다.',
+    title: '견습 폰',
+    text: '* 작은 폰이 망치를 거꾸로 들고 있다. 본인은 모른다.',
     choices: [
       { label: '맡겨 볼까?', desc: '50%: 무작위 유형 개량 +1 / 50%: 개량 −1 (없으면 손상)' },
       { label: '거절한다', desc: '' },
@@ -191,8 +191,8 @@ export const EVENTS: Record<EventId, EventDef> = {
     ],
   },
   scout: {
-    title: '경쟁 공장 스카우트',
-    text: '* 다른 공장 조끼를 입은 사람. "좋은 부품이군. 두 배 주지."',
+    title: '다른 공장의 흑 비숍',
+    text: '* 낯선 도장이 찍힌 흑 비숍. 눈이 돈을 센다. "좋은 부품이군. 두 배 주지."',
     choices: [
       { label: '하나를 판다', desc: '킹 말고 가장 비싼 기물 1기 · 판매가 ×2' },
       { label: '거절한다', desc: '' },
@@ -207,8 +207,8 @@ export const EVENTS: Record<EventId, EventDef> = {
     ],
   },
   napping: {
-    title: '조는 검수관',
-    text: '* 검수관이 서류 위에서 졸고 있다. 도장은 손에 쥐고 있다.',
+    title: '조는 검수 저울',
+    text: '* 검수 저울이 서류 위에서 졸고 있다. 바늘이 꾸벅인다. 도장은 접시에 그대로 있다.',
     choices: [
       { label: '서류를 바꿔칠까?', desc: '50%: 상위 기물 1기 / 50%: 들킨다 — 봉인 2대국 · 나사 −20' },
       { label: '조용히 지나간다', desc: '' },

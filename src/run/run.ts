@@ -355,7 +355,7 @@ const moreEvent = (run: RunState, id: EventId, i: number): string | null => {
       const t = pick([...new Set(run.deck)].filter((x) => (run.loadout.forge[x] ?? 0) < FORGE_MAX));
       run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
       run.sealed = (run.sealed ?? 0) + 1;
-      return `${PIECE_NAMES_KO[t]} 개량 +${run.loadout.forge[t]}. 장인이 깼다 — 봉인 1대국.`;
+      return `${PIECE_NAMES_KO[t]} 개량 +${run.loadout.forge[t]}. 외눈 비숍이 깼다 — 봉인 1대국.`;
     }
     case 'moldBin': {
       if (roll() < 0.6) {
@@ -519,7 +519,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
 
   run.wins += 1;
   const lines: string[] = [];
-  // 보관 이자 (D-119): 대국 나사를 받기 전 들고 있던 나사로
+  // 나사통 적립 (D-119 · D-133 이름): 대국 나사를 받기 전 들고 있던 나사로
   const interest = Math.min(INTEREST.cap, Math.floor(run.gold / INTEREST.per) * INTEREST.gain);
   // 나사 자루 (억빠, D-099): 가끔 대국 나사가 세 배
   const jackpot = withRng(run, (rng) => rng.next()) < LUCK.jackpot;
@@ -533,7 +533,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   lines.push(jackpot ? `${TEXT.luck.jackpot} 나사 +${gold}` : `나사 +${gold}`);
   if (interest) {
     run.gold += interest;
-    lines.push(`보관 이자 +${interest}`);
+    lines.push(`나사통 적립 +${interest}`);
   }
   // 빠른 승리 보너스 (D-072): 기준 턴 안에 이기면 골드를 더 준다
   const rounds = Math.ceil(final.turnNumber / 2);
@@ -543,11 +543,11 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     run.gold += extra;
     lines.push(`빠른 승리 (${rounds}/${par}턴) 나사 +${extra}`);
   }
-  // 처치 수당 (D-105)
+  // 노획 집게 (D-105)
   const bounty = run.loadout.enchants.E34 ? (final.record?.[0].kills ?? 0) * tier(MORE.E34, run.loadout.enchants.E34) : 0;
   if (bounty) {
     run.gold += bounty;
-    lines.push(`처치 수당 나사 +${bounty}`);
+    lines.push(`노획 집게 나사 +${bounty}`);
   }
   // 수리 키트 (D-105): n승마다 손상 1단 수리
   const kit = run.loadout.enchants.E35;

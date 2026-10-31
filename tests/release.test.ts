@@ -37,7 +37,7 @@ describe('공방 덜어내기 (D-118)', () => {
 });
 
 describe('보관 이자 (D-119)', () => {
-  it('들고 있던 나사 50마다 5, 최대 25', async () => {
+  it('들고 있던 나사 per마다 gain, 최대 cap', async () => {
     const { INTEREST } = await import('../src/data/run');
     const { enterNode, finishBattle } = await import('../src/run/run');
     const run = newRun(4);
@@ -48,7 +48,7 @@ describe('보관 이자 (D-119)', () => {
     finishBattle(run, s);
     const st = run.stage as unknown as { at: string; lines: string[] };
     expect(st.at).toBe('reward');
-    expect(st.lines).toContain(`보관 이자 +${Math.min(INTEREST.cap, 3 * INTEREST.gain)}`);
+    expect(st.lines).toContain(`나사통 적립 +${Math.min(INTEREST.cap, Math.floor(180 / INTEREST.per) * INTEREST.gain)}`);
   });
 });
 
