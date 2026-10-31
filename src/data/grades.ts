@@ -26,12 +26,12 @@ export const PITY = { step: 1.5, max: 25 };
 
 /**
  * 에픽 부품이 나오는 곳 (D-112) — "얻는 것 자체가 사건"이 되게 드물게.
- * - 반장 해체: 첫 반장 40% · 둘째 반장 100% (출하마다 적어도 한 번은 에픽 3지선다를 본다)
- * - 검문!: 4% + 못 본 검문마다 +2%p (최대 20%)
+ * - 반장 해체: 첫 반장 70% · 둘째 반장 100% (D-114: 40%로는 에픽을 본 출하가 22%뿐) (출하마다 적어도 한 번은 에픽 3지선다를 본다)
+ * - 검문!: 5% + 못 본 검문마다 +2%p (최대 20%)
  * - 고물상 (공정 2부터): 에픽 진열 20%
  * 에픽 슬롯은 2칸. 다 차면 더 나오지 않는다.
  */
-export const LEGEND_CHANCE = { boss: [0.4, 1, 0], elite: 0.04, elitePity: 0.02, eliteMax: 0.2, shop: 0.2, shopFrom: 2 };
+export const LEGEND_CHANCE = { boss: [0.7, 1, 0], elite: 0.05, elitePity: 0.02, eliteMax: 0.2, shop: 0.2, shopFrom: 2 };
 export const LEGEND_SLOTS = 2;
 export const LEGEND_PRICE = 240;
 

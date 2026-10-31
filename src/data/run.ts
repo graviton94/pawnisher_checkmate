@@ -101,7 +101,7 @@ export const SHOP = {
   /** 기물 가격 = 가치 × 이 배율 */
   pieceMult: 1.6,
   /** 공정(Act)마다 고물상 값 +40% (D-099) */
-  actPriceStep: 0.4,
+  actPriceStep: 0.5, // D-114: 36층 나사 548 → 고물상 공정 배율 ↑
   /** 판매가 = 가치 × 이 배율 */
   sellMult: 0.6,
   cardPrice: { sustain: 55, consume: 85 },
@@ -245,7 +245,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
     enchants: { E02: 3 },
     cards: ['A03'],
-    forge: { B: 2 }, // D-111: 첫 반장 55% → 한 단 낮춤
+    forge: { B: 3 }, // D-114: 약점(깨지는 렌즈)이 생겨 89% → 원래대로
     arena: 'lens',
     weakness: { id: 'glass', label: '깨지는 렌즈 (옆 칸에서 맞으면 ×2)', prep: '붙어서 치기(나이트 · 폰 · 킹 · 돌파) · 끌어오기(갈고리 와이어)' },
   },
@@ -258,7 +258,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
     enchants: { E03: 3 },
     cards: ['A06'],
-    forge: { R: 3 }, // D-111: 첫 반장 85% → 한 단 올림
+    forge: { R: 2 }, // D-114: 약점(네모난 차체) 뒤 56% → 원래대로
     arena: 'wall',
     weakness: { id: 'square', label: '네모난 차체 (사선에서 맞으면 ×2)', prep: '사선(비숍 · 퀸 · 폰 · 연마 렌즈 · 프리즘 코어)' },
   },
@@ -269,7 +269,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     role: '물량 라인의 감독',
     quote: '하나 부서지면 둘 찍는다.',
     deck: ['K', 'Q', 'R', 'R', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-    enchants: { E12: 3, E04: 2 }, // D-113: 약점이 생겨 원래 세기로 (준비 없으면 어렵다)
+    enchants: { E12: 2, E04: 2 }, // D-114: 약점이 있어도 59% → 양산 라인 2단
     cards: ['A06'],
     forge: { P: 2 },
     arena: 'belt',
