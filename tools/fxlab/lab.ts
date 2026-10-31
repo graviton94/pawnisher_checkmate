@@ -8,7 +8,7 @@ import { buildPopupArt, drawPopup, type PopupArt } from '../../src/view/popup';
 import { CRUMBLE_MS, MOVE_TOTAL, buildAttackFx, fxPower, impactFeedback, drawCrumble, drawHitSpark, drawLandPuff, moveMotion, type CrumbleCell, type Pose } from '../../src/view/attackFx';
 import { BOARD_DOTS, PixelPen } from '../../src/view/pixel';
 import { FX_CHOICE, FX_VARIANT_NAMES, type KingFx, type QueenFx } from '../../src/data/fx';
-import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, VERSION, type Status } from './decisions';
+import { CHANGELOG, DECISIONS, OPEN_QUESTIONS, PIECES, TOPICS, VERSION, type Status } from './decisions';
 
 declare const SPRITES: Record<string, string>;
 declare const GALLERY: { dir: string; name: string; key: string; w: number; h: number }[];
@@ -660,6 +660,25 @@ const STATUS: Record<Status, string> = { done: '확정', review: '보는 중', p
 const chip = (s: Status) => `<span class="chip chip-${s}">${STATUS[s]}</span>`;
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
+/** 보는 중인 주제 탭 (v49): 고르면 무대 대신 실제 게임 화면 */
+let topic: string | null = null;
+const SHOTS = (window as unknown as { SHOTS: Record<string, { src: string; label: string }> }).SHOTS ?? {};
+const showTopic = (id: string | null) => {
+  topic = id;
+  const t = TOPICS.find((x) => x.id === id);
+  $('#stage').hidden = !!t;
+  $('#controls').hidden = !!t;
+  $('#shots').hidden = !t;
+  document.querySelectorAll('[data-t]').forEach((x) => x.setAttribute('aria-pressed', String(!t && x.getAttribute('data-t') === opt.type)));
+  document.querySelectorAll('[data-topic]').forEach((x) => x.setAttribute('aria-pressed', String(x.getAttribute('data-topic') === id)));
+  if (!t) return renderPanel();
+  $('#shots').innerHTML = t.shots.map((f) => (SHOTS[f] ? `<figure><img src="${SHOTS[f].src}" alt="${SHOTS[f].label}"><figcaption>${SHOTS[f].label}</figcaption></figure>` : '')).join('');
+  $('#detail').innerHTML = `
+    <div class="detail-head"><h2>${t.name}</h2>${chip(t.status)}</div>
+    <p>${t.rule}</p>
+    ${t.changed ? `<dl><dt>이번에 바뀐 점</dt><dd class="new">${t.changed}</dd></dl>` : ''}`;
+};
+
 const renderPanel = () => {
   const d = PIECES[opt.type];
   const names: Record<string, string> | null = opt.type === 'Q' ? FX_VARIANT_NAMES.Q : opt.type === 'K' ? FX_VARIANT_NAMES.K : null;
@@ -683,16 +702,17 @@ const renderPanel = () => {
 const init = () => {
   $('#ver').textContent = `v${VERSION.n} · ${VERSION.date}`;
   $('#tabs').innerHTML = (['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
-    .map((k) => `<button type="button" class="tab" data-t="${k}" aria-pressed="${k === opt.type}"><span>${PIECES[k].name}</span>${PIECES[k].status === 'pick' ? '<i class="dot" aria-label="고를 것 있음"></i>' : PIECES[k].changed ? '<i class="dot dot-new" aria-label="바뀜"></i>' : ''}</button>`)
+    .map((k) => `<button type="button" class="tab" data-t="${k}" aria-pressed="${k === opt.type}"><span>${PIECES[k].name}</span>${PIECES[k].status === 'pick' ? '<i class="dot" aria-label="고를 것 있음"></i>' : PIECES[k].changed && PIECES[k].status !== 'done' ? '<i class="dot dot-new" aria-label="바뀜"></i>' : ''}</button>`)
     .join('');
   document.querySelectorAll<HTMLButtonElement>('[data-t]').forEach((b) =>
     b.addEventListener('click', () => {
       opt.type = b.dataset.t as PieceType;
-      document.querySelectorAll('[data-t]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      renderPanel();
+      showTopic(null);
       play();
     }),
   );
+  $('#topics').innerHTML = TOPICS.map((t) => `<button type="button" data-topic="${t.id}" aria-pressed="false"><span>${t.name}</span>${t.status === 'pick' ? '<i class="dot" aria-label="고를 것 있음"></i>' : t.changed ? '<i class="dot dot-new" aria-label="바뀜"></i>' : ''}</button>`).join('');
+  document.querySelectorAll<HTMLButtonElement>('[data-topic]').forEach((b) => b.addEventListener('click', () => showTopic(b.dataset.topic!)));
   const bindSeg = (attr: string, set: (v: string) => void) =>
     document.querySelectorAll<HTMLButtonElement>(`[${attr}]`).forEach((b) =>
       b.addEventListener('click', () => {
@@ -713,8 +733,8 @@ const init = () => {
   $('#decisions').innerHTML = DECISIONS.filter((d) => d.status !== 'done').map(row).join('');
   $('#decisions-done').innerHTML = DECISIONS.filter((d) => d.status === 'done').map(row).join('');
   const entry = (c: (typeof CHANGELOG)[number]) => `<li><b>v${c.v}</b> <span class="muted">${c.date}</span><ul>${c.items.map((i) => `<li>${i}</li>`).join('')}</ul></li>`;
-  $('#log').innerHTML = CHANGELOG.slice(0, 4).map(entry).join('');
-  $('#log-old').innerHTML = CHANGELOG.slice(4).map(entry).join('');
+  $('#log').innerHTML = CHANGELOG.slice(0, 3).map(entry).join('');
+  $('#done-count').textContent = `— ${DECISIONS.filter((d) => d.status === 'done').length}개 · 바꾸고 싶으면 말해 주세요`;
   renderGallery();
   renderPanel();
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

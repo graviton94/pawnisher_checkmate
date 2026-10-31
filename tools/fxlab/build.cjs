@@ -35,24 +35,19 @@ const path = require('node:path');
       gallery.push({ dir, name, key, w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) });
     }
   }
-  // 화면 디자인 (D-085): tools/fxlab/screens/index.tsv 순서대로 실제 화면 스크린샷
+  // 보는 중인 주제의 실제 화면 (decisions.ts TOPICS.shots): tools/fxlab/screens/index.tsv의 파일 → 이름표
   const sdir = path.join(__dirname, 'screens');
-  const screens = fs.existsSync(path.join(sdir, 'index.tsv'))
-    ? fs
-        .readFileSync(path.join(sdir, 'index.tsv'), 'utf8')
-        .trim()
-        .split('\n')
-        .map((l) => l.split('\t'))
-        .map(([f, label]) => `<figure><img src="data:image/jpeg;base64,${fs.readFileSync(path.join(sdir, f)).toString('base64')}" alt="${label}" loading="lazy"><figcaption>${label}</figcaption></figure>`)
-        .join('')
-    : '';
+  const shots = {};
+  if (fs.existsSync(path.join(sdir, 'index.tsv')))
+    for (const [f, label] of fs.readFileSync(path.join(sdir, 'index.tsv'), 'utf8').trim().split('\n').map((l) => l.split('\t')))
+      shots[f] = { label, src: `data:image/jpeg;base64,${fs.readFileSync(path.join(sdir, f)).toString('base64')}` };
   const html = fs
     .readFileSync(path.join(__dirname, 'template.html'), 'utf8')
     .replace('{{FONT11}}', b64('node_modules/galmuri/dist/Galmuri11.woff2'))
     .replace('{{FONT11B}}', b64('node_modules/galmuri/dist/Galmuri11-Bold.woff2'))
     .replace('{{SPRITES}}', JSON.stringify(sprites))
     .replace('{{GALLERY}}', JSON.stringify(gallery))
-    .replace('{{SCREENS}}', () => screens)
+    .replace('{{SHOTS}}', () => JSON.stringify(shots))
     .replace('{{JS}}', () => js.replace(/<\/script/gi, '<\\/script'));
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, html);

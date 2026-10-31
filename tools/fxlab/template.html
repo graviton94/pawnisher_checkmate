@@ -39,6 +39,17 @@ h1 b { color: var(--brass); }
 .stage-box { display: grid; gap: 12px; min-width: 0; }
 canvas { width: 100%; max-width: 560px; aspect-ratio: 1; image-rendering: pixelated; border: 3px solid #000; box-shadow: 0 0 0 2px var(--line); background: #110f15; }
 .tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.tab-row { display: grid; gap: 4px; }
+.tabs.topics { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+.tabs.topics button { font-size: 13px; }
+.shots { display: grid; gap: 10px; }
+.shots figure { margin: 0; display: grid; gap: 4px; }
+.shots img { width: 100%; height: auto; display: block; border: 2px solid #000; }
+.shots figcaption { font-size: 12px; color: var(--muted); }
+.fold summary { cursor: pointer; list-style: none; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary h3::before { content: '▸ '; }
+.fold[open] summary h3::before { content: '▾ '; }
 button {
   font: inherit; color: var(--fg); background: var(--panel); border: 2px solid var(--line);
   min-height: 44px; padding: 6px 10px; cursor: pointer; box-shadow: 0 3px 0 #000; position: relative;
@@ -99,9 +110,11 @@ td:last-child { width: 1%; }
 
   <div class="main">
     <div class="stage-box">
-      <div class="tabs" id="tabs" role="group" aria-label="기물"></div>
+      <div class="tab-row"><span class="label">기물 공격</span><div class="tabs" id="tabs" role="group" aria-label="기물"></div></div>
+      <div class="tab-row"><span class="label">보는 중</span><div class="tabs topics" id="topics" role="group" aria-label="보는 중인 주제"></div></div>
       <canvas id="stage" aria-label="공격 장면"></canvas>
-      <div class="controls">
+      <div class="shots" id="shots" hidden></div>
+      <div class="controls" id="controls">
         <div class="segs" role="group" aria-label="진영"><span class="label">진영</span>
           <button type="button" data-side="0" aria-pressed="true">아군</button>
           <button type="button" data-side="1" aria-pressed="false">적</button>
@@ -126,26 +139,20 @@ td:last-child { width: 1%; }
     <section class="panel">
       <h3>최근 바뀐 것</h3>
       <ul id="log"></ul>
-      <details><summary class="muted">이전 기록</summary><ul id="log-old"></ul></details>
+      <div class="table"><table><tbody id="decisions"></tbody></table></div>
     </section>
   </div>
 
-  <section class="panel">
-    <h3>화면 디자인 <span class="muted">— 실제 게임 화면 (모바일 가로 915×412, D-085)</span></h3>
-    <div class="screens">{{SCREENS}}</div>
-  </section>
+  <details class="panel fold">
+    <summary><h3>확정된 것 <span class="muted" id="done-count"></span></h3></summary>
+    <div class="table"><table><tbody id="decisions-done"></tbody></table></div>
+  </details>
 
-  <section class="panel">
-    <h3>에셋 목록 <span class="muted">— 화면 없이 그림만, 도트 1개 = 화면 4px</span></h3>
+  <details class="panel fold">
+    <summary><h3>에셋 목록 <span class="muted">— 그림만, 도트 1개 = 화면 4px</span></h3></summary>
     <div id="gallery" class="gallery"></div>
-  </section>
-
-  <section class="panel">
-    <h3>그래픽 결정 <span class="muted">— 확정은 접어 두고, 보는 중·대기만 펼침</span></h3>
-    <div class="table"><table><tbody id="decisions"></tbody></table></div>
-    <details><summary class="muted">확정된 것</summary><div class="table"><table><tbody id="decisions-done"></tbody></table></div></details>
-  </section>
+  </details>
 </div>
 
-<script>window.SPRITES = {{SPRITES}}; window.GALLERY = {{GALLERY}};</script>
+<script>window.SPRITES = {{SPRITES}}; window.GALLERY = {{GALLERY}}; window.SHOTS = {{SHOTS}};</script>
 <script>{{JS}}</script>
