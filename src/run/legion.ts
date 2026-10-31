@@ -62,7 +62,7 @@ const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
 const TYPE_ENCHANT: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04' };
 const GENERAL: EnchantId[] = ['E05', 'E07', 'E08', 'E09'];
 
-export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0): Encounter => {
+export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0, blueprint?: VariantId): Encounter => {
   const seed = rng.int(1_000_000_000);
   const tier = ascension >= 3 && kind === 'elite' ? 2 : enemyTier(floor, kind);
   const baseForge = enemyForge(floor);
@@ -135,6 +135,16 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   for (let i = enemyVariantCount(floor, kind, rng.next()); i > 0 && vPool.length; i--) {
     const id = vPool.splice(rng.int(vPool.length), 1)[0];
     variants[VARIANTS[id].base] = id;
+  }
+  // 도면 (D-107): 지도에 미리 보인 이형은 이 군단이 꼭 단다 (그 유형이 없으면 폰 하나를 바꿔 넣는다)
+  if (blueprint) {
+    const base = VARIANTS[blueprint].base;
+    if (!deck.includes(base)) {
+      const p = deck.lastIndexOf('P');
+      if (p > 0) deck[p] = base;
+      else deck.push(base);
+    }
+    variants[base] = blueprint;
   }
   // 검문! 정예 접사 (D-096): 일반 기물 중 무작위 유형에 하나씩
   const affixes: { type: PieceType; id: AffixId }[] = [];

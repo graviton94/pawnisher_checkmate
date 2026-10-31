@@ -36,6 +36,9 @@ import {
   finishBattle,
   finishPuzzle,
   battleDeck,
+  buyBlueprint,
+  ownedBlueprints,
+  lacksBlueprint,
   buyPolish,
   altarPremium,
   altarPremiumOpen,
@@ -129,6 +132,13 @@ const enchantOffer = (id: EnchantId, next: number, run: RunState | null): string
 const polishOffer = (run: RunState, id: EnchantId): string => {
   const n = run.loadout.enchants[id] ?? 0;
   return `<span class="kind">${icon('wrench', 's')} ${TEXT.shop.polish}</span><b>${ENCHANTS[id].name}</b><span class="tags"><i class="tag${n + 1 >= 3 ? ' gold' : ''}">${n}단 → ${n + 1}단${n + 1 >= 3 ? ' ★' : ''}</i></span><p>${ENCHANTS[id].levels[n]}</p>`;
+};
+
+/** 도면 카드 (D-107): 어느 유형의 이형인지 · 강점 · 대가 */
+const blueprintOffer = (run: RunState, id: VariantId): string => {
+  const v = VARIANTS[id];
+  const has = run.deck.includes(v.base);
+  return `<span class="kind"><img src="ui/board/variant-${id}.png" alt="" style="width:14px;height:14px;image-rendering:pixelated;vertical-align:-2px"> ${TEXT.blueprint.name} · ${PIECE_NAMES_KO[v.base]}</span>${pieceImg(v.base, 0, 'large', 52)}<b>${v.name}</b><span class="tags"><i class="tag${has ? '' : ' red'}">${has ? `+${VARIANT_FORGE_LEVEL} 공방에서 부음` : `${PIECE_NAMES_KO[v.base]} 없음`}</i></span><p>${v.gain}</p><p class="bad-line">대가: ${v.cost}</p>`;
 };
 
 const cardOffer = (id: CardId): string => {
@@ -226,6 +236,7 @@ export class RunUi {
       <p class="sub">${TEXT.formation.title} <small class="dim">${TEXT.formation.lead}</small></p>
       <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
       <div class="army-list">${units.join('')}</div>
+      <p class="sub">${TEXT.blueprint.name} (${ownedBlueprints(run).length})</p><div class="unlocks">${ownedBlueprints(run).map((id) => `<i class="tag${run.loadout.variants?.[VARIANTS[id].base] === id ? ' gold' : ''}"><img src="ui/board/variant-${id}.png" alt="" style="width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px"> ${VARIANTS[id].name}</i>`).join('') || `<small class="lead">${TEXT.blueprint.empty}</small>`}</div>
       <p class="sub">개조 (${ench.length}/6)</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
       <p class="sub">천공 카드 (${cards.length}/${CARD_SLOTS})</p><div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
@@ -463,8 +474,11 @@ export class RunUi {
           const label = NODE_NAMES[n.kind];
           const state = cur ? 'open' : f < run.floor ? (chosen ? 'chosen past' : 'past') : 'future';
           const ic = n.kind === 'event' && n.event && f <= run.floor ? EVENT_ICON[n.event] : NODE_ICON[n.kind];
-          const title = n.kind === 'boss' ? `${NODE_NAMES.boss} · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `${NODE_NAMES.event} · ${EVENTS[n.event].title}` : NODE_NAMES[n.kind];
-          return `<button class="node ${n.kind} ${state}" type="button" ${cur ? `data-node="${j}"` : 'disabled'} data-f="${f}" data-j="${j}" aria-label="${title}" title="${title}">${icon(ic)}<span>${label}</span></button>`;
+          const bp = n.kind === 'elite' && n.blueprint ? n.blueprint : null;
+          const title = n.kind === 'boss' ? `${NODE_NAMES.boss} · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `${NODE_NAMES.event} · ${EVENTS[n.event].title}` : bp ? `${NODE_NAMES.elite} · ${TEXT.blueprint.name} ${VARIANTS[bp].name}` : NODE_NAMES[n.kind];
+          // 도면 (D-107): 검문!이 다는 이형 — 문양 + 이름 (가진 도면이면 흐리게)
+          const bpTag = bp ? `<span class="bp${ownedBlueprints(run).includes(bp) ? ' owned' : ''}"><img src="ui/board/variant-${bp}.png" alt="">${VARIANTS[bp].name.split(' ')[0]}</span>` : '';
+          return `<button class="node ${n.kind} ${state}" type="button" ${cur ? `data-node="${j}"` : 'disabled'} data-f="${f}" data-j="${j}" aria-label="${title}" title="${title}">${icon(ic)}<span>${label}</span>${bpTag}</button>`;
         })
         .join('');
       return `<div class="floor-col${cur ? ' current' : ''}" data-col="${f}"><span class="fl">${inAct(f)}층</span>${btns}</div>`;
@@ -584,6 +598,9 @@ export class RunUi {
           return `<button class="offer${next >= 3 ? ' rare' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
         })
         .join('');
+    } else if (ch?.type === 'blueprint') {
+      kind = TEXT.blueprint.name;
+      offers = ch.options.map((id) => `<button class="offer" type="button" data-pick="${id}">${blueprintOffer(run, id)}</button>`).join('');
     } else if (ch?.type === 'recruit') {
       kind = R.recruit;
       offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t, ch.variants[t])}</button>`).join('');
@@ -594,7 +611,7 @@ export class RunUi {
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
@@ -663,6 +680,8 @@ export class RunUi {
         return item('ench', i, enchantOffer(p.item, next, run), p.price, p.sold, next >= 3);
       }),
       ...s.cards.map((p, i) => item('card', i, cardOffer(p.item), p.price, p.sold, CARDS[p.item].limit.type === 'consume')),
+      // 도면 진열 (D-107)
+      ...(s.blueprint ? [item('bp', 0, blueprintOffer(run, s.blueprint.item), s.blueprint.price, s.blueprint.sold)] : []),
       // 개조 다듬기 (D-103): 가진 개조 한 단 올리기
       ...(s.polish ? [item('polish', 0, polishOffer(run, s.polish.item), s.polish.price, s.polish.sold, (run.loadout.enchants[s.polish.item] ?? 0) + 1 >= 3)] : []),
     ];
@@ -692,6 +711,10 @@ export class RunUi {
       polish: () => {
         sfx('land');
         this.act(buyPolish(run));
+      },
+      bp: () => {
+        sfx('land');
+        this.act(buyBlueprint(run));
       },
       sellmenu: () => this.showSell(run),
       reroll: () => this.act(reroll(run)),
@@ -735,7 +758,7 @@ export class RunUi {
       return `<div class="forge-card panel9">
         ${pieceImg(t, 0, 'large', 52)}
         <b>${PIECE_NAMES_KO[t]} ×${n}</b>
-        <span class="vname">${v ? `이형 · ${VARIANTS[v].name}` : lv >= VARIANT_FORGE_LEVEL ? '' : `+${VARIANT_FORGE_LEVEL} 이형 가능`}</span>
+        <span class="vname">${v ? `이형 · ${VARIANTS[v].name}` : lv >= VARIANT_FORGE_LEVEL ? '' : `+${VARIANT_FORGE_LEVEL} 도면으로 이형`}</span>
         <span class="lv">${lvPips}</span>
         ${cost === null ? `<span class="tag gold">완성 거푸집</span>` : `<button class="btn${run.gold >= cost ? ' brass' : ' poor'}" type="button" data-up="${t}">+${lv + 1} ${screws(cost)}</button>`}
         ${
@@ -746,7 +769,9 @@ export class RunUi {
             ? opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('')
             : (run.loadout.damage?.[t] ?? 0) > 0
               ? `<button class="btn crimson${run.gold >= DEFECT.repairCost ? '' : ' poor'}" type="button" data-repair="${t}">${TEXT.defect.repair} ${run.loadout.damage![t]}단 ${screws(DEFECT.repairCost)}</button>`
-              : '<span class="slot-v"></span>'
+              : lacksBlueprint(run, t)
+                ? `<span class="slot-v nobp">${TEXT.blueprint.none}</span>`
+                : '<span class="slot-v"></span>'
         }
       </div>`;
     });

@@ -6,6 +6,7 @@ import { ALTAR } from '../data/run';
 import { PIECE_STATS } from '../data/pieces';
 import { resolveTurn, type BattleState, type PieceType } from '../engine';
 import { canAdd } from '../run/deck';
+import { VARIANTS } from '../data/variants';
 import { EVENTS } from '../run/events';
 import { encounterBattle } from '../run/legion';
 import { puzzleBattle, puzzleFor, solvePuzzle } from '../run/puzzle';
@@ -21,6 +22,9 @@ import {
   finishBattle,
   finishPuzzle,
   battleDeck,
+  buyBlueprint,
+  forgeVariantOptions,
+  forgeVariant,
   buyPolish,
   buyEnchant,
   altarPremium,
@@ -167,6 +171,9 @@ export const autoRun = (seed: number): RunLog => {
           const count = (t: PieceType) => run.deck.filter((x) => x === t).length;
           const best = [...ch.options].sort((a, b) => count(b) * 20 + PIECE_STATS[b].value - (count(a) * 20 + PIECE_STATS[a].value))[0];
           if (takeChoice(run, best)) skipChoice(run); // 군단이 꽉 찼으면 넘긴다
+        } else if (ch.type === 'blueprint') {
+          // 군단에 있는 유형의 도면 먼저
+          takeChoice(run, ch.options.find((id) => run.deck.includes(VARIANTS[id].base)) ?? ch.options[0]);
         } else if (ch.type === 'enchant') {
           const id = pickEnchant(run, ch.options);
           const full = !run.loadout.enchants[id] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
@@ -193,6 +200,7 @@ export const autoRun = (seed: number): RunLog => {
         }
         // 후반 나사 쓸 곳 (D-103): 다듬기 · 희귀 진열은 여유가 있으면
         if (st.stock.polish && !st.stock.polish.sold && run.gold - st.stock.polish.price >= 30) buyPolish(run);
+        if (st.stock.blueprint && !st.stock.blueprint.sold && run.gold - st.stock.blueprint.price >= 60) buyBlueprint(run);
         st.stock.enchants.forEach((e, i) => {
           const full = !run.loadout.enchants[e.item] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
           if (!e.sold && !full && run.gold - e.price >= 60) buyEnchant(run, i);
@@ -218,6 +226,11 @@ export const autoRun = (seed: number): RunLog => {
               break;
             }
           }
+        }
+        // 도면이 있으면 이형을 붓는다 (D-107)
+        for (const t of [...new Set(run.deck)]) {
+          const opts = forgeVariantOptions(run, t);
+          if (opts.length) forgeVariant(run, t, opts[0]);
         }
         track();
         leaveNode(run);

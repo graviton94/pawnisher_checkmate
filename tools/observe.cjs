@@ -361,6 +361,18 @@ const scenarios = {
     await page.tap('[data-vpick="N"]'); await page.waitForTimeout(300);
     return ['forge-vpick'];
   },
+  // 도면 (D-107): 지도 검문! 도면 · 도면 보상 · 공방 도면 없음 · 군단 창
+  async blueprint(page) {
+    const bps = ['spring', 'turret', 'boiler', 'scope', 'command', 'hammer'];
+    await loadRun(page, { at: 'map' }, { floor: 4, path: [0, 0, 0], blueprints: ['hammer'], map: Array.from({ length: 36 }, (_, i) => (i % 2 ? [{ kind: 'battle' }, { kind: 'elite', blueprint: bps[i % 6] }] : [{ kind: 'elite', blueprint: bps[(i + 1) % 6] }, { kind: 'shop' }, { kind: 'battle' }])) });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-bp-map.png`) });
+    await loadRun(page, { at: 'reward', title: '검문 통과!', lines: ['나사 +60'], choices: [{ type: 'blueprint', options: ['spring', 'scope'] }] });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-bp-reward.png`) });
+    await loadRun(page, { at: 'forge' }, { gold: 300, blueprints: ['hammer'], loadout: { enchants: {}, cards: [], forge: { N: 3, P: 3 }, variants: {} } });
+    await page.screenshot({ path: path.join(OUT, `${stamp}-bp-forge.png`) });
+    await page.tap('[data-army]'); await page.waitForTimeout(300);
+    return ['bp-army'];
+  },
   async over(page) {
     await scenarios.menu(page);
     await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });

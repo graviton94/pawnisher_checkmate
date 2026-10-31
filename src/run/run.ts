@@ -54,6 +54,8 @@ import { generateEncounter, type Encounter } from './legion';
 export interface MapNode {
   kind: NodeKind;
   event?: EventId;
+  /** 검문!이 다는 이형 — 지도에 도면으로 미리 보인다 (D-107) */
+  blueprint?: VariantId;
 }
 
 /** 3지선다 (인챈트·카드). 건너뛰면 골드 소량 */
@@ -61,8 +63,10 @@ export type Choice =
   | { type: 'enchant'; options: EnchantId[] }
   | { type: 'card'; options: CardId[] }
   | { type: 'piece'; options: PieceType[] }
-  /** 영입 (D-096): 쓰러뜨린 적 기물 하나. 적의 이형이면 그 이형 거푸집도 따라온다 */
-  | { type: 'recruit'; options: PieceType[]; variants: Partial<Record<PieceType, VariantId>> };
+  /** 영입 (D-096): 쓰러뜨린 적 기물 하나. 적의 이형이면 그 도면도 따라온다 (D-107) */
+  | { type: 'recruit'; options: PieceType[]; variants: Partial<Record<PieceType, VariantId>> }
+  /** 도면 (D-107): 쓰러뜨린 군단이 단 이형 중 하나 */
+  | { type: 'blueprint'; options: VariantId[] };
 
 export interface ShopItem<T> {
   item: T;
@@ -77,6 +81,8 @@ export interface ShopStock {
   rerollPrice: number;
   /** 개조 다듬기 (D-103): 가진 개조 한 단 올리기 */
   polish?: ShopItem<EnchantId>;
+  /** 도면 진열 (D-107, Act 2부터): 군단에 있는 유형의 아직 없는 도면 하나 */
+  blueprint?: ShopItem<VariantId>;
 }
 
 export type AltarResult = { kind: 'piece'; piece: PieceType | null } | { kind: 'variant'; variant: VariantId } | { kind: 'miss' } | { kind: 'enchant' } | { kind: 'pick' };
@@ -115,6 +121,8 @@ export interface RunState {
   ascension: number;
   /** 결함 · 봉인: 남은 대국 수 (D-101) */
   sealed?: number;
+  /** 모은 이형 도면 (D-107): 공방은 이것으로만 이형을 부어 준다. 옛 저장은 지금 단 이형만 */
+  blueprints?: VariantId[];
   stage: Stage;
 }
 
@@ -186,7 +194,13 @@ const generateMap = (rng: Rng): MapNode[][] => {
         const j = rng.int(i + 1);
         [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
       }
-      map.push(kinds.map((kind) => (kind === 'event' ? { kind, event: EVENT_IDS[rng.int(EVENT_IDS.length)] } : { kind })));
+      // 검문!은 어떤 이형을 다는지 지도에 미리 보인다 → 갖고 싶은 도면이 있으면 그 검문을 고른다 (D-107)
+      const ALL_VARIANTS = Object.keys(VARIANTS) as VariantId[];
+      map.push(
+        kinds.map((kind) =>
+          kind === 'event' ? { kind, event: EVENT_IDS[rng.int(EVENT_IDS.length)] } : kind === 'elite' ? { kind, blueprint: ALL_VARIANTS[rng.int(ALL_VARIANTS.length)] } : { kind },
+        ),
+      );
     }
   }
   return map;
@@ -242,7 +256,7 @@ export const enterNode = (run: RunState, index: number): string | void => {
     case 'battle':
     case 'elite':
     case 'boss': {
-      const encounter = withRng(run, (rng) => generateEncounter(run.floor, node.kind, rng, run.bosses[actOf(run.floor) - 1], run.ascension ?? 0));
+      const encounter = withRng(run, (rng) => generateEncounter(run.floor, node.kind, rng, run.bosses[actOf(run.floor) - 1], run.ascension ?? 0, node.blueprint));
       encounter.order = withRng(run, (rng) => pickOrder(run.deck, rng));
       run.stage = { at: 'battle', encounter };
       return;
@@ -548,9 +562,12 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     const variants: Partial<Record<PieceType, VariantId>> = {};
     for (const t of options) {
       const v = e.loadout.variants?.[t];
-      if (v && !run.loadout.variants?.[t]) variants[t] = v;
+      if (v && !ownedBlueprints(run).includes(v)) variants[t] = v;
     }
     if (options.length) choices.push({ type: 'recruit', options, variants });
+    // 도면 (D-107): 그 군단이 단 이형 중 아직 없는 것
+    const bps = (Object.values(e.loadout.variants ?? {}) as VariantId[]).filter((id) => !ownedBlueprints(run).includes(id));
+    if (bps.length) choices.unshift({ type: 'blueprint', options: bps.slice(0, 3) });
   }
   choices.push({ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, source)) });
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
@@ -644,13 +661,18 @@ export const takeChoice = (run: RunState, option: string, discard?: EnchantId | 
   if (run.stage.at !== 'reward' || !run.stage.choices.length) return '고를 게 없는데.';
   const ch = run.stage.choices[0];
   if (!(ch.options as string[]).includes(option)) return '없는 선택지';
+  if (ch.type === 'blueprint') {
+    addBlueprint(run, option as VariantId);
+    run.stage.choices.shift();
+    return;
+  }
   if (ch.type === 'piece' || ch.type === 'recruit') {
     const t = option as PieceType;
     if (!canAdd(run.deck, t)) return '“규격 초과.”';
     run.deck.push(t);
-    // 영입한 적이 이형이었으면 그 이형 거푸집도 (아직 이형이 없는 유형만)
+    // 영입한 적이 이형이었으면 그 도면도 따라온다 (D-107: 공방에서 부어 쓴다)
     const v = ch.type === 'recruit' ? ch.variants[t] : undefined;
-    if (v && !run.loadout.variants?.[t]) (run.loadout.variants ??= {})[t] = v;
+    if (v) addBlueprint(run, v);
     run.stage.choices.shift();
     return;
   }
@@ -698,6 +720,8 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
   }
   const owned = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).filter(([, n]) => n < ENCHANT_MAX_STACK);
   const polishId = late && owned.length ? owned[rng.int(owned.length)][0] : undefined;
+  const bpPool = late ? [...new Set(run.deck)].flatMap((t) => variantsFor(t)).filter((id) => !ownedBlueprints(run).includes(id)) : [];
+  const bpId = bpPool.length ? bpPool[rng.int(bpPool.length)] : undefined;
   // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
   const appraisal = run.loadout.enchants.E33 ? tier(MORE.E33, run.loadout.enchants.E33) : 1; // 고물 감정서 (D-105)
   const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal;
@@ -706,6 +730,7 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
     pieces: pieces.map((item) => ({ item, price: at(piecePrice(item)), sold: false })),
     cards: cards.map((item) => ({ item, price: at(cardPrice(item)), sold: false })),
     enchants: enchants.map((item) => ({ item, price: at(enchantPrice(item)), sold: false })),
+    ...(bpId ? { blueprint: { item: bpId, price: at(SHOP.blueprint), sold: false } } : {}),
     ...(polishId ? { polish: { item: polishId, price: at(SHOP.polish.base + SHOP.polish.perLevel * (run.loadout.enchants[polishId] ?? 0)), sold: false } } : {}),
     rerollPrice,
   };
@@ -779,7 +804,20 @@ export const forgeUp = (run: RunState, t: PieceType): string | void => {
 
 /** 이형 거푸집으로 바꿀 수 있는 이형들 (공방, 개량 +3 이상, 아직 이형이 없는 유형 — GDD 13장 P2) */
 export const forgeVariantOptions = (run: RunState, t: PieceType): VariantId[] =>
-  run.deck.includes(t) && (run.loadout.forge[t] ?? 0) >= VARIANT_FORGE_LEVEL && !run.loadout.variants?.[t] ? variantsFor(t) : [];
+  run.deck.includes(t) && (run.loadout.forge[t] ?? 0) >= VARIANT_FORGE_LEVEL && !run.loadout.variants?.[t] ? variantsFor(t).filter((id) => ownedBlueprints(run).includes(id)) : [];
+
+// ---------- 도면 (D-107) ----------
+/** 가진 도면 (지금 단 이형 포함) */
+export const ownedBlueprints = (run: RunState): VariantId[] => [...new Set([...(run.blueprints ?? []), ...(Object.values(run.loadout.variants ?? {}) as VariantId[])])];
+/** 도면을 얻는다. 새 도면이면 true */
+export const addBlueprint = (run: RunState, id: VariantId): boolean => {
+  if (ownedBlueprints(run).includes(id)) return false;
+  run.blueprints = [...(run.blueprints ?? []), id];
+  return true;
+};
+/** 공방에서 이형을 부을 수 있는 단계인데 그 유형 도면이 없는가 (화면 안내용) */
+export const lacksBlueprint = (run: RunState, t: PieceType): boolean =>
+  run.deck.includes(t) && (run.loadout.forge[t] ?? 0) >= VARIANT_FORGE_LEVEL && !run.loadout.variants?.[t] && variantsFor(t).length > 0 && !forgeVariantOptions(run, t).length;
 
 /** 공방: 그 유형의 거푸집을 이형으로 바꾼다 (무료, 되돌릴 수 없음) */
 export const forgeVariant = (run: RunState, t: PieceType, id: VariantId): string | void => {
@@ -794,12 +832,23 @@ const grantVariant = (run: RunState, rng: Rng): VariantId | null => {
   if (!pool.length) return null;
   const id = pool[rng.int(pool.length)];
   run.loadout.variants = { ...run.loadout.variants, [VARIANTS[id].base]: id };
+  addBlueprint(run, id);
   return id;
 };
 
 // ---------- 크랙 제단 ----------
 /** 게이지가 가득 찼으면 원하는 인챈트를 확정으로 고를 수 있다 (GDD 8장 §8.5) */
 export const altarCanPick = (run: RunState): boolean => run.crackGauge >= ALTAR.gaugeMax;
+
+/** 도면 진열 (D-107) */
+export const buyBlueprint = (run: RunState): string | void => {
+  const it = shopOf(run)?.blueprint;
+  if (!it || it.sold) return '“그런 물건 없어.”';
+  if (run.gold < it.price) return '“나사가 부족해.”';
+  run.gold -= it.price;
+  addBlueprint(run, it.item);
+  it.sold = true;
+};
 
 /** 개조 다듬기 (D-103): 가진 개조 한 단 올리기 */
 export const buyPolish = (run: RunState): string | void => {

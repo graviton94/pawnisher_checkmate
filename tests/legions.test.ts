@@ -72,7 +72,7 @@ describe('군단 원형 · 영입 (D-096)', () => {
     expect(knights / total).toBeGreaterThan(0.25);
   });
 
-  it('영입: 검문! 보상에 쓰러뜨린 적 기물 칸, 이형이면 그 거푸집도 따라온다', () => {
+  it('영입: 검문! 보상에 쓰러뜨린 적 기물 칸, 이형이면 그 도면도 따라온다', () => {
     const run = newRun(11);
     run.map[0][0] = { kind: 'elite' };
     enterNode(run, 0);
@@ -90,7 +90,9 @@ describe('군단 원형 · 영입 (D-096)', () => {
     const n = run.deck.filter((t) => t === 'N').length;
     expect(takeChoice(run, 'N')).toBeUndefined();
     expect(run.deck.filter((t) => t === 'N').length).toBe(n + 1);
-    expect(run.loadout.variants?.N).toBe('hammer');
+    // D-107: 이형은 바로 붓지 않고 도면으로 — 공방 +3에서 부어 쓴다
+    expect(run.loadout.variants?.N).toBeUndefined();
+    expect(run.blueprints).toContain('hammer');
   });
 });
 
@@ -194,5 +196,40 @@ describe('반장 셋 더 (D-106)', () => {
     const seen = new Set<string>();
     for (let seed = 1; seed < 80; seed++) for (const b of newRun(seed).bosses) seen.add(b);
     expect(seen.size).toBe(6);
+  });
+});
+
+describe('이형 도면 (D-107)', () => {
+  it('공방은 가진 도면으로만 이형을 붓는다', async () => {
+    const { newRun, forgeVariantOptions, addBlueprint } = await import('../src/run/run');
+    const run = newRun(3);
+    run.deck = ['K', 'N', 'N'];
+    run.loadout.forge = { N: 3 };
+    expect(forgeVariantOptions(run, 'N')).toEqual([]);
+    expect(addBlueprint(run, 'spring')).toBe(true);
+    expect(addBlueprint(run, 'spring')).toBe(false);
+    expect(forgeVariantOptions(run, 'N')).toEqual(['spring']);
+  });
+  it('검문!은 지도에 미리 보인 이형을 꼭 달고, 이기면 그 도면 칸이 뜬다', async () => {
+    const { newRun, enterNode, finishBattle } = await import('../src/run/run');
+    const { createBattle } = await import('../src/engine');
+    const run = newRun(9);
+    run.map[0] = [{ kind: 'elite', blueprint: 'turret' }];
+    enterNode(run, 0);
+    if (run.stage.at !== 'battle') throw new Error('대국 아님');
+    expect(run.stage.encounter.loadout.variants?.R).toBe('turret');
+    expect(run.stage.encounter.deck).toContain('R');
+    const b = createBattle({ width: 6, height: 6, decks: [run.deck, ['K']] });
+    b.winner = 0;
+    finishBattle(run, b);
+    const st = run.stage as unknown as { choices: { type: string; options: string[] }[] };
+    expect(st.choices[0].type).toBe('blueprint');
+    expect(st.choices[0].options).toContain('turret');
+  });
+  it('지도의 검문!마다 도면이 하나씩 붙는다', async () => {
+    const { newRun } = await import('../src/run/run');
+    const elites = newRun(4).map.flat().filter((n) => n.kind === 'elite');
+    expect(elites.length).toBeGreaterThan(0);
+    expect(elites.every((n) => !!n.blueprint)).toBe(true);
   });
 });

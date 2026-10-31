@@ -551,3 +551,11 @@ img { image-rendering: pixelated; }
 
 /* 이형 고르기 대가 줄 (D-106) */
 .chip small.bad { color: var(--crimson-soft); }
+
+/* 도면 (D-107) */
+.node { position: relative; }
+.node .bp { position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); z-index: 1; display: flex; align-items: center; gap: 2px; padding: 2px 4px; font-size: 12px; line-height: 1; color: var(--brass-hi, #e8c060); background: #16141c; border: 2px solid #6b5420; white-space: nowrap; }
+.node .bp img { width: 12px; height: 12px; image-rendering: pixelated; }
+.node .bp.owned { opacity: 0.45; }
+.forge-card .slot-v.nobp { font-size: 12px; color: var(--muted); min-height: 48px; display: flex; align-items: center; }
+.offer .bad-line { color: var(--crimson-soft); font-size: 12px; margin: 0; }
