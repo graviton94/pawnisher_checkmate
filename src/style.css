@@ -738,3 +738,18 @@ body.busy .scene, body.busy .overlay { pointer-events: none; }
 .boss-card[data-bossinfo]:active { filter: brightness(1.15); }
 .offers.scroll-x { padding: 12px 10px; margin: -6px -4px; }
 .info .weak { color: #7dd3fc; }
+
+/* 첫 출하 안내 (D-116): 화면 아래 가운데 서술 한 줄 — 판을 가리지 않게 낮게 */
+.coach {
+  position: fixed; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 70;
+  width: min(560px, 70vw); padding: 8px 12px; display: grid; gap: 6px;
+  background: rgba(10, 8, 14, 0.94); box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--brass), 0 6px 0 2px #000;
+}
+.coach p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text); }
+.coach-row { display: flex; gap: 8px; justify-content: flex-end; }
+.coach-row .btn { min-height: 44px; }
+.coach-row .ghost { filter: brightness(0.75); }
+.coach.in { animation: toastIn 240ms var(--ease-back) both; }
+@media (prefers-reduced-motion: reduce) { .coach.in { animation: none; } }
+.coach.side { left: auto; right: max(8px, env(safe-area-inset-right)); transform: none; width: min(330px, 36vw); bottom: auto; top: 30%; }
+.coach.side.in { animation: fadeIn 200ms ease-out both; }

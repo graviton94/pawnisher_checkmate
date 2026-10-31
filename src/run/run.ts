@@ -137,6 +137,8 @@ export interface RunState {
   /** 유니크 보정 (D-112): 유니크가 안 나온 칸마다 쌓이는 %p · 검문! 에픽 보정 */
   pity?: number;
   goldPity?: number;
+  /** 출하를 시작한 시각 (출하 기록용, 화면이 넣는다 — 엔진 결과와 무관) */
+  startedAt?: number;
   stage: Stage;
 }
 

@@ -14,6 +14,9 @@ import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { ACT_NAMES, ALTAR, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
+import { coach } from './coach';
+import { logBattle, logOffer, logRun } from '../run/telemetry';
+import { TUTORIAL_SEED } from '../data/coach';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
 import { LEGENDS, type LegendId } from '../data/legends';
 import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
@@ -308,6 +311,7 @@ export class RunUi {
       menu: () => this.showMenu(),
       abandon: () => {
         saveMeta(recordRunEnd(loadMeta(), run.floor, false, run.ascension ?? 0, run));
+        logRun(run, false, Date.now() - (run.startedAt ?? Date.now()));
         clearRun();
         this.run = null;
         this.showMenu();
@@ -463,7 +467,8 @@ export class RunUi {
   /** 새 출하: 시작 세트 3지선다 */
   private startNew(fixed?: number): void {
     const meta = loadMeta();
-    const seed = fixed ?? freshSeed();
+    // 첫 출하는 1~3층이 무난한 고정 시드 (D-116)
+    const seed = fixed ?? (meta.runs === 0 ? TUTORIAL_SEED : freshSeed());
     const decks = startDeckOptions(seed, unlockedDecks(meta));
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('flag', 's')}${TEXT.start.title}</span><span class="spacer"></span>${button(TEXT.start.back, 'data-menu')}</div>
@@ -476,9 +481,11 @@ export class RunUi {
         })
         .join('')}</div></div>`,
     );
+    coach('start');
     this.wire(el, {
       deck: (b) => {
         this.run = newRun(seed, { ascension: Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta), deck: decks[Number(b.dataset.deck)] });
+        this.run.startedAt = Date.now();
         sfx('submit');
         this.save();
         this.show();
@@ -572,6 +579,7 @@ export class RunUi {
       window.setTimeout(() => this.show(), 600);
     };
     this.c.startState(state, 0, TUNED, { singleTurn: true });
+    coach('puzzle');
     this.hud.toast(TEXT.puzzle.opening);
   }
 
@@ -620,6 +628,7 @@ export class RunUi {
       </div>
       <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'altar', 'event', 'puzzle'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
     );
+    coach('map');
     this.wireBar(el, run);
     this.wire(el, {
       node: (b) => this.act(enterNode(run, Number(b.dataset.node))),
@@ -675,7 +684,9 @@ export class RunUi {
       recordBattle(run, s);
       this.save();
     };
+    const startedAt = Date.now();
     this.c.onBattleEnd = (s) => {
+      logBattle(run, state, s, Date.now() - startedAt, e.kind, e.boss ?? (e.kind === 'boss' ? 'final' : undefined)); // 출하 기록 (D-117)
       if (s.winner === 0 && e.kind === 'boss') unlockAchievement(`ACT${actOf(run.floor)}_CLEAR`);
       finishBattle(run, s);
       this.save();
@@ -688,6 +699,8 @@ export class RunUi {
     const opening =
       e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`;
     this.hud.toast(opening);
+    if (e.kind === 'elite') coach('elite');
+    if (e.kind === 'boss') coach('boss');
     // 억까·억빠 (D-099): 대국 시작 한 줄 다음에 · 봉인 (D-101)
     const later: string[] = [];
     if (e.luck) later.push(TEXT.luck[e.luck]);
@@ -742,14 +755,17 @@ export class RunUi {
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
       </div>`,
     );
+    coach(ch?.type === 'legend' ? 'epic' : 'reward');
     this.wireBar(el, run);
     this.wire(el, {
       pick: (b) => {
         const id = b.dataset.pick!;
+        if (ch) logOffer(run, ch.type, ch.options as string[], id);
         sfx('land');
         this.act(takeChoice(run, id), () => this.discardPicker(run, ch!.type === 'enchant' ? 'enchant' : 'card', (d) => this.act(takeChoice(run, id, d))));
       },
       skip: () => {
+        if (ch) logOffer(run, ch.type, ch.options as string[], null);
         skipChoice(run);
         this.act();
       },
@@ -824,6 +840,7 @@ export class RunUi {
         </div>
       </div>`,
     );
+    coach('shop');
     this.wireBar(el, run);
     this.wire(el, {
       piece: (b) => this.act(buyPiece(run, Number(b.dataset.piece))),
@@ -909,6 +926,7 @@ export class RunUi {
       <div class="stage"><div class="forge-row">${cards.join('')}</div></div>
       <div style="display:flex;justify-content:flex-end;padding-bottom:8px">${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
     );
+    coach('forge');
     this.wireBar(el, run);
     this.wire(el, {
       up: (b) => {
@@ -964,7 +982,8 @@ export class RunUi {
           })
           .join('')}</div></div>`,
       );
-      this.wireBar(el, run);
+      coach('altar');
+    this.wireBar(el, run);
       this.wire(el, {
         pick: (b) => {
           const id = b.dataset.pick as EnchantId;
@@ -1039,6 +1058,7 @@ export class RunUi {
         </div>
       </div>`,
     );
+    coach('event');
     this.wireBar(el, run);
     this.wire(el, {
       ev: (b) => this.act(eventChoose(run, Number(b.dataset.ev))),
@@ -1054,6 +1074,7 @@ export class RunUi {
     const floor = Math.min(run.floor, TOTAL_FLOORS);
     const before = loadMeta();
     const meta = recordRunEnd(before, floor, won, run.ascension ?? 0, run);
+    logRun(run, won, Date.now() - (run.startedAt ?? Date.now()));
     if (won) unlockAchievement(`ASCENSION_${run.ascension ?? 0}_CLEAR`);
     saveMeta(meta);
     clearRun();

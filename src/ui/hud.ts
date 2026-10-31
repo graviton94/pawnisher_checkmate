@@ -16,6 +16,8 @@ import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
 import { LEGENDS } from '../data/legends';
+import { coach, coachOn, resetCoach, setCoach } from './coach';
+import { exportLog, logSummary } from '../run/telemetry';
 import { CARD_GRADE } from '../data/grades';
 import { ghostOut, replay } from './motion';
 import { MOTION } from '../data/motion';
@@ -192,6 +194,7 @@ export class Hud implements HudView {
   }
 
   update(c: BattleController): void {
+    this.coachBattle(c);
     this.renderCards(c);
     this.renderOrder(c);
     const label = $('turn-label');
@@ -250,6 +253,20 @@ export class Hud implements HudView {
     ($('btn-undo') as HTMLButtonElement).disabled = !mine || !c.plan.length;
     ($('btn-reset') as HTMLButtonElement).disabled = !mine || !c.plan.length;
     ($('btn-submit') as HTMLButtonElement).disabled = !mine;
+  }
+
+  /** 첫 출하 안내 (D-116): 대국 상황마다 한 번씩 (본 것은 다시 안 나온다) */
+  private coachBattle(c: BattleController): void {
+    if (!c.state || c.phase !== 'plan') return;
+    if (c.state.pieces.some((p) => p.type === 'K' && p.hp === 1) && c.state.rules.checkmate) return coach('check');
+    if (c.plan.length >= 2) return coach('chain');
+    if (c.plan.length >= 1) {
+      coach('tape');
+      return coach('ap');
+    }
+    if (c.selectedId !== null) return coach('targets');
+    if (c.state.turnNumber >= 3) coach('intent');
+    coach('select');
   }
 
   toast(msg: string): void {
@@ -379,6 +396,9 @@ export class Hud implements HudView {
       <h2>${S.title}</h2>
       <div class="col">
         ${button(`${S.sfx}: ${sfxOn() ? S.on : S.off}`, 'data-sfx', { icon: 'bell', cls: 'wide' })}
+        ${button(`${S.coach}: ${coachOn() ? S.on : S.off}`, 'data-coach', { icon: 'question', cls: 'wide' })}
+        ${button(S.coachReset, 'data-coachreset', { icon: 'swap', cls: 'wide' })}
+        ${button(S.log, 'data-log', { icon: 'crate', cls: 'wide', small: S.logSmall(logSummary()) })}
         ${this.onIntro ? button(S.intro, 'data-intro', { icon: 'watch', cls: 'wide' }) : ''}
         ${button(S.close, 'data-close', { tone: 'brass', cls: 'wide' })}
       </div>`);
@@ -386,6 +406,18 @@ export class Hud implements HudView {
       setSfx(!sfxOn());
       if (sfxOn()) sfx('submit');
       this.showSettings(back);
+    });
+    panel.querySelector('[data-coach]')!.addEventListener('click', () => {
+      setCoach(!coachOn());
+      this.showSettings(back);
+    });
+    panel.querySelector('[data-log]')!.addEventListener('click', async () => {
+      const r = await exportLog();
+      this.toast(r === 'file' ? S.logFile : r === 'clipboard' ? S.logClip : S.logFail);
+    });
+    panel.querySelector('[data-coachreset]')!.addEventListener('click', () => {
+      resetCoach();
+      this.toast(S.coachResetDone);
     });
     panel.querySelector('[data-intro]')?.addEventListener('click', () => {
       this.closeOverlay();
