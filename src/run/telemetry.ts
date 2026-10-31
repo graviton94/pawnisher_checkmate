@@ -1,4 +1,5 @@
 import type { BattleState } from '../engine/types';
+import { APP_VERSION } from '../data/version';
 import type { RunState } from './run';
 
 /**
@@ -67,7 +68,7 @@ export const logSummary = (): { runs: number; battles: number; offers: number } 
 
 /** 내보내기: 파일로 내려받고, 안 되면 클립보드로. 결과 문구를 돌려준다 */
 export const exportLog = async (): Promise<string> => {
-  const text = JSON.stringify({ app: 'pawnisher', version: 1, exported: new Date().toISOString(), entries: read() });
+  const text = JSON.stringify({ app: 'pawnisher', version: 1, build: APP_VERSION, exported: new Date().toISOString(), entries: read() });
   try {
     const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     const a = document.createElement('a');

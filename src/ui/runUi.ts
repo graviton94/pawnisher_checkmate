@@ -21,6 +21,7 @@ import { LINES, lineOf } from '../data/lines';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
 import { LESSONS } from '../data/onboarding';
 import { RULEBOOK } from '../data/rulebook';
+import { APP_VERSION } from '../data/version';
 import { lessonBattle } from '../run/onboarding';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
 import { LEGENDS, RESONANCES, type LegendId } from '../data/legends';
@@ -344,7 +345,7 @@ export class RunUi {
       const el = this.hud.openScene(
         `<img class="logo in" src="./logo.png" alt="Pawnisher : Checkmate">
         <p class="press">${TEXT.pressStart}</p>
-        <span class="ver">${TEXT.tagline}</span>`,
+        <span class="ver">${TEXT.tagline} · v${APP_VERSION}</span>`,
         'title-screen',
         'title',
       );
