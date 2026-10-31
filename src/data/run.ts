@@ -239,7 +239,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
     enchants: { E02: 3 },
     cards: ['A03'],
-    forge: { B: 3 },
+    forge: { B: 2 }, // D-111: 첫 반장 55% → 한 단 낮춤
     arena: 'lens',
   },
   rook: {
@@ -251,7 +251,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
     enchants: { E03: 3 },
     cards: ['A06'],
-    forge: { R: 2 },
+    forge: { R: 3 }, // D-111: 첫 반장 85% → 한 단 올림
     arena: 'wall',
   },
   // ---- 볼륨 2 (D-106): 반장 셋 더 — 한 출하에 둘이 나오니 여섯 중 둘 ----
@@ -261,9 +261,9 @@ export const BOSSES: Record<BossId, BossDef> = {
     role: '물량 라인의 감독',
     quote: '하나 부서지면 둘 찍는다.',
     deck: ['K', 'Q', 'R', 'R', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-    enchants: { E12: 3, E04: 2 },
+    enchants: { E12: 2, E04: 2 }, // D-111: 첫 반장 41% → 개조 한 단 · 개량 한 단 낮춤
     cards: ['A06'],
-    forge: { P: 2 },
+    forge: { P: 1 },
     arena: 'belt',
   },
   variant: {
@@ -274,7 +274,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E09: 2 },
     cards: ['A04'],
-    forge: { N: 1, B: 1 },
+    forge: { N: 2, B: 2, R: 1 }, // D-111: 첫 반장 90% → 올림
     arena: 'scrapyard',
     variants: { P: 'boiler', N: 'spring', B: 'scope', R: 'turret', Q: 'command' },
   },
