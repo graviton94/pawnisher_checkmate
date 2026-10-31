@@ -15,6 +15,8 @@ import { pop, stamp } from './juice';
 import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
+import { ghostOut, replay } from './motion';
+import { MOTION } from '../data/motion';
 import { button, icon } from './chrome';
 import { setSfx, sfxOn } from '../audio/sfx';
 
@@ -252,8 +254,13 @@ export class Hud implements HudView {
     const t = $('toast');
     t.textContent = msg;
     t.hidden = false;
+    t.classList.remove('out');
+    replay(t, 'in');
     window.clearTimeout(this.toastTimer);
-    this.toastTimer = window.setTimeout(() => (t.hidden = true), 1600);
+    this.toastTimer = window.setTimeout(() => {
+      t.classList.add('out');
+      this.toastTimer = window.setTimeout(() => (t.hidden = true), MOTION.toastOut);
+    }, 1600);
   }
 
   showInfo(p: Piece, clientX: number, clientY: number): void {
@@ -294,21 +301,36 @@ export class Hud implements HudView {
     $('info').hidden = true;
   }
 
+  /** 모달 열기: 처음 열 때만 튀어나온다 (열린 채 내용만 바뀌면 그대로) */
   openOverlay(html: string): HTMLElement {
     const panel = $('overlay-panel');
+    const wasOpen = !$('overlay').hidden;
     panel.innerHTML = html;
     $('overlay').hidden = false;
+    if (!wasOpen) replay($('overlay'), 'in');
     return panel;
   }
 
   closeOverlay(): void {
-    $('overlay').hidden = true;
+    const o = $('overlay');
+    if (o.hidden) return;
+    ghostOut(o, 'out', MOTION.overlayOut);
+    o.hidden = true;
   }
+
+  /** 다음 openScene의 화면 이름. 같은 이름이면 다시 그리기로 보고 전환 연출을 하지 않는다 (D-109) */
+  sceneKey: string | undefined;
 
   /** 전체 화면 장면 (타이틀·메뉴·출하 화면): 공장 배경 위에 그린다 */
   openScene(html: string, cls = '', backdrop: 'title' | 'dim' = 'dim'): HTMLElement {
     const el = $('scene');
-    el.className = `scene fade-in ${cls}`;
+    const key = this.sceneKey ?? `${cls}|${/class="plate">([^<]*<[^>]*>)?([^<]*)/.exec(html)?.[2] ?? ''}`;
+    this.sceneKey = undefined;
+    const same = !el.hidden && el.dataset.key === key;
+    // 화면 전환: 옛 화면은 흐려지며 위로 빠지고, 새 화면은 아래에서 떠오른다. 카드는 하나씩 들어온다
+    if (!same) ghostOut(el, 'out', MOTION.sceneOut);
+    el.className = `scene ${same ? 'refresh' : 'enter'} ${cls}`;
+    el.dataset.key = key;
     el.innerHTML = html;
     el.hidden = false;
     this.closeOverlay();
@@ -320,7 +342,9 @@ export class Hud implements HudView {
 
   /** 장면을 닫고 전투 화면으로 */
   closeScene(): void {
+    ghostOut($('scene'), 'out', MOTION.sceneOut);
     $('scene').hidden = true;
+    delete $('scene').dataset.key;
     this.backdrop.hide();
   }
 

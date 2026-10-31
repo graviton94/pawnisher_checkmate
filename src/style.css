@@ -263,7 +263,6 @@ img { image-rendering: pixelated; }
   display: flex; flex-direction: column;
   padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px, env(safe-area-inset-left));
 }
-.scene.fade-in { animation: fadeIn 0.25s ease-out; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* 상단 상태 띠: 공정·층 · 나사 · 행운 톱니 · 압력 · 군단 · 메뉴 */
@@ -414,7 +413,7 @@ img { image-rendering: pixelated; }
   .rotate { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .press, .node.open, .title-screen .logo.in, .stamp-big, .scene.fade-in { animation: none; }
+  .press, .node.open, .title-screen .logo.in, .stamp-big { animation: none; }
 }
 
 /* 시운전 · 장비 편집 (개발·시험용 화면): 옛 마크업을 새 부품 모양으로 */
@@ -585,3 +584,75 @@ img { image-rendering: pixelated; }
 .cx:active { transform: translateY(1px); }
 .codex-grid.wide { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
 .codex-grid.wide .cx { gap: 1px; }
+
+/* ---------------- 조작 반응 모션 (D-109) ----------------
+   곡선: 나감 = 빠르게 시작해 느려짐(expo-out), 들어옴 = 살짝 넘쳤다 돌아옴(back-out). 시간은 src/data/motion.ts와 맞춘다. */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+}
+body.busy .scene, body.busy .overlay { pointer-events: none; }
+.ghost { pointer-events: none !important; }
+
+/* 누름: 손가락이 닿는 순간 눌린다 (버튼은 눌린 그림 + 아래로 2px, 카드·칸은 살짝 작아짐) */
+.offer, .node, .chip, .cx, .card, .tac { transition: transform 90ms var(--ease-out), filter 90ms; }
+.offer:active:not(:disabled), .chip:active:not(:disabled), .cx:active, .card:active:not(:disabled) { transform: translateY(2px) scale(0.97); filter: brightness(1.15); }
+.node:active:not(:disabled) { transform: scale(0.92); }
+.btn { transition: filter 90ms; }
+.btn:active:not(:disabled) { filter: brightness(1.12); }
+
+/* 화면 전환: 새 화면이 아래서 떠오르고, 옛 화면(유령)은 흐려지며 위로 */
+.scene.enter { animation: sceneIn 260ms var(--ease-out) both; }
+@keyframes sceneIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.scene.ghost.out { z-index: 31; animation: sceneOut 160ms var(--ease-in) forwards; }
+@keyframes sceneOut { to { opacity: 0; transform: translateY(-8px); } }
+
+/* 고르기 카드 등장: 하나씩 (60ms 간격) 아래에서 튀어 올라온다 */
+.scene.enter .offers > .offer, .scene.enter .offers > .chip { animation: offerIn 340ms var(--ease-back) both; }
+.scene.enter .offers > :nth-child(1) { animation-delay: 90ms; }
+.scene.enter .offers > :nth-child(2) { animation-delay: 150ms; }
+.scene.enter .offers > :nth-child(3) { animation-delay: 210ms; }
+.scene.enter .offers > :nth-child(4) { animation-delay: 270ms; }
+.scene.enter .offers > :nth-child(n+5) { animation-delay: 320ms; }
+@keyframes offerIn { from { opacity: 0; transform: translateY(26px) scale(0.92); } to { opacity: 1; transform: none; } }
+/* 지도: 지금 고를 수 있는 칸이 차례로 켜진다 */
+.scene.enter .node.open { animation: nodeIn 320ms var(--ease-back) 120ms both, nodePulse 1.1s steps(2) 440ms infinite; }
+@keyframes nodeIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+
+/* 고름: 고른 것은 들리며 금빛 번쩍, 나머지는 가라앉아 사라진다 */
+.picked { position: relative; z-index: 2; animation: picked 280ms var(--ease-out) both !important; }
+@keyframes picked {
+  0% { transform: none; filter: none; }
+  35% { transform: translateY(-10px) scale(1.06); filter: brightness(1.6) drop-shadow(0 0 6px #facc15); }
+  100% { transform: translateY(-6px) scale(1.04); filter: brightness(1.2) drop-shadow(0 0 4px #facc15); }
+}
+.node.picked { animation-name: pickedNode !important; }
+@keyframes pickedNode { 35% { transform: scale(1.25); filter: brightness(1.7); } 100% { transform: scale(1.12); filter: brightness(1.3); } }
+.dismissed { animation: dismissed 220ms var(--ease-out) var(--d, 0ms) both !important; pointer-events: none; }
+@keyframes dismissed { to { opacity: 0; transform: translateY(18px) scale(0.9); filter: grayscale(1) brightness(0.5); } }
+/* 못 고름 (나사 부족 등): 좌우로 짧게 고개를 젓는다 */
+.nope { animation: nope 260ms var(--ease-out) !important; }
+@keyframes nope { 20% { transform: translateX(-5px); } 45% { transform: translateX(4px); } 70% { transform: translateX(-2px); } }
+
+/* 모달: 배경이 깔리고 판이 살짝 튀어나온다. 닫힐 때는 줄어들며 흐려진다 */
+.overlay.in { animation: fadeIn 160ms var(--ease-out) both; }
+.overlay.in .panel { animation: panelIn 240ms var(--ease-back) both; }
+@keyframes panelIn { from { opacity: 0; transform: scale(0.9) translateY(8px); } to { opacity: 1; transform: none; } }
+.overlay.ghost.out { z-index: 41; animation: fadeOut 140ms var(--ease-in) forwards; }
+.overlay.ghost.out .panel { animation: panelOut 140ms var(--ease-in) forwards; }
+@keyframes fadeOut { to { opacity: 0; } }
+@keyframes panelOut { to { transform: scale(0.94); } }
+
+/* 토스트: 위에서 툭 내려오고, 위로 사라진다 */
+.toast.in { animation: toastIn 220ms var(--ease-back) both; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.toast.out { animation: toastOut 180ms var(--ease-in) forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translate(-50%, -10px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene.enter, .scene.enter .offers > *, .scene.enter .node.open, .picked, .node.picked, .dismissed, .nope, .overlay.in, .overlay.in .panel, .toast.in, .toast.out { animation: none; }
+  .ghost { display: none; }
+  .picked, .node.picked, .dismissed, .nope { animation: none !important; }
+  .offer, .node, .chip, .cx, .card, .tac { transition: none; }
+}

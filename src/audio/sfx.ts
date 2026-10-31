@@ -3,7 +3,7 @@
  * 나중에 필요한 것만 녹음·에셋으로 바꾼다 (사용자 결정). 켜고 끄기는 메인 메뉴, 값은 localStorage에.
  */
 
-export type SfxKind = 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 'threat' | 'win' | 'lose' | 'coin' | 'spend' | 'rare' | 'jackpot' | 'hurt' | 'loss' | 'stamp' | 'awaken';
+export type SfxKind = 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 'threat' | 'win' | 'lose' | 'coin' | 'spend' | 'rare' | 'jackpot' | 'hurt' | 'loss' | 'stamp' | 'awaken' | 'tap';
 
 const KEY = 'pawnisher.sfx';
 let ctx: AudioContext | null = null;
@@ -85,6 +85,10 @@ export const sfx = (kind: SfxKind, combo = 0): void => {
   switch (kind) {
     case 'lift':
       tone(a, t, 330, 520, 0.07, 'square', 0.06);
+      break;
+    case 'tap':
+      // 누름 (D-109): 아주 짧은 딸깍 — 뒤따르는 효과음을 가리지 않게 작게
+      tone(a, t, 1400, 900, 0.025, 'square', 0.025);
       break;
     case 'land':
       noise(a, t, 0.06, 0.18, 300);

@@ -1,3 +1,4 @@
+import { installPressFeedback } from './ui/motion';
 import { TERRAIN } from './data/terrain';
 import './fonts.css';
 import './style.css';
@@ -9,6 +10,7 @@ import { standingOf } from './engine';
 import { BoardRenderer, GRADE } from './view/BoardRenderer';
 
 const hud = new Hud();
+installPressFeedback();
 let controller: BattleController;
 
 const renderer = new BoardRenderer(document.getElementById('board')!, {

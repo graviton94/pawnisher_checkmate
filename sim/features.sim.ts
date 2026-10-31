@@ -29,6 +29,9 @@ it('features', () => {
   const byLuck = new Map<string, [number, number]>();
   for (const b of bs) { const k = b.luck ?? 'none'; const v = byLuck.get(k) ?? [0, 0]; v[1]++; if (b.won) v[0]++; byLuck.set(k, v); }
   console.log(`억까·억빠별 승률: ${[...byLuck.entries()].map(([k, [w, t]]) => `${k} ${pct(w, t)}(${t})`).join(' · ')}`);
+  const byBoss = new Map<string, [number, number]>();
+  for (const b of bs.filter((x) => x.boss)) { const k = `${b.boss}@${b.floor}`; const v = byBoss.get(k) ?? [0, 0]; v[1]++; if (b.won) v[0]++; byBoss.set(k, v); }
+  console.log(`반장별 승률: ${[...byBoss.entries()].sort().map(([k, [w, t]]) => `${k} ${pct(w, t)}(${t})`).join(' · ')}`);
   const pz = logs.flatMap((l) => l.puzzles);
   console.log(`묘수 ${pz.length}회 · 해법 ${pct(pz.filter(Boolean).length, pz.length)}`);
 }, 7_200_000);

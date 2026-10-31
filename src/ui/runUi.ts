@@ -13,6 +13,7 @@ import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { ACT_NAMES, ALTAR, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
+import { choose, dismissAll } from './motion';
 import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import { EVENT_IDS } from '../run/events';
 import type { BattleController } from '../game/controller';
@@ -68,6 +69,9 @@ import { unlockAchievement } from '../platform';
 import { VARIANTS, VARIANT_FORGE_LEVEL, type VariantId } from '../data/variants';
 
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
+/** 고르기 모션을 거는 버튼 (D-109). 고물상 진열(BUY)은 고른 것만 들리고 나머지는 남는다 */
+const BUY_ATTRS = new Set(['piece', 'ench', 'card', 'bp', 'polish']);
+const CHOOSE_ATTRS = new Set(['pick', 'deck', 'node', 'd', 'v', 'sell', ...BUY_ATTRS]);
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
 const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
@@ -187,7 +191,14 @@ export class RunUi {
   /** 버튼 묶음 연결: data-* 속성 이름 → 처리 */
   private wire(panel: HTMLElement, handlers: Record<string, (el: HTMLElement) => void>): void {
     for (const [attr, fn] of Object.entries(handlers)) {
-      panel.querySelectorAll<HTMLElement>(`[data-${attr}]`).forEach((el) => el.addEventListener('click', () => fn(el)));
+      panel.querySelectorAll<HTMLElement>(`[data-${attr}]`).forEach((el) =>
+        el.addEventListener('click', () => {
+          // 고르기 모션 (D-109): 고른 카드는 들리고, 나머지는 가라앉아 사라진 뒤 다음으로
+          if (CHOOSE_ATTRS.has(attr) && el.matches('.offer, .node, .chip')) return choose(el, () => fn(el), !BUY_ATTRS.has(attr));
+          if (attr === 'skip') return dismissAll(panel.querySelector('.offers'), () => fn(el));
+          fn(el);
+        }),
+      );
     }
   }
 
@@ -475,6 +486,9 @@ export class RunUi {
   private render(): void {
     const run = this.run;
     if (!run) return this.showMenu();
+    // 같은 화면 다시 그리기(고물상에서 사기 등)는 전환 연출 없이 (D-109)
+    const st = run.stage;
+    this.hud.sceneKey = `${st.at}:${run.floor}:${st.at === 'reward' ? st.choices.length : st.at === 'event' ? ('result' in st ? 1 : 0) : ''}`;
     switch (run.stage.at) {
       case 'map':
         return this.showMap(run);

@@ -228,6 +228,34 @@ const scenarios = {
     return ['pause'];
   },
   // 출하 화면들 (D-085): 저장된 출하를 심고 → 타이틀 → 이어서 출하
+  // 조작 반응 모션 (D-109): 타이머를 붙잡고 CSS 애니메이션을 원하는 시점에 세워 프레임을 찍는다
+  async motion(page) {
+    const freeze = () => page.evaluate(() => { window.__held = []; window.__st = window.__st || window.setTimeout; window.setTimeout = (f, ms, ...a) => { window.__held.push(() => f(...a)); return 0; }; });
+    const thaw = () => page.evaluate(() => { window.setTimeout = window.__st; window.__held.forEach((f) => f()); window.__held = []; document.getAnimations().forEach((a) => a.play()); });
+    const at = (ms) => page.evaluate((t) => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = t; }), ms);
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-motion-${n}.png`) });
+    await loadRun(page, { at: 'map' }, { floor: 4, path: [0, 1, 0], map: Array.from({ length: 36 }, () => [{ kind: 'battle' }, { kind: 'shop' }, { kind: 'forge' }]) });
+    await freeze();
+    await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('pawnisher.run.v1')); s.stage = { at: 'reward', title: '4층 통과', lines: ['나사 +34'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] }; localStorage.setItem('pawnisher.run.v1', JSON.stringify(s)); });
+    await thaw();
+    // 지도에서 노드 고름 → 고른 칸이 커지고 나머지는 가라앉음
+    await freeze(); await page.tap('[data-node="1"]'); await at(140); await shot('1-node-chosen'); await thaw(); await page.waitForTimeout(500);
+    // 고물상 들어옴: 카드가 하나씩 (220ms 시점)
+    await page.tap('[data-leave]').catch(() => {});
+    await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('pawnisher.run.v1')); s.stage = { at: 'reward', title: '4층 통과', lines: ['나사 +34'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] }; localStorage.setItem('pawnisher.run.v1', JSON.stringify(s)); });
+    await page.reload(); await page.waitForTimeout(600); await page.tap('[data-title]'); await page.waitForTimeout(300);
+    await freeze(); await page.tap('[data-continue]'); await at(200); await shot('2-offers-in'); await thaw(); await page.waitForTimeout(500);
+    // 카드 고름: 고른 것은 들리고, 나머지는 사라지는 중
+    await freeze(); await page.tap('[data-pick="R"]'); await at(150); await shot('3-chosen'); await thaw(); await page.waitForTimeout(100);
+    // 다음 화면으로 넘어가는 순간 (옛 화면 유령 + 새 화면 떠오름)
+    await at(90); await shot('4-crossfade'); await page.evaluate(() => document.getAnimations().forEach((a) => a.play())); await page.waitForTimeout(600);
+    // 모달 열림 (군단 보기) 120ms
+    await freeze(); await page.tap('[data-army]'); await at(120); await shot('5-overlay-in'); await thaw(); await page.waitForTimeout(400);
+    await page.tap('[data-close]'); await page.waitForTimeout(400);
+    // 건너뛰기: 전부 가라앉음
+    await freeze(); await page.tap('[data-skip]'); await at(160); await shot('6-skip'); await thaw(); await page.waitForTimeout(600);
+    return ['motion-7-after'];
+  },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });
