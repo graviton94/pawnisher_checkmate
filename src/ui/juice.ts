@@ -109,6 +109,8 @@ export interface RunDelta {
   /** 손상 단 증가 · 봉인 증가 */
   damaged: number;
   sealed: number;
+  /** 새로 얻은 황금 부품 (D-112) */
+  legend?: number;
 }
 
 /**
@@ -126,6 +128,14 @@ export const runFeedback = (root: ParentNode, d: RunDelta, goldBefore: number): 
     shake(bad ?? goldEl, 1.4);
     burst(bad ?? goldEl, 'bad', 10);
     stamp(d.deck < 0 ? '손실!' : d.damaged > 0 ? '손상!' : '봉인!', 'bad');
+    return;
+  }
+  if (d.legend) {
+    // 황금 부품: 가장 큰 쾌감 — 금빛 가장자리 끝까지 + 파편 + 도장
+    sfx('jackpot');
+    vignette('good', 1);
+    burst(root.querySelector('.bar .btn.army'), 'good', 24);
+    stamp('황금!', 'good');
     return;
   }
   if (d.awakened > 0) {

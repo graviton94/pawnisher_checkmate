@@ -15,6 +15,8 @@ import { pop, stamp } from './juice';
 import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
+import { LEGENDS } from '../data/legends';
+import { CARD_GRADE } from '../data/grades';
 import { ghostOut, replay } from './motion';
 import { MOTION } from '../data/motion';
 import { button, icon } from './chrome';
@@ -126,7 +128,7 @@ export class Hud implements HudView {
           : lim.type === 'consume' ? '종이 · 한 번' : lim.type === 'round' ? '대국당 1회' : `냉각 ${lim.turns}턴`;
       const off = slot.spent || slot.cooldown > 0 || c.phase !== 'plan';
       slots.push(
-        `<button type="button" class="card ${slot.id[0] === 'C' ? 'consume' : ''}${armed ? ' armed' : ''}" data-card="${i}" ${off ? 'disabled' : ''}>
+        `<button type="button" class="card ${lim.type === 'consume' ? 'consume' : ''}${CARD_GRADE[slot.id] === 'legend' ? ' legend' : ''}${armed ? ' armed' : ''}" data-card="${i}" ${off ? 'disabled' : ''}>
           <span class="card-name">${def.name}</span>
           <span class="card-desc">${def.desc}</span>
           <span class="card-tag">${def.ap ? `태엽 ${def.ap} · ` : ''}${status}</span>
@@ -405,6 +407,7 @@ export class Hud implements HudView {
     const variants = lo?.variants ? Object.values(lo.variants).map((id) => VARIANTS[id].name) : [];
     const panel = this.openOverlay(`
       <h2>${icon('wrench')} 개조</h2>
+      ${(lo?.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-legend">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('')}
       ${rows.length ? rows.join('') : '<p>아직 달린 개조가 없다. 대국을 이기면 3지선다로 얻는다.</p>'}
       ${forgeLine}
       ${variants.length ? `<p>이형 거푸집: ${variants.join(' · ')}</p>` : ''}

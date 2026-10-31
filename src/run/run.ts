@@ -6,6 +6,8 @@ import { DEFECT } from '../data/defects';
 import { DEFAULT_FORMATION } from '../data/formations';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { ASC, ascOn } from '../data/ascension';
+import { CARD_GRADE, ENCHANT_GRADE, GRADE_WEIGHT, LEGEND_CHANCE, LEGEND_PRICE, LEGEND_SLOTS, PITY, type Grade } from '../data/grades';
+import { LEGENDS, LEGEND_FX, type LegendId } from '../data/legends';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, MORE, tier, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
@@ -29,8 +31,6 @@ import {
   STACK_WEIGHT,
   TYPE_MATCH_WEIGHT,
   PIECE_REWARD_WEIGHTS,
-  RARE_ENCHANTS,
-  RARE_WEIGHT,
   SHOP,
   SKIP_GOLD,
   PAR,
@@ -67,7 +67,13 @@ export type Choice =
   /** 영입 (D-096): 쓰러뜨린 적 기물 하나. 적의 이형이면 그 도면도 따라온다 (D-107) */
   | { type: 'recruit'; options: PieceType[]; variants: Partial<Record<PieceType, VariantId>> }
   /** 도면 (D-107): 쓰러뜨린 군단이 단 이형 중 하나 */
-  | { type: 'blueprint'; options: VariantId[] };
+  | { type: 'blueprint'; options: VariantId[] }
+  /** 황금 부품 (D-112): 황금 개조(L..) 또는 황금 카드(C07~C09) */
+  | { type: 'legend'; options: GoldId[] };
+
+/** 황금 3지선다 칸: 황금 부품 또는 황금 천공 카드 */
+export type GoldId = LegendId | 'C07' | 'C08' | 'C09';
+const GOLD_CARDS: GoldId[] = ['C07', 'C08', 'C09'];
 
 export interface ShopItem<T> {
   item: T;
@@ -84,6 +90,8 @@ export interface ShopStock {
   polish?: ShopItem<EnchantId>;
   /** 도면 진열 (D-107, Act 2부터): 군단에 있는 유형의 아직 없는 도면 하나 */
   blueprint?: ShopItem<VariantId>;
+  /** 황금 진열 (D-112, 공정 2부터 가끔) */
+  legend?: ShopItem<GoldId>;
 }
 
 export type AltarResult = { kind: 'piece'; piece: PieceType | null } | { kind: 'variant'; variant: VariantId } | { kind: 'miss' } | { kind: 'enchant' } | { kind: 'pick' };
@@ -126,6 +134,9 @@ export interface RunState {
   blueprints?: VariantId[];
   /** 이 출하에서 푼 묘수 (도감 기록, D-108) */
   solved?: number;
+  /** 희귀 보정 (D-112): 희귀가 안 나온 칸마다 쌓이는 %p · 검문! 황금 보정 */
+  pity?: number;
+  goldPity?: number;
   stage: Stage;
 }
 
@@ -500,7 +511,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   const lines: string[] = [];
   // 나사 자루 (억빠, D-099): 가끔 대국 나사가 세 배
   const jackpot = withRng(run, (rng) => rng.next()) < LUCK.jackpot;
-  const magnet = run.loadout.enchants.E32 ? tier(MORE.E32, run.loadout.enchants.E32) : 1; // 나사 자석 (D-105)
+  const magnet = (run.loadout.enchants.E32 ? tier(MORE.E32, run.loadout.enchants.E32) : 1) * (run.loadout.legends?.includes('L08') ? LEGEND_FX.goldMult : 1); // 나사 자석 (D-105) · 황금 나사 (D-112)
   const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1) * (jackpot ? LUCK.jackpotMult : 1) * magnet);
   run.gold += gold;
   lines.push(jackpot ? `${TEXT.luck.jackpot} 나사 +${gold}` : `나사 +${gold}`);
@@ -575,6 +586,18 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   }
   choices.push({ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, source)) });
   if (source !== 'battle') choices.push({ type: 'card', options: withRng(run, (rng) => rollCards(run, rng, source)) });
+  // 황금 3지선다 (D-112): 반장 해체는 공정마다 확률(둘째 반장은 확정), 검문!은 드물게 + 보정
+  const goldRoll = withRng(run, (rng) => rng.next());
+  const act = actOf(run.floor) - 1;
+  const goldChance = source === 'boss' ? (LEGEND_CHANCE.boss[act] ?? 0) : source === 'elite' ? Math.min(LEGEND_CHANCE.eliteMax, LEGEND_CHANCE.elite + (run.goldPity ?? 0)) : 0;
+  if (source === 'elite') run.goldPity = goldRoll < goldChance ? 0 : (run.goldPity ?? 0) + LEGEND_CHANCE.elitePity;
+  if (goldRoll < goldChance) {
+    const options = withRng(run, (rng) => rollGold(run, rng));
+    if (options.length) {
+      choices.unshift({ type: 'legend', options });
+      lines.push(TEXT.legend.found);
+    }
+  }
   run.stage = {
     at: 'reward',
     title: kind === 'boss' ? `${bossName(run, run.floor)} 격파 — ${ACT_NAMES[actOf(run.floor) - 1]} 끝` : kind === 'elite' ? '검문 통과!' : `${inAct(run.floor)}층 통과`,
@@ -608,34 +631,98 @@ const rollPieces = (run: RunState, rng: Rng): PieceType[] =>
 /** 인챈트가 대상으로 삼는 기물 유형 */
 export const ENCHANT_TYPE: Partial<Record<EnchantId, PieceType>> = { E01: 'N', E02: 'B', E03: 'R', E04: 'P', E08: 'K', E12: 'P', E13: 'N', E14: 'B', E22: 'P', E38: 'Q', E39: 'K', E40: 'P', E41: 'N', E42: 'B', E43: 'R' };
 
+/**
+ * 칸 하나의 등급을 굴린다 (D-112): 출처 · 공정별 표 + 희귀 보정. 희귀가 나오면 보정은 처음으로.
+ */
+const rollGrade = (run: RunState, rng: Rng, source: 'battle' | 'elite' | 'boss' | 'shop'): Grade => {
+  const act = Math.min(3, actOf(Math.min(run.floor, TOTAL_FLOORS))) - 1;
+  const [c, u, r0] = GRADE_WEIGHT[source][act];
+  const r = Math.min(r0 + (run.pity ?? 0), r0 + PITY.max);
+  const roll = rng.next() * (c + u + r);
+  const g: Grade = roll < r ? 'rare' : roll < r + u ? 'uncommon' : 'common';
+  run.pity = g === 'rare' ? 0 : (run.pity ?? 0) + PITY.step;
+  return g;
+};
+
+/** 같은 등급에서 못 고르면 가까운 등급으로 (희귀 → 고급 → 일반, 일반 → 고급 → 희귀) */
+const gradeFallback = (g: Grade): Grade[] => (g === 'rare' ? ['rare', 'uncommon', 'common'] : g === 'uncommon' ? ['uncommon', 'common', 'rare'] : ['common', 'uncommon', 'rare']);
+
 const rollEnchants = (run: RunState, rng: Rng, source: 'battle' | 'elite' | 'boss' | 'altar', rareOnly = false): EnchantId[] => {
   const act = Math.min(3, actOf(Math.min(run.floor, TOTAL_FLOORS))) - 1;
   const table = (Object.keys(ENCHANTS) as EnchantId[]).flatMap((id): [EnchantId, number][] => {
     const n = run.loadout.enchants[id] ?? 0;
     if (n >= ENCHANT_MAX_STACK) return [];
-    const rare = RARE_ENCHANTS.includes(id);
-    if (rareOnly && !rare) return [];
-    let w = rare ? RARE_WEIGHT[source === 'altar' ? 'boss' : source] : 1;
+    if (rareOnly && ENCHANT_GRADE[id] !== 'rare') return [];
+    let w = 1;
     if (n === 1) w *= STACK_WEIGHT.second[act];
     if (n === 2) w *= STACK_WEIGHT.third[act];
     const t = ENCHANT_TYPE[id];
     if (t && t !== 'K' && run.deck.filter((x) => x === t).length >= 3) w *= TYPE_MATCH_WEIGHT;
     return [[id, w]];
   });
-  const out = pickDistinct(rng, table, 3);
-  // 보스는 희귀 인챈트 1장 확정
-  if (source === 'boss' && !out.some((id) => RARE_ENCHANTS.includes(id))) {
-    const rare = table.filter(([id]) => RARE_ENCHANTS.includes(id));
+  const out: EnchantId[] = [];
+  for (let k = 0; k < 3; k++) {
+    const g = rareOnly ? 'rare' : rollGrade(run, rng, source === 'altar' ? 'boss' : source);
+    for (const gg of gradeFallback(g)) {
+      const pool = table.filter(([id]) => ENCHANT_GRADE[id] === gg && !out.includes(id));
+      const id = weighted(rng, pool);
+      if (id) {
+        out.push(id);
+        break;
+      }
+    }
+  }
+  // 보스는 희귀 1장 확정
+  if (source === 'boss' && out.length && !out.some((id) => ENCHANT_GRADE[id] === 'rare')) {
+    const rare = table.filter(([id]) => ENCHANT_GRADE[id] === 'rare' && !out.includes(id));
     if (rare.length) out[out.length - 1] = weighted(rng, rare)!;
   }
   return out;
 };
 
-const rollCards = (run: RunState, rng: Rng, source: 'elite' | 'boss'): CardId[] => {
+/** 천공 카드 3지선다 (황금 카드는 황금 3지선다에서만) */
+const rollCards = (run: RunState, rng: Rng, source: 'elite' | 'boss' | 'shop', n = 3): CardId[] => {
   const table = (Object.keys(CARDS) as CardId[])
-    .filter((id) => !run.loadout.cards.includes(id))
+    .filter((id) => !run.loadout.cards.includes(id) && CARD_GRADE[id] !== 'legend')
     .map((id): [CardId, number] => [id, CARDS[id].limit.type === 'consume' ? CONSUME_CARD_WEIGHT[source] : 1]);
-  return pickDistinct(rng, table, 3);
+  const out: CardId[] = [];
+  for (let k = 0; k < n; k++) {
+    const g = rollGrade(run, rng, source);
+    for (const gg of gradeFallback(g)) {
+      const id = weighted(rng, table.filter(([id]) => CARD_GRADE[id] === gg && !out.includes(id)));
+      if (id) {
+        out.push(id);
+        break;
+      }
+    }
+  }
+  return out;
+};
+
+/** 가진 황금 부품 수 (황금 카드는 카드 칸) */
+export const legendCount = (run: RunState): number => run.loadout.legends?.length ?? 0;
+
+/** 황금 3지선다 (D-112): 아직 없는 것 중, 군단 주력 유형을 밀어 주는 부품은 두 배로 */
+const rollGold = (run: RunState, rng: Rng, n = 3): GoldId[] => {
+  const owned = new Set<string>([...(run.loadout.legends ?? []), ...run.loadout.cards]);
+  const slotsFull = legendCount(run) >= LEGEND_SLOTS;
+  const table: [GoldId, number][] = [
+    ...(slotsFull ? [] : (Object.keys(LEGENDS) as LegendId[]).filter((id) => !owned.has(id)).map((id): [GoldId, number] => {
+      const t = LEGENDS[id].type;
+      return [id, t && t !== 'K' && run.deck.filter((x) => x === t).length >= 3 ? 2 : 1];
+    })),
+    ...GOLD_CARDS.filter((id) => !owned.has(id)).map((id): [GoldId, number] => [id, 0.8]),
+  ];
+  return pickDistinct(rng, table, n);
+};
+
+/** 황금 부품을 단다 */
+export const addGold = (run: RunState, id: GoldId, discard?: number): string | void => {
+  if (id.startsWith('C')) return addCard(run, id as CardId, discard);
+  const list = (run.loadout.legends ??= []);
+  if (list.includes(id as LegendId)) return '“이미 있다.”';
+  if (list.length >= LEGEND_SLOTS) return '“황금 슬롯이 가득 찼다.”';
+  list.push(id as LegendId);
 };
 
 /** 인챈트를 얻는다. 이미 있으면 중첩, 6칸이 차 있으면 discard를 버려야 한다. */
@@ -680,6 +767,12 @@ export const takeChoice = (run: RunState, option: string, discard?: EnchantId | 
     run.stage.choices.shift();
     return;
   }
+  if (ch.type === 'legend') {
+    const e = addGold(run, option as GoldId, discard as number | undefined);
+    if (e) return e;
+    run.stage.choices.shift();
+    return;
+  }
   const err =
     ch.type === 'enchant'
       ? addEnchant(run, option as EnchantId, discard as EnchantId | undefined)
@@ -705,16 +798,12 @@ export const finishReward = (run: RunState): string | void => {
 // ---------- 상점 ----------
 const piecePrice = (t: PieceType) => Math.round(PIECE_STATS[t].value * SHOP.pieceMult);
 export const sellPrice = (t: PieceType) => (t === 'K' ? 0 : Math.round(PIECE_STATS[t].value * SHOP.sellMult));
-const enchantPrice = (id: EnchantId) => (RARE_ENCHANTS.includes(id) ? SHOP.enchantPrice.rare : SHOP.enchantPrice.common);
+const enchantPrice = (id: EnchantId) => SHOP.enchantPrice[ENCHANT_GRADE[id] === 'legend' ? 'rare' : ENCHANT_GRADE[id]];
 const cardPrice = (id: CardId) => (CARDS[id].limit.type === 'consume' ? SHOP.cardPrice.consume : SHOP.cardPrice.sustain);
 
 const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): ShopStock => {
   const pieces = Array.from({ length: SHOP.pieces }, () => weighted(rng, Object.entries(PIECE_REWARD_WEIGHTS) as [PieceType, number][])!);
-  const cards = pickDistinct(
-    rng,
-    (Object.keys(CARDS) as CardId[]).filter((id) => !run.loadout.cards.includes(id)).map((id): [CardId, number] => [id, CARDS[id].limit.type === 'consume' ? CONSUME_CARD_WEIGHT.shop : 1]),
-    SHOP.cards,
-  );
+  const cards = rollCards(run, rng, 'shop', SHOP.cards);
   const late = actOf(Math.min(run.floor, TOTAL_FLOORS)) >= SHOP.lateFrom;
   const enchants = rollEnchants(run, rng, 'battle').slice(0, SHOP.enchants);
   // 후반 나사 쓸 곳 (D-103): 희귀 진열 1칸 + 개조 다듬기
@@ -728,13 +817,16 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
   const bpId = bpPool.length ? bpPool[rng.int(bpPool.length)] : undefined;
   // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
   const appraisal = run.loadout.enchants.E33 ? tier(MORE.E33, run.loadout.enchants.E33) : 1; // 고물 감정서 (D-105)
-  const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal * (ascOn(run.ascension, 'shopPrice') ? ASC.shopPrice.mult : 1);
+  const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal * (ascOn(run.ascension, 'shopPrice') ? ASC.shopPrice.mult : 1) * (run.loadout.legends?.includes('L08') ? LEGEND_FX.goldShop : 1);
+  // 황금 진열 (D-112): 공정 2부터 가끔
+  const goldId = actOf(Math.min(run.floor, TOTAL_FLOORS)) >= LEGEND_CHANCE.shopFrom && rng.next() < LEGEND_CHANCE.shop ? rollGold(run, rng, 1)[0] : undefined;
   const at = (n: number) => Math.round(n * k);
   return {
     pieces: pieces.map((item) => ({ item, price: at(piecePrice(item)), sold: false })),
     cards: cards.map((item) => ({ item, price: at(cardPrice(item)), sold: false })),
     enchants: enchants.map((item) => ({ item, price: at(enchantPrice(item)), sold: false })),
     ...(bpId ? { blueprint: { item: bpId, price: at(SHOP.blueprint), sold: false } } : {}),
+    ...(goldId ? { legend: { item: goldId, price: at(LEGEND_PRICE), sold: false } } : {}),
     ...(polishId ? { polish: { item: polishId, price: at(SHOP.polish.base + SHOP.polish.perLevel * (run.loadout.enchants[polishId] ?? 0)), sold: false } } : {}),
     rerollPrice,
   };
@@ -845,6 +937,17 @@ const grantVariant = (run: RunState, rng: Rng): VariantId | null => {
 export const altarCanPick = (run: RunState): boolean => run.crackGauge >= ALTAR.gaugeMax;
 
 /** 도면 진열 (D-107) */
+/** 황금 진열 사기 (D-112) */
+export const buyLegend = (run: RunState, discard?: number): string | void => {
+  const it = shopOf(run)?.legend;
+  if (!it || it.sold) return '“그런 물건 없어.”';
+  if (run.gold < it.price) return '“나사가 부족해.”';
+  const err = addGold(run, it.item, discard);
+  if (err) return err;
+  run.gold -= it.price;
+  it.sold = true;
+};
+
 export const buyBlueprint = (run: RunState): string | void => {
   const it = shopOf(run)?.blueprint;
   if (!it || it.sold) return '“그런 물건 없어.”';

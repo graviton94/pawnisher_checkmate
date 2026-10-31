@@ -14,6 +14,8 @@ import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { ACT_NAMES, ALTAR, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
+import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
+import { LEGENDS, type LegendId } from '../data/legends';
 import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import { EVENT_IDS } from '../run/events';
 import type { BattleController } from '../game/controller';
@@ -39,6 +41,9 @@ import {
   finishPuzzle,
   battleDeck,
   buyBlueprint,
+  buyLegend,
+  legendCount,
+  type GoldId,
   ownedBlueprints,
   lacksBlueprint,
   buyPolish,
@@ -70,7 +75,7 @@ import { VARIANTS, VARIANT_FORGE_LEVEL, type VariantId } from '../data/variants'
 
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 /** 고르기 모션을 거는 버튼 (D-109). 고물상 진열(BUY)은 고른 것만 들리고 나머지는 남는다 */
-const BUY_ATTRS = new Set(['piece', 'ench', 'card', 'bp', 'polish']);
+const BUY_ATTRS = new Set(['piece', 'ench', 'card', 'bp', 'polish', 'gold']);
 const CHOOSE_ATTRS = new Set(['pick', 'deck', 'node', 'd', 'v', 'sell', ...BUY_ATTRS]);
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
@@ -97,11 +102,14 @@ interface RunSnap {
   damage: number;
   sealed: number;
   stage: string;
+  /** 황금 부품 + 황금 카드 수 (D-112) */
+  gold2: number;
 }
 const snapOf = (run: RunState): RunSnap => ({
   gold: run.gold,
   deck: run.deck.length,
   star: Object.values(run.loadout.enchants).filter((n) => (n ?? 0) >= 3).length,
+  gold2: legendCount(run) + run.loadout.cards.filter((id) => CARD_GRADE[id] === 'legend').length,
   damage: Object.values(run.loadout.damage ?? {}).reduce((a: number, n) => a + (n ?? 0), 0),
   sealed: run.sealed ?? 0,
   stage: run.stage.at === 'altar' && run.stage.result ? 'altar-result' : run.stage.at,
@@ -113,6 +121,22 @@ const setName = (deck: Deck): string => {
   const u = UNLOCK_DECKS.find((x) => [...x.deck].sort().join('') === key);
   if (u) return u.name;
   return deck.includes('N') ? '척후 세트' : deck.includes('B') ? '견습 사제 세트' : '보병 세트';
+};
+
+/** 등급 딱지 (D-112): 색 + 글자 (색만으로 구분하지 않는다) */
+const gradeChip = (g: Grade): string => `<i class="grade g-${g}">${GRADE_NAME[g]}</i>`;
+
+/** 유형이 없는 황금 부품의 그림 */
+const LEGEND_ICON: Partial<Record<LegendId, string>> = { L06: 'flame', L07: 'flag', L08: 'screw', L10: 'chain' };
+
+/** 황금 3지선다 카드 (D-112): 컨셉 · 효과 */
+const goldOffer = (run: RunState, id: GoldId): string => {
+  if (id.startsWith('C')) return cardOffer(id as CardId);
+  const L = LEGENDS[id as LegendId];
+  const t = L.type;
+  const n = t ? run.deck.filter((x) => x === t).length : 0;
+  const tag = t ? `<i class="tag${n ? '' : ' red'}">${n ? `내 ${PIECE_NAMES_KO[t]} ${n}기` : `${PIECE_NAMES_KO[t]} 없음`}</i>` : '';
+  return `<span class="kind">${gradeChip('legend')} ${TEXT.legend.name} · ${L.concept}</span>${t ? pieceImg(t, 0, 'large', 44) : icon(LEGEND_ICON[id as LegendId] ?? 'crown', 'xl', '#3a2a08')}<b>${L.name}</b><span class="tags">${tag}</span><p>${L.desc}</p>`;
 };
 
 /** 개조 고르기 카드 내용: 대상 · 몇 단째 · 효과 · 시너지 태그 */
@@ -130,7 +154,7 @@ const enchantOffer = (id: EnchantId, next: number, run: RunState | null): string
   const tac = def.tactic ? TACTICS[def.tactic] : null;
   // 아이콘은 색 딱지 위 어두운 도트 (가는 선 아이콘이 카드 위에서 묻히지 않게)
   const kindIcon = `<span class="kbadge" style="background:${tac ? tac.color : 'var(--brass)'}">${icon(tac ? tac.icon : 'wrench', '', '#16141c')}</span>`;
-  return `<span class="kind">${kindIcon} 개조 · ${tac ? `<span style="color:${tac.color}">${def.target}</span>` : def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
+  return `<span class="kind">${gradeChip(ENCHANT_GRADE[id])} ${kindIcon} ${tac ? `<span style="color:${tac.color}">${def.target}</span>` : def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
 };
 
 /** 개조 다듬기 카드 (D-103): 가진 개조의 다음 단 */
@@ -151,7 +175,7 @@ const cardOffer = (id: CardId): string => {
   const l = c.limit;
   const paper = l.type === 'consume';
   const lim = l.type === 'consume' ? '한 번 쓰면 탄다' : l.type === 'round' ? '대국당 1회' : `냉각 ${l.turns}턴`;
-  return `<span class="kind">${icon('card', 's')} ${paper ? '종이 카드' : '철 카드'}</span><b>${c.name}</b><p>${c.desc}</p><span class="tags"><i class="tag${paper ? ' gold' : ''}">${lim}</i>${c.ap ? `<i class="tag">태엽 ${c.ap}</i>` : ''}</span>`;
+  return `<span class="kind">${gradeChip(CARD_GRADE[id])} ${icon('card', 's')} ${paper ? '종이 카드' : '철 카드'}</span><b>${c.name}</b><p>${c.desc}</p><span class="tags"><i class="tag${paper ? ' gold' : ''}">${lim}</i>${c.ap ? `<i class="tag">태엽 ${c.ap}</i>` : ''}</span>`;
 };
 
 const pieceOffer = (run: RunState, t: PieceType, recruitVariant?: VariantId): string => {
@@ -251,6 +275,7 @@ export class RunUi {
       <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
       <div class="army-list">${units.join('')}</div>
       <p class="sub">${TEXT.blueprint.name} (${ownedBlueprints(run).length})</p><div class="unlocks">${ownedBlueprints(run).map((id) => `<i class="tag${run.loadout.variants?.[VARIANTS[id].base] === id ? ' gold' : ''}"><img src="ui/board/variant-${id}.png" alt="" style="width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px"> ${VARIANTS[id].name}</i>`).join('') || `<small class="lead">${TEXT.blueprint.empty}</small>`}</div>
+      <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-legend">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}
       <p class="sub">개조 (${ench.length}/6)</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
       <p class="sub">천공 카드 (${cards.length}/${CARD_SLOTS})</p><div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
@@ -397,10 +422,25 @@ export class RunUi {
     const enchants: Entry[] = (Object.keys(ENCHANTS) as EnchantId[]).map((id) => ({
       known: seen.enchants.includes(id),
       name: ENCHANTS[id].name,
-      info: `${ENCHANTS[id].name} (${ENCHANTS[id].target}) — ${ENCHANTS[id].levels[0]}`,
+      info: `${GRADE_NAME[ENCHANT_GRADE[id]]} · ${ENCHANTS[id].name} (${ENCHANTS[id].target}) — ${ENCHANTS[id].levels[0]}`,
+      img: gradeChip(ENCHANT_GRADE[id]),
+    }));
+    const cards: Entry[] = (Object.keys(CARDS) as CardId[]).map((id) => ({
+      known: (seen.cards ?? []).includes(id),
+      name: CARDS[id].name,
+      info: `${GRADE_NAME[CARD_GRADE[id]]} · ${CARDS[id].name} — ${CARDS[id].desc}`,
+      img: gradeChip(CARD_GRADE[id]),
+      gold: CARD_GRADE[id] === 'legend',
+    }));
+    const legends: Entry[] = (Object.keys(LEGENDS) as LegendId[]).map((id) => ({
+      known: (seen.legends ?? []).includes(id),
+      name: LEGENDS[id].name,
+      info: `${LEGENDS[id].name} · ${LEGENDS[id].concept} — ${LEGENDS[id].desc}`,
+      img: gradeChip('legend'),
+      gold: true,
     }));
     const events: Entry[] = EVENT_IDS.map((id) => ({ known: seen.events.includes(id), name: EVENTS[id].title, info: EVENTS[id].text, img: icon(EVENT_ICON[id], 's') }));
-    const all: Record<string, Entry[]> = { [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.variants]: variants, [C.sections.enchants]: enchants, [C.sections.events]: events };
+    const all: Record<string, Entry[]> = { [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.legends]: legends, [C.sections.variants]: variants, [C.sections.enchants]: enchants, [C.sections.cards]: cards, [C.sections.events]: events };
     const rec = [meta.runs, meta.clears, meta.bestFloor, meta.elites ?? 0, meta.puzzles ?? 0, meta.ascension];
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('crate', 's')}${C.title}</span><span class="spacer"></span>${button(C.back, 'data-menu')}</div>
@@ -465,7 +505,7 @@ export class RunUi {
     const before = this.snap;
     this.snap = now;
     if (!before) return;
-    const d: RunDelta = { gold: now.gold - before.gold, deck: now.deck - before.deck, awakened: Math.max(0, now.star - before.star), damaged: Math.max(0, now.damage - before.damage), sealed: Math.max(0, now.sealed - before.sealed) };
+    const d: RunDelta = { gold: now.gold - before.gold, deck: now.deck - before.deck, awakened: Math.max(0, now.star - before.star), damaged: Math.max(0, now.damage - before.damage), sealed: Math.max(0, now.sealed - before.sealed), legend: Math.max(0, now.gold2 - before.gold2) };
     runFeedback(document, d, before.gold);
     // 뽑기 기계 결과: 이형 대박 · 꽝
     if (run.stage.at === 'altar' && run.stage.result && before.stage !== 'altar-result') {
@@ -664,9 +704,12 @@ export class RunUi {
       offers = ch.options
         .map((id) => {
           const next = (run.loadout.enchants[id] ?? 0) + 1;
-          return `<button class="offer${next >= 3 ? ' rare' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
+          return `<button class="offer g-${ENCHANT_GRADE[id]}${next >= 3 ? ' rare' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
         })
         .join('');
+    } else if (ch?.type === 'legend') {
+      kind = TEXT.legend.name;
+      offers = ch.options.map((id) => `<button class="offer legend rare" type="button" data-pick="${id}">${goldOffer(run, id)}</button>`).join('');
     } else if (ch?.type === 'blueprint') {
       kind = TEXT.blueprint.name;
       offers = ch.options.map((id) => `<button class="offer" type="button" data-pick="${id}">${blueprintOffer(run, id)}</button>`).join('');
@@ -675,12 +718,12 @@ export class RunUi {
       offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t, ch.variants[t])}</button>`).join('');
     } else if (ch?.type === 'card') {
       kind = R.card;
-      offers = ch.options.map((id) => `<button class="offer${CARDS[id].limit.type === 'consume' ? ' rare' : ''}" type="button" data-pick="${id}">${cardOffer(id)}</button>`).join('');
+      offers = ch.options.map((id) => `<button class="offer g-${CARD_GRADE[id]}${CARDS[id].limit.type === 'consume' ? ' rare' : ''}" type="button" data-pick="${id}">${cardOffer(id)}</button>`).join('');
     }
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : ch.type === 'legend' ? TEXT.legend.lead : `“통과. ${kind} 하나.”`}</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
@@ -691,7 +734,7 @@ export class RunUi {
       pick: (b) => {
         const id = b.dataset.pick!;
         sfx('land');
-        this.act(takeChoice(run, id), () => this.discardPicker(run, ch!.type as 'enchant' | 'card', (d) => this.act(takeChoice(run, id, d))));
+        this.act(takeChoice(run, id), () => this.discardPicker(run, ch!.type === 'enchant' ? 'enchant' : 'card', (d) => this.act(takeChoice(run, id, d))));
       },
       skip: () => {
         skipChoice(run);
@@ -743,6 +786,8 @@ export class RunUi {
     const item = (attr: string, i: number, html: string, price: number, sold: boolean, rare = false) =>
       `<button class="offer${rare ? ' rare' : ''}${!sold && run.gold < price ? ' poor' : ''}" style="flex:0 0 150px" type="button" data-${attr}="${i}" ${sold ? 'disabled' : ''}>${html}<span class="price">${sold ? S.sold : `${icon('screw', 's')}${price}`}</span></button>`;
     const goods = [
+      // 황금 진열 (D-112): 맨 앞 칸
+      ...(s.legend ? [item('gold', 0, goldOffer(run, s.legend.item), s.legend.price, s.legend.sold, true).replace('class="offer', 'class="offer legend')] : []),
       ...s.pieces.map((p, i) => item('piece', i, pieceOffer(run, p.item), p.price, p.sold)),
       ...s.enchants.map((p, i) => {
         const next = (run.loadout.enchants[p.item] ?? 0) + 1;
@@ -785,6 +830,7 @@ export class RunUi {
         sfx('land');
         this.act(buyBlueprint(run));
       },
+      gold: () => this.act(buyLegend(run), () => this.discardPicker(run, 'card', (d) => this.act(buyLegend(run, d as number)))),
       sellmenu: () => this.showSell(run),
       reroll: () => this.act(reroll(run)),
       leave: () => {

@@ -23,6 +23,8 @@ const loadRun = async (page, stage, extra = {}) => {
   await page.tap('[data-continue]'); await page.waitForTimeout(500);
 };
 
+const TEXT_FOUND = '* 상자 바닥에서 금빛이 난다.';
+
 const scenarios = {
   async menu(page) {
     await page.evaluate(() => localStorage.clear());
@@ -255,6 +257,19 @@ const scenarios = {
     // 건너뛰기: 전부 가라앉음
     await freeze(); await page.tap('[data-skip]'); await at(160); await shot('6-skip'); await thaw(); await page.waitForTimeout(600);
     return ['motion-7-after'];
+  },
+  // 볼륨 4 (D-112): 등급 딱지 · 황금 3지선다 · 황금 진열 · 군단 보기 황금 슬롯 · 카드 레일 황금 카드
+  async legend(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-legend-${n}.png`) });
+    await loadRun(page, { at: 'reward', title: '나이트 반장 격파 — 주조 공정 끝', lines: ['나사 +60', TEXT_FOUND], choices: [{ type: 'legend', options: ['L01', 'L06', 'C07'] }, { type: 'enchant', options: ['E01', 'E17', 'E05'] }, { type: 'card', options: ['A07', 'C10', 'C04'] }] });
+    await page.waitForTimeout(700); await shot('1-gold-pick');
+    await page.tap('[data-pick="L01"]'); await page.waitForTimeout(1400); await shot('2-enchant-grades');
+    await page.tap('[data-pick="E17"]'); await page.waitForTimeout(700); await shot('3-card-grades');
+    await page.tap('[data-army]'); await page.waitForTimeout(500); await shot('4-army');
+    await page.tap('[data-close]'); await page.waitForTimeout(300);
+    await loadRun(page, { at: 'shop', stock: { pieces: [{ item: 'N', price: 75, sold: false }, { item: 'P', price: 25, sold: false }], cards: [{ item: 'A08', price: 55, sold: false }], enchants: [{ item: 'E26', price: 110, sold: false }], rerollPrice: 20, legend: { item: 'L09', price: 336, sold: false } } }, { floor: 15, gold: 400 });
+    await page.waitForTimeout(700); await shot('5-shop');
+    return ['legend-6-end'];
   },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });

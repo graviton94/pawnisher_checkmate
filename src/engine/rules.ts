@@ -1,3 +1,4 @@
+import type { LegendId } from '../data/legends';
 import { at, buildGrid, forward, inBounds, onStronghold, type Grid } from './board';
 import { strongholdTerms } from './score';
 import type { EnchantId } from '../data/enchants';
@@ -16,6 +17,9 @@ const SLIDE_DIRS: Partial<Record<PieceType, Pos[]>> = { B: DIAG, R: ORTHO, Q: AL
 
 /** 진영이 보유한 인챈트 중첩 수 (없으면 0) */
 export const ench = (s: BattleState, side: Side, id: EnchantId): number => s.loadouts?.[side]?.enchants[id] ?? 0;
+
+/** 황금 부품을 가졌나 (D-112) */
+export const legend = (s: BattleState, side: Side, id: LegendId): boolean => !!s.loadouts?.[side]?.legends?.includes(id);
 
 /** 이번 턴 이 기물의 행마·공격 유형들: 폼 시프트 > 합체 구성 > 자기 유형 */
 export const moveTypes = (piece: Piece): PieceType[] => (piece.formAs ? [piece.formAs] : (piece.fused ?? [piece.type]));

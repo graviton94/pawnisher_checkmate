@@ -32,6 +32,13 @@ it('features', () => {
   const byBoss = new Map<string, [number, number]>();
   for (const b of bs.filter((x) => x.boss)) { const k = `${b.boss}@${b.floor}`; const v = byBoss.get(k) ?? [0, 0]; v[1]++; if (b.won) v[0]++; byBoss.set(k, v); }
   console.log(`반장별 승률: ${[...byBoss.entries()].sort().map(([k, [w, t]]) => `${k} ${pct(w, t)}(${t})`).join(' · ')}`);
+  // 등급 · 황금 (D-112)
+  const slots = logs.reduce((a, l) => a + (l.slotsSeen ?? 0), 0);
+  console.log(`개조 칸 중 희귀 ${pct(logs.reduce((a, l) => a + (l.rareSeen ?? 0), 0), slots)} · 황금 3지선다 런당 ${(logs.reduce((a, l) => a + (l.goldSeen ?? 0), 0) / n).toFixed(2)}회 · 황금 하나라도 가진 런 ${pct(logs.filter((l) => l.legends?.length).length, n)}`);
+  const byLegend = new Map<string, [number, number, number]>();
+  for (const l of logs) for (const id of l.legends ?? []) { const v = byLegend.get(id) ?? [0, 0, 0]; v[0]++; v[1] += l.floor; if (l.won) v[2]++; byLegend.set(id, v); }
+  console.log(`황금별 (런 수 · 평균 도달 층 · 완주): ${[...byLegend.entries()].sort().map(([k, [c, f, w]]) => `${k} ${c} · ${(f / c).toFixed(1)}층 · ${w}`).join(' / ')}`);
+  console.log(`(참고) 전체 평균 도달 층 ${(logs.reduce((a, l) => a + l.floor, 0) / n).toFixed(1)} · 완주 ${logs.filter((l) => l.won).length}`);
   const pz = logs.flatMap((l) => l.puzzles);
   console.log(`묘수 ${pz.length}회 · 해법 ${pct(pz.filter(Boolean).length, pz.length)}`);
 }, 7_200_000);

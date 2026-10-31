@@ -18,6 +18,7 @@ import { actedInPlan,
   undoLast,
   EMPTY_LOADOUT,
   ench,
+  legend,
   findPiece,
   type Loadout,
   type PlanStep,
@@ -500,7 +501,7 @@ export class BattleController {
 
   /** 인챈트 합체(E11)를 쓸 수 있는가 — 카드 레일에 합체 버튼을 띄운다 */
   get canEnchantFuse(): boolean {
-    return !!this.state && ench(this.state, 0, 'E11') >= 1;
+    return !!this.state && (ench(this.state, 0, 'E11') >= 1 || legend(this.state, 0, 'L10'));
   }
 
   /** 디버그: 플레이어 차례를 AI가 대신 예약한다 (?debug) */

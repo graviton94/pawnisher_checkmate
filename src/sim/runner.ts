@@ -1,3 +1,5 @@
+import { ENCHANT_GRADE } from '../data/grades';
+import { LEGENDS, type LegendId } from '../data/legends';
 import { choosePlan, AI_TIERS } from '../ai/search';
 import { TUNED } from '../data/aiWeights';
 import { CARD_SLOTS } from '../data/cards';
@@ -23,6 +25,7 @@ import {
   finishPuzzle,
   battleDeck,
   buyBlueprint,
+  buyLegend,
   forgeVariantOptions,
   forgeVariant,
   buyPolish,
@@ -72,6 +75,12 @@ export interface RunLog {
   trace: { floor: number; gold: number; deck: number; forge: number; enchants: number; cards: number }[];
   goldEarned: number;
   goldSpent: number;
+  /** 황금 부품 (D-112): 본 3지선다 수 · 가진 것 */
+  goldSeen?: number;
+  legends?: string[];
+  /** 본 희귀 칸 수 · 전체 칸 수 */
+  rareSeen?: number;
+  slotsSeen?: number;
 }
 
 const MAX_TURNS = 160;
@@ -176,7 +185,16 @@ export const autoRun = (seed: number): RunLog => {
         } else if (ch.type === 'blueprint') {
           // 군단에 있는 유형의 도면 먼저
           takeChoice(run, ch.options.find((id) => run.deck.includes(VARIANTS[id].base)) ?? ch.options[0]);
+        } else if (ch.type === 'legend') {
+          // 황금 (D-112): 군단 주력 유형을 미는 부품 > 유형 없는 부품 > 황금 카드
+          log.goldSeen = (log.goldSeen ?? 0) + 1;
+          const count = (t?: PieceType) => (t ? run.deck.filter((x) => x === t).length : 0);
+          const score = (id: string) => (id.startsWith('C') ? 1 : LEGENDS[id as LegendId].type ? count(LEGENDS[id as LegendId].type) : id === 'L07' ? (run.deck.length <= 6 ? 4 : -1) : 2.5);
+          const best = [...ch.options].sort((a, b) => score(b) - score(a))[0];
+          if (takeChoice(run, best)) skipChoice(run);
         } else if (ch.type === 'enchant') {
+          log.slotsSeen = (log.slotsSeen ?? 0) + ch.options.length;
+          log.rareSeen = (log.rareSeen ?? 0) + ch.options.filter((id) => ENCHANT_GRADE[id] === 'rare').length;
           const id = pickEnchant(run, ch.options);
           const full = !run.loadout.enchants[id] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
           if (full) skipChoice(run);
@@ -203,6 +221,7 @@ export const autoRun = (seed: number): RunLog => {
         // 후반 나사 쓸 곳 (D-103): 다듬기 · 희귀 진열은 여유가 있으면
         if (st.stock.polish && !st.stock.polish.sold && run.gold - st.stock.polish.price >= 30) buyPolish(run);
         if (st.stock.blueprint && !st.stock.blueprint.sold && run.gold - st.stock.blueprint.price >= 60) buyBlueprint(run);
+        if (st.stock.legend && !st.stock.legend.sold && run.gold - st.stock.legend.price >= 30) buyLegend(run);
         st.stock.enchants.forEach((e, i) => {
           const full = !run.loadout.enchants[e.item] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
           if (!e.sold && !full && run.gold - e.price >= 60) buyEnchant(run, i);
@@ -281,6 +300,7 @@ export const autoRun = (seed: number): RunLog => {
       }
     }
     log.floor = Math.min(run.floor, 36);
+    log.legends = [...(run.loadout.legends ?? []), ...run.loadout.cards.filter((id) => id === 'C07' || id === 'C08' || id === 'C09')];
   }
   log.won = run.stage.at === 'over' && run.stage.won;
   return log;

@@ -1,3 +1,4 @@
+import { ENCHANT_GRADE } from './grades';
 import type { ArenaId } from './terrain';
 import type { VariantId } from './variants';
 import type { AffixId } from './legions';
@@ -79,9 +80,8 @@ export const SKIP_GOLD = 10;
 export const pieceRewardDue = (floor: number, wins: number): boolean => actOf(floor) === 1 || wins % 2 === 0;
 export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 38, N: 22, B: 22, R: 12, Q: 6 };
 
-/** 희귀 인챈트 (나머지는 일반). 엘리트·보스는 희귀 가중, 보스는 희귀 1장 확정. */
-export const RARE_ENCHANTS: EnchantId[] = ['E05', 'E06', 'E07', 'E09', 'E11', 'E15', 'E26', 'E31', 'E44'];
-export const RARE_WEIGHT = { battle: 0.5, elite: 1.5, boss: 2 };
+/** 희귀 개조 — 등급표(data/grades.ts, D-112)에서. 보스는 희귀 1장 확정 */
+export const RARE_ENCHANTS: EnchantId[] = (Object.keys(ENCHANT_GRADE) as EnchantId[]).filter((id) => ENCHANT_GRADE[id] === 'rare');
 /**
  * 인챈트 3지선다가 이미 가진 인챈트 쪽으로 모이게 한다 (중반 "파츠 모으기" → 후반 시너지).
  * 1장 보유 → 2장째 가중치, 2장 보유 → ★3장째 가중치. Act 1에서는 ★이 드물고 Act 3에서 흔해진다.
@@ -105,7 +105,7 @@ export const SHOP = {
   /** 판매가 = 가치 × 이 배율 */
   sellMult: 0.6,
   cardPrice: { sustain: 55, consume: 85 },
-  enchantPrice: { common: 70, rare: 110 },
+  enchantPrice: { common: 70, uncommon: 90, rare: 110 },
   reroll: 15,
   rerollStep: 5,
   /** 후반 나사 쓸 곳 (D-103): Act 2부터 「희귀 진열」 1칸 + 「개조 다듬기」(가진 개조 한 단 올리기) — 값 = 기본 + 단 × 가산, 공정 배율 적용 */

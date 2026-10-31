@@ -21,7 +21,7 @@ export interface MetaState {
   /** 쓰러뜨린 반장 (BossId · 'final') */
   bossKills?: string[];
   /** 도감 (D-108): 한 번이라도 얻은 개조 · 도면, 들어가 본 돌발 */
-  seen?: { enchants: string[]; variants: string[]; events: string[] };
+  seen?: { enchants: string[]; variants: string[]; events: string[]; cards?: string[]; legends?: string[] };
 }
 
 export { ASCENSIONS, MAX_ASCENSION } from '../data/ascension';
@@ -80,6 +80,8 @@ export const absorbRun = (m: MetaState, run: RunState): MetaState => {
       enchants: union(seen.enchants, Object.keys(run.loadout.enchants)),
       variants: union(seen.variants, [...(run.blueprints ?? []), ...Object.values(run.loadout.variants ?? {})]),
       events: union(seen.events, passed(run).flatMap((n) => (n.event ? [n.event] : []))),
+      cards: union(seen.cards, run.loadout.cards),
+      legends: union(seen.legends, run.loadout.legends ?? []),
     },
   };
 };

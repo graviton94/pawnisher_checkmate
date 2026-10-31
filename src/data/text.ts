@@ -47,12 +47,24 @@ export const TEXT = {
     pressure: '보일러 압력',
     codex: '도감',
   },
+  /** 황금 부품 (D-112) */
+  legend: {
+    name: '황금 부품',
+    found: '* 상자 바닥에서 금빛이 난다.',
+    lead: '“이건 규격서에 없는 물건이다. 하나만.”',
+    kind: '황금',
+    slots: '황금 슬롯',
+    full: '“황금 슬롯이 가득 찼다.”',
+    stamp: '황금!',
+    shop: '“진열장 맨 위 칸. 먼지 하나 없다.”',
+    empty: '없음 — 반장 상자 · 검문! · 고물상 맨 위 칸',
+  },
   /** 도감 (D-108): 한 번 손에 넣은 것만 적힌다 */
   codex: {
     title: '도감',
     lead: '* 한 번 손에 넣은 것만 적힌다. 나머지는 물음표다. 물음표도 언젠가 채워진다.',
     unknown: '???',
-    sections: { records: '기록', sets: '시작 세트', bosses: '반장', variants: '도면', enchants: '개조', events: '돌발' },
+    sections: { records: '기록', sets: '시작 세트', bosses: '반장', legends: '황금 부품', variants: '도면', enchants: '개조', cards: '천공 카드', events: '돌발' },
     records: ['출하', '정품 출하', '최고 공정', '검문! 통과', '푼 묘수', '열린 압력'],
     back: '메뉴',
   },

@@ -67,7 +67,7 @@ describe('시작 세트 +3 · 도감 (D-108)', () => {
     run.floor = 3;
     run.bosses = ['pawn', 'knight'];
     const once = absorbRun(meta(), run);
-    expect(once.seen).toEqual({ enchants: ['E05'], variants: ['hammer'], events: ['smith'] });
+    expect(once.seen).toEqual({ enchants: ['E05'], variants: ['hammer'], events: ['smith'], cards: [], legends: [] });
     expect(absorbRun(once, run)).toEqual(once);
     expect(bossKillsOf(run)).toEqual([]);
     run.floor = FLOORS_PER_ACT + 1;

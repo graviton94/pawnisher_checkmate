@@ -1,7 +1,7 @@
 import { CARDS, type CardUse } from '../data/cards';
 import { buildGrid, chebyshev, inBounds } from './board';
 import { actedInPlan, checkPlan, pawnCounter, simulate, turretReady } from './plan';
-import { ench, legalMoves } from './rules';
+import { ench, legalMoves, legend } from './rules';
 import type { BattleState, PlannedMove, Plan, PlanStep, Pos, Side, SpecialStep } from './types';
 
 /** 지금 쓸 수 있는 카드 슬롯 (계획에서 이미 쓴 카드 반영). use를 주면 그 방식만. */
@@ -30,7 +30,7 @@ export const gateSquares = (v: BattleState, side: Side): Pos[] => {
 export const specialSteps = (s: BattleState, plan: Plan, maxGate = 6): SpecialStep[] => {
   const side0 = s.turnSide;
   const counters = s.pieces.some((p) => p.side === side0 && (pawnCounter(s, p) || turretReady(s, p)));
-  if (!counters && !usableCards(s, side0).length && ench(s, side0, 'E04') < 2 && ench(s, side0, 'E11') < 1) return [];
+  if (!counters && !usableCards(s, side0).length && ench(s, side0, 'E04') < 2 && ench(s, side0, 'E11') < 1 && !legend(s, side0, 'L10')) return [];
   const check = checkPlan(s, plan);
   if (!check.ok || check.virtual.winner !== null) return [];
   const v = check.virtual;
@@ -47,9 +47,12 @@ export const specialSteps = (s: BattleState, plan: Plan, maxGate = 6): SpecialSt
         for (const a of free)
           for (const b of free) if (a.id < b.id && (a.x === b.x || a.y === b.y)) cands.push({ kind: 'castle', pieceId: a.id, partnerId: b.id, card });
         break;
-      case 'shield':
-        for (const p of mine) cands.push({ kind: 'shield', pieceId: p.id, card });
+      case 'shield': {
+        // 대상이 상관없는 보조 카드(태엽 · 전체 효과 · 일제 사격)는 후보 하나면 된다 (AI 탐색을 줄인다)
+        const anyone = ['C07', 'C08', 'C09', 'C10', 'C11'].includes(v.cards[side][card].id);
+        for (const p of anyone ? [mine.find((q) => q.type === 'K') ?? mine[0]] : mine) cands.push({ kind: 'shield', pieceId: p.id, card });
         break;
+      }
       case 'gate': {
         const squares = gateSquares(v, side).sort((a, b) => (side === 0 ? b.y - a.y : a.y - b.y)).slice(0, maxGate);
         for (const p of free) if (p.type !== 'K') for (const to of squares) cands.push({ kind: 'gate', pieceId: p.id, to, card });
@@ -67,7 +70,7 @@ export const specialSteps = (s: BattleState, plan: Plan, maxGate = 6): SpecialSt
     }
   }
   // 인챈트 합체 (E11): 카드 없이
-  if (ench(v, side, 'E11') >= 1) for (const a of free) for (const b of free) if (a.id !== b.id && chebyshev(a, b) === 1) cands.push({ kind: 'fuse', pieceId: a.id, partnerId: b.id });
+  if (ench(v, side, 'E11') >= 1 || legend(v, side, 'L10')) for (const a of free) for (const b of free) if (a.id !== b.id && chebyshev(a, b) === 1) cands.push({ kind: 'fuse', pieceId: a.id, partnerId: b.id });
 
   return cands.filter((st) => simulate(s, [...plan, st]).ok);
 };
