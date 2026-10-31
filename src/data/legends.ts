@@ -23,7 +23,7 @@ export const LEGENDS: Record<LegendId, LegendDef> = {
   L05: { name: '폭군 왕관', concept: '킹 전투', type: 'K', desc: '킹 ATK 두 배. 킹이 적을 쓰러뜨리면 아군 전체 방열판 +10' },
   L06: { name: '도미노 공장', concept: '연쇄 폭발', desc: '적이 쓰러지면 그 상하좌우의 적에게 쓰러진 기물 최대 HP 25% 피해 (연쇄된다)' },
   L07: { name: '단독 출하', concept: '소수 정예', desc: '대국을 6기 이하로 시작하면 주는 피해 +40% · 받는 피해 −25%' },
-  L08: { name: '조폐 프레스', concept: '나사 경제', desc: '대국 나사 ×1.6 · 고물상 값 −20%' },
+  L08: { name: '조폐 프레스', concept: '나사 경제', desc: '대국 나사 ×1.8 · 고물상 값 −30%' },
   L09: { name: '양산 명령서', concept: '폰 대대', type: 'P', desc: '폰이 공격하면 그 적과 붙어 있는 다른 아군 폰들도 같은 적을 50%로 친다' },
   L10: { name: '합체 공정', concept: '결합 군단', desc: '붙어 있는 두 기물(킹 제외)을 카드 없이 태엽 0으로 결합. 결합 기물 피해 +50%' },
 };
@@ -40,8 +40,8 @@ export const LEGEND_FX = {
   soloMax: 6,
   soloDeal: 1.4,
   soloTake: 0.75,
-  goldMult: 1.6,
-  goldShop: 0.8,
+  goldMult: 1.8, // D-114: 조폐 프레스 가진 출하 평균 21.8층 (에픽 중 낮음) → 1.6→1.8
+  goldShop: 0.7,
   phalanxRatio: 0.5,
   fusionMult: 1.5,
 };
