@@ -297,7 +297,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     name: '검문 반장',
     title: '정예 접사 셋',
     role: '검문소의 끝',
-    quote: '서류는 네 장. 너는 한 장도 못 넘긴다.',
+    quote: '서류는 셋. 너는 한 장도 못 넘긴다.',
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P'],
     enchants: { E08: 2 },
     cards: ['A06'],
