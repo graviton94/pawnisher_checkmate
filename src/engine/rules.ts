@@ -27,6 +27,9 @@ export const weakOn = (s: BattleState, p: Piece, id: WeakId): boolean => {
   return on === 'variant' ? !!p.variant : on === 'affix' ? !!p.affix : on.includes(p.type);
 };
 
+/** 두 에픽을 함께 가졌나 — 공명 (D-121) */
+export const resonance = (s: BattleState, side: Side, a: LegendId, b: LegendId): boolean => legend(s, side, a) && legend(s, side, b);
+
 /** 계약 부품을 가졌나 (D-120) */
 export const contract = (s: BattleState, side: Side, id: ContractId): boolean => !!s.loadouts?.[side]?.contracts?.includes(id);
 

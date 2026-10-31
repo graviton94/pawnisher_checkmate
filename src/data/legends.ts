@@ -45,3 +45,16 @@ export const LEGEND_FX = {
   phalanxRatio: 0.5,
   fusionMult: 1.5,
 };
+
+/**
+ * 에픽 공명 (D-121, 제안서 P1 2.7): 정해진 두 에픽을 함께 가지면 한 줄이 더 붙는다 — "사기 콤보" 순간.
+ * 무한 루프는 막는다 (턴당 · 기물당 한 번 원칙 그대로).
+ */
+export const RESONANCES: { pair: [LegendId, LegendId]; name: string; desc: string }[] = [
+  { pair: ['L01', 'L04'], name: '기병 여왕', desc: '퀸도 적을 쓰러뜨리면 한 번 더 움직인다 (턴당 한 번)' },
+  { pair: ['L02', 'L03'], name: '교차 사격', desc: '꿰뚫고 맞힌 적에게 피해 +25%' },
+  { pair: ['L06', 'L09'], name: '연쇄 양산', desc: '도미노 피해 25% → 40%' },
+  { pair: ['L05', 'L07'], name: '고독한 왕', desc: '내 킹이 받는 피해 −30%' },
+  { pair: ['L08', 'L10'], name: '합병 자본', desc: '결합할 때마다 나사 +10' },
+];
+export const RESONANCE_FX = { pierceMult: 1.25, dominoRatio: 0.4, kingTaken: 0.7, fuseGold: 10 };

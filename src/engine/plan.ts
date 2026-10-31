@@ -1,6 +1,6 @@
 import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, CARD_FX, type CardUse } from '../data/cards';
-import { LEGEND_FX } from '../data/legends';
+import { LEGEND_FX, RESONANCE_FX } from '../data/legends';
 import { CONTRACT_FX } from '../data/contracts';
 import { MORE, SYNERGY, TACTIC_ENCHANT, tier } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
@@ -9,7 +9,7 @@ import { VARIANTS, VARIANT2 } from '../data/variants';
 import { AFFIX, WEAK } from '../data/legions';
 import { TERRAIN_FX } from '../data/terrain';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos, terrainAt } from './board';
-import { attackScan, contract, damageOf, ench, isStrikeMove, legalMoves, legend, moveTypes, onEdge, variantOn, weakOn } from './rules';
+import { attackScan, contract, damageOf, ench, isStrikeMove, legalMoves, legend, resonance, moveTypes, onEdge, variantOn, weakOn } from './rules';
 import {
   isMove,
   otherSide,
@@ -172,7 +172,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
     if (depth < LEGEND_FX.dominoDepth && legend(s, (1 - d.side) as Side, 'L06')) {
       const hits = s.pieces
         .filter((p) => p.side === d.side && p.hp > 0 && Math.abs(p.x - d.x) + Math.abs(p.y - d.y) === 1)
-        .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.maxHp * LEGEND_FX.dominoRatio)), true));
+        .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.maxHp * (resonance(s, (1 - d.side) as Side, 'L06', 'L09') ? RESONANCE_FX.dominoRatio : LEGEND_FX.dominoRatio))), true));
       if (hits.length) ctx.events.push({ type: 'blast', pos: { x: d.x, y: d.y }, label: '도미노', hits });
     }
     if (d.affix === 'recoil' && killer && killer.side !== d.side && findPiece(s, killer.id)) {
@@ -286,6 +286,7 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
   }
   if (s.solo?.[t.side]) damage = Math.max(1, Math.round(damage * LEGEND_FX.soloTake)); // 단독 출하 (에픽)
   if (contract(s, t.side, 'K4')) damage = Math.round(damage * CONTRACT_FX.taken); // 날림 공정 (계약): 받는 피해 +15%
+  if (t.type === 'K' && resonance(s, t.side, 'L05', 'L07')) damage = Math.max(1, Math.round(damage * RESONANCE_FX.kingTaken)); // 고독한 왕 (공명)
   if (splash && weakOn(s, t, 'brittle')) damage = Math.round(damage * WEAK.brittleMult); // 얇은 양산 철판 (폰 반장 약점, D-113)
   const e29 = ench(s, t.side, 'E29');
   if (e29) damage = Math.min(damage, Math.max(1, Math.ceil(t.maxHp * tier(MORE.E29, e29))));
@@ -426,6 +427,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     if (pierced.has(t.id) && lvT('E18') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.pierceMult);
     // 반장 약점 (D-113)
     if (pierced.has(t.id) && weakOn(s, t, 'brittle')) dmg = Math.round(dmg * WEAK.brittleMult);
+    if (pierced.has(t.id) && resonance(s, attacker.side, 'L02', 'L03')) dmg = Math.round(dmg * RESONANCE_FX.pierceMult); // 교차 사격 (공명)
     if (t.shield > 0 && weakOn(s, attacker, 'blunt')) dmg = Math.max(1, Math.round(dmg * WEAK.bluntMult));
     if (chebyshev(attacker, t) === 1 && weakOn(s, t, 'glass')) dmg = Math.round(dmg * WEAK.glassMult);
     if (attacker.x !== t.x && attacker.y !== t.y && Math.abs(attacker.x - t.x) === Math.abs(attacker.y - t.y) && weakOn(s, t, 'square')) dmg = Math.round(dmg * WEAK.squareMult);
@@ -873,6 +875,11 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
           s.stronghold.hold = 0;
         }
         ctx.events.push({ type: 'fuse', pieceId: piece.id, partnerId: partner.id, types });
+        // 합병 자본 (공명): 결합할 때마다 나사
+        if (resonance(s, side, 'L08', 'L10')) {
+          const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[side];
+          rec.gold = (rec.gold ?? 0) + RESONANCE_FX.fuseGold;
+        }
         if (ench(s, side, 'E11') >= 3) repeats += 1;
         attackers = [piece];
         ctx.acted.add(piece.id);
@@ -914,7 +921,8 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     }
     prevKilled = killed > 0;
     // 무한 궤도 (에픽): 나이트가 쓰러뜨리면 한 번 더 움직인다 (기물마다 턴당 1번)
-    if (killed && isMoveStep && moveTypes(piece).includes('N') && legend(s, side, 'L01') && findPiece(s, piece.id) && !s.relaunch!.includes(piece.id)) {
+    const relaunchable = (moveTypes(piece).includes('N') && legend(s, side, 'L01')) || (piece.type === 'Q' && !piece.fused && resonance(s, side, 'L01', 'L04')); // 기병 여왕 (공명)
+    if (killed && isMoveStep && relaunchable && findPiece(s, piece.id) && !s.relaunch!.includes(piece.id)) {
       s.relaunch!.push(piece.id);
       ctx.acted.delete(piece.id);
     }

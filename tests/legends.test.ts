@@ -179,3 +179,23 @@ describe('반장 약점 (D-113)', () => {
     expect(dmgTo(simulate(weak(s(), 'blunt'), plan).events, 2)).toBeLessThan(plain);
   });
 });
+
+describe('에픽 공명 (D-121)', () => {
+  it('고독한 왕: 내 킹 받는 피해 −30% · 교차 사격: 꿰뚫은 피해 +25%', () => {
+    const s = () => board([['K', 0, 'd1', tough], ['R', 1, 'd8'], ['K', 1, 'h8']], 8, 8, 1);
+    const plan = [{ pieceId: 2, to: sq('d7') }];
+    const base = dmgTo(simulate(s(), plan).events, 1);
+    const reso = gild(s(), 'L05', 'L07');
+    expect(dmgTo(simulate(reso, plan).events, 1)).toBeLessThan(base);
+  });
+  it('기병 여왕: 퀸도 쓰러뜨리면 다시 움직인다', () => {
+    const s = () => {
+      const b = board([['K', 0, 'h1'], ['Q', 0, 'd1'], ['P', 1, 'd5', weak], ['P', 1, 'a7', tough], ['K', 1, 'h8']]);
+      b.apBonus[0] = 4; // 퀸 두 번 움직일 태엽
+      return b;
+    };
+    const plan = [{ pieceId: 2, to: sq('d4') }];
+    expect(plannableMoves(gild(s(), 'L04'), plan, 2)).toHaveLength(0);
+    expect(plannableMoves(gild(s(), 'L01', 'L04'), plan, 2).length).toBeGreaterThan(0);
+  });
+});

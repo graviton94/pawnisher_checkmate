@@ -19,7 +19,7 @@ import { CONTRACTS, type ContractId } from '../data/contracts';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
 import { TUTORIAL_SEED } from '../data/coach';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
-import { LEGENDS, type LegendId } from '../data/legends';
+import { LEGENDS, RESONANCES, type LegendId } from '../data/legends';
 import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import { EVENT_IDS } from '../run/events';
 import type { BattleController } from '../game/controller';
@@ -151,7 +151,8 @@ const goldOffer = (run: RunState, id: GoldId): string => {
   const L = LEGENDS[id as LegendId];
   const t = L.type;
   const n = t ? run.deck.filter((x) => x === t).length : 0;
-  const tag = t ? `<i class="tag${n ? '' : ' red'}">${n ? `내 ${PIECE_NAMES_KO[t]} ${n}기` : `${PIECE_NAMES_KO[t]} 없음`}</i>` : '';
+  const reso = RESONANCES.find((r) => r.pair.includes(id as LegendId) && r.pair.some((x) => x !== id && run.loadout.legends?.includes(x)));
+  const tag = (t ? `<i class="tag${n ? '' : ' red'}">${n ? `내 ${PIECE_NAMES_KO[t]} ${n}기` : `${PIECE_NAMES_KO[t]} 없음`}</i>` : '') + (reso ? `<i class="tag gold">공명 · ${reso.name}</i>` : '');
   return `<span class="kind">${gradeChip('epic')} ${TEXT.legend.name} · ${L.concept}</span>${t ? pieceImg(t, 0, 'large', 44) : icon(LEGEND_ICON[id as LegendId] ?? 'crown', 'xl', '#ffb35c')}<b>${L.name}</b><span class="tags">${tag}</span><p>${L.desc}</p>`;
 };
 
@@ -291,7 +292,7 @@ export class RunUi {
       <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
       <div class="army-list">${units.join('')}</div>
       <p class="sub">${TEXT.blueprint.name} (${ownedBlueprints(run).length})</p><div class="unlocks">${ownedBlueprints(run).map((id) => `<i class="tag${run.loadout.variants?.[VARIANTS[id].base] === id ? ' gold' : ''}"><img src="ui/board/variant-${id}.png" alt="" style="width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px"> ${VARIANTS[id].name}</i>`).join('') || `<small class="lead">${TEXT.blueprint.empty}</small>`}</div>
-      <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-epic">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}
+      <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-epic">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}${RESONANCES.filter((r) => r.pair.every((x) => run.loadout.legends?.includes(x))).map((r) => `<p class="legend-line"><i class="grade g-epic">공명 · ${r.name}</i> ${r.desc}</p>`).join('')}
       <p class="sub">개조 (${ench.length}/${enchantSlots(run)})</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
       <p class="sub">천공 카드 (${cards.length}/${cardSlots(run)})</p>${(run.loadout.contracts ?? []).map((id) => `<p class="legend-line"><i class="grade g-contract">${CONTRACTS[id].name}</i> ${CONTRACTS[id].gain} · <span class="bad">${CONTRACTS[id].cost}</span></p>`).join('')}<div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
