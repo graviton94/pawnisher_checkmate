@@ -67,7 +67,8 @@ const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
 const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
-const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame', safe: 'crate', press: 'anvil', forgery: 'question', jam: 'claw' };
+const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame', safe: 'crate', press: 'anvil', forgery: 'question', jam: 'claw',
+  nightShift: 'anvil', moldBin: 'crate', recheck: 'eye', dipping: 'flame', screwRain: 'screw', stampForge: 'question', swapDealer: 'swap', oilLeak: 'oil', brokenGacha: 'lever', apprentice: 'wrench', lostBox: 'crate', welding: 'flame', scout: 'scale', auction: 'bell', napping: 'watch' };
 const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R' };
 
 

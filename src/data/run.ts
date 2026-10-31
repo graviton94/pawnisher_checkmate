@@ -78,7 +78,7 @@ export const pieceRewardDue = (floor: number, wins: number): boolean => actOf(fl
 export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 38, N: 22, B: 22, R: 12, Q: 6 };
 
 /** 희귀 인챈트 (나머지는 일반). 엘리트·보스는 희귀 가중, 보스는 희귀 1장 확정. */
-export const RARE_ENCHANTS: EnchantId[] = ['E05', 'E06', 'E07', 'E09', 'E11', 'E15'];
+export const RARE_ENCHANTS: EnchantId[] = ['E05', 'E06', 'E07', 'E09', 'E11', 'E15', 'E26', 'E31', 'E44'];
 export const RARE_WEIGHT = { battle: 0.5, elite: 1.5, boss: 2 };
 /**
  * 인챈트 3지선다가 이미 가진 인챈트 쪽으로 모이게 한다 (중반 "파츠 모으기" → 후반 시너지).

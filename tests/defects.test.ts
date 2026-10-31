@@ -106,3 +106,47 @@ describe('후반 나사 쓸 곳 (D-103)', () => {
     expect(st.choices[0].options.length).toBeGreaterThan(0);
   });
 });
+
+describe('볼륨 1 돌발 15종 (D-105)', () => {
+  const ids = ['nightShift', 'moldBin', 'recheck', 'dipping', 'screwRain', 'stampForge', 'swapDealer', 'oilLeak', 'brokenGacha', 'apprentice', 'lostBox', 'welding', 'scout', 'auction', 'napping'] as const;
+  it('모든 선택지가 결과 한 줄이나 보상 단계로 끝난다 (시드 여럿)', async () => {
+    const { EVENTS } = await import('../src/run/events');
+    const { eventChoiceAvailable } = await import('../src/run/run');
+    for (const id of ids) {
+      for (let i = 0; i < EVENTS[id].choices.length; i++) {
+        for (let seed = 1; seed <= 6; seed++) {
+          const run = newRun(seed);
+          run.deck = ['K', 'P', 'P', 'N', 'B', 'R'];
+          run.gold = 200;
+          run.loadout.enchants = { E01: 1 };
+          run.loadout.damage = { P: 1 };
+          run.map[0] = [{ kind: 'event', event: id }];
+          enterNode(run, 0);
+          if (!eventChoiceAvailable(run, id, i)) continue;
+          expect(eventChoose(run, i)).toBeUndefined();
+          const st = run.stage as unknown as { at: string; result?: string };
+          expect(st.at === 'reward' || (st.at === 'event' && typeof st.result === 'string' && st.result.length > 0)).toBe(true);
+          expect(run.deck).toContain('K');
+          expect(run.gold).toBeGreaterThanOrEqual(0);
+        }
+      }
+    }
+  });
+  it('부품 교환상: 폰 둘 → 나이트 · 스카우트: 가장 비싼 기물을 두 배 값에', async () => {
+    const run = newRun(1);
+    run.deck = ['K', 'P', 'P', 'R'];
+    run.map[0] = [{ kind: 'event', event: 'swapDealer' }];
+    enterNode(run, 0);
+    eventChoose(run, 0);
+    expect(run.deck.filter((t) => t === 'P')).toHaveLength(0);
+    expect(run.deck).toContain('N');
+    const r2 = newRun(1);
+    r2.deck = ['K', 'P', 'R'];
+    r2.map[0] = [{ kind: 'event', event: 'scout' }];
+    enterNode(r2, 0);
+    const g = r2.gold;
+    eventChoose(r2, 0);
+    expect(r2.deck).not.toContain('R');
+    expect(r2.gold).toBeGreaterThan(g);
+  });
+});

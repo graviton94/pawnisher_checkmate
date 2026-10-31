@@ -6,7 +6,7 @@ import { DEFECT } from '../data/defects';
 import { DEFAULT_FORMATION } from '../data/formations';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
-import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
+import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, MORE, tier, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { VARIANTS, VARIANT_FORGE_LEVEL, variantsFor, type VariantId } from '../data/variants';
@@ -276,6 +276,152 @@ export const recordBattle = (run: RunState, battle: BattleState): void => {
   if (run.stage.at === 'battle') run.stage.battle = battle;
 };
 
+// ---------- 볼륨 1 돌발 (D-105) ----------
+const MORE_EVENTS: EventId[] = ['nightShift', 'moldBin', 'recheck', 'dipping', 'screwRain', 'stampForge', 'swapDealer', 'oilLeak', 'brokenGacha', 'apprentice', 'lostBox', 'welding', 'scout', 'auction', 'napping'];
+/** 한 단계 위 유형 (쇳물 담금질) */
+const UPGRADE: Partial<Record<PieceType, PieceType[]>> = { P: ['N', 'B'], N: ['R'], B: ['R'], R: ['Q'] };
+
+/** 볼륨 1 돌발의 선택 결과. 보상 단계로 넘기면 null */
+const moreEvent = (run: RunState, id: EventId, i: number): string | null => {
+  const roll = () => withRng(run, (rng) => rng.next());
+  const pick = <T>(list: T[]): T => list[withRng(run, (rng) => rng.int(list.length))];
+  const types = () => [...new Set(run.deck)].filter((t) => t !== 'K');
+  const rareChoice = (title: string, lines: string[]): null => {
+    const options = withRng(run, (rng) => rollEnchants(run, rng, 'altar', true));
+    run.stage = { at: 'reward', title, lines, choices: options.length ? [{ type: 'enchant', options }] : [] };
+    return null;
+  };
+  if (i !== 0) {
+    switch (id) {
+      case 'moldBin':
+        run.gold += 30;
+        return '고철값을 받았다. 나사 +30.';
+      case 'oilLeak':
+        return `미끄러졌다. ${damageRandom(run)}`;
+      case 'brokenGacha':
+        run.gold += 30;
+        run.crackGauge = 0;
+        return '톱니를 뜯어 팔았다. 나사 +30. 행운 톱니가 멈췄다.';
+      case 'lostBox':
+        run.gold += 30;
+        return '상자째 팔았다. 나사 +30.';
+      case 'screwRain':
+        return '* 나사가 다 지나갈 때까지 기다렸다. 머리는 무사하다.';
+      default:
+        return '지나갔다.';
+    }
+  }
+  switch (id) {
+    case 'nightShift': {
+      const t = pick([...new Set(run.deck)].filter((x) => (run.loadout.forge[x] ?? 0) < FORGE_MAX));
+      run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
+      run.sealed = (run.sealed ?? 0) + 1;
+      return `${PIECE_NAMES_KO[t]} 개량 +${run.loadout.forge[t]}. 장인이 깼다 — 봉인 1대국.`;
+    }
+    case 'moldBin': {
+      if (roll() < 0.6) {
+        const v = withRng(run, (rng) => grantVariant(run, rng));
+        if (v) return `이형 거푸집! ${VARIANTS[v].name}.`;
+      }
+      return `거푸집이 터졌다. ${damageRandom(run)}`;
+    }
+    case 'recheck': {
+      run.gold -= 50;
+      for (const t of Object.keys(run.loadout.damage ?? {}) as PieceType[]) run.loadout.damage![t] = Math.max(0, (run.loadout.damage![t] ?? 0) - 1);
+      return '재검사 통과. 손상이 한 단씩 지워졌다. 나사 −50.';
+    }
+    case 'dipping': {
+      const idx = run.deck.map((t, k) => [t, k] as const).filter(([t]) => t !== 'K');
+      const [t, k] = pick(idx);
+      if (roll() < 0.5) {
+        const up = UPGRADE[t];
+        if (up) {
+          const to = pick(up);
+          run.deck[k] = to;
+          return `${PIECE_NAMES_KO[t]}가 ${PIECE_NAMES_KO[to]}로 굳었다.`;
+        }
+        run.loadout.forge[t] = Math.min(FORGE_MAX, (run.loadout.forge[t] ?? 0) + 1);
+        return `${PIECE_NAMES_KO[t]}가 더 단단해졌다. 개량 +1.`;
+      }
+      run.deck.splice(k, 1);
+      return `${PIECE_NAMES_KO[t]}가 녹아 사라졌다.`;
+    }
+    case 'screwRain':
+      run.gold += 25;
+      return '나사 +25. 혹이 하나 생겼다.';
+    case 'stampForge': {
+      const owned = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).filter(([, n]) => n > 0 && n < ENCHANT_MAX_STACK);
+      const [e, n] = pick(owned);
+      run.loadout.enchants[e] = n + 1;
+      run.sealed = (run.sealed ?? 0) + DEFECT.sealBattles;
+      return `${ENCHANTS[e].name} ${n + 1}단. 서류가 꼬였다 — 봉인 ${DEFECT.sealBattles}대국.`;
+    }
+    case 'swapDealer': {
+      for (let n = 0; n < 2; n++) run.deck.splice(run.deck.indexOf('P'), 1);
+      if (canAdd(run.deck, 'N')) {
+        run.deck.push('N');
+        return '폰 둘을 건네고 나이트 하나를 받았다.';
+      }
+      run.gold += 25;
+      return '나이트를 들일 자리가 없다. 나사 +25로 받았다.';
+    }
+    case 'oilLeak':
+      run.gold -= 20;
+      return '틈을 막았다. 나사 −20.';
+    case 'brokenGacha':
+      run.crackGauge = Math.min(ALTAR.gaugeMax, run.crackGauge + 2);
+      return `행운 톱니가 두 칸 돌았다 (${run.crackGauge}/${ALTAR.gaugeMax}).`;
+    case 'apprentice': {
+      const t = pick<PieceType>(types().length ? types() : ['K']);
+      if (roll() < 0.5 && (run.loadout.forge[t] ?? 0) < FORGE_MAX) {
+        run.loadout.forge[t] = (run.loadout.forge[t] ?? 0) + 1;
+        return `운이 좋았다. ${PIECE_NAMES_KO[t]} 개량 +${run.loadout.forge[t]}.`;
+      }
+      const forged = (Object.entries(run.loadout.forge) as [PieceType, number][]).filter(([, n]) => n > 0 && n < FORGE_MAX);
+      if (forged.length) {
+        const [ft] = pick(forged);
+        run.loadout.forge[ft] = run.loadout.forge[ft]! - 1;
+        return `망치가 거꾸로였다. ${PIECE_NAMES_KO[ft]} 개량 −1.`;
+      }
+      return `망치가 거꾸로였다. ${damageRandom(run)}`;
+    }
+    case 'lostBox': {
+      const pool = (Object.keys(CARDS) as CardId[]).filter((c) => !run.loadout.cards.includes(c));
+      if (run.loadout.cards.length >= CARD_SLOTS || !pool.length) {
+        run.gold += 30;
+        return '천공 카드 칸이 차 있다. 상자째 팔았다. 나사 +30.';
+      }
+      const c = pick(pool);
+      run.loadout.cards.push(c);
+      return `카드 획득: ${CARDS[c].name}`;
+    }
+    case 'welding': {
+      const t = types().length ? pick(types()) : null;
+      if (t) damageType(run, t);
+      return rareChoice('꺼지지 않은 용접기', t ? [damageType(run, t)] : []);
+    }
+    case 'scout': {
+      const best = types().sort((a, b) => PIECE_STATS[b].value - PIECE_STATS[a].value)[0];
+      run.deck.splice(run.deck.indexOf(best), 1);
+      const g = sellPrice(best) * 2;
+      run.gold += g;
+      return `${PIECE_NAMES_KO[best]}를 넘겼다. 나사 +${g}.`;
+    }
+    case 'auction':
+      run.gold -= 60;
+      if (roll() < 0.5) return rareChoice('고철 경매 — 낙찰', ['나사 −60']);
+      return '빈 상자였다. 나사 −60.';
+    case 'napping': {
+      if (roll() < 0.5) return withRng(run, (rng) => grantRandomPiece(run, rng, { P: 0, N: 30, B: 30, R: 25, Q: 15 }));
+      run.sealed = (run.sealed ?? 0) + DEFECT.sealBattles;
+      run.gold = Math.max(0, run.gold - 20);
+      return `들켰다. 봉인 ${DEFECT.sealBattles}대국 · 나사 −20.`;
+    }
+    default:
+      return null;
+  }
+};
+
 // ---------- 결함 (D-101) ----------
 /** 그 유형 손상 1단 (최대 3단) — 결과 한 줄 */
 const damageType = (run: RunState, t: PieceType): string => {
@@ -335,7 +481,8 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   const lines: string[] = [];
   // 나사 자루 (억빠, D-099): 가끔 대국 나사가 세 배
   const jackpot = withRng(run, (rng) => rng.next()) < LUCK.jackpot;
-  const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1) * (jackpot ? LUCK.jackpotMult : 1));
+  const magnet = run.loadout.enchants.E32 ? tier(MORE.E32, run.loadout.enchants.E32) : 1; // 나사 자석 (D-105)
+  const gold = Math.round(battleGold(run.floor, kind as 'battle' | 'elite' | 'boss') * ((run.ascension ?? 0) >= 2 ? 0.85 : 1) * (jackpot ? LUCK.jackpotMult : 1) * magnet);
   run.gold += gold;
   lines.push(jackpot ? `${TEXT.luck.jackpot} 나사 +${gold}` : `나사 +${gold}`);
   // 빠른 승리 보너스 (D-072): 기준 턴 안에 이기면 골드를 더 준다
@@ -345,6 +492,21 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     const extra = Math.round(gold * PAR.bonus);
     run.gold += extra;
     lines.push(`빠른 승리 (${rounds}/${par}턴) 나사 +${extra}`);
+  }
+  // 처치 수당 (D-105)
+  const bounty = run.loadout.enchants.E34 ? (final.record?.[0].kills ?? 0) * tier(MORE.E34, run.loadout.enchants.E34) : 0;
+  if (bounty) {
+    run.gold += bounty;
+    lines.push(`처치 수당 나사 +${bounty}`);
+  }
+  // 수리 키트 (D-105): n승마다 손상 1단 수리
+  const kit = run.loadout.enchants.E35;
+  if (kit && run.wins % tier(MORE.E35, kit) === 0) {
+    const hurt = (Object.entries(run.loadout.damage ?? {}) as [PieceType, number][]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])[0];
+    if (hurt) {
+      run.loadout.damage![hurt[0]] = hurt[1] - 1;
+      lines.push(`수리 키트 — ${PIECE_NAMES_KO[hurt[0]]} 손상 1단 수리`);
+    }
   }
   // 나사 더미 (지형, D-097): 대국 중 주운 나사
   const picked = final.record?.[0].gold ?? 0;
@@ -357,7 +519,8 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
   if (order) {
     const def = ORDERS[order];
     if (orderProgress(order, final, run.deck, true).done) {
-      const g = Math.round(def.gold * ORDER_GOLD_MULT[kind as 'battle' | 'elite' | 'boss']);
+      const ledger = run.loadout.enchants.E36 ? tier(MORE.E36, run.loadout.enchants.E36) : 1; // 주문 장부 (D-105)
+      const g = Math.round(def.gold * ORDER_GOLD_MULT[kind as 'battle' | 'elite' | 'boss'] * ledger);
       run.gold += g;
       lines.push(`주문서 완수 · 나사 +${g}`);
     } else lines.push('주문서 미완');
@@ -421,7 +584,7 @@ const rollPieces = (run: RunState, rng: Rng): PieceType[] =>
   );
 
 /** 인챈트가 대상으로 삼는 기물 유형 */
-export const ENCHANT_TYPE: Partial<Record<EnchantId, PieceType>> = { E01: 'N', E02: 'B', E03: 'R', E04: 'P', E08: 'K', E12: 'P', E13: 'N', E14: 'B' };
+export const ENCHANT_TYPE: Partial<Record<EnchantId, PieceType>> = { E01: 'N', E02: 'B', E03: 'R', E04: 'P', E08: 'K', E12: 'P', E13: 'N', E14: 'B', E22: 'P', E38: 'Q', E39: 'K', E40: 'P', E41: 'N', E42: 'B', E43: 'R' };
 
 const rollEnchants = (run: RunState, rng: Rng, source: 'battle' | 'elite' | 'boss' | 'altar', rareOnly = false): EnchantId[] => {
   const act = Math.min(3, actOf(Math.min(run.floor, TOTAL_FLOORS))) - 1;
@@ -535,7 +698,8 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
   const owned = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).filter(([, n]) => n < ENCHANT_MAX_STACK);
   const polishId = late && owned.length ? owned[rng.int(owned.length)][0] : undefined;
   // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
-  const k = 1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep;
+  const appraisal = run.loadout.enchants.E33 ? tier(MORE.E33, run.loadout.enchants.E33) : 1; // 고물 감정서 (D-105)
+  const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal;
   const at = (n: number) => Math.round(n * k);
   return {
     pieces: pieces.map((item) => ({ item, price: at(piecePrice(item)), sold: false })),
@@ -711,6 +875,16 @@ export const eventChoiceAvailable = (run: RunState, id: EventId, i: number): boo
   if (id === 'pact' && i === 0) return run.deck.some((t) => PACT_VICTIMS.includes(t));
   if (id === 'press' && i === 0) return run.deck.length > 1;
   if (id === 'jam' && i === 1) return run.gold >= 40;
+  // 볼륨 1 돌발 (D-105)
+  const damaged = Object.values(run.loadout.damage ?? {}).some((n) => (n ?? 0) > 0);
+  if (id === 'recheck' && i === 0) return damaged && run.gold >= 50;
+  if (id === 'dipping' && i === 0) return run.deck.some((t) => t !== 'K');
+  if (id === 'stampForge' && i === 0) return Object.values(run.loadout.enchants).some((n) => (n ?? 0) > 0 && (n ?? 0) < ENCHANT_MAX_STACK);
+  if (id === 'swapDealer' && i === 0) return run.deck.filter((t) => t === 'P').length >= 2;
+  if (id === 'oilLeak' && i === 0) return run.gold >= 20;
+  if (id === 'auction' && i === 0) return run.gold >= 60;
+  if (id === 'scout' && i === 0) return run.deck.some((t) => t !== 'K');
+  if (id === 'nightShift' && i === 0) return [...new Set(run.deck)].some((t) => (run.loadout.forge[t] ?? 0) < FORGE_MAX);
   return true;
 };
 
@@ -719,6 +893,12 @@ export const eventChoose = (run: RunState, i: number): string | void => {
   const id = run.stage.id;
   if (!EVENTS[id].choices[i]) return '없는 선택지';
   if (!eventChoiceAvailable(run, id, i)) return '그건 안 돼.';
+  // 볼륨 1 돌발 (D-105): 따로 처리 (결과 한 줄 또는 보상 단계)
+  if (MORE_EVENTS.includes(id)) {
+    const r = moreEvent(run, id, i);
+    if (r !== null && run.stage.at === 'event') run.stage.result = r;
+    return;
+  }
   let result = '아무 일도 없었다.';
   if (i === 0) {
     switch (id) {

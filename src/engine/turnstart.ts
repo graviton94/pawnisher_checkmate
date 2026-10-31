@@ -1,3 +1,4 @@
+import { MORE, tier } from '../data/enchants';
 import { AFFIX } from '../data/legions';
 import { COLLAPSE, RESIGN, STALL, STRONGHOLD } from '../data/battle';
 import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
@@ -235,6 +236,16 @@ export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
     s.apBonus[side] += s.apCarry[side];
     events.push({ type: 'apGain', side, amount: s.apCarry[side] });
     s.apCarry[side] = 0;
+  }
+  // 겹 장갑 (D-105): 자기 턴 시작마다 모든 아군 방열판, ★이면 킹 더
+  const e28 = ench(s, side, 'E28');
+  if (e28) {
+    for (const p of s.pieces) {
+      if (p.side !== side) continue;
+      const amount = tier(MORE.E28, e28) + (e28 >= 3 && p.type === 'K' ? MORE.kingPlate - tier(MORE.E28, e28) : 0);
+      p.shield += amount;
+      events.push({ type: 'shield', pieceId: p.id, amount });
+    }
   }
   // 덧댄 철판 (정예 접사, D-096): 자기 턴 시작마다 방열판
   for (const p of s.pieces) {

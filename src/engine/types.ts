@@ -130,6 +130,8 @@ export interface BattleState {
   checkGuard?: number[];
   /** 진영별 대국 기록 (전술 키워드 횟수 · 결정타) — 주문서 판정용 (D-094). 옛 저장에는 없다 */
   record?: [BattleRecord, BattleRecord];
+  /** 비상 퓨즈를 쓴 수 (진영별, D-105) */
+  fuseUsed?: [number, number];
   /** 지형 칸 (D-097). 옛 저장에는 없다 */
   terrain?: { x: number; y: number; kind: TerrainId }[];
 }
@@ -140,6 +142,8 @@ export interface BattleRecord {
   finisher?: PieceType;
   /** 나사 더미에서 주운 나사 (D-097) */
   gold?: number;
+  /** 처치한 적 수 (처치 수당, D-105) */
+  kills?: number;
   /** 폰이 처치한 적 수 (주문서 「폰으로 셋」, D-099) */
   pawnKills?: number;
 }
@@ -193,6 +197,8 @@ export interface HitResult {
   checked?: boolean;
   /** 최후의 리벳 접사로 HP 1에서 버텼다 */
   held?: boolean;
+  /** 비상 퓨즈 개조로 HP 1에서 버텼다 (D-105) */
+  fuse?: boolean;
 }
 
 export type BattleEvent =

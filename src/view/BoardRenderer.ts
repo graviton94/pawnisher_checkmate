@@ -996,6 +996,11 @@ class BoardScene extends Phaser.Scene {
         const sp = this.sprites.get(h.targetId);
         if (sp) this.floatText(sp, AFFIXES.lastRivet.name, AFFIXES.lastRivet.color);
       }
+      // 비상 퓨즈 (D-105): 내 기물이 HP 1로 버틴다
+      for (const h of e.hits.filter((x) => x.fuse)) {
+        const sp = this.sprites.get(h.targetId);
+        if (sp) this.floatText(sp, '비상 퓨즈', '#FDE68A');
+      }
       const checked = e.hits.find((h) => h.checked);
       if (checked) sfx('check');
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버틴다 — 한 대면 끝`);

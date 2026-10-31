@@ -340,6 +340,15 @@ const scenarios = {
     }
     return [];
   },
+  // 볼륨 1 (D-105): 새 돌발 · 새 개조 보상
+  async volume(page) {
+    for (const id of ['dipping', 'auction', 'napping']) {
+      await loadRun(page, { at: 'event', id });
+      await page.screenshot({ path: path.join(OUT, `${stamp}-event-${id}.png`) });
+    }
+    await loadRun(page, { at: 'reward', title: '4층 통과', lines: ['나사 +37'], choices: [{ type: 'enchant', options: ['E22', 'E31', 'E41'] }] });
+    return ['reward-volume'];
+  },
   async over(page) {
     await scenarios.menu(page);
     await page.evaluate((run) => { window.runUi.run = run; window.runUi.show(); }, { ...runFixture({ at: 'over', won: false }), floor: 9 });

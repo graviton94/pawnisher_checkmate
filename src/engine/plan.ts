@@ -1,6 +1,6 @@
 import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, type CardUse } from '../data/cards';
-import { SYNERGY, TACTIC_ENCHANT } from '../data/enchants';
+import { MORE, SYNERGY, TACTIC_ENCHANT, tier } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
 import { VARIANTS } from '../data/variants';
@@ -35,7 +35,7 @@ export const moveCost = (s: BattleState, piece: Piece): number => {
   const types = moveTypes(piece);
   if (types.length === 1 && types[0] === 'P' && ench(s, piece.side, 'E04') >= 3) return 0;
   const extra = piece.variant && variantOn(piece, piece.variant) ? (VARIANTS[piece.variant].apDelta ?? 0) : 0;
-  const oiled = piece.affix === 'oiled' ? 1 : 0; // 기름칠한 관절 (접사)
+  const oiled = (piece.affix === 'oiled' ? 1 : 0) + (types.length === 1 && types[0] === 'Q' && ench(s, piece.side, 'E38') >= 2 ? 1 : 0); // 기름칠한 관절 (접사) · 퀸 왕관 톱니 2단
   return Math.max(0, Math.max(...types.map((t) => PIECE_STATS[t].ap)) + extra - oiled);
 };
 
@@ -130,6 +130,10 @@ interface AttackMods {
   knockback: boolean;
   /** 맞은 적의 상하좌우에 주는 부가 피해 비율 */
   splash: number;
+  /** 이번 명령에서 이동한 칸 수 · 폭주였나 · 제자리 공격(받아치기)이었나 (D-105 개조) */
+  dist?: number;
+  strike?: boolean;
+  stand?: boolean;
 }
 
 /** 파괴된 기물을 치우고 처치 효과·승패·각성을 처리한다 */
@@ -161,6 +165,10 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined):
   if (killer && dead.some((p) => p.type === 'K' && p.side !== killer.side)) {
     const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[killer.side];
     rec.finisher = killer.type;
+  }
+  if (killer && enemyKills) {
+    const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[killer.side];
+    rec.kills = (rec.kills ?? 0) + enemyKills;
   }
   if (killer && killer.type === 'P' && enemyKills) {
     const rec = (s.record ??= [{ tactics: {} }, { tactics: {} }])[killer.side];
@@ -230,10 +238,24 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
     const k = kingOf(s, t.side);
     if (k && k.id !== t.id && chebyshev(k, t) === 1) damage = Math.max(1, Math.round(damage * AFFIX.guardCut));
   }
-  // 지형 (D-097): 방호판 −20% · 조명 칸 +20%
+  // 지형 (D-097): 방호판 −20% · 조명 칸 +20% (자석 장화 2단이면 내 방호판 −40%)
   const ground = terrainAt(s, t.x, t.y);
-  if (ground === 'shelter') damage = Math.max(1, Math.round(damage * TERRAIN_FX.shelterCut));
+  if (ground === 'shelter') damage = Math.max(1, Math.round(damage * (ench(s, t.side, 'E37') >= 2 ? MORE.shelterCut : TERRAIN_FX.shelterCut)));
   else if (ground === 'lit') damage = Math.round(damage * TERRAIN_FX.litMult);
+  // 방어 개조 (D-105): 킹 철모 · 폰 방패 대열 · 충격 흡수 스프링
+  const e39 = ench(s, t.side, 'E39');
+  if (t.type === 'K' && e39) damage = Math.max(1, Math.round(damage * tier(MORE.E39, e39)));
+  else if (e39 >= 3) {
+    const k = kingOf(s, t.side);
+    if (k && chebyshev(k, t) === 1) damage = Math.max(1, Math.round(damage * MORE.guardCut));
+  }
+  const e40 = ench(s, t.side, 'E40');
+  if (t.type === 'P' && e40) {
+    const mates = s.pieces.filter((p) => p.side === t.side && p.type === 'P' && p.hp > 0 && p.y === t.y && Math.abs(p.x - t.x) === 1).length;
+    if (mates) damage = Math.max(1, Math.round(damage * Math.max(0.5, 1 - mates * tier(MORE.E40, e40))));
+  }
+  const e29 = ench(s, t.side, 'E29');
+  if (e29) damage = Math.min(damage, Math.max(1, Math.ceil(t.maxHp * tier(MORE.E29, e29))));
   const shieldAbsorbed = Math.min(t.shield, damage);
   t.shield -= shieldAbsorbed;
   t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
@@ -243,7 +265,15 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
   // 최후의 리벳 (접사): 다른 일반 기물이 남아 있으면 HP 1에서 버틴다
   const held = !checked && t.hp <= 0 && t.affix === 'lastRivet' && s.pieces.some((p) => p.side === t.side && p.id !== t.id && p.type !== 'K' && p.hp > 0);
   if (held) t.hp = 1;
-  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(held ? { held } : {}) };
+  // 비상 퓨즈 (D-105): 대국마다 처음 쓰러지는 아군 n기는 HP 1로 버틴다 (킹 제외)
+  const e31 = ench(s, t.side, 'E31');
+  const fuse = !checked && !held && t.hp <= 0 && t.type !== 'K' && e31 > 0 && (s.fuseUsed?.[t.side] ?? 0) < tier(MORE.E31, e31);
+  if (fuse) {
+    t.hp = 1;
+    const used = (s.fuseUsed ??= [0, 0]);
+    used[t.side] += 1;
+  }
+  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(held ? { held } : {}), ...(fuse ? { fuse } : {}) };
 };
 
 const SLIDERS: PieceType[] = ['B', 'R', 'Q'];
@@ -286,6 +316,7 @@ const landOn = (s: BattleState, ctx: TurnCtx, piece: Piece): void => {
   if (i < 0) return;
   const tile = s.terrain![i];
   const pos = { x: tile.x, y: tile.y };
+  if (tile.kind === 'magnet' && ench(s, piece.side, 'E37') >= 1) return; // 자석 장화: 안 붙잡힌다
   if (tile.kind === 'magnet') {
     piece.stuckTurn = s.turnNumber + 2;
     s.terrain!.splice(i, 1);
@@ -307,8 +338,20 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   const { targets, area, pierced } = attackScan(s, attacker, grid, { pierce: mods.pierce });
   let mult = mods.mult;
 
-  // 발판 (지형): 여기서 치면 피해 +30%
-  if (terrainAt(s, attacker.x, attacker.y) === 'platform') mult *= TERRAIN_FX.platformMult;
+  // 발판 (지형): 여기서 치면 피해 +30% (자석 장화 ★: +60%)
+  const under = terrainAt(s, attacker.x, attacker.y);
+  if (under === 'platform') mult *= ench(s, attacker.side, 'E37') >= 3 ? MORE.platformMult : TERRAIN_FX.platformMult;
+  // 볼륨 1 개조 (D-105): 공격하는 쪽 배율
+  const lvM = (id: 'E21' | 'E22' | 'E23' | 'E24' | 'E27' | 'E38' | 'E43' | 'E44' | 'E45') => ench(s, attacker.side, id);
+  if (under && lvM('E21')) mult *= tier(MORE.E21, lvM('E21'));
+  if (mods.stand && lvM('E22')) mult *= tier(MORE.E22, lvM('E22'));
+  if (ctx.order === 0 && lvM('E23')) mult *= tier(MORE.E23, lvM('E23'));
+  if (ctx.order >= 2 && lvM('E24')) mult *= tier(MORE.E24, lvM('E24'));
+  if (mods.dist && lvM('E27')) mult *= 1 + mods.dist * tier(MORE.E27, lvM('E27'));
+  if (attacker.type === 'Q' && !attacker.fused && lvM('E38')) mult *= tier(MORE.E38, lvM('E38'));
+  if (attacker.type === 'R' && !attacker.fused && (mods.dist ?? 0) >= 3 && lvM('E43')) mult *= tier(MORE.E43, lvM('E43'));
+  if (mods.strike && lvM('E44')) mult *= tier(MORE.E44, lvM('E44'));
+  if (attacker.fused && lvM('E45')) mult *= tier(MORE.E45, lvM('E45'));
   // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
   const types = moveTypes(attacker);
   const lv = (id: 'E12' | 'E13' | 'E14' | 'E15') => ench(s, attacker.side, id);
@@ -338,6 +381,7 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   if (breach && lvT('E19') >= 1) mult *= TACTIC_ENCHANT.breachMult;
 
   const hits: HitResult[] = [];
+  const counters: { by: number; hit: HitResult }[] = [];
   const primary = new Set(targets.map((t) => t.id));
   for (const t of targets) {
     if (t.hp <= 0) continue;
@@ -345,6 +389,14 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     if (e09 >= 3 && (ctx.hitCount.get(t.id) ?? 0) >= 1) dmg *= 2;
     if (pierced.has(t.id) && lvT('E18') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.pierceMult);
     if (t.type === 'K' && lvT('E20') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.kingMult);
+    // 볼륨 1 개조 (D-105): 대상에 따라 — 킹 사냥 · 처형 날 · 정밀 렌즈
+    const e25 = ench(s, attacker.side, 'E25');
+    if (t.type === 'K' && e25) dmg = Math.round(dmg * tier(MORE.E25, e25));
+    const e26 = ench(s, attacker.side, 'E26');
+    if (e26 && t.hp <= t.maxHp * MORE.woundedAt) dmg = Math.round(dmg * tier(MORE.E26, e26));
+    if (e26 >= 3 && t.type !== 'K' && t.hp <= t.maxHp * MORE.executeAt) dmg = Math.max(dmg, t.hp + t.shield);
+    const e42 = ench(s, attacker.side, 'E42');
+    if (e42 && attacker.type === 'B' && !attacker.fused && chebyshev(attacker, t) >= 2) dmg = Math.round(dmg * tier(MORE.E42, e42));
     const origin = { x: t.x, y: t.y };
     const hit = applyDamage(s, t, dmg);
     ctx.hitCount.set(t.id, (ctx.hitCount.get(t.id) ?? 0) + 1);
@@ -363,6 +415,9 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
       }
     }
     hits.push(hit);
+    // 반격 톱니 (D-105): 맞은 쪽이 받은 피해 일부를 되돌린다
+    const e30 = ench(s, victim.side, 'E30');
+    if (e30 && hit.damage > 0 && victim.hp > 0 && attacker.hp > 0) counters.push({ by: victim.id, hit: applyDamage(s, attacker, Math.max(1, Math.round(hit.damage * tier(MORE.E30, e30))), true) });
     // 갈래 톱날 ★: 포크로 맞힌 적마다 한 번 더
     if (forking && lvT('E17') >= 3 && victim.hp > 0) hits.push(applyDamage(s, victim, Math.max(1, Math.floor(dmg * TACTIC_ENCHANT.extraHit)), true));
 
@@ -377,6 +432,15 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     }
   }
   ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  // 반격 톱니: 맞은 기물이 공격자를 친다 (화면에는 맞은 쪽의 공격으로)
+  for (const c of counters) ctx.events.push({ type: 'attack', order, attackerId: c.by, area: [], hits: [c.hit] });
+  // 착지 충격판 (D-105): 나이트가 이동해 치면 내려앉은 칸 주변 적에게
+  const e41 = ench(s, attacker.side, 'E41');
+  if (e41 && attacker.type === 'N' && !attacker.fused && mods.dist && attacker.hp > 0) {
+    const ring = s.pieces.filter((p) => p.side !== attacker.side && p.hp > 0 && chebyshev(p, attacker) === 1);
+    const shock = ring.map((n) => applyDamage(s, n, Math.max(1, Math.floor(damageOf(s, attacker, n, mult) * tier(MORE.E41, e41))), true));
+    if (shock.length) ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area: [], hits: shock });
+  }
   // 전술 키워드 (D-094): 피해 공식은 그대로, 이름만 붙인다
   const direct = hits.filter((h) => !h.splash);
   if (direct.length) {
@@ -545,7 +609,9 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
         landOn(s, ctx, piece);
         ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
         if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
+        mods.dist = chebyshev(from, step.to);
         if (strike) {
+          mods.strike = true;
           s.lastStrike[side] = 'used';
           ctx.events.push({ type: 'lastStrike', pieceId: piece.id });
           mods.mult *= LAST_STRIKE_MULT;
@@ -590,8 +656,9 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
       }
       case 'stand': {
         if (!pawnCounter(s, piece) && (ench(s, side, 'E04') < 2 || !pawnBlocked(s, piece))) return fail('제자리 공격 불가');
-        cost = ench(s, side, 'E04') >= 3 ? 0 : 1;
+        cost = ench(s, side, 'E04') >= 3 || ench(s, side, 'E22') >= 2 ? 0 : 1;
         if (apUsed + cost > availableAp(s)) return fail('AP 부족');
+        mods.stand = true;
         attackers = [piece];
         ctx.acted.add(piece.id);
         break;
@@ -705,6 +772,8 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     prevMoveType = moveType;
     if (s.winner !== null) continue;
 
+    // 퀸 왕관 톱니 ★ (D-105): 퀸이 이동해 치면 두 번
+    if (ench(s, side, 'E38') >= 3 && mods.dist && piece.type === 'Q' && !piece.fused) repeats += 1;
     // 그랜드 피날레 (E05 ★): 두 기 이상 예약했을 때 마지막 순번의 공격 2회
     if (ench(s, side, 'E05') >= 3 && plan.length >= 2 && order === plan.length - 1) repeats += 1;
 
@@ -716,6 +785,15 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
       }
     }
     prevKilled = killed > 0;
+    // 받침 스프링 ★ · 선봉 리벳 ★ (D-105): 처치하면 그 턴 태엽 +1 (턴당 1회)
+    const apOnce = (key: string) => {
+      if (ctx.tacticAp.has(key)) return;
+      ctx.tacticAp.add(key);
+      s.apBonus[side] += 1;
+      ctx.events.push({ type: 'apGain', side, amount: 1 });
+    };
+    if (killed && mods.stand && ench(s, side, 'E22') >= 3) apOnce('counter');
+    if (killed && order === 0 && ench(s, side, 'E23') >= 3) apOnce('first');
   }
 
   // 연쇄 지휘 체계 2장: 한 턴에 3기 이상 처치하면 다음 턴 AP +1

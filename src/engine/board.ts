@@ -28,6 +28,7 @@ export const cloneState = (s: BattleState): BattleState => ({
   lastStrike: [...s.lastStrike] as BattleState['lastStrike'],
   pieces: s.pieces.map((p) => ({ ...p })),
   fallen: s.fallen ? [...s.fallen] : [],
+  fuseUsed: s.fuseUsed ? [...s.fuseUsed] as [number, number] : undefined,
   terrain: s.terrain ? s.terrain.map((t) => ({ ...t })) : undefined,
   record: s.record ? [{ ...s.record[0], tactics: { ...s.record[0].tactics } }, { ...s.record[1], tactics: { ...s.record[1].tactics } }] : undefined,
 });
