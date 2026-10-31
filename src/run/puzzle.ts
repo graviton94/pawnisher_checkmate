@@ -3,6 +3,7 @@ import { PIECE_STATS } from '../data/pieces';
 import { fromSquare } from '../engine/board';
 import { legalMoves } from '../engine/rules';
 import { simulate } from '../engine/plan';
+import { specialSteps } from '../engine/options';
 import { createBattle } from '../engine/setup';
 import type { BattleState, Plan } from '../engine/types';
 
@@ -37,6 +38,15 @@ const search = (s: BattleState, plan: Plan, depth: number): Plan | null => {
   const sim = simulate(s, plan);
   if (!sim.ok || sim.state.winner !== null) return null;
   const acted = new Set(plan.map((p) => p.pieceId));
+  // 특수 수 (폰 받아치기 등)도 해법 후보 — 새 규칙에서 지름길이 생기지 않았는지까지 본다
+  for (const st of specialSteps(s, plan)) {
+    const next: Plan = [...plan, st];
+    const r = simulate(s, next);
+    if (!r.ok) continue;
+    if (r.state.winner === s.turnSide) return next;
+    const deeper = search(s, next, depth);
+    if (deeper) return deeper;
+  }
   for (const p of sim.state.pieces) {
     if (p.side !== s.turnSide || acted.has(p.id)) continue;
     for (const to of legalMoves(sim.state, p)) {

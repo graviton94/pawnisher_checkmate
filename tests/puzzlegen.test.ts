@@ -9,7 +9,9 @@ import type { PieceType, Side } from '../src/engine/types';
 /** 묘수풀이 생성기 (D-097): PUZZLEGEN=1 npx vitest run tests/puzzlegen.test.ts → scratch JSON. 평소 테스트에서는 건너뛴다 */
 it.runIf(process.env.PUZZLEGEN)('묘수풀이 생성', () => {
   const out: PuzzleDef[] = [];
-  for (let seed = 1; seed < 400 && out.length < 10; seed++) {
+  const from = Number(process.env.PUZZLEGEN_FROM ?? 1);
+  const want = Number(process.env.PUZZLEGEN_COUNT ?? 10);
+  for (let seed = from; seed < from + 4000 && out.length < want; seed++) {
     const rng = new Rng(seed * 7919);
     const W = 6, H = 6;
     const taken = new Set<string>();
