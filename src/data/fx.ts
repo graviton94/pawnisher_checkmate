@@ -59,6 +59,26 @@ export const FX_POWER = {
 
 /** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
 export const FX_SHAKE = { damage: 4, ms: 160, intensity: 0.005, killIntensity: 0.009, vibrateHit: 25, vibrateKill: 45 };
+/**
+ * 타격 카메라 (D-115): 공격이 닿은 거리만큼 — 붙어서 치면 그쪽으로 당겨 들어가고(줌 인), 멀리 닿으면 물러나 판을 보여 준다(줌 아웃).
+ * 큰 피해(대상 최대 HP 대비)는 흔들림을 키우고, 처치는 한 번 더 툭 당긴다. 배율은 기본 줌(DPR) 대비.
+ */
+export const FX_CAMERA = {
+  /** 닿은 거리(칸, 체비셰프) → 줌 배율: 1칸 · 2칸 · 3칸 이상 */
+  near: 1.1,
+  mid: 1.04,
+  far: 0.92,
+  /** 줌 인 때 공격 지점 쪽으로 끌려가는 비율 (0 = 그대로, 1 = 지점 한가운데) */
+  pull: 0.3,
+  inMs: 200,
+  outMs: 320,
+  /** 처치: 짧게 한 번 더 당긴다 */
+  killPunch: 0.035,
+  killPunchMs: 90,
+  /** 흔들림 세기 = 기본 × (1 + 피해/최대 HP × k), 최대 maxMult 배 */
+  shakeByRatio: 2.2,
+  shakeMaxMult: 2.6,
+};
 
 /** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
 export const TURN_SUMMARY = { bigDamage: 40 };

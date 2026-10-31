@@ -88,6 +88,22 @@ const scenarios = {
     await page.tap('[data-node="0"]'); await page.waitForTimeout(1000);
     return ['battle-6x6'];
   },
+  // 타격 카메라 (D-115): 공격 중 프레임을 연달아 찍어 줌 인 · 아웃 · 흔들림을 본다
+  async camera(page) {
+    await scenarios.menu(page);
+    await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);
+    for (let turn = 0; turn < 3; turn++) {
+      await page.evaluate(() => window.pawnisher.autoPlan());
+      await page.waitForTimeout(200);
+      page.evaluate(() => window.pawnisher.submit());
+      for (let i = 0; i < 6; i++) {
+        await page.waitForTimeout(170);
+        await page.screenshot({ path: path.join(OUT, `${stamp}-camera-t${turn}-${i}.png`) });
+      }
+      await page.waitForTimeout(4000);
+    }
+    return ['camera-end'];
+  },
   async 'battle-full'(page) {
     await scenarios.menu(page);
     await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(1000);

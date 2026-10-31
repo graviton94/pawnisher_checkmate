@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { PieceType, Side } from '../engine/types';
-import { FX_CHOICE, FX_POWER, FX_SHAKE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
+import { FX_CAMERA, FX_CHOICE, FX_POWER, FX_SHAKE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
 import { BOARD_DOTS, PixelPen, easeInCubic, easeInExpo, easeInOutCubic, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
 
 /**
@@ -243,9 +243,11 @@ export const fxPower = (hits: { damage: number; killed?: boolean }[]): number =>
   Math.min(1, hits.reduce((a, h) => a + h.damage * FX_POWER.perDamage + (h.killed ? FX_POWER.perKill : 0), 0));
 
 /** 피격 순간의 화면 흔들림·진동 (D-064): 기준 미만이면 null */
-export const impactFeedback = (damage: number, killed: boolean): { ms: number; intensity: number; vibrate: number } | null => {
+export const impactFeedback = (damage: number, killed: boolean, maxHp = 0): { ms: number; intensity: number; vibrate: number } | null => {
   if (!killed && damage < FX_SHAKE.damage) return null;
-  return { ms: FX_SHAKE.ms, intensity: killed ? FX_SHAKE.killIntensity : FX_SHAKE.intensity, vibrate: killed ? FX_SHAKE.vibrateKill : FX_SHAKE.vibrateHit };
+  // 큰 피해일수록 세게 (D-115): 대상 최대 HP 대비 비율
+  const k = maxHp > 0 ? Math.min(FX_CAMERA.shakeMaxMult, 1 + (damage / maxHp) * FX_CAMERA.shakeByRatio) : 1;
+  return { ms: Math.round(FX_SHAKE.ms * Math.min(1.6, k)), intensity: (killed ? FX_SHAKE.killIntensity : FX_SHAKE.intensity) * k, vibrate: killed ? FX_SHAKE.vibrateKill : FX_SHAKE.vibrateHit };
 };
 
 /** 기물별 예비 동작(모으기) 길이 (ms) — 세기 연출이 이 부분을 대신한다 */

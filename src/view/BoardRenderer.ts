@@ -12,7 +12,7 @@ import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower,
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
-import { TURN_SUMMARY } from '../data/fx';
+import { FX_CAMERA, TURN_SUMMARY } from '../data/fx';
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
@@ -150,6 +150,7 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.cameras.main.setZoom(this.dpr);
+    this.camZoom = this.dpr;
     this.cameras.main.setBackgroundColor(C.bg);
     this.tilesG = this.add.graphics().setDepth(0.1);
     this.tilesC = this.add.container(0, 0).setDepth(0);
@@ -544,6 +545,52 @@ class BoardScene extends Phaser.Scene {
     const duration = typeof cfg.duration === 'number' && this.calm ? cfg.duration * 0.3 : cfg.duration;
     return new Promise((r) => this.tweens.add({ ...cfg, duration, onComplete: () => r() }));
   }
+  /** 타격 카메라의 지금 목표 줌 */
+  private camZoom = 1;
+
+  /**
+   * 타격 카메라 (D-115): 공격이 닿은 가장 먼 적까지의 거리로 줌을 정한다.
+   * 1칸 = 그쪽으로 당겨 들어감 · 2칸 = 살짝 · 3칸 이상 = 물러나 판 전체를. 동작 줄이기면 안 한다.
+   */
+  private camPunch(atk: PieceSprite, hits: { targetId: number; splash?: boolean }[]): void {
+    if (this.calm) return;
+    const t = this.tile;
+    const cell = (sp: PieceSprite) => ({ x: Math.round(sp.root.x / t), y: Math.round(sp.root.y / t) });
+    const a = cell(atk);
+    const targets = hits.filter((h) => !h.splash).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);
+    if (!targets.length) return;
+    const reach = Math.max(...targets.map((sp) => Math.max(Math.abs(cell(sp).x - a.x), Math.abs(cell(sp).y - a.y))));
+    const C = FX_CAMERA;
+    const k = reach <= 1 ? C.near : reach === 2 ? C.mid : C.far;
+    const cam = this.cameras.main;
+    this.camZoom = this.dpr * k;
+    cam.zoomTo(this.camZoom, C.inMs / this.speed, 'Cubic.easeOut', true);
+    if (k > 1) {
+      // 공격자와 맞는 쪽 사이로 끌려 들어간다
+      const fx = (atk.root.x + targets.reduce((s, sp) => s + sp.root.x, 0) / targets.length) / 2 + t / 2;
+      const fy = (atk.root.y + targets.reduce((s, sp) => s + sp.root.y, 0) / targets.length) / 2 + t / 2;
+      cam.pan(this.camCenter.x + (fx - this.camCenter.x) * C.pull, this.camCenter.y + (fy - this.camCenter.y) * C.pull, C.inMs / this.speed, 'Cubic.easeOut', true);
+    }
+  }
+
+  /** 처치 순간: 한 번 더 툭 당겼다 놓는다 */
+  private camKill(): void {
+    if (this.calm) return;
+    const cam = this.cameras.main;
+    // 늘 지금 목표 줌 기준으로 (처치가 여러 번이어도 쌓이지 않게)
+    cam.zoomTo(this.camZoom * (1 + FX_CAMERA.killPunch), FX_CAMERA.killPunchMs / this.speed, 'Quad.easeOut', true);
+    window.setTimeout(() => cam.zoomTo(this.camZoom, FX_CAMERA.killPunchMs / this.speed, 'Quad.easeIn', true), FX_CAMERA.killPunchMs / this.speed);
+  }
+
+  /** 공격이 끝나면 원래 자리로 */
+  private camRelease(): void {
+    if (this.calm) return;
+    const cam = this.cameras.main;
+    this.camZoom = this.dpr;
+    cam.zoomTo(this.dpr, FX_CAMERA.outMs / this.speed, 'Sine.easeInOut', true);
+    cam.pan(this.camCenter.x, this.camCenter.y, FX_CAMERA.outMs / this.speed, 'Sine.easeInOut', true);
+  }
+
   private shake(ms: number, intensity: number): void {
     if (!this.calm) this.cameras.main.shake(ms, intensity);
   }
@@ -988,6 +1035,8 @@ class BoardScene extends Phaser.Scene {
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
       const base = { x: atk.root.x, y: atk.root.y };
       // 세기(피해·처치)가 클수록 뛰어올라 모았다가 터뜨린다 (D-064)
+      // 타격 카메라 (D-115): 닿은 거리만큼 당기거나 물러난다
+      this.camPunch(atk, e.hits);
       const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
       );
@@ -997,7 +1046,8 @@ class BoardScene extends Phaser.Scene {
         const key = `${Math.round(ts.root.x / t)},${this.state.height - 1 - Math.round(ts.root.y / t)}`;
         return this.after(fx.impact.get(key) ?? fx.duration * 0.6).then(() => {
           // 큰 피해·처치: 화면 흔들림 + 휴대폰 진동 (D-064)
-          const fb = impactFeedback(h.damage, !!h.killed);
+          const fb = impactFeedback(h.damage, !!h.killed, ts.piece.maxHp);
+          if (h.killed) this.camKill();
           if (fb) {
             this.shake(fb.ms, fb.intensity);
             if (!this.calm) navigator.vibrate?.(fb.vibrate);
@@ -1017,6 +1067,7 @@ class BoardScene extends Phaser.Scene {
         });
       });
       await Promise.all([...hitsDone, this.after(fx.duration)]);
+      this.camRelease();
       // 최후의 리벳: HP 1에서 버틴 기물 위에 접사 이름
       for (const h of e.hits.filter((x) => x.held)) {
         const sp = this.sprites.get(h.targetId);
