@@ -6,11 +6,11 @@ import { AI_STYLES, SCENARIOS, type BattleController, type HudView, type Scenari
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
-import { checkPlan, ench, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
+import { checkPlan, ench, findPiece, weakOn, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
 import { VARIANTS } from '../data/variants';
 import { TEXT } from '../data/text';
 import { NODE_NAMES } from '../data/run';
-import { AFFIXES } from '../data/legions';
+import { AFFIXES, WEAKS } from '../data/legions';
 import { pop, stamp } from './juice';
 import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
 import { orderProgress } from '../run/orders';
@@ -275,6 +275,8 @@ export class Hud implements HudView {
     if (p.stuckTurn !== undefined && p.stuckTurn >= (this.c.state?.turnNumber ?? 0)) extra.push('<span class="enemy">자석판에 붙잡혔다 — 다음 자기 턴에 못 움직인다</span>');
     if (p.type === 'P' && !p.fused) extra.push(`<small>${TEXT.battle.counter}</small>`);
     if (p.affix) extra.push(`<span class="enemy">${AFFIXES[p.affix].name}</span><br><small>${AFFIXES[p.affix].desc}</small>`);
+    const weak = this.c.state?.weak;
+    if (weak && this.c.state && weakOn(this.c.state, p, weak.id)) extra.push(`<span class="weak">약점 · ${WEAKS[weak.id].name}</span><br><small>${WEAKS[weak.id].desc}</small>`);
     const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
     if (forge) extra.push(`거푸집 개량 +${forge}`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';

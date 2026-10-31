@@ -1,3 +1,4 @@
+import { WEAKS, type WeakId } from '../data/legions';
 import type { LegendId } from '../data/legends';
 import { at, buildGrid, forward, inBounds, onStronghold, type Grid } from './board';
 import { strongholdTerms } from './score';
@@ -17,6 +18,13 @@ const SLIDE_DIRS: Partial<Record<PieceType, Pos[]>> = { B: DIAG, R: ORTHO, Q: AL
 
 /** 진영이 보유한 인챈트 중첩 수 (없으면 0) */
 export const ench = (s: BattleState, side: Side, id: EnchantId): number => s.loadouts?.[side]?.enchants[id] ?? 0;
+
+/** 이 기물이 반장 약점 id를 가졌나 (D-113) */
+export const weakOn = (s: BattleState, p: Piece, id: WeakId): boolean => {
+  if (!s.weak || s.weak.id !== id || p.side !== s.weak.side) return false;
+  const on = WEAKS[id].on;
+  return on === 'variant' ? !!p.variant : on === 'affix' ? !!p.affix : on.includes(p.type);
+};
 
 /** 에픽 부품을 가졌나 (D-112) */
 export const legend = (s: BattleState, side: Side, id: LegendId): boolean => !!s.loadouts?.[side]?.legends?.includes(id);

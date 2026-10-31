@@ -1,6 +1,6 @@
 import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
-import { AFFIXES, ELITE_AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
+import { AFFIXES, ELITE_AFFIXES, type WeakId, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import { ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { ASC, ascOn } from '../data/ascension';
 import { BOSSES, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
@@ -37,6 +37,8 @@ export interface Encounter {
   luck?: LuckId;
   /** 검문! 정예 접사: 그 유형의 적 기물 한 기씩 (D-096) */
   affixes?: { type: PieceType; id: AffixId }[];
+  /** 반장 약점 (D-113) */
+  weak?: WeakId;
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */
@@ -85,7 +87,8 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
       // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
       deck: bossDeck,
       loadout: { enchants, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge, ...(def.variants ? { variants: { ...def.variants } } : {}) },
-      ...(def.affixes || def.weakness ? { affixes: [...(def.affixes ?? []).map((a) => ({ ...a })), ...bossDeck.filter((t) => t === def.weakness?.type).map((type) => ({ type, id: def.weakness!.affix }))] } : {}),
+      ...(def.affixes ? { affixes: def.affixes.map((a) => ({ ...a })) } : {}),
+      ...(def.weakness ? { weak: def.weakness.id } : {}),
       tier,
       boss,
       seed,
@@ -235,6 +238,7 @@ export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): Bat
     const p = s.pieces.find((q) => q.side === 1 && q.type === a.type && !q.affix);
     if (p) p.affix = a.id;
   }
+  if (e.weak) s.weak = { side: 1, id: e.weak };
   // 적 다음 수 미리보기: 낮은 승천에서만 기본 제공 (D-076)
   s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION ? 1 : 0 };
   const scale = enemyKingScale(e.floor);

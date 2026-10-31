@@ -5,10 +5,10 @@ import { MORE, SYNERGY, TACTIC_ENCHANT, tier } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
 import { VARIANTS, VARIANT2 } from '../data/variants';
-import { AFFIX } from '../data/legions';
+import { AFFIX, WEAK } from '../data/legions';
 import { TERRAIN_FX } from '../data/terrain';
 import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos, terrainAt } from './board';
-import { attackScan, damageOf, ench, isStrikeMove, legalMoves, legend, moveTypes, onEdge, variantOn } from './rules';
+import { attackScan, damageOf, ench, isStrikeMove, legalMoves, legend, moveTypes, onEdge, variantOn, weakOn } from './rules';
 import {
   isMove,
   otherSide,
@@ -284,7 +284,7 @@ const applyDamage = (s: BattleState, target: Piece, damage: number, splash = fal
     if (mates) damage = Math.max(1, Math.round(damage * Math.max(0.5, 1 - mates * tier(MORE.E40, e40))));
   }
   if (s.solo?.[t.side]) damage = Math.max(1, Math.round(damage * LEGEND_FX.soloTake)); // 단독 출하 (에픽)
-  if (splash && t.affix === 'brittle') damage = Math.round(damage * AFFIX.brittleMult); // 얇은 양산 철판 (폰 반장 약점, D-113)
+  if (splash && weakOn(s, t, 'brittle')) damage = Math.round(damage * WEAK.brittleMult); // 얇은 양산 철판 (폰 반장 약점, D-113)
   const e29 = ench(s, t.side, 'E29');
   if (e29) damage = Math.min(damage, Math.max(1, Math.ceil(t.maxHp * tier(MORE.E29, e29))));
   const shieldAbsorbed = Math.min(t.shield, damage);
@@ -422,7 +422,13 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
     let dmg = damageOf(s, attacker, t, mult);
     if (e09 >= 3 && (ctx.hitCount.get(t.id) ?? 0) >= 1) dmg *= 2;
     if (pierced.has(t.id) && lvT('E18') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.pierceMult);
-    if (pierced.has(t.id) && t.affix === 'brittle') dmg = Math.round(dmg * AFFIX.brittleMult);
+    // 반장 약점 (D-113)
+    if (pierced.has(t.id) && weakOn(s, t, 'brittle')) dmg = Math.round(dmg * WEAK.brittleMult);
+    if (t.shield > 0 && weakOn(s, attacker, 'blunt')) dmg = Math.max(1, Math.round(dmg * WEAK.bluntMult));
+    if (chebyshev(attacker, t) === 1 && weakOn(s, t, 'glass')) dmg = Math.round(dmg * WEAK.glassMult);
+    if (attacker.x !== t.x && attacker.y !== t.y && Math.abs(attacker.x - t.x) === Math.abs(attacker.y - t.y) && weakOn(s, t, 'square')) dmg = Math.round(dmg * WEAK.squareMult);
+    if (ctx.kills > 0 && weakOn(s, t, 'weld')) dmg = Math.round(dmg * (1 + ctx.kills * WEAK.weldPerKill));
+    if ((ctx.hitCount.get(t.id) ?? 0) >= 1 && weakOn(s, t, 'paper')) dmg = Math.round(dmg * WEAK.paperMult);
     if (t.type === 'K' && lvT('E20') >= 2) dmg = Math.round(dmg * TACTIC_ENCHANT.kingMult);
     // 볼륨 1 개조 (D-105): 대상에 따라 — 킹 사냥 · 처형 날 · 정밀 렌즈
     const e25 = ench(s, attacker.side, 'E25');

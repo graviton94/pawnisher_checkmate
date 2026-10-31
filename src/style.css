@@ -737,3 +737,4 @@ body.busy .scene, body.busy .overlay { pointer-events: none; }
 .boss-card[data-bossinfo] { cursor: pointer; }
 .boss-card[data-bossinfo]:active { filter: brightness(1.15); }
 .offers.scroll-x { padding: 12px 10px; margin: -6px -4px; }
+.info .weak { color: #7dd3fc; }

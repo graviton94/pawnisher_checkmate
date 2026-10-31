@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CARD_FX } from '../src/data/cards';
 import { CARD_GRADE, ENCHANT_GRADE } from '../src/data/grades';
 import { LEGENDS, LEGEND_FX, type LegendId } from '../src/data/legends';
+import type { WeakId } from '../src/data/legions';
 import { CARDS, type CardId } from '../src/data/cards';
 import { ENCHANTS } from '../src/data/enchants';
 import { createBattle, plannableMoves, simulate, specialSteps, type BattleEvent, type BattleState } from '../src/engine';
@@ -144,15 +145,37 @@ describe('천공 카드 +9 (D-112)', () => {
 });
 
 describe('반장 약점 (D-113)', () => {
-  it('폰 반장의 폰은 전부 얇은 양산 철판 — 관통 · 부가 피해 두 배', async () => {
-    const { generateEncounter } = await import('../src/run/legion');
+  const weak = (s: BattleState, id: WeakId) => {
+    s.weak = { side: 1, id };
+    return s;
+  };
+  it('반장마다 약점 하나, 대국에 실린다', async () => {
+    const { generateEncounter, encounterBattle } = await import('../src/run/legion');
     const { Rng } = await import('../src/engine');
     const e = generateEncounter(12, 'boss', new Rng(1), 'pawn');
-    expect(e.affixes?.filter((a) => a.id === 'brittle')).toHaveLength(e.deck.filter((t) => t === 'P').length);
-    const s = (affix?: 'brittle') => board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a5', tough], ['P', 1, 'a7', { ...tough, ...(affix ? { affix } : {}) }], ['K', 1, 'h8']]);
+    expect(e.weak).toBe('brittle');
+    expect(encounterBattle(['K', 'R'], { enchants: {}, cards: [], forge: {} }, e).weak).toEqual({ side: 1, id: 'brittle' });
+  });
+  it('얇은 양산 철판: 관통 피해 두 배', () => {
+    const s = () => withCard(board([['K', 0, 'h1'], ['R', 0, 'a1'], ['P', 1, 'a5', tough], ['P', 1, 'a7', tough], ['K', 1, 'h8']]), 'A03');
     const plan = [{ pieceId: 2, to: sq('a2'), card: 0 }];
-    const plain = dmgTo(simulate(withCard(s(), 'A03'), plan).events, 4);
-    const brittle = dmgTo(simulate(withCard(s('brittle'), 'A03'), plan).events, 4);
-    expect(brittle).toBe(plain * 2);
+    expect(dmgTo(simulate(weak(s(), 'brittle'), plan).events, 4)).toBe(dmgTo(simulate(s(), plan).events, 4) * 2);
+  });
+  it('깨지는 렌즈: 옆 칸에서 맞으면 두 배 · 네모난 차체: 사선에서 맞으면 두 배', () => {
+    const glass = () => board([['K', 0, 'h1'], ['N', 0, 'b1'], ['B', 1, 'c4', tough], ['K', 1, 'h8']]);
+    const g = [{ pieceId: 2, to: sq('b3') }];
+    expect(dmgTo(simulate(weak(glass(), 'glass'), g).events, 3)).toBe(dmgTo(simulate(glass(), g).events, 3) * 2);
+    const sq2 = () => board([['K', 0, 'h1'], ['B', 0, 'c1'], ['R', 1, 'f4', tough], ['K', 1, 'h8']]);
+    const d = [{ pieceId: 2, to: sq('d2') }];
+    expect(dmgTo(simulate(weak(sq2(), 'square'), d).events, 3)).toBe(dmgTo(simulate(sq2(), d).events, 3) * 2);
+  });
+  it('무딘 편자: 방열판이 남은 기물에는 40%', () => {
+    const s = () => {
+      const b = board([['K', 0, 'h1'], ['R', 0, 'd3', { ...tough, shield: 5 }], ['N', 1, 'c6', tough], ['K', 1, 'a8']], 8, 8, 1);
+      return b;
+    };
+    const plan = [{ pieceId: 3, to: sq('e5') }];
+    const plain = dmgTo(simulate(s(), plan).events, 2);
+    expect(dmgTo(simulate(weak(s(), 'blunt'), plan).events, 2)).toBeLessThan(plain);
   });
 });

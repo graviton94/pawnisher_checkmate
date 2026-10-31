@@ -292,6 +292,15 @@ const scenarios = {
     await page.tap('[data-bossinfo]'); await page.waitForTimeout(300);
     return ['grades-7-pawn-weak'];
   },
+  // 반장 약점 표식 (D-113): 반장 대국 판 위 청색 과녁
+  async weakness(page) {
+    for (const boss of ['pawn', 'bishop', 'affix']) {
+      await loadRun(page, { at: 'map' }, { floor: 12, bosses: [boss, 'rook'], map: Array.from({ length: 36 }, (_, i) => ((i + 1) % 12 === 0 ? [{ kind: 'boss' }] : [{ kind: 'battle' }])) });
+      await page.tap('[data-node="0"]'); await page.waitForTimeout(1400);
+      await page.screenshot({ path: path.join(OUT, `${stamp}-weak-${boss}.png`) });
+    }
+    return ['weak-end'];
+  },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });

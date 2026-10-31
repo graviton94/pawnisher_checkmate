@@ -2,7 +2,7 @@ import type { LegendId } from '../data/legends';
 import type { CardId } from '../data/cards';
 import type { EnchantId } from '../data/enchants';
 import type { TacticId } from '../data/tactics';
-import type { AffixId } from '../data/legions';
+import type { AffixId, WeakId } from '../data/legions';
 import type { TerrainId } from '../data/terrain';
 import type { FormationId } from '../data/formations';
 import type { VariantId } from '../data/variants';
@@ -129,6 +129,8 @@ export interface BattleState {
   cards: [CardSlot[], CardSlot[]];
   /** 다음 턴으로 넘어가는 AP (축전기 이월, 연쇄 지휘 보너스) */
   apCarry: [number, number];
+  /** 반장 약점 (D-113): 그 진영의 해당 기물이 약점을 가진다 */
+  weak?: { side: Side; id: WeakId };
   /** 단독 출하 (에픽, D-112): 진영별로 켜졌나 */
   solo?: [boolean, boolean];
   /** 무한 궤도 (에픽): 이번 턴 한 번 더 움직일 수 있게 된 기물 (계획 미리보기용, 턴마다 비운다) */

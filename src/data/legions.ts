@@ -5,7 +5,7 @@
 import type { EnchantId } from './enchants';
 import type { PieceType } from '../engine/types';
 
-export type AffixId = 'lastRivet' | 'recoil' | 'plate' | 'oiled' | 'mold' | 'guardBolt' | 'brittle';
+export type AffixId = 'lastRivet' | 'recoil' | 'plate' | 'oiled' | 'mold' | 'guardBolt';
 
 export interface AffixDef {
   name: string;
@@ -23,16 +23,31 @@ export const AFFIXES: Record<AffixId, AffixDef> = {
   oiled: { name: '기름칠한 관절', icon: 'oil', color: '#FDE68A', desc: '이동 태엽 −1.' },
   mold: { name: '같은 틀', icon: 'chain', color: '#C4B5FD', desc: '붙어 있던 아군이 쓰러지면 ATK +30% (그 대국 내내).' },
   guardBolt: { name: '근위 볼트', icon: 'crown', color: '#FACC15', desc: '자기 킹과 붙어 있으면 받는 피해 −30%.' },
-  // 반장 약점 (D-113): 무작위 검문 접사에는 나오지 않는다
-  brittle: { name: '얇은 양산 철판', icon: 'pierce', color: '#7DD3FC', desc: '관통 · 부가 피해(방전 · 연쇄 · 폭발 · 충격)를 두 배로 받는다.' },
 };
-/** 검문!에 무작위로 붙는 접사 (반장 약점 접사는 빼고) */
 export const ELITE_AFFIXES: AffixId[] = ['lastRivet', 'recoil', 'plate', 'oiled', 'mold', 'guardBolt'];
+
+/**
+ * 반장 약점 (D-113): 반장마다 하나. 지도에서 공정 시작부터 보이고, 준비하면 승률이 확 달라진다.
+ * on = 약점이 붙는 기물 (유형 목록 · 'variant' 이형 단 기물 · 'affix' 접사 단 기물).
+ */
+export type WeakId = 'brittle' | 'blunt' | 'glass' | 'square' | 'weld' | 'paper';
+export interface WeakDef {
+  name: string;
+  desc: string;
+  on: PieceType[] | 'variant' | 'affix';
+}
+export const WEAKS: Record<WeakId, WeakDef> = {
+  brittle: { name: '얇은 양산 철판', on: ['P'], desc: '관통 · 부가 피해(방전 · 연쇄 · 폭발 · 충격)를 두 배로 받는다.' },
+  blunt: { name: '무딘 편자', on: ['N'], desc: '방열판이 남은 기물을 치면 피해가 40%만 들어간다.' },
+  glass: { name: '깨지는 렌즈', on: ['B'], desc: '바로 옆 칸에서 맞으면 피해 두 배.' },
+  square: { name: '네모난 차체', on: ['R'], desc: '사선(대각선 방향)에서 맞으면 피해 두 배.' },
+  weld: { name: '급조 용접', on: 'variant', desc: '그 턴에 앞서 쓰러진 적 하나마다 받는 피해 +40%.' },
+  paper: { name: '서류 대조', on: 'affix', desc: '한 턴에 두 번째로 맞는 순간부터 피해 두 배.' },
+};
+export const WEAK = { brittleMult: 2, bluntMult: 0.4, glassMult: 2, squareMult: 2, weldPerKill: 0.4, paperMult: 2 };
 
 export const AFFIX = {
   recoilRatio: 0.5,
-  /** 얇은 양산 철판: 관통 · 부가 피해 배율 */
-  brittleMult: 2,
   plateShield: 10,
   moldAtk: 1.3,
   guardCut: 0.7,

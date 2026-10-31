@@ -1,7 +1,7 @@
 import { ENCHANT_GRADE } from './grades';
 import type { ArenaId } from './terrain';
 import type { VariantId } from './variants';
-import type { AffixId } from './legions';
+import type { AffixId, WeakId } from './legions';
 import type { CardId } from './cards';
 import type { EnchantId } from './enchants';
 import type { PieceType } from '../engine/types';
@@ -220,7 +220,7 @@ export interface BossDef {
    * 약점 (D-113): 그 유형 전부에 약점 접사가 붙는다. 지도에서 공정 시작부터 보이니 미리 준비할 수 있다.
    * 그냥 붙으면 어렵고, 준비하면 확연히 쉬운 반장.
    */
-  weakness?: { type: PieceType; affix: AffixId; label: string; prep: string };
+  weakness?: { id: WeakId; label: string; prep: string };
 }
 
 export const BOSSES: Record<BossId, BossDef> = {
@@ -235,6 +235,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A01'],
     forge: { N: 3 }, // D-099: 첫 반장 승률 86% → 목표 65~80%
     arena: 'hooves',
+    weakness: { id: 'blunt', label: '무딘 편자 (방열판 위로는 40%)', prep: '방열판(방열판 덧대기 · 폐품 장갑 · 겹 장갑 · 증기 장갑판 · 긴급 재조립)' },
   },
   bishop: {
     name: '비숍 반장',
@@ -246,6 +247,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A03'],
     forge: { B: 2 }, // D-111: 첫 반장 55% → 한 단 낮춤
     arena: 'lens',
+    weakness: { id: 'glass', label: '깨지는 렌즈 (옆 칸에서 맞으면 ×2)', prep: '붙어서 치기(나이트 · 폰 · 킹 · 돌파) · 끌어오기(갈고리 와이어)' },
   },
   rook: {
     name: '룩 반장',
@@ -258,6 +260,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A06'],
     forge: { R: 3 }, // D-111: 첫 반장 85% → 한 단 올림
     arena: 'wall',
+    weakness: { id: 'square', label: '네모난 차체 (사선에서 맞으면 ×2)', prep: '사선(비숍 · 퀸 · 폰 · 연마 렌즈 · 프리즘 코어)' },
   },
   // ---- 볼륨 2 (D-106): 반장 셋 더 — 한 출하에 둘이 나오니 여섯 중 둘 ----
   pawn: {
@@ -270,7 +273,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A06'],
     forge: { P: 2 },
     arena: 'belt',
-    weakness: { type: 'P', affix: 'brittle', label: '얇은 양산 철판 (관통 · 부가 피해 ×2). 누르면 준비할 것', prep: '관통(비숍 · 관통 철갑탄 · 천공 드릴) · 방전(피스톤 박차 2단 · 과충전 방전) · 폭발(보일러 폰 · 도미노 공장)' },
+    weakness: { id: 'brittle', label: '얇은 양산 철판 (관통 · 부가 피해 ×2)', prep: '관통(비숍 · 관통 철갑탄 · 천공 드릴) · 방전(피스톤 박차 2단 · 과충전 방전) · 폭발(보일러 폰 · 도미노 공장)' },
   },
   variant: {
     name: '이형 반장',
@@ -282,6 +285,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A04'],
     forge: { N: 2, B: 2, R: 1 }, // D-111: 첫 반장 90% → 올림
     arena: 'scrapyard',
+    weakness: { id: 'weld', label: '급조 용접 (앞서 쓰러진 적마다 +40%)', prep: '연쇄(연동 기어 · 연쇄 점화 · 포크 · 도미노 공장)' },
     variants: { P: 'boiler', N: 'spring', B: 'scope', R: 'turret', Q: 'command' },
   },
   affix: {
@@ -294,6 +298,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     cards: ['A06'],
     forge: {}, // D-113: 첫 반장 60% → 킹 개량 뺌
     arena: 'checkpoint',
+    weakness: { id: 'paper', label: '서류 대조 (한 턴 두 번째 피격부터 ×2)', prep: '여러 번 치기(이중 타격 태엽 · 기병 연동축 · 조준경 비숍 · 일제 사격)' },
     affixes: [
       { type: 'Q', id: 'lastRivet' },
       { type: 'R', id: 'plate' },

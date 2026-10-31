@@ -16,7 +16,7 @@ import { TURN_SUMMARY } from '../data/fx';
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
-import { findPiece, isFallen, isMove, moveTypes, standingOf, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
+import { findPiece, isFallen, isMove, moveTypes, standingOf, weakOn, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
 import { VARIANTS } from '../data/variants';
 
 /** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
@@ -142,7 +142,7 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
-    for (const a of [...Object.values(AFFIXES), ...Object.values(TERRAIN)]) if (!this.textures.exists(`icon-${a.icon}`)) this.load.image(`icon-${a.icon}`, `ui/icons/${a.icon}.png`);
+    for (const a of [...Object.values(AFFIXES), ...Object.values(TERRAIN), { icon: 'reticle' }]) if (!this.textures.exists(`icon-${a.icon}`)) this.load.image(`icon-${a.icon}`, `ui/icons/${a.icon}.png`);
   }
 
   create(): void {
@@ -342,6 +342,14 @@ class BoardScene extends Phaser.Scene {
       tag.fillStyle(0x16141c, 1).fillRect(t * 0.02, t * 0.02, size, size);
       tag.lineStyle(Math.max(1, t * 0.03), Phaser.Display.Color.HexStringToColor(a.color).color, 1).strokeRect(t * 0.02, t * 0.02, size, size);
       marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, `icon-${a.icon}`).setDisplaySize(size * 0.72, size * 0.72).setTint(Phaser.Display.Color.HexStringToColor(a.color).color));
+    }
+    // 반장 약점 (D-113): 오른쪽 아래 청색 과녁 — 길게 누르면 약점 이름·효과
+    if (this.state?.weak && weakOn(this.state, p, this.state.weak.id)) {
+      const size = t * 0.3;
+      const tag = this.add.graphics();
+      tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t - size - t * 0.12, size, size);
+      tag.lineStyle(Math.max(1, t * 0.03), 0x7dd3fc, 1).strokeRect(t - size - t * 0.02, t - size - t * 0.12, size, size);
+      marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t - size / 2 - t * 0.12, 'icon-reticle').setDisplaySize(size * 0.72, size * 0.72).setTint(0x7dd3fc));
     }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
