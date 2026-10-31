@@ -22,6 +22,8 @@ export interface MetaState {
   bossKills?: string[];
   /** 도감 (D-108): 한 번이라도 얻은 개조 · 도면, 들어가 본 돌발 */
   seen?: { enchants: string[]; variants: string[]; events: string[]; cards?: string[]; legends?: string[] };
+  /** 온보딩 시험대를 마쳤거나 건너뛰었나 (D-116) */
+  onboarded?: boolean;
   /** 오늘의 출하 최고 기록 (D-122): 날짜 · 도달 층 · 완주 */
   daily?: { date: string; floor: number; won: boolean };
 }

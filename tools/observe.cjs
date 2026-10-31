@@ -339,6 +339,18 @@ const scenarios = {
     await page.waitForTimeout(200); await shot('7-contract');
     return ['release-8-end'];
   },
+  // 시험대 · 규칙서 (D-116 · D-126)
+  async onboarding(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-onboard-${n}.png`) });
+    await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(600);
+    await page.tap('[data-title]'); await page.waitForTimeout(500); await shot('1-menu');
+    await page.tap('[data-rules]'); await page.waitForTimeout(500); await shot('2-rules');
+    await page.tap('[data-rb="10"]'); await page.waitForTimeout(400); await shot('3-rules-epic');
+    await page.tap('[data-menu]'); await page.waitForTimeout(400);
+    await page.tap('[data-new]'); await page.waitForTimeout(500); await shot('4-offer');
+    await page.tap('[data-go]'); await page.waitForTimeout(1500); await shot('5-lesson1');
+    return ['onboard-6-end'];
+  },
   async reward(page) {
     await loadRun(page, { at: 'reward', title: '3층 통과', lines: ['나사 +34', '빠른 승리 (6/8턴) 나사 +10', '주문서 완수 · 나사 +20'], choices: [{ type: 'piece', options: ['N', 'R', 'P'] }, { type: 'enchant', options: ['E17', 'E18', 'E19'] }] });
     await page.screenshot({ path: path.join(OUT, `${stamp}-reward-piece.png`) });

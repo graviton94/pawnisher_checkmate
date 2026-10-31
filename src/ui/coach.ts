@@ -60,3 +60,28 @@ export const coach = (key: CoachKey): void => {
   el.querySelector('[data-coach-ok]')!.addEventListener('click', () => close(false));
   el.querySelector('[data-coach-off]')!.addEventListener('click', () => close(true));
 };
+
+/** 시험대 서술 (D-116): 정해진 줄들을 차례로 (안내 끄기와 상관없이). 다 넘기면 done */
+export const coachLines = (lines: string[], done?: () => void): void => {
+  if (!lines.length) return done?.();
+  let el = document.getElementById('coach');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'coach';
+    el.className = 'coach';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  current = 'start';
+  el.classList.toggle('side', !!document.getElementById('scene')?.hidden);
+  el.innerHTML = `<p>${lines[0]}</p><div class="coach-row"><span class="dim">${lines.length > 1 ? `${lines.length - 1}줄 더` : ''}</span><button type="button" class="btn" data-coach-ok>안다</button></div>`;
+  el.hidden = false;
+  el.classList.remove('in');
+  void el.offsetWidth;
+  el.classList.add('in');
+  el.querySelector('[data-coach-ok]')!.addEventListener('click', () => {
+    el!.hidden = true;
+    current = null;
+    coachLines(lines.slice(1), done);
+  });
+};

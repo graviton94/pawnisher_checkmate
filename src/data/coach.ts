@@ -29,5 +29,3 @@ export const COACH: Record<CoachKey, string> = {
   contract: '* 계약. 이득과 대가가 함께 온다. 내 군단이 그 대가를 버틸지 보고 서명한다. 건너뛰어도 된다.',
 };
 
-/** 첫 출하 고정 시드: 1~3층이 무난한 판 (D-116) */
-export const TUTORIAL_SEED = 20261031;

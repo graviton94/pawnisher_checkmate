@@ -765,3 +765,16 @@ body.busy .scene, body.busy .overlay { pointer-events: none; }
 .offer .good-line { color: var(--cyan); }
 .legend-line .bad { color: var(--crimson-soft); }
 .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .settings-grid .btn:last-child { grid-column: 1 / -1; }
+.menu .row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; } .menu .row4 > * { justify-content: center; padding-left: 6px; padding-right: 6px; }
+/* 규칙서 (D-126) */
+.rulebook { flex: 1; min-height: 0; display: grid; grid-template-columns: 180px 1fr; gap: 10px; padding: 6px 0 10px; }
+.rb-toc { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.rb-ch { min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; text-align: left; font: inherit; font-size: 14px; color: var(--text2); background: rgba(20, 17, 26, 0.85); box-shadow: 0 0 0 2px #000; cursor: pointer; }
+.rb-ch.on { color: var(--brass-hi); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px var(--brass); }
+.rb-page { min-height: 0; padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
+.rb-page h2 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.rb-page p, .rb-page li { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text2); }
+.rb-page b { color: var(--text); }
+.rb-page ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.rb-page .bad { color: var(--crimson-soft); }
+.rb-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 8px; }

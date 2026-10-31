@@ -162,9 +162,11 @@ export class Hud implements HudView {
 
   /** 묘수풀이 목표 한 줄 (주문서 자리를 쓴다) */
   private goal: string | null = null;
-  setGoal(text: string | null): void {
+  setGoal(text: string | null, label: string = NODE_NAMES.puzzle): void {
     this.goal = text;
+    this.goalLabel = label;
   }
+  private goalLabel: string = NODE_NAMES.puzzle;
 
   /** 레일 한 줄: 주문서 · 진행 (완수 ✓ / 실패 줄 긋기) */
   private renderOrder(c: BattleController): void {
@@ -172,7 +174,7 @@ export class Hud implements HudView {
     if (this.goal) {
       el.hidden = false;
       el.className = `order${c.state.winner === 0 ? ' done' : ''}`;
-      el.innerHTML = `${icon('reticle', 's')}<span class="what"><b>${NODE_NAMES.puzzle}</b> ${this.goal}</span>`;
+      el.innerHTML = `${icon('reticle', 's')}<span class="what"><b>${this.goalLabel}</b> ${this.goal}</span>`;
       return;
     }
     el.hidden = !this.order;

@@ -14,12 +14,14 @@ import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { ACT_NAMES, ALTAR, DAILY, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
-import { coach } from './coach';
+import { coach, coachLines } from './coach';
 import { playMusic } from '../audio/music';
 import { CONTRACTS, type ContractId } from '../data/contracts';
 import { LINES, lineOf } from '../data/lines';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
-import { TUTORIAL_SEED } from '../data/coach';
+import { LESSONS } from '../data/onboarding';
+import { RULEBOOK } from '../data/rulebook';
+import { lessonBattle } from '../run/onboarding';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
 import { LEGENDS, RESONANCES, type LegendId } from '../data/legends';
 import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
@@ -392,7 +394,7 @@ export class RunUi {
         ${asc}
         <p class="sub">${icon('crate', 's')} ${M.unlocks}</p>
         <div class="unlocks">${unlocks}</div>
-        <div class="row2">${button(M.codex, 'data-codex', { icon: 'crate' })}<button class="btn" type="button" data-title-back>${icon('eye', 's')} ${M.quit}</button></div>
+        <div class="row4">${button(M.codex, 'data-codex', { icon: 'crate' })}${button(M.rules, 'data-rules', { icon: 'card' })}${button(M.lessons, 'data-lessons', { icon: 'flag' })}<button class="btn" type="button" data-title-back>${icon('eye', 's')} ${M.quit}</button></div>
       </div>`,
       'menu',
     );
@@ -409,9 +411,71 @@ export class RunUi {
       },
       test: () => this.hud.showStart(),
       codex: () => this.showCodex(),
+      rules: () => this.showRulebook(0),
+      lessons: () => this.showOnboarding(0),
       settings: () => this.hud.showSettings(() => this.hud.closeOverlay()),
       'title-back': () => this.showTitle(false),
     });
+  }
+
+  /** 규칙서 (D-126): 왼쪽 목차 · 오른쪽 장 — 책자처럼 넘긴다 */
+  private showRulebook(page: number): void {
+    const p = RULEBOOK[page];
+    const el = this.hud.openScene(
+      `<div class="bar"><span class="plate">${icon('card', 's')}${TEXT.menu.rules}</span><span class="spacer"></span>${button(TEXT.codex.back, 'data-menu')}</div>
+      <div class="rulebook">
+        <nav class="rb-toc scroll-y">${RULEBOOK.map((r, i) => `<button class="rb-ch${i === page ? ' on' : ''}" type="button" data-rb="${i}">${icon(r.icon, 's')}<span>${r.title}</span></button>`).join('')}</nav>
+        <article class="rb-page panel9 scroll-y"><h2>${icon(p.icon)} ${p.title} <small class="dim">${page + 1} / ${RULEBOOK.length}</small></h2>${p.body.map((b) => (b.startsWith('<ul>') ? b : `<p>${b}</p>`)).join('')}
+          <div class="rb-nav">${page > 0 ? button(`◀ ${RULEBOOK[page - 1].title}`, `data-rb="${page - 1}"`) : '<span></span>'}${page < RULEBOOK.length - 1 ? button(`${RULEBOOK[page + 1].title} ▶`, `data-rb="${page + 1}"`, { tone: 'brass' }) : ''}</div>
+        </article>
+      </div>`,
+      'rules',
+    );
+    this.wire(el, {
+      menu: () => this.showMenu(),
+      rb: (b) => this.showRulebook(Number(b.dataset.rb)),
+    });
+  }
+
+  /** 처음 출하: 시험대를 먼저 권한다 (D-116) */
+  private offerOnboarding(): void {
+    const O = TEXT.onboarding;
+    const panel = this.hud.openOverlay(`
+      <h2>${icon('flag')} ${O.title}</h2>
+      <p>${O.offer}</p>
+      <div class="row">${button(O.skip, 'data-skip')}${button(O.go, 'data-go', { tone: 'brass', icon: 'lever' })}</div>`);
+    this.wire(panel, {
+      go: () => this.showOnboarding(0),
+      skip: () => {
+        saveMeta({ ...loadMeta(), onboarded: true });
+        this.startNew();
+      },
+    });
+  }
+
+  /** 온보딩 시험대 (D-116): 출하와 따로 세 판. 지면 그 판 다시, 이기면 다음 판, 끝나면 진짜 출하로 */
+  showOnboarding(i: number): void {
+    const l = LESSONS[i];
+    if (!l) {
+      saveMeta({ ...loadMeta(), onboarded: true });
+      this.hud.toast(TEXT.onboarding.done);
+      return this.startNew();
+    }
+    this.run = null;
+    playMusic('act1');
+    this.hud.closeOverlay();
+    this.hud.closeScene();
+    this.hud.setOrder(null);
+    this.hud.setGoal(`${l.title.replace('시험대 ', '')} · ${l.goal}`, TEXT.onboarding.title);
+    this.c.onPlayerTurn = null;
+    this.c.onBattleEnd = (s) => {
+      this.hud.setGoal(null);
+      const won = s.winner === 0;
+      this.hud.toast(won ? TEXT.onboarding.pass : TEXT.onboarding.retry);
+      window.setTimeout(() => this.showOnboarding(won ? i + 1 : i), 1400);
+    };
+    this.c.startState(lessonBattle(l), l.tier, TUNED);
+    window.setTimeout(() => coachLines(l.lines), 400);
   }
 
   /** 도감 (D-108): 얻어 본 개조·도면, 만난 돌발, 해체한 반장, 시작 세트, 기록. 못 본 것은 ??? */
@@ -486,8 +550,9 @@ export class RunUi {
   /** 새 출하: 시작 세트 3지선다 */
   private startNew(fixed?: number, daily?: string): void {
     const meta = loadMeta();
-    // 첫 출하는 1~3층이 무난한 고정 시드 (D-116)
-    const seed = fixed ?? (meta.runs === 0 ? TUTORIAL_SEED : freshSeed());
+    // 처음이면 시험대 먼저 권한다 (D-116) — 출하 자체는 매번 무작위
+    if (fixed === undefined && !daily && !meta.onboarded && meta.runs === 0) return this.offerOnboarding();
+    const seed = fixed ?? freshSeed();
     const decks = startDeckOptions(seed, unlockedDecks(meta));
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('flag', 's')}${TEXT.start.title}</span><span class="spacer"></span>${button(TEXT.start.back, 'data-menu')}</div>
