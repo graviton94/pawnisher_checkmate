@@ -16,8 +16,8 @@ const runFixture = (stage) => ({
 });
 
 /** 저장된 출하를 심고 타이틀 → 이어서 출하 */
-const loadRun = async (page, stage, extra = {}) => {
-  await page.evaluate((run) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); }, { ...runFixture(stage), ...extra });
+const loadRun = async (page, stage, extra = {}, quiet = false) => {
+  await page.evaluate(([run, quiet]) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); if (quiet) localStorage.setItem('pawnisher.coach.v1', JSON.stringify({ off: true, seen: [] })); }, [{ ...runFixture(stage), ...extra }, quiet]);
   await page.reload(); await page.waitForTimeout(600);
   await page.tap('[data-title]'); await page.waitForTimeout(300);
   await page.tap('[data-continue]'); await page.waitForTimeout(500);
@@ -350,6 +350,45 @@ const scenarios = {
     await page.tap('[data-new]'); await page.waitForTimeout(500); await shot('4-offer');
     await page.tap('[data-go]'); await page.waitForTimeout(1500); await shot('5-lesson1');
     return ['onboard-6-end'];
+  },
+  // 이야기 (D-135): 프롤로그 · 공정 진입 · 반장 소개 · 최종장 · 승급 화면 · 진 엔딩 · 패배
+  async story(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-story-${n}.png`) });
+    const tapAll = async (n, prefix) => { for (let i = 0; i < n; i++) { await page.tap('.cut-box'); await page.waitForTimeout(160); await page.tap('.cut-box'); await page.waitForTimeout(500); if (prefix) await shot(`${prefix}${i + 2}`); } };
+    await page.evaluate(() => { localStorage.clear(); localStorage.setItem('pawnisher.meta.v1', JSON.stringify({ version: 1, runs: 1, clears: 0, bestFloor: 3, ascension: 0, onboarded: true })); localStorage.setItem('pawnisher.coach.v1', JSON.stringify({ off: true, seen: [] })); });
+    await page.reload(); await page.waitForTimeout(600);
+    await page.tap('[data-title]'); await page.waitForTimeout(400);
+    await page.tap('[data-new]'); await page.waitForTimeout(700);
+    await page.tap('.cut-box'); await page.waitForTimeout(400); await shot('p1');
+    await tapAll(6, 'p');
+    await page.tap('.cut-box'); await page.waitForTimeout(600);
+    await page.tap('[data-deck="0"]'); await page.waitForTimeout(800);
+    await page.tap('.cut-box'); await page.waitForTimeout(400); await shot('act1');
+    await page.tap('.cut-box'); await page.waitForTimeout(600); await shot('map-after');
+    // 반장 소개
+    await loadRun(page, { at: 'map' }, { floor: 10, bosses: ['bishop', 'rook'], story: { acts: [1] }, map: Array.from({ length: 30 }, () => [{ kind: 'boss' }]) }, true);
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(800);
+    await page.tap('.cut-box'); await page.waitForTimeout(400); await shot('boss-intro');
+    await page.tap('.cut-box'); await page.waitForTimeout(1400); await shot('boss-battle');
+    // 반장 해체 컷
+    await page.evaluate(() => window.runUi.afterBattle(window.runUi.run, { kind: 'boss' }, true, 10, 6)); await page.waitForTimeout(600);
+    await page.tap('.cut-box'); await page.waitForTimeout(400); await shot('boss-fall');
+    // 최종장 (압력 5): 내려놓기 실패 → 승급
+    for (const asc of [5, 13]) {
+      await loadRun(page, { at: 'map' }, { floor: 30, ascension: asc, story: { acts: [1, 2, 3] } }, true);
+      await page.evaluate(() => { window.runUi.run.stage = { at: 'over', won: true }; window.runUi.finale(window.runUi.run, 15); }); await page.waitForTimeout(600);
+      await page.tap('.cut-box'); await page.waitForTimeout(160); await page.tap('.cut-box'); await page.waitForTimeout(400); await shot(`f${asc}-fall`);
+      await page.tap('.cut-box'); await page.waitForTimeout(400); await page.tap('.cut-box'); await page.waitForTimeout(300); await page.tap('.cut-box'); await page.waitForTimeout(500); await shot(`f${asc}-howl`);
+      await page.tap('.cut-box'); await page.waitForTimeout(700); await shot(`f${asc}-promo`);
+      await page.tap('[data-lay]'); await page.waitForTimeout(asc >= 13 ? 700 : 2400); await shot(`f${asc}-lay`);
+      if (asc < 13) { await page.tap('[data-promote]'); await page.waitForTimeout(600); await page.tap('.cut-box'); await page.waitForTimeout(400); await shot(`f${asc}-promoted`); await tapAll(1); await page.waitForTimeout(700); await shot(`f${asc}-over`); }
+      else { await page.tap('.cut-box'); await page.waitForTimeout(400); await shot('true1'); await tapAll(6, 'true'); await page.tap('.cut-box'); await page.waitForTimeout(900); await shot('true-over'); }
+    }
+    // 패배
+    await loadRun(page, { at: 'map' }, { story: { acts: [1] } }, true);
+    await page.evaluate(() => { window.runUi.run.stage = { at: 'over', won: false }; window.runUi.afterBattle(window.runUi.run, { kind: 'battle' }, false, 4, 6); }); await page.waitForTimeout(700);
+    await page.tap('.cut-box'); await page.waitForTimeout(500); await shot('defeat');
+    return ['story-end'];
   },
   // 말하는 기물 초상화 (D-134): 고물상 · 공방 · 돌발 · 보상 · 결과
   async npcs(page) {

@@ -16,6 +16,8 @@ import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
 import { coach, coachLines } from './coach';
 import { portraitBig, speaker } from './portrait';
+import { playCuts, promotionScene } from './cutscene';
+import { ACT_ENTRY, AFTER_PROMOTION, BOSS_STORY, CUT_UI, DEFEAT, ENDING_A_MONO, GILDED, JOIN, OVER_STORY, PROLOGUE, RECORDS, RECRUIT, TAUNTS, TRUE_ENDING, promotionFor, type Cut } from '../data/story';
 import { NPCS, type NpcId } from '../data/npcs';
 import { playMusic } from '../audio/music';
 import { CONTRACTS, type ContractId } from '../data/contracts';
@@ -532,18 +534,22 @@ export class RunUi {
       gold: true,
     }));
     const events: Entry[] = EVENT_IDS.map((id) => ({ known: seen.events.includes(id), name: EVENTS[id].title, info: EVENTS[id].text, img: icon(EVENT_ICON[id], 's') }));
-    const all: Record<string, Entry[]> = { [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.legends]: legends, [C.sections.variants]: variants, [C.sections.enchants]: enchants, [C.sections.cards]: cards, [C.sections.events]: events };
+    const got = meta.story?.records ?? [];
+    const records: Entry[] = RECORDS.map((r, i) => ({ known: got.includes(i), name: r.title, info: `${r.title} — ${r.text}`, hint: `잠김 · ${r.need}`, img: icon('card', 's') }));
+    const all: Record<string, Entry[]> = { [C.sections.story]: records, [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.legends]: legends, [C.sections.variants]: variants, [C.sections.enchants]: enchants, [C.sections.cards]: cards, [C.sections.events]: events };
     const rec = [meta.runs, meta.clears, meta.bestFloor, meta.elites ?? 0, meta.puzzles ?? 0, meta.ascension];
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('crate', 's')}${C.title}</span><span class="spacer"></span>${button(C.back, 'data-menu')}</div>
       <div class="codex scroll-y">
         <p class="lead">${C.lead}</p>
+        <div style="display:flex;justify-content:flex-start;margin-bottom:6px">${meta.story?.prologue ? button(CUT_UI.prologueAgain, 'data-prologue', { icon: 'flag' }) : ''}</div>
         <div class="records">${rec.map((n, i) => `<div class="panel9"><span class="num">${n}</span><small>${C.records[i]}</small></div>`).join('')}</div>
         ${Object.entries(all).map(([t, list]) => section(t, list)).join('')}
       </div>`,
     );
     this.wire(el, {
       menu: () => this.showMenu(),
+      prologue: () => playCuts(this.hud, PROLOGUE, () => this.showCodex()),
       cx: (b) => {
         const [t, i] = b.dataset.cx!.split(':');
         const e = all[t][Number(i)];
@@ -557,6 +563,11 @@ export class RunUi {
     const meta = loadMeta();
     // 처음이면 시험대 먼저 권한다 (D-116) — 출하 자체는 매번 무작위
     if (fixed === undefined && !daily && !meta.onboarded && meta.runs === 0) return this.offerOnboarding();
+    // 프롤로그 (D-135): 처음 출하 한 번 — 도감에서 다시 본다
+    if (!meta.story?.prologue) {
+      saveMeta({ ...meta, story: { ...meta.story, prologue: true } });
+      return playCuts(this.hud, PROLOGUE, () => this.startNew(fixed, daily));
+    }
     const seed = fixed ?? freshSeed();
     const decks = startDeckOptions(seed, unlockedDecks(meta));
     const el = this.hud.openScene(
@@ -577,6 +588,7 @@ export class RunUi {
         this.run = newRun(seed, { ascension: daily ? DAILY.ascension : Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta), deck: decks[Number(b.dataset.deck)] });
         this.run.startedAt = Date.now();
         if (daily) this.run.daily = daily;
+        this.gainRecords([0]);
         sfx('submit');
         this.save();
         this.show();
@@ -637,8 +649,20 @@ export class RunUi {
     playMusic(st.at === 'over' ? 'menu' : bossFight ? (floor === TOTAL_FLOORS ? 'final' : 'boss') : (['act1', 'act2', 'act3'] as const)[actOf(floor) - 1]);
     this.hud.sceneKey = `${st.at}:${run.floor}:${st.at === 'reward' ? st.choices.length : st.at === 'event' ? ('result' in st ? 1 : 0) : ''}`;
     switch (run.stage.at) {
-      case 'map':
+      case 'map': {
+        // 공정 진입 컷 (D-135): 출하마다 공정 첫 층에서 한 번
+        const act = actOf(floor);
+        const seenActs = (run.story ??= {}).acts ??= [];
+        if (inAct(floor) === 1 && !seenActs.includes(act)) {
+          seenActs.push(act);
+          this.save();
+          return playCuts(this.hud, [ACT_ENTRY[act - 1]], () => {
+            this.hud.sceneKey = `map:${run.floor}:`;
+            this.showMap(run);
+          });
+        }
         return this.showMap(run);
+      }
       case 'battle':
         return this.startBattle(run);
       case 'reward':
@@ -771,6 +795,13 @@ export class RunUi {
   private startBattle(run: RunState): void {
     if (run.stage.at !== 'battle') return;
     const e = run.stage.encounter;
+    // 반장 소개 컷 (D-135): 그 층에서 처음 들어갈 때 한 번
+    const intro = ((run.story ??= {}).intro ??= []);
+    if (e.kind === 'boss' && !run.stage.battle && !intro.includes(run.floor)) {
+      intro.push(run.floor);
+      this.save();
+      return playCuts(this.hud, [this.bossIntroCut(run)], () => this.startBattle(run));
+    }
     const bd = battleDeck(run);
     const state: BattleState = run.stage.battle ?? encounterBattle(bd.deck, run.loadout, e);
     this.hud.closeOverlay();
@@ -783,16 +814,18 @@ export class RunUi {
     this.c.onBattleEnd = (s) => {
       logBattle(run, state, s, Date.now() - startedAt, e.kind, e.boss ?? (e.kind === 'boss' ? 'final' : undefined)); // 출하 기록 (D-117)
       if (s.winner === 0 && e.kind === 'boss') unlockAchievement(`ACT${actOf(run.floor)}_CLEAR`);
+      const floor = run.floor;
+      const army = run.deck.length;
       finishBattle(run, s);
       this.save();
-      window.setTimeout(() => this.show(), 600);
+      window.setTimeout(() => this.afterBattle(run, e, s.winner === 0, floor, army), 600);
     };
     this.hud.setOrder(e.order ? { id: e.order, deck: [...run.deck] } : null);
     this.hud.setGoal(null);
     this.c.startState(state, e.tier, TUNED);
     // 대국 시작 한 줄: 반장은 자기 대사, 검문!은 경고, 그 밖엔 공정과 군단 이름
     const opening =
-      e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${inAct(run.floor)}층 · ${e.name}`;
+      e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name} — ${TAUNTS[(run.seed + run.floor) % TAUNTS.length]}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${e.name} — ${TAUNTS[(run.seed + run.floor) % TAUNTS.length]}`;
     this.hud.toast(opening);
     if (e.kind === 'elite') coach('elite');
     if (e.kind === 'boss') coach('boss');
@@ -860,7 +893,14 @@ export class RunUi {
         const id = b.dataset.pick!;
         if (ch) logOffer(run, ch.type, ch.options as string[], id);
         sfx('land');
-        this.act(takeChoice(run, id), () => this.discardPicker(run, ch!.type === 'enchant' ? 'enchant' : 'card', (d) => this.act(takeChoice(run, id, d))));
+        const err = takeChoice(run, id);
+        if (err === 'full') return this.discardPicker(run, ch!.type === 'enchant' ? 'enchant' : 'card', (d) => this.act(takeChoice(run, id, d)));
+        this.act(err);
+        // 합류 · 영입 한 줄 (D-135)
+        if (!err && ch?.type === 'piece') {
+          this.hud.toast(JOIN[id as Exclude<PieceType, 'K'>]);
+          if (id === 'Q') this.gainRecords([2]);
+        } else if (!err && ch?.type === 'recruit') this.hud.toast(RECRUIT);
       },
       skip: () => {
         if (ch) logOffer(run, ch.type, ch.options as string[], null);
@@ -1214,6 +1254,70 @@ export class RunUi {
     });
   }
 
+  /** 검수 기록지 얻기 (D-135): 처음 얻으면 한 줄 알림 */
+  private gainRecords(ids: number[]): void {
+    const m = loadMeta();
+    const have = m.story?.records ?? [];
+    const fresh = ids.filter((i) => !have.includes(i));
+    if (!fresh.length) return;
+    saveMeta({ ...m, story: { ...m.story, records: [...have, ...fresh].sort((a, b) => a - b) } });
+    fresh.forEach((i, k) => window.setTimeout(() => this.hud.toast(`* 검수 기록지 — ${RECORDS[i].title}`), 1800 * (k + 1)));
+  }
+
+  /** 반장 · 도금왕 소개 컷 */
+  private bossIntroCut(run: RunState): Cut {
+    const boss = bossOf(run, run.floor);
+    if (run.floor === TOTAL_FLOORS)
+      return { bg: 'top', actors: [{ npc: 'gilded', x: 34, y: 50, size: 130, mood: 'narrow' }, { npc: 'ninth', x: 72, y: 60, size: 100, mood: 'look' }], lines: GILDED.intro, fx: 'gold' };
+    const id = run.bosses[actOf(run.floor) - 1];
+    const b = BOSS_STORY[id];
+    return { bg: 'line', actors: [{ npc: b.npc, x: 34, y: 50, size: 130 }, { npc: 'ninth', x: 72, y: 62, size: 96, mood: 'look' }], lines: [{ kind: 'tell', text: b.belief }, { kind: 'say', who: boss.name, text: `「${boss.quote}」` }] };
+  }
+
+  /** 대국 뒤 (D-135): 반장 해체 컷 · 도금왕 최종장 · 패배 컷 → 다음 화면 */
+  private afterBattle(run: RunState, e: { kind: string; boss?: string }, won: boolean, floor: number, army: number): void {
+    if (!won) {
+      if (run.stage.at !== 'over') return this.show();
+      this.gainRecords([1]);
+      return playCuts(this.hud, [DEFEAT], () => this.show());
+    }
+    if (e.kind !== 'boss') return this.show();
+    if (floor === TOTAL_FLOORS) return this.finale(run, army);
+    const id = run.bosses[actOf(floor) - 1];
+    const b = BOSS_STORY[id];
+    this.gainRecords([3 + (Object.keys(BOSS_STORY) as (keyof typeof BOSS_STORY)[]).indexOf(id)]);
+    playCuts(this.hud, [{ bg: 'line', actors: [{ npc: b.npc, x: 34, y: 54, size: 120, mood: 'sleepy', dim: true }, { npc: 'ninth', x: 70, y: 58, size: 110, mood: 'calm' }], lines: [{ kind: 'tell', text: b.fall }, { kind: 'mono', text: b.reply }] }], () => this.show());
+  }
+
+  /** 최종장 (D-131): 도금왕 쓰러짐 → 울부짖음 → 승급 화면 → 엔딩 */
+  private finale(run: RunState, army: number): void {
+    const pressure = run.ascension ?? 0;
+    const g = promotionFor(pressure);
+    const gilded = (mood: 'narrow' | 'glare' | 'sleepy' | 'wide' | 'look' | 'calm', dim = false) => ({ npc: 'gilded' as const, x: 34, y: 52, size: 130, mood, dim });
+    const fall: Cut[] = [
+      { bg: 'top', actors: [gilded('sleepy'), { npc: 'ninth', x: 72, y: 60, size: 100, mood: 'calm' }], lines: GILDED.fall, fx: 'gold' },
+      ...(army >= 14 ? [{ bg: 'box' as const, actors: [], lines: [{ kind: 'tell' as const, text: '* 아무도 등을 돌리지 않았다.' }] }] : []),
+      { bg: 'top', actors: [gilded(g.mood), { npc: 'ninth', x: 72, y: 60, size: 100, mood: 'wide' }], lines: GILDED.howl, fx: 'shake' },
+    ];
+    this.gainRecords([9]);
+    playCuts(this.hud, fall, () =>
+      promotionScene(this.hud, pressure, (lay) => {
+        (run.story ??= {}).ending = lay ? 'free' : 'promote';
+        this.save();
+        const m = loadMeta();
+        saveMeta({ ...m, story: { ...m.story, promoted: (m.story?.promoted ?? 0) + (lay ? 0 : 1), freed: m.story?.freed || lay } });
+        this.gainRecords(lay ? [11] : [10]);
+        const after: Cut[] = lay
+          ? TRUE_ENDING
+          : [
+              { bg: 'top', actors: [{ npc: 'ninth', x: 50, y: 58, size: 120, mood: 'sleepy' }], lines: pressure >= 13 ? [ENDING_A_MONO] : [{ kind: 'tell', text: g.after }], fx: 'gold' },
+              AFTER_PROMOTION,
+            ];
+        playCuts(this.hud, after, () => this.show());
+      }),
+    );
+  }
+
   private showOver(run: RunState): void {
     const won = run.stage.at === 'over' && run.stage.won;
     const floor = Math.min(run.floor, TOTAL_FLOORS);
@@ -1227,10 +1331,13 @@ export class RunUi {
     if (meta.ascension > before.ascension) newly.push(`압력 ${meta.ascension} 해금: ${ASCENSIONS[meta.ascension]}`);
     const O = TEXT.over;
     const ench = Object.keys(run.loadout.enchants).length;
+    const ending = run.story?.ending;
+    const winTitle = ending === 'free' ? OVER_STORY.freeTitle : O.win;
+    const winTell = ending === 'free' ? OVER_STORY.freeTell : ending === 'promote' ? OVER_STORY.promoteTell : O.winTell;
     const el = this.hud.openScene(
-      `<div class="stamp-big ${won ? 'good' : 'bad'}">${won ? O.win : O.lose}</div>
-      ${speaker('scale', `“${won ? O.winSay : O.loseSay}”`, won ? 'calm' : 'glare')}
-      <p class="tell">${won ? O.winTell : `${ACT_NAMES[actOf(floor) - 1]} ${inAct(floor)}층. ${O.loseTell}`}</p>
+      `<div class="stamp-big ${won ? 'good' : 'bad'}">${won ? winTitle : O.lose}</div>
+      ${speaker('scale', `“${won ? (ending === 'free' ? OVER_STORY.freeSay : O.winSay) : O.loseSay}”`, ending === 'free' ? 'sleepy' : won ? 'calm' : 'glare')}
+      <p class="tell">${won ? winTell : `${ACT_NAMES[actOf(floor) - 1]} ${inAct(floor)}층. ${O.loseTell}`}</p>
       <div class="records" style="width:min(520px,90vw)">
         <div class="panel9"><span class="num">${floor}</span><small>도달 층</small></div>
         <div class="panel9"><span class="num">${run.deck.length}</span><small>군단</small></div>

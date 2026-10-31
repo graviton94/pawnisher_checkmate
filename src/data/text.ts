@@ -84,7 +84,7 @@ export const TEXT = {
     title: '도감',
     lead: '* 한 번 손에 넣은 것만 적힌다. 나머지는 물음표다. 물음표도 언젠가 채워진다.',
     unknown: '???',
-    sections: { records: '기록', sets: '시작 세트', bosses: '반장', legends: '에픽 부품', variants: '도면', enchants: '개조', cards: '천공 카드', events: '돌발' },
+    sections: { records: '기록', story: '검수 기록지', sets: '시작 세트', bosses: '반장', legends: '에픽 부품', variants: '도면', enchants: '개조', cards: '천공 카드', events: '돌발' },
     records: ['출하', '정품 출하', '최고 공정', '검문! 통과', '푼 묘수', '열린 압력'],
     back: '메뉴',
   },

@@ -118,6 +118,23 @@ const drawProps = (c: CanvasRenderingContext2D, props: string[], e: { lx: number
       c.fillRect(25, 41, 14, 8);
       c.fillStyle = '#0b0b0e';
       c.fillRect(28, 44, 8, 2);
+    } else if (p === 'goldCrown') {
+      // 금 칠한 왕관: 몸 위에 딱 맞게, 칠이 반짝인다
+      const y = e.y - e.r - 9;
+      c.fillStyle = '#0b0b0e';
+      c.fillRect(17, y - 1, 30, 9);
+      c.fillStyle = '#e0b030';
+      c.fillRect(18, y, 28, 7);
+      for (const x of [17, 28, 39]) {
+        c.fillStyle = '#0b0b0e';
+        c.fillRect(x, y - 6, 8, 6);
+        c.fillStyle = '#facc15';
+        c.fillRect(x + 1, y - 5, 6, 6);
+      }
+      c.fillStyle = '#fff3b0';
+      c.fillRect(20, y + 1, 4, 1);
+      c.fillStyle = '#d64545';
+      c.fillRect(31, y + 2, 2, 3);
     } else if (p === 'paperCrown') {
       // 너무 큰 종이 왕관: 눈 위까지 내려온다
       const y = e.y - e.r - 6;
@@ -154,13 +171,14 @@ const draw = async (cv: HTMLCanvasElement, blink = false): Promise<void> => {
   const e = EYES[piece];
   const k = (v: number) => Math.round(off / 2 + v * scale);
   const ey = { lx: k(e.lx), rx: k(e.rx), y: off + Math.round(e.y * scale), r: Math.max(4, Math.round(e.r * scale)) };
-  const props = def.props.filter((p) => p !== 'paperCrown');
+  const props = def.props.filter((p) => p !== 'paperCrown' && p !== 'goldCrown');
   drawProps(c, props, ey);
   const big = def.props.includes('monocle');
   eye(c, ey.lx, ey.y, ey.r, mood, blink, 'l');
   eye(c, ey.rx, ey.y, big ? ey.r + 1 : ey.r, mood, blink, 'r');
   if (def.props.includes('monocle')) drawProps(c, ['monocle'], { ...ey, r: ey.r + 1 });
   if (def.props.includes('paperCrown')) drawProps(c, ['paperCrown'], ey);
+  if (def.props.includes('goldCrown')) drawProps(c, ['goldCrown'], ey);
 };
 
 const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;

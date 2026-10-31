@@ -26,6 +26,8 @@ export interface MetaState {
   onboarded?: boolean;
   /** 오늘의 출하 최고 기록 (D-122): 날짜 · 도달 층 · 완주 */
   daily?: { date: string; floor: number; won: boolean };
+  /** 이야기 (D-135): 프롤로그를 봤나 · 얻은 검수 기록지 번호 · 승급 횟수 · 해방 */
+  story?: { prologue?: boolean; records?: number[]; promoted?: number; freed?: boolean };
 }
 
 export { ASCENSIONS, MAX_ASCENSION } from '../data/ascension';

@@ -147,6 +147,8 @@ export interface RunState {
   startedAt?: number;
   /** 오늘의 출하 날짜 (D-122) */
   daily?: string;
+  /** 이야기 (D-135): 본 공정 진입 컷 · 소개를 본 반장 층 · 엔딩 */
+  story?: { acts?: number[]; intro?: number[]; ending?: 'free' | 'promote' };
   stage: Stage;
 }
 

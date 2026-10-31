@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 50, date: '2026-10-31' };
+export const VERSION = { n: 51, date: '2026-10-31' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -52,6 +52,14 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
  * shots = tools/fxlab/screens/의 파일 이름 (index.tsv에 이름표). 확정되면 DECISIONS의 done으로 옮기고 화면은 지운다.
  */
 export const TOPICS: { id: string; name: string; status: Status; rule: string; changed?: string; shots: string[] }[] = [
+  {
+    id: 'cutscene',
+    name: '컷신 · 승급 화면',
+    status: 'review',
+    rule: '컷 = 코드 배경(공장 · 컨베이어 · 상자 안 · 용광로 · 꼭대기 · 방) + 눈 초상화 · 기물 도트 배우 + 아래 두 줄 글(서술 * · 대사 「」 · 독백 ‘’ 기울임 금빛). 탭 = 다음 줄 → 다음 컷, 건너뛰기 오른쪽 위. 효과: 경고등 깜빡 · 불량 도장 · 흔들림 · 금빛 · 조용함. 승급 화면: 도금왕 ↔ 아홉째 폰, 가운데 금빛 ♛, 「승급한다」 · 「내려놓는다」 — 압력 0~12면 떨리다 꺼지고 「* 손이 떨어지지 않는다.」 (D-135)',
+    changed: '새로 들어감 — 컷 그림이 오면 배경 · 배우 자리에 바꿔 끼운다',
+    shots: ['57-cut-prologue.jpg', '58-cut-boss.jpg', '59-cut-promotion.jpg', '60-cut-true.jpg'],
+  },
   {
     id: 'npc',
     name: '말하는 기물',
@@ -149,8 +157,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 51, date: '2026-10-31', items: ['컷신 재생기 · 승급 화면 (이야기 v5)', '초상화 +11: 흰 퀸 · 룩 · 비숍, 반장 여섯, 도금왕(금칠 왕관)'] },
   { v: 50, date: '2026-10-31', items: ['말하는 기물 임시 초상화 (큰 눈 + 소품) — 고물상 · 공방 · 돌발 · 보상 · 결과 · 시험대', '용어: 사람 없는 공장 (검수 저울 · 녹슨 룩 · 외눈 비숍), 최종 보스 도금왕'] },
   { v: 49, date: '2026-10-31', items: ['랩 정리: 보는 중인 주제를 위 탭으로 (기물 공격 옆) · 오래된 결정은 확정으로 접음 · 확정된 화면 스크린샷은 뺌 · 기록은 최근 3개만', '타격 카메라 · 등급 연출 · 반장 약점 탭 새로'] },
-  { v: 48, date: '2026-10-30', items: ['같은 줄 높이 통일 · 반장 카드 세계관 · 인물별 대사'] },
-  { v: 47, date: '2026-10-30', items: ['기물 외곽선 다듬기 · 느낌표/물음표 규칙'] },
 ];
