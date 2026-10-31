@@ -7,6 +7,7 @@ import { DEFAULT_FORMATION } from '../data/formations';
 import { PUZZLE_GOLD } from '../data/puzzles';
 import { ASC, ascOn } from '../data/ascension';
 import { CONTRACTS, CONTRACT_FX, CONTRACT_OPTIONS, type ContractId } from '../data/contracts';
+import { LINES, LINE_FX, lineOf } from '../data/lines';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_WEIGHT, LEGEND_CHANCE, LEGEND_PRICE, LEGEND_SLOTS, PITY, type Grade } from '../data/grades';
 import { LEGENDS, LEGEND_FX, type LegendId } from '../data/legends';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
@@ -252,7 +253,7 @@ export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
     path: [],
     gold: ascOn(opts.ascension, 'finalForge') ? ASC.finalForge.startGold : START_GOLD,
     deck,
-    loadout: { enchants: {}, cards: [], forge: {}, variants: {}, formation: DEFAULT_FORMATION },
+    loadout: { enchants: {}, cards: [], forge: {}, variants: {}, formation: DEFAULT_FORMATION, line: lineOf(deck) },
     wins: 0,
     crackGauge: 0,
     bosses,
@@ -688,6 +689,7 @@ const rollEnchants = (run: RunState, rng: Rng, source: 'battle' | 'elite' | 'bos
     if (n === 2) w *= STACK_WEIGHT.third[act];
     const t = ENCHANT_TYPE[id];
     if (t && t !== 'K' && run.deck.filter((x) => x === t).length >= 3) w *= TYPE_MATCH_WEIGHT;
+    if (t && run.loadout.line && LINES[run.loadout.line].types.includes(t)) w *= LINE_FX.enchantWeight; // 라인 (D-125)
     return [[id, w]];
   });
   const out: EnchantId[] = [];
@@ -739,7 +741,8 @@ const rollGold = (run: RunState, rng: Rng, n = 3): GoldId[] => {
   const table: [GoldId, number][] = [
     ...(slotsFull ? [] : (Object.keys(LEGENDS) as LegendId[]).filter((id) => !owned.has(id)).map((id): [GoldId, number] => {
       const t = LEGENDS[id].type;
-      return [id, t && t !== 'K' && run.deck.filter((x) => x === t).length >= 3 ? 2 : 1];
+      const lineW = run.loadout.line && LINES[run.loadout.line].epics.includes(id) ? LINE_FX.epicWeight : 1; // 라인 (D-125)
+      return [id, (t && t !== 'K' && run.deck.filter((x) => x === t).length >= 3 ? 2 : 1) * lineW];
     })),
     ...GOLD_CARDS.filter((id) => !owned.has(id)).map((id): [GoldId, number] => [id, 0.8]),
   ];

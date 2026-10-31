@@ -17,6 +17,7 @@ import { choose, dismissAll } from './motion';
 import { coach } from './coach';
 import { playMusic } from '../audio/music';
 import { CONTRACTS, type ContractId } from '../data/contracts';
+import { LINES, lineOf } from '../data/lines';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
 import { TUTORIAL_SEED } from '../data/coach';
 import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
@@ -288,7 +289,7 @@ export class RunUi {
     const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<i class="tag${n >= 3 ? ' gold' : ''}">${ENCHANTS[id].name} ${n}단${n >= 3 ? '★' : ''}</i>`);
     const cards = run.loadout.cards.map((id) => `<i class="tag${CARDS[id].limit.type === 'consume' ? ' gold' : ''}">${CARDS[id].name}</i>`);
     const panel = this.hud.openOverlay(`
-      <h2>${icon('flag')} 군단 ${run.deck.length}기</h2>
+      <h2>${icon('flag')} 군단 ${run.deck.length}기${run.loadout.line ? ` <small class="dim">${LINES[run.loadout.line].name} · ${LINES[run.loadout.line].trait}</small>` : ''}</h2>
       <p class="sub">${TEXT.formation.title} <small class="dim">${TEXT.formation.lead}</small></p>
       <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
       <div class="army-list">${units.join('')}</div>
@@ -495,7 +496,8 @@ export class RunUi {
       <div class="stage"><div class="offers">${decks
         .map((d, i) => {
           const kinds = SET_LORE[[...d].sort().join('')] ?? '';
-          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트</span><b>${setName(d)}</b><span class="pieces">${d.map((t) => pieceImg(t, 0, 'large', 56)).join('')}</span><p>${kinds}</p></button>`;
+          const L = LINES[lineOf(d)];
+          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트 · ${L.name}</span><b>${setName(d)}</b><span class="pieces">${d.map((t) => pieceImg(t, 0, 'large', 56)).join('')}</span><p>${kinds}</p><span class="tags"><i class="tag gold">${L.trait}</i></span></button>`;
         })
         .join('')}</div></div>`,
     );

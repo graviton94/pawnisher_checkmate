@@ -2,6 +2,7 @@ import { CHAIN, LAST_STRIKE_MULT } from '../data/battle';
 import { CARDS, CARD_FX, type CardUse } from '../data/cards';
 import { LEGEND_FX, RESONANCE_FX } from '../data/legends';
 import { CONTRACT_FX } from '../data/contracts';
+import { LINE_FX } from '../data/lines';
 import { MORE, SYNERGY, TACTIC_ENCHANT, tier } from '../data/enchants';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { CHAIN_KILLS, type TacticId } from '../data/tactics';
@@ -389,6 +390,8 @@ const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: Turn
   // 에픽 부품 (D-112): 단독 출하 · 합체 공정
   if (s.solo?.[attacker.side]) mult *= LEGEND_FX.soloDeal;
   if (attacker.fused && legend(s, attacker.side, 'L10')) mult *= LEGEND_FX.fusionMult;
+  // 사선 라인 (D-125)
+  if (s.loadouts?.[attacker.side]?.line === 'ray' && moveTypes(attacker).some((t) => t === 'B' || t === 'R' || t === 'Q')) mult *= LINE_FX.rayMult;
   // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
   const types = moveTypes(attacker);
   const lv = (id: 'E12' | 'E13' | 'E14' | 'E15') => ench(s, attacker.side, id);

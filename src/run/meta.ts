@@ -31,8 +31,8 @@ import { MAX_ASCENSION } from '../data/ascension';
 
 /** 해금되는 시작 덱 후보 (기본 3종은 run.ts의 START_DECKS) */
 export const UNLOCK_DECKS: { id: string; name: string; deck: Deck; need: string; ok: (m: MetaState) => boolean }[] = [
-  { id: 'cavalry', name: '기병 세트', deck: ['K', 'N', 'N'], need: '조립 공정 도달', ok: (m) => m.bestFloor >= 13 },
-  { id: 'clergy', name: '사제 세트', deck: ['K', 'B', 'B'], need: '검수 공정 도달', ok: (m) => m.bestFloor >= 25 },
+  { id: 'cavalry', name: '기병 세트', deck: ['K', 'N', 'N'], need: '조립 공정 도달', ok: (m) => m.bestFloor >= FLOORS_PER_ACT + 1 },
+  { id: 'clergy', name: '사제 세트', deck: ['K', 'B', 'B'], need: '검수 공정 도달', ok: (m) => m.bestFloor >= 2 * FLOORS_PER_ACT + 1 },
   { id: 'tower', name: '성채 세트', deck: ['K', 'R', 'P'], need: '출하 완료', ok: (m) => m.clears >= 1 },
   // 볼륨 3 (D-108)
   { id: 'battalion', name: '폰 대대 세트', deck: ['K', 'P', 'P', 'P', 'P', 'P'], need: '폰 반장 해체', ok: (m) => (m.bossKills ?? []).includes('pawn') },

@@ -1,3 +1,4 @@
+import { LINE_FX } from '../data/lines';
 import { CONTRACT_FX } from '../data/contracts';
 import { LEGEND_FX } from '../data/legends';
 import { DEFECT } from '../data/defects';
@@ -169,6 +170,8 @@ export const createBattle = ({ width, height, decks, rules, seed, loadouts }: Ba
   applyVariants(theirs, lo[1]);
   // 폭군 왕관 (에픽, D-112): 킹 ATK 두 배
   for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.legends?.includes('L05')) for (const p of list) if (p.type === 'K') p.atk *= LEGEND_FX.tyrantAtk;
+  // 라인 특성 (D-125): 물량 = 폰 최대 HP +20% · 돌격 = 첫 턴 태엽 +2 (아래 apBonus)
+  for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.line === 'mass') for (const p of list) if (p.type === 'P') p.maxHp = p.hp = Math.round(p.maxHp * LINE_FX.massHp);
   // 날림 공정 (계약, D-120): ATK +20%
   for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.contracts?.includes('K4')) for (const p of list) p.atk = Math.round(p.atk * CONTRACT_FX.atk);
   // 단독 출하 (에픽): 6기 이하로 시작했나
@@ -186,7 +189,7 @@ export const createBattle = ({ width, height, decks, rules, seed, loadouts }: Ba
     stronghold: null,
     strongholdsSpawned: 0,
     ring: 0,
-    apBonus: [0, 0],
+    apBonus: [lo[0].line === 'assault' ? LINE_FX.assaultAp : 0, lo[1].line === 'assault' ? LINE_FX.assaultAp : 0],
     lastStrike: ['none', 'none'],
     loadouts: lo,
     cards: [lo[0].cards.map((id) => ({ id, cooldown: 0, spent: false })), lo[1].cards.map((id) => ({ id, cooldown: 0, spent: false }))],

@@ -95,3 +95,19 @@ describe('오늘의 출하 (D-122)', () => {
     expect(recordRunEnd(m1, 5, false, 1, run).daily?.floor).toBe(9);
   });
 });
+
+describe('라인 (D-125)', () => {
+  it('시작 세트로 라인이 정해지고 특성이 붙는다', async () => {
+    const { lineOf, LINE_FX } = await import('../src/data/lines');
+    const { createBattle } = await import('../src/engine');
+    expect(lineOf(['K', 'P', 'N'])).toBe('assault');
+    expect(lineOf(['K', 'R', 'P'])).toBe('ray');
+    expect(lineOf(['K', 'P', 'P', 'P'])).toBe('mass');
+    expect(newRun(1, { deck: ['K', 'P', 'P', 'P'] }).loadout.line).toBe('mass');
+    const b = createBattle({ width: 8, height: 8, decks: [['K', 'P'], ['K']], loadouts: [{ enchants: {}, cards: [], forge: {}, line: 'assault' }, { enchants: {}, cards: [], forge: {} }] });
+    expect(b.apBonus[0]).toBe(LINE_FX.assaultAp);
+    const m = createBattle({ width: 8, height: 8, decks: [['K', 'P'], ['K']], loadouts: [{ enchants: {}, cards: [], forge: {}, line: 'mass' }, { enchants: {}, cards: [], forge: {} }] });
+    const plain = createBattle({ width: 8, height: 8, decks: [['K', 'P'], ['K']] });
+    expect(m.pieces.find((p) => p.type === 'P')!.maxHp).toBe(Math.round(plain.pieces.find((p) => p.type === 'P')!.maxHp * LINE_FX.massHp));
+  });
+});

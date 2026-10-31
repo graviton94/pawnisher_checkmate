@@ -1,3 +1,4 @@
+import type { LineId } from '../data/lines';
 import type { ContractId } from '../data/contracts';
 import type { LegendId } from '../data/legends';
 import type { CardId } from '../data/cards';
@@ -67,6 +68,8 @@ export interface Loadout {
   legends?: LegendId[];
   /** 계약 부품 (D-120): 이득 + 대가 */
   contracts?: ContractId[];
+  /** 라인 (D-125): 시작 세트에서 정해진다 */
+  line?: LineId;
 }
 
 export interface CardSlot {
