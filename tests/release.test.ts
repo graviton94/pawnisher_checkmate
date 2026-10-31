@@ -80,3 +80,18 @@ describe('계약 부품 (D-120)', () => {
     expect(b.pieces.find((p) => p.type === 'R')!.atk).toBe(Math.round(a.pieces.find((p) => p.type === 'R')!.atk * 1.2));
   });
 });
+
+describe('오늘의 출하 (D-122)', () => {
+  it('같은 날 같은 시드 · 날마다 다르다 · 최고 기록', async () => {
+    const { dailySeed } = await import('../src/run/seed');
+    const { recordRunEnd } = await import('../src/run/meta');
+    expect(dailySeed('2026-10-31')).toBe(dailySeed('2026-10-31'));
+    expect(dailySeed('2026-10-31')).not.toBe(dailySeed('2026-11-01'));
+    const run = newRun(dailySeed('2026-10-31'));
+    run.daily = '2026-10-31';
+    const m0 = { version: 1 as const, runs: 0, clears: 0, bestFloor: 0, ascension: 0 };
+    const m1 = recordRunEnd(m0, 9, false, 1, run);
+    expect(m1.daily).toEqual({ date: '2026-10-31', floor: 9, won: false });
+    expect(recordRunEnd(m1, 5, false, 1, run).daily?.floor).toBe(9);
+  });
+});

@@ -57,3 +57,11 @@ export const parseSeed = (code: string): number | null => {
 
 /** 새 출하 시드 (시계 기준, 30비트) */
 export const freshSeed = (): number => (Date.now() % (SEED_MAX - 1)) + 1;
+
+/** 오늘의 출하 (D-122): 날짜(기기 현지 날짜)에서 시드 — 같은 날 모두 같은 출하 */
+export const todayKey = (d = new Date()): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export const dailySeed = (key = todayKey()): number => {
+  let h = 2166136261;
+  for (const c of `pawnisher-daily-${key}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  return (h % (SEED_MAX - 1)) + 1;
+};

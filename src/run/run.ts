@@ -144,6 +144,8 @@ export interface RunState {
   goldPity?: number;
   /** 출하를 시작한 시각 (출하 기록용, 화면이 넣는다 — 엔진 결과와 무관) */
   startedAt?: number;
+  /** 오늘의 출하 날짜 (D-122) */
+  daily?: string;
   stage: Stage;
 }
 

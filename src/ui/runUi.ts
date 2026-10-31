@@ -1,7 +1,7 @@
 import { TACTICS } from '../data/tactics';
 import { ARENAS } from '../data/terrain';
 import { puzzleBattle, puzzleFor } from '../run/puzzle';
-import { freshSeed, parseSeed, seedCode } from '../run/seed';
+import { dailySeed, freshSeed, parseSeed, seedCode, todayKey } from '../run/seed';
 import { DEFECT } from '../data/defects';
 import { FORMATIONS, FORMATION_ORDER, type FormationId } from '../data/formations';
 import { runFeedback, shake, stamp, vignette, type RunDelta } from './juice';
@@ -11,7 +11,7 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { ACT_NAMES, ALTAR, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
+import { ACT_NAMES, ALTAR, DAILY, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
 import { coach } from './coach';
@@ -376,6 +376,7 @@ export class RunUi {
       `<div class="left">
         ${live ? button(M.continue, 'data-continue', { tone: 'brass', icon: 'lever', small: `${ACT_NAMES[actOf(Math.min(saved!.floor, TOTAL_FLOORS)) - 1]} ${inAct(Math.min(saved!.floor, TOTAL_FLOORS))}층 · 나사 ${saved!.gold} · 군단 ${saved!.deck.length}기` }) : ''}
         ${button(M.newRun, 'data-new', { tone: live ? undefined : 'brass', icon: 'flag', small: live ? M.newRunWarn : undefined })}
+        ${button(M.daily, 'data-daily', { icon: 'watch', small: meta.daily?.date === todayKey() ? M.dailyBest(meta.daily.floor, meta.daily.won) : M.dailyDesc })}
         ${button(M.trial, 'data-test', { icon: 'sword', small: M.trialDesc })}
         ${button(M.settings, 'data-settings', { icon: 'watch' })}
       </div>
@@ -398,6 +399,7 @@ export class RunUi {
         this.show();
       },
       new: () => this.startNew(),
+      daily: () => this.startNew(dailySeed(), todayKey()),
       asc: (b) => {
         this.ascension = Number(b.dataset.asc);
         this.showMenu();
@@ -479,7 +481,7 @@ export class RunUi {
   }
 
   /** 새 출하: 시작 세트 3지선다 */
-  private startNew(fixed?: number): void {
+  private startNew(fixed?: number, daily?: string): void {
     const meta = loadMeta();
     // 첫 출하는 1~3층이 무난한 고정 시드 (D-116)
     const seed = fixed ?? (meta.runs === 0 ? TUTORIAL_SEED : freshSeed());
@@ -498,8 +500,9 @@ export class RunUi {
     coach('start');
     this.wire(el, {
       deck: (b) => {
-        this.run = newRun(seed, { ascension: Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta), deck: decks[Number(b.dataset.deck)] });
+        this.run = newRun(seed, { ascension: daily ? DAILY.ascension : Math.min(this.ascension, meta.ascension), extraDecks: unlockedDecks(meta), deck: decks[Number(b.dataset.deck)] });
         this.run.startedAt = Date.now();
+        if (daily) this.run.daily = daily;
         sfx('submit');
         this.save();
         this.show();

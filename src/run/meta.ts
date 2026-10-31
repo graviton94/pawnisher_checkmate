@@ -22,6 +22,8 @@ export interface MetaState {
   bossKills?: string[];
   /** 도감 (D-108): 한 번이라도 얻은 개조 · 도면, 들어가 본 돌발 */
   seen?: { enchants: string[]; variants: string[]; events: string[]; cards?: string[]; legends?: string[] };
+  /** 오늘의 출하 최고 기록 (D-122): 날짜 · 도달 층 · 완주 */
+  daily?: { date: string; floor: number; won: boolean };
 }
 
 export { ASCENSIONS, MAX_ASCENSION } from '../data/ascension';
@@ -90,6 +92,7 @@ export const absorbRun = (m: MetaState, run: RunState): MetaState => {
 export const recordRunEnd = (m: MetaState, floor: number, won: boolean, ascension: number, run?: RunState): MetaState => ({
   ...(run ? absorbRun(m, run) : m),
   ...(run ? { elites: (m.elites ?? 0) + passed(run).filter((n) => n.kind === 'elite').length, puzzles: (m.puzzles ?? 0) + (run.solved ?? 0) } : {}),
+  ...(run?.daily && (m.daily?.date !== run.daily || floor > m.daily.floor || (won && !m.daily.won)) ? { daily: { date: run.daily, floor, won } } : {}),
   runs: m.runs + 1,
   clears: m.clears + (won ? 1 : 0),
   bestFloor: Math.max(m.bestFloor, floor),
