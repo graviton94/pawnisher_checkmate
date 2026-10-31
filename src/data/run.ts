@@ -168,7 +168,8 @@ export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
 /** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
 /** D-099: 검문! 승률 88~92% → 목표 65~85%: 개량 +1. 단 Act 1에는 없다 (붙이니 46~49%로 떨어졌다) */
 export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 1 };
-export const eliteForge = (floor: number): number => (actOf(floor) === 1 ? 0 : ELITE_BONUS.forge);
+/** D-124: 짧아진 2공정에서 검문! 60% → 개량 보너스는 3공정만 */
+export const eliteForge = (floor: number): number => (actOf(floor) === 3 ? ELITE_BONUS.forge : 0);
 /** 적 군단의 이형 거푸집 수 (GDD 13장 P2, D-084): 정예는 Act 1부터 1개 · Act 3 정예 2개, 일반은 Act 2부터 확률로 1개 (Act 3은 항상) */
 export const enemyVariantCount = (floor: number, kind: NodeKind, roll: number): number => {
   const act = actOf(floor);
@@ -294,7 +295,7 @@ export const BOSSES: Record<BossId, BossDef> = {
   },
   affix: {
     name: '검문 반장',
-    title: '정예 접사 넷',
+    title: '정예 접사 셋',
     role: '검문소의 끝',
     quote: '서류는 네 장. 너는 한 장도 못 넘긴다.',
     deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P'],
@@ -305,7 +306,6 @@ export const BOSSES: Record<BossId, BossDef> = {
     weakness: { id: 'paper', label: '서류 대조 (한 턴 두 번째 피격부터 ×2)', prep: '여러 번 치기(이중 타격 태엽 · 기병 연동축 · 조준경 비숍 · 일제 사격)' },
     affixes: [
       { type: 'Q', id: 'lastRivet' },
-      { type: 'R', id: 'plate' },
       { type: 'N', id: 'recoil' },
       { type: 'B', id: 'guardBolt' },
     ],
@@ -320,7 +320,7 @@ export const FINAL_BOSS: BossDef = {
   quote: '그 왕관, 종이로군.',
   // 퀸 2 = 초과 1 × (60 + 세금 10) = 70 → 나이트 1(25) + 비숍 1(25) + 폰 2(20) 희생
   deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
-  enchants: { E05: 2, E08: 3, E06: 2 }, // D-114: 공장장 36%(14판) → 연동 기어 ★ 대신 2단
+  enchants: { E05: 3, E08: 3, E06: 2 }, // D-114: 36%(14판) → 2단 · D-124: 30층 출하에서 88%(25판) → 다시 ★
   cards: ['A06', 'C03'],
   forge: { Q: 5, R: 4, K: 3 }, // D-099: 83% → 목표 55~80% · D-114: 53% → 킹 4→3
   arena: 'final',
@@ -334,7 +334,7 @@ export const FINAL_BOSS: BossDef = {
 export const FORGE_EXTRA = { salvagePerLevel: 15, cardSalvage: 10, reforgeCost: 45 };
 
 /** 보관 이자 (D-119, 제안서 P1 2.6 · Gambonanza 이자): 대국을 이길 때 들고 있던 나사 per마다 gain, 최대 cap — 저축 vs 투자 */
-export const INTEREST = { per: 50, gain: 5, cap: 25 };
+export const INTEREST = { per: 60, gain: 5, cap: 20 }; // D-124: 3공정 나사가 쌓여 50·25 → 60·20
 
 /** 오늘의 출하 (D-122): 압력 고정 — 같은 날 같은 조건으로 비교 */
 export const DAILY = { ascension: 1 };

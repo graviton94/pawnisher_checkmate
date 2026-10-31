@@ -185,12 +185,12 @@ describe('억까·억빠 (D-099)', () => {
 });
 
 describe('반장 셋 더 (D-106)', () => {
-  it('이형 반장은 다섯 이형, 검문 반장은 접사 넷이 판에 올라온다', () => {
+  it('이형 반장은 다섯 이형, 검문 반장은 접사 셋이 판에 올라온다', () => {
     const lo = { enchants: {}, cards: [], forge: {} };
     const v = encounterBattle(['K', 'P'], lo, generateEncounter(12, 'boss', new Rng(2), 'variant'));
     expect(new Set(v.pieces.filter((p) => p.side === 1 && p.variant).map((p) => p.variant)).size).toBe(5);
     const a = encounterBattle(['K', 'P'], lo, generateEncounter(12, 'boss', new Rng(2), 'affix'));
-    expect(a.pieces.filter((p) => p.side === 1 && p.affix)).toHaveLength(4);
+    expect(a.pieces.filter((p) => p.side === 1 && p.affix)).toHaveLength(3);
   });
   it('출하마다 반장 여섯 중 둘', async () => {
     const { newRun } = await import('../src/run/run');
