@@ -256,7 +256,7 @@ export const BOSSES: Record<BossId, BossDef> = {
     quote: '여기서 끝이다.',
     // 룩 3 = 초과 1 × (40 + 세금 10) = 50 → 나이트 2(50) 희생
     deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
-    enchants: { E03: 3 },
+    enchants: { E03: 2 }, // D-114: 58% → 증기 장갑판 2단
     cards: ['A06'],
     forge: { R: 2 }, // D-114: 약점(네모난 차체) 뒤 56% → 원래대로
     arena: 'wall',
@@ -318,6 +318,6 @@ export const FINAL_BOSS: BossDef = {
   deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
   enchants: { E05: 3, E08: 3, E06: 2 },
   cards: ['A06', 'C03'],
-  forge: { Q: 5, R: 4, K: 4 }, // D-099: 83% → 목표 55~80%
+  forge: { Q: 5, R: 4, K: 3 }, // D-099: 83% → 목표 55~80% · D-114: 53% → 킹 4→3
   arena: 'final',
 };

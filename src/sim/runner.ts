@@ -26,6 +26,7 @@ import {
   battleDeck,
   buyBlueprint,
   buyLegend,
+  reroll,
   forgeVariantOptions,
   forgeVariant,
   buyPolish,
@@ -207,28 +208,36 @@ export const autoRun = (seed: number): RunLog => {
         break;
       }
       case 'shop': {
-        // 살 수 있는 가장 비싼 기물부터, 남으면 카드
-        let bought = true;
-        while (bought) {
-          bought = false;
-          const order = st.stock.pieces.map((p, i) => [p, i] as const).filter(([p]) => !p.sold && p.price <= run.gold && canAdd(run.deck, p.item));
-          order.sort((a, b) => PIECE_STATS[b[0].item].value - PIECE_STATS[a[0].item].value);
-          if (order.length) {
-            buyPiece(run, order[0][1]);
-            bought = true;
+        // 사람처럼 (D-114): 에픽 → 다듬기 · 개조 → 기물 → 카드 순, 여유가 크면 한 번 새로 진열하고 다시 본다
+        const shopOnce = () => {
+          const stock = run.stage.at === 'shop' ? run.stage.stock : null;
+          if (!stock) return;
+          if (stock.legend && !stock.legend.sold && run.gold >= stock.legend.price) buyLegend(run);
+          if (stock.polish && !stock.polish.sold && run.gold - stock.polish.price >= 10) buyPolish(run);
+          stock.enchants.forEach((e, i) => {
+            const full = !run.loadout.enchants[e.item] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
+            if (!e.sold && !full && run.gold - e.price >= 20) buyEnchant(run, i);
+          });
+          if (stock.blueprint && !stock.blueprint.sold && run.gold - stock.blueprint.price >= 40) buyBlueprint(run);
+          let bought = true;
+          while (bought) {
+            bought = false;
+            const order = stock.pieces.map((p, i) => [p, i] as const).filter(([p]) => !p.sold && p.price <= run.gold && canAdd(run.deck, p.item));
+            order.sort((a, b) => PIECE_STATS[b[0].item].value - PIECE_STATS[a[0].item].value);
+            if (order.length) {
+              buyPiece(run, order[0][1]);
+              bought = true;
+            }
           }
+          stock.cards.forEach((c, i) => {
+            if (!c.sold && run.gold - c.price >= 20 && run.loadout.cards.length < CARD_SLOTS) buyCard(run, i);
+          });
+        };
+        shopOnce();
+        if (run.stage.at === 'shop' && run.gold >= 200 && run.gold >= run.stage.stock.rerollPrice + 150) {
+          reroll(run);
+          shopOnce();
         }
-        // 후반 나사 쓸 곳 (D-103): 다듬기 · 희귀 진열은 여유가 있으면
-        if (st.stock.polish && !st.stock.polish.sold && run.gold - st.stock.polish.price >= 30) buyPolish(run);
-        if (st.stock.blueprint && !st.stock.blueprint.sold && run.gold - st.stock.blueprint.price >= 60) buyBlueprint(run);
-        if (st.stock.legend && !st.stock.legend.sold && run.gold - st.stock.legend.price >= 30) buyLegend(run);
-        st.stock.enchants.forEach((e, i) => {
-          const full = !run.loadout.enchants[e.item] && Object.keys(run.loadout.enchants).length >= ENCHANT_SLOTS;
-          if (!e.sold && !full && run.gold - e.price >= 60) buyEnchant(run, i);
-        });
-        st.stock.cards.forEach((c, i) => {
-          if (!c.sold && run.gold - c.price >= 40 && run.loadout.cards.length < CARD_SLOTS) buyCard(run, i);
-        });
         track();
         leaveNode(run);
         break;
