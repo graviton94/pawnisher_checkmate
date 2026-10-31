@@ -606,7 +606,7 @@ export class RunUi {
     this.hud.toast(TEXT.puzzle.opening);
   }
 
-  /** 공정 지도: 1층 → 12층(반장)이 가로로 흐른다. 지금 층의 노드만 누를 수 있다 */
+  /** 공정 지도: 1층 → 공정 끝 반장이 가로로 흐른다. 지금 층의 노드만 누를 수 있다 */
   private showMap(run: RunState): void {
     const act = actOf(run.floor);
     const first = (act - 1) * FLOORS_PER_ACT;

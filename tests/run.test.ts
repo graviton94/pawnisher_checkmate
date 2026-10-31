@@ -1,6 +1,7 @@
 import { ORDERS } from '../src/data/tactics';
 import { orderProgress, pickOrder } from '../src/run/orders';
 import type { PieceType } from '../src/engine/types';
+import { FLOORS_PER_ACT } from '../src/data/run';
 import { describe, expect, it } from 'vitest';
 import { BOSSES, FINAL_BOSS, FORGE_COST, TOTAL_FLOORS, type BossId } from '../src/data/run';
 import { createBattle, Rng } from '../src/engine';
@@ -37,15 +38,15 @@ describe('런 구조 (GDD 8장)', () => {
   it('같은 시드면 같은 런', () => {
     expect(JSON.stringify(newRun(42))).toBe(JSON.stringify(newRun(42)));
   });
-  it('맵: Act마다 첫 층 전투 · 12층 보스 · 층마다 전투 1개 이상 · Act 1 엘리트는 5층부터', () => {
+  it('맵: Act마다 첫 층 전투 · 공정 끝 보스 · 층마다 전투 1개 이상 · Act 1 엘리트는 5층부터', () => {
     for (let seed = 1; seed < 30; seed++) {
       const run = newRun(seed);
       expect(run.map).toHaveLength(TOTAL_FLOORS);
-      for (const a of [0, 12, 24]) {
+      for (const a of [0, FLOORS_PER_ACT, 2 * FLOORS_PER_ACT]) {
         expect(run.map[a]).toEqual([{ kind: 'battle' }]);
-        expect(run.map[a + 11]).toEqual([{ kind: 'boss' }]);
+        expect(run.map[a + FLOORS_PER_ACT - 1]).toEqual([{ kind: 'boss' }]);
       }
-      run.map.slice(1, 11).forEach((floor, i) => {
+      run.map.slice(1, FLOORS_PER_ACT - 1).forEach((floor, i) => {
         expect(floor.length).toBeGreaterThanOrEqual(2);
         expect(floor.some((n) => n.kind === 'battle')).toBe(true);
         if (i + 2 < 5) expect(floor.some((n) => n.kind === 'elite')).toBe(false);

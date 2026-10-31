@@ -1,6 +1,7 @@
 import { it } from 'vitest';
 import { autoRun, type RunLog } from '../src/sim/runner';
 import { seedCode } from '../src/run/seed';
+import { FLOORS_PER_ACT as P, TOTAL_FLOORS as T } from '../src/data/run';
 
 /** M5 자동 등반: 층별 생존·경제·덱 성장 곡선 (GDD 8장) */
 it('run', () => {
@@ -10,13 +11,13 @@ it('run', () => {
   for (let i = 0; i < n; i++) logs.push(autoRun(1000 + i));
   const pct = (x: number) => `${Math.round((x / n) * 100)}%`;
   console.log(`런 ${n}회, 런당 ${((Date.now() - t0) / n / 1000).toFixed(1)}초`);
-  console.log(`36층 완료: ${pct(logs.filter((l) => l.won).length)}`);
-  const at = [4, 8, 12, 13, 18, 24, 25, 30, 36];
-  console.log(`층 도달: ${at.map((f) => `${f}층 ${pct(logs.filter((l) => l.floor >= f && (f < 36 || l.won || l.floor === 36)).length)}`).join(' · ')}`);
+  console.log(`${T}층 완료: ${pct(logs.filter((l) => l.won).length)}`);
+  const at = [4, 8, P, P + 1, P + 6, 2 * P, 2 * P + 1, 3 * P - 4, T];
+  console.log(`층 도달: ${at.map((f) => `${f}층 ${pct(logs.filter((l) => l.floor >= f && (f < T || l.won || l.floor === T)).length)}`).join(' · ')}`);
   const died = new Map<string, number>();
   for (const l of logs) if (!l.won) died.set(`${l.floor}층 ${l.diedAt}`, (died.get(`${l.floor}층 ${l.diedAt}`) ?? 0) + 1);
   console.log(`사망 위치: ${[...died.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
-  for (const [label, lo, hi] of [['1~3층', 1, 3], ['4~11층', 4, 11], ['12층', 12, 12], ['13~23층', 13, 23], ['24층', 24, 24], ['25~35층', 25, 35], ['36층', 36, 36]] as const) {
+  for (const [label, lo, hi] of [['1~3층', 1, 3], [`4~${P - 1}층`, 4, P - 1], [`${P}층`, P, P], [`${P + 1}~${2 * P - 1}층`, P + 1, 2 * P - 1], [`${2 * P}층`, 2 * P, 2 * P], [`${2 * P + 1}~${T - 1}층`, 2 * P + 1, T - 1], [`${T}층`, T, T]] as const) {
     for (const kind of ['battle', 'elite', 'boss']) {
       const bs = logs.flatMap((l) => l.battles).filter((b) => b.floor >= lo && b.floor <= hi && b.kind === kind);
       if (!bs.length) continue;
@@ -24,7 +25,7 @@ it('run', () => {
       console.log(`${label} ${kind}: ${bs.length}판 승률 ${Math.round((w / bs.length) * 100)}% 평균 ${(bs.reduce((a, b) => a + b.turns, 0) / bs.length).toFixed(1)}턴`);
     }
   }
-  for (const f of [1, 4, 8, 12, 18, 24, 30, 36]) {
+  for (const f of [1, 4, 8, P, P + 6, 2 * P, 2 * P + 6, T]) {
     const tr = logs.flatMap((l) => l.trace.filter((t) => t.floor === f));
     if (!tr.length) continue;
     const avg = (k: 'gold' | 'deck' | 'forge' | 'enchants' | 'cards') => (tr.reduce((a, t) => a + t[k], 0) / tr.length).toFixed(1);

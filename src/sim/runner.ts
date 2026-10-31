@@ -1,3 +1,4 @@
+import { TOTAL_FLOORS } from '../data/run';
 import { ENCHANT_GRADE } from '../data/grades';
 import { LEGENDS, type LegendId } from '../data/legends';
 import { choosePlan, AI_TIERS } from '../ai/search';
@@ -313,7 +314,7 @@ export const autoRun = (seed: number): RunLog => {
         break;
       }
     }
-    log.floor = Math.min(run.floor, 36);
+    log.floor = Math.min(run.floor, TOTAL_FLOORS);
     log.legends = [...(run.loadout.legends ?? []), ...run.loadout.cards.filter((id) => id === 'C07' || id === 'C08' || id === 'C09')];
   }
   log.won = run.stage.at === 'over' && run.stage.won;

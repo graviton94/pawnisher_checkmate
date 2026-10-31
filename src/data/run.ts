@@ -9,7 +9,8 @@ import type { Deck } from '../engine/setup';
 
 /** 등반 구조와 경제 초기값 (GDD 8장). 모두 🔧 — 런 시뮬레이션으로 조정한다. */
 
-export const FLOORS_PER_ACT = 12;
+/** D-124 (제안서 P1 2.1): 공정 12층 → 10층 (출하 36 → 30층) — 한 출하를 ~1/6 줄인다 */
+export const FLOORS_PER_ACT = 10;
 export const ACTS = 3;
 export const TOTAL_FLOORS = FLOORS_PER_ACT * ACTS;
 /** 층(1~36)이 속한 Act (1~3)와 Act 안에서의 층 (1~12) */

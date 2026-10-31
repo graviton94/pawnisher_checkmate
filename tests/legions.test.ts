@@ -1,3 +1,4 @@
+import { TOTAL_FLOORS } from '../src/data/run';
 import { describe, expect, it } from 'vitest';
 import { AFFIX } from '../src/data/legions';
 import { Rng, createBattle, moveCost, resolveTurn, simulate } from '../src/engine';
@@ -145,7 +146,7 @@ describe('지형 (GDD 11장 A2, D-097)', () => {
 describe('반장 전장 규칙 (GDD 11장 A5, D-097)', () => {
   const deck = ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'] as const;
   const lo = { enchants: {}, cards: [], forge: {} };
-  const cases: [string, number, 'knight' | 'bishop' | 'rook' | 'pawn' | 'variant' | 'affix' | undefined][] = [['knight', 12, 'knight'], ['bishop', 12, 'bishop'], ['rook', 24, 'rook'], ['pawn', 12, 'pawn'], ['variant', 24, 'variant'], ['affix', 12, 'affix'], ['final', 36, undefined]];
+  const cases: [string, number, 'knight' | 'bishop' | 'rook' | 'pawn' | 'variant' | 'affix' | undefined][] = [['knight', 12, 'knight'], ['bishop', 12, 'bishop'], ['rook', 24, 'rook'], ['pawn', 12, 'pawn'], ['variant', 24, 'variant'], ['affix', 12, 'affix'], ['final', TOTAL_FLOORS, undefined]];
   for (const [label, floor, boss] of cases) {
     it(`${label}: 전장이 깔리고 AI 대국이 끝까지 돈다`, () => {
       const e = generateEncounter(floor, 'boss', new Rng(3), boss);
