@@ -39,6 +39,29 @@ const scenarios = {
     await page.waitForTimeout(1600);
     return ['title'];
   },
+  // 볼륨 3 (D-108): 압력 ◀ ▶ · 도감 · 새 시작 세트
+  async codex(page) {
+    const meta = { version: 1, runs: 23, clears: 2, bestFloor: 36, ascension: 7, elites: 16, puzzles: 5, bossKills: ['pawn', 'knight', 'final'],
+      seen: { enchants: ['E01', 'E02', 'E05', 'E13', 'E17', 'E26', 'E31'], variants: ['hammer', 'scope'], events: ['smith', 'gambler', 'jam', 'auction'] } };
+    await page.evaluate((m) => { localStorage.clear(); localStorage.setItem('pawnisher.meta.v1', JSON.stringify(m)); }, meta);
+    await page.reload(); await page.waitForTimeout(600);
+    await page.tap('[data-title]'); await page.waitForTimeout(400);
+    await page.tap('[data-asc="1"]'); await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-menu-asc.png`) });
+    await page.tap('[data-codex]'); await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-codex-top.png`) });
+    await page.tap('.cx.unknown'); await page.waitForTimeout(200);
+    await page.evaluate(() => { const c = document.querySelector('.codex'); c.scrollTop = c.scrollHeight; }); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(OUT, `${stamp}-codex-bottom.png`) });
+    await page.tap('[data-menu]'); await page.waitForTimeout(300);
+    // 지휘 세트가 나오는 시드를 찾을 때까지 새 출하를 연다
+    for (let i = 0; i < 12; i++) {
+      await page.tap('[data-new]'); await page.waitForTimeout(250);
+      if (await page.locator('.offer b', { hasText: '지휘' }).count()) break;
+      await page.tap('[data-menu]'); await page.waitForTimeout(200);
+    }
+    return ['start-sets'];
+  },
   async start(page) {
     await scenarios.menu(page);
     await page.tap('[data-new]'); await page.waitForTimeout(400);

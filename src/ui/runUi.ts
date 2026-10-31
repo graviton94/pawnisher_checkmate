@@ -11,9 +11,10 @@ import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { ACT_NAMES, ALTAR, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
+import { ACT_NAMES, ALTAR, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
-import { ASCENSIONS, UNLOCK_DECKS, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
+import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
+import { EVENT_IDS } from '../run/events';
 import type { BattleController } from '../game/controller';
 import type { BattleState, Deck, PieceType } from '../engine';
 import { EVENTS, type EventId } from '../run/events';
@@ -178,7 +179,9 @@ export class RunUi {
 
   // ---------- 공통 ----------
   private save(): void {
-    if (this.run) saveRun(this.run);
+    if (!this.run) return;
+    saveRun(this.run);
+    saveMeta(absorbRun(loadMeta(), this.run)); // 도감 (D-108)
   }
 
   /** 버튼 묶음 연결: data-* 속성 이름 → 처리 */
@@ -268,7 +271,7 @@ export class RunUi {
       settings: () => this.hud.showSettings(() => this.showRunMenu(run)),
       menu: () => this.showMenu(),
       abandon: () => {
-        saveMeta(recordRunEnd(loadMeta(), run.floor, false, run.ascension ?? 0));
+        saveMeta(recordRunEnd(loadMeta(), run.floor, false, run.ascension ?? 0, run));
         clearRun();
         this.run = null;
         this.showMenu();
@@ -312,9 +315,7 @@ export class RunUi {
     const live = saved && saved.stage.at !== 'over';
     const M = TEXT.menu;
     const asc = meta.ascension
-      ? `<p class="sub">${icon('flame', 's')} ${M.pressure}</p><div class="unlocks">${ASCENSIONS.slice(0, meta.ascension + 1)
-          .map((d, i) => `<button class="btn${i === this.ascension ? ' cyan' : ''}" type="button" data-asc="${i}" title="${d}">압력 ${i}</button>`)
-          .join('')}</div><p class="lead">${ASCENSIONS[this.ascension]}</p>`
+      ? `<p class="sub">${icon('flame', 's')} ${M.pressure}</p><div class="asc-step"><button class="btn" type="button" data-asc="${this.ascension - 1}" aria-label="압력 내리기"${this.ascension <= 0 ? ' disabled' : ''}>◀</button><b>압력 ${this.ascension}<small> / ${meta.ascension}</small></b><button class="btn" type="button" data-asc="${this.ascension + 1}" aria-label="압력 올리기"${this.ascension >= meta.ascension ? ' disabled' : ''}>▶</button><p class="lead">${ASCENSIONS[this.ascension]}</p></div>`
       : '';
     const unlocks = UNLOCK_DECKS.map((u) => `<span class="unlock panel9${u.ok(meta) ? ' ok' : ''}">${u.deck.map((t) => pieceImg(t, 0, 'small', 20)).join('')} ${u.name}${u.ok(meta) ? '' : ` · ${u.need}`}</span>`).join('');
     const el = this.hud.openScene(
@@ -334,7 +335,7 @@ export class RunUi {
         ${asc}
         <p class="sub">${icon('crate', 's')} ${M.unlocks}</p>
         <div class="unlocks">${unlocks}</div>
-        <button class="btn" type="button" data-title-back>${icon('eye', 's')} ${M.quit}</button>
+        <div class="row2">${button(M.codex, 'data-codex', { icon: 'crate' })}<button class="btn" type="button" data-title-back>${icon('eye', 's')} ${M.quit}</button></div>
       </div>`,
       'menu',
     );
@@ -349,8 +350,63 @@ export class RunUi {
         this.showMenu();
       },
       test: () => this.hud.showStart(),
+      codex: () => this.showCodex(),
       settings: () => this.hud.showSettings(() => this.hud.closeOverlay()),
       'title-back': () => this.showTitle(false),
+    });
+  }
+
+  /** 도감 (D-108): 얻어 본 개조·도면, 만난 돌발, 해체한 반장, 시작 세트, 기록. 못 본 것은 ??? */
+  private showCodex(): void {
+    const meta = loadMeta();
+    const C = TEXT.codex;
+    const seen = meta.seen ?? { enchants: [], variants: [], events: [] };
+    const kills = meta.bossKills ?? [];
+    type Entry = { known: boolean; name: string; info: string; img?: string; gold?: boolean; hint?: string };
+    const section = (title: string, list: Entry[]) =>
+      `<p class="sub">${title} <small class="dim">${list.filter((e) => e.known).length}/${list.length}</small></p><div class="codex-grid${title === C.sections.sets ? ' wide' : ''}">${list
+        .map((e, i) => `<button class="cx${e.known ? '' : ' unknown'}${e.gold ? ' gold' : ''}" type="button" data-cx="${title}:${i}">${e.known && e.img ? e.img : ''}<span>${e.known ? e.name : (e.hint ?? C.unknown)}</span></button>`)
+        .join('')}</div>`;
+    const startSets: Entry[] = [
+      ...START_DECKS.map((d) => ({ known: true, name: setName(d), info: SET_LORE[[...d].sort().join('')] ?? '', img: d.map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
+      ...UNLOCK_DECKS.map((u) => ({ known: u.ok(meta), name: u.name, info: u.ok(meta) ? (SET_LORE[[...u.deck].sort().join('')] ?? '') : `* ${u.name}. 잠겨 있다 — ${u.need}`, hint: `잠김 · ${u.need}`, img: u.deck.map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
+    ];
+    const bosses: Entry[] = [...(Object.keys(BOSSES) as (keyof typeof BOSSES)[]).map((id) => ({ id, def: BOSSES[id] })), { id: 'final', def: FINAL_BOSS }].map(({ id, def }) => ({
+      known: kills.includes(id),
+      name: def.name,
+      info: `${def.name} — ${def.title}. “${def.quote}”`,
+      img: pieceImg(BOSS_PIECE[id] ?? 'K', 1, 'small', 20),
+      gold: id === 'final',
+    }));
+    const variants: Entry[] = (Object.keys(VARIANTS) as VariantId[]).map((id) => ({
+      known: seen.variants.includes(id),
+      name: VARIANTS[id].name,
+      info: `${VARIANTS[id].name} — ${VARIANTS[id].gain} · 대가: ${VARIANTS[id].cost}`,
+      img: `<img src="ui/board/variant-${id}.png" alt="" class="vg">`,
+    }));
+    const enchants: Entry[] = (Object.keys(ENCHANTS) as EnchantId[]).map((id) => ({
+      known: seen.enchants.includes(id),
+      name: ENCHANTS[id].name,
+      info: `${ENCHANTS[id].name} (${ENCHANTS[id].target}) — ${ENCHANTS[id].levels[0]}`,
+    }));
+    const events: Entry[] = EVENT_IDS.map((id) => ({ known: seen.events.includes(id), name: EVENTS[id].title, info: EVENTS[id].text, img: icon(EVENT_ICON[id], 's') }));
+    const all: Record<string, Entry[]> = { [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.variants]: variants, [C.sections.enchants]: enchants, [C.sections.events]: events };
+    const rec = [meta.runs, meta.clears, meta.bestFloor, meta.elites ?? 0, meta.puzzles ?? 0, meta.ascension];
+    const el = this.hud.openScene(
+      `<div class="bar"><span class="plate">${icon('crate', 's')}${C.title}</span><span class="spacer"></span>${button(C.back, 'data-menu')}</div>
+      <div class="codex scroll-y">
+        <p class="lead">${C.lead}</p>
+        <div class="records">${rec.map((n, i) => `<div class="panel9"><span class="num">${n}</span><small>${C.records[i]}</small></div>`).join('')}</div>
+        ${Object.entries(all).map(([t, list]) => section(t, list)).join('')}
+      </div>`,
+    );
+    this.wire(el, {
+      menu: () => this.showMenu(),
+      cx: (b) => {
+        const [t, i] = b.dataset.cx!.split(':');
+        const e = all[t][Number(i)];
+        this.hud.toast(e.known || t === C.sections.sets ? e.info : `* ${C.unknown}`);
+      },
     });
   }
 
@@ -925,7 +981,7 @@ export class RunUi {
     const won = run.stage.at === 'over' && run.stage.won;
     const floor = Math.min(run.floor, TOTAL_FLOORS);
     const before = loadMeta();
-    const meta = recordRunEnd(before, floor, won, run.ascension ?? 0);
+    const meta = recordRunEnd(before, floor, won, run.ascension ?? 0, run);
     if (won) unlockAchievement(`ASCENSION_${run.ascension ?? 0}_CLEAR`);
     saveMeta(meta);
     clearRun();

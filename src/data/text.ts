@@ -45,6 +45,16 @@ export const TEXT = {
     records: ['출하', '최고 공정', '정품 출하'],
     unlocks: '시작 세트',
     pressure: '보일러 압력',
+    codex: '도감',
+  },
+  /** 도감 (D-108): 한 번 손에 넣은 것만 적힌다 */
+  codex: {
+    title: '도감',
+    lead: '* 한 번 손에 넣은 것만 적힌다. 나머지는 물음표다. 물음표도 언젠가 채워진다.',
+    unknown: '???',
+    sections: { records: '기록', sets: '시작 세트', bosses: '반장', variants: '도면', enchants: '개조', events: '돌발' },
+    records: ['출하', '정품 출하', '최고 공정', '검문! 통과', '푼 묘수', '열린 압력'],
+    back: '메뉴',
   },
   settings: {
     title: '설정',
@@ -186,4 +196,7 @@ export const SET_LORE: Record<string, string> = {
   KNN: '반품 사유: 피스톤 압력 초과.',
   BBK: '반품 사유: 검수대 렌즈 파손.',
   KPR: '반품 사유: 보일러 과열.',
+  KPPPPP: '반품 사유: 같은 얼굴이 다섯.',
+  BKN: '반품 사유: 너무 잘 맞물림. 수상함.',
+  KQ: '반품 사유: 혼자 다 함.',
 };

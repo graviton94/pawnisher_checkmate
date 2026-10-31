@@ -5,6 +5,7 @@ import { LUCK, RECRUIT_OPTIONS } from '../data/legions';
 import { DEFECT } from '../data/defects';
 import { DEFAULT_FORMATION } from '../data/formations';
 import { PUZZLE_GOLD } from '../data/puzzles';
+import { ASC, ascOn } from '../data/ascension';
 import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
 import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, MORE, tier, type EnchantId } from '../data/enchants';
 import { FORGE_MAX } from '../data/forge';
@@ -123,6 +124,8 @@ export interface RunState {
   sealed?: number;
   /** 모은 이형 도면 (D-107): 공방은 이것으로만 이형을 부어 준다. 옛 저장은 지금 단 이형만 */
   blueprints?: VariantId[];
+  /** 이 출하에서 푼 묘수 (도감 기록, D-108) */
+  solved?: number;
   stage: Stage;
 }
 
@@ -227,7 +230,7 @@ export const newRun = (seed: number, opts: RunOptions = {}): RunState => {
     floor: 1,
     map,
     path: [],
-    gold: START_GOLD,
+    gold: ascOn(opts.ascension, 'finalForge') ? ASC.finalForge.startGold : START_GOLD,
     deck,
     loadout: { enchants: {}, cards: [], forge: {}, variants: {}, formation: DEFAULT_FORMATION },
     wins: 0,
@@ -474,6 +477,7 @@ export const finishPuzzle = (run: RunState, final: BattleState): void => {
   if (run.stage.at !== 'puzzle') return;
   if (final.winner === 0) {
     run.gold += PUZZLE_GOLD;
+    run.solved = (run.solved ?? 0) + 1;
     run.stage = { at: 'reward', title: '묘수 풀이', lines: [`나사 +${PUZZLE_GOLD}`], choices: [{ type: 'enchant', options: withRng(run, (rng) => rollEnchants(run, rng, 'battle')) }] };
   } else run.stage = { at: 'reward', title: '묘수 실패', lines: ['* 킹이 버틴다. 판이 조용히 치워진다.'], choices: [] };
 };
@@ -535,7 +539,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
     const def = ORDERS[order];
     if (orderProgress(order, final, run.deck, true).done) {
       const ledger = run.loadout.enchants.E36 ? tier(MORE.E36, run.loadout.enchants.E36) : 1; // 주문 장부 (D-105)
-      const g = Math.round(def.gold * ORDER_GOLD_MULT[kind as 'battle' | 'elite' | 'boss'] * ledger);
+      const g = Math.round(def.gold * ORDER_GOLD_MULT[kind as 'battle' | 'elite' | 'boss'] * ledger * (ascOn(run.ascension, 'orderGold') ? ASC.orderGold.mult : 1));
       run.gold += g;
       lines.push(`주문서 완수 · 나사 +${g}`);
     } else lines.push('주문서 미완');
@@ -724,7 +728,7 @@ const makeStock = (run: RunState, rng: Rng, rerollPrice: number = SHOP.reroll): 
   const bpId = bpPool.length ? bpPool[rng.int(bpPool.length)] : undefined;
   // 공정이 오를수록 고물상 값도 오른다 (D-099: 후반 나사가 남아돌았다)
   const appraisal = run.loadout.enchants.E33 ? tier(MORE.E33, run.loadout.enchants.E33) : 1; // 고물 감정서 (D-105)
-  const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal;
+  const k = (1 + (actOf(Math.min(run.floor, TOTAL_FLOORS)) - 1) * SHOP.actPriceStep) * appraisal * (ascOn(run.ascension, 'shopPrice') ? ASC.shopPrice.mult : 1);
   const at = (n: number) => Math.round(n * k);
   return {
     pieces: pieces.map((item) => ({ item, price: at(piecePrice(item)), sold: false })),

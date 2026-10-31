@@ -1,7 +1,8 @@
 import type { OrderId } from '../data/tactics';
 import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
 import { AFFIXES, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
-import type { EnchantId } from '../data/enchants';
+import { ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
+import { ASC, ascOn } from '../data/ascension';
 import { BOSSES, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
@@ -71,14 +72,18 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     const def = floor === TOTAL_FLOORS ? FINAL_BOSS : BOSSES[boss!];
     const forge: Partial<Record<PieceType, number>> = {};
     const actBonus = actOf(floor) === 2 ? 1 : 0; // Act 2 보스는 강화 +1 더
-    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0));
+    const finalAsc = floor === TOTAL_FLOORS && ascOn(ascension, 'finalForge') ? ASC.finalForge.add : 0;
+    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0) + finalAsc);
+    // 압력 12 (D-108): 반장 개조 +1단
+    const enchants = { ...def.enchants };
+    if (ascOn(ascension, 'bossEnchant')) for (const id of Object.keys(enchants) as EnchantId[]) enchants[id] = Math.min(ENCHANT_MAX_STACK, (enchants[id] ?? 0) + ASC.bossEnchant.add);
     return {
       kind,
       name: `${def.name} — ${def.title}`,
       ...boardFor(floor, 'boss'),
       // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
       deck: actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck],
-      loadout: { enchants: { ...def.enchants }, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge, ...(def.variants ? { variants: { ...def.variants } } : {}) },
+      loadout: { enchants, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge, ...(def.variants ? { variants: { ...def.variants } } : {}) },
       ...(def.affixes ? { affixes: def.affixes.map((a) => ({ ...a })) } : {}),
       tier,
       boss,
@@ -97,7 +102,8 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   // 억까·억빠 (D-099): 4층부터 가끔. 과적 = 1기 더 + 개량 +1, 불량 군단 = 적 일반 기물 HP 60%로 시작
   const roll = rng.next();
   const act = actOf(floor) - 1;
-  const luck: LuckId | undefined = floor <= ARCHETYPE_EXTRA_FROM ? undefined : roll < LUCK.overload[act] ? 'overload' : roll < LUCK.overload[act] + LUCK.defective[act] ? 'defective' : undefined;
+  const overload = LUCK.overload[act] * (ascOn(ascension, 'overload') ? ASC.overload.mult : 1);
+  const luck: LuckId | undefined = floor <= ARCHETYPE_EXTRA_FROM ? undefined : roll < overload ? 'overload' : roll < overload + LUCK.defective[act] ? 'defective' : undefined;
   const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0) + (luck === 'overload' ? 1 : 0);
   const deck: Deck = ['K'];
   let guard = 0;
@@ -109,7 +115,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   }
 
   const forge: Partial<Record<PieceType, number>> = {};
-  const lv = baseForge + (kind === 'elite' ? eliteForge(floor) : 0) + (luck === 'overload' ? 1 : 0);
+  const lv = baseForge + (kind === 'elite' ? eliteForge(floor) : 0) + (luck === 'overload' ? 1 : 0) + (kind === 'battle' && ascOn(ascension, 'battleForge') ? ASC.battleForge.add : 0);
   if (lv > 0) for (const t of new Set(deck)) forge[t] = lv;
 
   const enchants: Partial<Record<EnchantId, number>> = {};
@@ -151,7 +157,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   if (kind === 'elite') {
     const ids = Object.keys(AFFIXES) as AffixId[];
     const bodies = deck.filter((t) => t !== 'K');
-    for (let i = affixCount(actOf(floor)); i > 0 && bodies.length && ids.length; i--) {
+    for (let i = affixCount(actOf(floor)) + (ascOn(ascension, 'eliteAffix') ? ASC.eliteAffix.add : 0); i > 0 && bodies.length && ids.length; i--) {
       const type = bodies.splice(rng.int(bodies.length), 1)[0];
       affixes.push({ type, id: ids.splice(rng.int(ids.length), 1)[0] });
     }
@@ -234,6 +240,8 @@ export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): Bat
   const expose = actOf(e.floor) >= 2 && e.kind !== 'boss' ? KING_EXPOSE : 1; // D-077
   const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0)) * expose;
   for (const p of s.pieces) {
+    // 압력 8 (D-108): 내 킹 최대 HP −10%
+    if (p.side === 0 && p.type === 'K' && ascOn(e.ascension, 'myKingHp')) p.maxHp = p.hp = Math.round(p.maxHp * ASC.myKingHp.mult);
     if (p.side !== 1 || p.type !== 'K') continue;
     p.maxHp = p.hp = Math.round(p.maxHp * hpScale);
     p.atk = Math.round(p.atk * scale.atk);

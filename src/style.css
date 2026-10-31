@@ -559,3 +559,29 @@ img { image-rendering: pixelated; }
 .node .bp.owned { opacity: 0.45; }
 .forge-card .slot-v.nobp { font-size: 12px; color: var(--muted); min-height: 48px; display: flex; align-items: center; }
 .offer .bad-line { color: var(--crimson-soft); font-size: 12px; margin: 0; }
+
+/* 압력 고르기 (D-108): 14단계라 버튼 줄 대신 ◀ ▶ */
+.asc-step { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.asc-step .btn { min-width: 48px; justify-content: center; }
+.asc-step b { font-size: 16px; color: var(--brass-hi); min-width: 74px; text-align: center; }
+.asc-step b small { color: var(--muted); font-size: 12px; }
+.asc-step .lead { flex: 1 1 160px; font-size: 13px; }
+.menu .row2 { display: flex; gap: 8px; }
+.menu .row2 > * { flex: 1; justify-content: center; }
+
+/* 도감 (D-108) */
+.codex { flex: 1; min-height: 0; padding: 6px 2px 12px; display: flex; flex-direction: column; gap: 8px; }
+.codex .records .num { font-size: 18px; }
+.codex .sub { margin: 4px 0 0; }
+.codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.cx {
+  min-height: 44px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; text-align: left;
+  font: inherit; font-size: 13px; color: var(--text); background: rgba(20, 17, 26, 0.85); box-shadow: 0 0 0 2px #000, inset 0 0 0 1px #3a3542; cursor: pointer;
+}
+.cx span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx.unknown { color: var(--muted); background: rgba(10, 9, 14, 0.7); }
+.cx.gold { box-shadow: 0 0 0 2px #000, inset 0 0 0 1px var(--brass-hi); }
+.cx .vg { width: 16px; height: 16px; image-rendering: pixelated; flex: none; }
+.cx:active { transform: translateY(1px); }
+.codex-grid.wide { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
+.codex-grid.wide .cx { gap: 1px; }
