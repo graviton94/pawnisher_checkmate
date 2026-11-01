@@ -319,7 +319,8 @@ const onTap = async (pos: Pos): Promise<void> => {
   refresh();
 };
 
-const run = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
+const run = (i: number, pieceId?: number, to?: Pos): Promise<void> => guarded(() => runInner(i, pieceId, to));
+const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
   const cardId = b.hand[i];
   const moverType = pieceId !== undefined ? findPiece(b.s, pieceId)?.type : undefined;
   const k0 = b.kills;
@@ -350,7 +351,8 @@ const run = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
 };
 let prevKills = 0;
 
-const onEnd = async (): Promise<void> => {
+const onEnd = (): Promise<void> => guarded(onEndInner);
+const onEndInner = async (): Promise<void> => {
   if (busy || b.s.winner !== null) return;
   const r = endTurn(b);
   if (r === 'warn') {
@@ -379,6 +381,20 @@ const onEnd = async (): Promise<void> => {
   refresh();
   if (b.s.winner !== null) return finish();
   sfx('submit');
+};
+
+/** 연출 중 오류가 나도 조작이 잠기지 않게 (busy를 풀고 판을 다시 그린다) */
+const guarded = async (fn: () => Promise<void>): Promise<void> => {
+  try {
+    await fn();
+  } catch (err) {
+    console.error(err);
+    busy = false;
+    enemyTurn = false;
+    renderer.setup(b.s);
+    refresh();
+    if (b.s.winner !== null) finish();
+  }
 };
 
 // ---------- 흐름 ----------
