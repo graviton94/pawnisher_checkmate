@@ -125,7 +125,7 @@ const cardHtml = (id: CommandId, i: number): string => {
 const cardArt = (id: CommandId): string => {
   const c = COMMANDS[id];
   if (c.who === 'any') return `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>`;
-  if (c.kind === 'move' || c.kind === 'march') return `<span class="art">${shapeHtml(c.who, 44)}</span>`;
+  if (c.kind === 'move' || c.kind === 'march') return `<span class="art mvplate">${shapeHtml(c.who)}</span>`;
   return `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
 };
 
@@ -479,7 +479,7 @@ const help = (): void => {
     <ul class="help">
       <li><b>카드</b>를 누르고 → <b>기물</b>을 누르고 → <b>갈 칸</b>을 누른다. 기물을 먼저 눌러도 된다 (맞는 카드를 골라 준다).</li>
       <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 친다. 과녁 = 친다 · 금 = 처치.</li>
-      <li>카드의 작은 판: <b style="color:#4ec3d6">●</b> 갈 칸 · <b style="color:#ff6b5a">□</b> 칠 칸 (위쪽이 앞).</li>
+      <li>카드의 작은 판: 가운데 흰 칸 = 이 기물 · <b style="color:#ff8a6a">붉은 칸</b> = 가서 치는 범위 · <b style="color:#4ec3d6">청록</b> = 이동만 · 줄 = 막힐 때까지 간다 (위쪽이 앞).</li>
       <li>카드 왼쪽 위 숫자 = <b>태엽</b>. 한 턴에 ${SLICE.ap}. 같은 기물을 여러 번 움직여도 된다.</li>
       <li>이번 턴에 처치할 때마다 <b>연쇄</b> 배수가 오른다 (×${chainMult(1).toFixed(2)} → ×${chainMult(2).toFixed(2)} …). 순서가 곧 화력.</li>
       <li><b>붉게 깜빡이는 칸</b> = 적이 예고한 칠 칸. 번호 = 이번에 움직일 적. 먼저 쓰러뜨리면 취소, 비키면 빗나간다, 길을 막으면 못 온다.</li>

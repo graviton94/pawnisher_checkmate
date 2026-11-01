@@ -114,3 +114,7 @@ body.slice #app { grid-template-columns: 272px 1fr 210px; }
 .boss-rules .hot { color: #fff; font-weight: 700; animation: bosshot 900ms ease-in-out infinite alternate; }
 @keyframes bosshot { to { color: #ff6b5a; } }
 @media (prefers-reduced-motion: reduce) { .boss-rules .hot { animation: none; } }
+/* 행마 그림 다시 (D-149): 52px 도트 판, 틀 없이 */
+.cmd .art.mvplate { width: 52px; height: 52px; background: none; box-shadow: 0 0 0 2px #000; }
+.cmd .art.mvplate .shape svg { width: 52px; height: 52px; }
+body.slice .cmd { grid-template-columns: 52px 1fr; }
