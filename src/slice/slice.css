@@ -99,3 +99,12 @@ body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; 
 body.slice #app { grid-template-columns: 272px 1fr 210px; }
 .hand { gap: 6px; }
 .cmd b { white-space: nowrap; }
+/* 덱 보기 · 카드 빼기 (D-147) */
+.deck-btn { min-height: 32px; padding: 2px 8px; font: 700 12px Galmuri11, sans-serif; color: #f4d27a; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; margin-right: 6px; }
+.deck-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-height: 260px; overflow-y: auto; margin: 8px 0; padding: 4px; }
+.cmd.deckcard { min-height: 60px; }
+.cmd.deckcard .cnt { position: absolute; right: 6px; bottom: 4px; font: 700 14px Galmuri14, sans-serif; color: #f4d27a; }
+.deck-grid:not(.removing) .cmd.deckcard { pointer-events: none; }
+.deck-grid.removing .cmd.deckcard:hover, .deck-grid.removing .cmd.deckcard:active { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #ff6b5a; }
+.cmd.deckcard.removed { opacity: 0; transform: translateY(-16px) rotate(-4deg); transition: opacity 400ms, transform 400ms; }
+.cmd.deckcard { padding-right: 30px; }

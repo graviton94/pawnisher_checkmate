@@ -155,7 +155,7 @@ const refresh = (): void => {
   renderer.render(model());
   $('turn-label').textContent = b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`;
   $('turn-label').classList.toggle('enemy', enemyTurn);
-  $('hand').innerHTML = `<p class="hand-head">손패 ${b.hand.length} · 덱 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>'}`;
+  $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}장 보기</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('') || '<span class="dim">부품 없음</span>';
   $('vials').innerHTML = Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<img class="${i < b.ap ? 'full' : 'spent'}" src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt="">`).join('');
   $('coins').innerHTML = `<span class="lbl">나사</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b>${b.coins * SLICE.coinValue}</b>`;
@@ -370,43 +370,88 @@ const finish = (): void => {
       const a = axes[rng.int(axes.length)];
       if (!picks.includes(a)) picks.push(a);
     }
-    const offers: CommandId[] = picks.map((a) => {
-      const pool = REWARD_COMMANDS.filter((id) => COMMANDS[id].axis === a || COMMANDS[id].axis2 === a);
-      return pool[rng.int(pool.length)];
-    });
+    // 같은 카드가 두 번 나오지 않게 (브릿지 카드는 두 축에 걸친다)
+    const offers: CommandId[] = [];
+    for (const a of picks) {
+      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id));
+      if (pool.length) offers.push(pool[rng.int(pool.length)]);
+    }
     const lost = BATTLES[stage].enemy.length;
-    const el = openOverlay(`
-      <h2>통과 — 나사 +${earned} <small class="dim">(남은 칸 ${b.coins} × ${SLICE.coinValue}${overGold ? ` + 넘친 피해 ${b.overkill} → ${overGold}` : ''})</small></h2>
-      <p>* 쓰러진 흑 ${lost}기의 상자에서 명령 카드가 나온다. 하나를 덱에 넣는다.</p>
-      <div class="reward-cards">${offers
-        .map((id) => {
-          const c = COMMANDS[id];
-          const who = cardArt(id);
-          return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small></span></button>`;
-        })
-        .join('')}</div>
-      <p class="rest-line">* 쉬는 사이 기름칠 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((t) => PIECE_NAMES_KO[t]).join(' · ')}</span>` : ''}</p>
-      <div class="row">
-        <button class="btn" type="button" data-skip>건너뛰기</button>
-        <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${PIECE_NAMES_KO[[...fallen].sort((a, c) => (COST_ORDER[c] ?? 0) - (COST_ORDER[a] ?? 0))[0]]}을 HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}% (카드 대신)</button>
-      </div>`);
-    el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
-      btn.addEventListener('click', () => {
-        deck.push(btn.dataset.pick as CommandId);
-        sfx('rare');
-        btn.classList.add('picked');
-        window.setTimeout(() => start(stage + 1), 380);
-      }),
-    );
-    el.querySelector('[data-skip]')!.addEventListener('click', () => start(stage + 1));
-    el.querySelector('[data-overhaul]')!.addEventListener('click', () => {
-      const o = overhaulSquad(squad, fallen);
-      squad = o.squad;
-      sfx('awaken');
-      toast(o.revived ? `* ${PIECE_NAMES_KO[o.revived]}이(가) 다시 선다.` : '* 분대가 기름을 먹는다.');
-      window.setTimeout(() => start(stage + 1), 500);
-    });
+    /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
+    const showReward = (): void => {
+      const el = openOverlay(`
+        <h2>통과 — 나사 +${earned} <small class="dim">(남은 칸 ${b.coins} × ${SLICE.coinValue}${overGold ? ` + 넘친 피해 ${b.overkill} → ${overGold}` : ''})</small></h2>
+        <p>* 쓰러진 흑 ${lost}기의 상자에서 명령 카드가 나온다. 하나를 덱에 넣는다.</p>
+        <div class="reward-cards">${offers
+          .map((id) => {
+            const c = COMMANDS[id];
+            const who = cardArt(id);
+            return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small></span></button>`;
+          })
+          .join('')}</div>
+        <p class="rest-line">* 쉬는 사이 기름칠 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((t) => PIECE_NAMES_KO[t]).join(' · ')}</span>` : ''}</p>
+        <div class="row">
+          <button class="btn" type="button" data-skip>건너뛰기</button>
+          <button class="btn" type="button" data-remove>카드 빼기 (카드 대신)</button>
+          <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${PIECE_NAMES_KO[[...fallen].sort((a, c) => (COST_ORDER[c] ?? 0) - (COST_ORDER[a] ?? 0))[0]]}을 HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}% (카드 대신)</button>
+        </div>`);
+      el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          deck.push(btn.dataset.pick as CommandId);
+          sfx('rare');
+          btn.classList.add('picked');
+          window.setTimeout(() => start(stage + 1), 380);
+        }),
+      );
+      el.querySelector('[data-skip]')!.addEventListener('click', () => start(stage + 1));
+      // 카드 빼기: 한 장 빼면 다음 판, 그만두면 보상 화면으로 돌아온다
+      el.querySelector('[data-remove]')!.addEventListener('click', () =>
+        deckView('remove', (removed) => (removed ? start(stage + 1) : showReward())),
+      );
+      el.querySelector('[data-overhaul]')!.addEventListener('click', () => {
+        const o = overhaulSquad(squad, fallen);
+        squad = o.squad;
+        sfx('awaken');
+        toast(o.revived ? `* ${PIECE_NAMES_KO[o.revived]}이(가) 다시 선다.` : '* 분대가 기름을 먹는다.');
+        window.setTimeout(() => start(stage + 1), 500);
+      });
+    };
+    showReward();
   }, 700);
+};
+
+/**
+ * 덱 보기 (view) · 카드 빼기 (remove — 보상 대신, 덱 압축: 쓸모없는 카드를 덜어 빌드를 선명하게).
+ * 같은 카드는 한 칸에 ×개수로 묶고, 축 순서로 늘어놓는다.
+ */
+const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): void => {
+  const order: (Axis | undefined)[] = [undefined, 'cav', 'inf', 'king', 'chain'];
+  const counts = new Map<CommandId, number>();
+  for (const id of deck) counts.set(id, (counts.get(id) ?? 0) + 1);
+  const ids = [...counts.keys()].sort((x, y) => order.indexOf(COMMANDS[x].axis) - order.indexOf(COMMANDS[y].axis) || COMMANDS[x].cost - COMMANDS[y].cost);
+  const cards = ids
+    .map((id) => {
+      const c = COMMANDS[id];
+      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}><span class="cost">${c.cost}</span>${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b><small>${c.desc}</small></span><span class="cnt">×${counts.get(id)}</span></button>`;
+    })
+    .join('');
+  const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>* 고물상 주인이 집게를 내민다. “하나 빼. 가벼워진다.”</p>`;
+  const el = openOverlay(`${head}<div class="deck-grid${mode === 'remove' ? ' removing' : ''}">${cards}</div><div class="row">${mode === 'view' ? '<button class="btn brass" type="button" data-close-deck>닫기</button>' : '<button class="btn" type="button" data-cancel>그만두기</button>'}</div>`);
+  if (mode === 'view') {
+    el.querySelector('[data-close-deck]')!.addEventListener('click', closeOverlay);
+    return;
+  }
+  el.querySelector('[data-cancel]')!.addEventListener('click', () => then?.(false));
+  el.querySelectorAll<HTMLElement>('[data-rm]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.rm as CommandId;
+      deck.splice(deck.indexOf(id), 1);
+      sfx('stamp');
+      btn.classList.add('removed');
+      toast(`* ${COMMANDS[id].name} 한 장이 집게에 들려 나간다.`);
+      window.setTimeout(() => then?.(true), 520);
+    }),
+  );
 };
 
 /** 부품 고르기 (출하 시작 · 검문! 통과): 셋 중 하나 */
@@ -456,6 +501,7 @@ const help = (): void => {
 };
 
 $('hand').addEventListener('click', (e) => {
+  if ((e.target as HTMLElement).closest('[data-deck]')) return deckView('view');
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
   if (el) pickCard(Number(el.dataset.card));
 });
