@@ -3,7 +3,7 @@ import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, f
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { Rng } from '../engine/rng';
-import { BOSS, COMMANDS, SLICE, type CommandId } from './cards';
+import { BOSS, COMMANDS, PUSH, SLICE, type CommandId } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -320,6 +320,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const grudge = b.grudged.includes(pieceId) ? 2 : 1;
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * grudge });
     if (!sim.ok) return null;
+    if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
     const after = findPiece(sim.state, pieceId);
     const orig = findPiece(b.s, pieceId);
@@ -431,7 +432,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   } else if (c.kind === 'draw') {
     drawCards(b, c.amount ?? 0);
   }
-  creditKills(b, before, events);
+  creditKills(b, before, events, c.kind === 'move' ? pieceId : undefined);
   b.ap = b.ap - cost + gained;
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
@@ -447,17 +448,59 @@ export const kingInDanger = (b: SliceBattle): boolean => {
 
 // ---------- 적 차례 ----------
 /** 예고를 그대로 실행한다. 다음 내 차례를 준비하지는 않는다 */
+/**
+ * 밀치기 (D-154): 이 기물이 친 적(살아남은)을 친 방향으로 한 칸 민다.
+ * 빈 칸이면 밀려난다(예고가 어긋날 수 있다). 벽 · 기물에 막히면 밀린 적과 부딪힌 기물이 둘 다 충돌 피해(적끼리면 오사).
+ * 미리보기 · 실행이 같은 함수 (결과가 누르기 전에 보인다).
+ */
+const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEvent[]; removed: Piece[] }, pieceId: number): void => {
+  const s = sim.state;
+  const me = findPiece(s, pieceId);
+  if (!me) return;
+  const dmg = PUSH.collide * (b.parts.includes('hammer') ? PART_NUM.hammerMult : 1);
+  const targets = sim.events.flatMap((e) => (e.type === 'attack' && e.attackerId === pieceId ? e.hits.filter((h) => !h.killed) : []));
+  for (const h of targets) {
+    const t = findPiece(s, h.targetId);
+    if (!t || t.side === 0) continue;
+    const dx = Math.sign(t.x - me.x), dy = Math.sign(t.y - me.y);
+    const to = { x: t.x + dx, y: t.y + dy };
+    const blocker = s.pieces.find((p) => p.x === to.x && p.y === to.y);
+    if (inBounds(s, to.x, to.y) && !blocker) {
+      sim.events.push({ type: 'move', order: 0, pieceId: t.id, from: { x: t.x, y: t.y }, to });
+      t.x = to.x;
+      t.y = to.y;
+      continue;
+    }
+    // 충돌: 밀린 적 + 부딪힌 기물
+    const hits = [t, ...(blocker ? [blocker] : [])].map((p) => {
+      const absorbed = Math.min(p.shield, dmg);
+      p.shield -= absorbed;
+      p.hp = Math.max(0, p.hp - (dmg - absorbed));
+      return { targetId: p.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
+    });
+    sim.events.push({ type: 'blast', pos: { x: t.x, y: t.y }, label: blocker ? '충돌!' : '벽 충돌!', hits });
+    for (const x of hits.filter((x) => x.killed)) {
+      const dead = findPiece(s, x.targetId)!;
+      sim.removed.push(dead);
+      if (dead.type === 'K') s.winner = dead.side === 1 ? 0 : 1;
+    }
+    s.pieces = s.pieces.filter((p) => p.hp > 0);
+  }
+};
+
 /** 처치 기록 (분대원 처치 수 · 반장 처치) */
-const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[]): void => {
+const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[], mover?: number): void => {
   for (const e of events) {
-    if (e.type !== 'attack') continue;
+    // 충돌 처치(밀치기)는 민 기물의 처치로 센다
+    if (e.type !== 'attack' && !(e.type === 'blast' && mover !== undefined)) continue;
+    const by = e.type === 'attack' ? e.attackerId : mover!;
     for (const h of e.hits) {
       if (!h.killed) continue;
       const t = before.pieces.find((p) => p.id === h.targetId);
       if (!t || t.side !== 1) continue;
-      const rec = (b.pk[e.attackerId] ??= {});
+      const rec = (b.pk[by] ??= {});
       rec[t.type] = (rec[t.type] ?? 0) + 1;
-      if (t.type === 'K' && b.boss) b.bossKiller = e.attackerId;
+      if (t.type === 'K' && b.boss) b.bossKiller = by;
     }
   }
 };

@@ -155,3 +155,4 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 .part-card.recruit b { font-size: 16px; }
 .part-card.recruit .quirk-line { font-size: 12px; line-height: 1.35; }
 .part-card.recruit .kit-cards { font-size: 12px; }
+.ax-push.axis { background: #7ab8ff; }

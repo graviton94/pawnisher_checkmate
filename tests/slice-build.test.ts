@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canPlay, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
-import { BOSS, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
+import { BOSS, PUSH, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
 import type { SlicePartId } from '../src/slice/parts';
 
 const squad = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'P' as const }, { t: 'N' as const }, { t: 'B' as const }];
@@ -200,5 +200,34 @@ describe('애착 (D-153)', () => {
     expect(c.kills).toBe(5);
     expect(c.scars).toContain('용접 흉터');
     expect(c.nick).toBe('폰 분쇄기');
+  });
+});
+
+describe('밀치기 (D-154)', () => {
+  /** 4×4: 내 폰 (1,1) → 전진 (1,2), 적 폰을 (2,3)에 두면 대각 앞을 친다 → 위쪽은 벽 */
+  const setup = (parts: SlicePartId[] = []) => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P'], ['shieldBash'], 1, { width: 4, height: 4, parts, place: [{ side: 1, t: 'P', x: 2, y: 3 }] });
+    b.hand = ['shieldBash'];
+    const p = b.s.pieces.find((q) => q.side === 0 && q.type === 'P')!;
+    const e = b.s.pieces.find((q) => q.side === 1 && q.type === 'P')!;
+    e.hp = e.maxHp = 200;
+    return { b, p, e };
+  };
+  it('벽에 막히면 충돌 피해 (미리보기와 실행이 같다)', () => {
+    const { b, p, e } = setup();
+    const sim = previewPlay(b, 0, p.id, { x: 1, y: 2 })!;
+    const bump = sim.events.find((x) => x.type === 'blast');
+    expect(bump).toBeTruthy();
+    const hp0 = e.hp;
+    playCard(b, 0, p.id, { x: 1, y: 2 });
+    const after = b.s.pieces.find((q) => q.id === e.id)!;
+    const atk = sim.events.flatMap((x) => (x.type === 'attack' ? x.hits : [])).find((h) => h.targetId === e.id)!.damage;
+    expect(after.hp).toBe(hp0 - atk - PUSH.collide);
+  });
+  it('쇠망치: 충돌 피해 ×2', () => {
+    const { b, p, e } = setup(['hammer']);
+    const sim = previewPlay(b, 0, p.id, { x: 1, y: 2 })!;
+    const blast = sim.events.find((x) => x.type === 'blast') as { hits: { targetId: number; damage: number }[] };
+    expect(blast.hits.find((h) => h.targetId === e.id)!.damage).toBe(PUSH.collide * 2);
   });
 });

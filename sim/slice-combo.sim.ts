@@ -12,7 +12,7 @@ type Step = { i: number; p?: number; to?: { x: number; y: number } };
 const clone = (b: SliceBattle): SliceBattle => JSON.parse(JSON.stringify(b)) as SliceBattle;
 const enemyDmg = (b: SliceBattle, ev: BattleEvent[]) => {
   let d = 0;
-  for (const e of ev) if (e.type === 'attack') for (const h of e.hits) if (!b.s.pieces.some((p) => p.id === h.targetId && p.side === 0)) d += h.damage;
+  for (const e of ev) if (e.type === 'attack' || e.type === 'blast') for (const h of e.hits) if (!b.s.pieces.some((p) => p.id === h.targetId && p.side === 0)) d += h.damage;
   return d;
 };
 const steps = (b: SliceBattle): Step[] => {
@@ -60,6 +60,8 @@ const CASES: { name: string; parts: SlicePartId[]; add: CommandId[] }[] = [
   { name: '이중 톱니 + 코일 + 연속 도약×2', parts: ['echo', 'coil'], add: ['doubleLeap', 'doubleLeap', 'spark'] },
   { name: '조립 라인 + 희생 수×2 + 마무리', parts: ['assembly'], add: ['gambit', 'gambit', 'finisher'] },
   { name: '편자 + 기마 돌격×2 + 행진', parts: ['horseshoe'], add: ['cavCharge', 'cavCharge', 'march'] },
+  { name: '쇠망치 + 밀어치기 + 방패×2', parts: ['hammer'], add: ['shove', 'shieldBash', 'shieldBash'] },
+  { name: '밀치기 카드만 (부품 없음)', parts: [], add: ['shove', 'shieldBash', 'ram'] },
   { name: '행진 북 + 행진×2 + 징집', parts: ['drum'], add: ['march', 'march', 'draft'] },
   { name: '무거운 왕관 + 분노한 왕×2 + 왕의 일격', parts: ['crown'], add: ['wrath', 'wrath', 'kingBlow'] },
 ];

@@ -10,14 +10,15 @@ export type CommandId =
   | 'advance' | 'leap' | 'diagonal' | 'kingStep' | 'order'
   | 'pierceDiag' | 'crossLeap' | 'charge' | 'plate' | 'repair' | 'reload' | 'kingBlow' | 'splashDiag' | 'smash' | 'rookLine'
   | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
-  | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit';
+  | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit'
+  | 'shove' | 'shieldBash' | 'ram';
 
 /**
  * 빌드 축 (D-144 — 덱빌딩의 "부서지는" 맛): 축마다 카드 몇 장 + 규칙을 깨는 부품 하나가 맞물린다.
  * 기병 = 처치한 나이트가 또 뛴다 · 보병 = 폰이 많고 싸다 · 왕관 = 킹이 직접 싸운다 · 연쇄 = 배수를 키운다.
  */
-export type Axis = 'cav' | 'inf' | 'king' | 'chain';
-export const AXIS_NAMES: Record<Axis, string> = { cav: '기병', inf: '보병', king: '왕관', chain: '연쇄' };
+export type Axis = 'cav' | 'inf' | 'king' | 'chain' | 'push';
+export const AXIS_NAMES: Record<Axis, string> = { cav: '기병', inf: '보병', king: '왕관', chain: '연쇄', push: '밀치기' };
 
 export interface CommandDef {
   name: string;
@@ -33,6 +34,8 @@ export interface CommandDef {
   axis2?: Axis;
   /** 움직인 뒤, 내려앉은 칸 둘레의 폰이 모두 한 칸 전진해 친다 */
   rally?: boolean;
+  /** 친 적을 한 칸 밀어낸다. 막히면 둘 다 충돌 피해 (D-154, Into the Breach) */
+  push?: boolean;
   /** 이 카드로 처치하면 연쇄가 이만큼씩 오른다 (기본 1) */
   chainPerKill?: number;
   /** 이번 턴에 처치한 기물로 내면 태엽 0 */
@@ -80,6 +83,10 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   cavCharge: { axis: 'cav', axis2: 'inf', name: '기마 돌격', cost: 2, who: 'N', kind: 'move', rally: true, desc: '나이트 · 착지 둘레의 폰도 전진해 친다.' },
   kingGuard: { axis: 'king', axis2: 'inf', name: '근위대', cost: 2, who: 'K', kind: 'move', rally: true, desc: '킹 · 둘레의 폰도 전진해 친다.' },
   doubleLeap: { axis: 'cav', axis2: 'chain', name: '연속 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '나이트 · 처치하면 연쇄가 두 칸 오른다.' },
+  // ---- 밀치기 (D-154): 친 적을 한 칸 민다, 막히면 충돌 ----
+  shove: { axis: 'push', name: '밀어치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '아무 기물 · 친 적을 한 칸 민다. 막히면 충돌.' },
+  shieldBash: { axis: 'push', axis2: 'inf', name: '방패 밀치기', cost: 1, who: 'P', kind: 'move', push: true, desc: '폰 · 친 적을 민다. 막히면 충돌.' },
+  ram: { axis: 'push', axis2: 'cav', name: '들이받기', cost: 1, who: 'N', kind: 'move', push: true, desc: '나이트 · 친 적을 민다. 막히면 충돌.' },
   gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '내 폰 하나를 부순다. 연쇄 +2, 한 장.' },
 };
 
@@ -110,9 +117,10 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
   { part: 'horseshoe', cards: ['rebound', 'rebound'], needs: 'N' },
   { part: 'echo', cards: ['doubleLeap', 'spark'], needs: 'N' },
   { part: 'magnet', cards: ['spark', 'spark'] },
+  { part: 'hammer', cards: ['shieldBash', 'shove'] },
 ];
 /** 보상 후보 */
-export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit'];
+export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram'];
 
 /**
  * 반장 규칙 (D-148 — 레퍼런스 5권 원리 5 「부서진 빌드는 너프하지 말고 보스가 질문한다」). 둘 다 미리 보인다.
@@ -120,6 +128,10 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
  * 줄 폭격: 2턴마다 한 줄을 예고하고 다음 적 차례에 그 줄을 친다 → 뭉쳐 있지 않나?
  */
 // 철갑 20 · 2턴마다: 빔 탐색 봇 기준 시작 덱만 25% · 카드 2장 + 부품 1 빌드 88% — 빌드를 갖췄는지 묻는다 (30 · 매 턴은 벽이었다: 0~13%)
+/** 밀치기 충돌 피해 (밀린 적과 부딪힌 기물 둘 다) */
+// 18: 조합 봇에서 쇠망치 + 밀치기 카드가 기준의 약 1.9배 (12일 땐 1.5배 — 축 단독 2배 목표, D-154)
+export const PUSH = { collide: 18 };
+
 export const BOSS = { plate: 20, plateEvery: 2, bombEvery: 2, bombDamage: 18 };
 
 /** 수직 조각 수치 */

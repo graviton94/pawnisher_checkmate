@@ -100,7 +100,9 @@ const model = (): BoardModel => {
     ? dests.flatMap((to) => {
         const sim = previewPlay(b, selCard!, selPiece!, to);
         const hits = sim?.events.flatMap((e) => (e.type === 'attack' && e.attackerId === selPiece ? e.hits : [])) ?? [];
-        return hits.length ? [{ pos: to, kill: hits.some((h) => h.killed) }] : [];
+        // 밀치기 충돌 처치도 금색으로 (결과를 누르기 전에)
+        const bump = sim?.events.some((e) => e.type === 'blast' && e.hits.some((h) => h.killed && b.s.pieces.find((p) => p.id === h.targetId)?.side === 1)) ?? false;
+        return hits.length ? [{ pos: to, kill: hits.some((h) => h.killed) || bump }] : [];
       })
     : [];
   return {
@@ -402,7 +404,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
     }
     const rng = new Rng(Date.now() & 0xffff);
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
-    const axes: Axis[] = ['cav', 'inf', 'king', 'chain'];
+    const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push'];
     const mine = parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a);
     const picks: Axis[] = mine.length ? [mine[rng.int(mine.length)]] : [];
     while (picks.length < 3) {
@@ -464,7 +466,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
  * 같은 카드는 한 칸에 ×개수로 묶고, 축 순서로 늘어놓는다.
  */
 const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): void => {
-  const order: (Axis | undefined)[] = [undefined, 'cav', 'inf', 'king', 'chain'];
+  const order: (Axis | undefined)[] = [undefined, 'cav', 'inf', 'king', 'chain', 'push'];
   const counts = new Map<CommandId, number>();
   for (const id of deck) counts.set(id, (counts.get(id) ?? 0) + 1);
   const ids = [...counts.keys()].sort((x, y) => order.indexOf(COMMANDS[x].axis) - order.indexOf(COMMANDS[y].axis) || COMMANDS[x].cost - COMMANDS[y].cost);
