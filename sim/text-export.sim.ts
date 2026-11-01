@@ -46,12 +46,21 @@ it('text export', () => {
   L.push(`- 반장: 철갑 ${BOSS.plate} (${BOSS.plateEvery}턴마다) · 줄 폭격 −${BOSS.bombDamage} (${BOSS.bombEvery}턴마다) · 밀치기 충돌 ${PUSH.collide}`);
   // 화면 문구: 코드 속 한글 문자열 전부 (파일:줄)
   L.push('', '## 5. 화면 문구 (코드 속 한글 문자열 전부)', '');
+  const seen = new Set<string>();
   for (const f of ['src/slice/main.ts', 'src/slice/battle.ts', 'slice.html']) {
     L.push(`### ${f}`, '');
     readFileSync(f, 'utf8').split('\n').forEach((line, n) => {
       if (/^\s*(\/\/|\*|\/\*\*)/.test(line)) return;
       const hits = line.match(/(['"`])(?:(?!\1).)*[가-힣](?:(?!\1).)*\1/g) ?? (f.endsWith('.html') && /[가-힣]/.test(line) ? [line.trim()] : []);
-      for (const h of hits) L.push(`- \`${n + 1}\` ${h.replace(/\|/g, '\\|').slice(0, 400)}`);
+      for (const h of hits) {
+        // 화면에 보이는 글만: 태그 · ${…} 식 · 따옴표를 걷어 낸다 (○ = 숫자 · 이름 자리)
+        let t = h.slice(1, -1);
+        for (let k = 0; k < 4; k++) t = t.replace(/\$\{[^{}]*\}/g, '○');
+        t = t.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!/[가-힣]/.test(t) || seen.has(t)) continue;
+        seen.add(t);
+        L.push(`- \`${n + 1}\` ${t.replace(/\|/g, '\\|')}`);
+      }
     });
     L.push('');
   }
