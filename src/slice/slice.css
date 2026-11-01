@@ -85,3 +85,17 @@ body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; 
 .part-card small { font-size: 14px; color: #d6d0c6; line-height: 1.4; }
 .part-card:hover, .part-card:active { transform: translateY(-4px); }
 .part-card.picked { transform: translateY(-10px) scale(1.05); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, 0 0 22px rgba(244, 210, 122, 0.7); }
+/* 행마 그림 (D-146) */
+.shape { position: relative; display: block; }
+.shape svg { display: block; image-rendering: pixelated; }
+.shape-pc { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); line-height: 0; }
+.shape-pc img { image-rendering: pixelated; }
+.cmd .art .shape { margin: 0; }
+.cmd .art .shape-pc img { width: 14px; height: 14px; }
+.hand .cmd { flex: none; }
+.cmd b { display: flex; align-items: center; gap: 4px; }
+.cmd .chips { display: inline-flex; gap: 2px; margin-left: auto; }
+.axis.mini { margin: 0; width: 20px; height: 20px; padding: 0; display: inline-grid; place-items: center; vertical-align: 0; font-size: 12px; }
+body.slice #app { grid-template-columns: 272px 1fr 210px; }
+.hand { gap: 6px; }
+.cmd b { white-space: nowrap; }

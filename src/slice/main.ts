@@ -11,6 +11,7 @@ import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { AXIS_NAMES, COMMANDS, REWARD_COMMANDS, SLICE, START_COMMANDS, type Axis, type CommandId } from './cards';
 import { SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
+import { shapeHtml } from './shape';
 import { REST, canPlay, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
@@ -114,14 +115,24 @@ const cardHtml = (id: CommandId, i: number): string => {
   const ok = canPlay(b, i);
   const poor = !ok && cost > b.ap;
   const off = !ok || busy;
-  const art = c.who === 'any' ? `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>` : `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
+  const art = cardArt(id);
   const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : '움직일 기물 없음'}</em>` : '';
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
-    <span class="cost" aria-label="태엽 ${cost}">${cost}</span>${art}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small>${why}</span></button>`;
+    <span class="cost" aria-label="태엽 ${cost}">${cost}</span>${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b><small>${c.desc}</small>${why}</span></button>`;
+};
+
+/** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
+const cardArt = (id: CommandId): string => {
+  const c = COMMANDS[id];
+  if (c.who === 'any') return `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>`;
+  if (c.kind === 'move' || c.kind === 'march') return `<span class="art">${shapeHtml(c.who, 44)}</span>`;
+  return `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
 };
 
 /** 빌드 축 띠 */
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
+/** 손패용 짧은 축 띠: 한 글자 색 칩 (이름은 보상 화면 · 읽기용 라벨에) */
+const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-label="${AXIS_NAMES[a]}">${AXIS_NAMES[a][0]}</i>` : '');
 
 /** 부품 칩 (레일 · 고르기 화면) */
 const partHtml = (id: SlicePartId, big = false): string => {
@@ -370,7 +381,7 @@ const finish = (): void => {
       <div class="reward-cards">${offers
         .map((id) => {
           const c = COMMANDS[id];
-          const who = c.who === 'any' ? `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>` : `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
+          const who = cardArt(id);
           return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small></span></button>`;
         })
         .join('')}</div>
@@ -421,6 +432,7 @@ const help = (): void => {
     <ul class="help">
       <li><b>카드</b>를 누르고 → <b>기물</b>을 누르고 → <b>갈 칸</b>을 누른다. 기물을 먼저 눌러도 된다 (맞는 카드를 골라 준다).</li>
       <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 친다. 과녁 = 친다 · 금 = 처치.</li>
+      <li>카드의 작은 판: <b style="color:#4ec3d6">●</b> 갈 칸 · <b style="color:#ff6b5a">□</b> 칠 칸 (위쪽이 앞).</li>
       <li>카드 왼쪽 위 숫자 = <b>태엽</b>. 한 턴에 ${SLICE.ap}. 같은 기물을 여러 번 움직여도 된다.</li>
       <li>이번 턴에 처치할 때마다 <b>연쇄</b> 배수가 오른다 (×${chainMult(1).toFixed(2)} → ×${chainMult(2).toFixed(2)} …). 순서가 곧 화력.</li>
       <li><b>붉게 깜빡이는 칸</b> = 적이 예고한 칠 칸. 번호 = 이번에 움직일 적. 먼저 쓰러뜨리면 취소, 비키면 빗나간다, 길을 막으면 못 온다.</li>

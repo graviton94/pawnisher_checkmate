@@ -67,7 +67,7 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   smash: { axis: 'chain', name: '강타', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '아무 기물 · 이번 공격 ×1.5.' },
   rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '룩 하나가 곧게 움직여 친다.' },
   // ---- 빌드 축 카드 (D-144) ----
-  rebound: { axis: 'cav', name: '재도약', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '나이트 · 이번 턴 처치한 나이트면 태엽 0.' },
+  rebound: { axis: 'cav', name: '재도약', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '나이트 · 이번 턴 처치했으면 태엽 0.' },
   hoofKick: { axis: 'cav', name: '말발굽', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '나이트 · 처치하면 카드 한 장.' },
   march: { axis: 'inf', name: '행진', cost: 1, who: 'P', kind: 'march', desc: '폰 모두 한 칸 앞으로 가서 친다.' },
   draft: { axis: 'inf', name: '징집', cost: 1, who: 'any', kind: 'draft', desc: '킹 옆에 폰 하나를 세운다. 이번 대국만.' },
@@ -76,10 +76,10 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   spark: { axis: 'chain', name: '불씨', cost: 0, who: 'any', kind: 'spark', desc: '처치 없이 연쇄 +1. 카드 한 장.' },
   finisher: { axis: 'chain', name: '마무리', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '아무 기물 · 연쇄 하나마다 ×0.5 더.' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
-  cavCharge: { axis: 'cav', axis2: 'inf', name: '기마 돌격', cost: 2, who: 'N', kind: 'move', rally: true, desc: '나이트 · 내려앉은 칸 둘레의 폰이 한 칸씩 전진해 친다.' },
-  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대', cost: 2, who: 'K', kind: 'move', rally: true, desc: '킹 · 둘레의 폰이 한 칸씩 전진해 친다.' },
+  cavCharge: { axis: 'cav', axis2: 'inf', name: '기마 돌격', cost: 2, who: 'N', kind: 'move', rally: true, desc: '나이트 · 착지 둘레의 폰도 전진해 친다.' },
+  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대', cost: 2, who: 'K', kind: 'move', rally: true, desc: '킹 · 둘레의 폰도 전진해 친다.' },
   doubleLeap: { axis: 'cav', axis2: 'chain', name: '연속 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '나이트 · 처치하면 연쇄가 두 칸 오른다.' },
-  gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '내 폰 하나를 부순다. 연쇄 +2 · 카드 한 장.' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '내 폰 하나를 부순다. 연쇄 +2, 한 장.' },
 };
 
 /** 시작 덱 (10장) */
