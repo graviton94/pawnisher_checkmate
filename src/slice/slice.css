@@ -179,3 +179,9 @@ body.slice .rail .meter { position: static; justify-items: center; align-self: s
 .cmd .flv, .part-card .flv { font-size: 12px; font-style: italic; color: #b9a98a; }
 .deathfx .narr { margin: 0; font-size: 16px; color: #d6d0c6; font-style: italic; }
 .deathfx i { font-size: 15px; color: #f4d27a; }
+/* 시작 화면 (테스트 유저판) */
+.title-card { display: grid; gap: 8px; justify-items: center; text-align: center; padding: 8px 4px; }
+.title-card .eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.2em; color: #c89b3c; }
+.title-card h1 { margin: 0; font: 700 30px Galmuri14, sans-serif; color: #f4d27a; text-shadow: 3px 3px 0 #000; }
+.title-card .flv { font-size: 15px; }
+.title-how { margin: 4px 0; padding-left: 18px; text-align: left; font-size: 14px; line-height: 1.6; color: #d6d0c6; }

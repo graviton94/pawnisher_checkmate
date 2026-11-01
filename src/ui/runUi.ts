@@ -109,7 +109,7 @@ const gradeChip = (g: Grade): string => `<i class="grade g-${g}">${GRADE_NAME[g]
 /** 부품 카드 */
 const partOffer = (id: PartId, tail = ''): string => {
   const p = PARTS[id];
-  return `<span class="kind">${gradeChip(p.grade)} ${icon('wrench', 's')} 부품</span><b>${p.name}</b><p>${p.desc}</p><p class="dim-line">* ${p.lore}</p>${tail}`;
+  return `<span class="kind">${gradeChip(p.grade)} ${icon('wrench', 's')} 부품</span><b>${p.name}</b><p>${p.desc}</p><p class="dim-line">${p.lore}</p>${tail}`;
 };
 /** 각인 카드 */
 const carveOffer = (id: CarveId): string => {
@@ -218,7 +218,7 @@ export class RunUi {
     const panel = this.hud.openOverlay(`
       <h2>${title}</h2>
       <p>${lead}</p>
-      <div class="chips">${chips || '<small class="lead">고를 기물이 없다.</small>'}</div>
+      <div class="chips">${chips || '<small class="lead">고를 기물이 없습니다.</small>'}</div>
       ${button('취소', 'data-cancel', { cls: 'wide' })}`);
     this.wire(panel, {
       unit: (b) => {
@@ -232,8 +232,8 @@ export class RunUi {
   /** 부품 칸이 가득 찼을 때 버릴 것을 고른다 (모달) */
   private discardPart(run: RunState, done: (i: number) => void): void {
     const panel = this.hud.openOverlay(`
-      <h2>부품 칸(${PART_SLOTS})이 꽉 찼다</h2>
-      <p>하나를 뜯어내야 새 것이 들어간다. 뜯은 건 돌아오지 않는다.</p>
+      <h2>부품 칸이 가득 찼습니다 (${PART_SLOTS})</h2>
+      <p>하나를 뜯어내야 새 부품이 들어갑니다. 뜯어낸 부품은 돌아오지 않습니다.</p>
       <div class="chips">${run.parts.map((id, i) => `<button class="chip" type="button" data-d="${i}"><b>${PARTS[id].name}</b><small>${GRADE_NAME[PARTS[id].grade]} · ${PARTS[id].desc}</small></button>`).join('')}</div>
       ${button('취소', 'data-cancel', { cls: 'wide' })}`);
     this.wire(panel, {
@@ -424,7 +424,7 @@ export class RunUi {
         .join('')}</div>`;
     const startSets: Entry[] = [
       ...START_DECKS.map((d) => ({ known: true, name: setName(d), info: SET_LORE[typesOf(d).sort().join('')] ?? '', img: typesOf(d).map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
-      ...UNLOCK_DECKS.map((u) => ({ known: u.ok(meta), name: u.name, info: u.ok(meta) ? (SET_LORE[typesOf(u.deck).sort().join('')] ?? '') : `* ${u.name}. 잠겨 있다 — ${u.need}`, hint: `잠김 · ${u.need}`, img: typesOf(u.deck).map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
+      ...UNLOCK_DECKS.map((u) => ({ known: u.ok(meta), name: u.name, info: u.ok(meta) ? (SET_LORE[typesOf(u.deck).sort().join('')] ?? '') : `${u.name} — 잠겨 있습니다. (${u.need})`, hint: `잠김 · ${u.need}`, img: typesOf(u.deck).map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
     ];
     const bosses: Entry[] = [...(Object.keys(BOSSES) as (keyof typeof BOSSES)[]).map((id) => ({ id, def: BOSSES[id] })), { id: 'final', def: FINAL_BOSS }].map(({ id, def }) => ({
       known: kills.includes(id),
@@ -461,7 +461,7 @@ export class RunUi {
       cx: (b) => {
         const [t, i] = b.dataset.cx!.split(':');
         const e = all[t][Number(i)];
-        this.hud.toast(e.known || t === C.sections.sets ? e.info : `* ${C.unknown}`);
+        this.hud.toast(e.known || t === C.sections.sets ? e.info : C.unknown);
       },
     });
   }
@@ -699,8 +699,8 @@ export class RunUi {
     const taunt = TAUNTS[(run.seed + run.floor) % TAUNTS.length];
     const lines: string[] = [];
     if (e.kind === 'boss' && e.twist) lines.push(`${TWISTS[e.twist].name} — ${TWISTS[e.twist].desc}`);
-    else if (e.kind === 'elite') lines.push(`검문! ${e.name} — 왕관 표식은 정예 (HP 두 배)`);
-    else lines.push(run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${e.name} — ${taunt}`);
+    else if (e.kind === 'elite') lines.push(`검문! ${e.name} — 왕관 표식은 정예입니다. (HP ×2)`);
+    else lines.push(run.floor <= 2 ? '움직인 기물만 칩니다. 붉은 과녁 칸으로 보내십시오.' : `${e.name} — ${taunt}`);
     lines.forEach((m) => this.hud.say(m));
     if (e.kind === 'elite') coach('elite');
     if (e.kind === 'boss') coach('boss');
@@ -752,7 +752,7 @@ export class RunUi {
       const err = takeChoice(run, id, extra);
       if (err === 'unit') {
         const carve = (id.includes(':') ? id.split(':')[1] : id) as CarveId;
-        return this.pickUnit(run, `${CARVES[carve].mark} ${CARVES[carve].name}`, `${CARVES[carve].desc} * 새길 기물을 고른다. 있던 각인은 사라진다.`, (u) => u.t !== 'K', (i) => take(id, i));
+        return this.pickUnit(run, `${CARVES[carve].mark} ${CARVES[carve].name}`, `${CARVES[carve].desc} 새길 기물을 고릅니다. 있던 각인은 사라집니다.`, (u) => u.t !== 'K', (i) => take(id, i));
       }
       if (err === 'full') return this.discardPart(run, (d) => take(id, d));
       this.act(err);
@@ -805,7 +805,7 @@ export class RunUi {
       const err = buyCarve(run, i, unit);
       if (err === 'unit') {
         const id = stock.carves[i].item;
-        return this.pickUnit(run, `${CARVES[id].mark} ${CARVES[id].name}`, `${CARVES[id].desc} * 새길 기물을 고른다.`, (u) => u.t !== 'K', (k) => buyC(i, k));
+        return this.pickUnit(run, `${CARVES[id].mark} ${CARVES[id].name}`, `${CARVES[id].desc} 새길 기물을 고릅니다.`, (u) => u.t !== 'K', (k) => buyC(i, k));
       }
       if (!err) sfx('spend');
       this.act(err);
@@ -824,7 +824,7 @@ export class RunUi {
       },
       carve: (b) => buyC(Number(b.dataset.carve)),
       part: (b) => buyP(Number(b.dataset.part)),
-      sell: () => this.pickUnit(run, `${icon('scale')} ${S.sell}`, '* 녹슨 룩이 기물을 저울에 올린다. 판 기물은 돌아오지 않는다.', (u) => u.t !== 'K', (i) => this.act(sellPiece(run, i)), (u) => ` · ${icon('screw', 's')}${sellPrice(u.t)}`),
+      sell: () => this.pickUnit(run, `${icon('scale')} ${S.sell}`, '“저울에 올려라.” 판 기물은 돌아오지 않습니다.', (u) => u.t !== 'K', (i) => this.act(sellPiece(run, i)), (u) => ` · ${icon('screw', 's')}${sellPrice(u.t)}`),
       reroll: () => this.act(reroll(run)),
       leave: () => {
         leaveNode(run);
@@ -854,7 +854,7 @@ export class RunUi {
       carvepick: (b) => {
         const i = Number(b.dataset.carvepick);
         const id = st.carves[i];
-        this.pickUnit(run, `${CARVES[id].mark} ${CARVES[id].name}`, `${CARVES[id].desc} * 새길 기물을 고른다. 있던 각인은 사라진다.`, (u) => u.t !== 'K', (k) => {
+        this.pickUnit(run, `${CARVES[id].mark} ${CARVES[id].name}`, `${CARVES[id].desc} 새길 기물을 고릅니다. 있던 각인은 사라집니다.`, (u) => u.t !== 'K', (k) => {
           sfx('awaken');
           this.act(forgeCarve(run, i, k));
         });
@@ -928,7 +928,7 @@ export class RunUi {
     const fresh = ids.filter((i) => !have.includes(i));
     if (!fresh.length) return;
     saveMeta({ ...m, story: { ...m.story, records: [...have, ...fresh].sort((a, b) => a - b) } });
-    fresh.forEach((i) => this.hud.say(`* 검수 기록지 — ${RECORDS[i].title}`));
+    fresh.forEach((i) => this.hud.say(`검수 기록지를 얻었습니다 — ${RECORDS[i].title}`));
   }
 
   /** 반장 · 도금왕 소개 컷 */
@@ -964,7 +964,7 @@ export class RunUi {
     const gilded = (mood: 'narrow' | 'glare' | 'sleepy' | 'wide' | 'look' | 'calm', dim = false) => ({ npc: 'gilded' as const, x: 34, y: 52, size: 130, mood, dim });
     const fall: Cut[] = [
       { bg: 'top', actors: [gilded('sleepy'), { npc: 'ninth', x: 72, y: 60, size: 100, mood: 'calm' }], lines: GILDED.fall, fx: 'gold' },
-      ...(army >= 14 ? [{ bg: 'box' as const, actors: [], lines: [{ kind: 'tell' as const, text: '* 아무도 등을 돌리지 않았다.' }] }] : []),
+      ...(army >= 14 ? [{ bg: 'box' as const, actors: [], lines: [{ kind: 'tell' as const, text: '아무도 당신에게 등을 돌리지 않았다.' }] }] : []),
       { bg: 'top', actors: [gilded(g.mood), { npc: 'ninth', x: 72, y: 60, size: 100, mood: 'wide' }], lines: GILDED.howl, fx: 'shake' },
     ];
     this.gainRecords([9]);

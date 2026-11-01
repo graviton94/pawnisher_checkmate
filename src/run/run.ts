@@ -262,9 +262,9 @@ const rollPairs = (run: RunState, rng: Rng, from: 'elite' | 'boss'): Pair[] => {
 
 // ---------- 노드 진입 ----------
 export const enterNode = (run: RunState, index: number): string | void => {
-  if (run.stage.at !== 'map') return '지금은 못 간다.';
+  if (run.stage.at !== 'map') return '지금은 갈 수 없습니다.';
   const node = currentNodes(run)[index];
-  if (!node) return '없는 칸';
+  if (!node) return '없는 칸입니다.';
   run.path[run.floor - 1] = index;
   switch (node.kind) {
     case 'battle':
@@ -333,7 +333,7 @@ export const finishBattle = (run: RunState, final: BattleState): void => {
 // ---------- 보상 받기 ----------
 /** 부품 넣기. 칸이 차면 discard(부품 칸 번호)가 필요하다 */
 export const addPart = (run: RunState, id: PartId, discard?: number): string | void => {
-  if (run.parts.includes(id)) return '이미 있다.';
+  if (run.parts.includes(id)) return '이미 가진 부품입니다.';
   if (run.parts.length >= PART_SLOTS) {
     if (discard === undefined) return 'full';
     run.parts.splice(discard, 1);
@@ -343,12 +343,12 @@ export const addPart = (run: RunState, id: PartId, discard?: number): string | v
 /** 군단 기물 하나에 각인 (있던 각인은 사라진다) */
 export const setCarve = (run: RunState, unit: number, id: CarveId | undefined): string | void => {
   const u = run.deck[unit];
-  if (!u) return '없는 기물';
+  if (!u) return '없는 기물입니다.';
   if (id) u.carve = id;
   else delete u.carve;
 };
 export const addPiece = (run: RunState, t: PieceType): string | void => {
-  if (!canAdd(run, t)) return run.deck.length >= DECK_MAX ? `군단은 ${DECK_MAX}기까지.` : `${PIECE_NAMES_KO[t]}은(는) ${TYPE_MAX[t]}기까지.`;
+  if (!canAdd(run, t)) return run.deck.length >= DECK_MAX ? `군단은 ${DECK_MAX}기까지입니다.` : `${PIECE_NAMES_KO[t]}은(는) ${TYPE_MAX[t]}기까지입니다.`;
   run.deck.push({ t });
 };
 
@@ -375,7 +375,7 @@ export const takeChoice = (run: RunState, option: string, extra?: number): strin
   } else if (kind === 'part') err = addPart(run, value as PartId, extra);
   else if (kind === 'pair' && ch.type === 'pair') {
     const pair = ch.options[Number(value)];
-    if (!pair) return '없는 쌍';
+    if (!pair) return '없는 쌍입니다.';
     err = addPart(run, pair.part, extra);
     if (!err) run.threats.push(...pair.threats);
   }
@@ -391,7 +391,7 @@ export const skipChoice = (run: RunState): void => {
 
 export const finishReward = (run: RunState): string | void => {
   if (run.stage.at !== 'reward') return;
-  if (run.stage.choices.length) return '아직 고를 것이 있다.';
+  if (run.stage.choices.length) return '아직 고를 것이 남았습니다.';
   advance(run);
 };
 
@@ -410,13 +410,13 @@ const makeStock = (run: RunState, rng: Rng): ShopStock => ({
 
 const stockOf = (run: RunState): ShopStock | null => (run.stage.at === 'shop' ? run.stage.stock : null);
 const pay = (run: RunState, price: number): string | void => {
-  if (run.gold < price) return '나사가 모자라다.';
+  if (run.gold < price) return '나사가 부족합니다.';
   run.gold -= price;
 };
 
 export const buyPiece = (run: RunState, i: number): string | void => {
   const it = stockOf(run)?.pieces[i];
-  if (!it || it.sold) return '없는 물건';
+  if (!it || it.sold) return '없는 물건입니다.';
   if (!canAdd(run, it.item)) return addPiece(run, it.item);
   const err = pay(run, it.price);
   if (err) return err;
@@ -425,9 +425,9 @@ export const buyPiece = (run: RunState, i: number): string | void => {
 };
 export const buyCarve = (run: RunState, i: number, unit?: number): string | void => {
   const it = stockOf(run)?.carves[i];
-  if (!it || it.sold) return '없는 물건';
+  if (!it || it.sold) return '없는 물건입니다.';
   if (unit === undefined) return 'unit';
-  if (run.gold < it.price) return '나사가 모자라다.';
+  if (run.gold < it.price) return '나사가 부족합니다.';
   const err = setCarve(run, unit, it.item);
   if (err) return err;
   run.gold -= it.price;
@@ -435,8 +435,8 @@ export const buyCarve = (run: RunState, i: number, unit?: number): string | void
 };
 export const buyPart = (run: RunState, i: number, discard?: number): string | void => {
   const it = stockOf(run)?.parts[i];
-  if (!it || it.sold) return '없는 물건';
-  if (run.gold < it.price) return '나사가 모자라다.';
+  if (!it || it.sold) return '없는 물건입니다.';
+  if (run.gold < it.price) return '나사가 부족합니다.';
   const err = addPart(run, it.item, discard);
   if (err) return err;
   run.gold -= it.price;
@@ -444,8 +444,8 @@ export const buyPart = (run: RunState, i: number, discard?: number): string | vo
 };
 export const sellPiece = (run: RunState, unit: number): string | void => {
   const u = run.deck[unit];
-  if (!u || u.t === 'K') return '킹은 못 판다.';
-  if (run.deck.length <= 2) return '군단이 너무 적다.';
+  if (!u || u.t === 'K') return '킹은 팔 수 없습니다.';
+  if (run.deck.length <= 2) return '군단이 너무 적습니다. (최소 2기)';
   run.deck.splice(unit, 1);
   run.gold += sellPrice(u.t);
 };
@@ -462,19 +462,19 @@ export const reroll = (run: RunState): string | void => {
 // ---------- 공방 ----------
 /** 각인 새기기: 공방의 각인 셋 중 하나를 기물 하나에 (무료, 방문마다 한 번) */
 export const forgeCarve = (run: RunState, carve: number, unit: number): string | void => {
-  if (run.stage.at !== 'forge' || run.stage.done) return '이번엔 끝났다.';
+  if (run.stage.at !== 'forge' || run.stage.done) return '이번 방문의 작업은 끝났습니다.';
   const id = run.stage.carves[carve];
-  if (!id) return '없는 각인';
+  if (!id) return '없는 각인입니다.';
   const err = setCarve(run, unit, id);
   if (err) return err;
   run.stage.done = true;
 };
 /** 기물 다듬기: 기물 하나를 한 단계 위 유형으로 (무료, 방문마다 한 번) */
 export const forgeUpgrade = (run: RunState, unit: number, to: PieceType): string | void => {
-  if (run.stage.at !== 'forge' || run.stage.done) return '이번엔 끝났다.';
+  if (run.stage.at !== 'forge' || run.stage.done) return '이번 방문의 작업은 끝났습니다.';
   const u = run.deck[unit];
-  if (!u || !UPGRADE[u.t]?.includes(to)) return '다듬을 수 없다.';
-  if (run.deck.filter((x) => x.t === to).length >= TYPE_MAX[to]) return `${PIECE_NAMES_KO[to]}은(는) ${TYPE_MAX[to]}기까지.`;
+  if (!u || !UPGRADE[u.t]?.includes(to)) return '다듬을 수 없습니다.';
+  if (run.deck.filter((x) => x.t === to).length >= TYPE_MAX[to]) return `${PIECE_NAMES_KO[to]}은(는) ${TYPE_MAX[to]}기까지입니다.`;
   u.t = to;
   run.stage.done = true;
 };
@@ -500,10 +500,10 @@ const partReward = (run: RunState, title: string, lines: string[], from: 'event'
 export const eventChoose = (run: RunState, i: number): string | void => {
   if (run.stage.at !== 'event' || run.stage.result) return;
   const id = run.stage.id;
-  if (!eventChoiceAvailable(run, id, i)) return '할 수 없다.';
+  if (!eventChoiceAvailable(run, id, i)) return '지금은 고를 수 없습니다.';
   const title = EVENTS[id].title;
   if (i !== 0) {
-    run.stage.result = '* 그냥 지나간다.';
+    run.stage.result = '당신은 등을 돌린다. 아무 일도 일어나지 않았다.';
     return;
   }
   const roll = () => withRng(run, (rng) => rng.next());
@@ -517,30 +517,30 @@ export const eventChoose = (run: RunState, i: number): string | void => {
       const k = pickIdx(idx((u) => !u.carve));
       const c = randomCarve();
       setCarve(run, k, c);
-      result = `* 렌치가 돈다. ${PIECE_NAMES_KO[run.deck[k].t]}에 ${CARVES[c].name}.`;
+      result = `렌치가 쇠를 파고든다. (${PIECE_NAMES_KO[run.deck[k].t]} · ${CARVES[c].name})`;
       break;
     }
     case 'gambler':
       if (roll() < 0.5) {
         run.gold += 30;
-        result = '* 앞면. 나사 +30.';
+        result = '앞면. 운이 당신 편에 섰다. (나사 +30)';
       } else {
         run.gold -= 30;
-        result = '* 뒷면. 나사 −30. 나이트가 동전을 문다.';
+        result = '뒷면. 당신의 나사가 발굽 아래로 사라진다. (나사 −30)';
       }
       break;
     case 'apprentice': {
       const k = pickIdx(idx((u) => u.t !== 'K'));
       if (k === undefined) {
-        result = '* 망치가 허공을 친다.';
+        result = '망치가 허공을 가른다. 맡길 기물이 없었다.';
       } else if (roll() < 0.5) {
         const c = randomCarve();
         setCarve(run, k, c);
-        result = `* 맞았다. ${PIECE_NAMES_KO[run.deck[k].t]}에 ${CARVES[c].name}.`;
+        result = `떨리던 망치가 정확히 내려앉는다. (${PIECE_NAMES_KO[run.deck[k].t]} · ${CARVES[c].name})`;
       } else {
         const had = run.deck[k].carve;
         setCarve(run, k, undefined);
-        result = had ? `* 망치가 미끄러진다. ${PIECE_NAMES_KO[run.deck[k].t]}의 ${CARVES[had].name}이 지워진다.` : '* 망치가 미끄러진다. 다행히 지울 것이 없었다.';
+        result = had ? `망치가 미끄러진다. 새겨 둔 것이 긁혀 나간다. (${PIECE_NAMES_KO[run.deck[k].t]} · ${CARVES[had].name} 삭제)` : '망치가 미끄러진다. 잃을 것은 없었다.';
       }
       break;
     }
@@ -550,7 +550,7 @@ export const eventChoose = (run: RunState, i: number): string | void => {
       run.deck.splice(k, 1);
       const g = sellPrice(u.t) * 2;
       run.gold += g;
-      result = `* ${PIECE_NAMES_KO[u.t]}이 낯선 상자에 담긴다. 나사 +${g}.`;
+      result = `당신의 ${PIECE_NAMES_KO[u.t]}이 낯선 상자에 실려 간다. (나사 +${g})`;
       break;
     }
     case 'napping':
@@ -558,26 +558,26 @@ export const eventChoose = (run: RunState, i: number): string | void => {
         const t = (['N', 'B', 'R'] as PieceType[]).filter((x) => canAdd(run, x))[0];
         if (t) {
           run.deck.push({ t });
-          result = `* 서류가 바뀐다. ${PIECE_NAMES_KO[t]} 하나가 군단에 들어온다.`;
-        } else result = '* 서류를 바꿨지만 군단에 자리가 없다.';
+          result = `도장이 찍힌다. 새 기물이 대열에 선다. (${PIECE_NAMES_KO[t]} +1)`;
+        } else result = '서류는 바꿨으나, 대열에 빈자리가 없다.';
       } else {
         run.gold = Math.max(0, run.gold - 40);
-        result = '* 바늘이 번쩍 든다. 나사 −40.';
+        result = '저울의 바늘이 번쩍 든다. 당신은 대가를 치른다. (나사 −40)';
       }
       break;
     case 'nightShift': {
       const k = pickIdx(idx((u) => u.t !== 'K'));
-      if (k === undefined) result = '* 두드릴 것이 없다.';
+      if (k === undefined) result = '모루 위에 올릴 기물이 없다.';
       else {
         setCarve(run, k, 'forged');
-        result = `* 망치 소리. ${PIECE_NAMES_KO[run.deck[k].t]}에 단조 각인.`;
+        result = `어둠 속에서 망치가 울린다. 쇠가 단단해진다. (${PIECE_NAMES_KO[run.deck[k].t]} · 단조 각인)`;
       }
       break;
     }
     case 'pact': {
       const k = pickIdx(idx((u) => PACT_VICTIMS.includes(u.t)));
       const u = run.deck.splice(k, 1)[0];
-      return partReward(run, title, [`${PIECE_NAMES_KO[u.t]} 1기가 쇳물에 잠긴다.`], 'event', 'rare');
+      return partReward(run, title, [`당신의 ${PIECE_NAMES_KO[u.t]}이 쇳물 속으로 가라앉는다.`], 'event', 'rare');
     }
     case 'dipping': {
       const k = pickIdx(idx((u) => u.t !== 'K'));
@@ -585,34 +585,34 @@ export const eventChoose = (run: RunState, i: number): string | void => {
       const ups = (UPGRADE[u.t] ?? []).filter((t) => run.deck.filter((x) => x.t === t).length < TYPE_MAX[t]);
       if (roll() < 0.5 && ups.length) {
         const to = ups[withRng(run, (rng) => rng.int(ups.length))];
-        result = `* ${PIECE_NAMES_KO[u.t]}이 ${PIECE_NAMES_KO[to]}이 되어 나온다.`;
+        result = `쇳물이 식는다. 더 단단한 모습이 떠오른다. (${PIECE_NAMES_KO[u.t]} → ${PIECE_NAMES_KO[to]})`;
         u.t = to;
       } else {
         run.deck.splice(k, 1);
-        result = `* ${PIECE_NAMES_KO[u.t]}이 녹는다. 거품만 올라온다.`;
+        result = `쇳물이 삼켰다. 떠오르는 것은 없다. (${PIECE_NAMES_KO[u.t]} 소실)`;
       }
       break;
     }
     case 'swapDealer': {
       for (let n = 0; n < 2; n++) run.deck.splice(run.deck.findIndex((u) => u.t === 'P'), 1);
       run.deck.push({ t: 'N' });
-      result = '* 폰 둘이 손수레에 오른다. 나이트 하나가 내려온다.';
+      result = '폰 둘이 손수레에 오르고, 나이트가 대열에 선다. (폰 −2 · 나이트 +1)';
       break;
     }
     case 'auction':
       run.gold -= 60;
-      if (roll() < 0.5) return partReward(run, title, ['상자 안에서 부품이 나온다.'], 'event');
-      result = '* 상자는 비어 있다. 경매인도 놀란다.';
+      if (roll() < 0.5) return partReward(run, title, ['봉인이 뜯긴다. 상자 속에서 부품이 빛난다.'], 'event');
+      result = '상자는 비어 있다. 당신의 나사만 사라졌다.';
       break;
     case 'brokenGacha': {
       run.gold -= 40;
       const r = roll();
-      if (r < 0.45) return partReward(run, title, ['레버가 돈다. 부품이 굴러 나온다.'], 'event');
+      if (r < 0.45) return partReward(run, title, ['레버가 내려간다. 부품이 굴러 나온다.'], 'event');
       if (r < 0.7) {
         const t = (['R', 'B', 'N'] as PieceType[]).find((x) => canAdd(run, x));
         if (t) run.deck.push({ t });
-        result = t ? `* ${PIECE_NAMES_KO[t]} 하나가 굴러 나온다.` : '* 기물이 굴러 나왔지만 자리가 없다.';
-      } else result = '* 꽝. 기계가 트림을 한다.';
+        result = t ? `기계가 기물 하나를 토해 낸다. (${PIECE_NAMES_KO[t]} +1)` : '기물이 굴러 나왔으나, 대열에 빈자리가 없다.';
+      } else result = '기계가 침묵한다. 나사는 돌아오지 않는다.';
       break;
     }
     case 'safe': {
@@ -621,8 +621,8 @@ export const eventChoose = (run: RunState, i: number): string | void => {
       if (k !== undefined) {
         const had = run.deck[k].carve!;
         setCarve(run, k, undefined);
-        result = `* 나사 +70. 손잡이 날에 ${PIECE_NAMES_KO[run.deck[k].t]}의 ${CARVES[had].name}이 긁혀 나간다.`;
-      } else result = '* 나사 +70. 손이 조금 베인다.';
+        result = `금고가 열린다. 손잡이의 날이 새겨 둔 것을 앗아 간다. (나사 +70 · ${PIECE_NAMES_KO[run.deck[k].t]} · ${CARVES[had].name} 삭제)`;
+      } else result = '금고가 열린다. 손이 베였으나, 나사는 당신 것이다. (나사 +70)';
       break;
     }
   }
