@@ -72,8 +72,6 @@ export interface SliceBattle {
   falls: Fall[];
   /** 문턱을 넘은 분대원 */
   doorUsed: number[];
-  /** 원한의 톱니: 맞아서 다음 공격 ×2 */
-  grudged: number[];
   /** 턴에 한 번 효과 (풀린 브레이크) */
   once: string[];
   rng: number;
@@ -184,7 +182,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = parts.includes('spare') ? 1 : 0;
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], overkill: 0, boss: !!opts.boss, bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], grudged: [], once: [], rng: rng.state, warned: false };
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], overkill: 0, boss: !!opts.boss, bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   drawCards(b, b.handSize);
   bossTurnStart(b);
   b.intents = planEnemy(b.s);
@@ -317,8 +315,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1;
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const grudge = b.grudged.includes(pieceId) ? 2 : 1;
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * grudge });
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -377,14 +374,6 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         events.push({ type: 'apGain', side: 0, amount: k });
       }
       drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0));
-    }
-    b.grudged = b.grudged.filter((id) => id !== pieceId);
-    // 기벽: 어긋난 유리 눈(처치 → 한 장) · 풀린 브레이크(처치 → 태엽 +1, 턴에 한 번)
-    if (k > 0 && b.quirks[pieceId] === 'lens') drawCards(b, 1);
-    if (k > 0 && b.quirks[pieceId] === 'brake' && !b.once.includes(`brake${pieceId}`)) {
-      b.once.push(`brake${pieceId}`);
-      gained += 1;
-      events.push({ type: 'apGain', side: 0, amount: 1 });
     }
     // 이동식 옥좌: 킹 카드를 내면 킹 방열판
     const pk = findPiece(b.s, pieceId);
@@ -514,7 +503,6 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
     for (const h of e.hits) {
       if (!b.squadIds.includes(h.targetId)) continue;
       if (h.door) b.doorUsed.push(h.targetId);
-      if (!h.killed && h.damage > 0 && b.quirks[h.targetId] === 'grudge' && !b.grudged.includes(h.targetId)) b.grudged.push(h.targetId);
       if (h.killed && !b.falls.some((f) => f.pieceId === h.targetId)) {
         b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn });
         const dead = before.pieces.find((p) => p.id === h.targetId);

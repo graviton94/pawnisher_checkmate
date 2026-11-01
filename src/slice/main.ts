@@ -377,13 +377,14 @@ const finish = (): void => {
     const fallen: Crew[] = fallenList.map((f) => f.crew);
     // 폐기 원부: 영구 기록 (D-153)
     writeLedger(fallenList.map(({ crew, fall }) => ({ serial: crew.serial ?? '', name: crew.name ?? '', t: crew.t, quirk: crew.quirk, kills: crew.kills ?? 0, battles: crew.battles ?? 0, nick: crew.nick, cause: `${BATTLES[stage].title} ${fall.turn}턴 · ${fall.by}`, run: runId })));
-    // 덤 나사 기벽
-    const screwBonus = survived.filter((u) => u.quirk === 'screw').length * CREW.screwBonus;
-    gold += screwBonus;
     // 판 사이 기본 회복: 남은 분대 최대 HP의 30%
     squad = restSquad(survived);
-    // 유품 태엽이 먼저 (쓰러진 이름 하나마다 — 팔기 · 이식), 그다음 보상
-    if (fallen.length) return heirloomStep(fallen, () => rewardFlow(earned, overGold, fallen));
+    // 유품 태엽: 고르게 하지 않는다 — 자동으로 나사가 되고 한 줄만 (D-155, 관리 피로 제로)
+    const heirs = fallen.filter((c) => c.t !== 'K');
+    if (heirs.length) {
+      gold += heirs.length * CREW.heirloomScrews;
+      window.setTimeout(() => toast(`* ${heirs.map((c) => c.name).join(' · ')}의 태엽이 저울에 오른다. 나사 +${heirs.length * CREW.heirloomScrews}.`, 3000), 400);
+    }
     rewardFlow(earned, overGold, fallen);
   }, 700);
 };
@@ -535,47 +536,12 @@ const deathRites = async (): Promise<void> => {
   }
 };
 
-/** 유품 태엽 (쓰러진 분대원 하나마다): 나사로 팔기 · 산 분대원에게 이식(기벽을 물려받는다) */
-const heirloomStep = (fallen: Crew[], then: () => void): void => {
-  const queue = fallen.filter((c) => c.t !== 'K');
-  const next = (): void => {
-    const c = queue.shift();
-    if (!c) return then();
-    const heirs = squad.filter((u) => u.t !== 'K');
-    const q = c.quirk ? QUIRKS[c.quirk] : null;
-    const el = openOverlay(`<h2>유품 태엽 — ${crewLabel(c)} <span class="dim">${c.serial}</span></h2>
-      <p>* 처치 ${c.kills ?? 0} · 대국 ${c.battles ?? 0}. 가슴의 태엽만 남았다.${q ? ` 기벽 「${q.name}」.` : ''}</p>
-      <div class="row heirs">
-        <button class="btn" type="button" data-sell>팔기 — 나사 +${CREW.heirloomScrews}</button>
-        ${heirs.map((u, k) => `<button class="btn cyan" type="button" data-heir="${k}">${u.name}에게 이식${q ? ` (기벽 → ${q.name})` : ''}</button>`).join('')}
-      </div>`);
-    el.querySelector('[data-sell]')!.addEventListener('click', () => {
-      gold += CREW.heirloomScrews;
-      sfx('coin');
-      toast(`* 고물상이 태엽을 저울에 올린다. 나사 +${CREW.heirloomScrews}.`);
-      window.setTimeout(next, 300);
-    });
-    el.querySelectorAll<HTMLElement>('[data-heir]').forEach((btn) =>
-      btn.addEventListener('click', () => {
-        const h = heirs[Number(btn.dataset.heir)];
-        const i = squad.indexOf(h);
-        squad[i] = { ...h, quirk: c.quirk ?? h.quirk, scars: [...(h.scars ?? []), `${c.name}의 태엽`] };
-        squad[i].hp = Math.min(crewMaxHp(squad[i]), squad[i].hp ?? crewMaxHp(squad[i]));
-        sfx('awaken');
-        toast(`* ${h.name}의 가슴에 ${c.name}의 태엽이 들어간다.`);
-        window.setTimeout(next, 300);
-      }),
-    );
-  };
-  next();
-};
-
 /** 분대 보기: 이름 · 시리얼 · 기벽 · 처치 · 흉터 · 이름 바꾸기 · 폐기 원부 */
 const crewView = (): void => {
-  const el = openOverlay(`<h2>분대 ${squad.length}</h2><div class="crew-grid">${squad
+  const el = openOverlay(`<h2>분대 ${squad.length}</h2><div class="crew-list">${squad
     .map((u, k) => {
       const q = u.quirk ? QUIRKS[u.quirk] : null;
-      return `<div class="crew-card"><span class="rec-art">${pieceImg(u.t, 0, 'large', 40)}</span><div><b>${crewLabel(u)}</b> <span class="dim">${u.serial}</span><br><small>HP ${u.hp ?? crewMaxHp(u)} / ${crewMaxHp(u)} · 처치 ${u.kills ?? 0} · 대국 ${u.battles ?? 0}</small>${q ? `<br><small><span class="quirk">${q.name}</span> ${q.desc}</small>` : ''}${u.scars?.length ? `<br><small class="scar">${u.scars.join(' · ')}</small>` : ''}</div>${u.t !== 'K' ? `<button class="btn sm" type="button" data-rename="${k}">이름</button>` : ''}</div>`;
+      return `<div class="crew-row">${pieceImg(u.t, 0, 'small', 26)}<div><b>${crewLabel(u)}</b> <span class="dim">${u.serial} · HP ${u.hp ?? crewMaxHp(u)}/${crewMaxHp(u)} · 처치 ${u.kills ?? 0}</span>${q ? `<br><span class="quirk">${q.name}</span> <small>${q.desc}</small>` : ''}${u.scars?.length ? ` <small class="scar">· ${u.scars.join(' · ')}</small>` : ''}</div>${u.t !== 'K' ? `<button class="btn sm" type="button" data-rename="${k}">이름</button>` : '<span></span>'}</div>`;
     })
     .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
@@ -621,11 +587,11 @@ const recruitPick = (head: string, then: () => void): void => {
   // 셋이 서로 다른 이름 · 기벽
   const crews: Crew[] = [];
   for (const r of offers) crews.push(makeCrew(r.t, crewRng, [...squad, ...crews].map((u) => u.name ?? ''), crews.map((u) => u.quirk!).filter(Boolean)));
-  const el = openOverlay(`${head}<p>* 출하 대기열에서 기물 셋이 고개를 든다. 검수관이 불량 사유를 읽는다. 하나를 분대에 넣는다.</p><div class="part-cards">${offers
+  const el = openOverlay(`${head}<p>* 출하 대기열의 기물 셋. 하나를 분대에 넣는다.</p><div class="part-cards">${offers
     .map((r, k) => {
       const c = crews[k];
       const q = c.quirk ? QUIRKS[c.quirk] : null;
-      return `<button type="button" class="part-card recruit" data-rec="${k}"><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name} <span class="dim">${c.serial}</span></b>${q ? `<small class="quirk-line"><b>${q.name}</b> — “${q.reason}”<br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
+      return `<button type="button" class="part-card recruit" data-rec="${k}"><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name} <span class="dim">${c.serial}</span></b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
     })
     .join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-rec]').forEach((btn) =>

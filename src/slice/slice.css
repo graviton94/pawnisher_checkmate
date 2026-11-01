@@ -156,3 +156,8 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 .part-card.recruit .quirk-line { font-size: 12px; line-height: 1.35; }
 .part-card.recruit .kit-cards { font-size: 12px; }
 .ax-push.axis { background: #7ab8ff; }
+/* 분대 한 줄 (D-155) */
+.crew-list { display: grid; gap: 6px; max-height: 250px; overflow-y: auto; margin: 8px 0; }
+.crew-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; font-size: 14px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; }
+.crew-row small { font-size: 12px; color: #d6d0c6; }
+.crew-row .rename { grid-column: 1 / -1; }

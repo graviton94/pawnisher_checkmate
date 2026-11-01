@@ -5,13 +5,11 @@ import { Rng } from '../engine/rng';
  * 분대원 정체성 (R2 애착, D-153 — 레퍼런스 6권: 이름 1 + 기벽 1 + 짧은 말 한 줄이면 인격이 생긴다).
  * 공장 세계관: 출하 시리얼 + 검수관이 붙인 이름(개명 가능) + 「불량 검수 사유」 = 기벽 (양날).
  */
-export type QuirkId = 'overwound' | 'welded' | 'lens' | 'boiler' | 'brake' | 'grudge' | 'stubborn' | 'screw';
+export type QuirkId = 'overwound' | 'welded' | 'stubborn' | 'boiler';
 
 export interface QuirkDef {
   name: string;
-  /** 불량 검수 사유 (검수관 말투, 짧고 차갑게) */
-  reason: string;
-  /** 효과 한 줄 (장점 · 단점) */
+  /** 효과 한 줄 (짧게 — 카드 · 칩에 잘리지 않게) */
   desc: string;
   /** 공격 배율 */
   atk?: number;
@@ -23,19 +21,16 @@ export interface QuirkDef {
   doors?: number;
 }
 
+/** 기벽 4종 (D-155: 8 → 4, 눈에 보이는 수치만 — 숨은 발동 조건은 뺐다) */
 export const QUIRKS: Record<QuirkId, QuirkDef> = {
-  overwound: { name: '과감김 태엽', reason: '태엽을 세 바퀴 더 감았다.', desc: '공격 ×1.3 · 최대 HP −20%', atk: 1.3, hp: 0.8 },
-  welded: { name: '납땜된 흉갑', reason: '가슴판을 대충 땜질했다.', desc: '대국마다 방열판 12 · 공격 ×0.85', shield: 12, atk: 0.85 },
-  lens: { name: '어긋난 유리 눈', reason: '초점이 반 칸 틀어졌다.', desc: '처치하면 카드 한 장 · 최대 HP −15%', hp: 0.85 },
-  boiler: { name: '새는 보일러', reason: '증기가 샌다. 언제 터질지 모른다.', desc: '쓰러지면 둘레 적에게 20 · 문턱 없음', doors: 0 },
-  brake: { name: '풀린 브레이크', reason: '멈추지 못한다.', desc: '처치하면 태엽 +1 (턴에 한 번) · 최대 HP −25%', hp: 0.75 },
-  grudge: { name: '원한의 톱니', reason: '맞은 것을 기억한다.', desc: '맞으면 다음 공격 ×2 · 최대 HP −10%', hp: 0.9 },
-  stubborn: { name: '고집 센 축', reason: '쓰러져도 다시 선다.', desc: '문턱 두 번 · 공격 ×0.85', doors: 2, atk: 0.85 },
-  screw: { name: '덤 나사', reason: '나사 하나가 남았다.', desc: '이기면 나사 +10 · 최대 HP −10%', hp: 0.9 },
+  overwound: { name: '과감김 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
+  welded: { name: '납땜 흉갑', desc: '방열판 12 · 공격 −15%', shield: 12, atk: 0.85 },
+  stubborn: { name: '고집 센 축', desc: '문턱 2번 · 공격 −15%', doors: 2, atk: 0.85 },
+  boiler: { name: '새는 보일러', desc: '쓰러지면 둘레 폭발 20', doors: 0 },
 };
 
 /** 수치 (data — 근거 D-153) */
-export const CREW = { boilerBlast: 20, screwBonus: 10, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
+export const CREW = { boilerBlast: 20, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
 
 /** 검수관이 붙이는 이름 풀 (공장 · 고물 말투) */
 const NAMES = ['고철이', '나사못', '톱니', '녹슨발', '삐걱이', '땜쟁이', '굴대', '쇠뭉치', '반쪽', '덜컹이', '찌그렁', '용수철', '볼트', '너트', '쇳조각', '기름통', '헛바퀴', '못난이', '깡통', '절름발'];

@@ -55,11 +55,11 @@ export interface CommandDef {
 }
 
 export const COMMANDS: Record<CommandId, CommandDef> = {
-  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '폰 하나가 움직여 친다.' },
-  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '나이트 하나가 뛰어 친다.' },
-  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '비숍 하나가 사선으로 움직여 친다.' },
-  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '킹이 한 칸 움직여 둘레를 친다.' },
-  order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '아무 기물 하나가 움직여 친다.' },
+  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '움직여 친다.' },
+  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '뛰어넘어 친다.' },
+  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '사선으로 가서 친다.' },
+  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '한 칸 가서 둘레를 친다.' },
+  order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '아무 기물이 움직여 친다.' },
   pierceDiag: { axis: 'chain', name: '관통 사선', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '비숍 · 첫 적을 지나 한 기 더 맞힌다.' },
   crossLeap: { axis: 'cav', name: '십자 도약', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '나이트 · 내려앉은 칸 상하좌우로 50% 튄다.' },
   charge: { axis: 'inf', name: '돌격', cost: 1, who: 'P', kind: 'move', mult: 1.6, desc: '폰 · 이번 공격 ×1.6.' },
@@ -69,7 +69,7 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   kingBlow: { axis: 'king', name: '왕의 일격', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '킹 · 이번 공격 ×2.' },
   splashDiag: { axis: 'chain', name: '대각 튐', cost: 2, who: 'B', kind: 'move', carve: 'diag', desc: '비숍 · 내려앉은 칸 대각선으로 50% 튄다.' },
   smash: { axis: 'chain', name: '강타', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '아무 기물 · 이번 공격 ×1.5.' },
-  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '룩 하나가 곧게 움직여 친다.' },
+  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '곧게 가서 친다.' },
   // ---- 빌드 축 카드 (D-144) ----
   rebound: { axis: 'cav', name: '재도약', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '나이트 · 이번 턴 처치했으면 태엽 0.' },
   hoofKick: { axis: 'cav', name: '말발굽', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '나이트 · 처치하면 카드 한 장.' },
