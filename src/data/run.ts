@@ -1,19 +1,19 @@
-import type { CardId } from './cards';
-import type { EnchantId } from './enchants';
 import type { PieceType } from '../engine/types';
 import type { Deck } from '../engine/setup';
+import type { Grade } from './grades';
 
-/** 등반 구조와 경제 초기값 (GDD 8장). 모두 🔧 — 런 시뮬레이션으로 조정한다. */
+/** 등반 구조와 경제 (규격 2.0, GDD 14장 §3.5). 모두 🔧 — 자동 등반으로 조정한다. */
 
-export const FLOORS_PER_ACT = 12;
+/** 3공정 × 7층 = 21층 (일반 · 노드 6층 + 반장 1). 목표 한 출하 30~45분 */
+export const FLOORS_PER_ACT = 7;
 export const ACTS = 3;
 export const TOTAL_FLOORS = FLOORS_PER_ACT * ACTS;
-/** 층(1~36)이 속한 Act (1~3)와 Act 안에서의 층 (1~12) */
+/** 층이 속한 공정 (1~3)과 공정 안의 층 (1~7) */
 export const actOf = (floor: number): number => Math.ceil(floor / FLOORS_PER_ACT);
 export const inAct = (floor: number): number => ((floor - 1) % FLOORS_PER_ACT) + 1;
-export const ACT_NAMES = ['서막', '격돌', '초월'];
+export const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'];
 
-/** 런 시작 덱 후보 (GDD 6장 §6.3) */
+/** 시작 세트 후보 (작은 시작 = 이야기의 「따르는 건 몇뿐」) */
 export const START_DECKS: Deck[] = [
   ['K', 'P', 'N'],
   ['K', 'P', 'B'],
@@ -21,192 +21,146 @@ export const START_DECKS: Deck[] = [
 ];
 export const START_GOLD = 50;
 
-export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'altar' | 'event';
+/** 노드 6종 (규격 2.0) */
+export type NodeKind = 'battle' | 'elite' | 'boss' | 'shop' | 'forge' | 'event';
 
 export const NODE_NAMES: Record<NodeKind, string> = {
-  battle: '전투',
-  elite: '엘리트',
-  boss: '보스',
-  shop: '상점',
-  forge: '대장간',
-  altar: '크랙 제단',
-  event: '이벤트',
+  battle: '대국',
+  elite: '검문!',
+  boss: '반장 대국',
+  shop: '고물상',
+  forge: '공방',
+  event: '돌발',
 };
 
-/** 노드 등장 가중치 (층마다 2~3개를 뽑는다). */
-export const NODE_WEIGHTS: Record<Exclude<NodeKind, 'boss'>, number> = {
-  battle: 46,
-  elite: 12,
-  shop: 13,
-  forge: 11,
-  altar: 8,
-  event: 10,
-};
-/** 엘리트가 나오기 시작하는 Act 안 층 (Act 1은 5층, Act 2·3은 2층) */
-export const eliteFrom = (floor: number): number => (actOf(floor) === 1 ? 5 : 2);
+/** 노드 등장 가중치 (층마다 2~3개) */
+export const NODE_WEIGHTS: Record<Exclude<NodeKind, 'boss'>, number> = { battle: 46, elite: 13, shop: 14, forge: 12, event: 15 };
+/** 검문!이 나오기 시작하는 공정 안 층 (1공정은 3층, 2·3공정은 2층) */
+export const eliteFrom = (floor: number): number => (actOf(floor) === 1 ? 3 : 2);
 
-/**
- * 층별 보드 (GDD 8장 §8.3). coin(0~1)은 비대칭 보드 방향.
- * Act 1: 1~3층 6×6, 이후 8×8 · Act 2: 8×8, 엘리트 8×10/10×8 · Act 3: 8×10/10×8 · 36층 10×10
- */
-export const boardFor = (floor: number, kind: NodeKind = 'battle', coin = 0): { width: number; height: number } => {
-  const act = actOf(floor);
-  const long = coin < 0.5 ? { width: 8, height: 10 } : { width: 10, height: 8 };
-  if (floor === TOTAL_FLOORS) return { width: 10, height: 10 };
-  if (kind === 'boss' && act < 3) return { width: 8, height: 8 };
-  if (act === 1) return floor <= 3 ? { width: 6, height: 6 } : { width: 8, height: 8 };
-  if (act === 2) return kind === 'elite' ? long : { width: 8, height: 8 };
-  return kind === 'boss' ? { width: 10, height: 10 } : long;
+/** 판 크기: 일반 6×6 · 검문! 1공정 6×6, 이후 8×6 · 반장 · 도금왕 8×8 */
+export const boardFor = (floor: number, kind: NodeKind = 'battle'): { width: number; height: number } => {
+  if (kind === 'boss') return { width: 8, height: 8 };
+  if (kind === 'elite' && actOf(floor) >= 2) return { width: 8, height: 6 };
+  return { width: 6, height: 6 };
 };
 
 // ---------- 보상 ----------
-export const GOLD_REWARD = { battle: 25, elite: 55, boss: 100, perFloor: 3, perAct: 10 };
-/** 전투 골드: 기본 + Act 안 층 × 3 + (Act − 1) × 10 (층 전체로 키우면 Act 3에서 골드가 넘쳐 강화가 4~5유형 완성된다) */
-export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): number =>
-  GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor + (actOf(floor) - 1) * GOLD_REWARD.perAct;
+export const GOLD_REWARD = { battle: 30, elite: 60, boss: 100, perFloor: 3 };
+export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): number => GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor;
 /** 3지선다 건너뛰기 보상 */
 export const SKIP_GOLD = 10;
-/** 기물 3지선다 보상: Act 1은 매 승리 (초반은 덱빌딩 고민이 중심), Act 2·3은 2승마다 */
-export const pieceRewardDue = (floor: number, wins: number): boolean => actOf(floor) === 1 || wins % 2 === 0;
-export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 38, N: 22, B: 22, R: 12, Q: 6 };
+/** 기물 보상 가중치 */
+export const PIECE_REWARD_WEIGHTS: Record<Exclude<PieceType, 'K'>, number> = { P: 34, N: 24, B: 24, R: 12, Q: 6 };
+/** 군단 상한 · 유형별 상한 (체스 세트 규격) */
+export const DECK_MAX = 10;
+export const TYPE_MAX: Record<PieceType, number> = { K: 1, Q: 2, R: 3, B: 3, N: 3, P: 8 };
 
-/** 희귀 인챈트 (나머지는 일반). 엘리트·보스는 희귀 가중, 보스는 희귀 1장 확정. */
-export const RARE_ENCHANTS: EnchantId[] = ['E05', 'E06', 'E07', 'E09', 'E11', 'E15'];
-export const RARE_WEIGHT = { battle: 0.5, elite: 1.5, boss: 2 };
+/** 부품 등급 가중치 (커먼 · 레어 · 유니크 · 에픽) — 출처 · 공정별 */
+export const PART_GRADE_WEIGHT: Record<'shop' | 'elite' | 'boss' | 'event', [number, number, number, number][]> = {
+  shop: [[62, 30, 8, 0], [50, 36, 12, 2], [40, 40, 16, 4]],
+  elite: [[40, 45, 13, 2], [30, 48, 18, 4], [22, 48, 24, 6]],
+  boss: [[0, 30, 55, 15], [0, 20, 55, 25], [0, 10, 55, 35]],
+  event: [[30, 50, 18, 2], [25, 50, 20, 5], [20, 50, 24, 6]],
+};
+
 /**
- * 인챈트 3지선다가 이미 가진 인챈트 쪽으로 모이게 한다 (중반 "파츠 모으기" → 후반 시너지).
- * 1장 보유 → 2장째 가중치, 2장 보유 → ★3장째 가중치. Act 1에서는 ★이 드물고 Act 3에서 흔해진다.
+ * 양날 한 쌍 (Shotgun King 흑백 카드, 규격 2.0 §3.3): 검문! · 반장 보상은 「내 부품 하나 + 적 강화 하나」 묶음 셋 중 하나.
+ * 적 강화는 출하 끝까지 남는다. 계약 부품(1.0)이 여기로 녹았다.
  */
-export const STACK_WEIGHT = { second: [1.6, 2.2, 2.5], third: [0.3, 1.0, 1.5] };
-/** 덱 주력 유형(3기 이상)의 유형 인챈트 가중치 */
-export const TYPE_MATCH_WEIGHT = 1.5;
+export type ThreatId = 'pawnHp' | 'knightAtk' | 'bishopHp' | 'rookAtk' | 'queenHp' | 'kingHp' | 'allAtk' | 'allHp';
+export const THREATS: Record<ThreatId, { name: string; type?: PieceType; hp?: number; atk?: number }> = {
+  pawnHp: { name: '적 폰 HP +25%', type: 'P', hp: 1.25 },
+  knightAtk: { name: '적 나이트 공격 +20%', type: 'N', atk: 1.2 },
+  bishopHp: { name: '적 비숍 HP +25%', type: 'B', hp: 1.25 },
+  rookAtk: { name: '적 룩 공격 +20%', type: 'R', atk: 1.2 },
+  queenHp: { name: '적 퀸 HP +30%', type: 'Q', hp: 1.3 },
+  kingHp: { name: '적 킹 HP +20%', type: 'K', hp: 1.2 },
+  allAtk: { name: '적 전체 공격 +8%', atk: 1.08 },
+  allHp: { name: '적 전체 HP +8%', hp: 1.08 },
+};
+export const PAIR_OPTIONS = 3;
 
-/** 카드 3지선다는 엘리트·보스에서만. 소멸형은 희소하게 (사용자 결정: "이걸로 고비를 넘긴다"는 한 방) */
-export const CONSUME_CARD_WEIGHT = { elite: 0.35, boss: 0.6, shop: 0.4 };
-
-// ---------- 상점 ----------
+// ---------- 고물상 ----------
 export const SHOP = {
   pieces: 3,
-  cards: 2,
-  enchants: 1,
-  /** 기물 가격 = 가치 × 이 배율 */
+  carves: 2,
+  parts: 2,
+  /** 기물 값 = 가치 × 이 배율 */
   pieceMult: 1.6,
+  /** 공정마다 값 +25% */
+  actPriceStep: 0.25,
   /** 판매가 = 가치 × 이 배율 */
-  sellMult: 0.6,
-  cardPrice: { sustain: 55, consume: 85 },
-  enchantPrice: { common: 70, rare: 110 },
+  sellMult: 0.5,
+  partPrice: { common: 60, rare: 90, unique: 130, epic: 200 } as Record<Grade, number>,
   reroll: 15,
   rerollStep: 5,
 };
 
-// ---------- 대장간 ----------
-/** 다음 단계(+1 ~ +5)로 올리는 비용. 가파르게 오른다 (GDD 6장 §6.5) */
-export const FORGE_COST = [30, 45, 70, 105, 150];
-
-// ---------- 크랙 제단 ----------
-export const ALTAR = {
-  cost: 40,
-  /** 결과 확률: 희귀 인챈트 3지선다 / 상위 기물 / 꽝 */
-  odds: { enchant: 0.45, piece: 0.25 },
-  /** 꽝일 때 쌓이는 크랙 게이지. 가득 차면 다음 제단에서 원하는 인챈트 확정 */
-  gaugeMax: 3,
-};
-
 // ---------- 적 군단 ----------
-/**
- * 일반 전투 적 기물 수 (킹 포함). 플레이어 덱보다 조금 적게 시작해 따라 오른다.
- * 1층 2 · 2층 3 · 3층 4 · 4층 4 · 6층 5 · 8층 6 · 10층 7 (11층 7) (GDD 8장 §8.3의 3~5 / 6~10에서 조정, 런 시뮬레이션)
- */
-export const enemyCount = (floor: number): number => {
-  const act = actOf(floor);
-  const f = inAct(floor);
-  if (act === 1) return floor <= 3 ? 1 + floor : Math.min(10, 3 + Math.floor(floor / 2)); // 4층 5 → 11층 8
-  if (act === 2) return Math.min(15, 9 + Math.floor(f / 2)); // 9~14
-  return Math.min(16, 13 + Math.floor(f / 3)); // 13~16
-};
-/** 일반·엘리트 군단의 킹은 보스보다 약하다 — 1~3층 50%, 4~7층 70%, 8~11층 85%, Act 2 90%, Act 3·보스 100% (HP 기준).
- * 1~3층 적 킹은 특히 약하다 (도입 구간: 작은 덱으로 100 HP 킹을 끝내지 못해 킹 맞대결 동전 던지기가 되는 것을 막는다) */
-export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
-  if (actOf(floor) === 2) return { hp: 1, atk: 1 };
-  if (actOf(floor) === 3) return { hp: 1, atk: 1 };
-  return floor <= 3 ? { hp: 0.5, atk: 0.7 } : floor <= 7 ? { hp: 0.8, atk: 0.9 } : { hp: 0.95, atk: 1 };
-};
-/** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
-export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 0 };
-/** Act 3 일반 군단도 인챈트 1개를 가진다 (GDD 8장: "14~16기 + 카드·인챈트") */
-export const actEnchants = (floor: number, kind: NodeKind): number => {
-  const act = actOf(floor);
-  if (kind === 'elite') return act === 3 ? 3 : act === 2 ? 2 : ELITE_BONUS.enchants;
-  if (act === 3) return 2;
-  return act === 2 && inAct(floor) >= 6 ? 1 : 0;
-};
-/** 적 인챈트 중첩: Act 1 1장(8층부터 2장), Act 2 2장, Act 3 엘리트 3장(★)·일반 2장 */
-export const enemyEnchantStack = (floor: number, kind: NodeKind): number => {
-  const act = actOf(floor);
-  if (act === 3) return kind === 'elite' ? 3 : 2;
-  if (act === 2) return 2;
-  return floor >= 8 ? 2 : 1;
-};
-/** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2, Act 3 전부 2 */
+/** 일반 대국 적 기물 수 (킹 포함) — 공정 안 층별 */
+export const ENEMY_COUNT: number[][] = [
+  [2, 3, 3, 4, 4, 5],
+  [5, 5, 6, 6, 7, 7],
+  [6, 6, 7, 7, 8, 8],
+];
+export const enemyCount = (floor: number): number => ENEMY_COUNT[actOf(floor) - 1][Math.min(5, inAct(floor) - 1)];
+/** 적 수치 배율 (정적 디자인 — 적은 수치로만 강해진다) */
+export const ENEMY_SCALE = [
+  { hp: 1, atk: 1 },
+  { hp: 1.15, atk: 1.08 },
+  { hp: 1.28, atk: 1.14 },
+];
+/** 1공정 앞쪽 적 킹은 약하다 (작은 군단으로 100 HP 킹을 끝내지 못하는 동전 던지기 방지) */
+export const earlyKingHp = (floor: number): number => (floor <= 2 ? 0.5 : floor <= 4 ? 0.75 : 1);
+export const earlyKingAtk = (floor: number): number => (floor <= 2 ? 0.7 : 1);
+/** 적 AI 단계 (0~2) */
 export const enemyTier = (floor: number, kind: NodeKind): number => {
-  // 중반부터는 실수하지 않는 AI: 머리를 써야 이긴다
-  if (actOf(floor) >= 2 || kind === 'boss' || kind === 'elite' || floor >= 6) return 2;
-  return floor <= 3 ? 0 : 1;
+  if (actOf(floor) >= 2 || kind === 'boss') return 2;
+  if (floor <= 2) return 0;
+  return 1;
 };
-/** 적 대장간 강화: Act 1 없음, Act 2 +1~+3, Act 3 +4~+5 (후반에도 긴장이 남도록) */
-export const enemyForge = (floor: number): number => {
-  const act = actOf(floor);
-  if (act === 1) return 0;
-  return Math.min(5, (act === 2 ? 1 : 4) + Math.floor((inAct(floor) - 1) / 4));
-};
+/** 검문!: 기물 수 +1 · 정예 1기 (HP ×2) */
+export const ELITE = { pieces: 1 };
 
-/** 중간 보스 컨셉 (사용자 결정: 나이트·비숍·룩 컨셉 중 런마다 2개가 Act 1·2 보스) */
-export type BossId = 'knight' | 'bishop' | 'rook';
+/** 반장 6 (런마다 둘) + 도금왕 */
+export type BossId = 'knight' | 'bishop' | 'rook' | 'pawn' | 'variant' | 'affix';
 export interface BossDef {
   name: string;
   title: string;
+  /** 세계관 별칭 · 대사 한 줄 (D-091) */
+  role: string;
+  quote: string;
   deck: Deck;
-  enchants: Partial<Record<EnchantId, number>>;
-  cards: CardId[];
-  forge: Partial<Record<PieceType, number>>;
 }
 
 export const BOSSES: Record<BossId, BossDef> = {
-  knight: {
-    name: '기병 군주',
-    title: '나이트 4기 · 천둥기병',
-    // 나이트 4 = 초과 2 × (25 + 세금 10) = 70 → 비숍 2(50) + 폰 2(20) 희생
-    deck: ['K', 'Q', 'R', 'R', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'P'],
-    enchants: { E01: 3 },
-    cards: ['A01'],
-    forge: { N: 2 },
-  },
-  bishop: {
-    name: '사선의 대주교',
-    title: '비숍 4기 · 프리즘 레이저',
-    deck: ['K', 'Q', 'R', 'R', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'P'],
-    enchants: { E02: 3 },
-    cards: ['A03'],
-    forge: { B: 2 },
-  },
-  rook: {
-    name: '강철 성주',
-    title: '룩 3기 · 폭주 기관차',
-    // 룩 3 = 초과 1 × (40 + 세금 10) = 50 → 나이트 2(50) 희생
-    deck: ['K', 'Q', 'R', 'R', 'R', 'B', 'B', 'P', 'P', 'P', 'P', 'P', 'P'],
-    enchants: { E03: 3 },
-    cards: ['A06'],
-    forge: { R: 1 },
-  },
+  knight: { name: '나이트 반장', title: '나이트 넷', role: '주조 라인의 발굽', quote: '규격 밖은 밟고 간다.', deck: ['K', 'N', 'N', 'N', 'N', 'P', 'P', 'P', 'R'] },
+  bishop: { name: '비숍 반장', title: '비숍 넷', role: '조립 라인의 렌즈', quote: '삐뚤어진 건 빛에 다 보여.', deck: ['K', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'R'] },
+  rook: { name: '룩 반장', title: '룩 셋', role: '검수 라인의 마지막 문', quote: '여기서 끝이다.', deck: ['K', 'R', 'R', 'R', 'P', 'P', 'P', 'P', 'B'] },
+  pawn: { name: '폰 반장', title: '폰 여덟', role: '물량 라인의 감독', quote: '하나 부서지면 둘 찍는다.', deck: ['K', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'R'] },
+  variant: { name: '이형 반장', title: '각인 셋', role: '규격 외 부품 감독', quote: '규격? 그건 네 사정이고.', deck: ['K', 'B', 'N', 'P', 'P', 'P', 'R', 'Q', 'P'] },
+  affix: { name: '검문 반장', title: '서류 셋', role: '검문소의 끝', quote: '서류는 셋. 너는 셋까지만 둔다.', deck: ['K', 'N', 'N', 'B', 'P', 'P', 'R', 'Q', 'P'] },
 };
 
-/** 36층 최종 보스 (10×10 대성당 전면전). 퀸 2기 · 연쇄 지휘 ★ · 근위대 결속 */
+/** 도금왕 (D-132) */
 export const FINAL_BOSS: BossDef = {
-  name: '균열의 왕',
-  title: '퀸 2기 · 그랜드 피날레 · 근위대 결속',
-  // 퀸 2 = 초과 1 × (60 + 세금 10) = 70 → 나이트 1(25) + 비숍 1(25) + 폰 2(20) 희생
-  deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P', 'P', 'P'],
-  enchants: { E05: 3, E08: 3, E06: 2 },
-  cards: ['A06', 'C03'],
-  forge: { Q: 5, R: 3, K: 3 },
+  name: '도금왕',
+  title: '퀸 · 금칠 근위대',
+  role: '금을 칠한 첫 번째 킹',
+  quote: '그 왕관, 종이로군.',
+  deck: ['K', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P'],
 };
+/** 반장 수치: 공정 배율 위에 더 (2공정 반장은 조금 더 세다) */
+export const BOSS_SCALE = [
+  { hp: 0.9, atk: 0.9 },
+  { hp: 1.05, atk: 1.0 },
+  { hp: 1.05, atk: 1.0 },
+];
+/** 1공정 반장은 군단 앞쪽 7기만 데려온다 (B1: 9~10기 반장에 첫 반장 36%) */
+export const BOSS_ACT1_SIZE = 7;
+/** 거푸집 상인: 각인을 받는 적 기물 수 (B1: 전부 → 이형 반장 6%) */
+export const MOLDS_COUNT = 3;
+
+/** 오늘의 출하 (D-122): 압력 고정 */
+export const DAILY = { ascension: 1 };

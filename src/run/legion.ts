@@ -1,37 +1,49 @@
-import { ENCHANTS, type EnchantId } from '../data/enchants';
-import { BOSSES, ELITE_BONUS, FINAL_BOSS, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
-import { CARDS, type CardId } from '../data/cards';
-import { createBattle } from '../engine/setup';
-import type { BattleState } from '../engine/types';
-import type { Rng } from '../engine/rng';
-import type { Deck } from '../engine/setup';
-import type { Loadout, PieceType } from '../engine/types';
-import { canAdd } from './deck';
+import { ASC, ascOn } from '../data/ascension';
+import { FORESIGHT_UNTIL_ASCENSION, defaultRules } from '../data/battle';
+import { CARVE_IDS } from '../data/carves';
+import { BOSSES, BOSS_ACT1_SIZE, BOSS_SCALE, MOLDS_COUNT, ELITE, ENEMY_SCALE, FINAL_BOSS, THREATS, TOTAL_FLOORS, TYPE_MAX, actOf, boardFor, earlyKingAtk, earlyKingHp, enemyCount, enemyTier, type BossId, type NodeKind, type ThreatId } from '../data/run';
+import { BOSS_TWIST, type TwistId } from '../data/twists';
+import { Rng } from '../engine/rng';
+import { createBattle, toUnits, type Deck, type Scale, type Unit } from '../engine/setup';
+import type { BattleState, Loadout, PieceType } from '../engine/types';
 
-/** 한 라운드(전투)의 적 군단 (GDD 8장 §8.3) */
+/**
+ * 적 군단 (규격 2.0 §3.4 — Into the Breach 정적 디자인): 적은 수 · 수치 · AI 단계로만 강해진다.
+ * 검문!은 기물 +1 · 정예 1기, 반장은 비틀기 하나. 원형(폰 행렬 · 기병 · 사선 포대 · 방벽)은 구성의 맛일 뿐 규칙이 없다.
+ */
+export type ArchetypeId = 'horde' | 'cavalry' | 'battery' | 'rampart';
+export const ARCHETYPES: Record<ArchetypeId, { name: string; weight: Partial<Record<PieceType, number>>; from: number }> = {
+  horde: { name: '폰 행렬', weight: { P: 3, N: 0.5, B: 0.5 }, from: 1 },
+  cavalry: { name: '기병 기습대', weight: { N: 4, P: 0.6 }, from: 2 },
+  battery: { name: '사선 포대', weight: { B: 4, Q: 1, P: 0.6 }, from: 3 },
+  rampart: { name: '방벽 대열', weight: { R: 4, P: 1.2, N: 0.4, B: 0.4 }, from: 4 },
+};
+
+/** 한 대국의 적 군단 */
 export interface Encounter {
   kind: NodeKind;
   name: string;
   width: number;
   height: number;
-  deck: Deck;
-  loadout: Loadout;
+  deck: Unit[];
   /** 적 AI 단계 (0~2) */
   tier: number;
-  boss?: BossId;
+  boss?: BossId | 'final';
+  twist?: TwistId;
+  scale: Scale;
   seed: number;
   floor: number;
-  /** 승천 단계 (적 킹 보정 축소에 쓴다) */
   ascension?: number;
+  archetype?: ArchetypeId;
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */
 const pieceWeights = (floor: number): [PieceType, number][] => [
   ['P', Math.max(14, 50 - floor * 3)],
-  ['N', floor <= 3 ? 6 : 10 + floor],
-  ['B', floor <= 3 ? 6 : 10 + floor],
-  ['R', floor >= 5 ? 2 + floor : 0],
-  ['Q', floor >= 8 ? floor / 2 : 0],
+  ['N', floor <= 2 ? 6 : 10 + floor],
+  ['B', floor <= 2 ? 6 : 10 + floor],
+  ['R', floor >= 4 ? 2 + floor : 0],
+  ['Q', floor >= 9 ? floor / 2 : 0],
 ];
 
 const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
@@ -45,86 +57,89 @@ const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
   return items[items.length - 1][0];
 };
 
-/** 군단 기물 유형에 맞는 인챈트 후보 (유형 인챈트 + 전체·시스템 인챈트) */
-const TYPE_ENCHANT: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04' };
-const GENERAL: EnchantId[] = ['E05', 'E07', 'E08', 'E09'];
-
-export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0): Encounter => {
-  const seed = rng.int(1_000_000_000);
-  const tier = ascension >= 3 && kind === 'elite' ? 2 : enemyTier(floor, kind);
-  const baseForge = enemyForge(floor);
-
-  if (kind === 'boss' && (boss || floor === TOTAL_FLOORS)) {
-    const def = floor === TOTAL_FLOORS ? FINAL_BOSS : BOSSES[boss!];
-    const forge: Partial<Record<PieceType, number>> = {};
-    const actBonus = actOf(floor) === 2 ? 1 : 0; // Act 2 보스는 강화 +1 더
-    for (const t of new Set(def.deck)) forge[t] = Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0));
-    return {
-      kind,
-      name: `${def.name} — ${def.title}`,
-      ...boardFor(floor, 'boss'),
-      // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
-      deck: actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck],
-      loadout: { enchants: { ...def.enchants }, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge },
-      tier,
-      boss,
-      seed,
-      floor,
-      ascension,
-    };
-  }
-
-  const { width, height } = boardFor(floor, kind, rng.next());
-  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0);
-  const deck: Deck = ['K'];
-  let guard = 0;
-  while (deck.length < count && guard++ < 200) {
-    const options = pieceWeights(floor).filter(([t]) => canAdd(deck, t));
-    const t = pick(rng, options);
-    if (!t) break;
-    deck.push(t);
-  }
-
-  const forge: Partial<Record<PieceType, number>> = {};
-  const lv = baseForge + (kind === 'elite' ? ELITE_BONUS.forge : 0);
-  if (lv > 0) for (const t of new Set(deck)) forge[t] = lv;
-
-  const enchants: Partial<Record<EnchantId, number>> = {};
-  const pool = [...new Set(deck.map((t) => TYPE_ENCHANT[t]).filter((e): e is EnchantId => !!e)), ...GENERAL];
-  for (let i = 0; i < actEnchants(floor, kind) + (ascension >= 3 && kind === 'elite' ? 1 : 0) && pool.length; i++) {
-    const id = pool.splice(rng.int(pool.length), 1)[0];
-    enchants[id] = enemyEnchantStack(floor, kind);
-  }
-  // Act 3 엘리트는 지속형 카드 1장
-  const cards: CardId[] = [];
-  if (kind === 'elite' && actOf(floor) === 3) {
-    const sustain = (Object.keys(CARDS) as CardId[]).filter((c) => CARDS[c].limit.type !== 'consume');
-    cards.push(sustain[rng.int(sustain.length)]);
-  }
-  const names = Object.keys(enchants).map((id) => ENCHANTS[id as EnchantId].name);
-  return {
-    kind,
-    name: `${kind === 'elite' ? '정예 군단' : `${floor}층 군단`}${names.length ? ` — ${names.join(' · ')}` : ''}`,
-    width,
-    height,
-    deck,
-    loadout: { enchants, cards, forge },
-    tier,
-    seed,
-    floor,
-    ascension,
-  };
-};
-
-/** 런 전투를 만든다: 플레이어 덱·장비 대 군단 (+ 층별 적 킹 보정) */
-export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
-  const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
-  const scale = enemyKingScale(e.floor);
-  const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0));
-  for (const p of s.pieces) {
-    if (p.side !== 1 || p.type !== 'K') continue;
-    p.maxHp = p.hp = Math.round(p.maxHp * hpScale);
-    p.atk = Math.round(p.atk * scale.atk);
+/** 양날 쌍의 적 강화 → 유형별 배율 */
+export const threatScale = (threats: ThreatId[] = []): Scale => {
+  const s: Scale = { hp: 1, atk: 1, byType: {} };
+  for (const id of threats) {
+    const t = THREATS[id];
+    if (t.type) {
+      const cur = (s.byType![t.type] ??= {});
+      if (t.hp) cur.hp = (cur.hp ?? 1) * t.hp;
+      if (t.atk) cur.atk = (cur.atk ?? 1) * t.atk;
+    } else {
+      if (t.hp) s.hp *= t.hp;
+      if (t.atk) s.atk *= t.atk;
+    }
   }
   return s;
+};
+
+const mul = (a: Scale, hp: number, atk: number): Scale => ({ ...a, hp: a.hp * hp, atk: a.atk * atk });
+
+export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0, threats: ThreatId[] = []): Encounter => {
+  const seed = rng.int(1_000_000_000);
+  const act = actOf(floor);
+  const tier = ascOn(ascension, 'noForesight') && kind === 'elite' ? 2 : enemyTier(floor, kind);
+  let scale = mul(threatScale(threats), ENEMY_SCALE[act - 1].hp, ENEMY_SCALE[act - 1].atk);
+  if (ascOn(ascension, 'enemyHp')) scale = mul(scale, ASC.enemyHp.mult, 1);
+  if (ascOn(ascension, 'enemyAtk')) scale = mul(scale, 1, ASC.enemyAtk.mult);
+
+  if (kind === 'boss') {
+    const final = floor === TOTAL_FLOORS;
+    const id: BossId | 'final' = final ? 'final' : boss!;
+    const def = final ? FINAL_BOSS : BOSSES[boss!];
+    const bs = BOSS_SCALE[act - 1];
+    scale = mul(scale, bs.hp * (ascOn(ascension, 'bossHp') ? ASC.bossHp.mult : 1) * (final && ascOn(ascension, 'final') ? ASC.final.hp : 1), bs.atk);
+    const twist = BOSS_TWIST[id];
+    // 거푸집 상인: 적 기물마다 각인 하나 (킹 제외)
+    const base = toUnits(def.deck);
+    // 1공정 반장은 군단 앞쪽 일부만 (킹 포함)
+    const deck = act === 1 ? base.slice(0, BOSS_ACT1_SIZE) : base;
+    // 거푸집 상인: 적 기물 몇에 각인 하나씩 (킹 제외)
+    if (twist === 'molds') for (const u of deck.filter((x) => x.t !== 'K').slice(0, MOLDS_COUNT)) u.carve = CARVE_IDS[rng.int(CARVE_IDS.length)];
+    return { kind, name: `${def.name} — ${def.title}`, ...boardFor(floor, 'boss'), deck, tier, boss: id, twist, scale, seed, floor, ascension };
+  }
+
+  const { width, height } = boardFor(floor, kind);
+  const archOptions = (Object.keys(ARCHETYPES) as ArchetypeId[]).filter((id) => ARCHETYPES[id].from <= floor);
+  const archetype = archOptions[rng.int(archOptions.length)];
+  const arch = ARCHETYPES[archetype];
+  const weights = pieceWeights(floor).map(([t, w]): [PieceType, number] => [t, w * (arch.weight[t] ?? 1)]);
+  const count = enemyCount(floor) + (kind === 'elite' ? ELITE.pieces : 0) + (ascOn(ascension, 'extraPiece') ? 1 : 0);
+  const types: PieceType[] = ['K'];
+  for (let guard = 0; types.length < count && guard < 200; guard++) {
+    const options = weights.filter(([t]) => types.filter((x) => x === t).length < TYPE_MAX[t]);
+    const t = pick(rng, options);
+    if (!t) break;
+    types.push(t);
+  }
+  const deck: Unit[] = types.map((t) => ({ t }));
+  // 검문! 정예: 가장 비싼 일반 기물 한 기 (HP ×2, 표식 하나)
+  if (kind === 'elite') {
+    const order: PieceType[] = ['Q', 'R', 'B', 'N', 'P'];
+    const best = order.map((t) => deck.find((u) => u.t === t)).find((u) => !!u);
+    if (best) best.elite = true;
+  }
+  // 1공정 앞쪽 적 킹은 약하다
+  const kingHp = earlyKingHp(floor);
+  const kingAtk = earlyKingAtk(floor);
+  if (kingHp < 1 || kingAtk < 1) scale = { ...scale, byType: { ...scale.byType, K: { ...scale.byType?.K, hp: (scale.byType?.K?.hp ?? 1) * kingHp, atk: (scale.byType?.K?.atk ?? 1) * kingAtk } } };
+  return { kind, name: `${kind === 'elite' ? '정예 ' : ''}${arch.name}`, width, height, deck, tier, scale, seed, floor, ascension, archetype };
+};
+
+/** 군단(덱)과 부품으로 실제 대국 상태를 만든다 */
+export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
+  const rules = defaultRules(e.width, e.height);
+  const foresight = (e.ascension ?? 0) >= FORESIGHT_UNTIL_ASCENSION ? 0 : 1;
+  return createBattle({
+    width: e.width,
+    height: e.height,
+    decks: [deck, e.deck],
+    seed: e.seed,
+    loadouts: [{ parts: [...loadout.parts] }, { parts: [] }],
+    rules: { ...rules, foresight },
+    twist: e.twist,
+    enemyScale: e.scale,
+    myKingHp: ascOn(e.ascension, 'myKingHp') ? ASC.myKingHp.mult : undefined,
+  });
 };

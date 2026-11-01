@@ -1,7 +1,7 @@
 {
   "name": "pawnisher-checkmate",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",
+    "@iconify-json/game-icons": "^1.2.4",
+    "@iconify-json/tabler": "^1.2.43",
     "electron": "^38.8.6",
     "electron-builder": "^26.18.0",
     "typescript": "^5.9.3",

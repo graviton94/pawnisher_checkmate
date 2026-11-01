@@ -1,61 +1,46 @@
-import { LAST_STRIKE_MULT } from '../data/battle';
-import { CARDS, type CardUse } from '../data/cards';
-import { SYNERGY } from '../data/enchants';
+import { CHAIN } from '../data/battle';
+import { CARVE_FX } from '../data/carves';
+import { PART_FX } from '../data/parts';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
-import { at, buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
-import { attackScan, damageOf, ench, isStrikeMove, legalMoves, moveTypes, onEdge } from './rules';
-import {
-  isMove,
-  otherSide,
-  type BattleEvent,
-  type BattleState,
-  type HitResult,
-  type Piece,
-  type PieceType,
-  type Plan,
-  type PlannedMove,
-  type PlanStep,
-  type Pos,
-  type Side,
-} from './types';
+import { TWIST_FX } from '../data/twists';
+import { buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
+import { attackScan, damageOf, legalMoves, part, takenMult, twistOn } from './rules';
+import { otherSide, type BattleEvent, type BattleState, type HitResult, type Piece, type PieceType, type Plan, type PlannedMove, type PlanStep, type Pos, type Side } from './types';
 
-/** 이번 턴 가용 AP = 기본 + 이번 턴 보너스(요충지·이월 등) + 마공학 축전기 (E06 1장 +1, ★ +1) */
+/** 이번 턴 가용 태엽 = 기본 5 + 이번 턴 보너스 + 축전기 · 총동원령 */
 export const availableAp = (s: BattleState): number => {
   const side = s.turnSide;
-  const e06 = ench(s, side, 'E06');
-  return BASE_AP + s.apBonus[side] + (e06 >= 1 ? 1 : 0) + (e06 >= 3 ? 1 : 0);
+  return BASE_AP + s.apBonus[side] + (part(s, side, 'capacitor') ? 1 : 0) + (part(s, side, 'mobilize') ? PART_FX.mobilizeAp : 0);
 };
 
-/** 기물의 기본 이동 AP. 합체·폼 시프트면 가진 유형 중 가장 비싼 값, 태엽 행군(E04 ★)이면 폰은 0 */
+/** 기물의 이동 태엽: 기본값 − 태엽 각인 − 편자 질주(반장 나이트) */
 export const moveCost = (s: BattleState, piece: Piece): number => {
-  const types = moveTypes(piece);
-  if (types.length === 1 && types[0] === 'P' && ench(s, piece.side, 'E04') >= 3) return 0;
-  return Math.max(...types.map((t) => PIECE_STATS[t].ap));
+  let c = PIECE_STATS[piece.type].ap;
+  if (piece.carve === 'haste') c -= CARVE_FX.haste;
+  if (piece.type === 'N' && twistOn(s, piece, 'horseshoe')) c -= 1;
+  return Math.max(0, c);
 };
 
-/**
- * 정통 체스 승급: 폰이 상대 끝줄에 닿으면 퀸. HP 비율은 유지한다 (GDD 2장 §2.6).
- * 붕괴로 끝줄이 무너졌으면 남은 보드의 끝(바로 앞 칸이 보드 밖)이 끝줄이다.
- */
+/** 기물을 다른 유형으로 바꾼다. HP 비율은 유지한다 */
+const transform = (piece: Piece, to: PieceType): void => {
+  const st = PIECE_STATS[to];
+  const ratio = piece.hp / piece.maxHp;
+  const forged = piece.carve === 'forged';
+  piece.type = to;
+  piece.maxHp = Math.round(st.hp * (forged ? CARVE_FX.forgedHp : 1));
+  piece.hp = Math.max(1, Math.round(piece.maxHp * ratio));
+  piece.atk = Math.round(st.atk * (forged ? CARVE_FX.forgedAtk : 1));
+  piece.def = st.def;
+};
+
+/** 정통 체스 승급: 폰이 상대 끝줄(무너졌으면 남은 끝)에 닿으면 퀸 */
 export const applyPromotion = (s: BattleState, piece: Piece): boolean => {
-  if (piece.type !== 'P' || piece.fused) return false;
+  if (piece.type !== 'P') return false;
   if (piece.y !== lastRank(s, piece.side) && inBounds(s, piece.x, piece.y + forward(piece.side))) return false;
   transform(piece, 'Q');
   return true;
 };
 
-/** 기물을 다른 유형으로 바꾼다. HP 비율은 유지한다. */
-const transform = (piece: Piece, to: PieceType): void => {
-  const st = PIECE_STATS[to];
-  const ratio = piece.hp / piece.maxHp;
-  piece.type = to;
-  piece.maxHp = st.hp;
-  piece.hp = Math.max(1, Math.round(st.hp * ratio));
-  piece.atk = st.atk;
-  piece.def = st.def;
-};
-
-/** 기물 하나를 옮긴다 (승급 포함). 상태를 직접 바꾼다. */
 export const applyMove = (s: BattleState, piece: Piece, to: Pos): void => {
   piece.x = to.x;
   piece.y = to.y;
@@ -63,192 +48,171 @@ export const applyMove = (s: BattleState, piece: Piece, to: Pos): void => {
   applyPromotion(s, piece);
 };
 
-/** 진영에 킹만 남았으면 최후의 일격을 준비시킨다 (D-015) */
-export const checkAwaken = (s: BattleState, events: BattleEvent[]): void => {
-  for (const side of [0, 1] as const) {
-    if (s.lastStrike[side] !== 'none') continue;
-    const mine = s.pieces.filter((p) => p.side === side);
-    if (mine.length === 1 && mine[0].type === 'K') {
-      s.lastStrike[side] = 'ready';
-      events.push({ type: 'awaken', side, pieceId: mine[0].id });
-    }
-  }
-};
-
-/** 요충지에 올라섰거나 떠났을 때 점령 상태를 갱신한다 (GDD 5장 §5.4) */
-const updateHolder = (s: BattleState, piece: Piece): void => {
-  const sh = s.stronghold;
-  if (!sh) return;
-  if (piece.x === sh.x && piece.y === sh.y) {
-    sh.holderId = piece.id;
-    sh.hold = 0;
-  } else if (sh.holderId === piece.id) {
-    sh.holderId = null;
-    sh.hold = 0;
-  }
-};
-
 /** 이번 턴 진행 중 상태 (시뮬레이션 내부) */
 interface TurnCtx {
   side: Side;
   events: BattleEvent[];
   removed: Piece[];
-  /** 대상별 이번 턴 피격 횟수 (합동 십자포화) */
-  hitCount: Map<number, number>;
-  /** 턴 시작 시 아군 위치 (전술적 사선 개척) */
-  startPos: Map<number, Pos>;
   acted: Set<number>;
+  /** 이번 턴 처치 수 (연쇄 보너스) */
   kills: number;
-  knightApGiven: boolean;
-  /** 이번 턴 공격한 아군 나이트 수 (기병 편대 E13) */
-  knightAttacks: number;
+  order: number;
+  /** 턴당 한 번 효과 (기병 박차) · 여왕 거푸집 횟수 */
+  once: Set<string>;
+  queenAp: number;
 }
 
-interface AttackMods {
-  mult: number;
-  pierce: number;
-  knockback: boolean;
-  /** 맞은 적의 상하좌우에 주는 부가 피해 비율 */
-  splash: number;
-}
+const gainAp = (s: BattleState, ctx: TurnCtx, n: number) => {
+  s.apBonus[ctx.side] += n;
+  ctx.events.push({ type: 'apGain', side: ctx.side, amount: n });
+};
 
-/** 파괴된 기물을 치우고 처치 효과·승패·각성을 처리한다 */
-const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined): number => {
+/** 체크 보호: 공격받는 쪽 킹이 이번 턴 시작 때 HP 2 이상이었는가 */
+const checkGuarded = (s: BattleState, king: Piece): boolean => s.rules.checkmate && !!s.checkGuard?.includes(king.id);
+
+/** 피해를 준다 (방열판 먼저). 체크 · 비상 퓨즈로 버틸 수 있다 */
+const applyDamage = (s: BattleState, t: Piece, damage: number, splash = false): HitResult => {
+  const shieldAbsorbed = Math.min(t.shield, damage);
+  t.shield -= shieldAbsorbed;
+  t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
+  const checked = t.hp <= 0 && t.type === 'K' && checkGuarded(s, t);
+  if (checked) t.hp = 1;
+  const fuse = !checked && t.hp <= 0 && t.type !== 'K' && part(s, t.side, 'fuse') && !s.fuseUsed?.[t.side];
+  if (fuse) {
+    t.hp = 1;
+    (s.fuseUsed ??= [false, false])[t.side] = true;
+  }
+  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(fuse ? { fuse } : {}) };
+};
+
+/** 튐 (각인 · 번개 편자): 그 칸 주변 적에게 dmg × ratio */
+const splashAround = (s: BattleState, attacker: Piece, center: Pos, dirs: Pos[], dmg: number, ratio: number, skip: Set<number>): HitResult[] => {
+  const out: HitResult[] = [];
+  for (const d of dirs) {
+    const n = s.pieces.find((p) => p.x === center.x + d.x && p.y === center.y + d.y && p.side !== attacker.side && p.hp > 0);
+    if (!n || skip.has(n.id)) continue;
+    skip.add(n.id);
+    out.push(applyDamage(s, n, Math.max(1, Math.round(dmg * ratio * takenMult(s, attacker, n))), true));
+  }
+  return out;
+};
+const ORTHO: Pos[] = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+const DIAG: Pos[] = [{ x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }];
+
+/** 양산 라인 비틀기: 쓰러진 적 폰이 맨 뒷줄 빈칸에 다시 선다 */
+const respawnPawn = (s: BattleState, dead: Piece, ctx: TurnCtx): void => {
+  if ((s.respawns ?? 0) >= TWIST_FX.lineMax) return;
+  const y = s.height - 1;
+  const grid = buildGrid(s);
+  const xs = [...Array(s.width).keys()].sort((a, b) => Math.abs(a - dead.x) - Math.abs(b - dead.x));
+  const x = xs.find((cx) => inBounds(s, cx, y) && !grid[y * s.width + cx]);
+  if (x === undefined) return;
+  const st = PIECE_STATS.P;
+  const id = Math.max(...s.pieces.map((p) => p.id), ...ctx.removed.map((p) => p.id)) + 1;
+  s.pieces.push({ id, type: 'P', side: 1, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false });
+  s.respawns = (s.respawns ?? 0) + 1;
+  ctx.events.push({ type: 'respawn', pieceId: id, pos: { x, y } });
+};
+
+/** 쓰러진 기물을 치우고 처치 효과 · 승패를 처리한다. 적 처치 수를 돌려준다 */
+const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, depth = 0): number => {
   const dead = s.pieces.filter((p) => p.hp <= 0);
   if (!dead.length) return 0;
   for (const p of dead) ctx.removed.push({ ...p });
   s.pieces = s.pieces.filter((p) => p.hp > 0);
-  if (s.stronghold && s.stronghold.holderId !== null && !findPiece(s, s.stronghold.holderId)) {
-    s.stronghold.holderId = null;
-    s.stronghold.hold = 0;
+  for (const d of dead) {
+    // 도미노 공장 (에픽): 쓰러진 적의 상하좌우 적에게 — 한 번만 (연쇄 없음)
+    if (depth === 0 && part(s, otherSide(d.side), 'domino')) {
+      const hits = s.pieces
+        .filter((p) => p.side === d.side && p.hp > 0 && Math.abs(p.x - d.x) + Math.abs(p.y - d.y) === 1)
+        .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.maxHp * PART_FX.domino)), true));
+      if (hits.length) ctx.events.push({ type: 'blast', pos: { x: d.x, y: d.y }, label: '도미노', hits });
+    }
+    if (d.type === 'P' && twistOn(s, d, 'line')) respawnPawn(s, d, ctx);
   }
   const enemyKills = dead.filter((p) => p.side !== ctx.side).length;
   ctx.kills += enemyKills;
-
+  if (killer) {
+    const rec = (s.record ??= [{}, {}])[killer.side];
+    if (dead.some((p) => p.type === 'K' && p.side !== killer.side)) rec.finisher = killer.type;
+    if (enemyKills) rec.kills = (rec.kills ?? 0) + enemyKills;
+  }
   if (killer && enemyKills && findPiece(s, killer.id)) {
     const side = killer.side;
-    // 피의 진군 (E07)
-    const e07 = ench(s, side, 'E07');
-    if (e07 >= 1) {
-      const heal = Math.round(killer.maxHp * 0.25);
-      killer.hp = Math.min(killer.maxHp, killer.hp + heal);
-      ctx.events.push({ type: 'heal', pieceId: killer.id, amount: heal });
-    }
-    if (e07 >= 2) for (const p of s.pieces) if (p.side === side) p.hp = Math.min(p.maxHp, p.hp + 10);
-    if (e07 >= 3 && !killer.fused && !killer.formAs) {
-      const up: Partial<Record<PieceType, PieceType>> = { P: 'N', N: 'R', B: 'Q' };
-      const to = up[killer.type];
-      if (to) {
-        const from = killer.type;
-        transform(killer, to);
-        ctx.events.push({ type: 'promote', pieceId: killer.id, from, to });
+    if (part(s, side, 'blood')) {
+      const heal = Math.min(killer.maxHp - killer.hp, Math.round(killer.maxHp * PART_FX.blood));
+      if (heal > 0) {
+        killer.hp += heal;
+        ctx.events.push({ type: 'heal', pieceId: killer.id, amount: heal });
       }
     }
-    // 기병대 돌격 교리 1장: 나이트가 처치하면 그 턴 AP +1 (턴당 1회)
-    if (ench(s, side, 'E01') >= 1 && !ctx.knightApGiven && moveTypes(killer).includes('N')) {
-      ctx.knightApGiven = true;
-      s.apBonus[side] += 1;
-      ctx.events.push({ type: 'apGain', side, amount: 1 });
+    if (killer.type === 'P' && part(s, side, 'promo')) {
+      transform(killer, 'N');
+      ctx.events.push({ type: 'promote', pieceId: killer.id, from: 'P', to: 'N' });
+    }
+    if (killer.type === 'K' && part(s, side, 'tyrant')) {
+      for (const p of s.pieces) if (p.side === side) p.shield += PART_FX.tyrantShield;
+      ctx.events.push({ type: 'shield', pieceId: killer.id, amount: PART_FX.tyrantShield });
+    }
+    if (killer.type === 'N' && part(s, side, 'spur') && !ctx.once.has('spur')) {
+      ctx.once.add('spur');
+      gainAp(s, ctx, 1);
     }
   }
-
   const winner = !kingOf(s, otherSide(s.turnSide)) ? s.turnSide : !kingOf(s, s.turnSide) ? otherSide(s.turnSide) : null;
   if (winner !== null) {
     s.winner = winner;
     ctx.events.push({ type: 'gameOver', winner });
     return enemyKills;
   }
-  checkAwaken(s, ctx.events);
+  // 도미노 · 반격으로 쓰러진 기물 정리
+  if (s.pieces.some((p) => p.hp <= 0)) resolveDeaths(s, ctx, undefined, depth + 1);
   return enemyKills;
 };
 
-/** 대상에 피해를 준다. 근위대 결속 ★이면 킹 피해를 붙어 있는 아군이 대신 받는다. */
-/**
- * 체크메이트 보호: 공격받는 쪽 킹이 이번 턴 시작 때 HP 2 이상이었는가.
- * 시뮬레이션 시작 시 s.checkGuard에 기록한다.
- */
-const checkGuarded = (s: BattleState, king: Piece): boolean => !!s.rules.checkmate && !!s.checkGuard?.includes(king.id);
-
-const applyDamage = (s: BattleState, target: Piece, damage: number, splash = false): HitResult => {
-  let t = target;
-  if (t.type === 'K' && ench(s, t.side, 'E08') >= 3) {
-    const guard = s.pieces
-      .filter((p) => p.side === t.side && p.id !== t.id && p.hp > 0 && chebyshev(p, t) === 1)
-      .sort((a, b) => b.hp - a.hp || a.id - b.id)[0];
-    if (guard) t = guard;
-  }
-  const shieldAbsorbed = Math.min(t.shield, damage);
-  t.shield -= shieldAbsorbed;
-  t.hp = Math.max(0, t.hp - (damage - shieldAbsorbed));
-  // 체크메이트 (D-022): 이번 턴 보호받는 킹은 HP 1에서 버틴다 — 다음 상대 턴에 맞으면 끝
-  const checked = t.hp <= 0 && t.type === 'K' && checkGuarded(s, t);
-  if (checked) t.hp = 1;
-  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}) };
-};
-
-const SLIDERS: PieceType[] = ['B', 'R', 'Q'];
-
-/** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 파괴된 기물은 즉시 제거한다. 처치 수를 돌려준다. */
-const performAttack = (s: BattleState, attacker: Piece, order: number, ctx: TurnCtx, mods: AttackMods): number => {
-  const grid = buildGrid(s);
-  const { targets, area } = attackScan(s, attacker, grid, { pierce: mods.pierce });
-  let mult = mods.mult;
-
-  // 곱연산 시너지 (D-026): 같은 유형 수 · 앞선 공격 · 처치 연쇄에 비례
-  const types = moveTypes(attacker);
-  const lv = (id: 'E12' | 'E13' | 'E14' | 'E15') => ench(s, attacker.side, id);
-  const own = (t: PieceType) => s.pieces.filter((p) => p.side === attacker.side && p.hp > 0 && p.type === t).length;
-  if (lv('E12') && types.includes('P')) mult *= 1 + own('P') * SYNERGY.E12[lv('E12') - 1];
-  if (lv('E13') && types.includes('N')) mult *= 1 + ctx.knightAttacks * SYNERGY.E13[lv('E13') - 1];
-  if (lv('E14') && types.includes('B')) mult *= 1 + Math.max(0, own('B') - (attacker.type === 'B' ? 1 : 0)) * SYNERGY.E14[lv('E14') - 1];
-  if (lv('E15') && ctx.kills > 0) mult *= SYNERGY.E15[lv('E15') - 1] ** ctx.kills;
-  if (types.includes('N')) ctx.knightAttacks += 1;
-
-  // 전술적 사선 개척 (E09): 이번 턴 비켜 준 아군 덕에 열린 사선으로 치면 보너스
-  const e09 = ench(s, attacker.side, 'E09');
-  if (e09 >= 1 && moveTypes(attacker).some((t) => SLIDERS.includes(t))) {
-    const opened = [...ctx.startPos.entries()].some(
-      ([id, pos]) => id !== attacker.id && ctx.acted.has(id) && area.some((a) => samePos(a, pos)) && !at(s, grid, pos.x, pos.y),
-    );
-    if (opened) mult *= e09 >= 2 ? 1.6 : 1.3;
-  }
-
+/** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 처치 수를 돌려준다 */
+const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number): number => {
+  const { targets, area } = attackScan(s, attacker);
+  let mult = baseMult;
+  // 연쇄 보너스 (D-077): 이번 턴 앞 순번 처치 수만큼
+  if (ctx.kills > 0) mult *= 1 + Math.min(ctx.kills, CHAIN.cap) * CHAIN.perKill;
+  const side = attacker.side;
   const hits: HitResult[] = [];
-  const primary = new Set(targets.map((t) => t.id));
+  const counters: { by: number; hit: HitResult }[] = [];
+  const skip = new Set(targets.map((t) => t.id));
+  const land = { x: attacker.x, y: attacker.y };
+  let landDmg = 0;
   for (const t of targets) {
     if (t.hp <= 0) continue;
     let dmg = damageOf(s, attacker, t, mult);
-    if (e09 >= 3 && (ctx.hitCount.get(t.id) ?? 0) >= 1) dmg *= 2;
+    if (part(s, side, 'blade') && t.hp <= t.maxHp * PART_FX.bladeAt) dmg = Math.round(dmg * PART_FX.blade);
+    if (t.type === 'K' && part(s, side, 'hunter')) dmg = Math.round(dmg * PART_FX.hunter);
+    landDmg = Math.max(landDmg, dmg);
     const origin = { x: t.x, y: t.y };
     const hit = applyDamage(s, t, dmg);
-    ctx.hitCount.set(t.id, (ctx.hitCount.get(t.id) ?? 0) + 1);
-
-    // 증기 충격파 (A04): 공격 방향으로 1칸 밀어냄
-    const victim = findPiece(s, hit.targetId)!;
-    if (mods.knockback && victim.hp > 0) {
-      const dx = Math.sign(victim.x - attacker.x);
-      const dy = Math.sign(victim.y - attacker.y);
-      const to = { x: victim.x + dx, y: victim.y + dy };
-      if (inBounds(s, to.x, to.y) && !at(s, buildGrid(s), to.x, to.y)) {
-        victim.x = to.x;
-        victim.y = to.y;
-        updateHolder(s, victim);
-        hit.pushedTo = to;
-      }
-    }
     hits.push(hit);
-
-    // 번개·연쇄 (E01 2장·★, C03): 맞은 적의 상하좌우 적에게 부가 피해
-    if (mods.splash > 0) {
-      for (const d of [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }]) {
-        const n = s.pieces.find((p) => p.x === origin.x + d.x && p.y === origin.y + d.y && p.side !== attacker.side && p.hp > 0);
-        if (!n || primary.has(n.id)) continue;
-        hits.push(applyDamage(s, n, Math.max(1, Math.floor(dmg * mods.splash)), true));
-        ctx.hitCount.set(n.id, (ctx.hitCount.get(n.id) ?? 0) + 1);
+    // 반격 톱니: 맞고 살아남으면 일부를 되돌린다
+    if (part(s, t.side, 'counterCog') && hit.damage > 0 && t.hp > 0 && attacker.hp > 0) counters.push({ by: t.id, hit: applyDamage(s, attacker, Math.max(1, Math.round(hit.damage * PART_FX.counter)), true) });
+    // 번개 편자: 나이트가 맞힌 적의 상하좌우로
+    if (attacker.type === 'N' && part(s, side, 'bolt')) hits.push(...splashAround(s, attacker, origin, ORTHO, dmg, PART_FX.bolt, skip));
+  }
+  // 튐 각인: 착지 칸 주변으로 (이 공격에서 가장 큰 피해 기준)
+  if (landDmg > 0 && attacker.carve === 'cross') hits.push(...splashAround(s, attacker, land, ORTHO, landDmg, CARVE_FX.splash, skip));
+  if (landDmg > 0 && attacker.carve === 'diag') hits.push(...splashAround(s, attacker, land, DIAG, landDmg, CARVE_FX.splash, skip));
+  ctx.events.push({ type: 'attack', order: ctx.order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  // 양산 명령서: 폰이 치면 그 적에 붙어 있는 다른 아군 폰도 50%로
+  if (attacker.type === 'P' && part(s, side, 'phalanx')) {
+    for (const h of hits.filter((x) => !x.splash)) {
+      const t = findPiece(s, h.targetId);
+      if (!t || t.hp <= 0) continue;
+      for (const mate of s.pieces.filter((p) => p.side === side && p.type === 'P' && p.id !== attacker.id && p.hp > 0 && chebyshev(p, t) === 1)) {
+        if (t.hp <= 0) break;
+        const hit = applyDamage(s, t, Math.max(1, Math.round(damageOf(s, mate, t, mult) * PART_FX.phalanx)), true);
+        ctx.events.push({ type: 'attack', order: ctx.order, attackerId: mate.id, area: [{ x: t.x, y: t.y }], hits: [hit] });
       }
     }
   }
-  ctx.events.push({ type: 'attack', order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  for (const c of counters) ctx.events.push({ type: 'attack', order: ctx.order, attackerId: c.by, area: [], hits: [c.hit] });
   return resolveDeaths(s, ctx, attacker);
 };
 
@@ -263,304 +227,75 @@ export interface Simulation {
   removed: Piece[];
 }
 
-/** 이 예약에 쓸 카드 슬롯 (없으면 null). 잘못된 카드면 이유 문자열. */
-const cardFor = (s: BattleState, side: Side, step: PlanStep, use: CardUse): number | null | string => {
-  const idx = 'card' in step ? step.card : undefined;
-  if (idx === undefined) return null;
-  const slot = s.cards[side][idx];
-  if (!slot) return '없는 카드';
-  if (slot.spent || slot.cooldown > 0) return '쓸 수 없는 카드';
-  if (CARDS[slot.id].use !== use) return '맞지 않는 카드';
-  return idx;
-};
-
-/** 카드를 사용 처리한다 (라운드당 1회·소멸 → spent, 쿨타임 → cooldown) */
-const spendCard = (s: BattleState, side: Side, idx: number, pieceId: number, events: BattleEvent[]) => {
-  const slot = s.cards[side][idx];
-  const lim = CARDS[slot.id].limit;
-  if (lim.type === 'cooldown') slot.cooldown = lim.turns + 1;
-  else slot.spent = true;
-  events.push({ type: 'card', side, card: slot.id, pieceId });
-};
-
-/** 처형자의 진격(C06) 대상인가: HP 30% 이하 적 일반 기물 */
-const executable = (p: Piece | undefined, side: Side): p is Piece => !!p && p.side !== side && p.type !== 'K' && p.hp <= p.maxHp * 0.3;
-
-/** 이 이동 예약이 갈 수 있는 칸인가 (처형자의 진격이면 대상 적 칸 포함) */
-const moveReachable = (s: BattleState, piece: Piece, to: Pos, execute: boolean): boolean => {
-  if (!execute) return legalMoves(s, piece).some((p) => samePos(p, to));
-  const victim = s.pieces.find((p) => p.x === to.x && p.y === to.y);
-  if (!executable(victim, piece.side)) return false;
-  const without = { ...s, pieces: s.pieces.filter((p) => p !== victim) };
-  return legalMoves(without, piece).some((p) => samePos(p, to));
-};
-
-const ownHalf = (s: BattleState, side: Side, y: number) => (side === 0 ? y < s.height / 2 : y >= s.height / 2);
-
-/** 정면이 막혀 이동할 수 없는 폰인가 (E04 2장 제자리 공격 조건) */
-export const pawnBlocked = (s: BattleState, piece: Piece): boolean =>
-  piece.type === 'P' && !piece.fused && !piece.formAs && !legalMoves(s, piece).some((p) => p.x === piece.x && p.y === piece.y + forward(piece.side));
-
-/** 합체 가능한 조합인가 (카드면 킹 외 아무 조합, 인챈트면 E11 단계별 해금) */
-export const canFuse = (s: BattleState, a: Piece, b: Piece, withCard: boolean): boolean => {
-  if (a.side !== b.side || a.id === b.id || a.type === 'K' || b.type === 'K' || a.fused || b.fused) return false;
-  if (chebyshev(a, b) !== 1) return false;
-  if (withCard) return true;
-  const lv = ench(s, a.side, 'E11');
-  const pair = [a.type, b.type].sort().join('');
-  return (lv >= 1 && pair === 'BN') || (lv >= 2 && pair === 'NR');
-};
+/** 이 진영의 한 턴 명령 상한 (서류 검문) */
+const orderCap = (s: BattleState, side: Side): number => (side === 0 && s.twist === 'papers' ? TWIST_FX.papersMax : Infinity);
 
 /**
  * 계획을 예약 순서대로 실행한다: #1 이동 → #1 공격 → #2 이동 → #2 공격 … (GDD 1장 §1.5).
- * 계획 검증, 미리보기, 실제 실행이 모두 이 함수 하나를 쓴다. 입력 상태는 바꾸지 않는다.
+ * 계획 검증, 미리보기, AI, 실제 실행이 모두 이 함수 하나를 쓴다. 입력 상태는 바꾸지 않는다.
  */
-export const simulate = (input: BattleState, plan: Plan): Simulation => {
+export interface SimOptions {
+  /** 이번 턴 앞서 처치한 수 (명령 카드가 한 장씩 실행될 때 연쇄 보너스를 이어 간다) */
+  kills?: number;
+  /** 이 계획 전체에 곱할 공격 배율 (카드 효과) */
+  mult?: number;
+  /** 태엽 검사를 건너뛴다 (카드가 태엽을 따로 셀 때) */
+  freeAp?: boolean;
+}
+
+export const simulate = (input: BattleState, plan: Plan, opts: SimOptions = {}): Simulation => {
   const s = cloneState(input);
   const side = input.turnSide;
   s.checkGuard = s.pieces.filter((p) => p.type === 'K' && p.side !== side && p.hp > 1).map((p) => p.id);
-  const ctx: TurnCtx = {
-    side,
-    events: [],
-    removed: [],
-    hitCount: new Map(),
-    startPos: new Map(s.pieces.filter((p) => p.side === side).map((p) => [p.id, { x: p.x, y: p.y }])),
-    acted: new Set(),
-    kills: 0,
-    knightApGiven: false,
-    knightAttacks: 0,
-  };
+  s.relaunch = [];
+  const ctx: TurnCtx = { side, events: [], removed: [], acted: new Set(), kills: opts.kills ?? 0, order: 0, once: new Set(), queenAp: 0 };
   let apUsed = 0;
   let prevKilled = false;
   const fail = (reason: string): Simulation => ({ ok: false, reason, state: s, events: ctx.events, apUsed, removed: ctx.removed });
-  const own = (id: number) => {
-    const p = findPiece(s, id);
-    return p && p.side === side ? p : undefined;
-  };
+  if (plan.length > orderCap(s, side)) return fail('명령이 너무 많다');
 
   for (let order = 0; order < plan.length; order++) {
     const step = plan[order];
-    if (s.winner !== null) return fail('전투 종료');
-    const piece = own(step.pieceId);
-    if (!piece) return fail('없는 기물');
-    const acting = step.kind !== 'shield' && step.kind !== 'formShift';
-    if (acting && ctx.acted.has(piece.id)) return fail('이미 행동한 기물');
-
-    // 기본 배율: 연쇄 지휘 체계 1장 (앞 순번이 처치했으면 +30%)
-    const baseMult = ench(s, side, 'E05') >= 1 && prevKilled ? 1.3 : 1;
-    const mods: AttackMods = { mult: baseMult, pierce: 0, knockback: false, splash: 0 };
-    if (moveTypes(piece).includes('N')) {
-      const e01 = ench(s, side, 'E01');
-      if (e01 >= 2) mods.splash = e01 >= 3 ? 1 : 0.5;
-    }
-    let attackers: Piece[] = [];
-    let repeats = 1;
-    let cost = 0;
-    let cardIdx: number | null = null;
-
-    switch (step.kind) {
-      case undefined:
-      case 'move': {
-        const c = cardFor(s, side, step, 'attach');
-        if (typeof c === 'string') return fail(c);
-        cardIdx = c;
-        const cardId = c !== null ? s.cards[side][c].id : null;
-        const execute = cardId === 'C06';
-        if (!moveReachable(s, piece, step.to, execute)) return fail('갈 수 없는 칸');
-        cost = moveCost(s, piece);
-        if (ench(s, side, 'E10') >= 2 && onEdge(s, piece) && onEdge(s, step.to)) cost -= 1;
-        if (cardId === 'A01') cost -= 1;
-        cost = Math.max(0, cost);
-        if (apUsed + cost > availableAp(s)) return fail('AP 부족');
-
-        if (execute) {
-          const victim = s.pieces.find((p) => p.x === step.to.x && p.y === step.to.y)!;
-          const hit = applyDamage(s, victim, victim.hp + victim.shield);
-          ctx.events.push({ type: 'attack', order, attackerId: piece.id, area: [{ ...step.to }], hits: [hit] });
-          resolveDeaths(s, ctx, piece);
-          if (s.winner !== null) break;
-        }
-        const from = { x: piece.x, y: piece.y };
-        const before = piece.type;
-        const strike = isStrikeMove(s, piece, step.to);
-        applyMove(s, piece, step.to);
-        updateHolder(s, piece);
-        ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
-        if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
-        if (strike) {
-          s.lastStrike[side] = 'used';
-          ctx.events.push({ type: 'lastStrike', pieceId: piece.id });
-          mods.mult *= LAST_STRIKE_MULT;
-        }
-        // 증기 기관 장갑 (E03)
-        if (moveTypes(piece).includes('R')) {
-          const e03 = ench(s, side, 'E03');
-          const dist = chebyshev(from, step.to);
-          if (e03 >= 1) {
-            piece.shield += dist * 3;
-            ctx.events.push({ type: 'shield', pieceId: piece.id, amount: dist * 3 });
-          }
-          if (e03 >= 3) {
-            // 폭주 기관차: 지나온 칸 옆의 적에게 돌진 피해
-            const dx = Math.sign(step.to.x - from.x);
-            const dy = Math.sign(step.to.y - from.y);
-            const rams: HitResult[] = [];
-            for (let i = 1; i <= dist; i++) {
-              const cx = from.x + dx * i;
-              const cy = from.y + dy * i;
-              for (const d of [{ x: dy, y: dx }, { x: -dy, y: -dx }]) {
-                const e = s.pieces.find((p) => p.x === cx + d.x && p.y === cy + d.y && p.side !== side && p.hp > 0);
-                if (e) rams.push(applyDamage(s, e, Math.max(1, Math.floor(piece.atk * 0.5) - e.def), true));
-              }
-            }
-            if (rams.length) {
-              ctx.events.push({ type: 'attack', order, attackerId: piece.id, area: [], hits: rams });
-              resolveDeaths(s, ctx, piece);
-            }
-          }
-        }
-        if (cardId === 'A03') mods.pierce = 1;
-        if (cardId === 'A04') mods.knockback = true;
-        if (cardId === 'C01') repeats += 1;
-        if (cardId === 'C03') {
-          mods.mult *= 1.8;
-          mods.splash = Math.max(mods.splash, 0.5);
-        }
-        attackers = [piece];
-        ctx.acted.add(piece.id);
-        break;
-      }
-      case 'stand': {
-        if (ench(s, side, 'E04') < 2 || !pawnBlocked(s, piece)) return fail('제자리 공격 불가');
-        cost = ench(s, side, 'E04') >= 3 ? 0 : 1;
-        if (apUsed + cost > availableAp(s)) return fail('AP 부족');
-        attackers = [piece];
-        ctx.acted.add(piece.id);
-        break;
-      }
-      case 'castle': {
-        const c = cardFor(s, side, step, 'castle');
-        if (c === null || typeof c === 'string') return fail(typeof c === 'string' ? c : '카드 필요');
-        cardIdx = c;
-        const partner = own(step.partnerId);
-        if (!partner || ctx.acted.has(partner.id) || partner.id === piece.id) return fail('교환 대상 없음');
-        if (piece.x !== partner.x && piece.y !== partner.y) return fail('같은 행/열이 아님');
-        cost = CARDS.A02.ap;
-        if (apUsed + cost > availableAp(s)) return fail('AP 부족');
-        const a = { x: piece.x, y: piece.y };
-        const b = { x: partner.x, y: partner.y };
-        piece.x = b.x;
-        piece.y = b.y;
-        partner.x = a.x;
-        partner.y = a.y;
-        piece.moved = partner.moved = true;
-        updateHolder(s, piece);
-        updateHolder(s, partner);
-        ctx.events.push({ type: 'move', order, pieceId: piece.id, from: a, to: b });
-        ctx.events.push({ type: 'move', order, pieceId: partner.id, from: b, to: a });
-        attackers = [piece, partner];
-        ctx.acted.add(piece.id);
-        ctx.acted.add(partner.id);
-        break;
-      }
-      case 'shield': {
-        const c = cardFor(s, side, step, 'shield');
-        if (c === null || typeof c === 'string') return fail(typeof c === 'string' ? c : '카드 필요');
-        cardIdx = c;
-        piece.shield += 25;
-        ctx.events.push({ type: 'shield', pieceId: piece.id, amount: 25 });
-        break;
-      }
-      case 'gate': {
-        const c = cardFor(s, side, step, 'gate');
-        if (c === null || typeof c === 'string') return fail(typeof c === 'string' ? c : '카드 필요');
-        cardIdx = c;
-        if (!inBounds(s, step.to.x, step.to.y) || at(s, buildGrid(s), step.to.x, step.to.y) || !ownHalf(s, side, step.to.y)) {
-          return fail('도약할 수 없는 칸');
-        }
-        cost = moveCost(s, piece);
-        if (apUsed + cost > availableAp(s)) return fail('AP 부족');
-        const from = { x: piece.x, y: piece.y };
-        applyMove(s, piece, step.to);
-        updateHolder(s, piece);
-        ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
-        attackers = [piece];
-        ctx.acted.add(piece.id);
-        break;
-      }
-      case 'promote': {
-        const c = cardFor(s, side, step, 'promote');
-        if (c === null || typeof c === 'string') return fail(typeof c === 'string' ? c : '카드 필요');
-        if (piece.type !== 'P' || piece.fused) return fail('폰이 아님');
-        cardIdx = c;
-        transform(piece, 'Q');
-        ctx.events.push({ type: 'promote', pieceId: piece.id, from: 'P', to: 'Q' });
-        attackers = [piece];
-        ctx.acted.add(piece.id);
-        break;
-      }
-      case 'fuse': {
-        const c = step.card !== undefined ? cardFor(s, side, step, 'fuse') : null;
-        if (typeof c === 'string') return fail(c);
-        cardIdx = c;
-        const partner = own(step.partnerId);
-        if (!partner || ctx.acted.has(partner.id) || !canFuse(s, piece, partner, c !== null)) return fail('합체 불가');
-        cost = ench(s, side, 'E11') >= 3 ? 0 : CARDS.C05.ap;
-        if (apUsed + cost > availableAp(s)) return fail('AP 부족');
-        const types = [...new Set([...moveTypes(piece), ...moveTypes(partner)])];
-        const main = PIECE_STATS[partner.type].value > PIECE_STATS[piece.type].value ? partner.type : piece.type;
-        piece.type = main;
-        piece.fused = types;
-        piece.formAs = null;
-        piece.hp += partner.hp;
-        piece.maxHp += partner.maxHp;
-        piece.atk = Math.max(piece.atk, partner.atk);
-        piece.def = Math.max(piece.def, partner.def);
-        piece.shield += partner.shield;
-        piece.moved = true;
-        s.pieces = s.pieces.filter((p) => p.id !== partner.id);
-        if (s.stronghold?.holderId === partner.id) {
-          s.stronghold.holderId = null;
-          s.stronghold.hold = 0;
-        }
-        ctx.events.push({ type: 'fuse', pieceId: piece.id, partnerId: partner.id, types });
-        if (ench(s, side, 'E11') >= 3) repeats += 1;
-        attackers = [piece];
-        ctx.acted.add(piece.id);
-        ctx.acted.add(partner.id);
-        break;
-      }
-      case 'formShift': {
-        const c = cardFor(s, side, step, 'formShift');
-        if (c === null || typeof c === 'string') return fail(typeof c === 'string' ? c : '카드 필요');
-        const partner = own(step.partnerId);
-        if (piece.type !== 'N' || piece.fused || !partner || partner.type !== 'B' || partner.fused) return fail('나이트와 비숍이 필요');
-        cardIdx = c;
-        piece.formAs = 'B';
-        partner.formAs = 'N';
-        break;
-      }
-    }
-
-    if (cardIdx !== null) spendCard(s, side, cardIdx, piece.id, ctx.events);
+    ctx.order = order;
+    if (s.winner !== null) return fail('대국 종료');
+    const piece = findPiece(s, step.pieceId);
+    if (!piece || piece.side !== side) return fail('없는 기물');
+    if (ctx.acted.has(piece.id)) return fail('이미 움직인 기물');
+    if (!legalMoves(s, piece).some((p) => samePos(p, step.to))) return fail('갈 수 없는 칸');
+    const cost = moveCost(s, piece);
+    if (!opts.freeAp && apUsed + cost > availableAp(s)) return fail('태엽 부족');
     apUsed += cost;
+
+    const from = { x: piece.x, y: piece.y };
+    const before = piece.type;
+    applyMove(s, piece, step.to);
+    ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
+    if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
+    ctx.acted.add(piece.id);
+
+    // 이번 명령의 배율: 선봉 톱니 · 마무리 망치 · 연쇄 지휘
+    let mult = opts.mult ?? 1;
+    if (order === 0 && part(s, side, 'firstCog')) mult *= PART_FX.firstCog;
+    if (order >= PART_FX.lastFrom && part(s, side, 'lastHammer')) mult *= PART_FX.lastHammer;
+    if (prevKilled && part(s, side, 'command')) mult *= PART_FX.command;
+    const killed = performAttack(s, piece, ctx, mult);
+    prevKilled = killed > 0;
     if (s.winner !== null) continue;
 
-    // 그랜드 피날레 (E05 ★): 두 기 이상 예약했을 때 마지막 순번의 공격 2회
-    if (ench(s, side, 'E05') >= 3 && plan.length >= 2 && order === plan.length - 1) repeats += 1;
-
-    let killed = 0;
-    for (const a of attackers) {
-      for (let r = 0; r < repeats && s.winner === null; r++) {
-        if (!findPiece(s, a.id)) break;
-        killed += performAttack(s, a, order, ctx, mods);
+    // 무한 궤도: 나이트가 처치하면 한 번 더 움직일 수 있다 (기물마다 턴당 한 번)
+    if (killed && piece.type === 'N' && part(s, side, 'tread') && findPiece(s, piece.id) && !s.relaunch.includes(piece.id)) {
+      s.relaunch.push(piece.id);
+      ctx.acted.delete(piece.id);
+    }
+    // 여왕 거푸집: 퀸이 처치할 때마다 태엽 +1 (턴당 두 번)
+    if (killed && piece.type === 'Q' && part(s, side, 'queenMold')) {
+      const n = Math.min(killed, PART_FX.queenApCap - ctx.queenAp);
+      if (n > 0) {
+        ctx.queenAp += n;
+        gainAp(s, ctx, n);
       }
     }
-    prevKilled = killed > 0;
   }
-
-  // 연쇄 지휘 체계 2장: 한 턴에 3기 이상 처치하면 다음 턴 AP +1
-  if (ench(s, side, 'E05') >= 2 && ctx.kills >= 3) s.apCarry[side] += 1;
   return { ok: true, state: s, events: ctx.events, apUsed, removed: ctx.removed };
 };
 
@@ -579,29 +314,20 @@ export const checkPlan = (s: BattleState, plan: Plan): PlanCheck => {
   return { ok: sim.ok, reason: sim.reason, virtual: sim.state, apUsed: sim.apUsed, removed: sim.removed, events: sim.events };
 };
 
-/** 이미 이번 계획에서 행동한 기물인가 */
-export const actedInPlan = (plan: Plan, pieceId: number): boolean =>
-  plan.some((st) => {
-    if (st.kind === 'shield' || st.kind === 'formShift') return false;
-    if (st.pieceId === pieceId) return true;
-    return (st.kind === 'castle' || st.kind === 'fuse') && st.partnerId === pieceId;
-  });
+/** 이미 이번 계획에서 움직인 기물인가 (무한 궤도로 다시 움직일 수 있게 된 나이트는 아니다) */
+export const actedInPlan = (plan: Plan, pieceId: number, s?: BattleState): boolean => {
+  const n = plan.filter((st) => st.pieceId === pieceId).length;
+  if (!n) return false;
+  return !(s?.relaunch?.includes(pieceId) && n < 2);
+};
 
-/**
- * 현재 계획에 이어 이 기물이 예약할 수 있는 칸 (붙일 카드 포함).
- * 이미 행동했거나 AP가 모자라면 빈 배열.
- */
-export const plannableMoves = (s: BattleState, plan: Plan, pieceId: number, card?: number): Pos[] => {
+/** 현재 계획에 이어 이 기물이 예약할 수 있는 칸. 이미 움직였거나 태엽이 모자라면 빈 배열 */
+export const plannableMoves = (s: BattleState, plan: Plan, pieceId: number): Pos[] => {
   const check = checkPlan(s, plan);
-  if (!check.ok || check.virtual.winner !== null || actedInPlan(plan, pieceId)) return [];
+  if (!check.ok || check.virtual.winner !== null || actedInPlan(plan, pieceId, check.virtual)) return [];
   const piece = findPiece(check.virtual, pieceId);
   if (!piece || piece.side !== s.turnSide) return [];
-  const v = check.virtual;
-  const cands = [...legalMoves(v, piece, buildGrid(v))];
-  if (card !== undefined && v.cards[s.turnSide][card]?.id === 'C06') {
-    for (const e of v.pieces) if (executable(e, piece.side) && moveReachable(v, piece, e, true)) cands.push({ x: e.x, y: e.y });
-  }
-  return cands.filter((to) => simulate(s, [...plan, { pieceId, to, card } as PlannedMove]).ok);
+  return legalMoves(check.virtual, piece, buildGrid(check.virtual)).filter((to) => simulate(s, [...plan, { pieceId, to }]).ok);
 };
 
 export const addToPlan = (s: BattleState, plan: Plan, step: PlanStep): Plan | null => {
@@ -612,5 +338,5 @@ export const addToPlan = (s: BattleState, plan: Plan, step: PlanStep): Plan | nu
 /** 마지막 예약 되돌리기 */
 export const undoLast = (plan: Plan): Plan => plan.slice(0, -1);
 
-/** 이동 예약만 골라낸다 (화면 표시용) */
-export const moveSteps = (plan: Plan): PlannedMove[] => plan.filter(isMove);
+/** 이동 예약 (2.0에서는 계획 전부) */
+export const moveSteps = (plan: Plan): PlannedMove[] => plan;

@@ -1,8 +1,7 @@
 import { AGGRESSIVE, DEFENSIVE, type Weights } from '../ai/evaluate';
 import { AI_TIERS, choosePlan } from '../ai/search';
 import { TUNED } from '../data/aiWeights';
-import { CARDS } from '../data/cards';
-import {
+import { actedInPlan,
   addToPlan,
   availableAp,
   checkPlan,
@@ -13,10 +12,8 @@ import {
   samePos,
   legalMoves,
   attackArea,
-  specialSteps,
   undoLast,
   EMPTY_LOADOUT,
-  ench,
   findPiece,
   type Loadout,
   type PlanStep,
@@ -27,6 +24,7 @@ import {
   type Plan,
   type Pos,
   type Side,
+  type PieceType,
 } from '../engine';
 
 export interface Scenario {
@@ -43,7 +41,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'trainA',
     title: '온보딩 A · 6×6',
-    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4라운드부터 대성당이 무너집니다.',
+    desc: '폰 3 + 킹 vs 폰 2 + 킹. 4턴부터 작업대가 무너진다.',
     width: 6,
     height: 6,
     decks: [['K', 'P', 'P', 'P'], ['K', 'P', 'P']],
@@ -61,7 +59,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'full',
     title: '정규 교전 · 8×8',
-    desc: '정통 체스 16기 대 16기. 3·6·9라운드에 요충지, 15라운드부터 붕괴.',
+    desc: '정통 체스 16기 대 16기. 정체가 이어지면 판이 무너진다.',
     width: 8,
     height: 8,
     decks: [
@@ -79,9 +77,6 @@ export const AI_STYLES: { id: string; label: string; weights: Weights | null }[]
 ];
 
 export type Phase = 'idle' | 'plan' | 'busy' | 'over';
-
-/** 카드 모드: 왼쪽 카드를 눌러 고른 상태. fuse = 인챈트(E11) 합체 (카드 없음) */
-export type Mode = { kind: 'card'; card: number } | { kind: 'fuse' } | null;
 
 /** 선택 기물에서 고를 수 있는 다음 예약 하나와, 그 예약을 고르려고 누를 칸 */
 export interface StepOption {
@@ -119,6 +114,39 @@ export interface Intent {
   hits: { pieceId: number; pos: Pos; damage: number; killed: boolean }[];
 }
 
+/** 기록 줄 한 칸 (D-073, 하스스톤식): 누가 → 누구를, 얼마나. 내 지난 턴 + 적 지난 턴만 남긴다 */
+export interface LogEntry {
+  side: Side;
+  order: number;
+  attacker: { type: PieceType; side: Side; pos: Pos };
+  targets: { type: PieceType; side: Side; pos: Pos; damage: number; killed: boolean }[];
+}
+
+/** 한 턴의 실행 기록을 기록 줄로 바꾼다 (이동을 따라가며 공격 순간의 칸을 잡는다) */
+export const buildLog = (before: BattleState, events: BattleEvent[]): LogEntry[] => {
+  const at = new Map(before.pieces.map((p) => [p.id, { type: p.type, side: p.side, pos: { x: p.x, y: p.y } }]));
+  const out: LogEntry[] = [];
+  for (const e of events) {
+    if (e.type === 'move') {
+      const a = at.get(e.pieceId);
+      if (a) a.pos = { ...e.to };
+    } else if (e.type === 'attack') {
+      const a = at.get(e.attackerId);
+      if (!a || !e.hits.length) continue;
+      out.push({
+        side: a.side,
+        order: e.order,
+        attacker: { ...a, pos: { ...a.pos } },
+        targets: e.hits.flatMap((h) => {
+          const t = at.get(h.targetId);
+          return t ? [{ type: t.type, side: t.side, pos: { ...t.pos }, damage: h.damage, killed: !!h.killed }] : [];
+        }),
+      });
+    }
+  }
+  return out;
+};
+
 export interface BoardView {
   setup(state: BattleState): void;
   render(model: BoardModel): void;
@@ -126,6 +154,10 @@ export interface BoardView {
   play(before: BattleState, events: BattleEvent[]): Promise<void>;
   /** 적 계획을 잠깐 보여 준다 */
   showPlan(state: BattleState, plan: Plan): Promise<void>;
+  /** 턴 합계 (D-073, 발라트로식): 준 피해 합계가 세어 올라가고 처치 수가 붙는다 */
+  summary?(side: Side, damage: number, kills: number): Promise<void>;
+  /** 기록 줄 한 칸을 판 위에 다시 보여 준다 */
+  flashLog?(entry: LogEntry): void;
 }
 
 export interface HudView {
@@ -144,19 +176,23 @@ export class BattleController {
   selectedId: number | null = null;
   /** 위협 범위를 보고 있는 적 기물 */
   inspectId: number | null = null;
-  mode: Mode = null;
   phase: Phase = 'idle';
   aiTier = 1;
   enemyWeights: Weights = TUNED;
+  /** 기록 줄: 내 지난 턴 + 적 지난 턴 (D-073) */
+  log: LogEntry[] = [];
 
   /** 런 전투용 훅: 내 차례가 시작될 때마다(자동 저장), 전투가 끝났을 때 */
   onPlayerTurn: ((s: BattleState) => void) | null = null;
   onBattleEnd: ((s: BattleState) => void) | null = null;
+  /** 묘수풀이: 한 번 가동하면 끝 (D-097) */
+  singleTurn = false;
 
   constructor(private view: BoardView, private hud: HudView) {}
 
   /** 이미 만든 전투 상태로 시작한다 (런 전투·이어하기) */
-  startState(state: BattleState, aiTier: number, weights: Weights): void {
+  startState(state: BattleState, aiTier: number, weights: Weights, opts: { singleTurn?: boolean } = {}): void {
+    this.singleTurn = !!opts.singleTurn;
     this.state = state;
     this.aiTier = aiTier;
     this.enemyWeights = weights;
@@ -170,6 +206,7 @@ export class BattleController {
   start(sc: Scenario, aiTier: number, weights: Weights | null, loadouts: [Loadout, Loadout] = [EMPTY_LOADOUT, EMPTY_LOADOUT]): void {
     this.onPlayerTurn = null;
     this.onBattleEnd = null;
+    this.singleTurn = false;
     this.state = createBattle({ width: sc.width, height: sc.height, decks: sc.decks, loadouts });
     this.aiTier = aiTier;
     this.enemyWeights = weights ?? sc.weights;
@@ -198,7 +235,6 @@ export class BattleController {
     this.pending = null;
     this.pendingPos = null;
     this.selectedId = null;
-    this.mode = null;
   }
 
   /** 미확정 미리보기까지 포함한 계획 */
@@ -206,55 +242,11 @@ export class BattleController {
     return this.pending ? [...this.plan, this.pending] : this.plan;
   }
 
-  /** 지금 모드에서 이 카드 슬롯이 붙는 attach 카드인가 */
-  private get attachCard(): number | undefined {
-    const m = this.mode;
-    if (m?.kind !== 'card') return undefined;
-    return CARDS[this.state.cards[this.state.turnSide][m.card].id].use === 'attach' ? m.card : undefined;
-  }
-
-  /** 모드의 특수 예약 후보 전부 (attach 카드·일반 모드면 제자리 공격만) */
-  private specials(): PlanStep[] {
-    const m = this.mode;
-    const all = specialSteps(this.state, this.plan, Infinity);
-    if (!m) return all.filter((st) => st.kind === 'stand');
-    if (m.kind === 'fuse') return all.filter((st) => st.kind === 'fuse' && st.card === undefined);
-    return all.filter((st) => 'card' in st && st.card === m.card);
-  }
-
   /** 선택 기물의 다음 예약 후보 (GDD 1장 §1.4, 7장 카드 사용) */
   options(): StepOption[] {
     const sel = this.selectedId;
     if (sel === null) return [];
-    const v = this.virtual;
-    const posOf = (id: number) => findPiece(v, id) ?? { x: -1, y: -1 };
-    const out: StepOption[] = [];
-    const card = this.attachCard;
-    if (!this.mode || card !== undefined) {
-      for (const to of plannableMoves(this.state, this.plan, sel, card)) out.push({ step: card !== undefined ? { pieceId: sel, to, card } : { pieceId: sel, to }, pos: to });
-      if (card !== undefined) return out;
-    }
-    for (const st of this.specials()) {
-      switch (st.kind) {
-        case 'stand':
-        case 'shield':
-        case 'promote':
-          if (st.pieceId === sel) out.push({ step: st, pos: posOf(sel) });
-          break;
-        case 'gate':
-          if (st.pieceId === sel) out.push({ step: st, pos: st.to });
-          break;
-        case 'fuse':
-          if (st.pieceId === sel) out.push({ step: st, pos: posOf(st.partnerId) });
-          break;
-        case 'castle':
-        case 'formShift':
-          if (st.pieceId === sel) out.push({ step: st, pos: posOf(st.partnerId) });
-          else if (st.partnerId === sel) out.push({ step: st, pos: posOf(st.pieceId) });
-          break;
-      }
-    }
-    return out;
+    return plannableMoves(this.state, this.plan, sel).map((to) => ({ step: { pieceId: sel, to }, pos: to }));
   }
 
   model(): BoardModel {
@@ -285,7 +277,8 @@ export class BattleController {
   private intent(): Intent | null {
     if (this.phase !== 'plan' || !this.state || this.state.winner !== null) return null;
     // 미래 예지 (E16): 1장 첫 수 · 2장 2수 · ★ 전부. 없으면 예고하지 않는다 (사용자: 무조건 예고는 너무 쉽다)
-    const sight = ench(this.state, this.state.turnSide, 'E16');
+    // 낮은 승천은 적 첫 수를 기본으로 보여 준다 (D-076, rules.foresight) — 미래 예지가 더 많으면 그쪽
+    const sight = this.state.rules.foresight ?? 0;
     if (!sight) return null;
     const shown = sight >= 3 ? Infinity : sight;
     const key = `${this.state.turnNumber}|${sight}|${JSON.stringify(this.plan)}`;
@@ -351,36 +344,6 @@ export class BattleController {
     return this.virtual.pieces.find((p) => p.x === pos.x && p.y === pos.y);
   }
 
-  /** 카드(또는 인챈트 합체)를 고른다. 같은 것을 다시 누르면 해제. */
-  arm(mode: Mode): void {
-    if (this.phase !== 'plan') return;
-    const same = JSON.stringify(mode) === JSON.stringify(this.mode);
-    this.pending = null;
-    this.pendingPos = null;
-    this.selectedId = null;
-    this.mode = same ? null : mode;
-    if (this.mode) {
-      const anchors = this.anchorIds();
-      if (this.attachCard === undefined && !anchors.size) {
-        this.hud.toast('지금은 쓸 수 있는 대상이 없습니다');
-        this.mode = null;
-      } else if (this.mode.kind === 'card') {
-        this.hud.toast(CARDS[this.state.cards[this.state.turnSide][this.mode.card].id].desc);
-      } else this.hud.toast('합체할 두 기물을 차례로 누르세요');
-    }
-    this.refresh();
-  }
-
-  /** 지금 모드에서 고를 수 있는 기물 */
-  private anchorIds(): Set<number> {
-    const ids = new Set<number>();
-    for (const st of this.specials()) {
-      ids.add(st.pieceId);
-      if (st.kind === 'castle' || st.kind === 'formShift') ids.add(st.partnerId);
-    }
-    return ids;
-  }
-
   /** 칸을 눌렀다. 갈 수 있는 칸이면 바로 예약 (마우스는 호버로 미리보기) */
   tap(pos: Pos, _touch: boolean): void {
     if (this.phase !== 'plan') return;
@@ -411,18 +374,11 @@ export class BattleController {
     this.inspectId = null;
     if (mine && this.selectedId === p.id) {
       this.selectedId = null;
-    } else if (mine && this.mode && this.attachCard === undefined) {
-      // 카드 모드: 그 카드를 쓸 수 있는 기물만 고른다 (보호막·폼 시프트는 이미 행동한 기물도 가능)
-      if (this.anchorIds().has(p.id)) this.selectedId = p.id;
-      else {
-        this.selectedId = null;
-        this.hud.toast('이 기물에는 쓸 수 없습니다');
-      }
-    } else if (mine && !this.plan.some((st) => 'pieceId' in st && st.pieceId === p.id && st.kind !== 'shield' && st.kind !== 'formShift')) {
+    } else if (mine && !actedInPlan(this.plan, p.id, this.state)) {
       this.selectedId = p.id;
       const left = this.apTotal - this.apUsed;
-      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`AP가 부족합니다 (필요 ${moveCost(this.virtual, p)})`);
-      else if (!this.options().length) this.hud.toast('갈 수 있는 칸이 없습니다');
+      if (moveCost(this.virtual, p) > left && !this.options().length) this.hud.toast(`태엽이 다 풀렸다. (${moveCost(this.virtual, p)} 필요)`);
+      else if (!this.options().length) this.hud.toast('갈 칸이 없다.');
     } else {
       this.selectedId = null;
     }
@@ -444,11 +400,6 @@ export class BattleController {
     const next = addToPlan(this.state, this.plan, step);
     if (next) this.plan = next;
     this.clearPick();
-  }
-
-  /** 인챈트 합체(E11)를 쓸 수 있는가 — 카드 레일에 합체 버튼을 띄운다 */
-  get canEnchantFuse(): boolean {
-    return !!this.state && ench(this.state, 0, 'E11') >= 1;
   }
 
   /** 디버그: 플레이어 차례를 AI가 대신 예약한다 (?debug) */
@@ -482,11 +433,24 @@ export class BattleController {
     return this.state ? this.pieceAtVirtual(pos) : undefined;
   }
 
+  /** 기록 줄 한 칸을 판 위에 다시 보여 준다 */
+  showLog(i: number): void {
+    const e = this.log[i];
+    if (e) this.view.flashLog?.(e);
+  }
+
   async submit(): Promise<void> {
     if (this.phase !== 'plan') return;
     this.clearPick();
     await this.runTurn(this.plan);
     if (this.isOver()) return;
+    // 묘수풀이: 가동은 한 번 — 못 쓰러뜨렸으면 거기서 끝
+    if (this.singleTurn) {
+      this.phase = 'over';
+      this.refresh();
+      this.onBattleEnd?.(this.state);
+      return;
+    }
     await this.enemyTurn();
   }
 
@@ -498,6 +462,11 @@ export class BattleController {
     this.view.render({ ...this.model(), state: before, virtual: before, plan: [], preview: [], removed: [], destinations: [], hitDests: [], threat: null, intent: null });
     this.hud.update(this);
     await this.view.play(before, events);
+    // 기록 줄: 내 턴이 시작되면 새로, 적 턴은 이어 붙인다 → 다음 내 차례에 "내 지난 턴 + 적 지난 턴"
+    const entries = buildLog(before, events);
+    this.log = before.turnSide === 0 ? entries : [...this.log, ...entries];
+    const damage = entries.reduce((a, e) => a + e.targets.reduce((b, t) => b + t.damage, 0), 0);
+    if (damage > 0 && state.winner === null) await this.view.summary?.(before.turnSide, damage, entries.reduce((a, e) => a + e.targets.filter((t) => t.killed).length, 0));
     this.state = state;
     this.view.setup(this.state);
     if (state.winner !== null) {

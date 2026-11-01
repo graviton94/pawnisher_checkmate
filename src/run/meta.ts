@@ -1,4 +1,6 @@
 import type { Deck } from '../engine/setup';
+import { FLOORS_PER_ACT, TOTAL_FLOORS } from '../data/run';
+import type { RunState } from './run';
 
 /**
  * 메타 진행 (GDD 8장 §8.7): 영구 스탯 강화 없이 콘텐츠 해금 + 승천 난이도.
@@ -12,24 +14,34 @@ export interface MetaState {
   bestFloor: number;
   /** 고를 수 있는 가장 높은 승천 단계 (클리어할 때마다 +1) */
   ascension: number;
+  /** 이긴 검문! 누계 (D-108) */
+  elites?: number;
+  /** 푼 묘수 누계 */
+  puzzles?: number;
+  /** 쓰러뜨린 반장 (BossId · 'final') */
+  bossKills?: string[];
+  /** 도감: 한 번이라도 얻은 부품 · 새긴 각인 · 들어가 본 돌발 (1.0 기록 필드는 남겨 둔다) */
+  seen?: { enchants?: string[]; variants?: string[]; events: string[]; cards?: string[]; legends?: string[]; parts?: string[]; carves?: string[] };
+  /** 온보딩 시험대를 마쳤거나 건너뛰었나 (D-116) */
+  onboarded?: boolean;
+  /** 오늘의 출하 최고 기록 (D-122): 날짜 · 도달 층 · 완주 */
+  daily?: { date: string; floor: number; won: boolean };
+  /** 이야기 (D-135): 프롤로그를 봤나 · 얻은 검수 기록지 번호 · 승급 횟수 · 해방 */
+  story?: { prologue?: boolean; records?: number[]; promoted?: number; freed?: boolean; acts?: number[]; bosses?: string[]; falls?: string[] };
 }
 
-/** 승천 단계별 제약 (누적). 0 = 기본 */
-export const ASCENSIONS = [
-  '기본',
-  '적 일반 군단 +1기',
-  '전투 골드 보상 −15%',
-  '엘리트 인챈트 +1 · 엘리트 AI 최고 단계',
-  '적 킹 약화 보정 축소 (+10%p)',
-  '보스 대장간 전 유형 +1',
-];
-export const MAX_ASCENSION = ASCENSIONS.length - 1;
+export { ASCENSIONS, MAX_ASCENSION } from '../data/ascension';
+import { MAX_ASCENSION } from '../data/ascension';
 
 /** 해금되는 시작 덱 후보 (기본 3종은 run.ts의 START_DECKS) */
 export const UNLOCK_DECKS: { id: string; name: string; deck: Deck; need: string; ok: (m: MetaState) => boolean }[] = [
-  { id: 'cavalry', name: '기병 출발', deck: ['K', 'N', 'N'], need: 'Act 2 도달', ok: (m) => m.bestFloor >= 13 },
-  { id: 'clergy', name: '사제 출발', deck: ['K', 'B', 'B'], need: 'Act 3 도달', ok: (m) => m.bestFloor >= 25 },
-  { id: 'tower', name: '성탑 출발', deck: ['K', 'R', 'P'], need: '등반 완료', ok: (m) => m.clears >= 1 },
+  { id: 'cavalry', name: '기병 세트', deck: ['K', 'N', 'N'], need: '조립 공정 도달', ok: (m) => m.bestFloor >= FLOORS_PER_ACT + 1 },
+  { id: 'clergy', name: '사제 세트', deck: ['K', 'B', 'B'], need: '검수 공정 도달', ok: (m) => m.bestFloor >= 2 * FLOORS_PER_ACT + 1 },
+  { id: 'tower', name: '성채 세트', deck: ['K', 'R', 'P'], need: '출하 완료', ok: (m) => m.clears >= 1 },
+  // 볼륨 3 (D-108)
+  { id: 'battalion', name: '폰 대대 세트', deck: ['K', 'P', 'P', 'P', 'P', 'P'], need: '폰 반장 해체', ok: (m) => (m.bossKills ?? []).includes('pawn') },
+  { id: 'elite', name: '정예 세트', deck: ['K', 'N', 'B'], need: '검문! 10번 통과', ok: (m) => (m.elites ?? 0) >= 10 },
+  { id: 'command', name: '지휘 세트', deck: ['K', 'Q'], need: '압력 5 개방', ok: (m) => m.ascension >= 5 },
 ];
 
 const KEY = 'pawnisher.meta.v1';
@@ -53,9 +65,37 @@ export const saveMeta = (m: MetaState): void => {
   }
 };
 
-/** 런이 끝났을 때 기록한다. 이번 런 승천 단계에서 클리어하면 다음 단계가 열린다. */
-export const recordRunEnd = (m: MetaState, floor: number, won: boolean, ascension: number): MetaState => ({
-  ...m,
+/** 이 출하에서 지나온 층의 노드 (진 층은 빼고) */
+const passed = (run: RunState) => run.path.flatMap((i, f) => (f + 1 < run.floor ? [run.map[f]?.[i]] : [])).filter((n) => !!n);
+
+/** 이 출하가 쓰러뜨린 반장 */
+export const bossKillsOf = (run: RunState): string[] => [
+  ...run.bosses.filter((_, a) => run.floor > (a + 1) * FLOORS_PER_ACT),
+  ...(run.floor > TOTAL_FLOORS ? ['final'] : []),
+];
+
+const union = (a: string[] = [], b: string[]) => [...new Set([...a, ...b])];
+
+/** 도감에 이 출하에서 본 것을 더한다 (저장할 때마다 불러도 같다) */
+export const absorbRun = (m: MetaState, run: RunState): MetaState => {
+  const seen = m.seen ?? { events: [] };
+  return {
+    ...m,
+    bossKills: union(m.bossKills, bossKillsOf(run)),
+    seen: {
+      ...seen,
+      events: union(seen.events, passed(run).flatMap((n) => (n.event ? [n.event] : []))),
+      parts: union(seen.parts, run.parts),
+      carves: union(seen.carves, run.deck.flatMap((u) => (u.carve ? [u.carve] : []))),
+    },
+  };
+};
+
+/** 런이 끝났을 때 기록한다. 이번 런 승천 단계에서 클리어하면 다음 단계가 열린다. run을 주면 누계·도감도 더한다. */
+export const recordRunEnd = (m: MetaState, floor: number, won: boolean, ascension: number, run?: RunState): MetaState => ({
+  ...(run ? absorbRun(m, run) : m),
+  ...(run ? { elites: (m.elites ?? 0) + passed(run).filter((n) => n.kind === 'elite').length } : {}),
+  ...(run?.daily && (m.daily?.date !== run.daily || floor > m.daily.floor || (won && !m.daily.won)) ? { daily: { date: run.daily, floor, won } } : {}),
   runs: m.runs + 1,
   clears: m.clears + (won ? 1 : 0),
   bestFloor: Math.max(m.bestFloor, floor),

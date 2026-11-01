@@ -21,13 +21,13 @@ export const at = (s: BattleState, grid: Grid, x: number, y: number): Piece | un
 
 export const cloneState = (s: BattleState): BattleState => ({
   ...s,
-  stronghold: s.stronghold ? { ...s.stronghold } : null,
   apBonus: [...s.apBonus] as [number, number],
-  apCarry: [...s.apCarry] as [number, number],
-  cards: [s.cards[0].map((c) => ({ ...c })), s.cards[1].map((c) => ({ ...c }))],
-  lastStrike: [...s.lastStrike] as BattleState['lastStrike'],
+  loadouts: [{ parts: [...s.loadouts[0].parts] }, { parts: [...s.loadouts[1].parts] }],
   pieces: s.pieces.map((p) => ({ ...p })),
   fallen: s.fallen ? [...s.fallen] : [],
+  fuseUsed: s.fuseUsed ? ([...s.fuseUsed] as [boolean, boolean]) : undefined,
+  relaunch: s.relaunch ? [...s.relaunch] : undefined,
+  record: s.record ? [{ ...s.record[0] }, { ...s.record[1] }] : undefined,
 });
 
 export const findPiece = (s: BattleState, id: number): Piece | undefined =>
@@ -55,6 +55,3 @@ export const fromSquare = (sq: string): Pos => ({
 export const chebyshev = (a: Pos, b: Pos): number => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 
 export const roundOf = (s: BattleState): number => Math.ceil(s.turnNumber / 2);
-
-export const onStronghold = (s: BattleState, p: Pos): boolean =>
-  !!s.stronghold && s.stronghold.x === p.x && s.stronghold.y === p.y;

@@ -82,7 +82,7 @@ describe('실행 단계: 예약 순서대로 이동 → 공격 (GDD 1장 §1.5, 
     const plan = [{ pieceId: 1, to: sq('e4') }, { pieceId: 2, to: sq('c4') }];
     const r = resolveTurn(s, plan);
     expect(findPiece(r.state, 4)).toBeUndefined();
-    expect(findPiece(r.state, 5)!.hp).toBe(100 - (18 - 4));
+    expect(findPiece(r.state, 5)!.hp).toBe(100 - Math.round((18 - 4) * 1.1)); // #1 처치 뒤라 연쇄 ×1.1 (D-077)
 
     // 순서를 바꾸면 비숍은 d5 폰에 막혀 킹을 치지 못한다
     const r2 = resolveTurn(s, [plan[1], plan[0]]);

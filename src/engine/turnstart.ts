@@ -1,12 +1,9 @@
-import { COLLAPSE, STRONGHOLD } from '../data/battle';
-import { buildGrid, chebyshev, findPiece, inBounds, kingOf, roundOf } from './board';
-import { Rng } from './rng';
-import { applyPromotion, availableAp } from './plan';
-import { attackArea, ench, legalMoves } from './rules';
-import { battleScore, inferiority, kingHpRatio, standingOf, strongholdTerms } from './score';
-import { otherSide, type BattleEvent, type BattleState, type Pos, type Side } from './types';
-
-const rngFor = (s: BattleState) => new Rng((s.seed ^ Math.imul(s.turnNumber, 2654435761)) >>> 0);
+import { COLLAPSE, RESIGN, STALL } from '../data/battle';
+import { PART_FX } from '../data/parts';
+import { buildGrid, chebyshev, inBounds, roundOf } from './board';
+import { applyPromotion } from './plan';
+import { part } from './rules';
+import { otherSide, type BattleEvent, type BattleState, type Pos } from './types';
 
 const center = (s: BattleState): Pos => ({ x: (s.width - 1) / 2, y: (s.height - 1) / 2 });
 
@@ -35,6 +32,22 @@ const nextCollapse = (s: BattleState): Pos[] => {
     return out.slice(0, COLLAPSE.tilesPerEvent);
   }
   return [];
+};
+
+/**
+ * 정체 압박 (GDD 12장 F1, D-072): 새 라운드가 시작될 때 지난 라운드를 판정한다.
+ * 서로 다가가는 첫 STALL.grace 라운드는 세지 않는다. 피해 없는 라운드가 STALL.rounds번 이어지면 이번 라운드부터 붕괴를 시작한다.
+ */
+const stallCheck = (s: BattleState, round: number, events: BattleEvent[]): void => {
+  const st = { count: 0, dealt: false, ...s.stall }; // 새 객체 — 입력 상태를 바꾸지 않는다 (결정론)
+  if (round - 1 > STALL.grace) {
+    st.count = st.dealt ? 0 : st.count + 1;
+    if (st.count > 0) events.push({ type: 'stall', count: Math.min(st.count, STALL.rounds), need: STALL.rounds });
+    const start = s.rules.collapseStart;
+    if (st.count >= STALL.rounds && start !== null && start > round) s.rules = { ...s.rules, collapseStart: round };
+  }
+  st.dealt = false;
+  s.stall = st;
 };
 
 /** 다음 라운드 시작에 무너질 칸 (화면 예고용). 붕괴가 아직 멀었으면 빈 배열 */
@@ -92,10 +105,6 @@ export const collapseStep = (s: BattleState, events: BattleEvent[]): boolean => 
     const before = p.type;
     if (applyPromotion(s, p)) events.push({ type: 'promote', pieceId: p.id, from: before, to: p.type });
   }
-  if (s.stronghold && !inBounds(s, s.stronghold.x, s.stronghold.y)) {
-    s.stronghold = null;
-    events.push({ type: 'strongholdLost' });
-  }
   return true;
 };
 
@@ -118,154 +127,44 @@ const suddenDeath = (s: BattleState, events: BattleEvent[]): void => {
   events.push({ type: 'suddenDeath', hits });
 };
 
-// ---------- 요충지 (GDD 5장) ----------
-
-/** 다음 턴에 `side`가 공격할 수 있는 칸 (이동 후 공격 범위의 합집합) */
-const reachableAttacks = (s: BattleState, side: Side): Set<string> => {
-  const grid = buildGrid(s);
-  const out = new Set<string>();
-  for (const p of s.pieces) {
-    if (p.side !== side) continue;
-    for (const to of legalMoves(s, p, grid)) {
-      for (const a of attackArea(s, { ...p, x: to.x, y: to.y }, grid)) out.add(`${a.x},${a.y}`);
-    }
-  }
-  return out;
-};
-
-/** 생성 위치 (GDD 5장 §5.2): 열세 진영에 더 가까운 빈칸 중, 1~2칸 거리 → 안전한 칸 → 가까운 순 */
-export const strongholdSpot = (s: BattleState): Pos | null => {
-  const sa = battleScore(s, 0);
-  const sb = battleScore(s, 1);
-  const losing: Side = sb < sa ? 1 : 0;
-  const winning: Side = losing === 0 ? 1 : 0;
-  const grid = buildGrid(s);
-  const mine = s.pieces.filter((p) => p.side === losing);
-  const theirs = s.pieces.filter((p) => p.side === winning);
-  const danger = reachableAttacks(s, winning);
-  const rng = rngFor(s);
-  const dist = (pos: Pos, list: Pos[]) => list.reduce((m, q) => Math.min(m, chebyshev(pos, q)), Infinity);
-
-  const cands: { pos: Pos; key: number[] }[] = [];
-  for (let y = 0; y < s.height; y++) {
-    for (let x = 0; x < s.width; x++) {
-      if (!inBounds(s, x, y) || grid[y * s.width + x]) continue;
-      const pos = { x, y };
-      const dl = dist(pos, mine);
-      const dw = dist(pos, theirs);
-      if (!(dl < dw)) continue;
-      cands.push({ pos, key: [dl >= 1 && dl <= 2 ? 0 : 1, danger.has(`${x},${y}`) ? 1 : 0, dl, rng.next()] });
-    }
-  }
-  if (!cands.length) {
-    const mid = Math.floor((s.height - 1) / 2);
-    for (let x = 0; x < s.width; x++) if (inBounds(s, x, mid) && !grid[mid * s.width + x]) cands.push({ pos: { x, y: mid }, key: [0, 0, 0, rng.next()] });
-  }
-  if (!cands.length) return null;
-  cands.sort((a, b) => {
-    for (let i = 0; i < a.key.length; i++) if (a.key[i] !== b.key[i]) return a.key[i] - b.key[i];
-    return 0;
-  });
-  return cands[0].pos;
-};
-
-/** 점령 완료 → 열세 단계별 보상 (GDD 5장 §5.5). 긴급 전술 카드는 M4(카드 시스템)에서 지급한다. */
-const capture = (s: BattleState, side: Side, holderId: number, events: BattleEvent[]): void => {
-  const inf = inferiority(s, side);
-  const tier: 1 | 2 | 3 =
-    inf >= STRONGHOLD.tier3At || kingHpRatio(s, side) <= STRONGHOLD.tier3KingHp ? 3 : inf >= STRONGHOLD.tier2At ? 2 : 1;
-  const holder = findPiece(s, holderId);
-  if (tier === 1) {
-    s.apBonus[side] += STRONGHOLD.tier1.ap;
-    if (holder) holder.hp = Math.min(holder.maxHp, holder.hp + Math.round(holder.maxHp * STRONGHOLD.tier1.healPct));
-  } else if (tier === 2) {
-    s.apBonus[side] += STRONGHOLD.tier2.ap;
-    for (const p of s.pieces) {
-      if (p.side !== side) continue;
-      p.buffAtkPct = STRONGHOLD.tier2.atkPct;
-      p.buffDef = STRONGHOLD.tier2.def;
-      p.buffTurns = STRONGHOLD.tier2.turns;
-    }
-  } else {
-    s.apBonus[side] += STRONGHOLD.tier3.ap;
-    const k = kingOf(s, side);
-    if (k) k.shield += STRONGHOLD.tier3.kingShield;
-  }
-  s.stronghold = null;
-  events.push({ type: 'strongholdCapture', side, pieceId: holderId, tier, behind: inf > 0 });
-};
-
 /**
  * 턴 시작 처리. 차례가 막 넘어온 진영(s.turnSide) 기준으로 실행한다.
- * 라운드 시작(플레이어 턴)에는 붕괴·요충지 생성을, 매 턴에는 요충지 유지·점령을 확인한다.
+ * 라운드 시작(플레이어 턴)에는 정체 판정과 무너지는 판을, 매 턴에는 겹 장갑을 처리한다.
  */
 export const beginTurn = (s: BattleState, events: BattleEvent[]): void => {
-  // 이월된 AP (마공학 축전기 2장 · 연쇄 지휘 체계 2장)
-  const side = s.turnSide;
-  if (s.apCarry[side] > 0) {
-    s.apBonus[side] += s.apCarry[side];
-    events.push({ type: 'apGain', side, amount: s.apCarry[side] });
-    s.apCarry[side] = 0;
-  }
-  // 근위대 결속 2장: 킹과 붙어 있는 아군에 보호막 +10
-  if (ench(s, side, 'E08') >= 2) {
-    const k = kingOf(s, side);
-    if (k) {
-      for (const p of s.pieces) {
-        if (p.side === side && p.id !== k.id && chebyshev(p, k) === 1) {
-          p.shield += 10;
-          events.push({ type: 'shield', pieceId: p.id, amount: 10 });
-        }
-      }
+  // 명예로운 항복 (D-077): 적 차례 시작에 적에게 킹만 남았고 내 기물이 넉넉하면 끝낸다 (죽은 턴 없애기)
+  if (s.turnSide === 1) {
+    const theirs = s.pieces.filter((p) => p.side === 1);
+    const mine = s.pieces.filter((p) => p.side === 0 && p.type !== 'K').length;
+    if (theirs.length === 1 && theirs[0].type === 'K' && mine >= RESIGN.minMine) {
+      events.push({ type: 'resign', side: 1, pieceId: theirs[0].id });
+      s.winner = 0;
+      events.push({ type: 'gameOver', winner: 0 });
+      return;
     }
   }
-
+  const side = s.turnSide;
+  // 겹 장갑 (부품): 자기 턴 시작마다 모든 아군 방열판
+  if (part(s, side, 'plate')) {
+    for (const p of s.pieces) {
+      if (p.side !== side) continue;
+      p.shield += PART_FX.plateShield;
+      events.push({ type: 'shield', pieceId: p.id, amount: PART_FX.plateShield });
+    }
+  }
   if (s.turnSide === 0) {
     const round = roundOf(s);
-    const { collapseStart, collapseInterval, strongholdRounds } = s.rules;
+    stallCheck(s, round, events);
+    const { collapseStart, collapseInterval } = s.rules;
     if (collapseStart !== null && round >= collapseStart && (round - collapseStart) % collapseInterval === 0) {
-      if (!collapseStep(s, events)) suddenDeath(s, events);
-      if (s.winner !== null) return;
-    }
-    if (!s.stronghold && strongholdRounds.includes(round)) {
-      const pos = strongholdSpot(s);
-      if (pos) {
-        s.stronghold = { ...pos, holderId: null, hold: 0 };
-        s.strongholdsSpawned += 1;
-        events.push({ type: 'strongholdSpawn', pos, standings: [standingOf(s, 0), standingOf(s, 1)] });
-      }
-    }
-  }
-
-  const sh = s.stronghold;
-  if (sh && sh.holderId !== null) {
-    const holder = findPiece(s, sh.holderId);
-    if (!holder || holder.x !== sh.x || holder.y !== sh.y) {
-      sh.holderId = null;
-      sh.hold = 0;
-    } else if (holder.side === s.turnSide) {
-      sh.hold += 1;
-      if (sh.hold >= strongholdTerms(s, holder.side).hold) capture(s, holder.side, holder.id, events);
+      // 정체가 이어지면 더 빨리 무너진다 (끝판 킹 숨바꼭질 방지)
+      const steps = 1 + Math.max(0, (s.stall?.count ?? 0) - STALL.rounds + 1);
+      for (let i = 0; i < steps && s.winner === null; i++) if (!collapseStep(s, events)) suddenDeath(s, events);
     }
   }
 };
 
-/** 턴 종료 처리: 버프·카드 쿨타임·폼 시프트를 정리하고, 이번 턴 추가 AP를 비운다 (축전기 2장이면 1까지 이월). */
-export const endTurn = (s: BattleState, apUsed = 0): void => {
-  const side = s.turnSide;
-  if (ench(s, side, 'E06') >= 2) {
-    const left = availableAp(s) - apUsed;
-    if (left > 0) s.apCarry[side] += 1;
-  }
-  for (const c of s.cards[side]) if (c.cooldown > 0) c.cooldown -= 1;
-  for (const p of s.pieces) if (p.side === side) p.formAs = null;
-  for (const p of s.pieces) {
-    if (p.side !== side || p.buffTurns <= 0) continue;
-    p.buffTurns -= 1;
-    if (p.buffTurns === 0) {
-      p.buffAtkPct = 0;
-      p.buffDef = 0;
-    }
-  }
-  s.apBonus[side] = 0;
+/** 턴 종료 처리: 이번 턴 추가 태엽을 비운다 */
+export const endTurn = (s: BattleState): void => {
+  s.apBonus[s.turnSide] = 0;
 };

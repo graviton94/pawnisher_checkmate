@@ -17,6 +17,9 @@
 | 8 | [등반 구조 & 경제](08_climb_and_economy.md) | ✅ |
 | 9 | [아트 & UI/UX](09_art_and_ui.md) | ✅ |
 | 10 | [기술 스택 · 아키텍처 · 로드맵](10_tech_and_roadmap.md) | ✅ |
+| 11 | [심화 계획 — 레퍼런스 반영](11_depth_plan.md) | 💬 |
+| 12 | [한 판의 피로도 & 턴 피드백](12_pacing_and_feedback.md) | 💬 |
+| 13 | [재미 방향 — 로그라이크 덱빌딩 체스](13_fun_direction.md) | 💬 |
 
 ## 용어
 
