@@ -2,7 +2,7 @@ import { it } from 'vitest';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { AXIS_NAMES, BOSS, COMMANDS, KITS, PUSH, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type CommandId } from '../src/slice/cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
-import { CREW, LAST_WORDS, NAMES, QUIRKS, type QuirkId } from '../src/slice/crew';
+import { CREW, DEATHS, NAMES, QUIRKS, type QuirkId } from '../src/slice/crew';
 import { REST } from '../src/slice/battle';
 import { PIECE_NAMES_KO } from '../src/data/pieces';
 
@@ -15,18 +15,15 @@ it('text export', () => {
   L.push('# 수직 조각 텍스트 · 효과 전수표', '', `> 자동 생성 (${new Date().toISOString().slice(0, 10)}) — \`sim/text-export.sim.ts\`. 고칠 곳은 이 문서에 표시해 주면 원본(데이터 파일)에 반영한다.`, '');
   L.push('## 0. 서술 스타일 규칙 (CLAUDE.md · D-087 · D-093 · D-098 · D-129)', '');
   L.push('- 존댓말 안내 금지. 모두 짧고 차갑게. 정겨운 말투 · 농담 · 애칭 · 말꼬리(~잖아 · ~볼래 · ~해 볼까) 금지.');
-  L.push('- **서술**: 줄 앞 「* 」, ~다 체, 담담한 두 박자 + 엉뚱한 작은 디테일 하나 (언더테일식). 예: “* 나사를 먹는 기계. 배가 고파 보인다.”');
-  L.push('- **인물 대사**: 반말, 큰따옴표 “ ” (검수관 · 고물상 주인 · 공방 장인 · 분대원 마지막 말).');
-  L.push('- **주인공 독백**: 작은따옴표 ‘ ’, 1인칭 짧게, 컷신 · 결정적 순간에만.');
-  L.push('- **버튼**: 동사 하나. **느낌표**는 치명적인 순간에만(검문! · 체크! · 충돌! …), **물음표**는 무작위가 걸린 선택에만.', '');
+  L.push('- (D-158로 교체됨 — 아래 0.1이 현행)', '', '### 0.1 현행 (D-158 다키스트 던전식)', '- 카드: 비장한 한 문장 + 괄호 수치 — 「굳게 걸어 잠근다. (방열판 +15)」. 필요하면 각주(칭호 · 짧은 대사).', '- 기물 칭호: 폰 작은 개척자 · 나이트 뛰어넘고, 짓밟는 자 · 비숍 성스러운 빛의 심판자 · 룩 살아 움직이는 요새 · 킹 화려한 왕관, 잔혹한 무게.', '- 분대원 이름: 상태를 묘사하는 별칭 (먼지투성이 · 구부러진 못).', '- 쓰러질 때: 2인칭 서술 한 줄 + 아래 각주 대사.', '- 안내: 플레이어가 느끼는 것은 독백(‘태엽이 모자라.’), 규칙 · 경고 같은 전지적 정보는 시스템 투(합니다체).', '- 언더테일식 「* 」 서술 · NPC 농담 · 애매하게 주절대는 설명 금지.', '');
 
   L.push('## 1. 명령 카드', '', `시작 덱: ${START_DECK.map((id) => COMMANDS[id].name).join(' · ')} · 시작 분대: ${START_SQUAD.map((t) => PIECE_NAMES_KO[t]).join(' · ')}`, '');
   L.push('| id | 이름 | 태엽 | 기물 | 축 | 설명 (화면) | 실제 효과 |', '| :-- | :-- | :-: | :-- | :-- | :-- | :-- |');
   for (const id of Object.keys(COMMANDS) as CommandId[]) {
     const c = COMMANDS[id];
     const fx = [c.kind !== 'move' ? `종류 ${c.kind}` : '', c.mult ? `배율 ×${c.mult}` : '', c.carve ? `각인 ${c.carve}` : '', c.amount ? `수치 ${c.amount}` : '', c.freeIfKiller ? '이번 턴 처치한 기물이면 태엽 0' : '', c.multPerKill ? `연쇄마다 ×${c.multPerKill} 더` : '', c.rage ? '잃은 HP 비율만큼 최대 ×3' : '', c.drawOnKill ? `처치마다 ${c.drawOnKill}장` : '', c.rally ? '둘레 폰 전진' : '', c.chainPerKill ? `처치당 연쇄 ${c.chainPerKill}칸` : '', c.push ? `밀치기 (충돌 ${PUSH.collide})` : '', REWARD_COMMANDS.includes(id) ? '보상 후보' : '시작/영입 전용'].filter(Boolean).join(' · ');
-    J.push({ id: `card-${id}`, group: '명령 카드', name: `${c.name} · 태엽 ${c.cost} · ${who(c.who)}${c.axis ? ` · ${[c.axis, c.axis2].filter(Boolean).map((a) => AXIS_NAMES[a!]).join('·')}` : ''}`, text: c.desc, fx });
-    L.push(`| ${id} | ${c.name} | ${c.cost} | ${who(c.who)} | ${[c.axis, c.axis2].filter(Boolean).map((a) => AXIS_NAMES[a!]).join(' · ') || '—'} | ${c.desc} | ${fx} |`);
+    J.push({ id: `card-${id}`, group: '명령 카드', name: `${c.name} · 태엽 ${c.cost} · ${who(c.who)}${c.axis ? ` · ${[c.axis, c.axis2].filter(Boolean).map((a) => AXIS_NAMES[a!]).join('·')}` : ''}`, text: c.desc + (c.flavor ? ` — 각주: ${c.flavor}` : ''), fx });
+    L.push(`| ${id} | ${c.name} | ${c.cost} | ${who(c.who)} | ${[c.axis, c.axis2].filter(Boolean).map((a) => AXIS_NAMES[a!]).join(' · ') || '—'} | ${c.desc}${c.flavor ? `<br>각주: ${c.flavor}` : ''} | ${fx} |`);
   }
   L.push('', '## 2. 부품', '', '| id | 이름 | 축 | 설명 (화면) | 수치 |', '| :-- | :-- | :-- | :-- | :-- |');
   for (const id of Object.keys(SLICE_PARTS) as SlicePartId[]) {
@@ -43,10 +40,10 @@ it('text export', () => {
   L.push('', '## 3. 분대원 (애착)', '', '| id | 기벽 | 설명 (화면) |', '| :-- | :-- | :-- |');
   for (const id of Object.keys(QUIRKS) as QuirkId[]) J.push({ id: `quirk-${id}`, group: '기벽', name: QUIRKS[id].name, text: QUIRKS[id].desc });
   NAMES.forEach((n) => J.push({ id: `name-${n}`, group: '이름 풀', name: n, text: '분대원 이름' }));
-  LAST_WORDS.forEach((w, k) => J.push({ id: `last-${k}`, group: '마지막 말', name: `#${k + 1}`, text: w }));
+  DEATHS.forEach((w, k) => J.push({ id: `death-${k}`, group: '쓰러질 때', name: `#${k + 1}`, text: w.narr, fx: w.line }));
   for (const id of Object.keys(QUIRKS) as QuirkId[]) L.push(`| ${id} | ${QUIRKS[id].name} | ${QUIRKS[id].desc} |`);
   L.push('', `- 이름 풀 (${NAMES.length}): ${NAMES.join(' · ')} · 킹은 「대장」`);
-  L.push(`- 마지막 말: ${LAST_WORDS.join(' / ')}`);
+  L.push(`- 쓰러질 때: ${DEATHS.map((d) => `${d.narr} ${d.line}`).join(' / ')}`);
   L.push(`- 자동 흔적: 3대국 생존 「용접 흉터」 · 문턱을 넘고 생존 「납땜 자국」 · ${CREW.nickAfterKills}처치 「○○ 분쇄기」 · 반장 처치 「반장 사냥꾼」 · 이식 흔적 「○○의 태엽」`);
   L.push(`- 유품 태엽: 자동 나사 +${CREW.heirloomScrews} · 새는 보일러 폭발 ${CREW.boilerBlast}`);
   L.push('', '## 4. 수치', '');

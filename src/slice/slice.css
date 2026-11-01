@@ -175,3 +175,7 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 @media (prefers-reduced-motion: reduce) { .decrees .part-chip.fire { animation: none; } }
 /* 배수 계기판은 오른쪽 레일 가운데 (판을 가리지 않는다) */
 body.slice .rail .meter { position: static; justify-items: center; align-self: stretch; margin: 4px 0; }
+/* 각주 · 사망 서술 (D-158) */
+.cmd .flv, .part-card .flv { font-size: 12px; font-style: italic; color: #b9a98a; }
+.deathfx .narr { margin: 0; font-size: 16px; color: #d6d0c6; font-style: italic; }
+.deathfx i { font-size: 15px; color: #f4d27a; }

@@ -12,7 +12,7 @@ import { AXIS_NAMES, BOSS, COMMANDS, KITS, RECRUITS, REWARD_COMMANDS, SLICE, STA
 import { SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 import { shapeHtml } from './shape';
-import { CREW, LAST_WORDS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
+import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { REST, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
@@ -35,11 +35,11 @@ const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3,
 type Reward = 'recruit' | 'kit' | 'card' | 'part' | 'end';
 const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string; reward: Reward; boss?: boolean; w?: number; h?: number; place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] }[] = [
   // 입문 판은 손으로 만든다: 적 폰을 킹 옆으로 비켜 두면 첫 카드(전진 · 사선)가 바로 친다
-  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', tell: '* 카드 → 기물 → 붉은 과녁. 킹을 쓰러뜨리면 끝.', reward: 'recruit' },
-  { enemy: ['K', 'P', 'P'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', tell: '* 붉은 칸이 다음에 맞을 자리다. 비키거나 먼저 친다.', reward: 'kit' },
-  { enemy: ['K', 'P', 'P', 'N'], kingHp: 0.6, title: '2판 — 주조 공정', tell: '* 부품이 달렸다. 조합을 터뜨린다.', reward: 'card' },
-  { enemy: ['K', 'P', 'P', 'B', 'R'], kingHp: 0.7, title: '3판 — 검문!', tell: '* 룩이 섞였다. 이기면 부품 상자가 열린다.', reward: 'part' },
-  { enemy: ['K', 'Q', 'P', 'P', 'N'], kingHp: 0.75, title: '4판 — 반장', tell: '* 반장이 철갑을 두른다. 몰아쳐야 뚫린다.', reward: 'end', boss: true },
+  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', tell: '카드 → 기물 → 붉은 과녁 순서로 누릅니다. 적 킹을 쓰러뜨리면 승리합니다.', reward: 'recruit' },
+  { enemy: ['K', 'P', 'P'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', tell: '붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.', reward: 'kit' },
+  { enemy: ['K', 'P', 'P', 'N'], kingHp: 0.6, title: '2판 — 주조 공정', tell: '부품이 장착되었습니다. 맞는 카드와 함께 쓰면 배율이 커집니다.', reward: 'card' },
+  { enemy: ['K', 'P', 'P', 'B', 'R'], kingHp: 0.7, title: '3판 — 검문!', tell: '검문입니다. 이기면 부품을 하나 더 얻습니다.', reward: 'part' },
+  { enemy: ['K', 'Q', 'P', 'P', 'N'], kingHp: 0.75, title: '4판 — 반장', tell: '반장은 철갑을 두르고 줄 폭격을 예고합니다.', reward: 'end', boss: true },
 ];
 
 /** 분대: 시리얼 · 이름 · 기벽이 붙은 기물 (D-153) */
@@ -170,7 +170,7 @@ const refresh = (): void => {
   renderer.render(model());
   $('turn-label').textContent = b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`;
   $('turn-label').classList.toggle('enemy', enemyTurn);
-  $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>'}`;
+  $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   $('parts').hidden = !parts.length;
   $('boss').hidden = !b.boss;
@@ -248,7 +248,7 @@ const pickCard = (i: number): void => {
   const c = COMMANDS[b.hand[i]];
   if (!c) return;
   if (isInstant(b.hand[i])) {
-    if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? `태엽이 모자라다. (${costOf(b, i)} 필요)` : c.kind === 'march' ? '앞으로 갈 폰이 없다.' : '낼 수 없다.');
+    if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'tap', b.kills + 2);
       playCard(b, i);
@@ -259,9 +259,9 @@ const pickCard = (i: number): void => {
     }
     return void run(i);
   }
-  if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return toast(`태엽이 모자라다. (${c.cost} 필요)`);
+  if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return toast('‘태엽이 모자라.’');
   const pieces = cardPieces(b, i);
-  if (!pieces.length) return toast(c.who === 'any' ? '움직일 기물이 없다.' : `${PIECE_NAMES_KO[c.who]}이(가) 없거나 갈 칸이 없다.`);
+  if (!pieces.length) return toast(c.who === 'any' ? '‘움직일 기물이 없어.’' : `‘${PIECE_NAMES_KO[c.who]}이(가) 없거나, 갈 칸이 없어.’`);
   sfx('lift');
   if (selCard === i) {
     selCard = selPiece = null;
@@ -294,7 +294,7 @@ const onTap = async (pos: Pos): Promise<void> => {
     if (selCard !== null && cardPieces(b, selCard).some((q) => q.id === p.id)) selPiece = p.id;
     else {
       const ci = autoCard(p.id);
-      if (ci === null) return toast(`${PIECE_NAMES_KO[p.type]}을(를) 움직일 카드가 없다.`);
+      if (ci === null) return toast(`‘${PIECE_NAMES_KO[p.type]}을(를) 움직일 카드가 없어.’`);
       selCard = ci;
       selPiece = p.id;
     }
@@ -303,7 +303,7 @@ const onTap = async (pos: Pos): Promise<void> => {
   }
   if (p && p.side === 1) {
     const it = liveIntents(b).find((x) => x.pieceId === p.id);
-    toast(it ? `* 이번에 움직인다. 붉은 칸을 친다.` : '* 이번엔 움직이지 않는다.');
+    toast(it ? '다음 차례에 움직이는 적입니다. 붉은 칸을 공격합니다.' : '다음 차례에는 움직이지 않습니다.');
     return;
   }
   selCard = selPiece = null;
@@ -334,7 +334,7 @@ const run = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
   // 템포 가속: 연쇄가 쌓일수록 다음 연출이 빨라진다
   renderer.setTempo(1 + Math.min(b.kills, 4) * 0.15);
   if (gain) {
-    toast(`* 편자가 울린다. 태엽 +${gain}.`);
+    toast(`편자 발동 — 태엽 +${gain}`);
     window.setTimeout(() => sfx('coin', 9), 200);
   }
   if (b.s.winner !== null) return finish();
@@ -346,7 +346,7 @@ const onEnd = async (): Promise<void> => {
   const r = endTurn(b);
   if (r === 'warn') {
     sfx('threat');
-    toast('‘거기는 맞는다. 그래도?’ — 한 번 더 누르면 끝낸다.', 2600);
+    toast('이대로 턴을 끝내면 킹이 피격당합니다. 한 번 더 누르면 끝냅니다.', 2600);
     $('btn-end').classList.add('warn');
     return;
   }
@@ -401,7 +401,7 @@ const finish = (): void => {
   const won = b.s.winner === 0;
   window.setTimeout(() => {
     if (!won) {
-      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>* 집게가 상자째 들어 올린다.</p><div class="row"><button class="btn brass" type="button" data-again>이 판 다시</button></div>`);
+      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>분대가 용광로로 보내졌습니다.</p><div class="row"><button class="btn brass" type="button" data-again>다시 하기</button></div>`);
       el.querySelector('[data-again]')!.addEventListener('click', () => start(stage));
       return;
     }
@@ -421,7 +421,7 @@ const finish = (): void => {
     const heirs = fallen.filter((c) => c.t !== 'K');
     if (heirs.length) {
       gold += heirs.length * CREW.heirloomScrews;
-      window.setTimeout(() => toast(`* ${heirs.map((c) => c.name).join(' · ')}의 태엽이 저울에 오른다. 나사 +${heirs.length * CREW.heirloomScrews}.`, 3000), 400);
+      window.setTimeout(() => toast(`유품 태엽 처분 (${heirs.map((c) => c.name).join(' · ')}) — 나사 +${heirs.length * CREW.heirloomScrews}`, 3000), 400);
     }
     rewardFlow(earned, overGold, fallen);
   }, 700);
@@ -434,9 +434,9 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
     const head = `<h2><span class="pass-tag">통과</span> ${BATTLES[stage].title} — 나사 +${earned}</h2>`;
     if (reward === 'recruit') return recruitPick(head, () => start(stage + 1));
     if (reward === 'kit') return kitPick(head, () => start(stage + 1));
-    if (reward === 'part') return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>* 검수관의 상자가 열린다. 부품 하나를 단다. 규칙이 바뀐다.</p>`, () => start(stage + 1));
+    if (reward === 'part') return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => start(stage + 1));
     if (stage + 1 >= BATTLES.length) {
-      openOverlay(`<div class="stamp-big good">통과</div><h2>수직 조각 끝</h2><p>* 남은 분대 ${squad.length}기 · 나사 ${gold} · 덱 ${deck.length}장.</p><p class="dim">손맛이 어땠는지 — 카드 · 붉은 칸 · 연쇄 · 되감기 — 한 줄씩 알려 주면 다음 조각에 반영한다.</p><div class="row"><button class="btn brass" type="button" data-restart>처음부터</button></div>`)
+      openOverlay(`<div class="stamp-big good">통과</div><h2>수직 조각 끝</h2><p>남은 분대 ${squad.length}기 · 나사 ${gold} · 덱 ${deck.length}장</p><p class="dim">플레이 소감을 알려 주면 다음 조각에 반영합니다.</p><div class="row"><button class="btn brass" type="button" data-restart>처음부터</button></div>`)
         .querySelector('[data-restart]')!
         .addEventListener('click', () => location.reload());
       return;
@@ -461,15 +461,15 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
     const showReward = (): void => {
       const el = openOverlay(`
         <h2>통과 — 나사 +${earned} <small class="dim">(남은 칸 ${b.coins} × ${SLICE.coinValue}${overGold ? ` + 넘친 피해 ${b.overkill} → ${overGold}` : ''})</small></h2>
-        <p>* 쓰러진 흑 ${lost}기의 상자에서 명령 카드가 나온다. 하나를 덱에 넣는다.</p>
+        <p>명령 카드 하나를 덱에 넣습니다. (흑 ${lost}기 처치)</p>
         <div class="reward-cards">${offers
           .map((id) => {
             const c = COMMANDS[id];
             const who = cardArt(id);
-            return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small></span></button>`;
+            return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small>${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
           })
           .join('')}</div>
-        <p class="rest-line">* 쉬는 사이 기름칠 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
+        <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
           <button class="btn" type="button" data-remove>카드 빼기 (카드 대신)</button>
@@ -492,7 +492,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
         const o = overhaulSquad(squad, fallen);
         squad = o.squad;
         sfx('awaken');
-        toast(o.revived ? `* ${o.revived.name}이(가) 다시 선다. 원부의 줄이 지워진다.` : '* 분대가 기름을 먹는다.');
+        toast(o.revived ? `${o.revived.name}이(가) 복귀했습니다.` : `분대 전원 HP +${Math.round(REST.overhaul * 100)}%`);
         window.setTimeout(() => start(stage + 1), 500);
       });
     };
@@ -512,10 +512,10 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const cards = ids
     .map((id) => {
       const c = COMMANDS[id];
-      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}><span class="cost">${c.cost}</span>${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b><small>${c.desc}</small></span><span class="cnt">×${counts.get(id)}</span></button>`;
+      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}><span class="cost">${c.cost}</span>${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b><small>${c.desc}</small>${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span></button>`;
     })
     .join('');
-  const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>* 고물상 주인이 집게를 내민다. “하나 빼. 가벼워진다.”</p>`;
+  const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>덱에서 카드 한 장을 영구히 뺍니다.</p>`;
   const el = openOverlay(`${head}<div class="deck-grid${mode === 'remove' ? ' removing' : ''}">${cards}</div><div class="row">${mode === 'view' ? '<button class="btn brass" type="button" data-close-deck>닫기</button>' : '<button class="btn" type="button" data-cancel>그만두기</button>'}</div>`);
   if (mode === 'view') {
     el.querySelector('[data-close-deck]')!.addEventListener('click', closeOverlay);
@@ -528,7 +528,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
       deck.splice(deck.indexOf(id), 1);
       sfx('stamp');
       btn.classList.add('removed');
-      toast(`* ${COMMANDS[id].name} 한 장이 집게에 들려 나간다.`);
+      toast(`${COMMANDS[id].name} 한 장을 뺐습니다.`);
       window.setTimeout(() => then?.(true), 520);
     }),
   );
@@ -565,7 +565,9 @@ const deathRites = async (): Promise<void> => {
     if (!c) continue;
     const fx = document.createElement('div');
     fx.className = 'deathfx';
-    fx.innerHTML = `<div><span class="dim">${c.serial}</span><b>${crewLabel(c)}</b><i>${LAST_WORDS[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % LAST_WORDS.length]}</i><small>* ${f.by}에게 쓰러졌다. 유품 태엽이 떨어진다.</small></div>`;
+    const d = DEATHS[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % DEATHS.length];
+    // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158)
+    fx.innerHTML = `<div><p class="narr">${d.narr}</p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
     document.body.appendChild(fx);
     sfx('loss');
     await new Promise((r) => window.setTimeout(r, 1200));
@@ -608,10 +610,10 @@ const crewView = (): void => {
 /** 폐기 원부: 쓰러진 분대원의 영구 기록 */
 const ledgerView = (): void => {
   const rows = readLedger();
-  const el = openOverlay(`<h2>폐기 원부</h2><p>* 검수관의 장부. 지워지지 않는다.</p><div class="ledger">${
+  const el = openOverlay(`<h2>폐기 원부</h2><p>쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><div class="ledger">${
     rows.length
       ? rows.map((r) => `<div class="ledger-row">${pieceImg(r.t, 0, 'small', 22)} <b>${r.name}${r.nick ? ` 「${r.nick}」` : ''}</b> <span class="dim">${r.serial}</span> · 처치 ${r.kills} · 대국 ${r.battles}<br><small>${r.cause} · ${r.run}</small></div>`).join('')
-      : '<p class="dim">아직 비어 있다.</p>'
+      : '<p class="dim">아직 기록이 없습니다.</p>'
   }</div><div class="row"><button class="btn brass" type="button" data-back>분대로</button></div>`);
   el.querySelector('[data-back]')!.addEventListener('click', crewView);
 };
@@ -625,7 +627,7 @@ const recruitPick = (head: string, then: () => void): void => {
   // 셋이 서로 다른 이름 · 기벽
   const crews: Crew[] = [];
   for (const r of offers) crews.push(makeCrew(r.t, crewRng, [...squad, ...crews].map((u) => u.name ?? ''), crews.map((u) => u.quirk!).filter(Boolean)));
-  const el = openOverlay(`${head}<p>* 출하 대기열의 기물 셋. 하나를 분대에 넣는다.</p><div class="part-cards">${offers
+  const el = openOverlay(`${head}<p>분대에 넣을 기물을 하나 고릅니다.</p><div class="part-cards">${offers
     .map((r, k) => {
       const c = crews[k];
       const q = c.quirk ? QUIRKS[c.quirk] : null;
@@ -639,7 +641,7 @@ const recruitPick = (head: string, then: () => void): void => {
       deck.push(...r.cards);
       sfx('rare');
       btn.classList.add('picked');
-      toast(`* ${crews[Number(btn.dataset.rec)].name}이(가) 분대에 선다.`);
+      toast(`${crews[Number(btn.dataset.rec)].name}이(가) 분대에 합류했습니다.`);
       window.setTimeout(then, 420);
     }),
   );
@@ -651,7 +653,7 @@ const kitPick = (head: string, then: () => void): void => {
   const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)));
   const offers: typeof KITS = [];
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
-  const el = openOverlay(`${head}<p>* 검수관이 상자를 내민다. 부품 하나와 맞물리는 카드 둘. 하나를 고른다.</p><div class="part-cards">${offers
+  const el = openOverlay(`${head}<p>부품 하나와 맞물리는 카드 두 장이 함께 들어옵니다. 하나를 고릅니다.</p><div class="part-cards">${offers
     .map((k, n) => {
       const d = SLICE_PARTS[k.part];
       return `<button type="button" class="part-card${d.axis ? ` ax-${d.axis}` : ''}" data-kit="${n}"><i class="ico" style="${iconMask(d.icon)}"></i><b>${d.name}${axisTag(d.axis ?? undefined)}</b><small>${d.desc}</small><span class="kit-cards">+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
@@ -690,16 +692,16 @@ const help = (): void => {
   const el = openOverlay(`
     <h2>수직 조각 — 분대 + 명령 덱</h2>
     <ul class="help">
-      <li><b>카드</b>를 누르고 → <b>기물</b>을 누르고 → <b>갈 칸</b>을 누른다. 기물을 먼저 눌러도 된다 (맞는 카드를 골라 준다).</li>
-      <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 친다. 과녁 = 친다 · 금 = 처치.</li>
-      <li>카드의 작은 판: 가운데 흰 칸 = 이 기물 · <b style="color:#ff8a6a">붉은 칸</b> = 가서 치는 범위 · <b style="color:#4ec3d6">청록</b> = 이동만 · 줄 = 막힐 때까지 간다 (위쪽이 앞).</li>
-      <li>카드 왼쪽 위 숫자 = <b>태엽</b>. 한 턴에 ${SLICE.ap}. 같은 기물을 여러 번 움직여도 된다.</li>
-      <li>이번 턴에 처치할 때마다 <b>연쇄</b> 배수가 오른다 (×${chainMult(1).toFixed(2)} → ×${chainMult(2).toFixed(2)} …). 순서가 곧 화력.</li>
-      <li><b>붉게 깜빡이는 칸</b> = 적이 예고한 칠 칸. 번호 = 이번에 움직일 적. 먼저 쓰러뜨리면 취소, 비키면 빗나간다, 길을 막으면 못 온다.</li>
-      <li><b>나사 트랙</b>: 턴마다 한 칸씩 사라진다. 빨리 이길수록 많이 받는다.</li>
-      <li><b>되감기</b>: 이번 턴 처음으로, 대국마다 한 번. 분대 HP는 다음 판으로 이어진다.</li>
-      <li><b>넘친 피해</b>: 적 HP를 넘어선 피해 10마다 나사 1. 배수를 키울수록 번다.</li>
-      <li><b>부품</b>: 규칙을 바꾸는 장치. 1판을 넘으면 부품 상자(카드 둘과 함께), 검문!을 넘으면 하나 더. 카드 띠(기병 · 보병 · 왕관 · 연쇄)와 맞추면 터진다.</li>
+      <li><b>카드</b> → <b>기물</b> → <b>갈 칸</b> 순서로 누릅니다. 기물을 먼저 누르면 맞는 카드가 골라집니다.</li>
+      <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 공격합니다. 과녁 = 공격 · 금색 = 처치.</li>
+      <li>카드의 작은 판: 가운데 흰 칸 = 이 기물 · <b style="color:#ff8a6a">붉은 칸</b> = 가서 치는 범위 · <b style="color:#4ec3d6">청록</b> = 이동만 · 줄 = 막힐 때까지 이어짐 (위쪽이 앞).</li>
+      <li>카드 왼쪽 숫자는 <b>태엽</b> 비용입니다. 한 턴에 ${SLICE.ap}. 같은 기물을 여러 번 움직일 수 있습니다.</li>
+      <li>한 턴 안에서 처치할 때마다 <b>연쇄</b> 배율이 오릅니다 (×${chainMult(1).toFixed(2)} → ×${chainMult(2).toFixed(2)} …).</li>
+      <li><b>붉은 칸</b>은 다음 차례에 상대가 공격할 수 있는 범위입니다. 번호는 움직일 순서입니다. 그 적을 먼저 쓰러뜨리거나, 비키거나, 길을 막으면 공격이 무산됩니다.</li>
+      <li><b>나사 트랙</b>: 턴마다 한 칸씩 줄어듭니다. 빨리 이길수록 많이 받습니다.</li>
+      <li><b>되감기</b>: 이번 턴을 처음으로 되돌립니다 (대국마다 1회). 분대 HP는 다음 판으로 이어집니다.</li>
+      <li><b>넘친 피해</b>: 적 HP를 넘어선 피해 10마다 나사 1.</li>
+      <li><b>부품</b>: 규칙을 바꾸는 장치입니다. 1판 뒤 부품 상자(카드 두 장 포함), 검문 뒤 하나 더. 같은 띠(기병 · 보병 · 왕관 · 연쇄 · 밀치기)의 카드와 맞물립니다.</li>
     </ul>
     <div class="row"><button class="btn brass" type="button" data-close>닫기</button></div>`);
   el.querySelector('[data-close]')!.addEventListener('click', () => {

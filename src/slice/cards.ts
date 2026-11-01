@@ -52,42 +52,44 @@ export interface CommandDef {
   carve?: CarveId;
   amount?: number;
   desc: string;
+  /** 각주 (칭호 · 짧은 대사 — 비장하게, D-158) */
+  flavor?: string;
 }
 
 export const COMMANDS: Record<CommandId, CommandDef> = {
-  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '움직여 친다.' },
-  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '뛰어넘어 친다.' },
-  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '사선으로 가서 친다.' },
-  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '한 칸 가서 둘레를 친다.' },
-  order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '아무 기물이 움직여 친다.' },
-  pierceDiag: { axis: 'chain', name: '관통 사선', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '비숍 · 첫 적을 지나 한 기 더 맞힌다.' },
-  crossLeap: { axis: 'cav', name: '십자 도약', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '나이트 · 내려앉은 칸 상하좌우로 50% 튄다.' },
-  charge: { axis: 'inf', name: '돌격', cost: 1, who: 'P', kind: 'move', mult: 1.6, desc: '폰 · 이번 공격 ×1.6.' },
-  plate: { name: '방열판', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '기물 하나에 방열판 15. 움직이지 않는다.' },
-  repair: { name: '땜질', cost: 1, who: 'any', kind: 'repair', amount: 15, desc: '기물 하나의 HP 15를 되찾는다.' },
-  reload: { name: '재장전', cost: 0, who: 'any', kind: 'draw', amount: 2, desc: '카드 두 장을 뽑는다.' },
-  kingBlow: { axis: 'king', name: '왕의 일격', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '킹 · 이번 공격 ×2.' },
-  splashDiag: { axis: 'chain', name: '대각 튐', cost: 2, who: 'B', kind: 'move', carve: 'diag', desc: '비숍 · 내려앉은 칸 대각선으로 50% 튄다.' },
-  smash: { axis: 'chain', name: '강타', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '아무 기물 · 이번 공격 ×1.5.' },
-  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '곧게 가서 친다.' },
+  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '앞으로 나아가 대각선 앞을 친다.', flavor: '작은 개척자' },
+  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '뛰어넘어 내려앉고, 그 자리에서 친다.', flavor: '뛰어넘고, 짓밟는 자.' },
+  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '사선으로 나아가 사선 끝까지 친다.', flavor: '성스러운 빛의 심판자' },
+  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '한 칸 움직여 둘레를 친다.', flavor: '화려한 왕관, 잔혹한 무게' },
+  order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '원하는 기물에게 명령한다.' },
+  pierceDiag: { axis: 'chain', name: '관통 사선', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 1기까지)' },
+  crossLeap: { axis: 'cav', name: '십자 도약', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
+  charge: { axis: 'inf', name: '돌격', cost: 1, who: 'P', kind: 'move', mult: 1.6, desc: '일격을 휘두른다. (×1.6)' },
+  plate: { name: '방열판', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15)' },
+  repair: { name: '땜질', cost: 1, who: 'any', kind: 'repair', amount: 15, desc: '기물 하나를 땜질한다. (HP +15)' },
+  reload: { name: '재장전', cost: 0, who: 'any', kind: 'draw', amount: 2, desc: '탄창을 다시 채운다. (카드 +2)' },
+  kingBlow: { axis: 'king', name: '왕의 일격', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (×2)' },
+  splashDiag: { axis: 'chain', name: '대각 튐', cost: 2, who: 'B', kind: 'move', carve: 'diag', desc: '착지한 자리에서 사선으로 파편이 튄다. (대각 50%)' },
+  smash: { axis: 'chain', name: '강타', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '온 힘을 실어 내려친다. (×1.5)' },
+  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '곧게 나아가 줄 끝까지 친다.', flavor: '살아 움직이는 요새' },
   // ---- 빌드 축 카드 (D-144) ----
-  rebound: { axis: 'cav', name: '재도약', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '나이트 · 이번 턴 처치했으면 태엽 0.' },
-  hoofKick: { axis: 'cav', name: '말발굽', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '나이트 · 처치하면 카드 한 장.' },
-  march: { axis: 'inf', name: '행진', cost: 1, who: 'P', kind: 'march', desc: '폰 모두 한 칸 앞으로 가서 친다.' },
-  draft: { axis: 'inf', name: '징집', cost: 1, who: 'any', kind: 'draft', desc: '킹 옆에 폰 하나를 세운다. 이번 대국만.' },
-  wrath: { axis: 'king', name: '분노한 왕', cost: 1, who: 'K', kind: 'move', rage: true, desc: '킹 · 잃은 HP만큼 세진다 (최대 ×3).' },
-  royalGuard: { axis: 'king', name: '왕의 갑주', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '킹에게 방열판 30.' },
-  spark: { axis: 'chain', name: '불씨', cost: 0, who: 'any', kind: 'spark', desc: '처치 없이 연쇄 +1. 카드 한 장.' },
-  finisher: { axis: 'chain', name: '마무리', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '아무 기물 · 연쇄 하나마다 ×0.5 더.' },
+  rebound: { axis: 'cav', name: '재도약', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '처치 후 한 번 더 도약한다. (이번 턴 처치했으면 태엽 0)' },
+  hoofKick: { axis: 'cav', name: '말발굽', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '짓밟고 다음 명령을 받는다. (처치 시 카드 +1)' },
+  march: { axis: 'inf', name: '행진', cost: 1, who: 'P', kind: 'march', desc: '폰 전원이 한 칸 전진해 친다.', flavor: '“전군, 진격하라!”' },
+  draft: { axis: 'inf', name: '징집', cost: 1, who: 'any', kind: 'draft', desc: '킹 곁에 폰 하나를 세운다. (이번 대국만)', flavor: '“빈자리를 채워라.”' },
+  wrath: { axis: 'king', name: '분노한 왕', cost: 1, who: 'K', kind: 'move', rage: true, desc: '상처 입은 만큼 분노한다. (잃은 HP 비율만큼, 최대 ×3)' },
+  royalGuard: { axis: 'king', name: '왕의 갑주', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '왕이 갑주를 두른다. (방열판 +30)' },
+  spark: { axis: 'chain', name: '불씨', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1, 카드 +1)' },
+  finisher: { axis: 'chain', name: '마무리', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (연쇄 1마다 ×0.5 추가)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
-  cavCharge: { axis: 'cav', axis2: 'inf', name: '기마 돌격', cost: 2, who: 'N', kind: 'move', rally: true, desc: '나이트 · 착지 둘레의 폰도 전진해 친다.' },
-  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대', cost: 2, who: 'K', kind: 'move', rally: true, desc: '킹 · 둘레의 폰도 전진해 친다.' },
-  doubleLeap: { axis: 'cav', axis2: 'chain', name: '연속 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '나이트 · 처치하면 연쇄가 두 칸 오른다.' },
+  cavCharge: { axis: 'cav', axis2: 'inf', name: '기마 돌격', cost: 2, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (착지 둘레 폰 전진 공격)' },
+  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대', cost: 2, who: 'K', kind: 'move', rally: true, desc: '왕이 나서자 근위대가 따른다. (둘레 폰 전진 공격)' },
+  doubleLeap: { axis: 'cav', axis2: 'chain', name: '연속 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '처치할 때마다 연쇄가 거세진다. (처치 1회 = 연쇄 2칸)' },
   // ---- 밀치기 (D-154): 친 적을 한 칸 민다, 막히면 충돌 ----
-  shove: { axis: 'push', name: '밀어치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '아무 기물 · 친 적을 한 칸 민다. 막히면 충돌.' },
-  shieldBash: { axis: 'push', axis2: 'inf', name: '방패 밀치기', cost: 1, who: 'P', kind: 'move', push: true, desc: '폰 · 친 적을 민다. 막히면 충돌.' },
-  ram: { axis: 'push', axis2: 'cav', name: '들이받기', cost: 1, who: 'N', kind: 'move', push: true, desc: '나이트 · 친 적을 민다. 막히면 충돌.' },
-  gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '내 폰 하나를 부순다. 연쇄 +2, 한 장.' },
+  shove: { axis: 'push', name: '밀어치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '적을 밀어낸다. 막히면 부딪친다. (충돌 18)' },
+  shieldBash: { axis: 'push', axis2: 'inf', name: '방패 밀치기', cost: 1, who: 'P', kind: 'move', push: true, desc: '방패로 밀쳐 낸다. 막히면 부딪친다. (충돌 18)' },
+  ram: { axis: 'push', axis2: 'cav', name: '들이받기', cost: 1, who: 'N', kind: 'move', push: true, desc: '들이받아 밀어낸다. 막히면 부딪친다. (충돌 18)' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +2, 카드 +1)', flavor: '“기꺼이.”' },
 };
 
 /** 시작 덱 (10장) — 2판 구조 시절 (테스트 · 봇 기준용으로 남긴다) */
@@ -102,10 +104,10 @@ export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'diagon
 
 /** 영입: 기물 하나 + 그 기물의 카드 */
 export const RECRUITS: { t: PieceType; cards: CommandId[]; line: string }[] = [
-  { t: 'N', cards: ['leap', 'leap'], line: '뛰어넘어 친다.' },
-  { t: 'P', cards: ['advance', 'charge'], line: '싸고 많다.' },
-  { t: 'B', cards: ['diagonal', 'pierceDiag'], line: '사선 끝까지.' },
-  { t: 'R', cards: ['rookLine'], line: '곧은 줄을 민다. 비싸다.' },
+  { t: 'N', cards: ['leap', 'leap'], line: '뛰어넘고, 짓밟는 자.' },
+  { t: 'P', cards: ['advance', 'charge'], line: '작은 개척자' },
+  { t: 'B', cards: ['diagonal', 'pierceDiag'], line: '성스러운 빛의 심판자' },
+  { t: 'R', cards: ['rookLine'], line: '살아 움직이는 요새' },
 ];
 
 /** 부품 상자 (첫 사기 조합 확정): 부품 + 맞물리는 카드 둘. needs = 분대에 있어야 하는 기물 */

@@ -334,18 +334,18 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
 export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos): { events: BattleEvent[]; before: BattleState } | string => {
   const id = b.hand[i];
   const c = COMMANDS[id];
-  if (!c) return '없는 카드';
+  if (!c) return '없는 카드입니다.';
   const cost = costOf(b, i, pieceId);
-  if (cost > b.ap) return '태엽이 모자라다.';
+  if (cost > b.ap) return '‘태엽이 모자라.’';
   const before = cloneState(b.s);
   let events: BattleEvent[] = [];
   let gained = 0;
   if (c.kind === 'move') {
-    if (pieceId === undefined || !to) return '기물과 칸을 고른다.';
+    if (pieceId === undefined || !to) return '기물과 칸을 선택하십시오.';
     const p = findPiece(b.s, pieceId);
-    if (!p || p.side !== 0 || (c.who !== 'any' && c.who !== p.type)) return '이 카드로 움직일 수 없는 기물이다.';
+    if (!p || p.side !== 0 || (c.who !== 'any' && c.who !== p.type)) return '이 카드로 움직일 수 없는 기물입니다.';
     const sim = previewPlay(b, i, pieceId, to);
-    if (!sim) return '갈 수 없는 칸이다.';
+    if (!sim) return '갈 수 없는 칸입니다.';
     b.s = sim.state;
     events = sim.events;
     b.overkill += overkillOf(before, sim.events);
@@ -383,9 +383,9 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     }
   } else if (c.kind === 'march') {
     const plan = marchPlan(b);
-    if (!plan.length) return '앞으로 갈 폰이 없다.';
+    if (!plan.length) return '‘앞으로 갈 폰이 없어.’';
     const sim = simulate(b.s, plan, { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) });
-    if (!sim.ok) return '앞으로 갈 폰이 없다.';
+    if (!sim.ok) return '‘앞으로 갈 폰이 없어.’';
     b.s = sim.state;
     events = sim.events;
     b.overkill += overkillOf(before, sim.events);
@@ -393,13 +393,13 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (has(b, 'magnet')) drawCards(b, sim.removed.filter((q) => q.side === 1).length);
   } else if (c.kind === 'draft') {
     const e = spawnPawn(b, '징집 — 폰이 선다');
-    if (!e) return '킹 옆에 빈 칸이 없다.';
+    if (!e) return '킹 곁에 빈 칸이 없습니다.';
     events = [e];
   } else if (c.kind === 'gambit') {
     // 희생 수: 이번 대국만 선 폰(징집 · 조립 라인)부터, 그다음 HP가 낮은 폰
     const pawns = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').sort((x, y) => Number(b.squadIds.includes(x.id)) - Number(b.squadIds.includes(y.id)) || x.hp - y.hp);
     const v = pawns[0];
-    if (!v) return '부술 폰이 없다.';
+    if (!v) return '바칠 폰이 없습니다.';
     b.s.pieces = b.s.pieces.filter((p) => p.id !== v.id);
     events = [{ type: 'attack', order: 0, attackerId: v.id, area: [{ x: v.x, y: v.y }], hits: [{ targetId: v.id, damage: v.hp, shieldAbsorbed: 0, hpAfter: 0, killed: true }] }];
     b.kills += 2;
@@ -409,7 +409,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     drawCards(b, 1);
   } else if (c.kind === 'shield' || c.kind === 'repair') {
     const p = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
-    if (!p || p.side !== 0) return '내 기물을 고른다.';
+    if (!p || p.side !== 0) return '내 기물을 선택하십시오.';
     if (c.kind === 'shield') {
       p.shield += c.amount ?? 0;
       events = [{ type: 'shield', pieceId: p.id, amount: c.amount ?? 0 }];
@@ -622,7 +622,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
 
 /** 되감기: 이번 턴 처음으로 (대국마다 한 번) */
 export const rewind = (b: SliceBattle): SliceBattle | string => {
-  if (b.rewinds <= 0) return '되감기를 다 썼다.';
+  if (b.rewinds <= 0) return '되감기를 모두 사용했습니다.';
   const back = JSON.parse(b.snap) as SliceBattle;
   back.rewinds = b.rewinds - 1;
   back.snap = b.snap;
