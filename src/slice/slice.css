@@ -213,3 +213,4 @@ body.slice .cmd.cheap .keys img { filter: drop-shadow(0 0 3px #5fe0a8); }
 .reward-cards .cmd { grid-template-columns: 1fr; justify-items: center; }
 .reward-cards .cmd .keys { flex-direction: row; position: absolute; left: 8px; top: 6px; }
 .cmd.deckcard { grid-template-columns: 22px 52px 1fr; }
+.pass-tag.bad { background: #e0564f; color: #fff; }

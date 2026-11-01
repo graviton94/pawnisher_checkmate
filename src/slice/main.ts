@@ -459,13 +459,14 @@ const finish = (): void => {
 };
 
 /** 보상 흐름 (유품 다음) */
-const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
+const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone = false): void => {
   {
     const reward = BATTLES[stage].reward;
     const head = `<h2><span class="pass-tag">통과</span> ${BATTLES[stage].title} — 나사 +${earned}</h2>`;
     if (reward === 'recruit') return recruitPick(head, () => start(stage + 1));
     if (reward === 'kit') return kitPick(head, () => start(stage + 1));
-    if (reward === 'part') return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen));
+    // 검문: 부품을 고른 뒤 카드 보상으로 (partDone — 다시 부품 화면으로 돌지 않게)
+    if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true));
     if (stage + 1 >= BATTLES.length) {
       return runEnd(true);
     }
@@ -780,8 +781,7 @@ $('btn-help').addEventListener('click', help);
 const runEnd = (cleared: boolean): void => {
   const fallenNow = readLedger().filter((r) => r.run === runId);
   const best = [...squad].sort((x, y) => (y.kills ?? 0) - (x.kills ?? 0))[0];
-  openOverlay(`<div class="stamp-big ${cleared ? 'good' : 'bad'}">${cleared ? '출하 완료' : '출하 중단'}</div>
-    <h2>${cleared ? '반장을 넘었습니다.' : `${BATTLES[stage].title}에서 멈췄습니다.`}</h2>
+  openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '반장을 넘었습니다.' : `${BATTLES[stage].title}에서 멈췄습니다.`}</h2>
     <p>대국 ${cleared ? BATTLES.length : stage} / ${BATTLES.length} · 나사 ${gold} · 덱 ${deck.length}장 · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
     <p>살아남은 분대: ${squad.map((u) => `${crewLabel(u)} (처치 ${u.kills ?? 0})`).join(' · ')}</p>
     ${fallenNow.length ? `<p class="bad">쓰러진 분대원: ${fallenNow.map((r) => r.name).join(' · ')}</p>` : ''}
