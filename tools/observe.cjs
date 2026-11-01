@@ -10,14 +10,14 @@ const URL = process.env.OBSERVE_URL || 'http://localhost:4173/?debug&nointro';
 const stamp = new Date().toISOString().slice(0, 10);
 
 const runFixture = (stage) => ({
-  version: 1, seed: 5, rng: 5, floor: 3, map: Array.from({ length: 36 }, () => [{ kind: 'battle' }, { kind: 'shop' }]), path: [],
-  gold: 120, deck: ['K', 'N', 'N', 'P', 'P', 'B'], loadout: { enchants: { E01: 1, E13: 2 }, cards: ['A01', 'C03'], forge: { N: 1 }, variants: {} },
-  wins: 2, crackGauge: 1, bosses: ['knight', 'rook'], ascension: 0, stage,
+  version: 2, seed: 5, rng: 5, floor: 3, map: Array.from({ length: 21 }, () => [{ kind: 'battle' }, { kind: 'shop' }]), path: [],
+  gold: 120, deck: [{ t: 'K' }, { t: 'N', carve: 'cross' }, { t: 'N' }, { t: 'P' }, { t: 'P', carve: 'haste' }, { t: 'B' }], parts: ['lens', 'spur'], threats: [],
+  wins: 2, bosses: ['knight', 'rook'], ascension: 0, stage,
 });
 
 /** 저장된 출하를 심고 타이틀 → 이어서 출하 */
 const loadRun = async (page, stage, extra = {}, quiet = false) => {
-  await page.evaluate(([run, quiet]) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v1', JSON.stringify(run)); if (quiet) localStorage.setItem('pawnisher.coach.v1', JSON.stringify({ off: true, seen: [] })); }, [{ ...runFixture(stage), ...extra }, quiet]);
+  await page.evaluate(([run, quiet]) => { localStorage.clear(); localStorage.setItem('pawnisher.run.v2', JSON.stringify(run)); if (quiet) localStorage.setItem('pawnisher.coach.v1', JSON.stringify({ off: true, seen: [] })); }, [{ ...runFixture(stage), ...extra }, quiet]);
   await page.reload(); await page.waitForTimeout(600);
   await page.tap('[data-title]'); await page.waitForTimeout(300);
   await page.tap('[data-continue]'); await page.waitForTimeout(500);
@@ -350,6 +350,27 @@ const scenarios = {
     await page.tap('[data-new]'); await page.waitForTimeout(500); await shot('4-offer');
     await page.tap('[data-go]'); await page.waitForTimeout(1500); await shot('5-lesson1');
     return ['onboard-6-end'];
+  },
+  // 규격 2.0 (D-138): 고물상 · 공방 · 양날 쌍 · 반장 비틀기 · 도감 · 규칙서 · 군단
+  async v2(page) {
+    const shot = (n) => page.screenshot({ path: path.join(OUT, `${stamp}-v2-${n}.png`) });
+    const quiet = true;
+    await loadRun(page, { at: 'shop', stock: { pieces: [{ item: 'R', price: 64, sold: false }, { item: 'P', price: 16, sold: false }], carves: [{ item: 'pierce', price: 60, sold: false }, { item: 'plate', price: 55, sold: false }], parts: [{ item: 'prism', price: 140, sold: false }, { item: 'blade', price: 70, sold: false }], rerollPrice: 15 } }, { gold: 200 }, quiet);
+    await page.waitForTimeout(800); await shot('1-shop');
+    await page.tap('[data-carve="0"]'); await page.waitForTimeout(600); await shot('2-carve-unit');
+    await page.tap('[data-cancel]'); await page.waitForTimeout(300);
+    await loadRun(page, { at: 'forge', carves: ['forged', 'diag', 'plate'] }, {}, quiet); await page.waitForTimeout(800); await shot('3-forge');
+    await loadRun(page, { at: 'reward', title: '검문! 통과 — 4층', lines: ['나사 +62'], choices: [{ type: 'pair', options: [{ part: 'tread', threats: ['knightAtk'] }, { part: 'capacitor', threats: ['allHp'] }, { part: 'guard', threats: ['pawnHp'] }] }] }, { floor: 4 }, quiet);
+    await page.waitForTimeout(1000); await shot('4-pair');
+    await loadRun(page, { at: 'map' }, { floor: 7, bosses: ['bishop', 'rook'], story: { acts: [1], intro: [7] }, map: Array.from({ length: 21 }, () => [{ kind: 'boss' }]) }, quiet);
+    await page.evaluate(() => localStorage.setItem('pawnisher.meta.v1', JSON.stringify({ version: 1, runs: 3, clears: 0, bestFloor: 7, ascension: 0, onboarded: true, story: { prologue: true, acts: [1, 2, 3], bosses: ['bishop', 'rook', 'knight', 'pawn', 'variant', 'affix', 'final'] } })));
+    await page.tap('[data-node="0"]'); await page.waitForTimeout(1600); await shot('5-boss');
+    await page.evaluate(() => { localStorage.removeItem('pawnisher.run.v2'); });
+    await page.reload(); await page.waitForTimeout(600); await page.tap('[data-title]'); await page.waitForTimeout(400);
+    await page.tap('[data-codex]'); await page.waitForTimeout(500); await shot('6-codex');
+    await page.tap('[data-menu]'); await page.waitForTimeout(300);
+    await page.tap('[data-rules]'); await page.waitForTimeout(500); await page.tap('[data-rb="5"]'); await page.waitForTimeout(400); await shot('7-rules-carve');
+    return ['v2-8-end'];
   },
   // 이야기 (D-135): 프롤로그 · 공정 진입 · 반장 소개 · 최종장 · 승급 화면 · 진 엔딩 · 패배
   async story(page) {

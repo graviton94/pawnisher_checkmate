@@ -68,7 +68,7 @@ export const BOSS_STORY: Record<BossId, { npc: NpcId; belief: string; fall: stri
   bishop: { npc: 'bossBishop', belief: '* 사선만이 바른 길이다 — 그가 믿는 것.', fall: '* 렌즈가 깨진다. 몸의 숫자 3에 금이 간다.', reply: '가까이서 보면, 길은 사선만이 아니다.' },
   rook: { npc: 'bossRook', belief: '* 곧게, 자리를 지켜라. 벽 밖은 위험하다 — 그가 믿는 것.', fall: '* 성벽이 옆으로 기운다. 몸의 숫자 5에 금이 간다.', reply: '벽만 보고 섰으니 옆을 못 봤지.' },
   pawn: { npc: 'bossPawn', belief: '* 하나는 아무것도 아니다. 줄 맞춰 앞으로만 — 그가 믿는 것.', fall: '* 열이 한꺼번에 쓰러진다. 숫자 1이 여럿, 같이 갈라진다.', reply: '너희도 하나씩이었다. 줄 밖으로 나와도 된다.' },
-  variant: { npc: 'bossVariant', belief: '* 모양이 싫으면 다른 모양을 사라 — 그가 믿는 것.', fall: '* 용접이 풀린다. 사 온 거푸집이 하나씩 떨어진다.', reply: '바꾼 것도 남이 판 틀이다. 길은 사는 게 아니다.' },
+  variant: { npc: 'bossVariant', belief: '* 모양이 싫으면 다른 모양을 사라 — 그가 믿는 것.', fall: '* 용접이 풀린다. 사 온 각인이 하나씩 떨어진다.', reply: '바꾼 것도 남이 판 틀이다. 길은 사는 게 아니다.' },
   affix: { npc: 'bossAffix', belief: '* 서류에 없는 길은 없는 길이다 — 그가 믿는 것.', fall: '* 서류가 흩어진다. 아무도 서명하지 않은 판이다.', reply: '서류 밖에도 판은 있다. 지나간다.' },
 };
 
@@ -149,7 +149,7 @@ export const RECORDS: { title: string; need: string; text: string }[] = [
   { title: '비숍 반장의 렌즈 일지', need: '비숍 반장 해체', text: '렌즈는 도금왕이 갈았다. 주문: "사선만 보이게."' },
   { title: '룩 반장의 출입 명부', need: '룩 반장 해체', text: '명부 첫 줄: 도금왕 — 「폰 (임시)」.' },
   { title: '폰 반장의 생산 대장', need: '폰 반장 해체', text: '하루 8,000. 줄 밖으로 나간 폰: 0. 그날까지는.' },
-  { title: '이형 반장의 영수증', need: '이형 반장 해체', text: '거푸집 다섯을 판 값: 「반장 자리 하나.」' },
+  { title: '이형 반장의 영수증', need: '이형 반장 해체', text: '각인 다섯을 판 값: 「반장 자리 하나.」' },
   { title: '검문 반장의 서류철', need: '검문 반장 해체', text: '맨 아래 「최종 승인」 칸 — 늘 비어 있다.' },
   { title: '도금왕의 첫 상자', need: '도금왕 첫 격파', text: '킹 자리에 폰 하나. 금 왕관은 나중에 칠한 것이다.' },
   { title: '꺼진 경고등의 메모', need: '첫 승급', text: '메모의 글씨가 내 글씨다. 「누군가 다른 답을.」' },

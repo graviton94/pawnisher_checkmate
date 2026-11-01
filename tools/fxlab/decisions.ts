@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 51, date: '2026-10-31' };
+export const VERSION = { n: 52, date: '2026-11-01' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -52,6 +52,14 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
  * shots = tools/fxlab/screens/의 파일 이름 (index.tsv에 이름표). 확정되면 DECISIONS의 done으로 옮기고 화면은 지운다.
  */
 export const TOPICS: { id: string; name: string; status: Status; rule: string; changed?: string; shots: string[] }[] = [
+  {
+    id: 'spec2',
+    name: '규격 2.0 화면',
+    status: 'review',
+    rule: '판 위 표식은 둘뿐: 기물 왼쪽 위 각인 글자(⚡ ✚ ✖ ◆ ➤ ★, 황동 딱지) · 오른쪽 위 정예 왕관(진홍 딱지). 레일은 부품 이름표 · 태엽 · 예약 · 가동. 보상 카드: 기물 · 각인(글자 딱지) · 부품(등급 딱지 + 성격 한 줄) · 양날 쌍(붉은 「대가:」 줄) (D-139)',
+    changed: '새로 들어감 — 1.0의 개조 점 · 개량 +n · 이형 문양 · 접사 딱지 · 약점 과녁 · 지형 칸 · 요충지 깃발 · 카드 레일을 걷어 냈다',
+    shots: ['61-v2-board.jpg', '62-v2-shop.jpg', '63-v2-pair.jpg', '64-v2-forge.jpg'],
+  },
   {
     id: 'cutscene',
     name: '컷신 · 승급 화면',
@@ -157,7 +165,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 52, date: '2026-11-01', items: ['규격 2.0: 판 위 표식 둘(각인 · 정예) · 카드 레일 삭제 · 고물상 · 공방 · 양날 쌍 화면'] },
   { v: 51, date: '2026-10-31', items: ['컷신 재생기 · 승급 화면 (이야기 v5)', '초상화 +11: 흰 퀸 · 룩 · 비숍, 반장 여섯, 도금왕(금칠 왕관)'] },
   { v: 50, date: '2026-10-31', items: ['말하는 기물 임시 초상화 (큰 눈 + 소품) — 고물상 · 공방 · 돌발 · 보상 · 결과 · 시험대', '용어: 사람 없는 공장 (검수 저울 · 녹슨 룩 · 외눈 비숍), 최종 보스 도금왕'] },
-  { v: 49, date: '2026-10-31', items: ['랩 정리: 보는 중인 주제를 위 탭으로 (기물 공격 옆) · 오래된 결정은 확정으로 접음 · 확정된 화면 스크린샷은 뺌 · 기록은 최근 3개만', '타격 카메라 · 등급 연출 · 반장 약점 탭 새로'] },
 ];

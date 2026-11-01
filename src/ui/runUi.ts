@@ -119,11 +119,11 @@ const carveOffer = (id: CarveId): string => {
 /** 양날 쌍 카드: 내 부품 + 적 강화 */
 const pairOffer = (pair: Pair): string => partOffer(pair.part, `<p class="bad-line">대가: ${pair.threats.map((t: ThreatId) => THREATS[t].name).join(' · ')}</p>`);
 
-const pieceOffer = (run: RunState, t: PieceType, recruit = false): string => {
+const pieceOffer = (run: RunState, t: PieceType, recruit = false, lore = true): string => {
   const n = run.deck.filter((u) => u.t === t).length;
   const tag = n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>';
   const head = recruit ? `${icon('flag', 's')} ${TEXT.reward.recruit}` : `${icon('crate', 's')} 기물`;
-  return `<span class="kind">${head} · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${PIECE_NAMES_KO[t]}</b><span class="tags">${tag}</span><p>${PIECE_LORE[t]}</p>`;
+  return `<span class="kind">${head} · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${PIECE_NAMES_KO[t]}</b><span class="tags">${tag}</span>${lore ? `<p>${PIECE_LORE[t]}</p>` : ''}`;
 };
 
 /** 군단 기물 한 칸 (기물 + 각인 글자) */
@@ -786,7 +786,7 @@ export class RunUi {
     const S = TEXT.shop;
     const poor = (price: number) => (run.gold < price ? ' poor' : '');
     const priceTag = (price: number, sold: boolean) => (sold ? `<span class="price sold">${S.sold}</span>` : `<span class="price">${icon('screw', 's')}${price}</span>`);
-    const pieces = stock.pieces.map((it, i) => `<button class="offer${it.sold ? ' sold' : poor(it.price)}" type="button" data-piece="${i}" ${it.sold ? 'disabled' : ''}>${pieceOffer(run, it.item)}${priceTag(it.price, it.sold)}</button>`).join('');
+    const pieces = stock.pieces.map((it, i) => `<button class="offer${it.sold ? ' sold' : poor(it.price)}" type="button" data-piece="${i}" ${it.sold ? 'disabled' : ''}>${pieceOffer(run, it.item, false, false)}${priceTag(it.price, it.sold)}</button>`).join('');
     const carves = stock.carves.map((it, i) => `<button class="offer g-rare${it.sold ? ' sold' : poor(it.price)}" type="button" data-carve="${i}" ${it.sold ? 'disabled' : ''}>${carveOffer(it.item)}${priceTag(it.price, it.sold)}</button>`).join('');
     const parts = stock.parts.map((it, i) => `<button class="offer g-${PARTS[it.item].grade}${it.sold ? ' sold' : poor(it.price)}" type="button" data-part="${i}" ${it.sold ? 'disabled' : ''}>${partOffer(it.item)}${priceTag(it.price, it.sold)}</button>`).join('');
     const el = this.hud.openScene(
