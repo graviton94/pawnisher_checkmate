@@ -10,7 +10,7 @@ import type { RunState } from './run';
 export type LogEntry =
   | { t: 'offer'; at: number; floor: number; kind: string; options: string[]; picked: string | null }
   | { t: 'battle'; at: number; floor: number; kind: string; boss?: string; won: boolean; rounds: number; hpLost: number; ms: number }
-  | { t: 'run'; at: number; seed: number; ascension: number; won: boolean; floor: number; deck: string[]; enchants: Record<string, number>; legends: string[]; cards: string[]; ms: number };
+  | { t: 'run'; at: number; seed: number; ascension: number; won: boolean; floor: number; deck: string[]; parts: string[]; threats: string[]; ms: number };
 
 const KEY = 'pawnisher.log.v1';
 /** 기기에 남길 최대 줄 수 (오래된 것부터 지운다) */
@@ -53,10 +53,9 @@ export const logRun = (run: RunState, won: boolean, ms: number): void =>
     ascension: run.ascension ?? 0,
     won,
     floor: run.floor,
-    deck: [...run.deck],
-    enchants: { ...(run.loadout.enchants as Record<string, number>) },
-    legends: [...(run.loadout.legends ?? [])],
-    cards: [...run.loadout.cards],
+    deck: run.deck.map((u) => (u.carve ? `${u.t}:${u.carve}` : u.t)),
+    parts: [...run.parts],
+    threats: [...run.threats],
     ms,
   });
 

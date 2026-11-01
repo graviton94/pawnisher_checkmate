@@ -45,12 +45,10 @@ export const playGame = (m: Matchup, players: [Player, Player], seed: number): G
   const stats: GameStats = { winner: null, turns: 0, promotions: 0, captures: [], strikes: 0, collapses: 0, checks: 0 };
   for (; stats.turns < m.maxTurns && s.winner === null; stats.turns++) {
     const p = players[s.turnSide];
-    const plan = choosePlan(s, { tier: p.tier, weights: p.weights, cards: p.cards, seed: seed * 7919 + stats.turns });
+    const plan = choosePlan(s, { tier: p.tier, weights: p.weights, seed: seed * 7919 + stats.turns });
     const r = resolveTurn(s, plan);
     for (const e of r.events) {
       if (e.type === 'promote') stats.promotions++;
-      else if (e.type === 'strongholdCapture') stats.captures.push({ side: e.side, tier: e.tier, behind: e.behind });
-      else if (e.type === 'lastStrike') stats.strikes++;
       else if (e.type === 'collapse') stats.collapses++;
       else if (e.type === 'attack') stats.checks! += e.hits.filter((h) => h.checked).length;
     }

@@ -37,8 +37,10 @@ export interface BattleSetup {
   loadouts?: [Loadout, Loadout];
   /** 반장 비틀기 (적 진영) */
   twist?: TwistId;
-  /** 적 기물 수치 배율 (층 · 압력) */
-  enemyScale?: { hp: number; atk: number };
+  /** 적 기물 수치 배율 (층 · 압력 · 양날 쌍의 적 강화) */
+  enemyScale?: Scale;
+  /** 내 킹 최대 HP 배율 (압력) */
+  myKingHp?: number;
 }
 
 export const EMPTY_LOADOUT: Loadout = { parts: [] };
@@ -121,13 +123,21 @@ const deploy = (width: number, height: number, units: Unit[], side: Side, nextId
   return out;
 };
 
+/** 수치 배율: 전체 + 유형별 */
+export interface Scale {
+  hp: number;
+  atk: number;
+  byType?: Partial<Record<PieceType, { hp?: number; atk?: number }>>;
+}
+
 /** 각인 · 정예 · 수치 배율 · 대국 시작 부품을 기물에 반영한다 */
-const prepare = (list: Piece[], lo: Loadout, scale?: { hp: number; atk: number }): void => {
+const prepare = (list: Piece[], lo: Loadout, scale?: Scale): void => {
   const has = (id: Loadout['parts'][number]) => lo.parts.includes(id);
   for (const p of list) {
     if (scale) {
-      p.maxHp = Math.max(1, Math.round(p.maxHp * scale.hp));
-      p.atk = Math.max(1, Math.round(p.atk * scale.atk));
+      const t = scale.byType?.[p.type];
+      p.maxHp = Math.max(1, Math.round(p.maxHp * scale.hp * (t?.hp ?? 1)));
+      p.atk = Math.max(1, Math.round(p.atk * scale.atk * (t?.atk ?? 1)));
     }
     if (p.carve === 'forged') {
       p.maxHp = Math.round(p.maxHp * CARVE_FX.forgedHp);
@@ -141,13 +151,13 @@ const prepare = (list: Piece[], lo: Loadout, scale?: { hp: number; atk: number }
   }
 };
 
-export const createBattle = ({ width, height, decks, rules, seed, loadouts, twist, enemyScale }: BattleSetup): BattleState => {
+export const createBattle = ({ width, height, decks, rules, seed, loadouts, twist, enemyScale, myKingHp }: BattleSetup): BattleState => {
   let id = 1;
   const nextId = () => id++;
   const lo: [Loadout, Loadout] = loadouts ?? [EMPTY_LOADOUT, EMPTY_LOADOUT];
   const mine = deploy(width, height, toUnits(decks[0]), 0, nextId);
   const theirs = deploy(width, height, toUnits(decks[1]), 1, nextId);
-  prepare(mine, lo[0]);
+  prepare(mine, lo[0], myKingHp ? { hp: 1, atk: 1, byType: { K: { hp: myKingHp } } } : undefined);
   prepare(theirs, lo[1], enemyScale);
   // 단독 출하 (에픽): 적은 군단으로 시작했나
   const solo: [boolean, boolean] = [lo[0].parts.includes('solo') && mine.length <= PART_FX.soloMax, lo[1].parts.includes('solo') && theirs.length <= PART_FX.soloMax];

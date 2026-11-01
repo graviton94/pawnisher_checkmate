@@ -20,8 +20,8 @@ export interface MetaState {
   puzzles?: number;
   /** 쓰러뜨린 반장 (BossId · 'final') */
   bossKills?: string[];
-  /** 도감 (D-108): 한 번이라도 얻은 개조 · 도면, 들어가 본 돌발 */
-  seen?: { enchants: string[]; variants: string[]; events: string[]; cards?: string[]; legends?: string[] };
+  /** 도감: 한 번이라도 얻은 부품 · 새긴 각인 · 들어가 본 돌발 (1.0 기록 필드는 남겨 둔다) */
+  seen?: { enchants?: string[]; variants?: string[]; events: string[]; cards?: string[]; legends?: string[]; parts?: string[]; carves?: string[] };
   /** 온보딩 시험대를 마쳤거나 건너뛰었나 (D-116) */
   onboarded?: boolean;
   /** 오늘의 출하 최고 기록 (D-122): 날짜 · 도달 층 · 완주 */
@@ -40,8 +40,8 @@ export const UNLOCK_DECKS: { id: string; name: string; deck: Deck; need: string;
   { id: 'tower', name: '성채 세트', deck: ['K', 'R', 'P'], need: '출하 완료', ok: (m) => m.clears >= 1 },
   // 볼륨 3 (D-108)
   { id: 'battalion', name: '폰 대대 세트', deck: ['K', 'P', 'P', 'P', 'P', 'P'], need: '폰 반장 해체', ok: (m) => (m.bossKills ?? []).includes('pawn') },
-  { id: 'elite', name: '정예 세트', deck: ['K', 'N', 'B'], need: '검문! 15번 통과', ok: (m) => (m.elites ?? 0) >= 15 },
-  { id: 'command', name: '지휘 세트', deck: ['K', 'Q'], need: '압력 6 개방', ok: (m) => m.ascension >= 6 },
+  { id: 'elite', name: '정예 세트', deck: ['K', 'N', 'B'], need: '검문! 10번 통과', ok: (m) => (m.elites ?? 0) >= 10 },
+  { id: 'command', name: '지휘 세트', deck: ['K', 'Q'], need: '압력 5 개방', ok: (m) => m.ascension >= 5 },
 ];
 
 const KEY = 'pawnisher.meta.v1';
@@ -78,16 +78,15 @@ const union = (a: string[] = [], b: string[]) => [...new Set([...a, ...b])];
 
 /** 도감에 이 출하에서 본 것을 더한다 (저장할 때마다 불러도 같다) */
 export const absorbRun = (m: MetaState, run: RunState): MetaState => {
-  const seen = m.seen ?? { enchants: [], variants: [], events: [] };
+  const seen = m.seen ?? { events: [] };
   return {
     ...m,
     bossKills: union(m.bossKills, bossKillsOf(run)),
     seen: {
-      enchants: union(seen.enchants, Object.keys(run.loadout.enchants)),
-      variants: union(seen.variants, [...(run.blueprints ?? []), ...Object.values(run.loadout.variants ?? {})]),
+      ...seen,
       events: union(seen.events, passed(run).flatMap((n) => (n.event ? [n.event] : []))),
-      cards: union(seen.cards, run.loadout.cards),
-      legends: union(seen.legends, run.loadout.legends ?? []),
+      parts: union(seen.parts, run.parts),
+      carves: union(seen.carves, run.deck.flatMap((u) => (u.carve ? [u.carve] : []))),
     },
   };
 };
@@ -95,7 +94,7 @@ export const absorbRun = (m: MetaState, run: RunState): MetaState => {
 /** 런이 끝났을 때 기록한다. 이번 런 승천 단계에서 클리어하면 다음 단계가 열린다. run을 주면 누계·도감도 더한다. */
 export const recordRunEnd = (m: MetaState, floor: number, won: boolean, ascension: number, run?: RunState): MetaState => ({
   ...(run ? absorbRun(m, run) : m),
-  ...(run ? { elites: (m.elites ?? 0) + passed(run).filter((n) => n.kind === 'elite').length, puzzles: (m.puzzles ?? 0) + (run.solved ?? 0) } : {}),
+  ...(run ? { elites: (m.elites ?? 0) + passed(run).filter((n) => n.kind === 'elite').length } : {}),
   ...(run?.daily && (m.daily?.date !== run.daily || floor > m.daily.floor || (won && !m.daily.won)) ? { daily: { date: run.daily, floor, won } } : {}),
   runs: m.runs + 1,
   clears: m.clears + (won ? 1 : 0),

@@ -1,54 +1,49 @@
-import { CONTRACT_FX } from '../data/contracts';
-import type { OrderId } from '../data/tactics';
-import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/terrain';
-import { AFFIXES, ELITE_AFFIXES, type WeakId, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
-import { ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { ASC, ascOn } from '../data/ascension';
-import { BOSSES, BOSS_FORGE_SHIFT, eliteForge, elitePieces, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
-import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
-import { CARDS, type CardId } from '../data/cards';
-import { createBattle } from '../engine/setup';
-import type { BattleState } from '../engine/types';
+import { FORESIGHT_UNTIL_ASCENSION, defaultRules } from '../data/battle';
+import { CARVE_IDS } from '../data/carves';
+import { BOSSES, BOSS_SCALE, ELITE, ENEMY_SCALE, FINAL_BOSS, THREATS, TOTAL_FLOORS, TYPE_MAX, actOf, boardFor, earlyKingAtk, earlyKingHp, enemyCount, enemyTier, type BossId, type NodeKind, type ThreatId } from '../data/run';
+import { BOSS_TWIST, type TwistId } from '../data/twists';
 import { Rng } from '../engine/rng';
-import type { Deck } from '../engine/setup';
-import type { Loadout, PieceType } from '../engine/types';
-import { canAdd } from './deck';
-import { VARIANTS, variantsFor, type VariantId } from '../data/variants';
+import { createBattle, toUnits, type Deck, type Scale, type Unit } from '../engine/setup';
+import type { BattleState, Loadout, PieceType } from '../engine/types';
 
-/** 한 라운드(전투)의 적 군단 (GDD 8장 §8.3) */
+/**
+ * 적 군단 (규격 2.0 §3.4 — Into the Breach 정적 디자인): 적은 수 · 수치 · AI 단계로만 강해진다.
+ * 검문!은 기물 +1 · 정예 1기, 반장은 비틀기 하나. 원형(폰 행렬 · 기병 · 사선 포대 · 방벽)은 구성의 맛일 뿐 규칙이 없다.
+ */
+export type ArchetypeId = 'horde' | 'cavalry' | 'battery' | 'rampart';
+export const ARCHETYPES: Record<ArchetypeId, { name: string; weight: Partial<Record<PieceType, number>>; from: number }> = {
+  horde: { name: '폰 행렬', weight: { P: 3, N: 0.5, B: 0.5 }, from: 1 },
+  cavalry: { name: '기병 기습대', weight: { N: 4, P: 0.6 }, from: 2 },
+  battery: { name: '사선 포대', weight: { B: 4, Q: 1, P: 0.6 }, from: 3 },
+  rampart: { name: '방벽 대열', weight: { R: 4, P: 1.2, N: 0.4, B: 0.4 }, from: 4 },
+};
+
+/** 한 대국의 적 군단 */
 export interface Encounter {
   kind: NodeKind;
   name: string;
   width: number;
   height: number;
-  deck: Deck;
-  loadout: Loadout;
+  deck: Unit[];
   /** 적 AI 단계 (0~2) */
   tier: number;
-  boss?: BossId;
+  boss?: BossId | 'final';
+  twist?: TwistId;
+  scale: Scale;
   seed: number;
   floor: number;
-  /** 승천 단계 (적 킹 보정 축소에 쓴다) */
   ascension?: number;
-  /** 이 대국의 주문서 (D-094). 옛 저장에는 없다 */
-  order?: OrderId;
-  /** 군단 원형 (D-096) */
   archetype?: ArchetypeId;
-  /** 억까·억빠 (D-099) */
-  luck?: LuckId;
-  /** 검문! 정예 접사: 그 유형의 적 기물 한 기씩 (D-096) */
-  affixes?: { type: PieceType; id: AffixId }[];
-  /** 반장 약점 (D-113) */
-  weak?: WeakId;
 }
 
 /** 층이 오를수록 폰 비중이 줄고 상위 기물이 섞인다 */
 const pieceWeights = (floor: number): [PieceType, number][] => [
   ['P', Math.max(14, 50 - floor * 3)],
-  ['N', floor <= 3 ? 6 : 10 + floor],
-  ['B', floor <= 3 ? 6 : 10 + floor],
-  ['R', floor >= 5 ? 2 + floor : 0],
-  ['Q', floor >= 8 ? floor / 2 : 0],
+  ['N', floor <= 2 ? 6 : 10 + floor],
+  ['B', floor <= 2 ? 6 : 10 + floor],
+  ['R', floor >= 4 ? 2 + floor : 0],
+  ['Q', floor >= 9 ? floor / 2 : 0],
 ];
 
 const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
@@ -62,197 +57,85 @@ const pick = <T>(rng: Rng, items: [T, number][]): T | undefined => {
   return items[items.length - 1][0];
 };
 
-/** 군단 기물 유형에 맞는 인챈트 후보 (유형 인챈트 + 전체·시스템 인챈트) */
-const TYPE_ENCHANT: Partial<Record<PieceType, EnchantId>> = { N: 'E01', B: 'E02', R: 'E03', P: 'E04' };
-const GENERAL: EnchantId[] = ['E05', 'E07', 'E08', 'E09'];
+/** 양날 쌍의 적 강화 → 유형별 배율 */
+export const threatScale = (threats: ThreatId[] = []): Scale => {
+  const s: Scale = { hp: 1, atk: 1, byType: {} };
+  for (const id of threats) {
+    const t = THREATS[id];
+    if (t.type) {
+      const cur = (s.byType![t.type] ??= {});
+      if (t.hp) cur.hp = (cur.hp ?? 1) * t.hp;
+      if (t.atk) cur.atk = (cur.atk ?? 1) * t.atk;
+    } else {
+      if (t.hp) s.hp *= t.hp;
+      if (t.atk) s.atk *= t.atk;
+    }
+  }
+  return s;
+};
 
-export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0, blueprint?: VariantId): Encounter => {
+const mul = (a: Scale, hp: number, atk: number): Scale => ({ ...a, hp: a.hp * hp, atk: a.atk * atk });
+
+export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?: BossId, ascension = 0, threats: ThreatId[] = []): Encounter => {
   const seed = rng.int(1_000_000_000);
-  const tier = ascension >= 3 && kind === 'elite' ? 2 : enemyTier(floor, kind);
-  const baseForge = enemyForge(floor);
+  const act = actOf(floor);
+  const tier = ascOn(ascension, 'noForesight') && kind === 'elite' ? 2 : enemyTier(floor, kind);
+  let scale = mul(threatScale(threats), ENEMY_SCALE[act - 1].hp, ENEMY_SCALE[act - 1].atk);
+  if (ascOn(ascension, 'enemyHp')) scale = mul(scale, ASC.enemyHp.mult, 1);
+  if (ascOn(ascension, 'enemyAtk')) scale = mul(scale, 1, ASC.enemyAtk.mult);
 
-  if (kind === 'boss' && (boss || floor === TOTAL_FLOORS)) {
-    const def = floor === TOTAL_FLOORS ? FINAL_BOSS : BOSSES[boss!];
-    const forge: Partial<Record<PieceType, number>> = {};
-    const actBonus = actOf(floor) === 2 ? 1 : 0; // Act 2 보스는 강화 +1 더
-    const finalAsc = floor === TOTAL_FLOORS && ascOn(ascension, 'finalForge') ? ASC.finalForge.add : 0;
-    const shift = floor === TOTAL_FLOORS ? 0 : BOSS_FORGE_SHIFT;
-    for (const t of new Set(def.deck)) forge[t] = Math.max(0, Math.min(5, (def.forge[t] ?? 0) + baseForge + actBonus + (ascension >= 5 ? 1 : 0) + finalAsc + shift));
-    // 압력 12 (D-108): 반장 개조 +1단
-    const enchants = { ...def.enchants };
-    if (ascOn(ascension, 'bossEnchant')) for (const id of Object.keys(enchants) as EnchantId[]) enchants[id] = Math.min(ENCHANT_MAX_STACK, (enchants[id] ?? 0) + ASC.bossEnchant.add);
-    const bossDeck: Deck = actOf(floor) === 2 ? [...def.deck, 'P', 'P'] : [...def.deck];
-    return {
-      kind,
-      name: `${def.name} — ${def.title}`,
-      ...boardFor(floor, 'boss'),
-      // Act 2 보스는 같은 컨셉 군단에 폰 2기가 더 붙는다
-      deck: bossDeck,
-      loadout: { enchants, cards: actOf(floor) === 2 ? [...def.cards, 'C03'] : [...def.cards], forge, ...(def.variants ? { variants: { ...def.variants } } : {}) },
-      ...(def.affixes ? { affixes: def.affixes.map((a) => ({ ...a })) } : {}),
-      ...(def.weakness ? { weak: def.weakness.id } : {}),
-      tier,
-      boss,
-      seed,
-      floor,
-      ascension,
-    };
+  if (kind === 'boss') {
+    const final = floor === TOTAL_FLOORS;
+    const id: BossId | 'final' = final ? 'final' : boss!;
+    const def = final ? FINAL_BOSS : BOSSES[boss!];
+    const bs = BOSS_SCALE[act - 1];
+    scale = mul(scale, bs.hp * (ascOn(ascension, 'bossHp') ? ASC.bossHp.mult : 1) * (final && ascOn(ascension, 'final') ? ASC.final.hp : 1), bs.atk);
+    const twist = BOSS_TWIST[id];
+    // 거푸집 상인: 적 기물마다 각인 하나 (킹 제외)
+    const deck = toUnits(def.deck).map((u) => (twist === 'molds' && u.t !== 'K' ? { ...u, carve: CARVE_IDS[rng.int(CARVE_IDS.length)] } : u));
+    return { kind, name: `${def.name} — ${def.title}`, ...boardFor(floor, 'boss'), deck, tier, boss: id, twist, scale, seed, floor, ascension };
   }
 
-  const { width, height } = boardFor(floor, kind, rng.next());
-  // 군단 원형 (D-096): 판마다 다른 문제
+  const { width, height } = boardFor(floor, kind);
   const archOptions = (Object.keys(ARCHETYPES) as ArchetypeId[]).filter((id) => ARCHETYPES[id].from <= floor);
   const archetype = archOptions[rng.int(archOptions.length)];
   const arch = ARCHETYPES[archetype];
-  const weights = pieceWeights(floor).map(([t, w]): [PieceType, number] => [t, (t === 'R' && archetype === 'rampart' ? Math.max(w, RAMPART_ROOK_MIN) : w) * (arch.weight[t] ?? 1)]);
-  // 억까·억빠 (D-099): 4층부터 가끔. 과적 = 1기 더 + 개량 +1, 불량 군단 = 적 일반 기물 HP 60%로 시작
-  const roll = rng.next();
-  const act = actOf(floor) - 1;
-  const overload = LUCK.overload[act] * (ascOn(ascension, 'overload') ? ASC.overload.mult : 1);
-  const luck: LuckId | undefined = floor <= ARCHETYPE_EXTRA_FROM ? undefined : roll < overload ? 'overload' : roll < overload + LUCK.defective[act] ? 'defective' : undefined;
-  const count = enemyCount(floor) + (kind === 'elite' ? elitePieces(floor) : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0) + (luck === 'overload' ? 1 : 0);
-  const deck: Deck = ['K'];
-  let guard = 0;
-  while (deck.length < count && guard++ < 200) {
-    const options = weights.filter(([t]) => canAdd(deck, t));
+  const weights = pieceWeights(floor).map(([t, w]): [PieceType, number] => [t, w * (arch.weight[t] ?? 1)]);
+  const count = enemyCount(floor) + (kind === 'elite' ? ELITE.pieces : 0) + (ascOn(ascension, 'extraPiece') ? 1 : 0);
+  const types: PieceType[] = ['K'];
+  for (let guard = 0; types.length < count && guard < 200; guard++) {
+    const options = weights.filter(([t]) => types.filter((x) => x === t).length < TYPE_MAX[t]);
     const t = pick(rng, options);
     if (!t) break;
-    deck.push(t);
+    types.push(t);
   }
-
-  const forge: Partial<Record<PieceType, number>> = {};
-  const lv = baseForge + (kind === 'elite' ? eliteForge(floor) : 0) + (luck === 'overload' ? 1 : 0) + (kind === 'battle' && ascOn(ascension, 'battleForge') ? ASC.battleForge.add : 0);
-  if (lv > 0) for (const t of new Set(deck)) forge[t] = lv;
-
-  const enchants: Partial<Record<EnchantId, number>> = {};
-  const pool = [...new Set(deck.map((t) => TYPE_ENCHANT[t]).filter((e): e is EnchantId => !!e)), ...GENERAL];
-  const own = arch.enchants.filter((e) => !pool.includes(e));
-  for (let i = 0; i < actEnchants(floor, kind) + (ascension >= 3 && kind === 'elite' ? 1 : 0) && (pool.length || own.length); i++) {
-    // 첫 개조는 원형의 개조 (기병 기습대 = 기병 개조 …)
-    const fromArch = i === 0 && (own.length || arch.enchants.some((e) => pool.includes(e)));
-    const src = fromArch ? [...own, ...arch.enchants.filter((e) => pool.includes(e))] : pool.length ? pool : own;
-    const id = src[rng.int(src.length)];
-    for (const list of [pool, own]) if (list.includes(id)) list.splice(list.indexOf(id), 1);
-    enchants[id] = enemyEnchantStack(floor, kind);
-  }
-  // Act 3 엘리트는 지속형 카드 1장
-  const cards: CardId[] = [];
-  if (kind === 'elite' && actOf(floor) === 3) {
-    const sustain = (Object.keys(CARDS) as CardId[]).filter((c) => CARDS[c].limit.type !== 'consume');
-    cards.push(sustain[rng.int(sustain.length)]);
-  }
-  // 이형 거푸집: 군단에 있는 유형 중에서 (같은 규칙 — 플레이어도 얻을 수 있는 것만)
-  const variants: Partial<Record<PieceType, VariantId>> = {};
-  const vPool = [...new Set(deck)].flatMap((t) => variantsFor(t));
-  for (let i = enemyVariantCount(floor, kind, rng.next()); i > 0 && vPool.length; i--) {
-    const id = vPool.splice(rng.int(vPool.length), 1)[0];
-    variants[VARIANTS[id].base] = id;
-  }
-  // 도면 (D-107): 지도에 미리 보인 이형은 이 군단이 꼭 단다 (그 유형이 없으면 폰 하나를 바꿔 넣는다)
-  if (blueprint) {
-    const base = VARIANTS[blueprint].base;
-    if (!deck.includes(base)) {
-      const p = deck.lastIndexOf('P');
-      if (p > 0) deck[p] = base;
-      else deck.push(base);
-    }
-    variants[base] = blueprint;
-  }
-  // 검문! 정예 접사 (D-096): 일반 기물 중 무작위 유형에 하나씩
-  const affixes: { type: PieceType; id: AffixId }[] = [];
+  const deck: Unit[] = types.map((t) => ({ t }));
+  // 검문! 정예: 가장 비싼 일반 기물 한 기 (HP ×2, 표식 하나)
   if (kind === 'elite') {
-    const ids = [...ELITE_AFFIXES];
-    const bodies = deck.filter((t) => t !== 'K');
-    for (let i = affixCount(actOf(floor)) + (ascOn(ascension, 'eliteAffix') ? ASC.eliteAffix.add : 0); i > 0 && bodies.length && ids.length; i--) {
-      const type = bodies.splice(rng.int(bodies.length), 1)[0];
-      affixes.push({ type, id: ids.splice(rng.int(ids.length), 1)[0] });
-    }
+    const order: PieceType[] = ['Q', 'R', 'B', 'N', 'P'];
+    const best = order.map((t) => deck.find((u) => u.t === t)).find((u) => !!u);
+    if (best) best.elite = true;
   }
-  const names = [...affixes.map((a) => AFFIXES[a.id].name), ...Object.values(variants).map((id) => VARIANTS[id].name)];
-  return {
-    kind,
-    archetype,
-    ...(luck ? { luck } : {}),
-    ...(affixes.length ? { affixes } : {}),
-    name: `${kind === 'elite' ? `정예 ${arch.name}` : arch.name}${names.length ? ` — ${names.join(' · ')}` : ''}`,
-    width,
-    height,
-    deck,
-    loadout: { enchants, cards, forge, variants },
-    tier,
-    seed,
-    floor,
-    ascension,
-  };
+  // 1공정 앞쪽 적 킹은 약하다
+  const kingHp = earlyKingHp(floor);
+  const kingAtk = earlyKingAtk(floor);
+  if (kingHp < 1 || kingAtk < 1) scale = { ...scale, byType: { ...scale.byType, K: { ...scale.byType?.K, hp: (scale.byType?.K?.hp ?? 1) * kingHp, atk: (scale.byType?.K?.atk ?? 1) * kingAtk } } };
+  return { kind, name: `${kind === 'elite' ? '정예 ' : ''}${arch.name}`, width, height, deck, tier, scale, seed, floor, ascension, archetype };
 };
 
-/**
- * 지형 깔기 (D-097): 점대칭 쌍(양 진영 공평) · 진영 끝 두 줄 제외 · 나사 더미는 대칭 없이 한 칸.
- * 반장 판은 전장 규칙(BossDef.arena)이 깐다.
- */
-export const layTerrain = (s: BattleState, e: Encounter): void => {
-  const act = actOf(e.floor);
-  if (e.kind === 'boss') {
-    const def = e.floor === TOTAL_FLOORS ? FINAL_BOSS : e.boss ? BOSSES[e.boss] : null;
-    if (!def) return;
-    const arena = ARENAS[def.arena];
-    const tiles = arena.terrain(s.width, s.height);
-    if (tiles.length) s.terrain = tiles;
-    const ruins = arena.ruins?.(s.width, s.height) ?? [];
-    if (ruins.length) s.fallen = [...(s.fallen ?? []), ...ruins.map((r) => r.y * s.width + r.x)];
-    if (arena.collapseDelay && s.rules.collapseStart !== null) s.rules = { ...s.rules, collapseStart: s.rules.collapseStart + arena.collapseDelay };
-    return;
-  }
-  const rng = new Rng((e.seed ^ 0x7e11a) >>> 0);
-  const tiles: NonNullable<BattleState['terrain']> = [];
-  const free = (x: number, y: number) => y >= 2 && y <= s.height - 3 && !tiles.some((t) => t.x === x && t.y === y);
-  const kinds: TerrainId[] = ['platform', 'shelter', 'magnet'];
-  for (let n = terrainPairs(act, e.kind as 'battle' | 'elite'), guard = 0; n > 0 && guard < 50; guard++) {
-    const x = rng.int(s.width);
-    const y = 2 + rng.int(Math.max(1, s.height - 4));
-    const mx = s.width - 1 - x;
-    const my = s.height - 1 - y;
-    if (!free(x, y) || !free(mx, my) || (x === mx && y === my)) continue;
-    const kind = kinds[rng.int(kinds.length)];
-    tiles.push({ x, y, kind }, { x: mx, y: my, kind });
-    n--;
-  }
-  if (act >= 2 && rng.next() < SCREWS_CHANCE) {
-    for (let guard = 0; guard < 30; guard++) {
-      const x = rng.int(s.width);
-      const y = Math.floor(s.height / 2) + rng.int(Math.max(1, Math.floor(s.height / 2) - 2));
-      if (free(x, y)) {
-        tiles.push({ x, y, kind: 'screws' });
-        break;
-      }
-    }
-  }
-  if (tiles.length) s.terrain = tiles;
-};
-
-/** 런 전투를 만든다: 플레이어 덱·장비 대 군단 (+ 층별 적 킹 보정) */
+/** 군단(덱)과 부품으로 실제 대국 상태를 만든다 */
 export const encounterBattle = (deck: Deck, loadout: Loadout, e: Encounter): BattleState => {
-  const s = createBattle({ width: e.width, height: e.height, decks: [deck, e.deck], loadouts: [loadout, e.loadout], seed: e.seed });
-  layTerrain(s, e);
-  if (e.luck === 'defective') for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.hp = Math.max(1, Math.round(p.maxHp * LUCK.defectiveHp));
-  // 정예 접사: 그 유형의 적 기물 한 기씩
-  for (const a of e.affixes ?? []) {
-    const p = s.pieces.find((q) => q.side === 1 && q.type === a.type && !q.affix);
-    if (p) p.affix = a.id;
-  }
-  if (e.weak) s.weak = { side: 1, id: e.weak };
-  // 적 다음 수 미리보기: 낮은 승천에서만 기본 제공 (D-076)
-  s.rules = { ...s.rules, foresight: (e.ascension ?? 0) < FORESIGHT_UNTIL_ASCENSION && !loadout.contracts?.includes('K2') ? 1 : 0 }; // 검사 면제 도장 (계약): 감청 꺼짐
-  const scale = enemyKingScale(e.floor);
-  const expose = actOf(e.floor) >= 2 && e.kind !== 'boss' ? KING_EXPOSE : 1; // D-077
-  const hpScale = Math.min(1, scale.hp + ((e.ascension ?? 0) >= 4 ? 0.1 : 0)) * expose;
-  for (const p of s.pieces) {
-    // 압력 8 (D-108): 내 킹 최대 HP −10%
-    if (p.side === 0 && p.type === 'K' && ascOn(e.ascension, 'myKingHp')) p.maxHp = p.hp = Math.round(p.maxHp * ASC.myKingHp.mult);
-    if (p.side === 0 && p.type === 'K' && loadout.contracts?.includes('K3')) p.maxHp = p.hp = Math.round(p.maxHp * CONTRACT_FX.kingHp); // 야간 근무 (계약)
-    if (p.side !== 1 || p.type !== 'K') continue;
-    p.maxHp = p.hp = Math.round(p.maxHp * hpScale);
-    p.atk = Math.round(p.atk * scale.atk);
-  }
-  return s;
+  const rules = defaultRules(e.width, e.height);
+  const foresight = (e.ascension ?? 0) >= FORESIGHT_UNTIL_ASCENSION ? 0 : 1;
+  return createBattle({
+    width: e.width,
+    height: e.height,
+    decks: [deck, e.deck],
+    seed: e.seed,
+    loadouts: [{ parts: [...loadout.parts] }, { parts: [] }],
+    rules: { ...rules, foresight },
+    twist: e.twist,
+    enemyScale: e.scale,
+    myKingHp: ascOn(e.ascension, 'myKingHp') ? ASC.myKingHp.mult : undefined,
+  });
 };
