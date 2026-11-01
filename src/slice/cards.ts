@@ -8,7 +8,8 @@ import type { PieceType } from '../engine/types';
 export type CommandId =
   | 'advance' | 'leap' | 'diagonal' | 'kingStep' | 'order'
   | 'pierceDiag' | 'crossLeap' | 'charge' | 'plate' | 'repair' | 'reload' | 'kingBlow' | 'splashDiag' | 'smash' | 'rookLine'
-  | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher';
+  | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
+  | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit';
 
 /**
  * 빌드 축 (D-144 — 덱빌딩의 "부서지는" 맛): 축마다 카드 몇 장 + 규칙을 깨는 부품 하나가 맞물린다.
@@ -24,9 +25,15 @@ export interface CommandDef {
   /** 움직일 수 있는 기물 (any = 아무나) */
   who: PieceType | 'any';
   /** move = 기물 하나를 움직여 친다 · march = 폰 모두 한 칸 전진 · draft = 킹 옆에 폰 · spark = 연쇄 +1 */
-  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark';
+  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit';
   /** 빌드 축 (보상에서 축이 고루 나오게, 카드에 띠로 표시) */
   axis?: Axis;
+  /** 둘째 축 (교차 브릿지 카드 — 한 축의 행동이 다른 축을 돕는다, D-145) */
+  axis2?: Axis;
+  /** 움직인 뒤, 내려앉은 칸 둘레의 폰이 모두 한 칸 전진해 친다 */
+  rally?: boolean;
+  /** 이 카드로 처치하면 연쇄가 이만큼씩 오른다 (기본 1) */
+  chainPerKill?: number;
   /** 이번 턴에 처치한 기물로 내면 태엽 0 */
   freeIfKiller?: boolean;
   /** 연쇄 하나마다 배율 +이만큼 */
@@ -68,12 +75,17 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   royalGuard: { axis: 'king', name: '왕의 갑주', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '킹에게 방열판 30.' },
   spark: { axis: 'chain', name: '불씨', cost: 0, who: 'any', kind: 'spark', desc: '처치 없이 연쇄 +1. 카드 한 장.' },
   finisher: { axis: 'chain', name: '마무리', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '아무 기물 · 연쇄 하나마다 ×0.5 더.' },
+  // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
+  cavCharge: { axis: 'cav', axis2: 'inf', name: '기마 돌격', cost: 2, who: 'N', kind: 'move', rally: true, desc: '나이트 · 내려앉은 칸 둘레의 폰이 한 칸씩 전진해 친다.' },
+  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대', cost: 2, who: 'K', kind: 'move', rally: true, desc: '킹 · 둘레의 폰이 한 칸씩 전진해 친다.' },
+  doubleLeap: { axis: 'cav', axis2: 'chain', name: '연속 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '나이트 · 처치하면 연쇄가 두 칸 오른다.' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '내 폰 하나를 부순다. 연쇄 +2 · 카드 한 장.' },
 };
 
 /** 시작 덱 (10장) */
 export const START_COMMANDS: CommandId[] = ['advance', 'advance', 'advance', 'leap', 'leap', 'diagonal', 'diagonal', 'kingStep', 'order', 'order'];
 /** 보상 후보 */
-export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher'];
+export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit'];
 
 /** 수직 조각 수치 */
 export const SLICE = {

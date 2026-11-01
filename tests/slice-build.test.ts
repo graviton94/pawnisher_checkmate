@@ -33,8 +33,8 @@ describe('빌드 축 · 부품 (D-144)', () => {
     expect(typeof r2).toBe('object');
     expect(typeof rewind(r2 as SliceBattle)).toBe('string');
   });
-  it('증폭 코일: 처치마다 +50%, 상한 없음', () => {
-    expect(chainMult(6, ['coil'])).toBeCloseTo(4);
+  it('증폭 코일: 처치마다 ×1.5, 상한 없음 (D-145에서 덧셈 → 곱셈)', () => {
+    expect(chainMult(6, ['coil'])).toBeCloseTo(1.5 ** 6);
     expect(chainMult(6)).toBeCloseTo(1 + SLICE.chainCap * SLICE.chainPerKill);
   });
   it('행진 북: 폰 카드 태엽 −1', () => {
@@ -100,5 +100,33 @@ describe('빌드 축 · 부품 (D-144)', () => {
     }
     const dmg = (b: SliceBattle) => previewPlay(b, 0, k.id, tos[0])!.events.flatMap((e) => (e.type === 'attack' ? e.hits : [])).reduce((a, h) => a + h.damage, 0);
     expect(dmg(crown)).toBeGreaterThan(dmg(plain) * 1.8);
+  });
+});
+
+describe('3단 성장 · 교차 브릿지 (D-145)', () => {
+  it('증폭 코일은 곱해진다 (×1.5씩) · 기본은 더한다', () => {
+    expect(chainMult(4, ['coil'])).toBeCloseTo(1.5 ** 4);
+    expect(chainMult(4)).toBeCloseTo(1 + 4 * SLICE.chainPerKill);
+  });
+  it('이중 톱니: 처치 하나가 연쇄 두 칸', () => {
+    const b = mk(['echo'], ['leap', 'advance']);
+    const m = killMove(b, 0);
+    expect(m).not.toBeNull();
+    playCard(b, 0, m!.p.id, m!.to);
+    expect(b.kills % 2).toBe(0);
+    expect(b.kills).toBeGreaterThanOrEqual(2);
+  });
+  it('희생 수: 폰 하나를 부수고 연쇄 +2', () => {
+    const b = mk([], ['gambit', 'advance']);
+    const n0 = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').length;
+    playCard(b, 0);
+    expect(b.kills).toBe(2);
+    expect(b.s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(n0 - 1);
+  });
+  it('넘친 피해가 쌓인다', () => {
+    const b = mk(['coil'], ['leap', 'advance']);
+    const m = killMove(b, 0);
+    playCard(b, 0, m!.p.id, m!.to);
+    expect(b.overkill).toBeGreaterThan(0);
   });
 });

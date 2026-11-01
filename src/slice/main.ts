@@ -117,7 +117,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const art = c.who === 'any' ? `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>` : `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
   const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : '움직일 기물 없음'}</em>` : '';
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
-    <span class="cost" aria-label="태엽 ${cost}">${cost}</span>${art}<span class="txt"><b>${c.name}${axisTag(c.axis)}</b><small>${c.desc}</small>${why}</span></button>`;
+    <span class="cost" aria-label="태엽 ${cost}">${cost}</span>${art}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small>${why}</span></button>`;
 };
 
 /** 빌드 축 띠 */
@@ -157,13 +157,13 @@ const refresh = (): void => {
 /** 연쇄 계기판 (Balatro식): 이번 턴 피해 합계와 배수 — 처치가 쌓일수록 크고 뜨겁게 */
 const meter = (): void => {
   const m = $('meter');
-  if (!turnDmg && !b.kills) {
+  if (!turnDmg && !b.kills && !b.overkill) {
     m.hidden = true;
     return;
   }
   m.hidden = false;
   m.className = `meter lv${Math.min(b.kills, 4)}`;
-  m.innerHTML = `<small>이번 턴</small><span class="dmg">−${turnDmg}</span><b>연쇄 ${b.kills} · ×${chainMult(b.kills, parts).toFixed(2)}</b>`;
+  m.innerHTML = `<small>이번 턴</small><span class="dmg">−${turnDmg}</span><b>연쇄 ${b.kills} · ×${chainMult(b.kills, parts).toFixed(2)}</b>${b.overkill ? `<small>넘친 피해 ${b.overkill}</small>` : ''}`;
 };
 
 /** 처치 순간 (연쇄): 판 한가운데 큰 글자 + 판 흔들림 + 음이 올라간다 */
@@ -333,7 +333,9 @@ const finish = (): void => {
       el.querySelector('[data-again]')!.addEventListener('click', () => start(stage));
       return;
     }
-    const earned = b.coins * SLICE.coinValue;
+    // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
+    const overGold = Math.floor(b.overkill / 10);
+    const earned = b.coins * SLICE.coinValue + overGold;
     gold += earned;
     const before = squad;
     const survived = squadAfter(b, squad);
@@ -358,18 +360,18 @@ const finish = (): void => {
       if (!picks.includes(a)) picks.push(a);
     }
     const offers: CommandId[] = picks.map((a) => {
-      const pool = REWARD_COMMANDS.filter((id) => COMMANDS[id].axis === a);
+      const pool = REWARD_COMMANDS.filter((id) => COMMANDS[id].axis === a || COMMANDS[id].axis2 === a);
       return pool[rng.int(pool.length)];
     });
     const lost = BATTLES[stage].enemy.length;
     const el = openOverlay(`
-      <h2>통과 — 나사 +${earned} <small class="dim">(남은 나사 칸 ${b.coins} × ${SLICE.coinValue})</small></h2>
+      <h2>통과 — 나사 +${earned} <small class="dim">(남은 칸 ${b.coins} × ${SLICE.coinValue}${overGold ? ` + 넘친 피해 ${b.overkill} → ${overGold}` : ''})</small></h2>
       <p>* 쓰러진 흑 ${lost}기의 상자에서 명령 카드가 나온다. 하나를 덱에 넣는다.</p>
       <div class="reward-cards">${offers
         .map((id) => {
           const c = COMMANDS[id];
           const who = c.who === 'any' ? `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>` : `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
-          return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}</b><small>${c.desc}</small></span></button>`;
+          return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b><small>${c.desc}</small></span></button>`;
         })
         .join('')}</div>
       <p class="rest-line">* 쉬는 사이 기름칠 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((t) => PIECE_NAMES_KO[t]).join(' · ')}</span>` : ''}</p>
@@ -424,6 +426,7 @@ const help = (): void => {
       <li><b>붉게 깜빡이는 칸</b> = 적이 예고한 칠 칸. 번호 = 이번에 움직일 적. 먼저 쓰러뜨리면 취소, 비키면 빗나간다, 길을 막으면 못 온다.</li>
       <li><b>나사 트랙</b>: 턴마다 한 칸씩 사라진다. 빨리 이길수록 많이 받는다.</li>
       <li><b>되감기</b>: 이번 턴 처음으로, 대국마다 한 번. 분대 HP는 다음 판으로 이어진다.</li>
+      <li><b>넘친 피해</b>: 적 HP를 넘어선 피해 10마다 나사 1. 배수를 키울수록 번다.</li>
       <li><b>부품</b>: 규칙을 바꾸는 장치. 시작에 하나, 검문!을 넘으면 하나 더. 카드 띠(기병 · 보병 · 왕관 · 연쇄)와 맞추면 터진다.</li>
     </ul>
     <div class="row"><button class="btn brass" type="button" data-close>닫기</button></div>`);

@@ -41,6 +41,8 @@ export interface SliceBattle {
   parts: SlicePartId[];
   /** 이번 턴에 처치한 내 기물 (재도약) */
   killers: number[];
+  /** 이 대국에서 넘친 피해 합 (이기면 나사로) */
+  overkill: number;
   /** 턴마다 태엽 · 손패 (여분 태엽이면 +1 · −1) */
   apMax: number;
   handSize: number;
@@ -77,7 +79,28 @@ const drawCards = (b: SliceBattle, n: number): void => {
 
 /** 연쇄 배수 (이번 턴 처치 수 기준) */
 export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
-  parts.includes('coil') ? 1 + kills * PART_NUM.coilPerKill : 1 + Math.min(kills, SLICE.chainCap) * SLICE.chainPerKill;
+  // 덧셈(기본: +25%씩, 상한 4) → 곱셈(증폭 코일: ×1.5씩, 상한 없음) — 3단 성장의 둘째 단 (D-145)
+  parts.includes('coil') ? Math.pow(PART_NUM.coilPerKill, kills) : 1 + Math.min(kills, SLICE.chainCap) * SLICE.chainPerKill;
+
+/** 처치 k개가 올리는 연쇄 칸 (이중 톱니 · 연속 도약은 재발동 — 3단 성장의 셋째 단) */
+const chainGain = (b: SliceBattle, k: number, perKill = 1): number => k * perKill * (has(b, 'echo') ? 2 : 1);
+
+/** 넘친 피해 (적 HP를 넘어선 만큼) — 나사로 바꾼다 (Inscryption 오버킬) */
+export const overkillOf = (before: BattleState, events: BattleEvent[]): number => {
+  const hp = new Map(before.pieces.filter((p) => p.side === 1).map((p) => [p.id, p.hp]));
+  let over = 0;
+  for (const e of events) {
+    if (e.type !== 'attack') continue;
+    for (const h of e.hits) {
+      const cur = hp.get(h.targetId);
+      if (cur === undefined) continue;
+      const through = h.damage - h.shieldAbsorbed;
+      if (through > cur) over += through - cur;
+      hp.set(h.targetId, Math.max(0, cur - through));
+    }
+  }
+  return over;
+};
 
 const has = (b: SliceBattle, id: SlicePartId) => b.parts.includes(id);
 
@@ -121,7 +144,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = parts.includes('spare') ? 1 : 0;
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, rng: rng.state, warned: false };
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], overkill: 0, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, rng: rng.state, warned: false };
   drawCards(b, b.handSize);
   b.intents = planEnemy(b.s);
   b.snap = JSON.stringify(b);
@@ -208,25 +231,25 @@ const cloneBattle = (b: SliceBattle): SliceBattle => JSON.parse(JSON.stringify(b
 export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return [];
-  if (c.kind === 'draw' || c.kind === 'spark' || c.kind === 'march' || c.kind === 'draft') return [];
+  if (isInstant(b.hand[i])) return [];
   return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0));
 };
 
 /** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
-export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft'].includes(COMMANDS[id].kind);
+export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft', 'gambit'].includes(COMMANDS[id].kind);
 
 /** 이 카드를 지금 낼 수 있나 */
 export const canPlay = (b: SliceBattle, i: number): boolean => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return false;
-  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0));
+  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P'));
   return cardPieces(b, i).length > 0;
 };
 
 /** 행진: 폰마다 곧장 한 칸 앞 (앞의 폰부터, 막혔으면 제자리) */
-const marchPlan = (b: SliceBattle): { pieceId: number; to: Pos }[] => {
+const marchPlan = (b: SliceBattle, near?: Pos): { pieceId: number; to: Pos }[] => {
   const f = forward(0);
-  const pawns = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').sort((x, y) => (x.y - y.y) * f * -1);
+  const pawns = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P' && (!near || chebyshev(p, near) === 1)).sort((x, y) => (x.y - y.y) * f * -1);
   return pawns.flatMap((p) => {
     const to = { x: p.x, y: p.y + f };
     return legalMoves(b.s, p).some((q) => samePos(q, to)) ? [{ pieceId: p.id, to }] : [];
@@ -284,8 +307,24 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (!sim) return '갈 수 없는 칸이다.';
     b.s = sim.state;
     events = sim.events;
-    const k = sim.removed.filter((q) => q.side === 1).length;
-    b.kills += k;
+    b.overkill += overkillOf(before, sim.events);
+    let k = sim.removed.filter((q) => q.side === 1).length;
+    b.kills += chainGain(b, k, c.chainPerKill);
+    // 둘레의 폰이 따라 전진한다 (기마 돌격 · 근위대)
+    const landed = findPiece(b.s, pieceId);
+    if (c.rally && landed && b.s.winner === null) {
+      const plan = marchPlan(b, landed);
+      const mid = cloneState(b.s);
+      const s2 = plan.length ? simulate(b.s, plan, { freeAp: true, mult: chainMult(b.kills, b.parts) }) : null;
+      if (s2 && s2.ok) {
+        b.s = s2.state;
+        events = [...events, ...s2.events];
+        b.overkill += overkillOf(mid, s2.events);
+        const k2 = s2.removed.filter((q) => q.side === 1).length;
+        b.kills += chainGain(b, k2);
+        k += k2;
+      }
+    }
     if (k > 0) {
       if (!b.killers.includes(pieceId)) b.killers.push(pieceId);
       // 편자: 나이트가 처치하면 태엽 +1 (처치마다)
@@ -308,12 +347,22 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (!sim.ok) return '앞으로 갈 폰이 없다.';
     b.s = sim.state;
     events = sim.events;
-    b.kills += sim.removed.filter((q) => q.side === 1).length;
+    b.overkill += overkillOf(before, sim.events);
+    b.kills += chainGain(b, sim.removed.filter((q) => q.side === 1).length);
     if (has(b, 'magnet')) drawCards(b, sim.removed.filter((q) => q.side === 1).length);
   } else if (c.kind === 'draft') {
     const e = spawnPawn(b, '징집 — 폰이 선다');
     if (!e) return '킹 옆에 빈 칸이 없다.';
     events = [e];
+  } else if (c.kind === 'gambit') {
+    // 희생 수: 이번 대국만 선 폰(징집 · 조립 라인)부터, 그다음 HP가 낮은 폰
+    const pawns = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').sort((x, y) => Number(b.squadIds.includes(x.id)) - Number(b.squadIds.includes(y.id)) || x.hp - y.hp);
+    const v = pawns[0];
+    if (!v) return '부술 폰이 없다.';
+    b.s.pieces = b.s.pieces.filter((p) => p.id !== v.id);
+    events = [{ type: 'attack', order: 0, attackerId: v.id, area: [{ x: v.x, y: v.y }], hits: [{ targetId: v.id, damage: v.hp, shieldAbsorbed: 0, hpAfter: 0, killed: true }] }];
+    b.kills += 2;
+    drawCards(b, 1);
   } else if (c.kind === 'spark') {
     b.kills += 1;
     drawCards(b, 1);
