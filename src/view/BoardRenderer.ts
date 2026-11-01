@@ -1,13 +1,8 @@
 import { vignette } from '../ui/juice';
-import { TERRAIN } from '../data/terrain';
-import { AFFIXES } from '../data/legions';
-import { TACTICS } from '../data/tactics';
+import { CARVES } from '../data/carves';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
-import { STRONGHOLD } from '../data/battle';
-import { CARDS } from '../data/cards';
-import type { EnchantId } from '../data/enchants';
 import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, playHitSpark, type CrumbleCell, type Pose } from './attackFx';
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
@@ -16,20 +11,9 @@ import { FX_CAMERA, TURN_SUMMARY } from '../data/fx';
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
-import { findPiece, isFallen, isMove, moveTypes, standingOf, weakOn, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos, type Standing } from '../engine';
-import { VARIANTS } from '../data/variants';
-
-/** 요충지 등급 색 — 플레이어의 형편 기준. 쉬울수록 밝은 금속 (GDD 5장 §5.4, 9장) */
-export const GRADE: Record<Standing, { color: number; name: string }> = {
-  leading: { color: 0x9aa3b5, name: '강철' },
-  tier1: { color: 0xc89b3c, name: '황동' },
-  tier2: { color: 0xe07b39, name: '구리' },
-  tier3: { color: 0xfacc15, name: '황금' },
-};
+import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos } from '../engine';
 
 
-/** 기물 유형에 붙는 인챈트 — 그 기물 위에 표식으로 보인다 (GDD 9장: 인챈트는 유닛에 표시) */
-const TYPE_ENCHANTS: Partial<Record<PieceType, EnchantId[]>> = { N: ['E01', 'E13'], B: ['E02', 'E14'], R: ['E03'], P: ['E04', 'E12'], K: ['E08'] };
 
 /** 기물 텍스처 키 */
 const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
@@ -71,28 +55,14 @@ const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'ra
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
-/** 예약 하나를 그릴 화살표 (이동·순간이동·캐슬링) */
+/** 예약 하나를 그릴 화살표 */
 const stepArrows = (s: BattleState, step: PlanStep): { piece: Piece; from: Pos; to: Pos; knight: boolean }[] => {
   const p = findPiece(s, step.pieceId);
-  if (!p) return [];
-  if (isMove(step) || step.kind === 'gate') return [{ piece: p, from: p, to: step.to, knight: step.kind !== 'gate' && p.type === 'N' && !p.fused }];
-  if (step.kind === 'castle') {
-    const q = findPiece(s, step.partnerId);
-    return q ? [{ piece: p, from: p, to: q, knight: false }, { piece: q, from: q, to: p, knight: false }] : [];
-  }
-  if (step.kind === 'fuse') {
-    const q = findPiece(s, step.partnerId);
-    return q ? [{ piece: q, from: q, to: p, knight: false }] : [];
-  }
-  return [];
+  return p ? [{ piece: p, from: p, to: step.to, knight: p.type === 'N' }] : [];
 };
 
 /** 예약 순번 배지를 붙일 칸 */
-const stepBadge = (s: BattleState, virtual: BattleState, step: PlanStep): Pos => {
-  if (isMove(step) || step.kind === 'gate') return step.to;
-  if (step.kind === 'castle') return findPiece(s, step.partnerId) ?? findPiece(s, step.pieceId)!;
-  return findPiece(virtual, step.pieceId) ?? findPiece(s, step.pieceId) ?? { x: 0, y: 0 };
-};
+const stepBadge = (_s: BattleState, _virtual: BattleState, step: PlanStep): Pos => step.to;
 
 interface PieceSprite {
   root: Phaser.GameObjects.Container;
@@ -143,7 +113,7 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
-    for (const a of [...Object.values(AFFIXES), ...Object.values(TERRAIN), { icon: 'reticle' }]) if (!this.textures.exists(`icon-${a.icon}`)) this.load.image(`icon-${a.icon}`, `ui/icons/${a.icon}.png`);
+    for (const name of ['reticle', 'star', 'crown']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
   }
 
   create(): void {
@@ -214,10 +184,9 @@ class BoardScene extends Phaser.Scene {
     this.fitCamera(true);
   }
 
-  /** 판 칸 · 무너진 칸 · 붕락 균열 · 요충지 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
+  /** 판 칸 · 무너진 칸 · 붕락 균열 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
   drawTiles(state: BattleState): void {
     const t = this.tile;
-    const d = t / BOARD_DOTS;
     this.tilesG.clear();
     this.tilesC.removeAll(true);
     this.boardTopC.removeAll(true);
@@ -228,40 +197,10 @@ class BoardScene extends Phaser.Scene {
         const w = this.world({ x, y });
         put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? 'tile-dark' : 'tile-light', w.x, w.y);
       }
-    // 지형 (D-097): 칸 안쪽 색 테두리 + 가운데 흐린 아이콘 — 기물 아래에 깔린다
-    for (const tr of state.terrain ?? []) {
-      if (isFallen(state, tr.x, tr.y)) continue;
-      const w = this.world(tr);
-      const def = TERRAIN[tr.kind];
-      const col = Phaser.Display.Color.HexStringToColor(def.color).color;
-      const g = this.add.graphics();
-      g.fillStyle(col, 0.16).fillRect(w.x + 2 * d, w.y + 2 * d, t - 4 * d, t - 4 * d);
-      g.lineStyle(Math.max(1, d), col, 0.85).strokeRect(w.x + 2 * d, w.y + 2 * d, t - 4 * d, t - 4 * d);
-      this.tilesC.add(g);
-      this.tilesC.add(this.add.image(w.x + t / 2, w.y + t / 2, `icon-${def.icon}`).setDisplaySize(t * 0.42, t * 0.42).setTint(col).setAlpha(0.55));
-    }
     // 다음 라운드에 무너질 칸 예고: 철판에 간 금 (D-045)
     for (const p of upcomingCollapse(state)) {
       const w = this.world(p);
       put(this.tilesC, 'crack', w.x, w.y);
-    }
-    // 요충지 (D-068·D-069): 점선 테두리는 기물 아래, 깃발·점거 눈금은 기물 위. 빈 = 흰, 내가 점거 = 청록, 적 = 진홍
-    const sh = state.stronghold;
-    if (sh) {
-      const w = this.world(sh);
-      const holder = sh.holderId !== null ? findPiece(state, sh.holderId) : undefined;
-      const name = holder ? (holder.side === 0 ? 'stronghold-ally' : 'stronghold-enemy') : 'stronghold';
-      put(this.tilesC, name, w.x, w.y);
-      put(this.boardTopC, `${name}-flag`, w.x, w.y);
-      if (holder) {
-        // 점거 눈금: 버텨야 하는 상대 턴 수만큼, 칸 오른쪽 위 (아래는 HP 게이지 자리)
-        const need = STRONGHOLD.terms[standingOf(state, holder.side)].hold;
-        const g = this.add.graphics();
-        const x0 = w.x + (19 - 3 * need) * d;
-        g.fillStyle(0x0b0b0e, 1).fillRect(x0 - d, w.y + 2 * d, (3 * need + 1) * d, 4 * d);
-        for (let i = 0; i < need; i++) g.fillStyle(i < sh.hold ? (holder.side === 0 ? C.cyan : C.crimson) : C.dark, 1).fillRect(x0 + i * 3 * d, w.y + 3 * d, 2 * d, 2 * d);
-        this.boardTopC.add(g);
-      }
     }
   }
 
@@ -297,64 +236,34 @@ class BoardScene extends Phaser.Scene {
     const root = this.add.container(w.x, w.y).setDepth(2 + pos.y * -0.001 + 0.5);
     // 발밑 받침은 쓰지 않는다 (D-048) — 진영은 흰/검은 기물 + HP 게이지 색
     const base = this.add.graphics();
-    const pen = new PixelPen(base, t / BOARD_DOTS);
-    if (p.type === 'K' && this.state?.lastStrike?.[p.side] === 'ready') pen.ring(t / 2, t * 0.45, t * 0.44, C.brass, 1);
     const rings: Phaser.GameObjects.GameObject[] = [];
     // 체크: HP 1로 버틴 킹 — 다음에 맞으면 끝 (D-022). 위 가운데가 터진 붉은 톱니 고리
     if (p.type === 'K' && p.hp === 1 && this.state?.rules.checkmate) rings.push(this.add.image(t / 2, t / 2, boardKey('check')).setDisplaySize((t * 21) / 20, (t * 21) / 20));
-    if (p.buffTurns > 0) base.fillStyle(C.brass, 1).fillTriangle(t * 0.86, t * 0.2, t * 0.78, t * 0.32, t * 0.94, t * 0.32);
-    // 인챈트 표식: 왼쪽 위 황동 점 (장 수), ★ 각성
-    const lo = this.state?.loadouts?.[p.side];
-    const stacks = [...new Set(moveTypes(p).flatMap((ty) => TYPE_ENCHANTS[ty] ?? []))].map((e) => lo?.enchants[e] ?? 0);
     const marks: Phaser.GameObjects.GameObject[] = [];
-    let my = t * 0.12;
-    for (const n of stacks.filter((n) => n > 0)) {
-      if (n >= 3) {
-        base.fillStyle(C.brass, 1).fillCircle(t * 0.12, my, t * 0.075);
-        base.fillStyle(C.ink, 1).fillCircle(t * 0.12, my, t * 0.03);
-      } else for (let i = 0; i < n; i++) base.fillStyle(C.brass, 1).fillCircle(t * (0.1 + i * 0.1), my, t * 0.045);
-      my += t * 0.14;
-    }
-    // 대장간 강화: 왼쪽 아래 +n
-    const forge = lo?.forge[p.type] ?? 0;
-    if (forge > 0) {
-      marks.push(
-        this.add
-          .text(t * 0.04, t * 0.62, `+${forge}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.22)}px`, color: '#E0A060', stroke: '#16141C', strokeThickness: 3 })
-          .setResolution(this.dpr),
-      );
-    }
-    // 합체: 오른쪽 위에 흡수한 유형 작은 글리프 · 폼 시프트: 바뀐 행마
-    const extra = p.formAs ? [p.type] : (p.fused ?? []).filter((ty) => ty !== p.type);
-    extra.forEach((ty, i) => {
-      const img = this.add.image(t * 0.84, t * (0.16 + i * 0.24), pieceKey(ty, p.side)).setDisplaySize(t * 0.3, t * 0.3);
-      if (p.formAs) img.setTint(0xc89b3c);
-      marks.push(img);
-    });
-    // 이형 거푸집 (D-084): 오른쪽 위 7도트 황동 문양 — 길게 누르면 이름·효과
-    if (p.variant && p.type === VARIANTS[p.variant].base && !p.fused && !p.formAs) {
-      const d = t / BOARD_DOTS;
-      marks.push(this.add.image(13 * d, d, boardKey(`variant-${p.variant}`)).setOrigin(0, 0).setDisplaySize(7 * d, 7 * d));
-    }
-    // 검문! 정예 접사 (D-096): 왼쪽 위 검은 딱지 + 접사 색 아이콘 — 늘 보이고, 길게 누르면 이름·효과
-    if (p.affix) {
-      const a = AFFIXES[p.affix];
+    // 각인 (규격 2.0): 왼쪽 위 검은 딱지 + 황동 글자 하나 — 길게 누르면 이름 · 효과
+    if (p.carve) {
       const size = t * 0.34;
       const tag = this.add.graphics();
       tag.fillStyle(0x16141c, 1).fillRect(t * 0.02, t * 0.02, size, size);
-      tag.lineStyle(Math.max(1, t * 0.03), Phaser.Display.Color.HexStringToColor(a.color).color, 1).strokeRect(t * 0.02, t * 0.02, size, size);
-      marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, `icon-${a.icon}`).setDisplaySize(size * 0.72, size * 0.72).setTint(Phaser.Display.Color.HexStringToColor(a.color).color));
+      tag.lineStyle(Math.max(1, t * 0.03), C.brass, 1).strokeRect(t * 0.02, t * 0.02, size, size);
+      marks.push(
+        tag,
+        this.add
+          .text(t * 0.02 + size / 2, t * 0.02 + size / 2, CARVES[p.carve].mark, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(size * 0.7)}px`, color: '#E8C060' })
+          .setOrigin(0.5)
+          .setResolution(this.dpr),
+      );
     }
-    // 반장 약점 (D-113): 오른쪽 아래 청색 과녁 — 길게 누르면 약점 이름·효과
-    if (this.state?.weak && weakOn(this.state, p, this.state.weak.id)) {
+    // 정예 (검문!): 오른쪽 위 진홍 왕관 딱지 — HP 두 배
+    if (p.elite) {
       const size = t * 0.3;
       const tag = this.add.graphics();
-      tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t - size - t * 0.12, size, size);
-      tag.lineStyle(Math.max(1, t * 0.03), 0x7dd3fc, 1).strokeRect(t - size - t * 0.02, t - size - t * 0.12, size, size);
-      marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t - size / 2 - t * 0.12, 'icon-reticle').setDisplaySize(size * 0.72, size * 0.72).setTint(0x7dd3fc));
+      tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t * 0.02, size, size);
+      tag.lineStyle(Math.max(1, t * 0.03), C.crimson, 1).strokeRect(t - size - t * 0.02, t * 0.02, size, size);
+      marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t * 0.02 + size / 2, 'icon-crown').setDisplaySize(size * 0.72, size * 0.72).setTint(C.crimson));
     }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.formAs ?? p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
+    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -791,13 +700,11 @@ class BoardScene extends Phaser.Scene {
     if (over) this.time.delayedCall(200, () => sfx(over.winner === 0 ? 'win' : 'lose'));
     const t = this.tile;
     // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
-    const cur: BattleState = { ...this.state, stronghold: this.state.stronghold ? { ...this.state.stronghold } : null };
+    const cur: BattleState = { ...this.state };
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
-    let tacticStack = 0;
     for (const e of events) {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
-        if (cur.stronghold && isFallen(cur, cur.stronghold.x, cur.stronghold.y)) cur.stronghold = null;
         this.announce('바닥이 꺼진다! 칸 한 쌍이 톱니 아래로');
         this.shake(300, 0.008);
         this.drawTiles(cur);
@@ -844,43 +751,13 @@ class BoardScene extends Phaser.Scene {
         this.announce(e.count >= e.need ? '정체 — 이제부터 바닥이 꺼진다' : `정체 ${e.count}/${e.need} — 이번 턴도 아무도 안 맞으면 바닥이 꺼진다`);
         continue;
       }
-      if (e.type === 'strongholdSpawn') {
-        cur.stronghold = { ...e.pos, holderId: null, hold: 0 };
-        this.drawTiles(cur);
-        const mine = e.standings[0];
-        this.announce(`${GRADE[mine].name} 요충지 — 상대 턴 ${STRONGHOLD.terms[mine].hold}번 버티면 점령 · 받는 피해 −${Math.round(STRONGHOLD.terms[mine].cover * 100)}%`);
-        await this.wait(500);
-        continue;
-      }
-      if (e.type === 'strongholdCapture') {
-        cur.stronghold = null;
-        this.drawTiles(cur);
-        this.announce(`${e.side === 0 ? '아군' : '적'} 요충지 점령 — Tier ${e.tier} 보상`);
-        await this.wait(600);
-        continue;
-      }
-      if (e.type === 'strongholdLost') {
-        cur.stronghold = null;
-        this.drawTiles(cur);
-        continue;
-      }
-      if (e.type === 'awaken') {
-        this.announce(`${e.side === 0 ? '내' : '적'} 킹 폭주 준비 — 폭주 1회`);
-        const sp = this.sprites.get(e.pieceId);
-        if (sp) await this.tween({ targets: sp.root, scale: { from: 1, to: 1.25 }, yoyo: true, duration: 220 });
-        continue;
-      }
-      if (e.type === 'lastStrike') {
-        this.announce('폭주!');
-        continue;
-      }
       if (e.type === 'move') {
         const s = this.sprites.get(e.pieceId);
         if (!s) continue;
         // 들기 → 지수형 이동 → 착지 출렁임 + 증기 먼지 (D-036)
         const w = this.world(e.to);
         const from = { x: s.root.x, y: s.root.y };
-        const jump = s.piece.type === 'N' && !s.piece.fused;
+        const jump = s.piece.type === 'N';
         const g = this.add.graphics().setDepth(6.4);
         const pen = new PixelPen(g, t / BOARD_DOTS);
         let landed = false;
@@ -912,10 +789,6 @@ class BoardScene extends Phaser.Scene {
         );
         continue;
       }
-      if (e.type === 'card') {
-        this.announce(`${e.side === 0 ? '' : '적 · '}${CARDS[e.card].name}`);
-        continue;
-      }
       if (e.type === 'shield' || e.type === 'heal') {
         const sp = this.sprites.get(e.pieceId);
         if (!sp) continue;
@@ -924,18 +797,6 @@ class BoardScene extends Phaser.Scene {
         this.drawHp(sp, sp.piece.hp, sp.piece.hp);
         this.floatText(sp, `+${e.amount}`, e.type === 'shield' ? '#E2E8F0' : '#86EFAC');
         await this.wait(160);
-        continue;
-      }
-      if (e.type === 'fuse') {
-        const a = this.sprites.get(e.pieceId);
-        const b = this.sprites.get(e.partnerId);
-        this.announce('결합!');
-        if (a && b) {
-          await this.tween({ targets: b.root, x: a.root.x, y: a.root.y, alpha: 0.2, duration: 260, ease: 'Quad.easeIn' });
-          b.root.destroy();
-          this.sprites.delete(e.partnerId);
-          await this.tween({ targets: a.root, scale: { from: 1, to: 1.25 }, yoyo: true, duration: 200 });
-        }
         continue;
       }
       if (e.type === 'promote') {
@@ -964,54 +825,12 @@ class BoardScene extends Phaser.Scene {
         await this.wait(260);
         continue;
       }
-      if (e.type === 'terrain') {
-        // 지형 발동: 자석판에 붙잡힘 · 나사 줍기
-        const sp = this.sprites.get(e.pieceId);
-        const def = TERRAIN[e.terrain];
-        if (sp) this.floatText(sp, e.gold ? `나사 +${e.gold}` : e.terrain === 'screws' ? '흩어졌다' : `${def.name}!`, def.color);
-        cur.terrain = (cur.terrain ?? []).filter((x) => !(x.x === e.pos.x && x.y === e.pos.y));
-        this.drawTiles(cur);
-        await this.wait(220);
+      if (e.type === 'respawn') {
+        // 양산 라인 (폰 반장 비틀기): 쓰러진 폰이 뒷줄에 다시 선다
+        this.announce('양산 라인 — 폰이 다시 선다');
+        await this.wait(200);
         continue;
       }
-      if (e.type === 'affix') {
-        // 정예 접사 발동: 이름이 떠오르고, 반동 스프링이면 쓰러뜨린 쪽이 맞는다
-        const sp = this.sprites.get(e.pieceId);
-        const a = AFFIXES[e.affix];
-        if (sp) {
-          this.floatText(sp, a.name, a.color);
-          if (e.hit) {
-            sfx('hit', this.combo++);
-            this.applyHit(sp, e.hit);
-            if (e.hit.killed) {
-              await Promise.race([this.playCrumble(sp), this.after(260)]);
-              sp.root.destroy();
-              this.sprites.delete(sp.piece.id);
-            }
-          }
-          await this.wait(260);
-        }
-        continue;
-      }
-      if (e.type === 'tactic') {
-        // 전술 키워드 배너 (D-094): 친 기물 위에 이름이 튀어 오른다. 체크는 아래 안내가 맡는다
-        const sp = this.sprites.get(e.pieceId);
-        if (sp && e.tactic !== 'check') {
-          const def = TACTICS[e.tactic];
-          const stack = tacticStack++;
-          const label = this.add
-            .text(sp.root.x + t / 2, sp.root.y - t * (0.2 + stack * 0.32), def.name, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: def.color, stroke: '#0B0B0E', strokeThickness: 5 })
-            .setOrigin(0.5)
-            .setDepth(10)
-            .setScale(this.calm ? 1 : 0.4)
-            .setResolution(this.dpr);
-          if (!this.calm) this.tweens.add({ targets: label, scale: 1, duration: 160, ease: 'Back.easeOut' });
-          this.tweens.add({ targets: label, y: label.y - t * 0.3, alpha: 0, delay: 520, duration: 360, ease: 'Quad.easeIn', onComplete: () => label.destroy() });
-          await this.wait(180);
-        }
-        continue;
-      }
-      tacticStack = 0;
       if (e.type !== 'attack') continue;
       const atk = this.sprites.get(e.attackerId);
       if (!atk) continue;
@@ -1032,7 +851,7 @@ class BoardScene extends Phaser.Scene {
       }
 
       // 몸짓 → 기물별 공격 이펙트 (기물 중심에서 공격 범위로) → 이펙트가 닿는 순간 피격
-      const kinds = atk.piece.fused?.length ? [...new Set(atk.piece.fused)] : [atk.piece.formAs ?? atk.piece.type];
+      const kinds = [atk.piece.type];
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
       const base = { x: atk.root.x, y: atk.root.y };
       // 세기(피해·처치)가 클수록 뛰어올라 모았다가 터뜨린다 (D-064)
@@ -1069,11 +888,6 @@ class BoardScene extends Phaser.Scene {
       });
       await Promise.all([...hitsDone, this.after(fx.duration)]);
       this.camRelease();
-      // 최후의 리벳: HP 1에서 버틴 기물 위에 접사 이름
-      for (const h of e.hits.filter((x) => x.held)) {
-        const sp = this.sprites.get(h.targetId);
-        if (sp) this.floatText(sp, AFFIXES.lastRivet.name, AFFIXES.lastRivet.color);
-      }
       // 비상 퓨즈 (D-105): 내 기물이 HP 1로 버틴다
       for (const h of e.hits.filter((x) => x.fuse)) {
         const sp = this.sprites.get(h.targetId);

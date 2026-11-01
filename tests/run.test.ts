@@ -1,206 +1,137 @@
-import { ORDERS } from '../src/data/tactics';
-import { orderProgress, pickOrder } from '../src/run/orders';
-import type { PieceType } from '../src/engine/types';
-import { FLOORS_PER_ACT } from '../src/data/run';
 import { describe, expect, it } from 'vitest';
-import { BOSSES, FINAL_BOSS, FORGE_COST, TOTAL_FLOORS, type BossId } from '../src/data/run';
-import { createBattle, Rng } from '../src/engine';
-import { checkDeck } from '../src/run/deck';
-import { generateEncounter } from '../src/run/legion';
-import {
-  addCard,
-  addEnchant,
-  altarGamble,
-  buyPiece,
-  enterNode,
-  finishBattle,
-  forgeUp,
-  leaveNode,
-  newRun,
-  sellPiece,
-  skipChoice,
-  takeChoice,
-  finishReward,
-  type RunState,
-} from '../src/run/run';
+import { ACTS, FLOORS_PER_ACT, TOTAL_FLOORS, eliteFrom, inAct, actOf, type NodeKind } from '../src/data/run';
+import { PART_SLOTS } from '../src/data/parts';
+import { MAX_ASCENSION } from '../src/data/ascension';
+import { Rng, type BattleState } from '../src/engine';
+import { generateEncounter, encounterBattle } from '../src/run/legion';
+import { addPart, buyPiece, enterNode, eventChoose, finishBattle, finishReward, forgeCarve, forgeUpgrade, newRun, sellPiece, skipChoice, takeChoice, type RunState } from '../src/run/run';
 
-const toNode = (run: RunState, kind: string) => {
-  const i = run.map[run.floor - 1].findIndex((n) => n.kind === kind);
-  run.map[run.floor - 1][i === -1 ? 0 : i] = { kind: kind as never };
-  return enterNode(run, i === -1 ? 0 : i);
+const won = (run: RunState): BattleState => {
+  if (run.stage.at !== 'battle') throw new Error('not battle');
+  const s = encounterBattle(run.deck, { parts: run.parts }, run.stage.encounter);
+  return { ...s, winner: 0 };
 };
 
-describe('런 구조 (GDD 8장)', () => {
-  it('보스 덱은 덱 규칙을 지킨다', () => {
-    for (const id of Object.keys(BOSSES) as BossId[]) expect(checkDeck(BOSSES[id].deck).ok, id).toBe(true);
-    expect(checkDeck(FINAL_BOSS.deck).ok).toBe(true);
+describe('출하 구조 (규격 2.0)', () => {
+  it('3공정 × 7층 = 21층 · 압력 10단계', () => {
+    expect(FLOORS_PER_ACT * ACTS).toBe(TOTAL_FLOORS);
+    expect(TOTAL_FLOORS).toBe(21);
+    expect(MAX_ASCENSION).toBe(10);
   });
-  it('같은 시드면 같은 런', () => {
-    expect(JSON.stringify(newRun(42))).toBe(JSON.stringify(newRun(42)));
-  });
-  it('맵: Act마다 첫 층 전투 · 공정 끝 보스 · 층마다 전투 1개 이상 · Act 1 엘리트는 5층부터', () => {
-    for (let seed = 1; seed < 30; seed++) {
+  it('지도: 공정 첫 층은 대국 · 끝은 반장 · 층마다 대국 하나 이상 · 노드 6종 · 검문!은 정해진 층부터', () => {
+    for (let seed = 1; seed <= 30; seed++) {
       const run = newRun(seed);
-      expect(run.map).toHaveLength(TOTAL_FLOORS);
-      for (const a of [0, FLOORS_PER_ACT, 2 * FLOORS_PER_ACT]) {
-        expect(run.map[a]).toEqual([{ kind: 'battle' }]);
-        expect(run.map[a + FLOORS_PER_ACT - 1]).toEqual([{ kind: 'boss' }]);
-      }
-      run.map.slice(1, FLOORS_PER_ACT - 1).forEach((floor, i) => {
-        expect(floor.length).toBeGreaterThanOrEqual(2);
-        expect(floor.some((n) => n.kind === 'battle')).toBe(true);
-        if (i + 2 < 5) expect(floor.some((n) => n.kind === 'elite')).toBe(false);
+      run.map.forEach((nodes, i) => {
+        const f = i + 1;
+        if (inAct(f) === 1) expect(nodes.map((n) => n.kind)).toEqual(['battle']);
+        else if (inAct(f) === FLOORS_PER_ACT) expect(nodes.map((n) => n.kind)).toEqual(['boss']);
+        else {
+          expect(nodes.some((n) => n.kind === 'battle')).toBe(true);
+          for (const n of nodes) expect(['battle', 'elite', 'shop', 'forge', 'event']).toContain(n.kind);
+          if (nodes.some((n) => n.kind === 'elite')) expect(inAct(f)).toBeGreaterThanOrEqual(eliteFrom(f));
+        }
       });
-      expect(new Set(run.bosses).size).toBe(2);
     }
   });
-  it('모든 층·종류의 적 군단이 보드에 배치된다', () => {
-    const rng = new Rng(7);
-    for (let f = 1; f <= TOTAL_FLOORS; f++)
-      for (const kind of ['battle', 'elite', 'boss'] as const) {
-        for (const boss of Object.keys(BOSSES) as BossId[]) {
-          const e = generateEncounter(f, kind, rng, boss);
-          expect(checkDeck(e.deck).ok).toBe(true);
-          expect(() => createBattle({ width: e.width, height: e.height, decks: [(['K', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'N', 'N', 'B', 'B', 'R', 'R', 'Q'] as const).slice(0, e.width * 2), e.deck] })).not.toThrow();
-        }
+  it('같은 시드면 같은 출하', () => {
+    expect(JSON.stringify(newRun(5))).toBe(JSON.stringify(newRun(5)));
+  });
+  it('모든 층 · 종류의 적 군단이 판에 놓인다 (정예는 검문!에만)', () => {
+    const rng = new Rng(3);
+    for (let f = 1; f <= TOTAL_FLOORS; f++) {
+      const kinds: NodeKind[] = inAct(f) === FLOORS_PER_ACT ? ['boss'] : ['battle', 'elite'];
+      for (const k of kinds) {
+        const e = generateEncounter(f, k, rng, 'pawn', 0);
+        const s = encounterBattle(['K', 'P', 'N'], { parts: [] }, e);
+        expect(s.pieces.filter((p) => p.side === 1 && p.type === 'K')).toHaveLength(1);
+        expect(s.pieces.some((p) => p.side === 1 && p.elite)).toBe(k === 'elite');
+        if (k === 'boss') expect(e.twist).toBeDefined();
       }
+    }
   });
 });
 
 describe('보상과 노드', () => {
-  it('전투 승리 → 골드·기물·인챈트 3지선다, 소멸 카드는 쓰면 사라진다', () => {
-    const run = newRun(3);
-    run.loadout.cards = ['C01', 'A01'];
+  it('일반 대국: 나사 + 기물 둘 · 각인 하나 — 각인은 기물을 골라 새긴다', () => {
+    const run = newRun(11);
     enterNode(run, 0);
-    const st = run.stage.at === 'battle' ? run.stage.encounter : null;
-    const b = createBattle({ width: st!.width, height: st!.height, decks: [run.deck, st!.deck], loadouts: [run.loadout, st!.loadout] });
-    b.winner = 0;
-    b.cards[0][0].spent = true;
-    b.cards[0][1].spent = true; // 라운드 1회 카드는 남는다
     const gold = run.gold;
-    const deck = run.deck.length;
-    finishBattle(run, b);
-    expect(run.loadout.cards).toEqual(['A01']);
+    finishBattle(run, won(run));
     expect(run.gold).toBeGreaterThan(gold);
-    expect(run.stage.at).toBe('reward');
-    if (run.stage.at !== 'reward') return;
-    // Act 1은 매 승리마다 기물 3지선다 → 인챈트 3지선다
-    expect(run.stage.choices.map((c) => c.type)).toEqual(['piece', 'enchant']);
-    expect(run.stage.choices[0].options).toHaveLength(3);
-    expect(takeChoice(run, run.stage.choices[0].options[0])).toBeUndefined();
-    expect(run.deck.length).toBe(deck + 1);
-    const pick = run.stage.choices[0].options[0];
-    expect(takeChoice(run, pick)).toBeUndefined();
+    if (run.stage.at !== 'reward') throw new Error('reward');
+    const ch = run.stage.choices[0];
+    expect(ch.type).toBe('mixed');
+    if (ch.type !== 'mixed') return;
+    expect(ch.options.filter((o) => o.startsWith('carve:'))).toHaveLength(1);
+    const carve = ch.options.find((o) => o.startsWith('carve:'))!;
+    expect(takeChoice(run, carve)).toBe('unit');
+    expect(takeChoice(run, carve, 1)).toBeUndefined();
+    expect(run.deck[1].carve).toBe(carve.split(':')[1]);
     expect(finishReward(run)).toBeUndefined();
     expect(run.floor).toBe(2);
   });
-  it('주문서: 전투마다 하나, 완수하면 나사 · 못 하면 미완 줄 (D-094)', () => {
+  it('검문!: 양날 한 쌍 — 부품을 받고 적 강화가 남는다', () => {
+    const run = newRun(12);
+    run.map[2] = [{ kind: 'elite' }];
+    run.floor = 3;
+    enterNode(run, 0);
+    finishBattle(run, won(run));
+    if (run.stage.at !== 'reward') throw new Error('reward');
+    expect(run.stage.choices[0].type).toBe('pair');
+    expect(takeChoice(run, '0')).toBeUndefined();
+    expect(run.parts).toHaveLength(1);
+    expect(run.threats.length).toBeGreaterThanOrEqual(1);
+  });
+  it('부품 칸이 차면 버릴 것을 골라야 한다', () => {
+    const run = newRun(1);
+    run.parts = ['lens', 'drum', 'spur', 'helmet', 'blade'];
+    expect(run.parts).toHaveLength(PART_SLOTS);
+    expect(addPart(run, 'prism')).toBe('full');
+    expect(addPart(run, 'prism', 0)).toBeUndefined();
+    expect(run.parts).toContain('prism');
+    expect(run.parts).not.toContain('lens');
+  });
+  it('패배하면 출하 끝 · 건너뛰기는 나사', () => {
     const run = newRun(3);
     enterNode(run, 0);
-    const st = run.stage.at === 'battle' ? run.stage.encounter : null;
-    expect(st!.order).toBeDefined();
-    st!.order = 'fork2';
-    const b = createBattle({ width: st!.width, height: st!.height, decks: [run.deck, st!.deck], loadouts: [run.loadout, st!.loadout] });
-    b.winner = 0;
-    b.record = [{ tactics: { fork: 3 } }, { tactics: {} }];
-    const gold = run.gold;
-    finishBattle(run, b);
-    if (run.stage.at !== 'reward') throw new Error('보상 단계가 아님');
-    expect(run.stage.lines.some((l) => l.startsWith('주문서 완수') && l.endsWith(`+${ORDERS.fork2.gold}`))).toBe(true);
-    expect(run.gold).toBeGreaterThanOrEqual(gold + ORDERS.fork2.gold);
-
-    const run2 = newRun(3);
-    enterNode(run2, 0);
-    if (run2.stage.at !== 'battle') throw new Error('대국이 아님');
-    run2.stage.encounter.order = 'fork2';
-    const b2 = createBattle({ width: 6, height: 6, decks: [run2.deck, ['K']] });
-    b2.winner = 0;
-    b2.record = [{ tactics: { fork: 1 } }, { tactics: {} }];
-    finishBattle(run2, b2);
-    const after = run2.stage as unknown as { at: string; lines: string[] };
-    if (after.at !== 'reward') throw new Error('보상 단계가 아님');
-    expect(after.lines).toContain('주문서 미완');
-  });
-
-  it('주문서 판정: 무손실 · 킹 무상처 · 폰 결정타', () => {
-    const deck: PieceType[] = ['K', 'P', 'N'];
-    const b = createBattle({ width: 6, height: 6, decks: [deck, ['K']] });
-    b.winner = 0;
-    expect(orderProgress('flawless', b, deck).done).toBe(true);
-    expect(orderProgress('ironKing', b, deck).done).toBe(true);
-    b.pieces = b.pieces.filter((p) => !(p.side === 0 && p.type === 'N'));
-    expect(orderProgress('flawless', b, deck).failed).toBe(true);
-    b.pieces.find((p) => p.side === 0 && p.type === 'K')!.hp -= 1;
-    expect(orderProgress('ironKing', b, deck).failed).toBe(true);
-    expect(orderProgress('pawnMate', b, deck).done).toBe(false);
-    b.record = [{ tactics: {}, finisher: 'P' }, { tactics: {} }];
-    expect(orderProgress('pawnMate', b, deck).done).toBe(true);
-  });
-
-  it('주문서는 군단으로 할 수 있는 것만 (폰이 없으면 폰 결정타 없음)', () => {
-    for (let seed = 1; seed < 200; seed++) { const o = pickOrder(['K', 'N', 'N'], new Rng(seed)); expect(o).not.toBe('pawnWork'); expect(o).not.toBe('pawnMate'); }
-  });
-  it('패배하면 런 종료', () => {
-    const run = newRun(4);
-    enterNode(run, 0);
-    const b = createBattle({ width: 6, height: 6, decks: [run.deck, ['K']] });
-    b.winner = 1;
-    finishBattle(run, b);
+    const st = won(run);
+    finishBattle(run, { ...st, winner: 1 });
     expect(run.stage).toEqual({ at: 'over', won: false });
+    const r2 = newRun(4);
+    enterNode(r2, 0);
+    finishBattle(r2, won(r2));
+    const g = r2.gold;
+    skipChoice(r2);
+    expect(r2.gold).toBeGreaterThan(g);
   });
-  it('인챈트 중첩 · 6칸 가득 차면 버려야 함 · 카드 4칸', () => {
+  it('고물상: 사고 팔기 · 공방: 각인 또는 다듬기 하나만', () => {
     const run = newRun(5);
-    addEnchant(run, 'E01');
-    addEnchant(run, 'E01');
-    expect(run.loadout.enchants.E01).toBe(2);
-    for (const id of ['E02', 'E03', 'E04', 'E05', 'E06'] as const) addEnchant(run, id);
-    expect(addEnchant(run, 'E07')).toBe('full');
-    expect(addEnchant(run, 'E07', 'E02')).toBeUndefined();
-    expect(run.loadout.enchants.E02).toBeUndefined();
-    for (const id of ['A01', 'A02', 'A03', 'A04'] as const) addCard(run, id);
-    expect(addCard(run, 'C01')).toBe('full');
-    expect(addCard(run, 'C01', 0)).toBeUndefined();
-    expect(run.loadout.cards).toEqual(['A02', 'A03', 'A04', 'C01']);
-  });
-  it('건너뛰기는 골드 소량', () => {
-    const run = newRun(6);
-    run.stage = { at: 'reward', title: '', lines: [], choices: [{ type: 'enchant', options: ['E01', 'E02', 'E03'] }] };
-    const g = run.gold;
-    skipChoice(run);
-    expect(run.gold).toBeGreaterThan(g);
-  });
-  it('상점: 구매 · 판매 · 덱 한도', () => {
-    const run = newRun(8);
+    run.gold = 999;
+    run.map[1] = [{ kind: 'shop' }];
     run.floor = 2;
-    toNode(run, 'shop');
-    expect(run.stage.at).toBe('shop');
-    run.gold = 1000;
+    enterNode(run, 0);
+    const n = run.deck.length;
     expect(buyPiece(run, 0)).toBeUndefined();
-    expect(buyPiece(run, 0)).toBe('“그런 물건 없어.”');
-    const before = run.gold;
-    expect(sellPiece(run, 'K')).toBe('“킹은 안 받아.”');
-    expect(sellPiece(run, run.deck.find((t) => t !== 'K')!)).toBeUndefined();
-    expect(run.gold).toBeGreaterThan(before);
-    leaveNode(run);
-    expect(run.floor).toBe(3);
+    expect(run.deck.length).toBe(n + 1);
+    expect(sellPiece(run, run.deck.length - 1)).toBeUndefined();
+    expect(sellPiece(run, 0)).toBeDefined(); // 킹은 못 판다
+    const f = newRun(6);
+    f.map[1] = [{ kind: 'forge' }];
+    f.floor = 2;
+    f.deck = [{ t: 'K' }, { t: 'P' }, { t: 'N' }];
+    enterNode(f, 0);
+    expect(forgeUpgrade(f, 1, 'N')).toBeUndefined();
+    expect(f.deck[1].t).toBe('N');
+    expect(forgeCarve(f, 0, 2)).toBeDefined(); // 이미 한 번 했다
   });
-  it('대장간: 비용이 단계마다 오르고 +5가 상한', () => {
-    const run = newRun(9);
+  it('돌발은 열둘, 결과가 남는다', () => {
+    const run = newRun(8);
+    run.map[1] = [{ kind: 'event', event: 'gambler' }];
     run.floor = 2;
-    toNode(run, 'forge');
-    run.gold = 10000;
-    for (let i = 0; i < 5; i++) expect(forgeUp(run, 'K')).toBeUndefined();
-    expect(forgeUp(run, 'K')).toBe('“완성품이다. 더 손댈 데 없어.”');
-    expect(run.gold).toBe(10000 - FORGE_COST.reduce((a, b) => a + b, 0));
-  });
-  it('크랙 제단: 꽝이 쌓이면 다음 제단에서 원하는 인챈트 확정', () => {
-    const run = newRun(10);
-    run.crackGauge = 3;
-    run.floor = 2;
-    toNode(run, 'altar');
-    altarGamble(run);
-    expect(run.stage.at === 'altar' && run.stage.result?.kind).toBe('pick');
-    expect(run.crackGauge).toBe(0);
+    enterNode(run, 0);
+    eventChoose(run, 1);
+    expect(run.stage.at === 'event' && run.stage.result).toBeTruthy();
+    expect(actOf(run.floor)).toBe(1);
   });
 });
 

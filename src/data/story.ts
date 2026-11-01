@@ -80,13 +80,13 @@ export const GILDED = {
   howl: [say('도금왕', '「보아라! 너도 결국 여기까지 왔다. 더 높은 모양이 되려고.」'), say('도금왕', '「폰이라 무시당한 게 억울했지? 그래서 퀸이 되고 싶은 거다. 나처럼.」')],
 };
 
-/** 압력 묶음별 승급 장면 (D-131): from ~ to 압력 */
+/** 압력 묶음별 승급 장면 (D-131 · 규격 2.0 압력 10단계): from ~ to 압력 — 최고 압력에서만 내려놓는다 */
 export const PROMOTION: { from: number; to: number; taunt: string; mono: string; after: string; mood: Mood }[] = [
-  { from: 0, to: 2, taunt: '「규격을 깨러 왔다고? 아니. 너는 규격 위에 올라서고 싶었을 뿐이다.」', mono: '아니다. …이번만.', after: '* 퀸이 된다. 흰 기물들이 박수 치듯 철컥인다. 종이 왕관이 바닥에 떨어진다.', mood: 'glare' },
-  { from: 3, to: 6, taunt: '「또 왔구나. 무시당한 만큼 올라가고 싶은 거다.」', mono: '또 여기다. 손이 먼저 간다.', after: '* 승급. 박수가 줄었다. 누군가 종이 왕관을 주워 든다.', mood: 'narrow' },
-  { from: 7, to: 10, taunt: '「나는 너다. 이 왕관은 네 거다.」', mono: '무겁다. 그런데 놓지 못한다.', after: '* 승급. 흰 기물들이 말없이 본다.', mood: 'look' },
-  { from: 11, to: 12, taunt: '「봐라, 또 쓴다. 너는 결국 내가 된다.」', mono: '저 얼굴이 된다. 알면서.', after: '* 승급. 쓰는 순간 금빛이 갈라진다. 아무도 박수 치지 않는다.', mood: 'sleepy' },
-  { from: 13, to: 99, taunt: '「써라! 너도 원했다! 힘을, 자리를, 인정을!」', mono: '원했다. 그래서 내려놓는다.', after: '', mood: 'wide' },
+  { from: 0, to: 1, taunt: '「규격을 깨러 왔다고? 아니. 너는 규격 위에 올라서고 싶었을 뿐이다.」', mono: '아니다. …이번만.', after: '* 퀸이 된다. 흰 기물들이 박수 치듯 철컥인다. 종이 왕관이 바닥에 떨어진다.', mood: 'glare' },
+  { from: 2, to: 4, taunt: '「또 왔구나. 무시당한 만큼 올라가고 싶은 거다.」', mono: '또 여기다. 손이 먼저 간다.', after: '* 승급. 박수가 줄었다. 누군가 종이 왕관을 주워 든다.', mood: 'narrow' },
+  { from: 5, to: 7, taunt: '「나는 너다. 이 왕관은 네 거다.」', mono: '무겁다. 그런데 놓지 못한다.', after: '* 승급. 흰 기물들이 말없이 본다.', mood: 'look' },
+  { from: 8, to: 9, taunt: '「봐라, 또 쓴다. 너는 결국 내가 된다.」', mono: '저 얼굴이 된다. 알면서.', after: '* 승급. 쓰는 순간 금빛이 갈라진다. 아무도 박수 치지 않는다.', mood: 'sleepy' },
+  { from: 10, to: 99, taunt: '「써라! 너도 원했다! 힘을, 자리를, 인정을!」', mono: '원했다. 그래서 내려놓는다.', after: '', mood: 'wide' },
 ];
 export const promotionFor = (pressure: number) => PROMOTION.find((p) => pressure >= p.from && pressure <= p.to) ?? PROMOTION[0];
 
@@ -94,12 +94,12 @@ export const promotionFor = (pressure: number) => PROMOTION.find((p) => pressure
 export const PROMOTE_UI = {
   promote: '승급한다',
   lay: '내려놓는다',
-  /** 압력 0~12: 「내려놓는다」가 떨리다 꺼진다 */
+  /** 최고 압력 전: 「내려놓는다」가 떨리다 꺼진다 */
   stuck: '* 손이 떨어지지 않는다.',
   stuckMono: '…아직이다.',
   /** 떨림이 버티는 시간 (ms) = base + 압력 × per */
   holdBase: 300,
-  holdPer: 140,
+  holdPer: 180,
 };
 
 /** 승급 뒤 공통 (새 도금왕) */
@@ -110,7 +110,7 @@ export const AFTER_PROMOTION: Cut = {
   fx: 'alarm',
 };
 
-/** 진 엔딩 「해방」 (압력 13 · 내려놓는다) */
+/** 진 엔딩 「해방」 (최고 압력 · 내려놓는다) */
 export const TRUE_ENDING: Cut[] = [
   { bg: 'top', actors: [me(50, 60, 130, 'calm')], lines: [tell('* 종이 왕관을 벗어 접는다. 승급 표시가 꺼진다. 울부짖음이 멈춘다.'), mono('원했다. 그래서 내려놓는다.')], fx: 'calm' },
   { bg: 'top', actors: [{ piece: { t: 'P', side: 1 }, x: 60, y: 64, size: 96 }, { piece: { t: 'K', side: 1 }, x: 34, y: 60, size: 90 }], lines: [tell('* 금 왕관이 혼자 굴러가 멈춘다. 금빛이 벗겨진다 — 안에 흠집 난 폰 하나.'), say('도금왕', '「…나는, 못 했다.」')], fx: 'gold' },
@@ -121,7 +121,7 @@ export const TRUE_ENDING: Cut[] = [
   { bg: 'room', actors: [me(50, 58, 120, 'look')], lines: [tell('* 정해진 길은 없었다.'), tell('* 이 판을 펴는 것도, 당신이다.')] },
 ];
 
-/** 압력 13에서도 승급하면 */
+/** 최고 압력에서도 승급하면 */
 export const ENDING_A_MONO = mono('맞는다. 너무.');
 
 /** 패배 (용광로) */
@@ -153,7 +153,7 @@ export const RECORDS: { title: string; need: string; text: string }[] = [
   { title: '검문 반장의 서류철', need: '검문 반장 해체', text: '맨 아래 「최종 승인」 칸 — 늘 비어 있다.' },
   { title: '도금왕의 첫 상자', need: '도금왕 첫 격파', text: '킹 자리에 폰 하나. 금 왕관은 나중에 칠한 것이다.' },
   { title: '꺼진 경고등의 메모', need: '첫 승급', text: '메모의 글씨가 내 글씨다. 「누군가 다른 답을.」' },
-  { title: '접힌 종이 왕관', need: '해방 (압력 13)', text: '접은 자국이 열세 겹이다.' },
+  { title: '접힌 종이 왕관', need: '해방 (최고 압력)', text: '접은 자국이 열세 겹이다.' },
 ];
 
 /** 대국 중 처음 체크를 당할 때 독백 (안내 말풍선에 붙는다) */

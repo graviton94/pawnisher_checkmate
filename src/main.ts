@@ -1,13 +1,10 @@
 import { installPressFeedback } from './ui/motion';
-import { TERRAIN } from './data/terrain';
 import './fonts.css';
 import './style.css';
 import { BattleController } from './game/controller';
 import { Hud } from './ui/hud';
 import { RunUi } from './ui/runUi';
-import { STRONGHOLD } from './data/battle';
-import { standingOf } from './engine';
-import { BoardRenderer, GRADE } from './view/BoardRenderer';
+import { BoardRenderer } from './view/BoardRenderer';
 
 const hud = new Hud();
 installPressFeedback();
@@ -18,26 +15,7 @@ const renderer = new BoardRenderer(document.getElementById('board')!, {
   hover: (pos) => controller.hover(pos),
   longPress: (pos, x, y) => {
     const p = controller.pieceInfo(pos);
-    if (p) {
-      hud.showInfo(p, x, y);
-      return;
-    }
-    // 지형 칸 (D-097): 이름 · 효과
-    const tr = controller.state?.terrain?.find((t) => t.x === pos.x && t.y === pos.y);
-    if (tr) {
-      hud.showStrongholdInfo(`<b style="color:${TERRAIN[tr.kind].color}">${TERRAIN[tr.kind].name}</b><br>${TERRAIN[tr.kind].desc}`, x, y);
-      return;
-    }
-    const sh = controller.state?.stronghold;
-    if (sh && sh.x === pos.x && sh.y === pos.y) {
-      const st = standingOf(controller.state, 0);
-      const terms = STRONGHOLD.terms[st];
-      hud.showStrongholdInfo(
-        `<b>${GRADE[st].name} 요충지</b><br>지금 형편 기준: 상대 턴 ${terms.hold}번 버티면 점거<br>위에 선 기물이 받는 피해 −${Math.round(terms.cover * 100)}%<br><span style="color:var(--muted)">밀릴수록 등급이 올라 더 쉽게 점거한다</span>`,
-        x,
-        y,
-      );
-    }
+    if (p) hud.showInfo(p, x, y);
   },
   longPressEnd: () => hud.hideInfo(),
 }, (text) => hud.toast(text));

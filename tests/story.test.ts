@@ -7,9 +7,9 @@ import { MAX_ASCENSION } from '../src/data/ascension';
 describe('이야기 데이터 (D-135)', () => {
   it('압력 0~최대 모두 승급 장면이 있고, 13에서만 내려놓는 장면', () => {
     for (let p = 0; p <= MAX_ASCENSION; p++) expect(promotionFor(p)).toBeDefined();
-    expect(promotionFor(13).mono).toContain('내려놓는다');
-    expect(promotionFor(12).mono).not.toContain('내려놓는다');
-    expect(PROMOTION.map((g) => g.from)).toEqual([0, 3, 7, 11, 13]);
+    expect(promotionFor(MAX_ASCENSION).mono).toContain('내려놓는다');
+    expect(promotionFor(MAX_ASCENSION - 1).mono).not.toContain('내려놓는다');
+    expect(PROMOTION.map((g) => g.from)).toEqual([0, 2, 5, 8, 10]);
   });
   it('반장마다 신념 · 해체 · 대답 · 초상화', () => {
     for (const id of Object.keys(BOSSES) as (keyof typeof BOSSES)[]) {

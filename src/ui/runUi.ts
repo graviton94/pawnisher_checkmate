@@ -1,17 +1,12 @@
-import { TACTICS } from '../data/tactics';
-import { ARENAS } from '../data/terrain';
-import { puzzleBattle, puzzleFor } from '../run/puzzle';
 import { dailySeed, freshSeed, parseSeed, seedCode, todayKey } from '../run/seed';
-import { DEFECT } from '../data/defects';
-import { FORMATIONS, FORMATION_ORDER, type FormationId } from '../data/formations';
-import { runFeedback, shake, stamp, vignette, type RunDelta } from './juice';
+import { runFeedback, vignette, type RunDelta } from './juice';
 import { sfx } from '../audio/sfx';
 import { TUNED } from '../data/aiWeights';
-import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
-import { ENCHANTS, ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
-import { FORGE_MAX } from '../data/forge';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { ACT_NAMES, ALTAR, DAILY, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
+import { ACT_NAMES, DAILY, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, THREATS, TOTAL_FLOORS, actOf, inAct, type NodeKind, type ThreatId } from '../data/run';
+import { CARVES, CARVE_IDS, type CarveId } from '../data/carves';
+import { PARTS, PART_IDS, PART_SLOTS, type PartId } from '../data/parts';
+import { BOSS_TWIST, TWISTS } from '../data/twists';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
 import { coach, coachLines, markCoachSeen } from './coach';
@@ -21,60 +16,35 @@ import { playCuts, promotionScene } from './cutscene';
 import { ACT_ENTRY, AFTER_PROMOTION, BOSS_STORY, CUT_UI, DEFEAT, ENDING_A_MONO, GILDED, JOIN, OVER_STORY, PROLOGUE, RECORDS, RECRUIT, TAUNTS, TRUE_ENDING, promotionFor, type Cut } from '../data/story';
 import { NPCS, type NpcId } from '../data/npcs';
 import { playMusic } from '../audio/music';
-import { CONTRACTS, type ContractId } from '../data/contracts';
-import { LINES, lineOf } from '../data/lines';
 import { logBattle, logOffer, logRun } from '../run/telemetry';
 import { LESSONS } from '../data/onboarding';
 import { RULEBOOK } from '../data/rulebook';
 import { APP_VERSION } from '../data/version';
 import { lessonBattle } from '../run/onboarding';
-import { CARD_GRADE, ENCHANT_GRADE, GRADE_NAME, LEGEND_SLOTS, type Grade } from '../data/grades';
-import { LEGENDS, RESONANCES, type LegendId } from '../data/legends';
-import { ASCENSIONS, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
+import { GRADE_NAME, type Grade } from '../data/grades';
+import { ASCENSIONS, MAX_ASCENSION, UNLOCK_DECKS, absorbRun, loadMeta, recordRunEnd, saveMeta, unlockedDecks } from '../run/meta';
 import { EVENT_IDS } from '../run/events';
 import type { BattleController } from '../game/controller';
 import type { BattleState, Deck, PieceType } from '../engine';
+import type { Unit } from '../engine/setup';
 import { EVENTS, type EventId } from '../run/events';
 import { encounterBattle } from '../run/legion';
 import {
-  altarCanPick,
-  altarGamble,
-  altarPick,
+  bossIdOf,
   bossName,
   bossOf,
-  ENCHANT_TYPE,
   startDeckOptions,
-  buyCard,
-  buyEnchant,
+  buyCarve,
+  buyPart,
   buyPiece,
   clearRun,
   enterNode,
   eventChoiceAvailable,
   eventChoose,
   finishBattle,
-  finishPuzzle,
-  battleDeck,
-  buyBlueprint,
-  buyLegend,
-  cardSlots,
-  enchantSlots,
-  dismantleEnchant,
-  reforgeCost,
-  reforgeEnchant,
-  scrapCard,
-  legendCount,
-  type GoldId,
-  ownedBlueprints,
-  lacksBlueprint,
-  buyPolish,
-  altarPremium,
-  altarPremiumOpen,
-  repairDamage,
   finishReward,
-  forgeCost,
-  forgeUp,
-  forgeVariant,
-  forgeVariantOptions,
+  forgeCarve,
+  forgeUpgrade,
   leaveNode,
   loadRun,
   newRun,
@@ -85,143 +55,83 @@ import {
   sellPrice,
   skipChoice,
   takeChoice,
+  UPGRADE,
+  type Pair,
   type RunState,
 } from '../run/run';
 import type { Hud } from './hud';
 import { pieceImg } from './sprites';
-import { button, icon, pips, screws } from './chrome';
+import { button, icon } from './chrome';
 import { unlockAchievement } from '../platform';
-import { VARIANTS, VARIANT_FORGE_LEVEL, type VariantId } from '../data/variants';
 
 const ORDER: PieceType[] = ['K', 'Q', 'R', 'B', 'N', 'P'];
 /** 고르기 모션을 거는 버튼 (D-109). 고물상 진열(BUY)은 고른 것만 들리고 나머지는 남는다 */
-const BUY_ATTRS = new Set(['piece', 'ench', 'card', 'bp', 'polish', 'gold']);
-const CHOOSE_ATTRS = new Set(['pick', 'deck', 'node', 'd', 'v', 'sell', ...BUY_ATTRS]);
+const BUY_ATTRS = new Set(['piece', 'carve', 'part']);
+const CHOOSE_ATTRS = new Set(['pick', 'deck', 'node', 'd', 'sell', 'unit', ...BUY_ATTRS]);
 
 /** 공정 지도 노드 아이콘 (public/ui/icons) */
-const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', altar: 'lever', event: 'question', puzzle: 'reticle' };
+const NODE_ICON: Record<NodeKind, string> = { battle: 'sword', elite: 'skull', boss: 'crown', shop: 'screw', forge: 'anvil', event: 'question' };
 /** 돌발마다 나오는 말하는 기물 (D-133 · D-134) — 없으면 아이콘 */
 const EVENT_NPC: Partial<Record<EventId, NpcId>> = { smith: 'tinkerPawn', gambler: 'coinKnight', apprentice: 'apprentice', scout: 'blackBishop', napping: 'scale', nightShift: 'monoBishop' };
-const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', armory: 'crate', gambler: 'windkey', pilgrim: 'flag', pact: 'flame', safe: 'crate', press: 'anvil', forgery: 'question', jam: 'claw',
-  nightShift: 'anvil', moldBin: 'crate', recheck: 'eye', dipping: 'flame', screwRain: 'screw', stampForge: 'question', swapDealer: 'swap', oilLeak: 'oil', brokenGacha: 'lever', apprentice: 'wrench', lostBox: 'crate', welding: 'flame', scout: 'scale', auction: 'bell', napping: 'watch' };
+const EVENT_ICON: Record<EventId, string> = { smith: 'wrench', gambler: 'windkey', apprentice: 'wrench', scout: 'scale', napping: 'watch', nightShift: 'anvil', pact: 'flame', dipping: 'flame', swapDealer: 'swap', auction: 'bell', brokenGacha: 'lever', safe: 'crate' };
 const BOSS_PIECE: Record<string, PieceType> = { knight: 'N', bishop: 'B', rook: 'R', pawn: 'P', variant: 'Q', affix: 'K' };
-
-
-/** 결함 표시 (D-101): 손상 단 합계 · 봉인 남은 대국 — 상단 바 */
-const defectStats = (run: RunState): string => {
-  const dmg = Object.entries(run.loadout.damage ?? {}).filter(([, n]) => (n ?? 0) > 0);
-  const parts: string[] = [];
-  if (dmg.length) parts.push(`<span class="stat bad" title="${dmg.map(([t, n]) => `${PIECE_NAMES_KO[t as PieceType]} ${n}단`).join(' · ')}">${icon('wrench', 's')}${TEXT.defect.damage} <b>${dmg.map(([t, n]) => `${PIECE_NAMES_KO[t as PieceType]}${n}`).join(' ')}</b></span>`);
-  if (run.sealed) parts.push(`<span class="stat bad">${icon('claw', 's')}${TEXT.defect.seal} <b>${run.sealed}</b></span>`);
-  return parts.join('');
-};
 
 /** 연출 비교용 출하 상태 (D-104) */
 interface RunSnap {
   gold: number;
   deck: number;
-  star: number;
-  damage: number;
-  sealed: number;
+  carves: number;
   stage: string;
-  /** 에픽 부품 + 에픽 카드 수 (D-112) */
-  gold2: number;
+  /** 에픽 부품 수 */
+  epic: number;
 }
 const snapOf = (run: RunState): RunSnap => ({
   gold: run.gold,
   deck: run.deck.length,
-  star: Object.values(run.loadout.enchants).filter((n) => (n ?? 0) >= 3).length,
-  gold2: legendCount(run) + run.loadout.cards.filter((id) => CARD_GRADE[id] === 'epic').length,
-  damage: Object.values(run.loadout.damage ?? {}).reduce((a: number, n) => a + (n ?? 0), 0),
-  sealed: run.sealed ?? 0,
-  stage: run.stage.at === 'altar' && run.stage.result ? 'altar-result' : run.stage.at,
+  carves: run.deck.filter((u) => u.carve).length,
+  epic: run.parts.filter((id) => PARTS[id].grade === 'epic').length,
+  stage: run.stage.at,
 });
 
 /** 시작 세트 이름 (해금 세트는 meta의 이름) */
 const setName = (deck: Deck): string => {
-  const key = [...deck].sort().join('');
-  const u = UNLOCK_DECKS.find((x) => [...x.deck].sort().join('') === key);
+  const types = deck.map((d) => (typeof d === 'string' ? d : d.t));
+  const key = [...types].sort().join('');
+  const u = UNLOCK_DECKS.find((x) => [...x.deck].map((d) => (typeof d === 'string' ? d : d.t)).sort().join('') === key);
   if (u) return u.name;
-  return deck.includes('N') ? '척후 세트' : deck.includes('B') ? '견습 사제 세트' : '보병 세트';
+  return types.includes('N') ? '척후 세트' : types.includes('B') ? '견습 사제 세트' : '보병 세트';
 };
+const typesOf = (deck: Deck): PieceType[] => deck.map((d) => (typeof d === 'string' ? d : d.t));
 
 /** 등급 딱지 (D-112): 색 + 글자 (색만으로 구분하지 않는다) */
 const gradeChip = (g: Grade): string => `<i class="grade g-${g}">${GRADE_NAME[g]}</i>`;
 
-/** 계약 부품 카드 (D-120): 이득 · 대가 */
-const contractOffer = (id: ContractId): string => {
-  const c = CONTRACTS[id];
-  return `<span class="kind"><i class="grade g-contract">${TEXT.contract.name}</i></span>${icon('scale', 'xl', '#e8c060')}<b>${c.name}</b><p class="good-line">${c.gain}</p><p class="bad-line">대가: ${c.cost}</p>`;
+/** 부품 카드 */
+const partOffer = (id: PartId, tail = ''): string => {
+  const p = PARTS[id];
+  return `<span class="kind">${gradeChip(p.grade)} ${icon('wrench', 's')} 부품</span><b>${p.name}</b><p>${p.desc}</p><p class="dim-line">* ${p.lore}</p>${tail}`;
+};
+/** 각인 카드 */
+const carveOffer = (id: CarveId): string => {
+  const c = CARVES[id];
+  return `<span class="kind">${icon('star', 's')} 각인</span><span class="carve-mark">${c.mark}</span><b>${c.name}</b><p>${c.desc}</p>`;
+};
+/** 양날 쌍 카드: 내 부품 + 적 강화 */
+const pairOffer = (pair: Pair): string => partOffer(pair.part, `<p class="bad-line">대가: ${pair.threats.map((t: ThreatId) => THREATS[t].name).join(' · ')}</p>`);
+
+const pieceOffer = (run: RunState, t: PieceType, recruit = false): string => {
+  const n = run.deck.filter((u) => u.t === t).length;
+  const tag = n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>';
+  const head = recruit ? `${icon('flag', 's')} ${TEXT.reward.recruit}` : `${icon('crate', 's')} 기물`;
+  return `<span class="kind">${head} · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${PIECE_NAMES_KO[t]}</b><span class="tags">${tag}</span><p>${PIECE_LORE[t]}</p>`;
 };
 
-/** 유형이 없는 에픽 부품의 그림 */
-const LEGEND_ICON: Partial<Record<LegendId, string>> = { L06: 'flame', L07: 'flag', L08: 'screw', L10: 'chain' };
-
-/** 에픽 3지선다 카드 (D-112): 컨셉 · 효과 */
-const goldOffer = (run: RunState, id: GoldId): string => {
-  if (id.startsWith('C')) return cardOffer(id as CardId);
-  const L = LEGENDS[id as LegendId];
-  const t = L.type;
-  const n = t ? run.deck.filter((x) => x === t).length : 0;
-  const reso = RESONANCES.find((r) => r.pair.includes(id as LegendId) && r.pair.some((x) => x !== id && run.loadout.legends?.includes(x)));
-  const tag = (t ? `<i class="tag${n ? '' : ' red'}">${n ? `내 ${PIECE_NAMES_KO[t]} ${n}기` : `${PIECE_NAMES_KO[t]} 없음`}</i>` : '') + (reso ? `<i class="tag gold">공명 · ${reso.name}</i>` : '');
-  return `<span class="kind">${gradeChip('epic')} ${TEXT.legend.name} · ${L.concept}</span>${t ? pieceImg(t, 0, 'large', 44) : icon(LEGEND_ICON[id as LegendId] ?? 'crown', 'xl', '#ffb35c')}<b>${L.name}</b><span class="tags">${tag}</span><p>${L.desc}</p>`;
-};
-
-/** 개조 고르기 카드 내용: 대상 · 몇 단째 · 효과 · 시너지 태그 */
-const enchantOffer = (id: EnchantId, next: number, run: RunState | null): string => {
-  const def = ENCHANTS[id];
-  const tags: string[] = [];
-  const t = ENCHANT_TYPE[id];
-  if (run && t) {
-    const n = run.deck.filter((x) => x === t).length;
-    tags.push(n ? `<i class="tag">내 ${PIECE_NAMES_KO[t]} ${n}기</i>` : `<i class="tag red">${PIECE_NAMES_KO[t]} 없음</i>`);
-  }
-  if (next === 2) tags.push('<i class="tag">★까지 1단</i>');
-  if (next === 3) tags.push('<i class="tag gold">★ 걸작!</i>');
-  // 키워드 연계 개조 (D-095): 그 수의 아이콘·색으로
-  const tac = def.tactic ? TACTICS[def.tactic] : null;
-  // 아이콘은 색 딱지 위 어두운 도트 (가는 선 아이콘이 카드 위에서 묻히지 않게)
-  const kindIcon = `<span class="kbadge" style="background:${tac ? tac.color : 'var(--brass)'}">${icon(tac ? tac.icon : 'wrench', '', '#16141c')}</span>`;
-  return `<span class="kind">${gradeChip(ENCHANT_GRADE[id])} ${kindIcon} ${tac ? `<span style="color:${tac.color}">${def.target}</span>` : def.target}</span><b>${def.name}</b><span class="tags">${tags.join('')}</span><p>${next}단: ${def.levels[next - 1]}</p>`;
-};
-
-/** 개조 다듬기 카드 (D-103): 가진 개조의 다음 단 */
-const polishOffer = (run: RunState, id: EnchantId): string => {
-  const n = run.loadout.enchants[id] ?? 0;
-  return `<span class="kind">${icon('wrench', 's')} ${TEXT.shop.polish}</span><b>${ENCHANTS[id].name}</b><span class="tags"><i class="tag${n + 1 >= 3 ? ' gold' : ''}">${n}단 → ${n + 1}단${n + 1 >= 3 ? ' ★' : ''}</i></span><p>${ENCHANTS[id].levels[n]}</p>`;
-};
-
-/** 도면 카드 (D-107): 어느 유형의 이형인지 · 강점 · 대가 */
-const blueprintOffer = (run: RunState, id: VariantId): string => {
-  const v = VARIANTS[id];
-  const has = run.deck.includes(v.base);
-  return `<span class="kind"><img src="ui/board/variant-${id}.png" alt="" style="width:14px;height:14px;image-rendering:pixelated;vertical-align:-2px"> ${TEXT.blueprint.name} · ${PIECE_NAMES_KO[v.base]}</span>${pieceImg(v.base, 0, 'large', 52)}<b>${v.name}</b><span class="tags"><i class="tag${has ? '' : ' red'}">${has ? `+${VARIANT_FORGE_LEVEL} 공방에서 부음` : `${PIECE_NAMES_KO[v.base]} 없음`}</i></span><p>${v.gain}</p><p class="bad-line">대가: ${v.cost}</p>`;
-};
-
-const cardOffer = (id: CardId): string => {
-  const c = CARDS[id];
-  const l = c.limit;
-  const paper = l.type === 'consume';
-  const lim = l.type === 'consume' ? '한 번 쓰면 탄다' : l.type === 'round' ? '대국당 1회' : `냉각 ${l.turns}턴`;
-  return `<span class="kind">${gradeChip(CARD_GRADE[id])} ${icon('card', 's')} ${paper ? '종이 카드' : '철 카드'}</span><b>${c.name}</b><p>${c.desc}</p><span class="tags"><i class="tag${paper ? ' gold' : ''}">${lim}</i>${c.ap ? `<i class="tag">태엽 ${c.ap}</i>` : ''}</span>`;
-};
-
-const pieceOffer = (run: RunState, t: PieceType, recruitVariant?: VariantId): string => {
-  const n = run.deck.filter((x) => x === t).length;
-  const forge = run.loadout.forge[t] ?? 0;
-  const v = recruitVariant ?? run.loadout.variants?.[t];
-  const tags = [
-    n ? `<i class="tag">보유 ${n}기</i>` : '<i class="tag cyan">새 유형</i>',
-    forge ? `<i class="tag">개량 +${forge}</i>` : '',
-    v ? `<i class="tag gold">${VARIANTS[v].name}${recruitVariant ? ' 거푸집' : ''}</i>` : '',
-  ].join('');
-  const head = recruitVariant !== undefined || run.stage.at === 'reward' && run.stage.choices[0]?.type === 'recruit' ? `${icon('flag', 's')} ${TEXT.reward.recruit}` : `${icon('crate', 's')} 기물`;
-  return `<span class="kind">${head} · 태엽 ${PIECE_STATS[t].ap}</span>${pieceImg(t, 0, 'large', 60)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]}</b><span class="tags">${tags}</span><p>${PIECE_LORE[t]}</p>`;
-};
+/** 군단 기물 한 칸 (기물 + 각인 글자) */
+const unitChip = (u: Unit, i: number, attr: string, extra = ''): string =>
+  `<button class="chip unit-chip" type="button" data-${attr}="${i}">${pieceImg(u.t, 0, 'small', 32)}<b>${PIECE_NAMES_KO[u.t]}</b><small>${u.carve ? `${CARVES[u.carve].mark} ${CARVES[u.carve].name}` : '각인 없음'}${extra}</small></button>`;
 
 /**
- * 출하(런) 화면들 (D-085 화면 디자인): 타이틀 · 메인 메뉴 · 시작 세트 · 공정 지도 · 보상 · 고물상 · 공방 · 뽑기 기계 · 돌발 · 결과.
+ * 출하 화면들 (규격 2.0): 타이틀 · 메인 메뉴 · 시작 세트 · 공정 지도 · 보상 · 고물상 · 공방 · 돌발 · 결과.
  * 모두 공장 배경 위 전체 화면 장면. 대국은 전투 화면을 쓴다.
  */
 export class RunUi {
@@ -238,7 +148,7 @@ export class RunUi {
   private save(): void {
     if (!this.run) return;
     saveRun(this.run);
-    saveMeta(absorbRun(loadMeta(), this.run)); // 도감 (D-108)
+    saveMeta(absorbRun(loadMeta(), this.run)); // 도감
   }
 
   /** 버튼 묶음 연결: data-* 속성 이름 → 처리 */
@@ -247,7 +157,7 @@ export class RunUi {
       panel.querySelectorAll<HTMLElement>(`[data-${attr}]`).forEach((el) =>
         el.addEventListener('click', () => {
           // 고르기 모션 (D-109): 고른 카드는 들리고, 나머지는 가라앉아 사라진 뒤 다음으로
-          if (CHOOSE_ATTRS.has(attr) && el.matches('.offer, .node, .chip')) return choose(el, () => fn(el), !BUY_ATTRS.has(attr));
+          if (CHOOSE_ATTRS.has(attr) && el.matches('.offer, .node')) return choose(el, () => fn(el), !BUY_ATTRS.has(attr));
           if (attr === 'skip') return dismissAll(panel.querySelector('.offers'), () => fn(el));
           fn(el);
         }),
@@ -256,24 +166,23 @@ export class RunUi {
   }
 
   /** 조작 결과: 실패면 토스트, 성공이면 저장 후 다시 그림 */
-  private act(err: string | void, onFull?: () => void): void {
-    if (err === 'full' && onFull) return onFull();
+  private act(err: string | void): void {
     if (err) this.hud.toast(err);
     this.save();
     this.show();
   }
 
-  /** 위 상태 띠: 공정 · 층 · 나사 · 행운 톱니 · 압력 · 군단 · 메뉴 */
+  /** 위 상태 띠: 공정 · 층 · 나사 · 압력 · 군단 · 메뉴 */
   private bar(run: RunState, title?: string): string {
     const f = Math.min(run.floor, TOTAL_FLOORS);
-    const counts = ORDER.map((t) => [t, run.deck.filter((x) => x === t).length] as const).filter(([, n]) => n);
+    const counts = ORDER.map((t) => [t, run.deck.filter((u) => u.t === t).length] as const).filter(([, n]) => n);
     const army = counts.map(([t, n]) => `${pieceImg(t, 0, 'small', 24)}${n > 1 ? `<span class="n">${n}</span>` : ''}`).join('');
     return `<div class="bar">
       <span class="plate">${icon('anvil', 's')}${title ?? `${ACT_NAMES[actOf(f) - 1]} · ${inAct(f)}층`}</span>
       <span class="stat screw">${icon('screw', 's')}<b>${run.gold}</b></span>
-      <span class="stat" title="행운 톱니">${icon('windkey', 's')}${pips(run.crackGauge, ALTAR.gaugeMax)}</span>
+      <span class="stat" title="부품">${icon('wrench', 's')}<b>${run.parts.length}/${PART_SLOTS}</b></span>
       ${run.ascension ? `<span class="stat">${icon('flame', 's')}압력 <b>${run.ascension}</b></span>` : ''}
-      ${defectStats(run)}
+      ${run.threats.length ? `<span class="stat bad" title="${run.threats.map((t) => THREATS[t].name).join(' · ')}">${icon('skull', 's')}적 강화 <b>${run.threats.length}</b></span>` : ''}
       <span class="spacer"></span>
       <button class="btn army" type="button" data-army aria-label="군단 보기">${army}</button>
       <button class="btn sq" type="button" data-runmenu aria-label="메뉴">${icon('watch')}</button>
@@ -288,36 +197,52 @@ export class RunUi {
     });
   }
 
-  /** 군단 보기 (모달): 기물 · 개량 · 이형 · 개조 · 천공 카드 */
+  /** 군단 보기 (모달): 기물 + 각인 · 부품 · 적 강화 */
   private showArmy(run: RunState): void {
-    const units = ORDER.filter((t) => run.deck.includes(t)).map((t) => {
-      const n = run.deck.filter((x) => x === t).length;
-      const v = run.loadout.variants?.[t];
-      const f = run.loadout.forge[t] ?? 0;
-      return `<div class="unit panel9">${pieceImg(t, 0, 'large', 56)}<b>${v ? VARIANTS[v].name : PIECE_NAMES_KO[t]} ×${n}</b><small>${f ? `개량 +${f}` : '개량 없음'}</small></div>`;
-    });
-    const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<i class="tag${n >= 3 ? ' gold' : ''}">${ENCHANTS[id].name} ${n}단${n >= 3 ? '★' : ''}</i>`);
-    const cards = run.loadout.cards.map((id) => `<i class="tag${CARDS[id].limit.type === 'consume' ? ' gold' : ''}">${CARDS[id].name}</i>`);
+    const units = run.deck
+      .map((u, i) => [u, i] as const)
+      .sort((a, b) => ORDER.indexOf(a[0].t) - ORDER.indexOf(b[0].t))
+      .map(([u]) => `<div class="unit panel9">${pieceImg(u.t, 0, 'large', 48)}<b>${PIECE_NAMES_KO[u.t]}</b><small>${u.carve ? `${CARVES[u.carve].mark} ${CARVES[u.carve].name}` : '각인 없음'}</small></div>`);
     const panel = this.hud.openOverlay(`
-      <h2>${icon('flag')} 군단 ${run.deck.length}기${run.loadout.line ? ` <small class="dim">${LINES[run.loadout.line].name} · ${LINES[run.loadout.line].trait}</small>` : ''}</h2>
-      <p class="sub">${TEXT.formation.title} <small class="dim">${TEXT.formation.lead}</small></p>
-      <div class="formations">${FORMATION_ORDER.map((id) => `<button class="chip${(run.loadout.formation ?? 'classic') === id ? ' on' : ''}" type="button" data-formation="${id}" aria-pressed="${(run.loadout.formation ?? 'classic') === id}"><b>${FORMATIONS[id].name}</b><small>${FORMATIONS[id].desc}</small></button>`).join('')}</div>
+      <h2>${icon('flag')} 군단 ${run.deck.length}기</h2>
       <div class="army-list">${units.join('')}</div>
-      <p class="sub">${TEXT.blueprint.name} (${ownedBlueprints(run).length})</p><div class="unlocks">${ownedBlueprints(run).map((id) => `<i class="tag${run.loadout.variants?.[VARIANTS[id].base] === id ? ' gold' : ''}"><img src="ui/board/variant-${id}.png" alt="" style="width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px"> ${VARIANTS[id].name}</i>`).join('') || `<small class="lead">${TEXT.blueprint.empty}</small>`}</div>
-      <p class="sub">${TEXT.legend.slots} (${legendCount(run)}/${LEGEND_SLOTS})</p>${(run.loadout.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-epic">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('') || `<small class="lead">${TEXT.legend.empty}</small>`}${RESONANCES.filter((r) => r.pair.every((x) => run.loadout.legends?.includes(x))).map((r) => `<p class="legend-line"><i class="grade g-epic">공명 · ${r.name}</i> ${r.desc}</p>`).join('')}
-      <p class="sub">개조 (${ench.length}/${enchantSlots(run)})</p><div class="unlocks">${ench.join('') || '<small class="lead">없음</small>'}</div>
-      <p class="sub">천공 카드 (${cards.length}/${cardSlots(run)})</p>${(run.loadout.contracts ?? []).map((id) => `<p class="legend-line"><i class="grade g-contract">${CONTRACTS[id].name}</i> ${CONTRACTS[id].gain} · <span class="bad">${CONTRACTS[id].cost}</span></p>`).join('')}<div class="unlocks">${cards.join('') || '<small class="lead">없음</small>'}</div>
+      <p class="sub">부품 (${run.parts.length}/${PART_SLOTS})</p>${run.parts.map((id) => `<p class="legend-line">${gradeChip(PARTS[id].grade)} <b>${PARTS[id].name}</b> — ${PARTS[id].desc}</p>`).join('') || '<small class="lead">없음</small>'}
+      ${run.threats.length ? `<p class="sub">적 강화 (양날 쌍의 대가)</p><div class="unlocks">${run.threats.map((t) => `<i class="tag red">${THREATS[t].name}</i>`).join('')}</div>` : ''}
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     panel.querySelector('[data-close]')!.addEventListener('click', () => this.hud.closeOverlay());
-    // 진형 (D-102): 고르면 다음 대국부터 그대로 놓인다
-    panel.querySelectorAll<HTMLElement>('[data-formation]').forEach((b) =>
-      b.addEventListener('click', () => {
-        run.loadout.formation = b.dataset.formation as FormationId;
-        sfx('land');
-        this.save();
-        this.showArmy(run);
-      }),
-    );
+  }
+
+  /** 군단 기물 고르기 (모달): 각인 새기기 · 팔기 · 다듬기 대상 */
+  private pickUnit(run: RunState, title: string, lead: string, ok: (u: Unit) => boolean, done: (i: number) => void, extra?: (u: Unit) => string): void {
+    const chips = run.deck.map((u, i) => (ok(u) ? unitChip(u, i, 'unit', extra ? extra(u) : '') : '')).join('');
+    const panel = this.hud.openOverlay(`
+      <h2>${title}</h2>
+      <p>${lead}</p>
+      <div class="chips">${chips || '<small class="lead">고를 기물이 없다.</small>'}</div>
+      ${button('취소', 'data-cancel', { cls: 'wide' })}`);
+    this.wire(panel, {
+      unit: (b) => {
+        this.hud.closeOverlay();
+        done(Number(b.dataset.unit));
+      },
+      cancel: () => this.hud.closeOverlay(),
+    });
+  }
+
+  /** 부품 칸이 가득 찼을 때 버릴 것을 고른다 (모달) */
+  private discardPart(run: RunState, done: (i: number) => void): void {
+    const panel = this.hud.openOverlay(`
+      <h2>부품 칸(${PART_SLOTS})이 꽉 찼다</h2>
+      <p>하나를 뜯어내야 새 것이 들어간다. 뜯은 건 돌아오지 않는다.</p>
+      <div class="chips">${run.parts.map((id, i) => `<button class="chip" type="button" data-d="${i}"><b>${PARTS[id].name}</b><small>${GRADE_NAME[PARTS[id].grade]} · ${PARTS[id].desc}</small></button>`).join('')}</div>
+      ${button('취소', 'data-cancel', { cls: 'wide' })}`);
+    this.wire(panel, {
+      d: (b) => {
+        this.hud.closeOverlay();
+        done(Number(b.dataset.d));
+      },
+      cancel: () => this.hud.closeOverlay(),
+    });
   }
 
   /** 출하 중 메뉴 (모달): 계속 · 설정 · 메인 메뉴 · 출하 포기 */
@@ -384,7 +309,7 @@ export class RunUi {
     const asc = meta.ascension
       ? `<p class="sub">${icon('flame', 's')} ${M.pressure}</p><div class="asc-step"><button class="btn" type="button" data-asc="${this.ascension - 1}" aria-label="압력 내리기"${this.ascension <= 0 ? ' disabled' : ''}>◀</button><b>압력 ${this.ascension}<small> / ${meta.ascension}</small></b><button class="btn" type="button" data-asc="${this.ascension + 1}" aria-label="압력 올리기"${this.ascension >= meta.ascension ? ' disabled' : ''}>▶</button><p class="lead">${ASCENSIONS[this.ascension]}</p></div>`
       : '';
-    const unlocks = UNLOCK_DECKS.map((u) => `<span class="unlock panel9${u.ok(meta) ? ' ok' : ''}">${u.deck.map((t) => pieceImg(t, 0, 'small', 20)).join('')} ${u.name}${u.ok(meta) ? '' : ` · ${u.need}`}</span>`).join('');
+    const unlocks = UNLOCK_DECKS.map((u) => `<span class="unlock panel9${u.ok(meta) ? ' ok' : ''}">${typesOf(u.deck).map((t) => pieceImg(t, 0, 'small', 20)).join('')} ${u.name}${u.ok(meta) ? '' : ` · ${u.need}`}</span>`).join('');
     const el = this.hud.openScene(
       `<div class="left">
         ${live ? button(M.continue, 'data-continue', { tone: 'brass', icon: 'lever', small: `${ACT_NAMES[actOf(Math.min(saved!.floor, TOTAL_FLOORS)) - 1]} ${inAct(Math.min(saved!.floor, TOTAL_FLOORS))}층 · 나사 ${saved!.gold} · 군단 ${saved!.deck.length}기` }) : ''}
@@ -474,7 +399,6 @@ export class RunUi {
     playMusic('act1');
     this.hud.closeOverlay();
     this.hud.closeScene();
-    this.hud.setOrder(null);
     this.hud.setGoal(`${l.title.replace('시험대 ', '')} · ${l.goal}`, TEXT.onboarding.title);
     this.c.onPlayerTurn = null;
     this.c.onBattleEnd = (s) => {
@@ -491,7 +415,7 @@ export class RunUi {
   private showCodex(): void {
     const meta = loadMeta();
     const C = TEXT.codex;
-    const seen = meta.seen ?? { enchants: [], variants: [], events: [] };
+    const seen = meta.seen ?? { events: [] };
     const kills = meta.bossKills ?? [];
     type Entry = { known: boolean; name: string; info: string; img?: string; gold?: boolean; hint?: string };
     const section = (title: string, list: Entry[]) =>
@@ -499,47 +423,29 @@ export class RunUi {
         .map((e, i) => `<button class="cx${e.known ? '' : ' unknown'}${e.gold ? ' gold' : ''}" type="button" data-cx="${title}:${i}">${e.known && e.img ? e.img : ''}<span>${e.known ? e.name : (e.hint ?? C.unknown)}</span></button>`)
         .join('')}</div>`;
     const startSets: Entry[] = [
-      ...START_DECKS.map((d) => ({ known: true, name: setName(d), info: SET_LORE[[...d].sort().join('')] ?? '', img: d.map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
-      ...UNLOCK_DECKS.map((u) => ({ known: u.ok(meta), name: u.name, info: u.ok(meta) ? (SET_LORE[[...u.deck].sort().join('')] ?? '') : `* ${u.name}. 잠겨 있다 — ${u.need}`, hint: `잠김 · ${u.need}`, img: u.deck.map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
+      ...START_DECKS.map((d) => ({ known: true, name: setName(d), info: SET_LORE[typesOf(d).sort().join('')] ?? '', img: typesOf(d).map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
+      ...UNLOCK_DECKS.map((u) => ({ known: u.ok(meta), name: u.name, info: u.ok(meta) ? (SET_LORE[typesOf(u.deck).sort().join('')] ?? '') : `* ${u.name}. 잠겨 있다 — ${u.need}`, hint: `잠김 · ${u.need}`, img: typesOf(u.deck).map((t) => pieceImg(t, 0, 'small', 16)).join('') })),
     ];
     const bosses: Entry[] = [...(Object.keys(BOSSES) as (keyof typeof BOSSES)[]).map((id) => ({ id, def: BOSSES[id] })), { id: 'final', def: FINAL_BOSS }].map(({ id, def }) => ({
       known: kills.includes(id),
       name: def.name,
-      info: `${def.name} — ${def.title}. “${def.quote}”`,
+      info: `${def.name} — ${def.title}. “${def.quote}” · 비틀기: ${TWISTS[BOSS_TWIST[id as keyof typeof BOSS_TWIST]].name} — ${TWISTS[BOSS_TWIST[id as keyof typeof BOSS_TWIST]].desc}`,
       img: pieceImg(BOSS_PIECE[id] ?? 'K', 1, 'small', 20),
       gold: id === 'final',
     }));
-    const variants: Entry[] = (Object.keys(VARIANTS) as VariantId[]).map((id) => ({
-      known: seen.variants.includes(id),
-      name: VARIANTS[id].name,
-      info: `${VARIANTS[id].name} — ${VARIANTS[id].gain} · 대가: ${VARIANTS[id].cost}`,
-      img: `<img src="ui/board/variant-${id}.png" alt="" class="vg">`,
+    const parts: Entry[] = PART_IDS.map((id) => ({
+      known: (seen.parts ?? []).includes(id),
+      name: PARTS[id].name,
+      info: `${GRADE_NAME[PARTS[id].grade]} · ${PARTS[id].name} — ${PARTS[id].desc}`,
+      img: gradeChip(PARTS[id].grade),
+      gold: PARTS[id].grade === 'epic',
     }));
-    const enchants: Entry[] = (Object.keys(ENCHANTS) as EnchantId[]).map((id) => ({
-      known: seen.enchants.includes(id),
-      name: ENCHANTS[id].name,
-      info: `${GRADE_NAME[ENCHANT_GRADE[id]]} · ${ENCHANTS[id].name} (${ENCHANTS[id].target}) — ${ENCHANTS[id].levels[0]}`,
-      img: gradeChip(ENCHANT_GRADE[id]),
-    }));
-    const cards: Entry[] = (Object.keys(CARDS) as CardId[]).map((id) => ({
-      known: (seen.cards ?? []).includes(id),
-      name: CARDS[id].name,
-      info: `${GRADE_NAME[CARD_GRADE[id]]} · ${CARDS[id].name} — ${CARDS[id].desc}`,
-      img: gradeChip(CARD_GRADE[id]),
-      gold: CARD_GRADE[id] === 'epic',
-    }));
-    const legends: Entry[] = (Object.keys(LEGENDS) as LegendId[]).map((id) => ({
-      known: (seen.legends ?? []).includes(id),
-      name: LEGENDS[id].name,
-      info: `${LEGENDS[id].name} · ${LEGENDS[id].concept} — ${LEGENDS[id].desc}`,
-      img: gradeChip('epic'),
-      gold: true,
-    }));
+    const carves: Entry[] = CARVE_IDS.map((id) => ({ known: (seen.carves ?? []).includes(id), name: CARVES[id].name, info: `${CARVES[id].name} — ${CARVES[id].desc}`, img: `<span class="carve-mark small">${CARVES[id].mark}</span>` }));
     const events: Entry[] = EVENT_IDS.map((id) => ({ known: seen.events.includes(id), name: EVENTS[id].title, info: EVENTS[id].text, img: icon(EVENT_ICON[id], 's') }));
     const got = meta.story?.records ?? [];
     const records: Entry[] = RECORDS.map((r, i) => ({ known: got.includes(i), name: r.title, info: `${r.title} — ${r.text}`, hint: `잠김 · ${r.need}`, img: icon('card', 's') }));
-    const all: Record<string, Entry[]> = { [C.sections.story]: records, [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.legends]: legends, [C.sections.variants]: variants, [C.sections.enchants]: enchants, [C.sections.cards]: cards, [C.sections.events]: events };
-    const rec = [meta.runs, meta.clears, meta.bestFloor, meta.elites ?? 0, meta.puzzles ?? 0, meta.ascension];
+    const all: Record<string, Entry[]> = { [C.sections.story]: records, [C.sections.sets]: startSets, [C.sections.bosses]: bosses, [C.sections.parts]: parts, [C.sections.carves]: carves, [C.sections.events]: events };
+    const rec = [meta.runs, meta.clears, meta.bestFloor, meta.elites ?? 0, meta.ascension];
     const el = this.hud.openScene(
       `<div class="bar"><span class="plate">${icon('crate', 's')}${C.title}</span><span class="spacer"></span>${button(C.back, 'data-menu')}</div>
       <div class="codex scroll-y">
@@ -578,9 +484,8 @@ export class RunUi {
       <div class="seed-row"><span class="seed">${TEXT.seed.label} <b>${seedCode(seed)}</b></span><input id="seed-input" class="seed-input" maxlength="11" autocomplete="off" spellcheck="false" placeholder="${TEXT.seed.placeholder}" aria-label="${TEXT.seed.placeholder}">${button(TEXT.seed.apply, 'data-seed')}</div>
       <div class="stage"><div class="offers">${decks
         .map((d, i) => {
-          const kinds = SET_LORE[[...d].sort().join('')] ?? '';
-          const L = LINES[lineOf(d)];
-          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트 · ${L.name}</span><b>${setName(d)}</b><span class="pieces">${d.map((t) => pieceImg(t, 0, 'large', 56)).join('')}</span><p>${kinds}</p><span class="tags"><i class="tag gold">${L.trait}</i></span></button>`;
+          const kinds = SET_LORE[typesOf(d).sort().join('')] ?? '';
+          return `<button class="offer" type="button" data-deck="${i}"><span class="kind">시작 세트</span><b>${setName(d)}</b><span class="pieces">${typesOf(d).map((t) => pieceImg(t, 0, 'large', 56)).join('')}</span><p>${kinds}</p></button>`;
         })
         .join('')}</div></div>`,
     );
@@ -617,16 +522,8 @@ export class RunUi {
     const before = this.snap;
     this.snap = now;
     if (!before) return;
-    const d: RunDelta = { gold: now.gold - before.gold, deck: now.deck - before.deck, awakened: Math.max(0, now.star - before.star), damaged: Math.max(0, now.damage - before.damage), sealed: Math.max(0, now.sealed - before.sealed), legend: Math.max(0, now.gold2 - before.gold2) };
+    const d: RunDelta = { gold: now.gold - before.gold, deck: now.deck - before.deck, awakened: Math.max(0, now.carves - before.carves), damaged: 0, sealed: 0, legend: Math.max(0, now.epic - before.epic) };
     runFeedback(document, d, before.gold);
-    // 뽑기 기계 결과: 이형 대박 · 꽝
-    if (run.stage.at === 'altar' && run.stage.result && before.stage !== 'altar-result') {
-      if (run.stage.result.kind === 'variant') {
-        sfx('jackpot');
-        vignette('good', 1);
-        stamp('이형!', 'good');
-      } else if (run.stage.result.kind === 'miss') shake(document.querySelector('.result-stamp'), 1);
-    }
     // 희귀가 걸린 고르기 화면: 반짝
     // 등급별 등장 소리 (D-113): 에픽은 내리꽂히는 순간 · 유니크는 뒤집힐 때
     if ((run.stage.at === 'reward' || run.stage.at === 'shop') && document.querySelector('.scene.enter .offer.g-epic')) {
@@ -634,7 +531,7 @@ export class RunUi {
         sfx('jackpot');
         vignette('epic', 0.5);
       }, 700);
-    } else if (run.stage.at === 'reward' && run.stage.choices.length && document.querySelector('.offer.g-unique, .offer.plate')) sfx('rare');
+    } else if (run.stage.at === 'reward' && run.stage.choices.length && document.querySelector('.offer.g-unique')) sfx('rare');
   }
 
   /** 지난 화면의 출하 상태 (연출 비교용) */
@@ -675,35 +572,11 @@ export class RunUi {
         return this.showShop(run);
       case 'forge':
         return this.showForge(run);
-      case 'altar':
-        return this.showAltar(run);
       case 'event':
         return this.showEvent(run);
       case 'over':
         return this.showOver(run);
-      case 'puzzle':
-        return this.startPuzzle(run);
     }
-  }
-
-  /** 묘수풀이 (D-097): 고정 판 · 한 번 가동하면 끝 */
-  private startPuzzle(run: RunState): void {
-    if (run.stage.at !== 'puzzle') return;
-    const state = puzzleBattle(puzzleFor(run.stage.id));
-    this.hud.closeOverlay();
-    this.hud.closeScene();
-    this.hud.setOrder(null);
-    this.hud.setGoal(TEXT.puzzle.goal);
-    this.c.onPlayerTurn = null;
-    this.c.onBattleEnd = (s) => {
-      this.hud.setGoal(null);
-      finishPuzzle(run, s);
-      this.save();
-      window.setTimeout(() => this.show(), 600);
-    };
-    this.c.startState(state, 0, TUNED, { singleTurn: true });
-    coach('puzzle');
-    this.hud.toast(TEXT.puzzle.opening);
   }
 
   /** 공정 지도: 1층 → 공정 끝 반장이 가로로 흐른다. 지금 층의 노드만 누를 수 있다 */
@@ -720,11 +593,8 @@ export class RunUi {
           const label = NODE_NAMES[n.kind];
           const state = cur ? 'open' : f < run.floor ? (chosen ? 'chosen past' : 'past') : 'future';
           const ic = n.kind === 'event' && n.event && f <= run.floor ? EVENT_ICON[n.event] : NODE_ICON[n.kind];
-          const bp = n.kind === 'elite' && n.blueprint ? n.blueprint : null;
-          const title = n.kind === 'boss' ? `${NODE_NAMES.boss} · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `${NODE_NAMES.event} · ${EVENTS[n.event].title}` : bp ? `${NODE_NAMES.elite} · ${TEXT.blueprint.name} ${VARIANTS[bp].name}` : NODE_NAMES[n.kind];
-          // 도면 (D-107): 검문!이 다는 이형 — 문양 + 이름 (가진 도면이면 흐리게)
-          const bpTag = bp ? `<span class="bp${ownedBlueprints(run).includes(bp) ? ' owned' : ''}"><img src="ui/board/variant-${bp}.png" alt="">${VARIANTS[bp].name.split(' ')[0]}</span>` : '';
-          return `<button class="node ${n.kind} ${state}" type="button" ${cur ? `data-node="${j}"` : 'disabled'} data-f="${f}" data-j="${j}" aria-label="${title}" title="${title}">${icon(ic)}<span>${label}</span>${bpTag}</button>`;
+          const title = n.kind === 'boss' ? `${NODE_NAMES.boss} · ${bossName(run, f)}` : n.kind === 'event' && n.event ? `${NODE_NAMES.event} · ${EVENTS[n.event].title}` : NODE_NAMES[n.kind];
+          return `<button class="node ${n.kind} ${state}" type="button" ${cur ? `data-node="${j}"` : 'disabled'} data-f="${f}" data-j="${j}" aria-label="${title}" title="${title}">${icon(ic)}<span>${label}</span></button>`;
         })
         .join('');
       return `<div class="floor-col${cur ? ' current' : ''}" data-col="${f}"><span class="fl">${inAct(f)}층</span>${btns}</div>`;
@@ -732,31 +602,31 @@ export class RunUi {
     const bossF = act * FLOORS_PER_ACT;
     const bossId = act < 3 ? run.bosses[act - 1] : null;
     const boss = bossOf(run, bossF);
-    const bossPiece: PieceType = bossId ? BOSS_PIECE[bossId] : 'Q';
+    const twist = TWISTS[BOSS_TWIST[bossIdOf(run, bossF)]];
+    const bossPiece: PieceType = bossId ? BOSS_PIECE[bossId] : 'K';
     const el = this.hud.openScene(
       `${this.bar(run)}
       <div class="title-line"><h2>${ACT_NAMES[act - 1]}</h2><p>${inAct(run.floor)}층 · ${TEXT.map.choose}</p></div>
       <div class="stage">
         <div class="map-wrap grow scroll-x" data-scroll><div class="map"><svg class="links"></svg>${cols.join('')}</div></div>
-        <div class="boss-card panel9"${boss.weakness ? ' data-bossinfo role="button" tabindex="0"' : ''}>
+        <div class="boss-card panel9" data-bossinfo role="button" tabindex="0">
           <span class="kind" style="font-size:12px;color:var(--crimson-soft)">${icon('crown', 's')} ${TEXT.map.bossAhead} · ${inAct(bossF)}층</span>
           <div class="portrait">${pieceImg(bossPiece, 1, 'large', 80)}</div>
           <b>${boss.name}</b>
           <small class="lead dim">${boss.role}</small>
           <p class="quote">“${boss.quote}”</p>
-          ${boss.weakness ? `<small class="lead weak">${icon('reticle', 's')} ${TEXT.map.weakness} · ${boss.weakness.label}</small>` : ''}
-          <small class="lead arena">${icon('flag', 's')} ${ARENAS[boss.arena].name}${boss.weakness ? '' : ` — ${ARENAS[boss.arena].desc}`}</small>
-          ${boss.weakness ? '' : `<small class="lead dim">${boss.title}</small>`}
+          <small class="lead weak">${icon('reticle', 's')} ${twist.name} — ${twist.desc}</small>
+          <small class="lead dim">${boss.title}</small>
         </div>
       </div>
-      <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'altar', 'event', 'puzzle'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
+      <div class="map-legend">${(['battle', 'elite', 'shop', 'forge', 'event'] as NodeKind[]).map((k) => `<span>${icon(NODE_ICON[k], 's')}${NODE_NAMES[k]}</span>`).join('')}</div>`,
     );
     coach('map');
     this.wireBar(el, run);
     this.wire(el, {
       node: (b) => this.act(enterNode(run, Number(b.dataset.node))),
-      // 반장 약점 (D-113): 누르면 무엇을 준비하면 좋은지
-      bossinfo: () => boss.weakness && this.hud.toast(`${TEXT.map.prep} — ${boss.weakness.prep}`),
+      // 반장 비틀기: 누르면 무엇을 준비하면 좋은지
+      bossinfo: () => this.hud.toast(`${TEXT.map.prep} — ${twist.prep}`),
     });
     requestAnimationFrame(() => {
       const wrap = el.querySelector<HTMLElement>('[data-scroll]')!;
@@ -806,8 +676,7 @@ export class RunUi {
       this.save();
       return playCuts(this.hud, [this.bossIntroCut(run)], () => this.startBattle(run));
     }
-    const bd = battleDeck(run);
-    const state: BattleState = run.stage.battle ?? encounterBattle(bd.deck, run.loadout, e);
+    const state: BattleState = run.stage.battle ?? encounterBattle(run.deck, { parts: run.parts }, e);
     this.hud.closeOverlay();
     this.hud.closeScene();
     this.c.onPlayerTurn = (s) => {
@@ -816,7 +685,7 @@ export class RunUi {
     };
     const startedAt = Date.now();
     this.c.onBattleEnd = (s) => {
-      logBattle(run, state, s, Date.now() - startedAt, e.kind, e.boss ?? (e.kind === 'boss' ? 'final' : undefined)); // 출하 기록 (D-117)
+      logBattle(run, state, s, Date.now() - startedAt, e.kind, e.boss); // 출하 기록 (D-117)
       if (s.winner === 0 && e.kind === 'boss') unlockAchievement(`ACT${actOf(run.floor)}_CLEAR`);
       const floor = run.floor;
       const army = run.deck.length;
@@ -824,22 +693,14 @@ export class RunUi {
       this.save();
       window.setTimeout(() => this.afterBattle(run, e, s.winner === 0, floor, army), 600);
     };
-    this.hud.setOrder(e.order ? { id: e.order, deck: [...run.deck] } : null);
     this.hud.setGoal(null);
     this.c.startState(state, e.tier, TUNED);
-    // 대국 시작 (D-137): 줄을 서서 하나씩 — 반장은 전장 규칙 · 약점 (대사는 소개 컷에서 했다), 검문!은 이름(접사 · 거푸집), 일반은 이름 + 비웃음
+    // 대국 시작 (D-137): 한 줄씩 — 반장은 비틀기, 검문!은 이름 + 정예, 일반은 이름 + 비웃음
     const taunt = TAUNTS[(run.seed + run.floor) % TAUNTS.length];
     const lines: string[] = [];
-    if (e.kind === 'boss') {
-      const boss = bossOf(run, run.floor);
-      const arena = ARENAS[boss.arena];
-      lines.push(`전장 · ${arena.name} — ${arena.desc}`);
-      if (boss.weakness) lines.push(`${TEXT.map.weakness} · ${boss.weakness.label}`);
-    } else if (e.kind === 'elite') lines.push(`검문! ${e.name}`);
+    if (e.kind === 'boss' && e.twist) lines.push(`${TWISTS[e.twist].name} — ${TWISTS[e.twist].desc}`);
+    else if (e.kind === 'elite') lines.push(`검문! ${e.name} — 왕관 표식은 정예 (HP 두 배)`);
     else lines.push(run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${e.name} — ${taunt}`);
-    // 억까·억빠 (D-099) · 봉인 (D-101)
-    if (e.luck) lines.push(TEXT.luck[e.luck]);
-    if (bd.sealed && !run.stage.battle) lines.push(TEXT.defect.sealedBattle(PIECE_NAMES_KO[bd.sealed]));
     lines.forEach((m) => this.hud.say(m));
     if (e.kind === 'elite') coach('elite');
     if (e.kind === 'boss') coach('boss');
@@ -852,60 +713,66 @@ export class RunUi {
     const R = TEXT.reward;
     let offers = '';
     let kind = '';
-    if (ch?.type === 'piece') {
-      kind = R.piece;
-      offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t)}</button>`).join('');
-    } else if (ch?.type === 'enchant') {
-      kind = R.enchant;
+    let lead = '';
+    if (ch?.type === 'mixed') {
+      kind = '보상';
       offers = ch.options
-        .map((id) => {
-          const next = (run.loadout.enchants[id] ?? 0) + 1;
-          return `<button class="offer g-${ENCHANT_GRADE[id]}${next >= 3 ? ' plate' : ''}" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
+        .map((o) => {
+          const [k, v] = o.split(':');
+          return k === 'piece' ? `<button class="offer" type="button" data-pick="${o}">${pieceOffer(run, v as PieceType)}</button>` : `<button class="offer g-rare" type="button" data-pick="${o}">${carveOffer(v as CarveId)}</button>`;
         })
         .join('');
-    } else if (ch?.type === 'contract') {
-      kind = TEXT.contract.name;
-      offers = ch.options.map((id) => `<button class="offer g-contract" type="button" data-pick="${id}">${contractOffer(id)}</button>`).join('');
-    } else if (ch?.type === 'legend') {
-      kind = TEXT.legend.name;
-      offers = ch.options.map((id) => `<button class="offer g-epic" type="button" data-pick="${id}">${goldOffer(run, id)}</button>`).join('');
-    } else if (ch?.type === 'blueprint') {
-      kind = TEXT.blueprint.name;
-      offers = ch.options.map((id) => `<button class="offer" type="button" data-pick="${id}">${blueprintOffer(run, id)}</button>`).join('');
-    } else if (ch?.type === 'recruit') {
-      kind = R.recruit;
-      offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t, ch.variants[t])}</button>`).join('');
-    } else if (ch?.type === 'card') {
-      kind = R.card;
-      offers = ch.options.map((id) => `<button class="offer g-${CARD_GRADE[id]}${CARDS[id].limit.type === 'consume' ? ' plate' : ''}" type="button" data-pick="${id}">${cardOffer(id)}</button>`).join('');
+    } else if (ch?.type === 'piece' || ch?.type === 'recruit') {
+      kind = ch.type === 'recruit' ? R.recruit : R.piece;
+      if (ch.type === 'recruit') lead = R.recruitLead;
+      offers = ch.options.map((t) => `<button class="offer" type="button" data-pick="${t}">${pieceOffer(run, t, ch.type === 'recruit')}</button>`).join('');
+    } else if (ch?.type === 'carve') {
+      kind = '각인';
+      offers = ch.options.map((id) => `<button class="offer g-rare" type="button" data-pick="${id}">${carveOffer(id)}</button>`).join('');
+    } else if (ch?.type === 'part') {
+      kind = '부품';
+      offers = ch.options.map((id) => `<button class="offer g-${PARTS[id].grade}" type="button" data-pick="${id}">${partOffer(id)}</button>`).join('');
+    } else if (ch?.type === 'pair') {
+      kind = '양날 한 쌍';
+      lead = TEXT.pair.lead;
+      offers = ch.options.map((p, i) => `<button class="offer g-${PARTS[p.part].grade} pair" type="button" data-pick="${i}">${pairOffer(p)}</button>`).join('');
     }
     const lines = st.lines.map((l) => `<i class="tag">${l}</i>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${st.title}</h2>${lines}${ch && !['recruit', 'blueprint', 'legend', 'contract'].includes(ch.type) ? speaker('scale', `“통과. ${kind} 하나.”`, 'calm') : ch ? `<p>${ch.type === 'recruit' ? R.recruitLead : ch.type === 'blueprint' ? TEXT.blueprint.lead : ch.type === 'legend' ? TEXT.legend.lead : ch.type === 'contract' ? TEXT.contract.lead : ''}</p>` : ''}</div>
+      <div class="title-line"><h2>${st.title}</h2>${lines}${ch && (ch.type === 'mixed' || ch.type === 'piece') ? speaker('scale', `“통과. ${kind} 하나.”`, 'calm') : lead ? `<p>${lead}</p>` : ''}</div>
       <div class="stage">${ch ? `<div class="offers">${offers}</div>` : '<div class="grow"></div>'}</div>
       <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
         ${ch ? button(`${R.skip} (나사 +${SKIP_GOLD})`, 'data-skip') : button(R.next, 'data-next', { tone: 'brass', icon: 'lever' })}
       </div>`,
     );
-    coach(ch?.type === 'legend' ? 'epic' : ch?.type === 'contract' ? 'contract' : 'reward');
+    coach(ch?.type === 'pair' ? 'contract' : ch?.type === 'part' ? 'epic' : 'reward');
     this.wireBar(el, run);
+    const take = (id: string, extra?: number) => {
+      const err = takeChoice(run, id, extra);
+      if (err === 'unit') {
+        const carve = (id.includes(':') ? id.split(':')[1] : id) as CarveId;
+        return this.pickUnit(run, `${CARVES[carve].mark} ${CARVES[carve].name}`, `${CARVES[carve].desc} * 새길 기물을 고른다. 있던 각인은 사라진다.`, (u) => u.t !== 'K', (i) => take(id, i));
+      }
+      if (err === 'full') return this.discardPart(run, (d) => take(id, d));
+      this.act(err);
+      if (err) return;
+      // 합류 · 영입 한 줄 (D-135)
+      const piece = ch?.type === 'mixed' && id.startsWith('piece:') ? id.split(':')[1] : ch?.type === 'piece' ? id : null;
+      if (piece) {
+        this.hud.say(JOIN[piece as Exclude<PieceType, 'K'>]);
+        if (piece === 'Q') this.gainRecords([2]);
+      } else if (ch?.type === 'recruit') this.hud.say(RECRUIT);
+    };
     this.wire(el, {
       pick: (b) => {
         const id = b.dataset.pick!;
-        if (ch) logOffer(run, ch.type, ch.options as string[], id);
+        if (ch) logOffer(run, ch.type, ch.type === 'pair' ? ch.options.map((p) => p.part) : (ch.options as string[]), id);
         sfx('land');
-        const err = takeChoice(run, id);
-        if (err === 'full') return this.discardPicker(run, ch!.type === 'enchant' ? 'enchant' : 'card', (d) => this.act(takeChoice(run, id, d)));
-        this.act(err);
-        // 합류 · 영입 한 줄 (D-135)
-        if (!err && ch?.type === 'piece') {
-          this.hud.say(JOIN[id as Exclude<PieceType, 'K'>]);
-          if (id === 'Q') this.gainRecords([2]);
-        } else if (!err && ch?.type === 'recruit') this.hud.say(RECRUIT);
+        take(id);
       },
       skip: () => {
-        if (ch) logOffer(run, ch.type, ch.options as string[], null);
+        if (ch) logOffer(run, ch.type, ch.type === 'pair' ? ch.options.map((p) => p.part) : (ch.options as string[]), null);
         skipChoice(run);
         this.act();
       },
@@ -913,95 +780,51 @@ export class RunUi {
     });
   }
 
-  /** 이형 거푸집 고르기 (D-106): 유형마다 둘 — 강점 · 대가를 나란히 보고 하나 */
-  private showVariantPick(run: RunState, t: PieceType): void {
-    const opts = forgeVariantOptions(run, t);
-    const panel = this.hud.openOverlay(`
-      <h2>${pieceImg(t, 0, 'small', 28)} ${PIECE_NAMES_KO[t]} — ${TEXT.forge.variantPick}</h2>
-      <p>${TEXT.forge.variantLead}</p>
-      <div class="chips">${opts.map((id) => `<button class="chip" type="button" data-v="${id}"><b>${VARIANTS[id].name}</b><small>${VARIANTS[id].gain}</small><small class="bad">대가: ${VARIANTS[id].cost}</small></button>`).join('')}</div>
-      ${button('취소', 'data-cancel', { cls: 'wide' })}`);
-    this.wire(panel, {
-      v: (b) => {
-        sfx('land');
-        this.hud.closeOverlay();
-        this.act(forgeVariant(run, t, b.dataset.v as VariantId));
-      },
-      cancel: () => this.hud.closeOverlay(),
-    });
-  }
-
-  /** 칸이 가득 찼을 때 버릴 것을 고른다 (모달) */
-  private discardPicker(run: RunState, type: 'enchant' | 'card', done: (discard: EnchantId | number) => void): void {
-    const items =
-      type === 'enchant'
-        ? (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(([id, n]) => `<button class="chip" type="button" data-d="${id}"><b>${ENCHANTS[id].name}</b><small>${n}단 — 단째 사라진다</small></button>`)
-        : run.loadout.cards.map((id, i) => `<button class="chip" type="button" data-d="${i}"><b>${CARDS[id].name}</b><small>${CARDS[id].desc}</small></button>`);
-    const panel = this.hud.openOverlay(`
-      <h2>${type === 'enchant' ? '개조 칸이 꽉 찼다' : `천공 카드 칸(${CARD_SLOTS})이 꽉 찼다`}</h2>
-      <p>하나를 뜯어내야 새 것이 들어간다. 뜯은 건 돌아오지 않는다.</p>
-      <div class="chips">${items.join('')}</div>
-      ${button('취소', 'data-cancel', { cls: 'wide' })}`);
-    this.wire(panel, {
-      d: (b) => done(type === 'enchant' ? (b.dataset.d as EnchantId) : Number(b.dataset.d)),
-      cancel: () => this.show(),
-    });
-  }
-
   private showShop(run: RunState): void {
     if (run.stage.at !== 'shop') return;
-    const s = run.stage.stock;
+    const stock = run.stage.stock;
     const S = TEXT.shop;
-    const item = (attr: string, i: number, html: string, price: number, sold: boolean, rare = false) =>
-      `<button class="offer${rare ? ' plate' : ''}${!sold && run.gold < price ? ' poor' : ''}" style="flex:0 0 150px" type="button" data-${attr}="${i}" ${sold ? 'disabled' : ''}>${html}<span class="price">${sold ? S.sold : `${icon('screw', 's')}${price}`}</span></button>`;
-    const goods = [
-      // 에픽 진열 (D-112): 맨 앞 칸
-      ...(s.legend ? [item('gold', 0, goldOffer(run, s.legend.item), s.legend.price, s.legend.sold).replace('class="offer', 'class="offer g-epic')] : []),
-      ...s.pieces.map((p, i) => item('piece', i, pieceOffer(run, p.item), p.price, p.sold)),
-      ...s.enchants.map((p, i) => {
-        const next = (run.loadout.enchants[p.item] ?? 0) + 1;
-        return item('ench', i, enchantOffer(p.item, next, run), p.price, p.sold, next >= 3).replace('class="offer', `class="offer g-${ENCHANT_GRADE[p.item]}`);
-      }),
-      ...s.cards.map((p, i) => item('card', i, cardOffer(p.item), p.price, p.sold, CARDS[p.item].limit.type === 'consume').replace('class="offer', `class="offer g-${CARD_GRADE[p.item]}`)),
-      // 도면 진열 (D-107)
-      ...(s.blueprint ? [item('bp', 0, blueprintOffer(run, s.blueprint.item), s.blueprint.price, s.blueprint.sold)] : []),
-      // 개조 다듬기 (D-103): 가진 개조 한 단 올리기
-      ...(s.polish ? [item('polish', 0, polishOffer(run, s.polish.item), s.polish.price, s.polish.sold, (run.loadout.enchants[s.polish.item] ?? 0) + 1 >= 3)] : []),
-    ];
+    const poor = (price: number) => (run.gold < price ? ' poor' : '');
+    const priceTag = (price: number, sold: boolean) => (sold ? `<span class="price sold">${S.sold}</span>` : `<span class="price">${icon('screw', 's')}${price}</span>`);
+    const pieces = stock.pieces.map((it, i) => `<button class="offer${it.sold ? ' sold' : poor(it.price)}" type="button" data-piece="${i}" ${it.sold ? 'disabled' : ''}>${pieceOffer(run, it.item)}${priceTag(it.price, it.sold)}</button>`).join('');
+    const carves = stock.carves.map((it, i) => `<button class="offer g-rare${it.sold ? ' sold' : poor(it.price)}" type="button" data-carve="${i}" ${it.sold ? 'disabled' : ''}>${carveOffer(it.item)}${priceTag(it.price, it.sold)}</button>`).join('');
+    const parts = stock.parts.map((it, i) => `<button class="offer g-${PARTS[it.item].grade}${it.sold ? ' sold' : poor(it.price)}" type="button" data-part="${i}" ${it.sold ? 'disabled' : ''}>${partOffer(it.item)}${priceTag(it.price, it.sold)}</button>`).join('');
     const el = this.hud.openScene(
       `${this.bar(run)}
       <div class="title-line"><h2>${icon('screw')} ${S.title}</h2>${speaker('rustRook', `${S.say} <span class="tell">${S.lead}</span>`)}</div>
-      <div class="stage">
-        <div class="offers scroll-x grow">${goods.join('')}</div>
-        <div class="col" style="width:170px;flex:none;justify-content:flex-end">
-          ${button(S.sell, 'data-sellmenu', { icon: 'scale', cls: 'wide' })}
-          ${button(S.reroll, 'data-reroll', { icon: 'swap', small: `나사 ${s.rerollPrice}`, cls: `wide${run.gold < s.rerollPrice ? ' poor' : ''}` })}
-          ${button(S.leave, 'data-leave', { tone: 'brass', icon: 'lever', cls: 'wide' })}
-        </div>
+      <div class="stage scroll-x"><div class="offers shop">${parts}${carves}${pieces}</div></div>
+      <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
+        ${button(S.sell, 'data-sell', { icon: 'scale' })}
+        ${button(`${S.reroll} ${stock.rerollPrice}`, 'data-reroll', { icon: 'swap' })}
+        ${button(S.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}
       </div>`,
     );
     coach('shop');
     this.wireBar(el, run);
+    const buyC = (i: number, unit?: number) => {
+      const err = buyCarve(run, i, unit);
+      if (err === 'unit') {
+        const id = stock.carves[i].item;
+        return this.pickUnit(run, `${CARVES[id].mark} ${CARVES[id].name}`, `${CARVES[id].desc} * 새길 기물을 고른다.`, (u) => u.t !== 'K', (k) => buyC(i, k));
+      }
+      if (!err) sfx('spend');
+      this.act(err);
+    };
+    const buyP = (i: number, d?: number) => {
+      const err = buyPart(run, i, d);
+      if (err === 'full') return this.discardPart(run, (k) => buyP(i, k));
+      if (!err) sfx('spend');
+      this.act(err);
+    };
     this.wire(el, {
-      piece: (b) => this.act(buyPiece(run, Number(b.dataset.piece))),
-      card: (b) => {
-        const i = Number(b.dataset.card);
-        this.act(buyCard(run, i), () => this.discardPicker(run, 'card', (d) => this.act(buyCard(run, i, d as number))));
+      piece: (b) => {
+        const err = buyPiece(run, Number(b.dataset.piece));
+        if (!err) sfx('spend');
+        this.act(err);
       },
-      ench: (b) => {
-        const i = Number(b.dataset.ench);
-        this.act(buyEnchant(run, i), () => this.discardPicker(run, 'enchant', (d) => this.act(buyEnchant(run, i, d as EnchantId))));
-      },
-      polish: () => {
-        sfx('land');
-        this.act(buyPolish(run));
-      },
-      bp: () => {
-        sfx('land');
-        this.act(buyBlueprint(run));
-      },
-      gold: () => this.act(buyLegend(run), () => this.discardPicker(run, 'card', (d) => this.act(buyLegend(run, d as number)))),
-      sellmenu: () => this.showSell(run),
+      carve: (b) => buyC(Number(b.dataset.carve)),
+      part: (b) => buyP(Number(b.dataset.part)),
+      sell: () => this.pickUnit(run, `${icon('scale')} ${S.sell}`, '* 녹슨 룩이 기물을 저울에 올린다. 판 기물은 돌아오지 않는다.', (u) => u.t !== 'K', (i) => this.act(sellPiece(run, i)), (u) => ` · ${icon('screw', 's')}${sellPrice(u.t)}`),
       reroll: () => this.act(reroll(run)),
       leave: () => {
         leaveNode(run);
@@ -1010,213 +833,46 @@ export class RunUi {
     });
   }
 
-  /** 고물상 팔기 (모달) */
-  private showSell(run: RunState): void {
-    const types = ORDER.filter((t) => t !== 'K' && run.deck.includes(t));
-    const panel = this.hud.openOverlay(`
-      <h2>${icon('scale')} ${TEXT.shop.sell}</h2>
-      <p>판 기물은 돌아오지 않는다.</p>
-      <div class="chips">${types.map((t) => `<button class="chip" type="button" data-sell="${t}"><b>${pieceImg(t, 0, 'small', 24)} ${PIECE_NAMES_KO[t]} ×${run.deck.filter((x) => x === t).length}</b><small>1기 팔기 · 나사 +${sellPrice(t)}</small></button>`).join('')}</div>
-      ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
-    this.wire(panel, {
-      sell: (b) => {
-        const err = sellPiece(run, b.dataset.sell as PieceType);
-        if (err) this.hud.toast(err);
-        this.save();
-        this.showShop(run);
-        this.showSell(run);
-      },
-      close: () => this.hud.closeOverlay(),
-    });
-  }
-
+  /** 공방: 각인 새기기(셋 중 하나) 또는 기물 다듬기(한 단계 위) — 둘 중 하나 */
   private showForge(run: RunState): void {
+    if (run.stage.at !== 'forge') return;
+    const st = run.stage;
     const F = TEXT.forge;
-    const types = ORDER.filter((t) => run.deck.includes(t));
-    const cards = types.map((t) => {
-      const lv = run.loadout.forge[t] ?? 0;
-      const cost = forgeCost(run, t);
-      const n = run.deck.filter((x) => x === t).length;
-      const v = run.loadout.variants?.[t];
-      const opts = forgeVariantOptions(run, t);
-      const lvPips = Array.from({ length: FORGE_MAX }, (_, i) => `<i class="${i < lv ? 'on' : ''}${i === VARIANT_FORGE_LEVEL - 1 ? ' v' : ''}"></i>`).join('');
-      return `<div class="forge-card panel9">
-        ${pieceImg(t, 0, 'large', 52)}
-        <b>${PIECE_NAMES_KO[t]} ×${n}</b>
-        <span class="vname">${v ? `이형 · ${VARIANTS[v].name}` : lv >= VARIANT_FORGE_LEVEL ? '' : `+${VARIANT_FORGE_LEVEL} 도면으로 이형`}</span>
-        <span class="lv">${lvPips}</span>
-        ${cost === null ? `<span class="tag gold">완성 거푸집</span>` : `<button class="btn${run.gold >= cost ? ' brass' : ' poor'}" type="button" data-up="${t}">+${lv + 1} ${screws(cost)}</button>`}
-        ${
-          // 이형 버튼 자리 하나를 같이 쓴다 (카드 높이가 같게): 이형 > 손상 수리 > 빈 자리
-          opts.length > 1
-            ? `<button class="btn cyan" type="button" data-vpick="${t}">${TEXT.forge.variantPick} (${opts.length})</button>`
-            : opts.length
-            ? opts.map((id) => `<button class="btn cyan" type="button" data-variant="${t}:${id}">이형 → ${VARIANTS[id].name}</button>`).join('')
-            : (run.loadout.damage?.[t] ?? 0) > 0
-              ? `<button class="btn crimson${run.gold >= DEFECT.repairCost ? '' : ' poor'}" type="button" data-repair="${t}">${TEXT.defect.repair} ${run.loadout.damage![t]}단 ${screws(DEFECT.repairCost)}</button>`
-              : lacksBlueprint(run, t)
-                ? `<span class="slot-v nobp">${TEXT.blueprint.none}</span>`
-                : '<span class="slot-v"></span>'
-        }
-      </div>`;
-    });
+    const carves = st.carves.map((id, i) => `<button class="offer g-rare" type="button" data-carvepick="${i}" ${st.done ? 'disabled' : ''}>${carveOffer(id)}</button>`).join('');
+    const upgradable = run.deck.some((u) => (UPGRADE[u.t] ?? []).length);
     const el = this.hud.openScene(
       `${this.bar(run)}
-      <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2>${speaker('monoBishop', F.lead)}<small class="dim">${F.rule} ${F.variantLead}</small></div>
-      <div class="stage"><div class="forge-row">${cards.join('')}</div></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">${button(F.tidy, 'data-tidy', { icon: 'wrench', small: F.tidySmall })}${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
+      <div class="title-line"><h2>${icon('anvil')} ${F.title}</h2>${speaker('monoBishop', st.done ? F.done : F.lead)}<small class="dim">${F.rule}</small></div>
+      <div class="stage"><div class="offers">${carves}
+        <button class="offer" type="button" data-upgrade ${st.done || !upgradable ? 'disabled' : ''}><span class="kind">${icon('anvil', 's')} ${F.upgrade}</span>${pieceImg('P', 0, 'large', 44)}<span class="arrow">→</span>${pieceImg('N', 0, 'large', 44)}<b>${F.upgrade}</b><p>${F.upgradeDesc}</p></button>
+      </div></div>
+      <div class="row" style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">${button(F.leave, 'data-leave', { tone: 'brass', icon: 'lever' })}</div>`,
     );
     coach('forge');
     this.wireBar(el, run);
     this.wire(el, {
-      up: (b) => {
-        sfx('hit', 3);
-        this.act(forgeUp(run, b.dataset.up as PieceType));
+      carvepick: (b) => {
+        const i = Number(b.dataset.carvepick);
+        const id = st.carves[i];
+        this.pickUnit(run, `${CARVES[id].mark} ${CARVES[id].name}`, `${CARVES[id].desc} * 새길 기물을 고른다. 있던 각인은 사라진다.`, (u) => u.t !== 'K', (k) => {
+          sfx('awaken');
+          this.act(forgeCarve(run, i, k));
+        });
       },
-      vpick: (b) => this.showVariantPick(run, b.dataset.vpick as PieceType),
-      tidy: () => this.showTidy(run),
-      repair: (b) => {
-        sfx('land');
-        this.act(repairDamage(run, b.dataset.repair as PieceType));
-      },
-      variant: (b) => {
-        const [t, id] = b.dataset.variant!.split(':') as [PieceType, VariantId];
-        this.confirmVariant(run, t, id);
-      },
-      leave: () => {
-        leaveNode(run);
-        this.act();
-      },
-    });
-  }
-
-  /** 공방 덜어내기 (D-118, 모달): 개조 분해 · 재주조 (방문마다 한 번) · 카드 파쇄 */
-  private showTidy(run: RunState): void {
-    const F = TEXT.forge;
-    const cost = reforgeCost(run);
-    const done = run.stage.at === 'forge' && !!run.stage.reforged;
-    const ench = (Object.entries(run.loadout.enchants) as [EnchantId, number][]).map(
-      ([id, n]) => `<div class="tidy-row">${gradeChip(ENCHANT_GRADE[id])}<b>${ENCHANTS[id].name}</b><small>${n}단</small><span class="spacer"></span>
-        <button class="btn" type="button" data-dis="${id}">${F.dismantle} +${n * FORGE_EXTRA.salvagePerLevel}</button>
-        <button class="btn cyan${done || run.gold < cost ? ' poor' : ''}" type="button" data-ref="${id}">${F.reforge} ${screws(cost)}</button></div>`,
-    );
-    const cards = run.loadout.cards.map((id, i) => `<div class="tidy-row">${gradeChip(CARD_GRADE[id])}<b>${CARDS[id].name}</b><span class="spacer"></span><button class="btn" type="button" data-scrap="${i}">${F.scrap} +${FORGE_EXTRA.cardSalvage}</button></div>`);
-    const panel = this.hud.openOverlay(`
-      <h2>${icon('wrench')} ${F.tidy}</h2>
-      <p>${F.tidyLead}</p>
-      ${ench.join('') || `<p class="dim">${F.none}</p>`}
-      ${cards.length ? `<p class="sub">천공 카드</p>${cards.join('')}` : ''}
-      ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
-    const after = (err: string | void) => {
-      if (err) this.hud.toast(err);
-      this.save();
-      this.show();
-      this.showTidy(run);
-    };
-    this.wire(panel, {
-      dis: (b) => {
-        sfx('coin');
-        after(dismantleEnchant(run, b.dataset.dis as EnchantId));
-      },
-      ref: (b) => {
-        const before = Object.keys(run.loadout.enchants);
-        const err = reforgeEnchant(run, b.dataset.ref as EnchantId);
-        if (!err) {
-          const to = Object.keys(run.loadout.enchants).find((x) => !before.includes(x)) as EnchantId | undefined;
-          sfx('rare');
-          if (to) window.setTimeout(() => this.hud.toast(`* ${ENCHANTS[b.dataset.ref as EnchantId].name} → ${ENCHANTS[to].name}`), 50);
-        }
-        after(err);
-      },
-      scrap: (b) => {
-        sfx('coin');
-        after(scrapCard(run, Number(b.dataset.scrap)));
-      },
-      close: () => this.hud.closeOverlay(),
-    });
-  }
-
-  /** 이형 거푸집 확인 (모달): 강점 · 대가 · 되돌릴 수 없음 */
-  private confirmVariant(run: RunState, t: PieceType, id: VariantId): void {
-    const v = VARIANTS[id];
-    const panel = this.hud.openOverlay(`
-      <h2>${icon('anvil')} 이형 거푸집 — ${v.name}</h2>
-      <p>“${PIECE_NAMES_KO[t]} 거푸집을 통째로 뜯는다. 무르기 없다.”</p>
-      <div class="panel9"><p><b style="color:var(--cyan)">강점</b> ${v.gain}</p><p><b style="color:var(--crimson-soft)">대가</b> ${v.cost}</p></div>
-      <div class="row">${button('그만두기', 'data-no')}${button('바꾼다', 'data-yes', { tone: 'brass' })}</div>`);
-    this.wire(panel, {
-      no: () => this.hud.closeOverlay(),
-      yes: () => {
-        sfx('kill');
-        this.act(forgeVariant(run, t, id));
-      },
-    });
-  }
-
-  private showAltar(run: RunState): void {
-    if (run.stage.at !== 'altar') return;
-    const A = TEXT.altar;
-    const r = run.stage.result;
-    if (r?.kind === 'pick') {
-      const all = (Object.keys(ENCHANTS) as EnchantId[]).filter((id) => (run.loadout.enchants[id] ?? 0) < ENCHANT_MAX_STACK);
-      const el = this.hud.openScene(
-        `${this.bar(run)}
-        <div class="title-line"><h2>${icon('lever')} 행운 톱니 해방</h2><p>행운 톱니가 다 찼다. 이번엔 꽝이 없다.</p></div>
-        <div class="stage"><div class="offers scroll-x grow">${all
-          .map((id) => {
-            const next = (run.loadout.enchants[id] ?? 0) + 1;
-            return `<button class="offer${next >= 3 ? ' plate' : ''}" style="flex:0 0 170px" type="button" data-pick="${id}">${enchantOffer(id, next, run)}</button>`;
-          })
-          .join('')}</div></div>`,
-      );
-      coach('altar');
-    this.wireBar(el, run);
-      this.wire(el, {
-        pick: (b) => {
-          const id = b.dataset.pick as EnchantId;
-          this.act(altarPick(run, id), () => this.discardPicker(run, 'enchant', (d) => this.act(altarPick(run, id, d as EnchantId))));
-        },
-      });
-      return;
-    }
-    const odds = [ALTAR.odds.enchant, ALTAR.odds.piece, ALTAR.odds.variant, 1 - ALTAR.odds.enchant - ALTAR.odds.piece - ALTAR.odds.variant];
-    const result =
-      r?.kind === 'miss'
-        ? `<span class="result-stamp bad">꽝</span><p class="lead">* 기계가 나사를 삼키고 트림을 한다. 행운 톱니가 한 칸 돈다 (${run.crackGauge}/${ALTAR.gaugeMax}).</p>`
-        : r?.kind === 'variant'
-          ? `<span class="result-stamp good">드르르륵— 쾅! 이형 거푸집!</span><p class="lead"><b>${VARIANTS[r.variant].name}</b> · ${VARIANTS[r.variant].gain}</p>`
-          : r?.kind === 'piece'
-            ? r.piece
-              ? `<span class="result-stamp cyan">상위 기물</span><p class="lead">${pieceImg(r.piece, 0, 'large', 40)} ${PIECE_NAMES_KO[r.piece]}가 굴러 나와 군단 뒤에 줄을 선다</p>`
-              : `<span class="result-stamp cyan">상위 기물</span><p class="lead">자리가 없다. 고물상이 냉큼 나사로 바꿔 갔다</p>`
-            : '';
-    const canPick = altarCanPick(run);
-    const el = this.hud.openScene(
-      `${this.bar(run)}
-      <div class="stage">
-        <div class="art panel9">${icon('lever', 'xl', '#c4b5fd')}<span class="caption">${pips(run.crackGauge, ALTAR.gaugeMax)} 행운 톱니</span></div>
-        <div class="col grow">
-          <div class="title-line"><h2>${A.title}</h2><p>${A.lead}</p></div>
-          <div class="odds panel9">${A.outcomes.map((o, i) => `<div><span style="width:120px">${o}</span><span class="bar-in"><i style="width:${Math.round(odds[i] * 100)}%"></i></span><span>${Math.round(odds[i] * 100)}%</span></div>`).join('')}</div>
-          ${result}
-          <div style="display:flex;gap:8px;margin-top:auto">
-            ${!r ? button(canPick ? A.release : `${A.pull}`, 'data-gamble', { tone: 'brass', icon: 'lever', small: canPick ? undefined : `나사 ${ALTAR.cost}`, cls: !canPick && run.gold < ALTAR.cost ? 'poor' : undefined }) : ''}
-            ${!r && !canPick && altarPremiumOpen(run) ? button(A.premium, 'data-premium', { tone: 'cyan', icon: 'star', small: `나사 ${ALTAR.premiumCost} · ${A.premiumDesc}`, cls: run.gold < ALTAR.premiumCost ? 'poor' : undefined }) : ''}
-            ${button(A.leave, 'data-leave', { tone: r ? 'brass' : undefined })}
-          </div>
-        </div>
-      </div>`,
-    );
-    this.wireBar(el, run);
-    this.wire(el, {
-      gamble: () => {
-        sfx('submit');
-        this.act(altarGamble(run));
-      },
-      premium: () => {
-        sfx('submit');
-        this.act(altarPremium(run));
-      },
+      upgrade: () =>
+        this.pickUnit(run, F.upgrade, F.upgradeDesc, (u) => (UPGRADE[u.t] ?? []).length > 0, (k) => {
+          const ups = UPGRADE[run.deck[k].t] ?? [];
+          if (ups.length === 1) return this.act(forgeUpgrade(run, k, ups[0]));
+          const panel = this.hud.openOverlay(`<h2>${F.upgrade}</h2><div class="chips">${ups.map((t) => `<button class="chip" type="button" data-to="${t}">${pieceImg(t, 0, 'small', 32)}<b>${PIECE_NAMES_KO[t]}</b></button>`).join('')}</div>${button('취소', 'data-cancel', { cls: 'wide' })}`);
+          this.wire(panel, {
+            to: (b) => {
+              this.hud.closeOverlay();
+              sfx('awaken');
+              this.act(forgeUpgrade(run, k, b.dataset.to as PieceType));
+            },
+            cancel: () => this.hud.closeOverlay(),
+          });
+        }),
       leave: () => {
         leaveNode(run);
         this.act();
@@ -1322,7 +978,7 @@ export class RunUi {
         const after: Cut[] = lay
           ? TRUE_ENDING
           : [
-              { bg: 'top', actors: [{ npc: 'ninth', x: 50, y: 58, size: 120, mood: 'sleepy' }], lines: pressure >= 13 ? [ENDING_A_MONO] : [{ kind: 'tell', text: g.after }], fx: 'gold' },
+              { bg: 'top', actors: [{ npc: 'ninth', x: 50, y: 58, size: 120, mood: 'sleepy' }], lines: pressure >= MAX_ASCENSION ? [ENDING_A_MONO] : [{ kind: 'tell', text: g.after }], fx: 'gold' },
               AFTER_PROMOTION,
             ];
         playCuts(this.hud, after, () => this.show());
@@ -1342,7 +998,7 @@ export class RunUi {
     const newly = UNLOCK_DECKS.filter((u) => u.ok(meta) && !u.ok(before)).map((u) => `시작 세트 해금: ${u.name}`);
     if (meta.ascension > before.ascension) newly.push(`압력 ${meta.ascension} 해금: ${ASCENSIONS[meta.ascension]}`);
     const O = TEXT.over;
-    const ench = Object.keys(run.loadout.enchants).length;
+    const ench = run.parts.length;
     const ending = run.story?.ending;
     const winTitle = ending === 'free' ? OVER_STORY.freeTitle : O.win;
     const winTell = ending === 'free' ? OVER_STORY.freeTell : ending === 'promote' ? OVER_STORY.promoteTell : O.winTell;
@@ -1353,7 +1009,7 @@ export class RunUi {
       <div class="records" style="width:min(520px,90vw)">
         <div class="panel9"><span class="num">${floor}</span><small>도달 층</small></div>
         <div class="panel9"><span class="num">${run.deck.length}</span><small>군단</small></div>
-        <div class="panel9"><span class="num">${ench}</span><small>개조</small></div>
+        <div class="panel9"><span class="num">${ench}</span><small>부품</small></div>
         <div class="panel9"><span class="num">${run.wins}</span><small>이긴 대국</small></div>
       </div>
       ${newly.length ? `<div class="unlocks">${newly.map((n) => `<i class="tag gold">${n}</i>`).join('')}</div>` : ''}

@@ -3,24 +3,17 @@ import { STALL } from '../data/battle';
 import { BASE_AP, PIECE_NAMES_KO } from '../data/pieces';
 import { pieceImg } from './sprites';
 import { AI_STYLES, SCENARIOS, type BattleController, type HudView, type Scenario } from '../game/controller';
-import { CARDS, CARD_SLOTS, type CardId } from '../data/cards';
-import { ENCHANTS, ENCHANT_MAX_STACK, ENCHANT_SLOTS, type EnchantId } from '../data/enchants';
-import { FORGE_MAX } from '../data/forge';
-import { checkPlan, ench, findPiece, weakOn, toSquare, type BattleState, type Loadout, type Piece, type PieceType, type PlanStep, type Side } from '../engine';
-import { VARIANTS } from '../data/variants';
+import { CARVES } from '../data/carves';
+import { PARTS, PART_IDS, PART_SLOTS, type PartId } from '../data/parts';
+import { TWISTS } from '../data/twists';
+import { GRADE_NAME } from '../data/grades';
+import { checkPlan, findPiece, toSquare, type BattleState, type Loadout, type Piece, type PlanStep, type Side } from '../engine';
 import { TEXT } from '../data/text';
-import { NODE_NAMES } from '../data/run';
-import { AFFIXES, WEAKS } from '../data/legions';
-import { pop, stamp } from './juice';
-import { ORDERS, TACTICS, type OrderId, type TacticId } from '../data/tactics';
-import { orderProgress } from '../run/orders';
 import { Backdrop } from './backdrop';
-import { LEGENDS } from '../data/legends';
 import { coach, coachOn, resetCoach, setCoach } from './coach';
 import { musicOn, setMusic } from '../audio/music';
 import { exportLog, logSummary } from '../run/telemetry';
 import { paintPortraits } from './portrait';
-import { CARD_GRADE } from '../data/grades';
 import { ghostOut, replay } from './motion';
 import { MOTION, TOAST } from '../data/motion';
 import { button, icon } from './chrome';
@@ -29,39 +22,10 @@ import { setSfx, sfxOn } from '../audio/sfx';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-/** 예약 목록 한 줄: 좌표 이동 또는 특수 행동 이름 (+붙인 카드) */
+/** 예약 목록 한 줄: 좌표 이동 */
 const describeStep = (s: BattleState, m: PlanStep): string => {
   const p = findPiece(s, m.pieceId);
-  const from = p ? toSquare(p) : '?';
-  const cardName = (idx?: number) => (idx !== undefined && s.cards[s.turnSide][idx] ? ` · ${CARDS[s.cards[s.turnSide][idx].id].name}` : '');
-  switch (m.kind) {
-    case undefined:
-    case 'move':
-      return `${from} → ${toSquare(m.to)}${cardName(m.card)}`;
-    case 'stand':
-      return `${from} 제자리 공격`;
-    case 'castle':
-      return `${from} ⇄ ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })}${cardName(m.card)}`;
-    case 'shield':
-      return `${from} 방열판${cardName(m.card)}`;
-    case 'gate':
-      return `${from} ⇢ ${toSquare(m.to)}${cardName(m.card)}`;
-    case 'promote':
-      return `${from} 퀸 승급${cardName(m.card)}`;
-    case 'fuse':
-      return `${from} + ${toSquare(findPiece(s, m.partnerId) ?? { x: 0, y: 0 })} 결합${cardName(m.card)}`;
-    case 'formShift':
-      return `${from} ⇄ 거푸집 교환${cardName(m.card)}`;
-  }
-};
-
-/** 전술 키워드 칩: 이름까지(명령 테이프) 또는 아이콘만(기록 줄) */
-const tacticChips = (list: TacticId[], named: boolean): string => {
-  const uniq = [...new Set(list)];
-  if (!uniq.length) return '';
-  return `<span class="chips">${uniq
-    .map((t) => `<span class="tac" style="color:${TACTICS[t].color}" title="${TACTICS[t].name} — ${TACTICS[t].desc}">${icon(TACTICS[t].icon, 's')}${named ? TACTICS[t].name : ''}</span>`)
-    .join('')}</span>`;
+  return `${p ? toSquare(p) : '?'} → ${toSquare(m.to)}`;
 };
 
 export class Hud implements HudView {
@@ -70,7 +34,7 @@ export class Hud implements HudView {
   private lastScenario: Scenario = SCENARIOS[0];
   private lastTier = 1;
   private lastStyle = 'scenario';
-  private loadout: Loadout = { enchants: {}, cards: [], forge: {} };
+  private loadout: Loadout = { parts: [] };
   /** 메인 메뉴로 (등반 화면이 설정) */
   onMenu: (() => void) | null = null;
   private enemyMirror = false;
@@ -90,7 +54,7 @@ export class Hud implements HudView {
       const li = (e.target as HTMLElement).closest('[data-log]') as HTMLElement | null;
       if (li) c.showLog(Number(li.dataset.log));
     });
-    $('btn-enchant').addEventListener('click', () => this.showEnchants());
+    $('btn-enchant').addEventListener('click', () => this.showParts());
     $('overlay').addEventListener('click', (e) => {
       if (e.target === $('overlay') && c.phase !== 'idle' && c.phase !== 'over') this.closeOverlay();
     });
@@ -104,70 +68,26 @@ export class Hud implements HudView {
         void c.submit();
       }
     });
-    $('cards').addEventListener('click', (e) => {
-      const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
-      if (!el) return;
-      const v = el.dataset.card!;
-      c.arm(v === 'fuse' ? { kind: 'fuse' } : { kind: 'card', card: Number(v) });
-      // 카드 설명은 패널에 다 못 싣는다 — 고를 때 안내로 (D-075)
-      const slot = v === 'fuse' ? null : c.virtual.cards[0][Number(v)];
-      if (slot && c.mode) this.toast(`${CARDS[slot.id].name} — ${CARDS[slot.id].desc}`);
-    });
   }
 
-  /** 액티브 카드 4칸 (TCG 비율). 계획에서 이미 쓴 카드는 흐리게, 고른 카드는 황동 테두리. */
-  private renderCards(c: BattleController): void {
+  /** 왼쪽 레일: 부품 이름표 (누르면 부품 목록) — 규격 2.0에는 카드가 없다 */
+  private renderParts(c: BattleController): void {
     if (!c.state) return;
-    const side = 0;
-    const v = c.virtual;
-    const slots: string[] = [];
-    v.cards[side].forEach((slot, i) => {
-      const def = CARDS[slot.id];
-      const armed = c.mode?.kind === 'card' && c.mode.card === i;
-      const lim = def.limit;
-      const status = slot.spent
-        ? lim.type === 'consume' ? '탔음' : '이번 대국 씀'
-        : slot.cooldown > 0
-          ? `냉각 ${slot.cooldown}`
-          : lim.type === 'consume' ? '종이 · 한 번' : lim.type === 'round' ? '대국당 1회' : `냉각 ${lim.turns}턴`;
-      const off = slot.spent || slot.cooldown > 0 || c.phase !== 'plan';
-      slots.push(
-        `<button type="button" class="card ${lim.type === 'consume' ? 'consume' : ''} g-${CARD_GRADE[slot.id]}${armed ? ' armed' : ''}" data-card="${i}" ${off ? 'disabled' : ''}>
-          <span class="card-name">${def.name}</span>
-          <span class="card-desc">${def.desc}</span>
-          <span class="card-tag">${def.ap ? `태엽 ${def.ap} · ` : ''}${status}</span>
-        </button>`,
-      );
-    });
-    if (c.canEnchantFuse) {
-      const armed = c.mode?.kind === 'fuse';
-      slots.push(
-        `<button type="button" class="card wide${armed ? ' armed' : ''}" data-card="fuse" ${c.phase !== 'plan' ? 'disabled' : ''}>
-          <span class="card-name">결합 · ${ENCHANTS.E11.name}</span>
-          <span class="card-tag">태엽 ${(c.state.loadouts[0].enchants.E11 ?? 0) >= 3 ? 0 : CARDS.C05.ap}</span>
-        </button>`,
-      );
-    }
-    // 빈 슬롯은 그리지 않는다 (오른쪽 패널 공간 절약, D-075)
-    $('cards').innerHTML = slots.join('');
+    const parts = c.state.loadouts[0].parts;
+    $('cards').innerHTML = parts.map((id) => `<button type="button" class="card part g-${PARTS[id].grade}" data-part="${id}"><span class="card-name">${PARTS[id].name}</span><span class="card-desc">${PARTS[id].desc}</span></button>`).join('');
+    $('cards').onclick = (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('[data-part]');
+      if (el) this.toast(`${PARTS[el.dataset.part as PartId].name} — ${PARTS[el.dataset.part as PartId].desc}`);
+    };
   }
-
-  /** 이 대국의 주문서 (출하 대국만, 연습판은 없음) — D-094 */
-  private order: { id: OrderId; deck: PieceType[] } | null = null;
-
-  setOrder(order: { id: OrderId; deck: PieceType[] } | null): void {
-    this.order = order;
-    this.orderDone = false;
-  }
-  private orderDone = false;
 
   /** 묘수풀이 목표 한 줄 (주문서 자리를 쓴다) */
   private goal: string | null = null;
-  setGoal(text: string | null, label: string = NODE_NAMES.puzzle): void {
+  setGoal(text: string | null, label = '목표'): void {
     this.goal = text;
     this.goalLabel = label;
   }
-  private goalLabel: string = NODE_NAMES.puzzle;
+  private goalLabel = '목표';
 
   /** 레일 한 줄: 주문서 · 진행 (완수 ✓ / 실패 줄 긋기) */
   private renderOrder(c: BattleController): void {
@@ -178,28 +98,12 @@ export class Hud implements HudView {
       el.innerHTML = `${icon('reticle', 's')}<span class="what"><b>${this.goalLabel}</b> ${this.goal}</span>`;
       return;
     }
-    el.hidden = !this.order;
-    if (!this.order) return;
-    const def = ORDERS[this.order.id];
-    const pr = orderProgress(this.order.id, c.state, this.order.deck);
-    // 완수하는 순간 (D-104): 줄이 금빛으로 튀고 도장
-    if (pr.done && !this.orderDone) {
-      this.orderDone = true;
-      window.setTimeout(() => {
-        stamp('완수', 'good');
-        sfx('coin');
-        pop($('order'), 'good');
-      }, 200);
-    } else if (!pr.done) this.orderDone = false;
-    el.className = `order${pr.done ? ' done' : pr.failed ? ' failed' : ''}`;
-    const mark = def.tactic ? icon(TACTICS[def.tactic].icon, 's', TACTICS[def.tactic].color) : icon('flag', 's');
-    el.innerHTML = `${mark}<span class="what"><b>${TEXT.battle.order}</b> ${def.text}</span>${pr.done ? icon('star', 's') : pr.count ? `<span class="count">${pr.count}</span>` : ''}`;
-    el.setAttribute('aria-label', `${TEXT.battle.order}: ${def.text}${pr.done ? ' 완수' : pr.failed ? ' 실패' : ''}`);
+    el.hidden = true;
   }
 
   update(c: BattleController): void {
     this.coachBattle(c);
-    this.renderCards(c);
+    this.renderParts(c);
     this.renderOrder(c);
     const label = $('turn-label');
     const mine = c.phase === 'plan';
@@ -214,15 +118,13 @@ export class Hud implements HudView {
     const q = $('queue');
     const rows: string[] = [];
     const full = c.pending ? [...c.plan, c.pending] : c.plan;
-    // 미리보기 키워드 칩 (D-094): 이 순서로 두면 무슨 수가 나는지 누르기 전에 보인다
     const check = checkPlan(c.state, full);
-    const chipsAt = (i: number) => tacticChips(check.events.flatMap((e) => (e.type === 'tactic' && e.order === i && e.side === c.state.turnSide ? [e.tactic] : [])), true);
     full.forEach((m, i) => {
       const p = findPiece(c.state, m.pieceId);
       if (!p) return;
       const pending = c.pending !== null && i === full.length - 1;
       rows.push(
-        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 24)}</span><span>${describeStep(c.state, m)}</span>${chipsAt(i)}</li>`,
+        `<li class="${pending ? 'pending' : ''}"><span class="no">${i + 1}</span><span class="glyph">${pieceImg(p.type, p.side, 'small', 24)}</span><span>${describeStep(c.state, m)}</span></li>`,
       );
     });
     if (!rows.length && mine && c.log.length) {
@@ -233,12 +135,12 @@ export class Hud implements HudView {
         const kill = e.targets.some((t) => t.killed);
         const tg = e.targets.slice(0, 2).map((t) => pieceImg(t.type, t.side, 'small', 22)).join('') + (e.targets.length > 2 ? `<small>+${e.targets.length - 2}</small>` : '');
         rows.push(
-          `<li class="log ${e.side === 0 ? 'mine' : 'enemy'}" data-log="${i}"><span class="who">${e.side === 0 ? '내' : '적'} #${e.order + 1}</span><span class="glyph">${pieceImg(e.attacker.type, e.attacker.side, 'small', 22)}</span><span class="to">→</span><span class="glyph">${tg}</span>${tacticChips(e.tactics, false)}<span class="dmg${kill ? ' kill' : ''}">-${dmg}${kill ? '<i class="skull" aria-label="처치"></i>' : ''}</span></li>`,
+          `<li class="log ${e.side === 0 ? 'mine' : 'enemy'}" data-log="${i}"><span class="who">${e.side === 0 ? '내' : '적'} #${e.order + 1}</span><span class="glyph">${pieceImg(e.attacker.type, e.attacker.side, 'small', 22)}</span><span class="to">→</span><span class="glyph">${tg}</span><span class="dmg${kill ? ' kill' : ''}">-${dmg}${kill ? '<i class="skull" aria-label="처치"></i>' : ''}</span></li>`,
         );
       });
     }
     if (!rows.length && mine) {
-      const hint = ench(c.state, 0, 'E16') || (c.state.rules.foresight ?? 0) > 0
+      const hint = (c.state.rules.foresight ?? 0) > 0
         ? `<span class="hint">${TEXT.battle.hintIntent}</span>`
         : `<span class="hint muted">${TEXT.battle.hintThreat}</span>`;
       rows.push(`<li class="empty">${TEXT.battle.hintPlan}<br>${hint}</li>`);
@@ -318,20 +220,12 @@ export class Hud implements HudView {
     const el = $('info');
     const side = p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>';
     const extra: string[] = [];
-    if (p.fused) extra.push(`결합: ${p.fused.map((ty) => PIECE_NAMES_KO[ty]).join(' + ')}`);
-    if (p.formAs) extra.push(`거푸집 교환: ${PIECE_NAMES_KO[p.formAs]} 행마`);
-    if (p.variant && p.type === VARIANTS[p.variant].base) extra.push(`<span class="variant">이형 · ${VARIANTS[p.variant].name}</span><br><small>${VARIANTS[p.variant].gain} (${VARIANTS[p.variant].cost})</small>`);
-    if (p.stuckTurn !== undefined && p.stuckTurn >= (this.c.state?.turnNumber ?? 0)) extra.push('<span class="enemy">자석판에 붙잡혔다 — 다음 자기 턴에 못 움직인다</span>');
-    if (p.type === 'P' && !p.fused) extra.push(`<small>${TEXT.battle.counter}</small>`);
-    if (p.affix) extra.push(`<span class="enemy">${AFFIXES[p.affix].name}</span><br><small>${AFFIXES[p.affix].desc}</small>`);
-    const weak = this.c.state?.weak;
-    if (weak && this.c.state && weakOn(this.c.state, p, weak.id)) extra.push(`<span class="weak">약점 · ${WEAKS[weak.id].name}</span><br><small>${WEAKS[weak.id].desc}</small>`);
-    const forge = this.c.state?.loadouts?.[p.side]?.forge[p.type] ?? 0;
-    if (forge) extra.push(`거푸집 개량 +${forge}`);
+    if (p.carve) extra.push(`<span class="variant">${CARVES[p.carve].mark} ${CARVES[p.carve].name}</span><br><small>${CARVES[p.carve].desc}</small>`);
+    if (p.elite) extra.push('<span class="enemy">정예 — HP 두 배</span>');
+    const tw = this.c.state?.twist;
+    if (tw && p.side === 1) extra.push(`<span class="weak">${TWISTS[tw].name}</span><br><small>${TWISTS[tw].desc}</small>`);
     const more = extra.length ? `<br>${extra.join('<br>')}` : '';
-    const buff = p.buffTurns > 0 ? `<br>요충지 가호: ATK +${Math.round(p.buffAtkPct * 100)}% · DEF +${p.buffDef} (${p.buffTurns}턴)` : '';
-    const name = p.variant && p.type === VARIANTS[p.variant].base ? VARIANTS[p.variant].name : PIECE_NAMES_KO[p.type];
-    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${name}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${buff}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '안전 밸브: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
+    el.innerHTML = `<b>${pieceImg(p.type, p.side, 'small', 24)} ${side} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''}<br>ATK ${p.atk} · DEF ${p.def}${more}${p.type === 'K' && this.c.state?.rules.checkmate ? `<br>${p.hp === 1 ? '<span class="enemy">체크 — 다음에 맞으면 쓰러짐</span>' : '체크 버팀: 한 턴에 HP 1 아래로 떨어지지 않음'}` : ''}`;
     el.hidden = false;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
@@ -410,12 +304,12 @@ export class Hud implements HudView {
       <h2>${P.title}</h2>
       <div class="col">
         ${button(P.resume, 'data-resume', { tone: 'brass', cls: 'wide' })}
-        ${button(P.enchants, 'data-ench', { icon: 'wrench', cls: 'wide' })}
+        ${button('부품', 'data-ench', { icon: 'wrench', cls: 'wide' })}
         ${button(TEXT.menu.settings, 'data-settings', { icon: 'watch', cls: 'wide' })}
         ${button(P.toMenu, 'data-menu', { small: P.toMenuDesc, cls: 'wide' })}
       </div>`);
     panel.querySelector('[data-resume]')!.addEventListener('click', () => this.closeOverlay());
-    panel.querySelector('[data-ench]')!.addEventListener('click', () => this.showEnchants());
+    panel.querySelector('[data-ench]')!.addEventListener('click', () => this.showParts());
     panel.querySelector('[data-settings]')!.addEventListener('click', () => this.showSettings(() => this.showPause()));
     panel.querySelector('[data-menu]')!.addEventListener('click', () => {
       this.closeOverlay();
@@ -467,84 +361,36 @@ export class Hud implements HudView {
   /** 인트로 다시 보기 (등반 화면이 설정) */
   onIntro: (() => void) | null = null;
 
-  private showEnchants(): void {
-    const lo = this.c.state?.loadouts?.[0];
-    const held = lo ? (Object.entries(lo.enchants) as [EnchantId, number][]).filter(([, n]) => n > 0) : [];
-    const rows = held.map(([id, n]) => {
-      const def = ENCHANTS[id];
-      const lv = def.levels.map((d, i) => `<li class="${i < n ? 'on' : ''}">${i + 1}단 · ${d}</li>`).join('');
-      return `<div class="ench panel9"><b>${def.name}</b> <small>${def.target} · ${n}/${ENCHANT_MAX_STACK}단${n >= 3 ? ' ★걸작' : ''}</small><ul>${lv}</ul></div>`;
-    });
-    const forge = lo ? (Object.entries(lo.forge) as [PieceType, number][]).filter(([, n]) => n > 0) : [];
-    const forgeLine = forge.length ? `<p>거푸집 개량: ${forge.map(([ty, n]) => `${PIECE_NAMES_KO[ty]} +${n}`).join(' · ')}</p>` : '';
-    const variants = lo?.variants ? Object.values(lo.variants).map((id) => VARIANTS[id].name) : [];
+  /** 부품 목록 (레일 버튼 · 일시 정지) */
+  private showParts(): void {
+    const parts = this.c.state?.loadouts?.[0].parts ?? [];
     const panel = this.openOverlay(`
-      <h2>${icon('wrench')} 개조</h2>
-      ${(lo?.legends ?? []).map((id) => `<p class="legend-line"><i class="grade g-epic">${LEGENDS[id].name}</i> ${LEGENDS[id].desc}</p>`).join('')}
-      ${rows.length ? rows.join('') : '<p>아직 달린 개조가 없다. 대국을 이기면 3지선다로 얻는다.</p>'}
-      ${forgeLine}
-      ${variants.length ? `<p>이형 거푸집: ${variants.join(' · ')}</p>` : ''}
+      <h2>${icon('wrench')} 부품 (${parts.length}/${PART_SLOTS})</h2>
+      ${parts.length ? parts.map((id) => `<p class="legend-line"><i class="grade g-${PARTS[id].grade}">${GRADE_NAME[PARTS[id].grade]}</i> <b>${PARTS[id].name}</b> — ${PARTS[id].desc}</p>`).join('') : '<p>아직 부품이 없다. 검문! · 반장 · 고물상에서 얻는다.</p>'}
       ${button('닫기', 'data-close', { tone: 'brass', cls: 'wide' })}`);
     panel.querySelector('[data-close]')!.addEventListener('click', () => this.closeOverlay());
   }
 
-  /** 시험용 장비 편집 (M4): 인챈트 장 수 · 카드 4장 · 대장간 강화를 눌러서 바꾼다 */
+  /** 시험용 부품 편집 (연습판): 눌러서 넣고 뺀다 */
   private showLoadout(): void {
     const lo = this.loadout;
-    const enchCount = () => Object.values(lo.enchants).filter((n) => (n ?? 0) > 0).length;
     const draw = () => {
-      const ench = (Object.keys(ENCHANTS) as EnchantId[])
-        .map((id) => {
-          const n = lo.enchants[id] ?? 0;
-          return `<button class="chip${n ? ' on' : ''}" type="button" data-ench="${id}"><b>${ENCHANTS[id].name}</b><small>${ENCHANTS[id].target} · ${n ? `${n}단${n >= 3 ? ' ★' : ''}` : '없음'}</small></button>`;
-        })
-        .join('');
-      const cards = (Object.keys(CARDS) as CardId[])
-        .map((id) => `<button class="chip${lo.cards.includes(id) ? ' on' : ''}" type="button" data-cardpick="${id}"><b>${CARDS[id].name}</b><small>${CARDS[id].desc}</small></button>`)
-        .join('');
-      const forge = (['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
-        .map((ty) => {
-          const n = lo.forge[ty] ?? 0;
-          return `<button class="chip small${n ? ' on' : ''}" type="button" data-forge="${ty}"><b>${PIECE_NAMES_KO[ty]}</b><small>+${n}</small></button>`;
-        })
-        .join('');
+      const chips = PART_IDS.map((id) => `<button class="chip${lo.parts.includes(id) ? ' on' : ''}" type="button" data-part="${id}"><b>${PARTS[id].name}</b><small>${GRADE_NAME[PARTS[id].grade]} · ${PARTS[id].desc}</small></button>`).join('');
       const panel = this.openOverlay(`
-        <h2>장비 (연습판)</h2>
-        <p>누를 때마다 단계가 오른다. 개조 최대 ${ENCHANT_SLOTS}종 · 천공 카드 ${CARD_SLOTS}장.</p>
-        <p class="sub">개조 (${enchCount()}/${ENCHANT_SLOTS})</p><div class="chips">${ench}</div>
-        <p class="sub">천공 카드 (${lo.cards.length}/${CARD_SLOTS})</p><div class="chips">${cards}</div>
-        <p class="sub">거푸집 개량</p><div class="chips">${forge}</div>
+        <h2>부품 (연습판)</h2>
+        <p>누르면 넣고 다시 누르면 뺀다. 최대 ${PART_SLOTS}개.</p>
+        <div class="chips">${chips}</div>
         <div class="row">
-          <button class="choice" type="button" data-enemy aria-pressed="${this.enemyMirror}">적도 같은 장비</button>
+          <button class="choice" type="button" data-enemy aria-pressed="${this.enemyMirror}">적도 같은 부품</button>
           <button class="choice" type="button" data-clear>모두 비우기</button>
         </div>
         <button class="choice primary" type="button" data-done>완료</button>`);
-      panel.querySelectorAll<HTMLElement>('[data-ench]').forEach((b) =>
+      panel.querySelectorAll<HTMLElement>('[data-part]').forEach((b) =>
         b.addEventListener('click', () => {
-          const id = b.dataset.ench as EnchantId;
-          const n = lo.enchants[id] ?? 0;
-          if (!n && enchCount() >= ENCHANT_SLOTS) return this.toast(`개조는 ${ENCHANT_SLOTS}종까지`);
-          const next = (n + 1) % (ENCHANT_MAX_STACK + 1);
-          if (next) lo.enchants[id] = next;
-          else delete lo.enchants[id];
-          draw();
-        }),
-      );
-      panel.querySelectorAll<HTMLElement>('[data-cardpick]').forEach((b) =>
-        b.addEventListener('click', () => {
-          const id = b.dataset.cardpick as CardId;
-          if (lo.cards.includes(id)) lo.cards = lo.cards.filter((x) => x !== id);
-          else if (lo.cards.length >= CARD_SLOTS) return this.toast(`천공 카드는 ${CARD_SLOTS}장까지`);
-          else lo.cards.push(id);
-          draw();
-        }),
-      );
-      panel.querySelectorAll<HTMLElement>('[data-forge]').forEach((b) =>
-        b.addEventListener('click', () => {
-          const ty = b.dataset.forge as PieceType;
-          const next = ((lo.forge[ty] ?? 0) + 1) % (FORGE_MAX + 1);
-          if (next) lo.forge[ty] = next;
-          else delete lo.forge[ty];
+          const id = b.dataset.part as PartId;
+          if (lo.parts.includes(id)) lo.parts = lo.parts.filter((x) => x !== id);
+          else if (lo.parts.length >= PART_SLOTS) return this.toast(`부품은 ${PART_SLOTS}개까지`);
+          else lo.parts.push(id);
           draw();
         }),
       );
@@ -553,7 +399,7 @@ export class Hud implements HudView {
         draw();
       });
       panel.querySelector('[data-clear]')!.addEventListener('click', () => {
-        this.loadout = { enchants: {}, cards: [], forge: {} };
+        this.loadout = { parts: [] };
         this.showLoadout();
       });
       panel.querySelector('[data-done]')!.addEventListener('click', () => this.showStart());
@@ -562,16 +408,11 @@ export class Hud implements HudView {
   }
 
   private loadouts(): [Loadout, Loadout] {
-    const copy = (l: Loadout): Loadout => ({ enchants: { ...l.enchants }, cards: [...l.cards], forge: { ...l.forge } });
-    return [copy(this.loadout), this.enemyMirror ? copy(this.loadout) : { enchants: {}, cards: [], forge: {} }];
+    return [{ parts: [...this.loadout.parts] }, this.enemyMirror ? { parts: [...this.loadout.parts] } : { parts: [] }];
   }
 
   private loadoutSummary(): string {
-    const lo = this.loadout;
-    const e = (Object.entries(lo.enchants) as [EnchantId, number][]).map(([id, n]) => `${ENCHANTS[id].name} ${n}`);
-    const c = lo.cards.map((id) => CARDS[id].name);
-    const f = (Object.entries(lo.forge) as [PieceType, number][]).map(([ty, n]) => `${PIECE_NAMES_KO[ty]}+${n}`);
-    const all = [...e, ...c, ...f];
+    const all = this.loadout.parts.map((id) => PARTS[id].name);
     return all.length ? all.join(' · ') + (this.enemyMirror ? ' (적도 동일)' : '') : '없음';
   }
 
@@ -617,7 +458,6 @@ export class Hud implements HudView {
       this.closeOverlay();
       this.closeScene();
       const weights = AI_STYLES.find((s) => s.id === this.lastStyle)!.weights;
-      this.order = null;
       this.c.start(this.lastScenario, this.lastTier, weights, this.loadouts());
     });
   }
@@ -635,7 +475,6 @@ export class Hud implements HudView {
     panel.querySelector('[data-again]')!.addEventListener('click', () => {
       this.closeOverlay();
       const weights = AI_STYLES.find((s) => s.id === this.lastStyle)!.weights;
-      this.order = null;
       this.c.start(this.lastScenario, this.lastTier, weights, this.loadouts());
     });
   }

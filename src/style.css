@@ -837,3 +837,12 @@ body.busy .scene, body.busy .overlay { pointer-events: none; }
 }
 .fx-shake .actor:first-of-type { animation: actor-in 420ms both, howl 120ms linear 420ms 6; }
 @keyframes howl { 25% { margin-left: -3px; } 75% { margin-left: 3px; } }
+
+/* ---------- 규격 2.0: 각인 · 군단 고르기 ---------- */
+.carve-mark { display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 4px auto; font: 700 26px Galmuri14, sans-serif; color: #e8c060; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px var(--brass); }
+.carve-mark.small { width: 20px; height: 20px; margin: 0; font-size: 13px; }
+.offer .dim-line { color: var(--text2); font-size: 12px; margin: 2px 0 0; }
+.chip.unit-chip { display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 8px; min-height: 52px; text-align: left; }
+.chip.unit-chip img { grid-row: span 2; }
+.offer .arrow { font-size: 20px; color: var(--brass); margin: 0 4px; }
+.card.part { cursor: pointer; }

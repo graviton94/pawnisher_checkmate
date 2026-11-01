@@ -1,5 +1,6 @@
 import { CUT_UI, PROMOTE_UI, promotionFor, type Actor, type Cut, type Line } from '../data/story';
 import { NPCS } from '../data/npcs';
+import { MAX_ASCENSION } from '../data/ascension';
 import { sfx } from '../audio/sfx';
 import { paintPortraits } from './portrait';
 import type { Hud } from './hud';
@@ -85,7 +86,7 @@ export const playCuts = (hud: Hud, cuts: Cut[], done: () => void): void => {
  */
 export const promotionScene = (hud: Hud, pressure: number, choose: (lay: boolean) => void): void => {
   const g = promotionFor(pressure);
-  const free = pressure >= 13;
+  const free = pressure >= MAX_ASCENSION;
   hud.sceneKey = 'promotion';
   const el = hud.openScene(
     `<div class="cut-stage bg-top fx-gold"><div class="cut-bg"></div>
