@@ -125,3 +125,33 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 @keyframes handhint { to { box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #f4d27a, 0 0 14px rgba(244, 210, 122, 0.55); } }
 @media (prefers-reduced-motion: reduce) { .hand.hint .cmd { animation: none; } }
 .pass-tag { display: inline-block; padding: 0 8px; margin-right: 6px; color: #16141c; background: #f4d27a; box-shadow: 0 0 0 2px #000; transform: rotate(-3deg); }
+/* 애착 (D-153): 분대 · 원부 · 유품 · 사망 의식 */
+.hand-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.quirk { color: #ffb36b; font-weight: 700; }
+.scar { color: #c9b8a8; }
+.part-card .quirk-line { font-size: 13px; color: #f2d6b8; }
+.part-card .quirk-line b { color: #ffb36b; }
+.crew-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; margin: 8px 0; }
+.crew-card { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; padding: 8px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; font-size: 14px; }
+.crew-card small { font-size: 12px; color: #d6d0c6; }
+.crew-card .rec-art img { width: 40px; height: 40px; image-rendering: pixelated; }
+.btn.sm { min-height: 44px; padding: 4px 10px; font-size: 14px; }
+.rename { grid-column: 1 / -1; display: flex; gap: 6px; }
+.rename input { flex: 1; min-height: 44px; padding: 4px 8px; font: 16px Galmuri11, sans-serif; color: #fff; background: #121016; border: 0; box-shadow: 0 0 0 2px #c89b3c; }
+.ledger { max-height: 240px; overflow-y: auto; display: grid; gap: 6px; margin: 8px 0; }
+.ledger-row { padding: 6px 8px; font-size: 14px; background: #1c1a22; box-shadow: inset 3px 0 0 #a8323a; }
+.ledger-row small { font-size: 12px; color: #a8a2b0; }
+.row.heirs { flex-wrap: wrap; }
+.deathfx { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; pointer-events: none; background: rgba(6, 5, 8, 0.62); backdrop-filter: grayscale(0.9); animation: deathin 260ms ease-out; transition: opacity 380ms; }
+.deathfx.out { opacity: 0; }
+.deathfx > div { display: grid; justify-items: center; gap: 4px; padding: 14px 22px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #6a2a30; }
+.deathfx b { font-size: 22px; color: #f2ede4; }
+.deathfx i { font-style: normal; font-size: 18px; color: #f4d27a; }
+.deathfx small { font-size: 13px; color: #a8a2b0; }
+@keyframes deathin { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .deathfx { animation: none; } }
+.part-card.recruit { min-height: 0; padding: 10px 10px 10px; gap: 4px; }
+.part-card.recruit .rec-art img { width: 44px; height: 44px; }
+.part-card.recruit b { font-size: 16px; }
+.part-card.recruit .quirk-line { font-size: 12px; line-height: 1.35; }
+.part-card.recruit .kit-cards { font-size: 12px; }

@@ -899,6 +899,11 @@ class BoardScene extends Phaser.Scene {
         const sp = this.sprites.get(h.targetId);
         if (sp) this.floatText(sp, '비상 퓨즈', '#FDE68A');
       }
+      // 죽음의 문턱 (D-153): 이름 붙은 기물이 HP 1로 버틴다
+      for (const h of e.hits.filter((x) => x.door)) {
+        const sp = this.sprites.get(h.targetId);
+        if (sp) this.floatText(sp, '문턱!', '#FCA5A5');
+      }
       const checked = e.hits.find((h) => h.checked);
       if (checked) sfx('check');
       if (checked) this.announce(`체크! ${this.sprites.get(checked.targetId)?.piece.side === 0 ? '내' : '적'} 킹이 HP 1로 버틴다 — 한 대면 끝`);

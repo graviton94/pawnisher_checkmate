@@ -88,6 +88,8 @@ export interface BattleState {
   checkGuard?: number[];
   /** 비상 퓨즈 부품을 쓴 진영 */
   fuseUsed?: [boolean, boolean];
+  /** 죽음의 문턱이 남은 기물 (HP 0이 되면 한 번 HP 1로 버틴다 — 수직 조각 애착, D-153) */
+  doorIds?: number[];
   /** 진영별 대국 기록 (결정타 · 처치 수) */
   record?: [BattleRecord, BattleRecord];
 }
@@ -123,6 +125,8 @@ export interface HitResult {
   checked?: boolean;
   /** 비상 퓨즈 부품으로 HP 1에서 버텼다 */
   fuse?: boolean;
+  /** 죽음의 문턱으로 HP 1에서 버텼다 */
+  door?: boolean;
 }
 
 export type BattleEvent =

@@ -171,3 +171,34 @@ describe('첫 10분 (D-150)', () => {
     expect(hits(1)).toBe(true);
   });
 });
+
+describe('애착 (D-153)', () => {
+  it('분대원은 시리얼 · 이름 · 기벽을 갖고, 기벽이 최대 HP를 바꾼다', async () => {
+    const { makeCrew, QUIRKS } = await import('../src/slice/crew');
+    const { Rng } = await import('../src/engine/rng');
+    const c = makeCrew('P', new Rng(3));
+    expect(c.serial).toMatch(/^#P-\d{3}$/);
+    expect(c.name).toBeTruthy();
+    expect(c.quirk).toBeTruthy();
+    const b = newSliceBattle([{ t: 'K' }, { ...c, quirk: 'overwound' }], ['K', 'P'], START_COMMANDS, 3);
+    const p = b.s.pieces.find((q) => q.id === b.squadIds[1])!;
+    expect(p.maxHp).toBe(Math.round(25 * QUIRKS.overwound.hp!));
+  });
+  it('죽음의 문턱: 분대원은 대국마다 한 번 HP 1로 버틴다 (고집 센 축은 두 번, 새는 보일러는 없음)', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N', quirk: 'stubborn' }, { t: 'B', quirk: 'boiler' }], ['K', 'P'], START_COMMANDS, 3);
+    const [, pid, nid, bid] = b.squadIds;
+    expect(b.s.doorIds!.filter((x) => x === pid)).toHaveLength(1);
+    expect(b.s.doorIds!.filter((x) => x === nid)).toHaveLength(2);
+    expect(b.s.doorIds!.filter((x) => x === bid)).toHaveLength(0);
+  });
+  it('대국 뒤 성장: 처치가 쌓이고 3대국이면 용접 흉터 · 5처치면 별명', async () => {
+    const { growCrew } = await import('../src/slice/battle');
+    const b = newSliceBattle([{ t: 'K' }, { t: 'N' }], ['K', 'P'], START_COMMANDS, 3);
+    const nid = b.squadIds[1];
+    b.pk[nid] = { P: 5 };
+    const c = growCrew(b, { t: 'N', name: '톱니', battles: 2, kills: 0 }, nid, 20);
+    expect(c.kills).toBe(5);
+    expect(c.scars).toContain('용접 흉터');
+    expect(c.nick).toBe('폰 분쇄기');
+  });
+});

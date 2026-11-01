@@ -82,7 +82,14 @@ const applyDamage = (s: BattleState, t: Piece, damage: number, splash = false): 
     t.hp = 1;
     (s.fuseUsed ??= [false, false])[t.side] = true;
   }
-  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(fuse ? { fuse } : {}) };
+  const door = !checked && !fuse && t.hp <= 0 && !!s.doorIds?.includes(t.id);
+  if (door) {
+    t.hp = 1;
+    // 한 번만 지운다 (문턱 두 번인 기물은 id가 두 번 들어 있다)
+    s.doorIds = [...s.doorIds!];
+    s.doorIds.splice(s.doorIds.indexOf(t.id), 1);
+  }
+  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(fuse ? { fuse } : {}), ...(door ? { door } : {}) };
 };
 
 /** 튐 (각인 · 번개 편자): 그 칸 주변 적에게 dmg × ratio */

@@ -47,7 +47,7 @@ describe('수직 조각: 분대 + 명령 덱 (D-142)', () => {
     if (typeof back === 'object') expect(typeof rewind(back)).toBe('string');
     const pawn = findPiece(b.s, b.squadIds[1])!;
     pawn.hp = 9;
-    expect(squadAfter(b, squad)[1]).toEqual({ t: 'P', hp: 9 });
+    expect(squadAfter(b, squad)[1]).toMatchObject({ t: 'P', hp: 9, battles: 1 });
     const next = newSliceBattle(squadAfter(b, squad), ['K'], START_COMMANDS, 8);
     expect(findPiece(next.s, next.squadIds[1])!.hp).toBe(9);
   });
@@ -59,8 +59,8 @@ describe('판 사이 회복', () => {
     const { PIECE_STATS } = await import('../src/data/pieces');
     const r = restSquad([{ t: 'N', hp: 10 }]);
     expect(r[0].hp).toBe(10 + Math.round(PIECE_STATS.N.hp * 0.3));
-    const o = overhaulSquad([{ t: 'K', hp: 50 }], ['P', 'N']);
-    expect(o.revived).toBe('N');
+    const o = overhaulSquad([{ t: 'K', hp: 50 }], [{ t: 'P', name: '못난이' }, { t: 'N', name: '고철이' }]);
+    expect(o.revived?.name).toBe('고철이');
     expect(o.squad).toHaveLength(2);
   });
 });
