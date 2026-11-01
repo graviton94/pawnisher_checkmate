@@ -185,3 +185,4 @@ body.slice .rail .meter { position: static; justify-items: center; align-self: s
 .title-card h1 { margin: 0; font: 700 30px Galmuri14, sans-serif; color: #f4d27a; text-shadow: 3px 3px 0 #000; }
 .title-card .flv { font-size: 15px; }
 .title-how { margin: 4px 0; padding-left: 18px; text-align: left; font-size: 14px; line-height: 1.6; color: #d6d0c6; }
+.title-card .btn { min-width: 120px; white-space: nowrap; }

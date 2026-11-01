@@ -375,6 +375,8 @@ const onEnd = async (): Promise<void> => {
 // ---------- 흐름 ----------
 /** 이번 출하에서 고른 적 구성 (다시 하기는 같은 구성) */
 const enemyPick: Record<number, PieceType[]> = {};
+/** 시작 화면을 넘겼나 (그 전엔 첫 판 안내를 띄우지 않는다) */
+let titleDone = new URLSearchParams(location.search).has('debug');
 const start = (i: number): void => {
   stage = i;
   const def = BATTLES[i];
@@ -388,7 +390,7 @@ const start = (i: number): void => {
   closeOverlay();
   renderer.setup(b.s);
   refresh();
-  window.setTimeout(() => toast(`${def.title} ${def.tell}`, 3000), 300);
+  if (i > 0 || titleDone) window.setTimeout(() => toast(`${def.title} ${def.tell}`, 3000), 300);
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
   $('hand').classList.toggle('hint', i === 0);
 };
@@ -438,7 +440,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
     const head = `<h2><span class="pass-tag">통과</span> ${BATTLES[stage].title} — 나사 +${earned}</h2>`;
     if (reward === 'recruit') return recruitPick(head, () => start(stage + 1));
     if (reward === 'kit') return kitPick(head, () => start(stage + 1));
-    if (reward === 'part') return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => start(stage + 1));
+    if (reward === 'part') return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen));
     if (stage + 1 >= BATTLES.length) {
       return runEnd(true);
     }
@@ -768,9 +770,10 @@ const runEnd = (cleared: boolean): void => {
 /** 시작 화면 (한 번 누르면 바로 첫 판 — 글 안내는 ? 버튼에) */
 const title = (): void => {
   const el = openOverlay(`<div class="title-card"><p class="eyebrow">시험판</p><h1>Pawnisher : Checkmate</h1><p class="flv">체스 규칙을 부수는 태엽 분대</p>
-    <ul class="title-how"><li>카드를 고르고, 기물을 움직이면 그 자리에서 친다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>적 킹을 쓰러뜨리면 승리합니다. 대국 다섯을 넘으십시오.</li></ul>
+    <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>적 킹을 쓰러뜨리면 승리합니다. 대국 다섯을 넘으십시오.</li></ul>
     <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn brass" type="button" data-go>출하 시작</button></div></div>`);
   el.querySelector('[data-go]')!.addEventListener('click', () => {
+    titleDone = true;
     closeOverlay();
     sfx('submit');
     window.setTimeout(() => toast(`${BATTLES[0].title} ${BATTLES[0].tell}`, 3200), 200);

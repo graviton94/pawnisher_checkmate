@@ -7,6 +7,8 @@
   <link rel="icon" type="image/png" href="./favicon.png">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <title>Pawnisher : Checkmate</title>
+  <!-- 앱(Capacitor)에서는 리뉴얼 시험판(수직 조각)이 첫 화면이다 — 테스트 유저판 (D-160). 웹은 그대로, ?legacy면 2.0 -->
+  <script>if (window.Capacitor && !/[?&]legacy/.test(location.search)) location.replace('slice.html');</script>
 </head>
 <body>
   <div id="app">
