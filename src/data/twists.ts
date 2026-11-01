@@ -34,4 +34,4 @@ export const BOSS_TWIST: Record<BossId | 'final', TwistId> = {
   final: 'gild',
 };
 
-export const TWIST_FX = { lensCut: 0.5, wallCut: 0.6, lineMax: 4, papersMax: 3, gildCut: 0.5 };
+export const TWIST_FX = { lensCut: 0.5, wallCut: 0.7, lineMax: 4, papersMax: 3, gildCut: 0.5 };

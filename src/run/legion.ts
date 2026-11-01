@@ -1,7 +1,7 @@
 import { ASC, ascOn } from '../data/ascension';
 import { FORESIGHT_UNTIL_ASCENSION, defaultRules } from '../data/battle';
 import { CARVE_IDS } from '../data/carves';
-import { BOSSES, BOSS_SCALE, ELITE, ENEMY_SCALE, FINAL_BOSS, THREATS, TOTAL_FLOORS, TYPE_MAX, actOf, boardFor, earlyKingAtk, earlyKingHp, enemyCount, enemyTier, type BossId, type NodeKind, type ThreatId } from '../data/run';
+import { BOSSES, BOSS_ACT1_SIZE, BOSS_SCALE, MOLDS_COUNT, ELITE, ENEMY_SCALE, FINAL_BOSS, THREATS, TOTAL_FLOORS, TYPE_MAX, actOf, boardFor, earlyKingAtk, earlyKingHp, enemyCount, enemyTier, type BossId, type NodeKind, type ThreatId } from '../data/run';
 import { BOSS_TWIST, type TwistId } from '../data/twists';
 import { Rng } from '../engine/rng';
 import { createBattle, toUnits, type Deck, type Scale, type Unit } from '../engine/setup';
@@ -92,7 +92,11 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
     scale = mul(scale, bs.hp * (ascOn(ascension, 'bossHp') ? ASC.bossHp.mult : 1) * (final && ascOn(ascension, 'final') ? ASC.final.hp : 1), bs.atk);
     const twist = BOSS_TWIST[id];
     // 거푸집 상인: 적 기물마다 각인 하나 (킹 제외)
-    const deck = toUnits(def.deck).map((u) => (twist === 'molds' && u.t !== 'K' ? { ...u, carve: CARVE_IDS[rng.int(CARVE_IDS.length)] } : u));
+    const base = toUnits(def.deck);
+    // 1공정 반장은 군단 앞쪽 일부만 (킹 포함)
+    const deck = act === 1 ? base.slice(0, BOSS_ACT1_SIZE) : base;
+    // 거푸집 상인: 적 기물 몇에 각인 하나씩 (킹 제외)
+    if (twist === 'molds') for (const u of deck.filter((x) => x.t !== 'K').slice(0, MOLDS_COUNT)) u.carve = CARVE_IDS[rng.int(CARVE_IDS.length)];
     return { kind, name: `${def.name} — ${def.title}`, ...boardFor(floor, 'boss'), deck, tier, boss: id, twist, scale, seed, floor, ascension };
   }
 

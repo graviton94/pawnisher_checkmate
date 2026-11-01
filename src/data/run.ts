@@ -46,7 +46,7 @@ export const boardFor = (floor: number, kind: NodeKind = 'battle'): { width: num
 };
 
 // ---------- 보상 ----------
-export const GOLD_REWARD = { battle: 25, elite: 50, boss: 90, perFloor: 3 };
+export const GOLD_REWARD = { battle: 30, elite: 60, boss: 100, perFloor: 3 };
 export const battleGold = (floor: number, kind: 'battle' | 'elite' | 'boss'): number => GOLD_REWARD[kind] + inAct(floor) * GOLD_REWARD.perFloor;
 /** 3지선다 건너뛰기 보상 */
 export const SKIP_GOLD = 10;
@@ -92,7 +92,7 @@ export const SHOP = {
   actPriceStep: 0.25,
   /** 판매가 = 가치 × 이 배율 */
   sellMult: 0.5,
-  partPrice: { common: 70, rare: 100, unique: 140, epic: 220 } as Record<Grade, number>,
+  partPrice: { common: 60, rare: 90, unique: 130, epic: 200 } as Record<Grade, number>,
   reroll: 15,
   rerollStep: 5,
 };
@@ -108,8 +108,8 @@ export const enemyCount = (floor: number): number => ENEMY_COUNT[actOf(floor) - 
 /** 적 수치 배율 (정적 디자인 — 적은 수치로만 강해진다) */
 export const ENEMY_SCALE = [
   { hp: 1, atk: 1 },
-  { hp: 1.2, atk: 1.12 },
-  { hp: 1.45, atk: 1.25 },
+  { hp: 1.15, atk: 1.08 },
+  { hp: 1.28, atk: 1.14 },
 ];
 /** 1공정 앞쪽 적 킹은 약하다 (작은 군단으로 100 HP 킹을 끝내지 못하는 동전 던지기 방지) */
 export const earlyKingHp = (floor: number): number => (floor <= 2 ? 0.5 : floor <= 4 ? 0.75 : 1);
@@ -139,24 +139,28 @@ export const BOSSES: Record<BossId, BossDef> = {
   bishop: { name: '비숍 반장', title: '비숍 넷', role: '조립 라인의 렌즈', quote: '삐뚤어진 건 빛에 다 보여.', deck: ['K', 'B', 'B', 'B', 'B', 'P', 'P', 'P', 'R'] },
   rook: { name: '룩 반장', title: '룩 셋', role: '검수 라인의 마지막 문', quote: '여기서 끝이다.', deck: ['K', 'R', 'R', 'R', 'P', 'P', 'P', 'P', 'B'] },
   pawn: { name: '폰 반장', title: '폰 여덟', role: '물량 라인의 감독', quote: '하나 부서지면 둘 찍는다.', deck: ['K', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'R'] },
-  variant: { name: '이형 반장', title: '각인 가득', role: '규격 외 부품 감독', quote: '규격? 그건 네 사정이고.', deck: ['K', 'Q', 'R', 'B', 'N', 'P', 'P', 'P', 'P'] },
-  affix: { name: '검문 반장', title: '서류 셋', role: '검문소의 끝', quote: '서류는 셋. 너는 셋까지만 둔다.', deck: ['K', 'Q', 'R', 'B', 'N', 'N', 'P', 'P', 'P'] },
+  variant: { name: '이형 반장', title: '각인 셋', role: '규격 외 부품 감독', quote: '규격? 그건 네 사정이고.', deck: ['K', 'B', 'N', 'P', 'P', 'P', 'R', 'Q', 'P'] },
+  affix: { name: '검문 반장', title: '서류 셋', role: '검문소의 끝', quote: '서류는 셋. 너는 셋까지만 둔다.', deck: ['K', 'N', 'N', 'B', 'P', 'P', 'R', 'Q', 'P'] },
 };
 
 /** 도금왕 (D-132) */
 export const FINAL_BOSS: BossDef = {
   name: '도금왕',
-  title: '퀸 둘 · 금칠 근위대',
+  title: '퀸 · 금칠 근위대',
   role: '금을 칠한 첫 번째 킹',
   quote: '그 왕관, 종이로군.',
-  deck: ['K', 'Q', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P'],
+  deck: ['K', 'Q', 'R', 'R', 'B', 'N', 'P', 'P', 'P', 'P'],
 };
 /** 반장 수치: 공정 배율 위에 더 (2공정 반장은 조금 더 세다) */
 export const BOSS_SCALE = [
+  { hp: 0.9, atk: 0.9 },
   { hp: 1.05, atk: 1.0 },
-  { hp: 1.15, atk: 1.08 },
-  { hp: 1.3, atk: 1.15 },
+  { hp: 1.05, atk: 1.0 },
 ];
+/** 1공정 반장은 군단 앞쪽 7기만 데려온다 (B1: 9~10기 반장에 첫 반장 36%) */
+export const BOSS_ACT1_SIZE = 7;
+/** 거푸집 상인: 각인을 받는 적 기물 수 (B1: 전부 → 이형 반장 6%) */
+export const MOLDS_COUNT = 3;
 
 /** 오늘의 출하 (D-122): 압력 고정 */
 export const DAILY = { ascension: 1 };

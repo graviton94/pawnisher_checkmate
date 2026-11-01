@@ -16,12 +16,12 @@ export interface CarveDef {
 }
 
 export const CARVES: Record<CarveId, CarveDef> = {
-  haste: { name: '태엽 각인', mark: '⚡', desc: '이 기물의 이동 태엽 −1.', price: 70 },
-  cross: { name: '십자 튐 각인', mark: '✚', desc: '착지해 친 피해의 50%가 착지 칸 상하좌우 적에게 튄다.', price: 60 },
-  diag: { name: '대각 튐 각인', mark: '✖', desc: '착지해 친 피해의 50%가 착지 칸 대각선 네 칸 적에게 튄다.', price: 60 },
-  plate: { name: '철갑 각인', mark: '◆', desc: '받는 피해 −30%.', price: 55 },
-  pierce: { name: '관통 각인', mark: '➤', desc: '공격이 첫 적을 지나 한 기 더 맞힌다 (비숍 · 룩 · 퀸).', price: 60 },
-  forged: { name: '단조 각인', mark: '★', desc: '공격 +30% · 최대 HP +30%.', price: 65 },
+  haste: { name: '태엽 각인', mark: '⚡', desc: '이 기물의 이동 태엽 −1.', price: 45 },
+  cross: { name: '십자 튐 각인', mark: '✚', desc: '착지해 친 피해의 50%가 착지 칸 상하좌우 적에게 튄다.', price: 50 },
+  diag: { name: '대각 튐 각인', mark: '✖', desc: '착지해 친 피해의 50%가 착지 칸 대각선 네 칸 적에게 튄다.', price: 50 },
+  plate: { name: '철갑 각인', mark: '◆', desc: '받는 피해 −30%.', price: 45 },
+  pierce: { name: '관통 각인', mark: '➤', desc: '공격이 첫 적을 지나 한 기 더 맞힌다 (비숍 · 룩 · 퀸).', price: 50 },
+  forged: { name: '단조 각인', mark: '★', desc: '공격 +30% · 최대 HP +30%.', price: 55 },
 };
 
 export const CARVE_IDS = Object.keys(CARVES) as CarveId[];
