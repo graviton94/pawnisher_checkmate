@@ -308,3 +308,18 @@ export const squadAfter = (b: SliceBattle, squad: Squad[]): Squad[] =>
     const p = findPiece(b.s, b.squadIds[i]);
     return p ? [{ t: p.type, hp: p.hp }] : [];
   });
+
+/** 판 사이 회복 (사용자: 누적되면 너무 약해진다): 살아남은 분대는 최대 HP의 일부를 되찾는다 */
+export const REST = { heal: 0.3, reviveHp: 0.5, overhaul: 0.25 };
+
+/** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */
+export const restSquad = (squad: Squad[]): Squad[] => squad.map((u) => ({ t: u.t, hp: Math.min(maxHpOf(u.t), (u.hp ?? maxHpOf(u.t)) + Math.round(maxHpOf(u.t) * REST.heal)) }));
+
+/** 정비 (보상 대신 고를 수 있다): 쓰러진 기물 하나를 HP 50%로 되살리고, 모두 25% 더 */
+export const overhaulSquad = (squad: Squad[], fallen: PieceType[]): { squad: Squad[]; revived?: PieceType } => {
+  const revived = [...fallen].sort((a, b) => PIECE_STATS[b].value - PIECE_STATS[a].value)[0];
+  const healed = squad.map((u) => ({ t: u.t, hp: Math.min(maxHpOf(u.t), (u.hp ?? maxHpOf(u.t)) + Math.round(maxHpOf(u.t) * REST.overhaul)) }));
+  return revived ? { squad: [...healed, { t: revived, hp: Math.round(maxHpOf(revived) * REST.reviveHp) }], revived } : { squad: healed };
+};
+
+const maxHpOf = (t: PieceType) => PIECE_STATS[t].hp;

@@ -9,7 +9,8 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { COMMANDS, REWARD_COMMANDS, SLICE, START_COMMANDS, type CommandId } from './cards';
-import { cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, playCard, previewPlay, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { REST, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
 
 /**
@@ -18,6 +19,9 @@ import { Rng } from '../engine/rng';
  * 붉게 깜빡이는 칸 = 적이 예고한 칠 칸. 붉은 화살표 · 번호 = 이번에 움직일 적.
  */
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+/** 정비가 먼저 되살릴 기물 순서 (값이 큰 것부터) */
+const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3, P: 1 };
 
 const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string }[] = [
   { enemy: ['K', 'P', 'P', 'N'], kingHp: 0.6, title: '1판 — 주조 공정', tell: '* 흑 세트 셋. 붉은 칸이 다음에 맞을 자리다.' },
@@ -96,37 +100,65 @@ const model = (): BoardModel => {
 const cardHtml = (id: CommandId, i: number): string => {
   const c = COMMANDS[id];
   const pieces = cardPieces(b, i);
-  const off = c.cost > b.ap || (c.kind !== 'draw' && !pieces.length) || busy || b.s.winner !== null;
-  const who = c.who === 'any' ? '<span class="who any">아무나</span>' : pieceImg(c.who, 0, 'small', 22);
-  return `<button type="button" class="cmd${selCard === i ? ' armed' : ''}${off ? ' off' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
-    <span class="cost">${c.cost}</span>${who}<b>${c.name}</b><small>${c.desc}</small></button>`;
+  const poor = c.cost > b.ap;
+  const none = c.kind !== 'draw' && !pieces.length;
+  const off = poor || none || busy || b.s.winner !== null;
+  const art = c.who === 'any' ? '<span class="art any">★</span>' : `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
+  const why = poor ? `<em>태엽 ${c.cost} 필요</em>` : none && !busy ? '<em>움직일 기물 없음</em>' : '';
+  return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
+    <span class="cost" aria-label="태엽 ${c.cost}">${c.cost}</span>${art}<span class="txt"><b>${c.name}</b><small>${c.desc}</small>${why}</span></button>`;
 };
+
+/** 연출 직전 화면: 바뀌기 전 모습 그대로 (피해 숫자 · 이동이 제대로 보이게) */
+const showBefore = (before: BattleState): void =>
+  renderer.render({ state: before, virtual: before, plan: [], pending: null, pendingPos: null, selectedId: null, destinations: [], hitDests: [], preview: [], removed: [], threat: null, intent: null });
+
+/** 이번 턴 준 피해 합계 (계기판 · 턴 합계) */
+let turnDmg = 0;
+const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number =>
+  events.reduce((a, e) => (e.type === 'attack' ? a + e.hits.reduce((x, h) => x + (before.pieces.find((p) => p.id === h.targetId)?.side !== side ? h.damage : 0), 0) : a), 0);
 
 const refresh = (): void => {
   renderer.render(model());
   $('turn-label').textContent = b.s.winner !== null ? '대국 끝' : busy ? '적 차례' : `${b.turn}턴 · 내 차례`;
   $('turn-label').classList.toggle('enemy', busy);
-  $('hand').innerHTML = b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>';
+  $('hand').innerHTML = `<p class="hand-head">손패 ${b.hand.length} · 덱 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>'}`;
   $('vials').innerHTML = Array.from({ length: SLICE.ap }, (_, i) => `<img class="${i < b.ap ? 'full' : 'spent'}" src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt="">`).join('');
   $('coins').innerHTML = `<span class="lbl">나사</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b>${b.coins * SLICE.coinValue}</b>`;
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewound || busy || b.s.winner !== null;
+  $('btn-rewind').innerHTML = `◀◀ 되감기 <small>${b.rewound ? '0' : '1'}/1</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
   meter();
 };
 
-/** 연쇄 계기판 (Balatro식): 이번 턴 처치가 쌓일수록 크게 */
+/** 연쇄 계기판 (Balatro식): 이번 턴 피해 합계와 배수 — 처치가 쌓일수록 크고 뜨겁게 */
 const meter = (): void => {
   const m = $('meter');
-  if (!b.kills) {
+  if (!turnDmg && !b.kills) {
     m.hidden = true;
     return;
   }
   m.hidden = false;
   m.className = `meter lv${Math.min(b.kills, 4)}`;
-  m.innerHTML = `<small>연쇄 ${b.kills}</small><b>×${chainMult(b.kills).toFixed(2)}</b>`;
-  m.classList.remove('pop');
-  void m.offsetWidth;
-  m.classList.add('pop');
+  m.innerHTML = `<small>이번 턴</small><span class="dmg">−${turnDmg}</span><b>연쇄 ${b.kills} · ×${chainMult(b.kills).toFixed(2)}</b>`;
+};
+
+/** 처치 순간 (연쇄): 판 한가운데 큰 글자 + 판 흔들림 + 음이 올라간다 */
+const chainPop = (kills: number): void => {
+  const el = document.createElement('div');
+  el.className = `chainpop lv${Math.min(kills, 4)}`;
+  el.innerHTML = `<small>연쇄 ${kills}</small>×${chainMult(kills).toFixed(2)}${kills >= 3 ? '!' : ''}`;
+  // 판 캔버스 위로 (body에 고정 배치, 판 한가운데)
+  const r = $('board').getBoundingClientRect();
+  el.style.left = `${r.left + r.width / 2}px`;
+  el.style.top = `${r.top + r.height * 0.42}px`;
+  document.body.appendChild(el);
+  window.setTimeout(() => el.remove(), 900);
+  $('board').classList.remove('jolt');
+  void $('board').offsetWidth;
+  $('board').classList.add(`jolt`);
+  sfx('kill', kills + 2);
+  window.setTimeout(() => sfx('coin', kills + 4), 120);
 };
 
 // ---------- 조작 ----------
@@ -197,12 +229,17 @@ const run = async (i: number, pieceId: number, to?: Pos): Promise<void> => {
   selCard = selPiece = null;
   busy = true;
   refresh();
+  showBefore(r.before);
   await renderer.play(r.before, r.events);
   busy = false;
+  turnDmg += dealt(r.events, 0, r.before);
   renderer.setup(b.s);
   refresh();
+  if (b.kills > prevKills) chainPop(b.kills);
+  prevKills = b.kills;
   if (b.s.winner !== null) return finish();
 };
+let prevKills = 0;
 
 const onEnd = async (): Promise<void> => {
   if (busy || b.s.winner !== null) return;
@@ -215,8 +252,13 @@ const onEnd = async (): Promise<void> => {
   }
   $('btn-end').classList.remove('warn');
   selCard = selPiece = null;
+  // 턴 합계 (Balatro식): 이번 턴 준 피해가 세어 올라간다
+  if (turnDmg > 0) await renderer.summary(0, turnDmg, prevKills);
+  turnDmg = 0;
+  prevKills = 0;
   busy = true;
   refresh();
+  showBefore(r.before);
   await renderer.play(r.before, r.events);
   busy = false;
   renderer.setup(b.s);
@@ -232,6 +274,8 @@ const start = (i: number): void => {
   b = newSliceBattle(squad, def.enemy, deck, 100 + i * 17 + Math.floor(Math.random() * 1000), { enemyKingHp: def.kingHp });
   selCard = selPiece = null;
   busy = false;
+  turnDmg = 0;
+  prevKills = 0;
   closeOverlay();
   renderer.setup(b.s);
   refresh();
@@ -255,7 +299,12 @@ const finish = (): void => {
     }
     const earned = b.coins * SLICE.coinValue;
     gold += earned;
-    squad = squadAfter(b, squad);
+    const before = squad;
+    const survived = squadAfter(b, squad);
+    const fallen = before.map((u) => u.t);
+    for (const u of survived) fallen.splice(fallen.indexOf(u.t), 1);
+    // 판 사이 기본 회복: 남은 분대 최대 HP의 30%
+    squad = restSquad(survived);
     if (stage + 1 >= BATTLES.length) {
       openOverlay(`<div class="stamp-big good">통과</div><h2>수직 조각 끝</h2><p>* 남은 분대 ${squad.length}기 · 나사 ${gold} · 덱 ${deck.length}장.</p><p class="dim">손맛이 어땠는지 — 카드 · 붉은 칸 · 연쇄 · 되감기 — 한 줄씩 알려 주면 다음 조각에 반영한다.</p><div class="row"><button class="btn brass" type="button" data-restart>처음부터</button></div>`)
         .querySelector('[data-restart]')!
@@ -277,8 +326,11 @@ const finish = (): void => {
           return `<button type="button" class="cmd big" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<b>${c.name}</b><small>${c.desc}</small></button>`;
         })
         .join('')}</div>
-      <p class="dim">분대: ${squad.map((u) => `${PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')} — HP는 다음 판으로 이어진다.</p>
-      <div class="row"><button class="btn" type="button" data-skip>건너뛰기</button></div>`);
+      <p class="rest-line">* 쉬는 사이 기름칠 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((t) => PIECE_NAMES_KO[t]).join(' · ')}</span>` : ''}</p>
+      <div class="row">
+        <button class="btn" type="button" data-skip>건너뛰기</button>
+        <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${PIECE_NAMES_KO[[...fallen].sort((a, c) => (COST_ORDER[c] ?? 0) - (COST_ORDER[a] ?? 0))[0]]}을 HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}% (카드 대신)</button>
+      </div>`);
     el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
       btn.addEventListener('click', () => {
         deck.push(btn.dataset.pick as CommandId);
@@ -288,6 +340,13 @@ const finish = (): void => {
       }),
     );
     el.querySelector('[data-skip]')!.addEventListener('click', () => start(stage + 1));
+    el.querySelector('[data-overhaul]')!.addEventListener('click', () => {
+      const o = overhaulSquad(squad, fallen);
+      squad = o.squad;
+      sfx('awaken');
+      toast(o.revived ? `* ${PIECE_NAMES_KO[o.revived]}이(가) 다시 선다.` : '* 분대가 기름을 먹는다.');
+      window.setTimeout(() => start(stage + 1), 500);
+    });
   }, 700);
 };
 
@@ -321,12 +380,25 @@ $('btn-end').addEventListener('click', () => void onEnd());
 $('btn-rewind').addEventListener('click', () => {
   const r = rewind(b);
   if (typeof r === 'string') return toast(r);
-  b = r;
-  selCard = selPiece = null;
-  sfx('tap');
-  renderer.setup(b.s);
+  // 되감기 연출: 테이프가 거꾸로 감기며 화면이 청록으로 번지고, 판이 이번 턴 처음으로 돌아간다
+  busy = true;
   refresh();
-  toast('* 테이프가 거꾸로 돈다. 이번 턴 처음으로.');
+  const fx = document.createElement('div');
+  fx.className = 'tapefx';
+  fx.innerHTML = '<span>◀◀ 되감기</span>';
+  document.body.appendChild(fx);
+  [0, 90, 180, 270].forEach((ms, k) => window.setTimeout(() => sfx('tap', 8 - k * 2), ms));
+  window.setTimeout(() => {
+    b = r;
+    turnDmg = 0;
+    prevKills = b.kills;
+    selCard = selPiece = null;
+    busy = false;
+    renderer.setup(b.s);
+    refresh();
+    sfx('awaken');
+  }, 420);
+  window.setTimeout(() => fx.remove(), 800);
 });
 $('btn-help').addEventListener('click', help);
 
