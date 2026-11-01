@@ -51,16 +51,17 @@ export interface CommandDef {
   /** 이번 공격에만 붙는 각인 효과 */
   carve?: CarveId;
   amount?: number;
+  /** 효과 한 문장 (기본 이동 카드는 비운다 — 행마 그림과 판 위 표시가 가르친다, D-159) */
   desc: string;
   /** 각주 (칭호 · 짧은 대사 — 비장하게, D-158) */
   flavor?: string;
 }
 
 export const COMMANDS: Record<CommandId, CommandDef> = {
-  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '앞으로 나아가 대각선 앞을 친다.', flavor: '작은 개척자' },
-  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '뛰어넘어 내려앉고, 그 자리에서 친다.', flavor: '뛰어넘고, 짓밟는 자.' },
-  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '사선으로 나아가 사선 끝까지 친다.', flavor: '성스러운 빛의 심판자' },
-  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '한 칸 움직여 둘레를 친다.', flavor: '화려한 왕관, 잔혹한 무게' },
+  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '', flavor: '작은 개척자' },
+  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '', flavor: '뛰어넘고, 짓밟는 자.' },
+  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '', flavor: '성스러운 빛의 심판자' },
+  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '', flavor: '화려한 왕관, 잔혹한 무게' },
   order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '원하는 기물에게 명령한다.' },
   pierceDiag: { axis: 'chain', name: '관통 사선', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 1기까지)' },
   crossLeap: { axis: 'cav', name: '십자 도약', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
@@ -71,7 +72,7 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   kingBlow: { axis: 'king', name: '왕의 일격', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (×2)' },
   splashDiag: { axis: 'chain', name: '대각 튐', cost: 2, who: 'B', kind: 'move', carve: 'diag', desc: '착지한 자리에서 사선으로 파편이 튄다. (대각 50%)' },
   smash: { axis: 'chain', name: '강타', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '온 힘을 실어 내려친다. (×1.5)' },
-  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '곧게 나아가 줄 끝까지 친다.', flavor: '살아 움직이는 요새' },
+  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '', flavor: '살아 움직이는 요새' },
   // ---- 빌드 축 카드 (D-144) ----
   rebound: { axis: 'cav', name: '재도약', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '처치 후 한 번 더 도약한다. (이번 턴 처치했으면 태엽 0)' },
   hoofKick: { axis: 'cav', name: '말발굽', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '짓밟고 다음 명령을 받는다. (처치 시 카드 +1)' },
