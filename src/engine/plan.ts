@@ -234,12 +234,21 @@ const orderCap = (s: BattleState, side: Side): number => (side === 0 && s.twist 
  * 계획을 예약 순서대로 실행한다: #1 이동 → #1 공격 → #2 이동 → #2 공격 … (GDD 1장 §1.5).
  * 계획 검증, 미리보기, AI, 실제 실행이 모두 이 함수 하나를 쓴다. 입력 상태는 바꾸지 않는다.
  */
-export const simulate = (input: BattleState, plan: Plan): Simulation => {
+export interface SimOptions {
+  /** 이번 턴 앞서 처치한 수 (명령 카드가 한 장씩 실행될 때 연쇄 보너스를 이어 간다) */
+  kills?: number;
+  /** 이 계획 전체에 곱할 공격 배율 (카드 효과) */
+  mult?: number;
+  /** 태엽 검사를 건너뛴다 (카드가 태엽을 따로 셀 때) */
+  freeAp?: boolean;
+}
+
+export const simulate = (input: BattleState, plan: Plan, opts: SimOptions = {}): Simulation => {
   const s = cloneState(input);
   const side = input.turnSide;
   s.checkGuard = s.pieces.filter((p) => p.type === 'K' && p.side !== side && p.hp > 1).map((p) => p.id);
   s.relaunch = [];
-  const ctx: TurnCtx = { side, events: [], removed: [], acted: new Set(), kills: 0, order: 0, once: new Set(), queenAp: 0 };
+  const ctx: TurnCtx = { side, events: [], removed: [], acted: new Set(), kills: opts.kills ?? 0, order: 0, once: new Set(), queenAp: 0 };
   let apUsed = 0;
   let prevKilled = false;
   const fail = (reason: string): Simulation => ({ ok: false, reason, state: s, events: ctx.events, apUsed, removed: ctx.removed });
@@ -254,7 +263,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     if (ctx.acted.has(piece.id)) return fail('이미 움직인 기물');
     if (!legalMoves(s, piece).some((p) => samePos(p, step.to))) return fail('갈 수 없는 칸');
     const cost = moveCost(s, piece);
-    if (apUsed + cost > availableAp(s)) return fail('태엽 부족');
+    if (!opts.freeAp && apUsed + cost > availableAp(s)) return fail('태엽 부족');
     apUsed += cost;
 
     const from = { x: piece.x, y: piece.y };
@@ -265,7 +274,7 @@ export const simulate = (input: BattleState, plan: Plan): Simulation => {
     ctx.acted.add(piece.id);
 
     // 이번 명령의 배율: 선봉 톱니 · 마무리 망치 · 연쇄 지휘
-    let mult = 1;
+    let mult = opts.mult ?? 1;
     if (order === 0 && part(s, side, 'firstCog')) mult *= PART_FX.firstCog;
     if (order >= PART_FX.lastFrom && part(s, side, 'lastHammer')) mult *= PART_FX.lastHammer;
     if (prevKilled && part(s, side, 'command')) mult *= PART_FX.command;

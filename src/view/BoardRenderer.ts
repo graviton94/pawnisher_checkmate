@@ -532,6 +532,12 @@ class BoardScene extends Phaser.Scene {
     playHitSpark(this, ts.root.x + t / 2, ts.root.y + t * 0.45, t, ts.piece.side === 0 ? 1 : 0, this.speed);
     const dealt = ts.piece.hp - h.hpAfter;
     const before = ts.piece.hp;
+    // 히트스톱 (D-142): 맞은 몫만큼 화면이 잠깐 멈춘다 — 킹 처치는 길게
+    if (!this.calm) {
+      const stop = h.killed && ts.piece.type === 'K' ? 220 : Math.min(130, 40 + (dealt / ts.piece.maxHp) * 120);
+      this.tweens.timeScale = 0.05;
+      window.setTimeout(() => (this.tweens.timeScale = 1), stop);
+    }
     this.drawHp(ts, h.hpAfter, h.hpAfter);
     ts.piece = { ...ts.piece, hp: h.hpAfter };
     const d = t / BOARD_DOTS;
