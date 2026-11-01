@@ -1,7 +1,7 @@
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
-import { LAST_STRIKE_MULT } from '../data/battle';
-import { buildGrid, chebyshev, findPiece, forward, kingOf } from '../engine/board';
-import { attackTargets, damageOf, isStrikeMove, legalMoves } from '../engine/rules';
+import { buildGrid, forward, kingOf } from '../engine/board';
+import { attackTargets, damageOf, legalMoves } from '../engine/rules';
+import { moveCost } from '../engine/plan';
 import { otherSide, type BattleState, type Piece, type Side } from '../engine/types';
 
 /** 평가 가중치 묶음 = 군단 성향 (GDD 4장 §4.4) */
@@ -18,8 +18,8 @@ export interface Weights {
   advance: number;
   /** 폰 승급 잠재력 — 끝줄에 가까운 폰일수록 크게 (내 폰은 밀고, 상대 폰은 막는다) */
   promotion: number;
-  /** 요충지 점유·접근 (GDD 5장) */
-  stronghold: number;
+  /** (2.0에서 요충지가 빠져 쓰지 않는다 — 저장된 가중치 호환용) */
+  stronghold?: number;
   /** 살아 있는 것 자체의 가치 (기물 가치 배수). 깎는 것과 처치하는 것의 차이를 키운다 */
   kill: number;
 }
@@ -61,11 +61,10 @@ export const threatEstimate = (s: BattleState, side: Side): number => {
     for (const to of legalMoves(s, p, grid)) {
       const ghost = { ...p, x: to.x, y: to.y };
       let worth = 0;
-      const mult = isStrikeMove(s, p, to) ? LAST_STRIKE_MULT : 1;
-      for (const t of attackTargets(s, ghost, grid)) worth += hitWorth(s, t, damageOf(s, ghost, t, mult));
+      for (const t of attackTargets(s, ghost, grid)) worth += hitWorth(s, t, damageOf(s, ghost, t));
       if (worth > best) best = worth;
     }
-    if (best > 0) options.push({ worth: best, ap: PIECE_STATS[p.type].ap });
+    if (best > 0) options.push({ worth: best, ap: Math.max(1, moveCost(s, p)) });
   }
   options.sort((a, b) => b.worth / b.ap - a.worth / a.ap);
   let ap = BASE_AP;
@@ -120,19 +119,7 @@ export const evaluate = (s: BattleState, side: Side, w: Weights): number => {
     } else material -= v;
   }
 
-  // 요충지: 올라선 기물은 유지 카운트만큼, 그 외에는 가장 가까운 기물의 거리만큼
-  let stronghold = 0;
-  const sh = s.stronghold;
-  if (sh) {
-    const holder = sh.holderId !== null ? findPiece(s, sh.holderId) : undefined;
-    if (holder) stronghold += (holder.side === side ? 1 : -1) * 25 * (sh.hold + 1);
-    const near = (sd: Side) =>
-      s.pieces.filter((p) => p.side === sd && p.type !== 'K').reduce((m, p) => Math.min(m, chebyshev(p, sh)), 99);
-    stronghold += (near(enemy) - near(side)) * 2;
-  }
-
   return (
-    w.stronghold * stronghold +
     w.enemyKing * (1 - theirKing.hp / theirKing.maxHp) * 100 -
     w.ownKing * (1 - myKing.hp / myKing.maxHp) * 100 +
     w.material * material -

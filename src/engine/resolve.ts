@@ -20,7 +20,7 @@ export const resolveTurn = (input: BattleState, plan: Plan): TurnResult => {
   // 정체 압박 (F1): 이번 턴에 누구든 피해를 줬는지 기록한다
   if (events.some((e) => e.type === 'attack' && e.hits.some((h) => h.damage > 0))) s.stall = { count: s.stall?.count ?? 0, dealt: true };
   if (s.winner === null) {
-    endTurn(s, sim.apUsed);
+    endTurn(s);
     s.turnSide = otherSide(s.turnSide);
     s.turnNumber += 1;
     beginTurn(s, events);

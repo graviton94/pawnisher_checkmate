@@ -1,16 +1,21 @@
-import { LINE_FX } from '../data/lines';
-import { CONTRACT_FX } from '../data/contracts';
-import { LEGEND_FX } from '../data/legends';
-import { DEFECT } from '../data/defects';
-import { LANE_BLOCK, type FormationId } from '../data/formations';
 import { defaultRules } from '../data/battle';
-import { FORGE_GAIN, FORGE_MASTERY_SHIELD, FORGE_MAX } from '../data/forge';
+import { CARVE_FX, type CarveId } from '../data/carves';
+import { PART_FX } from '../data/parts';
 import { PIECE_STATS } from '../data/pieces';
-import { VARIANTS } from '../data/variants';
+import type { TwistId } from '../data/twists';
 import type { BattleRules, BattleState, Loadout, Piece, PieceType, Side } from './types';
 
-/** 덱 = 보유 기물 유형 목록 (GDD 6장 §6.1) */
-export type Deck = PieceType[];
+/** 군단의 기물 하나: 유형 + 각인 (+ 검문! 정예) */
+export interface Unit {
+  t: PieceType;
+  carve?: CarveId;
+  elite?: boolean;
+}
+
+/** 덱 = 보유 기물 목록. 유형만 적어도 된다 (각인 없음) */
+export type Deck = (PieceType | Unit)[];
+
+export const toUnits = (deck: Deck): Unit[] => deck.map((d) => (typeof d === 'string' ? { t: d } : d));
 
 /** 보드 폭별 후열 기본 순서 (GDD 6장 §6.4). null = 한도 초과 기물용 추가 슬롯 */
 const BACK_ROW: Record<number, (PieceType | null)[]> = {
@@ -19,7 +24,7 @@ const BACK_ROW: Record<number, (PieceType | null)[]> = {
   10: ['R', 'N', null, 'B', 'Q', 'K', 'B', null, 'N', 'R'],
 };
 
-export const FULL_DECK: Deck = ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'];
+export const FULL_DECK: PieceType[] = ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'];
 
 export interface BattleSetup {
   width: number;
@@ -28,55 +33,24 @@ export interface BattleSetup {
   /** 생략하면 보드 크기별 기본 규칙 (data/battle.ts) */
   rules?: BattleRules;
   seed?: number;
-  /** 진영별 인챈트·카드·대장간. 생략하면 없음 */
+  /** 진영별 부품. 생략하면 없음 */
   loadouts?: [Loadout, Loadout];
+  /** 반장 비틀기 (적 진영) */
+  twist?: TwistId;
+  /** 적 기물 수치 배율 (층 · 압력) */
+  enemyScale?: { hp: number; atk: number };
 }
 
-export const EMPTY_LOADOUT: Loadout = { enchants: {}, cards: [], forge: {} };
-
-/** 대장간 유형 강화를 기물에 반영한다. +5 완전 강화면 전투 시작 보호막 (GDD 6장 §6.5) */
-const applyForge = (pieces: Piece[], loadout: Loadout): void => {
-  for (const p of pieces) {
-    const lv = Math.min(FORGE_MAX, loadout.forge[p.type] ?? 0);
-    if (!lv) continue;
-    const g = FORGE_GAIN[p.type];
-    p.maxHp += g.hp * lv;
-    p.hp = p.maxHp;
-    p.atk += g.atk * lv;
-    p.def += g.def * lv;
-    if (lv >= FORGE_MAX) p.shield += Math.round(p.maxHp * FORGE_MASTERY_SHIELD);
-  }
-  // 결함 · 손상 (D-101): 그 유형 최대 HP가 깎인 채로 나온다
-  for (const p of pieces) {
-    const n = Math.min(DEFECT.damageMax, loadout.damage?.[p.type] ?? 0);
-    if (!n) continue;
-    p.maxHp = Math.max(1, Math.round(p.maxHp * (1 - DEFECT.damageCut * n)));
-    p.hp = p.maxHp;
-  }
-};
-
-/** 이형 거푸집을 입힌다: 표식 + 스탯 배율 (개량 뒤에 곱한다) */
-const applyVariants = (pieces: Piece[], loadout: Loadout): void => {
-  for (const p of pieces) {
-    const id = loadout.variants?.[p.type];
-    if (!id) continue;
-    const v = VARIANTS[id];
-    p.variant = id;
-    if (v.hpMul) {
-      p.maxHp = Math.max(1, Math.round(p.maxHp * v.hpMul));
-      p.hp = p.maxHp;
-    }
-    if (v.atkMul) p.atk = Math.max(1, Math.round(p.atk * v.atkMul));
-  }
-};
+export const EMPTY_LOADOUT: Loadout = { parts: [] };
 
 const makePiece = (id: number, type: PieceType, side: Side, x: number, y: number): Piece => {
   const st = PIECE_STATS[type];
-  return { id, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false, buffAtkPct: 0, buffDef: 0, buffTurns: 0 };
+  return { id, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false };
 };
 
 /** 덱을 정통 체스 배치 규칙으로 자기 진영 끝 두 줄에 놓는다. */
-const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: () => number, formation: FormationId = 'classic'): Piece[] => {
+const deploy = (width: number, height: number, units: Unit[], side: Side, nextId: () => number): Piece[] => {
+  const deck = units.map((u) => u.t);
   const template = BACK_ROW[width];
   if (!template) throw new Error(`지원하지 않는 보드 폭: ${width}`);
   if (deck.filter((t) => t === 'K').length !== 1) throw new Error('덱에는 킹이 정확히 1기 있어야 한다');
@@ -120,11 +94,8 @@ const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: (
     }
   }
 
-  // 3) 폰: 킹 앞 열부터 중앙에서 바깥쪽으로. 길 튼 진형이면 비숍·룩·퀸 앞을 마지막에 (D-102)
-  const pawnOrder =
-    formation === 'lanes'
-      ? byNearness(kingX).sort((a, b) => (LANE_BLOCK[back[a] ?? 'empty'] ?? 1) - (LANE_BLOCK[back[b] ?? 'empty'] ?? 1))
-      : byNearness(kingX);
+  // 3) 폰: 킹 앞 열부터 중앙에서 바깥쪽으로
+  const pawnOrder = byNearness(kingX);
   for (let i = 0; i < pawns; i++) {
     const fx = pawnOrder.find((x) => !front[x]);
     if (fx !== undefined) front[fx] = 'P';
@@ -135,49 +106,54 @@ const deploy = (width: number, height: number, deck: Deck, side: Side, nextId: (
     }
   }
 
-  // 선봉 진형: 킹 말고 앞뒤를 바꾼다 (앞줄 = 기물, 뒷줄 = 폰)
-  if (formation === 'vanguard') {
-    for (let x = 0; x < width; x++) {
-      if (back[x] === 'K') continue;
-      [back[x], front[x]] = [front[x], back[x]];
-    }
-    // 킹 앞 폰도 뒷줄 빈칸으로 (앞줄은 기물만)
-    for (let x = 0; x < width; x++) {
-      if (front[x] !== 'P') continue;
-      const bx = byNearness(x).find((c) => !back[c]);
-      if (bx !== undefined) {
-        back[bx] = 'P';
-        front[x] = undefined;
-      }
-    }
-  }
-
   const out: Piece[] = [];
   back.forEach((t, x) => t && out.push(makePiece(nextId(), t, side, x, backY)));
   front.forEach((t, x) => t && out.push(makePiece(nextId(), t, side, x, frontY)));
+  // 각인 · 정예: 같은 유형 안에서 덱 순서대로 붙인다 (킹에 가까운 기물부터)
+  const pool = [...units];
+  for (const p of [...out].sort((a, b) => Math.abs(a.x - kingX) - Math.abs(b.x - kingX) || a.id - b.id)) {
+    const i = pool.findIndex((u) => u.t === p.type);
+    if (i < 0) continue;
+    const u = pool.splice(i, 1)[0];
+    if (u.carve) p.carve = u.carve;
+    if (u.elite) p.elite = true;
+  }
   return out;
 };
 
-export const createBattle = ({ width, height, decks, rules, seed, loadouts }: BattleSetup): BattleState => {
+/** 각인 · 정예 · 수치 배율 · 대국 시작 부품을 기물에 반영한다 */
+const prepare = (list: Piece[], lo: Loadout, scale?: { hp: number; atk: number }): void => {
+  const has = (id: Loadout['parts'][number]) => lo.parts.includes(id);
+  for (const p of list) {
+    if (scale) {
+      p.maxHp = Math.max(1, Math.round(p.maxHp * scale.hp));
+      p.atk = Math.max(1, Math.round(p.atk * scale.atk));
+    }
+    if (p.carve === 'forged') {
+      p.maxHp = Math.round(p.maxHp * CARVE_FX.forgedHp);
+      p.atk = Math.round(p.atk * CARVE_FX.forgedAtk);
+    }
+    if (p.elite) p.maxHp *= 2;
+    if (p.type === 'K' && has('tyrant')) p.atk *= PART_FX.tyrantAtk;
+    if (p.type === 'K' && has('mobilize')) p.maxHp = Math.round(p.maxHp * PART_FX.mobilizeKingHp);
+    if (p.type === 'R' && has('rivet')) p.shield += PART_FX.rivetShield;
+    p.hp = p.maxHp;
+  }
+};
+
+export const createBattle = ({ width, height, decks, rules, seed, loadouts, twist, enemyScale }: BattleSetup): BattleState => {
   let id = 1;
   const nextId = () => id++;
   const lo: [Loadout, Loadout] = loadouts ?? [EMPTY_LOADOUT, EMPTY_LOADOUT];
-  const mine = deploy(width, height, decks[0], 0, nextId, lo[0].formation);
-  const theirs = deploy(width, height, decks[1], 1, nextId, lo[1].formation);
-  applyForge(mine, lo[0]);
-  applyForge(theirs, lo[1]);
-  applyVariants(mine, lo[0]);
-  applyVariants(theirs, lo[1]);
-  // 폭군 왕관 (에픽, D-112): 킹 ATK 두 배
-  for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.legends?.includes('L05')) for (const p of list) if (p.type === 'K') p.atk *= LEGEND_FX.tyrantAtk;
-  // 라인 특성 (D-125): 물량 = 폰 최대 HP +20% · 돌격 = 첫 턴 태엽 +2 (아래 apBonus)
-  for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.line === 'mass') for (const p of list) if (p.type === 'P') p.maxHp = p.hp = Math.round(p.maxHp * LINE_FX.massHp);
-  // 날림 공정 (계약, D-120): ATK +20%
-  for (const [list, l] of [[mine, lo[0]], [theirs, lo[1]]] as const) if (l.contracts?.includes('K4')) for (const p of list) p.atk = Math.round(p.atk * CONTRACT_FX.atk);
-  // 단독 출하 (에픽): 6기 이하로 시작했나
-  const solo: [boolean, boolean] = [!!lo[0].legends?.includes('L07') && mine.length <= LEGEND_FX.soloMax, !!lo[1].legends?.includes('L07') && theirs.length <= LEGEND_FX.soloMax];
+  const mine = deploy(width, height, toUnits(decks[0]), 0, nextId);
+  const theirs = deploy(width, height, toUnits(decks[1]), 1, nextId);
+  prepare(mine, lo[0]);
+  prepare(theirs, lo[1], enemyScale);
+  // 단독 출하 (에픽): 적은 군단으로 시작했나
+  const solo: [boolean, boolean] = [lo[0].parts.includes('solo') && mine.length <= PART_FX.soloMax, lo[1].parts.includes('solo') && theirs.length <= PART_FX.soloMax];
   return {
     ...(solo[0] || solo[1] ? { solo } : {}),
+    ...(twist ? { twist } : {}),
     width,
     height,
     pieces: [...mine, ...theirs],
@@ -186,13 +162,8 @@ export const createBattle = ({ width, height, decks, rules, seed, loadouts }: Ba
     winner: null,
     seed: seed ?? 1,
     rules: rules ?? defaultRules(width, height),
-    stronghold: null,
-    strongholdsSpawned: 0,
     ring: 0,
-    apBonus: [lo[0].line === 'assault' ? LINE_FX.assaultAp : 0, lo[1].line === 'assault' ? LINE_FX.assaultAp : 0],
-    lastStrike: ['none', 'none'],
-    loadouts: lo,
-    cards: [lo[0].cards.map((id) => ({ id, cooldown: 0, spent: false })), lo[1].cards.map((id) => ({ id, cooldown: 0, spent: false }))],
-    apCarry: [0, 0],
+    apBonus: [0, 0],
+    loadouts: [{ parts: [...lo[0].parts] }, { parts: [...lo[1].parts] }],
   };
 };
