@@ -507,8 +507,10 @@ class BoardScene extends Phaser.Scene {
 
   /** 연출 속도 배율 (동작 줄이기 = 약 3배 빠르게) */
   private get speed(): number {
-    return this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : 1;
+    return (this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : 1) * this.tempo;
   }
+  /** 템포 가속 (연쇄가 쌓일수록 연출이 빨라진다 — 레퍼런스 5권 원리 10, D-156). 1 = 기본 */
+  tempo = 1;
   /** QA용: 주소에 ?fxslow를 붙이면 공격 이펙트를 4배 느리게 (스크린샷 증거용) */
   private readonly slowFx = new URLSearchParams(window.location.search).has('fxslow');
   /** 이미 배율이 적용된 시간만큼 기다린다 */
@@ -1051,6 +1053,11 @@ export class BoardRenderer implements BoardView {
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
     await this.whenReady;
     await this.scene.showPlan(state, plan);
+  }
+
+  /** 템포 가속: 연쇄가 쌓일수록 연출이 빨라진다 (D-156) */
+  setTempo(t: number): void {
+    this.scene.tempo = t;
   }
 
   async summary(side: Side, damage: number, kills: number): Promise<void> {

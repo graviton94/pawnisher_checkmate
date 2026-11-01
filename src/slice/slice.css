@@ -161,3 +161,17 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 .crew-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; font-size: 14px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; }
 .crew-row small { font-size: 12px; color: #d6d0c6; }
 .crew-row .rename { grid-column: 1 / -1; }
+/* 대표 화면 (D-156): 판 아래 칙령 트레이 · 큰 배수 */
+.decrees { position: absolute; left: 50%; bottom: 10px; z-index: 5; display: flex; gap: 6px; transform: translateX(-50%); max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center; }
+.decrees .part-chip { width: auto; height: 36px; padding: 0 10px 0 6px; gap: 6px; display: inline-flex; align-items: center; font: 700 13px Galmuri11, sans-serif; color: #f4d27a; background: rgba(20, 18, 26, 0.92); }
+.decrees .part-chip .ico { width: 22px; height: 22px; }
+.decrees .part-chip.fire { animation: decree 700ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes decree { 0% { transform: translateY(0) scale(1); } 25% { transform: translateY(-10px) scale(1.15); color: #fff; background: #c89b3c; box-shadow: 0 0 0 2px #000, 0 0 18px rgba(244, 210, 122, 0.9); } 100% { transform: none; } }
+.meter { min-width: 120px; padding: 6px 12px; }
+.meter .mult { font: 700 36px Galmuri14, sans-serif; line-height: 1; color: #e8c060; }
+.meter.lv1 .mult { font-size: 40px; } .meter.lv2 .mult { font-size: 46px; color: #f4b740; } .meter.lv3 .mult { font-size: 52px; color: #ff9f40; } .meter.lv4 .mult { font-size: 58px; color: #ff6b4a; text-shadow: 0 0 14px rgba(255, 107, 74, 0.8); }
+.meter b { font-size: 14px; color: #f2ede4; }
+.meter .dmg { font: 700 15px Galmuri14, sans-serif; color: #fff; }
+@media (prefers-reduced-motion: reduce) { .decrees .part-chip.fire { animation: none; } }
+/* 배수 계기판은 오른쪽 레일 가운데 (판을 가리지 않는다) */
+body.slice .rail .meter { position: static; justify-items: center; align-self: stretch; margin: 4px 0; }

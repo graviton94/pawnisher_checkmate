@@ -154,7 +154,7 @@ const partHtml = (id: SlicePartId, big = false): string => {
   const d = SLICE_PARTS[id];
   return big
     ? `<button type="button" class="part-card${d.axis ? ` ax-${d.axis}` : ''}" data-part="${id}"><i class="ico" style="${iconMask(d.icon)}"></i><b>${d.name}${axisTag(d.axis ?? undefined)}</b><small>${d.desc}</small></button>`
-    : `<button type="button" class="part-chip" data-part-info="${id}" aria-label="${d.name}"><i class="ico" style="${iconMask(d.icon)}"></i></button>`;
+    : `<button type="button" class="part-chip${d.axis ? ` ax-${d.axis}` : ''}" data-part-info="${id}" aria-label="${d.name}"><i class="ico" style="${iconMask(d.icon)}"></i><span>${d.name}</span></button>`;
 };
 
 /** 연출 직전 화면: 바뀌기 전 모습 그대로 (피해 숫자 · 이동이 제대로 보이게) */
@@ -171,7 +171,8 @@ const refresh = (): void => {
   $('turn-label').textContent = b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`;
   $('turn-label').classList.toggle('enemy', enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>'}`;
-  $('parts').innerHTML = parts.map((id) => partHtml(id)).join('') || '<span class="dim">부품 없음</span>';
+  $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
+  $('parts').hidden = !parts.length;
   $('boss').hidden = !b.boss;
   if (b.boss) $('boss').innerHTML = `<b>반장 규칙</b><span>철갑 ${BOSS.plate} · ${BOSS.plateEvery}턴마다 다시</span><span${b.bombRow !== null ? ' class="hot"' : ''}>줄 폭격 −${BOSS.bombDamage} · ${b.bombRow !== null ? '턴 끝에 붉은 줄!' : `${BOSS.bombEvery}턴마다`}</span>`;
   $('vials').innerHTML = Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<img class="${i < b.ap ? 'full' : 'spent'}" src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt="">`).join('');
@@ -191,7 +192,36 @@ const meter = (): void => {
   }
   m.hidden = false;
   m.className = `meter lv${Math.min(b.kills, 4)}`;
-  m.innerHTML = `<small>이번 턴</small><span class="dmg">−${turnDmg}</span><b>연쇄 ${b.kills} · ×${chainMult(b.kills, parts).toFixed(2)}</b>${b.overkill ? `<small>넘친 피해 ${b.overkill}</small>` : ''}`;
+  // 대표 화면 (D-156): 배수가 주인공 — 크게, 연쇄가 쌓일수록 크고 뜨겁게
+  m.innerHTML = `<span class="mult">×${chainMult(b.kills, parts).toFixed(2)}</span><b>연쇄 ${b.kills}</b><span class="dmg">이번 턴 −${turnDmg}</span>${b.overkill ? `<small>넘친 피해 ${b.overkill}</small>` : ''}`;
+};
+
+/** 이번 카드에서 발동한 부품 (칙령 트레이가 빛난다) */
+const firedParts = (cardId: CommandId, mover: PieceType | undefined, events: BattleEvent[], newKills: number): SlicePartId[] => {
+  const c = COMMANDS[cardId];
+  const out: SlicePartId[] = [];
+  const on = (id: SlicePartId, cond: boolean) => cond && parts.includes(id) && out.push(id);
+  on('horseshoe', events.some((e) => e.type === 'apGain'));
+  on('magnet', newKills > 0);
+  on('coil', newKills > 0);
+  on('echo', newKills > 0);
+  on('drum', !!c && (c.who === 'P' || c.kind === 'march'));
+  on('crown', mover === 'K' && events.some((e) => e.type === 'attack' && e.hits.length > 0));
+  on('throne', mover === 'K' && events.some((e) => e.type === 'shield'));
+  on('hammer', events.some((e) => e.type === 'blast' && e.label.includes('충돌')));
+  return out;
+};
+
+/** 칙령 트레이: 발동한 부품이 번쩍인다 */
+const flashParts = (ids: SlicePartId[]): void => {
+  for (const id of ids) {
+    const el = $('parts').querySelector<HTMLElement>(`[data-part-info="${id}"]`);
+    if (!el) continue;
+    el.classList.remove('fire');
+    void el.offsetWidth;
+    el.classList.add('fire');
+  }
+  if (ids.length) sfx('stamp');
 };
 
 /** 처치 순간 (연쇄): 판 한가운데 큰 글자 + 판 흔들림 + 음이 올라간다 */
@@ -281,6 +311,9 @@ const onTap = async (pos: Pos): Promise<void> => {
 };
 
 const run = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
+  const cardId = b.hand[i];
+  const moverType = pieceId !== undefined ? findPiece(b.s, pieceId)?.type : undefined;
+  const k0 = b.kills;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
   $('hand').classList.remove('hint');
@@ -297,6 +330,9 @@ const run = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
   refresh();
   if (b.kills > prevKills) chainPop(b.kills);
   prevKills = b.kills;
+  flashParts(firedParts(cardId, moverType, r.events, b.kills - k0));
+  // 템포 가속: 연쇄가 쌓일수록 다음 연출이 빨라진다
+  renderer.setTempo(1 + Math.min(b.kills, 4) * 0.15);
   if (gain) {
     toast(`* 편자가 울린다. 태엽 +${gain}.`);
     window.setTimeout(() => sfx('coin', 9), 200);
@@ -320,12 +356,14 @@ const onEnd = async (): Promise<void> => {
   if (turnDmg > 0) await renderer.summary(0, turnDmg, prevKills);
   turnDmg = 0;
   prevKills = 0;
+  renderer.setTempo(1);
   busy = true;
   enemyTurn = true;
   refresh();
   showBefore(r.before);
   await renderer.play(r.before, r.events);
   await deathRites();
+  if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('조립'))) flashParts(['assembly']);
   busy = false;
   enemyTurn = false;
   renderer.setup(b.s);
@@ -691,6 +729,7 @@ $('btn-rewind').addEventListener('click', () => {
   const fx = document.createElement('div');
   fx.className = 'tapefx';
   fx.innerHTML = '<span>◀◀ 되감기</span>';
+  if (parts.includes('tape')) flashParts(['tape']);
   document.body.appendChild(fx);
   [0, 90, 180, 270].forEach((ms, k) => window.setTimeout(() => sfx('tap', 8 - k * 2), ms));
   window.setTimeout(() => {
