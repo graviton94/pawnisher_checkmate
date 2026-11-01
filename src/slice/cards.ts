@@ -1,5 +1,6 @@
 import type { CarveId } from '../data/carves';
 import type { PieceType } from '../engine/types';
+import type { SlicePartId } from './parts';
 
 /**
  * 명령 카드 (수직 조각 — 분대 + 명령 덱, D-142). 카드를 태엽으로 내면 기물이 체스로 움직이고,
@@ -82,8 +83,34 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   gambit: { axis: 'inf', axis2: 'chain', name: '희생 수', cost: 0, who: 'P', kind: 'gambit', desc: '내 폰 하나를 부순다. 연쇄 +2, 한 장.' },
 };
 
-/** 시작 덱 (10장) */
+/** 시작 덱 (10장) — 2판 구조 시절 (테스트 · 봇 기준용으로 남긴다) */
 export const START_COMMANDS: CommandId[] = ['advance', 'advance', 'advance', 'leap', 'leap', 'diagonal', 'diagonal', 'kingStep', 'order', 'order'];
+
+/**
+ * 첫 10분 (D-150 — 조사 B: 30초 첫 타격 · 2분 첫 승 · 5분 안 첫 "와!").
+ * 분대는 작게 시작한다(킹 · 폰 · 비숍), 1판 뒤 기물 영입, 2판 뒤 부품 상자 = 부품 + 맞물리는 카드 둘(첫 사기 조합 확정).
+ */
+export const START_SQUAD: PieceType[] = ['K', 'P', 'B'];
+export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'diagonal', 'diagonal', 'kingStep', 'order', 'order'];
+
+/** 영입: 기물 하나 + 그 기물의 카드 */
+export const RECRUITS: { t: PieceType; cards: CommandId[]; line: string }[] = [
+  { t: 'N', cards: ['leap', 'leap'], line: '뛰어넘어 친다.' },
+  { t: 'P', cards: ['advance', 'charge'], line: '싸고 많다.' },
+  { t: 'B', cards: ['diagonal', 'pierceDiag'], line: '사선 끝까지.' },
+  { t: 'R', cards: ['rookLine'], line: '곧은 줄을 민다. 비싸다.' },
+];
+
+/** 부품 상자 (첫 사기 조합 확정): 부품 + 맞물리는 카드 둘. needs = 분대에 있어야 하는 기물 */
+export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[] = [
+  { part: 'coil', cards: ['spark', 'finisher'] },
+  { part: 'drum', cards: ['march', 'march'] },
+  { part: 'assembly', cards: ['gambit', 'draft'] },
+  { part: 'crown', cards: ['wrath', 'kingBlow'] },
+  { part: 'horseshoe', cards: ['rebound', 'rebound'], needs: 'N' },
+  { part: 'echo', cards: ['doubleLeap', 'spark'], needs: 'N' },
+  { part: 'magnet', cards: ['spark', 'spark'] },
+];
 /** 보상 후보 */
 export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit'];
 

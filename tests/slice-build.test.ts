@@ -161,3 +161,13 @@ describe('반장 규칙 (D-148)', () => {
     }
   });
 });
+
+describe('첫 10분 (D-150)', () => {
+  it('입문 판: 4×4, 손으로 옮긴 적 폰 — 첫 손패의 폰 · 비숍 카드가 바로 친다', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'B' }], ['K', 'P'], ['advance', 'diagonal', 'kingStep'], 1, { width: 4, height: 4, enemyKingHp: 0.35, place: [{ side: 1, t: 'P', x: 2, y: 3 }] });
+    b.hand = ['advance', 'diagonal', 'kingStep'];
+    const hits = (i: number) => cardPieces(b, i).some((p) => cardMoves(b, i, p.id).some((to) => previewPlay(b, i, p.id, to)!.events.some((e) => e.type === 'attack' && e.hits.length > 0)));
+    expect(hits(0)).toBe(true);
+    expect(hits(1)).toBe(true);
+  });
+});

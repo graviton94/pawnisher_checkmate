@@ -118,3 +118,10 @@ body.slice #app { grid-template-columns: 272px 1fr 210px; }
 .cmd .art.mvplate { width: 52px; height: 52px; background: none; box-shadow: 0 0 0 2px #000; }
 .cmd .art.mvplate .shape svg { width: 52px; height: 52px; }
 body.slice .cmd { grid-template-columns: 52px 1fr; }
+/* 첫 10분 (D-150): 영입 · 부품 상자 · 입문 손패 빛 */
+.part-card.recruit .rec-art img { width: 56px; height: 56px; image-rendering: pixelated; }
+.part-card .kit-cards { font-size: 13px; color: #f4d27a; }
+.hand.hint .cmd:not(.off) { animation: handhint 1100ms ease-in-out infinite alternate; }
+@keyframes handhint { to { box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #f4d27a, 0 0 14px rgba(244, 210, 122, 0.55); } }
+@media (prefers-reduced-motion: reduce) { .hand.hint .cmd { animation: none; } }
+.pass-tag { display: inline-block; padding: 0 8px; margin-right: 6px; color: #16141c; background: #f4d27a; box-shadow: 0 0 0 2px #000; transform: rotate(-3deg); }
