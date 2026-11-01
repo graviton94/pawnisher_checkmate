@@ -2,7 +2,7 @@ import { PIECE_STATS } from '../data/pieces';
 import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, moveCost, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { Rng } from '../engine/rng';
-import { COMMANDS, SLICE, type CommandId } from './cards';
+import { BOSS, COMMANDS, SLICE, type CommandId } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -43,6 +43,10 @@ export interface SliceBattle {
   killers: number[];
   /** 이 대국에서 넘친 피해 합 (이기면 나사로) */
   overkill: number;
+  /** 반장 판 (철갑 · 줄 폭격) */
+  boss: boolean;
+  /** 다음 적 차례에 폭격할 줄 (y) — 예고 */
+  bombRow: number | null;
   /** 턴마다 태엽 · 손패 (여분 태엽이면 +1 · −1) */
   apMax: number;
   handSize: number;
@@ -127,7 +131,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -144,8 +148,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = parts.includes('spare') ? 1 : 0;
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], overkill: 0, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, rng: rng.state, warned: false };
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], overkill: 0, boss: !!opts.boss, bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, rng: rng.state, warned: false };
   drawCards(b, b.handSize);
+  bossTurnStart(b);
   b.intents = planEnemy(b.s);
   b.snap = JSON.stringify(b);
   return b;
@@ -191,6 +196,7 @@ export const planEnemy = (s0: BattleState): Intent[] => {
 /** 지금 보드에서 예고가 칠 칸 (내 수로 막히면 바뀐다 — 화면은 늘 지금 기준) */
 export const dangerSquares = (b: SliceBattle): Pos[] => {
   const out = new Map<string, Pos>();
+  if (b.bombRow !== null) for (let x = 0; x < b.s.width; x++) out.set(`${x},${b.bombRow}`, { x, y: b.bombRow });
   for (const it of liveIntents(b)) {
     const p = findPiece(b.s, it.pieceId)!;
     const ghostState = { ...b.s, pieces: b.s.pieces.filter((q) => q.id !== p.id) };
@@ -212,7 +218,7 @@ export const intentHits = (b: SliceBattle): { pieceId: number; pos: Pos; damage:
   const after = enemyPhase(cloneBattle(b)).events;
   const dmg = new Map<number, { damage: number; killed: boolean }>();
   for (const e of after) {
-    if (e.type !== 'attack') continue;
+    if (e.type !== 'attack' && e.type !== 'blast') continue;
     for (const h of e.hits) {
       const cur = dmg.get(h.targetId) ?? { damage: 0, killed: false };
       dmg.set(h.targetId, { damage: cur.damage + h.damage, killed: cur.killed || h.killed });
@@ -395,6 +401,35 @@ export const kingInDanger = (b: SliceBattle): boolean => {
 
 // ---------- 적 차례 ----------
 /** 예고를 그대로 실행한다. 다음 내 차례를 준비하지는 않는다 */
+/** 반장 턴 시작: 철갑을 다시 두르고, 폭격 줄을 예고한다 (내 기물 값이 가장 많이 모인 줄) */
+const bossTurnStart = (b: SliceBattle): void => {
+  if (!b.boss) return;
+  const k = kingOf(b.s, 1);
+  if (k && (b.turn - 1) % BOSS.plateEvery === 0) k.shield = Math.max(k.shield, BOSS.plate);
+  b.bombRow = null;
+  if (b.turn % BOSS.bombEvery !== 0) return;
+  const rows = new Map<number, number>();
+  for (const p of b.s.pieces) if (p.side === 0) rows.set(p.y, (rows.get(p.y) ?? 0) + valueOf(p));
+  const best = [...rows.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0];
+  if (best) b.bombRow = best[0];
+};
+
+/** 줄 폭격 실행 */
+const bombard = (b: SliceBattle): BattleEvent | null => {
+  if (b.bombRow === null) return null;
+  const row = b.bombRow;
+  const hits = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => {
+    const absorbed = Math.min(p.shield, BOSS.bombDamage);
+    p.shield -= absorbed;
+    p.hp = Math.max(0, p.hp - (BOSS.bombDamage - absorbed));
+    return { targetId: p.id, damage: BOSS.bombDamage, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
+  });
+  const kingDead = hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K');
+  b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+  if (kingDead) b.s = { ...b.s, winner: 1 };
+  return { type: 'blast', pos: { x: Math.floor(b.s.width / 2), y: row }, label: '줄 폭격!', hits };
+};
+
 const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
   const events: BattleEvent[] = [];
   for (const it of b.intents) {
@@ -406,6 +441,13 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
     if (!sim.ok) continue;
     b.s = { ...sim.state, turnSide: 0 };
     events.push(...sim.events);
+  }
+  if (b.s.winner === null) {
+    const bomb = bombard(b);
+    if (bomb) {
+      events.push(bomb);
+      if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
+    }
   }
   return { events };
 };
@@ -437,6 +479,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
       if (e) events.push(e);
     }
     drawCards(b, b.handSize);
+    bossTurnStart(b);
     b.intents = planEnemy(b.s);
     b.snap = JSON.stringify({ ...b, snap: '' });
   }

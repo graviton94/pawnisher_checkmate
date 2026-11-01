@@ -6,11 +6,11 @@ import { kingOf, type PieceType } from '../src/engine';
 import { Rng } from '../src/engine/rng';
 
 /** 수직 조각 봇 (D-144 구조 확인): 부품 하나로 시작 · 카드 보상 · 검문! 뒤 부품 하나 · 4판. 탐욕적으로 둔다 */
-const BATTLES: { e: PieceType[]; k: number }[] = [
+const BATTLES: { e: PieceType[]; k: number; boss?: boolean }[] = [
   { e: ['K', 'P', 'P', 'N'], k: 0.6 },
   { e: ['K', 'P', 'P', 'B', 'N'], k: 0.65 },
   { e: ['K', 'P', 'P', 'B', 'R'], k: 0.7 },
-  { e: ['K', 'Q', 'P', 'P', 'N'], k: 0.75 },
+  { e: ['K', 'Q', 'P', 'P', 'N'], k: 0.75, boss: true },
 ];
 it('slice', () => {
   const N = Number(process.env.SIM_GAMES ?? 100);
@@ -25,7 +25,7 @@ it('slice', () => {
     const first = parts[0];
     let cleared = false;
     for (let bi = 0; bi < BATTLES.length; bi++) {
-      const b = newSliceBattle(squad, BATTLES[bi].e, deck, 1000 + g * 7 + bi, { enemyKingHp: BATTLES[bi].k, parts });
+      const b = newSliceBattle(squad, BATTLES[bi].e, deck, 1000 + g * 7 + bi, { enemyKingHp: BATTLES[bi].k, parts, boss: BATTLES[bi].boss });
       let guard = 0;
       while (b.s.winner === null && guard++ < 40) {
         for (let step = 0; step < 10; step++) {

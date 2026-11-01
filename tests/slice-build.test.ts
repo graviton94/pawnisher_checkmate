@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { canPlay, cardMoves, cardPieces, chainMult, costOf, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
-import { SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
+import { canPlay, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
+import { BOSS, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
 import type { SlicePartId } from '../src/slice/parts';
 
 const squad = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'P' as const }, { t: 'N' as const }, { t: 'B' as const }];
@@ -128,5 +128,36 @@ describe('3단 성장 · 교차 브릿지 (D-145)', () => {
     const m = killMove(b, 0);
     playCard(b, 0, m!.p.id, m!.to);
     expect(b.overkill).toBeGreaterThan(0);
+  });
+});
+
+describe('반장 규칙 (D-148)', () => {
+  it('철갑: 반장 킹은 2턴마다 방열판을 다시 두른다', () => {
+    const b = newSliceBattle(squad, ['K', 'P', 'P'], START_COMMANDS, 5, { boss: true });
+    const k = () => b.s.pieces.find((p) => p.side === 1 && p.type === 'K')!;
+    expect(k().shield).toBe(BOSS.plate);
+    k().shield = 0;
+    for (let t = 0; t < BOSS.plateEvery; t++) {
+      b.intents = [];
+      endTurn(b, true);
+    }
+    expect(k().shield).toBe(BOSS.plate);
+  });
+  it('줄 폭격: 2턴째에 예고하고, 턴을 끝내면 그 줄의 내 기물이 맞는다', () => {
+    const b = newSliceBattle(squad, ['K', 'P', 'P'], START_COMMANDS, 5, { boss: true });
+    expect(b.bombRow).toBeNull();
+    b.intents = [];
+    endTurn(b, true);
+    expect(b.bombRow).not.toBeNull();
+    const row = b.bombRow!;
+    const inRow = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => ({ id: p.id, hp: p.hp }));
+    expect(inRow.length).toBeGreaterThan(0);
+    expect(dangerSquares(b).filter((q) => q.y === row)).toHaveLength(b.s.width);
+    b.intents = [];
+    endTurn(b, true);
+    for (const q of inRow) {
+      const p = b.s.pieces.find((x) => x.id === q.id);
+      if (p) expect(p.hp).toBeLessThan(q.hp);
+    }
   });
 });

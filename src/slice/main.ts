@@ -8,7 +8,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { AXIS_NAMES, COMMANDS, REWARD_COMMANDS, SLICE, START_COMMANDS, type Axis, type CommandId } from './cards';
+import { AXIS_NAMES, BOSS, COMMANDS, REWARD_COMMANDS, SLICE, START_COMMANDS, type Axis, type CommandId } from './cards';
 import { SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 import { shapeHtml } from './shape';
@@ -27,11 +27,11 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3, P: 1 };
 
 /** 대국 넷 (D-144): 일반 · 일반 · 검문!(이기면 부품) · 반장. reward = 이기면 받는 것 */
-const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string; reward: 'card' | 'part' | 'end' }[] = [
+const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string; reward: 'card' | 'part' | 'end'; boss?: boolean }[] = [
   { enemy: ['K', 'P', 'P', 'N'], kingHp: 0.6, title: '1판 — 주조 공정', tell: '* 흑 세트 셋. 붉은 칸이 다음에 맞을 자리다.', reward: 'card' },
   { enemy: ['K', 'P', 'P', 'B', 'N'], kingHp: 0.65, title: '2판 — 연마 공정', tell: '* 비숍이 섞였다. 사선을 조심한다.', reward: 'card' },
   { enemy: ['K', 'P', 'P', 'B', 'R'], kingHp: 0.7, title: '3판 — 검문!', tell: '* 룩이 섞였다. 이기면 부품 상자가 열린다.', reward: 'part' },
-  { enemy: ['K', 'Q', 'P', 'P', 'N'], kingHp: 0.75, title: '4판 — 반장', tell: '* 퀸이 선다. 반장의 판이다.', reward: 'end' },
+  { enemy: ['K', 'Q', 'P', 'P', 'N'], kingHp: 0.75, title: '4판 — 반장', tell: '* 반장이 철갑을 두른다. 몰아쳐야 뚫린다.', reward: 'end', boss: true },
 ];
 
 let squad: Squad[] = [{ t: 'K' }, { t: 'P' }, { t: 'P' }, { t: 'N' }, { t: 'B' }];
@@ -157,6 +157,8 @@ const refresh = (): void => {
   $('turn-label').classList.toggle('enemy', enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}장 보기</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">손패가 비었다. 턴을 끝낸다.</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('') || '<span class="dim">부품 없음</span>';
+  $('boss').hidden = !b.boss;
+  if (b.boss) $('boss').innerHTML = `<b>반장 규칙</b><span>철갑 ${BOSS.plate} · ${BOSS.plateEvery}턴마다 다시</span><span${b.bombRow !== null ? ' class="hot"' : ''}>줄 폭격 −${BOSS.bombDamage} · ${b.bombRow !== null ? '턴 끝에 붉은 줄!' : `${BOSS.bombEvery}턴마다`}</span>`;
   $('vials').innerHTML = Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<img class="${i < b.ap ? 'full' : 'spent'}" src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt="">`).join('');
   $('coins').innerHTML = `<span class="lbl">나사</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b>${b.coins * SLICE.coinValue}</b>`;
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
@@ -318,7 +320,7 @@ const onEnd = async (): Promise<void> => {
 const start = (i: number): void => {
   stage = i;
   const def = BATTLES[i];
-  b = newSliceBattle(squad, def.enemy, deck, 100 + i * 17 + Math.floor(Math.random() * 1000), { enemyKingHp: def.kingHp, parts });
+  b = newSliceBattle(squad, def.enemy, deck, 100 + i * 17 + Math.floor(Math.random() * 1000), { enemyKingHp: def.kingHp, parts, boss: def.boss });
   selCard = selPiece = null;
   busy = false;
   turnDmg = 0;
@@ -539,4 +541,4 @@ $('btn-help').addEventListener('click', help);
 
 start(0);
 help();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, tap: (pos: Pos) => onTap(pos) } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, tap: (pos: Pos) => onTap(pos), start: (i: number) => start(i) } });

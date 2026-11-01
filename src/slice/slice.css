@@ -108,3 +108,9 @@ body.slice #app { grid-template-columns: 272px 1fr 210px; }
 .deck-grid.removing .cmd.deckcard:hover, .deck-grid.removing .cmd.deckcard:active { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #ff6b5a; }
 .cmd.deckcard.removed { opacity: 0; transform: translateY(-16px) rotate(-4deg); transition: opacity 400ms, transform 400ms; }
 .cmd.deckcard { padding-right: 30px; }
+/* 반장 규칙 (D-148) */
+.boss-rules { display: grid; gap: 2px; padding: 6px 8px; font-size: 12px; color: #f2d6d0; background: #2a1518; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #a8323a; }
+.boss-rules b { font-size: 13px; color: #ff8a7a; }
+.boss-rules .hot { color: #fff; font-weight: 700; animation: bosshot 900ms ease-in-out infinite alternate; }
+@keyframes bosshot { to { color: #ff6b5a; } }
+@media (prefers-reduced-motion: reduce) { .boss-rules .hot { animation: none; } }
