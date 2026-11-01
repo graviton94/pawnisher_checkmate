@@ -833,7 +833,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'respawn') {
         // 양산 라인 (폰 반장 비틀기): 쓰러진 폰이 뒷줄에 다시 선다
-        this.announce('양산 라인 — 폰이 다시 선다');
+        this.announce(e.label ?? '양산 라인 — 폰이 다시 선다');
         await this.wait(200);
         continue;
       }

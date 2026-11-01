@@ -143,6 +143,6 @@ export type BattleEvent =
   /** 터짐 (도미노 부품 등): 그 칸에서 주변으로 */
   | { type: 'blast'; pos: Pos; label: string; hits: HitResult[] }
   /** 양산 라인 비틀기: 쓰러진 폰이 뒷줄에 다시 섰다 */
-  | { type: 'respawn'; pieceId: number; pos: Pos };
+  | { type: 'respawn'; pieceId: number; pos: Pos; /** 화면 안내 (없으면 양산 라인) */ label?: string };
 
 export const otherSide = (side: Side): Side => (side === 0 ? 1 : 0);

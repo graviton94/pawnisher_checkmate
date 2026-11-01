@@ -45,7 +45,8 @@ export interface BattleSetup {
 
 export const EMPTY_LOADOUT: Loadout = { parts: [] };
 
-const makePiece = (id: number, type: PieceType, side: Side, x: number, y: number): Piece => {
+/** 기물 하나를 만든다 (기본 수치) */
+export const makePiece = (id: number, type: PieceType, side: Side, x: number, y: number): Piece => {
   const st = PIECE_STATS[type];
   return { id, type, side, x, y, hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, moved: false };
 };

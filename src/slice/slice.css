@@ -71,3 +71,17 @@ body.slice .coins .coin { width: 8px; }
 body.slice .actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
 body.slice .actions .btn { width: 100%; min-height: 48px; white-space: nowrap; }
 body.slice .actions { height: auto; max-height: none; flex: none; grid-template-columns: none; }
+/* 빌드 축 띠 · 부품 (D-144) */
+.axis { display: inline-block; margin-left: 4px; padding: 1px 5px; font: 700 12px Galmuri11, sans-serif; font-style: normal; vertical-align: 2px; color: #111; background: #aaa; box-shadow: 0 0 0 1px #000; }
+.ax-cav.axis { background: #5fc28a; } .ax-inf.axis { background: #9aa7b8; } .ax-king.axis { background: #e8c060; } .ax-chain.axis { background: #ff8a5a; }
+.cmd.cheap .cost { background: radial-gradient(circle at 35% 30%, #d8fff0, #5fe0a8 55%, #2a9a6a); }
+body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; align-items: center; font-size: 12px; }
+.part-chip { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; color: #f4d27a; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
+.part-chip .ico, .part-card .ico { display: block; width: 24px; height: 24px; background: currentColor; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
+.part-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 4px; }
+.part-card { display: grid; justify-items: center; gap: 8px; padding: 16px 12px 14px; min-height: 150px; text-align: center; color: #f2ede4; background: linear-gradient(180deg, #2c2833, #1c1a22); border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1); }
+.part-card .ico { width: 44px; height: 44px; color: #f4d27a; }
+.part-card b { font-size: 17px; }
+.part-card small { font-size: 14px; color: #d6d0c6; line-height: 1.4; }
+.part-card:hover, .part-card:active { transform: translateY(-4px); }
+.part-card.picked { transform: translateY(-10px) scale(1.05); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, 0 0 22px rgba(244, 210, 122, 0.7); }

@@ -1,5 +1,6 @@
 import { PIECE_STATS } from '../data/pieces';
-import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, kingOf, legalMoves, moveCost, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
+import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, moveCost, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
+import { PART_NUM, type SlicePartId } from './parts';
 import { Rng } from '../engine/rng';
 import { COMMANDS, SLICE, type CommandId } from './cards';
 
@@ -34,8 +35,15 @@ export interface SliceBattle {
   intents: Intent[];
   /** 나사 트랙 */
   coins: number;
-  /** 되감기를 썼나 (대국마다 한 번) */
-  rewound: boolean;
+  /** 남은 되감기 (대국마다 한 번, 이중 테이프면 두 번) */
+  rewinds: number;
+  /** 부품 (규칙을 깨는 유물, D-144) */
+  parts: SlicePartId[];
+  /** 이번 턴에 처치한 내 기물 (재도약) */
+  killers: number[];
+  /** 턴마다 태엽 · 손패 (여분 태엽이면 +1 · −1) */
+  apMax: number;
+  handSize: number;
   /** 이번 턴 시작 모습 (되감기용) */
   snap: string;
   /** 분대 기물 id ↔ 분대 번호 */
@@ -68,9 +76,35 @@ const drawCards = (b: SliceBattle, n: number): void => {
 };
 
 /** 연쇄 배수 (이번 턴 처치 수 기준) */
-export const chainMult = (kills: number): number => 1 + Math.min(kills, SLICE.chainCap) * SLICE.chainPerKill;
+export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
+  parts.includes('coil') ? 1 + kills * PART_NUM.coilPerKill : 1 + Math.min(kills, SLICE.chainCap) * SLICE.chainPerKill;
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number } = {}): SliceBattle => {
+const has = (b: SliceBattle, id: SlicePartId) => b.parts.includes(id);
+
+/** 카드의 실제 태엽 (행진 북 · 재도약). pieceId를 주면 그 기물로 낼 때 */
+export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
+  const c = COMMANDS[b.hand[i]];
+  if (!c) return 99;
+  if (c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId)) return 0;
+  const pawnCard = c.who === 'P' || c.kind === 'march';
+  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0));
+};
+
+/** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
+const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
+  const k = kingOf(b.s, 0);
+  if (!k) return null;
+  const f = forward(0);
+  const cand: Pos[] = [];
+  for (const dy of [f, 0, -f]) for (const dx of [0, -1, 1]) if (dx || dy) cand.push({ x: k.x + dx, y: k.y + dy });
+  const spot = cand.find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
+  if (!spot) return null;
+  const id = Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds, 0) + 1;
+  b.s.pieces.push(makePiece(id, 'P', 0, spot.x, spot.y));
+  return { type: 'respawn', pieceId: id, pos: spot, label };
+};
+
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[] } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -85,8 +119,10 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     k.maxHp = k.hp = Math.round(k.maxHp * opts.enemyKingHp);
   }
   const rng = new Rng(seed ^ 0x9e3779b9);
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewound: false, snap: '', squadIds, rng: rng.state, warned: false };
-  drawCards(b, SLICE.hand);
+  const parts = opts.parts ?? [];
+  const spare = parts.includes('spare') ? 1 : 0;
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, rng: rng.state, warned: false };
+  drawCards(b, b.handSize);
   b.intents = planEnemy(b.s);
   b.snap = JSON.stringify(b);
   return b;
@@ -171,9 +207,30 @@ const cloneBattle = (b: SliceBattle): SliceBattle => JSON.parse(JSON.stringify(b
 /** 이 카드를 낼 수 있는 내 기물 */
 export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
   const c = COMMANDS[b.hand[i]];
-  if (!c || c.cost > b.ap || b.s.winner !== null) return [];
-  if (c.kind === 'draw') return [];
-  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && (c.kind !== 'move' || legalMoves(b.s, p).length > 0));
+  if (!c || b.s.winner !== null) return [];
+  if (c.kind === 'draw' || c.kind === 'spark' || c.kind === 'march' || c.kind === 'draft') return [];
+  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0));
+};
+
+/** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
+export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft'].includes(COMMANDS[id].kind);
+
+/** 이 카드를 지금 낼 수 있나 */
+export const canPlay = (b: SliceBattle, i: number): boolean => {
+  const c = COMMANDS[b.hand[i]];
+  if (!c || b.s.winner !== null) return false;
+  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0));
+  return cardPieces(b, i).length > 0;
+};
+
+/** 행진: 폰마다 곧장 한 칸 앞 (앞의 폰부터, 막혔으면 제자리) */
+const marchPlan = (b: SliceBattle): { pieceId: number; to: Pos }[] => {
+  const f = forward(0);
+  const pawns = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').sort((x, y) => (x.y - y.y) * f * -1);
+  return pawns.flatMap((p) => {
+    const to = { x: p.x, y: p.y + f };
+    return legalMoves(b.s, p).some((q) => samePos(q, to)) ? [{ pieceId: p.id, to }] : [];
+  });
 };
 
 /** 이 카드 · 이 기물로 갈 수 있는 칸 */
@@ -192,7 +249,10 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
   if (!c || !p) return null;
   if (c.kind === 'move' && to) {
     if (c.carve) p.carve = c.carve;
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills) });
+    const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
+    const crown = p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1;
+    const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill });
     if (!sim.ok) return null;
     // 카드 각인은 이번 공격에만
     const after = findPiece(sim.state, pieceId);
@@ -211,9 +271,11 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   const id = b.hand[i];
   const c = COMMANDS[id];
   if (!c) return '없는 카드';
-  if (c.cost > b.ap) return '태엽이 모자라다.';
+  const cost = costOf(b, i, pieceId);
+  if (cost > b.ap) return '태엽이 모자라다.';
   const before = cloneState(b.s);
   let events: BattleEvent[] = [];
+  let gained = 0;
   if (c.kind === 'move') {
     if (pieceId === undefined || !to) return '기물과 칸을 고른다.';
     const p = findPiece(b.s, pieceId);
@@ -222,7 +284,39 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (!sim) return '갈 수 없는 칸이다.';
     b.s = sim.state;
     events = sim.events;
+    const k = sim.removed.filter((q) => q.side === 1).length;
+    b.kills += k;
+    if (k > 0) {
+      if (!b.killers.includes(pieceId)) b.killers.push(pieceId);
+      // 편자: 나이트가 처치하면 태엽 +1 (처치마다)
+      if (p.type === 'N' && has(b, 'horseshoe')) {
+        gained += k;
+        events.push({ type: 'apGain', side: 0, amount: k });
+      }
+      drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0));
+    }
+    // 이동식 옥좌: 킹 카드를 내면 킹 방열판
+    const pk = findPiece(b.s, pieceId);
+    if (pk && pk.type === 'K' && has(b, 'throne')) {
+      pk.shield += PART_NUM.throneShield;
+      events.push({ type: 'shield', pieceId: pk.id, amount: PART_NUM.throneShield });
+    }
+  } else if (c.kind === 'march') {
+    const plan = marchPlan(b);
+    if (!plan.length) return '앞으로 갈 폰이 없다.';
+    const sim = simulate(b.s, plan, { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) });
+    if (!sim.ok) return '앞으로 갈 폰이 없다.';
+    b.s = sim.state;
+    events = sim.events;
     b.kills += sim.removed.filter((q) => q.side === 1).length;
+    if (has(b, 'magnet')) drawCards(b, sim.removed.filter((q) => q.side === 1).length);
+  } else if (c.kind === 'draft') {
+    const e = spawnPawn(b, '징집 — 폰이 선다');
+    if (!e) return '킹 옆에 빈 칸이 없다.';
+    events = [e];
+  } else if (c.kind === 'spark') {
+    b.kills += 1;
+    drawCards(b, 1);
   } else if (c.kind === 'shield' || c.kind === 'repair') {
     const p = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
     if (!p || p.side !== 0) return '내 기물을 고른다.';
@@ -237,7 +331,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   } else if (c.kind === 'draw') {
     drawCards(b, c.amount ?? 0);
   }
-  b.ap -= c.cost;
+  b.ap = b.ap - cost + gained;
+  // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
   b.discard.push(id);
   return { events, before };
@@ -283,10 +378,16 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   if (b.s.winner === null) {
     b.turn += 1;
     b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
-    b.ap = SLICE.ap;
+    b.ap = b.apMax;
     b.kills = 0;
+    b.killers = [];
     b.warned = false;
-    drawCards(b, SLICE.hand);
+    // 조립 라인: 폰이 적으면 킹 옆에 하나
+    if (has(b, 'assembly') && b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').length <= PART_NUM.assemblyBelow) {
+      const e = spawnPawn(b, '조립 라인 — 폰이 나온다');
+      if (e) events.push(e);
+    }
+    drawCards(b, b.handSize);
     b.intents = planEnemy(b.s);
     b.snap = JSON.stringify({ ...b, snap: '' });
   }
@@ -295,9 +396,9 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
 
 /** 되감기: 이번 턴 처음으로 (대국마다 한 번) */
 export const rewind = (b: SliceBattle): SliceBattle | string => {
-  if (b.rewound) return '되감기는 대국마다 한 번.';
+  if (b.rewinds <= 0) return '되감기를 다 썼다.';
   const back = JSON.parse(b.snap) as SliceBattle;
-  back.rewound = true;
+  back.rewinds = b.rewinds - 1;
   back.snap = b.snap;
   return back;
 };
