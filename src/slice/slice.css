@@ -186,3 +186,30 @@ body.slice .rail .meter { position: static; justify-items: center; align-self: s
 .title-card .flv { font-size: 15px; }
 .title-how { margin: 4px 0; padding-left: 18px; text-align: left; font-size: 14px; line-height: 1.6; color: #d6d0c6; }
 .title-card .btn { min-width: 120px; white-space: nowrap; }
+/* 카드 다시 (D-161): 리벳 박힌 철판(베벨 + 네 귀퉁이 리벳) + 태엽 열쇠 비용 */
+body.slice .cmd {
+  grid-template-columns: 22px 52px 1fr; column-gap: 8px; min-height: 60px; padding: 5px 12px 5px 8px;
+  border: 0; border-radius: 0;
+  background:
+    radial-gradient(circle at 5px 5px, #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - 5px) 5px, #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
+    radial-gradient(circle at 5px calc(100% - 5px), #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
+    linear-gradient(90deg, color-mix(in srgb, var(--tone) 30%, transparent) 0, transparent 42%),
+    linear-gradient(180deg, #34303a 0, #26232c 50%, #1d1b22 100%);
+  box-shadow: 0 0 0 2px #000, inset 0 2px 0 #4a4552, inset 0 -2px 0 #121016, inset 3px 0 0 var(--tone), 0 3px 0 #000;
+}
+body.slice .cmd::before { content: none; }
+.cmd .keys { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; align-self: stretch; }
+.cmd .keys img { width: 20px; height: 20px; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 #000); }
+.cmd .keys.free { position: relative; }
+.cmd .keys.free b { position: absolute; font: 700 13px Galmuri14, sans-serif; color: #fff; text-shadow: 1px 1px 0 #000; }
+.cmd .cost { display: none; }
+body.slice .cmd b { color: #f4e6c4; text-shadow: 1px 1px 0 #000; }
+body.slice .cmd.armed { transform: translateX(8px) scale(1.03); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, inset 3px 0 0 var(--tone), 0 0 16px color-mix(in srgb, var(--tone) 70%, transparent); }
+body.slice .cmd.off { filter: grayscale(0.85) brightness(0.55); }
+body.slice .cmd.cheap .keys img { filter: drop-shadow(0 0 3px #5fe0a8); }
+/* 보상 · 덱 카드 */
+.reward-cards .cmd { grid-template-columns: 1fr; justify-items: center; }
+.reward-cards .cmd .keys { flex-direction: row; position: absolute; left: 8px; top: 6px; }
+.cmd.deckcard { grid-template-columns: 22px 52px 1fr; }

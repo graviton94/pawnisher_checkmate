@@ -133,7 +133,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const art = cardArt(id);
   const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : '움직일 기물 없음'}</em>` : '';
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
-    <span class="cost" aria-label="태엽 ${cost}">${cost}</span>${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : `<i class="flv">${c.flavor ?? ''}</i>`}${why}</span></button>`;
+    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : `<i class="flv">${c.flavor ?? ''}</i>`}${why}</span></button>`;
 };
 
 /** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
@@ -143,6 +143,15 @@ const cardArt = (id: CommandId): string => {
   if (c.kind === 'move' || c.kind === 'march') return `<span class="art mvplate">${shapeHtml(c.who)}</span>`;
   return `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
 };
+
+/**
+ * 카드 비용 = 태엽 열쇠 개수 (D-161): 오른쪽 레일의 태엽과 같은 그림이라 「내 태엽 셋 중 둘」로 읽힌다.
+ * have를 주면 지금 남은 태엽보다 많은 열쇠는 빈 열쇠로 (얼마나 모자란지 보인다). 0이면 빈 열쇠 + 0.
+ */
+const keysHtml = (n: number, have = Infinity): string =>
+  n <= 0
+    ? '<span class="keys free" aria-label="태엽 0"><img src="ui/hud/key-spent.png" alt=""><b>0</b></span>'
+    : `<span class="keys" aria-label="태엽 ${n}">${Array.from({ length: n }, (_, k) => `<img src="ui/hud/key-${k < have ? 'full' : 'spent'}.png" alt="">`).join('')}</span>`;
 
 /** 빌드 축 띠 */
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
@@ -469,7 +478,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[]): void => {
           .map((id) => {
             const c = COMMANDS[id];
             const who = cardArt(id);
-            return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}"><span class="cost">${c.cost}</span>${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
+            return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}">${keysHtml(c.cost)}${who}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
           })
           .join('')}</div>
         <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
@@ -515,7 +524,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const cards = ids
     .map((id) => {
       const c = COMMANDS[id];
-      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}><span class="cost">${c.cost}</span>${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span></button>`;
+      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}>${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span></button>`;
     })
     .join('');
   const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>덱에서 카드 한 장을 영구히 뺍니다.</p>`;
