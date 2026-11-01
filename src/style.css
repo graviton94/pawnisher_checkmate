@@ -189,7 +189,7 @@ img { image-rendering: pixelated; }
 .queue li.log .skull { display: inline-block; width: 14px; height: 14px; margin-left: 4px; vertical-align: -1px; background: #a8730a; -webkit-mask: url('./assets/ui/skull-small.png') center / contain no-repeat; mask: url('./assets/ui/skull-small.png') center / contain no-repeat; }
 .queue li.empty { display: block; min-height: 0; padding: 4px 2px; border: none; color: var(--text2); font-weight: 400; font-size: 13px; line-height: 1.5; }
 .queue li.empty > * { margin: 0; }
-.queue li.empty .hint { color: var(--crimson-soft); font-size: 12px; }
+.queue li.empty .hint { color: var(--muted); font-size: 12px; } /* D-137: 안내는 붉게 하지 않는다 — 붉은색은 위험에만 */
 .queue li.empty .hint.muted { color: var(--muted); }
 
 /* 천공 카드: 철 카드(되쓰기) / 종이 카드(한 번) */

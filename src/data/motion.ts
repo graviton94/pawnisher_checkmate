@@ -13,3 +13,6 @@ export const MOTION = {
   /** 토스트가 지워지는 시간 */
   toastOut: 180,
 } as const;
+
+/** 알림 줄 (D-137): 자동 서술은 줄을 서서 하나씩. 보이는 시간 = base + 글자당 perChar (상한 max), 기다리는 줄은 queueMax까지 */
+export const TOAST = { base: 1100, perChar: 45, max: 3200, queueMax: 3 };

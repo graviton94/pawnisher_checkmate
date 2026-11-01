@@ -29,3 +29,6 @@ export const COACH: Record<CoachKey, string> = {
   contract: '* 계약. 이득과 대가가 함께 온다. 내 군단이 그 대가를 버틸지 보고 서명한다. 건너뛰어도 된다.',
 };
 
+
+/** 시험대 세 판이 가르치는 것 (D-137): 시험대를 마치면 이 안내는 출하에서 다시 띄우지 않는다 */
+export const COACH_TAUGHT: CoachKey[] = ['select', 'targets', 'tape', 'ap', 'chain', 'intent', 'check', 'win'];

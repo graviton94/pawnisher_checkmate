@@ -61,7 +61,8 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
   const want = window.matchMedia('(pointer: coarse)').matches ? 48 : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
   // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
   const fit = Math.min(want, viewH / (rows + 0.9), viewW / (cols + 0.5));
-  const dots = Math.max(5, Math.floor((fit * dpr) / BOARD_DOTS)); // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게)
+  // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게). 예전 하한 5도트는 DPR 2 아래 기기 · PC에서 판을 화면 밖으로 밀었다
+  const dots = Math.max(1, Math.floor((fit * dpr) / BOARD_DOTS));
   return (dots * BOARD_DOTS) / dpr;
 };
 

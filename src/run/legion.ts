@@ -4,7 +4,7 @@ import { ARENAS, SCREWS_CHANCE, terrainPairs, type TerrainId } from '../data/ter
 import { AFFIXES, ELITE_AFFIXES, type WeakId, ARCHETYPES, ARCHETYPE_EXTRA_FROM, LUCK, type LuckId, RAMPART_ROOK_MIN, affixCount, type AffixId, type ArchetypeId } from '../data/legions';
 import { ENCHANT_MAX_STACK, type EnchantId } from '../data/enchants';
 import { ASC, ascOn } from '../data/ascension';
-import { BOSSES, BOSS_FORGE_SHIFT, ELITE_BONUS, eliteForge, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
+import { BOSSES, BOSS_FORGE_SHIFT, eliteForge, elitePieces, enemyVariantCount, FINAL_BOSS, KING_EXPOSE, TOTAL_FLOORS, actEnchants, actOf, enemyEnchantStack, boardFor, enemyCount, enemyForge, enemyKingScale, enemyTier, type BossId, type NodeKind } from '../data/run';
 import { FORESIGHT_UNTIL_ASCENSION } from '../data/battle';
 import { CARDS, type CardId } from '../data/cards';
 import { createBattle } from '../engine/setup';
@@ -110,7 +110,7 @@ export const generateEncounter = (floor: number, kind: NodeKind, rng: Rng, boss?
   const act = actOf(floor) - 1;
   const overload = LUCK.overload[act] * (ascOn(ascension, 'overload') ? ASC.overload.mult : 1);
   const luck: LuckId | undefined = floor <= ARCHETYPE_EXTRA_FROM ? undefined : roll < overload ? 'overload' : roll < overload + LUCK.defective[act] ? 'defective' : undefined;
-  const count = enemyCount(floor) + (kind === 'elite' ? ELITE_BONUS.pieces : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0) + (luck === 'overload' ? 1 : 0);
+  const count = enemyCount(floor) + (kind === 'elite' ? elitePieces(floor) : 0) + (ascension >= 1 ? 1 : 0) + (floor > ARCHETYPE_EXTRA_FROM ? arch.extra : 0) + (luck === 'overload' ? 1 : 0);
   const deck: Deck = ['K'];
   let guard = 0;
   while (deck.length < count && guard++ < 200) {

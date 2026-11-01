@@ -29,6 +29,12 @@ export const setCoach = (on: boolean): void => save({ ...load(), off: !on });
 /** 안내를 처음부터 다시 */
 export const resetCoach = (): void => save({ off: false, seen: [] });
 
+/** 이미 배운 것으로 친다 (D-137: 시험대를 마치면 대국 기초 안내는 다시 띄우지 않는다) */
+export const markCoachSeen = (keys: CoachKey[]): void => {
+  const c = load();
+  save({ ...c, seen: [...new Set([...c.seen, ...keys])] });
+};
+
 let current: CoachKey | null = null;
 
 /** 그 안내를 아직 안 봤으면 띄운다. 이미 다른 안내가 떠 있으면 기다린다 (다음 호출 때) */

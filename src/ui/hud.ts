@@ -22,7 +22,7 @@ import { exportLog, logSummary } from '../run/telemetry';
 import { paintPortraits } from './portrait';
 import { CARD_GRADE } from '../data/grades';
 import { ghostOut, replay } from './motion';
-import { MOTION } from '../data/motion';
+import { MOTION, TOAST } from '../data/motion';
 import { button, icon } from './chrome';
 import { setSfx, sfxOn } from '../audio/sfx';
 
@@ -273,17 +273,45 @@ export class Hud implements HudView {
     coach('select');
   }
 
+  /** 조작에 대한 즉시 알림 (부족 · 불가 등): 지금 보이는 줄을 바로 바꾼다. 기다리던 줄은 그 뒤에 이어진다 */
   toast(msg: string): void {
+    this.showToast(msg);
+  }
+
+  /** 자동 서술 한 줄 (대국 시작 · 합류 · 기록지 등): 줄을 서서 하나씩 — 앞 줄을 덮지 않는다 (D-137) */
+  say(msg: string): void {
+    if (this.toastQueue.includes(msg) || this.toastNow === msg) return;
+    this.toastQueue.push(msg);
+    if (this.toastQueue.length > TOAST.queueMax) this.toastQueue.shift();
+    if (!this.toastNow) this.nextToast();
+  }
+
+  private toastQueue: string[] = [];
+  private toastNow: string | null = null;
+
+  private nextToast(): void {
+    const m = this.toastQueue.shift();
+    if (m) this.showToast(m);
+  }
+
+  private showToast(msg: string): void {
     const t = $('toast');
     t.textContent = msg;
     t.hidden = false;
     t.classList.remove('out');
     replay(t, 'in');
+    this.toastNow = msg;
     window.clearTimeout(this.toastTimer);
+    // 글이 길면 오래: 읽을 시간 (TOAST.base + 글자당 perChar, 상한 max)
+    const hold = Math.min(TOAST.max, TOAST.base + msg.length * TOAST.perChar);
     this.toastTimer = window.setTimeout(() => {
       t.classList.add('out');
-      this.toastTimer = window.setTimeout(() => (t.hidden = true), MOTION.toastOut);
-    }, 1600);
+      this.toastTimer = window.setTimeout(() => {
+        t.hidden = true;
+        this.toastNow = null;
+        this.nextToast();
+      }, MOTION.toastOut);
+    }, hold);
   }
 
   showInfo(p: Piece, clientX: number, clientY: number): void {

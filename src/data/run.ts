@@ -50,8 +50,8 @@ export const NODE_WEIGHTS: Record<Exclude<NodeKind, 'boss'>, number> = {
   /** 묘수풀이 (D-097): 한 번의 가동으로 킹을 쓰러뜨리는 고정 판 */
   puzzle: 7,
 };
-/** 엘리트가 나오기 시작하는 Act 안 층 (Act 1은 5층, Act 2·3은 2층) */
-export const eliteFrom = (floor: number): number => (actOf(floor) === 1 ? 5 : 2);
+/** 엘리트가 나오기 시작하는 Act 안 층 (Act 1은 6층, Act 2·3은 2층) — D-137: 5층 검문!은 시작 세트로 맞기엔 너무 일렀다 */
+export const eliteFrom = (floor: number): number => (actOf(floor) === 1 ? 6 : 2);
 
 /**
  * 층별 보드 (GDD 8장 §8.3). coin(0~1)은 비대칭 보드 방향.
@@ -168,6 +168,8 @@ export const enemyKingScale = (floor: number): { hp: number; atk: number } => {
 /** 엘리트는 기물 +1, 인챈트 1개(8층부터 2장 중첩). Act 3 엘리트는 인챈트 2개 + 카드 1장 */
 /** D-099: 검문! 승률 88~92% → 목표 65~85%: 개량 +1. 단 Act 1에는 없다 (붙이니 46~49%로 떨어졌다) */
 export const ELITE_BONUS = { pieces: 1, enchants: 1, forge: 1 };
+/** D-137 (사용자: 검문이 너무 강하다): 1공정 검문!은 기물 +1을 뺀다 — 접사 1 + 도면 거푸집 1만 */
+export const elitePieces = (floor: number): number => (actOf(floor) === 1 ? 0 : ELITE_BONUS.pieces);
 /** D-124: 짧아진 2공정에서 검문! 60% → 개량 보너스는 3공정만 */
 export const eliteForge = (floor: number): number => (actOf(floor) === 3 ? ELITE_BONUS.forge : 0);
 /** 적 군단의 이형 거푸집 수 (GDD 13장 P2, D-084): 정예는 Act 1부터 1개 · Act 3 정예 2개, 일반은 Act 2부터 확률로 1개 (Act 3은 항상) */
@@ -180,7 +182,8 @@ export const enemyVariantCount = (floor: number, kind: NodeKind, roll: number): 
 /** Act 3 일반 군단도 인챈트 1개를 가진다 (GDD 8장: "14~16기 + 카드·인챈트") */
 export const actEnchants = (floor: number, kind: NodeKind): number => {
   const act = actOf(floor);
-  if (kind === 'elite') return act === 3 ? 3 : act === 2 ? 2 : ELITE_BONUS.enchants;
+  // D-137: 검문! 개조 1공정 1→0 · 2공정 2→1 · 3공정 3→2 (접사 · 거푸집 · 개조가 한꺼번에 겹쳐 읽기 어렵고 셌다)
+  if (kind === 'elite') return act === 3 ? 2 : act === 2 ? 1 : 0;
   if (act === 3) return 2;
   return act === 2 && inAct(floor) >= 6 ? 1 : 0;
 };
@@ -194,7 +197,10 @@ export const enemyEnchantStack = (floor: number, kind: NodeKind): number => {
 /** 적 AI 단계 (0~2): 1~3층 0, 4층부터 1, 8층 이상 엘리트·보스 2, Act 3 전부 2 */
 export const enemyTier = (floor: number, kind: NodeKind): number => {
   // 중반부터는 실수하지 않는 AI: 머리를 써야 이긴다
-  if (actOf(floor) >= 2 || kind === 'boss' || kind === 'elite' || floor >= 6) return 2;
+  // D-137: 1공정 검문!은 단계 1 (가끔 실수한다) — 2공정부터 실수하지 않는다
+  if (actOf(floor) >= 2 || kind === 'boss') return 2;
+  if (kind === 'elite') return 1;
+  if (floor >= 6) return 2;
   return floor <= 3 ? 0 : 1;
 };
 /** 적 대장간 강화: Act 1 없음, Act 2 +1~+3, Act 3 +4~+5 (후반에도 긴장이 남도록) */

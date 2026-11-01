@@ -14,7 +14,8 @@ import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { ACT_NAMES, ALTAR, DAILY, FORGE_EXTRA, START_DECKS, BOSSES, FINAL_BOSS, FLOORS_PER_ACT, NODE_NAMES, SKIP_GOLD, TOTAL_FLOORS, actOf, inAct, type NodeKind } from '../data/run';
 import { PIECE_LORE, SET_LORE, TEXT } from '../data/text';
 import { choose, dismissAll } from './motion';
-import { coach, coachLines } from './coach';
+import { coach, coachLines, markCoachSeen } from './coach';
+import { COACH_TAUGHT } from '../data/coach';
 import { portraitBig, speaker } from './portrait';
 import { playCuts, promotionScene } from './cutscene';
 import { ACT_ENTRY, AFTER_PROMOTION, BOSS_STORY, CUT_UI, DEFEAT, ENDING_A_MONO, GILDED, JOIN, OVER_STORY, PROLOGUE, RECORDS, RECRUIT, TAUNTS, TRUE_ENDING, promotionFor, type Cut } from '../data/story';
@@ -465,6 +466,7 @@ export class RunUi {
     const l = LESSONS[i];
     if (!l) {
       saveMeta({ ...loadMeta(), onboarded: true });
+      markCoachSeen(COACH_TAUGHT);
       this.hud.toast(TEXT.onboarding.done);
       return this.startNew();
     }
@@ -656,6 +658,8 @@ export class RunUi {
         if (inAct(floor) === 1 && !seenActs.includes(act)) {
           seenActs.push(act);
           this.save();
+          // D-137: 공정 진입 컷은 처음 한 번만 (출하마다 끼어들면 정신없다)
+          if (!this.storyFirst('acts', act)) return this.showMap(run);
           return playCuts(this.hud, [ACT_ENTRY[act - 1]], () => {
             this.hud.sceneKey = `map:${run.floor}:`;
             this.showMap(run);
@@ -797,7 +801,7 @@ export class RunUi {
     const e = run.stage.encounter;
     // 반장 소개 컷 (D-135): 그 층에서 처음 들어갈 때 한 번
     const intro = ((run.story ??= {}).intro ??= []);
-    if (e.kind === 'boss' && !run.stage.battle && !intro.includes(run.floor)) {
+    if (e.kind === 'boss' && !run.stage.battle && !intro.includes(run.floor) && this.storyFirst('bosses', run.floor === TOTAL_FLOORS ? 'final' : run.bosses[actOf(run.floor) - 1])) {
       intro.push(run.floor);
       this.save();
       return playCuts(this.hud, [this.bossIntroCut(run)], () => this.startBattle(run));
@@ -823,24 +827,22 @@ export class RunUi {
     this.hud.setOrder(e.order ? { id: e.order, deck: [...run.deck] } : null);
     this.hud.setGoal(null);
     this.c.startState(state, e.tier, TUNED);
-    // 대국 시작 한 줄: 반장은 자기 대사, 검문!은 경고, 그 밖엔 공정과 군단 이름
-    const opening =
-      e.kind === 'boss' ? `${bossName(run, run.floor)} — “${bossOf(run, run.floor).quote}”` : e.kind === 'elite' ? `검문! ${e.name} — ${TAUNTS[(run.seed + run.floor) % TAUNTS.length]}` : run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${e.name} — ${TAUNTS[(run.seed + run.floor) % TAUNTS.length]}`;
-    this.hud.toast(opening);
+    // 대국 시작 (D-137): 줄을 서서 하나씩 — 반장은 전장 규칙 · 약점 (대사는 소개 컷에서 했다), 검문!은 이름(접사 · 거푸집), 일반은 이름 + 비웃음
+    const taunt = TAUNTS[(run.seed + run.floor) % TAUNTS.length];
+    const lines: string[] = [];
+    if (e.kind === 'boss') {
+      const boss = bossOf(run, run.floor);
+      const arena = ARENAS[boss.arena];
+      lines.push(`전장 · ${arena.name} — ${arena.desc}`);
+      if (boss.weakness) lines.push(`${TEXT.map.weakness} · ${boss.weakness.label}`);
+    } else if (e.kind === 'elite') lines.push(`검문! ${e.name}`);
+    else lines.push(run.floor <= 2 ? '“움직인 놈만 쏜다. 붉은 과녁 칸으로 보내.”' : `${e.name} — ${taunt}`);
+    // 억까·억빠 (D-099) · 봉인 (D-101)
+    if (e.luck) lines.push(TEXT.luck[e.luck]);
+    if (bd.sealed && !run.stage.battle) lines.push(TEXT.defect.sealedBattle(PIECE_NAMES_KO[bd.sealed]));
+    lines.forEach((m) => this.hud.say(m));
     if (e.kind === 'elite') coach('elite');
     if (e.kind === 'boss') coach('boss');
-    // 억까·억빠 (D-099): 대국 시작 한 줄 다음에 · 봉인 (D-101)
-    const later: string[] = [];
-    if (e.luck) later.push(TEXT.luck[e.luck]);
-    if (bd.sealed && !run.stage.battle) later.push(TEXT.defect.sealedBattle(PIECE_NAMES_KO[bd.sealed]));
-    later.forEach((m, i) => window.setTimeout(() => this.hud.toast(m), 1700 * (i + 1)));
-    // 반장 전장 규칙 (D-097): 대사 다음에 규칙 한 줄
-    if (e.kind === 'boss') {
-      const arena = ARENAS[bossOf(run, run.floor).arena];
-      const weak = bossOf(run, run.floor).weakness;
-      window.setTimeout(() => this.hud.toast(`전장 · ${arena.name} — ${arena.desc}`), 1700);
-      if (weak) window.setTimeout(() => this.hud.toast(`${TEXT.map.weakness} · ${weak.label}`), 3500);
-    }
   }
 
   private showReward(run: RunState): void {
@@ -898,9 +900,9 @@ export class RunUi {
         this.act(err);
         // 합류 · 영입 한 줄 (D-135)
         if (!err && ch?.type === 'piece') {
-          this.hud.toast(JOIN[id as Exclude<PieceType, 'K'>]);
+          this.hud.say(JOIN[id as Exclude<PieceType, 'K'>]);
           if (id === 'Q') this.gainRecords([2]);
-        } else if (!err && ch?.type === 'recruit') this.hud.toast(RECRUIT);
+        } else if (!err && ch?.type === 'recruit') this.hud.say(RECRUIT);
       },
       skip: () => {
         if (ch) logOffer(run, ch.type, ch.options as string[], null);
@@ -1254,6 +1256,15 @@ export class RunUi {
     });
   }
 
+  /** 이야기 컷을 처음 보는가 (D-137): 처음이면 표시하고 true — 두 번째부터는 컷 없이 지나간다 */
+  private storyFirst(key: 'acts' | 'bosses' | 'falls', id: number | string): boolean {
+    const m = loadMeta();
+    const list = (m.story?.[key] ?? []) as (number | string)[];
+    if (list.includes(id)) return false;
+    saveMeta({ ...m, story: { ...m.story, [key]: [...list, id] } });
+    return true;
+  }
+
   /** 검수 기록지 얻기 (D-135): 처음 얻으면 한 줄 알림 */
   private gainRecords(ids: number[]): void {
     const m = loadMeta();
@@ -1261,7 +1272,7 @@ export class RunUi {
     const fresh = ids.filter((i) => !have.includes(i));
     if (!fresh.length) return;
     saveMeta({ ...m, story: { ...m.story, records: [...have, ...fresh].sort((a, b) => a - b) } });
-    fresh.forEach((i, k) => window.setTimeout(() => this.hud.toast(`* 검수 기록지 — ${RECORDS[i].title}`), 1800 * (k + 1)));
+    fresh.forEach((i) => this.hud.say(`* 검수 기록지 — ${RECORDS[i].title}`));
   }
 
   /** 반장 · 도금왕 소개 컷 */
@@ -1286,6 +1297,7 @@ export class RunUi {
     const id = run.bosses[actOf(floor) - 1];
     const b = BOSS_STORY[id];
     this.gainRecords([3 + (Object.keys(BOSS_STORY) as (keyof typeof BOSS_STORY)[]).indexOf(id)]);
+    if (!this.storyFirst('falls', id)) return this.show();
     playCuts(this.hud, [{ bg: 'line', actors: [{ npc: b.npc, x: 34, y: 54, size: 120, mood: 'sleepy', dim: true }, { npc: 'ninth', x: 70, y: 58, size: 110, mood: 'calm' }], lines: [{ kind: 'tell', text: b.fall }, { kind: 'mono', text: b.reply }] }], () => this.show());
   }
 
