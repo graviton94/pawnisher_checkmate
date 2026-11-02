@@ -13,6 +13,7 @@ import { SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
+import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from './events';
 import { REST, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
@@ -476,6 +477,11 @@ const ACT_NARR = ['', '컨베이어가 당신을 위층으로 끌어올린다. �
 const enterNode = (n: MapNode): void => {
   if (n.battle) return startBattle(n.battle);
   if (n.kind === 'shop') return void sceneIntro(NODE_NAMES.shop, '고물 더미', '고물 더미 사이로 저울이 흔들린다. 나사 냄새가 난다.', `<i class="sf-ico" style="${iconMask('crate')}"></i>`).then(shopScreen);
+  if (n.kind === 'event') {
+    const id = eventBag.length ? eventBag.splice(Math.floor(Math.random() * eventBag.length), 1)[0] : SLICE_EVENT_IDS[0];
+    const ev = SLICE_EVENTS[id];
+    return void sceneIntro(NODE_NAMES.event, ev.title, ev.text.split('.')[0] + '.', `<i class="sf-ico" style="${iconMask('question')}"></i>`).then(() => eventScreen(id));
+  }
   if (n.kind === 'forge') return void sceneIntro(NODE_NAMES.forge, '꺼지지 않은 화덕', '화덕이 당신을 부른다. 모루는 아직 뜨겁다.', `<i class="sf-ico" style="${iconMask('anvil')}"></i>`).then(forgeScreen);
 };
 
@@ -551,6 +557,38 @@ const showMap = (): void => {
       enterNode(row[k]);
     }, 380);
   };
+};
+
+/** 이번 출하에서 아직 안 나온 사건 (한 출하에 같은 사건 두 번 없음) */
+const eventBag = [...SLICE_EVENT_IDS];
+/** 사건 화면 (R5-3, D-170): 서술 · 선택지(고를 수 없으면 이유) → 결과 한 줄 → 계속 (부품이면 고르기) */
+const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
+  const ev = SLICE_EVENTS[id];
+  const st = (): EventState => ({ squad, deck, refined, gold });
+  const el = openOverlay(`<h2>${ev.title}</h2><p class="ev-text">${ev.text}</p><div class="ev-choices">${ev.choices
+    .map((c, k) => {
+      const why = c.blocked?.(st()) ?? null;
+      return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}</button>`;
+    })
+    .join('')}</div><p class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p>`);
+  el.querySelectorAll<HTMLElement>('[data-ev]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('off')) return toast('지금은 고를 수 없습니다.');
+      const c = ev.choices[Number(btn.dataset.ev)];
+      choose(btn, c.label.replace(/\?$/, ''), () => {
+        const s0 = st();
+        const out = c.apply(s0, new Rng((Date.now() ^ (id.length * 977)) & 0xffff));
+        squad = s0.squad;
+        deck = s0.deck;
+        refined.splice(0, refined.length, ...s0.refined);
+        gold = s0.gold;
+        if (out.recruit) squad.push(makeCrew(out.recruit, crewRng, squad.map((u) => u.name ?? '')));
+        sfx(out.partPick ? 'rare' : 'stamp');
+        const res = openOverlay(`<h2>${ev.title}</h2><p class="ev-text">${out.text}</p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div>`);
+        res.querySelector('[data-next]')!.addEventListener('click', () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
+      });
+    }),
+  );
 };
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */
@@ -1162,4 +1200,4 @@ const title = (): void => {
 
 startBattle(INTRO[0], true);
 if (!new URLSearchParams(location.search).has('debug')) title();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });

@@ -5,7 +5,7 @@ import { Rng } from '../engine/rng';
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
  * 1막 앞 두 판(입문 · 연마)은 고정 — 첫 10분(D-150). 화면과 무관한 순수 로직.
  */
-export type NodeKind = 'battle' | 'shop' | 'forge' | 'check' | 'boss';
+export type NodeKind = 'battle' | 'shop' | 'forge' | 'event' | 'check' | 'boss';
 export type Reward = 'recruit' | 'kit' | 'card' | 'part' | 'end';
 
 export interface BattleDef {
@@ -39,13 +39,14 @@ export interface Act {
   rows: MapNode[][];
 }
 
-export const NODE_NAMES: Record<NodeKind, string> = { battle: '대국', shop: '고물상', forge: '작업대', check: '검문', boss: '반장' };
-export const NODE_ICONS: Record<NodeKind, string> = { battle: 'sword', shop: 'crate', forge: 'anvil', check: 'scale', boss: 'crown' };
+export const NODE_NAMES: Record<NodeKind, string> = { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장' };
+export const NODE_ICONS: Record<NodeKind, string> = { battle: 'sword', shop: 'crate', forge: 'anvil', event: 'question', check: 'scale', boss: 'crown' };
 /** 갈림길 카드의 짧은 설명 (시스템 투) */
 export const NODE_DESC: Record<NodeKind, string> = {
   battle: '대국을 치르고 카드를 얻습니다.',
   shop: '나사로 카드 · 부품 · 정비를 삽니다.',
   forge: '카드 하나를 다듬거나, 빼거나, 분대를 수리합니다.',
+  event: '무엇이 기다리는지 알 수 없습니다.',
   check: '정예와의 대국. 이기면 부품을 얻습니다.',
   boss: '막의 끝. 반장이 기다린다.',
 };
@@ -92,17 +93,19 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.', reward: 'card' };
 };
 
-/** 갈림길 한 줄: 2~3개, 대국 하나는 반드시. 고물상 · 작업대는 막마다 많아야 둘 */
-const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number }): MapNode[] => {
+/** 갈림길 한 줄: 2~3개, 대국 하나는 반드시. 고물상 · 작업대 · 사건은 막마다 많아야 둘 */
+const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number; event: number }): MapNode[] => {
   const n = 2 + rng.int(2);
   const row: MapNode[] = [{ kind: 'battle', battle: battleFor(act, 'battle', rng) }];
   const extra: NodeKind[] = [];
   if (used.shop < 2) extra.push('shop');
   if (used.forge < 2) extra.push('forge');
+  if (used.event < 2) extra.push('event');
   while (row.length < n) {
     const k = extra.length && rng.int(3) > 0 ? extra.splice(rng.int(extra.length), 1)[0] : 'battle';
     if (k === 'shop') used.shop++;
     if (k === 'forge') used.forge++;
+    if (k === 'event') used.event++;
     row.push(k === 'battle' ? { kind: 'battle', battle: battleFor(act, 'battle', rng) } : { kind: k });
   }
   // 섞는다 (대국이 늘 왼쪽에 있지 않게)
@@ -117,7 +120,7 @@ const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number }
 export const buildRun = (seed: number): Act[] => {
   const rng = new Rng(seed);
   return ([1, 2, 3] as const).map((act) => {
-    const used = { shop: 0, forge: 0 };
+    const used = { shop: 0, forge: 0, event: 0 };
     const rows: MapNode[][] = [];
     if (act === 1) INTRO.forEach((battle) => rows.push([{ kind: 'battle', battle }]));
     for (let k = 0; k < (act === 1 ? 3 : 4); k++) rows.push(forkRow(act, rng, used));

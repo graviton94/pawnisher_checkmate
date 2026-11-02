@@ -39,3 +39,24 @@ describe('출하 지도 (D-168)', () => {
     expect(b.refined).toContain('advance');
   });
 });
+
+describe('사건 (D-170)', () => {
+  it('열두 사건 모두 선택지를 고르면 상태가 규칙대로 바뀐다 (막히는 선택은 이유를 준다)', async () => {
+    const { SLICE_EVENTS, SLICE_EVENT_IDS } = await import('../src/slice/events');
+    const { Rng } = await import('../src/engine/rng');
+    expect(SLICE_EVENT_IDS).toHaveLength(12);
+    for (const id of SLICE_EVENT_IDS) {
+      for (const c of SLICE_EVENTS[id].choices) {
+        const s = { squad: [{ t: 'K' as const }, { t: 'P' as const, name: 'a' }, { t: 'P' as const, name: 'b' }, { t: 'N' as const, name: 'c' }], deck: [...START_COMMANDS], refined: [] as never[], gold: 100 };
+        expect(c.blocked?.(s) ?? null).toBeNull();
+        const out = c.apply(s, new Rng(3));
+        expect(out.text.length).toBeGreaterThan(0);
+        expect(s.gold).toBeGreaterThanOrEqual(0);
+        expect(s.squad.some((u) => u.t === 'K')).toBe(true);
+      }
+    }
+    const poor = { squad: [{ t: 'K' as const }], deck: [], refined: [], gold: 0 };
+    expect(SLICE_EVENTS.gambler.choices[0].blocked!(poor)).toBeTruthy();
+    expect(SLICE_EVENTS.swapDealer.choices[0].blocked!(poor)).toBeTruthy();
+  });
+});

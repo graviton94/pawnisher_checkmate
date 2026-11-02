@@ -415,3 +415,12 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .map-info .txt { flex: 1; display: grid; min-width: 0; } .map-info .txt b { font-size: 16px; color: #f4e6c4; } .map-info .txt small { font-size: 13px; color: #c9c0b0; }
 .map-info .btn { min-height: 48px; min-width: 110px; }
 @media (prefers-reduced-motion: reduce) { .mnd.now, .map-body line.live { animation: none; } }
+/* 사건 (D-170) */
+.ev-text { font-size: 15px; line-height: 1.6; font-style: italic; color: #e2d9c8; max-width: 60ch; }
+.ev-choices { display: grid; gap: 8px; }
+.ev-choice { display: grid; gap: 2px; text-align: left; min-height: 52px; padding: 8px 12px; color: #f2ede4; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 3px 0 0 #c89b3c, inset 0 0 0 2px #46404f; }
+.ev-choice b { font-size: 15px; } .ev-choice small { font-size: 13px; color: #d6d0c6; } .ev-choice em { font-size: 12px; font-style: normal; color: #ff9a8a; }
+.ev-choice.off { filter: grayscale(0.8) brightness(0.6); }
+.panel.choosing .ev-choice:not(.chosen) { filter: brightness(0.55) grayscale(0.4); }
+.ev-choice.chosen { box-shadow: 0 0 0 2px #000, inset 3px 0 0 #f4d27a, inset 0 0 0 3px #f4d27a, 0 0 18px rgba(244, 210, 122, 0.5); }
+.mnd.nd-event i { background: #c9a8ff; } .nd-event .ico { background: #c9a8ff; }
