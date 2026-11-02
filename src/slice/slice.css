@@ -737,5 +737,5 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 }
 .hand.dealing .cmd { visibility: hidden; }
 .tally { max-width: 380px; }
-.panel .stamp-big { align-self: center; }
+.panel .stamp-big { align-self: center; margin: 6px 0 10px; }
 .overlay.m3off { pointer-events: none; }

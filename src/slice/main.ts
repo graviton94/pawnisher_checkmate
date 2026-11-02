@@ -1276,8 +1276,7 @@ const crewView = (): void => {
     })
     .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
-  el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(title));
-  el.querySelector('[data-lab-open]')!.addEventListener('click', labPick);
+  el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView());
   el.querySelectorAll<HTMLElement>('[data-rename]').forEach((btn) =>
     btn.addEventListener('click', () => {
       const k = Number(btn.dataset.rename);
@@ -1384,7 +1383,7 @@ const partPick = (head: string, then: () => void): void => {
 
 const help = (): void => {
   const el = openOverlay(`
-    <h2>수직 조각 — 분대 + 명령 덱</h2>
+    <h2>규칙</h2>
     <ul class="help">
       <li><b>카드</b> → <b>기물</b> → <b>갈 칸</b> 순서로 누릅니다. 기물을 먼저 누르면 맞는 카드가 골라집니다.</li>
       <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 공격합니다. 과녁 = 공격 · 금색 = 처치.</li>
@@ -1659,6 +1658,7 @@ const title = (): void => {
   );
   el.querySelector('[data-rules]')!.addEventListener('click', help);
   el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(title));
+  el.querySelector('[data-lab-open]')!.addEventListener('click', labPick);
 };
 
 startBattle(INTRO[0], true);
