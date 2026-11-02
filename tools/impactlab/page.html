@@ -171,12 +171,16 @@ footer { color: var(--dim); font-size: 12px; }
 #mapStage .shut { z-index: 4; }
 .path { position: absolute; height: 4px; background: repeating-linear-gradient(90deg, #facc15 0 6px, transparent 6px 12px); top: 50%; left: 0; width: 0; transition: width 520ms cubic-bezier(0.6, 0, 0.3, 1); }
 /* 셔터 */
-.shut { position: absolute; left: 0; right: 0; height: 50%; background: repeating-linear-gradient(0deg, #2f2e36 0 10px, #24232c 10px 12px); box-shadow: 0 0 0 2px #000; z-index: 3; pointer-events: none; }
-.shut.t { top: 0; transform: translateY(-101%); border-bottom: 4px solid #c89b3c; }
-.shut.b { bottom: 0; transform: translateY(101%); border-top: 4px solid #c89b3c; }
+.shut { position: absolute; left: 0; right: 0; height: 50%; background: var(--door) 0 0 / 48px 16px repeat; image-rendering: pixelated; z-index: 3; pointer-events: none; }
+/* 맞물림 끝: 검정 2px + 도트 경고 줄무늬 8px + 검정 2px · 가운데 손잡이 */
+.shut::after { content: ''; position: absolute; left: 0; right: 0; height: 12px; background: var(--hazard) 0 2px / 16px 8px repeat-x, #0b0b0e; image-rendering: pixelated; }
+.shut::before { content: ''; position: absolute; left: 50%; width: 32px; height: 10px; margin-left: -16px; background: var(--handle) 0 0 / 32px 10px no-repeat; image-rendering: pixelated; z-index: 1; }
+.shut.t { top: 0; transform: translateY(-101%); } .shut.t::after { bottom: 0; } .shut.t::before { bottom: 12px; }
+.shut.b { bottom: 0; transform: translateY(101%); } .shut.b::after { top: 0; } .shut.b::before { top: 12px; transform: scaleY(-1); }
 .shut.close { animation: shutc 300ms cubic-bezier(0.7, 0, 0.9, 0.4) forwards; }
 .shut.open { animation: shuto 420ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards; }
-@keyframes shutc { to { transform: translateY(0); } }
+@keyframes shutc { 85% { transform: translateY(0); } 92% { transform: translateY(var(--bump, 0)); } to { transform: translateY(0); } }
+.shut.t { --bump: -3px; } .shut.b { --bump: 3px; }
 @keyframes shuto { from { transform: translateY(0); } }
 .scene-name { font: 700 22px var(--display); color: #f4d27a; text-shadow: 2px 2px 0 #000; }
 /* 토스트 · 불가 */
@@ -1098,7 +1102,7 @@ function medalSprites() {
   return { medal: pixelSprite(m, GOLDPAL, 3), cog: pixelSprite(cog, GOLDPAL, 3), chain: pixelSprite(chainRows, GOLDPAL, 2), chaing: pixelSprite(goldRows, GOLDPAL, 2), plate: pixelSprite(plate, GOLDPAL, 3) };
 }
 function setupUi() {
-  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); for (const k of ['chain', 'chaing', 'plate']) document.documentElement.style.setProperty(`--${k}`, `url(${ms0[k]})`); document.documentElement.style.setProperty('--arrow', `url(${pixelSprite(['K...', 'KYK.', 'KYYK', 'KYYY', 'KYYK', 'KYK.', 'K...'].map((r) => r.replace(/Y/g, 'T')), { K: '#16141c', T: '#16141c' }, 2)})`); document.documentElement.style.setProperty('--dither', `url(${pixelSprite(['K.', '.K'], { K: 'rgba(11,11,14,0.55)' }, 2)}) 0 0 / 4px 4px repeat`); }
+  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); for (const k of ['chain', 'chaing', 'plate']) document.documentElement.style.setProperty(`--${k}`, `url(${ms0[k]})`); document.documentElement.style.setProperty('--arrow', `url(${pixelSprite(['K...', 'KYK.', 'KYYK', 'KYYY', 'KYYK', 'KYK.', 'K...'].map((r) => r.replace(/Y/g, 'T')), { K: '#16141c', T: '#16141c' }, 2)})`); document.documentElement.style.setProperty('--door', `url(${pixelSprite(['HHHHHHHHHHHHHHHHHHHHHHHH', 'LBBBBBBBBBBBBBBBBBBBBBBB', 'BBRBBBBBBBBBBBBBBBBBBBBB', 'BRrBBBBBBBBBBBBBBBBBBBBB', 'BBBBBBBBBBBBBBBBBBBBBBBB', 'SSSSSSSSSSSSSSSSSSSSSSSS', 'DDDDDDDDDDDDDDDDDDDDDDDD', 'KKKKKKKKKKKKKKKKKKKKKKKK'], { H: '#6b6876', L: '#4a4854', B: '#3a3843', R: '#8a8794', r: '#1c1b22', S: '#2c2a33', D: '#1c1b22', K: '#0b0b0e' }, 2)})`); document.documentElement.style.setProperty('--hazard', `url(${pixelSprite(['YYYYKKKK', 'YYYKKKKY', 'YYKKKKYY', 'YKKKKYYY'], { Y: '#c89b3c', K: '#16141c' }, 2)})`); document.documentElement.style.setProperty('--handle', `url(${pixelSprite(['.KKKKKKKKKKKKKK.', 'KAAAAAAAAAAAAAAK', 'KATTTTTTTTTTTTAK', 'KAAAAAAAAAAAAAAK', '.KKKKKKKKKKKKKK.'], { K: '#0b0b0e', A: '#7a5a12', T: '#c89b3c' }, 2)})`); document.documentElement.style.setProperty('--dither', `url(${pixelSprite(['K.', '.K'], { K: 'rgba(11,11,14,0.55)' }, 2)}) 0 0 / 4px 4px repeat`); }
   document.querySelectorAll('img[data-k]').forEach((im) => (im.src = SPR[im.dataset.k]));
   pressy(document.getElementById('bbNew'));
   // 보상 카드
