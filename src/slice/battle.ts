@@ -40,6 +40,8 @@ export interface SliceBattle {
   draw: CommandId[];
   hand: CommandId[];
   discard: CommandId[];
+  /** 이번 턴에 낸 카드 — 턴이 끝나야 버림 더미로 간다 (페르소나 테스트 B2: 0태엽 + 뽑기 카드가 같은 턴에 다시 섞여 끝없이 돌았다) */
+  played?: CommandId[];
   ap: number;
   /** 이번 턴 처치 수 (연쇄) */
   kills: number;
@@ -574,7 +576,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   b.ap = b.ap - cost + gained;
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
-  b.discard.push(id);
+  (b.played ??= []).push(id);
   return { events, before };
 };
 
@@ -818,7 +820,8 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     return 'warn';
   }
   const before = cloneState(b.s);
-  b.discard.push(...b.hand);
+  b.discard.push(...(b.played ?? []), ...b.hand);
+  b.played = [];
   b.hand = [];
   const { events } = enemyPhase(b);
   b.coins = Math.max(0, b.coins - 1);

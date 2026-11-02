@@ -78,3 +78,37 @@ describe('교착 압박 (D-196)', () => {
     expect(kingMoves(SLICE.kingMarchTurn)).toBe(true);
   });
 });
+
+describe('페르소나 테스트 버그 수정 (D-197)', () => {
+  it('이번 턴에 낸 카드는 같은 턴에 다시 뽑히지 않는다 (점화 무한 반복 차단)', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P'], START_COMMANDS, 3);
+    b.hand = ['spark', 'spark'];
+    b.draw = [];
+    b.discard = [];
+    let plays = 0;
+    while (b.hand.includes('spark') && plays < 20) {
+      const r = playCard(b, b.hand.indexOf('spark'));
+      expect(typeof r).not.toBe('string');
+      plays++;
+    }
+    expect(plays).toBe(2);
+    expect(b.played).toEqual(['spark', 'spark']);
+    endTurn(b, true);
+    expect(b.played).toEqual([]);
+    expect([...b.hand, ...b.draw, ...b.discard].filter((c) => c === 'spark').length).toBe(2);
+  });
+  it('조사: 받침에 따라 을/를 · 이/가', async () => {
+    const { josa } = await import('../src/data/josa');
+    expect(josa('헐거운 나사', '을')).toBe('헐거운 나사를');
+    expect(josa('총진격', '을')).toBe('총진격을');
+    expect(josa('굽은 지렛대', '이')).toBe('굽은 지렛대가');
+    expect(josa('왕의 철퇴', '은')).toBe('왕의 철퇴는');
+  });
+  it('분대에 없는 기물의 부품은 내놓지 않는다', async () => {
+    const { partFits } = await import('../src/slice/parts');
+    expect(partFits('horseshoe', ['K', 'P', 'B'], [])).toBe(false);
+    expect(partFits('horseshoe', ['K', 'N'], [])).toBe(true);
+    expect(partFits('banner', ['K', 'B'], ['barracks'])).toBe(true);
+    expect(partFits('coil', ['K'], [])).toBe(true);
+  });
+});

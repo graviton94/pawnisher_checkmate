@@ -43,7 +43,8 @@ export interface BoardInput {
  * 판 그림은 칸 = 20도트라, 기기 픽셀로 한 도트가 정수 px가 되게 올림한다 (도트 굵기가 고르게 — D-071).
  */
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
-  const want = window.matchMedia('(pointer: coarse)').matches ? 48 : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
+  // 터치 기기는 상한 없이 판 자리를 꽉 채운다 (페르소나 테스트 m3: 상한 48 → 도트 내림으로 작은 판이 40px까지 줄었다)
+  const want = window.matchMedia('(pointer: coarse)').matches ? Infinity : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
   // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
   const fit = Math.min(want, viewH / (rows + 0.9), viewW / (cols + 0.5));
   // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게). 예전 하한 5도트는 DPR 2 아래 기기 · PC에서 판을 화면 밖으로 밀었다
@@ -399,6 +400,9 @@ class BoardScene extends Phaser.Scene {
     spr.forEach((sp) => {
       sp.root.setAlpha(0);
     });
+    // 기물이 박히기 전에 의도 화살표 · 예측 숫자가 먼저 보이지 않게 (페르소나 테스트 m5) — 끝나면 한 번에 켠다
+    const marks: { setAlpha(a: number): unknown }[] = [this.marksG, this.arrowsG, ...(this.dynamic as unknown as { setAlpha(a: number): unknown }[]).filter((o) => typeof (o as { setAlpha?: unknown }).setAlpha === 'function')];
+    marks.forEach((o) => o.setAlpha(0));
     await new Promise<void>((r) => this.time.delayedCall(base, () => r()));
     await Promise.all(
       spr.map(async (sp, i) => {
@@ -420,6 +424,7 @@ class BoardScene extends Phaser.Scene {
       }),
     );
     this.shakeLv(1);
+    marks.forEach((o) => o.setAlpha(1));
   }
 
   private clearDynamic(): void {
@@ -1359,7 +1364,7 @@ class BoardScene extends Phaser.Scene {
           if (h.killed) this.camKill();
           if (fb) {
             this.shakeLv(shakeLvOf(fb.intensity));
-            if (!this.calm) navigator.vibrate?.(fb.vibrate);
+            if (!this.calm) (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(fb.vibrate);
           }
           sfx('hit', this.combo++);
           this.applyHit(ts, h);

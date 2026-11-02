@@ -338,7 +338,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   shake(12, 480);
   re(root, 'punch');
   re(rays, 'on');
-  navigator.vibrate?.(40);
+  (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(40);
   const er = em.getBoundingClientRect();
   for (let i = 0; i < 22; i++) {
     const t = 0.2 + Math.random() * 0.6;

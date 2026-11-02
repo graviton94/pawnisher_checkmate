@@ -125,23 +125,46 @@ const guidePic = (k: (typeof GUIDE_PAGES)[number]['pic']): string => {
   return `<div class="gd-pic king"><span class="gd-crowned">${pieceImg('P', 0, 'large', 48)}<img class="pl-crown" src="ui/hud/paper-crown.png" alt=""></span><b>vs</b>${pieceImg('K', 1, 'large', 48)}</div>`;
 };
 
-/** 안내서: 네 쪽, 이전 · 다음. 마지막 쪽 버튼 = last (첫 대국으로 / 닫기) */
+/**
+ * 안내서: 다섯 쪽, 이전 · 다음. 마지막 쪽 버튼 = last (첫 대국으로 / 닫기).
+ * 어느 쪽에서든 ✕ · Esc · 창 바깥 탭으로 닫힌다 (페르소나 테스트 m1 — 닫기가 마지막 쪽에만 있었다).
+ */
 export const guide = (open: (html: string) => HTMLElement, last: string = OPENING_TEXT.close): Promise<void> =>
   new Promise((resolve) => {
     let p = 0;
+    let done = false;
+    const over = document.getElementById('overlay');
+    const end = (): void => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('keydown', onKey);
+      over?.removeEventListener('click', onOut);
+      resolve();
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') end();
+    };
+    const onOut = (e: MouseEvent): void => {
+      if (e.target === over) end();
+    };
+    window.addEventListener('keydown', onKey);
+    // 여는 탭이 그대로 바깥 탭으로 잡히지 않게 한 박자 뒤에
+    window.setTimeout(() => !done && over?.addEventListener('click', onOut), 0);
     const draw = (): void => {
+      if (done) return;
       const g = GUIDE_PAGES[p];
-      const el = open(`<div class="guide"><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2>${guidePic(g.pic)}${g.lines.map((l) => `<p>${l}</p>`).join('')}
+      const el = open(`<div class="guide"><button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2>${guidePic(g.pic)}${g.lines.map((l) => `<p>${l}</p>`).join('')}
         <div class="gd-dots">${GUIDE_PAGES.map((_, k) => `<i${k === p ? ' class="on"' : ''}></i>`).join('')}</div>
         <div class="row"><button class="btn" type="button" data-prev${p ? '' : ' disabled'}>${OPENING_TEXT.prev}</button><button class="btn brass" type="button" data-next>${p === GUIDE_PAGES.length - 1 ? last : OPENING_TEXT.next}</button></div></div>`);
       replay(el.querySelector('.gd-pic')!, 'in');
+      el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), end()));
       el.querySelector('[data-prev]')!.addEventListener('click', () => {
         if (p > 0) (p--, sfx('tap'), draw());
       });
       el.querySelector('[data-next]')!.addEventListener('click', () => {
         sfx('tap');
         if (p < GUIDE_PAGES.length - 1) return (p++, draw());
-        resolve();
+        end();
       });
     };
     draw();

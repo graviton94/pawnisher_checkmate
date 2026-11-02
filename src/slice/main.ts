@@ -1,4 +1,5 @@
 import '../fonts.css';
+import { josa } from '../data/josa';
 import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
@@ -13,7 +14,7 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
-import { PART_NUM, SLICE_PARTS, type SlicePartId } from './parts';
+import { PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -111,6 +112,10 @@ let b: SliceBattle;
 let selCard: number | null = null;
 let selPiece: number | null = null;
 let busy = false;
+/** 배율 표기: 큰 값은 줄여 레일 밖으로 넘치지 않게 (페르소나 테스트 m11) — ×1.25 · ×128 · ×5.6만 · ×3.2억 */
+const fmtMult = (v: number): string =>
+  v < 100 ? v.toFixed(2) : v < 10000 ? String(Math.round(v)) : v < 1e8 ? `${(v / 1e4).toFixed(1)}만` : `${(v / 1e8).toFixed(1)}억`;
+
 /** 적이 두는 중 (레일 상태 표시) */
 let enemyTurn = false;
 
@@ -227,6 +232,7 @@ const showPeek = (cardEl: HTMLElement): void => {
   const r = cardEl.getBoundingClientRect();
   peekEl = document.createElement('div');
   peekEl.className = 'peek';
+  peekEl.dataset.for = cardEl.dataset.card ?? '';
   peekEl.innerHTML = peekHtml(id, Number(cardEl.querySelector('.costgear')?.getAttribute('aria-label')?.replace(/\D/g, '') ?? COMMANDS[id].cost));
   peekEl.style.visibility = 'hidden';
   document.body.appendChild(peekEl);
@@ -297,7 +303,7 @@ const refresh = (): void => {
   hidePeek();
   renderer.render(model());
   turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`, enemyTurn);
-  $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
+  $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
   for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
@@ -357,7 +363,7 @@ const meter = (): void => {
   m.hidden = false;
   m.className = `meter lv${Math.min(b.kills, 4)}`;
   // 대표 화면 (D-156): 배수가 주인공 — 크게, 연쇄가 쌓일수록 크고 뜨겁게
-  m.innerHTML = `<span class="mult">×${chainMult(b.kills, parts).toFixed(2)}</span><b>연쇄 ${b.kills}</b><span class="dmg">이번 턴 −${turnDmg}</span>${b.overkill ? `<small>넘친 피해 ${b.overkill}</small>` : ''}`;
+  m.innerHTML = `<span class="mult">×${fmtMult(chainMult(b.kills, parts))}</span><b>연쇄 ${b.kills}</b><span class="dmg">피해 ${turnDmg}</span>${b.overkill ? `<small>넘친 피해 ${b.overkill}</small>` : ''}`;
 };
 
 /** 이번 카드에서 발동한 부품 (칙령 트레이가 빛난다) */
@@ -400,7 +406,7 @@ const flashParts = (ids: SlicePartId[]): void => {
 const chainPop = (kills: number): void => {
   const el = document.createElement('div');
   el.className = `chainpop lv${Math.min(kills, 4)}`;
-  el.innerHTML = `<small>연쇄 ${kills}</small>×${chainMult(kills, parts).toFixed(2)}${kills >= 3 ? '!' : ''}`;
+  el.innerHTML = `<small>연쇄 ${kills}</small>×${fmtMult(chainMult(kills, parts))}${kills >= 3 ? '!' : ''}`;
   // 판 캔버스 위로 (body에 고정 배치, 판 한가운데)
   const r = $('board').getBoundingClientRect();
   el.style.left = `${r.left + r.width / 2}px`;
@@ -432,7 +438,7 @@ const pickCard = (i: number): void => {
   }
   if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return nope(document.querySelector(`[data-card="${i}"]`), $('vials')), toast('‘태엽이 모자라.’');
   const pieces = cardPieces(b, i);
-  if (!pieces.length) return toast(c.who === 'any' ? '‘움직일 기물이 없어.’' : `‘${PIECE_NAMES_KO[c.who]}이(가) 없거나, 갈 칸이 없어.’`);
+  if (!pieces.length) return toast(c.who === 'any' ? '‘움직일 기물이 없어.’' : `‘${josa(PIECE_NAMES_KO[c.who], '이')} 없거나, 갈 칸이 없어.’`);
   sfx('lift');
   if (selCard === i) {
     selCard = selPiece = null;
@@ -465,7 +471,7 @@ const onTap = async (pos: Pos): Promise<void> => {
     if (selCard !== null && cardPieces(b, selCard).some((q) => q.id === p.id)) selPiece = p.id;
     else {
       const ci = autoCard(p.id);
-      if (ci === null) return toast(`‘${PIECE_NAMES_KO[p.type]}을(를) 움직일 카드가 없어.’`);
+      if (ci === null) return toast(`‘${josa(PIECE_NAMES_KO[p.type], '을')} 움직일 카드가 없어.’`);
       selCard = ci;
       selPiece = p.id;
     }
@@ -524,7 +530,10 @@ const onEndInner = async (): Promise<void> => {
     return;
   }
   $('btn-end').classList.remove('warn');
+  // 바로 잠근다 (페르소나 테스트 B1): 턴 합계 연출을 기다리는 사이 「턴 끝」 연타가 적 차례를 한 번 더 돌렸다
+  busy = true;
   selCard = selPiece = null;
+  refresh();
   // 이번 출하 최고의 턴 (하이라이트, D-178) · 한 턴에 둘 이상 쓰러뜨리면 적 킹이 분해한다
   const hl = { where: cur.title, turn: b.turn - 1, kills: prevKills, damage: turnDmg };
   if (turnDmg > 0 && betterHighlight(highlight, hl)) highlight = hl;
@@ -587,7 +596,7 @@ const lastStand = async (force = false): Promise<void> => {
         sfx('stamp');
         renderer.setup(b.s);
         refresh();
-        toast(`${who.name}이(가) 킹 앞을 막아선다.`, 2600);
+        toast(`${josa(who.name, '이')} 킹 앞을 막아선다.`, 2600);
         if (!force && !kingDoomed(b)) return;
       }
     }
@@ -605,7 +614,7 @@ const lastStand = async (force = false): Promise<void> => {
 
 /** 원수와 다시 만났다 (전환 화면 뒤): 이름 · 쓰러뜨린 분대원 · 단계 */
 const nemesisMeet = (n: Nemesis): void => {
-  const el = openOverlay(`<div class="stand nemesis"><p class="eyebrow">원수</p><h2>${pieceImg(n.t, 1, 'small', 30)} ${n.name}</h2><p class="line">${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><p class="dim">쓰러뜨린 분대원: ${n.victims.join(' · ')} · ${n.rank}단계 (HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%)<br>쓰러뜨리면 현상금 나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${n.heir.name}이(가) 돌아온다` : ''}.</p><div class="row"><button class="btn brass" type="button" data-go>간다</button></div></div>`);
+  const el = openOverlay(`<div class="stand nemesis"><p class="eyebrow">원수</p><h2>${pieceImg(n.t, 1, 'small', 30)} ${n.name}</h2><p class="line">${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><p class="dim">쓰러뜨린 분대원: ${n.victims.join(' · ')} · ${n.rank}단계 (HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%)<br>쓰러뜨리면 현상금 나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${josa(n.heir.name, '이')} 돌아온다` : ''}.</p><div class="row"><button class="btn brass" type="button" data-go>간다</button></div></div>`);
   sfx('threat');
   el.querySelector('[data-go]')!.addEventListener('click', async () => {
     closeOverlay();
@@ -656,6 +665,7 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
 /** 대국 시작 (지도에서 고른 판 · 다시 하기) */
 const startBattle = (def: BattleDef, silent = false): void => {
   closeOpening();
+  document.body.classList.remove('between');
   cur = def;
   stage += 1;
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
@@ -707,7 +717,13 @@ const startBattle = (def: BattleDef, silent = false): void => {
 
 /** 판 세우기 (D-189): 칸이 대각선 물결로 깔리고 기물이 떨어져 박힌 뒤 손패가 한 장씩 들어온다 */
 const battleIntro = (): void => {
-  void renderer.boardIntro();
+  // 판이 다 서기 전에는 누르지 못한다 (페르소나 테스트 m5)
+  busy = true;
+  refresh();
+  void renderer.boardIntro().finally(() => {
+    busy = false;
+    refresh();
+  });
   window.setTimeout(() => dealHand($('hand')), 450);
 };
 
@@ -731,8 +747,9 @@ const ACT_NARR = ['', '컨베이어가 당신을 위층으로 끌어올린다. �
 /** 노드에 들어간다 */
 const enterNode = (n: MapNode): void => {
   if (n.battle) {
-    startBattle(n.battle);
-    return saveRun('battle', picked[actI][rowI] ?? 0);
+    // 저장이 먼저 (페르소나 테스트 M2): 대국을 세우며 R을 쓰므로, 세우기 전 상태를 남겨야 이어하기가 같은 대국을 다시 세운다
+    saveRun('battle', picked[actI][rowI] ?? 0);
+    return startBattle(n.battle);
   }
   if (n.kind === 'shop') return void sceneIntro(NODE_NAMES.shop, '고물 더미', '고물 더미 사이로 저울이 흔들린다. 나사 냄새가 난다.', `<i class="sf-ico" style="${iconArt('n.shop')}"></i>`).then(shopScreen);
   if (n.kind === 'event') {
@@ -759,6 +776,7 @@ const showMap = (): void => {
   }
   closeOverlay();
   closeOpening();
+  document.body.classList.add('between');
   document.querySelector('.mapfx')?.remove();
   saveRun('map');
   const n = a.rows.length;
@@ -869,7 +887,7 @@ const shopScreen = (): void => {
   const pool = REWARD_COMMANDS.filter(usable);
   const cards: CommandId[] = [];
   while (cards.length < SHOP.cards && pool.length) cards.push(pool.splice(rng.int(pool.length), 1)[0]);
-  const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id));
+  const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
   const part = partPool.length ? partPool[rng.int(partPool.length)] : null;
   const sold = new Set<string>();
   const price = (id: CommandId) => ascPrice(SHOP.cardPrice[Math.min(2, COMMANDS[id].cost)]);
@@ -890,7 +908,7 @@ const shopScreen = (): void => {
         if (sold.has(key)) return;
         const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? ascPrice(SHOP.partPrice) : kind === 'heal' ? ascPrice(SHOP.healPrice) : ascPrice(SHOP.removePrice);
         if (gold < cost) return toast(`‘나사가 모자라.’ (${cost} 필요)`);
-        const label = kind === 'card' ? `${COMMANDS[id as CommandId].name}을(를) 산다 — 나사 ${cost}` : kind === 'part' ? `${SLICE_PARTS[id as SlicePartId].name}을(를) 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
+        const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
           if (kind === 'remove') {
             return deckView('remove', (removed) => {
@@ -953,7 +971,7 @@ const refineScreen = (): void => {
   el.querySelector('[data-back]')!.addEventListener('click', forgeScreen);
   el.querySelectorAll<HTMLElement>('[data-ref]').forEach((btn) =>
     btn.addEventListener('click', () =>
-      choose(btn, `${COMMANDS[btn.dataset.ref as CommandId].name}을(를) 다듬는다`, () => {
+      choose(btn, `${josa(COMMANDS[btn.dataset.ref as CommandId].name, '을')} 다듬는다`, () => {
         const rid = btn.dataset.ref as CommandId;
         deck[deck.indexOf(rid)] = refinedOf(baseOf(rid));
         refined.push(rid);
@@ -1011,6 +1029,8 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       // 닫힌 사이에 다음 화면을 세운다 (resolve → 부른 쪽이 곧바로 판 · 화면을 만든다)
       void shutter(() => {
         el.remove();
+        // 입력 위생 (페르소나 테스트 m4): 전환 화면을 넘긴 탭이 곧바로 다음 화면의 물건을 고르지 않게 잠깐 막는다
+        gateUntil = performance.now() + 350;
         resolve();
         return new Promise((r) => window.setTimeout(r, 80));
       });
@@ -1027,6 +1047,19 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   const roster = [...counts].map(([t, n], i) => `<b style="animation-delay:${900 + i * 90}ms">${pieceImg(t, 1, 'small', 28)}${n > 1 ? `<small>×${n}</small>` : ''}</b>`).join('');
   return sceneIntro(label, name, def.narr, pieceImg(foe, 1, 'large', 220), def.boss, roster);
 };
+
+/** 전환 화면 직후 이 시각까지 창 안 탭을 버린다 */
+let gateUntil = 0;
+document.addEventListener(
+  'click',
+  (e) => {
+    if (performance.now() < gateUntil && (e.target as HTMLElement).closest?.('#overlay, .mapfx')) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  },
+  true,
+);
 
 /** 승패 띠 (대국이 끝난 순간 화면을 가로지른다) */
 const banner = (text: string, good: boolean): Promise<void> => koBanner(text, good);
@@ -1049,6 +1082,8 @@ const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void =>
     panel.appendChild(bar);
   }
   bar.innerHTML = `<span>‘${label}’</span><button class="btn" type="button" data-unchoose>다시 보기</button><button class="btn brass" type="button" data-confirm>고르기</button>`;
+  // 확인 띠가 고른 것을 가리지 않게 (페르소나 테스트 m2)
+  btn.scrollIntoView({ block: 'nearest' });
   bar.querySelector('[data-unchoose]')!.addEventListener('click', () => {
     btn.classList.remove('chosen');
     panel.classList.remove('choosing');
@@ -1104,6 +1139,8 @@ const finish = (): void => {
   if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
     await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
+    // 처치 장면이 다 끝난 뒤에 보상창 (페르소나 테스트 M4: 킹 분해 연출을 창이 1~2초 만에 덮었다)
+    if (isWin && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) await new Promise((r) => window.setTimeout(r, cur.boss ? 900 : 600));
     if (!isWin) {
       lossesHere += 1;
       if (betNow) gold = Math.max(0, gold - betNow.stake);
@@ -1115,6 +1152,8 @@ const finish = (): void => {
       el.querySelector('[data-quit]')!.addEventListener('click', () => runEnd(false));
       return;
     }
+    // 판 사이 (페르소나 테스트 M7): 보상 · 지도 · 장소 화면 뒤로 끝난 대국의 손패 · 숫자가 비치지 않게 판을 내린다
+    document.body.classList.add('between');
     // 판돈 정산 · 원수 처치 · 새 원수 · 사선 보상 (D-178)
     const notes: string[] = [];
     if (betNow) {
@@ -1129,7 +1168,7 @@ const finish = (): void => {
       notes.push(`원수 「${n.name}」 처치 — 현상금 나사 +${dir.bounty(asc)}`);
       if (asc <= DIRECTOR.heirloomUpTo && n.heir && !squad.some((u) => u.serial && u.serial === n.heir!.serial)) {
         squad.push({ t: n.heir.t, name: n.heir.name, serial: n.heir.serial, kills: 0, battles: 0, scars: ['원수의 손에서 돌아옴'] });
-        notes.push(`${n.heir.name}이(가) 돌아왔다.`);
+        notes.push(`${josa(n.heir.name, '이')} 돌아왔다.`);
       }
     }
     const kingNow = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
@@ -1182,7 +1221,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       closeTier = 0;
       return partPick(`<div class="stamp-big good">사선을 넘었다</div><h2>부품 하나 더</h2><p>겨우 넘은 대국입니다. 부품을 하나 고릅니다.</p>`, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); });
     }
-    if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true));
+    if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">${cur.boss ? '반장 격파' : '검문 통과'}</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true));
     if (reward === 'end') return runEnd(true);
     const rng = sub();
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
@@ -1217,11 +1256,11 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
           <button class="btn" type="button" data-remove>카드 빼기</button>
-          <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${[...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name}을(를) HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
+          <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${josa([...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name, '을')} HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
       el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
         btn.addEventListener('click', () =>
-          choose(btn, `${COMMANDS[btn.dataset.pick as CommandId].name}을(를) 덱에 넣는다`, () => {
+          choose(btn, `${josa(COMMANDS[btn.dataset.pick as CommandId].name, '을')} 덱에 넣는다`, () => {
             deck.push(btn.dataset.pick as CommandId);
             advance();
           }),
@@ -1239,7 +1278,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           const o = overhaulSquad(squad, fallen);
           squad = o.squad;
           sfx('awaken');
-          toast(o.revived ? `${o.revived.name}이(가) 복귀했습니다.` : `분대 전원 HP +${Math.round(REST.overhaul * 100)}%`);
+          toast(o.revived ? `${josa(o.revived.name, '이')} 복귀했습니다.` : `분대 전원 HP +${Math.round(REST.overhaul * 100)}%`);
           window.setTimeout(() => advance(), 500);
         }),
       );
@@ -1314,7 +1353,9 @@ const deathRites = async (): Promise<void> => {
     if (!c) continue;
     const fx = document.createElement('div');
     fx.className = 'deathfx dc3';
-    const d = DEATHS[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % DEATHS.length];
+    // 킹(대장)은 「대장, 먼저 갑니다」를 말하지 않는다 (페르소나 테스트 c4) — 대장을 부르는 대사는 분대원에게만
+    const pool = c.t === 'K' ? DEATHS.filter((x) => !x.line.includes('대장')) : DEATHS;
+    const d = pool[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % pool.length];
     // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158). D-189: 검은 막이 한 줄씩 계단으로 내려오고 서술이 한 자씩 찍힌다
     fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
     curtainRows(fx);
@@ -1394,11 +1435,11 @@ const recruitPick = (head: string, then: () => void): void => {
     .join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-rec]').forEach((btn) =>
     btn.addEventListener('click', () =>
-      choose(btn, `${crews[Number(btn.dataset.rec)].name}을(를) 분대에 넣는다`, () => {
+      choose(btn, `${josa(crews[Number(btn.dataset.rec)].name, '을')} 분대에 넣는다`, () => {
         const r = offers[Number(btn.dataset.rec)];
         squad.push(crews[Number(btn.dataset.rec)]);
         deck.push(...r.cards);
-        toast(`${crews[Number(btn.dataset.rec)].name}이(가) 분대에 합류했습니다.`);
+        toast(`${josa(crews[Number(btn.dataset.rec)].name, '이')} 분대에 합류했습니다.`);
         then();
       }),
     ),
@@ -1419,7 +1460,7 @@ const kitPick = (head: string, then: () => void): void => {
     .join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-kit]').forEach((btn) =>
     btn.addEventListener('click', () =>
-      choose(btn, `${SLICE_PARTS[offers[Number(btn.dataset.kit)].part].name}을(를) 단다`, () => {
+      choose(btn, `${josa(SLICE_PARTS[offers[Number(btn.dataset.kit)].part].name, '을')} 단다`, () => {
         const k = offers[Number(btn.dataset.kit)];
         parts.push(k.part);
         newParts.add(k.part);
@@ -1433,13 +1474,13 @@ const kitPick = (head: string, then: () => void): void => {
 /** 부품 고르기 (검문! 통과): 셋 중 하나 */
 const partPick = (head: string, then: () => void): void => {
   const rng = sub();
-  const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id));
+  const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
   const offers: SlicePartId[] = [];
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
   const el = openOverlay(`${head}<div class="part-cards">${offers.map((id) => partHtml(id, true)).join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-part]').forEach((btn) =>
     btn.addEventListener('click', () =>
-      choose(btn, `${SLICE_PARTS[btn.dataset.part as SlicePartId].name}을(를) 단다`, () => {
+      choose(btn, `${josa(SLICE_PARTS[btn.dataset.part as SlicePartId].name, '을')} 단다`, () => {
         parts.push(btn.dataset.part as SlicePartId);
         newParts.add(btn.dataset.part as SlicePartId);
         then();
@@ -1470,10 +1511,15 @@ const endPress = () => {
 };
 $('hand').addEventListener('pointerup', endPress);
 $('hand').addEventListener('pointercancel', endPress);
+/** 방금 고른 카드는 마우스가 다른 카드로 옮겨 갈 때까지 크게 보이지 않는다 (페르소나 테스트 M3: 확대창이 판 왼쪽을 덮은 채 칸을 골라야 했다) */
+let peekMute: string | null = null;
 $('hand').addEventListener('pointerover', (e) => {
   if (e.pointerType !== 'mouse') return;
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
-  if (el) showPeek(el);
+  if (!el || el.dataset.card === peekMute) return;
+  peekMute = null;
+  if (peekEl && peekEl.dataset.for === el.dataset.card) return;
+  showPeek(el);
 });
 $('hand').addEventListener('pointerleave', hidePeek);
 $('hand').addEventListener('contextmenu', (e) => e.preventDefault());
@@ -1485,7 +1531,10 @@ $('hand').addEventListener('click', (e) => {
   if ((e.target as HTMLElement).closest('[data-deck]')) return deckView('view');
   if ((e.target as HTMLElement).closest('[data-crew]')) return crewView();
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
-  if (el) pickCard(Number(el.dataset.card));
+  if (!el) return;
+  peekMute = el.dataset.card ?? null;
+  hidePeek();
+  pickCard(Number(el.dataset.card));
 });
 $('btn-end').addEventListener('click', () => void onEnd());
 $('parts').addEventListener('click', (e) => {
@@ -1652,8 +1701,8 @@ const runEnd = (cleared: boolean): void => {
 /** 첫 판으로 들어간다 (새 출하 · 오늘의 출하) */
 const begin = (seed: number, level: number, day: string | null): void => {
   newRun(seed, level, day);
-  startBattle(INTRO[0], true);
   saveRun('battle', 0);
+  startBattle(INTRO[0], true);
   closeOverlay();
   sfx('submit');
   void stageIntro(INTRO[0]).then(() => {

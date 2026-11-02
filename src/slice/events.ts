@@ -1,4 +1,5 @@
 import type { PieceType } from '../engine';
+import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
 import { baseOf, COMMANDS, isRefined, refinedOf, type CommandId } from './cards';
 import type { Crew } from './crew';
@@ -107,7 +108,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         s.squad = s.squad.filter((x) => x !== u);
         const g = SELL[u.t] * 2;
         s.gold += g;
-        return { text: `${u.name}이(가) 낯선 상자에 실린다. 돌아보지 않는다. (나사 +${g})` };
+        return { text: `${josa(u.name, '이')} 낯선 상자에 실린다. 돌아보지 않는다. (나사 +${g})` };
       } },
       leave('거절하기'),
     ],
@@ -120,7 +121,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) {
           const u = pick(rng, s.squad.filter((x) => x.t === 'P'))!;
           s.squad = s.squad.map((x) => (x === u ? { ...x, t: 'N', hp: undefined } : x));
-          return { text: `도장이 찍힌다. ${u.name}은(는) 이제 나이트다.` };
+          return { text: `도장이 찍힌다. ${josa(u.name, '은')} 이제 나이트다.` };
         }
         s.gold = Math.max(0, s.gold - 40);
         return { text: '저울이 눈을 뜬다. 벌금이 매겨진다. (나사 −40)' };
@@ -143,7 +144,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '하나를 녹일까?', desc: '킹 · 폰을 뺀 무작위 분대원 1기를 잃습니다. (부품 하나를 고른다)', blocked: (s) => (s.squad.some((u) => u.t !== 'K' && u.t !== 'P') ? null : '바칠 분대원이 없음'), apply: (s, rng) => {
         const u = pick(rng, s.squad.filter((x) => x.t !== 'K' && x.t !== 'P'))!;
         s.squad = s.squad.filter((x) => x !== u);
-        return { text: `${u.name}이(가) 쇳물 속으로 가라앉는다. 그림자가 무언가를 내민다.`, partPick: true };
+        return { text: `${josa(u.name, '이')} 쇳물 속으로 가라앉는다. 그림자가 무언가를 내민다.`, partPick: true };
       } },
       leave('거절하기'),
     ],
@@ -157,10 +158,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) {
           const t = UP[u.t]!;
           s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-          return { text: `${u.name}이(가) 붉게 달아올라 다시 선다. 이제 ${NAMES[t]}이다.` };
+          return { text: `${josa(u.name, '이')} 붉게 달아올라 다시 선다. 이제 ${NAMES[t]}이다.` };
         }
         s.squad = s.squad.filter((x) => x !== u);
-        return { text: `집게가 비어 올라온다. ${u.name}은(는) 돌아오지 않았다.` };
+        return { text: `집게가 비어 올라온다. ${josa(u.name, '은')} 돌아오지 않았다.` };
       } },
       leave('거절하기'),
     ],
@@ -199,7 +200,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           if (u) {
             const t = UP[u.t]!;
             s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-            return { text: `불꽃이 튄다. ${u.name}은(는) 이제 ${NAMES[t]}이다.` };
+            return { text: `불꽃이 튄다. ${josa(u.name, '은')} 이제 ${NAMES[t]}이다.` };
           }
         }
         return { text: '기계가 침묵한다. 나사는 돌아오지 않는다. (나사 −40)' };
