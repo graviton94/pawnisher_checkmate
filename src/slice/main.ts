@@ -4,7 +4,7 @@ import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
 import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
-import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, replay, shakeEl, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
+import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, prologue } from './opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { pieceImg } from '../ui/sprites';
@@ -85,9 +85,8 @@ const taunt = (cue: TauntCue, force = false): void => {
   // D-189: 말풍선이 튀어나오고 글자가 타자처럼 찍히다 마지막 낱말에서 떨린다
   const words = line.split(' ');
   const last = words.pop() ?? '';
-  window.setTimeout(() => void typeIn(el.querySelector('span')!, `${words.length ? `${words.join(' ')} ` : ''}<em>${last}</em>`, 40, () => shakeEl(el, 4, 300)), 200);
-  window.setTimeout(() => el.classList.add('out'), 2900);
-  window.setTimeout(() => el.remove(), 3200);
+  window.setTimeout(() => void typeIn(el.querySelector('span')!, `${words.length ? `${words.join(' ')} ` : ''}<em>${last}</em>`, 40, () => shake(el, 1)), 200);
+  window.setTimeout(() => pxOut(el, () => el.remove()), 2900);
 };
 let actI = 0;
 let rowI = 0;
@@ -134,12 +133,16 @@ const renderer = new BoardRenderer(
         ? `<b>${pieceImg(p.type, 0, 'small', 24)} ${crewLabel(c)}</b> <span class="dim">${c.serial}</span><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · 처치 ${(c.kills ?? 0) + Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0)}${c.quirk ? `<br><span class="quirk">${QUIRKS[c.quirk].name}</span> ${QUIRKS[c.quirk].desc}` : ''}${b.s.doorIds?.includes(p.id) ? '<br>문턱 남음' : ''}`
         : `<b>${pieceImg(p.type, p.side, 'small', 24)} ${p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>'} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · ATK ${p.atk}${foeTraitLine(p)}`;
       el.hidden = false;
+      el.classList.remove('pxout');
       el.style.left = `${Math.max(8, x - 80)}px`;
       el.style.top = `${Math.max(8, y - 90)}px`;
+      // 손끝 정보는 도트 쓸기로 (D-193)
+      sweep(el, true, undefined, 260);
     },
-    longPressEnd: () => ($('info').hidden = true),
+    longPressEnd: () => pxOut($('info'), () => ($('info').hidden = true)),
   },
-  (text) => toast(text),
+  // 판 위 상황 알림 (붕락 · 과열 · 항복)은 띠로 (D-193 알림 위계 ① 상황)
+  (text) => turnBanner($('board'), text, true, true),
 );
 installPressFeedback();
 installUiSprites();
@@ -316,7 +319,7 @@ const coach = (): void => {
   let el = document.querySelector<HTMLElement>('.coach-line');
   const live = coachOn && cur === INTRO[0] && b.s.winner === null && !busy && !enemyTurn;
   $('btn-end').classList.toggle('coach-end', false);
-  if (!live) return void el?.remove();
+  if (!live) return void (el && !el.classList.contains('pxout') && pxOut(el, () => el?.remove()));
   const canPlay = b.hand.some((_, i) => canPlay2(i));
   const key: keyof typeof COACH_LINES = !canPlay ? 'end' : selCard === null ? 'card' : selPiece === null ? 'piece' : 'square';
   $('btn-end').classList.toggle('coach-end', key === 'end');
@@ -382,7 +385,7 @@ const flashParts = (ids: SlicePartId[]): void => {
     void el.offsetWidth;
     el.classList.add('fire');
   }
-  if (ids.length) sfx('stamp');
+  if (ids.length) sfx('coin');
 };
 
 /** 처치 순간 (연쇄): 판 한가운데 큰 글자 + 판 흔들림 + 음이 올라간다 */
@@ -396,9 +399,7 @@ const chainPop = (kills: number): void => {
   el.style.top = `${r.top + r.height * 0.42}px`;
   document.body.appendChild(el);
   window.setTimeout(() => el.remove(), 900);
-  $('board').classList.remove('jolt');
-  void $('board').offsetWidth;
-  $('board').classList.add(`jolt`);
+  shake($('board'), kills >= 3 ? 3 : 2);
   sfx('kill', kills + 2);
   window.setTimeout(() => sfx('coin', kills + 4), 120);
 };
@@ -586,14 +587,10 @@ const lastStand = async (force = false): Promise<void> => {
   if (clutchLeft <= 0) return;
   clutchLeft -= 1;
   clutchedNow = true;
-  const fx = document.createElement('div');
-  fx.className = 'clutchfx';
-  fx.innerHTML = `<p>태엽이 마지막으로 감긴다.</p><small>태엽 +${dir.clutchAp(asc)} · 손패에 철벽</small>`;
-  document.body.appendChild(fx);
+  // 마지막 한 수 = 상황이 바뀐다 → 띠 (D-193). 회색 막 + 서서히 대신
+  turnBanner($('board'), `마지막 한 수 — 태엽 +${dir.clutchAp(asc)} · 철벽`, false, true);
   sfx('awaken');
-  await new Promise((r) => window.setTimeout(r, 1500));
-  fx.classList.add('out');
-  window.setTimeout(() => fx.remove(), 400);
+  await new Promise((r) => window.setTimeout(r, 1000));
   clutchBoost(b, dir.clutchAp(asc));
   refresh();
 };
@@ -815,11 +812,10 @@ const showMap = (): void => {
   const go = (k: number): void => {
     picked[actI][rowI] = k;
     sfx('rare');
-    el.classList.add('out');
-    window.setTimeout(() => {
+    pxOut(el, () => {
       el.remove();
       enterNode(row[k]);
-    }, 380);
+    }, 300);
   };
 };
 
@@ -830,12 +826,15 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const st = (): EventState => ({ squad, deck, refined, gold });
   // 장면 칸 (슬더스식 왼쪽 그림): public/scenes/<사건>.png가 오면 그 그림, 없으면 물음표 문양 (발주 docs/asset-order-scenes.md)
-  const el = openOverlay(`<div class="ev-wrap"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><p class="ev-text">${ev.text}</p><div class="ev-choices">${ev.choices
+  const el = openOverlay(`<div class="ev-wrap"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><p class="ev-text"></p><div class="ev-choices">${ev.choices
     .map((c, k) => {
       const why = c.blocked?.(st()) ?? null;
       return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}</button>`;
     })
     .join('')}</div><p class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
+  // 서술은 타자로 (D-193 — 서술 = 타자, 시스템 글 = 즉시)
+  const evText = el.querySelector<HTMLElement>('.ev-text')!;
+  void typeIn(evText, ev.text, 18, undefined, () => evText.isConnected);
   el.querySelectorAll<HTMLElement>('[data-ev]').forEach((btn) =>
     btn.addEventListener('click', () => {
       if (btn.classList.contains('off')) return toast('지금은 고를 수 없습니다.');
@@ -990,7 +989,7 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       at(330, () => {
         const r = el.querySelector('.enc-piece')!.getBoundingClientRect();
         sparksAt(r.left + r.width / 2, r.bottom - 6, boss ? 14 : 8, boss ? 70 : 44);
-        shakeEl(el, boss ? 9 : 5, boss ? 420 : 300);
+        shake(el, boss ? 3 : 2);
         sfx(boss ? 'threat' : 'land');
       });
       at(560, () => sfx('stamp'));
@@ -1166,7 +1165,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
   {
     won += 1;
     const reward = cur.reward;
-    const head = `<h2><span class="pass-tag">통과</span> ${cur.title} — 나사 +${earned}</h2>`;
+    const head = `<h2><span class="pass-tag">통과</span> ${cur.title} <span class="dim">— 나사 +${earned}</span></h2>`;
     if (reward === 'recruit') return recruitPick(head, () => advance());
     if (reward === 'kit') return kitPick(head, () => advance());
     // 검문: 부품을 고른 뒤 카드 보상으로 (partDone — 다시 부품 화면으로 돌지 않게)
@@ -1197,7 +1196,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
     const showReward = (): void => {
       const el = openOverlay(`
-        <h2>통과 — 나사 +${earned}</h2>
+        <h2><span class="pass-tag">통과</span> ${cur.title} <span class="dim">— 나사 +${earned}</span></h2>
         <p>명령 카드 하나를 덱에 넣거나, 아래 셋 중 하나를 고릅니다.</p>
         <div class="reward-cards">${offers
           .map((id) => {
@@ -1322,7 +1321,8 @@ const deathRites = async (): Promise<void> => {
     }
     await new Promise((r) => window.setTimeout(r, 450));
     fx.classList.add('out');
-    window.setTimeout(() => fx.remove(), 320);
+    pxOut(fx.querySelector<HTMLElement>(':scope > div'), undefined, 200);
+    window.setTimeout(() => fx.remove(), 330);
   }
 };
 
@@ -1766,8 +1766,7 @@ const opening = (): void => {
 const closeOpening = (): void => {
   const el = document.querySelector<HTMLElement>('.opening');
   if (!el) return;
-  el.classList.add('out');
-  window.setTimeout(() => el.remove(), 300);
+  pxOut(el, () => el.remove(), 300);
 };
 
 startBattle(INTRO[0], true);

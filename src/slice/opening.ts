@@ -5,7 +5,7 @@
 import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, PROLOGUE_CUTS, type PrologueCut, type StandIn } from '../data/opening';
 import { pieceImg } from '../ui/sprites';
-import { replay, shakeEl, typeIn } from './fx3';
+import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -57,10 +57,11 @@ export const prologue = (short = false): Promise<void> =>
       el.classList.add('logo');
       void titleFx(stage.querySelector<HTMLElement>('.tfx'));
       await wait(calm() ? 300 : 1900);
-      el.classList.add('out');
-      await wait(calm() ? 0 : 300);
-      el.remove();
-      resolve();
+      // 도트 퇴장 (D-193)
+      pxOut(el, () => {
+        el.remove();
+        resolve();
+      }, 300);
     };
     const show = async (k: number): Promise<void> => {
       const my = ++token;
@@ -77,7 +78,7 @@ export const prologue = (short = false): Promise<void> =>
       el.classList.remove('dip');
       if (c.fx === 'alarm' || c.fx === 'red') {
         sfx('threat');
-        window.setTimeout(() => shakeEl(stage, 3, 300), 200);
+        window.setTimeout(() => shake(stage, 1), 200);
       } else sfx('tap');
       text.innerHTML = `${c.narr ? '<p class="pl-narr"></p>' : ''}${c.say ? '<p class="pl-say"></p>' : ''}${c.mono ? '<p class="pl-mono"></p>' : ''}`;
       typing = true;

@@ -1,4 +1,5 @@
 import { sfx } from '../audio/sfx';
+import { arcFly } from './fx3';
 
 /**
  * 비전투 UI 손맛 (D-184 — 타격감 연구소 2부를 본편으로). 모두 도트로만: 계단(steps) 움직임 · 도트 불똥 · 도트 스프라이트.
@@ -184,7 +185,7 @@ export const dissolveUp = (el: HTMLElement, ms = 520): void => {
 };
 
 /** 요소 복제가 기울며 들렸다가 목표 쪽으로 빨려 들어간다 (고른 카드 → 덱, 부품 → 부품 칸) */
-export const flyTo = (el: HTMLElement, target: Element | { x: number; y: number }, ms = 620): Promise<void> =>
+export const flyTo = (el: HTMLElement, target: Element | { x: number; y: number }, ms = 520): Promise<void> =>
   new Promise((done) => {
     if (calm()) return done();
     const a = el.getBoundingClientRect();
@@ -194,21 +195,8 @@ export const flyTo = (el: HTMLElement, target: Element | { x: number; y: number 
     ghost.classList.add('flyghost');
     document.body.appendChild(ghost);
     el.style.visibility = 'hidden';
-    const dx = to.x - (a.left + a.width / 2);
-    const dy = to.y - (a.top + a.height / 2);
-    ghost.animate(
-      [
-        { transform: 'translate(0,-14px) rotate(-3deg) scale(1.08)' },
-        { transform: 'translate(0,-24px) rotate(4deg) scale(1.16)', offset: 0.25 },
-        { transform: `translate(${dx}px,${dy}px) rotate(18deg) scale(0.16)`, opacity: 0.3 },
-      ],
-      { duration: ms, easing: 'cubic-bezier(.6,-.4,.8,.4)', fill: 'forwards' },
-    );
-    window.setTimeout(() => {
-      ghost.remove();
-      sparksAt(to.x, to.y, 6, 22);
-      done();
-    }, ms);
+    // 획득 비행 하나 (D-193): 카드도 나사 · 구매와 같은 호를 탄다
+    arcFly(ghost, { x: a.left + a.width / 2, y: a.top + a.height / 2 }, to, { ms, end: 0.2, target: 'getBoundingClientRect' in target ? target : null, done });
   });
 
 /** 나사 받기 (연구소 「나사」): 가운데서 도트 나사가 튀어 올랐다 돌며 흩어진 뒤 목표로 빨려 든다 */
@@ -230,7 +218,7 @@ export const screwBurst = (from: { x: number; y: number }, target: Element | nul
       [
         { transform: 'translate(0,0) rotate(0) scale(.4)' },
         { transform: `translate(${mx}px,${my}px) rotate(${180 + i * 30}deg) scale(1.1)`, offset: 0.35, easing: 'cubic-bezier(.2,.8,.3,1)' },
-        { transform: `translate(${mx}px,${my + 6}px) rotate(${260 + i * 30}deg) scale(1)`, offset: 0.5, easing: 'cubic-bezier(.6,0,.9,.3)' },
+        { transform: `translate(${mx}px,${my + 6}px) rotate(${260 + i * 30}deg) scale(1)`, offset: 0.5, easing: 'cubic-bezier(.1,.9,.2,1)' },
         { transform: `translate(${to.x - from.x}px,${to.y - from.y}px) rotate(${540 + i * 30}deg) scale(.6)` },
       ],
       { duration: 900 + i * 40, fill: 'forwards' },
@@ -238,7 +226,7 @@ export const screwBurst = (from: { x: number; y: number }, target: Element | nul
     window.setTimeout(() => {
       s.remove();
       if (i === count - 1) {
-        sparksAt(to.x, to.y, 6, 20);
+        sparksAt(to.x, to.y, 3, 16);
         target.classList.remove('punch');
         void (target as HTMLElement).offsetWidth;
         target.classList.add('punch');

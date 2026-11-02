@@ -103,6 +103,10 @@ interface AnimMarks {
 }
 const noMarks = (): AnimMarks => ({ arrows: [], gears: [], threat: [], glints: [] });
 
+/** 흔들림 세 단계 (D-193) */
+const SHAKE_LV = { 1: [260, 0.005], 2: [360, 0.009], 3: [480, 0.014] } as const;
+const shakeLvOf = (k: number): 1 | 2 | 3 => (k < 0.007 ? 1 : k < 0.011 ? 2 : 3);
+
 class BoardScene extends Phaser.Scene {
   input2!: BoardInput;
   tile = 48;
@@ -333,24 +337,45 @@ class BoardScene extends Phaser.Scene {
     if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
   }
 
-  /** 떠오르는 숫자 (D-189): 작게 튀어나와 크게 부풀고 → 제자리 → 잠깐 머문 뒤 아래에서부터 접혀 사라진다 (선형 페이드 없음) */
+  /**
+   * 떠오르는 숫자 · 낱말 (D-193 숫자 통일): 숫자는 모두 타격과 같은 도트 숫자 — 내가 맞음 진홍 · 적이 맞음 흰 · 회복 초록 · 방열판 은빛.
+   * 「문턱!」 같은 낱말은 딱지(검은 테 + 색 판)로 튀어나와 머문 뒤 계단으로 접힌다.
+   */
   private floatText(sp: PieceSprite, text: string, color: string): void {
     const t = this.tile;
-    const o = this.add
-      .text(sp.root.x + t / 2, sp.root.y + t * 0.1, text, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color, stroke: '#16141C', strokeThickness: 4 })
-      .setOrigin(0.5, 1)
-      .setDepth(8)
+    const d = t / BOARD_DOTS;
+    if (/^[+−-]\d+$/.test(text)) {
+      const heal = text.startsWith('+');
+      const c = heal ? (color.toUpperCase() === '#E2E8F0' ? 0xe2e8f0 : 0x86efac) : sp.piece.side === 0 ? 0xff6b6b : 0xf4f1ea;
+      const art = buildPopupArt(text.replace('−', '-'), c);
+      const g = this.add.graphics().setDepth(8);
+      const x0 = sp.root.x;
+      const y0 = sp.root.y;
+      this.tweens.addCounter({ from: 0, to: POPUP_MS.life, duration: POPUP_MS.life, onUpdate: (tw) => { g.clear(); drawPopup(g, art, x0 + t / 2, y0 + t * 0.3, d, tw.getValue() ?? 0, t * 0.35); }, onComplete: () => g.destroy() });
+      return;
+    }
+    const lbl = this.add
+      .text(0, 0, text, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.24)}px`, color: '#16141C' })
+      .setOrigin(0.5)
       .setResolution(this.dpr);
-    if (this.calm) return void this.tweens.add({ targets: o, alpha: 0, delay: 500, duration: 150, onComplete: () => o.destroy() });
-    const y0 = o.y;
+    const padX = t * 0.1;
+    const padY = t * 0.04;
+    const bw = lbl.width + padX * 2;
+    const bh = lbl.height + padY * 2;
+    const bg = this.add.graphics();
+    bg.fillStyle(0x0b0b0e, 1).fillRect(-bw / 2 - 2, -bh / 2 - 2, bw + 4, bh + 4);
+    bg.fillStyle(Phaser.Display.Color.HexStringToColor(color).color, 1).fillRect(-bw / 2, -bh / 2, bw, bh);
+    const o = this.add.container(sp.root.x + t / 2, sp.root.y + t * 0.05, [bg, lbl]).setDepth(8);
+    if (this.calm) return void this.time.delayedCall(700, () => o.destroy());
     o.setScale(0.3);
     this.tweens.chain({
       targets: o,
       tweens: [
-        { y: y0 - t * 0.38, scale: 1.25, duration: 180, ease: 'Back.easeOut' },
-        { y: y0 - t * 0.42, scale: 1, duration: 140, ease: 'Quad.easeOut' },
-        { y: y0 - t * 0.5, duration: 330, ease: 'Sine.easeOut' },
-        { y: y0 - t * 0.4, scaleY: 0, scaleX: 0.9, duration: 200, ease: 'Quad.easeIn' },
+        { y: o.y - t * 0.3, scale: 1.15, duration: 200, ease: 'Back.easeOut' },
+        { scale: 1, duration: 120, ease: 'Quad.easeOut' },
+        { y: o.y - t * 0.38, duration: 380, ease: 'Sine.easeOut' },
+        // 도트 퇴장: 계단 넷으로 접힌다 (투명 페이드 없이)
+        { scaleY: 0, duration: 200, ease: 'Stepped', easeParams: [4] },
       ],
       onComplete: () => o.destroy(),
     });
@@ -394,7 +419,7 @@ class BoardScene extends Phaser.Scene {
         this.tweens.add({ targets: g, scaleX: sx, scaleY: sy, y: gy, duration: 260, ease: 'Back.easeOut' });
       }),
     );
-    this.shake(220, 0.006);
+    this.shakeLv(1);
   }
 
   private clearDynamic(): void {
@@ -622,6 +647,11 @@ class BoardScene extends Phaser.Scene {
 
   private shake(ms: number, intensity: number): void {
     if (!this.calm) this.cameras.main.shake(ms, intensity);
+  }
+  /** 흔들림 세 단계 (D-193, 판 밖 shake(1|2|3)와 같은 박자): 약 260ms · 중 360ms · 강 480ms */
+  private shakeLv(lv: 1 | 2 | 3): void {
+    const [ms, k] = SHAKE_LV[lv];
+    this.shake(ms, k);
   }
 
   /** 연출 속도 배율 (동작 줄이기 = 약 3배 빠르게) */
@@ -880,7 +910,7 @@ class BoardScene extends Phaser.Scene {
       }),
     );
     sfx('kill');
-    this.shake(500, mine ? 0.007 : 0.01);
+    this.shakeLv(mine ? 2 : 3);
     const gx = cx;
     const gy = s.root.y + t * 0.3;
     const floor = s.root.y + t * 0.85;
@@ -951,7 +981,7 @@ class BoardScene extends Phaser.Scene {
     );
     await this.tween({ targets: s.root, y: by, duration: D.fall, ease: 'Quad.easeIn' });
     g.clear();
-    this.shake(420, 0.014);
+    this.shakeLv(3);
     sfx('kill');
     const cell = { x: Math.round(bx / t), y: Math.round(by / t) };
     const tiles = this.tilesC.list as Phaser.GameObjects.Image[];
@@ -1007,7 +1037,7 @@ class BoardScene extends Phaser.Scene {
         onComplete: () => done(),
       }),
     );
-    this.shake(160, 0.004);
+    this.shakeLv(1);
     sfx('land');
     await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: 330 / this.speed, onUpdate: (tw) => { const a = 1 - easeOutElastic(tw.getValue() ?? 0); this.applyPose(c, kx, ky, { dx: 0, dy: 0, sx: 1 + 0.28 * a, sy: 1 - 0.28 * a }); }, onComplete: () => done() }));
   }
@@ -1024,7 +1054,10 @@ class BoardScene extends Phaser.Scene {
       // 적 턴, 또는 작은 내 턴: 위쪽에 작게 (판을 가리지 않고 기다림도 짧게)
       const text = side === 1 ? `잃음 −${damage}` : `피해 ${damage}`;
       const lost = this.add.text(x, y - t * 2.2, text, { ...font(t * 0.42), color: side === 1 ? '#FF6B6B' : '#7DD3FC' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
-      await this.tween({ targets: lost, y: lost.y - t * 0.3, alpha: { from: 1, to: 0 }, delay: 500, duration: 300 });
+      // 결과 = 내리꽂힘 → 머묾 → 계단으로 접힘 (D-193)
+      lost.setScale(2);
+      await this.tween({ targets: lost, scale: 1, duration: 260, ease: 'Back.easeOut' });
+      await this.tween({ targets: lost, scaleY: 0, delay: 380, duration: 200, ease: 'Stepped', easeParams: [4] });
       lost.destroy();
       return;
     }
@@ -1048,7 +1081,7 @@ class BoardScene extends Phaser.Scene {
     this.tweens.add({ targets: num, scale: 1, duration: 220, ease: 'Back.easeOut' });
     if (kills > 0) parts.push(this.add.text(x, y + t * 0.75, `처치 ${kills}`, { ...font(t * 0.36), color: '#FACC15' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr));
     await this.wait(450);
-    await this.tween({ targets: parts, alpha: 0, duration: 200 });
+    await this.tween({ targets: parts, scaleY: 0, duration: 200, ease: 'Stepped', easeParams: [4] });
     for (const o of parts) o.destroy();
   }
 
@@ -1144,7 +1177,7 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         this.announce('바닥이 꺼진다! 칸 한 쌍이 톱니 아래로');
-        this.shake(300, 0.008);
+        this.shakeLv(2);
         this.drawTiles(cur);
         await Promise.all(
           e.pushes.map((p) => {
@@ -1161,7 +1194,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'suddenDeath') {
         this.announce('더 무너질 곳이 없다 — 과열이 킹을 짓누른다');
-        this.shake(250, 0.006);
+        this.shakeLv(1);
         for (const h of e.hits) {
           const sp = this.sprites.get(h.pieceId);
           if (!sp) continue;
@@ -1265,7 +1298,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'blast') {
         // 터짐 (D-106 보일러 폰): 그 칸에서 둘레로 — 맞은 기물마다 피격, 쓰러지면 재
-        this.shake(220, 0.006);
+        this.shakeLv(1);
         sfx('kill');
         for (const h of e.hits) {
           const sp = this.sprites.get(h.targetId);
@@ -1325,7 +1358,7 @@ class BoardScene extends Phaser.Scene {
           const fb = impactFeedback(h.damage, !!h.killed, ts.piece.maxHp);
           if (h.killed) this.camKill();
           if (fb) {
-            this.shake(fb.ms, fb.intensity);
+            this.shakeLv(shakeLvOf(fb.intensity));
             if (!this.calm) navigator.vibrate?.(fb.vibrate);
           }
           sfx('hit', this.combo++);

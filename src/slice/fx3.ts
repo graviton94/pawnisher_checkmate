@@ -27,6 +27,47 @@ export const flashScreen = (a = 0.85): void => {
   document.body.appendChild(f);
   window.setTimeout(() => f.remove(), 260);
 };
+/**
+ * 도트 퇴장 (D-193): 사라지는 것은 모두 4×4 체크무늬가 다섯 단계로 지워진다 — 투명 페이드 대신.
+ * 끝나면 then (요소를 지우거나 숨기는 건 부른 쪽).
+ */
+export const pxOut = (el: HTMLElement | null, then?: () => void, ms = 240): void => {
+  if (!el) return then?.();
+  if (calm()) return then?.();
+  el.style.setProperty('--pxms', `${ms}ms`);
+  el.classList.remove('pxout');
+  void el.offsetWidth;
+  el.classList.add('pxout');
+  window.setTimeout(() => {
+    el.classList.remove('pxout');
+    then?.();
+  }, ms);
+};
+/** 흔들림 세 단계 (D-193): 약 4px/260ms · 중 7px/360ms · 강 12px/480ms — 판 밖은 모두 이것만 */
+export const SHAKE = { 1: [4, 260], 2: [7, 360], 3: [12, 480] } as const;
+export const shake = (el: HTMLElement | null, lv: 1 | 2 | 3 = 2): void => shakeEl(el, SHAKE[lv][0], SHAKE[lv][1]);
+/**
+ * 획득 비행 하나 (D-193): 위로 가속 → 착지 감속 → 도착점 눌림 + 불똥 셋. 카드 · 나사 · 구매가 모두 이 호를 탄다.
+ * el은 fixed로 띄운 조각(불러 준 쪽이 만든다), spin = 나사처럼 돌기, tilt = 카드처럼 기울기.
+ */
+export const arcFly = (el: HTMLElement, from: { x: number; y: number }, to: { x: number; y: number }, opt: { spin?: boolean; delay?: number; ms?: number; end?: number; target?: Element | null; done?: () => void } = {}): void => {
+  if (calm()) return void (el.remove(), opt.done?.());
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const r1 = opt.spin ? 'rotate(200deg) scale(1.15)' : 'rotate(12deg) scale(1.08)';
+  const r2 = opt.spin ? `rotate(400deg) scale(${opt.end ?? 0.5})` : `rotate(18deg) scale(${opt.end ?? 0.2})`;
+  const a = el.animate(
+    [{ transform: 'translate(0,0)' }, { transform: `translate(${dx * 0.45}px,${dy * 0.45 - 56}px) ${r1}`, offset: 0.45, easing: 'cubic-bezier(.6,0,.9,.4)' }, { transform: `translate(${dx}px,${dy}px) ${r2}` }],
+    { duration: opt.ms ?? 460, delay: opt.delay ?? 0, easing: 'cubic-bezier(.1,.9,.2,1)', fill: 'forwards' },
+  );
+  a.onfinish = () => {
+    el.remove();
+    sparksAt(to.x, to.y, 3, 16);
+    if (opt.target) (opt.target as HTMLElement).animate?.([{ transform: 'scale(1.25,.8)' }, { transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,1.6,.35,1)' });
+    opt.done?.();
+  };
+};
+
 /** 감쇠 흔들림 (요소 하나) */
 export const shakeEl = (el: HTMLElement | null, amp = 7, ms = 360): void => {
   if (!el || calm()) return;
@@ -62,10 +103,11 @@ export const modalOut = (overlay: HTMLElement, panel: HTMLElement, done: () => v
   overlay.querySelectorAll('.fx3-rv').forEach((x) => x.remove());
   if (calm()) return done();
   panel.classList.remove('m3in', 'pop');
-  replay(panel, 'm3out');
+  // 도트 퇴장 (D-193): 창은 체크무늬로 지워지고 그늘은 세 단계로 걷힌다. 사이에 다시 열리면 m3out이 지워져 취소된다
+  panel.classList.add('m3out');
   overlay.classList.remove('m3on');
   replay(overlay, 'm3off');
-  window.setTimeout(() => {
+  pxOut(panel, () => {
     if (!panel.classList.contains('m3out')) return;
     panel.classList.remove('m3out');
     overlay.classList.remove('m3off');
@@ -77,14 +119,14 @@ export const modalOut = (overlay: HTMLElement, panel: HTMLElement, done: () => v
 /** 알림: 위에서 떨어져 한 번 튀고 → 머문 뒤 → 아래부터 접혀 올라가며 사라짐 */
 export const toastIn = (t: HTMLElement): void => {
   t.hidden = false;
-  t.classList.remove('t3out', 'tin');
+  t.classList.remove('t3out', 'tin', 'pxout');
   if (!calm()) replay(t, 't3in');
 };
 export const toastOut = (t: HTMLElement): void => {
   if (calm() || t.hidden) return void (t.hidden = true);
   t.classList.remove('t3in');
-  replay(t, 't3out');
-  window.setTimeout(() => {
+  t.classList.add('t3out');
+  pxOut(t, () => {
     if (t.classList.contains('t3out')) {
       t.hidden = true;
       t.classList.remove('t3out');
@@ -106,12 +148,12 @@ export const turnLabel = (el: HTMLElement, text: string, enemy: boolean): void =
 
 // ---------- 4 턴 배너 ----------
 /** 아케이드 「ROUND」식: 속도선 띠가 비스듬히 날아들어 출렁 멈추고, 글자는 색이 갈라졌다 모이며 꽝 · 반짝 띠 → 반대쪽으로 비틀며 빠짐 */
-export const turnBanner = (over: HTMLElement, text: string, foe: boolean): void => {
+export const turnBanner = (over: HTMLElement, text: string, foe: boolean, small = false): void => {
   if (calm()) return;
   document.querySelectorAll('.tb4').forEach((x) => x.remove());
   const r = over.getBoundingClientRect();
   const el = document.createElement('div');
-  el.className = `tb4${foe ? ' foe' : ''}`;
+  el.className = `tb4${foe ? ' foe' : ''}${small ? ' sm' : ''}`;
   el.style.left = `${r.left}px`;
   el.style.top = `${r.top}px`;
   el.style.width = `${r.width}px`;
@@ -120,8 +162,8 @@ export const turnBanner = (over: HTMLElement, text: string, foe: boolean): void 
   document.body.appendChild(el);
   replay(el, 'run');
   window.setTimeout(() => {
-    sfx(foe ? 'threat' : 'stamp');
-    shakeEl(over, 4, 260);
+    sfx(foe ? 'threat' : 'tap');
+    shake(over, 1);
   }, 170);
   window.setTimeout(() => el.remove(), 1250);
 };
@@ -172,14 +214,14 @@ export const koBanner = (text: string, good: boolean): Promise<void> =>
     sfx(good ? 'win' : 'lose');
     if (!calm()) replay(el, 'run');
     window.setTimeout(() => {
-      if (good) flashScreen(0.7);
-      shakeEl(document.getElementById('app'), good ? 9 : 6, 420);
+      if (good) flashScreen(0.85);
+      shake(document.getElementById('app'), good ? 3 : 2);
       sparksAt(window.innerWidth / 2, window.innerHeight / 2 + (good ? 0 : 16), good ? 14 : 8, good ? 80 : 44);
     }, good ? 200 : 320);
-    window.setTimeout(() => {
+    window.setTimeout(() => pxOut(el, () => {
       el.remove();
       resolve();
-    }, calm() ? 900 : 1500);
+    }), calm() ? 900 : 1260);
   });
 
 // ---------- 8 도장 ----------
@@ -189,7 +231,7 @@ export const stampFx = (s: HTMLElement): void => {
   s.classList.add('st3');
   window.setTimeout(() => {
     flashScreen(0.5);
-    shakeEl(s.closest<HTMLElement>('.panel'), 6, 320);
+    shake(s.closest<HTMLElement>('.panel'), 2);
     sfx('stamp');
     const p = centerOf(s);
     for (let i = 0; i < 14; i++) {
@@ -303,17 +345,15 @@ export const buyFx = (item: HTMLElement | null, from: Element | null): void => {
   const b = centerOf(item);
   const a = from ? centerOf(from) : { x: b.x, y: b.y - 80 };
   const screw = getComputedStyle(document.documentElement).getPropertyValue('--screw');
-  for (let i = 0; i < 5; i++)
-    window.setTimeout(() => {
-      const s = document.createElement('i');
-      s.className = 'fx3-coin';
-      s.style.backgroundImage = screw;
-      s.style.left = `${a.x}px`;
-      s.style.top = `${a.y}px`;
-      document.body.appendChild(s);
-      s.animate([{ transform: 'translate(0,0) rotate(0) scale(1)' }, { transform: `translate(${(b.x - a.x) * 0.45}px,${(b.y - a.y) * 0.45 - 60}px) rotate(200deg) scale(1.2)`, offset: 0.45, easing: 'cubic-bezier(.6,0,.9,.4)' }, { transform: `translate(${b.x - a.x}px,${b.y - a.y}px) rotate(400deg) scale(.5)` }], { duration: 440, easing: 'cubic-bezier(.1,.9,.2,1)', fill: 'forwards' });
-      window.setTimeout(() => s.remove(), 460);
-    }, i * 60);
+  for (let i = 0; i < 5; i++) {
+    const c = document.createElement('i');
+    c.className = 'fx3-coin';
+    c.style.backgroundImage = screw;
+    c.style.left = `${a.x}px`;
+    c.style.top = `${a.y}px`;
+    document.body.appendChild(c);
+    arcFly(c, a, b, { spin: true, delay: i * 60, target: i === 4 ? item : null });
+  }
   window.setTimeout(() => {
     replay(item, 'got3');
     ring(b.x, b.y, Math.min(b.w, 120));
