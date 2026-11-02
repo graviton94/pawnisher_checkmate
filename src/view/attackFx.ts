@@ -75,20 +75,21 @@ export const MOVE_TOTAL = MOVE_MS.lift + MOVE_MS.travel + MOVE_MS.land;
 /** 이동 중 자세: 진행도(0~1, 지수형)와 높이·출렁임. 착지 먼지는 landQ(0~1) */
 export const moveMotion = (ms: number, jump: boolean): { p: number; pose: Pose; landQ: number } => {
   const M = MOVE_MS;
-  const lift = 0.14;
+  // 웅크림 (예비 동작, D-180): 바닥에 붙은 채 납작해졌다가
   if (ms < M.lift) {
     const e = easeOutCubic(ms / M.lift);
-    return { p: 0, pose: { dx: 0, dy: -lift * e, sx: 1 - 0.06 * e, sy: 1 + 0.08 * e }, landQ: -1 };
+    return { p: 0, pose: { dx: 0, dy: 0, sx: 1 + 0.14 * e, sy: 1 - 0.2 * e }, landQ: -1 };
   }
+  // 가속 이동: 느리게 떠나 빠르게 닿는다 (늘어난 몸)
   if (ms < M.lift + M.travel) {
     const q = (ms - M.lift) / M.travel;
-    const arc = Math.sin(Math.PI * q) * (jump ? 0.5 : 0.1);
-    return { p: easeInOutExpo(q), pose: { dx: 0, dy: -lift - arc, sx: 0.94, sy: 1.08 }, landQ: -1 };
+    const arc = Math.sin(Math.PI * q) * (jump ? 0.55 : 0.12);
+    return { p: q * q * q, pose: { dx: 0, dy: -arc, sx: 0.9, sy: 1.12 }, landQ: -1 };
   }
+  // 착지: 납작 → 출렁 복귀
   const q = Math.min(1, (ms - M.lift - M.travel) / M.land);
-  if (q < 0.25) return { p: 1, pose: { dx: 0, dy: -lift * (1 - easeInCubic(q / 0.25)), sx: 0.94, sy: 1.08 }, landQ: -1 };
-  const a = 1 - easeOutBack((q - 0.25) / 0.75);
-  return { p: 1, pose: { dx: 0, dy: 0, sx: 1 + 0.2 * a, sy: 1 - 0.2 * a }, landQ: (q - 0.25) / 0.75 };
+  const a = 1 - easeOutBack(q);
+  return { p: 1, pose: { dx: 0, dy: 0, sx: 1 + 0.22 * a, sy: 1 - 0.22 * a }, landQ: q };
 };
 
 /** 착지 증기 먼지 (q = 0~1) */

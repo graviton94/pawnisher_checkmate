@@ -508,6 +508,13 @@ const lastStand = async (force = false): Promise<void> => {
       closeOverlay();
       if (ok) {
         sacLeft -= 1;
+        // 몸을 던진다 (D-180): 웅크림 → 높은 호 → 킹 자리에 박힘, 킹은 뒤로
+        const kingId = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')?.id;
+        if (kingId !== undefined) {
+          busy = true;
+          await renderer.swapLeap(cands[0], kingId);
+          busy = false;
+        }
         sacrificeSwap(b, cands[0]);
         sfx('stamp');
         renderer.setup(b.s);
@@ -536,8 +543,16 @@ const lastStand = async (force = false): Promise<void> => {
 const nemesisMeet = (n: Nemesis): void => {
   const el = openOverlay(`<div class="stand nemesis"><p class="eyebrow">원수</p><h2>${pieceImg(n.t, 1, 'small', 30)} ${n.name}</h2><p class="line">${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><p class="dim">쓰러뜨린 분대원: ${n.victims.join(' · ')} · ${n.rank}단계 (HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%)<br>쓰러뜨리면 현상금 나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${n.heir.name}이(가) 돌아온다` : ''}.</p><div class="row"><button class="btn brass" type="button" data-go>간다</button></div></div>`);
   sfx('threat');
-  el.querySelector('[data-go]')!.addEventListener('click', () => {
+  el.querySelector('[data-go]')!.addEventListener('click', async () => {
     closeOverlay();
+    // 원수 낙하 (D-180): 그림자 → 낙하 → 판 물결
+    if (b.nemesisId !== undefined) {
+      busy = true;
+      refresh();
+      await renderer.dropIn(b.nemesisId);
+      busy = false;
+      refresh();
+    }
     toast(cur.tell, 3200);
   });
 };
@@ -607,6 +622,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   closeOverlay();
   renderer.setFoeTraits([...(b.blastPawns ? ['blast' as const] : []), ...(b.boss && b.bossRule === 'thorns' ? ['thorns' as const] : [])]);
   renderer.setNemesis(b.nemesisId ?? null);
+  renderer.setBossFinish(!!def.boss);
   renderer.setup(b.s);
   refresh();
   // 전환 화면 (D-165): 판이 바뀔 때마다 — 서술 한 줄 + 도움말, 눌러서 넘긴다. 판 위 규칙 한 줄은 그 뒤에

@@ -3,11 +3,12 @@ import { CARVES } from '../data/carves';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
-import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, playHitSpark, type CrumbleCell, type Pose } from './attackFx';
+import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
-import { FX_CAMERA, TURN_SUMMARY } from '../data/fx';
+import { FX_CAMERA, IMPACT, MOVE_MS, TURN_SUMMARY } from '../data/fx';
+import { crackPath, drawCrack, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
@@ -63,6 +64,28 @@ const stepArrows = (s: BattleState, step: PlanStep): { piece: Piece; from: Pos; 
 
 /** 예약 순번 배지를 붙일 칸 */
 const stepBadge = (_s: BattleState, _virtual: BattleState, step: PlanStep): Pos => step.to;
+
+/** 결정론 잡음 (파편 방향) */
+const hashN = (n: number): number => {
+  const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return v - Math.floor(v);
+};
+const easeOutElastic = (x: number): number => (x <= 0 ? 0 : x >= 1 ? 1 : 2 ** (-10 * x) * Math.sin((x * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1);
+/** 영화 띠 (반장 마무리): 위아래 검은 띠가 닫힌다. 돌려주는 함수를 부르면 열린다 */
+const letterbox = (h: number): (() => void) => {
+  const bars = ['top', 'bottom'].map((side) => {
+    const el = document.createElement('div');
+    el.className = `lbox ${side}`;
+    el.style.height = `${h}px`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('on'));
+    return el;
+  });
+  return () => {
+    for (const el of bars) el.classList.remove('on');
+    window.setTimeout(() => bars.forEach((el) => el.remove()), 500);
+  };
+};
 
 interface PieceSprite {
   root: Phaser.GameObjects.Container;
@@ -555,12 +578,20 @@ class BoardScene extends Phaser.Scene {
     const t = this.tile;
     ts.glyph.setTintFill(0xffffff);
     this.time.delayedCall(70, () => ts.glyph.clearTint());
-    playHitSpark(this, ts.root.x + t / 2, ts.root.y + t * 0.45, t, ts.piece.side === 0 ? 1 : 0, this.speed);
+    // 타격 불꽃 (D-180): 흰 심 → 금 가시 → 떨어지는 팔 → 불똥 (도트 별)
+    {
+      const sg = this.add.graphics().setDepth(7.5);
+      const spen = new PixelPen(sg, t / BOARD_DOTS);
+      const sx = ts.root.x + t / 2;
+      const sy = ts.root.y + t * 0.45;
+      this.tweens.addCounter({ from: 0, to: 1, duration: (h.killed ? 420 : 320) / this.speed, onUpdate: (tw) => (sg.clear(), drawSpark(spen, sx, sy, t * (h.killed ? 0.6 : 0.45), tw.getValue() ?? 0)), onComplete: () => sg.destroy() });
+    }
     const dealt = ts.piece.hp - h.hpAfter;
     const before = ts.piece.hp;
     // 히트스톱 (D-142): 맞은 몫만큼 화면이 잠깐 멈춘다 — 킹 처치는 길게
     if (!this.calm) {
-      const stop = h.killed && ts.piece.type === 'K' ? 220 : Math.min(130, 40 + (dealt / ts.piece.maxHp) * 120);
+      const S = IMPACT.stop;
+      const stop = h.killed ? (ts.piece.type === 'K' ? S.king : S.kill) : Math.min(S.max, S.min + (dealt / ts.piece.maxHp) * (S.max - S.min) * 2);
       this.tweens.timeScale = 0.05;
       window.setTimeout(() => (this.tweens.timeScale = 1), stop);
     }
@@ -604,7 +635,232 @@ class BoardScene extends Phaser.Scene {
     if (h.pushedTo) {
       const w = this.world(h.pushedTo);
       this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
+    } else if (!h.killed && !this.calm) {
+      // 찌그러짐 → 출렁 복귀 (D-180)
+      const Q = IMPACT.squash;
+      const bx = ts.root.x - (t / 2) * (1 - ts.root.scaleX);
+      const by = ts.root.y - t * 0.85 * (1 - ts.root.scaleY);
+      this.tweens.addCounter({ from: 0, to: 1, duration: Q.ms / this.speed, onUpdate: (tw) => { if (!ts.root.active) return; const a = 1 - easeOutElastic(tw.getValue() ?? 0); this.applyPose(ts, bx, by, { dx: 0, dy: 0, sx: 1 + (Q.sx - 1) * a, sy: 1 - (1 - Q.sy) * a }); } });
     }
+  }
+
+  /**
+   * 처치 (D-180): 기물 그림이 16조각으로 부서져 돌며 날아가고, 불씨가 식으며 흩어지고, 도트 고리가 번진다.
+   * slow = 슬로 배율 (킹 마무리), power = 날아가는 힘
+   */
+  private shatterPiece(s: PieceSprite, slow = 1, power = 1): Promise<void> {
+    const t = this.tile;
+    const key = s.glyph.texture.key;
+    const W0 = (this.textures.get(key).getSourceImage() as HTMLImageElement).width;
+    const n = 4;
+    const part = W0 / n;
+    const size = t * 0.82;
+    const gx = s.root.x + t / 2;
+    const gy = s.root.y + t * 0.43;
+    const frags: { img: Phaser.GameObjects.Image; x: number; y: number; a: number; v: number; r: number }[] = [];
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        const id = j * n + i;
+        const x = gx - size / 2 + ((i + 0.5) * size) / n;
+        const y = gy - size / 2 + ((j + 0.5) * size) / n;
+        const img = this.add.image(x, y, key).setDepth(6.6).setDisplaySize(size, size).setCrop(i * part, j * part, part, part).setOrigin((i + 0.5) / n, (j + 0.5) / n);
+        const a = Math.atan2(y - gy - 4, x - gx) + (hashN(31 + id) - 0.5) * 0.8;
+        frags.push({ img, x, y, a, v: (t * 0.6 + hashN(31 + id * 3) * t * 1.1) * power, r: (hashN(31 + id * 7) - 0.5) * 6 });
+      }
+    const g = this.add.graphics().setDepth(6.7);
+    const pen = new PixelPen(g, t / BOARD_DOTS);
+    const total = (IMPACT.shatter.ms * slow) / this.speed;
+    const seed = (s.piece.id * 17) % 97;
+    return new Promise((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: total,
+        onUpdate: (tw) => {
+          const k = tw.getValue() ?? 0;
+          const e = 1 - (1 - k) ** 2.2;
+          for (const f of frags) {
+            f.img.setPosition(f.x + Math.cos(f.a) * f.v * e, f.y + Math.sin(f.a) * f.v * e * 0.8 + t * 1.4 * k * k * power);
+            f.img.setRotation(f.r * e).setAlpha(1 - Math.max(0, (k - 0.6) / 0.4));
+          }
+          g.clear();
+          drawEmbers(pen, gx, gy, k, seed, IMPACT.shatter.embers, power);
+          const rk = Math.min(1, k * (IMPACT.shatter.ms / IMPACT.shatter.ringMs));
+          drawRing(pen, gx, gy + t * 0.1, t * 0.15 + t * 1.1 * (1 - (1 - rk) ** 3), 0xfacc15, 1 - rk);
+        },
+        onComplete: () => {
+          for (const f of frags) f.img.destroy();
+          g.destroy();
+          done();
+        },
+      }),
+    );
+  }
+
+  /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
+  bossFinish = false;
+
+  /**
+   * 킹 마무리 (D-180): 멈춤 → 총알 시간(킹 그림 위에서 빛의 금이 자란다 · 카메라가 천천히 다가간다)
+   * → 슬로로 산산이 → 왕관이 솟았다 떨어져 두 번 튄다. 반장이면 위아래 영화 띠.
+   */
+  private async finisher(s: PieceSprite): Promise<void> {
+    const t = this.tile;
+    const F = IMPACT.finisher;
+    const bars = this.bossFinish && !this.calm ? letterbox(F.bossBars) : null;
+    await this.after(F.hold / this.speed);
+    const d = t / BOARD_DOTS;
+    const path = crackPath(this.pieceCells(s.glyph.texture.key), s.piece.id * 7 + 3);
+    const g = this.add.graphics().setDepth(6.5);
+    const pen = new PixelPen(g, d);
+    if (!this.calm) this.cameras.main.zoomTo(this.dpr * 1.25, F.crack / this.speed, 'Sine.easeInOut', true);
+    if (!this.calm) this.cameras.main.pan(s.root.x + t / 2, s.root.y + t / 2, F.crack / this.speed, 'Sine.easeInOut', true);
+    const x0 = s.root.x;
+    await new Promise<void>((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: F.crack / this.speed,
+        onUpdate: (tw) => {
+          const k = tw.getValue() ?? 0;
+          g.clear();
+          drawCrack(pen, s.root.x, s.root.y, path, k * k * k);
+          if (!this.calm) s.root.x = x0 + (Math.random() - 0.5) * d * (0.4 + 1.6 * k);
+          s.glyph.setTint(k > 0.5 && Math.floor(k * 20) % 2 ? 0xffd0c0 : 0xffffff);
+        },
+        onComplete: () => (g.destroy(), (s.root.x = x0), done()),
+      }),
+    );
+    sfx('kill');
+    this.shake(500, 0.01);
+    const gx = s.root.x + t / 2;
+    const gy = s.root.y + t * 0.3;
+    const floor = s.root.y + t * 0.85;
+    const crownG = this.add.graphics().setDepth(6.8);
+    const cpen = new PixelPen(crownG, d);
+    const crown = new Promise<void>((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: F.crownMs / this.speed,
+        onUpdate: (tw) => {
+          const k = tw.getValue() ?? 0;
+          crownG.clear();
+          let x = gx + t * 0.7 * (1 - (1 - Math.min(1, k / 0.72)) ** 3);
+          let y: number;
+          if (k < 0.72) {
+            const q = k / 0.72;
+            y = gy + (floor - gy) * q - 4 * t * 1.1 * q * (1 - q);
+            for (let i = 1; i <= 5; i++) cpen.px(x - i * d * 0.6, y + i * d * 0.8 * (q < 0.5 ? 1 : -1), 0xf59e0b, 1 - i / 6);
+          } else {
+            const b = (k - 0.72) / 0.28;
+            x = gx + t * 0.7 + t * 0.15 * b;
+            y = floor - (b < 0.6 ? t * 0.35 * Math.sin((Math.PI * b) / 0.6) : t * 0.1 * Math.sin((Math.PI * (b - 0.6)) / 0.4));
+          }
+          drawCrown(cpen, x, y);
+        },
+        onComplete: () => done(),
+      }),
+    );
+    const s0 = this.shatterPiece(s, F.shatterMs / IMPACT.shatter.ms, 1.3);
+    s.root.destroy();
+    this.sprites.delete(s.piece.id);
+    await Promise.all([s0, crown]);
+    this.time.delayedCall(900 / this.speed, () => crownG.destroy());
+    this.camRelease();
+    bars?.();
+  }
+
+  /**
+   * 원수 낙하 (D-180): 바닥 그림자가 먼저 커지고 → 위에서 떨어져 → 판이 물결친다 (꺼진 칸 · 들썩이는 둘레) + 먼지.
+   */
+  async dropIn(pieceId: number): Promise<void> {
+    const s = this.sprites.get(pieceId);
+    if (!s || this.calm) return;
+    const t = this.tile;
+    const D = IMPACT.drop;
+    const d = t / BOARD_DOTS;
+    const by = s.root.y;
+    const bx = s.root.x;
+    s.root.y = by - t * 3.2;
+    const g = this.add.graphics().setDepth(1.9);
+    const pen = new PixelPen(g, d);
+    await new Promise<void>((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: D.shadow,
+        onUpdate: (tw) => {
+          const k = (tw.getValue() ?? 0) ** 3;
+          g.clear();
+          const rx = t * 0.42 * k;
+          const ry = t * 0.12 * k;
+          for (let yy = -ry; yy <= ry; yy += d) for (let xx = -rx; xx <= rx; xx += d) if ((xx * xx) / (rx * rx + 1) + (yy * yy) / (ry * ry + 1) <= 1) pen.px(bx + t / 2 + xx, by + t * 0.86 + yy, 0x000000, 0.25 + 0.5 * k);
+        },
+        onComplete: () => done(),
+      }),
+    );
+    await this.tween({ targets: s.root, y: by, duration: D.fall, ease: 'Quad.easeIn' });
+    g.clear();
+    this.shake(420, 0.014);
+    sfx('kill');
+    const cell = { x: Math.round(bx / t), y: Math.round(by / t) };
+    const tiles = this.tilesC.list as Phaser.GameObjects.Image[];
+    const bases = tiles.map((im) => im.y);
+    await new Promise<void>((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: D.ripple,
+        duration: D.ripple,
+        onUpdate: (tw) => {
+          const ms = tw.getValue() ?? 0;
+          tiles.forEach((im, i) => {
+            const dist = Math.hypot(Math.round(im.x / t) - cell.x, Math.round(bases[i] / t) - cell.y);
+            im.y = bases[i] + rippleOffset(dist, ms, t);
+          });
+          const a = 1 - easeOutElastic(Math.min(1, ms / 600));
+          this.applyPose(s, bx, by, { dx: 0, dy: 0, sx: 1 + 0.45 * a, sy: 1 - 0.45 * a });
+          g.clear();
+          drawSlamDust(pen, bx + t / 2, by + t * 0.9, ms / D.ripple);
+        },
+        onComplete: () => {
+          tiles.forEach((im, i) => (im.y = bases[i]));
+          this.applyPose(s, bx, by, REST_POSE);
+          g.destroy();
+          done();
+        },
+      }),
+    );
+  }
+
+  /** 자원 희생 (D-180): 분대원이 웅크렸다 높은 호로 킹 자리에 박히고, 킹은 뒤로 미끄러진다 */
+  async swapLeap(crewId: number, kingId: number): Promise<void> {
+    const c = this.sprites.get(crewId);
+    const k = this.sprites.get(kingId);
+    if (!c || !k) return;
+    const S = IMPACT.sacrifice;
+    const t = this.tile;
+    const cx = c.root.x;
+    const cy = c.root.y;
+    const kx = k.root.x;
+    const ky = k.root.y;
+    await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: S.crouch / this.speed, onUpdate: (tw) => { const e = tw.getValue() ?? 0; this.applyPose(c, cx, cy, { dx: 0, dy: 0, sx: 1 + 0.16 * e, sy: 1 - 0.26 * e }); }, onComplete: () => done() }));
+    this.tweens.add({ targets: k.root, x: cx, y: cy, duration: (S.leap * 1.4) / this.speed, ease: 'Cubic.easeOut' });
+    await new Promise<void>((done) =>
+      this.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: S.leap / this.speed,
+        onUpdate: (tw) => {
+          const q = (tw.getValue() ?? 0) ** 2;
+          this.applyPose(c, cx + (kx - cx) * q, cy + (ky - cy) * q - Math.sin(Math.PI * q) * t, { dx: 0, dy: 0, sx: 0.9, sy: 1.12 });
+        },
+        onComplete: () => done(),
+      }),
+    );
+    this.shake(160, 0.004);
+    sfx('land');
+    await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: 330 / this.speed, onUpdate: (tw) => { const a = 1 - easeOutElastic(tw.getValue() ?? 0); this.applyPose(c, kx, ky, { dx: 0, dy: 0, sx: 1 + 0.28 * a, sy: 1 - 0.28 * a }); }, onComplete: () => done() }));
   }
 
   /**
@@ -794,15 +1050,32 @@ class BoardScene extends Phaser.Scene {
         const pen = new PixelPen(g, t / BOARD_DOTS);
         let landed = false;
         sfx('lift');
+        // 흰 그림자 잔상 셋 (D-180): 지나온 길 위, 지금 자리 가까이 몰리고 오래된 것일수록 작고 옅고 길다
+        const ghosts = this.calm ? [] : IMPACT.ghosts.map(() => this.add.image(0, 0, pieceKey(s.piece.type, s.piece.side)).setTintFill(0xffffff).setDepth(2.4).setVisible(false));
+        const trail: { x: number; y: number }[] = [];
+        let landAt = -1;
         await new Promise<void>((done) =>
           this.tweens.addCounter({
             from: 0,
             to: MOVE_TOTAL,
             duration: MOVE_TOTAL / this.speed,
             onUpdate: (tw) => {
-              const m = moveMotion(tw.getValue() ?? 0, jump);
+              const ms = tw.getValue() ?? 0;
+              const m = moveMotion(ms, jump);
               this.applyPose(s, from.x + (w.x - from.x) * m.p, from.y + (w.y - from.y) * m.p, m.pose);
               g.clear();
+              // 출발 먼지 · 잔상
+              const dk = (ms - MOVE_MS.lift) / 420;
+              if (dk > 0) drawTakeoffDust(pen, from.x + t / 2, from.y + t * 0.85, dk);
+              if (ms >= MOVE_MS.lift && m.landQ < 0) trail.push({ x: s.root.x, y: s.root.y });
+              if (m.landQ >= 0 && landAt < 0) landAt = ms;
+              const fade = landAt < 0 ? 1 : Math.max(0, 1 - (ms - landAt) / 200);
+              if (trail.length > 1)
+                IMPACT.ghosts.forEach((gh, i) => {
+                  const p0 = trail[Math.floor(gh.at * (trail.length - 1))];
+                  const size = t * 0.82 * gh.scale;
+                  ghosts[i]?.setVisible(fade > 0).setPosition(p0.x + t / 2, p0.y + t * 0.43).setDisplaySize(size * gh.stretch, size / gh.stretch).setAlpha(gh.alpha * fade);
+                });
               if (m.landQ >= 0) {
                 if (!landed) {
                   this.shake(60, 0.002);
@@ -814,6 +1087,7 @@ class BoardScene extends Phaser.Scene {
             },
             onComplete: () => {
               g.destroy();
+              for (const gh of ghosts) gh.destroy();
               this.applyPose(s, w.x, w.y, REST_POSE);
               done();
             },
@@ -938,12 +1212,16 @@ class BoardScene extends Phaser.Scene {
       const deaths = e.hits.filter((h) => h.killed).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);
       if (deaths.length) {
         sfx('kill');
-        const ashes = deaths.map((s) => this.playCrumble(s));
-        for (const s of deaths) {
+        // 킹 마무리 (D-180): 적 킹이면 총알 시간 · 빛의 금 · 슬로 산산이 · 왕관
+        const king = deaths.find((s) => s.piece.type === 'K' && s.piece.side === 1);
+        const rest = deaths.filter((s) => s !== king);
+        const ashes = rest.map((s) => this.shatterPiece(s));
+        for (const s of rest) {
           s.root.destroy();
           this.sprites.delete(s.piece.id);
         }
-        await Promise.race([Promise.all(ashes), this.after(260)]);
+        if (king) await this.finisher(king);
+        await Promise.race([Promise.all(ashes), this.after(420)]);
       }
       order.destroy();
       await this.wait(140);
@@ -1064,6 +1342,20 @@ export class BoardRenderer implements BoardView {
   /** 원수 표식 (D-178) — setup 전에 */
   setNemesis(id: number | null): void {
     this.scene.nemesisId = id;
+  }
+  /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
+  setBossFinish(on: boolean): void {
+    this.scene.bossFinish = on;
+  }
+  /** 원수 낙하 (D-180) */
+  async dropIn(pieceId: number): Promise<void> {
+    await this.whenReady;
+    await this.scene.dropIn(pieceId);
+  }
+  /** 자원 희생 도약 (D-180) */
+  async swapLeap(crewId: number, kingId: number): Promise<void> {
+    await this.whenReady;
+    await this.scene.swapLeap(crewId, kingId);
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => this.scene.setupBoard(state));

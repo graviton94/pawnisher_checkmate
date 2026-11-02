@@ -5,7 +5,8 @@
  */
 
 /** 이동 (ms, 1배속): 들기 → 지수형 이동 → 착지 출렁임 */
-export const MOVE_MS = { lift: 80, travel: 230, land: 130 };
+/** D-180: 들기 → 웅크림(예비 동작, 길게), 이동은 가속, 착지는 길게 출렁 */
+export const MOVE_MS = { lift: 170, travel: 150, land: 230 };
 
 /** 공격 박자 (ms, 1배속). 1회 ≤ 1초 (D-036, 속도 옵션으로 줄인다) */
 export const FX_MS = {
@@ -82,3 +83,30 @@ export const FX_CAMERA = {
 
 /** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
 export const TURN_SUMMARY = { bigDamage: 40 };
+
+/**
+ * 타격감 연구실 확정안 (D-180, 아티팩트 https://claude.ai/artifact/MWkNrybMzHSEsvCUD5CKWd 6판).
+ * 원리: 모으기는 길게 · 터짐은 한 박 · 정지는 분명히 · 여운은 길게. FX는 판 칸과 같은 도트(칸당 16)로만.
+ */
+export const IMPACT = {
+  /** 이동: 웅크림(예비) → 가속 이동 → 착지 출렁 */
+  move: { crouch: 170, travel: 150, land: 230 },
+  /** 흰 그림자 잔상 셋: 경로 위치 · 투명도 · 크기 · 늘어짐 (오래된 것일수록 작고 옅고 길다) */
+  ghosts: [
+    { at: 0.38, alpha: 0.16, scale: 0.8, stretch: 1.22 },
+    { at: 0.66, alpha: 0.3, scale: 0.88, stretch: 1.12 },
+    { at: 0.86, alpha: 0.5, scale: 0.95, stretch: 1.05 },
+  ],
+  /** 맞은 쪽 찌그러짐 → 출렁 복귀 */
+  squash: { sx: 1.16, sy: 0.84, ms: 420 },
+  /** 정지 프레임 (ms): 타격(피해 비율로 70~120) · 처치 · 킹 처치 */
+  stop: { min: 70, max: 120, kill: 200, king: 120 },
+  /** 처치: 기물 그림 16조각 · 불씨 · 도트 고리 */
+  shatter: { ms: 900, embers: 22, ringMs: 520 },
+  /** 킹 마무리 (D-180): 멈춤 → 총알 시간(빛의 금) → 슬로 산산이 → 왕관. 반장이면 영화 띠 */
+  finisher: { hold: 120, crack: 650, shatterMs: 1500, crownMs: 1100, bossBars: 24 },
+  /** 원수 낙하: 그림자 · 낙하 · 판 물결 */
+  drop: { shadow: 600, fall: 120, ripple: 900 },
+  /** 자원 희생: 웅크림 · 도약 · 킹 미끄러짐 */
+  sacrifice: { crouch: 250, leap: 220 },
+} as const;
