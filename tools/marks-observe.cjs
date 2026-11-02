@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 915, height: 412 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
-  await page.goto('http://localhost:4173/?debug'); await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(800);
+  await page.goto('http://localhost:4173/legacy.html?debug'); await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(800);
   await page.tap('[data-test]'); await page.tap('[data-sc="full"]'); await page.tap('[data-go]'); await page.waitForTimeout(800);
   for (let i = 0; i < 4; i++) { await page.evaluate(async () => { window.pawnisher.autoPlan(); await window.pawnisher.submit(); }); await page.waitForTimeout(200); }
   // 예약 2개 + 다른 기물 선택 상태

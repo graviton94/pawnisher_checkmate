@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#16141C">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <title>Pawnisher : Checkmate — 2.0 (legacy)</title>
+  <!-- 2.0 본편 (R6 이후 legacy, D-174) — 본편은 index.html (리뉴얼판) -->
+</head>
+<body>
+  <div id="app">
+    <main id="board"></main>
+    <aside id="right" class="rail">
+      <div class="rail-head">
+        <span id="turn-label" class="plate turn-label">내 차례</span>
+        <button id="btn-enchant" class="btn sq" type="button" aria-label="부품 보기"><i class="icon" style="-webkit-mask-image:url(ui/icons/wrench.png);mask-image:url(ui/icons/wrench.png)"></i></button>
+        <button id="btn-pause" class="btn sq" type="button" aria-label="일시 정지"><i class="icon" style="-webkit-mask-image:url(ui/icons/watch.png);mask-image:url(ui/icons/watch.png)"></i></button>
+      </div>
+      <div id="order" class="order" hidden></div>
+      <ol id="queue" class="queue"></ol>
+      <div id="cards" class="cards"></div>
+      <div id="vials" class="springs" aria-label="남은 태엽"></div>
+      <div class="actions">
+        <button id="btn-undo" class="btn sq" type="button" aria-label="마지막 명령 되돌리기" title="되돌리기 (Z)">
+          <svg width="24" height="24" viewBox="0 0 12 12" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M4 2h1v1H4zM3 3h1v1H3zM2 4h1v1H2zM3 5h1v1H3zM4 6h1v1H4zM3 4h6v1H3zM9 5h1v1H9zM10 6h1v3h-1zM9 9h1v1H9zM5 10h4v1H5z"/></svg>
+        </button>
+        <button id="btn-reset" class="btn sq" type="button" aria-label="명령 테이프 비우기" title="초기화 (R)">
+          <svg width="24" height="24" viewBox="0 0 12 12" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor"><path d="M2 2h2v1H2zM3 3h2v1H3zM4 4h2v1H4zM5 5h2v2H5zM6 4h2v1H6zM7 3h2v1H7zM8 2h2v1H8zM4 7h2v1H4zM3 8h2v1H3zM2 9h2v1H2zM6 7h2v1H6zM7 8h2v1H7zM8 9h2v1H8z"/></svg>
+        </button>
+        <button id="btn-submit" class="btn brass btn-go" type="button" title="가동 (Space)"><i class="icon" style="-webkit-mask-image:url(ui/icons/lever.png);mask-image:url(ui/icons/lever.png)"></i>가동</button>
+      </div>
+    </aside>
+  </div>
+
+  <div id="scene" class="scene" hidden></div>
+  <div id="info" class="info" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <div id="overlay" class="overlay" hidden>
+    <div class="panel" id="overlay-panel"></div>
+  </div>
+
+  <div id="rotate" class="rotate">
+    <p>화면을 가로로 돌린다</p>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

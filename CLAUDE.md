@@ -5,7 +5,8 @@
 ## 스택
 - TypeScript + Vite + Phaser 3 (보드 렌더링) + HTML/CSS 오버레이 (UI) · Vitest
 - 결정론적 엔진 `src/engine/` (시드 RNG, 같은 입력 = 같은 결과) — 미리보기·AI·실행이 같은 `simulate()` 하나를 쓴다
-- 런(등반) 로직 `src/run/`, 데이터 `src/data/`, AI `src/ai/`, 화면 `src/ui/` `src/view/` `src/game/`
+- **본편 = 리뉴얼판** `index.html` → `src/slice/` (분대 · 명령 덱 · 3막 출하 · 저장 · 승급 · 오늘의 출하, GDD 16장 · D-174). 2.0은 `legacy.html`로 남는다 (`src/run/` `src/ui/` `src/game/`).
+- 공용: 엔진 `src/engine/`, 데이터 `src/data/`, 판 그리기 `src/view/`, AI `src/ai/`
 - 빌드: 웹 `npm run build` · 안드로이드 Capacitor (CI가 APK를 `apk-latest` 릴리스로 올림) · PC Electron
 
 ## 문서

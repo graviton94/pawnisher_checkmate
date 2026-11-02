@@ -764,7 +764,7 @@ export const fallenAfter = (b: SliceBattle, squad: Squad[]): { crew: Squad; fall
 export const REST = { heal: 0.3, reviveHp: 0.5, overhaul: 0.25 };
 
 /** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */
-export const restSquad = (squad: Squad[]): Squad[] => squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * REST.heal)) }));
+export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * heal)) }));
 
 /** 정비 (보상 대신 고를 수 있다): 쓰러진 기물 하나를 HP 50%로 되살리고, 모두 25% 더 */
 export const overhaulSquad = (squad: Squad[], fallen: Squad[]): { squad: Squad[]; revived?: Squad } => {

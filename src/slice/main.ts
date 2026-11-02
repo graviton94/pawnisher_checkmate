@@ -12,8 +12,9 @@ import { AXIS_NAMES, BOSS_RULES, COMMANDS, FORGE, KITS, SHOP, RECRUITS, REWARD_C
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
-import { battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
-import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from './events';
+import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
+import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
+import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
 import { REST, backlashOf, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
@@ -29,7 +30,16 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3, P: 1 };
 
 /** 출하 지도 (R5, D-168): 3막 × 갈림길 + 검문 + 반장. 1막 앞 두 판은 입문 · 연마 고정 */
-const acts: Act[] = buildRun((Date.now() ^ 0x2f17) & 0xffffff);
+let runSeed = (Date.now() ^ 0x2f17) & 0xffffff;
+/** 승급 단계 (D-174) · 오늘의 출하 날짜 */
+let asc = 0;
+let daily: string | null = null;
+let acts: Act[] = buildRun(runSeed);
+/** 출하 난수: 분대 · 보상 · 사건 · 대국 시드가 모두 여기서 (같은 시드 = 같은 출하 — 오늘의 출하) */
+let R = new Rng(runSeed ^ 0x51c3);
+/** 하위 난수 하나 (화면마다 따로 쓰되 순서는 출하 난수가 정한다) */
+const sub = (): Rng => new Rng(R.int(0x7fffffff));
+const store = defaultStore();
 let actI = 0;
 let rowI = 0;
 /** 지금 치르는 대국 */
@@ -37,12 +47,11 @@ let cur: BattleDef = INTRO[0];
 /** 이긴 대국 수 (결과 화면) */
 let won = 0;
 /** 다듬은 카드 (작업대 — 그 카드 전부 태엽 −1) */
-const refined: CommandId[] = [];
+let refined: CommandId[] = [];
 
 /** 분대: 시리얼 · 이름 · 기벽이 붙은 기물 (D-153) */
-const crewRng = new Rng((Date.now() ^ 0x51c3) & 0xffff);
 let squad: Squad[] = [];
-for (const t of START_SQUAD) squad.push(makeCrew(t, crewRng, squad.map((u) => u.name ?? '')));
+for (const t of START_SQUAD) squad.push(makeCrew(t, R, squad.map((u) => u.name ?? '')));
 let deck: CommandId[] = [...START_DECK];
 /** 부품 (규칙을 깨는 유물, D-144) */
 let parts: SlicePartId[] = [];
@@ -452,7 +461,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   cur = def;
   stage += 1;
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
-  b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17 + Math.floor(Math.random() * 1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
+  b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
   selCard = selPiece = null;
   busy = false;
   turnDmg = 0;
@@ -476,7 +485,7 @@ const advance = (): void => {
     if (actI >= acts.length) return runEnd(true);
     const a = acts[actI];
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
-    squad = restSquad(squad);
+    squad = restSquad(squad, restHeal());
     void sceneIntro(`${a.act}막`, a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`).then(showMap);
     return;
   }
@@ -486,10 +495,13 @@ const ACT_NARR = ['', '컨베이어가 당신을 위층으로 끌어올린다. �
 
 /** 노드에 들어간다 */
 const enterNode = (n: MapNode): void => {
-  if (n.battle) return startBattle(n.battle);
+  if (n.battle) {
+    startBattle(n.battle);
+    return saveRun('battle', picked[actI][rowI] ?? 0);
+  }
   if (n.kind === 'shop') return void sceneIntro(NODE_NAMES.shop, '고물 더미', '고물 더미 사이로 저울이 흔들린다. 나사 냄새가 난다.', `<i class="sf-ico" style="${iconMask('crate')}"></i>`).then(shopScreen);
   if (n.kind === 'event') {
-    const id = eventBag.length ? eventBag.splice(Math.floor(Math.random() * eventBag.length), 1)[0] : SLICE_EVENT_IDS[0];
+    const id = eventBag.length ? eventBag.splice(R.int(eventBag.length), 1)[0] : SLICE_EVENT_IDS[0];
     const ev = SLICE_EVENTS[id];
     return void sceneIntro(NODE_NAMES.event, ev.title, ev.text.split('.')[0] + '.', `<i class="sf-ico" style="${iconMask('question')}"></i>`).then(() => eventScreen(id));
   }
@@ -502,7 +514,7 @@ const enterNode = (n: MapNode): void => {
  * 고정 노드(입문 · 연마)는 지도 없이 바로.
  */
 /** 지나온 길: 막마다 줄 → 고른 노드 번호 */
-const picked: number[][] = [[], [], []];
+let picked: number[][] = [[], [], []];
 const showMap = (): void => {
   const a = acts[actI];
   const row = a.rows[rowI];
@@ -512,6 +524,7 @@ const showMap = (): void => {
   }
   closeOverlay();
   document.querySelector('.mapfx')?.remove();
+  saveRun('map');
   const n = a.rows.length;
   const pos = (r: number, k: number) => ({ x: ((r + 0.5) / n) * 100, y: ((k + 0.5) / a.rows[r].length) * 100 });
   // 선: 지나온 길(금) · 지금 위치 → 다음 갈 곳들(밝게) · 그 뒤는 모두 이어진 흐린 선
@@ -571,7 +584,7 @@ const showMap = (): void => {
 };
 
 /** 이번 출하에서 아직 안 나온 사건 (한 출하에 같은 사건 두 번 없음) */
-const eventBag = [...SLICE_EVENT_IDS];
+let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
 /** 사건 화면 (R5-3, D-170): 서술 · 선택지(고를 수 없으면 이유) → 결과 한 줄 → 계속 (부품이면 고르기) */
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
@@ -589,12 +602,12 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       const c = ev.choices[Number(btn.dataset.ev)];
       choose(btn, c.label.replace(/\?$/, ''), () => {
         const s0 = st();
-        const out = c.apply(s0, new Rng((Date.now() ^ (id.length * 977)) & 0xffff));
+        const out = c.apply(s0, sub());
         squad = s0.squad;
         deck = s0.deck;
         refined.splice(0, refined.length, ...s0.refined);
         gold = s0.gold;
-        if (out.recruit) squad.push(makeCrew(out.recruit, crewRng, squad.map((u) => u.name ?? '')));
+        if (out.recruit) squad.push(makeCrew(out.recruit, R, squad.map((u) => u.name ?? '')));
         sfx(out.partPick ? 'rare' : 'stamp');
         const res = openOverlay(`<h2>${ev.title}</h2><p class="ev-text">${out.text}</p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div>`);
         res.querySelector('[data-next]')!.addEventListener('click', () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
@@ -605,22 +618,22 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */
 const shopScreen = (): void => {
-  const rng = new Rng((Date.now() ^ 0x1d3) & 0xffff);
+  const rng = sub();
   const pool = REWARD_COMMANDS.filter(usable);
   const cards: CommandId[] = [];
   while (cards.length < SHOP.cards && pool.length) cards.push(pool.splice(rng.int(pool.length), 1)[0]);
   const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id));
   const part = partPool.length ? partPool[rng.int(partPool.length)] : null;
   const sold = new Set<string>();
-  const price = (id: CommandId) => SHOP.cardPrice[Math.min(2, COMMANDS[id].cost)];
+  const price = (id: CommandId) => ascPrice(SHOP.cardPrice[Math.min(2, COMMANDS[id].cost)]);
   const render = (): void => {
     const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price${gold < cost ? ' poor' : ''}">나사 ${cost}</span>`);
     const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><button class="btn brass" type="button" data-leave>떠나기</button></div>
       <div class="shop-grid">
         ${cards.map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd big t-${c.who}${sold.has(id) ? ' sold' : ''}" data-buy="card:${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}</span>${tag(id, price(id))}</button>`; }).join('')}
-        ${part ? `<button type="button" class="part-card${sold.has('part') ? ' sold' : ''}" data-buy="part:${part}"><i class="ico" style="${iconMask(SLICE_PARTS[part].icon)}"></i><b>${SLICE_PARTS[part].name}</b><small>${SLICE_PARTS[part].desc}</small>${tag('part', SHOP.partPrice)}</button>` : ''}
-        <button type="button" class="part-card${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><i class="ico" style="${iconMask('oil')}"></i><b>정비</b><small>분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', SHOP.healPrice)}</button>
-        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconMask('wrench')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small>${tag('remove', SHOP.removePrice)}</button>
+        ${part ? `<button type="button" class="part-card${sold.has('part') ? ' sold' : ''}" data-buy="part:${part}"><i class="ico" style="${iconMask(SLICE_PARTS[part].icon)}"></i><b>${SLICE_PARTS[part].name}</b><small>${SLICE_PARTS[part].desc}</small>${tag('part', ascPrice(SHOP.partPrice))}</button>` : ''}
+        <button type="button" class="part-card${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><i class="ico" style="${iconMask('oil')}"></i><b>정비</b><small>분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
+        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconMask('wrench')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
       </div>`);
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
     el.querySelectorAll<HTMLElement>('[data-buy]').forEach((btn) =>
@@ -628,7 +641,7 @@ const shopScreen = (): void => {
         const [kind, id] = (btn.dataset.buy ?? '').split(':');
         const key = kind === 'card' ? id : kind;
         if (sold.has(key)) return;
-        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? SHOP.partPrice : kind === 'heal' ? SHOP.healPrice : SHOP.removePrice;
+        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? ascPrice(SHOP.partPrice) : kind === 'heal' ? ascPrice(SHOP.healPrice) : ascPrice(SHOP.removePrice);
         if (gold < cost) return toast(`‘나사가 모자라.’ (${cost} 필요)`);
         const label = kind === 'card' ? `${COMMANDS[id as CommandId].name}을(를) 산다 — 나사 ${cost}` : kind === 'part' ? `${SLICE_PARTS[id as SlicePartId].name}을(를) 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
@@ -818,7 +831,7 @@ const finish = (): void => {
     // 폐기 원부: 영구 기록 (D-153)
     writeLedger(fallenList.map(({ crew, fall }) => ({ serial: crew.serial ?? '', name: crew.name ?? '', t: crew.t, quirk: crew.quirk, kills: crew.kills ?? 0, battles: crew.battles ?? 0, nick: crew.nick, cause: `${cur.title} ${fall.turn}턴 · ${fall.by}`, run: runId })));
     // 판 사이 기본 회복: 남은 분대 최대 HP의 30%
-    squad = restSquad(survived);
+    squad = restSquad(survived, restHeal());
     // 유품 태엽: 고르게 하지 않는다 — 자동으로 나사가 되고 한 줄만 (D-155, 관리 피로 제로)
     const heirs = fallen.filter((c) => c.t !== 'K');
     if (heirs.length) {
@@ -840,7 +853,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     // 검문: 부품을 고른 뒤 카드 보상으로 (partDone — 다시 부품 화면으로 돌지 않게)
     if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true));
     if (reward === 'end') return runEnd(true);
-    const rng = new Rng(Date.now() & 0xffff);
+    const rng = sub();
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
     const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push'];
     const mine = parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a);
@@ -940,7 +953,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
 };
 
 // ---------- 애착 (D-153) ----------
-const runId = new Date().toISOString().slice(0, 16).replace('T', ' ');
+let runId = new Date().toISOString().slice(0, 16).replace('T', ' ');
 const LEDGER_KEY = 'pawnisher.slice.ledger';
 const readLedger = (): LedgerEntry[] => {
   try {
@@ -990,7 +1003,7 @@ const crewView = (): void => {
     })
     .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
-  el.querySelector('[data-ledger]')!.addEventListener('click', ledgerView);
+  el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(title));
   el.querySelectorAll<HTMLElement>('[data-rename]').forEach((btn) =>
     btn.addEventListener('click', () => {
       const k = Number(btn.dataset.rename);
@@ -1013,25 +1026,25 @@ const crewView = (): void => {
 };
 
 /** 폐기 원부: 쓰러진 분대원의 영구 기록 */
-const ledgerView = (): void => {
+const ledgerView = (back: () => void = crewView): void => {
   const rows = readLedger();
   const el = openOverlay(`<h2>폐기 원부</h2><p>쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><div class="ledger">${
     rows.length
       ? rows.map((r) => `<div class="ledger-row">${pieceImg(r.t, 0, 'small', 22)} <b>${r.name}${r.nick ? ` 「${r.nick}」` : ''}</b> <span class="dim">${r.serial}</span> · 처치 ${r.kills} · 대국 ${r.battles}<br><small>${r.cause} · ${r.run}</small></div>`).join('')
       : '<p class="dim">아직 기록이 없습니다.</p>'
-  }</div><div class="row"><button class="btn brass" type="button" data-back>분대로</button></div>`);
-  el.querySelector('[data-back]')!.addEventListener('click', crewView);
+  }</div><div class="row"><button class="btn brass" type="button" data-back>${back === crewView ? '분대로' : '닫기'}</button></div>`);
+  el.querySelector('[data-back]')!.addEventListener('click', () => back());
 };
 
 /** 영입 (입문 뒤): 기물 셋 중 하나 — 그 기물의 카드가 같이 들어온다 */
 const recruitPick = (head: string, then: () => void): void => {
-  const rng = new Rng((Date.now() ^ 0x3c1) & 0xffff);
+  const rng = sub();
   const pool = [...RECRUITS];
   const offers: typeof RECRUITS = [];
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
   // 셋이 서로 다른 이름 · 기벽
   const crews: Crew[] = [];
-  for (const r of offers) crews.push(makeCrew(r.t, crewRng, [...squad, ...crews].map((u) => u.name ?? ''), crews.map((u) => u.quirk!).filter(Boolean)));
+  for (const r of offers) crews.push(makeCrew(r.t, R, [...squad, ...crews].map((u) => u.name ?? ''), crews.map((u) => u.quirk!).filter(Boolean)));
   const el = openOverlay(`${head}<p>분대에 넣을 기물을 하나 고릅니다.</p><div class="part-cards">${offers
     .map((r, k) => {
       const c = crews[k];
@@ -1054,7 +1067,7 @@ const recruitPick = (head: string, then: () => void): void => {
 
 /** 부품 상자 (1판 뒤 — 첫 사기 조합 확정): 부품 + 맞물리는 카드 둘, 셋 중 하나 */
 const kitPick = (head: string, then: () => void): void => {
-  const rng = new Rng((Date.now() ^ 0x7a2) & 0xffff);
+  const rng = sub();
   const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)) && k.cards.every(usable));
   const offers: typeof KITS = [];
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
@@ -1078,7 +1091,7 @@ const kitPick = (head: string, then: () => void): void => {
 
 /** 부품 고르기 (검문! 통과): 셋 중 하나 */
 const partPick = (head: string, then: () => void): void => {
-  const rng = new Rng((Date.now() ^ 0x5bd1) & 0xffff);
+  const rng = sub();
   const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id));
   const offers: SlicePartId[] = [];
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
@@ -1182,32 +1195,121 @@ $('btn-rewind').addEventListener('click', () => {
 });
 $('btn-help').addEventListener('click', help);
 
-/** 출하 결과 (끝까지 갔거나 그만뒀을 때): 분대 · 기록 · 다시 */
+// ---------- 저장 · 승급 · 오늘의 출하 (R6, D-174) ----------
+/** 대국 사이 회복 (승급 3부터 절반) */
+const restHeal = (): number => REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1);
+/** 고물상 값 (승급 4부터 비싸다) */
+const ascPrice = (n: number): number => (asc >= 4 ? Math.round(n * ASC_NUM.shopMul) : n);
+
+/** 새 출하: 시드 · 승급 · 오늘의 출하. 분대 · 덱 · 부품 · 나사 · 지도를 처음으로 */
+const newRun = (seed: number, level: number, day: string | null): void => {
+  runSeed = seed;
+  asc = level;
+  daily = day;
+  acts = buildRun(seed, level);
+  R = new Rng(seed ^ 0x51c3);
+  actI = 0;
+  rowI = 0;
+  won = 0;
+  stage = 0;
+  gold = 0;
+  refined = [];
+  parts = [];
+  deck = [...START_DECK];
+  picked = [[], [], []];
+  eventBag = [...SLICE_EVENT_IDS];
+  runId = `${new Date().toISOString().slice(0, 16).replace('T', ' ')}${day ? ' · 오늘의 출하' : ''}${level ? ` · 승급 ${level}` : ''}`;
+  squad = [];
+  for (const t of START_SQUAD) squad.push(makeCrew(t, R, squad.map((u) => u.name ?? '')));
+};
+
+/** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
+const saveRun = (at: 'map' | 'battle', node?: number): void =>
+  writeSave(store, { v: 1, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node });
+
+/** 저장한 출하를 되살린다 */
+const loadRun = (sv: RunSave): void => {
+  runSeed = sv.seed;
+  asc = sv.asc;
+  daily = sv.daily;
+  acts = buildRun(sv.seed, sv.asc);
+  R = new Rng(sv.rng);
+  ({ runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag } = sv);
+};
+
+/** 출하 결과 (끝까지 갔거나 그만뒀을 때): 분대 · 기록 · 다시. 저장을 지우고 기록을 남긴다 (승급이 열린다) */
 const runEnd = (cleared: boolean): void => {
+  clearSave(store);
+  const m0 = readMeta(store);
+  const m = recordRun(m0, { cleared, act: actI + 1, won, asc, daily });
+  writeMeta(store, m);
+  const unlocked = m.ascOpen > m0.ascOpen;
   const fallenNow = readLedger().filter((r) => r.run === runId);
   const best = [...squad].sort((x, y) => (y.kills ?? 0) - (x.kills ?? 0))[0];
   openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '출하구를 지났습니다.' : `${actI + 1}막 · ${cur.title}에서 멈췄습니다.`}</h2>
-    <p>이긴 대국 ${won} · ${cleared ? '3막 완주' : `${actI + 1}막`} · 나사 ${gold} · 덱 ${deck.length}장 · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
+    <p>${daily ? `오늘의 출하 ${daily} · ` : ''}${asc ? `승급 ${asc} · ` : ''}이긴 대국 ${won} · ${cleared ? '3막 완주' : `${actI + 1}막`} · 나사 ${gold} · 덱 ${deck.length}장 · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
     <p>살아남은 분대: ${squad.map((u) => `${crewLabel(u)} (처치 ${u.kills ?? 0})`).join(' · ')}</p>
     ${fallenNow.length ? `<p class="bad">쓰러진 분대원: ${fallenNow.map((r) => r.name).join(' · ')}</p>` : ''}
     ${best && (best.kills ?? 0) > 0 ? `<p class="flv">${crewLabel(best)} — 이번 출하의 선봉.</p>` : ''}
+    ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
     <p class="dim">시험판입니다. 막힌 곳 · 좋았던 순간 · 복잡했던 곳을 알려 주십시오.</p>
-    <div class="row"><button class="btn brass" type="button" data-restart>다시 출하</button></div>`)
+    <div class="row"><button class="btn brass" type="button" data-restart>처음 화면</button></div>`)
     .querySelector('[data-restart]')!
     .addEventListener('click', () => location.reload());
 };
 
-/** 시작 화면 (한 번 누르면 바로 첫 판 — 글 안내는 ? 버튼에) */
+/** 첫 판으로 들어간다 (새 출하 · 오늘의 출하) */
+const begin = (seed: number, level: number, day: string | null): void => {
+  newRun(seed, level, day);
+  startBattle(INTRO[0], true);
+  saveRun('battle', 0);
+  closeOverlay();
+  sfx('submit');
+  void stageIntro(INTRO[0]).then(() => toast(INTRO[0].tell, 3200));
+};
+
+/**
+ * 시작 화면 (R6): 이어하기(저장이 있으면 맨 위) · 출하 시작(열린 승급을 고른다) · 오늘의 출하 · 규칙 · 원부.
+ * 기록 한 줄: 출하 · 완주 · 가장 멀리 간 막.
+ */
 const title = (): void => {
-  const el = openOverlay(`<div class="title-card"><p class="eyebrow">시험판</p><h1>Pawnisher : Checkmate</h1><p class="flv">체스 규칙을 부수는 태엽 분대</p>
-    <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>적 킹을 쓰러뜨리면 승리합니다. 대국 다섯을 넘으십시오.</li></ul>
-    <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn brass" type="button" data-go>출하 시작</button></div></div>`);
-  el.querySelector('[data-go]')!.addEventListener('click', () => {
+  const sv = readSave(store);
+  const m = readMeta(store);
+  const today = todayKey();
+  const doneToday = m.daily[today];
+  let level = m.ascOpen;
+  const ascLine = () => (level ? `승급 ${level} — ${ASCENSION.slice(0, level).map((a) => a.name).join(' · ')}` : '기본 — 승급 없음');
+  const el = openOverlay(`<div class="title-card"><h1>Pawnisher : Checkmate</h1><p class="flv">체스 규칙을 부수는 태엽 분대</p>
+    <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>세 막을 지나 출하구에 닿으십시오.</li></ul>
+    ${sv ? `<button class="btn brass wide" type="button" data-cont>이어하기 <small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
+    ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span data-asc-line>${ascLine()}</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}
+    <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn" type="button" data-ledger>원부</button><button class="btn cyan" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}</button><button class="btn ${sv ? '' : 'brass'}" type="button" data-go>${sv ? '새 출하' : '출하 시작'}</button></div>
+    <p class="dim rec">오늘의 출하 = 모두가 같은 지도 · 같은 분대${doneToday ? ' (기록은 첫 시도만)' : ''}<br>출하 ${m.runs} · 완주 ${m.clears}${m.bestAct ? ` · 최고 ${m.bestAct > 3 ? '완주' : `${m.bestAct}막`}` : ''}${doneToday ? ` · 오늘 ${doneToday.cleared ? '완주' : `${doneToday.act}막`}` : ''}</p></div>`);
+  el.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      level = Math.max(0, Math.min(m.ascOpen, level + Number(btn.dataset.asc)));
+      el.querySelector('[data-asc-line]')!.textContent = ascLine();
+      sfx('tap');
+    }),
+  );
+  el.querySelector('[data-cont]')?.addEventListener('click', () => {
+    loadRun(sv!);
     closeOverlay();
     sfx('submit');
-    void stageIntro(INTRO[0]).then(() => toast(INTRO[0].tell, 3200));
+    if (sv!.at === 'battle') {
+      const nd = acts[actI].rows[rowI][sv!.node ?? 0];
+      if (nd?.battle) return startBattle(nd.battle);
+    }
+    showMap();
   });
+  const goBtn = el.querySelector<HTMLElement>('[data-go]')!;
+  goBtn.addEventListener('click', () => (sv ? choose(goBtn, '저장한 출하를 버리고 새로 시작한다', () => begin((Date.now() ^ 0x2f17) & 0xffffff, level, null)) : begin((Date.now() ^ 0x2f17) & 0xffffff, level, null)));
+  const dBtn = el.querySelector<HTMLElement>('[data-daily]')!;
+  dBtn.addEventListener('click', () =>
+    choose(dBtn, sv ? '저장을 버리고 오늘의 출하에 나선다' : '오늘의 출하에 나선다', () => begin(dailySeed(today), 0, today)),
+  );
   el.querySelector('[data-rules]')!.addEventListener('click', help);
+  el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(title));
 };
 
 startBattle(INTRO[0], true);

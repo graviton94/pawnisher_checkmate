@@ -303,7 +303,7 @@ body.slice .toast { white-space: pre-line; } body.slice .toast::first-line { col
 /* 고르기 확인 */
 .panel.choosing .part-card:not(.chosen), .panel.choosing .reward-cards .cmd:not(.chosen), .panel.choosing .deck-grid .cmd:not(.chosen), .panel.choosing .row .btn:not(.chosen) { filter: brightness(0.55) grayscale(0.4); }
 .part-card.chosen, .reward-cards .cmd.chosen, .deck-grid .cmd.chosen, .row .btn.chosen { transform: translateY(-6px) scale(1.04); box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #f4d27a, 0 0 22px rgba(244, 210, 122, 0.6) !important; z-index: 2; }
-.confirm-bar { position: sticky; bottom: -10px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin: 4px -14px -10px; background: #16141c; box-shadow: 0 -2px 0 #000, inset 0 2px 0 #c89b3c; animation: barin 220ms ease-out both; }
+.confirm-bar { position: sticky; bottom: -10px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin: 4px -14px -10px; background: #16141c; box-shadow: 0 -2px 0 #000, inset 0 2px 0 #c89b3c; animation: barin 220ms ease-out both; z-index: 5; }
 .confirm-bar span { flex: 1; font-size: 15px; color: #f4e6c4; font-style: italic; min-width: 0; }
 .confirm-bar .btn { min-height: 48px; min-width: 96px; }
 .panel.locked { pointer-events: none; }
@@ -433,3 +433,11 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .ev-body h2 { margin: 0; }
 .ev-body .ev-text { margin: 0; font-size: 14px; }
 .ev-scene img + i { display: none; }
+
+/* R6 시작 화면 (D-174): 이어하기 · 승급 고르기 · 기록 한 줄 */
+.title-card .btn.wide { min-width: 280px; height: auto; min-height: 56px; display: grid; gap: 2px; padding: 6px 16px; line-height: 1.3; }
+.title-card .btn.wide small { font-size: 12px; opacity: 0.85; font-weight: 400; }
+.asc-pick { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #f4d27a; }
+.asc-pick .btn.sq { min-width: 44px; min-height: 44px; }
+.title-card .rec { margin: 0; font-size: 12px; }
+.asc-open { color: #f4d27a; font-weight: 700; }

@@ -56,6 +56,20 @@ export const NODE_DESC: Record<NodeKind, string> = {
 };
 
 const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;
+
+/**
+ * 승급 (R6, D-174): 출하를 끝내면 다음 단계가 열린다. 단계는 쌓인다 (승급 3 = 1 + 2 + 3).
+ * 수치는 구조용 — 조정은 R7 (D-080). 화면은 이름 + 한 줄.
+ */
+export const ASCENSION: { name: string; desc: string }[] = [
+  { name: '날 선 쇠', desc: '적 기물 HP +10%' },
+  { name: '굳은 검수', desc: '검문 · 반장의 킹 HP +10%' },
+  { name: '짧은 휴식', desc: '대국 사이 회복이 절반으로' },
+  { name: '비싼 고물', desc: '고물상 값 +25%' },
+  { name: '불어난 무리', desc: '대국마다 적 폰 하나 더' },
+];
+export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.25 };
+export const ASC_MAX = ASCENSION.length;
 /** 막마다 적 HP 배율 · 적 킹 HP (구조용 — 난이도 조정은 R7, D-080) */
 const ACT_SCALE = [
   { hp: 1, king: 0.6 },
@@ -88,7 +102,15 @@ export const INTRO: BattleDef[] = [
 ];
 
 /** 대국 하나 만들기 */
-export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng): BattleDef => {
+export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0): BattleDef => {
+  const d = battleBase(act, kind, rng);
+  if (asc >= 1) d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.enemyHp;
+  if (asc >= 2 && kind !== 'battle') d.kingHp += ASC_NUM.eliteKing;
+  if (asc >= 5) d.enemy = [...d.enemy, 'P'];
+  return d;
+};
+
+const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng): BattleDef => {
   const a = act - 1;
   const sc = ACT_SCALE[a];
   const label = `${act}막`;
@@ -100,9 +122,9 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
 };
 
 /** 갈림길 한 줄: 2~3개, 대국 하나는 반드시. 고물상 · 작업대 · 사건은 막마다 많아야 둘 */
-const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number; event: number }): MapNode[] => {
+const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number; event: number }, asc: number): MapNode[] => {
   const n = 2 + rng.int(2);
-  const row: MapNode[] = [{ kind: 'battle', battle: battleFor(act, 'battle', rng) }];
+  const row: MapNode[] = [{ kind: 'battle', battle: battleFor(act, 'battle', rng, asc) }];
   const extra: NodeKind[] = [];
   if (used.shop < 2) extra.push('shop');
   if (used.forge < 2) extra.push('forge');
@@ -112,7 +134,7 @@ const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number; 
     if (k === 'shop') used.shop++;
     if (k === 'forge') used.forge++;
     if (k === 'event') used.event++;
-    row.push(k === 'battle' ? { kind: 'battle', battle: battleFor(act, 'battle', rng) } : { kind: k });
+    row.push(k === 'battle' ? { kind: 'battle', battle: battleFor(act, 'battle', rng, asc) } : { kind: k });
   }
   // 섞는다 (대국이 늘 왼쪽에 있지 않게)
   for (let i = row.length - 1; i > 0; i--) {
@@ -122,16 +144,16 @@ const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number; 
   return row;
 };
 
-/** 출하 전체 (3막). 1막은 입문 · 연마 고정 뒤 갈림길 3줄, 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장 */
-export const buildRun = (seed: number): Act[] => {
+/** 출하 전체 (3막). 1막은 입문 · 연마 고정 뒤 갈림길 3줄, 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장. 같은 시드 = 같은 지도 (오늘의 출하) */
+export const buildRun = (seed: number, asc = 0): Act[] => {
   const rng = new Rng(seed);
   return ([1, 2, 3] as const).map((act) => {
     const used = { shop: 0, forge: 0, event: 0 };
     const rows: MapNode[][] = [];
     if (act === 1) INTRO.forEach((battle) => rows.push([{ kind: 'battle', battle }]));
-    for (let k = 0; k < (act === 1 ? 3 : 4); k++) rows.push(forkRow(act, rng, used));
-    rows.push([{ kind: 'check', battle: battleFor(act, 'check', rng) }]);
-    rows.push([{ kind: 'boss', battle: battleFor(act, 'boss', rng) }]);
+    for (let k = 0; k < (act === 1 ? 3 : 4); k++) rows.push(forkRow(act, rng, used, asc));
+    rows.push([{ kind: 'check', battle: battleFor(act, 'check', rng, asc) }]);
+    rows.push([{ kind: 'boss', battle: battleFor(act, 'boss', rng, asc) }]);
     return { act, name: ACT_NAMES[act - 1], rows };
   });
 };
