@@ -108,12 +108,18 @@ class BoardScene extends Phaser.Scene {
   }
 
   /** 사용자 제공 도트 기물 12종 (public/pieces/s-{유형}{진영}.png) */
+  /** 적 특성 표식 (자폭 폰 · 되받아침 반장) — 대국마다 setFoeTraits로 */
+  private foeTraits: ('blast' | 'thorns')[] = [];
+  setFoeTraits(list: ('blast' | 'thorns')[]): void {
+    this.foeTraits = list;
+  }
+
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
-    for (const name of ['reticle', 'star', 'crown']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
+    for (const name of ['reticle', 'star', 'crown', 'flame', 'claw']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
   }
 
   create(): void {
@@ -262,6 +268,15 @@ class BoardScene extends Phaser.Scene {
       tag.lineStyle(Math.max(1, t * 0.03), C.crimson, 1).strokeRect(t - size - t * 0.02, t * 0.02, size, size);
       marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t * 0.02 + size / 2, 'icon-crown').setDisplaySize(size * 0.72, size * 0.72).setTint(C.crimson));
     }
+    // 적 특성 (D-175): 자폭 폰 = 불꽃, 되받아치는 반장 킹 = 발톱 — 오른쪽 위 진홍 딱지. 치기 전에 "이 기물은 물어뜯는다"가 보인다
+    const trait = p.side === 1 ? (p.type === 'P' && this.foeTraits.includes('blast') ? 'flame' : p.type === 'K' && this.foeTraits.includes('thorns') ? 'claw' : null) : null;
+    if (trait && !p.elite) {
+      const size = t * 0.3;
+      const tag = this.add.graphics();
+      tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t * 0.02, size, size);
+      tag.lineStyle(Math.max(1, t * 0.03), C.crimson, 1).strokeRect(t - size - t * 0.02, t * 0.02, size, size);
+      marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t * 0.02 + size / 2, `icon-${trait}`).setDisplaySize(size * 0.72, size * 0.72).setTint(0xff6b6b));
+    }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
@@ -390,11 +405,6 @@ class BoardScene extends Phaser.Scene {
         if (hit) {
           this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
           if (hit.kill) img('skull', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTint(0xfacc15);
-          // 되받아침 · 자폭: 치면 내 쪽이 받을 피해 (붉은 숫자, 왼쪽 위)
-          if (hit.backlash) {
-            const tx = this.add.text(w.x + 1 * d, w.y + 0.5 * d, `↩${hit.backlash}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: '#FF6B6B', stroke: '#0B0B0E', strokeThickness: Math.max(3, t * 0.06) }).setOrigin(0, 0).setDepth(1.8).setResolution(this.dpr);
-            this.dynamic.push(tx);
-          }
         } else if (isPending) img('select', w.x, w.y, t, 1.7, 0.6);
         else img('move-dot', w.x + 8 * d, w.y + 8 * d, 4 * d);
       }
@@ -1038,6 +1048,10 @@ export class BoardRenderer implements BoardView {
     this.game.scale.resize(w * dpr, h * dpr);
   }
 
+  /** 적 특성 표식 (자폭 폰 · 되받아침 반장, D-175) — setup 전에 */
+  setFoeTraits(list: ('blast' | 'thorns')[]): void {
+    this.scene.setFoeTraits(list);
+  }
   setup(state: BattleState): void {
     void this.whenReady.then(() => this.scene.setupBoard(state));
   }

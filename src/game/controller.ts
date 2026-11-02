@@ -96,7 +96,7 @@ export interface BoardModel {
   selectedId: number | null;
   destinations: Pos[];
   /** 갈 수 있는 칸 중 도착하면 적을 치는 칸 (kill = 처치까지) — 누르기 전에 결과가 보이게 */
-  hitDests: { pos: Pos; kill: boolean; /** 치면 내 쪽이 받는 피해 (되받아침 · 자폭) */ backlash?: number }[];
+  hitDests: { pos: Pos; kill: boolean }[];
   /** 미리보기 결과 */
   preview: BattleEvent[];
   /** 미리보기에서 파괴되는 기물 (파괴 시점 위치) — 보드에서 사라지기 전 모습으로 X 표시와 함께 그린다 */

@@ -26,16 +26,8 @@ const day = new Date().toISOString().slice(0, 10);
     else if (sc === 'map') await A(() => window.sliceApi.map(2));
     else if (sc === 'shop') await A(() => { window.sliceApi.gold(120); window.sliceApi.shop(); });
     else if (sc === 'forge') await A(() => window.sliceApi.forge());
-    else if (sc === 'backlash') {
-      const f = await A(() => { const S = window.sliceApi; S.startAt(2, 'battle'); const b = window.slice();
-        for (const p of b.s.pieces) if (p.side === 1 && p.type !== 'K') p.hp = 1;
-        const occ = (x, y) => b.s.pieces.some((q) => q.x === x && q.y === y);
-        const find = () => { for (let i = 0; i < b.hand.length; i++) for (const p of S.cardPieces(b, i)) for (const to of S.cardMoves(b, i, p.id)) { const sim = S.previewPlay(b, i, p.id, to); if (sim && sim.state.winner === null && S.backlashOf(b, sim) > 0) return { i, x: p.x, y: p.y }; } return null; };
-        for (const ep of b.s.pieces.filter((q) => q.side === 1 && q.type === 'P')) { const ox = ep.x, oy = ep.y;
-          for (let x = 0; x < b.s.width; x++) for (let y = 0; y < b.s.height; y++) { if (occ(x, y)) continue; ep.x = x; ep.y = y; const r = find(); if (r) { S.redraw(); return r; } ep.x = ox; ep.y = oy; } }
-        return null; });
-      if (f) { await pg.click(`[data-card="${f.i}"]`); await pg.mouse.move(900, 400); await pg.waitForTimeout(300); await A((p) => window.sliceApi.tap(p), f); }
-    }
+    else if (sc === 'traits') await A(() => window.sliceApi.startAt(2, 'battle'));
+    else if (sc === 'boss3') await A(() => window.sliceApi.startAt(3, 'boss'));
     await pg.waitForTimeout(600);
     await shot(sc.replace(':', '-'));
   }

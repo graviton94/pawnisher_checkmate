@@ -11,7 +11,7 @@ user-invocable: true
 
 1. `npm run build`
 2. 프리뷰가 안 떠 있으면 `nohup npx vite preview --port 4173 >/dev/null 2>&1 &` (이미 떠 있으면 재사용 — 빌드 결과를 바로 반영한다)
-3. **본편(리뉴얼판, `index.html`)**: `node tools/slice-observe.cjs <title|continue|event:<id>|backlash|map|shop|forge>` → `production/qa/evidence/<날짜>-slice-<장면>.png`.
+3. **본편(리뉴얼판, `index.html`)**: `node tools/slice-observe.cjs <title|continue|event:<id>|traits|boss3|map|shop|forge>` → `production/qa/evidence/<날짜>-slice-<장면>.png`.
    2.0(legacy, `legacy.html`): `node tools/observe.cjs <시나리오>` (PC 확인은 `--pc`). 결과 PNG: `production/qa/evidence/<날짜>-<장면>.png`
 4. 스크린샷을 Read로 **직접 본다**. 확인할 것: 겹침·잘림, 글자 크기, 터치 대상 크기, 바뀐 기능이 실제로 보이는가.
 5. 콘솔/페이지 에러가 하나라도 있으면 실패로 보고한다.
