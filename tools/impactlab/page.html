@@ -66,14 +66,14 @@ footer { color: var(--dim); font-size: 12px; }
 .ui-stage.row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
 .ui-stage .hint { position: absolute; bottom: 6px; right: 8px; font-size: 11px; color: #6b6876; pointer-events: none; }
 /* 황동 버튼 */
-.bb { position: relative; font: 700 15px var(--body); color: #16141c; background: #c89b3c; border: 0; min-height: 48px; padding: 0 22px; box-shadow: 0 0 0 2px #000, inset 0 -4px 0 #7a5a12, 0 5px 0 #000; transform: translateY(0); cursor: pointer; }
+.bb { position: relative; white-space: nowrap; min-width: 96px; font: 700 15px var(--body); color: #16141c; background: #c89b3c; border: 0; min-height: 48px; padding: 0 22px; box-shadow: 0 0 0 2px #000, inset 0 -4px 0 #7a5a12, 0 5px 0 #000; transform: translateY(0); cursor: pointer; }
 .bb.old:active { transform: scale(0.97); }
 .bb.new { transition: none; }
 .bb.new.down { transform: translateY(4px) scale(0.97, 0.94); box-shadow: 0 0 0 2px #000, inset 0 -1px 0 #7a5a12, 0 1px 0 #000; filter: brightness(0.92); }
 .bb.new.up { animation: bbup 380ms cubic-bezier(0.2, 1.6, 0.3, 1) both; }
 @keyframes bbup { 0% { transform: translateY(4px) scale(0.97, 0.94); } 35% { transform: translateY(-3px) scale(1.06, 1.08); filter: brightness(1.35); } 100% { transform: none; filter: none; } }
 .bb .shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.bb .shine::after { content: ''; position: absolute; top: 0; bottom: 0; width: 22px; left: -30px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent); }
+.bb .shine::after { content: ''; position: absolute; top: 0; bottom: 0; width: 6px; left: -30px; background: rgba(255,255,255,.8); box-shadow: 10px 0 0 rgba(255,255,255,.4); transform: skewX(-20deg); }
 .bb.up .shine::after { animation: shine 420ms 60ms ease-out both; }
 @keyframes shine { to { left: 110%; } }
 /* 도트 불똥 */
@@ -96,20 +96,20 @@ footer { color: var(--dim); font-size: 12px; }
 /* 선택지 두 단계 */
 .ch { display: grid; gap: 8px; width: 100%; max-width: 360px; }
 .ch button { text-align: left; font: 700 14px var(--body); color: #ece8de; background: #24232c; border: 0; min-height: 48px; padding: 8px 12px; box-shadow: 0 0 0 2px #000, inset 4px 0 0 #c89b3c; cursor: pointer; transition: transform 260ms cubic-bezier(0.2, 1.4, 0.3, 1), opacity 220ms, max-height 260ms, padding 260ms, filter 220ms; max-height: 80px; overflow: hidden; }
-.ch button.pick { transform: translateX(10px) scale(1.03); box-shadow: 0 0 0 2px #000, inset 6px 0 0 #facc15, 0 0 0 4px rgba(250,204,21,.25); }
+.ch button.pick { transform: translateX(10px) scale(1.03); background: #c89b3c; color: #16141c; box-shadow: 0 0 0 2px #000, inset 0 -4px 0 #7a5a12, inset 6px 0 0 #fff3b0; }
 .ch button.fold { opacity: 0.25; transform: translateX(-12px) scaleY(0.8); filter: grayscale(1); }
 .ch button.riveted { animation: rivet 420ms cubic-bezier(0.2, 1.6, 0.3, 1); }
 @keyframes rivet { 0% { transform: translateX(10px) scale(1.03); } 20% { transform: translateX(10px) scale(0.96, 1.08); filter: brightness(1.5); } 100% { transform: translateX(10px) scale(1.03); } }
 .cbar { display: flex; gap: 8px; align-items: center; transform: translateY(70px); opacity: 0; transition: transform 300ms cubic-bezier(0.2, 1.4, 0.3, 1), opacity 200ms; width: 100%; max-width: 360px; }
 .cbar.on { transform: none; opacity: 1; }
-.cbar span { flex: 1; font-style: italic; font-size: 13px; color: #f4e6c4; }
+.cbar span { flex: 1; min-width: 0; font-style: italic; font-size: 13px; color: #f4e6c4; }
 .stage-shake { animation: sshake 300ms linear; }
 @keyframes sshake { 10% { transform: translate(-4px, 2px); } 25% { transform: translate(4px, -2px); } 40% { transform: translate(-3px, 1px); } 60% { transform: translate(2px, -1px); } 80% { transform: translate(-1px, 0); } 100% { transform: none; } }
 /* 나사 계기 */
 .meterx { position: absolute; right: 12px; top: 12px; display: flex; align-items: center; gap: 6px; font: 700 18px var(--body); color: #facc15; text-shadow: 2px 2px 0 #000; }
-.meterx i { width: 14px; height: 14px; background: #c89b3c; box-shadow: 0 0 0 2px #000, inset -3px -3px 0 #7a5a12; }
+.meterx i { width: 18px; height: 18px; background-size: 100% 100%; image-rendering: pixelated; }
 .meterx.punch { animation: punch 260ms cubic-bezier(0.2, 1.8, 0.4, 1); }
-.screw { position: absolute; width: 8px; height: 8px; background: #facc15; box-shadow: 0 0 0 2px #000, inset -2px -2px 0 #c89b3c; pointer-events: none; }
+.screw { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; background-size: 100% 100%; image-rendering: pixelated; pointer-events: none; }
 /* 지도 메달 */
 .medals { display: flex; gap: 26px; align-items: center; }
 .md { width: 58px; height: 58px; border-radius: 50%; border: 0; background: radial-gradient(circle at 35% 30%, #f4d27a, #c89b3c 55%, #7a5a12); box-shadow: 0 0 0 3px #000, inset 0 -4px 0 rgba(0,0,0,.35); cursor: pointer; display: grid; place-items: center; font: 700 12px var(--body); color: #16141c; position: relative; }
@@ -142,14 +142,28 @@ footer { color: var(--dim); font-size: 12px; }
 .ap i.empty.blink { animation: apb 420ms steps(2) 3; }
 @keyframes apb { 50% { background: #e5262f; } }
 /* 부품 장착 */
-.tray { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; padding: 6px 10px; background: #1a1922; box-shadow: 0 0 0 2px #000; }
-.tray i { width: 30px; height: 30px; box-shadow: inset 0 0 0 2px #45434f; display: grid; place-items: center; }
+.tray { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; padding: 8px 12px; background: #1a1922; box-shadow: 0 0 0 2px #000, inset 0 -3px 0 #0b0b0e; }
 .tray.jolt { animation: sshake 260ms linear; }
-.part { width: 42px; height: 42px; background: #24232c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #facc15; display: grid; place-items: center; color: #facc15; font: 700 18px var(--body); cursor: pointer; border: 0; }
-.part.fly { position: absolute; animation: pfly 520ms cubic-bezier(0.6, -0.3, 0.7, 1) forwards; }
-@keyframes pfly { 0% { transform: translate(0, 0) rotate(0); } 30% { transform: translate(calc(var(--tx) * 0.2), calc(var(--ty) * 0.2 - 30px)) rotate(-20deg) scale(1.15); } 100% { transform: translate(var(--tx), var(--ty)) rotate(0) scale(0.7); } }
-.slotin { animation: slotin 360ms cubic-bezier(0.2, 1.8, 0.4, 1); box-shadow: inset 0 0 0 2px #facc15, 0 0 0 3px rgba(250,204,21,.35) !important; }
-@keyframes slotin { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.slot { position: relative; width: 40px; height: 40px; display: grid; place-items: center; }
+.slot .br { position: absolute; width: 10px; height: 10px; border: 0 solid #8a8794; transition: transform 140ms cubic-bezier(0.2, 1.6, 0.3, 1), border-color 140ms; }
+.slot .br.tl { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; } .slot .br.tr { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; }
+.slot .br.bl { bottom: 0; left: 0; border-bottom-width: 4px; border-left-width: 4px; } .slot .br.br2 { bottom: 0; right: 0; border-bottom-width: 4px; border-right-width: 4px; }
+.slot.open .br.tl { transform: translate(-6px, -6px); } .slot.open .br.tr { transform: translate(6px, -6px); } .slot.open .br.bl { transform: translate(-6px, 6px); } .slot.open .br.br2 { transform: translate(6px, 6px); }
+.slot.locked .br { border-color: #facc15; }
+.slot img { width: 32px; height: 32px; image-rendering: pixelated; }
+.slot img.lock { animation: lock 360ms steps(3) forwards; }
+@keyframes lock { from { transform: rotate(-90deg) scale(1.25); } to { transform: rotate(0) scale(1); } }
+.slot .bolt { position: absolute; width: 4px; height: 4px; background: #fff3b0; box-shadow: 0 0 0 1px #000; opacity: 0; }
+.slot .bolt.on { animation: bolt 200ms cubic-bezier(0.2, 1.8, 0.4, 1) forwards; }
+@keyframes bolt { 0% { opacity: 1; transform: scale(2.4); } 100% { opacity: 1; transform: scale(1); } }
+.slot .lbl { position: absolute; top: 46px; left: 50%; transform: translate(-50%, -12px) scale(1.6); opacity: 0; white-space: nowrap; font: 700 11px var(--body); color: #16141c; background: #c89b3c; padding: 1px 5px; box-shadow: 0 0 0 2px #000; }
+.slot .lbl.on { animation: lbl 260ms cubic-bezier(0.2, 1.5, 0.4, 1) forwards; }
+@keyframes lbl { to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.part { position: relative; width: 52px; height: 52px; background: #24232c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c, inset 0 -4px 0 #0b0b0e; display: grid; place-items: center; cursor: pointer; border: 0; margin-top: 64px; }
+.part img { width: 36px; height: 36px; image-rendering: pixelated; }
+.part.charge img { animation: charge 300ms cubic-bezier(0.5, 0, 0.9, 0.5) forwards; }
+@keyframes charge { 0% { transform: none; } 100% { transform: translateY(-10px) rotate(-40deg) scale(1.15); filter: brightness(1.5); } }
+.pfly { position: absolute; width: 36px; height: 36px; image-rendering: pixelated; pointer-events: none; z-index: 4; }
 @media (prefers-reduced-motion: reduce) { .ui-card * { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
 </style>
 
@@ -189,11 +203,11 @@ footer { color: var(--dim); font-size: 12px; }
   <section class="ui-grid" id="uiGrid">
     <article class="ui-card"><h3>버튼 — 지금 vs 제안</h3><p class="beats">누를 때 4px 내려가며 납작(그림자 접힘) → 뗄 때 1.06배로 튀어 오르며 밝아지고 흰 반짝 띠 → 불똥 여섯.</p>
       <div class="ui-stage row"><button class="bb old" type="button">지금</button><button class="bb new" type="button" id="bbNew"><span class="shine"></span>간다</button><span class="hint">눌렀다 떼기</span></div></article>
-    <article class="ui-card"><h3>보상 카드 고르기</h3><p class="beats">탭 → 그 카드만 들려 기울고 금테, 나머지는 어둡게 물러남 → 한 번 더 → 「획득」 도장이 꽝 → 카드가 덱으로 빨려 들고 덱 숫자가 튄다.</p>
+    <article class="ui-card"><h3>보상 카드 고르기</h3><p class="beats">탭 → 그 카드만 들려 기울고 금테, 나머지는 어둡게 물러남 → 한 번 더 → 「획득」 도장이 꽝 → 고른 카드는 덱으로 빨려 들고, 안 고른 카드는 아래에서 위로 도트가 떨어져 나가며 사라진다.</p>
       <div class="ui-stage row" id="rcStage"><span class="deckc" id="deckc">덱 12</span><span class="hint">카드 탭 두 번</span></div></article>
-    <article class="ui-card"><h3>선택지 두 단계</h3><p class="beats">탭 → 고른 줄이 밀려 나오고 나머지는 접힘 · 확인 띠가 튀어 올라옴 → 고르기 → 리벳 박히듯 한 번 눌리고 판이 흔들린다.</p>
+    <article class="ui-card"><h3>선택지 두 단계</h3><p class="beats">탭 → 고른 줄이 황동 판으로 바뀌며(글자 검정) 밀려 나오고 나머지는 접힘 · 확인 띠가 튀어 올라옴 → 고르기 → 리벳 박히듯 한 번 눌리고 판이 흔들린다.</p>
       <div class="ui-stage" id="chStage"><div class="ch" id="chList"><button type="button">나사 30을 건다</button><button type="button">거래를 거절한다</button><button type="button">나이트를 판다</button></div><div class="cbar" id="cbar"><span>‘나사 30을 건다’</span><button class="bb new" type="button" id="cbarGo"><span class="shine"></span>고르기</button></div></div></article>
-    <article class="ui-card"><h3>나사 받기</h3><p class="beats">나사가 튀어 올랐다(흩어짐) → 계기로 빨려 들고(가속) → 하나 닿을 때마다 숫자가 오르며 계기가 튄다 → 마지막에 반짝.</p>
+    <article class="ui-card"><h3>나사 받기</h3><p class="beats">도트 나사(십자 홈)가 튀어 올랐다 돌며 흩어짐 → 계기로 빨려 들고(가속) → 하나 닿을 때마다 숫자가 오르며 계기가 튄다 → 마지막에 반짝.</p>
       <div class="ui-stage" id="gStage"><div class="meterx" id="meterx"><i></i><b id="gnum">40</b></div><button class="bb new" type="button" id="gGo"><span class="shine"></span>나사 +12</button></div></article>
     <article class="ui-card"><h3>지도 — 갈 곳 고르기</h3><p class="beats">메달 탭 → 톱니 고리가 철컥 철컥 1/8씩 돌고 메달이 튄다 · 다른 메달은 식는다 → 길이 점선으로 불붙듯 뻗는다.</p>
       <div class="ui-stage" id="mapStage"><div class="path" id="mpath"></div><div class="medals"><button class="md" type="button">대국</button><button class="md" type="button">사건</button><button class="md" type="button">고물상</button></div></div></article>
@@ -201,8 +215,8 @@ footer { color: var(--dim); font-size: 12px; }
       <div class="ui-stage" id="shStage"><span class="scene-name" id="shName">고물상</span><div class="shut t"></div><div class="shut b"></div><button class="bb new" type="button" id="shGo" style="position:absolute;bottom:10px"><span class="shine"></span>들어간다</button></div></article>
     <article class="ui-card"><h3>안 될 때 — 태엽 부족</h3><p class="beats">못 내는 카드를 누르면 카드가 좌우로 떨고 붉은 테 · 태엽 게이지의 빈 칸이 붉게 세 번 깜빡 · 독백이 위에서 떨어져 튄다.</p>
       <div class="ui-stage row" id="noStage" style="padding-top:56px;min-height:200px"><div class="tst" id="tst">‘태엽이 모자라.’</div><div class="ap" id="ap"><i></i><i class="empty"></i><i class="empty"></i></div><button class="rc" type="button" id="noCard"><span class="cost">2</span><img alt="" data-k="R0">직진</button><span class="hint">카드 탭</span></div></article>
-    <article class="ui-card"><h3>부품 장착</h3><p class="beats">부품 탭 → 들렸다가(예비) 위 칙령 트레이로 휙 날아가 → 칸에 철컥 끼워지며 칸이 커졌다 줄고 · 트레이가 한 번 흔들린다.</p>
-      <div class="ui-stage" id="ptStage"><div class="tray" id="tray"><i></i><i></i><i></i></div><button class="part" type="button" id="part">⚙</button></div></article>
+    <article class="ui-card"><h3>부품 장착</h3><p class="beats">부품 탭 → 들리며 비틀어 힘을 모음(0.3초) → 잔상을 끌고 칸으로 날아감 · 칸의 집게가 벌어짐 → 꽂히는 순간 철컥철컥 세 번 돌아 잠김 · 집게가 물고 금빛으로 · 모서리 볼트 넷이 차례로 박힘 → 이름표가 떨어져 붙음.</p>
+      <div class="ui-stage" id="ptStage" style="min-height:180px"><div class="tray" id="tray"></div><button class="part" type="button" id="part" aria-label="부품 장착"><img alt="" id="partImg"></button><span class="hint">부품 탭 (세 번)</span></div></article>
   </section>
   <footer>Pawnisher : Checkmate · 연출 시안 (D-179 · D-180). 소리는 빠져 있습니다 — 게임에서는 맞는 순간 저음 한 번, 연쇄마다 반음씩 오릅니다.</footer>
 </div>
@@ -812,6 +826,30 @@ Promise.all(keys.map((k) => new Promise((res) => { const im = new Image(); im.on
     requestAnimationFrame((n) => { players.forEach((p) => (p.last = n)); loop(n); });
   });
 // ---------- 비전투 UI 시안 (D-180) ----------
+/** 도트 그림: 글자 격자 → data URL (배율 scale) */
+function pixelSprite(rows, pal, scale = 2) {
+  const c = document.createElement('canvas'); c.width = rows[0].length * scale; c.height = rows.length * scale; const x = c.getContext('2d');
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i * scale, j * scale, scale, scale); } }));
+  return c.toDataURL();
+}
+const GOLDPAL = { K: '#0b0b0e', T: '#fff3b0', Y: '#facc15', A: '#9a6f14', U: '#c89b3c', G: '#56545e', L: '#8a8794', W: '#d6d3dc' };
+/** 나사 머리 (십자 홈) */
+const SCREW = pixelSprite(['...KKK...', '.KKTTYKK.', '.KTTKYYK.', 'KTTYKYYAK', 'KTKKKKKAK', 'KYYYKYAAK', '.KYYKYAK.', '.KKAAAKK.', '...KKK...'], GOLDPAL, 2);
+/** 부품: 톱니 (금) */
+const GEAR = pixelSprite(['.....KK.KK.....', '....KTTKYYK....', '..KKKTYYYYAKKK.', '.KTTKYYYYYYKAAK', '.KTYYYYKKYYYYAK', '..KYYYKUUKYYAK.', 'KKYYYKU..UKYYKK', 'KTYYKU....UKYAK', 'KKYYYKU..UKYYKK', '..KYYYKUUKYYAK.', '.KTYYYYKKYYYYAK', '.KYAKYYYYYYKAAK', '..KKKAYYYYAKKK.', '....KAAKAAK....', '.....KK.KK.....'], GOLDPAL, 2);
+/** 도트로 사라지기: 아래에서 위로 칸이 떨어져 나가고, 떨어진 칸은 작은 도트가 되어 떠오른다 */
+function dissolveUp(el, stage, ms = 520) {
+  const cols = 8, rows = 11; const r = el.getBoundingClientRect(), q = stage.getBoundingClientRect(); const bw = r.width / cols, bh = r.height / rows;
+  const th = []; for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) th.push(((rows - 1 - j) / rows) * 0.8 + Math.random() * 0.2);
+  const mask = document.createElement('canvas'); mask.width = cols; mask.height = rows; const m = mask.getContext('2d'); const gone = new Set(); const t0 = performance.now();
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms); m.clearRect(0, 0, cols, rows); m.fillStyle = '#000';
+    th.forEach((v, idx) => { const i = idx % cols, j = Math.floor(idx / cols); if (k < v) m.fillRect(i, j, 1, 1); else if (!gone.has(idx)) { gone.add(idx); const b = document.createElement('i'); b.className = 'spk'; b.style.background = ['#56545e', '#8a8794', '#45434f'][idx % 3]; b.style.left = `${r.left - q.left + i * bw + bw / 2}px`; b.style.top = `${r.top - q.top + j * bh + bh / 2}px`; b.style.setProperty('--x', `${(Math.random() - 0.5) * 10}px`); b.style.setProperty('--y', `${-18 - Math.random() * 22}px`); b.style.setProperty('--d', '480ms'); stage.appendChild(b); setTimeout(() => b.remove(), 520); } });
+    const url = `url(${mask.toDataURL()})`; el.style.webkitMaskImage = url; el.style.maskImage = url; el.style.webkitMaskSize = el.style.maskSize = '100% 100%'; el.style.imageRendering = 'pixelated';
+    if (k < 1) requestAnimationFrame(step); else el.style.visibility = 'hidden';
+  };
+  requestAnimationFrame(step);
+}
 const SPK_COLORS = ['#ffffff', '#fff3b0', '#facc15', '#f59e0b'];
 /** 도트 불똥: 요소 가운데에서 n개 */
 function sparksAt(stage, x, y, n = 6, dist = 34) {
@@ -835,7 +873,7 @@ function setupUi() {
     const all = [...rs.querySelectorAll('.rc')];
     if (!b.classList.contains('lift')) { all.forEach((x) => { x.classList.toggle('lift', x === b); x.classList.toggle('dim', x !== b); }); return; }
     const s = document.createElement('span'); s.className = 'stampx'; s.textContent = '획득'; const p = rel(b, rs); s.style.left = `${p.x - 30}px`; s.style.top = `${p.y - 14}px`; rs.appendChild(s); rs.classList.remove('stage-shake'); void rs.offsetWidth; rs.classList.add('stage-shake'); sparksAt(rs, p.x, p.y, 8, 40);
-    setTimeout(() => { const d = rel(deck, rs); b.style.setProperty('--tx', `${d.x - p.x}px`); b.style.setProperty('--ty', `${d.y - p.y}px`); b.classList.add('taken'); s.remove(); all.filter((x) => x !== b).forEach((x) => x.classList.add('gone')); }, 360);
+    setTimeout(() => { const d = rel(deck, rs); b.style.setProperty('--tx', `${d.x - p.x}px`); b.style.setProperty('--ty', `${d.y - p.y}px`); b.classList.add('taken'); s.remove(); all.filter((x) => x !== b).forEach((x, i) => setTimeout(() => dissolveUp(x, rs), i * 90)); }, 360);
     setTimeout(() => { deck.textContent = `덱 ${++n}`; deck.classList.remove('punch'); void deck.offsetWidth; deck.classList.add('punch'); const d = rel(deck, rs); sparksAt(rs, d.x, d.y, 6, 24); }, 960);
     setTimeout(mkCards, 2200);
   };
@@ -848,8 +886,8 @@ function setupUi() {
   const gs = document.getElementById('gStage'), meter = document.getElementById('meterx'), gnum = document.getElementById('gnum'); let gold = 40;
   pressy(document.getElementById('gGo'), () => {
     const b = rel(document.getElementById('gGo'), gs), m = rel(meter, gs);
-    for (let i = 0; i < 12; i++) { const sc = document.createElement('i'); sc.className = 'screw'; gs.appendChild(sc); const a = Math.random() * Math.PI - Math.PI, r = 30 + Math.random() * 40; const mid = { x: b.x + Math.cos(a) * r, y: b.y - 20 + Math.sin(a) * r * 0.6 }; sc.style.left = `${b.x}px`; sc.style.top = `${b.y}px`;
-      sc.animate([{ transform: 'translate(0,0) scale(.4)' }, { transform: `translate(${mid.x - b.x}px, ${mid.y - b.y}px) scale(1.2)`, offset: 0.35, easing: 'cubic-bezier(.6,0,.9,.4)' }, { transform: `translate(${m.x - b.x - 30}px, ${m.y - b.y}px) scale(.7)` }], { duration: 620 + i * 45, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
+    for (let i = 0; i < 12; i++) { const sc = document.createElement('i'); sc.className = 'screw'; sc.style.backgroundImage = `url(${SCREW})`; gs.appendChild(sc); const a = Math.random() * Math.PI - Math.PI, r = 30 + Math.random() * 40; const mid = { x: b.x + Math.cos(a) * r, y: b.y - 20 + Math.sin(a) * r * 0.6 }; sc.style.left = `${b.x}px`; sc.style.top = `${b.y}px`;
+      sc.animate([{ transform: 'translate(0,0) scale(.4) rotate(0deg)' }, { transform: `translate(${mid.x - b.x}px, ${mid.y - b.y}px) scale(1.15) rotate(${180 + i * 30}deg)`, offset: 0.35, easing: 'cubic-bezier(.6,0,.9,.4)' }, { transform: `translate(${m.x - b.x - 30}px, ${m.y - b.y}px) scale(.7) rotate(${360 + i * 30}deg)` }], { duration: 620 + i * 45, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
       setTimeout(() => { sc.remove(); gnum.textContent = String(++gold); meter.classList.remove('punch'); void meter.offsetWidth; meter.classList.add('punch'); if (i === 11) sparksAt(gs, m.x - 10, m.y, 8, 26); }, 620 + i * 45); }
   });
   // 지도
@@ -861,9 +899,36 @@ function setupUi() {
   // 태엽 부족
   const nc = document.getElementById('noCard'), tst = document.getElementById('tst');
   nc.addEventListener('click', () => { nc.classList.remove('nope'); void nc.offsetWidth; nc.classList.add('nope'); document.querySelectorAll('#ap i.empty').forEach((x) => { x.classList.remove('blink'); void x.offsetWidth; x.classList.add('blink'); }); tst.classList.remove('in'); void tst.offsetWidth; tst.classList.add('in'); });
-  // 부품 장착
-  const pt = document.getElementById('part'), ps = document.getElementById('ptStage'), tray = document.getElementById('tray'); let slot = 0;
-  pt.addEventListener('click', () => { const slots = tray.querySelectorAll('i'); const target = slots[slot % slots.length]; const a = rel(pt, ps), b = rel(target, ps); const fly = pt.cloneNode(true); fly.classList.add('fly'); fly.style.left = `${a.x - a.w / 2}px`; fly.style.top = `${a.y - a.h / 2}px`; fly.style.setProperty('--tx', `${b.x - a.x}px`); fly.style.setProperty('--ty', `${b.y - a.y}px`); ps.appendChild(fly); pt.style.visibility = 'hidden';
-    setTimeout(() => { fly.remove(); pt.style.visibility = ''; target.textContent = '⚙'; target.style.color = '#facc15'; target.classList.remove('slotin'); void target.offsetWidth; target.classList.add('slotin'); tray.classList.remove('jolt'); void tray.offsetWidth; tray.classList.add('jolt'); sparksAt(ps, b.x, b.y, 8, 26); slot++; if (slot % 3 === 0) setTimeout(() => slots.forEach((s2) => { s2.textContent = ''; s2.classList.remove('slotin'); }), 900); }, 520); });
+  // 부품 장착 (다시): 모으기 → 잔상 비행 · 집게 벌어짐 → 꽂힘 · 세 번 철컥 잠김 · 볼트 넷 · 이름표
+  document.querySelector('.meterx i').style.backgroundImage = `url(${SCREW})`;
+  const pt = document.getElementById('part'), ps = document.getElementById('ptStage'), tray = document.getElementById('tray'); let slot = 0, busyP = false;
+  const NAMES2 = ['증폭 코일', '행진 북', '편자'];
+  const mkTray = () => { tray.innerHTML = [0, 1, 2].map(() => '<div class="slot"><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br br2"></i><i class="bolt" style="top:3px;left:3px"></i><i class="bolt" style="top:3px;right:3px"></i><i class="bolt" style="bottom:3px;left:3px"></i><i class="bolt" style="bottom:3px;right:3px"></i><span class="lbl"></span></div>').join(''); };
+  mkTray(); document.getElementById('partImg').src = GEAR;
+  pt.addEventListener('click', () => {
+    if (busyP) return; busyP = true;
+    const slots = tray.querySelectorAll('.slot'); const target = slots[slot % 3];
+    pt.classList.remove('charge'); void pt.offsetWidth; pt.classList.add('charge');
+    setTimeout(() => {
+      const a = rel(pt, ps), b = rel(target, ps);
+      const mk = (op) => { const im = document.createElement('img'); im.className = 'pfly'; im.src = GEAR; im.style.left = `${a.x - 18}px`; im.style.top = `${a.y - 28}px`; im.style.opacity = op; ps.appendChild(im); return im; };
+      const flyer = mk(1); const ghosts = [mk(0.35), mk(0.18)];
+      pt.querySelector('img').style.visibility = 'hidden';
+      const kf = [{ transform: 'translate(0,0) rotate(-40deg) scale(1.15)' }, { transform: `translate(${(b.x - a.x) * 0.45}px, ${(b.y - a.y) * 0.45 - 40}px) rotate(160deg) scale(1.1)`, offset: 0.5 }, { transform: `translate(${b.x - a.x}px, ${b.y - a.y + 10}px) rotate(330deg) scale(0.9)` }];
+      flyer.animate(kf, { duration: 300, easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' });
+      ghosts.forEach((g2, i) => g2.animate(kf, { duration: 300, delay: 40 * (i + 1), easing: 'cubic-bezier(.55,0,.9,.5)', fill: 'forwards' }));
+      setTimeout(() => target.classList.add('open'), 180);
+      setTimeout(() => {
+        flyer.remove(); ghosts.forEach((g2) => g2.remove()); pt.querySelector('img').style.visibility = ''; pt.classList.remove('charge');
+        const im = document.createElement('img'); im.src = GEAR; im.className = 'lock'; target.appendChild(im);
+        target.classList.remove('open'); target.classList.add('locked');
+        tray.classList.remove('jolt'); void tray.offsetWidth; tray.classList.add('jolt'); sparksAt(ps, b.x, b.y, 8, 26);
+        target.querySelectorAll('.bolt').forEach((bo, i) => setTimeout(() => bo.classList.add('on'), 380 + i * 70));
+        const lbl = target.querySelector('.lbl'); lbl.textContent = NAMES2[slot % 3]; setTimeout(() => lbl.classList.add('on'), 680);
+        slot++; busyP = false;
+        if (slot % 3 === 0) setTimeout(mkTray, 1600);
+      }, 340);
+    }, 300);
+  });
 }
 </script>
