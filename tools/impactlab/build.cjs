@@ -9,6 +9,8 @@ const b64 = (p) => fs.readFileSync(path.join(root, p)).toString('base64');
 const sprites = {};
 for (const t of ['P', 'N', 'B', 'R', 'Q', 'K']) for (const s of [0, 1]) sprites[`${t}${s}`] = `data:image/png;base64,${b64(`public/pieces/s-${t}${s}.png`)}`;
 sprites.LOGO = `data:image/png;base64,${b64('public/ui/title-logo.png')}`;
+sprites.TPAWN = `data:image/png;base64,${b64('public/ui/title-pawn.png')}`;
+sprites.TSLASH = `data:image/png;base64,${b64('public/ui/title-slash.png')}`;
 html = html
   .replace('__FONT_B__', `data:font/woff2;base64,${b64('node_modules/galmuri/dist/Galmuri11-Bold.woff2')}`)
   .replace('__FONT_R__', `data:font/woff2;base64,${b64('node_modules/galmuri/dist/Galmuri11.woff2')}`)

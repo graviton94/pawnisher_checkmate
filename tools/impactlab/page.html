@@ -309,7 +309,7 @@ footer { color: var(--dim); font-size: 12px; }
 .ko3.lose.run .word { animation: kolose 1800ms both; }
 @keyframes kowin { 0% { opacity: 0; transform: scale(4) rotate(-8deg); text-shadow: -18px 0 #ff2a6d, 18px 0 #2de2e6; animation-timing-function: var(--accel); } 12% { opacity: 1; transform: scale(0.88) rotate(0); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); } 20% { transform: scale(1.08); text-shadow: 4px 4px 0 #16141c; } 28% { transform: scale(1); } 80% { opacity: 1; transform: scale(1.02); animation-timing-function: var(--accel); } 100% { opacity: 0; transform: scale(1.6); } }
 @keyframes kolose { 0% { opacity: 0; transform: translateY(-150px) scale(0.9, 1.2); animation-timing-function: var(--accel); } 18% { opacity: 1; transform: translateY(0) scale(1.15, 0.8); animation-timing-function: var(--decel); } 26% { transform: translateY(-12px) scale(0.97, 1.04); animation-timing-function: var(--accel); } 33% { transform: translateY(0) scale(1.04, 0.96); } 40% { transform: none; } 82% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(30px); } }
-.ko3 .word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18px; left: -30px; background: rgba(255,255,255,0.8); transform: skewX(-20deg); mix-blend-mode: overlay; }
+.ko3 .word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18px; left: -30px; background: rgba(255,255,255,0.8); transform: skewX(-20deg); mix-blend-mode: overlay; opacity: 0; pointer-events: none; }
 .ko3.win.run .word::after { animation: glint2 1800ms both; }
 @keyframes glint2 { 0%, 32% { left: -30px; opacity: 0; } 33% { opacity: 1; } 55% { left: 105%; opacity: 1; } 56%, 100% { opacity: 0; } }
 /* 8 도장 */
@@ -411,6 +411,31 @@ footer { color: var(--dim); font-size: 12px; }
 .pk3hand .c3 { position: relative; }
 .pk3big { position: absolute; left: 50%; top: 50%; width: 120px; height: 160px; margin: -92px 0 0 -60px; background: #1e1c26; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #c89b3c, 0 6px 0 #000; display: grid; place-items: center; align-content: center; gap: 8px; font: 700 15px var(--body); color: #f4e6c4; z-index: 5; visibility: hidden; }
 .pk3big img { width: 56px; height: 56px; image-rendering: pixelated; }
+
+/* 메인 화면 — 베인 폰 (D-188) */
+.em3 { position: relative; width: 150px; height: 150px; flex: none; }
+.em3 img { position: absolute; inset: 0; width: 150px; height: 150px; image-rendering: pixelated; }
+.em3 .h1 { clip-path: polygon(0 0, 100% 0, 0 100%); }
+.em3 .h2 { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.em3 .h1, .em3 .h2 { opacity: 0; }
+.em3 .sl { clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0); filter: drop-shadow(0 0 6px rgba(229, 38, 47, 0.7)); }
+.em3.run .h1, .em3.run .h2 { animation: emdrop 520ms both; }
+@keyframes emdrop { 0% { opacity: 1; transform: translateY(-140px) scale(0.9, 1.25); animation-timing-function: var(--accel); } 45% { transform: translateY(0) scale(1.14, 0.84); animation-timing-function: var(--decel); } 70% { transform: translateY(-5px) scale(0.97, 1.04); } 100% { opacity: 1; transform: none; } }
+.em3.cut .h1 { animation: emh1 520ms var(--decel) forwards; opacity: 1; }
+.em3.cut .h2 { animation: emh2 520ms var(--decel) forwards; opacity: 1; }
+@keyframes emh1 { 0% { transform: none; } 30% { transform: translate(-9px, -9px) rotate(-3deg); } 100% { transform: translate(-6px, -6px) rotate(-2deg); } }
+@keyframes emh2 { 0% { transform: none; } 30% { transform: translate(9px, 9px) rotate(2deg); } 100% { transform: translate(6px, 6px) rotate(1deg); } }
+.em3.tremble { animation: emtr 260ms linear; }
+@keyframes emtr { 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } }
+.em3.cut .sl { animation: emsl 140ms var(--accel) forwards; }
+@keyframes emsl { 0% { clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0); } 100% { clip-path: polygon(-10% -10%, 110% -10%, 110% 110%, -10% 110%); } }
+.em3.cut.done .sl { animation: emglow 1400ms ease-in-out infinite; clip-path: none; }
+@keyframes emglow { 50% { filter: drop-shadow(0 0 12px rgba(229, 38, 47, 0.95)); } }
+.emword { position: relative; width: 177px; height: 54px; overflow: hidden; opacity: 0; flex: none; }
+.emword img { position: absolute; left: 0; top: -95px; width: 177px; height: 149px; image-rendering: pixelated; }
+.emword.in { animation: emword 420ms var(--decel) both; }
+@keyframes emword { 0% { opacity: 1; transform: translateX(60px) skewX(-18deg); filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6); } 70% { filter: drop-shadow(-1px 0 #ff2a6d) drop-shadow(1px 0 #2de2e6); } 100% { opacity: 1; transform: none; filter: none; } }
+.emrow { display: flex; align-items: center; gap: 6px; }
 </style>
 
 <div class="wrap">
@@ -1456,7 +1481,7 @@ function setupPart3() {
     {
       t: '승패 연출', now: '투명 → 금 가로 그라데이션 띠가 쓸고 지나가며 흐려짐.', beats: '격투게임 「K.O.」식 — 승리: 섬광 → 금빛 빛줄기가 돌며 퍼지고 · 글자가 4배에서 색이 갈라진 채 내리꽂혀 큰 흔들림 · 반짝 띠 → 커지며 사라짐. 패배: 가장자리가 붉게 두 번 맥박치고 글자가 위에서 무겁게 떨어져 튐.', btn: '승 / 패',
       html: `<div class="minib"></div><div class="ko3"><div class="rays"></div><div class="tint"></div><div class="word"></div></div><div class="flash3"></div>`,
-      play(st) { const k = st.querySelector('.ko3'); const lose = k.dataset.l !== '1'; k.dataset.l = lose ? '1' : '0'; k.className = `ko3 ${lose ? 'lose' : 'win'}`; k.querySelector('.word').textContent = lose ? '킹 파괴' : '적 킹 격파'; re(k, 'run'); after(lose ? 320 : 200, () => { if (!lose) re(st.querySelector('.flash3'), 'on'); shakeSt(st); sparksAt(st, st.clientWidth / 2, st.clientHeight / 2 + (lose ? 20 : 0), lose ? 8 : 14, lose ? 40 : 70); }); },
+      play(st) { const k = st.querySelector('.ko3'); const lose = k.dataset.l === 'w'; k.dataset.l = lose ? 'l' : 'w'; k.className = 'ko3'; void k.offsetWidth; k.className = `ko3 ${lose ? 'lose' : 'win'}`; k.querySelector('.word').textContent = lose ? '킹 파괴' : '적 킹 격파'; re(k, 'run'); after(lose ? 320 : 200, () => { if (!lose) re(st.querySelector('.flash3'), 'on'); shakeSt(st); sparksAt(st, st.clientWidth / 2, st.clientHeight / 2 + (lose ? 20 : 0), lose ? 8 : 14, lose ? 40 : 70); }); },
     },
 
     {
@@ -1469,6 +1494,12 @@ function setupPart3() {
       t: '출하 결과 집계', now: '결과 글이 한 번에 툭 뜸 — 집계 연출 없음.', beats: '줄이 하나씩 밀려 들어오고, 숫자가 째깍째깍 올라가며(오를 때마다 톡) → 마지막에 등급 도장.', btn: '집계',
       html: `<div class="rs3"><div>이긴 대국 <b data-v="7">0</b></div><div>처치 <b data-v="23">0</b></div><div>나사 <b data-v="340">0</b></div><div>최고 연쇄 <b data-v="5">0</b></div></div><div class="st3" style="position:absolute;right:16px;bottom:30px;font-size:16px">3막 완주</div>`,
       play(st) { const rows = [...st.querySelectorAll('.rs3 div')]; const s = st.querySelector('.st3'); s.classList.remove('on'); rows.forEach((r) => { r.classList.remove('in'); r.querySelector('b').textContent = '0'; }); let t = 0; rows.forEach((r) => { after(t, () => re(r, 'in')); const b = r.querySelector('b'); const v = Number(b.dataset.v); const steps = Math.min(10, v); for (let k = 1; k <= steps; k++) after(t + 120 + k * 60, () => { b.textContent = Math.round((v * k) / steps); re(b, 'tick'); }); t += 120 + steps * 60 + 100; }); after(t + 100, () => { re(s, 'on'); after(150, () => shakeSt(st)); }); },
+    },
+    {
+      t: '메인 화면 — 베인 폰 (아이콘 문법)', now: '글자 제목 / 로고 그림.', beats: '우리 흰 폰(정본 그대로)이 떨어져 꽝 → 잠깐 떨고 → 크고 붉은 칼자국이 오른위에서 왼아래로 한 번에 그어짐(섬광 · 흔들림 · 칼자국 따라 불똥) → 폰이 칼자국을 따라 두 동강으로 어긋남 · 칼자국은 붉게 숨 쉬듯 빛남 → 이름이 색 갈림과 함께 미끄러져 들어옴. 칼자국은 아이콘처럼 검정 외곽선 · 흰 심 · 진홍 · 튄 핏방울 도트.', btn: '다시',
+      html: `<div class="emrow"><div class="em3"><img class="h1" alt=""><img class="h2" alt=""><img class="sl" alt=""></div><div class="emword"><img alt=""></div></div><div class="flash3"></div>`,
+      init(st) { st.querySelectorAll('.em3 .h1, .em3 .h2').forEach((im) => (im.src = SPR.TPAWN)); st.querySelector('.em3 .sl').src = SPR.TSLASH; st.querySelector('.emword img').src = SPR.LOGO; },
+      play(st) { const e = st.querySelector('.em3'), w = st.querySelector('.emword'); e.className = 'em3'; w.classList.remove('in'); void e.offsetWidth; e.classList.add('run'); after(240, () => shakeSt(st)); after(700, () => re(e, 'tremble')); after(980, () => { e.classList.remove('tremble'); e.classList.add('cut'); }); after(1100, () => { re(st.querySelector('.flash3'), 'on'); shakeSt(st); const r = rel(e, st); for (let k = 0; k < 5; k++) { const t = 0.15 + k * 0.17; sparksAt(st, r.x + r.w * (0.45 - t * 0.9), r.y - r.h * (0.45 - t * 0.9), 5, 26); } }); after(1260, () => e.classList.add('done')); after(1450, () => re(w, 'in')); },
     },
     {
       t: '타이틀 등장 (지금 로고로)', now: '로고 · 버튼이 정지 패널로 즉시 뜸.', beats: '지금 타이틀 로고를 그대로 나눠 쓴다 — 왕관 쓴 폰 문장이 위에서 떨어져 꽝(납작 · 출렁 · 섬광) → 붉은 칼자국 위로 흰 칼빛이 번쩍 → PAWNISHER가 왼쪽부터 열리며 색 갈림이 모임 → CHECKMATE 줄이 가운데서 펼쳐짐 → 로고 전체를 반짝 띠가 훑음 → 버튼이 튀어 오름.', btn: '다시',
