@@ -1594,7 +1594,7 @@ const title = (): void => {
   let level = m.ascOpen;
   const ascLine = () => (level ? `승급 ${level} — ${ASCENSION.slice(0, level).map((a) => a.name).join(' · ')}` : '기본 — 승급 없음');
   const el = openOverlay(`<div class="title-card"><h1 class="sr-only">Pawnisher : Checkmate</h1>
-    <div class="title-head"><img class="title-logo" src="ui/title-logo.png" alt="" width="177" height="146"><div class="title-side"><p class="flv">체스 규칙을 부수는 태엽 분대</p>
+    <div class="title-head"><img class="title-logo" src="ui/title-logo.png" alt="" width="177" height="149"><div class="title-side"><p class="flv">체스 규칙을 부수는 태엽 분대</p>
     <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>세 막을 지나 출하구에 닿으십시오.</li></ul></div></div>
     ${sv ? `<button class="btn brass wide" type="button" data-cont>이어하기 <small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
     ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span data-asc-line>${ascLine()}</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}

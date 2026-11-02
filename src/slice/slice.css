@@ -558,7 +558,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 
 /* 타이틀 도트 로고 (D-185): 원본 로고를 4px 칸으로 도트화(넓이 평균 → 고정 8색) · 배경 투명. 왼쪽 로고 · 오른쪽 설명 */
 .title-head { display: flex; align-items: center; gap: 18px; text-align: left; }
-.title-logo { width: 177px; height: 146px; image-rendering: pixelated; flex: none; filter: drop-shadow(3px 3px 0 #000); }
+.title-logo { width: 177px; height: 149px; image-rendering: pixelated; flex: none; filter: drop-shadow(3px 3px 0 #000); }
 .title-side { display: grid; gap: 6px; }
 .title-side .flv { margin: 0; color: #f4d27a; font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
