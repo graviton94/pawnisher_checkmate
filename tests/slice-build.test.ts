@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backlashOf, canPlay, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
+import { backlashOf, canPlay, liveIntents, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
 import { BOSS, COMMANDS, PUSH, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
 import { playOut } from '../src/slice/bot';
 import type { SlicePartId } from '../src/slice/parts';
@@ -305,5 +305,28 @@ describe('돌아오는 피해 미리보기 · 자동 플레이 봇 (D-173)', () 
     const r = playOut(b);
     expect(b.s.winner).not.toBeNull();
     expect(r.plays).toBeGreaterThan(0);
+  });
+});
+
+describe('막힌 적 예고 (D-176)', () => {
+  it('예고한 칸을 막으면 그 적은 쉬지 않고 다른 수를 둔다 — 화면 예고 = 실행', () => {
+    let checked = 0;
+    for (let seed = 1; seed < 40 && checked < 3; seed++) {
+      const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, seed);
+      const it = b.intents.find((x) => !b.s.pieces.some((p) => p.x === x.to.x && p.y === x.to.y));
+      if (!it) continue;
+      const mine = b.s.pieces.find((p) => p.side === 0 && p.type === 'P');
+      if (!mine) continue;
+      Object.assign(mine, { x: it.to.x, y: it.to.y });
+      const live = liveIntents(b).find((x) => x.pieceId === it.pieceId);
+      if (!live) continue;
+      expect(live.to).not.toEqual(it.to);
+      const before = { ...b.s.pieces.find((p) => p.id === it.pieceId)! };
+      endTurn(b, true);
+      const after = b.s.pieces.find((p) => p.id === it.pieceId);
+      if (after) expect({ x: after.x, y: after.y }).not.toEqual({ x: before.x, y: before.y });
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 });
