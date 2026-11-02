@@ -4,6 +4,7 @@ import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
 import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, titleFx } from './uifx';
+import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, shakeEl, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
@@ -76,11 +77,15 @@ const taunt = (cue: TauntCue, force = false): void => {
   const lines = TAUNTS[cue];
   const line = lines[R.int(lines.length)];
   const el = document.createElement('div');
-  el.className = 'taunt';
-  el.innerHTML = `${pieceImg('K', 1, 'small', 22)}<span>${line}</span>`;
+  el.className = 'taunt tq3';
+  el.innerHTML = `${pieceImg('K', 1, 'small', 22)}<span></span>`;
   document.body.appendChild(el);
-  window.setTimeout(() => el.classList.add('out'), 2600);
-  window.setTimeout(() => el.remove(), 3100);
+  // D-189: 말풍선이 튀어나오고 글자가 타자처럼 찍히다 마지막 낱말에서 떨린다
+  const words = line.split(' ');
+  const last = words.pop() ?? '';
+  window.setTimeout(() => void typeIn(el.querySelector('span')!, `${words.length ? `${words.join(' ')} ` : ''}<em>${last}</em>`, 40, () => shakeEl(el, 4, 300)), 200);
+  window.setTimeout(() => el.classList.add('out'), 2900);
+  window.setTimeout(() => el.remove(), 3200);
 };
 let actI = 0;
 let rowI = 0;
@@ -142,12 +147,9 @@ let toastTimer: number | undefined;
 const toast = (msg: string, ms = 1800) => {
   const t = $('toast');
   t.textContent = msg;
-  t.hidden = false;
-  t.classList.remove('tin');
-  void t.offsetWidth;
-  t.classList.add('tin');
+  toastIn(t);
   window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => (t.hidden = true), ms);
+  toastTimer = window.setTimeout(() => toastOut(t), ms);
 };
 
 // ---------- 화면 모델 ----------
@@ -213,14 +215,18 @@ const showPeek = (cardEl: HTMLElement): void => {
   peekEl = document.createElement('div');
   peekEl.className = 'peek';
   peekEl.innerHTML = peekHtml(id, Number(cardEl.querySelector('.costgear')?.getAttribute('aria-label')?.replace(/\D/g, '') ?? COMMANDS[id].cost));
+  peekEl.style.visibility = 'hidden';
   document.body.appendChild(peekEl);
   const h = peekEl.offsetHeight;
   peekEl.style.left = `${r.right + 10}px`;
   peekEl.style.top = `${Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2))}px`;
+  // D-189: 도트가 아래에서 쓸어 올리며 드러내고, 닫을 땐 위에서 쓸어 내린다
+  sweep(peekEl, true);
 };
 const hidePeek = (): void => {
-  peekEl?.remove();
+  const el = peekEl;
   peekEl = null;
+  if (el) sweep(el, false, () => el.remove(), 220);
 };
 
 /** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
@@ -277,8 +283,7 @@ const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number 
 const refresh = (): void => {
   hidePeek();
   renderer.render(model());
-  $('turn-label').textContent = b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`;
-  $('turn-label').classList.toggle('enemy', enemyTurn);
+  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`, enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
@@ -489,9 +494,11 @@ const onEndInner = async (): Promise<void> => {
   prevKills = 0;
   renderer.setTempo(1);
   busy = true;
+  await discardHand($('hand'));
   enemyTurn = true;
   refresh();
   showBefore(r.before);
+  turnBanner($('board'), '적 차례', true);
   await renderer.play(r.before, r.events);
   await deathRites();
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
@@ -500,6 +507,8 @@ const onEndInner = async (): Promise<void> => {
   renderer.setup(b.s);
   refresh();
   if (b.s.winner !== null) return finish();
+  turnBanner($('board'), `${b.turn}턴 · 내 차례`, false);
+  dealHand($('hand'));
   if (b.falls.some((f) => f.turn === b.turn - 1)) taunt('gloat');
   sfx('submit');
   await lastStand();
@@ -595,6 +604,7 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
     await fn();
   } catch (err) {
     console.error(err);
+    $('hand').classList.remove('dealing');
     busy = false;
     enemyTurn = false;
     renderer.setup(b.s);
@@ -635,6 +645,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   turnDmg = 0;
   prevKills = 0;
   ritesDone = 0;
+  $('hand').classList.remove('dealing');
   closeOverlay();
   renderer.setFoeTraits([...(b.blastPawns ? ['blast' as const] : []), ...(b.boss && b.bossRule === 'thorns' ? ['thorns' as const] : [])]);
   renderer.setNemesis(b.nemesisId ?? null);
@@ -644,12 +655,19 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 전환 화면 (D-165): 판이 바뀔 때마다 — 서술 한 줄 + 도움말, 눌러서 넘긴다. 판 위 규칙 한 줄은 그 뒤에
   if (!silent)
     void stageIntro(def).then(() => {
+      battleIntro();
       if (nemesisNow) return nemesisMeet(nemesisNow);
       toast(def.tell, 3200);
       maybeBet(def);
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
   $('hand').classList.toggle('hint', def === INTRO[0]);
+};
+
+/** 판 세우기 (D-189): 칸이 대각선 물결로 깔리고 기물이 떨어져 박힌 뒤 손패가 한 장씩 들어온다 */
+const battleIntro = (): void => {
+  void renderer.boardIntro();
+  window.setTimeout(() => dealHand($('hand')), 450);
 };
 
 /** 다음 노드로: 줄을 하나 넘기고, 막이 끝나면 다음 막 (전환 화면), 3막 반장 뒤면 출하 완료 */
@@ -846,6 +864,10 @@ const shopScreen = (): void => {
           if (kind === 'part') (parts.push(id as SlicePartId), newParts.add(id as SlicePartId));
           if (kind === 'heal') squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * SHOP.healPct)) }));
           render();
+          // 구매 · 회복 (D-189): 나사가 날아와 꽂히고 물건이 튄다 / 정비는 초록 고리 · 십자 반짝이
+          const got = $('overlay-panel').querySelector<HTMLElement>(`[data-buy="${btn.dataset.buy}"]`);
+          if (kind === 'heal') healFx(got, `HP +${Math.round(SHOP.healPct * 100)}%`);
+          else if (kind !== 'remove') buyFx(got, $('overlay-panel').querySelector('.shop-head .dim'));
         });
       }),
     );
@@ -870,8 +892,9 @@ const forgeScreen = (): void => {
         if (k === 'refine') return refineScreen();
         squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * FORGE.repairPct)) }));
         sfx('awaken');
+        healFx($('overlay-panel').querySelector<HTMLElement>('.part-cards'), `HP +${Math.round(FORGE.repairPct * 100)}%`);
         toast(`분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%`);
-        window.setTimeout(advance, 400);
+        window.setTimeout(advance, 750);
       });
     }),
   );
@@ -944,18 +967,7 @@ const stageIntro = (def: BattleDef): Promise<void> => {
 };
 
 /** 승패 띠 (대국이 끝난 순간 화면을 가로지른다) */
-const banner = (text: string, good: boolean): Promise<void> =>
-  new Promise((resolve) => {
-    const el = document.createElement('div');
-    el.className = `slashfx ${good ? 'good' : 'bad'}`;
-    el.innerHTML = `<span>${text}</span>`;
-    document.body.appendChild(el);
-    sfx(good ? 'win' : 'lose');
-    window.setTimeout(() => {
-      el.remove();
-      resolve();
-    }, 1100);
-  });
+const banner = (text: string, good: boolean): Promise<void> => koBanner(text, good);
 
 /**
  * 고르기 확인 (D-165): 첫 탭 = 고른다(들어 올리고 나머지는 어두워짐 + 아래 확인 띠), 같은 것을 다시 누르거나 「고르기」 = 확정.
@@ -1003,17 +1015,19 @@ const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
 const openOverlay = (html: string): HTMLElement => {
   const panel = $('overlay-panel');
   panel.innerHTML = html;
-  const wasHidden = $('overlay').hidden;
+  const wasHidden = $('overlay').hidden || panel.classList.contains('m3out');
   $('overlay').hidden = false;
-  // 계단으로 떨어져 박힘 (D-184) — 이미 열린 창의 내용만 바뀔 때는 그대로
-  if (wasHidden) {
-    panel.classList.remove('pop');
-    void panel.offsetWidth;
-    panel.classList.add('pop');
-  }
+  // 떨어져 박혀 출렁 · 리벳 (D-189) — 이미 열린 창의 내용만 바뀔 때는 그대로
+  if (wasHidden) modalIn($('overlay'), panel);
+  // 도장은 내리꽂혀 잉크가 튄다
+  panel.querySelectorAll<HTMLElement>('.stamp-big').forEach(stampFx);
   return panel;
 };
-const closeOverlay = () => ($('overlay').hidden = true);
+/** 창 닫기: 가로로 접혀 사라진다 (D-189). 접히는 사이 다시 열리면 취소된다 */
+const closeOverlay = (): void => {
+  if ($('overlay').hidden) return;
+  modalOut($('overlay'), $('overlay-panel'), () => ($('overlay').hidden = true));
+};
 
 const finish = (): void => {
   const isWin = b.s.winner === 0;
@@ -1229,13 +1243,20 @@ const deathRites = async (): Promise<void> => {
     const c = squad[b.squadIds.indexOf(f.pieceId)];
     if (!c) continue;
     const fx = document.createElement('div');
-    fx.className = 'deathfx';
+    fx.className = 'deathfx dc3';
     const d = DEATHS[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % DEATHS.length];
-    // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158)
-    fx.innerHTML = `<div><p class="narr">${d.narr}</p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
+    // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158). D-189: 검은 막이 한 줄씩 계단으로 내려오고 서술이 한 자씩 찍힌다
+    fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
+    curtainRows(fx);
     document.body.appendChild(fx);
     sfx('loss');
-    await new Promise((r) => window.setTimeout(r, 1200));
+    await new Promise((r) => window.setTimeout(r, 380));
+    await typeIn(fx.querySelector<HTMLElement>('.narr')!, d.narr, 28);
+    for (const x of fx.querySelectorAll('div > :not(.narr)')) {
+      x.classList.add('in');
+      await new Promise((r) => window.setTimeout(r, 140));
+    }
+    await new Promise((r) => window.setTimeout(r, 700));
     fx.classList.add('out');
     window.setTimeout(() => fx.remove(), 400);
   }
@@ -1468,6 +1489,7 @@ const startLab = (mode: 'A' | 'B'): void => {
   turnDmg = 0;
   prevKills = 0;
   ritesDone = 0;
+  $('hand').classList.remove('dealing');
   closeOverlay();
   renderer.setFoeTraits([]);
   renderer.setup(b.s);
@@ -1559,17 +1581,20 @@ const runEnd = (cleared: boolean): void => {
   const unlocked = m.ascOpen > m0.ascOpen;
   const fallenNow = readLedger().filter((r) => r.run === runId);
   const best = [...squad].sort((x, y) => (y.kills ?? 0) - (x.kills ?? 0))[0];
-  openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '출하구를 지났습니다.' : `${actI + 1}막 · ${cur.title}에서 멈췄습니다.`}</h2>
-    <p>${daily ? `오늘의 출하 ${daily} · ` : ''}${asc ? `승급 ${asc} · ` : ''}이긴 대국 ${won} · ${cleared ? '3막 완주' : `${actI + 1}막`} · 나사 ${gold} · 덱 ${deck.length}장 · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
+  const kills = squad.reduce((n, u) => n + (u.kills ?? 0), 0) + fallenNow.reduce((n, r) => n + r.kills, 0);
+  const el = openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '출하구를 지났습니다.' : `${actI + 1}막 · ${cur.title}에서 멈췄습니다.`}</h2>
+    <div class="tally"><div>이긴 대국 <b data-v="${won}">${won}</b></div><div>처치 <b data-v="${kills}">${kills}</b></div><div>나사 <b data-v="${gold}">${gold}</b></div><div>덱 <b data-v="${deck.length}">${deck.length}</b></div></div>
+    <p>${daily ? `오늘의 출하 ${daily} · ` : ''}${asc ? `승급 ${asc} · ` : ''}${cleared ? '3막 완주' : `${actI + 1}막`} · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
     ${highlight ? `<p class="hl"><span class="pass-tag">이번 출하의 묘수</span> ${highlight.where} ${highlight.turn}턴 — 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : ''}
     <p>살아남은 분대: ${squad.map((u) => `${crewLabel(u)} (처치 ${u.kills ?? 0})`).join(' · ')}</p>
     ${fallenNow.length ? `<p class="bad">쓰러진 분대원: ${fallenNow.map((r) => r.name).join(' · ')}</p>` : ''}
     ${best && (best.kills ?? 0) > 0 ? `<p class="flv">${crewLabel(best)} — 이번 출하의 선봉.</p>` : ''}
     ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
     <p class="dim">시험판입니다. 막힌 곳 · 좋았던 순간 · 복잡했던 곳을 알려 주십시오.</p>
-    <div class="row"><button class="btn brass" type="button" data-restart>처음 화면</button></div>`)
-    .querySelector('[data-restart]')!
-    .addEventListener('click', () => location.reload());
+    <div class="row"><button class="btn brass" type="button" data-restart>처음 화면</button></div>`);
+  el.querySelector('[data-restart]')!.addEventListener('click', () => location.reload());
+  // 결과 집계 (D-189): 줄이 밀려 들어오고 숫자가 째깍 올라간 뒤 → 출하 도장
+  tally(el.querySelector<HTMLElement>('.tally')!, el.querySelector<HTMLElement>('h2 .pass-tag'));
 };
 
 /** 첫 판으로 들어간다 (새 출하 · 오늘의 출하) */
@@ -1579,7 +1604,10 @@ const begin = (seed: number, level: number, day: string | null): void => {
   saveRun('battle', 0);
   closeOverlay();
   sfx('submit');
-  void stageIntro(INTRO[0]).then(() => toast(INTRO[0].tell, 3200));
+  void stageIntro(INTRO[0]).then(() => {
+    battleIntro();
+    toast(INTRO[0].tell, 3200);
+  });
 };
 
 /**
@@ -1632,4 +1660,4 @@ startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 if (qs.has('lab')) labPick();
 else if (!qs.has('debug')) title();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

@@ -333,14 +333,68 @@ class BoardScene extends Phaser.Scene {
     if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
   }
 
+  /** 떠오르는 숫자 (D-189): 작게 튀어나와 크게 부풀고 → 제자리 → 잠깐 머문 뒤 아래에서부터 접혀 사라진다 (선형 페이드 없음) */
   private floatText(sp: PieceSprite, text: string, color: string): void {
     const t = this.tile;
     const o = this.add
       .text(sp.root.x + t / 2, sp.root.y + t * 0.1, text, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color, stroke: '#16141C', strokeThickness: 4 })
-      .setOrigin(0.5)
+      .setOrigin(0.5, 1)
       .setDepth(8)
       .setResolution(this.dpr);
-    this.tweens.add({ targets: o, y: o.y - t * 0.5, alpha: 0, duration: 650, onComplete: () => o.destroy() });
+    if (this.calm) return void this.tweens.add({ targets: o, alpha: 0, delay: 500, duration: 150, onComplete: () => o.destroy() });
+    const y0 = o.y;
+    o.setScale(0.3);
+    this.tweens.chain({
+      targets: o,
+      tweens: [
+        { y: y0 - t * 0.38, scale: 1.25, duration: 180, ease: 'Back.easeOut' },
+        { y: y0 - t * 0.42, scale: 1, duration: 140, ease: 'Quad.easeOut' },
+        { y: y0 - t * 0.5, duration: 330, ease: 'Sine.easeOut' },
+        { y: y0 - t * 0.4, scaleY: 0, scaleX: 0.9, duration: 200, ease: 'Quad.easeIn' },
+      ],
+      onComplete: () => o.destroy(),
+    });
+  }
+
+  /** 판 세우기 (D-189): 칸이 왼위에서 대각선 물결로 떨어져 깔리고 → 기물이 위에서 떨어져 박혀 납작 · 마지막에 한 번 흔들림 */
+  async boardIntro(): Promise<void> {
+    if (this.calm || !this.state) return;
+    const t = this.tile;
+    const tiles = this.tilesC.list as Phaser.GameObjects.Image[];
+    const H = this.state.height;
+    for (const im of tiles) {
+      const x = Math.round(im.x / t);
+      const yTop = Math.round(im.y / t);
+      const y0 = im.y;
+      im.setAlpha(0).setY(y0 - t * 0.4);
+      this.tweens.add({ targets: im, y: y0, alpha: 1, delay: (x + yTop) * 32, duration: 300, ease: 'Back.easeOut' });
+    }
+    const spr = [...this.sprites.values()];
+    const base = (this.state.width + H) * 32 + 80;
+    spr.forEach((sp) => {
+      sp.root.setAlpha(0);
+    });
+    await new Promise<void>((r) => this.time.delayedCall(base, () => r()));
+    await Promise.all(
+      spr.map(async (sp, i) => {
+        if (!sp.root.active) return;
+        const y0 = sp.root.y;
+        await new Promise<void>((r) => this.time.delayedCall(i * 55, () => r()));
+        if (!sp.root.active) return;
+        sp.root.setAlpha(1).setY(y0 - t * 1.6);
+        await this.tween({ targets: sp.root, y: y0, duration: 200, ease: 'Quad.easeIn' });
+        if (!sp.root.active) return;
+        const g = sp.glyph;
+        const sx = g.scaleX;
+        const sy = g.scaleY;
+        const gy = g.y;
+        const h = g.displayHeight;
+        // 납작 → 출렁 (발끝을 바닥에 둔 채)
+        g.setScale(sx * 1.25, sy * 0.72).setY(gy + h * 0.14);
+        this.tweens.add({ targets: g, scaleX: sx, scaleY: sy, y: gy, duration: 260, ease: 'Back.easeOut' });
+      }),
+    );
+    this.shake(220, 0.006);
   }
 
   private clearDynamic(): void {
@@ -1443,6 +1497,11 @@ export class BoardRenderer implements BoardView {
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
   setBossFinish(on: boolean): void {
     this.scene.bossFinish = on;
+  }
+  /** 판 세우기 (D-189) */
+  async boardIntro(): Promise<void> {
+    await this.whenReady;
+    await this.scene.boardIntro();
   }
   /** 원수 낙하 (D-180) */
   async dropIn(pieceId: number): Promise<void> {

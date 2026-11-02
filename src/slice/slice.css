@@ -606,3 +606,135 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .tfx-blood { position: fixed; z-index: 121; width: 5px; height: 5px; background: #e5262f; box-shadow: 0 0 0 1px #0b0b0e; pointer-events: none; }
 .tfx-ember { position: fixed; z-index: 41; width: 3px; height: 3px; background: #ff6b5a; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; } .tfx-em.done .sl { animation: none; } }
+/* ---------- 화면 연출 3부 (D-189, 연구소 21~24판 승인) ---------- */
+:root { --snap: cubic-bezier(0.2, 1.6, 0.35, 1); --accel: cubic-bezier(0.6, 0, 0.9, 0.4); --decel: cubic-bezier(0.1, 0.9, 0.2, 1); }
+.fx3-flash { position: fixed; inset: 0; z-index: 118; background: #fff; pointer-events: none; animation: fx3fl 220ms var(--decel) forwards; }
+@keyframes fx3fl { 0% { opacity: var(--a, 0.85); } 100% { opacity: 0; } }
+/* 1 창: 체크무늬 그늘 세 단계 · 떨어져 박혀 출렁 · 리벳 · 닫으면 가로로 접힘 */
+.overlay.m3on { animation: m3dith 200ms steps(3) both; }
+.overlay.m3off { animation: m3dith 200ms steps(3) reverse both; }
+@keyframes m3dith { 0% { background-color: rgba(6, 5, 9, 0); } 100% { background-color: rgba(6, 5, 9, 0.8); } }
+.overlay .panel.m3in { animation: m3in 420ms both; transform-origin: 50% 100%; }
+.overlay .panel.m3out { animation: m3out 220ms var(--accel) both; }
+@keyframes m3in { 0% { transform: translateY(-90px) scale(0.92, 1.12); opacity: 0.4; animation-timing-function: var(--accel); } 45% { transform: translateY(0) scale(1.06, 0.9); opacity: 1; animation-timing-function: var(--decel); } 70% { transform: translateY(-5px) scale(0.98, 1.03); animation-timing-function: ease-in-out; } 100% { transform: none; } }
+@keyframes m3out { 0% { transform: none; } 30% { transform: scale(1.04, 0.92); } 100% { transform: scale(1.12, 0.02); opacity: 0.5; } }
+.fx3-rv { position: absolute; z-index: 2; width: 4px; height: 4px; background: #fff3b0; box-shadow: 1px 1px 0 #3a2a0a; opacity: 0; pointer-events: none; animation: rvpop 1ms steps(1) forwards; }
+@keyframes rvpop { to { opacity: 1; } }
+/* 2 알림 */
+.toast.t3in { animation: t3in 380ms var(--snap) both; }
+.toast.t3out { animation: t3out 200ms var(--accel) both; }
+@keyframes t3in { 0% { transform: translate(-50%, -70px) scaleY(1.3); } 100% { transform: translate(-50%, 0); } }
+@keyframes t3out { 0% { transform: translate(-50%, 0); } 35% { transform: translate(-50%, 4px) scale(1.04, 0.9); } 100% { transform: translate(-50%, -60px) scale(0.9, 1.2); opacity: 0; } }
+/* 3 적이 생각 중 */
+.turn-label { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.turn-label.th-pop { animation: thp 360ms var(--snap); }
+@keyframes thp { 0% { transform: scale(0.7, 1.3); } 100% { transform: none; } }
+.th-cog { width: 18px; height: 18px; flex: none; background: var(--cog) center / 100% 100%; image-rendering: pixelated; filter: hue-rotate(-40deg) saturate(1.4); animation: cog3 900ms var(--snap) infinite; }
+@keyframes cog3 { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(45deg); } }
+.th-dots { display: inline-flex; align-items: flex-end; }
+.th-dots i { width: 3px; height: 3px; margin-left: 2px; background: currentColor; opacity: 0.2; animation: dot3 900ms ease-in-out infinite; }
+.th-dots i:nth-child(2) { animation-delay: 150ms; } .th-dots i:nth-child(3) { animation-delay: 300ms; }
+@keyframes dot3 { 0%, 100% { opacity: 0.2; transform: none; } 30% { opacity: 1; transform: translateY(-4px); } 50% { opacity: 1; transform: none; } }
+.th-lamp { width: 6px; height: 6px; flex: none; background: #e5262f; box-shadow: 0 0 0 2px #000, 0 0 8px #e5262f; animation: lamp 700ms steps(2) infinite; }
+@keyframes lamp { 50% { background: #5a0e12; box-shadow: 0 0 0 2px #000; } }
+/* 4 턴 배너 */
+.tb4 { position: fixed; z-index: 44; pointer-events: none; overflow: hidden; }
+.tb4 .band { position: absolute; left: -10%; right: -10%; top: 50%; height: 50px; margin-top: -25px; background: #c89b3c; box-shadow: 0 -4px 0 #0b0b0e, 0 4px 0 #0b0b0e, 0 -8px 0 #fff3b0, 0 8px 0 #7a5a12; transform: translateX(-130%) skewX(-30deg); overflow: hidden; }
+.tb4 .band::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 14px, transparent 14px 70px); animation: streak 300ms linear infinite; }
+@keyframes streak { to { background-position: 70px 0; } }
+.tb4.foe .band { background: #c81e2a; box-shadow: 0 -4px 0 #0b0b0e, 0 4px 0 #0b0b0e, 0 -8px 0 #ff6b6b, 0 8px 0 #5a0e12; }
+.tb4 .txt { position: absolute; left: 0; right: 0; top: 50%; margin-top: -17px; text-align: center; font: 700 28px Galmuri14, sans-serif; letter-spacing: 0.06em; color: #16141c; opacity: 0; }
+.tb4.foe .txt { color: #fff; }
+.tb4.run .band { animation: tb4band 1200ms both; }
+.tb4.run .txt { animation: tb4txt 1200ms both; }
+@keyframes tb4band { 0% { transform: translateX(-130%) skewX(-30deg); animation-timing-function: var(--accel); } 14% { transform: translateX(3%) skewX(-8deg); animation-timing-function: var(--decel); } 22% { transform: none; } 76% { transform: none; animation-timing-function: var(--accel); } 100% { transform: translateX(130%) skewX(30deg); } }
+@keyframes tb4txt { 0%, 14% { opacity: 0; transform: scale(3.2) skewX(-14deg); text-shadow: -14px 0 #ff2a6d, 14px 0 #2de2e6; animation-timing-function: var(--accel); } 22% { opacity: 1; transform: scale(0.9, 1.1); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); } 30% { transform: scale(1.06, 0.94); text-shadow: 0 0 transparent; } 38% { transform: none; } 74% { opacity: 1; transform: none; animation-timing-function: var(--accel); } 100% { opacity: 0; transform: translateX(120px) skewX(20deg); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; } }
+.tb4 .glint { position: absolute; top: 50%; height: 50px; margin-top: -25px; width: 24px; left: -40px; background: rgba(255, 255, 255, 0.7); transform: skewX(-25deg); opacity: 0; }
+.tb4.run .glint { animation: tb4glint 1200ms both; }
+@keyframes tb4glint { 0%, 38% { left: -40px; opacity: 0; } 39% { opacity: 1; } 62% { left: 110%; opacity: 1; } 63%, 100% { opacity: 0; } }
+/* 7 승패 K.O. */
+.ko3 { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
+.ko3 .rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: repeating-conic-gradient(rgba(250, 204, 21, 0.32) 0 8deg, transparent 8deg 22deg); opacity: 0; border-radius: 50%; }
+.ko3.win.run .rays { animation: korays 1500ms var(--decel) both; }
+@keyframes korays { 0% { opacity: 0; transform: scale(0.2) rotate(0); } 15% { opacity: 1; transform: scale(1) rotate(20deg); } 80% { opacity: 0.8; transform: scale(1.05) rotate(70deg); } 100% { opacity: 0; transform: scale(1.3) rotate(90deg); } }
+.ko3 .tint { position: absolute; inset: 0; background: radial-gradient(circle, transparent 30%, rgba(120, 10, 16, 0.75) 100%); opacity: 0; }
+.ko3.lose.run .tint { animation: kotint 1500ms ease-out both; }
+@keyframes kotint { 0% { opacity: 0; } 20% { opacity: 1; } 35% { opacity: 0.6; } 50% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+.ko3 .word { position: relative; font: 700 52px Galmuri14, sans-serif; letter-spacing: 0.08em; color: #facc15; -webkit-text-stroke: 2px #16141c; text-shadow: 4px 4px 0 #16141c; opacity: 0; overflow: hidden; padding: 0 6px; }
+.ko3.lose .word { color: #f4f1ea; text-shadow: 4px 4px 0 #5a0e12; }
+.ko3.win.run .word { animation: kowin 1500ms both; }
+.ko3.lose.run .word { animation: kolose 1500ms both; }
+.ko3:not(.run) .word { opacity: 1; }
+@keyframes kowin { 0% { opacity: 0; transform: scale(4) rotate(-8deg); text-shadow: -18px 0 #ff2a6d, 18px 0 #2de2e6; animation-timing-function: var(--accel); } 12% { opacity: 1; transform: scale(0.88) rotate(0); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); } 20% { transform: scale(1.08); text-shadow: 4px 4px 0 #16141c; } 28% { transform: scale(1); } 80% { opacity: 1; transform: scale(1.02); animation-timing-function: var(--accel); } 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes kolose { 0% { opacity: 0; transform: translateY(-150px) scale(0.9, 1.2); animation-timing-function: var(--accel); } 18% { opacity: 1; transform: translateY(0) scale(1.15, 0.8); animation-timing-function: var(--decel); } 26% { transform: translateY(-12px) scale(0.97, 1.04); animation-timing-function: var(--accel); } 33% { transform: translateY(0) scale(1.04, 0.96); } 40% { transform: none; } 82% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(30px); } }
+.ko3 .word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18px; left: -30px; background: rgba(255, 255, 255, 0.8); transform: skewX(-20deg); mix-blend-mode: overlay; opacity: 0; }
+.ko3.win.run .word::after { animation: koglint 1500ms both; }
+@keyframes koglint { 0%, 32% { left: -30px; opacity: 0; } 33% { opacity: 1; } 55% { left: 105%; opacity: 1; } 56%, 100% { opacity: 0; } }
+/* 8 도장 */
+.stamp-big.st3 { animation: st3 380ms both; }
+.stamp-big.st3-wait { opacity: 0; animation: none; }
+@keyframes st3 { 0% { opacity: 0; transform: rotate(-12deg) scale(3.2); animation-timing-function: var(--accel); } 40% { opacity: 1; transform: rotate(-4deg) scale(0.86); animation-timing-function: var(--decel); } 70% { transform: rotate(-4deg) scale(1.05); } 100% { opacity: 1; transform: rotate(-4deg) scale(1); } }
+.pass-tag.st3 { display: inline-block; animation: st3tag 380ms both; }
+@keyframes st3tag { 0% { opacity: 0; transform: rotate(-12deg) scale(3); animation-timing-function: var(--accel); } 40% { opacity: 1; transform: scale(0.86); animation-timing-function: var(--decel); } 70% { transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+.pass-tag.st3-wait { opacity: 0; }
+.fx3-ink { position: fixed; z-index: 70; width: 4px; height: 4px; background: #e5262f; pointer-events: none; animation: ink3 300ms var(--decel) both; }
+@keyframes ink3 { 0% { transform: translate(var(--ix), var(--iy)) scale(0); } 100% { transform: none; } }
+/* 9 결과 집계 */
+.tally { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: 15px; color: #ece8de; }
+.tally div { display: flex; justify-content: space-between; opacity: 0; }
+.tally div.in { animation: rv3 320ms var(--snap) forwards; }
+@keyframes rv3 { 0% { opacity: 1; transform: translateX(-40px) skewX(-15deg); } 100% { opacity: 1; transform: none; } }
+.tally b { color: #facc15; display: inline-block; }
+.tally b.tick { animation: tick3 120ms var(--snap); }
+@keyframes tick3 { 0% { transform: translateY(-4px) scale(1.35); color: #fff; } 100% { transform: none; } }
+/* 10 쓰러짐 막: 줄 계단 + 타자 */
+.deathfx.dc3 { background: none; backdrop-filter: none; animation: none; }
+.dc-row { position: absolute; left: 0; right: 0; height: 12.6%; background: #0b0b0e; opacity: 0; animation: rowd 300ms var(--accel) forwards; }
+@keyframes rowd { 0% { opacity: 0.9; transform: translateY(-100%) scaleY(0.4); } 100% { opacity: 0.82; transform: none; } }
+.deathfx.dc3 > div { position: relative; z-index: 2; }
+.deathfx.dc3 > div > :not(.narr) { opacity: 0; }
+.deathfx.dc3 > div > .in { animation: bbpop 360ms var(--snap) forwards; }
+@keyframes bbpop { 0% { opacity: 1; transform: translateY(14px) scale(0.85, 1.15); } 100% { opacity: 1; transform: none; } }
+/* 11 도발 */
+.taunt.tq3 { animation: tq3 360ms var(--snap) both; }
+@keyframes tq3 { 0% { transform: translateX(-50%) scale(0.2, 0.6) rotate(-6deg); } 100% { transform: translateX(-50%); } }
+.taunt.out { animation: t3up 220ms var(--accel) forwards; transition: none; }
+@keyframes t3up { 0% { transform: translateX(-50%); } 35% { transform: translateX(-50%) scale(1.04, 0.9); } 100% { transform: translateX(-50%) translateY(-50px) scale(0.9, 1.2); opacity: 0; } }
+.taunt em { font-style: normal; color: #ff6b6b; display: inline-block; }
+.taunt em.wshake { animation: wshake 420ms var(--decel); }
+@keyframes wshake { 0% { transform: scale(1.8) rotate(-8deg); } 30% { transform: scale(0.9) translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 70% { transform: translate(-1px, 0); } 100% { transform: none; } }
+/* 13 연쇄 팝: 크게 내리찍혀 출렁 + 색 갈림 */
+.chainpop { text-shadow: 3px 3px 0 #000; animation: cp3 900ms forwards; }
+.chainpop.lv4 { text-shadow: 3px 3px 0 #000; }
+@keyframes cp3 { 0% { opacity: 0; transform: translate(-50%, -50%) scale(3) rotate(-12deg); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; animation-timing-function: var(--accel); } 18% { opacity: 1; transform: translate(-50%, -50%) scale(0.85) rotate(3deg); text-shadow: 3px 3px 0 #000; animation-timing-function: var(--decel); } 34% { transform: translate(-50%, -50%) scale(1.08) rotate(-1deg); } 46% { transform: translate(-50%, -50%) scale(1); } 78% { opacity: 1; transform: translate(-50%, -50%); clip-path: inset(0 0 0 0); animation-timing-function: var(--accel); } 100% { opacity: 1; transform: translate(-50%, -62%) scale(0.92, 1.08); clip-path: inset(0 0 100% 0); } }
+/* 14 꺾쇠 맥박: 손패 안내 · 반장 규칙 · 지금 갈 곳 */
+.hand.hint .cmd:not(.off) { animation: none; }
+.hand.hint .cmd:not(.off)::after, .boss-rules::after, .mnd.now::after { content: ''; position: absolute; inset: -5px; pointer-events: none; z-index: 3; --c: #facc15;
+  background: linear-gradient(var(--c), var(--c)) 0 0 / 10px 3px, linear-gradient(var(--c), var(--c)) 0 0 / 3px 10px, linear-gradient(var(--c), var(--c)) 100% 0 / 10px 3px, linear-gradient(var(--c), var(--c)) 100% 0 / 3px 10px, linear-gradient(var(--c), var(--c)) 0 100% / 10px 3px, linear-gradient(var(--c), var(--c)) 0 100% / 3px 10px, linear-gradient(var(--c), var(--c)) 100% 100% / 10px 3px, linear-gradient(var(--c), var(--c)) 100% 100% / 3px 10px;
+  background-repeat: no-repeat; animation: brk3 1000ms var(--snap) infinite; }
+.boss-rules { position: relative; }
+.boss-rules::after { --c: #ff6b6b; }
+.mnd.now::after { inset: -14px; }
+@keyframes brk3 { 0%, 55% { transform: scale(1.06); } 70% { transform: none; } 100% { transform: scale(1.06); } }
+/* 15 구매 · 회복 */
+.got3 { animation: got3 520ms both; }
+@keyframes got3 { 0% { transform: none; } 20% { transform: translateY(4px) scale(1.12, 0.84); animation-timing-function: var(--decel); } 50% { transform: translateY(-12px) scale(0.94, 1.08); animation-timing-function: var(--accel); } 75% { transform: translateY(0) scale(1.05, 0.96); } 100% { transform: none; } }
+.heal3 { animation: heal3 600ms both; }
+@keyframes heal3 { 0% { filter: none; } 20% { filter: brightness(1.7) sepia(1) hue-rotate(60deg); transform: translateY(-4px); } 100% { filter: none; transform: none; } }
+.fx3-ring { position: fixed; z-index: 70; border: 3px solid #facc15; border-radius: 50%; pointer-events: none; animation: ring3 520ms var(--decel) forwards; }
+.fx3-ring.g { border-color: #86efac; }
+@keyframes ring3 { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; border-width: 1px; } }
+.fx3-badge { position: fixed; z-index: 71; font: 700 14px Galmuri14, sans-serif; color: #16141c; background: #facc15; padding: 1px 6px; box-shadow: 0 0 0 2px #000; pointer-events: none; animation: badge3 900ms both; }
+.fx3-badge.g { background: #86efac; }
+@keyframes badge3 { 0% { transform: translate(-50%, 0) scale(0); animation-timing-function: var(--snap); } 25% { transform: translate(-50%, -16px) scale(1); } 75% { transform: translate(-50%, -20px); opacity: 1; animation-timing-function: var(--accel); } 100% { transform: translate(-50%, -34px); opacity: 0; } }
+.fx3-plus { position: fixed; z-index: 71; width: 8px; height: 8px; margin: -4px 0 0 -4px; pointer-events: none; background: linear-gradient(#bbf7d0, #bbf7d0) center / 8px 2px no-repeat, linear-gradient(#bbf7d0, #bbf7d0) center / 2px 8px no-repeat; image-rendering: pixelated; }
+.fx3-coin { position: fixed; z-index: 71; width: 18px; height: 18px; margin: -9px 0 0 -9px; background-size: 100% 100%; image-rendering: pixelated; pointer-events: none; }
+/* 16 카드 크게 보기: 도트 쓸기 (끼어드는 등장 애니메이션은 끈다) */
+.peek { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .overlay.m3on, .overlay.m3off, .overlay .panel.m3in, .overlay .panel.m3out, .toast.t3in, .toast.t3out, .turn-label.th-pop, .th-cog, .th-dots i, .th-lamp, .stamp-big.st3, .pass-tag.st3, .tally div.in, .dc-row, .deathfx.dc3 > div > .in, .taunt.tq3, .taunt.out, .chainpop, .hand.hint .cmd:not(.off)::after, .boss-rules::after, .mnd.now::after, .got3, .heal3 { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
+  .tally div, .deathfx.dc3 > div > :not(.narr) { opacity: 1; }
+}
+.hand.dealing .cmd { visibility: hidden; }
+.tally { max-width: 380px; }
+.panel .stamp-big { align-self: center; }
