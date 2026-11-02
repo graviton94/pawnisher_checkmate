@@ -562,3 +562,47 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .title-side { display: grid; gap: 6px; }
 .title-side .flv { margin: 0; color: #f4d27a; font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* 메인 화면 — 베인 타이틀 문장 (D-188, 연구소 24판) */
+.tfx { --accel: cubic-bezier(0.6, 0, 0.9, 0.4); --decel: cubic-bezier(0.1, 0.9, 0.2, 1); --snap: cubic-bezier(0.2, 1.6, 0.35, 1); position: relative; display: flex; flex-direction: column; align-items: center; flex: none; width: 205px; }
+.tfx.punch { animation: tfxpunch 420ms var(--snap); }
+@keyframes tfxpunch { 0% { transform: scale(1.22); } 100% { transform: none; } }
+.tfx.inv > * { filter: invert(1) contrast(1.6); }
+.tfx-em { position: relative; width: 205px; height: 124px; margin-top: -14px; }
+.tfx-em img { position: absolute; inset: 0; width: 205px; height: 124px; image-rendering: pixelated; opacity: 0; }
+.tfx-em .h1 { clip-path: polygon(0 0, 77.6% 0, 20% 100%, 0 100%); }
+.tfx-em .h2 { clip-path: polygon(77.6% 0, 100% 0, 100% 100%, 20% 100%); }
+.tfx-em.run .h1, .tfx-em.run .h2 { animation: tfxdrop 260ms both; }
+@keyframes tfxdrop { 0% { opacity: 1; transform: translateY(-200px) scale(0.85, 1.35); animation-timing-function: cubic-bezier(0.7, 0, 1, 0.5); } 70% { transform: translateY(0) scale(1.2, 0.78); animation-timing-function: var(--decel); } 100% { opacity: 1; transform: none; } }
+.tfx-em.tremble .h1, .tfx-em.tremble .h2 { opacity: 1; animation: tfxtr 120ms linear both; }
+@keyframes tfxtr { 0% { transform: translate(-2px, 1px); } 25% { transform: translate(2px, -1px); } 50% { transform: translate(-2px, -1px); } 75% { transform: translate(1px, 1px); } 100% { transform: none; } }
+.tfx-em.cut .sl { opacity: 1; animation: tfxsl 70ms linear both, tfxthick 420ms var(--decel) 70ms both; }
+@keyframes tfxsl { 0% { clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0); } 100% { clip-path: polygon(-10% -10%, 110% -10%, 110% 110%, -10% 110%); } }
+@keyframes tfxthick { 0% { filter: drop-shadow(0 0 18px rgba(255, 60, 70, 1)) brightness(2); transform: scale(1.06); } 100% { filter: drop-shadow(0 0 6px rgba(229, 38, 47, 0.8)); transform: none; } }
+.tfx-em.cut .h1 { opacity: 1; animation: tfxh1 700ms both; }
+.tfx-em.cut .h2 { opacity: 1; animation: tfxh2 700ms both; }
+@keyframes tfxh1 { 0% { transform: none; filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6); animation-timing-function: var(--decel); } 18% { transform: translate(-16px, -15px) rotate(-7deg); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: cubic-bezier(0.3, 1.6, 0.4, 1); } 100% { transform: translate(-5px, -5px) rotate(-2deg); filter: none; } }
+@keyframes tfxh2 { 0% { transform: none; filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6); animation-timing-function: var(--decel); } 18% { transform: translate(16px, 15px) rotate(6deg); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: cubic-bezier(0.3, 1.6, 0.4, 1); } 100% { transform: translate(5px, 5px) rotate(2deg); filter: none; } }
+.tfx-em.done .h1 { opacity: 1; transform: translate(-5px, -5px) rotate(-2deg); } .tfx-em.done .h2 { opacity: 1; transform: translate(5px, 5px) rotate(2deg); }
+.tfx-em.done .sl { opacity: 1; animation: tfxglow 1600ms ease-in-out infinite; }
+@keyframes tfxglow { 0%, 100% { filter: drop-shadow(0 0 5px rgba(229, 38, 47, 0.7)); } 50% { filter: drop-shadow(0 0 12px rgba(255, 70, 80, 1)) brightness(1.15); } }
+.tfx-glint { position: absolute; width: 40px; height: 5px; margin: -2px 0 0 -20px; background: linear-gradient(90deg, transparent, #fff, transparent); opacity: 0; pointer-events: none; mix-blend-mode: screen; z-index: 3; }
+.tfx-rays { position: absolute; left: 50%; top: 34%; width: 560px; height: 560px; margin: -280px 0 0 -280px; background: repeating-conic-gradient(rgba(255, 255, 255, 0.45) 0 2deg, transparent 2deg 11deg); border-radius: 50%; opacity: 0; pointer-events: none; }
+.tfx-rays.on { animation: tfxrays 420ms var(--decel) forwards; }
+@keyframes tfxrays { 0% { opacity: 1; transform: scale(0.3) rotate(0); } 100% { opacity: 0; transform: scale(1.4) rotate(14deg); } }
+.tfx-vig { position: fixed; inset: 0; background: radial-gradient(circle, transparent 35%, rgba(150, 10, 18, 0.6) 100%); opacity: 0; pointer-events: none; z-index: -1; }
+.tfx-vig.on { animation: tfxvig 1200ms ease-out forwards; }
+@keyframes tfxvig { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0.45; } }
+.tfx-flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 120; }
+.tfx-flash.on { animation: tfxfl 220ms var(--decel) forwards; }
+@keyframes tfxfl { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+.tfx-word { position: relative; width: 177px; height: 54px; overflow: hidden; opacity: 0; -webkit-mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; }
+.tfx-word img { position: absolute; left: 0; top: -95px; width: 177px; height: 149px; image-rendering: pixelated; }
+.tfx-word.in, .tfx-word.shown { opacity: 1; }
+.tfx-word.in { animation: tfxword 300ms both; }
+@keyframes tfxword { 0% { opacity: 1; transform: scale(2.2) translateY(-10px); filter: drop-shadow(-8px 0 #ff2a6d) drop-shadow(8px 0 #2de2e6) brightness(2); animation-timing-function: var(--accel); } 55% { transform: scale(0.94); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: var(--decel); } 100% { opacity: 1; transform: none; filter: none; } }
+.tfx-word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 24px; left: -40px; background: rgba(255, 255, 255, 0.85); transform: skewX(-22deg); mix-blend-mode: overlay; opacity: 0; }
+.tfx-word.shine::after { animation: tfxshine 600ms ease-in-out both; }
+@keyframes tfxshine { 0% { left: -40px; opacity: 1; } 100% { left: 110%; opacity: 1; } }
+.tfx-blood { position: fixed; z-index: 121; width: 5px; height: 5px; background: #e5262f; box-shadow: 0 0 0 1px #0b0b0e; pointer-events: none; }
+.tfx-ember { position: fixed; z-index: 41; width: 3px; height: 3px; background: #ff6b5a; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; } .tfx-em.done .sl { animation: none; } }

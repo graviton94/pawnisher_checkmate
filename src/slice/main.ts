@@ -3,7 +3,7 @@ import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
-import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter } from './uifx';
+import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, titleFx } from './uifx';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
@@ -1594,12 +1594,13 @@ const title = (): void => {
   let level = m.ascOpen;
   const ascLine = () => (level ? `승급 ${level} — ${ASCENSION.slice(0, level).map((a) => a.name).join(' · ')}` : '기본 — 승급 없음');
   const el = openOverlay(`<div class="title-card"><h1 class="sr-only">Pawnisher : Checkmate</h1>
-    <div class="title-head"><img class="title-logo" src="ui/title-logo.png" alt="" width="177" height="149"><div class="title-side"><p class="flv">체스 규칙을 부수는 태엽 분대</p>
+    <div class="title-head"><div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-logo.png" alt=""></div><div class="tfx-flash"></div></div><div class="title-side"><p class="flv">체스 규칙을 부수는 태엽 분대</p>
     <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>세 막을 지나 출하구에 닿으십시오.</li></ul></div></div>
     ${sv ? `<button class="btn brass wide" type="button" data-cont>이어하기 <small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
     ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span data-asc-line>${ascLine()}</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}
     <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-lab-open>시험장</button><button class="btn cyan" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}</button><button class="btn ${sv ? '' : 'brass'}" type="button" data-go>${sv ? '새 출하' : '출하 시작'}</button></div>
     <p class="dim rec">오늘의 출하 = 모두가 같은 지도 · 같은 분대${doneToday ? ' (기록은 첫 시도만)' : ''}<br>출하 ${m.runs} · 완주 ${m.clears}${m.bestAct ? ` · 최고 ${m.bestAct > 3 ? '완주' : `${m.bestAct}막`}` : ''}${doneToday ? ` · 오늘 ${doneToday.cleared ? '완주' : `${doneToday.act}막`}` : ''}</p></div>`);
+  void titleFx(el.querySelector<HTMLElement>('.tfx'));
   el.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
     btn.addEventListener('click', () => {
       level = Math.max(0, Math.min(m.ascOpen, level + Number(btn.dataset.asc)));

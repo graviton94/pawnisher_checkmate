@@ -301,3 +301,89 @@ export const mountPart = (chip: Element | null): void => {
     sfx('stamp');
   }, 360);
 };
+
+/**
+ * 메인 화면 「베인 타이틀 문장」 (D-188 · 연구소 24판): 실제 타이틀 로고의 왕관 쓴 폰이 내리꽂히고 → 붉은 가장자리 · 떨림 · 칼날 끝 빛 →
+ * 굵은 도트 칼자국이 한 번에 그어짐(화면 반전 두 프레임 → 흰 섬광 · 큰 흔들림 · 줌 펀치 · 방사 속도선 · 핏방울) → 두 동강이 색 갈림과 튕겼다 출렁 →
+ * 이름이 내리꽂힘 + 반짝 띠 → 대기 중 칼빛 · 반짝 띠 · 불씨. 요소가 화면에서 사라지면 대기 연출도 멈춘다.
+ */
+export const titleFx = async (root: HTMLElement | null): Promise<void> => {
+  if (!root) return;
+  const em = root.querySelector<HTMLElement>('.tfx-em')!;
+  const word = root.querySelector<HTMLElement>('.tfx-word')!;
+  const glint = root.querySelector<HTMLElement>('.tfx-glint')!;
+  const vig = root.querySelector<HTMLElement>('.tfx-vig')!;
+  const rays = root.querySelector<HTMLElement>('.tfx-rays')!;
+  const flash = root.querySelector<HTMLElement>('.tfx-flash')!;
+  const panel = root.closest<HTMLElement>('.panel') ?? root;
+  word.style.setProperty('--tlogo', `url(${new URL('ui/title-logo.png', document.baseURI).href})`);
+  const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+  const re = (el: Element, cls: string) => { el.classList.remove(cls); void (el as HTMLElement).offsetWidth; el.classList.add(cls); };
+  if (calm()) { em.className = 'tfx-em done'; word.classList.add('shown'); return; }
+  // 칼자국 선 (문장 좌표): 오른위 A → 왼아래 B
+  const A = { x: 152, y: 7.5 }, B = { x: 50, y: 114.7 };
+  const ang = (Math.atan2(B.y - A.y, B.x - A.x) * 180) / Math.PI;
+  const glintRun = (ms: number) => { glint.style.left = `${A.x}px`; glint.style.top = `${A.y}px`; glint.animate([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }], { duration: ms, easing: 'cubic-bezier(.6,0,.4,1)' }); };
+  const shake = (amp: number, ms: number) => panel.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.9}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.6}px,${amp * 0.4}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.2}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' });
+  em.classList.add('run');
+  sfx('lift');
+  await wait(200);
+  shake(4, 260);
+  { const r = em.getBoundingClientRect(); sparksAt(r.left + r.width / 2, r.top + r.height * 0.9, 8, 40); sfx('land'); }
+  await wait(180);
+  em.classList.remove('run');
+  em.classList.add('tremble');
+  re(vig, 'on');
+  glint.style.left = `${A.x}px`;
+  glint.style.top = `${A.y}px`;
+  glint.animate([{ transform: `rotate(${ang}deg) scale(.2)`, opacity: 0 }, { transform: `rotate(${ang}deg) scale(1.6, 3)`, opacity: 1 }], { duration: 120, fill: 'forwards' });
+  await wait(120);
+  // 베기
+  em.classList.remove('tremble');
+  em.classList.add('cut');
+  glint.getAnimations().forEach((x) => x.cancel());
+  glintRun(90);
+  sfx('kill');
+  root.classList.add('inv');
+  window.setTimeout(() => { root.classList.remove('inv'); re(flash, 'on'); }, 60);
+  shake(12, 480);
+  re(root, 'punch');
+  re(rays, 'on');
+  navigator.vibrate?.(40);
+  const er = em.getBoundingClientRect();
+  for (let i = 0; i < 22; i++) {
+    const t = 0.2 + Math.random() * 0.6;
+    const x = er.left + A.x + (B.x - A.x) * t;
+    const y = er.top + A.y + (B.y - A.y) * t;
+    const side = Math.random() < 0.5 ? -1 : 1;
+    const v = 30 + Math.random() * 70;
+    const d = document.createElement('i');
+    d.className = 'tfx-blood';
+    d.style.left = `${x}px`;
+    d.style.top = `${y}px`;
+    if (i % 3 === 0) d.style.width = d.style.height = '3px';
+    document.body.appendChild(d);
+    d.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${0.72 * side * v}px,${0.69 * side * v - 20}px)`, offset: 0.45 }, { transform: `translate(${0.72 * side * v * 1.3}px,${0.69 * side * v + 60}px)`, opacity: 0 }], { duration: 700 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.5,1)', fill: 'forwards' });
+    window.setTimeout(() => d.remove(), 1050);
+  }
+  window.setTimeout(() => { em.classList.remove('cut'); em.classList.add('done'); }, 700);
+  await wait(200);
+  re(word, 'in');
+  sfx('stamp');
+  window.setTimeout(() => shake(5, 260), 160);
+  window.setTimeout(() => re(word, 'shine'), 420);
+  await wait(700);
+  // 대기: 칼빛 · 반짝 띠 · 불씨 (타이틀이 닫히면 멈춘다)
+  const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); glintRun(500); re(word, 'shine'); }, 2600);
+  const emb = window.setInterval(() => {
+    if (!root.isConnected) return void window.clearInterval(emb);
+    const r = panel.getBoundingClientRect();
+    const m = document.createElement('i');
+    m.className = 'tfx-ember';
+    m.style.left = `${r.left + 20 + Math.random() * (r.width - 40)}px`;
+    m.style.top = `${r.bottom - 12}px`;
+    document.body.appendChild(m);
+    m.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${(Math.random() - 0.5) * 30}px,-${120 + Math.random() * 80}px)`, opacity: 0 }], { duration: 2200, easing: 'cubic-bezier(.2,.6,.4,1)', fill: 'forwards' });
+    window.setTimeout(() => m.remove(), 2300);
+  }, 300);
+};
