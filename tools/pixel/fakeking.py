@@ -89,8 +89,6 @@ def crowned(base, key):
             g[yb][x] = 'K'
         if 0 <= yb + 1 < n and g[yb + 1][x] in 'WSGD':
             g[yb + 1][x] = 'K'
-        if 0 <= yb + 2 < n and g[yb + 2][x] in 'WS':
-            g[yb + 2][x] = 'G'  # 왕관이 드리운 그늘 한 줄
     # 왕관 둘레 검정 외곽선 2칸 → 흰 테두리 2칸 (빈 칸 · 흰 테두리만 바꾼다)
     def ring(cells, depth, ch, over):
         out = set()
