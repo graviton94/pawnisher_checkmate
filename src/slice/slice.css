@@ -921,3 +921,16 @@ body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 
 @keyframes koband { 0%, 8% { transform: scaleX(0) scaleY(0.4); animation-timing-function: var(--snap); } 18% { transform: scaleX(1.02) scaleY(1.1); } 26%, 100% { transform: none; } }
 .ko3:not(.run) .koband { transform: none; }
 .ko3 .word { -webkit-text-stroke: 0; font-size: 54px; } .ko3.lose .word { color: #fff3e8; }
+/* ---------- 화면 정리 · 층 순서 (D-195) ---------- */
+/* 층: 판 · 레일 < 도움말 한 줄(41) < 띠(44) < 쓰러짐 막(45) < 창(50) < 알림 · 도발(60) < 전환 장면(70) */
+.overlay { z-index: 50; }
+.coach-line { z-index: 41; }
+/* 길게 누르기 정보 = 잠깐 뜨는 것 → CSS 틀 (청록 = 내 것 정보) */
+body.slice .info { border: 0; border-image: none; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #38bdf8; padding: 8px 12px; z-index: 46; }
+/* 반장 규칙 꺾쇠는 레일 안으로 */
+.boss-rules::after { inset: 2px; }
+/* 결과 화면 */
+.re-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.re-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; font-size: 13px; color: #ece8de; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; }
+.re-chip.bad { color: #ff6b6b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #7a1218; text-decoration: line-through; }
+.re-note { font-size: 12px; margin-top: -4px; }

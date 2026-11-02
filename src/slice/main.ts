@@ -132,14 +132,20 @@ const renderer = new BoardRenderer(
       el.innerHTML = c
         ? `<b>${pieceImg(p.type, 0, 'small', 24)} ${crewLabel(c)}</b> <span class="dim">${c.serial}</span><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · 처치 ${(c.kills ?? 0) + Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0)}${c.quirk ? `<br><span class="quirk">${QUIRKS[c.quirk].name}</span> ${QUIRKS[c.quirk].desc}` : ''}${b.s.doorIds?.includes(p.id) ? '<br>문턱 남음' : ''}`
         : `<b>${pieceImg(p.type, p.side, 'small', 24)} ${p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>'} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · ATK ${p.atk}${foeTraitLine(p)}`;
+      infoTok++;
+      const fresh = el.hidden || el.dataset.pid !== String(p.id);
+      el.dataset.pid = String(p.id);
       el.hidden = false;
       el.classList.remove('pxout');
       el.style.left = `${Math.max(8, x - 80)}px`;
       el.style.top = `${Math.max(8, y - 90)}px`;
-      // 손끝 정보는 도트 쓸기로 (D-193)
-      sweep(el, true, undefined, 260);
+      // 손끝 정보는 도트 쓸기로 (D-193) — 누르고 있는 동안 거듭 불려도 처음 한 번만
+      if (fresh) sweep(el, true, undefined, 260);
     },
-    longPressEnd: () => pxOut($('info'), () => ($('info').hidden = true)),
+    longPressEnd: () => {
+      const tok = ++infoTok;
+      pxOut($('info'), () => tok === infoTok && ($('info').hidden = true));
+    },
   },
   // 판 위 상황 알림 (붕락 · 과열 · 항복)은 띠로 (D-193 알림 위계 ① 상황)
   (text) => turnBanner($('board'), text, true, true),
@@ -148,6 +154,8 @@ installPressFeedback();
 installUiSprites();
 installPressy();
 
+/** 길게 누르기 정보: 손을 뗀 뒤 지워지는 사이 다시 누르면 새 정보가 숨지 않게 */
+let infoTok = 0;
 let toastTimer: number | undefined;
 const toast = (msg: string, ms = 1800) => {
   const t = $('toast');
@@ -1381,7 +1389,7 @@ const recruitPick = (head: string, then: () => void): void => {
     .map((r, k) => {
       const c = crews[k];
       const q = c.quirk ? QUIRKS[c.quirk] : null;
-      return `<button type="button" class="part-card recruit" data-rec="${k}"><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name} <span class="dim">${c.serial}</span></b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
+      return `<button type="button" class="part-card recruit" data-rec="${k}"><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name}</b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
     })
     .join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-rec]').forEach((btn) =>
@@ -1440,25 +1448,8 @@ const partPick = (head: string, then: () => void): void => {
   );
 };
 
-const help = (): void => {
-  const el = openOverlay(`
-    <h2>규칙</h2>
-    <ul class="help">
-      <li><b>카드</b> → <b>기물</b> → <b>갈 칸</b> 순서로 누릅니다. 기물을 먼저 누르면 맞는 카드가 골라집니다.</li>
-      <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 공격합니다. 과녁 = 공격 · 금색 = 처치.</li>
-      <li>카드 왼쪽 숫자는 <b>태엽</b> 비용입니다. 한 턴에 ${SLICE.ap}. 같은 기물을 여러 번 움직일 수 있습니다.</li>
-      <li>한 턴 안에서 처치할 때마다 <b>연쇄</b> 배율이 오릅니다 (×${chainMult(1).toFixed(2)} → ×${chainMult(2).toFixed(2)} …).</li>
-      <li><b>붉은 칸</b>은 다음 차례에 상대가 공격할 수 있는 범위입니다. 번호는 움직일 순서입니다. 그 적을 먼저 쓰러뜨리거나, 비키거나, 길을 막으면 공격이 무산됩니다.</li>
-      <li><b>나사 트랙</b>: 턴마다 한 칸씩 줄어듭니다. 빨리 이길수록 많이 받습니다.</li>
-      <li><b>되감기</b>: 이번 턴을 처음으로 되돌립니다 (대국마다 1회). 분대 HP는 다음 판으로 이어집니다.</li>
-      <li><b>넘친 피해</b>: 적 HP를 넘어선 피해 10마다 나사 1.</li>
-      <li><b>부품</b>: 규칙을 바꾸는 장치입니다. 1판 뒤 부품 상자(카드 두 장 포함), 검문 뒤 하나 더. 같은 띠(기병 · 보병 · 왕관 · 연쇄 · 밀치기)의 카드와 맞물립니다.</li>
-    </ul>
-    <div class="row"><button class="btn brass" type="button" data-close>닫기</button></div>`);
-  el.querySelector('[data-close]')!.addEventListener('click', () => {
-    closeOverlay();
-  });
-};
+/** 규칙 (D-195): 글 벽 대신 안내서 다섯 쪽(그림 한 줄 + 두세 줄) — 처음 화면의 안내서와 같은 것 */
+const help = (): void => void guide(openOverlay).then(closeOverlay);
 
 // 길게 누르기(터치 0.35초) · 마우스 올리기 = 크게 보기. 길게 누른 뒤 손을 떼면 고르지 않는다
 let pressTimer: number | undefined;
@@ -1643,18 +1634,16 @@ const runEnd = (cleared: boolean): void => {
   writeMeta(store, m);
   const unlocked = m.ascOpen > m0.ascOpen;
   const fallenNow = readLedger().filter((r) => r.run === runId);
-  const best = [...squad].sort((x, y) => (y.kills ?? 0) - (x.kills ?? 0))[0];
   const kills = squad.reduce((n, u) => n + (u.kills ?? 0), 0) + fallenNow.reduce((n, r) => n + r.kills, 0);
-  const el = openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '출하구를 지났습니다.' : `${actI + 1}막 · ${cur.title}에서 멈췄습니다.`}</h2>
+  // 결과 (D-195 정리): 머리 한 줄 · 집계 넷 · 분대 칩 한 줄 · (있으면) 묘수 · 승급 열림. 긴 문장 나열 대신
+  const chip = (name: string, t: PieceType, bad = false) => `<span class="re-chip${bad ? ' bad' : ''}">${pieceImg(t, 0, 'small', 18)}${name}</span>`;
+  const el = openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '출하구를 지났습니다.' : `${actI + 1}막에서 멈췄습니다.`}${daily || asc ? ` <span class="dim">${daily ? '오늘의 출하' : ''}${daily && asc ? ' · ' : ''}${asc ? `승급 ${asc}` : ''}</span>` : ''}</h2>
     <div class="tally"><div>이긴 대국 <b data-v="${won}">${won}</b></div><div>처치 <b data-v="${kills}">${kills}</b></div><div>나사 <b data-v="${gold}">${gold}</b></div><div>덱 <b data-v="${deck.length}">${deck.length}</b></div></div>
-    <p>${daily ? `오늘의 출하 ${daily} · ` : ''}${asc ? `승급 ${asc} · ` : ''}${cleared ? '3막 완주' : `${actI + 1}막`} · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
-    ${highlight ? `<p class="hl"><span class="pass-tag">이번 출하의 묘수</span> ${highlight.where} ${highlight.turn}턴 — 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : ''}
-    <p>살아남은 분대: ${squad.map((u) => `${crewLabel(u)} (처치 ${u.kills ?? 0})`).join(' · ')}</p>
-    ${fallenNow.length ? `<p class="bad">쓰러진 분대원: ${fallenNow.map((r) => r.name).join(' · ')}</p>` : ''}
-    ${best && (best.kills ?? 0) > 0 ? `<p class="flv">${crewLabel(best)} — 이번 출하의 선봉.</p>` : ''}
+    <div class="re-row">${squad.map((u) => chip(u.name ?? PIECE_NAMES_KO[u.t], u.t)).join('')}${fallenNow.map((r) => chip(r.name, r.t, true)).join('')}</div>
+    ${highlight ? `<p class="hl"><span class="pass-tag">묘수</span> ${highlight.where} ${highlight.turn}턴 — 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : ''}
     ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
-    <p class="dim">시험판입니다. 막힌 곳 · 좋았던 순간 · 복잡했던 곳을 알려 주십시오.</p>
-    <div class="row"><button class="btn brass" type="button" data-restart>처음 화면</button></div>`);
+    <div class="row"><button class="btn brass" type="button" data-restart>처음 화면</button></div>
+    <p class="dim re-note">시험판입니다. 막힌 곳 · 좋았던 순간을 알려 주십시오.</p>`);
   el.querySelector('[data-restart]')!.addEventListener('click', () => (sessionStorage.setItem('op-menu', '1'), location.reload()));
   // 결과 집계 (D-189): 줄이 밀려 들어오고 숫자가 째깍 올라간 뒤 → 출하 도장
   tally(el.querySelector<HTMLElement>('.tally')!, el.querySelector<HTMLElement>('h2 .pass-tag'));

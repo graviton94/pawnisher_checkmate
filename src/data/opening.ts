@@ -77,11 +77,12 @@ export const PROLOGUE_CUTS: PrologueCut[] = [
 ];
 
 /** 안내서 (처음 한 번 · 메뉴에서 다시): 쪽마다 그림 한 줄 + 글 두 줄 (시스템 투) */
-export const GUIDE_PAGES: { title: string; lines: string[]; pic: 'play' | 'red' | 'keys' | 'king' }[] = [
+export const GUIDE_PAGES: { title: string; lines: string[]; pic: 'play' | 'red' | 'keys' | 'king' | 'terms' }[] = [
   { title: '카드 → 기물 → 칸', pic: 'play', lines: ['손패에서 카드를 고르면 움직일 수 있는 기물이 빛납니다.', '기물을 고르고 갈 칸을 고르면, 내려앉은 자리에서 공격합니다.'] },
   { title: '붉은 칸', pic: 'red', lines: ['붉은 칸은 적이 다음 차례에 칠 수 있는 곳입니다. 번호는 치는 순서입니다.', '턴을 끝내기 전에 붉은 칸에서 내 기물을 빼십시오.'] },
   { title: '태엽', pic: 'keys', lines: ['카드마다 태엽이 듭니다. 한 턴에 태엽 셋.', '처치가 이어지면 배수가 오릅니다. 한 턴에 몰아치십시오.'] },
   { title: '종이 왕관', pic: 'king', lines: ['적 킹을 쓰러뜨리면 대국을 이깁니다. 종이 왕관을 쓴 내 킹이 쓰러지면 끝입니다.', '세 막을 지나 출하구에 닿으십시오.'] },
+  { title: '알아 두면 좋은 것', pic: 'terms', lines: ['되감기 — 이번 턴을 처음으로. 대국마다 한 번.', '나사 트랙 — 턴마다 한 칸 줄어듭니다. 빨리 이길수록 많이 받습니다.', '부품 — 규칙을 바꾸는 장치. 같은 띠의 카드와 맞물립니다.'] },
 ];
 
 /** 첫 대국 도움말 (처음 출하하는 사람에게만, 시험대 한 판) */

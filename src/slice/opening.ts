@@ -121,6 +121,7 @@ const guidePic = (k: (typeof GUIDE_PAGES)[number]['pic']): string => {
     return `<div class="gd-pic play"><span class="gd-card">${pieceImg('N', 0, 'small', 28)}</span><b>→</b>${pieceImg('N', 0, 'large', 44)}<b>→</b><img src="ui/board/target-kill.png" alt=""></div>`;
   if (k === 'red') return `<div class="gd-pic red"><i></i><i class="r"><img src="ui/board/badge-e1.png" alt=""></i><i></i><i class="r"><img src="ui/board/badge-e2.png" alt=""></i>${pieceImg('B', 1, 'large', 40)}</div>`;
   if (k === 'keys') return `<div class="gd-pic keys"><img src="ui/hud/key-full.png" alt=""><img src="ui/hud/key-full.png" alt=""><img src="ui/hud/key-spent.png" alt=""><span>×1.25 → ×1.50</span></div>`;
+  if (k === 'terms') return `<div class="gd-pic keys"><img src="ui/icons16/tape.png" alt=""><img src="ui/icons/screw.png" alt=""><img src="ui/icons16/crown.png" alt=""></div>`;
   return `<div class="gd-pic king"><span class="gd-crowned">${pieceImg('P', 0, 'large', 48)}<img class="pl-crown" src="ui/hud/paper-crown.png" alt=""></span><b>vs</b>${pieceImg('K', 1, 'large', 48)}</div>`;
 };
 
