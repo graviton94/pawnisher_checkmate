@@ -12,12 +12,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import maker  # noqa: E402
 
-# 왕관 색 (게임 연출과 같은 금 · 진홍 — impact.ts RAMP)
-maker.PAL64.update({'Y': (0xFA, 0xCC, 0x15), 'A': (0x9A, 0x6F, 0x14), 'T': (0xFF, 0xF3, 0xB0), 'R': (0xE5, 0x26, 0x2F), 'X': (0x7A, 0x12, 0x18)})
+# 왕관 색은 maker.PAL64에 (Y · A · T · R · X — 게임 연출의 금 · 진홍과 같다)
 
 CROWNS = {
     # 가: 반장의 왕관 그대로 — 가운데 바로 얹음
-    'a': (23, 6, [
+    'a': (23, 8, [
         '.Y.......Y.......Y.',
         '.YY.....YTY.....YY.',
         '.YYY...YTTTY...YYY.',
@@ -138,5 +137,33 @@ def main(path):
     print(path, sheet.size)
 
 
+def apply(key='a'):
+    """고른 안을 정본에 넣는다: 흰 킹(우리 대장 = 가짜 왕) 자리에. 옛 킹 그림은 [K:classic 0]으로 남긴다"""
+    path = os.path.join(HERE, 'pieces64.txt')
+    hi = maker.load64()
+    grid = crowned(hi[('P', 0)], key)
+    text = open(path, encoding='utf-8').read()
+    lines = text.split('\n')
+    out, skip = [], False
+    for ln in lines:
+        if ln.startswith('['):
+            skip = ln.strip() in ('[K 0]', '[K:classic 0]')
+            if ln.strip() == '[K 0]':
+                if ('K:classic', 0) not in hi:
+                    out += ['[K:classic 0]'] + hi[('K', 0)] + ['']
+                out += ['[K 0]', f'# 가짜 왕 (D-181): 폰 머리에 반장의 도트 왕관 — tools/pixel/fakeking.py apply {key}'] + grid + ['']
+                continue
+            if ln.strip() == '[K:classic 0]':
+                out += ['[K:classic 0]'] + hi[('K:classic', 0)] + ['']
+                continue
+        if not skip:
+            out.append(ln)
+    open(path, 'w', encoding='utf-8').write('\n'.join(out))
+    print('pieces64.txt [K 0] = 가짜 왕', key)
+
+
 if __name__ == '__main__':
-    main(sys.argv[1])
+    if sys.argv[1] == 'apply':
+        apply(sys.argv[2] if len(sys.argv) > 2 else 'a')
+    else:
+        main(sys.argv[1])
