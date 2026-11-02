@@ -11,7 +11,8 @@ export type CommandId =
   | 'pierceDiag' | 'crossLeap' | 'charge' | 'plate' | 'repair' | 'reload' | 'kingBlow' | 'splashDiag' | 'smash' | 'rookLine'
   | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
   | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit'
-  | 'shove' | 'shieldBash' | 'ram';
+  | 'shove' | 'shieldBash' | 'ram'
+  | 'pawnStorm' | 'knightRaid' | 'bishopRay' | 'rookCharge' | 'kingDecree' | 'overload' | 'quickFix' | 'tempo' | 'bulwark' | 'bladeRain';
 
 /**
  * 빌드 축 (D-144 — 덱빌딩의 "부서지는" 맛): 축마다 카드 몇 장 + 규칙을 깨는 부품 하나가 맞물린다.
@@ -90,6 +91,17 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   shove: { axis: 'push', name: '몰아치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '적을 밀어낸다. 막히면 부딪친다. (충돌 18)' },
   shieldBash: { axis: 'push', axis2: 'inf', name: '방패 돌진', cost: 1, who: 'P', kind: 'move', push: true, desc: '방패로 밀쳐 낸다. 막히면 부딪친다. (충돌 18)' },
   ram: { axis: 'push', axis2: 'cav', name: '파성추', cost: 1, who: 'N', kind: 'move', push: true, desc: '들이받아 밀어낸다. 막히면 부딪친다. (충돌 18)' },
+  // ---- 볼륨 (R5-5, D-172): 있는 장치(배율 · 각인 · 밀치기 · 뽑기 · 연쇄)만 조합 ----
+  pawnStorm: { axis: 'inf', name: '선두 분쇄', cost: 1, who: 'P', kind: 'move', push: true, mult: 1.3, desc: '앞으로 밀어붙인다. (×1.3, 밀치기)' },
+  knightRaid: { axis: 'cav', name: '기습', cost: 2, who: 'N', kind: 'move', mult: 1.8, drawOnKill: 1, desc: '어둠 속에서 덮친다. (×1.8, 처치 시 카드 +1)' },
+  bishopRay: { axis: 'chain', name: '정죄의 빛', cost: 2, who: 'B', kind: 'move', carve: 'pierce', mult: 1.4, desc: '사선 끝까지 꿰뚫는다. (×1.4, 뒤의 1기까지)' },
+  rookCharge: { axis: 'push', name: '성벽 돌진', cost: 2, who: 'R', kind: 'move', push: true, mult: 1.3, desc: '요새가 통째로 밀고 들어간다. (×1.3, 밀치기)' },
+  kingDecree: { axis: 'king', axis2: 'chain', name: '왕명', cost: 1, who: 'K', kind: 'move', chainPerKill: 2, desc: '왕의 손에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
+  overload: { axis: 'chain', name: '과부하', cost: 3, who: 'any', kind: 'move', mult: 2.5, desc: '태엽을 끝까지 감는다. (×2.5)' },
+  quickFix: { name: '덧댐', cost: 0, who: 'any', kind: 'repair', amount: 8, desc: '급한 대로 덧댄다. (HP +8)' },
+  tempo: { axis: 'chain', name: '박자', cost: 1, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 +3)' },
+  bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 25, desc: '몸으로 막아선다. (방열판 +25)' },
+  bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (상하좌우 50%, 처치 1회 = 연쇄 2칸)' },
   gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +2, 카드 +1)', flavor: '“기꺼이.”' },
 };
 
@@ -121,9 +133,13 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
   { part: 'echo', cards: ['doubleLeap', 'spark'], needs: 'N' },
   { part: 'magnet', cards: ['spark', 'spark'] },
   { part: 'hammer', cards: ['shieldBash', 'shove'] },
+  { part: 'lance', cards: ['knightRaid', 'leap'], needs: 'N' },
+  { part: 'banner', cards: ['pawnStorm', 'charge'] },
+  { part: 'conductor', cards: ['tempo', 'finisher'] },
+  { part: 'scepter', cards: ['kingDecree', 'royalGuard'] },
 ];
 /** 보상 후보 */
-export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram'];
+export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain'];
 
 /**
  * 반장 규칙 (D-148 — 레퍼런스 5권 원리 5 「부서진 빌드는 너프하지 말고 보스가 질문한다」). 둘 다 미리 보인다.

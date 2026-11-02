@@ -424,3 +424,11 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .panel.choosing .ev-choice:not(.chosen) { filter: brightness(0.55) grayscale(0.4); }
 .ev-choice.chosen { box-shadow: 0 0 0 2px #000, inset 3px 0 0 #f4d27a, inset 0 0 0 3px #f4d27a, 0 0 18px rgba(244, 210, 122, 0.5); }
 .mnd.nd-event i { background: #c9a8ff; } .nd-event .ico { background: #c9a8ff; }
+/* 사건 장면 칸 (슬더스식): 왼쪽 4:3 그림 · 오른쪽 서술 · 선택지 */
+.ev-wrap { display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); gap: 14px; align-items: start; }
+.ev-scene { position: relative; aspect-ratio: 4 / 3; max-width: 100%; display: grid; place-items: center; background: radial-gradient(circle at 50% 60%, #2a2218, #0b0a0e 75%); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #8a6a32; overflow: hidden; }
+.ev-scene img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.ev-scene i { width: 30%; height: 40%; background: #5a4a2e; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; }
+.ev-body { display: grid; gap: 8px; min-width: 0; }
+.ev-body h2 { margin: 0; }
+.ev-body .ev-text { margin: 0; font-size: 14px; }

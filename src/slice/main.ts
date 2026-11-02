@@ -9,7 +9,7 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { AXIS_NAMES, BOSS_RULES, COMMANDS, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
-import { SLICE_PARTS, type SlicePartId } from './parts';
+import { PART_NUM, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
@@ -259,6 +259,14 @@ const firedParts = (cardId: CommandId, mover: PieceType | undefined, events: Bat
   on('crown', mover === 'K' && events.some((e) => e.type === 'attack' && e.hits.length > 0));
   on('throne', mover === 'K' && events.some((e) => e.type === 'shield'));
   on('hammer', events.some((e) => e.type === 'blast' && e.label.includes('충돌')));
+  on('anvilPlate', events.some((e) => e.type === 'blast' && e.label.includes('충돌')));
+  on('chainShot', events.some((e) => e.type === 'blast' && e.label.includes('충돌') && e.hits.some((h) => h.killed)));
+  on('lance', mover === 'N' && events.some((e) => e.type === 'attack' && e.hits.length > 0));
+  on('spurs', c?.who === 'N');
+  on('banner', mover === 'P' && events.some((e) => e.type === 'attack' && e.hits.length > 0));
+  on('bloodPact', events.some((e) => e.type === 'attack' && e.hits.length > 0));
+  on('conductor', newKills > 0);
+  on('fuse', b.kills >= PART_NUM.fuseAt && newKills > 0);
   return out;
 };
 
@@ -568,12 +576,13 @@ const eventBag = [...SLICE_EVENT_IDS];
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const st = (): EventState => ({ squad, deck, refined, gold });
-  const el = openOverlay(`<h2>${ev.title}</h2><p class="ev-text">${ev.text}</p><div class="ev-choices">${ev.choices
+  // 장면 칸 (슬더스식 왼쪽 그림): public/scenes/<사건>.png가 오면 그 그림, 없으면 물음표 문양 (발주 docs/asset-order-scenes.md)
+  const el = openOverlay(`<div class="ev-wrap"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconMask('question')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><p class="ev-text">${ev.text}</p><div class="ev-choices">${ev.choices
     .map((c, k) => {
       const why = c.blocked?.(st()) ?? null;
       return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}</button>`;
     })
-    .join('')}</div><p class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p>`);
+    .join('')}</div><p class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
   el.querySelectorAll<HTMLElement>('[data-ev]').forEach((btn) =>
     btn.addEventListener('click', () => {
       if (btn.classList.contains('off')) return toast('지금은 고를 수 없습니다.');
@@ -800,7 +809,7 @@ const finish = (): void => {
     }
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
     const overGold = Math.floor(b.overkill / 10);
-    const earned = b.coins * SLICE.coinValue + overGold;
+    const earned = (b.coins * SLICE.coinValue + overGold) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
     gold += earned;
     const before = squad;
     const survived = squadAfter(b, squad);

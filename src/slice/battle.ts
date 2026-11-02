@@ -110,7 +110,7 @@ const drawCards = (b: SliceBattle, n: number): void => {
 /** 연쇄 배수 (이번 턴 처치 수 기준) */
 export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
   // 덧셈(기본: +25%씩, 상한 4) → 곱셈(증폭 코일: ×1.5씩, 상한 없음) — 3단 성장의 둘째 단 (D-145)
-  parts.includes('coil') ? Math.pow(PART_NUM.coilPerKill, kills) : 1 + Math.min(kills, SLICE.chainCap) * SLICE.chainPerKill;
+  parts.includes('coil') ? Math.pow(PART_NUM.coilPerKill, kills) : 1 + Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorPerKill : SLICE.chainPerKill);
 
 /** 처치 k개가 올리는 연쇄 칸 (이중 톱니 · 연속 도약은 재발동 — 3단 성장의 셋째 단) */
 const chainGain = (b: SliceBattle, k: number, perKill = 1): number => k * perKill * (has(b, 'echo') ? 2 : 1);
@@ -140,7 +140,8 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   if (!c) return 99;
   if (c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId)) return 0;
   const pawnCard = c.who === 'P' || c.kind === 'march';
-  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (b.refined?.includes(b.hand[i]) ? 1 : 0));
+  const knightCard = c.who === 'N';
+  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (knightCard && has(b, 'spurs') ? 1 : 0) - (b.refined?.includes(b.hand[i]) ? 1 : 0));
 };
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
@@ -189,8 +190,13 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   }
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
-  const spare = parts.includes('spare') ? 1 : 0;
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  const spare = (parts.includes('spare') ? 1 : 0) + (parts.includes('brittle') ? 1 : 0);
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  // 시작 부품: 깨지는 유리 심장(분대 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 녹슨 홀(킹 방열판) · 막사의 종(폰 +1)
+  if (has(b, 'brittle')) for (const p of s.pieces) if (p.side === 0) { p.maxHp = Math.round(p.maxHp * PART_NUM.brittleHp); p.hp = Math.min(p.hp, p.maxHp); }
+  if (has(b, 'greed')) for (const p of s.pieces) if (p.side === 1) p.maxHp = p.hp = Math.round(p.maxHp * PART_NUM.greedHp);
+  if (has(b, 'scepter')) { const k = kingOf(s, 0); if (k) k.shield += PART_NUM.scepterShield; }
+  if (has(b, 'barracks')) spawnPawn(b, '막사의 종 — 폰이 선다');
   drawCards(b, b.handSize);
   bossTurnStart(b);
   b.intents = planEnemy(b.s);
@@ -321,7 +327,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
   if (c.kind === 'move' && to) {
     if (c.carve) p.carve = c.carve;
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
-    const crown = p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1;
+    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill });
     if (!sim.ok) return null;
@@ -359,6 +365,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.overkill += overkillOf(before, sim.events);
     let k = sim.removed.filter((q) => q.side === 1).length;
     b.kills += chainGain(b, k, c.chainPerKill);
+    // 연쇄 사슬: 충돌로 쓰러뜨린 적마다 연쇄 +1
+    if (has(b, 'chainShot')) b.kills += sim.events.filter((e) => e.type === 'blast').reduce((a, e) => a + (e.type === 'blast' ? e.hits.filter((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1).length : 0), 0);
     // 둘레의 폰이 따라 전진한다 (기마 돌격 · 근위대)
     const landed = findPiece(b.s, pieceId);
     if (c.rally && landed && b.s.winner === null) {
@@ -429,6 +437,11 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   } else if (c.kind === 'draw') {
     drawCards(b, c.amount ?? 0);
   }
+  // 도화선: 이번 턴 연쇄가 3에 닿으면 한 장 (턴에 한 번)
+  if (has(b, 'fuse') && b.kills >= PART_NUM.fuseAt && !b.once.includes('fuse')) {
+    b.once.push('fuse');
+    drawCards(b, 1);
+  }
   creditKills(b, before, events, c.kind === 'move' ? pieceId : undefined);
   events.push(...afterMyHits(b, before, events));
   b.ap = b.ap - cost + gained;
@@ -455,7 +468,7 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
   const s = sim.state;
   const me = findPiece(s, pieceId);
   if (!me) return;
-  const dmg = PUSH.collide * (b.parts.includes('hammer') ? PART_NUM.hammerMult : 1);
+  const dmg = (PUSH.collide + (b.parts.includes('anvilPlate') ? PART_NUM.anvilPlate : 0)) * (b.parts.includes('hammer') ? PART_NUM.hammerMult : 1);
   const targets = sim.events.flatMap((e) => (e.type === 'attack' && e.attackerId === pieceId ? e.hits.filter((h) => !h.killed) : []));
   for (const h of targets) {
     const t = findPiece(s, h.targetId);
@@ -548,6 +561,7 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
     for (const h of e.hits) {
       if (!b.squadIds.includes(h.targetId)) continue;
       if (h.door) b.doorUsed.push(h.targetId);
+      if (has(b, 'gilded') && h.damage > 0 && findPiece(before, h.targetId)?.type === 'K' && !b.once.includes('gilded')) b.once.push('gilded');
       if (h.killed && !b.falls.some((f) => f.pieceId === h.targetId)) {
         b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn });
         const dead = before.pieces.find((p) => p.id === h.targetId);
@@ -653,10 +667,23 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.hand = [];
   const { events } = enemyPhase(b);
   b.coins = Math.max(0, b.coins - 1);
+  // 피의 계약 (양날): 턴 끝마다 킹 HP −4 (쓰러지지는 않는다 — HP 1에서 멈춘다)
+  if (b.s.winner === null && has(b, 'bloodPact')) {
+    const k = kingOf(b.s, 0);
+    if (k) {
+      const dmg = Math.min(PART_NUM.bloodCost, k.hp - 1);
+      if (dmg > 0) {
+        k.hp -= dmg;
+        events.push({ type: 'blast', pos: { x: k.x, y: k.y }, label: '피의 계약', hits: [{ targetId: k.id, damage: dmg, shieldAbsorbed: 0, hpAfter: k.hp, killed: false }] });
+      }
+    }
+  }
+  const gildedHit = b.once.includes('gilded');
   if (b.s.winner === null) {
     b.turn += 1;
     b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
-    b.ap = b.apMax;
+    // 도금 갑주: 지난 적 차례에 킹이 맞았으면 태엽 +1
+    b.ap = b.apMax + (gildedHit ? 1 : 0);
     b.kills = 0;
     b.killers = [];
     b.once = [];

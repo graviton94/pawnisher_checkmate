@@ -4,7 +4,8 @@ import type { Axis } from './cards';
  * 부품 (수직 조각 — 규칙을 깨는 유물, D-144). Balatro 조커 · StS 유물처럼 카드와 맞물려 빌드를 "부순다".
  * 축마다 둘: 하나는 그 축 카드를 싸게/여러 번, 하나는 판을 바꾼다.
  */
-export type SlicePartId = 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape';
+export type SlicePartId = 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
+  | 'lance' | 'spurs' | 'barracks' | 'banner' | 'scepter' | 'gilded' | 'fuse' | 'conductor' | 'anvilPlate' | 'chainShot' | 'bloodPact' | 'brittle' | 'greed';
 
 export interface SlicePartDef {
   name: string;
@@ -24,9 +25,23 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   coil: { name: '폭주 코일', axis: 'chain', icon: 'chain', desc: '연쇄 배율이 곱해진다 (처치마다 ×1.5, 상한 없음)' },
   echo: { name: '메아리 톱니', axis: 'chain', icon: 'swap', desc: '처치 1회가 연쇄 2칸' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'wrench', desc: '충돌 피해 ×2' },
+  // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
+  lance: { name: '기사의 창', axis: 'cav', icon: 'sword', desc: '나이트의 공격 ×1.5' },
+  spurs: { name: '녹슨 박차', axis: 'cav', icon: 'horseshoe', desc: '나이트 카드 태엽 −1' },
+  barracks: { name: '막사의 종', axis: 'inf', icon: 'bell', desc: '대국 시작에 킹 곁에 폰 +1' },
+  banner: { name: '찢긴 군기', axis: 'inf', icon: 'flag', desc: '폰의 공격 ×1.5' },
+  scepter: { name: '녹슨 홀', axis: 'king', icon: 'crown', desc: '대국 시작에 킹 방열판 +25' },
+  gilded: { name: '도금 갑주', axis: 'king', icon: 'shield', desc: '킹이 맞을 때마다 태엽 +1 (턴에 한 번)' },
+  fuse: { name: '도화선', axis: 'chain', icon: 'flame', desc: '연쇄 3 이상이면 손패 +1' },
+  conductor: { name: '전도 코일', axis: 'chain', icon: 'chain', desc: '연쇄 기본 배율 +10%p (처치마다 +35%)' },
+  anvilPlate: { name: '모루 장갑', axis: 'push', icon: 'anvil', desc: '충돌 피해 +10' },
+  chainShot: { name: '연쇄 사슬', axis: 'push', icon: 'chain', desc: '충돌로 쓰러뜨리면 연쇄 +1' },
+  bloodPact: { name: '피의 계약', axis: null, icon: 'skull', desc: '모든 공격 ×1.4. 대가: 턴 끝마다 킹 HP −4' },
+  brittle: { name: '깨지는 유리 심장', axis: null, icon: 'star', desc: '태엽 +1. 대가: 분대 최대 HP −20%' },
+  greed: { name: '탐욕의 저울', axis: null, icon: 'scale', desc: '이기면 나사 ×2. 대가: 적 HP +20%' },
   spare: { name: '과부하 태엽', axis: null, icon: 'windkey', desc: '태엽 +1, 손패 −1' },
   tape: { name: '되감는 테이프', axis: null, icon: 'watch', desc: '되감기 2회' },
 };
 
 /** 부품 수치 */
-export const PART_NUM = { hammerMult: 2, coilPerKill: 1.5, crownMult: 2, throneShield: 10, assemblyBelow: 2 };
+export const PART_NUM = { lanceMult: 1.5, bannerMult: 1.5, scepterShield: 25, conductorPerKill: 0.35, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedGold: 2, greedHp: 1.2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, crownMult: 2, throneShield: 10, assemblyBelow: 2 };

@@ -241,3 +241,36 @@ describe('분대에 없는 기물의 카드 (D-164)', () => {
     for (const id of [...b.hand, ...b.draw]) expect(usable(id)).toBe(true);
   });
 });
+
+describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
+  it('수량', async () => {
+    const { REWARD_COMMANDS } = await import('../src/slice/cards');
+    const { SLICE_PARTS } = await import('../src/slice/parts');
+    expect(Object.keys(COMMANDS).length).toBe(40);
+    expect(REWARD_COMMANDS.length).toBe(34);
+    expect(Object.keys(SLICE_PARTS).length).toBe(24);
+  });
+  it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 피의 계약(턴 끝 킹 −4)', () => {
+    const b = mk(['brittle']);
+    expect(b.apMax).toBe(SLICE.ap + 1);
+    const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
+    expect(k.maxHp).toBe(Math.round(100 * 0.8));
+    const g = mk(['greed']);
+    expect(g.s.pieces.find((p) => p.side === 1 && p.type === 'P')!.maxHp).toBe(Math.round(25 * 1.2));
+    const bp = mk(['bloodPact']);
+    const kb = bp.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
+    bp.intents = [];
+    endTurn(bp, true);
+    expect(bp.s.pieces.find((p) => p.id === kb.id)!.hp).toBe(kb.maxHp - 4);
+  });
+  it('녹슨 박차: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 25 · 막사의 종: 폰 +1', () => {
+    const b = mk(['spurs', 'scepter', 'barracks'], ['leap', 'knightRaid']);
+    expect(costOf(b, 0)).toBe(0);
+    expect(costOf(b, 1)).toBe(1);
+    expect(b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!.shield).toBe(25);
+    expect(b.s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(3);
+  });
+  it('전도 코일: 연쇄 처치마다 +35%', () => {
+    expect(chainMult(2, ['conductor'])).toBeCloseTo(1.7);
+  });
+});
