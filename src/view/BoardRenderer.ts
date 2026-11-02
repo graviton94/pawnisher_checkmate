@@ -46,7 +46,9 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
   // 터치 기기는 상한 없이 판 자리를 꽉 채운다 (페르소나 테스트 m3: 상한 48 → 도트 내림으로 작은 판이 40px까지 줄었다)
   const want = window.matchMedia('(pointer: coarse)').matches ? Infinity : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
   // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
-  const fit = Math.min(want, viewH / (rows + 0.9), viewW / (cols + 0.5));
+  // 판 배치 시안 C (D-198): 위아래 여백을 줄여 판을 키운다
+  const vPad = document.body.classList.contains('lay-c') ? 0.45 : 0.9;
+  const fit = Math.min(want, viewH / (rows + vPad), viewW / (cols + 0.5));
   // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게). 예전 하한 5도트는 DPR 2 아래 기기 · PC에서 판을 화면 밖으로 밀었다
   const dots = Math.max(1, Math.floor((fit * dpr) / BOARD_DOTS));
   return (dots * BOARD_DOTS) / dpr;

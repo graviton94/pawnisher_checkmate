@@ -1,5 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
+import { BATTLE_HELP, HUD_TEXT, KEYWORDS } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
@@ -24,9 +25,15 @@ import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, 
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
-import { REST, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { REST, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
+
+// 판 배치 시안 (D-198 7번): ?layout=b|c — 사용자가 고르면 기본으로 굳힌다
+{
+  const lay = new URLSearchParams(location.search).get('layout');
+  if (lay === 'b' || lay === 'c') document.body.classList.add(`lay-${lay}`);
+}
 
 /**
  * 수직 조각 화면 (분대 + 명령 덱, D-142): 대국 두 판 + 카드 보상 한 번.
@@ -302,7 +309,7 @@ const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number 
 const refresh = (): void => {
   hidePeek();
   renderer.render(model());
-  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`, enemyTurn);
+  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
@@ -316,7 +323,7 @@ const refresh = (): void => {
   }
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<i class="seg${i < b.ap ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}"><img src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt=""></i>`).join('')}<b>${b.ap}/${b.apMax}</b>`;
-  $('coins').innerHTML = `<span class="lbl">나사</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b>${b.coins * SLICE.coinValue}</b>`;
+  $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b title="이기면 받는 나사">+${b.coins * SLICE.coinValue}</b>`;
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
   $('btn-rewind').innerHTML = `◀◀ 되감기 <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
@@ -356,14 +363,15 @@ const canPlay2 = (i: number): boolean => canPlay(b, i);
 /** 연쇄 계기판 (Balatro식): 이번 턴 피해 합계와 배수 — 처치가 쌓일수록 크고 뜨겁게 */
 const meter = (): void => {
   const m = $('meter');
-  if (!turnDmg && !b.kills && !b.overkill) {
+  // 숫자 줄이기 (D-198, 사용자 승인 6번): 이번 턴에 무언가 했을 때만 — 넘친 피해는 대국 뒤 보상 머리로
+  if (!turnDmg && !b.kills) {
     m.hidden = true;
     return;
   }
   m.hidden = false;
   m.className = `meter lv${Math.min(b.kills, 4)}`;
   // 대표 화면 (D-156): 배수가 주인공 — 크게, 연쇄가 쌓일수록 크고 뜨겁게
-  m.innerHTML = `<span class="mult">×${fmtMult(chainMult(b.kills, parts))}</span><b>연쇄 ${b.kills}</b><span class="dmg">피해 ${turnDmg}</span>${b.overkill ? `<small>넘친 피해 ${b.overkill}</small>` : ''}`;
+  m.innerHTML = `${b.kills ? `<span class="mult">×${fmtMult(chainMult(b.kills, parts))}</span><b>연쇄 ${b.kills}</b>` : ''}<span class="dmg">${HUD_TEXT.dmg} ${turnDmg}</span>`;
 };
 
 /** 이번 카드에서 발동한 부품 (칙령 트레이가 빛난다) */
@@ -487,11 +495,23 @@ const onTap = async (pos: Pos): Promise<void> => {
   refresh();
 };
 
+/** 쓰러진 분대원과 함께 카드가 탔으면 알린다 (D-198) — n0 = 그 조작 전 탄 카드 수 */
+const burnNote = (n0: number): void => {
+  const fresh = (b.burned ?? []).slice(n0);
+  if (!fresh.length) return;
+  const by = new Map<string, number>();
+  for (const id of fresh) by.set(COMMANDS[id].who, (by.get(COMMANDS[id].who) ?? 0) + 1);
+  const t = [...by.keys()][0] as PieceType;
+  toast(`${josa(PIECE_NAMES_KO[t], '이')} 모두 쓰러져 ${PIECE_NAMES_KO[t]} 카드 ${fresh.length}장이 불탑니다. (이번 대국만)`, 3000);
+  sfx('threat');
+};
+
 const run = (i: number, pieceId?: number, to?: Pos): Promise<void> => guarded(() => runInner(i, pieceId, to));
 const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
   const cardId = b.hand[i];
   const moverType = pieceId !== undefined ? findPiece(b.s, pieceId)?.type : undefined;
   const k0 = b.kills;
+  const burn0 = b.burned?.length ?? 0;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
   $('hand').classList.remove('hint');
@@ -503,6 +523,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   await renderer.play(r.before, r.events);
   await deathRites();
   busy = false;
+  burnNote(burn0);
   turnDmg += dealt(r.events, 0, r.before);
   renderer.setup(b.s);
   refresh();
@@ -522,6 +543,7 @@ let prevKills = 0;
 const onEnd = (): Promise<void> => guarded(onEndInner);
 const onEndInner = async (): Promise<void> => {
   if (busy || b.s.winner !== null) return;
+  const burn0 = b.burned?.length ?? 0;
   const r = endTurn(b);
   if (r === 'warn') {
     sfx('threat');
@@ -561,6 +583,7 @@ const onEndInner = async (): Promise<void> => {
   if (b.s.winner !== null) return finish();
   turnBanner($('board'), `${b.turn}턴 · 내 차례`, false);
   dealHand($('hand'));
+  burnNote(burn0);
   if (b.falls.some((f) => f.turn === b.turn - 1)) taunt('gloat');
   sfx('submit');
   await lastStand();
@@ -989,7 +1012,7 @@ const TIPS = [
   '한 턴에 여럿을 처치할수록 연쇄 배율이 오릅니다. 순서가 곧 화력입니다.',
   '적의 공격은 미리 보입니다. 먼저 쓰러뜨리거나, 비키거나, 길을 막으십시오.',
   '되감기는 대국마다 한 번. 이번 턴을 처음으로 되돌립니다.',
-  '나사 트랙은 턴마다 줄어듭니다. 빨리 이길수록 많이 받습니다.',
+  HUD_TEXT.trackHint,
   '쓰러진 분대원은 돌아오지 않습니다. 정비로 한 기를 되살릴 수 있습니다.',
   '부품은 같은 띠의 카드와 맞물립니다. 띠를 맞추면 배율이 폭발합니다.',
   '기물을 길게 누르면 이름 · 기벽 · 체력을 볼 수 있습니다.',
@@ -1070,7 +1093,11 @@ const banner = (text: string, good: boolean): Promise<void> => koBanner(text, go
  */
 const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void => {
   const panel = $('overlay-panel');
+  window.clearTimeout(quickTimer);
   if (btn.classList.contains('chosen')) return void confirmChoice(btn, onConfirm);
+  // 한 번 탭 (D-198, 사용자 승인): 보상 · 영입 · 부품처럼 물릴 일이 적은 선택은 바로 고르고 잠깐 「되돌리기」만 남긴다.
+  // 나사를 쓰는 고물상 구매 · 카드 빼기 · 다듬기는 지금처럼 두 단계
+  const quick = !btn.matches('[data-buy]') && !/뺀다|다듬는다/.test(label);
   panel.querySelectorAll('.chosen').forEach((x) => x.classList.remove('chosen'));
   panel.classList.add('choosing');
   btn.classList.add('chosen');
@@ -1081,16 +1108,24 @@ const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void =>
     bar.className = 'confirm-bar';
     panel.appendChild(bar);
   }
-  bar.innerHTML = `<span>‘${label}’</span><button class="btn" type="button" data-unchoose>다시 보기</button><button class="btn brass" type="button" data-confirm>고르기</button>`;
+  bar.classList.toggle('quick', quick);
+  bar.innerHTML = quick
+    ? `<span>‘${label}’</span><i class="cb-fill" style="--ms:${QUICK_MS}ms"></i><button class="btn" type="button" data-unchoose>되돌리기</button>`
+    : `<span>‘${label}’</span><button class="btn" type="button" data-unchoose>다시 보기</button><button class="btn brass" type="button" data-confirm>고르기</button>`;
   // 확인 띠가 고른 것을 가리지 않게 (페르소나 테스트 m2)
   btn.scrollIntoView({ block: 'nearest' });
   bar.querySelector('[data-unchoose]')!.addEventListener('click', () => {
+    window.clearTimeout(quickTimer);
     btn.classList.remove('chosen');
     panel.classList.remove('choosing');
     bar!.remove();
   });
-  bar.querySelector('[data-confirm]')!.addEventListener('click', () => confirmChoice(btn, onConfirm));
+  bar.querySelector('[data-confirm]')?.addEventListener('click', () => confirmChoice(btn, onConfirm));
+  if (quick) quickTimer = window.setTimeout(() => btn.isConnected && btn.classList.contains('chosen') && confirmChoice(btn, onConfirm), QUICK_MS);
 };
+/** 한 번 탭 고르기: 이 시간 안에 「되돌리기」를 누르지 않으면 확정 */
+const QUICK_MS = 1100;
+let quickTimer: number | undefined;
 const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
   const panel = $('overlay-panel');
   if (panel.classList.contains('locked')) return;
@@ -1199,10 +1234,27 @@ const finish = (): void => {
     squad = restSquad(survived, restHeal());
     // 유품 태엽: 고르게 하지 않는다 — 자동으로 나사가 되고 한 줄만 (D-155, 관리 피로 제로)
     const heirs = fallen.filter((c) => c.t !== 'K');
+    const after: string[] = [];
     if (heirs.length) {
       gold += heirs.length * CREW.heirloomScrews;
-      window.setTimeout(() => toast(`유품 태엽 처분 (${heirs.map((c) => c.name).join(' · ')}) — 나사 +${heirs.length * CREW.heirloomScrews}`, 3000), 400);
+      after.push(`유품 태엽 처분 (${heirs.map((c) => c.name).join(' · ')}) — 나사 +${heirs.length * CREW.heirloomScrews}`);
     }
+    // 승격 도장 (D-198): 승격은 이 대국에서만 — 대신 나사로 보답한다
+    const promo = promotedIn(b, before);
+    if (promo) {
+      gold += promo * SLICE.promoteBonus;
+      after.push(`승격 도장 — 나사 +${promo * SLICE.promoteBonus} (승격은 이 대국에서만)`);
+    }
+    // 보충병 (D-198): 다 잃고 겨우 이겼어도 다음 판을 설 수 있게
+    const men = squad.filter((u) => u.t !== 'K').length;
+    if (!labMode && men < SLICE.reinforceMin) {
+      const n = SLICE.reinforceMin - men;
+      for (let k = 0; k < n; k++) squad.push({ ...makeCrew('P', R, squad.map((u) => u.name ?? '')), scars: ['보충병'] });
+      const pawnCards = deck.filter((id) => COMMANDS[id].who === 'P').length;
+      if (pawnCards < SLICE.reinforceCards) for (let k = pawnCards; k < SLICE.reinforceCards; k++) deck.push('advance');
+      after.push(`보충병 폰 ${n}기가 분대에 들어옵니다.`);
+    }
+    if (after.length) window.setTimeout(() => toast(after.join(' · '), 3600), notes.length ? 3900 : 400);
     rewardFlow(earned, overGold, fallen);
   }, 700);
 };
@@ -1212,7 +1264,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
   {
     won += 1;
     const reward = cur.reward;
-    const head = `<h2><span class="pass-tag">통과</span> ${cur.title} <span class="dim">— 나사 +${earned}</span></h2>`;
+    const head = `<h2><span class="pass-tag">통과</span> ${cur.title} <span class="dim">— 나사 +${earned}${overGold ? ` (넘친 피해 +${overGold})` : ''}</span></h2>`;
     if (reward === 'recruit') return recruitPick(head, () => advance());
     if (reward === 'kit') return kitPick(head, () => advance());
     // 검문: 부품을 고른 뒤 카드 보상으로 (partDone — 다시 부품 화면으로 돌지 않게)
@@ -1490,7 +1542,37 @@ const partPick = (head: string, then: () => void): void => {
 };
 
 /** 규칙 (D-195): 글 벽 대신 안내서 다섯 쪽(그림 한 줄 + 두세 줄) — 처음 화면의 안내서와 같은 것 */
-const help = (): void => void guide(openOverlay).then(closeOverlay);
+/**
+ * ? 버튼 (D-198, 사용자 승인 5번): 안내서 다섯 쪽 대신 지금 화면 한 장 + 용어 사전. ✕ · Esc · 바깥 탭으로 닫힌다.
+ * 반장 판이면 그 반장 규칙을 맨 위에. 「안내서 전체」로 예전 다섯 쪽.
+ */
+const help = (tab: 'now' | 'dict' = 'now'): void => {
+  const boss = b.boss ? BOSS_RULES[b.bossRule] : null;
+  const body =
+    tab === 'now'
+      ? `${boss ? `<p class="hp-boss"><b>${boss.name}</b> ${boss.lines.join(' · ')}</p>` : ''}<ul class="hp-list">${BATTLE_HELP.map((l) => `<li>${l}</li>`).join('')}</ul>`
+      : `<dl class="hp-dict">${KEYWORDS.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  const el = openOverlay(`<div class="helpcard"><button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button>
+    <div class="hp-tabs"><button class="btn${tab === 'now' ? ' brass' : ''}" type="button" data-tab="now">${HUD_TEXT.helpTitle}</button><button class="btn${tab === 'dict' ? ' brass' : ''}" type="button" data-tab="dict">${HUD_TEXT.dictTitle}</button><button class="btn" type="button" data-full>${HUD_TEXT.fullGuide}</button></div>
+    <div class="hp-body">${body}</div></div>`);
+  const over = $('overlay');
+  const done = (): void => {
+    window.removeEventListener('keydown', onKey);
+    over.removeEventListener('click', onOut);
+  };
+  const close = (): void => (done(), closeOverlay());
+  const onKey = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape') close();
+  };
+  const onOut = (e: MouseEvent): void => {
+    if (e.target === over) close();
+  };
+  window.addEventListener('keydown', onKey);
+  window.setTimeout(() => over.addEventListener('click', onOut), 0);
+  el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), close()));
+  el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => (sfx('tap'), done(), help(t.dataset.tab as 'now' | 'dict'))));
+  el.querySelector('[data-full]')!.addEventListener('click', () => (done(), void guide(openOverlay).then(closeOverlay)));
+};
 
 // 길게 누르기(터치 0.35초) · 마우스 올리기 = 크게 보기. 길게 누른 뒤 손을 떼면 고르지 않는다
 let pressTimer: number | undefined;
@@ -1567,7 +1649,7 @@ $('btn-rewind').addEventListener('click', () => {
   }, 420);
   window.setTimeout(() => fx.remove(), 800);
 });
-$('btn-help').addEventListener('click', help);
+$('btn-help').addEventListener('click', () => help());
 
 // ---------- 근간 시험장 (D-177) ----------
 /** 시험장 모드: A = 지금 규칙 + 처치 환급, B = 진짜 잡기 + 잡기 환급. 같은 판 · 같은 적 · 같은 덱 */

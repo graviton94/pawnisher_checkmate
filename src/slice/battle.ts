@@ -27,6 +27,9 @@ export interface Fall {
   /** 쓰러뜨린 적 기물 (원수, D-178) */
   byType?: PieceType;
   byId?: number;
+  /** 쓰러진 기물의 유형 · 카드를 이미 태웠는가 (D-198) */
+  t?: PieceType;
+  burned?: boolean;
 }
 
 /** 적의 예고 한 건 */
@@ -42,6 +45,8 @@ export interface SliceBattle {
   discard: CommandId[];
   /** 이번 턴에 낸 카드 — 턴이 끝나야 버림 더미로 간다 (페르소나 테스트 B2: 0태엽 + 뽑기 카드가 같은 턴에 다시 섞여 끝없이 돌았다) */
   played?: CommandId[];
+  /** 쓰러진 분대원과 함께 탄 카드 (D-198) — 이번 대국에서만 빠진다 */
+  burned?: CommandId[];
   ap: number;
   /** 이번 턴 처치 수 (연쇄) */
   kills: number;
@@ -577,6 +582,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
   (b.played ??= []).push(id);
+  burnFallen(b);
   return { events, before };
 };
 
@@ -712,8 +718,8 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
       if (h.door) b.doorUsed.push(h.targetId);
       if (has(b, 'gilded') && h.damage > 0 && findPiece(before, h.targetId)?.type === 'K' && !b.once.includes('gilded')) b.once.push('gilded');
       if (h.killed && !b.falls.some((f) => f.pieceId === h.targetId)) {
-        b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn, ...(attacker && attacker.side === 1 ? { byType: attacker.type, byId: attacker.id } : {}) });
         const dead = before.pieces.find((p) => p.id === h.targetId);
+        b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn, t: dead?.type, ...(attacker && attacker.side === 1 ? { byType: attacker.type, byId: attacker.id } : {}) });
         if (dead && b.quirks[h.targetId] === 'boiler') {
           const hits = b.s.pieces.filter((p) => p.side === 1 && chebyshev(p, dead) === 1).map((p) => {
             const absorbed = Math.min(p.shield, CREW.boilerBlast);
@@ -824,6 +830,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.played = [];
   b.hand = [];
   const { events } = enemyPhase(b);
+  burnFallen(b);
   b.coins = Math.max(0, b.coins - 1);
   // 피의 계약 (양날): 턴 끝마다 킹 HP −4 (쓰러지지는 않는다 — HP 1에서 멈춘다)
   if (b.s.winner === null && has(b, 'bloodPact')) {
@@ -900,11 +907,52 @@ export const rewind = (b: SliceBattle): SliceBattle | string => {
 };
 
 /** 대국이 끝난 뒤 분대: 살아남은 기물만 남기고 HP를 이어 간다 */
+/**
+ * 대국 뒤 분대: 살아남은 이만 · 승격은 그 대국에서만 (D-198 — 입문 판의 공짜 퀸이 출하 내내 남아 난이도를 무너뜨렸다).
+ * 유형은 대국 전으로 돌아가고 HP는 원래 최대치 안으로.
+ */
 export const squadAfter = (b: SliceBattle, squad: Squad[]): Squad[] =>
   squad.flatMap((u, i) => {
     const p = findPiece(b.s, b.squadIds[i]);
-    return p ? [growCrew(b, u, b.squadIds[i], p.hp, p.type)] : [];
+    if (!p) return [];
+    const hp = p.type === u.t ? p.hp : Math.min(p.hp, u.hp ?? p.hp);
+    return [growCrew(b, u, b.squadIds[i], hp, u.t)];
   });
+
+/** 이 대국에서 승격한 분대원 수 (승격 도장) */
+export const promotedIn = (b: SliceBattle, squad: Squad[]): number =>
+  squad.filter((u, i) => {
+    const p = findPiece(b.s, b.squadIds[i]);
+    return p && p.type !== u.t;
+  }).length;
+
+/**
+ * 쓰러진 분대원의 전용 카드를 태운다 (D-198, 사용자: "해당 기물 전용 카드만 태우자 — 왕만 남아도 역전수를 낼 수 있게").
+ * 같은 유형이 아직 판에 살아 있으면 남긴다. 「지휘」 같은 아무 기물 카드는 남는다. 이번 대국에서만 — 덱에는 그대로.
+ */
+export const burnFallen = (b: SliceBattle): { t: PieceType; ids: CommandId[] }[] => {
+  const out: { t: PieceType; ids: CommandId[] }[] = [];
+  for (const f of b.falls) {
+    if (f.burned || !f.t) continue;
+    f.burned = true;
+    const t = f.t;
+    if (t === 'K' || b.s.pieces.some((p) => p.side === 0 && p.type === t)) continue;
+    const ids: CommandId[] = [];
+    const keep = (pile: CommandId[]): CommandId[] =>
+      pile.filter((id) => {
+        if (COMMANDS[id].who !== t) return true;
+        ids.push(id);
+        return false;
+      });
+    b.hand = keep(b.hand);
+    b.draw = keep(b.draw);
+    b.discard = keep(b.discard);
+    b.played = keep(b.played ?? []);
+    if (ids.length) out.push({ t, ids });
+  }
+  b.burned = [...(b.burned ?? []), ...out.flatMap((x) => x.ids)];
+  return out;
+};
 
 /** 대국 뒤 성장: 처치 · 대국 수 · 흉터 · 별명 (자동으로 붙는다 — 레퍼런스 6권 원리 3 · 5) */
 export const growCrew = (b: SliceBattle, u: Squad, id: number, hp: number, t: PieceType = u.t): Squad => {

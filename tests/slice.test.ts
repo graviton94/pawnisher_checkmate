@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, planEnemy, playCard, rewind, squadAfter } from '../src/slice/battle';
+import { burnFallen, promotedIn, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, planEnemy, playCard, rewind, squadAfter } from '../src/slice/battle';
 import { START_COMMANDS, SLICE } from '../src/slice/cards';
 import { findPiece } from '../src/engine';
 
@@ -110,5 +110,41 @@ describe('페르소나 테스트 버그 수정 (D-197)', () => {
     expect(partFits('horseshoe', ['K', 'N'], [])).toBe(true);
     expect(partFits('banner', ['K', 'B'], ['barracks'])).toBe(true);
     expect(partFits('coil', ['K'], [])).toBe(true);
+  });
+});
+
+describe('카드 태우기 · 승격은 대국에서만 (D-198)', () => {
+  it('폰이 모두 쓰러지면 폰 카드만 이번 대국에서 탄다 — 지휘 · 다른 기물 카드는 남는다', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'B' }], ['K', 'P'], START_COMMANDS, 4);
+    const pawnId = b.squadIds[1];
+    b.s.pieces = b.s.pieces.filter((p) => p.id !== pawnId);
+    b.falls.push({ pieceId: pawnId, by: '적 폰', turn: 1, t: 'P' });
+    const all0 = [...b.hand, ...b.draw, ...b.discard];
+    const out = burnFallen(b);
+    const all1 = [...b.hand, ...b.draw, ...b.discard];
+    expect(out[0]?.t).toBe('P');
+    expect(all1.some((id) => id.startsWith('advance'))).toBe(false);
+    expect(all1.length).toBe(all0.length - out[0].ids.length);
+    expect(all1.some((id) => id.startsWith('order'))).toBe(all0.some((id) => id.startsWith('order')));
+    // 두 번 태우지 않는다
+    expect(burnFallen(b)).toEqual([]);
+  });
+  it('같은 유형이 아직 살아 있으면 태우지 않는다', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'P' }], ['K', 'P'], START_COMMANDS, 4);
+    const pawnId = b.squadIds[1];
+    b.s.pieces = b.s.pieces.filter((p) => p.id !== pawnId);
+    b.falls.push({ pieceId: pawnId, by: '적 폰', turn: 1, t: 'P' });
+    expect(burnFallen(b)).toEqual([]);
+  });
+  it('승격한 폰은 대국이 끝나면 폰으로 돌아온다', () => {
+    const squad0 = [{ t: 'K' as const }, { t: 'P' as const, hp: 9 }];
+    const b = newSliceBattle(squad0, ['K'], START_COMMANDS, 4);
+    const p = b.s.pieces.find((x) => x.id === b.squadIds[1])!;
+    p.type = 'Q';
+    p.hp = 30;
+    expect(promotedIn(b, squad0)).toBe(1);
+    const after = squadAfter(b, squad0);
+    expect(after[1].t).toBe('P');
+    expect(after[1].hp).toBe(9);
   });
 });
