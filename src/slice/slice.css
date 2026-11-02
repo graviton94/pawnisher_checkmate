@@ -77,10 +77,10 @@ body.slice .actions { height: auto; max-height: none; flex: none; grid-template-
 .cmd.cheap .cost { background: radial-gradient(circle at 35% 30%, #d8fff0, #5fe0a8 55%, #2a9a6a); }
 body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; align-items: center; font-size: 12px; }
 .part-chip { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; color: #f4d27a; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
-.part-chip .ico, .part-card .ico { display: block; width: 24px; height: 24px; background: currentColor; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
+.part-chip .ico, .part-card .ico { display: block; width: 32px; height: 32px; background: currentColor; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
 .part-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 4px; }
 .part-card { display: grid; justify-items: center; gap: 8px; padding: 16px 12px 14px; min-height: 150px; text-align: center; color: #f2ede4; background: linear-gradient(180deg, #2c2833, #1c1a22); border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1); }
-.part-card .ico { width: 44px; height: 44px; color: #f4d27a; }
+.part-card .ico { width: 48px; height: 48px; color: #f4d27a; }
 .part-card b { font-size: 17px; }
 .part-card small { font-size: 14px; color: #d6d0c6; line-height: 1.4; }
 .part-card:hover, .part-card:active { transform: translateY(-4px); }
@@ -164,7 +164,7 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 /* 대표 화면 (D-156): 판 아래 칙령 트레이 · 큰 배수 */
 .decrees { position: absolute; left: 50%; bottom: 10px; z-index: 5; display: flex; gap: 6px; transform: translateX(-50%); max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center; }
 .decrees .part-chip { width: auto; height: 36px; padding: 0 10px 0 6px; gap: 6px; display: inline-flex; align-items: center; font: 700 13px Galmuri11, sans-serif; color: #f4d27a; background: rgba(20, 18, 26, 0.92); }
-.decrees .part-chip .ico { width: 22px; height: 22px; }
+.decrees .part-chip .ico { width: 32px; height: 32px; }
 .decrees .part-chip.fire { animation: decree 700ms cubic-bezier(0.2, 1.6, 0.4, 1); }
 @keyframes decree { 0% { transform: translateY(0) scale(1); } 25% { transform: translateY(-10px) scale(1.15); color: #fff; background: #c89b3c; box-shadow: 0 0 0 2px #000, 0 0 18px rgba(244, 210, 122, 0.9); } 100% { transform: none; } }
 .meter { min-width: 120px; padding: 6px 12px; }
@@ -350,7 +350,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .map-track .tk.boss { background: #e0564f; }
 .map-track .tk-line { width: 22px; height: 2px; background: #3a3542; }
 .part-card.mnode { min-height: 0; padding: 12px 10px; gap: 6px; }
-.part-card.mnode .ico { width: 40px; height: 40px; }
+.part-card.mnode .ico { width: 48px; height: 48px; }
 .nd-battle .ico { color: #f2ede4; } .nd-shop .ico { color: #f4d27a; } .nd-forge .ico { color: #ff9a5a; } .nd-check .ico { color: #7ab8ff; } .nd-boss .ico { color: #ff6b5a; }
 .nd-foes { display: flex; gap: 2px; justify-content: center; }
 .nd-foes img { width: 18px; height: 18px; image-rendering: pixelated; }
@@ -364,11 +364,12 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .price.poor { background: #5a5560; color: #c9c2cc; }
 .price.sold { background: #2a2630; color: #8a8494; }
 .shop-grid .sold { filter: grayscale(1) brightness(0.5); pointer-events: none; }
-.sf-ico { display: block; width: 180px; height: 180px; background: #c89b3c; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
+.sf-ico { display: block; width: 176px; height: 176px; background: #c89b3c; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
 /* 고물상 한 화면에 (915×412): 4열 작은 칸, 설명 두 줄 */
 .shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .shop-grid .cmd.big, .shop-grid .part-card { padding: 22px 6px 26px; gap: 2px; }
-.shop-grid .cmd .art, .shop-grid .part-card .ico { width: 34px; height: 34px; }
+.shop-grid .cmd .art { width: 34px; height: 34px; }
+.shop-grid .part-card .ico { width: 32px; height: 32px; }
 .shop-grid .cmd .art img { width: 30px; height: 30px; }
 .shop-grid .cmd .costgear img { width: 22px; height: 22px; }
 .shop-grid .cmd b, .shop-grid .part-card b { font-size: 14px; }
@@ -399,7 +400,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 @keyframes march { to { stroke-dashoffset: -22; } }
 .mnd { position: absolute; transform: translate(-50%, -50%); width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: default;
   background: radial-gradient(circle at 35% 30%, #5a4a2e, #2a2218 70%); box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #8a6a32, 0 3px 0 #000; }
-.mnd i { width: 30px; height: 30px; background: #d8c08a; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.mnd i { width: 32px; height: 32px; background: #d8c08a; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .mnd span { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 12px; white-space: nowrap; color: #a89f92; }
 .mnd.later { filter: brightness(0.6); }
 .mnd.skip { filter: grayscale(1) brightness(0.35); }
@@ -412,7 +413,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 @keyframes nodepulse { 50% { box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #f4d27a, 0 0 28px rgba(244, 210, 122, 0.85); } }
 .map-info { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 12px; background: rgba(10, 9, 13, 0.85); box-shadow: 0 0 0 2px #000, inset 0 2px 0 #3a3238; }
 .map-info .hint { margin: 0; font-size: 14px; color: #a89f92; }
-.map-info .ico { width: 34px; height: 34px; flex: none; background: #d8c08a; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.map-info .ico { width: 32px; height: 32px; flex: none; background: #d8c08a; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .map-info .txt { flex: 1; display: grid; min-width: 0; } .map-info .txt b { font-size: 16px; color: #f4e6c4; } .map-info .txt small { font-size: 13px; color: #c9c0b0; }
 .map-info .btn { min-height: 48px; min-width: 110px; }
 @media (prefers-reduced-motion: reduce) { .mnd.now, .map-body line.live { animation: none; } }

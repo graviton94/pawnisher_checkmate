@@ -4,7 +4,7 @@
   ① 왼위 가장자리는 밝게 · 오른아래 가장자리는 어둡게 (빛은 왼위에서)
   ② 둘레에 검정 외곽선 1칸
 을 똑같이 입힌다. 대문자는 고정색(눈 · 못 · 선 같은 세부). 나사 · 태엽 시안과 같은 규칙.
-사용: python3 -I tools/pixel/icons16.py sheet <out.png>   |   export <dir> (16px · 32px · 48px PNG)
+사용: python3 -I tools/pixel/icons16.py sheet <out.png>   |   export public/ui/icons16 (게임용 16px PNG)
 """
 import os
 import sys
@@ -1185,11 +1185,10 @@ def sheet(path):
 
 
 def export(out):
+    """게임용: <키>.png 16×16 (화면에서 계단 확대) — 보통 public/ui/icons16"""
     os.makedirs(out, exist_ok=True)
     for k, rows in ICONS.items():
-        icn = render(rows)
-        for sc in (1, 2, 3):
-            icn.resize((16 * sc, 16 * sc), Image.NEAREST).save(os.path.join(out, f'{k}@{sc}x.png'))
+        render(rows).save(os.path.join(out, f'{k}.png'))
     print(out, len(ICONS))
 
 

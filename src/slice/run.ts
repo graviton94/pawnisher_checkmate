@@ -44,7 +44,8 @@ export interface Act {
 }
 
 export const NODE_NAMES: Record<NodeKind, string> = { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장' };
-export const NODE_ICONS: Record<NodeKind, string> = { battle: 'sword', shop: 'crate', forge: 'anvil', event: 'question', check: 'scale', boss: 'crown' };
+/** 지도 노드 도트 아이콘 키 (public/ui/icons16, D-182) */
+export const NODE_ICONS: Record<NodeKind, string> = { battle: 'n.battle', shop: 'n.shop', forge: 'n.forge', event: 'n.event', check: 'n.check', boss: 'n.boss' };
 /** 갈림길 카드의 짧은 설명 (시스템 투) */
 export const NODE_DESC: Record<NodeKind, string> = {
   battle: '대국을 치르고 카드를 얻습니다.',
