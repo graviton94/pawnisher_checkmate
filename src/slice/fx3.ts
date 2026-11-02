@@ -209,7 +209,7 @@ export const koBanner = (text: string, good: boolean): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = `ko3 ${good ? 'win' : 'lose'}`;
-    el.innerHTML = `<div class="rays"></div><div class="tint"></div><div class="word">${text}</div>`;
+    el.innerHTML = `<div class="rays"></div><div class="tint"></div><div class="koband"></div><div class="word">${text}</div>`;
     document.body.appendChild(el);
     sfx(good ? 'win' : 'lose');
     if (!calm()) replay(el, 'run');

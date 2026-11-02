@@ -468,7 +468,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 @keyframes bbup { 0% { transform: translateY(3px) scale(0.97, 0.94); } 35% { transform: translateY(-3px) scale(1.05, 1.07); filter: brightness(1.35); } 100% { transform: none; filter: none; } }
 /* 철문 전환 */
 .shutterfx { position: fixed; inset: 0; z-index: 110; pointer-events: none; }
-.shutterfx .shut { position: absolute; left: 0; right: 0; height: 50%; background: var(--door) 0 0 / 48px 16px repeat; image-rendering: pixelated; }
+.shutterfx .shut { position: absolute; left: 0; right: 0; height: 50%; background: var(--door) 0 0 / 160px 40px repeat; image-rendering: pixelated; }
 .shutterfx .shut::after { content: ''; position: absolute; left: 0; right: 0; height: 12px; background: var(--hazard) 0 2px / 16px 8px repeat-x, #0b0b0e; image-rendering: pixelated; }
 .shutterfx .shut::before { content: ''; position: absolute; left: 50%; width: 32px; height: 10px; margin-left: -16px; background: var(--handle) 0 0 / 32px 10px no-repeat; image-rendering: pixelated; z-index: 1; }
 .shutterfx .shut.t { top: 0; --bump: -3px; } .shutterfx .shut.t::after { bottom: 0; } .shutterfx .shut.t::before { bottom: 12px; }
@@ -911,3 +911,13 @@ body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 
 .stagefx .sf-eyebrow.enc-plate { color: #2a1e08; }
 .stand .row { align-self: stretch; }
 @media (prefers-reduced-motion: reduce) { .confirm-bar, .part-chip.mount, .mapfx, .part-card.chosen, .reward-cards .cmd.chosen, .ev-choice.chosen, .btn.btn-go.warn::after { animation: none !important; } }
+
+/* 승패 글자 받침 띠 (D-194: 사용자 "적 킹 격파가 글자 배경 없이 어색") — 글자가 꽂히는 순간 가운데서 펼쳐지는 검은 판 + 위아래 금(패배는 진홍) 줄 */
+.ko3 .koband { position: absolute; left: 0; right: 0; top: 50%; height: 92px; margin-top: -46px; background: #16141c; box-shadow: 0 -4px 0 #facc15, 0 4px 0 #facc15, 0 -8px 0 #0b0b0e, 0 8px 0 #0b0b0e; transform: scaleX(0); }
+.ko3 .koband::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0 14px, transparent 14px 64px); }
+.ko3.lose .koband { background: #2a0a0e; box-shadow: 0 -4px 0 #e5262f, 0 4px 0 #e5262f, 0 -8px 0 #0b0b0e, 0 8px 0 #0b0b0e; }
+.ko3.lose .koband::before { background: repeating-linear-gradient(90deg, rgba(229, 38, 47, 0.1) 0 14px, transparent 14px 64px); }
+.ko3.run .koband { animation: koband 1500ms both; }
+@keyframes koband { 0%, 8% { transform: scaleX(0) scaleY(0.4); animation-timing-function: var(--snap); } 18% { transform: scaleX(1.02) scaleY(1.1); } 26%, 100% { transform: none; } }
+.ko3:not(.run) .koband { transform: none; }
+.ko3 .word { -webkit-text-stroke: 0; font-size: 54px; } .ko3.lose .word { color: #fff3e8; }
