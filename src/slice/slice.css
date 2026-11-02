@@ -309,3 +309,35 @@ body.slice .toast { white-space: pre-line; } body.slice .toast::first-line { col
 .panel.locked { pointer-events: none; }
 @keyframes barin { from { transform: translateY(100%); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .stagefx, .stagefx.out, .sf-art, .stagefx h1, .sf-narr, .slashfx, .confirm-bar { animation-duration: 1ms; } }
+/* 손패 줄이기 (D-166): 비용 · 기물 · 이름 · 수치 한 줄 — 자세한 건 길게 누르기 */
+.hand { gap: 5px; }
+body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-template-columns: 26px 36px minmax(0, 1fr); column-gap: 6px; }
+.hand .cmd .costgear img { width: 26px; height: 26px; }
+.hand .cmd .art { width: 36px; height: 36px; }
+.hand .cmd .art img { width: 32px; height: 32px; }
+.hand .cmd .art.any { font-size: 20px; }
+.hand .cmd b { font-size: 15px; }
+.hand .cmd small { font-size: 12px; -webkit-line-clamp: 1; }
+.hand .cmd em { font-size: 12px; }
+.hand .cmd .axis.mini { width: 18px; height: 18px; font-size: 11px; }
+.hand .cmd { -webkit-touch-callout: none; user-select: none; }
+/* 크게 보기 카드 */
+.peek { position: fixed; z-index: 55; pointer-events: none; animation: peekin 140ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.peek-card { --tone: #8a8494; width: 200px; display: grid; gap: 6px; justify-items: center; padding: 10px 12px 12px; text-align: center; color: #f2ede4;
+  background:
+    radial-gradient(circle at 6px 6px, #d8c08a 0 2px, transparent 2.4px), radial-gradient(circle at calc(100% - 6px) 6px, #d8c08a 0 2px, transparent 2.4px),
+    radial-gradient(circle at 6px calc(100% - 6px), #d8c08a 0 2px, transparent 2.4px), radial-gradient(circle at calc(100% - 6px) calc(100% - 6px), #d8c08a 0 2px, transparent 2.4px),
+    linear-gradient(180deg, color-mix(in srgb, var(--tone) 35%, #2e2a33) 0, #1d1b22 70%);
+  box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c, inset 0 0 0 4px var(--tone), 0 8px 24px rgba(0, 0, 0, 0.7); }
+.peek-card.t-P { --tone: #9aa7b8; } .peek-card.t-N { --tone: #5fc28a; } .peek-card.t-B { --tone: #b07ae8; } .peek-card.t-R { --tone: #e88a4a; } .peek-card.t-Q { --tone: #e85a8a; } .peek-card.t-K { --tone: #e8c060; } .peek-card.t-any { --tone: #4ec3d6; }
+.pk-top { display: flex; align-items: center; gap: 8px; justify-self: stretch; }
+.pk-top .costgear img { width: 30px; height: 30px; image-rendering: pixelated; }
+.pk-top b { font: 700 18px Galmuri14, sans-serif; color: #f4e6c4; text-shadow: 1px 1px 0 #000; }
+.pk-art { width: 96px; height: 84px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.35); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.5); }
+.pk-art img { width: 72px; height: 72px; image-rendering: pixelated; }
+.pk-any { font-size: 44px; color: var(--tone); }
+.pk-axes { display: flex; gap: 4px; min-height: 0; }
+.pk-desc { margin: 0; font-size: 14px; line-height: 1.45; }
+.pk-flv { margin: 0; font-size: 13px; font-style: italic; color: #c9b88f; }
+@keyframes peekin { from { opacity: 0; transform: translateX(-8px) scale(0.92); } }
+@media (prefers-reduced-motion: reduce) { .peek { animation: none; } }

@@ -132,7 +132,35 @@ const cardHtml = (id: CommandId, i: number): string => {
   const art = cardArt(id);
   const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : '움직일 기물 없음'}</em>` : '';
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
-    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${handDesc(c.desc)}</small>` : `<i class="flv">${c.flavor ?? ''}</i>`}${why}</span></button>`;
+    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}</span></button>`;
+};
+
+/**
+ * 카드 크게 보기 (D-166, 슬더스식): 손패를 길게 누르거나(터치) 마우스를 올리면 카드 모양으로 전체 효과.
+ * 손패는 이름 · 비용 · 수치만 짧게, 자세한 문장 · 각주 · 띠 이름은 여기서.
+ */
+const peekHtml = (id: CommandId, cost: number): string => {
+  const c = COMMANDS[id];
+  return `<div class="peek-card t-${c.who}"><div class="pk-top">${keysHtml(cost)}<b>${c.name}</b></div><div class="pk-art">${c.who === 'any' ? `<span class="pk-any">${c.kind === 'spark' ? '✦' : '★'}</span>` : pieceImg(c.who, 0, 'large', 72)}</div><div class="pk-axes">${axisTag(c.axis)}${axisTag(c.axis2)}</div><p class="pk-desc">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</p>${c.flavor ? `<p class="pk-flv">${c.flavor}</p>` : ''}</div>`;
+};
+let peekEl: HTMLElement | null = null;
+const showPeek = (cardEl: HTMLElement): void => {
+  const i = Number(cardEl.dataset.card);
+  const id = b.hand[i];
+  if (!id) return;
+  hidePeek();
+  const r = cardEl.getBoundingClientRect();
+  peekEl = document.createElement('div');
+  peekEl.className = 'peek';
+  peekEl.innerHTML = peekHtml(id, Number(cardEl.querySelector('.costgear')?.getAttribute('aria-label')?.replace(/\D/g, '') ?? COMMANDS[id].cost));
+  document.body.appendChild(peekEl);
+  const h = peekEl.offsetHeight;
+  peekEl.style.left = `${r.right + 10}px`;
+  peekEl.style.top = `${Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2))}px`;
+};
+const hidePeek = (): void => {
+  peekEl?.remove();
+  peekEl = null;
 };
 
 /** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
@@ -186,6 +214,7 @@ const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number 
   events.reduce((a, e) => (e.type === 'attack' ? a + e.hits.reduce((x, h) => x + (before.pieces.find((p) => p.id === h.targetId)?.side !== side ? h.damage : 0), 0) : a), 0);
 
 const refresh = (): void => {
+  hidePeek();
   renderer.render(model());
   $('turn-label').textContent = b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴 · 내 차례`;
   $('turn-label').classList.toggle('enemy', enemyTurn);
@@ -845,7 +874,37 @@ const help = (): void => {
   });
 };
 
+// 길게 누르기(터치 0.35초) · 마우스 올리기 = 크게 보기. 길게 누른 뒤 손을 떼면 고르지 않는다
+let pressTimer: number | undefined;
+let peeked = false;
+$('hand').addEventListener('pointerdown', (e) => {
+  const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
+  if (!el || e.pointerType === 'mouse') return;
+  peeked = false;
+  window.clearTimeout(pressTimer);
+  pressTimer = window.setTimeout(() => {
+    peeked = true;
+    showPeek(el);
+  }, 350);
+});
+const endPress = () => {
+  window.clearTimeout(pressTimer);
+  if (peeked) window.setTimeout(hidePeek, 60);
+};
+$('hand').addEventListener('pointerup', endPress);
+$('hand').addEventListener('pointercancel', endPress);
+$('hand').addEventListener('pointerover', (e) => {
+  if (e.pointerType !== 'mouse') return;
+  const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
+  if (el) showPeek(el);
+});
+$('hand').addEventListener('pointerleave', hidePeek);
+$('hand').addEventListener('contextmenu', (e) => e.preventDefault());
 $('hand').addEventListener('click', (e) => {
+  if (peeked) {
+    peeked = false;
+    return;
+  }
   if ((e.target as HTMLElement).closest('[data-deck]')) return deckView('view');
   if ((e.target as HTMLElement).closest('[data-crew]')) return crewView();
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-card]');
