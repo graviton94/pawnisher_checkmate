@@ -49,6 +49,8 @@ export interface SliceBattle {
   parts: SlicePartId[];
   /** 이번 턴에 처치한 내 기물 (재도약) */
   killers: number[];
+  /** 다듬은 카드 (태엽 −1) */
+  refined: CommandId[];
   /** 이 대국에서 넘친 피해 합 (이기면 나사로) */
   overkill: number;
   /** 반장 판 (철갑 · 줄 폭격) */
@@ -134,7 +136,7 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   if (!c) return 99;
   if (c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId)) return 0;
   const pawnCard = c.who === 'P' || c.kind === 'march';
-  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0));
+  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (b.refined?.includes(b.hand[i]) ? 1 : 0));
 };
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
@@ -151,7 +153,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -175,6 +177,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     const p = s.pieces.find((r) => r.side === q.side && r.type === q.t);
     if (p && !s.pieces.some((r) => r.x === q.x && r.y === q.y)) Object.assign(p, { x: q.x, y: q.y });
   }
+  if (opts.enemyHp && opts.enemyHp !== 1) for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.maxHp = p.hp = Math.round(p.maxHp * opts.enemyHp);
   if (opts.enemyKingHp) {
     const k = kingOf(s, 1)!;
     k.maxHp = k.hp = Math.round(k.maxHp * opts.enemyKingHp);
@@ -182,7 +185,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = parts.includes('spare') ? 1 : 0;
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], overkill: 0, boss: !!opts.boss, bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - spare, snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   drawCards(b, b.handSize);
   bossTurnStart(b);
   b.intents = planEnemy(b.s);

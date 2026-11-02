@@ -131,6 +131,10 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
  * 줄 폭격: 2턴마다 한 줄을 예고하고 다음 적 차례에 그 줄을 친다 → 뭉쳐 있지 않나?
  */
 // 철갑 20 · 2턴마다: 빔 탐색 봇 기준 시작 덱만 25% · 카드 2장 + 부품 1 빌드 88% — 빌드를 갖췄는지 묻는다 (30 · 매 턴은 벽이었다: 0~13%)
+/** 고물상 · 작업대 (R5-2, D-168) — 값은 구조용, 조정은 R7 */
+export const SHOP = { cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 };
+export const FORGE = { repairPct: 0.4 };
+
 /** 밀치기 충돌 피해 (밀린 적과 부딪힌 기물 둘 다) */
 // 18: 조합 봇에서 쇠망치 + 밀치기 카드가 기준의 약 1.9배 (12일 땐 1.5배 — 축 단독 2배 목표, D-154)
 export const PUSH = { collide: 18 };

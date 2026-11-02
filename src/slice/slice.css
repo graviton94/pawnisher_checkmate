@@ -341,3 +341,39 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .pk-flv { margin: 0; font-size: 13px; font-style: italic; color: #c9b88f; }
 @keyframes peekin { from { opacity: 0; transform: translateX(-8px) scale(0.92); } }
 @media (prefers-reduced-motion: reduce) { .peek { animation: none; } }
+/* 출하 지도 · 고물상 · 작업대 (R5, D-168) */
+.map-track { display: flex; align-items: center; justify-content: center; gap: 0; padding: 6px 0; }
+.map-track .tk { width: 24px; height: 24px; flex: none; background: #6f6770; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.map-track .tk.done { background: #5f9a6a; }
+.map-track .tk.now { background: #f4d27a; width: 30px; height: 30px; filter: drop-shadow(0 0 6px rgba(244, 210, 122, 0.8)); }
+.map-track .tk.boss { background: #e0564f; }
+.map-track .tk-line { width: 22px; height: 2px; background: #3a3542; }
+.part-card.mnode { min-height: 0; padding: 12px 10px; gap: 6px; }
+.part-card.mnode .ico { width: 40px; height: 40px; }
+.nd-battle .ico { color: #f2ede4; } .nd-shop .ico { color: #f4d27a; } .nd-forge .ico { color: #ff9a5a; } .nd-check .ico { color: #7ab8ff; } .nd-boss .ico { color: #ff6b5a; }
+.nd-foes { display: flex; gap: 2px; justify-content: center; }
+.nd-foes img { width: 18px; height: 18px; image-rendering: pixelated; }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 6px 0; }
+.shop-grid .cmd.big, .shop-grid .part-card { position: relative; display: grid; grid-template-columns: 1fr; justify-items: center; align-content: start; gap: 4px; padding: 30px 8px 30px; min-height: 0; text-align: center; }
+.shop-grid .cmd .costgear { position: absolute; left: 6px; top: 6px; }
+.shop-grid .cmd .txt { display: grid; gap: 3px; justify-items: center; }
+.shop-grid .cmd b { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; font-size: 15px; white-space: normal; }
+.shop-grid small { font-size: 12px; line-height: 1.35; }
+.price { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 0; font: 700 13px Galmuri14, sans-serif; color: #16141c; background: #e8c060; }
+.price.poor { background: #5a5560; color: #c9c2cc; }
+.price.sold { background: #2a2630; color: #8a8494; }
+.shop-grid .sold { filter: grayscale(1) brightness(0.5); pointer-events: none; }
+.sf-ico { display: block; width: 180px; height: 180px; background: #c89b3c; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
+/* 고물상 한 화면에 (915×412): 4열 작은 칸, 설명 두 줄 */
+.shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.shop-grid .cmd.big, .shop-grid .part-card { padding: 22px 6px 26px; gap: 2px; }
+.shop-grid .cmd .art, .shop-grid .part-card .ico { width: 34px; height: 34px; }
+.shop-grid .cmd .art img { width: 30px; height: 30px; }
+.shop-grid .cmd .costgear img { width: 22px; height: 22px; }
+.shop-grid .cmd b, .shop-grid .part-card b { font-size: 14px; }
+.shop-grid small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; }
+.shop-grid .cmd .axis { display: none; }
+.price { font-size: 12px; padding: 2px 0; }
+
+.shop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.shop-head .btn { min-height: 44px; min-width: 110px; }
