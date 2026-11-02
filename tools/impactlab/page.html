@@ -438,13 +438,19 @@ const FRAG = {};
 function fragsOf(key) { if (FRAG[key]) return FRAG[key]; const src = imgs[key], n = 4, s = src.width / n, out = []; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = s; c.height = s; c.getContext('2d').drawImage(src, -i * s, -j * s); const w = document.createElement('canvas'); w.width = s; w.height = s; const wx = w.getContext('2d'); wx.drawImage(c, 0, 0); wx.globalCompositeOperation = 'source-atop'; wx.fillStyle = '#ffffff'; wx.fillRect(0, 0, s, s); out.push({ c, w, i, j }); } return (FRAG[key] = out); }
 function shatter(g, key, x, y, k, seed, o = {}) {
   if (k <= 0) return;
-  const s = T * 0.86, cx = x * T + T / 2, top = y * T + T * 0.88 - s * 0.94, part = s / 4, power = o.power ?? 1;
+  // 19판: 네모 4×4 대신 들쭉날쭉한 보로노이 조각 (그림 도트 그대로 오려 낸다)
+  const s = T * 0.86, cx = x * T + T / 2, base = y * T + T * 0.88, top = base - s * 0.94, sc = s / 64, power = o.power ?? 1;
+  const list = voronoiShards(key, o.n ?? 14, seed);
   g.save(); g.imageSmoothingEnabled = false;
-  for (const f of fragsOf(key)) {
-    const id = f.j * 4 + f.i; const ox = (f.i - 1.5) * part, oy = (f.j - 1.5) * part; const a = Math.atan2(oy - 6, ox) + (hash(seed + id) - 0.5) * 0.8; const v = (40 + hash(seed + id * 3) * 70) * power;
+  list.forEach((f, id) => {
+    const ox = (f.gx - 32) * sc, oy = (f.gy - 32) * sc; const a = Math.atan2(oy - 6, ox) + (hash(seed + id) - 0.5) * 0.8; const v = (40 + hash(seed + id * 3) * 70) * power * (f.size < 80 ? 1.3 : 1);
     const e = 1 - Math.pow(1 - k, 2.2); const px0 = cx + ox + Math.cos(a) * v * e, py0 = top + s / 2 + oy + Math.sin(a) * v * e * 0.8 + 90 * k * k * power;
-    g.save(); g.translate(q(px0), q(py0)); g.rotate((hash(seed + id * 7) - 0.5) * 6 * e); g.globalAlpha = 1 - cl((k - 0.6) / 0.4); g.drawImage(f.c, -part / 2, -part / 2, part, part); if (o.hot && k < 0.3) { g.globalAlpha = (1 - k / 0.3) * (1 - cl((k - 0.6) / 0.4)); g.drawImage(f.w, -part / 2, -part / 2, part, part); } if (k < 0.25) { g.globalAlpha = (1 - k / 0.25) * 0.9; g.globalCompositeOperation = 'lighter'; g.fillStyle = '#facc15'; g.fillRect(-part / 2, -part / 2, part, 2); } g.restore();
-  }
+    const al = 1 - cl((k - 0.6) / 0.4);
+    g.save(); g.translate(q(px0), q(py0)); g.rotate((hash(seed + id * 7) - 0.5) * 5 * e); g.globalAlpha = al; g.drawImage(f.c, -f.gx * sc, -f.gy * sc, s, s);
+    if (o.hot && k < 0.3) { if (!f.w) { f.w = document.createElement('canvas'); f.w.width = 64; f.w.height = 64; const wx = f.w.getContext('2d'); wx.drawImage(f.c, 0, 0); wx.globalCompositeOperation = 'source-atop'; wx.fillStyle = '#ffffff'; wx.fillRect(0, 0, 64, 64); } g.globalAlpha = al * (1 - k / 0.3); g.drawImage(f.w, -f.gx * sc, -f.gy * sc, s, s); }
+    else if (k < 0.25) { g.globalAlpha = (1 - k / 0.25) * 0.9; g.drawImage(f.edgeC, -f.gx * sc, -f.gy * sc, s, s); }
+    g.restore();
+  });
   g.restore();
 }
 const crackC = document.createElement('canvas'); crackC.width = 128; crackC.height = 128;
@@ -849,7 +855,7 @@ const SCENES = [
         else { chargedPiece(g, 'K0', KK[0], KK[1], seg(t, 1950, 2700), 31, { pal: ['#ffffff', '#cbd5e1', '#64748b'], sx: 1.12 - 0.04 * seg(t, 1950, 2700) + 0.08 * E.inCubic(seg(t, 2450, 2700)), sy: 0.88 + 0.12 * seg(t, 1950, 2700), dx: tremble(t, 0.4 + 1.4 * seg(t, 2300, 2700))[0] }); }
       } else {
         shatter(g, 'K0', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.25, hot: true });
-        burst(g, kx, ky - 10, 40 * (1 - seg(t, 2700, 2950)), 0.2 + 0.6 * seg(t, 2700, 2950), '#e2e8f0', 12);
+        if (t < 2900) burst(g, kx, ky - 10, 40 * (1 - seg(t, 2700, 2950)), 0.2 + 0.6 * seg(t, 2700, 2950), '#e2e8f0', 12);
         shards(g, kx, ky, seg(t, 2700, 4000), 41, 'cool', 24);
         glow(g, kx, ky, 70 * (1 - seg(t, 2700, 3100)), 'rgba(226,232,240,A)', 0.45 * (1 - seg(t, 2700, 3100)));
       }
@@ -996,7 +1002,7 @@ const SCENES = [
         else { chargedPiece(g, 'K1', KK[0], KK[1], seg(t, 1950, 2700), 31, { sx: 1.12 - 0.04 * seg(t, 1950, 2700) + 0.08 * E.inCubic(seg(t, 2450, 2700)), sy: 0.88 + 0.12 * seg(t, 1950, 2700), dx: tremble(t, 0.5 + 2 * seg(t, 2300, 2700))[0] }); }
       } else {
         shatter(g, 'K1', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.4, hot: true });
-        burst(g, kx, ky - 10, 44 * (1 - seg(t, 2700, 2950)), 0.2 + 0.6 * seg(t, 2700, 2950), C.gold, 12);
+        if (t < 2900) burst(g, kx, ky - 10, 44 * (1 - seg(t, 2700, 2950)), 0.2 + 0.6 * seg(t, 2700, 2950), C.gold, 12);
         shards(g, kx, ky, seg(t, 2700, 4000), 41, C.gold, 34);
         const rk = E.outExpo(seg(t, 2700, 3600)); ring(g, kx, ky, 8 + 110 * rk, 8 * (1 - rk), C.gold, 1 - rk);
         glow(g, kx, ky, 80 * (1 - seg(t, 2700, 3100)), 'rgba(255,220,140,A)', 0.5 * (1 - seg(t, 2700, 3100)));
