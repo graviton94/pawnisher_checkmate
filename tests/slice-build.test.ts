@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canPlay, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
-import { BOSS, PUSH, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
+import { BOSS, COMMANDS, PUSH, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
 import type { SlicePartId } from '../src/slice/parts';
 
 const squad = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'P' as const }, { t: 'N' as const }, { t: 'B' as const }];
@@ -229,5 +229,15 @@ describe('밀치기 (D-154)', () => {
     const sim = previewPlay(b, 0, p.id, { x: 1, y: 2 })!;
     const blast = sim.events.find((x) => x.type === 'blast') as { hits: { targetId: number; damage: number }[] };
     expect(blast.hits.find((h) => h.targetId === e.id)!.damage).toBe(PUSH.collide * 2);
+  });
+});
+
+describe('분대에 없는 기물의 카드 (D-164)', () => {
+  it('덱에서 걸러 넣으면 손패에 그 기물의 카드가 없다', () => {
+    const deck: CommandId[] = ['advance', 'advance', 'leap', 'leap', 'rookLine', 'diagonal', 'order'];
+    const squadPB = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'B' as const }];
+    const usable = (id: CommandId) => COMMANDS[id].who === 'any' || squadPB.some((u) => u.t === COMMANDS[id].who);
+    const b = newSliceBattle(squadPB, ['K', 'P'], deck.filter(usable), 3);
+    for (const id of [...b.hand, ...b.draw]) expect(usable(id)).toBe(true);
   });
 });

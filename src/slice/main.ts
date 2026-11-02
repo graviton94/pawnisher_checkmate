@@ -156,6 +156,13 @@ const handDesc = (d: string): string => {
   return m ? `${m[2]}` : d;
 };
 
+/** 지금 분대로 쓸 수 있는 카드인가 (D-164): 그 기물이 분대에 있어야 보상 · 상자에 나온다. 폰 전용 즉시 카드(총진격 · 제물)도 폰이 있어야 */
+const usable = (id: CommandId): boolean => {
+  const c = COMMANDS[id];
+  if (c.who !== 'any') return squad.some((u) => u.t === c.who);
+  return true;
+};
+
 /** 빌드 축 띠 */
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
 /** 손패용 짧은 축 띠: 한 글자 색 칩 (이름은 보상 화면 · 읽기용 라벨에) */
@@ -410,7 +417,8 @@ const start = (i: number): void => {
   stage = i;
   const def = BATTLES[i];
   if (!(i in enemyPick)) enemyPick[i] = def.alt && Math.random() < 0.5 ? def.alt : def.enemy;
-  b = newSliceBattle(squad, enemyPick[i], deck, 100 + i * 17 + Math.floor(Math.random() * 1000), { enemyKingHp: def.kingHp, parts, boss: def.boss, width: def.w, height: def.h, place: def.place });
+  // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
+  b = newSliceBattle(squad, enemyPick[i], deck.filter(usable), 100 + i * 17 + Math.floor(Math.random() * 1000), { enemyKingHp: def.kingHp, parts, boss: def.boss, width: def.w, height: def.h, place: def.place });
   selCard = selPiece = null;
   busy = false;
   turnDmg = 0;
@@ -485,8 +493,10 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     }
     // 같은 카드가 두 번 나오지 않게 (브릿지 카드는 두 축에 걸친다)
     const offers: CommandId[] = [];
-    for (const a of picks) {
-      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id));
+    // 축에 쓸 수 있는 카드가 없으면 다른 축에서 채운다 (3장 유지)
+    for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
+      if (offers.length >= 3) break;
+      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id));
       if (pool.length) offers.push(pool[rng.int(pool.length)]);
     }
     /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
@@ -544,7 +554,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const cards = ids
     .map((id) => {
       const c = COMMANDS[id];
-      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}>${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span></button>`;
+      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}>${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span>${usable(id) ? '' : '<em class="shelved">기물 없음 — 보관 중</em>'}</button>`;
     })
     .join('');
   const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>덱에서 카드 한 장을 영구히 뺍니다.</p>`;
@@ -682,7 +692,7 @@ const recruitPick = (head: string, then: () => void): void => {
 /** 부품 상자 (1판 뒤 — 첫 사기 조합 확정): 부품 + 맞물리는 카드 둘, 셋 중 하나 */
 const kitPick = (head: string, then: () => void): void => {
   const rng = new Rng((Date.now() ^ 0x7a2) & 0xffff);
-  const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)));
+  const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)) && k.cards.every(usable));
   const offers: typeof KITS = [];
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
   const el = openOverlay(`${head}<p>부품 하나와 맞물리는 카드 두 장이 함께 들어옵니다. 하나를 고릅니다.</p><div class="part-cards">${offers
