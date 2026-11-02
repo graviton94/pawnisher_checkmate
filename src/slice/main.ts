@@ -11,7 +11,6 @@ import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { AXIS_NAMES, BOSS, COMMANDS, KITS, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
-import { shapeHtml } from './shape';
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { REST, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
@@ -140,8 +139,8 @@ const cardHtml = (id: CommandId, i: number): string => {
 const cardArt = (id: CommandId): string => {
   const c = COMMANDS[id];
   if (c.who === 'any') return `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>`;
-  if (c.kind === 'move' || c.kind === 'march') return `<span class="art mvplate">${shapeHtml(c.who)}</span>`;
-  return `<span class="art">${pieceImg(c.who, 0, 'large', 40)}</span>`;
+  // 기물 아이콘 (D-162 — 행마 판보다 「누가 움직이나」가 먼저 읽힌다. 범위는 판 위 표시가 보여 준다)
+  return `<span class="art">${pieceImg(c.who, 0, 'large', 44)}</span>`;
 };
 
 /**
@@ -149,9 +148,7 @@ const cardArt = (id: CommandId): string => {
  * have를 주면 지금 남은 태엽보다 많은 열쇠는 빈 열쇠로 (얼마나 모자란지 보인다). 0이면 빈 열쇠 + 0.
  */
 const keysHtml = (n: number, have = Infinity): string =>
-  n <= 0
-    ? '<span class="keys free" aria-label="태엽 0"><img src="ui/hud/key-spent.png" alt=""><b>0</b></span>'
-    : `<span class="keys" aria-label="태엽 ${n}">${Array.from({ length: n }, (_, k) => `<img src="ui/hud/key-${k < have ? 'full' : 'spent'}.png" alt="">`).join('')}</span>`;
+  `<span class="costgear${n > have ? ' short' : ''}" aria-label="태엽 ${n}"><img src="ui/board/badge-c${Math.max(0, Math.min(9, n))}.png" alt=""></span>`;
 
 /** 빌드 축 띠 */
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
@@ -184,7 +181,8 @@ const refresh = (): void => {
   $('parts').hidden = !parts.length;
   $('boss').hidden = !b.boss;
   if (b.boss) $('boss').innerHTML = `<b>반장 규칙</b><span>철갑 ${BOSS.plate} · ${BOSS.plateEvery}턴마다 다시</span><span${b.bombRow !== null ? ' class="hot"' : ''}>줄 폭격 −${BOSS.bombDamage} · ${b.bombRow !== null ? '턴 끝에 붉은 줄!' : `${BOSS.bombEvery}턴마다`}</span>`;
-  $('vials').innerHTML = Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<img class="${i < b.ap ? 'full' : 'spent'}" src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt="">`).join('');
+  // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
+  $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<i class="seg${i < b.ap ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}"><img src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt=""></i>`).join('')}<b>${b.ap}/${b.apMax}</b>`;
   $('coins').innerHTML = `<span class="lbl">나사</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b>${b.coins * SLICE.coinValue}</b>`;
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
   $('btn-rewind').innerHTML = `◀◀ 되감기 <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
@@ -485,12 +483,11 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id));
       if (pool.length) offers.push(pool[rng.int(pool.length)]);
     }
-    const lost = BATTLES[stage].enemy.length;
     /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
     const showReward = (): void => {
       const el = openOverlay(`
-        <h2>통과 — 나사 +${earned} <small class="dim">(남은 칸 ${b.coins} × ${SLICE.coinValue}${overGold ? ` + 넘친 피해 ${b.overkill} → ${overGold}` : ''})</small></h2>
-        <p>명령 카드 하나를 덱에 넣습니다. (흑 ${lost}기 처치)</p>
+        <h2>통과 — 나사 +${earned}</h2>
+        <p>명령 카드 하나를 덱에 넣거나, 아래 셋 중 하나를 고릅니다.</p>
         <div class="reward-cards">${offers
           .map((id) => {
             const c = COMMANDS[id];
@@ -501,8 +498,8 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
         <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
-          <button class="btn" type="button" data-remove>카드 빼기 (카드 대신)</button>
-          <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${[...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name}을(를) HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}% (카드 대신)</button>
+          <button class="btn" type="button" data-remove>카드 빼기</button>
+          <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${[...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name}을(를) HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
       el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
         btn.addEventListener('click', () => {
@@ -723,7 +720,6 @@ const help = (): void => {
     <ul class="help">
       <li><b>카드</b> → <b>기물</b> → <b>갈 칸</b> 순서로 누릅니다. 기물을 먼저 누르면 맞는 카드가 골라집니다.</li>
       <li>움직인 기물은 내려앉은 자리에서 <b>다음에 갈 수 있는 칸</b>을 공격합니다. 과녁 = 공격 · 금색 = 처치.</li>
-      <li>카드의 작은 판: 가운데 흰 칸 = 이 기물 · <b style="color:#ff8a6a">붉은 칸</b> = 가서 치는 범위 · <b style="color:#4ec3d6">청록</b> = 이동만 · 줄 = 막힐 때까지 이어짐 (위쪽이 앞).</li>
       <li>카드 왼쪽 숫자는 <b>태엽</b> 비용입니다. 한 턴에 ${SLICE.ap}. 같은 기물을 여러 번 움직일 수 있습니다.</li>
       <li>한 턴 안에서 처치할 때마다 <b>연쇄</b> 배율이 오릅니다 (×${chainMult(1).toFixed(2)} → ×${chainMult(2).toFixed(2)} …).</li>
       <li><b>붉은 칸</b>은 다음 차례에 상대가 공격할 수 있는 범위입니다. 번호는 움직일 순서입니다. 그 적을 먼저 쓰러뜨리거나, 비키거나, 길을 막으면 공격이 무산됩니다.</li>

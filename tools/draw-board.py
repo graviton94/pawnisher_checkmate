@@ -161,15 +161,18 @@ def target(kill, ally=True):
 
 
 DIGITS = {
+    '0': ['###', '#.#', '#.#', '#.#', '###'],
     '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['##.', '..#', '.#.', '#..', '###'], '3': ['##.', '..#', '.#.', '..#', '##.'],
     '4': ['#.#', '#.#', '###', '..#', '..#'], '5': ['###', '#..', '##.', '..#', '##.'], '6': ['.##', '#..', '###', '#.#', '###'],
     '7': ['###', '..#', '.#.', '.#.', '.#.'], '8': ['###', '#.#', '###', '#.#', '###'], '9': ['###', '#.#', '###', '..#', '##.'],
 }
 
 
-def badge(ally, n):
-    """순번 배지 11×11: 톱니 토큰 + 어두운 판 + 3×5 도트 숫자 (글꼴 대신 도트로 — 판과 같은 격자)"""
-    im = ring(11, 3.3, 4.7, 'CY' if ally else 'CR', teeth=8, tooth_r=1.0, shade='CY2' if ally else 'CR2')
+def badge(ally, n, cost=False):
+    """순번 배지 11×11: 톱니 토큰 + 어두운 판 + 3×5 도트 숫자 (글꼴 대신 도트로 — 판과 같은 격자).
+    cost=True: 카드 태엽 비용 — 같은 톱니를 황동(UI 장치 색)으로 (D-162)"""
+    main, shade = ('BR', 'BR2') if cost else (('CY', 'CY2') if ally else ('CR', 'CR2'))
+    im = ring(11, 3.3, 4.7, main, teeth=8, tooth_r=1.0, shade=shade)
     for y in range(2, 9):
         for x in range(2, 9):
             if (x - 5) ** 2 + (y - 5) ** 2 <= 11:
@@ -177,7 +180,7 @@ def badge(ally, n):
     for y, row in enumerate(DIGITS[str(n)]):
         for x, ch in enumerate(row):
             if ch == '#':
-                dot(im, 4 + x, 3 + y, 'W' if ally else 'CR')
+                dot(im, 4 + x, 3 + y, 'W' if (ally or cost) else 'CR')
     return im
 
 
@@ -262,6 +265,8 @@ move_dot().save(f'{OUT}/move-dot.png')
 target(False).save(f'{OUT}/target.png')
 target(True).save(f'{OUT}/target-kill.png')
 target(False, False).save(f'{OUT}/target-enemy.png')
+for n in range(0, 10):
+    badge(True, n, cost=True).save(f'{OUT}/badge-c{n}.png')
 for n in range(1, 10):
     badge(True, n).save(f'{OUT}/badge-a{n}.png')
     badge(False, n).save(f'{OUT}/badge-e{n}.png')
