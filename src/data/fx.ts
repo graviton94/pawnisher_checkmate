@@ -104,7 +104,19 @@ export const IMPACT = {
   /** 처치: 기물 그림 16조각 · 불씨 · 도트 고리 */
   shatter: { ms: 900, embers: 22, ringMs: 520 },
   /** 킹 마무리 (D-180): 멈춤 → 총알 시간(빛의 금) → 슬로 산산이 → 왕관. 반장이면 영화 띠 */
-  finisher: { hold: 120, crack: 650, shatterMs: 1500, crownMs: 1100, bossBars: 24 },
+  finisher: { hold: 120, crack: 650, charge: 750, shatterMs: 1500, crownMs: 1100, bossBars: 24 },
+  /** 처치 조각 수 (보로노이 — 그림을 들쭉날쭉하게 오린다, D-184) */
+  shards: 14,
+  /** 내 기물 피격 (연구소 「내가 맞을 때」): 붉은 실루엣 · 좌우 감쇠 떨림 */
+  hurt: { flash: 90, tremble: 500, amp: 0.06 },
+  /** 강타 (최대 HP의 heavyAt 이상): 붉은 컷 · 정지 두 배 · 반 칸 밀림 → 출렁 복귀 · 가장자리 맥 두 번 */
+  heavy: { heavyAt: 0.4, cut: 60, knock: 0.25, knockMs: 140, back: 420 },
+  /** 밀치기 충돌: 감속 미끄러짐 → 가로 납작 → 출렁 */
+  push: { slide: 280, squash: 0.65, wobble: 550 },
+  /** 연쇄 (같은 턴 처치마다): 정지가 길어진다 ×(1 + streak·k), 최대 max배 */
+  chain: { k: 0.55, max: 2.4 },
+  /** 적 예고 과녁: 2배 크기 · −40°에서 떨어져 철컥 박힌다 */
+  aim: { drop: 160, fromScale: 2, fromAngle: -40 },
   /** 원수 낙하: 그림자 · 낙하 · 판 물결 */
   drop: { shadow: 600, fall: 120, ripple: 900 },
   /** 자원 희생: 웅크림 · 도약 · 킹 미끄러짐 */

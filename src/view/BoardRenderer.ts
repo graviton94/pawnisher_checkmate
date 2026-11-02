@@ -8,7 +8,7 @@ import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
 import { FX_CAMERA, IMPACT, MOVE_MS, TURN_SUMMARY } from '../data/fx';
-import { crackPath, drawCrack, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
+import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
@@ -355,7 +355,7 @@ class BoardScene extends Phaser.Scene {
   }
 
   /** 순번 배지 (톱니 토큰 + 도트 숫자, 11×11): 내 예약 = 청록, 적 = 진홍. 칸 왼쪽 위에 걸친다 */
-  private badge(pos: Pos, n: number, alpha = 1, enemy = false): void {
+  private badge(pos: Pos, n: number, alpha = 1, enemy = false): Phaser.GameObjects.Image {
     const t = this.tile;
     const d = t / BOARD_DOTS;
     const w = this.world(pos);
@@ -366,6 +366,20 @@ class BoardScene extends Phaser.Scene {
       .setDepth(4)
       .setAlpha(alpha);
     this.dynamic.push(img);
+    return img;
+  }
+
+  /** 적 예고가 바뀐 순간만 과녁이 떨어져 철컥 박힌다 (D-184, 연구소 「적 예고」) */
+  private aimSig = '';
+  private dropAim(img: Phaser.GameObjects.Image, i: number): void {
+    if (this.calm) return;
+    const A = IMPACT.aim;
+    const w = img.displayWidth;
+    const h = img.displayHeight;
+    const x = img.x;
+    const y = img.y;
+    img.setOrigin(0.5).setPosition(x + w / 2, y + h / 2).setAngle(A.fromAngle).setDisplaySize(w * A.fromScale, h * A.fromScale).setAlpha(0);
+    this.tweens.add({ targets: img, angle: 0, displayWidth: w, displayHeight: h, alpha: img.alpha || 1, delay: i * 90, duration: A.drop, ease: 'Back.easeOut', onComplete: () => sfx('land') });
   }
 
   /** 흐르는 화살표 예약 (update가 매 프레임 그린다) */
@@ -444,11 +458,15 @@ class BoardScene extends Phaser.Scene {
 
     // 적 의도 예고: 지금 제출하면 적이 둘 수 (옅은 붉은 흐르는 화살표 + 붉은 순번). 맞을 내 기물은 아래 HP 게이지로 (D-081)
     // 한 번에 한 겹: 내 기물을 고르는 동안은 거의 숨긴다
+    const aimSig = m.intent ? JSON.stringify(m.intent.plan) : '';
+    const newAim = aimSig !== '' && aimSig !== this.aimSig;
+    this.aimSig = aimSig;
     if (m.intent) {
       const faint = m.selectedId !== null ? 0.12 : 0.6;
       m.intent.plan.forEach((st, i) => {
         for (const a of stepArrows(m.intent!.state, st)) this.arrow(a.from, a.to, a.knight, C.crimson, faint);
-        this.badge(stepBadge(m.intent!.state, m.intent!.state, st), i + 1, faint + 0.25, true);
+        const bimg = this.badge(stepBadge(m.intent!.state, m.intent!.state, st), i + 1, faint + 0.25, true);
+        if (newAim) this.dropAim(bimg, i);
       });
     }
 
@@ -576,8 +594,10 @@ class BoardScene extends Phaser.Scene {
   /** 피격 한 건: 흰 점멸 · 스파크 · 큰 피해 숫자 · HP · 밀려남 */
   private applyHit(ts: PieceSprite, h: { targetId: number; hpAfter: number; killed?: boolean; pushedTo?: Pos }): void {
     const t = this.tile;
-    ts.glyph.setTintFill(0xffffff);
-    this.time.delayedCall(70, () => ts.glyph.clearTint());
+    const mine = ts.piece.side === 0;
+    // 내 기물은 붉은 실루엣 (연구소 「내가 맞을 때」), 적은 흰 섬광
+    ts.glyph.setTintFill(mine ? 0xff4b4b : 0xffffff);
+    this.time.delayedCall(mine ? IMPACT.hurt.flash : 70, () => ts.glyph.clearTint());
     // 타격 불꽃 (D-180): 흰 심 → 금 가시 → 떨어지는 팔 → 불똥 (도트 별)
     {
       const sg = this.add.graphics().setDepth(7.5);
@@ -591,9 +611,18 @@ class BoardScene extends Phaser.Scene {
     // 히트스톱 (D-142): 맞은 몫만큼 화면이 잠깐 멈춘다 — 킹 처치는 길게
     if (!this.calm) {
       const S = IMPACT.stop;
-      const stop = h.killed ? (ts.piece.type === 'K' ? S.king : S.kill) : Math.min(S.max, S.min + (dealt / ts.piece.maxHp) * (S.max - S.min) * 2);
+      // 연쇄 (D-184): 같은 턴 처치가 이어질수록 정지가 길어진다 · 강타는 두 배
+      const chainMul = Math.min(IMPACT.chain.max, 1 + IMPACT.chain.k * this.killStreak);
+      const heavyHit = !h.killed && dealt / ts.piece.maxHp >= IMPACT.heavy.heavyAt;
+      const stop = h.killed ? (ts.piece.type === 'K' ? S.king : S.kill * chainMul) : Math.min(S.max, S.min + (dealt / ts.piece.maxHp) * (S.max - S.min) * 2) * (heavyHit ? 2 : 1);
       this.tweens.timeScale = 0.05;
       window.setTimeout(() => (this.tweens.timeScale = 1), stop);
+    }
+    if (h.killed) this.killStreak++;
+    // 강타 (D-184): 붉은 컷 한 프레임 · 가장자리 붉은 맥 두 번
+    if (!this.calm && !h.killed && dealt / ts.piece.maxHp >= IMPACT.heavy.heavyAt) {
+      this.cameras.main.flash(IMPACT.heavy.cut, 170, 20, 30);
+      if (mine) window.setTimeout(() => vignette('bad', 0.8), 360);
     }
     this.drawHp(ts, h.hpAfter, h.hpAfter);
     ts.piece = { ...ts.piece, hp: h.hpAfter };
@@ -633,40 +662,94 @@ class BoardScene extends Phaser.Scene {
       onComplete: () => g.destroy(),
     });
     if (h.pushedTo) {
+      // 밀치기 (D-184): 감속하며 미끄러져 → 멈추는 순간 가로로 납작 → 출렁 · 양옆 먼지
       const w = this.world(h.pushedTo);
-      this.tweens.add({ targets: ts.root, x: w.x, y: w.y, duration: 160, ease: 'Quad.easeOut' });
+      const P = IMPACT.push;
+      void this.tween({ targets: ts.root, x: w.x, y: w.y, duration: P.slide / this.speed, ease: 'Cubic.easeOut' }).then(() => {
+        if (!ts.root.active || this.calm) return;
+        const dg = this.add.graphics().setDepth(6.4);
+        const dpen = new PixelPen(dg, t / BOARD_DOTS);
+        this.tweens.addCounter({ from: 0, to: 1, duration: P.wobble / this.speed, onUpdate: (tw) => { if (!ts.root.active) return; const k = tw.getValue() ?? 0; const a = 1 - easeOutElastic(k); this.applyPose(ts, w.x, w.y, { dx: 0, dy: 0, sx: 1 - (1 - P.squash) * a, sy: 1 + (1 - P.squash) * 0.6 * a }); dg.clear(); drawSlamDust(dpen, w.x + t / 2, w.y + t * 0.9, k); }, onComplete: () => dg.destroy() });
+      });
+    } else if (!h.killed && !this.calm && dealt / ts.piece.maxHp >= IMPACT.heavy.heavyAt) {
+      // 강타: 반 칸 밀렸다(내 기물은 아래로, 적은 위로) 출렁 복귀
+      const H = IMPACT.heavy;
+      const bx = ts.root.x;
+      const by = ts.root.y;
+      const dir = mine ? 1 : -1;
+      this.tweens.addCounter({ from: 0, to: 1, duration: (H.knockMs + H.back) / this.speed, onUpdate: (tw) => { if (!ts.root.active) return; const ms = (tw.getValue() ?? 0) * (H.knockMs + H.back); const out = ms < H.knockMs ? 1 - (1 - ms / H.knockMs) ** 3 : 1 - easeOutElastic((ms - H.knockMs) / H.back); this.applyPose(ts, bx, by + dir * t * H.knock * out, { dx: 0, dy: 0, sx: 1 + 0.12 * out, sy: 1 - 0.12 * out }); } });
     } else if (!h.killed && !this.calm) {
       // 찌그러짐 → 출렁 복귀 (D-180)
       const Q = IMPACT.squash;
       const bx = ts.root.x - (t / 2) * (1 - ts.root.scaleX);
       const by = ts.root.y - t * 0.85 * (1 - ts.root.scaleY);
-      this.tweens.addCounter({ from: 0, to: 1, duration: Q.ms / this.speed, onUpdate: (tw) => { if (!ts.root.active) return; const a = 1 - easeOutElastic(tw.getValue() ?? 0); this.applyPose(ts, bx, by, { dx: 0, dy: 0, sx: 1 + (Q.sx - 1) * a, sy: 1 - (1 - Q.sy) * a }); } });
+      this.tweens.addCounter({ from: 0, to: 1, duration: Q.ms / this.speed, onUpdate: (tw) => { if (!ts.root.active) return; const a = 1 - easeOutElastic(tw.getValue() ?? 0); const k = tw.getValue() ?? 0; const tr = mine ? Math.sin(k * 40) * t * IMPACT.hurt.amp * (1 - k) : 0; this.applyPose(ts, bx + tr, by, { dx: 0, dy: 0, sx: 1 + (Q.sx - 1) * a, sy: 1 - (1 - Q.sy) * a }); } });
     }
   }
 
+  /** 보로노이 조각 (D-184): 기물 그림을 씨앗 n개로 나눠 들쭉날쭉한 조각 텍스처로 오린다 (텍스처마다 한 번) */
+  private shardCache = new Map<string, { key: string; cx: number; cy: number; size: number }[]>();
+  private shardsOf(key: string, n: number): { key: string; cx: number; cy: number; size: number }[] {
+    const hit = this.shardCache.get(key);
+    if (hit) return hit;
+    const src = this.textures.get(key).getSourceImage() as HTMLImageElement;
+    const W = src.width;
+    const H = src.height;
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    const cx0 = cv.getContext('2d')!;
+    cx0.drawImage(src, 0, 0);
+    const data = cx0.getImageData(0, 0, W, H).data;
+    let x0 = W, x1 = 0, y0 = H, y1 = 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 0) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const seeds = Array.from({ length: n }, (_, i) => [x0 + hashN(5 + i * 3) * (x1 - x0), y0 + hashN(5 + i * 7 + 1) * (y1 - y0)]);
+    const groups: number[][] = seeds.map(() => []);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        if (data[(y * W + x) * 4 + 3] === 0) continue;
+        let best = 0, bd = 1e9;
+        seeds.forEach(([a2, b2], i) => { const dd = (a2 - x) ** 2 + (b2 - y) ** 2 * 0.8; if (dd < bd) { bd = dd; best = i; } });
+        groups[best].push(y * W + x);
+      }
+    const out = groups
+      .filter((gr) => gr.length > 6)
+      .map((gr, gi) => {
+        const c = document.createElement('canvas');
+        c.width = W;
+        c.height = H;
+        const cx = c.getContext('2d')!;
+        const img = cx.createImageData(W, H);
+        let sx = 0, sy = 0;
+        for (const idx of gr) { for (let k = 0; k < 4; k++) img.data[idx * 4 + k] = data[idx * 4 + k]; sx += idx % W; sy += Math.floor(idx / W); }
+        cx.putImageData(img, 0, 0);
+        const tk = `${key}#shard${gi}`;
+        if (!this.textures.exists(tk)) this.textures.addCanvas(tk, c);
+        return { key: tk, cx: sx / gr.length / W, cy: sy / gr.length / H, size: gr.length };
+      });
+    this.shardCache.set(key, out);
+    return out;
+  }
+
   /**
-   * 처치 (D-180): 기물 그림이 16조각으로 부서져 돌며 날아가고, 불씨가 식으며 흩어지고, 도트 고리가 번진다.
-   * slow = 슬로 배율 (킹 마무리), power = 날아가는 힘
+   * 처치 (D-180 → D-184): 기물 그림이 들쭉날쭉한 보로노이 조각으로 부서져 돌며 날아가고, 불씨가 식으며 흩어지고, 도트 고리가 번진다.
+   * slow = 슬로 배율 (킹 마무리), power = 날아가는 힘, hot = 하얗게 달군 조각으로 시작, cool = 은빛 불씨 (내 킹)
    */
-  private shatterPiece(s: PieceSprite, slow = 1, power = 1): Promise<void> {
+  private shatterPiece(s: PieceSprite, slow = 1, power = 1, o: { hot?: boolean; cool?: boolean } = {}): Promise<void> {
     const t = this.tile;
     const key = s.glyph.texture.key;
-    const W0 = (this.textures.get(key).getSourceImage() as HTMLImageElement).width;
-    const n = 4;
-    const part = W0 / n;
     const size = t * 0.82;
     const gx = s.root.x + t / 2;
     const gy = s.root.y + t * 0.43;
     const frags: { img: Phaser.GameObjects.Image; x: number; y: number; a: number; v: number; r: number }[] = [];
-    for (let j = 0; j < n; j++)
-      for (let i = 0; i < n; i++) {
-        const id = j * n + i;
-        const x = gx - size / 2 + ((i + 0.5) * size) / n;
-        const y = gy - size / 2 + ((j + 0.5) * size) / n;
-        const img = this.add.image(x, y, key).setDepth(6.6).setDisplaySize(size, size).setCrop(i * part, j * part, part, part).setOrigin((i + 0.5) / n, (j + 0.5) / n);
-        const a = Math.atan2(y - gy - 4, x - gx) + (hashN(31 + id) - 0.5) * 0.8;
-        frags.push({ img, x, y, a, v: (t * 0.6 + hashN(31 + id * 3) * t * 1.1) * power, r: (hashN(31 + id * 7) - 0.5) * 6 });
-      }
+    this.shardsOf(key, IMPACT.shards).forEach((sh, id) => {
+      const x = gx - size / 2 + sh.cx * size;
+      const y = gy - size / 2 + sh.cy * size;
+      const img = this.add.image(x, y, sh.key).setDepth(6.6).setDisplaySize(size, size).setOrigin(sh.cx, sh.cy);
+      if (o.hot) img.setTintFill(0xffffff);
+      const a = Math.atan2(y - gy - 4, x - gx) + (hashN(31 + id) - 0.5) * 0.8;
+      frags.push({ img, x, y, a, v: (t * 0.6 + hashN(31 + id * 3) * t * 1.1) * power * (sh.size < 600 ? 1.3 : 1), r: (hashN(31 + id * 7) - 0.5) * 5 });
+    });
     const g = this.add.graphics().setDepth(6.7);
     const pen = new PixelPen(g, t / BOARD_DOTS);
     const total = (IMPACT.shatter.ms * slow) / this.speed;
@@ -682,11 +765,12 @@ class BoardScene extends Phaser.Scene {
           for (const f of frags) {
             f.img.setPosition(f.x + Math.cos(f.a) * f.v * e, f.y + Math.sin(f.a) * f.v * e * 0.8 + t * 1.4 * k * k * power);
             f.img.setRotation(f.r * e).setAlpha(1 - Math.max(0, (k - 0.6) / 0.4));
+            if (o.hot && k > 0.22) f.img.clearTint();
           }
           g.clear();
-          drawEmbers(pen, gx, gy, k, seed, IMPACT.shatter.embers, power);
+          drawEmbers(pen, gx, gy, k, seed, IMPACT.shatter.embers, power, o.cool ? coolRamp : undefined);
           const rk = Math.min(1, k * (IMPACT.shatter.ms / IMPACT.shatter.ringMs));
-          drawRing(pen, gx, gy + t * 0.1, t * 0.15 + t * 1.1 * (1 - (1 - rk) ** 3), 0xfacc15, 1 - rk);
+          drawRing(pen, gx, gy + t * 0.1, t * 0.15 + t * 1.1 * (1 - (1 - rk) ** 3), o.cool ? 0xcbd5e1 : 0xfacc15, 1 - rk);
         },
         onComplete: () => {
           for (const f of frags) f.img.destroy();
@@ -697,43 +781,53 @@ class BoardScene extends Phaser.Scene {
     );
   }
 
+  /** 같은 턴 처치 수 (연쇄 정지가 길어진다, D-184) */
+  private killStreak = 0;
+
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
   bossFinish = false;
 
   /**
-   * 킹 마무리 (D-180): 멈춤 → 총알 시간(킹 그림 위에서 빛의 금이 자란다 · 카메라가 천천히 다가간다)
-   * → 슬로로 산산이 → 왕관이 솟았다 떨어져 두 번 튄다. 반장이면 위아래 영화 띠.
+   * 킹 마무리 (D-180 → D-184, 연구소 18 · 19판): 멈춤 → 총알 시간 — 몸이 점점 빨라지는 점멸로 번쩍이고, 빛 도트가 가슴으로 빨려 들며
+   * 심이 커지고, 끝에 하얗게 달아오른다 → 하얀 조각으로 터진다(보로노이) → 왕관이 솟았다 떨어져 두 번 튄다. 반장이면 영화 띠.
+   * mine = 내 킹 (같은 문법, 은빛 · 흔들림 2/3 — 덜 아프게)
    */
-  private async finisher(s: PieceSprite): Promise<void> {
+  private async finisher(s: PieceSprite, mine = false): Promise<void> {
     const t = this.tile;
     const F = IMPACT.finisher;
-    const bars = this.bossFinish && !this.calm ? letterbox(F.bossBars) : null;
+    const pal = mine ? [0xffffff, 0xcbd5e1, 0x64748b] : [0xffffff, 0xfff3b0, 0xfacc15];
+    const bars = (this.bossFinish || mine) && !this.calm ? letterbox(F.bossBars) : null;
     await this.after(F.hold / this.speed);
     const d = t / BOARD_DOTS;
-    const path = crackPath(this.pieceCells(s.glyph.texture.key), s.piece.id * 7 + 3);
-    const g = this.add.graphics().setDepth(6.5);
+    const g = this.add.graphics().setDepth(6.9);
     const pen = new PixelPen(g, d);
-    if (!this.calm) this.cameras.main.zoomTo(this.dpr * 1.25, F.crack / this.speed, 'Sine.easeInOut', true);
-    if (!this.calm) this.cameras.main.pan(s.root.x + t / 2, s.root.y + t / 2, F.crack / this.speed, 'Sine.easeInOut', true);
+    if (!this.calm) this.cameras.main.zoomTo(this.dpr * (mine ? 1.18 : 1.25), F.charge / this.speed, 'Sine.easeInOut', true);
+    if (!this.calm) this.cameras.main.pan(s.root.x + t / 2, s.root.y + t / 2, F.charge / this.speed, 'Sine.easeInOut', true);
     const x0 = s.root.x;
+    // 몸 위에 겹친 흰 실루엣 (점멸 · 달아오름)
+    const glow = this.add.image(s.glyph.x, s.glyph.y, s.glyph.texture.key).setDisplaySize(s.glyph.displayWidth, s.glyph.displayHeight).setTintFill(pal[0]).setAlpha(0);
+    s.root.add(glow);
+    const cx = s.root.x + t / 2;
+    const cy = s.root.y + t * 0.45;
     await new Promise<void>((done) =>
       this.tweens.addCounter({
         from: 0,
         to: 1,
-        duration: F.crack / this.speed,
+        duration: F.charge / this.speed,
         onUpdate: (tw) => {
           const k = tw.getValue() ?? 0;
+          const on = ((k * k * 7) % 1) < 0.45;
+          glow.setAlpha(k > 0.88 ? (k - 0.88) / 0.12 : on ? 0.18 + 0.5 * k : 0);
           g.clear();
-          drawCrack(pen, s.root.x, s.root.y, path, k * k * k);
-          if (!this.calm) s.root.x = x0 + (Math.random() - 0.5) * d * (0.4 + 1.6 * k);
-          s.glyph.setTint(k > 0.5 && Math.floor(k * 20) % 2 ? 0xffd0c0 : 0xffffff);
+          drawCharge(pen, s.root.x + t / 2, cy, t * 0.9, k, s.piece.id * 7 + 3, pal, on);
+          if (!this.calm) s.root.x = x0 + (Math.random() - 0.5) * d * (0.4 + (mine ? 1.0 : 1.6) * k);
         },
         onComplete: () => (g.destroy(), (s.root.x = x0), done()),
       }),
     );
     sfx('kill');
-    this.shake(500, 0.01);
-    const gx = s.root.x + t / 2;
+    this.shake(500, mine ? 0.007 : 0.01);
+    const gx = cx;
     const gy = s.root.y + t * 0.3;
     const floor = s.root.y + t * 0.85;
     const crownG = this.add.graphics().setDepth(6.8);
@@ -746,6 +840,7 @@ class BoardScene extends Phaser.Scene {
         onUpdate: (tw) => {
           const k = tw.getValue() ?? 0;
           crownG.clear();
+          if (k < 0.25) drawSpark(cpen, gx, cy, t * 0.7, k / 0.25);
           let x = gx + t * 0.7 * (1 - (1 - Math.min(1, k / 0.72)) ** 3);
           let y: number;
           if (k < 0.72) {
@@ -762,7 +857,7 @@ class BoardScene extends Phaser.Scene {
         onComplete: () => done(),
       }),
     );
-    const s0 = this.shatterPiece(s, F.shatterMs / IMPACT.shatter.ms, 1.3);
+    const s0 = this.shatterPiece(s, F.shatterMs / IMPACT.shatter.ms, 1.3, { hot: true, cool: mine });
     s.root.destroy();
     this.sprites.delete(s.piece.id);
     await Promise.all([s0, crown]);
@@ -990,6 +1085,7 @@ class BoardScene extends Phaser.Scene {
     // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
     const cur: BattleState = { ...this.state };
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
+    this.killStreak = 0;
     for (const e of events) {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
@@ -1212,15 +1308,15 @@ class BoardScene extends Phaser.Scene {
       const deaths = e.hits.filter((h) => h.killed).map((h) => this.sprites.get(h.targetId)).filter((s): s is PieceSprite => !!s);
       if (deaths.length) {
         sfx('kill');
-        // 킹 마무리 (D-180): 적 킹이면 총알 시간 · 빛의 금 · 슬로 산산이 · 왕관
-        const king = deaths.find((s) => s.piece.type === 'K' && s.piece.side === 1);
+        // 킹 마무리 (D-180 → D-184): 적 킹은 금빛, 내 킹은 은빛으로 같은 문법 — 응축 → 폭발 → 왕관
+        const king = deaths.find((s) => s.piece.type === 'K');
         const rest = deaths.filter((s) => s !== king);
         const ashes = rest.map((s) => this.shatterPiece(s));
         for (const s of rest) {
           s.root.destroy();
           this.sprites.delete(s.piece.id);
         }
-        if (king) await this.finisher(king);
+        if (king) await this.finisher(king, king.piece.side === 0);
         await Promise.race([Promise.all(ashes), this.after(420)]);
       }
       order.destroy();
@@ -1343,6 +1439,7 @@ export class BoardRenderer implements BoardView {
   setNemesis(id: number | null): void {
     this.scene.nemesisId = id;
   }
+  /** 같은 턴 처치 수 (연쇄 정지가 길어진다, D-184) */
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
   setBossFinish(on: boolean): void {
     this.scene.bossFinish = on;

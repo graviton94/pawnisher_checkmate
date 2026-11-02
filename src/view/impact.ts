@@ -8,6 +8,9 @@ import { PixelPen } from './pixel';
 /** 불씨 색 단계: 흰 → 연노랑 → 금 → 주황 → 진홍 → 검붉음 */
 export const RAMP = [0xffffff, 0xfff3b0, 0xfacc15, 0xf59e0b, 0xe5262f, 0x7a1218, 0x2a0a0d];
 export const ramp = (k: number): number => RAMP[Math.min(RAMP.length - 1, Math.max(0, Math.floor(k * RAMP.length)))];
+/** 차가운 단계 (내 킹 — 덜 아프게, D-184): 흰 → 은 → 잿빛 */
+export const COOL = [0xffffff, 0xe2e8f0, 0xcbd5e1, 0x94a3b8, 0x64748b, 0x475569, 0x1e293b];
+export const coolRamp = (k: number): number => COOL[Math.min(COOL.length - 1, Math.max(0, Math.floor(k * COOL.length)))];
 
 /** 결정론 잡음 */
 export const hash = (n: number): number => {
@@ -54,7 +57,7 @@ export const drawSpark = (pen: PixelPen, x: number, y: number, r: number, k: num
 };
 
 /** 불씨 파편: 색이 식어 가며 끌림 · 중력 (n개, power 배) */
-export const drawEmbers = (pen: PixelPen, x: number, y: number, k: number, seed: number, n = 20, power = 1): void => {
+export const drawEmbers = (pen: PixelPen, x: number, y: number, k: number, seed: number, n = 20, power = 1, rp: (k: number) => number = ramp): void => {
   if (k <= 0 || k >= 1) return;
   for (let i = 0; i < n; i++) {
     const a = hash(seed + i) * Math.PI * 2;
@@ -63,7 +66,7 @@ export const drawEmbers = (pen: PixelPen, x: number, y: number, k: number, seed:
     const q = k / life;
     if (q >= 1) continue;
     const e = 1 - (1 - q) ** 2;
-    pen.px(x + Math.cos(a) * v * e, y + Math.sin(a) * v * e * 0.7 + 60 * q * q * power, ramp(q * 0.95), 1, hash(seed + i * 7) > 0.7 ? 2 : 1);
+    pen.px(x + Math.cos(a) * v * e, y + Math.sin(a) * v * e * 0.7 + 60 * q * q * power, rp(q * 0.95), 1, hash(seed + i * 7) > 0.7 ? 2 : 1);
   }
 };
 
@@ -158,4 +161,31 @@ export const rippleOffset = (dist: number, ms: number, tile: number): number => 
   if (dist === 0) return tile * 0.06 * decay;
   if (local > 0 && local < 1.2) return (-tile * 0.12 * Math.sin((Math.PI * local) / 1.2) * decay) / (0.6 + dist * 0.4);
   return 0;
+};
+
+/**
+ * 응축 (킹 마무리, D-184 — 연구소 18판): 둘레의 빛 도트가 가슴 한가운데로 빨려 들고 심(흰 · 빛 · 체크무늬 테)이 커진다.
+ * pal = [심, 빛, 테], r = 빨려 드는 거리(월드 px), on = 점멸이 켜진 순간이면 심이 한 칸 크다
+ */
+export const drawCharge = (pen: PixelPen, x: number, y: number, r: number, k: number, seed: number, pal: readonly number[], on: boolean): void => {
+  if (k <= 0) return;
+  const d = pen.dot;
+  for (let i = 0; i < 22; i++) {
+    const st = hash(seed + 90 + i) * 0.55;
+    const kk = cl((k - st) / 0.4);
+    if (kk <= 0 || kk >= 1) continue;
+    const a = hash(seed + 70 + i) * Math.PI * 2;
+    const rr = r * (0.55 + hash(seed + 50 + i) * 0.6) * (1 - kk * kk);
+    pen.px(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.8, kk > 0.6 ? pal[0] : pal[2], 0.4 + 0.6 * kk, 2);
+  }
+  const R = (0.6 + 4.2 * k ** 3 + (on ? 0.6 : 0)) * 2;
+  for (let dy = -12; dy <= 12; dy++)
+    for (let dx = -12; dx <= 12; dx++) {
+      const dd = Math.hypot(dx, dy);
+      const cx = Math.floor(x / d) + dx;
+      const cy = Math.floor(y / d) + dy;
+      if (dd <= R * 0.45) pen.px(cx * d, cy * d, pal[0]);
+      else if (dd <= R * 0.8) pen.px(cx * d, cy * d, pal[1]);
+      else if (dd <= R + 0.8 && (cx + cy) % 2 === 0) pen.px(cx * d, cy * d, pal[2], 0.85);
+    }
 };

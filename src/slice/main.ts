@@ -3,6 +3,7 @@ import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
+import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter } from './uifx';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
@@ -89,6 +90,8 @@ let cur: BattleDef = INTRO[0];
 let won = 0;
 /** 다듬은 기록 (작업대 — 한 장씩 「+」 변형으로 바뀐다. 덱이 정본, 이 목록은 기록 · 옛 저장 옮기기용) */
 let refined: CommandId[] = [];
+/** 이번에 새로 단 부품 (다음에 부품 칸이 그려질 때 장착 연출) */
+const newParts = new Set<SlicePartId>();
 
 /** 분대: 시리얼 · 이름 · 기벽이 붙은 기물 (D-153) */
 let squad: Squad[] = [];
@@ -132,12 +135,17 @@ const renderer = new BoardRenderer(
   (text) => toast(text),
 );
 installPressFeedback();
+installUiSprites();
+installPressy();
 
 let toastTimer: number | undefined;
 const toast = (msg: string, ms = 1800) => {
   const t = $('toast');
   t.textContent = msg;
   t.hidden = false;
+  t.classList.remove('tin');
+  void t.offsetWidth;
+  t.classList.add('tin');
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => (t.hidden = true), ms);
 };
@@ -273,6 +281,9 @@ const refresh = (): void => {
   $('turn-label').classList.toggle('enemy', enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
+  // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
+  for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
+  newParts.clear();
   $('parts').hidden = !parts.length;
   $('boss').hidden = !b.boss;
   if (b.boss) {
@@ -361,6 +372,7 @@ const pickCard = (i: number): void => {
   const c = COMMANDS[b.hand[i]];
   if (!c) return;
   if (isInstant(b.hand[i])) {
+    if (!canPlay(b, i) && costOf(b, i) > b.ap) nope(document.querySelector(`[data-card="${i}"]`), $('vials'));
     if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'tap', b.kills + 2);
@@ -372,7 +384,7 @@ const pickCard = (i: number): void => {
     }
     return void run(i);
   }
-  if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return toast('‘태엽이 모자라.’');
+  if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return nope(document.querySelector(`[data-card="${i}"]`), $('vials')), toast('‘태엽이 모자라.’');
   const pieces = cardPieces(b, i);
   if (!pieces.length) return toast(c.who === 'any' ? '‘움직일 기물이 없어.’' : `‘${PIECE_NAMES_KO[c.who]}이(가) 없거나, 갈 칸이 없어.’`);
   sfx('lift');
@@ -701,7 +713,10 @@ const showMap = (): void => {
         const live = r === rowI - 1 && picked[actI][r] === k;
         const dead = r < rowI && picked[actI][r] !== k;
         if (dead) return;
-        lines.push(`<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" class="${walked ? 'walked' : live ? 'live' : 'far'}"/>`);
+        // 컨베이어 체인 (D-184): 검은 바깥 줄 + 고리 무늬. 지금 갈 수 있는 길은 돌아가고, 고르면 나머지는 끊어진다
+        const cls = walked ? 'walked' : live ? 'live' : 'far';
+        const xy = `x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"`;
+        lines.push(`<line ${xy} class="ch-o"/><line ${xy} class="ch-i ${cls}"${live ? ` data-to="${k2}"` : ''}/>`);
       }),
     );
   const nodes = a.rows
@@ -731,6 +746,12 @@ const showMap = (): void => {
       el.querySelectorAll('.mnd.chosen').forEach((x) => x.classList.remove('chosen'));
       btn.classList.add('chosen');
       sfx('tap');
+      el.querySelectorAll<SVGLineElement>('line[data-to]').forEach((ln) => {
+        const me = Number(ln.dataset.to) === k;
+        ln.classList.toggle('pick', me);
+        ln.classList.toggle('snap', !me);
+        ln.classList.toggle('live', me);
+      });
       const foes = nd.battle ? `<span class="nd-foes">${nd.battle.enemy.map((t) => pieceImg(t, 1, 'small', 22)).join('')}</span>` : '';
       info.innerHTML = `<i class="ico nd-${nd.kind}" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="txt"><b>${NODE_NAMES[nd.kind]}</b><small>${NODE_DESC[nd.kind]}</small></div>${foes}<button class="btn brass" type="button" data-go>간다</button>`;
       info.querySelector('[data-go]')!.addEventListener('click', () => go(k));
@@ -797,7 +818,7 @@ const shopScreen = (): void => {
         ${cards.map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd big t-${c.who}${sold.has(id) ? ' sold' : ''}" data-buy="card:${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}</span>${tag(id, price(id))}</button>`; }).join('')}
         ${part ? `<button type="button" class="part-card${sold.has('part') ? ' sold' : ''}" data-buy="part:${part}"><i class="ico" style="${iconArt(SLICE_PARTS[part].icon)}"></i><b>${SLICE_PARTS[part].name}</b><small>${SLICE_PARTS[part].desc}</small>${tag('part', ascPrice(SHOP.partPrice))}</button>` : ''}
         <button type="button" class="part-card${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><i class="ico" style="${iconArt('s.heal')}"></i><b>정비</b><small>분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
-        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
+        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
       </div>`);
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
     el.querySelectorAll<HTMLElement>('[data-buy]').forEach((btn) =>
@@ -822,7 +843,7 @@ const shopScreen = (): void => {
           sold.add(key);
           sfx('coin');
           if (kind === 'card') deck.push(id as CommandId);
-          if (kind === 'part') parts.push(id as SlicePartId);
+          if (kind === 'part') (parts.push(id as SlicePartId), newParts.add(id as SlicePartId));
           if (kind === 'heal') squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * SHOP.healPct)) }));
           render();
         });
@@ -837,7 +858,7 @@ const forgeScreen = (): void => {
   const el = openOverlay(`<h2>작업대 <span class="dim">— 하나를 고릅니다</span></h2>
     <div class="part-cards">
       <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>
-      <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small></button>
+      <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small></button>
       <button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>
     </div>`);
   el.querySelectorAll<HTMLElement>('[data-forge]').forEach((btn) =>
@@ -893,24 +914,28 @@ const TIPS = [
 const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
-    el.className = `stagefx${boss ? ' boss' : ''}`;
+    el.className = `stagefx instant${boss ? ' boss' : ''}`;
     el.innerHTML = `<div class="sf-art">${art}</div>
       <div class="sf-text"><p class="sf-eyebrow">${label}</p><h1>${name}</h1><p class="sf-narr">${narr}</p></div>
       <p class="sf-tip">${TIPS[Math.floor(Math.random() * TIPS.length)]}</p><p class="sf-skip">눌러서 계속</p>`;
-    document.body.appendChild(el);
-    sfx(boss ? 'threat' : 'stamp');
+    // 철문 전환 (D-184): 닫힌 사이에 장면을 세우고 열며 보여 준다 — 페이드 대신
+    void shutter(() => {
+      document.body.appendChild(el);
+      sfx(boss ? 'threat' : 'stamp');
+    });
     let done = false;
     const close = () => {
       if (done) return;
       done = true;
-      el.classList.add('out');
-      window.setTimeout(() => {
+      // 닫힌 사이에 다음 화면을 세운다 (resolve → 부른 쪽이 곧바로 판 · 화면을 만든다)
+      void shutter(() => {
         el.remove();
         resolve();
-      }, 420);
+        return new Promise((r) => window.setTimeout(r, 80));
+      });
     };
-    window.setTimeout(() => el.addEventListener('click', close), 350);
-    window.setTimeout(close, boss ? 3800 : 3000);
+    window.setTimeout(() => el.addEventListener('click', close), 1000);
+    window.setTimeout(close, boss ? 4200 : 3400);
   });
 const stageIntro = (def: BattleDef): Promise<void> => {
   const [label, name] = def.title.split(' — ');
@@ -963,16 +988,30 @@ const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
   panel.classList.add('locked');
   btn.classList.add('picked');
   sfx('rare');
+  // D-184: 안 고른 것은 아래부터 도트로 흩어지고, 고른 카드 · 부품은 기울며 들렸다가 덱 · 부품 칸으로 빨려 든다
+  const group = btn.parentElement ? [...btn.parentElement.children].filter((x): x is HTMLElement => x !== btn && x instanceof HTMLElement && (x.matches('.cmd, .part-card'))) : [];
+  group.forEach((x) => dissolveUp(x));
+  const isCard = btn.matches('.cmd, .part-card');
+  const target = btn.matches('.part-card') ? $('parts') : document.querySelector('[data-deck]');
+  if (isCard && target) void flyTo(btn, target);
   window.setTimeout(() => {
     panel.classList.remove('locked', 'choosing');
     onConfirm();
-  }, 450);
+  }, isCard ? 640 : 450);
 };
 
 const openOverlay = (html: string): HTMLElement => {
-  $('overlay-panel').innerHTML = html;
+  const panel = $('overlay-panel');
+  panel.innerHTML = html;
+  const wasHidden = $('overlay').hidden;
   $('overlay').hidden = false;
-  return $('overlay-panel');
+  // 계단으로 떨어져 박힘 (D-184) — 이미 열린 창의 내용만 바뀔 때는 그대로
+  if (wasHidden) {
+    panel.classList.remove('pop');
+    void panel.offsetWidth;
+    panel.classList.add('pop');
+  }
+  return panel;
 };
 const closeOverlay = () => ($('overlay').hidden = true);
 
@@ -1023,6 +1062,8 @@ const finish = (): void => {
     const overGold = Math.floor(b.overkill / 10);
     const earned = (b.coins * SLICE.coinValue + overGold) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
     gold += earned;
+    // 나사 받기 (D-184): 판 가운데서 도트 나사가 튀어 올라 나사 칸으로 빨려 든다
+    { const r = $('board').getBoundingClientRect(); screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, $('coins'), Math.round(earned / 6)); }
     const before = squad;
     const survived = squadAfter(b, squad);
     const fallenList = fallenAfter(b, before);
@@ -1289,6 +1330,7 @@ const kitPick = (head: string, then: () => void): void => {
       choose(btn, `${SLICE_PARTS[offers[Number(btn.dataset.kit)].part].name}을(를) 단다`, () => {
         const k = offers[Number(btn.dataset.kit)];
         parts.push(k.part);
+        newParts.add(k.part);
         deck.push(...k.cards);
         then();
       }),
@@ -1307,6 +1349,7 @@ const partPick = (head: string, then: () => void): void => {
     btn.addEventListener('click', () =>
       choose(btn, `${SLICE_PARTS[btn.dataset.part as SlicePartId].name}을(를) 단다`, () => {
         parts.push(btn.dataset.part as SlicePartId);
+        newParts.add(btn.dataset.part as SlicePartId);
         then();
       }),
     ),

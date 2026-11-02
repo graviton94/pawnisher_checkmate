@@ -4,7 +4,7 @@
   ① 왼위 가장자리는 밝게 · 오른아래 가장자리는 어둡게 (빛은 왼위에서)
   ② 둘레에 검정 외곽선 1칸
 을 똑같이 입힌다. 대문자는 고정색(눈 · 못 · 선 같은 세부). 나사 · 태엽 시안과 같은 규칙.
-사용: python3 -I tools/pixel/icons16.py sheet <out.png>   |   export public/ui/icons16 (게임용 16px PNG)
+사용: python3 -I tools/pixel/icons16.py sheet <out.png>   |   export public/ui/icons16 (게임용 32px PNG, 정중앙)
 """
 import os
 import sys
@@ -1410,13 +1410,24 @@ def sheet(path):
     print(path, im.size)
 
 
+def centered(rows, scale=2):
+    """그린 그림(외곽선 포함)의 실제 범위를 찾아 16칸 × scale 캔버스 정중앙에 놓는다.
+    scale 2면 반 칸까지 맞출 수 있어 좌우 · 위아래 여백이 정확히 같다 (칸 안에서 삐뚤어 보이지 않게)."""
+    icn = render(rows)
+    box = icn.getbbox()
+    crop = icn.crop(box).resize(((box[2] - box[0]) * scale, (box[3] - box[1]) * scale), Image.NEAREST)
+    n = 16 * scale
+    out = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    out.paste(crop, ((n - crop.width) // 2, (n - crop.height) // 2), crop)
+    return out
+
+
 def export(out):
-    """게임용: <키>.png 16×16 (화면에서 계단 확대) — 보통 public/ui/icons16"""
+    """게임용: <키>.png 32×32 (한 칸 = 2px, 그림을 정중앙에) — 보통 public/ui/icons16"""
     os.makedirs(out, exist_ok=True)
     for k, rows in ICONS.items():
-        render(rows).save(os.path.join(out, f'{k}.png'))
+        centered(rows).save(os.path.join(out, f'{k}.png'))
     print(out, len(ICONS))
-
 
 if __name__ == '__main__':
     {'sheet': sheet, 'export': export}[sys.argv[1]](sys.argv[2])
