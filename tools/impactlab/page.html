@@ -122,13 +122,13 @@ footer { color: var(--dim); font-size: 12px; }
 .md.dim { filter: grayscale(1) brightness(0.5); transform: scale(0.9); transition: all 220ms; }
 .mapwrap { position: absolute; inset: 0 0 96px 0; }
 .mlink { position: absolute; height: 12px; transform-origin: 0 50%; pointer-events: none; }
-.mlink .half { position: absolute; top: 0; height: 12px; background: var(--chain) 0 0 / 20px 12px repeat-x; image-rendering: pixelated; transition: transform 520ms cubic-bezier(0.5, 0, 0.9, 0.5), opacity 520ms, filter 300ms; }
+.mlink .half { position: absolute; top: 0; height: 12px; background: var(--chain) 0 0 / 20px 12px repeat-x; image-rendering: pixelated; transition: opacity 700ms 300ms, filter 400ms 200ms; }
 .mlink .half.l { left: 0; transform-origin: 0 50%; } .mlink .half.r { transform-origin: 100% 50%; }
 .mlink.live .half { background-image: var(--chaing); animation: chainrun 600ms steps(5) infinite; }
 .mlink.run .half { background-image: var(--chaing); animation: chainrun 160ms steps(5) infinite; }
 @keyframes chainrun { to { background-position: 20px 0; } }
 .mlink.off .half { filter: grayscale(1) brightness(0.45); opacity: 0.55; }
-.mlink.off .half.l { transform: rotate(30deg) translateY(6px); } .mlink.off .half.r { transform: rotate(-34deg) translateY(10px); }
+
 .mnode { position: absolute; transform: translate(-50%, -50%); }
 .mnode.md { transition: filter 260ms, transform 260ms; }
 .mnode.md.off { filter: grayscale(1) brightness(0.4); transform: translate(-50%, -50%) scale(0.82); cursor: default; }
@@ -136,10 +136,19 @@ footer { color: var(--dim); font-size: 12px; }
 @keyframes mmedal { 0% { transform: translate(-50%, -50%) scale(0.88); } 40% { transform: translate(-50%, -50%) scale(1.18); filter: brightness(1.35); } 100% { transform: translate(-50%, -50%) scale(1.08); } }
 .mnode.md.arrive { animation: marrive 420ms cubic-bezier(0.2, 1.6, 0.3, 1) forwards; }
 @keyframes marrive { 0% { transform: translate(-50%, -50%) scale(1.3); filter: brightness(2); } 100% { transform: translate(-50%, -50%) scale(1.08); } }
-.mstart { width: 48px; height: 48px; background: var(--plate) center / 100% 100% no-repeat; image-rendering: pixelated; }
-.mtoken { position: absolute; width: 42px; height: 42px; image-rendering: pixelated; transform: translate(-50%, -62%); z-index: 3; pointer-events: none; }
-.mlabel { position: absolute; transform: translate(-50%, 0); white-space: nowrap; font: 700 12px var(--body); color: #16141c; background: #c89b3c; padding: 1px 6px; box-shadow: 0 0 0 2px #000; pointer-events: none; transition: filter 260ms; }
+.chainbit { position: absolute; width: 8px; height: 6px; margin: -3px 0 0 -4px; background: var(--chain) 0 0 / 20px 12px; image-rendering: pixelated; pointer-events: none; z-index: 3; }
+.mstart { width: 54px; height: 54px; background: var(--cog) center / 100% 100% no-repeat; image-rendering: pixelated; }
+.mstart::after { content: ''; position: absolute; inset: 15px; background: var(--medal) center / 100% 100% no-repeat; image-rendering: pixelated; filter: grayscale(1) brightness(0.7); }
+.mstart.spin { animation: sprocket 900ms steps(8) infinite; } .mstart.spin.fast { animation-duration: 260ms; }
+@keyframes sprocket { to { transform: translate(-50%, -50%) rotate(45deg); } }
+/* 이름표: 리벳 박힌 황동 명판 · 새긴 글자 · 위에 매단 고리 */
+.mlabel { position: absolute; transform: translate(-50%, 0); white-space: nowrap; font: 700 12px var(--body); letter-spacing: 0.06em; color: #2a1e08; text-shadow: 0 1px 0 #f4d27a; background: #c89b3c; padding: 2px 14px 3px; box-shadow: 0 0 0 2px #000, inset 0 2px 0 #fff3b0, inset 0 -3px 0 #7a5a12, inset 2px 0 0 #e2b85a, inset -2px 0 0 #9a6f14; pointer-events: none; transition: filter 300ms; }
+.mlabel::before, .mlabel::after { content: ''; position: absolute; top: 50%; width: 4px; height: 4px; margin-top: -2px; background: #3a2a0a; box-shadow: 1px 1px 0 #fff3b0; }
+.mlabel::before { left: 5px; } .mlabel::after { right: 5px; }
+.mlabel i { position: absolute; left: 50%; top: -9px; width: 4px; height: 7px; margin-left: -2px; background: #56545e; box-shadow: 0 0 0 1px #000; }
 .mlabel.off { filter: grayscale(1) brightness(0.45); }
+.mlabel.pick { animation: plaque 380ms cubic-bezier(0.2, 1.6, 0.3, 1); }
+@keyframes plaque { 0% { transform: translate(-50%, 0) rotate(-6deg) scale(1.1); } 50% { transform: translate(-50%, 0) rotate(4deg); } 100% { transform: translate(-50%, 0); } }
 .md img, .md b { width: 26px; height: 26px; image-rendering: pixelated; display: grid; place-items: center; font: 700 20px var(--body); color: #16141c; }
 .mcbar { position: absolute; left: 12px; right: 12px; bottom: 8px; max-width: none; flex-wrap: wrap; justify-content: flex-end; z-index: 2; background: #121118; }
 .mcbar span { flex-basis: 100%; font-style: normal; font-weight: 700; font-size: 14px; }
@@ -237,7 +246,7 @@ footer { color: var(--dim); font-size: 12px; }
       <div class="ui-stage" id="chStage"><div class="ch" id="chList"><button type="button">나사 30을 건다</button><button type="button">거래를 거절한다</button><button type="button">나이트를 판다</button></div><div class="cbar" id="cbar"><span>‘나사 30을 건다’</span><button class="bb new" type="button" id="cbarGo"><span class="shine"></span>고르기</button></div></div></article>
     <article class="ui-card"><h3>나사 받기</h3><p class="beats">도트 나사(십자 홈)가 튀어 올랐다 돌며 흩어짐 → 계기로 빨려 들고(가속) → 하나 닿을 때마다 숫자가 오르며 계기가 튄다 → 마지막에 반짝.</p>
       <div class="ui-stage" id="gStage"><div class="meterx" id="meterx"><i></i><b id="gnum">40</b></div><button class="bb new" type="button" id="gGo"><span class="shine"></span>나사 +12</button></div></article>
-    <article class="ui-card"><h3>지도 — 갈 곳 고르기</h3><p class="beats">길은 컨베이어 체인. 메달 탭 → 톱니가 철컥 돌고 메달이 튐 · 고른 체인만 금빛으로 맞물려 돌기 시작 · <b>안 고른 체인은 가운데가 툭 끊겨 양쪽으로 늘어지고 고리가 떨어짐</b>, 메달 · 이름표는 식음 → 확인 띠 「대국으로 가시겠습니까?」 → 간다 → 체인이 빨리 돌며 발판 위 가짜 왕을 실어 감 → 도착하며 메달 번쩍 → 철문이 닫히며 장면 이름이 찍히고 열림.</p>
+    <article class="ui-card"><h3>지도 — 갈 곳 고르기</h3><p class="beats">길은 왼쪽 톱니바퀴에서 나가는 컨베이어 체인. 메달 탭 → 톱니바퀴가 철컥철컥 돌기 시작 · 고른 체인만 금빛으로 맞물려 돌고 명판이 흔들림 · <b>안 고른 체인은 잠깐 팽팽히 떨다가 가운데가 툭 끊겨, 두 동강이 튕겨 올랐다 무게로 떨어져 진자처럼 흔들리며 멈추고 고리 몇 개가 떨어진다</b> · 메달 · 명판은 식음 → 「대국으로 가시겠습니까?」 → 간다 → 톱니 · 체인이 빨라지고 → 도착 메달 번쩍 → 철문 전환.</p>
       <div class="ui-stage" id="mapStage" style="min-height:400px;display:block;padding:0"><div class="mapwrap" id="mapwrap"></div>
         <div class="cbar mcbar" id="mcbar"><span id="mcq">대국으로 가시겠습니까?</span><button class="bb new" type="button" id="mBack" style="background:#3b3a45;color:#ece8de"><span class="shine"></span>다시 보기</button><button class="bb new" type="button" id="mGo"><span class="shine"></span>간다</button></div>
         <div class="shut t"></div><div class="shut b"></div><span class="scene-name mname" id="mname"></span><span class="hint">메달 탭</span></div></article>
@@ -646,60 +655,78 @@ const SCENES = [
     },
   },
   {
-    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '심장이 멎고, 왕관이 남는다', rest: 2300, wide: true,
-    sit: '마지막 일격이 가짜 왕을 친다. 진홍 · 검정 반전 컷 두 장 → 영화 띠가 천천히 닫히고 색이 빠진다 → 심장 박동이 점점 느려지는 동안 몸 안에서 금이 번진다 → 박동이 멎는 순간 왕관이 머리에서 튕겨 오르고 몸은 산산이 부서져 바닥에 흩어진다 → 왕관은 동전처럼 뒤집히며 떨어져 두 번 튀고 흔들리다 멈춘다 → 글자가 한 자씩 내려찍히고 서술 한 줄. 빛은 왕관에만.',
-    dur: 6400, phases: [['겨눔', 0, 520, P.gather], ['일격', 520, 580, P.dash], ['반전 컷', 580, 700, P.boom], ['멈춤', 700, 820, P.stop], ['느려지는 박동 · 금', 820, 2200, P.pre], ['멎음 · 산산이', 2200, 3300, P.boom], ['왕관 낙하 · 튐', 2200, 3600, P.dash], ['글자 · 서술', 3700, 4900, P.recoil], ['여운', 4900, 6400, P.tail]],
-    chips: ['반전 컷: 진홍 바탕 검은 실루엣 → 흰 바탕 검은 실루엣', '영화 띠가 천천히 닫힘 · 채도 0으로', '박동 간격 280 → 520 → 900ms, 그리고 멎음', '몸 안 도트 금이 박동마다 번짐', '왕관 = 가짜 왕 그림에서 오린 그 왕관 (회전 없이 동전 뒤집기)', '몸 조각은 바닥에 떨어져 쌓인다 (사라지지 않음)', '「킹 · 파 · 괴」 한 자씩 내려찍기 + 서술 한 줄', '빛은 바닥의 왕관 위에만'],
+    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '심장이 멎고, 왕관만 남는다', rest: 2640, wide: true,
+    sit: '반장 격파와 짝을 이루는 패배의 한 컷. 영화 띠가 닫히고 두 기물에만 조명 → 적이 힘을 모아 찌름 → 반전 컷 둘 · 집중선 위 멈춤 → 총알 시간: 카메라가 가짜 왕에게 다가가고 심장 박동이 점점 느려지며 박동마다 몸 안 금이 하얗게 달아오름 → 박동이 멎는 순간 빛이 터지며 몸이 슬로로 산산이 흩어졌다가 바닥에 무너져 쌓이고, 왕관은 금빛 꼬리를 끌며 높이 솟았다가 떨어져 튄다 → 빛은 왕관에만, 「킹 파괴」가 한 자씩.',
+    dur: 7600, phases: [['막 · 조명', 0, 450, P.tail], ['적 모으기', 450, 1350, P.gather], ['찌름', 1350, 1410, P.dash], ['반전 컷', 1410, 1530, P.boom], ['멈춤', 1530, 1650, P.stop], ['총알 시간 · 박동', 1650, 3350, P.pre], ['멎음 · 산산이', 3350, 4700, P.boom], ['왕관', 3350, 5000, P.dash], ['글자 · 서술', 5000, 6300, P.recoil], ['여운', 6300, 7600, P.tail]],
+    chips: ['영화 띠 · 두 기물만 조명 (반장 격파와 같은 문법)', '적 모으기 0.9초 → 찌름 0.06초 · 잔상', '반전 컷: 진홍/검정 → 흰/검정 + 집중선', '총알 시간 1.7초: 카메라 1 → 1.35, 박동 간격 280 → 600 → 1000ms', '박동마다 금이 번지고 하얗게 달아오름 · 부스러기', '멎음: 흰 섬광 · 이중 도트 고리 · 몸이 슬로로 흩어졌다 바닥에 쌓임', '왕관: 가짜 왕의 그 왕관이 금빛 꼬리로 솟아 동전처럼 뒤집히며 떨어져 두 번 튐', '빛줄기 · 빛은 왕관에만 · 재가 내려앉음 · 「킹 파괴」 한 자씩 쿵'],
     draw: (g, t) => {
-      const KG = [2, 1], [kx, ky] = ctr(2, 1), floorY = 1 * T + T * 0.86;
-      const beats = [900, 1180, 1700, 2600]; // 마지막 박동 = 멎음
-      let beat = 0; for (const b of beats.slice(0, 3)) beat = Math.max(beat, 1 - Math.abs(t - b) / 160);
-      const stopped = t >= 2200;
-      const sh = addv(shake(t, 580, 8, 360), shake(t, 2200, 9, 520), shake(t, 3060, 3, 160), stopped ? [0, 0] : t >= 820 ? tremble(t, 0.6 * beat) : [0, 0]);
-      const cut = t >= 580 && t < 700;
-      const zoom = 1 + 0.14 * E.inOutQuad(seg(t, 700, 2200)) * (1 - E.outCubic(seg(t, 4200, 6000)));
-      g.save(); cam(g, zoom, ...ctr(2.2, 1), sh);
-      const aim = E.outCubic(seg(t, 0, 520)), mv = E.inExpo(seg(t, 520, 580));
-      const nx = lerp(4.2 + 0.25 * aim, 3.05, mv);
-      if (cut) { const inv = t >= 640; g.fillStyle = inv ? '#f4f1ea' : '#7a1218'; g.fillRect(-W, -H, W * 3, H * 3); piece(g, 'N1', nx, 1, { black: true, sx: 1.1, sy: 0.9 }); piece(g, 'K0', KG[0], 1, { black: true, sx: 1.16, sy: 0.84 }); g.restore(); letterbox(g, 0.4); return; }
+      const KG = [2, 1], EN = [4.4, 1], [kx, ky] = ctr(2, 1), floorY = 1 * T + T * 0.86;
+      const sine = (x) => 0.5 - 0.5 * Math.cos(Math.PI * x);
+      const beats = [1950, 2450, 3050]; let beat = 0; for (const b of beats) beat = Math.max(beat, 1 - Math.abs(t - b) / 170);
+      const stopT = 3350, stopped = t >= stopT;
+      const gk = seg(t, 450, 1350), thrust = E.inExpo(seg(t, 1350, 1410));
+      const nx = t < 1350 ? EN[0] + 0.35 * E.outCubic(gk) : lerp(EN[0] + 0.35, 3.05, thrust);
+      // 카메라: 모으는 동안 둘 사이로 → 찌름 펀치 → 총알 시간 동안 가짜 왕에게 천천히 → 멎은 뒤 천천히 빠짐
+      let z = 1 + 0.12 * sine(gk), fx0 = lerp(W / 2, ctr(3.1, 1)[0], sine(gk));
+      if (t >= 1410) { const p0 = E.outExpo(seg(t, 1410, 1500)); z = lerp(1.12, 1.5, p0); fx0 = lerp(ctr(3.1, 1)[0], ctr(2.3, 1)[0], p0); }
+      if (t >= 1650) { z = 1.5 + 0.22 * sine(seg(t, 1650, stopT)); fx0 = lerp(ctr(2.3, 1)[0], kx, sine(seg(t, 1650, stopT))); }
+      if (stopped) { const p0 = sine(seg(t, stopT + 600, 6600)); z = lerp(1.72, 1.08, p0); fx0 = lerp(kx, ctr(1.6, 1)[0], p0); }
+      const sh = addv(t < 1350 ? tremble(t, 2.2 * E.inCubic(gk)) : [0, 0], t >= 1530 && t < 1650 ? tremble(t, 1.2) : [0, 0], t >= 1650 && !stopped ? tremble(t, 1.5 * beat + 0.4) : [0, 0], shake(t, stopT, 13, 800), shake(t, 4450, 4, 200));
+      const cut = t >= 1410 && t < 1530;
+      g.save(); cam(g, z, fx0, ky, sh);
+      if (cut) { const inv = t >= 1470; g.fillStyle = inv ? '#f4f1ea' : '#7a1218'; g.fillRect(-W, -H, W * 3, H * 3); piece(g, 'N1', nx, 1, { black: true, sx: 1.12, sy: 0.88 }); piece(g, 'K0', KG[0], 1, { black: true, sx: 1.18, sy: 0.82 }); focusLines(g, kx, ky, 1, 5, inv ? '#050407' : '#ffffff'); g.restore(); letterbox(g, 1); return; }
       board(g);
-      const grey = E.outCubic(seg(t, 700, 1600));
-      piece(g, 'N1', nx, 1, { grey: grey > 0.5, sx: t < 520 ? 1 + 0.12 * aim : 1, sy: t < 520 ? 1 - 0.18 * aim : 1, redFlash: t < 520 ? 0.5 * aim : 0 });
-      if (t >= 520 && t < 900) afterimage(g, 'N1', [[4.45, 1], [3.7, 1], [3.05, 1]], 1 - seg(t, 580, 900));
-      // 몸: 박동마다 금이 번지고 → 멎는 순간 산산이 → 조각은 바닥에 떨어져 쌓인다
+      const grey = stopped ? 1 : E.outCubic(seg(t, 1530, 2600));
+      // 적: 모으기(불씨 수렴 · 붉은 빛) → 찌름(잔상)
+      if (t >= 450 && t < 1350) { const [qx2, qy2] = ctr(nx, 1); glow(g, qx2, qy2 + 16, 24 + 18 * gk, 'rgba(229,38,47,A)', 0.2 + 0.4 * gk); for (let i = 0; i < 14; i++) { const a = hash(i + 200) * Math.PI * 2 + gk * 2; const r = (56 + hash(i + 201) * 40) * (1 - E.inCubic(gk)); px(g, qx2 + Math.cos(a) * r, qy2 + Math.sin(a) * r * 0.7, ramp(0.35 + (1 - gk) * 0.4), 0.3 + 0.7 * gk); } }
+      if (t >= 1350 && t < 2200) afterimage(g, 'N1', [[EN[0] + 0.35, 1], [lerp(EN[0] + 0.35, 3.05, 0.5), 1], [3.05, 1]], 1 - seg(t, 1650, 2200));
+      piece(g, 'N1', nx, 1, { grey: grey > 0.5, sx: t < 1350 ? 1 + 0.16 * gk : 1, sy: t < 1350 ? 1 - 0.22 * gk : 1, redFlash: t < 1350 ? 0.6 * E.inCubic(gk) : 0 });
+      // 가짜 왕: 멈춤(흰 테) → 총알 시간 박동마다 금 · 달아오름 → 멎음
       if (!stopped) {
-        const ck = t < 820 ? 0 : cl(seg(t, 820, 2200) * 0.6 + beat * 0.15 + (t > 1700 ? 0.25 * seg(t, 1700, 2200) : 0));
-        if (t < 820) piece(g, 'K0', KG[0], 1, { sx: t >= 580 ? 1.14 : 1, sy: t >= 580 ? 0.86 : 1, flash: t >= 700 && t < 760 ? 0.8 : 0 });
-        else { g.save(); g.filter = `grayscale(${grey})`; crackedPiece(g, 'K0', KG[0], 1, ck, 91, { sx: 1 + 0.04 * beat, sy: 1 - 0.04 * beat }); g.restore(); }
+        if (t < 1650) piece(g, 'K0', KG[0], 1, { sx: t >= 1410 ? 1.16 : 1, sy: t >= 1410 ? 0.84 : 1, flash: t >= 1530 ? 0.35 : 0 });
+        else { const ck = cl(seg(t, 1650, stopT) * 0.7 + beat * 0.2 + 0.1 * seg(t, 3000, stopT)); g.save(); g.filter = `grayscale(${grey * 0.85})`; crackedPiece(g, 'K0', KG[0], 1, ck, 91, { sx: 1 + 0.05 * beat, sy: 1 - 0.05 * beat, dx: tremble(t, 0.4 + beat)[0] }); g.restore(); if (beat > 0.6) shards(g, kx, ky - 6, (1 - beat) * 0.6, 300 + Math.floor(t / 200), '#c8c8c8', 4); }
+        if (t >= 1530 && t < 1650) { focusLines(g, kx, ky, 0.55, 3 + Math.floor(t / 60)); burst(g, kx + 12, ky, 40, 0.06 + 0.05 * Math.sin(t / 25), '#ff6b6b', 12); }
+        if (t >= 1650) focusLines(g, kx, ky, 0.35 * (1 - seg(t, 1650, 2400)), 9 + Math.floor(t / 80));
       } else {
-        const k = seg(t, 2200, 3300); const s = T * 0.86, cx = KG[0] * T + T / 2, top = 1 * T + T * 0.88 - s * 0.94, part = s / 4;
-        g.save(); g.imageSmoothingEnabled = false; g.filter = 'grayscale(1) brightness(0.75)';
-        for (const f of fragsOf('P0')) { const id = f.j * 4 + f.i; if (f.j === 0) continue; const ox = (f.i - 1.5) * part, oy = (f.j - 1.5) * part; const delay = (3 - f.j) * 0.08 + hash(91 + id) * 0.06; const tt = Math.max(0, k * 1.3 - delay); const vx = ox * 0.35 + (hash(92 + id) - 0.5) * 10; let x2 = cx + ox + vx * Math.min(tt, 0.5), y2 = top + s / 2 + oy + 200 * tt * tt; const layer = 3 - f.j; const rest = floorY - 3 - part * 0.55 * layer * 0.6 - (f.i === 1 || f.i === 2 ? part * 0.25 : 0); const rot = 0; if (y2 > rest) { y2 = rest; } g.save(); g.translate(q(x2), q(y2)); g.rotate(rot); g.drawImage(f.c, -part / 2, -part / 2, part, part); g.restore(); }
+        // 산산이: 흩어졌다가(슬로) → 무게로 떨어져 발밑에 쌓인다
+        const k = seg(t, stopT, 4700); const s = T * 0.86, cx = KG[0] * T + T / 2, top = 1 * T + T * 0.88 - s * 0.94, part = s / 4;
+        g.save(); g.imageSmoothingEnabled = false; g.filter = 'grayscale(1) brightness(0.8)';
+        for (const f of fragsOf('P0')) { const id = f.j * 4 + f.i; if (f.j === 0) continue; const ox = (f.i - 1.5) * part, oy = (f.j - 1.5) * part; const out = E.outCubic(cl(k * 2.2)); const a = Math.atan2(oy - 4, ox) + (hash(91 + id) - 0.5) * 0.6; const v = 22 + hash(92 + id) * 24; let x2 = cx + ox + Math.cos(a) * v * out, y2 = top + s / 2 + oy + Math.sin(a) * v * out * 0.7; const fall = Math.max(0, k - 0.42); y2 += 260 * fall * fall; x2 -= ox * 0.5 * cl(fall * 3); const layer = 3 - f.j; const rest = floorY - 3 - part * 0.33 * layer - (f.i === 1 || f.i === 2 ? part * 0.2 : 0); if (y2 > rest) y2 = rest; g.save(); g.translate(q(x2), q(y2)); g.rotate(k < 0.42 ? Math.round((hash(93 + id) - 0.5) * 4 * out) * (Math.PI / 2) * 0.5 : 0); g.drawImage(f.c, -part / 2, -part / 2, part, part); g.restore(); }
         g.restore();
-        shards(g, cx, ky, seg(t, 2200, 3000), 97, '#8a8794', 14);
+        shards(g, kx, ky, seg(t, stopT, 4500), 97, '#c8c8c8', 22);
+        const rk = E.outExpo(seg(t, stopT, stopT + 900)); ring(g, kx, ky, 8 + 120 * rk, 8 * (1 - rk), '#ece8de', 1 - rk); ring(g, kx, ky, 4 + 70 * rk, 4 * (1 - rk), '#8a8794', 1 - rk);
+        glow(g, kx, ky, 90 * (1 - seg(t, stopT, stopT + 500)), 'rgba(230,230,240,A)', 0.8 * (1 - seg(t, stopT, stopT + 500)));
+        if (t >= 4450 && t < 4700) { const kk = seg(t, 4450, 4700); for (let i = 0; i < 10; i++) px(g, kx + (i - 4.5) * 7 * (0.6 + kk), floorY - 2 - 6 * kk * (i % 2 ? 1 : 0.4), '#8a8794', 1 - kk, kk < 0.4 ? 2 : 1); }
       }
-      // 왕관: 멎는 순간 머리에서 튕겨 → 동전처럼 뒤집히며 떨어짐 → 두 번 튐 → 흔들리다 멈춤
+      // 왕관: 멎는 순간 머리에서 솟아 → 금빛 꼬리 · 동전 뒤집기 → 떨어져 두 번 튐 → 흔들리다 멈춤
       if (stopped) {
-        const k1 = seg(t, 2200, 3060); let x = kx - 64 * E.outCubic(k1), y = lerp(ky - 26, floorY - 10, k1) - 4 * 70 * k1 * (1 - k1), flip = Math.cos(k1 * Math.PI * 5);
-        if (t >= 3060) { const b1 = seg(t, 3060, 3300), b2 = seg(t, 3300, 3460), w = seg(t, 3460, 3900); x = kx - 64 - 8 * E.outCubic(seg(t, 3060, 3900)); y = floorY - 10 - (t < 3300 ? 14 * Math.sin(Math.PI * b1) : t < 3460 ? 5 * Math.sin(Math.PI * b2) : 0); flip = t < 3460 ? 1 : 1 - 0.25 * Math.abs(Math.sin(w * Math.PI * 3)) * (1 - w); }
-        const cw = T * 0.86 * (64 / 128), ch = T * 0.86 * (28 / 128);
-        g.save(); g.imageSmoothingEnabled = false; g.translate(q(x), q(y)); g.scale(Math.abs(flip) < 0.15 ? 0.15 : flip, 1); g.drawImage(CROWN_CUT(), -cw / 2, -ch / 2, cw, ch); g.restore();
-        if (t >= 3060 && t < 3300) { const kk = seg(t, 3060, 3300); for (let i = 0; i < 6; i++) px(g, x + (i - 2.5) * 6 * (0.5 + kk), floorY - 4 - 6 * kk * (i % 2 ? 1 : 0.5), '#8a8794', 1 - kk); }
-        if (t >= 3500) glow(g, x, y, 30, 'rgba(250,204,21,A)', 0.45 * seg(t, 3500, 4200));
-      } else if (t >= 820) { /* 왕관은 몸 그림(K0)에 붙어 있다 */ }
+        const k1 = seg(t, stopT, 4500); const posAt = (k) => [kx - 70 * E.outCubic(k), lerp(ky - 26, floorY - 10, k) - 4 * 95 * k * (1 - k)];
+        let [x, y] = posAt(k1); let flip = Math.cos(k1 * Math.PI * 6);
+        if (t < 4500) for (let i = 1; i <= 7; i++) { const [tx2, ty2] = posAt(Math.max(0, k1 - i * 0.022)); px(g, tx2, ty2, ramp(0.1 + i * 0.1), 1 - i / 8, i < 3 ? 2 : 1); }
+        if (t >= 4500) { const b1 = seg(t, 4500, 4760), b2 = seg(t, 4760, 4940), w = seg(t, 4940, 5500); x = kx - 70 - 8 * E.outCubic(seg(t, 4500, 5500)); y = floorY - 10 - (t < 4760 ? 16 * Math.sin(Math.PI * b1) : t < 4940 ? 5 * Math.sin(Math.PI * b2) : 0); flip = t < 4940 ? 1 : 1 - 0.25 * Math.abs(Math.sin(w * Math.PI * 3)) * (1 - w); if (t < 4760) { const kk = seg(t, 4500, 4760); for (let i = 0; i < 6; i++) px(g, x + (i - 2.5) * 6 * (0.6 + kk), floorY - 2 - 5 * kk * (i % 2 ? 1 : 0.4), '#c89b3c', 1 - kk); } }
+        const cw = T * 0.86 * 0.5, chh = T * 0.86 * (28 / 128);
+        glow(g, x, y, 34, 'rgba(250,204,21,A)', t < 4500 ? 0.5 : 0.35 + 0.15 * Math.sin(t / 300));
+        g.save(); g.imageSmoothingEnabled = false; g.translate(q(x), q(y)); g.scale(Math.abs(flip) < 0.15 ? 0.15 : flip, 1); g.drawImage(CROWN_CUT(), -cw / 2, -chh / 2, cw, chh); g.restore();
+      }
       g.restore();
-      // 색 빠짐 · 박동 맥 · 영화 띠
-      if (grey > 0) { g.fillStyle = `rgba(10,9,14,${0.5 * grey})`; g.fillRect(0, 0, W, H); }
-      if (!stopped && beat > 0) vignette(g, 0.65 * beat, '122,18,24');
-      vignette(g, 0.75 * seg(t, 1500, 3000));
-      letterbox(g, E.inOutQuad(seg(t, 700, 2200)));
-      if (stopped) { const a = seg(t, 2200, 2260); if (a < 1) flashAll(g, 0.35 * (1 - a)); }
-      // 재: 천천히 가라앉는 회색 도트 (많지 않게)
-      if (t >= 2400) { const k = seg(t, 2400, 6400); for (let i = 0; i < 14; i++) { const life = cl((k - hash(i + 130) * 0.4) / 0.6); if (life <= 0 || life >= 1) continue; px(g, 60 + hash(i + 131) * (W - 120) + Math.sin(life * 4 + i) * 5, 40 + life * (H - 80), '#6b6876', (1 - life) * 0.7); } }
-      // 글자: 한 자씩 내려찍기 + 서술
-      const chars = ['킹', '파', '괴'];
-      chars.forEach((c2, i) => { const t0 = 3700 + i * 260; if (t < t0) return; const kk = seg(t, t0, t0 + 200); const x = W / 2 - 34 + i * 34; text(g, c2, x + 2, 34 + 3, 26, '#000', { scale: lerp(2.2, 1, E.outBack(kk)), alpha: cl(kk * 3) * 0.8 }); text(g, c2, x, 34, 26, '#ff6b6b', { scale: lerp(2.2, 1, E.outBack(kk)), alpha: cl(kk * 3) }); });
-      if (t >= 4500) text(g, '태엽이 다 풀렸다. 당신의 눈이 감겨 온다.', W / 2, H - 34, 12, '#c8c8c8', { alpha: seg(t, 4500, 5100) });
+      // 조명 · 색 · 박동 · 막
+      const zs = z, toS = (wx, wy) => [W / 2 + (wx - fx0) * zs, H / 2 + (wy - ky) * zs];
+      if (!stopped) spotlight(g, [[...toS(...ctr(nx, 1)), 70 * zs], [...toS(kx, ky), 70 * zs]], 0.8 * E.outCubic(seg(t, 0, 450)));
+      else spotlight(g, [[...toS(kx - 78, floorY - 10), 60 * zs]], 0.85 * seg(t, 4300, 5200));
+      if (grey > 0 && !stopped) { g.fillStyle = `rgba(10,9,14,${0.35 * grey})`; g.fillRect(0, 0, W, H); }
+      if (!stopped && beat > 0) vignette(g, 0.7 * beat, '122,18,24');
+      if (t >= 1530 && t < 1550) flashAll(g, 0.6);
+      if (t >= stopT && t < stopT + 40) flashAll(g, 0.95, '240,240,250');
+      if (stopped) rays(g, toS(kx - 78, 0)[0], 0.7 * seg(t, 4800, 5600) * (1 - seg(t, 7000, 7600)));
+      letterbox(g, t < 6300 ? E.outCubic(seg(t, 0, 450)) : 1 - E.inOutQuad(seg(t, 6300, 7200)));
+      // 재
+      if (t >= 3600) { const k = seg(t, 3600, 7600); for (let i = 0; i < 18; i++) { const life = cl((k - hash(i + 130) * 0.4) / 0.6); if (life <= 0 || life >= 1) continue; px(g, 40 + hash(i + 131) * (W - 80) + Math.sin(life * 4 + i) * 5, 30 + life * (H - 60), '#6b6876', (1 - life) * 0.7); } }
+      // 글자: 한 자씩 쿵 + 서술
+      ['킹', '파', '괴'].forEach((c2, i) => { const t0 = 5000 + i * 280; if (t < t0) return; const kk = seg(t, t0, t0 + 200); const xx = W / 2 - 36 + i * 36; const sc = lerp(2.4, 1, E.outBack(kk)); text(g, c2, xx + 3, 40 + 4, 28, '#000', { scale: sc, alpha: cl(kk * 3) * 0.85 }); text(g, c2, xx, 40, 28, '#ff6b6b', { scale: sc, alpha: cl(kk * 3) }); });
+      if (t >= 5000 && t < 5900) { const i = Math.floor((t - 5000) / 280); const kk = (t - 5000 - i * 280) / 280; if (i < 3 && kk < 0.25) { g.save(); g.translate((hash(t) - 0.5) * 4, (hash(t + 1) - 0.5) * 4); g.restore(); } }
+      if (t >= 5900) text(g, '태엽이 다 풀렸다. 당신의 눈이 감겨 온다.', W / 2, H - 40, 12, '#c8c8c8', { alpha: seg(t, 5900, 6500) });
+      const scale = t < 1410 ? '1' : t < 1650 ? '0 (멈춤)' : t < stopT ? '0.15 (총알 시간)' : t < 4700 ? '0.35 (슬로)' : '1';
+      text(g, `시간 ×${scale}`, 62, H - 12, 11, C.fg, { alpha: 0.75 });
     },
   },
   {
@@ -1037,40 +1064,49 @@ function setupUi() {
   const ms = document.getElementById('mapStage'), wrap = document.getElementById('mapwrap'), mbar = document.getElementById('mcbar');
   const NODES = [['대국', 0.16, `<img alt="" src="${SPR.N1}">`], ['사건', 0.5, '<b>?</b>'], ['고물상', 0.84, `<img alt="" src="${SCREW}">`]];
   let mpick = -1, mbusy = false;
+  /** 체인이 끊어진다: 팽팽히 떨다가(긴장) → 가운데가 툭 → 두 동강이 튕겨 올랐다가 무게로 떨어져 진자처럼 흔들리며 멈춘다 · 고리가 떨어진다 */
+  const snapChain = (l) => {
+    const [L, Rr] = l.querySelectorAll('.half');
+    const tense = [{ transform: 'none' }, { transform: 'translateY(-1px)' }, { transform: 'translateY(1px)' }, { transform: 'translateY(-1px)' }, { transform: 'none' }];
+    L.animate(tense, { duration: 140, iterations: 1 }); Rr.animate(tense, { duration: 140, iterations: 1 });
+    const swing = (sign) => [{ transform: 'rotate(0deg)', offset: 0 }, { transform: `rotate(${-8 * sign}deg)`, offset: 0.08, easing: 'cubic-bezier(.2,.8,.3,1)' }, { transform: `rotate(${44 * sign}deg) translateY(${4 * sign}px)`, offset: 0.34, easing: 'cubic-bezier(.5,0,.8,.6)' }, { transform: `rotate(${24 * sign}deg) translateY(${4 * sign}px)`, offset: 0.52, easing: 'cubic-bezier(.3,0,.5,1)' }, { transform: `rotate(${36 * sign}deg) translateY(${4 * sign}px)`, offset: 0.68 }, { transform: `rotate(${29 * sign}deg) translateY(${4 * sign}px)`, offset: 0.82 }, { transform: `rotate(${32 * sign}deg) translateY(${4 * sign}px)`, offset: 1 }];
+    setTimeout(() => { L.animate(swing(1), { duration: 1300, fill: 'forwards' }); Rr.animate(swing(-1), { duration: 1400, fill: 'forwards' }); }, 140);
+    setTimeout(() => { const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 8, 22);
+      for (let k = 0; k < 5; k++) { const b = document.createElement('i'); b.className = 'chainbit'; b.style.left = `${bx}px`; b.style.top = `${by}px`; ms.appendChild(b); const vx = (Math.random() - 0.5) * 50; b.animate([{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${vx * 0.5}px, -${10 + Math.random() * 10}px) rotate(${90 * (k % 2 ? 1 : -1)}deg)`, offset: 0.25, easing: 'cubic-bezier(.2,.8,.3,1)' }, { transform: `translate(${vx}px, ${60 + Math.random() * 30}px) rotate(${180 * (k % 2 ? 1 : -1)}deg)`, easing: 'cubic-bezier(.5,0,.9,.4)' }], { duration: 760, fill: 'forwards' }); b.animate([{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { duration: 760, fill: 'forwards' }); setTimeout(() => b.remove(), 800); } }, 140);
+  };
   const buildMap = () => {
     wrap.innerHTML = ''; mpick = -1; mbar.classList.remove('on');
     const W0 = wrap.clientWidth, H0 = wrap.clientHeight; const sx = 50, sy = H0 * 0.5;
     const start = document.createElement('div'); start.className = 'mnode mstart'; start.style.left = `${sx}px`; start.style.top = `${sy}px`; wrap.appendChild(start);
-    const tok = document.createElement('img'); tok.className = 'mtoken'; tok.src = SPR.K0; tok.style.left = `${sx}px`; tok.style.top = `${sy}px`; wrap.appendChild(tok);
+    
     NODES.forEach(([name, fy, icon], i) => {
       const nx = W0 - 74, ny = H0 * fy - 6; const dx = nx - sx, dy = ny - sy; const len = Math.hypot(dx, dy) - 54;
       const ln = document.createElement('div'); ln.className = 'mlink'; ln.style.left = `${sx + Math.cos(Math.atan2(dy, dx)) * 24}px`; ln.style.top = `${sy + Math.sin(Math.atan2(dy, dx)) * 24 - 6}px`; ln.style.width = `${len}px`; ln.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
       ln.innerHTML = `<i class="half l" style="width:${len / 2}px"></i><i class="half r" style="left:${len / 2}px;width:${len / 2}px"></i>`; ln.dataset.i = i; ln.dataset.mx = String(sx + dx / 2); ln.dataset.my = String(sy + dy / 2); wrap.appendChild(ln);
       const md = document.createElement('button'); md.type = 'button'; md.className = 'mnode md'; md.innerHTML = icon; md.setAttribute('aria-label', name); md.style.left = `${nx}px`; md.style.top = `${ny}px`; md.dataset.i = i; wrap.appendChild(md);
-      const lb = document.createElement('span'); lb.className = 'mlabel'; lb.textContent = name; lb.style.left = `${nx}px`; lb.style.top = `${ny + 34}px`; lb.dataset.i = i; wrap.appendChild(lb);
+      const lb = document.createElement('span'); lb.className = 'mlabel'; lb.innerHTML = `<i></i>${name}`; lb.style.left = `${nx}px`; lb.style.top = `${ny + 34}px`; lb.dataset.i = i; wrap.appendChild(lb);
       md.addEventListener('click', () => pickNode(i));
     });
   };
   const pickNode = (i) => {
     if (mbusy || mpick === i) return; const was = mpick; mpick = i;
     wrap.querySelectorAll('.md').forEach((m) => { m.classList.remove('click'); m.classList.toggle('off', Number(m.dataset.i) !== i); });
-    wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.toggle('off', Number(m.dataset.i) !== i));
+    wrap.querySelectorAll('.mlabel').forEach((m) => { m.classList.toggle('off', Number(m.dataset.i) !== i); m.classList.remove('pick'); if (Number(m.dataset.i) === i) { void m.offsetWidth; m.classList.add('pick'); } });
+    wrap.querySelector('.mstart')?.classList.add('spin');
     wrap.querySelectorAll('.mlink').forEach((l) => {
       const me = Number(l.dataset.i) === i; l.classList.toggle('live', me);
-      if (!me && !l.classList.contains('off')) { l.classList.add('off'); const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 6, 18); for (let k = 0; k < 4; k++) { const b = document.createElement('i'); b.className = 'spk'; b.style.background = '#8a8794'; b.style.left = `${bx}px`; b.style.top = `${by}px`; b.style.setProperty('--x', `${(Math.random() - 0.5) * 16}px`); b.style.setProperty('--y', `${30 + Math.random() * 20}px`); b.style.setProperty('--d', '700ms'); ms.appendChild(b); setTimeout(() => b.remove(), 760); } }
+      if (!me && !l.classList.contains('off')) { l.classList.add('off'); snapChain(l); const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 6, 18); for (let k = 0; k < 4; k++) { const b = document.createElement('i'); b.className = 'spk'; b.style.background = '#8a8794'; b.style.left = `${bx}px`; b.style.top = `${by}px`; b.style.setProperty('--x', `${(Math.random() - 0.5) * 16}px`); b.style.setProperty('--y', `${30 + Math.random() * 20}px`); b.style.setProperty('--d', '700ms'); ms.appendChild(b); setTimeout(() => b.remove(), 760); } }
       if (me) l.classList.remove('off');
     });
     const md = wrap.querySelectorAll('.md')[i]; void md.offsetWidth; md.classList.add('click'); const p = rel(md, ms); sparksAt(ms, p.x, p.y, 8, 34);
     document.getElementById('mcq').textContent = `${NODES[i][0]}으로 가시겠습니까?`;
     mbar.classList.add('on');
   };
-  document.getElementById('mBack').addEventListener('click', () => { if (mbusy) return; wrap.querySelectorAll('.md').forEach((m) => m.classList.remove('off', 'click')); wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.remove('off')); wrap.querySelectorAll('.mlink').forEach((l) => l.classList.remove('live', 'off')); mbar.classList.remove('on'); mpick = -1; });
+  document.getElementById('mBack').addEventListener('click', () => { if (mbusy) return; wrap.querySelectorAll('.md').forEach((m) => m.classList.remove('off', 'click')); wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.remove('off')); wrap.querySelectorAll('.mlink').forEach((l) => { l.classList.remove('live', 'off'); l.querySelectorAll('.half').forEach((h) => h.getAnimations().forEach((a2) => a2.cancel())); }); wrap.querySelector('.mstart')?.classList.remove('spin'); mbar.classList.remove('on'); mpick = -1; });
   pressy(document.getElementById('mGo'), () => {
     if (mpick < 0 || mbusy) return; mbusy = true; mbar.classList.remove('on');
-    const ln = wrap.querySelectorAll('.mlink')[mpick], md = wrap.querySelectorAll('.md')[mpick], tok = wrap.querySelector('.mtoken');
-    ln.classList.add('run');
-    const sx = parseFloat(tok.style.left), sy = parseFloat(tok.style.top); const tx = parseFloat(md.style.left) - sx, ty = parseFloat(md.style.top) - sy;
-    tok.animate([{ transform: 'translate(-50%, -62%)' }, { transform: `translate(calc(-50% + ${tx}px), calc(-62% + ${ty}px))` }], { duration: 760, delay: 140, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+    const ln = wrap.querySelectorAll('.mlink')[mpick], md = wrap.querySelectorAll('.md')[mpick];
+    ln.classList.add('run'); wrap.querySelector('.mstart')?.classList.add('fast');
     setTimeout(() => { md.classList.remove('click'); void md.offsetWidth; md.classList.add('arrive'); const p = rel(md, ms); sparksAt(ms, p.x, p.y, 10, 40); ln.classList.remove('run'); }, 900);
     setTimeout(() => { const doors = ms.querySelectorAll('.shut'); doors.forEach((d) => { d.classList.remove('open'); void d.offsetWidth; d.classList.add('close'); }); }, 1150);
     setTimeout(() => { ms.classList.remove('stage-shake'); void ms.offsetWidth; ms.classList.add('stage-shake'); const nm = document.getElementById('mname'); nm.textContent = NODES[mpick][0]; nm.classList.remove('on'); void nm.offsetWidth; nm.classList.add('on'); }, 1460);
