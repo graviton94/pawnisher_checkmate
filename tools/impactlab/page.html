@@ -448,6 +448,9 @@ function crackedPiece(g, key, x, y, k, seed, o = {}) {
 }
 /** 가짜 왕의 왕관 (도트 표: [열, 행, 색]) — 굴러가는 왕관에 쓴다 */
 const CROWN_PX = (() => { const rows = ['KKKKKKK', 'KYKYKYK', 'KYYYYYK', 'KTTTTTK', 'KYYRYYK', 'KAAAAAK', 'KKKKKKK']; const pal = { K: '#0b0b0e', Y: '#facc15', T: '#fff3b0', R: '#e5262f', A: '#9a6f14' }; const out = []; rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'K' && (i === 0 || i === 6) && j === 0) return; out.push([i - 1, j - 1, pal[ch]]); })); return out; })();
+/** 가짜 왕 그림에서 오린 그 왕관 (64 × 28 원본 px) */
+let crownCut = null;
+const CROWN_CUT = () => { if (crownCut) return crownCut; const c = document.createElement('canvas'); c.width = 64; c.height = 28; c.getContext('2d').drawImage(imgs.K0, 32, 12, 64, 28, 0, 0, 64, 28); return (crownCut = c); };
 /** 화면 위아래 검은 띠 (영화) */
 function letterbox(g, k) { if (k <= 0) return; const h = Math.round(24 * k / FU) * FU; g.fillStyle = '#000'; g.fillRect(0, 0, W, h); g.fillRect(0, H - h, W, h); }
 /** 조명: 둘레를 어둡게, 점들만 밝게 */
@@ -643,43 +646,60 @@ const SCENES = [
     },
   },
   {
-    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '왕관이 굴러간다', rest: 2300,
-    sit: '마지막 일격이 가짜 왕을 친다. 시간이 늘어지고 색이 빠지며, 왕관이 머리에서 튕겨 나가 돌다가 떨어져 굴러간다. 폰 몸이 천천히 쓰러져 바스러지고, 바닥에 왕관만 남는다.',
-    dur: 4600, phases: [['겨눔', 0, 500, P.gather], ['일격', 500, 560, P.dash], ['정지', 560, 760, P.stop], ['색 빠짐 · 왕관 튐', 760, 1300, P.pre], ['쓰러짐', 1100, 1750, P.boom], ['슬로 바스러짐', 1900, 3200, P.recoil], ['왕관 굴러 멈춤', 1300, 2900, P.dash], ['도장 · 여운', 3000, 4600, P.tail]],
-    chips: ['일격 뒤 정지 200ms', '시간 0.3배 · 채도 0', '왕관이 머리에서 튕겨 90°씩 돌며 떨어짐', '바닥에서 두 번 튀고 굴러 흔들리다 멈춤', '폰 몸이 무겁게 쓰러짐(쿵) → 바스러짐', '재(회색)가 내려앉음', '붉은 「킹 파괴」 · 왕관 위에만 빛'],
+    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '심장이 멎고, 왕관이 남는다', rest: 2300, wide: true,
+    sit: '마지막 일격이 가짜 왕을 친다. 진홍 · 검정 반전 컷 두 장 → 영화 띠가 천천히 닫히고 색이 빠진다 → 심장 박동이 점점 느려지는 동안 몸 안에서 금이 번진다 → 박동이 멎는 순간 왕관이 머리에서 튕겨 오르고 몸은 산산이 부서져 바닥에 흩어진다 → 왕관은 동전처럼 뒤집히며 떨어져 두 번 튀고 흔들리다 멈춘다 → 글자가 한 자씩 내려찍히고 서술 한 줄. 빛은 왕관에만.',
+    dur: 6400, phases: [['겨눔', 0, 520, P.gather], ['일격', 520, 580, P.dash], ['반전 컷', 580, 700, P.boom], ['멈춤', 700, 820, P.stop], ['느려지는 박동 · 금', 820, 2200, P.pre], ['멎음 · 산산이', 2200, 3300, P.boom], ['왕관 낙하 · 튐', 2200, 3600, P.dash], ['글자 · 서술', 3700, 4900, P.recoil], ['여운', 4900, 6400, P.tail]],
+    chips: ['반전 컷: 진홍 바탕 검은 실루엣 → 흰 바탕 검은 실루엣', '영화 띠가 천천히 닫힘 · 채도 0으로', '박동 간격 280 → 520 → 900ms, 그리고 멎음', '몸 안 도트 금이 박동마다 번짐', '왕관 = 가짜 왕 그림에서 오린 그 왕관 (회전 없이 동전 뒤집기)', '몸 조각은 바닥에 떨어져 쌓인다 (사라지지 않음)', '「킹 · 파 · 괴」 한 자씩 내려찍기 + 서술 한 줄', '빛은 바닥의 왕관 위에만'],
     draw: (g, t) => {
-      const KG = [2, 1];
-      const sh = addv(shake(t, 560, 6, 300), shake(t, 1750, 5, 300));
-      const grey = seg(t, 760, 1300);
-      g.save(); cam(g, 1 + 0.1 * E.outCubic(seg(t, 560, 1300)) * (1 - E.outCubic(seg(t, 3200, 4400))), ...ctr(2, 1), sh); board(g);
-      const aim = E.outCubic(seg(t, 0, 500)), mv = E.inExpo(seg(t, 500, 560));
-      const nx = lerp(4.2 + 0.2 * aim, 3.05, mv);
-      piece(g, 'N1', nx, 1, { grey: grey > 0.5, sx: t < 500 ? 1 + 0.12 * aim : 1, sy: t < 500 ? 1 - 0.18 * aim : 1, redFlash: t < 500 ? 0.5 * aim : 0 });
-      const [kx, ky] = ctr(...KG);
-      // 왕관: 머리 위 → 튕겨 솟음 → 떨어져 두 번 튐 → 굴러 흔들리며 멈춤
-      const crownAt = () => {
-        if (t < 760) return [kx, ky - 22, 0];
-        const k1 = seg(t, 760, 1900); const floorY = ky + 22;
-        if (t < 1900) return [kx - 70 * E.outCubic(k1), lerp(ky - 22, floorY, k1) - 4 * 60 * k1 * (1 - k1), Math.floor(k1 * 6) * (Math.PI / 2)];
-        const b1 = seg(t, 1900, 2150), b2 = seg(t, 2150, 2330), roll = E.outCubic(seg(t, 2330, 2900));
-        const y = floorY - (t < 2150 ? 14 * Math.sin(Math.PI * b1) : t < 2330 ? 5 * Math.sin(Math.PI * b2) : 0);
-        const wob = t >= 2330 ? Math.sin((t - 2330) / 60) * 0.3 * (1 - roll) : 0;
-        return [kx - 70 - 26 * roll, y, wob];
-      };
-      if (t < 1900) {
-        const fall = E.inQuad(seg(t, 1100, 1750));
-        if (t < 760) piece(g, 'K0', KG[0], 1, { sx: t >= 560 ? 1.14 : 1, sy: t >= 560 ? 0.86 : 1, flash: t >= 560 && t < 640 ? 1 : 0 });
-        else piece(g, 'P0', KG[0], 1, { grey: true, rot: -1.45 * fall, dx: -6 * fall });
-      } else shatter(g, 'P0', KG[0] - 0.15, 1.15, seg(t, 1900, 3200), 77, { power: 0.6 });
-      if (t >= 760) { const [cx2, cy2, rot] = crownAt(); g.save(); g.translate(q(cx2), q(cy2)); g.rotate(rot); for (const [i, j, c] of CROWN_PX) px(g, i * FU - FU * 2, j * FU - FU * 2, c); g.restore(); if (t >= 2900) glow(g, cx2, cy2, 26, 'rgba(250,204,21,A)', 0.4 * seg(t, 2900, 3400)); }
-      if (t >= 560 && t < 760) burst(g, kx, ky, 40, 0.15, C.fg, 12);
+      const KG = [2, 1], [kx, ky] = ctr(2, 1), floorY = 1 * T + T * 0.86;
+      const beats = [900, 1180, 1700, 2600]; // 마지막 박동 = 멎음
+      let beat = 0; for (const b of beats.slice(0, 3)) beat = Math.max(beat, 1 - Math.abs(t - b) / 160);
+      const stopped = t >= 2200;
+      const sh = addv(shake(t, 580, 8, 360), shake(t, 2200, 9, 520), shake(t, 3060, 3, 160), stopped ? [0, 0] : t >= 820 ? tremble(t, 0.6 * beat) : [0, 0]);
+      const cut = t >= 580 && t < 700;
+      const zoom = 1 + 0.14 * E.inOutQuad(seg(t, 700, 2200)) * (1 - E.outCubic(seg(t, 4200, 6000)));
+      g.save(); cam(g, zoom, ...ctr(2.2, 1), sh);
+      const aim = E.outCubic(seg(t, 0, 520)), mv = E.inExpo(seg(t, 520, 580));
+      const nx = lerp(4.2 + 0.25 * aim, 3.05, mv);
+      if (cut) { const inv = t >= 640; g.fillStyle = inv ? '#f4f1ea' : '#7a1218'; g.fillRect(-W, -H, W * 3, H * 3); piece(g, 'N1', nx, 1, { black: true, sx: 1.1, sy: 0.9 }); piece(g, 'K0', KG[0], 1, { black: true, sx: 1.16, sy: 0.84 }); g.restore(); letterbox(g, 0.4); return; }
+      board(g);
+      const grey = E.outCubic(seg(t, 700, 1600));
+      piece(g, 'N1', nx, 1, { grey: grey > 0.5, sx: t < 520 ? 1 + 0.12 * aim : 1, sy: t < 520 ? 1 - 0.18 * aim : 1, redFlash: t < 520 ? 0.5 * aim : 0 });
+      if (t >= 520 && t < 900) afterimage(g, 'N1', [[4.45, 1], [3.7, 1], [3.05, 1]], 1 - seg(t, 580, 900));
+      // 몸: 박동마다 금이 번지고 → 멎는 순간 산산이 → 조각은 바닥에 떨어져 쌓인다
+      if (!stopped) {
+        const ck = t < 820 ? 0 : cl(seg(t, 820, 2200) * 0.6 + beat * 0.15 + (t > 1700 ? 0.25 * seg(t, 1700, 2200) : 0));
+        if (t < 820) piece(g, 'K0', KG[0], 1, { sx: t >= 580 ? 1.14 : 1, sy: t >= 580 ? 0.86 : 1, flash: t >= 700 && t < 760 ? 0.8 : 0 });
+        else { g.save(); g.filter = `grayscale(${grey})`; crackedPiece(g, 'K0', KG[0], 1, ck, 91, { sx: 1 + 0.04 * beat, sy: 1 - 0.04 * beat }); g.restore(); }
+      } else {
+        const k = seg(t, 2200, 3300); const s = T * 0.86, cx = KG[0] * T + T / 2, top = 1 * T + T * 0.88 - s * 0.94, part = s / 4;
+        g.save(); g.imageSmoothingEnabled = false; g.filter = 'grayscale(1) brightness(0.75)';
+        for (const f of fragsOf('P0')) { const id = f.j * 4 + f.i; if (f.j === 0) continue; const ox = (f.i - 1.5) * part, oy = (f.j - 1.5) * part; const delay = (3 - f.j) * 0.08 + hash(91 + id) * 0.06; const tt = Math.max(0, k * 1.3 - delay); const vx = ox * 0.35 + (hash(92 + id) - 0.5) * 10; let x2 = cx + ox + vx * Math.min(tt, 0.5), y2 = top + s / 2 + oy + 200 * tt * tt; const layer = 3 - f.j; const rest = floorY - 3 - part * 0.55 * layer * 0.6 - (f.i === 1 || f.i === 2 ? part * 0.25 : 0); const rot = 0; if (y2 > rest) { y2 = rest; } g.save(); g.translate(q(x2), q(y2)); g.rotate(rot); g.drawImage(f.c, -part / 2, -part / 2, part, part); g.restore(); }
+        g.restore();
+        shards(g, cx, ky, seg(t, 2200, 3000), 97, '#8a8794', 14);
+      }
+      // 왕관: 멎는 순간 머리에서 튕겨 → 동전처럼 뒤집히며 떨어짐 → 두 번 튐 → 흔들리다 멈춤
+      if (stopped) {
+        const k1 = seg(t, 2200, 3060); let x = kx - 64 * E.outCubic(k1), y = lerp(ky - 26, floorY - 10, k1) - 4 * 70 * k1 * (1 - k1), flip = Math.cos(k1 * Math.PI * 5);
+        if (t >= 3060) { const b1 = seg(t, 3060, 3300), b2 = seg(t, 3300, 3460), w = seg(t, 3460, 3900); x = kx - 64 - 8 * E.outCubic(seg(t, 3060, 3900)); y = floorY - 10 - (t < 3300 ? 14 * Math.sin(Math.PI * b1) : t < 3460 ? 5 * Math.sin(Math.PI * b2) : 0); flip = t < 3460 ? 1 : 1 - 0.25 * Math.abs(Math.sin(w * Math.PI * 3)) * (1 - w); }
+        const cw = T * 0.86 * (64 / 128), ch = T * 0.86 * (28 / 128);
+        g.save(); g.imageSmoothingEnabled = false; g.translate(q(x), q(y)); g.scale(Math.abs(flip) < 0.15 ? 0.15 : flip, 1); g.drawImage(CROWN_CUT(), -cw / 2, -ch / 2, cw, ch); g.restore();
+        if (t >= 3060 && t < 3300) { const kk = seg(t, 3060, 3300); for (let i = 0; i < 6; i++) px(g, x + (i - 2.5) * 6 * (0.5 + kk), floorY - 4 - 6 * kk * (i % 2 ? 1 : 0.5), '#8a8794', 1 - kk); }
+        if (t >= 3500) glow(g, x, y, 30, 'rgba(250,204,21,A)', 0.45 * seg(t, 3500, 4200));
+      } else if (t >= 820) { /* 왕관은 몸 그림(K0)에 붙어 있다 */ }
       g.restore();
-      if (grey > 0) { g.fillStyle = `rgba(14,13,18,${0.45 * grey})`; g.fillRect(0, 0, W, H); }
-      vignette(g, 0.8 * seg(t, 760, 2000));
-      // 재가 내려앉음 (회색, 위에서 아래로)
-      if (t >= 1900) { const k = seg(t, 1900, 4600); for (let i = 0; i < 26; i++) { const y0 = hash(i + 120) * H * 0.5; const life = cl((k - hash(i + 121) * 0.3) / 0.7); if (life <= 0 || life >= 1) continue; px(g, hash(i + 122) * W + Math.sin(life * 5 + i) * 6, y0 + life * H * 0.5, i % 2 ? '#8a8794' : '#56545e', (1 - life) * 0.8); } }
-      if (t >= 3000) stamp(g, '킹 파괴', W / 2, 32, seg(t, 3000, 3300), '#ff6b6b', 26);
-      text(g, `시간 ×${t < 760 ? '1' : t < 3200 ? '0.3' : '1'}`, 50, H - 12, 11, C.fg, { alpha: 0.7 });
+      // 색 빠짐 · 박동 맥 · 영화 띠
+      if (grey > 0) { g.fillStyle = `rgba(10,9,14,${0.5 * grey})`; g.fillRect(0, 0, W, H); }
+      if (!stopped && beat > 0) vignette(g, 0.65 * beat, '122,18,24');
+      vignette(g, 0.75 * seg(t, 1500, 3000));
+      letterbox(g, E.inOutQuad(seg(t, 700, 2200)));
+      if (stopped) { const a = seg(t, 2200, 2260); if (a < 1) flashAll(g, 0.35 * (1 - a)); }
+      // 재: 천천히 가라앉는 회색 도트 (많지 않게)
+      if (t >= 2400) { const k = seg(t, 2400, 6400); for (let i = 0; i < 14; i++) { const life = cl((k - hash(i + 130) * 0.4) / 0.6); if (life <= 0 || life >= 1) continue; px(g, 60 + hash(i + 131) * (W - 120) + Math.sin(life * 4 + i) * 5, 40 + life * (H - 80), '#6b6876', (1 - life) * 0.7); } }
+      // 글자: 한 자씩 내려찍기 + 서술
+      const chars = ['킹', '파', '괴'];
+      chars.forEach((c2, i) => { const t0 = 3700 + i * 260; if (t < t0) return; const kk = seg(t, t0, t0 + 200); const x = W / 2 - 34 + i * 34; text(g, c2, x + 2, 34 + 3, 26, '#000', { scale: lerp(2.2, 1, E.outBack(kk)), alpha: cl(kk * 3) * 0.8 }); text(g, c2, x, 34, 26, '#ff6b6b', { scale: lerp(2.2, 1, E.outBack(kk)), alpha: cl(kk * 3) }); });
+      if (t >= 4500) text(g, '태엽이 다 풀렸다. 당신의 눈이 감겨 온다.', W / 2, H - 34, 12, '#c8c8c8', { alpha: seg(t, 4500, 5100) });
     },
   },
   {
