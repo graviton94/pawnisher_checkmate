@@ -3,7 +3,7 @@ import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
-import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, titleFx } from './uifx';
+import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, shakeEl, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
@@ -935,23 +935,37 @@ const TIPS = [
   '기물을 길게 누르면 이름 · 기벽 · 체력을 볼 수 있습니다.',
 ];
 
-/** 전환 화면 (D-165): 큰 그림 + 이름 + 서술 한 줄 + 도움말. 눌러서 넘기거나 약 3초 뒤 저절로 */
-const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false): Promise<void> =>
+/**
+ * 전환 화면 (D-165 → D-191 새 문법): 철문이 열리면 — 빛줄기 앞으로 적(또는 장소 문양)이 떨어져 박히고 → 명패 아래 이름이 내리꽂히고
+ * (색 갈림) → 서술이 한 자씩 → 적 구성이 하나씩 튀어나온다. 눌러서 넘기거나 약 3.5초 뒤 저절로.
+ */
+const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false, roster = ''): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
-    el.className = `stagefx instant${boss ? ' boss' : ''}`;
-    el.innerHTML = `<div class="sf-art">${art}</div>
-      <div class="sf-text"><p class="sf-eyebrow">${label}</p><h1>${name}</h1><p class="sf-narr">${narr}</p></div>
+    el.className = `stagefx enc${boss ? ' boss' : ''}`;
+    el.innerHTML = `<div class="enc-rays"></div><div class="sf-art"><i class="enc-shadow"></i><div class="enc-piece">${art}</div></div>
+      <div class="sf-text"><p class="sf-eyebrow enc-plate">${label}</p><h1>${name}</h1><p class="sf-narr"></p>${roster ? `<div class="enc-foes"><span>적</span>${roster}</div>` : ''}</div>
       <p class="sf-tip">${TIPS[Math.floor(Math.random() * TIPS.length)]}</p><p class="sf-skip">눌러서 계속</p>`;
-    // 철문 전환 (D-184): 닫힌 사이에 장면을 세우고 열며 보여 준다 — 페이드 대신
+    const T: number[] = [];
+    const at = (ms: number, fn: () => void) => T.push(window.setTimeout(fn, ms));
+    // 철문 전환 (D-184): 닫힌 사이에 장면을 세우고, 문이 열리는 박자에 맞춰 연출을 시작한다
     void shutter(() => {
       document.body.appendChild(el);
-      sfx(boss ? 'threat' : 'stamp');
+      el.classList.add('run');
+      at(330, () => {
+        const r = el.querySelector('.enc-piece')!.getBoundingClientRect();
+        sparksAt(r.left + r.width / 2, r.bottom - 6, boss ? 14 : 8, boss ? 70 : 44);
+        shakeEl(el, boss ? 9 : 5, boss ? 420 : 300);
+        sfx(boss ? 'threat' : 'land');
+      });
+      at(560, () => sfx('stamp'));
+      at(720, () => void typeIn(el.querySelector<HTMLElement>('.sf-narr')!, narr, 20));
     });
     let done = false;
     const close = () => {
       if (done) return;
       done = true;
+      T.forEach(clearTimeout);
       // 닫힌 사이에 다음 화면을 세운다 (resolve → 부른 쪽이 곧바로 판 · 화면을 만든다)
       void shutter(() => {
         el.remove();
@@ -960,12 +974,16 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       });
     };
     window.setTimeout(() => el.addEventListener('click', close), 1000);
-    window.setTimeout(close, boss ? 4200 : 3400);
+    window.setTimeout(close, boss ? 4400 : 3600);
   });
 const stageIntro = (def: BattleDef): Promise<void> => {
   const [label, name] = def.title.split(' — ');
   const foe: PieceType = def.boss ? 'Q' : def.enemy.find((t) => t !== 'K' && t !== 'P') ?? 'K';
-  return sceneIntro(label, name, def.narr, pieceImg(foe, 1, 'large', 220), def.boss);
+  // 적 구성: 같은 유형은 묶어 ×n
+  const counts = new Map<PieceType, number>();
+  for (const t of def.enemy) counts.set(t, (counts.get(t) ?? 0) + 1);
+  const roster = [...counts].map(([t, n], i) => `<b style="animation-delay:${900 + i * 90}ms">${pieceImg(t, 1, 'small', 28)}${n > 1 ? `<small>×${n}</small>` : ''}</b>`).join('');
+  return sceneIntro(label, name, def.narr, pieceImg(foe, 1, 'large', 220), def.boss, roster);
 };
 
 /** 승패 띠 (대국이 끝난 순간 화면을 가로지른다) */
@@ -1255,15 +1273,16 @@ const deathRites = async (): Promise<void> => {
     curtainRows(fx);
     document.body.appendChild(fx);
     sfx('loss');
-    await new Promise((r) => window.setTimeout(r, 380));
-    await typeIn(fx.querySelector<HTMLElement>('.narr')!, d.narr, 28);
+    // 빠르게 (D-191): 막 0.2초 → 서술 한 자 14ms → 이름 · 대사 · 시스템 줄 60ms 간격 → 0.45초 머묾 (약 1.2초)
+    await new Promise((r) => window.setTimeout(r, 200));
+    await typeIn(fx.querySelector<HTMLElement>('.narr')!, d.narr, 14);
     for (const x of fx.querySelectorAll('div > :not(.narr)')) {
       x.classList.add('in');
-      await new Promise((r) => window.setTimeout(r, 140));
+      await new Promise((r) => window.setTimeout(r, 60));
     }
-    await new Promise((r) => window.setTimeout(r, 700));
+    await new Promise((r) => window.setTimeout(r, 450));
     fx.classList.add('out');
-    window.setTimeout(() => fx.remove(), 400);
+    window.setTimeout(() => fx.remove(), 320);
   }
 };
 

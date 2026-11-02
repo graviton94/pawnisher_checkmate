@@ -274,7 +274,7 @@ export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () =>
   });
 /** 검은 막이 위에서 한 줄씩 계단으로 내려온다 (8줄) */
 export const curtainRows = (host: HTMLElement): void => {
-  host.insertAdjacentHTML('afterbegin', Array.from({ length: 8 }, (_, i) => `<span class="dc-row" style="top:${i * 12.5}%;animation-delay:${i * 45}ms"></span>`).join(''));
+  host.insertAdjacentHTML('afterbegin', Array.from({ length: 8 }, (_, i) => `<span class="dc-row" style="top:${i * 12.5}%;animation-delay:${i * 22}ms;--r:${7 - i}"></span>`).join(''));
 };
 
 // ---------- 15 구매 · 회복 ----------
