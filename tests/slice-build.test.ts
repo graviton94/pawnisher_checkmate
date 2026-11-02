@@ -264,7 +264,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     endTurn(bp, true);
     expect(bp.s.pieces.find((p) => p.id === kb.id)!.hp).toBe(kb.maxHp - 4);
   });
-  it('녹슨 박차: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 25 · 막사의 종: 폰 +1', () => {
+  it('녹슨 등자: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 25 · 막사의 종: 폰 +1', () => {
     const b = mk(['spurs', 'scepter', 'barracks'], ['leap', 'knightRaid']);
     expect(costOf(b, 0)).toBe(0);
     expect(costOf(b, 1)).toBe(1);

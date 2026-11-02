@@ -836,7 +836,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   if (b.s.winner === null) {
     b.turn += 1;
     b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
-    // 도금 갑주: 지난 적 차례에 킹이 맞았으면 태엽 +1
+    // 도금 방패: 지난 적 차례에 킹이 맞았으면 태엽 +1
     b.ap = b.apMax + (gildedHit ? 1 : 0);
     b.kills = 0;
     b.killers = [];

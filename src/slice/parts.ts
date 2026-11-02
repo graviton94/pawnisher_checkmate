@@ -27,11 +27,11 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   hammer: { name: '공성 망치', axis: 'push', icon: 'wrench', desc: '충돌 피해 ×2' },
   // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
   lance: { name: '기사의 창', axis: 'cav', icon: 'sword', desc: '나이트의 공격 ×1.5' },
-  spurs: { name: '녹슨 박차', axis: 'cav', icon: 'horseshoe', desc: '나이트 카드 태엽 −1' },
+  spurs: { name: '녹슨 등자', axis: 'cav', icon: 'horseshoe', desc: '나이트 카드 태엽 −1' },
   barracks: { name: '막사의 종', axis: 'inf', icon: 'bell', desc: '대국 시작에 킹 곁에 폰 +1' },
   banner: { name: '찢긴 군기', axis: 'inf', icon: 'flag', desc: '폰의 공격 ×1.5' },
   scepter: { name: '녹슨 홀', axis: 'king', icon: 'crown', desc: '대국 시작에 킹 방열판 +25' },
-  gilded: { name: '도금 갑주', axis: 'king', icon: 'shield', desc: '킹이 맞을 때마다 태엽 +1 (턴에 한 번)' },
+  gilded: { name: '도금 방패', axis: 'king', icon: 'shield', desc: '킹이 맞을 때마다 태엽 +1 (턴에 한 번)' },
   fuse: { name: '도화선', axis: 'chain', icon: 'flame', desc: '연쇄 3 이상이면 손패 +1' },
   conductor: { name: '전도 코일', axis: 'chain', icon: 'chain', desc: '연쇄 기본 배율 +10%p (처치마다 +35%)' },
   anvilPlate: { name: '모루 장갑', axis: 'push', icon: 'anvil', desc: '충돌 피해 +10' },
