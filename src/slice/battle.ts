@@ -2,6 +2,7 @@ import { PIECE_STATS } from '../data/pieces';
 import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, moveCost, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
+import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
 import { BOSS, BOSS_NUM, COMMANDS, LAB, PUSH, SLICE, TRAIT, type BossRule, type CommandId } from './cards';
 
@@ -23,6 +24,9 @@ export interface Fall {
   pieceId: number;
   by: string;
   turn: number;
+  /** 쓰러뜨린 적 기물 (원수, D-178) */
+  byType?: PieceType;
+  byId?: number;
 }
 
 /** 적의 예고 한 건 */
@@ -81,6 +85,10 @@ export interface SliceBattle {
   /** 턴에 한 번 효과 (풀린 브레이크) */
   once: string[];
   rng: number;
+  /** 보이지 않는 손 (D-178): 적이 가장 아픈 수를 한 번 건너뛸 확률 — 화면에 드러내지 않는다 */
+  mercy?: number;
+  /** 원수가 선 적 기물 id (D-178) */
+  nemesisId?: number;
   /** 근간 시험장 (D-177): 'A' 지금 규칙 + 환급 · 'B' 진짜 잡기 + 환급 */
   lab?: 'A' | 'B';
   /** 이번 턴 환급받은 태엽 */
@@ -162,7 +170,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B' } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number } } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -219,11 +227,30 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
       s.doorIds = [];
     }
   }
+  if (opts.mercy) b.mercy = opts.mercy;
+  // 원수: 그 유형의 적 하나 (킹이 아니면 킹이 아닌 쪽부터) — 단계마다 HP +25%
+  if (opts.nemesis) {
+    const n = opts.nemesis;
+    const p = s.pieces.find((q) => q.side === 1 && q.type === n.t);
+    if (p) {
+      p.maxHp = p.hp = Math.round(p.maxHp * (1 + n.rank * DIRECTOR.nemesisHp));
+      b.nemesisId = p.id;
+    }
+  }
   drawCards(b, b.handSize);
   bossTurnStart(b);
-  b.intents = planEnemy(b.s);
+  b.intents = planFor(b);
   b.snap = JSON.stringify(b);
   return b;
+};
+
+/** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
+const planFor = (b: SliceBattle): Intent[] => {
+  if (!b.mercy) return planEnemy(b.s);
+  const rng = new Rng(b.rng ^ 0x5eed);
+  const skip = rng.next() < b.mercy;
+  b.rng = (b.rng + 0x9e37) >>> 0;
+  return planEnemy(b.s, skip);
 };
 
 // ---------- 적 예고 (단순한 AI — Into the Breach식: 수는 단순해도 다 보인다) ----------
@@ -285,7 +312,7 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set()): { t
 };
 
 /** 적의 이번 수: 태엽 3 안에서, 내 기물을 가장 아프게 치는 칸부터. 칠 게 없으면 내 킹 쪽으로 */
-export const planEnemy = (s0: BattleState): Intent[] => {
+export const planEnemy = (s0: BattleState, skipTop = false): Intent[] => {
   const s = { ...s0, turnSide: 1 as const };
   const options: { pieceId: number; to: Pos; score: number; cost: number }[] = [];
   for (const p of s.pieces.filter((q) => q.side === 1)) {
@@ -293,6 +320,7 @@ export const planEnemy = (s0: BattleState): Intent[] => {
     if (best) options.push({ pieceId: p.id, to: best.to, score: best.score, cost: moveCost(s, p) });
   }
   options.sort((a, b) => b.score - a.score || a.pieceId - b.pieceId);
+  if (skipTop && options.length > 1) options.shift();
   const out: Intent[] = [];
   let ap = SLICE.enemyAp;
   const taken = new Set<string>();
@@ -681,7 +709,7 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
       if (h.door) b.doorUsed.push(h.targetId);
       if (has(b, 'gilded') && h.damage > 0 && findPiece(before, h.targetId)?.type === 'K' && !b.once.includes('gilded')) b.once.push('gilded');
       if (h.killed && !b.falls.some((f) => f.pieceId === h.targetId)) {
-        b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn });
+        b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn, ...(attacker && attacker.side === 1 ? { byType: attacker.type, byId: attacker.id } : {}) });
         const dead = before.pieces.find((p) => p.id === h.targetId);
         if (dead && b.quirks[h.targetId] === 'boiler') {
           const hits = b.s.pieces.filter((p) => p.side === 1 && chebyshev(p, dead) === 1).map((p) => {
@@ -822,10 +850,40 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     }
     drawCards(b, b.handSize);
     bossTurnStart(b);
-    b.intents = planEnemy(b.s);
+    b.intents = planFor(b);
     b.snap = JSON.stringify({ ...b, snap: '' });
   }
   return { events, before };
+};
+
+/** 이번 적 차례에 내 킹이 쓰러지나 (마지막 한 수 · 자원 희생 판정, D-178) */
+export const kingDoomed = (b: SliceBattle): boolean => {
+  const k = kingOf(b.s, 0);
+  return !!k && b.s.winner === null && intentHits(b).some((h) => h.pieceId === k.id && h.killed);
+};
+
+/** 자원 희생 (D-178): 킹과 곁의 분대원이 자리를 바꾼다 — 그 분대원이 대신 맞는다. 바꿀 수 있는 분대원 id들 */
+export const sacrificeCandidates = (b: SliceBattle): number[] => {
+  const k = kingOf(b.s, 0);
+  if (!k) return [];
+  return b.s.pieces.filter((p) => p.side === 0 && p.id !== k.id && chebyshev(p, k) === 1).map((p) => p.id);
+};
+export const sacrificeSwap = (b: SliceBattle, crewId: number): boolean => {
+  const k = kingOf(b.s, 0);
+  const c = findPiece(b.s, crewId);
+  if (!k || !c || chebyshev(k, c) !== 1) return false;
+  const kx = k.x, ky = k.y;
+  Object.assign(k, { x: c.x, y: c.y });
+  Object.assign(c, { x: kx, y: ky });
+  b.snap = JSON.stringify({ ...b, snap: '' });
+  return true;
+};
+
+/** 마지막 한 수 (D-178): 태엽 +ap, 손패에 철벽 한 장 (이 대국 동안만 — 출하 덱에는 남지 않는다) */
+export const clutchBoost = (b: SliceBattle, ap: number): void => {
+  b.ap += ap;
+  b.hand.push('plate');
+  b.snap = JSON.stringify({ ...b, snap: '' });
 };
 
 /** 되감기: 이번 턴 처음으로 (대국마다 한 번) */

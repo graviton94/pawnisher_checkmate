@@ -14,8 +14,9 @@ import { iconMask } from '../ui/chrome';
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
+import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
-import { REST, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { REST, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
 
@@ -40,6 +41,43 @@ let R = new Rng(runSeed ^ 0x51c3);
 /** 하위 난수 하나 (화면마다 따로 쓰되 순서는 출하 난수가 정한다) */
 const sub = (): Rng => new Rng(R.int(0x7fffffff));
 const store = defaultStore();
+
+// ---------- 심리 연출 상태 (D-178) ----------
+/** 남은 마지막 한 수 · 자원 희생 (출하마다) */
+let clutchLeft = 0;
+let sacLeft = 0;
+/** 사선 보상을 받은 막 (막마다 한 번) */
+let closeActs: number[] = [];
+/** 이번 출하 최고의 턴 */
+let highlight: Highlight | null = null;
+/** 같은 대국에서 진 횟수 (보이지 않는 손) · 그 대국 */
+let lossesHere = 0;
+let lossDef: BattleDef | null = null;
+/** 이번 대국: 마지막 한 수를 썼나 · 도발을 했나 · 판돈 · 원수 */
+let clutchedNow = false;
+let tauntedNow = false;
+let betNow: { kind: BetKind; stake: number } | null = null;
+let nemesisNow: Nemesis | null = null;
+/** 사선 보상 등급 (보상 흐름에서 쓴다) */
+let closeTier = 0;
+/** 원수 목록 (출하를 넘어 남는다 — 기록에 저장) */
+const nemeses = (): Nemesis[] => readMeta(store).nemeses ?? [];
+const setNemeses = (list: Nemesis[]): void => writeMeta(store, { ...readMeta(store), nemeses: list });
+
+/** 적 킹의 한 마디 (대국마다 한 줄까지, 확률로만 — 매 판 떠들지 않는다) */
+const taunt = (cue: TauntCue, force = false): void => {
+  if (tauntedNow || labMode) return;
+  if (!force && R.next() > DIRECTOR.taunt) return;
+  tauntedNow = true;
+  const lines = TAUNTS[cue];
+  const line = lines[R.int(lines.length)];
+  const el = document.createElement('div');
+  el.className = 'taunt';
+  el.innerHTML = `${pieceImg('K', 1, 'small', 22)}<span>${line}</span>`;
+  document.body.appendChild(el);
+  window.setTimeout(() => el.classList.add('out'), 2600);
+  window.setTimeout(() => el.remove(), 3100);
+};
 let actI = 0;
 let rowI = 0;
 /** 지금 치르는 대국 */
@@ -425,6 +463,10 @@ const onEndInner = async (): Promise<void> => {
   }
   $('btn-end').classList.remove('warn');
   selCard = selPiece = null;
+  // 이번 출하 최고의 턴 (하이라이트, D-178) · 한 턴에 둘 이상 쓰러뜨리면 적 킹이 분해한다
+  const hl = { where: cur.title, turn: b.turn - 1, kills: prevKills, damage: turnDmg };
+  if (turnDmg > 0 && betterHighlight(highlight, hl)) highlight = hl;
+  if (prevKills >= 2) taunt('cheese');
   // 턴 합계 (Balatro식): 이번 턴 준 피해가 세어 올라간다
   if (turnDmg > 0) await renderer.summary(0, turnDmg, prevKills);
   turnDmg = 0;
@@ -442,7 +484,78 @@ const onEndInner = async (): Promise<void> => {
   renderer.setup(b.s);
   refresh();
   if (b.s.winner !== null) return finish();
+  if (b.falls.some((f) => f.turn === b.turn - 1)) taunt('gloat');
   sfx('submit');
+  await lastStand();
+};
+
+/**
+ * 사선 (D-178): 이번 적 차례에 내 킹이 쓰러지게 생겼으면 — ⑥ 곁의 분대원이 대신 맞겠다고 나서거나(고른다),
+ * ⑤ 시간이 멈추고 마지막 한 수(태엽 + 철벽)가 들어온다. 둘 다 출하마다 몇 번뿐, 승급이 오를수록 줄어든다.
+ */
+const lastStand = async (force = false): Promise<void> => {
+  if (labMode || (!force && !kingDoomed(b))) return;
+  const cands = sacrificeCandidates(b);
+  if (sacLeft > 0 && cands.length) {
+    const ci = b.squadIds.indexOf(cands[0]);
+    const who = ci >= 0 ? squad[ci] : null;
+    if (who) {
+      const ok = await new Promise<boolean>((res) => {
+        const el = openOverlay(`<div class="stand"><p class="eyebrow">사선</p><h2>${pieceImg(who.t, 0, 'small', 28)} ${crewLabel(who)}</h2><p class="line">“제가 맞겠습니다, 대장.”</p><p class="dim">받아들이면 킹과 자리를 바꿉니다. 이 분대원이 대신 맞습니다.</p><div class="row"><button class="btn" type="button" data-no>거절한다</button><button class="btn brass" type="button" data-yes>받아들인다</button></div></div>`);
+        el.querySelector('[data-yes]')!.addEventListener('click', () => res(true));
+        el.querySelector('[data-no]')!.addEventListener('click', () => res(false));
+      });
+      closeOverlay();
+      if (ok) {
+        sacLeft -= 1;
+        sacrificeSwap(b, cands[0]);
+        sfx('stamp');
+        renderer.setup(b.s);
+        refresh();
+        toast(`${who.name}이(가) 킹 앞을 막아선다.`, 2600);
+        if (!force && !kingDoomed(b)) return;
+      }
+    }
+  }
+  if (clutchLeft <= 0) return;
+  clutchLeft -= 1;
+  clutchedNow = true;
+  const fx = document.createElement('div');
+  fx.className = 'clutchfx';
+  fx.innerHTML = `<p>태엽이 마지막으로 감긴다.</p><small>태엽 +${dir.clutchAp(asc)} · 손패에 철벽</small>`;
+  document.body.appendChild(fx);
+  sfx('awaken');
+  await new Promise((r) => window.setTimeout(r, 1500));
+  fx.classList.add('out');
+  window.setTimeout(() => fx.remove(), 400);
+  clutchBoost(b, dir.clutchAp(asc));
+  refresh();
+};
+
+/** 원수와 다시 만났다 (전환 화면 뒤): 이름 · 쓰러뜨린 분대원 · 단계 */
+const nemesisMeet = (n: Nemesis): void => {
+  const el = openOverlay(`<div class="stand nemesis"><p class="eyebrow">원수</p><h2>${pieceImg(n.t, 1, 'small', 30)} ${n.name}</h2><p class="line">${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><p class="dim">쓰러뜨린 분대원: ${n.victims.join(' · ')} · ${n.rank}단계 (HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%)<br>쓰러뜨리면 현상금 나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${n.heir.name}이(가) 돌아온다` : ''}.</p><div class="row"><button class="btn brass" type="button" data-go>간다</button></div></div>`);
+  sfx('threat');
+  el.querySelector('[data-go]')!.addEventListener('click', () => {
+    closeOverlay();
+    toast(cur.tell, 3200);
+  });
+};
+
+/** 판돈 (D-178): 이따금, 대국 앞에서 나 자신에게 건다 — 걸지 않아도 된다 */
+const maybeBet = (def: BattleDef, force = false): void => {
+  if (!force && (labMode || INTRO.includes(def) || def.boss || gold < DIRECTOR.betStake || R.next() > DIRECTOR.betChance)) return;
+  const kinds: BetKind[] = ['fast', 'clean'];
+  const kind = kinds[R.int(kinds.length)];
+  const el = openOverlay(`<div class="stand"><p class="eyebrow">판돈</p><h2>${BETS[kind].label}</h2><p class="dim">${BETS[kind].desc}. 못 이루면 건 나사를 잃습니다.</p><div class="row"><button class="btn" type="button" data-no>걸지 않는다</button><button class="btn brass" type="button" data-yes>나사 ${DIRECTOR.betStake}을 건다</button></div></div>`);
+  el.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
+  el.querySelector('[data-yes]')!.addEventListener('click', () => {
+    betNow = { kind, stake: DIRECTOR.betStake };
+    sfx('rare');
+    closeOverlay();
+    toast(`판돈: ${BETS[kind].label}`, 2200);
+    refresh();
+  });
 };
 
 /** 연출 중 오류가 나도 조작이 잠기지 않게 (busy를 풀고 판을 다시 그린다) */
@@ -465,7 +578,27 @@ const startBattle = (def: BattleDef, silent = false): void => {
   cur = def;
   stage += 1;
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
-  b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
+  // 보이지 않는 손 (D-178): 같은 대국을 거듭 지면 적이 가끔 가장 아픈 수를 건너뛴다 — 낮은 승급일수록
+  if (lossDef !== def) {
+    lossDef = def;
+    lossesHere = 0;
+  }
+  const mercy = dir.mercy(asc, lossesHere);
+  // 원수 (D-178): 입문 · 연마가 아니면 이따금 그 유형의 적으로 다시 선다
+  nemesisNow = null;
+  let enemy = def.enemy;
+  const ns = nemeses();
+  if (ns.length && !INTRO.includes(def) && R.next() < DIRECTOR.nemesisShow) {
+    const n = ns.find((x) => enemy.includes(x.t)) ?? ns.find((x) => x.t !== 'K');
+    if (n) {
+      nemesisNow = n;
+      if (!enemy.includes(n.t)) enemy = [...enemy, n.t];
+    }
+  }
+  clutchedNow = false;
+  tauntedNow = false;
+  betNow = null;
+  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined });
   selCard = selPiece = null;
   busy = false;
   turnDmg = 0;
@@ -473,10 +606,16 @@ const startBattle = (def: BattleDef, silent = false): void => {
   ritesDone = 0;
   closeOverlay();
   renderer.setFoeTraits([...(b.blastPawns ? ['blast' as const] : []), ...(b.boss && b.bossRule === 'thorns' ? ['thorns' as const] : [])]);
+  renderer.setNemesis(b.nemesisId ?? null);
   renderer.setup(b.s);
   refresh();
   // 전환 화면 (D-165): 판이 바뀔 때마다 — 서술 한 줄 + 도움말, 눌러서 넘긴다. 판 위 규칙 한 줄은 그 뒤에
-  if (!silent) void stageIntro(def).then(() => toast(def.tell, 3200));
+  if (!silent)
+    void stageIntro(def).then(() => {
+      if (nemesisNow) return nemesisMeet(nemesisNow);
+      toast(def.tell, 3200);
+      maybeBet(def);
+    });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
   $('hand').classList.toggle('hint', def === INTRO[0]);
 };
@@ -821,11 +960,43 @@ const finish = (): void => {
   window.setTimeout(async () => {
     await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
     if (!isWin) {
-      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>킹이 쓰러졌습니다. ${cur.title}부터 다시 할 수 있습니다.</p><div class="row"><button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>다시 하기</button></div>`);
+      lossesHere += 1;
+      if (betNow) gold = Math.max(0, gold - betNow.stake);
+      // 아까운 패배 (D-178): 적 킹이 거의 다 깎였으면 「한 수였습니다」 — 가까웠던 만큼 다시 누르게
+      const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+      const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="near">적 킹 HP ${ek.hp} 남았습니다. 한 수였습니다.</p>` : '';
+      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>킹이 쓰러졌습니다. ${cur.title}부터 다시 할 수 있습니다.</p>${near}<div class="row"><button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>다시 하기</button></div>`);
       el.querySelector('[data-again]')!.addEventListener('click', () => startBattle(cur));
       el.querySelector('[data-quit]')!.addEventListener('click', () => runEnd(false));
       return;
     }
+    // 판돈 정산 · 원수 처치 · 새 원수 · 사선 보상 (D-178)
+    const notes: string[] = [];
+    if (betNow) {
+      const d = settleBet(betNow.kind, betNow.stake, { won: true, turns: b.turn, fell: b.falls.length });
+      gold = Math.max(0, gold + d);
+      notes.push(d > 0 ? `판돈 적중 — 나사 +${d}` : `판돈을 잃었다 — 나사 ${d}`);
+    }
+    if (nemesisNow && b.nemesisId !== undefined && !b.s.pieces.some((p) => p.id === b.nemesisId)) {
+      const n = nemesisNow;
+      gold += dir.bounty(asc);
+      setNemeses(nemeses().filter((x) => x.name !== n.name));
+      notes.push(`원수 「${n.name}」 처치 — 현상금 나사 +${dir.bounty(asc)}`);
+      if (asc <= DIRECTOR.heirloomUpTo && n.heir && !squad.some((u) => u.serial && u.serial === n.heir!.serial)) {
+        squad.push({ t: n.heir.t, name: n.heir.name, serial: n.heir.serial, kills: 0, battles: 0, scars: ['원수의 손에서 돌아옴'] });
+        notes.push(`${n.heir.name}이(가) 돌아왔다.`);
+      }
+    }
+    const kingNow = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
+    const kingMax = kingNow?.maxHp ?? 1;
+    closeTier = 0;
+    if (isCloseCall({ kingHp: kingNow?.hp ?? 0, kingMax, fell: b.falls.length, clutched: clutchedNow }) && !closeActs.includes(actI) && dir.closeCall(asc) > 0) {
+      closeActs.push(actI);
+      closeTier = dir.closeCall(asc);
+      if (closeTier === 1) gold += DIRECTOR.closeCallGold;
+      notes.unshift(`사선을 넘었다 — ${closeTier === 3 ? '부품 하나 더' : closeTier === 2 ? '카드 넷 중 고르기' : `나사 +${DIRECTOR.closeCallGold}`}`);
+    }
+    if (notes.length) window.setTimeout(() => toast(notes.join(' · '), 3600), 300);
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
     const overGold = Math.floor(b.overkill / 10);
     const earned = (b.coins * SLICE.coinValue + overGold) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
@@ -834,6 +1005,8 @@ const finish = (): void => {
     const survived = squadAfter(b, squad);
     const fallenList = fallenAfter(b, before);
     const fallen: Crew[] = fallenList.map((f) => f.crew);
+    // 원수가 생긴다: 내 분대원을 쓰러뜨린 적 (킹 · 입문 판 제외)
+    for (const { crew, fall } of fallenList) if (crew.t !== 'K' && fall.byType && fall.byType !== 'K' && !INTRO.includes(cur)) setNemeses(addNemesis(nemeses(), fall.byType, { t: crew.t, name: crew.name ?? PIECE_NAMES_KO[crew.t], serial: crew.serial }, R.int(1000)));
     // 폐기 원부: 영구 기록 (D-153)
     writeLedger(fallenList.map(({ crew, fall }) => ({ serial: crew.serial ?? '', name: crew.name ?? '', t: crew.t, quirk: crew.quirk, kills: crew.kills ?? 0, battles: crew.battles ?? 0, nick: crew.nick, cause: `${cur.title} ${fall.turn}턴 · ${fall.by}`, run: runId })));
     // 판 사이 기본 회복: 남은 분대 최대 HP의 30%
@@ -857,6 +1030,11 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     if (reward === 'recruit') return recruitPick(head, () => advance());
     if (reward === 'kit') return kitPick(head, () => advance());
     // 검문: 부품을 고른 뒤 카드 보상으로 (partDone — 다시 부품 화면으로 돌지 않게)
+    // 사선 보상 3등급: 부품 하나 더 (검문 부품과 겹치지 않게 먼저)
+    if (closeTier === 3 && !partDone) {
+      closeTier = 0;
+      return partPick(`<div class="stamp-big good">사선을 넘었다</div><h2>부품 하나 더</h2><p>겨우 넘은 대국입니다. 부품을 하나 고릅니다.</p>`, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); });
+    }
     if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">검문 통과</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true));
     if (reward === 'end') return runEnd(true);
     const rng = sub();
@@ -872,7 +1050,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     const offers: CommandId[] = [];
     // 축에 쓸 수 있는 카드가 없으면 다른 축에서 채운다 (3장 유지)
     for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
-      if (offers.length >= 3) break;
+      if (offers.length >= (closeTier === 2 ? 4 : 3)) break;
       const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id));
       if (pool.length) offers.push(pool[rng.int(pool.length)]);
     }
@@ -1279,11 +1457,17 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   runId = `${new Date().toISOString().slice(0, 16).replace('T', ' ')}${day ? ' · 오늘의 출하' : ''}${level ? ` · 승급 ${level}` : ''}`;
   squad = [];
   for (const t of START_SQUAD) squad.push(makeCrew(t, R, squad.map((u) => u.name ?? '')));
+  clutchLeft = dir.clutch(level);
+  sacLeft = dir.sacrifice(level);
+  closeActs = [];
+  highlight = null;
+  lossesHere = 0;
+  lossDef = null;
 };
 
 /** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
 const saveRun = (at: 'map' | 'battle', node?: number): void =>
-  writeSave(store, { v: 1, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node });
+  writeSave(store, { v: 1, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight });
 
 /** 저장한 출하를 되살린다 */
 const loadRun = (sv: RunSave): void => {
@@ -1293,6 +1477,10 @@ const loadRun = (sv: RunSave): void => {
   acts = buildRun(sv.seed, sv.asc);
   R = new Rng(sv.rng);
   ({ runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag } = sv);
+  clutchLeft = sv.clutchLeft ?? dir.clutch(sv.asc);
+  sacLeft = sv.sacLeft ?? dir.sacrifice(sv.asc);
+  closeActs = sv.closeActs ?? [];
+  highlight = sv.highlight ?? null;
 };
 
 /** 출하 결과 (끝까지 갔거나 그만뒀을 때): 분대 · 기록 · 다시. 저장을 지우고 기록을 남긴다 (승급이 열린다) */
@@ -1306,6 +1494,7 @@ const runEnd = (cleared: boolean): void => {
   const best = [...squad].sort((x, y) => (y.kills ?? 0) - (x.kills ?? 0))[0];
   openOverlay(`<h2><span class="pass-tag${cleared ? '' : ' bad'}">${cleared ? '출하 완료' : '출하 중단'}</span> ${cleared ? '출하구를 지났습니다.' : `${actI + 1}막 · ${cur.title}에서 멈췄습니다.`}</h2>
     <p>${daily ? `오늘의 출하 ${daily} · ` : ''}${asc ? `승급 ${asc} · ` : ''}이긴 대국 ${won} · ${cleared ? '3막 완주' : `${actI + 1}막`} · 나사 ${gold} · 덱 ${deck.length}장 · 부품 ${parts.map((id) => SLICE_PARTS[id].name).join(' · ') || '없음'}</p>
+    ${highlight ? `<p class="hl"><span class="pass-tag">이번 출하의 묘수</span> ${highlight.where} ${highlight.turn}턴 — 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : ''}
     <p>살아남은 분대: ${squad.map((u) => `${crewLabel(u)} (처치 ${u.kills ?? 0})`).join(' · ')}</p>
     ${fallenNow.length ? `<p class="bad">쓰러진 분대원: ${fallenNow.map((r) => r.name).join(' · ')}</p>` : ''}
     ${best && (best.kills ?? 0) > 0 ? `<p class="flv">${crewLabel(best)} — 이번 출하의 선봉.</p>` : ''}
@@ -1374,4 +1563,4 @@ startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 if (qs.has('lab')) labPick();
 else if (!qs.has('debug')) title();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });

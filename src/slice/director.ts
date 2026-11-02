@@ -1,0 +1,129 @@
+import type { PieceType } from '../engine';
+
+/**
+ * 심리 연출 감독 (D-178). 사용자 원칙: 유저는 ① 똑똑해 보이고 싶지만 복잡한 건 싫고 ② 이기면 내 실력, 지면 게임 탓
+ * ③ 치사해도 이기는 게 중요 ④ 사선을 넘은 승리엔 걸맞은 보상. 단 "모든 판에서 작동하는 무자극 보상"이 되면 안 된다 —
+ * 큰 도움 · 보상은 낮은 승급에서 자동으로, 승급이 오를수록 줄인다. 이 파일은 순수 로직 + 수치 (화면과 무관).
+ */
+
+/** 승급 단계별 (0 ~ 5) 도움 크기 — 아래로 갈수록 줄어든다 */
+export const DIRECTOR = {
+  /** ⑤ 마지막 한 수: 한 출하에 몇 번 (킹이 이번 적 차례에 쓰러지게 생기면 자동) */
+  clutch: [2, 1, 1, 1, 0, 0],
+  /** 마지막 한 수가 주는 태엽 */
+  clutchAp: [2, 2, 1, 1, 1, 0],
+  /** ⑥ 자원 희생 제안: 한 출하에 몇 번 */
+  sacrifice: [1, 1, 1, 1, 0, 0],
+  /** ③ 보이지 않는 손: 같은 대국을 몇 번 지면 켜지나 (Infinity = 없음) · 적이 가장 아픈 수를 한 번 건너뛸 확률 */
+  mercyAfter: [1, 1, 2, 2, 3, Infinity],
+  mercy: [0.5, 0.4, 0.3, 0.25, 0.15, 0],
+  /** ④ 사선 보상: 등급 (0 없음 · 1 나사 · 2 카드 넷 · 3 부품 하나 더) — 막마다 한 번까지 */
+  closeCall: [3, 3, 2, 2, 1, 0],
+  closeCallGold: 40,
+  /** 사선 판정: 킹 HP 비율 이하 · 분대원 쓰러짐 · 마지막 한 수 사용 */
+  closeKingHp: 0.3,
+  /** ① 원수 현상금 (나사) · 유품 반환(쓰러진 분대원 되살리기)이 되는 승급 상한 */
+  bounty: [90, 75, 60, 50, 40, 30],
+  heirloomUpTo: 2,
+  /** 원수가 다음 대국에 나타날 확률 (같은 출하) · 원수 강화 (HP 배율, 단계마다) */
+  nemesisShow: 0.5,
+  nemesisHp: 0.25,
+  nemesisMax: 3,
+  /** ② 도발: 대국마다 한 줄까지, 이 확률로만 (매 판 떠들지 않는다) */
+  taunt: 0.45,
+  /** ⑦ 판돈: 대국 앞에서 이 확률로만 제안 · 건 나사 비율 */
+  betChance: 0.3,
+  betStake: 30,
+  betTurns: 4,
+  /** ④ 아까운 패배: 적 킹 HP 비율이 이 아래면 「한 수였습니다」 */
+  nearMiss: 0.25,
+} as const;
+
+const at = <T>(list: readonly T[], asc: number): T => list[Math.max(0, Math.min(list.length - 1, asc))];
+
+/** 이 승급의 값 */
+export const dir = {
+  clutch: (asc: number) => at(DIRECTOR.clutch, asc),
+  clutchAp: (asc: number) => at(DIRECTOR.clutchAp, asc),
+  sacrifice: (asc: number) => at(DIRECTOR.sacrifice, asc),
+  closeCall: (asc: number) => at(DIRECTOR.closeCall, asc),
+  bounty: (asc: number) => at(DIRECTOR.bounty, asc),
+  /** 같은 대국에서 진 횟수 → 보이지 않는 손 세기 (0 = 없음) */
+  mercy: (asc: number, losses: number) => (losses >= at(DIRECTOR.mercyAfter, asc) ? at(DIRECTOR.mercy, asc) : 0),
+};
+
+/** 사선을 넘었나 (승리한 대국) */
+export const isCloseCall = (r: { kingHp: number; kingMax: number; fell: number; clutched: boolean }): boolean =>
+  r.clutched || r.fell > 0 || r.kingHp <= r.kingMax * DIRECTOR.closeKingHp;
+
+// ---------- ① 원수 ----------
+/** 원수: 내 분대원을 쓰러뜨린 적 기물. 이름 · 흉터 · 단계를 얻고 다시 나타난다 */
+export interface Nemesis {
+  t: PieceType;
+  name: string;
+  /** 단계 (1 ~ nemesisMax): 다시 이길 때마다 오른다 */
+  rank: number;
+  /** 쓰러뜨린 분대원 이름들 */
+  victims: string[];
+  /** 마지막으로 쓰러뜨린 분대원 (유품 반환 대상) */
+  heir?: { t: PieceType; name: string; serial?: string };
+}
+
+/** 원수 이름: 쓰러뜨린 분대원 이름에서 (다키스트 던전식 칭호) */
+const TITLES: Partial<Record<PieceType, string[]>> = {
+  P: ['녹 먹는 졸개', '뒤꿈치 무는 자'],
+  N: ['못 뽑는 자', '검은 송곳니'],
+  B: ['그을린 사제', '비스듬한 칼날'],
+  R: ['철문 짓밟는 자', '녹슨 성벽'],
+  Q: ['검은 과부', '태엽 먹는 여왕'],
+  K: ['검은 왕관'],
+};
+export const nemesisName = (t: PieceType, victim: string, seed: number): string => {
+  const pool = TITLES[t] ?? ['검은 그림자'];
+  return `「${victim}」을 부순 ${pool[seed % pool.length]}`;
+};
+
+/** 분대원을 쓰러뜨린 적을 원수 목록에 올린다 (같은 유형이 이미 있으면 그 원수가 한 단계 오른다) */
+export const addNemesis = (list: Nemesis[], t: PieceType, victim: { t: PieceType; name: string; serial?: string }, seed: number): Nemesis[] => {
+  const out = list.map((n) => ({ ...n, victims: [...n.victims] }));
+  const same = out.find((n) => n.t === t);
+  if (same) {
+    same.rank = Math.min(DIRECTOR.nemesisMax, same.rank + 1);
+    same.victims.push(victim.name);
+    same.heir = victim;
+    return out;
+  }
+  out.push({ t, name: nemesisName(t, victim.name, seed), rank: 1, victims: [victim.name], heir: victim });
+  return out.slice(-DIRECTOR.nemesisMax);
+};
+
+// ---------- ② 도발 (적 킹의 말 — 대국마다 한 줄까지) ----------
+export type TauntCue = 'cheese' | 'beg' | 'gloat' | 'meet';
+export const TAUNTS: Record<TauntCue, string[]> = {
+  cheese: ['“비겁한 태엽 같으니!”', '“뒤에서 찌르다니, 공장의 수치다.”', '“그건… 반칙 아닌가?”'],
+  beg: ['“자, 잠깐… 거래하자.”', '“나사라면 얼마든지 주겠다!”', '“내 왕관만은…”'],
+  gloat: ['“불량품은 용광로로.”', '“하나 줄었군.”'],
+  meet: ['“…또 만났군.”', '“그 녀석의 태엽 소리가 아직 들린다.”'],
+};
+
+// ---------- ⑦ 판돈 ----------
+export type BetKind = 'fast' | 'clean';
+export const BETS: Record<BetKind, { label: string; desc: string }> = {
+  fast: { label: `${DIRECTOR.betTurns}턴 안에 끝낸다`, desc: `${DIRECTOR.betTurns}턴 안에 이기면 건 나사의 두 배` },
+  clean: { label: '아무도 잃지 않는다', desc: '분대원이 하나도 쓰러지지 않고 이기면 건 나사의 두 배' },
+};
+/** 판돈 정산: 이겼으면 +건 나사 (총 두 배), 못 이뤘으면 건 나사를 잃는다 */
+export const settleBet = (bet: BetKind, stake: number, r: { won: boolean; turns: number; fell: number }): number => {
+  const ok = r.won && (bet === 'fast' ? r.turns <= DIRECTOR.betTurns : r.fell === 0);
+  return ok ? stake : -stake;
+};
+
+// ---------- ⑧ 출하 하이라이트 ----------
+export interface Highlight {
+  where: string;
+  turn: number;
+  kills: number;
+  damage: number;
+}
+/** 더 멋진 턴인가 (처치 수 우선, 같으면 피해) */
+export const betterHighlight = (a: Highlight | null, b: Highlight): boolean => !a || b.kills > a.kills || (b.kills === a.kills && b.damage > a.damage);

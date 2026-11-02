@@ -3,6 +3,7 @@ import type { Crew } from './crew';
 import type { SliceEventId } from './events';
 import type { SlicePartId } from './parts';
 import { ASC_MAX } from './run';
+import type { Highlight, Nemesis } from './director';
 
 /**
  * 저장 · 이어하기 · 기록 (R6, D-174). 화면과 무관한 순수 로직 — 저장소는 주입한다 (테스트는 메모리).
@@ -31,6 +32,11 @@ export interface RunSave {
   /** 'map' = 지도에서, 'battle' = 그 줄의 node번째 대국 처음부터 */
   at: 'map' | 'battle';
   node?: number;
+  /** 심리 연출 (D-178): 남은 마지막 한 수 · 자원 희생, 사선 보상을 받은 막, 이번 출하 최고의 턴 */
+  clutchLeft?: number;
+  sacLeft?: number;
+  closeActs?: number[];
+  highlight?: Highlight | null;
 }
 
 /** 쌓이는 기록 (출하를 넘어 남는다) */
@@ -43,6 +49,8 @@ export interface Meta {
   bestAct: number;
   /** 오늘의 출하: 날짜 → 결과 (첫 시도만 남긴다) */
   daily: Record<string, { cleared: boolean; act: number; won: number }>;
+  /** 원수 (D-178): 출하를 넘어 남는다 */
+  nemeses: Nemesis[];
 }
 
 export interface Store {
@@ -89,12 +97,12 @@ export const readSave = (st: Store): RunSave | null =>
   }, null);
 export const clearSave = (st: Store): void => safe(() => st.removeItem(SAVE_KEY), undefined);
 
-export const emptyMeta = (): Meta => ({ runs: 0, clears: 0, ascOpen: 0, bestAct: 0, daily: {} });
+export const emptyMeta = (): Meta => ({ runs: 0, clears: 0, ascOpen: 0, bestAct: 0, daily: {}, nemeses: [] });
 export const readMeta = (st: Store): Meta => safe(() => ({ ...emptyMeta(), ...(JSON.parse(st.getItem(META_KEY) ?? '{}') as Partial<Meta>) }), emptyMeta());
 
 /** 출하가 끝났을 때 기록을 더한다. 승급 n을 끝내면 n+1이 열린다 (오늘의 출하는 승급을 열지 않는다) */
 export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: number; asc: number; daily: string | null }): Meta => {
-  const out: Meta = { ...m, daily: { ...m.daily } };
+  const out: Meta = { ...m, daily: { ...m.daily }, nemeses: [...(m.nemeses ?? [])] };
   out.runs += 1;
   if (r.cleared) out.clears += 1;
   out.bestAct = Math.max(out.bestAct, r.cleared ? 4 : r.act);

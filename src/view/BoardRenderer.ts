@@ -113,13 +113,15 @@ class BoardScene extends Phaser.Scene {
   setFoeTraits(list: ('blast' | 'thorns')[]): void {
     this.foeTraits = list;
   }
+  /** 원수 (D-178): 이 기물 왼쪽 위에 진홍 해골 딱지 */
+  nemesisId: number | null = null;
 
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
-    for (const name of ['reticle', 'star', 'crown', 'flame', 'claw']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
+    for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
   }
 
   create(): void {
@@ -276,6 +278,13 @@ class BoardScene extends Phaser.Scene {
       tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t * 0.02, size, size);
       tag.lineStyle(Math.max(1, t * 0.03), C.crimson, 1).strokeRect(t - size - t * 0.02, t * 0.02, size, size);
       marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t * 0.02 + size / 2, `icon-${trait}`).setDisplaySize(size * 0.72, size * 0.72).setTint(0xff6b6b));
+    }
+    if (p.id === this.nemesisId && p.side === 1) {
+      const size = t * 0.34;
+      const tag = this.add.graphics();
+      tag.fillStyle(0x7a1218, 1).fillRect(t * 0.02, t * 0.02, size, size);
+      tag.lineStyle(Math.max(1, t * 0.03), 0xfacc15, 1).strokeRect(t * 0.02, t * 0.02, size, size);
+      marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, 'icon-skull').setDisplaySize(size * 0.72, size * 0.72).setTint(0xf4f1ea));
     }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
@@ -1051,6 +1060,10 @@ export class BoardRenderer implements BoardView {
   /** 적 특성 표식 (자폭 폰 · 되받아침 반장, D-175) — setup 전에 */
   setFoeTraits(list: ('blast' | 'thorns')[]): void {
     this.scene.setFoeTraits(list);
+  }
+  /** 원수 표식 (D-178) — setup 전에 */
+  setNemesis(id: number | null): void {
+    this.scene.nemesisId = id;
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => this.scene.setupBoard(state));
