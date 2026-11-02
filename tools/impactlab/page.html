@@ -55,11 +55,144 @@ canvas { width: 100%; max-width: 100%; min-width: 0; aspect-ratio: 2 / 1; backgr
 footer { color: var(--dim); font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { .reduced-note { display: block !important; } }
 .reduced-note { display: none; color: var(--gold); font-size: 12.5px; }
+/* ---------- 4부 · 일관성 (D-190) — 지금 vs 제안 ---------- */
+.p4 { --snap: cubic-bezier(0.2, 1.6, 0.35, 1); --accel: cubic-bezier(0.6, 0, 0.9, 0.4); --decel: cubic-bezier(0.1, 0.9, 0.2, 1); }
+.p4 .ui-card { gap: 8px; position: relative; }
+.p4 .tagline { margin: 0; font-size: 12.5px; color: var(--dim); }
+.p4 .tagline b { color: var(--gold); font-weight: 700; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.half { position: relative; min-height: 170px; background: #121118; box-shadow: inset 0 0 0 2px #000; display: grid; place-items: center; align-content: center; gap: 8px; padding: 26px 8px 10px; overflow: hidden; }
+.half > .tag { position: absolute; left: 6px; top: 5px; font: 700 11px var(--body); letter-spacing: 0.1em; padding: 1px 6px; box-shadow: 0 0 0 1px #000; }
+.half.now > .tag { background: #3b3a45; color: #c9c4d4; }
+.half.new > .tag { background: #c89b3c; color: #16141c; }
+.half .cap { font-size: 11px; color: #8a8794; text-align: center; line-height: 1.35; }
+.p4 .go { justify-self: start; }
+.p4 .notes { margin: 0; padding-left: 16px; font-size: 12px; color: var(--dim); }
+.mini-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.box { width: 34px; height: 34px; background: #c89b3c; box-shadow: 0 0 0 2px #000; display: grid; place-items: center; font: 700 10px var(--body); color: #16141c; }
+.lbl4 { font-size: 10.5px; color: #8a8794; text-align: center; margin-top: 3px; }
+.col4 { display: grid; justify-items: center; }
+/* 곡선 데모 */
+.cv-in { animation-fill-mode: both; }
+@keyframes popc { 0% { transform: translateY(-36px) scale(0.6); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes outc { 0% { transform: none; opacity: 1; } 100% { transform: translateY(-36px) scale(0.6); opacity: 0; } }
+/* 시간 막대 */
+.bars { display: grid; gap: 4px; width: 100%; font-size: 10.5px; color: #c9c4d4; }
+.bars div { display: grid; grid-template-columns: 70px 1fr 34px; gap: 6px; align-items: center; }
+.bars i { display: block; height: 8px; background: #8a8794; transform-origin: 0 50%; }
+.half.new .bars i { background: #c89b3c; }
+.bars.run i { animation: barg var(--d) var(--e, linear) both; }
+@keyframes barg { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* 색 견본 */
+.sw { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.sw i { width: 26px; height: 26px; box-shadow: 0 0 0 2px #000; position: relative; }
+.sw i b { position: absolute; left: 0; right: 0; bottom: -14px; font: 400 9px var(--body); color: #8a8794; text-align: center; font-style: normal; }
+.sw.big i { width: 40px; height: 40px; margin-bottom: 14px; }
+.sw.big i b { font-size: 10px; bottom: -15px; }
+.sample { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.sample .t { font: 700 14px var(--display); text-shadow: 2px 2px 0 #000; }
+.sample .b { font: 700 12px var(--body); padding: 6px 10px; color: #16141c; box-shadow: 0 0 0 2px #000; }
+/* 틀 */
+.frm { padding: 6px 12px; font-size: 12.5px; white-space: nowrap; color: #f4e6c4; background: #16141c; }
+.frm.steel { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #6b6876, inset 0 0 0 4px #2f2e36, inset 0 0 0 6px #56545e; padding: 8px 14px; }
+.frm.css { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px var(--c, #c89b3c); }
+.frm.info { background: rgba(20, 18, 26, 0.95); box-shadow: 0 0 0 1px #46404f; font-size: 12px; }
+/* 그림자 */
+.shd { font: 700 18px var(--display); color: #f4e6c4; }
+/* 번진 빛 vs 실선 + 꺾쇠 */
+.crd { position: relative; width: 70px; height: 84px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; display: grid; place-items: center; }
+.crd img { width: 36px; height: 36px; image-rendering: pixelated; }
+.crd.glow { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, 0 0 22px rgba(244, 210, 122, 0.6); }
+.crd.solid { box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15; }
+.brk4 { position: absolute; inset: -6px; pointer-events: none; --c: #facc15; background: linear-gradient(var(--c), var(--c)) 0 0 / 10px 3px, linear-gradient(var(--c), var(--c)) 0 0 / 3px 10px, linear-gradient(var(--c), var(--c)) 100% 0 / 10px 3px, linear-gradient(var(--c), var(--c)) 100% 0 / 3px 10px, linear-gradient(var(--c), var(--c)) 0 100% / 10px 3px, linear-gradient(var(--c), var(--c)) 0 100% / 3px 10px, linear-gradient(var(--c), var(--c)) 100% 100% / 10px 3px, linear-gradient(var(--c), var(--c)) 100% 100% / 3px 10px; background-repeat: no-repeat; }
+.brk4.pulse { animation: brk4 1000ms var(--snap) infinite; }
+.brk4.red { --c: #e5262f; }
+@keyframes brk4 { 0%, 55% { transform: scale(1.08); } 70% { transform: none; } 100% { transform: scale(1.08); } }
+/* 선택 상태 (지금 4가지) */
+.selbox { position: relative; display: grid; place-items: center; width: 64px; height: 44px; font-size: 11px; color: #f2ede4; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; cursor: pointer; }
+.selbox.med { width: 44px; height: 44px; border-radius: 50%; background: #5a4a2a; }
+.now .selbox.s1.on { transform: translateX(8px) scale(1.03); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, 0 0 18px rgba(244, 210, 122, 0.7); transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1); }
+.now .selbox.s2.on { animation: pickst 180ms steps(3) both; transform: translateY(-6px); box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 #000; }
+@keyframes pickst { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+.now .selbox.s3.on { transform: scale(1.15); box-shadow: 0 0 0 3px #000, inset 0 0 0 4px #fff0b0, 0 0 26px rgba(244, 210, 122, 0.9); }
+.now .selbox.s4.on { box-shadow: 0 0 0 2px #000, inset 3px 0 0 #f4d27a, inset 0 0 0 3px #f4d27a, 0 0 18px rgba(244, 210, 122, 0.5); }
+.new .selbox.on { box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15; }
+.new .selbox.on.lift { animation: lift4 180ms var(--snap) both; }
+.new .selbox.on.side { animation: side4 180ms var(--snap) both; }
+@keyframes lift4 { to { transform: translateY(-6px); } }
+@keyframes side4 { to { transform: translateX(8px); } }
+.new .selbox:not(.on).dimmed::after { content: ''; position: absolute; inset: 0; background: repeating-conic-gradient(rgba(11, 11, 14, 0.6) 0 25%, transparent 0 50%) 0 0 / 4px 4px; }
+/* 안내 (지금) */
+.glowpulse { animation: gpulse 1.1s ease-in-out infinite alternate; }
+@keyframes gpulse { to { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, 0 0 14px rgba(244, 210, 122, 0.55); } }
+.softblink { color: #fff; font-weight: 700; font-size: 12px; animation: sblink 900ms ease-in-out infinite alternate; }
+@keyframes sblink { from { opacity: 1; } to { opacity: 0.35; } }
+.redblur { box-shadow: 0 0 0 2px #000, 0 0 14px rgba(224, 72, 72, 0.9) !important; }
+.cogring { position: relative; }
+.cogring::before { content: ''; position: absolute; inset: -9px; background: var(--cog) center / 100% 100% no-repeat; image-rendering: pixelated; animation: cogt 1.6s steps(4) infinite; z-index: -1; }
+@keyframes cogt { to { transform: rotate(90deg); } }
+.minibtn { font: 700 11px var(--body); color: #16141c; background: #c89b3c; padding: 6px 10px; box-shadow: 0 0 0 2px #000; position: relative; }
+/* 알림 위계 */
+.gray4 { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; background: rgba(11, 11, 14, 0.72); filter: grayscale(0.4); font: 700 18px var(--display); color: #f4d27a; text-shadow: 3px 3px 0 #000; opacity: 0; }
+.gray4.on { animation: grayin 300ms ease-out forwards; }
+@keyframes grayin { to { opacity: 1; } }
+.plain4 { position: absolute; left: 0; right: 0; top: 46%; text-align: center; font: 700 14px var(--display); color: #fde68a; text-shadow: 2px 2px 0 #000; opacity: 0; }
+.plain4.on { animation: plain4 1200ms linear forwards; }
+@keyframes plain4 { 0% { opacity: 0; transform: translateY(6px); } 15%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.band4 { position: absolute; left: -10%; right: -10%; top: 50%; height: 34px; margin-top: -17px; background: #c89b3c; box-shadow: 0 -3px 0 #0b0b0e, 0 3px 0 #0b0b0e, 0 -6px 0 #fff3b0, 0 6px 0 #7a5a12; transform: translateX(-130%) skewX(-30deg); display: grid; place-items: center; font: 700 15px var(--display); color: #16141c; }
+.band4.foe { background: #c81e2a; color: #fff; box-shadow: 0 -3px 0 #0b0b0e, 0 3px 0 #0b0b0e, 0 -6px 0 #ff6b6b, 0 6px 0 #5a0e12; }
+.band4.on { animation: band4 1200ms both; }
+@keyframes band4 { 0% { transform: translateX(-130%) skewX(-30deg); animation-timing-function: var(--accel); } 14% { transform: translateX(3%) skewX(-8deg); animation-timing-function: var(--decel); } 22% { transform: none; } 76% { transform: none; animation-timing-function: var(--accel); } 100% { transform: translateX(130%) skewX(30deg); } }
+.slam4 { font: 700 22px var(--display); color: #facc15; -webkit-text-stroke: 1px #16141c; text-shadow: 3px 3px 0 #16141c; opacity: 0; }
+.slam4.on { animation: slam4 900ms both; }
+@keyframes slam4 { 0% { opacity: 0; transform: scale(3) rotate(-8deg); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; animation-timing-function: var(--accel); } 20% { opacity: 1; transform: scale(0.9); text-shadow: 3px 3px 0 #16141c; animation-timing-function: var(--decel); } 34% { transform: scale(1.06); } 46%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.rows4 { position: absolute; inset: 0; pointer-events: none; }
+.rows4 i { position: absolute; left: 0; right: 0; height: 12.6%; background: #0b0b0e; opacity: 0; }
+.rows4.on i { animation: rowd4 220ms var(--accel) forwards; }
+@keyframes rowd4 { 0% { opacity: 0.9; transform: translateY(-100%) scaleY(0.4); } 100% { opacity: 0.85; transform: none; } }
+.tier { display: grid; gap: 2px; font-size: 11px; color: #c9c4d4; text-align: left; width: 100%; }
+.tier b { color: var(--gold); }
+/* 등장 · 퇴장 */
+.pop4 { padding: 6px 10px; font-size: 12px; color: #f4e6c4; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
+.pop4.instant { opacity: 0; } .pop4.instant.on { opacity: 1; }
+.pop4.steps.on { animation: stepsin 200ms steps(4) both; }
+@keyframes stepsin { from { transform: translateY(100%); opacity: 0; } }
+.pop4.fadein.on { animation: fadein4 520ms ease-out both; }
+@keyframes fadein4 { from { opacity: 0; } }
+.pop4.fadeout.off { animation: fadeout4 420ms ease-in forwards; }
+@keyframes fadeout4 { to { opacity: 0; } }
+.pop4.snapup.on { animation: snapup4 260ms var(--snap) both; }
+@keyframes snapup4 { 0% { transform: translateY(24px) scale(0.85, 1.2); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.pop4.drop.on { animation: drop4 400ms both; }
+@keyframes drop4 { 0% { transform: translateY(-60px) scale(0.92, 1.12); opacity: 0.4; animation-timing-function: var(--accel); } 45% { transform: translateY(0) scale(1.06, 0.9); opacity: 1; animation-timing-function: var(--decel); } 100% { transform: none; } }
+.pop4.fold.off { animation: fold4 200ms var(--accel) forwards; }
+@keyframes fold4 { 0% { transform: none; } 30% { transform: scale(1.04, 0.9); } 100% { transform: scale(1.1, 0.02); opacity: 0.5; } }
+.pop4.hide { visibility: hidden; }
+/* 흔들림 · 섬광 */
+.tgt { width: 70px; height: 46px; background: repeating-conic-gradient(#3a3944 0 25%, #2f2e36 0 50%) 0 0 / 20px 20px; box-shadow: 0 0 0 2px #000; }
+.fl4 { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+/* 숫자 */
+.num-font { font: 700 18px 'Galmuri11', var(--body); -webkit-text-stroke: 0; text-shadow: -2px 0 #16141c, 2px 0 #16141c, 0 -2px #16141c, 0 2px #16141c; }
+.num-px { font: 700 20px var(--display); letter-spacing: 1px; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 0 #000; image-rendering: pixelated; }
+.badge4 { font: 700 12px var(--display); color: #16141c; background: #fdba74; padding: 1px 6px; box-shadow: 0 0 0 2px #000; }
+.fly4 { position: absolute; }
+/* 판정 · 창 머리 */
+.stampbig { font: 700 18px var(--display); letter-spacing: 3px; padding: 2px 10px 4px; border: 4px solid currentColor; transform: rotate(-4deg); }
+.passtag { display: inline-block; padding: 0 6px; color: #16141c; background: #f4d27a; box-shadow: 0 0 0 2px #000; transform: rotate(-3deg); font-size: 12px; font-weight: 700; }
+.eyebrow4 { font-size: 10.5px; letter-spacing: 0.3em; color: #e0564f; }
+.stampsm { display: inline-block; font: 700 11px var(--display); letter-spacing: 1px; padding: 0 5px 1px; border: 2px solid currentColor; transform: rotate(-4deg); margin-right: 6px; }
+.hd { width: 100%; padding: 6px 8px; background: #24232c; box-shadow: 0 0 0 2px #000; font-size: 11px; color: #c9c4d4; }
+.hd h4 { margin: 0; font: 700 14px var(--display); color: #f4e6c4; }
+.hd.c { text-align: center; }
+.soundtbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.soundtbl td { padding: 3px 6px; border-bottom: 1px solid #2f2e36; color: #c9c4d4; }
+.soundtbl td:first-child { color: #ece8de; white-space: nowrap; }
+
 /* ---------- 비전투 UI 타격감 (D-180) ---------- */
 .ui-head { display: grid; gap: 6px; margin-top: 12px; }
 .ui-head h2 { margin: 0; font: 700 clamp(20px, 3.4vw, 28px) var(--display); text-shadow: 2px 2px 0 #000; }
 .ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px; }
-.ui-card { background: var(--plate); box-shadow: 0 0 0 2px #000; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; }
+.ui-card { background: #1a1922; box-shadow: 0 0 0 2px #000; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; min-width: 0; }
 .ui-card h3 { margin: 0; font: 700 16px var(--display); }
 .ui-card .beats { margin: 0; color: var(--dim); font-size: 12.5px; }
 .ui-stage { position: relative; min-height: 150px; background: #121118; box-shadow: inset 0 0 0 2px #000; display: grid; place-items: center; padding: 14px; overflow: hidden; }
@@ -463,6 +596,12 @@ footer { color: var(--dim); font-size: 12px; }
     <p class="reduced-note">기기에서 동작 줄이기가 켜져 있습니다. 재생 버튼을 누를 때만 움직입니다.</p>
   </header>
 
+  <section class="ui-head" aria-label="일관성" id="p4">
+    <div class="eyebrow">4부 · 일관성 (25판, D-190)</div>
+    <h2>같은 성격은 같은 연출로 — 지금 vs 제안 21가지</h2>
+    <p class="lede">세 시기(판 연출 · UI 연출 · 3부)에 쌓이며 같은 일을 하는 연출이 2~4가지로 따로 놀던 곳입니다. 카드마다 왼쪽이 <b>지금 게임</b>, 오른쪽이 <b>제안</b>입니다. 버튼이 있는 카드는 눌러서 움직임을 비교하십시오. 항목별로 「좋다 · 아니다 · 이렇게」만 주시면 그대로 적용합니다.</p>
+  </section>
+  <section class="ui-grid p4" id="uiGrid4"></section>
   <section class="rules" aria-label="타격감 원리">
     <div class="rule key"><b>대비가 전부</b><svg viewBox="0 0 100 34" aria-hidden="true"><path d="M2 30 C40 30 62 27 70 20 L71 3 L74 3 C82 20 90 24 98 26" fill="none" stroke="#facc15" stroke-width="2.5"/></svg><p>모으기는 길게(0.4~1.8초), 터짐은 한 박(0.06초), 여운은 다시 길게. 전체가 빠르면 곡선이 있어도 눈에 안 보인다.</p></div>
     <div class="rule"><b>예비 동작</b><svg viewBox="0 0 100 34" aria-hidden="true"><path d="M2 20 C20 20 26 30 38 30 C46 30 52 4 98 4" fill="none" stroke="#c89b3c" stroke-width="2"/></svg><p>치기 전에 오래 웅크린다(돌진의 5~10배). 뒤로 물러서고 납작해지며 빛이 찬다. 눈이 "온다"를 먼저 읽는다.</p></div>
@@ -1384,6 +1523,7 @@ Promise.all(keys.map((k) => new Promise((res) => { const im = new Image(); im.on
     for (const sc of SCENES) mkCard(sc);
     setupUi();
     setupPart3();
+    setupPart4();
     players.forEach((p) => p.render());
     requestAnimationFrame((n) => { players.forEach((p) => (p.last = n)); loop(n); });
   });
@@ -1421,7 +1561,7 @@ const rel = (el, stage) => { const r = el.getBoundingClientRect(), q = stage.get
 /** 황동 버튼: 누름 → 눌림, 뗌 → 튀어 오름 · 반짝 · 불똥 */
 function pressy(btn, onUp) {
   btn.addEventListener('pointerdown', () => { btn.classList.remove('up'); btn.classList.add('down'); });
-  const up = () => { if (!btn.classList.contains('down')) return; btn.classList.remove('down'); void btn.offsetWidth; btn.classList.add('up'); const st = btn.closest('.ui-stage'); const p = rel(btn, st); sparksAt(st, p.x, p.y - p.h / 2, 6, 30); onUp?.(); };
+  const up = () => { if (!btn.classList.contains('down')) return; btn.classList.remove('down'); void btn.offsetWidth; btn.classList.add('up'); const st = btn.closest('.ui-stage, .ui-card'); const p = rel(btn, st); sparksAt(st, p.x, p.y - p.h / 2, 6, 30); onUp?.(); };
   btn.addEventListener('pointerup', up); btn.addEventListener('pointerleave', () => btn.classList.remove('down'));
   btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { btn.classList.add('down'); setTimeout(up, 90); e.preventDefault(); } });
 }
@@ -1619,6 +1759,120 @@ function setupPart3() {
     const b = a.querySelector('.go');
     if (b) pressy(b, () => c.play(st));
   }
+}
+
+/** 4부 · 일관성 (D-190): 같은 성격인데 따로 노는 연출 — 지금(왼쪽) vs 제안(오른쪽) */
+function setupPart4() {
+  const grid = document.getElementById('uiGrid4');
+  const re = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+  const after = (ms, fn) => setTimeout(fn, ms);
+  const P = (k, px = 32) => `<img alt="" src="${SPR[k]}" style="width:${px}px;height:${px}px;image-rendering:pixelated">`;
+  const shake = (el, amp, ms, steps) => el.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.85}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.55}px,${amp * 0.3}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.15}px)` }, { transform: 'none' }], { duration: ms, easing: steps ? 'steps(6)' : 'cubic-bezier(.1,.9,.2,1)' });
+  const flash = (half, a) => { const f = half.querySelector('.fl4'); f.animate([{ opacity: a }, { opacity: 0 }], { duration: 220, easing: 'cubic-bezier(.1,.9,.2,1)' }); };
+  const arc = (stage, el, from, to, opt) => { el.style.left = `${from.x}px`; el.style.top = `${from.y}px`; stage.appendChild(el); const dx = to.x - from.x, dy = to.y - from.y; const a = el.animate([{ transform: 'translate(0,0)' + (opt.r0 || '') }, { transform: `translate(${dx * 0.45}px,${dy * 0.45 - (opt.h ?? 50)}px)${opt.r1 || ''}`, offset: 0.45, easing: opt.e1 || 'cubic-bezier(.6,0,.9,.4)' }, { transform: `translate(${dx}px,${dy}px)${opt.r2 || ''}` }], { duration: opt.ms || 460, easing: opt.e || 'cubic-bezier(.1,.9,.2,1)', delay: opt.delay || 0, fill: 'forwards' }); a.onfinish = () => { el.remove(); opt.done?.(); }; };
+  const cards = [
+    // ---------- 1. 바탕 규칙 ----------
+    { t: '곡선', why: '같은 「튀어나옴」이 화면마다 다른 곡선. 움직임에 계단 7곳.', rule: '곡선은 <b>셋만</b> — 튀어나옴(snap) · 착지(decel) · 퇴장(accel). 계단은 기계 박자(경고등 · 톱니 · 체인 · 테이프)에만.',
+      now: `<div class="mini-row">${['steps(4)', 'ease-out', 'linear', '손베지어'].map((n, i) => `<div class="col4"><div class="box cv" data-i="${i}"></div><div class="lbl4">${n}</div></div>`).join('')}</div><div class="cap">알림 · 대국 전환 · 체인 · 버튼이 각자</div>`,
+      neu: `<div class="mini-row">${['튀어나옴', '착지', '퇴장'].map((n, i) => `<div class="col4"><div class="box cv" data-i="${i}"></div><div class="lbl4">${n}</div></div>`).join('')}</div><div class="cap">모든 화면이 이 셋 중 하나</div>`,
+      play(c) {
+        const E = ['steps(4)', 'ease-out', 'linear', 'cubic-bezier(0.2,1.8,0.4,1)'];
+        c.querySelectorAll('.now .cv').forEach((b, i) => b.animate([{ transform: 'translateY(-36px) scale(.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: [260, 380, 400, 300][i], easing: E[i], fill: 'both' }));
+        const N = ['cubic-bezier(0.2,1.6,0.35,1)', 'cubic-bezier(0.1,0.9,0.2,1)', 'cubic-bezier(0.6,0,0.9,0.4)'];
+        c.querySelectorAll('.new .cv').forEach((b, i) => b.animate(i < 2 ? [{ transform: 'translateY(-36px) scale(.6)', opacity: 0 }, { transform: 'none', opacity: 1 }] : [{ transform: 'none', opacity: 1 }, { transform: 'translateY(-36px) scale(.6)', opacity: 0 }, { transform: 'none', opacity: 1, offset: 1 }], { duration: i < 2 ? [260, 400][i] : 900, easing: N[i], fill: 'both' }));
+      } },
+    { t: '시간', why: '비슷한 무게의 창이 0.14초 · 0.42초 · 0.52초로 제각각.', rule: '5단 — <b>즉각 140</b> · <b>작은 등장 260</b> · <b>창 400</b> · <b>퇴장 200</b>(등장의 절반) · <b>알림 1200 / 결정 1500</b>.',
+      now: `<div class="bars">${[['크게 보기', 140], ['확인 띠', 200], ['알림', 260], ['마지막 한 수', 300], ['창', 420], ['대국 전환', 520]].map(([n, d]) => `<div><span>${n}</span><i style="--d:${d}ms"></i><span>${d}</span></div>`).join('')}</div>`,
+      neu: `<div class="bars">${[['눌림 · 째깍', 140], ['칩 · 딱지 · 띠', 260], ['창 · 카드 · 말풍선', 400], ['퇴장', 200], ['턴 배너', 1200], ['승패', 1500]].map(([n, d]) => `<div><span>${n}</span><i style="--d:${d}ms;--e:cubic-bezier(.1,.9,.2,1)"></i><span>${d}</span></div>`).join('')}</div>`,
+      play(c) { c.querySelectorAll('.bars').forEach((b) => re(b, 'run')); } },
+    { t: '금색', why: '「금」이 8가지(#f4d27a 37곳 · #c89b3c 23 · #facc15 13 · #e8c060 12 …). 강조 금과 글자 금이 화면마다 바뀜.', rule: '4개만 — <b>강조 #facc15</b>(선택 · 처치 · 꺾쇠) · <b>황동 #c89b3c</b>(테두리) · <b>글자 금 #f4d27a</b> · <b>빛 #fff3b0</b>.',
+      now: `<div class="sw">${['#f4d27a', '#c89b3c', '#facc15', '#e8c060', '#f4e6c4', '#fff3b0', '#f4b740', '#fde68a'].map((c) => `<i style="background:${c}"><b>${c.slice(1, 4)}</b></i>`).join('')}</div><div class="sample"><span class="t" style="color:#e8c060">공방</span><span class="b" style="background:#f4b740">고르기</span><span class="t" style="color:#fde68a">−8</span></div>`,
+      neu: `<div class="sw big">${[['#facc15', '강조'], ['#c89b3c', '황동'], ['#f4d27a', '글자'], ['#fff3b0', '빛']].map(([c, n]) => `<i style="background:${c}"><b>${n}</b></i>`).join('')}</div><div class="sample"><span class="t" style="color:#f4d27a">공방</span><span class="b" style="background:#c89b3c">고르기</span><span class="t" style="color:#facc15">처치</span></div>` },
+    { t: '붉은색', why: '적 · 위험 · 피해가 각자 다른 빨강 10가지.', rule: '3개만 — <b>진홍 #e5262f</b>(위험 · 적 테두리) · <b>피해 글자 #ff6b6b</b> · <b>어둠 #7a1218</b>(적 바탕).',
+      now: `<div class="sw">${['#e5262f', '#ff6b6b', '#ff6b4a', '#7a1218', '#5a0e12', '#ff8a7a', '#e0564f', '#a8323a', '#fca5a5', '#c81e2a'].map((c) => `<i style="background:${c}"><b>${c.slice(1, 4)}</b></i>`).join('')}</div>`,
+      neu: `<div class="sw big">${[['#e5262f', '위험'], ['#ff6b6b', '피해'], ['#7a1218', '적 바탕']].map(([c, n]) => `<i style="background:${c}"><b>${n}</b></i>`).join('')}</div>` },
+    { t: '틀 (프레임)', why: '같은 「한 줄 알림」인데 알림은 철판 테두리, 도발은 CSS 틀, 길게 누르기 정보는 또 다른 틀.', rule: '<b>창 = 철판</b>, <b>잠깐 뜨는 모든 것 = CSS 틀</b>. 안쪽 색이 말하는 사람 — 황동 = 시스템, 진홍 = 적, 청록 = 내 것.',
+      now: `<div class="frm steel">‘태엽이 모자라.’</div><div class="frm css" style="--c:#7a1218">「그 폰, 내가 부숴 주마.」</div><div class="frm info">HP 14 / 20 · ATK 6</div><div class="cap">알림(철판) · 도발 · 길게 누르기</div>`,
+      neu: `<div class="frm css" style="--c:#c89b3c">‘태엽이 모자라.’</div><div class="frm css" style="--c:#e5262f">「그 폰, 내가 부숴 주마.」</div><div class="frm css" style="--c:#38bdf8">HP 14 / 20 · ATK 6</div><div class="cap">시스템 · 적 · 내 것</div>` },
+    { t: '글자 그림자', why: '같은 크기 글자가 그림자 4가지 + 번진 글로.', rule: '28px 이상 <b>3px 3px 0</b>, 그 아래 <b>2px 2px 0</b>. 번진 글로 없음.',
+      now: `<div class="shd" style="text-shadow:3px 3px 0 #000">연쇄 2</div><div class="shd" style="text-shadow:0 3px 0 #000">검문 통과</div><div class="shd" style="text-shadow:0 0 18px rgba(244,183,64,.8),3px 3px 0 #000">×1.50</div><div class="shd" style="-webkit-text-stroke:1px #16141c;text-shadow:none">−14</div>`,
+      neu: `<div class="shd" style="text-shadow:2px 2px 0 #000">연쇄 2</div><div class="shd" style="text-shadow:2px 2px 0 #000">검문 통과</div><div class="shd" style="text-shadow:2px 2px 0 #000">×1.50</div><div class="shd" style="text-shadow:2px 2px 0 #000">−14</div>` },
+    { t: '번진 빛 → 실선 + 꺾쇠', why: '번진 빛 18곳 (D-187에서 「번진 글로 → 꺾쇠 · 도트」로 정했는데 남음).', rule: '강조는 <b>실선 테두리 3px + 꺾쇠</b>, 반짝임은 <b>반짝 띠</b>.',
+      now: `<div class="crd glow">${P('B0', 36)}</div><div class="cap">전투 카드 · 보상 · 지도 · 사건 · 턴 끝 경고</div>`,
+      neu: `<div class="crd solid">${P('B0', 36)}<i class="brk4"></i></div><div class="cap">어디서나 같은 강조</div>` },
+    // ---------- 2. 성격별 ----------
+    { t: '골랐다 (선택 상태)', why: '전투 카드: 오른쪽 + 번진 빛 · 보상: 위로 계단 · 지도: 확대 · 사건 선택지: 왼쪽 금줄 + 번진 빛.', rule: '<b>들림(snap 180ms) + 강조 금 테두리 3px + 나머지 체크무늬</b>. 방향만 자리 따라 — 손패는 판 쪽(오른쪽), 나머지는 위로.', btn: '고르기',
+      now: `<div class="mini-row"><div class="selbox s1">손패</div><div class="selbox s2">보상</div><div class="selbox med s3">지도</div><div class="selbox s4">선택지</div></div>`,
+      neu: `<div class="mini-row"><div class="selbox side">손패</div><div class="selbox lift">보상</div><div class="selbox med lift">지도</div><div class="selbox lift">선택지</div></div>`,
+      play(c) { const on = !c.dataset.on; c.dataset.on = on ? '1' : ''; c.querySelectorAll('.selbox').forEach((b) => { b.classList.toggle('on', on); b.classList.toggle('dimmed', false); }); if (on) c.querySelectorAll('.new .selbox').forEach((b) => b.classList.add('dimmed')); } },
+    { t: '여기를 보라 (안내 맥박)', why: '꺾쇠 · 글자 부드러운 깜빡 · 지도 지금 노드는 톱니 + 꺾쇠 둘 동시 · 턴 끝 경고는 붉은 번진 빛.', rule: '<b>꺾쇠 하나</b> — 금 = 해야 할 것, 진홍 = 위험. 지도 지금 노드는 톱니만(지도 고유).',
+      now: `<div class="mini-row"><div class="selbox glowpulse">손패</div><span class="softblink">붉은 줄!</span><div class="selbox med cogring" style="z-index:0">지도<i class="brk4 pulse"></i></div><span class="minibtn redblur">턴 끝</span></div>`,
+      neu: `<div class="mini-row"><div class="selbox">손패<i class="brk4 pulse"></i></div><span class="minibtn" style="background:#2a1518;color:#ff6b6b">붉은 줄!<i class="brk4 pulse red"></i></span><div class="selbox med cogring" style="z-index:0">지도</div><span class="minibtn">턴 끝<i class="brk4 pulse red"></i></span></div>` },
+    { t: '화면 전체 알림 — 3단 위계', why: '대국 전환(서서히) · 턴 배너(띠) · 승패(K.O.) · 마지막 한 수(회색 막 + 서서히) · 판 위 상황 알림(그냥 글자) · 턴 합계(Phaser 글자) — 무게가 제각각.', rule: '① <b>띠</b> = 상황이 바뀜(턴 · 판 위 상황 · 마지막 한 수) ② <b>내리꽂힘</b> = 결과(승패 · 연쇄 · 턴 합계 · 도장) ③ <b>막</b> = 장면이 바뀜(대국 전환 · 쓰러짐). 되감기는 유지.', btn: '마지막 한 수 → 판 위 알림',
+      now: `<div class="minib" style="inset:26px 8px 8px"></div><div class="gray4">시간이 멈춘다<br><small style="font-size:11px;color:#f4f1ea">마지막 한 수</small></div><div class="plain4">바닥이 꺼진다!</div>`,
+      neu: `<div class="minib" style="inset:26px 8px 8px"></div><div class="band4">마지막 한 수</div><div class="band4 foe" style="top:50%">바닥이 꺼진다!</div><div class="tier" style="position:absolute;left:8px;bottom:6px;width:auto"><span>① 띠 = 상황</span><span>② 내리꽂힘 = 결과</span><span>③ 막 = 장면</span></div>`,
+      play(c) { const g = c.querySelector('.gray4'), pl = c.querySelector('.plain4'), [b1, b2] = c.querySelectorAll('.band4'); g.classList.remove('on'); pl.classList.remove('on'); re(g, 'on'); re(b1, 'on'); after(1400, () => { g.classList.remove('on'); re(pl, 'on'); re(b2, 'on'); }); } },
+    { t: '결과 · 장면 (②내리꽂힘 · ③막)', why: '연쇄 팝 · 턴 합계 · 도장이 각자 다른 커짐/흐려짐. 대국 전환 · 쓰러짐은 서서히 / 줄 계단 섞임.', rule: '결과는 모두 <b>크게 → 눌림 → 출렁 + 색 갈림</b>, 장면은 모두 <b>줄 계단 막</b>.', btn: '턴 합계 → 장면',
+      now: `<div class="minib" style="inset:26px 8px 8px"></div><div class="shd" style="font-size:20px;color:#fde68a;opacity:0" data-sum>이번 턴 −32</div><div class="pop4 fadein hide" data-sc style="position:absolute">2막 — 조립 층</div>`,
+      neu: `<div class="minib" style="inset:26px 8px 8px"></div><div class="slam4" data-sum>이번 턴 −32</div><div class="rows4">${Array.from({ length: 8 }, (_, i) => `<i style="top:${i * 12.5}%;animation-delay:${i * 22}ms"></i>`).join('')}</div><div class="pop4 drop hide" data-sc style="position:absolute;z-index:2">2막 — 조립 층</div>`,
+      play(c) { const ns = c.querySelector('.now [data-sum]'); ns.animate([{ opacity: 0, transform: 'scale(1.6)' }, { opacity: 1, transform: 'scale(1)', offset: 0.3 }, { opacity: 1, offset: 0.8 }, { opacity: 0, transform: 'translateY(-14px)' }], { duration: 1100, easing: 'ease-out' }); const s2 = c.querySelector('.new [data-sum]'); re(s2, 'on');
+        const sc1 = c.querySelector('.now [data-sc]'), sc2 = c.querySelector('.new [data-sc]'), rows = c.querySelector('.rows4'); [sc1, sc2].forEach((x) => { x.classList.add('hide'); x.classList.remove('on'); }); rows.classList.remove('on');
+        after(1300, () => { sc1.classList.remove('hide'); re(sc1, 'on'); re(rows, 'on'); after(220, () => { sc2.classList.remove('hide'); re(sc2, 'on'); }); }); after(3000, () => { sc1.classList.add('hide'); sc2.classList.add('hide'); rows.classList.remove('on'); }); } },
+    { t: '등장', why: '창: 떨어져 박힘 · 대국 전환: 서서히 · 확인 띠: 계단 · 부품 칩: 계단 비틀림 · 길게 누르기 정보: 그냥 툭.', rule: '창 = <b>낙하</b> · 아래 띠 · 칩 = <b>아래에서 snap</b> · 손끝 정보(길게 누르기 · 크게 보기) = <b>도트 쓸기</b> · 장면 = 막/철문.', btn: '등장',
+      now: `<div class="mini-row"><div class="col4"><div class="pop4 instant">HP 14</div><div class="lbl4">정보 · 툭</div></div><div class="col4"><div class="pop4 steps">고르기</div><div class="lbl4">확인 띠 · 계단</div></div><div class="col4"><div class="pop4 fadein">조립 층</div><div class="lbl4">전환 · 서서히</div></div></div>`,
+      neu: `<div class="mini-row"><div class="col4"><div class="pop4" data-sw>HP 14</div><div class="lbl4">정보 · 쓸기</div></div><div class="col4"><div class="pop4 snapup">고르기</div><div class="lbl4">띠 · snap</div></div><div class="col4"><div class="pop4 drop">조립 층</div><div class="lbl4">창 · 낙하</div></div></div>`,
+      play(c) { c.querySelectorAll('.pop4').forEach((p) => { p.classList.remove('on', 'off'); }); void c.offsetWidth; c.querySelectorAll('.pop4:not([data-sw])').forEach((p) => p.classList.add('on')); const sw = c.querySelector('[data-sw]'); sw.animate([{ clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 260, easing: 'steps(6)' }); } },
+    { t: '퇴장', why: '창 · 알림 · 도발 = 접힘 · 대국 전환 = 서서히 투명 · 길게 누르기 정보 = 툭 사라짐.', rule: '<b>접힘(accel 200ms) 하나</b>. 막은 들어온 반대로 줄이 걷힘. 손끝 정보는 쓸어내림.', btn: '퇴장',
+      now: `<div class="mini-row"><div class="col4"><div class="pop4 instant on" data-inst>HP 14</div><div class="lbl4">정보 · 툭</div></div><div class="col4"><div class="pop4 fadeout">조립 층</div><div class="lbl4">전환 · 서서히</div></div><div class="col4"><div class="pop4 fold">알림</div><div class="lbl4">알림 · 접힘</div></div></div>`,
+      neu: `<div class="mini-row"><div class="col4"><div class="pop4" data-sw>HP 14</div><div class="lbl4">정보 · 쓸어내림</div></div><div class="col4"><div class="pop4 fold">조립 층</div><div class="lbl4">접힘</div></div><div class="col4"><div class="pop4 fold">알림</div><div class="lbl4">접힘</div></div></div>`,
+      play(c) { c.querySelectorAll('.pop4').forEach((p) => p.classList.remove('off')); const i = c.querySelector('[data-inst]'); i.classList.add('on'); void c.offsetWidth; c.querySelectorAll('.fadeout, .fold').forEach((p) => p.classList.add('off')); i.classList.remove('on'); c.querySelector('[data-sw]').animate([{ clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 100% 0)' }], { duration: 220, easing: 'steps(6)', fill: 'forwards' }); after(1300, () => { c.querySelectorAll('.pop4').forEach((p) => p.classList.remove('off')); i.classList.add('on'); c.querySelector('[data-sw]').getAnimations().forEach((a) => a.cancel()); }); } },
+    { t: '흔들림', why: '구현 4가지(판 jolt · 화면 계단 흔들림 · 요소 흔들기 · Phaser 카메라), 세기는 그때그때 4~12px.', rule: '함수 하나 <b>shake(대상, 1|2|3)</b> — 약 4px/260ms · 중 7px/360ms · 강 12px/480ms. 판 안 카메라도 같은 세 단계.', btn: '흔들기',
+      now: `<div class="mini-row">${['jolt', '계단', '요소', '카메라'].map((n) => `<div class="col4"><div class="tgt"></div><div class="lbl4">${n}</div></div>`).join('')}</div>`,
+      neu: `<div class="mini-row">${['약', '중', '강'].map((n) => `<div class="col4"><div class="tgt"></div><div class="lbl4">${n}</div></div>`).join('')}</div>`,
+      play(c) { const now = c.querySelectorAll('.now .tgt'); shake(now[0], 5, 260); shake(now[1], 6, 300, true); shake(now[2], 9, 420); shake(now[3], 3, 200); c.querySelectorAll('.new .tgt').forEach((t, i) => shake(t, [4, 7, 12][i], [260, 360, 480][i])); } },
+    { t: '섬광', why: '화면 섬광 · 타이틀 전용 · 카메라 섬광 · 투명도 0.4~0.9 제각각.', rule: '<b>flash(약 0.5 | 강 0.85)</b>, 220ms 착지 곡선. 판 안 · 판 밖 같은 값.', btn: '번쩍',
+      now: `<div class="mini-row">${[0.4, 0.6, 0.9, 0.7].map((a) => `<div class="col4" style="position:relative"><div class="tgt"></div><i class="fl4" data-a="${a}"></i><div class="lbl4">${a}</div></div>`).join('')}</div>`,
+      neu: `<div class="mini-row">${[0.5, 0.85].map((a) => `<div class="col4" style="position:relative"><div class="tgt"></div><i class="fl4" data-a="${a}"></i><div class="lbl4">${a === 0.5 ? '약' : '강'}</div></div>`).join('')}</div>`,
+      play(c) { c.querySelectorAll('.now .fl4').forEach((f, i) => f.animate([{ opacity: f.dataset.a }, { opacity: 0 }], { duration: [180, 260, 220, 320][i], easing: ['linear', 'ease-out', 'cubic-bezier(.1,.9,.2,1)', 'ease-in'][i] })); c.querySelectorAll('.new .fl4').forEach((f) => f.animate([{ opacity: f.dataset.a }, { opacity: 0 }], { duration: 220, easing: 'cubic-bezier(.1,.9,.2,1)' })); } },
+    { t: '숫자', why: '판 위 피해: 도트 숫자(흰 · 진홍 · 금) / 붕락 피해 · 회복 · 라벨: 글꼴 숫자(피해가 노랑 #fde68a — 처치 금과 헷갈림).', rule: '<b>피해는 전부 도트 숫자</b> — 적이 맞음 흰 · 내가 맞음 진홍 · 처치 금 · 회복 초록 · 방열판 은빛. 「문턱!」 같은 낱말은 <b>딱지</b>.', btn: '숫자',
+      now: `<div class="mini-row"><span class="num-px" style="color:#f4f1ea">−14</span><span class="num-font" style="color:#fde68a">−8</span><span class="num-font" style="color:#86efac">+6</span><span class="num-font" style="color:#fdba74">문턱!</span></div><div class="cap">타격 · 붕락 · 회복 · 라벨</div>`,
+      neu: `<div class="mini-row"><span class="num-px" style="color:#f4f1ea">−14</span><span class="num-px" style="color:#ff6b6b">−8</span><span class="num-px" style="color:#86efac">+6</span><span class="badge4">문턱!</span></div><div class="cap">같은 도트 숫자 · 낱말은 딱지</div>`,
+      play(c) { c.querySelectorAll('.num-font, .num-px, .badge4').forEach((n, i) => { const nowFont = n.classList.contains('num-font'); n.animate(nowFont ? [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-22px)', opacity: 0 }] : [{ transform: 'translateY(0) scale(.3)' }, { transform: 'translateY(-16px) scale(1.25)', offset: 0.2 }, { transform: 'translateY(-18px) scale(1)', offset: 0.35 }, { transform: 'translateY(-22px)', clipPath: 'inset(0 0 0 0)', offset: 0.7 }, { transform: 'translateY(-18px) scale(.9,1.1)', clipPath: 'inset(0 0 100% 0)' }], { duration: nowFont ? 650 : 1000, easing: nowFont ? 'linear' : 'ease-out', delay: (i % 4) * 90 }); }); } },
+    { t: '들어온다 (획득 비행)', why: '카드 → 덱 · 나사 → 계기 · 구매 나사 — 호 높이 · 회전 · 잔상 · 도착 반응이 다 다름.', rule: '<b>arcFly 하나</b> — 위로 가속 → 착지 감속 → 도착점 눌림 + 불똥 셋. 나사는 잔상 셋, 카드는 기울기만.', btn: '날리기',
+      now: `<div class="box" style="position:absolute;right:10px;top:34px;width:44px">덱</div><div class="cap" style="position:absolute;left:8px;bottom:8px">카드 · 나사 · 구매 — 각자</div>`,
+      neu: `<div class="box" style="position:absolute;right:10px;top:34px;width:44px">덱</div><div class="cap" style="position:absolute;left:8px;bottom:8px">셋 다 같은 호</div>`,
+      play(c) {
+        const go = (half, same) => { const tgt = half.querySelector('.box'); const to = rel(tgt, half); const mk = (k) => { const d = document.createElement('i'); d.className = 'fly4'; d.innerHTML = k === 'c' ? `<span class="crd" style="width:26px;height:32px">${P('N0', 18)}</span>` : `<i class="coin3" style="position:static;display:block;margin:0;background-image:url(${SCREW})"></i>`; return d; };
+          const punch = () => tgt.animate([{ transform: 'scale(1.3,.8)' }, { transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,1.6,.35,1)' });
+          const items = [['c', { x: 16, y: 120 }], ['s', { x: 40, y: 140 }], ['s', { x: 70, y: 130 }]];
+          items.forEach(([k, from], i) => { const opt = same ? { h: 50, ms: 460, delay: i * 120, r1: k === 'c' ? ' rotate(14deg)' : ' rotate(200deg)', r2: k === 'c' ? ' rotate(0deg) scale(.6)' : ' rotate(400deg) scale(.5)', done: () => { punch(); sparksAt(half, to.x, to.y, 3, 14); } }
+            : [{ h: 20, ms: 640, e: 'cubic-bezier(.2,.8,.2,1)', r1: ' rotate(-8deg)', r2: ' scale(.85)' }, { h: 80, ms: 800, e: 'cubic-bezier(.2,.8,.2,1)', r1: ' rotate(180deg) scale(1.15)', r2: ' rotate(360deg) scale(.7)', done: () => tgt.animate([{ transform: 'scale(1.15)' }, { transform: 'none' }], { duration: 200 }) }, { h: 60, ms: 460, r1: ' rotate(200deg) scale(1.2)', r2: ' rotate(400deg) scale(.5)' }][i];
+            opt.delay = i * 120; arc(half, mk(k), from, { x: to.x - 10, y: to.y - 10 }, opt); }); };
+        go(c.querySelector('.now'), false); go(c.querySelector('.new'), true);
+      } },
+    { t: '글이 나온다', why: '쓰러짐 · 도발 · 대국 전환 · 프롤로그 = 타자 · 사건 서술 = 툭 · 결과 = 밀려 들어옴.', rule: '<b>서술(2인칭 · 독백 · 대사) = 타자</b>, 시스템 글 = 즉시. 사건 서술도 타자로.', btn: '사건 서술',
+      now: `<p class="cap" style="font-size:12px;color:#c9c0b0;text-align:left" data-t></p>`,
+      neu: `<p class="cap" style="font-size:12px;color:#c9c0b0;text-align:left" data-t></p>`,
+      play(c) { const s = '공구 수레 곁에 떠돌이 폰이 서 있다. 등에 진 렌치가 녹슬었다.'; c.querySelector('.now [data-t]').textContent = s; const el = c.querySelector('.new [data-t]'); el.textContent = ''; let i = 0; const tk = () => { if (i < s.length) { el.textContent += s[i++]; setTimeout(tk, 26); } }; tk(); } },
+    { t: '판정 도장', why: '큰 외곽선 도장(검문 통과 · 불량 폐기) · 채운 꼬리표(보상 「통과」 · 결과 「출하 완료」) · 작은 붉은 머리말(사선 · 판돈) — 같은 「판정」이 셋.', rule: '판정 = <b>도장(외곽선)</b> 하나, 크기만 2단(창 머리 큰 도장 / 제목 앞 작은 도장). 머리말은 <b>분류</b>(사선 · 판돈 · 반장)에만.',
+      now: `<span class="stampbig" style="color:#facc15">검문 통과</span><span><span class="passtag">통과</span> <b style="font-size:12px">입문 — 시험대</b></span><span class="eyebrow4">사선</span>`,
+      neu: `<span class="stampbig" style="color:#facc15">검문 통과</span><span><span class="stampsm" style="color:#facc15">통과</span><b style="font-size:12px">입문 — 시험대</b></span><span class="eyebrow4" style="color:#a8a4b2">분류 · 사선</span>` },
+    { t: '창 머리', why: '왼쪽 제목 + 흐린 부제(고물상 · 작업대) · 가운데 머리말 + 제목(사선 · 판돈) · 꼬리표 + 제목(보상 · 결과).', rule: '<b>왼쪽 정렬 제목 + 흐린 부제</b> 하나. 판정이 있으면 제목 앞 작은 도장, 분류가 있으면 제목 위 머리말.',
+      now: `<div class="hd"><h4>작업대 <span style="color:#8a8794;font-weight:400">— 하나를 고릅니다</span></h4></div><div class="hd c"><span class="eyebrow4">판돈</span><h4>아무도 잃지 않는다</h4></div><div class="hd"><h4><span class="passtag">통과</span> 입문 — 나사 +50</h4></div>`,
+      neu: `<div class="hd"><h4>작업대 <span style="color:#8a8794;font-weight:400">— 하나를 고릅니다</span></h4></div><div class="hd"><span class="eyebrow4" style="color:#a8a4b2">판돈</span><h4>아무도 잃지 않는다</h4></div><div class="hd"><h4><span class="stampsm" style="color:#facc15">통과</span>입문 <span style="color:#8a8794;font-weight:400">— 나사 +50</span></h4></div>` },
+    { t: '소리', why: '「도장」 소리 하나가 8가지 일에 쓰임 (부품 발동 · 턴 배너 · 타이틀 · 이름 새기기 …).', rule: '성격별로 하나씩.', wide: true,
+      now: `<table class="soundtbl"><tr><td>도장</td><td>부품 발동 · 턴 배너 · 타이틀 · 전환 화면 · 이름 새기기 · 결정 · 도장 · 고르기</td></tr><tr><td>동전</td><td>나사 · 구매 · 연쇄 · 편자</td></tr></table>`,
+      neu: `<table class="soundtbl"><tr><td>도장</td><td>판정 · 결정</td></tr><tr><td>동전</td><td>획득(나사 · 구매)</td></tr><tr><td>경고</td><td>적 쪽 상황 알림(적 배너)</td></tr><tr><td>탭</td><td>내 쪽 상황 알림(내 배너) · 넘김</td></tr><tr><td>들기</td><td>고름</td></tr></table>` },
+  ];
+  cards.forEach((c, k) => {
+    const a = document.createElement('article');
+    a.className = 'ui-card';
+    a.innerHTML = `<h3>${k + 1}. ${c.t}</h3><p class="tagline"><b>지금</b> ${c.why}</p><p class="tagline"><b>제안</b> ${c.rule}</p><div class="cmp"><div class="half now"><span class="tag">지금</span>${c.now}</div><div class="half new"><span class="tag">제안</span>${c.neu}${''}</div></div>${c.play ? `<button class="bb new small go" type="button"><span class="shine"></span>${c.btn || '재생'}</button>` : ''}`;
+    grid.appendChild(a);
+    a.querySelectorAll('.half').forEach((h) => { if (!h.querySelector('.fl4') && /번쩍/.test(c.btn || '')) h.insertAdjacentHTML('beforeend', '<i class="fl4"></i>'); });
+    const b = a.querySelector('.go');
+    if (b) pressy(b, () => c.play(a));
+  });
 }
 
 function setupUi() {
