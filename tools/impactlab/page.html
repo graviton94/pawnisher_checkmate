@@ -114,18 +114,21 @@ footer { color: var(--dim); font-size: 12px; }
 .medals { display: flex; gap: 26px; align-items: center; }
 .md { width: 58px; height: 58px; border: 0; background: var(--medal) center / 100% 100% no-repeat; image-rendering: pixelated; box-shadow: none; cursor: pointer; display: grid; place-items: center; font: 700 12px var(--body); color: #16141c; position: relative; }
 .md::before { content: ''; position: absolute; inset: -9px; background: var(--cog) center / 100% 100% no-repeat; image-rendering: pixelated; z-index: -1; }
-.md:hover { filter: brightness(1.15); }
+.md:hover, .md:focus { background: var(--medal) center / 100% 100% no-repeat; filter: brightness(1.15); }
 .md.click::before { animation: cog 520ms steps(4) forwards; }
 @keyframes cog { to { transform: rotate(45deg); } }
 .md.click { animation: medal 420ms cubic-bezier(0.2, 1.6, 0.3, 1); }
 @keyframes medal { 0% { transform: scale(0.88); } 40% { transform: scale(1.14); filter: brightness(1.3); } 100% { transform: scale(1.06); } }
 .md.dim { filter: grayscale(1) brightness(0.5); transform: scale(0.9); transition: all 220ms; }
 .mapwrap { position: absolute; inset: 0 0 96px 0; }
-.mlink { position: absolute; height: 4px; transform-origin: 0 50%; background: repeating-linear-gradient(90deg, #8a8794 0 6px, transparent 6px 12px); transition: opacity 260ms, filter 260ms; }
-.mlink.live { background: repeating-linear-gradient(90deg, #facc15 0 6px, transparent 6px 12px); background-size: 12px 4px; animation: ants 420ms steps(4) infinite; }
-@keyframes ants { to { background-position: 12px 0; } }
-.mlink.off { opacity: 0.18; filter: grayscale(1); background: repeating-linear-gradient(90deg, #56545e 0 2px, transparent 2px 12px); }
-.mlink .fillg { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #facc15; box-shadow: 0 0 0 1px #000; }
+.mlink { position: absolute; height: 12px; transform-origin: 0 50%; pointer-events: none; }
+.mlink .half { position: absolute; top: 0; height: 12px; background: var(--chain) 0 0 / 20px 12px repeat-x; image-rendering: pixelated; transition: transform 520ms cubic-bezier(0.5, 0, 0.9, 0.5), opacity 520ms, filter 300ms; }
+.mlink .half.l { left: 0; transform-origin: 0 50%; } .mlink .half.r { transform-origin: 100% 50%; }
+.mlink.live .half { background-image: var(--chaing); animation: chainrun 600ms steps(5) infinite; }
+.mlink.run .half { background-image: var(--chaing); animation: chainrun 160ms steps(5) infinite; }
+@keyframes chainrun { to { background-position: 20px 0; } }
+.mlink.off .half { filter: grayscale(1) brightness(0.45); opacity: 0.55; }
+.mlink.off .half.l { transform: rotate(30deg) translateY(6px); } .mlink.off .half.r { transform: rotate(-34deg) translateY(10px); }
 .mnode { position: absolute; transform: translate(-50%, -50%); }
 .mnode.md { transition: filter 260ms, transform 260ms; }
 .mnode.md.off { filter: grayscale(1) brightness(0.4); transform: translate(-50%, -50%) scale(0.82); cursor: default; }
@@ -133,8 +136,11 @@ footer { color: var(--dim); font-size: 12px; }
 @keyframes mmedal { 0% { transform: translate(-50%, -50%) scale(0.88); } 40% { transform: translate(-50%, -50%) scale(1.18); filter: brightness(1.35); } 100% { transform: translate(-50%, -50%) scale(1.08); } }
 .mnode.md.arrive { animation: marrive 420ms cubic-bezier(0.2, 1.6, 0.3, 1) forwards; }
 @keyframes marrive { 0% { transform: translate(-50%, -50%) scale(1.3); filter: brightness(2); } 100% { transform: translate(-50%, -50%) scale(1.08); } }
-.mstart { width: 40px; height: 40px; background: var(--medal) center / 100% 100% no-repeat; image-rendering: pixelated; filter: grayscale(1) brightness(0.55); }
-.mtoken { position: absolute; width: 40px; height: 40px; image-rendering: pixelated; transform: translate(-50%, -78%); z-index: 3; pointer-events: none; }
+.mstart { width: 48px; height: 48px; background: var(--plate) center / 100% 100% no-repeat; image-rendering: pixelated; }
+.mtoken { position: absolute; width: 42px; height: 42px; image-rendering: pixelated; transform: translate(-50%, -62%); z-index: 3; pointer-events: none; }
+.mlabel { position: absolute; transform: translate(-50%, 0); white-space: nowrap; font: 700 12px var(--body); color: #16141c; background: #c89b3c; padding: 1px 6px; box-shadow: 0 0 0 2px #000; pointer-events: none; transition: filter 260ms; }
+.mlabel.off { filter: grayscale(1) brightness(0.45); }
+.md img, .md b { width: 26px; height: 26px; image-rendering: pixelated; display: grid; place-items: center; font: 700 20px var(--body); color: #16141c; }
 .mcbar { position: absolute; left: 12px; right: 12px; bottom: 8px; max-width: none; flex-wrap: wrap; justify-content: flex-end; z-index: 2; background: #121118; }
 .mcbar span { flex-basis: 100%; font-style: normal; font-weight: 700; font-size: 14px; }
 #mapStage:has(.mcbar.on) .hint { display: none; }
@@ -231,8 +237,8 @@ footer { color: var(--dim); font-size: 12px; }
       <div class="ui-stage" id="chStage"><div class="ch" id="chList"><button type="button">나사 30을 건다</button><button type="button">거래를 거절한다</button><button type="button">나이트를 판다</button></div><div class="cbar" id="cbar"><span>‘나사 30을 건다’</span><button class="bb new" type="button" id="cbarGo"><span class="shine"></span>고르기</button></div></div></article>
     <article class="ui-card"><h3>나사 받기</h3><p class="beats">도트 나사(십자 홈)가 튀어 올랐다 돌며 흩어짐 → 계기로 빨려 들고(가속) → 하나 닿을 때마다 숫자가 오르며 계기가 튄다 → 마지막에 반짝.</p>
       <div class="ui-stage" id="gStage"><div class="meterx" id="meterx"><i></i><b id="gnum">40</b></div><button class="bb new" type="button" id="gGo"><span class="shine"></span>나사 +12</button></div></article>
-    <article class="ui-card"><h3>지도 — 갈 곳 고르기</h3><p class="beats">메달 탭 → 톱니가 철컥 돌고 메달이 튐 · <b>안 고른 길과 메달은 식어 꺼짐</b>(회색 · 점선이 흩어짐), 고른 길만 점선이 흐름 → 확인 띠 「대국으로 가시겠습니까?」 → 간다 → 길이 금빛으로 차오르고 가짜 왕이 길을 따라 뛰어감 → 도착하며 메달이 번쩍 → 철문이 닫히며 장면 이름이 찍히고 열림.</p>
-      <div class="ui-stage" id="mapStage" style="min-height:330px;display:block;padding:0"><div class="mapwrap" id="mapwrap"></div>
+    <article class="ui-card"><h3>지도 — 갈 곳 고르기</h3><p class="beats">길은 컨베이어 체인. 메달 탭 → 톱니가 철컥 돌고 메달이 튐 · 고른 체인만 금빛으로 맞물려 돌기 시작 · <b>안 고른 체인은 가운데가 툭 끊겨 양쪽으로 늘어지고 고리가 떨어짐</b>, 메달 · 이름표는 식음 → 확인 띠 「대국으로 가시겠습니까?」 → 간다 → 체인이 빨리 돌며 발판 위 가짜 왕을 실어 감 → 도착하며 메달 번쩍 → 철문이 닫히며 장면 이름이 찍히고 열림.</p>
+      <div class="ui-stage" id="mapStage" style="min-height:400px;display:block;padding:0"><div class="mapwrap" id="mapwrap"></div>
         <div class="cbar mcbar" id="mcbar"><span id="mcq">대국으로 가시겠습니까?</span><button class="bb new" type="button" id="mBack" style="background:#3b3a45;color:#ece8de"><span class="shine"></span>다시 보기</button><button class="bb new" type="button" id="mGo"><span class="shine"></span>간다</button></div>
         <div class="shut t"></div><div class="shut b"></div><span class="scene-name mname" id="mname"></span><span class="hint">메달 탭</span></div></article>
     <article class="ui-card"><h3>화면 전환 — 철문</h3><p class="beats">위아래 철문이 가속하며 쾅 닫힘(0.3초) → 판이 흔들림 · 장면 이름이 찍힘 → 철문이 감속하며 열림(0.42초).</p>
@@ -974,10 +980,13 @@ function medalSprites() {
   const m = rows.map((r, j) => [...r].map((ch, i) => { const d = Math.hypot(i - c, j - c); return ch !== '.' && ch !== 'K' && d > c - 2.4 && d < c - 1.4 ? 'A' : ch; }).join(''));
   const N = 25, C = (N - 1) / 2, cog = [];
   for (let j = 0; j < N; j++) { let r = ''; for (let i = 0; i < N; i++) { const dx = i - C, dy = j - C, d = Math.hypot(dx, dy), a = (Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI / 4); const tooth = a < Math.PI / 8; const outer = tooth ? C : C - 2; if (d > outer + 0.3 || d < C - 4.2) r += '.'; else if (d > outer - 0.9 || d < C - 3.3) r += 'K'; else r += tooth ? 'L' : 'G'; } cog.push(r); }
-  return { medal: pixelSprite(m, GOLDPAL, 3), cog: pixelSprite(cog, GOLDPAL, 3) };
+  const chainRows = ['.KKKK.....', 'KWLLLK....', 'KL..GKKKKK', 'KL..GKWLLG', 'KLGGGKKKKK', '.KKKK.....'];
+  const goldRows = chainRows.map((r) => r.replace(/W/g, 'T').replace(/L/g, 'Y').replace(/G/g, 'A'));
+  const plate = ['KKKKKKKKKKKKKKKK', 'KUUUUUUUUUUUUUUK', 'KUGGGGGGGGGGGGAK', 'KUGLGGGGGGGGLGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGGGGGGGGGGGGAK', 'KUGLGGGGGGGGLGAK', 'KUGGGGGGGGGGGGAK', 'KAAAAAAAAAAAAAAK', 'KKKKKKKKKKKKKKKK'];
+  return { medal: pixelSprite(m, GOLDPAL, 3), cog: pixelSprite(cog, GOLDPAL, 3), chain: pixelSprite(chainRows, GOLDPAL, 2), chaing: pixelSprite(goldRows, GOLDPAL, 2), plate: pixelSprite(plate, GOLDPAL, 3) };
 }
 function setupUi() {
-  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); }
+  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); for (const k of ['chain', 'chaing', 'plate']) document.documentElement.style.setProperty(`--${k}`, `url(${ms0[k]})`); }
   document.querySelectorAll('img[data-k]').forEach((im) => (im.src = SPR[im.dataset.k]));
   pressy(document.getElementById('bbNew'));
   // 보상 카드
@@ -1004,42 +1013,48 @@ function setupUi() {
       sc.animate([{ transform: 'translate(0,0) scale(.4) rotate(0deg)' }, { transform: `translate(${mid.x - b.x}px, ${mid.y - b.y}px) scale(1.15) rotate(${180 + i * 30}deg)`, offset: 0.35, easing: 'cubic-bezier(.6,0,.9,.4)' }, { transform: `translate(${m.x - b.x - 30}px, ${m.y - b.y}px) scale(.7) rotate(${360 + i * 30}deg)` }], { duration: 620 + i * 45, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
       setTimeout(() => { sc.remove(); gnum.textContent = String(++gold); meter.classList.remove('punch'); void meter.offsetWidth; meter.classList.add('punch'); if (i === 11) sparksAt(gs, m.x - 10, m.y, 8, 26); }, 620 + i * 45); }
   });
-  // 지도: 고르기 → 안 고른 길 꺼짐 → 확인 → 길이 차오르며 가짜 왕이 뜀 → 철문 전환
+  // 지도: 고르기 → 고른 체인만 돌고 안 고른 체인은 툭 끊겨 늘어짐 → 확인 → 체인이 빨리 돌며 가짜 왕을 실어 감 → 철문 전환
   const ms = document.getElementById('mapStage'), wrap = document.getElementById('mapwrap'), mbar = document.getElementById('mcbar');
-  const NODES = [['대국', 0.17], ['사건', 0.5], ['고물상', 0.83]];
+  const NODES = [['대국', 0.16, `<img alt="" src="${SPR.N1}">`], ['사건', 0.5, '<b>?</b>'], ['고물상', 0.84, `<img alt="" src="${SCREW}">`]];
   let mpick = -1, mbusy = false;
   const buildMap = () => {
     wrap.innerHTML = ''; mpick = -1; mbar.classList.remove('on');
-    const W0 = wrap.clientWidth, H0 = wrap.clientHeight; const sx = 46, sy = H0 * 0.5;
+    const W0 = wrap.clientWidth, H0 = wrap.clientHeight; const sx = 50, sy = H0 * 0.5;
     const start = document.createElement('div'); start.className = 'mnode mstart'; start.style.left = `${sx}px`; start.style.top = `${sy}px`; wrap.appendChild(start);
     const tok = document.createElement('img'); tok.className = 'mtoken'; tok.src = SPR.K0; tok.style.left = `${sx}px`; tok.style.top = `${sy}px`; wrap.appendChild(tok);
-    NODES.forEach(([name, fy], i) => {
-      const nx = W0 - 70, ny = H0 * fy; const dx = nx - sx, dy = ny - sy; const len = Math.hypot(dx, dy) - 30;
-      const ln = document.createElement('div'); ln.className = 'mlink'; ln.style.left = `${sx}px`; ln.style.top = `${sy - 2}px`; ln.style.width = `${len}px`; ln.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`; ln.innerHTML = '<i class="fillg"></i>'; ln.dataset.i = i; wrap.appendChild(ln);
-      const md = document.createElement('button'); md.type = 'button'; md.className = 'mnode md'; md.textContent = name; md.style.left = `${nx}px`; md.style.top = `${ny}px`; md.dataset.i = i; wrap.appendChild(md);
+    NODES.forEach(([name, fy, icon], i) => {
+      const nx = W0 - 74, ny = H0 * fy - 6; const dx = nx - sx, dy = ny - sy; const len = Math.hypot(dx, dy) - 54;
+      const ln = document.createElement('div'); ln.className = 'mlink'; ln.style.left = `${sx + Math.cos(Math.atan2(dy, dx)) * 24}px`; ln.style.top = `${sy + Math.sin(Math.atan2(dy, dx)) * 24 - 6}px`; ln.style.width = `${len}px`; ln.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+      ln.innerHTML = `<i class="half l" style="width:${len / 2}px"></i><i class="half r" style="left:${len / 2}px;width:${len / 2}px"></i>`; ln.dataset.i = i; ln.dataset.mx = String(sx + dx / 2); ln.dataset.my = String(sy + dy / 2); wrap.appendChild(ln);
+      const md = document.createElement('button'); md.type = 'button'; md.className = 'mnode md'; md.innerHTML = icon; md.setAttribute('aria-label', name); md.style.left = `${nx}px`; md.style.top = `${ny}px`; md.dataset.i = i; wrap.appendChild(md);
+      const lb = document.createElement('span'); lb.className = 'mlabel'; lb.textContent = name; lb.style.left = `${nx}px`; lb.style.top = `${ny + 34}px`; lb.dataset.i = i; wrap.appendChild(lb);
       md.addEventListener('click', () => pickNode(i));
     });
   };
   const pickNode = (i) => {
-    if (mbusy) return; mpick = i;
+    if (mbusy || mpick === i) return; const was = mpick; mpick = i;
     wrap.querySelectorAll('.md').forEach((m) => { m.classList.remove('click'); m.classList.toggle('off', Number(m.dataset.i) !== i); });
-    wrap.querySelectorAll('.mlink').forEach((l) => { const me = Number(l.dataset.i) === i; l.classList.toggle('live', me); l.classList.toggle('off', !me); });
+    wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.toggle('off', Number(m.dataset.i) !== i));
+    wrap.querySelectorAll('.mlink').forEach((l) => {
+      const me = Number(l.dataset.i) === i; l.classList.toggle('live', me);
+      if (!me && !l.classList.contains('off')) { l.classList.add('off'); const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 6, 18); for (let k = 0; k < 4; k++) { const b = document.createElement('i'); b.className = 'spk'; b.style.background = '#8a8794'; b.style.left = `${bx}px`; b.style.top = `${by}px`; b.style.setProperty('--x', `${(Math.random() - 0.5) * 16}px`); b.style.setProperty('--y', `${30 + Math.random() * 20}px`); b.style.setProperty('--d', '700ms'); ms.appendChild(b); setTimeout(() => b.remove(), 760); } }
+      if (me) l.classList.remove('off');
+    });
     const md = wrap.querySelectorAll('.md')[i]; void md.offsetWidth; md.classList.add('click'); const p = rel(md, ms); sparksAt(ms, p.x, p.y, 8, 34);
-    document.getElementById('mcq').textContent = `${NODES[i][0]}${NODES[i][0] === '고물상' ? '으로' : '으로'} 가시겠습니까?`;
+    document.getElementById('mcq').textContent = `${NODES[i][0]}으로 가시겠습니까?`;
     mbar.classList.add('on');
   };
-  document.getElementById('mBack').addEventListener('click', () => { if (mbusy) return; wrap.querySelectorAll('.md').forEach((m) => m.classList.remove('off', 'click')); wrap.querySelectorAll('.mlink').forEach((l) => l.classList.remove('live', 'off')); mbar.classList.remove('on'); mpick = -1; });
+  document.getElementById('mBack').addEventListener('click', () => { if (mbusy) return; wrap.querySelectorAll('.md').forEach((m) => m.classList.remove('off', 'click')); wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.remove('off')); wrap.querySelectorAll('.mlink').forEach((l) => l.classList.remove('live', 'off')); mbar.classList.remove('on'); mpick = -1; });
   pressy(document.getElementById('mGo'), () => {
     if (mpick < 0 || mbusy) return; mbusy = true; mbar.classList.remove('on');
-    const ln = wrap.querySelectorAll('.mlink')[mpick], fill = ln.querySelector('.fillg'), md = wrap.querySelectorAll('.md')[mpick], tok = wrap.querySelector('.mtoken');
-    const len = parseFloat(ln.style.width); fill.animate([{ width: '0px' }, { width: `${len}px` }], { duration: 620, easing: 'cubic-bezier(.6,0,.3,1)', fill: 'forwards' });
-    const a = rel(tok, wrap), b2 = rel(md, wrap); const sx = parseFloat(tok.style.left), sy = parseFloat(tok.style.top); const tx = parseFloat(md.style.left) - sx, ty = parseFloat(md.style.top) - sy;
-    const hops = []; for (let k = 0; k <= 4; k++) { const f = k / 4; hops.push({ transform: `translate(calc(-50% + ${tx * f}px), calc(-78% + ${ty * f}px - ${k % 2 ? 14 : 0}px)) scale(${k % 2 ? '0.92,1.1' : '1.1,0.9'})` }); }
-    tok.animate([{ transform: 'translate(-50%, -78%) scale(1.14, 0.82)' }, ...hops], { duration: 700, delay: 120, easing: 'cubic-bezier(.5,0,.5,1)', fill: 'forwards' });
-    setTimeout(() => { md.classList.remove('click'); void md.offsetWidth; md.classList.add('arrive'); const p = rel(md, ms); sparksAt(ms, p.x, p.y, 10, 40); }, 820);
-    setTimeout(() => { const doors = ms.querySelectorAll('.shut'); doors.forEach((d) => { d.classList.remove('open'); void d.offsetWidth; d.classList.add('close'); }); }, 1050);
-    setTimeout(() => { ms.classList.remove('stage-shake'); void ms.offsetWidth; ms.classList.add('stage-shake'); const nm = document.getElementById('mname'); nm.textContent = NODES[mpick][0]; nm.classList.remove('on'); void nm.offsetWidth; nm.classList.add('on'); }, 1360);
-    setTimeout(() => { buildMap(); document.getElementById('mname').classList.remove('on'); ms.querySelectorAll('.shut').forEach((d) => { d.classList.remove('close'); void d.offsetWidth; d.classList.add('open'); }); mbusy = false; }, 2300);
+    const ln = wrap.querySelectorAll('.mlink')[mpick], md = wrap.querySelectorAll('.md')[mpick], tok = wrap.querySelector('.mtoken');
+    ln.classList.add('run');
+    const sx = parseFloat(tok.style.left), sy = parseFloat(tok.style.top); const tx = parseFloat(md.style.left) - sx, ty = parseFloat(md.style.top) - sy;
+    tok.animate([{ transform: 'translate(-50%, -62%)' }, { transform: `translate(calc(-50% + ${tx}px), calc(-62% + ${ty}px))` }], { duration: 760, delay: 140, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+    setTimeout(() => { md.classList.remove('click'); void md.offsetWidth; md.classList.add('arrive'); const p = rel(md, ms); sparksAt(ms, p.x, p.y, 10, 40); ln.classList.remove('run'); }, 900);
+    setTimeout(() => { const doors = ms.querySelectorAll('.shut'); doors.forEach((d) => { d.classList.remove('open'); void d.offsetWidth; d.classList.add('close'); }); }, 1150);
+    setTimeout(() => { ms.classList.remove('stage-shake'); void ms.offsetWidth; ms.classList.add('stage-shake'); const nm = document.getElementById('mname'); nm.textContent = NODES[mpick][0]; nm.classList.remove('on'); void nm.offsetWidth; nm.classList.add('on'); }, 1460);
+    setTimeout(() => { buildMap(); document.getElementById('mname').classList.remove('on'); ms.querySelectorAll('.shut').forEach((d) => { d.classList.remove('close'); void d.offsetWidth; d.classList.add('open'); }); mbusy = false; }, 2400);
   });
   buildMap(); window.addEventListener('resize', () => { if (!mbusy) buildMap(); });
   // 철문
