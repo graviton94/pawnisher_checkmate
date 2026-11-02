@@ -535,6 +535,26 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
   return out;
 };
 
+/**
+ * 내가 치면 돌아오는 피해 미리보기 (D-173): 출하 반장 되받아침 · 자폭 폰. previewPlay 결과로 계산만 한다 (상태는 안 바꾼다).
+ * 화면은 과녁 칸에 붉은 숫자로 보여 준다 — 결과를 누르기 전에 (UI 원칙 1).
+ */
+export const backlashOf = (b: SliceBattle, sim: { state: BattleState; events: BattleEvent[] }): number => {
+  let dmg = 0;
+  const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+  for (const e of sim.events) {
+    if (e.type !== 'attack') continue;
+    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += BOSS_NUM.thorns;
+    if (b.blastPawns)
+      for (const h of e.hits) {
+        const dead = b.s.pieces.find((p) => p.id === h.targetId);
+        if (!h.killed || !dead || dead.side !== 1 || dead.type !== 'P') continue;
+        dmg += TRAIT.blast * sim.state.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).length;
+      }
+  }
+  return dmg;
+};
+
 /** 처치 기록 (분대원 처치 수 · 반장 처치) */
 const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[], mover?: number): void => {
   for (const e of events) {

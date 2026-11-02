@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { canPlay, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
+import { backlashOf, canPlay, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
 import { BOSS, COMMANDS, PUSH, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
+import { playOut } from '../src/slice/bot';
 import type { SlicePartId } from '../src/slice/parts';
 
 const squad = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'P' as const }, { t: 'N' as const }, { t: 'B' as const }];
@@ -272,5 +273,37 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
   });
   it('전도 코일: 연쇄 처치마다 +35%', () => {
     expect(chainMult(2, ['conductor'])).toBeCloseTo(1.7);
+  });
+});
+
+describe('돌아오는 피해 미리보기 · 자동 플레이 봇 (D-173)', () => {
+  it('자폭 폰: 처치하는 수의 미리보기 = 실제로 받는 자폭 피해', () => {
+    const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 11, { traits: ['blastPawn'] });
+    for (const p of b.s.pieces) if (p.side === 1 && p.type !== 'K') p.hp = 1;
+    let found = false;
+    for (let i = 0; i < b.hand.length && !found; i++)
+      for (const p of cardPieces(b, i)) {
+        for (const to of cardMoves(b, i, p.id)) {
+          const sim = previewPlay(b, i, p.id, to);
+          if (!sim || !sim.removed.some((q) => q.side === 1 && q.type === 'P') || sim.state.winner !== null) continue;
+          const pre = backlashOf(b, sim);
+          const hp0 = b.s.pieces.filter((q) => q.side === 0).reduce((a, q) => a + q.hp + q.shield, 0);
+          const sim0 = sim.state.pieces.filter((q) => q.side === 0).reduce((a, q) => a + q.hp + q.shield, 0);
+          playCard(b, i, p.id, to);
+          const hp1 = b.s.pieces.filter((q) => q.side === 0).reduce((a, q) => a + q.hp + q.shield, 0);
+          expect(sim0 - hp1).toBe(pre);
+          expect(hp0).toBeGreaterThanOrEqual(hp1);
+          found = true;
+          break;
+        }
+        if (found) break;
+      }
+    expect(found).toBe(true);
+  });
+  it('봇: 1막 대국을 끝까지 둔다 (막히지 않는다)', () => {
+    const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 5, { enemyKingHp: 0.6 });
+    const r = playOut(b);
+    expect(b.s.winner).not.toBeNull();
+    expect(r.plays).toBeGreaterThan(0);
   });
 });

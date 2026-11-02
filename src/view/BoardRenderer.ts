@@ -390,6 +390,11 @@ class BoardScene extends Phaser.Scene {
         if (hit) {
           this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
           if (hit.kill) img('skull', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTint(0xfacc15);
+          // 되받아침 · 자폭: 치면 내 쪽이 받을 피해 (붉은 숫자, 왼쪽 위)
+          if (hit.backlash) {
+            const tx = this.add.text(w.x + 1 * d, w.y + 0.5 * d, `↩${hit.backlash}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.3)}px`, color: '#FF6B6B', stroke: '#0B0B0E', strokeThickness: Math.max(3, t * 0.06) }).setOrigin(0, 0).setDepth(1.8).setResolution(this.dpr);
+            this.dynamic.push(tx);
+          }
         } else if (isPending) img('select', w.x, w.y, t, 1.7, 0.6);
         else img('move-dot', w.x + 8 * d, w.y + 8 * d, 4 * d);
       }
