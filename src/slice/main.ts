@@ -499,6 +499,8 @@ const onEndInner = async (): Promise<void> => {
   refresh();
   showBefore(r.before);
   turnBanner($('board'), '적 차례', true);
+  // 띠가 판 가운데를 지나는 동안 적 첫 수가 가려지지 않게 잠깐 기다린다 (띠는 0.9초에 빠지고 적은 겨눔부터 시작)
+  await new Promise((res) => window.setTimeout(res, 350));
   await renderer.play(r.before, r.events);
   await deathRites();
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
@@ -892,7 +894,7 @@ const forgeScreen = (): void => {
         if (k === 'refine') return refineScreen();
         squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * FORGE.repairPct)) }));
         sfx('awaken');
-        healFx($('overlay-panel').querySelector<HTMLElement>('.part-cards'), `HP +${Math.round(FORGE.repairPct * 100)}%`);
+        healFx(btn, `HP +${Math.round(FORGE.repairPct * 100)}%`);
         toast(`분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%`);
         window.setTimeout(advance, 750);
       });
@@ -1002,9 +1004,12 @@ const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
   sfx('rare');
   // D-184: 안 고른 것은 아래부터 도트로 흩어지고, 고른 카드 · 부품은 기울며 들렸다가 덱 · 부품 칸으로 빨려 든다
   const group = btn.parentElement ? [...btn.parentElement.children].filter((x): x is HTMLElement => x !== btn && x instanceof HTMLElement && (x.matches('.cmd, .part-card'))) : [];
-  group.forEach((x) => dissolveUp(x));
-  const isCard = btn.matches('.cmd, .part-card');
-  const target = btn.matches('.part-card') ? $('parts') : document.querySelector('[data-deck]');
+  // 고물상은 하나를 사도 나머지 물건이 그대로 남는다 — 흩어지게 하지 않는다
+  if (!btn.matches('[data-buy]')) group.forEach((x) => dissolveUp(x));
+  // 덱 · 부품 칸으로 날아가는 것은 실제로 손에 들어오는 카드 · 부품뿐 (정비 · 수리 · 카드 빼기 같은 일은 제자리에서 연출)
+  const isPart = btn.matches('[data-part], [data-buy^="part:"]');
+  const isCard = isPart || btn.matches('.cmd');
+  const target = isPart ? $('parts') : document.querySelector('[data-deck]');
   if (isCard && target) void flyTo(btn, target);
   window.setTimeout(() => {
     panel.classList.remove('locked', 'choosing');

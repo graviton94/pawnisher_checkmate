@@ -714,7 +714,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
   background-repeat: no-repeat; animation: brk3 1000ms var(--snap) infinite; }
 .boss-rules { position: relative; }
 .boss-rules::after { --c: #ff6b6b; }
-.mnd.now::after { inset: -14px; }
+.mnd.now::after { inset: -3px; }
 @keyframes brk3 { 0%, 55% { transform: scale(1.06); } 70% { transform: none; } 100% { transform: scale(1.06); } }
 /* 15 구매 · 회복 */
 .got3 { animation: got3 520ms both; }
@@ -738,3 +738,4 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .hand.dealing .cmd { visibility: hidden; }
 .tally { max-width: 380px; }
 .panel .stamp-big { align-self: center; }
+.overlay.m3off { pointer-events: none; }
