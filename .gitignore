@@ -5,3 +5,4 @@ dist/
 release/
 production/qa/evidence/*.png
 production/fxlab.html
+__pycache__/
