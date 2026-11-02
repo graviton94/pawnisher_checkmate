@@ -479,32 +479,78 @@ const enterNode = (n: MapNode): void => {
   if (n.kind === 'forge') return void sceneIntro(NODE_NAMES.forge, '꺼지지 않은 화덕', '화덕이 당신을 부른다. 모루는 아직 뜨겁다.', `<i class="sf-ico" style="${iconMask('anvil')}"></i>`).then(forgeScreen);
 };
 
-/** 출하 지도: 지나온 길 · 지금 갈림길(2~3) · 앞으로 남은 줄. 고정 노드(입문 · 연마)는 지도 없이 바로 */
+/**
+ * 출하 지도 (D-169, 슬더스식 전체 화면): 막 전체가 왼쪽 → 오른쪽으로 펼쳐진다. 줄마다 노드(황동 메달), 지나온 길은 금빛 선,
+ * 다음 갈 곳만 빛나고 누를 수 있다. 누르면 아래 정보 띠(이름 · 설명 · 적 구성) + 「간다」. 앞으로 남은 줄도 다 보인다(계획).
+ * 고정 노드(입문 · 연마)는 지도 없이 바로.
+ */
+/** 지나온 길: 막마다 줄 → 고른 노드 번호 */
+const picked: number[][] = [[], [], []];
 const showMap = (): void => {
   const a = acts[actI];
   const row = a.rows[rowI];
-  if (row.length === 1 && row[0].battle && INTRO.includes(row[0].battle)) return enterNode(row[0]);
-  const track = a.rows
-    .map((r, k) => {
-      const kind = r.length === 1 ? r[0].kind : null;
-      const cls = k < rowI ? 'done' : k === rowI ? 'now' : 'next';
-      const ico = k < rowI ? 'flag' : kind ? NODE_ICONS[kind] : 'question';
-      return `<i class="tk ${cls}${kind === 'boss' ? ' boss' : ''}" title="${kind ? NODE_NAMES[kind] : '갈림길'}" style="${iconMask(ico)}"></i>`;
-    })
-    .join('<b class="tk-line"></b>');
-  const foes = (n: MapNode) => (n.battle ? `<span class="nd-foes">${n.battle.enemy.map((t) => pieceImg(t, 1, 'small', 18)).join('')}</span>` : '');
-  const el = openOverlay(`<h2>${a.act}막 — ${a.name}</h2>
-    <div class="map-track">${track}</div>
-    <p>${row.length > 1 ? '다음 갈 곳을 고릅니다.' : '앞으로 나아갑니다.'} <span class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</span></p>
-    <div class="part-cards nodes">${row
-      .map((n, k) => `<button type="button" class="part-card mnode nd-${n.kind}" data-node="${k}"><i class="ico" style="${iconMask(NODE_ICONS[n.kind])}"></i><b>${NODE_NAMES[n.kind]}</b><small>${NODE_DESC[n.kind]}</small>${foes(n)}</button>`)
-      .join('')}</div>`);
+  if (row.length === 1 && row[0].battle && INTRO.includes(row[0].battle)) {
+    picked[actI][rowI] = 0;
+    return enterNode(row[0]);
+  }
+  closeOverlay();
+  document.querySelector('.mapfx')?.remove();
+  const n = a.rows.length;
+  const pos = (r: number, k: number) => ({ x: ((r + 0.5) / n) * 100, y: ((k + 0.5) / a.rows[r].length) * 100 });
+  // 선: 지나온 길(금) · 지금 위치 → 다음 갈 곳들(밝게) · 그 뒤는 모두 이어진 흐린 선
+  const lines: string[] = [];
+  for (let r = 0; r < n - 1; r++)
+    a.rows[r].forEach((_, k) =>
+      a.rows[r + 1].forEach((__, k2) => {
+        const p1 = pos(r, k), p2 = pos(r + 1, k2);
+        const walked = picked[actI][r] === k && picked[actI][r + 1] === k2;
+        const live = r === rowI - 1 && picked[actI][r] === k;
+        const dead = r < rowI && picked[actI][r] !== k;
+        if (dead) return;
+        lines.push(`<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" class="${walked ? 'walked' : live ? 'live' : 'far'}"/>`);
+      }),
+    );
+  const nodes = a.rows
+    .map((r, ri) =>
+      r
+        .map((nd, k) => {
+          const p = pos(ri, k);
+          const state = ri < rowI ? (picked[actI][ri] === k ? 'done' : 'skip') : ri === rowI ? 'now' : 'later';
+          return `<button type="button" class="mnd ${state} nd-${nd.kind}" style="left:${p.x}%;top:${p.y}%" ${state === 'now' ? `data-node="${k}"` : 'tabindex="-1"'} aria-label="${NODE_NAMES[nd.kind]}"><i style="${iconMask(NODE_ICONS[nd.kind])}"></i><span>${NODE_NAMES[nd.kind]}</span></button>`;
+        })
+        .join(''),
+    )
+    .join('');
+  const el = document.createElement('div');
+  el.className = 'mapfx';
+  el.innerHTML = `<header><div><p class="sf-eyebrow">${a.act}막</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''}</p></header>
+    <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
+    <footer class="map-info"><p class="hint">빛나는 곳 중 하나를 고릅니다.</p></footer>`;
+  document.body.appendChild(el);
+  sfx('lift');
+  const info = el.querySelector<HTMLElement>('.map-info')!;
   el.querySelectorAll<HTMLElement>('[data-node]').forEach((btn) =>
     btn.addEventListener('click', () => {
-      const n = row[Number(btn.dataset.node)];
-      choose(btn, `${NODE_NAMES[n.kind]}(으)로 간다`, () => enterNode(n));
+      const k = Number(btn.dataset.node);
+      const nd = row[k];
+      if (btn.classList.contains('chosen')) return go(k);
+      el.querySelectorAll('.mnd.chosen').forEach((x) => x.classList.remove('chosen'));
+      btn.classList.add('chosen');
+      sfx('tap');
+      const foes = nd.battle ? `<span class="nd-foes">${nd.battle.enemy.map((t) => pieceImg(t, 1, 'small', 22)).join('')}</span>` : '';
+      info.innerHTML = `<i class="ico nd-${nd.kind}" style="${iconMask(NODE_ICONS[nd.kind])}"></i><div class="txt"><b>${NODE_NAMES[nd.kind]}</b><small>${NODE_DESC[nd.kind]}</small></div>${foes}<button class="btn brass" type="button" data-go>간다</button>`;
+      info.querySelector('[data-go]')!.addEventListener('click', () => go(k));
     }),
   );
+  const go = (k: number): void => {
+    picked[actI][rowI] = k;
+    sfx('rare');
+    el.classList.add('out');
+    window.setTimeout(() => {
+      el.remove();
+      enterNode(row[k]);
+    }, 380);
+  };
 };
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */

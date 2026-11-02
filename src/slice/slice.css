@@ -377,3 +377,41 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 
 .shop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .shop-head .btn { min-height: 44px; min-width: 110px; }
+/* 출하 지도 전체 화면 (D-169) */
+.mapfx { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: auto 1fr auto; gap: 4px; padding: 10px max(20px, env(safe-area-inset-right, 0px)) 10px max(20px, env(safe-area-inset-left, 0px));
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 48px),
+    radial-gradient(ellipse at 50% 120%, #3a2414 0, #121016 60%);
+  color: #e9e2d4; animation: sfin 380ms ease-out both; }
+.mapfx.out { animation: sfout 380ms ease-in forwards; }
+.mapfx header { display: flex; align-items: flex-end; justify-content: space-between; }
+.mapfx header h2 { margin: 0; font: 700 26px Galmuri14, sans-serif; color: #f4e6c4; text-shadow: 2px 2px 0 #000; }
+.mapfx header .sf-eyebrow { margin: 0; }
+.mapfx .res { margin: 0; font-size: 14px; color: #c9c0b0; } .mapfx .res b { color: #f4d27a; }
+.map-body { position: relative; margin: 6px 4%; }
+.map-body svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.map-body line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.map-body line.far { stroke: #4a4250; stroke-width: 2; stroke-dasharray: 3 6; }
+.map-body line.live { stroke: #c89b3c; stroke-width: 3; stroke-dasharray: 6 5; animation: march 0.8s linear infinite; }
+.map-body line.walked { stroke: #f4d27a; stroke-width: 4; }
+@keyframes march { to { stroke-dashoffset: -22; } }
+.mnd { position: absolute; transform: translate(-50%, -50%); width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: default;
+  background: radial-gradient(circle at 35% 30%, #5a4a2e, #2a2218 70%); box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #8a6a32, 0 3px 0 #000; }
+.mnd i { width: 30px; height: 30px; background: #d8c08a; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.mnd span { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: 12px; white-space: nowrap; color: #a89f92; }
+.mnd.later { filter: brightness(0.6); }
+.mnd.skip { filter: grayscale(1) brightness(0.35); }
+.mnd.done { box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #f4d27a, 0 3px 0 #000; }
+.mnd.done i { background: #f4d27a; }
+.mnd.now { cursor: pointer; width: 64px; height: 64px; box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #f4d27a, 0 0 18px rgba(244, 210, 122, 0.55); animation: nodepulse 1.4s ease-in-out infinite; }
+.mnd.now span { color: #f4e6c4; font-weight: 700; }
+.mnd.now.chosen { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 0 3px #000, inset 0 0 0 4px #fff0b0, 0 0 26px rgba(244, 210, 122, 0.9); animation: none; }
+.mnd.nd-shop i { background: #f4d27a; } .mnd.nd-forge i { background: #ff9a5a; } .mnd.nd-check i { background: #7ab8ff; } .mnd.nd-boss { width: 72px; height: 72px; background: radial-gradient(circle at 35% 30%, #6a2a2a, #2a1414 70%); } .mnd.nd-boss i { background: #ff6b5a; width: 38px; height: 38px; }
+@keyframes nodepulse { 50% { box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #f4d27a, 0 0 28px rgba(244, 210, 122, 0.85); } }
+.map-info { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 6px 12px; background: rgba(10, 9, 13, 0.85); box-shadow: 0 0 0 2px #000, inset 0 2px 0 #3a3238; }
+.map-info .hint { margin: 0; font-size: 14px; color: #a89f92; }
+.map-info .ico { width: 34px; height: 34px; flex: none; background: #d8c08a; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.map-info .txt { flex: 1; display: grid; min-width: 0; } .map-info .txt b { font-size: 16px; color: #f4e6c4; } .map-info .txt small { font-size: 13px; color: #c9c0b0; }
+.map-info .btn { min-height: 48px; min-width: 110px; }
+@media (prefers-reduced-motion: reduce) { .mnd.now, .map-body line.live { animation: none; } }
