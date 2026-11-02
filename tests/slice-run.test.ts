@@ -60,3 +60,25 @@ describe('사건 (D-170)', () => {
     expect(SLICE_EVENTS.swapDealer.choices[0].blocked!(poor)).toBeTruthy();
   });
 });
+
+describe('막별 반장 · 적 특성 (D-171)', () => {
+  it('막마다 반장 규칙이 다르고, 2 · 3막 판에는 적 특성이 붙는다', () => {
+    const run = buildRun(5);
+    expect(run.map((a) => a.rows.at(-1)![0].battle!.bossRule)).toEqual(['plate', 'spawn', 'thorns']);
+    expect(run[1].rows.at(-2)![0].battle!.traits).toContain('blastPawn');
+    expect(run[2].rows.at(-2)![0].battle!.traits).toContain('rookPlate');
+  });
+  it('조립 반장: 2턴째에 킹 곁에 폰이 하나 선다', async () => {
+    const { endTurn } = await import('../src/slice/battle');
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'Q'], START_COMMANDS, 2, { boss: true, bossRule: 'spawn' });
+    const pawns = () => b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length;
+    expect(pawns()).toBe(0);
+    b.intents = [];
+    endTurn(b, true);
+    expect(pawns()).toBe(1);
+  });
+  it('방패 룩: 대국 시작에 방열판 15', () => {
+    const b = newSliceBattle([{ t: 'K' }], ['K', 'R'], START_COMMANDS, 2, { traits: ['rookPlate'] });
+    expect(b.s.pieces.find((p) => p.side === 1 && p.type === 'R')!.shield).toBe(15);
+  });
+});

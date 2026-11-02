@@ -1,5 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
+import { BOSS_RULES, type BossRule } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -21,6 +22,9 @@ export interface BattleDef {
   tell: string;
   reward: Reward;
   boss?: boolean;
+  bossRule?: BossRule;
+  /** 막별 적 특성 */
+  traits?: ('blastPawn' | 'rookPlate')[];
   w?: number;
   h?: number;
   place?: { side: 0 | 1; t: PieceType; x: number; y: number }[];
@@ -73,7 +77,9 @@ const NARR_BATTLE = [
 ];
 const NARR_CHECK = ['검수관의 저울이 기울어 있다. 이 문을 지난 자는 많지 않다.', '두 번째 검문. 저울 위에 당신의 이름이 적혀 있다.', '마지막 검문. 저울은 이미 당신을 재고 있다.'];
 const NARR_BOSS = ['철갑을 두른 반장이 기다린다.', '조립 반장이 당신의 부품을 하나하나 센다.', '출하 반장. 이 문 너머는 바깥이다.'];
-const BOSS_TELL = '두 턴마다 한 줄이 불길에 잠깁니다. 붉은 줄에서 벗어나십시오.';
+const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
+const TRAITS: ('blastPawn' | 'rookPlate')[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
+const TRAIT_TELL = ['', ' 이 층의 폰은 쓰러지면 터집니다.', ' 폰은 터지고, 룩은 방패를 두릅니다.'];
 
 /** 1막 앞 두 판 (첫 10분 — D-150) */
 export const INTRO: BattleDef[] = [
@@ -87,10 +93,10 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   const sc = ACT_SCALE[a];
   const label = `${act}막`;
   if (kind === 'boss')
-    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — 반장`, narr: NARR_BOSS[a], tell: BOSS_TELL, reward: act === 3 ? 'end' : 'part', boss: true };
-  if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.', reward: 'part' };
+    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[BOSS_RULE[a]].name}`, narr: NARR_BOSS[a], tell: BOSS_RULES[BOSS_RULE[a]].tell, reward: act === 3 ? 'end' : 'part', boss: true, bossRule: BOSS_RULE[a], traits: TRAITS[a] };
+  if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
-  return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.', reward: 'card' };
+  return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
 };
 
 /** 갈림길 한 줄: 2~3개, 대국 하나는 반드시. 고물상 · 작업대 · 사건은 막마다 많아야 둘 */

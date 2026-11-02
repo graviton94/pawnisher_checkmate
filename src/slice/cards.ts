@@ -141,6 +141,21 @@ export const PUSH = { collide: 18 };
 
 export const BOSS = { plate: 20, plateEvery: 2, bombEvery: 2, bombDamage: 18 };
 
+/**
+ * 막별 반장 규칙 (R5-4, D-171): 반장마다 빌드에 던지는 질문 하나 + 레일 표시 문구.
+ * plate = 철갑 · 줄 폭격(1막) · spawn = 2턴마다 킹 곁에 폰(2막 — 빨리 끝낼 수 있나) · thorns = 철갑 + 맞으면 되받아침(3막 — 한 방에 몰아칠 수 있나)
+ */
+export type BossRule = 'plate' | 'spawn' | 'thorns';
+export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
+  plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', '줄 폭격 −18 · 2턴마다'], tell: '두 턴마다 한 줄이 불길에 잠깁니다. 붉은 줄에서 벗어나십시오.' },
+  spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
+  thorns: { name: '출하 반장', lines: ['철갑 20 · 2턴마다 다시', '반장을 친 기물은 6 되받는다'], tell: '반장을 치면 되받아칩니다. 한 번에 몰아치십시오.' },
+};
+export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 6 };
+
+/** 막별 적 특성 (R5-4): 2막 자폭 폰(쓰러지면 둘레 8) · 3막 방패 룩(대국 시작 방열판 15) */
+export const TRAIT = { blast: 8, rookPlate: 15 };
+
 /** 수직 조각 수치 */
 export const SLICE = {
   hand: 5,
