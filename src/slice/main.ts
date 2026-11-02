@@ -795,8 +795,8 @@ const shopScreen = (): void => {
       <div class="shop-grid">
         ${cards.map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd big t-${c.who}${sold.has(id) ? ' sold' : ''}" data-buy="card:${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}</span>${tag(id, price(id))}</button>`; }).join('')}
         ${part ? `<button type="button" class="part-card${sold.has('part') ? ' sold' : ''}" data-buy="part:${part}"><i class="ico" style="${iconArt(SLICE_PARTS[part].icon)}"></i><b>${SLICE_PARTS[part].name}</b><small>${SLICE_PARTS[part].desc}</small>${tag('part', ascPrice(SHOP.partPrice))}</button>` : ''}
-        <button type="button" class="part-card${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><i class="ico" style="${iconMask('oil')}"></i><b>정비</b><small>분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
-        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconMask('wrench')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
+        <button type="button" class="part-card${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><i class="ico" style="${iconArt('s.heal')}"></i><b>정비</b><small>분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
+        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
       </div>`);
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
     el.querySelectorAll<HTMLElement>('[data-buy]').forEach((btn) =>
@@ -835,9 +835,9 @@ const shopScreen = (): void => {
 const forgeScreen = (): void => {
   const el = openOverlay(`<h2>작업대 <span class="dim">— 하나를 고릅니다</span></h2>
     <div class="part-cards">
-      <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconMask('anvil')}"></i><b>다듬기</b><small>카드 하나를 골라 그 카드 전부를 태엽 −1.</small></button>
-      <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconMask('wrench')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small></button>
-      <button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconMask('oil')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>
+      <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 하나를 골라 그 카드 전부를 태엽 −1.</small></button>
+      <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small></button>
+      <button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>
     </div>`);
   el.querySelectorAll<HTMLElement>('[data-forge]').forEach((btn) =>
     btn.addEventListener('click', () => {

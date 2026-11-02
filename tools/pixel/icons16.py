@@ -1117,6 +1117,43 @@ g.rect(5, 2, 3, 9, 'R').rect(2, 4, 9, 3, 'R').pts('T', (5, 2), (2, 4))
 icon('gilded', '도금 방패', g.done())
 
 
+# ───────── 서비스 4 (고물상 · 작업대) ─────────
+
+def card(g, x0=2, y0=1, w=9, h=12):
+    g.rect(x0, y0, w, h, 'u').rect(x0 + 1, y0 + 1, w - 2, h - 2, 'w')
+    ascii_(g, x0 + 3, y0 + 3, [' S', 'SSS', ' S', 'SSS'])
+
+# 정비: 기름통 (쇠 몸통 · 황동 주둥이 · 떨어지는 기름 방울)
+g = G(14)
+g.rect(1, 6, 8, 7, 'l').rect(2, 5, 6, 1, 'l').rect(3, 3, 4, 2, 'u').rect(4, 2, 2, 1, 'g')
+g.line(9, 7, 12, 4, 'u', w=1).pts('u', (9, 8), (10, 7), (11, 6))
+g.pts('O', (13, 6), (13, 7)).pts('Y', (13, 8))
+g.rect(2, 9, 6, 1, 'G').pts('T', (2, 7))
+icon('s.heal', '정비', g.done())
+
+# 수리: 엇갈린 렌치(벌린 턱 · 둥근 끝)와 붉은 손잡이 드라이버 — 굵게 2칸
+g = G(14)
+ascii_(g, 0, 0, ['l  l', 'l  l', 'llll', ' lll'])
+g.line(3, 3, 11, 11, 'l', w=2).disc(12, 12, 1.5, 'l').set(12, 12, '.')
+g.line(12, 0, 7, 5, 'l', w=2)
+g.line(6, 7, 1, 12, 'r', w=2).pts('r', (0, 13), (1, 13), (0, 12))
+icon('s.repair', '수리', g.done())
+
+# 카드 빼기: 카드 + 붉은 X 표 (오른아래)
+g = G(14)
+card(g, 0, 0, 9, 12)
+g.disc(10, 10, 3.6, 'R')
+g.pts('X', (8, 8), (9, 9), (10, 10), (11, 11), (12, 12), (12, 8), (11, 9), (9, 11), (8, 12))
+icon('s.remove', '카드 빼기', g.done())
+
+# 다듬기: 반짝이는 금테 카드 (태엽 −1)
+g = G(14)
+card(g, 1, 2, 9, 12)
+g.rect(1, 2, 9, 1, 'y').rect(1, 2, 1, 12, 'y')
+g.pts('X', (12, 1), (12, 0), (12, 2), (11, 1), (13, 1)).pts('T', (12, 6), (0, 0))
+icon('s.refine', '다듬기', g.done())
+
+
 def render(rows):
     """14×14 재질 그림 → 16×16 RGBA (명암 · 외곽선)"""
     n = 16
@@ -1152,7 +1189,7 @@ def render(rows):
 
 
 def sheet(path):
-    keys = [k for k in ICONS if k.startswith('n.')] + [k for k in ICONS if not k.startswith('n.')]
+    keys = [k for k in ICONS if k.startswith('n.')] + [k for k in ICONS if not k.startswith(('n.', 's.'))] + [k for k in ICONS if k.startswith('s.')]
     cols = 6
     S = 4
     cw, ch = 16 * S + 150, 16 * S + 70
