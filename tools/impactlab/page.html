@@ -95,11 +95,23 @@ footer { color: var(--dim); font-size: 12px; }
 @keyframes punch { 0% { transform: scale(1.5); filter: brightness(1.6); } 100% { transform: scale(1); } }
 /* 선택지 두 단계 */
 .ch { display: grid; gap: 8px; width: 100%; max-width: 360px; }
-.ch button { text-align: left; font: 700 14px var(--body); color: #ece8de; background: #24232c; border: 0; min-height: 48px; padding: 8px 12px; box-shadow: 0 0 0 2px #000, inset 4px 0 0 #c89b3c; cursor: pointer; transition: transform 260ms cubic-bezier(0.2, 1.4, 0.3, 1), opacity 220ms, max-height 260ms, padding 260ms, filter 220ms; max-height: 80px; overflow: hidden; }
-.ch button.pick { transform: translateX(10px) scale(1.03); background: #c89b3c; color: #16141c; box-shadow: 0 0 0 2px #000, inset 0 -4px 0 #7a5a12, inset 6px 0 0 #fff3b0; }
-.ch button.fold { opacity: 0.25; transform: translateX(-12px) scaleY(0.8); filter: grayscale(1); }
-.ch button.riveted { animation: rivet 420ms cubic-bezier(0.2, 1.6, 0.3, 1); }
-@keyframes rivet { 0% { transform: translateX(10px) scale(1.03); } 20% { transform: translateX(10px) scale(0.96, 1.08); filter: brightness(1.5); } 100% { transform: translateX(10px) scale(1.03); } }
+.ch button { position: relative; text-align: left; font: 700 14px var(--body); color: #ece8de; background: #24232c; border: 0; min-height: 48px; padding: 8px 12px 8px 30px; box-shadow: 0 0 0 2px #000, inset 4px 0 0 #56545e; cursor: pointer; overflow: hidden; }
+.ch button::before { content: ''; position: absolute; left: 10px; top: 50%; width: 8px; height: 10px; margin-top: -5px; background: var(--arrow) center / 100% 100% no-repeat; image-rendering: pixelated; opacity: 0; }
+.ch button::after { content: ''; position: absolute; inset: 0; background: var(--dither); image-rendering: pixelated; opacity: 0; pointer-events: none; }
+/* 고른 줄: 황동 판으로 한 칸씩 밀려 나오고(3단), 왼쪽 도트 화살이 깜빡, 네 귀퉁이 리벳 */
+.ch button.pick { background: #c89b3c; color: #16141c; box-shadow: 0 0 0 2px #000, inset 0 2px 0 #fff3b0, inset 0 -4px 0 #7a5a12, inset 4px 0 0 #fff3b0; animation: pickstep 180ms steps(3) forwards; }
+@keyframes pickstep { from { transform: translateX(0); } to { transform: translateX(12px); } }
+.ch button.pick::before { opacity: 1; animation: arrowblink 700ms steps(2) infinite; }
+@keyframes arrowblink { 50% { transform: translateX(3px); } }
+/* 안 고른 줄: 체크무늬 그늘이 덮이고 글자가 식는다 (투명 · 흐림 없이) */
+.ch button.fold { color: #56545e; box-shadow: 0 0 0 2px #000, inset 4px 0 0 #2f2e36; }
+.ch button.fold::after { opacity: 1; }
+.ch button .rv { position: absolute; width: 4px; height: 4px; background: #3a2a0a; box-shadow: 1px 1px 0 #fff3b0; opacity: 0; }
+.ch button.riveted .rv { animation: rvin 1ms steps(1) forwards; }
+.ch button.riveted .rv:nth-of-type(2) { animation-delay: 70ms; } .ch button.riveted .rv:nth-of-type(3) { animation-delay: 140ms; } .ch button.riveted .rv:nth-of-type(4) { animation-delay: 210ms; }
+@keyframes rvin { to { opacity: 1; } }
+.ch button.riveted { animation: pickstep 1ms steps(1) forwards, rivetpress 240ms steps(3); }
+@keyframes rivetpress { 0% { translate: 0 0; } 33% { translate: 0 3px; } 66% { translate: 0 1px; } 100% { translate: 0 0; } }
 .cbar { display: flex; gap: 8px; align-items: center; transform: translateY(70px); opacity: 0; transition: transform 300ms cubic-bezier(0.2, 1.4, 0.3, 1), opacity 200ms; width: 100%; max-width: 360px; }
 .cbar.on { transform: none; opacity: 1; }
 .cbar span { flex: 1; min-width: 0; font-style: italic; font-size: 13px; color: #f4e6c4; }
@@ -180,7 +192,8 @@ footer { color: var(--dim); font-size: 12px; }
 @keyframes apb { 50% { background: #e5262f; } }
 /* 부품 장착 */
 .tray { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; padding: 8px 12px; background: #1a1922; box-shadow: 0 0 0 2px #000, inset 0 -3px 0 #0b0b0e; }
-.tray.jolt { animation: sshake 260ms linear; }
+.tray.jolt { animation: trayjolt 260ms steps(6); }
+@keyframes trayjolt { 0%, 100% { transform: translateX(-50%); } 20% { transform: translate(calc(-50% - 3px), 2px); } 40% { transform: translate(calc(-50% + 3px), -1px); } 60% { transform: translate(calc(-50% - 2px), 1px); } 80% { transform: translate(calc(-50% + 1px), 0); } }
 .slot { position: relative; width: 40px; height: 40px; display: grid; place-items: center; }
 .slot .br { position: absolute; width: 10px; height: 10px; border: 0 solid #8a8794; transition: transform 140ms cubic-bezier(0.2, 1.6, 0.3, 1), border-color 140ms; }
 .slot .br.tl { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; } .slot .br.tr { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; }
@@ -460,6 +473,52 @@ const CROWN_PX = (() => { const rows = ['KKKKKKK', 'KYKYKYK', 'KYYYYYK', 'KTTTTT
 /** 가짜 왕 그림에서 오린 그 왕관 (64 × 28 원본 px) */
 let crownCut = null;
 const CROWN_CUT = () => { if (crownCut) return crownCut; const c = document.createElement('canvas'); c.width = 64; c.height = 28; c.getContext('2d').drawImage(imgs.K0, 32, 12, 64, 28, 0, 0, 64, 28); return (crownCut = c); };
+/**
+ * 번개 금 (킹 파괴용): 맞은 쪽(오른쪽)에서 몸을 가로질러 갈라지는 굵은 금 + 위아래 가지.
+ * 그림 도트(64칸) 단위 한 칸 굵기 — 흰 심 · 연노랑 몸 · 위아래로만 검붉은 가장자리(뭉개지지 않게). k에 따라 자란다.
+ */
+const BOLT = (() => {
+  const paths = [
+    [[46, 38], [41, 35], [37, 37], [33, 33], [28, 38], [24, 35], [20, 39], [17, 37]],
+    [[37, 37], [36, 31], [33, 27], [34, 22]],
+    [[28, 38], [30, 44], [27, 49], [29, 54]],
+    [[24, 35], [22, 30], [24, 26]],
+    [[41, 35], [43, 44], [41, 49]],
+  ];
+  const out = []; const order = [0, 0.25, 0.4, 0.55, 0.62];
+  paths.forEach((P0, pi) => { let len = 0; const pts = []; for (let i = 1; i < P0.length; i++) { const [x0, y0] = P0[i - 1], [x1, y1] = P0[i]; const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let s2 = 0; s2 < n; s2++) pts.push([Math.round(x0 + ((x1 - x0) * s2) / n), Math.round(y0 + ((y1 - y0) * s2) / n), Math.abs(x1 - x0) >= Math.abs(y1 - y0)]); } pts.forEach((p2, i) => out.push({ x: p2[0], y: p2[1], h: p2[2], ord: order[pi] + (i / pts.length) * (pi ? 0.38 : 0.6) })); });
+  return out;
+})();
+function boltPiece(g, key, x, y, k, o = {}) {
+  const c = crackC.getContext('2d'); c.imageSmoothingEnabled = false; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, 128, 128); c.drawImage(imgs[key], 0, 0, 128, 128);
+  c.globalCompositeOperation = 'source-atop'; const P2 = 2;
+  const shown = BOLT.filter((b) => b.ord <= k);
+  for (const b of shown) { c.fillStyle = '#4a0c10'; if (b.h) { c.fillRect(b.x * P2, (b.y - 1) * P2, P2, P2); c.fillRect(b.x * P2, (b.y + 1) * P2, P2, P2); } else { c.fillRect((b.x - 1) * P2, b.y * P2, P2, P2); c.fillRect((b.x + 1) * P2, b.y * P2, P2, P2); } }
+  if (k > 0.55) { c.fillStyle = 'rgba(250,204,21,0.55)'; for (const b of shown) if ((b.x + b.y) % 2 === 0) { if (b.h) c.fillRect(b.x * P2, (b.y - 2) * P2, P2, P2); else c.fillRect((b.x - 2) * P2, b.y * P2, P2, P2); } }
+  for (const b of shown) { c.fillStyle = k - b.ord < 0.06 ? '#ffffff' : k > 0.75 ? '#ffffff' : '#fff3b0'; c.fillRect(b.x * P2, b.y * P2, P2, P2); if (b.ord < 0.6 && k > 0.35) { if (b.h) c.fillRect(b.x * P2, (b.y + 1) * P2, P2, P2 / 2); else c.fillRect((b.x + 1) * P2, b.y * P2, P2 / 2, P2); } }
+  const s2 = T * 0.86, cx = x * T + T / 2 + (o.dx ?? 0), base = y * T + T * 0.88;
+  g.save(); g.imageSmoothingEnabled = false; if (o.filter) g.filter = o.filter; g.translate(cx, base); g.scale(o.sx ?? 1, o.sy ?? 1); g.drawImage(crackC, -s2 / 2, -s2 * 0.94, s2, s2); g.restore();
+  glow(g, cx, base - s2 * 0.42, 18 + 30 * k, 'rgba(255,236,190,A)', 0.1 + 0.5 * k * k);
+}
+/** 들쭉날쭉한 도트 조각: 그림 도트(64칸)를 씨앗 n개에 가장 가까운 것끼리 묶는다 (보로노이) — 네모 조각 대신 */
+const VSH = {};
+function voronoiShards(key, n = 13, seed = 5) {
+  const id = `${key}:${n}:${seed}`; if (VSH[id]) return VSH[id];
+  const src = document.createElement('canvas'); src.width = 64; src.height = 64; const sx = src.getContext('2d'); sx.imageSmoothingEnabled = false; sx.drawImage(imgs[key], 0, 0, 64, 64); const data = sx.getImageData(0, 0, 64, 64).data;
+  const cells = []; for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (data[(y * 64 + x) * 4 + 3] > 0) cells.push([x, y]);
+  const xs = cells.map((c2) => c2[0]), ys = cells.map((c2) => c2[1]); const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const seeds = []; for (let i = 0; i < n; i++) seeds.push([x0 + hash(seed + i * 3) * (x1 - x0), y0 + hash(seed + i * 7 + 1) * (y1 - y0)]);
+  const groups = seeds.map(() => []);
+  for (const [x, y] of cells) { let best = 0, bd = 1e9; seeds.forEach(([a, b], i) => { const d = (a - x) ** 2 + (b - y) ** 2 * 0.8; if (d < bd) { bd = d; best = i; } }); groups[best].push([x, y]); }
+  const out = groups.filter((gr) => gr.length > 6).map((gr) => {
+    const gx = gr.reduce((a, c2) => a + c2[0], 0) / gr.length, gy = gr.reduce((a, c2) => a + c2[1], 0) / gr.length;
+    const c = document.createElement('canvas'); c.width = 64; c.height = 64; const cx2 = c.getContext('2d'); const set = new Set(gr.map(([x, y]) => x + ',' + y));
+    for (const [x, y] of gr) { const k4 = (x + y * 64) * 4; const edge = !set.has(x + 1 + ',' + y) || !set.has(x - 1 + ',' + y) || !set.has(x + ',' + (y + 1)) || !set.has(x + ',' + (y - 1)); cx2.fillStyle = `rgb(${data[k4]},${data[k4 + 1]},${data[k4 + 2]})`; cx2.fillRect(x, y, 1, 1); if (edge && data[k4] > 120) { cx2.fillStyle = 'rgba(255,243,176,0.0)'; } }
+    const edgeC = document.createElement('canvas'); edgeC.width = 64; edgeC.height = 64; const ex = edgeC.getContext('2d'); ex.fillStyle = '#fff3b0'; for (const [x, y] of gr) { const edge = !set.has(x + 1 + ',' + y) || !set.has(x - 1 + ',' + y) || !set.has(x + ',' + (y + 1)) || !set.has(x + ',' + (y - 1)); if (edge) ex.fillRect(x, y, 1, 1); }
+    return { c, edgeC, gx, gy, size: gr.length };
+  });
+  return (VSH[id] = out);
+}
 /** 화면 위아래 검은 띠 (영화) */
 function letterbox(g, k) { if (k <= 0) return; const h = Math.round(24 * k / FU) * FU; g.fillStyle = '#000'; g.fillRect(0, 0, W, h); g.fillRect(0, H - h, W, h); }
 /** 조명: 둘레를 어둡게, 점들만 밝게 */
@@ -684,14 +743,26 @@ const SCENES = [
       // 가짜 왕: 멈춤(흰 테) → 총알 시간 박동마다 금 · 달아오름 → 멎음
       if (!stopped) {
         if (t < 1650) piece(g, 'K0', KG[0], 1, { sx: t >= 1410 ? 1.16 : 1, sy: t >= 1410 ? 0.84 : 1, flash: t >= 1530 ? 0.35 : 0 });
-        else { const ck = cl(seg(t, 1650, stopT) * 0.7 + beat * 0.2 + 0.1 * seg(t, 3000, stopT)); g.save(); g.filter = `grayscale(${grey * 0.85})`; crackedPiece(g, 'K0', KG[0], 1, ck, 91, { sx: 1 + 0.05 * beat, sy: 1 - 0.05 * beat, dx: tremble(t, 0.4 + beat)[0] }); g.restore(); if (beat > 0.6) shards(g, kx, ky - 6, (1 - beat) * 0.6, 300 + Math.floor(t / 200), '#c8c8c8', 4); }
+        else { const ck = cl(seg(t, 1650, stopT) * 0.7 + beat * 0.2 + 0.1 * seg(t, 3000, stopT)); boltPiece(g, 'K0', KG[0], 1, ck, { sx: 1 + 0.05 * beat, sy: 1 - 0.05 * beat, dx: tremble(t, 0.4 + beat)[0], filter: `grayscale(${grey * 0.85})` }); if (beat > 0.6) shards(g, kx, ky - 6, (1 - beat) * 0.6, 300 + Math.floor(t / 200), '#c8c8c8', 4); }
         if (t >= 1530 && t < 1650) { focusLines(g, kx, ky, 0.55, 3 + Math.floor(t / 60)); burst(g, kx + 12, ky, 40, 0.06 + 0.05 * Math.sin(t / 25), '#ff6b6b', 12); }
         if (t >= 1650) focusLines(g, kx, ky, 0.35 * (1 - seg(t, 1650, 2400)), 9 + Math.floor(t / 80));
       } else {
         // 산산이: 흩어졌다가(슬로) → 무게로 떨어져 발밑에 쌓인다
         const k = seg(t, stopT, 4700); const s = T * 0.86, cx = KG[0] * T + T / 2, top = 1 * T + T * 0.88 - s * 0.94, part = s / 4;
-        g.save(); g.imageSmoothingEnabled = false; g.filter = 'grayscale(1) brightness(0.8)';
-        for (const f of fragsOf('P0')) { const id = f.j * 4 + f.i; if (f.j === 0) continue; const ox = (f.i - 1.5) * part, oy = (f.j - 1.5) * part; const out = E.outCubic(cl(k * 2.2)); const a = Math.atan2(oy - 4, ox) + (hash(91 + id) - 0.5) * 0.6; const v = 22 + hash(92 + id) * 24; let x2 = cx + ox + Math.cos(a) * v * out, y2 = top + s / 2 + oy + Math.sin(a) * v * out * 0.7; const fall = Math.max(0, k - 0.42); y2 += 260 * fall * fall; x2 -= ox * 0.5 * cl(fall * 3); const layer = 3 - f.j; const rest = floorY - 3 - part * 0.33 * layer - (f.i === 1 || f.i === 2 ? part * 0.2 : 0); if (y2 > rest) y2 = rest; g.save(); g.translate(q(x2), q(y2)); g.rotate(k < 0.42 ? Math.round((hash(93 + id) - 0.5) * 4 * out) * (Math.PI / 2) * 0.5 : 0); g.drawImage(f.c, -part / 2, -part / 2, part, part); g.restore(); }
+        // 들쭉날쭉한 도트 조각: 터지며 흩어지고(가장자리가 금빛으로 달아올랐다 식음) → 1/4바퀴씩 굴러 → 무게로 떨어져 발밑에 쌓인다
+        const sc2 = s / 64; const shardsV = voronoiShards('P0', 13, 7);
+        g.save(); g.imageSmoothingEnabled = false;
+        shardsV.forEach((f, id) => {
+          if (f.gy < 14) return;
+          const ox = (f.gx - 32) * sc2, oy = (f.gy - 32) * sc2; const out = E.outCubic(cl(k * 2.4)); const a = Math.atan2(oy - 6, ox) + (hash(91 + id) - 0.5) * 0.7; const v = 14 + hash(92 + id) * 16;
+          const bx2 = cx + ox + Math.cos(a) * v * out; const fall = Math.max(0, k - 0.38); let y2 = top + s / 2 + oy + Math.sin(a) * v * out * 0.7 + 280 * fall * fall; const pileX = cx + ox * 0.55 + (hash(94 + id) - 0.5) * 8; let x2 = lerp(bx2, pileX, E.inOutQuad(cl(fall * 2.5)));
+          const rest = floorY - 4 - (f.size / 120) * 2 - (id % 3) * 2; const landed = y2 >= rest; if (landed) y2 = rest;
+          const turns = landed ? Math.round(hash(93 + id) * 3) : Math.floor(k * 14 + hash(93 + id) * 4) % 4;
+          g.save(); g.translate(q(x2), q(y2)); g.rotate(turns * Math.PI / 2); g.filter = `grayscale(1) brightness(${0.75 + 0.25 * (1 - k)})`;
+          g.drawImage(f.c, -f.gx * sc2, -f.gy * sc2, 64 * sc2, 64 * sc2);
+          const ea = 1 - cl(k * 2.2); if (ea > 0) { g.filter = 'none'; g.globalAlpha = ea; g.drawImage(f.edgeC, -f.gx * sc2, -f.gy * sc2, 64 * sc2, 64 * sc2); g.globalAlpha = 1; }
+          g.restore();
+        });
         g.restore();
         shards(g, kx, ky, seg(t, stopT, 4500), 97, '#c8c8c8', 22);
         const rk = E.outExpo(seg(t, stopT, stopT + 900)); ring(g, kx, ky, 8 + 120 * rk, 8 * (1 - rk), '#ece8de', 1 - rk); ring(g, kx, ky, 4 + 70 * rk, 4 * (1 - rk), '#8a8794', 1 - rk);
@@ -1033,7 +1104,7 @@ function medalSprites() {
   return { medal: pixelSprite(m, GOLDPAL, 3), cog: pixelSprite(cog, GOLDPAL, 3), chain: pixelSprite(chainRows, GOLDPAL, 2), chaing: pixelSprite(goldRows, GOLDPAL, 2), plate: pixelSprite(plate, GOLDPAL, 3) };
 }
 function setupUi() {
-  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); for (const k of ['chain', 'chaing', 'plate']) document.documentElement.style.setProperty(`--${k}`, `url(${ms0[k]})`); }
+  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); for (const k of ['chain', 'chaing', 'plate']) document.documentElement.style.setProperty(`--${k}`, `url(${ms0[k]})`); document.documentElement.style.setProperty('--arrow', `url(${pixelSprite(['K...', 'KYK.', 'KYYK', 'KYYY', 'KYYK', 'KYK.', 'K...'].map((r) => r.replace(/Y/g, 'T')), { K: '#16141c', T: '#16141c' }, 2)})`); document.documentElement.style.setProperty('--dither', `url(${pixelSprite(['K.', '.K'], { K: 'rgba(11,11,14,0.55)' }, 2)}) 0 0 / 4px 4px repeat`); }
   document.querySelectorAll('img[data-k]').forEach((im) => (im.src = SPR[im.dataset.k]));
   pressy(document.getElementById('bbNew'));
   // 보상 카드
@@ -1050,7 +1121,8 @@ function setupUi() {
   mkCards();
   // 선택지
   const list = document.getElementById('chList'), bar = document.getElementById('cbar'), chs = document.getElementById('chStage');
-  list.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { list.querySelectorAll('button').forEach((x) => { x.classList.toggle('pick', x === b); x.classList.toggle('fold', x !== b); x.classList.remove('riveted'); }); bar.querySelector('span').textContent = `‘${b.textContent}’`; bar.classList.add('on'); }));
+  list.querySelectorAll('button').forEach((b) => { b.insertAdjacentHTML('beforeend', '<i class="rv" style="left:4px;top:4px"></i><i class="rv" style="right:4px;top:4px"></i><i class="rv" style="left:4px;bottom:6px"></i><i class="rv" style="right:4px;bottom:6px"></i>'); });
+  list.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { list.querySelectorAll('button').forEach((x) => { x.classList.toggle('pick', x === b); x.classList.toggle('fold', x !== b); x.classList.remove('riveted'); }); bar.querySelector('span').textContent = `‘${b.textContent.trim()}’`; bar.classList.add('on'); }));
   pressy(document.getElementById('cbarGo'), () => { const p = list.querySelector('.pick'); if (!p) return; p.classList.add('riveted'); chs.classList.remove('stage-shake'); void chs.offsetWidth; chs.classList.add('stage-shake'); const q = rel(p, chs); sparksAt(chs, q.x - q.w / 2 + 6, q.y, 6, 26); setTimeout(() => { list.querySelectorAll('button').forEach((x) => x.classList.remove('pick', 'fold', 'riveted')); bar.classList.remove('on'); }, 1300); });
   // 나사
   const gs = document.getElementById('gStage'), meter = document.getElementById('meterx'), gnum = document.getElementById('gnum'); let gold = 40;
