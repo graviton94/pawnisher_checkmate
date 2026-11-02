@@ -315,7 +315,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   const vig = root.querySelector<HTMLElement>('.tfx-vig')!;
   const rays = root.querySelector<HTMLElement>('.tfx-rays')!;
   const flash = root.querySelector<HTMLElement>('.tfx-flash')!;
-  const panel = root.closest<HTMLElement>('.panel') ?? root;
+  const panel = root.closest<HTMLElement>('.panel, .opening, .prologue') ?? root;
   word.style.setProperty('--tlogo', `url(${new URL('ui/title-logo.png', document.baseURI).href})`);
   const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
   const re = (el: Element, cls: string) => { el.classList.remove(cls); void (el as HTMLElement).offsetWidth; el.classList.add(cls); };

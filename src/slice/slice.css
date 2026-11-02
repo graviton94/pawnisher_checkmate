@@ -807,3 +807,93 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes foepop { 0% { opacity: 1; transform: translateY(12px) scale(0.4, 1.4); } 100% { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .stagefx.enc.run .enc-rays, .stagefx.enc.run .enc-piece, .stagefx.enc.run .enc-shadow, .stagefx.enc.run .enc-plate, .stagefx.enc.run h1, .stagefx.enc.run .enc-foes b { animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; } }
 .deathfx.dc3 > div { min-width: min(380px, 80vw); }
+/* ---------- 메인 오프닝 화면 · 메뉴 · 프롤로그 · 안내서 · 첫 대국 도움말 (D-192) ---------- */
+.opening { position: fixed; inset: 0; z-index: 38; overflow: hidden; color: #e9e2d4; cursor: pointer;
+  padding: 18px max(28px, env(safe-area-inset-right, 0px)) 16px max(28px, env(safe-area-inset-left, 0px)); }
+.opening.out { animation: opout 300ms var(--accel) forwards; pointer-events: none; }
+@keyframes opout { to { opacity: 0; transform: scale(1.04); } }
+/* 배경: P-00 그림이 오면 그것, 없으면 증기 · 용광로 한 점으로 짠 자리 배경 */
+.op-bg { position: absolute; inset: 0; background: var(--img, none) center / cover no-repeat, radial-gradient(ellipse at 72% 78%, #3a2414 0, transparent 46%), linear-gradient(#0e1220, #16141c 60%, #0b0a0e); image-rendering: pixelated; }
+.op-bg .op-fog { position: absolute; left: -10%; right: -10%; bottom: 18%; height: 30%; background: repeating-linear-gradient(90deg, rgba(138, 152, 168, 0.07) 0 40px, transparent 40px 90px); filter: none; animation: fogmove 40s linear infinite; }
+@keyframes fogmove { to { transform: translateX(90px); } }
+.op-bg .op-glow { position: absolute; right: 12%; bottom: 10%; width: 14px; height: 14px; background: #e8783c; box-shadow: 0 0 0 6px rgba(232, 120, 60, 0.35), 0 0 0 14px rgba(232, 120, 60, 0.12); animation: lamp 1.4s steps(2) infinite; }
+.op-bg[style*="--img"] .op-fog, .op-bg[style*="--img"] .op-glow { display: none; }
+.op-logo { position: absolute; inset: 0 0 34px 0; display: grid; place-content: center; justify-items: center; gap: 8px; zoom: 1.3; transition: right 520ms var(--decel); }
+.op-tag { margin: 0; font-size: 14px; letter-spacing: 0.2em; color: #c9c0b0; text-shadow: 2px 2px 0 #000; }
+.op-press { position: absolute; left: 0; right: 0; bottom: 30px; margin: 0; text-align: center; font: 700 16px Galmuri14, sans-serif; letter-spacing: 0.2em; color: #f4d27a; text-shadow: 2px 2px 0 #000; animation: blink 1.4s steps(2) infinite; }
+.opening.menu { cursor: default; }
+.opening.menu .op-press { display: none; }
+.opening.menu .op-logo { right: 46%; bottom: 0; zoom: 1.15; }
+.opening:not(.menu).busy .op-press { display: none; }
+.op-menu { position: absolute; right: max(28px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); width: min(340px, 42vw); display: grid; gap: 8px; }
+.op-menu.in > * { animation: menuin 360ms var(--snap) both; }
+.op-menu.in > *:nth-child(2) { animation-delay: 50ms; } .op-menu.in > *:nth-child(3) { animation-delay: 100ms; } .op-menu.in > *:nth-child(4) { animation-delay: 150ms; } .op-menu.in > *:nth-child(5) { animation-delay: 200ms; } .op-menu.in > *:nth-child(6) { animation-delay: 250ms; }
+@keyframes menuin { 0% { opacity: 0; transform: translateX(60px) skewX(-10deg); } 100% { opacity: 1; transform: none; } }
+.op-main { min-height: 52px; height: auto; line-height: 1.3; display: grid; justify-items: start; align-content: center; padding: 4px 16px; text-align: left; font-size: 17px; }
+.op-main small { font-size: 12px; font-weight: 400; opacity: 0.85; }
+.op-menu .asc-pick { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #c9c0b0; }
+.op-sub { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.op-sub .btn { min-height: 48px; padding: 0 4px; font-size: 13px; }
+.op-rec { margin: 0; font-size: 12px; color: #a89f92; text-align: right; }
+/* 프롤로그 */
+.prologue { position: fixed; inset: 0; z-index: 80; background: #000; overflow: hidden; cursor: pointer; }
+.prologue.out { animation: opout 300ms var(--accel) forwards; }
+.pl-stage { position: absolute; inset: 0; }
+.pl-stage.in { animation: plin 380ms var(--decel) both; }
+@keyframes plin { 0% { opacity: 0; filter: brightness(2.2); } 30% { opacity: 1; } 100% { filter: none; } }
+.pl-stage > .pl-img, .pl-stage > .pl-standin { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; image-rendering: pixelated; }
+.pl-stage.kb0 > * { animation: kb0 9s ease-out both; } .pl-stage.kb1 > * { animation: kb1 9s ease-out both; }
+@keyframes kb0 { from { transform: scale(1.08) translate(-1.5%, 1%); } to { transform: none; } }
+@keyframes kb1 { from { transform: scale(1) translate(1.5%, 0); } to { transform: scale(1.07) translate(-1%, -1%); } }
+.prologue.dip .pl-stage { opacity: 0; transition: opacity 120ms; }
+.pl-standin { background: linear-gradient(var(--a), var(--b)); }
+.pl-glow { position: absolute; left: 50%; top: 18%; width: 120px; height: 120px; margin-left: -60px; background: var(--g); opacity: 0.18; clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
+.pl-pc { position: absolute; transform: translate(-50%, -100%); display: block; }
+.pl-pc > .piece-img { height: 100%; width: auto; image-rendering: pixelated; }
+.pl-pc.dim > .piece-img { filter: brightness(0.45); }
+.pl-pc.flip > .piece-img { transform: scaleX(-1); }
+.pl-crown, .gd-crowned .pl-crown { position: absolute; left: 50%; top: -14%; width: 62%; transform: translateX(-46%) rotate(-12deg); image-rendering: pixelated; }
+.pl-stage.fx-alarm::after { content: ''; position: absolute; right: 12%; top: 16%; width: 18px; height: 18px; background: #e5262f; box-shadow: 0 0 0 3px #000; animation: alarm 1.8s steps(1) forwards; }
+@keyframes alarm { 0%, 20%, 40% { opacity: 1; } 10%, 30%, 50%, 100% { opacity: 0.1; } }
+.pl-stage.fx-red::after { content: ''; position: absolute; inset: 0; background: rgba(229, 38, 47, 0.18); animation: lamp 900ms steps(2) 3; }
+.pl-stage.fx-spot::after { content: ''; position: absolute; left: 50%; top: 0; width: 34%; height: 100%; margin-left: -17%; background: rgba(244, 241, 234, 0.08); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); }
+.pl-stage.fx-path::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 60%; height: 55%; margin-left: -30%; background: rgba(200, 155, 60, 0.14); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); }
+.pl-bar { position: absolute; left: 0; right: 0; height: 8%; background: #000; z-index: 2; }
+.pl-bar.t { top: 0; } .pl-bar.b { bottom: 0; }
+.pl-text { position: absolute; left: 50%; bottom: 10%; transform: translateX(-50%); width: min(720px, 86vw); z-index: 3; display: grid; gap: 6px; text-align: center; }
+.pl-text p { margin: 0; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; min-height: 1.4em; }
+.pl-narr { font-size: 18px; line-height: 1.5; color: #ece8de; }
+.pl-say { font-size: 17px; color: #ffb4a8; }
+.pl-mono { font-size: 18px; font-style: italic; color: #f4d27a; }
+.pl-skip { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 12px; z-index: 4; min-height: 44px; font-size: 13px; }
+.pl-tap { position: absolute; right: 24px; bottom: 9%; z-index: 3; margin: 0; color: #f4d27a; animation: blink 1.2s steps(2) infinite; }
+.prologue.logo .pl-text, .prologue.logo .pl-tap { display: none; }
+.pl-logo { position: absolute; inset: 0; display: grid; place-content: center; zoom: 1.4; }
+/* 안내서 */
+.guide { display: grid; gap: 8px; }
+.guide h2 { margin: 0; }
+.gd-pic { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 6px; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; }
+.gd-pic.in > * { animation: foepop 320ms var(--snap) both; }
+.gd-pic.in > *:nth-child(2) { animation-delay: 80ms; } .gd-pic.in > *:nth-child(3) { animation-delay: 160ms; } .gd-pic.in > *:nth-child(4) { animation-delay: 240ms; } .gd-pic.in > *:nth-child(5) { animation-delay: 320ms; }
+.gd-pic img { image-rendering: pixelated; }
+.gd-pic > img { width: 40px; height: 40px; }
+.gd-pic b { color: #f4d27a; font-size: 18px; }
+.gd-card { display: grid; place-items: center; width: 36px; height: 48px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
+.gd-pic.red i { position: relative; width: 40px; height: 40px; background: #3a3944; }
+.gd-pic.red i.r { background: rgba(229, 38, 47, 0.45); box-shadow: inset 0 0 0 2px #e5262f; }
+.gd-pic.red i img { position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; }
+.gd-pic.keys > img { width: 32px; height: 32px; }
+.gd-pic.keys span { font: 700 15px Galmuri14, sans-serif; color: #facc15; }
+.gd-crowned { position: relative; display: inline-block; }
+.gd-dots { display: flex; justify-content: center; gap: 6px; }
+.gd-dots i { width: 8px; height: 8px; background: #46404f; box-shadow: 0 0 0 1px #000; }
+.gd-dots i.on { background: #facc15; }
+/* 첫 대국 도움말 */
+.coach-line { position: fixed; z-index: 42; transform: translateX(-50%); padding: 6px 14px; font-size: 14px; color: #f4e6c4; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; pointer-events: none; white-space: nowrap; }
+.coach-line.in { animation: coachin 320ms var(--snap); }
+@keyframes coachin { 0% { transform: translate(-50%, -20px) scaleY(1.3); opacity: 0; } 100% { transform: translateX(-50%); opacity: 1; } }
+.btn.btn-go.coach-end { position: relative; }
+.btn.btn-go.coach-end::after { content: ''; position: absolute; inset: -6px; pointer-events: none; --c: #facc15;
+  background: linear-gradient(var(--c), var(--c)) 0 0 / 10px 3px, linear-gradient(var(--c), var(--c)) 0 0 / 3px 10px, linear-gradient(var(--c), var(--c)) 100% 0 / 10px 3px, linear-gradient(var(--c), var(--c)) 100% 0 / 3px 10px, linear-gradient(var(--c), var(--c)) 0 100% / 10px 3px, linear-gradient(var(--c), var(--c)) 0 100% / 3px 10px, linear-gradient(var(--c), var(--c)) 100% 100% / 10px 3px, linear-gradient(var(--c), var(--c)) 100% 100% / 3px 10px;
+  background-repeat: no-repeat; animation: brk3 1000ms var(--snap) infinite; }
+@media (prefers-reduced-motion: reduce) { .op-bg .op-fog, .op-bg .op-glow, .op-press, .op-menu.in > *, .pl-stage.in, .pl-stage > *, .pl-tap, .gd-pic.in > *, .coach-line.in, .btn.btn-go.coach-end::after { animation: none !important; } }

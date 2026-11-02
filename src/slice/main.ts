@@ -4,7 +4,9 @@ import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
 import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
-import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, shakeEl, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
+import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, replay, shakeEl, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
+import { crestHtml, guide, prologue } from './opening';
+import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
@@ -302,7 +304,37 @@ const refresh = (): void => {
   $('btn-rewind').innerHTML = `◀◀ 되감기 <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
   meter();
+  coach();
 };
+
+/**
+ * 첫 대국 도움말 (D-192): 처음 출하하는 사람의 시험대 한 판에만 — 지금 할 일 한 줄(시스템 투)을 판 위에 띄운다.
+ * 고를 카드 → 빛나는 기물 → 갈 칸 → 턴 끝. 그 판을 이기면 다시 나오지 않는다.
+ */
+let coachOn = false;
+const coach = (): void => {
+  let el = document.querySelector<HTMLElement>('.coach-line');
+  const live = coachOn && cur === INTRO[0] && b.s.winner === null && !busy && !enemyTurn;
+  $('btn-end').classList.toggle('coach-end', false);
+  if (!live) return void el?.remove();
+  const canPlay = b.hand.some((_, i) => canPlay2(i));
+  const key: keyof typeof COACH_LINES = !canPlay ? 'end' : selCard === null ? 'card' : selPiece === null ? 'piece' : 'square';
+  $('btn-end').classList.toggle('coach-end', key === 'end');
+  $('hand').classList.toggle('hint', key === 'card');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'coach-line';
+    document.body.appendChild(el);
+  }
+  if (el.dataset.k === key) return;
+  el.dataset.k = key;
+  el.textContent = COACH_LINES[key];
+  const r = $('board').getBoundingClientRect();
+  el.style.left = `${r.left + r.width / 2}px`;
+  el.style.top = `${r.bottom - 44}px`;
+  replay(el, 'in');
+};
+const canPlay2 = (i: number): boolean => canPlay(b, i);
 
 /** 연쇄 계기판 (Balatro식): 이번 턴 피해 합계와 배수 — 처치가 쌓일수록 크고 뜨겁게 */
 const meter = (): void => {
@@ -618,6 +650,7 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
 // ---------- 흐름 ----------
 /** 대국 시작 (지도에서 고른 판 · 다시 하기) */
 const startBattle = (def: BattleDef, silent = false): void => {
+  closeOpening();
   cur = def;
   stage += 1;
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
@@ -663,7 +696,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
       maybeBet(def);
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
-  $('hand').classList.toggle('hint', def === INTRO[0]);
+  coachOn = def === INTRO[0] && !readMeta(store).onboarded && !labMode;
+  $('hand').classList.toggle('hint', coachOn);
 };
 
 /** 판 세우기 (D-189): 칸이 대각선 물결로 깔리고 기물이 떨어져 박힌 뒤 손패가 한 장씩 들어온다 */
@@ -719,6 +753,7 @@ const showMap = (): void => {
     return enterNode(row[0]);
   }
   closeOverlay();
+  closeOpening();
   document.querySelector('.mapfx')?.remove();
   saveRun('map');
   const n = a.rows.length;
@@ -1054,6 +1089,11 @@ const closeOverlay = (): void => {
 
 const finish = (): void => {
   const isWin = b.s.winner === 0;
+  if (isWin && coachOn) {
+    coachOn = false;
+    writeMeta(store, { ...readMeta(store), onboarded: true });
+  }
+  document.querySelector('.coach-line')?.remove();
   if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
     await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
@@ -1525,7 +1565,7 @@ const labPick = (): void => {
   const card = (m: 'A' | 'B') => `<button type="button" class="lab-card" data-lab="${m}"><b>${LAB_TEXT[m].name}</b><ul>${LAB_TEXT[m].how.map((h) => `<li>${h}</li>`).join('')}</ul><small>이김 ${labScore[m].w} · 짐 ${labScore[m].l}</small></button>`;
   const el = openOverlay(`<h2>근간 시험장</h2><p>같은 판 · 같은 적 · 같은 덱입니다. 둘 다 해 보고 어느 쪽이 손에 붙는지 알려 주십시오.</p><div class="lab-row">${card('A')}${card('B')}</div><div class="row"><button class="btn" type="button" data-lab-back>처음 화면</button></div>`);
   el.querySelectorAll<HTMLElement>('[data-lab]').forEach((btn) => btn.addEventListener('click', () => startLab(btn.dataset.lab as 'A' | 'B')));
-  el.querySelector('[data-lab-back]')!.addEventListener('click', () => location.assign(location.pathname));
+  el.querySelector('[data-lab-back]')!.addEventListener('click', () => (sessionStorage.setItem('op-menu', '1'), location.assign(location.pathname)));
 };
 
 /** 시험장 대국 끝 */
@@ -1615,7 +1655,7 @@ const runEnd = (cleared: boolean): void => {
     ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
     <p class="dim">시험판입니다. 막힌 곳 · 좋았던 순간 · 복잡했던 곳을 알려 주십시오.</p>
     <div class="row"><button class="btn brass" type="button" data-restart>처음 화면</button></div>`);
-  el.querySelector('[data-restart]')!.addEventListener('click', () => location.reload());
+  el.querySelector('[data-restart]')!.addEventListener('click', () => (sessionStorage.setItem('op-menu', '1'), location.reload()));
   // 결과 집계 (D-189): 줄이 밀려 들어오고 숫자가 째깍 올라간 뒤 → 출하 도장
   tally(el.querySelector<HTMLElement>('.tally')!, el.querySelector<HTMLElement>('h2 .pass-tag'));
 };
@@ -1634,54 +1674,104 @@ const begin = (seed: number, level: number, day: string | null): void => {
 };
 
 /**
- * 시작 화면 (R6): 이어하기(저장이 있으면 맨 위) · 출하 시작(열린 승급을 고른다) · 오늘의 출하 · 규칙 · 원부.
- * 기록 한 줄: 출하 · 완주 · 가장 멀리 간 막.
+ * 메인 오프닝 화면 (D-192): 게임 판 위에 겹친 창이 아니라 화면 전체를 쓰는 장면.
+ * 베인 타이틀 문장 + 「화면을 눌러 시작」 → 처음이면 프롤로그 → 안내서 → 첫 대국(도움말),
+ * 프롤로그를 본 사람은 누르면 메뉴(이어하기 · 출하 · 오늘의 출하 · 시험장 · 원부 · 안내서 · 프롤로그).
  */
-const title = (): void => {
-  const sv = readSave(store);
-  const m = readMeta(store);
-  const today = todayKey();
-  const doneToday = m.daily[today];
-  let level = m.ascOpen;
-  const ascLine = () => (level ? `승급 ${level} — ${ASCENSION.slice(0, level).map((a) => a.name).join(' · ')}` : '기본 — 승급 없음');
-  const el = openOverlay(`<div class="title-card"><h1 class="sr-only">Pawnisher : Checkmate</h1>
-    <div class="title-head"><div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-logo.png" alt=""></div><div class="tfx-flash"></div></div><div class="title-side"><p class="flv">체스 규칙을 부수는 태엽 분대</p>
-    <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>세 막을 지나 출하구에 닿으십시오.</li></ul></div></div>
-    ${sv ? `<button class="btn brass wide" type="button" data-cont>이어하기 <small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
-    ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span data-asc-line>${ascLine()}</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}
-    <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-lab-open>시험장</button><button class="btn cyan" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}</button><button class="btn ${sv ? '' : 'brass'}" type="button" data-go>${sv ? '새 출하' : '출하 시작'}</button></div>
-    <p class="dim rec">오늘의 출하 = 모두가 같은 지도 · 같은 분대${doneToday ? ' (기록은 첫 시도만)' : ''}<br>출하 ${m.runs} · 완주 ${m.clears}${m.bestAct ? ` · 최고 ${m.bestAct > 3 ? '완주' : `${m.bestAct}막`}` : ''}${doneToday ? ` · 오늘 ${doneToday.cleared ? '완주' : `${doneToday.act}막`}` : ''}</p></div>`);
+const opening = (): void => {
+  document.querySelector('.opening')?.remove();
+  const m0 = readMeta(store);
+  const el = document.createElement('div');
+  el.className = 'opening';
+  el.innerHTML = `<div class="op-bg"><i class="op-fog"></i><i class="op-glow"></i></div><h1 class="sr-only">Pawnisher : Checkmate</h1>
+    <div class="op-logo">${crestHtml()}<p class="op-tag">${OPENING_TEXT.tagline}</p></div>
+    <p class="op-press">${OPENING_TEXT.press}</p><nav class="op-menu" hidden></nav>`;
+  document.body.appendChild(el);
+  void (async () => {
+    const im = new Image();
+    im.onload = () => el.querySelector<HTMLElement>('.op-bg')!.style.setProperty('--img', `url(${im.src})`);
+    im.src = 'scenes/prologue-00.png';
+  })();
   void titleFx(el.querySelector<HTMLElement>('.tfx'));
-  el.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      level = Math.max(0, Math.min(m.ascOpen, level + Number(btn.dataset.asc)));
-      el.querySelector('[data-asc-line]')!.textContent = ascLine();
-      sfx('tap');
-    }),
-  );
-  el.querySelector('[data-cont]')?.addEventListener('click', () => {
-    loadRun(sv!);
-    closeOverlay();
+  let stage: 'press' | 'menu' = 'press';
+  el.addEventListener('click', () => {
+    if (stage !== 'press') return;
+    stage = 'menu';
     sfx('submit');
-    if (sv!.at === 'battle') {
-      const nd = acts[actI].rows[rowI][sv!.node ?? 0];
-      if (nd?.battle) return startBattle(nd.battle);
-    }
-    showMap();
+    el.classList.add('busy');
+    if (!m0.prologue) return void firstRun();
+    openMenu();
   });
-  const goBtn = el.querySelector<HTMLElement>('[data-go]')!;
-  goBtn.addEventListener('click', () => (sv ? choose(goBtn, '저장한 출하를 버리고 새로 시작한다', () => begin((Date.now() ^ 0x2f17) & 0xffffff, level, null)) : begin((Date.now() ^ 0x2f17) & 0xffffff, level, null)));
-  const dBtn = el.querySelector<HTMLElement>('[data-daily]')!;
-  dBtn.addEventListener('click', () =>
-    choose(dBtn, sv ? '저장을 버리고 오늘의 출하에 나선다' : '오늘의 출하에 나선다', () => begin(dailySeed(today), 0, today)),
-  );
-  el.querySelector('[data-rules]')!.addEventListener('click', help);
-  el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(title));
-  el.querySelector('[data-lab-open]')!.addEventListener('click', labPick);
+  /** 처음 온 사람: 프롤로그 → 안내서 → 첫 대국 (도움말 켜짐) */
+  const firstRun = async (): Promise<void> => {
+    await prologue();
+    writeMeta(store, { ...readMeta(store), prologue: true });
+    await guide(openOverlay, OPENING_TEXT.toBattle);
+    closeOverlay();
+    begin((Date.now() ^ 0x2f17) & 0xffffff, 0, null);
+  };
+  const openMenu = (): void => {
+    el.classList.add('menu');
+    const nav = el.querySelector<HTMLElement>('.op-menu')!;
+    nav.hidden = false;
+    const sv = readSave(store);
+    const m = readMeta(store);
+    const today = todayKey();
+    const doneToday = m.daily[today];
+    let level = m.ascOpen;
+    const ascLine = () => (level ? `승급 ${level} — ${ASCENSION[level - 1].name}` : '승급 없음');
+    nav.innerHTML = `${sv ? `<button class="btn brass op-main" type="button" data-cont>이어하기<small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
+      <button class="btn ${sv ? '' : 'brass'} op-main" type="button" data-go>${sv ? '새 출하' : '출하 시작'}${m.ascOpen ? `<small data-asc-line>${ascLine()}</small>` : ''}</button>
+      ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span>승급</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}
+      <button class="btn cyan op-main" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}<small>모두가 같은 지도 · 같은 분대</small></button>
+      <div class="op-sub"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-guide>안내서</button><button class="btn" type="button" data-prologue>프롤로그</button></div>
+      <p class="op-rec">출하 ${m.runs} · 완주 ${m.clears}${m.bestAct ? ` · 최고 ${m.bestAct > 3 ? '완주' : `${m.bestAct}막`}` : ''}${doneToday ? ` · 오늘 ${doneToday.cleared ? '완주' : `${doneToday.act}막`}` : ''}</p>`;
+    nav.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        level = Math.max(0, Math.min(m.ascOpen, level + Number(btn.dataset.asc)));
+        nav.querySelector('[data-asc-line]')!.textContent = ascLine();
+        sfx('tap');
+      }),
+    );
+    nav.querySelector('[data-cont]')?.addEventListener('click', () => {
+      loadRun(sv!);
+      sfx('submit');
+      if (sv!.at === 'battle') {
+        const nd = acts[actI].rows[rowI][sv!.node ?? 0];
+        if (nd?.battle) return startBattle(nd.battle);
+      }
+      showMap();
+    });
+    const seed = () => (Date.now() ^ 0x2f17) & 0xffffff;
+    nav.querySelector('[data-go]')!.addEventListener('click', () => {
+      if (!sv) return begin(seed(), level, null);
+      const ok = openOverlay(`<h2>새 출하</h2><p>저장한 출하를 버리고 새로 시작합니다.</p><div class="row"><button class="btn" type="button" data-no>그만둔다</button><button class="btn brass" type="button" data-yes>새로 시작한다</button></div>`);
+      ok.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
+      ok.querySelector('[data-yes]')!.addEventListener('click', () => begin(seed(), level, null));
+    });
+    nav.querySelector('[data-daily]')!.addEventListener('click', () => begin(dailySeed(today), 0, today));
+    nav.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(closeOverlay));
+    nav.querySelector('[data-lab-open]')!.addEventListener('click', labPick);
+    nav.querySelector('[data-guide]')!.addEventListener('click', () => void guide(openOverlay).then(closeOverlay));
+    nav.querySelector('[data-prologue]')!.addEventListener('click', () => void prologue(true));
+    replay(nav, 'in');
+  };
+  // 프롤로그를 본 사람이 출하를 끝내고 돌아오면(처음 화면) 바로 메뉴
+  if (m0.prologue && sessionStorage.getItem('op-menu') === '1') {
+    stage = 'menu';
+    openMenu();
+  }
+};
+/** 오프닝 화면을 걷는다 (대국 · 지도로 들어갈 때) */
+const closeOpening = (): void => {
+  const el = document.querySelector<HTMLElement>('.opening');
+  if (!el) return;
+  el.classList.add('out');
+  window.setTimeout(() => el.remove(), 300);
 };
 
 startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 if (qs.has('lab')) labPick();
-else if (!qs.has('debug')) title();
+else if (!qs.has('debug')) opening();
 if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

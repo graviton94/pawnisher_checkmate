@@ -51,6 +51,10 @@ export interface Meta {
   daily: Record<string, { cleared: boolean; act: number; won: number }>;
   /** 원수 (D-178): 출하를 넘어 남는다 */
   nemeses: Nemesis[];
+  /** 프롤로그를 끝까지 봤다 (D-192 — 다음부터 화면을 누르면 메뉴) */
+  prologue?: boolean;
+  /** 첫 대국 도움말을 마쳤다 (D-192) */
+  onboarded?: boolean;
 }
 
 export interface Store {

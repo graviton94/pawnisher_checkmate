@@ -239,7 +239,7 @@ export const tally = (box: HTMLElement, stamp?: HTMLElement | null): void => {
 
 // ---------- 10 쓰러짐 막 · 11 도발 ----------
 /** 한 자씩 찍는다. <em>낱말</em>은 한 번에 찍히며 떨린다 */
-export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () => void): Promise<void> =>
+export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () => void, alive?: () => boolean): Promise<void> =>
   new Promise((done) => {
     if (calm()) {
       el.innerHTML = html;
@@ -250,7 +250,8 @@ export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () =>
     let i = 0;
     let j = 0;
     const tick = (): void => {
-      if (i >= parts.length) return done();
+      // 찍던 화면이 바뀌면(탭으로 건너뜀 등) 거기서 멈춘다
+      if (i >= parts.length || (alive && !alive())) return done();
       const p = parts[i];
       if (p.startsWith('<em>')) {
         const em = document.createElement('em');
