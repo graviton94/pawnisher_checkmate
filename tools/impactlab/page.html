@@ -435,7 +435,7 @@ function afterimage(g, key, pts, a) {
 }
 /** 기물 그림을 4×4 조각으로 부순다: k 0~1, 느리게 날아가며 돈다 */
 const FRAG = {};
-function fragsOf(key) { if (FRAG[key]) return FRAG[key]; const src = imgs[key], n = 4, s = src.width / n, out = []; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = s; c.height = s; c.getContext('2d').drawImage(src, -i * s, -j * s); out.push({ c, i, j }); } return (FRAG[key] = out); }
+function fragsOf(key) { if (FRAG[key]) return FRAG[key]; const src = imgs[key], n = 4, s = src.width / n, out = []; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const c = document.createElement('canvas'); c.width = s; c.height = s; c.getContext('2d').drawImage(src, -i * s, -j * s); const w = document.createElement('canvas'); w.width = s; w.height = s; const wx = w.getContext('2d'); wx.drawImage(c, 0, 0); wx.globalCompositeOperation = 'source-atop'; wx.fillStyle = '#ffffff'; wx.fillRect(0, 0, s, s); out.push({ c, w, i, j }); } return (FRAG[key] = out); }
 function shatter(g, key, x, y, k, seed, o = {}) {
   if (k <= 0) return;
   const s = T * 0.86, cx = x * T + T / 2, top = y * T + T * 0.88 - s * 0.94, part = s / 4, power = o.power ?? 1;
@@ -443,7 +443,7 @@ function shatter(g, key, x, y, k, seed, o = {}) {
   for (const f of fragsOf(key)) {
     const id = f.j * 4 + f.i; const ox = (f.i - 1.5) * part, oy = (f.j - 1.5) * part; const a = Math.atan2(oy - 6, ox) + (hash(seed + id) - 0.5) * 0.8; const v = (40 + hash(seed + id * 3) * 70) * power;
     const e = 1 - Math.pow(1 - k, 2.2); const px0 = cx + ox + Math.cos(a) * v * e, py0 = top + s / 2 + oy + Math.sin(a) * v * e * 0.8 + 90 * k * k * power;
-    g.save(); g.translate(q(px0), q(py0)); g.rotate((hash(seed + id * 7) - 0.5) * 6 * e); g.globalAlpha = 1 - cl((k - 0.6) / 0.4); g.drawImage(f.c, -part / 2, -part / 2, part, part); if (k < 0.25) { g.globalAlpha = (1 - k / 0.25) * 0.9; g.globalCompositeOperation = 'lighter'; g.fillStyle = '#facc15'; g.fillRect(-part / 2, -part / 2, part, 2); } g.restore();
+    g.save(); g.translate(q(px0), q(py0)); g.rotate((hash(seed + id * 7) - 0.5) * 6 * e); g.globalAlpha = 1 - cl((k - 0.6) / 0.4); g.drawImage(f.c, -part / 2, -part / 2, part, part); if (o.hot && k < 0.3) { g.globalAlpha = (1 - k / 0.3) * (1 - cl((k - 0.6) / 0.4)); g.drawImage(f.w, -part / 2, -part / 2, part, part); } if (k < 0.25) { g.globalAlpha = (1 - k / 0.25) * 0.9; g.globalCompositeOperation = 'lighter'; g.fillStyle = '#facc15'; g.fillRect(-part / 2, -part / 2, part, 2); } g.restore();
   }
   g.restore();
 }
@@ -551,6 +551,39 @@ const BOLT = (() => {
   paths.forEach((P0, pi) => { let len = 0; const pts = []; for (let i = 1; i < P0.length; i++) { const [x0, y0] = P0[i - 1], [x1, y1] = P0[i]; const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let s2 = 0; s2 < n; s2++) pts.push([Math.round(x0 + ((x1 - x0) * s2) / n), Math.round(y0 + ((y1 - y0) * s2) / n), Math.abs(x1 - x0) >= Math.abs(y1 - y0)]); } pts.forEach((p2, i) => out.push({ x: p2[0], y: p2[1], h: p2[2], ord: order[pi] + (i / pts.length) * (pi ? 0.38 : 0.6) })); });
   return out;
 })();
+/**
+ * 안에서 터지는 킹 (18판): 금 대신 — 몸이 번쩍번쩍(점점 빨라지는 점멸), 몸 안팎의 빛 도트가 가슴 한가운데로
+ * 빨려 들며 심이 커지고, 끝에는 하얗게 달아올라 터진다. 도트 2×2 단위(외곽선 굵기). pal = [심, 빛, 테]
+ */
+function chargedPiece(g, key, x, y, k, seed, o = {}) {
+  const pal = o.pal ?? ['#ffffff', '#fff3b0', '#facc15'];
+  const al = alphaOf(key), P = 4, img = imgs[key];
+  let y0 = 32, y1 = 0; for (let i = 0; i < 1024; i++) if (al[i]) { y0 = Math.min(y0, i >> 5); y1 = Math.max(y1, i >> 5); }
+  const core = [16, Math.round(lerp(y0, y1, 0.5))];
+  const c = crackC.getContext('2d'); c.imageSmoothingEnabled = false; c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.clearRect(0, 0, 128, 128); c.drawImage(img, 0, 0, 128, 128);
+  c.globalCompositeOperation = 'source-atop';
+  const cell = (cx2, cy2, col, a = 1) => { if (a <= 0) return; c.globalAlpha = Math.min(1, a); c.fillStyle = col; c.fillRect(cx2 * P, cy2 * P, P, P); };
+  // 번쩍번쩍: 점멸이 점점 빨라진다 (k² · 7번), 켜질 때마다 더 하얗게
+  const ph = k * k * 7, on = ph % 1 < 0.45;
+  if (on) { c.globalAlpha = 0.18 + 0.55 * k; c.fillStyle = pal[0]; c.fillRect(0, 0, 128, 128); }
+  // 빨려 드는 빛 도트 (몸 안)
+  for (let i = 0; i < 26; i++) {
+    const st = hash(seed + i * 5) * 0.6, kk = cl((k - st) / 0.35); if (kk <= 0 || kk >= 1) continue;
+    const a0 = hash(seed + i) * Math.PI * 2, r0 = 6 + hash(seed + i * 3) * 10, e = E.inCubic(kk);
+    cell(Math.round(core[0] + Math.cos(a0) * r0 * (1 - e)), Math.round(core[1] + Math.sin(a0) * r0 * (1 - e)), kk > 0.6 ? pal[0] : pal[1], 0.5 + 0.5 * kk);
+  }
+  // 심: 커지며 맥박 — 흰 심 · 빛 · 체크무늬 테
+  const r = 0.6 + 4.2 * E.inCubic(k) + (on ? 0.6 : 0);
+  for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const d = Math.hypot(dx, dy); const cx2 = core[0] + dx, cy2 = core[1] + dy; if (d <= r * 0.45) cell(cx2, cy2, pal[0]); else if (d <= r * 0.8) cell(cx2, cy2, pal[1]); else if (d <= r + 0.8 && (cx2 + cy2) % 2 === 0) cell(cx2, cy2, pal[2], 0.85); }
+  // 마지막 0.12: 통째로 하얗게 달아오른다
+  if (k > 0.88) { c.globalAlpha = (k - 0.88) / 0.12; c.fillStyle = pal[0]; c.fillRect(0, 0, 128, 128); }
+  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  const s = T * 0.86, cx = x * T + T / 2 + (o.dx ?? 0), base = y * T + T * 0.88;
+  g.save(); g.imageSmoothingEnabled = false; g.translate(cx, base); g.scale(o.sx ?? 1, o.sy ?? 1); g.drawImage(crackC, -s / 2, -s * 0.94, s, s); g.restore();
+  // 몸 밖에서도 빛 도트가 빨려 든다 (판 도트 크기)
+  const wx = cx, wy = base - s * 0.94 + (core[1] / 32) * s;
+  for (let i = 0; i < 18; i++) { const st = hash(seed + 90 + i) * 0.55, kk = cl((k - st) / 0.4); if (kk <= 0 || kk >= 1) continue; const a0 = hash(seed + 70 + i) * Math.PI * 2, r0 = 46 + hash(seed + 50 + i) * 40, e = E.inQuad(kk); px(g, wx + Math.cos(a0) * r0 * (1 - e), wy + Math.sin(a0) * r0 * (1 - e) * 0.8, kk > 0.6 ? pal[0] : pal[2], 0.4 + 0.6 * kk); }
+}
 function boltPiece(g, key, x, y, k, o = {}) {
   const c = crackC.getContext('2d'); c.imageSmoothingEnabled = false; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, 128, 128); c.drawImage(imgs[key], 0, 0, 128, 128);
   c.globalCompositeOperation = 'source-atop'; const P2 = 2;
@@ -813,9 +846,10 @@ const SCENES = [
       const [kx, ky] = ctr(...KK);
       if (t < 2700) {
         if (t < 1950) piece(g, 'K0', KK[0], KK[1], { sx: 1.12, sy: 0.88, flash: hold ? 0.35 : 0 });
-        else { crackedPiece(g, 'K0', KK[0], KK[1], E.inCubic(seg(t, 1950, 2700)), 31, { sx: 1.12 - 0.08 * seg(t, 1950, 2700), sy: 0.88 + 0.06 * seg(t, 1950, 2700), dx: tremble(t, 0.4 + 1.4 * seg(t, 2300, 2700))[0] }); }
+        else { chargedPiece(g, 'K0', KK[0], KK[1], seg(t, 1950, 2700), 31, { pal: ['#ffffff', '#cbd5e1', '#64748b'], sx: 1.12 - 0.04 * seg(t, 1950, 2700) + 0.08 * E.inCubic(seg(t, 2450, 2700)), sy: 0.88 + 0.12 * seg(t, 1950, 2700), dx: tremble(t, 0.4 + 1.4 * seg(t, 2300, 2700))[0] }); }
       } else {
-        shatter(g, 'K0', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.1 });
+        shatter(g, 'K0', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.25, hot: true });
+        burst(g, kx, ky - 10, 40 * (1 - seg(t, 2700, 2950)), 0.2 + 0.6 * seg(t, 2700, 2950), '#e2e8f0', 12);
         shards(g, kx, ky, seg(t, 2700, 4000), 41, 'cool', 24);
         glow(g, kx, ky, 70 * (1 - seg(t, 2700, 3100)), 'rgba(226,232,240,A)', 0.45 * (1 - seg(t, 2700, 3100)));
       }
@@ -959,9 +993,10 @@ const SCENES = [
       const [kx, ky] = ctr(...KK);
       if (t < 2700) {
         if (t < 1950) piece(g, 'K1', KK[0], KK[1], { sx: 1.12, sy: 0.88, flash: hold ? 0.35 : 0 });
-        else { crackedPiece(g, 'K1', KK[0], KK[1], E.inCubic(seg(t, 1950, 2700)), 31, { sx: 1.12 - 0.08 * seg(t, 1950, 2700), sy: 0.88 + 0.06 * seg(t, 1950, 2700), dx: tremble(t, 0.5 + 2 * seg(t, 2300, 2700))[0] }); }
+        else { chargedPiece(g, 'K1', KK[0], KK[1], seg(t, 1950, 2700), 31, { sx: 1.12 - 0.04 * seg(t, 1950, 2700) + 0.08 * E.inCubic(seg(t, 2450, 2700)), sy: 0.88 + 0.12 * seg(t, 1950, 2700), dx: tremble(t, 0.5 + 2 * seg(t, 2300, 2700))[0] }); }
       } else {
-        shatter(g, 'K1', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.25 });
+        shatter(g, 'K1', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.4, hot: true });
+        burst(g, kx, ky - 10, 44 * (1 - seg(t, 2700, 2950)), 0.2 + 0.6 * seg(t, 2700, 2950), C.gold, 12);
         shards(g, kx, ky, seg(t, 2700, 4000), 41, C.gold, 34);
         const rk = E.outExpo(seg(t, 2700, 3600)); ring(g, kx, ky, 8 + 110 * rk, 8 * (1 - rk), C.gold, 1 - rk);
         glow(g, kx, ky, 80 * (1 - seg(t, 2700, 3100)), 'rgba(255,220,140,A)', 0.5 * (1 - seg(t, 2700, 3100)));
