@@ -432,3 +432,4 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .ev-body { display: grid; gap: 8px; min-width: 0; }
 .ev-body h2 { margin: 0; }
 .ev-body .ev-text { margin: 0; font-size: 14px; }
+.ev-scene img + i { display: none; }
