@@ -1,6 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { COMMANDS, type CommandId } from './cards';
+import { baseOf, COMMANDS, isRefined, refinedOf, type CommandId } from './cards';
 import type { Crew } from './crew';
 import { crewMaxHp } from './battle';
 
@@ -50,12 +50,13 @@ const NAMES: Record<PieceType, string> = { K: '킹', Q: '퀸', R: '룩', B: '비
 
 const pick = <T>(rng: Rng, a: T[]): T | undefined => (a.length ? a[rng.int(a.length)] : undefined);
 const nonKing = (s: EventState) => s.squad.filter((u) => u.t !== 'K');
-const refinable = (s: EventState) => [...new Set(s.deck)].filter((id) => COMMANDS[id].cost >= 1 && !s.refined.includes(id));
+const refinable = (s: EventState) => [...new Set(s.deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
 const refineRandom = (s: EventState, rng: Rng): string => {
   const id = pick(rng, refinable(s));
   if (!id) return '다듬을 카드가 없었다.';
+  s.deck[s.deck.indexOf(id)] = refinedOf(baseOf(id));
   s.refined.push(id);
-  return `${COMMANDS[id].name} — 태엽 −1`;
+  return `${COMMANDS[id].name} 한 장 — 태엽 −1`;
 };
 const hpRatio = (s: EventState, pct: number) => {
   s.squad = s.squad.map((u) => {
@@ -72,7 +73,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '떠돌이 정비 폰',
     text: '공구 수레 곁에서 떠돌이 폰이 당신을 기다린다. 등에 진 렌치가 녹슨 빛을 낸다. “나사 25. 무엇을 다듬을지는 내가 정한다.”',
     choices: [
-      { label: '나사 25를 맡길까?', desc: '무작위 카드 하나를 다듬습니다. (그 카드 전부 태엽 −1, 나사 −25)', blocked: poor(25), apply: (s, rng) => { s.gold -= 25; return { text: `렌치가 한 번 돈다. ${refineRandom(s, rng)}` }; } },
+      { label: '나사 25를 맡길까?', desc: '무작위 카드 하나를 다듬습니다. (한 장 태엽 −1, 나사 −25)', blocked: poor(25), apply: (s, rng) => { s.gold -= 25; return { text: `렌치가 한 번 돈다. ${refineRandom(s, rng)}` }; } },
       leave('지나가기'),
     ],
   },

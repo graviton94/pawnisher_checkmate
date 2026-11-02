@@ -247,7 +247,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
   it('수량', async () => {
     const { REWARD_COMMANDS } = await import('../src/slice/cards');
     const { SLICE_PARTS } = await import('../src/slice/parts');
-    expect(Object.keys(COMMANDS).length).toBe(40);
+    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(40);
     expect(REWARD_COMMANDS.length).toBe(34);
     expect(Object.keys(SLICE_PARTS).length).toBe(24);
   });

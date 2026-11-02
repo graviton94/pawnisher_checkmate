@@ -35,8 +35,21 @@ describe('출하 지도 (D-168)', () => {
     const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], b3.enemy, START_COMMANDS, 1, { enemyHp: b3.enemyHp, refined: ['advance'] });
     const q = b.s.pieces.find((p) => p.side === 1 && p.type === 'Q')!;
     expect(q.maxHp).toBeGreaterThan(60);
-    b.hand = ['advance'];
-    expect(b.refined).toContain('advance');
+  });
+  it('다듬기는 한 장만 (D-183): 「전진+」 한 장만 태엽 −1, 나머지 전진은 그대로', async () => {
+    const { COMMANDS, refinedOf, baseOf } = await import('../src/slice/cards');
+    const { costOf } = await import('../src/slice/battle');
+    expect(COMMANDS['advance+'].name).toBe('전진+');
+    expect(COMMANDS['advance+'].cost).toBe(COMMANDS.advance.cost - 1);
+    expect(COMMANDS['order+'].cost).toBe(COMMANDS.order.cost - 1);
+    expect(COMMANDS['reload+'].cost).toBe(0); // 0 아래로 안 내려간다
+    expect(baseOf(refinedOf('spark'))).toBe('spark');
+    const deck = [...START_COMMANDS];
+    deck[deck.indexOf('advance')] = refinedOf('advance');
+    expect(deck.filter((d) => d === 'advance').length).toBe(START_COMMANDS.filter((d) => d === 'advance').length - 1);
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P'], deck, 1);
+    b.hand = ['advance+', 'advance'];
+    expect(costOf(b, 0)).toBe(costOf(b, 1) - 1);
   });
 });
 

@@ -153,7 +153,7 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   if (c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId)) return 0;
   const pawnCard = c.who === 'P' || c.kind === 'march';
   const knightCard = c.who === 'N';
-  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (knightCard && has(b, 'spurs') ? 1 : 0) - (b.refined?.includes(b.hand[i]) ? 1 : 0));
+  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (knightCard && has(b, 'spurs') ? 1 : 0));
 };
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */

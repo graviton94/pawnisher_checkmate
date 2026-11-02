@@ -8,7 +8,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -87,7 +87,7 @@ let rowI = 0;
 let cur: BattleDef = INTRO[0];
 /** 이긴 대국 수 (결과 화면) */
 let won = 0;
-/** 다듬은 카드 (작업대 — 그 카드 전부 태엽 −1) */
+/** 다듬은 기록 (작업대 — 한 장씩 「+」 변형으로 바뀐다. 덱이 정본, 이 목록은 기록 · 옛 저장 옮기기용) */
 let refined: CommandId[] = [];
 
 /** 분대: 시리얼 · 이름 · 기벽이 붙은 기물 (D-153) */
@@ -193,7 +193,7 @@ const cardHtml = (id: CommandId, i: number): string => {
  */
 const peekHtml = (id: CommandId, cost: number): string => {
   const c = COMMANDS[id];
-  return `<div class="peek-card t-${c.who}"><div class="pk-top">${keysHtml(cost)}<b>${c.name}</b></div><div class="pk-art">${c.who === 'any' ? `<span class="pk-any">${c.kind === 'spark' ? '✦' : '★'}</span>` : pieceImg(c.who, 0, 'large', 72)}</div><div class="pk-axes">${axisTag(c.axis)}${axisTag(c.axis2)}</div><p class="pk-desc">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</p>${c.flavor ? `<p class="pk-flv">${c.flavor}</p>` : ''}</div>`;
+  return `<div class="peek-card t-${c.who}"><div class="pk-top">${keysHtml(cost)}<b>${c.name}</b></div><div class="pk-art">${c.who === 'any' ? `<span class="pk-any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>` : pieceImg(c.who, 0, 'large', 72)}</div><div class="pk-axes">${axisTag(c.axis)}${axisTag(c.axis2)}</div><p class="pk-desc">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</p>${c.flavor ? `<p class="pk-flv">${c.flavor}</p>` : ''}</div>`;
 };
 let peekEl: HTMLElement | null = null;
 const showPeek = (cardEl: HTMLElement): void => {
@@ -219,7 +219,7 @@ const hidePeek = (): void => {
 const cardArt = (id: CommandId): string => {
   const c = COMMANDS[id];
   // 기물 없는 카드: 카드마다 도트 아이콘 (D-182, public/ui/icons16/c.<id>.png)
-  if (c.who === 'any') return `<span class="art any"><i class="ico16" style="${iconArt(`c.${id}`)}"></i></span>`;
+  if (c.who === 'any') return `<span class="art any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>`;
   // 기물 아이콘 (D-162 — 행마 판보다 「누가 움직이나」가 먼저 읽힌다. 범위는 판 위 표시가 보여 준다)
   return `<span class="art">${pieceImg(c.who, 0, 'large', 44)}</span>`;
 };
@@ -832,11 +832,11 @@ const shopScreen = (): void => {
   render();
 };
 
-/** 작업대 (R5-2): 셋 중 하나 — 다듬기(그 카드 전부 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) */
+/** 작업대 (R5-2): 셋 중 하나 — 다듬기(한 장 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) */
 const forgeScreen = (): void => {
   const el = openOverlay(`<h2>작업대 <span class="dim">— 하나를 고릅니다</span></h2>
     <div class="part-cards">
-      <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 하나를 골라 그 카드 전부를 태엽 −1.</small></button>
+      <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>
       <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 한 장을 영구히 뺍니다.</small></button>
       <button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>
     </div>`);
@@ -858,17 +858,19 @@ const forgeScreen = (): void => {
 
 /** 다듬기: 태엽 1 이상이고 아직 다듬지 않은 카드 중 하나 */
 const refineScreen = (): void => {
-  const ids = [...new Set(deck)].filter((id) => COMMANDS[id].cost >= 1 && !refined.includes(id));
-  const el = openOverlay(`<h2>다듬기 — 카드 하나</h2><p>고른 카드는 덱의 같은 카드 전부가 태엽 −1이 됩니다.</p><div class="deck-grid removing">${ids
-    .map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd deckcard t-${c.who}" data-ref="${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}</b>${c.desc ? `<small>${c.desc}</small>` : ''}</span><span class="cnt">태엽 ${c.cost} → ${c.cost - 1}</span></button>`; })
+  const ids = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
+  const el = openOverlay(`<h2>다듬기 — 카드 하나</h2><p>고른 카드 한 장이 「+」가 되어 태엽 −1이 됩니다. 같은 카드가 여러 장이면 한 장만.</p><div class="deck-grid removing">${ids
+    .map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd deckcard t-${c.who}" data-ref="${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}</b></span><span class="cnt">태엽 ${c.cost} → ${c.cost - 1}</span></button>`; })
     .join('') || '<p class="dim">다듬을 카드가 없습니다.</p>'}</div><div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
   el.querySelector('[data-back]')!.addEventListener('click', forgeScreen);
   el.querySelectorAll<HTMLElement>('[data-ref]').forEach((btn) =>
     btn.addEventListener('click', () =>
       choose(btn, `${COMMANDS[btn.dataset.ref as CommandId].name}을(를) 다듬는다`, () => {
-        refined.push(btn.dataset.ref as CommandId);
+        const rid = btn.dataset.ref as CommandId;
+        deck[deck.indexOf(rid)] = refinedOf(baseOf(rid));
+        refined.push(rid);
         sfx('stamp');
-        toast(`${COMMANDS[btn.dataset.ref as CommandId].name} — 태엽 −1`);
+        toast(`${COMMANDS[btn.dataset.ref as CommandId].name} 한 장 — 태엽 −1`);
         window.setTimeout(advance, 300);
       }),
     ),
@@ -1497,6 +1499,8 @@ const loadRun = (sv: RunSave): void => {
   acts = buildRun(sv.seed, sv.asc);
   R = new Rng(sv.rng);
   ({ runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag } = sv);
+  // 옛 저장 (D-183 전 — 다듬기가 카드 종류 전부였다): 그 종류를 모두 「+」로 옮겨 그 판은 그대로 이어 간다
+  if (refined.length && !deck.some(isRefined)) deck = deck.map((id) => (refined.includes(id) ? refinedOf(baseOf(id)) : id));
   clutchLeft = sv.clutchLeft ?? dir.clutch(sv.asc);
   sacLeft = sv.sacLeft ?? dir.sacrifice(sv.asc);
   closeActs = sv.closeActs ?? [];

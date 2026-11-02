@@ -6,13 +6,15 @@ import type { SlicePartId } from './parts';
  * 명령 카드 (수직 조각 — 분대 + 명령 덱, D-142). 카드를 태엽으로 내면 기물이 체스로 움직이고,
  * 내려앉은 자리에서 다음에 갈 수 있는 칸을 친다. 카드는 「누가 · 얼마에 · 무엇을 더」만 정한다.
  */
-export type CommandId =
+export type BaseCommandId =
   | 'advance' | 'leap' | 'diagonal' | 'kingStep' | 'order'
   | 'pierceDiag' | 'crossLeap' | 'charge' | 'plate' | 'repair' | 'reload' | 'kingBlow' | 'splashDiag' | 'smash' | 'rookLine'
   | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
   | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit'
   | 'shove' | 'shieldBash' | 'ram'
   | 'pawnStorm' | 'knightRaid' | 'bishopRay' | 'rookCharge' | 'kingDecree' | 'overload' | 'quickFix' | 'tempo' | 'bulwark' | 'bladeRain';
+/** 다듬은 카드는 한 장씩 「이름+」 변형이 된다 (작업대 다듬기 — 그 한 장만 태엽 −1, D-183) */
+export type CommandId = BaseCommandId | `${BaseCommandId}+`;
 
 /**
  * 빌드 축 (D-144 — 덱빌딩의 "부서지는" 맛): 축마다 카드 몇 장 + 규칙을 깨는 부품 하나가 맞물린다.
@@ -58,7 +60,7 @@ export interface CommandDef {
   flavor?: string;
 }
 
-export const COMMANDS: Record<CommandId, CommandDef> = {
+const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '', flavor: '작은 개척자' },
   leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '', flavor: '뛰어넘고, 짓밟는 자.' },
   diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '', flavor: '성스러운 빛의 심판자' },
@@ -104,6 +106,18 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (상하좌우 50%, 처치 1회 = 연쇄 2칸)' },
   gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +2, 카드 +1)', flavor: '“기꺼이.”' },
 };
+
+/** 다듬은 변형: 이름 뒤에 +, 태엽 −1 (0 아래로는 안 내려간다). 나머지는 원본 그대로 */
+export const refinedOf = (id: BaseCommandId): CommandId => `${id}+`;
+/** 변형이면 원본 id */
+export const baseOf = (id: CommandId): BaseCommandId => (id.endsWith('+') ? id.slice(0, -1) : id) as BaseCommandId;
+export const isRefined = (id: CommandId): boolean => id.endsWith('+');
+export const COMMANDS = Object.fromEntries(
+  (Object.entries(BASE_COMMANDS) as [BaseCommandId, CommandDef][]).flatMap(([id, c]) => [
+    [id, c],
+    [refinedOf(id), { ...c, name: `${c.name}+`, cost: Math.max(0, c.cost - 1) }],
+  ]),
+) as Record<CommandId, CommandDef>;
 
 /** 시작 덱 (10장) — 2판 구조 시절 (테스트 · 봇 기준용으로 남긴다) */
 export const START_COMMANDS: CommandId[] = ['advance', 'advance', 'advance', 'leap', 'leap', 'diagonal', 'diagonal', 'kingStep', 'order', 'order'];

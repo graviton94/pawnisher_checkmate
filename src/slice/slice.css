@@ -338,6 +338,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .pk-art { width: 96px; height: 84px; display: grid; place-items: center; background: rgba(0, 0, 0, 0.35); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.5); }
 .pk-art img { width: 72px; height: 72px; image-rendering: pixelated; }
 .pk-any { font-size: 44px; color: var(--tone); }
+.pk-any .ico16 { display: block; width: 64px; height: 64px; }
 .pk-axes { display: flex; gap: 4px; min-height: 0; }
 .pk-desc { margin: 0; font-size: 14px; line-height: 1.45; }
 .pk-flv { margin: 0; font-size: 13px; font-style: italic; color: #c9b88f; }
