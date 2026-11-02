@@ -30,7 +30,7 @@ RAMP = {
     'd': ('#b3242c', '#6e1016', '#33060a'),  # 검붉은 (적 훈장)
     'a': ('#f2fdff', '#a5ecf7', '#4fb3cf'),  # 소다
 }
-FIX = {'K': '#0b0b0e', 'S': '#bfb9ad', 'Q': '#7a3b1c', 'X': '#ffffff', 'E': '#3b2412', 'D': '#2a2830', 'M': '#7a1218', 'R': '#e5262f', 'T': '#fff3b0', 'A': '#8a6416', 'N': '#1f8a7a', 'O': '#f59e0b', 'G': '#56545e', 'Y': '#facc15', 'L': '#a8a4b2', 'W': '#f1ede4', 'C': '#5eead4'}
+FIX = {'K': '#0b0b0e', 'S': '#bfb9ad', 'Q': '#7a3b1c', 'P': '#d9824a', 'H': '#f6b38a', 'X': '#ffffff', 'E': '#3b2412', 'D': '#2a2830', 'M': '#7a1218', 'R': '#e5262f', 'T': '#fff3b0', 'A': '#8a6416', 'N': '#1f8a7a', 'O': '#f59e0b', 'G': '#56545e', 'Y': '#facc15', 'L': '#a8a4b2', 'W': '#f1ede4', 'C': '#5eead4'}
 
 
 def mir(rows):
@@ -1014,6 +1014,75 @@ ascii_(g, 0, 0, [
 ])
 g.mirror().pts('r', (6, 13)).pts('X', (5, 5))
 icon('bloodPact', '피의 계약', g.done())
+
+
+# ───────── 6판 ─────────
+
+# 녹슨 박차: 장화 뒤축만 — 가죽 뒤꿈치 · 밑창 · 굽 · 감아 돈 녹슨 띠 · 뒤로 뻗은 별 톱니
+g = G(14)
+ascii_(g, 5, 0, [
+    '  bbbbbbb',
+    ' bbbbbbbb',
+    ' bbbbbbbb',
+    ' bbbbbbbb',
+    ' bbbbbbbb',
+    'bbbbbbbbb',
+    'bbbbbbbbb',
+    'bbbbbbbbb',
+    'bbbbbbbbb',
+    'EEEEEEEEE',
+    'EEEEE',
+    'EEEEE',
+    'EEEEE',
+])
+g.rect(4, 6, 10, 2, 'u').pts('k', (7, 6), (11, 7), (13, 6)).rect(3, 6, 1, 2, 'u')
+g.pts('S', (6, 1), (6, 3))
+cx, cy = 1, 7
+for dx, dy in [(0, -3), (0, -2), (0, 2), (0, 3), (-1, 0), (1, 0), (2, 0), (-1, -1), (1, -1), (-1, 1), (1, 1), (0, -1), (0, 1), (2, -2), (2, 2)]:
+    g.set(cx + dx, cy + dy, 'l')
+g.set(cx, cy, 'K')
+icon('spurs', '녹슨 박차', g.done())
+
+# 전도 코일: 상징 — 굵은 구리 고리 셋이 감은 금빛 번개
+g = G()
+ascii_(g, 0, 0, [
+    '       yyyyy',
+    '      yyyyy',
+    '     yyyyy',
+    '    yyyyy',
+    '   yyyyy',
+    '  yyyyyyyyyy',
+    '       yyyy',
+    '      yyyy',
+    '     yyyy',
+    '    yyy',
+    '   yy',
+    '  y',
+])
+for (y, x0, x1) in [(3, 3, 9), (7, 5, 10)]:
+    g.rect(x0, y, x1 - x0 + 1, 1, 'P').rect(x0, y + 1, x1 - x0 + 1, 1, 'Q').set(x0, y, 'H')
+icon('conductor', '전도 코일', g.done())
+
+# 도금 갑주: 금빛 로마 투구 — 가로로 솟은 붉은 볏 · 눈썹 테 · 가는 눈 틈 · 코 가리개 · 한 줄 입 틈 · 볼 가리개
+g = G()
+ascii_(g, 0, 0, [
+    '  rrrrr',
+    ' rrrrrr',
+    '   MMMM',
+    '  yyyyy',
+    ' yyyyyy',
+    'yAAAAAy',
+    'yKKKKyy',
+    'yyyKKyy',
+    'yyyyyyK',
+    'yyyyyyK',
+    'yyyyyyK',
+    ' yyyyyK',
+    ' yyyy K',
+    '  yy',
+])
+g.mirror().pts('T', (2, 3), (1, 4), (1, 5))
+icon('gilded', '도금 갑주', g.done())
 
 
 def render(rows):
