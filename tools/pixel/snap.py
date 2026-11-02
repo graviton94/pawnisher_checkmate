@@ -184,7 +184,7 @@ def run(src, dst, colors=24, pitch=None, preview=None, scale=4):
     small.save(dst)
     if preview:
         small.resize((small.width * scale, small.height * scale), Image.NEAREST).save(preview)
-    print(f'{src}: 칸 {px:.2f}×{py:.2f}px (시작 {ox:.1f},{oy:.1f} · 맞음 {score:.2f}) → {small.size} {colors}색 → {dst}')
+    print(f'{src}: 칸 {px:.2f}×{py:.2f}px (시작 {ox:.1f},{oy:.1f} · 맞음 {score:.2f}) → {small.size} {f"{colors}색" if colors else "색 그대로"} → {dst}')
     return small, (px, py)
 
 
