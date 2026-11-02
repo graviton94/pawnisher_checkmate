@@ -198,6 +198,8 @@ export const SLICE = {
   /** 나사 트랙 (Pawnbarian 루트 트랙): 턴마다 한 칸씩 사라진다 */
   coins: 10,
   coinValue: 5,
+  /** 교착 압박 (D-196): 적 킹은 원래 뒤에 남지만, 혼자 남았거나 이 턴부터는 내 킹에게 다가온다 — 판이 끝나지 않는 교착을 막는다 */
+  kingMarchTurn: 12,
 };
 
 /**

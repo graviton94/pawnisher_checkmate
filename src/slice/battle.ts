@@ -246,11 +246,11 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
 
 /** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
 const planFor = (b: SliceBattle): Intent[] => {
-  if (!b.mercy) return planEnemy(b.s);
+  if (!b.mercy) return planEnemy(b.s, false, b.turn);
   const rng = new Rng(b.rng ^ 0x5eed);
   const skip = rng.next() < b.mercy;
   b.rng = (b.rng + 0x9e37) >>> 0;
-  return planEnemy(b.s, skip);
+  return planEnemy(b.s, skip, b.turn);
 };
 
 // ---------- 적 예고 (단순한 AI — Into the Breach식: 수는 단순해도 다 보인다) ----------
@@ -279,7 +279,7 @@ export const threatOf = (s0: BattleState, side: 0 | 1): Pos[] => {
 };
 
 /** 적 기물 하나의 가장 좋은 수 (내 기물을 가장 아프게 치는 칸, 칠 게 없으면 내 킹 쪽으로). 0점 이하면 null */
-const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set()): { to: Pos; score: number } | null => {
+const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn = 0): { to: Pos; score: number } | null => {
   const s = { ...s0, turnSide: 1 as const };
   const grid = buildGrid(s);
   const myKing = kingOf(s, 0);
@@ -304,19 +304,20 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set()): { t
       const dmg = damageOf(s, ghost, t);
       score += dmg >= t.hp + t.shield ? valueOf(t) + dmg : (dmg / t.maxHp) * valueOf(t);
     }
-    // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다)
-    if (score === 0 && myKing && p.type !== 'K') score = (chebyshev(p, myKing) - chebyshev(to, myKing)) * 2;
+    // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196)
+    const kingMarch = p.type === 'K' && (s.pieces.every((q) => q.side !== 1 || q.type === 'K') || turn >= SLICE.kingMarchTurn);
+    if (score === 0 && myKing && (p.type !== 'K' || kingMarch)) score = (chebyshev(p, myKing) - chebyshev(to, myKing)) * 2;
     if (!best || score > best.score) best = { to, score };
   }
   return best && best.score > 0 ? best : null;
 };
 
 /** 적의 이번 수: 태엽 3 안에서, 내 기물을 가장 아프게 치는 칸부터. 칠 게 없으면 내 킹 쪽으로 */
-export const planEnemy = (s0: BattleState, skipTop = false): Intent[] => {
+export const planEnemy = (s0: BattleState, skipTop = false, turn = 0): Intent[] => {
   const s = { ...s0, turnSide: 1 as const };
   const options: { pieceId: number; to: Pos; score: number; cost: number }[] = [];
   for (const p of s.pieces.filter((q) => q.side === 1)) {
-    const best = bestFor(s, p);
+    const best = bestFor(s, p, undefined, turn);
     if (best) options.push({ pieceId: p.id, to: best.to, score: best.score, cost: moveCost(s, p) });
   }
   options.sort((a, b) => b.score - a.score || a.pieceId - b.pieceId);
@@ -353,7 +354,7 @@ export const dangerSquares = (b: SliceBattle): Pos[] => {
  */
 export const liveIntents = (b: SliceBattle): Intent[] => {
   // 잡기 규칙: 적은 늘 지금 보드를 보고 둔다 — 내 수마다 예고 화살표가 바로 바뀐다 (보이는 대로 일어난다)
-  if (b.s.rules.capture) return planEnemy(b.s);
+  if (b.s.rules.capture) return planEnemy(b.s, false, b.turn);
   const s1 = { ...b.s, turnSide: 1 as const };
   const open = (it: Intent, p: Piece) => legalMoves(s1, p).some((q) => samePos(q, it.to));
   const keep = b.intents.filter((it) => {
@@ -369,7 +370,7 @@ export const liveIntents = (b: SliceBattle): Intent[] => {
       out.push(it);
       continue;
     }
-    const alt = bestFor(b.s, p, taken);
+    const alt = bestFor(b.s, p, taken, b.turn);
     if (alt) {
       taken.add(`${alt.to.x},${alt.to.y}`);
       out.push({ pieceId: p.id, to: alt.to });
@@ -780,7 +781,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
     let sim = simulate(s1, [it], { freeAp: true });
     // 앞의 적이 움직이며 칸이 막혔으면 그 자리에서 다시 고른다 (쉬지 않는다)
     if (!sim.ok) {
-      const alt = bestFor(b.s, p);
+      const alt = bestFor(b.s, p, undefined, b.turn);
       if (!alt) continue;
       it = { pieceId: p.id, to: alt.to };
       sim = simulate(s1, [it], { freeAp: true });

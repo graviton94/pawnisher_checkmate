@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, playCard, rewind, squadAfter } from '../src/slice/battle';
+import { cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, planEnemy, playCard, rewind, squadAfter } from '../src/slice/battle';
 import { START_COMMANDS, SLICE } from '../src/slice/cards';
 import { findPiece } from '../src/engine';
 
@@ -62,5 +62,19 @@ describe('판 사이 회복', () => {
     const o = overhaulSquad([{ t: 'K', hp: 50 }], [{ t: 'P', name: '못난이' }, { t: 'N', name: '고철이' }]);
     expect(o.revived?.name).toBe('고철이');
     expect(o.squad).toHaveLength(2);
+  });
+});
+
+describe('교착 압박 (D-196)', () => {
+  it('적 킹이 혼자 남으면 내 킹에게 다가온다', () => {
+    const b = newSliceBattle(squad, ['K'], START_COMMANDS, 7);
+    const plan = planEnemy(b.s, false, 1);
+    expect(plan.some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K')).toBe(true);
+  });
+  it('다른 적이 있으면 킹은 뒤에 남는다 — 단 정해진 턴부터는 나선다', () => {
+    const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 7);
+    const kingMoves = (turn: number) => planEnemy(b.s, false, turn).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K');
+    expect(kingMoves(1)).toBe(false);
+    expect(kingMoves(SLICE.kingMarchTurn)).toBe(true);
   });
 });
