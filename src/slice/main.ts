@@ -1063,7 +1063,7 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
   });
 const stageIntro = (def: BattleDef): Promise<void> => {
   const [label, name] = def.title.split(' — ');
-  const foe: PieceType = def.boss ? 'Q' : def.enemy.find((t) => t !== 'K' && t !== 'P') ?? 'K';
+  const foe: PieceType = def.boss ? 'K' : def.enemy.find((t) => t !== 'K' && t !== 'P') ?? 'K';
   // 적 구성: 같은 유형은 묶어 ×n
   const counts = new Map<PieceType, number>();
   for (const t of def.enemy) counts.set(t, (counts.get(t) ?? 0) + 1);
