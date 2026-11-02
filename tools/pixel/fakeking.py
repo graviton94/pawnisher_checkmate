@@ -16,7 +16,7 @@ import maker  # noqa: E402
 
 CROWNS = {
     # 가: 반장의 왕관 그대로 — 가운데 바로 얹음
-    'a': (23, 8, [
+    'a': (23, 11, [
         '.Y.......Y.......Y.',
         '.YY.....YTY.....YY.',
         '.YYY...YTTTY...YYY.',
@@ -87,13 +87,16 @@ def crowned(base, key):
         for (x, y) in cells:
             for dy in range(-depth, depth + 1):
                 for dx in range(-depth, depth + 1):
+                    if dx * dx + dy * dy > depth * depth + 1:
+                        continue  # 둥근 붓 — 모서리가 네모로 뭉치지 않게
                     xx, yy = x + dx, y + dy
                     if 0 <= xx < n and 0 <= yy < n and g[yy][xx] in over and (xx, yy) not in fill:
                         out.add((xx, yy))
         for (xx, yy) in out:
             g[yy][xx] = ch
         return out
-    k = ring(set(fill), 2, 'K', '.O')
+    # 외곽선 두께는 폰 몸통과 같게 (몸통 검정 외곽선 4~5칸) — 왕관만 얇아 보이지 않게
+    k = ring(set(fill), 3, 'K', '.O')
     ring(set(fill) | k, 2, 'O', '.')
     return [''.join(r) for r in g]
 
