@@ -24,12 +24,18 @@ export const part = (s: BattleState, side: Side, id: PartId): boolean => !!s.loa
 /** 적 진영(1)에 걸린 반장 비틀기인가 */
 export const twistOn = (s: BattleState, p: Piece, id: BattleState['twist']): boolean => p.side === 1 && s.twist === id;
 
+const otherSideOf = (side: number) => (side === 0 ? 1 : 0);
+
 /**
  * 기물이 갈 수 있는 빈 칸 (GDD 2장): 정통 체스 행마. 착지는 빈 칸만, 슬라이딩은 모든 기물에 막히고, 나이트는 도약한다.
  */
 export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Pos[] => {
   const out: Pos[] = [];
   const empty = (x: number, y: number) => inBounds(s, x, y) && !at(s, grid, x, y);
+  // 잡기 규칙(시험장 B): 적이 선 칸에도 들어갈 수 있다 (폰은 대각 앞으로만 잡는다)
+  const cap = !!s.rules.capture;
+  const foe = (x: number, y: number) => cap && inBounds(s, x, y) && at(s, grid, x, y)?.side === otherSideOf(piece.side);
+  const stepTo = (x: number, y: number) => (empty(x, y) || foe(x, y)) && out.push({ x, y });
   switch (piece.type) {
     case 'P': {
       const f = forward(piece.side);
@@ -37,13 +43,14 @@ export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
         out.push({ x: piece.x, y: piece.y + f });
         if (!piece.moved && empty(piece.x, piece.y + 2 * f)) out.push({ x: piece.x, y: piece.y + 2 * f });
       }
+      for (const dx of [-1, 1]) if (foe(piece.x + dx, piece.y + f)) out.push({ x: piece.x + dx, y: piece.y + f });
       break;
     }
     case 'N':
-      for (const d of KNIGHT) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
+      for (const d of KNIGHT) stepTo(piece.x + d.x, piece.y + d.y);
       break;
     case 'K':
-      for (const d of ALL8) if (empty(piece.x + d.x, piece.y + d.y)) out.push({ x: piece.x + d.x, y: piece.y + d.y });
+      for (const d of ALL8) stepTo(piece.x + d.x, piece.y + d.y);
       break;
     default:
       for (const d of SLIDE_DIRS[piece.type]!) {
@@ -54,6 +61,7 @@ export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
           x += d.x;
           y += d.y;
         }
+        if (foe(x, y)) out.push({ x, y });
       }
   }
   return out;

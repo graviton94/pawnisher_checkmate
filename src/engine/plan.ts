@@ -275,10 +275,26 @@ export const simulate = (input: BattleState, plan: Plan, opts: SimOptions = {}):
 
     const from = { x: piece.x, y: piece.y };
     const before = piece.type;
+    // 잡기 규칙(시험장 B, D-177): 적이 선 칸에 들어가면 그 적을 잡는다 (체력과 무관하게 한 번에)
+    let captured = 0;
+    if (s.rules.capture) {
+      const victim = s.pieces.find((p) => p.x === step.to.x && p.y === step.to.y && p.side !== side);
+      if (victim) {
+        const hit = applyDamage(s, victim, victim.hp + victim.shield);
+        if (victim.hp > 0) victim.hp = 0;
+        ctx.events.push({ type: 'attack', order, attackerId: piece.id, area: [{ ...step.to }], hits: [{ ...hit, hpAfter: 0, killed: true }] });
+        captured = resolveDeaths(s, ctx, piece);
+        if (victim.type === 'K') s.winner = side;
+      }
+    }
     applyMove(s, piece, step.to);
     ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
     if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
     ctx.acted.add(piece.id);
+    if (s.rules.capture) {
+      prevKilled = captured > 0;
+      continue;
+    }
 
     // 이번 명령의 배율: 선봉 톱니 · 마무리 망치 · 연쇄 지휘
     let mult = opts.mult ?? 1;

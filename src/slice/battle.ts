@@ -3,7 +3,7 @@ import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, f
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { Rng } from '../engine/rng';
-import { BOSS, BOSS_NUM, COMMANDS, PUSH, SLICE, TRAIT, type BossRule, type CommandId } from './cards';
+import { BOSS, BOSS_NUM, COMMANDS, LAB, PUSH, SLICE, TRAIT, type BossRule, type CommandId } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -81,6 +81,10 @@ export interface SliceBattle {
   /** 턴에 한 번 효과 (풀린 브레이크) */
   once: string[];
   rng: number;
+  /** 근간 시험장 (D-177): 'A' 지금 규칙 + 환급 · 'B' 진짜 잡기 + 환급 */
+  lab?: 'A' | 'B';
+  /** 이번 턴 환급받은 태엽 */
+  refunded?: number;
   /** 자살 수 경고를 이미 보였나 (이번 턴) */
   warned: boolean;
 }
@@ -158,7 +162,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B' } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -197,6 +201,24 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   if (has(b, 'greed')) for (const p of s.pieces) if (p.side === 1) p.maxHp = p.hp = Math.round(p.maxHp * PART_NUM.greedHp);
   if (has(b, 'scepter')) { const k = kingOf(s, 0); if (k) k.shield += PART_NUM.scepterShield; }
   if (has(b, 'barracks')) spawnPawn(b, '막사의 종 — 폰이 선다');
+  if (opts.lab) {
+    b.lab = opts.lab;
+    // 손으로 둔 판: 같은 유형은 순서대로 그 칸에
+    const used = new Set<number>();
+    for (const [side, t, x, y] of LAB.layout) {
+      const p = s.pieces.find((q) => q.side === side && q.type === t && !used.has(q.id));
+      if (p) Object.assign(p, { x, y, moved: false });
+      if (p) used.add(p.id);
+    }
+    b.refunded = 0;
+    b.ap = b.apMax = LAB.ap;
+    if (opts.lab === 'B') {
+      // 진짜 잡기: 체력 · 방열판 · 문턱 없음 — 잡히면 끝
+      s.rules = { ...s.rules, capture: true, checkmate: false };
+      for (const p of s.pieces) Object.assign(p, { hp: 1, maxHp: 1, shield: 0 });
+      s.doorIds = [];
+    }
+  }
   drawCards(b, b.handSize);
   bossTurnStart(b);
   b.intents = planEnemy(b.s);
@@ -207,12 +229,46 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
 // ---------- 적 예고 (단순한 AI — Into the Breach식: 수는 단순해도 다 보인다) ----------
 const valueOf = (p: Piece) => (p.type === 'K' ? 300 : PIECE_STATS[p.type].value);
 
+/**
+ * 잡기 규칙(시험장 B)의 위협 칸: 이 진영이 다음 수에 잡으러 들어갈 수 있는 칸 전부 (폰은 대각 앞 두 칸).
+ * 화면은 적의 이것을 붉은 칸으로 — 내 기물을 여기 두면 잡힐 수 있다 (체스 그대로).
+ */
+export const threatOf = (s0: BattleState, side: 0 | 1): Pos[] => {
+  const s = { ...s0, turnSide: side };
+  const grid = buildGrid(s);
+  const out = new Map<string, Pos>();
+  for (const p of s.pieces.filter((q) => q.side === side)) {
+    if (p.type === 'P') {
+      for (const dx of [-1, 1]) {
+        const q = { x: p.x + dx, y: p.y + forward(side) };
+        if (inBounds(s, q.x, q.y)) out.set(`${q.x},${q.y}`, q);
+      }
+      continue;
+    }
+    // 빈 칸 + 상대 기물 칸 (자기 편 칸은 빼고 — 지키기는 단순화)
+    for (const q of legalMoves({ ...s, rules: { ...s.rules, capture: true } }, p, grid)) out.set(`${q.x},${q.y}`, q);
+  }
+  return [...out.values()];
+};
+
 /** 적 기물 하나의 가장 좋은 수 (내 기물을 가장 아프게 치는 칸, 칠 게 없으면 내 킹 쪽으로). 0점 이하면 null */
 const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set()): { to: Pos; score: number } | null => {
   const s = { ...s0, turnSide: 1 as const };
   const grid = buildGrid(s);
   const myKing = kingOf(s, 0);
   let best: { to: Pos; score: number } | null = null;
+  // 잡기 규칙(시험장 B): 내 기물이 선 칸에 들어가 잡는다. 잡을 게 없으면 다가가되, 내가 잡을 수 있는 칸은 꺼린다
+  if (s.rules.capture) {
+    const mine = threatOf(s, 0);
+    for (const to of legalMoves(s, p, grid)) {
+      if (taken.has(`${to.x},${to.y}`)) continue;
+      const victim = s.pieces.find((q) => q.side === 0 && q.x === to.x && q.y === to.y);
+      let score = victim ? valueOf(victim) + 20 : myKing && p.type !== 'K' ? (chebyshev(p, myKing) - chebyshev(to, myKing)) * 2 : 0;
+      if (mine.some((m) => samePos(m, to))) score -= valueOf(p) * 0.5;
+      if (!best || score > best.score) best = { to, score };
+    }
+    return best && best.score > 0 ? best : null;
+  }
   for (const to of legalMoves(s, p, grid)) {
     if (taken.has(`${to.x},${to.y}`)) continue;
     const ghost = { ...p, x: to.x, y: to.y };
@@ -251,6 +307,7 @@ export const planEnemy = (s0: BattleState): Intent[] => {
 
 /** 지금 보드에서 예고가 칠 칸 (내 수로 막히면 바뀐다 — 화면은 늘 지금 기준) */
 export const dangerSquares = (b: SliceBattle): Pos[] => {
+  if (b.s.rules.capture) return threatOf(b.s, 1);
   const out = new Map<string, Pos>();
   if (b.bombRow !== null) for (let x = 0; x < b.s.width; x++) out.set(`${x},${b.bombRow}`, { x, y: b.bombRow });
   for (const it of liveIntents(b)) {
@@ -267,6 +324,8 @@ export const dangerSquares = (b: SliceBattle): Pos[] => {
  * 내가 피한 공격(칸은 열렸는데 칠 게 없음)은 그대로 헛친다 — 피하기는 보상이다.
  */
 export const liveIntents = (b: SliceBattle): Intent[] => {
+  // 잡기 규칙: 적은 늘 지금 보드를 보고 둔다 — 내 수마다 예고 화살표가 바로 바뀐다 (보이는 대로 일어난다)
+  if (b.s.rules.capture) return planEnemy(b.s);
   const s1 = { ...b.s, turnSide: 1 as const };
   const open = (it: Intent, p: Piece) => legalMoves(s1, p).some((q) => samePos(q, it.to));
   const keep = b.intents.filter((it) => {
@@ -410,6 +469,15 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         const k2 = s2.removed.filter((q) => q.side === 1).length;
         b.kills += chainGain(b, k2);
         k += k2;
+      }
+    }
+    // 시험장: 처치(잡기)마다 태엽 +1, 턴당 LAB.refundCap까지 (D-177)
+    if (k > 0 && b.lab) {
+      const g = Math.min(k, LAB.refundCap - (b.refunded ?? 0));
+      if (g > 0) {
+        b.refunded = (b.refunded ?? 0) + g;
+        gained += g;
+        events.push({ type: 'apGain', side: 0, amount: g });
       }
     }
     if (k > 0) {
@@ -745,6 +813,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.kills = 0;
     b.killers = [];
     b.once = [];
+    b.refunded = 0;
     b.warned = false;
     // 조립 라인: 폰이 적으면 킹 옆에 하나
     if (has(b, 'assembly') && b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').length <= PART_NUM.assemblyBelow) {

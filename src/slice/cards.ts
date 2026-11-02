@@ -185,3 +185,24 @@ export const SLICE = {
   coins: 10,
   coinValue: 5,
 };
+
+/**
+ * 근간 시험장 (D-177): A = 지금 규칙 + 처치 환급, B = 체력 없는 진짜 잡기 + 잡기 환급.
+ * 둘 다 기본 태엽 2, 처치(잡기)마다 태엽 +1 (턴당 refundCap까지) — 폰바리안 캔트립: 턴은 벌어서 늘린다.
+ */
+export const LAB = {
+  ap: 2,
+  refundCap: 3,
+  squad: ['K', 'P', 'P', 'P', 'P', 'N', 'B', 'R'] as PieceType[],
+  enemy: ['K', 'P', 'P', 'P', 'P', 'P', 'N', 'B', 'R'] as PieceType[],
+  /** 손으로 둔 판 (6×6): 폰 벽 뒤에 기물 — 첫 수에 열린 줄로 공짜 잡기가 나지 않게. [진영, 유형, x, y] (같은 유형은 순서대로) */
+  layout: [
+    [0, 'R', 0, 0], [0, 'N', 1, 0], [0, 'B', 2, 0], [0, 'K', 3, 0],
+    [0, 'P', 0, 1], [0, 'P', 1, 1], [0, 'P', 2, 1], [0, 'P', 3, 1],
+    [1, 'R', 0, 5], [1, 'N', 1, 5], [1, 'B', 2, 5], [1, 'K', 3, 5],
+    [1, 'P', 0, 4], [1, 'P', 1, 4], [1, 'P', 2, 4], [1, 'P', 3, 4], [1, 'P', 4, 4],
+  ] as [0 | 1, PieceType, number, number][],
+  deck: ['advance', 'advance', 'advance', 'leap', 'leap', 'diagonal', 'diagonal', 'rookLine', 'rookLine', 'kingStep', 'order', 'order'] as CommandId[],
+  /** A의 적 킹 HP 배율 (1막 대국과 같게) */
+  kingHpA: 0.6,
+};

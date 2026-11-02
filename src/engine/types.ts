@@ -53,6 +53,8 @@ export interface BattleRules {
   foresight: number;
   /** 한 턴 명령 상한 (검문 반장의 「서류 검문」) — 없으면 제한 없음 */
   maxOrders?: number;
+  /** 시험장 B (D-177): 진짜 체스 잡기 — 적 칸에 들어가 잡는다, 착지 공격 없음 */
+  capture?: boolean;
 }
 
 export interface BattleState {

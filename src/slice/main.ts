@@ -8,7 +8,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
@@ -817,6 +817,7 @@ const closeOverlay = () => ($('overlay').hidden = true);
 
 const finish = (): void => {
   const isWin = b.s.winner === 0;
+  if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
     await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
     if (!isWin) {
@@ -1009,6 +1010,7 @@ const crewView = (): void => {
     .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
   el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(title));
+  el.querySelector('[data-lab-open]')!.addEventListener('click', labPick);
   el.querySelectorAll<HTMLElement>('[data-rename]').forEach((btn) =>
     btn.addEventListener('click', () => {
       const k = Number(btn.dataset.rename);
@@ -1200,6 +1202,57 @@ $('btn-rewind').addEventListener('click', () => {
 });
 $('btn-help').addEventListener('click', help);
 
+// ---------- 근간 시험장 (D-177) ----------
+/** 시험장 모드: A = 지금 규칙 + 처치 환급, B = 진짜 잡기 + 잡기 환급. 같은 판 · 같은 적 · 같은 덱 */
+let labMode: 'A' | 'B' | null = null;
+const labRounds = { A: 0, B: 0 };
+const labScore = { A: { w: 0, l: 0, turns: 0 }, B: { w: 0, l: 0, turns: 0 } };
+const LAB_TEXT: Record<'A' | 'B', { name: string; how: string[] }> = {
+  A: { name: '시험장 A — 지금 규칙 + 처치 환급', how: ['내려앉은 자리에서 공격합니다 (지금과 같은 체력 · 피해).', '태엽은 2. 처치하면 태엽 +1 (턴당 3까지).', '적은 예고한 대로 둡니다.'] },
+  B: { name: '시험장 B — 진짜 잡기', how: ['체력이 없습니다. 적이 선 칸에 들어가면 잡습니다.', '붉은 칸에 선 내 기물은 적이 잡을 수 있습니다.', '태엽은 2. 잡으면 태엽 +1 (턴당 3까지). 적은 늘 지금 판을 보고 둡니다.'] },
+};
+
+/** 시험장 대국 시작 (같은 규칙끼리는 판 순서가 같다 — A와 B를 같은 씨앗으로 비교) */
+const startLab = (mode: 'A' | 'B'): void => {
+  labMode = mode;
+  labRounds[mode] += 1;
+  squad = LAB.squad.map((t) => ({ t, name: PIECE_NAMES_KO[t] }));
+  cur = { enemy: LAB.enemy, kingHp: LAB.kingHpA, title: LAB_TEXT[mode].name, narr: '', tell: '', reward: 'end' };
+  stage += 1;
+  b = newSliceBattle(squad, LAB.enemy, LAB.deck, 300 + labRounds[mode] * 31, { enemyKingHp: mode === 'A' ? LAB.kingHpA : undefined, lab: mode });
+  selCard = selPiece = null;
+  busy = false;
+  turnDmg = 0;
+  prevKills = 0;
+  ritesDone = 0;
+  closeOverlay();
+  renderer.setFoeTraits([]);
+  renderer.setup(b.s);
+  refresh();
+  toast(mode === 'A' ? '처치하면 태엽 +1 — 턴은 벌어서 늘린다.' : '적 칸에 들어가면 잡는다. 붉은 칸에 남은 기물은 잡힌다.', 3600);
+};
+
+/** 시험장 고르기 화면 */
+const labPick = (): void => {
+  const card = (m: 'A' | 'B') => `<button type="button" class="lab-card" data-lab="${m}"><b>${LAB_TEXT[m].name}</b><ul>${LAB_TEXT[m].how.map((h) => `<li>${h}</li>`).join('')}</ul><small>이김 ${labScore[m].w} · 짐 ${labScore[m].l}</small></button>`;
+  const el = openOverlay(`<h2>근간 시험장</h2><p>같은 판 · 같은 적 · 같은 덱입니다. 둘 다 해 보고 어느 쪽이 손에 붙는지 알려 주십시오.</p><div class="lab-row">${card('A')}${card('B')}</div><div class="row"><button class="btn" type="button" data-lab-back>처음 화면</button></div>`);
+  el.querySelectorAll<HTMLElement>('[data-lab]').forEach((btn) => btn.addEventListener('click', () => startLab(btn.dataset.lab as 'A' | 'B')));
+  el.querySelector('[data-lab-back]')!.addEventListener('click', () => location.assign(location.pathname));
+};
+
+/** 시험장 대국 끝 */
+const labEnd = (isWin: boolean): void => {
+  const m = labMode!;
+  labScore[m][isWin ? 'w' : 'l'] += 1;
+  labScore[m].turns += b.turn;
+  window.setTimeout(async () => {
+    await banner(isWin ? '적 킹 격파' : '킹 파괴', isWin);
+    const el = openOverlay(`<h2>${LAB_TEXT[m].name}</h2><p>${isWin ? '이겼습니다' : '졌습니다'} · ${b.turn}턴 · 남은 내 기물 ${b.s.pieces.filter((p) => p.side === 0).length} / ${LAB.squad.length}</p><p class="dim">이 규칙 — 이김 ${labScore[m].w} · 짐 ${labScore[m].l}</p><div class="row"><button class="btn" type="button" data-lab-pick>고르기 화면</button><button class="btn brass" type="button" data-lab-again>한 판 더</button></div>`);
+    el.querySelector('[data-lab-pick]')!.addEventListener('click', labPick);
+    el.querySelector('[data-lab-again]')!.addEventListener('click', () => startLab(m));
+  }, 700);
+};
+
 // ---------- 저장 · 승급 · 오늘의 출하 (R6, D-174) ----------
 /** 대국 사이 회복 (승급 3부터 절반) */
 const restHeal = (): number => REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1);
@@ -1288,7 +1341,7 @@ const title = (): void => {
     <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>세 막을 지나 출하구에 닿으십시오.</li></ul>
     ${sv ? `<button class="btn brass wide" type="button" data-cont>이어하기 <small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
     ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span data-asc-line>${ascLine()}</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}
-    <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn" type="button" data-ledger>원부</button><button class="btn cyan" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}</button><button class="btn ${sv ? '' : 'brass'}" type="button" data-go>${sv ? '새 출하' : '출하 시작'}</button></div>
+    <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-lab-open>시험장</button><button class="btn cyan" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}</button><button class="btn ${sv ? '' : 'brass'}" type="button" data-go>${sv ? '새 출하' : '출하 시작'}</button></div>
     <p class="dim rec">오늘의 출하 = 모두가 같은 지도 · 같은 분대${doneToday ? ' (기록은 첫 시도만)' : ''}<br>출하 ${m.runs} · 완주 ${m.clears}${m.bestAct ? ` · 최고 ${m.bestAct > 3 ? '완주' : `${m.bestAct}막`}` : ''}${doneToday ? ` · 오늘 ${doneToday.cleared ? '완주' : `${doneToday.act}막`}` : ''}</p></div>`);
   el.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -1318,5 +1371,7 @@ const title = (): void => {
 };
 
 startBattle(INTRO[0], true);
-if (!new URLSearchParams(location.search).has('debug')) title();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });
+const qs = new URLSearchParams(location.search);
+if (qs.has('lab')) labPick();
+else if (!qs.has('debug')) title();
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n) } });
