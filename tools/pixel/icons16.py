@@ -26,6 +26,7 @@ RAMP = {
     'o': ('#fff3b0', '#f59e0b', '#c2410c'),  # 불
     'p': ('#e9a2ff', '#b65cd6', '#6b2a84'),  # 보라 (계약)
     'k': ('#f6b38a', '#c56a3a', '#7a3b1c'),  # 구리
+    'v': ('#8b5cf6', '#4c1d95', '#24093f'),  # 불길한 보라
 }
 FIX = {'K': '#0b0b0e', 'S': '#bfb9ad', 'Q': '#7a3b1c', 'X': '#ffffff', 'E': '#3b2412', 'D': '#2a2830', 'M': '#7a1218', 'R': '#e5262f', 'T': '#fff3b0', 'A': '#8a6416', 'N': '#1f8a7a', 'O': '#f59e0b', 'G': '#56545e', 'Y': '#facc15', 'L': '#a8a4b2', 'W': '#f1ede4', 'C': '#5eead4'}
 
@@ -636,6 +637,240 @@ for y in range(14):
 for (x, y) in [(6, 1), (6, 2), (5, 3), (5, 4), (6, 5), (7, 6), (7, 7), (6, 8), (5, 9), (6, 10), (6, 11)]:
     g.set(x, y, '.')
 g.pts('X', (2, 2), (3, 2), (2, 3), (9, 2))
+icon('brittle', '깨지는 유리 심장', g.done())
+
+
+# ───────── 4판: 불합격 14개 다시 (합격작처럼 — 정확한 대칭 · 화면을 꽉 채우는 실루엣 · 한 가지 생각) ─────────
+
+def ascii_(g, x0, y0, rows):
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            if ch != ' ':
+                g.set(x0 + i, y0 + j, ch)
+
+# 반장: 검은 쇠 왕관 · 붉은 구슬 끝 · 황동 테 · 가운데 마름모 보석
+g = G()
+ascii_(g, 0, 0, [
+    '      r',
+    '     rrr',
+    '  r   r',
+    ' rrr  g',
+    '  g  ggg',
+    ' ggg ggg',
+    ' gggggggg',
+    'uuuuuuu',
+    'ggggggg',
+    'ggggggg',
+    'ggggggg',
+    'uuuuuuu',
+])
+g.mirror()
+g.pts('R', (6, 8), (5, 9), (6, 9), (7, 9), (6, 10)).pts('T', (6, 8)).pts('R', (2, 9), (10, 9))
+g.pts('u', (0, 7), (12, 7), (0, 11), (12, 11))
+icon('n.boss', '반장', g.done())
+
+# 짓누르는 왕관: 불길한 보랏빛 가시 왕관 · 핏빛 보석 · 흘러내리는 피
+g = G()
+ascii_(g, 0, 0, [
+    '      v',
+    '   v  v',
+    'v  v vvv',
+    'vv vv vvv',
+    'vvvvvvvvv',
+    'vvvvvvvvv',
+    'ggggggg',
+    'vvvvvvv',
+    'vvvvvvv',
+    'ggggggg',
+    ' M   M',
+    ' M',
+])
+g.mirror()
+g.pts('R', (2, 7), (6, 7), (10, 7), (6, 8)).pts('r', (2, 8), (10, 8)).pts('T', (6, 7))
+g.pts('.', (0, 10), (12, 10)).pts('M', (5, 10), (9, 10), (9, 11), (9, 12)).pts('.', (7, 10), (7, 11))
+icon('crown', '짓누르는 왕관', g.done())
+
+# 검문: 돌 아치 안의 쇠살문 (참고 dungeon-gate)
+g = G()
+ascii_(g, 0, 0, [
+    '   llll',
+    ' llllll',
+    'lll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'll',
+    'llll',
+])
+g.mirror()
+for x in (3, 5, 7, 9):
+    g.rect(x, 3, 1, 10, 'g').set(x, 12, 'G')
+for y in (5, 9):
+    g.rect(2, y, 9, 1, 'g')
+g.pts('K', (4, 13), (6, 13), (8, 13)).pts('l', (3, 13), (5, 13), (7, 13), (9, 13))
+icon('n.check', '검문', g.done())
+
+# 끝없는 생산선: 폰을 감싸 도는 두 화살 (끝없이 다시 나온다)
+g = G(14)
+ascii_(g, 4, 3, [
+    '  ww',
+    ' wwww',
+    '  ww',
+    ' wwww',
+    '  ww',
+    ' wwww',
+    'wwwwww',
+])
+for y in range(14):
+    for x in range(14):
+        d = _m.hypot(x - 6.5, y - 6.5)
+        a = _m.degrees(_m.atan2(y - 6.5, x - 6.5))
+        if 5.5 <= d <= 6.8 and not (-60 < a < -20 or 120 < a < 160):
+            g.set(x, y, 'y')
+ascii_(g, 9, 0, ['yyyy', ' yyy', '  yy'])
+ascii_(g, 1, 11, ['yy', 'yyy', 'yyyy'])
+icon('assembly', '끝없는 생산선', g.done())
+
+# 메아리 톱니: 금 톱니 뒤로 청록 잔상 톱니 둘 (이동 잔상과 같은 생각)
+g = G(14)
+gear(g, 10.2, 6.5, 4.6, 3.0, 8, 'N', 0.25)
+gear(g, 8.0, 6.5, 5.2, 3.5, 8, 'c', 0.25)
+gear(g, 5.5, 6.5, 5.6, 3.9, 8, 'y', 0.25)
+g.disc(5.5, 6.5, 2.0, 'A').disc(5.5, 6.5, 1.1, 'K')
+icon('echo', '메아리 톱니', g.done())
+
+# 공성 망치: 숫양 머리 쇠망치 + 통나무 + 매단 밧줄
+g = G(14)
+ascii_(g, 0, 0, [
+    '        u   u',
+    '  lll   u   u',
+    ' l   l  u   u',
+    ' l l l  u   u',
+    ' l  ll  u   u',
+    'llllllbbbbbbbb',
+    'lKllllbgbbbbgb',
+    'llllllbgbbbbgb',
+    'llllllbbbbbbbb',
+    ' llll',
+])
+icon('hammer', '공성 망치', g.done())
+
+# 찢긴 군기: 가로대에 매단 세로 깃발 · 너덜한 꼬리 (참고 knight-banner)
+g = G()
+ascii_(g, 0, 0, [
+    'y bbbbb',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rrrrr',
+    '  rr rr',
+    '  r   r',
+    '  r',
+])
+g.mirror().pts('b', (1, 0), (11, 0))
+ascii_(g, 4, 2, ['  Y', ' YYY', 'YYYYY', ' YYY', '  Y'])
+g.pts('.', (9, 7), (3, 4)).pts('.', (10, 10))
+icon('banner', '찢긴 군기', g.done())
+
+# 도금 갑주: 금 투구 (T자 눈 틈 · 숨구멍 · 붉은 깃털)
+g = G()
+ascii_(g, 0, 0, [
+    '     rr',
+    '    rrr',
+    '   yyyy',
+    '  yyyyy',
+    ' yyyyyy',
+    ' yyyyyy',
+    ' yKKKKK',
+    ' yyyyyK',
+    ' yyyyyK',
+    ' yKyyyK',
+    ' yyyyyy',
+    ' yKyyyy',
+    '  uuuuu',
+])
+g.mirror().pts('T', (3, 3), (2, 4), (2, 5)).pts('.', (7, 0), (8, 0), (8, 1))
+icon('gilded', '도금 갑주', g.done())
+
+# 도화선: 다이너마이트 세 개 · 도화선 끝 불꽃
+g = G(14)
+for x0 in (2, 5, 8):
+    g.rect(x0, 5, 3, 9, 'r')
+g.rect(1, 9, 11, 2, 'u').pts('w', (3, 5), (6, 5), (9, 5))
+g.pts('b', (6, 4), (6, 3), (7, 2), (8, 2), (9, 1))
+g.pts('O', (11, 0), (11, 3), (12, 1), (10, 1), (12, 2), (10, 2)).pts('X', (11, 1), (11, 2)).pts('T', (13, 1), (11, 4) if False else (13, 2))
+icon('fuse', '도화선', g.done())
+
+# 전도 코일: 구리선을 감은 고리 (토로이드) · 둘레를 도는 전기
+g = G()
+g.disc(6, 6.5, 6.0, 'k', inner=2.6)
+for a in range(12):
+    t = a / 12 * 2 * _m.pi
+    g.line(round(6 + _m.cos(t) * 3.2), round(6.5 + _m.sin(t) * 3.2), round(6 + _m.cos(t) * 5.6), round(6.5 + _m.sin(t) * 5.6), 'Q')
+g.pts('c', (6, 4), (5, 5), (6, 6), (7, 7), (6, 8)).pts('X', (6, 6))
+icon('conductor', '전도 코일', g.done())
+
+# 모루 장갑: 황동 띠 · 리벳을 두른 묵직한 모루
+g = G(14)
+ascii_(g, 0, 1, [
+    '   llllllllll',
+    'lllllllllllll',
+    ' llllllllllll',
+    '   gggggggg',
+    '    gggggg',
+    '    uuuuuu',
+    '    gggggg',
+    '   gggggggg',
+    '  gggggggggg',
+    ' gggggggggggg',
+    ' gggggggggggg',
+])
+g.pts('T', (4, 6), (9, 6)).pts('L', (4, 3), (8, 3))
+icon('anvilPlate', '모루 장갑', g.done())
+
+# 연쇄 사슬: 대각선으로 맞물린 굵은 고리 셋 (타원 고리를 45도로 눕혀 계산)
+g = G(14)
+def link(cx, cy, ch, ang, rx, ry, hole):
+    c, s_ = _m.cos(ang), _m.sin(ang)
+    for y in range(14):
+        for x in range(14):
+            u, v = (x - cx) * c + (y - cy) * s_, -(x - cx) * s_ + (y - cy) * c
+            d = (u / rx) ** 2 + (v / ry) ** 2
+            if hole < d <= 1.0:
+                g.set(x, y, ch)
+link(2.7, 2.7, 'l', _m.pi / 4, 3.9, 2.5, 0.28)
+link(10.3, 10.3, 'l', _m.pi / 4, 3.9, 2.5, 0.28)
+link(6.5, 6.5, 'g', _m.pi / 4, 3.0, 1.0, -1)
+icon('chainShot', '연쇄 사슬', g.done())
+
+# 피의 계약: 붉은 끈으로 묶은 두루마리 · 끈에서 떨어지는 피
+g = G()
+g.rect(1, 3, 11, 6, 'w').ell(0.8, 6, 1.2, 3, 'S').ell(11.2, 6, 1.2, 3, 'S').pts('K', (0, 6), (12, 6))
+g.rect(5, 2, 3, 8, 'r').pts('r', (4, 10), (3, 11), (8, 10), (9, 11)).pts('M', (6, 10), (6, 11), (6, 12)).pts('r', (6, 13))
+g.pts('T', (2, 4), (3, 4))
+icon('bloodPact', '피의 계약', g.done())
+
+# 깨지는 유리 심장: 붉은 유리 하트 · 흰 반사 · 갈라지는 금 · 튀는 조각
+g = G()
+for y in range(14):
+    for x in range(13):
+        X, Y = (x - 6) / 5.0, (5.3 - y) / 4.6
+        if (X * X + Y * Y - 1) ** 3 - X * X * Y ** 3 <= 0:
+            g.set(x, y, 'r')
+g.pts('X', (2, 2), (3, 2), (2, 3), (4, 4), (3, 5))
+g.pts('K', (7, 2), (7, 3), (6, 4), (7, 5), (8, 5), (9, 6), (6, 6), (5, 7), (6, 8))
+g.pts('.', (10, 8), (11, 7))
 icon('brittle', '깨지는 유리 심장', g.done())
 
 
