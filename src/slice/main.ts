@@ -32,13 +32,13 @@ const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3,
  * reward = 이기면 받는 것: 영입(기물 + 그 카드) · 부품 상자(부품 + 맞물리는 카드 둘) · 카드 · 부품 · 끝.
  */
 type Reward = 'recruit' | 'kit' | 'card' | 'part' | 'end';
-const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string; reward: Reward; boss?: boolean; w?: number; h?: number; /** 다른 구성 (출하마다 둘 중 하나 — 다시 할 때 같은 판이 되풀이되지 않게) */ alt?: PieceType[]; place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] }[] = [
+const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string; reward: Reward; /** 전환 화면 서술 (다키스트 던전식 한 줄, D-165) */ narr: string; boss?: boolean; w?: number; h?: number; /** 다른 구성 (출하마다 둘 중 하나 — 다시 할 때 같은 판이 되풀이되지 않게) */ alt?: PieceType[]; place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] }[] = [
   // 입문 판은 손으로 만든다: 적 폰을 킹 옆으로 비켜 두면 첫 카드(전진 · 사선)가 바로 친다
-  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.', reward: 'recruit' },
-  { enemy: ['K', 'P', 'P'], alt: ['K', 'P', 'N'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', tell: '붉은 칸은 적이 다음 차례에 칠 자리입니다.', reward: 'kit' },
-  { enemy: ['K', 'P', 'P', 'N'], alt: ['K', 'P', 'B', 'N'], kingHp: 0.6, title: '2판 — 주조 공정', tell: '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.', reward: 'card' },
-  { enemy: ['K', 'P', 'P', 'B', 'R'], alt: ['K', 'P', 'N', 'N', 'R'], kingHp: 0.7, title: '3판 — 검문!', tell: '검수관의 판. 이기면 부품을 하나 더 받습니다.', reward: 'part' },
-  { enemy: ['K', 'Q', 'P', 'P', 'N'], alt: ['K', 'Q', 'P', 'B', 'P'], kingHp: 0.75, title: '4판 — 반장', tell: '철갑을 두른 반장이 기다린다. 두 턴마다, 한 줄이 불길에 잠긴다.', reward: 'end', boss: true },
+  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', narr: '흰 기물들이 처음으로 눈을 뜬다. 검은 것이 앞을 막는다.', tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.', reward: 'recruit' },
+  { enemy: ['K', 'P', 'P'], alt: ['K', 'P', 'N'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', narr: '숫돌 위로 불꽃이 튄다. 무딘 것은 이곳을 넘지 못한다.', tell: '붉은 칸은 적이 다음 차례에 칠 자리입니다.', reward: 'kit' },
+  { enemy: ['K', 'P', 'P', 'N'], alt: ['K', 'P', 'B', 'N'], kingHp: 0.6, title: '2판 — 주조 공정', narr: '쇳물이 바닥을 흐른다. 당신의 발밑이 달아오른다.', tell: '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.', reward: 'card' },
+  { enemy: ['K', 'P', 'P', 'B', 'R'], alt: ['K', 'P', 'N', 'N', 'R'], kingHp: 0.7, title: '3판 — 검문', narr: '검수관의 저울이 기울어 있다. 이 문을 지난 자는 많지 않다.', tell: '이기면 부품을 하나 더 받습니다.', reward: 'part' },
+  { enemy: ['K', 'Q', 'P', 'P', 'N'], alt: ['K', 'Q', 'P', 'B', 'P'], kingHp: 0.75, title: '4판 — 반장', narr: '철갑을 두른 반장이 기다린다.', tell: '두 턴마다 한 줄이 불길에 잠깁니다. 붉은 줄에서 벗어나십시오.', reward: 'end', boss: true },
 ];
 
 /** 분대: 시리얼 · 이름 · 기벽이 붙은 기물 (D-153) */
@@ -411,9 +411,7 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
 // ---------- 흐름 ----------
 /** 이번 출하에서 고른 적 구성 (다시 하기는 같은 구성) */
 const enemyPick: Record<number, PieceType[]> = {};
-/** 시작 화면을 넘겼나 (그 전엔 첫 판 안내를 띄우지 않는다) */
-let titleDone = new URLSearchParams(location.search).has('debug');
-const start = (i: number): void => {
+const start = (i: number, silent = false): void => {
   stage = i;
   const def = BATTLES[i];
   if (!(i in enemyPick)) enemyPick[i] = def.alt && Math.random() < 0.5 ? def.alt : def.enemy;
@@ -427,9 +425,100 @@ const start = (i: number): void => {
   closeOverlay();
   renderer.setup(b.s);
   refresh();
-  if (i > 0 || titleDone) window.setTimeout(() => toast(`${def.title}\n${def.tell}`, 3000), 300);
+  // 전환 화면 (D-165): 판이 바뀔 때마다 — 서술 한 줄 + 도움말, 눌러서 넘긴다. 판 위 규칙 한 줄은 그 뒤에
+  if (!silent) void stageIntro(i).then(() => toast(def.tell, 3200));
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
   $('hand').classList.toggle('hint', i === 0);
+};
+
+/** 판 전환 도움말 (스카이림식 — 전환 화면 아래 한 줄) */
+const TIPS = [
+  '카드를 쓰기 전에 붉은 과녁과 금색 칸을 보십시오. 금색은 처치입니다.',
+  '한 턴에 여럿을 처치할수록 연쇄 배율이 오릅니다. 순서가 곧 화력입니다.',
+  '적의 공격은 미리 보입니다. 먼저 쓰러뜨리거나, 비키거나, 길을 막으십시오.',
+  '되감기는 대국마다 한 번. 이번 턴을 처음으로 되돌립니다.',
+  '나사 트랙은 턴마다 줄어듭니다. 빨리 이길수록 많이 받습니다.',
+  '쓰러진 분대원은 돌아오지 않습니다. 정비로 한 기를 되살릴 수 있습니다.',
+  '부품은 같은 띠의 카드와 맞물립니다. 띠를 맞추면 배율이 폭발합니다.',
+  '기물을 길게 누르면 이름 · 기벽 · 체력을 볼 수 있습니다.',
+];
+
+/** 전환 화면 (D-165): 큰 실루엣 + 판 이름 + 서술 한 줄 + 도움말. 눌러서 넘기거나 약 3초 뒤 저절로 */
+const stageIntro = (i: number): Promise<void> =>
+  new Promise((resolve) => {
+    const def = BATTLES[i];
+    const [label, name] = def.title.split(' — ');
+    const foe: PieceType = def.boss ? 'Q' : (enemyPick[i] ?? def.enemy).find((t) => t !== 'K' && t !== 'P') ?? 'K';
+    const el = document.createElement('div');
+    el.className = `stagefx${def.boss ? ' boss' : ''}`;
+    el.innerHTML = `<div class="sf-art">${pieceImg(foe, 1, 'large', 220)}</div>
+      <div class="sf-text"><p class="sf-eyebrow">${label}</p><h1>${name}</h1><p class="sf-narr">${def.narr}</p></div>
+      <p class="sf-tip">${TIPS[(i * 3 + Math.floor(Math.random() * TIPS.length)) % TIPS.length]}</p><p class="sf-skip">눌러서 계속</p>`;
+    document.body.appendChild(el);
+    sfx(def.boss ? 'threat' : 'stamp');
+    let done = false;
+    const close = () => {
+      if (done) return;
+      done = true;
+      el.classList.add('out');
+      window.setTimeout(() => {
+        el.remove();
+        resolve();
+      }, 420);
+    };
+    window.setTimeout(() => el.addEventListener('click', close), 350);
+    window.setTimeout(close, def.boss ? 3800 : 3000);
+  });
+
+/** 승패 띠 (대국이 끝난 순간 화면을 가로지른다) */
+const banner = (text: string, good: boolean): Promise<void> =>
+  new Promise((resolve) => {
+    const el = document.createElement('div');
+    el.className = `slashfx ${good ? 'good' : 'bad'}`;
+    el.innerHTML = `<span>${text}</span>`;
+    document.body.appendChild(el);
+    sfx(good ? 'win' : 'lose');
+    window.setTimeout(() => {
+      el.remove();
+      resolve();
+    }, 1100);
+  });
+
+/**
+ * 고르기 확인 (D-165): 첫 탭 = 고른다(들어 올리고 나머지는 어두워짐 + 아래 확인 띠), 같은 것을 다시 누르거나 「고르기」 = 확정.
+ * 다른 것을 누르면 그쪽으로 바뀐다. 모든 보상 · 부품 · 영입 · 정비 · 건너뛰기가 이 두 단계를 지난다.
+ */
+const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void => {
+  const panel = $('overlay-panel');
+  if (btn.classList.contains('chosen')) return void confirmChoice(btn, onConfirm);
+  panel.querySelectorAll('.chosen').forEach((x) => x.classList.remove('chosen'));
+  panel.classList.add('choosing');
+  btn.classList.add('chosen');
+  sfx('lift');
+  let bar = panel.querySelector<HTMLElement>('.confirm-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'confirm-bar';
+    panel.appendChild(bar);
+  }
+  bar.innerHTML = `<span>‘${label}’</span><button class="btn" type="button" data-unchoose>다시 보기</button><button class="btn brass" type="button" data-confirm>고르기</button>`;
+  bar.querySelector('[data-unchoose]')!.addEventListener('click', () => {
+    btn.classList.remove('chosen');
+    panel.classList.remove('choosing');
+    bar!.remove();
+  });
+  bar.querySelector('[data-confirm]')!.addEventListener('click', () => confirmChoice(btn, onConfirm));
+};
+const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
+  const panel = $('overlay-panel');
+  if (panel.classList.contains('locked')) return;
+  panel.classList.add('locked');
+  btn.classList.add('picked');
+  sfx('rare');
+  window.setTimeout(() => {
+    panel.classList.remove('locked', 'choosing');
+    onConfirm();
+  }, 450);
 };
 
 const openOverlay = (html: string): HTMLElement => {
@@ -441,7 +530,8 @@ const closeOverlay = () => ($('overlay').hidden = true);
 
 const finish = (): void => {
   const won = b.s.winner === 0;
-  window.setTimeout(() => {
+  window.setTimeout(async () => {
+    await banner(won ? (BATTLES[stage].boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', won);
     if (!won) {
       const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>킹이 쓰러졌습니다. ${BATTLES[stage].title}부터 다시 할 수 있습니다.</p><div class="row"><button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>다시 하기</button></div>`);
       el.querySelector('[data-again]')!.addEventListener('click', () => start(stage));
@@ -518,25 +608,29 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${[...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name}을(를) HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
       el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
-        btn.addEventListener('click', () => {
-          deck.push(btn.dataset.pick as CommandId);
-          sfx('rare');
-          btn.classList.add('picked');
-          window.setTimeout(() => start(stage + 1), 380);
-        }),
+        btn.addEventListener('click', () =>
+          choose(btn, `${COMMANDS[btn.dataset.pick as CommandId].name}을(를) 덱에 넣는다`, () => {
+            deck.push(btn.dataset.pick as CommandId);
+            start(stage + 1);
+          }),
+        ),
       );
-      el.querySelector('[data-skip]')!.addEventListener('click', () => start(stage + 1));
+      const skipBtn = el.querySelector<HTMLElement>('[data-skip]')!;
+      skipBtn.addEventListener('click', () => choose(skipBtn, '아무것도 받지 않는다', () => start(stage + 1)));
       // 카드 빼기: 한 장 빼면 다음 판, 그만두면 보상 화면으로 돌아온다
       el.querySelector('[data-remove]')!.addEventListener('click', () =>
         deckView('remove', (removed) => (removed ? start(stage + 1) : showReward())),
       );
-      el.querySelector('[data-overhaul]')!.addEventListener('click', () => {
-        const o = overhaulSquad(squad, fallen);
-        squad = o.squad;
-        sfx('awaken');
-        toast(o.revived ? `${o.revived.name}이(가) 복귀했습니다.` : `분대 전원 HP +${Math.round(REST.overhaul * 100)}%`);
-        window.setTimeout(() => start(stage + 1), 500);
-      });
+      const ohBtn = el.querySelector<HTMLElement>('[data-overhaul]')!;
+      ohBtn.addEventListener('click', () =>
+        choose(ohBtn, '카드 대신 분대를 정비한다', () => {
+          const o = overhaulSquad(squad, fallen);
+          squad = o.squad;
+          sfx('awaken');
+          toast(o.revived ? `${o.revived.name}이(가) 복귀했습니다.` : `분대 전원 HP +${Math.round(REST.overhaul * 100)}%`);
+          window.setTimeout(() => start(stage + 1), 500);
+        }),
+      );
     };
     showReward();
   }
@@ -565,14 +659,15 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   }
   el.querySelector('[data-cancel]')!.addEventListener('click', () => then?.(false));
   el.querySelectorAll<HTMLElement>('[data-rm]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.rm as CommandId;
-      deck.splice(deck.indexOf(id), 1);
-      sfx('stamp');
-      btn.classList.add('removed');
-      toast(`${COMMANDS[id].name} 한 장을 뺐습니다.`);
-      window.setTimeout(() => then?.(true), 520);
-    }),
+    btn.addEventListener('click', () =>
+      choose(btn, `${COMMANDS[btn.dataset.rm as CommandId].name} 한 장을 영구히 뺀다`, () => {
+        const id = btn.dataset.rm as CommandId;
+        deck.splice(deck.indexOf(id), 1);
+        sfx('stamp');
+        toast(`${COMMANDS[id].name} 한 장을 뺐습니다.`);
+        then?.(true);
+      }),
+    ),
   );
 };
 
@@ -677,15 +772,15 @@ const recruitPick = (head: string, then: () => void): void => {
     })
     .join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-rec]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      const r = offers[Number(btn.dataset.rec)];
-      squad.push(crews[Number(btn.dataset.rec)]);
-      deck.push(...r.cards);
-      sfx('rare');
-      btn.classList.add('picked');
-      toast(`${crews[Number(btn.dataset.rec)].name}이(가) 분대에 합류했습니다.`);
-      window.setTimeout(then, 420);
-    }),
+    btn.addEventListener('click', () =>
+      choose(btn, `${crews[Number(btn.dataset.rec)].name}을(를) 분대에 넣는다`, () => {
+        const r = offers[Number(btn.dataset.rec)];
+        squad.push(crews[Number(btn.dataset.rec)]);
+        deck.push(...r.cards);
+        toast(`${crews[Number(btn.dataset.rec)].name}이(가) 분대에 합류했습니다.`);
+        then();
+      }),
+    ),
   );
 };
 
@@ -702,14 +797,14 @@ const kitPick = (head: string, then: () => void): void => {
     })
     .join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-kit]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      const k = offers[Number(btn.dataset.kit)];
-      parts.push(k.part);
-      deck.push(...k.cards);
-      sfx('rare');
-      btn.classList.add('picked');
-      window.setTimeout(then, 420);
-    }),
+    btn.addEventListener('click', () =>
+      choose(btn, `${SLICE_PARTS[offers[Number(btn.dataset.kit)].part].name}을(를) 단다`, () => {
+        const k = offers[Number(btn.dataset.kit)];
+        parts.push(k.part);
+        deck.push(...k.cards);
+        then();
+      }),
+    ),
   );
 };
 
@@ -721,12 +816,12 @@ const partPick = (head: string, then: () => void): void => {
   while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
   const el = openOverlay(`${head}<div class="part-cards">${offers.map((id) => partHtml(id, true)).join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-part]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      parts.push(btn.dataset.part as SlicePartId);
-      sfx('rare');
-      btn.classList.add('picked');
-      window.setTimeout(then, 380);
-    }),
+    btn.addEventListener('click', () =>
+      choose(btn, `${SLICE_PARTS[btn.dataset.part as SlicePartId].name}을(를) 단다`, () => {
+        parts.push(btn.dataset.part as SlicePartId);
+        then();
+      }),
+    ),
   );
 };
 
@@ -810,14 +905,13 @@ const title = (): void => {
     <ul class="title-how"><li>카드를 고르고 기물을 움직이면, 내려앉은 자리에서 공격합니다.</li><li>붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.</li><li>적 킹을 쓰러뜨리면 승리합니다. 대국 다섯을 넘으십시오.</li></ul>
     <div class="row"><button class="btn" type="button" data-rules>규칙</button><button class="btn brass" type="button" data-go>출하 시작</button></div></div>`);
   el.querySelector('[data-go]')!.addEventListener('click', () => {
-    titleDone = true;
     closeOverlay();
     sfx('submit');
-    window.setTimeout(() => toast(`${BATTLES[0].title}\n${BATTLES[0].tell}`, 3200), 200);
+    void stageIntro(0).then(() => toast(BATTLES[0].tell, 3200));
   });
   el.querySelector('[data-rules]')!.addEventListener('click', help);
 };
 
-start(0);
+start(0, true);
 if (!new URLSearchParams(location.search).has('debug')) title();
 if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, tap: (pos: Pos) => onTap(pos), start: (i: number) => start(i) } });

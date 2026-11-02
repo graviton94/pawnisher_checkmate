@@ -275,3 +275,37 @@ body.slice .panel p { margin: 0; }
 body.slice .panel .row .btn { min-height: 48px; white-space: nowrap; font-size: 15px; }
 .cmd .shelved { grid-column: 1 / -1; font-size: 12px; font-style: normal; color: #ff9a8a; } .cmd.deckcard:has(.shelved) { filter: grayscale(0.8) brightness(0.7); }
 body.slice .toast { white-space: pre-line; } body.slice .toast::first-line { color: #f4d27a; font-weight: 700; }
+/* 전환 화면 (D-165, 스카이림식): 어둠 속 큰 실루엣이 천천히 다가오고, 판 이름 · 서술 한 줄 · 아래 도움말 */
+.stagefx { position: fixed; inset: 0; z-index: 70; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 24px max(32px, env(safe-area-inset-right, 0px)) 24px max(32px, env(safe-area-inset-left, 0px)); background: radial-gradient(ellipse at 30% 55%, #2a1e14 0, #0b0a0e 62%); color: #e9e2d4; cursor: pointer; animation: sfin 520ms ease-out both; }
+.stagefx.boss { background: radial-gradient(ellipse at 30% 55%, #3a1214 0, #0b0a0e 64%); }
+.stagefx.out { animation: sfout 420ms ease-in forwards; }
+.sf-art { justify-self: center; opacity: 0.85; filter: drop-shadow(0 0 28px rgba(232, 120, 60, 0.35)) brightness(0.8); animation: sfdrift 4s ease-out both; }
+.stagefx.boss .sf-art { filter: drop-shadow(0 0 36px rgba(229, 38, 47, 0.55)) brightness(0.85); }
+.sf-art img { width: min(220px, 40vh); height: auto; image-rendering: pixelated; }
+.sf-text { display: grid; gap: 10px; align-content: center; }
+.sf-eyebrow { margin: 0; font-size: 13px; letter-spacing: 0.3em; color: #c89b3c; }
+.stagefx h1 { margin: 0; font: 700 40px Galmuri14, sans-serif; color: #f4e6c4; text-shadow: 3px 3px 0 #000; animation: sftitle 700ms 150ms ease-out both; }
+.stagefx.boss h1 { color: #ff8a7a; }
+.sf-narr { margin: 0; font-size: 17px; line-height: 1.6; font-style: italic; color: #d9cfbd; max-width: 34ch; animation: sftitle 700ms 450ms ease-out both; }
+.sf-tip { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); width: min(80vw, 640px); margin: 0; text-align: center; font-size: 13px; color: #a89f92; border-top: 1px solid #3a3238; padding-top: 8px; }
+.sf-skip { position: absolute; right: 18px; top: 12px; margin: 0; font-size: 12px; color: #6f6770; animation: blink 1.6s steps(2) infinite; }
+@keyframes sfin { from { opacity: 0; } }
+@keyframes sfout { to { opacity: 0; } }
+@keyframes sfdrift { from { transform: scale(0.9) translateX(-16px); opacity: 0; } to { transform: scale(1); } }
+@keyframes sftitle { from { opacity: 0; transform: translateY(8px); } }
+/* 승패 띠: 화면을 가로지르는 사선 띠 */
+.slashfx { position: fixed; left: 0; right: 0; top: 50%; z-index: 65; height: 86px; transform: translateY(-50%) skewY(-4deg); display: grid; place-items: center; pointer-events: none; animation: slash 1100ms cubic-bezier(0.2, 1, 0.3, 1) both; }
+.slashfx.good { background: linear-gradient(90deg, transparent, #c89b3c 15%, #f4d27a 50%, #c89b3c 85%, transparent); }
+.slashfx.bad { background: linear-gradient(90deg, transparent, #7a1218 15%, #e5262f 50%, #7a1218 85%, transparent); }
+.slashfx span { font: 700 40px Galmuri14, sans-serif; color: #16141c; letter-spacing: 0.15em; transform: skewY(4deg); }
+.slashfx.bad span { color: #fff; }
+@keyframes slash { 0% { clip-path: inset(0 100% 0 0); } 25% { clip-path: inset(0 0 0 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* 고르기 확인 */
+.panel.choosing .part-card:not(.chosen), .panel.choosing .reward-cards .cmd:not(.chosen), .panel.choosing .deck-grid .cmd:not(.chosen), .panel.choosing .row .btn:not(.chosen) { filter: brightness(0.55) grayscale(0.4); }
+.part-card.chosen, .reward-cards .cmd.chosen, .deck-grid .cmd.chosen, .row .btn.chosen { transform: translateY(-6px) scale(1.04); box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #f4d27a, 0 0 22px rgba(244, 210, 122, 0.6) !important; z-index: 2; }
+.confirm-bar { position: sticky; bottom: -10px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin: 4px -14px -10px; background: #16141c; box-shadow: 0 -2px 0 #000, inset 0 2px 0 #c89b3c; animation: barin 220ms ease-out both; }
+.confirm-bar span { flex: 1; font-size: 15px; color: #f4e6c4; font-style: italic; min-width: 0; }
+.confirm-bar .btn { min-height: 48px; min-width: 96px; }
+.panel.locked { pointer-events: none; }
+@keyframes barin { from { transform: translateY(100%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .stagefx, .stagefx.out, .sf-art, .stagefx h1, .sf-narr, .slashfx, .confirm-bar { animation-duration: 1ms; } }
