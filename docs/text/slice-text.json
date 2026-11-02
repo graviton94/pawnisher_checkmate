@@ -3,28 +3,28 @@
   "id": "card-advance",
   "group": "명령 카드",
   "name": "전진 · 태엽 1 · 폰",
-  "text": "앞으로 나아가 대각선 앞을 친다. — 각주: 작은 개척자",
+  "text": " — 각주: 작은 개척자",
   "fx": "시작/영입 전용"
  },
  {
   "id": "card-leap",
   "group": "명령 카드",
   "name": "도약 · 태엽 1 · 나이트",
-  "text": "뛰어넘어 내려앉고, 그 자리에서 친다. — 각주: 뛰어넘고, 짓밟는 자.",
+  "text": " — 각주: 뛰어넘고, 짓밟는 자.",
   "fx": "시작/영입 전용"
  },
  {
   "id": "card-diagonal",
   "group": "명령 카드",
   "name": "사선 · 태엽 1 · 비숍",
-  "text": "사선으로 나아가 사선 끝까지 친다. — 각주: 성스러운 빛의 심판자",
+  "text": " — 각주: 성스러운 빛의 심판자",
   "fx": "시작/영입 전용"
  },
  {
   "id": "card-kingStep",
   "group": "명령 카드",
   "name": "왕의 걸음 · 태엽 1 · 킹",
-  "text": "한 칸 움직여 둘레를 친다. — 각주: 화려한 왕관, 잔혹한 무게",
+  "text": " — 각주: 화려한 왕관, 잔혹한 무게",
   "fx": "시작/영입 전용"
  },
  {
@@ -37,63 +37,63 @@
  {
   "id": "card-pierceDiag",
   "group": "명령 카드",
-  "name": "관통 사선 · 태엽 1 · 비숍 · 연쇄",
+  "name": "심판의 창 · 태엽 1 · 비숍 · 연쇄",
   "text": "첫 적을 꿰뚫는다. (뒤의 1기까지)",
   "fx": "각인 pierce · 보상 후보"
  },
  {
   "id": "card-crossLeap",
   "group": "명령 카드",
-  "name": "십자 도약 · 태엽 2 · 나이트 · 기병",
+  "name": "지축 강타 · 태엽 2 · 나이트 · 기병",
   "text": "도약 후 사방에 여진을 일으킨다. (상하좌우 50%)",
   "fx": "각인 cross · 보상 후보"
  },
  {
   "id": "card-charge",
   "group": "명령 카드",
-  "name": "돌격 · 태엽 1 · 폰 · 보병",
+  "name": "쇄도 · 태엽 1 · 폰 · 보병",
   "text": "일격을 휘두른다. (×1.6)",
   "fx": "배율 ×1.6 · 보상 후보"
  },
  {
   "id": "card-plate",
   "group": "명령 카드",
-  "name": "방열판 · 태엽 1 · 아무나",
+  "name": "철벽 · 태엽 1 · 아무나",
   "text": "굳게 걸어 잠근다. (방열판 +15)",
   "fx": "종류 shield · 수치 15 · 보상 후보"
  },
  {
   "id": "card-repair",
   "group": "명령 카드",
-  "name": "땜질 · 태엽 1 · 아무나",
+  "name": "응급 용접 · 태엽 1 · 아무나",
   "text": "기물 하나를 땜질한다. (HP +15)",
   "fx": "종류 repair · 수치 15 · 보상 후보"
  },
  {
   "id": "card-reload",
   "group": "명령 카드",
-  "name": "재장전 · 태엽 0 · 아무나",
+  "name": "태엽 감기 · 태엽 0 · 아무나",
   "text": "탄창을 다시 채운다. (카드 +2)",
   "fx": "종류 draw · 수치 2 · 보상 후보"
  },
  {
   "id": "card-kingBlow",
   "group": "명령 카드",
-  "name": "왕의 일격 · 태엽 2 · 킹 · 왕관",
+  "name": "왕의 철퇴 · 태엽 2 · 킹 · 왕관",
   "text": "왕이 직접 내려친다. (×2)",
   "fx": "배율 ×2 · 보상 후보"
  },
  {
   "id": "card-splashDiag",
   "group": "명령 카드",
-  "name": "대각 튐 · 태엽 2 · 비숍 · 연쇄",
+  "name": "파편 세례 · 태엽 2 · 비숍 · 연쇄",
   "text": "착지한 자리에서 사선으로 파편이 튄다. (대각 50%)",
   "fx": "각인 diag · 보상 후보"
  },
  {
   "id": "card-smash",
   "group": "명령 카드",
-  "name": "강타 · 태엽 2 · 아무나 · 연쇄",
+  "name": "분쇄 · 태엽 2 · 아무나 · 연쇄",
   "text": "온 힘을 실어 내려친다. (×1.5)",
   "fx": "배율 ×1.5 · 보상 후보"
  },
@@ -101,229 +101,229 @@
   "id": "card-rookLine",
   "group": "명령 카드",
   "name": "직진 · 태엽 2 · 룩",
-  "text": "곧게 나아가 줄 끝까지 친다. — 각주: 살아 움직이는 요새",
+  "text": " — 각주: 살아 움직이는 요새",
   "fx": "시작/영입 전용"
  },
  {
   "id": "card-rebound",
   "group": "명령 카드",
-  "name": "재도약 · 태엽 1 · 나이트 · 기병",
+  "name": "피의 질주 · 태엽 1 · 나이트 · 기병",
   "text": "처치 후 한 번 더 도약한다. (이번 턴 처치했으면 태엽 0)",
   "fx": "이번 턴 처치한 기물이면 태엽 0 · 보상 후보"
  },
  {
   "id": "card-hoofKick",
   "group": "명령 카드",
-  "name": "말발굽 · 태엽 1 · 나이트 · 기병",
+  "name": "짓밟기 · 태엽 1 · 나이트 · 기병",
   "text": "짓밟고 다음 명령을 받는다. (처치 시 카드 +1)",
   "fx": "처치마다 1장 · 보상 후보"
  },
  {
   "id": "card-march",
   "group": "명령 카드",
-  "name": "행진 · 태엽 1 · 폰 · 보병",
+  "name": "총진격 · 태엽 1 · 폰 · 보병",
   "text": "폰 전원이 한 칸 전진해 친다. — 각주: “전군, 진격하라!”",
   "fx": "종류 march · 보상 후보"
  },
  {
   "id": "card-draft",
   "group": "명령 카드",
-  "name": "징집 · 태엽 1 · 아무나 · 보병",
+  "name": "강제 징집 · 태엽 1 · 아무나 · 보병",
   "text": "킹 곁에 폰 하나를 세운다. (이번 대국만) — 각주: “빈자리를 채워라.”",
   "fx": "종류 draft · 보상 후보"
  },
  {
   "id": "card-wrath",
   "group": "명령 카드",
-  "name": "분노한 왕 · 태엽 1 · 킹 · 왕관",
+  "name": "왕의 분노 · 태엽 1 · 킹 · 왕관",
   "text": "상처 입은 만큼 분노한다. (잃은 HP 비율만큼, 최대 ×3)",
   "fx": "잃은 HP 비율만큼 최대 ×3 · 보상 후보"
  },
  {
   "id": "card-royalGuard",
   "group": "명령 카드",
-  "name": "왕의 갑주 · 태엽 1 · 킹 · 왕관",
+  "name": "황금 흉갑 · 태엽 1 · 킹 · 왕관",
   "text": "왕이 갑주를 두른다. (방열판 +30)",
   "fx": "종류 shield · 수치 30 · 보상 후보"
  },
  {
   "id": "card-spark",
   "group": "명령 카드",
-  "name": "불씨 · 태엽 0 · 아무나 · 연쇄",
+  "name": "점화 · 태엽 0 · 아무나 · 연쇄",
   "text": "불씨를 지핀다. (연쇄 +1, 카드 +1)",
   "fx": "종류 spark · 보상 후보"
  },
  {
   "id": "card-finisher",
   "group": "명령 카드",
-  "name": "마무리 · 태엽 2 · 아무나 · 연쇄",
+  "name": "처형 · 태엽 2 · 아무나 · 연쇄",
   "text": "연쇄를 끝맺는 일격. (연쇄 1마다 ×0.5 추가)",
   "fx": "연쇄마다 ×0.5 더 · 보상 후보"
  },
  {
   "id": "card-cavCharge",
   "group": "명령 카드",
-  "name": "기마 돌격 · 태엽 2 · 나이트 · 기병·보병",
+  "name": "선봉 돌파 · 태엽 2 · 나이트 · 기병·보병",
   "text": "기병이 앞장서고 보병이 뒤따른다. (착지 둘레 폰 전진 공격)",
   "fx": "둘레 폰 전진 · 보상 후보"
  },
  {
   "id": "card-kingGuard",
   "group": "명령 카드",
-  "name": "근위대 · 태엽 2 · 킹 · 왕관·보병",
+  "name": "근위대 진군 · 태엽 2 · 킹 · 왕관·보병",
   "text": "왕이 나서자 근위대가 따른다. (둘레 폰 전진 공격)",
   "fx": "둘레 폰 전진 · 보상 후보"
  },
  {
   "id": "card-doubleLeap",
   "group": "명령 카드",
-  "name": "연속 도약 · 태엽 1 · 나이트 · 기병·연쇄",
+  "name": "광란의 도약 · 태엽 1 · 나이트 · 기병·연쇄",
   "text": "처치할 때마다 연쇄가 거세진다. (처치 1회 = 연쇄 2칸)",
   "fx": "처치당 연쇄 2칸 · 보상 후보"
  },
  {
   "id": "card-shove",
   "group": "명령 카드",
-  "name": "밀어치기 · 태엽 2 · 아무나 · 밀치기",
+  "name": "몰아치기 · 태엽 2 · 아무나 · 밀치기",
   "text": "적을 밀어낸다. 막히면 부딪친다. (충돌 18)",
   "fx": "밀치기 (충돌 18) · 보상 후보"
  },
  {
   "id": "card-shieldBash",
   "group": "명령 카드",
-  "name": "방패 밀치기 · 태엽 1 · 폰 · 밀치기·보병",
+  "name": "방패 돌진 · 태엽 1 · 폰 · 밀치기·보병",
   "text": "방패로 밀쳐 낸다. 막히면 부딪친다. (충돌 18)",
   "fx": "밀치기 (충돌 18) · 보상 후보"
  },
  {
   "id": "card-ram",
   "group": "명령 카드",
-  "name": "들이받기 · 태엽 1 · 나이트 · 밀치기·기병",
+  "name": "파성추 · 태엽 1 · 나이트 · 밀치기·기병",
   "text": "들이받아 밀어낸다. 막히면 부딪친다. (충돌 18)",
   "fx": "밀치기 (충돌 18) · 보상 후보"
  },
  {
   "id": "card-gambit",
   "group": "명령 카드",
-  "name": "희생 수 · 태엽 0 · 폰 · 보병·연쇄",
+  "name": "제물 · 태엽 0 · 폰 · 보병·연쇄",
   "text": "폰 하나를 제물로 바친다. (연쇄 +2, 카드 +1) — 각주: “기꺼이.”",
   "fx": "종류 gambit · 보상 후보"
  },
  {
   "id": "part-horseshoe",
   "group": "부품",
-  "name": "편자 · 기병",
+  "name": "피 묻은 편자 · 기병",
   "text": "나이트가 처치하면 태엽 +1"
  },
  {
   "id": "part-magnet",
   "group": "부품",
-  "name": "자석 손 · 기병",
+  "name": "약탈자의 집게 · 기병",
   "text": "처치할 때마다 카드 +1"
  },
  {
   "id": "part-assembly",
   "group": "부품",
-  "name": "조립 라인 · 보병",
+  "name": "끝없는 생산선 · 보병",
   "text": "턴 시작에 폰이 2기 이하면 킹 곁에 폰 +1"
  },
  {
   "id": "part-drum",
   "group": "부품",
-  "name": "행진 북 · 보병",
+  "name": "진군의 북 · 보병",
   "text": "폰 카드 태엽 −1"
  },
  {
   "id": "part-crown",
   "group": "부품",
-  "name": "무거운 왕관 · 왕관",
+  "name": "짓누르는 왕관 · 왕관",
   "text": "킹의 공격 ×2"
  },
  {
   "id": "part-throne",
   "group": "부품",
-  "name": "이동식 옥좌 · 왕관",
+  "name": "걷는 옥좌 · 왕관",
   "text": "킹 카드를 쓰면 킹 방열판 +10"
  },
  {
   "id": "part-coil",
   "group": "부품",
-  "name": "증폭 코일 · 연쇄",
+  "name": "폭주 코일 · 연쇄",
   "text": "연쇄 배율이 곱해진다 (처치마다 ×1.5, 상한 없음)"
  },
  {
   "id": "part-echo",
   "group": "부품",
-  "name": "이중 톱니 · 연쇄",
+  "name": "메아리 톱니 · 연쇄",
   "text": "처치 1회가 연쇄 2칸"
  },
  {
   "id": "part-hammer",
   "group": "부품",
-  "name": "쇠망치 · 밀치기",
+  "name": "공성 망치 · 밀치기",
   "text": "충돌 피해 ×2"
  },
  {
   "id": "part-spare",
   "group": "부품",
-  "name": "여분 태엽 · 공용",
+  "name": "과부하 태엽 · 공용",
   "text": "태엽 +1, 손패 −1"
  },
  {
   "id": "part-tape",
   "group": "부품",
-  "name": "이중 테이프 · 공용",
+  "name": "되감는 테이프 · 공용",
   "text": "되감기 2회"
  },
  {
   "id": "kit-coil",
   "group": "부품 상자",
-  "name": "증폭 코일",
-  "text": "+ 불씨 · 마무리"
+  "name": "폭주 코일",
+  "text": "+ 점화 · 처형"
  },
  {
   "id": "kit-drum",
   "group": "부품 상자",
-  "name": "행진 북",
-  "text": "+ 행진 · 행진"
+  "name": "진군의 북",
+  "text": "+ 총진격 · 총진격"
  },
  {
   "id": "kit-assembly",
   "group": "부품 상자",
-  "name": "조립 라인",
-  "text": "+ 희생 수 · 징집"
+  "name": "끝없는 생산선",
+  "text": "+ 제물 · 강제 징집"
  },
  {
   "id": "kit-crown",
   "group": "부품 상자",
-  "name": "무거운 왕관",
-  "text": "+ 분노한 왕 · 왕의 일격"
+  "name": "짓누르는 왕관",
+  "text": "+ 왕의 분노 · 왕의 철퇴"
  },
  {
   "id": "kit-horseshoe",
   "group": "부품 상자",
-  "name": "편자",
-  "text": "+ 재도약 · 재도약",
+  "name": "피 묻은 편자",
+  "text": "+ 피의 질주 · 피의 질주",
   "fx": "분대에 나이트 필요"
  },
  {
   "id": "kit-echo",
   "group": "부품 상자",
-  "name": "이중 톱니",
-  "text": "+ 연속 도약 · 불씨",
+  "name": "메아리 톱니",
+  "text": "+ 광란의 도약 · 점화",
   "fx": "분대에 나이트 필요"
  },
  {
   "id": "kit-magnet",
   "group": "부품 상자",
-  "name": "자석 손",
-  "text": "+ 불씨 · 불씨"
+  "name": "약탈자의 집게",
+  "text": "+ 점화 · 점화"
  },
  {
   "id": "kit-hammer",
   "group": "부품 상자",
-  "name": "쇠망치",
-  "text": "+ 방패 밀치기 · 밀어치기"
+  "name": "공성 망치",
+  "text": "+ 방패 돌진 · 몰아치기"
  },
  {
   "id": "rec-N",
@@ -337,14 +337,14 @@
   "group": "영입",
   "name": "폰",
   "text": "작은 개척자",
-  "fx": "+ 전진 · 돌격"
+  "fx": "+ 전진 · 쇄도"
  },
  {
   "id": "rec-B",
   "group": "영입",
   "name": "비숍",
   "text": "성스러운 빛의 심판자",
-  "fx": "+ 사선 · 관통 사선"
+  "fx": "+ 사선 · 심판의 창"
  },
  {
   "id": "rec-R",
@@ -540,619 +540,643 @@
   "fx": "“대장, 먼저 갑니다.”"
  },
  {
-  "id": "ui-srcslicemaints-38-83",
+  "id": "ui-srcslicemaints-37-83",
   "group": "화면 문구",
-  "name": "main.ts:38",
+  "name": "main.ts:37",
   "text": "입문 — 시험대"
  },
  {
-  "id": "ui-srcslicemaints-38-84",
+  "id": "ui-srcslicemaints-37-84",
   "group": "화면 문구",
-  "name": "main.ts:38",
+  "name": "main.ts:37",
   "text": "카드 → 기물 → 붉은 과녁 순서로 누릅니다. 적 킹을 쓰러뜨리면 승리합니다."
  },
  {
-  "id": "ui-srcslicemaints-39-85",
+  "id": "ui-srcslicemaints-38-85",
   "group": "화면 문구",
-  "name": "main.ts:39",
+  "name": "main.ts:38",
   "text": "1판 — 연마 공정"
  },
  {
-  "id": "ui-srcslicemaints-39-86",
+  "id": "ui-srcslicemaints-38-86",
   "group": "화면 문구",
-  "name": "main.ts:39",
+  "name": "main.ts:38",
   "text": "붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다."
  },
  {
-  "id": "ui-srcslicemaints-40-87",
+  "id": "ui-srcslicemaints-39-87",
   "group": "화면 문구",
-  "name": "main.ts:40",
+  "name": "main.ts:39",
   "text": "2판 — 주조 공정"
  },
  {
-  "id": "ui-srcslicemaints-40-88",
+  "id": "ui-srcslicemaints-39-88",
   "group": "화면 문구",
-  "name": "main.ts:40",
+  "name": "main.ts:39",
   "text": "부품이 장착되었습니다. 맞는 카드와 함께 쓰면 배율이 커집니다."
  },
  {
-  "id": "ui-srcslicemaints-41-89",
+  "id": "ui-srcslicemaints-40-89",
   "group": "화면 문구",
-  "name": "main.ts:41",
+  "name": "main.ts:40",
   "text": "3판 — 검문!"
  },
  {
-  "id": "ui-srcslicemaints-41-90",
+  "id": "ui-srcslicemaints-40-90",
   "group": "화면 문구",
-  "name": "main.ts:41",
+  "name": "main.ts:40",
   "text": "검문입니다. 이기면 부품을 하나 더 얻습니다."
  },
  {
-  "id": "ui-srcslicemaints-42-91",
+  "id": "ui-srcslicemaints-41-91",
   "group": "화면 문구",
-  "name": "main.ts:42",
+  "name": "main.ts:41",
   "text": "4판 — 반장"
  },
  {
-  "id": "ui-srcslicemaints-42-92",
+  "id": "ui-srcslicemaints-41-92",
   "group": "화면 문구",
-  "name": "main.ts:42",
+  "name": "main.ts:41",
   "text": "반장은 철갑을 두르고 줄 폭격을 예고합니다."
  },
  {
-  "id": "ui-srcslicemaints-73-93",
+  "id": "ui-srcslicemaints-72-93",
   "group": "화면 문구",
-  "name": "main.ts:73",
+  "name": "main.ts:72",
   "text": ", 24)} ○ ○ HP ○ / ○${p.shield ? ` · 방열판 ○` :"
  },
  {
-  "id": "ui-srcslicemaints-73-94",
+  "id": "ui-srcslicemaints-72-94",
   "group": "화면 문구",
-  "name": "main.ts:73",
+  "name": "main.ts:72",
   "text": "} · 처치 ${(c.kills ?? 0) + Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0)}${c.quirk ? ` ○ ○` :"
  },
  {
-  "id": "ui-srcslicemaints-73-95",
+  "id": "ui-srcslicemaints-72-95",
   "group": "화면 문구",
-  "name": "main.ts:73",
+  "name": "main.ts:72",
   "text": "문턱 남음"
  },
  {
-  "id": "ui-srcslicemaints-134-96",
+  "id": "ui-srcslicemaints-133-96",
   "group": "화면 문구",
-  "name": "main.ts:134",
+  "name": "main.ts:133",
   "text": ": poor ? ` 태엽 ○ 필요 ` : !ok ? ` ${c.kind ==="
  },
  {
-  "id": "ui-srcslicemaints-134-97",
+  "id": "ui-srcslicemaints-133-97",
   "group": "화면 문구",
-  "name": "main.ts:134",
+  "name": "main.ts:133",
   "text": "앞으로 갈 폰 없음"
  },
  {
-  "id": "ui-srcslicemaints-134-98",
+  "id": "ui-srcslicemaints-133-98",
   "group": "화면 문구",
-  "name": "main.ts:134",
+  "name": "main.ts:133",
   "text": "움직일 기물 없음"
  },
  {
-  "id": "ui-srcslicemaints-136-99",
+  "id": "ui-srcslicemaints-183-99",
   "group": "화면 문구",
-  "name": "main.ts:136",
-  "text": "태엽 ○"
- },
- {
-  "id": "ui-srcslicemaints-171-100",
-  "group": "화면 문구",
-  "name": "main.ts:171",
+  "name": "main.ts:183",
   "text": "대국 끝"
  },
  {
-  "id": "ui-srcslicemaints-171-101",
+  "id": "ui-srcslicemaints-183-100",
   "group": "화면 문구",
-  "name": "main.ts:171",
+  "name": "main.ts:183",
   "text": "적 차례"
  },
  {
-  "id": "ui-srcslicemaints-171-102",
+  "id": "ui-srcslicemaints-183-101",
   "group": "화면 문구",
-  "name": "main.ts:171",
+  "name": "main.ts:183",
   "text": "움직이는 중"
  },
  {
-  "id": "ui-srcslicemaints-171-103",
+  "id": "ui-srcslicemaints-183-102",
   "group": "화면 문구",
-  "name": "main.ts:171",
+  "name": "main.ts:183",
   "text": "○턴 · 내 차례"
  },
  {
-  "id": "ui-srcslicemaints-173-104",
+  "id": "ui-srcslicemaints-185-103",
   "group": "화면 문구",
-  "name": "main.ts:173",
+  "name": "main.ts:185",
   "text": ").innerHTML = ` 덱 ○ 분대 ○ 뽑을 ○ · 버림 ○ ${b.hand.map(cardHtml).join("
  },
  {
-  "id": "ui-srcslicemaints-173-105",
+  "id": "ui-srcslicemaints-185-104",
   "group": "화면 문구",
-  "name": "main.ts:173",
+  "name": "main.ts:185",
   "text": "‘손패가 없어.’"
  },
  {
-  "id": "ui-srcslicemaints-177-106",
+  "id": "ui-srcslicemaints-189-105",
   "group": "화면 문구",
-  "name": "main.ts:177",
+  "name": "main.ts:189",
   "text": ").innerHTML = ` 반장 규칙 철갑 ○ · ○턴마다 다시 <span${b.bombRow !== null ?"
  },
  {
-  "id": "ui-srcslicemaints-177-107",
+  "id": "ui-srcslicemaints-189-106",
   "group": "화면 문구",
-  "name": "main.ts:177",
+  "name": "main.ts:189",
   "text": "}>줄 폭격 −○ · ${b.bombRow !== null ?"
  },
  {
-  "id": "ui-srcslicemaints-177-108",
+  "id": "ui-srcslicemaints-189-107",
   "group": "화면 문구",
-  "name": "main.ts:177",
+  "name": "main.ts:189",
   "text": "○턴마다"
  },
  {
-  "id": "ui-srcslicemaints-179-109",
+  "id": "ui-srcslicemaints-191-108",
   "group": "화면 문구",
-  "name": "main.ts:179",
+  "name": "main.ts:191",
+  "text": ").innerHTML = ` 태엽 ${Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<i class=\"seg${i < b.ap ?"
+ },
+ {
+  "id": "ui-srcslicemaints-192-109",
+  "group": "화면 문구",
+  "name": "main.ts:192",
   "text": ").innerHTML = ` 나사 ${Array.from({ length: SLICE.coins }, (_, i) => `<i class=\"coin${i < b.coins ?"
  },
  {
-  "id": "ui-srcslicemaints-181-110",
+  "id": "ui-srcslicemaints-194-110",
   "group": "화면 문구",
-  "name": "main.ts:181",
+  "name": "main.ts:194",
   "text": ").innerHTML = `◀◀ 되감기 ○/${parts.includes("
  },
  {
-  "id": "ui-srcslicemaints-196-111",
+  "id": "ui-srcslicemaints-209-111",
   "group": "화면 문구",
-  "name": "main.ts:196",
+  "name": "main.ts:209",
   "text": "×○ 연쇄 ○ 이번 턴 −○ ${b.overkill ?"
  },
  {
-  "id": "ui-srcslicemaints-211-112",
+  "id": "ui-srcslicemaints-224-112",
   "group": "화면 문구",
-  "name": "main.ts:211",
+  "name": "main.ts:224",
   "text": "충돌"
  },
  {
-  "id": "ui-srcslicemaints-231-113",
+  "id": "ui-srcslicemaints-244-113",
   "group": "화면 문구",
-  "name": "main.ts:231",
+  "name": "main.ts:244",
   "text": "연쇄 ○ ×○○"
  },
  {
-  "id": "ui-srcslicemaints-251-114",
+  "id": "ui-srcslicemaints-264-114",
   "group": "화면 문구",
-  "name": "main.ts:251",
+  "name": "main.ts:264",
   "text": "‘태엽이 모자라.’"
  },
  {
-  "id": "ui-srcslicemaints-251-115",
+  "id": "ui-srcslicemaints-264-115",
   "group": "화면 문구",
-  "name": "main.ts:251",
+  "name": "main.ts:264",
   "text": "‘앞으로 갈 폰이 없어.’"
  },
  {
-  "id": "ui-srcslicemaints-251-116",
+  "id": "ui-srcslicemaints-264-116",
   "group": "화면 문구",
-  "name": "main.ts:251",
+  "name": "main.ts:264",
   "text": "‘지금은 쓸 수 없어.’"
  },
  {
-  "id": "ui-srcslicemaints-264-117",
+  "id": "ui-srcslicemaints-277-117",
   "group": "화면 문구",
-  "name": "main.ts:264",
+  "name": "main.ts:277",
   "text": "‘움직일 기물이 없어.’"
  },
  {
-  "id": "ui-srcslicemaints-264-118",
+  "id": "ui-srcslicemaints-277-118",
   "group": "화면 문구",
-  "name": "main.ts:264",
+  "name": "main.ts:277",
   "text": "‘○이(가) 없거나, 갈 칸이 없어.’"
  },
  {
-  "id": "ui-srcslicemaints-297-119",
+  "id": "ui-srcslicemaints-310-119",
   "group": "화면 문구",
-  "name": "main.ts:297",
+  "name": "main.ts:310",
   "text": "‘○을(를) 움직일 카드가 없어.’"
  },
  {
-  "id": "ui-srcslicemaints-306-120",
+  "id": "ui-srcslicemaints-319-120",
   "group": "화면 문구",
-  "name": "main.ts:306",
+  "name": "main.ts:319",
   "text": "다음 차례에 움직이는 적입니다. 붉은 칸을 공격합니다."
  },
  {
-  "id": "ui-srcslicemaints-306-121",
+  "id": "ui-srcslicemaints-319-121",
   "group": "화면 문구",
-  "name": "main.ts:306",
+  "name": "main.ts:319",
   "text": "다음 차례에는 움직이지 않습니다."
  },
  {
-  "id": "ui-srcslicemaints-337-122",
+  "id": "ui-srcslicemaints-351-122",
   "group": "화면 문구",
-  "name": "main.ts:337",
-  "text": "편자 발동 — 태엽 +○"
+  "name": "main.ts:351",
+  "text": "○ — 태엽 +○"
  },
  {
-  "id": "ui-srcslicemaints-349-123",
+  "id": "ui-srcslicemaints-364-123",
   "group": "화면 문구",
-  "name": "main.ts:349",
+  "name": "main.ts:364",
   "text": "이대로 턴을 끝내면 킹이 피격당합니다. 한 번 더 누르면 끝냅니다."
  },
  {
-  "id": "ui-srcslicemaints-366-124",
+  "id": "ui-srcslicemaints-381-124",
   "group": "화면 문구",
-  "name": "main.ts:366",
-  "text": "조립"
+  "name": "main.ts:381",
+  "text": "끝없는"
  },
  {
-  "id": "ui-srcslicemaints-404-125",
+  "id": "ui-srcslicemaints-438-125",
   "group": "화면 문구",
-  "name": "main.ts:404",
-  "text": "불량 폐기 분대가 용광로로 보내졌습니다. 다시 하기"
+  "name": "main.ts:438",
+  "text": "불량 폐기 킹이 쓰러졌습니다. ○부터 다시 할 수 있습니다. 출하 종료 다시 하기"
  },
  {
-  "id": "ui-srcslicemaints-417-126",
+  "id": "ui-srcslicemaints-452-126",
   "group": "화면 문구",
-  "name": "main.ts:417",
+  "name": "main.ts:452",
   "text": "○ ○턴 · ○"
  },
  {
-  "id": "ui-srcslicemaints-424-127",
+  "id": "ui-srcslicemaints-459-127",
   "group": "화면 문구",
-  "name": "main.ts:424",
+  "name": "main.ts:459",
   "text": "유품 태엽 처분 (○) — 나사 +○"
  },
  {
-  "id": "ui-srcslicemaints-434-128",
+  "id": "ui-srcslicemaints-469-128",
   "group": "화면 문구",
-  "name": "main.ts:434",
+  "name": "main.ts:469",
   "text": "통과 ○ — 나사 +○"
  },
  {
-  "id": "ui-srcslicemaints-437-129",
+  "id": "ui-srcslicemaints-473-129",
   "group": "화면 문구",
-  "name": "main.ts:437",
+  "name": "main.ts:473",
   "text": "검문 통과 부품 상자 — 나사 +○ 부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다."
  },
  {
-  "id": "ui-srcslicemaints-439-130",
+  "id": "ui-srcslicemaints-504-130",
   "group": "화면 문구",
-  "name": "main.ts:439",
-  "text": "통과 수직 조각 끝 남은 분대 ○기 · 나사 ○ · 덱 ○장 플레이 소감을 알려 주면 다음 조각에 반영합니다. 처음부터"
- },
- {
-  "id": "ui-srcslicemaints-463-131",
-  "group": "화면 문구",
-  "name": "main.ts:463",
-  "text": "+ 넘친 피해 ○ → ○"
- },
- {
-  "id": "ui-srcslicemaints-472-132",
-  "group": "화면 문구",
-  "name": "main.ts:472",
+  "name": "main.ts:504",
   "text": ">정비 완료 — 남은 분대 HP +○%: ○${fallen.length ? ` · <span class="
  },
  {
-  "id": "ui-srcslicemaints-476-133",
+  "id": "ui-srcslicemaints-508-131",
   "group": "화면 문구",
-  "name": "main.ts:476",
+  "name": "main.ts:508",
   "text": "쓰러진 ○을(를) HP 50%로 되살리고"
  },
  {
-  "id": "ui-srcslicemaints-495-134",
+  "id": "ui-srcslicemaints-527-132",
   "group": "화면 문구",
-  "name": "main.ts:495",
+  "name": "main.ts:527",
   "text": "○이(가) 복귀했습니다."
  },
  {
-  "id": "ui-srcslicemaints-495-135",
+  "id": "ui-srcslicemaints-527-133",
   "group": "화면 문구",
-  "name": "main.ts:495",
+  "name": "main.ts:527",
   "text": "분대 전원 HP +○%"
  },
  {
-  "id": "ui-srcslicemaints-518-136",
+  "id": "ui-srcslicemaints-550-134",
   "group": "화면 문구",
-  "name": "main.ts:518",
+  "name": "main.ts:550",
   "text": "덱 ○장"
  },
  {
-  "id": "ui-srcslicemaints-518-137",
+  "id": "ui-srcslicemaints-550-135",
   "group": "화면 문구",
-  "name": "main.ts:518",
+  "name": "main.ts:550",
   "text": "카드 빼기 — 한 장 덱에서 카드 한 장을 영구히 뺍니다."
  },
  {
-  "id": "ui-srcslicemaints-531-138",
+  "id": "ui-srcslicemaints-563-136",
   "group": "화면 문구",
-  "name": "main.ts:531",
+  "name": "main.ts:563",
   "text": "○ 한 장을 뺐습니다."
  },
  {
-  "id": "ui-srcslicemaints-570-139",
+  "id": "ui-srcslicemaints-602-137",
   "group": "화면 문구",
-  "name": "main.ts:570",
+  "name": "main.ts:602",
   "text": "○ ○ ○ ○ · ○에게 파괴되었습니다."
  },
  {
-  "id": "ui-srcslicemaints-584-140",
+  "id": "ui-srcslicemaints-616-138",
   "group": "화면 문구",
-  "name": "main.ts:584",
+  "name": "main.ts:616",
   "text": "○ ○ ○ · HP ○/○ · 처치 ○ ${q ?"
  },
  {
-  "id": "ui-srcslicemaints-584-141",
+  "id": "ui-srcslicemaints-616-139",
   "group": "화면 문구",
-  "name": "main.ts:584",
+  "name": "main.ts:616",
   "text": "? ` 이름 ` :"
  },
  {
-  "id": "ui-srcslicemaints-586-142",
+  "id": "ui-srcslicemaints-618-140",
   "group": "화면 문구",
-  "name": "main.ts:586",
+  "name": "main.ts:618",
   "text": "data-ledger>폐기 원부 ○ <button class="
  },
  {
-  "id": "ui-srcslicemaints-593-143",
+  "id": "ui-srcslicemaints-625-141",
   "group": "화면 문구",
-  "name": "main.ts:593",
+  "name": "main.ts:625",
   "text": "새기기"
  },
  {
-  "id": "ui-srcslicemaints-615-144",
+  "id": "ui-srcslicemaints-647-142",
   "group": "화면 문구",
-  "name": "main.ts:615",
+  "name": "main.ts:647",
   "text": ": ''} ○ · 처치 ○ · 대국 ○ ○ · ○"
  },
  {
-  "id": "ui-srcslicemaints-616-145",
+  "id": "ui-srcslicemaints-648-143",
   "group": "화면 문구",
-  "name": "main.ts:616",
+  "name": "main.ts:648",
   "text": "아직 기록이 없습니다."
  },
  {
-  "id": "ui-srcslicemaints-644-146",
+  "id": "ui-srcslicemaints-676-144",
   "group": "화면 문구",
-  "name": "main.ts:644",
+  "name": "main.ts:676",
   "text": "○이(가) 분대에 합류했습니다."
  },
  {
-  "id": "ui-srcslicemaints-697-147",
+  "id": "ui-srcslicemaints-764-145",
   "group": "화면 문구",
-  "name": "main.ts:697",
-  "text": ">붉은 칸 = 가서 치는 범위 · <b style="
- },
- {
-  "id": "ui-srcslicemaints-733-148",
-  "group": "화면 문구",
-  "name": "main.ts:733",
+  "name": "main.ts:764",
   "text": "◀◀ 되감기"
  },
  {
-  "id": "ui-srcslicebattlets-337-149",
+  "id": "ui-srcslicemaints-786-146",
+  "group": "화면 문구",
+  "name": "main.ts:786",
+  "text": "○ ${cleared ? '반장을 넘었습니다.' :"
+ },
+ {
+  "id": "ui-srcslicemaints-787-147",
+  "group": "화면 문구",
+  "name": "main.ts:787",
+  "text": "없음"
+ },
+ {
+  "id": "ui-srcslicemaints-788-148",
+  "group": "화면 문구",
+  "name": "main.ts:788",
+  "text": "○ (처치 ○)"
+ },
+ {
+  "id": "ui-srcslicemaints-789-149",
+  "group": "화면 문구",
+  "name": "main.ts:789",
+  "text": "쓰러진 분대원: ○"
+ },
+ {
+  "id": "ui-srcslicemaints-790-150",
+  "group": "화면 문구",
+  "name": "main.ts:790",
+  "text": "○ — 이번 출하의 선봉."
+ },
+ {
+  "id": "ui-srcslicemaints-799-151",
+  "group": "화면 문구",
+  "name": "main.ts:799",
+  "text": ">시험판 Pawnisher : Checkmate <p class="
+ },
+ {
+  "id": "ui-srcslicemaints-801-152",
+  "group": "화면 문구",
+  "name": "main.ts:801",
+  "text": "data-rules>규칙 <button class="
+ },
+ {
+  "id": "ui-srcslicebattlets-337-153",
   "group": "화면 문구",
   "name": "battle.ts:337",
   "text": "없는 카드입니다."
  },
  {
-  "id": "ui-srcslicebattlets-344-150",
+  "id": "ui-srcslicebattlets-344-154",
   "group": "화면 문구",
   "name": "battle.ts:344",
   "text": "기물과 칸을 선택하십시오."
  },
  {
-  "id": "ui-srcslicebattlets-346-151",
+  "id": "ui-srcslicebattlets-346-155",
   "group": "화면 문구",
   "name": "battle.ts:346",
   "text": "이 카드로 움직일 수 없는 기물입니다."
  },
  {
-  "id": "ui-srcslicebattlets-348-152",
+  "id": "ui-srcslicebattlets-348-156",
   "group": "화면 문구",
   "name": "battle.ts:348",
   "text": "갈 수 없는 칸입니다."
  },
  {
-  "id": "ui-srcslicebattlets-395-153",
+  "id": "ui-srcslicebattlets-395-157",
   "group": "화면 문구",
   "name": "battle.ts:395",
-  "text": "징집 — 폰이 선다"
+  "text": "강제 징집 — 폰이 선다"
  },
  {
-  "id": "ui-srcslicebattlets-396-154",
+  "id": "ui-srcslicebattlets-396-158",
   "group": "화면 문구",
   "name": "battle.ts:396",
   "text": "킹 곁에 빈 칸이 없습니다."
  },
  {
-  "id": "ui-srcslicebattlets-402-155",
+  "id": "ui-srcslicebattlets-402-159",
   "group": "화면 문구",
   "name": "battle.ts:402",
   "text": "바칠 폰이 없습니다."
  },
  {
-  "id": "ui-srcslicebattlets-412-156",
+  "id": "ui-srcslicebattlets-412-160",
   "group": "화면 문구",
   "name": "battle.ts:412",
   "text": "내 기물을 선택하십시오."
  },
  {
-  "id": "ui-srcslicebattlets-470-157",
+  "id": "ui-srcslicebattlets-470-161",
   "group": "화면 문구",
   "name": "battle.ts:470",
   "text": "충돌!"
  },
  {
-  "id": "ui-srcslicebattlets-470-158",
+  "id": "ui-srcslicebattlets-470-162",
   "group": "화면 문구",
   "name": "battle.ts:470",
   "text": "벽 충돌!"
  },
  {
-  "id": "ui-srcslicebattlets-507-159",
+  "id": "ui-srcslicebattlets-507-163",
   "group": "화면 문구",
   "name": "battle.ts:507",
   "text": "적 ○"
  },
  {
-  "id": "ui-srcslicebattlets-519-160",
+  "id": "ui-srcslicebattlets-519-164",
   "group": "화면 문구",
   "name": "battle.ts:519",
   "text": "보일러 폭발!"
  },
  {
-  "id": "ui-srcslicebattlets-527-161",
+  "id": "ui-srcslicebattlets-527-165",
   "group": "화면 문구",
   "name": "battle.ts:527",
   "text": "킹"
  },
  {
-  "id": "ui-srcslicebattlets-527-162",
+  "id": "ui-srcslicebattlets-527-166",
   "group": "화면 문구",
   "name": "battle.ts:527",
   "text": "퀸"
  },
  {
-  "id": "ui-srcslicebattlets-527-163",
+  "id": "ui-srcslicebattlets-527-167",
   "group": "화면 문구",
   "name": "battle.ts:527",
   "text": "룩"
  },
  {
-  "id": "ui-srcslicebattlets-527-164",
+  "id": "ui-srcslicebattlets-527-168",
   "group": "화면 문구",
   "name": "battle.ts:527",
   "text": "비숍"
  },
  {
-  "id": "ui-srcslicebattlets-527-165",
+  "id": "ui-srcslicebattlets-527-169",
   "group": "화면 문구",
   "name": "battle.ts:527",
   "text": "나이트"
  },
  {
-  "id": "ui-srcslicebattlets-527-166",
+  "id": "ui-srcslicebattlets-527-170",
   "group": "화면 문구",
   "name": "battle.ts:527",
   "text": "폰"
  },
  {
-  "id": "ui-srcslicebattlets-555-167",
+  "id": "ui-srcslicebattlets-555-171",
   "group": "화면 문구",
   "name": "battle.ts:555",
   "text": "줄 폭격!"
  },
  {
-  "id": "ui-srcslicebattlets-570-168",
+  "id": "ui-srcslicebattlets-570-172",
   "group": "화면 문구",
   "name": "battle.ts:570",
   "text": "적"
  },
  {
-  "id": "ui-srcslicebattlets-581-169",
+  "id": "ui-srcslicebattlets-581-173",
   "group": "화면 문구",
   "name": "battle.ts:581",
   "text": "줄 폭격"
  },
  {
-  "id": "ui-srcslicebattlets-612-170",
+  "id": "ui-srcslicebattlets-612-174",
   "group": "화면 문구",
   "name": "battle.ts:612",
-  "text": "조립 라인 — 폰이 나온다"
+  "text": "끝없는 생산선 — 폰이 나온다"
  },
  {
-  "id": "ui-srcslicebattlets-625-171",
+  "id": "ui-srcslicebattlets-625-175",
   "group": "화면 문구",
   "name": "battle.ts:625",
   "text": "되감기를 모두 사용했습니다."
  },
  {
-  "id": "ui-srcslicebattlets-643-172",
+  "id": "ui-srcslicebattlets-643-176",
   "group": "화면 문구",
   "name": "battle.ts:643",
   "text": "납땜 자국"
  },
  {
-  "id": "ui-srcslicebattlets-644-173",
+  "id": "ui-srcslicebattlets-644-177",
   "group": "화면 문구",
   "name": "battle.ts:644",
   "text": "용접 흉터"
  },
  {
-  "id": "ui-srcslicebattlets-645-174",
+  "id": "ui-srcslicebattlets-645-178",
   "group": "화면 문구",
   "name": "battle.ts:645",
   "text": "반장 사냥꾼"
  },
  {
-  "id": "ui-srcslicebattlets-648-175",
+  "id": "ui-srcslicebattlets-648-179",
   "group": "화면 문구",
   "name": "battle.ts:648",
   "text": "○ 분쇄기"
  },
  {
-  "id": "ui-srcslicebattlets-658-176",
+  "id": "ui-srcslicebattlets-658-180",
   "group": "화면 문구",
   "name": "battle.ts:658",
   "text": "알 수 없음"
  },
  {
-  "id": "ui-slicehtml-8-177",
+  "id": "ui-slicehtml-8-181",
   "group": "화면 문구",
   "name": "slice.html:8",
   "text": "title>Pawnisher — 수직 조각</title"
  },
  {
-  "id": "ui-slicehtml-13-178",
+  "id": "ui-slicehtml-12-182",
   "group": "화면 문구",
-  "name": "slice.html:13",
-  "text": "부품 (칙령 트레이)"
+  "name": "slice.html:12",
+  "text": "남은 태엽"
  },
  {
-  "id": "ui-slicehtml-16-179",
+  "id": "ui-slicehtml-16-183",
   "group": "화면 문구",
   "name": "slice.html:16",
   "text": "span id=\"turn-label\" class=\"plate turn-label\">1턴 · 내 차례</span"
  },
  {
-  "id": "ui-slicehtml-17-180",
+  "id": "ui-slicehtml-17-184",
   "group": "화면 문구",
   "name": "slice.html:17",
   "text": "규칙"
  },
  {
-  "id": "ui-slicehtml-19-181",
+  "id": "ui-slicehtml-19-185",
   "group": "화면 문구",
   "name": "slice.html:19",
   "text": "나사 트랙"
  },
  {
-  "id": "ui-slicehtml-21-182",
+  "id": "ui-slicehtml-21-186",
   "group": "화면 문구",
   "name": "slice.html:21",
-  "text": "남은 태엽"
+  "text": "부품"
  },
  {
-  "id": "ui-slicehtml-24-183",
+  "id": "ui-slicehtml-24-187",
   "group": "화면 문구",
   "name": "slice.html:24",
   "text": "되감기 — 이번 턴 처음으로 (대국마다 한 번)"
  },
  {
-  "id": "ui-slicehtml-25-184",
+  "id": "ui-slicehtml-25-188",
   "group": "화면 문구",
   "name": "slice.html:25",
   "text": "button id=\"btn-end\" class=\"btn brass btn-go\" type=\"button\">턴 끝</button"
  },
  {
-  "id": "ui-slicehtml-32-185",
+  "id": "ui-slicehtml-32-189",
   "group": "화면 문구",
   "name": "slice.html:32",
   "text": "div id=\"rotate\" class=\"rotate\"> 화면을 가로로 돌려 주십시오 </div"
@@ -1167,6 +1191,6 @@
   "id": "misc-판 위 연출",
   "group": "기타 문구",
   "name": "판 위 연출",
-  "text": "문턱! · 충돌! · 벽 충돌! · 줄 폭격! · 보일러 폭발! · 징집 — 폰이 선다 · 조립 라인 — 폰이 나온다 · 체크! · 연쇄 N ×배수"
+  "text": "문턱! · 충돌! · 벽 충돌! · 줄 폭격! · 보일러 폭발! · 강제 징집 — 폰이 선다 · 끝없는 생산선 — 폰이 나온다 · 체크! · 연쇄 N ×배수"
  }
 ]

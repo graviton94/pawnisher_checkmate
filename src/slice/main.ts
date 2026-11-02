@@ -132,7 +132,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const art = cardArt(id);
   const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : '움직일 기물 없음'}</em>` : '';
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
-    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${c.desc}</small>` : `<i class="flv">${c.flavor ?? ''}</i>`}${why}</span></button>`;
+    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${c.desc ? `<small>${handDesc(c.desc)}</small>` : `<i class="flv">${c.flavor ?? ''}</i>`}${why}</span></button>`;
 };
 
 /** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
@@ -149,6 +149,12 @@ const cardArt = (id: CommandId): string => {
  */
 const keysHtml = (n: number, have = Infinity): string =>
   `<span class="costgear${n > have ? ' short' : ''}" aria-label="태엽 ${n}"><img src="ui/board/badge-c${Math.max(0, Math.min(9, n))}.png" alt=""></span>`;
+
+/** 손패용 짧은 설명 (D-163): 괄호 수치가 있으면 「문장 첫 마디 · 수치」, 없으면 문장 그대로. 전체 문장은 보상 · 덱 보기에 */
+const handDesc = (d: string): string => {
+  const m = d.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+  return m ? `${m[2]}` : d;
+};
 
 /** 빌드 축 띠 */
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
@@ -342,7 +348,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   // 템포 가속: 연쇄가 쌓일수록 다음 연출이 빨라진다
   renderer.setTempo(1 + Math.min(b.kills, 4) * 0.15);
   if (gain) {
-    toast(`편자 발동 — 태엽 +${gain}`);
+    toast(`${SLICE_PARTS.horseshoe.name} — 태엽 +${gain}`);
     window.setTimeout(() => sfx('coin', 9), 200);
   }
   if (b.s.winner !== null) return finish();
@@ -372,7 +378,7 @@ const onEndInner = async (): Promise<void> => {
   showBefore(r.before);
   await renderer.play(r.before, r.events);
   await deathRites();
-  if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('조립'))) flashParts(['assembly']);
+  if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
   busy = false;
   enemyTurn = false;
   renderer.setup(b.s);

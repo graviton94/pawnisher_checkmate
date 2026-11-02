@@ -392,7 +392,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.kills += chainGain(b, sim.removed.filter((q) => q.side === 1).length);
     if (has(b, 'magnet')) drawCards(b, sim.removed.filter((q) => q.side === 1).length);
   } else if (c.kind === 'draft') {
-    const e = spawnPawn(b, '징집 — 폰이 선다');
+    const e = spawnPawn(b, '강제 징집 — 폰이 선다');
     if (!e) return '킹 곁에 빈 칸이 없습니다.';
     events = [e];
   } else if (c.kind === 'gambit') {
@@ -609,7 +609,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.warned = false;
     // 조립 라인: 폰이 적으면 킹 옆에 하나
     if (has(b, 'assembly') && b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').length <= PART_NUM.assemblyBelow) {
-      const e = spawnPawn(b, '조립 라인 — 폰이 나온다');
+      const e = spawnPawn(b, '끝없는 생산선 — 폰이 나온다');
       if (e) events.push(e);
     }
     drawCards(b, b.handSize);
