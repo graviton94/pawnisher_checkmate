@@ -345,6 +345,9 @@ function px(g, x, y, c, a = 1, n = 1) { if (a <= 0) return; g.globalAlpha = Math
 /** 불씨 색 단계: 흰 → 연노랑 → 금 → 주황 → 진홍 → 검붉음 */
 const RAMP = ['#ffffff', '#fff3b0', '#facc15', '#f59e0b', '#e5262f', '#7a1218', '#2a0a0d'];
 const ramp = (k) => RAMP[Math.min(RAMP.length - 1, Math.max(0, Math.floor(k * RAMP.length)))];
+/** 차가운 불씨 (내 킹 파괴 — 덜 아프게): 흰 → 은 → 잿빛 */
+const COOL = ['#ffffff', '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#1e293b'];
+const coolRamp = (k) => COOL[Math.min(COOL.length - 1, Math.max(0, Math.floor(k * COOL.length)))];
 const COLD = ['#ffffff', '#bfefff', '#38bdf8', '#2563eb', '#1e1b4b'];
 const cold = (k) => COLD[Math.min(COLD.length - 1, Math.max(0, Math.floor(k * COLD.length)))];
 /** 부드러운 빛 (더하기 합성) — 도트 위에 얹는 유일한 매끈한 것 */
@@ -388,14 +391,14 @@ function shards(g, cx, cy, k, seed, color, n = 18) {
   for (let i = 0; i < n; i++) {
     const a = hash(seed + i) * Math.PI * 2, v = 50 + hash(seed + i * 3) * 120, life = 0.55 + hash(seed + i * 5) * 0.45; const kk = k / life; if (kk >= 1) continue;
     const e = 1 - Math.pow(1 - kk, 2); const x = cx + Math.cos(a) * v * e, y = cy + Math.sin(a) * v * e * 0.7 + 70 * kk * kk;
-    px(g, x, y, ramp(kk * 0.95), 1, hash(seed + i * 7) > 0.7 ? 2 : 1);
+    px(g, x, y, color === 'cool' ? coolRamp(kk * 0.95) : ramp(kk * 0.95), 1, hash(seed + i * 7) > 0.7 ? 2 : 1);
   }
 }
 /** 불씨 (여운): 아래에서 위로 떠오르며 깜빡이고 식는다 (더하기 합성) */
 function motes(g, k, seed, color = '#f59e0b', n = 22) {
   if (k <= 0) return;
   g.save(); g.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < n; i++) { const life = cl((k - hash(seed + i * 3) * 0.4) / 0.6); if (life <= 0 || life >= 1) continue; const x = hash(seed + i) * W + Math.sin(life * 7 + i) * 6, y = H * (0.75 + hash(seed + i * 5) * 0.25) - life * H * 0.55; const fl = 0.55 + 0.45 * Math.sin(life * 40 + i * 3); px(g, x, y, ramp(0.15 + life * 0.6), (1 - life) * fl); }
+  for (let i = 0; i < n; i++) { const life = cl((k - hash(seed + i * 3) * 0.4) / 0.6); if (life <= 0 || life >= 1) continue; const x = hash(seed + i) * W + Math.sin(life * 7 + i) * 6, y = H * (0.75 + hash(seed + i * 5) * 0.25) - life * H * 0.55; const fl = 0.55 + 0.45 * Math.sin(life * 40 + i * 3); px(g, x, y, color === 'cool' ? coolRamp(0.15 + life * 0.6) : ramp(0.15 + life * 0.6), (1 - life) * fl); }
   g.restore();
 }
 /** 위에서 비치는 빛줄기 (체크무늬 도트) */
@@ -714,90 +717,81 @@ const SCENES = [
     },
   },
   {
-    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '심장이 멎고, 왕관만 남는다', rest: 2640, wide: true,
-    sit: '반장 격파와 짝을 이루는 패배의 한 컷. 영화 띠가 닫히고 두 기물에만 조명 → 적이 힘을 모아 찌름 → 반전 컷 둘 · 집중선 위 멈춤 → 총알 시간: 카메라가 가짜 왕에게 다가가고 심장 박동이 점점 느려지며 박동마다 몸 안 금이 하얗게 달아오름 → 박동이 멎는 순간 빛이 터지며 몸이 슬로로 산산이 흩어졌다가 바닥에 무너져 쌓이고, 왕관은 금빛 꼬리를 끌며 높이 솟았다가 떨어져 튄다 → 빛은 왕관에만, 「킹 파괴」가 한 자씩.',
-    dur: 7600, phases: [['막 · 조명', 0, 450, P.tail], ['적 모으기', 450, 1350, P.gather], ['찌름', 1350, 1410, P.dash], ['반전 컷', 1410, 1530, P.boom], ['멈춤', 1530, 1650, P.stop], ['총알 시간 · 박동', 1650, 3350, P.pre], ['멎음 · 산산이', 3350, 4700, P.boom], ['왕관', 3350, 5000, P.dash], ['글자 · 서술', 5000, 6300, P.recoil], ['여운', 6300, 7600, P.tail]],
-    chips: ['영화 띠 · 두 기물만 조명 (반장 격파와 같은 문법)', '적 모으기 0.9초 → 찌름 0.06초 · 잔상', '반전 컷: 진홍/검정 → 흰/검정 + 집중선', '총알 시간 1.7초: 카메라 1 → 1.35, 박동 간격 280 → 600 → 1000ms', '박동마다 금이 번지고 하얗게 달아오름 · 부스러기', '멎음: 흰 섬광 · 이중 도트 고리 · 몸이 슬로로 흩어졌다 바닥에 쌓임', '왕관: 가짜 왕의 그 왕관이 금빛 꼬리로 솟아 동전처럼 뒤집히며 떨어져 두 번 튐', '빛줄기 · 빛은 왕관에만 · 재가 내려앉음 · 「킹 파괴」 한 자씩 쿵'],
+    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '반장 격파와 같은 문법, 조금 덜 아프게', rest: 2050, wide: true,
+    sit: '반장 격파를 거의 그대로 뒤집었다: 막이 닫히고 두 기물만 조명 → 적 퀸이 힘을 모아 찌름 → 반전 컷 → 0.12초 멈춤 → 총알 시간에 가짜 왕 안에서 금이 자람 → 슬로로 산산이 → 반장과 똑같은 왕관이 꼬리를 끌며 솟았다 떨어져 튄다. 덜 아프게: 흔들림 · 줌을 약하게, 진홍 대신 차가운 은빛 섬광 · 재, 축하 고리 없음, 막이 천천히 열리고 「킹 파괴」는 은빛 도장 + 한 줄 서술.',
+    dur: 6600, phases: [['막 닫힘', 0, 450, P.tail], ['적 모으기', 450, 1650, P.gather], ['찌름', 1650, 1710, P.dash], ['반전 컷', 1710, 1830, P.boom], ['멈춤', 1830, 1950, P.stop], ['총알 시간 · 금', 1950, 2700, P.pre], ['슬로 산산이', 2700, 4300, P.recoil], ['왕관 착지', 4300, 4700, P.pre], ['막 열림 · 도장', 4700, 5300, P.boom], ['서술 · 여운', 5300, 6600, P.tail]],
+    chips: ['반장 격파와 같은 타이밍 · 같은 카메라', '적 퀸 모으기 1.2초 → 찌름 0.06초 · 잔상', '반전 컷 둘 (흑 → 백)', '0.12초 멈춤 → 총알 시간: 가짜 왕 안에서 금이 자람', '16조각 슬로 산산이', '반장과 똑같은 도트 왕관 · 꼬리 · 두 번 튐', '덜 아프게: 흔들림 2/3 · 은빛 불씨 · 축하 고리 없음', '은빛 도장 「킹 파괴」 + 서술 한 줄'],
     draw: (g, t) => {
-      const KG = [2, 1], EN = [4.4, 1], [kx, ky] = ctr(2, 1), floorY = 1 * T + T * 0.86;
+      const KQ = [1.5, 1], KK = [4, 1], SIL = '#cbd5e1';
       const sine = (x) => 0.5 - 0.5 * Math.cos(Math.PI * x);
-      const beats = [1950, 2450, 3050]; let beat = 0; for (const b of beats) beat = Math.max(beat, 1 - Math.abs(t - b) / 170);
-      const stopT = 3350, stopped = t >= stopT;
-      const gk = seg(t, 450, 1350), thrust = E.inExpo(seg(t, 1350, 1410));
-      const nx = t < 1350 ? EN[0] + 0.35 * E.outCubic(gk) : lerp(EN[0] + 0.35, 3.05, thrust);
-      // 카메라: 모으는 동안 둘 사이로 → 찌름 펀치 → 총알 시간 동안 가짜 왕에게 천천히 → 멎은 뒤 천천히 빠짐
-      let z = 1 + 0.12 * sine(gk), fx0 = lerp(W / 2, ctr(3.1, 1)[0], sine(gk));
-      if (t >= 1410) { const p0 = E.outExpo(seg(t, 1410, 1500)); z = lerp(1.12, 1.5, p0); fx0 = lerp(ctr(3.1, 1)[0], ctr(2.3, 1)[0], p0); }
-      if (t >= 1650) { z = 1.5 + 0.22 * sine(seg(t, 1650, stopT)); fx0 = lerp(ctr(2.3, 1)[0], kx, sine(seg(t, 1650, stopT))); }
-      if (stopped) { const p0 = sine(seg(t, stopT + 600, 6600)); z = lerp(1.72, 1.08, p0); fx0 = lerp(kx, ctr(1.6, 1)[0], p0); }
-      const sh = addv(t < 1350 ? tremble(t, 2.2 * E.inCubic(gk)) : [0, 0], t >= 1530 && t < 1650 ? tremble(t, 1.2) : [0, 0], t >= 1650 && !stopped ? tremble(t, 1.5 * beat + 0.4) : [0, 0], shake(t, stopT, 13, 800), shake(t, 4450, 4, 200));
-      const cut = t >= 1410 && t < 1530;
-      g.save(); cam(g, z, fx0, ky, sh);
-      if (cut) { const inv = t >= 1470; g.fillStyle = inv ? '#f4f1ea' : '#7a1218'; g.fillRect(-W, -H, W * 3, H * 3); piece(g, 'N1', nx, 1, { black: true, sx: 1.12, sy: 0.88 }); piece(g, 'K0', KG[0], 1, { black: true, sx: 1.18, sy: 0.82 }); focusLines(g, kx, ky, 1, 5, inv ? '#050407' : '#ffffff'); g.restore(); letterbox(g, 1); return; }
-      board(g);
-      const grey = stopped ? 1 : E.outCubic(seg(t, 1530, 2600));
-      // 적: 모으기(불씨 수렴 · 붉은 빛) → 찌름(잔상)
-      if (t >= 450 && t < 1350) { const [qx2, qy2] = ctr(nx, 1); glow(g, qx2, qy2 + 16, 24 + 18 * gk, 'rgba(229,38,47,A)', 0.2 + 0.4 * gk); for (let i = 0; i < 14; i++) { const a = hash(i + 200) * Math.PI * 2 + gk * 2; const r = (56 + hash(i + 201) * 40) * (1 - E.inCubic(gk)); px(g, qx2 + Math.cos(a) * r, qy2 + Math.sin(a) * r * 0.7, ramp(0.35 + (1 - gk) * 0.4), 0.3 + 0.7 * gk); } }
-      if (t >= 1350 && t < 2200) afterimage(g, 'N1', [[EN[0] + 0.35, 1], [lerp(EN[0] + 0.35, 3.05, 0.5), 1], [3.05, 1]], 1 - seg(t, 1650, 2200));
-      piece(g, 'N1', nx, 1, { grey: grey > 0.5, sx: t < 1350 ? 1 + 0.16 * gk : 1, sy: t < 1350 ? 1 - 0.22 * gk : 1, redFlash: t < 1350 ? 0.6 * E.inCubic(gk) : 0 });
-      // 가짜 왕: 멈춤(흰 테) → 총알 시간 박동마다 금 · 달아오름 → 멎음
-      if (!stopped) {
-        if (t < 1650) piece(g, 'K0', KG[0], 1, { sx: t >= 1410 ? 1.16 : 1, sy: t >= 1410 ? 0.84 : 1, flash: t >= 1530 ? 0.35 : 0 });
-        else { const ck = cl(seg(t, 1650, stopT) * 0.7 + beat * 0.2 + 0.1 * seg(t, 3000, stopT)); boltPiece(g, 'K0', KG[0], 1, ck, { sx: 1 + 0.05 * beat, sy: 1 - 0.05 * beat, dx: tremble(t, 0.4 + beat)[0], filter: `grayscale(${grey * 0.85})` }); if (beat > 0.6) shards(g, kx, ky - 6, (1 - beat) * 0.6, 300 + Math.floor(t / 200), '#c8c8c8', 4); }
-        if (t >= 1530 && t < 1650) { focusLines(g, kx, ky, 0.55, 3 + Math.floor(t / 60)); burst(g, kx + 12, ky, 40, 0.06 + 0.05 * Math.sin(t / 25), '#ff6b6b', 12); }
-        if (t >= 1650) focusLines(g, kx, ky, 0.35 * (1 - seg(t, 1650, 2400)), 9 + Math.floor(t / 80));
-      } else {
-        // 산산이: 흩어졌다가(슬로) → 무게로 떨어져 발밑에 쌓인다
-        const k = seg(t, stopT, 4700); const s = T * 0.86, cx = KG[0] * T + T / 2, top = 1 * T + T * 0.88 - s * 0.94, part = s / 4;
-        // 들쭉날쭉한 도트 조각: 터지며 흩어지고(가장자리가 금빛으로 달아올랐다 식음) → 1/4바퀴씩 굴러 → 무게로 떨어져 발밑에 쌓인다
-        const sc2 = s / 64; const shardsV = voronoiShards('P0', 13, 7);
-        g.save(); g.imageSmoothingEnabled = false;
-        shardsV.forEach((f, id) => {
-          if (f.gy < 14) return;
-          const ox = (f.gx - 32) * sc2, oy = (f.gy - 32) * sc2; const out = E.outCubic(cl(k * 2.4)); const a = Math.atan2(oy - 6, ox) + (hash(91 + id) - 0.5) * 0.7; const v = 14 + hash(92 + id) * 16;
-          const bx2 = cx + ox + Math.cos(a) * v * out; const fall = Math.max(0, k - 0.38); let y2 = top + s / 2 + oy + Math.sin(a) * v * out * 0.7 + 280 * fall * fall; const pileX = cx + ox * 0.55 + (hash(94 + id) - 0.5) * 8; let x2 = lerp(bx2, pileX, E.inOutQuad(cl(fall * 2.5)));
-          const rest = floorY - 4 - (f.size / 120) * 2 - (id % 3) * 2; const landed = y2 >= rest; if (landed) y2 = rest;
-          const turns = landed ? Math.round(hash(93 + id) * 3) : Math.floor(k * 14 + hash(93 + id) * 4) % 4;
-          g.save(); g.translate(q(x2), q(y2)); g.rotate(turns * Math.PI / 2); g.filter = `grayscale(1) brightness(${0.75 + 0.25 * (1 - k)})`;
-          g.drawImage(f.c, -f.gx * sc2, -f.gy * sc2, 64 * sc2, 64 * sc2);
-          const ea = 1 - cl(k * 2.2); if (ea > 0) { g.filter = 'none'; g.globalAlpha = ea; g.drawImage(f.edgeC, -f.gx * sc2, -f.gy * sc2, 64 * sc2, 64 * sc2); g.globalAlpha = 1; }
-          g.restore();
-        });
-        g.restore();
-        shards(g, kx, ky, seg(t, stopT, 4500), 97, '#c8c8c8', 22);
-        const rk = E.outExpo(seg(t, stopT, stopT + 900)); ring(g, kx, ky, 8 + 120 * rk, 8 * (1 - rk), '#ece8de', 1 - rk); ring(g, kx, ky, 4 + 70 * rk, 4 * (1 - rk), '#8a8794', 1 - rk);
-        glow(g, kx, ky, 90 * (1 - seg(t, stopT, stopT + 500)), 'rgba(230,230,240,A)', 0.8 * (1 - seg(t, stopT, stopT + 500)));
-        if (t >= 4450 && t < 4700) { const kk = seg(t, 4450, 4700); for (let i = 0; i < 10; i++) px(g, kx + (i - 4.5) * 7 * (0.6 + kk), floorY - 2 - 6 * kk * (i % 2 ? 1 : 0.4), '#8a8794', 1 - kk, kk < 0.4 ? 2 : 1); }
+      const gk = seg(t, 450, 1650);
+      let z = 1 + 0.18 * sine(gk), fxp = lerp(W / 2, ctr(2.7, 1)[0], sine(gk)), fyp = ctr(2.7, 1)[1];
+      if (t >= 1710) { const p = E.outExpo(seg(t, 1710, 1800)); z = lerp(1.18, 1.6, p) + 0.08 * E.inOutQuad(seg(t, 1830, 2700)); fxp = lerp(ctr(2.7, 1)[0], ctr(3.7, 1)[0], p); }
+      if (t >= 2700) { const p = sine(seg(t, 2700, 4700)); z = lerp(1.68, 1.08, p); fxp = lerp(ctr(3.7, 1)[0], ctr(3.4, 1)[0], p); }
+      const impact = t >= 1710 && t < 1830; const hold = t >= 1830 && t < 1950; const bullet = t >= 1950 && t < 2700; const frozen = hold || bullet;
+      const sh = addv(t < 1650 ? tremble(t, 1.8 * E.inCubic(gk)) : [0, 0], hold ? tremble(t, 0.8) : bullet ? tremble(t, 0.4 + 1.4 * E.inCubic(seg(t, 1950, 2700))) : [0, 0], shake(t, 2700, 8, 700), shake(t, 4300, 2, 200));
+      const thrust = E.inExpo(seg(t, 1650, 1710)), back = E.outCubic(seg(t, 450, 1650));
+      const qx = t < 1650 ? KQ[0] - 0.5 * back : lerp(KQ[0] - 0.5, 3.15, thrust) + 0.07 * E.outCubic(seg(t, 1950, 2700));
+      const qsx = t < 1650 ? 1 + 0.18 * back : t < 2700 ? 1.14 + 0.04 * seg(t, 1950, 2700) : 1 + 0.18 * (1 - E.outElastic(seg(t, 2700, 3400)));
+      const qsy = t < 1650 ? 1 - 0.24 * back : t < 2700 ? 0.88 - 0.03 * seg(t, 1950, 2700) : 1 - 0.16 * (1 - E.outElastic(seg(t, 2700, 3400)));
+      g.save(); cam(g, z, fxp, fyp, sh);
+      if (impact) {
+        const inv = t >= 1770;
+        impactFrame(g, [['Q1', qx, 1, { sx: qsx, sy: qsy }], ['K0', KK[0], KK[1], { sx: 1.12, sy: 0.88 }]], inv);
+        focusLines(g, ...ctr(...KK), 1, 3, inv ? '#050407' : '#ffffff');
+        g.restore(); letterbox(g, 1); return;
       }
-      // 왕관: 멎는 순간 머리에서 솟아 → 금빛 꼬리 · 동전 뒤집기 → 떨어져 두 번 튐 → 흔들리다 멈춤
-      if (stopped) {
-        const k1 = seg(t, stopT, 4500); const posAt = (k) => [kx - 70 * E.outCubic(k), lerp(ky - 26, floorY - 10, k) - 4 * 95 * k * (1 - k)];
-        let [x, y] = posAt(k1); let flip = Math.cos(k1 * Math.PI * 6);
-        if (t < 4500) for (let i = 1; i <= 7; i++) { const [tx2, ty2] = posAt(Math.max(0, k1 - i * 0.022)); px(g, tx2, ty2, ramp(0.1 + i * 0.1), 1 - i / 8, i < 3 ? 2 : 1); }
-        if (t >= 4500) { const b1 = seg(t, 4500, 4760), b2 = seg(t, 4760, 4940), w = seg(t, 4940, 5500); x = kx - 70 - 8 * E.outCubic(seg(t, 4500, 5500)); y = floorY - 10 - (t < 4760 ? 16 * Math.sin(Math.PI * b1) : t < 4940 ? 5 * Math.sin(Math.PI * b2) : 0); flip = t < 4940 ? 1 : 1 - 0.25 * Math.abs(Math.sin(w * Math.PI * 3)) * (1 - w); if (t < 4760) { const kk = seg(t, 4500, 4760); for (let i = 0; i < 6; i++) px(g, x + (i - 2.5) * 6 * (0.6 + kk), floorY - 2 - 5 * kk * (i % 2 ? 1 : 0.4), '#c89b3c', 1 - kk); } }
-        const cw = T * 0.86 * 0.5, chh = T * 0.86 * (28 / 128);
-        glow(g, x, y, 34, 'rgba(250,204,21,A)', t < 4500 ? 0.5 : 0.35 + 0.15 * Math.sin(t / 300));
-        g.save(); g.imageSmoothingEnabled = false; g.translate(q(x), q(y)); g.scale(Math.abs(flip) < 0.15 ? 0.15 : flip, 1); g.drawImage(CROWN_CUT(), -cw / 2, -chh / 2, cw, chh); g.restore();
+      board(g);
+      piece(g, 'P0', 5, 0, { grey: t >= 1830 });
+      if (t >= 450 && t < 1650) {
+        const [qcx, qcy] = ctr(qx, 1); const pulse = 0.5 + 0.5 * Math.sin(t / lerp(120, 40, gk));
+        glow(g, qcx, qcy + 18, 30 + 20 * gk, 'rgba(203,213,225,A)', 0.2 + 0.3 * gk * pulse);
+        for (let w = 0; w < 3; w++) { const wk = cl((gk - w * 0.25) / 0.5); if (wk <= 0 || wk >= 1) continue; for (let i = 0; i < 14; i++) { const a = hash(i + w * 31) * Math.PI * 2 + wk * 2.2; const r = (60 + hash(i + 7 + w) * 60) * (1 - E.inCubic(wk)); px(g, qcx + Math.cos(a) * r, qcy + Math.sin(a) * r * 0.7, wk > 0.6 ? '#ffffff' : SIL, 0.3 + 0.7 * wk); } }
+      }
+      if (t >= 1650 && t < 2900 && qx > KQ[0] - 0.3) afterimage(g, 'Q1', [0, 0.3, 0.6, 0.85].map((f) => [lerp(KQ[0] - 0.5, qx - 0.15, f), 1]), 1 - seg(t, 2400, 2900));
+      piece(g, 'Q1', qx, 1, { sx: qsx, sy: qsy, flash: t < 1650 ? 0.6 * E.inCubic(seg(t, 700, 1650)) : 0 });
+      if (t >= 1650 && t < 2600) speedLines(g, ctr(KQ[0] - 0.5, 1)[0], ctr(1, 1)[1], ctr(3.15, 1)[0], ctr(1, 1)[1], 1 - seg(t, 1650, 2600));
+      const [kx, ky] = ctr(...KK);
+      if (t < 2700) {
+        if (t < 1950) piece(g, 'K0', KK[0], KK[1], { sx: 1.12, sy: 0.88, flash: hold ? 0.35 : 0 });
+        else { crackedPiece(g, 'K0', KK[0], KK[1], E.inCubic(seg(t, 1950, 2700)), 31, { sx: 1.12 - 0.08 * seg(t, 1950, 2700), sy: 0.88 + 0.06 * seg(t, 1950, 2700), dx: tremble(t, 0.4 + 1.4 * seg(t, 2300, 2700))[0] }); if (t >= 2250) shards(g, kx, ky - 10, seg(t, 2250, 2700) * 0.5, 61, 'cool', 6); }
+      } else {
+        shatter(g, 'K0', KK[0], KK[1], seg(t, 2700, 4300), 31, { power: 1.1 });
+        shards(g, kx, ky, seg(t, 2700, 4000), 41, 'cool', 24);
+        glow(g, kx, ky, 70 * (1 - seg(t, 2700, 3100)), 'rgba(226,232,240,A)', 0.45 * (1 - seg(t, 2700, 3100)));
+      }
+      if (frozen) focusLines(g, kx, ky, 0.45 * (1 - seg(t, 1950, 2650)), 3 + Math.floor(t / 60));
+      if (hold) burst(g, kx - 14, ky, 36, 0.06 + 0.05 * Math.sin(t / 25), '#ffffff', 12);
+      if (bullet && t < 2300) burst(g, kx - 14, ky, 26 * (1 - seg(t, 1950, 2300)), 0.1 + 0.5 * seg(t, 1950, 2300), '#ffffff', 12);
+      // 왕관: 반장 격파와 똑같은 그림 · 궤적 · 꼬리 · 두 번 튐
+      let crownX = kx + 56, crownY = ky + 22;
+      if (t >= 2700) {
+        const floorY = ky + 22; let x, y, rot;
+        const k1 = seg(t, 2700, 4300);
+        const posAt = (k) => [kx + 46 * E.outCubic(k), lerp(ky - 20, floorY, k) - 4 * 70 * k * (1 - k)];
+        [x, y] = posAt(k1); rot = 2 * Math.PI * E.outCubic(k1) - 0.4 * (1 - k1);
+        if (t < 4300) for (let i = 1; i <= 6; i++) { const kk = Math.max(0, k1 - i * 0.025); const [tx, ty] = posAt(kk); px(g, tx, ty, ramp(0.15 + i * 0.12), 1 - i / 7); }
+        if (t >= 4300) { const b1 = seg(t, 4300, 4520), b2 = seg(t, 4520, 4680); x = kx + 46 + 10 * E.outCubic(seg(t, 4300, 4680)); y = floorY - (t < 4520 ? 22 * Math.sin(Math.PI * b1) : 7 * Math.sin(Math.PI * b2)); rot = 2 * Math.PI; }
+        crownX = x; crownY = y;
+        g.save(); g.translate(q(x), q(y)); g.rotate(rot); g.fillStyle = '#7a5a12'; g.fillRect(-10, -1, 20, 5); g.fillStyle = C.gold; g.fillRect(-10, -4, 20, 4); g.fillRect(-10, -11, 4, 7); g.fillRect(-2, -13, 4, 9); g.fillRect(6, -11, 4, 7); g.fillStyle = '#fff3b0'; g.fillRect(-9, -4, 3, 2); g.fillStyle = C.crimson; g.fillRect(-1, -2, 3, 3); g.restore();
+        glow(g, x, y, 22, 'rgba(250,204,21,A)', 0.3);
+        if (t >= 4300 && t < 4550) ring(g, kx + 46, floorY, 4 + 20 * E.outExpo(seg(t, 4300, 4550)), 2, SIL, 0.7 * (1 - seg(t, 4300, 4550)));
       }
       g.restore();
-      // 조명 · 색 · 박동 · 막
-      const zs = z, toS = (wx, wy) => [W / 2 + (wx - fx0) * zs, H / 2 + (wy - ky) * zs];
-      if (!stopped) spotlight(g, [[...toS(...ctr(nx, 1)), 70 * zs], [...toS(kx, ky), 70 * zs]], 0.8 * E.outCubic(seg(t, 0, 450)));
-      else spotlight(g, [[...toS(kx - 78, floorY - 10), 60 * zs]], 0.85 * seg(t, 4300, 5200));
-      if (grey > 0 && !stopped) { g.fillStyle = `rgba(10,9,14,${0.35 * grey})`; g.fillRect(0, 0, W, H); }
-      if (!stopped && beat > 0) vignette(g, 0.7 * beat, '122,18,24');
-      if (t >= 1530 && t < 1550) flashAll(g, 0.6);
-      if (t >= stopT && t < stopT + 40) flashAll(g, 0.95, '240,240,250');
-      if (stopped) rays(g, toS(kx - 78, 0)[0], 0.7 * seg(t, 4800, 5600) * (1 - seg(t, 7000, 7600)));
-      letterbox(g, t < 6300 ? E.outCubic(seg(t, 0, 450)) : 1 - E.inOutQuad(seg(t, 6300, 7200)));
-      // 재
-      if (t >= 3600) { const k = seg(t, 3600, 7600); for (let i = 0; i < 18; i++) { const life = cl((k - hash(i + 130) * 0.4) / 0.6); if (life <= 0 || life >= 1) continue; px(g, 40 + hash(i + 131) * (W - 80) + Math.sin(life * 4 + i) * 5, 30 + life * (H - 60), '#6b6876', (1 - life) * 0.7); } }
-      // 글자: 한 자씩 쿵 + 서술
-      ['킹', '파', '괴'].forEach((c2, i) => { const t0 = 5000 + i * 280; if (t < t0) return; const kk = seg(t, t0, t0 + 200); const xx = W / 2 - 36 + i * 36; const sc = lerp(2.4, 1, E.outBack(kk)); text(g, c2, xx + 3, 40 + 4, 28, '#000', { scale: sc, alpha: cl(kk * 3) * 0.85 }); text(g, c2, xx, 40, 28, '#ff6b6b', { scale: sc, alpha: cl(kk * 3) }); });
-      if (t >= 5000 && t < 5900) { const i = Math.floor((t - 5000) / 280); const kk = (t - 5000 - i * 280) / 280; if (i < 3 && kk < 0.25) { g.save(); g.translate((hash(t) - 0.5) * 4, (hash(t + 1) - 0.5) * 4); g.restore(); } }
-      if (t >= 5900) text(g, '태엽이 다 풀렸다. 당신의 눈이 감겨 온다.', W / 2, H - 40, 12, '#c8c8c8', { alpha: seg(t, 5900, 6500) });
-      const scale = t < 1410 ? '1' : t < 1650 ? '0 (멈춤)' : t < stopT ? '0.15 (총알 시간)' : t < 4700 ? '0.35 (슬로)' : '1';
-      text(g, `시간 ×${scale}`, 62, H - 12, 11, C.fg, { alpha: 0.75 });
+      // 조명 · 막: 열릴 때 빛은 왕관에만 남는다
+      const lb = t < 4700 ? E.outCubic(seg(t, 0, 450)) : 1 - 0.7 * E.inOutQuad(seg(t, 4700, 5600));
+      const spotA = t < 4700 ? 0.82 * E.outCubic(seg(t, 0, 450)) : 0.82 - 0.3 * seg(t, 4700, 5600);
+      const zs = z; const toScreen = (wx, wy) => [W / 2 + (wx - fxp) * zs, H / 2 + (wy - fyp) * zs];
+      spotlight(g, t < 4300 ? [[...toScreen(...ctr(qx, 1)), 70 * zs], [...toScreen(kx, ky), 70 * zs]] : [[...toScreen(crownX, crownY), (70 - 25 * seg(t, 4300, 4700)) * zs]], spotA);
+      if (t >= 1830 && t < 1850) flashAll(g, 0.6);
+      if (t >= 2700 && t < 2730) flashAll(g, 0.45, '226,232,240');
+      letterbox(g, lb);
+      motes(g, seg(t, 4200, 6600), 51, 'cool', 24);
+      if (t >= 4800) stamp(g, '킹 파괴', W / 2, H / 2 - 30, seg(t, 4800, 5400), SIL, 28);
+      if (t >= 5400) text(g, '태엽이 다 풀렸다. 당신의 눈이 감겨 온다.', W / 2, H - 46, 12, '#d4d4d8', { alpha: seg(t, 5400, 5900) });
+      if (t >= 5800) text(g, '“한 번만 더 기회가 있었더라면…”', W / 2, H - 30, 11, '#9ca3af', { alpha: seg(t, 5800, 6300) });
+      const scale = t < 1830 ? '1' : t < 1950 ? '0 (멈춤)' : t < 2700 ? '0.1 (총알 시간)' : t < 4300 ? '0.3 (슬로)' : '1';
+      text(g, `시간 ×${scale}`, 54, H - 12, 11, C.fg, { alpha: 0.75 });
     },
   },
   {
@@ -1142,10 +1136,12 @@ function setupUi() {
     const tense = [{ transform: 'none' }, { transform: 'translateY(-1px)' }, { transform: 'translateY(1px)' }, { transform: 'translateY(-1px)' }, { transform: 'none' }];
     L.animate(tense, { duration: 140, iterations: 1 }); Rr.animate(tense, { duration: 140, iterations: 1 });
     const swing = (sign) => [{ transform: 'rotate(0deg)', offset: 0 }, { transform: `rotate(${-8 * sign}deg)`, offset: 0.08, easing: 'cubic-bezier(.2,.8,.3,1)' }, { transform: `rotate(${44 * sign}deg) translateY(${4 * sign}px)`, offset: 0.34, easing: 'cubic-bezier(.5,0,.8,.6)' }, { transform: `rotate(${24 * sign}deg) translateY(${4 * sign}px)`, offset: 0.52, easing: 'cubic-bezier(.3,0,.5,1)' }, { transform: `rotate(${36 * sign}deg) translateY(${4 * sign}px)`, offset: 0.68 }, { transform: `rotate(${29 * sign}deg) translateY(${4 * sign}px)`, offset: 0.82 }, { transform: `rotate(${32 * sign}deg) translateY(${4 * sign}px)`, offset: 1 }];
-    setTimeout(() => { L.animate(swing(1), { duration: 1300, fill: 'forwards' }); Rr.animate(swing(-1), { duration: 1400, fill: 'forwards' }); }, 140);
-    setTimeout(() => { const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 8, 22);
-      for (let k = 0; k < 5; k++) { const b = document.createElement('i'); b.className = 'chainbit'; b.style.left = `${bx}px`; b.style.top = `${by}px`; ms.appendChild(b); const vx = (Math.random() - 0.5) * 50; b.animate([{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${vx * 0.5}px, -${10 + Math.random() * 10}px) rotate(${90 * (k % 2 ? 1 : -1)}deg)`, offset: 0.25, easing: 'cubic-bezier(.2,.8,.3,1)' }, { transform: `translate(${vx}px, ${60 + Math.random() * 30}px) rotate(${180 * (k % 2 ? 1 : -1)}deg)`, easing: 'cubic-bezier(.5,0,.9,.4)' }], { duration: 760, fill: 'forwards' }); b.animate([{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { duration: 760, fill: 'forwards' }); setTimeout(() => b.remove(), 800); } }, 140);
+    l._snapT = [setTimeout(() => { L.animate(swing(1), { duration: 1300, fill: 'forwards' }); Rr.animate(swing(-1), { duration: 1400, fill: 'forwards' }); }, 140)];
+    l._snapT.push(setTimeout(() => { if (!l.classList.contains('off')) return; const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 8, 22);
+      for (let k = 0; k < 5; k++) { const b = document.createElement('i'); b.className = 'chainbit'; b.style.left = `${bx}px`; b.style.top = `${by}px`; ms.appendChild(b); const vx = (Math.random() - 0.5) * 50; b.animate([{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${vx * 0.5}px, -${10 + Math.random() * 10}px) rotate(${90 * (k % 2 ? 1 : -1)}deg)`, offset: 0.25, easing: 'cubic-bezier(.2,.8,.3,1)' }, { transform: `translate(${vx}px, ${60 + Math.random() * 30}px) rotate(${180 * (k % 2 ? 1 : -1)}deg)`, easing: 'cubic-bezier(.5,0,.9,.4)' }], { duration: 760, fill: 'forwards' }); b.animate([{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { duration: 760, fill: 'forwards' }); setTimeout(() => b.remove(), 800); } }, 140));
   };
+  /** 끊긴 체인을 다시 잇는다: 늦게 걸린 끊김 타이머 · 남은 끊김 애니메이션(CSS 흐름 제외)을 모두 거둔다 */
+  const healChain = (l) => { (l._snapT ?? []).forEach(clearTimeout); l._snapT = []; l.classList.remove('off'); l.querySelectorAll('.half').forEach((h) => h.getAnimations().forEach((a2) => { if (!(a2 instanceof CSSAnimation)) a2.cancel(); })); };
   const buildMap = () => {
     wrap.innerHTML = ''; mpick = -1; mbar.classList.remove('on');
     const W0 = wrap.clientWidth, H0 = wrap.clientHeight; const sx = 50, sy = H0 * 0.5;
@@ -1168,13 +1164,13 @@ function setupUi() {
     wrap.querySelectorAll('.mlink').forEach((l) => {
       const me = Number(l.dataset.i) === i; l.classList.toggle('live', me);
       if (!me && !l.classList.contains('off')) { l.classList.add('off'); snapChain(l); const wr = wrap.getBoundingClientRect(), sr = ms.getBoundingClientRect(); const bx = Number(l.dataset.mx) + wr.left - sr.left, by = Number(l.dataset.my) + wr.top - sr.top; sparksAt(ms, bx, by, 6, 18); for (let k = 0; k < 4; k++) { const b = document.createElement('i'); b.className = 'spk'; b.style.background = '#8a8794'; b.style.left = `${bx}px`; b.style.top = `${by}px`; b.style.setProperty('--x', `${(Math.random() - 0.5) * 16}px`); b.style.setProperty('--y', `${30 + Math.random() * 20}px`); b.style.setProperty('--d', '700ms'); ms.appendChild(b); setTimeout(() => b.remove(), 760); } }
-      if (me) l.classList.remove('off');
+      if (me) healChain(l);
     });
     const md = wrap.querySelectorAll('.md')[i]; void md.offsetWidth; md.classList.add('click'); const p = rel(md, ms); sparksAt(ms, p.x, p.y, 8, 34);
     document.getElementById('mcq').textContent = `${NODES[i][0]}으로 가시겠습니까?`;
     mbar.classList.add('on');
   };
-  document.getElementById('mBack').addEventListener('click', () => { if (mbusy) return; wrap.querySelectorAll('.md').forEach((m) => m.classList.remove('off', 'click')); wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.remove('off')); wrap.querySelectorAll('.mlink').forEach((l) => { l.classList.remove('live', 'off'); l.querySelectorAll('.half').forEach((h) => h.getAnimations().forEach((a2) => a2.cancel())); }); wrap.querySelector('.mstart')?.classList.remove('spin'); mbar.classList.remove('on'); mpick = -1; });
+  document.getElementById('mBack').addEventListener('click', () => { if (mbusy) return; wrap.querySelectorAll('.md').forEach((m) => m.classList.remove('off', 'click')); wrap.querySelectorAll('.mlabel').forEach((m) => m.classList.remove('off')); wrap.querySelectorAll('.mlink').forEach((l) => { l.classList.remove('live'); healChain(l); }); wrap.querySelector('.mstart')?.classList.remove('spin'); mbar.classList.remove('on'); mpick = -1; });
   pressy(document.getElementById('mGo'), () => {
     if (mpick < 0 || mbusy) return; mbusy = true; mbar.classList.remove('on');
     const ln = wrap.querySelectorAll('.mlink')[mpick], md = wrap.querySelectorAll('.md')[mpick];
