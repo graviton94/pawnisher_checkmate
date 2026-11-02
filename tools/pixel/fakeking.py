@@ -16,7 +16,7 @@ import maker  # noqa: E402
 
 CROWNS = {
     # 가: 반장의 왕관 그대로 — 가운데 바로 얹음
-    'a': (23, 11, [
+    'a': (23, 13, [
         '.Y.......Y.......Y.',
         '.YY.....YTY.....YY.',
         '.YYY...YTTTY...YYY.',
@@ -81,6 +81,15 @@ def crowned(base, key):
     # 왕관 칸 (머리 외곽선 위로 덮는다)
     for (x, y), ch in fill.items():
         g[y][x] = ch
+    # 왕관 아랫단과 머리 사이 경계: 왕관 바로 아래 몸통 칸에 검정 한 줄 (그림자 겸 경계선)
+    for x in {x for (x, _) in fill}:
+        yb = max(y for (xx, y) in fill if xx == x) + 1
+        if 0 <= yb < n and g[yb][x] in 'WSGD':
+            g[yb][x] = 'K'
+        if 0 <= yb + 1 < n and g[yb + 1][x] in 'WSGD':
+            g[yb + 1][x] = 'K'
+        if 0 <= yb + 2 < n and g[yb + 2][x] in 'WS':
+            g[yb + 2][x] = 'G'  # 왕관이 드리운 그늘 한 줄
     # 왕관 둘레 검정 외곽선 2칸 → 흰 테두리 2칸 (빈 칸 · 흰 테두리만 바꾼다)
     def ring(cells, depth, ch, over):
         out = set()
