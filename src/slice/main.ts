@@ -34,11 +34,11 @@ const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3,
 type Reward = 'recruit' | 'kit' | 'card' | 'part' | 'end';
 const BATTLES: { enemy: PieceType[]; kingHp: number; title: string; tell: string; reward: Reward; boss?: boolean; w?: number; h?: number; /** 다른 구성 (출하마다 둘 중 하나 — 다시 할 때 같은 판이 되풀이되지 않게) */ alt?: PieceType[]; place?: { side: 0 | 1; t: PieceType; x: number; y: number }[] }[] = [
   // 입문 판은 손으로 만든다: 적 폰을 킹 옆으로 비켜 두면 첫 카드(전진 · 사선)가 바로 친다
-  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', tell: '카드 → 기물 → 붉은 과녁 순서로 누릅니다. 적 킹을 쓰러뜨리면 승리합니다.', reward: 'recruit' },
-  { enemy: ['K', 'P', 'P'], alt: ['K', 'P', 'N'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', tell: '붉은 칸은 다음 차례에 상대가 공격할 수 있는 범위입니다.', reward: 'kit' },
-  { enemy: ['K', 'P', 'P', 'N'], alt: ['K', 'P', 'B', 'N'], kingHp: 0.6, title: '2판 — 주조 공정', tell: '부품이 장착되었습니다. 맞는 카드와 함께 쓰면 배율이 커집니다.', reward: 'card' },
-  { enemy: ['K', 'P', 'P', 'B', 'R'], alt: ['K', 'P', 'N', 'N', 'R'], kingHp: 0.7, title: '3판 — 검문!', tell: '검문입니다. 이기면 부품을 하나 더 얻습니다.', reward: 'part' },
-  { enemy: ['K', 'Q', 'P', 'P', 'N'], alt: ['K', 'Q', 'P', 'B', 'P'], kingHp: 0.75, title: '4판 — 반장', tell: '반장은 철갑을 두르고 줄 폭격을 예고합니다.', reward: 'end', boss: true },
+  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.', reward: 'recruit' },
+  { enemy: ['K', 'P', 'P'], alt: ['K', 'P', 'N'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', tell: '붉은 칸은 적이 다음 차례에 칠 자리입니다.', reward: 'kit' },
+  { enemy: ['K', 'P', 'P', 'N'], alt: ['K', 'P', 'B', 'N'], kingHp: 0.6, title: '2판 — 주조 공정', tell: '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.', reward: 'card' },
+  { enemy: ['K', 'P', 'P', 'B', 'R'], alt: ['K', 'P', 'N', 'N', 'R'], kingHp: 0.7, title: '3판 — 검문!', tell: '검수관의 판. 이기면 부품을 하나 더 받습니다.', reward: 'part' },
+  { enemy: ['K', 'Q', 'P', 'P', 'N'], alt: ['K', 'Q', 'P', 'B', 'P'], kingHp: 0.75, title: '4판 — 반장', tell: '철갑을 두른 반장이 기다린다. 두 턴마다, 한 줄이 불길에 잠긴다.', reward: 'end', boss: true },
 ];
 
 /** 분대: 시리얼 · 이름 · 기벽이 붙은 기물 (D-153) */
@@ -427,7 +427,7 @@ const start = (i: number): void => {
   closeOverlay();
   renderer.setup(b.s);
   refresh();
-  if (i > 0 || titleDone) window.setTimeout(() => toast(`${def.title} ${def.tell}`, 3000), 300);
+  if (i > 0 || titleDone) window.setTimeout(() => toast(`${def.title}\n${def.tell}`, 3000), 300);
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
   $('hand').classList.toggle('hint', i === 0);
 };
@@ -813,7 +813,7 @@ const title = (): void => {
     titleDone = true;
     closeOverlay();
     sfx('submit');
-    window.setTimeout(() => toast(`${BATTLES[0].title} ${BATTLES[0].tell}`, 3200), 200);
+    window.setTimeout(() => toast(`${BATTLES[0].title}\n${BATTLES[0].tell}`, 3200), 200);
   });
   el.querySelector('[data-rules]')!.addEventListener('click', help);
 };

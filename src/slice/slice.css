@@ -274,3 +274,4 @@ body.slice .panel h2 { margin: 0; font-size: 18px; }
 body.slice .panel p { margin: 0; }
 body.slice .panel .row .btn { min-height: 48px; white-space: nowrap; font-size: 15px; }
 .cmd .shelved { grid-column: 1 / -1; font-size: 12px; font-style: normal; color: #ff9a8a; } .cmd.deckcard:has(.shelved) { filter: grayscale(0.8) brightness(0.7); }
+body.slice .toast { white-space: pre-line; } body.slice .toast::first-line { color: #f4d27a; font-weight: 700; }
