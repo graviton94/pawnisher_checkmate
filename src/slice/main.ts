@@ -218,7 +218,8 @@ const hidePeek = (): void => {
 /** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
 const cardArt = (id: CommandId): string => {
   const c = COMMANDS[id];
-  if (c.who === 'any') return `<span class="art any">${c.kind === 'spark' ? '✦' : '★'}</span>`;
+  // 기물 없는 카드: 카드마다 도트 아이콘 (D-182, public/ui/icons16/c.<id>.png)
+  if (c.who === 'any') return `<span class="art any"><i class="ico16" style="${iconArt(`c.${id}`)}"></i></span>`;
   // 기물 아이콘 (D-162 — 행마 판보다 「누가 움직이나」가 먼저 읽힌다. 범위는 판 위 표시가 보여 준다)
   return `<span class="art">${pieceImg(c.who, 0, 'large', 44)}</span>`;
 };

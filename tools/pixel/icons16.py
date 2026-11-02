@@ -1155,6 +1155,165 @@ g.pts('T', (1, 0), (0, 1), (1, 1), (2, 1), (1, 2)).pts('T', (12, 8), (11, 9), (1
 icon('s.refine', '다듬기', g.done())
 
 
+# ───────── 지휘 카드 13 (기물 없는 카드 — 예전 ★ · ✦ 기호를 대신) ─────────
+
+# 지휘: 금별 훈장
+g = G()
+ascii_(g, 0, 0, [
+    '      y',
+    '      y',
+    '     yyy',
+    '     yyy',
+    'yyyyyyyy',
+    ' yyyyyyy',
+    '  yyyyyy',
+    '   yyyyy',
+    '   yyyyy',
+    '  yyyy y',
+    '  yyy',
+    ' yy',
+])
+g.mirror().pts('R', (6, 6), (6, 7)).pts('T', (6, 2), (5, 3))
+icon('c.order', '지휘', g.done())
+
+# 철벽: 리벳 박은 쇠 판
+g = G()
+g.rect(0, 1, 13, 12, 'l').rect(1, 2, 11, 10, 'g').rect(2, 3, 9, 8, 'l')
+g.pts('K', (1, 2), (11, 2), (1, 11), (11, 11)).pts('X', (3, 4), (9, 4), (3, 9), (9, 9))
+icon('c.plate', '철벽', g.done())
+
+# 방벽: 돌벽 (엇갈린 벽돌 · 위 톱니)
+g = G()
+ascii_(g, 0, 0, ['lll lll lll', 'lllllllllllll'])
+g.rect(0, 1, 13, 12, 'l')
+for y in (4, 7, 10):
+    g.rect(0, y, 13, 1, 'G')
+for y0, xs in [(1, (4, 9)), (5, (2, 7, 11)), (8, (4, 9)), (11, (2, 7, 11))]:
+    for x in xs:
+        g.rect(x, y0, 1, 3 if y0 != 11 else 2, 'G')
+g.pts('.', (3, 0), (7, 0), (11, 0), (12, 0))
+icon('c.bulwark', '방벽', g.done())
+
+# 응급 용접: 용접 토치 · 푸른 불꽃 · 튀는 불똥
+g = G(14)
+g.line(0, 12, 5, 7, 'l', w=3).rect(0, 11, 3, 3, 'r').rect(5, 6, 3, 2, 'u')
+g.pts('c', (8, 5), (9, 4), (9, 5), (10, 3), (10, 4)).pts('X', (9, 4), (11, 2))
+g.pts('O', (12, 0), (13, 3), (11, 6), (13, 6)).pts('T', (12, 4))
+icon('c.repair', '응급 용접', g.done())
+
+# 덧댐: 굵은 반창고 한 장 (가운데 거즈 · 숨구멍)
+g = G(14)
+for k in range(-2, 3):
+    g.line(1 + max(0, k), 12 - max(0, -k) , 12 - max(0, -k), 1 + max(0, k), 'w') if False else None
+for y in range(14):
+    for x in range(14):
+        if abs((x + y) - 13) <= 2.5 and 1 <= x <= 12 and 1 <= y <= 12:
+            g.set(x, y, 'w')
+for y in range(14):
+    for x in range(14):
+        if abs((x + y) - 13) <= 2.5 and abs(x - y) <= 3:
+            g.set(x, y, 'S')
+g.pts('G', (6, 5), (8, 7), (5, 8), (7, 6))
+icon('c.quickFix', '덧댐', g.done())
+
+# 태엽 감기: 태엽 열쇠 + 감기는 화살
+g = G(14)
+for y in range(14):
+    for x in range(14):
+        d = _m.hypot(x - 6.5, y - 6.5)
+        a = _m.degrees(_m.atan2(y - 6.5, x - 6.5))
+        if 5.6 <= d <= 6.8 and not (-80 < a < -30):
+            g.set(x, y, 'c')
+ascii_(g, 9, 0, ['cccc', ' ccc', '  cc'])
+g.disc(5, 5.5, 2.1, 'u').disc(8, 5.5, 2.1, 'u').rect(6, 5, 2, 5, 'u').pts('K', (5, 5), (8, 5)).rect(6, 10, 2, 1, 'A')
+icon('c.reload', '태엽 감기', g.done())
+
+# 박자: 메트로놈 (나무 몸통 · 쇠 추)
+g = G()
+for y, hw in zip(range(2, 13), [1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 6]):
+    g.rect(6 - hw, y, 2 * hw + 1, 1, 'b')
+g.rect(0, 12, 13, 2, 'E').rect(5, 8, 3, 3, 'w')
+g.line(6, 10, 9, 1, 'l').rect(8, 3, 2, 2, 'u')
+icon('c.tempo', '박자', g.done())
+
+# 점화: 불꽃
+g = G()
+ascii_(g, 0, 0, [
+    '      o',
+    '     oo',
+    '    ooo',
+    '   oooo',
+    '  ooooo  o',
+    '  oooooo oo',
+    ' ooooooooo',
+    ' ooooooooo',
+    'oooooooooo',
+    'ooooooooooo',
+    'ooooooooooo',
+    ' ooooooooo',
+    '  ooooooo',
+])
+ascii_(g, 4, 6, ['  y', ' yyy', ' yyyy', 'yyyyy', 'yyyyyy', ' yyyy'])
+g.pts('X', (6, 9), (6, 10), (7, 10))
+icon('c.spark', '점화', g.done())
+
+# 분쇄: 충격 폭발 (도트 별 터짐 · 흰 심)
+g = G()
+ascii_(g, 0, 0, [
+    'o     o',
+    ' o   oo',
+    ' oo ooo',
+    '  ooooo',
+    '  oyyyy',
+    'ooyyyyy',
+    ' oyyyXX',
+])
+for y in range(7):
+    g.c[13 - y] = list(g.c[y])
+g.mirror().pts('X', (5, 6), (6, 5), (6, 7), (7, 6))
+icon('c.smash', '분쇄', g.done())
+
+# 처형: 처형 도끼 (넓은 날 · 긴 자루)
+g = G(14)
+ascii_(g, 3, 0, [
+    '      ll',
+    '    lllll',
+    '   llllll',
+    '  lllllll',
+    '  llllll',
+    '   llll',
+])
+g.line(9, 1, 1, 12, 'b', w=2).pts('r', (2, 6), (3, 7), (4, 5)).pts('X', (6, 1), (5, 2))
+g.pts('u', (0, 13), (1, 13))
+icon('c.finisher', '처형', g.done())
+
+# 몰아치기: 겹 화살 (오른쪽으로 밀어붙임)
+g = G(14)
+for ox, ch in [(0, 'w'), (5, 'y')]:
+    for i in range(6):
+        g.rect(ox + i, 1 + i, 3, 1, ch).rect(ox + i, 12 - i, 3, 1, ch)
+    g.rect(ox + 6, 6, 3, 2, ch)
+icon('c.shove', '몰아치기', g.done())
+
+# 과부하: 압력계 — 쇠 테 · 붉은 눈금 칸 · 끝까지 넘어간 바늘
+g = G()
+g.disc(6, 6.5, 6, 'l').disc(6, 6.5, 4.8, 'w')
+for y in range(14):
+    for x in range(13):
+        d = _m.hypot(x - 6, y - 6.5)
+        a = _m.degrees(_m.atan2(y - 6.5, x - 6))
+        if 3.4 <= d <= 4.8 and -60 <= a <= 20:
+            g.set(x, y, 'R')
+g.line(6, 7, 10, 4, 'K').pts('K', (5, 7), (6, 6), (6, 8)).pts('G', (2, 6), (3, 4), (5, 2))
+icon('c.overload', '과부하', g.done())
+
+# 강제 징집: 흰 폰 + 금 십자 (곁에 하나 더)
+g = G(14)
+ascii_(g, 0, 3, PAWN7)
+g.rect(10, 1, 2, 6, 'y').rect(8, 3, 6, 2, 'y')
+icon('c.draft', '강제 징집', g.done())
+
+
 def render(rows):
     """14×14 재질 그림 → 16×16 RGBA (명암 · 외곽선)"""
     n = 16
@@ -1190,7 +1349,7 @@ def render(rows):
 
 
 def sheet(path):
-    keys = [k for k in ICONS if k.startswith('n.')] + [k for k in ICONS if not k.startswith(('n.', 's.'))] + [k for k in ICONS if k.startswith('s.')]
+    keys = [k for k in ICONS if k.startswith('n.')] + [k for k in ICONS if not k.startswith(('n.', 's.', 'c.'))] + [k for k in ICONS if k.startswith('s.')] + [k for k in ICONS if k.startswith('c.')]
     cols = 6
     S = 4
     cw, ch = 16 * S + 150, 16 * S + 70
