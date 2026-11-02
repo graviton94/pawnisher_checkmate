@@ -412,30 +412,47 @@ footer { color: var(--dim); font-size: 12px; }
 .pk3big { position: absolute; left: 50%; top: 50%; width: 120px; height: 160px; margin: -92px 0 0 -60px; background: #1e1c26; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #c89b3c, 0 6px 0 #000; display: grid; place-items: center; align-content: center; gap: 8px; font: 700 15px var(--body); color: #f4e6c4; z-index: 5; visibility: hidden; }
 .pk3big img { width: 56px; height: 56px; image-rendering: pixelated; }
 
-/* 메인 화면 — 베인 폰 (D-188) */
-.em3 { position: relative; width: 205px; height: 124px; flex: none; }
-.em3 img { position: absolute; inset: 0; width: 205px; height: 124px; image-rendering: pixelated; }
+/* 메인 화면 — 베인 타이틀 문장 (D-188, 24판: 빠르고 세게) */
+.emstage { min-height: 320px !important; }
+.emrow { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: -10px; }
+.emrow.punch { animation: empunch 420ms var(--snap); }
+@keyframes empunch { 0% { transform: scale(1.22); } 100% { transform: none; } }
+.em3 { position: relative; width: 308px; height: 186px; flex: none; }
+.em3 img { position: absolute; inset: 0; width: 308px; height: 186px; image-rendering: pixelated; }
 .em3 .h1 { clip-path: polygon(0 0, 77.6% 0, 20% 100%, 0 100%); }
 .em3 .h2 { clip-path: polygon(77.6% 0, 100% 0, 100% 100%, 20% 100%); }
-.em3 .h1, .em3 .h2 { opacity: 0; }
-.em3 .sl { clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0); filter: drop-shadow(0 0 6px rgba(229, 38, 47, 0.7)); }
-.em3.run .h1, .em3.run .h2 { animation: emdrop 520ms both; }
-@keyframes emdrop { 0% { opacity: 1; transform: translateY(-140px) scale(0.9, 1.25); animation-timing-function: var(--accel); } 45% { transform: translateY(0) scale(1.14, 0.84); animation-timing-function: var(--decel); } 70% { transform: translateY(-5px) scale(0.97, 1.04); } 100% { opacity: 1; transform: none; } }
-.em3.cut .h1 { animation: emh1 520ms var(--decel) forwards; opacity: 1; }
-.em3.cut .h2 { animation: emh2 520ms var(--decel) forwards; opacity: 1; }
-@keyframes emh1 { 0% { transform: none; } 30% { transform: translate(-8px, -8px) rotate(-2deg); } 100% { transform: translate(-5px, -5px) rotate(-1deg); } }
-@keyframes emh2 { 0% { transform: none; } 30% { transform: translate(8px, 8px) rotate(2deg); } 100% { transform: translate(5px, 5px) rotate(1deg); } }
-.em3.tremble { animation: emtr 260ms linear; }
-@keyframes emtr { 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } }
-.em3.cut .sl { animation: emsl 140ms var(--accel) forwards; }
+.em3 .h1, .em3 .h2, .em3 .sl { opacity: 0; }
+.em3.run .h1, .em3.run .h2 { animation: emdrop 260ms both; }
+@keyframes emdrop { 0% { opacity: 1; transform: translateY(-200px) scale(0.85, 1.35); animation-timing-function: cubic-bezier(0.7, 0, 1, 0.5); } 70% { transform: translateY(0) scale(1.2, 0.78); animation-timing-function: var(--decel); } 100% { opacity: 1; transform: none; } }
+.em3.tremble .h1, .em3.tremble .h2 { animation: emtr 120ms linear both; opacity: 1; }
+@keyframes emtr { 0% { transform: translate(-2px, 1px); } 25% { transform: translate(2px, -1px); } 50% { transform: translate(-2px, -1px); } 75% { transform: translate(1px, 1px); } 100% { transform: none; } }
+.em3.cut .sl { opacity: 1; animation: emsl 70ms linear both, emthick 420ms var(--decel) 70ms both; }
 @keyframes emsl { 0% { clip-path: polygon(100% 0, 100% 0, 100% 0, 100% 0); } 100% { clip-path: polygon(-10% -10%, 110% -10%, 110% 110%, -10% 110%); } }
-.em3.cut.done .sl { animation: emglow 1400ms ease-in-out infinite; clip-path: none; }
-@keyframes emglow { 50% { filter: drop-shadow(0 0 12px rgba(229, 38, 47, 0.95)); } }
-.emword { position: relative; width: 177px; height: 54px; overflow: hidden; opacity: 0; flex: none; }
-.emword img { position: absolute; left: 0; top: -95px; width: 177px; height: 149px; image-rendering: pixelated; }
-.emword.in { animation: emword 420ms var(--decel) both; }
-@keyframes emword { 0% { opacity: 1; transform: translateX(60px) skewX(-18deg); filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6); } 70% { filter: drop-shadow(-1px 0 #ff2a6d) drop-shadow(1px 0 #2de2e6); } 100% { opacity: 1; transform: none; filter: none; } }
-.emrow { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: -14px; }
+@keyframes emthick { 0% { filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 22px rgba(255, 60, 70, 1)) brightness(2); transform: scale(1.06); } 100% { filter: drop-shadow(0 0 8px rgba(229, 38, 47, 0.8)); transform: none; } }
+.em3.cut .h1 { opacity: 1; animation: emh1 700ms both; }
+.em3.cut .h2 { opacity: 1; animation: emh2 700ms both; }
+@keyframes emh1 { 0% { transform: none; filter: drop-shadow(-8px 0 #ff2a6d) drop-shadow(8px 0 #2de2e6); animation-timing-function: var(--decel); } 18% { transform: translate(-22px, -21px) rotate(-7deg); filter: drop-shadow(-3px 0 #ff2a6d) drop-shadow(3px 0 #2de2e6); animation-timing-function: cubic-bezier(0.3, 1.6, 0.4, 1); } 100% { transform: translate(-7px, -7px) rotate(-2deg); filter: none; } }
+@keyframes emh2 { 0% { transform: none; filter: drop-shadow(-8px 0 #ff2a6d) drop-shadow(8px 0 #2de2e6); animation-timing-function: var(--decel); } 18% { transform: translate(22px, 21px) rotate(6deg); filter: drop-shadow(-3px 0 #ff2a6d) drop-shadow(3px 0 #2de2e6); animation-timing-function: cubic-bezier(0.3, 1.6, 0.4, 1); } 100% { transform: translate(7px, 7px) rotate(2deg); filter: none; } }
+.em3.done .sl { animation: emglow 1600ms ease-in-out infinite; opacity: 1; clip-path: none; }
+@keyframes emglow { 0%, 100% { filter: drop-shadow(0 0 6px rgba(229, 38, 47, 0.7)); } 50% { filter: drop-shadow(0 0 16px rgba(255, 70, 80, 1)) brightness(1.15); } }
+.em3.done .h1 { opacity: 1; transform: translate(-7px, -7px) rotate(-2deg); } .em3.done .h2 { opacity: 1; transform: translate(7px, 7px) rotate(2deg); }
+.emglint { position: absolute; width: 46px; height: 6px; margin: -3px 0 0 -23px; background: linear-gradient(90deg, transparent, #fff, transparent); transform-origin: 50% 50%; opacity: 0; pointer-events: none; mix-blend-mode: screen; z-index: 3; }
+.emrays { position: absolute; left: 50%; top: 42%; width: 700px; height: 700px; margin: -350px 0 0 -350px; background: repeating-conic-gradient(rgba(255, 255, 255, 0.5) 0 2deg, transparent 2deg 11deg); border-radius: 50%; opacity: 0; pointer-events: none; z-index: 0; }
+.emrays.on { animation: emrays 420ms var(--decel) forwards; }
+@keyframes emrays { 0% { opacity: 1; transform: scale(0.3) rotate(0); } 100% { opacity: 0; transform: scale(1.4) rotate(14deg); } }
+.emvig { position: absolute; inset: 0; background: radial-gradient(circle, transparent 35%, rgba(150, 10, 18, 0.7) 100%); opacity: 0; pointer-events: none; z-index: 1; }
+.emvig.on { animation: emvig 1200ms ease-out forwards; }
+@keyframes emvig { 0% { opacity: 0; } 15% { opacity: 1; } 40% { opacity: 0.9; } 100% { opacity: 0.35; } }
+.ui-stage.inv > * { filter: invert(1) contrast(1.6); }
+.blood3 { position: absolute; width: 5px; height: 5px; background: #e5262f; box-shadow: 0 0 0 1px #0b0b0e; pointer-events: none; z-index: 4; }
+.ember3 { position: absolute; width: 3px; height: 3px; background: #ff6b5a; pointer-events: none; z-index: 1; }
+.emword { position: relative; width: 266px; height: 81px; overflow: hidden; opacity: 0; flex: none; z-index: 2; }
+.emword img { position: absolute; left: 0; top: -142px; width: 266px; height: 224px; image-rendering: pixelated; }
+.emword.in { animation: emword 300ms both; }
+@keyframes emword { 0% { opacity: 1; transform: scale(2.2) translateY(-12px); filter: drop-shadow(-10px 0 #ff2a6d) drop-shadow(10px 0 #2de2e6) brightness(2); animation-timing-function: var(--accel); } 55% { transform: scale(0.94); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: var(--decel); } 100% { opacity: 1; transform: none; filter: none; } }
+.emword::after { content: ''; position: absolute; top: 0; bottom: 0; width: 30px; left: -50px; background: rgba(255, 255, 255, 0.85); transform: skewX(-22deg); mix-blend-mode: overlay; opacity: 0; }
+.emword.shine::after { animation: emshine 600ms ease-in-out both; }
+@keyframes emshine { 0% { left: -50px; opacity: 1; } 100% { left: 110%; opacity: 1; } }
 </style>
 
 <div class="wrap">
@@ -1496,11 +1513,38 @@ function setupPart3() {
       play(st) { const rows = [...st.querySelectorAll('.rs3 div')]; const s = st.querySelector('.st3'); s.classList.remove('on'); rows.forEach((r) => { r.classList.remove('in'); r.querySelector('b').textContent = '0'; }); let t = 0; rows.forEach((r) => { after(t, () => re(r, 'in')); const b = r.querySelector('b'); const v = Number(b.dataset.v); const steps = Math.min(10, v); for (let k = 1; k <= steps; k++) after(t + 120 + k * 60, () => { b.textContent = Math.round((v * k) / steps); re(b, 'tick'); }); t += 120 + steps * 60 + 100; }); after(t + 100, () => { re(s, 'on'); after(150, () => shakeSt(st)); }); },
     },
     {
-      t: '메인 화면 — 베인 타이틀 문장', now: '로고 그림이 그대로 뜸.', beats: '지금 타이틀 로고의 왕관 쓴 폰 문장(가는 칼자국은 지우고)이 떨어져 꽝 → 잠깐 떨고 → 크고 붉은 칼자국이 오른위에서 왼아래로 한 번에 그어짐(섬광 · 흔들림 · 칼자국 따라 불똥) → 폰이 칼자국을 따라 두 동강으로 어긋남 · 칼자국은 붉게 숨 쉬듯 빛남 → 아래에 로고의 PAWNISHER · CHECKMATE가 색 갈림과 함께 들어옴. 칼자국은 원래 칼자국과 같은 각도, 아이콘처럼 검정 외곽선 · 흰 심 · 진홍 · 튄 핏방울 도트.', btn: '다시',
-      html: `<div class="emrow"><div class="em3"><img class="h1" alt=""><img class="h2" alt=""><img class="sl" alt=""></div><div class="emword"><img alt=""></div></div><div class="flash3"></div>`,
-      init(st) { st.querySelectorAll('.em3 .h1, .em3 .h2').forEach((im) => (im.src = SPR.TPAWN)); st.querySelector('.em3 .sl').src = SPR.TSLASH; st.querySelector('.emword img').src = SPR.LOGO; },
-      play(st) { const e = st.querySelector('.em3'), w = st.querySelector('.emword'); e.className = 'em3'; w.classList.remove('in'); void e.offsetWidth; e.classList.add('run'); after(240, () => shakeSt(st)); after(700, () => re(e, 'tremble')); after(980, () => { e.classList.remove('tremble'); e.classList.add('cut'); }); after(1100, () => { re(st.querySelector('.flash3'), 'on'); shakeSt(st); const r = rel(e, st); for (let k = 0; k < 5; k++) { const t = 0.15 + k * 0.17; sparksAt(st, r.x + r.w * (0.27 - t * 0.5), r.y - r.h * (0.43 - t * 0.86), 5, 26); } }); after(1260, () => e.classList.add('done')); after(1450, () => re(w, 'in')); },
+      t: '메인 화면 — 베인 타이틀 문장', now: '로고 그림이 그대로 뜸.', beats: '0.26초: 문장이 위에서 내리꽂혀 납작 → 0.38초: 가장자리가 붉게 조이고 문장이 떨며 칼날 끝에 흰 빛이 모임 → 0.5초 베기: 칼자국이 한 번에 그어지고 화면이 두 프레임 뒤집혔다 하얗게 번쩍 · 큰 흔들림 · 1.2배 줌 펀치 · 방사 속도선 · 핏방울이 튀어 떨어짐 · 두 동강이 색 갈림과 함께 멀리 튕겼다 출렁 복귀 · 칼자국은 굵게 부풀었다 가라앉음 → 0.7초: PAWNISHER가 2.2배에서 꽝 + 반짝 띠 → 대기 중: 칼자국 위로 흰 빛이 몇 초마다 훑고 불씨가 떠오름.', btn: '다시',
+      html: `<div class="emvig"></div><div class="emrays"></div><div class="emrow"><div class="em3"><img class="h1" alt=""><img class="h2" alt=""><img class="sl" alt=""><span class="emglint"></span></div><div class="emword"><img alt=""></div></div><div class="flash3"></div>`,
+      init(st) { st.classList.add('emstage'); st.querySelectorAll('.em3 .h1, .em3 .h2').forEach((im) => (im.src = SPR.TPAWN)); st.querySelector('.em3 .sl').src = SPR.TSLASH; st.querySelector('.emword img').src = SPR.LOGO; },
+      play(st) {
+        clearInterval(st._idle); clearInterval(st._emb);
+        const row = st.querySelector('.emrow'), e = st.querySelector('.em3'), w = st.querySelector('.emword'), g = st.querySelector('.emglint'), vig = st.querySelector('.emvig'), rays = st.querySelector('.emrays');
+        e.className = 'em3'; w.className = 'emword'; vig.classList.remove('on'); st.querySelectorAll('.blood3, .ember3').forEach((x) => x.remove()); void e.offsetWidth;
+        // 칼자국 선 (문장 좌표, 1.5배): A 오른위 → B 왼아래
+        const A = { x: 152 * 1.5, y: 7.5 * 1.5 }, B = { x: 50 * 1.5, y: 114.7 * 1.5 };
+        const ang = Math.atan2(B.y - A.y, B.x - A.x) * 180 / Math.PI;
+        const glintRun = (ms) => { g.style.left = `${A.x}px`; g.style.top = `${A.y}px`; g.animate([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }], { duration: ms, easing: 'cubic-bezier(.6,0,.4,1)' }); };
+        e.classList.add('run');
+        after(200, () => { shakeSt(st); const r = rel(e, st); sparksAt(st, r.x, r.y + r.h * 0.45, 10, 50); });
+        after(380, () => { e.classList.remove('run'); e.classList.add('tremble'); re(vig, 'on'); g.style.left = `${A.x}px`; g.style.top = `${A.y}px`; g.animate([{ transform: `rotate(${ang}deg) scale(.2)`, opacity: 0 }, { transform: `rotate(${ang}deg) scale(1.6, 3)`, opacity: 1 }], { duration: 120, fill: 'forwards' }); });
+        after(500, () => {
+          e.classList.remove('tremble'); e.classList.add('cut');
+          g.getAnimations().forEach((x) => x.cancel()); glintRun(90);
+          st.classList.add('inv'); after(60, () => { st.classList.remove('inv'); re(st.querySelector('.flash3'), 'on'); });
+          re(st, 'stage-shake'); st.animate([{ transform: 'translate(-12px,8px)' }, { transform: 'translate(11px,-7px)' }, { transform: 'translate(-8px,5px)' }, { transform: 'translate(5px,-3px)' }, { transform: 'translate(-2px,1px)' }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.1,.9,.2,1)' });
+          re(row, 'punch'); re(rays, 'on');
+          const er = e.getBoundingClientRect(), sr = st.getBoundingClientRect();
+          for (let i = 0; i < 22; i++) { const t = 0.2 + Math.random() * 0.6; const x = er.left - sr.left + A.x + (B.x - A.x) * t, y = er.top - sr.top + A.y + (B.y - A.y) * t; const side = Math.random() < 0.5 ? -1 : 1; const nx = 0.72 * side, ny = 0.69 * side; const v = 30 + Math.random() * 70; const d = document.createElement('i'); d.className = 'blood3'; d.style.left = `${x}px`; d.style.top = `${y}px`; if (i % 3 === 0) d.style.width = d.style.height = '3px'; st.appendChild(d); d.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${nx * v}px,${ny * v - 20}px)`, offset: 0.45 }, { transform: `translate(${nx * v * 1.3}px,${ny * v + 60}px)`, opacity: 0 }], { duration: 700 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.5,1)', fill: 'forwards' }); after(1000, () => d.remove()); }
+        });
+        after(1200, () => { e.classList.remove('cut'); e.classList.add('done'); });
+        after(700, () => { re(w, 'in'); after(160, () => shakeSt(st)); after(420, () => re(w, 'shine')); });
+        after(1400, () => {
+          st._idle = setInterval(() => { glintRun(500); re(w, 'shine'); }, 2600);
+          st._emb = setInterval(() => { const m = document.createElement('i'); m.className = 'ember3'; m.style.left = `${20 + Math.random() * (st.clientWidth - 40)}px`; m.style.top = `${st.clientHeight - 10}px`; st.appendChild(m); m.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${(Math.random() - 0.5) * 30}px,-${120 + Math.random() * 80}px)`, opacity: 0 }], { duration: 2200, easing: 'cubic-bezier(.2,.6,.4,1)', fill: 'forwards' }); after(2300, () => m.remove()); }, 260);
+        });
+      },
     },
+
     {
       t: '타이틀 등장 (지금 로고로)', now: '로고 · 버튼이 정지 패널로 즉시 뜸.', beats: '지금 타이틀 로고를 그대로 나눠 쓴다 — 왕관 쓴 폰 문장이 위에서 떨어져 꽝(납작 · 출렁 · 섬광) → 붉은 칼자국 위로 흰 칼빛이 번쩍 → PAWNISHER가 왼쪽부터 열리며 색 갈림이 모임 → CHECKMATE 줄이 가운데서 펼쳐짐 → 로고 전체를 반짝 띠가 훑음 → 버튼이 튀어 오름.', btn: '다시',
       html: `<div class="tl3"><img class="crest" alt=""><img class="word" alt=""><img class="sub" alt=""><span class="slash"></span><span class="shine"></span></div><div class="tl3btns"><span class="bb new small">규칙</span><span class="bb new small">출하 시작</span></div><div class="flash3"></div>`,
