@@ -252,17 +252,33 @@ function shatter(g, key, x, y, k, seed, o = {}) {
   }
   g.restore();
 }
-/** 빛이 새는 금: 기물 그림 안에만 갈라진 빛줄기가 자란다 (k 0~1). 금 밖으로는 그리지 않는다 */
 const crackC = document.createElement('canvas'); crackC.width = 128; crackC.height = 128;
+/** 도트 금 길: 64칸 그림 격자 위 무작위 걸음 (가지 다섯 + 잔가지). 각 도트에 자라는 순서(0~1) */
+const CRACKS = {};
+function crackPath(seed) {
+  if (CRACKS[seed]) return CRACKS[seed];
+  const out = []; const D8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  const walk = (x, y, ang, len, t0, span, depth) => {
+    for (let s = 0; s < len; s++) {
+      const a = ang + (hash(seed + x * 7 + y * 13 + s) - 0.5) * 1.3; const d = D8[(Math.round((a / (Math.PI * 2)) * 8) % 8 + 8) % 8];
+      x += d[0]; y += d[1]; out.push([x, y, t0 + (s / len) * span]);
+      if (depth < 1 && s > 2 && hash(seed + s * 31 + x) > 0.72) walk(x, y, a + (hash(seed + s) > 0.5 ? 0.9 : -0.9), 3 + Math.floor(hash(seed + s + 3) * 4), t0 + (s / len) * span, span * 0.4, depth + 1);
+    }
+  };
+  for (let b = 0; b < 5; b++) walk(32, 36, (b / 5) * Math.PI * 2 + hash(seed + b) * 0.8, 9 + Math.floor(hash(seed + b * 5) * 8), b * 0.08, 0.6, 0);
+  return (CRACKS[seed] = out);
+}
+/** 빛이 새는 금 (도트): 기물 그림 안에서만, 그림 도트 크기 그대로 — 검붉은 테두리 · 금빛 → 흰 심 · 끝에 불똥, 커지면 체크무늬 빛 번짐 */
 function crackedPiece(g, key, x, y, k, seed, o = {}) {
-  const c = crackC.getContext('2d'); c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, 128, 128); c.drawImage(imgs[key], 0, 0, 128, 128);
+  const c = crackC.getContext('2d'); c.imageSmoothingEnabled = false; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, 128, 128); c.drawImage(imgs[key], 0, 0, 128, 128);
   c.globalCompositeOperation = 'source-atop';
-  const paths = [[[64, 70], [54, 52], [60, 40], [50, 24]], [[64, 70], [78, 58], [74, 44], [86, 30]], [[64, 70], [70, 86], [60, 100], [66, 112]], [[64, 70], [46, 80], [38, 96]], [[64, 70], [86, 84], [94, 100]]];
-  const thick = 3 + 4 * k;
-  for (let pi = 0; pi < paths.length; pi++) { const P0 = paths[pi]; const reach = cl(k * 1.4 - pi * 0.12); if (reach <= 0) continue; const segs = (P0.length - 1) * reach; c.strokeStyle = '#7a1218'; c.lineWidth = thick + 4; c.lineJoin = 'miter'; c.beginPath(); c.moveTo(...P0[0]); for (let i = 1; i <= Math.ceil(segs); i++) { const f = Math.min(1, segs - (i - 1)); c.lineTo(lerp(P0[i - 1][0], P0[i][0], f), lerp(P0[i - 1][1], P0[i][1], f)); } c.stroke(); c.strokeStyle = k > 0.6 ? '#ffffff' : '#fff3b0'; c.lineWidth = thick; c.stroke(); }
+  const pts = crackPath(seed).filter((p) => p[2] <= k * 1.05); const P = 2; // 그림 도트 = 2px
+  c.fillStyle = '#2a0608'; for (const [ax, ay] of pts) c.fillRect((ax - 1) * P, (ay - 1) * P, P * 3, P * 3);
+  if (k > 0.45) { c.fillStyle = '#facc15'; c.globalAlpha = Math.min(1, (k - 0.45) * 2); for (const [ax, ay] of pts) for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) if ((ax + dx + ay + dy) % 2 === 0) c.fillRect((ax + dx) * P, (ay + dy) * P, P, P); c.globalAlpha = 1; }
+  for (const [ax, ay, ord] of pts) { c.fillStyle = k - ord < 0.12 ? '#ffffff' : k > 0.7 ? '#fff3b0' : '#f59e0b'; c.fillRect(ax * P, ay * P, P, P); }
   const s = T * 0.86, cx = x * T + T / 2 + (o.dx ?? 0), base = y * T + T * 0.88;
   g.save(); g.imageSmoothingEnabled = false; g.translate(cx, base); g.scale(o.sx ?? 1, o.sy ?? 1); g.drawImage(crackC, -s / 2, -s * 0.94, s, s); g.restore();
-  glow(g, cx, base - s * 0.45, 26 + 30 * k, 'rgba(255,230,150,A)', 0.25 + 0.6 * k);
+  glow(g, cx, base - s * 0.45, 22 + 26 * k, 'rgba(255,220,130,A)', 0.15 + 0.45 * k * k);
 }
 /** 화면 위아래 검은 띠 (영화) */
 function letterbox(g, k) { if (k <= 0) return; const h = Math.round(24 * k / FU) * FU; g.fillStyle = '#000'; g.fillRect(0, 0, W, h); g.fillRect(0, H - h, W, h); }
@@ -565,31 +581,51 @@ const SCENES = [
     },
   },
   {
-    id: 'sac', title: '자원 희생', tag: '막아서는 몸', rest: 2120,
-    sit: '말이 먼저 뜨고 잠깐 침묵. 폰이 웅크렸다 높이 뛰어 킹 앞에 내려앉아 버티고, 적 룩이 오래 겨눈 포격을 대신 맞는다. 맞고도 서 있다.',
-    dur: 3400, phases: [['말 · 침묵', 0, 700, P.tail], ['웅크림', 700, 1000, P.pre], ['몸 던짐', 1000, 1220, P.dash], ['버팀', 1220, 1550, P.recoil], ['적 겨눔', 1550, 2050, P.gather], ['포격', 2050, 2100, P.boom], ['정지', 2100, 2320, P.stop], ['여운 · 버티고 섬', 2320, 3400, P.tail]],
-    chips: ['말풍선 0.7초 먼저', '웅크림 300ms → 높은 호 220ms', '킹은 뒤로 미끄러짐', '착지 버팀 + 방패 반짝', '적 룩 500ms 겨눔 (빛이 모임)', '포격 50ms → 정지 220ms', '숫자는 흰색 · 오래 머묾'],
+    id: 'sac', title: '자원 희생', tag: '막아서는 몸', rest: 2080,
+    sit: '적 룩의 포격선이 킹을 겨눈다 (도트 화살이 줄을 따라 기어 온다). 곁의 폰이 “제가 맞겠습니다” — 웅크렸다 뛰어 킹 앞에 박히고, 킹은 뒤로 물러난다. 룩이 불씨를 모아 쏘는 빛줄기를 폰이 몸으로 받아 갈라낸다.',
+    dur: 3600, phases: [['겨눔 · 말', 0, 700, P.tail], ['웅크림', 700, 950, P.pre], ['몸 던짐', 950, 1150, P.dash], ['박힘 · 버팀', 1150, 1450, P.recoil], ['룩 모으기', 1450, 2000, P.gather], ['발사', 2000, 2060, P.boom], ['받아냄', 2060, 2400, P.stop], ['빛 꺼짐', 2400, 2700, P.tail], ['여운', 2700, 3600, P.tail]],
+    chips: ['도트 화살이 줄을 따라 기어 옴 (갈수록 빨라짐)', '도트 말풍선 · 꼬리', '웅크림 → 높은 호 · 자기 그림 잔상', '박힐 때 판 물결 + 먼지', '룩 앞에 불씨 수렴 0.55초', '빛줄기: 진홍 테 · 금 · 흰 심, 떨림', '폰에 부딪혀 위아래로 갈라지는 불똥', '빛줄기는 꼬리부터 체크무늬로 꺼짐'],
     draw: (g, t) => {
-      const sh = shake(t, 2050, 9, 450);
-      g.save(); cam(g, 1 + 0.05 * (t >= 2100 && t < 2320 ? 1 : t >= 2320 ? 1 - E.outCubic(seg(t, 2320, 3000)) : 0), W / 2, H / 2, sh);
-      board(g, { red: [[1, 1, 0.22], [2, 1, 0.22], [3, 1, 0.22], [4, 1, 0.22]] });
-      const aimK = E.inCubic(seg(t, 1550, 2050));
-      piece(g, 'R1', 5, 1, { sx: t < 2050 ? 1 + 0.1 * aimK : 1, sy: t < 2050 ? 1 - 0.15 * aimK : 1, redFlash: t < 2050 ? 0.7 * aimK : 0, dx: t < 2050 ? 6 * aimK : 0 });
-      if (t >= 1550 && t < 2050) { g.fillStyle = `rgba(229,38,47,${0.15 + 0.5 * aimK})`; g.fillRect(2.5 * T, 1 * T + T * 0.44, 2.5 * T, 2 + 4 * aimK); }
-      piece(g, 'K0', 2, lerp(1, 2, E.outCubic(seg(t, 1000, 1220))));
-      const crouch = E.outCubic(seg(t, 700, 1000)); const land = t >= 1220;
-      const pawnP = arc(ctr(2, 2), ctr(2, 1), E.inQuad(seg(t, 1000, 1220)), 56);
-      const bsq = land ? 1 - 0.3 * (1 - E.outElastic(seg(t, 1220, 1550))) : 1;
-      const hitSq = t >= 2050 && t < 2320 ? 0.82 : 1;
-      piece(g, 'P0', (pawnP[0] - T / 2) / T, (pawnP[1] - T / 2) / T, { sy: t < 1000 ? 1 - 0.25 * crouch : land ? bsq * hitSq : 1.12, sx: t < 1000 ? 1 + 0.15 * crouch : land ? (2 - bsq) * (2 - hitSq) : 0.9, flash: t >= 2050 && t < 2200 ? 1 : 0 });
-      if (t >= 1220 && t < 1550) { const k = seg(t, 1220, 1550); g.strokeStyle = C.cyan; g.globalAlpha = 1 - k; g.lineWidth = 3; g.beginPath(); g.arc(...ctr(2, 1), 26 + 10 * k, -1.2, 1.2); g.stroke(); g.globalAlpha = 1; }
-      if (t >= 2050 && t < 2400) { g.fillStyle = `rgba(255,255,255,${1 - seg(t, 2050, 2400)})`; g.fillRect(2.5 * T, 1 * T + T * 0.4, 2.5 * T, 10); }
-      if (t >= 2050 && t < 2320) burst(g, ...ctr(2, 1), 36, 0.3, C.fg, 12);
+      const sh = addv(shake(t, 2000, 8, 450), shake(t, 1150, 3, 200));
+      g.save(); cam(g, 1 + 0.06 * (t >= 2060 && t < 2400 ? 1 : t >= 2400 ? 1 - E.outCubic(seg(t, 2400, 3000)) : 0), ctr(3, 1)[0], H / 2, sh);
+      board(g, { wave: t >= 1150 ? { x: 2, y: 1, dt: (t - 1150) * 0.7 } : null });
+      const row = 1, rook = [5, 1];
+      // 겨눔: 도트 화살 (>) 이 줄을 따라 킹 쪽으로 기어 온다 — 룩이 모을수록 빨라지고 밝아진다
+      if (t < 2000) { const speed = t < 1450 ? 0.03 : lerp(0.03, 0.12, seg(t, 1450, 2000)); const bright = t < 1450 ? 0.55 : 0.55 + 0.45 * seg(t, 1450, 2000); for (let i = 0; i < 6; i++) { const ph = ((t * speed / 10 + i / 6) % 1); const xx = lerp(rook[0] * T - 4, 2 * T + T * 0.7, ph); const cy = ctr(0, row)[1]; for (const [dx, dy] of [[0, 0], [-1, -1], [-1, 1], [-2, -2], [-2, 2]]) px(g, xx + dx * FU, cy + dy * FU, '#e5262f', bright * (ph < 0.1 ? ph * 10 : 1)); } }
+      // 룩: 모으기 → 반동
+      const ck = E.inCubic(seg(t, 1450, 2000)); const rec = t >= 2000 ? 1 - E.outElastic(seg(t, 2000, 2600)) : 0;
+      piece(g, 'R1', rook[0], rook[1], { sx: t < 2000 ? 1 + 0.12 * ck : 1 + 0.1 * rec, sy: t < 2000 ? 1 - 0.16 * ck : 1 - 0.1 * rec, dx: t < 2000 ? 5 * ck : 8 * rec, redFlash: t < 2000 ? 0.5 * ck : 0 });
+      const [mx, my] = [rook[0] * T + 6, ctr(0, row)[1]];
+      if (t >= 1450 && t < 2000) { glow(g, mx, my, 10 + 16 * ck, 'rgba(255,120,60,A)', 0.3 + 0.5 * ck); for (let i = 0; i < 12; i++) { const a = hash(i + 80) * Math.PI * 2 + ck * 3; const r = (34 + hash(i + 81) * 20) * (1 - ck); px(g, mx + Math.cos(a) * r, my + Math.sin(a) * r * 0.7, ramp(0.1 + (1 - ck) * 0.5), 0.4 + 0.6 * ck); } }
+      // 킹: 폰이 뛰는 동안 뒤로 미끄러진다 · 붉게 겨눠진 맥박 (막아선 뒤엔 꺼짐)
+      const kSlide = E.outCubic(seg(t, 950, 1200));
+      piece(g, 'K0', 2 - 0.0 * kSlide, lerp(1, 2, kSlide), { redFlash: t < 950 ? 0.25 + 0.2 * Math.sin(t / 90) : 0 });
+      // 폰: 웅크림 → 높은 호 (잔상) → 박힘 · 버팀 → 받아냄
+      const crouch = E.outCubic(seg(t, 700, 950)); const jumpK = E.inQuad(seg(t, 950, 1150));
+      const pp = arc(ctr(2, 2), ctr(2, 1), jumpK, 58); const ppx = (pp[0] - T / 2) / T, ppy = (pp[1] - T / 2) / T;
+      if (t >= 950 && t < 1400) afterimage(g, 'P0', [0, 0.35, 0.7].map((f) => { const a2 = arc(ctr(2, 2), ctr(2, 1), jumpK * f, 58); return [(a2[0] - T / 2) / T, (a2[1] - T / 2) / T]; }), 1 - seg(t, 1150, 1400));
+      const land = t >= 1150; const brace = land ? 1 - 0.28 * (1 - E.outElastic(seg(t, 1150, 1450))) : 1;
+      const hitPush = t >= 2060 && t < 2400 ? -0.08 * E.outCubic(seg(t, 2060, 2140)) : t >= 2400 ? -0.08 * (1 - E.outBack(seg(t, 2400, 2800))) : 0;
+      const hitSq = t >= 2060 && t < 2400 ? 0.86 : 1;
+      const wob = t >= 2400 ? Math.sin((t - 2400) / 40) * 3 * (1 - seg(t, 2400, 2900)) : t >= 2060 && t < 2400 ? tremble(t, 1.5)[0] : 0;
+      piece(g, 'P0', land ? 2 + hitPush : ppx, land ? 1 : ppy, { sy: t < 950 ? 1 - 0.26 * crouch : land ? brace * hitSq : 1.12, sx: t < 950 ? 1 + 0.16 * crouch : land ? (2 - brace) * (2 - hitSq) : 0.9, flash: t >= 2000 && t < 2140 ? 1 : 0, dx: wob });
+      // 버팀: 폰 앞(룩 쪽) 테두리에 금빛 도트가 아래→위로 켜진다
+      if (t >= 1200 && t < 2000) { const bk = seg(t, 1200, 1450); const fx = 2 * T + T * 0.78, top = 1 * T + T * 0.2; for (let i = 0; i < 8; i++) if (i / 8 <= bk) px(g, fx, top + (7 - i) * FU * 1.1, i % 2 ? '#facc15' : '#fff3b0', 0.9 - 0.4 * seg(t, 1500, 2000)); }
+      // 빛줄기: 2000에 룩 앞에서 출발해 60ms에 폰 앞까지 → 2400부터 꼬리부터 꺼짐
+      if (t >= 2000 && t < 2700) {
+        const head = lerp(mx, 2 * T + T * 0.8, E.outCubic(seg(t, 2000, 2060))); const tailX = t < 2400 ? mx : lerp(mx, head, E.inCubic(seg(t, 2400, 2700)));
+        const wid = 1 + (t < 2400 ? (Math.floor(t / 40) % 2) : 0); const cy = my;
+        for (let x = head; x <= tailX; x += FU) { const dither = t >= 2400 && (Math.round(x / FU) + Math.floor(t / 30)) % 2; if (dither) continue; for (let r = -wid - 1; r <= wid + 1; r++) { const ar = Math.abs(r); px(g, x, cy + r * FU, ar === wid + 1 ? '#e5262f' : ar === wid ? '#facc15' : '#ffffff'); } }
+        glow(g, (head + tailX) / 2, cy, (tailX - head) / 2 + 10, 'rgba(255,200,120,A)', t < 2400 ? 0.35 : 0.35 * (1 - seg(t, 2400, 2700)));
+        if (t < 2400) { const hx = head; burst(g, hx, cy, 30, ((t - 2060) % 120) / 120 * 0.3 + 0.02, C.gold, 10); for (let i = 0; i < 10; i++) { const life = ((t / 260 + hash(i + 90)) % 1); const up = i % 2 ? -1 : 1; px(g, hx + 6 + life * 30 * (0.6 + hash(i + 91) * 0.6), cy + up * (4 + life * 26 * (0.5 + hash(i + 92))), ramp(life * 0.9), 1 - life); } }
+      }
+      hp(g, 2 + hitPush, 1, t >= 2060 ? 0.55 : 1, t < 2500 ? 1 : lerp(1, 0.55, E.outCubic(seg(t, 2500, 2850))), 0);
       g.restore();
-      if (t >= 2050 && t < 2070) flashAll(g, 0.6);
-      if (t < 1900) { const a = cl(seg(t, 0, 160) * 2) * (1 - seg(t, 1600, 1900)); g.globalAlpha = a; g.fillStyle = '#16141c'; g.fillRect(14, 8, 196, 28); g.strokeStyle = C.brass; g.lineWidth = 2; g.strokeRect(14, 8, 196, 28); g.globalAlpha = 1; text(g, '“제가 맞겠습니다, 대장.”', 112, 22, 13, C.fg, { alpha: a, scale: lerp(1.15, 1, E.outBack(seg(t, 0, 250))) }); }
-      if (t >= 2100) { const d = seg(t, 2100, 3300); text(g, '−22', ctr(2, 1)[0] + 26, ctr(2, 1)[1] - 24 - 12 * d, 18, C.fg, { alpha: 1 - seg(t, 2900, 3300), scale: lerp(1.6, 1, E.outBack(cl(d * 5))) }); }
-      motes(g, seg(t, 2300, 3400), 61);
+      if (t >= 2000 && t < 2025) flashAll(g, 0.55, '255,230,180');
+      // 도트 말풍선 (꼬리) — 비차단, 0.25초에 튀어나와 1.9초에 접힘
+      if (t >= 250 && t < 1900) { const pop = E.outBack(seg(t, 250, 420)) * (1 - E.inCubic(seg(t, 1700, 1900))); const bw = 184 * pop, bh = 26 * pop, bx = 16, by = 10; g.fillStyle = '#16141c'; g.fillRect(q(bx), q(by), q(bw), q(bh)); g.fillStyle = C.brass; g.fillRect(q(bx), q(by), q(bw), FU); g.fillRect(q(bx), q(by + bh) - FU, q(bw), FU); g.fillRect(q(bx), q(by), FU, q(bh)); g.fillRect(q(bx + bw) - FU, q(by), FU, q(bh)); if (pop > 0.9) { px(g, bx + 30, by + bh, C.brass); px(g, bx + 30, by + bh + FU, C.brass); px(g, bx + 30 + FU, by + bh + FU * 2, C.brass); const line = '“제가 맞겠습니다, 대장.”'; const n = Math.floor(line.length * seg(t, 420, 900)); text(g, line.slice(0, n), bx + 92, by + 13, 13, C.fg); } }
+      if (t >= 2100) { const d = seg(t, 2100, 3400); text(g, '−22', ctr(2, 1)[0] + 26, ctr(2, 1)[1] - 26 - 12 * d, 18, C.fg, { alpha: 1 - seg(t, 3000, 3400), scale: lerp(1.6, 1, E.outBack(cl(d * 5))) }); }
+      motes(g, seg(t, 2400, 3600), 61);
     },
   },
 ];
