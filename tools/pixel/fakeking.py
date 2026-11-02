@@ -17,15 +17,15 @@ import maker  # noqa: E402
 CROWNS = {
     # 가: 반장의 왕관 그대로 — 가운데 바로 얹음
     'a': (21, 10, [
-        '.Y.........Y.........Y.',
-        '.YY.......YTY.......YY.',
-        '.YYY.....YTTTY.....YYY.',
-        '.YYYY...YTTTTTY...YYYY.',
-        '.YYYYY.YYYYYYYYY.YYYYY.',
-        'YYYYYYYYYYYYYYYYYYYYYYY',
-        'TTTTTTTTTTTTTTTTTTTTTTT',
-        'YYYYYYYYYYRRRYYYYYYYYYY',
-        'AAAAAAAAAARXRAAAAAAAAAA',
+        '.T.........T.........T.',
+        '.TY.......TYU.......YU.',
+        '.TYU.....TYYYU.....TYU.',
+        '.TYYU...TYYYYYU...TYYU.',
+        '.TYYYU.TYYYYYYYU.TYYYU.',
+        'TTTTTTTTTTTXTTTTTTTTTTU',
+        'YYYYYYYYYYXPXYYYYYYYYYU',
+        'YYYYCYYYYXRRRXYYYYCYYYU',
+        'AAAAAAAAAAXRXAAAAAAAAAA',
     ]),
     # 나: 주워 쓴 큰 왕관 — 머리보다 커서 한쪽으로 기울어 흘러내린다
     'b': (20, 5, [
