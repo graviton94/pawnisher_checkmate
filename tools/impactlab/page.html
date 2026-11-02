@@ -112,9 +112,9 @@ footer { color: var(--dim); font-size: 12px; }
 .screw { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; background-size: 100% 100%; image-rendering: pixelated; pointer-events: none; }
 /* 지도 메달 */
 .medals { display: flex; gap: 26px; align-items: center; }
-.md { width: 58px; height: 58px; border-radius: 50%; border: 0; background: radial-gradient(circle at 35% 30%, #f4d27a, #c89b3c 55%, #7a5a12); box-shadow: 0 0 0 3px #000, inset 0 -4px 0 rgba(0,0,0,.35); cursor: pointer; display: grid; place-items: center; font: 700 12px var(--body); color: #16141c; position: relative; }
-.md::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; background: repeating-conic-gradient(#56545e 0 12deg, transparent 12deg 22.5deg); -webkit-mask: radial-gradient(circle, transparent 31px, #000 32px); mask: radial-gradient(circle, transparent 31px, #000 32px); }
-.md:hover { background: radial-gradient(circle at 35% 30%, #fff3b0, #d9ad4c 55%, #7a5a12); }
+.md { width: 58px; height: 58px; border: 0; background: var(--medal) center / 100% 100% no-repeat; image-rendering: pixelated; box-shadow: none; cursor: pointer; display: grid; place-items: center; font: 700 12px var(--body); color: #16141c; position: relative; }
+.md::before { content: ''; position: absolute; inset: -9px; background: var(--cog) center / 100% 100% no-repeat; image-rendering: pixelated; z-index: -1; }
+.md:hover { filter: brightness(1.15); }
 .md.click::before { animation: cog 520ms steps(4) forwards; }
 @keyframes cog { to { transform: rotate(45deg); } }
 .md.click { animation: medal 420ms cubic-bezier(0.2, 1.6, 0.3, 1); }
@@ -133,7 +133,7 @@ footer { color: var(--dim); font-size: 12px; }
 @keyframes mmedal { 0% { transform: translate(-50%, -50%) scale(0.88); } 40% { transform: translate(-50%, -50%) scale(1.18); filter: brightness(1.35); } 100% { transform: translate(-50%, -50%) scale(1.08); } }
 .mnode.md.arrive { animation: marrive 420ms cubic-bezier(0.2, 1.6, 0.3, 1) forwards; }
 @keyframes marrive { 0% { transform: translate(-50%, -50%) scale(1.3); filter: brightness(2); } 100% { transform: translate(-50%, -50%) scale(1.08); } }
-.mstart { width: 40px; height: 40px; border-radius: 50%; background: #2f2e36; box-shadow: 0 0 0 3px #000, inset 0 0 0 3px #c89b3c; }
+.mstart { width: 40px; height: 40px; background: var(--medal) center / 100% 100% no-repeat; image-rendering: pixelated; filter: grayscale(1) brightness(0.55); }
 .mtoken { position: absolute; width: 40px; height: 40px; image-rendering: pixelated; transform: translate(-50%, -78%); z-index: 3; pointer-events: none; }
 .mcbar { position: absolute; left: 12px; right: 12px; bottom: 8px; max-width: none; flex-wrap: wrap; justify-content: flex-end; z-index: 2; background: #121118; }
 .mcbar span { flex-basis: 100%; font-style: normal; font-weight: 700; font-size: 14px; }
@@ -440,6 +440,8 @@ function crackedPiece(g, key, x, y, k, seed, o = {}) {
   g.save(); g.imageSmoothingEnabled = false; g.translate(cx, base); g.scale(o.sx ?? 1, o.sy ?? 1); g.drawImage(crackC, -s / 2, -s * 0.94, s, s); g.restore();
   glow(g, cx, base - s * 0.45, 22 + 26 * k, 'rgba(255,220,130,A)', 0.15 + 0.45 * k * k);
 }
+/** 가짜 왕의 왕관 (도트 표: [열, 행, 색]) — 굴러가는 왕관에 쓴다 */
+const CROWN_PX = (() => { const rows = ['KKKKKKK', 'KYKYKYK', 'KYYYYYK', 'KTTTTTK', 'KYYRYYK', 'KAAAAAK', 'KKKKKKK']; const pal = { K: '#0b0b0e', Y: '#facc15', T: '#fff3b0', R: '#e5262f', A: '#9a6f14' }; const out = []; rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'K' && (i === 0 || i === 6) && j === 0) return; out.push([i - 1, j - 1, pal[ch]]); })); return out; })();
 /** 화면 위아래 검은 띠 (영화) */
 function letterbox(g, k) { if (k <= 0) return; const h = Math.round(24 * k / FU) * FU; g.fillStyle = '#000'; g.fillRect(0, 0, W, h); g.fillRect(0, H - h, W, h); }
 /** 조명: 둘레를 어둡게, 점들만 밝게 */
@@ -595,6 +597,83 @@ const SCENES = [
       g.restore();
       if (t >= 540) vignette(g, 0.6 * (1 - E.outCubic(seg(t, 540, 1300))), '229,38,47');
       if (t >= 540) { const d = seg(t, 540, 1700); text(g, '−14', ctr(2, 1)[0] + 24, ctr(2, 1)[1] - 30 - 30 * d + 80 * d * d, 19, '#ff6b6b', { alpha: 1 - seg(t, 1400, 1700), scale: lerp(1.5, 1, E.outBack(cl(d * 5))) }); }
+    },
+  },
+  {
+    id: 'heavy', title: '세게 맞을 때', tag: '버티는 게 보일 만큼', rest: 820,
+    sit: '적 퀸이 오래 겨눈 일격이 내 룩의 HP 60%를 날린다. 화면이 붉게 한 번 뒤집히고, 정지가 두 배로 길고, 룩은 반 칸 밀렸다 돌아오며, 큰 숫자가 떨어져 바닥에서 튄다. 흰 HP 잔상은 버티다 조각나 떨어진다.',
+    dur: 2800, phases: [['겨눔', 0, 650, P.gather], ['돌진', 650, 710, P.dash], ['붉은 컷', 710, 750, P.boom], ['정지', 750, 960, P.stop], ['밀림', 960, 1250, P.boom], ['복귀', 1250, 1700, P.recoil], ['HP 조각', 1400, 1900, P.pre], ['여운', 1900, 2800, P.tail]],
+    chips: ['겨눔 650ms · 과녁이 점점 빨리 맥박', '붉은 바탕 + 검은 실루엣 컷 1프레임', '정지 210ms (보통 피격의 2배)', '반 칸 넉백 → 출렁 복귀', '큰 숫자(26px) 낙하 · 바닥에서 한 번 튐', '심장 박동처럼 가장자리 붉은 맥 두 번', '흰 HP 잔상이 버티다 도트로 부서져 떨어짐'],
+    draw: (g, t) => {
+      const R = [2, 1], Q0 = [4, 1];
+      const sh = addv(shake(t, 960, 11, 520), t < 650 ? tremble(t, 1.4 * seg(t, 250, 650)) : [0, 0]);
+      const redCut = t >= 710 && t < 750;
+      g.save(); cam(g, 1 + 0.05 * (t >= 750 && t < 960 ? 1 : t >= 960 ? 1 - E.outCubic(seg(t, 960, 1700)) : 0), W / 2, H / 2, sh);
+      const aim = E.outCubic(seg(t, 0, 650)), mv = E.inExpo(seg(t, 650, 710));
+      const qx = lerp(Q0[0] + 0.3 * aim, 3.05, mv);
+      const kb = t < 960 ? 0 : t < 1250 ? -0.5 * E.outExpo(seg(t, 960, 1250)) : -0.5 * (1 - E.outBack(seg(t, 1250, 1700)));
+      if (redCut) {
+        g.fillStyle = '#7a1218'; g.fillRect(-W, -H, W * 3, H * 3);
+        piece(g, 'Q1', qx, 1, { black: true, sx: 1.12, sy: 0.9 }); piece(g, 'R0', R[0], 1, { black: true, sx: 1.2, sy: 0.82 });
+        g.restore(); return;
+      }
+      board(g);
+      if (t < 710) { const pulse = Math.abs(Math.sin(t / lerp(170, 50, aim))); reticle(g, R[0], 1, 1 + 0.08 * pulse, 0, 0.5 + 0.5 * pulse); }
+      if (t >= 650 && t < 1000) afterimage(g, 'Q1', [[Q0[0] + 0.3, 1], [lerp(Q0[0] + 0.3, 3.05, 0.5), 1], [3.05, 1]], 1 - seg(t, 710, 1000));
+      piece(g, 'Q1', qx, 1, { sx: t < 650 ? 1 + 0.12 * aim : 1, sy: t < 650 ? 1 - 0.18 * aim : 1, redFlash: t < 650 ? 0.6 * E.inCubic(seg(t, 200, 650)) : 0 });
+      const frozen = t >= 750 && t < 960;
+      const wob = t >= 1250 ? Math.sin((t - 1250) / 40) * 3 * (1 - seg(t, 1250, 1900)) : 0;
+      piece(g, 'R0', R[0] + kb, 1, { redFlash: frozen ? 1 : t >= 960 ? 1 - seg(t, 960, 1300) : 0, sx: frozen ? 1.2 : t >= 960 ? 1 + 0.15 * (1 - E.outElastic(seg(t, 960, 1700))) : 1, sy: frozen ? 0.82 : t >= 960 ? 1 - 0.15 * (1 - E.outElastic(seg(t, 960, 1700))) : 1, dx: wob });
+      // HP: 붉은 몫은 즉시, 흰 잔상은 버티다 1400부터 도트로 부서져 떨어진다
+      const now = t >= 750 ? 0.38 : 1;
+      const gk = seg(t, 1400, 1650);
+      hp(g, R[0] + kb, 1, now, t < 1400 ? 1 : lerp(1, 0.38, gk), 0);
+      if (t >= 1400 && t < 2100) { const w2 = T * 0.62, px0 = (R[0] + kb) * T + (T - w2) / 2 + w2 * 0.38, py0 = 1 * T + T - 8; for (let i = 0; i < 12; i++) { const k = seg(t, 1400 + i * 18, 1900 + i * 18); if (k <= 0 || k >= 1) continue; px(g, px0 + (i / 12) * w2 * 0.62 + (hash(i) - 0.5) * 8 * k, py0 + 70 * k * k, i % 3 ? '#ece8de' : '#c8c8c8', 1 - k); } }
+      if (frozen) burst(g, ...ctr(R[0], 1), 44, 0.15 + 0.05 * Math.sin(t / 25), '#ff6b6b', 12);
+      if (t >= 960 && t < 1100) burst(g, ...ctr(R[0], 1), 44, 0.3 + 0.7 * seg(t, 960, 1100), '#ff6b6b', 12);
+      g.restore();
+      if (t >= 750) { const beat = Math.max(1 - Math.abs(t - 960) / 260, 1 - Math.abs(t - 1380) / 260, 0); vignette(g, 0.75 * beat, '229,38,47'); }
+      if (t >= 750) { const d = seg(t, 750, 1500); const floor = ctr(R[0], 1)[1] + 18; let y = ctr(R[0], 1)[1] - 34 + 120 * d * d; if (y > floor) { const b2 = seg(t, 1180, 1500); y = floor - 16 * Math.sin(Math.PI * b2) * (1 - b2 * 0.3); } text(g, '−42', ctr(R[0], 1)[0] + 20, y, 26, '#ff6b6b', { alpha: 1 - seg(t, 2300, 2700), scale: lerp(1.7, 1, E.outBack(cl(seg(t, 750, 900)))) }); }
+    },
+  },
+  {
+    id: 'kingfall', title: '내 킹이 쓰러질 때', tag: '왕관이 굴러간다', rest: 2300,
+    sit: '마지막 일격이 가짜 왕을 친다. 시간이 늘어지고 색이 빠지며, 왕관이 머리에서 튕겨 나가 돌다가 떨어져 굴러간다. 폰 몸이 천천히 쓰러져 바스러지고, 바닥에 왕관만 남는다.',
+    dur: 4600, phases: [['겨눔', 0, 500, P.gather], ['일격', 500, 560, P.dash], ['정지', 560, 760, P.stop], ['색 빠짐 · 왕관 튐', 760, 1300, P.pre], ['쓰러짐', 1100, 1750, P.boom], ['슬로 바스러짐', 1900, 3200, P.recoil], ['왕관 굴러 멈춤', 1300, 2900, P.dash], ['도장 · 여운', 3000, 4600, P.tail]],
+    chips: ['일격 뒤 정지 200ms', '시간 0.3배 · 채도 0', '왕관이 머리에서 튕겨 90°씩 돌며 떨어짐', '바닥에서 두 번 튀고 굴러 흔들리다 멈춤', '폰 몸이 무겁게 쓰러짐(쿵) → 바스러짐', '재(회색)가 내려앉음', '붉은 「킹 파괴」 · 왕관 위에만 빛'],
+    draw: (g, t) => {
+      const KG = [2, 1];
+      const sh = addv(shake(t, 560, 6, 300), shake(t, 1750, 5, 300));
+      const grey = seg(t, 760, 1300);
+      g.save(); cam(g, 1 + 0.1 * E.outCubic(seg(t, 560, 1300)) * (1 - E.outCubic(seg(t, 3200, 4400))), ...ctr(2, 1), sh); board(g);
+      const aim = E.outCubic(seg(t, 0, 500)), mv = E.inExpo(seg(t, 500, 560));
+      const nx = lerp(4.2 + 0.2 * aim, 3.05, mv);
+      piece(g, 'N1', nx, 1, { grey: grey > 0.5, sx: t < 500 ? 1 + 0.12 * aim : 1, sy: t < 500 ? 1 - 0.18 * aim : 1, redFlash: t < 500 ? 0.5 * aim : 0 });
+      const [kx, ky] = ctr(...KG);
+      // 왕관: 머리 위 → 튕겨 솟음 → 떨어져 두 번 튐 → 굴러 흔들리며 멈춤
+      const crownAt = () => {
+        if (t < 760) return [kx, ky - 22, 0];
+        const k1 = seg(t, 760, 1900); const floorY = ky + 22;
+        if (t < 1900) return [kx - 70 * E.outCubic(k1), lerp(ky - 22, floorY, k1) - 4 * 60 * k1 * (1 - k1), Math.floor(k1 * 6) * (Math.PI / 2)];
+        const b1 = seg(t, 1900, 2150), b2 = seg(t, 2150, 2330), roll = E.outCubic(seg(t, 2330, 2900));
+        const y = floorY - (t < 2150 ? 14 * Math.sin(Math.PI * b1) : t < 2330 ? 5 * Math.sin(Math.PI * b2) : 0);
+        const wob = t >= 2330 ? Math.sin((t - 2330) / 60) * 0.3 * (1 - roll) : 0;
+        return [kx - 70 - 26 * roll, y, wob];
+      };
+      if (t < 1900) {
+        const fall = E.inQuad(seg(t, 1100, 1750));
+        if (t < 760) piece(g, 'K0', KG[0], 1, { sx: t >= 560 ? 1.14 : 1, sy: t >= 560 ? 0.86 : 1, flash: t >= 560 && t < 640 ? 1 : 0 });
+        else piece(g, 'P0', KG[0], 1, { grey: true, rot: -1.45 * fall, dx: -6 * fall });
+      } else shatter(g, 'P0', KG[0] - 0.15, 1.15, seg(t, 1900, 3200), 77, { power: 0.6 });
+      if (t >= 760) { const [cx2, cy2, rot] = crownAt(); g.save(); g.translate(q(cx2), q(cy2)); g.rotate(rot); for (const [i, j, c] of CROWN_PX) px(g, i * FU - FU * 2, j * FU - FU * 2, c); g.restore(); if (t >= 2900) glow(g, cx2, cy2, 26, 'rgba(250,204,21,A)', 0.4 * seg(t, 2900, 3400)); }
+      if (t >= 560 && t < 760) burst(g, kx, ky, 40, 0.15, C.fg, 12);
+      g.restore();
+      if (grey > 0) { g.fillStyle = `rgba(14,13,18,${0.45 * grey})`; g.fillRect(0, 0, W, H); }
+      vignette(g, 0.8 * seg(t, 760, 2000));
+      // 재가 내려앉음 (회색, 위에서 아래로)
+      if (t >= 1900) { const k = seg(t, 1900, 4600); for (let i = 0; i < 26; i++) { const y0 = hash(i + 120) * H * 0.5; const life = cl((k - hash(i + 121) * 0.3) / 0.7); if (life <= 0 || life >= 1) continue; px(g, hash(i + 122) * W + Math.sin(life * 5 + i) * 6, y0 + life * H * 0.5, i % 2 ? '#8a8794' : '#56545e', (1 - life) * 0.8); } }
+      if (t >= 3000) stamp(g, '킹 파괴', W / 2, 32, seg(t, 3000, 3300), '#ff6b6b', 26);
+      text(g, `시간 ×${t < 760 ? '1' : t < 3200 ? '0.3' : '1'}`, 50, H - 12, 11, C.fg, { alpha: 0.7 });
     },
   },
   {
@@ -887,7 +966,18 @@ function pressy(btn, onUp) {
   btn.addEventListener('pointerup', up); btn.addEventListener('pointerleave', () => btn.classList.remove('down'));
   btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { btn.classList.add('down'); setTimeout(up, 90); e.preventDefault(); } });
 }
+/** 도트 메달 (그라데이션 없이 4단 명암 — 빛은 왼쪽 위) · 도트 톱니 고리 */
+function medalSprites() {
+  const n = 19, c = (n - 1) / 2, rows = [];
+  for (let j = 0; j < n; j++) { let r = ''; for (let i = 0; i < n; i++) { const dx = i - c, dy = j - c, d = Math.hypot(dx, dy); if (d > c + 0.3) r += '.'; else if (d > c - 0.9) r += 'K'; else { const lit = (-dx - dy) / c + (d < c - 2.5 ? 0.2 : -0.6); r += lit > 0.9 ? 'T' : lit > 0.05 ? 'Y' : lit > -0.8 ? 'U' : 'A'; } } rows.push(r); }
+  // 안쪽 테 (한 칸 짙은 금) — 눌린 동전 느낌
+  const m = rows.map((r, j) => [...r].map((ch, i) => { const d = Math.hypot(i - c, j - c); return ch !== '.' && ch !== 'K' && d > c - 2.4 && d < c - 1.4 ? 'A' : ch; }).join(''));
+  const N = 25, C = (N - 1) / 2, cog = [];
+  for (let j = 0; j < N; j++) { let r = ''; for (let i = 0; i < N; i++) { const dx = i - C, dy = j - C, d = Math.hypot(dx, dy), a = (Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI / 4); const tooth = a < Math.PI / 8; const outer = tooth ? C : C - 2; if (d > outer + 0.3 || d < C - 4.2) r += '.'; else if (d > outer - 0.9 || d < C - 3.3) r += 'K'; else r += tooth ? 'L' : 'G'; } cog.push(r); }
+  return { medal: pixelSprite(m, GOLDPAL, 3), cog: pixelSprite(cog, GOLDPAL, 3) };
+}
 function setupUi() {
+  { const ms0 = medalSprites(); document.documentElement.style.setProperty('--medal', `url(${ms0.medal})`); document.documentElement.style.setProperty('--cog', `url(${ms0.cog})`); }
   document.querySelectorAll('img[data-k]').forEach((im) => (im.src = SPR[im.dataset.k]));
   pressy(document.getElementById('bbNew'));
   // 보상 카드
