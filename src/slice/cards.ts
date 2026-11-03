@@ -8,6 +8,7 @@ import type { SlicePartId } from './parts';
  */
 export type BaseCommandId =
   | 'advance' | 'leap' | 'diagonal' | 'kingStep' | 'order'
+  | 'rookPierce' | 'phalanx' | 'bishopChain' | 'scrapToss' | 'pawnExecute' | 'kingCharge'
   | 'pierceDiag' | 'crossLeap' | 'charge' | 'plate' | 'repair' | 'reload' | 'kingBlow' | 'splashDiag' | 'smash' | 'rookLine'
   | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
   | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit'
@@ -76,6 +77,13 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   pierceDiag: { axis: 'chain', name: '심판의 창', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 1기까지)' },
   crossLeap: { axis: 'cav', name: '지축 강타', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
   charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', add: 8, desc: '일격을 휘두른다. (+8)' },
+  // 빌드 다양성 묶음 (D-217 4): 축마다 「그 축으로 가고 싶게」 만드는 카드
+  rookPierce: { axis: 'push', name: '관통 포격', cost: 2, who: 'R', kind: 'move', carve: 'pierce', mult: 1.2, desc: '요새가 줄을 꿰뚫는다. (×1.2, 뒤의 1기까지)' },
+  scrapToss: { axis: 'push', name: '고철 투척', cost: 1, who: 'R', kind: 'move', add: 10, desc: '쇳덩이를 내던진다. (+10)' },
+  phalanx: { axis: 'inf', name: '방진', cost: 1, who: 'P', kind: 'move', rally: true, desc: '어깨를 맞대고 나아간다. (둘레 폰 전진 공격)', flavor: '“한 발도 물러서지 마라.”' },
+  pawnExecute: { axis: 'inf', axis2: 'chain', name: '개척자의 처단', cost: 1, who: 'P', kind: 'move', multPerKill: 0.6, desc: '작은 칼끝이 연쇄를 끝맺는다. (연쇄 1마다 ×0.6 추가)' },
+  bishopChain: { axis: 'chain', name: '축복의 고리', cost: 1, who: 'B', kind: 'move', chainPerKill: 2, desc: '심판받은 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
+  kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 2, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (+6, 밀치기)' },
   plate: { name: '철벽', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15)' },
   repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 15, desc: '기물 하나를 땜질한다. (HP +15)' },
   reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 2, desc: '탄창을 다시 채운다. (카드 +2)' },
@@ -92,8 +100,8 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '왕이 갑주를 두른다. (방열판 +30)' },
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1, 카드 +1)' },
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
-  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 10, desc: '쌓인 열기를 갑옷으로 돌린다. (연쇄를 모두 써서 킹 방열판 +연쇄×10)', flavor: '“식기 전에 입어라.”' },
-  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 6, desc: '보일러를 연다. (연쇄를 모두 써서 적 전체에 연쇄×6 피해)', flavor: '“압력을 놓아라.”' },
+  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '쌓인 열기를 갑옷으로 돌린다. (연쇄를 모두 써서 킹 방열판 +연쇄×14)', flavor: '“식기 전에 입어라.”' },
+  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 9, desc: '보일러를 연다. (연쇄를 모두 써서 적 전체에 연쇄×9 피해)', flavor: '“압력을 놓아라.”' },
   recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'draw', amount: 1, desc: '흩어진 명령을 거둔다. (연쇄를 모두 써서 카드 +연쇄, 최대 3)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (연쇄 1마다 ×0.5 추가)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
@@ -112,10 +120,10 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   kingDecree: { axis: 'king', axis2: 'chain', name: '왕명', cost: 1, who: 'K', kind: 'move', chainPerKill: 2, desc: '왕의 손에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
   overload: { axis: 'chain', name: '과부하', cost: 3, who: 'any', kind: 'move', mult: 2.5, desc: '태엽을 끝까지 감는다. (×2.5)' },
   quickFix: { name: '덧댐', cost: 0, who: 'any', kind: 'repair', amount: 8, desc: '급한 대로 덧댄다. (HP +8)' },
-  tempo: { axis: 'chain', name: '박자', cost: 1, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 +3)' },
+  tempo: { axis: 'chain', name: '박자', cost: 0, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 +3)' },
   bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 25, desc: '몸으로 막아선다. (방열판 +25)' },
   bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (상하좌우 50%, 처치 1회 = 연쇄 2칸)' },
-  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +2, 카드 +1)', flavor: '“기꺼이.”' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +3, 카드 +2)', flavor: '“기꺼이.”' },
 };
 
 /** 다듬은 변형: 이름 뒤에 +, 태엽 −1 (0 아래로는 안 내려간다). 나머지는 원본 그대로 */
@@ -172,7 +180,7 @@ export type Grade = 'common' | 'rare' | 'gold';
 export const CARD_GRADE: Partial<Record<string, Grade>> = {
   // 측정 (D-217 2, sim/rarity.sim.ts — 모든 기물 분대 · 2 · 3막 판 200번 · 넣은 덱 vs 기본 카드 덱의 승률 차 + 턴 단축 × 5):
   // 황금 = 상위 약 10% (가치 34 이상), 희귀 = 다음 35% (가치 12 이상), 나머지 일반. 봇이 못 쓰는 연쇄 마무리(처형 · 칼날 세례)만 설계 판단으로 희귀.
-  rookCharge: 'gold', shove: 'gold', overload: 'gold', wrath: 'gold',
+  rookCharge: 'gold', shove: 'gold', overload: 'gold', wrath: 'gold', scrapToss: 'gold', rookPierce: 'rare',
   royalGuard: 'rare', bulwark: 'rare', smash: 'rare', quickFix: 'rare', spark: 'rare', repair: 'rare', plate: 'rare', ram: 'rare', kingDecree: 'rare',
   pawnStorm: 'rare', kingBlow: 'rare', shieldBash: 'rare', charge: 'rare', finisher: 'rare', bladeRain: 'rare',
 };
@@ -191,7 +199,7 @@ export const rollGrade = (r: number, w: Record<Grade, number>): Grade => {
   return 'common';
 };
 
-export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall'];
+export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall', 'rookPierce', 'scrapToss', 'phalanx', 'pawnExecute', 'bishopChain', 'kingCharge'];
 
 /**
  * 반장 규칙 (D-148 — 레퍼런스 5권 원리 5 「부서진 빌드는 너프하지 말고 보스가 질문한다」). 둘 다 미리 보인다.
@@ -282,6 +290,9 @@ export const SLICE = {
   depthActs: [[0, 5], [6, 9], [15, 5]] as [number, number][],
   /** 부품 상자 나사 [최소, 최대] (D-215) */
   chestGold: [20, 35] as [number, number],
+  /** 제물 (D-217 4: 측정 가치 −24 → 올림) — 연쇄 · 카드 */
+  gambitChain: 3,
+  gambitDraw: 2,
   /** 기물 수집 (D-216): 분대 상한 · 대국 보상에 새 분대원이 섞일 확률 (검문 · 반장 뒤는 확정) */
   squadMax: 10,
   recruitChance: 0.25,

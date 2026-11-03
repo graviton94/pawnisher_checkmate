@@ -81,6 +81,69 @@ icon('n.shop', '고물상', [
     'bEEEEEEEEEEEEb',
     'bbbbbbbbbbbbbb',
 ])
+# 공성 쇠뇌 (D-217 4, 룩 ×1.3): 쇠뇌 활 · 볼트
+icon('rookBolt', '공성 쇠뇌', [
+    'gg..........gg',
+    '.gg........gg.',
+    '..gg......gg..',
+    '...gg....gg...',
+    '....gggggg....',
+    'wwwwwwwwwwwwwY',
+    '....gggggg..Y.',
+    '...gg.bb.gg...',
+    '..gg..bb..gg..',
+    '.gg...bb...gg.',
+    'gg....bb....gg',
+    '......bb......',
+    '.....bbbb.....',
+])
+# 외눈 렌즈 (D-217 4, 비숍 ×1.3): 황동 테 외눈 렌즈 · 하늘색 유리 · 반사
+icon('bishopLens', '외눈 렌즈', [
+    '....yyyyyy....',
+    '...ybbbbbby...',
+    '..ybccccccby..',
+    '.ybcwwcccccby.',
+    '.ybcwcccccccby',
+    '.ybccccccccby.',
+    '.ybccccccccby.',
+    '..ybccccccby..',
+    '...ybbbbbby...',
+    '....yyyyyyg...',
+    '..........gg..',
+    '...........gg.',
+    '............g.',
+])
+# 개척자의 창 (D-217 4, 폰 +5): 짧은 창날 · 나무 자루
+icon('pawnPike', '개척자의 창', [
+    '...........ww.',
+    '..........wwg.',
+    '.........wwg..',
+    '........wgg...',
+    '.......bg.....',
+    '......bb......',
+    '.....bb.......',
+    '....bb........',
+    '...bb.........',
+    '..bb..........',
+    '.bb...........',
+    'bb............',
+])
+# 작은 개척자의 맹세 (D-217, 폰 전용 황금 부품): 황동 방패 안 흰 폰
+icon('oath', '작은 개척자의 맹세', [
+    '.yyyyyyyyyyyy.',
+    'ybbbbbbbbbbbby',
+    'ybbbbbwwbbbbby',
+    'ybbbbwwwwbbbby',
+    'ybbbbbwwbbbbby',
+    'ybbbbbwwbbbbby',
+    'ybbbbwwwwbbbby',
+    '.ybbwwwwwwbby.',
+    '.ybbbbbbbbbby.',
+    '..ybbbbbbbby..',
+    '...ybbbbbby...',
+    '....ybbbby....',
+    '.....yyyy.....',
+])
 # 부품 상자 (D-215, 슬더스식 지도의 보물 노드): 황동 뚜껑 · 갈색 몸통 · 가운데 쇠 자물쇠
 icon('n.chest', '부품 상자', [
     '..............',

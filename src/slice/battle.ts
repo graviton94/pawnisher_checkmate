@@ -539,9 +539,9 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
   if (c.kind === 'move' && to) {
     if (c.carve) p.carve = c.carve;
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
-    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
+    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) });
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -642,8 +642,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (!v) return '바칠 폰이 없습니다.';
     b.s.pieces = b.s.pieces.filter((p) => p.id !== v.id);
     events = [{ type: 'attack', order: 0, attackerId: v.id, area: [{ x: v.x, y: v.y }], hits: [{ targetId: v.id, damage: v.hp, shieldAbsorbed: 0, hpAfter: 0, killed: true }] }];
-    b.kills += 2;
-    drawCards(b, 1);
+    b.kills += SLICE.gambitChain;
+    drawCards(b, SLICE.gambitDraw);
   } else if (c.kind === 'spark') {
     b.kills += 1;
     drawCards(b, 1);

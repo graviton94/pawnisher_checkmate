@@ -122,11 +122,11 @@ describe('3단 성장 · 교차 브릿지 (D-145)', () => {
     expect(b.kills % 2).toBe(0);
     expect(b.kills).toBeGreaterThanOrEqual(2);
   });
-  it('희생 수: 폰 하나를 부수고 연쇄 +2', () => {
+  it('희생 수: 폰 하나를 부수고 연쇄 +3 (D-217 4)', () => {
     const b = mk([], ['gambit', 'advance']);
     const n0 = b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').length;
     playCard(b, 0);
-    expect(b.kills).toBe(2);
+    expect(b.kills).toBe(3);
     expect(b.s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(n0 - 1);
   });
   it('넘친 피해가 쌓인다', () => {
@@ -257,9 +257,9 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
   it('수량', async () => {
     const { REWARD_COMMANDS } = await import('../src/slice/cards');
     const { SLICE_PARTS } = await import('../src/slice/parts');
-    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(43);
-    expect(REWARD_COMMANDS.length).toBe(37); // + 연쇄 소모 3 (D-203)
-    expect(Object.keys(SLICE_PARTS).length).toBe(26); // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
+    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(49); // + 빌드 다양성 6 (D-217 4)
+    expect(REWARD_COMMANDS.length).toBe(43); // + 연쇄 소모 3 (D-203) · 빌드 다양성 6 (D-217 4)
+    expect(Object.keys(SLICE_PARTS).length).toBe(29); // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
   });
   it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 피의 계약(턴 끝 킹 −4)', () => {
     const b = mk(['brittle']);
@@ -364,7 +364,7 @@ describe('배율 쓰기 (D-203)', () => {
     const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
     const sh0 = k.shield;
     expect(typeof playCard(b, 0)).toBe('object');
-    expect(k.shield).toBe(sh0 + 20);
+    expect(k.shield).toBe(sh0 + 28);
     expect(b.kills).toBe(0);
     b.kills = 3;
     const foes = b.s.pieces.filter((p) => p.side === 1).map((p) => ({ id: p.id, hp: p.hp + p.shield }));
@@ -372,7 +372,7 @@ describe('배율 쓰기 (D-203)', () => {
     expect(typeof playCard(b, i)).toBe('object');
     for (const f of foes) {
       const p = b.s.pieces.find((x) => x.id === f.id);
-      if (p) expect(p.hp + p.shield).toBe(f.hp - 18);
+      if (p) expect(p.hp + p.shield).toBe(f.hp - 27);
     }
   });
 });
