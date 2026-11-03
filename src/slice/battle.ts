@@ -352,8 +352,9 @@ export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = fal
   const o: FoeOpts = { reach: s.rules.capture ? undefined : playerReach(s), boss };
   for (const p of s.pieces.filter((q) => q.side === 1)) {
     const best = bestFor(s, p, undefined, turn, o);
-    // 반장(적 킹)은 태엽을 쓰지 않고 매 턴 한 수 (D-201): 졸개가 태엽을 다 써도 반장은 움직인다 — "반장이 열 턴 동안 안 움직였다"(태오)
-    if (best) options.push({ pieceId: p.id, to: best.to, score: best.score, cost: boss && p.type === 'K' ? 0 : moveCost(s, p) });
+    // 적 퀸(태엽 4)이 적 태엽 3을 넘어 영영 못 움직이던 버그 (D-201) → 적 한 수의 값은 적 태엽을 넘지 않는다
+    // 반장(적 킹)은 같은 태엽을 쓰되 먼저 고른다 (D-201 수정, 사용자: "매 턴 추가 행동은 사기 — 같은 자원을 공유하고 값을 높여라")
+    if (best) options.push({ pieceId: p.id, to: best.to, score: boss && p.type === 'K' ? best.score * SLICE.bossPriority + SLICE.bossPriorityFlat : best.score, cost: Math.min(SLICE.enemyAp, moveCost(s, p)) });
   }
   options.sort((a, b) => b.score - a.score || a.pieceId - b.pieceId);
   if (skipTop && options.length > 1) options.shift();

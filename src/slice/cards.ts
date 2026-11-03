@@ -211,6 +211,9 @@ export const SLICE = {
   aiRiskStep: 1,
   aiRiskAttack: 0.3,
   aiRiskKing: 30,
+  /** 반장 킹 수의 우선순위 (D-201): 점수 ×배 + 더하기 — 졸개보다 먼저 태엽을 쓴다(추가 행동은 없다) */
+  bossPriority: 1.5,
+  bossPriorityFlat: 8,
 };
 
 /**
