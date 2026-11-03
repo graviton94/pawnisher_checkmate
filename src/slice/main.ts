@@ -923,7 +923,7 @@ const shopScreen = (): void => {
   const sold = new Set<string>();
   const price = (id: CommandId) => ascPrice(SHOP.cardPrice[Math.min(2, COMMANDS[id].cost)]);
   const render = (): void => {
-    const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price${gold < cost ? ' poor' : ''}">나사 ${cost}</span>`);
+    const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price${gold < cost ? ' poor' : ''}"><img src="ui/icons/screw.png" alt="나사">${cost}</span>`);
     const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><button class="btn brass" type="button" data-leave>떠나기</button></div>
       <div class="shop-grid">
         ${cards.map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd big t-${c.who}${sold.has(id) ? ' sold' : ''}" data-buy="card:${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}</span>${tag(id, price(id))}</button>`; }).join('')}

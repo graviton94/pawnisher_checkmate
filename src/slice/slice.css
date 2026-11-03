@@ -1029,3 +1029,7 @@ body.placebg .shop-grid .cmd.big, body.placebg .shop-grid .part-card { padding: 
 body.placebg .shop-grid small { font-size: 12px; -webkit-line-clamp: 3; }
 body.placebg .shop-grid .cmd b, body.placebg .shop-grid .part-card b { font-size: 14px; }
 body.placebg .panel .row .btn { white-space: normal; font-size: 14px; line-height: 1.2; padding-left: 6px; padding-right: 6px; min-width: 0; flex: 1 1 0; }
+/* 고물상 값표 (사용자: "나사 25가 왼쪽에 딱 붙어 있다 — 여백 + 나사 그림"): 가운데 정렬 · 나사 아이콘 · 숫자 */
+body.slice .price { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 3px 8px; font-size: 14px; }
+body.slice .price img { width: 16px; height: 16px; image-rendering: pixelated; }
+body.slice .price.poor img { filter: grayscale(1) brightness(.8); }
