@@ -22,7 +22,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   drum: { name: '진군의 북', axis: 'inf', icon: 'drum', desc: '폰 카드 태엽 −1' },
   crown: { name: '짓누르는 왕관', axis: 'king', icon: 'crown', desc: '킹의 공격 ×2' },
   throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', desc: '킹 카드를 쓰면 킹 방열판 +10' },
-  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', desc: '연쇄 배율이 곱해진다 (처치마다 ×1.5, 상한 없음)' },
+  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', desc: '연쇄 배율이 곱해진다 (처치마다 ×1.5, 최대 ×16)' },
   echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', desc: '처치 1회가 연쇄 2칸' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'hammer', desc: '충돌 피해 ×2' },
   // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
@@ -44,7 +44,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
 };
 
 /** 부품 수치 */
-export const PART_NUM = { lanceMult: 1.5, bannerMult: 1.5, scepterShield: 25, conductorPerKill: 0.35, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedGold: 2, greedHp: 1.2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, crownMult: 2, throneShield: 10, assemblyBelow: 2 };
+export const PART_NUM = { lanceMult: 1.5, bannerMult: 1.5, scepterShield: 25, conductorPerKill: 0.35, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedGold: 2, greedHp: 1.2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 10, assemblyBelow: 2 };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).

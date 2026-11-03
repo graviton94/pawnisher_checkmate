@@ -144,11 +144,8 @@ describe('반장 규칙 (D-148)', () => {
     }
     expect(k().shield).toBe(BOSS.plate);
   });
-  it('줄 폭격: 2턴째에 예고하고, 턴을 끝내면 그 줄의 내 기물이 맞는다', () => {
+  it('줄 폭격: 1턴부터 예고하고 (D-201), 턴을 끝내면 그 줄의 내 기물이 맞는다', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P'], START_COMMANDS, 5, { boss: true });
-    expect(b.bombRow).toBeNull();
-    b.intents = [];
-    endTurn(b, true);
     expect(b.bombRow).not.toBeNull();
     const row = b.bombRow!;
     const inRow = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => ({ id: p.id, hp: p.hp }));
@@ -156,6 +153,8 @@ describe('반장 규칙 (D-148)', () => {
     expect(dangerSquares(b).filter((q) => q.y === row)).toHaveLength(b.s.width);
     b.intents = [];
     endTurn(b, true);
+    // 다음 턴(2턴)은 쉰다 — 두 턴마다
+    expect(b.bombRow).toBeNull();
     for (const q of inRow) {
       const p = b.s.pieces.find((x) => x.id === q.id);
       if (p) expect(p.hp).toBeLessThan(q.hp);
@@ -311,10 +310,14 @@ describe('돌아오는 피해 미리보기 · 자동 플레이 봇 (D-173)', () 
 describe('막힌 적 예고 (D-176)', () => {
   it('예고한 칸을 막으면 그 적은 쉬지 않고 다른 수를 둔다 — 화면 예고 = 실행', () => {
     let checked = 0;
-    for (let seed = 1; seed < 40 && checked < 3; seed++) {
-      const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, seed);
-      const it = b.intents.find((x) => !b.s.pieces.some((p) => p.x === x.to.x && p.y === x.to.y));
+    // 적 구성 몇 가지 (D-201: 맞을 칸을 꺼리는 AI라 구성에 따라 막혔을 때 다른 수가 없을 수 있다)
+    const rosters: ('K' | 'P' | 'N' | 'B' | 'R')[][] = [['K', 'P', 'P', 'N'], ['K', 'N', 'B'], ['K', 'R', 'N'], ['K', 'B', 'B']];
+    for (let seed = 1; seed < 40 * rosters.length && checked < 3; seed++) {
+      const b0 = newSliceBattle(squad, rosters[seed % rosters.length], START_COMMANDS, seed);
+      // 막혀도 갈 곳이 있는 적(폰이 아닌 것)의 예고를 고른다 (D-201: 적 AI가 바뀌어 첫 예고가 폰일 수 있다)
+      const it = b0.intents.find((x) => !b0.s.pieces.some((p) => p.x === x.to.x && p.y === x.to.y) && b0.s.pieces.find((p) => p.id === x.pieceId)?.type !== 'P');
       if (!it) continue;
+      const b = b0;
       const mine = b.s.pieces.find((p) => p.side === 0 && p.type === 'P');
       if (!mine) continue;
       Object.assign(mine, { x: it.to.x, y: it.to.y });

@@ -81,14 +81,17 @@ describe('막별 반장 · 적 특성 (D-171)', () => {
     expect(run[1].rows.at(-2)![0].battle!.traits).toContain('blastPawn');
     expect(run[2].rows.at(-2)![0].battle!.traits).toContain('rookPlate');
   });
-  it('조립 반장: 2턴째에 킹 곁에 폰이 하나 선다', async () => {
+  it('조립 반장: 1턴부터 킹 곁에 폰이 선다 (D-201), 두 턴마다', async () => {
     const { endTurn } = await import('../src/slice/battle');
     const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'Q'], START_COMMANDS, 2, { boss: true, bossRule: 'spawn' });
     const pawns = () => b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length;
-    expect(pawns()).toBe(0);
+    expect(pawns()).toBe(1);
     b.intents = [];
     endTurn(b, true);
     expect(pawns()).toBe(1);
+    b.intents = [];
+    endTurn(b, true);
+    expect(pawns()).toBeGreaterThanOrEqual(1);
   });
   it('방패 룩: 대국 시작에 방열판 15', () => {
     const b = newSliceBattle([{ t: 'K' }], ['K', 'R'], START_COMMANDS, 2, { traits: ['rookPlate'] });

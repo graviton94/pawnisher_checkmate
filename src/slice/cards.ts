@@ -206,6 +206,11 @@ export const SLICE = {
   reinforceCards: 2,
   /** 승격은 그 대국에서만 (D-198) — 대신 승격 도장 나사 */
   promoteBonus: 30,
+  /** 적 AI (D-201): 남은 HP 대비 피해 가중 · 맞을 칸 감점 (다가가기 · 공격 값 비율 · 킹 추가) */
+  aiFinishWeight: 1,
+  aiRiskStep: 1,
+  aiRiskAttack: 0.3,
+  aiRiskKing: 30,
 };
 
 /**

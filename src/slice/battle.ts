@@ -129,7 +129,7 @@ const drawCards = (b: SliceBattle, n: number): void => {
 /** 연쇄 배수 (이번 턴 처치 수 기준) */
 export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
   // 덧셈(기본: +25%씩, 상한 4) → 곱셈(증폭 코일: ×1.5씩, 상한 없음) — 3단 성장의 둘째 단 (D-145)
-  parts.includes('coil') ? Math.pow(PART_NUM.coilPerKill, kills) : 1 + Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorPerKill : SLICE.chainPerKill);
+  parts.includes('coil') ? Math.min(PART_NUM.coilCap, Math.pow(PART_NUM.coilPerKill, kills)) : 1 + Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorPerKill : SLICE.chainPerKill);
 
 /** 처치 k개가 올리는 연쇄 칸 (이중 톱니 · 연속 도약은 재발동 — 3단 성장의 셋째 단) */
 const chainGain = (b: SliceBattle, k: number, perKill = 1): number => k * perKill * (has(b, 'echo') ? 2 : 1);
@@ -253,11 +253,11 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
 
 /** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
 const planFor = (b: SliceBattle): Intent[] => {
-  if (!b.mercy) return planEnemy(b.s, false, b.turn);
+  if (!b.mercy) return planEnemy(b.s, false, b.turn, b.boss);
   const rng = new Rng(b.rng ^ 0x5eed);
   const skip = rng.next() < b.mercy;
   b.rng = (b.rng + 0x9e37) >>> 0;
-  return planEnemy(b.s, skip, b.turn);
+  return planEnemy(b.s, skip, b.turn, b.boss);
 };
 
 // ---------- 적 예고 (단순한 AI — Into the Breach식: 수는 단순해도 다 보인다) ----------
@@ -286,7 +286,28 @@ export const threatOf = (s0: BattleState, side: 0 | 1): Pos[] => {
 };
 
 /** 적 기물 하나의 가장 좋은 수 (내 기물을 가장 아프게 치는 칸, 칠 게 없으면 내 킹 쪽으로). 0점 이하면 null */
-const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn = 0): { to: Pos; score: number } | null => {
+/**
+ * 내 기물이 다음 차례에 칠 수 있는 칸 (움직인 뒤 공격 범위의 합). 적 AI가 맞을 자리를 꺼리는 데 쓴다 (D-201).
+ */
+export const playerReach = (s0: BattleState): Set<string> => {
+  const s = { ...s0, turnSide: 0 as const };
+  const grid = buildGrid(s);
+  const out = new Set<string>();
+  for (const p of s.pieces.filter((q) => q.side === 0)) {
+    for (const to of [{ x: p.x, y: p.y }, ...legalMoves(s, p, grid)]) {
+      for (const a of attackScan(s, { ...p, x: to.x, y: to.y }, grid).area) out.add(`${a.x},${a.y}`);
+    }
+  }
+  return out;
+};
+
+/** 적 AI 선택 (D-201): reach = 내 기물이 칠 수 있는 칸 · boss = 반장 판(반장 킹도 1턴부터 나선다) */
+export interface FoeOpts {
+  reach?: Set<string>;
+  boss?: boolean;
+}
+
+const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn = 0, o: FoeOpts = {}): { to: Pos; score: number } | null => {
   const s = { ...s0, turnSide: 1 as const };
   const grid = buildGrid(s);
   const myKing = kingOf(s, 0);
@@ -309,23 +330,30 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
     let score = 0;
     for (const t of attackScan(s, ghost, grid).targets) {
       const dmg = damageOf(s, ghost, t);
-      score += dmg >= t.hp + t.shield ? valueOf(t) + dmg : (dmg / t.maxHp) * valueOf(t);
+      // 약한 기물을 노린다 (D-201): 남은 HP 대비 비율 — 거의 쓰러진 기물을 먼저 마무리한다
+      score += dmg >= t.hp + t.shield ? valueOf(t) + dmg : (dmg / Math.max(1, t.hp + t.shield)) * valueOf(t) * SLICE.aiFinishWeight;
     }
-    // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196)
-    const kingMarch = p.type === 'K' && (s.pieces.every((q) => q.side !== 1 || q.type === 'K') || turn >= SLICE.kingMarchTurn);
-    if (score === 0 && myKing && (p.type !== 'K' || kingMarch)) score = (chebyshev(p, myKing) - chebyshev(to, myKing)) * 2;
+    // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196 · 반장은 1턴부터 D-201)
+    const kingMarch = p.type === 'K' && (o.boss || s.pieces.every((q) => q.side !== 1 || q.type === 'K') || turn >= SLICE.kingMarchTurn);
+    const approach = score === 0;
+    if (approach && myKing && (p.type !== 'K' || kingMarch)) score = (chebyshev(p, myKing) - chebyshev(to, myKing)) * 2;
+    if (approach && p.type === 'K' && !kingMarch) continue;
+    // 맞을 칸을 꺼린다 (D-201): 내 기물이 다음 차례에 칠 수 있는 칸이면 감점 — 공격이면 값의 일부, 다가가기면 같은 거리 중 안전한 칸을 고르게
+    if (o.reach?.has(`${to.x},${to.y}`)) score -= approach ? SLICE.aiRiskStep : valueOf(p) * SLICE.aiRiskAttack + (p.type === 'K' ? SLICE.aiRiskKing : 0);
     if (!best || score > best.score) best = { to, score };
   }
   return best && best.score > 0 ? best : null;
 };
 
 /** 적의 이번 수: 태엽 3 안에서, 내 기물을 가장 아프게 치는 칸부터. 칠 게 없으면 내 킹 쪽으로 */
-export const planEnemy = (s0: BattleState, skipTop = false, turn = 0): Intent[] => {
+export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = false): Intent[] => {
   const s = { ...s0, turnSide: 1 as const };
   const options: { pieceId: number; to: Pos; score: number; cost: number }[] = [];
+  const o: FoeOpts = { reach: s.rules.capture ? undefined : playerReach(s), boss };
   for (const p of s.pieces.filter((q) => q.side === 1)) {
-    const best = bestFor(s, p, undefined, turn);
-    if (best) options.push({ pieceId: p.id, to: best.to, score: best.score, cost: moveCost(s, p) });
+    const best = bestFor(s, p, undefined, turn, o);
+    // 반장(적 킹)은 태엽을 쓰지 않고 매 턴 한 수 (D-201): 졸개가 태엽을 다 써도 반장은 움직인다 — "반장이 열 턴 동안 안 움직였다"(태오)
+    if (best) options.push({ pieceId: p.id, to: best.to, score: best.score, cost: boss && p.type === 'K' ? 0 : moveCost(s, p) });
   }
   options.sort((a, b) => b.score - a.score || a.pieceId - b.pieceId);
   if (skipTop && options.length > 1) options.shift();
@@ -377,7 +405,8 @@ export const liveIntents = (b: SliceBattle): Intent[] => {
       out.push(it);
       continue;
     }
-    const alt = bestFor(b.s, p, taken, b.turn);
+    // 실행(enemyPhase)과 같은 선택 기준 — 화면 예고 = 실행
+    const alt = bestFor(b.s, p, taken, b.turn, { reach: playerReach(b.s), boss: b.boss });
     if (alt) {
       taken.add(`${alt.to.x},${alt.to.y}`);
       out.push({ pieceId: p.id, to: alt.to });
@@ -411,7 +440,7 @@ export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return [];
   if (isInstant(b.hand[i])) return [];
-  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0));
+  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0) && !(c.who === 'any' && c.kind === 'move' && b.once.includes(`cmd:${p.id}`)));
 };
 
 /** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
@@ -483,6 +512,9 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (pieceId === undefined || !to) return '기물과 칸을 선택하십시오.';
     const p = findPiece(b.s, pieceId);
     if (!p || p.side !== 0 || (c.who !== 'any' && c.who !== p.type)) return '이 카드로 움직일 수 없는 기물입니다.';
+    // 지배 전략 정리 (D-201, K교수): 아무 기물 카드(지휘 등)로는 한 기물을 한 턴에 한 번만 — 센 기물 하나를 지휘로 거듭 굴리지 못하게
+    if (c.who === 'any' && b.once.includes(`cmd:${p.id}`)) return '이번 턴에 이미 지휘한 기물입니다.';
+    if (c.who === 'any') b.once.push(`cmd:${p.id}`);
     const sim = previewPlay(b, i, pieceId, to);
     if (!sim) return '갈 수 없는 칸입니다.';
     b.s = sim.state;
@@ -748,14 +780,15 @@ const bossTurnStart = (b: SliceBattle): void => {
   b.bombRow = null;
   // 조립 반장: 2턴마다 킹 곁에 폰 (셋까지)
   if (b.bossRule === 'spawn') {
-    if (k && b.turn > 1 && b.turn % BOSS_NUM.spawnEvery === 0 && b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length < BOSS_NUM.spawnMax) {
+    if (k && (b.turn - 1) % BOSS_NUM.spawnEvery === 0 && b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length < BOSS_NUM.spawnMax) {
       const spot = [[0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1]].map(([dx, dy]) => ({ x: k.x + dx, y: k.y + dy })).find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
       if (spot) b.s.pieces.push(makePiece(Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds) + 1, 'P', 1, spot.x, spot.y));
     }
     return;
   }
   if (b.bossRule === 'thorns') return;
-  if (b.turn % BOSS.bombEvery !== 0) return;
+  // 1턴부터 (D-201): 반장 규칙이 첫 턴에 바로 보인다 — 예고(붉은 줄)는 그 턴 시작에 뜨고 턴 끝에 친다
+  if ((b.turn - 1) % BOSS.bombEvery !== 0) return;
   const rows = new Map<number, number>();
   for (const p of b.s.pieces) if (p.side === 0) rows.set(p.y, (rows.get(p.y) ?? 0) + valueOf(p));
   const best = [...rows.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0];
@@ -789,7 +822,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
     let sim = simulate(s1, [it], { freeAp: true });
     // 앞의 적이 움직이며 칸이 막혔으면 그 자리에서 다시 고른다 (쉬지 않는다)
     if (!sim.ok) {
-      const alt = bestFor(b.s, p, undefined, b.turn);
+      const alt = bestFor(b.s, p, undefined, b.turn, { reach: playerReach(b.s), boss: b.boss });
       if (!alt) continue;
       it = { pieceId: p.id, to: alt.to };
       sim = simulate(s1, [it], { freeAp: true });
