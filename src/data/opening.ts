@@ -97,7 +97,7 @@ export const GUIDE_PAGES: { title: string; lines: string[]; tip?: string; media:
 
 /** 첫 대국 도움말 (처음 출하하는 사람에게만, 시험대 한 판) */
 export const COACH_LINES = {
-  card: '손패에서 카드를 고르십시오.',
+  card: '탄창에서 탄을 누르면 효과가 펼쳐집니다. 한 번 더 누르면 장전합니다.',
   piece: '빛나는 기물을 고르십시오.',
   square: '갈 칸을 고르십시오. 과녁은 칠 수 있는 적입니다.',
   end: '태엽을 다 썼습니다. 턴 끝을 누르십시오.',

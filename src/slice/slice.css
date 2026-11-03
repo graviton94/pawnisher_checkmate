@@ -1241,3 +1241,78 @@ body.slice.lay-f #right > .actions .btn-go { flex: 1; min-height: 60px; font-siz
 .blog .bl-k { color: #a8a1b1; font-size: 12px; }
 body.slice.lay-f #right > .actions .rewind > span, body.slice.lay-f #right > .actions .rewind > small { display: block; white-space: nowrap; }
 .blog .bl-list { -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent); }
+
+/* ===================== D-209 탄창 다듬기 · 계기 ===================== */
+/* 탄 한 발: 머리(비용 · 기물 · 이름) 40px — 펼치면 아래 몸(설명) 칸이 따로 붙는다 */
+body.slice.lay-f #hand { gap: 4px; padding: 2px 2px 6px; scrollbar-width: thin; overscroll-behavior: contain; }
+body.slice.lay-f #hand > .cmd.mag { display: flex; flex-direction: column; align-items: stretch; min-height: 0; padding: 0; grid-template-rows: none; flex: none; overflow: hidden; }
+body.slice.lay-f #hand > .cmd.mag .mg-head { display: grid; grid-template-columns: 24px 26px minmax(0, 1fr) auto; align-items: center; column-gap: 6px; height: 40px; padding: 0 8px 0 9px; }
+body.slice.lay-f #hand > .cmd.mag .costgear img { width: 22px; height: 22px; }
+body.slice.lay-f #hand > .cmd.mag .art { position: static; width: 26px; height: 26px; background: none; box-shadow: none; }
+body.slice.lay-f #hand > .cmd.mag .art img, body.slice.lay-f #hand > .cmd.mag .art .ico16 { width: 26px; height: 26px; }
+body.slice.lay-f #hand > .cmd.mag .mg-head b { font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+body.slice.lay-f #hand > .cmd.mag .mg-body { display: flex; gap: 8px; align-items: flex-start; padding: 7px 9px 8px 11px; overflow: hidden;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px), #15131a;
+  box-shadow: inset 0 2px 0 #000, inset 0 3px 0 #3a3542, inset 3px 0 0 var(--tone); }
+body.slice.lay-f #hand > .cmd.mag .mg-shape svg { display: block; width: 37px; height: 37px; }
+body.slice.lay-f #hand > .cmd.mag .mg-txt { display: grid; gap: 3px; min-width: 0; }
+body.slice.lay-f #hand > .cmd.mag .mg-desc { margin: 0; font-size: 13px; line-height: 1.4; color: #ece6da; white-space: normal; }
+body.slice.lay-f #hand > .cmd.mag .mg-flv { margin: 0; font-size: 12px; font-style: italic; color: #c9b48a; white-space: normal; }
+body.slice.lay-f #hand > .cmd.mag .mg-use { margin: 0; font-size: 12px; color: #9ec7dc; white-space: normal; }
+body.slice.lay-f #hand > .cmd.mag.off .mg-use { color: #ff9a8a; }
+body.slice.lay-f #hand > .cmd.mag.open:not(.armed) { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #8f889a, inset 3px 0 0 var(--tone); }
+body.slice.lay-f #hand > .cmd.mag.armed { margin-block: 3px; box-shadow: 0 0 0 2px #000, 0 0 0 4px #facc15, inset 3px 0 0 var(--tone); }
+body.slice.lay-f #hand > .cmd.mag.off.open { filter: grayscale(0.5) brightness(0.85); }
+/* 덱 · 분대 · 버림: 왼쪽 아래 고정 */
+body.slice.lay-f .rail.left { display: flex; flex-direction: column; min-height: 0; }
+body.slice.lay-f .rail.left #hand { flex: 1 1 auto; min-height: 0; }
+body.slice.lay-f .rail.left > .deckrow { flex: none; padding-top: 4px; box-shadow: 0 -2px 0 #000, 0 -3px 0 #2e2a35; }
+body.slice.lay-f .deckrow .hand-head { justify-content: flex-start; }
+/* 되감기: 턴 옆 작은 단추 (◀◀ + 남은 수) */
+body.slice.lay-f #right .rail-head { display: flex; gap: 6px; align-items: center; }
+body.slice.lay-f #right .rail-head .btn-rewind, body.slice.lay-f #right .rail-head #btn-rewind { flex: none; width: 56px; min-width: 0; height: 48px; padding: 0; display: grid; place-content: center; line-height: 1; font-size: 13px; }
+body.slice.lay-f #btn-rewind .rw-t { display: none; }
+body.slice.lay-f #btn-rewind .rw-i { display: block; font-size: 15px; }
+body.slice.lay-f #btn-rewind small { display: block; margin-top: 3px; }
+body.slice.lay-f #right > .actions .btn-go { flex: 1; min-height: 56px; }
+.overlay .stand.rw-ask h2 { font-size: 18px; }
+.overlay .stand.rw-ask .row .btn { min-width: 96px; }
+
+/* 태엽: 열쇠 구멍(팔각 홈) 속 황동 열쇠 — 켜지면 뒤에서 따뜻한 빛 */
+body.slice .apbar .seg { position: relative; height: 30px; background: radial-gradient(circle at 50% 55%, #0c0b0f 0 40%, #1d1a22 41%); clip-path: polygon(22% 0, 78% 0, 100% 22%, 100% 78%, 78% 100%, 22% 100%, 0 78%, 0 22%); box-shadow: none; }
+body.slice .apbar .seg.on { background: radial-gradient(circle at 50% 55%, #ffe9a8 0 18%, #e3a23a 40%, #7a4f14 62%, #2a2018 64%); }
+body.slice .apbar .seg.bonus.on { background: radial-gradient(circle at 50% 55%, #d8fff0 0 18%, #5fe0a8 40%, #1f6a4c 62%, #182a22 64%); }
+body.slice .apbar .seg img { width: 24px; height: 24px; filter: drop-shadow(1px 1px 0 #000); }
+body.slice .apbar .seg:not(.on) img { opacity: 0.45; }
+/* 쓸 때: 감긴 태엽이 풀리듯 거꾸로 빠르게 돌다 느려지고, 빛이 한 번 튀고 꺼진다 */
+body.slice .apbar .seg.spend img { animation: keyUnwind 620ms cubic-bezier(0.15, 0.7, 0.3, 1) both; }
+body.slice .apbar .seg.spend { animation: sockOut 620ms ease-out both; }
+@keyframes keyUnwind { 0% { transform: rotate(0) scale(1.15); opacity: 1; } 70% { transform: rotate(-600deg) scale(0.95); opacity: 0.8; } 100% { transform: rotate(-720deg) scale(1); opacity: 0.45; } }
+@keyframes sockOut { 0% { background: radial-gradient(circle at 50% 55%, #fff6d0 0 30%, #f4b740 55%, #2a2018 64%); } 25% { filter: brightness(1.6); } 100% { filter: none; } }
+/* 감길 때: 앞으로 딸깍딸깍 돌며 켜진다 */
+body.slice .apbar .seg.wind img { animation: keyWind 420ms steps(4, end) both; animation-delay: calc(var(--k) * 70ms); }
+@keyframes keyWind { 0% { transform: rotate(-180deg); opacity: 0.5; } 100% { transform: rotate(0); opacity: 1; } }
+
+/* 속전: 진공관 줄 — 머리에 「속전 보상 +50」, 아래로 관 12개. 켜진 관은 필라멘트가 은은히 떨린다 */
+body.slice .coins { display: grid; grid-template-columns: 1fr auto; row-gap: 3px; align-items: center; }
+body.slice .coins .lbl { margin: 0; color: #f0c48a; font-size: 12px; }
+body.slice .coins > b { display: inline-flex; align-items: center; gap: 3px; margin: 0; color: #f4d27a; font: 700 15px Galmuri14, sans-serif; }
+body.slice .coins > b .scr { width: 14px; height: 14px; }
+body.slice .coins .tubes { grid-column: 1 / -1; display: flex; gap: 2px; padding: 3px 4px 0; background: linear-gradient(180deg, transparent 0 70%, #2b2620 70%); box-shadow: inset 0 -2px 0 #000; }
+body.slice .coins .tube { flex: 1; height: 20px; min-width: 0; border-radius: 6px 6px 1px 1px; background: linear-gradient(90deg, #26232b 0, #3a3640 40%, #1b1920 100%); box-shadow: 0 0 0 1px #000, inset 0 -3px 0 #121016; position: relative; }
+body.slice .coins .tube::after { content: ''; position: absolute; left: 35%; right: 35%; top: 30%; bottom: 22%; background: #4a4450; }
+body.slice .coins .tube.lit { background: radial-gradient(ellipse at 50% 60%, #fff1c0 0 14%, #ff9a3c 38%, #a8401a 70%, #3a1a14 100%); box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255, 140, 50, 0.55), inset 0 -3px 0 #3a1a14; animation: tubeHum 2.4s ease-in-out infinite alternate; animation-delay: calc(var(--k) * -0.37s); }
+body.slice .coins .tube.lit::after { background: #fff4d6; box-shadow: 0 0 3px #ffd27a; }
+@keyframes tubeHum { 0%, 100% { filter: brightness(1); } 47% { filter: brightness(0.86); } 50% { filter: brightness(1.12); } }
+/* 꺼질 때: 몇 번 깜빡이다 필라멘트가 식는다 */
+body.slice .coins .tube.dying { animation: tubeDie 1100ms steps(1, end) both; }
+@keyframes tubeDie {
+  0% { background: radial-gradient(ellipse at 50% 60%, #fff1c0 0 14%, #ff9a3c 38%, #a8401a 70%, #3a1a14 100%); box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255, 140, 50, 0.7); }
+  18% { background: #26232b; box-shadow: 0 0 0 1px #000; }
+  30% { background: radial-gradient(ellipse at 50% 60%, #ffd8a0 0 10%, #d06a2a 40%, #3a1a14 100%); }
+  44% { background: #26232b; }
+  54% { background: radial-gradient(ellipse at 50% 60%, #b05a2a 0 20%, #3a1a14 100%); }
+  70%, 100% { background: linear-gradient(90deg, #26232b 0, #3a3640 40%, #1b1920 100%); box-shadow: 0 0 0 1px #000; }
+}
+@media (prefers-reduced-motion: reduce) { body.slice .coins .tube.lit, body.slice .coins .tube.dying, body.slice .apbar .seg.spend, body.slice .apbar .seg.spend img, body.slice .apbar .seg.wind img { animation: none; } }
+.overlay .panel:has(.rw-ask) { max-width: 460px; }

@@ -30,6 +30,7 @@ import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBe
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
 import { REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
+import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
 
 // 판 배치 시안 (D-198 7번): ?layout=b|c — 사용자가 고르면 기본으로 굳힌다
@@ -45,11 +46,12 @@ import { Rng } from '../engine/rng';
     log.id = 'blog';
     log.className = 'blog';
     document.getElementById('meter')!.before(log);
-    // 덱 · 분대 · 뽑을 · 버림은 오른쪽 아래(턴 끝 위)로 — 탄창 높이를 손패에 다 쓴다
+    // 덱 · 분대 · 버림 = 왼쪽 아래 고정 (탄창은 그 위에서 위아래로 밀린다) · 되감기 = 턴 옆 작은 단추
     const dr = document.createElement('div');
     dr.id = 'deckrow';
     dr.className = 'deckrow';
-    document.querySelector('#right .actions')!.before(dr);
+    document.getElementById('left')!.appendChild(dr);
+    document.getElementById('btn-help')!.before(document.getElementById('btn-rewind')!);
   } else if (lay === 'e') {
     // 기본 = E안 (D-207, 사용자: "좌우가 쓸데없는 정보나 텅 비어 있다"): 판은 화면 높이 꽉, 왼쪽 = 내 선택지(손패 2열 · 설명까지), 오른쪽 = 적의 수(예고 목록) · 연쇄 · 턴 끝
     document.body.classList.add('lay-e');
@@ -156,6 +158,8 @@ let gold = 0;
 let stage = 0;
 let b: SliceBattle;
 let selCard: number | null = null;
+/** 탄창(F안)에서 펼쳐 둔 탄 — 한 번 누르면 펼치고, 펼친 탄을 한 번 더 누르면 쓴다 (D-209) */
+let openCard: number | null = null;
 let selPiece: number | null = null;
 let busy = false;
 /** 배율 표기: 큰 값은 줄여 레일 밖으로 넘치지 않게 (페르소나 테스트 m11) — ×1.25 · ×128 · ×5.6만 · ×3.2억 */
@@ -251,6 +255,7 @@ const model = (): BoardModel => {
 
 // ---------- 레일 ----------
 const cardHtml = (id: CommandId, i: number): string => {
+  if (document.body.classList.contains('lay-f')) return magHtml(id, i);
   const c = COMMANDS[id];
   // 실제 태엽: 행진 북 · 재도약이면 싸진다 (기물마다 다르면 가장 싼 값)
   const costs = isInstant(id) ? [costOf(b, i)] : b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type)).map((p) => costOf(b, i, p.id));
@@ -268,12 +273,33 @@ const cardHtml = (id: CommandId, i: number): string => {
 };
 
 /**
+ * 탄창의 탄 한 발 (D-209): 머리(비용 · 기물 · 이름) + 몸(펼쳤을 때만 — 효과 문장 · 행마 그림 · 각주).
+ * 단순한 카드(기본 행마)는 문장 없이 행마 그림과 칭호만.
+ */
+const magHtml = (id: CommandId, i: number): string => {
+  const c = COMMANDS[id];
+  const costs = isInstant(id) ? [costOf(b, i)] : b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type)).map((p) => costOf(b, i, p.id));
+  const cost = costs.length ? Math.min(...costs) : c.cost;
+  const ok = canPlay(b, i);
+  const poor = !ok && cost > b.ap;
+  const off = !ok || busy;
+  const why = busy ? '' : poor ? `태엽 ${cost} 필요` : !ok ? (c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : '움직일 기물 없음') : '';
+  const open = openCard === i || selCard === i;
+  const shape = c.who !== 'any' && c.kind === 'move' ? `<span class="mg-shape">${shapeHtml(c.who, 7)}</span>` : '';
+  const desc = c.desc ? `<p class="mg-desc">${c.desc}</p>` : '';
+  const flv = c.flavor ? `<p class="mg-flv">${c.flavor}</p>` : '';
+  const hint = selCard === i ? '' : `<p class="mg-use">${off ? why || '지금은 쓸 수 없음' : '한 번 더 누르면 장전'}</p>`;
+  return `<button type="button" class="cmd mag t-${c.who}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
+    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${c.name}</b>${opTag(opOfCard(c))}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
+};
+
+/**
  * 카드 크게 보기 (D-166, 슬더스식): 손패를 길게 누르거나(터치) 마우스를 올리면 카드 모양으로 전체 효과.
  * 손패는 이름 · 비용 · 수치만 짧게, 자세한 문장 · 각주 · 띠 이름은 여기서.
  */
 const peekHtml = (id: CommandId, cost: number): string => {
   const c = COMMANDS[id];
-  return `<div class="peek-card t-${c.who}"><div class="pk-top">${keysHtml(cost)}<b>${c.name}</b></div><div class="pk-art">${c.who === 'any' ? `<span class="pk-any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>` : pieceImg(c.who, 0, 'large', 72)}</div><div class="pk-axes">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</div><p class="pk-desc">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</p>${c.flavor ? `<p class="pk-flv">${c.flavor}</p>` : ''}</div>`;
+  return `<div class="peek-card t-${c.who}"><div class="pk-top">${keysHtml(cost)}<b>${c.name}</b></div><div class="pk-art">${c.who === 'any' ? `<span class="pk-any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>` : pieceImg(c.who, 0, 'large', 72)}</div><div class="pk-axes">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</div>${c.desc ? `<p class="pk-desc">${c.desc}</p>` : c.who !== 'any' ? `<div class="pk-shape">${shapeHtml(c.who, 9)}</div>` : ''}${c.flavor ? `<p class="pk-flv">${c.flavor}</p>` : ''}</div>`;
 };
 let peekEl: HTMLElement | null = null;
 const showPeek = (cardEl: HTMLElement): void => {
@@ -451,6 +477,61 @@ const portrait = (): void => {
   if (hpEl) hpEl.textContent = `HP ${hp}`;
 };
 
+/**
+ * 태엽 · 속전 계기 (D-209): 값이 바뀔 때만 다시 그린다 — 그래야 꺼지는 연출이 다음 새로 그리기에 끊기지 않는다.
+ * 태엽: 열쇠 구멍마다 황동 열쇠. 쓰면 열쇠가 풀리며 거꾸로 돌고 빛이 꺼진다 · 감기면 앞으로 돌며 켜진다.
+ * 속전: 진공관 줄. 턴이 지나면 끝의 관이 몇 번 깜빡이다 꺼진다.
+ */
+let apKey = '';
+let apPrev: number | null = null;
+let coinPrev: number | null = null;
+const gauges = (): void => {
+  const n = Math.max(b.apMax, b.ap);
+  const k = `${b.ap}/${n}/${b.apMax}`;
+  if (k !== apKey) {
+    const was = apPrev;
+    apKey = k;
+    apPrev = b.ap;
+    $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: n }, (_, i) => {
+      const on = i < b.ap;
+      const fx = was === null || calmNow() ? '' : !on && i < was ? ' spend' : on && i >= was ? ' wind' : '';
+      return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><img src="ui/hud/key-${on ? 'full' : 'spent'}.png" alt=""></i>`;
+    }).join('')}<b>${b.ap}/${b.apMax}</b>`;
+  }
+  if (coinPrev !== b.coins || !$('coins').childElementCount) {
+    const was = coinPrev;
+    coinPrev = b.coins;
+    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track} 보상</span><b title="이기면 받는 나사"><i class="scr"></i>+${b.coins * SLICE.coinValue}</b><span class="tubes">${Array.from({ length: SLICE.coins }, (_, i) => `<i class="tube${i < b.coins ? ' lit' : ''}${was !== null && !calmNow() && i >= b.coins && i < was ? ' dying' : ''}" style="--k:${i}"></i>`).join('')}</span>`;
+  }
+};
+
+/**
+ * 탄 펼치기 · 접기 (D-209): 톱니가 걸리듯 드르륵 — 높이가 네 칸으로 끊겨 열리고 닫히며, 칸마다 딸깍.
+ * 손패가 그대로일 때만 접히는 탄을 보여 준다(쓴 탄은 그냥 빠진다).
+ */
+let lastOpen: number | null = null;
+const magAnim = (oldBody: HTMLElement | null, same: boolean): void => {
+  const now = openCard ?? selCard;
+  if (now === lastOpen) return;
+  const prev = lastOpen;
+  lastOpen = now;
+  if (calmNow()) return;
+  const tick = (k: number) => window.setTimeout(() => sfx('tap', 6 + k), k * 55);
+  const el = now !== null ? $('hand').querySelector<HTMLElement>(`[data-card="${now}"] .mg-body`) : null;
+  if (el) {
+    const h = el.offsetHeight;
+    el.animate([{ height: '0px', opacity: 0.4 }, { height: `${h}px`, opacity: 1 }], { duration: 220, easing: 'steps(4, end)' });
+    for (let k = 0; k < 3; k++) tick(k);
+  }
+  const host = same && prev !== null && prev !== now ? $('hand').querySelector<HTMLElement>(`[data-card="${prev}"]`) : null;
+  if (host && oldBody) {
+    const ghost = oldBody.cloneNode(true) as HTMLElement;
+    host.appendChild(ghost);
+    const h = ghost.offsetHeight;
+    ghost.animate([{ height: `${h}px` }, { height: '0px' }], { duration: 180, easing: 'steps(3, end)', fill: 'forwards' }).onfinish = () => ghost.remove();
+  }
+};
+
 const refresh = (): void => {
   hidePeek();
   renderer.render(model());
@@ -458,7 +539,11 @@ const refresh = (): void => {
   const deckRow = document.getElementById('deckrow');
   const head = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>`;
   if (deckRow) deckRow.innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button><span>버림 ${b.discard.length + (b.played?.length ?? 0)}</span></p>`;
+  if (openCard !== null && openCard >= b.hand.length) openCard = null;
+  const oldBody = $('hand').querySelector<HTMLElement>('.cmd.open .mg-body');
+  const handLen0 = $('hand').querySelectorAll('[data-card]').length;
   $('hand').innerHTML = `${deckRow ? '' : head}${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
+  magAnim(oldBody, handLen0 === b.hand.length);
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   portrait();
   foePlan();
@@ -475,8 +560,7 @@ const refresh = (): void => {
     $('boss').innerHTML = `<b>${r.name}</b>${lines.map((l, k) => `<span${k === 1 && b.bombRow !== null ? ' class="hot"' : ''}>${k === 1 && b.bombRow !== null ? '턴 끝 — 불꽃 줄 폭격!' : l}</span>`).join('')}`;
   }
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
-  $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<i class="seg${i < b.ap ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}"><img src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt=""></i>`).join('')}<b>${b.ap}/${b.apMax}</b>`;
-  $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b title="이기면 받는 나사">+${b.coins * SLICE.coinValue}</b>`;
+  gauges();
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
   $('btn-rewind').innerHTML = `<span class="rw-i">◀◀</span> <span class="rw-t">되감기</span> <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
@@ -595,7 +679,7 @@ const pickCard = (i: number): void => {
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'tap', b.kills + 2);
       playCard(b, i);
-      selCard = selPiece = null;
+      selCard = selPiece = openCard = null;
       if (c.kind === 'spark') chainPop(b.kills);
       prevKills = b.kills;
       return refresh();
@@ -607,7 +691,7 @@ const pickCard = (i: number): void => {
   if (!pieces.length) return toast(c.who === 'any' ? '‘움직일 기물이 없어.’' : `‘${josa(PIECE_NAMES_KO[c.who], '이')} 없거나, 갈 칸이 없어.’`);
   sfx('lift');
   if (selCard === i) {
-    selCard = selPiece = null;
+    selCard = selPiece = openCard = null;
     return refresh();
   }
   selCard = i;
@@ -639,6 +723,7 @@ const onTap = async (pos: Pos): Promise<void> => {
       const ci = autoCard(p.id);
       if (ci === null) return toast(`‘${josa(PIECE_NAMES_KO[p.type], '을')} 움직일 카드가 없어.’`);
       selCard = ci;
+      openCard = ci;
       selPiece = p.id;
     }
     sfx('lift');
@@ -649,7 +734,7 @@ const onTap = async (pos: Pos): Promise<void> => {
     toast(it ? '다음 차례에 움직이는 적입니다. 붉은 칸을 공격합니다.' : '다음 차례에는 움직이지 않습니다.');
     return;
   }
-  selCard = selPiece = null;
+  selCard = selPiece = openCard = null;
   refresh();
 };
 
@@ -674,7 +759,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   if (typeof r === 'string') return toast(r);
   $('hand').classList.remove('hint');
   const gain = r.events.reduce((a, e) => (e.type === 'apGain' ? a + e.amount : a), 0);
-  selCard = selPiece = null;
+  selCard = selPiece = openCard = null;
   busy = true;
   refresh();
   showBefore(r.before);
@@ -716,7 +801,7 @@ const onEndInner = async (): Promise<void> => {
   $('btn-end').classList.remove('warn');
   // 바로 잠근다 (페르소나 테스트 B1): 턴 합계 연출을 기다리는 사이 「턴 끝」 연타가 적 차례를 한 번 더 돌렸다
   busy = true;
-  selCard = selPiece = null;
+  selCard = selPiece = openCard = null;
   refresh();
   // 이번 출하 최고의 턴 (하이라이트, D-178) · 한 턴에 둘 이상 쓰러뜨리면 적 킹이 분해한다
   const hl = { where: cur.title, turn: b.turn - 1, kills: prevKills, damage: turnDmg };
@@ -879,8 +964,10 @@ const startBattle = (def: BattleDef, silent = false): void => {
   tauntedNow = false;
   betNow = null;
   blog = [];
+  apKey = '';
+  apPrev = coinPrev = null;
   b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : stage });
-  selCard = selPiece = null;
+  selCard = selPiece = openCard = null;
   busy = false;
   turnDmg = 0;
   prevKills = 0;
@@ -1807,7 +1894,20 @@ $('hand').addEventListener('click', (e) => {
   if (!el) return;
   peekMute = el.dataset.card ?? null;
   hidePeek();
-  pickCard(Number(el.dataset.card));
+  const i = Number(el.dataset.card);
+  // 탄창 (D-209): 한 번 = 펼쳐 효과 보기, 펼친 탄 한 번 더 = 쓴다(장전). 장전된 탄을 또 누르면 내려놓고 접는다
+  if (document.body.classList.contains('lay-f') && !busy) {
+    if (selCard === i) {
+      selCard = selPiece = openCard = null;
+      return refresh();
+    }
+    if (openCard !== i) {
+      selCard = selPiece = null;
+      openCard = i;
+      return refresh();
+    }
+  }
+  pickCard(i);
 });
 $('btn-end').addEventListener('click', () => void onEnd());
 document.getElementById('deckrow')?.addEventListener('click', (e) => {
@@ -1827,6 +1927,17 @@ $('parts').addEventListener('click', (e) => {
   toast(`${d.name} — ${d.desc}`, 2400);
 });
 $('btn-rewind').addEventListener('click', () => {
+  if (busy || b.s.winner !== null) return;
+  if (b.rewinds <= 0) return toast('되감기를 모두 사용했습니다.');
+  // 확인 (D-209): 되돌릴 수 없는 결정은 한 번 묻는다
+  const el = openOverlay(`<div class="stand rw-ask"><p class="eyebrow">◀◀ 되감기</p><h2>${HUD_TEXT.rewindAsk}</h2><p class="line">${HUD_TEXT.rewindLine}</p><p class="dim">남은 되감기 ${b.rewinds}</p><div class="row"><button class="btn" type="button" data-no>아니오</button><button class="btn brass" type="button" data-yes>예</button></div></div>`);
+  el.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
+  el.querySelector('[data-yes]')!.addEventListener('click', () => {
+    closeOverlay();
+    doRewind();
+  });
+});
+const doRewind = (): void => {
   const r = rewind(b);
   if (typeof r === 'string') return toast(r);
   blog = blog.filter((x) => !(x.side === 0 && x.turn === b.turn));
@@ -1843,14 +1954,14 @@ $('btn-rewind').addEventListener('click', () => {
     b = r;
     turnDmg = 0;
     prevKills = b.kills;
-    selCard = selPiece = null;
+    selCard = selPiece = openCard = null;
     busy = false;
     renderer.setup(b.s);
     refresh();
     sfx('awaken');
   }, 420);
   window.setTimeout(() => fx.remove(), 800);
-});
+};
 $('btn-help').addEventListener('click', () => help());
 
 // ---------- 근간 시험장 (D-177) ----------
@@ -1871,8 +1982,10 @@ const startLab = (mode: 'A' | 'B'): void => {
   cur = { enemy: LAB.enemy, kingHp: LAB.kingHpA, title: LAB_TEXT[mode].name, narr: '', tell: '', reward: 'end' };
   stage += 1;
   blog = [];
+  apKey = '';
+  apPrev = coinPrev = null;
   b = newSliceBattle(squad, LAB.enemy, LAB.deck, 300 + labRounds[mode] * 31, { enemyKingHp: mode === 'A' ? LAB.kingHpA : undefined, lab: mode });
-  selCard = selPiece = null;
+  selCard = selPiece = openCard = null;
   busy = false;
   turnDmg = 0;
   prevKills = 0;
