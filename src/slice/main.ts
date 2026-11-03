@@ -28,7 +28,7 @@ import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, MAP, NODE_DESC, NODE_IC
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
-import { REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { depthAt, REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -1044,7 +1044,7 @@ const battleIntro = (): void => {
 /**
  * 적 성장 깊이 (D-215): 대국 수 대신 출하 진행도 — 막 하나 = SLICE.depthPerAct. 지도가 길어져 대국이 늘어도 성장 곡선은 예전 길이 그대로.
  */
-const depthNow = (): number => Math.round((actI + rowI / Math.max(1, acts[actI].rows.length)) * SLICE.depthPerAct);
+const depthNow = (): number => depthAt(actI, rowI / Math.max(1, acts[actI].rows.length));
 
 /** 다음 노드로: 줄을 하나 넘기고, 막이 끝나면 다음 막 (전환 화면), 3막 반장 뒤면 출하 완료 */
 const advance = (): void => {

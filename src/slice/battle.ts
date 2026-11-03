@@ -267,6 +267,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   return b;
 };
 
+/** 출하 진행도 → 적 성장 깊이 (D-216 3): 막 ai(0~2)에서 frac(0~1)만큼 왔을 때 */
+export const depthAt = (ai: number, frac: number): number => { const [d0, dl] = SLICE.depthActs[Math.min(ai, SLICE.depthActs.length - 1)]; return Math.round(d0 + dl * frac); };
+
 /** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
 /** 반장 규칙 · 적 특성 피해에도 난이도 공격 배율을 곱한다 (D-202) */
 export const foeDmg = (n: number, b?: { atkK?: number }): number => Math.max(1, Math.round(n * (b?.atkK ?? SLICE.foeAtk)));
