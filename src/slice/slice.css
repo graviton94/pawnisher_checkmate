@@ -1502,3 +1502,7 @@ body.slice.lay-f #hand > .cmd.mag .costgear img { width: 20px; height: 20px; }
 /* 보상 줄: 카드 셋 + (가끔) 새 분대원 한 명 — 한 줄에 다 (D-216) */
 .reward-cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
 .reward-cards .cmd .gtag, .part-card .gtag { color: #0b0b0e; font-style: normal; }
+/* 지도 범례 (D-216 4): 아무것도 안 골랐을 때 아래 띠 — 아이콘 + 이름 한 줄 */
+.map-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.map-legend li { display: flex; align-items: center; gap: 4px; font: 400 12px/1 Galmuri11, sans-serif; color: #c9c1b4; }
+.map-legend .ico { width: 24px; height: 24px; }

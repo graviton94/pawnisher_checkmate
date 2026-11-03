@@ -1150,7 +1150,9 @@ const showMap = (): void => {
   el.style.setProperty('--act', `url(${new URL(`scenes/act-${actI + 1}.png`, location.href).href})`);
   el.innerHTML = `<header><div><p class="sf-eyebrow">${a.act}막</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''}</p></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
-    <footer class="map-info"><p class="hint">빛나는 곳 중 하나를 고릅니다.</p></footer>`;
+    <footer class="map-info"><p class="hint">빛나는 곳을 고릅니다.</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
+      .map((k) => `<li class="nd-${k}"><i class="ico" style="${iconArt(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
+      .join('')}</ul></footer>`;
   document.body.appendChild(el);
   sfx('lift');
   const info = el.querySelector<HTMLElement>('.map-info')!;
