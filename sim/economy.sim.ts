@@ -7,7 +7,7 @@ import { PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '.
 import { makeCrew } from '../src/slice/crew';
 import { buildRun, battleFor, MAP, type MapNode } from '../src/slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../src/slice/events';
-import { crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../src/slice/battle';
+import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../src/slice/battle';
 import { playOut } from '../src/slice/bot';
 
 /**
@@ -115,12 +115,14 @@ const one = (seed: number) => {
           const r = playOut(b);
           if (r.won) {
             ok = true;
-            fell = fallenAfter(b, squad).map((f) => f.crew);
+            // 목숨 둘 (D-219): 처음 쓰러지면 톱니가 깨진 채 HP 50%로 돌아오고, 깨진 채 쓰러지면 폐기
+            const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
+            fell = cs.scrapped;
+            bump(T, 'cracked', cs.back.length);
             const g = (b.coins * SLICE.coinValue + Math.floor(b.overkill / 10)) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
             gold += g; bump(T, 'goldBattle', g);
-            const before = squad.length;
-            squad = restSquad(squadAfter(b, squad));
-            bump(T, 'lost', before - squad.length);
+            squad = [...restSquad(squadAfter(b, squad)), ...cs.back];
+            bump(T, 'lost', cs.scrapped.length);
           } else bump(T, 'retry');
         }
         if (!ok) { ended = `${ai + 1}막 ${def.title}`; return { cleared: false, ended, T, curve, checkpoints, deck, squad, parts }; }
@@ -152,6 +154,7 @@ const one = (seed: number) => {
         { const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x)); if (cand[0] && gold >= SHOP.refinePrice + 40) { gold -= SHOP.refinePrice; deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); bump(T, 'shop:refine'); bump(T, 'goldSpent', SHOP.refinePrice); } }
         if (deck.length > 14 && gold >= SHOP.removePrice) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= SHOP.removePrice; bump(T, 'shop:remove'); bump(T, 'goldSpent', SHOP.removePrice); }
       } else if (n.kind === 'forge') {
+        { const m = mendSquad(squad); squad = m.squad; bump(T, 'mended', m.mended.length); }
         if (hpRatio() < 0.6) { squad = restSquad(squad, FORGE.repairPct); bump(T, 'forge:repair'); }
         else {
           const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x));
@@ -173,7 +176,7 @@ const one = (seed: number) => {
       const d = depthAt(ai, frac);
       curve.push({ act: ai + 1, floor: ri, deck: deck.length, dead: deck.filter((id) => !usable(id)).length, types: new Set(squad.map((u) => u.t)).size, squad: squad.length, parts: parts.length, gold, avgVal, hpK: SLICE.foeHp * (d ? SLICE.foeHpStart * Math.pow(SLICE.foeHpGrow, d) : 1), atkK: SLICE.foeAtk * (1 + SLICE.foeAtkGrow * d) });
     }
-    squad = restSquad(squad, 1);
+    squad = mendSquad(restSquad(squad, 1)).squad;
   }
   return { cleared: true, ended, T, curve, checkpoints, deck, squad, parts };
 };

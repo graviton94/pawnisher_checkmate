@@ -1,6 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BATTLE_HELP, HUD_TEXT, KEYWORDS } from '../data/hud';
+import { BATTLE_HELP, HUD_TEXT, KEYWORDS, LIFE_TEXT } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
@@ -22,13 +22,22 @@ import { PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId 
 import { iconMask } from '../ui/chrome';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
+/** 심장 톱니 두 칸 (D-219, 킹 제외): 성한 황동 · 깨진 검은 쇠. mending = 방금 끼운 칸이 떨어져 박힌다 */
+const lifePips = (u: Crew, fx: 'mend' | 'break' | '' = ''): string =>
+  u.t === 'K' ? '' : `<span class="lifes" role="img" aria-label="${LIFE_TEXT.name} ${u.cracked ? 1 : 2}/2"><i class="life"></i><i class="life${u.cracked ? ' off' : ''}${fx === 'mend' ? ' mending' : fx === 'break' && u.cracked ? ' breaking' : ''}"></i></span>`;
+// 심장 톱니 그림은 public 경로라 문서 기준으로 푼다 (base './' — CSS 파일 안 상대 경로는 Vite가 묶으려 든다)
+// (변수 속 url은 쓰이는 CSS 파일 기준으로 풀리므로 절대 주소로 넣는다)
+document.documentElement.style.setProperty('--life-on', `url(${new URL('ui/icons16/life.png', document.baseURI).href})`);
+document.documentElement.style.setProperty('--life-off', `url(${new URL('ui/icons16/life.crack.png', document.baseURI).href})`);
+/** 방금 대국에서 심장 톱니가 깨진 분대원 (보상 화면에서 깨지는 연출) */
+let justCracked: string[] = [];
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
-import { depthAt, REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { depthAt, REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -1027,10 +1036,12 @@ const startBattle = (def: BattleDef, silent = false): void => {
   turnDmg = 0;
   prevKills = 0;
   ritesDone = 0;
+  justCracked = [];
   $('hand').classList.remove('dealing');
   closeOverlay();
   renderer.setFoeTraits([...(b.blastPawns ? ['blast' as const] : []), ...(b.boss && b.bossRule === 'thorns' ? ['thorns' as const] : [])]);
   renderer.setNemesis(b.nemesisId ?? null);
+  renderer.setCracked(b.squadIds.filter((_, i) => squad[i]?.cracked));
   renderer.setBossFinish(!!def.boss);
   renderer.setup(b.s);
   refresh();
@@ -1039,7 +1050,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
     void stageIntro(def).then(() => {
       battleIntro();
       if (nemesisNow) return nemesisMeet(nemesisNow);
-      toast(def.tell, 3200);
+      const cracked = squad.filter((u) => u.cracked);
+      toast(cracked.length ? `${def.tell} · ${LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · '))}` : def.tell, 3600);
       maybeBet(def);
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
@@ -1074,6 +1086,7 @@ const advance = (): void => {
     const a = acts[actI];
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
     squad = restSquad(squad, restHeal());
+    { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
     void sceneIntro(`${a.act}막`, a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`).then(showMap);
     return;
   }
@@ -1305,7 +1318,10 @@ const shopScreen = (): void => {
 
 /** 작업대 (R5-2): 셋 중 하나 — 다듬기(한 장 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) */
 const forgeScreen = (): void => {
-  const el = openOverlay(`<h2>작업대 <span class="dim">— 하나를 고릅니다</span></h2>
+  // 작업대에 들르면 깨진 심장 톱니를 모두 새로 끼운다 (D-219 — 고르지 않아도 된다)
+  const mend = mendSquad(squad);
+  squad = mend.squad;
+  const el = openOverlay(`<h2>작업대 <span class="dim">— 하나를 고릅니다</span></h2>${mend.mended.length ? `<p class="mend-line">${mend.mended.map((u) => `<span class="mend">${lifePips(u, 'mend')} ${u.name}</span>`).join(' ')} <span class="dim">${LIFE_TEXT.mended(mend.mended.map((u) => u.name ?? '').join(' · '))}</span></p>` : ''}
     <div class="part-cards">
       <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>
       <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small></button>
@@ -1585,17 +1601,26 @@ const finish = (): void => {
     { const r = $('board').getBoundingClientRect(); screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, $('coins'), Math.round(earned / 6)); }
     const before = squad;
     const survived = squadAfter(b, squad);
-    const fallenList = fallenAfter(b, before);
+    // 목숨 둘 (D-219): 처음 쓰러진 분대원은 심장 톱니 하나가 깨진 채 돌아온다. 깨진 채 쓰러진 분대원만 폐기 (원수 · 원부 · 유품도 그쪽만)
+    const allFallen = fallenAfter(b, before);
+    const { back, scrapped } = crackOrScrap(allFallen.map((f) => f.crew));
+    const fallenList = allFallen.filter((f) => scrapped.some((u) => u.serial === f.crew.serial));
     const fallen: Crew[] = fallenList.map((f) => f.crew);
     // 원수가 생긴다: 내 분대원을 쓰러뜨린 적 (킹 · 입문 판 제외)
     for (const { crew, fall } of fallenList) if (crew.t !== 'K' && fall.byType && fall.byType !== 'K' && !INTRO.includes(cur)) setNemeses(addNemesis(nemeses(), fall.byType, { t: crew.t, name: crew.name ?? PIECE_NAMES_KO[crew.t], serial: crew.serial }, R.int(1000)));
     // 폐기 원부: 영구 기록 (D-153)
     writeLedger(fallenList.map(({ crew, fall }) => ({ serial: crew.serial ?? '', name: crew.name ?? '', t: crew.t, quirk: crew.quirk, kills: crew.kills ?? 0, battles: crew.battles ?? 0, nick: crew.nick, cause: `${cur.title} ${fall.turn}턴 · ${fall.by}`, run: runId })));
     // 판 사이 기본 회복: 남은 분대 최대 HP의 30%
-    squad = restSquad(survived, restHeal());
+    {
+      const rested = restSquad(survived, restHeal());
+      // 원래 줄 순서대로 (돌아온 분대원은 HP 50%, 회복은 받지 않는다)
+      squad = before.flatMap((u) => [...rested, ...back].filter((v) => v.serial === u.serial));
+    }
     // 유품 태엽: 고르게 하지 않는다 — 자동으로 나사가 되고 한 줄만 (D-155, 관리 피로 제로)
     const heirs = fallen.filter((c) => c.t !== 'K');
     const after: string[] = [];
+    justCracked = back.map((u) => u.serial ?? '');
+    if (back.length) after.push(LIFE_TEXT.cracked(back.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · ')));
     if (heirs.length) {
       gold += heirs.length * CREW.heirloomScrews;
       after.push(`유품 태엽 처분 (${heirs.map((c) => c.name).join(' · ')}) — 나사 +${heirs.length * CREW.heirloomScrews}`);
@@ -1678,7 +1703,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
             return cardFace(id, `data-pick="${id}"`);
           })
           .join('')}${recruitOffer && recruitCrew ? `<button type="button" class="part-card recruit g-rare" data-recruit data-grade="rare"><em class="gtag g-rare">기물</em><span class="rec-art">${pieceImg(recruitOffer.t, 0, 'large', 56)}</span><b>${recruitCrew.name}</b>${recruitCrew.quirk ? `<small class="quirk-line"><b>${QUIRKS[recruitCrew.quirk].name}</b><br>${QUIRKS[recruitCrew.quirk].desc}</small>` : ''}<span class="kit-cards">+ ${recruitOffer.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>` : ''}</div>
-        <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
+        <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `<span class="rest-u">${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}${lifePips(u, justCracked.includes(u.serial ?? '') ? 'break' : '')}</span>`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
           <button class="btn" type="button" data-remove>카드 빼기</button>
@@ -1788,6 +1813,20 @@ const deathRites = async (): Promise<void> => {
   for (const f of fresh) {
     const c = squad[b.squadIds.indexOf(f.pieceId)];
     if (!c) continue;
+    // 목숨 둘 (D-219): 성한 분대원이 처음 쓰러지면 폐기 의식 대신 짧은 「톱니가 깨진다」 — 판 가운데 톱니가 흔들리다 튕겨 나간다
+    if (c.t !== 'K' && !c.cracked) {
+      const fx = document.createElement('div');
+      fx.className = 'crackfx';
+      fx.innerHTML = `<div><span class="lifes big"><i class="life"></i><i class="life breaking"></i></span><p class="narr"></p><b>${crewLabel(c)}</b><small>${LIFE_TEXT.riteSys}</small></div>`;
+      document.body.appendChild(fx);
+      sfx('hurt');
+      await new Promise((r) => window.setTimeout(r, 120));
+      await typeIn(fx.querySelector<HTMLElement>('.narr')!, LIFE_TEXT.riteNarr, 14);
+      await new Promise((r) => window.setTimeout(r, 650));
+      pxOut(fx.querySelector<HTMLElement>(':scope > div'), undefined, 200);
+      window.setTimeout(() => fx.remove(), 260);
+      continue;
+    }
     const fx = document.createElement('div');
     fx.className = 'deathfx dc3';
     // 킹(대장)은 「대장, 먼저 갑니다」를 말하지 않는다 (페르소나 테스트 c4) — 대장을 부르는 대사는 분대원에게만
@@ -1817,7 +1856,7 @@ const crewView = (): void => {
   const el = openOverlay(`<h2>분대 ${squad.length}</h2><div class="crew-list">${squad
     .map((u, k) => {
       const q = u.quirk ? QUIRKS[u.quirk] : null;
-      return `<div class="crew-row">${pieceImg(u.t, 0, 'small', 26)}<div><b>${crewLabel(u)}</b> <span class="dim">${u.serial} · HP ${u.hp ?? crewMaxHp(u)}/${crewMaxHp(u)} · 처치 ${u.kills ?? 0}</span>${q ? `<br><span class="quirk">${q.name}</span> <small>${q.desc}</small>` : ''}${u.scars?.length ? ` <small class="scar">· ${u.scars.join(' · ')}</small>` : ''}</div>${u.t !== 'K' ? `<button class="btn sm" type="button" data-rename="${k}">이름</button>` : '<span></span>'}</div>`;
+      return `<div class="crew-row">${pieceImg(u.t, 0, 'small', 26)}<div><b>${crewLabel(u)}</b> ${lifePips(u)} <span class="dim">${u.serial} · HP ${u.hp ?? crewMaxHp(u)}/${crewMaxHp(u)} · 처치 ${u.kills ?? 0}</span>${q ? `<br><span class="quirk">${q.name}</span> <small>${q.desc}</small>` : ''}${u.scars?.length ? ` <small class="scar">· ${u.scars.join(' · ')}</small>` : ''}</div>${u.t !== 'K' ? `<button class="btn sm" type="button" data-rename="${k}">이름</button>` : '<span></span>'}</div>`;
     })
     .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
@@ -2330,4 +2369,4 @@ startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 if (qs.has('lab')) labPick();
 else if (!qs.has('debug')) opening();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

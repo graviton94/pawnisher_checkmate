@@ -1104,9 +1104,28 @@ export const REST = { heal: 0.3, reviveHp: 0.5, overhaul: 0.25 };
 /** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */
 export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * heal)) }));
 
+/**
+ * 목숨 둘 · 심장 톱니 (D-219, 다키스트 던전 2 · 와일드프로스트 · 인투 더 브리치 벤치마크): 분대원이 처음 쓰러지면 톱니 하나가 깨진 채
+ * HP 50%로 돌아오고, 깨진 채로 또 쓰러지면 폐기된다. 킹은 쓰러지면 대국이 끝나므로 해당 없음.
+ */
+export const crackOrScrap = (fallen: Squad[]): { back: Squad[]; scrapped: Squad[] } => {
+  const back: Squad[] = [];
+  const scrapped: Squad[] = [];
+  for (const u of fallen) {
+    if (u.t === 'K' || u.cracked) scrapped.push(u);
+    else back.push({ ...u, cracked: true, hp: Math.round(crewMaxHp(u) * REST.reviveHp) });
+  }
+  return { back, scrapped };
+};
+/** 깨진 심장 톱니를 모두 새로 끼운다 (작업대 · 막이 바뀔 때) — 고친 분대원 */
+export const mendSquad = (squad: Squad[]): { squad: Squad[]; mended: Squad[] } => {
+  const mended = squad.filter((u) => u.cracked);
+  return { squad: squad.map((u) => (u.cracked ? { ...u, cracked: false } : u)), mended };
+};
+
 /** 정비 (보상 대신 고를 수 있다): 쓰러진 기물 하나를 HP 50%로 되살리고, 모두 25% 더 */
 export const overhaulSquad = (squad: Squad[], fallen: Squad[]): { squad: Squad[]; revived?: Squad } => {
   const revived = [...fallen].sort((a, b) => PIECE_STATS[b.t].value - PIECE_STATS[a.t].value)[0];
   const healed = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * REST.overhaul)) }));
-  return revived ? { squad: [...healed, { ...revived, hp: Math.round(crewMaxHp(revived) * REST.reviveHp) }], revived } : { squad: healed };
+  return revived ? { squad: [...healed, { ...revived, cracked: true, hp: Math.round(crewMaxHp(revived) * REST.reviveHp) }], revived } : { squad: healed };
 };

@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 58, date: '2026-11-03' };
+export const VERSION = { n: 59, date: '2026-11-03' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -52,6 +52,14 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
  * shots = tools/fxlab/screens/의 파일 이름 (index.tsv에 이름표). 확정되면 DECISIONS의 done으로 옮기고 화면은 지운다.
  */
 export const TOPICS: { id: string; name: string; status: Status; rule: string; changed?: string; shots: string[] }[] = [
+  {
+    id: 'life',
+    name: '심장 톱니 (목숨 둘)',
+    status: 'review',
+    rule: '분대원마다 황동 톱니 둘. 처음 쓰러지면 폐기 의식 대신 짧은 「톱니가 깨진다」(큰 톱니 흔들림 → 터짐 → 깨진 톱니 + 파편) — HP 50%로 돌아온다. 깨진 채 쓰러지면 폐기. 작업대 · 막이 바뀌면 다시 끼운다 (D-219)',
+    changed: '새로 — 시뮬레이션: 영구 손실 8.9 → 3.2명/판',
+    shots: ['70-life-rite.jpg', '71-life-board.jpg', '72-life-crew.jpg', '73-life-forge.jpg'],
+  },
   {
     id: 'spec2',
     name: '규격 2.0 화면',
@@ -146,6 +154,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '레일 단추 · 도움말', rule: '덱 · 분대 · 되감기 · 턴 끝 모두 철 · 황동 도트 단추. 도움말은 판 무대 오른쪽 위의 태엽 톱니 속 ? (D-211)', status: 'review' },
   { item: '보상 등급', rule: '희귀 청강 · 황금 황동 도트 테두리 + 딱지, 들썩(눌림 → 튀어 오름 → 출렁) + 불똥, 황금은 화면 전체 금빛 디더 + 귀퉁이 반짝임 4칸 (D-216)', status: 'review' },
   { item: '페이드 금지', rule: '나타남 · 사라짐은 모두 체크무늬 디더 5단계 (CSS 81종 · 코드 애니메이션 · 판 위 투명도 트윈은 4단 계단). 둥근 모서리 · 번지는 그림자 · 부드러운 그라데이션 제거, 빛줄기는 도트 방사선 그림 (D-216)', status: 'review' },
+  { item: '심장 톱니 (목숨 둘)', rule: '분대원마다 황동 톱니 둘(속에 붉은 심장) — 깨지면 이 빠진 검은 쇠 톱니 + 가운데 검은 금. 쓰러지는 순간: 판 가운데 큰 톱니가 흔들림(예비) → 부풀어 터짐 → 깨진 톱니로 바뀌며 출렁 + 황동 파편 셋이 계단으로 튐. 작업대에서 끼울 때: 들렸다가 떨어져 박히고 출렁. 깨진 내 기물은 판 위 왼쪽 위 검은 쇠 딱지 (D-219)', status: 'review' },
   { item: '카드 얼굴', rule: '보상 · 고물상 공통: 등급 9-slice 틀(일반 철 · 희귀 청강 — 테 반짝임 2칸 · 황금 황동 — 테를 도는 불빛 4칸) · 머리띠 이름 · 체크무늬 그림 창 · 성질 줄 · 설명 · 아래 등급 보석. 고물상 값은 황동 가격표 도트(못 사면 철판) (D-217 3)', status: 'review' },
   // 확정 (v49: 오래 게임에 들어가 있고 지적 없던 것은 확정으로 옮김 — 바꾸고 싶으면 말해 주세요)
   { item: '도트 격자', rule: '판 칸 20×20 도트, 기물 약 16도트 높이(칸의 0.82). 판·표식·이펙트 모두 같은 격자', status: 'done' },
@@ -173,6 +182,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 59, date: '2026-11-03', items: ['심장 톱니 (목숨 둘): 성한 · 깨진 톱니 도트, 깨짐 · 끼움 계단 연출, 판 위 깨진 톱니 딱지 (D-219)'] },
   { v: 58, date: '2026-11-03', items: ['카드 얼굴 리뉴얼 · 등급 오라(희귀 반짝임 · 황금 불빛) · 고물상 가격표 (D-217 3)'] },
   { v: 57, date: '2026-11-03', items: ['그래픽 철학 확정 (D-216): 페이드 · 그라데이션 · 둥근 모서리 · 번짐 일괄 제거, 보상 등급 연출, 도트 방사선'] },
   { v: 56, date: '2026-11-03', items: ['속전 게이지 → 끓는 쇳물 보일러관 · 태엽 5칸(3칸 켜짐) · 탄창 칭호 5자 · 갈무리 글씨 통일 (D-212)'] },

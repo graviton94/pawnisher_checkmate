@@ -1552,3 +1552,61 @@ body.slice .shop-grid .cf .cf-win .ico, body.slice .shop-grid .cf .cf-win .art.a
 body.slice .shop-grid .cf .cf-desc { line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 body.slice .shop-grid .cf .cf-flv { display: none; }
 body.slice .shop-grid { row-gap: 20px; padding-bottom: 14px; }
+
+/* ───────── 목숨 둘 · 심장 톱니 (D-219) ─────────
+   아이콘 32px(14도트 × 2px + 여백)을 16px로 = 1도트 1px, 큰 연출은 64px = 1도트 4px. 정수배만.
+   깨짐: 흔들림(예비) → 부풀어 터짐 → 깨진 톱니로 바뀌며 출렁임 + 파편 3알이 계단으로 튄다. 끼움: 위로 들렸다가 떨어져 박히고 출렁. 페이드 없음. */
+.lifes { display: inline-flex; gap: 2px; vertical-align: -3px; margin-left: 2px; }
+.life { position: relative; display: inline-block; width: 16px; height: 16px; background: var(--life-on) center / 16px 16px no-repeat; image-rendering: pixelated; }
+.life.off { background-image: var(--life-off); }
+.lifes.big { gap: 8px; margin: 0 0 4px; }
+.lifes.big .life { width: 64px; height: 64px; background-size: 64px 64px; }
+.life.breaking { animation: life-break 720ms steps(1, end) 1 both; }
+.life.breaking::after { content: ''; position: absolute; left: 50%; top: 50%; width: 2px; height: 2px; background: transparent; animation: life-shard 720ms steps(1, end) 1 both; }
+.lifes.big .life.breaking::after { width: 6px; height: 6px; }
+@keyframes life-break {
+  0% { transform: translate(0, 0); background-image: var(--life-on); }
+  10% { transform: translate(-2px, 0); }
+  20% { transform: translate(2px, 0); }
+  30% { transform: translate(-2px, 0); }
+  40% { transform: scale(1.25); background-image: var(--life-on); }
+  50% { transform: scale(0.75); background-image: var(--life-off); }
+  65% { transform: scale(1.12); }
+  80% { transform: scale(0.94); }
+  100% { transform: scale(1); background-image: var(--life-off); }
+}
+@keyframes life-shard {
+  0%, 40% { box-shadow: none; }
+  50% { box-shadow: -4px -4px 0 #c89b3c, 4px -5px 0 #f5c542, 1px 5px 0 #8a6416; }
+  65% { box-shadow: -8px -7px 0 #c89b3c, 8px -9px 0 #f5c542, 2px 9px 0 #8a6416; }
+  80% { box-shadow: -11px -6px 0 #8a6416, 11px -8px 0 #c89b3c, 3px 12px 0 #8a6416; }
+  90%, 100% { box-shadow: none; }
+}
+.lifes.big .life.breaking::after { animation-name: life-shard-big; }
+@keyframes life-shard-big {
+  0%, 40% { box-shadow: none; }
+  50% { box-shadow: -14px -14px 0 #c89b3c, 14px -18px 0 #f5c542, 4px 18px 0 #8a6416, -18px 6px 0 #0b0b0e; }
+  65% { box-shadow: -26px -22px 0 #c89b3c, 26px -30px 0 #f5c542, 6px 30px 0 #8a6416, -30px 10px 0 #0b0b0e; }
+  80% { box-shadow: -36px -18px 0 #8a6416, 36px -26px 0 #c89b3c, 8px 40px 0 #8a6416, -40px 18px 0 #0b0b0e; }
+  90%, 100% { box-shadow: none; }
+}
+.life.mending { animation: life-mend 560ms steps(1, end) 1 both; }
+@keyframes life-mend {
+  0% { transform: translate(0, 0); background-image: var(--life-off); }
+  20% { transform: translate(0, -6px); background-image: var(--life-on); }
+  35% { transform: translate(0, -8px); }
+  50% { transform: translate(0, 2px) scale(1.15, 0.85); }
+  70% { transform: translate(0, -2px); }
+  85% { transform: translate(0, 1px); }
+  100% { transform: translate(0, 0); background-image: var(--life-on); }
+}
+.mend-line { margin: 0 0 6px; font-size: 12px; font-family: Galmuri11, sans-serif; }
+.mend-line .mend { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; color: #f2ede4; }
+.rest-u { white-space: nowrap; }
+.crackfx { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; pointer-events: none; background: rgba(6, 5, 8, 0.45); }
+.crackfx > div { display: grid; justify-items: center; gap: 4px; padding: 14px 22px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #56545e, 0 4px 0 2px #000; animation: crack-pop 240ms steps(1, end) 1 both; }
+@keyframes crack-pop { 0% { transform: scale(0.8); } 35% { transform: scale(1.06); } 70% { transform: scale(0.98); } 100% { transform: scale(1); } }
+.crackfx b { font-size: 24px; font-family: Galmuri11, sans-serif; color: #f2ede4; }
+.crackfx small { font-size: 12px; font-family: Galmuri11, sans-serif; color: #a8a2b0; }
+.crackfx .narr { margin: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #d6d0c6; }
+@media (prefers-reduced-motion: reduce) { .life.breaking, .life.mending, .life.breaking::after, .crackfx > div { animation: none; } }

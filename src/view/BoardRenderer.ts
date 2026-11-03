@@ -167,6 +167,8 @@ class BoardScene extends Phaser.Scene {
   }
   /** 원수 (D-178): 이 기물 왼쪽 위에 진홍 해골 딱지 */
   nemesisId: number | null = null;
+  /** 심장 톱니가 깨진 내 기물 (D-219): 왼쪽 위에 깨진 톱니 딱지 — 또 쓰러지면 폐기 */
+  crackedIds: number[] = [];
 
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
@@ -174,6 +176,7 @@ class BoardScene extends Phaser.Scene {
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
     for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
+    if (!this.textures.exists('ic16-life-crack')) this.load.image('ic16-life-crack', 'ui/icons16/life.crack.png');
   }
 
   create(): void {
@@ -414,6 +417,15 @@ class BoardScene extends Phaser.Scene {
       tag.fillStyle(0x7a1218, 1).fillRect(t * 0.02, t * 0.02, size, size);
       tag.lineStyle(Math.max(1, t * 0.03), 0xfacc15, 1).strokeRect(t * 0.02, t * 0.02, size, size);
       marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, 'icon-skull').setDisplaySize(size * 0.72, size * 0.72).setTint(0xf4f1ea));
+    }
+    // 깨진 심장 톱니 (D-219): 내 기물 왼쪽 위 검은 쇠 딱지 — 아이콘 14도트를 판 도트 정수배로
+    if (p.side === 0 && this.crackedIds.includes(p.id)) {
+      const d = t / BOARD_DOTS;
+      const size = Math.round(10 * d);
+      const tag = this.add.graphics();
+      tag.fillStyle(0x0b0b0e, 1).fillRect(t * 0.02, t * 0.02, size + 2 * d, size + 2 * d);
+      tag.fillStyle(0x2f2e36, 1).fillRect(t * 0.02 + d * 0.5, t * 0.02 + d * 0.5, size + d, size + d);
+      marks.push(tag, this.add.image(t * 0.02 + d + size / 2, t * 0.02 + d + size / 2, 'ic16-life-crack').setDisplaySize(size, size));
     }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
@@ -1646,6 +1658,10 @@ export class BoardRenderer implements BoardView {
   /** 원수 표식 (D-178) — setup 전에 */
   setNemesis(id: number | null): void {
     this.scene.nemesisId = id;
+  }
+  /** 깨진 심장 톱니 표식 (D-219) — setup 전에 */
+  setCracked(ids: number[]): void {
+    this.scene.crackedIds = ids;
   }
   /** 같은 턴 처치 수 (연쇄 정지가 길어진다, D-184) */
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
