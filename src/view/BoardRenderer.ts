@@ -15,6 +15,9 @@ import { drawGearTarget } from './target';
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos } from '../engine';
 
+/** 판 위 글씨 크기 (D-213): 갈무리11 굵게의 격자(12px) 배수로만 — 크기마다 다른 서체처럼 보이지 않게 */
+const gpx = (px: number): number => Math.max(12, Math.round(px / 12) * 12);
+
 
 
 /** 기물 텍스처 키 */
@@ -367,7 +370,7 @@ class BoardScene extends Phaser.Scene {
       marks.push(
         tag,
         this.add
-          .text(t * 0.02 + size / 2, t * 0.02 + size / 2, CARVES[p.carve].mark, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(size * 0.7)}px`, color: '#E8C060' })
+          .text(t * 0.02 + size / 2, t * 0.02 + size / 2, CARVES[p.carve].mark, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(size * 0.7)}px`, color: '#E8C060' })
           .setOrigin(0.5)
           .setResolution(this.dpr),
       );
@@ -438,7 +441,7 @@ class BoardScene extends Phaser.Scene {
       return;
     }
     const lbl = this.add
-      .text(0, 0, text, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.24)}px`, color: '#16141C' })
+      .text(0, 0, text, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(t * 0.24)}px`, color: '#16141C' })
       .setOrigin(0.5)
       .setResolution(this.dpr);
     const padX = t * 0.1;
@@ -1137,7 +1140,7 @@ class BoardScene extends Phaser.Scene {
   async summary(side: Side, damage: number, kills: number): Promise<void> {
     const t = this.tile;
     const { x, y } = this.camCenter;
-    const font = (px: number) => ({ fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(px)}px`, stroke: '#0B0B0E', strokeThickness: Math.max(4, px / 6) });
+    const font = (px: number) => ({ fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(px)}px`, stroke: '#0B0B0E', strokeThickness: Math.max(4, px / 6) });
     if (side === 1 || (kills === 0 && damage < TURN_SUMMARY.bigDamage)) {
       // 적 턴, 또는 작은 내 턴: 위쪽에 작게 (판을 가리지 않고 기다림도 짧게)
       const text = side === 1 ? `잃음 −${damage}` : `피해 ${damage}`;
@@ -1416,7 +1419,7 @@ class BoardScene extends Phaser.Scene {
       // 적 공격 직전 한 박자 — 누가 칠지 눈이 따라갈 틈 (D-204)
       if (atk.piece.side === 1) await this.wait(PACE.enemyLead);
       const order = this.add
-        .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.4)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 4 })
+        .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(t * 0.4)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 4 })
         .setOrigin(0.5)
         .setDepth(7)
         .setResolution(this.dpr);
@@ -1424,7 +1427,7 @@ class BoardScene extends Phaser.Scene {
       if (e.mult) {
         const big = Math.min(1.8, 0.8 + (e.mult - 1) * 0.6);
         const m = this.add
-          .text(atk.root.x + t / 2, atk.root.y - t * 0.35, `×${e.mult.toFixed(e.mult >= 10 ? 0 : 1)}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.34 * big)}px`, color: e.mult >= 2 ? '#FACC15' : '#FDBA74', stroke: '#0B0B0E', strokeThickness: 4 })
+          .text(atk.root.x + t / 2, atk.root.y - t * 0.35, `×${e.mult.toFixed(e.mult >= 10 ? 0 : 1)}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(t * 0.34 * big)}px`, color: e.mult >= 2 ? '#FACC15' : '#FDBA74', stroke: '#0B0B0E', strokeThickness: 4 })
           .setOrigin(0.5)
           .setDepth(9)
           .setResolution(this.dpr);
@@ -1433,7 +1436,7 @@ class BoardScene extends Phaser.Scene {
       // 합(+): 먼저 더해지는 피해를 청록으로, 곱(×) 왼쪽에 (D-205) — 「+12 ×1.5」 순서 = 식의 순서
       if (e.add) {
         const a = this.add
-          .text(atk.root.x + t / 2 - (e.mult ? t * 0.55 : 0), atk.root.y - t * 0.35, `+${e.add}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.32)}px`, color: '#7FDCEA', stroke: '#0B0B0E', strokeThickness: 4 })
+          .text(atk.root.x + t / 2 - (e.mult ? t * 0.55 : 0), atk.root.y - t * 0.35, `+${e.add}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(t * 0.32)}px`, color: '#7FDCEA', stroke: '#0B0B0E', strokeThickness: 4 })
           .setOrigin(0.5)
           .setDepth(9)
           .setResolution(this.dpr);
