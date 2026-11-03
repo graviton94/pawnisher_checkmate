@@ -52,7 +52,7 @@ const one = (seed: number) => {
   const refined: CommandId[] = [];
   let gold = 0;
   const T: Tally = {};
-  const curve: { act: number; floor: number; deck: number; squad: number; parts: number; gold: number; avgVal: number; hpK: number; atkK: number }[] = [];
+  const curve: { act: number; floor: number; deck: number; dead: number; types: number; squad: number; parts: number; gold: number; avgVal: number; hpK: number; atkK: number }[] = [];
   const checkpoints: { act: number; win: number; turns: number }[] = [];
   const has = (t: PieceType) => squad.some((u) => u.t === t);
   const usable = (id: CommandId) => COMMANDS[id].who === 'any' || has(COMMANDS[id].who as PieceType);
@@ -171,7 +171,7 @@ const one = (seed: number) => {
       }
       const avgVal = deck.reduce((x, id) => x + val(id), 0) / deck.length;
       const d = depthAt(ai, frac);
-      curve.push({ act: ai + 1, floor: ri, deck: deck.length, squad: squad.length, parts: parts.length, gold, avgVal, hpK: SLICE.foeHp * (d ? SLICE.foeHpStart * Math.pow(SLICE.foeHpGrow, d) : 1), atkK: SLICE.foeAtk * (1 + SLICE.foeAtkGrow * d) });
+      curve.push({ act: ai + 1, floor: ri, deck: deck.length, dead: deck.filter((id) => !usable(id)).length, types: new Set(squad.map((u) => u.t)).size, squad: squad.length, parts: parts.length, gold, avgVal, hpK: SLICE.foeHp * (d ? SLICE.foeHpStart * Math.pow(SLICE.foeHpGrow, d) : 1), atkK: SLICE.foeAtk * (1 + SLICE.foeAtkGrow * d) });
     }
     squad = restSquad(squad, 1);
   }
