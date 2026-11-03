@@ -436,6 +436,27 @@ export const liveIntents = (b: SliceBattle): Intent[] => {
 };
 
 /** 예고대로 두면 맞을 내 기물 (화면 HP 깜빡임용) */
+/**
+ * 적 계획 목록 (D-207 — 화면 오른쪽 「적의 수」): 지금 턴을 끝내면 적이 둘 수를 순서대로 — 누가 · 누구를 · 얼마나.
+ * 반장 규칙 · 특성(줄 폭격 · 자폭 · 되받아침)도 한 줄로. 실행과 같은 enemyPhase를 미리 돌려 본다.
+ */
+export const intentPlan = (b: SliceBattle): { by: PieceType | null; label?: string; hits: { t: PieceType; damage: number; killed: boolean }[] }[] => {
+  const c = cloneBattle(b);
+  const before = cloneState(c.s);
+  const out: { by: PieceType | null; label?: string; hits: { t: PieceType; damage: number; killed: boolean }[] }[] = [];
+  for (const e of enemyPhase(c).events) {
+    if (e.type !== 'attack' && e.type !== 'blast') continue;
+    const hits = e.hits.flatMap((h) => {
+      const t = before.pieces.find((p) => p.id === h.targetId);
+      return t && t.side === 0 ? [{ t: t.type, damage: h.damage, killed: h.killed }] : [];
+    });
+    if (!hits.length) continue;
+    const by = e.type === 'attack' ? before.pieces.find((p) => p.id === e.attackerId)?.type ?? null : null;
+    out.push({ by, label: e.type === 'blast' ? e.label : undefined, hits });
+  }
+  return out;
+};
+
 export const intentHits = (b: SliceBattle): { pieceId: number; pos: Pos; damage: number; killed: boolean }[] => {
   const after = enemyPhase(cloneBattle(b)).events;
   const dmg = new Map<number, { damage: number; killed: boolean }>();

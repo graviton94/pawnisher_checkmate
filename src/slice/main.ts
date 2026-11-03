@@ -28,7 +28,7 @@ import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, 
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
-import { REST, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
 
@@ -37,7 +37,14 @@ import { Rng } from '../engine/rng';
   const lay = new URLSearchParams(location.search).get('layout');
   // 기본 = 4안 (D-206, 사용자 결정): 판 무대 + 아래 부채꼴 손패 + 판 옆 적 초상. ?layout=a(예전) · b · c 는 비교용
   if (lay === 'b' || lay === 'c') document.body.classList.add(`lay-${lay}`);
-  else if (lay !== 'a') {
+  else if (lay !== 'a' && lay !== 'd') {
+    // 기본 = E안 (D-207, 사용자: "좌우가 쓸데없는 정보나 텅 비어 있다"): 판은 화면 높이 꽉, 왼쪽 = 내 선택지(손패 2열 · 설명까지), 오른쪽 = 적의 수(예고 목록) · 연쇄 · 턴 끝
+    document.body.classList.add('lay-e');
+    const plan = document.createElement('div');
+    plan.id = 'foeplan';
+    plan.className = 'foeplan';
+    document.querySelector('#right .rail-head')!.after(plan);
+  } else if (lay === 'd') {
     document.body.classList.add('lay-d');
     // 배치 옮기기: 턴 · ? · 증기 · 반장 규칙 · 부품 → 왼쪽 기둥, 오른쪽 기둥 위에 적 초상
     const left = document.getElementById('left')!;
@@ -345,6 +352,28 @@ const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number 
  * 판 옆 적 초상 (4안, D-206): 반장이면 반장 그림(B-01~03), 원수가 섰으면 원수, 아니면 적 킹 — 이름 · HP.
  * 그림이 없으면 기물 도트. 같은 내용이면 다시 그리지 않는다(깜빡임 없이).
  */
+/** 오른쪽 「적의 수」 (D-207): 턴을 끝내면 적이 둘 수 — 순번 · 누가 → 누구 · 피해(쓰러지면 ☠) */
+const foePlan = (): void => {
+  const el = document.getElementById('foeplan');
+  if (!el) return;
+  if (b.s.winner !== null || enemyTurn) return void (el.innerHTML = '');
+  const rows: { by: PieceType | null; label?: string; hits: { t: PieceType; damage: number; killed: boolean }[]; move?: boolean }[] = intentPlan(b);
+  // 치지 않고 다가오기만 하는 적도 한 줄 (예고 화살표와 같은 수)
+  const hitters = new Set(rows.map((r) => r.by));
+  for (const it of liveIntents(b)) {
+    const p = b.s.pieces.find((q) => q.id === it.pieceId);
+    if (p && !hitters.has(p.type)) rows.push({ by: p.type, hits: [], move: true });
+  }
+  const ico = (t: PieceType, side: 0 | 1) => pieceImg(t, side, 'small', 22);
+  el.innerHTML = `<p class="fp-head">적의 수</p>${
+    rows.length
+      ? rows
+          .slice(0, 5)
+          .map((r, i) => `<div class="fp-row${r.hits.some((h) => h.killed) ? ' kill' : ''}"><b class="fp-n">${i + 1}</b>${r.by ? ico(r.by, 1) : `<span class="fp-rule">${r.label ?? ''}</span>`}<span class="fp-arrow">→</span>${r.move ? '<span class="fp-move">다가옴</span>' : r.hits.map((h) => `<span class="fp-hit">${ico(h.t, 0)}<em>${h.killed ? '☠' : `−${h.damage}`}</em></span>`).join('')}</div>`)
+          .join('')
+      : '<p class="fp-none">이번엔 움직이는 적이 없습니다.</p>'
+  }`;
+};
 let portraitKey = '';
 const portrait = (): void => {
   const el = document.getElementById('portrait');
@@ -368,10 +397,11 @@ const portrait = (): void => {
 const refresh = (): void => {
   hidePeek();
   renderer.render(model());
-  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
+  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c, .lay-e') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   portrait();
+  foePlan();
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
   for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
   newParts.clear();

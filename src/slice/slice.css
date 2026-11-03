@@ -1132,3 +1132,43 @@ body.slice:not(.lay-d) .portrait { display: none; }
 body.slice.lay-d #hand > .cmd .txt { order: -1; }
 body.slice.lay-d #hand > .cmd { padding-top: 32px; }
 body.slice.lay-d #hand > .cmd .txt b { white-space: nowrap; }
+
+/* ===================== 전투 화면 E안 (D-207) — 왼쪽 = 내 선택지 · 가운데 = 판(높이 꽉) · 오른쪽 = 적의 수 ===================== */
+body.slice.lay-e { --railL: clamp(250px, 31vw, 290px); --railR: clamp(190px, 23vw, 214px); }
+body.slice.lay-e #board { border-top: 0; }
+/* 왼쪽: 태엽 · 손패 2열(설명까지) · 맨 아래 덱 · 분대 · 뽑을 · 버림 */
+body.slice.lay-e .rail.left { padding: 6px; gap: 6px; }
+body.slice.lay-e #hand { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: min-content; gap: 6px; overflow-y: auto; align-content: start; padding: 0; }
+body.slice.lay-e #hand .hand-head { grid-column: 1 / -1; order: 9; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--text2); }
+body.slice.lay-e #hand .empty { grid-column: 1 / -1; }
+body.slice.lay-e #hand > .cmd { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto; row-gap: 2px; min-height: 92px; padding: 6px 6px 6px 8px; transform: none; align-content: start; }
+body.slice.lay-e #hand > .cmd .costgear { position: absolute; left: 4px; top: 4px; }
+body.slice.lay-e #hand > .cmd .costgear img { width: 24px; height: 24px; }
+body.slice.lay-e #hand > .cmd .art { position: absolute; right: 4px; top: 4px; width: 30px; height: 30px; }
+body.slice.lay-e #hand > .cmd .art img, body.slice.lay-e #hand > .cmd .art .ico16 { width: 28px; height: 28px; }
+body.slice.lay-e #hand > .cmd .op-corner { display: none; }
+body.slice.lay-e #hand > .cmd .txt { padding-top: 28px; display: grid; gap: 2px; min-width: 0; }
+body.slice.lay-e #hand > .cmd .txt b { font-size: 14px; display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+body.slice.lay-e #hand > .cmd .txt small { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; line-height: 1.3; }
+body.slice.lay-e #hand > .cmd.armed { box-shadow: 0 0 0 2px #000, 0 0 0 4px #facc15, inset 4px 0 0 var(--tone); }
+/* 오른쪽: 턴 · ? / 적의 수 / 반장 규칙 / 증기 / 부품 / 연쇄 · 되감기 · 턴 끝 */
+body.slice.lay-e #right { padding: 6px; gap: 6px; }
+body.slice.lay-e #right .rail-head .turn-label { font-size: 15px; }
+.foeplan { display: grid; gap: 4px; padding: 6px; background: #1a1418; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #5a2026; }
+.foeplan .fp-head { margin: 0; font: 700 14px Galmuri14, sans-serif; color: #ff8a8a; display: flex; justify-content: space-between; align-items: baseline; }
+.foeplan .fp-head small { font: 400 12px var(--font, sans-serif); color: #a59fae; }
+.fp-row { display: flex; align-items: center; gap: 4px; font-size: 13px; min-height: 26px; }
+.fp-row .fp-n { display: inline-grid; place-items: center; width: 18px; height: 18px; background: #7a1218; color: #fff; font-size: 12px; box-shadow: 0 0 0 1px #000; }
+.fp-row img { width: 22px; height: 22px; image-rendering: pixelated; }
+.fp-row .fp-arrow { color: #a59fae; }
+.fp-row .fp-hit { display: inline-flex; align-items: center; gap: 1px; }
+.fp-row .fp-hit em { font-style: normal; font-weight: 700; color: #ff6b6b; font-variant-numeric: tabular-nums; }
+.fp-row.kill { background: rgba(229, 38, 47, 0.18); }
+.fp-row .fp-rule { font-size: 12px; color: #ffb15a; white-space: nowrap; }
+.foeplan .fp-none { margin: 0; font-size: 12px; color: #a59fae; }
+body.slice.lay-e #right > .meter { position: static; margin: 0; }
+body.slice.lay-e #right > .actions { margin-top: auto; }
+body.slice.lay-e #hand > .cmd { min-height: 70px; }
+.fp-row { flex-wrap: wrap; row-gap: 0; }
+.fp-row .fp-move { font-size: 12px; color: #a59fae; }
+.fp-row .fp-hit em { font-size: 13px; }
