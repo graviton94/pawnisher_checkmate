@@ -1,4 +1,5 @@
 import { vignette } from '../ui/juice';
+import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
@@ -743,7 +744,7 @@ class BoardScene extends Phaser.Scene {
 
   /** 연출 속도 배율 (동작 줄이기 = 약 3배 빠르게) */
   private get speed(): number {
-    return (this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : 1) * this.tempo;
+    return (this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : PACE.fx) * this.tempo;
   }
   /** 템포 가속 (연쇄가 쌓일수록 연출이 빨라진다 — 레퍼런스 5권 원리 10, D-156). 1 = 기본 */
   tempo = 1;
@@ -1412,6 +1413,8 @@ class BoardScene extends Phaser.Scene {
       if (e.type !== 'attack') continue;
       const atk = this.sprites.get(e.attackerId);
       if (!atk) continue;
+      // 적 공격 직전 한 박자 — 누가 칠지 눈이 따라갈 틈 (D-204)
+      if (atk.piece.side === 1) await this.wait(PACE.enemyLead);
       const order = this.add
         .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.4)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 4 })
         .setOrigin(0.5)
@@ -1496,7 +1499,8 @@ class BoardScene extends Phaser.Scene {
         await Promise.race([Promise.all(ashes), this.after(420)]);
       }
       order.destroy();
-      await this.wait(140);
+      // 공격과 공격 사이 숨 (D-204)
+      await this.wait(PACE.hitGap / this.tempo);
     }
     if (events.some((e) => e.type === 'gameOver')) await this.wait(400);
   }

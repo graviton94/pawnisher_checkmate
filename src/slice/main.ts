@@ -5,6 +5,9 @@ import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
+import { PACE } from '../data/motion';
+/** 동작 줄이기 */
+const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, prologue } from './opening';
@@ -527,6 +530,8 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   showBefore(r.before);
   await renderer.play(r.before, r.events);
   await deathRites();
+  // 내 카드 연출 끝 → 다음 조작 사이 짧은 숨 (D-204)
+  if (!calmNow()) await new Promise((res) => window.setTimeout(res, PACE.afterMine));
   busy = false;
   burnNote(burn0);
   turnDmg += dealt(r.events, 0, r.before);
@@ -536,7 +541,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   prevKills = b.kills;
   flashParts(firedParts(cardId, moverType, r.events, b.kills - k0));
   // 템포 가속: 연쇄가 쌓일수록 다음 연출이 빨라진다
-  renderer.setTempo(1 + Math.min(b.kills, 4) * 0.15);
+  renderer.setTempo(1 + Math.min(b.kills, PACE.tempoKillsMax) * PACE.tempoPerKill);
   if (gain) {
     toast(`처치 — 태엽 +${gain}${parts.includes('horseshoe') && moverType === 'N' ? ` (${SLICE_PARTS.horseshoe.name})` : ''}`);
     window.setTimeout(() => sfx('coin', 9), 200);
@@ -577,7 +582,7 @@ const onEndInner = async (): Promise<void> => {
   showBefore(r.before);
   turnBanner($('board'), '적 차례', true);
   // 띠가 판 가운데를 지나는 동안 적 첫 수가 가려지지 않게 잠깐 기다린다 (띠는 0.9초에 빠지고 적은 겨눔부터 시작)
-  await new Promise((res) => window.setTimeout(res, 350));
+  await new Promise((res) => window.setTimeout(res, calmNow() ? 120 : PACE.enemyBannerHold));
   await renderer.play(r.before, r.events);
   await deathRites();
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
@@ -586,6 +591,8 @@ const onEndInner = async (): Promise<void> => {
   renderer.setup(b.s);
   refresh();
   if (b.s.winner !== null) return finish();
+  // 적 차례 끝 → 내 차례 사이 숨 (D-204)
+  await new Promise((res) => window.setTimeout(res, calmNow() ? 0 : PACE.turnHold));
   turnBanner($('board'), `${b.turn}턴 · 내 차례`, false);
   dealHand($('hand'));
   burnNote(burn0);
