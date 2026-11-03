@@ -164,6 +164,30 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
   { part: 'scepter', cards: ['kingDecree', 'royalGuard'] },
 ];
 /** 보상 후보 */
+/**
+ * 카드 등급 (D-216, 게이머 크리틱 「받는 순간이 조용하다」): 일반 · 희귀 · 황금. 표에 없으면 일반.
+ * 희귀 = 두 축에 걸치거나 한 판을 바꾸는 카드, 황금 = 빌드의 끝을 정하는 카드.
+ */
+export type Grade = 'common' | 'rare' | 'gold';
+export const CARD_GRADE: Partial<Record<string, Grade>> = {
+  crossLeap: 'rare', splashDiag: 'rare', kingBlow: 'rare', smash: 'rare', rebound: 'rare', march: 'rare', wrath: 'rare', cavCharge: 'rare', kingGuard: 'rare',
+  doubleLeap: 'rare', knightRaid: 'rare', bishopRay: 'rare', rookCharge: 'rare', vent: 'rare', recall: 'rare', gambit: 'rare', tempo: 'rare', bulwark: 'rare', shove: 'rare',
+  overload: 'gold', finisher: 'gold', bladeRain: 'gold', kingDecree: 'gold', burst: 'gold',
+};
+export const gradeOf = (id: string): Grade => CARD_GRADE[id.replace(/\+$/, '')] ?? 'common';
+/** 보상 한 칸이 어느 등급으로 나오나 (가중치) — 검문 · 반장은 elite */
+export const GRADE = {
+  weights: { common: 62, rare: 30, gold: 8 } as Record<Grade, number>,
+  elite: { common: 30, rare: 50, gold: 20 } as Record<Grade, number>,
+  names: { common: '일반', rare: '희귀', gold: '황금' } as Record<Grade, string>,
+};
+/** 가중치로 등급 하나 뽑기 */
+export const rollGrade = (r: number, w: Record<Grade, number>): Grade => {
+  let x = r * (w.common + w.rare + w.gold);
+  for (const g of ['gold', 'rare', 'common'] as Grade[]) if ((x -= w[g]) < 0) return g;
+  return 'common';
+};
+
 export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall'];
 
 /**

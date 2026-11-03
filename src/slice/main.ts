@@ -9,7 +9,7 @@ import { PACE } from '../data/motion';
 /** 동작 줄이기 */
 const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
-import { buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
+import { gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, prologue } from './opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { pieceImg } from '../ui/sprites';
@@ -17,8 +17,8 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
-import { PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
+import { gradeOf, rollGrade, GRADE, type Grade, baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -391,10 +391,12 @@ const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAME
 const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-label="${AXIS_NAMES[a]}">${AXIS_NAMES[a][0]}</i>` : '');
 
 /** 부품 칩 (레일 · 고르기 화면) */
+/** 등급 딱지 (D-216): 일반은 없음, 희귀 · 황금만 오른쪽 위 도트 딱지 */
+const gradeTag = (g: Grade): string => (g === 'common' ? '' : `<em class="gtag g-${g}">${GRADE.names[g]}</em>`);
 const partHtml = (id: SlicePartId, big = false): string => {
   const d = SLICE_PARTS[id];
   return big
-    ? `<button type="button" class="part-card${d.axis ? ` ax-${d.axis}` : ''}" data-part="${id}"><i class="ico" style="${iconArt(d.icon)}"></i><b>${d.name}${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</b><small>${d.desc}</small></button>`
+    ? `<button type="button" class="part-card${d.axis ? ` ax-${d.axis}` : ''} g-${PART_GRADE[id] ?? 'common'}" data-part="${id}" data-grade="${PART_GRADE[id] ?? 'common'}">${gradeTag(PART_GRADE[id] ?? 'common')}<i class="ico" style="${iconArt(d.icon)}"></i><b>${d.name}${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</b><small>${d.desc}</small></button>`
     : `<button type="button" class="part-chip${d.axis ? ` ax-${d.axis}` : ''}" data-part-info="${id}" aria-label="${d.name}"><i class="ico" style="${iconArt(d.icon)}"></i><span>${d.name}</span></button>`;
 };
 
@@ -1606,7 +1608,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       closeTier = 0;
       return partPick(`<div class="stamp-big good">사선을 넘었다</div><h2>부품 하나 더</h2><p>겨우 넘은 대국입니다. 부품을 하나 고릅니다.</p>`, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); });
     }
-    if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">${cur.boss ? '반장 격파' : '검문 통과'}</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true));
+    if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">${cur.boss ? '반장 격파' : '검문 통과'}</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true), true);
     if (reward === 'end') return runEnd(true);
     const rng = sub();
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
@@ -1620,10 +1622,15 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     // 같은 카드가 두 번 나오지 않게 (브릿지 카드는 두 축에 걸친다)
     const offers: CommandId[] = [];
     // 축에 쓸 수 있는 카드가 없으면 다른 축에서 채운다 (3장 유지)
+    // 칸마다 등급을 먼저 뽑는다 (D-216) — 그 축에 그 등급이 없으면 아무 등급
+    const elite = !!cur.boss || cur.reward === 'part' || partDone;
     for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
       if (offers.length >= (closeTier === 2 ? 4 : 3)) break;
       const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id));
-      if (pool.length) offers.push(pool[rng.int(pool.length)]);
+      const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
+      const same = pool.filter((id) => gradeOf(id) === g);
+      const from = same.length ? same : pool;
+      if (from.length) offers.push(from[rng.int(from.length)]);
     }
     /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
     const showReward = (): void => {
@@ -1634,7 +1641,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           .map((id) => {
             const c = COMMANDS[id];
             const who = cardArt(id);
-            return `<button type="button" class="cmd big t-${c.who}" data-pick="${id}">${keysHtml(c.cost)}${who}<span class="txt"><b>${c.name}${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
+            return `<button type="button" class="cmd big t-${c.who} g-${gradeOf(id)}" data-pick="${id}" data-grade="${gradeOf(id)}">${gradeTag(gradeOf(id))}${keysHtml(c.cost)}${who}<span class="txt"><b>${c.name}${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
           })
           .join('')}</div>
         <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
@@ -1643,6 +1650,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           <button class="btn" type="button" data-remove>카드 빼기</button>
           <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${josa([...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name, '을')} HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
+      gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
       el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
         btn.addEventListener('click', () =>
           choose(btn, `${josa(COMMANDS[btn.dataset.pick as CommandId].name, '을')} 덱에 넣는다`, () => {
@@ -1857,12 +1865,21 @@ const kitPick = (head: string, then: () => void): void => {
 };
 
 /** 부품 고르기 (검문! 통과): 셋 중 하나 */
-const partPick = (head: string, then: () => void): void => {
+const partPick = (head: string, then: () => void, elite = false): void => {
   const rng = sub();
   const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
   const offers: SlicePartId[] = [];
-  while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
+  // 칸마다 등급을 먼저 뽑고 그 등급에서 하나 (없으면 아무 등급) — 검문 · 반장은 높은 등급이 잘 나온다 (D-216)
+  while (offers.length < 3 && pool.length) {
+    const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
+    const same = pool.filter((id) => (PART_GRADE[id] ?? 'common') === g);
+    const pickFrom = same.length ? same : pool;
+    const id = pickFrom[rng.int(pickFrom.length)];
+    pool.splice(pool.indexOf(id), 1);
+    offers.push(id);
+  }
   const el = openOverlay(`${head}<div class="part-cards">${offers.map((id) => partHtml(id, true)).join('')}</div>`);
+  gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
   el.querySelectorAll<HTMLElement>('[data-part]').forEach((btn) =>
     btn.addEventListener('click', () =>
       choose(btn, `${josa(SLICE_PARTS[btn.dataset.part as SlicePartId].name, '을')} 단다`, () => {

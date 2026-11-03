@@ -12,6 +12,7 @@
   pipe.png · cap-l/r.png · lava.png · tick.png   속전 보일러관: 관 틀 · 황동 마개 · 끓는 쇳물 무늬 · 칸 눈금
   cog-help.png               도움말 — 태엽 톱니 안에 ?
   ico-rewind.png             ◀◀
+  frame-rare.png · frame-gold.png · twinkle.png   보상 등급 테두리 · 황금 반짝임 4칸 (D-216)
   gauge.png                  계기 창 9-slice (태엽 · 속전 창)
 
 사용: python3 -I tools/draw-hud.py
@@ -247,6 +248,41 @@ LAVA = [
 # 눈금 7×10: 칸 경계에 검은 선 (빈 유리에서도 칸이 보인다)
 TICK = ['......E'] * 10
 
+# ---------- 등급 테두리 (D-216): 16×16 slice 5 — 가운데가 비어 카드 위에 덧씌운다 ----------
+def grade_frame(outer, inner, hi, studs):
+    """outer = 바깥 2도트 띠, inner = 안쪽 1도트, hi = 위 · 왼쪽 하이라이트, studs = 귀퉁이 장식 색"""
+    p = dict(PAL, A=outer, B=inner, H=hi, S=studs)
+    rows = []
+    for y in range(16):
+        r = ''
+        for x in range(16):
+            d = min(x, y, 15 - x, 15 - y)
+            if d == 0:
+                r += '.' if (x in (0, 15) and y in (0, 15)) else 'k'
+            elif d == 1:
+                r += 'H' if (x == 1 or y == 1) and not (x == 15 - 1 or y == 15 - 1) else 'A'
+            elif d == 2:
+                r += 'A'
+            elif d == 3:
+                r += 'B'
+            else:
+                r += '.'
+        rows.append(r)
+    im = art(rows, p)
+    for cx, cy in ((2, 2), (13, 2), (2, 13), (13, 13)):  # 귀퉁이 마름모 장식 (slice 5 안)
+        for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+            im.putpixel((cx + dx, cy + dy), studs + (255,))
+        im.putpixel((cx, cy), PAL['W'] + (255,))
+    return im
+
+# 반짝임 4칸 띠 (7×7): 점 → 십자 → 큰 십자 → 점 — 황금 카드 귀퉁이에서 돈다
+TWINKLE = [
+    ['.......', '.......', '.......', '...W...', '.......', '.......', '.......'],
+    ['.......', '.......', '...Y...', '..YWY..', '...Y...', '.......', '.......'],
+    ['...Y...', '...Y...', '...W...', 'YYWWWYY', '...W...', '...Y...', '...Y...'],
+    ['.......', '...Y...', '.......', '.Y.W.Y.', '.......', '...Y...', '.......'],
+]
+
 
 if __name__ == '__main__':
     for t, tone in TONES.items():
@@ -275,6 +311,9 @@ if __name__ == '__main__':
     save(cap.transpose(Image.Transpose.FLIP_LEFT_RIGHT), 'cap-r.png')
     save(art(LAVA), 'lava.png')
     save(art(TICK), 'tick.png')
+    save(grade_frame(HEX('#3f7fb8'), HEX('#1e3a58'), HEX('#9ec7ef'), HEX('#6fb3e8')), 'frame-rare.png')
+    save(grade_frame(HEX('#c89b3c'), HEX('#6b4a14'), HEX('#fff1b0'), HEX('#f4d27a')), 'frame-gold.png')
+    save(strip([art(f) for f in TWINKLE]), 'twinkle.png')
     save(art(COG), 'cog-help.png')
     save(art(REW), 'ico-rewind.png')
     print('ok')

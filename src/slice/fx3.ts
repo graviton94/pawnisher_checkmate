@@ -441,3 +441,39 @@ export const sweep = (el: HTMLElement, show: boolean, then?: () => void, ms = 30
   };
   requestAnimationFrame(step);
 };
+
+/**
+ * 보상 등급 드러내기 (D-216): 카드가 깔린 뒤 차례로 — 희귀는 청강 불똥 · 딸깍, 황금은 화면 전체 금빛 디더 번쩍(체크무늬 다섯 단계로 들어왔다 빠짐) ·
+ * 큰 불똥 · 카드 들썩(예비 눌림 → 튀어 오름 → 출렁) · 귀퉁이 반짝임 4칸이 계속 돈다. 페이드 · 그라데이션 없이 도트 단계로만.
+ */
+export const gradeReveal = (cards: HTMLElement[]): void => {
+  cards.forEach((c, i) => {
+    const g = c.dataset.grade;
+    if (!g || g === 'common') return;
+    if (g === 'gold') for (const [x, y] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+      const t = document.createElement('i');
+      t.className = 'twk';
+      t.style.left = x ? 'calc(100% - 10px)' : '-4px';
+      t.style.top = y ? 'calc(100% - 10px)' : '-4px';
+      t.style.animationDelay = `${(x * 2 + y) * -190}ms`;
+      c.appendChild(t);
+    }
+    if (calm()) return;
+    window.setTimeout(() => {
+      if (!c.isConnected) return;
+      const r = centerOf(c);
+      replay(c, 'g-pop');
+      if (g === 'gold') {
+        const f = document.createElement('div');
+        f.className = 'fx3-gold';
+        document.body.appendChild(f);
+        window.setTimeout(() => f.remove(), 420);
+        sparksAt(r.x, r.y, 16, 80, ['#fff4d6', '#f4d27a', '#c89b3c', '#ffffff']);
+        sfx('rare');
+      } else {
+        sparksAt(r.x, r.y, 8, 44, ['#ffffff', '#9ec7ef', '#3f7fb8']);
+        sfx('coin', 8);
+      }
+    }, 320 + i * 160);
+  });
+};

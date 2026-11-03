@@ -15,6 +15,11 @@ export interface SlicePartDef {
   desc: string;
 }
 
+/** 부품 등급 (D-216): 규칙을 크게 바꾸는 것일수록 위. 표에 없으면 일반 */
+export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>> = {
+  coil: 'gold', conductor: 'gold', brittle: 'gold', bloodPact: 'gold', assembly: 'gold',
+  echo: 'rare', crown: 'rare', throne: 'rare', hammer: 'rare', lance: 'rare', barracks: 'rare', fuse: 'rare', chainShot: 'rare', tape: 'rare', spare: 'rare', magnet: 'rare',
+};
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', desc: '나이트가 처치하면 태엽 +1' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', desc: '처치할 때마다 카드 +1' },
