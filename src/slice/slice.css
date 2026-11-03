@@ -1316,3 +1316,41 @@ body.slice .coins .tube.dying { animation: tubeDie 1100ms steps(1, end) both; }
 }
 @media (prefers-reduced-motion: reduce) { body.slice .coins .tube.lit, body.slice .coins .tube.dying, body.slice .apbar .seg.spend, body.slice .apbar .seg.spend img, body.slice .apbar .seg.wind img { animation: none; } }
 .overlay .panel:has(.rw-ask) { max-width: 460px; }
+
+/* ===================== D-210 좌우 거울 배치 — 같은 폭 · 같은 세 단(계기 64 · 밀리는 칸 · 단추 줄 52) ===================== */
+.apbar .keys { display: flex; flex: 1; gap: 3px; min-width: 0; }
+body.slice.lay-f { --railL: clamp(196px, 23vw, 214px); --railR: clamp(196px, 23vw, 214px); --gTop: 64px; --gBot: 52px; }
+body.slice.lay-f .rail.left, body.slice.lay-f #right { display: flex; flex-direction: column; gap: 6px; padding: 6px; min-height: 0; overflow: hidden; }
+/* 위: 계기 판 — 왼쪽 태엽 / 오른쪽 턴 · 속전 */
+body.slice.lay-f .rail.left > .apbar, body.slice.lay-f #right > .gtop { flex: none; height: var(--gTop); margin: 0; box-sizing: border-box; padding: 5px 8px 6px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #3a3542; }
+body.slice.lay-f .rail.left > .apbar { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 16px 1fr; row-gap: 4px; align-items: center; }
+body.slice.lay-f .apbar .lbl { display: block; margin: 0; font-size: 12px; color: #f0c48a; }
+body.slice.lay-f .apbar > b { margin: 0; min-width: 0; font-size: 14px; line-height: 16px; }
+body.slice.lay-f .apbar .keys { grid-column: 1 / -1; height: 100%; }
+body.slice.lay-f .apbar .seg { height: auto; }
+body.slice.lay-f #right > .gtop { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: 16px 1fr; row-gap: 4px; column-gap: 6px; align-items: center; }
+body.slice.lay-f .gtop #coins { display: contents; }
+body.slice.lay-f .gtop .turn-label { height: 16px !important; min-height: 0 !important; padding: 0 !important; margin: 0; font-size: 13px !important; line-height: 16px; background: none; border: 0; border-image: none; box-shadow: none; color: #ece6da; justify-content: flex-start; }
+body.slice.lay-f .gtop .turn-label.enemy { color: #ff8a8a; }
+body.slice.lay-f .gtop .coins .lbl { justify-self: end; font-size: 12px; }
+body.slice.lay-f .gtop .coins > b { font-size: 14px; line-height: 16px; }
+body.slice.lay-f .gtop .coins .tubes { grid-column: 1 / -1; height: 100%; box-sizing: border-box; padding: 2px 2px 0; }
+body.slice.lay-f .gtop .coins .tube { height: 100%; }
+/* 가운데: 밀리는 칸 — 같은 틀 */
+body.slice.lay-f .rail.left > #hand, body.slice.lay-f #right > .rmid { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 4px; background: #0f0e13; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #24212b; }
+body.slice.lay-f #right > .rmid { display: flex; flex-direction: column; gap: 6px; }
+body.slice.lay-f .rmid > .boss-rules, body.slice.lay-f .rmid > .parts { flex: none; }
+body.slice.lay-f .rmid > .blog { flex: none; overflow: visible; }
+body.slice.lay-f .blog .bl-list { overflow: visible; -webkit-mask-image: none; mask-image: none; }
+/* 아래: 단추 줄 — 같은 높이 */
+body.slice.lay-f .rail.left > .deckrow, body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0; padding: 0; box-shadow: none; display: flex; align-items: stretch; gap: 6px; }
+body.slice.lay-f .rail.left > .deckrow .hand-head { width: 100%; height: 100%; margin: 0; gap: 6px; align-items: stretch; }
+body.slice.lay-f .deckrow .deck-btn { flex: 1; min-height: 0; height: 100%; padding: 0 6px; }
+body.slice.lay-f .deckrow .hand-head > span { align-self: center; font-size: 12px; white-space: nowrap; }
+body.slice.lay-f #right > .actions #btn-help, body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 48px; width: 48px; min-width: 0; height: 100%; min-height: 0; padding: 0; display: grid; place-content: center; line-height: 1; font-size: 13px; }
+body.slice.lay-f #right > .actions .btn-go { flex: 1; height: 100%; min-height: 0; font-size: 19px; }
+body.slice.lay-f .apbar .lbl { grid-row: 1; grid-column: 1; }
+body.slice.lay-f .apbar > b { grid-row: 1; grid-column: 2; }
+body.slice.lay-f .apbar .keys { grid-row: 2; }
+body.slice.lay-f #btn-rewind .rw-t { display: none !important; }
+body.slice.lay-f #btn-rewind small { margin-top: 2px; font-size: 12px; }

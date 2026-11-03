@@ -51,7 +51,19 @@ import { Rng } from '../engine/rng';
     dr.id = 'deckrow';
     dr.className = 'deckrow';
     document.getElementById('left')!.appendChild(dr);
-    document.getElementById('btn-help')!.before(document.getElementById('btn-rewind')!);
+    // 좌우 거울 배치 (D-210): 위 = 계기(태엽 ↔ 턴 · 속전) · 가운데 = 밀리는 칸(탄창 ↔ 반장 · 직전 공격 · 기록) · 아래 = 단추 줄(덱 ↔ ? · 되감기 · 턴 끝)
+    const right = document.getElementById('right')!;
+    const top = document.createElement('div');
+    top.className = 'gtop';
+    top.append(document.getElementById('turn-label')!, document.getElementById('coins')!);
+    const mid = document.createElement('div');
+    mid.className = 'rmid';
+    mid.append(...(['boss', 'parts', 'blog'].map((id) => document.getElementById(id)!)));
+    right.prepend(top);
+    top.after(mid);
+    const act = right.querySelector('.actions')!;
+    act.prepend(document.getElementById('btn-help')!, document.getElementById('btn-rewind')!);
+    right.querySelector('.rail-head')?.remove();
   } else if (lay === 'e') {
     // 기본 = E안 (D-207, 사용자: "좌우가 쓸데없는 정보나 텅 비어 있다"): 판은 화면 높이 꽉, 왼쪽 = 내 선택지(손패 2열 · 설명까지), 오른쪽 = 적의 수(예고 목록) · 연쇄 · 턴 끝
     document.body.classList.add('lay-e');
@@ -492,11 +504,11 @@ const gauges = (): void => {
     const was = apPrev;
     apKey = k;
     apPrev = b.ap;
-    $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: n }, (_, i) => {
+    $('vials').innerHTML = `<span class="lbl">태엽</span><span class="keys">${Array.from({ length: n }, (_, i) => {
       const on = i < b.ap;
       const fx = was === null || calmNow() ? '' : !on && i < was ? ' spend' : on && i >= was ? ' wind' : '';
       return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><img src="ui/hud/key-${on ? 'full' : 'spent'}.png" alt=""></i>`;
-    }).join('')}<b>${b.ap}/${b.apMax}</b>`;
+    }).join('')}</span><b>${b.ap}/${b.apMax}</b>`;
   }
   if (coinPrev !== b.coins || !$('coins').childElementCount) {
     const was = coinPrev;
