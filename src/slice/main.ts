@@ -37,7 +37,20 @@ import { Rng } from '../engine/rng';
   const lay = new URLSearchParams(location.search).get('layout');
   // 기본 = 4안 (D-206, 사용자 결정): 판 무대 + 아래 부채꼴 손패 + 판 옆 적 초상. ?layout=a(예전) · b · c 는 비교용
   if (lay === 'b' || lay === 'c') document.body.classList.add(`lay-${lay}`);
-  else if (lay !== 'a' && lay !== 'd') {
+  else if (lay !== 'a' && lay !== 'd' && lay !== 'e') {
+    // 기본 = F안 탄창 (D-208, 사용자 결정): 왼쪽 = 손패를 탄약처럼 얇게 적재(누르면 그 탄만 펼쳐 상세), 오른쪽 = 직전 공격 계산 · 전투 기록.
+    // 적의 수 · 반장 규칙은 판이 보여 주므로 레일에서 뺀다 (반장은 이름 한 줄 — 누르면 규칙)
+    document.body.classList.add('lay-f');
+    const log = document.createElement('div');
+    log.id = 'blog';
+    log.className = 'blog';
+    document.getElementById('meter')!.before(log);
+    // 덱 · 분대 · 뽑을 · 버림은 오른쪽 아래(턴 끝 위)로 — 탄창 높이를 손패에 다 쓴다
+    const dr = document.createElement('div');
+    dr.id = 'deckrow';
+    dr.className = 'deckrow';
+    document.querySelector('#right .actions')!.before(dr);
+  } else if (lay === 'e') {
     // 기본 = E안 (D-207, 사용자: "좌우가 쓸데없는 정보나 텅 비어 있다"): 판은 화면 높이 꽉, 왼쪽 = 내 선택지(손패 2열 · 설명까지), 오른쪽 = 적의 수(예고 목록) · 연쇄 · 턴 끝
     document.body.classList.add('lay-e');
     const plan = document.createElement('div');
@@ -251,7 +264,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const mid = (b.hand.length - 1) / 2;
   const fan = `--r:${((i - mid) * 5).toFixed(1)}deg;--fy:${Math.round(Math.abs(i - mid) ** 1.4 * 6)}px`;
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" style="${fan}" ${off ? 'aria-disabled="true"' : ''}>${opTag(opOfCard(c)) ? `<span class="op-corner">${opTag(opOfCard(c))}</span>` : ''}
-    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${opTag(opOfCard(c))}${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}</span></button>`;
+    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${opTag(opOfCard(c))}${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}${selCard === i ? `<span class="full">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</span>` : ''}</span></button>`;
 };
 
 /**
@@ -352,6 +365,50 @@ const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number 
  * 판 옆 적 초상 (4안, D-206): 반장이면 반장 그림(B-01~03), 원수가 섰으면 원수, 아니면 적 킹 — 이름 · HP.
  * 그림이 없으면 기물 도트. 같은 내용이면 다시 그리지 않는다(깜빡임 없이).
  */
+/**
+ * 전투 기록 (D-208, 사용자 결정): 오른쪽 레일 — 맨 위 「직전 공격」(공격력 · 합 · 곱 → 실제 피해), 아래 최근 수(이번 턴 · 지난 적 턴).
+ * 적의 다음 수는 판 위 과녁 · 번호가 보여 주므로 여기서 다시 쓰지 않는다.
+ */
+type LogHit = { t: PieceType; side: 0 | 1; dmg: number; killed: boolean };
+type LogRow = { turn: number; side: 0 | 1; by: PieceType | null; label?: string; hits: LogHit[]; base?: number; add?: number; mult?: number };
+let blog: LogRow[] = [];
+const logEvents = (events: BattleEvent[], before: BattleState, side: 0 | 1, turn: number): void => {
+  const pc = (id: number) => before.pieces.find((p) => p.id === id);
+  const hitsOf = (hs: { targetId: number; damage: number; killed: boolean }[]): LogHit[] =>
+    hs.map((h) => ({ t: pc(h.targetId)?.type ?? 'P', side: (pc(h.targetId)?.side ?? 1) as 0 | 1, dmg: h.damage, killed: h.killed }));
+  for (const e of events) {
+    if (e.type === 'attack' && e.hits.length) {
+      const a = pc(e.attackerId);
+      blog.push({ turn, side, by: a?.type ?? null, base: a?.atk, add: e.add, mult: e.mult, hits: hitsOf(e.hits) });
+    } else if (e.type === 'blast' && e.hits.length) blog.push({ turn, side, by: null, label: e.label, hits: hitsOf(e.hits) });
+  }
+  blog = blog.slice(-24);
+};
+const logHits = (hs: LogHit[]): string =>
+  hs.map((h) => `<span class="bl-hit">${pieceImg(h.t, h.side, 'small', 20)}<em>${h.killed ? '☠' : `−${h.dmg}`}</em></span>`).join('');
+const renderLog = (): void => {
+  const el = document.getElementById('blog');
+  if (!el) return;
+  const mine = [...blog].reverse().find((r) => r.side === 0 && r.by);
+  const sum = mine ? mine.hits.reduce((a, h) => a + h.dmg, 0) : 0;
+  const last = mine
+    ? `<div class="bl-last"><p class="bl-h">직전 공격</p><p class="bl-calc">${pieceImg(mine.by!, 0, 'small', 22)}<span class="bl-arrow">→</span>${mine.hits.map((h) => pieceImg(h.t, h.side, 'small', 22) + (h.killed ? '<em class="kill">☠</em>' : '')).join('')}<span class="bl-k">공격</span><span>${mine.base ?? '?'}</span>${mine.add ? `<em class="op-add">+${mine.add}</em>` : ''}${mine.mult && mine.mult > 1 ? `<em class="op-mul">×${fmtMult(mine.mult)}</em>` : ''}<span class="bl-eq">→ <b>${sum}</b></span></p></div>`
+    : `<div class="bl-last none"><p class="bl-h">직전 공격</p><p class="bl-none">아직 공격하지 않았습니다.</p></div>`;
+  let rows = '';
+  let head = '';
+  for (const r of [...blog].reverse().slice(0, 7)) {
+    const h = `${r.turn}턴 · ${r.side ? '적' : '나'}`;
+    if (h !== head) rows += `<p class="bl-turn${r.side ? ' foe' : ''}">${(head = h)}</p>`;
+    rows += `<div class="bl-row${r.side ? ' foe' : ''}">${r.by ? pieceImg(r.by, r.side, 'small', 20) : `<span class="bl-lbl">${r.label ?? ''}</span>`}<span class="bl-arrow">→</span>${logHits(r.hits)}</div>`;
+  }
+  // 연쇄 계기판을 여기로 합친다 (F안): 이번 턴 합계 · 다음 공격에 붙을 합/곱
+  const add = chainAdd(b.kills, parts);
+  const mul = chainMult(b.kills, parts);
+  const next = b.kills ? `<p class="bl-next">연쇄 ${b.kills} · 다음 공격 ${add ? `<em class="op-add">+${add}</em>` : ''}${mul > 1 ? `<em class="op-mul">×${fmtMult(mul)}</em>` : ''}</p>` : '';
+  const tot = turnDmg ? `<p class="bl-tot">이번 턴 피해 <b>${turnDmg}</b></p>` : '';
+  el.innerHTML = `${last.replace(/<\/div>$/, `${tot}${next}</div>`)}<div class="bl-list"><p class="bl-h">기록</p>${rows || '<p class="bl-none">첫 턴입니다.</p>'}</div>`;
+};
+
 /** 오른쪽 「적의 수」 (D-207): 턴을 끝내면 적이 둘 수 — 순번 · 누가 → 누구 · 피해(쓰러지면 ☠) */
 const foePlan = (): void => {
   const el = document.getElementById('foeplan');
@@ -397,11 +454,15 @@ const portrait = (): void => {
 const refresh = (): void => {
   hidePeek();
   renderer.render(model());
-  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c, .lay-e') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
-  $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
+  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c, .lay-e, .lay-f') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
+  const deckRow = document.getElementById('deckrow');
+  const head = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>`;
+  if (deckRow) deckRow.innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button><span>버림 ${b.discard.length + (b.played?.length ?? 0)}</span></p>`;
+  $('hand').innerHTML = `${deckRow ? '' : head}${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
   portrait();
   foePlan();
+  renderLog();
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
   for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
   newParts.clear();
@@ -417,7 +478,7 @@ const refresh = (): void => {
   $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<i class="seg${i < b.ap ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}"><img src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt=""></i>`).join('')}<b>${b.ap}/${b.apMax}</b>`;
   $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}</span>${Array.from({ length: SLICE.coins }, (_, i) => `<i class="coin${i < b.coins ? '' : ' gone'}"></i>`).join('')}<b title="이기면 받는 나사">+${b.coins * SLICE.coinValue}</b>`;
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
-  $('btn-rewind').innerHTML = `◀◀ 되감기 <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
+  $('btn-rewind').innerHTML = `<span class="rw-i">◀◀</span> <span class="rw-t">되감기</span> <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
   meter();
   coach();
@@ -629,6 +690,8 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   if (b.kills > prevKills) chainPop(b.kills);
   prevKills = b.kills;
   flashParts(firedParts(cardId, moverType, r.events, b.kills - k0));
+  logEvents(r.events, r.before, 0, b.turn);
+  renderLog();
   // 템포 가속: 연쇄가 쌓일수록 다음 연출이 빨라진다
   renderer.setTempo(1 + Math.min(b.kills, PACE.tempoKillsMax) * PACE.tempoPerKill);
   if (gain) {
@@ -673,6 +736,7 @@ const onEndInner = async (): Promise<void> => {
   // 띠가 판 가운데를 지나는 동안 적 첫 수가 가려지지 않게 잠깐 기다린다 (띠는 0.9초에 빠지고 적은 겨눔부터 시작)
   await new Promise((res) => window.setTimeout(res, calmNow() ? 120 : PACE.enemyBannerHold));
   await renderer.play(r.before, r.events);
+  logEvents(r.events, r.before, 1, b.turn - 1);
   await deathRites();
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
   busy = false;
@@ -814,6 +878,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   clutchedNow = false;
   tauntedNow = false;
   betNow = null;
+  blog = [];
   b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : stage });
   selCard = selPiece = null;
   busy = false;
@@ -1745,6 +1810,16 @@ $('hand').addEventListener('click', (e) => {
   pickCard(Number(el.dataset.card));
 });
 $('btn-end').addEventListener('click', () => void onEnd());
+document.getElementById('deckrow')?.addEventListener('click', (e) => {
+  if ((e.target as HTMLElement).closest('[data-deck]')) return deckView('view');
+  if ((e.target as HTMLElement).closest('[data-crew]')) return crewView();
+});
+// 반장 칸 (D-208): 레일엔 이름 · 지금 일만 — 누르면 규칙 전체
+$('boss').addEventListener('click', () => {
+  if (!b.boss) return;
+  const r = BOSS_RULES[b.bossRule];
+  toast(`${r.name} — ${r.lines.map((l) => l.replace(/(줄 폭격 −)\d+/, `$1${foeDmg(BOSS.bombDamage, b)}`).replace(/(친 기물이 )\d+/, `$1${foeDmg(BOSS_NUM.thorns, b)}`)).join(' · ')}`, 3200);
+});
 $('parts').addEventListener('click', (e) => {
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-part-info]');
   if (!el) return;
@@ -1754,6 +1829,7 @@ $('parts').addEventListener('click', (e) => {
 $('btn-rewind').addEventListener('click', () => {
   const r = rewind(b);
   if (typeof r === 'string') return toast(r);
+  blog = blog.filter((x) => !(x.side === 0 && x.turn === b.turn));
   // 되감기 연출: 테이프가 거꾸로 감기며 화면이 청록으로 번지고, 판이 이번 턴 처음으로 돌아간다
   busy = true;
   refresh();
@@ -1794,6 +1870,7 @@ const startLab = (mode: 'A' | 'B'): void => {
   squad = LAB.squad.map((t) => ({ t, name: PIECE_NAMES_KO[t] }));
   cur = { enemy: LAB.enemy, kingHp: LAB.kingHpA, title: LAB_TEXT[mode].name, narr: '', tell: '', reward: 'end' };
   stage += 1;
+  blog = [];
   b = newSliceBattle(squad, LAB.enemy, LAB.deck, 300 + labRounds[mode] * 31, { enemyKingHp: mode === 'A' ? LAB.kingHpA : undefined, lab: mode });
   selCard = selPiece = null;
   busy = false;

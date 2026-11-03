@@ -127,7 +127,7 @@ const guideMedia = (m: GuideMedia): string => {
       <div class="fx-row r3 sum"><span>=</span><b>18</b></div>
       <div class="fx-row r4"><i class="op op-mul">×</i><span>분쇄</span><b class="mul">1.5</b></div>
       <div class="fx-row r5 total"><span>피해</span><b>27</b></div></div>`;
-  return `<div class="gd-media anim steam"><div class="st-track">${Array.from({ length: 10 }, (_, k) => `<i style="--k:${k}"></i>`).join('')}</div><div class="st-out"><i class="scr big"></i><b>+35</b></div><p>남은 증기 × 5 = 나사</p></div>`;
+  return `<div class="gd-media anim steam"><div class="st-track">${Array.from({ length: 10 }, (_, k) => `<i style="--k:${k}"></i>`).join('')}</div><div class="st-out"><i class="scr big"></i><b>+35</b></div><p>남은 칸 × 5 = 나사</p></div>`;
 };
 
 /**
