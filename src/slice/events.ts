@@ -9,7 +9,7 @@ import { crewMaxHp } from './battle';
  * 사건 (R5-3, D-170): 본편 돌발 12종(D-158 문체)을 시험판 체계(분대원 · 카드 · 부품 · 나사)로 옮겼다.
  * 효과는 순수 함수 — 화면은 결과 문구와 후속(부품 고르기)만 받는다. 무작위가 걸린 선택은 「?」(말투 원칙 11).
  */
-export type SliceEventId = 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe';
+export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe';
 
 /** 사건이 바꿀 수 있는 출하 상태 */
 export interface EventState {
@@ -70,6 +70,24 @@ const poor = (n: number) => (s: EventState) => (s.gold < n ? `나사 ${n} 필요
 const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', apply: () => ({ text: '당신은 발걸음을 돌린다.' }) });
 
 export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
+  tinker: {
+    title: '떠돌이 땜장이',
+    text: '외눈 렌즈를 낀 땜장이가 당신의 분대를 훑는다. “가장 오래 버틴 놈 하나. 그놈 축만 두껍게 해 주지.”',
+    choices: [
+      {
+        label: '나사 30을 낼까?',
+        desc: '처치가 가장 많은 분대원 한 명에게 영구 문턱 +1. (그 분대원만, 출하 내내)',
+        blocked: (s) => (s.gold < 30 ? '나사 30 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
+        apply: (s) => {
+          s.gold -= 30;
+          const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
+          u.doors = (u.doors ?? 0) + 1;
+          return { text: `불꽃이 튄다. ${u.name ?? NAMES[u.t]}, 그 축이 두꺼워졌다. (문턱 +1, 영구)` };
+        },
+      },
+      leave('지나가기'),
+    ],
+  },
   smith: {
     title: '떠돌이 정비 폰',
     text: '공구 수레 곁에서 떠돌이 폰이 당신을 기다린다. 등에 진 렌치가 녹슨 빛을 낸다. “나사 25. 무엇을 다듬을지는 내가 정한다.”',

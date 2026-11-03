@@ -192,12 +192,15 @@ describe('애착 (D-153)', () => {
     const p = b.s.pieces.find((q) => q.id === b.squadIds[1])!;
     expect(p.maxHp).toBe(Math.round(25 * QUIRKS.overwound.hp!));
   });
-  it('죽음의 문턱: 분대원은 대국마다 한 번 HP 1로 버틴다 (고집 센 축은 두 번, 새는 보일러는 없음)', () => {
-    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N', quirk: 'stubborn' }, { t: 'B', quirk: 'boiler' }], ['K', 'P'], START_COMMANDS, 3);
+  it('죽음의 문턱 (D-217): 기본은 없다 · 고집 센 축 2 · 영구 문턱은 그 분대원만 · 맹세는 폰마다 1', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N', quirk: 'stubborn' }, { t: 'B', doors: 1 }], ['K', 'P'], START_COMMANDS, 3);
     const [, pid, nid, bid] = b.squadIds;
-    expect(b.s.doorIds!.filter((x) => x === pid)).toHaveLength(1);
+    expect(b.s.doorIds?.filter((x) => x === pid) ?? []).toHaveLength(0);
     expect(b.s.doorIds!.filter((x) => x === nid)).toHaveLength(2);
-    expect(b.s.doorIds!.filter((x) => x === bid)).toHaveLength(0);
+    expect(b.s.doorIds!.filter((x) => x === bid)).toHaveLength(1);
+    const o = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'B' }], ['K', 'P'], START_COMMANDS, 3, { parts: ['oath'] });
+    expect(o.s.doorIds!.filter((x) => x === o.squadIds[1])).toHaveLength(1);
+    expect(o.s.doorIds?.filter((x) => x === o.squadIds[2]) ?? []).toHaveLength(0);
   });
   it('대국 뒤 성장: 처치가 쌓이고 3대국이면 용접 흉터 · 5처치면 별명', async () => {
     const { growCrew } = await import('../src/slice/battle');
@@ -256,7 +259,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     const { SLICE_PARTS } = await import('../src/slice/parts');
     expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(43);
     expect(REWARD_COMMANDS.length).toBe(37); // + 연쇄 소모 3 (D-203)
-    expect(Object.keys(SLICE_PARTS).length).toBe(25); // + 닳은 숫돌 (D-205)
+    expect(Object.keys(SLICE_PARTS).length).toBe(26); // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
   });
   it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 피의 계약(턴 끝 킹 −4)', () => {
     const b = mk(['brittle']);

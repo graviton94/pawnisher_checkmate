@@ -23,5 +23,5 @@ export const TOAST = { base: 1100, perChar: 45, max: 3200, queueMax: 3 };
  * tempoPerKill = 연쇄마다 빨라지는 정도(예전 0.15 — 몰아침의 주범) · enemyBannerHold = 「적 차례」 띠 뒤 첫 적 수까지 ·
  * turnHold = 적 차례가 끝나고 내 차례 띠까지 · afterMine = 내 카드 연출이 끝나고 손이 풀리기까지
  */
-/** enemyTempo · enemyOverlap (D-216 5): 적 차례 박자 ×1.25 · 다가오기만 하는 적은 이만큼(ms) 뒤에 다음 적이 겹쳐 출발 */
-export const PACE = { fx: 0.8, hitGap: 320, enemyLead: 260, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 520, turnHold: 320, afterMine: 120, enemyTempo: 1.25, enemyOverlap: 160 } as const;
+/** enemyTempo (D-216 5): 적 차례 박자 ×1.25 — 적은 늘 한 명씩 차례대로 (D-217) */
+export const PACE = { fx: 0.8, hitGap: 320, enemyLead: 260, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 520, turnHold: 320, afterMine: 120, enemyTempo: 1.25 } as const;

@@ -17,7 +17,7 @@ export interface QuirkDef {
   hp?: number;
   /** 대국 시작 방열판 */
   shield?: number;
-  /** 죽음의 문턱 횟수 (기본 1) */
+  /** 죽음의 문턱 횟수 (기본 0 — D-217: 모두에게 주던 문턱 1번을 없앴다, 기벽 · 사건 · 부품으로만) */
   doors?: number;
 }
 
@@ -59,6 +59,8 @@ export interface Crew {
   scars?: string[];
   /** 업적 별명 (자동) */
   nick?: string;
+  /** 이 분대원만 갖는 영구 문턱 (D-217 — 사건 「떠돌이 땜장이」 등) */
+  doors?: number;
 }
 
 /** 폐기 원부 한 줄 (영구 기록) */

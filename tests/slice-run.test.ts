@@ -70,7 +70,7 @@ describe('사건 (D-170)', () => {
   it('열두 사건 모두 선택지를 고르면 상태가 규칙대로 바뀐다 (막히는 선택은 이유를 준다)', async () => {
     const { SLICE_EVENTS, SLICE_EVENT_IDS } = await import('../src/slice/events');
     const { Rng } = await import('../src/engine/rng');
-    expect(SLICE_EVENT_IDS).toHaveLength(12);
+    expect(SLICE_EVENT_IDS).toHaveLength(13); // + 떠돌이 땜장이 (D-217)
     for (const id of SLICE_EVENT_IDS) {
       for (const c of SLICE_EVENTS[id].choices) {
         const s = { squad: [{ t: 'K' as const }, { t: 'P' as const, name: 'a' }, { t: 'P' as const, name: 'b' }, { t: 'N' as const, name: 'c' }], deck: [...START_COMMANDS], refined: [] as never[], gold: 100 };

@@ -197,7 +197,8 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (q?.shield) p.shield += q.shield;
     if (q?.atk) p.atk = Math.round(p.atk * q.atk);
     if (u.hp !== undefined) p.hp = Math.max(1, Math.min(p.maxHp, u.hp));
-    const doors = q ? (q.doors ?? 1) : 1;
+    // 문턱 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 문턱 + 폰 전용 황금 부품 「작은 개척자의 맹세」
+    const doors = (q?.doors ?? 0) + (u.doors ?? 0) + (p.type === 'P' && (opts.parts ?? []).includes('oath') ? 1 : 0);
     if (p.type !== 'K') for (let k = 0; k < doors; k++) (s.doorIds ??= []).push(p.id);
     return p.id;
   });

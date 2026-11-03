@@ -4,7 +4,7 @@ import type { Axis } from './cards';
  * 부품 (수직 조각 — 규칙을 깨는 유물, D-144). Balatro 조커 · StS 유물처럼 카드와 맞물려 빌드를 "부순다".
  * 축마다 둘: 하나는 그 축 카드를 싸게/여러 번, 하나는 판을 바꾼다.
  */
-export type SlicePartId = 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
+export type SlicePartId = 'oath' | 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
   | 'lance' | 'spurs' | 'barracks' | 'banner' | 'scepter' | 'gilded' | 'fuse' | 'conductor' | 'anvilPlate' | 'chainShot' | 'bloodPact' | 'brittle' | 'greed' | 'whetstone';
 
 export interface SlicePartDef {
@@ -17,10 +17,11 @@ export interface SlicePartDef {
 
 /** 부품 등급 (D-216): 규칙을 크게 바꾸는 것일수록 위. 표에 없으면 일반 */
 export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>> = {
-  coil: 'gold', conductor: 'gold', brittle: 'gold', bloodPact: 'gold', assembly: 'gold',
+  oath: 'gold', coil: 'gold', conductor: 'gold', brittle: 'gold', bloodPact: 'gold', assembly: 'gold',
   echo: 'rare', crown: 'rare', throne: 'rare', hammer: 'rare', lance: 'rare', barracks: 'rare', fuse: 'rare', chainShot: 'rare', tape: 'rare', spare: 'rare', magnet: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
+  oath: { name: '작은 개척자의 맹세', axis: 'inf', icon: 'oath', desc: '폰마다 대국마다 문턱 한 번. (쓰러질 피해를 HP 1로 버틴다)' },
   horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', desc: '나이트가 처치하면 태엽 +1' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', desc: '처치할 때마다 카드 +1' },
   assembly: { name: '끝없는 생산선', axis: 'inf', icon: 'assembly', desc: '턴 시작에 폰이 2기 이하면 킹 곁에 폰 +1' },
@@ -57,7 +58,7 @@ export const PART_NUM = { lanceMult: 1.5, bannerMult: 1.5, scepterShield: 25, co
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).
  * 폰 부품은 폰을 만들어 내는 부품(생산선 · 막사)이 있으면 괜찮다.
  */
-export const PART_NEEDS: Partial<Record<SlicePartId, 'N' | 'P'>> = { horseshoe: 'N', lance: 'N', spurs: 'N', drum: 'P', banner: 'P' };
+export const PART_NEEDS: Partial<Record<SlicePartId, 'N' | 'P'>> = { oath: 'P', horseshoe: 'N', lance: 'N', spurs: 'N', drum: 'P', banner: 'P' };
 
 /** 지금 분대 · 부품으로 이 부품이 쓸모 있는가 */
 export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePartId[]): boolean => {

@@ -280,7 +280,7 @@ export const SLICE = {
   /** 부품 상자 나사 [최소, 최대] (D-215) */
   chestGold: [20, 35] as [number, number],
   /** 기물 수집 (D-216): 분대 상한 · 대국 보상에 새 분대원이 섞일 확률 (검문 · 반장 뒤는 확정) */
-  squadMax: 7,
+  squadMax: 10,
   recruitChance: 0.25,
   /** 태엽 칸 (D-212, 사용자: "최대 5개를 깔아 두고 3개만 켠다") — 한 턴에 가질 수 있는 태엽 상한 */
   apCap: 5,
