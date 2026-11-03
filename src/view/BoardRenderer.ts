@@ -1267,7 +1267,10 @@ class BoardScene extends Phaser.Scene {
     const cur: BattleState = { ...this.state };
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
     this.killStreak = 0;
-    for (const e of events) {
+    // 다가오기만 하는 이동은 기다리지 않는다 (D-216 5): 다음 적이 바로 이어 움직인다 — 공격 전에만 모두 마친다
+    const moving: Promise<void>[] = [];
+    for (const [ei, e] of events.entries()) {
+      if (e.type !== 'move' && moving.length) await Promise.all(moving.splice(0));
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         this.announce('바닥이 꺼진다! 칸 한 쌍이 톱니 아래로');
@@ -1331,7 +1334,9 @@ class BoardScene extends Phaser.Scene {
         const ghosts = this.calm ? [] : IMPACT.ghosts.map(() => this.add.image(0, 0, pieceKey(s.piece.type, s.piece.side)).setTintFill(0xffffff).setDepth(2.4).setVisible(false));
         const trail: { x: number; y: number }[] = [];
         let landAt = -1;
-        await new Promise<void>((done) =>
+        const nx = events[ei + 1];
+        const approachOnly = s.piece.side === 1 && !(nx && nx.type === 'attack' && nx.attackerId === e.pieceId);
+        const run = new Promise<void>((done) =>
           this.tweens.addCounter({
             from: 0,
             to: MOVE_TOTAL,
@@ -1369,6 +1374,10 @@ class BoardScene extends Phaser.Scene {
             },
           }),
         );
+        if (approachOnly) {
+          moving.push(run);
+          await this.wait(PACE.enemyOverlap / this.tempo);
+        } else await run;
         continue;
       }
       if (e.type === 'shield' || e.type === 'heal') {
@@ -1516,6 +1525,7 @@ class BoardScene extends Phaser.Scene {
       // 공격과 공격 사이 숨 (D-204)
       await this.wait(PACE.hitGap / this.tempo);
     }
+    await Promise.all(moving);
     if (events.some((e) => e.type === 'gameOver')) await this.wait(400);
   }
 

@@ -857,7 +857,9 @@ const onEndInner = async (): Promise<void> => {
   // 띠가 판 가운데를 지나는 동안 적 첫 수가 가려지지 않게 잠깐 기다린다 (띠는 0.9초에 빠지고 적은 겨눔부터 시작)
   await new Promise((res) => window.setTimeout(res, calmNow() ? 120 : PACE.enemyBannerHold));
   holdView = null;
+  renderer.setTempo(PACE.enemyTempo);
   await renderer.play(r.before, r.events);
+  renderer.setTempo(1);
   logEvents(r.events, r.before, 1, b.turn - 1);
   await deathRites();
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
