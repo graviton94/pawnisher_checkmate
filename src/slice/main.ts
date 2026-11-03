@@ -14,7 +14,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -128,7 +128,9 @@ let enemyTurn = false;
 
 /** 적 특성 한 줄 (길게 누르기, D-175) */
 const foeTraitLine = (p: { side: number; type: PieceType }): string =>
-  p.side !== 1 ? '' : p.type === 'P' && b.blastPawns ? `<br><span class="enemy">자폭</span> 쓰러지면 둘레 내 기물에 ${foeDmg(TRAIT.blast)}` : p.type === 'K' && b.boss && b.bossRule === 'thorns' ? `<br><span class="enemy">되받아침</span> 치고 못 쓰러뜨리면 친 기물이 ${foeDmg(BOSS_NUM.thorns)}을 받는다` : '';
+  p.side !== 1 ? '' :
+  p.type === 'K' && b.boss && b.bossRule === 'plate' ? `<br><span class="enemy">철갑 · 줄 폭격</span> 두 턴마다 철갑 ${BOSS.plate}을 다시 두르고, 두 턴마다 한 줄에 ${foeDmg(BOSS.bombDamage, b)}` :
+  p.type === 'K' && b.boss && b.bossRule === 'spawn' ? `<br><span class="enemy">조립</span> 두 턴마다 곁에 폰을 찍어 낸다 (셋까지)` : p.type === 'P' && b.blastPawns ? `<br><span class="enemy">자폭</span> 쓰러지면 둘레 내 기물에 ${foeDmg(TRAIT.blast, b)}` : p.type === 'K' && b.boss && b.bossRule === 'thorns' ? `<br><span class="enemy">되받아침</span> 치고 못 쓰러뜨리면 친 기물이 ${foeDmg(BOSS_NUM.thorns, b)}을 받는다` : '';
 
 const renderer = new BoardRenderer(
   $('board'),
@@ -203,6 +205,7 @@ const model = (): BoardModel => {
     preview: [],
     removed: [],
     threat: b.s.winner === null && !busy ? { moves: [], hits: dangerSquares(b) } : null,
+    fireRow: b.s.winner === null ? b.bombRow : null,
     intent: b.s.winner === null && !busy ? { state: b.s, plan: liveIntents(b), hits: intentHits(b) } : null,
   };
 };
@@ -217,7 +220,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const poor = !ok && cost > b.ap;
   const off = !ok || busy;
   const art = cardArt(id);
-  const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : '움직일 기물 없음'}</em>` : '';
+  const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : '움직일 기물 없음'}</em>` : '';
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
     ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}</span></button>`;
 };
@@ -319,7 +322,9 @@ const refresh = (): void => {
   $('boss').hidden = !b.boss;
   if (b.boss) {
     const r = BOSS_RULES[b.bossRule];
-    $('boss').innerHTML = `<b>${r.name}</b>${r.lines.map((l, k) => `<span${k === 1 && b.bombRow !== null ? ' class="hot"' : ''}>${k === 1 && b.bombRow !== null ? '턴 끝에 붉은 줄!' : l}</span>`).join('')}`;
+    // 이 대국의 실제 피해 숫자로 (난이도 × 층별 성장, D-203)
+    const lines = r.lines.map((l) => l.replace(/(줄 폭격 −)\d+/, `$1${foeDmg(BOSS.bombDamage, b)}`).replace(/(친 기물이 )\d+/, `$1${foeDmg(BOSS_NUM.thorns, b)}`));
+    $('boss').innerHTML = `<b>${r.name}</b>${lines.map((l, k) => `<span${k === 1 && b.bombRow !== null ? ' class="hot"' : ''}>${k === 1 && b.bombRow !== null ? '턴 끝 — 불꽃 줄 폭격!' : l}</span>`).join('')}`;
   }
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   $('vials').innerHTML = `<span class="lbl">태엽</span>${Array.from({ length: Math.max(b.apMax, b.ap) }, (_, i) => `<i class="seg${i < b.ap ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}"><img src="ui/hud/key-${i < b.ap ? 'full' : 'spent'}.png" alt=""></i>`).join('')}<b>${b.ap}/${b.apMax}</b>`;
@@ -533,7 +538,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   // 템포 가속: 연쇄가 쌓일수록 다음 연출이 빨라진다
   renderer.setTempo(1 + Math.min(b.kills, 4) * 0.15);
   if (gain) {
-    toast(`${SLICE_PARTS.horseshoe.name} — 태엽 +${gain}`);
+    toast(`처치 — 태엽 +${gain}${parts.includes('horseshoe') && moverType === 'N' ? ` (${SLICE_PARTS.horseshoe.name})` : ''}`);
     window.setTimeout(() => sfx('coin', 9), 200);
   }
   if (b.s.winner !== null) return finish();
@@ -713,7 +718,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   clutchedNow = false;
   tauntedNow = false;
   betNow = null;
-  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined });
+  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : stage });
   selCard = selPiece = null;
   busy = false;
   turnDmg = 0;

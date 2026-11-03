@@ -102,9 +102,11 @@ interface AnimMarks {
   arrows: { a: { x: number; y: number }; b: { x: number; y: number }; knight: boolean; color: number; alpha: number }[];
   gears: { x: number; y: number; kind: 'ally' | 'kill' }[];
   threat: { x: number; y: number }[];
+  /** 줄 폭격 예고 칸 (불길이 일렁인다, D-203) */
+  fire: { x: number; y: number }[];
   glints: { s: PieceSprite; hp: number; after: number }[];
 }
-const noMarks = (): AnimMarks => ({ arrows: [], gears: [], threat: [], glints: [] });
+const noMarks = (): AnimMarks => ({ arrows: [], gears: [], threat: [], fire: [], glints: [] });
 
 /** 흔들림 세 단계 (D-193) */
 const SHAKE_LV = { 1: [260, 0.005], 2: [360, 0.009], 3: [480, 0.014] } as const;
@@ -191,6 +193,19 @@ class BoardScene extends Phaser.Scene {
       const a = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(time / 260));
       for (const w of this.anim.threat) g.fillStyle(C.crimson, a).fillRect(w.x, w.y, t, t);
     }
+    if (this.anim.fire.length) {
+      // 줄 폭격 예고: 칸 아래에서 도트 불꽃 혀가 일렁인다 — 일반 위협(붉은 깜빡임)과 다른 모양
+      const d = t / BOARD_DOTS;
+      this.anim.fire.forEach((w, i) => {
+        g.fillStyle(0xe8783c, 0.18).fillRect(w.x, w.y, t, t);
+        for (let k = 0; k < 4; k++) {
+          const ph = Math.sin(ms / 140 + i * 1.7 + k * 2.1);
+          const h = Math.round((0.28 + 0.14 * ph) * BOARD_DOTS) * d;
+          const x = w.x + (k * 4 + 1) * d * (BOARD_DOTS / 16);
+          g.fillStyle(k % 2 ? 0xfacc15 : 0xe8783c, 0.85).fillRect(x, w.y + t - h, d * 2, h);
+        }
+      });
+    }
     for (const r of this.anim.gears) drawGearTarget(pen, r.x + t / 2 + pen.dot / 2, r.y + t / 2 + pen.dot / 2, r.kind, ms);
     for (const r of this.anim.arrows) drawArrow(pen, r.a, r.b, r.knight, r.color, ms, r.alpha);
     const tp = new PixelPen(top, t / BOARD_DOTS);
@@ -198,6 +213,70 @@ class BoardScene extends Phaser.Scene {
       if (!r.s.root.active) continue;
       drawGauge(tp, r.s.root.x + 3 * tp.dot, r.s.root.y + 16 * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms);
     }
+  }
+
+  /**
+   * 특수 기믹 연출 (D-203, 사용자: "그 특성이 확실히 드러나야 하고 일반 공격과 다른 형식"). 도트 칸 단위 · 계단 페이드.
+   * row: 한 줄을 왼쪽부터 불길이 훑고 지나간다 · thorns: 반장에서 친 기물까지 가시 줄 · burst: 터진 칸 둘레 3×3이 두 번 번쩍 · steam: 맞은 적마다 김이 솟는다
+   */
+  private async gimmickFx(kind: 'row' | 'thorns' | 'burst' | 'steam', pos: Pos, from: Pos | undefined, ids: number[]): Promise<void> {
+    if (this.calm || !this.state) return;
+    const t = this.tile;
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    const cell = (q: Pos, color: number, alpha: number, delay: number, life = 260, inset = 0) => {
+      if (q.x < 0 || q.y < 0 || q.x >= this.state.width || q.y >= this.state.height) return;
+      const w = this.world(q);
+      const r = this.add.rectangle(w.x + inset, w.y + inset, t - inset * 2, t - inset * 2, color, alpha).setOrigin(0, 0).setDepth(8).setAlpha(0);
+      objs.push(r);
+      this.tweens.add({ targets: r, alpha: { from: 0, to: alpha }, delay, duration: 60, ease: 'Stepped', easeParams: [2] });
+      this.tweens.add({ targets: r, alpha: 0, delay: delay + life, duration: 160, ease: 'Stepped', easeParams: [3] });
+    };
+    if (kind === 'row') {
+      sfx('threat');
+      for (let x = 0; x < this.state.width; x++) {
+        cell({ x, y: pos.y }, 0xe8783c, 0.75, x * 55, 240);
+        cell({ x, y: pos.y }, 0xfacc15, 0.6, x * 55 + 40, 120, t * 0.28);
+      }
+      await this.wait(this.state.width * 55 + 160);
+    } else if (kind === 'burst') {
+      for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) cell({ x: pos.x + dx, y: pos.y + dy }, 0xe8783c, 0.55, 0, 120);
+      cell(pos, 0xfff3b0, 0.9, 0, 100);
+      for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) cell({ x: pos.x + dx, y: pos.y + dy }, 0xfacc15, 0.45, 200, 100, t * 0.2);
+      await this.wait(320);
+    } else if (kind === 'thorns' && from) {
+      sfx('threat');
+      const a = this.center(from);
+      const b = this.center(pos);
+      const n = Math.max(3, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / (t * 0.35)));
+      const g = this.add.graphics().setDepth(9);
+      objs.push(g);
+      for (let i = 1; i <= n; i++) {
+        const k = i / n;
+        const x = a.x + (b.x - a.x) * k;
+        const y = a.y + (b.y - a.y) * k;
+        const sz = t * 0.14;
+        this.time.delayedCall(i * 28, () => {
+          if (!g.active) return;
+          g.fillStyle(0x0b0b0e, 1).fillTriangle(x - sz - 2, y + sz + 2, x + sz + 2, y + sz + 2, x, y - sz * 1.6 - 2);
+          g.fillStyle(0xe5262f, 1).fillTriangle(x - sz, y + sz, x + sz, y + sz, x, y - sz * 1.6);
+        });
+      }
+      const sp = [...this.sprites.values()].find((v) => v.piece.x === pos.x && v.piece.y === pos.y);
+      if (sp) this.tweens.add({ targets: sp.root, x: sp.root.x + t * 0.08, duration: 40, yoyo: true, repeat: 3, delay: n * 28 });
+      await this.wait(n * 28 + 220);
+    } else if (kind === 'steam') {
+      for (const id of ids) {
+        const sp = this.sprites.get(id);
+        if (!sp) continue;
+        for (let i = 0; i < 4; i++) {
+          const puff = this.add.rectangle(sp.root.x + t * (0.2 + 0.2 * i), sp.root.y + t * 0.6, t * 0.18, t * 0.18, 0xcfe3ea, 0.8).setDepth(9);
+          objs.push(puff);
+          this.tweens.add({ targets: puff, y: puff.y - t * 0.7, alpha: 0, delay: i * 50, duration: 420, ease: 'Stepped', easeParams: [5] });
+        }
+      }
+      await this.wait(300);
+    }
+    this.time.delayedCall(600, () => objs.forEach((o) => o.active && o.destroy()));
   }
 
   // ---------- 좌표 ----------
@@ -514,6 +593,7 @@ class BoardScene extends Phaser.Scene {
     }
 
     // 누른 적 기물의 다음 턴 위협: 칠 수 있는 칸(반투명 붉은 깜빡임)과 갈 수 있는 칸(붉은 방울)
+    if (m.fireRow !== undefined && m.fireRow !== null) for (let x = 0; x < m.state.width; x++) this.anim.fire.push(this.world({ x, y: m.fireRow }));
     if (m.threat) {
       for (const a of m.threat.hits) this.anim.threat.push(this.world(a));
       const pen = new PixelPen(this.marksG, d);
@@ -1304,8 +1384,10 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'blast') {
+        // 특수 기믹은 일반 공격과 다른 모양으로 먼저 (D-203): 줄 폭격 = 불길이 줄을 훑는다 · 되받아침 = 가시가 친 기물로 · 자폭 = 둘레 3×3 고리 · 증기 폭발 = 적마다 김
+        if (e.fx) await this.gimmickFx(e.fx, e.pos, e.from, e.hits.map((h) => h.targetId));
         // 터짐 (D-106 보일러 폰): 그 칸에서 둘레로 — 맞은 기물마다 피격, 쓰러지면 재
-        this.shakeLv(1);
+        this.shakeLv(e.fx === 'row' || e.fx === 'burst' ? 2 : 1);
         sfx('kill');
         for (const h of e.hits) {
           const sp = this.sprites.get(h.targetId);

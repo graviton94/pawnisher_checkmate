@@ -45,6 +45,8 @@ export interface SliceBattle {
   discard: CommandId[];
   /** 이번 턴에 낸 카드 — 턴이 끝나야 버림 더미로 간다 (페르소나 테스트 B2: 0태엽 + 뽑기 카드가 같은 턴에 다시 섞여 끝없이 돌았다) */
   played?: CommandId[];
+  /** 이 대국 적 공격 배율 (난이도 × 층별 성장, D-203) — 반장 규칙 · 특성 피해도 */
+  atkK?: number;
   /** 쓰러진 분대원과 함께 탄 카드 (D-198) — 이번 대국에서만 빠진다 */
   burned?: CommandId[];
   ap: number;
@@ -177,7 +179,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number } } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -203,9 +205,13 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   }
   if (opts.enemyHp && opts.enemyHp !== 1) for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.maxHp = p.hp = Math.round(p.maxHp * opts.enemyHp);
   // 난이도 비율 (D-202): 모든 적 기물 HP(킹 제외 — 킹은 대국마다 따로) · 공격
+  // 층별 성장 (D-203): 깊이(출하에서 몇 번째 대국인가)만큼 HP는 곱으로, 공격은 더하기로 — 킹 HP도 같은 곱
+  const depth = opts.depth ?? 0;
+  const hpK = SLICE.foeHp * (depth ? SLICE.foeHpStart * Math.pow(SLICE.foeHpGrow, depth) : 1);
+  const atkK = SLICE.foeAtk * (1 + SLICE.foeAtkGrow * depth);
   if (!opts.lab) for (const p of s.pieces) if (p.side === 1) {
-    if (p.type !== 'K' && SLICE.foeHp !== 1) p.maxHp = p.hp = Math.max(1, Math.round(p.maxHp * SLICE.foeHp));
-    if (SLICE.foeAtk !== 1) p.atk = Math.max(1, Math.round(p.atk * SLICE.foeAtk));
+    if (hpK !== 1) p.maxHp = p.hp = Math.max(1, Math.round(p.maxHp * hpK));
+    if (atkK !== 1) p.atk = Math.max(1, Math.round(p.atk * atkK));
   }
   if (opts.traits?.includes('rookPlate')) for (const p of s.pieces) if (p.side === 1 && p.type === 'R') p.shield += TRAIT.rookPlate;
   if (opts.enemyKingHp) {
@@ -249,6 +255,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
       b.nemesisId = p.id;
     }
   }
+  b.atkK = atkK;
   drawCards(b, b.handSize);
   bossTurnStart(b);
   b.intents = planFor(b);
@@ -258,7 +265,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
 
 /** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
 /** 반장 규칙 · 적 특성 피해에도 난이도 공격 배율을 곱한다 (D-202) */
-export const foeDmg = (n: number): number => Math.max(1, Math.round(n * SLICE.foeAtk));
+export const foeDmg = (n: number, b?: { atkK?: number }): number => Math.max(1, Math.round(n * (b?.atkK ?? SLICE.foeAtk)));
 
 const planFor = (b: SliceBattle): Intent[] => {
   if (!b.mercy) return planEnemy(b.s, false, b.turn, b.boss);
@@ -453,13 +460,13 @@ export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
 };
 
 /** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
-export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft', 'gambit'].includes(COMMANDS[id].kind);
+export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft', 'gambit', 'spend'].includes(COMMANDS[id].kind);
 
 /** 이 카드를 지금 낼 수 있나 */
 export const canPlay = (b: SliceBattle, i: number): boolean => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return false;
-  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P'));
+  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P')) && (c.kind !== 'spend' || b.kills > 0);
   return cardPieces(b, i).length > 0;
 };
 
@@ -548,9 +555,9 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         k += k2;
       }
     }
-    // 시험장: 처치(잡기)마다 태엽 +1, 턴당 LAB.refundCap까지 (D-177)
-    if (k > 0 && b.lab) {
-      const g = Math.min(k, LAB.refundCap - (b.refunded ?? 0));
+    // 처치 환급 (D-203, 시험장 D-177에서 본편으로): 처치마다 태엽 +1, 턴당 상한까지 — 쌓인 연쇄를 실제로 쓸 수를 번다
+    if (k > 0) {
+      const g = Math.min(k, (b.lab ? LAB.refundCap : SLICE.refundCap) - (b.refunded ?? 0));
       if (g > 0) {
         b.refunded = (b.refunded ?? 0) + g;
         gained += g;
@@ -611,6 +618,34 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     }
   } else if (c.kind === 'draw') {
     drawCards(b, c.amount ?? 0);
+  } else if (c.kind === 'spend') {
+    // 연쇄 소모 (D-203): 쌓인 연쇄를 모두 비우고 그만큼 — 배율을 다음 공격 말고 다른 데에 쓴다
+    const n = b.kills;
+    if (n <= 0) return '‘쌓인 연쇄가 없어.’';
+    b.kills = 0;
+    b.killers = [];
+    if (c.spend === 'shield') {
+      const k = kingOf(b.s, 0);
+      if (k) {
+        k.shield += n * (c.amount ?? 0);
+        events = [{ type: 'shield', pieceId: k.id, amount: n * (c.amount ?? 0) }];
+      }
+    } else if (c.spend === 'draw') {
+      drawCards(b, Math.min(SLICE.recallMax, n * (c.amount ?? 1)));
+    } else if (c.spend === 'blast') {
+      const dmg = n * (c.amount ?? 0);
+      const hits = b.s.pieces.filter((p) => p.side === 1).map((p) => {
+        const absorbed = Math.min(p.shield, dmg);
+        p.shield -= absorbed;
+        p.hp = Math.max(0, p.hp - (dmg - absorbed));
+        return { targetId: p.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
+      });
+      const kingDead = hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K');
+      b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+      if (kingDead) b.s = { ...b.s, winner: 0 };
+      const k = kingOf(b.s, 0);
+      events = [{ type: 'blast', pos: k ? { x: k.x, y: k.y } : { x: 0, y: 0 }, label: '증기 폭발!', hits, fx: 'steam' }];
+    }
   }
   // 도화선: 이번 턴 연쇄가 3에 닿으면 한 장 (턴에 한 번)
   if (has(b, 'fuse') && b.kills >= PART_NUM.fuseAt && !b.once.includes('fuse')) {
@@ -692,14 +727,14 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
     if (e.type !== 'attack') continue;
     if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) {
       const me = findPiece(b.s, e.attackerId);
-      if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '되받아침!', hits: [hurt(me, foeDmg(BOSS_NUM.thorns))] });
+      if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '되받아침!', hits: [hurt(me, foeDmg(BOSS_NUM.thorns, b))], fx: 'thorns', from: { x: ek.x, y: ek.y } });
     }
     if (b.blastPawns)
       for (const h of e.hits) {
         const dead = before.pieces.find((p) => p.id === h.targetId);
         if (!h.killed || !dead || dead.side !== 1 || dead.type !== 'P') continue;
-        const hits = b.s.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).map((p) => hurt(p, foeDmg(TRAIT.blast)));
-        if (hits.length) out.push({ type: 'blast', pos: { x: dead.x, y: dead.y }, label: '자폭!', hits });
+        const hits = b.s.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).map((p) => hurt(p, foeDmg(TRAIT.blast, b)));
+        if (hits.length) out.push({ type: 'blast', pos: { x: dead.x, y: dead.y }, label: '자폭!', hits, fx: 'burst' });
       }
   }
   if (out.length) {
@@ -720,12 +755,12 @@ export const backlashOf = (b: SliceBattle, sim: { state: BattleState; events: Ba
   const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
   for (const e of sim.events) {
     if (e.type !== 'attack') continue;
-    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += foeDmg(BOSS_NUM.thorns);
+    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += foeDmg(BOSS_NUM.thorns, b);
     if (b.blastPawns)
       for (const h of e.hits) {
         const dead = b.s.pieces.find((p) => p.id === h.targetId);
         if (!h.killed || !dead || dead.side !== 1 || dead.type !== 'P') continue;
-        dmg += foeDmg(TRAIT.blast) * sim.state.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).length;
+        dmg += foeDmg(TRAIT.blast, b) * sim.state.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).length;
       }
   }
   return dmg;
@@ -771,7 +806,7 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
           const kingDead = hits.some((x) => x.killed && findPiece(b.s, x.targetId)?.type === 'K');
           b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
           if (kingDead) b.s = { ...b.s, winner: 0 };
-          extra.push({ type: 'blast', pos: { x: dead.x, y: dead.y }, label: '보일러 폭발!', hits });
+          extra.push({ type: 'blast', pos: { x: dead.x, y: dead.y }, label: '보일러 폭발!', hits, fx: 'burst' });
         }
       }
     }
@@ -809,7 +844,7 @@ const bombard = (b: SliceBattle): BattleEvent | null => {
   if (b.bombRow === null) return null;
   const row = b.bombRow;
   const hits = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => {
-    const bomb = foeDmg(BOSS.bombDamage);
+    const bomb = foeDmg(BOSS.bombDamage, b);
     const absorbed = Math.min(p.shield, bomb);
     p.shield -= absorbed;
     p.hp = Math.max(0, p.hp - (bomb - absorbed));
@@ -818,7 +853,7 @@ const bombard = (b: SliceBattle): BattleEvent | null => {
   const kingDead = hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K');
   b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
   if (kingDead) b.s = { ...b.s, winner: 1 };
-  return { type: 'blast', pos: { x: Math.floor(b.s.width / 2), y: row }, label: '줄 폭격!', hits };
+  return { type: 'blast', pos: { x: Math.floor(b.s.width / 2), y: row }, label: '줄 폭격!', hits, fx: 'row' };
 };
 
 const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {

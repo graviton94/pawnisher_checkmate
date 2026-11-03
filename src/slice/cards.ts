@@ -12,7 +12,8 @@ export type BaseCommandId =
   | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
   | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit'
   | 'shove' | 'shieldBash' | 'ram'
-  | 'pawnStorm' | 'knightRaid' | 'bishopRay' | 'rookCharge' | 'kingDecree' | 'overload' | 'quickFix' | 'tempo' | 'bulwark' | 'bladeRain';
+  | 'pawnStorm' | 'knightRaid' | 'bishopRay' | 'rookCharge' | 'kingDecree' | 'overload' | 'quickFix' | 'tempo' | 'bulwark' | 'bladeRain'
+  | 'vent' | 'burst' | 'recall';
 /** 다듬은 카드는 한 장씩 「이름+」 변형이 된다 (작업대 다듬기 — 그 한 장만 태엽 −1, D-183) */
 export type CommandId = BaseCommandId | `${BaseCommandId}+`;
 
@@ -30,7 +31,9 @@ export interface CommandDef {
   /** 움직일 수 있는 기물 (any = 아무나) */
   who: PieceType | 'any';
   /** move = 기물 하나를 움직여 친다 · march = 폰 모두 한 칸 전진 · draft = 킹 옆에 폰 · spark = 연쇄 +1 */
-  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit';
+  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit' | 'spend';
+  /** spend: 쌓인 연쇄를 모두 써서 — 킹 방열판 · 적 전체 피해 · 카드 뽑기 (D-203). amount = 연쇄 하나마다 */
+  spend?: 'shield' | 'blast' | 'draw';
   /** 빌드 축 (보상에서 축이 고루 나오게, 카드에 띠로 표시) */
   axis?: Axis;
   /** 둘째 축 (교차 브릿지 카드 — 한 축의 행동이 다른 축을 돕는다, D-145) */
@@ -84,6 +87,10 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   wrath: { axis: 'king', name: '왕의 분노', cost: 1, who: 'K', kind: 'move', rage: true, desc: '상처 입은 만큼 분노한다. (잃은 HP 비율만큼, 최대 ×3)' },
   royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '왕이 갑주를 두른다. (방열판 +30)' },
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1, 카드 +1)' },
+  // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
+  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 10, desc: '쌓인 열기를 갑옷으로 돌린다. (연쇄를 모두 써서 킹 방열판 +연쇄×10)', flavor: '“식기 전에 입어라.”' },
+  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 6, desc: '보일러를 연다. (연쇄를 모두 써서 적 전체에 연쇄×6 피해)', flavor: '“압력을 놓아라.”' },
+  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'draw', amount: 1, desc: '흩어진 명령을 거둔다. (연쇄를 모두 써서 카드 +연쇄, 최대 3)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (연쇄 1마다 ×0.5 추가)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
   cavCharge: { axis: 'cav', axis2: 'inf', name: '선봉 돌파', cost: 2, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (착지 둘레 폰 전진 공격)' },
@@ -153,7 +160,7 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
   { part: 'scepter', cards: ['kingDecree', 'royalGuard'] },
 ];
 /** 보상 후보 */
-export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain'];
+export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall'];
 
 /**
  * 반장 규칙 (D-148 — 레퍼런스 5권 원리 5 「부서진 빌드는 너프하지 말고 보스가 질문한다」). 둘 다 미리 보인다.
@@ -174,7 +181,19 @@ export const BOSS = { plate: 20, plateEvery: 2, bombEvery: 2, bombDamage: 18 };
  * 난이도 비율 (D-202, 사용자: "체력이든 공격력이든 비율 조정으로 난이도"): 모든 적 기물의 HP · 공격 배율 (막 배율 위에 곱한다).
  * 값표 통일로 적이 더 자주 움직이게 된 만큼 공격을 낮췄다 (등반 봇 40판: 1.0 → 완주 18 · 0.75 → 31, HP는 거의 영향 없음)
  */
-export const FOE = { hp: 1, atk: 0.75 };
+export const FOE = {
+  hp: 1,
+  atk: 0.75,
+  /**
+   * 층별 성장 곡선 (D-203, 사용자: "유저가 강해지는 만큼 적도 — 합연산은 지금 강하고 곱연산은 나중에 강하게"):
+   * 적 HP는 대국마다 곱으로 (hpGrow^깊이 — 지수), 공격은 더하기로 (1 + atkGrow × 깊이 — 직선).
+   * 합연산 빌드(고정 피해 · +% 연쇄)는 초반을 쉽게 넘지만 뒤로 갈수록 지수로 불어나는 HP를 못 따라가고, 곱연산 빌드(코일 · ×배율)가 뒤에서 따라잡는다.
+   */
+  // 등반 봇 40판: 시작 0.72 · ×1.05 → 완주 28 (1막 대국 ≈0.8 · 1막 반장 ≈1.06 · 3막 끝 ≈1.5) — 곡선 없음(계단 1/1.15/1.3)은 31
+  hpStart: 0.72,
+  hpGrow: 1.05,
+  atkGrow: 0.015,
+};
 
 /**
  * 막별 반장 규칙 (R5-4, D-171): 반장마다 빌드에 던지는 질문 하나 + 레일 표시 문구.
@@ -182,9 +201,9 @@ export const FOE = { hp: 1, atk: 0.75 };
  */
 export type BossRule = 'plate' | 'spawn' | 'thorns';
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
-  plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '두 턴마다 한 줄이 불길에 잠깁니다. 붉은 줄에서 벗어나십시오.' },
-  spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
-  thorns: { name: '출하 반장', lines: ['철갑 20 · 2턴마다 다시', '반장을 친 기물은 6 되받는다'], tell: '반장을 치면 되받아칩니다. 한 번에 몰아치십시오.' },
+  plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '첫 턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
+  spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '첫 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
+  thorns: { name: '출하 반장', lines: ['철갑 20 · 2턴마다 다시', `못 쓰러뜨리면 친 기물이 ${Math.round(6 * FOE.atk)} 되받는다`], tell: '가시 갑옷 — 반장을 치고 못 쓰러뜨리면 가시가 친 기물에게 되돌아갑니다. 한 번에 몰아치십시오.' },
 };
 export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 6 };
 
@@ -219,6 +238,10 @@ export const SLICE = {
   /** 반장 킹 수의 우선순위 (D-201): 점수 ×배 + 더하기 — 졸개보다 먼저 태엽을 쓴다(추가 행동은 없다) */
   bossPriority: 1.5,
   bossPriorityFlat: 8,
+  /** 처치 환급 (D-203): 처치마다 태엽 +1, 턴당 최대 */
+  refundCap: 2,
+  /** 회수(연쇄 소모 → 뽑기) 최대 장수 */
+  recallMax: 3,
   /**
    * 한 수의 값표 (D-202, 사용자: "값표 통일") — 플레이어 기본 이동 카드 비용과 같다.
    * 전진 · 도약 · 사선 · 왕의 걸음 1, 직진 2, 퀸은 지휘 값 2. 적도 이 값으로 태엽을 쓴다.
@@ -227,6 +250,9 @@ export const SLICE = {
   /** 난이도 비율 — 값은 위 FOE (반장 규칙 문구가 먼저 쓰므로 거기 둔다) */
   foeHp: FOE.hp,
   foeAtk: FOE.atk,
+  foeHpStart: FOE.hpStart,
+  foeHpGrow: FOE.hpGrow,
+  foeAtkGrow: FOE.atkGrow,
 };
 
 /**

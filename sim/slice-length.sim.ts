@@ -36,7 +36,7 @@ const one = (seed: number) => {
       let ok = false;
       for (let tryN = 0; tryN < 4 && !ok; tryN++) {
         stage++;
-        const b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
+        const b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: stage, parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
         const r = playOut(b);
         battles++; turns += r.turns; plays += r.plays;
         sec += T.battleIntro + r.plays * T.play + r.turns * T.endTurn;
@@ -57,6 +57,8 @@ const one = (seed: number) => {
 // 난이도 비율 시험 (D-202): FOE_HP · FOE_ATK 환경 변수로 SLICE.foeHp · foeAtk를 바꿔 같은 40판을 다시 잰다
 if (process.env.FOE_HP) (SLICE as { foeHp: number }).foeHp = Number(process.env.FOE_HP);
 if (process.env.FOE_ATK) (SLICE as { foeAtk: number }).foeAtk = Number(process.env.FOE_ATK);
+if (process.env.FOE_GROW) (SLICE as { foeHpGrow: number }).foeHpGrow = Number(process.env.FOE_GROW);
+if (process.env.FOE_START) (SLICE as { foeHpStart: number }).foeHpStart = Number(process.env.FOE_START);
 
 it('한 판 길이', () => {
   const rs = Array.from({ length: 40 }, (_, k) => one(1000 + k * 7919));

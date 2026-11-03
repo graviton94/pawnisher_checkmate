@@ -51,7 +51,8 @@ describe('빌드 축 · 부품 (D-144)', () => {
     const ap0 = b.ap;
     const r = playCard(b, 0, m!.p.id, m!.to);
     expect(typeof r).toBe('object');
-    expect(b.ap).toBe(ap0 - 1 + 1);
+    // 편자 +1 · 처치 환급 +1 (D-203)
+    expect(b.ap).toBe(ap0 - 1 + 1 + 1);
     expect(costOf(b, 0, m!.p.id)).toBe(0);
   });
   it('자석 손: 처치하면 카드 한 장', () => {
@@ -246,8 +247,8 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
   it('수량', async () => {
     const { REWARD_COMMANDS } = await import('../src/slice/cards');
     const { SLICE_PARTS } = await import('../src/slice/parts');
-    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(40);
-    expect(REWARD_COMMANDS.length).toBe(34);
+    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(43);
+    expect(REWARD_COMMANDS.length).toBe(37); // + 연쇄 소모 3 (D-203)
     expect(Object.keys(SLICE_PARTS).length).toBe(24);
   });
   it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 피의 계약(턴 끝 킹 −4)', () => {
@@ -331,5 +332,36 @@ describe('막힌 적 예고 (D-176)', () => {
       checked++;
     }
     expect(checked).toBeGreaterThan(0);
+  });
+});
+
+describe('배율 쓰기 (D-203)', () => {
+  it('처치 환급: 처치마다 태엽 +1, 턴당 2까지', async () => {
+    const { SLICE } = await import('../src/slice/cards');
+    const b = mk([], ['leap', 'advance', 'advance']);
+    const m = killMove(b, 0);
+    expect(m).not.toBeNull();
+    const ap0 = b.ap;
+    playCard(b, 0, m!.p.id, m!.to);
+    expect(b.ap).toBe(ap0 - 1 + 1);
+    expect(b.refunded).toBeLessThanOrEqual(SLICE.refundCap);
+  });
+  it('연쇄 소모: 연쇄 0이면 못 내고, 내면 연쇄가 비며 효과가 연쇄만큼', () => {
+    const b = mk([], ['vent', 'recall', 'burst']);
+    expect(canPlay(b, 0)).toBe(false);
+    b.kills = 2;
+    const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
+    const sh0 = k.shield;
+    expect(typeof playCard(b, 0)).toBe('object');
+    expect(k.shield).toBe(sh0 + 20);
+    expect(b.kills).toBe(0);
+    b.kills = 3;
+    const foes = b.s.pieces.filter((p) => p.side === 1).map((p) => ({ id: p.id, hp: p.hp + p.shield }));
+    const i = b.hand.indexOf('burst');
+    expect(typeof playCard(b, i)).toBe('object');
+    for (const f of foes) {
+      const p = b.s.pieces.find((x) => x.id === f.id);
+      if (p) expect(p.hp + p.shield).toBe(f.hp - 18);
+    }
   });
 });

@@ -73,9 +73,10 @@ export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.
 export const ASC_MAX = ASCENSION.length;
 /** 막마다 적 HP 배율 · 적 킹 HP (구조용 — 난이도 조정은 R7, D-080) */
 const ACT_SCALE = [
+  // 적 HP의 막별 계단은 층별 성장 곡선(FOE.hpGrow^깊이, D-203)으로 옮겼다 — 여기는 킹 HP만
   { hp: 1, king: 0.6 },
-  { hp: 1.15, king: 0.75 },
-  { hp: 1.3, king: 0.9 },
+  { hp: 1, king: 0.75 },
+  { hp: 1, king: 0.9 },
 ];
 const NORMAL: PieceType[][][] = [
   [['K', 'P', 'P', 'N'], ['K', 'P', 'P', 'B'], ['K', 'P', 'N', 'B']],
@@ -91,10 +92,10 @@ const NARR_BATTLE = [
   ['포장 상자 사이로 찬 바람이 분다. 출하가 가깝다.', '도장 찍힌 기물들이 줄지어 서 있다. 하나도 웃지 않는다.', '출하구의 빛이 보인다. 그 앞을 검은 것이 막는다.'],
 ];
 const NARR_CHECK = ['검수관의 저울이 기울어 있다. 이 문을 지난 자는 많지 않다.', '두 번째 검문. 저울 위에 당신의 이름이 적혀 있다.', '마지막 검문. 저울은 이미 당신을 재고 있다.'];
-const NARR_BOSS = ['철갑을 두른 반장이 기다린다.', '조립 반장이 당신의 부품을 하나하나 센다.', '출하 반장. 이 문 너머는 바깥이다.'];
+const NARR_BOSS = ['철갑을 두른 반장이 기다린다. 발밑 한 줄이 벌겋게 달아오른다.', '조립 반장이 당신의 부품을 하나하나 센다. 집게 끝에서 검은 폰이 찍혀 나온다.', '출하 반장. 이 문 너머는 바깥이다. 갑옷의 가시가 당신을 겨눈다.'];
 const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
 const TRAITS: ('blastPawn' | 'rookPlate')[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
-const TRAIT_TELL = ['', ' 이 층의 폰은 쓰러지면 터집니다.', ' 폰은 터지고, 룩은 방패를 두릅니다.'];
+const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다.'];
 
 /** 1막 앞 두 판 (첫 10분 — D-150) */
 export const INTRO: BattleDef[] = [

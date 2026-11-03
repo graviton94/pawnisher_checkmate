@@ -147,7 +147,7 @@ export type BattleEvent =
   | { type: 'heal'; pieceId: number; amount: number }
   | { type: 'apGain'; side: Side; amount: number }
   /** 터짐 (도미노 부품 등): 그 칸에서 주변으로 */
-  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[] }
+  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[]; /** 특수 기믹 연출 (D-203): 줄 폭격 · 되받아침 · 자폭 · 증기 폭발 — 일반 공격과 다른 모양 */ fx?: 'row' | 'thorns' | 'burst' | 'steam'; /** 되받아침: 반장 칸 */ from?: Pos }
   /** 양산 라인 비틀기: 쓰러진 폰이 뒷줄에 다시 섰다 */
   | { type: 'respawn'; pieceId: number; pos: Pos; /** 화면 안내 (없으면 양산 라인) */ label?: string };
 
