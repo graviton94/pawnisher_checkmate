@@ -71,10 +71,10 @@ export const MAP = {
   lanes: 4,
   paths: 5,
   floors: [8, 10, 10],
-  weights: { battle: 44, event: 22, check: 13, shop: 9, forge: 12 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
+  weights: { battle: 42, event: 21, check: 13, shop: 14, forge: 10 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
   from: { battle: 0, event: 1, check: 3, shop: 2, forge: 3 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
   /** 막마다 상점 · 작업대 · 검문 최대 수 (고정 층 제외) */
-  max: { shop: 2, forge: 2, check: 3 } as Record<string, number>,
+  max: { shop: 3, forge: 2, check: 3 } as Record<string, number>,
 };
 
 const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;

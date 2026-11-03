@@ -149,10 +149,11 @@ export const START_SQUAD: PieceType[] = ['K', 'P', 'B'];
 export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'diagonal', 'diagonal', 'kingStep', 'order', 'order'];
 
 /** 영입: 기물 하나 + 그 기물의 카드 */
+/** 새 분대원 (D-218: 들고 오는 카드 2장 → 1장 — 분대원 8명이 카드 16장을 몰고 와 덱이 38장까지 불었다) */
 export const RECRUITS: { t: PieceType; cards: CommandId[]; line: string }[] = [
-  { t: 'N', cards: ['leap', 'leap'], line: '뛰어넘고, 짓밟는 자.' },
-  { t: 'P', cards: ['advance', 'charge'], line: '작은 개척자' },
-  { t: 'B', cards: ['diagonal', 'pierceDiag'], line: '성스러운 빛의 심판자' },
+  { t: 'N', cards: ['leap'], line: '뛰어넘고, 짓밟는 자.' },
+  { t: 'P', cards: ['charge'], line: '작은 개척자' },
+  { t: 'B', cards: ['pierceDiag'], line: '성스러운 빛의 심판자' },
   { t: 'R', cards: ['rookLine'], line: '살아 움직이는 요새' },
 ];
 
@@ -209,7 +210,8 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
 // 철갑 20 · 2턴마다: 빔 탐색 봇 기준 시작 덱만 25% · 카드 2장 + 부품 1 빌드 88% — 빌드를 갖췄는지 묻는다 (30 · 매 턴은 벽이었다: 0~13%)
 /** 고물상 · 작업대 (R5-2, D-168) — 값은 구조용, 조정은 R7 */
 /** gradePrice · partGradePrice (D-217 3): 고물상 값은 등급으로 — 일반 · 희귀 · 황금 */
-export const SHOP = { gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 };
+/** refinePrice (D-218): 고물상 다듬기 — 남는 나사를 강화로 */
+export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 };
 export const FORGE = { repairPct: 0.4 };
 
 /** 밀치기 충돌 피해 (밀린 적과 부딪힌 기물 둘 다) */
@@ -264,7 +266,7 @@ export const SLICE = {
   chainCap: 4,
   /** 나사 트랙 (Pawnbarian 루트 트랙): 턴마다 한 칸씩 사라진다 */
   coins: 10,
-  coinValue: 5,
+  coinValue: 4, // D-218: 5 → 4 — 한 판에 나사 약 1000을 벌고 550만 써서 400이 남았다
   /** 교착 압박 (D-196): 적 킹은 원래 뒤에 남지만, 혼자 남았거나 이 턴부터는 내 킹에게 다가온다 — 판이 끝나지 않는 교착을 막는다 */
   kingMarchTurn: 12,
   /** 보충병 (D-198): 이긴 뒤 킹 말고 분대원이 이만큼 안 되면 폰이 보충된다 — 다 잃고 겨우 이긴 다음 판이 원천 봉쇄되지 않게 */

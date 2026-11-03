@@ -1261,6 +1261,7 @@ const shopScreen = (): void => {
         ${cards.map((id) => cardFace(id, `data-buy="card:${id}"`, tag(id, price(id)), sold.has(id) ? 'sold' : '')).join('')}
         ${part ? partFace(part, `data-buy="part:${part}"`, tag('part', partPrice(part)), sold.has('part') ? 'sold' : '') : ''}
         <button type="button" class="cf part-card svc g-common${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><b class="cf-name">정비</b><span class="cf-win"><i class="ico" style="${iconArt('s.heal')}"></i></span><small class="cf-desc">분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
+        <button type="button" class="cf part-card svc g-common${sold.has('refine') ? ' sold' : ''}" data-buy="refine"><b class="cf-name">다듬기</b><span class="cf-win"><i class="ico" style="${iconArt('s.refine')}"></i></span><small class="cf-desc">카드 한 장을 골라 태엽 −1.</small>${tag('refine', ascPrice(SHOP.refinePrice))}</button>
         <button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><small class="cf-desc">덱에서 카드 1장 영구 제거.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
       </div>`);
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
@@ -1269,10 +1270,12 @@ const shopScreen = (): void => {
         const [kind, id] = (btn.dataset.buy ?? '').split(':');
         const key = kind === 'card' ? id : kind;
         if (sold.has(key)) return;
-        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : ascPrice(SHOP.removePrice);
+        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : kind === 'refine' ? ascPrice(SHOP.refinePrice) : ascPrice(SHOP.removePrice);
         if (gold < cost) return toast(`‘나사가 모자라.’ (${cost} 필요)`);
         const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
+          // 나사로 다듬기 (D-218 — 남는 나사를 쓸 곳 · 강화 경로): 고르면 값을 치르고 고물상으로 돌아온다
+          if (kind === 'refine') return refineScreen(render, () => { gold -= cost; sold.add(key); render(); });
           if (kind === 'remove') {
             return deckView('remove', (removed) => {
               if (removed) {
@@ -1326,12 +1329,13 @@ const forgeScreen = (): void => {
 };
 
 /** 다듬기: 태엽 1 이상이고 아직 다듬지 않은 카드 중 하나 */
-const refineScreen = (): void => {
+/** 다듬기 화면 — back = 그만두면 돌아갈 곳, done = 다듬은 뒤 (작업대: 다음 노드로 · 고물상: 값을 치르고 고물상으로, D-218) */
+const refineScreen = (back: () => void = forgeScreen, done: () => void = advance): void => {
   const ids = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
   const el = openOverlay(`<h2>다듬기 — 카드 하나</h2><p>고른 카드 한 장이 「+」가 되어 태엽 −1이 됩니다. 같은 카드가 여러 장이면 한 장만.</p><div class="deck-grid removing">${ids
     .map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd deckcard t-${c.who}" data-ref="${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}</b></span><span class="cnt">태엽 ${c.cost} → ${c.cost - 1}</span></button>`; })
     .join('') || '<p class="dim">다듬을 카드가 없습니다.</p>'}</div><div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
-  el.querySelector('[data-back]')!.addEventListener('click', forgeScreen);
+  el.querySelector('[data-back]')!.addEventListener('click', back);
   el.querySelectorAll<HTMLElement>('[data-ref]').forEach((btn) =>
     btn.addEventListener('click', () =>
       choose(btn, `${josa(COMMANDS[btn.dataset.ref as CommandId].name, '을')} 다듬는다`, () => {
@@ -1340,7 +1344,7 @@ const refineScreen = (): void => {
         refined.push(rid);
         sfx('stamp');
         toast(`${COMMANDS[btn.dataset.ref as CommandId].name} 한 장 — 태엽 −1`);
-        window.setTimeout(advance, 300);
+        window.setTimeout(done, 300);
       }),
     ),
   );
