@@ -8,7 +8,8 @@
   mag-body.png               펼친 몸 칸 9-slice (오목 홈 — 위 · 왼쪽 그늘)
   socket.png / socket-lit.png / socket-bonus.png   태엽 열쇠 구멍 (팔각)
   key-spin.png               열쇠 5칸 띠: 0° · 90° · 180° · 270° · 빈 열쇠 (쓰면 거꾸로 돌며 풀린다)
-  tube.png                   진공관 5칸 띠: 켜짐 A · 켜짐 B(떨림) · 번쩍 · 불씨 · 꺼짐
+  tube.png                   (예전) 진공관 띠 — D-212에서 보일러관으로 바뀜
+  pipe.png · cap-l/r.png · lava.png · tick.png   속전 보일러관: 관 틀 · 황동 마개 · 끓는 쇳물 무늬 · 칸 눈금
   cog-help.png               도움말 — 태엽 톱니 안에 ?
   ico-rewind.png             ◀◀
   gauge.png                  계기 창 9-slice (태엽 · 속전 창)
@@ -113,9 +114,9 @@ GAUGE = [
 # ---------- 태엽 열쇠 구멍 (팔각 14×14) ----------
 def socket(rim, glow):
     p = dict(PAL, R=rim, L=glow)
-    # 18×18: 바깥 테(R) 1도트 + 안쪽 빛 테(L) 1도트 + 검은 구멍 — 16도트 열쇠가 구멍 안에 들어간다
-    n = 18
-    cut = 5
+    # 16×16 (D-212: 5칸이 한 줄에 — 열쇠와 같은 크기): 바깥 테(R) 1도트 + 안쪽 빛 테(L) 1도트 + 검은 구멍 — 16도트 열쇠가 구멍 안에 들어간다
+    n = 16
+    cut = 4
     rows = []
     for y in range(n):
         r = ''
@@ -203,6 +204,49 @@ REW = [
     '...kk...kk.',
 ]
 
+# ---------- 속전 보일러관 (D-212, 사용자: 진공관도 별로 — 끓는 쇳물 게이지) ----------
+# 관 틀 6×6 (slice 2): 검은 선 + 위 유리 반사 1도트 + 아래 그늘. 안은 비면 검은 유리.
+PIPE = [
+    'kkkkkk',
+    'kmmmmk',
+    'kiiiik',
+    'kiiiik',
+    'kddddk',
+    'kkkkkk',
+]
+# 황동 마개 4×14 (왼쪽 · 오른쪽은 좌우 뒤집기): 볼트 머리 두 개
+CAP = [
+    '.kkk',
+    'kyYk',
+    'kybk',
+    'kYyk',
+    'kybk',
+    'kyyk',
+    'kbbk',
+    'kyyk',
+    'kYyk',
+    'kybk',
+    'kYyk',
+    'kybk',
+    'kbbk',
+    '.kkk',
+]
+# 쇳물 한 장 14×10 (한 칸 = 7도트, 두 칸 무늬) — 위 표면은 끓어 오르는 거품 자리가 비고, 속엔 밝은 기포
+LAVA = [
+    'YY.YYYYYY.YYYY',
+    'OYOOOOOYOOOOYO',
+    'OOOOWOOOOOOOOO',
+    'OOOOOOOOOYOOOO',
+    'OOYOOOOOOOOOOO',
+    'OOOOOOOWOOOOYO',
+    'OOOOOOOOOOOOOO',
+    'eOOOOeOOOOOeOO',
+    'eeeeeeeeeeeeee',
+    'EeeeEeeeeEeeee',
+]
+# 눈금 7×10: 칸 경계에 검은 선 (빈 유리에서도 칸이 보인다)
+TICK = ['......E'] * 10
+
 
 if __name__ == '__main__':
     for t, tone in TONES.items():
@@ -225,6 +269,12 @@ if __name__ == '__main__':
         tube(PAL['E'], PAL['e']),             # 불씨
         tube(PAL['d'], PAL['l']),             # 꺼짐
     ]), 'tube.png')
+    save(art(PIPE), 'pipe.png')
+    cap = art(CAP)
+    save(cap, 'cap-l.png')
+    save(cap.transpose(Image.Transpose.FLIP_LEFT_RIGHT), 'cap-r.png')
+    save(art(LAVA), 'lava.png')
+    save(art(TICK), 'tick.png')
     save(art(COG), 'cog-help.png')
     save(art(REW), 'ico-rewind.png')
     print('ok')

@@ -61,16 +61,18 @@ export interface CommandDef {
   amount?: number;
   /** 효과 한 문장 (기본 이동 카드는 비운다 — 행마 그림과 판 위 표시가 가르친다, D-159) */
   desc: string;
+  /** 탄창 머리에 쓰는 짧은 칭호 (한글 5자 이내, D-212) — 기본 행마 카드만 */
+  title?: string;
   /** 각주 (칭호 · 짧은 대사 — 비장하게, D-158) */
   flavor?: string;
 }
 
 const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
-  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '한 칸 나아가 대각선 앞을 벤다. (첫 걸음은 두 칸까지)', flavor: '작은 개척자' },
-  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: 'L자로 뛰어올라, 내려앉은 자리의 L자 여덟 곳을 짓밟는다.', flavor: '뛰어넘고, 짓밟는 자.' },
-  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '대각선으로 미끄러져, 네 대각선의 첫 적을 심판한다.', flavor: '성스러운 빛의 심판자' },
-  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '한 칸 걷고, 둘레 여덟 칸을 짓누른다.', flavor: '화려한 왕관, 잔혹한 무게' },
-  order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '누구든 하나, 제 행마대로 움직여 친다.' },
+  advance: { name: '전진', cost: 1, who: 'P', kind: 'move', desc: '대각선 앞을 벤다.', flavor: '작은 개척자', title: '작은 개척자' },
+  leap: { name: '도약', cost: 1, who: 'N', kind: 'move', desc: '내려앉아 짓밟는다.', flavor: '뛰어넘고, 짓밟는 자.', title: '짓밟는 자' },
+  diagonal: { name: '사선', cost: 1, who: 'B', kind: 'move', desc: '첫 적을 심판한다.', flavor: '성스러운 빛의 심판자', title: '빛의 심판자' },
+  kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '둘레를 짓누른다.', flavor: '화려한 왕관, 잔혹한 무게', title: '잔혹한 왕관' },
+  order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '누구든 하나를 부린다.' },
   pierceDiag: { axis: 'chain', name: '심판의 창', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 1기까지)' },
   crossLeap: { axis: 'cav', name: '지축 강타', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
   charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', add: 8, desc: '일격을 휘두른다. (+8)' },
@@ -80,7 +82,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   kingBlow: { axis: 'king', name: '왕의 철퇴', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (×2)' },
   splashDiag: { axis: 'chain', name: '파편 세례', cost: 2, who: 'B', kind: 'move', carve: 'diag', desc: '착지한 자리에서 사선으로 파편이 튄다. (대각 50%)' },
   smash: { axis: 'chain', name: '분쇄', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '온 힘을 실어 내려친다. (×1.5)' },
-  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '곧게 밀고 나가, 네 방향의 첫 적을 친다.', flavor: '살아 움직이는 요새' },
+  rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '첫 적을 들이받는다.', flavor: '살아 움직이는 요새', title: '걷는 요새' },
   // ---- 빌드 축 카드 (D-144) ----
   rebound: { axis: 'cav', name: '피의 질주', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '처치 후 한 번 더 도약한다. (이번 턴 처치했으면 태엽 0)' },
   hoofKick: { axis: 'cav', name: '짓밟기', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '짓밟고 다음 명령을 받는다. (처치 시 카드 +1)' },
@@ -244,6 +246,8 @@ export const SLICE = {
   bossPriorityFlat: 8,
   /** 처치 환급 (D-203): 처치마다 태엽 +1, 턴당 최대 */
   refundCap: 2,
+  /** 태엽 칸 (D-212, 사용자: "최대 5개를 깔아 두고 3개만 켠다") — 한 턴에 가질 수 있는 태엽 상한 */
+  apCap: 5,
   /** 회수(연쇄 소모 → 뽑기) 최대 장수 */
   recallMax: 3,
   /**

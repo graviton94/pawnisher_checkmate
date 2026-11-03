@@ -679,7 +679,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   }
   creditKills(b, before, events, c.kind === 'move' ? pieceId : undefined);
   events.push(...afterMyHits(b, before, events));
-  b.ap = b.ap - cost + gained;
+  b.ap = Math.min(SLICE.apCap, b.ap - cost + gained);
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
   (b.played ??= []).push(id);
@@ -951,7 +951,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.turn += 1;
     b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
     // 도금 방패: 지난 적 차례에 킹이 맞았으면 태엽 +1
-    b.ap = b.apMax + (gildedHit ? 1 : 0);
+    b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0));
     b.kills = 0;
     b.killers = [];
     b.once = [];
@@ -995,7 +995,7 @@ export const sacrificeSwap = (b: SliceBattle, crewId: number): boolean => {
 
 /** 마지막 한 수 (D-178): 태엽 +ap, 손패에 철벽 한 장 (이 대국 동안만 — 출하 덱에는 남지 않는다) */
 export const clutchBoost = (b: SliceBattle, ap: number): void => {
-  b.ap += ap;
+  b.ap = Math.min(SLICE.apCap, b.ap + ap);
   b.hand.push('plate');
   b.snap = JSON.stringify({ ...b, snap: '' });
 };

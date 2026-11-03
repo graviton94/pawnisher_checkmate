@@ -305,11 +305,12 @@ const magHtml = (id: CommandId, i: number): string => {
   const shape = c.who !== 'any' && c.kind === 'move' ? `<span class="mg-shape">${shapeHtml(c.who, 7)}</span>` : '';
   const desc = c.desc ? `<p class="mg-desc">${c.desc}</p>` : '';
   // 기본 행마 카드: 머리 = 칭호(작은 개척자), 몸 = 실제로 하는 일(한 칸 나아가 대각선 앞을 벤다) — 사용자 지적 D-211
-  const titled = !!c.flavor && !c.flavor.startsWith('“') && c.kind === 'move' && !c.axis;
+  const titled = !!c.title;
   const flv = c.flavor && !titled ? `<p class="mg-flv">${c.flavor}</p>` : '';
-  const hint = selCard === i ? '' : `<p class="mg-use">${off ? why || '지금은 쓸 수 없음' : '한 번 더 누르면 장전'}</p>`;
+  // 움직이는 카드는 한 번 누르면 펼치며 바로 장전(기물 → 칸) — 즉시 카드만 한 번 더 눌러 쓴다 (D-212)
+  const hint = off ? `<p class="mg-use">${why || '지금은 쓸 수 없음'}</p>` : isInstant(id) && selCard !== i ? '<p class="mg-use">눌러서 사용</p>' : '';
   return `<button type="button" class="cmd mag t-${c.who}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
-    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.flavor : c.name}</b>${opTag(opOfCard(c))}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
+    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.title : c.name}</b>${opTag(opOfCard(c))}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
 };
 
 /**
@@ -505,7 +506,8 @@ let apKey = '';
 let apPrev: number | null = null;
 let coinPrev: number | null = null;
 const gauges = (): void => {
-  const n = Math.max(b.apMax, b.ap);
+  // 태엽 칸은 늘 상한(5)만큼 깔아 둔다 — 기본은 그중 apMax(3)가 켜진다 (D-212)
+  const n = Math.max(SLICE.apCap, b.ap);
   const k = `${b.ap}/${n}/${b.apMax}`;
   if (k !== apKey) {
     const was = apPrev;
@@ -520,7 +522,13 @@ const gauges = (): void => {
   if (coinPrev !== b.coins || !$('coins').childElementCount) {
     const was = coinPrev;
     coinPrev = b.coins;
-    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track} 보상</span><b title="이기면 받는 나사"><i class="scr"></i>+${b.coins * SLICE.coinValue}</b><span class="tubes">${Array.from({ length: SLICE.coins }, (_, i) => `<i class="tube${i < b.coins ? ' lit' : ''}${was !== null && !calmNow() && i >= b.coins && i < was ? ' dying' : ''}" style="--k:${i}"></i>`).join('')}</span>`;
+    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track} 보상</span><b title="이기면 받는 나사"><i class="scr"></i>+${b.coins * SLICE.coinValue}</b><span class="boiler" style="--n:${SLICE.coins}"><i class="lava" style="--c:${was !== null && was > b.coins && !calmNow() ? was : b.coins}"></i><i class="ticks"></i></span>`;
+    // 쇳물이 한 칸 빠진다: 이전 높이로 그린 뒤 다음 장면에 새 높이로 — 2도트씩 끊겨 줄어든다
+    if (was !== null && was > b.coins && !calmNow()) {
+      const lava = $('coins').querySelector<HTMLElement>('.lava')!;
+      lava.classList.add('drain');
+      requestAnimationFrame(() => requestAnimationFrame(() => lava.style.setProperty('--c', String(b.coins))));
+    }
   }
 };
 
@@ -1920,11 +1928,13 @@ $('hand').addEventListener('click', (e) => {
       selCard = selPiece = openCard = null;
       return refresh();
     }
-    if (openCard !== i) {
+    // 즉시 카드(뽑기 · 점화 등)는 한 번에 쓰이면 되돌릴 수 없으니 먼저 펼쳐 보여 준다. 움직이는 카드는 바로 장전
+    if (openCard !== i && (isInstant(b.hand[i]) || !canPlay(b, i))) {
       selCard = selPiece = null;
       openCard = i;
       return refresh();
     }
+    openCard = i;
   }
   pickCard(i);
 });

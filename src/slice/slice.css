@@ -1417,3 +1417,32 @@ body.slice.lay-f .deckrow .deck-btn { border-style: solid; border-width: calc(va
 body.slice.lay-f .deckrow .deck-btn { border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / calc(var(--px) * 4) stretch; }
 body.slice.lay-f .deckrow .deck-btn:active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); }
 @keyframes tubeFlick { 0%, 62%, 64%, 100% { background-position: 0 0; } 63% { background-position: -12px 0; } }
+
+/* ===================== D-212 속전 보일러관 · 탄창 글씨 ===================== */
+body.slice.lay-f .gtop .coins .boiler { grid-column: 1 / -1; justify-self: center; position: relative; box-sizing: content-box; width: calc(var(--n) * 14px); height: 20px; border-style: solid; border-width: calc(var(--px) * 2); border-image: url('../assets/ui/kit/pipe.png') 2 fill / calc(var(--px) * 2) stretch; image-rendering: pixelated; margin: 0 8px; }
+body.slice.lay-f .gtop .coins .boiler::before, body.slice.lay-f .gtop .coins .boiler::after { content: ''; position: absolute; top: -4px; width: 8px; height: 28px; background: url('../assets/ui/kit/cap-l.png') 0 0 / 8px 28px no-repeat; image-rendering: pixelated; }
+body.slice.lay-f .gtop .coins .boiler::before { left: -10px; }
+body.slice.lay-f .gtop .coins .boiler::after { right: -10px; background-image: url('../assets/ui/kit/cap-r.png'); }
+body.slice.lay-f .gtop .coins .lava { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--c) * 14px); background: url('../assets/ui/kit/lava.png') 0 0 / 28px 20px repeat-x; image-rendering: pixelated; animation: boil 1.6s steps(7, end) infinite; }
+body.slice.lay-f .gtop .coins .lava.drain { transition: width 700ms steps(7, end); }
+body.slice.lay-f .gtop .coins .ticks { position: absolute; inset: 0; background: url('../assets/ui/kit/tick.png') 0 0 / 14px 20px repeat-x; image-rendering: pixelated; }
+@keyframes boil { from { background-position: 0 0; } to { background-position: -28px 0; } }
+@media (prefers-reduced-motion: reduce) { body.slice.lay-f .gtop .coins .lava { animation: none; } }
+/* 탄창 글씨: 갈무리 정체로 통일 (기울임 · 다른 서체 없음), 머리 칭호는 작게 */
+body.slice.lay-f #hand > .cmd.mag { font-family: Galmuri11, 'Noto Sans KR', sans-serif; }
+body.slice.lay-f #hand > .cmd.mag .mg-head b { font: 700 13px/1.2 Galmuri11, sans-serif; -webkit-line-clamp: 1; white-space: nowrap; }
+body.slice.lay-f #hand > .cmd.mag .mg-desc, body.slice.lay-f #hand > .cmd.mag .mg-use, body.slice.lay-f #hand > .cmd.mag .mg-flv { font: 400 12px/1.4 Galmuri11, sans-serif; font-style: normal; }
+body.slice.lay-f #hand > .cmd.mag .mg-shape svg { width: 30px; height: 30px; }
+/* 태엽 5칸: 구멍 30px로 줄여 한 줄에 */
+body.slice.lay-f .apbar .seg { width: 32px; height: 32px; background-size: 32px 32px; }
+body.slice.lay-f .apbar .seg .key { width: 28px; height: 28px; margin: 2px; background-size: 140px 28px; background-position: -112px 0; }
+body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
+@keyframes keySpin { from { background-position: 0 0; } to { background-position: -112px 0; } }
+@keyframes keyWind2 { from { background-position: -112px 0; } to { background-position: 0 0; } }
+body.slice.lay-f .apbar .seg { width: 32px; height: 32px; background-size: 32px 32px; }
+body.slice.lay-f .apbar .seg .key { width: 32px; height: 32px; margin: 0; background-size: 160px 32px; background-position: -128px 0; }
+body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
+body.slice.lay-f .apbar .seg:not(.on) .key { opacity: 0.5; }
+@keyframes keySpin { from { background-position: 0 0; } to { background-position: -128px 0; } }
+@keyframes keyWind2 { from { background-position: -128px 0; } to { background-position: 0 0; } }
+body.slice.lay-f .gtop .turn-label { min-width: max-content; overflow: visible; white-space: nowrap; }
