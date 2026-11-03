@@ -24,7 +24,7 @@ import { playOut } from '../src/slice/bot';
 const RUNS = Number(process.env.BR ?? 30);
 const VALUE: Record<string, number> = Object.fromEntries((JSON.parse(readFileSync('sim/rarity-result.json', 'utf8')).rows as { id: string; value: number }[]).map((r) => [r.id, r.value]));
 const val = (id: string) => VALUE[baseOf(id as CommandId)] ?? 5;
-const BOND = { shared: 4, slots: 3, shopRecruit: 45, partExtra: 2, pity: 5, removeStep: 25 };
+const BOND = { shared: 4, slots: Number(process.env.BOND_SLOTS ?? 3), recruitExtra: Number(process.env.BOND_RC ?? 0), fixPrice: Number(process.env.BOND_FIX ?? 0), shopRecruit: 45, partExtra: 2, pity: 5, removeStep: 25 };
 
 type Tally = Record<string, number>;
 const bump = (t: Tally, k: string, n = 1) => (t[k] = (t[k] ?? 0) + n);
@@ -87,7 +87,9 @@ const one = (seed: number, on: string) => {
     if (pool[0] && val(pool[0].id) < val(id)) { pool[0].id = id; bump(T, `${tag}:swap`); return true; }
     bump(T, `${tag}:full`); return false;
   };
-  const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; const c = mk(r.t); squad.push(c); for (const id of r.cards) A ? deck.push({ id, o: c.serial! }) : deck.push({ id, o: '' }); bump(T, 'recruit'); };
+  const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; const c = mk(r.t); squad.push(c); for (const id of r.cards) A ? deck.push({ id, o: c.serial! }) : deck.push({ id, o: '' });
+    for (let k = 0; k < BOND.recruitExtra; k++) { const own = REWARD_COMMANDS.filter((id) => COMMANDS[id].who === r.t && gradeOf(id) !== 'gold'); if (own.length) deck.push({ id: own[rng.int(own.length)], o: A ? c.serial! : '' }); }
+    bump(T, 'recruit'); };
   /** 영구로 잃은 분대원 정리 (A: 카드가 빠지고, 가장 좋은 1장이 유품으로 공용 칸에) */
   const bury = (gone: Squad[]) => {
     for (const g of gone) {
@@ -219,6 +221,7 @@ const one = (seed: number, on: string) => {
         while (offers.length < SHOP.cards && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
         const spend = (k: string, p: number) => { gold -= p; bump(T, k); bump(T, 'goldSpent', p); };
         if (hpRatio() < 0.55 && gold >= SHOP.healPrice) { spend('shop:heal', SHOP.healPrice); squad = restSquad(squad, SHOP.healPct); }
+        if (B && BOND.fixPrice && broken.size && gold >= BOND.fixPrice * broken.size) { spend('shop:fix', BOND.fixPrice * broken.size); repairAll(); }
         if (C && squad.length < 7 && gold >= BOND.shopRecruit) { spend('shop:recruit', BOND.shopRecruit); recruit(); }
         for (const id of offers.sort((x, y) => val(y) - val(x))) {
           const p = SHOP.gradePrice[gradeOf(id) as Grade];
@@ -236,8 +239,8 @@ const one = (seed: number, on: string) => {
           deck.splice(deck.indexOf(w), 1); removes++; spend('shop:remove', rp);
         }
       } else if (n.kind === 'forge') {
-        if (B) repairAll();
-        if (hpRatio() < 0.6) { squad = restSquad(squad, FORGE.repairPct); bump(T, 'forge:repair'); }
+        if (B && (!BOND.fixPrice || broken.size >= 2)) { repairAll(); bump(T, 'forge:fix'); }
+        else if (hpRatio() < 0.6) { squad = restSquad(squad, FORGE.repairPct); bump(T, 'forge:repair'); }
         else refineBest('forge:refine');
       } else if (n.kind === 'event') {
         const id = SLICE_EVENT_IDS[rng.int(SLICE_EVENT_IDS.length)];
