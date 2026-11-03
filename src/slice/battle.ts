@@ -1,5 +1,5 @@
 import { PIECE_STATS } from '../data/pieces';
-import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, moveCost, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
+import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
@@ -202,6 +202,11 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (p && !s.pieces.some((r) => r.x === q.x && r.y === q.y)) Object.assign(p, { x: q.x, y: q.y });
   }
   if (opts.enemyHp && opts.enemyHp !== 1) for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.maxHp = p.hp = Math.round(p.maxHp * opts.enemyHp);
+  // 난이도 비율 (D-202): 모든 적 기물 HP(킹 제외 — 킹은 대국마다 따로) · 공격
+  if (!opts.lab) for (const p of s.pieces) if (p.side === 1) {
+    if (p.type !== 'K' && SLICE.foeHp !== 1) p.maxHp = p.hp = Math.max(1, Math.round(p.maxHp * SLICE.foeHp));
+    if (SLICE.foeAtk !== 1) p.atk = Math.max(1, Math.round(p.atk * SLICE.foeAtk));
+  }
   if (opts.traits?.includes('rookPlate')) for (const p of s.pieces) if (p.side === 1 && p.type === 'R') p.shield += TRAIT.rookPlate;
   if (opts.enemyKingHp) {
     const k = kingOf(s, 1)!;
@@ -252,6 +257,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
 };
 
 /** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
+/** 반장 규칙 · 적 특성 피해에도 난이도 공격 배율을 곱한다 (D-202) */
+export const foeDmg = (n: number): number => Math.max(1, Math.round(n * SLICE.foeAtk));
+
 const planFor = (b: SliceBattle): Intent[] => {
   if (!b.mercy) return planEnemy(b.s, false, b.turn, b.boss);
   const rng = new Rng(b.rng ^ 0x5eed);
@@ -352,9 +360,9 @@ export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = fal
   const o: FoeOpts = { reach: s.rules.capture ? undefined : playerReach(s), boss };
   for (const p of s.pieces.filter((q) => q.side === 1)) {
     const best = bestFor(s, p, undefined, turn, o);
-    // 적 퀸(태엽 4)이 적 태엽 3을 넘어 영영 못 움직이던 버그 (D-201) → 적 한 수의 값은 적 태엽을 넘지 않는다
+    // 적도 플레이어와 같은 값표로 태엽을 쓴다 (D-202 — 예전엔 기물 고유 이동 값이라 적 퀸 4 > 태엽 3으로 영영 서 있었다)
     // 반장(적 킹)은 같은 태엽을 쓰되 먼저 고른다 (D-201 수정, 사용자: "매 턴 추가 행동은 사기 — 같은 자원을 공유하고 값을 높여라")
-    if (best) options.push({ pieceId: p.id, to: best.to, score: boss && p.type === 'K' ? best.score * SLICE.bossPriority + SLICE.bossPriorityFlat : best.score, cost: Math.min(SLICE.enemyAp, moveCost(s, p)) });
+    if (best) options.push({ pieceId: p.id, to: best.to, score: boss && p.type === 'K' ? best.score * SLICE.bossPriority + SLICE.bossPriorityFlat : best.score, cost: SLICE.moveCost[p.type] });
   }
   options.sort((a, b) => b.score - a.score || a.pieceId - b.pieceId);
   if (skipTop && options.length > 1) options.shift();
@@ -684,13 +692,13 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
     if (e.type !== 'attack') continue;
     if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) {
       const me = findPiece(b.s, e.attackerId);
-      if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '되받아침!', hits: [hurt(me, BOSS_NUM.thorns)] });
+      if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '되받아침!', hits: [hurt(me, foeDmg(BOSS_NUM.thorns))] });
     }
     if (b.blastPawns)
       for (const h of e.hits) {
         const dead = before.pieces.find((p) => p.id === h.targetId);
         if (!h.killed || !dead || dead.side !== 1 || dead.type !== 'P') continue;
-        const hits = b.s.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).map((p) => hurt(p, TRAIT.blast));
+        const hits = b.s.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).map((p) => hurt(p, foeDmg(TRAIT.blast)));
         if (hits.length) out.push({ type: 'blast', pos: { x: dead.x, y: dead.y }, label: '자폭!', hits });
       }
   }
@@ -712,12 +720,12 @@ export const backlashOf = (b: SliceBattle, sim: { state: BattleState; events: Ba
   const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
   for (const e of sim.events) {
     if (e.type !== 'attack') continue;
-    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += BOSS_NUM.thorns;
+    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += foeDmg(BOSS_NUM.thorns);
     if (b.blastPawns)
       for (const h of e.hits) {
         const dead = b.s.pieces.find((p) => p.id === h.targetId);
         if (!h.killed || !dead || dead.side !== 1 || dead.type !== 'P') continue;
-        dmg += TRAIT.blast * sim.state.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).length;
+        dmg += foeDmg(TRAIT.blast) * sim.state.pieces.filter((p) => p.side === 0 && chebyshev(p, dead) === 1).length;
       }
   }
   return dmg;
@@ -801,10 +809,11 @@ const bombard = (b: SliceBattle): BattleEvent | null => {
   if (b.bombRow === null) return null;
   const row = b.bombRow;
   const hits = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => {
-    const absorbed = Math.min(p.shield, BOSS.bombDamage);
+    const bomb = foeDmg(BOSS.bombDamage);
+    const absorbed = Math.min(p.shield, bomb);
     p.shield -= absorbed;
-    p.hp = Math.max(0, p.hp - (BOSS.bombDamage - absorbed));
-    return { targetId: p.id, damage: BOSS.bombDamage, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
+    p.hp = Math.max(0, p.hp - (bomb - absorbed));
+    return { targetId: p.id, damage: bomb, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
   });
   const kingDead = hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K');
   b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);

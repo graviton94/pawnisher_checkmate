@@ -170,6 +170,11 @@ export const FORGE = { repairPct: 0.4 };
 export const PUSH = { collide: 18 };
 
 export const BOSS = { plate: 20, plateEvery: 2, bombEvery: 2, bombDamage: 18 };
+/**
+ * 난이도 비율 (D-202, 사용자: "체력이든 공격력이든 비율 조정으로 난이도"): 모든 적 기물의 HP · 공격 배율 (막 배율 위에 곱한다).
+ * 값표 통일로 적이 더 자주 움직이게 된 만큼 공격을 낮췄다 (등반 봇 40판: 1.0 → 완주 18 · 0.75 → 31, HP는 거의 영향 없음)
+ */
+export const FOE = { hp: 1, atk: 0.75 };
 
 /**
  * 막별 반장 규칙 (R5-4, D-171): 반장마다 빌드에 던지는 질문 하나 + 레일 표시 문구.
@@ -177,7 +182,7 @@ export const BOSS = { plate: 20, plateEvery: 2, bombEvery: 2, bombDamage: 18 };
  */
 export type BossRule = 'plate' | 'spawn' | 'thorns';
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
-  plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', '줄 폭격 −18 · 2턴마다'], tell: '두 턴마다 한 줄이 불길에 잠깁니다. 붉은 줄에서 벗어나십시오.' },
+  plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '두 턴마다 한 줄이 불길에 잠깁니다. 붉은 줄에서 벗어나십시오.' },
   spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
   thorns: { name: '출하 반장', lines: ['철갑 20 · 2턴마다 다시', '반장을 친 기물은 6 되받는다'], tell: '반장을 치면 되받아칩니다. 한 번에 몰아치십시오.' },
 };
@@ -214,6 +219,14 @@ export const SLICE = {
   /** 반장 킹 수의 우선순위 (D-201): 점수 ×배 + 더하기 — 졸개보다 먼저 태엽을 쓴다(추가 행동은 없다) */
   bossPriority: 1.5,
   bossPriorityFlat: 8,
+  /**
+   * 한 수의 값표 (D-202, 사용자: "값표 통일") — 플레이어 기본 이동 카드 비용과 같다.
+   * 전진 · 도약 · 사선 · 왕의 걸음 1, 직진 2, 퀸은 지휘 값 2. 적도 이 값으로 태엽을 쓴다.
+   */
+  moveCost: { P: 1, N: 1, B: 1, R: 2, Q: 2, K: 1 } as Record<PieceType, number>,
+  /** 난이도 비율 — 값은 위 FOE (반장 규칙 문구가 먼저 쓰므로 거기 둔다) */
+  foeHp: FOE.hp,
+  foeAtk: FOE.atk,
 };
 
 /**

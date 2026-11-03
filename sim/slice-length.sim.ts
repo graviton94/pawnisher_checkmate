@@ -1,7 +1,7 @@
 import { it } from 'vitest';
 import type { PieceType } from '../src/engine';
 import { Rng } from '../src/engine/rng';
-import { COMMANDS, KITS, RECRUITS, REWARD_COMMANDS, START_DECK, START_SQUAD, type CommandId } from '../src/slice/cards';
+import { COMMANDS, KITS, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type CommandId } from '../src/slice/cards';
 import { SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
 import { makeCrew } from '../src/slice/crew';
 import { buildRun } from '../src/slice/run';
@@ -53,6 +53,10 @@ const one = (seed: number) => {
   }
   return { cleared: true, reached, sec, battles, turns, plays, retries };
 };
+
+// 난이도 비율 시험 (D-202): FOE_HP · FOE_ATK 환경 변수로 SLICE.foeHp · foeAtk를 바꿔 같은 40판을 다시 잰다
+if (process.env.FOE_HP) (SLICE as { foeHp: number }).foeHp = Number(process.env.FOE_HP);
+if (process.env.FOE_ATK) (SLICE as { foeAtk: number }).foeAtk = Number(process.env.FOE_ATK);
 
 it('한 판 길이', () => {
   const rs = Array.from({ length: 40 }, (_, k) => one(1000 + k * 7919));

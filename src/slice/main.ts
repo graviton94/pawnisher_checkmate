@@ -25,7 +25,7 @@ import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, 
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
-import { REST, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { REST, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { Rng } from '../engine/rng';
 
@@ -128,7 +128,7 @@ let enemyTurn = false;
 
 /** 적 특성 한 줄 (길게 누르기, D-175) */
 const foeTraitLine = (p: { side: number; type: PieceType }): string =>
-  p.side !== 1 ? '' : p.type === 'P' && b.blastPawns ? `<br><span class="enemy">자폭</span> 쓰러지면 둘레 내 기물에 ${TRAIT.blast}` : p.type === 'K' && b.boss && b.bossRule === 'thorns' ? `<br><span class="enemy">되받아침</span> 치고 못 쓰러뜨리면 친 기물이 ${BOSS_NUM.thorns}을 받는다` : '';
+  p.side !== 1 ? '' : p.type === 'P' && b.blastPawns ? `<br><span class="enemy">자폭</span> 쓰러지면 둘레 내 기물에 ${foeDmg(TRAIT.blast)}` : p.type === 'K' && b.boss && b.bossRule === 'thorns' ? `<br><span class="enemy">되받아침</span> 치고 못 쓰러뜨리면 친 기물이 ${foeDmg(BOSS_NUM.thorns)}을 받는다` : '';
 
 const renderer = new BoardRenderer(
   $('board'),
