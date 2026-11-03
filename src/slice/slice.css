@@ -1003,8 +1003,11 @@ body.placebg::before { content: ''; position: fixed; inset: 0; z-index: 0; backg
 body.placebg #app { visibility: hidden; }
 body.placebg .overlay { background: rgba(6, 5, 9, 0.35); }
 /* 보상(정비 라인 BG-04): 왼쪽 40%는 그림, 창은 오른쪽으로 — 장소 화면 틀 */
-body[data-place="bg-reward"] .overlay { justify-content: flex-end; padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+body[data-place="bg-reward"] .overlay, body[data-place="bg-shop"] .overlay { justify-content: flex-end; padding-right: max(14px, env(safe-area-inset-right, 0px)); }
 body[data-place="bg-reward"] .overlay .panel { max-width: min(60vw, 620px); }
+body[data-place="bg-shop"] .overlay .panel { max-width: min(60vw, 640px); }
+/* 녹슨 룩이 창에 가리지 않게 그림을 살짝 키워 왼쪽으로 민다 */
+body[data-place="bg-shop"]::before { background-size: 114% auto; background-position: 88% 45%; }
 /* 출하 끝(E-01 · E-02): 위 3분의 1이 그림, 결과 창은 아래로 */
 body[data-place^="end-"] .overlay { align-items: flex-end; padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
 body[data-place^="end-"] .overlay .panel { max-height: 64vh; }
@@ -1012,4 +1015,4 @@ body[data-place^="end-"] .overlay .panel { max-height: 64vh; }
 .mapfx::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--act) center / cover no-repeat; image-rendering: pixelated; opacity: .55; }
 .mapfx { isolation: isolate; }
 /* 반장 초상 (B-01~03) */
-.enc-portrait { width: min(46vh, 300px); height: auto; image-rendering: pixelated; display: block; box-shadow: 0 0 0 3px #000, 0 0 0 5px #7a1218; }
+.enc-portrait { width: min(46vh, 300px); aspect-ratio: 1; object-fit: cover; object-position: 72% 40%; height: auto; image-rendering: pixelated; display: block; box-shadow: 0 0 0 3px #000, 0 0 0 5px #7a1218; }
