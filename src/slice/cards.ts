@@ -180,7 +180,8 @@ export const FORGE = { repairPct: 0.4 };
 // 18: 조합 봇에서 쇠망치 + 밀치기 카드가 기준의 약 1.9배 (12일 땐 1.5배 — 축 단독 2배 목표, D-154)
 export const PUSH = { collide: 18 };
 
-export const BOSS = { plate: 20, plateEvery: 2, bombEvery: 2, bombDamage: 18 };
+/** 철갑 반장 (D-214 완화): 철갑 20 → 15, 폭격 18 → 12, 첫 폭격은 2턴 끝 */
+export const BOSS = { plate: 15, plateEvery: 2, bombEvery: 2, bombFirst: 2, bombDamage: 12 };
 /**
  * 난이도 비율 (D-202, 사용자: "체력이든 공격력이든 비율 조정으로 난이도"): 모든 적 기물의 HP · 공격 배율 (막 배율 위에 곱한다).
  * 값표 통일로 적이 더 자주 움직이게 된 만큼 공격을 낮췄다 (등반 봇 40판: 1.0 → 완주 18 · 0.75 → 31, HP는 거의 영향 없음)
@@ -246,6 +247,8 @@ export const SLICE = {
   bossPriorityFlat: 8,
   /** 처치 환급 (D-203): 처치마다 태엽 +1, 턴당 최대 */
   refundCap: 2,
+  /** 적 AI 다가가기: 거리가 안 줄어도 내 진영 쪽으로 한 줄 나아가면 더하는 점수 (D-214) */
+  aiAdvance: 1,
   /** 태엽 칸 (D-212, 사용자: "최대 5개를 깔아 두고 3개만 켠다") — 한 턴에 가질 수 있는 태엽 상한 */
   apCap: 5,
   /** 회수(연쇄 소모 → 뽑기) 최대 장수 */

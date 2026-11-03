@@ -305,10 +305,17 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   const rays = root.querySelector<HTMLElement>('.tfx-rays')!;
   const flash = root.querySelector<HTMLElement>('.tfx-flash')!;
   const panel = root.closest<HTMLElement>('.panel, .opening, .prologue') ?? root;
+  // 화면 전체 연출(붉은 가장자리 · 흰 섬광 · 반전)은 body로 뺀다 (D-214): 부모에 흔들림 · 줌 transform이 걸리면
+  // position: fixed가 그 상자 기준이 되어, 번쩍임이 타이틀 그림 사각형 안에서만 일어났다 (사용자 지적)
+  const inv = document.createElement('div');
+  inv.className = 'tfx-inv';
+  for (const el of [vig, flash, inv]) document.body.appendChild(el);
+  const cleanup = () => [vig, flash, inv].forEach((el) => el.remove());
+  const watch = window.setInterval(() => { if (!root.isConnected) { cleanup(); window.clearInterval(watch); } }, 300);
   word.style.setProperty('--tlogo', `url(${new URL('ui/title-logo.png', document.baseURI).href})`);
   const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
   const re = (el: Element, cls: string) => { el.classList.remove(cls); void (el as HTMLElement).offsetWidth; el.classList.add(cls); };
-  if (calm()) { em.className = 'tfx-em done'; word.classList.add('shown'); return; }
+  if (calm()) { em.className = 'tfx-em done'; word.classList.add('shown'); cleanup(); window.clearInterval(watch); return; }
   // 칼자국 선 (문장 좌표): 오른위 A → 왼아래 B
   const A = { x: 152, y: 7.5 }, B = { x: 50, y: 114.7 };
   const ang = (Math.atan2(B.y - A.y, B.x - A.x) * 180) / Math.PI;
@@ -317,7 +324,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   em.classList.add('run');
   sfx('lift');
   await wait(200);
-  shake(4, 260);
+  shake(2, 200);
   { const r = em.getBoundingClientRect(); sparksAt(r.left + r.width / 2, r.top + r.height * 0.9, 8, 40); sfx('land'); }
   await wait(180);
   em.classList.remove('run');
@@ -333,9 +340,9 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   glint.getAnimations().forEach((x) => x.cancel());
   glintRun(90);
   sfx('kill');
-  root.classList.add('inv');
-  window.setTimeout(() => { root.classList.remove('inv'); re(flash, 'on'); }, 60);
-  shake(12, 480);
+  inv.classList.add('on');
+  window.setTimeout(() => { inv.classList.remove('on'); re(flash, 'on'); }, 60);
+  shake(6, 320);
   re(root, 'punch');
   re(rays, 'on');
   (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(40);
@@ -359,7 +366,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   await wait(200);
   re(word, 'in');
   sfx('stamp');
-  window.setTimeout(() => shake(5, 260), 160);
+  window.setTimeout(() => shake(3, 220), 160);
   window.setTimeout(() => re(word, 'shine'), 420);
   await wait(700);
   // 대기: 칼빛 · 반짝 띠 · 불씨 (타이틀이 닫히면 멈춘다)

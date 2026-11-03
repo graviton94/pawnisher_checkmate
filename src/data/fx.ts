@@ -59,7 +59,7 @@ export const FX_POWER = {
 };
 
 /** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
-export const FX_SHAKE = { damage: 4, ms: 160, intensity: 0.005, killIntensity: 0.009, vibrateHit: 25, vibrateKill: 45 };
+export const FX_SHAKE = { damage: 4, ratio: 0.35, ms: 160, intensity: 0.003, killIntensity: 0.005, vibrateHit: 25, vibrateKill: 45 };
 /**
  * 타격 카메라 (D-115): 공격이 닿은 거리만큼 — 붙어서 치면 그쪽으로 당겨 들어가고(줌 인), 멀리 닿으면 물러나 판을 보여 준다(줌 아웃).
  * 큰 피해(대상 최대 HP 대비)는 흔들림을 키우고, 처치는 한 번 더 툭 당긴다. 배율은 기본 줌(DPR) 대비.

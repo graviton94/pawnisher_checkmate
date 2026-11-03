@@ -44,7 +44,8 @@ export const pxOut = (el: HTMLElement | null, then?: () => void, ms = 240): void
   }, ms);
 };
 /** 흔들림 세 단계 (D-193): 약 4px/260ms · 중 7px/360ms · 강 12px/480ms — 판 밖은 모두 이것만 */
-export const SHAKE = { 1: [4, 260], 2: [7, 360], 3: [12, 480] } as const;
+/** 판 밖 흔들림 (D-214: 절반으로) — 픽셀 진폭 · ms */
+export const SHAKE = { 1: [2, 180], 2: [4, 240], 3: [6, 320] } as const;
 export const shake = (el: HTMLElement | null, lv: 1 | 2 | 3 = 2): void => shakeEl(el, SHAKE[lv][0], SHAKE[lv][1]);
 /**
  * 획득 비행 하나 (D-193): 위로 가속 → 착지 감속 → 도착점 눌림 + 불똥 셋. 카드 · 나사 · 구매가 모두 이 호를 탄다.

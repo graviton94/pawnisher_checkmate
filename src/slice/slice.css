@@ -1452,3 +1452,6 @@ body.slice.lay-f #hand > .cmd.mag .mg-head b { font: 700 12px/1 Galmuri11, sans-
 body.slice.lay-f #hand > .cmd.mag .art img, body.slice.lay-f #hand > .cmd.mag .art .ico16 { width: 24px; height: 24px; }
 body.slice.lay-f #hand > .cmd.mag .art { width: 24px; height: 24px; }
 body.slice.lay-f #hand > .cmd.mag .costgear img { width: 20px; height: 20px; }
+/* 타이틀 화면 전체 반전 (D-214): body 위 덮개 — 두 프레임만 */
+.tfx-inv { position: fixed; inset: 0; z-index: 119; pointer-events: none; display: none; backdrop-filter: invert(1) contrast(1.6); -webkit-backdrop-filter: invert(1) contrast(1.6); }
+.tfx-inv.on { display: block; }

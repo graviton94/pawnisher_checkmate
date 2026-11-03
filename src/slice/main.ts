@@ -559,9 +559,15 @@ const magAnim = (oldBody: HTMLElement | null, same: boolean): void => {
   }
 };
 
+/**
+ * 연출 전 판 붙잡기 (D-214): 엔진은 턴 끝에 적 수까지 한 번에 계산한다. 연출이 시작될 때까지 판은 그 전 모습을 보여 줘야
+ * 「적이 이미 움직인 판 → 적 차례 띠 → 다시 움직임」이 되지 않는다 (사용자 지적).
+ */
+let holdView: BattleState | null = null;
 const refresh = (): void => {
   hidePeek();
-  renderer.render(model());
+  if (holdView) showBefore(holdView);
+  else renderer.render(model());
   turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c, .lay-e, .lay-f') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
   const deckRow = document.getElementById('deckrow');
   const head = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>`;
@@ -690,7 +696,7 @@ const chainPop = (kills: number): void => {
   el.style.top = `${r.top + r.height * 0.42}px`;
   document.body.appendChild(el);
   window.setTimeout(() => el.remove(), 900);
-  shake($('board'), kills >= 3 ? 3 : 2);
+  if (kills >= 3) shake($('board'), 1);
   sfx('kill', kills + 2);
   window.setTimeout(() => sfx('coin', kills + 4), 120);
 };
@@ -826,6 +832,7 @@ const onEndInner = async (): Promise<void> => {
     return;
   }
   $('btn-end').classList.remove('warn');
+  holdView = r.before;
   // 바로 잠근다 (페르소나 테스트 B1): 턴 합계 연출을 기다리는 사이 「턴 끝」 연타가 적 차례를 한 번 더 돌렸다
   busy = true;
   selCard = selPiece = openCard = null;
@@ -847,6 +854,7 @@ const onEndInner = async (): Promise<void> => {
   turnBanner($('board'), '적 차례', true);
   // 띠가 판 가운데를 지나는 동안 적 첫 수가 가려지지 않게 잠깐 기다린다 (띠는 0.9초에 빠지고 적은 겨눔부터 시작)
   await new Promise((res) => window.setTimeout(res, calmNow() ? 120 : PACE.enemyBannerHold));
+  holdView = null;
   await renderer.play(r.before, r.events);
   logEvents(r.events, r.before, 1, b.turn - 1);
   await deathRites();

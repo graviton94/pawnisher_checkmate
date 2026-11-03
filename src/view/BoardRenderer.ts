@@ -46,9 +46,11 @@ export interface BoardInput {
  * 기기 종류별 타일 크기 (CSS px = dp). GDD 9장 §9.2: 모바일 약 48dp, PC는 화면 높이에 맞춘 크기.
  * 판 그림은 칸 = 20도트라, 기기 픽셀로 한 도트가 정수 px가 되게 올림한다 (도트 굵기가 고르게 — D-071).
  */
+/** 터치 기기 칸 최대 크기 (CSS px) */
+const BOARD_TILE_TOUCH_MAX = 54; // 도트 내림(DPR 2.625 → 칸 53.3px)이 48 아래로 가지 않게
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
-  // 터치 기기는 상한 없이 판 자리를 꽉 채운다 (페르소나 테스트 m3: 상한 48 → 도트 내림으로 작은 판이 40px까지 줄었다)
-  const want = window.matchMedia('(pointer: coarse)').matches ? Infinity : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
+  // 터치 기기 칸 상한 약 53px (D-214, 사용자: "4×4 · 6×6이 화면을 꽉 채워 부담스럽다") — 터치 하한 48은 지킨다
+  const want = window.matchMedia('(pointer: coarse)').matches ? BOARD_TILE_TOUCH_MAX : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
   // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
   // 판 배치 시안 C (D-198): 위아래 여백을 줄여 판을 키운다
   const vPad = document.body.matches('.lay-c, .lay-d, .lay-e, .lay-f') ? 0.45 : 0.9;
@@ -113,7 +115,8 @@ interface AnimMarks {
 const noMarks = (): AnimMarks => ({ arrows: [], gears: [], threat: [], fire: [], glints: [] });
 
 /** 흔들림 세 단계 (D-193) */
-const SHAKE_LV = { 1: [260, 0.005], 2: [360, 0.009], 3: [480, 0.014] } as const;
+/** 흔들림 세 단계 (D-214: 사용자 "너무 잦고 크다" — 세기 · 길이를 절반 가까이로) */
+const SHAKE_LV = { 1: [160, 0.0025], 2: [220, 0.0045], 3: [300, 0.007] } as const;
 const shakeLvOf = (k: number): 1 | 2 | 3 => (k < 0.007 ? 1 : k < 0.011 ? 2 : 3);
 
 class BoardScene extends Phaser.Scene {
@@ -1352,7 +1355,6 @@ class BoardScene extends Phaser.Scene {
                 });
               if (m.landQ >= 0) {
                 if (!landed) {
-                  this.shake(60, 0.002);
                   sfx('land');
                 }
                 landed = true;

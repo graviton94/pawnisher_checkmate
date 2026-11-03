@@ -355,10 +355,18 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
     // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196 · 반장은 1턴부터 D-201)
     const kingMarch = p.type === 'K' && (o.boss || s.pieces.every((q) => q.side !== 1 || q.type === 'K') || turn >= SLICE.kingMarchTurn);
     const approach = score === 0;
-    if (approach && myKing && (p.type !== 'K' || kingMarch)) score = (chebyshev(p, myKing) - chebyshev(to, myKing)) * 2;
+    // 다가가기 (D-214, 사용자: "1층 적이 아무것도 안 하는 게 부지기수"): 내 킹 또는 가장 가까운 내 기물 쪽으로 — 둘 중 더 줄어드는 쪽.
+    // 거리가 줄지 않아도 내 진영 쪽으로 한 줄 나아가면 조금 쳐 준다 (나이트처럼 거리가 안 줄어 서 있던 기물)
+    if (approach && myKing && (p.type !== 'K' || kingMarch)) {
+      const near = (q: Pos) => Math.min(...s.pieces.filter((m) => m.side === 0).map((m) => chebyshev(q, m)));
+      const gain = Math.max(chebyshev(p, myKing) - chebyshev(to, myKing), near(p) - near(to));
+      score = gain * 2 + (to.y < p.y ? SLICE.aiAdvance : 0);
+    }
     if (approach && p.type === 'K' && !kingMarch) continue;
     // 맞을 칸을 꺼린다 (D-201): 내 기물이 다음 차례에 칠 수 있는 칸이면 감점 — 공격이면 값의 일부, 다가가기면 같은 거리 중 안전한 칸을 고르게
-    if (o.reach?.has(`${to.x},${to.y}`)) score -= approach ? SLICE.aiRiskStep : valueOf(p) * SLICE.aiRiskAttack + (p.type === 'K' ? SLICE.aiRiskKing : 0);
+    // 혼자 남은 킹은 겁내지 않는다 (D-214 — 맞을 칸 감점 −30 때문에 옆의 폰도 안 치고 매 턴 서 있었다)
+    const alone = s.pieces.every((q) => q.side !== 1 || q.type === 'K');
+    if (o.reach?.has(`${to.x},${to.y}`)) score -= approach ? SLICE.aiRiskStep : valueOf(p) * SLICE.aiRiskAttack + (p.type === 'K' && !alone ? SLICE.aiRiskKing : 0);
     if (!best || score > best.score) best = { to, score };
   }
   return best && best.score > 0 ? best : null;
@@ -385,6 +393,11 @@ export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = fal
     ap -= o.cost;
     taken.add(`${o.to.x},${o.to.y}`);
     out.push({ pieceId: o.pieceId, to: o.to });
+  }
+  // 한 턴을 통째로 쉬지 않는다 (D-214): 겁나서 고른 게 없으면 위험을 무릅쓰고 가장 좋은 수 하나
+  if (!out.length && o.reach) {
+    const bold = s.pieces.filter((q) => q.side === 1).map((p) => ({ p, best: bestFor(s, p, undefined, turn, { boss }) })).filter((x) => x.best && SLICE.moveCost[x.p.type] <= SLICE.enemyAp).sort((x, y) => y.best!.score - x.best!.score)[0];
+    if (bold) out.push({ pieceId: bold.p.id, to: bold.best!.to });
   }
   return out;
 };
@@ -857,7 +870,8 @@ const bossTurnStart = (b: SliceBattle): void => {
   }
   if (b.bossRule === 'thorns') return;
   // 1턴부터 (D-201): 반장 규칙이 첫 턴에 바로 보인다 — 예고(붉은 줄)는 그 턴 시작에 뜨고 턴 끝에 친다
-  if ((b.turn - 1) % BOSS.bombEvery !== 0) return;
+  // 첫 폭격은 2턴 끝 (D-214, 사용자: "불길이 첫 턴부터 다 태우면 어떻게 이기나") — 1턴엔 출발 줄을 벗어날 틈을 준다
+  if (b.turn < BOSS.bombFirst || (b.turn - BOSS.bombFirst) % BOSS.bombEvery !== 0) return;
   const rows = new Map<number, number>();
   for (const p of b.s.pieces) if (p.side === 0) rows.set(p.y, (rows.get(p.y) ?? 0) + valueOf(p));
   const best = [...rows.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0];

@@ -245,7 +245,8 @@ export const fxPower = (hits: { damage: number; killed?: boolean }[]): number =>
 
 /** 피격 순간의 화면 흔들림·진동 (D-064): 기준 미만이면 null */
 export const impactFeedback = (damage: number, killed: boolean, maxHp = 0): { ms: number; intensity: number; vibrate: number } | null => {
-  if (!killed && damage < FX_SHAKE.damage) return null;
+  // 흔들림은 처치 · 큰 피해(최대 HP의 FX_SHAKE.ratio 이상)에만 (D-214)
+  if (!killed && (damage < FX_SHAKE.damage || damage < maxHp * FX_SHAKE.ratio)) return null;
   // 큰 피해일수록 세게 (D-115): 대상 최대 HP 대비 비율
   const k = maxHp > 0 ? Math.min(FX_CAMERA.shakeMaxMult, 1 + (damage / maxHp) * FX_CAMERA.shakeByRatio) : 1;
   return { ms: Math.round(FX_SHAKE.ms * Math.min(1.6, k)), intensity: (killed ? FX_SHAKE.killIntensity : FX_SHAKE.intensity) * k, vibrate: killed ? FX_SHAKE.vibrateKill : FX_SHAKE.vibrateHit };

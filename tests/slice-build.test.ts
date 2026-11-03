@@ -149,8 +149,11 @@ describe('반장 규칙 (D-148)', () => {
     }
     expect(k().shield).toBe(BOSS.plate);
   });
-  it('줄 폭격: 1턴부터 예고하고 (D-201), 턴을 끝내면 그 줄의 내 기물이 맞는다', () => {
+  it('줄 폭격: 1턴은 쉬고 2턴에 예고하며 (D-214), 턴을 끝내면 그 줄의 내 기물이 맞는다', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P'], START_COMMANDS, 5, { boss: true });
+    expect(b.bombRow).toBeNull();
+    b.intents = [];
+    endTurn(b, true);
     expect(b.bombRow).not.toBeNull();
     const row = b.bombRow!;
     const inRow = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => ({ id: p.id, hp: p.hp }));
@@ -158,7 +161,7 @@ describe('반장 규칙 (D-148)', () => {
     expect(dangerSquares(b).filter((q) => q.y === row)).toHaveLength(b.s.width);
     b.intents = [];
     endTurn(b, true);
-    // 다음 턴(2턴)은 쉰다 — 두 턴마다
+    // 다음 턴(3턴)은 쉰다 — 두 턴마다
     expect(b.bombRow).toBeNull();
     for (const q of inRow) {
       const p = b.s.pieces.find((x) => x.id === q.id);
