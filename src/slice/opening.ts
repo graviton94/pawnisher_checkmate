@@ -3,7 +3,7 @@
  * 컷마다 그림(public/scenes/prologue-0N.png)이 있으면 그것을, 없으면 기물 도트로 짠 자리 그림을 쓴다.
  */
 import { sfx } from '../audio/sfx';
-import { GUIDE_PAGES, OPENING_TEXT, PROLOGUE_CUTS, type PrologueCut, type StandIn } from '../data/opening';
+import { GUIDE_PAGES, OPENING_TEXT, PROLOGUE_CUTS, type GuideMedia, type PrologueCut, type StandIn } from '../data/opening';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
@@ -115,14 +115,19 @@ export const prologue = (short = false): Promise<void> =>
     next();
   });
 
-/** 안내서 그림 (자산 조합) */
-const guidePic = (k: (typeof GUIDE_PAGES)[number]['pic']): string => {
-  if (k === 'play')
-    return `<div class="gd-pic play"><span class="gd-card">${pieceImg('N', 0, 'small', 28)}</span><b>→</b>${pieceImg('N', 0, 'large', 44)}<b>→</b><img src="ui/board/target-kill.png" alt=""></div>`;
-  if (k === 'red') return `<div class="gd-pic red"><i></i><i class="r"><img src="ui/board/badge-e1.png" alt=""></i><i></i><i class="r"><img src="ui/board/badge-e2.png" alt=""></i>${pieceImg('B', 1, 'large', 40)}</div>`;
-  if (k === 'keys') return `<div class="gd-pic keys"><img src="ui/hud/key-full.png" alt=""><img src="ui/hud/key-full.png" alt=""><img src="ui/hud/key-spent.png" alt=""><span>×1.25 → ×1.50</span></div>`;
-  if (k === 'terms') return `<div class="gd-pic keys"><img src="ui/icons16/tape.png" alt=""><i class="scr big" aria-hidden="true"></i><img src="ui/icons16/crown.png" alt=""></div>`;
-  return `<div class="gd-pic king"><span class="gd-crowned">${pieceImg('P', 0, 'large', 48)}<img class="pl-crown" src="ui/hud/paper-crown.png" alt=""></span><b>vs</b>${pieceImg('K', 1, 'large', 48)}</div>`;
+/** 안내서 왼쪽 정사각 (D-205): 실제 게임 화면을 자른 그림, 또는 코드 애니메이션 */
+const guideMedia = (m: GuideMedia): string => {
+  if ('img' in m) return `<div class="gd-media shot"><img src="guide/${m.img}.png" alt=""></div>`;
+  if (m.anim === 'king')
+    return `<div class="gd-media anim king"><span class="gd-crowned">${pieceImg('P', 0, 'large', 64)}<img class="pl-crown" src="ui/hud/paper-crown.png" alt=""></span><b>vs</b><span class="gd-foe">${pieceImg('K', 1, 'large', 64)}</span></div>`;
+  if (m.anim === 'formula')
+    return `<div class="gd-media anim formula" aria-label="피해 = (공격 + 합) × 곱">
+      <div class="fx-row r1"><span class="gd-pc">${pieceImg('P', 0, 'small', 30)}</span><span>공격</span><b>10</b></div>
+      <div class="fx-row r2"><i class="op op-add">+</i><span>쇄도</span><b class="add">8</b></div>
+      <div class="fx-row r3 sum"><span>=</span><b>18</b></div>
+      <div class="fx-row r4"><i class="op op-mul">×</i><span>분쇄</span><b class="mul">1.5</b></div>
+      <div class="fx-row r5 total"><span>피해</span><b>27</b></div></div>`;
+  return `<div class="gd-media anim steam"><div class="st-track">${Array.from({ length: 10 }, (_, k) => `<i style="--k:${k}"></i>`).join('')}</div><div class="st-out"><i class="scr big"></i><b>+35</b></div><p>남은 증기 × 5 = 나사</p></div>`;
 };
 
 /**
@@ -153,10 +158,10 @@ export const guide = (open: (html: string) => HTMLElement, last: string = OPENIN
     const draw = (): void => {
       if (done) return;
       const g = GUIDE_PAGES[p];
-      const el = open(`<div class="guide"><button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2>${guidePic(g.pic)}${g.lines.map((l) => `<p>${l}</p>`).join('')}
-        <div class="gd-dots">${GUIDE_PAGES.map((_, k) => `<i${k === p ? ' class="on"' : ''}></i>`).join('')}</div>
-        <div class="row"><button class="btn" type="button" data-prev${p ? '' : ' disabled'}>${OPENING_TEXT.prev}</button><button class="btn brass" type="button" data-next>${p === GUIDE_PAGES.length - 1 ? last : OPENING_TEXT.next}</button></div></div>`);
-      replay(el.querySelector('.gd-pic')!, 'in');
+      const el = open(`<div class="guide gd2"><button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button>
+        <div class="gd-card">${guideMedia(g.media)}<div class="gd-text"><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2>${g.lines.map((l) => `<p>${l}</p>`).join('')}${g.tip ? `<p class="gd-tip">‘${g.tip}’</p>` : ''}</div></div>
+        <div class="gd-nav"><button class="btn" type="button" data-prev${p ? '' : ' disabled'}>${OPENING_TEXT.prev}</button><div class="gd-dots">${GUIDE_PAGES.map((_, k) => `<i${k === p ? ' class="on"' : ''}></i>`).join('')}</div><button class="btn brass" type="button" data-next>${p === GUIDE_PAGES.length - 1 ? last : OPENING_TEXT.next}</button></div></div>`);
+      replay(el.querySelector('.gd-media')!, 'in');
       el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), end()));
       el.querySelector('[data-prev]')!.addEventListener('click', () => {
         if (p > 0) (p--, sfx('tap'), draw());

@@ -130,8 +130,12 @@ const drawCards = (b: SliceBattle, n: number): void => {
 
 /** 연쇄 배수 (이번 턴 처치 수 기준) */
 export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
-  // 덧셈(기본: +25%씩, 상한 4) → 곱셈(증폭 코일: ×1.5씩, 상한 없음) — 3단 성장의 둘째 단 (D-145)
-  parts.includes('coil') ? Math.min(PART_NUM.coilCap, Math.pow(PART_NUM.coilPerKill, kills)) : 1 + Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorPerKill : SLICE.chainPerKill);
+  // 연쇄의 곱(×)은 폭주 코일이 있을 때만 (D-205) — 기본 연쇄는 합(+)이다 (chainAdd)
+  parts.includes('coil') ? Math.min(PART_NUM.coilCap, Math.pow(PART_NUM.coilPerKill, kills)) : 1;
+
+/** 연쇄의 합(+) (D-205): 이번 턴 처치마다 다음 공격 피해 +4 (전도 코일 +7), 상한 4처치. 코일이 있으면 곱으로 바뀌고 합은 없다 */
+export const chainAdd = (kills: number, parts: SlicePartId[] = []): number =>
+  parts.includes('coil') ? 0 : Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorAdd : SLICE.chainAddPerKill);
 
 /** 처치 k개가 올리는 연쇄 칸 (이중 톱니 · 연속 도약은 재발동 — 3단 성장의 셋째 단) */
 const chainGain = (b: SliceBattle, k: number, perKill = 1): number => k * perKill * (has(b, 'echo') ? 2 : 1);
@@ -499,7 +503,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill });
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -545,7 +549,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (c.rally && landed && b.s.winner === null) {
       const plan = marchPlan(b, landed);
       const mid = cloneState(b.s);
-      const s2 = plan.length ? simulate(b.s, plan, { freeAp: true, mult: chainMult(b.kills, b.parts) }) : null;
+      const s2 = plan.length ? simulate(b.s, plan, { freeAp: true, mult: chainMult(b.kills, b.parts), add: chainAdd(b.kills, b.parts) }) : null;
       if (s2 && s2.ok) {
         b.s = s2.state;
         events = [...events, ...s2.events];
@@ -582,7 +586,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   } else if (c.kind === 'march') {
     const plan = marchPlan(b);
     if (!plan.length) return '‘앞으로 갈 폰이 없어.’';
-    const sim = simulate(b.s, plan, { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) });
+    const sim = simulate(b.s, plan, { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts), add: (c.add ?? 0) + chainAdd(b.kills, b.parts) });
     if (!sim.ok) return '‘앞으로 갈 폰이 없어.’';
     b.s = sim.state;
     events = sim.events;

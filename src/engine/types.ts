@@ -134,7 +134,7 @@ export interface HitResult {
 export type BattleEvent =
   | { type: 'move'; order: number; pieceId: number; from: Pos; to: Pos }
   | { type: 'promote'; pieceId: number; from: PieceType; to: PieceType }
-  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number }
+  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number; /** 더한 피해 (합, D-205 — 화면 표시용) */ add?: number }
   | { type: 'gameOver'; winner: Side }
   /** 명예로운 항복: 그 진영 킹이 왕관을 내려놓았다 (D-077) */
   | { type: 'resign'; side: Side; pieceId: number }

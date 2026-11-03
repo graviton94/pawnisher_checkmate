@@ -178,7 +178,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
 };
 
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 처치 수를 돌려준다 */
-const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number): number => {
+const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number, add = 0): number => {
   const { targets, area } = attackScan(s, attacker);
   let mult = baseMult;
   // 연쇄 보너스 (D-077): 이번 턴 앞 순번 처치 수만큼
@@ -191,7 +191,7 @@ const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: 
   let landDmg = 0;
   for (const t of targets) {
     if (t.hp <= 0) continue;
-    let dmg = damageOf(s, attacker, t, mult);
+    let dmg = damageOf(s, attacker, t, mult, add);
     if (part(s, side, 'blade') && t.hp <= t.maxHp * PART_FX.bladeAt) dmg = Math.round(dmg * PART_FX.blade);
     if (t.type === 'K' && part(s, side, 'hunter')) dmg = Math.round(dmg * PART_FX.hunter);
     landDmg = Math.max(landDmg, dmg);
@@ -206,7 +206,7 @@ const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: 
   // 튐 각인: 착지 칸 주변으로 (이 공격에서 가장 큰 피해 기준)
   if (landDmg > 0 && attacker.carve === 'cross') hits.push(...splashAround(s, attacker, land, ORTHO, landDmg, CARVE_FX.splash, skip));
   if (landDmg > 0 && attacker.carve === 'diag') hits.push(...splashAround(s, attacker, land, DIAG, landDmg, CARVE_FX.splash, skip));
-  ctx.events.push({ type: 'attack', order: ctx.order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  ctx.events.push({ type: 'attack', order: ctx.order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}), ...(add > 0 ? { add } : {}) });
   // 양산 명령서: 폰이 치면 그 적에 붙어 있는 다른 아군 폰도 50%로
   if (attacker.type === 'P' && part(s, side, 'phalanx')) {
     for (const h of hits.filter((x) => !x.splash)) {
@@ -244,8 +244,10 @@ const orderCap = (s: BattleState, side: Side): number => (side === 0 && s.twist 
 export interface SimOptions {
   /** 이번 턴 앞서 처치한 수 (명령 카드가 한 장씩 실행될 때 연쇄 보너스를 이어 간다) */
   kills?: number;
-  /** 이 계획 전체에 곱할 공격 배율 (카드 효과) */
+  /** 이 계획 전체에 곱할 공격 배율 (카드 효과 — ×) */
   mult?: number;
+  /** 공격력에 먼저 더하는 피해 (합 — +, D-205). 최종 = (공격 + 합) × 곱 */
+  add?: number;
   /** 태엽 검사를 건너뛴다 (카드가 태엽을 따로 셀 때) */
   freeAp?: boolean;
 }
@@ -301,7 +303,7 @@ export const simulate = (input: BattleState, plan: Plan, opts: SimOptions = {}):
     if (order === 0 && part(s, side, 'firstCog')) mult *= PART_FX.firstCog;
     if (order >= PART_FX.lastFrom && part(s, side, 'lastHammer')) mult *= PART_FX.lastHammer;
     if (prevKilled && part(s, side, 'command')) mult *= PART_FX.command;
-    const killed = performAttack(s, piece, ctx, mult);
+    const killed = performAttack(s, piece, ctx, mult, opts.add ?? 0);
     prevKilled = killed > 0;
     if (s.winner !== null) continue;
 

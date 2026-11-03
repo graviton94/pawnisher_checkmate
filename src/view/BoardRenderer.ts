@@ -1430,6 +1430,15 @@ class BoardScene extends Phaser.Scene {
           .setResolution(this.dpr);
         this.tweens.add({ targets: m, y: m.y - t * 0.4, alpha: 0, scale: 1.3, duration: 900, onComplete: () => m.destroy() });
       }
+      // 합(+): 먼저 더해지는 피해를 청록으로, 곱(×) 왼쪽에 (D-205) — 「+12 ×1.5」 순서 = 식의 순서
+      if (e.add) {
+        const a = this.add
+          .text(atk.root.x + t / 2 - (e.mult ? t * 0.55 : 0), atk.root.y - t * 0.35, `+${e.add}`, { fontFamily: 'Galmuri14, Galmuri11, sans-serif', fontStyle: '700', fontSize: `${Math.round(t * 0.32)}px`, color: '#7FDCEA', stroke: '#0B0B0E', strokeThickness: 4 })
+          .setOrigin(0.5)
+          .setDepth(9)
+          .setResolution(this.dpr);
+        this.tweens.add({ targets: a, y: a.y - t * 0.4, alpha: 0, duration: 900, onComplete: () => a.destroy() });
+      }
 
       // 몸짓 → 기물별 공격 이펙트 (기물 중심에서 공격 범위로) → 이펙트가 닿는 순간 피격
       const kinds = [atk.piece.type];

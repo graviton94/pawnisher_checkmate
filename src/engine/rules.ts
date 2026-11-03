@@ -165,8 +165,9 @@ export const takenMult = (s: BattleState, attacker: Piece | null, t: Piece): num
  * 최종 피해량 (GDD 3장 §3.2): max(1, floor(ATK × 배율) − DEF) × 맞는 쪽 배율.
  * 미리보기 · AI · 실행이 모두 이 식 하나를 쓴다.
  */
-export const damageOf = (s: BattleState, attacker: Piece, target: Piece, multiplier = 1): number => {
-  const atk = Math.floor(attacker.atk * attackMult(s, attacker) * multiplier);
+/** 피해 = (공격력 + 합) × 곱 − 방어 (D-205: 합연산 · 곱연산을 정본으로) */
+export const damageOf = (s: BattleState, attacker: Piece, target: Piece, multiplier = 1, add = 0): number => {
+  const atk = Math.floor((attacker.atk + add) * attackMult(s, attacker) * multiplier);
   const raw = Math.max(1, atk - Math.max(0, target.def));
   return Math.max(1, Math.round(raw * takenMult(s, attacker, target)));
 };

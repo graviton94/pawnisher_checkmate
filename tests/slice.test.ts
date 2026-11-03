@@ -23,9 +23,22 @@ describe('수직 조각: 분대 + 명령 덱 (D-142)', () => {
     expect(b.ap).toBeLessThan(SLICE.ap);
     expect(findPiece(b.s, p.id)).toMatchObject({ x: to.x, y: to.y });
   });
-  it('연쇄 배수는 처치마다 오른다', () => {
-    expect(chainMult(0)).toBe(1);
-    expect(chainMult(2)).toBeCloseTo(1 + 2 * SLICE.chainPerKill);
+  it('연쇄는 처치마다 다음 공격 피해를 더한다 (합, D-205)', async () => {
+    const { chainAdd } = await import('../src/slice/battle');
+    expect(chainMult(2)).toBe(1);
+    expect(chainAdd(0)).toBe(0);
+    expect(chainAdd(2)).toBe(2 * SLICE.chainAddPerKill);
+  });
+  it('피해 = (공격 + 합) × 곱 (D-205)', async () => {
+    const { damageOf } = await import('../src/engine');
+    const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 7);
+    const me = b.s.pieces.find((p) => p.side === 0 && p.type === 'N')!;
+    const foe = b.s.pieces.find((p) => p.side === 1 && p.type === 'P')!;
+    const plain = damageOf(b.s, me, foe, 1, 0);
+    const added = damageOf(b.s, me, foe, 1, 8);
+    const both = damageOf(b.s, me, foe, 2, 8);
+    expect(added - plain).toBe(8);
+    expect(both).toBe(Math.floor((me.atk + 8) * 2) - foe.def);
   });
   it('턴을 끝내면 예고대로 두고 · 나사가 한 칸 사라지고 · 새 손패', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7);

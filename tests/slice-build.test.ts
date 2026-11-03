@@ -34,9 +34,12 @@ describe('빌드 축 · 부품 (D-144)', () => {
     expect(typeof r2).toBe('object');
     expect(typeof rewind(r2 as SliceBattle)).toBe('string');
   });
-  it('증폭 코일: 처치마다 ×1.5, 상한 없음 (D-145에서 덧셈 → 곱셈)', () => {
-    expect(chainMult(6, ['coil'])).toBeCloseTo(1.5 ** 6);
-    expect(chainMult(6)).toBeCloseTo(1 + SLICE.chainCap * SLICE.chainPerKill);
+  it('증폭 코일: 처치마다 ×1.5, 최대 ×16 — 기본 연쇄는 합 (D-205)', async () => {
+    const { chainAdd } = await import('../src/slice/battle');
+    expect(chainMult(6, ['coil'])).toBeCloseTo(Math.min(16, 1.5 ** 6));
+    expect(chainMult(6)).toBe(1);
+    expect(chainAdd(6)).toBe(SLICE.chainCap * SLICE.chainAddPerKill);
+    expect(chainAdd(6, ['coil'])).toBe(0);
   });
   it('행진 북: 폰 카드 태엽 −1', () => {
     const b = mk(['drum'], ['advance', 'march', 'leap']);
@@ -106,9 +109,10 @@ describe('빌드 축 · 부품 (D-144)', () => {
 });
 
 describe('3단 성장 · 교차 브릿지 (D-145)', () => {
-  it('증폭 코일은 곱해진다 (×1.5씩) · 기본은 더한다', () => {
+  it('증폭 코일은 곱해진다 (×1.5씩) · 기본은 더한다 (+4씩, D-205)', async () => {
+    const { chainAdd } = await import('../src/slice/battle');
     expect(chainMult(4, ['coil'])).toBeCloseTo(1.5 ** 4);
-    expect(chainMult(4)).toBeCloseTo(1 + 4 * SLICE.chainPerKill);
+    expect(chainAdd(4)).toBe(16);
   });
   it('이중 톱니: 처치 하나가 연쇄 두 칸', () => {
     const b = mk(['echo'], ['leap', 'advance']);
@@ -249,7 +253,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     const { SLICE_PARTS } = await import('../src/slice/parts');
     expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+')).length).toBe(43);
     expect(REWARD_COMMANDS.length).toBe(37); // + 연쇄 소모 3 (D-203)
-    expect(Object.keys(SLICE_PARTS).length).toBe(24);
+    expect(Object.keys(SLICE_PARTS).length).toBe(25); // + 닳은 숫돌 (D-205)
   });
   it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 피의 계약(턴 끝 킹 −4)', () => {
     const b = mk(['brittle']);
@@ -271,8 +275,9 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     expect(b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!.shield).toBe(25);
     expect(b.s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(3);
   });
-  it('전도 코일: 연쇄 처치마다 +35%', () => {
-    expect(chainMult(2, ['conductor'])).toBeCloseTo(1.7);
+  it('전도 코일: 연쇄 처치마다 +7 (합, D-205)', async () => {
+    const { chainAdd } = await import('../src/slice/battle');
+    expect(chainAdd(2, ['conductor'])).toBe(14);
   });
 });
 

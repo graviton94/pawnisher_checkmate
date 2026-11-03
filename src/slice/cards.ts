@@ -52,8 +52,10 @@ export interface CommandDef {
   rage?: boolean;
   /** 처치하면 카드를 이만큼 뽑는다 */
   drawOnKill?: number;
-  /** 이번 공격 배율 */
+  /** 이번 공격 배율 (곱 ×, D-205) */
   mult?: number;
+  /** 이번 공격에 더하는 피해 (합 +, D-205) — 최종 = (공격 + 합) × 곱 */
+  add?: number;
   /** 이번 공격에만 붙는 각인 효과 */
   carve?: CarveId;
   amount?: number;
@@ -71,7 +73,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '원하는 기물에게 명령한다.' },
   pierceDiag: { axis: 'chain', name: '심판의 창', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 1기까지)' },
   crossLeap: { axis: 'cav', name: '지축 강타', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
-  charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', mult: 1.6, desc: '일격을 휘두른다. (×1.6)' },
+  charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', add: 8, desc: '일격을 휘두른다. (+8)' },
   plate: { name: '철벽', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15)' },
   repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 15, desc: '기물 하나를 땜질한다. (HP +15)' },
   reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 2, desc: '탄창을 다시 채운다. (카드 +2)' },
@@ -101,10 +103,10 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   shieldBash: { axis: 'push', axis2: 'inf', name: '방패 돌진', cost: 1, who: 'P', kind: 'move', push: true, desc: '방패로 밀쳐 낸다. 막히면 부딪친다. (충돌 18)' },
   ram: { axis: 'push', axis2: 'cav', name: '파성추', cost: 1, who: 'N', kind: 'move', push: true, desc: '들이받아 밀어낸다. 막히면 부딪친다. (충돌 18)' },
   // ---- 볼륨 (R5-5, D-172): 있는 장치(배율 · 각인 · 밀치기 · 뽑기 · 연쇄)만 조합 ----
-  pawnStorm: { axis: 'inf', name: '선두 분쇄', cost: 1, who: 'P', kind: 'move', push: true, mult: 1.3, desc: '앞으로 밀어붙인다. (×1.3, 밀치기)' },
+  pawnStorm: { axis: 'inf', name: '선두 분쇄', cost: 1, who: 'P', kind: 'move', push: true, add: 5, desc: '앞으로 밀어붙인다. (+5, 밀치기)' },
   knightRaid: { axis: 'cav', name: '기습', cost: 2, who: 'N', kind: 'move', mult: 1.8, drawOnKill: 1, desc: '어둠 속에서 덮친다. (×1.8, 처치 시 카드 +1)' },
   bishopRay: { axis: 'chain', name: '정죄의 빛', cost: 2, who: 'B', kind: 'move', carve: 'pierce', mult: 1.4, desc: '사선 끝까지 꿰뚫는다. (×1.4, 뒤의 1기까지)' },
-  rookCharge: { axis: 'push', name: '성벽 돌진', cost: 2, who: 'R', kind: 'move', push: true, mult: 1.3, desc: '요새가 통째로 밀고 들어간다. (×1.3, 밀치기)' },
+  rookCharge: { axis: 'push', name: '성벽 돌진', cost: 2, who: 'R', kind: 'move', push: true, add: 8, desc: '요새가 통째로 밀고 들어간다. (+8, 밀치기)' },
   kingDecree: { axis: 'king', axis2: 'chain', name: '왕명', cost: 1, who: 'K', kind: 'move', chainPerKill: 2, desc: '왕의 손에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
   overload: { axis: 'chain', name: '과부하', cost: 3, who: 'any', kind: 'move', mult: 2.5, desc: '태엽을 끝까지 감는다. (×2.5)' },
   quickFix: { name: '덧댐', cost: 0, who: 'any', kind: 'repair', amount: 8, desc: '급한 대로 덧댄다. (HP +8)' },
@@ -217,6 +219,8 @@ export const SLICE = {
   /** 적도 태엽 3으로 움직인다 (같은 규칙) */
   enemyAp: 3,
   /** 연쇄: 이번 턴 처치마다 +25% (Balatro 정산 — 순서가 곧 화력) */
+  /** 연쇄 (D-205 — 합 +): 이번 턴 처치마다 다음 공격 피해 +이만큼, 상한 chainCap 처치 */
+  chainAddPerKill: 4,
   chainPerKill: 0.25,
   chainCap: 4,
   /** 나사 트랙 (Pawnbarian 루트 트랙): 턴마다 한 칸씩 사라진다 */

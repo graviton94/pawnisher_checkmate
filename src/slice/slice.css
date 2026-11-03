@@ -843,7 +843,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .gd-pic img { image-rendering: pixelated; }
 .gd-pic > img { width: 40px; height: 40px; }
 .gd-pic b { color: #f4d27a; font-size: 18px; }
-.gd-card { display: grid; place-items: center; width: 36px; height: 48px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
+.gd-pic .gd-card { display: grid; place-items: center; width: 36px; height: 48px; background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
 .gd-pic.red i { position: relative; width: 40px; height: 40px; background: #3a3944; }
 .gd-pic.red i.r { background: rgba(229, 38, 47, 0.45); box-shadow: inset 0 0 0 2px #e5262f; }
 .gd-pic.red i img { position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; }
@@ -1035,3 +1035,56 @@ body.slice .price { display: flex; align-items: center; justify-content: center;
 .scr { display: inline-block; width: 16px; height: 16px; background: var(--screw) 0 0 / 100% 100%; image-rendering: pixelated; flex: none; }
 .scr.big { width: 36px; height: 36px; }
 body.slice .price.poor .scr { filter: grayscale(1) brightness(.8); }
+
+/* 합(+) · 곱(×) 표지 (D-205): 합 = 청록 사각, 곱 = 주황 사각 — 카드 · 부품 · 계기판 같은 색 */
+.op { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 3px; font: 700 14px/1 Galmuri14, sans-serif; font-style: normal; color: #0b0a0e; box-shadow: 0 0 0 2px #000; vertical-align: middle; }
+.op.op-add { background: #5cc4d4; }
+.op.op-mul { background: #ff9f40; }
+.meter .mult em { font-style: normal; display: inline-block; margin: 0 2px; }
+.meter .mult .op-add { color: #7fdcea; }
+.meter .mult .op-mul { color: #ffb15a; }
+
+/* ---------- 안내서 가로 카드 (D-205) — 왼쪽 정사각 예시 · 오른쪽 설명 ---------- */
+body.slice .overlay .panel:has(.gd2) { width: min(860px, 96vw); }
+.guide.gd2 { position: relative; display: grid; gap: 10px; }
+.gd2 .gd-card { display: grid; grid-template-columns: min(58vh, 250px) minmax(0, 1fr); gap: 14px; align-items: start; width: auto; height: auto; background: none; box-shadow: none; place-items: stretch; }
+.gd-media { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; background: #0e0d12; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; display: grid; place-items: center; }
+.gd-media.shot img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; animation: gdzoom 6s ease-in-out infinite alternate; }
+@keyframes gdzoom { from { transform: scale(1); } to { transform: scale(1.06); } }
+.gd-text { display: grid; gap: 6px; align-content: start; padding-right: 48px; min-width: 0; }
+.gd-text h2 { margin: 0; font-size: 20px; }
+.gd-text p { margin: 0; font-size: 15px; line-height: 1.45; color: #e8e2d6; }
+.gd-text .sf-eyebrow { font-size: 12px; color: #a59fae; }
+.gd-text .gd-tip { margin-top: 4px; color: #f4d27a; font-style: italic; }
+.gd-nav { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.gd-nav .btn { min-height: 48px; min-width: 110px; }
+.gd-nav .gd-dots { justify-self: center; }
+/* 목표: 종이 왕관 폰 vs 검은 킹 */
+.gd-media.king { grid-auto-flow: column; gap: 12px; background: radial-gradient(circle at 50% 70%, #2a1e14, #0e0d12 70%); }
+.gd-media.king b { color: #f4d27a; font: 700 22px Galmuri14, sans-serif; }
+.gd-media.king .gd-crowned { position: relative; animation: gdbob 1.6s steps(4) infinite alternate; }
+.gd-media.king .gd-crowned .pl-crown { position: absolute; left: 50%; top: -14%; width: 70%; transform: translateX(-50%) rotate(-8deg); image-rendering: pixelated; }
+.gd-media.king .gd-foe { animation: gdbob 1.6s steps(4) infinite alternate-reverse; }
+@keyframes gdbob { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+/* 피해 식: 한 줄씩 들어와 — 공격 10 → + 합 8 → = 18 → × 곱 1.5 → 피해 27, 다시 처음부터 */
+.gd-media.formula { align-content: center; justify-items: stretch; gap: 4px; padding: 10px 14px; }
+.fx-row { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 6px; font: 700 15px Galmuri14, sans-serif; color: #e8e2d6; opacity: 0; animation: fxrow 6s steps(1) infinite; }
+.fx-row b { font-size: 19px; color: #f2ede4; }
+.fx-row b.add { color: #7fdcea; } .fx-row b.mul { color: #ffb15a; }
+.fx-row.sum, .fx-row.total { border-top: 2px solid #46404f; padding-top: 4px; }
+.fx-row.total b { font-size: 26px; color: #facc15; }
+.fx-row .op { width: 26px; height: 26px; font-size: 18px; }
+.fx-row.r1 { animation-delay: 0s; } .fx-row.r2 { animation-delay: .6s; } .fx-row.r3 { animation-delay: 1.2s; } .fx-row.r4 { animation-delay: 1.9s; } .fx-row.r5 { animation-delay: 2.6s; }
+@keyframes fxrow { 0% { opacity: 1; } 80% { opacity: 1; } 81%, 100% { opacity: 0; } }
+/* 증기 → 나사 */
+.gd-media.steam { align-content: center; justify-items: center; gap: 12px; padding: 12px; }
+.st-track { display: flex; gap: 4px; }
+.st-track i { width: 14px; height: 22px; background: #cfe3ea; box-shadow: 0 0 0 2px #000; animation: stdrain 6s steps(1) infinite; animation-delay: calc(var(--k) * -0.0s); }
+.st-track i:nth-child(n+8) { animation-name: stgone; }
+@keyframes stgone { 0%, 12% { background: #cfe3ea; } 13%, 100% { background: #2b2832; } }
+@keyframes stdrain { 0%, 100% { background: #cfe3ea; } }
+.st-out { display: flex; align-items: center; gap: 6px; font: 700 26px Galmuri14, sans-serif; color: #f4d27a; animation: stout 6s steps(1) infinite; }
+@keyframes stout { 0%, 40% { opacity: 0; } 41%, 100% { opacity: 1; } }
+.gd-media.steam p { margin: 0; font-size: 13px; color: #a59fae; }
+@media (prefers-reduced-motion: reduce) { .gd-media.shot img, .gd-crowned, .gd-foe { animation: none; } .fx-row, .st-out { animation: none; opacity: 1; } }
+@media (max-height: 380px) { .gd2 .gd-card { grid-template-columns: 54vh minmax(0, 1fr); } .gd-text p { font-size: 14px; } }
