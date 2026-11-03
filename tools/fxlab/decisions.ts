@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 54, date: '2026-11-03' };
+export const VERSION = { n: 55, date: '2026-11-03' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -140,9 +140,10 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   // 고를 것 · 대기 (보는 중인 것은 위 탭 TOPICS)
   { item: '지형 소품', rule: '불합격 (사용자: 디자인 자체가 별로) — 방향을 다시 정할 때까지 판에 올리지 않는다', status: 'pick' },
   { item: '이펙트 스프라이트', rule: '발주 시트 E가 오면 같은 박자에 그림만 갈아 끼운다', status: 'wait' },
-  { item: '속전 게이지', rule: '진공관 줄 — 켜진 관은 필라멘트가 은은히 떨고, 턴이 지나면 끝 관이 몇 번 깜빡이다 식는다 (D-209)', status: 'review' },
-  { item: '태엽 게이지', rule: '팔각 열쇠 구멍 속 황동 열쇠 — 쓰면 열쇠가 풀리듯 거꾸로 돌며 꺼지고, 감기면 딸깍딸깍 앞으로 돌며 켜진다 (D-209)', status: 'review' },
-  { item: '탄창 손패', rule: '한 발 = 머리(비용 · 기물 · 이름) 40px. 한 번 누르면 몸(설명 칸)이 4단으로 드르륵 펼쳐지고, 한 번 더 누르면 장전 (D-209)', status: 'review' },
+  { item: '속전 게이지', rule: '6×14도트 진공관 띠(켜짐 · 떨림 · 번쩍 · 불씨 · 꺼짐 5칸) — 켜진 관은 가끔 한 칸 어두워지고, 턴이 지나면 끝 관이 번쩍 → 불씨 → 꺼짐 (D-211, tools/draw-hud.py)', status: 'review' },
+  { item: '태엽 게이지', rule: '18도트 팔각 열쇠 구멍 + 태엽 열쇠 도트를 90도씩 돌린 5칸 띠 — 쓰면 네 번 넘어가며 빈 열쇠로, 감기면 거꾸로 (D-211)', status: 'review' },
+  { item: '탄창 손패', rule: '기물 색 띠 + 리벳 철판 9-slice 머리, 오목한 홈 9-slice 몸. 기본 카드 머리 = 칭호, 몸 = 하는 일. 한 번 누르면 4단 드르륵 펼침, 한 번 더 누르면 장전 (D-209 · D-211)', status: 'review' },
+  { item: '레일 단추 · 도움말', rule: '덱 · 분대 · 되감기 · 턴 끝 모두 철 · 황동 도트 단추. 도움말은 판 무대 오른쪽 위의 태엽 톱니 속 ? (D-211)', status: 'review' },
   // 확정 (v49: 오래 게임에 들어가 있고 지적 없던 것은 확정으로 옮김 — 바꾸고 싶으면 말해 주세요)
   { item: '도트 격자', rule: '판 칸 20×20 도트, 기물 약 16도트 높이(칸의 0.82). 판·표식·이펙트 모두 같은 격자', status: 'done' },
   { item: '박자', rule: '예비 동작(느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
@@ -169,6 +170,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 55, date: '2026-11-03', items: ['레일 HUD를 도트 부품으로 다시 (D-211): 탄 머리판 7색 · 몸 홈 · 계기 창 · 열쇠 구멍 · 열쇠 회전 띠 · 진공관 띠 · 톱니 ? · ◀◀ — 그라데이션 · 둥근 모서리 · 빛 번짐 제거'] },
   { v: 54, date: '2026-11-03', items: ['전투 화면 탄창 배치 (D-208 · D-209): 탄창 손패 드르륵 펼침 · 진공관 속전 게이지 · 열쇠 태엽 게이지 · 되감기 확인창'] },
   { v: 53, date: '2026-11-01', items: ['시험판 명령 카드 다시: 마름모 비용 → 태엽 열쇠 개수, 리벳 철판, 기본 카드는 칭호만 (D-159 · D-161)'] },
   { v: 52, date: '2026-11-01', items: ['규격 2.0: 판 위 표식 둘(각인 · 정예) · 카드 레일 삭제 · 고물상 · 공방 · 양날 쌍 화면'] },

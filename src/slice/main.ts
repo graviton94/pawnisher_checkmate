@@ -62,7 +62,12 @@ import { Rng } from '../engine/rng';
     right.prepend(top);
     top.after(mid);
     const act = right.querySelector('.actions')!;
-    act.prepend(document.getElementById('btn-help')!, document.getElementById('btn-rewind')!);
+    act.prepend(document.getElementById('btn-rewind')!);
+    // 도움말(지금 화면 · 용어 · 안내서)은 판 무대 오른쪽 위 — 자주 안 누르고, 턴 끝과 멀어야 한다 (D-211)
+    const help = document.getElementById('btn-help')!;
+    help.classList.add('cog-help');
+    help.innerHTML = '<i aria-hidden="true"></i>';
+    document.getElementById('board')!.appendChild(help);
     right.querySelector('.rail-head')?.remove();
   } else if (lay === 'e') {
     // 기본 = E안 (D-207, 사용자: "좌우가 쓸데없는 정보나 텅 비어 있다"): 판은 화면 높이 꽉, 왼쪽 = 내 선택지(손패 2열 · 설명까지), 오른쪽 = 적의 수(예고 목록) · 연쇄 · 턴 끝
@@ -299,10 +304,12 @@ const magHtml = (id: CommandId, i: number): string => {
   const open = openCard === i || selCard === i;
   const shape = c.who !== 'any' && c.kind === 'move' ? `<span class="mg-shape">${shapeHtml(c.who, 7)}</span>` : '';
   const desc = c.desc ? `<p class="mg-desc">${c.desc}</p>` : '';
-  const flv = c.flavor ? `<p class="mg-flv">${c.flavor}</p>` : '';
+  // 기본 행마 카드: 머리 = 칭호(작은 개척자), 몸 = 실제로 하는 일(한 칸 나아가 대각선 앞을 벤다) — 사용자 지적 D-211
+  const titled = !!c.flavor && !c.flavor.startsWith('“') && c.kind === 'move' && !c.axis;
+  const flv = c.flavor && !titled ? `<p class="mg-flv">${c.flavor}</p>` : '';
   const hint = selCard === i ? '' : `<p class="mg-use">${off ? why || '지금은 쓸 수 없음' : '한 번 더 누르면 장전'}</p>`;
   return `<button type="button" class="cmd mag t-${c.who}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
-    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${c.name}</b>${opTag(opOfCard(c))}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
+    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.flavor : c.name}</b>${opTag(opOfCard(c))}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
 };
 
 /**
@@ -507,7 +514,7 @@ const gauges = (): void => {
     $('vials').innerHTML = `<span class="lbl">태엽</span><span class="keys">${Array.from({ length: n }, (_, i) => {
       const on = i < b.ap;
       const fx = was === null || calmNow() ? '' : !on && i < was ? ' spend' : on && i >= was ? ' wind' : '';
-      return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><img src="ui/hud/key-${on ? 'full' : 'spent'}.png" alt=""></i>`;
+      return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><i class="key"></i></i>`;
     }).join('')}</span><b>${b.ap}/${b.apMax}</b>`;
   }
   if (coinPrev !== b.coins || !$('coins').childElementCount) {
@@ -550,7 +557,7 @@ const refresh = (): void => {
   turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c, .lay-e, .lay-f') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
   const deckRow = document.getElementById('deckrow');
   const head = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>`;
-  if (deckRow) deckRow.innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button><span>버림 ${b.discard.length + (b.played?.length ?? 0)}</span></p>`;
+  if (deckRow) deckRow.innerHTML = `<p class="hand-head"><button type="button" class="btn deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="btn deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button><span>버림 ${b.discard.length + (b.played?.length ?? 0)}</span></p>`;
   if (openCard !== null && openCard >= b.hand.length) openCard = null;
   const oldBody = $('hand').querySelector<HTMLElement>('.cmd.open .mg-body');
   const handLen0 = $('hand').querySelectorAll('[data-card]').length;
@@ -574,7 +581,7 @@ const refresh = (): void => {
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   gauges();
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
-  $('btn-rewind').innerHTML = `<span class="rw-i">◀◀</span> <span class="rw-t">되감기</span> <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
+  $('btn-rewind').innerHTML = `<span class="rw-i"><i class="ico-rew" aria-hidden="true"></i></span> <span class="rw-t">되감기</span> <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
   meter();
   coach();

@@ -1354,3 +1354,66 @@ body.slice.lay-f .apbar > b { grid-row: 1; grid-column: 2; }
 body.slice.lay-f .apbar .keys { grid-row: 2; }
 body.slice.lay-f #btn-rewind .rw-t { display: none !important; }
 body.slice.lay-f #btn-rewind small { margin-top: 2px; font-size: 12px; }
+
+/* ===================== D-211 도트 철학 맞추기 — 레일의 모든 그림을 public/ui/kit 도트(tools/draw-hud.py)로, 1도트 = --px ===================== */
+/* 탄 머리판: 기물 색 띠 + 리벳이 찍힌 철판 9-slice (그라데이션 · 둥근 리벳 없이) */
+body.slice.lay-f #hand > .cmd.mag { background: none; border: 0; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/mag-P.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; box-shadow: none; filter: none; }
+body.slice.lay-f #hand > .cmd.mag::before, body.slice.lay-f #hand > .cmd.mag::after { content: none; }
+body.slice.lay-f #hand > .cmd.mag.t-N { border-image-source: url('../assets/ui/kit/mag-N.png'); }
+body.slice.lay-f #hand > .cmd.mag.t-B { border-image-source: url('../assets/ui/kit/mag-B.png'); }
+body.slice.lay-f #hand > .cmd.mag.t-R { border-image-source: url('../assets/ui/kit/mag-R.png'); }
+body.slice.lay-f #hand > .cmd.mag.t-Q { border-image-source: url('../assets/ui/kit/mag-Q.png'); }
+body.slice.lay-f #hand > .cmd.mag.t-K { border-image-source: url('../assets/ui/kit/mag-K.png'); }
+body.slice.lay-f #hand > .cmd.mag.t-any { border-image-source: url('../assets/ui/kit/mag-any.png'); }
+body.slice.lay-f #hand > .cmd.mag .mg-head { height: 32px; padding: 0 2px 0 4px; }
+/* 펼친 몸: 오목한 홈 9-slice — 머리와 칸이 갈린다 */
+body.slice.lay-f #hand > .cmd.mag .mg-body { margin: 2px -2px -2px 0; background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 2); border-image: url('../assets/ui/kit/mag-body.png') 2 fill / calc(var(--px) * 2) stretch; padding: 4px 6px 5px; }
+/* 고름 · 장전: 단단한 2도트 테두리만 (빛 번짐 없음) */
+body.slice.lay-f #hand > .cmd.mag.open:not(.armed) { box-shadow: 0 0 0 var(--px) #8a8794; }
+body.slice.lay-f #hand > .cmd.mag.armed { box-shadow: 0 0 0 var(--px) #000, 0 0 0 calc(var(--px) * 2) #facc15; }
+body.slice.lay-f #hand > .cmd.mag.off { filter: none; opacity: 0.55; }
+body.slice.lay-f #hand > .cmd.mag.off.open { filter: none; opacity: 0.8; }
+/* 탄창 · 기록 칸 틀: 오목한 홈 */
+body.slice.lay-f .rail.left > #hand, body.slice.lay-f #right > .rmid { background: #0f0e13; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 2); border-image: url('../assets/ui/kit/mag-body.png') 2 fill / calc(var(--px) * 2) stretch; }
+/* 계기 창(태엽 · 속전): 리벳 창 9-slice */
+body.slice.lay-f .rail.left > .apbar, body.slice.lay-f #right > .gtop { background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/gauge.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; padding: 0 2px; }
+/* 태엽: 팔각 열쇠 구멍(14도트) 속 열쇠(16도트) — 쓰면 열쇠 띠가 90도씩 네 번 넘어가며 빈 열쇠로 (steps = 도트 그대로) */
+body.slice.lay-f .apbar .keys { gap: 2px; justify-content: space-between; align-items: center; }
+body.slice.lay-f .apbar .seg { flex: 0 0 auto; width: 28px; height: 28px; background: url('../assets/ui/kit/socket.png') 0 0 / 28px 28px no-repeat; image-rendering: pixelated; clip-path: none; box-shadow: none; display: grid; place-items: center; animation: none; filter: none; }
+body.slice.lay-f .apbar .seg.on { background-image: url('../assets/ui/kit/socket-lit.png'); }
+body.slice.lay-f .apbar .seg.bonus.on { background-image: url('../assets/ui/kit/socket-bonus.png'); }
+body.slice.lay-f .apbar .seg .key { display: block; width: 32px; height: 32px; margin: -2px; background: url('../assets/ui/kit/key-spin.png') -128px 0 / 160px 32px no-repeat; image-rendering: pixelated; }
+body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
+body.slice.lay-f .apbar .seg.bonus .key { background-image: url('../assets/ui/kit/key-spin-bonus.png'); }
+body.slice.lay-f .apbar .seg.spend .key { animation: keySpin 360ms steps(4, jump-none) both; }
+body.slice.lay-f .apbar .seg.wind .key { animation: keyWind2 280ms steps(4, jump-none) both; animation-delay: calc(var(--k) * 60ms); }
+@keyframes keySpin { from { background-position: 0 0; } to { background-position: -128px 0; } }
+@keyframes keyWind2 { from { background-position: -128px 0; } to { background-position: 0 0; } }
+/* 속전: 진공관 띠(6×14도트) — 켜짐은 가끔 한 칸 어두워지는 떨림, 꺼질 땐 번쩍 → 불씨 → 꺼짐 */
+body.slice.lay-f .gtop .coins .tubes { background: none; box-shadow: none; padding: 0; gap: 2px; justify-content: space-between; align-items: end; }
+body.slice.lay-f .gtop .coins .tube { flex: 0 0 auto; width: 12px; height: 28px; border-radius: 0; box-shadow: none; filter: none; background: url('../assets/ui/kit/tube.png') -48px 0 / 60px 28px no-repeat; image-rendering: pixelated; animation: none; }
+body.slice.lay-f .gtop .coins .tube::after { content: none; }
+body.slice.lay-f .gtop .coins .tube.lit { background-position: 0 0; animation: tubeFlick 3.2s steps(1, end) infinite; animation-delay: calc(var(--k) * -0.53s); }
+@keyframes tubeFlick { 0%, 61%, 66%, 100% { background-position: 0 0; } 62%, 65% { background-position: -12px 0; } }
+body.slice.lay-f .gtop .coins .tube.dying { animation: tubeOut 900ms steps(1, end) both; }
+@keyframes tubeOut { 0% { background-position: 0 0; } 15% { background-position: -24px 0; } 30% { background-position: -48px 0; } 45% { background-position: -24px 0; } 60% { background-position: -36px 0; } 80%, 100% { background-position: -48px 0; } }
+/* 단추: 모두 같은 철 · 황동 도트 버튼 (덱 · 분대도) */
+body.slice.lay-f .deckrow .deck-btn { background: none; box-shadow: none; color: #ece6da; font: 700 13px Galmuri11, sans-serif; margin: 0; min-width: 0; }
+body.slice.lay-f #btn-rewind .ico-rew { display: block; width: 22px; height: 14px; background: url('../assets/ui/kit/ico-rewind.png') 0 0 / 22px 14px no-repeat; image-rendering: pixelated; }
+body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 64px; width: 64px; }
+/* 도움말: 판 무대 오른쪽 위, 태엽 톱니 안의 ? */
+#board > .cog-help { position: absolute; top: 4px; right: 4px; z-index: 6; width: 48px; height: 48px; min-width: 0; min-height: 0; padding: 0; border: 0; border-image: none; background: none; display: grid; place-items: center; }
+#board > .cog-help i { display: block; width: 32px; height: 32px; background: url('../assets/ui/kit/cog-help.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
+#board > .cog-help:active i { transform: translateY(var(--px)); }
+@media (prefers-reduced-motion: reduce) { body.slice.lay-f .gtop .coins .tube.lit { animation: none; } }
+body.slice.lay-f #hand > .cmd.mag { border-width: calc(var(--px) * 5); border-image-slice: 5 fill; border-image-width: calc(var(--px) * 5); }
+body.slice.lay-f #hand > .cmd.mag .mg-head { height: auto; min-height: 30px; padding: 0 0 0 2px; }
+body.slice.lay-f #hand > .cmd.mag .mg-head b { white-space: normal; font-size: 14px; line-height: 1.15; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+body.slice.lay-f #hand > .cmd.mag .mg-body { margin: 4px -4px -4px -2px; }
+body.slice.lay-f .apbar .seg { width: 36px; height: 36px; background-size: 36px 36px; }
+body.slice.lay-f .apbar .seg .key { margin: 0; }
+body.slice.lay-f .rail.left > .apbar { grid-template-rows: 14px 1fr; row-gap: 2px; }
+body.slice.lay-f .deckrow .deck-btn { border-style: solid; border-width: calc(var(--px) * 4); }
+body.slice.lay-f .deckrow .deck-btn { border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / calc(var(--px) * 4) stretch; }
+body.slice.lay-f .deckrow .deck-btn:active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); }
+@keyframes tubeFlick { 0%, 62%, 64%, 100% { background-position: 0 0; } 63% { background-position: -12px 0; } }
