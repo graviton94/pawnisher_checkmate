@@ -35,7 +35,23 @@ import { Rng } from '../engine/rng';
 // 판 배치 시안 (D-198 7번): ?layout=b|c — 사용자가 고르면 기본으로 굳힌다
 {
   const lay = new URLSearchParams(location.search).get('layout');
+  // 기본 = 4안 (D-206, 사용자 결정): 판 무대 + 아래 부채꼴 손패 + 판 옆 적 초상. ?layout=a(예전) · b · c 는 비교용
   if (lay === 'b' || lay === 'c') document.body.classList.add(`lay-${lay}`);
+  else if (lay !== 'a') {
+    document.body.classList.add('lay-d');
+    // 배치 옮기기: 턴 · ? · 증기 · 반장 규칙 · 부품 → 왼쪽 기둥, 오른쪽 기둥 위에 적 초상
+    const left = document.getElementById('left')!;
+    const hand = document.getElementById('hand')!;
+    const head = document.querySelector('#right .rail-head')!;
+    for (const el of [head, document.getElementById('coins'), document.getElementById('boss'), document.getElementById('parts')]) if (el) left.insertBefore(el, hand);
+    left.insertBefore(document.getElementById('vials')!, head.nextSibling);
+    // 손패는 화면 아래 가운데 고정 — 기둥의 transform 안에 있으면 fixed가 기둥 기준이 되므로 body로 뺀다
+    document.body.appendChild(hand);
+    const pt = document.createElement('div');
+    pt.id = 'portrait';
+    pt.className = 'portrait';
+    document.getElementById('right')!.prepend(pt);
+  }
 }
 
 /**
@@ -224,7 +240,10 @@ const cardHtml = (id: CommandId, i: number): string => {
   const off = !ok || busy;
   const art = cardArt(id);
   const why = busy ? '' : poor ? `<em>태엽 ${cost} 필요</em>` : !ok ? `<em>${c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : '움직일 기물 없음'}</em>` : '';
-  return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''}>
+  // 부채꼴 (4안): 가운데에서 멀수록 기울고 내려간다
+  const mid = (b.hand.length - 1) / 2;
+  const fan = `--r:${((i - mid) * 5).toFixed(1)}deg;--fy:${Math.round(Math.abs(i - mid) ** 1.4 * 6)}px`;
+  return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" style="${fan}" ${off ? 'aria-disabled="true"' : ''}>${opTag(opOfCard(c)) ? `<span class="op-corner">${opTag(opOfCard(c))}</span>` : ''}
     ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${opTag(opOfCard(c))}${axisChip(c.axis)}${axisChip(c.axis2)}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}</span></button>`;
 };
 
@@ -250,8 +269,15 @@ const showPeek = (cardEl: HTMLElement): void => {
   peekEl.style.visibility = 'hidden';
   document.body.appendChild(peekEl);
   const h = peekEl.offsetHeight;
-  peekEl.style.left = `${r.right + 10}px`;
-  peekEl.style.top = `${Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2))}px`;
+  if (document.body.classList.contains('lay-d')) {
+    // 아래 부채꼴 손패: 크게 보기는 카드 위로 (판 가운데 위쪽)
+    const w = peekEl.offsetWidth;
+    peekEl.style.left = `${Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2))}px`;
+    peekEl.style.top = `${Math.max(8, r.top - h - 10)}px`;
+  } else {
+    peekEl.style.left = `${r.right + 10}px`;
+    peekEl.style.top = `${Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2))}px`;
+  }
   // D-189: 도트가 아래에서 쓸어 올리며 드러내고, 닫을 땐 위에서 쓸어 내린다
   sweep(peekEl, true);
 };
@@ -315,12 +341,37 @@ let turnDmg = 0;
 const dealt = (events: BattleEvent[], side: 0 | 1, before: BattleState): number =>
   events.reduce((a, e) => (e.type === 'attack' ? a + e.hits.reduce((x, h) => x + (before.pieces.find((p) => p.id === h.targetId)?.side !== side ? h.damage : 0), 0) : a), 0);
 
+/**
+ * 판 옆 적 초상 (4안, D-206): 반장이면 반장 그림(B-01~03), 원수가 섰으면 원수, 아니면 적 킹 — 이름 · HP.
+ * 그림이 없으면 기물 도트. 같은 내용이면 다시 그리지 않는다(깜빡임 없이).
+ */
+let portraitKey = '';
+const portrait = (): void => {
+  const el = document.getElementById('portrait');
+  if (!el) return;
+  const k = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+  const nem = b.nemesisId !== undefined ? b.s.pieces.find((p) => p.id === b.nemesisId) : undefined;
+  const who = b.boss ? BOSS_RULES[b.bossRule].name : nem && nemesisNow ? `원수 「${nemesisNow.name}」` : '적 킹';
+  const target = b.boss || !nem ? k : nem;
+  const hp = target ? `${target.hp}${target.shield ? ` +${target.shield}` : ''} / ${target.maxHp}` : '쓰러짐';
+  const art = b.boss ? `<img class="pt-art" src="scenes/${BOSS_ART[b.bossRule]}.png" alt="" onerror="this.remove()">` : '';
+  const key = `${who}|${b.boss}|${target?.type}`;
+  if (key !== portraitKey) {
+    portraitKey = key;
+    el.className = `portrait${b.boss ? ' boss' : ''}`;
+    el.innerHTML = `<div class="pt-frame">${art}<span class="pt-piece">${pieceImg(target?.type ?? 'K', 1, 'large', 120)}</span></div><p class="pt-name">${who}</p><p class="pt-hp"></p>`;
+  }
+  const hpEl = el.querySelector('.pt-hp');
+  if (hpEl) hpEl.textContent = `HP ${hp}`;
+};
+
 const refresh = (): void => {
   hidePeek();
   renderer.render(model());
   turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : document.body.matches('.lay-b, .lay-c') ? `${b.turn}턴` : `${b.turn}턴 · 내 차례`, enemyTurn);
   $('hand').innerHTML = `<p class="hand-head"><button type="button" class="deck-btn" data-deck>덱 ${deck.length}</button><button type="button" class="deck-btn" data-crew>분대 ${b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length}</button> 뽑을 ${b.draw.length} · 버림 ${b.discard.length + (b.played?.length ?? 0)}</p>${b.hand.map(cardHtml).join('') || '<p class="empty">‘손패가 없어.’</p>'}`;
   $('parts').innerHTML = parts.map((id) => partHtml(id)).join('');
+  portrait();
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
   for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
   newParts.clear();
