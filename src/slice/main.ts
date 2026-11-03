@@ -1608,7 +1608,10 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       closeTier = 0;
       return partPick(`<div class="stamp-big good">사선을 넘었다</div><h2>부품 하나 더</h2><p>겨우 넘은 대국입니다. 부품을 하나 고릅니다.</p>`, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); });
     }
-    if (reward === 'part' && !partDone) return partPick(`<div class="stamp-big good">${cur.boss ? '반장 격파' : '검문 통과'}</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () => rewardFlow(earned, overGold, fallen, true), true);
+    // 검문 · 반장 (D-216): 부품 → 새 분대원(상한 아래면 확정) → 카드
+    if (reward === 'part' && !partDone)
+      return partPick(`<div class="stamp-big good">${cur.boss ? '반장 격파' : '검문 통과'}</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () =>
+        squad.length < SLICE.squadMax ? (won -= 1, recruitPick(`<h2>새 분대원</h2>`, () => rewardFlow(earned, overGold, fallen, true), true)) : rewardFlow(earned, overGold, fallen, true), true);
     if (reward === 'end') return runEnd(true);
     const rng = sub();
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
@@ -1632,18 +1635,21 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       const from = same.length ? same : pool;
       if (from.length) offers.push(from[rng.int(from.length)]);
     }
+    // 기물 수집 (D-216): 대국 보상에 가끔 새 분대원 한 명이 섞인다 — 카드 대신 고를 수 있다
+    const recruitOffer = !elite && squad.length < SLICE.squadMax && rng.next() < SLICE.recruitChance ? RECRUITS[rng.int(RECRUITS.length)] : null;
+    const recruitCrew = recruitOffer ? makeCrew(recruitOffer.t, R, squad.map((u) => u.name ?? '')) : null;
     /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
     const showReward = (): void => {
       const el = openOverlay(`
         <h2><span class="pass-tag">통과</span> ${cur.title} <span class="dim">— 나사 +${earned}</span></h2>
-        <p>명령 카드 하나를 덱에 넣거나, 아래 셋 중 하나를 고릅니다.</p>
+        <p>${recruitOffer ? '명령 카드나 새 분대원' : '명령 카드'} 하나를 고르거나, 아래 셋 중 하나를 고릅니다.</p>
         <div class="reward-cards">${offers
           .map((id) => {
             const c = COMMANDS[id];
             const who = cardArt(id);
             return `<button type="button" class="cmd big t-${c.who} g-${gradeOf(id)}" data-pick="${id}" data-grade="${gradeOf(id)}">${gradeTag(gradeOf(id))}${keysHtml(c.cost)}${who}<span class="txt"><b>${c.name}${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
           })
-          .join('')}</div>
+          .join('')}${recruitOffer && recruitCrew ? `<button type="button" class="part-card recruit g-rare" data-recruit data-grade="rare"><em class="gtag g-rare">기물</em><span class="rec-art">${pieceImg(recruitOffer.t, 0, 'large', 56)}</span><b>${recruitCrew.name}</b>${recruitCrew.quirk ? `<small class="quirk-line"><b>${QUIRKS[recruitCrew.quirk].name}</b><br>${QUIRKS[recruitCrew.quirk].desc}</small>` : ''}<span class="kit-cards">+ ${recruitOffer.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>` : ''}</div>
         <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
@@ -1659,6 +1665,16 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           }),
         ),
       );
+      const recBtn = el.querySelector<HTMLElement>('[data-recruit]');
+      if (recBtn && recruitOffer && recruitCrew)
+        recBtn.addEventListener('click', () =>
+          choose(recBtn, `${josa(recruitCrew.name, '을')} 분대에 넣는다`, () => {
+            squad.push(recruitCrew);
+            deck.push(...recruitOffer.cards);
+            toast(`${josa(recruitCrew.name, '이')} 분대에 합류했습니다.`);
+            advance();
+          }),
+        );
       const skipBtn = el.querySelector<HTMLElement>('[data-skip]')!;
       skipBtn.addEventListener('click', () => choose(skipBtn, '아무것도 받지 않는다', () => advance()));
       // 카드 빼기: 한 장 빼면 다음 판, 그만두면 보상 화면으로 돌아온다
@@ -1811,7 +1827,7 @@ const ledgerView = (back: () => void = crewView): void => {
 };
 
 /** 영입 (입문 뒤): 기물 셋 중 하나 — 그 기물의 카드가 같이 들어온다 */
-const recruitPick = (head: string, then: () => void): void => {
+const recruitPick = (head: string, then: () => void, _elite = false): void => {
   const rng = sub();
   const pool = [...RECRUITS];
   const offers: typeof RECRUITS = [];
@@ -1823,9 +1839,10 @@ const recruitPick = (head: string, then: () => void): void => {
     .map((r, k) => {
       const c = crews[k];
       const q = c.quirk ? QUIRKS[c.quirk] : null;
-      return `<button type="button" class="part-card recruit" data-rec="${k}"><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name}</b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
+      return `<button type="button" class="part-card recruit g-rare" data-rec="${k}" data-grade="rare"><em class="gtag g-rare">기물</em><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name}</b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
     })
     .join('')}</div>`);
+  gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
   el.querySelectorAll<HTMLElement>('[data-rec]').forEach((btn) =>
     btn.addEventListener('click', () =>
       choose(btn, `${josa(crews[Number(btn.dataset.rec)].name, '을')} 분대에 넣는다`, () => {

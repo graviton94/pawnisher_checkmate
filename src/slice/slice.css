@@ -1499,3 +1499,6 @@ body.slice.lay-f #hand > .cmd.mag .costgear img { width: 20px; height: 20px; }
 @media (prefers-reduced-motion: reduce) { .twk { animation: none; } .g-pop { animation: none; } }
 /* 일반 부품은 철 테두리 · 단색 바탕 (황금 테두리와 헷갈리지 않게, 그라데이션 없이 — D-216) */
 .part-card { background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #56545e, inset 0 4px 0 #2f2b36; }
+/* 보상 줄: 카드 셋 + (가끔) 새 분대원 한 명 — 한 줄에 다 (D-216) */
+.reward-cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.reward-cards .cmd .gtag, .part-card .gtag { color: #0b0b0e; font-style: normal; }
