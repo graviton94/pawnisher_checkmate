@@ -477,3 +477,24 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
     }, 320 + i * 160);
   });
 };
+
+/**
+ * 도트 애니메이션 장치 (D-216 6): 코드로 거는 Web Animations의 투명도 보간을 디더 마스크 단계로 바꾼다 — 단순 페이드 금지.
+ * 이미 마스크로 모양을 내는 요소(아이콘 · 로고)는 그대로 둔다. main에서 한 번 부른다.
+ */
+export const installPixelAnimate = (): void => {
+  const lv = (v: number) => `var(--px${v >= 0.9 ? 0 : v >= 0.65 ? 1 : v >= 0.4 ? 2 : v >= 0.12 ? 3 : 4})`;
+  const orig = Element.prototype.animate;
+  Element.prototype.animate = function (this: Element, kf: Keyframe[] | PropertyIndexedKeyframes | null, opts?: number | KeyframeAnimationOptions) {
+    if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') {
+      let last = 1;
+      kf = kf.map((f) => {
+        if (f.opacity === undefined) return { ...f, maskImage: lv(last), webkitMaskImage: lv(last) } as Keyframe;
+        last = Number(f.opacity);
+        const { opacity: _o, ...rest } = f;
+        return { ...rest, maskImage: lv(last), webkitMaskImage: lv(last) } as Keyframe;
+      });
+    }
+    return orig.call(this, kf, opts);
+  } as typeof Element.prototype.animate;
+};

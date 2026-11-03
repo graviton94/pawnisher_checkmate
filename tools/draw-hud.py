@@ -283,6 +283,22 @@ TWINKLE = [
     ['.......', '...Y...', '.......', '.Y.W.Y.', '.......', '...Y...', '.......'],
 ]
 
+# ---------- 도트 방사선 (D-216 6): 원뿔 그라데이션 빛줄기를 대신하는 112×112 도트 — 쐐기 경계에 번짐 없음 ----------
+import math as _m
+def rays(color, alpha, period, width, n=112):
+    im = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    c = (n - 1) / 2
+    for y in range(n):
+        for x in range(n):
+            dx, dy = x - c, y - c
+            r = _m.hypot(dx, dy)
+            if r > c or r < 3:
+                continue
+            a = (_m.degrees(_m.atan2(dy, dx)) + 360) % period
+            if a < width:
+                im.putpixel((x, y), color + (alpha,))
+    return im
+
 
 if __name__ == '__main__':
     for t, tone in TONES.items():
@@ -314,6 +330,10 @@ if __name__ == '__main__':
     save(grade_frame(HEX('#3f7fb8'), HEX('#1e3a58'), HEX('#9ec7ef'), HEX('#6fb3e8')), 'frame-rare.png')
     save(grade_frame(HEX('#c89b3c'), HEX('#6b4a14'), HEX('#fff1b0'), HEX('#f4d27a')), 'frame-gold.png')
     save(strip([art(f) for f in TWINKLE]), 'twinkle.png')
+    save(rays((255, 255, 255), 115, 11, 2), 'rays-white.png')
+    save(rays((250, 204, 21), 82, 22, 8), 'rays-gold.png')
+    save(rays((200, 155, 60), 40, 20, 7), 'rays-brass.png')
+    save(rays((229, 38, 47), 52, 20, 7), 'rays-red.png')
     save(art(COG), 'cog-help.png')
     save(art(REW), 'ico-rewind.png')
     print('ok')

@@ -46,6 +46,19 @@ export interface BoardInput {
  * 기기 종류별 타일 크기 (CSS px = dp). GDD 9장 §9.2: 모바일 약 48dp, PC는 화면 높이에 맞춘 크기.
  * 판 그림은 칸 = 20도트라, 기기 픽셀로 한 도트가 정수 px가 되게 올림한다 (도트 굵기가 고르게 — D-071).
  */
+/**
+ * 판 위 투명도만 바꾸는 트윈은 4단 계단으로 (D-216 6 — 단순 페이드 금지). 움직임과 함께 가는 투명도는 움직임 곡선을 따른다.
+ */
+{
+  const proto = Phaser.Tweens.TweenManager.prototype as unknown as { add: (cfg: Record<string, unknown>) => unknown };
+  const orig = proto.add;
+  const MOTION = ['x', 'y', 'scale', 'scaleX', 'scaleY', 'angle', 'rotation', 'displayWidth', 'displayHeight'];
+  proto.add = function (this: unknown, cfg: Record<string, unknown>) {
+    if (cfg && typeof cfg === 'object' && 'alpha' in cfg && !MOTION.some((k) => k in cfg) && !('ease' in cfg && cfg.ease === 'Stepped')) cfg = { ...cfg, ease: 'Stepped', easeParams: [4] };
+    return orig.call(this, cfg);
+  };
+}
+
 /** 터치 기기 칸 최대 크기 (CSS px) */
 const BOARD_TILE_TOUCH_MAX = 54; // 도트 내림(DPR 2.625 → 칸 53.3px)이 48 아래로 가지 않게
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
