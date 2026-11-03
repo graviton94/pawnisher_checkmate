@@ -170,15 +170,18 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
  */
 export type Grade = 'common' | 'rare' | 'gold';
 export const CARD_GRADE: Partial<Record<string, Grade>> = {
-  crossLeap: 'rare', splashDiag: 'rare', kingBlow: 'rare', smash: 'rare', rebound: 'rare', march: 'rare', wrath: 'rare', cavCharge: 'rare', kingGuard: 'rare',
-  doubleLeap: 'rare', knightRaid: 'rare', bishopRay: 'rare', rookCharge: 'rare', vent: 'rare', recall: 'rare', gambit: 'rare', tempo: 'rare', bulwark: 'rare', shove: 'rare',
-  overload: 'gold', finisher: 'gold', bladeRain: 'gold', kingDecree: 'gold', burst: 'gold',
+  // 측정 (D-217 2, sim/rarity.sim.ts — 모든 기물 분대 · 2 · 3막 판 200번 · 넣은 덱 vs 기본 카드 덱의 승률 차 + 턴 단축 × 5):
+  // 황금 = 상위 약 10% (가치 34 이상), 희귀 = 다음 35% (가치 12 이상), 나머지 일반. 봇이 못 쓰는 연쇄 마무리(처형 · 칼날 세례)만 설계 판단으로 희귀.
+  rookCharge: 'gold', shove: 'gold', overload: 'gold', wrath: 'gold',
+  royalGuard: 'rare', bulwark: 'rare', smash: 'rare', quickFix: 'rare', spark: 'rare', repair: 'rare', plate: 'rare', ram: 'rare', kingDecree: 'rare',
+  pawnStorm: 'rare', kingBlow: 'rare', shieldBash: 'rare', charge: 'rare', finisher: 'rare', bladeRain: 'rare',
 };
 export const gradeOf = (id: string): Grade => CARD_GRADE[id.replace(/\+$/, '')] ?? 'common';
 /** 보상 한 칸이 어느 등급으로 나오나 (가중치) — 검문 · 반장은 elite */
 export const GRADE = {
-  weights: { common: 62, rare: 30, gold: 8 } as Record<Grade, number>,
-  elite: { common: 30, rare: 50, gold: 20 } as Record<Grade, number>,
+  // D-217 2: 카드 한 장 기준 빈도가 일반 > 희귀 > 황금이 되게 (카드 일반 18 · 희귀 15 · 황금 4장 → 대국 보상 한 칸에서 한 장이 나올 확률 3.6% · 2.1% · 1.3%)
+  weights: { common: 64, rare: 31, gold: 5 } as Record<Grade, number>,
+  elite: { common: 35, rare: 50, gold: 15 } as Record<Grade, number>,
   names: { common: '일반', rare: '희귀', gold: '황금' } as Record<Grade, string>,
 };
 /** 가중치로 등급 하나 뽑기 */

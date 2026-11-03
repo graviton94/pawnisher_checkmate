@@ -17,8 +17,10 @@ export interface SlicePartDef {
 
 /** 부품 등급 (D-216): 규칙을 크게 바꾸는 것일수록 위. 표에 없으면 일반 */
 export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>> = {
-  oath: 'gold', coil: 'gold', conductor: 'gold', brittle: 'gold', bloodPact: 'gold', assembly: 'gold',
-  echo: 'rare', crown: 'rare', throne: 'rare', hammer: 'rare', lance: 'rare', barracks: 'rare', fuse: 'rare', chainShot: 'rare', tape: 'rare', spare: 'rare', magnet: 'rare',
+  // 측정 (D-217 2): 같은 축 카드 둘과 함께 넣은 덱 vs 그 카드만 넣은 덱. 황금 = 상위 4, 희귀 = 다음 10.
+  // 설계 보정: 맹세(사용자 결정 — 폰 전용 고등급) 황금, 탐욕의 저울(나사 두 배 — 경제는 봇이 못 잰다) · 되감는 테이프(봇은 되감기를 안 쓴다) 희귀
+  bloodPact: 'gold', hammer: 'gold', whetstone: 'gold', coil: 'gold', oath: 'gold',
+  crown: 'rare', lance: 'rare', anvilPlate: 'rare', spare: 'rare', drum: 'rare', assembly: 'rare', brittle: 'rare', gilded: 'rare', throne: 'rare', conductor: 'rare', greed: 'rare', tape: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   oath: { name: '작은 개척자의 맹세', axis: 'inf', icon: 'oath', desc: '폰마다 대국마다 문턱 한 번. (쓰러질 피해를 HP 1로 버틴다)' },

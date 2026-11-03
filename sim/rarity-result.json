@@ -1,0 +1,575 @@
+{
+ "base": {
+  "win": 81.5,
+  "turns": 12.195
+ },
+ "rows": [
+  {
+   "id": "rookCharge",
+   "kind": "card",
+   "name": "성벽 돌진",
+   "grade": "rare",
+   "win": 15.5,
+   "turns": 5.315,
+   "value": 42.075
+  },
+  {
+   "id": "shove",
+   "kind": "card",
+   "name": "몰아치기",
+   "grade": "rare",
+   "win": 13,
+   "turns": 4.5,
+   "value": 35.5
+  },
+  {
+   "id": "overload",
+   "kind": "card",
+   "name": "과부하",
+   "grade": "gold",
+   "win": 13.5,
+   "turns": 4.34,
+   "value": 35.2
+  },
+  {
+   "id": "wrath",
+   "kind": "card",
+   "name": "왕의 분노",
+   "grade": "rare",
+   "win": 16.5,
+   "turns": 3.6500000000000004,
+   "value": 34.75
+  },
+  {
+   "id": "royalGuard",
+   "kind": "card",
+   "name": "황금 흉갑",
+   "grade": "common",
+   "win": 18.5,
+   "turns": 1.7750000000000004,
+   "value": 27.375
+  },
+  {
+   "id": "bulwark",
+   "kind": "card",
+   "name": "방벽",
+   "grade": "rare",
+   "win": 18.5,
+   "turns": 1.7400000000000002,
+   "value": 27.200000000000003
+  },
+  {
+   "id": "bloodPact",
+   "kind": "part",
+   "name": "피의 계약",
+   "grade": "gold",
+   "win": 7.5,
+   "turns": 3.825000000000001,
+   "value": 26.625000000000007
+  },
+  {
+   "id": "smash",
+   "kind": "card",
+   "name": "분쇄",
+   "grade": "rare",
+   "win": 10,
+   "turns": 3.2300000000000004,
+   "value": 26.150000000000002
+  },
+  {
+   "id": "quickFix",
+   "kind": "card",
+   "name": "덧댐",
+   "grade": "common",
+   "win": 14.5,
+   "turns": 2.280000000000001,
+   "value": 25.900000000000006
+  },
+  {
+   "id": "spark",
+   "kind": "card",
+   "name": "점화",
+   "grade": "common",
+   "win": 8.5,
+   "turns": 2.5150000000000006,
+   "value": 21.075000000000003
+  },
+  {
+   "id": "repair",
+   "kind": "card",
+   "name": "응급 용접",
+   "grade": "common",
+   "win": 15,
+   "turns": 1.075000000000001,
+   "value": 20.375000000000007
+  },
+  {
+   "id": "hammer",
+   "kind": "part",
+   "name": "공성 망치",
+   "grade": "rare",
+   "win": 7,
+   "turns": 2.5600000000000005,
+   "value": 19.800000000000004
+  },
+  {
+   "id": "plate",
+   "kind": "card",
+   "name": "철벽",
+   "grade": "common",
+   "win": 14.5,
+   "turns": 0.9849999999999994,
+   "value": 19.424999999999997
+  },
+  {
+   "id": "whetstone",
+   "kind": "part",
+   "name": "닳은 숫돌",
+   "grade": "common",
+   "win": 7,
+   "turns": 2.3100000000000005,
+   "value": 18.550000000000004
+  },
+  {
+   "id": "ram",
+   "kind": "card",
+   "name": "파성추",
+   "grade": "common",
+   "win": 7,
+   "turns": 2.2650000000000006,
+   "value": 18.325000000000003
+  },
+  {
+   "id": "coil",
+   "kind": "part",
+   "name": "폭주 코일",
+   "grade": "gold",
+   "win": 5.5,
+   "turns": 2.164999999999999,
+   "value": 16.324999999999996
+  },
+  {
+   "id": "crown",
+   "kind": "part",
+   "name": "짓누르는 왕관",
+   "grade": "rare",
+   "win": 5,
+   "turns": 2.1849999999999996,
+   "value": 15.924999999999997
+  },
+  {
+   "id": "kingDecree",
+   "kind": "card",
+   "name": "왕명",
+   "grade": "gold",
+   "win": 7.5,
+   "turns": 1.4749999999999996,
+   "value": 14.874999999999998
+  },
+  {
+   "id": "lance",
+   "kind": "part",
+   "name": "기사의 창",
+   "grade": "rare",
+   "win": 5.5,
+   "turns": 1.8100000000000005,
+   "value": 14.550000000000002
+  },
+  {
+   "id": "pawnStorm",
+   "kind": "card",
+   "name": "선두 분쇄",
+   "grade": "common",
+   "win": 4,
+   "turns": 2.0500000000000007,
+   "value": 14.250000000000004
+  },
+  {
+   "id": "kingBlow",
+   "kind": "card",
+   "name": "왕의 철퇴",
+   "grade": "rare",
+   "win": 8,
+   "turns": 1.245000000000001,
+   "value": 14.225000000000005
+  },
+  {
+   "id": "anvilPlate",
+   "kind": "part",
+   "name": "모루 장갑",
+   "grade": "common",
+   "win": 5,
+   "turns": 1.6750000000000007,
+   "value": 13.375000000000004
+  },
+  {
+   "id": "shieldBash",
+   "kind": "card",
+   "name": "방패 돌진",
+   "grade": "common",
+   "win": 4,
+   "turns": 1.6899999999999995,
+   "value": 12.449999999999998
+  },
+  {
+   "id": "charge",
+   "kind": "card",
+   "name": "쇄도",
+   "grade": "common",
+   "win": 4.5,
+   "turns": 1.58,
+   "value": 12.4
+  },
+  {
+   "id": "spare",
+   "kind": "part",
+   "name": "과부하 태엽",
+   "grade": "rare",
+   "win": 5,
+   "turns": 1.3849999999999998,
+   "value": 11.924999999999999
+  },
+  {
+   "id": "drum",
+   "kind": "part",
+   "name": "진군의 북",
+   "grade": "common",
+   "win": 3,
+   "turns": 1.5600000000000005,
+   "value": 10.800000000000002
+  },
+  {
+   "id": "assembly",
+   "kind": "part",
+   "name": "끝없는 생산선",
+   "grade": "gold",
+   "win": 4.5,
+   "turns": 1.125,
+   "value": 10.125
+  },
+  {
+   "id": "brittle",
+   "kind": "part",
+   "name": "깨지는 유리 심장",
+   "grade": "gold",
+   "win": 2,
+   "turns": 1.5950000000000006,
+   "value": 9.975000000000003
+  },
+  {
+   "id": "gilded",
+   "kind": "part",
+   "name": "도금 방패",
+   "grade": "common",
+   "win": 3.5,
+   "turns": 1.254999999999999,
+   "value": 9.774999999999995
+  },
+  {
+   "id": "throne",
+   "kind": "part",
+   "name": "걷는 옥좌",
+   "grade": "rare",
+   "win": 4.5,
+   "turns": 0.8249999999999993,
+   "value": 8.624999999999996
+  },
+  {
+   "id": "conductor",
+   "kind": "part",
+   "name": "전도 코일",
+   "grade": "gold",
+   "win": 3.5,
+   "turns": 0.875,
+   "value": 7.875
+  },
+  {
+   "id": "banner",
+   "kind": "part",
+   "name": "찢긴 군기",
+   "grade": "common",
+   "win": 0.5,
+   "turns": 1.3450000000000006,
+   "value": 7.225000000000003
+  },
+  {
+   "id": "vent",
+   "kind": "card",
+   "name": "방출",
+   "grade": "rare",
+   "win": 4,
+   "turns": 0.5800000000000001,
+   "value": 6.9
+  },
+  {
+   "id": "rebound",
+   "kind": "card",
+   "name": "피의 질주",
+   "grade": "rare",
+   "win": 3.5,
+   "turns": 0.6400000000000006,
+   "value": 6.700000000000003
+  },
+  {
+   "id": "doubleLeap",
+   "kind": "card",
+   "name": "광란의 도약",
+   "grade": "rare",
+   "win": 3.5,
+   "turns": 0.5850000000000009,
+   "value": 6.425000000000004
+  },
+  {
+   "id": "spurs",
+   "kind": "part",
+   "name": "녹슨 등자",
+   "grade": "common",
+   "win": 1,
+   "turns": 0.9900000000000002,
+   "value": 5.950000000000001
+  },
+  {
+   "id": "finisher",
+   "kind": "card",
+   "name": "처형",
+   "grade": "gold",
+   "win": 2.5,
+   "turns": 0.5800000000000001,
+   "value": 5.4
+  },
+  {
+   "id": "barracks",
+   "kind": "part",
+   "name": "막사의 종",
+   "grade": "rare",
+   "win": 1,
+   "turns": 0.8699999999999992,
+   "value": 5.349999999999996
+  },
+  {
+   "id": "draft",
+   "kind": "card",
+   "name": "강제 징집",
+   "grade": "common",
+   "win": 4,
+   "turns": 0.2550000000000008,
+   "value": 5.275000000000004
+  },
+  {
+   "id": "bladeRain",
+   "kind": "card",
+   "name": "칼날 세례",
+   "grade": "gold",
+   "win": 3,
+   "turns": 0.4299999999999997,
+   "value": 5.149999999999999
+  },
+  {
+   "id": "hoofKick",
+   "kind": "card",
+   "name": "짓밟기",
+   "grade": "common",
+   "win": 2.5,
+   "turns": 0.5150000000000006,
+   "value": 5.075000000000003
+  },
+  {
+   "id": "crossLeap",
+   "kind": "card",
+   "name": "지축 강타",
+   "grade": "rare",
+   "win": 2.5,
+   "turns": 0.3000000000000007,
+   "value": 4.0000000000000036
+  },
+  {
+   "id": "echo",
+   "kind": "part",
+   "name": "메아리 톱니",
+   "grade": "rare",
+   "win": 1,
+   "turns": 0.5750000000000011,
+   "value": 3.8750000000000053
+  },
+  {
+   "id": "reload",
+   "kind": "card",
+   "name": "태엽 감기",
+   "grade": "common",
+   "win": 1,
+   "turns": 0.5050000000000008,
+   "value": 3.525000000000004
+  },
+  {
+   "id": "knightRaid",
+   "kind": "card",
+   "name": "기습",
+   "grade": "rare",
+   "win": 1.5,
+   "turns": 0.3100000000000005,
+   "value": 3.0500000000000025
+  },
+  {
+   "id": "scepter",
+   "kind": "part",
+   "name": "녹슨 홀",
+   "grade": "common",
+   "win": 1.5,
+   "turns": 0.29499999999999993,
+   "value": 2.9749999999999996
+  },
+  {
+   "id": "chainShot",
+   "kind": "part",
+   "name": "연쇄 사슬",
+   "grade": "rare",
+   "win": 1,
+   "turns": 0.39000000000000057,
+   "value": 2.950000000000003
+  },
+  {
+   "id": "pierceDiag",
+   "kind": "card",
+   "name": "심판의 창",
+   "grade": "common",
+   "win": 0.5,
+   "turns": 0.4800000000000004,
+   "value": 2.900000000000002
+  },
+  {
+   "id": "cavCharge",
+   "kind": "card",
+   "name": "선봉 돌파",
+   "grade": "rare",
+   "win": 1.5,
+   "turns": 0.2599999999999998,
+   "value": 2.799999999999999
+  },
+  {
+   "id": "horseshoe",
+   "kind": "part",
+   "name": "피 묻은 편자",
+   "grade": "common",
+   "win": 1,
+   "turns": 0.27500000000000036,
+   "value": 2.3750000000000018
+  },
+  {
+   "id": "magnet",
+   "kind": "part",
+   "name": "약탈자의 집게",
+   "grade": "rare",
+   "win": 0.5,
+   "turns": 0.3550000000000004,
+   "value": 2.275000000000002
+  },
+  {
+   "id": "march",
+   "kind": "card",
+   "name": "총진격",
+   "grade": "rare",
+   "win": 0,
+   "turns": 0.14499999999999957,
+   "value": 0.7249999999999979
+  },
+  {
+   "id": "bishopRay",
+   "kind": "card",
+   "name": "정죄의 빛",
+   "grade": "rare",
+   "win": 0,
+   "turns": 0.07500000000000107,
+   "value": 0.37500000000000533
+  },
+  {
+   "id": "fuse",
+   "kind": "part",
+   "name": "도화선",
+   "grade": "rare",
+   "win": 0,
+   "turns": 0,
+   "value": 0
+  },
+  {
+   "id": "tape",
+   "kind": "part",
+   "name": "되감는 테이프",
+   "grade": "rare",
+   "win": 0,
+   "turns": 0,
+   "value": 0
+  },
+  {
+   "id": "splashDiag",
+   "kind": "card",
+   "name": "파편 세례",
+   "grade": "rare",
+   "win": -0.5,
+   "turns": -0.10999999999999943,
+   "value": -1.0499999999999972
+  },
+  {
+   "id": "kingGuard",
+   "kind": "card",
+   "name": "근위대 진군",
+   "grade": "rare",
+   "win": -0.5,
+   "turns": -0.33999999999999986,
+   "value": -2.1999999999999993
+  },
+  {
+   "id": "burst",
+   "kind": "card",
+   "name": "증기 폭발",
+   "grade": "gold",
+   "win": -1.5,
+   "turns": -0.16000000000000014,
+   "value": -2.3000000000000007
+  },
+  {
+   "id": "oath",
+   "kind": "part",
+   "name": "작은 개척자의 맹세",
+   "grade": "gold",
+   "win": -1.5,
+   "turns": -0.33999999999999986,
+   "value": -3.1999999999999993
+  },
+  {
+   "id": "recall",
+   "kind": "card",
+   "name": "회수",
+   "grade": "rare",
+   "win": -1.5,
+   "turns": -0.35999999999999943,
+   "value": -3.299999999999997
+  },
+  {
+   "id": "greed",
+   "kind": "part",
+   "name": "탐욕의 저울",
+   "grade": "common",
+   "win": -9,
+   "turns": -2.5649999999999995,
+   "value": -21.824999999999996
+  },
+  {
+   "id": "gambit",
+   "kind": "card",
+   "name": "제물",
+   "grade": "rare",
+   "win": -10.5,
+   "turns": -2.709999999999999,
+   "value": -24.049999999999997
+  },
+  {
+   "id": "tempo",
+   "kind": "card",
+   "name": "박자",
+   "grade": "rare",
+   "win": -14,
+   "turns": -4.239999999999998,
+   "value": -35.19999999999999
+  }
+ ]
+}
