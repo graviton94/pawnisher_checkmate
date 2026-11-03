@@ -299,6 +299,68 @@ def rays(color, alpha, period, width, n=112):
                 im.putpixel((x, y), color + (alpha,))
     return im
 
+# ---------- 카드 얼굴 (D-217 3): 24×32 9-slice (위 9 · 양옆 4 · 아래 5) — 위는 이름 머리띠, 가운데는 비움 ----------
+def card_frame(rim, hi, band, shade, lights=None, shimmer=None):
+    """lights = 황금 테 위를 도는 불빛 위상(0~3), shimmer = 희귀 테 반짝임 위상(0~1)"""
+    W, H = 24, 32
+    im = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    def put(x, y, c):
+        im.putpixel((x, y), c + (255,))
+    perim = []
+    for y in range(H):
+        for x in range(W):
+            corner = (x in (0, W - 1)) and (y in (0, H - 1))
+            if corner:
+                continue
+            if x in (0, W - 1) or y in (0, H - 1):
+                put(x, y, K)
+            elif x in (1, W - 2) or y in (1, H - 2) or y == 8:
+                put(x, y, hi if (y == 1 or x == 1) and y != 8 else rim)
+                if x in (1, W - 2) or y in (1, H - 2):
+                    perim.append((x, y))
+            elif y <= 7:
+                put(x, y, band)
+            elif x == 2 or y == 9:
+                put(x, y, shade)
+            elif x == W - 3 or y == H - 3:
+                put(x, y, shade)
+    if lights is not None:
+        # 테를 시계 방향으로 돌며 4칸마다 불빛 — 띠를 넘기면 불빛이 달린다
+        ring = sorted(set(perim), key=lambda p: (_m.atan2(p[1] - H / 2, p[0] - W / 2)))
+        for k, (x, y) in enumerate(ring):
+            if (k + lights) % 4 == 0:
+                put(x, y, PAL['W'])
+    if shimmer is not None:
+        for x in range(3 + shimmer * 2, W - 3, 4):
+            put(x, 1, PAL['W'])
+    return im
+
+# 등급 보석 9×9 마름모 (아래 테 가운데)
+def gem(c1, c2):
+    p = dict(PAL, A=c1, B=c2)
+    return art(['....k....', '...kAk...', '..kAWAk..', '.kAAAABk.', 'kAAAAABBk', '.kAABBBk.', '..kBBBk..', '...kBk...', '....k....'], p)
+
+# 고물상 가격표 12×12 (slice 4): 황동판 · 위 하이라이트 · 아래 그늘 · 왼쪽 끈 구멍
+def tag_plate(face, hi, low):
+    p = dict(PAL, F=face, H=hi, L=low)
+    return art([
+        '.kkkkkkkkkk.',
+        'kHHHHHHHHHHk',
+        'kHFFFFFFFFLk',
+        'kFFFFFFFFFLk',
+        'kFkFFFFFFFLk',
+        'kFkFFFFFFFLk',
+        'kFFFFFFFFFLk',
+        'kFFFFFFFFFLk',
+        'kFFFFFFFFFLk',
+        'kLLLLLLLLLLk',
+        '.kkkkkkkkkk.',
+        '..kkkkkkkk..',
+    ], p)
+
+# 그림 창 바탕 4×4 체크무늬 (두 단계 어두운 철)
+WIN = ['ddii', 'ddii', 'iidd', 'iidd']
+
 
 if __name__ == '__main__':
     for t, tone in TONES.items():
@@ -334,6 +396,17 @@ if __name__ == '__main__':
     save(rays((250, 204, 21), 82, 22, 8), 'rays-gold.png')
     save(rays((200, 155, 60), 40, 20, 7), 'rays-brass.png')
     save(rays((229, 38, 47), 52, 20, 7), 'rays-red.png')
+    save(card_frame(PAL['l'], PAL['g'], (0x24, 0x22, 0x2A), PAL['i']), 'card-common.png')
+    for ph in (0, 1):
+        save(card_frame(HEX('#3f7fb8'), HEX('#9ec7ef'), HEX('#1e3a58'), HEX('#14243a'), shimmer=ph), f'card-rare-{ph}.png')
+    for ph in range(4):
+        save(card_frame(HEX('#c89b3c'), HEX('#fff1b0'), HEX('#6b4a14'), HEX('#3a2810'), lights=ph), f'card-gold-{ph}.png')
+    save(gem(PAL['g'], PAL['l']), 'gem-common.png')
+    save(gem(HEX('#9ec7ef'), HEX('#3f7fb8')), 'gem-rare.png')
+    save(gem(HEX('#f4d27a'), HEX('#c89b3c')), 'gem-gold.png')
+    save(tag_plate(HEX('#c89b3c'), HEX('#f4d27a'), HEX('#6b4a14')), 'price-tag.png')
+    save(tag_plate(PAL['l'], PAL['g'], PAL['d']), 'price-tag-poor.png')
+    save(art(WIN), 'win-pattern.png')
     save(art(COG), 'cog-help.png')
     save(art(REW), 'ico-rewind.png')
     print('ok')

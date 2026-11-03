@@ -17,7 +17,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { gradeOf, rollGrade, GRADE, type Grade, baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { gradeOf, rollGrade, GRADE, baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -393,12 +393,26 @@ const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAME
 const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-label="${AXIS_NAMES[a]}">${AXIS_NAMES[a][0]}</i>` : '');
 
 /** 부품 칩 (레일 · 고르기 화면) */
-/** 등급 딱지 (D-216): 일반은 없음, 희귀 · 황금만 오른쪽 위 도트 딱지 */
-const gradeTag = (g: Grade): string => (g === 'common' ? '' : `<em class="gtag g-${g}">${GRADE.names[g]}</em>`);
+/**
+ * 카드 얼굴 (D-217 3): 보상 · 고물상이 모두 이것 — 등급 틀(일반 철 · 희귀 청강 · 황금 황동, 황금은 테를 도는 불빛) ·
+ * 머리띠 이름 · 그림 창(체크무늬) · 성질 줄(+/× · 축) · 설명 · 등급 보석. attrs = data-* , extra = 가격표 등 꼬리.
+ */
+const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string => {
+  const c = COMMANDS[id];
+  const g = gradeOf(id);
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span><span class="cf-type">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</span><small class="cf-desc">${c.desc || ''}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${extra}</button>`;
+};
+/** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
+const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
+  const d = SLICE_PARTS[id];
+  const g = PART_GRADE[id] ?? 'common';
+  return `<button type="button" class="cf part-card g-${g}${d.axis ? ` ax-${d.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type">${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</span><small class="cf-desc">${d.desc}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${extra}</button>`;
+};
+
 const partHtml = (id: SlicePartId, big = false): string => {
   const d = SLICE_PARTS[id];
   return big
-    ? `<button type="button" class="part-card${d.axis ? ` ax-${d.axis}` : ''} g-${PART_GRADE[id] ?? 'common'}" data-part="${id}" data-grade="${PART_GRADE[id] ?? 'common'}">${gradeTag(PART_GRADE[id] ?? 'common')}<i class="ico" style="${iconArt(d.icon)}"></i><b>${d.name}${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</b><small>${d.desc}</small></button>`
+    ? partFace(id, `data-part="${id}"`)
     : `<button type="button" class="part-chip${d.axis ? ` ax-${d.axis}` : ''}" data-part-info="${id}" aria-label="${d.name}"><i class="ico" style="${iconArt(d.icon)}"></i><span>${d.name}</span></button>`;
 };
 
@@ -1237,15 +1251,17 @@ const shopScreen = (): void => {
   const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
   const part = partPool.length ? partPool[rng.int(partPool.length)] : null;
   const sold = new Set<string>();
-  const price = (id: CommandId) => ascPrice(SHOP.cardPrice[Math.min(2, COMMANDS[id].cost)]);
+  // 값은 등급으로 (D-217 3 — 슬더스식): 일반 · 희귀 · 황금
+  const price = (id: CommandId) => ascPrice(SHOP.gradePrice[gradeOf(id)]);
+  const partPrice = (id: SlicePartId) => ascPrice(SHOP.partGradePrice[PART_GRADE[id] ?? 'common']);
   const render = (): void => {
-    const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price${gold < cost ? ' poor' : ''}"><i class="scr" role="img" aria-label="나사"></i>${cost}</span>`);
+    const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price ptag${gold < cost ? ' poor' : ''}"><i class="scr" role="img" aria-label="나사"></i>${cost}</span>`);
     const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><button class="btn brass" type="button" data-leave>떠나기</button></div>
       <div class="shop-grid">
-        ${cards.map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd big t-${c.who}${sold.has(id) ? ' sold' : ''}" data-buy="card:${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}</span>${tag(id, price(id))}</button>`; }).join('')}
-        ${part ? `<button type="button" class="part-card${sold.has('part') ? ' sold' : ''}" data-buy="part:${part}"><i class="ico" style="${iconArt(SLICE_PARTS[part].icon)}"></i><b>${SLICE_PARTS[part].name}${opTag(PART_OP[part])}</b><small>${SLICE_PARTS[part].desc}</small>${tag('part', ascPrice(SHOP.partPrice))}</button>` : ''}
-        <button type="button" class="part-card${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><i class="ico" style="${iconArt('s.heal')}"></i><b>정비</b><small>분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
-        <button type="button" class="part-card${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
+        ${cards.map((id) => cardFace(id, `data-buy="card:${id}"`, tag(id, price(id)), sold.has(id) ? 'sold' : '')).join('')}
+        ${part ? partFace(part, `data-buy="part:${part}"`, tag('part', partPrice(part)), sold.has('part') ? 'sold' : '') : ''}
+        <button type="button" class="cf part-card svc g-common${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><b class="cf-name">정비</b><span class="cf-win"><i class="ico" style="${iconArt('s.heal')}"></i></span><small class="cf-desc">분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
+        <button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><small class="cf-desc">덱에서 카드 1장 영구 제거.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
       </div>`);
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
     el.querySelectorAll<HTMLElement>('[data-buy]').forEach((btn) =>
@@ -1253,7 +1269,7 @@ const shopScreen = (): void => {
         const [kind, id] = (btn.dataset.buy ?? '').split(':');
         const key = kind === 'card' ? id : kind;
         if (sold.has(key)) return;
-        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? ascPrice(SHOP.partPrice) : kind === 'heal' ? ascPrice(SHOP.healPrice) : ascPrice(SHOP.removePrice);
+        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : ascPrice(SHOP.removePrice);
         if (gold < cost) return toast(`‘나사가 모자라.’ (${cost} 필요)`);
         const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
@@ -1653,7 +1669,9 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           .map((id) => {
             const c = COMMANDS[id];
             const who = cardArt(id);
-            return `<button type="button" class="cmd big t-${c.who} g-${gradeOf(id)}" data-pick="${id}" data-grade="${gradeOf(id)}">${gradeTag(gradeOf(id))}${keysHtml(c.cost)}${who}<span class="txt"><b>${c.name}${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span></button>`;
+            void c;
+            void who;
+            return cardFace(id, `data-pick="${id}"`);
           })
           .join('')}${recruitOffer && recruitCrew ? `<button type="button" class="part-card recruit g-rare" data-recruit data-grade="rare"><em class="gtag g-rare">기물</em><span class="rec-art">${pieceImg(recruitOffer.t, 0, 'large', 56)}</span><b>${recruitCrew.name}</b>${recruitCrew.quirk ? `<small class="quirk-line"><b>${QUIRKS[recruitCrew.quirk].name}</b><br>${QUIRKS[recruitCrew.quirk].desc}</small>` : ''}<span class="kit-cards">+ ${recruitOffer.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>` : ''}</div>
         <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>

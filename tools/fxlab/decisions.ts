@@ -6,7 +6,7 @@ import type { PieceType } from '../../src/engine/types';
 
 export type Status = 'done' | 'review' | 'pick' | 'wait';
 
-export const VERSION = { n: 57, date: '2026-11-03' };
+export const VERSION = { n: 58, date: '2026-11-03' };
 
 export const PIECES: Record<PieceType, { name: string; status: Status; idea: string; beat: string; changed?: string }> = {
   P: {
@@ -146,6 +146,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
   { item: '레일 단추 · 도움말', rule: '덱 · 분대 · 되감기 · 턴 끝 모두 철 · 황동 도트 단추. 도움말은 판 무대 오른쪽 위의 태엽 톱니 속 ? (D-211)', status: 'review' },
   { item: '보상 등급', rule: '희귀 청강 · 황금 황동 도트 테두리 + 딱지, 들썩(눌림 → 튀어 오름 → 출렁) + 불똥, 황금은 화면 전체 금빛 디더 + 귀퉁이 반짝임 4칸 (D-216)', status: 'review' },
   { item: '페이드 금지', rule: '나타남 · 사라짐은 모두 체크무늬 디더 5단계 (CSS 81종 · 코드 애니메이션 · 판 위 투명도 트윈은 4단 계단). 둥근 모서리 · 번지는 그림자 · 부드러운 그라데이션 제거, 빛줄기는 도트 방사선 그림 (D-216)', status: 'review' },
+  { item: '카드 얼굴', rule: '보상 · 고물상 공통: 등급 9-slice 틀(일반 철 · 희귀 청강 — 테 반짝임 2칸 · 황금 황동 — 테를 도는 불빛 4칸) · 머리띠 이름 · 체크무늬 그림 창 · 성질 줄 · 설명 · 아래 등급 보석. 고물상 값은 황동 가격표 도트(못 사면 철판) (D-217 3)', status: 'review' },
   // 확정 (v49: 오래 게임에 들어가 있고 지적 없던 것은 확정으로 옮김 — 바꾸고 싶으면 말해 주세요)
   { item: '도트 격자', rule: '판 칸 20×20 도트, 기물 약 16도트 높이(칸의 0.82). 판·표식·이펙트 모두 같은 격자', status: 'done' },
   { item: '박자', rule: '예비 동작(느리게→빠르게) → 터짐(빠르게→느리게) → 여운. 공격 1회 최대 1초, 속도 옵션 없음', status: 'done' },
@@ -172,6 +173,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
+  { v: 58, date: '2026-11-03', items: ['카드 얼굴 리뉴얼 · 등급 오라(희귀 반짝임 · 황금 불빛) · 고물상 가격표 (D-217 3)'] },
   { v: 57, date: '2026-11-03', items: ['그래픽 철학 확정 (D-216): 페이드 · 그라데이션 · 둥근 모서리 · 번짐 일괄 제거, 보상 등급 연출, 도트 방사선'] },
   { v: 56, date: '2026-11-03', items: ['속전 게이지 → 끓는 쇳물 보일러관 · 태엽 5칸(3칸 켜짐) · 탄창 칭호 5자 · 갈무리 글씨 통일 (D-212)'] },
   { v: 55, date: '2026-11-03', items: ['레일 HUD를 도트 부품으로 다시 (D-211): 탄 머리판 7색 · 몸 홈 · 계기 창 · 열쇠 구멍 · 열쇠 회전 띠 · 진공관 띠 · 톱니 ? · ◀◀ — 그라데이션 · 둥근 모서리 · 빛 번짐 제거'] },
