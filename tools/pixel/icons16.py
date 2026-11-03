@@ -81,6 +81,21 @@ icon('n.shop', '고물상', [
     'bEEEEEEEEEEEEb',
     'bbbbbbbbbbbbbb',
 ])
+# 부품 상자 (D-215, 슬더스식 지도의 보물 노드): 황동 뚜껑 · 갈색 몸통 · 가운데 쇠 자물쇠
+icon('n.chest', '부품 상자', [
+    '..............',
+    '...bbbbbbbb...',
+    '..byyyyyyyyb..',
+    '.byyyyyyyyyyb.',
+    '.bbbbbbbbbbbb.',
+    '.bEEEEggEEEEb.',
+    '.bEEEgKKgEEEb.',
+    '.bbbbgKKgbbbb.',
+    '.bEEEEggEEEEb.',
+    '.bEEEEEEEEEEb.',
+    '.bEEEEEEEEEEb.',
+    '.bbbbbbbbbbbb.',
+])
 icon('n.forge', '작업대', [
     '.........bb...',
     '........bbbb..',

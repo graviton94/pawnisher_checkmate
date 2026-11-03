@@ -10,7 +10,8 @@ import type { Highlight, Nemesis } from './director';
  * 저장 시점: 지도에 설 때 · 대국을 시작할 때. 대국 중간에 나가면 그 대국 처음부터 이어 간다.
  */
 export interface RunSave {
-  v: 1;
+  /** 2 = 슬더스식 지도 (D-215) — 1은 예전 갈림길 지도라 버린다 */
+  v: 2;
   seed: number;
   asc: number;
   /** 오늘의 출하 (날짜 시드) — 기록에만 따로 남는다 */
@@ -97,7 +98,7 @@ export const readSave = (st: Store): RunSave | null =>
     const raw = st.getItem(SAVE_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as RunSave;
-    return s && s.v === 1 && Array.isArray(s.squad) && s.squad.length ? s : null;
+    return s && s.v === 2 && Array.isArray(s.squad) && s.squad.length ? s : null;
   }, null);
 export const clearSave = (st: Store): void => safe(() => st.removeItem(SAVE_KEY), undefined);
 

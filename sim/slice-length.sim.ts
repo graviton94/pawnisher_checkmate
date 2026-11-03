@@ -26,17 +26,23 @@ const one = (seed: number) => {
   const usable = (id: CommandId) => COMMANDS[id].who === 'any' || has(COMMANDS[id].who as PieceType);
   let sec = 0, battles = 0, turns = 0, plays = 0, retries = 0, stage = 0;
   let reached = '';
-  for (const a of acts) {
+  for (const [ai, a] of acts.entries()) {
     sec += T.actIntro;
-    for (const row of a.rows) {
-      const n = row[rng.int(row.length)];
-      sec += row.length > 1 ? T.map : 0;
+    let prev: (typeof a.rows)[number][number] | null = null;
+    for (const [ri, row] of a.rows.entries()) {
+      // 슬더스식 길 (D-215): 지난 노드와 이어진 곳 중 무작위
+      const open = prev?.to ?? row.map((_, i) => i);
+      const n = row[open[rng.int(open.length)]];
+      prev = n;
+      sec += open.length > 1 ? T.map : 0;
+      if (n.kind === 'chest') { const ids = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((p) => !parts.includes(p)); parts.push(ids[rng.int(ids.length)]); }
       if (!n.battle) { sec += T.node; continue; }
+      const depth = Math.round((ai + ri / a.rows.length) * SLICE.depthPerAct);
       const def = n.battle;
       let ok = false;
       for (let tryN = 0; tryN < 4 && !ok; tryN++) {
         stage++;
-        const b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: stage, parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
+        const b = newSliceBattle(squad, def.enemy, deck.filter(usable), 100 + stage * 17, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth, parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
         const r = playOut(b);
         battles++; turns += r.turns; plays += r.plays;
         sec += T.battleIntro + r.plays * T.play + r.turns * T.endTurn;
@@ -69,5 +75,5 @@ it('한 판 길이', () => {
   const stuck = new Map<string, number>();
   for (const r of rs.filter((x) => !x.cleared)) stuck.set(r.reached, (stuck.get(r.reached) ?? 0) + 1);
   console.log('막힌 곳', [...stuck].sort((a, b) => b[1] - a[1]));
-  console.log(`전체 평균 ${(avg((r) => r.sec) / 60).toFixed(1)}분`);
+  console.log(`전체 평균 ${(avg((r) => r.sec) / 60).toFixed(1)}분 · 한 번도 안 지고 완주 ${rs.filter((r) => r.cleared && r.retries === 0).length}/${rs.length}`);
 });

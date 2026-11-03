@@ -1455,3 +1455,12 @@ body.slice.lay-f #hand > .cmd.mag .costgear img { width: 20px; height: 20px; }
 /* 타이틀 화면 전체 반전 (D-214): body 위 덮개 — 두 프레임만 */
 .tfx-inv { position: fixed; inset: 0; z-index: 119; pointer-events: none; display: none; backdrop-filter: invert(1) contrast(1.6); -webkit-backdrop-filter: invert(1) contrast(1.6); }
 .tfx-inv.on { display: block; }
+/* 슬더스식 지도 (D-215): 층이 늘어 이름은 지금 갈 수 있는 곳만 — 나머지는 아이콘만 (눌러 보면 아래 띠에 이름) */
+.mapfx .mnd:not(.now) span { display: none; }
+.mapfx .mnd { width: 48px; height: 48px; }
+.mapfx .mnd i { width: 28px; height: 28px; }
+.mapfx .mnd.now { width: 56px; height: 56px; }
+.mapfx .mnd.nd-boss { width: 64px; height: 64px; }
+.mnd.nd-chest i { background: #e8c060; }
+/* 층 사이가 좁아 이름표가 아래 노드를 덮는다 — 지도는 아이콘만, 이름 · 설명은 눌렀을 때 아래 띠에 (D-215) */
+.mapfx .mnd span { display: none; }

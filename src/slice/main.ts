@@ -24,7 +24,7 @@ import { iconMask } from '../ui/chrome';
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
-import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
+import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
@@ -1001,7 +1001,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : stage });
+  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow() });
   selCard = selPiece = openCard = null;
   busy = false;
   turnDmg = 0;
@@ -1039,6 +1039,11 @@ const battleIntro = (): void => {
   window.setTimeout(() => dealHand($('hand')), 450);
 };
 
+/**
+ * 적 성장 깊이 (D-215): 대국 수 대신 출하 진행도 — 막 하나 = SLICE.depthPerAct. 지도가 길어져 대국이 늘어도 성장 곡선은 예전 길이 그대로.
+ */
+const depthNow = (): number => Math.round((actI + rowI / Math.max(1, acts[actI].rows.length)) * SLICE.depthPerAct);
+
 /** 다음 노드로: 줄을 하나 넘기고, 막이 끝나면 다음 막 (전환 화면), 3막 반장 뒤면 출하 완료 */
 const advance = (): void => {
   rowI += 1;
@@ -1069,6 +1074,14 @@ const enterNode = (n: MapNode): void => {
     const ev = SLICE_EVENTS[id];
     return void sceneIntro(NODE_NAMES.event, ev.title, ev.text.split('.')[0] + '.', `<i class="sf-ico" style="${iconArt('n.event')}"></i>`).then(() => eventScreen(id));
   }
+  if (n.kind === 'chest') {
+    // 부품 상자 (D-215): 나사 한 줌 + 부품 하나 — 지도 가운데 층에 고정
+    const screws = SLICE.chestGold[0] + R.int(SLICE.chestGold[1] - SLICE.chestGold[0] + 1);
+    return void sceneIntro(NODE_NAMES.chest, '녹슨 자물쇠', '자물쇠가 삐걱이며 풀린다. 안에서 기름 냄새가 난다.', `<i class="sf-ico" style="${iconArt('n.chest')}"></i>`).then(() => {
+      gold += screws;
+      partPick(`<div class="stamp-big good">상자를 열었다</div><h2>부품 하나 — 나사 +${screws}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, advance);
+    });
+  }
   if (n.kind === 'forge') return void sceneIntro(NODE_NAMES.forge, '꺼지지 않은 화덕', '화덕이 당신을 부른다. 모루는 아직 뜨겁다.', `<i class="sf-ico" style="${iconArt('n.forge')}"></i>`).then(forgeScreen);
 };
 
@@ -1093,15 +1106,22 @@ const showMap = (): void => {
   document.querySelector('.mapfx')?.remove();
   saveRun('map');
   const n = a.rows.length;
-  const pos = (r: number, k: number) => ({ x: ((r + 0.5) / n) * 100, y: ((k + 0.5) / a.rows[r].length) * 100 });
+  // 세로 자리는 노드의 칸(lane) — 입문 · 반장처럼 칸이 없으면 가운데
+  const pos = (r: number, k: number) => {
+    const lane = a.rows[r][k].lane;
+    return { x: ((r + 0.5) / n) * 100, y: lane === undefined ? 50 : ((lane + 0.5) / MAP.lanes) * 100 };
+  };
+  const nextOf = (r: number, k: number): number[] => a.rows[r][k].to ?? a.rows[r + 1].map((_, i) => i);
+  // 지금 갈 수 있는 곳 (슬더스식, D-215): 지난 줄에서 고른 노드와 이어진 노드만. 첫 줄은 전부
+  const open = new Set(rowI === 0 ? row.map((_, i) => i) : nextOf(rowI - 1, picked[actI][rowI - 1] ?? 0));
   // 선: 지나온 길(금) · 지금 위치 → 다음 갈 곳들(밝게) · 그 뒤는 모두 이어진 흐린 선
   const lines: string[] = [];
   for (let r = 0; r < n - 1; r++)
     a.rows[r].forEach((_, k) =>
-      a.rows[r + 1].forEach((__, k2) => {
+      nextOf(r, k).forEach((k2) => {
         const p1 = pos(r, k), p2 = pos(r + 1, k2);
         const walked = picked[actI][r] === k && picked[actI][r + 1] === k2;
-        const live = r === rowI - 1 && picked[actI][r] === k;
+        const live = r === rowI - 1 && picked[actI][r] === k && open.has(k2);
         const dead = r < rowI && picked[actI][r] !== k;
         if (dead) return;
         // 컨베이어 체인 (D-184): 검은 바깥 줄 + 고리 무늬. 지금 갈 수 있는 길은 돌아가고, 고르면 나머지는 끊어진다
@@ -1115,7 +1135,7 @@ const showMap = (): void => {
       r
         .map((nd, k) => {
           const p = pos(ri, k);
-          const state = ri < rowI ? (picked[actI][ri] === k ? 'done' : 'skip') : ri === rowI ? 'now' : 'later';
+          const state = ri < rowI ? (picked[actI][ri] === k ? 'done' : 'skip') : ri === rowI ? (open.has(k) ? 'now' : 'skip') : 'later';
           return `<button type="button" class="mnd ${state} nd-${nd.kind}" style="left:${p.x}%;top:${p.y}%" ${state === 'now' ? `data-node="${k}"` : 'tabindex="-1"'} aria-label="${NODE_NAMES[nd.kind]}"><i style="${iconArt(NODE_ICONS[nd.kind])}"></i><span>${NODE_NAMES[nd.kind]}</span></button>`;
         })
         .join(''),
@@ -2092,7 +2112,7 @@ const newRun = (seed: number, level: number, day: string | null): void => {
 
 /** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
 const saveRun = (at: 'map' | 'battle', node?: number): void =>
-  writeSave(store, { v: 1, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight });
+  writeSave(store, { v: 2, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight });
 
 /** 저장한 출하를 되살린다 */
 const loadRun = (sv: RunSave): void => {

@@ -6,7 +6,7 @@ const memStore = (): Store => {
   const m = new Map<string, string>();
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v), removeItem: (k) => void m.delete(k) };
 };
-const sample = (): RunSave => ({ v: 1, seed: 7, asc: 2, daily: null, runId: 'r', actI: 1, rowI: 3, picked: [[0, 0, 1], [2], []], squad: [{ t: 'K', name: '대장' }], deck: ['advance'], parts: ['coil'], gold: 40, won: 6, stage: 9, refined: [], eventBag: ['smith'], rng: 12345, at: 'map' });
+const sample = (): RunSave => ({ v: 2, seed: 7, asc: 2, daily: null, runId: 'r', actI: 1, rowI: 3, picked: [[0, 0, 1], [2], []], squad: [{ t: 'K', name: '대장' }], deck: ['advance'], parts: ['coil'], gold: 40, won: 6, stage: 9, refined: [], eventBag: ['smith'], rng: 12345, at: 'map' });
 
 describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
   it('저장 → 읽기 → 지우기', () => {
@@ -54,6 +54,7 @@ describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
     const b5 = r5[1].rows[0].find((n) => n.battle)!.battle!;
     expect(b5.enemyHp!).toBeGreaterThan(b0.enemyHp!);
     expect(b5.enemy.length).toBe(b0.enemy.length + 1);
-    expect(r5[0].rows.at(-2)![0].battle!.kingHp).toBeGreaterThan(r0[0].rows.at(-2)![0].battle!.kingHp);
+    const chk = (r: typeof r0) => r[0].rows.at(-1)![0].battle!.kingHp;
+    expect(chk(r5)).toBeGreaterThan(chk(r0));
   });
 });

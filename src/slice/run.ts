@@ -6,7 +6,7 @@ import { BOSS_RULES, type BossRule } from './cards';
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
  * 1막 앞 두 판(입문 · 연마)은 고정 — 첫 10분(D-150). 화면과 무관한 순수 로직.
  */
-export type NodeKind = 'battle' | 'shop' | 'forge' | 'event' | 'check' | 'boss';
+export type NodeKind = 'battle' | 'shop' | 'forge' | 'event' | 'check' | 'boss' | 'chest';
 export type Reward = 'recruit' | 'kit' | 'card' | 'part' | 'end';
 
 export interface BattleDef {
@@ -34,6 +34,10 @@ export interface MapNode {
   kind: NodeKind;
   /** 대국 노드면 그 판 */
   battle?: BattleDef;
+  /** 지도 세로 칸 (0 ~ MAP.lanes−1). 없으면 가운데 (입문 · 반장) */
+  lane?: number;
+  /** 다음 줄에서 이어진 노드 번호 (슬더스식 길, D-215). 없으면 다음 줄 전부 */
+  to?: number[];
 }
 
 export interface Act {
@@ -43,9 +47,9 @@ export interface Act {
   rows: MapNode[][];
 }
 
-export const NODE_NAMES: Record<NodeKind, string> = { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장' };
+export const NODE_NAMES: Record<NodeKind, string> = { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장', chest: '부품 상자' };
 /** 지도 노드 도트 아이콘 키 (public/ui/icons16, D-182) */
-export const NODE_ICONS: Record<NodeKind, string> = { battle: 'n.battle', shop: 'n.shop', forge: 'n.forge', event: 'n.event', check: 'n.check', boss: 'n.boss' };
+export const NODE_ICONS: Record<NodeKind, string> = { battle: 'n.battle', shop: 'n.shop', forge: 'n.forge', event: 'n.event', check: 'n.check', boss: 'n.boss', chest: 'n.chest' };
 /** 갈림길 카드의 짧은 설명 (시스템 투) */
 export const NODE_DESC: Record<NodeKind, string> = {
   battle: '대국을 치르고 카드를 얻습니다.',
@@ -54,6 +58,23 @@ export const NODE_DESC: Record<NodeKind, string> = {
   event: '무엇이 기다리는지 알 수 없습니다.',
   check: '정예와의 대국. 이기면 부품을 얻습니다.',
   boss: '막의 끝. 반장이 기다린다.',
+  chest: '잠긴 상자. 부품 하나와 나사가 들어 있습니다.',
+};
+
+/**
+ * 지도 (D-215, 사용자: "뭘 골라도 다음 선택지가 다 열린다 — 슬더스식으로, 길이도 늘려라"):
+ * 막마다 층 floors[막]개 × 세로 lanes칸. 길 paths갈래가 아래층에서 위층으로 한 칸씩(−1 · 0 · +1) 올라가며, 길끼리 엇갈리지 않는다.
+ * 고른 노드에서 이어진 노드로만 간다. 첫 층은 대국, 가운데 층은 부품 상자, 반장 앞 층은 작업대(쉼터) 고정.
+ * 종류 가중치 · 첫 등장 층은 weights · from. 상점 · 작업대 · 검문은 같은 길에서 연달아 나오지 않는다.
+ */
+export const MAP = {
+  lanes: 4,
+  paths: 5,
+  floors: [8, 10, 10],
+  weights: { battle: 44, event: 22, check: 13, shop: 9, forge: 12 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
+  from: { battle: 0, event: 1, check: 3, shop: 2, forge: 3 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
+  /** 막마다 상점 · 작업대 · 검문 최대 수 (고정 층 제외) */
+  max: { shop: 2, forge: 2, check: 3 } as Record<string, number>,
 };
 
 const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;
@@ -124,39 +145,70 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng)
   return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
 };
 
-/** 갈림길 한 줄: 2~3개, 대국 하나는 반드시. 고물상 · 작업대 · 사건은 막마다 많아야 둘 */
-const forkRow = (act: 1 | 2 | 3, rng: Rng, used: { shop: number; forge: number; event: number }, asc: number): MapNode[] => {
-  const n = 2 + rng.int(2);
-  const row: MapNode[] = [{ kind: 'battle', battle: battleFor(act, 'battle', rng, asc) }];
-  const extra: NodeKind[] = [];
-  if (used.shop < 2) extra.push('shop');
-  if (used.forge < 2) extra.push('forge');
-  if (used.event < 2) extra.push('event');
-  while (row.length < n) {
-    const k = extra.length && rng.int(3) > 0 ? extra.splice(rng.int(extra.length), 1)[0] : 'battle';
-    if (k === 'shop') used.shop++;
-    if (k === 'forge') used.forge++;
-    if (k === 'event') used.event++;
-    row.push(k === 'battle' ? { kind: 'battle', battle: battleFor(act, 'battle', rng, asc) } : { kind: k });
-  }
-  // 섞는다 (대국이 늘 왼쪽에 있지 않게)
-  for (let i = row.length - 1; i > 0; i--) {
-    const j = rng.int(i + 1);
-    [row[i], row[j]] = [row[j], row[i]];
-  }
-  return row;
-};
 
 /** 출하 전체 (3막). 1막은 입문 · 연마 고정 뒤 갈림길 3줄, 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장. 같은 시드 = 같은 지도 (오늘의 출하) */
 export const buildRun = (seed: number, asc = 0): Act[] => {
   const rng = new Rng(seed);
   return ([1, 2, 3] as const).map((act) => {
-    const used = { shop: 0, forge: 0, event: 0 };
     const rows: MapNode[][] = [];
     if (act === 1) INTRO.forEach((battle) => rows.push([{ kind: 'battle', battle }]));
-    for (let k = 0; k < (act === 1 ? 3 : 4); k++) rows.push(forkRow(act, rng, used, asc));
-    rows.push([{ kind: 'check', battle: battleFor(act, 'check', rng, asc) }]);
+    rows.push(...buildGraph(act, rng, asc));
     rows.push([{ kind: 'boss', battle: battleFor(act, 'boss', rng, asc) }]);
     return { act, name: ACT_NAMES[act - 1], rows };
   });
+};
+
+/** 막 하나의 길 그래프 (D-215) — 층마다 노드 줄. 마지막 층은 반장으로 이어진다(to 없음 = 다음 줄 전부) */
+export const buildGraph = (act: 1 | 2 | 3, rng: Rng, asc = 0): MapNode[][] => {
+  const F = MAP.floors[act - 1];
+  const L = MAP.lanes;
+  const lanes: Set<number>[] = Array.from({ length: F }, () => new Set());
+  const edges: [number, number, number][] = [];
+  const crosses = (f: number, a: number, b: number) => edges.some(([ff, c, d]) => ff === f && ((a < c && b > d) || (a > c && b < d)));
+  for (let p = 0; p < MAP.paths; p++) {
+    // 첫 두 길은 서로 다른 쪽에서 출발 — 처음부터 갈림길이 보이게
+    let lane = p === 0 ? rng.int(2) : p === 1 ? L - 1 - rng.int(2) : rng.int(L);
+    for (let f = 0; f < F; f++) {
+      lanes[f].add(lane);
+      if (f === F - 1) break;
+      const opts = [lane - 1, lane, lane + 1].filter((x) => x >= 0 && x < L && !crosses(f, lane, x));
+      const nx = opts.length ? opts[rng.int(opts.length)] : lane;
+      if (!edges.some(([ff, a, b]) => ff === f && a === lane && b === nx)) edges.push([f, lane, nx]);
+      lane = nx;
+    }
+  }
+  const rows: MapNode[][] = lanes.map((set) => [...set].sort((a, b) => a - b).map((lane) => ({ kind: 'battle' as NodeKind, lane, to: [] as number[] })));
+  for (const [f, a, b] of edges) {
+    const from = rows[f].find((n) => n.lane === a)!;
+    const k = rows[f + 1].findIndex((n) => n.lane === b);
+    if (!from.to!.includes(k)) from.to!.push(k);
+  }
+  rows.forEach((r) => r.forEach((n) => n.to!.sort((x, y) => x - y)));
+  rows[F - 1].forEach((n) => delete n.to);
+  // 종류: 아래층부터 — 부모와 같은 상점 · 작업대 · 검문은 피한다
+  const chestAt = Math.round(F / 2);
+  const count: Record<string, number> = {};
+  const parents = (f: number, k: number) => (f ? rows[f - 1].filter((n) => n.to?.includes(k) ?? true) : []);
+  for (let f = 0; f < F; f++)
+    rows[f].forEach((n, k) => {
+      if (f === 0) n.kind = 'battle';
+      else if (f === F - 1) n.kind = 'forge';
+      else if (f === chestAt) n.kind = 'chest';
+      else {
+        const ps = parents(f, k).map((q) => q.kind);
+        const pool = (Object.keys(MAP.weights) as (keyof typeof MAP.weights)[]).filter(
+          (kd) => f >= MAP.from[kd] && (count[kd] ?? 0) < (MAP.max[kd] ?? 99) && !(kd !== 'battle' && kd !== 'event' && ps.includes(kd)) && !(kd === 'forge' && f === F - 2),
+        );
+        let r = rng.int(pool.reduce((a, kd) => a + MAP.weights[kd], 0));
+        n.kind = pool.find((kd) => (r -= MAP.weights[kd]) < 0) ?? 'battle';
+      }
+      count[n.kind] = (count[n.kind] ?? 0) + 1;
+    });
+  // 검문은 막마다 하나는 있게
+  if (!count.check) {
+    const cand = rows.slice(3, F - 1).flat().filter((n) => n.kind === 'battle');
+    if (cand.length) cand[rng.int(cand.length)].kind = 'check';
+  }
+  for (const n of rows.flat()) if (n.kind === 'battle' || n.kind === 'check') n.battle = battleFor(act, n.kind, rng, asc);
+  return rows;
 };
