@@ -689,6 +689,7 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
 const startBattle = (def: BattleDef, silent = false): void => {
   closeOpening();
   document.body.classList.remove('between');
+  placeBg(null);
   cur = def;
   stage += 1;
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
@@ -800,6 +801,7 @@ const showMap = (): void => {
   closeOverlay();
   closeOpening();
   document.body.classList.add('between');
+  placeBg(null);
   document.querySelector('.mapfx')?.remove();
   saveRun('map');
   const n = a.rows.length;
@@ -833,6 +835,9 @@ const showMap = (): void => {
     .join('');
   const el = document.createElement('div');
   el.className = 'mapfx';
+  // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
+  // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
+  el.style.setProperty('--act', `url(${new URL(`scenes/act-${actI + 1}.png`, location.href).href})`);
   el.innerHTML = `<header><div><p class="sf-eyebrow">${a.act}막</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''}</p></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="map-info"><p class="hint">빛나는 곳 중 하나를 고릅니다.</p></footer>`;
@@ -1068,7 +1073,23 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   const counts = new Map<PieceType, number>();
   for (const t of def.enemy) counts.set(t, (counts.get(t) ?? 0) + 1);
   const roster = [...counts].map(([t, n], i) => `<b style="animation-delay:${900 + i * 90}ms">${pieceImg(t, 1, 'small', 28)}${n > 1 ? `<small>×${n}</small>` : ''}</b>`).join('');
-  return sceneIntro(label, name, def.narr, pieceImg(foe, 1, 'large', 220), def.boss, roster);
+  // 반장 초상 (B-01~03, 실제 유닛 = 검은 킹): 그림이 있으면 그것, 없으면 큰 도트 (img onerror가 도트로 되돌린다)
+  const art = def.boss ? `<img class="enc-portrait" src="scenes/${BOSS_ART[def.bossRule ?? 'plate']}.png" alt="" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(foe, 1, 'large', 220).replace(/'/g, '&#39;')}'>` : pieceImg(foe, 1, 'large', 220);
+  return sceneIntro(label, name, def.narr, art, def.boss, roster);
+};
+/** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
+const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns' };
+
+/**
+ * 장소 배경 (D-200): 판 사이 화면 뒤에 화면 전체 그림을 깐다 (받은 그림이 없으면 아무것도 안 깔린다).
+ * reward = 정비 라인 BG-04 · end-fail / end-clear = 출하 끝 E-02 / E-01. null이면 걷는다.
+ */
+const placeBg = (name: string | null): void => {
+  document.body.classList.toggle('placebg', !!name);
+  if (name) {
+    document.body.style.setProperty('--place', `url(${new URL(`scenes/${name}.png`, location.href).href})`);
+    document.body.dataset.place = name;
+  } else delete document.body.dataset.place;
 };
 
 /** 전환 화면 직후 이 시각까지 창 안 탭을 버린다 */
@@ -1189,6 +1210,7 @@ const finish = (): void => {
     }
     // 판 사이 (페르소나 테스트 M7): 보상 · 지도 · 장소 화면 뒤로 끝난 대국의 손패 · 숫자가 비치지 않게 판을 내린다
     document.body.classList.add('between');
+    placeBg('bg-reward');
     // 판돈 정산 · 원수 처치 · 새 원수 · 사선 보상 (D-178)
     const notes: string[] = [];
     if (betNow) {
@@ -1760,6 +1782,8 @@ const loadRun = (sv: RunSave): void => {
 /** 출하 결과 (끝까지 갔거나 그만뒀을 때): 분대 · 기록 · 다시. 저장을 지우고 기록을 남긴다 (승급이 열린다) */
 const runEnd = (cleared: boolean): void => {
   clearSave(store);
+  document.body.classList.add('between');
+  placeBg(cleared ? 'end-clear' : 'end-fail');
   const m0 = readMeta(store);
   const m = recordRun(m0, { cleared, act: actI + 1, won, asc, daily });
   writeMeta(store, m);

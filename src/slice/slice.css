@@ -996,3 +996,20 @@ body.slice .coins b { margin-left: 4px; }
 body.slice.lay-b .turn-label, body.slice.lay-c .turn-label { font-size: 14px; padding-left: 4px; padding-right: 4px; white-space: nowrap; }
 body.slice .boss-rules { word-break: keep-all; }
 body.slice .confirm-bar.quick { bottom: 0; margin-bottom: 0; min-height: 60px; }
+
+/* ---------- 받은 그림 넣기 (D-200) ---------- */
+/* 장소 배경: 판 사이 화면 전체에 그림, 끝난 대국 화면은 통째로 내린다 */
+body.placebg::before { content: ''; position: fixed; inset: 0; z-index: 0; background: #0b0a0e var(--place) center / cover no-repeat; image-rendering: pixelated; }
+body.placebg #app { visibility: hidden; }
+body.placebg .overlay { background: rgba(6, 5, 9, 0.35); }
+/* 보상(정비 라인 BG-04): 왼쪽 40%는 그림, 창은 오른쪽으로 — 장소 화면 틀 */
+body[data-place="bg-reward"] .overlay { justify-content: flex-end; padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+body[data-place="bg-reward"] .overlay .panel { max-width: min(60vw, 620px); }
+/* 출하 끝(E-01 · E-02): 위 3분의 1이 그림, 결과 창은 아래로 */
+body[data-place^="end-"] .overlay { align-items: flex-end; padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+body[data-place^="end-"] .overlay .panel { max-height: 64vh; }
+/* 지도: 막 표지를 어둡게 */
+.mapfx::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--act) center / cover no-repeat; image-rendering: pixelated; opacity: .55; }
+.mapfx { isolation: isolate; }
+/* 반장 초상 (B-01~03) */
+.enc-portrait { width: min(46vh, 300px); height: auto; image-rendering: pixelated; display: block; box-shadow: 0 0 0 3px #000, 0 0 0 5px #7a1218; }
