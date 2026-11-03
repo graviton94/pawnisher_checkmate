@@ -11,7 +11,7 @@ body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow
 .hand { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; padding: 2px 4px 6px 2px; }
 .hand .empty { color: var(--text2); font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 .hand-head { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
-.cmd { --tone: #8a8494; position: relative; display: grid; grid-template-columns: 44px 1fr; align-items: center; column-gap: 8px; min-height: 64px; padding: 6px 10px 6px 34px; text-align: left; color: #f2ede4; background: linear-gradient(90deg, color-mix(in srgb, var(--tone) 26%, #24212b) 0, #24212b 60%); border: 0; box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #46404f; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1),   box-shadow 140ms; }
+.cmd { --tone: #8a8494; position: relative; display: grid; grid-template-columns: 44px 1fr; align-items: center; column-gap: 8px; min-height: 64px; padding: 6px 10px 6px 34px; text-align: left; color: #f2ede4; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #46404f; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1),   box-shadow 140ms; }
 .cmd.t-P { --tone: #9aa7b8; } .cmd.t-N { --tone: #5fc28a; } .cmd.t-B { --tone: #b07ae8; } .cmd.t-R { --tone: #e88a4a; } .cmd.t-Q { --tone: #e85a8a; } .cmd.t-K { --tone: #f4d27a; } .cmd.t-any { --tone: #4ec3d6; }
 .cmd .art { display: grid; place-items: center; width: 44px; height: 44px; background: rgba(0, 0, 0, 0.35); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.5); }
 .cmd .art img { width: 40px; height: 40px; image-rendering: pixelated; }
@@ -23,7 +23,7 @@ body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow
 .cmd em { font-style: normal; font-size: 12px; font-family: Galmuri11, sans-serif; color: #ff9a8a; }
 .cmd .cost { position: absolute; left: -2px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; display: grid; place-items: center; font: 700 24px Galmuri11, sans-serif; color: #16141c; background: linear-gradient(transparent, transparent); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
 .cmd:not(.off):active, .cmd:not(.off):hover { filter: brightness(1.15); }
-.cmd.armed { transform: translateX(8px) scale(1.03); z-index: 2; box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #f4d27a, 0 0 0 4px color-mix(in srgb, var(--tone) 70%, transparent); }
+.cmd.armed { transform: translateX(8px) scale(1.03); z-index: 2; box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #f4d27a, 0 0 0 2px color-mix(in srgb, var(--tone) 70%, transparent); }
 .cmd.off { filter: grayscale(0.8) brightness(0.6); }
 .cmd.off .cost { background: #6a6470; }
 .cmd.big { min-height: 120px; padding: 10px 12px 10px 30px; }
@@ -183,23 +183,23 @@ body.slice .rail .meter { position: static; justify-items: center; align-self: s
 body.slice .cmd {
   grid-template-columns: 22px 52px 1fr; column-gap: 8px; min-height: 60px; padding: 5px 12px 5px 8px;
   border: 0; border-radius: 0;
-  background:
-    radial-gradient(circle at 5px 5px, #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
-    radial-gradient(circle at calc(100% - 5px) 5px, #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
-    radial-gradient(circle at 5px calc(100% - 5px), #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
-    radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), #d8c08a 0 1.6px, #5a4a2a 1.7px 2.4px, transparent 2.5px),
-    linear-gradient(90deg, color-mix(in srgb, var(--tone) 30%, transparent) 0, transparent 42%),
-    linear-gradient(#34303a, #34303a);
-  box-shadow: 0 0 0 2px #000, inset 0 2px 0 #4a4552, inset 0 -2px 0 #121016, inset 3px 0 0 var(--tone), 0 3px 0 #000;
+  /* D-216: 고정 그라데이션 · 매끈한 원 리벳 → 단색 철판 + 위에 도트 철판 9-slice(기물 색 띠 · 도트 리벳, tools/draw-hud.py mag-*) */
+  background: #2f2e36;
+  box-shadow: 0 3px 0 #000;
 }
-body.slice .cmd::before { content: none; }
+body.slice .cmd { isolation: isolate; }
+body.slice .cmd::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1; border-style: solid; border-width: calc(var(--px) * 5); border-image: url('../assets/ui/kit/mag-P.png') 5 / calc(var(--px) * 5) stretch; image-rendering: pixelated; }
+body.slice .cmd.t-N::before { border-image-source: url('../assets/ui/kit/mag-N.png'); } body.slice .cmd.t-B::before { border-image-source: url('../assets/ui/kit/mag-B.png'); }
+body.slice .cmd.t-R::before { border-image-source: url('../assets/ui/kit/mag-R.png'); } body.slice .cmd.t-Q::before { border-image-source: url('../assets/ui/kit/mag-Q.png'); }
+body.slice .cmd.t-K::before { border-image-source: url('../assets/ui/kit/mag-K.png'); } body.slice .cmd.t-any::before { border-image-source: url('../assets/ui/kit/mag-any.png'); }
+
 .cmd .keys { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; align-self: stretch; }
 .cmd .keys img { width: 20px; height: 20px; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 #000); }
 .cmd .keys.free { position: relative; }
 .cmd .keys.free b { position: absolute; font: 700 12px Galmuri11, sans-serif; color: #fff; text-shadow: 1px 1px 0 #000; }
 .cmd .cost { display: none; }
 body.slice .cmd b { color: #f4e6c4; text-shadow: 1px 1px 0 #000; }
-body.slice .cmd.armed { transform: translateX(8px) scale(1.03); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, inset 3px 0 0 var(--tone), 0 0 0 4px color-mix(in srgb, var(--tone) 70%, transparent); }
+body.slice .cmd.armed { transform: translateX(8px) scale(1.03); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #f4d27a, inset 3px 0 0 var(--tone), 0 0 0 2px color-mix(in srgb, var(--tone) 70%, transparent); }
 body.slice .cmd.off { filter: grayscale(0.85) brightness(0.55); }
 body.slice .cmd.cheap .keys img { filter: drop-shadow(0 0 0 transparent); }
 /* 보상 · 덱 카드 */
@@ -312,10 +312,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 /* 크게 보기 카드 */
 .peek { position: fixed; z-index: 55; pointer-events: none; animation: peekin 140ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
 .peek-card { --tone: #8a8494; width: 200px; display: grid; gap: 6px; justify-items: center; padding: 10px 12px 12px; text-align: center; color: #f2ede4;
-  background:
-    linear-gradient(transparent, transparent), linear-gradient(transparent, transparent),
-    linear-gradient(transparent, transparent), linear-gradient(transparent, transparent),
-    linear-gradient(180deg, color-mix(in srgb, var(--tone) 35%, #2e2a33) 0, #1d1b22 70%);
+  background: #24212b;
   box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c, inset 0 0 0 4px var(--tone), 0 8px 0 0px rgba(0, 0, 0, 0.7); }
 .peek-card.t-P { --tone: #9aa7b8; } .peek-card.t-N { --tone: #5fc28a; } .peek-card.t-B { --tone: #b07ae8; } .peek-card.t-R { --tone: #e88a4a; } .peek-card.t-Q { --tone: #e85a8a; } .peek-card.t-K { --tone: #f4d27a; } .peek-card.t-any { --tone: #4ec3d6; }
 .pk-top { display: flex; align-items: center; gap: 8px; justify-self: stretch; }
