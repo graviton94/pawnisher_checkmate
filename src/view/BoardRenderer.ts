@@ -60,6 +60,8 @@ export interface BoardInput {
 }
 
 /** 터치 기기 칸 최대 크기 (CSS px) */
+/** 깨진 심장 톱니 속 칠 (D-219): 흰 기물 팔레트 → 한 단계 어두운 쇠 색. 외곽선 #0b0b0e · 바깥 흰 테 #f4f1ea는 그대로 */
+const CRACK_TONE: Record<number, number> = { 0xf1eeec: 0x8a8790, 0xc5c3c3: 0x5f5d66, 0x858488: 0x45434b, 0x3a393e: 0x2a2930 };
 const BOARD_TILE_TOUCH_MAX = 54; // 도트 내림(DPR 2.625 → 칸 53.3px)이 48 아래로 가지 않게
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // 터치 기기 칸 상한 약 53px (D-214, 사용자: "4×4 · 6×6이 화면을 꽉 채워 부담스럽다") — 터치 하한 48은 지킨다
@@ -167,7 +169,7 @@ class BoardScene extends Phaser.Scene {
   }
   /** 원수 (D-178): 이 기물 왼쪽 위에 진홍 해골 딱지 */
   nemesisId: number | null = null;
-  /** 심장 톱니가 깨진 내 기물 (D-219): 왼쪽 위에 깨진 톱니 딱지 — 또 쓰러지면 폐기 */
+  /** 심장 톱니가 깨진 내 기물 (D-219): 외곽선은 그대로, 속 칠만 어둡게 — 판에 딱지를 더하지 않는다 (사용자: "보드가 더럽다") */
   crackedIds: number[] = [];
 
   preload(): void {
@@ -176,13 +178,44 @@ class BoardScene extends Phaser.Scene {
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
     for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
-    if (!this.textures.exists('ic16-life-crack')) this.load.image('ic16-life-crack', 'ui/icons16/life.crack.png');
+  }
+
+  /**
+   * 깨진 심장 톱니 기물 (D-219): 내 기물 그림에서 검은 외곽선 · 바깥 흰 테는 두고 속 칠 색만 팔레트로 한 단계씩 어둡게 바꾼 텍스처.
+   * 색을 1:1로 바꿀 뿐이라 도트가 그대로 남는다 (그라데이션 · 반투명 없음). 명도 차이라 색약에도 보인다.
+   */
+  private makeCrackedTexture(type: PieceType): void {
+    const key = `${pieceKey(type, 0)}-crack`;
+    if (this.textures.exists(key)) return;
+    const src = this.textures.get(pieceKey(type, 0)).getSourceImage() as HTMLImageElement;
+    const tex = this.textures.createCanvas(key, src.width, src.height);
+    if (!tex) return;
+    const ctx = tex.getContext();
+    ctx.drawImage(src, 0, 0);
+    const img = ctx.getImageData(0, 0, src.width, src.height);
+    const px = img.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if (px[i + 3] === 0) continue;
+      const to = CRACK_TONE[(px[i] << 16) | (px[i + 1] << 8) | px[i + 2]];
+      if (to === undefined) continue;
+      px[i] = (to >> 16) & 255;
+      px[i + 1] = (to >> 8) & 255;
+      px[i + 2] = to & 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    tex.refresh();
+    tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  }
+  /** 이 기물이 쓸 그림 (깨진 내 기물이면 어두운 속 칠) */
+  private glyphKey(id: number, type: PieceType, side: Side): string {
+    return side === 0 && this.crackedIds.includes(id) && this.textures.exists(`${pieceKey(type, 0)}-crack`) ? `${pieceKey(type, 0)}-crack` : pieceKey(type, side);
   }
 
   create(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[]) this.makeCrackedTexture(type);
     this.cameras.main.setZoom(this.dpr);
     this.camZoom = this.dpr;
     this.cameras.main.setBackgroundColor(C.bg);
@@ -418,17 +451,8 @@ class BoardScene extends Phaser.Scene {
       tag.lineStyle(Math.max(1, t * 0.03), 0xfacc15, 1).strokeRect(t * 0.02, t * 0.02, size, size);
       marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, 'icon-skull').setDisplaySize(size * 0.72, size * 0.72).setTint(0xf4f1ea));
     }
-    // 깨진 심장 톱니 (D-219): 내 기물 왼쪽 위 검은 쇠 딱지 — 아이콘 14도트를 판 도트 정수배로
-    if (p.side === 0 && this.crackedIds.includes(p.id)) {
-      const d = t / BOARD_DOTS;
-      const size = Math.round(10 * d);
-      const tag = this.add.graphics();
-      tag.fillStyle(0x0b0b0e, 1).fillRect(t * 0.02, t * 0.02, size + 2 * d, size + 2 * d);
-      tag.fillStyle(0x2f2e36, 1).fillRect(t * 0.02 + d * 0.5, t * 0.02 + d * 0.5, size + d, size + d);
-      marks.push(tag, this.add.image(t * 0.02 + d + size / 2, t * 0.02 + d + size / 2, 'ic16-life-crack').setDisplaySize(size, size));
-    }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * 0.43, pieceKey(p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
+    const glyph = this.add.image(t / 2, t * 0.43, this.glyphKey(p.id, p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -1410,7 +1434,7 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'promote') {
         const s = this.sprites.get(e.pieceId);
         if (s) {
-          s.glyph.setTexture(pieceKey(e.to, s.piece.side));
+          s.glyph.setTexture(this.glyphKey(s.piece.id, e.to, s.piece.side));
           s.piece = { ...s.piece, type: e.to };
         }
         continue;
