@@ -1222,7 +1222,7 @@ let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const st = (): EventState => ({ squad, deck, refined, gold });
-  // 장면 칸 (슬더스식 왼쪽 그림): public/scenes/<사건>.png가 오면 그 그림, 없으면 물음표 문양 (발주 docs/asset-order-scenes.md)
+  // 장면 칸 (슬더스식 왼쪽 그림): public/scenes/<사건>.png가 오면 그 그림, 없으면 물음표 문양 (발주 docs/asset-order-scenes-prompts.md)
   const el = openOverlay(`<div class="ev-wrap"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><p class="ev-text"></p><div class="ev-choices">${ev.choices
     .map((c, k) => {
       const why = c.blocked?.(st()) ?? null;
@@ -1318,6 +1318,9 @@ const shopScreen = (): void => {
 
 /** 작업대 (R5-2): 셋 중 하나 — 다듬기(한 장 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) */
 const forgeScreen = (): void => {
+  // 장소 배경 (D-200): 외눈 정비공의 작업대 BG-02 — 정비공이 왼쪽, 창은 오른쪽
+  document.body.classList.add('between');
+  placeBg('bg-forge');
   // 작업대에 들르면 깨진 심장 톱니를 모두 새로 끼운다 (D-219 — 고르지 않아도 된다)
   const mend = mendSquad(squad);
   squad = mend.squad;

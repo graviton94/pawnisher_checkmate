@@ -1000,7 +1000,7 @@ body.placebg::before { content: ''; position: fixed; inset: 0; z-index: 0; backg
 body.placebg #app { visibility: hidden; }
 body.placebg .overlay { background: rgba(6, 5, 9, 0.35); }
 /* 보상(정비 라인 BG-04): 왼쪽 40%는 그림, 창은 오른쪽으로 — 장소 화면 틀 */
-body[data-place="bg-reward"] .overlay, body[data-place="bg-shop"] .overlay { justify-content: flex-end; padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+body[data-place="bg-reward"] .overlay, body[data-place="bg-shop"] .overlay, body[data-place="bg-forge"] .overlay { justify-content: flex-end; padding-right: max(14px, env(safe-area-inset-right, 0px)); }
 body[data-place="bg-reward"] .overlay .panel { max-width: min(60vw, 620px); }
 body[data-place="bg-shop"] .overlay .panel { max-width: min(60vw, 640px); }
 /* 녹슨 룩이 창에 가리지 않게 그림을 살짝 키워 왼쪽으로 민다 */
@@ -1018,6 +1018,7 @@ body[data-place^="end-"] .overlay .panel { max-height: 64vh; }
 body.placebg .overlay .panel { border-image: none; border: 0; background: rgba(14, 12, 18, 0.58); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px rgba(200, 155, 60, 0.5); padding: 10px 12px; gap: 8px; }
 body[data-place="bg-reward"] .overlay .panel { max-width: min(52vw, 540px); }
 body[data-place="bg-shop"] .overlay .panel { max-width: min(54vw, 560px); }
+body[data-place="bg-forge"] .overlay .panel { max-width: min(56vw, 580px); }
 body[data-place^="end-"] .overlay .panel { width: min(640px, 72vw); max-height: 58vh; }
 body.placebg .reward-cards { gap: 8px; margin: 4px 0; }
 body.placebg .reward-cards .cmd { padding: 10px 8px 8px; row-gap: 4px; }
