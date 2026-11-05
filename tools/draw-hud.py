@@ -101,18 +101,18 @@ BODY = [
 ]
 
 # ---------- 계기 창 (12×12, slice 4): 검은 틀 · 오목한 검은 창 · 리벳 ----------
-GAUGE = [
+GAUGE = [  # 2026-11-05 리뉴얼 (스팀펑크 HP 바 레퍼런스 학습): 황동 테(왼쪽 위 빛 · 오른쪽 아래 그늘) · 네 귀 볼트 · 오목한 검은 창
     '.kkkkkkkkkk.',
-    'kllllllllllk',
-    'klgkkkkkkgdk',
-    'klkiiiiiiidk',
-    'klkiiiiiiidk',
-    'klkiiiiiiidk',
-    'klkiiiiiiidk',
-    'klkiiiiiiidk',
-    'klkiiiiiiidk',
-    'klgdddddddgk',
-    'kddddddddddk',
+    'kYYYYYYYYYyk',
+    'kYwyyyyyywbk',
+    'kYykkkkkkybk',
+    'kYykiiiidybk',
+    'kYykiiiidybk',
+    'kYykiiiidybk',
+    'kYykiiiidybk',
+    'kYyddddddybk',
+    'kYwyyyyyywbk',
+    'kybbbbbbbbbk',
     '.kkkkkkkkkk.',
 ]
 
@@ -211,14 +211,16 @@ REW = [
 
 # ---------- 속전 보일러관 (D-212, 사용자: 진공관도 별로 — 끓는 쇳물 게이지) ----------
 # 관 틀 6×6 (slice 2): 검은 선 + 위 유리 반사 1도트 + 아래 그늘. 안은 비면 검은 유리.
-PIPE = [
+PIPE = [  # 2026-11-05: 황동 테 유리관 (위 · 왼쪽 빛, 아래 · 오른쪽 그늘)
     'kkkkkk',
-    'kmmmmk',
-    'kiiiik',
-    'kiiiik',
-    'kddddk',
+    'kYYYyk',
+    'kYiiyk',
+    'kyiibk',
+    'kybbbk',
     'kkkkkk',
 ]
+# 태엽 구멍을 잇는 황동 관 (4×8 가로로 이어 붙인다): 검은 선 · 빛 · 몸 · 그늘
+MANIFOLD = ['kkkk', 'YYYY', 'yyyy', 'yyyy', 'bbbb', 'kkkk', '....', '....']
 # 황동 마개 4×14 (왼쪽 · 오른쪽은 좌우 뒤집기): 볼트 머리 두 개
 CAP = [
     '.kkk',
@@ -373,7 +375,8 @@ if __name__ == '__main__':
     save(art(BODY), 'mag-body.png')
     save(art(GAUGE), 'gauge.png')
     save(socket(PAL['l'], PAL['d']), 'socket.png')
-    save(socket(PAL['b'], PAL['O']), 'socket-lit.png')
+    save(socket(PAL['y'], PAL['O']), 'socket-lit.png')
+    save(art(MANIFOLD), 'manifold.png')
     save(socket(PAL['j'], PAL['G']), 'socket-bonus.png')
     # 열쇠: hud_icons가 찍은 태엽 열쇠를 90도씩 돌린다 — 도트가 그대로 남는 회전만
     hud_icons.main()

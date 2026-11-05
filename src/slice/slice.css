@@ -1376,7 +1376,7 @@ body.slice.lay-f .rail.left > #hand, body.slice.lay-f #right > .rmid { backgroun
 /* 계기 창(태엽 · 속전): 리벳 창 9-slice */
 body.slice.lay-f .rail.left > .apbar, body.slice.lay-f #right > .gtop { background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/gauge.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; padding: 0 2px; }
 /* 태엽: 팔각 열쇠 구멍(14도트) 속 열쇠(16도트) — 쓰면 열쇠 띠가 90도씩 네 번 넘어가며 빈 열쇠로 (steps = 도트 그대로) */
-body.slice.lay-f .apbar .keys { gap: 2px; justify-content: space-between; align-items: center; }
+body.slice.lay-f .apbar .keys { gap: 2px; justify-content: space-between; align-items: center; background: url('../assets/ui/kit/manifold.png') 0 50% / 8px 16px repeat-x; image-rendering: pixelated; } /* 구멍을 잇는 황동 관 (2026-11-05) */
 body.slice.lay-f .apbar .seg { flex: 0 0 auto; width: 28px; height: 28px; background: url('../assets/ui/kit/socket.png') 0 0 / 28px 28px no-repeat; image-rendering: pixelated; clip-path: none; box-shadow: none; display: grid; place-items: center; animation: none; filter: none; }
 body.slice.lay-f .apbar .seg.on { background-image: url('../assets/ui/kit/socket-lit.png'); }
 body.slice.lay-f .apbar .seg.bonus.on { background-image: url('../assets/ui/kit/socket-bonus.png'); }
