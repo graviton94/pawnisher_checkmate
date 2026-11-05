@@ -23,7 +23,7 @@ export interface QuirkDef {
 
 /** 기벽 4종 (D-155: 8 → 4, 눈에 보이는 수치만 — 숨은 발동 조건은 뺐다) */
 export const QUIRKS: Record<QuirkId, QuirkDef> = {
-  overwound: { name: '과감김 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
+  overwound: { name: '과하게 감긴 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
   welded: { name: '납땜 흉갑', desc: '방열판 12 · 공격 −15%', shield: 12, atk: 0.85 },
   stubborn: { name: '고집 센 축', desc: '문턱 2번 · 공격 −15%', doors: 2, atk: 0.85 },
   boiler: { name: '새는 보일러', desc: '쓰러지면 둘레 폭발 20', doors: 0 },
