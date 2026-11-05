@@ -34,7 +34,7 @@ export interface CommandDef {
   /** move = 기물 하나를 움직여 친다 · march = 폰 모두 한 칸 전진 · draft = 킹 옆에 폰 · spark = 연쇄 +1 */
   kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit' | 'spend';
   /** spend: 쌓인 연쇄를 모두 써서 — 킹 방열판 · 적 전체 피해 · 카드 뽑기 (D-203). amount = 연쇄 하나마다 */
-  spend?: 'shield' | 'blast' | 'draw';
+  spend?: 'shield' | 'blast' | 'draw' | 'ap';
   /** 빌드 축 (보상에서 축이 고루 나오게, 카드에 띠로 표시) */
   axis?: Axis;
   /** 둘째 축 (교차 브릿지 카드 — 한 축의 행동이 다른 축을 돕는다, D-145) */
@@ -104,7 +104,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '쌓인 열기를 갑옷으로 돌린다. (연쇄를 모두 써서 킹 방열판 +연쇄×14)', flavor: '“식기 전에 입어라.”' },
   burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄를 모두 써서 적 전체에 연쇄×14 피해)', flavor: '“압력을 놓아라.”' },
-  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'draw', amount: 2, desc: '흩어진 명령을 거둔다. (연쇄를 모두 써서 카드 +연쇄×2, 최대 4)' },
+  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 1, desc: '흩어진 태엽을 거둔다. (연쇄를 모두 써서 태엽 +연쇄, 최대 3)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (연쇄 1마다 ×0.5 추가)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
   cavCharge: { axis: 'cav', axis2: 'inf', name: '선봉 돌파', cost: 1, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (착지 둘레 폰 전진 공격)' },
@@ -125,7 +125,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   tempo: { axis: 'chain', name: '박자', cost: 0, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 +3)' },
   bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 25, desc: '몸으로 막아선다. (방열판 +25)' },
   bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (상하좌우 50%, 처치 1회 = 연쇄 2칸)' },
-  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +3, 카드 +2)', flavor: '“기꺼이.”' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +3, 카드 +2, 태엽 +1)', flavor: '“기꺼이.”' },
 };
 
 /** 다듬은 변형: 이름 뒤에 +, 태엽 −1 (0 아래로는 안 내려간다). 나머지는 원본 그대로 */
@@ -186,6 +186,8 @@ export const CARD_GRADE: Partial<Record<string, Grade>> = {
   rookCharge: 'gold', shove: 'gold', overload: 'gold', wrath: 'gold', scrapToss: 'gold', rookPierce: 'rare',
   royalGuard: 'rare', bulwark: 'rare', smash: 'rare', quickFix: 'rare', spark: 'rare', repair: 'rare', plate: 'rare', ram: 'rare', kingDecree: 'rare',
   pawnStorm: 'rare', kingBlow: 'rare', shieldBash: 'rare', charge: 'rare', finisher: 'rare', bladeRain: 'rare',
+  // 등반 감사 재측정 (D-227): 손본 뒤 가치 12 넘은 카드
+  reload: 'rare', knightRaid: 'rare', draft: 'rare', kingGuard: 'rare', bishopRay: 'rare',
 };
 export const gradeOf = (id: string): Grade => CARD_GRADE[id.replace(/\+$/, '')] ?? 'common';
 /** 보상 한 칸이 어느 등급으로 나오나 (가중치) — 검문 · 반장은 elite */
@@ -304,7 +306,7 @@ export const SLICE = {
   /** 태엽 칸 (D-212, 사용자: "최대 5개를 깔아 두고 3개만 켠다") — 한 턴에 가질 수 있는 태엽 상한 */
   apCap: 5,
   /** 회수(연쇄 소모 → 뽑기) 최대 장수 */
-  recallMax: 4,
+  recallMax: 3,
   /**
    * 한 수의 값표 (D-202, 사용자: "값표 통일") — 플레이어 기본 이동 카드 비용과 같다.
    * 전진 · 도약 · 사선 · 왕의 걸음 1, 직진 2, 퀸은 지휘 값 2. 적도 이 값으로 태엽을 쓴다.

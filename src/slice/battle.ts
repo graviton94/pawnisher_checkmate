@@ -647,6 +647,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     events = [{ type: 'attack', order: 0, attackerId: v.id, area: [{ x: v.x, y: v.y }], hits: [{ targetId: v.id, damage: v.hp, shieldAbsorbed: 0, hpAfter: 0, killed: true }] }];
     b.kills += SLICE.gambitChain;
     drawCards(b, SLICE.gambitDraw);
+    gained += 1;
   } else if (c.kind === 'spark') {
     b.kills += 1;
     drawCards(b, 1);
@@ -676,6 +677,9 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         k.shield += n * (c.amount ?? 0);
         events = [{ type: 'shield', pieceId: k.id, amount: n * (c.amount ?? 0) }];
       }
+    } else if (c.spend === 'ap') {
+      // 회수 (D-227 개편): 쌓인 연쇄를 태엽으로 — 카드 뽑기는 태엽이 모자라면 쓸모가 없었다
+      gained += Math.min(SLICE.recallMax, n * (c.amount ?? 1));
     } else if (c.spend === 'draw') {
       drawCards(b, Math.min(SLICE.recallMax, n * (c.amount ?? 1)));
     } else if (c.spend === 'blast') {
