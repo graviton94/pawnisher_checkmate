@@ -9,8 +9,9 @@
     검은 진영: hi2 H · hi1 M · base B · sh1 Z #26272E · sh2 D
   외곽선 모양: 검은 기물 정본을 따른다 (킹은 사용자 K new). 폰 · 룩 · 퀸 · 킹은 좌우 대칭으로 맞춘다.
   역할 지도: 정본 그림자를 쓰지 않고 형태만 보고 새로 칠한다 (사용자: "색칠은 기존 방식 아니더라도 다시"). 빛은 왼쪽 위.
-    폰 · 비숍 · 룩 · 퀸 · 킹 = 줄마다 원통 음영 + 단 경계(넓어지면 윗면 빛, 좁아지면 처마 그림자) + 위 · 아래 가장자리,
-    나이트 = 대각선 빛(머리라 원통이 맞지 않는다) + 가장자리. 흑백이 칸 하나까지 같은 자리에 같은 단계.
+    심플하게 (사용자: "너무 세밀묘사"): 빛 · 바탕 · 그늘 세 덩어리 + 오른쪽 · 아래 끝 한 칸 짙은 그늘.
+    폰 · 비숍 · 룩 · 퀸 · 킹 = 줄마다 원통(왼쪽 36% 빛 · 가운데 바탕 · 72%부터 그늘) + 단 경계 한 줄(넓어지면 윗면 빛, 좁아지면 처마 그림자),
+    나이트 = 대각선 빛(머리라 원통이 맞지 않는다). 흑백이 칸 하나까지 같은 자리에 같은 단계.
   외곽선 대칭: 킹 · 퀸 · 룩 · 폰은 좌우 대칭(왼쪽 절반을 비춘다), 비숍 · 나이트는 생김새 그대로.
   룩 성곽(14~26줄) · 퀸 십자가와 성곽(6~26줄)은 새로 그린다 — 칸 폭을 정수로 맞춰 좌우 대칭.
 가짜 왕 [K 0](주인공)은 모양이 달라 흰 테만 3칸으로 맞춘다. 흰 킹 통일안은 [K:classic 0]에 넣는다.
@@ -142,17 +143,14 @@ def roles(t, kind, hi, ksrc):
             hi_ += 1
         w = hi_ - lo + 1
         p = (x - lo) / max(1, w - 1)
+        # 심플하게 (사용자: "너무 세밀묘사"): 빛 · 바탕 · 그늘 세 덩어리 + 오른쪽 끝 한 칸만 짙은 그늘
         if w <= 4:
             v = 1 if x == lo else 3 if x == hi_ else 2
-        elif x == lo:
-            v = 1
         elif x == hi_:
             v = 4
-        elif 0.15 <= p <= 0.38:
-            v = 0
-        elif p >= 0.84:
-            v = 4
-        elif p >= 0.64:
+        elif p < 0.36:
+            v = 1
+        elif p >= 0.72:
             v = 3
         else:
             v = 2
@@ -172,20 +170,6 @@ def roles(t, kind, hi, ksrc):
         if w1 is not None and w1 <= w - 4:
             v -= 1
         elif w1 is not None and w1 >= w + 4:
-            v += 1
-        elif w2 is not None and w1 is not None and w2 >= w + 4 and w1 < w + 4:
-            v += 1
-        above = [(x, y - k) in inner for k in range(1, 7)]
-        if not above[0]:
-            if any(above[1:]):
-                v += 2  # 바로 위 단이 드리운 그림자
-            else:
-                v -= 1  # 하늘을 보는 윗면
-        elif not above[1] and any(above[2:]) is False and False:
-            pass
-        elif (x, y - 2) in inner and (x, y - 1) in inner and not (x, y - 2 - 1) in inner and any((x, y - k) in inner for k in range(4, 8)):
-            v += 1
-        if (x, y + 1) not in inner:
             v += 1
         lvl[(x, y)] = max(0, min(4, v))
     # 잡티 정리: 상하좌우 넷 중 셋 이상이 같은 단계면 그 단계로
@@ -207,12 +191,9 @@ def knight_roles(inner):
     lvl = {}
     for (x, y) in inner:
         d = ((x - x0) + (y - y0)) / span
-        v = 1 if d < 0.32 else 3 if d > 0.68 else 2
+        v = 1 if d < 0.38 else 3 if d > 0.66 else 2
         gone = lambda dx, dy: (x + dx, y + dy) not in inner
-        lit, dark = gone(-1, 0) or gone(0, -1), gone(1, 0) or gone(0, 1)
-        if lit and not dark:
-            v = 0
-        if dark:
+        if gone(1, 0) or gone(0, 1):
             v = 4
         lvl[(x, y)] = v
     for (x, y), v in list(lvl.items()):
