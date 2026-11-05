@@ -1434,6 +1434,23 @@ g.pts('X', (7, 1), (7, 2), (6, 2), (8, 2), (7, 3)).pts('T', (5, 0), (9, 0), (4, 
 icon('c.smash', '분쇄', g.done())
 
 
+# ── 2차 리뉴얼 (2026-11-05, D-223): 레퍼런스 학습으로 새로 그린 손그림 14×14 (tools/pixel/icons16_v2/batch_*.py)
+# 사용자 검토에서 전 버전이 낫다고 한 7장은 위의 예전 그림을 그대로 둔다.
+KEEP_OLD = {'n.check', 'c.finisher', 'c.repair', 'banner', 'greed', 'bloodPact', 'n.chest'}
+
+
+def _load_v2():
+    import runpy
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icons16_v2')
+    for b in 'ABCD':
+        for k, rows in runpy.run_path(os.path.join(here, f'batch_{b}.py'))['NEW'].items():
+            if k in ICONS and k not in KEEP_OLD:
+                ICONS[k] = rows
+
+
+_load_v2()
+
+
 def mix(a, b, t):
     """두 색 섞기 (t = b 쪽 비율) — 결과는 팔레트 한 칸, 그라데이션 아님"""
     return tuple(round(a[i] * (1 - t) + b[i] * t) for i in range(3)) + (255,)
