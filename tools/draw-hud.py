@@ -303,10 +303,11 @@ def rays(color, alpha, period, width, n=112):
                 im.putpixel((x, y), color + (alpha,))
     return im
 
-# ---------- 카드 얼굴 (D-217 3): 24×32 9-slice (위 9 · 양옆 4 · 아래 5) — 위는 이름 머리띠, 가운데는 비움 ----------
+# ---------- 카드 얼굴 (D-217 3): 24×35 9-slice (위 12 · 양옆 4 · 아래 5) — 위는 이름 머리띠(속 9칸: 12px 글자 위아래 3px 여유, 2026-11-05), 가운데는 비움 ----------
 def card_frame(rim, hi, band, shade, lights=None, shimmer=None):
     """lights = 황금 테 위를 도는 불빛 위상(0~3), shimmer = 희귀 테 반짝임 위상(0~1)"""
-    W, H = 24, 32
+    W, H = 24, 35
+    BAND = 11  # 머리띠 아래 테 줄
     im = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     def put(x, y, c):
         im.putpixel((x, y), c + (255,))
@@ -318,13 +319,13 @@ def card_frame(rim, hi, band, shade, lights=None, shimmer=None):
                 continue
             if x in (0, W - 1) or y in (0, H - 1):
                 put(x, y, K)
-            elif x in (1, W - 2) or y in (1, H - 2) or y == 8:
-                put(x, y, hi if (y == 1 or x == 1) and y != 8 else rim)
+            elif x in (1, W - 2) or y in (1, H - 2) or y == BAND:
+                put(x, y, hi if (y == 1 or x == 1) and y != BAND else rim)
                 if x in (1, W - 2) or y in (1, H - 2):
                     perim.append((x, y))
-            elif y <= 7:
+            elif y < BAND:
                 put(x, y, band)
-            elif x == 2 or y == 9:
+            elif x == 2 or y == BAND + 1:
                 put(x, y, shade)
             elif x == W - 3 or y == H - 3:
                 put(x, y, shade)
