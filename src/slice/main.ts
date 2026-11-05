@@ -1087,7 +1087,7 @@ const advance = (): void => {
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
     squad = restSquad(squad, restHeal());
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
-    void sceneIntro(`${a.act}막`, a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`).then(showMap);
+    void sceneIntro(`${a.act}막`, a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`, false, '', `act-${actI + 1}`).then(showMap);
     return;
   }
   showMap();
@@ -1222,6 +1222,9 @@ let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const st = (): EventState => ({ squad, deck, refined, gold });
+  // 장소 배경 (BG-03): 공장 뒷길 — 사건 창은 가운데 그대로
+  document.body.classList.add('between');
+  placeBg('bg-event');
   // 장면 칸 (슬더스식 왼쪽 그림): public/scenes/<사건>.png가 오면 그 그림, 없으면 물음표 문양 (발주 docs/asset-order-scenes-prompts.md)
   const el = openOverlay(`<div class="ev-wrap"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><p class="ev-text"></p><div class="ev-choices">${ev.choices
     .map((c, k) => {
@@ -1385,10 +1388,12 @@ const TIPS = [
  * 전환 화면 (D-165 → D-191 새 문법): 철문이 열리면 — 빛줄기 앞으로 적(또는 장소 문양)이 떨어져 박히고 → 명패 아래 이름이 내리꽂히고
  * (색 갈림) → 서술이 한 자씩 → 적 구성이 하나씩 튀어나온다. 눌러서 넘기거나 약 3.5초 뒤 저절로.
  */
-const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false, roster = ''): Promise<void> =>
+const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false, roster = '', bg = ''): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
-    el.className = `stagefx enc${boss ? ' boss' : ''}`;
+    el.className = `stagefx enc${boss ? ' boss' : ''}${bg ? ' has-bg' : ''}`;
+    // 막 전환 (A-01~03): 그 막의 표지 그림을 전환 화면 뒤에 깐다
+    if (bg) el.style.setProperty('--sf-bg', `url(${new URL(`scenes/${bg}.png`, location.href).href})`);
     el.innerHTML = `<div class="enc-rays"></div><div class="sf-art"><i class="enc-shadow"></i><div class="enc-piece">${art}</div></div>
       <div class="sf-text"><p class="sf-eyebrow enc-plate">${label}</p><h1>${name}</h1><p class="sf-narr"></p>${roster ? `<div class="enc-foes"><span>적</span>${roster}</div>` : ''}</div>
       <p class="sf-tip">${TIPS[Math.floor(Math.random() * TIPS.length)]}</p><p class="sf-skip">눌러서 계속</p>`;
@@ -2372,4 +2377,4 @@ startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 if (qs.has('lab')) labPick();
 else if (!qs.has('debug')) opening();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 2 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

@@ -1611,3 +1611,9 @@ body.slice .shop-grid { row-gap: 20px; padding-bottom: 14px; }
 .crackfx small { font-size: 12px; font-family: Galmuri11, sans-serif; color: #a8a2b0; }
 .crackfx .narr { margin: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #d6d0c6; }
 @media (prefers-reduced-motion: reduce) { .life.breaking, .life.mending, .life.breaking::after, .crackfx > div { animation: none; } }
+
+/* 막 전환 화면 (A-01~03): 막 표지를 뒤에 깔고 어둡게 덮는다 (고정 덮개 — 움직이지 않는다) */
+.stagefx.has-bg { isolation: isolate; }
+.stagefx.has-bg::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--sf-bg) center / cover no-repeat; image-rendering: pixelated; }
+.stagefx.has-bg::after { content: ''; position: absolute; inset: 0; z-index: -1; background: rgba(6, 5, 9, 0.45); }
+body[data-place="end-clear"]::before { background-position: 50% 92%; }
