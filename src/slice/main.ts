@@ -1033,7 +1033,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow() });
+  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold });
   selCard = selPiece = openCard = null;
   busy = false;
   turnDmg = 0;
@@ -1622,7 +1622,7 @@ const finish = (): void => {
     if (notes.length) window.setTimeout(() => toast(notes.join(' · '), 3600), 300);
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
     const overGold = Math.floor(b.overkill / 10);
-    const earned = (b.coins * SLICE.coinValue + overGold) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
+    const earned = b.coins * SLICE.coinValue + overGold;
     gold += earned;
     // 나사 받기 (D-184): 판 가운데서 도트 나사가 튀어 올라 나사 칸으로 빨려 든다
     { const r = $('board').getBoundingClientRect(); screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, $('coins'), Math.round(earned / 6)); }
@@ -2208,7 +2208,8 @@ const labEnd = (isWin: boolean): void => {
 /** 대국 사이 회복 (승급 3부터 절반) */
 const restHeal = (): number => REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1);
 /** 고물상 값 (승급 4부터 비싸다) */
-const ascPrice = (n: number): number => (asc >= 4 ? Math.round(n * ASC_NUM.shopMul) : n);
+/** 고물상 값: 승급 4 이상 · 탐욕의 저울(대가 +25%)이면 오른다 */
+const ascPrice = (n: number): number => Math.round(n * (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1));
 
 /** 새 출하: 시드 · 승급 · 오늘의 출하. 분대 · 덱 · 부품 · 나사 · 지도를 처음으로 */
 const newRun = (seed: number, level: number, day: string | null): void => {

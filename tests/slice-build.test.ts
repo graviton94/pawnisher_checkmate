@@ -261,29 +261,29 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     expect(REWARD_COMMANDS.length).toBe(43); // + 연쇄 소모 3 (D-203) · 빌드 다양성 6 (D-217 4)
     expect(Object.keys(SLICE_PARTS).length).toBe(29); // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
   });
-  it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 피의 계약(턴 끝 킹 −4)', () => {
+  it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(나사 100마다 공격 +3, D-227) · 피의 계약(턴 끝 킹 −4)', () => {
     const b = mk(['brittle']);
     expect(b.apMax).toBe(SLICE.ap + 1);
     const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
     expect(k.maxHp).toBe(Math.round(100 * 0.8));
-    const g = mk(['greed']);
-    expect(g.s.pieces.find((p) => p.side === 1 && p.type === 'P')!.maxHp).toBe(Math.round(25 * 1.2));
+    const g = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P'], ['advance'], 3, { parts: ['greed'], gold: 250 });
+    expect(g.greedAdd).toBe(6);
     const bp = mk(['bloodPact']);
     const kb = bp.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
     bp.intents = [];
     endTurn(bp, true);
     expect(bp.s.pieces.find((p) => p.id === kb.id)!.hp).toBe(kb.maxHp - 4);
   });
-  it('녹슨 등자: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 25 · 막사의 종: 폰 +1', () => {
+  it('녹슨 등자: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 40 · 막사의 종: 폰 +1', () => {
     const b = mk(['spurs', 'scepter', 'barracks'], ['leap', 'knightRaid']);
     expect(costOf(b, 0)).toBe(0);
-    expect(costOf(b, 1)).toBe(1);
-    expect(b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!.shield).toBe(25);
+    expect(costOf(b, 1)).toBe(0); // 기습 태엽 1 (D-227) − 등자 1
+    expect(b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!.shield).toBe(40);
     expect(b.s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(3);
   });
-  it('전도 코일: 연쇄 처치마다 +7 (합, D-205)', async () => {
+  it('전도 코일: 연쇄 처치마다 +10 (합, D-205 · D-227)', async () => {
     const { chainAdd } = await import('../src/slice/battle');
-    expect(chainAdd(2, ['conductor'])).toBe(14);
+    expect(chainAdd(2, ['conductor'])).toBe(20);
   });
 });
 
@@ -372,7 +372,7 @@ describe('배율 쓰기 (D-203)', () => {
     expect(typeof playCard(b, i)).toBe('object');
     for (const f of foes) {
       const p = b.s.pieces.find((x) => x.id === f.id);
-      if (p) expect(p.hp + p.shield).toBe(f.hp - 27);
+      if (p) expect(p.hp + p.shield).toBe(Math.max(0, f.hp - 42));
     }
   });
 });

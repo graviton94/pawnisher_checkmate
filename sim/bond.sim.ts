@@ -183,7 +183,7 @@ const one = (seed: number, on: string) => {
           if (r.won) {
             ok = true;
             fell = fallenAfter(b, squad).map((f) => f.crew);
-            const g = (b.coins * SLICE.coinValue + Math.floor(b.overkill / 10)) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
+            const g = (b.coins * SLICE.coinValue + Math.floor(b.overkill / 10));
             gold += g; bump(T, 'goldBattle', g);
             squad = squadAfter(b, squad);
             if (B) {

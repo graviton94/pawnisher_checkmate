@@ -51,4 +51,4 @@
 - `c.finisher` 처형
 - `c.shove` 몰아치기
 - `c.overload` 과부하
-- `c.draft` 강제 징집
+- `c.draft` 땜질 보충병

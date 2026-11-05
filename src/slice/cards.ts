@@ -60,6 +60,8 @@ export interface CommandDef {
   /** 이번 공격에만 붙는 각인 효과 */
   carve?: CarveId;
   amount?: number;
+  /** draw 카드: 태엽도 이만큼 (태엽 감기) */
+  ap?: number;
   /** 효과 한 문장 (기본 이동 카드는 비운다 — 행마 그림과 판 위 표시가 가르친다, D-159) */
   desc: string;
   /** 탄창 머리에 쓰는 짧은 칭호 (한글 5자 이내, D-212) — 기본 행마 카드만 */
@@ -75,38 +77,38 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   kingStep: { name: '왕의 걸음', cost: 1, who: 'K', kind: 'move', desc: '둘레를 짓누른다.', flavor: '화려한 왕관, 잔혹한 무게', title: '잔혹한 왕관' },
   order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '누구든 하나를 부린다.' },
   pierceDiag: { axis: 'chain', name: '심판의 창', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 1기까지)' },
-  crossLeap: { axis: 'cav', name: '지축 강타', cost: 2, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
+  crossLeap: { axis: 'cav', name: '지축 강타', cost: 1, who: 'N', kind: 'move', carve: 'cross', desc: '도약 후 사방에 여진을 일으킨다. (상하좌우 50%)' },
   charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', add: 8, desc: '일격을 휘두른다. (+8)' },
   // 빌드 다양성 묶음 (D-217 4): 축마다 「그 축으로 가고 싶게」 만드는 카드
   rookPierce: { axis: 'push', name: '관통 포격', cost: 2, who: 'R', kind: 'move', carve: 'pierce', mult: 1.2, desc: '요새가 줄을 꿰뚫는다. (×1.2, 뒤의 1기까지)' },
   scrapToss: { axis: 'push', name: '고철 투척', cost: 1, who: 'R', kind: 'move', add: 10, desc: '쇳덩이를 내던진다. (+10)' },
-  phalanx: { axis: 'inf', name: '방진', cost: 1, who: 'P', kind: 'move', rally: true, desc: '어깨를 맞대고 나아간다. (둘레 폰 전진 공격)', flavor: '“한 발도 물러서지 마라.”' },
-  pawnExecute: { axis: 'inf', axis2: 'chain', name: '개척자의 처단', cost: 1, who: 'P', kind: 'move', multPerKill: 0.6, desc: '작은 칼끝이 연쇄를 끝맺는다. (연쇄 1마다 ×0.6 추가)' },
+  phalanx: { axis: 'inf', name: '방진', cost: 1, who: 'P', kind: 'move', rally: true, add: 5, desc: '어깨를 맞대고 나아간다. (+5, 둘레 폰 전진 공격)', flavor: '“한 발도 물러서지 마라.”' },
+  pawnExecute: { axis: 'inf', axis2: 'chain', name: '개척자의 처단', cost: 1, who: 'P', kind: 'move', multPerKill: 1, desc: '작은 칼끝이 연쇄를 끝맺는다. (연쇄 1마다 ×1 추가)' },
   bishopChain: { axis: 'chain', name: '축복의 고리', cost: 1, who: 'B', kind: 'move', chainPerKill: 2, desc: '심판받은 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
   kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 2, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (+6, 밀치기)' },
   plate: { name: '철벽', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15)' },
   repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 15, desc: '기물 하나를 땜질한다. (HP +15)' },
-  reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 2, desc: '탄창을 다시 채운다. (카드 +2)' },
+  reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 1, ap: 1, desc: '태엽을 감고 탄창을 채운다. (태엽 +1, 카드 +1)' },
   kingBlow: { axis: 'king', name: '왕의 철퇴', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (×2)' },
-  splashDiag: { axis: 'chain', name: '파편 세례', cost: 2, who: 'B', kind: 'move', carve: 'diag', desc: '착지한 자리에서 사선으로 파편이 튄다. (대각 50%)' },
+  splashDiag: { axis: 'chain', name: '파편 세례', cost: 1, who: 'B', kind: 'move', carve: 'diag', desc: '착지한 자리에서 사선으로 파편이 튄다. (대각 50%)' },
   smash: { axis: 'chain', name: '분쇄', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '온 힘을 실어 내려친다. (×1.5)' },
   rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '첫 적을 들이받는다.', flavor: '살아 움직이는 요새', title: '걷는 요새' },
   // ---- 빌드 축 카드 (D-144) ----
   rebound: { axis: 'cav', name: '피의 질주', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '처치 후 한 번 더 도약한다. (이번 턴 처치했으면 태엽 0)' },
   hoofKick: { axis: 'cav', name: '짓밟기', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '짓밟고 다음 명령을 받는다. (처치 시 카드 +1)' },
-  march: { axis: 'inf', name: '총진격', cost: 1, who: 'P', kind: 'march', desc: '폰 전원이 한 칸 전진해 친다.', flavor: '“전군, 진격하라!”' },
-  draft: { axis: 'inf', name: '강제 징집', cost: 1, who: 'any', kind: 'draft', desc: '킹 곁에 폰 하나를 세운다. (이번 대국만)', flavor: '“빈자리를 채워라.”' },
+  march: { axis: 'inf', name: '총진격', cost: 0, who: 'P', kind: 'march', desc: '폰 전원이 한 칸 전진해 친다.', flavor: '“전군, 진격하라!”' },
+  draft: { axis: 'inf', name: '땜질 보충병', cost: 0, who: 'any', kind: 'draft', desc: '고철로 땜질한 폰 하나가 킹 곁에 선다. (이번 대국만)', flavor: '“빈자리를 채워라.”' },
   wrath: { axis: 'king', name: '왕의 분노', cost: 1, who: 'K', kind: 'move', rage: true, desc: '상처 입은 만큼 분노한다. (잃은 HP 비율만큼, 최대 ×3)' },
   royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '왕이 갑주를 두른다. (방열판 +30)' },
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1, 카드 +1)' },
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '쌓인 열기를 갑옷으로 돌린다. (연쇄를 모두 써서 킹 방열판 +연쇄×14)', flavor: '“식기 전에 입어라.”' },
-  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 9, desc: '보일러를 연다. (연쇄를 모두 써서 적 전체에 연쇄×9 피해)', flavor: '“압력을 놓아라.”' },
-  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'draw', amount: 1, desc: '흩어진 명령을 거둔다. (연쇄를 모두 써서 카드 +연쇄, 최대 3)' },
+  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄를 모두 써서 적 전체에 연쇄×14 피해)', flavor: '“압력을 놓아라.”' },
+  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'draw', amount: 2, desc: '흩어진 명령을 거둔다. (연쇄를 모두 써서 카드 +연쇄×2, 최대 4)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (연쇄 1마다 ×0.5 추가)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
-  cavCharge: { axis: 'cav', axis2: 'inf', name: '선봉 돌파', cost: 2, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (착지 둘레 폰 전진 공격)' },
-  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대 진군', cost: 2, who: 'K', kind: 'move', rally: true, desc: '왕이 나서자 근위대가 따른다. (둘레 폰 전진 공격)' },
+  cavCharge: { axis: 'cav', axis2: 'inf', name: '선봉 돌파', cost: 1, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (착지 둘레 폰 전진 공격)' },
+  kingGuard: { axis: 'king', axis2: 'inf', name: '근위대 진군', cost: 1, who: 'K', kind: 'move', rally: true, desc: '왕이 나서자 근위대가 따른다. (둘레 폰 전진 공격)' },
   doubleLeap: { axis: 'cav', axis2: 'chain', name: '광란의 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '처치할 때마다 연쇄가 거세진다. (처치 1회 = 연쇄 2칸)' },
   // ---- 밀치기 (D-154): 친 적을 한 칸 민다, 막히면 충돌 ----
   shove: { axis: 'push', name: '몰아치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '적을 밀어낸다. 막히면 부딪친다. (충돌 18)' },
@@ -114,8 +116,8 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   ram: { axis: 'push', axis2: 'cav', name: '파성추', cost: 1, who: 'N', kind: 'move', push: true, desc: '들이받아 밀어낸다. 막히면 부딪친다. (충돌 18)' },
   // ---- 볼륨 (R5-5, D-172): 있는 장치(배율 · 각인 · 밀치기 · 뽑기 · 연쇄)만 조합 ----
   pawnStorm: { axis: 'inf', name: '선두 분쇄', cost: 1, who: 'P', kind: 'move', push: true, add: 5, desc: '앞으로 밀어붙인다. (+5, 밀치기)' },
-  knightRaid: { axis: 'cav', name: '기습', cost: 2, who: 'N', kind: 'move', mult: 1.8, drawOnKill: 1, desc: '어둠 속에서 덮친다. (×1.8, 처치 시 카드 +1)' },
-  bishopRay: { axis: 'chain', name: '정죄의 빛', cost: 2, who: 'B', kind: 'move', carve: 'pierce', mult: 1.4, desc: '사선 끝까지 꿰뚫는다. (×1.4, 뒤의 1기까지)' },
+  knightRaid: { axis: 'cav', name: '기습', cost: 1, who: 'N', kind: 'move', mult: 1.5, drawOnKill: 1, desc: '어둠 속에서 덮친다. (×1.5, 처치 시 카드 +1)' },
+  bishopRay: { axis: 'chain', name: '정죄의 빛', cost: 1, who: 'B', kind: 'move', carve: 'pierce', mult: 1.4, desc: '사선 끝까지 꿰뚫는다. (×1.4, 뒤의 1기까지)' },
   rookCharge: { axis: 'push', name: '성벽 돌진', cost: 2, who: 'R', kind: 'move', push: true, add: 8, desc: '요새가 통째로 밀고 들어간다. (+8, 밀치기)' },
   kingDecree: { axis: 'king', axis2: 'chain', name: '왕명', cost: 1, who: 'K', kind: 'move', chainPerKill: 2, desc: '왕의 손에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
   overload: { axis: 'chain', name: '과부하', cost: 3, who: 'any', kind: 'move', mult: 2.5, desc: '태엽을 끝까지 감는다. (×2.5)' },
@@ -302,7 +304,7 @@ export const SLICE = {
   /** 태엽 칸 (D-212, 사용자: "최대 5개를 깔아 두고 3개만 켠다") — 한 턴에 가질 수 있는 태엽 상한 */
   apCap: 5,
   /** 회수(연쇄 소모 → 뽑기) 최대 장수 */
-  recallMax: 3,
+  recallMax: 4,
   /**
    * 한 수의 값표 (D-202, 사용자: "값표 통일") — 플레이어 기본 이동 카드 비용과 같다.
    * 전진 · 도약 · 사선 · 왕의 걸음 1, 직진 2, 퀸은 지휘 값 2. 적도 이 값으로 태엽을 쓴다.

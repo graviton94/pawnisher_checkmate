@@ -114,7 +114,7 @@ const one = (seed: number) => {
         let ok = false;
         let fell: Squad[] = [];
         for (let tryN = 0; tryN < 4 && !ok; tryN++) {
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold });
           const r = playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`));
           if (r.won) {
             ok = true;
@@ -122,7 +122,7 @@ const one = (seed: number) => {
             const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
             fell = cs.scrapped;
             bump(T, 'cracked', cs.back.length);
-            const g = (b.coins * SLICE.coinValue + Math.floor(b.overkill / 10)) * (parts.includes('greed') ? PART_NUM.greedGold : 1);
+            const g = (b.coins * SLICE.coinValue + Math.floor(b.overkill / 10));
             gold += g; bump(T, 'goldBattle', g);
             squad = [...restSquad(squadAfter(b, squad)), ...cs.back];
             bump(T, 'lost', cs.scrapped.length);
@@ -148,12 +148,12 @@ const one = (seed: number) => {
         while (offers.length < SHOP.cards && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
         if (hpRatio() < 0.55 && gold >= SHOP.healPrice) { gold -= SHOP.healPrice; squad = restSquad(squad, SHOP.healPct); bump(T, 'shop:heal'); bump(T, 'goldSpent', SHOP.healPrice); }
         for (const id of offers.sort((x, y) => val(y) - val(x))) {
-          const p = SHOP.gradePrice[gradeOf(id) as Grade];
+          const p = Math.round(SHOP.gradePrice[gradeOf(id) as Grade] * (parts.includes('greed') ? PART_NUM.greedShop : 1));
           if (val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); bump(T, `pick:${id}`); bump(T, 'shop:card'); bump(T, `card:${gradeOf(id)}`); bump(T, 'goldSpent', p); break; }
         }
         const pp = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
         const part = pp.length ? pp[rng.int(pp.length)] : null;
-        if (part) { const p = SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade]; if (gold >= p + 30) { gold -= p; parts.push(part); bump(T, `pick:${part}`); bump(T, 'shop:part'); bump(T, `part:${PART_GRADE[part] ?? 'common'}`); bump(T, 'goldSpent', p); } }
+        if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * (parts.includes('greed') ? PART_NUM.greedShop : 1)); if (gold >= p + 30) { gold -= p; parts.push(part); bump(T, `pick:${part}`); bump(T, 'shop:part'); bump(T, `part:${PART_GRADE[part] ?? 'common'}`); bump(T, 'goldSpent', p); } }
         { const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x)); if (cand[0] && gold >= SHOP.refinePrice + 40) { gold -= SHOP.refinePrice; deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); bump(T, 'shop:refine'); bump(T, 'goldSpent', SHOP.refinePrice); } }
         if (deck.length > 14 && gold >= SHOP.removePrice) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= SHOP.removePrice; bump(T, 'shop:remove'); bump(T, 'goldSpent', SHOP.removePrice); }
       } else if (n.kind === 'forge') {

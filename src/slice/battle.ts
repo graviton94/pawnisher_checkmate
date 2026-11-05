@@ -40,6 +40,8 @@ export interface Intent {
 
 export interface SliceBattle {
   s: BattleState;
+  /** 탐욕의 저울: 모든 공격 합 (대국 시작에 쥔 나사로 정한다) */
+  greedAdd?: number;
   draw: CommandId[];
   hand: CommandId[];
   discard: CommandId[];
@@ -183,7 +185,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -229,7 +231,8 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   // 시작 부품: 깨지는 유리 심장(분대 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 녹슨 홀(킹 방열판) · 막사의 종(폰 +1)
   if (has(b, 'brittle')) for (const p of s.pieces) if (p.side === 0) { p.maxHp = Math.round(p.maxHp * PART_NUM.brittleHp); p.hp = Math.min(p.hp, p.maxHp); }
-  if (has(b, 'greed')) for (const p of s.pieces) if (p.side === 1) p.maxHp = p.hp = Math.round(p.maxHp * PART_NUM.greedHp);
+  // 탐욕의 저울 (2026-11-05 개편): 쥔 나사 100마다 모든 공격 +3 (합) — 쌓이기만 하던 나사를 힘으로 (D-227)
+  if (has(b, 'greed')) b.greedAdd = Math.floor((opts.gold ?? 0) / PART_NUM.greedPer) * PART_NUM.greedAdd;
   if (has(b, 'scepter')) { const k = kingOf(s, 0); if (k) k.shield += PART_NUM.scepterShield; }
   if (has(b, 'barracks')) spawnPawn(b, '막사의 종 — 폰이 선다');
   if (opts.lab) {
@@ -541,7 +544,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) });
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -581,7 +584,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     let k = sim.removed.filter((q) => q.side === 1).length;
     b.kills += chainGain(b, k, c.chainPerKill);
     // 연쇄 사슬: 충돌로 쓰러뜨린 적마다 연쇄 +1
-    if (has(b, 'chainShot')) b.kills += sim.events.filter((e) => e.type === 'blast').reduce((a, e) => a + (e.type === 'blast' ? e.hits.filter((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1).length : 0), 0);
+    if (has(b, 'chainShot')) b.kills += PART_NUM.chainShotGain * sim.events.filter((e) => e.type === 'blast').reduce((a, e) => a + (e.type === 'blast' ? e.hits.filter((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1).length : 0), 0);
     // 둘레의 폰이 따라 전진한다 (기마 돌격 · 근위대)
     const landed = findPiece(b.s, pieceId);
     if (c.rally && landed && b.s.winner === null) {
@@ -632,7 +635,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.kills += chainGain(b, sim.removed.filter((q) => q.side === 1).length);
     if (has(b, 'magnet')) drawCards(b, sim.removed.filter((q) => q.side === 1).length);
   } else if (c.kind === 'draft') {
-    const e = spawnPawn(b, '강제 징집 — 폰이 선다');
+    const e = spawnPawn(b, '땜질 보충병 — 폰이 선다');
     if (!e) return '킹 곁에 빈 칸이 없습니다.';
     events = [e];
   } else if (c.kind === 'gambit') {
@@ -660,6 +663,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     }
   } else if (c.kind === 'draw') {
     drawCards(b, c.amount ?? 0);
+    gained += c.ap ?? 0;
   } else if (c.kind === 'spend') {
     // 연쇄 소모 (D-203): 쌓인 연쇄를 모두 비우고 그만큼 — 배율을 다음 공격 말고 다른 데에 쓴다
     const n = b.kills;
@@ -693,6 +697,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   if (has(b, 'fuse') && b.kills >= PART_NUM.fuseAt && !b.once.includes('fuse')) {
     b.once.push('fuse');
     drawCards(b, 1);
+    gained += 1;
   }
   creditKills(b, before, events, c.kind === 'move' ? pieceId : undefined);
   events.push(...afterMyHits(b, before, events));
