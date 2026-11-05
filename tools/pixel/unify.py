@@ -8,7 +8,9 @@
     흰 진영: hi2 V #FFFFFF · hi1 W · base E #E2DED6 · sh1 S · sh2 G   (흰 바탕을 한 단계 낮춰야 빛이 보인다)
     검은 진영: hi2 H · hi1 M · base B · sh1 Z #26272E · sh2 D
   외곽선 모양: 검은 기물 정본을 따른다 (킹은 사용자 K new). 폰 · 룩 · 퀸 · 킹은 좌우 대칭으로 맞춘다.
-  역할 지도: 12종 모두 「빛은 왼쪽 위」 한 규칙으로 계산한다 (roles 참고) — 흑백이 칸 하나까지 같은 자리에 같은 단계.
+  역할 지도: 정본 그림자를 쓰지 않고 형태만 보고 새로 칠한다 (사용자: "색칠은 기존 방식 아니더라도 다시"). 빛은 왼쪽 위.
+    폰 · 비숍 · 룩 · 퀸 · 킹 = 줄마다 원통 음영 + 단 경계(넓어지면 윗면 빛, 좁아지면 처마 그림자) + 위 · 아래 가장자리,
+    나이트 = 대각선 빛(머리라 원통이 맞지 않는다) + 가장자리. 흑백이 칸 하나까지 같은 자리에 같은 단계.
   외곽선 대칭: 킹 · 퀸 · 룩 · 폰은 좌우 대칭(왼쪽 절반을 비춘다), 비숍 · 나이트는 생김새 그대로.
   룩 성곽(14~26줄) · 퀸 십자가와 성곽(6~26줄)은 새로 그린다 — 칸 폭을 정수로 맞춰 좌우 대칭.
 가짜 왕 [K 0](주인공)은 모양이 달라 흰 테만 3칸으로 맞춘다. 흰 킹 통일안은 [K:classic 0]에 넣는다.
@@ -117,47 +119,108 @@ def template(t, hi):
     return kind, src
 
 
+LADDER = ['hi2', 'hi1', 'base', 'sh1', 'sh2']
+
+
 def roles(t, kind, hi, ksrc):
-    """그림자 역할 지도 (흑백 공용) — 빛은 왼쪽 위에서.
-    ① 정본이 그려 둔 띠 · 덩어리(받침 고리 · 목 띠 · 갈기 등)를 옮긴다: 검은 정본 L · H → hi2, M → hi1, D → sh2 / 흰 정본 S → sh1, G · D → sh2.
-    ② 빛 방향을 덮어쓴다: 오른쪽 · 아래 가장자리 1칸 = 짙은 그늘(sh2), 왼쪽 · 위 가장자리 1칸 = 강한 빛(hi2, 그늘 띠가 아닐 때).
-       오른쪽 안쪽 2~3칸에 남은 빛은 바탕으로, 왼쪽 안쪽 2~3칸에 남은 짙은 그늘은 그늘(sh1)로 낮춘다 — 왼쪽은 밝고 오른쪽은 어둡게.
-    ③ 새로 그린 성곽(룩 · 퀸 머리)은 ②만으로 칠한다."""
-    blk = ksrc if t == 'K' else hi[(t, 1)]
-    wht = hi[('K:classic', 0)] if t == 'K' else hi[(t, 0)]
-    redrawn = (lambda y: 14 <= y <= 26) if t == 'R' else (lambda y: 4 <= y <= 26) if t == 'Q' else (lambda y: False)
+    """그림자 역할 지도 (흑백 공용) — 정본 그림자를 쓰지 않고 형태만 보고 새로 칠한다. 빛은 왼쪽 위.
+    ① 원통 음영: 줄마다 속 칠 덩어리(이어진 칸) 하나를 원통으로 보고, 왼끝에서의 위치로 단계를 정한다 —
+       왼끝 1칸 빛(hi1) · 15~38% 강한 빛 띠(hi2) · 가운데 바탕 · 64~84% 그늘(sh1) · 오른쪽 끝 짙은 그늘(sh2). 폭 4칸 이하는 왼쪽 빛 · 오른쪽 그늘만.
+    ② 위 · 아래: 위가 하늘이면(위로 6칸 안에 다른 속 칠 없음) 맨 윗줄 한 단계 밝게, 위에 튀어나온 단이 있으면 윗 두 줄에 그림자(한 단계 · 두 단계 어둡게).
+       맨 아랫줄은 한 단계 어둡게.
+    ③ 칸 하나짜리 튀는 점은 이웃 다수 단계로 고른다 (도트 잡티 정리)."""
     inner = {p for p, v in kind.items() if v == '#'}
-    out = {}
+    if t == 'N':
+        return knight_roles(inner)
+    lvl = {}
     for (x, y) in inner:
-        r = 'base'
-        if not redrawn(y):
-            b, w = blk[y][x], wht[y][x]
-            if b == 'M':
-                r = 'hi1'
-            if b in 'LH':
-                r = 'hi2'
-            if w == 'S':
-                r = 'sh1'
-            if w in 'GD' or b == 'D':
-                r = 'sh2'
+        lo = x
+        while (lo - 1, y) in inner:
+            lo -= 1
+        hi_ = x
+        while (hi_ + 1, y) in inner:
+            hi_ += 1
+        w = hi_ - lo + 1
+        p = (x - lo) / max(1, w - 1)
+        if w <= 4:
+            v = 1 if x == lo else 3 if x == hi_ else 2
+        elif x == lo:
+            v = 1
+        elif x == hi_:
+            v = 4
+        elif 0.15 <= p <= 0.38:
+            v = 0
+        elif p >= 0.84:
+            v = 4
+        elif p >= 0.64:
+            v = 3
+        else:
+            v = 2
+        # 단의 경계: 윗줄 덩어리 폭과 비교 — 넓어지면 단의 윗면(빛), 좁아지면 위 단의 처마 밑(그림자)
+        def span(yy):
+            if (x, yy) not in inner:
+                return None
+            l = x
+            while (l - 1, yy) in inner:
+                l -= 1
+            r = x
+            while (r + 1, yy) in inner:
+                r += 1
+            return r - l + 1
+        w1, w2 = span(y - 1), span(y - 2)
+        # 비스듬한 외곽(계단)은 단이 아니다 — 폭이 4칸 이상 바뀔 때만 단으로 본다
+        if w1 is not None and w1 <= w - 4:
+            v -= 1
+        elif w1 is not None and w1 >= w + 4:
+            v += 1
+        elif w2 is not None and w1 is not None and w2 >= w + 4 and w1 < w + 4:
+            v += 1
+        above = [(x, y - k) in inner for k in range(1, 7)]
+        if not above[0]:
+            if any(above[1:]):
+                v += 2  # 바로 위 단이 드리운 그림자
+            else:
+                v -= 1  # 하늘을 보는 윗면
+        elif not above[1] and any(above[2:]) is False and False:
+            pass
+        elif (x, y - 2) in inner and (x, y - 1) in inner and not (x, y - 2 - 1) in inner and any((x, y - k) in inner for k in range(4, 8)):
+            v += 1
+        if (x, y + 1) not in inner:
+            v += 1
+        lvl[(x, y)] = max(0, min(4, v))
+    # 잡티 정리: 상하좌우 넷 중 셋 이상이 같은 단계면 그 단계로
+    for (x, y), v in list(lvl.items()):
+        nb = [lvl.get(q) for q in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)) if q in lvl]
+        for c in set(nb):
+            if c != v and nb.count(c) >= 3:
+                lvl[(x, y)] = c
+    return {p: LADDER[v] for p, v in lvl.items()}
+
+
+def knight_roles(inner):
+    """나이트는 기둥이 아니라 머리라 원통 대신 대각선 빛: 왼쪽 위 → 오른쪽 아래로 바탕이 어두워지고,
+    왼쪽 · 위 가장자리는 강한 빛, 오른쪽 · 아래 가장자리는 짙은 그늘."""
+    xs = [x for x, _ in inner]
+    ys = [y for _, y in inner]
+    x0, y0 = min(xs), min(ys)
+    span = (max(xs) - x0) + (max(ys) - y0)
+    lvl = {}
+    for (x, y) in inner:
+        d = ((x - x0) + (y - y0)) / span
+        v = 1 if d < 0.32 else 3 if d > 0.68 else 2
         gone = lambda dx, dy: (x + dx, y + dy) not in inner
-        left, top, right, bottom = gone(-1, 0), gone(0, -1), gone(1, 0), gone(0, 1)
-        near_r = gone(2, 0) or gone(3, 0)
-        near_l = gone(-2, 0) or gone(-3, 0)
-        if near_r and r in ('hi1', 'hi2'):
-            r = 'base'
-        if near_l and r == 'sh2' and not (right or bottom):
-            r = 'sh1'
-        if (left or top) and r in ('base', 'hi1') and not (right or bottom):
-            r = 'hi2'
-        if redrawn(y) and near_l and r == 'base' and not near_r:
-            r = 'hi1'
-        if redrawn(y) and near_r and r == 'base' and not near_l:
-            r = 'sh1'
-        if right or bottom:
-            r = 'sh2'
-        out[(x, y)] = r
-    return out
+        lit, dark = gone(-1, 0) or gone(0, -1), gone(1, 0) or gone(0, 1)
+        if lit and not dark:
+            v = 0
+        if dark:
+            v = 4
+        lvl[(x, y)] = v
+    for (x, y), v in list(lvl.items()):
+        nb = [lvl.get(q) for q in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)) if q in lvl]
+        for c in set(nb):
+            if c != v and nb.count(c) >= 3:
+                lvl[(x, y)] = c
+    return {p: LADDER[v] for p, v in lvl.items()}
 
 
 def paint(kind, role, side):
