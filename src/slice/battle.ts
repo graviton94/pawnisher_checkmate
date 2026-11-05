@@ -1123,7 +1123,9 @@ export const crackOrScrap = (fallen: Squad[]): { back: Squad[]; scrapped: Squad[
   const back: Squad[] = [];
   const scrapped: Squad[] = [];
   for (const u of fallen) {
-    if (u.t === 'K' || u.cracked) scrapped.push(u);
+    // 킹이 이기는 수와 함께 쓰러졌으면(되받아침 · 자폭 · 피의 계약) HP 1로 버틴다 — 킹 없는 분대로 다음 대국이 깨지던 버그 (2026-11-05)
+    if (u.t === 'K') back.push({ ...u, hp: 1 });
+    else if (u.cracked) scrapped.push(u);
     else back.push({ ...u, cracked: true, hp: Math.round(crewMaxHp(u) * REST.reviveHp) });
   }
   return { back, scrapped };

@@ -15,8 +15,10 @@ describe('심장 톱니', () => {
     expect(r.back).toHaveLength(0);
     expect(r.scrapped).toHaveLength(1);
   });
-  it('킹은 목숨이 없다 (쓰러지면 대국이 끝난다)', () => {
-    expect(crackOrScrap([{ t: 'K', serial: '#K-1', hp: 0 }]).scrapped).toHaveLength(1);
+  it('킹은 폐기되지 않는다 — 이기는 수와 함께 쓰러졌으면 HP 1로 버틴다 (킹 없는 분대 버그)', () => {
+    const r = crackOrScrap([{ t: 'K', serial: '#K-1', hp: 0 }]);
+    expect(r.scrapped).toHaveLength(0);
+    expect(r.back[0]).toMatchObject({ t: 'K', hp: 1 });
   });
   it('작업대 · 막이 바뀌면 깨진 톱니를 모두 새로 끼운다', () => {
     const m = mendSquad([{ ...p, hp: 5, cracked: true }, { t: 'B', serial: '#B-1', hp: 5 }]);
