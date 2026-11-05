@@ -53,14 +53,6 @@ export const PIECES: Record<PieceType, { name: string; status: Status; idea: str
  */
 export const TOPICS: { id: string; name: string; status: Status; rule: string; changed?: string; shots: string[] }[] = [
   {
-    id: 'variants',
-    name: '이형 기물 4종 (판 위 도트)',
-    status: 'review',
-    rule: '기본 흑 킹 · 룩 64칸 실루엣(사용자 원본, 흰 테 2칸)은 그대로 두고, 받은 그림의 알아보는 특징 하나씩만 단색 도트로 얹었다 — 철갑 반장: 이음매 셋 + 리벳 + 쇳물 금 · 조립 반장: 양옆 황동 집게 팔 + 가슴 톱니 + 바퀴 받침 · 출하 반장: 외곽을 따라 검은 쇠 가시(끝만 진홍) · 방패 룩: 리벳 철판 + 가로 홈 셋. 받은 그림을 그대로 쓰지 않은 까닭: 판 위 크기(약 44px)에서 가늘고 어두워 기본 기물보다 덜 읽히고, 넷의 도트 크기가 제각각이다. 확인되면 게임 판 위 반장 · 방패 룩에 붙인다.',
-    changed: '새로 — tools/pixel/boss_variants.py가 pieces64.txt에 [K:plate 1] · [K:assembly 1] · [K:thorns 1] · [R:shield 1]을 쓴다',
-    shots: ['74-variants.jpg'],
-  },
-  {
     id: 'life',
     name: '심장 톱니 (목숨 둘)',
     status: 'review',
@@ -190,7 +182,7 @@ export const DECISIONS: { item: string; rule: string; status: Status }[] = [
 ];
 
 export const CHANGELOG: { v: number; date: string; items: string[] }[] = [
-  { v: 60, date: '2026-11-05', items: ['이형 기물 4종 판 위 도트 시안 — 철갑 · 조립 · 출하 반장 · 방패 룩 (기본 실루엣 + 특징 하나)'] },
+  { v: 60, date: '2026-11-05', items: ['이형 기물 판 위 도트 시안 — 사용자 반려, 철회 (받은 그림은 보관만)'] },
   { v: 59, date: '2026-11-03', items: ['심장 톱니 (목숨 둘): 성한 · 깨진 톱니 도트, 깨짐 · 끼움 계단 연출, 판 위 깨진 기물 = 속 칠만 어둡게 (딱지 없음) (D-219)'] },
   { v: 58, date: '2026-11-03', items: ['카드 얼굴 리뉴얼 · 등급 오라(희귀 반짝임 · 황금 불빛) · 고물상 가격표 (D-217 3)'] },
   { v: 57, date: '2026-11-03', items: ['그래픽 철학 확정 (D-216): 페이드 · 그라데이션 · 둥근 모서리 · 번짐 일괄 제거, 보상 등급 연출, 도트 방사선'] },
