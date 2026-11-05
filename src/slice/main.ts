@@ -1828,7 +1828,7 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
   el.className = `revfx${loss ? ' loss' : ''}`;
   // 패배: 쓰러진 킹의 서술이 먼저(잿빛 글) — 톱니는 아직 멈춰 있다가, 다음 줄에서 거꾸로 맞물려 돈다
   const pre = loss ? kingFallNarr || DEATHS[0].narr : '';
-  el.innerHTML = `${pre ? '<p class="rev-pre"></p>' : ''}<i class="rev-gear${pre ? ' still' : ''}" aria-hidden="true"></i><p class="rev-narr"></p>${T.line ? `<p class="rev-line" hidden>${T.line}</p>` : ''}<p class="rev-sys" hidden>${T.sys(b.rewinds)}</p><div class="row" hidden><button class="btn" type="button" data-no>${T.no}</button><button class="btn brass rev-yes" type="button" data-yes>${T.yes}</button></div>`;
+  el.innerHTML = `${pre ? '<p class="rev-pre"></p>' : ''}<i class="rev-gear${pre ? ' still' : ''}" aria-hidden="true"></i><p class="rev-narr"></p>${T.line ? '<p class="rev-line"></p>' : ''}<p class="rev-sys"></p><div class="row" hidden><button class="btn" type="button" data-no>${T.no}</button><button class="btn brass rev-yes" type="button" data-yes>${T.yes}</button></div>`;
   document.body.appendChild(el);
   const show = (sel: string) => {
     const x = el.querySelector<HTMLElement>(sel)!;
@@ -1847,10 +1847,12 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
       }
       return typeIn(el.querySelector<HTMLElement>('.rev-narr')!, T.narr, loss ? 38 : 26, () => (shake(el.querySelector<HTMLElement>('.rev-narr')!, loss ? 2 : 1), sfx('stamp')));
     })
-    .then(() => {
-    if (T.line) window.setTimeout(() => show('.rev-line'), 250);
-    window.setTimeout(() => (show('.rev-sys'), show('.row')), T.line ? 650 : 200);
-  });
+    // 각주 대사 · 시스템 줄도 한 자씩 (사용자 2026-11-05). 「역회전 톱니 N」은 <em>으로 한 번에 박히며 떨린다
+    .then(() => new Promise((res) => window.setTimeout(res, 220)))
+    .then(() => (T.line ? typeIn(el.querySelector<HTMLElement>('.rev-line')!, T.line, 34, () => shake(el.querySelector<HTMLElement>('.rev-line')!, 1)) : undefined))
+    .then(() => new Promise((res) => window.setTimeout(res, 200)))
+    .then(() => typeIn(el.querySelector<HTMLElement>('.rev-sys')!, T.sys(b.rewinds), 18, () => (shake(el.querySelector<HTMLElement>('.rev-sys em')!, 2), sfx('stamp'))))
+    .then(() => show('.row'));
   const leave = (then: () => void): void => {
     el.querySelectorAll('button').forEach((x) => ((x as HTMLButtonElement).disabled = true));
     // 잿빛은 장면이 다 빠진 뒤에 걷는다 (초월이 바로 이어 받는다 — 사이에 빈 프레임이 없게)
@@ -2186,6 +2188,9 @@ const deathRites = async (): Promise<void> => {
     fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
     curtainRows(fx);
     document.body.appendChild(fx);
+    // 전체 화면 장면 (되감기 장면과 같은 문법): 판이 잿빛으로 멈춘다
+    const froze = !document.body.classList.contains('rev-freeze');
+    document.body.classList.add('rev-freeze');
     sfx('loss');
     // 빠르게 (D-191): 막 0.2초 → 서술 한 자 14ms → 이름 · 대사 · 시스템 줄 60ms 간격 → 0.45초 머묾 (약 1.2초)
     await new Promise((r) => window.setTimeout(r, 200));
@@ -2194,7 +2199,8 @@ const deathRites = async (): Promise<void> => {
       x.classList.add('in');
       await new Promise((r) => window.setTimeout(r, 60));
     }
-    await new Promise((r) => window.setTimeout(r, 450));
+    await new Promise((r) => window.setTimeout(r, 650));
+    if (froze) document.body.classList.remove('rev-freeze');
     fx.classList.add('out');
     pxOut(fx.querySelector<HTMLElement>(':scope > div'), undefined, 200);
     window.setTimeout(() => fx.remove(), 330);
