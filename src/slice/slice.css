@@ -1639,3 +1639,17 @@ body.slice .shop-grid .cf .cf-win { height: 34px; }
 body.slice .shop-grid .cf .cf-type { position: absolute; z-index: 1; top: 44px; right: 10px; justify-content: flex-end; } /* 성질 칩은 그림 창 오른쪽 아래 귀퉁이에 — 설명 줄을 먹지 않는다 */
 body.slice .shop-grid { row-gap: 16px; }
 body.slice .shop-grid .cf.cf { padding-bottom: 14px; }
+/* 부적 (D-228): 고물상 머리줄 작은 단추 · 지도 머리 아이콘 */
+body.slice .shop-head { display: flex; align-items: center; gap: 8px; }
+body.slice .shop-head h2 { flex: 1 1 auto; }
+body.slice .shop-charms { display: flex; gap: 8px; }
+body.slice .charm-buy { position: relative; display: inline-flex; align-items: center; gap: 4px; min-height: 48px; padding: 4px 8px 14px; background: #1b1a20; color: #ece6da; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #3f7fb8; font: 700 12px/1 Galmuri11, sans-serif; cursor: pointer; }
+body.slice .charm-buy .ico { width: 32px; height: 32px; }
+body.slice .charm-buy .ptag { bottom: -10px; }
+body.slice .charm-buy.sold { filter: grayscale(1) brightness(0.55); pointer-events: none; }
+body.slice .charm-res { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; }
+body.slice .charm-res .ico { width: 16px; height: 16px; vertical-align: -2px; }
+body.slice .charm-buy { padding: 4px 10px; }
+body.slice .charm-buy .price { position: static; display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 0; background: none; box-shadow: none; color: #f4d27a; font: 700 12px/1 Galmuri11, sans-serif; }
+body.slice .charm-buy .price.poor { color: #c96a6a; background: none; }
+body.slice .charm-buy .price .scr { width: 12px; height: 12px; }

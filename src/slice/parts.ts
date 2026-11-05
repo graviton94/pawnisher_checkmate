@@ -51,7 +51,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   brittle: { name: '깨지는 유리 심장', axis: null, icon: 'brittle', desc: '태엽 +1. 대가: 분대 최대 HP −20%' },
   greed: { name: '탐욕의 저울', axis: null, icon: 'greed', desc: '쥔 나사 100마다 모든 공격 +3 (합). 대가: 고물상 값 +25%' },
   spare: { name: '과부하 태엽', axis: null, icon: 'spare', desc: '태엽 +1, 손패 −1' },
-  tape: { name: '되감는 테이프', axis: null, icon: 'tape', desc: '되감기 2회' },
+  tape: { name: '되감는 테이프', axis: null, icon: 'tape', desc: '대국마다 되감기 1회 (역회전 톱니를 쓰지 않는다)' },
   // 합(+) 기본기 (D-205): 모든 공격 +3 — 약한 기물일수록 크게 느껴지고, 뒤로 갈수록 묻힌다
   whetstone: { name: '닳은 숫돌', axis: null, icon: 'anvilPlate', desc: '모든 공격 +3 (합)' },
 };
@@ -77,3 +77,29 @@ export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePart
  * 합은 지금 세고(작은 수에 크게 붙는다), 곱은 나중에 세다(큰 수에 곱해진다 — 층별 성장 D-203이 지수로 커지는 HP를 받친다).
  */
 export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { rookBolt: '×', bishopLens: '×', pawnPike: '+', conductor: '+', anvilPlate: '+', coil: '×', lance: '×', banner: '×', crown: '×', hammer: '×', bloodPact: '×', echo: '+', whetstone: '+' };
+
+/**
+ * 부적 (D-228, 사용자: "1패는 즉시 사망, 희귀한 1회 부활 아이템을 풀에 · 저승급은 기본으로 · 슬롯을 차지하지 않는 부적 · 되감기도 아이템화").
+ * 부품 칸을 차지하지 않고 출하 내내 개수로 쌓인다. 쓰면 하나 깨진다.
+ *   revive: 여벌 심장 톱니 — 킹이 쓰러져도 출하가 끝나지 않고 그 대국을 처음부터 (하나 깨진다)
+ *   rewind: 역회전 톱니 — 되감기 1회 (이번 턴 처음으로)
+ */
+export type CharmId = 'revive' | 'rewind';
+export const CHARMS: Record<CharmId, { name: string; icon: string; desc: string }> = {
+  revive: { name: '여벌 심장 톱니', icon: 'life', desc: '킹이 쓰러지면 대신 깨진다. 그 대국을 처음부터 다시 둔다.' },
+  rewind: { name: '역회전 톱니', icon: 'tape', desc: '이번 턴을 처음으로 되감는다. (되감기 1회)' },
+};
+export const CHARM_NUM = {
+  /** 출하 시작: 되감기 2 · 승급 0~1은 여벌 심장 1 */
+  startRewind: 2,
+  startReviveUpTo: 1,
+  /** 부품 상자에서 부적이 나올 확률 (여벌 심장은 드물게) */
+  chestRewind: 0.3,
+  chestRevive: 0.08,
+  /** 반장을 쓰러뜨리면 역회전 톱니 +1 */
+  bossRewind: 1,
+  /** 고물상: 역회전 톱니는 늘, 여벌 심장은 가끔 */
+  shopRewindPrice: 45,
+  shopRevivePrice: 140,
+  shopReviveChance: 0.2,
+};

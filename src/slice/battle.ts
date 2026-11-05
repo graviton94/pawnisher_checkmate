@@ -60,6 +60,8 @@ export interface SliceBattle {
   coins: number;
   /** 남은 되감기 (대국마다 한 번, 이중 테이프면 두 번) */
   rewinds: number;
+  /** 이 대국의 공짜 되감기 (되감는 테이프) — 이것부터 쓰고, 넘으면 역회전 톱니가 깨진다 */
+  rewindFree?: number;
   /** 부품 (규칙을 깨는 유물, D-144) */
   parts: SlicePartId[];
   /** 이번 턴에 처치한 내 기물 (재도약) */
@@ -185,7 +187,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -228,7 +230,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = (parts.includes('spare') ? 1 : 0) + (parts.includes('brittle') ? 1 : 0);
-  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: parts.includes('tape') ? 2 : 1, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  const b: SliceBattle = { s, draw: shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   // 시작 부품: 깨지는 유리 심장(분대 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 녹슨 홀(킹 방열판) · 막사의 종(폰 +1)
   if (has(b, 'brittle')) for (const p of s.pieces) if (p.side === 0) { p.maxHp = Math.round(p.maxHp * PART_NUM.brittleHp); p.hp = Math.min(p.hp, p.maxHp); }
   // 탐욕의 저울 (2026-11-05 개편): 쥔 나사 100마다 모든 공격 +3 (합) — 쌓이기만 하던 나사를 힘으로 (D-227)
@@ -1027,7 +1029,7 @@ export const clutchBoost = (b: SliceBattle, ap: number): void => {
   b.snap = JSON.stringify({ ...b, snap: '' });
 };
 
-/** 되감기: 이번 턴 처음으로 (대국마다 한 번) */
+/** 되감기: 이번 턴 처음으로 (테이프의 공짜 1회 → 그다음 역회전 톱니 부적, D-228) */
 export const rewind = (b: SliceBattle): SliceBattle | string => {
   if (b.rewinds <= 0) return '되감기를 모두 사용했습니다.';
   const back = JSON.parse(b.snap) as SliceBattle;

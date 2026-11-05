@@ -53,8 +53,9 @@ describe('수직 조각: 분대 + 명령 덱 (D-142)', () => {
     b.s.pieces = b.s.pieces.filter((p) => p.id !== it0.pieceId);
     expect(liveIntents(b).some((x) => x.pieceId === it0.pieceId)).toBe(false);
   });
-  it('되감기는 대국마다 한 번 · 분대 HP는 이어진다', () => {
-    const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7);
+  it('되감기는 부적(역회전 톱니) 수만큼 — 없으면 못 한다 (D-228) · 분대 HP는 이어진다', () => {
+    expect(typeof rewind(newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7))).toBe('string');
+    const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7, { rewindCharms: 1 });
     const back = rewind(b);
     expect(typeof back).toBe('object');
     if (typeof back === 'object') expect(typeof rewind(back)).toBe('string');

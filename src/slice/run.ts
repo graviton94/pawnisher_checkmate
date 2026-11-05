@@ -85,7 +85,7 @@ const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;
  */
 export const ASCENSION: { name: string; desc: string }[] = [
   { name: '날 선 쇠', desc: '적 기물 HP +10%' },
-  { name: '굳은 검수', desc: '검문 · 반장의 킹 HP +10%' },
+  { name: '굳은 검수', desc: '검문 · 반장의 킹 HP +10% · 여벌 심장 톱니 없이 시작' },
   { name: '짧은 휴식', desc: '대국 사이 회복이 절반으로' },
   { name: '비싼 고물', desc: '고물상 값 +25%' },
   { name: '불어난 무리', desc: '대국마다 적 폰 하나 더' },

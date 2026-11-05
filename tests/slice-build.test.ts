@@ -26,13 +26,12 @@ describe('빌드 축 · 부품 (D-144)', () => {
     expect(b.ap).toBe(SLICE.ap + 1);
     expect(b.hand).toHaveLength(SLICE.hand - 1);
   });
-  it('이중 테이프: 되감기 두 번', () => {
+  it('되감는 테이프: 대국마다 공짜 되감기 1회 (D-228)', () => {
     const b = mk(['tape']);
+    expect(b.rewindFree).toBe(1);
     const r1 = rewind(b);
     expect(typeof r1).toBe('object');
-    const r2 = rewind(r1 as SliceBattle);
-    expect(typeof r2).toBe('object');
-    expect(typeof rewind(r2 as SliceBattle)).toBe('string');
+    expect(typeof rewind(r1 as SliceBattle)).toBe('string');
   });
   it('증폭 코일: 처치마다 ×1.5, 최대 ×16 — 기본 연쇄는 합 (D-205)', async () => {
     const { chainAdd } = await import('../src/slice/battle');

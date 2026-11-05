@@ -18,7 +18,7 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { gradeOf, rollGrade, GRADE, baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
-import { PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
+import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -183,6 +183,10 @@ let deck: CommandId[] = [...START_DECK];
 /** 부품 (규칙을 깨는 유물, D-144) */
 let parts: SlicePartId[] = [];
 let gold = 0;
+/** 부적 (D-228): 부품 칸을 안 쓰는 개수 — 여벌 심장 톱니(1패 대신) · 역회전 톱니(되감기) */
+let charms = { revive: 0, rewind: 0 };
+/** 이번 대국 시작 때 되감기 수 (끝나면 쓴 만큼 역회전 톱니를 깬다) */
+let rewindsAtStart = 0;
 let stage = 0;
 let b: SliceBattle;
 let selCard: number | null = null;
@@ -622,7 +626,7 @@ const refresh = (): void => {
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   gauges();
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
-  $('btn-rewind').innerHTML = `<span class="rw-i"><i class="ico-rew" aria-hidden="true"></i></span> <span class="rw-t">되감기</span> <small>${b.rewinds}/${parts.includes('tape') ? 2 : 1}</small>`;
+  $('btn-rewind').innerHTML = `<span class="rw-i"><i class="ico-rew" aria-hidden="true"></i></span> <span class="rw-t">되감기</span> <small>${b.rewinds}</small>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
   meter();
   coach();
@@ -1033,7 +1037,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold });
+  b = newSliceBattle(squad, enemy, deck.filter(usable), 100 + stage * 17 + R.int(1000), { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind });
+  rewindsAtStart = b.rewinds;
   selCard = selPiece = openCard = null;
   busy = false;
   turnDmg = 0;
@@ -1119,7 +1124,11 @@ const enterNode = (n: MapNode): void => {
     const screws = SLICE.chestGold[0] + R.int(SLICE.chestGold[1] - SLICE.chestGold[0] + 1);
     return void sceneIntro(NODE_NAMES.chest, '녹슨 자물쇠', '자물쇠가 삐걱이며 풀린다. 안에서 기름 냄새가 난다.', `<i class="sf-ico" style="${iconArt('n.chest')}"></i>`).then(() => {
       gold += screws;
-      partPick(`<div class="stamp-big good">상자를 열었다</div><h2>부품 하나 — 나사 +${screws}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, advance);
+      // 부적 (D-228): 가끔 상자 바닥에 — 여벌 심장은 드물게
+      const roll = R.next();
+      const charm = roll < CHARM_NUM.chestRevive ? 'revive' : roll < CHARM_NUM.chestRevive + CHARM_NUM.chestRewind ? 'rewind' : null;
+      if (charm) charms[charm] += 1;
+      partPick(`<div class="stamp-big good">상자를 열었다</div><h2>부품 하나 — 나사 +${screws}${charm ? ` · ${CHARMS[charm].name} +1` : ''}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, advance);
     });
   }
   if (n.kind === 'forge') return void sceneIntro(NODE_NAMES.forge, '꺼지지 않은 화덕', '화덕이 당신을 부른다. 모루는 아직 뜨겁다.', `<i class="sf-ico" style="${iconArt('n.forge')}"></i>`).then(forgeScreen);
@@ -1186,7 +1195,7 @@ const showMap = (): void => {
   // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
   el.style.setProperty('--act', `url(${new URL(`scenes/act-${actI + 1}.png`, location.href).href})`);
-  el.innerHTML = `<header><div><p class="sf-eyebrow">${a.act}막</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''}</p></header>
+  el.innerHTML = `<header><div><p class="sf-eyebrow">${a.act}막</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''} <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArt(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArt(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="map-info"><p class="hint">빛나는 곳을 고릅니다.</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
       .map((k) => `<li class="nd-${k}"><i class="ico" style="${iconArt(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
@@ -1274,12 +1283,15 @@ const shopScreen = (): void => {
   const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
   const part = partPool.length ? partPool[rng.int(partPool.length)] : null;
   const sold = new Set<string>();
+  // 부적 (D-228): 역회전 톱니는 늘, 여벌 심장은 가끔
+  const reviveOffer = rng.next() < CHARM_NUM.shopReviveChance;
   // 값은 등급으로 (D-217 3 — 슬더스식): 일반 · 희귀 · 황금
   const price = (id: CommandId) => ascPrice(SHOP.gradePrice[gradeOf(id)]);
   const partPrice = (id: SlicePartId) => ascPrice(SHOP.partGradePrice[PART_GRADE[id] ?? 'common']);
   const render = (): void => {
     const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price ptag${gold < cost ? ' poor' : ''}"><i class="scr" role="img" aria-label="나사"></i>${cost}</span>`);
-    const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><button class="btn brass" type="button" data-leave>떠나기</button></div>
+    // 부적 (D-228)은 카드 칸을 늘리지 않게 머리줄에 작은 단추로
+    const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><div class="shop-charms"><button type="button" class="charm-buy${sold.has('rewind') ? ' sold' : ''}" data-buy="rewind" aria-label="${CHARMS.rewind.name} — ${CHARMS.rewind.desc}"><i class="ico" style="${iconArt(CHARMS.rewind.icon)}"></i><span>${CHARMS.rewind.name}</span>${tag('rewind', ascPrice(CHARM_NUM.shopRewindPrice))}</button>${reviveOffer ? `<button type="button" class="charm-buy${sold.has('revive') ? ' sold' : ''}" data-buy="revive" aria-label="${CHARMS.revive.name} — ${CHARMS.revive.desc}"><i class="ico" style="${iconArt(CHARMS.revive.icon)}"></i><span>${CHARMS.revive.name}</span>${tag('revive', ascPrice(CHARM_NUM.shopRevivePrice))}</button>` : ''}</div><button class="btn brass" type="button" data-leave>떠나기</button></div>
       <div class="shop-grid">
         ${cards.map((id) => cardFace(id, `data-buy="card:${id}"`, tag(id, price(id)), sold.has(id) ? 'sold' : '')).join('')}
         ${part ? partFace(part, `data-buy="part:${part}"`, tag('part', partPrice(part)), sold.has('part') ? 'sold' : '') : ''}
@@ -1293,9 +1305,9 @@ const shopScreen = (): void => {
         const [kind, id] = (btn.dataset.buy ?? '').split(':');
         const key = kind === 'card' ? id : kind;
         if (sold.has(key)) return;
-        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : kind === 'refine' ? ascPrice(SHOP.refinePrice) : ascPrice(SHOP.removePrice);
+        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : kind === 'refine' ? ascPrice(SHOP.refinePrice) : kind === 'rewind' ? ascPrice(CHARM_NUM.shopRewindPrice) : kind === 'revive' ? ascPrice(CHARM_NUM.shopRevivePrice) : ascPrice(SHOP.removePrice);
         if (gold < cost) return toast(`‘나사가 모자라.’ (${cost} 필요)`);
-        const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
+        const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : kind === 'rewind' || kind === 'revive' ? `${josa(CHARMS[kind].name, '을')} 산다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
           // 나사로 다듬기 (D-218 — 남는 나사를 쓸 곳 · 강화 경로): 고르면 값을 치르고 고물상으로 돌아온다
           if (kind === 'refine') return refineScreen(render, () => { gold -= cost; sold.add(key); render(); });
@@ -1313,6 +1325,7 @@ const shopScreen = (): void => {
           sfx('coin');
           if (kind === 'card') deck.push(id as CommandId);
           if (kind === 'part') (parts.push(id as SlicePartId), newParts.add(id as SlicePartId));
+          if (kind === 'rewind' || kind === 'revive') charms[kind] += 1;
           if (kind === 'heal') squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * SHOP.healPct)) }));
           render();
           // 구매 · 회복 (D-189): 나사가 날아와 꽂히고 물건이 튄다 / 정비는 초록 고리 · 십자 반짝이
@@ -1569,6 +1582,8 @@ const closeOverlay = (): void => {
 
 const finish = (): void => {
   const isWin = b.s.winner === 0;
+  // 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 역회전 톱니가 깨진다
+  if (!labMode) charms.rewind = Math.max(0, charms.rewind - Math.max(0, rewindsAtStart - b.rewinds - (b.rewindFree ?? 0)));
   if (isWin && coachOn) {
     coachOn = false;
     writeMeta(store, { ...readMeta(store), onboarded: true });
@@ -1585,8 +1600,13 @@ const finish = (): void => {
       // 아까운 패배 (D-178): 적 킹이 거의 다 깎였으면 「한 수였습니다」 — 가까웠던 만큼 다시 누르게
       const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
       const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="near">적 킹 HP ${ek.hp} 남았습니다. 한 수였습니다.</p>` : '';
-      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>킹이 쓰러졌습니다. ${cur.title}부터 다시 할 수 있습니다.</p>${near}<div class="row"><button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>다시 하기</button></div>`);
-      el.querySelector('[data-again]')!.addEventListener('click', () => startBattle(cur));
+      // 1패 = 출하 끝 (D-228). 여벌 심장 톱니가 있으면 하나 깨고 그 대국을 처음부터
+      const spare = charms.revive > 0;
+      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다. (남은 ${charms.revive})` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}<div class="row">${spare ? '<button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>깨고 다시</button>' : '<button class="btn brass" type="button" data-quit>출하 종료</button>'}</div>`);
+      el.querySelector('[data-again]')?.addEventListener('click', () => {
+        charms.revive -= 1;
+        startBattle(cur);
+      });
       el.querySelector('[data-quit]')!.addEventListener('click', () => runEnd(false));
       return;
     }
@@ -1609,6 +1629,11 @@ const finish = (): void => {
         squad.push({ t: n.heir.t, name: n.heir.name, serial: n.heir.serial, kills: 0, battles: 0, scars: ['원수의 손에서 돌아옴'] });
         notes.push(`${josa(n.heir.name, '이')} 돌아왔다.`);
       }
+    }
+    // 반장을 쓰러뜨리면 역회전 톱니 (D-228)
+    if (cur.boss) {
+      charms.rewind += CHARM_NUM.bossRewind;
+      notes.push(`${CHARMS.rewind.name} +${CHARM_NUM.bossRewind}`);
     }
     const kingNow = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
     const kingMax = kingNow?.maxHp ?? 1;
@@ -2113,7 +2138,7 @@ $('parts').addEventListener('click', (e) => {
 });
 $('btn-rewind').addEventListener('click', () => {
   if (busy || b.s.winner !== null) return;
-  if (b.rewinds <= 0) return toast('되감기를 모두 사용했습니다.');
+  if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${CHARMS.rewind.name}는 상자 · 고물상 · 반장에게서)`);
   // 확인 (D-209): 되돌릴 수 없는 결정은 한 번 묻는다
   const el = openOverlay(`<div class="stand rw-ask"><p class="eyebrow">◀◀ 되감기</p><h2>${HUD_TEXT.rewindAsk}</h2><p class="line">${HUD_TEXT.rewindLine}</p><p class="dim">남은 되감기 ${b.rewinds}</p><div class="row"><button class="btn" type="button" data-no>아니오</button><button class="btn brass" type="button" data-yes>예</button></div></div>`);
   el.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
@@ -2235,13 +2260,14 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   sacLeft = dir.sacrifice(level);
   closeActs = [];
   highlight = null;
+  charms = { revive: level <= CHARM_NUM.startReviveUpTo ? 1 : 0, rewind: CHARM_NUM.startRewind };
   lossesHere = 0;
   lossDef = null;
 };
 
 /** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
 const saveRun = (at: 'map' | 'battle', node?: number): void =>
-  writeSave(store, { v: 2, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight });
+  writeSave(store, { v: 2, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight, charms });
 
 /** 저장한 출하를 되살린다 */
 const loadRun = (sv: RunSave): void => {
@@ -2257,6 +2283,8 @@ const loadRun = (sv: RunSave): void => {
   sacLeft = sv.sacLeft ?? dir.sacrifice(sv.asc);
   closeActs = sv.closeActs ?? [];
   highlight = sv.highlight ?? null;
+  // 부적 (D-228) 전 저장: 그때는 다시 하기가 무제한이었다 — 시작 몫을 그대로 준다
+  charms = sv.charms ?? { revive: sv.asc <= CHARM_NUM.startReviveUpTo ? 1 : 0, rewind: CHARM_NUM.startRewind };
 };
 
 /** 출하 결과 (끝까지 갔거나 그만뒀을 때): 분대 · 기록 · 다시. 저장을 지우고 기록을 남긴다 (승급이 열린다) */

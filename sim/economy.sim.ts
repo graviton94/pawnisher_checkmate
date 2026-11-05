@@ -3,7 +3,7 @@ import { writeFileSync, readFileSync } from 'node:fs';
 import type { PieceType } from '../src/engine';
 import { Rng } from '../src/engine/rng';
 import { COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type CommandId, type Grade } from '../src/slice/cards';
-import { PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../src/slice/parts';
+import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../src/slice/parts';
 import { makeCrew } from '../src/slice/crew';
 import { buildRun, battleFor, MAP, type MapNode } from '../src/slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../src/slice/events';
@@ -26,7 +26,9 @@ import { playOut, playOutSearch, type BotStyle } from '../src/slice/bot';
 const RUNS = Number(process.env.ER ?? 30);
 // 난이도 설계 (D-228): EB = random | naive | greedy | search (대국을 두는 봇 성향), ERT = 대국당 도전 횟수 (1 = 지면 출하 끝), ETAG = 결과 파일 꼬리표
 const STYLE = (process.env.EB ?? 'greedy') as BotStyle | 'search';
-const TRIES = Number(process.env.ERT ?? 4);
+// ERT 없으면 지금 규칙 (D-228): 1패 = 출하 끝, 여벌 심장 톱니(시작 EREV개 · 상자에서 드물게)가 있으면 하나 깨고 다시
+const TRIES = process.env.ERT ? Number(process.env.ERT) : 0;
+const START_REVIVE = Number(process.env.EREV ?? 1);
 const TAG = process.env.ETAG ?? '';
 // 적 수치 덮어쓰기 (난이도 탐색): EFA = 적 공격 배율, EFG = 공격 성장, EHS = HP 시작, EHG = HP 성장
 if (process.env.EFA) SLICE.foeAtk = Number(process.env.EFA);
@@ -60,6 +62,7 @@ const one = (seed: number) => {
   const parts: SlicePartId[] = [];
   const refined: CommandId[] = [];
   let gold = 0;
+  let revive = START_REVIVE;
   const T: Tally = {};
   const curve: { act: number; floor: number; deck: number; dead: number; types: number; squad: number; parts: number; gold: number; avgVal: number; hpK: number; atkK: number }[] = [];
   const checkpoints: { act: number; win: number; turns: number }[] = [];
@@ -122,7 +125,7 @@ const one = (seed: number) => {
         const def = n.battle;
         let ok = false;
         let fell: Squad[] = [];
-        for (let tryN = 0; tryN < TRIES && !ok; tryN++) {
+        for (let tryN = 0; !ok && (TRIES ? tryN < TRIES : tryN === 0 || (revive > 0 && (revive--, bump(T, 'revive'), true))); tryN++) {
           const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold });
           const r = STYLE === 'search' ? playOutSearch(b, 40, 3, 4) : playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`), STYLE);
           if (r.won) {
@@ -151,6 +154,7 @@ const one = (seed: number) => {
       } else if (n.kind === 'chest') {
         const g = SLICE.chestGold[0] + rng.int(SLICE.chestGold[1] - SLICE.chestGold[0] + 1);
         gold += g; bump(T, 'goldChest', g); partOf(false);
+        if (rng.next() < CHARM_NUM.chestRevive) { revive++; bump(T, 'charm:revive'); }
       } else if (n.kind === 'shop') {
         const pool = REWARD_COMMANDS.filter(usable);
         const offers: CommandId[] = [];
