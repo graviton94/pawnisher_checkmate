@@ -90,7 +90,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -185,6 +185,10 @@ class BoardScene extends Phaser.Scene {
   nemesisId: number | null = null;
   /** 심장 톱니가 깨진 내 기물 (D-219): 외곽선은 그대로, 속 칠만 어둡게 — 판에 딱지를 더하지 않는다 (사용자: "보드가 더럽다") */
   crackedIds: number[] = [];
+  /** 경직된 적 (헛방, D-229) — 오른쪽 위 별 딱지 */
+  staggeredIds: number[] = [];
+  /** 기어 쇼크를 먹은 내 기물 (D-229) — 오른쪽 위 번개 딱지 */
+  shockedIds: number[] = [];
   /** 적 계급 색: '' 보통 · elite 검문 · boss 반장 */
   foeTone: '' | 'elite' | 'boss' = '';
   /** 막 번호 (1~3) — 막마다 판 색조가 다르다 (0이면 기본 철판) */
@@ -471,7 +475,9 @@ class BoardScene extends Phaser.Scene {
       marks.push(this.add.image(Math.round(x), Math.round(t * 0.02 + size / 2), boardKey(`chip-${name}`)).setDisplaySize(size, size));
     };
     const trait = p.side === 1 ? (p.type === 'P' && this.foeTraits.includes('blast') ? 'flame' : p.type === 'K' && this.foeTraits.includes('thorns') ? 'claw' : null) : null;
-    if (p.elite) chipAt('crown', false);
+    if (p.side === 0 && this.shockedIds.includes(p.id)) chipAt('shock', false);
+    if (this.staggeredIds.includes(p.id)) chipAt('stun', false);
+    else if (p.elite) chipAt('crown', false);
     else if (trait) chipAt(trait, false);
     if (p.id === this.nemesisId && p.side === 1) chipAt('skull', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
@@ -1705,6 +1711,11 @@ export class BoardRenderer implements BoardView {
   /** 원수 표식 (D-178) — setup 전에 */
   setNemesis(id: number | null): void {
     this.scene.nemesisId = id;
+  }
+  /** 경직된 적 표시 (헛방) — setup 전에 */
+  setStaggered(ids: number[], shocked: number[] = []): void {
+    this.scene.staggeredIds = ids;
+    this.scene.shockedIds = shocked;
   }
   /** 적 계급 색 (검문 = 검붉은 쇠, 반장 = 보라) — setup 전에 */
   setFoeTone(t: '' | 'elite' | 'boss'): void {

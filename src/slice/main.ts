@@ -442,7 +442,7 @@ const descLines = (text: string): string =>
     .map((x) => `<span class="dl">${x}</span>`)
     .join('');
 /** 가격표가 붙는 카드(고물상)는 성질 칩(+ · × · 축)을 가격 옆에 — 가격은 카드 한가운데, 칩은 그 오른쪽에 매달린다 */
-const footed = (extra: string): boolean => extra.includes('class="price');
+const footed = (extra: string, attrs = ''): boolean => extra.includes('class="price') || attrs.includes('data-pick');
 const cfFoot = (price: string, chips: string): string => `<span class="cf-foot">${price}${chips ? `<span class="cf-chips">${chips}</span>` : ''}</span>`;
 const opTag = (op: '+' | '×' | null | undefined): string => (op ? `<i class="op op-${op === '+' ? 'add' : 'mul'}" aria-label="${op === '+' ? '합' : '곱'}">${op}</i>` : '');
 /** 빌드 축 띠 */
@@ -458,7 +458,7 @@ const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-l
 const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string => {
   const c = COMMANDS[id];
   const g = gradeOf(id);
-  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span>${footed(extra) ? '' : `<span class="cf-type">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</span>`}<small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra) ? cfFoot(extra, `${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}`) : extra}</button>`;
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span>${footed(extra, attrs) ? '' : `<span class="cf-type">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</span>`}<small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, `${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}`) : extra}</button>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
@@ -866,6 +866,10 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const burn0 = b.burned?.length ?? 0;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
+  if (b.grazedNow !== undefined) {
+    b.grazedNow = undefined;
+    toast(HUD_TEXT.graze, 2200);
+  }
   $('hand').classList.remove('hint');
   const gain = r.events.reduce((a, e) => (e.type === 'apGain' ? a + e.amount : a), 0);
   selCard = selPiece = openCard = null;
@@ -942,7 +946,11 @@ const onEndInner = async (): Promise<void> => {
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
   busy = false;
   enemyTurn = false;
+  renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
   renderer.setup(b.s);
+  // 헛방 (D-229): 예고를 피해 빈 땅을 친 적은 경직 · 맞은 기물은 기어 쇼크 — 한 번 알린다
+  if (b.staggered?.length) toast(HUD_TEXT.whiff(b.staggered.length), 2600);
+  else if (b.shocked?.length) toast(HUD_TEXT.shock, 2400);
   refresh();
   if (b.s.winner !== null) return finish();
   // 적 차례 끝 → 내 차례 사이 숨 (D-204)
@@ -1100,6 +1108,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   renderer.setAct(actI + 1);
   renderer.setFoeTone(def.boss ? 'boss' : def.reward === 'part' ? 'elite' : '');
   renderer.lastMovesClear();
+  renderer.setStaggered([]);
   renderer.setup(b.s);
   refresh();
   // 전환 화면 (D-165): 판이 바뀔 때마다 — 서술 한 줄 + 도움말, 눌러서 넘긴다. 판 위 규칙 한 줄은 그 뒤에
@@ -1794,7 +1803,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       const el = openOverlay(`
         <h2><span class="pass-tag">통과</span> ${cur.title} <span class="dim">— 나사 +${earned}</span></h2>
         <p>${recruitOffer ? '명령 카드나 새 분대원' : '명령 카드'} 하나를 고르거나, 아래 셋 중 하나를 고릅니다.</p>
-        <div class="reward-cards">${offers
+        <div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards">${offers
           .map((id) => {
             const c = COMMANDS[id];
             const who = cardArt(id);
@@ -1802,13 +1811,14 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
             void who;
             return cardFace(id, `data-pick="${id}"`);
           })
-          .join('')}${recruitOffer && recruitCrew ? `<button type="button" class="part-card recruit g-rare" data-recruit data-grade="rare"><em class="gtag g-rare">기물</em><span class="rec-art">${pieceImg(recruitOffer.t, 0, 'large', 56)}</span><b>${recruitCrew.name}</b>${recruitCrew.quirk ? `<small class="quirk-line"><b>${QUIRKS[recruitCrew.quirk].name}</b><br>${QUIRKS[recruitCrew.quirk].desc}</small>` : ''}<span class="kit-cards">+ ${recruitOffer.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>` : ''}</div>
-        <p class="rest-line">정비 완료 — 남은 분대 HP +${Math.round(REST.heal * 100)}%: ${squad.map((u) => `<span class="rest-u">${u.name ?? PIECE_NAMES_KO[u.t]} ${u.hp}${lifePips(u, justCracked.includes(u.serial ?? '') ? 'break' : '')}</span>`).join(' · ')}${fallen.length ? ` · <span class="bad">쓰러짐: ${fallen.map((u) => u.name).join(' · ')}</span>` : ''}</p>
+          .join('')}${recruitOffer && recruitCrew ? `<button type="button" class="cf part-card recruit g-rare" data-recruit data-grade="rare"><b class="cf-name">${recruitCrew.name}</b><span class="cf-win"><span class="art" style="transform:translateY(${Math.round((0.5 - (PIECE_ART_CENTER[recruitOffer.t] ?? 0.5)) * 44)}px)">${pieceImg(recruitOffer.t, 0, 'large', 44)}</span></span><small class="cf-desc">${recruitCrew.quirk ? `<span class="dl rec-name">${QUIRKS[recruitCrew.quirk].name}</span><span class="dl">(${QUIRKS[recruitCrew.quirk].desc})</span>` : ''}<span class="dl">(+ ${recruitOffer.cards.map((id) => COMMANDS[id].name).join(' · ')})</span></small><i class="cf-gem" aria-label="희귀"></i></button>` : ''}</div>
+        <p class="rest-line">정비 완료 · 남은 분대 HP +${Math.round(REST.heal * 100)}% ${squad.map((u) => `<span class="rest-u" title="${u.name ?? PIECE_NAMES_KO[u.t]}">${pieceImg(u.t, 0, 'small', 18)}${u.hp}${lifePips(u, justCracked.includes(u.serial ?? '') ? 'break' : '')}</span>`).join('')}${fallen.length ? ` <span class="bad">쓰러짐 ${fallen.length}</span>` : ''}</p></div></div>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
           <button class="btn" type="button" data-remove>카드 빼기</button>
           <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${josa([...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name, '을')} HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
+      pxRail(el.querySelector<HTMLElement>('.reward-scroll')!);
       gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
       el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
         btn.addEventListener('click', () =>

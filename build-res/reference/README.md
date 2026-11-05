@@ -10,6 +10,7 @@
 | `animated-gears/` | 회전 톱니 10종 (종마다 PNG 프레임 + `0. Gifs/` 미리보기) | 톱니 회전 프레임 수 · 명암 단계 — 태엽 · 심장 톱니 · 로딩 연출 | 사용자 제공 (출처 표기 없음 — 쓰기 전 확인) |
 | `steampunk-cityscape-backgrounds/` | 스팀펑크 도시 배경 4장 (층별 PNG + PSD, `orig` · `origbig`) | 시차 층 나누기 · 하늘/원경/근경 색 단계 — 막 표지 · 지도 배경 | CraftPix 무료 에셋 (`license.txt` → craftpix.net/file-licenses) |
 | `chess-pixel-art-collection/` | 체스 기물 100스타일 × 흑백 12종 (32 · 64px, 스타일마다 낱장 + 아틀라스) · 체스판 110스타일(32px 칸 · 256px 판) · 판 도구(좌표 · 테두리 · 강조: 선택 · 이동 가능 · 잡기 · 직전 수) · 미리보기 시트 | 우리 철학에 맞는 스타일: 기물 `steampunk_brass` · `brass_observatory` · `ember_forge` · `copper_patina` · `industrial_hazard` · `meteor_iron` · `gilded_art_deco` / 판 `clockwork_brass` · `ironforge_rivets` · `copper_oxide` · `copper_circuit` · `brass_verdure`. 막별 판 색 · 반장 · 정예 기물 팔레트 · 판 강조 표식 구성 참고 | 사용자 제공 (itch.io 「Chess Pixel Art Collection」, CC0 — 사용자 확인) |
+| `reports/2026-11-05-difficulty-and-fun.pdf` | 난이도 설계 · 재미 레퍼런스 보고서 (13개 게임 · 제안 10) | 예고 읽기 보상 · 1패 완화 · 모바일 세션 · 상점 경제 — 요약 `docs/reference/difficulty-fun-report.md` | 사용자 제공 (조사 의뢰 결과) |
 | `items/` | 16×16 아이템 아이콘 1,243장 (무기 · 방어구 · 음식 · 광물 · 도구 · 마법 소품) + `items-sheet-preview.png` | 16칸 아이콘 그리는 법 — 아래 학습 노트 | 사용자 제공 (itch.io, CC0 — 사용자 확인) |
 | `steampunk-lamps/` | 황동 램프 · 등불 7종 한 줄 | 작은 소품 실루엣 · 황동 3단계 — 판 소품 · 아이콘 | 사용자 제공 (채팅 첨부) |
 

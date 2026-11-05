@@ -40,6 +40,17 @@ export interface Intent {
 
 export interface SliceBattle {
   s: BattleState;
+  /**
+   * 예고 읽기 보상 (D-229, 레퍼런스 보고서 제안 1 · 2 — Shogun Showdown · Into the Breach):
+   * graze = 턴 시작에 적 예고 칸 위에 서 있던 내 기물 — 예고 밖으로 빠지며 치면 그 수 ×1.5 · 카드 +1 (기물마다 한 번)
+   * aimed = 턴 시작에 내 기물을 겨눈 적 · staggered = 겨눴는데 빈 땅을 친 적(헛방) — 다음 적 차례에 못 움직이고 방열판을 잃는다
+   */
+  graze?: number[];
+  /** 기어 쇼크 (D-229, 보고서 제안 4): 지난 적 차례에 예고 공격을 맞은 내 기물 — 이번 턴 그 기물의 공격 ×0.6 */
+  shocked?: number[];
+  grazeDanger?: string[];
+  aimed?: number[];
+  staggered?: number[];
   /** 탐욕의 저울: 모든 공격 합 (대국 시작에 쥔 나사로 정한다) */
   greedAdd?: number;
   draw: CommandId[];
@@ -60,6 +71,8 @@ export interface SliceBattle {
   coins: number;
   /** 남은 되감기 (대국마다 한 번, 이중 테이프면 두 번) */
   rewinds: number;
+  /** 방금 회피 반격한 기물 (화면 알림용) */
+  grazedNow?: number;
   /** 이 대국의 공짜 되감기 (되감는 테이프) — 이것부터 쓰고, 넘으면 역회전 톱니가 깨진다 */
   rewindFree?: number;
   /** 부품 (규칙을 깨는 유물, D-144) */
@@ -269,6 +282,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   drawCards(b, b.handSize);
   bossTurnStart(b);
   b.intents = planFor(b);
+  markTelegraph(b);
   b.snap = JSON.stringify(b);
   return b;
 };
@@ -527,6 +541,21 @@ const marchPlan = (b: SliceBattle, near?: Pos): { pieceId: number; to: Pos }[] =
   });
 };
 
+
+/** 이 수가 회피 반격인가: 턴 시작에 예고 칸 위에 있던 기물이 예고 밖 칸으로 (D-229) */
+const grazeOn = (b: SliceBattle, pieceId: number, to?: Pos): boolean =>
+  !!to && (b.graze ?? []).includes(pieceId) && !(b.grazeDanger ?? []).includes(`${to.x},${to.y}`);
+
+/** 턴 시작 예고 기록 (D-229): 내 기물을 겨눈 적(헛방 판정) · 예고 칸 위의 내 기물(회피 반격 후보) */
+const markTelegraph = (b: SliceBattle): void => {
+  const danger = dangerSquares(b);
+  b.grazeDanger = danger.map((d) => `${d.x},${d.y}`);
+  b.graze = b.s.pieces.filter((p) => p.side === 0 && b.grazeDanger!.includes(`${p.x},${p.y}`)).map((p) => p.id);
+  const c = cloneBattle(b);
+  const before = cloneState(c.s);
+  b.aimed = [...new Set(enemyPhase(c).events.flatMap((e) => (e.type === 'attack' && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 0) ? [e.attackerId] : [])))];
+};
+
 /** 이 카드 · 이 기물로 갈 수 있는 칸 */
 export const cardMoves = (b: SliceBattle, i: number, pieceId: number): Pos[] => {
   const c = COMMANDS[b.hand[i]];
@@ -546,7 +575,8 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
+    const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1);
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -578,9 +608,16 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     // 지배 전략 정리 (D-201, K교수): 아무 기물 카드(지휘 등)로는 한 기물을 한 턴에 한 번만 — 센 기물 하나를 지휘로 거듭 굴리지 못하게
     if (c.who === 'any' && b.once.includes(`cmd:${p.id}`)) return '이번 턴에 이미 지휘한 기물입니다.';
     if (c.who === 'any') b.once.push(`cmd:${p.id}`);
+    const grazed = grazeOn(b, pieceId, to);
     const sim = previewPlay(b, i, pieceId, to);
     if (!sim) return '갈 수 없는 칸입니다.';
     b.s = sim.state;
+    if (grazed) {
+      // 회피 반격 (D-229): 예고 칸에서 빠져나온 수 — 배율은 위에서, 여기선 카드 +1 · 그 기물은 이번 턴 다시 못 받는다
+      b.graze = (b.graze ?? []).filter((x) => x !== pieceId);
+      drawCards(b, SLICE.grazeDraw);
+      b.grazedNow = pieceId;
+    }
     events = sim.events;
     b.overkill += overkillOf(before, sim.events);
     let k = sim.removed.filter((q) => q.side === 1).length;
@@ -962,6 +999,13 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.played = [];
   b.hand = [];
   const { events } = enemyPhase(b);
+  // 헛방 (D-229): 겨눴던 적이 빈 땅을 쳤으면 경직 — 다음 적 차례에 못 움직이고 방열판을 잃는다 (반장 킹은 방열판만)
+  const hitters = new Set(events.flatMap((e) => (e.type === 'attack' && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 0) ? [e.attackerId] : [])));
+  b.staggered = (b.aimed ?? []).filter((id) => !hitters.has(id) && !!findPiece(b.s, id));
+  for (const id of b.staggered) { const p = findPiece(b.s, id)!; p.shield = 0; }
+  // 기어 쇼크: 적 공격을 맞고 살아남은 내 기물은 다음 턴 공격이 약해진다 (예고를 무시한 값)
+  b.shocked = [...new Set(events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.damage > 0 && !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 0).map((h) => h.targetId) : [])))];
+  if (b.boss) b.staggered = b.staggered.filter((id) => findPiece(b.s, id)?.type !== 'K');
   burnFallen(b);
   b.coins = Math.max(0, b.coins - 1);
   // 피의 계약 (양날): 턴 끝마다 킹 HP −4 (쓰러지지는 않는다 — HP 1에서 멈춘다)
@@ -993,7 +1037,8 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     }
     drawCards(b, b.handSize);
     bossTurnStart(b);
-    b.intents = planFor(b);
+    b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));
+    markTelegraph(b);
     b.snap = JSON.stringify({ ...b, snap: '' });
   }
   return { events, before };
