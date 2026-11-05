@@ -98,8 +98,9 @@ export const CHARM_NUM = {
   chestRevive: 0.08,
   /** 반장을 쓰러뜨리면 역회전 톱니 +1 */
   bossRewind: 1,
-  /** 고물상: 역회전 톱니는 늘, 여벌 심장은 가끔 */
+  /** 고물상: 카드처럼 진열대 한 칸에 가끔 (역회전 25% · 여벌 심장 10%) */
   shopRewindPrice: 45,
   shopRevivePrice: 140,
-  shopReviveChance: 0.2,
+  shopRewindChance: 0.25,
+  shopReviveChance: 0.1,
 };

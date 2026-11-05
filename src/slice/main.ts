@@ -1283,18 +1283,20 @@ const shopScreen = (): void => {
   const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
   const part = partPool.length ? partPool[rng.int(partPool.length)] : null;
   const sold = new Set<string>();
-  // 부적 (D-228): 역회전 톱니는 늘, 여벌 심장은 가끔
-  const reviveOffer = rng.next() < CHARM_NUM.shopReviveChance;
+  // 부적 (D-228): 카드처럼 가끔 진열대 한 칸에 — 나오면 카드 하나 자리를 차지한다 (사용자: 「드물게 등장하는 카드처럼」)
+  const charmRoll = rng.next();
+  const charmOffer = charmRoll < CHARM_NUM.shopReviveChance ? 'revive' : charmRoll < CHARM_NUM.shopReviveChance + CHARM_NUM.shopRewindChance ? 'rewind' : null;
+  if (charmOffer) cards.pop();
   // 값은 등급으로 (D-217 3 — 슬더스식): 일반 · 희귀 · 황금
   const price = (id: CommandId) => ascPrice(SHOP.gradePrice[gradeOf(id)]);
   const partPrice = (id: SlicePartId) => ascPrice(SHOP.partGradePrice[PART_GRADE[id] ?? 'common']);
   const render = (): void => {
     const tag = (key: string, cost: number) => (sold.has(key) ? '<span class="price sold">팔림</span>' : `<span class="price ptag${gold < cost ? ' poor' : ''}"><i class="scr" role="img" aria-label="나사"></i>${cost}</span>`);
-    // 부적 (D-228)은 카드 칸을 늘리지 않게 머리줄에 작은 단추로
-    const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><div class="shop-charms"><button type="button" class="charm-buy${sold.has('rewind') ? ' sold' : ''}" data-buy="rewind" aria-label="${CHARMS.rewind.name} — ${CHARMS.rewind.desc}"><i class="ico" style="${iconArt(CHARMS.rewind.icon)}"></i><span>${CHARMS.rewind.name}</span>${tag('rewind', ascPrice(CHARM_NUM.shopRewindPrice))}</button>${reviveOffer ? `<button type="button" class="charm-buy${sold.has('revive') ? ' sold' : ''}" data-buy="revive" aria-label="${CHARMS.revive.name} — ${CHARMS.revive.desc}"><i class="ico" style="${iconArt(CHARMS.revive.icon)}"></i><span>${CHARMS.revive.name}</span>${tag('revive', ascPrice(CHARM_NUM.shopRevivePrice))}</button>` : ''}</div><button class="btn brass" type="button" data-leave>떠나기</button></div>
+    const el = openOverlay(`<div class="shop-head"><h2>고물상 <span class="dim">— 나사 ${gold}</span></h2><button class="btn brass" type="button" data-leave>떠나기</button></div>
       <div class="shop-grid">
         ${cards.map((id) => cardFace(id, `data-buy="card:${id}"`, tag(id, price(id)), sold.has(id) ? 'sold' : '')).join('')}
         ${part ? partFace(part, `data-buy="part:${part}"`, tag('part', partPrice(part)), sold.has('part') ? 'sold' : '') : ''}
+        ${charmOffer ? `<button type="button" class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}${sold.has(charmOffer) ? ' sold' : ''}" data-buy="${charmOffer}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><small class="cf-desc">부적 — ${CHARMS[charmOffer].desc} (가진 ${charms[charmOffer]})</small>${tag(charmOffer, ascPrice(charmOffer === 'revive' ? CHARM_NUM.shopRevivePrice : CHARM_NUM.shopRewindPrice))}</button>` : ''}
         <button type="button" class="cf part-card svc g-common${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><b class="cf-name">정비</b><span class="cf-win"><i class="ico" style="${iconArt('s.heal')}"></i></span><small class="cf-desc">분대 전원 HP +${Math.round(SHOP.healPct * 100)}%</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
         <button type="button" class="cf part-card svc g-common${sold.has('refine') ? ' sold' : ''}" data-buy="refine"><b class="cf-name">다듬기</b><span class="cf-win"><i class="ico" style="${iconArt('s.refine')}"></i></span><small class="cf-desc">카드 한 장을 골라 태엽 −1.</small>${tag('refine', ascPrice(SHOP.refinePrice))}</button>
         <button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><small class="cf-desc">덱에서 카드 1장 영구 제거.</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
