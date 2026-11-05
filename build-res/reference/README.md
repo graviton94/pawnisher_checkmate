@@ -2,14 +2,22 @@
 
 > 사용자: "저작권 free 도트 에셋들이며, 바로 사용하라는 것은 아니고 이들의 구성을 참고삼아 우리 에셋 만들 때 활용하고자 하는 것."
 > **게임에 직접 넣지 않는다.** 구성(칸 크기 · 색 단계 · 프레임 수 · 층 나누기)을 보고 우리 철학(D-216)대로 코드로 다시 찍는다.
-> 혹시 그대로 쓰게 되면 아래 출처 · 조건을 먼저 확인하고 `docs/CREDITS.md`에 올린다.
+> 2026-11-05 사용자 확인: 모두 itch.io 판매 페이지에서 무료 CC0. 그래도 **학습 · 영감 자료로만 쓰고, 도트를 그대로 베끼지 않는다** (사용자 결정).
 
 | 폴더 | 내용 | 참고할 점 | 출처 · 조건 |
 | :-- | :-- | :-- | :-- |
 | `steampunk-hp-bars/` | 스팀펑크 HP 게이지 2종 × 7단계 (A~G) | 황동 틀 · 게이지 칸 단계 — 속전 보일러 · HP 게이지 다듬을 때 | mental.bloxx (`HELLO THERE.pdf`) — 쓰면 출처 표기 요청 |
 | `animated-gears/` | 회전 톱니 10종 (종마다 PNG 프레임 + `0. Gifs/` 미리보기) | 톱니 회전 프레임 수 · 명암 단계 — 태엽 · 심장 톱니 · 로딩 연출 | 사용자 제공 (출처 표기 없음 — 쓰기 전 확인) |
 | `steampunk-cityscape-backgrounds/` | 스팀펑크 도시 배경 4장 (층별 PNG + PSD, `orig` · `origbig`) | 시차 층 나누기 · 하늘/원경/근경 색 단계 — 막 표지 · 지도 배경 | CraftPix 무료 에셋 (`license.txt` → craftpix.net/file-licenses) |
-| `chess-pixel-art-collection/` | 체스 기물 100스타일 × 흑백 12종 (32 · 64px, 스타일마다 낱장 + 아틀라스) · 체스판 110스타일(32px 칸 · 256px 판) · 판 도구(좌표 · 테두리 · 강조: 선택 · 이동 가능 · 잡기 · 직전 수) · 미리보기 시트 | 우리 철학에 맞는 스타일: 기물 `steampunk_brass` · `brass_observatory` · `ember_forge` · `copper_patina` · `industrial_hazard` · `meteor_iron` · `gilded_art_deco` / 판 `clockwork_brass` · `ironforge_rivets` · `copper_oxide` · `copper_circuit` · `brass_verdure`. 막별 판 색 · 반장 · 정예 기물 팔레트 · 판 강조 표식 구성 참고 | 사용자 제공 (itch.io 「Chess Pixel Art Collection」, 묶음 안에 라이선스 파일 없음 — 그대로 쓰기 전 판매 페이지 조건 확인) |
+| `chess-pixel-art-collection/` | 체스 기물 100스타일 × 흑백 12종 (32 · 64px, 스타일마다 낱장 + 아틀라스) · 체스판 110스타일(32px 칸 · 256px 판) · 판 도구(좌표 · 테두리 · 강조: 선택 · 이동 가능 · 잡기 · 직전 수) · 미리보기 시트 | 우리 철학에 맞는 스타일: 기물 `steampunk_brass` · `brass_observatory` · `ember_forge` · `copper_patina` · `industrial_hazard` · `meteor_iron` · `gilded_art_deco` / 판 `clockwork_brass` · `ironforge_rivets` · `copper_oxide` · `copper_circuit` · `brass_verdure`. 막별 판 색 · 반장 · 정예 기물 팔레트 · 판 강조 표식 구성 참고 | 사용자 제공 (itch.io 「Chess Pixel Art Collection」, CC0 — 사용자 확인) |
+| `items/` | 16×16 아이템 아이콘 1,243장 (무기 · 방어구 · 음식 · 광물 · 도구 · 마법 소품) + `items-sheet-preview.png` | 16칸 아이콘 그리는 법 — 아래 학습 노트 | 사용자 제공 (itch.io, CC0 — 사용자 확인) |
 | `steampunk-lamps/` | 황동 램프 · 등불 7종 한 줄 | 작은 소품 실루엣 · 황동 3단계 — 판 소품 · 아이콘 | 사용자 제공 (채팅 첨부) |
 
 압축을 풀 때 빼낸 것: macOS 잔여 파일(`__MACOSX`, `.DS_Store`), 홍보용 쿠폰 · 링크 파일.
+
+## 학습 노트 — `items/` 1,243장을 재서 본 것 (2026-11-05)
+- **크기와 여백:** 모두 16×16이고, 그림이 칸의 약 절반(중앙값 49%)만 채운다. 우리 16칸 아이콘(`tools/pixel/icons16.py`, 14칸 안에 꽉)보다 여백이 넉넉해서 줄지어 놓아도 숨이 쉬어진다.
+- **색 수:** 아이콘 하나에 중앙값 12색(10%~90% 구간 7~17색). 재질마다 3~4단계 램프에 외곽선 색 1~2개를 더한 정도다.
+- **외곽선:** 순검정 외곽선은 0장이다. 1,243장 중 1,130장이 **그 물건 색을 어둡게 한 색**으로 테두리를 두른다(셀아웃). 금속은 검푸른, 나무는 검갈색, 음식은 검붉은 테두리를 쓴다. 우리 아이콘 · 기물은 검정 1칸 외곽선이 규칙(D-216)이라 그대로 따르지 않는다. 다만 작은 아이콘 안쪽 선(손잡이 · 이음매)을 검정 대신 어두운 재질색으로 그리는 식으로 참고할 수 있다.
+- **빛:** 왼쪽 위에서 오고, 1~2칸 하이라이트 점으로 광택을 준다. 우리 규칙(빛은 왼쪽 위)과 같다.
+
