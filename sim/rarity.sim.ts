@@ -5,7 +5,7 @@ import { PART_GRADE, SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
 import { makeCrew } from '../src/slice/crew';
 import { battleFor } from '../src/slice/run';
 import { depthAt, newSliceBattle, type Squad } from '../src/slice/battle';
-import { playOut } from '../src/slice/bot';
+import { playOut, playOutSearch } from '../src/slice/bot';
 import { writeFileSync } from 'node:fs';
 
 /**
@@ -15,6 +15,9 @@ import { writeFileSync } from 'node:fs';
  * 봇은 탐욕형이라 연쇄 소모처럼 순서를 타는 카드는 낮게 나올 수 있다 — 보고서에 함께 적는다.
  */
 const N = Number(process.env.RN ?? 50);
+// RB=search: 수읽기 봇(D-177)으로 — 순서를 타는 카드(연쇄 소모 · 제물)를 탐욕 봇이 낮게 재는지 확인용. RONLY=id,id: 그것만 재고 결과 파일은 쓰지 않는다
+const SEARCH = process.env.RB === 'search';
+const ONLY = process.env.RONLY ? new Set(process.env.RONLY.split(',')) : null;
 const SQUAD_T = ['K', 'P', 'P', 'N', 'B', 'R'] as const;
 const BASE: CommandId[] = [...(START_DECK as CommandId[]), 'leap', 'diagonal', 'rookLine', 'advance'];
 const run = (deck: CommandId[], parts: SlicePartId[]) => {
@@ -25,7 +28,7 @@ const run = (deck: CommandId[], parts: SlicePartId[]) => {
     const act = (i % 2) + 2 as 2 | 3;
     const def = battleFor(act, i % 5 === 4 ? 'check' : 'battle', new Rng(900 + i));
     const b = newSliceBattle(squad, def.enemy, deck, 7000 + i, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, traits: def.traits, parts, depth: depthAt(act - 1, 0.5) });
-    const r = playOut(b, 30);
+    const r = SEARCH ? playOutSearch(b, 30, 3, 4) : playOut(b, 30);
     w += +r.won; turns += r.won ? r.turns : 30;
   }
   return { win: (w / N) * 100, turns: turns / N };
@@ -34,11 +37,12 @@ it('등급 측정', () => {
   const base = run([...BASE, 'advance', 'advance'], []);
   const rows: { id: string; kind: 'card' | 'part'; name: string; grade: string; win: number; turns: number; value: number }[] = [];
   for (const id of REWARD_COMMANDS) {
+    if (ONLY && !ONLY.has(id)) continue;
     const r = run([...BASE, id, id], []);
     rows.push({ id, kind: 'card', name: COMMANDS[id].name, grade: CARD_GRADE[id] ?? 'common', win: r.win - base.win, turns: base.turns - r.turns, value: r.win - base.win + (base.turns - r.turns) * 5 });
   }
-  const pbase = run([...BASE, 'advance', 'advance'], []);
-  for (const id of Object.keys(SLICE_PARTS) as SlicePartId[]) {
+    for (const id of Object.keys(SLICE_PARTS) as SlicePartId[]) {
+    if (ONLY && !ONLY.has(id)) continue;
     // 부품은 같은 축 카드 둘과 함께 (축이 없으면 기본 카드) — 시너지까지 잰다. 비교 기준은 그 카드만 넣은 덱
     const ax = SLICE_PARTS[id].axis;
     const kit = KITS.find((k) => k.part === id)?.cards ?? (ax ? REWARD_COMMANDS.filter((c) => COMMANDS[c].axis === ax).slice(0, 2) : ['advance', 'advance']) as CommandId[];
@@ -49,5 +53,5 @@ it('등급 측정', () => {
   rows.sort((a, b) => b.value - a.value);
   console.log(`기준 승률 ${base.win.toFixed(0)}% · 턴 ${base.turns.toFixed(1)}`);
   for (const r of rows) console.log(`${r.kind}\t${r.id}\t${r.name}\t${r.grade}\t승률 ${r.win.toFixed(0)}\t턴 ${r.turns.toFixed(2)}\t가치 ${r.value.toFixed(1)}`);
-  writeFileSync('sim/rarity-result.json', JSON.stringify({ base, rows }, null, 1));
+  if (!ONLY) writeFileSync('sim/rarity-result.json', JSON.stringify({ base, rows }, null, 1));
 });

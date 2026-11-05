@@ -8,7 +8,7 @@
    "id": "scrapToss",
    "kind": "card",
    "name": "고철 투척",
-   "grade": "common",
+   "grade": "gold",
    "win": 17,
    "turns": 5.8500000000000005,
    "value": 46.25
@@ -188,7 +188,7 @@
    "id": "bishopLens",
    "kind": "part",
    "name": "외눈 렌즈",
-   "grade": "common",
+   "grade": "rare",
    "win": 4.5,
    "turns": 1.959999999999999,
    "value": 14.299999999999995
@@ -233,7 +233,7 @@
    "id": "rookBolt",
    "kind": "part",
    "name": "공성 쇠뇌",
-   "grade": "common",
+   "grade": "rare",
    "win": 5.5,
    "turns": 1.5300000000000002,
    "value": 13.150000000000002
@@ -242,7 +242,7 @@
    "id": "rookPierce",
    "kind": "card",
    "name": "관통 포격",
-   "grade": "common",
+   "grade": "rare",
    "win": 4,
    "turns": 1.745000000000001,
    "value": 12.725000000000005
