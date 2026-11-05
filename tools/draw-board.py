@@ -15,6 +15,14 @@ P = {
 }
 N = 20
 
+# 막별 판 색 (2026-11-05, 체스 레퍼런스 판 110종 학습: 판마다 한 가지 색조 · 밝은 칸/어두운 칸 명도 차는 그대로).
+# 명도는 기본 철판(L/D)과 같게 맞춰 기물 · 과녁 · 표식 대비가 막마다 같다. 색조만 바뀐다.
+ACT_TILES = {
+    1: {'b': (0x5E, 0x54, 0x4E), 'h': (0x86, 0x7A, 0x70), 'l': (0x35, 0x2E, 0x2B), 'd': (0x3A, 0x31, 0x2D), 'i': (0x1C, 0x16, 0x15), 'r': (0xB0, 0x82, 0x48)},  # 주조: 달군 쇠 · 녹 · 황동 리벳
+    2: {'b': (0x50, 0x58, 0x66), 'h': (0x7A, 0x84, 0x94), 'l': (0x2E, 0x34, 0x3E), 'd': (0x2C, 0x32, 0x3C), 'i': (0x15, 0x19, 0x20), 'r': (0x9A, 0xA6, 0xB6)},  # 조립: 푸른 강철 · 강철 리벳
+    3: {'b': (0x4C, 0x5C, 0x55), 'h': (0x74, 0x88, 0x7E), 'l': (0x2C, 0x37, 0x33), 'd': (0x2B, 0x36, 0x32), 'i': (0x14, 0x1C, 0x19), 'r': (0xC0, 0x7A, 0x4A)},  # 출하: 녹청 구리 · 구리 리벳
+}
+
 
 def canvas():
     return Image.new('RGBA', (N, N), (0, 0, 0, 0))
@@ -41,6 +49,22 @@ def plate(base, hi, lo, rivet, rivet_lo):
         put(im, rx + 1, ry, rivet)
         put(im, rx, ry + 1, rivet)
         put(im, rx + 1, ry + 1, rivet_lo)
+    return im
+
+
+def last_move():
+    """직전 수: 칸 네 모서리 꺾쇠 (검정 1도트 테 + 밝은 회색 — 파랑은 내 편 · 금은 처치 · 빨강은 위험이라 무채색) — 칸을 덮지 않아 판이 깨끗하다 (체스 레퍼런스 last_move 구성)"""
+    im = canvas()
+    L = 6
+    for cx, cy, dx, dy in ((1, 1, 1, 1), (18, 1, -1, 1), (1, 18, 1, -1), (18, 18, -1, -1)):
+        pts = [(cx + dx * i, cy) for i in range(L)] + [(cx, cy + dy * i) for i in range(L)]
+        for x, y in pts:
+            for ox in (-1, 0, 1):
+                for oy in (-1, 0, 1):
+                    if 0 <= x + ox < N and 0 <= y + oy < N and im.getpixel((x + ox, y + oy))[3] == 0:
+                        put(im, x + ox, y + oy, 'K')
+        for x, y in pts:
+            put(im, x, y, 'LG')
     return im
 
 
@@ -278,6 +302,11 @@ def stronghold(kind, part):
 
 plate('L', 'G', 'D', 'G', 'D').save(f'{OUT}/tile-light.png')
 plate('D', 'L', 'INK', 'L', 'INK').save(f'{OUT}/tile-dark.png')
+for _a, _c in ACT_TILES.items():
+    P.update({f'a{_a}b': _c['b'], f'a{_a}h': _c['h'], f'a{_a}l': _c['l'], f'a{_a}d': _c['d'], f'a{_a}i': _c['i'], f'a{_a}r': _c['r']})
+    plate(f'a{_a}b', f'a{_a}h', f'a{_a}l', f'a{_a}r', f'a{_a}l').save(f'{OUT}/tile-light-a{_a}.png')
+    plate(f'a{_a}d', f'a{_a}b', f'a{_a}i', f'a{_a}b', f'a{_a}i').save(f'{OUT}/tile-dark-a{_a}.png')
+last_move().save(f'{OUT}/last-move.png')
 crack().save(f'{OUT}/crack.png')
 range_frame(True).save(f'{OUT}/range.png')
 range_frame(False).save(f'{OUT}/range-enemy.png')

@@ -61,6 +61,14 @@ export interface BoardInput {
 
 /** 터치 기기 칸 최대 크기 (CSS px) */
 /** 깨진 심장 톱니 속 칠 (D-219): 흰 기물 팔레트 → 한 단계 어두운 쇠 색. 외곽선 #0b0b0e · 바깥 흰 테 #f4f1ea는 그대로 */
+/**
+ * 정예(검문) · 반장 적 기물 속 칠 (2026-11-05, 체스 레퍼런스 기물 100스타일 학습: 같은 실루엣에 속 색만 바꿔 계급을 말한다).
+ * 검정 기물의 속 칠 5단계만 1:1로 바꾼다 — 외곽선 · 흰 테는 그대로라 진영(명도)은 그대로 읽힌다.
+ */
+const FOE_TONE: Record<'elite' | 'boss', Record<number, number>> = {
+  elite: { 0x6e717e: 0xa65a5e, 0x484a55: 0x74303a, 0x32343d: 0x56202a, 0x26272e: 0x40161e, 0x1c1d22: 0x2a0e13 }, // 검붉은 쇠
+  boss: { 0x6e717e: 0xc89b3c, 0x484a55: 0x6e4a8c, 0x32343d: 0x4e3266, 0x26272e: 0x38224c, 0x1c1d22: 0x241634 }, // 불길한 보라 + 금빛 반짝
+};
 const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8790, 0xe2ded6: 0x7a7780, 0xc5c3c3: 0x5f5d66, 0x858488: 0x45434b, 0x3a393e: 0x2a2930 };
 /**
  * 기물 그림 크기 (2026-11-05): 기물 PNG는 72칸 캔버스(64칸 몸 + 위 8줄 — 주인공 종이 왕관 자리)다.
@@ -82,7 +90,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'last-move', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -177,6 +185,12 @@ class BoardScene extends Phaser.Scene {
   nemesisId: number | null = null;
   /** 심장 톱니가 깨진 내 기물 (D-219): 외곽선은 그대로, 속 칠만 어둡게 — 판에 딱지를 더하지 않는다 (사용자: "보드가 더럽다") */
   crackedIds: number[] = [];
+  /** 적 계급 색: '' 보통 · elite 검문 · boss 반장 */
+  foeTone: '' | 'elite' | 'boss' = '';
+  /** 막 번호 (1~3) — 막마다 판 색조가 다르다 (0이면 기본 철판) */
+  act = 0;
+  /** 직전 적 수: 출발 · 도착 칸에 모서리 꺾쇠 */
+  lastMoves: Pos[] = [];
 
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
@@ -191,9 +205,14 @@ class BoardScene extends Phaser.Scene {
    * 색을 1:1로 바꿀 뿐이라 도트가 그대로 남는다 (그라데이션 · 반투명 없음). 명도 차이라 색약에도 보인다.
    */
   private makeCrackedTexture(type: PieceType): void {
-    const key = `${pieceKey(type, 0)}-crack`;
+    this.makeToneTexture(type, 0, 'crack', CRACK_TONE);
+  }
+  /** 기물 그림의 색을 표에 따라 1:1로 바꾼 새 그림 `<기물키>-<suffix>` */
+  private makeToneTexture(type: PieceType, side: Side, suffix: string, tone: Record<number, number>): void {
+    const CRACK_TONE = tone;
+    const key = `${pieceKey(type, side)}-${suffix}`;
     if (this.textures.exists(key)) return;
-    const src = this.textures.get(pieceKey(type, 0)).getSourceImage() as HTMLImageElement;
+    const src = this.textures.get(pieceKey(type, side)).getSourceImage() as HTMLImageElement;
     const tex = this.textures.createCanvas(key, src.width, src.height);
     if (!tex) return;
     const ctx = tex.getContext();
@@ -214,6 +233,7 @@ class BoardScene extends Phaser.Scene {
   }
   /** 이 기물이 쓸 그림 (깨진 내 기물이면 어두운 속 칠) */
   private glyphKey(id: number, type: PieceType, side: Side): string {
+    if (side === 1 && this.foeTone && this.textures.exists(`${pieceKey(type, 1)}-${this.foeTone}`)) return `${pieceKey(type, 1)}-${this.foeTone}`;
     return side === 0 && this.crackedIds.includes(id) && this.textures.exists(`${pieceKey(type, 0)}-crack`) ? `${pieceKey(type, 0)}-crack` : pieceKey(type, side);
   }
 
@@ -221,7 +241,11 @@ class BoardScene extends Phaser.Scene {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
-    for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[]) this.makeCrackedTexture(type);
+    for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[]) {
+      this.makeCrackedTexture(type);
+      this.makeToneTexture(type, 1, 'elite', FOE_TONE.elite);
+      this.makeToneTexture(type, 1, 'boss', FOE_TONE.boss);
+    }
     this.cameras.main.setZoom(this.dpr);
     this.camZoom = this.dpr;
     this.cameras.main.setBackgroundColor(C.bg);
@@ -374,8 +398,13 @@ class BoardScene extends Phaser.Scene {
     for (let y = 0; y < state.height; y++)
       for (let x = 0; x < state.width; x++) {
         const w = this.world({ x, y });
-        put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? 'tile-dark' : 'tile-light', w.x, w.y);
+        const suf = this.act ? `-a${this.act}` : '';
+        put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? `tile-dark${suf}` : `tile-light${suf}`, w.x, w.y);
       }
+    for (const p of this.lastMoves) {
+      const w = this.world(p);
+      put(this.tilesC, 'last-move', w.x, w.y);
+    }
     // 다음 라운드에 무너질 칸 예고: 철판에 간 금 (D-045)
     for (const p of upcomingCollapse(state)) {
       const w = this.world(p);
@@ -1688,6 +1717,22 @@ export class BoardRenderer implements BoardView {
   /** 원수 표식 (D-178) — setup 전에 */
   setNemesis(id: number | null): void {
     this.scene.nemesisId = id;
+  }
+  /** 적 계급 색 (검문 = 검붉은 쇠, 반장 = 보라) — setup 전에 */
+  setFoeTone(t: '' | 'elite' | 'boss'): void {
+    this.scene.foeTone = t;
+  }
+  /** 막별 판 색 (1~3) — setup 전에 */
+  setAct(act: number): void {
+    this.scene.act = act;
+  }
+  /** 직전 적 수 표시 (출발 · 도착 칸) — 바꾸면 판을 다시 그린다 */
+  lastMovesSet(cells: Pos[]): void {
+    this.scene.lastMoves = cells;
+  }
+  /** 직전 수 지우기 (내 턴 끝 · 새 대국) — 다음 setup/drawTiles에 반영 */
+  lastMovesClear(): void {
+    this.scene.lastMoves = [];
   }
   /** 깨진 심장 톱니 표식 (D-219) — setup 전에 */
   setCracked(ids: number[]): void {
