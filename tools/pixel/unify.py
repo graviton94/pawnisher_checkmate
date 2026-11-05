@@ -8,7 +8,8 @@
     흰 진영: hi2 V #FFFFFF · hi1 W · base E #E2DED6 · sh1 S · sh2 G   (흰 바탕을 한 단계 낮춰야 빛이 보인다)
     검은 진영: hi2 H · hi1 M · base B · sh1 Z #26272E · sh2 D
   외곽선 모양: 검은 기물 정본을 따른다 (킹은 사용자 K new). 폰 · 룩 · 퀸 · 킹은 좌우 대칭으로 맞춘다.
-  역할 지도: 검은 정본의 강한 빛(L · H) → hi2, 빛(M) → hi1, 흰 정본의 그늘(S) → sh1, 짙은 그늘(G · 흑백 D) → sh2, 나머지 base.
+  역할 지도: 12종 모두 「빛은 왼쪽 위」 한 규칙으로 계산한다 (roles 참고) — 흑백이 칸 하나까지 같은 자리에 같은 단계.
+  외곽선 대칭: 킹 · 퀸 · 룩 · 폰은 좌우 대칭(왼쪽 절반을 비춘다), 비숍 · 나이트는 생김새 그대로.
   룩 성곽(14~26줄) · 퀸 십자가와 성곽(6~26줄)은 새로 그린다 — 칸 폭을 정수로 맞춰 좌우 대칭.
 가짜 왕 [K 0](주인공)은 모양이 달라 흰 테만 3칸으로 맞춘다. 흰 킹 통일안은 [K:classic 0]에 넣는다.
 
@@ -111,49 +112,49 @@ def template(t, hi):
         redraw_rook(kind)
     if t == 'Q':
         redraw_queen(kind)
-    if t in 'PRQ':
+    if t in 'PRQK':
         kind = mirror(kind, axis_of(set(kind)))
     return kind, src
 
 
 def roles(t, kind, hi, ksrc):
-    """그림자 역할 지도 (흑백 공용)"""
+    """그림자 역할 지도 (흑백 공용) — 빛은 왼쪽 위에서.
+    ① 정본이 그려 둔 띠 · 덩어리(받침 고리 · 목 띠 · 갈기 등)를 옮긴다: 검은 정본 L · H → hi2, M → hi1, D → sh2 / 흰 정본 S → sh1, G · D → sh2.
+    ② 빛 방향을 덮어쓴다: 오른쪽 · 아래 가장자리 1칸 = 짙은 그늘(sh2), 왼쪽 · 위 가장자리 1칸 = 강한 빛(hi2, 그늘 띠가 아닐 때).
+       오른쪽 안쪽 2~3칸에 남은 빛은 바탕으로, 왼쪽 안쪽 2~3칸에 남은 짙은 그늘은 그늘(sh1)로 낮춘다 — 왼쪽은 밝고 오른쪽은 어둡게.
+    ③ 새로 그린 성곽(룩 · 퀸 머리)은 ②만으로 칠한다."""
     blk = ksrc if t == 'K' else hi[(t, 1)]
-    wht = hi[(t, 0)] if t != 'K' else hi[('K:classic', 0)]
+    wht = hi[('K:classic', 0)] if t == 'K' else hi[(t, 0)]
     redrawn = (lambda y: 14 <= y <= 26) if t == 'R' else (lambda y: 4 <= y <= 26) if t == 'Q' else (lambda y: False)
-    out = {}
     inner = {p for p, v in kind.items() if v == '#'}
+    out = {}
     for (x, y) in inner:
-        if redrawn(y):
-            continue
         r = 'base'
-        b, w = blk[y][x], wht[y][x]
-        if b == 'M':
-            r = 'hi1'
-        if b in 'LH':
-            r = 'hi2'
-        if w == 'S' and RANK['sh1'] > RANK[r]:
-            r = 'sh1'
-        if w in 'GD' or b == 'D':
-            r = 'sh2'
-        out[(x, y)] = r
-    # 새로 그린 성곽: 빛은 왼쪽 · 위, 그늘은 오른쪽 · 아래 (칸 덩어리마다 같은 규칙)
-    for (x, y) in inner:
         if not redrawn(y):
-            continue
-        left = (x - 1, y) not in inner
-        top = (x, y - 1) not in inner
-        right1 = (x + 1, y) not in inner
-        right2 = (x + 2, y) not in inner
-        bottom = (x, y + 1) not in inner
-        r = 'base'
-        if (x - 2, y) not in inner:
-            r = 'hi1'
-        if left or top:
-            r = 'hi2'
-        if right2:
+            b, w = blk[y][x], wht[y][x]
+            if b == 'M':
+                r = 'hi1'
+            if b in 'LH':
+                r = 'hi2'
+            if w == 'S':
+                r = 'sh1'
+            if w in 'GD' or b == 'D':
+                r = 'sh2'
+        gone = lambda dx, dy: (x + dx, y + dy) not in inner
+        left, top, right, bottom = gone(-1, 0), gone(0, -1), gone(1, 0), gone(0, 1)
+        near_r = gone(2, 0) or gone(3, 0)
+        near_l = gone(-2, 0) or gone(-3, 0)
+        if near_r and r in ('hi1', 'hi2'):
+            r = 'base'
+        if near_l and r == 'sh2' and not (right or bottom):
             r = 'sh1'
-        if right1 or bottom:
+        if (left or top) and r in ('base', 'hi1') and not (right or bottom):
+            r = 'hi2'
+        if redrawn(y) and near_l and r == 'base' and not near_r:
+            r = 'hi1'
+        if redrawn(y) and near_r and r == 'base' and not near_l:
+            r = 'sh1'
+        if right or bottom:
             r = 'sh2'
         out[(x, y)] = r
     return out
