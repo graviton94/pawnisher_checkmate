@@ -90,7 +90,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'last-move', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -463,29 +463,17 @@ class BoardScene extends Phaser.Scene {
       );
     }
     // 정예 (검문!): 오른쪽 위 진홍 왕관 딱지 — HP 두 배
-    if (p.elite) {
-      const size = t * 0.3;
-      const tag = this.add.graphics();
-      tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t * 0.02, size, size);
-      tag.lineStyle(Math.max(1, t * 0.03), C.crimson, 1).strokeRect(t - size - t * 0.02, t * 0.02, size, size);
-      marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t * 0.02 + size / 2, 'icon-crown').setDisplaySize(size * 0.72, size * 0.72).setTint(C.crimson));
-    }
-    // 적 특성 (D-175): 자폭 폰 = 불꽃, 되받아치는 반장 킹 = 발톱 — 오른쪽 위 진홍 딱지. 치기 전에 "이 기물은 물어뜯는다"가 보인다
+    // 딱지 (2026-11-05 도트 명패, tools/pixel/board_chips.py): 정예 = 왕관 · 자폭 폰 = 불꽃 · 되받아치는 반장 킹 = 발톱 — 오른쪽 위,
+    // 원수 = 해골 — 왼쪽 위. 치기 전에 "이 기물은 물어뜯는다"가 보인다 (D-175 · D-178)
+    const chipAt = (name: string, left: boolean) => {
+      const size = Math.round(t * 0.36);
+      const x = left ? t * 0.02 + size / 2 : t - t * 0.02 - size / 2;
+      marks.push(this.add.image(Math.round(x), Math.round(t * 0.02 + size / 2), boardKey(`chip-${name}`)).setDisplaySize(size, size));
+    };
     const trait = p.side === 1 ? (p.type === 'P' && this.foeTraits.includes('blast') ? 'flame' : p.type === 'K' && this.foeTraits.includes('thorns') ? 'claw' : null) : null;
-    if (trait && !p.elite) {
-      const size = t * 0.3;
-      const tag = this.add.graphics();
-      tag.fillStyle(0x16141c, 1).fillRect(t - size - t * 0.02, t * 0.02, size, size);
-      tag.lineStyle(Math.max(1, t * 0.03), C.crimson, 1).strokeRect(t - size - t * 0.02, t * 0.02, size, size);
-      marks.push(tag, this.add.image(t - size / 2 - t * 0.02, t * 0.02 + size / 2, `icon-${trait}`).setDisplaySize(size * 0.72, size * 0.72).setTint(0xff6b6b));
-    }
-    if (p.id === this.nemesisId && p.side === 1) {
-      const size = t * 0.34;
-      const tag = this.add.graphics();
-      tag.fillStyle(0x7a1218, 1).fillRect(t * 0.02, t * 0.02, size, size);
-      tag.lineStyle(Math.max(1, t * 0.03), 0xfacc15, 1).strokeRect(t * 0.02, t * 0.02, size, size);
-      marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, 'icon-skull').setDisplaySize(size * 0.72, size * 0.72).setTint(0xf4f1ea));
-    }
+    if (p.elite) chipAt('crown', false);
+    else if (trait) chipAt(trait, false);
+    if (p.id === this.nemesisId && p.side === 1) chipAt('skull', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
     const hp = this.add.graphics();

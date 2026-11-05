@@ -1538,9 +1538,21 @@ const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
   }, isCard ? 640 : 450);
 };
 
+/**
+ * 수치 앞에서 줄이 끊기지 않게 (사용자: 「태엽(엔터)−1」 · 「HP(엔터)+25%」가 부자연스럽다, 2026-11-05):
+ * 낱말과 뒤따르는 수치(+25% · −1 · ×2 · 1장) 사이 띄어쓰기를 줄바꿈 없는 칸으로 바꾼다. 창 안 글씨 노드에만.
+ */
+const keepNumbers = (root: HTMLElement): void => {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    const t = n.nodeValue ?? '';
+    if (/ (?=[+\-−×]?\d)/.test(t)) n.nodeValue = t.replace(/ (?=[+\-−×]?\d)/g, '\u00a0');
+  }
+};
 const openOverlay = (html: string): HTMLElement => {
   const panel = $('overlay-panel');
   panel.innerHTML = html;
+  keepNumbers(panel);
   const wasHidden = $('overlay').hidden || panel.classList.contains('m3out');
   $('overlay').hidden = false;
   // 떨어져 박혀 출렁 · 리벳 (D-189) — 이미 열린 창의 내용만 바뀔 때는 그대로

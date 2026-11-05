@@ -1629,3 +1629,13 @@ body.slice .shop-grid .cf b.cf-name { font: 700 12px/18px Galmuri11, sans-serif;
 body.slice .opening.menu::after { content: ''; position: absolute; right: 16px; bottom: 12px; width: 88px; height: 60px; pointer-events: none;
   background: url('../assets/ui/kit/gears-spin.png') 0 0 / 1408px 60px no-repeat; image-rendering: pixelated; animation: gearsBig 2.4s steps(16) infinite; }
 @media (prefers-reduced-motion: reduce) { body.slice .opening.menu::after { animation: none; } }
+/* 고물상 설명은 자르지 않는다 (사용자: 「…」로 효과가 잘리면 안 된다, 2026-11-05) — 줄 수만큼 카드가 자란다 */
+body.slice .shop-grid .cf .cf-desc { display: block; -webkit-line-clamp: unset; overflow: visible; line-height: 1.3; }
+/* 설명을 자르지 않으니 창을 넓힌다 — 카드 폭 ~150px, 가장 긴 설명(41자)이 4줄 (2026-11-05) */
+body[data-place="bg-shop"] .overlay .panel { max-width: min(70vw, 680px); }
+/* 줄바꿈은 낱말 단위로 (「+연쇄 / ×14」처럼 낱말 속에서 끊기지 않게) · 고물상 세로 공간 아끼기 (2026-11-05) */
+body.slice .overlay .panel { word-break: keep-all; overflow-wrap: break-word; }
+body.slice .shop-grid .cf .cf-win { height: 34px; }
+body.slice .shop-grid .cf .cf-type { position: absolute; z-index: 1; top: 44px; right: 10px; justify-content: flex-end; } /* 성질 칩은 그림 창 오른쪽 아래 귀퉁이에 — 설명 줄을 먹지 않는다 */
+body.slice .shop-grid { row-gap: 16px; }
+body.slice .shop-grid .cf.cf { padding-bottom: 14px; }
