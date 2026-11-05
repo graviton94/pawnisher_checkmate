@@ -1723,3 +1723,8 @@ body.slice .rest-line .rest-u img { width: 18px; height: 18px; image-rendering: 
 body.slice .reward-cards .cf .costgear { position: absolute; left: -6px; top: -7px; }
 body.slice .reward-scroll .rest-line { margin-top: 28px; }
 body.slice .reward-scroll { padding-bottom: 6px; }
+/* 적 왕 말풍선 얼굴 (2026-11-05): 황동 틀 속 반장 초상화(원래 도트 1:1) 또는 검정 킹 */
+.taunt .taunt-face { flex: none; width: 60px; height: 60px; display: grid; place-items: center; background: #0b0b0e center / 60px 60px no-repeat; image-rendering: pixelated; box-shadow: 0 0 0 2px #000, 0 0 0 4px #8c6239, inset 0 0 0 2px #000; margin: 2px 6px 2px 2px; }
+.taunt .taunt-face img { width: 40px; height: 40px; image-rendering: pixelated; }
+.taunt { padding: 8px 16px 8px 10px; }
+.taunt .taunt-face.tf-boss { min-width: 60px; min-height: 60px; }

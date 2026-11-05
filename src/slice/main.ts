@@ -158,7 +158,9 @@ const taunt = (cue: TauntCue, force = false): void => {
   const line = lines[R.int(lines.length)];
   const el = document.createElement('div');
   el.className = 'taunt tq3';
-  el.innerHTML = `${pieceImg('K', 1, 'small', 22)}<span></span>`;
+  // 말하는 왕의 얼굴 (2026-11-05): 반장이면 반장 초상화의 왕관 · 머리, 보통 대국은 검정 킹 — 같은 황동 틀
+  const face = b?.boss ? `<i class="taunt-face tf-boss" style="background-image:url(ui/hud/avatar-${b.bossRule}.png)"></i>` : `<i class="taunt-face">${pieceImg('K', 1, 'small', 40)}</i>`;
+  el.innerHTML = `${face}<span></span>`;
   document.body.appendChild(el);
   // D-189: 말풍선이 튀어나오고 글자가 타자처럼 찍히다 마지막 낱말에서 떨린다
   const words = line.split(' ');
@@ -2038,17 +2040,21 @@ const kitPick = (head: string, then: () => void): void => {
   const rng = sub();
   const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)) && k.cards.every(usable));
   // 빌드 확정 (D-230, 보고서 4 · 5 — Monster Train 챔피언 · Balatro 앤티 2 · StS 첫 정예): 두 번째 대국 뒤 「핵심 부품」 셋은 서로 다른 축에서 — 고르는 순간 이번 출하의 방향이 선다
+  // 두 갈래 (사용자 결정 D-231): ① 큰 세 갈래 — 서로 다른 축 셋 ② 한 갈래의 세부 — 한 축 안의 셋. 세부는 그 축에 셋이 있을 때만
   const offers: typeof KITS = [];
   const axisOf = (k: (typeof KITS)[number]) => SLICE_PARTS[k.part].axis ?? 'none';
-  while (offers.length < 3 && pool.length) {
-    const fresh = pool.filter((k) => !offers.some((o) => axisOf(o) === axisOf(k)));
-    const from = fresh.length ? fresh : pool;
+  const deepAxes = [...new Set(pool.map(axisOf))].filter((ax) => ax !== 'none' && pool.filter((k) => axisOf(k) === ax).length >= 3);
+  const deep = deepAxes.length > 0 && rng.next() < SLICE.kitDeepChance ? deepAxes[rng.int(deepAxes.length)] : null;
+  const src = deep ? pool.filter((k) => axisOf(k) === deep) : pool;
+  while (offers.length < 3 && src.length) {
+    const fresh = deep ? src : src.filter((k) => !offers.some((o) => axisOf(o) === axisOf(k)));
+    const from = fresh.length ? fresh : src;
     const k = from[rng.int(from.length)];
-    pool.splice(pool.indexOf(k), 1);
+    src.splice(src.indexOf(k), 1);
     offers.push(k);
   }
   // 카드 틀은 고물상 · 보상과 같다 (이름판 · 그림 창 · 문장 한 줄 · 칩은 아래 가운데)
-  const el = openOverlay(`${head}<p>이번 출하의 방향을 고릅니다. 부품 하나와 맞물리는 카드 두 장이 함께 들어옵니다.</p><div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards">${offers
+  const el = openOverlay(`${head}<p>${deep ? `${AXIS_NAMES[deep as Axis]}의 길 — 세부 갈래 하나를 고릅니다.` : '이번 출하의 방향 — 큰 세 갈래 중 하나를 고릅니다.'} 부품 하나와 맞물리는 카드 두 장이 함께 들어옵니다.</p><div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards">${offers
     .map((k, n) => {
       const d = SLICE_PARTS[k.part];
       const g = PART_GRADE[k.part] ?? 'common';
