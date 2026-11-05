@@ -9,6 +9,7 @@
 | `steampunk-hp-bars/` | 스팀펑크 HP 게이지 2종 × 7단계 (A~G) | 황동 틀 · 게이지 칸 단계 — 속전 보일러 · HP 게이지 다듬을 때 | mental.bloxx (`HELLO THERE.pdf`) — 쓰면 출처 표기 요청 |
 | `animated-gears/` | 회전 톱니 10종 (종마다 PNG 프레임 + `0. Gifs/` 미리보기) | 톱니 회전 프레임 수 · 명암 단계 — 태엽 · 심장 톱니 · 로딩 연출 | 사용자 제공 (출처 표기 없음 — 쓰기 전 확인) |
 | `steampunk-cityscape-backgrounds/` | 스팀펑크 도시 배경 4장 (층별 PNG + PSD, `orig` · `origbig`) | 시차 층 나누기 · 하늘/원경/근경 색 단계 — 막 표지 · 지도 배경 | CraftPix 무료 에셋 (`license.txt` → craftpix.net/file-licenses) |
+| `chess-pixel-art-collection/` | 체스 기물 100스타일 × 흑백 12종 (32 · 64px, 스타일마다 낱장 + 아틀라스) · 체스판 110스타일(32px 칸 · 256px 판) · 판 도구(좌표 · 테두리 · 강조: 선택 · 이동 가능 · 잡기 · 직전 수) · 미리보기 시트 | 우리 철학에 맞는 스타일: 기물 `steampunk_brass` · `brass_observatory` · `ember_forge` · `copper_patina` · `industrial_hazard` · `meteor_iron` · `gilded_art_deco` / 판 `clockwork_brass` · `ironforge_rivets` · `copper_oxide` · `copper_circuit` · `brass_verdure`. 막별 판 색 · 반장 · 정예 기물 팔레트 · 판 강조 표식 구성 참고 | 사용자 제공 (itch.io 「Chess Pixel Art Collection」, 묶음 안에 라이선스 파일 없음 — 그대로 쓰기 전 판매 페이지 조건 확인) |
 | `steampunk-lamps/` | 황동 램프 · 등불 7종 한 줄 | 작은 소품 실루엣 · 황동 3단계 — 판 소품 · 아이콘 | 사용자 제공 (채팅 첨부) |
 
 압축을 풀 때 빼낸 것: macOS 잔여 파일(`__MACOSX`, `.DS_Store`), 홍보용 쿠폰 · 링크 파일.
