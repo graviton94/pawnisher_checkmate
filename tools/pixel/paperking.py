@@ -1,7 +1,7 @@
 """
 주인공 「종이 왕관을 쓴 폰」 (2026-11-05). 사용자 초안(72칸) build-res/order/K-paperking-sketch.png의 왕관을 칸 그대로 쓴다
 (사용자: "내 초안 활용하라고"). 왕관 모양 · 뿔 넷 · 기울기 · 크기 · 보석 자리는 초안 그대로, 칠만 다른 기물과 같은 규칙으로 맞춘다.
-  - 초안 순검정(#000000) = 왕관 외곽선 → K, 주황 = 왕관 속 칠, 청록 = 보석
+  - 초안 주황 = 왕관 속 칠, 청록 = 보석 — 모양 그대로, 2칸 더 아래로(푹 눌러쓴). 초안의 검은 테두리는 두께가 들쭉날쭉해 버리고, 폰 외곽선과 같은 4칸으로 고르게 다시 두른다
   - 몸통은 통일된 흰 폰 [P 0] (72칸 캔버스에 아래 맞춤 — 초안의 폰 자리와 같다), 왕관이 덮는 칸은 왕관이 이긴다
   - 왕관 칠: 마분지 3단계, 빛은 왼쪽 위 — 줄마다 왼쪽 36% 빛(F) · 가운데 바탕(Q) · 오른쪽 28% 그늘(J), 오른쪽 끝 · 맨 아래 한 칸 그늘
   - 보석: 청록(C) + 왼쪽 위 한 칸 흰 빛(V)
@@ -21,6 +21,8 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 SKETCH = os.path.join(ROOT, 'build-res', 'order', 'K-paperking-sketch.png')
 N = 72
 RIM = 3
+LINE = 4      # 왕관 검은 테두리 두께 — 폰 외곽선(4~5칸)에 맞춘다 (초안의 들쭉날쭉한 테두리 대신)
+DROP = 2      # 초안보다 2칸 더 푹 눌러쓴다
 
 
 def crown_from_sketch():
@@ -76,10 +78,25 @@ def shade(crown):
 
 def build():
     g = [list(r.replace('O', '.')) for r in maker.pad72(maker.load64()[('P', 0)])]
-    crown = crown_from_sketch()
+    sk = crown_from_sketch()
+    # 초안의 속 칠(주황 · 보석) 모양은 그대로, DROP칸 아래로. 검은 테두리는 초안 것을 버리고 LINE칸으로 고르게 다시 두른다
+    crown = {(x, y + DROP): v for (x, y), v in sk.items() if v != 'line'}
     paint = shade(crown)
-    for (x, y), v in crown.items():
-        g[y][x] = 'K' if v == 'line' else paint[(x, y)]
+    # 머리는 왕관 속에 들어간다: 왕관이 있는 열에서 왕관 맨 아랫줄보다 위의 폰 칸은 지운다 (뿔 사이 골로 머리가 비치지 않게)
+    bottom = {}
+    for (x, y) in crown:
+        bottom[x] = max(bottom.get(x, -1), y)
+    for x, yb in bottom.items():
+        for y in range(0, yb + 1):
+            g[y][x] = '.'
+    for (x, y) in crown:
+        for dy in range(-LINE, LINE + 1):
+            for dx in range(-LINE, LINE + 1):
+                q = (x + dx, y + dy)
+                if q not in crown and 0 <= q[0] < N and 0 <= q[1] < N:
+                    g[q[1]][q[0]] = 'K'
+    for (x, y), ch in paint.items():
+        g[y][x] = ch
     body = {(x, y) for y in range(N) for x in range(N) if g[y][x] != '.'}
     for y in range(N):
         for x in range(N):
