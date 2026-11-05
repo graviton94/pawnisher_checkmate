@@ -1835,8 +1835,8 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
   });
   const leave = (then: () => void): void => {
     el.querySelectorAll('button').forEach((x) => ((x as HTMLButtonElement).disabled = true));
-    document.body.classList.remove('rev-freeze');
-    pxOut(el, () => (el.remove(), then()));
+    // 잿빛은 장면이 다 빠진 뒤에 걷는다 (초월이 바로 이어 받는다 — 사이에 빈 프레임이 없게)
+    pxOut(el, () => (el.remove(), document.body.classList.remove('rev-freeze'), then()));
   };
   el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), leave(onNo)));
   el.querySelector('[data-yes]')!.addEventListener('click', () => leave(onYes));
@@ -2562,40 +2562,93 @@ $('btn-rewind').addEventListener('click', () => {
   if (busy || b.s.winner !== null) return;
   if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${CHARMS.rewind.name}는 상자 · 고물상 · 반장에게서)`);
   // 확인 (D-209): 되돌릴 수 없는 결정은 한 번 묻는다
-  rewindScene({ ...HUD_TEXT.rewindScene, line: HUD_TEXT.rewindLine }, () => undefined, () => doRewind(true), false);
+  rewindScene({ ...HUD_TEXT.rewindScene, line: HUD_TEXT.rewindLine }, () => undefined, () => doRewind(false), false);
 });
-const doRewind = (big = false): void => {
+/**
+ * 되감기 둘 (2026-11-05 사용자: 「더 세게 나누자」):
+ * - 턴 되감기 = 「◀◀ 역행」 — 청록 테이프가 거꾸로 감기는 0.8초. 가볍고 빠르다.
+ * - 죽음 되감기 = 「초월」 — 흰 정지 프레임 → 거꾸로 폭주하는 톱니와 금빛 「초월」 → 흩어진 도트 조각이 킹 자리로 빨려 들고(예비 동작 → 돌진)
+ *   빛기둥이 내리꽂히며 킹이 하늘에서 떨어져 박힌다(dropIn) → 2인칭 서술 한 줄. 약 3초.
+ */
+const doRewind = (death = false): void => {
   const r = rewind(b);
   if (typeof r === 'string') return toast(r);
-  track('rewind_used', { ...where(), turn: b.turn, rewinds_left: r.rewinds });
+  track('rewind_used', { ...where(), turn: b.turn, rewinds_left: r.rewinds, death });
   rewindsUsedRun += 1;
   blog = blog.filter((x) => !(x.side === 0 && x.turn === b.turn));
-  // 되감기 연출: 테이프가 거꾸로 감기며 화면이 청록으로 번지고, 판이 이번 턴 처음으로 돌아간다
   busy = true;
   refresh();
-  const fx = document.createElement('div');
-  // 패배에서 되돌릴 때는 더 크게: 거꾸로 도는 톱니 · 판이 크게 흔들린다 · 더 길다
-  fx.className = big ? 'tapefx big' : 'tapefx';
-  fx.innerHTML = `${big ? '<i class="rev-gear fast" aria-hidden="true"></i>' : ''}<span>${big ? HUD_TEXT.lossRewind.fx : '◀◀ 되감기'}</span>`;
-  if (big) {
-    $('board').classList.remove('jolt');
-    void $('board').offsetWidth;
-    $('board').classList.add('jolt');
-  }
   if (parts.includes('tape')) flashParts(['tape']);
-  document.body.appendChild(fx);
-  [0, 90, 180, 270].forEach((ms, k) => window.setTimeout(() => sfx('tap', 8 - k * 2), ms));
-  window.setTimeout(() => {
+  const swap = (): void => {
     b = r;
     turnDmg = 0;
     prevKills = b.kills;
     selCard = selPiece = openCard = null;
-    busy = false;
     renderer.setup(b.s);
+    // 기물 그림은 refresh(render)에서 다시 세워진다 — 그래야 dropIn이 되살아난 킹을 찾는다
     refresh();
-    sfx('awaken');
-  }, big ? 760 : 420);
-  window.setTimeout(() => fx.remove(), big ? 1300 : 800);
+  };
+  const done = (): void => {
+    busy = false;
+    refresh();
+  };
+  if (death) return void transcend(r, swap).then(done);
+  const fx = document.createElement('div');
+  fx.className = 'tapefx';
+  fx.innerHTML = `<span>${HUD_TEXT.rewindScene.fx}</span>`;
+  document.body.appendChild(fx);
+  [0, 90, 180, 270].forEach((ms, k) => window.setTimeout(() => sfx('tap', 8 - k * 2), ms));
+  window.setTimeout(() => (swap(), done(), sfx('awaken')), 420);
+  window.setTimeout(() => fx.remove(), 800);
+};
+
+/** 죽음 되감기 「초월」 연출 (DOM 겹 + 판 dropIn). swap()에서 판이 되돌아가고, 끝나면 풀린다 */
+const transcend = async (back: SliceBattle, swap: () => void): Promise<void> => {
+  const wait = (ms: number) => new Promise((res) => window.setTimeout(res, calmNow() ? Math.min(ms, 60) : ms));
+  const king = back.s.pieces.find((p) => p.side === 0 && p.type === 'K');
+  const at = king ? renderer.screenOf(king) : { x: innerWidth / 2, y: innerHeight / 2 };
+  document.body.classList.add('rev-freeze');
+  const el = document.createElement('div');
+  el.className = 'transfx';
+  el.innerHTML = `<i class="tf-flash"></i><i class="rev-gear fast"></i><b class="tf-word">${HUD_TEXT.lossRewind.fx}</b>`;
+  el.style.setProperty('--tx', `${Math.round(at.x)}px`);
+  el.style.setProperty('--ty', `${Math.round(at.y)}px`);
+  document.body.appendChild(el);
+  // ① 흰 정지 프레임 · 톱니 폭주 · 「초월」 도장
+  sfx('stamp');
+  await wait(420);
+  // ② 흩어진 도트 조각: 화면 곳곳에 떠 있다가 한 번 바깥으로 물러선 뒤(예비 동작) 킹 자리로 빨려 든다
+  const colors = ['#f4f1ea', '#f4d27a', '#6fe3f2', '#c89b3c'];
+  for (let k = 0; k < 30; k++) {
+    const sh = document.createElement('i');
+    sh.className = 'tf-shard';
+    const a = (k / 30) * Math.PI * 2 + (k % 3) * 0.4;
+    const d = 140 + (k * 37) % 220;
+    sh.style.setProperty('--sx', `${Math.round(Math.cos(a) * d)}px`);
+    sh.style.setProperty('--sy', `${Math.round(Math.sin(a) * d * 0.7)}px`);
+    sh.style.setProperty('--d', `${(k % 5) * 40}ms`);
+    sh.style.background = colors[k % colors.length];
+    const sz = k % 4 === 0 ? 12 : 8;
+    sh.style.width = sh.style.height = `${sz}px`;
+    el.appendChild(sh);
+  }
+  [0, 120, 240, 360, 480].forEach((ms, k) => window.setTimeout(() => sfx('tap', 4 + k * 2), ms));
+  await wait(900);
+  // ③ 빛기둥이 내리꽂히고 판이 되돌아온다 — 잿빛이 풀리고 킹이 하늘에서 떨어져 박힌다
+  el.classList.add('land');
+  document.body.classList.remove('rev-freeze');
+  swap();
+  sfx('awaken');
+  await wait(60);
+  await wait(120);
+  if (king) await renderer.dropIn(king.id);
+  // ④ 서술 한 줄
+  const line = document.createElement('p');
+  line.className = 'tf-wake';
+  el.appendChild(line);
+  await typeIn(line, HUD_TEXT.lossRewind.wake, 34);
+  await wait(900);
+  await new Promise<void>((res) => pxOut(el, () => (el.remove(), res())));
 };
 $('btn-help').addEventListener('click', () => help());
 
@@ -2867,4 +2920,4 @@ startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 if (qs.has('lab')) labPick();
 else if (!qs.has('debug') || qs.has('opening')) opening();
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

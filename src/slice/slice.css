@@ -1777,3 +1777,27 @@ body.rev-freeze #board, body.rev-freeze #left, body.rev-freeze #right { filter: 
 .tapefx.big { flex-direction: column; display: flex; align-items: center; justify-content: center; gap: 8px; animation-duration: 1300ms; }
 .tapefx.big span { font-size: 60px; animation-duration: 1300ms; }
 @media (prefers-reduced-motion: reduce) { .revfx, .rev-gear, .revfx .rev-yes { animation: none; } }
+
+/* ---------- 죽음 되감기 「초월」 (2026-11-05 사용자: 「턴 되감기와 더 세게 나누자」) ----------
+   흰 정지 프레임(steps 3) → 거꾸로 폭주하는 톱니 + 금빛 「초월」 도장 → 도트 조각이 물러섰다 킹 자리로 빨려 듦 → 빛기둥 · 사각 고리 → 서술. 페이드 없음 */
+.transfx { position: fixed; inset: 0; z-index: 70; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23050607' fill-opacity='.7'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23050607' fill-opacity='.7'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
+.transfx .tf-flash { position: absolute; inset: 0; background: #f4f1ea; animation: tfFlash 360ms steps(1) both; }
+@keyframes tfFlash { 0% { opacity: 1; } 34% { opacity: 1; -webkit-mask-image: var(--px2); mask-image: var(--px2); } 67% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 100% { opacity: 0; } }
+.transfx .rev-gear { position: relative; z-index: 1; }
+.transfx .tf-word { position: relative; z-index: 1; font: 400 60px/1 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; letter-spacing: 0.2em; text-shadow: 4px 0 0 rgba(255, 60, 90, 0.7), -4px 0 0 rgba(60, 200, 255, 0.7), 4px 4px 0 #000; animation: tfWord 520ms steps(6) both; }
+@keyframes tfWord { 0% { transform: scale(1.8); -webkit-mask-image: var(--px3); mask-image: var(--px3); } 40% { transform: scale(0.9); -webkit-mask-image: none; mask-image: none; } 70% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.transfx .tf-shard { position: fixed; left: var(--tx); top: var(--ty); margin: -4px 0 0 -4px; box-shadow: 2px 2px 0 #000; transform: translate(var(--sx), var(--sy)); animation: tfShard 760ms cubic-bezier(0.6, -0.45, 0.9, 0.4) var(--d) both; }
+@keyframes tfShard { 0% { transform: translate(var(--sx), var(--sy)); } 100% { transform: translate(0, 0) scale(0.5); } }
+.transfx.land .tf-shard { display: none; }
+/* 빛기둥 (위에서 킹 칸까지) · 사각 고리 */
+.transfx.land::before { content: ''; position: fixed; left: calc(var(--tx) - 14px); top: 0; width: 28px; height: var(--ty); background: #f4f1ea; box-shadow: -4px 0 0 #f4d27a, 4px 0 0 #f4d27a, -8px 0 0 rgba(244, 210, 122, .5), 8px 0 0 rgba(244, 210, 122, .5); animation: tfPillar 520ms steps(5) both; }
+@keyframes tfPillar { 0% { transform: scaleY(0); transform-origin: top; } 40% { transform: scaleY(1); transform-origin: top; -webkit-mask-image: none; mask-image: none; } 70% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 100% { transform: scaleY(1); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
+.transfx.land::after { content: ''; position: fixed; left: var(--tx); top: var(--ty); width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 4px solid #f4d27a; box-shadow: 0 0 0 4px #000, inset 0 0 0 4px #000; animation: tfRing 480ms steps(6) both; }
+@keyframes tfRing { 0% { transform: scale(1); } 80% { transform: scale(9); -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: scale(10); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
+.transfx.land .rev-gear, .transfx.land .tf-word { display: none; }
+.transfx .tf-wake { position: relative; z-index: 1; margin: 0; padding: 6px 12px; font: 400 24px/1.35 Galmuri11, sans-serif; color: #f4ead6; text-shadow: 2px 2px 0 #000; background: rgba(5, 6, 7, .8); }
+@media (prefers-reduced-motion: reduce) { .transfx *, .transfx::before, .transfx::after { animation-duration: 1ms !important; } }
+/* 착지 뒤에는 판이 다 보이게 — 어둠을 걷고, 서술은 판 위쪽 띠로 */
+.transfx.land { background: none; justify-content: flex-start; padding-top: 14vh; }
+.transfx.land .tf-wake { border: 2px solid #120c08; box-shadow: 2px 2px 0 #000, 0 0 0 2px #c89b3c; background: #0b0b0e; }

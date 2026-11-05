@@ -1760,6 +1760,18 @@ export class BoardRenderer implements BoardView {
   setup(state: BattleState): void {
     void this.whenReady.then(() => this.scene.setupBoard(state));
   }
+  /** 판 칸 하나의 화면 가운데 (CSS px) — 판 밖 DOM 연출(초월 등)이 그 칸을 겨눈다 */
+  screenOf(pos: Pos): { x: number; y: number } {
+    const sc = this.scene;
+    const cam = sc.cameras.main;
+    const t = sc.tile;
+    const wx = pos.x * t + t / 2;
+    const wy = (sc.state.height - 1 - pos.y) * t + t / 2;
+    const cv = this.game.canvas;
+    const r = cv.getBoundingClientRect();
+    const k = r.width / cv.width;
+    return { x: r.left + (wx - cam.worldView.x) * cam.zoom * k, y: r.top + (wy - cam.worldView.y) * cam.zoom * k };
+  }
 
   render(model: BoardModel): void {
     void this.whenReady.then(() => {

@@ -21,7 +21,7 @@ def b64(path):
 
 def img(name, alt, cls='shot'):
     p = os.path.join(SHOTS, name)
-    mime = 'image/png' if name.endswith('.png') else 'image/jpeg'
+    mime = 'image/png' if name.endswith('.png') else 'image/webp' if name.endswith('.webp') else 'image/jpeg'
     return f'<img class="{cls}" src="data:{mime};base64,{b64(p)}" alt="{html.escape(alt)}" loading="lazy">'
 
 
@@ -87,7 +87,11 @@ TOOLS = [
     ('이 합본', 'python3 -I tools/artguide/build.py <출력.html> → 같은 아티팩트에 다시 올린다'),
 ]
 
-REVIEW = []
+# 검토 중 (움직이는 webp = 실제 게임 녹화, 915×412 · 끝나면 처음부터 다시)
+REVIEW = [
+    ('rewind-turn.webp', '턴 되감기 「◀◀ 역행」 (D-236) — 판이 잿빛으로 멈추고 톱니가 거꾸로 돈다 → 「시간의 태엽을 거꾸로 감는다」 → [시간을 거스른다] → 청록 테이프가 거꾸로 감기는 0.8초. 가볍고 빠르게'),
+    ('rewind-death.webp', '죽음 되감기 「초월」 (D-236) — 적 차례에 킹이 쓰러진다 → 「킹이 무너지는 찰나…」 · “아직이다. 이 판은, 아직 끝나지 않았다!” → [운명을 거스른다] → 흰 정지 프레임 · 거꾸로 폭주하는 톱니 · 금빛 「초월」 → 흩어진 도트 조각이 물러섰다 킹 자리로 빨려 듦 → 빛기둥 · 사각 고리 → 킹이 하늘에서 떨어져 박힌다 → 「태엽이 다시 감긴다. 당신은, 눈을 뜬다.」'),
+]
 
 
 def page():
