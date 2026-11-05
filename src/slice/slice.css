@@ -1787,17 +1787,25 @@ body.rev-freeze #board, body.rev-freeze #left, body.rev-freeze #right { filter: 
 .transfx .rev-gear { position: relative; z-index: 1; }
 .transfx .tf-word { position: relative; z-index: 1; font: 400 60px/1 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; letter-spacing: 0.2em; text-shadow: 4px 0 0 rgba(255, 60, 90, 0.7), -4px 0 0 rgba(60, 200, 255, 0.7), 4px 4px 0 #000; animation: tfWord 520ms steps(6) both; }
 @keyframes tfWord { 0% { transform: scale(1.8); -webkit-mask-image: var(--px3); mask-image: var(--px3); } 40% { transform: scale(0.9); -webkit-mask-image: none; mask-image: none; } 70% { transform: scale(1.06); } 100% { transform: scale(1); } }
-.transfx .tf-shard { position: fixed; left: var(--tx); top: var(--ty); margin: -4px 0 0 -4px; box-shadow: 2px 2px 0 #000; transform: translate(var(--sx), var(--sy)); animation: tfShard 760ms cubic-bezier(0.6, -0.45, 0.9, 0.4) var(--d) both; }
-@keyframes tfShard { 0% { transform: translate(var(--sx), var(--sy)); } 100% { transform: translate(0, 0) scale(0.5); } }
-.transfx.land .tf-shard { display: none; }
-/* 빛기둥 (위에서 킹 칸까지) · 사각 고리 */
-.transfx.land::before { content: ''; position: fixed; left: calc(var(--tx) - 14px); top: 0; width: 28px; height: var(--ty); background: #f4f1ea; box-shadow: -4px 0 0 #f4d27a, 4px 0 0 #f4d27a, -8px 0 0 rgba(244, 210, 122, .5), 8px 0 0 rgba(244, 210, 122, .5); animation: tfPillar 520ms steps(5) both; }
-@keyframes tfPillar { 0% { transform: scaleY(0); transform-origin: top; } 40% { transform: scaleY(1); transform-origin: top; -webkit-mask-image: none; mask-image: none; } 70% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 100% { transform: scaleY(1); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.transfx.land::after { content: ''; position: fixed; left: var(--tx); top: var(--ty); width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 4px solid #f4d27a; box-shadow: 0 0 0 4px #000, inset 0 0 0 4px #000; animation: tfRing 480ms steps(6) both; }
-@keyframes tfRing { 0% { transform: scale(1); } 80% { transform: scale(9); -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: scale(10); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 .transfx.land .rev-gear, .transfx.land .tf-word { display: none; }
 .transfx .tf-wake { position: relative; z-index: 1; margin: 0; padding: 6px 12px; font: 400 24px/1.35 Galmuri11, sans-serif; color: #f4ead6; text-shadow: 2px 2px 0 #000; background: rgba(5, 6, 7, .8); }
 @media (prefers-reduced-motion: reduce) { .transfx *, .transfx::before, .transfx::after { animation-duration: 1ms !important; } }
 /* 착지 뒤에는 판이 다 보이게 — 어둠을 걷고, 서술은 판 위쪽 띠로 */
 .transfx.land { background: none; justify-content: flex-start; padding-top: 14vh; }
 .transfx.land .tf-wake { border: 2px solid #120c08; box-shadow: 2px 2px 0 #000, 0 0 0 2px #c89b3c; background: #0b0b0e; }
+
+/* 초월 2판 (2026-11-05 사용자: 「살아나는 빛이 구리다」): tools/pixel/revive_fx.py 도트 스프라이트 — 1도트 = 2px · 빛살은 3px */
+.transfx .tf-cog { position: fixed; left: var(--tx); top: var(--ty); width: 0; height: 0; animation: tfSpiral 820ms cubic-bezier(0.55, -0.4, 0.85, 0.45) var(--d) both; }
+.transfx .tf-cog > i { position: absolute; left: -10px; top: -10px; width: 21px; height: 21px; background: url('../assets/ui/kit/revive-cog.png') 0 0 / 42px 21px no-repeat; image-rendering: pixelated; animation: tfCogTurn 160ms steps(2) infinite, tfCounter 820ms cubic-bezier(0.55, -0.4, 0.85, 0.45) var(--d) both; }
+@keyframes tfSpiral { 0% { transform: rotate(var(--a)) translateX(var(--r)); } 100% { transform: rotate(calc(var(--a) + 240deg)) translateX(0); } }
+@keyframes tfCounter { 0% { transform: rotate(calc(var(--a) * -1)); } 100% { transform: rotate(calc(var(--a) * -1 - 240deg)); } }
+@keyframes tfCogTurn { from { background-position: 0 0; } to { background-position: -42px 0; } }
+.transfx.land .tf-cog { display: none; }
+.transfx .tf-beam { position: fixed; left: calc(var(--tx) - 24px); top: 0; width: 48px; height: var(--ty); background: url('../assets/ui/kit/revive-beam.png') 0 0 / 384px 4px repeat-y; image-rendering: pixelated; animation: tfBeam 1100ms steps(8) forwards; }
+@keyframes tfBeam { 0% { background-position-x: 0; } 100% { background-position-x: -384px; visibility: hidden; } }
+.transfx .tf-burst { position: fixed; left: calc(var(--tx) - 72px); top: calc(var(--ty) - 72px); width: 144px; height: 144px; background: url('../assets/ui/kit/revive-burst.png') 0 0 / 1152px 144px no-repeat; image-rendering: pixelated; animation: tfBurst 620ms steps(8) forwards; }
+@keyframes tfBurst { 0% { background-position-x: 0; } 100% { background-position-x: -1152px; visibility: hidden; } }
+/* 패배 되감기 장면 첫 줄: 쓰러진 킹의 서술 (잿빛) — 톱니는 멈춰 있다가 다음 줄에서 박히며 돈다 */
+.revfx .rev-pre { margin: 0; max-width: 640px; font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; color: #a8a4b2; text-shadow: 2px 2px 0 #000; min-height: 1.4em; }
+.revfx .rev-gear.still { animation-play-state: paused; filter: grayscale(1) brightness(0.55) drop-shadow(4px 4px 0 #000); }
+@media (prefers-reduced-motion: reduce) { .transfx .tf-cog, .transfx .tf-cog > i, .transfx .tf-beam, .transfx .tf-burst { animation-duration: 1ms !important; } }

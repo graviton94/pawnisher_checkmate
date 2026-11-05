@@ -38,6 +38,7 @@ import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } fro
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
+import { IMPACT } from '../data/fx';
 import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track } from './telemetry';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
 import { depthAt, REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
@@ -1078,8 +1079,8 @@ const onEndInner = async (): Promise<void> => {
   renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
   renderer.setup(b.s);
   // 헛방 (D-229): 예고를 피해 빈 땅을 친 적은 경직 · 맞은 기물은 기어 쇼크 — 한 번 알린다
-  if (b.staggered?.length) toast(HUD_TEXT.whiff(b.staggered.length), 2600);
-  else if (b.shocked?.length) toast(HUD_TEXT.shock, 2400);
+  if (b.s.winner === null && b.staggered?.length) toast(HUD_TEXT.whiff(b.staggered.length), 2600);
+  else if (b.s.winner === null && b.shocked?.length) toast(HUD_TEXT.shock, 2400);
   refresh();
   if (b.s.winner !== null) return finish();
   // 적 차례 끝 → 내 차례 사이 숨 (D-204)
@@ -1791,6 +1792,8 @@ const closeOverlay = (): void => {
   modalOut($('overlay'), $('overlay-panel'), () => ($('overlay').hidden = true));
 };
 
+/** 쓰러진 킹의 서술 (되감기 장면 첫 줄) */
+let kingFallNarr = '';
 /** 이 대국에서 「되감겠습니까」를 물었나 (패배 직전 되감기 팝업, 보고서 3 지표 ④ 처방) */
 let lossAsked = false;
 /**
@@ -1800,7 +1803,8 @@ let lossAsked = false;
 const finish = (): void => {
   if (b.s.winner === 1 && b.rewinds > 0 && !labMode && !lossAsked) {
     lossAsked = true;
-    window.setTimeout(() => lossRewindScene(), 900);
+    document.body.classList.add('rev-freeze');
+    window.setTimeout(() => lossRewindScene(), 260);
     return;
   }
   finishNow();
@@ -1821,15 +1825,29 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
   document.body.classList.add('rev-freeze');
   sfx(loss ? 'threat' : 'lift');
   const el = document.createElement('div');
-  el.className = 'revfx';
-  el.innerHTML = `<i class="rev-gear" aria-hidden="true"></i><p class="rev-narr"></p>${T.line ? `<p class="rev-line" hidden>${T.line}</p>` : ''}<p class="rev-sys" hidden>${T.sys(b.rewinds)}</p><div class="row" hidden><button class="btn" type="button" data-no>${T.no}</button><button class="btn brass rev-yes" type="button" data-yes>${T.yes}</button></div>`;
+  el.className = `revfx${loss ? ' loss' : ''}`;
+  // 패배: 쓰러진 킹의 서술이 먼저(잿빛 글) — 톱니는 아직 멈춰 있다가, 다음 줄에서 거꾸로 맞물려 돈다
+  const pre = loss ? kingFallNarr || DEATHS[0].narr : '';
+  el.innerHTML = `${pre ? '<p class="rev-pre"></p>' : ''}<i class="rev-gear${pre ? ' still' : ''}" aria-hidden="true"></i><p class="rev-narr"></p>${T.line ? `<p class="rev-line" hidden>${T.line}</p>` : ''}<p class="rev-sys" hidden>${T.sys(b.rewinds)}</p><div class="row" hidden><button class="btn" type="button" data-no>${T.no}</button><button class="btn brass rev-yes" type="button" data-yes>${T.yes}</button></div>`;
   document.body.appendChild(el);
   const show = (sel: string) => {
     const x = el.querySelector<HTMLElement>(sel)!;
     x.hidden = false;
     replay(x, 'in');
   };
-  void typeIn(el.querySelector<HTMLElement>('.rev-narr')!, T.narr, loss ? 38 : 26, () => (shake(el.querySelector<HTMLElement>('.rev-narr')!, loss ? 2 : 1), sfx('stamp'))).then(() => {
+  void (pre ? typeIn(el.querySelector<HTMLElement>('.rev-pre')!, pre, 30).then(() => new Promise((res) => window.setTimeout(res, 650))) : Promise.resolve())
+    .then(() => {
+      // 그때 — 톱니가 거꾸로 맞물린다: 멈춰 있던 톱니가 쿵 박히며 돈다
+      const g = el.querySelector<HTMLElement>('.rev-gear')!;
+      if (pre) {
+        g.classList.remove('still');
+        replay(g, 'in');
+        sfx('awaken');
+        shake(g, 2);
+      }
+      return typeIn(el.querySelector<HTMLElement>('.rev-narr')!, T.narr, loss ? 38 : 26, () => (shake(el.querySelector<HTMLElement>('.rev-narr')!, loss ? 2 : 1), sfx('stamp')));
+    })
+    .then(() => {
     if (T.line) window.setTimeout(() => show('.rev-line'), 250);
     window.setTimeout(() => (show('.rev-sys'), show('.row')), T.line ? 650 : 200);
   });
@@ -2149,6 +2167,14 @@ const deathRites = async (): Promise<void> => {
       await new Promise((r) => window.setTimeout(r, 650));
       pxOut(fx.querySelector<HTMLElement>(':scope > div'), undefined, 200);
       window.setTimeout(() => fx.remove(), 260);
+      continue;
+    }
+    // 되감기가 남은 채 킹이 쓰러지면 따로 의식을 띄우지 않는다 — 되감기 장면이 이 서술로 시작해 끊김 없이 잇는다 (2026-11-05 사용자: 「태엽이 다 풀렸다 뒤 흐름이 부자연스럽다」)
+    if (c.t === 'K' && b.s.winner === 1 && b.rewinds > 0 && !labMode && !lossAsked) {
+      kingFallNarr = DEATHS[((c.serial ?? '').charCodeAt(3) + f.turn) % DEATHS.length].narr;
+      // 부서지는 순간 그대로 잿빛으로 굳는다 — 장면까지 빈 박자가 없게
+      document.body.classList.add('rev-freeze');
+      sfx('loss');
       continue;
     }
     const fx = document.createElement('div');
@@ -2617,30 +2643,34 @@ const transcend = async (back: SliceBattle, swap: () => void): Promise<void> => 
   // ① 흰 정지 프레임 · 톱니 폭주 · 「초월」 도장
   sfx('stamp');
   await wait(420);
-  // ② 흩어진 도트 조각: 화면 곳곳에 떠 있다가 한 번 바깥으로 물러선 뒤(예비 동작) 킹 자리로 빨려 든다
-  const colors = ['#f4f1ea', '#f4d27a', '#6fe3f2', '#c89b3c'];
-  for (let k = 0; k < 30; k++) {
+  // ② 작은 황동 톱니 파편이 소용돌이치며 킹 자리로 감겨 든다 (한 번 바깥으로 물러섰다가 — 예비 동작 → 돌진)
+  for (let k = 0; k < 18; k++) {
     const sh = document.createElement('i');
-    sh.className = 'tf-shard';
-    const a = (k / 30) * Math.PI * 2 + (k % 3) * 0.4;
-    const d = 140 + (k * 37) % 220;
-    sh.style.setProperty('--sx', `${Math.round(Math.cos(a) * d)}px`);
-    sh.style.setProperty('--sy', `${Math.round(Math.sin(a) * d * 0.7)}px`);
-    sh.style.setProperty('--d', `${(k % 5) * 40}ms`);
-    sh.style.background = colors[k % colors.length];
-    const sz = k % 4 === 0 ? 12 : 8;
-    sh.style.width = sh.style.height = `${sz}px`;
+    sh.className = 'tf-cog';
+    sh.style.setProperty('--a', `${Math.round((k / 18) * 360)}deg`);
+    sh.style.setProperty('--r', `${150 + ((k * 53) % 120)}px`);
+    sh.style.setProperty('--d', `${(k % 6) * 45}ms`);
+    sh.innerHTML = '<i></i>';
     el.appendChild(sh);
   }
-  [0, 120, 240, 360, 480].forEach((ms, k) => window.setTimeout(() => sfx('tap', 4 + k * 2), ms));
-  await wait(900);
-  // ③ 빛기둥이 내리꽂히고 판이 되돌아온다 — 잿빛이 풀리고 킹이 하늘에서 떨어져 박힌다
+  [0, 110, 220, 330, 440, 550].forEach((ms, k) => window.setTimeout(() => sfx('tap', 4 + k * 2), ms));
+  await wait(980);
+  // ③ 빛기둥이 내리꽂히고(도트 단면 8장) 판이 되돌아온다 — 잿빛이 풀리고 킹이 빛 속으로 떨어져 박히는 순간 톱니 고리 빛살이 터진다
   el.classList.add('land');
+  const beam = document.createElement('i');
+  beam.className = 'tf-beam';
+  el.appendChild(beam);
   document.body.classList.remove('rev-freeze');
   swap();
   sfx('awaken');
-  await wait(60);
-  await wait(120);
+  // 기다리지 않고 바로 — 되살아난 킹이 제자리에 한 번 보였다가 하늘로 튀는 프레임이 없게 (그리기와 같은 순서로 이어진다)
+  const slam = IMPACT.drop.shadow + IMPACT.drop.fall;
+  window.setTimeout(() => {
+    const burst = document.createElement('i');
+    burst.className = 'tf-burst';
+    el.appendChild(burst);
+    sfx('kill');
+  }, calmNow() ? 0 : slam);
   if (king) await renderer.dropIn(king.id);
   // ④ 서술 한 줄
   const line = document.createElement('p');
