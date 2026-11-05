@@ -165,7 +165,7 @@ code {{ font: 12px/1.5 var(--f-head); color: var(--cyan); word-break: break-all;
 <section><h2>도트 부품 <small>코드 · 도트 메이커가 찍는다</small></h2>
 <div class="shots">
 <figure>{img('pieces.png', '기물 12종', 'shot px')}<figcaption>기물 12종 — 흑백 통일(외곽선 · 흰 테 3칸 공용, 속 칠만 다름) · 빛은 왼쪽 위 3단계 · 킹 · 퀸 · 룩 · 폰 좌우 대칭. 흰 킹 자리 = 종이 왕관을 쓴 주인공 (72칸 캔버스)</figcaption></figure>
-<figure>{img('hudkit.png', 'HUD 부품', 'shot px')}<figcaption>HUD 부품 — 탄 머리판 7색 · 태엽 열쇠 구멍 · 도움말 톱니 · 되감기 · 등급 보석 · 가격표 · 등급 틀 · 카드 틀 · 쇳물 무늬 (×4)</figcaption></figure>
+<figure>{img('hudkit.png', 'HUD 부품', 'shot px')}<figcaption>HUD 부품 (2026-11-05 리뉴얼) — 태엽 열쇠(보통 · 보너스 · 씀) · 열쇠 구멍 · 도움말 ? 톱니 · 되감기 · 탄 머리판 · 등급 보석 · 가격표 · 차례 배지(내 편 청록 · 태엽 비용 황동 · 적 진홍, 숫자는 모두 흰색) (×4)</figcaption></figure>
 <figure>{img('icons.png', '16칸 아이콘', 'shot px')}<figcaption>16칸 아이콘 — 부품 · 지도 노드 · 카드 · 상점 · 심장 톱니. 빛은 왼위, 검은 외곽선 1칸</figcaption></figure>
 </div></section>
 

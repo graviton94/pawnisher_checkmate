@@ -18,8 +18,12 @@
 사용: python3 -I tools/draw-hud.py
 """
 import os
+import sys
 
 from PIL import Image
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pixel'))
+import hud_icons  # noqa: E402
 
 OUT = 'src/assets/ui/kit'
 K = (0x0B, 0x0B, 0x0E)
@@ -370,7 +374,8 @@ if __name__ == '__main__':
     save(socket(PAL['l'], PAL['d']), 'socket.png')
     save(socket(PAL['b'], PAL['O']), 'socket-lit.png')
     save(socket(PAL['j'], PAL['G']), 'socket-bonus.png')
-    # 열쇠: 기존 태엽 도트(tools/draw-assets.py)를 90도씩 돌린다 — 도트가 그대로 남는 회전만
+    # 열쇠: hud_icons가 찍은 태엽 열쇠를 90도씩 돌린다 — 도트가 그대로 남는 회전만
+    hud_icons.main()
     full = Image.open('public/ui/hud/key-full.png').convert('RGBA')
     spent = Image.open('public/ui/hud/key-spent.png').convert('RGBA')
     save(strip([full, full.transpose(Image.Transpose.ROTATE_90), full.transpose(Image.Transpose.ROTATE_180), full.transpose(Image.Transpose.ROTATE_270), spent]), 'key-spin.png')
@@ -407,6 +412,7 @@ if __name__ == '__main__':
     save(tag_plate(HEX('#c89b3c'), HEX('#f4d27a'), HEX('#6b4a14')), 'price-tag.png')
     save(tag_plate(PAL['l'], PAL['g'], PAL['d']), 'price-tag-poor.png')
     save(art(WIN), 'win-pattern.png')
-    save(art(COG), 'cog-help.png')
+    # 도움말 톱니 · 태엽 열쇠는 16칸 아이콘과 같은 그리개로 (tools/pixel/hud_icons.py, 2026-11-05 리뉴얼)
+    save(hud_icons.cog_help(), 'cog-help.png')
     save(art(REW), 'ico-rewind.png')
     print('ok')

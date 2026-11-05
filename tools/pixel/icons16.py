@@ -1434,6 +1434,11 @@ g.pts('X', (7, 1), (7, 2), (6, 2), (8, 2), (7, 3)).pts('T', (5, 0), (9, 0), (4, 
 icon('c.smash', '분쇄', g.done())
 
 
+def mix(a, b, t):
+    """두 색 섞기 (t = b 쪽 비율) — 결과는 팔레트 한 칸, 그라데이션 아님"""
+    return tuple(round(a[i] * (1 - t) + b[i] * t) for i in range(3)) + (255,)
+
+
 def render(rows):
     """14×14 재질 그림 → 16×16 RGBA (명암 · 외곽선)"""
     n = 16
@@ -1456,13 +1461,26 @@ def render(rows):
                 hi, base, sh = RAMP[ch]
                 # 가장자리 = 빈칸이나 다른 재질과 닿은 곳 (대문자 세부색은 무시 — 세부 둘레가 지저분해지지 않게)
                 same = lambda xx, yy: 0 <= xx < n and 0 <= yy < n and (grid[yy][xx] == ch or (grid[yy][xx] != '.' and grid[yy][xx] not in RAMP))
-                if not same(x, y - 1) or not same(x - 1, y):
-                    c = hi
-                elif not same(x, y + 1) or not same(x + 1, y):
-                    c = sh
+                top, left, bottom, right = not same(x, y - 1), not same(x - 1, y), not same(x, y + 1), not same(x + 1, y)
+                # 리뉴얼 (2026-11-05, 참고 아이콘 1,243장 학습): 왼쪽 위 모서리 = 반짝 점, 오른쪽 아래 모서리 = 짙은 그늘 — 4단계 램프
+                if top and left and not (bottom or right):
+                    px[x, y] = mix(hexc(hi), (255, 255, 255, 255), 0.55)
+                elif top or left:
+                    px[x, y] = hexc(hi)
+                elif bottom and right:
+                    px[x, y] = mix(hexc(sh), (0, 0, 0, 255), 0.32)
+                elif bottom or right:
+                    px[x, y] = hexc(sh)
                 else:
-                    c = base
-                px[x, y] = hexc(c)
+                    px[x, y] = hexc(base)
+            elif ch == 'K':
+                # 안쪽 선: 순검정 대신 둘레 재질의 그늘을 더 어둡게 (셀아웃 — 바깥 테두리는 검정 그대로, D-216)
+                near = [grid[y + dy][x + dx] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if 0 <= x + dx < n and 0 <= y + dy < n and grid[y + dy][x + dx] in RAMP]
+                if near:
+                    m = max(set(near), key=near.count)
+                    px[x, y] = mix(hexc(RAMP[m][2]), (0, 0, 0, 255), 0.55)
+                else:
+                    px[x, y] = hexc(FIX['K'])
             else:
                 px[x, y] = hexc(FIX[ch])
     return out

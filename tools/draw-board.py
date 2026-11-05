@@ -11,7 +11,7 @@ P = {
     'K': (0x0B, 0x0B, 0x0E), 'INK': (0x16, 0x14, 0x1C), 'D': (0x2F, 0x2E, 0x36), 'L': (0x56, 0x54, 0x5E),
     'G': (0x8A, 0x87, 0x94), 'LG': (0xC8, 0xC8, 0xC8), 'W': (0xF4, 0xF1, 0xEA), 'BR2': (0x8C, 0x62, 0x39),
     'BR': (0xC8, 0x9B, 0x3C), 'GO': (0xFA, 0xCC, 0x15), 'CR2': (0x7A, 0x12, 0x18), 'CR': (0xE5, 0x26, 0x2F),
-    'CY': (0x38, 0xBD, 0xF8), 'CY2': (0x1E, 0x6E, 0x94), 'ST': (0xBF, 0xEF, 0xFF),
+    'CY': (0x38, 0xBD, 0xF8), 'CY2': (0x1E, 0x6E, 0x94), 'ST': (0xBF, 0xEF, 0xFF), 'CRL': (0xFF, 0x7B, 0x7B),
 }
 N = 20
 
@@ -169,18 +169,39 @@ DIGITS = {
 
 
 def badge(ally, n, cost=False):
-    """순번 배지 11×11: 톱니 토큰 + 어두운 판 + 3×5 도트 숫자 (글꼴 대신 도트로 — 판과 같은 격자).
+    """순번 배지 11×11 (리뉴얼 2026-11-05 — 16칸 아이콘과 같은 빛 규칙): 검정 바깥선 + 톱니 고리(왼쪽 위 빛 · 오른쪽 아래 그늘)
+    + 어두운 판 + 3×5 도트 숫자. 숫자는 내 편 · 적 모두 흰색 (진홍 바탕에 진홍 숫자는 안 읽혔다), 편은 고리 색으로.
     cost=True: 카드 태엽 비용 — 같은 톱니를 황동(UI 장치 색)으로 (D-162)"""
-    main, shade = ('BR', 'BR2') if cost else (('CY', 'CY2') if ally else ('CR', 'CR2'))
-    im = ring(11, 3.3, 4.7, main, teeth=8, tooth_r=1.0, shade=shade)
-    for y in range(2, 9):
-        for x in range(2, 9):
-            if (x - 5) ** 2 + (y - 5) ** 2 <= 11:
-                dot(im, x, y, 'INK')
+    import math
+    hi, main, sh = ('GO', 'BR', 'BR2') if cost else (('ST', 'CY', 'CY2') if ally else ('CRL', 'CR', 'CR2'))
+    size, c = 11, 5.0
+    ring_cells, inner = set(), set()
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - c, y - c)
+            a = math.atan2(y - c, x - c)
+            k = (a / (2 * math.pi) * 8 + 0.5) % 1
+            if d <= 2.9:
+                inner.add((x, y))
+            elif d <= 3.9 or (d <= 4.9 and (k < 0.3 or k > 0.7)):
+                ring_cells.add((x, y))
+    im = sprite(size, size)
+    body = ring_cells | inner
+    for y in range(size):
+        for x in range(size):
+            if (x, y) in body:
+                continue
+            if any((x + dx, y + dy) in body for dx in (-1, 0, 1) for dy in (-1, 0, 1)):
+                dot(im, x, y, 'K')
+    for (x, y) in ring_cells:
+        out = lambda dx, dy: (x + dx, y + dy) not in body
+        dot(im, x, y, hi if (out(-1, 0) or out(0, -1)) and not (out(1, 0) or out(0, 1)) else sh if (out(1, 0) or out(0, 1)) else main)
+    for (x, y) in inner:
+        dot(im, x, y, 'INK')
     for y, row in enumerate(DIGITS[str(n)]):
         for x, ch in enumerate(row):
             if ch == '#':
-                dot(im, 4 + x, 3 + y, 'W' if (ally or cost) else 'CR')
+                dot(im, 4 + x, 3 + y, 'W')
     return im
 
 
