@@ -1800,19 +1800,46 @@ let lossAsked = false;
 const finish = (): void => {
   if (b.s.winner === 1 && b.rewinds > 0 && !labMode && !lossAsked) {
     lossAsked = true;
-    window.setTimeout(() => {
-      const el = openOverlay(`<div class="stand rw-ask"><p class="eyebrow">◀◀ 되감기</p><h2>${HUD_TEXT.lossRewindAsk}</h2><p class="line">${HUD_TEXT.rewindLine}</p><p class="dim">남은 되감기 ${b.rewinds}</p><div class="row"><button class="btn" type="button" data-no>받아들인다</button><button class="btn brass" type="button" data-yes>되감는다</button></div></div>`);
-      el.querySelector('[data-no]')!.addEventListener('click', () => (track('loss_rewind_prompt', { ...where(), taken: false, rewinds_left: b.rewinds }), closeOverlay(), finishNow()));
-      el.querySelector('[data-yes]')!.addEventListener('click', () => {
-        track('loss_rewind_prompt', { ...where(), taken: true, rewinds_left: b.rewinds });
-        closeOverlay();
-        lossAsked = false;
-        doRewind();
-      });
-    }, 900);
+    window.setTimeout(() => lossRewindScene(), 900);
     return;
   }
   finishNow();
+};
+/**
+ * 패배 직전 되감기 장면 (2026-11-05 사용자: 「턴 되감기처럼 강력하고 임팩트 있는 서사로」):
+ * 판이 잿빛으로 멈추고, 가운데 톱니가 거꾸로 돈다 → 서술이 한 자씩 찍히고 「거꾸로」에서 떨린다 → 각주 대사 → 동사 버튼 둘.
+ * 거꾸로 감으면 큰 되감기 연출, 눈을 감으면 패배 처리.
+ */
+const lossRewindScene = (): void =>
+  rewindScene(HUD_TEXT.lossRewind, () => (track('loss_rewind_prompt', { ...where(), taken: false, rewinds_left: b.rewinds }), finishNow()), () => {
+    track('loss_rewind_prompt', { ...where(), taken: true, rewinds_left: b.rewinds });
+    lossAsked = false;
+    doRewind(true);
+  });
+/** 되감기 장면 하나 (패배 직전 · 버튼 둘 다): 판이 잿빛으로 멈추고 톱니가 거꾸로 — 서술 · 각주 · 동사 버튼 */
+const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => string; yes: string; no: string }, onNo: () => void, onYes: () => void, loss = true): void => {
+  document.body.classList.add('rev-freeze');
+  sfx(loss ? 'threat' : 'lift');
+  const el = document.createElement('div');
+  el.className = 'revfx';
+  el.innerHTML = `<i class="rev-gear" aria-hidden="true"></i><p class="rev-narr"></p>${T.line ? `<p class="rev-line" hidden>${T.line}</p>` : ''}<p class="rev-sys" hidden>${T.sys(b.rewinds)}</p><div class="row" hidden><button class="btn" type="button" data-no>${T.no}</button><button class="btn brass rev-yes" type="button" data-yes>${T.yes}</button></div>`;
+  document.body.appendChild(el);
+  const show = (sel: string) => {
+    const x = el.querySelector<HTMLElement>(sel)!;
+    x.hidden = false;
+    replay(x, 'in');
+  };
+  void typeIn(el.querySelector<HTMLElement>('.rev-narr')!, T.narr, loss ? 38 : 26, () => (shake(el.querySelector<HTMLElement>('.rev-narr')!, loss ? 2 : 1), sfx('stamp'))).then(() => {
+    if (T.line) window.setTimeout(() => show('.rev-line'), 250);
+    window.setTimeout(() => (show('.rev-sys'), show('.row')), T.line ? 650 : 200);
+  });
+  const leave = (then: () => void): void => {
+    el.querySelectorAll('button').forEach((x) => ((x as HTMLButtonElement).disabled = true));
+    document.body.classList.remove('rev-freeze');
+    pxOut(el, () => (el.remove(), then()));
+  };
+  el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), leave(onNo)));
+  el.querySelector('[data-yes]')!.addEventListener('click', () => leave(onYes));
 };
 const finishNow = (): void => {
   const isWin = b.s.winner === 0;
@@ -2535,14 +2562,9 @@ $('btn-rewind').addEventListener('click', () => {
   if (busy || b.s.winner !== null) return;
   if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${CHARMS.rewind.name}는 상자 · 고물상 · 반장에게서)`);
   // 확인 (D-209): 되돌릴 수 없는 결정은 한 번 묻는다
-  const el = openOverlay(`<div class="stand rw-ask"><p class="eyebrow">◀◀ 되감기</p><h2>${HUD_TEXT.rewindAsk}</h2><p class="line">${HUD_TEXT.rewindLine}</p><p class="dim">남은 되감기 ${b.rewinds}</p><div class="row"><button class="btn" type="button" data-no>아니오</button><button class="btn brass" type="button" data-yes>예</button></div></div>`);
-  el.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
-  el.querySelector('[data-yes]')!.addEventListener('click', () => {
-    closeOverlay();
-    doRewind();
-  });
+  rewindScene({ ...HUD_TEXT.rewindScene, line: HUD_TEXT.rewindLine }, () => undefined, () => doRewind(true), false);
 });
-const doRewind = (): void => {
+const doRewind = (big = false): void => {
   const r = rewind(b);
   if (typeof r === 'string') return toast(r);
   track('rewind_used', { ...where(), turn: b.turn, rewinds_left: r.rewinds });
@@ -2552,8 +2574,14 @@ const doRewind = (): void => {
   busy = true;
   refresh();
   const fx = document.createElement('div');
-  fx.className = 'tapefx';
-  fx.innerHTML = '<span>◀◀ 되감기</span>';
+  // 패배에서 되돌릴 때는 더 크게: 거꾸로 도는 톱니 · 판이 크게 흔들린다 · 더 길다
+  fx.className = big ? 'tapefx big' : 'tapefx';
+  fx.innerHTML = `${big ? '<i class="rev-gear fast" aria-hidden="true"></i>' : ''}<span>${big ? HUD_TEXT.lossRewind.fx : '◀◀ 되감기'}</span>`;
+  if (big) {
+    $('board').classList.remove('jolt');
+    void $('board').offsetWidth;
+    $('board').classList.add('jolt');
+  }
   if (parts.includes('tape')) flashParts(['tape']);
   document.body.appendChild(fx);
   [0, 90, 180, 270].forEach((ms, k) => window.setTimeout(() => sfx('tap', 8 - k * 2), ms));
@@ -2566,8 +2594,8 @@ const doRewind = (): void => {
     renderer.setup(b.s);
     refresh();
     sfx('awaken');
-  }, 420);
-  window.setTimeout(() => fx.remove(), 800);
+  }, big ? 760 : 420);
+  window.setTimeout(() => fx.remove(), big ? 1300 : 800);
 };
 $('btn-help').addEventListener('click', () => help());
 
