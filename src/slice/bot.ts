@@ -36,10 +36,17 @@ export const scoreMove = (b: SliceBattle, i: number, pieceId: number, to: { x: n
   return dmg + kills * 30 - lost * 80 + closer * 3 - risk - COMMANDS[b.hand[i]].cost * 2;
 };
 
+/**
+ * 봇 성향 (난이도 설계 D-228 — 「두뇌 플레이는 깨고, 무뇌 플레이는 막힌다」를 재려고):
+ * random = 무뇌(낼 수 있는 수 중 아무거나), naive = 단순(지금 가장 세게 치는 수 — 예고된 위험 무시), greedy = 보통(위험 피함), search = 두뇌(playOutSearch).
+ */
+export type BotStyle = 'random' | 'naive' | 'greedy';
+
 /** 지금 둘 가장 좋은 수 (없으면 null = 턴을 끝낸다) */
-export const bestAction = (b: SliceBattle): BotAction | null => {
+export const bestAction = (b: SliceBattle, style: BotStyle = 'greedy'): BotAction | null => {
   if (b.s.winner !== null) return null;
-  const danger = dangerSquares(b);
+  if (style === 'random') return randomAction(b);
+  const danger = style === 'naive' ? [] : dangerSquares(b);
   let best: BotAction | null = null;
   for (let i = 0; i < b.hand.length; i++) {
     if (!canPlay(b, i)) continue;
@@ -68,12 +75,29 @@ export const bestAction = (b: SliceBattle): BotAction | null => {
   return best && best.score > 0 ? best : null;
 };
 
+/** 무뇌: 낼 수 있는 수를 모두 모아 아무거나 (씨앗은 판 상태에서 — 결정론). 태엽이 남아도 30% 확률로 그냥 턴을 끝낸다 */
+const randomAction = (b: SliceBattle): BotAction | null => {
+  const all: BotAction[] = [];
+  for (let i = 0; i < b.hand.length; i++) {
+    if (!canPlay(b, i)) continue;
+    const c = COMMANDS[b.hand[i]];
+    if (isInstant(b.hand[i])) { all.push({ i, score: 1 }); continue; }
+    for (const p of cardPieces(b, i)) {
+      if (c.kind !== 'move') { all.push({ i, pieceId: p.id, score: 1 }); continue; }
+      for (const to of cardMoves(b, i, p.id)) all.push({ i, pieceId: p.id, to, score: 1 });
+    }
+  }
+  const h = (b.turn * 7919 + b.hand.length * 104729 + b.ap * 1299709 + b.s.pieces.reduce((a, p) => a + p.hp * (p.x + 1) * (p.y + 3), 0)) % 1000;
+  if (!all.length || h < 300) return null;
+  return all[h % all.length];
+};
+
 /** 대국 하나를 끝까지 둔다. 내 턴 수 · 낸 카드 수 · 이겼는지 */
-export const playOut = (b: SliceBattle, maxTurns = 40, onPlay?: (card: string) => void): { won: boolean; turns: number; plays: number } => {
+export const playOut = (b: SliceBattle, maxTurns = 40, onPlay?: (card: string) => void, style: BotStyle = 'greedy'): { won: boolean; turns: number; plays: number } => {
   let plays = 0;
   while (b.s.winner === null && b.turn < maxTurns) {
     for (let guard = 0; guard < 20; guard++) {
-      const a = bestAction(b);
+      const a = bestAction(b, style);
       if (!a) break;
       const card = b.hand[a.i];
       const r = playCard(b, a.i, a.pieceId, a.to);

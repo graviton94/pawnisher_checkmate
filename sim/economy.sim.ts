@@ -8,7 +8,7 @@ import { makeCrew } from '../src/slice/crew';
 import { buildRun, battleFor, MAP, type MapNode } from '../src/slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../src/slice/events';
 import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../src/slice/battle';
-import { playOut } from '../src/slice/bot';
+import { playOut, playOutSearch, type BotStyle } from '../src/slice/bot';
 
 /**
  * 성장 설계 시뮬레이션 (D-218, 사용자: "선택지별 획득 수량 · 기대 효과 · 덱을 어디까지 빌드할 수 있는지 — 기물 + 강화 + 덱 + 보상 아이템,
@@ -24,6 +24,15 @@ import { playOut } from '../src/slice/bot';
  * 전투력 = 고정 시험대(2막 대국 20판, 깊이 고정)에서 지금 분대 · 덱 · 부품의 승률과 평균 턴 — 막마다 반장 직전에 잰다.
  */
 const RUNS = Number(process.env.ER ?? 30);
+// 난이도 설계 (D-228): EB = random | naive | greedy | search (대국을 두는 봇 성향), ERT = 대국당 도전 횟수 (1 = 지면 출하 끝), ETAG = 결과 파일 꼬리표
+const STYLE = (process.env.EB ?? 'greedy') as BotStyle | 'search';
+const TRIES = Number(process.env.ERT ?? 4);
+const TAG = process.env.ETAG ?? '';
+// 적 수치 덮어쓰기 (난이도 탐색): EFA = 적 공격 배율, EFG = 공격 성장, EHS = HP 시작, EHG = HP 성장
+if (process.env.EFA) SLICE.foeAtk = Number(process.env.EFA);
+if (process.env.EFG) SLICE.foeAtkGrow = Number(process.env.EFG);
+if (process.env.EHS) SLICE.foeHpStart = Number(process.env.EHS);
+if (process.env.EHG) SLICE.foeHpGrow = Number(process.env.EHG);
 const VALUE: Record<string, number> = Object.fromEntries((JSON.parse(readFileSync('sim/rarity-result.json', 'utf8')).rows as { id: string; value: number }[]).map((r) => [r.id, r.value]));
 const val = (id: string) => VALUE[baseOf(id as CommandId)] ?? 5;
 
@@ -113,9 +122,9 @@ const one = (seed: number) => {
         const def = n.battle;
         let ok = false;
         let fell: Squad[] = [];
-        for (let tryN = 0; tryN < 4 && !ok; tryN++) {
+        for (let tryN = 0; tryN < TRIES && !ok; tryN++) {
           const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold });
-          const r = playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`));
+          const r = STYLE === 'search' ? playOutSearch(b, 40, 3, 4) : playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`), STYLE);
           if (r.won) {
             ok = true;
             // 목숨 둘 (D-219): 처음 쓰러지면 톱니가 깨진 채 HP 50%로 돌아오고, 깨진 채 쓰러지면 폐기
@@ -191,5 +200,5 @@ it('성장 설계 시뮬레이션', () => {
   const per = Object.fromEntries(Object.entries(all).map(([k, v]) => [k, +(v / RUNS).toFixed(2)]));
   console.log('완주', rs.filter((r) => r.cleared).length, '/', RUNS);
   console.log('출하 한 판 평균', JSON.stringify(per));
-  writeFileSync('sim/economy-result.json', JSON.stringify({ runs: RUNS, map: MAP, per, results: rs.map((r) => ({ cleared: r.cleared, ended: r.ended, T: r.T, curve: r.curve, checkpoints: r.checkpoints, final: { deck: r.deck.length, squad: r.squad.length, parts: r.parts.length, deckIds: r.deck.map((id) => baseOf(id)), partIds: r.parts, squadT: r.squad.map((u) => u.t) } })) }, null, 0));
+  writeFileSync(`sim/economy-result${TAG}.json`, JSON.stringify({ runs: RUNS, map: MAP, per, results: rs.map((r) => ({ cleared: r.cleared, ended: r.ended, T: r.T, curve: r.curve, checkpoints: r.checkpoints, final: { deck: r.deck.length, squad: r.squad.length, parts: r.parts.length, deckIds: r.deck.map((id) => baseOf(id)), partIds: r.parts, squadT: r.squad.map((u) => u.t) } })) }, null, 0));
 });
