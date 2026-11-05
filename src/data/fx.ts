@@ -1,6 +1,6 @@
 /**
  * 공격 연출 박자와 고른 안 (GDD 12장 §12.3, D-035·D-036).
- * 그래픽 결정은 FX 랩 아티팩트(tools/fxlab)에서 사용자가 보고 고른다. 고른 안을 여기 적으면 게임에 그대로 쓰인다.
+ * 그래픽 결정은 「그래픽 정본」 아티팩트(tools/artguide, D-220)에서 사용자가 보고 고른다. 고른 안을 여기 적으면 게임에 그대로 쓰인다.
  * 곡선은 선형이 아니라 지수형: 모을 때는 천천히→빠르게(ease-in expo), 터질 때는 빠르게→천천히(ease-out expo).
  */
 
@@ -35,7 +35,7 @@ export type KingFx = 'A' | 'B';
 /** 퀸·킹 안 — 사용자 결정 (D-038): 퀸 D 톱날 부메랑, 킹 B 종소리 파동 */
 export const FX_CHOICE: { Q: QueenFx; K: KingFx } = { Q: 'D', K: 'B' };
 
-/** 안 이름 (FX 랩 표시용) */
+/** 안 이름 (표시용) */
 export const FX_VARIANT_NAMES: { Q: Record<QueenFx, string>; K: Record<KingFx, string> } = {
   Q: { C: '회전 광선 (등대)', D: '톱날 부메랑', A: '8방향 섬광 (이전 안)' },
   K: { B: '종소리 파동', A: '사각 충격파' },
