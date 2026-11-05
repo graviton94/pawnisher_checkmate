@@ -72,6 +72,8 @@ const one = (seed: number) => {
     }
     const rank = { gold: 3, rare: 2, common: 1 } as Record<string, number>;
     const pick = offers.sort((a, b) => rank[PART_GRADE[b] ?? 'common'] - rank[PART_GRADE[a] ?? 'common'])[0];
+    for (const o of offers) bump(T, `offer:${o}`);
+    bump(T, `pick:${pick}`);
     parts.push(pick);
     bump(T, `part:${PART_GRADE[pick] ?? 'common'}`);
   };
@@ -91,7 +93,8 @@ const one = (seed: number) => {
   const takeCard = (offers: CommandId[], recruitOffer: boolean) => {
     if (recruitOffer && squad.length < SLICE.squadMax && (squad.length < 6 || rng.next() < 0.5)) return recruit();
     const best = offers.sort((a, b) => val(b) - val(a))[0];
-    if (best && val(best) > 0) { deck.push(best); bump(T, `card:${gradeOf(best)}`); } else bump(T, 'skip');
+    for (const o of offers) bump(T, `offer:${o}`);
+    if (best && val(best) > 0) { deck.push(best); bump(T, `pick:${best}`); bump(T, `card:${gradeOf(best)}`); } else bump(T, 'skip');
   };
   let ended = '';
   for (const [ai, a] of acts.entries()) {
@@ -112,7 +115,7 @@ const one = (seed: number) => {
         let fell: Squad[] = [];
         for (let tryN = 0; tryN < 4 && !ok; tryN++) {
           const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place });
-          const r = playOut(b);
+          const r = playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`));
           if (r.won) {
             ok = true;
             // 목숨 둘 (D-219): 처음 쓰러지면 톱니가 깨진 채 HP 50%로 돌아오고, 깨진 채 쓰러지면 폐기
@@ -146,11 +149,11 @@ const one = (seed: number) => {
         if (hpRatio() < 0.55 && gold >= SHOP.healPrice) { gold -= SHOP.healPrice; squad = restSquad(squad, SHOP.healPct); bump(T, 'shop:heal'); bump(T, 'goldSpent', SHOP.healPrice); }
         for (const id of offers.sort((x, y) => val(y) - val(x))) {
           const p = SHOP.gradePrice[gradeOf(id) as Grade];
-          if (val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); bump(T, 'shop:card'); bump(T, `card:${gradeOf(id)}`); bump(T, 'goldSpent', p); break; }
+          if (val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); bump(T, `pick:${id}`); bump(T, 'shop:card'); bump(T, `card:${gradeOf(id)}`); bump(T, 'goldSpent', p); break; }
         }
         const pp = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
         const part = pp.length ? pp[rng.int(pp.length)] : null;
-        if (part) { const p = SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade]; if (gold >= p + 30) { gold -= p; parts.push(part); bump(T, 'shop:part'); bump(T, `part:${PART_GRADE[part] ?? 'common'}`); bump(T, 'goldSpent', p); } }
+        if (part) { const p = SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade]; if (gold >= p + 30) { gold -= p; parts.push(part); bump(T, `pick:${part}`); bump(T, 'shop:part'); bump(T, `part:${PART_GRADE[part] ?? 'common'}`); bump(T, 'goldSpent', p); } }
         { const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x)); if (cand[0] && gold >= SHOP.refinePrice + 40) { gold -= SHOP.refinePrice; deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); bump(T, 'shop:refine'); bump(T, 'goldSpent', SHOP.refinePrice); } }
         if (deck.length > 14 && gold >= SHOP.removePrice) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= SHOP.removePrice; bump(T, 'shop:remove'); bump(T, 'goldSpent', SHOP.removePrice); }
       } else if (n.kind === 'forge') {
@@ -188,5 +191,5 @@ it('성장 설계 시뮬레이션', () => {
   const per = Object.fromEntries(Object.entries(all).map(([k, v]) => [k, +(v / RUNS).toFixed(2)]));
   console.log('완주', rs.filter((r) => r.cleared).length, '/', RUNS);
   console.log('출하 한 판 평균', JSON.stringify(per));
-  writeFileSync('sim/economy-result.json', JSON.stringify({ runs: RUNS, map: MAP, per, results: rs.map((r) => ({ cleared: r.cleared, ended: r.ended, T: r.T, curve: r.curve, checkpoints: r.checkpoints, final: { deck: r.deck.length, squad: r.squad.length, parts: r.parts.length } })) }, null, 0));
+  writeFileSync('sim/economy-result.json', JSON.stringify({ runs: RUNS, map: MAP, per, results: rs.map((r) => ({ cleared: r.cleared, ended: r.ended, T: r.T, curve: r.curve, checkpoints: r.checkpoints, final: { deck: r.deck.length, squad: r.squad.length, parts: r.parts.length, deckIds: r.deck.map((id) => baseOf(id)), partIds: r.parts, squadT: r.squad.map((u) => u.t) } })) }, null, 0));
 });

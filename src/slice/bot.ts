@@ -69,13 +69,15 @@ export const bestAction = (b: SliceBattle): BotAction | null => {
 };
 
 /** 대국 하나를 끝까지 둔다. 내 턴 수 · 낸 카드 수 · 이겼는지 */
-export const playOut = (b: SliceBattle, maxTurns = 40): { won: boolean; turns: number; plays: number } => {
+export const playOut = (b: SliceBattle, maxTurns = 40, onPlay?: (card: string) => void): { won: boolean; turns: number; plays: number } => {
   let plays = 0;
   while (b.s.winner === null && b.turn < maxTurns) {
     for (let guard = 0; guard < 20; guard++) {
       const a = bestAction(b);
       if (!a) break;
+      const card = b.hand[a.i];
       const r = playCard(b, a.i, a.pieceId, a.to);
+      if (typeof r !== 'string' && onPlay && card) onPlay(card);
       if (typeof r === 'string') break;
       plays++;
       if (b.s.winner !== null) break;
