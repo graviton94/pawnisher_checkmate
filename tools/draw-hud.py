@@ -369,11 +369,57 @@ def tag_plate(face, hi, low):
 WIN = ['ddii', 'ddii', 'iidd', 'iidd']
 
 
+# ---------- 합 · 곱 표지 (2026-11-05, 사용자: 「[+] [×] 로고도 우리 스타일로」) 12×12: 검정 테 · 왼쪽 위 빛 · 오른쪽 아래 그늘 · 흰 기호 + 검은 그림자 ----------
+def op_badge(kind):
+    base, hi, lo = ((0x5C, 0xC4, 0xD4), (0xB8, 0xF0, 0xF6), (0x1F, 0x7A, 0x8A)) if kind == 'add' else ((0xFF, 0x9F, 0x40), (0xFF, 0xD8, 0x9C), (0xA8, 0x50, 0x14))
+    p = dict(PAL, B=base, H=hi, L=lo)
+    # 기호는 흰 2도트 굵기, 오른쪽 아래로 검은 그림자 1도트 (손으로 정한 칸 — 판에 따라 바뀌지 않는다)
+    rows = {
+        'add': [
+            '.kkkkkkkkkk.',
+            'kHHHHHHHHHLk',
+            'kHBBBwwBBBLk',
+            'kHBBBwwkBBLk',
+            'kHBBBwwkBBLk',
+            'kHwwwwwwwBLk',
+            'kHwwwwwwwkLk',
+            'kHBkkwwkkkLk',
+            'kHBBBwwkBBLk',
+            'kHBBBBkkBBLk',
+            'kLLLLLLLLLLk',
+            '.kkkkkkkkkk.',
+        ],
+        'mul': [
+            '.kkkkkkkkkk.',
+            'kHHHHHHHHHLk',
+            'kHwwBBBBwwLk',
+            'kHBwwBBwwkLk',
+            'kHBkwwwwkBLk',
+            'kHBBkwwkBBLk',
+            'kHBBwwwwBBLk',
+            'kHBwwkkwwBLk',
+            'kHwwkBBkwwLk',
+            'kHBkBBBBBkLk',
+            'kLLLLLLLLLLk',
+            '.kkkkkkkkkk.',
+        ],
+    }[kind]
+    return art(rows, p)
+
+
+# 스크롤 막대 (2026-11-05): 홈 6×8 세로 이음 · 손잡이 6×12 9-slice(위아래 4) — 쇠 홈에 황동 손잡이, 가운데 홈 줄
+SCROLL_TRACK = ['kiiiik', 'kiddik', 'kiddik', 'kiddik', 'kiddik', 'kiddik', 'kiddik', 'kiiiik']
+SCROLL_THUMB = ['.kkkk.', 'kYYYyk', 'kYyyyk', 'kYyybk', 'kYyybk', 'kykkbk', 'kYyybk', 'kykkbk', 'kYyybk', 'kYyybk', 'kybbbk', '.kkkk.']
+
 if __name__ == '__main__':
     for t, tone in TONES.items():
         save(mag(tone), f'mag-{t}.png')
     save(art(BODY), 'mag-body.png')
     save(art(GAUGE), 'gauge.png')
+    save(op_badge('add'), 'op-add.png')
+    save(op_badge('mul'), 'op-mul.png')
+    save(art(SCROLL_TRACK), 'scroll-track.png')
+    save(art(SCROLL_THUMB), 'scroll-thumb.png')
     save(socket(PAL['l'], PAL['d']), 'socket.png')
     save(socket(PAL['y'], PAL['O']), 'socket-lit.png')
     save(art(MANIFOLD), 'manifold.png')

@@ -1653,3 +1653,31 @@ body.slice .charm-buy { padding: 4px 10px; }
 body.slice .charm-buy .price { position: static; display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 0; background: none; box-shadow: none; color: #f4d27a; font: 700 12px/1 Galmuri11, sans-serif; }
 body.slice .charm-buy .price.poor { color: #c96a6a; background: none; }
 body.slice .charm-buy .price .scr { width: 12px; height: 12px; }
+
+/* ───────── 고물상 3×3 (2026-11-05, 사용자: 「카드 높이 통일 · 3×3 · 변동 6 + 아래 고정 정비 · 다듬기 · 빼기 · 스크롤 · 우리 스타일 스크롤 · 설명 가운데 · 최대 4줄」) ───────── */
+body[data-place="bg-shop"] .overlay .panel { max-width: min(66vw, 600px); }
+body.slice .shop-scroll { max-height: calc(100vh - 96px); overflow-y: auto; overflow-x: hidden; padding: 10px 14px 18px 8px; margin-right: -6px; overscroll-behavior: contain; scrollbar-color: #c89b3c #16141c; }
+body.slice .shop-scroll::-webkit-scrollbar { width: 12px; }
+body.slice .shop-scroll::-webkit-scrollbar-track { border-style: solid; border-width: 4px 4px; border-image: url('../assets/ui/kit/scroll-track.png') 2 fill / 4px 4px round; image-rendering: pixelated; }
+body.slice .shop-scroll::-webkit-scrollbar-thumb { min-height: 36px; border-style: solid; border-width: 8px 4px; border-image: url('../assets/ui/kit/scroll-thumb.png') 4 2 fill / 8px 4px round; image-rendering: pixelated; }
+body.slice .shop-scroll::-webkit-scrollbar-button { display: none; height: 0; }
+body.slice .shop-grid.shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 168px; column-gap: 10px; row-gap: 22px; margin: 0; padding: 0; }
+body.slice .shop-grid .cf.cf { height: 100%; box-sizing: border-box; justify-content: flex-start; padding: 26px 8px 16px; }
+body.slice .shop-grid [data-buy="heal"] { grid-column: 1; }
+body.slice .shop-grid .cf .cf-win { flex: none; height: 38px; }
+/* 설명: 남은 칸 가운데에 — 문장 한 줄 · 괄호 한 줄, 최대 4줄 */
+body.slice .cf .cf-desc { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0; min-height: 0; text-align: center; -webkit-line-clamp: unset; overflow: visible; }
+body.slice .cf .cf-desc .dl { display: block; line-height: 15px; }
+body.slice .shop-grid .cf .cf-desc { max-height: 64px; }
+/* 합 · 곱 표지: 도트 판 (op-add / op-mul 12×12 → 24px) */
+body.slice .cf .op.op-add, body.slice .cf .op.op-mul { width: 24px; min-width: 24px; height: 24px; padding: 0; margin: 0 2px; font-size: 0; color: transparent; box-shadow: none; background: url('../assets/ui/kit/op-add.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.slice .cf .op.op-mul { background-image: url('../assets/ui/kit/op-mul.png'); }
+/* 고물상 2차 (2026-11-05): 설명 세로 가운데 · 카드 높이 · 도트 스크롤 막대 */
+body.slice .shop-grid .cf .cf-desc.cf-desc { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1 1 auto; max-height: none; line-height: 15px; }
+body.slice .shop-grid.shop-grid { grid-auto-rows: 150px; }
+body.slice .shop-scrollbox { position: relative; }
+body.slice .shop-scroll { scrollbar-width: none; padding-right: 22px; }
+body.slice .shop-scroll::-webkit-scrollbar { display: none; width: 0; }
+body.slice .px-rail { position: absolute; top: 10px; bottom: 18px; right: 0; width: 12px; border-style: solid; border-width: 4px; border-image: url('../assets/ui/kit/scroll-track.png') 2 fill / 4px round; image-rendering: pixelated; box-sizing: border-box; pointer-events: none; }
+body.slice .px-rail[hidden] { display: none; }
+body.slice .px-rail > i { position: absolute; left: -4px; right: -4px; top: -4px; display: block; border-style: solid; border-width: 8px 4px; border-image: url('../assets/ui/kit/scroll-thumb.png') 4 2 fill / 8px 4px round; image-rendering: pixelated; box-sizing: border-box; }

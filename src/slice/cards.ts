@@ -215,7 +215,7 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
 /** 고물상 · 작업대 (R5-2, D-168) — 값은 구조용, 조정은 R7 */
 /** gradePrice · partGradePrice (D-217 3): 고물상 값은 등급으로 — 일반 · 희귀 · 황금 */
 /** refinePrice (D-218): 고물상 다듬기 — 남는 나사를 강화로 */
-export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 };
+export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 5, parts: 1 }; // 진열대 = 카드 5 + 부품 1 (부적이 나오면 카드 한 자리), 아래 줄 정비 · 다듬기 · 빼기 고정 (2026-11-05 3×3)
 export const FORGE = { repairPct: 0.4 };
 
 /** 밀치기 충돌 피해 (밀린 적과 부딪힌 기물 둘 다) */
