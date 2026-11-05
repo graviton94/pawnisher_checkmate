@@ -26,7 +26,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   rookBolt: { name: '공성 쇠뇌', axis: 'push', icon: 'rookBolt', desc: '룩의 공격 ×1.3.' },
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', desc: '비숍의 공격 ×1.3.' },
   pawnPike: { name: '개척자의 창', axis: 'inf', icon: 'pawnPike', desc: '폰의 공격 +8.' },
-  oath: { name: '작은 개척자의 맹세', axis: 'inf', icon: 'oath', desc: '폰의 공격 +4. 폰마다 대국마다 문턱 한 번. (쓰러질 피해를 HP 1로 버틴다)' },
+  oath: { name: '작은 개척자의 맹세', axis: 'inf', icon: 'oath', desc: '폰의 공격 +4. (폰마다 대국마다 문턱 한 번)' },
   horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', desc: '나이트가 처치하면 태엽 +1' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', desc: '처치할 때마다 카드 +1' },
   assembly: { name: '끝없는 생산선', axis: 'inf', icon: 'assembly', desc: '턴 시작에 폰이 2기 이하면 킹 곁에 폰 +1' },

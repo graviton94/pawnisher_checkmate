@@ -1695,3 +1695,10 @@ body.slice .cf .cf-foot { display: flex; align-items: center; gap: 4px; white-sp
 body.slice .cf .cf-chips { position: static; height: 24px; }
 body.slice .cf .cf-foot .ptag, body.slice .cf .cf-foot .price.sold { min-width: 0; padding: 0 6px 0 16px; }
 body.slice .cf .cf-foot .ptag .scr { left: 2px; }
+/* 그림 창 가운데 맞춤 (2026-11-05, 사용자: 「빈 픽셀이 어디가 바닥 · 천장이냐에 따라 배치가 이상해 보인다」):
+   그림 상자는 늘 창 한가운데 · 상자 크기 = 그림 크기 (상자가 더 크면 그림이 상자 바닥에 붙었다).
+   상자 안 그림은 이미 보이는 도트 기준으로 가운데 — 16칸 아이콘은 내보낼 때(icons16 centered), 기물은 몸통 가운데 보정(PIECE_ART_CENTER). */
+body.slice .cf .cf-win { display: grid; place-items: center; }
+body.slice .cf .cf-win .art { width: auto; height: auto; display: grid; place-items: center; line-height: 0; }
+body.slice .cf .cf-win .art.any { transform: none; }
+body.slice .cf .cf-win .art > *, body.slice .cf .cf-win > .ico { display: block; margin: 0; vertical-align: top; }
