@@ -61,7 +61,13 @@ export interface BoardInput {
 
 /** 터치 기기 칸 최대 크기 (CSS px) */
 /** 깨진 심장 톱니 속 칠 (D-219): 흰 기물 팔레트 → 한 단계 어두운 쇠 색. 외곽선 #0b0b0e · 바깥 흰 테 #f4f1ea는 그대로 */
-const CRACK_TONE: Record<number, number> = { 0xf1eeec: 0x8a8790, 0xc5c3c3: 0x5f5d66, 0x858488: 0x45434b, 0x3a393e: 0x2a2930 };
+const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8790, 0xe2ded6: 0x7a7780, 0xc5c3c3: 0x5f5d66, 0x858488: 0x45434b, 0x3a393e: 0x2a2930 };
+/**
+ * 기물 그림 크기 (2026-11-05): 기물 PNG는 72칸 캔버스(64칸 몸 + 위 8줄 — 주인공 종이 왕관 자리)다.
+ * 몸 64칸이 예전처럼 칸의 82%를 차지하도록 그림 전체를 72/64배로 키우고, 바닥(칸의 84%)에 맞춘다.
+ */
+const PIECE_SIZE = 0.82 * (72 / 64);
+const PIECE_Y = 0.84 - PIECE_SIZE / 2;
 const BOARD_TILE_TOUCH_MAX = 54; // 도트 내림(DPR 2.625 → 칸 53.3px)이 48 아래로 가지 않게
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // 터치 기기 칸 상한 약 53px (D-214, 사용자: "4×4 · 6×6이 화면을 꽉 채워 부담스럽다") — 터치 하한 48은 지킨다
@@ -452,7 +458,7 @@ class BoardScene extends Phaser.Scene {
       marks.push(tag, this.add.image(t * 0.02 + size / 2, t * 0.02 + size / 2, 'icon-skull').setDisplaySize(size * 0.72, size * 0.72).setTint(0xf4f1ea));
     }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * 0.43, this.glyphKey(p.id, p.type, p.side)).setDisplaySize(t * 0.82, t * 0.82);
+    const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -965,9 +971,9 @@ class BoardScene extends Phaser.Scene {
   private shatterPiece(s: PieceSprite, slow = 1, power = 1, o: { hot?: boolean; cool?: boolean } = {}): Promise<void> {
     const t = this.tile;
     const key = s.glyph.texture.key;
-    const size = t * 0.82;
+    const size = t * PIECE_SIZE;
     const gx = s.root.x + t / 2;
-    const gy = s.root.y + t * 0.43;
+    const gy = s.root.y + t * PIECE_Y;
     const frags: { img: Phaser.GameObjects.Image; x: number; y: number; a: number; v: number; r: number }[] = [];
     this.shardsOf(key, IMPACT.shards).forEach((sh, id) => {
       const x = gx - size / 2 + sh.cx * size;
@@ -1258,8 +1264,8 @@ class BoardScene extends Phaser.Scene {
     cv.width = cv.height = N;
     const g = cv.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    const s = N * 0.82;
-    g.drawImage(src, (N - s) / 2, N * 0.43 - s / 2, s, s);
+    const s = N * PIECE_SIZE;
+    g.drawImage(src, (N - s) / 2, N * PIECE_Y - s / 2, s, s);
     const a = g.getImageData(0, 0, N, N).data;
     const out: { i: number; j: number; c: number }[] = [];
     for (let j = 0; j < BOARD_DOTS; j++)
@@ -1400,8 +1406,8 @@ class BoardScene extends Phaser.Scene {
               if (trail.length > 1)
                 IMPACT.ghosts.forEach((gh, i) => {
                   const p0 = trail[Math.floor(gh.at * (trail.length - 1))];
-                  const size = t * 0.82 * gh.scale;
-                  ghosts[i]?.setVisible(fade > 0).setPosition(p0.x + t / 2, p0.y + t * 0.43).setDisplaySize(size * gh.stretch, size / gh.stretch).setAlpha(gh.alpha * fade);
+                  const size = t * PIECE_SIZE * gh.scale;
+                  ghosts[i]?.setVisible(fade > 0).setPosition(p0.x + t / 2, p0.y + t * PIECE_Y).setDisplaySize(size * gh.stretch, size / gh.stretch).setAlpha(gh.alpha * fade);
                 });
               if (m.landQ >= 0) {
                 if (!landed) {

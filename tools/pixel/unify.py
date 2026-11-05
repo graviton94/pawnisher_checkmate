@@ -29,7 +29,7 @@ import maker  # noqa: E402
 import piskel  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(HERE))
-KING_NEW = os.path.join(ROOT, 'build-res', 'piskel', 'K-black-new.png')
+KING_NEW = os.path.join(ROOT, 'build-res', 'order', 'K-black-new-source.png')
 N = 64
 RIM = 3
 PAL = {0: {'hi2': 'V', 'hi1': 'W', 'base': 'E', 'sh1': 'S', 'sh2': 'G'}, 1: {'hi2': 'H', 'hi1': 'M', 'base': 'B', 'sh1': 'Z', 'sh2': 'D'}}

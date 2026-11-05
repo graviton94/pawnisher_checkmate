@@ -76,7 +76,8 @@ SCREENS = [
 ]
 
 TOOLS = [
-    ('기물 64칸 정본', 'tools/pixel/pieces64.txt → python3 -I tools/pixel/maker.py export (public/pieces/를 손으로 고치지 않는다)'),
+    ('기물 정본', 'tools/pixel/pieces64.txt (흑백 통일: unify.py · 주인공: paperking.py) → python3 -I tools/pixel/maker.py export (72칸 캔버스, public/pieces/를 손으로 고치지 않는다)'),
+    ('Piskel 왕복', 'python3 -I tools/pixel/piskel.py export | import (build-res/piskel/)'),
     ('16칸 아이콘', 'tools/pixel/icons16.py export public/ui/icons16'),
     ('HUD 부품', 'python3 -I tools/draw-hud.py → src/assets/ui/kit/'),
     ('판 칸 · 소품', 'tools/draw-board.py · tools/draw-assets.py'),
@@ -84,9 +85,7 @@ TOOLS = [
     ('이 합본', 'python3 -I tools/artguide/build.py <출력.html> → 같은 아티팩트에 다시 올린다'),
 ]
 
-REVIEW = [
-    ('crown.jpg', '주인공 왕관 시안 — 사용자가 준 왕관을 16×12 도트로 뽑아 2배로 키워 흰 폰 64칸에 씌웠다. 정하면 [K 0]을 바꾼다.'),
-]
+REVIEW = []
 
 
 def page():
@@ -165,12 +164,12 @@ code {{ font: 12px/1.5 var(--f-head); color: var(--cyan); word-break: break-all;
 
 <section><h2>도트 부품 <small>코드 · 도트 메이커가 찍는다</small></h2>
 <div class="shots">
-<figure>{img('pieces.png', '기물 12종', 'shot px')}<figcaption>기물 12종 — 64칸 정본 (사용자 원본, 흰 테 2칸 · 머리 강조형). 흰 킹 = 종이 왕관을 쓴 가짜 왕</figcaption></figure>
+<figure>{img('pieces.png', '기물 12종', 'shot px')}<figcaption>기물 12종 — 흑백 통일(외곽선 · 흰 테 3칸 공용, 속 칠만 다름) · 빛은 왼쪽 위 3단계 · 킹 · 퀸 · 룩 · 폰 좌우 대칭. 흰 킹 자리 = 종이 왕관을 쓴 주인공 (72칸 캔버스)</figcaption></figure>
 <figure>{img('hudkit.png', 'HUD 부품', 'shot px')}<figcaption>HUD 부품 — 탄 머리판 7색 · 태엽 열쇠 구멍 · 도움말 톱니 · 되감기 · 등급 보석 · 가격표 · 등급 틀 · 카드 틀 · 쇳물 무늬 (×4)</figcaption></figure>
 <figure>{img('icons.png', '16칸 아이콘', 'shot px')}<figcaption>16칸 아이콘 — 부품 · 지도 노드 · 카드 · 상점 · 심장 톱니. 빛은 왼위, 검은 외곽선 1칸</figcaption></figure>
 </div></section>
 
-<section><h2>검토 중 <small>정해 주면 게임에 넣는다</small></h2><div class="shots">{review}</div></section>
+{f'<section><h2>검토 중 <small>정해 주면 게임에 넣는다</small></h2><div class="shots">{review}</div></section>' if review else ''}
 
 <section><h2>만드는 법</h2><div class="tools">{tools}</div></section>
 </div>

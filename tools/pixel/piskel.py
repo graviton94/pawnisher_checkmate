@@ -23,12 +23,13 @@ SIDE = {0: 'white', 1: 'black'}
 
 # 진영마다 쓰는 글자 (pieces64.txt 머리 주석과 같다) — 색 → 글자를 진영별로 되돌린다
 LETTERS = {
-    0: 'OKWSGD' + 'YATRXUPC',
-    1: 'OKBMHLD' + 'YATRXUPC',
+    0: 'OKVWESGD' + 'YATRXUPC' + 'FQJI',
+    1: 'OKHMBZDL' + 'YATRXUPC',
 }
 NAMES = {
     'O': '흰 바깥 테', 'K': '검정 외곽선', 'W': '몸', 'S': '옅은 그늘', 'G': '그늘', 'D': '짙은 그늘',
     'B': '몸', 'M': '밝은 몸', 'H': '빛', 'L': '강한 빛',
+    'V': '강한 빛', 'E': '바탕', 'Z': '그늘', 'F': '종이 왕관 빛', 'Q': '종이 왕관 바탕', 'J': '종이 왕관 그늘', 'I': '종이 왕관 구멍',
     'Y': '왕관 금', 'A': '왕관 그늘', 'T': '왕관 연노랑', 'R': '보석 진홍', 'X': '보석 그늘', 'U': '황동 그늘', 'P': '보석 빛', 'C': '청록 보석',
 }
 
@@ -64,13 +65,14 @@ def export():
 
 def to_grid(path, side):
     im = Image.open(path).convert('RGBA')
-    if im.size != (64, 64):
-        raise SystemExit(f'{os.path.basename(path)}: 크기가 {im.size}입니다. 64×64(1칸 = 1px)로 내보내 주세요.')
+    if im.size not in ((64, 64), (72, 72)):
+        raise SystemExit(f'{os.path.basename(path)}: 크기가 {im.size}입니다. 64×64(주인공은 72×72, 1칸 = 1px)로 내보내 주세요.')
     pal = {ch: color(ch, side) for ch in LETTERS[side]}
     rows, off = [], {}
-    for y in range(64):
+    n = im.size[0]
+    for y in range(n):
         row = ''
-        for x in range(64):
+        for x in range(n):
             r, g, b, a = im.getpixel((x, y))
             if a < 128:
                 row += '.'
