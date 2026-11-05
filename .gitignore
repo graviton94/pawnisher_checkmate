@@ -4,5 +4,6 @@ dist/
 .DS_Store
 release/
 production/qa/evidence/*.png
+production/qa/evidence/**/
 production/fxlab.html
 __pycache__/
