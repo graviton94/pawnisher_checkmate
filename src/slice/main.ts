@@ -424,7 +424,7 @@ const pxRail = (sc: HTMLElement): void => {
   const upd = () => {
     const H = rail.clientHeight;
     const r = sc.clientHeight / Math.max(1, sc.scrollHeight);
-    rail.hidden = r >= 0.999;
+    rail.hidden = sc.scrollHeight - sc.clientHeight < 12; // 여백 몇 px 넘치는 것은 스크롤이 아니다
     const th = snap(Math.max(28, H * r));
     const max = Math.max(1, sc.scrollHeight - sc.clientHeight);
     thumb.style.height = `${th}px`;
@@ -2037,14 +2037,25 @@ const recruitPick = (head: string, then: () => void, _elite = false): void => {
 const kitPick = (head: string, then: () => void): void => {
   const rng = sub();
   const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)) && k.cards.every(usable));
+  // 빌드 확정 (D-230, 보고서 4 · 5 — Monster Train 챔피언 · Balatro 앤티 2 · StS 첫 정예): 두 번째 대국 뒤 「핵심 부품」 셋은 서로 다른 축에서 — 고르는 순간 이번 출하의 방향이 선다
   const offers: typeof KITS = [];
-  while (offers.length < 3 && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
-  const el = openOverlay(`${head}<p>부품 하나와 맞물리는 카드 두 장이 함께 들어옵니다. 하나를 고릅니다.</p><div class="part-cards">${offers
+  const axisOf = (k: (typeof KITS)[number]) => SLICE_PARTS[k.part].axis ?? 'none';
+  while (offers.length < 3 && pool.length) {
+    const fresh = pool.filter((k) => !offers.some((o) => axisOf(o) === axisOf(k)));
+    const from = fresh.length ? fresh : pool;
+    const k = from[rng.int(from.length)];
+    pool.splice(pool.indexOf(k), 1);
+    offers.push(k);
+  }
+  // 카드 틀은 고물상 · 보상과 같다 (이름판 · 그림 창 · 문장 한 줄 · 칩은 아래 가운데)
+  const el = openOverlay(`${head}<p>이번 출하의 방향을 고릅니다. 부품 하나와 맞물리는 카드 두 장이 함께 들어옵니다.</p><div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards">${offers
     .map((k, n) => {
       const d = SLICE_PARTS[k.part];
-      return `<button type="button" class="part-card${d.axis ? ` ax-${d.axis}` : ''}" data-kit="${n}"><i class="ico" style="${iconArt(d.icon)}"></i><b>${d.name}${opTag(PART_OP[k.part])}${axisTag(d.axis ?? undefined)}</b><small>${d.desc}</small><span class="kit-cards">+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
+      const g = PART_GRADE[k.part] ?? 'common';
+      return `<button type="button" class="cf part-card g-${g}" data-kit="${n}" data-grade="${g}"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><small class="cf-desc">${descLines(d.desc)}<span class="dl">(+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')})</span></small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${cfFoot('', `${opTag(PART_OP[k.part])}${axisTag(d.axis ?? undefined)}`)}</button>`;
     })
-    .join('')}</div>`);
+    .join('')}</div></div></div>`);
+  pxRail(el.querySelector<HTMLElement>('.reward-scroll')!);
   el.querySelectorAll<HTMLElement>('[data-kit]').forEach((btn) =>
     btn.addEventListener('click', () =>
       choose(btn, `${josa(SLICE_PARTS[offers[Number(btn.dataset.kit)].part].name, '을')} 단다`, () => {

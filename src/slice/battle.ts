@@ -48,6 +48,10 @@ export interface SliceBattle {
   graze?: number[];
   /** 기어 쇼크 (D-229, 보고서 제안 4): 지난 적 차례에 예고 공격을 맞은 내 기물 — 이번 턴 그 기물의 공격 ×0.6 */
   shocked?: number[];
+  /** 순수 회피 (D-230, 보고서 2): 예고 칸에서 빈 칸으로 빠지기만 한 기물 — 이번 턴 다음 공격 ×1.4 */
+  evaded?: number[];
+  /** 경직 면역 (D-230): 방금 경직이 풀린 적은 한 차례 다시 경직되지 않는다 (무한 경직 방지) */
+  stunImmune?: number[];
   grazeDanger?: string[];
   aimed?: number[];
   staggered?: number[];
@@ -575,7 +579,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1);
+    const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1);
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
@@ -612,11 +616,16 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     const sim = previewPlay(b, i, pieceId, to);
     if (!sim) return '갈 수 없는 칸입니다.';
     b.s = sim.state;
+    // 순수 회피 보너스는 그 기물의 다음 공격 한 번에 쓰이고 사라진다
+    const struck = sim.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 1 && h.damage > 0));
+    if (struck) b.evaded = (b.evaded ?? []).filter((x) => x !== pieceId);
     if (grazed) {
       // 회피 반격 (D-229): 예고 칸에서 빠져나온 수 — 배율은 위에서, 여기선 카드 +1 · 그 기물은 이번 턴 다시 못 받는다
       b.graze = (b.graze ?? []).filter((x) => x !== pieceId);
       drawCards(b, SLICE.grazeDraw);
       b.grazedNow = pieceId;
+      // 순수 회피 (D-230): 아무도 못 치고 빈 칸으로 빠지기만 했으면 다음 공격 ×1.4로 남긴다 (회피 턴이 손해가 되지 않게)
+      if (!struck) b.evaded = [...(b.evaded ?? []), pieceId];
     }
     events = sim.events;
     b.overkill += overkillOf(before, sim.events);
@@ -1001,9 +1010,13 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   const { events } = enemyPhase(b);
   // 헛방 (D-229): 겨눴던 적이 빈 땅을 쳤으면 경직 — 다음 적 차례에 못 움직이고 방열판을 잃는다 (반장 킹은 방열판만)
   const hitters = new Set(events.flatMap((e) => (e.type === 'attack' && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 0) ? [e.attackerId] : [])));
-  b.staggered = (b.aimed ?? []).filter((id) => !hitters.has(id) && !!findPiece(b.s, id));
+  // 경직 면역: 지난번에 경직돼 한 차례 쉰 적은 이번에 다시 경직되지 않는다 (쉬고 → 움직이고 → 다시 경직 가능)
+  const immune = b.stunImmune ?? [];
+  const restedNow = b.staggered ?? [];
+  b.staggered = (b.aimed ?? []).filter((id) => !hitters.has(id) && !!findPiece(b.s, id) && !immune.includes(id));
   for (const id of b.staggered) { const p = findPiece(b.s, id)!; p.shield = 0; }
   // 기어 쇼크: 적 공격을 맞고 살아남은 내 기물은 다음 턴 공격이 약해진다 (예고를 무시한 값)
+  b.stunImmune = [...restedNow];
   b.shocked = [...new Set(events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.damage > 0 && !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 0).map((h) => h.targetId) : [])))];
   if (b.boss) b.staggered = b.staggered.filter((id) => findPiece(b.s, id)?.type !== 'K');
   burnFallen(b);
@@ -1035,7 +1048,9 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
       const e = spawnPawn(b, '끝없는 생산선 — 폰이 나온다');
       if (e) events.push(e);
     }
-    drawCards(b, b.handSize);
+    // 기어 쇼크 (D-230, 보고서 2): 맞은 기물이 있으면 다음 턴 손패 −1 (턴에 최대 −1)
+    b.evaded = [];
+    drawCards(b, b.handSize - ((b.shocked ?? []).length ? SLICE.shockDraw : 0));
     bossTurnStart(b);
     b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));
     markTelegraph(b);

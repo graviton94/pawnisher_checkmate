@@ -45,7 +45,7 @@ describe('수직 조각: 분대 + 명령 덱 (D-142)', () => {
     const r = endTurn(b, true);
     expect(typeof r).toBe('object');
     expect(b.coins).toBe(SLICE.coins - 1);
-    if (b.s.winner === null) expect(b.hand).toHaveLength(SLICE.hand);
+    if (b.s.winner === null) expect(b.hand).toHaveLength(SLICE.hand - ((b.shocked ?? []).length ? SLICE.shockDraw : 0)); // 기어 쇼크 손패 −1 (D-230)
   });
   it('예고한 적이 쓰러지면 그 예고는 사라진다', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7);
