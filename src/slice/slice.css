@@ -1728,3 +1728,30 @@ body.slice .reward-scroll { padding-bottom: 6px; }
 .taunt .taunt-face img { width: 40px; height: 40px; image-rendering: pixelated; }
 .taunt { padding: 8px 16px 8px 10px; }
 .taunt .taunt-face.tf-boss { min-width: 60px; min-height: 60px; }
+
+/* ---------- 용어 단계 공개 (D-233): NEW 딱지 · ? 톱니의 빨간 점 ---------- */
+.new-tag { display: inline-block; margin-left: 6px; padding: 0 4px; font: 700 12px/16px Galmuri11, sans-serif; font-style: normal; color: #fff; background: #c8322a; border: 2px solid #120c08; box-shadow: 2px 2px 0 #120c08; vertical-align: 2px; }
+#board > .cog-help.has-new::after, .hp-tabs .btn.has-new::after { content: ''; position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; background: #e8443a; border: 2px solid #120c08; box-shadow: 2px 2px 0 #120c08; animation: newBlink 1.2s steps(2, jump-none) infinite; }
+.hp-tabs .btn.has-new { position: relative; }
+@keyframes newBlink { 0% { transform: translateY(0); } 100% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { #board > .cog-help.has-new::after, .hp-tabs .btn.has-new::after { animation: none; } }
+.hp-more { font: 12px Galmuri11, sans-serif; margin: 10px 0 0; }
+
+/* ---------- 시험판 도구 (D-234): 버그 제보 · 기록 보내기 · 설문 ---------- */
+.pt-card { width: min(620px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px; }
+.pt-card h2 { margin: 0; }
+#overlay-panel .pt-card h2.pt-q { font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; font-weight: 400; color: #f4ead6; margin: 0; }
+#overlay-panel .pt-card .eyebrow { margin: 0; }
+.pt-text { width: 100%; box-sizing: border-box; padding: 8px 10px; font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; color: #f4ead6; background: #1a1410; border: 2px solid #120c08; box-shadow: inset 2px 2px 0 #000, 0 0 0 2px #6b5236; resize: none; }
+.pt-text:focus { outline: none; box-shadow: inset 2px 2px 0 #000, 0 0 0 2px #f4d27a; }
+.pt-dump { font: 12px/1.3 Galmuri11, monospace; }
+.pt-scale { display: flex; gap: 8px; justify-content: center; }
+.pt-scale .btn { width: 56px; min-height: 48px; font-size: 24px; }
+.pt-ends { display: flex; justify-content: space-between; margin: 0; font: 12px Galmuri11, sans-serif; }
+.pt-zero { margin: 0; text-align: center; font: 12px Galmuri11, sans-serif; }
+.pt-opts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-height: 52vh; overflow-y: auto; }
+.pt-opts .btn { min-height: 48px; padding: 0 12px; font-size: 15px; }
+.pt-card .row { justify-content: center; flex-wrap: wrap; }
+/* 설문 · 기록 보내기는 출하 끝 그림 위에서도 화면 높이를 다 쓴다 (64vh 상한에 버튼이 잘렸다) */
+body[data-place^="end-"] .overlay:has(.pt-card) { align-items: center; }
+body.slice .overlay .panel:has(.pt-card) { max-height: 96vh; overflow-y: auto; }

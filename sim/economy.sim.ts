@@ -126,7 +126,7 @@ const one = (seed: number) => {
         let ok = false;
         let fell: Squad[] = [];
         for (let tryN = 0; !ok && (TRIES ? tryN < TRIES : tryN === 0 || (revive > 0 && (revive--, bump(T, 'revive'), true))); tryN++) {
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: process.env.ESHOCK !== '0' });
           const r = STYLE === 'search' ? playOutSearch(b, 40, 3, 4) : playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`), STYLE);
           if (r.won) {
             ok = true;

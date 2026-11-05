@@ -1,21 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { buildRun, INTRO, MAP } from '../src/slice/run';
-import { newSliceBattle } from '../src/slice/battle';
+import { buildRun, FTUE, INTRO, MAP } from '../src/slice/run';
+import { endTurn, newSliceBattle, playCard } from '../src/slice/battle';
 import { START_COMMANDS } from '../src/slice/cards';
 
 describe('출하 지도 (D-168)', () => {
-  it('3막 · 1막은 입문 · 연마로 시작 · 반장 앞 층은 작업대 · 막마다 검문 · 가운데 부품 상자 (D-215)', () => {
+  it('3막 · 1막은 입문 한 판으로 시작(D-232) · 첫 줄 대국 = 핵심 부품 · 반장 앞 층은 작업대 · 막마다 검문 · 가운데 부품 상자 (D-215)', () => {
     const run = buildRun(7);
     expect(run).toHaveLength(3);
+    expect(INTRO).toHaveLength(1);
     expect(run[0].rows[0][0].battle).toBe(INTRO[0]);
-    expect(run[0].rows[1][0].battle).toBe(INTRO[1]);
+    expect(run[0].rows[1].every((n) => n.battle?.reward === 'kit')).toBe(true);
     for (const a of run) {
       expect(a.rows.at(-1)![0].kind).toBe('boss');
       expect(a.rows.at(-1)![0].battle!.reward).toBe(a.act === 3 ? 'end' : 'part');
       expect(a.rows.at(-2)!.every((n) => n.kind === 'forge')).toBe(true);
       expect(a.rows.flat().some((n) => n.kind === 'check')).toBe(true);
       expect(a.rows.some((r) => r.length > 1 && r.every((n) => n.kind === 'chest'))).toBe(true);
-      expect(a.rows.length).toBe(MAP.floors[a.act - 1] + 1 + (a.act === 1 ? 2 : 0));
+      expect(a.rows.length).toBe(MAP.floors[a.act - 1] + 1 + (a.act === 1 ? 1 : 0));
     }
   });
   it('슬더스식 길 (D-215): 이어진 노드로만 · 길이 엇갈리지 않음 · 첫 층은 대국 · 상점 · 작업대 · 검문 상한', () => {
@@ -109,5 +110,26 @@ describe('막별 반장 · 적 특성 (D-171)', () => {
   it('방패 룩: 대국 시작에 방열판 15', () => {
     const b = newSliceBattle([{ t: 'K' }], ['K', 'R'], START_COMMANDS, 2, { traits: ['rookPlate'] });
     expect(b.s.pieces.find((p) => p.side === 1 && p.type === 'R')!.shield).toBe(15);
+  });
+  it('첫 출하 안전망 (D-232): 처음 출하면 1막 반장 HP만 −35%, 지도는 같다', () => {
+    const a = buildRun(9, 0, false);
+    const b = buildRun(9, 0, true);
+    const boss = (r: typeof a, k: number) => r[k].rows.at(-1)![0].battle!;
+    expect(boss(b, 0).kingHp).toBeCloseTo(boss(a, 0).kingHp * FTUE.firstBossHp);
+    expect(boss(b, 1).kingHp).toBe(boss(a, 1).kingHp);
+    expect(b[0].rows.map((r) => r.map((n) => n.kind).join()).join('|')).toBe(a[0].rows.map((r) => r.map((n) => n.kind).join()).join('|'));
+  });
+  it('입문 한 판 (D-232): 짜 둔 손패로 1턴에 폰 → 비숍 연쇄 두 처치, 적 차례 뒤 붉은 칸 위의 내 기물이 빠지며 치면 ×1.5', () => {
+    const d = INTRO[0];
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'B' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true });
+    expect(b.hand.slice(0, 2)).toEqual(['advance', 'diagonal']);
+    const id = (t: string) => b.s.pieces.find((p) => p.side === 0 && p.type === t)!.id;
+    expect(typeof playCard(b, 0, id('P'), { x: 1, y: 2 })).toBe('object');
+    expect(b.kills).toBe(1);
+    expect(typeof playCard(b, b.hand.indexOf('diagonal'), id('B'), { x: 2, y: 1 })).toBe('object');
+    expect(b.kills).toBeGreaterThanOrEqual(2);
+    endTurn(b, true);
+    expect(b.s.winner).toBeNull();
+    expect((b.graze ?? []).length).toBeGreaterThan(0);
   });
 });

@@ -40,6 +40,8 @@ export interface RunSave {
   highlight?: Highlight | null;
   /** 부적 (D-228): 여벌 심장 톱니 · 역회전 톱니 개수 */
   charms?: { revive: number; rewind: number };
+  /** 처음 출하 (D-232): 1막 반장 HP −35% · 첫 고물상 맞물림 부품 */
+  first?: boolean;
 }
 
 /** 쌓이는 기록 (출하를 넘어 남는다) */
@@ -58,6 +60,9 @@ export interface Meta {
   prologue?: boolean;
   /** 첫 대국 도움말을 마쳤다 (D-192) */
   onboarded?: boolean;
+  /** 열린 용어 · 아직 안 읽은 새 용어 (D-233 단계 공개) */
+  terms?: string[];
+  termsNew?: string[];
 }
 
 export interface Store {

@@ -1,6 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { BOSS_RULES, type BossRule } from './cards';
+import { BOSS_RULES, type BossRule, type CommandId } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -28,6 +28,8 @@ export interface BattleDef {
   w?: number;
   h?: number;
   place?: { side: 0 | 1; t: PieceType; x: number; y: number }[];
+  /** 짜 둔 손패 (입문 판, D-232): 덱을 이 순서로 놓고 섞지 않는다 */
+  order?: CommandId[];
 }
 
 export interface MapNode {
@@ -85,7 +87,7 @@ const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;
  */
 export const ASCENSION: { name: string; desc: string }[] = [
   { name: '날 선 쇠', desc: '적 기물 HP +10%' },
-  { name: '굳은 검수', desc: '검문 · 반장의 킹 HP +10% · 여벌 심장 톱니 없이 시작' },
+  { name: '굳은 검수', desc: '검문 · 반장의 킹 HP +10% · 여벌 심장 톱니 없이 시작 · 예고 공격을 맞으면 기어 쇼크' },
   { name: '짧은 휴식', desc: '대국 사이 회복이 절반으로' },
   { name: '비싼 고물', desc: '고물상 값 +25%' },
   { name: '불어난 무리', desc: '대국마다 적 폰 하나 더' },
@@ -120,10 +122,38 @@ const TRAITS: ('blastPawn' | 'rookPlate')[][] = [[], ['blastPawn'], ['blastPawn'
 const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다.'];
 
 /** 1막 앞 두 판 (첫 10분 — D-150) */
+/**
+ * 입문 (D-232, 보고서 3 템플릿 1 — 첫 10분): 예전 작은 판 둘(시험대 4×4 · 연마 공정 5×5)을 90초짜리 한 판으로 합쳤다.
+ * 1턴 = 연쇄 — 폰이 앞 폰을 베고(처치 · 태엽 +1) 비숍이 남은 폰을 친다(연쇄 +4).
+ * 2턴 = 예고 회피 — 살아남은 적이 킹 자리를 붉게 겨눈다. 킹이 붉은 칸에서 빠지며 치면 회피 반격 ×1.5.
+ * 이기면 바로 첫 결정(영입 셋 중 하나), 핵심 부품 셋은 지도의 첫 대국 뒤로.
+ */
 export const INTRO: BattleDef[] = [
-  { enemy: ['K', 'P'], kingHp: 0.35, w: 4, h: 4, place: [{ side: 1, t: 'P', x: 2, y: 3 }], title: '입문 — 시험대', narr: '흰 기물들이 처음으로 눈을 뜬다. 검은 것이 앞을 막는다.', tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.', reward: 'recruit' },
-  { enemy: ['K', 'P', 'P'], kingHp: 0.5, w: 5, h: 5, title: '1판 — 연마 공정', narr: '숫돌 위로 불꽃이 튄다. 무딘 것은 이곳을 넘지 못한다.', tell: '붉은 칸은 적이 다음 차례에 칠 자리입니다.', reward: 'kit' },
+  {
+    enemy: ['K', 'P', 'P', 'P'],
+    kingHp: 0.35,
+    enemyHp: 0.4,
+    w: 5,
+    h: 5,
+    place: [
+      { side: 0, t: 'K', x: 2, y: 0 },
+      { side: 0, t: 'P', x: 1, y: 1 },
+      { side: 0, t: 'B', x: 3, y: 0 },
+      { side: 1, t: 'K', x: 2, y: 4 },
+      { side: 1, t: 'P', x: 0, y: 3 },
+      { side: 1, t: 'P', x: 4, y: 3 },
+      { side: 1, t: 'P', x: 3, y: 4 },
+    ],
+    order: ['advance', 'diagonal', 'kingStep', 'advance', 'diagonal', 'order', 'advance', 'order'],
+    title: '입문 — 시험대',
+    narr: '흰 기물들이 처음으로 눈을 뜬다. 검은 것이 앞을 막는다.',
+    tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.',
+    reward: 'recruit',
+  },
 ];
+
+/** 첫 출하 안전망 (D-232 — Monster Train 첫 판 반장 체력 감산): 처음 출하하는 사람의 1막 반장 HP 배율 */
+export const FTUE = { firstBossHp: 0.65 };
 
 /** 대국 하나 만들기 */
 export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0): BattleDef => {
@@ -146,14 +176,22 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng)
 };
 
 
-/** 출하 전체 (3막). 1막은 입문 · 연마 고정 뒤 갈림길 3줄, 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장. 같은 시드 = 같은 지도 (오늘의 출하) */
-export const buildRun = (seed: number, asc = 0): Act[] => {
+/** 출하 전체 (3막). 1막은 입문 한 판 뒤 갈림길(첫 줄 = 핵심 부품), first = 처음 출하(1막 반장 HP −35%), 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장. 같은 시드 = 같은 지도 (오늘의 출하) */
+export const buildRun = (seed: number, asc = 0, first = false): Act[] => {
   const rng = new Rng(seed);
   return ([1, 2, 3] as const).map((act) => {
     const rows: MapNode[][] = [];
     if (act === 1) INTRO.forEach((battle) => rows.push([{ kind: 'battle', battle }]));
-    rows.push(...buildGraph(act, rng, asc));
-    rows.push([{ kind: 'boss', battle: battleFor(act, 'boss', rng, asc) }]);
+    const graph = buildGraph(act, rng, asc);
+    // 두 번째 결정 (D-232): 1막 첫 줄 대국을 이기면 핵심 부품 셋 (예전 연마 공정 자리)
+    if (act === 1) for (const n of graph[0]) if (n.battle) n.battle.reward = 'kit';
+    rows.push(...graph);
+    const boss = battleFor(act, 'boss', rng, asc);
+    if (act === 1 && first) {
+      boss.kingHp *= FTUE.firstBossHp;
+      boss.enemyHp = (boss.enemyHp ?? 1) * FTUE.firstBossHp;
+    }
+    rows.push([{ kind: 'boss', battle: boss }]);
     return { act, name: ACT_NAMES[act - 1], rows };
   });
 };

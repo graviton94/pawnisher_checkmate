@@ -48,3 +48,15 @@ describe('회피 반격 · 헛방 경직', () => {
     }
   });
 });
+
+/** 기어 쇼크는 승급 2부터 (D-233): shock: false면 맞아도 쇼크 없음 · 손패 그대로 */
+describe('기어 쇼크 단계 공개', () => {
+  it('끈 대국에서는 맞은 기물이 있어도 shocked가 비어 있다', () => {
+    for (let seed = 1; seed < 30; seed++) {
+      const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N' }], ['K', 'P', 'P', 'N'], ['leap', 'leap', 'advance', 'advance', 'leap', 'advance'], seed, { shock: false });
+      endTurn(b, true);
+      expect(b.shocked ?? []).toEqual([]);
+    }
+  });
+});
+
