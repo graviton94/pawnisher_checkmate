@@ -1681,3 +1681,17 @@ body.slice .shop-scroll::-webkit-scrollbar { display: none; width: 0; }
 body.slice .px-rail { position: absolute; top: 10px; bottom: 18px; right: 0; width: 12px; border-style: solid; border-width: 4px; border-image: url('../assets/ui/kit/scroll-track.png') 2 fill / 4px round; image-rendering: pixelated; box-sizing: border-box; pointer-events: none; }
 body.slice .px-rail[hidden] { display: none; }
 body.slice .px-rail > i { position: absolute; left: -4px; right: -4px; top: -4px; display: block; border-style: solid; border-width: 8px 4px; border-image: url('../assets/ui/kit/scroll-thumb.png') 4 2 fill / 8px 4px round; image-rendering: pixelated; box-sizing: border-box; }
+/* 고물상 3차 (2026-11-05): 가격은 카드 한가운데 · 나사는 숫자 왼쪽 · 성질 칩(+ × 기병…)은 가격 오른쪽에 매달림 */
+body.slice .cf .cf-foot { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); z-index: 3; display: block; height: 24px; }
+body.slice .cf .cf-foot .ptag, body.slice .cf .cf-foot .price.sold { position: relative; left: auto; bottom: auto; transform: none; display: inline-flex; justify-content: center; padding: 0 12px; min-width: 56px; }
+body.slice .cf .cf-foot .ptag .scr { position: absolute; left: 0; top: 50%; margin: -6px 0 0; }
+body.slice .cf .cf-chips { position: absolute; left: calc(100% + 4px); top: 0; height: 24px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+body.slice .cf .cf-chips .op.op-add, body.slice .cf .cf-chips .op.op-mul { margin: 0; }
+/* 축 칩: 글자를 칩 한가운데에 (격자로 가운데, 좌우 여백 같게) */
+body.slice .cf .axis { display: inline-grid; place-items: center; height: 20px; margin: 0; padding: 0 6px; line-height: 1; vertical-align: middle; text-align: center; letter-spacing: 0; box-sizing: border-box; }
+body.slice .cf .cf-win .art { transform-origin: center; }
+/* 가격 + 칩을 한 줄로 묶어 카드 가운데에 (칩이 카드 밖으로 넘치지 않게) */
+body.slice .cf .cf-foot { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+body.slice .cf .cf-chips { position: static; height: 24px; }
+body.slice .cf .cf-foot .ptag, body.slice .cf .cf-foot .price.sold { min-width: 0; padding: 0 6px 0 16px; }
+body.slice .cf .cf-foot .ptag .scr { left: 2px; }

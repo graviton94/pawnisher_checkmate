@@ -375,8 +375,12 @@ const cardArt = (id: CommandId): string => {
   // 기물 없는 카드: 카드마다 도트 아이콘 (D-182, public/ui/icons16/c.<id>.png)
   if (c.who === 'any') return `<span class="art any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>`;
   // 기물 아이콘 (D-162 — 행마 판보다 「누가 움직이나」가 먼저 읽힌다. 범위는 판 위 표시가 보여 준다)
-  return `<span class="art">${pieceImg(c.who, 0, 'large', 44)}</span>`;
+  // 기물 그림은 72칸 캔버스 아래쪽에 서 있다(위 8줄은 왕관 자리) — 실제 몸통 가운데가 창 가운데에 오게 올린다 (2026-11-05, 사용자: 「아이템 가운데 정렬 — 일부는 바닥, 일부는 가운데」)
+  const dy = Math.round((0.5 - (PIECE_ART_CENTER[c.who] ?? 0.5)) * 44);
+  return `<span class="art" style="transform:translateY(${dy}px)">${pieceImg(c.who, 0, 'large', 44)}</span>`;
 };
+/** 기물 그림(l-*.png) 안 보이는 몸통의 세로 가운데 (0~1) — tools/pixel/maker.py가 바뀌면 다시 잰다 */
+const PIECE_ART_CENTER: Record<string, number> = { P: 0.604, N: 0.569, B: 0.569, R: 0.625, Q: 0.576, K: 0.507 };
 
 /**
  * 카드 비용 = 태엽 열쇠 개수 (D-161): 오른쪽 레일의 태엽과 같은 그림이라 「내 태엽 셋 중 둘」로 읽힌다.
@@ -437,6 +441,9 @@ const descLines = (text: string): string =>
     .filter(Boolean)
     .map((x) => `<span class="dl">${x}</span>`)
     .join('');
+/** 가격표가 붙는 카드(고물상)는 성질 칩(+ · × · 축)을 가격 옆에 — 가격은 카드 한가운데, 칩은 그 오른쪽에 매달린다 */
+const footed = (extra: string): boolean => extra.includes('class="price');
+const cfFoot = (price: string, chips: string): string => `<span class="cf-foot">${price}${chips ? `<span class="cf-chips">${chips}</span>` : ''}</span>`;
 const opTag = (op: '+' | '×' | null | undefined): string => (op ? `<i class="op op-${op === '+' ? 'add' : 'mul'}" aria-label="${op === '+' ? '합' : '곱'}">${op}</i>` : '');
 /** 빌드 축 띠 */
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
@@ -451,13 +458,13 @@ const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-l
 const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string => {
   const c = COMMANDS[id];
   const g = gradeOf(id);
-  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span><span class="cf-type">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</span><small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${extra}</button>`;
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span>${footed(extra) ? '' : `<span class="cf-type">${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}</span>`}<small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra) ? cfFoot(extra, `${opTag(opOfCard(c))}${axisTag(c.axis)}${axisTag(c.axis2)}`) : extra}</button>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
   const d = SLICE_PARTS[id];
   const g = PART_GRADE[id] ?? 'common';
-  return `<button type="button" class="cf part-card g-${g}${d.axis ? ` ax-${d.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type">${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</span><small class="cf-desc">${descLines(d.desc)}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${extra}</button>`;
+  return `<button type="button" class="cf part-card g-${g}${d.axis ? ` ax-${d.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span>${footed(extra) ? '' : `<span class="cf-type">${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</span>`}<small class="cf-desc">${descLines(d.desc)}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra) ? cfFoot(extra, `${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}`) : extra}</button>`;
 };
 
 const partHtml = (id: SlicePartId, big = false): string => {
