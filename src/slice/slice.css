@@ -1927,5 +1927,8 @@ body.slice.lay-f .gtop .turn-label .th-cog { animation: gearsMini16 1.2s steps(1
 .ev-result.bad h2 { color: #ff9a8a; } .ev-result.good h2 { color: #f4d27a; }
 
 /* 다듬기 (D-245): 카드 얼굴 꼬리의 태엽 값 */
-body.slice .cf .cf-foot .ptag.refine { padding: 0 8px; font: 700 12px Galmuri11, sans-serif; color: #16141c; }
-body.slice .cf .cf-foot .ptag.refine b { font-weight: 700; color: #7a1e1e; }
+/* 카드 안 아래 한 줄 (밖으로 튀어나오지 않게 — 스크롤 끝 카드에서 삐져나왔다) · 줄어든 값은 좋은 일이라 초록 */
+body.slice .cf .refine-tag { display: block; margin-top: auto; padding: 4px 0 2px; font: 700 12px Galmuri11, sans-serif; color: #c89b3c; text-align: center; box-shadow: inset 0 2px 0 #2f2e36; }
+body.slice .cf .refine-tag i { font: inherit; font-style: normal; color: #7ee0a1; }
+/* 다듬을 카드가 넷 이상이면 찌그러뜨리지 말고 가로로 넘긴다 */
+body.slice .reward-cards.refine-cards { grid-auto-columns: 128px; justify-content: start; }

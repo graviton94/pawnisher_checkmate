@@ -1715,7 +1715,7 @@ const refineScreen = (back: () => void = forgeScreen, done: () => void = advance
   // D-245 (사용자: 「다듬기 화면 쓰레기 같다」): 잘린 목록 대신 보상 화면과 같은 카드 얼굴을 가로로 — 꼬리에 「태엽 2 → 1」
   const el = openOverlay(`<h2>다듬기 <span class="dim">— 카드 하나</span></h2><p>고른 카드 한 장이 「+」가 되어 태엽이 하나 줄어듭니다.</p>${ids.length
     ? `<div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards refine-cards">${ids
-        .map((id) => cardFace(id, `data-ref="${id}"`, `<span class="price ptag refine" aria-label="태엽 ${COMMANDS[id].cost}에서 ${COMMANDS[id].cost - 1}로">태엽 ${COMMANDS[id].cost} → <b>${COMMANDS[id].cost - 1}</b></span>`))
+        .map((id) => cardFace(id, `data-ref="${id}"`, `<span class="refine-tag" aria-label="태엽 ${COMMANDS[id].cost}에서 ${COMMANDS[id].cost - 1}로">태엽 ${COMMANDS[id].cost} → <i>${COMMANDS[id].cost - 1}</i></span>`))
         .join('')}</div></div></div>`
     : '<p class="dim">다듬을 카드가 없습니다.</p>'}<div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
   const rs = el.querySelector<HTMLElement>('.reward-scroll');
