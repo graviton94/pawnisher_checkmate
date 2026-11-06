@@ -1369,7 +1369,7 @@ class BoardScene extends Phaser.Scene {
     for (const e of events) {
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
-        this.announce('바닥이 꺼진다! 칸 한 쌍이 톱니 아래로');
+        this.announce('바닥이 꺼진다 — 칸 한 쌍이 톱니 아래로');
         this.shakeLv(2);
         this.drawTiles(cur);
         await Promise.all(

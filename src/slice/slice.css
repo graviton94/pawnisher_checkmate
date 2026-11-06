@@ -2091,7 +2091,8 @@ body.slice .overlay .panel > .eyebrow { color: #c89b3c; letter-spacing: 0.06em; 
 .ko3.lose .koband::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='4'%3E%3Crect width='14' height='4' fill='%233a0e12'/%3E%3C/svg%3E"); }
 /* 원수 도발 · 부관 말풍선 · 반장 규칙: 얇은 선 상자 → 크롬 패널 / 움푹 칸 */
 .taunt { background: none; box-shadow: 0 4px 0 #000; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; padding: 0 6px; }
-.tut .tut-talk { background: none; border: 0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; padding: 0 2px; }
+.tut .tut-talk { background: none; border: 0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; padding: 0 22px 0 2px; }
+.tut .tut-talk .tut-next { right: 4px; bottom: 0; }
 .boss-rules { background: none; box-shadow: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-crimson.png') 4 fill / 8px stretch; image-rendering: pixelated; padding: 0 4px 2px; color: #fff; }
 .boss-rules b { color: #fff1c0; }
 /* 작업대 선택지 등 카드 얼굴이 아닌 .part-card: 얇은 선 상자 → 철 단추(크롬), 누르면 내려감 */
