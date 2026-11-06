@@ -152,8 +152,6 @@ export class BoardFx {
     }
     // 반장 쪽에서 가시가 돋는 빛
     this.lights.add(a.x, a.y, 20, PAL.blood[5], 0.9, 0.4);
-    for (let i = 0; i < 0; i++) {
-    }
     window.setTimeout(() => { this.ps.burst(b.x, b.y, 12, [60, 160], P.SPARK, [0.2, 0.45], WHITE, 30); this.lights.add(b.x, b.y, 18, PAL.blood[5], 0.9, 0.4); }, 220);
     await new Promise((r) => window.setTimeout(r, 360));
   }
