@@ -1830,3 +1830,36 @@ body.slice .deathfx.dc3 .narr { font: 400 24px/1.35 Galmuri11, sans-serif; color
 body.slice .deathfx.dc3 b { font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #c8c2b8; text-shadow: 2px 2px 0 #000; }
 body.slice .deathfx.dc3 > div > i { font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; text-shadow: 2px 2px 0 #000; }
 body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
+
+/* 전환 카드를 넘기는 순간 글을 걷는다 (D-238) */
+.stagefx.closing .sf-text, .stagefx.closing .sf-tip, .stagefx.closing .sf-skip, .stagefx.closing .sf-art { visibility: hidden; }
+
+/* ---------- 부관 안내 (D-238): 디더 막 + 구멍 + 황동 꺾쇠 + 부관 말풍선 ---------- */
+.tut { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+.tut .tut-dim { position: absolute; inset: 0; pointer-events: auto;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23050607' fill-opacity='.85'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23050607' fill-opacity='.85'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
+.tut .tut-catch { position: absolute; inset: 0; pointer-events: auto; }
+.tut .tut-catch[hidden] { display: none; }
+/* 짚은 곳: 황동 꺾쇠 넷이 한 칸씩 숨 쉰다 (steps) */
+.tut .tut-frame { position: absolute; pointer-events: none; animation: tutBreath 0.8s steps(2, jump-none) infinite; }
+.tut .tut-frame::before, .tut .tut-frame::after { content: ''; position: absolute; inset: -4px; border: 4px solid #f4d27a; filter: drop-shadow(2px 2px 0 #000);
+  -webkit-mask: linear-gradient(#000 0 0) top left / 14px 14px no-repeat, linear-gradient(#000 0 0) top right / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom left / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom right / 14px 14px no-repeat;
+  mask: linear-gradient(#000 0 0) top left / 14px 14px no-repeat, linear-gradient(#000 0 0) top right / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom left / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom right / 14px 14px no-repeat; }
+.tut .tut-frame::after { inset: 0; border: 2px solid #120c08; filter: none; }
+@keyframes tutBreath { 0% { transform: scale(1); } 100% { transform: scale(1.04); } }
+.tut .tut-frame[hidden] { display: none; }
+/* 부관 말풍선: 얼굴 + 이름 + 말 · 아래(짚은 곳이 아래면 위) */
+.tut .tut-talk { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(620px, calc(100vw - 32px)); display: flex; align-items: center; gap: 12px; padding: 10px 12px; pointer-events: auto;
+  background: #16141c; border: 2px solid #0b0b0e; box-shadow: 0 0 0 2px #c89b3c, 4px 4px 0 2px #000; animation: tutIn 240ms steps(4) both; }
+.tut .tut-talk.top { bottom: auto; top: 12px; }
+@keyframes tutIn { 0% { -webkit-mask-image: var(--px3); mask-image: var(--px3); transform: translate(-50%, 6px); } 50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { -webkit-mask-image: none; mask-image: none; transform: translate(-50%, 0); } }
+.tut .tut-face { flex: none; width: 56px; height: 56px; display: grid; place-items: center; background: #0b0b0e; box-shadow: inset 0 0 0 2px #c89b3c, 0 0 0 2px #000; }
+.tut .tut-face img, .tut .tut-face canvas { image-rendering: pixelated; }
+.tut .tut-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.tut .tut-name { font: 700 12px Galmuri11, sans-serif; color: #c89b3c; }
+.tut .tut-text { margin: 0; font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; color: #f4ead6; min-height: 2.8em; word-break: keep-all; }
+.tut .tut-text em { font-style: normal; color: #f4d27a; display: inline-block; }
+.tut .tut-next { font: 12px Galmuri11, sans-serif; color: #a8a4b2; justify-self: end; animation: tutBreath 0.8s steps(2, jump-none) infinite; }
+.tut .tut-next[hidden] { display: none; }
+.tut .tut-skip { align-self: flex-start; flex: none; min-height: 32px; padding: 0 8px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; background: none; border: 0; text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .tut .tut-frame, .tut .tut-next, .tut .tut-talk { animation: none; } }

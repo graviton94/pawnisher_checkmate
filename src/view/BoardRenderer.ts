@@ -145,7 +145,8 @@ const noMarks = (): AnimMarks => ({ arrows: [], gears: [], threat: [], fire: [],
 
 /** 흔들림 세 단계 (D-193) */
 /** 흔들림 세 단계 (D-214: 사용자 "너무 잦고 크다" — 세기 · 길이를 절반 가까이로) */
-const SHAKE_LV = { 1: [160, 0.0025], 2: [220, 0.0045], 3: [300, 0.007] } as const;
+/** 화면 흔들림 세기 (2026-11-06 사용자: 「진동이 너무 잦아 정신없다」 — 세기를 절반 남짓으로, 1단은 거의 안 느껴질 만큼) */
+const SHAKE_LV = { 1: [110, 0.001], 2: [180, 0.0022], 3: [260, 0.0038] } as const;
 const shakeLvOf = (k: number): 1 | 2 | 3 => (k < 0.007 ? 1 : k < 0.011 ? 2 : 3);
 
 class BoardScene extends Phaser.Scene {
@@ -1542,9 +1543,10 @@ class BoardScene extends Phaser.Scene {
           // 큰 피해·처치: 화면 흔들림 + 휴대폰 진동 (D-064)
           const fb = impactFeedback(h.damage, !!h.killed, ts.piece.maxHp);
           if (h.killed) this.camKill();
-          if (fb) {
+          // 흔들림은 처치에만, 휴대폰 진동은 킹이 쓰러질 때만 (2026-11-06 — 맞을 때마다 흔들리고 떨려서 정신없었다)
+          if (fb && h.killed) {
             this.shakeLv(shakeLvOf(fb.intensity));
-            if (!this.calm) (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(fb.vibrate);
+            if (!this.calm && ts.piece.type === 'K') (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(fb.vibrate);
           }
           sfx('hit', this.combo++);
           this.applyHit(ts, h);

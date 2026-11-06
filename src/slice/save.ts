@@ -60,6 +60,8 @@ export interface Meta {
   prologue?: boolean;
   /** 첫 대국 도움말을 마쳤다 (D-192) */
   onboarded?: boolean;
+  /** 부관 안내를 마친 부분 (D-238): battle · recruit · map · kit */
+  tut?: string[];
   /** 열린 용어 · 아직 안 읽은 새 용어 (D-233 단계 공개) */
   terms?: string[];
   termsNew?: string[];

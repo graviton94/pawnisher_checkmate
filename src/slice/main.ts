@@ -39,6 +39,8 @@ import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBe
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
 import { IMPACT } from '../data/fx';
+import { TUT } from '../data/tutorial';
+import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track } from './telemetry';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave } from './save';
 import { depthAt, REST, intentPlan, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
@@ -704,7 +706,7 @@ const refresh = (): void => {
 let coachOn = false;
 const coach = (): void => {
   let el = document.querySelector<HTMLElement>('.coach-line');
-  const live = coachOn && cur === INTRO[0] && b.s.winner === null && !busy && !enemyTurn;
+  const live = coachOn && !tutActive && cur === INTRO[0] && b.s.winner === null && !busy && !enemyTurn;
   $('btn-end').classList.toggle('coach-end', false);
   if (!live) return void (el && !el.classList.contains('pxout') && pxOut(el, () => el?.remove()));
   const canPlay = b.hand.some((_, i) => canPlay2(i));
@@ -784,7 +786,7 @@ const unlockTerms = (gate: TermGate, quiet = false): void => {
   if (isNew.length) {
     $('btn-help').classList.add('has-new');
     track('term_unlock', { terms: isNew });
-    if (!quiet) window.setTimeout(() => toast(HUD_TEXT.newTerm(isNew.join(' · ')), 2600), 900);
+    if (!quiet && !tutActive && !INTRO.includes(cur)) window.setTimeout(() => toast(HUD_TEXT.newTerm(isNew.join(' · ')), 2600), 900);
   }
 };
 /** 지금 판 · 출하 상태에서 만난 것들을 연다 (refresh마다 — 이미 연 때는 바로 넘어간다) */
@@ -988,6 +990,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const ev0 = (b.evaded ?? []).length;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
+  playsMade += 1;
   if ((b.evaded ?? []).length > ev0) tg.evade += 1;
   if (b.grazedNow !== undefined) {
     b.grazedNow = undefined;
@@ -1425,6 +1428,22 @@ const showMap = (): void => {
       info.querySelector('[data-go]')!.addEventListener('click', () => go(k));
     }),
   );
+  // 부관 안내 (D-238): 첫 지도 — 지도 읽기 · 범례 · 첫 대국 고르기 · 「간다」
+  if (!tutDone('map') && actI === 0) {
+    const nowNodes = (): DOMRect | null => {
+      const rs = [...el.querySelectorAll('.mnd.now')].map((n) => n.getBoundingClientRect());
+      if (!rs.length) return null;
+      const l = Math.min(...rs.map((r) => r.left));
+      const t = Math.min(...rs.map((r) => r.top));
+      return new DOMRect(l, t, Math.max(...rs.map((r) => r.right)) - l, Math.max(...rs.map((r) => r.bottom)) - t);
+    };
+    void tutorial('map', [
+      { text: TUT.map.intro, target: () => el.querySelector('.map-body') },
+      { text: TUT.map.legend, target: () => el.querySelector('.map-legend') },
+      { text: TUT.map.pick, target: nowNodes, pad: 10, wait: () => !!el.querySelector('.mnd.chosen') },
+      { text: TUT.map.go, target: () => info.querySelector('[data-go]'), wait: () => !el.isConnected || el.classList.contains('pxout') },
+    ]);
+  }
   const go = (k: number): void => {
     picked[actI][rowI] = k;
     sfx('rare');
@@ -1649,6 +1668,8 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       if (done) return;
       done = true;
       T.forEach(clearTimeout);
+      // 글은 바로 걷는다 — 철문이 닫히는 동안 서술이 다음 판 위에 남아 겹쳐 보였다 (2026-11-06 APK 피드백)
+      el.classList.add('closing');
       // 닫힌 사이에 다음 화면을 세운다 (resolve → 부른 쪽이 곧바로 판 · 화면을 만든다)
       void shutter(() => {
         el.remove();
@@ -2269,6 +2290,11 @@ const recruitPick = (head: string, then: () => void, _elite = false): void => {
       return `<button type="button" class="part-card recruit g-rare" data-rec="${k}" data-grade="rare"><em class="gtag g-rare">기물</em><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name}</b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
     })
     .join('')}</div>`);
+  // 부관 안내 (D-238): 첫 영입은 무엇을 고르는지 짚는다
+  if (!tutDone('recruit')) {
+    const n0 = squad.length;
+    void tutorial('recruit', [{ text: TUT.recruit, target: () => el.querySelector('.part-cards'), wait: () => squad.length > n0 }]);
+  }
   gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
   el.querySelectorAll<HTMLElement>('[data-rec]').forEach((btn) =>
     btn.addEventListener('click', () =>
@@ -2311,6 +2337,7 @@ const kitPick = (head: string, then: () => void): void => {
       return `<button type="button" class="cf part-card g-${g}" data-kit="${n}" data-grade="${g}"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><small class="cf-desc">${descLines(d.desc)}<span class="dl">(+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')})</span></small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${cfFoot('', `${opTag(PART_OP[k.part])}${axisTag(d.axis ?? undefined)}`)}</button>`;
     })
     .join('')}</div></div></div>`);
+  if (!tutDone('kit')) void tutorial('kit', [{ text: TUT.kit, target: () => el.querySelector('.shop-scrollbox') }]);
   pxRail(el.querySelector<HTMLElement>('.reward-scroll')!);
   el.querySelectorAll<HTMLElement>('[data-kit]').forEach((btn) =>
     btn.addEventListener('click', () =>
@@ -2843,13 +2870,102 @@ const runEnd = (cleared: boolean): void => {
   tally(el.querySelector<HTMLElement>('.tally')!, el.querySelector<HTMLElement>('h2 .pass-tag'));
 };
 
+// ---------- 부관 안내 (D-238) ----------
+/** 부관이 말하는 중 (코치 줄 · 새 용어 알림을 끈다) */
+let tutActive = false;
+/** 안내를 마친 부분: battle · recruit · map · kit */
+const tutDone = (part: string): boolean => (readMeta(store).tut ?? []).includes(part) || !!labMode;
+const tutMark = (part: string): void => {
+  const m = readMeta(store);
+  writeMeta(store, { ...m, tut: [...new Set([...(m.tut ?? []), part])] });
+};
+/** 안내 한 묶음 — 건너뛰면 남은 묶음도 모두 건너뛴 것으로 */
+const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
+  tutActive = true;
+  document.querySelector('.coach-line')?.remove();
+  const done = await runTutorial(steps, { name: TUT.name, skip: TUT.skip, next: TUT.next, face: pieceImg('N', 0, 'large', 48), tick: () => sfx('tap', 3) });
+  tutActive = false;
+  tutMark(part);
+  track('tutorial', { part, completed: done });
+  if (!done) ['battle', 'recruit', 'map', 'kit'].forEach(tutMark);
+  refresh();
+  return done;
+};
+/** 판 칸 하나의 화면 사각형 */
+const tileRect = (pos: { x: number; y: number }): DOMRect => {
+  const a = renderer.screenOf(pos);
+  const c = renderer.screenOf({ x: pos.x + 1, y: pos.y });
+  const t = Math.abs(c.x - a.x) || 48;
+  return new DOMRect(a.x - t / 2, a.y - t / 2, t, t);
+};
+const myPiece = (t: PieceType) => b.s.pieces.find((p) => p.side === 0 && p.type === t);
+const cardEl = (id: CommandId) => document.querySelector(`#hand [data-card="${b.hand.indexOf(id)}"]`);
+/** 첫 대국 안내: 판 · 예고 · 태엽 · 탄창 → 폰 · 비숍 연쇄 → 턴 끝 → (적 차례 뒤) 빠지며 치기 · 되감기 · 도움말 */
+const battleTutorial = async (): Promise<void> => {
+  // 판이 다 설 때까지 기다린다
+  while (busy) await new Promise((r) => window.setTimeout(r, 120));
+  const T = TUT.battle;
+  const pawn = myPiece('P');
+  const bishop = myPiece('B');
+  const ok = await tutorial('battle-a', [
+    { text: T.hello },
+    { text: T.board, target: () => $('board').querySelector('canvas') ?? $('board') },
+    { text: T.threat, target: () => $('board').querySelector('canvas') ?? $('board') },
+    { text: T.gauge, target: () => $('vials') },
+    { text: T.hand, target: () => $('hand') },
+    { text: T.card1, target: () => cardEl('advance'), wait: () => selCard !== null && b.hand[selCard] === 'advance' },
+    { text: T.piece1, target: () => (pawn ? tileRect(pawn) : null), wait: () => !!pawn && selPiece === pawn.id },
+    { text: T.square1, target: () => tileRect({ x: 1, y: 2 }), wait: () => b.kills >= 1 && !busy },
+    { text: T.chain, target: () => $('vials') },
+    { text: T.card2, target: () => cardEl('diagonal'), wait: () => selCard !== null && b.hand[selCard] === 'diagonal' },
+    { text: T.piece2, target: () => (bishop ? tileRect(bishop) : null), wait: () => !!bishop && selPiece === bishop.id },
+    { text: T.square2, target: () => tileRect({ x: 2, y: 1 }), wait: () => b.kills >= 2 && !busy },
+    { text: T.end, target: () => $('btn-end'), wait: () => b.turn >= 2 && !busy && !enemyTurn },
+  ]);
+  if (!ok || b.s.winner !== null) return;
+  // 2턴: 적이 대장을 겨눴으면 빠지며 치기를 짚는다
+  const king = myPiece('K');
+  const steps: TutStep[] = [];
+  if (king && (b.graze ?? []).includes(king.id)) {
+    const kid = b.hand.includes('kingStep') ? 'kingStep' : 'order';
+    const plays0 = playsMade;
+    steps.push(
+      { text: T.graze, target: () => tileRect(king) },
+      { text: T.card3, target: () => cardEl(kid), wait: () => selCard !== null && b.hand[selCard] === kid },
+      { text: T.piece3, target: () => tileRect(king), wait: () => selPiece === king.id },
+      { text: T.square3, target: () => grazeSquare(king.id) ?? $('board'), wait: () => playsMade > plays0 && !busy },
+    );
+  }
+  steps.push({ text: T.rewind, target: () => $('btn-rewind') }, { text: T.help, target: () => $('btn-help') }, { text: T.free });
+  await tutorial('battle', steps);
+};
+/** 빠지며 칠 수 있는 칸 (붉은 칸 밖 · 적을 친다) */
+const grazeSquare = (pieceId: number): DOMRect | null => {
+  if (selCard === null) return null;
+  const danger = b.grazeDanger ?? [];
+  for (const to of cardMoves(b, selCard, pieceId)) {
+    if (danger.includes(`${to.x},${to.y}`)) continue;
+    const r = previewPlay(b, selCard, pieceId, to);
+    if (r?.events.some((e) => e.type === 'attack' && e.hits.length)) return tileRect(to);
+  }
+  return null;
+};
+/** 이번 대국에서 낸 카드 수 (안내가 「한 수 두었다」를 안다) */
+let playsMade = 0;
+
 /** 첫 판으로 들어간다 (새 출하 · 오늘의 출하) */
 const begin = (seed: number, level: number, day: string | null): void => {
   newRun(seed, level, day);
   saveRun('battle', 0);
   startBattle(INTRO[0], true);
   closeOverlay();
+  closeOpening();
   sfx('submit');
+  // 처음 온 사람 (D-238): 전환 카드 · 안내 알림 대신 판을 세우고 부관이 짚는다 — 글이 겹치지 않게 한 목소리만
+  if (!tutDone('battle')) {
+    battleIntro();
+    return void window.setTimeout(() => void battleTutorial(), 1400);
+  }
   void stageIntro(INTRO[0]).then(() => {
     battleIntro();
     toast(INTRO[0].tell, 3200);
@@ -2954,6 +3070,8 @@ const closeOpening = (): void => {
 
 startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
+// 부팅 화면을 걷는다 (판 · 오프닝이 다 선 뒤 한 박자)
+window.setTimeout(() => document.getElementById('boot')?.remove(), 60);
 if (qs.has('lab')) labPick();
 else if (!qs.has('debug') || qs.has('opening')) opening();
 if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

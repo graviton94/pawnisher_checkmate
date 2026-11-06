@@ -8,8 +8,16 @@
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <title>Pawnisher : Checkmate</title>
   <!-- 본편 (R6, D-174): 리뉴얼판이 첫 화면. 2.0은 legacy.html -->
+  <!-- 부팅 화면 (D-238): 묶음 파일이 내려오는 동안 검은 화면 대신 황동 도트 셋이 차례로 깜빡인다 (글꼴이 아직 없어 글은 쓰지 않는다) -->
+  <style>
+    #boot { position: fixed; inset: 0; z-index: 9999; background: #0b0b0e; display: grid; place-items: center; }
+    #boot i { display: inline-block; width: 12px; height: 12px; margin: 0 6px; background: #c89b3c; box-shadow: 4px 4px 0 #000; animation: bootDot 0.9s steps(1, end) infinite; }
+    #boot i:nth-child(2) { animation-delay: 0.3s; } #boot i:nth-child(3) { animation-delay: 0.6s; }
+    @keyframes bootDot { 0% { background: #f4d27a; } 33% { background: #5a4520; } }
+  </style>
 </head>
 <body class="slice">
+  <div id="boot" aria-hidden="true"><div><i></i><i></i><i></i></div></div>
   <div id="app">
     <aside id="left" class="rail left"><div id="vials" class="apbar" aria-label="남은 태엽"></div><div id="hand" class="hand"></div></aside>
     <main id="board"></main>
