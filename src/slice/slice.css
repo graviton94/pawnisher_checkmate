@@ -2276,3 +2276,12 @@ body.slice .op-asc b { padding: 0; line-height: 24px; }
 body.slice .op-daily { height: 56px; min-height: 56px; }
 body.slice .op-sub { margin-top: 0; height: 48px; }
 body.slice .op-sub .btn { height: 48px; min-height: 48px; }
+/* ───────── D-294 글자 바탕 E 계열 (tools/draw-chrome-e.py) — 성질 태그는 색 미니 판 ───────── */
+.axis { background: none; box-shadow: none; border-style: solid; border-width: 4px; border-image: url('../assets/ui/kit/tag-inf.png') 3 fill / 6px stretch; image-rendering: pixelated; padding: 0 3px 1px; color: #111; }
+.ax-cav.axis { background: none; border-image-source: url('../assets/ui/kit/tag-cav.png'); }
+.ax-inf.axis { background: none; border-image-source: url('../assets/ui/kit/tag-inf.png'); }
+.ax-king.axis { background: none; border-image-source: url('../assets/ui/kit/tag-king.png'); }
+.ax-chain.axis { background: none; border-image-source: url('../assets/ui/kit/tag-chain.png'); }
+.ax-push.axis { background: none; border-image-source: url('../assets/ui/kit/tag-push.png'); }
+.ax-tactic.axis { background: none; border-image-source: url('../assets/ui/kit/tag-tactic.png'); }
+body.slice .cf .axis { border-width: 4px; padding: 0 4px; height: 22px; }

@@ -121,8 +121,6 @@ TINTS = {
     'cyan': ('C2', 'C', 'c', 'K'),
 }
 # 단추는 D-293부터 E 레버 판 (tools/draw-chrome3.py --game) — 여기서는 찍지 않는다
-panel().save(f'{OUT}/panel.png')
-plate().save(f'{OUT}/plate.png')
+# panel · plate · inset는 D-294부터 tools/draw-chrome-e.py (E 계열)
 tape().save(f'{OUT}/tape.png')
-inset().save(f'{OUT}/inset.png')
 print('ok')

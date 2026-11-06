@@ -413,10 +413,9 @@ SCROLL_TRACK = ['kiiiik', 'kiddik', 'kiddik', 'kiddik', 'kiddik', 'kiddik', 'kid
 SCROLL_THUMB = ['.kkkk.', 'kYYYyk', 'kYyyyk', 'kYyybk', 'kYyybk', 'kykkbk', 'kYyybk', 'kykkbk', 'kYyybk', 'kYyybk', 'kybbbk', '.kkkk.']
 
 if __name__ == '__main__':
-    for t, tone in TONES.items():
-        save(mag(tone), f'mag-{t}.png')
+    # 손패 머리판 mag-*.png는 D-294부터 tools/draw-chrome-e.py (E 계열)
     save(art(BODY), 'mag-body.png')
-    save(art(GAUGE), 'gauge.png')
+    # gauge.png · 카드 얼굴 · 가격표는 D-294부터 tools/draw-chrome-e.py (E 계열)
     save(op_badge('add'), 'op-add.png')
     save(op_badge('mul'), 'op-mul.png')
     save(art(SCROLL_TRACK), 'scroll-track.png')
@@ -452,16 +451,11 @@ if __name__ == '__main__':
     save(rays((250, 204, 21), 82, 22, 8), 'rays-gold.png')
     save(rays((200, 155, 60), 40, 20, 7), 'rays-brass.png')
     save(rays((229, 38, 47), 52, 20, 7), 'rays-red.png')
-    save(card_frame(PAL['l'], PAL['g'], (0x24, 0x22, 0x2A), PAL['i']), 'card-common.png')
     for ph in (0, 1):
         save(card_frame(HEX('#3f7fb8'), HEX('#9ec7ef'), HEX('#1e3a58'), HEX('#14243a'), shimmer=ph), f'card-rare-{ph}.png')
-    for ph in range(4):
-        save(card_frame(HEX('#c89b3c'), HEX('#fff1b0'), HEX('#6b4a14'), HEX('#3a2810'), lights=ph), f'card-gold-{ph}.png')
     save(gem(PAL['g'], PAL['l']), 'gem-common.png')
     save(gem(HEX('#9ec7ef'), HEX('#3f7fb8')), 'gem-rare.png')
     save(gem(HEX('#f4d27a'), HEX('#c89b3c')), 'gem-gold.png')
-    save(tag_plate(HEX('#c89b3c'), HEX('#f4d27a'), HEX('#6b4a14')), 'price-tag.png')
-    save(tag_plate(PAL['l'], PAL['g'], PAL['d']), 'price-tag-poor.png')
     save(art(WIN), 'win-pattern.png')
     # 도움말 톱니 · 태엽 열쇠는 16칸 아이콘과 같은 그리개로 (tools/pixel/hud_icons.py, 2026-11-05 리뉴얼)
     save(hud_icons.cog_help(), 'cog-help.png')
