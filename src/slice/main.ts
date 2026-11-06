@@ -1071,7 +1071,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     const gilded = b.bossRule === 'gilded';
     await banner(gilded ? '도금왕이 일어선다' : '반장이 다시 일어선다', false);
     // 도금왕의 울부짖음 (스토리 §5) — 무너지던 도금왕이 일어나 비웃는다
-    toast(gilded ? '「보아라! 너도 결국 여기까지 왔다. 모양을 바꾸려고 — 더 높은 모양이 되려고.」' : '2단계 — 반장이 호위를 부르며 다시 일어섰습니다. 한 번 더 쓰러뜨리십시오.', 4200);
+    toast(gilded ? '“보아라! 너도 결국 여기까지 왔다. 모양을 바꾸려고 — 더 높은 모양이 되려고.”' : '2단계 — 반장이 호위를 부르며 다시 일어섰습니다. 한 번 더 쓰러뜨리십시오.', 4200);
     renderer.setup(b.s);
     refresh();
   }
@@ -2609,7 +2609,7 @@ const gainPart = (id: SlicePartId, done: (took: boolean) => void): void => {
         newParts.add(id);
         gold += ECON.meltBack;
         sfx('stamp');
-        toast(`${SLICE_PARTS[btn.dataset.melt as SlicePartId].name} — 녹였다 (나사 +${ECON.meltBack})`);
+        toast(`${SLICE_PARTS[btn.dataset.melt as SlicePartId].name} — 녹였습니다. (나사 +${ECON.meltBack})`);
         done(true);
       }),
     ),
@@ -3005,7 +3005,7 @@ const startLab = (mode: 'A' | 'B'): void => {
   renderer.setFoeTraits([]);
   renderer.setup(b.s);
   refresh();
-  toast(mode === 'A' ? '처치하면 태엽 +1 — 턴은 벌어서 늘린다.' : '적 칸에 들어가면 잡는다. 붉은 칸에 남은 기물은 잡힌다.', 3600);
+  toast(mode === 'A' ? '처치하면 태엽이 1 회복됩니다. 턴은 처치로 늘립니다.' : '적 칸에 들어가면 잡습니다. 붉은 칸에 남은 기물은 잡힙니다.', 3600);
 };
 
 /** 시험장 고르기 화면 */

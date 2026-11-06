@@ -84,7 +84,7 @@ export const prologue = (short = false): Promise<void> =>
       typing = true;
       await wait(calm() ? 0 : 260);
       if (c.narr && my === token) await typeIn(text.querySelector<HTMLElement>('.pl-narr')!, c.narr, 34, undefined, () => my === token);
-      if (c.say && my === token) await typeIn(text.querySelector<HTMLElement>('.pl-say')!, `「${c.say}」`, 34, undefined, () => my === token);
+      if (c.say && my === token) await typeIn(text.querySelector<HTMLElement>('.pl-say')!, `“${c.say}”`, 34, undefined, () => my === token);
       if (c.mono && my === token) {
         await wait(calm() ? 0 : 200);
         if (my === token) await typeIn(text.querySelector<HTMLElement>('.pl-mono')!, `‘${c.mono}’`, 44, undefined, () => my === token);
@@ -100,7 +100,7 @@ export const prologue = (short = false): Promise<void> =>
         const c = cuts[i];
         const set = (sel: string, v?: string) => { const p = text.querySelector<HTMLElement>(sel); if (p && v) p.textContent = v; };
         set('.pl-narr', c.narr);
-        set('.pl-say', c.say && `「${c.say}」`);
+        set('.pl-say', c.say && `“${c.say}”`);
         set('.pl-mono', c.mono && `‘${c.mono}’`);
         return;
       }

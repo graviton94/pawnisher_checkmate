@@ -48,7 +48,7 @@ export const PROLOGUE: Cut[] = [
   {
     bg: 'box',
     actors: [{ npc: 'whiteQueen', x: 24, y: 48, size: 110, mood: 'glare' }, { npc: 'whiteRook', x: 76, y: 52, size: 100, mood: 'narrow', dim: true }, { npc: 'whiteBishop', x: 50, y: 40, size: 92, mood: 'look', dim: true }, me(50, 78, 76, 'calm')],
-    lines: [say('흰 퀸', '「폰이 킹 자리에? 우리까지 녹이려고.」'), mono('폰이 맞다. 그래서?')],
+    lines: [say('흰 퀸', '“폰이 킹 자리에? 우리까지 녹이려고.”'), mono('폰이 맞다. 그래서?')],
   },
   { bg: 'box', actors: [me(50, 60, 130, 'sleepy')], lines: [tell('상자 귀퉁이를 오려 왕관을 쓴다. 너무 커서 눈까지 내려온다.'), mono('크다. …그래도 쓴다.')] },
   { bg: 'box', actors: [me(50, 58, 96), { piece: { t: 'P', side: 0 }, x: 32, y: 72, size: 60 }, { piece: { t: 'N', side: 0 }, x: 68, y: 72, size: 60 }, { npc: 'whiteRook', x: 88, y: 50, size: 70, mood: 'narrow', dim: true }], lines: [tell('따르는 건 몇뿐이다.'), tell('나머지는 상자 구석에서 지켜본다.')] },
@@ -74,19 +74,19 @@ export const BOSS_STORY: Record<BossId, { npc: NpcId; belief: string; fall: stri
 
 /** 도금왕 (마지막 층) */
 export const GILDED = {
-  intro: [say('도금왕', '「그 왕관, 종이로군.」'), mono('모양이 운명이라고 쓴 손.')],
-  fall: [say('도금왕', '「모양이 길이다. 그래야 아무도 안 다쳐.」'), say('도금왕', '「…나는 칠했다. 너는?」'), mono('…나는 뭐가 되고 싶었지.')],
+  intro: [say('도금왕', '“그 왕관, 종이로군.”'), mono('모양이 운명이라고 쓴 손.')],
+  fall: [say('도금왕', '“모양이 길이다. 그래야 아무도 안 다쳐.”'), say('도금왕', '“…나는 칠했다. 너는?”'), mono('…나는 뭐가 되고 싶었지.')],
   /** 승급 칸 앞 울부짖음 (압력과 상관없이) */
-  howl: [say('도금왕', '「보아라! 너도 결국 여기까지 왔다. 더 높은 모양이 되려고.」'), say('도금왕', '「폰이라 무시당한 게 억울했지? 그래서 퀸이 되고 싶은 거다. 나처럼.」')],
+  howl: [say('도금왕', '“보아라! 너도 결국 여기까지 왔다. 더 높은 모양이 되려고.”'), say('도금왕', '“폰이라 무시당한 게 억울했지? 그래서 퀸이 되고 싶은 거다. 나처럼.”')],
 };
 
 /** 압력 묶음별 승급 장면 (D-131 · 규격 2.0 압력 10단계): from ~ to 압력 — 최고 압력에서만 내려놓는다 */
 export const PROMOTION: { from: number; to: number; taunt: string; mono: string; after: string; mood: Mood }[] = [
-  { from: 0, to: 1, taunt: '「규격을 깨러 왔다고? 아니. 너는 규격 위에 올라서고 싶었을 뿐이다.」', mono: '아니다. …이번만.', after: '퀸이 된다. 흰 기물들이 박수 치듯 철컥인다. 종이 왕관이 바닥에 떨어진다.', mood: 'glare' },
-  { from: 2, to: 4, taunt: '「또 왔구나. 무시당한 만큼 올라가고 싶은 거다.」', mono: '또 여기다. 손이 먼저 간다.', after: '승급. 박수가 줄었다. 누군가 종이 왕관을 주워 든다.', mood: 'narrow' },
-  { from: 5, to: 7, taunt: '「나는 너다. 이 왕관은 네 거다.」', mono: '무겁다. 그런데 놓지 못한다.', after: '승급. 흰 기물들이 말없이 본다.', mood: 'look' },
-  { from: 8, to: 9, taunt: '「봐라, 또 쓴다. 너는 결국 내가 된다.」', mono: '저 얼굴이 된다. 알면서.', after: '승급. 쓰는 순간 금빛이 갈라진다. 아무도 박수 치지 않는다.', mood: 'sleepy' },
-  { from: 10, to: 99, taunt: '「써라! 너도 원했다! 힘을, 자리를, 인정을!」', mono: '원했다. 그래서 내려놓는다.', after: '', mood: 'wide' },
+  { from: 0, to: 1, taunt: '“규격을 깨러 왔다고? 아니. 너는 규격 위에 올라서고 싶었을 뿐이다.”', mono: '아니다. …이번만.', after: '퀸이 된다. 흰 기물들이 박수 치듯 철컥인다. 종이 왕관이 바닥에 떨어진다.', mood: 'glare' },
+  { from: 2, to: 4, taunt: '“또 왔구나. 무시당한 만큼 올라가고 싶은 거다.”', mono: '또 여기다. 손이 먼저 간다.', after: '승급. 박수가 줄었다. 누군가 종이 왕관을 주워 든다.', mood: 'narrow' },
+  { from: 5, to: 7, taunt: '“나는 너다. 이 왕관은 네 거다.”', mono: '무겁다. 그런데 놓지 못한다.', after: '승급. 흰 기물들이 말없이 본다.', mood: 'look' },
+  { from: 8, to: 9, taunt: '“봐라, 또 쓴다. 너는 결국 내가 된다.”', mono: '저 얼굴이 된다. 알면서.', after: '승급. 쓰는 순간 금빛이 갈라진다. 아무도 박수 치지 않는다.', mood: 'sleepy' },
+  { from: 10, to: 99, taunt: '“써라! 너도 원했다! 힘을, 자리를, 인정을!”', mono: '원했다. 그래서 내려놓는다.', after: '', mood: 'wide' },
 ];
 export const promotionFor = (pressure: number) => PROMOTION.find((p) => pressure >= p.from && pressure <= p.to) ?? PROMOTION[0];
 
@@ -113,7 +113,7 @@ export const AFTER_PROMOTION: Cut = {
 /** 진 엔딩 「해방」 (최고 압력 · 내려놓는다) */
 export const TRUE_ENDING: Cut[] = [
   { bg: 'top', actors: [me(50, 60, 130, 'calm')], lines: [tell('종이 왕관을 벗어 접는다. 승급 표시가 꺼진다. 울부짖음이 멈춘다.'), mono('원했다. 그래서 내려놓는다.')], fx: 'calm' },
-  { bg: 'top', actors: [{ piece: { t: 'P', side: 1 }, x: 60, y: 64, size: 96 }, { piece: { t: 'K', side: 1 }, x: 34, y: 60, size: 90 }], lines: [tell('금 왕관이 혼자 굴러가 멈춘다. 금빛이 벗겨진다 — 안에 흠집 난 폰 하나.'), say('도금왕', '「…나는, 못 했다.」')], fx: 'gold' },
+  { bg: 'top', actors: [{ piece: { t: 'P', side: 1 }, x: 60, y: 64, size: 96 }, { piece: { t: 'K', side: 1 }, x: 34, y: 60, size: 90 }], lines: [tell('금 왕관이 혼자 굴러가 멈춘다. 금빛이 벗겨진다 — 안에 흠집 난 폰 하나.'), say('도금왕', '“…나는, 못 했다.”')], fx: 'gold' },
   { bg: 'top', actors: [{ piece: { t: 'P', side: 0 }, x: 38, y: 64, size: 96 }, { piece: { t: 'P', side: 1 }, x: 62, y: 64, size: 96 }], lines: [tell('폰 둘이 나란히 선다.'), mono('폰으로 여기까지 왔다. 그거면 됐다.')] },
   { bg: 'box', actors: [{ npc: 'whiteQueen', x: 20, y: 50, size: 90, mood: 'calm' }, { npc: 'whiteRook', x: 38, y: 54, size: 80, mood: 'calm' }, { npc: 'whiteBishop', x: 62, y: 52, size: 80, mood: 'calm' }, { piece: { t: 'N', side: 1 }, x: 80, y: 58, size: 70 }, me(50, 82, 70)], lines: [tell('아무도 그를 킹이라 부르지 않는다.'), tell('아무도 떠나지 않는다.')] },
   { bg: 'factory', actors: [], lines: [tell('경고등이 깜빡인다. 아무도 끄지 않는다.'), tell('컨베이어가 멈춘다. 공장이 처음으로 조용하다.')], fx: 'calm' },
@@ -129,16 +129,16 @@ export const DEFEAT: Cut = { bg: 'furnace', actors: [me(50, 60, 110, 'sleepy')],
 
 /** 지켜보던 흰 기물의 합류 (새 기물 보상) */
 export const JOIN: Record<Exclude<PieceType, 'K'>, string> = {
-  P: '폰 하나가 줄 끝에 선다. 「하나 더.」',
-  N: '나이트 하나가 상자 구석에서 뛰어나온다. 「나도 L자만 뛰는 건 지겨웠다.」',
-  B: '비숍 하나가 렌즈를 닦고 줄 끝에 선다. 「모양이… 틀린 게 아니었나.」',
-  R: '룩 하나가 상자 구석에서 걸어 나온다. 「명령은 안 받는다. 옆에 서는 거다.」',
-  Q: '흰 퀸이 내려온다. 「…폰이 여기까지 온 건 처음 봤어.」',
+  P: '폰 하나가 줄 끝에 선다. “하나 더.”',
+  N: '나이트 하나가 상자 구석에서 뛰어나온다. “나도 L자만 뛰는 건 지겨웠다.”',
+  B: '비숍 하나가 렌즈를 닦고 줄 끝에 선다. “모양이… 틀린 게 아니었나.”',
+  R: '룩 하나가 상자 구석에서 걸어 나온다. “명령은 안 받는다. 옆에 서는 거다.”',
+  Q: '흰 퀸이 내려온다. “…폰이 여기까지 온 건 처음 봤어.”',
 };
 /** 진 흑 기물의 영입 */
-export const RECRUIT = '쓰러진 흑 기물이 일어나 판 이쪽으로 건너온다. 「…정해진 대로만 두다 졌다.」';
+export const RECRUIT = '쓰러진 흑 기물이 일어나 판 이쪽으로 건너온다. “…정해진 대로만 두다 졌다.”';
 /** 흑 세트의 비웃음 (일반 대국 · 검문! 시작) */
-export const TAUNTS = ['「폰이 킹 흉내를.」', '「괴짜 세트다.」', '「모양부터 틀렸어.」', '「정해진 대로 둬.」', '「저건 불량이다. 보면 안다.」', '「폰은 앞으로만 가는 거다.」'];
+export const TAUNTS = ['“폰이 킹 흉내를.”', '“괴짜 세트다.”', '“모양부터 틀렸어.”', '“정해진 대로 둬.”', '“저건 불량이다. 보면 안다.”', '“폰은 앞으로만 가는 거다.”'];
 
 /** 검수 기록지 12장 (도감) — 풀리는 조건은 run/meta.ts recordsOpen */
 export const RECORDS: { title: string; need: string; text: string }[] = [

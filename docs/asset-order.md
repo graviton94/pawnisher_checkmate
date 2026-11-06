@@ -2,7 +2,7 @@
 
 > **2026-11-04 정리: 이 발주서의 시트는 모두 끝났거나 코드로 대체됐다 — 프롬프트 본문은 지웠다.**
 > S0 통과 · B1~B5 판 칸 · 표식 → 코드(`tools/draw-board.py`, D-044) · B6 취소(D-068) · B7 지형 → 코드 소품(`tools/draw-assets.py`) · H 종이 왕관 킹 · I 태엽 → 도트 메이커 · `tools/draw-hud.py`(D-086 · D-211) · F 아이콘 → 공개 픽토그램 도트화(`tools/pixelize-icons.cjs`, D-049) · `tools/pixel/icons16.py` · G UI 프레임 → 코드 9-slice · E 공격 이펙트 → 코드 도트 이펙트(FX 랩).
-> 지금 받아야 할 그림은 `docs/illustration-list.md`가 정본이다. 아래 도트 규격 · 팔레트는 `tools/slice-sheet.py`가 쓴다.
+> 지금 받아야 할 그림은 `docs/asset-order-master.md`(프롬프트 · 우선순위)와 `docs/illustration-list.md`(받은 기록)가 정본이다. 아래 도트 규격 · 팔레트는 `tools/slice-sheet.py`가 쓴다.
 
 ## 1. 도트 규격 (모든 판 위 그림의 기준)
 
