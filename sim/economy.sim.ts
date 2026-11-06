@@ -36,6 +36,8 @@ if (process.env.EFG) SLICE.foeAtkGrow = Number(process.env.EFG);
 if (process.env.EHS) SLICE.foeHpStart = Number(process.env.EHS);
 if (process.env.EHG) SLICE.foeHpGrow = Number(process.env.EHG);
 const VALUE: Record<string, number> = Object.fromEntries((JSON.parse(readFileSync('sim/rarity-result.json', 'utf8')).rows as { id: string; value: number }[]).map((r) => [r.id, r.value]));
+/** 사건 진단 (D-261): 사건마다 분대 크기 · HP 앞뒤 · 다음 대국 쓰러짐 · 나사 */
+const EVLOG: { id: string; choice: string; act: number; squad: number; hp0: number; hp1: number; gold0: number; gold1: number; nextCrack?: number; nextLost?: number; nextWon?: boolean }[] = [];
 const val = (id: string) => VALUE[baseOf(id as CommandId)] ?? 5;
 
 type Tally = Record<string, number>;
@@ -109,6 +111,7 @@ const one = (seed: number) => {
     if (best && val(best) > 0) { deck.push(best); bump(T, `pick:${best}`); bump(T, `card:${gradeOf(best)}`); } else bump(T, 'skip');
   };
   let ended = '';
+  let pendEv: (typeof EVLOG)[number] | null = null;
   for (const [ai, a] of acts.entries()) {
     let prev: MapNode | null = null;
     for (const [ri, row] of a.rows.entries()) {
@@ -139,7 +142,8 @@ const one = (seed: number) => {
             gold += g; bump(T, 'goldBattle', g);
             squad = [...restSquad(squadAfter(b, squad)), ...cs.back];
             bump(T, 'lost', cs.scrapped.length);
-          } else bump(T, 'retry');
+            if (pendEv) { pendEv.nextCrack = cs.back.length + cs.scrapped.length; pendEv.nextLost = cs.scrapped.length; pendEv.nextWon = true; pendEv = null; }
+          } else { bump(T, 'retry'); if (pendEv) { pendEv.nextWon = false; pendEv = null; } }
         }
         if (!ok) { ended = `${ai + 1}막 ${def.title}`; return { cleared: false, ended, T, curve, checkpoints, deck, squad, parts }; }
         if (def.reward === 'recruit') recruit();
@@ -182,8 +186,12 @@ const one = (seed: number) => {
         const st: EventState = { squad, deck, refined, gold };
         const ch = SLICE_EVENTS[id].choices.filter((c) => c.desc && !c.blocked?.(st));
         if (ch.length) {
-          const out = ch[rng.int(ch.length)].apply(st, rng);
+          const c = ch[rng.int(ch.length)];
+          const h0 = hpRatio(), g0 = gold, n0 = squad.length;
+          const out = c.apply(st, rng);
           squad = st.squad; deck = st.deck; bump(T, 'goldEvent', st.gold - gold); gold = st.gold;
+          pendEv = { id, choice: c.label, act: ai + 1, squad: n0, hp0: h0, hp1: hpRatio(), gold0: g0, gold1: gold };
+          EVLOG.push(pendEv);
           if (out.partPick) partOf(false);
           if (out.recruit) { squad.push(makeCrew(out.recruit, rng, squad.map((u) => u.name ?? ''))); bump(T, 'recruit'); }
           bump(T, 'event:taken');
@@ -206,5 +214,6 @@ it('성장 설계 시뮬레이션', () => {
   console.log('완주', rs.filter((r) => r.cleared).length, '/', RUNS);
   for (const a of [1, 2, 3]) console.log(`${a}막 대국 평균 ${((all[`turns${a}`] ?? 0) / Math.max(1, all[`battles${a}`] ?? 0)).toFixed(2)}턴 · 반장 ${((all[`bossT${a}`] ?? 0) / Math.max(1, all[`bossN${a}`] ?? 0)).toFixed(2)}턴`);
   console.log('출하 한 판 평균', JSON.stringify(per));
+  writeFileSync(`sim/event-diag${TAG}.json`, JSON.stringify(EVLOG));
   writeFileSync(`sim/economy-result${TAG}.json`, JSON.stringify({ runs: RUNS, map: MAP, per, results: rs.map((r) => ({ cleared: r.cleared, ended: r.ended, T: r.T, curve: r.curve, checkpoints: r.checkpoints, final: { deck: r.deck.length, squad: r.squad.length, parts: r.parts.length, deckIds: r.deck.map((id) => baseOf(id)), partIds: r.parts, squadT: r.squad.map((u) => u.t) } })) }, null, 0));
 });
