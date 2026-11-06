@@ -274,6 +274,64 @@ def symbol(kind):
     return img
 
 
+# ── 슬롯 바퀴 그림 (16×16, D-253): 7 · 부품 톱니 · 왕관 · 나사 · 부서진 톱니 ──
+def reel_symbol(kind):
+    img = Img(16, 16)
+    if kind == 'seven':
+        # 굵은 붉은 7 (가로획 4줄 · 사선 4칸 폭) + 왼위 빛 · 오른쪽 그림자
+        img.rect(1, 1, 14, 4, RED[2])
+        img.hline(1, 14, 1, RED[3])
+        for i in range(10):
+            x = 10 - int(i * 0.55)
+            img.rect(x, 5 + i, 4, 1, RED[2])
+            img.px(x, 5 + i, RED[3])
+            img.px(x + 3, 5 + i, RED[1])
+        img.rect(13, 1, 2, 4, RED[1])
+    elif kind == 'gear':
+        for y in range(16):
+            for x in range(16):
+                d = ((x + 0.5 - 8) ** 2 + (y + 0.5 - 8) ** 2) ** 0.5
+                a = math.atan2(y + 0.5 - 8, x + 0.5 - 8)
+                tooth = (math.cos(a * 8) > 0.3)
+                if d <= 4.6 or (d <= 6.8 and tooth):
+                    c = GOLD[3]
+                    if x + y < 13:
+                        c = GOLD[4]
+                    if x + y > 19:
+                        c = GOLD[2]
+                    img.px(x, y, c)
+        img.rect(7, 7, 2, 2, OL)
+        img.px(5, 5, GOLD[5])
+    elif kind == 'crown':
+        base = [(2, 12), (13, 12)]
+        img.rect(2, 10, 12, 4, GOLD[3])
+        img.hline(2, 13, 10, GOLD[4])
+        for cx in (2, 7, 12):
+            for i in range(6):
+                img.hline(cx + (1 if cx == 7 else 0) - i // 3, cx + (1 if cx == 7 else 0) + i // 3, 9 - i, GOLD[3])
+        img.px(3, 4, GOLD[5]); img.px(8, 3, GOLD[5]); img.px(13, 4, GOLD[5])
+        img.px(7, 12, RED[2]); img.px(8, 12, RED[2]); img.px(4, 12, TEAL[2]); img.px(11, 12, TEAL[2])
+    elif kind == 'screw':
+        # 나사 머리 + 몸통 (강철)
+        img.rect(4, 2, 8, 4, STEEL[3])
+        img.hline(4, 11, 2, STEEL[4])
+        img.rect(7, 2, 2, 4, STEEL[1])
+        for y in range(6, 14):
+            img.rect(6, y, 4, 1, STEEL[2] if y % 2 else STEEL[3])
+        img.px(7, 14, STEEL[2])
+    else:  # broken: 금 간 회색 톱니 (꽝)
+        for y in range(16):
+            for x in range(16):
+                d = ((x + 0.5 - 8) ** 2 + (y + 0.5 - 8) ** 2) ** 0.5
+                a = math.atan2(y + 0.5 - 8, x + 0.5 - 8)
+                if (d <= 4.6 or (d <= 6.8 and math.cos(a * 8) > 0.3)) and not (x > 8 and y < 7):
+                    img.px(x, y, STEEL[2] if x + y > 16 else STEEL[3])
+        for i in range(7):
+            img.px(5 + i, 3 + i + (i % 2), OL)
+    img.outline()
+    return img
+
+
 def main():
     for i in range(8):
         coin_frame(i).save(f'coin-{i}.png')
@@ -283,6 +341,8 @@ def main():
     slot(True).save('slot-pull.png')
     for k in ('part', 'up', 'miss'):
         symbol(k).save(f'sym-{k}.png')
+    for k in ('seven', 'gear', 'crown', 'screw', 'broken'):
+        reel_symbol(k).save(f'reel-{k}.png')
     # 확인용 낱장 (배율 4, 투명 바탕 위)
     sheet = Image.new('RGBA', (18 * 8 * 4 + 34 * 3 * 4 + 48 * 4 * 2, 60 * 4), (240, 236, 232, 255))
     x = 0

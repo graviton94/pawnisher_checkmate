@@ -5,6 +5,7 @@
  */
 import type { PieceType } from '../engine';
 import { sfx } from '../audio/sfx';
+import { scratchCard, slotMachine } from './minigames';
 import { at, bayer, FxCanvas, hex, Lights, mix, OUTLINE, P, PAL, Painter, Particles, Rng, scale, WHITE, type Col } from '../view/pxfx';
 
 const D = 3;
@@ -304,69 +305,26 @@ const FX: Record<string, Fx> = {
     );
   },
 
-  /** 쓰러진 뽑기 기계 (D-251 에셋): 간판 불빛 · 레버를 당기면(손잡이 내려감) 세 바퀴가 돌다 누를 때마다 하나씩 선다
-   *  → 배출구 빛 → 보상 바퀴 오버레이가 돌다 실제 결과에 선다 */
+  /** 쓰러진 뽑기 기계 (D-253): 사건 창 전체를 덮는 3구 슬롯 — 희귀 부품 = 7 7 7 · 승급 = 왕관 셋 · 꽝 = 7 7 나사 */
   async brokenGacha(s, c) {
-    const mx = Math.round(s.w / 2 - 24), my = s.floor - 60;
-    const pick = c.diff.changed.length ? 'up' : c.good ? 'part' : 'miss';
-    const kinds = ['part', 'up', 'miss'] as const;
-    const stops = [-1, -1, -1];
-    const machine = (p: Painter, t: number, pulled: boolean) => {
-      s.sprite(pulled ? 'slot-pull' : 'slot', mx, my);
-      // 간판 전구가 돌아가며 빛
-      for (let i = 0; i < 6; i++) if ((i + Math.floor(t * 8)) % 3 === 0) p.glow(mx + 9 + i * 5, my + 12, 4, PAL.gold[5], 0.5);
-      kinds.forEach((_, r) => {
-        const x = mx + 8 + r * 9, y = my + 21;
-        if (stops[r] >= 0) { const b = t - stops[r] < 0.08 ? 1 : 0; s.sprite(`sym-${pick}`, x, y + 1 + b); }
-        else { const f = Math.floor(t * 18 + r * 2); s.sprite(`sym-${kinds[f % 3]}`, x, y + 1 + ((f % 2) ? -1 : 1)); for (let yy = y; yy < y + 12; yy += 3) p.rect(x, yy, 8, 1, PAL.paper[2], 0.7); }
-      });
-    };
-    let T0 = 0;
-    await s.play(500, (t, p) => { s.dim(p); s.ground(p); machine(p, t, t > 0.15 && t < 0.4); s.jolt(t, 0.15, 0.08, 1); });
-    for (let r = 0; r < 3; r++) {
-      await s.tap(c.tap && `${c.tap} (${r + 1}/3)`, (t, p) => { s.dim(p); s.ground(p); machine(p, T0 + t, false); });
-      T0 += 0.3;
-      stops[r] = T0;
-      await s.play(260, (t, p) => { s.dim(p); s.ground(p); machine(p, T0 + t, false); s.jolt(t, 0, 0.08, 1); }, (dt, t) => { if (t - dt <= 0) { s.ps.burst(mx + 12 + r * 9, my + 26, 8, [40, 100], P.SPARK, [0.2, 0.4]); s.lights.add(mx + 12 + r * 9, my + 26, 10, PAL.gold[5], 0.7, 0.3); } });
-    }
-    await s.play(700, (t, p) => { s.dim(p); s.ground(p); machine(p, T0 + t, false); if (pick !== 'miss') p.glow(mx + 21, my + 47, 14, PAL.gold[5], 0.6 * Math.min(1, t * 3)); hero(p, s, t, 0.3); }, (dt, t) => {
-      if (t > 0.3 && t - dt <= 0.3) { if (pick === 'miss') for (let i = 0; i < 8; i++) s.ps.spawn(P.SMOKE, mx + 21 + s.R.range(-4, 4), my + 46, s.R.range(-20, 20), s.R.range(-30, -10), s.R.range(0.8, 1.4), 0, s.R.range(3, 5)); else s.ps.burst(mx + 21, my + 46, 16, [50, 140], P.STAR, [0.4, 0.8], PAL.gold[5]); }
-    });
-    await rewardReel(s.host, [{ icon: 'sym-part', label: '희귀 부품', good: true }, { icon: 'sym-up', label: '한 단계 위로', good: true }, { icon: 'sym-miss', label: '꽝 · 감전', good: false }], kinds.indexOf(pick));
+    const pick = c.diff.changed.length ? 'crown' : c.good ? 'seven' : 'miss';
+    await slotMachine(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, pick, { title: '레버를 당겨라', win: pick === 'seven' ? '잭팟! 희귀 부품' : '왕관 셋! 한 단계 위로', lose: '꽝 — 불꽃이 튄다' });
   },
 
-  /** 고철 경매: 나무 단상 · 망치 세 번(누를 때마다 · 먼지 · 마지막은 흰 장) → 낙찰 → 상자가 들썩이다 열림: 금빛 기둥 / 먼지만 */
+  /** 고철 경매 (D-253): 망치 세 번으로 낙찰 → 봉인 상자 복권을 긁는다 — 톱니 셋이면 희귀 부품, 아니면 빈 상자 */
   async auction(s, c) {
     const cx = s.w / 2, top = s.floor - 18;
     const podium = (p: Painter) => { const W = PAL.wood; p.rect(cx - 30, top, 60, 18, INK); p.rect(cx - 29, top + 1, 58, 17, W[3]); p.rect(cx - 29, top + 1, 58, 2, W[5]); p.rect(cx - 29, top + 6, 58, 1, W[1]); p.rect(cx - 29, top + 7, 58, 2, PAL.brass[4]); p.rect(cx + 27, top + 1, 2, 17, W[1]); };
     const words = ['하나', '둘', '낙찰!'];
     for (let i = 0; i < 3; i++) {
-      await s.tap(c.tap && `${c.tap} (${i + 1}/3)`, (t, p) => { s.dim(p); s.ground(p, PAL.wood); podium(p); hammer(p, cx + 18, top - 2, 1.1 + (Math.floor(t * 5) % 2 ? 0.1 : 0)); s.text(`호가 60`, cx, 14, 24, '#f4d27a'); });
+      await s.tap(c.tap && `${c.tap} (${i + 1}/3)`, (t, p) => { s.dim(p); s.ground(p, PAL.wood); podium(p); hammer(p, cx + 18, top - 2, 1.1 + (Math.floor(t * 5) % 2 ? 0.1 : 0)); s.text('호가 100', cx, 14, 24, '#f4d27a'); });
       await s.play(400, (t, p) => {
         s.dim(p); s.ground(p, PAL.wood); podium(p); hammer(p, cx + 18, top - 2, t < 0.07 ? 1.2 - (t / 0.07) * 1.1 : 0.1);
         s.jolt(t, 0.07, 0.12, i === 2 ? 2 : 1); if (i === 2) hero(p, s, t, 0.07);
         s.text(words[i], cx, 14, i === 2 ? 36 : 24, i === 2 ? '#e5262f' : '#f4f1ea');
-      }, (dt, t) => { if (t > 0.07 && t - dt <= 0.07) { impact(s, cx + 6, top, PAL.gold[5], i === 2 ? 18 : 8); } });
+      }, (dt, t) => { if (t > 0.07 && t - dt <= 0.07) impact(s, cx + 6, top, PAL.gold[5], i === 2 ? 18 : 8); });
     }
-    const x = Math.round(cx - 17), y = s.floor - 30;
-    await s.play(
-      1300,
-      (t, p) => {
-        s.dim(p); s.ground(p, PAL.wood);
-        const f = t < 0.6 ? 0 : t < 0.7 ? 1 : 2;
-        const shake = t < 0.6 ? (Math.floor(t * 12) % 2 ? 1 : -1) * Math.min(2, Math.floor(t * 5)) : 0;
-        if (f > 0) p.glow(cx, y + 12, 26, c.good ? PAL.gold[5] : PAL.smoke[4], 0.5);
-        s.sprite(`chest-${f}`, x + shake, y);
-        hero(p, s, t, 0.6);
-      },
-      (dt, t) => {
-        if (t > 0.6 && t - dt <= 0.6) {
-          if (c.good) { s.lights.add(cx, y + 10, 40, PAL.gold[5], 1, 0.9); for (let i = 0; i < 14; i++) s.ps.spawn(P.MOTE, cx + s.R.range(-10, 10), y + 12, s.R.range(-12, 12), s.R.range(-90, -30), s.R.range(0.5, 1.1), PAL.gold[5], 1); s.ps.burst(cx, y + 8, 12, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); }
-          else for (let i = 0; i < 10; i++) s.ps.spawn(P.DUST, cx + s.R.range(-12, 12), y + 12, s.R.range(-30, 30), s.R.range(-30, -8), s.R.range(0.6, 1.2), PAL.wood[3], s.R.range(2, 4));
-        }
-      },
-    );
-    await rewardReel(s.host, [{ icon: 'sym-part', label: '희귀 부품', good: true }, { icon: 'sym-miss', label: '빈 상자', good: false }], c.good ? 0 : 1);
+    await scratchCard(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, c.good ? ['gear', 'gear', 'gear'] : ['gear', 'gear', 'broken'], c.good, { title: '봉인 상자 — 은박을 긁어라', win: '톱니 셋! 희귀 부품', lose: '빈 상자' });
   },
 
   /** 쇳물 담금질: 도가니(불 · 불씨 · 빛) 위로 사슬이 계단으로 내려가 잠김(김이 솟음) → 끌어올림: 달아오른 새 기물(번쩍) / 빈 갈고리에서 쇳물이 떨어짐 */
