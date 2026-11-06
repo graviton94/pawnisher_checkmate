@@ -147,8 +147,9 @@ export const START_COMMANDS: CommandId[] = ['advance', 'advance', 'advance', 'le
  * 첫 10분 (D-150 — 조사 B: 30초 첫 타격 · 2분 첫 승 · 5분 안 첫 "와!").
  * 분대는 작게 시작한다(킹 · 폰 · 비숍), 1판 뒤 기물 영입, 2판 뒤 부품 상자 = 부품 + 맞물리는 카드 둘(첫 사기 조합 확정).
  */
-export const START_SQUAD: PieceType[] = ['K', 'P', 'B'];
-export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'diagonal', 'diagonal', 'kingStep', 'order', 'order'];
+/** 시작 분대 (D-241: 비숍 → 나이트 — 부관 박차가 나이트라 첫 판부터 곁에서 싸운다, 착지 짓밟기로 1턴 3연쇄) */
+export const START_SQUAD: PieceType[] = ['K', 'P', 'N'];
+export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order', 'order'];
 
 /** 영입: 기물 하나 + 그 기물의 카드 */
 /** 새 분대원 (D-218: 들고 오는 카드 2장 → 1장 — 분대원 8명이 카드 16장을 몰고 와 덱이 38장까지 불었다) */

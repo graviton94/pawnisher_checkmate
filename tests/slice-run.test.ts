@@ -119,15 +119,15 @@ describe('막별 반장 · 적 특성 (D-171)', () => {
     expect(boss(b, 1).kingHp).toBe(boss(a, 1).kingHp);
     expect(b[0].rows.map((r) => r.map((n) => n.kind).join()).join('|')).toBe(a[0].rows.map((r) => r.map((n) => n.kind).join()).join('|'));
   });
-  it('입문 한 판 (D-232): 짜 둔 손패로 1턴에 폰 → 비숍 연쇄 두 처치, 적 차례 뒤 붉은 칸 위의 내 기물이 빠지며 치면 ×1.5', () => {
+  it('입문 한 판 (D-232 · D-241): 짜 둔 손패로 1턴에 폰 → 나이트 짓밟기 3연쇄, 적 차례 뒤 붉은 칸 위의 내 기물이 빠지며 칠 수 있다', () => {
     const d = INTRO[0];
-    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'B' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true });
-    expect(b.hand.slice(0, 2)).toEqual(['advance', 'diagonal']);
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true });
+    expect(b.hand.slice(0, 2)).toEqual(['advance', 'leap']);
     const id = (t: string) => b.s.pieces.find((p) => p.side === 0 && p.type === t)!.id;
     expect(typeof playCard(b, 0, id('P'), { x: 1, y: 2 })).toBe('object');
     expect(b.kills).toBe(1);
-    expect(typeof playCard(b, b.hand.indexOf('diagonal'), id('B'), { x: 2, y: 1 })).toBe('object');
-    expect(b.kills).toBeGreaterThanOrEqual(2);
+    expect(typeof playCard(b, b.hand.indexOf('leap'), id('N'), { x: 2, y: 2 })).toBe('object');
+    expect(b.kills).toBeGreaterThanOrEqual(3);
     endTurn(b, true);
     expect(b.s.winner).toBeNull();
     expect((b.graze ?? []).length).toBeGreaterThan(0);

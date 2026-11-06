@@ -2907,7 +2907,7 @@ const battleTutorial = async (): Promise<void> => {
   while (busy) await new Promise((r) => window.setTimeout(r, 120));
   const T = TUT.battle;
   const pawn = myPiece('P');
-  const bishop = myPiece('B');
+  const knight = myPiece('N');
   const ok = await tutorial('battle-a', [
     { text: T.hello },
     { text: T.board, target: () => $('board').querySelector('canvas') ?? $('board') },
@@ -2918,35 +2918,44 @@ const battleTutorial = async (): Promise<void> => {
     { text: T.piece1, target: () => (pawn ? tileRect(pawn) : null), wait: () => !!pawn && selPiece === pawn.id },
     { text: T.square1, target: () => tileRect({ x: 1, y: 2 }), wait: () => b.kills >= 1 && !busy },
     { text: T.chain, target: () => $('vials') },
-    { text: T.card2, target: () => cardEl('diagonal'), wait: () => selCard !== null && b.hand[selCard] === 'diagonal' },
-    { text: T.piece2, target: () => (bishop ? tileRect(bishop) : null), wait: () => !!bishop && selPiece === bishop.id },
-    { text: T.square2, target: () => tileRect({ x: 2, y: 1 }), wait: () => b.kills >= 2 && !busy },
+    { text: T.card2, target: () => cardEl('leap'), wait: () => selCard !== null && b.hand[selCard] === 'leap' },
+    { text: T.piece2, target: () => (knight ? tileRect(knight) : null), wait: () => !!knight && selPiece === knight.id },
+    { text: T.square2, target: () => tileRect({ x: 2, y: 2 }), wait: () => b.kills >= 2 && !busy },
     { text: T.end, target: () => $('btn-end'), wait: () => b.turn >= 2 && !busy && !enemyTurn },
   ]);
   if (!ok || b.s.winner !== null) return;
-  // 2턴: 적이 대장을 겨눴으면 빠지며 치기를 짚는다
-  const king = myPiece('K');
+  // 2턴: 적이 겨눈 우리 기물 하나를 골라 빠지며 치기를 짚는다 (나이트 → 대장 → 폰 순 — 붉은 칸 밖에서 칠 수 있는 것)
   const steps: TutStep[] = [];
-  if (king && (b.graze ?? []).includes(king.id)) {
-    const kid = b.hand.includes('kingStep') ? 'kingStep' : 'order';
+  const CARD_OF: Partial<Record<PieceType, CommandId>> = { N: 'leap', K: 'kingStep', P: 'advance' };
+  const pick = (['N', 'K', 'P'] as PieceType[])
+    .map((t) => myPiece(t))
+    .filter((p): p is NonNullable<typeof p> => !!p && (b.graze ?? []).includes(p.id))
+    .map((p) => ({ p, cid: [CARD_OF[p.type], 'order' as CommandId].find((c) => c && b.hand.includes(c)) }))
+    .find((x) => x.cid && grazeSquareFor(b.hand.indexOf(x.cid), x.p.id));
+  if (pick) {
+    const { p: gp, cid } = pick;
     const plays0 = playsMade;
     steps.push(
-      { text: T.graze, target: () => tileRect(king) },
-      { text: T.card3, target: () => cardEl(kid), wait: () => selCard !== null && b.hand[selCard] === kid },
-      { text: T.piece3, target: () => tileRect(king), wait: () => selPiece === king.id },
-      { text: T.square3, target: () => grazeSquare(king.id) ?? $('board'), wait: () => playsMade > plays0 && !busy },
+      { text: T.graze, target: () => tileRect(gp) },
+      { text: T.card3, target: () => cardEl(cid!), wait: () => selCard !== null && b.hand[selCard] === cid },
+      { text: T.piece3, target: () => tileRect(gp), wait: () => selPiece === gp.id },
+      { text: T.square3, target: () => (selCard !== null ? grazeSquareFor(selCard, gp.id) : null) ?? $('board'), wait: () => playsMade > plays0 && !busy },
     );
+  } else {
+    // 맞는 카드가 손에 없으면 설명만 — 노려진 기물을 짚는다
+    const any = b.s.pieces.find((p) => p.side === 0 && (b.graze ?? []).includes(p.id));
+    if (any) steps.push({ text: T.graze, target: () => tileRect(any) });
   }
   steps.push({ text: T.rewind, target: () => $('btn-rewind') }, { text: T.help, target: () => $('btn-help') }, { text: T.free });
   await tutorial('battle', steps);
 };
-/** 빠지며 칠 수 있는 칸 (붉은 칸 밖 · 적을 친다) */
-const grazeSquare = (pieceId: number): DOMRect | null => {
-  if (selCard === null) return null;
+/** 이 카드로 빠지며 칠 수 있는 칸 (붉은 칸 밖 · 적을 친다) */
+const grazeSquareFor = (ci: number, pieceId: number): DOMRect | null => {
+  if (ci < 0) return null;
   const danger = b.grazeDanger ?? [];
-  for (const to of cardMoves(b, selCard, pieceId)) {
+  for (const to of cardMoves(b, ci, pieceId)) {
     if (danger.includes(`${to.x},${to.y}`)) continue;
-    const r = previewPlay(b, selCard, pieceId, to);
+    const r = previewPlay(b, ci, pieceId, to);
     if (r?.events.some((e) => e.type === 'attack' && e.hits.length)) return tileRect(to);
   }
   return null;
