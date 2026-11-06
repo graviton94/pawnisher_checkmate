@@ -2228,3 +2228,4 @@ body.between #right, body.between #left { visibility: hidden; }
 .op-crown-note { display: inline-flex; gap: 6px; align-items: center; font: 12px Galmuri11, sans-serif; color: #e8ddb5; }
 .op-crown-note img { width: 24px; height: auto; image-rendering: pixelated; transform: rotate(-8deg) scaleY(0.6); }
 @media (prefers-reduced-motion: reduce) { .cr-page.in { animation: none; } }
+.ax-tactic.axis { background: #c9a0ff; }

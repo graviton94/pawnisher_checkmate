@@ -75,7 +75,7 @@ export const BATTLE_HELP: string[] = [
  * base = 처음부터 · 그 밖은 그것을 처음 만난 순간 사전에 들어오고 ? 에 NEW가 붙는다.
  * graze = 둘째 출하 또는 2막부터 (첫 출하에서는 「빠지며 치기 ×1.5」 연출로만) · quirk = 기벽이 붙는 셋째 출하부터 · shock = 승급 2부터.
  */
-export type TermGate = 'base' | 'part' | 'charm' | 'shield' | 'door' | 'crack' | 'reinforce' | 'burn' | 'heir' | 'nemesis' | 'plate' | 'thorns' | 'blast' | 'stun' | 'graze' | 'shock' | 'quirk' | 'overkill' | 'spend';
+export type TermGate = 'base' | 'part' | 'charm' | 'shield' | 'door' | 'crack' | 'reinforce' | 'burn' | 'heir' | 'nemesis' | 'plate' | 'thorns' | 'blast' | 'stun' | 'graze' | 'shock' | 'quirk' | 'overkill' | 'spend' | 'tactic';
 
 /** 용어 사전: [이름, 설명, 열리는 때] — 사전에는 열린 것만 (D-233). 설명은 최대 두 줄, \n이 줄바꿈 자리 (D-264) */
 export const KEYWORDS: [string, string, TermGate][] = [
@@ -106,6 +106,10 @@ export const KEYWORDS: [string, string, TermGate][] = [
   ['자폭', '쓰러지면 둘레 칸을 칩니다.', 'blast'],
   ['기벽', '분대원마다 붙은 버릇.\n장점과 단점이 하나씩.', 'quirk'],
   ['기어 쇼크', '예고 공격을 맞은 기물은\n다음 턴 공격 ×0.5.', 'shock'],
+  ['핀', '친 적은 이번 적 차례에\n움직이지 못하고 방열판을 잃습니다.', 'tactic'],
+  ['포크', '칠 적이 둘 이상인 칸에 내려앉으면\n배율이 붙습니다.', 'tactic'],
+  ['디스커버드', '비켜서며 길을 엽니다.\n다음 공격 한 번에 배율.', 'tactic'],
+  ['캐슬링', '킹과 가장 가까운 룩이\n자리를 바꿉니다.', 'tactic'],
 ];
 
 /** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */

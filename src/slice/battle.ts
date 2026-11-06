@@ -105,6 +105,10 @@ export interface SliceBattle {
   traits?: FoeTrait[];
   /** 다음 적 차례에 폭격할 줄 (y) — 예고 */
   bombRow: number | null;
+  /** 묶인 적 — 핀 (D-281): 다음 적 차례에 못 움직인다 */
+  pinned?: number[];
+  /** 디스커버드 (D-281): 다음 공격 카드 한 장의 배율 */
+  nextMult?: number;
   /** 검수 반장: 불량 도장이 찍힌 내 기물 (공격 ×0.5) */
   stampId?: number | null;
   /** 자석 반장: 이번 적 차례 끝에 끌려갈 내 기물과 칸 */
@@ -492,6 +496,8 @@ export const liveIntents = (b: SliceBattle): Intent[] => {
   const s1 = { ...b.s, turnSide: 1 as const };
   const open = (it: Intent, p: Piece) => legalMoves(s1, p).some((q) => samePos(q, it.to));
   const keep = b.intents.filter((it) => {
+    // 핀 (D-281): 묶인 적은 이번 적 차례에 움직이지 않는다 — 예고 화살표가 바로 사라진다
+    if ((b.pinned ?? []).includes(it.pieceId)) return false;
     const p = findPiece(b.s, it.pieceId);
     return p && open(it, p);
   });
@@ -499,7 +505,7 @@ export const liveIntents = (b: SliceBattle): Intent[] => {
   const out: Intent[] = [];
   for (const it of b.intents) {
     const p = findPiece(b.s, it.pieceId);
-    if (!p) continue;
+    if (!p || (b.pinned ?? []).includes(it.pieceId)) continue;
     if (open(it, p)) {
       out.push(it);
       continue;
@@ -564,13 +570,27 @@ export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
 };
 
 /** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
-export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft', 'gambit', 'spend'].includes(COMMANDS[id].kind);
+export const isInstant = (id: CommandId): boolean => ['draw', 'spark', 'march', 'draft', 'gambit', 'spend', 'swap'].includes(COMMANDS[id].kind);
+
+/** 캐슬링 (D-281): 내 킹과 가장 가까운 내 룩 */
+const castlePair = (b: SliceBattle): [Piece, Piece] | null => {
+  const k = kingOf(b.s, 0);
+  const r = k && b.s.pieces.filter((p) => p.side === 0 && p.type === 'R').sort((x, y) => chebyshev(x, k) - chebyshev(y, k))[0];
+  return k && r ? [k, r] : null;
+};
+/** 포크 (D-281): 이 기물이 to에 내려앉으면 칠 수 있는 적 수 */
+const forkTargets = (s: BattleState, p: Piece, to: Pos): number => {
+  const s2 = cloneState(s);
+  const q = findPiece(s2, p.id)!;
+  Object.assign(q, { x: to.x, y: to.y });
+  return attackScan(s2, q).targets.filter((t) => t.side !== p.side).length;
+};
 
 /** 이 카드를 지금 낼 수 있나 */
 export const canPlay = (b: SliceBattle, i: number): boolean => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return false;
-  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P')) && (c.kind !== 'spend' || b.kills > 0);
+  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P')) && (c.kind !== 'spend' || b.kills > 0) && (c.kind !== 'swap' || !!castlePair(b));
   return cardPieces(b, i).length > 0;
 };
 
@@ -617,7 +637,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     if (c.carve) p.carve = c.carve;
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
-    const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
+    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork : 1) * (b.nextMult ?? 1);
     const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
     if (!sim.ok) return null;
@@ -658,6 +678,14 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     // 순수 회피 보너스는 그 기물의 다음 공격 한 번에 쓰이고 사라진다
     const struck = sim.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 1 && h.damage > 0));
     if (struck) b.evaded = (b.evaded ?? []).filter((x) => x !== pieceId);
+    // 수읽기 (D-281): 디스커버드 배율은 공격 한 번에 쓰이고, 이 카드가 디스커버드면 다음 공격에 남긴다 · 핀은 친 적을 묶는다
+    if (struck) b.nextMult = undefined;
+    if (c.nextMult) b.nextMult = c.nextMult;
+    if (c.stun) {
+      const ids = sim.events.flatMap((e) => (e.type === 'attack' || e.type === 'blast' ? e.hits.filter((h) => !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1 && before.pieces.find((q) => q.id === h.targetId)?.type !== 'K').map((h) => h.targetId) : []));
+      b.pinned = [...new Set([...(b.pinned ?? []), ...ids])];
+      for (const id of ids) { const q = findPiece(b.s, id); if (q) q.shield = 0; }
+    }
     if (grazed) {
       // 회피 반격 (D-229): 예고 칸에서 빠져나온 수 — 배율은 위에서, 여기선 카드 +1 · 그 기물은 이번 턴 다시 못 받는다
       b.graze = (b.graze ?? []).filter((x) => x !== pieceId);
@@ -735,6 +763,16 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.kills += SLICE.gambitChain;
     drawCards(b, SLICE.gambitDraw);
     gained += 1;
+  } else if (c.kind === 'swap') {
+    // 캐슬링 (D-281): 킹과 가장 가까운 룩이 자리를 바꾸고, 둘 다 방열판
+    const pr = castlePair(b);
+    if (!pr) return '킹과 룩이 모두 있어야 합니다.';
+    const [k, r] = pr;
+    const kp = { x: k.x, y: k.y };
+    events = [{ type: 'move', order: 0, pieceId: k.id, from: kp, to: { x: r.x, y: r.y } }, { type: 'move', order: 1, pieceId: r.id, from: { x: r.x, y: r.y }, to: kp }];
+    Object.assign(k, { x: r.x, y: r.y });
+    Object.assign(r, kp);
+    for (const p of [k, r]) { p.shield += c.amount ?? 0; events.push({ type: 'shield', pieceId: p.id, amount: c.amount ?? 0 }); }
   } else if (c.kind === 'spark') {
     b.kills += 1;
     drawCards(b, 1);
@@ -1148,6 +1186,8 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   const immune = b.stunImmune ?? [];
   const restedNow = b.staggered ?? [];
   b.staggered = (b.aimed ?? []).filter((id) => !hitters.has(id) && !!findPiece(b.s, id) && !immune.includes(id));
+  // 핀 (D-281): 묶임은 방금 지난 적 차례 한 번으로 끝난다
+  b.pinned = [];
   for (const id of b.staggered) { const p = findPiece(b.s, id)!; p.shield = 0; }
   // 기어 쇼크: 적 공격을 맞고 살아남은 내 기물은 다음 턴 공격이 약해진다 (예고를 무시한 값)
   b.stunImmune = [...restedNow];

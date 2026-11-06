@@ -124,3 +124,37 @@ describe('승급 13 최종장 — 폰이 된 아홉째 (D-277)', () => {
     for (const m of after) expect(m.y - k.y === f || m.y - k.y === 2 * f).toBe(true);
   });
 });
+
+import { endTurn as endT2, playCard, liveIntents, cardMoves } from '../src/slice/battle';
+
+describe('수읽기 카드 — 핀 · 포크 · 디스커버드 · 캐슬링 (D-281)', () => {
+  const crewKR = [{ t: 'K' as const }, { t: 'R' as const }, { t: 'B' as const }, { t: 'P' as const }];
+  it('캐슬링: 킹과 가장 가까운 룩이 자리를 바꾸고 둘 다 방열판', () => {
+    const b = newSliceBattle(crewKR, ['K', 'P'], ['castle'], 3);
+    const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
+    const r = b.s.pieces.find((p) => p.side === 0 && p.type === 'R')!;
+    const [kp, rp, ks] = [{ x: k.x, y: k.y }, { x: r.x, y: r.y }, k.shield];
+    const i = b.hand.indexOf('castle');
+    expect(typeof playCard(b, i)).not.toBe('string');
+    expect({ x: k.x, y: k.y }).toEqual(rp);
+    expect({ x: r.x, y: r.y }).toEqual(kp);
+    expect(k.shield).toBeGreaterThan(ks);
+  });
+  it('디스커버드: 다음 공격 배율을 남긴다', () => {
+    const b = newSliceBattle(crewKR, ['K', 'P'], ['bishopStep', 'bishopStep', 'bishopStep', 'bishopStep', 'bishopStep'], 3);
+    const bi = b.s.pieces.find((p) => p.side === 0 && p.type === 'B')!;
+    const i = b.hand.indexOf('bishopStep');
+    const to = cardMoves(b, i, bi.id)[0];
+    expect(to).toBeTruthy();
+    playCard(b, i, bi.id, to);
+    expect(b.nextMult).toBe(2);
+  });
+  it('핀: 친 적(킹 제외)은 이번 적 차례 예고에서 빠진다', () => {
+    const b = newSliceBattle(crewKR, ['K', 'P'], START_COMMANDS, 3);
+    const foe = b.s.pieces.find((p) => p.side === 1 && p.type !== 'K')!;
+    b.pinned = [foe.id];
+    expect(liveIntents(b).some((it) => it.pieceId === foe.id)).toBe(false);
+    endT2(b, true);
+    expect(b.pinned).toEqual([]);
+  });
+});

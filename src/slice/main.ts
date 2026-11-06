@@ -848,6 +848,8 @@ const syncTerms = (): void => {
   on('graze', grazeNamed(meta));
   on('quirk', squad.some((u) => u.quirk));
   on('overkill', b.overkill > 0);
+  // 수읽기 (D-281): 덱에 체스 수 카드가 들어오면
+  on('tactic', deck.some((id) => COMMANDS[id]?.axis === 'tactic' || COMMANDS[id]?.axis2 === 'tactic'));
   on('spend', deck.some((id) => COMMANDS[id]?.kind === 'spend'));
 };
 /** 「회피 반격」이라는 이름은 둘째 출하 또는 2막부터 (첫 출하 1막은 「빠지며 쳤다」 연출로만) */
@@ -1063,6 +1065,8 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   busy = false;
   burnNote(burn0);
   turnDmg += dealt(r.events, 0, r.before);
+  // 핀 (D-281): 묶인 적에게 경직 딱지
+  renderer.setStaggered([...(b.staggered ?? []), ...(b.pinned ?? [])], b.shocked ?? []);
   renderer.setup(b.s);
   refresh();
   if (b.kills > prevKills) chainPop(b.kills);
@@ -2312,7 +2316,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     if (reward === 'end') return void endingFlow();
     const rng = sub();
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
-    const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push'];
+    const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push', 'tactic'];
     const mine = parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a);
     const picks: Axis[] = mine.length ? [mine[rng.int(mine.length)]] : [];
     while (picks.length < 3) {

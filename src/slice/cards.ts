@@ -14,7 +14,9 @@ export type BaseCommandId =
   | 'cavCharge' | 'kingGuard' | 'doubleLeap' | 'gambit'
   | 'shove' | 'shieldBash' | 'ram'
   | 'pawnStorm' | 'knightRaid' | 'bishopRay' | 'rookCharge' | 'kingDecree' | 'overload' | 'quickFix' | 'tempo' | 'bulwark' | 'bladeRain'
-  | 'vent' | 'burst' | 'recall';
+  | 'vent' | 'burst' | 'recall'
+  // 카드 확장 (D-281): 기물별 · 체스 수 · 공용 · 다리
+  | 'castle' | 'regalGaze' | 'kingTax' | 'crownSlam' | 'enPassant' | 'anklePin' | 'pawnFork' | 'pawnShield' | 'lastRank' | 'knightFork' | 'hobble' | 'skewer' | 'bishopPin' | 'bishopFork' | 'consecrate' | 'bishopStep' | 'cathedral' | 'rookSkewer' | 'rookPin' | 'rookFork' | 'rookGuard' | 'rookDiscover' | 'siegeRam' | 'rookTax' | 'queenStride' | 'queenFork' | 'queenPin' | 'queenWrath' | 'queenSkewer' | 'queenDecree' | 'queenShield' | 'queenSweep' | 'stepAside' | 'checkCall' | 'oilCan' | 'forkAny' | 'fieldPlate' | 'rookRally' | 'bishopChase' | 'queenGuard' | 'heavyLance' | 'bishopRally' | 'knightKing';
 /** 다듬은 카드는 한 장씩 「이름+」 변형이 된다 (작업대 다듬기 — 그 한 장만 태엽 −1, D-183) */
 /** `+` = 다듬은 카드(태엽 −1) · `~` = 녹슨 카드(태엽 +1, D-247 저울추 사건) */
 export type CommandId = BaseCommandId | `${BaseCommandId}+` | `${BaseCommandId}~`;
@@ -23,8 +25,9 @@ export type CommandId = BaseCommandId | `${BaseCommandId}+` | `${BaseCommandId}~
  * 빌드 축 (D-144 — 덱빌딩의 "부서지는" 맛): 축마다 카드 몇 장 + 규칙을 깨는 부품 하나가 맞물린다.
  * 기병 = 처치한 나이트가 또 뛴다 · 보병 = 폰이 많고 싸다 · 왕관 = 킹이 직접 싸운다 · 연쇄 = 배수를 키운다.
  */
-export type Axis = 'cav' | 'inf' | 'king' | 'chain' | 'push';
-export const AXIS_NAMES: Record<Axis, string> = { cav: '기병', inf: '보병', king: '왕관', chain: '연쇄', push: '밀치기' };
+export type Axis = 'cav' | 'inf' | 'king' | 'chain' | 'push' | 'tactic';
+/** tactic = 수읽기 (D-281): 체스 고유의 수 — 핀 · 포크 · 스큐어 · 디스커버드 · 캐슬링 */
+export const AXIS_NAMES: Record<Axis, string> = { cav: '기병', inf: '보병', king: '왕관', chain: '연쇄', push: '밀치기', tactic: '수읽기' };
 
 export interface CommandDef {
   name: string;
@@ -33,7 +36,7 @@ export interface CommandDef {
   /** 움직일 수 있는 기물 (any = 아무나) */
   who: PieceType | 'any';
   /** move = 기물 하나를 움직여 친다 · march = 폰 모두 한 칸 전진 · draft = 킹 옆에 폰 · spark = 연쇄 +1 */
-  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit' | 'spend';
+  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit' | 'spend' | 'swap';
   /** spend: 쌓인 연쇄를 모두 써서 — 킹 방열판 · 적 전체 피해 · 카드 뽑기 (D-203). amount = 연쇄 하나마다 */
   spend?: 'shield' | 'blast' | 'draw' | 'ap';
   /** 빌드 축 (보상에서 축이 고루 나오게, 카드에 띠로 표시) */
@@ -60,6 +63,12 @@ export interface CommandDef {
   add?: number;
   /** 이번 공격에만 붙는 각인 효과 */
   carve?: CarveId;
+  /** 묶기 — 핀 (D-281 체스 수): 친 적(쓰러지지 않은)은 다음 적 차례에 못 움직이고 방열판을 잃는다 */
+  stun?: boolean;
+  /** 포크 (D-281): 내려앉은 자리에서 칠 수 있는 적이 둘 이상이면 이번 공격 ×이만큼 */
+  fork?: number;
+  /** 디스커버드 어택 (D-281): 비켜서며 길을 연다 — 다음에 내는 공격 카드 한 장 ×이만큼 */
+  nextMult?: number;
   amount?: number;
   /** draw 카드: 태엽도 이만큼 (태엽 감기) */
   ap?: number;
@@ -127,6 +136,51 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 25, desc: '몸으로 막아선다. (방열판 +25)' },
   bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (상하좌우 50%, 처치 1회 = 연쇄 2칸)' },
   gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +3, 카드 +2, 태엽 +1)', flavor: '“기꺼이.”' },
+
+  // ---- 카드 확장 (D-281, 사용자: 「체스 룰을 너무 부수지 않으면서 각 말의 명령 카드로 쓰기 좋은 풀 90장」) — 이동은 기물 고유, 체스 수는 핀 · 포크 · 스큐어 · 디스커버드 · 캐슬링 · 앙파상 ----
+  castle: { axis: 'tactic', axis2: 'king', name: '캐슬링', cost: 1, who: 'K', kind: 'swap', amount: 12, desc: '킹과 가장 가까운 룩이 자리를 바꾼다. (둘 다 방열판 +12)', flavor: '“성문을 바꿔 단다.”' },
+  regalGaze: { axis: 'tactic', axis2: 'king', name: '왕의 시선', cost: 1, who: 'K', kind: 'move', stun: true, add: 4, desc: '노려본 자는 발이 묶인다. (+4, 핀 — 친 적은 이번 적 차례에 못 움직인다)' },
+  kingTax: { axis: 'king', name: '왕의 세금', cost: 1, who: 'K', kind: 'move', drawOnKill: 2, desc: '쓰러뜨린 자에게서 거둔다. (처치 시 카드 +2)' },
+  crownSlam: { axis: 'king', axis2: 'chain', name: '왕관 내리찍기', cost: 2, who: 'K', kind: 'move', carve: 'cross', mult: 1.5, desc: '왕관째로 내리찍는다. (×1.5, 상하좌우 50%)', flavor: '화려한 왕관, 잔혹한 무게' },
+  enPassant: { axis: 'tactic', axis2: 'inf', name: '앙파상', cost: 1, who: 'P', kind: 'move', carve: 'cross', add: 4, desc: '곁을 지나치는 자까지 벤다. (+4, 상하좌우 50%)' },
+  anklePin: { axis: 'tactic', axis2: 'inf', name: '발목 잡기', cost: 1, who: 'P', kind: 'move', stun: true, desc: '작은 손이 발목을 붙든다. (핀 — 친 적은 이번 적 차례에 못 움직인다)' },
+  pawnFork: { axis: 'tactic', axis2: 'inf', name: '폰 포크', cost: 1, who: 'P', kind: 'move', fork: 1.8, desc: '두 적 사이에 파고든다. (칠 적이 둘 이상이면 ×1.8)' },
+  pawnShield: { axis: 'inf', name: '방패 세우기', cost: 1, who: 'P', kind: 'shield', amount: 18, desc: '작은 방패를 세운다. (폰 방열판 +18)' },
+  lastRank: { axis: 'inf', name: '끝 줄의 꿈', cost: 2, who: 'P', kind: 'move', mult: 2, desc: '끝 줄을 꿈꾸며 내지른다. (×2)', flavor: '“언젠가는, 저 끝까지.”' },
+  knightFork: { axis: 'tactic', axis2: 'cav', name: '나이트 포크', cost: 1, who: 'N', kind: 'move', fork: 1.8, desc: '두 적을 한 번에 노린다. (칠 적이 둘 이상이면 ×1.8)', flavor: '체스에서 가장 오래된 함정' },
+  hobble: { axis: 'tactic', axis2: 'cav', name: '말발굽 족쇄', cost: 1, who: 'N', kind: 'move', stun: true, drawOnKill: 1, desc: '짓밟아 묶는다. (핀, 처치 시 카드 +1)' },
+  skewer: { axis: 'tactic', axis2: 'chain', name: '스큐어', cost: 1, who: 'B', kind: 'move', carve: 'pierce', add: 6, desc: '앞의 자와 뒤의 자를 함께 꿴다. (+6, 뒤의 1기까지)' },
+  bishopPin: { axis: 'tactic', name: '빛의 못', cost: 1, who: 'B', kind: 'move', stun: true, carve: 'pierce', desc: '빛이 둘을 꿰어 박는다. (핀, 뒤의 1기까지)' },
+  bishopFork: { axis: 'tactic', name: '갈림길의 빛', cost: 1, who: 'B', kind: 'move', fork: 1.6, desc: '두 갈래 사선을 동시에 비춘다. (칠 적이 둘 이상이면 ×1.6)' },
+  consecrate: { axis: 'chain', name: '축성', cost: 1, who: 'B', kind: 'shield', amount: 20, desc: '빛을 두른다. (비숍 방열판 +20)' },
+  bishopStep: { axis: 'tactic', axis2: 'chain', name: '비켜서는 사제', cost: 1, who: 'B', kind: 'move', nextMult: 2, desc: '비켜서며 길을 연다. (디스커버드 — 다음 공격 ×2)' },
+  cathedral: { axis: 'chain', name: '대성당의 빛', cost: 2, who: 'B', kind: 'move', carve: 'diag', mult: 1.6, chainPerKill: 2, desc: '사선 끝까지 빛이 쏟아진다. (×1.6, 대각 50%, 처치 1회 = 연쇄 2칸)', flavor: '성스러운 빛의 심판자' },
+  rookSkewer: { axis: 'tactic', axis2: 'push', name: '성벽 꿰기', cost: 2, who: 'R', kind: 'move', carve: 'pierce', add: 8, desc: '줄을 따라 둘을 꿴다. (+8, 뒤의 1기까지)' },
+  rookPin: { axis: 'tactic', axis2: 'push', name: '쇠사슬', cost: 1, who: 'R', kind: 'move', stun: true, desc: '쇠사슬을 던져 묶는다. (핀)' },
+  rookFork: { axis: 'tactic', axis2: 'push', name: '십자 포격', cost: 2, who: 'R', kind: 'move', fork: 1.7, desc: '두 줄을 동시에 겨눈다. (칠 적이 둘 이상이면 ×1.7)' },
+  rookGuard: { axis: 'push', name: '성문 잠그기', cost: 1, who: 'R', kind: 'shield', amount: 24, desc: '성문을 내린다. (룩 방열판 +24)' },
+  rookDiscover: { axis: 'tactic', axis2: 'push', name: '성문 열기', cost: 1, who: 'R', kind: 'move', nextMult: 2, desc: '비켜서며 길을 연다. (디스커버드 — 다음 공격 ×2)' },
+  siegeRam: { axis: 'push', name: '공성추', cost: 2, who: 'R', kind: 'move', push: true, mult: 1.8, desc: '요새가 성문을 부순다. (×1.8, 밀치기)', flavor: '살아 움직이는 요새' },
+  rookTax: { axis: 'push', name: '통행세', cost: 1, who: 'R', kind: 'move', add: 4, drawOnKill: 1, desc: '지나가려면 값을 치러라. (+4, 처치 시 카드 +1)' },
+  queenStride: { name: '여왕의 행보', cost: 2, who: 'Q', kind: 'move', desc: '어느 길로든 나아간다.', flavor: '모든 길의 주인', title: '모든 길' },
+  queenFork: { axis: 'tactic', name: '여왕의 포크', cost: 2, who: 'Q', kind: 'move', fork: 1.8, desc: '여덟 갈래 중 둘을 고른다. (칠 적이 둘 이상이면 ×1.8)' },
+  queenPin: { axis: 'tactic', name: '여왕의 못', cost: 2, who: 'Q', kind: 'move', stun: true, carve: 'pierce', desc: '줄 위의 둘을 꿰어 박는다. (핀, 뒤의 1기까지)' },
+  queenWrath: { axis: 'chain', name: '여왕의 진노', cost: 3, who: 'Q', kind: 'move', mult: 2.2, desc: '모든 길이 한 점으로 모인다. (×2.2)' },
+  queenSkewer: { axis: 'tactic', name: '여왕의 창', cost: 2, who: 'Q', kind: 'move', carve: 'pierce', add: 8, desc: '줄 끝까지 꿰뚫는다. (+8, 뒤의 1기까지)' },
+  queenDecree: { axis: 'chain', name: '여왕의 칙령', cost: 2, who: 'Q', kind: 'move', chainPerKill: 2, desc: '여왕 앞에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
+  queenShield: { axis: 'king', name: '여왕의 망토', cost: 1, who: 'Q', kind: 'shield', amount: 25, desc: '망토를 두른다. (퀸 방열판 +25)' },
+  queenSweep: { axis: 'chain', name: '여왕의 휩쓸기', cost: 2, who: 'Q', kind: 'move', carve: 'cross', mult: 1.3, desc: '내려앉으며 둘레를 쓴다. (×1.3, 상하좌우 50%)' },
+  stepAside: { axis: 'tactic', name: '비켜서기', cost: 1, who: 'any', kind: 'move', nextMult: 1.6, desc: '길을 내어 준다. (디스커버드 — 다음 공격 ×1.6)' },
+  checkCall: { axis: 'tactic', name: '체크!', cost: 2, who: 'any', kind: 'move', stun: true, add: 6, desc: '외침과 함께 묶는다. (+6, 핀)', flavor: '“체크!”' },
+  oilCan: { name: '기름칠', cost: 1, who: 'any', kind: 'repair', amount: 22, desc: '삐걱이는 관절에 기름을 먹인다. (HP +22)' },
+  forkAny: { axis: 'tactic', name: '양수겸장', cost: 2, who: 'any', kind: 'move', fork: 1.5, desc: '둘을 한꺼번에 겨눈다. (칠 적이 둘 이상이면 ×1.5)' },
+  fieldPlate: { name: '덧댄 판', cost: 0, who: 'any', kind: 'shield', amount: 10, desc: '쇳조각을 덧댄다. (방열판 +10)' },
+  rookRally: { axis: 'push', axis2: 'inf', name: '성벽 뒤의 행렬', cost: 2, who: 'R', kind: 'move', rally: true, desc: '요새가 나아가면 폰들이 뒤따른다. (둘레 폰 전진 공격)' },
+  bishopChase: { axis: 'chain', axis2: 'cav', name: '빛의 추격', cost: 1, who: 'B', kind: 'move', freeIfKiller: true, desc: '쓰러뜨린 빛이 다시 내리꽂힌다. (이번 턴 처치했으면 태엽 0)' },
+  queenGuard: { axis: 'king', axis2: 'inf', name: '여왕의 근위대', cost: 2, who: 'Q', kind: 'move', rally: true, desc: '여왕이 나서자 폰들이 따른다. (둘레 폰 전진 공격)' },
+  heavyLance: { axis: 'push', axis2: 'cav', name: '무거운 창', cost: 2, who: 'R', kind: 'move', freeIfKiller: true, push: true, desc: '쓰러뜨린 기세로 다시 밀고 간다. (밀치기, 이번 턴 처치했으면 태엽 0)' },
+  bishopRally: { axis: 'chain', axis2: 'inf', name: '순례 행렬', cost: 1, who: 'B', kind: 'move', rally: true, desc: '사제가 앞서면 폰들이 따른다. (둘레 폰 전진 공격)' },
+  knightKing: { axis: 'cav', axis2: 'king', name: '왕의 기사', cost: 1, who: 'N', kind: 'move', add: 6, freeIfKiller: true, desc: '왕을 위해 다시 뛴다. (+6, 이번 턴 처치했으면 태엽 0)' },
 };
 
 /** 다듬은 변형: 이름 뒤에 +, 태엽 −1 (0 아래로는 안 내려간다). 나머지는 원본 그대로 */
@@ -165,6 +219,7 @@ export const RECRUITS: { t: PieceType; cards: CommandId[]; line: string }[] = [
   { t: 'P', cards: ['charge'], line: '작은 개척자' },
   { t: 'B', cards: ['pierceDiag'], line: '성스러운 빛의 심판자' },
   { t: 'R', cards: ['rookLine'], line: '살아 움직이는 요새' },
+  { t: 'Q', cards: ['queenStride'], line: '모든 길의 주인' },
 ];
 
 /** 부품 상자 (첫 사기 조합 확정): 부품 + 맞물리는 카드 둘. needs = 분대에 있어야 하는 기물 */
@@ -189,6 +244,8 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
  */
 export type Grade = 'common' | 'rare' | 'gold';
 export const CARD_GRADE: Partial<Record<string, Grade>> = {
+  // 카드 확장 (D-281) — 설계 등급(측정 전): 체스 수는 희귀, 한 방 배율은 금
+  castle: 'rare', crownSlam: 'gold', pawnFork: 'rare', lastRank: 'gold', knightFork: 'rare', bishopPin: 'rare', bishopStep: 'rare', cathedral: 'gold', rookFork: 'rare', rookDiscover: 'rare', siegeRam: 'gold', queenFork: 'rare', queenPin: 'rare', queenWrath: 'gold', queenSweep: 'rare', checkCall: 'rare', rookRally: 'rare', bishopChase: 'rare', queenGuard: 'rare', heavyLance: 'rare', knightKing: 'rare',
   // 측정 (D-217 2, sim/rarity.sim.ts — 모든 기물 분대 · 2 · 3막 판 200번 · 넣은 덱 vs 기본 카드 덱의 승률 차 + 턴 단축 × 5):
   // 황금 = 상위 약 10% (가치 34 이상), 희귀 = 다음 35% (가치 12 이상), 나머지 일반. 봇이 못 쓰는 연쇄 마무리(처형 · 칼날 세례)만 설계 판단으로 희귀.
   rookCharge: 'gold', shove: 'gold', overload: 'gold', wrath: 'gold', scrapToss: 'gold', rookPierce: 'rare',
@@ -212,7 +269,7 @@ export const rollGrade = (r: number, w: Record<Grade, number>): Grade => {
   return 'common';
 };
 
-export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall', 'rookPierce', 'scrapToss', 'phalanx', 'pawnExecute', 'bishopChain', 'kingCharge'];
+export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall', 'rookPierce', 'scrapToss', 'phalanx', 'pawnExecute', 'bishopChain', 'kingCharge', 'castle', 'regalGaze', 'kingTax', 'crownSlam', 'enPassant', 'anklePin', 'pawnFork', 'pawnShield', 'lastRank', 'knightFork', 'hobble', 'skewer', 'bishopPin', 'bishopFork', 'consecrate', 'bishopStep', 'cathedral', 'rookSkewer', 'rookPin', 'rookFork', 'rookGuard', 'rookDiscover', 'siegeRam', 'rookTax', 'queenStride', 'queenFork', 'queenPin', 'queenWrath', 'queenSkewer', 'queenDecree', 'queenShield', 'queenSweep', 'stepAside', 'checkCall', 'oilCan', 'forkAny', 'fieldPlate', 'rookRally', 'bishopChase', 'queenGuard', 'heavyLance', 'bishopRally', 'knightKing'];
 
 /**
  * 반장 규칙 (D-148 — 레퍼런스 5권 원리 5 「부서진 빌드는 너프하지 말고 보스가 질문한다」). 둘 다 미리 보인다.
