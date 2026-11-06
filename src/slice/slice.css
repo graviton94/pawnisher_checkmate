@@ -81,7 +81,7 @@ body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; 
 .part-chip .ico, .part-card .ico { display: block; width: 32px; height: 32px; background: currentColor; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
 .part-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 4px; }
 .part-card { display: grid; justify-items: center; gap: 8px; padding: 16px 12px 14px; min-height: 150px; text-align: center; color: #f2ede4; background: linear-gradient(#2c2833, #2c2833); border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1); }
-.part-card .ico { width: 48px; height: 48px; color: #f4d27a; }
+.part-card .ico { width: 64px; height: 64px; color: #f4d27a; } /* 32도트 아이콘 2배 (D-290) */
 .part-card b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 .part-card small { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #d6d0c6; line-height: 1.4; }
 .part-card:hover, .part-card:active { transform: translateY(-4px); }
@@ -333,7 +333,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .map-track .tk.boss { background: #e5262f; }
 .map-track .tk-line { width: 22px; height: 2px; background: #3a3542; }
 .part-card.mnode { min-height: 0; padding: 12px 10px; gap: 6px; }
-.part-card.mnode .ico { width: 48px; height: 48px; }
+.part-card.mnode .ico { width: 64px; height: 64px; }
 .nd-battle .ico { color: #f2ede4; } .nd-shop .ico { color: #f4d27a; } .nd-forge .ico { color: #ff9a5a; } .nd-check .ico { color: #7ab8ff; } .nd-boss .ico { color: #ff6b5a; }
 .nd-foes { display: flex; gap: 2px; justify-content: center; }
 .nd-foes img { width: 18px; height: 18px; image-rendering: pixelated; }
@@ -1504,7 +1504,7 @@ body.slice.lay-f #hand > .cmd.mag .costgear img { width: 20px; height: 20px; }
 /* 지도 범례 (D-216 4): 아무것도 안 골랐을 때 아래 띠 — 아이콘 + 이름 한 줄 */
 .map-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 0 auto; padding: 0; list-style: none; }
 .map-legend li { display: flex; align-items: center; gap: 4px; font: 400 12px/1 Galmuri11, sans-serif; color: #c9c1b4; }
-.map-legend .ico { width: 24px; height: 24px; }
+.map-legend .ico { width: 32px; height: 32px; }
 /* 빛줄기 (D-216 6): 원뿔 그라데이션 대신 도트 방사선 그림 — 정수배(5 · 8 · 7배)로 */
 .tfx-rays { width: 560px; height: 560px; margin: -280px 0 0 -280px; background: url('../assets/ui/kit/rays-white.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; border-radius: 0; }
 .ko3 .rays { width: 896px; height: 896px; margin: -448px 0 0 -448px; background: url('../assets/ui/kit/rays-gold.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; border-radius: 0; }

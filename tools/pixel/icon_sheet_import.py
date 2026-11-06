@@ -1,12 +1,13 @@
 """
-받은 아이콘 시트 → 게임 16칸 아이콘 (D-289). 시트 정본: tools/pixel/icon_sheets.py
+받은 아이콘 시트 → 게임 32도트 아이콘 (D-289 · D-290). 시트 정본: tools/pixel/icon_sheets.py
   python3 -I tools/pixel/icon_sheet_import.py <받은 그림> I-0N [--dry]
 하는 일 (칸마다):
-  ① 시트를 5×2로 나누고, 칸을 16×16 격자로 다시 도트화 — 격자 한 칸 가운데 60% 영역의 중앙값 색 (안티앨리어싱 · 압축 얼룩 제거)
+  ① 시트를 5×2로 나누고, 칸을 32×32 격자로 다시 도트화 — 격자 한 칸 가운데 60% 영역의 중앙값 색 (안티앨리어싱 · 압축 얼룩 제거)
   ② 마젠타(#FF00FF 근처) = 투명
   ③ 우리 팔레트(icon_sheets.PALETTE)에서 가장 가까운 색으로 맞춘다
   ④ 둘레 바깥선 보정: 물건 가장자리에 붙은 투명 칸 중 바깥선이 빠진 곳을 먹(#0B0B0E)으로
-  ⑤ public/ui/icons16/<키>.png (32×32, 2배 · 정중앙 — icons16.py export와 같은 꼴)
+  ⑤ 원본 tools/pixel/icons32/<키>.png (32×32, 정중앙) — icons16.py export가 16칸 손그림 대신 이것을 쓴다 → public/ui/icons16/<키>.png
+     작은 칸(16px)용 <키>@16.png도 함께 (2×2 → 많은 색, 바깥선 우선)
 확인용: build-res/order/<시트>-check.png (지금 → 받은 것, 8배)
 --dry 면 게임 그림은 쓰지 않고 확인용만.
 """
@@ -33,14 +34,17 @@ def is_key(c):
     return r > 170 and b > 170 and g < 110
 
 
+N = 32
+
+
 def cell16(im):
-    """한 칸(아무 크기) → 16×16 RGBA"""
+    """한 칸(아무 크기) → N×N RGBA (이름은 옛 16칸 시절 그대로)"""
     w, h = im.size
-    out = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
-    for y in range(16):
-        for x in range(16):
-            x0, x1 = w * (x + 0.2) / 16, w * (x + 0.8) / 16
-            y0, y1 = h * (y + 0.2) / 16, h * (y + 0.8) / 16
+    out = Image.new('RGBA', (N, N), (0, 0, 0, 0))
+    for y in range(N):
+        for x in range(N):
+            x0, x1 = w * (x + 0.2) / N, w * (x + 0.8) / N
+            y0, y1 = h * (y + 0.2) / N, h * (y + 0.8) / N
             px = [im.getpixel((int(xx), int(yy))) for yy in range(int(y0), max(int(y0) + 1, int(y1))) for xx in range(int(x0), max(int(x0) + 1, int(x1)))]
             keep = [p for p in px if not is_key(p)]
             if len(keep) < len(px) / 2:
@@ -49,19 +53,35 @@ def cell16(im):
             out.putpixel((x, y), near(med) + (255,))
     # 바깥선 보정: 물건과 맞닿은 투명 칸 → 먹 (물건 가장자리가 먹이 아닐 때만)
     a = out.copy()
-    for y in range(16):
-        for x in range(16):
+    for y in range(N):
+        for x in range(N):
             if a.getpixel((x, y))[3]:
                 continue
-            nb = [a.getpixel((x + dx, y + dy)) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if 0 <= x + dx < 16 and 0 <= y + dy < 16]
+            nb = [a.getpixel((x + dx, y + dy)) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if 0 <= x + dx < N and 0 <= y + dy < N]
             if any(p[3] and p[:3] != INK for p in nb):
                 out.putpixel((x, y), INK + (255,))
     return out
 
 
-def centered(icn, scale=2):
+def small(icn):
+    """32 → 16: 2×2 칸마다 — 먹이 하나라도 있으면 먹(바깥선이 끊기지 않게), 아니면 가장 많은 색, 빈 칸이 셋 이상이면 투명"""
+    out = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+    for y in range(16):
+        for x in range(16):
+            px = [icn.getpixel((2 * x + dx, 2 * y + dy)) for dx in (0, 1) for dy in (0, 1)]
+            op = [p for p in px if p[3]]
+            if len(op) < 2:
+                continue
+            if any(p[:3] == INK for p in op) and len(op) < 4:
+                out.putpixel((x, y), INK + (255,))
+                continue
+            out.putpixel((x, y), max(op, key=op.count))
+    return out
+
+
+def centered(icn, scale=1):
     box = icn.getbbox()
-    n = 16 * scale
+    n = N * scale
     res = Image.new('RGBA', (n, n), (0, 0, 0, 0))
     if not box:
         return res
@@ -81,13 +101,17 @@ def main(src, sid, dry=False):
         icn = cell16(cell)
         game = centered(icn)
         f = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')
+        master = os.path.join(HERE, 'icons32', f'{k}.png')
         if os.path.exists(f):
             old = Image.open(f).convert('RGBA').resize((128, 128), Image.NEAREST)
             chk.paste(old, (cx * 272 + 4, cy * 136 + 4), old)
-        new = game.resize((128, 128), Image.NEAREST)
+        new = game.resize((128, 128), Image.NEAREST)  # 32 → 4배
         chk.paste(new, (cx * 272 + 140, cy * 136 + 4), new)
         if not dry:
+            os.makedirs(os.path.dirname(master), exist_ok=True)
+            game.save(master)
             game.save(f)
+            small(game).save(f.replace('.png', '@16.png'))
         print(f'{k:14} {name}')
     out = os.path.join(ROOT, 'build-res', 'order', f'{sid}-check.png')
     chk.save(out)

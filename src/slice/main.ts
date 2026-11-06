@@ -32,11 +32,13 @@ const lifePips = (u: Crew, fx: 'mend' | 'break' | '' = ''): string =>
   u.t === 'K' ? '' : `<span class="lifes" role="img" aria-label="${LIFE_TEXT.name} ${u.cracked ? 1 : 2}/2"><i class="life"></i><i class="life${u.cracked ? ' off' : ''}${fx === 'mend' ? ' mending' : fx === 'break' && u.cracked ? ' breaking' : ''}"></i></span>`;
 // 심장 톱니 그림은 public 경로라 문서 기준으로 푼다 (base './' — CSS 파일 안 상대 경로는 Vite가 묶으려 든다)
 // (변수 속 url은 쓰이는 CSS 파일 기준으로 풀리므로 절대 주소로 넣는다)
-document.documentElement.style.setProperty('--life-on', `url(${new URL('ui/icons16/life.png', document.baseURI).href})`);
-document.documentElement.style.setProperty('--life-off', `url(${new URL('ui/icons16/life.crack.png', document.baseURI).href})`);
+document.documentElement.style.setProperty('--life-on', `url(${new URL('ui/icons16/life@16.png', document.baseURI).href})`);
+document.documentElement.style.setProperty('--life-off', `url(${new URL('ui/icons16/life.crack@16.png', document.baseURI).href})`);
 /** 방금 대국에서 심장 톱니가 깨진 분대원 (보상 화면에서 깨지는 연출) */
 let justCracked: string[] = [];
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
+/** 16px 칸용 (D-290: 아이콘이 32도트가 되면 반으로 줄인 그림을 따로 쓴다 — 브라우저 축소는 바깥선을 끊는다) */
+const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
@@ -1486,7 +1488,7 @@ const showMap = (): void => {
   // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
   el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(3, actI + 1)}.png`, location.href).href})`);
-  el.innerHTML = `<header><div><p class="sf-eyebrow">${actLabel(a.act)}</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''} <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArt(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArt(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
+  el.innerHTML = `<header><div><p class="sf-eyebrow">${actLabel(a.act)}</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''} <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArtSmall(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArtSmall(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="map-info"><p class="hint">빛나는 곳을 고릅니다.</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
       .map((k) => `<li class="nd-${k}"><i class="ico" style="${iconArt(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)

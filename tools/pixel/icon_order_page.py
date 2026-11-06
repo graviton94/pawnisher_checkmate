@@ -96,13 +96,13 @@ def main(out):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+KR:wght@400;500&display=swap">
 <style>{CSS}</style>
 <div class="wrap">
-  <header><h1>아이콘 발주서 · 16칸 100장</h1>
-    <p class="lead">Pawnisher : Checkmate의 모든 16칸 아이콘(부품 70 · 부적 3 · 지도 노드 7 · 서비스 4 · 즉시 카드 16)을 모양이 비슷한 것끼리 10장씩 묶었습니다. 시트마다 ① 그림을 첨부하고 ② 프롬프트를 붙여 넣으면 됩니다.</p></header>
+  <header><h1>아이콘 발주서 · 32도트 100장</h1>
+    <p class="lead">Pawnisher : Checkmate의 모든 아이콘(부품 70 · 부적 3 · 지도 노드 7 · 서비스 4 · 즉시 카드 16)을 모양이 비슷한 것끼리 10장씩 묶었습니다. 시트마다 ① 그림을 첨부하고 ② 프롬프트를 붙여 넣으면 됩니다.</p></header>
   <div class="how">
     <div><b>1 · 새 채팅</b><p>시트 하나에 채팅 하나. 섞으면 격자가 흐트러집니다.</p></div>
     <div><b>2 · 그림 첨부</b><p>그 시트의 「지금 10장」 그림 — 화풍 · 칸 꼴 기준입니다.</p></div>
-    <div><b>3 · 프롬프트 붙여 넣기</b><p>복사 단추로 통째로. 1600×640 · 5×2 · 마젠타 바탕으로 받습니다.</p></div>
-    <div><b>4 · 받은 그림 넘기기</b><p>Claude가 <code>icon_sheet_import.py</code>로 16칸에 다시 찍어 게임에 넣습니다.</p></div>
+    <div><b>3 · 프롬프트 붙여 넣기</b><p>복사 단추로 통째로. 1600×640 · 5×2 · 칸마다 32×32 격자 · 마젠타 바탕으로 받습니다.</p></div>
+    <div><b>4 · 받은 그림 넘기기</b><p>Claude가 <code>icon_sheet_import.py</code>로 32도트로 다시 찍어 게임에 넣습니다.</p></div>
   </div>
   <nav aria-label="시트">{''.join(nav)}</nav>
   {''.join(secs)}

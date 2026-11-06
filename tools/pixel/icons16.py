@@ -1568,10 +1568,21 @@ def centered(rows, scale=2):
 
 
 def export(out):
-    """게임용: <키>.png 32×32 (한 칸 = 2px, 그림을 정중앙에) — 보통 public/ui/icons16"""
+    """게임용: <키>.png 32×32 (한 칸 = 2px, 그림을 정중앙에) — 보통 public/ui/icons16.
+    D-290: tools/pixel/icons32/<키>.png(받은 32도트 원본)가 있으면 손그림 대신 그것을 쓴다. 작은 칸용 <키>@16.png도 같이 쓴다."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from icon_sheet_import import small
     os.makedirs(out, exist_ok=True)
+    m32 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icons32')
     for k, rows in ICONS.items():
+        src = os.path.join(m32, f'{k}.png')
+        if os.path.exists(src):
+            big = Image.open(src).convert('RGBA')
+            big.save(os.path.join(out, f'{k}.png'))
+            small(big).save(os.path.join(out, f'{k}@16.png'))
+            continue
         centered(rows).save(os.path.join(out, f'{k}.png'))
+        centered(rows, 1).save(os.path.join(out, f'{k}@16.png'))
     print(out, len(ICONS))
 
 if __name__ == '__main__':
