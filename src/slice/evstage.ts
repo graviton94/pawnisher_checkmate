@@ -38,9 +38,9 @@ const propImg = (n: string): HTMLImageElement => {
   if (!i) { i = new Image(); i.src = `ui/props/${n}.png`; propImgs.set(n, i); }
   return i;
 };
-['ic32-coin-front', 'ic32-coin-tilt', 'ic32-coin-edge', 'ic32-coin-back'].forEach(propImg);
-/** 동전 회전 8장 (D-256, ICON-01): 앞면 → 기운 타원 → 옆면 → 거울 타원 → 뒷면 → … — [그림, 좌우 뒤집기] */
-const COIN: [string, boolean][] = [['ic32-coin-front', false], ['ic32-coin-tilt', false], ['ic32-coin-edge', false], ['ic32-coin-tilt', true], ['ic32-coin-back', false], ['ic32-coin-tilt', false], ['ic32-coin-edge', true], ['ic32-coin-tilt', true]];
+/** 동전 회전 12장 (D-257, tools/pixel/coinflip.py): 세로축 30°마다 — 0 앞면 · 3 옆면 · 6 뒷면 · 9 옆면 */
+const COIN_N = 12;
+for (let i = 0; i < COIN_N; i++) propImg(`flip-${i}`);
 const pieceImgs = new Map<string, HTMLImageElement>();
 const pieceImg = (t: PieceType, side: 0 | 1): HTMLImageElement => {
   const k = `${t}${side}`;
@@ -225,23 +225,23 @@ const FX: Record<string, Fx> = {
    *  → 떨어져 튕기며 앞/뒤에 선다 · 먼지 → 앞면: 나사 분수 · 빛 / 뒷면: 빛을 잃고 미끄러져 간다 */
   async gambler(s, c) {
     const cx = s.w / 2, g = s.floor - 36;
-    await s.tap(c.tap, (t, p) => { s.dim(p); s.ground(p, PAL.wood); p.glow(cx, g + 18, 26, PAL.gold[4], 0.18); s.sprite('ic32-coin-front', cx - 16, g + (Math.floor(t * 4) % 2)); if (Math.floor(t * 3) % 3 === 0) p.sparkle(cx - 4, g + 3, 2, PAL.gold[5], PAL.gold[3]); });
-    const peak = 4;
-    const endFrame = c.good ? 0 : 4;
+    await s.tap(c.tap, (t, p) => { s.dim(p); s.ground(p, PAL.wood); p.glow(cx, g + 18, 26, PAL.gold[4], 0.18); s.sprite('flip-0', cx - 20, g + (Math.floor(t * 4) % 2)); if (Math.floor(t * 3) % 3 === 0) p.sparkle(cx - 4, g + 3, 2, PAL.gold[5], PAL.gold[3]); });
+    const peak = 22; // 장면 위 끝에 잘리지 않게 (D-257)
+    const endFrame = c.good ? 0 : 6;
     await s.play(
       2600,
       (t, p) => {
         s.dim(p); s.ground(p, PAL.wood);
         let y = g, f = 0, x = cx;
         if (t < 0.12) y = g + 2;
-        else if (t < 1.25) { const k = (t - 0.12) / 1.13; y = g + (peak - g) * (1 - Math.pow(2 * k - 1, 2)); f = Math.floor(t * 16) % 8; }
-        else if (t < 1.4) { f = endFrame === 0 ? 7 : 3; y = g - Math.sin(((t - 1.25) / 0.15) * Math.PI) * 4; }
+        else if (t < 1.25) { const k = (t - 0.12) / 1.13; y = g + (peak - g) * (1 - Math.pow(2 * k - 1, 2)); f = (endFrame - Math.ceil((1.25 - t) * 22) + COIN_N * 40) % COIN_N; } // 거꾸로 세어 착지 순간에 결과 면이 된다
+        else if (t < 1.4) { f = (endFrame + 1) % COIN_N; y = g - Math.sin(((t - 1.25) / 0.15) * Math.PI) * 4; }
         else { f = endFrame; y = g; }
         if (!c.good && t > 1.7) x = cx + inE((t - 1.7) / 0.8) * 46;
         const sh = Math.max(3, 9 - (g - y) / 6);
         p.ellipse(cx, s.floor + 1, sh, 1.5, PAL.wood[1]);
         p.glow(x, y + 18, 24, PAL.gold[4], c.good || t < 1.4 ? 0.22 : 0.08);
-        s.sprite(COIN[f][0], x - 16, y, 1, COIN[f][1]);
+        s.sprite(`flip-${f}`, x - 20, y);
         if (t > 0.62 && t < 0.78) p.sparkle(cx + 12, peak + 6, 4, PAL.gold[5], PAL.gold[3]);
         s.jolt(t, 1.25, 0.1, 1);
         hero(p, s, t, 1.4);
