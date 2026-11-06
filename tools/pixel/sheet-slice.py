@@ -70,7 +70,11 @@ def slice_cell(im, ci, n):
     W, H = im.size
     cw, ch = W / COLS, H / ROWS
     col, row = ci % COLS, ci // COLS
-    box = (int(col * cw), int(row * ch), int((col + 1) * cw), int((row + 1) * ch))
+    # 그림이 칸 경계를 넘어가기도 한다(동전 윗부분 — D-258): 칸보다 넉넉히 자르고, 중심이 원래 칸 안에 있는 덩어리만 남긴다
+    pad = int(min(cw, ch) * 0.25)
+    bx0, by0 = max(0, int(col * cw) - pad), max(0, int(row * ch) - pad)
+    box = (bx0, by0, min(W, int((col + 1) * cw) + pad), min(H, int((row + 1) * ch) + pad))
+    core = (int(col * cw) - bx0, int(row * ch) - by0, int((col + 1) * cw) - bx0, int((row + 1) * ch) - by0)
     cell = im.crop(box)
     px = cell.load()
     w, h = cell.size
@@ -105,11 +109,17 @@ def slice_cell(im, ci, n):
                             lab[nb][na] = k
                             dq.append((na, nb))
             comps.append(pts)
-    big = max(len(c) for c in comps)
+    def in_core(c):
+        mx = (min(a for a, _ in c) + max(a for a, _ in c)) / 2
+        my = (min(b for _, b in c) + max(b for _, b in c)) / 2
+        return core[0] <= mx < core[2] and core[1] <= my < core[3]
+
+    big = max((len(c) for c in comps if in_core(c)), default=1)
     for c in comps:
+        # 이웃 칸 것: 덩어리 테두리 상자의 가운데가 원래 칸 밖이거나, 넉넉히 자른 가장자리에 닿고 가장 큰 덩어리의 절반보다 작은 것
+        out_core = not in_core(c)
         edge = any(a <= 1 or b <= 1 or a >= w - 2 or b >= h - 2 for a, b in c)
-        # 아래 · 위 가장자리에 닿은 조각은 가장 큰 덩어리의 절반보다 작으면 이웃 칸 것으로 본다
-        if (edge and len(c) < big / 2) or len(c) < 12:
+        if out_core or (edge and len(c) < big / 2) or len(c) < 12:
             for a, b in c:
                 bg[b][a] = True
     xs = [x for y in range(h) for x in range(w) if not bg[y][x]]
