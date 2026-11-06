@@ -17,7 +17,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { gradeOf, rollGrade, GRADE, baseOf, isRefined, refinedOf, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { gradeOf, rollGrade, GRADE, baseOf, isRefined, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -34,7 +34,7 @@ let justCracked: string[] = [];
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
-import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState, type SliceEventId } from './events';
+import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
@@ -130,6 +130,8 @@ let daily: string | null = null;
 let firstShip = false;
 /** 이번 출하에 들른 고물상 수 (첫 고물상 맞물림 부품, D-232) */
 let shopsSeen = 0;
+/** 고물상 다듬기 · 빼기를 이번 출하에 쓴 횟수 (D-247 — 쓸수록 값이 오른다) */
+let svcUsed = { refine: 0, remove: 0 };
 let acts: Act[] = buildRun(runSeed);
 /** 출하 난수: 분대 · 보상 · 사건 · 대국 시드가 모두 여기서 (같은 시드 = 같은 출하 — 오늘의 출하) */
 let R = new Rng(runSeed ^ 0x51c3);
@@ -1361,7 +1363,9 @@ const enterNode = (n: MapNode): void => {
   }
   if (n.kind === 'shop') return void sceneIntro(NODE_NAMES.shop, '고물 더미', '고물 더미 사이로 저울이 흔들린다. 나사 냄새가 난다.', `<i class="sf-ico" style="${iconArt('n.shop')}"></i>`).then(shopScreen);
   if (n.kind === 'event') {
-    const id = eventBag.length ? eventBag.splice(R.int(eventBag.length), 1)[0] : SLICE_EVENT_IDS[0];
+    if (!eventBag.length) eventBag = [...SLICE_EVENT_IDS];
+    const id = eventBag.splice(R.int(eventBag.length), 1)[0];
+    { const m = readMeta(store); writeMeta(store, { ...m, evRecent: [id, ...(m.evRecent ?? []).filter((x) => x !== id)].slice(0, EV_RECENT) }); }
     const ev = SLICE_EVENTS[id];
     return void sceneIntro(NODE_NAMES.event, ev.title, ev.text.split('.')[0] + '.', `<i class="sf-ico" style="${iconArt('n.event')}"></i>`).then(() => eventScreen(id));
   }
@@ -1496,6 +1500,8 @@ const showMap = (): void => {
 
 /** 이번 출하에서 아직 안 나온 사건 (한 출하에 같은 사건 두 번 없음) */
 let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
+/** 다음 출하에서 뒤로 미룰 최근 사건 수 (15종 중) */
+const EV_RECENT = 7;
 /** 사건 화면 (R5-3, D-170): 서술 · 선택지(고를 수 없으면 이유) → 결과 한 줄 → 계속 (부품이면 고르기) */
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
@@ -1543,19 +1549,33 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           await roulette(segs, out.slot, `${ev.title} — ${c.label.replace(/\?$/, '')}`);
           mood = BAD_SEG.test(segs[out.slot].label) ? 'bad' : 'good';
         }
-        const res = openOverlay(`<div class="ev-result ${mood}"><h2>${ev.title}</h2><p class="ev-text"></p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div></div>`);
-        sfx(mood === 'bad' ? 'hurt' : out.partPick ? 'rare' : 'stamp');
-        const box = res.querySelector<HTMLElement>('.ev-result')!;
-        if (mood === 'bad') shake(box, 2);
-        if (mood === 'good') {
-          const r = box.getBoundingClientRect();
-          sparksAt(r.left + r.width / 2, r.top + 30, 14, 60);
-        }
-        void typeIn(res.querySelector<HTMLElement>('.ev-text')!, out.text, 18);
-        res.querySelector('[data-next]')!.addEventListener('click', () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
+        // 저울추 (D-247): 카드를 고른 뒤에 결과
+        if (out.cardPick === 'counterweight')
+          return pickCardScreen(`${ev.title} — 카드 하나`, '고른 카드는 태엽 −1, 반대쪽 접시의 다른 카드 한 장(무작위)은 녹슬어 태엽 +1.', weighable(st()), (rid) => {
+            const s1 = st();
+            const text = counterweight(s1, rid, sub());
+            deck = s1.deck;
+            refined.splice(0, refined.length, ...s1.refined);
+            evResult(ev.title, { text }, 'good', advance);
+          }, () => eventScreen(id));
+        evResult(ev.title, out, mood, () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
       });
     }),
   );
+};
+
+/** 사건 결과 창: 좋으면 금빛 제목 + 불꽃, 나쁘면 붉은 제목 + 흔들림, 결과 글은 한 자씩 (D-244) */
+const evResult = (title: string, out: { text: string; partPick?: boolean }, mood: 'good' | 'bad' | '', next: () => void): void => {
+  const res = openOverlay(`<div class="ev-result ${mood}"><h2>${title}</h2><p class="ev-text"></p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div></div>`);
+  sfx(mood === 'bad' ? 'hurt' : out.partPick ? 'rare' : 'stamp');
+  const box = res.querySelector<HTMLElement>('.ev-result')!;
+  if (mood === 'bad') shake(box, 2);
+  if (mood === 'good') {
+    const r = box.getBoundingClientRect();
+    sparksAt(r.left + r.width / 2, r.top + 30, 14, 60);
+  }
+  void typeIn(res.querySelector<HTMLElement>('.ev-text')!, out.text, 18);
+  res.querySelector('[data-next]')!.addEventListener('click', next);
 };
 
 /** 나쁜 칸 (룰렛 색 · 결과 연출) */
@@ -1623,6 +1643,12 @@ const shopScreen = (): void => {
   const charmOffer = charmRoll < CHARM_NUM.shopReviveChance ? 'revive' : charmRoll < CHARM_NUM.shopReviveChance + CHARM_NUM.shopRewindChance ? 'rewind' : null;
   if (charmOffer) cards.pop();
   // 값은 등급으로 (D-217 3 — 슬더스식): 일반 · 희귀 · 황금
+  // 아래 줄 서비스는 셋 중 둘만 (D-247) — 같은 고물상에서 다듬기 · 빼기 · 정비를 다 누리지 못한다
+  const svcAll = ['heal', 'refine', 'remove'] as const;
+  const svcShown = new Set<string>();
+  while (svcShown.size < Math.min(ECON.shopSvc, svcAll.length)) svcShown.add(svcAll[rng.int(svcAll.length)]);
+  const refinePrice = () => ascPrice(SHOP.refinePrice + ECON.svcStep * svcUsed.refine);
+  const removePrice = () => ascPrice(SHOP.removePrice + ECON.svcStep * svcUsed.remove);
   const price = (id: CommandId) => ascPrice(SHOP.gradePrice[gradeOf(id)]);
   const partPrice = (id: SlicePartId) => ascPrice(SHOP.partGradePrice[PART_GRADE[id] ?? 'common']);
   const render = (): void => {
@@ -1632,9 +1658,9 @@ const shopScreen = (): void => {
         ${cards.map((id) => cardFace(id, `data-buy="card:${id}"`, tag(id, price(id)), sold.has(id) ? 'sold' : '')).join('')}
         ${part ? partFace(part, `data-buy="part:${part}"`, tag('part', partPrice(part)), sold.has('part') ? 'sold' : '') : ''}
         ${charmOffer ? `<button type="button" class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}${sold.has(charmOffer) ? ' sold' : ''}" data-buy="${charmOffer}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><small class="cf-desc">${descLines(CHARMS[charmOffer].desc)}</small>${tag(charmOffer, ascPrice(charmOffer === 'revive' ? CHARM_NUM.shopRevivePrice : CHARM_NUM.shopRewindPrice))}</button>` : ''}
-        <button type="button" class="cf part-card svc g-common${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><b class="cf-name">정비</b><span class="cf-win"><i class="ico" style="${iconArt('s.heal')}"></i></span><small class="cf-desc">${descLines(`분대 전원을 손본다. (HP +${Math.round(SHOP.healPct * 100)}%)`)}</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>
-        <button type="button" class="cf part-card svc g-common${sold.has('refine') ? ' sold' : ''}" data-buy="refine"><b class="cf-name">다듬기</b><span class="cf-win"><i class="ico" style="${iconArt('s.refine')}"></i></span><small class="cf-desc">${descLines('카드 한 장을 다듬는다. (태엽 −1)')}</small>${tag('refine', ascPrice(SHOP.refinePrice))}</button>
-        <button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><small class="cf-desc">${descLines('덱에서 카드 한 장을 버린다. (영구)')}</small>${tag('remove', ascPrice(SHOP.removePrice))}</button>
+        ${svcShown.has('heal') ? `<button type="button" class="cf part-card svc g-common${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><b class="cf-name">정비</b><span class="cf-win"><i class="ico" style="${iconArt('s.heal')}"></i></span><small class="cf-desc">${descLines(`분대 전원을 손본다. (HP +${Math.round(SHOP.healPct * 100)}%)`)}</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>` : ''}
+        ${svcShown.has('refine') ? `<button type="button" class="cf part-card svc g-common${sold.has('refine') ? ' sold' : ''}" data-buy="refine"><b class="cf-name">다듬기</b><span class="cf-win"><i class="ico" style="${iconArt('s.refine')}"></i></span><small class="cf-desc">${descLines('카드 한 장을 다듬는다. (태엽 −1)')}</small>${tag('refine', refinePrice())}</button>` : ''}
+        ${svcShown.has('remove') ? `<button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><small class="cf-desc">${descLines('덱에서 카드 한 장을 버린다. (영구)')}</small>${tag('remove', removePrice())}</button>` : ''}
       </div></div></div>`);
     pxRail(el.querySelector<HTMLElement>('.shop-scroll')!);
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
@@ -1643,26 +1669,28 @@ const shopScreen = (): void => {
         const [kind, id] = (btn.dataset.buy ?? '').split(':');
         const key = kind === 'card' ? id : kind;
         if (sold.has(key)) return;
-        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : kind === 'refine' ? ascPrice(SHOP.refinePrice) : kind === 'rewind' ? ascPrice(CHARM_NUM.shopRewindPrice) : kind === 'revive' ? ascPrice(CHARM_NUM.shopRevivePrice) : ascPrice(SHOP.removePrice);
+        const cost = kind === 'card' ? price(id as CommandId) : kind === 'part' ? partPrice(id as SlicePartId) : kind === 'heal' ? ascPrice(SHOP.healPrice) : kind === 'refine' ? refinePrice() : kind === 'rewind' ? ascPrice(CHARM_NUM.shopRewindPrice) : kind === 'revive' ? ascPrice(CHARM_NUM.shopRevivePrice) : removePrice();
         if (gold < cost) return toast(`‘나사가 모자라.’ (${cost} 필요)`);
         const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : kind === 'rewind' || kind === 'revive' ? `${josa(CHARMS[kind].name, '을')} 산다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
           // 나사로 다듬기 (D-218 — 남는 나사를 쓸 곳 · 강화 경로): 고르면 값을 치르고 고물상으로 돌아온다
-          if (kind === 'refine') return refineScreen(render, () => { gold -= cost; sold.add(key); render(); });
+          if (kind === 'refine') return refineScreen(render, () => { gold -= cost; svcUsed.refine += 1; sold.add(key); render(); });
           if (kind === 'remove') {
             return deckView('remove', (removed) => {
               if (removed) {
                 gold -= cost;
+                svcUsed.remove += 1;
                 sold.add(key);
               }
               render();
             });
           }
+          // 부품 칸이 가득이면 녹일 것을 먼저 고른다 (D-247) — 두고 가면 값을 치르지 않는다
+          if (kind === 'part') return gainPart(id as SlicePartId, (took) => { if (took) { gold -= cost; sold.add(key); sfx('coin'); } render(); });
           gold -= cost;
           sold.add(key);
           sfx('coin');
           if (kind === 'card') deck.push(id as CommandId);
-          if (kind === 'part') (parts.push(id as SlicePartId), newParts.add(id as SlicePartId));
           if (kind === 'rewind' || kind === 'revive') charms[kind] += 1;
           if (kind === 'heal') squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * SHOP.healPct)) }));
           render();
@@ -1685,11 +1713,15 @@ const forgeScreen = (): void => {
   // 작업대에 들르면 깨진 심장 톱니를 모두 새로 끼운다 (D-219 — 고르지 않아도 된다)
   const mend = mendSquad(squad);
   squad = mend.squad;
+  // 셋 중 둘만 (D-247): 출하 씨앗으로 정해 이어하기에서도 같다
+  const frng = sub();
+  const hide = (['refine', 'remove', 'repair'] as const)[frng.int(3)];
+  const opt = (k: 'refine' | 'remove' | 'repair', html: string) => (ECON.forgeOpts >= 3 || k !== hide ? html : '');
   const el = openOverlay(`<h2>작업대 <span class="dim">— 하나를 고릅니다</span></h2>${mend.mended.length ? `<p class="mend-line">${mend.mended.map((u) => `<span class="mend">${lifePips(u, 'mend')} ${u.name}</span>`).join(' ')} <span class="dim">${LIFE_TEXT.mended(mend.mended.map((u) => u.name ?? '').join(' · '))}</span></p>` : ''}
     <div class="part-cards">
-      <button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>
-      <button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small></button>
-      <button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>
+      ${opt('refine', `<button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>`)}
+      ${opt('remove', `<button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small></button>`)}
+      ${opt('repair', `<button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>`)}
     </div>`);
   el.querySelectorAll<HTMLElement>('[data-forge]').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -1710,28 +1742,30 @@ const forgeScreen = (): void => {
 
 /** 다듬기: 태엽 1 이상이고 아직 다듬지 않은 카드 중 하나 */
 /** 다듬기 화면 — back = 그만두면 돌아갈 곳, done = 다듬은 뒤 (작업대: 다음 노드로 · 고물상: 값을 치르고 고물상으로, D-218) */
-const refineScreen = (back: () => void = forgeScreen, done: () => void = advance): void => {
-  const ids = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
-  // D-245 (사용자: 「다듬기 화면 쓰레기 같다」): 잘린 목록 대신 보상 화면과 같은 카드 얼굴을 가로로 — 꼬리에 「태엽 2 → 1」
-  const el = openOverlay(`<h2>다듬기 <span class="dim">— 카드 하나</span></h2><p>고른 카드 한 장이 「+」가 되어 태엽이 하나 줄어듭니다.</p>${ids.length
+const refineScreen = (back: () => void = forgeScreen, done: () => void = advance): void =>
+  pickCardScreen('다듬기 <span class="dim">— 카드 하나</span>', '고른 카드 한 장이 「+」가 되어 태엽이 하나 줄어듭니다. 녹슨 카드는 녹을 벗습니다.', [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1), (rid) => {
+    deck[deck.indexOf(rid)] = refineOnce(rid);
+    refined.push(rid);
+    sfx('stamp');
+    toast(`${COMMANDS[rid].name} 한 장 — 태엽 −1`);
+    window.setTimeout(done, 300);
+  }, back, '다듬는다');
+
+/**
+ * 카드 한 장 고르기 (다듬기 · 저울추): 보상 화면과 같은 카드 얼굴을 가로로, 카드 안 아래에 「태엽 2 → 1」 (D-245).
+ * 두 단계 확인 (choose의 「다듬는다」 · 「올린다」).
+ */
+const pickCardScreen = (title: string, desc: string, ids: CommandId[], onPick: (id: CommandId) => void, back: () => void, verb = '저울에 올린다'): void => {
+  const el = openOverlay(`<h2>${title}</h2><p>${desc}</p>${ids.length
     ? `<div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards refine-cards">${ids
         .map((id) => cardFace(id, `data-ref="${id}"`, `<span class="refine-tag" aria-label="태엽 ${COMMANDS[id].cost}에서 ${COMMANDS[id].cost - 1}로">태엽 ${COMMANDS[id].cost} → <i>${COMMANDS[id].cost - 1}</i></span>`))
         .join('')}</div></div></div>`
-    : '<p class="dim">다듬을 카드가 없습니다.</p>'}<div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
+    : '<p class="dim">고를 카드가 없습니다.</p>'}<div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
   const rs = el.querySelector<HTMLElement>('.reward-scroll');
   if (rs) pxRail(rs);
   el.querySelector('[data-back]')!.addEventListener('click', back);
   el.querySelectorAll<HTMLElement>('[data-ref]').forEach((btn) =>
-    btn.addEventListener('click', () =>
-      choose(btn, `${josa(COMMANDS[btn.dataset.ref as CommandId].name, '을')} 다듬는다`, () => {
-        const rid = btn.dataset.ref as CommandId;
-        deck[deck.indexOf(rid)] = refinedOf(baseOf(rid));
-        refined.push(rid);
-        sfx('stamp');
-        toast(`${COMMANDS[btn.dataset.ref as CommandId].name} 한 장 — 태엽 −1`);
-        window.setTimeout(done, 300);
-      }),
-    ),
+    btn.addEventListener('click', () => choose(btn, `${josa(COMMANDS[btn.dataset.ref as CommandId].name, '을')} ${verb}`, () => onPick(btn.dataset.ref as CommandId))),
   );
 };
 
@@ -1846,7 +1880,7 @@ const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void =>
   if (btn.classList.contains('chosen')) return void confirmChoice(btn, onConfirm);
   // 한 번 탭 (D-198, 사용자 승인): 보상 · 영입 · 부품처럼 물릴 일이 적은 선택은 바로 고르고 잠깐 「되돌리기」만 남긴다.
   // 나사를 쓰는 고물상 구매 · 카드 빼기 · 다듬기는 지금처럼 두 단계
-  const quick = !btn.matches('[data-buy]') && !/뺀다|다듬는다/.test(label);
+  const quick = !btn.matches('[data-buy]') && !/뺀다|다듬는다|저울에 올린다|녹인다/.test(label);
   panel.querySelectorAll('.chosen').forEach((x) => x.classList.remove('chosen'));
   panel.classList.add('choosing');
   btn.classList.add('chosen');
@@ -2179,7 +2213,6 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
         <p class="rest-line">정비 완료 · 남은 분대 HP +${Math.round(REST.heal * 100)}% ${squad.map((u) => `<span class="rest-u" title="${u.name ?? PIECE_NAMES_KO[u.t]}">${pieceImg(u.t, 0, 'small', 18)}${u.hp}${lifePips(u, justCracked.includes(u.serial ?? '') ? 'break' : '')}</span>`).join('')}${fallen.length ? ` <span class="bad">쓰러짐 ${fallen.length}</span>` : ''}</p></div></div>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
-          <button class="btn" type="button" data-remove>카드 빼기</button>
           <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${josa([...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name, '을')} HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
       pxRail(el.querySelector<HTMLElement>('.reward-scroll')!);
@@ -2207,9 +2240,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       const skipBtn = el.querySelector<HTMLElement>('[data-skip]')!;
       skipBtn.addEventListener('click', () => choose(skipBtn, '아무것도 받지 않는다', () => (draft('card', offers, null), advance())));
       // 카드 빼기: 한 장 빼면 다음 판, 그만두면 보상 화면으로 돌아온다
-      el.querySelector('[data-remove]')!.addEventListener('click', () =>
-        deckView('remove', (removed) => (removed ? (draft('card', offers, 'remove'), advance()) : showReward())),
-      );
+      // 보상 화면의 카드 빼기는 뺐다 (D-247 — 대국마다 공짜로 뺄 수 있어 너무 잦았다). 빼기는 고물상(값이 오른다) · 작업대에서만
       const ohBtn = el.querySelector<HTMLElement>('[data-overhaul]')!;
       ohBtn.addEventListener('click', () =>
         choose(ohBtn, '카드 대신 분대를 정비한다', () => {
@@ -2466,6 +2497,35 @@ const kitPick = (head: string, then: () => void): void => {
   );
 };
 
+/**
+ * 부품 칸 (D-247): 칸이 남으면 바로 단다. 가득 차 있으면 녹일 부품 하나를 고른다(나사 +meltBack) — 새 부품을 버려도 된다.
+ * done(true) = 달았다 · done(false) = 새 부품을 버렸다
+ */
+const gainPart = (id: SlicePartId, done: (took: boolean) => void): void => {
+  if (parts.length < ECON.partSlots) {
+    parts.push(id);
+    newParts.add(id);
+    return done(true);
+  }
+  const el = openOverlay(`<h2><span class="pass-tag bad">칸 가득</span> 부품 칸 ${ECON.partSlots}개가 모두 찼습니다</h2><p>${josa(SLICE_PARTS[id].name, '을')} 달려면 하나를 녹여야 합니다. 녹인 부품은 나사 ${ECON.meltBack}이 됩니다.</p>
+    <div class="part-cards melt-cards">${parts.map((pid) => partFace(pid, `data-melt="${pid}"`)).join('')}</div>
+    <div class="row"><button class="btn" type="button" data-keep>${josa(SLICE_PARTS[id].name, '을')} 두고 간다</button></div>`);
+  gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
+  el.querySelector('[data-keep]')!.addEventListener('click', () => done(false));
+  el.querySelectorAll<HTMLElement>('[data-melt]').forEach((btn) =>
+    btn.addEventListener('click', () =>
+      choose(btn, `${josa(SLICE_PARTS[btn.dataset.melt as SlicePartId].name, '을')} 녹인다`, () => {
+        parts[parts.indexOf(btn.dataset.melt as SlicePartId)] = id;
+        newParts.add(id);
+        gold += ECON.meltBack;
+        sfx('stamp');
+        toast(`${SLICE_PARTS[btn.dataset.melt as SlicePartId].name} — 녹였다 (나사 +${ECON.meltBack})`);
+        done(true);
+      }),
+    ),
+  );
+};
+
 /** 부품 고르기 (검문! 통과): 셋 중 하나 */
 const partPick = (head: string, then: () => void, elite = false): void => {
   const rng = sub();
@@ -2486,9 +2546,7 @@ const partPick = (head: string, then: () => void, elite = false): void => {
     btn.addEventListener('click', () =>
       choose(btn, `${josa(SLICE_PARTS[btn.dataset.part as SlicePartId].name, '을')} 단다`, () => {
         draft(elite ? 'part_elite' : 'part', offers, btn.dataset.part!);
-        parts.push(btn.dataset.part as SlicePartId);
-        newParts.add(btn.dataset.part as SlicePartId);
-        then();
+        gainPart(btn.dataset.part as SlicePartId, () => then());
       }),
     ),
   );
@@ -2901,6 +2959,7 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   track('run_start', { seed, asc: level, daily: day, first: firstShip, run: readMeta(store).runs + 1 });
   acts = buildRun(seed, level, firstShip);
   shopsSeen = 0;
+  svcUsed = { refine: 0, remove: 0 };
   R = new Rng(seed ^ 0x51c3);
   actI = 0;
   rowI = 0;
@@ -2911,7 +2970,8 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   parts = [];
   deck = [...START_DECK];
   picked = [[], [], []];
-  eventBag = [...SLICE_EVENT_IDS];
+  // 최근 출하에서 만난 사건은 이번 가방에서 뺀다 (D-247, 사용자: 「랜덤 인카운터가 너무 동일하게 반복」) — 가방이 비면 다시 전부
+  { const recent = readMeta(store).evRecent ?? []; eventBag = SLICE_EVENT_IDS.filter((x) => !recent.includes(x)); if (eventBag.length < 4) eventBag = [...SLICE_EVENT_IDS]; }
   runId = `${new Date().toISOString().slice(0, 16).replace('T', ' ')}${day ? ' · 오늘의 출하' : ''}${level ? ` · 승급 ${level}` : ''}`;
   squad = [];
   metaCache = null;
@@ -2927,7 +2987,7 @@ const newRun = (seed: number, level: number, day: string | null): void => {
 
 /** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
 const saveRun = (at: 'map' | 'battle', node?: number): void =>
-  writeSave(store, { v: 2, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip });
+  writeSave(store, { v: 2, seed: runSeed, asc, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, svc: svcUsed });
 
 /** 저장한 출하를 되살린다 */
 const loadRun = (sv: RunSave): void => {
@@ -2935,6 +2995,7 @@ const loadRun = (sv: RunSave): void => {
   asc = sv.asc;
   daily = sv.daily;
   firstShip = !!sv.first;
+  svcUsed = sv.svc ?? { refine: 0, remove: 0 };
   runLive = true;
   acts = buildRun(sv.seed, sv.asc, firstShip);
   R = new Rng(sv.rng);
@@ -3199,4 +3260,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

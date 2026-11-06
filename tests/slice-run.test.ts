@@ -71,7 +71,7 @@ describe('사건 (D-170)', () => {
   it('열두 사건 모두 선택지를 고르면 상태가 규칙대로 바뀐다 (막히는 선택은 이유를 준다)', async () => {
     const { SLICE_EVENTS, SLICE_EVENT_IDS } = await import('../src/slice/events');
     const { Rng } = await import('../src/engine/rng');
-    expect(SLICE_EVENT_IDS).toHaveLength(13); // + 떠돌이 땜장이 (D-217)
+    expect(SLICE_EVENT_IDS).toHaveLength(15); // + 떠돌이 땜장이 (D-217) · 저울추 · 컨베이어 (D-247)
     for (const id of SLICE_EVENT_IDS) {
       for (const c of SLICE_EVENTS[id].choices) {
         const s = { squad: [{ t: 'K' as const }, { t: 'P' as const, name: 'a' }, { t: 'P' as const, name: 'b' }, { t: 'N' as const, name: 'c' }], deck: [...START_COMMANDS], refined: [] as never[], gold: 100 };
@@ -85,6 +85,24 @@ describe('사건 (D-170)', () => {
     const poor = { squad: [{ t: 'K' as const }], deck: [], refined: [], gold: 0 };
     expect(SLICE_EVENTS.gambler.choices[0].blocked!(poor)).toBeTruthy();
     expect(SLICE_EVENTS.swapDealer.choices[0].blocked!(poor)).toBeTruthy();
+  });
+});
+
+describe('저울추 · 녹슨 카드 (D-247)', () => {
+  it('고른 카드는 태엽 −1, 다른 카드 한 장은 녹슬어 태엽 +1 · 녹슨 카드를 다듬으면 원래대로', async () => {
+    const { counterweight } = await import('../src/slice/events');
+    const { COMMANDS, refineOnce, rustOnce } = await import('../src/slice/cards');
+    const { Rng } = await import('../src/engine/rng');
+    const s = { squad: [{ t: 'K' as const }], deck: ['leap', 'advance', 'order'] as never[], refined: [] as never[], gold: 0 };
+    const before = s.deck.reduce((a: number, id: string) => a + COMMANDS[id as keyof typeof COMMANDS].cost, 0);
+    const text = counterweight(s, 'leap' as never, new Rng(1));
+    expect(text).toContain('녹슨다');
+    expect(s.deck[0]).toBe('leap+');
+    expect(s.deck.filter((id: string) => id.endsWith('~'))).toHaveLength(1);
+    expect(s.deck.reduce((a: number, id: string) => a + COMMANDS[id as keyof typeof COMMANDS].cost, 0)).toBe(before);
+    expect(refineOnce(rustOnce('leap' as never))).toBe('leap');
+    expect(rustOnce('leap+' as never)).toBe('leap');
+    expect(COMMANDS['order~' as keyof typeof COMMANDS].cost).toBe(COMMANDS['order' as keyof typeof COMMANDS].cost + 1);
   });
 });
 

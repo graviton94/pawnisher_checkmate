@@ -42,6 +42,8 @@ export interface RunSave {
   charms?: { revive: number; rewind: number };
   /** 처음 출하 (D-232): 1막 반장 HP −35% · 첫 고물상 맞물림 부품 */
   first?: boolean;
+  /** 고물상 다듬기 · 빼기 쓴 횟수 (D-247 — 값이 오른다) */
+  svc?: { refine: number; remove: number };
 }
 
 /** 쌓이는 기록 (출하를 넘어 남는다) */
@@ -65,6 +67,8 @@ export interface Meta {
   /** 열린 용어 · 아직 안 읽은 새 용어 (D-233 단계 공개) */
   terms?: string[];
   termsNew?: string[];
+  /** 최근 출하들에서 만난 사건 (D-247 — 다음 출하에서는 뒤로 미룬다) */
+  evRecent?: string[];
 }
 
 export interface Store {

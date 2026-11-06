@@ -16,7 +16,8 @@ export type BaseCommandId =
   | 'pawnStorm' | 'knightRaid' | 'bishopRay' | 'rookCharge' | 'kingDecree' | 'overload' | 'quickFix' | 'tempo' | 'bulwark' | 'bladeRain'
   | 'vent' | 'burst' | 'recall';
 /** 다듬은 카드는 한 장씩 「이름+」 변형이 된다 (작업대 다듬기 — 그 한 장만 태엽 −1, D-183) */
-export type CommandId = BaseCommandId | `${BaseCommandId}+`;
+/** `+` = 다듬은 카드(태엽 −1) · `~` = 녹슨 카드(태엽 +1, D-247 저울추 사건) */
+export type CommandId = BaseCommandId | `${BaseCommandId}+` | `${BaseCommandId}~`;
 
 /**
  * 빌드 축 (D-144 — 덱빌딩의 "부서지는" 맛): 축마다 카드 몇 장 + 규칙을 깨는 부품 하나가 맞물린다.
@@ -131,12 +132,18 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
 /** 다듬은 변형: 이름 뒤에 +, 태엽 −1 (0 아래로는 안 내려간다). 나머지는 원본 그대로 */
 export const refinedOf = (id: BaseCommandId): CommandId => `${id}+`;
 /** 변형이면 원본 id */
-export const baseOf = (id: CommandId): BaseCommandId => (id.endsWith('+') ? id.slice(0, -1) : id) as BaseCommandId;
+export const baseOf = (id: CommandId): BaseCommandId => (id.endsWith('+') || id.endsWith('~') ? id.slice(0, -1) : id) as BaseCommandId;
 export const isRefined = (id: CommandId): boolean => id.endsWith('+');
+export const isRusted = (id: CommandId): boolean => id.endsWith('~');
+/** 한 번 다듬기: 녹슨 카드는 녹을 벗고(원본), 원본은 「+」 */
+export const refineOnce = (id: CommandId): CommandId => (isRusted(id) ? baseOf(id) : refinedOf(baseOf(id)));
+/** 한 번 녹슬기 (D-247): 다듬은 카드는 「+」를 잃고(원본), 원본은 「−」(태엽 +1) */
+export const rustOnce = (id: CommandId): CommandId => (isRefined(id) ? baseOf(id) : (`${baseOf(id)}~` as CommandId));
 export const COMMANDS = Object.fromEntries(
   (Object.entries(BASE_COMMANDS) as [BaseCommandId, CommandDef][]).flatMap(([id, c]) => [
     [id, c],
     [refinedOf(id), { ...c, name: `${c.name}+`, cost: Math.max(0, c.cost - 1) }],
+    [`${id}~`, { ...c, name: `${c.name}−`, cost: c.cost + 1 }],
   ]),
 ) as Record<CommandId, CommandDef>;
 
@@ -190,7 +197,7 @@ export const CARD_GRADE: Partial<Record<string, Grade>> = {
   // 등반 감사 재측정 (D-227): 손본 뒤 가치 12 넘은 카드
   reload: 'rare', knightRaid: 'rare', draft: 'rare', kingGuard: 'rare', bishopRay: 'rare',
 };
-export const gradeOf = (id: string): Grade => CARD_GRADE[id.replace(/\+$/, '')] ?? 'common';
+export const gradeOf = (id: string): Grade => CARD_GRADE[id.replace(/[+~]$/, '')] ?? 'common';
 /** 보상 한 칸이 어느 등급으로 나오나 (가중치) — 검문 · 반장은 elite */
 export const GRADE = {
   // D-217 2: 카드 한 장 기준 빈도가 일반 > 희귀 > 황금이 되게 (카드 일반 18 · 희귀 15 · 황금 4장 → 대국 보상 한 칸에서 한 장이 나올 확률 3.6% · 2.1% · 1.3%)
@@ -218,6 +225,21 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
 /** refinePrice (D-218): 고물상 다듬기 — 남는 나사를 강화로 */
 export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 5, parts: 1 }; // 진열대 = 카드 5 + 부품 1 (부적이 나오면 카드 한 자리), 아래 줄 정비 · 다듬기 · 빼기 고정 (2026-11-05 3×3)
 export const FORGE = { repairPct: 0.4 };
+/**
+ * 경제 압박 (D-247, 사용자: 「수리 · 강화 · 빼기를 너무 자주 고를 수 있고, 슬롯도 없어 돈을 펑펑 쓰면 된다 — 한정된 재화로 고민하는 게 아니라」):
+ * 부품 칸 · 서비스 값 누적(슬더스식 빼기 값 오름) · 고물상 서비스는 셋 중 둘만 · 작업대도 셋 중 둘.
+ */
+export const ECON = {
+  /** 부품 칸 — 넘치면 하나를 녹여(나사 meltBack) 자리를 낸다 */
+  partSlots: 5,
+  meltBack: 20,
+  /** 고물상 다듬기 · 빼기는 출하 내내 쓸 때마다 값이 오른다 */
+  svcStep: 25,
+  /** 고물상 아래 줄 서비스(정비 · 다듬기 · 빼기) 중 진열되는 수 */
+  shopSvc: 2,
+  /** 작업대 선택지 (다듬기 · 빼기 · 수리) 중 나오는 수 */
+  forgeOpts: 2,
+};
 
 /** 밀치기 충돌 피해 (밀린 적과 부딪힌 기물 둘 다) */
 // 18: 조합 봇에서 쇠망치 + 밀치기 카드가 기준의 약 1.9배 (12일 땐 1.5배 — 축 단독 2배 목표, D-154)

@@ -1932,3 +1932,6 @@ body.slice .cf .refine-tag { display: block; margin-top: auto; padding: 4px 0 2p
 body.slice .cf .refine-tag i { font: inherit; font-style: normal; color: #7ee0a1; }
 /* 다듬을 카드가 넷 이상이면 찌그러뜨리지 말고 가로로 넘긴다 */
 body.slice .reward-cards.refine-cards { grid-auto-columns: 128px; justify-content: start; }
+/* 부품 칸 가득 (D-247): 다섯 장이 한 줄에 */
+body.slice .part-cards.melt-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+body.slice .part-cards.melt-cards .cf-desc { font-size: 12px; font-family: Galmuri11, sans-serif; }

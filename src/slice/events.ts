@@ -1,7 +1,7 @@
 import type { PieceType } from '../engine';
 import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
-import { baseOf, COMMANDS, isRefined, refinedOf, type CommandId } from './cards';
+import { COMMANDS, isRefined, REWARD_COMMANDS, refineOnce, rustOnce, type CommandId } from './cards';
 import type { Crew } from './crew';
 import { crewMaxHp } from './battle';
 
@@ -9,7 +9,7 @@ import { crewMaxHp } from './battle';
  * 사건 (R5-3, D-170): 본편 돌발 12종(D-158 문체)을 시험판 체계(분대원 · 카드 · 부품 · 나사)로 옮겼다.
  * 효과는 순수 함수 — 화면은 결과 문구와 후속(부품 고르기)만 받는다. 무작위가 걸린 선택은 「?」(말투 원칙 11).
  */
-export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe';
+export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe' | 'counterweight' | 'conveyor';
 
 /** 사건이 바꿀 수 있는 출하 상태 */
 export interface EventState {
@@ -26,6 +26,8 @@ export interface EventOutcome {
   partPick?: boolean;
   /** 새로 들어온 분대원 (이름 붙이기는 화면이) */
   recruit?: PieceType;
+  /** 카드를 하나 고르게 한 뒤 counterweight()로 마무리한다 (D-247 저울추) */
+  cardPick?: 'counterweight';
   /** 확률 선택이면 실제로 걸린 칸 (desc의 「n%: …」 순서, 0부터) — 화면이 룰렛을 그 칸에 세운다 (D-244) */
   slot?: number;
 }
@@ -57,9 +59,26 @@ const refinable = (s: EventState) => [...new Set(s.deck)].filter((id) => !isRefi
 const refineRandom = (s: EventState, rng: Rng): string => {
   const id = pick(rng, refinable(s));
   if (!id) return '다듬을 카드가 없었다.';
-  s.deck[s.deck.indexOf(id)] = refinedOf(baseOf(id));
+  s.deck[s.deck.indexOf(id)] = refineOnce(id);
   s.refined.push(id);
   return `${COMMANDS[id].name} 한 장 — 태엽 −1`;
+};
+/** 저울추에 올릴 수 있는 카드: 태엽을 더 줄일 수 있는 것 (녹슨 것 포함) */
+export const weighable = (s: EventState): CommandId[] => [...new Set(s.deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
+/**
+ * 비뚤어진 저울추 (D-247, 사용자: 「고른 카드 비용 1 내리지만 무작위 카드 1장 비용 1 올리는 이벤트」):
+ * 고른 카드 한 장은 한 번 다듬고, 덱의 다른 카드 하나(고른 것 말고)가 녹슨다.
+ */
+export const counterweight = (s: EventState, chosen: CommandId, rng: Rng): string => {
+  const i = s.deck.indexOf(chosen);
+  if (i < 0) return '추가 헛돈다.';
+  s.deck[i] = refineOnce(chosen);
+  s.refined.push(chosen);
+  const others = s.deck.map((id, k) => [id, k] as const).filter(([id, k]) => k !== i && !id.endsWith('~'));
+  const o = pick(rng, others);
+  if (!o) return `${COMMANDS[chosen].name} — 태엽 −1. 반대쪽 접시는 비어 있었다.`;
+  s.deck[o[1]] = rustOnce(o[0]);
+  return `${COMMANDS[chosen].name} — 태엽 −1. 반대쪽 접시의 ${josa(COMMANDS[o[0]].name, '이')} 녹슨다. (태엽 +1)`;
 };
 const hpRatio = (s: EventState, pct: number) => {
   s.squad = s.squad.map((u) => {
@@ -234,6 +253,33 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     choices: [
       { label: '부수기', desc: '나사 +70. 분대 전원 HP −25%.', apply: (s) => { s.gold += 70; hpRatio(s, -0.25); return { text: '손잡이가 손을 벤다. 나사가 쏟아진다. (나사 +70 · HP −25%)' }; } },
       leave('떠나기'),
+    ],
+  },
+  counterweight: {
+    title: '비뚤어진 저울추',
+    text: '검수대 저울에 녹슨 추가 매달려 있다. 저울지기 폰이 속삭인다. “한쪽이 가벼워지면, 다른 쪽이 무거워지지.”',
+    choices: [
+      { label: '카드 하나를 올린다', desc: '고른 카드 태엽 −1 · 덱의 다른 카드 한 장(무작위) 태엽 +1', blocked: (s) => (weighable(s).length ? null : '올릴 카드가 없습니다'), apply: () => ({ text: '저울지기가 빈 접시를 내민다.', cardPick: 'counterweight' }) },
+      leave('지나가기'),
+    ],
+  },
+  conveyor: {
+    title: '거꾸로 도는 컨베이어',
+    text: '컨베이어가 거꾸로 돈다. 상자들이 당신 쪽으로 밀려온다. 레버 옆에 낙서가 있다. “넣은 만큼 바뀌어 나온다.”',
+    choices: [
+      { label: '카드 둘을 올린다', desc: '덱의 무작위 카드 2장이 무작위 새 카드 2장으로 바뀝니다.', blocked: (s) => (s.deck.length >= 6 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
+        const gone: string[] = [];
+        const got: string[] = [];
+        for (let n = 0; n < 2; n++) {
+          const k = rng.int(s.deck.length);
+          gone.push(COMMANDS[s.deck[k]].name);
+          const nid = REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
+          s.deck[k] = nid;
+          got.push(COMMANDS[nid].name);
+        }
+        return { text: `${josa(gone.join(' · '), '이')} 실려 가고, ${josa(got.join(' · '), '이')} 실려 온다.` };
+      } },
+      leave('레버를 놓는다'),
     ],
   },
 };
