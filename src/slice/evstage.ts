@@ -5,6 +5,7 @@
  */
 import type { PieceType } from '../engine';
 import { assemblyJudge, sealScrape } from './minigames';
+import { bay, block, fill as pf, INK as PINK, M, rivet, verdict, type VerdictKind } from '../view/pxkit';
 import { at, bayer, FxCanvas, hex, Lights, mix, OUTLINE, P, PAL, Painter, Particles, Rng, scale, WHITE, type Col } from '../view/pxfx';
 
 const D = 3;
@@ -66,8 +67,10 @@ class Stage {
   lights: Lights;
   shake = 0;
   items: HiItem[] = [];
+  private shown = false;
   constructor(public host: HTMLElement, seed: number) {
-    const r = host.getBoundingClientRect();
+    // 테(9-slice 패널) 안쪽만 — 캔버스는 안쪽 칸을 채운다
+    const r = { width: host.clientWidth, height: host.clientHeight };
     this.w = Math.floor(r.width / D);
     this.h = Math.floor(r.height / D);
     this.floor = this.h - 8;
@@ -152,6 +155,12 @@ class Stage {
       loop();
       window.setTimeout(end, 6000);
     });
+  }
+  /** 결과 알림 (D-259): 판결 명패 하나 — t가 t0를 넘는 첫 장에 한 번만 떨어진다 */
+  verdictAt(t: number, t0: number, text: string, kind: VerdictKind, sub?: string) {
+    if (this.shown || t < t0) return;
+    this.shown = true;
+    void verdict(this.host, text, kind, { sub, top: 4 });
   }
   jolt(t: number, t0: number, ms = 0.16, amp = 2) { this.shake = t >= t0 && t < t0 + ms ? (Math.floor(t * 24) % 2 ? amp : -amp) : 0; }
   /** 장면 그림을 디더로 어둡게 (장치가 주인공이 되게) */
@@ -245,7 +254,7 @@ const FX: Record<string, Fx> = {
         if (t > 0.62 && t < 0.78) p.sparkle(cx + 12, peak + 6, 4, PAL.gold[5], PAL.gold[3]);
         s.jolt(t, 1.25, 0.1, 1);
         hero(p, s, t, 1.4);
-        if (t > 1.42) s.text(c.good ? '앞면!' : '뒷면', cx, 12, 24, c.good ? '#f4d27a' : '#ff9a8a');
+        s.verdictAt(t, 1.42, c.good ? '앞면' : '뒷면', c.good ? 'good' : 'bad', c.good ? '부품 하나' : '분대원 HP −50%');
       },
       (dt, t) => {
         if (t > 1.25 && t - dt <= 1.25) for (let i = 0; i < 6; i++) s.ps.spawn(P.DUST, cx + s.R.range(-10, 10), s.floor, s.R.range(-40, 40), s.R.range(-10, -2), 0.6, PAL.wood[3], 3);
@@ -271,7 +280,7 @@ const FX: Record<string, Fx> = {
         s.jolt(t, 0.1, 0.16, 2);
         hero(p, s, t, 0.1);
         if (c.good && t > 0.2) p.sparkle(cardX + 18, cardY + 4, 3 + (Math.floor(t * 8) % 2), PAL.heal[5], PAL.heal[3]);
-        if (t > 0.3) s.text(c.good ? '태엽 −1' : '부서졌다', cx, 14, 24, c.good ? '#7ee0a1' : '#ff9a8a');
+        s.verdictAt(t, 0.3, c.good ? '벼려졌다' : '부서졌다', c.good ? 'good' : 'bad', c.good ? '카드 둘 태엽 −1' : '카드 둘을 잃었다');
       },
       (dt, t) => {
         if (t > 0.1 && t - dt <= 0.1) impact(s, cx, top, PAL.fire[6], 22);
@@ -284,12 +293,12 @@ const FX: Record<string, Fx> = {
    *  금 톱니 셋 = 희귀 부품 · 금 왕관 셋 = 승급 · 톱니 둘 + 금 간 톱니 = 불량(감전) */
   async brokenGacha(s, c) {
     const pick = c.diff.changed.length ? 'up' : c.good ? 'part' : 'miss';
-    await assemblyJudge(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, pick, { title: '판정기가 덜컹거린다', win: pick === 'part' ? '합격 — 금 톱니 셋' : '합격 — 금 왕관 셋', lose: '불량 — 불꽃이 튄다' });
+    await assemblyJudge(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, pick, { title: '조립 판정기', win: pick === 'part' ? '금 톱니 셋 · 희귀 부품' : '금 왕관 셋 · 승급', lose: '금 간 톱니 · 감전' });
   },
 
   /** 녹슨 봉인 상자 (D-256): 봉인판의 각인 칸 셋을 덮은 녹을 손가락으로 긁는다 — 금 톱니 셋이면 봉인이 풀린다, 아니면 녹 독 */
   async auction(s, c) {
-    await sealScrape(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, c.good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'], c.good, { title: '봉인판의 녹을 긁어낸다', win: '봉인이 풀렸다', lose: '녹 독이 피어오른다' });
+    await sealScrape(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, c.good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'], c.good, { title: '녹슨 봉인 상자', win: '희귀 부품', lose: '분대 HP −20%' });
   },
 
   /** 쇳물 담금질: 도가니(불 · 불씨 · 빛) 위로 사슬이 계단으로 내려가 잠김(김이 솟음) → 끌어올림: 달아오른 새 기물(번쩍) / 빈 갈고리에서 쇳물이 떨어짐 */
@@ -318,7 +327,7 @@ const FX: Record<string, Fx> = {
         if (c.good && to) { s.piece(to, cx, y, 72, pool + 1); if (t > 0.5 && t < 1.2 && Math.floor(t * 12) % 2) p.glow(cx, y - 12, 18, PAL.fire[6], 0.5); }
         else if (t > 0.5) for (let i = 0; i < 3; i++) { const dy = ((t * 40 + i * 9) % 20); p.rect(cx, y + dy, 1, 2, PAL.fire[5]); }
         crucible(p);
-        if (t > 0.6) s.text(c.good ? '다시 선다' : '삼켜졌다', cx, 14, 24, c.good ? '#f4d27a' : '#ff9a8a');
+        s.verdictAt(t, 0.6, c.good ? '다시 선다' : '삼켜졌다', c.good ? 'gold' : 'bad', c.good ? '한 단계 위로' : '분대원을 잃었다');
       },
       (dt, t) => {
         simPool(dt);
@@ -352,8 +361,8 @@ const FX: Record<string, Fx> = {
         scaleArt(p, eye, t); paper(p, t > 0.08);
         stamp(p, s.floor - 36 + Math.min(1, t / 0.08) * 16 - (t > 0.25 ? Math.min(1, (t - 0.25) / 0.2) * 16 : 0));
         s.jolt(t, 0.08, 0.1, 1);
-        if (c.good && t > 0.5) { s.piece(t < 0.9 && Math.floor(t * 12) % 2 ? 'P' : 'N', cx + 30, s.floor); s.text('승인', cx - 23, s.floor - 22, 12, '#f4d27a'); }
-        if (eye) { s.jolt(t, 0.35, 0.3, 2); s.text('!', cx, 4, 36, '#e5262f'); }
+        if (c.good && t > 0.5) { s.piece(t < 0.9 && Math.floor(t * 12) % 2 ? 'P' : 'N', cx + 30, s.floor); s.verdictAt(t, 0.5, '승인', 'gold', '폰 둘 → 나이트'); }
+        if (eye) { s.jolt(t, 0.35, 0.3, 2); s.verdictAt(t, 0.45, '들켰다', 'bad', '나사를 빼앗겼다'); }
       },
       (dt, t) => {
         if (t > 0.08 && t - dt <= 0.08) for (let i = 0; i < 10; i++) s.ps.spawn(P.GRIT, cx - 23 + s.R.range(-6, 6), s.floor - 14, s.R.range(-60, 60), s.R.range(-90, -30), 0.8, PAL.blood[5], 1);
@@ -403,7 +412,7 @@ const FX: Record<string, Fx> = {
         s.dim(p); s.ground(p); box(p, 5, Math.min(1, t / 0.25));
         s.jolt(t, 0, 0.2, 3);
         if (t > 0.6 && t < 0.85) for (let i = 0; i < 26; i++) { p.px(cx - 36 + i * 3, cy + 18 - i * 1.4, PAL.blood[6]); p.px(cx - 35 + i * 3, cy + 18 - i * 1.4, PAL.blood[4]); }
-        if (t > 0.6) { s.text(`나사 +${c.diff.gold}`, cx, 14, 24, '#f4d27a'); s.text('HP −25%', cx, s.h - 1, 12, '#ff9a8a'); }
+        s.verdictAt(t, 0.6, `나사 +${c.diff.gold}`, 'good', '분대 HP −25%');
       },
       (dt, t) => { if (t > 0.25 && t - dt <= 0.25) { screwBurst(s, cx, cy, 26, 200); s.lights.add(cx, cy, 40, PAL.gold[5], 1, 0.7); } },
     );
@@ -425,7 +434,7 @@ const FX: Record<string, Fx> = {
       for (let a = 0; a < 8; a++) p.px(cx + 16 + Math.cos(a * 0.785) * 6.5, y + Math.sin(a * 0.785) * 6.5, PAL.brass[4]);
       p.glow(cx + 16, y, 12, PAL.gold[5], 0.4);
       hero(p, s, t, 0.35);
-      if (t > 0.4) s.text('문턱 +1', cx, 14, 24, '#f4d27a');
+      s.verdictAt(t, 0.4, '문턱 +1', 'good');
     }, (dt, t) => { if (t > 0.35 && t - dt <= 0.35) { s.ps.burst(cx + 16, foot - 32, 14, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); s.lights.add(cx + 16, foot - 32, 26, PAL.gold[5], 0.9, 0.5); } });
   },
 
@@ -440,7 +449,7 @@ const FX: Record<string, Fx> = {
       else { card(p, x, y, { plus: true }); cardName(s, x, y, name, '#7ee0a1'); }
       const a = t * 7; for (let i = 0; i < 3; i++) { const px = cx + Math.cos(a + i * 2.09) * 20, py = y + 15 + Math.sin(a + i * 2.09) * 20; p.px(px, py, WHITE); p.glow(px, py, 4, PAL.brass[5], 0.5); }
       hero(p, s, t, 1);
-      if (t > 1.05) s.text('태엽 −1', cx, 12, 24, '#7ee0a1');
+      s.verdictAt(t, 1.05, '태엽 −1', 'good');
     }, (dt, t) => { if (s.R.chance(dt * 30)) { const a = t * 7; s.ps.spawn(P.SPARK, cx + Math.cos(a) * 20, y + 15 + Math.sin(a) * 20, s.R.range(-40, 40), s.R.range(-60, 0), 0.3); } if (t > 1 && t - dt <= 1) { s.ps.burst(cx, y + 15, 14, [40, 120], P.STAR, [0.4, 0.8], PAL.heal[5]); s.lights.add(cx, y + 15, 30, PAL.heal[5], 0.9, 0.5); } });
   },
 
@@ -455,7 +464,7 @@ const FX: Record<string, Fx> = {
       crate(p, t < 1.4 ? -8 : t < 1.5 ? -3 : 0);
       if (t < 1.35) s.piece(who, x, foot - (steps % 2));
       s.jolt(t, 1.5, 0.12, 1);
-      if (t > 1.7) s.text(`나사 +${c.diff.gold}`, s.w / 2, 14, 24, '#f4d27a');
+      s.verdictAt(t, 1.7, `나사 +${c.diff.gold}`, 'good');
     }, (dt, t) => {
       if (t > 1.5 && t - dt <= 1.5) for (let i = 0; i < 8; i++) s.ps.spawn(P.DUST, bx + 14 + s.R.range(-14, 14), foot - 2, s.R.range(-40, 40), s.R.range(-12, -2), 0.7, PAL.smoke[4], 3);
       if (t > 1.7 && t - dt <= 1.7) { screwBurst(s, bx + 14, foot - 26, 20, 180); s.lights.add(bx + 14, foot - 20, 30, PAL.gold[5], 0.8, 0.5); }
@@ -469,7 +478,7 @@ const FX: Record<string, Fx> = {
       await s.tap('눌러서 두드린다' + ` (${n + 1}/3)`, (t, p) => { s.dim(p); s.ground(p); anvil(p, cx, top, 0.6); hammer(p, cx + 22, top - 2, 1.2 + (Math.floor(t * 5) % 2 ? 0.1 : 0)); });
       await s.play(300, (t, p) => { s.dim(p); s.ground(p); anvil(p, cx, top, 1); hammer(p, cx + 22, top - 2, t < 0.06 ? 1.3 - (t / 0.06) * 1.2 : 0.1); s.jolt(t, 0.06, 0.1, 1); }, (dt, t) => { if (t > 0.06 && t - dt <= 0.06) impact(s, cx, top, PAL.fire[6], 20); });
     }
-    await s.play(1600, (t, p) => { s.dim(p); s.ground(p); anvil(p, cx, top, Math.max(0, 1 - t)); if (t > 0.3) s.text('HP +50%', cx, 14, 24, '#7ee0a1'); }, (dt) => { if (s.R.chance(dt * 40)) { const x = s.R.range(10, s.w - 10); s.ps.spawn(P.MOTE, x, s.floor - 4, 0, s.R.range(-40, -20), s.R.range(0.6, 1.2), PAL.heal[5], 1); if (s.R.chance(0.3)) s.ps.spawn(P.STAR, x, s.floor - 20 - s.R.range(0, 20), 0, 0, 0.6, PAL.heal[5], 2); } });
+    await s.play(1600, (t, p) => { s.dim(p); s.ground(p); anvil(p, cx, top, Math.max(0, 1 - t)); s.verdictAt(t, 0.3, '분대 HP +50%', 'good'); }, (dt) => { if (s.R.chance(dt * 40)) { const x = s.R.range(10, s.w - 10); s.ps.spawn(P.MOTE, x, s.floor - 4, 0, s.R.range(-40, -20), s.R.range(0.6, 1.2), PAL.heal[5], 1); if (s.R.chance(0.3)) s.ps.spawn(P.STAR, x, s.floor - 20 - s.R.range(0, 20), 0, 0, 0.6, PAL.heal[5], 2); } });
   },
 
   /** 쇳물 앞의 거래: 쇳물 웅덩이(불 · 불씨 · 빛)에 분대원이 계단으로 가라앉고 불이 확 솟는다 → 그림자 손이 빛나는 부품을 내민다 */
@@ -487,7 +496,7 @@ const FX: Record<string, Fx> = {
         p.circle(cx, y - 12, 5, INK); p.circle(cx, y - 12, 4, PAL.brass[4]); p.circle(cx - 1, y - 13, 2.5, PAL.brass[6]); p.px(cx, y - 12, INK);
         p.glow(cx, y - 12, 16, PAL.gold[5], 0.5);
       }
-      if (t > 1.9) s.text('부품 하나', cx, 14, 24, '#f4d27a');
+      s.verdictAt(t, 1.9, '부품 하나', 'gold');
     }, (dt, t) => {
       sim(dt);
       if (t > 1.1 && t - dt <= 1.1) { for (let i = 0; i < 20; i++) s.ps.spawn(P.FIRE, cx + s.R.range(-8, 8), pool, s.R.range(-20, 20), s.R.range(-90, -40), s.R.range(0.3, 0.7), 0, s.R.range(2, 3.5), 0, true); s.lights.add(cx, pool - 10, 40, PAL.fire[5], 1, 0.6); }
@@ -504,7 +513,7 @@ const FX: Record<string, Fx> = {
       [0, 1].forEach((i) => { const k = Math.min(1, Math.max(0, (t - i * 0.3) / 0.9)); const st = Math.floor(k * 7) / 7; const x = 14 + i * 14 + st * (cart + 10 + i * 10 - 14 - i * 14); if (t < 1.4 + i * 0.1) s.piece('P', x, foot - (k >= 1 ? 13 : Math.floor(t * 6 + i) % 2)); });
       if (t > 1.5) { const k = Math.min(1, (t - 1.5) / 0.45); const x = cart + 16 - k * 42, y = foot - 13 + k * 13 - Math.round(Math.sin(k * Math.PI) * 18); s.piece('N', x, y); }
       s.jolt(t, 1.95, 0.1, 1);
-      if (t > 2) s.text('나이트 +1', s.w / 2, 14, 24, '#f4d27a');
+      s.verdictAt(t, 2, '나이트 +1', 'gold');
     }, (dt, t) => { if (t > 1.95 && t - dt <= 1.95) for (let i = 0; i < 8; i++) s.ps.spawn(P.DUST, cart - 26 + s.R.range(-10, 10), foot - 1, s.R.range(-40, 40), s.R.range(-12, -2), 0.7, PAL.smoke[4], 3); });
   },
 
@@ -524,8 +533,8 @@ const FX: Record<string, Fx> = {
       card(p, cx - 41, ly - 30 + drop, { plus: t > 0.65 }); cardName(s, cx - 41, ly - 30 + drop, name, t > 0.65 ? '#7ee0a1' : '#f4f1ea');
       if (rust) { card(p, cx + 19, ry - 30, { rust: t > 1.1 }); cardName(s, cx + 19, ry - 30, rust, t > 1.1 ? '#ff9a8a' : '#f4f1ea'); if (t > 1 && t < 1.6) p.rect(cx + 19, ry - 30, 22, 30, PAL.rust[5], (t - 1) / 0.6 * 0.5); }
       s.jolt(t, 0.55, 0.1, 1);
-      if (t > 0.8) s.text('태엽 −1', cx - 30, 8, 12, '#7ee0a1');
-      if (t > 1.3 && rust) s.text('태엽 +1', cx + 30, 8, 12, '#ff9a8a');
+      s.verdictAt(t, 1.3, '태엽 −1', 'good', rust ? '다른 한 장 태엽 +1' : undefined);
+      
     }, (dt, t) => {
       if (t > 0.55 && t - dt <= 0.55) { s.ps.burst(cx - 30, ly0(), 10, [30, 90], P.SPARK, [0.2, 0.4]); }
       if (t > 1.1 && t < 2) if (s.R.chance(dt * 30)) s.ps.spawn(P.GRIT, cx + 30 + s.R.range(-10, 10), 36, s.R.range(-10, 10), 0, 1, PAL.rust[s.R.int(3) + 3], 1);
@@ -541,7 +550,7 @@ const FX: Record<string, Fx> = {
       s.dim(p); beltArt(p, t);
       c.diff.cardsOut.slice(0, 2).forEach((n, i) => { const x = s.w / 2 - 26 + i * 28 - Math.min(1, t / 1.2) * (s.w / 2 + 34); card(p, x, belt - 31); cardName(s, x, belt - 31, n.replace(/[+−]$/, '')); });
       c.diff.cardsIn.slice(0, 2).forEach((n, i) => { if (t < 0.9) return; const x = s.w + 4 + i * 28 - Math.min(1, (t - 0.9) / 1.2) * (s.w / 2 + 30); card(p, x, belt - 31); cardName(s, x, belt - 31, n.replace(/[+−]$/, '')); });
-      if (t > 2.1) s.text('바뀌어 나왔다', s.w / 2, 12, 24, '#f4d27a');
+      s.verdictAt(t, 2.1, '바뀌어 나왔다', 'good');
     }, (dt, t) => {
       if (s.R.chance(dt * 6)) s.ps.spawn(P.SMOKE, s.R.range(0, s.w), belt - 2, s.R.range(-8, 8), s.R.range(-20, -8), s.R.range(0.8, 1.4), hex('#8a8494'), s.R.range(2, 4));
       if (t > 2.1 && t - dt <= 2.1) { s.ps.burst(s.w / 2, belt - 16, 14, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); s.lights.add(s.w / 2, belt - 16, 30, PAL.gold[5], 0.8, 0.5); }
@@ -562,6 +571,58 @@ export const runEventFx = async (host: HTMLElement, c: EvFxCtx): Promise<void> =
   await fx(s, c);
   s.shake = 0;
   host.classList.add(c.good ? 'fx-good' : 'fx-bad');
+};
+
+/** 그림이 아직 없는 사건의 장면 기호 (ICON-01, 장면 그림 V-09~16이 오면 그것으로 바뀐다) */
+const STILL_ICON: Record<string, string> = { smith: 'bolt', swapDealer: 'medal-knight', safe: 'seal-slot', counterweight: 'tower', conveyor: 'gear' };
+/**
+ * 장면 그림이 없을 때의 정지 장면 (D-259): 같은 문법으로 찍은 공장 벽(철판 · 이음매 · 리벳 · 관) + 매달린 등의 계단 빛 웅덩이 + 장치.
+ * 판정기 · 봉인 상자는 미니게임과 같은 그림의 멈춘 장, 나머지는 철 표지판에 그 사건의 기호.
+ */
+export const sceneStill = (scene: HTMLElement, id: string): void => {
+  const r = { width: scene.clientWidth, height: scene.clientHeight };
+  const w = Math.max(60, Math.floor(r.width / D)), h = Math.max(45, Math.floor(r.height / D));
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  cv.className = 'ev-still';
+  const x = cv.getContext('2d')!;
+  // 벽: 철판 줄 · 세로 이음매 · 리벳
+  pf(x, M.iron[1], 0, 0, w, h);
+  for (let a = 0; a < w; a += 24) { pf(x, M.iron[0], a, 0, 1, h); pf(x, M.iron[2], a + 1, 0, 1, h); for (let b = 6; b < h - 10; b += 16) rivet(x, a + 3, b); }
+  pf(x, PINK, 0, 8, w, 6); pf(x, M.iron[3], 0, 9, w, 4); pf(x, M.iron[5], 0, 9, w, 1); // 관
+  // 매달린 등 + 계단 빛 웅덩이 (디더 띠 셋)
+  const lx = Math.round(w / 2);
+  pf(x, PINK, lx, 0, 1, 16); pf(x, PINK, lx - 5, 16, 11, 5); pf(x, M.brass[4], lx - 4, 16, 9, 3); pf(x, M.molten[6], lx - 2, 19, 5, 2);
+  for (let b = 21; b < h - 8; b++) for (let a = 0; a < w; a++) {
+    const d = Math.abs(a - lx) / ((b - 18) * 0.7 + 4);
+    if (d < 1) { const k = d < 0.4 ? 0.5 : d < 0.7 ? 0.3 : 0.14; if (bay(a, b) < k) pf(x, M.iron[3], a, b, 1, 1); }
+  }
+  // 바닥
+  pf(x, M.iron[0], 0, h - 8, w, 8); pf(x, M.iron[3], 0, h - 8, w, 1);
+  for (let a = 1; a < w; a += 4) if (bay(a, 2) < 0.5) pf(x, M.iron[2], a, h - 5, 2, 1);
+  const put = (art: HTMLCanvasElement) => {
+    // 장치는 정수 배율로 (가능하면 1도트 그대로) 가운데 아래에
+    const k = art.width <= w - 4 ? 1 : 0.5;
+    x.imageSmoothingEnabled = false;
+    if (k === 1) x.drawImage(art, Math.round((w - art.width) / 2), h - art.height);
+    else x.drawImage(art, 0, 0, art.width, art.height, Math.round((w - art.width / 2) / 2), h - Math.round(art.height / 2) - 2, Math.round(art.width / 2), Math.round(art.height / 2));
+  };
+  const label = { title: '', win: '', lose: '' };
+  if (id === 'brokenGacha') void assemblyJudge(scene, 'part', label, put);
+  else if (id === 'auction') void sealScrape(scene, ['gear-gold', 'gear-gold', 'gear-gold'], true, label, put);
+  else {
+    const ic = new Image();
+    ic.onload = () => {
+      const sw = 44, sh = 40, sx = Math.round((w - sw) / 2), sy = h - 8 - sh - 6;
+      pf(x, PINK, sx + sw / 2 - 12, sy - 14, 1, 14); pf(x, PINK, sx + sw / 2 + 11, sy - 14, 1, 14); // 매단 줄
+      block(x, sx, sy, sw, sh, M.iron, { mid: 3, shadow: 2 });
+      for (const [a, b] of [[sx + 1, sy + 1], [sx + sw - 4, sy + 1], [sx + 1, sy + sh - 4], [sx + sw - 4, sy + sh - 4]]) rivet(x, a, b);
+      x.drawImage(ic, sx + (sw - 32) / 2, sy + (sh - 32) / 2);
+    };
+    ic.src = `ui/props/ic32-${STILL_ICON[id] ?? 'gear'}.png`;
+  }
+  scene.querySelector('i')?.remove();
+  scene.prepend(cv);
 };
 
 void mix; void scale;

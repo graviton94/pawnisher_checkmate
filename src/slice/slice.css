@@ -403,15 +403,16 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 /* 사건 (D-170) */
 .ev-text { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 1.6; font-style: normal; color: #e2d9c8; max-width: 60ch; }
 .ev-choices { display: grid; gap: 8px; }
-.ev-choice { display: grid; gap: 2px; text-align: left; min-height: 52px; padding: 8px 12px; color: #f2ede4; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 3px 0 0 #c89b3c, inset 0 0 0 2px #46404f; }
+/* D-259: 선택지 = 철 단추(크롬 9-slice), 고르면 황동 단추 — 얇은 선 상자 금지 */
+.ev-choice { display: grid; gap: 2px; text-align: left; min-height: 52px; padding: 2px 6px 4px; color: #f2ede4; background: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / 8px stretch; image-rendering: pixelated; box-shadow: none; }
 .ev-choice b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; } .ev-choice small { font-size: 12px; font-family: Galmuri11, sans-serif; color: #d6d0c6; } .ev-choice em { font-size: 12px; font-family: Galmuri11, sans-serif; font-style: normal; color: #ff9a8a; }
 .ev-choice.off { filter: grayscale(0.8) brightness(0.6); }
 .panel.choosing .ev-choice:not(.chosen) { filter: brightness(0.55) grayscale(0.4); }
-.ev-choice.chosen { box-shadow: 0 0 0 2px #000, inset 3px 0 0 #f4d27a, inset 0 0 0 3px #f4d27a; }
+.ev-choice.chosen { border-image-source: url('../assets/ui/chrome/btn-brass.png'); color: #2a1a06; box-shadow: none; } .ev-choice.chosen small, .ev-choice.chosen .ev-again { color: #3a2408; }
 .mnd.nd-event i { background: #c9a8ff; } .nd-event .ico { background: #c9a8ff; }
 /* 사건 장면 칸 (슬더스식): 왼쪽 4:3 그림 · 오른쪽 서술 · 선택지 */
 .ev-wrap { display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); gap: 14px; align-items: start; }
-.ev-scene { position: relative; aspect-ratio: 4 / 3; max-width: 100%; display: grid; place-items: center; background: linear-gradient(transparent, transparent); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #8a6a32; overflow: hidden; }
+.ev-scene { position: relative; aspect-ratio: 4 / 3; max-width: 100%; display: grid; place-items: center; background: linear-gradient(transparent, transparent); border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; overflow: hidden; }
 .ev-scene img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
 .ev-scene i { width: 30%; height: 40%; background: #5a4a2e; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; }
 .ev-body { display: grid; gap: 8px; min-width: 0; }
@@ -874,7 +875,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, inset 4px 0 0 var(--tone); transition: transform 180ms var(--snap),   box-shadow 140ms; }
 .part-card.chosen, .reward-cards .cmd.chosen, .deck-grid .cmd.chosen, .row .btn.chosen { transform: translateY(-6px) !important; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 #000 !important; animation: lift4 180ms var(--snap) both; }
 @keyframes lift4 { from { transform: translateY(0); } to { transform: translateY(-6px); } }
-.ev-choice.chosen { transform: translateY(-4px); box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15; animation: lift4b 180ms var(--snap) both; }
+.ev-choice.chosen { transform: translateY(-4px); animation: lift4b 180ms var(--snap) both; }
 @keyframes lift4b { from { transform: none; } to { transform: translateY(-4px); } }
 .mnd.now.chosen { transform: translate(-50%, calc(-50% - 6px)); }
 /* 안내: 꺾쇠 하나 — 금 = 할 것, 진홍 = 위험 (부드러운 깜빡 · 번진 빛 대신) */
@@ -1941,15 +1942,14 @@ body.slice .part-cards.melt-cards .cf-desc { font-size: 12px; font-family: Galmu
 .ev-stage .ev-scene.fx-good { box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #f4d27a; }
 .ev-stage .ev-scene.fx-bad { box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #e5262f; }
 .ev-fx { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; z-index: 2; }
-.ev-tap { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 3; min-height: 44px; padding: 0 12px; font: 700 12px Galmuri11, sans-serif; color: #16141c; background: #f4d27a; border: 0; box-shadow: 0 0 0 2px #000, 0 3px 0 #000; animation: evTapBlink 660ms steps(1) infinite; white-space: nowrap; }
-@keyframes evTapBlink { 0%, 60% { background: #f4d27a; } 61%, 100% { background: #c89b3c; } }
 .ev-stage .ev-scene:has(.ev-tap) { cursor: pointer; }
 .ev-log { display: grid; gap: 6px; align-content: start; min-height: 60px; }
 .ev-line { margin: 0; font: 15px/1.5 Galmuri14, Galmuri11, sans-serif; color: #e2d9c8; }
-.ev-line.npc { display: grid; gap: 2px; padding: 4px 10px; background: #16141c; box-shadow: 0 0 0 2px #000, inset 3px 0 0 #f4d27a; color: #f2ede4; }
+/* D-259: NPC 대사 = 움푹 칸(크롬 inset) */
+.ev-line.npc { display: grid; gap: 2px; padding: 0 6px 2px; background: none; border-style: solid; border-width: 6px; border-image: url('../assets/ui/chrome/inset.png') 3 fill / 6px stretch; image-rendering: pixelated; box-shadow: none; color: #f2ede4; }
 .ev-line.npc b { font: 700 12px Galmuri11, sans-serif; color: #f4d27a; }
 .ev-line.old { color: #8f8898; }
-.ev-line.npc.old { box-shadow: 0 0 0 2px #000, inset 3px 0 0 #5a5462; }
+.ev-line.npc.old { opacity: 1; }
 .ev-line.npc.old b { color: #8f8898; }
 .ev-choice .ev-again { display: none; font: 700 12px Galmuri11, sans-serif; font-style: normal; color: #f4d27a; }
 .ev-choice.chosen .ev-again { display: block; animation: evAgain 660ms steps(1) infinite; }
@@ -2015,11 +2015,14 @@ body.slice .panel:has(.ev-stage) { width: min(880px, 96vw); }
 .mg.out { animation: bfOut 300ms steps(1) forwards; }
 .mg-stage { position: relative; touch-action: none; cursor: pointer; }
 .mg-stage canvas { position: absolute; left: 0; top: 0; image-rendering: pixelated; }
-.mg-cap { margin: 0; min-height: 30px; font: 700 24px Galmuri11, sans-serif; color: #f4f1ea; text-shadow: 2px 2px 0 #000; }
-.mg-cap.good { color: #f4d27a; animation: bfName 240ms steps(1) both; }
-.mg-cap.bad { color: #ff9a8a; animation: bfName 240ms steps(1) both; }
-.mg-go { min-height: 44px; padding: 0 16px; font: 700 12px Galmuri11, sans-serif; color: #16141c; background: #f4d27a; border: 0; box-shadow: 0 0 0 2px #000, 0 3px 0 #000; animation: evTapBlink 660ms steps(1) infinite; }
-.mg-stamp { position: absolute; left: 50%; top: 4px; transform: translateX(-50%); padding: 2px 12px; white-space: nowrap; font: 400 45px/1 Galmuri14, sans-serif; color: #e5262f; background: #16141c; box-shadow: inset 0 0 0 3px #e5262f, 0 0 0 3px #000, 0 6px 0 #000; animation: mgStamp 300ms steps(3) both; pointer-events: none; }
-@keyframes mgStamp { 0% { transform: translateX(-50%) scale(1.6); } 34% { transform: translateX(-50%) scale(0.9); } 67%, 100% { transform: translateX(-50%) scale(1); } }
-.mg-stamp.ok { color: #7ee0a1; box-shadow: inset 0 0 0 4px #7ee0a1; }
-@media (prefers-reduced-motion: reduce) { .mg, .mg-go { animation: none; } }
+/* D-259 주물 공방 문법: 미니게임 = 철판 패널(크롬) 안의 도트 장면, 머리는 황동 명패, 손짓은 종이 테이프, 결과는 판결 명패 */
+.mg-box { position: relative; padding: 0; }
+.mg-cap { position: absolute; left: 50%; top: -16px; transform: translateX(-50%); z-index: 3; margin: 0; min-height: 34px; font: 700 24px/1 Galmuri11, sans-serif; white-space: nowrap; }
+.mg .mg-hint, .ev-scene .ev-tap { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 3; margin: 0; min-height: 44px; display: grid; place-items: center; padding: 0 10px; font: 700 12px Galmuri11, sans-serif; color: #2a1a06; text-shadow: none; opacity: 1; background: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/tape.png') 4 fill / 8px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; white-space: nowrap; animation: tapNudge 900ms steps(1) infinite; }
+.mg .mg-hint:empty { display: none; }
+@keyframes tapNudge { 0%, 70% { translate: 0 0; } 71%, 85% { translate: 0 2px; } 86%, 100% { translate: 0 0; } }
+canvas.px-verdict { position: absolute; left: 50%; transform: translateX(-50%); z-index: 4; image-rendering: pixelated; pointer-events: none; }
+.px-jolt { animation: pxJolt 150ms steps(1) both; }
+@keyframes pxJolt { 0% { translate: 3px 0; } 33% { translate: -3px 0; } 66% { translate: 2px 0; } 100% { translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .mg, .mg-hint, .ev-tap, .px-jolt { animation: none; } }
+.ev-still { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; z-index: 0; }

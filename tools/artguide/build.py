@@ -112,14 +112,60 @@ D246 = [
         ('d246-ending-credits.webp', '엔딩 크레딧 — E-01 그림을 2배로 깔고 체크 디더로 어둡게, 글줄은 83ms마다 2도트 계단으로 올라감. 이번 출하를 끝까지 함께한 분대 · 쓰러진 이들(이름 · 시리얼 · 쓰러진 곳)이 실제 기록에서 들어감 → 「그리고, 끝까지 감아 준 당신에게.」'),
         ('d246-ending-photo.webp', '출하 기록 사진 — 셔터 흰 한 장 → 액자가 들렸다 박힘 → 분대가 한 기씩 계단으로 → 붉은 「출하 완료」 도장이 쾅, 잉크가 튐 → 오른쪽에 기록이 한 줄씩. [사진 저장](PNG로 내려받기) · [다시 출하]'),
     ]),
-    ('13. 사건 맞춤 연출 — 사건마다 다른 확률 장치', [
-        ('d246-ev-coin.webp', '동전 나이트 — 엄지에 눌렸다 튕겨 오른 동전이 5장(앞 · 비스듬 · 옆 · 비스듬 · 뒤)으로 돌다 떨어져 찌그러짐 → 앞면 · 나사가 튐. 아래 확률 칩은 걸린 칸만 남고 나머지는 디더로 꺼짐'),
-        ('d246-ev-gacha.webp', '쓰러진 뽑기 기계 — 레버 당김 → 세 바퀴가 돌다 하나씩 서며(넘쳤다 되돌아옴) 같은 그림이 셋 → 캡슐이 떨어져 튕기고 두 쪽으로 열리며 계단 빛살'),
-        ('d246-ev-hammer.webp', '견습 폰 망치 (성공 | 실패 나란히 — 실제로는 하나만) — 망치가 비틀대며 오름(예비) → 쾅. 성공 = 금빛 불꽃 + 「+」 / 실패 = 카드에 금이 가고 두 쪽으로 갈라져 디더로 떨어짐'),
-        ('d246-ev-dip.webp', '쇳물 담금질 (성공 | 소실 나란히) — 사슬에 매달린 폰이 계단으로 내려가 잠김(거품 · 김) → 들어 올리면 달아오른 나이트(번쩍) / 빈 사슬'),
-        ('d246-ev-chest.webp', '상자를 열었다 — 세 번 들썩(점점 크게) → 뚜껑이 돌며 날아감 · 계단 빛살 · 「상자를 열었다」 도장 → 부품 셋이 솟아 카드 뒷면으로 내려앉아 폭 계단으로 뒤집힘'),
-        ('d246-ev-auction.webp', '고철 경매 — 호가가 계단으로 오르고 망치 세 번(하나 · 둘 · 낙찰!) 마지막에 흔들림 → 걸린 칩만 남음'),
-    ]),
+]
+
+# D-259 디자인 문법 정본 (docs/design-system.md 요약)
+LAYERS = [
+    ('장면', '3px', '받은 장면 그림 · 판 · 기물 · 사건 장치 · 소품', '도트 캔버스 + pxkit 재질. 받은 그림은 격자만 맞춘다'),
+    ('장치', '2px', '패널 · 명패 · 단추 · 칸 · 테이프 · 판결 명패', 'UI 크롬 9-slice + 갈무리. 결과 알림은 verdict() 하나'),
+    ('빛', '3px', '불꽃 · 불씨 · 연기 · 빛살 · 번쩍', 'pxfx 입자 · 빛만. 더하기 빛 · 연기 반투명은 이 층에서만'),
+]
+MATERIALS = [
+    ('철', '구조 · 틀 · 중립', ['#14131a', '#1f1e27', '#2c2d38', '#41434f', '#5d606d', '#868a98', '#b9bdc8']),
+    ('황동', '손댈 것 · 보상 · 이름', ['#2b1a06', '#5a3a0e', '#8a5a14', '#b98424', '#d9a838', '#f4d27a', '#fff1c0']),
+    ('쇳물', '위험 · 힘 · 열', ['#3a0c06', '#7a1c08', '#c23a0c', '#ec6a1a', '#f8a03a', '#ffd27a', '#fff6d8']),
+    ('종이', '글 · 기록 · 주인공', ['#3a3328', '#6e6452', '#a39a84', '#cfc6ae', '#e8e0cc', '#f4f1ea', '#ffffff']),
+    ('녹', '쇠락 · 손해', ['#24110b', '#4a2112', '#74361a', '#9a4c22', '#c06a30', '#e0904a', '#f4b47a']),
+    ('신호 청록 · 진홍', '내 편 · 합격 / 적 · 불량 — 등불의 빛으로만', ['#0e4650', '#2e969c', '#8ee8ea', '#5a0c12', '#c81e28', '#ff6b6b']),
+]
+LIGHT = ['1도트 먹 테', '위 가장자리 +2단 · 왼 가장자리 +1단 (빛은 왼쪽 위)', '몸 = 램프 가운데', '아래 · 오른 가장자리 −1단', '먹 그림자 1~3도트 (오른아래, 반투명 없음)',
+         '부피 있는 물건은 3/4 시점: 위 면 + 앞 면 (box3)', '중간 톤은 같은 램프 이웃 단끼리 베이어 디더만', '유리 = 어두운 안 + 대각 반사 두 줄, 등불 = 둥근 유리 + 흰 반사 한 점']
+PARTS = [
+    ('철판 패널', '.panel9', '모든 창 · 팝업 · 안내창 · 사건 장면 테'), ('황동 명패', '.plate', '창 이름 — 패널 위 가장자리에 걸친다'),
+    ('움푹 칸', '.inset', '목록 · 기록 · NPC 대사'), ('단추', '.btn 철 · 황동 · 진홍 · 청록', '동사 하나. 사건 선택지 = 철 단추, 고르면 황동'),
+    ('손짓 테이프', '.ev-tap · .mg-hint', '「▼ 무엇을 한다」 — 종이 테이프'), ('판결 명패', 'verdict()', '모든 결과 알림 — 좋음 황동 · 금 · 나쁨 녹슨 쇠, 떨어져 파고들고 먼지'),
+    ('재질 덩어리', 'block · box3 · rivet · lamp', '장면 속 물건은 모두 이것으로'), ('도트 글씨', 'pixelText()', '장면 속 글은 갈무리를 단색 도트로'),
+]
+AUDIT = [
+    ('사건 15종 결과', '고침', '장면 위 색 글자 → 판결 명패'),
+    ('판정기 · 봉인 상자', '고침', '납작한 회색 상자 · HTML 도장 → 3/4 기계 · 상자 · 판결 명패'),
+    ('그림 없는 사건 7종', '고침', '검은 칸 + 편지 아이콘 → 정지 장면 (장면 그림이 오면 교체)'),
+    ('사건 창 선택지 · 대사 · 장면 테', '고침', '얇은 선 상자 → 철 단추 · 움푹 칸 · 철판 테'),
+    ('사건 소품 12종', '다음', '모루 · 저울 · 도가니 … 빛 공식 · 크기가 제각각 → block · box3로 다시 (장면 그림이 오면 걷음)'),
+    ('대국 「적 차례」 띠', '다음', '먹 테 없는 납작한 붉은 띠 → 진홍 쇠 띠 + 계단 등장'),
+    ('안내창 · 팝업 (심장 톱니 깨짐 등)', '다음', '얇은 선 상자 → 철판 패널 + 황동 명패 머리 + 판결 명패'),
+    ('작업대 · 토스트 · 독백', '다음', '얇은 선 칸 → 단추 문법 · 종이 테이프 · 움푹 칸'),
+]
+# 사건 15종 — 실제 게임 녹화 (D-259, tools/artguide/events/record.cjs · record.py). 끝나면 처음부터
+EVENTS = [
+    ('ev-brokenGacha-ok.webp', '고장 난 조립 판정기 — 합격', '붉은 단추 → 몸통이 떨고 압력계 바늘이 오름 → 깔때기 목에서 부품이 하나씩 떨어져 검사 창 받침에 박힘 → 앞 둘이 같으면 셋째 목이 길게 덜컹(「…!」) → 경광등 회전 빛살 · 판결 명패'),
+    ('ev-brokenGacha-ng.webp', '고장 난 조립 판정기 — 불량', '셋째 창에 금 간 톱니 → 유리가 금 가고 불꽃 · 연기 · 붉은 경광등 · 「불량」'),
+    ('ev-auction-ok.webp', '녹슨 봉인 상자 — 봉인 해제', '각인 칸 셋을 덮은 녹을 손가락으로 긁는다 → 금 톱니 셋 → 자물쇠 고리가 튀고 몸이 떨어짐 → 사슬이 미끄러짐 → 뚜껑 틈 계단 빛살 · 「봉인 해제」'),
+    ('ev-auction-ng.webp', '녹슨 봉인 상자 — 녹 독', '셋째 칸이 녹 덩어리 → 자물쇠가 덜컹하고 버팀 → 녹 가루 구름 · 「녹 독」'),
+    ('ev-gambler-ok.webp', '동전 나이트 — 앞면', '세로축 12장 회전 · 착지 순간 결과 면 → 「앞면」 부품 하나'),
+    ('ev-gambler-ng.webp', '동전 나이트 — 뒷면', '「뒷면」 분대원 HP −50%'),
+    ('ev-tinker.webp', '떠돌이 땜장이', '땜질 세 번 → 「문턱 +1」'),
+    ('ev-smith.webp', '떠돌이 정비 폰 (그림 없음 → 정지 장면)', '카드가 뒤집혀 돌고 렌치 불꽃 → 「태엽 −1」'),
+    ('ev-apprentice.webp', '견습 폰', '망치가 비틀대며 오름 → 쾅 → 벼려졌다 / 부서졌다'),
+    ('ev-scout.webp', '다른 공장의 흑 비숍', '분대원이 상자로 → 뚜껑 쾅 → 「나사 +」'),
+    ('ev-napping.webp', '조는 검수 저울', '도장 쾅 → 승인(폰 둘 → 나이트) / 눈을 뜨면 「들켰다」'),
+    ('ev-nightShift.webp', '야간 교대', '모루를 세 번 → 「분대 HP +50%」'),
+    ('ev-pact.webp', '쇳물 앞의 거래', '분대원이 쇳물에 잠김 → 그림자 손이 부품을 내밂 → 「부품 하나」'),
+    ('ev-dipping.webp', '쇳물 담금질', '사슬이 내려가 잠김 → 끌어올림 → 다시 선다 / 삼켜졌다'),
+    ('ev-swapDealer.webp', '부품 교환상 (그림 없음 → 정지 장면)', '폰이 둘 없으면 건넬 수 없다 — 이 녹화는 거절'),
+    ('ev-safe.webp', '녹슨 금고 (그림 없음 → 정지 장면)', '다섯 번 내리침 → 문이 열리며 나사 · 붉은 베임'),
+    ('ev-counterweight.webp', '비뚤어진 저울추 (그림 없음 → 정지 장면)', '카드를 고름 → 「태엽 −1」 · 다른 한 장 녹'),
+    ('ev-conveyor.webp', '거꾸로 도는 컨베이어 (그림 없음 → 정지 장면)', '카드가 실려 나가고 들어옴 → 「바뀌어 나왔다」'),
 ]
 
 # 받아야 할 그림 (D-246 · 사용자: 「에셋 필요한 건 차라리 달라고 해」)
@@ -171,6 +217,13 @@ code {{ font: 12px/1.5 var(--f-head); color: var(--cyan); word-break: break-all;
 .tools {{ display: grid; gap: 8px; }}
 .tools div {{ display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 2px solid var(--line); }}
 .tools div span {{ font: 700 15px var(--f-head); color: var(--fg); }}
+.ramp {{ display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; margin-top: 4px; box-shadow: 0 0 0 2px #000; }}
+.ramp i {{ height: 28px; }}
+ol.light {{ margin: 0; padding-left: 22px; display: grid; gap: 4px; }}
+.st {{ font: 700 12px var(--f-head); padding: 2px 8px; box-shadow: 0 0 0 2px #000; }}
+.st.ok {{ background: #d9a838; color: #2b1a06; }} .st.next {{ background: #2c2d38; color: #ff6b6b; }}
+.evt {{ font: 700 15px var(--f-head); color: var(--gold); }}
+.motto {{ font: 400 30px/1.4 var(--f-body); color: var(--fg); text-wrap: balance; }}
 @media (max-width: 520px) {{ .tools div {{ grid-template-columns: 1fr; gap: 2px; }} h1 {{ font-size: 24px; }} }}
 """
     rules = ''.join(f'<div class="card"><span class="tag">{t}</span><b>{h}</b><p>{d}</p></div>' for h, d, t in RULES)
@@ -185,6 +238,13 @@ code {{ font: 12px/1.5 var(--f-head); color: var(--cyan); word-break: break-all;
     d246 = ''.join(
         f'<h3>{title}</h3><div class="shots">' + ''.join(f'<figure>{img(f, c)}<figcaption>{c}</figcaption></figure>' for f, c in items) + '</div>'
         for title, items in D246)
+    layers = ''.join(f'<tr><td>{a}</td><td class="num">{b}</td><td>{c}</td><td>{d}</td></tr>' for a, b, c, d in LAYERS)
+    mats = ''.join(f'<div class="card"><b>{n}</b><p class="dim">{u}</p><div class="ramp">' + ''.join(f'<i style="background:{c}"></i>' for c in cs) + '</div></div>' for n, u, cs in MATERIALS)
+    light = ''.join(f'<li>{x}</li>' for x in LIGHT)
+    parts = ''.join(f'<tr><td>{a}</td><td><code>{html.escape(b)}</code></td><td>{c}</td></tr>' for a, b, c in PARTS)
+    audit = ''.join(f'<tr><td>{a}</td><td class="num"><span class="st {"ok" if b == "고침" else "next"}">{b}</span></td><td>{c}</td></tr>' for a, b, c in AUDIT)
+    # 녹화는 크기가 커서 아티팩트 보조 파일(ev/…)로 올린다 — 같은 이름으로 files에 넣어 publish
+    events = ''.join(f'<figure><img class="shot" src="ev/{f}" alt="{html.escape(t)}" loading="lazy"><figcaption><b class="evt">{t}</b><br>{c}</figcaption></figure>' for f, t, c in EVENTS if os.path.exists(os.path.join(SHOTS, f)))
     ask = ''.join(f'<div class="card"><b>{a}</b><p>{b}</p></div>' for a, b in ASK)
     return f"""<title>Pawnisher 그래픽 정본</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -195,6 +255,23 @@ code {{ font: 12px/1.5 var(--f-head); color: var(--cyan); word-break: break-all;
   <h1>그래픽 정본</h1>
   <p class="dim">FX 랩과 타격감 연구소를 하나로 합쳤다. 지금 게임에 들어가 있는 것만 담았다. 화면은 모두 실제 게임(모바일 가로 915×412)에서 찍었다.</p>
 </header>
+
+<section><h2>디자인 문법 정본 — 주물 공방 문법 <small>D-259 · docs/design-system.md</small></h2>
+<p class="motto">작업대 위의 물건만 있다.</p>
+<p class="dim" style="margin:8px 0 16px">화면의 모든 것은 공장에 실제로 있을 법한 쇠 · 황동 · 나무 · 종이 물건이고, 같은 빛(왼쪽 위)을 받고, 같은 손(코드 부품)이 찍는다. 떠다니는 글자 · 납작한 색 상자 · 출처 없는 빛은 없다. 새 화면 · 효과 · 팝업은 아래 부품을 조합해서만 만든다.</p>
+<h3>세 층 — 층마다 그리는 법이 하나</h3>
+<div class="tbl"><table><thead><tr><th>층</th><th>도트</th><th>무엇</th><th>그리는 법</th></tr></thead><tbody>{layers}</tbody></table></div>
+<h3>재질 — 뜻이 정해져 있다 (pxkit.M)</h3><div class="grid">{mats}</div>
+<h3>빛 공식 — 모든 물건이 같은 빛을 받는다</h3><div class="card"><ol class="light">{light}</ol></div>
+<h3>부품 — 이것만 조합한다</h3>
+<div class="tbl"><table><thead><tr><th>부품</th><th>코드</th><th>규칙</th></tr></thead><tbody>{parts}</tbody></table></div>
+<h3>고칠 목록 — 이 문법에 맞춘 것 / 다음 차례</h3>
+<div class="tbl"><table><thead><tr><th>화면</th><th>상태</th><th>무엇을</th></tr></thead><tbody>{audit}</tbody></table></div>
+</section>
+
+<section><h2>사건 15종 — 실제 게임 녹화 <small>915×412 · 손으로 누르고 긁은 그대로 · 끝나면 처음부터</small></h2>
+<p class="dim" style="margin-bottom:12px">결과는 모두 판결 명패 하나로 떨어진다. 확률 사건(판정기 · 봉인 상자 · 동전)은 좋음과 나쁨을 둘 다 담았다. 장면 그림이 아직 없는 사건은 같은 문법의 정지 장면이 대신한다(장면 그림 V-09~16이 오면 바뀐다).</p>
+<div class="shots">{events}</div></section>
 
 <section><h2>원칙 <small>D-216 · D-213 · D-193 · D-180</small></h2><div class="grid">{rules}</div></section>
 
@@ -216,7 +293,7 @@ code {{ font: 12px/1.5 var(--f-head); color: var(--cyan); word-break: break-all;
 <figure>{img('icons.png', '16칸 아이콘', 'shot px')}<figcaption>16칸 아이콘 — 부품 · 지도 노드 · 카드 · 상점 · 심장 톱니. 빛은 왼위, 검은 외곽선 1칸</figcaption></figure>
 </div></section>
 
-<section><h2>D-246 시안 — 반장 · 엔딩 · 사건 <small>정해 주면 게임에 넣는다 · 끝나면 처음부터 다시</small></h2>
+<section><h2>D-246 시안 — 반장 · 엔딩 <small>정해 주면 게임에 넣는다 · 끝나면 처음부터 다시</small></h2>
 <p class="dim" style="margin-bottom:12px">모두 도트 층(1도트 = 3px) 위에서 계단 프레임으로만 움직인다. 페이드 · 그라데이션 · 선형 슬라이드 없음 (D-216). 사라짐은 체크 디더, 움직임은 예비 동작 → 터짐 → 출렁임.</p>
 {d246}
 <h3>받아야 할 그림</h3><div class="grid">{ask}</div></section>
