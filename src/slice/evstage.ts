@@ -4,6 +4,7 @@
  * 결과는 엔진(events.ts)이 이미 정했다 — 보여 주기만 한다. 누르기(tap)는 손맛용.
  */
 import type { PieceType } from '../engine';
+import { sfx } from '../audio/sfx';
 import { at, bayer, FxCanvas, hex, Lights, mix, OUTLINE, P, PAL, Painter, Particles, Rng, scale, WHITE, type Col } from '../view/pxfx';
 
 const D = 3;
@@ -11,7 +12,6 @@ const INK = OUTLINE;
 const q = (v: number) => Math.max(0, Math.min(1, v));
 const outE = (v: number) => 1 - Math.pow(1 - q(v), 3);
 const inE = (v: number) => Math.pow(q(v), 3);
-const backE = (v: number) => { const x = q(v), c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /** 사건이 바꾼 것 (화면이 앞뒤 상태를 비교해 만든다) */
@@ -31,6 +31,14 @@ export interface EvFxCtx {
   tap?: string;
 }
 
+/** 소품 도트 에셋 (tools/pixel/props.py → public/ui/props/) */
+const propImgs = new Map<string, HTMLImageElement>();
+const propImg = (n: string): HTMLImageElement => {
+  let i = propImgs.get(n);
+  if (!i) { i = new Image(); i.src = `ui/props/${n}.png`; propImgs.set(n, i); }
+  return i;
+};
+['coin-0', 'coin-1', 'coin-2', 'coin-3', 'coin-4', 'coin-5', 'coin-6', 'coin-7', 'chest-0', 'chest-1', 'chest-2', 'slot', 'slot-pull', 'sym-part', 'sym-up', 'sym-miss'].forEach(propImg);
 const pieceImgs = new Map<string, HTMLImageElement>();
 const pieceImg = (t: PieceType, side: 0 | 1): HTMLImageElement => {
   const k = `${t}${side}`;
@@ -41,7 +49,7 @@ const pieceImg = (t: PieceType, side: 0 | 1): HTMLImageElement => {
 (['K', 'Q', 'R', 'B', 'N', 'P'] as PieceType[]).forEach((t) => { pieceImg(t, 0); pieceImg(t, 1); });
 
 /** 선명한 층에 올릴 것 (매 장 다시 그린다) */
-interface HiItem { piece?: { t: PieceType; x: number; foot: number; size?: number; clip?: number }; text?: { s: string; x: number; y: number; px: number; col: string } }
+interface HiItem { sprite?: { n: string; x: number; y: number; k: number }; piece?: { t: PieceType; x: number; foot: number; size?: number; clip?: number }; text?: { s: string; x: number; y: number; px: number; col: string } }
 
 /** 무대: 도트 FX 층 + 선명한 층 + 공용 입자 · 빛 */
 class Stage {
@@ -81,10 +89,13 @@ class Stage {
   /** clip: 이 도트 줄 아래는 그리지 않는다 (쇳물에 잠김) */
   piece(t: PieceType, x: number, foot: number, size = 72, clip?: number) { this.items.push({ piece: { t, x, foot, size, clip } }); }
   text(s: string, x: number, y: number, px = 24, col = '#f4f1ea') { this.items.push({ text: { s, x, y, px, col } }); }
+  /** 소품 에셋 (1도트 = 3px, 왼위 모서리 도트 좌표) */
+  sprite(n: string, x: number, y: number, k = 1) { this.items.push({ sprite: { n, x, y, k } }); }
   private paintHi() {
     const x = this.hx;
     x.clearRect(0, 0, this.w * D, this.h * D);
     for (const it of this.items) {
+      if (it.sprite) { const i = propImg(it.sprite.n); if (i.complete) x.drawImage(i, Math.round((it.sprite.x + this.shake) * D), Math.round(it.sprite.y * D), i.naturalWidth * D * it.sprite.k, i.naturalHeight * D * it.sprite.k); }
       if (it.piece) {
         const i = pieceImg(it.piece.t, 0), sz = it.piece.size ?? 72, top = Math.round(it.piece.foot * D - sz);
         const vis = it.piece.clip === undefined ? sz : Math.max(0, Math.min(sz, it.piece.clip * D - top));
@@ -143,35 +154,6 @@ class Stage {
 
 // ── 소품 (도트 · 램프 음영) ──
 
-/** 동전: w = 보이는 폭(0~1), 앞/뒤. 테 · 면 · 왼위 반달 빛 · 오른아래 그림자 · 새김 */
-const coin = (p: Painter, cx: number, cy: number, r: number, w: number, front: boolean) => {
-  const G = PAL.gold;
-  const rx = Math.max(0.6, r * w);
-  if (rx < 1.5) { p.rect(cx - 1, cy - r, 2, r * 2, G[3]); p.rect(cx - 1, cy - r, 1, r * 2, G[5]); for (let y = -r; y < r; y += 2) p.px(cx, cy + y, G[2]); return; }
-  p.ellipse(cx, cy, rx + 1, r + 1, INK);
-  p.ellipse(cx, cy, rx, r, G[2]);
-  p.ellipse(cx - 0.5, cy - 0.5, rx - 1, r - 1, front ? G[4] : G[3]);
-  // 반달 빛 (왼위) · 그림자 (오른아래)
-  for (let y = -r; y <= r; y++) for (let x = -rx; x <= rx; x++) {
-    const nx = x / rx, ny = y / r, d = nx * nx + ny * ny;
-    if (d > 0.62 && d < 0.95 && nx + ny < -0.4) p.px(cx + x, cy + y, G[5]);
-    if (d > 0.62 && d < 0.95 && nx + ny > 0.6) p.px(cx + x, cy + y, G[2]);
-  }
-  if (w > 0.55) {
-    const s = rx / r;
-    if (front) { // 나이트 머리 새김
-      const pts = [[-2, -5], [1, -6], [3, -4], [4, -1], [2, 0], [3, 3], [-1, 4], [-3, 1], [-4, -2]];
-      for (let i = 0; i < pts.length; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length]; p.line(cx + x0 * s, cy + y0, cx + x1 * s, cy + y1, G[2]); }
-      p.px(cx + 1 * s, cy - 3, G[6]);
-    } else { // 톱니 구멍
-      p.ellipse(cx, cy, 4 * s, 4, G[2]);
-      p.ellipse(cx, cy, 2 * s, 2, INK);
-      for (let a = 0; a < 6; a++) p.px(cx + Math.cos(a) * 5 * s, cy + Math.sin(a) * 5, G[2]);
-    }
-  }
-  p.px(cx - rx * 0.45, cy - r * 0.55, WHITE);
-};
-
 /** 망치 (자루 나무 · 머리 쇠) */
 const hammer = (p: Painter, x: number, y: number, ang: number, L = 22) => {
   const W = PAL.wood, S = PAL.steel;
@@ -227,38 +209,72 @@ const impact = (s: Stage, x: number, y: number, col: Col = PAL.fire[6], n = 18) 
 };
 const hero = (p: Painter, s: Stage, t: number, t0: number) => { if (t >= t0 && t < t0 + 0.06) p.rect(0, 0, s.w, s.h, WHITE, 0.85); };
 
+/**
+ * 보상 바퀴 (D-251, 사용자: 「실제 보상은 슬롯머신 돌아가듯이 오버레이 연출」): 장면 위 황동 창 안에서 보상 칸이 세로로 돌다가
+ * 계단으로 느려져(4px 단위, 감속) 실제 결과 칸에 선다 → 창이 번쩍 · 이름이 박힌다. 결과는 이미 정해져 있다.
+ */
+export const rewardReel = (host: HTMLElement, items: { icon: string; label: string; good: boolean }[], win: number): Promise<void> =>
+  new Promise((done) => {
+    const CELL = 72;
+    const loops = 4;
+    const el = document.createElement('div');
+    el.className = 'rr';
+    const cells = Array.from({ length: (loops + 1) * items.length }, (_, i) => items[i % items.length]);
+    el.innerHTML = `<div class="rr-win"><div class="rr-strip">${cells.map((it) => `<div class="rr-cell${it.good ? '' : ' bad'}"><img src="ui/props/${it.icon}.png" alt=""><b>${it.label}</b></div>`).join('')}</div><span class="rr-pin l"></span><span class="rr-pin r"></span></div>`;
+    host.appendChild(el);
+    const strip = el.querySelector<HTMLElement>('.rr-strip')!;
+    const target = (loops * items.length + win) * CELL;
+    const dur = calm() ? 200 : 1700;
+    const t0 = performance.now();
+    let lastCell = -1;
+    const tick = (now: number) => {
+      if (!el.isConnected) return done();
+      const k = Math.min(1, (now - t0) / dur);
+      const y = Math.round((target * (1 - Math.pow(1 - k, 4))) / 4) * 4;
+      strip.style.transform = `translateY(${-y}px)`;
+      const c = Math.floor((y + CELL / 2) / CELL);
+      if (c !== lastCell) { lastCell = c; sfx('tap'); }
+      if (k < 1) return void requestAnimationFrame(tick);
+      el.classList.add('hit', items[win].good ? 'good' : 'bad');
+      sfx(items[win].good ? 'jackpot' : 'hurt');
+      window.setTimeout(done, 650);
+    };
+    requestAnimationFrame(tick);
+  });
+
 type Fx = (s: Stage, c: EvFxCtx) => Promise<void>;
 const firstCrew = (c: EvFxCtx): PieceType => c.diff.gone[0] ?? c.diff.changed[0]?.from ?? 'P';
 
 const FX: Record<string, Fx> = {
-  /** 동전 나이트: 엄지에 눌림 → 튕겨 오르며 회전(폭 계단) · 꼭대기 반짝 → 떨어져 찌그러짐 · 먼지 → 앞면: 나사 분수 / 뒷면: 동전이 빛을 잃고 미끄러져 간다 */
+  /** 동전 나이트 (D-251 회전 묘사): 엄지에 눌림 → 튕겨 오르며 8장 회전(정면 → 테 두께 타원 → 줄무늬 옆면 → 어두운 뒷면) · 꼭대기 반짝
+   *  → 떨어져 튕기며 앞/뒤에 선다 · 먼지 → 앞면: 나사 분수 · 빛 / 뒷면: 빛을 잃고 미끄러져 간다 */
   async gambler(s, c) {
-    const cx = s.w / 2, g = s.floor - 13, r = 12;
-    await s.tap(c.tap, (t, p) => { s.dim(p); s.ground(p, PAL.wood); p.glow(cx, g, 20, PAL.gold[4], 0.18); coin(p, cx, g + (Math.floor(t * 4) % 2), r, 1, true); });
-    const peak = s.floor - 14 - (s.h - 40);
+    const cx = s.w / 2, g = s.floor - 36;
+    await s.tap(c.tap, (t, p) => { s.dim(p); s.ground(p, PAL.wood); p.glow(cx, g + 18, 26, PAL.gold[4], 0.18); s.sprite('coin-0', cx - 18, g + (Math.floor(t * 4) % 2), 2); if (Math.floor(t * 3) % 3 === 0) p.sparkle(cx - 4, g + 3, 2, PAL.gold[5], PAL.gold[3]); });
+    const peak = 4;
+    const endFrame = c.good ? 0 : 6;
     await s.play(
-      2.6 * 1000,
+      2600,
       (t, p) => {
         s.dim(p); s.ground(p, PAL.wood);
-        let y = g, w = 1, front = true;
+        let y = g, f = 0, x = cx;
         if (t < 0.12) y = g + 2;
-        else if (t < 1.25) { const k = (t - 0.12) / 1.13; y = g + (peak - g) * (1 - Math.pow(2 * k - 1, 2)); const ph = Math.floor(t * 18); w = [1, 0.66, 0.08, 0.66][ph % 4]; front = Math.floor(ph / 2) % 2 === 0; }
-        else if (t < 1.32) { y = g + 2; w = 1.2; front = c.good; }
-        else { front = c.good; y = t < 1.42 ? g - 3 : g; }
-        // 그림자 (높이에 따라 작아짐)
-        const sh = Math.max(3, 10 - (g - y) / 6);
+        else if (t < 1.25) { const k = (t - 0.12) / 1.13; y = g + (peak - g) * (1 - Math.pow(2 * k - 1, 2)); f = Math.floor(t * 16) % 8; }
+        else if (t < 1.4) { f = endFrame === 0 ? 7 : 5; y = g - Math.sin(((t - 1.25) / 0.15) * Math.PI) * 4; }
+        else { f = endFrame; y = g; }
+        if (!c.good && t > 1.7) x = cx + inE((t - 1.7) / 0.8) * 46;
+        const sh = Math.max(3, 9 - (g - y) / 6);
         p.ellipse(cx, s.floor + 1, sh, 1.5, PAL.wood[1]);
-        if (!c.good && t > 1.6) { const k = inE((t - 1.6) / 0.8); coin(p, cx + k * 40, g, r, 1, false); p.rect(cx - 14 + k * 40, g - 14, 28, 28, hex('#0b0b0e'), k * 0.6); }
-        else coin(p, cx, y, r, Math.min(1, w), front);
-        if (t > 0.6 && t < 0.75) p.sparkle(cx + 6, peak - 6, 4, PAL.gold[5], PAL.gold[3]);
-        p.glow(cx, y, 18, PAL.gold[4], 0.2);
+        p.glow(x, y + 18, 24, PAL.gold[4], c.good || t < 1.4 ? 0.22 : 0.08);
+        s.sprite(`coin-${f}`, x - 18, y, 2);
+        if (t > 0.62 && t < 0.78) p.sparkle(cx + 12, peak + 6, 4, PAL.gold[5], PAL.gold[3]);
         s.jolt(t, 1.25, 0.1, 1);
-        hero(p, s, t, 1.32);
-        if (t > 1.35) s.text(c.good ? '앞면!' : '뒷면', cx, 14, 24, c.good ? '#f4d27a' : '#ff9a8a');
+        hero(p, s, t, 1.4);
+        if (t > 1.42) s.text(c.good ? '앞면!' : '뒷면', cx, 12, 24, c.good ? '#f4d27a' : '#ff9a8a');
       },
-      (_dt, t) => {
-        if (t > 1.25 && t - _dt <= 1.25) { for (let i = 0; i < 6; i++) s.ps.spawn(P.DUST, cx + s.R.range(-10, 10), s.floor, s.R.range(-40, 40), s.R.range(-10, -2), 0.6, PAL.wood[3], 3); }
-        if (c.good && t > 1.35 && t - _dt <= 1.35) { screwBurst(s, cx, g - 4, 16); s.lights.add(cx, g, 34, PAL.gold[5], 1, 0.6); }
+      (dt, t) => {
+        if (t > 1.25 && t - dt <= 1.25) for (let i = 0; i < 6; i++) s.ps.spawn(P.DUST, cx + s.R.range(-10, 10), s.floor, s.R.range(-40, 40), s.R.range(-10, -2), 0.6, PAL.wood[3], 3);
+        if (c.good && t > 1.42 && t - dt <= 1.42) { screwBurst(s, cx, g + 10, 18); s.lights.add(cx, g + 18, 40, PAL.gold[5], 1, 0.6); }
       },
     );
   },
@@ -288,75 +304,41 @@ const FX: Record<string, Fx> = {
     );
   },
 
-  /** 쓰러진 뽑기 기계: 간판 전구가 돌아가며 깜빡 · 레버 → 세 바퀴(누를 때마다 하나씩 선다, 넘쳤다 되돌아옴) → 캡슐이 떨어져 튕기고 열린다: 빛기둥 / 연기 */
+  /** 쓰러진 뽑기 기계 (D-251 에셋): 간판 불빛 · 레버를 당기면(손잡이 내려감) 세 바퀴가 돌다 누를 때마다 하나씩 선다
+   *  → 배출구 빛 → 보상 바퀴 오버레이가 돌다 실제 결과에 선다 */
   async brokenGacha(s, c) {
-    const mx = Math.round(s.w / 2 - 28), my = 6, MW = 56, MH = s.floor - my;
+    const mx = Math.round(s.w / 2 - 24), my = s.floor - 60;
     const pick = c.diff.changed.length ? 'up' : c.good ? 'part' : 'miss';
     const kinds = ['part', 'up', 'miss'] as const;
-    const icon = (p: Painter, kind: (typeof kinds)[number], x: number, y: number) => {
-      p.rect(x, y, 12, 12, INK); p.rect(x + 1, y + 1, 10, 10, PAL.paper[4]); p.rect(x + 1, y + 1, 10, 1, PAL.paper[5]);
-      if (kind === 'part') { p.circle(x + 6, y + 6, 3.5, PAL.brass[3]); p.circle(x + 5.5, y + 5.5, 2.5, PAL.brass[5]); p.px(x + 6, y + 6, INK); for (const [dx, dy] of [[0, -4], [0, 4], [-4, 0], [4, 0]]) p.px(x + 6 + dx, y + 6 + dy, PAL.brass[3]); }
-      if (kind === 'up') { for (let i = 0; i < 4; i++) p.rect(x + 6 - i, y + 2 + i, 1 + i * 2, 1, PAL.teal[4]); p.rect(x + 4, y + 6, 4, 4, PAL.teal[4]); p.rect(x + 4, y + 6, 1, 4, PAL.teal[6]); }
-      if (kind === 'miss') for (let i = 0; i < 7; i++) { p.px(x + 2 + i, y + 2 + i, PAL.blood[5]); p.px(x + 3 + i, y + 2 + i, PAL.blood[4]); p.px(x + 9 - i, y + 2 + i, PAL.blood[5]); p.px(x + 8 - i, y + 2 + i, PAL.blood[4]); }
-    };
-    const body = (p: Painter, t: number, lever: number) => {
-      const B = PAL.blood;
-      p.rect(mx, my, MW, MH, INK); p.rect(mx + 1, my + 1, MW - 2, MH - 2, B[3]); p.rect(mx + 1, my + 1, MW - 2, 2, B[5]); p.rect(mx + 1, my + 1, 2, MH - 2, B[4]); p.rect(mx + MW - 3, my + 3, 2, MH - 4, B[2]);
-      // 간판 + 전구 (돌아가며 깜빡)
-      p.rect(mx + 3, my + 3, MW - 6, 8, PAL.brass[3]); p.rect(mx + 3, my + 3, MW - 6, 1, PAL.brass[5]);
-      for (let i = 0; i < 9; i++) { const on = (i + Math.floor(t * 10)) % 3 === 0; p.px(mx + 5 + i * 6, my + 7, on ? WHITE : PAL.brass[2]); if (on) p.glow(mx + 5 + i * 6, my + 7, 4, PAL.gold[5], 0.4); }
-      // 창
-      p.rect(mx + 4, my + 13, MW - 8, 18, INK); p.rect(mx + 5, my + 14, MW - 10, 16, PAL.steel[1]);
-      // 배출구
-      p.rect(mx + 18, my + MH - 18, 20, 13, INK); p.rect(mx + 19, my + MH - 17, 18, 11, PAL.steel[0]); p.rect(mx + 19, my + MH - 17, 18, 1, PAL.steel[3]);
-      // 레버
-      p.rect(mx + MW, my + 18 + lever, 3, 16, INK); p.rect(mx + MW + 1, my + 18 + lever, 1, 16, PAL.steel[5]);
-      p.circle(mx + MW + 1.5, my + 16 + lever, 3, INK); p.circle(mx + MW + 1.5, my + 16 + lever, 2.2, B[5]); p.px(mx + MW + 1, my + 15 + lever, WHITE);
-      // 유리 반사
-      p.line(mx + 6, my + 15, mx + 10, my + 15, PAL.steel[5], 0.6);
-    };
     const stops = [-1, -1, -1];
-    const reels = (p: Painter, t: number) => kinds.forEach((_, r) => {
-      const x = mx + 8 + r * 15, y = my + 16;
-      if (stops[r] >= 0) { const b = t - stops[r] < 0.08 ? 2 : t - stops[r] < 0.16 ? -1 : 0; icon(p, pick, x, y + b); }
-      else { const f = Math.floor(t * 20 + r); icon(p, kinds[f % 3], x, y + (f % 2 ? -3 : 3)); p.rect(x, y - 2, 12, 16, PAL.steel[1], 0.45); }
-    });
+    const machine = (p: Painter, t: number, pulled: boolean) => {
+      s.sprite(pulled ? 'slot-pull' : 'slot', mx, my);
+      // 간판 전구가 돌아가며 빛
+      for (let i = 0; i < 6; i++) if ((i + Math.floor(t * 8)) % 3 === 0) p.glow(mx + 9 + i * 5, my + 12, 4, PAL.gold[5], 0.5);
+      kinds.forEach((_, r) => {
+        const x = mx + 8 + r * 9, y = my + 21;
+        if (stops[r] >= 0) { const b = t - stops[r] < 0.08 ? 1 : 0; s.sprite(`sym-${pick}`, x, y + 1 + b); }
+        else { const f = Math.floor(t * 18 + r * 2); s.sprite(`sym-${kinds[f % 3]}`, x, y + 1 + ((f % 2) ? -1 : 1)); for (let yy = y; yy < y + 12; yy += 3) p.rect(x, yy, 8, 1, PAL.paper[2], 0.7); }
+      });
+    };
     let T0 = 0;
-    await s.play(450, (t, p) => { s.dim(p); s.ground(p); body(p, t, Math.min(1, t / 0.2) * 8); reels(p, t); });
+    await s.play(500, (t, p) => { s.dim(p); s.ground(p); machine(p, t, t > 0.15 && t < 0.4); s.jolt(t, 0.15, 0.08, 1); });
     for (let r = 0; r < 3; r++) {
-      await s.tap(c.tap && `${c.tap} (${r + 1}/3)`, (t, p) => { s.dim(p); s.ground(p); body(p, T0 + t, 0); reels(p, T0 + t); });
-      T0 += 0.25;
+      await s.tap(c.tap && `${c.tap} (${r + 1}/3)`, (t, p) => { s.dim(p); s.ground(p); machine(p, T0 + t, false); });
+      T0 += 0.3;
       stops[r] = T0;
-      await s.play(250, (t, p) => { s.dim(p); s.ground(p); body(p, T0 + t, 0); reels(p, T0 + t); s.jolt(t, 0, 0.08, 1); }, (dt, t) => { if (t - dt <= 0) s.ps.burst(mx + 14 + r * 15, my + 22, 6, [40, 90], P.SPARK, [0.2, 0.4]); });
+      await s.play(260, (t, p) => { s.dim(p); s.ground(p); machine(p, T0 + t, false); s.jolt(t, 0, 0.08, 1); }, (dt, t) => { if (t - dt <= 0) { s.ps.burst(mx + 12 + r * 9, my + 26, 8, [40, 100], P.SPARK, [0.2, 0.4]); s.lights.add(mx + 12 + r * 9, my + 26, 10, PAL.gold[5], 0.7, 0.3); } });
     }
-    const cxp = mx + 28;
-    await s.play(
-      2200,
-      (t, p) => {
-        s.dim(p); s.ground(p); body(p, T0 + t, 0); reels(p, T0 + t);
-        const y = t < 0.3 ? my + MH - 14 + backE(t / 0.3) * 0 + (t / 0.3) * 6 : t < 0.42 ? s.floor - 6 - Math.sin(((t - 0.3) / 0.12) * Math.PI) * 4 : s.floor - 6;
-        const open = t > 0.6 ? Math.min(1, (t - 0.6) / 0.15) * 7 : 0;
-        if (pick !== 'miss' && t > 0.6) { for (let yy = 0; yy < y; yy++) if (bayer(cxp, yy) < 0.5 * Math.min(1, (t - 0.6) * 3)) p.px(cxp + ((yy >> 2) % 2 ? 1 : -1), yy, PAL.gold[6]); p.glowLine(cxp, y, cxp, 0, 8, PAL.gold[5], 0.5 * Math.min(1, (t - 0.6) * 3)); }
-        p.circle(cxp - open, y, 5, INK); p.circle(cxp - open, y, 4, PAL.teal[4]); p.px(cxp - open - 2, y - 2, WHITE);
-        p.circle(cxp + open, y, 5, INK); p.circle(cxp + open, y, 4, PAL.paper[4]);
-        if (open && pick !== 'miss') icon(p, pick, cxp - 6, y - 20 - Math.min(1, (t - 0.6) / 0.3) * 6);
-        hero(p, s, t, 0.6);
-        if (t > 0.75) s.text(pick === 'part' ? '부품!' : pick === 'up' ? '한 단계 위로!' : '꽝', s.w / 2, 14, 24, pick === 'miss' ? '#ff9a8a' : '#f4d27a');
-      },
-      (dt, t) => {
-        if (t > 0.6 && t - dt <= 0.6) {
-          if (pick === 'miss') for (let i = 0; i < 8; i++) s.ps.spawn(P.SMOKE, cxp + s.R.range(-4, 4), s.floor - 8, s.R.range(-20, 20), s.R.range(-30, -10), s.R.range(0.8, 1.4), 0, s.R.range(3, 5));
-          else { s.lights.add(cxp, s.floor - 10, 40, PAL.gold[5], 1, 0.8); for (let i = 0; i < 12; i++) s.ps.spawn(P.MOTE, cxp + s.R.range(-6, 6), s.floor - 8, s.R.range(-10, 10), s.R.range(-80, -30), s.R.range(0.5, 1), PAL.gold[5], 1); }
-        }
-      },
-    );
+    await s.play(700, (t, p) => { s.dim(p); s.ground(p); machine(p, T0 + t, false); if (pick !== 'miss') p.glow(mx + 21, my + 47, 14, PAL.gold[5], 0.6 * Math.min(1, t * 3)); hero(p, s, t, 0.3); }, (dt, t) => {
+      if (t > 0.3 && t - dt <= 0.3) { if (pick === 'miss') for (let i = 0; i < 8; i++) s.ps.spawn(P.SMOKE, mx + 21 + s.R.range(-4, 4), my + 46, s.R.range(-20, 20), s.R.range(-30, -10), s.R.range(0.8, 1.4), 0, s.R.range(3, 5)); else s.ps.burst(mx + 21, my + 46, 16, [50, 140], P.STAR, [0.4, 0.8], PAL.gold[5]); }
+    });
+    await rewardReel(s.host, [{ icon: 'sym-part', label: '희귀 부품', good: true }, { icon: 'sym-up', label: '한 단계 위로', good: true }, { icon: 'sym-miss', label: '꽝 · 감전', good: false }], kinds.indexOf(pick));
   },
 
   /** 고철 경매: 나무 단상 · 망치 세 번(누를 때마다 · 먼지 · 마지막은 흰 장) → 낙찰 → 상자가 들썩이다 열림: 금빛 기둥 / 먼지만 */
   async auction(s, c) {
     const cx = s.w / 2, top = s.floor - 18;
     const podium = (p: Painter) => { const W = PAL.wood; p.rect(cx - 30, top, 60, 18, INK); p.rect(cx - 29, top + 1, 58, 17, W[3]); p.rect(cx - 29, top + 1, 58, 2, W[5]); p.rect(cx - 29, top + 6, 58, 1, W[1]); p.rect(cx - 29, top + 7, 58, 2, PAL.brass[4]); p.rect(cx + 27, top + 1, 2, 17, W[1]); };
-    const crate = (p: Painter, x: number, y: number, lid: number) => { const W = PAL.wood; p.rect(x, y, 30, 18, INK); p.rect(x + 1, y + 1, 28, 16, W[3]); for (let i = 0; i < 3; i++) p.rect(x + 1, y + 2 + i * 5, 28, 1, W[2]); p.rect(x + 1, y + 1, 2, 16, W[5]); p.rect(x + 13, y + 1, 4, 16, PAL.brass[3]); p.rect(x - 1, y - 5 + lid, 32, 6, INK); p.rect(x, y - 4 + lid, 30, 4, W[4]); p.rect(x, y - 4 + lid, 30, 1, W[6]); };
     const words = ['하나', '둘', '낙찰!'];
     for (let i = 0; i < 3; i++) {
       await s.tap(c.tap && `${c.tap} (${i + 1}/3)`, (t, p) => { s.dim(p); s.ground(p, PAL.wood); podium(p); hammer(p, cx + 18, top - 2, 1.1 + (Math.floor(t * 5) % 2 ? 0.1 : 0)); s.text(`호가 60`, cx, 14, 24, '#f4d27a'); });
@@ -366,25 +348,25 @@ const FX: Record<string, Fx> = {
         s.text(words[i], cx, 14, i === 2 ? 36 : 24, i === 2 ? '#e5262f' : '#f4f1ea');
       }, (dt, t) => { if (t > 0.07 && t - dt <= 0.07) { impact(s, cx + 6, top, PAL.gold[5], i === 2 ? 18 : 8); } });
     }
-    const x = cx - 15, y = s.floor - 18;
+    const x = Math.round(cx - 17), y = s.floor - 30;
     await s.play(
-      2000,
+      1300,
       (t, p) => {
         s.dim(p); s.ground(p, PAL.wood);
-        const lid = t < 0.6 ? (Math.floor(t * 12) % 2 ? -1 : 0) * Math.min(3, 1 + Math.floor(t * 5)) : -6 - Math.min(1, (t - 0.6) / 0.1) * 10;
-        if (c.good && t > 0.6) { p.glowLine(cx, y, cx, 0, 10, PAL.gold[5], 0.6); for (let yy = 0; yy < y; yy += 1) if (bayer(cx, yy) < 0.4) p.px(cx + ((yy >> 1) % 3) - 1, yy, PAL.gold[6]); }
-        crate(p, x, y, lid);
-        if (c.good && t > 0.7) { const k = outE((t - 0.7) / 0.4); p.circle(cx, y - 8 - k * 12, 4, INK); p.circle(cx, y - 8 - k * 12, 3, PAL.brass[5]); p.px(cx, y - 8 - k * 12, INK); }
+        const f = t < 0.6 ? 0 : t < 0.7 ? 1 : 2;
+        const shake = t < 0.6 ? (Math.floor(t * 12) % 2 ? 1 : -1) * Math.min(2, Math.floor(t * 5)) : 0;
+        if (f > 0) p.glow(cx, y + 12, 26, c.good ? PAL.gold[5] : PAL.smoke[4], 0.5);
+        s.sprite(`chest-${f}`, x + shake, y);
         hero(p, s, t, 0.6);
-        if (t > 0.8) s.text(c.good ? '부품이 빛난다' : '빈 상자', cx, 14, 24, c.good ? '#f4d27a' : '#ff9a8a');
       },
       (dt, t) => {
         if (t > 0.6 && t - dt <= 0.6) {
-          if (c.good) { s.lights.add(cx, y, 40, PAL.gold[5], 1, 0.9); for (let i = 0; i < 14; i++) s.ps.spawn(P.MOTE, cx + s.R.range(-8, 8), y, s.R.range(-12, 12), s.R.range(-90, -30), s.R.range(0.5, 1.1), PAL.gold[5], 1); s.ps.burst(cx, y - 4, 10, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); }
-          else for (let i = 0; i < 10; i++) s.ps.spawn(P.DUST, cx + s.R.range(-12, 12), y - 4, s.R.range(-30, 30), s.R.range(-30, -8), s.R.range(0.6, 1.2), PAL.wood[3], s.R.range(2, 4));
+          if (c.good) { s.lights.add(cx, y + 10, 40, PAL.gold[5], 1, 0.9); for (let i = 0; i < 14; i++) s.ps.spawn(P.MOTE, cx + s.R.range(-10, 10), y + 12, s.R.range(-12, 12), s.R.range(-90, -30), s.R.range(0.5, 1.1), PAL.gold[5], 1); s.ps.burst(cx, y + 8, 12, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); }
+          else for (let i = 0; i < 10; i++) s.ps.spawn(P.DUST, cx + s.R.range(-12, 12), y + 12, s.R.range(-30, 30), s.R.range(-30, -8), s.R.range(0.6, 1.2), PAL.wood[3], s.R.range(2, 4));
         }
       },
     );
+    await rewardReel(s.host, [{ icon: 'sym-part', label: '희귀 부품', good: true }, { icon: 'sym-miss', label: '빈 상자', good: false }], c.good ? 0 : 1);
   },
 
   /** 쇳물 담금질: 도가니(불 · 불씨 · 빛) 위로 사슬이 계단으로 내려가 잠김(김이 솟음) → 끌어올림: 달아오른 새 기물(번쩍) / 빈 갈고리에서 쇳물이 떨어짐 */
