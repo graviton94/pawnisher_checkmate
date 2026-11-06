@@ -6,13 +6,19 @@ import { START_COMMANDS } from '../src/slice/cards';
 describe('출하 지도 (D-168)', () => {
   it('3막 · 1막은 입문 한 판으로 시작(D-232) · 첫 줄 대국 = 핵심 부품 · 반장 앞 층은 작업대 · 막마다 검문 · 가운데 부품 상자 (D-215)', () => {
     const run = buildRun(7);
-    expect(run).toHaveLength(3);
+    // 3막 + 종막 (D-252): 종막은 최종 정비 → 고물상 → 도금왕
+    expect(run).toHaveLength(4);
+    expect(run[3].rows.map((r) => r[0].kind)).toEqual(['forge', 'shop', 'boss']);
+    expect(run[3].rows[0][0].final).toBe(true);
+    expect(run[3].rows[2][0].battle!.bossRule).toBe('gilded');
+    expect(run[2].rows.at(-1)![0].battle!.reward).toBe('part');
+    expect(run[3].rows[2][0].battle!.reward).toBe('end');
     expect(INTRO).toHaveLength(1);
     expect(run[0].rows[0][0].battle).toBe(INTRO[0]);
     expect(run[0].rows[1].every((n) => n.battle?.reward === 'kit')).toBe(true);
-    for (const a of run) {
+    for (const a of run.slice(0, 3)) {
       expect(a.rows.at(-1)![0].kind).toBe('boss');
-      expect(a.rows.at(-1)![0].battle!.reward).toBe(a.act === 3 ? 'end' : 'part');
+      expect(a.rows.at(-1)![0].battle!.reward).toBe('part');
       expect(a.rows.at(-2)!.every((n) => n.kind === 'forge')).toBe(true);
       expect(a.rows.flat().some((n) => n.kind === 'check')).toBe(true);
       expect(a.rows.some((r) => r.length > 1 && r.every((n) => n.kind === 'chest'))).toBe(true);
@@ -21,7 +27,7 @@ describe('출하 지도 (D-168)', () => {
   });
   it('슬더스식 길 (D-215): 이어진 노드로만 · 길이 엇갈리지 않음 · 첫 층은 대국 · 상점 · 작업대 · 검문 상한', () => {
     for (let seed = 1; seed < 40; seed++)
-      for (const a of buildRun(seed)) {
+      for (const a of buildRun(seed).slice(0, 3)) {
         const g = a.rows.filter((r) => r[0].lane !== undefined);
         expect(g[0].every((n) => n.kind === 'battle')).toBe(true);
         g.forEach((r, f) => {
@@ -109,7 +115,7 @@ describe('저울추 · 녹슨 카드 (D-247)', () => {
 describe('막별 반장 · 적 특성 (D-171)', () => {
   it('막마다 반장 규칙이 다르고, 2 · 3막 판에는 적 특성이 붙는다', () => {
     const run = buildRun(5);
-    expect(run.map((a) => a.rows.at(-1)![0].battle!.bossRule)).toEqual(['plate', 'spawn', 'thorns']);
+    expect(run.map((a) => a.rows.at(-1)![0].battle!.bossRule)).toEqual(['plate', 'spawn', 'thorns', 'gilded']);
     expect(run[1].rows.flat().find((n) => n.kind === 'check')!.battle!.traits).toContain('blastPawn');
     expect(run[2].rows.flat().find((n) => n.kind === 'check')!.battle!.traits).toContain('rookPlate');
   });

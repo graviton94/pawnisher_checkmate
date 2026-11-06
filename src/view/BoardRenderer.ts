@@ -70,6 +70,7 @@ const FOE_TONE: Record<string, Record<number, number>> = {
   // 반장별 (D-249 — 반장 초상화에서 뽑은 색): 철갑 = 쇠녹 · 쇳물 / 조립 = 청강 · 청록 / 출하 = 총신쇠 · 핏빛
   'boss-plate': { 0x6e717e: 0xe0904a, 0x484a55: 0x8c4a2a, 0x32343d: 0x5e2e1c, 0x26272e: 0x401e14, 0x1c1d22: 0x28120c },
   'boss-spawn': { 0x6e717e: 0x7fe6ea, 0x484a55: 0x2e7a80, 0x32343d: 0x1e5258, 0x26272e: 0x143a3e, 0x1c1d22: 0x0c2226 },
+  'boss-gilded': { 0x6e717e: 0xf4c84a, 0x484a55: 0xa8741c, 0x32343d: 0x6e4a12, 0x26272e: 0x46300c, 0x1c1d22: 0x241806 },
   'boss-thorns': { 0x6e717e: 0xe5262f, 0x484a55: 0x5a5e6c, 0x32343d: 0x3d404c, 0x26272e: 0x2a2c36, 0x1c1d22: 0x1a1a22 },
   elite: { 0x6e717e: 0xa65a5e, 0x484a55: 0x74303a, 0x32343d: 0x56202a, 0x26272e: 0x40161e, 0x1c1d22: 0x2a0e13 }, // 검붉은 쇠
   boss: { 0x6e717e: 0xc89b3c, 0x484a55: 0x6e4a8c, 0x32343d: 0x4e3266, 0x26272e: 0x38224c, 0x1c1d22: 0x241634 }, // 불길한 보라 + 금빛 반짝
@@ -95,7 +96,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -259,7 +260,7 @@ class BoardScene extends Phaser.Scene {
       this.makeCrackedTexture(type);
       this.makeToneTexture(type, 1, 'elite', FOE_TONE.elite);
       this.makeToneTexture(type, 1, 'boss', FOE_TONE.boss);
-      for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
+      for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns', 'boss-gilded']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
     }
     this.cameras.main.setZoom(this.dpr);
     this.camZoom = this.dpr;

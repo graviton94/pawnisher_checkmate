@@ -43,7 +43,7 @@ export class BoardFx {
       Object.assign(this.fx.canvas.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: '5' });
       this.host.appendChild(this.fx.canvas);
     }
-    this.ps = new Particles(this.R, () => Infinity, rule === 'spawn' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : rule === 'thorns' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
+    this.ps = new Particles(this.R, () => Infinity, rule === 'gilded' ? [hex('#fffbe0'), hex('#f4c84a'), hex('#9a6a14')] : rule === 'spawn' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : rule === 'thorns' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
     this.start();
   }
   private running = false;
@@ -80,7 +80,7 @@ export class BoardFx {
     this.flash -= dt;
     if (!this.rule || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const B = this.bounds(this.boardSize.w, this.boardSize.h), R = this.R;
-    this.acc += dt * (this.rule === 'plate' ? 9 : this.rule === 'spawn' ? 4 : 5);
+    this.acc += dt * (this.rule === 'plate' ? 9 : this.rule === 'spawn' ? 4 : this.rule === 'gilded' ? 7 : 5);
     for (; this.acc > 1; this.acc--) {
       if (this.rule === 'plate') {
         // 판 아래 가장자리에서 불씨가 오른다
@@ -89,6 +89,10 @@ export class BoardFx {
         // 리벳에서 청록 불꽃이 튄다
         const x = R.range(B.x0, B.x1), y = R.range(B.y0, B.y1);
         this.ps.spawn(P.SPARK, x, y, R.range(-40, 40), R.range(-60, -10), R.range(0.2, 0.4), WHITE, 1);
+      } else if (this.rule === 'gilded') {
+        // 금가루가 위에서 천천히 내려앉고, 가끔 금빛이 반짝인다
+        if (R.chance(0.7)) this.ps.spawn(P.MOTE, R.range(B.x0, B.x1), B.y0 - 4, R.range(-4, 4), R.range(6, 14), R.range(2, 3.4), hex('#f4c84a'), 0.5);
+        else this.ps.spawn(P.STAR, R.range(B.x0, B.x1), R.range(B.y0, B.y1), 0, 0, R.range(0.5, 0.9), hex('#ffe68a'), R.range(0.8, 1.8));
       } else {
         // 흰 역광 먼지가 천천히 떠오른다
         this.ps.spawn(P.MOTE, R.range(B.x0, B.x1), R.range(B.y0, B.y1), R.range(-4, 4), R.range(-12, -4), R.range(1.2, 2.2), hex('#d8d4dc'), 0.5);

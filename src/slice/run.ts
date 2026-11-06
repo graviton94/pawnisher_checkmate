@@ -42,10 +42,13 @@ export interface MapNode {
   lane?: number;
   /** 다음 줄에서 이어진 노드 번호 (슬더스식 길, D-215). 없으면 다음 줄 전부 */
   to?: number[];
+  /** 종막 최종 정비 (D-252): 선택지 셋 다 · 분대 가득 회복 */
+  final?: boolean;
 }
 
 export interface Act {
-  act: 1 | 2 | 3;
+  /** 4 = 종막 (출하구 — 최종 정비 · 고물상 · 도금왕, D-252) */
+  act: 1 | 2 | 3 | 4;
   name: string;
   /** 갈림길 줄: 줄마다 고를 수 있는 노드 (고정 노드는 하나) */
   rows: MapNode[][];
@@ -176,14 +179,33 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng)
   const sc = ACT_SCALE[a];
   const label = `${act}막`;
   if (kind === 'boss')
-    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[BOSS_RULE[a]].name}`, narr: NARR_BOSS[a], tell: BOSS_RULES[BOSS_RULE[a]].tell, reward: act === 3 ? 'end' : 'part', boss: true, bossRule: BOSS_RULE[a], traits: TRAITS[a] };
+    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[BOSS_RULE[a]].name}`, narr: NARR_BOSS[a], tell: BOSS_RULES[BOSS_RULE[a]].tell, reward: 'part', boss: true, bossRule: BOSS_RULE[a], traits: TRAITS[a] };
   if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
   return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
 };
 
 
-/** 출하 전체 (3막). 1막은 입문 한 판 뒤 갈림길(첫 줄 = 핵심 부품), first = 처음 출하(1막 반장 HP −35%), 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장. 같은 시드 = 같은 지도 (오늘의 출하) */
+/**
+ * 최종 보스 도금왕 (D-252, 사용자: 「3막까지 가고 그냥 끝이냐 — 슬더스처럼 최종 보스」 → 스토리 §5의 도금왕).
+ * 앞 세 반장의 규칙을 모두 쓰고, 넓은 판(8×7)에 흑 세트가 거의 다 선다. 쓰러지면 2단계로 다시 일어선다(모든 반장 공통).
+ */
+export const FINAL_BOSS = (asc = 0): BattleDef => ({
+  enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 5 ? (['P'] as PieceType[]) : [])],
+  kingHp: 1.25,
+  enemyHp: asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05,
+  w: 8,
+  h: 7,
+  title: '종막 — 도금왕',
+  narr: '포장대 위, 금 왕관을 칠한 킹이 당신을 내려다본다. 모양이 운명이라고 쓴 손이다.',
+  tell: BOSS_RULES.gilded.tell,
+  reward: 'end',
+  boss: true,
+  bossRule: 'gilded',
+  traits: ['blastPawn', 'rookPlate'],
+});
+
+/** 출하 전체 (3막 + 종막). 1막은 입문 한 판 뒤 갈림길(첫 줄 = 핵심 부품), first = 처음 출하(1막 반장 HP −35%), 2 · 3막은 갈림길 4줄. 끝에 검문 · 반장. 같은 시드 = 같은 지도 (오늘의 출하) */
 export const buildRun = (seed: number, asc = 0, first = false): Act[] => {
   const rng = new Rng(seed);
   return ([1, 2, 3] as const).map((act) => {
@@ -199,8 +221,8 @@ export const buildRun = (seed: number, asc = 0, first = false): Act[] => {
       boss.enemyHp = (boss.enemyHp ?? 1) * FTUE.firstBossHp;
     }
     rows.push([{ kind: 'boss', battle: boss }]);
-    return { act, name: ACT_NAMES[act - 1], rows };
-  });
+    return { act, name: ACT_NAMES[act - 1], rows } as Act;
+  }).concat([{ act: 4, name: '출하구', rows: [[{ kind: 'forge', final: true }], [{ kind: 'shop' }], [{ kind: 'boss', battle: FINAL_BOSS(asc) }]] }]);
 };
 
 /** 막 하나의 길 그래프 (D-215) — 층마다 노드 줄. 마지막 층은 반장으로 이어진다(to 없음 = 다음 줄 전부) */

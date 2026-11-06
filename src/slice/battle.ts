@@ -884,7 +884,7 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
   const ek = before.pieces.find((p) => p.side === 1 && p.type === 'K');
   for (const e of events) {
     if (e.type !== 'attack') continue;
-    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) {
+    if (b.boss && hasThorns(b) && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) {
       const me = findPiece(b.s, e.attackerId);
       if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '되받아침!', hits: [hurt(me, foeDmg(BOSS_NUM.thorns, b))], fx: 'thorns', from: { x: ek.x, y: ek.y } });
     }
@@ -914,7 +914,7 @@ export const backlashOf = (b: SliceBattle, sim: { state: BattleState; events: Ba
   const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
   for (const e of sim.events) {
     if (e.type !== 'attack') continue;
-    if (b.boss && b.bossRule === 'thorns' && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += foeDmg(BOSS_NUM.thorns, b);
+    if (b.boss && hasThorns(b) && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += foeDmg(BOSS_NUM.thorns, b);
     if (b.blastPawns)
       for (const h of e.hits) {
         const dead = b.s.pieces.find((p) => p.id === h.targetId);
@@ -975,6 +975,9 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
 
 const PIECE_LABEL: Record<PieceType, string> = { K: '킹', Q: '퀸', R: '룩', B: '비숍', N: '나이트', P: '폰' };
 
+/** 되받아침이 켜진 반장 (출하 반장 · 도금왕) */
+export const hasThorns = (b: SliceBattle): boolean => b.bossRule === 'thorns' || b.bossRule === 'gilded';
+
 /** 반장 턴 시작: 철갑을 다시 두르고, 폭격 줄을 예고한다 (내 기물 값이 가장 많이 모인 줄) */
 const bossTurnStart = (b: SliceBattle): void => {
   if (!b.boss) return;
@@ -982,12 +985,13 @@ const bossTurnStart = (b: SliceBattle): void => {
   if (k && b.bossRule !== 'spawn' && (b.turn - 1) % BOSS.plateEvery === 0) k.shield = Math.max(k.shield, BOSS.plate);
   b.bombRow = null;
   // 조립 반장: 2턴마다 킹 곁에 폰 (셋까지)
-  if (b.bossRule === 'spawn') {
+  // 도금왕 (D-252): 세 반장을 다 쓴다 — 방열판(위) · 홀수 턴 폰 찍기 · 짝수 턴 줄 폭격 · 되받아침(아래 hasThorns)
+  if (b.bossRule === 'spawn' || b.bossRule === 'gilded') {
     if (k && (b.turn - 1) % BOSS_NUM.spawnEvery === 0 && b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length < BOSS_NUM.spawnMax) {
       const spot = [[0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1]].map(([dx, dy]) => ({ x: k.x + dx, y: k.y + dy })).find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
       if (spot) b.s.pieces.push(makePiece(Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds) + 1, 'P', 1, spot.x, spot.y));
     }
-    return;
+    if (b.bossRule === 'spawn') return;
   }
   if (b.bossRule === 'thorns') return;
   // 1턴부터 (D-201): 반장 규칙이 첫 턴에 바로 보인다 — 예고(붉은 줄)는 그 턴 시작에 뜨고 턴 끝에 친다

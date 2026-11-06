@@ -8,7 +8,7 @@
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
 
-export type BossKey = 'plate' | 'spawn' | 'thorns';
+export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded';
 export interface BossIntroOpts {
   rule: BossKey;
   art: string;
@@ -24,15 +24,16 @@ const LOOK: Record<BossKey, { accent: string; seam: number }> = {
   plate: { accent: '#ff8a2a', seam: 0 },
   spawn: { accent: '#5fd4d8', seam: 0 },
   thorns: { accent: '#e5262f', seam: 0 },
+  gilded: { accent: '#f4c84a', seam: 0 },
 };
 
 /** 초상 왼쪽 band칸을 베이어 디더로 깎는다 (그림 도트 단위) */
-const ditherEdge = (img: HTMLImageElement, band: number): HTMLCanvasElement => {
+const ditherEdge = (img: HTMLImageElement, band: number, src: CanvasImageSource = img): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
   const x = c.getContext('2d')!;
-  x.drawImage(img, 0, 0);
+  x.drawImage(src, 0, 0, c.width, c.height);
   const d = x.getImageData(0, 0, c.width, c.height);
   for (let yy = 0; yy < c.height; yy++)
     for (let xx = 0; xx < Math.min(band, c.width); xx++) {
@@ -67,6 +68,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     let seamX = W * 0.45; // 경계선 (화면 px)
     let portW = 0;
     const img = new Image();
+    let fallbackSrc: HTMLImageElement | null = null;
     img.onload = () => {
       // 띠 사이를 덮는 정수배, 다만 폭은 화면의 70%까지 (가로로 긴 2막 초상이 글씨를 덮지 않게)
       let k = Math.max(1, Math.ceil((H - barH * 2) / img.naturalHeight));
@@ -74,12 +76,40 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       // 위끝(왕관)을 띠 바로 아래에 — 몸 아래쪽이 아래 띠에 잘린다
       port.style.top = `${barH - Math.round(img.naturalHeight * k * 0.03)}px`;
       const band = Math.round(img.naturalWidth * 0.32);
-      const cv = ditherEdge(img, band);
+      const cv = ditherEdge(img, band, fallbackSrc ?? img);
       cv.style.width = `${img.naturalWidth * k}px`;
       cv.style.height = `${img.naturalHeight * k}px`;
       port.appendChild(cv);
       portW = img.naturalWidth * k;
       seamX = W - portW + band * k * 0.45;
+    };
+    // 초상 그림이 아직 없으면 (도금왕 B-04 발주 전): 검은 킹 기물을 금칠해 크게 (72칸 그림 → 정수배)
+    img.onerror = () => {
+      const pc = new Image();
+      pc.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = 72; c.height = 72;
+        const x = c.getContext('2d')!;
+        x.imageSmoothingEnabled = false;
+        x.drawImage(pc, 0, 0, 72, 72);
+        const d = x.getImageData(0, 0, 72, 72);
+        const gold = [[42, 26, 6], [90, 58, 12], [154, 106, 20], [212, 154, 34], [244, 200, 74], [255, 230, 138]];
+        for (let i = 0; i < d.data.length; i += 4) {
+          if (!d.data[i + 3]) continue;
+          const l = (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3;
+          if (l < 20 || l > 200) continue;
+          const g = gold[Math.min(5, Math.floor((l / 140) * 6))];
+          d.data[i] = g[0]; d.data[i + 1] = g[1]; d.data[i + 2] = g[2];
+        }
+        x.putImageData(d, 0, 0);
+        const im2 = new Image();
+        im2.onload = () => img.onload?.(new Event('load'));
+        Object.defineProperty(img, 'naturalWidth', { value: 72 });
+        Object.defineProperty(img, 'naturalHeight', { value: 72 });
+        im2.src = c.toDataURL();
+        fallbackSrc = im2;
+      };
+      pc.src = 'pieces/l-K1.png';
     };
     img.src = `scenes/${o.art}.png`;
     const accent = hex(look.accent);

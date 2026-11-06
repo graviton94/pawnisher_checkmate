@@ -105,8 +105,9 @@ export const KEYWORDS: [string, string, TermGate][] = [
 ];
 
 /** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */
-export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns', string> = {
+export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded', string> = {
   plate: '용광로를 등에 진 자',
   spawn: '끝없이 찍어 내는 손',
   thorns: '가시 갑옷의 문지기',
+  gilded: '모양이 운명이라 쓴 손',
 };
