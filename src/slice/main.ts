@@ -1641,7 +1641,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         el.querySelector('.ev-purse')!.textContent = `나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}`;
         if (out.text) await say('narr', out.text);
         await say('npc', good ? talk.win : talk.lose ?? talk.win);
-        showExit(out.partPick ? '부품을 고른다' : talk.exit, () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
+        showExit(out.partPick ? '부품을 고른다' : talk.exit, () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance, !!out.elite) : advance()));
       })();
     }),
   );
