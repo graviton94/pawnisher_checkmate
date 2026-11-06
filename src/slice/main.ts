@@ -603,19 +603,22 @@ const portrait = (): void => {
 let apKey = '';
 let apPrev: number | null = null;
 let coinPrev: number | null = null;
+/** 처치 환급 연출 (D-242): 카드를 내면 먼저 쓴 만큼 풀린 채로 보이다가, 처치 연출이 끝나면 돌아온 열쇠가 감긴다 */
+let apHold: number | null = null;
 const gauges = (): void => {
+  const ap = apHold ?? b.ap;
   // 태엽 칸은 늘 상한(5)만큼 깔아 둔다 — 기본은 그중 apMax(3)가 켜진다 (D-212)
-  const n = Math.max(SLICE.apCap, b.ap);
-  const k = `${b.ap}/${n}/${b.apMax}`;
+  const n = Math.max(SLICE.apCap, ap);
+  const k = `${ap}/${n}/${b.apMax}`;
   if (k !== apKey) {
     const was = apPrev;
     apKey = k;
-    apPrev = b.ap;
+    apPrev = ap;
     $('vials').innerHTML = `<span class="lbl">태엽</span><span class="keys">${Array.from({ length: n }, (_, i) => {
-      const on = i < b.ap;
+      const on = i < ap;
       const fx = was === null || calmNow() ? '' : !on && i < was ? ' spend' : on && i >= was ? ' wind' : '';
       return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><i class="key"></i></i>`;
-    }).join('')}</span><b>${b.ap}/${b.apMax}</b>`;
+    }).join('')}</span><b>${ap}/${b.apMax}</b>`;
   }
   if (coinPrev !== b.coins || !$('coins').childElementCount) {
     const was = coinPrev;
@@ -723,10 +726,13 @@ const coach = (): void => {
   }
   if (el.dataset.k === key) return;
   el.dataset.k = key;
-  el.textContent = COACH_LINES[key];
+  // 부관 박차가 말한다 (D-242 화자 통일): 얼굴 + 이름 + 말
+  el.innerHTML = `<img class="cl-face" src="ui/hud/adjutant.png" alt="" width="40" height="40"><span><b>${TUT.name}</b>${COACH_LINES[key].replace(/\n/g, '<br>')}</span>`;
   const r = $('board').getBoundingClientRect();
   el.style.left = `${r.left + r.width / 2}px`;
-  el.style.top = `${r.bottom - 44}px`;
+  // 두 줄이 되어도 판 아래쪽에 붙는다 (아래 기준)
+  el.style.top = '';
+  el.style.bottom = `${Math.max(8, innerHeight - r.bottom + 6)}px`;
   replay(el, 'in');
 };
 const canPlay2 = (i: number): boolean => canPlay(b, i);
@@ -1003,9 +1009,24 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const gain = r.events.reduce((a, e) => (e.type === 'apGain' ? a + e.amount : a), 0);
   selCard = selPiece = openCard = null;
   busy = true;
+  // 먼저 쓴 만큼 풀린다 (돌아올 태엽은 처치 연출 뒤에)
+  apHold = gain ? b.ap - gain : null;
   refresh();
   showBefore(r.before);
   await renderer.play(r.before, r.events);
+  if (gain) {
+    // 처치 → 돌아온 열쇠가 감기며 불꽃이 튄다
+    apHold = null;
+    gauges();
+    $('vials').classList.remove('regain');
+    void $('vials').offsetWidth;
+    $('vials').classList.add('regain');
+    $('vials').querySelectorAll<HTMLElement>('.seg.wind').forEach((el) => {
+      const r2 = el.getBoundingClientRect();
+      sparksAt(r2.left + r2.width / 2, r2.top + r2.height / 2, 8, 26);
+    });
+    sfx('coin', 9);
+  }
   await deathRites();
   // 내 카드 연출 끝 → 다음 조작 사이 짧은 숨 (D-204)
   if (!calmNow()) await new Promise((res) => window.setTimeout(res, PACE.afterMine));
@@ -1023,7 +1044,6 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   renderer.setTempo(1 + Math.min(b.kills, PACE.tempoKillsMax) * PACE.tempoPerKill);
   if (gain) {
     toast(`처치 — 태엽 +${gain}${parts.includes('horseshoe') && moverType === 'N' ? ` (${SLICE_PARTS.horseshoe.name})` : ''}`);
-    window.setTimeout(() => sfx('coin', 9), 200);
   }
   if (b.s.winner !== null) return finish();
 };
@@ -2884,7 +2904,7 @@ const tutMark = (part: string): void => {
 const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
   tutActive = true;
   document.querySelector('.coach-line')?.remove();
-  const done = await runTutorial(steps, { name: TUT.name, skip: TUT.skip, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
+  const done = await runTutorial(steps, { pause: () => enemyTurn || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
   tutActive = false;
   tutMark(part);
   track('tutorial', { part, completed: done });

@@ -146,6 +146,7 @@ export const PRELOAD: string[] = [
   "ui/hud/avatar-plate.png",
   "ui/hud/avatar-spawn.png",
   "ui/hud/avatar-thorns.png",
+  "ui/hud/gears-spin.png",
   "ui/hud/key-bonus.png",
   "ui/hud/key-full.png",
   "ui/hud/key-spent.png",

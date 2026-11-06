@@ -28,6 +28,8 @@ export interface TutOpts {
   next: string;
   /** 소리 (톡) */
   tick?: () => void;
+  /** 참이면 막 · 꺾쇠 · 말풍선을 잠시 걷는다 (적 차례 · 연출 중 — 판이 흐려진 채 진행되지 않게, D-242) */
+  pause?: () => boolean;
 }
 
 const rectOf = (t: Element | DOMRect | null | undefined): DOMRect | null => {
@@ -97,7 +99,12 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       place();
       typing = true;
       o.tick?.();
-      void typeIn(textEl, s.text, 18, undefined, () => alive && steps[i] === s).then(() => {
+      // 줄 바꿈(\n)은 줄마다 한 자씩 이어 찍는다 (D-242)
+      const lines = s.text.split('\n');
+      textEl.innerHTML = lines.map(() => '<span class="ln"></span>').join('<br>');
+      const spans = [...textEl.querySelectorAll<HTMLElement>('.ln')];
+      const live = () => alive && steps[i] === s;
+      void lines.reduce((p, ln, k) => p.then(() => (live() ? typeIn(spans[k], ln, 18, undefined, live) : undefined)), Promise.resolve() as Promise<void>).then(() => {
         typing = false;
         if (alive && steps[i] === s && !s.wait) next.hidden = false;
       });
@@ -107,7 +114,7 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       if (!s || s.wait) return;
       if (typing) {
         typing = false;
-        textEl.innerHTML = s.text;
+        textEl.innerHTML = s.text.replace(/\n/g, '<br>');
         next.hidden = false;
         return;
       }
@@ -120,6 +127,7 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
     dim.addEventListener('click', (e) => e.stopPropagation());
     timer = window.setInterval(() => {
       if (!alive) return;
+      root.classList.toggle('paused', !!o.pause?.());
       place();
       const s = steps[i];
       if (s?.wait && s.wait()) go();

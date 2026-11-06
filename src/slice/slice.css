@@ -567,7 +567,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes tfxshine { 0% { left: -40px; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { left: 110%; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 .tfx-blood { position: fixed; z-index: 121; width: 5px; height: 5px; background: #e5262f; box-shadow: 0 0 0 1px #0b0b0e; pointer-events: none; }
 .tfx-ember { position: fixed; z-index: 41; width: 3px; height: 3px; background: #ff6b5a; pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; } .tfx-em.done .sl { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; -webkit-mask-image: none; mask-image: none; } .tfx-em.done .sl { animation: none; } }
 /* ---------- 화면 연출 3부 (D-189, 연구소 21~24판 승인) ---------- */
 :root { --snap: cubic-bezier(0.2, 1.6, 0.35, 1); --accel: cubic-bezier(0.6, 0, 0.9, 0.4); --decel: cubic-bezier(0.1, 0.9, 0.2, 1); }
 .fx3-flash { position: fixed; inset: 0; z-index: 118; background: #fff; pointer-events: none; animation: fx3fl 220ms var(--decel) forwards; }
@@ -627,7 +627,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .ko3.lose .word { color: #f4f1ea; text-shadow: 4px 4px 0 #5a0e12; }
 .ko3.win.run .word { animation: kowin 1500ms both; }
 .ko3.lose.run .word { animation: kolose 1500ms both; }
-.ko3:not(.run) .word { opacity: 1; }
+.ko3:not(.run) .word { opacity: 1; -webkit-mask-image: none; mask-image: none; }
 @keyframes kowin { 0% { transform: scale(4) rotate(-8deg); text-shadow: -18px 0 #ff2a6d, 18px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 6.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 9.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 12% { transform: scale(0.88) rotate(0); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 20% { transform: scale(1.08); text-shadow: 4px 4px 0 #16141c; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 28% { transform: scale(1); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: scale(1.02); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 85.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 90.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.6); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 @keyframes kolose { 0% { transform: translateY(-150px) scale(0.9, 1.2); animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 4.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 9.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 13.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 18% { transform: translateY(0) scale(1.15, 0.8); animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 26% { transform: translateY(-12px) scale(0.97, 1.04); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 33% { transform: translateY(0) scale(1.04, 0.96); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 40% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 82% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 86.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 91.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translateY(30px); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 .ko3 .word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18px; left: -30px; background: rgba(255, 255, 255, 0.8); transform: skewX(-20deg); mix-blend-mode: overlay; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
@@ -696,7 +696,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .peek { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .overlay.m3on, .overlay.m3off, .overlay .panel.m3in, .overlay .panel.m3out, .toast.t3in, .toast.t3out, .turn-label.th-pop, .th-cog, .th-dots i, .th-lamp, .stamp-big.st3, .pass-tag.st3, .tally div.in, .dc-row, .deathfx.dc3 > div > .in, .taunt.tq3, .taunt.out, .chainpop, .hand.hint .cmd:not(.off)::after, .boss-rules::after, .mnd.now::after, .got3, .heal3 { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
-  .tally div, .deathfx.dc3 > div > :not(.narr) { opacity: 1; }
+  .tally div, .deathfx.dc3 > div > :not(.narr) { opacity: 1; -webkit-mask-image: none; mask-image: none; }
 }
 .hand.dealing .cmd { visibility: hidden; }
 .tally { max-width: 380px; }
@@ -1883,3 +1883,18 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
 /* 부관 박차 초상 N-01 (56도트, 1도트 = 1px 그대로) */
 .tut .tut-face { width: 60px; height: 60px; }
 .tut .tut-face img { width: 56px; height: 56px; image-rendering: pixelated; }
+
+/* D-242: 안내가 잠시 쉰다 (적 차례 · 연출 중) — 판이 흐려진 채 진행되지 않게 */
+.tut.paused .tut-dim, .tut.paused .tut-frame, .tut.paused .tut-talk, .tut.paused .tut-catch { visibility: hidden; }
+/* 코치 줄 = 부관 박차가 말한다 (화자 통일) */
+.coach-line { display: flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; white-space: normal; text-align: left; line-height: 1.35; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c, 4px 4px 0 2px #000; }
+.coach-line .cl-face { flex: none; width: 40px; height: 40px; image-rendering: pixelated; background: #0b0b0e; box-shadow: inset 0 0 0 2px #c89b3c; }
+.coach-line span { white-space: nowrap; }
+.coach-line b { display: block; font: 700 12px Galmuri11, sans-serif; color: #c89b3c; }
+/* 태엽이 돌아온다: 계기 테가 두 번 번쩍 (steps) */
+.apbar.regain { animation: apRegain 420ms steps(2, jump-none) 2; }
+@keyframes apRegain { 0% { box-shadow: 0 0 0 2px #000, 0 0 0 4px #f4d27a; } 100% { box-shadow: 0 0 0 2px #000, 0 0 0 4px #6fe3f2; } }
+@media (prefers-reduced-motion: reduce) { .apbar.regain { animation: none; } }
+
+/* D-242: 메인 문장(왕관 폰 · 붉은 사선)이 연출 뒤 사라지던 것 — 시작 상태를 디더로 숨겼으니 보이는 단계에서 마스크를 걷는다 */
+.tfx-em.tremble img, .tfx-em.cut img, .tfx-em.done img { -webkit-mask-image: none; mask-image: none; }
