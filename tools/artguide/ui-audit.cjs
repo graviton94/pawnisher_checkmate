@@ -32,7 +32,35 @@ const SCENES = [
     p.on('pageerror', (e) => console.log('ERR', name, e.message));
     const A = (f, a) => p.evaluate(f, a).catch((e) => console.log('A', name, e.message.slice(0, 120)));
     const W = (ms) => p.waitForTimeout(ms);
-    const S = (n) => p.screenshot({ path: `${out}/${name}${n ? '-' + n : ''}.png` }).catch(() => console.log('shot fail', name, n));
+    // 찍을 때마다 글자 점검 (D-263): 갈무리 격자 크기 · 서체 · 넘침 · 말줄임
+    const TEXT = async (n) => {
+      const bad = await p.evaluate(() => {
+        const OK11 = [12, 24, 36], OK14 = [15, 30, 45, 60];
+        const out = [];
+        for (const el of document.querySelectorAll('body *')) {
+          if (!el.childNodes.length || ![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height) continue;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) continue;
+          let hid = false; for (let a = el; a; a = a.parentElement) { const c = getComputedStyle(a); if (c.display === 'none' || c.visibility === 'hidden' || a.hidden) { hid = true; break; } }
+          if (hid) continue;
+          const fs = parseFloat(cs.fontSize), fam = cs.fontFamily.split(',')[0].replace(/["']/g, '').trim(), w = +cs.fontWeight;
+          const txt = [...el.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent.trim()).join(' ').slice(0, 24);
+          const why = [];
+          if (fam === 'Galmuri11' && !OK11.includes(fs)) why.push(`G11 ${fs}px`);
+          else if (fam === 'Galmuri14' && !OK14.includes(fs)) why.push(`G14 ${fs}px`);
+          else if (fam !== 'Galmuri11' && fam !== 'Galmuri14') why.push(`서체 ${fam} ${fs}px`);
+          if (fam === 'Galmuri14' && w >= 600) why.push('G14 굵게');
+          if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) why.push('말줄임');
+          if (cs.overflow !== 'visible' && (el.scrollWidth > el.clientWidth + 2) && cs.whiteSpace === 'nowrap') why.push('넘침');
+          if (why.length) out.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} 「${txt}」 ${why.join(' · ')}`);
+        }
+        return [...new Set(out)];
+      }).catch(() => []);
+      for (const b of bad) console.log('TXT', name + (n ? '-' + n : ''), b);
+    };
+    const S = async (n) => { await p.screenshot({ path: `${out}/${name}${n ? '-' + n : ''}.png` }).catch(() => console.log('shot fail', name, n)); await TEXT(n); };
     try {
       await p.goto('http://localhost:4173/?debug');
       await p.evaluate((m) => localStorage.setItem('pawnisher.slice.meta', m), META);

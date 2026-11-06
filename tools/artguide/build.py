@@ -145,6 +145,18 @@ AUDIT = [
     ('안내창 · 팝업 (심장 톱니 깨짐 등)', '다음', '얇은 선 상자 → 철판 패널 + 황동 명패 머리'),
     ('작업대 · 토스트 · 독백', '다음', '얇은 선 칸 → 단추 문법 · 종이 테이프 · 움푹 칸'),
 ]
+# D-262 · D-263 UI 통일성 점검 뒤 화면 (915×412)
+UI_AUDIT = [
+    ('ui-enemyturn.jpg', '적 차례 띠 — 크롬 진홍 쇠 띠 + 단색 도트 속도선'),
+    ('ui-map.jpg', '지도 — 자원 줄은 제 크기의 움푹 칸, 판 사이에는 전투 칸을 숨긴다'),
+    ('ui-forge.jpg', '작업대 — 황동 명패 · 선택지 둘이면 고정 폭 철 단추'),
+    ('ui-bet.jpg', '판돈 — 명패 + 조건 · 보상 · 실패 시 한 줄씩'),
+    ('ui-crew.jpg', '분대 — 명패, 이름 바꾸기 뺌'),
+    ('ui-guide.jpg', '안내서 — 탭(안내서 · 용어 · 제보) · 그림 + 명패 + 이름표 행 + 요령 테이프'),
+    ('ui-terms.jpg', '용어 — 낱장 칸 둘씩, 한 줄'),
+    ('ui-event-result.jpg', '사건 결과 — 상황(문장마다 줄바꿈) + 대사(누가) + 결과 요약'),
+    ('ui-shop.jpg', '고물상 — 머리 명패'),
+]
 # 사건 15종 — 실제 게임 녹화 (D-259, tools/artguide/events/record.cjs · record.py). 끝나면 처음부터
 EVENTS = [
     ('ev-gambler-ok.webp', '동전 나이트 — 앞면', '컷씬 위로 동전만 — 세로축 12장 회전, 착지 순간 결과 면 · 금빛 별 → 부품을 고른다'),
@@ -246,6 +258,7 @@ ol.light {{ margin: 0; padding-left: 22px; display: grid; gap: 4px; }}
     audit = ''.join(f'<tr><td>{a}</td><td class="num"><span class="st {"ok" if b == "고침" else "next"}">{b}</span></td><td>{c}</td></tr>' for a, b, c in AUDIT)
     # 녹화는 크기가 커서 아티팩트 보조 파일(ev/…)로 올린다 — 같은 이름으로 files에 넣어 publish
     events = ''.join(f'<figure><img class="shot" src="ev/{f}" alt="{html.escape(t)}" loading="lazy"><figcaption><b class="evt">{t}</b><br>{c}</figcaption></figure>' for f, t, c in EVENTS if os.path.exists(os.path.join(SHOTS, f)))
+    uiaudit = ''.join(f'<figure>{img(f, c)}<figcaption>{c}</figcaption></figure>' for f, c in UI_AUDIT)
     ask = ''.join(f'<div class="card"><b>{a}</b><p>{b}</p></div>' for a, b in ASK)
     return f"""<title>Pawnisher 그래픽 정본</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -269,6 +282,8 @@ ol.light {{ margin: 0; padding-left: 22px; display: grid; gap: 4px; }}
 <h3>고칠 목록 — 이 문법에 맞춘 것 / 다음 차례</h3>
 <div class="tbl"><table><thead><tr><th>화면</th><th>상태</th><th>무엇을</th></tr></thead><tbody>{audit}</tbody></table></div>
 </section>
+
+<section><h2>UI 통일성 점검 뒤 <small>D-262 · D-263 · 역할 그룹 · 글자 전수 검사</small></h2><div class="shots">{uiaudit}</div></section>
 
 <section><h2>사건 15종 — 단순화판 (D-260) <small>실제 게임 녹화 915×412 · 끝나면 처음부터</small></h2>
 <p class="dim" style="margin-bottom:12px">흐름: 대화창 + 선택지 → 고르면 오버레이에서 연출(동전은 저절로, 칸은 하나씩 눌러 · 긁어 연다) → 결과 + [확인] → 대화창에서 NPC 마무리 대사 + 나가기. 컷씬(사건 그림) + 대사가 전부다. 사건 전용 소품 · 기계 · 상자는 뺐다. 확률은 동전 하나나 사각 칸 셋만, 결과는 실제 카드 얼굴 · 실제 기물 그림 + HP 바에 FX(강화 · 녹 · 파괴 / 진화 · 썰림 · HP 증감). 그림이 없는 사건은 공용 사건 배경.</p>

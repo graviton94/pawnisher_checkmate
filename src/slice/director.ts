@@ -109,9 +109,10 @@ export const TAUNTS: Record<TauntCue, string[]> = {
 
 // ---------- ⑦ 판돈 ----------
 export type BetKind = 'fast' | 'clean';
-export const BETS: Record<BetKind, { label: string; desc: string }> = {
-  fast: { label: `${DIRECTOR.betTurns}턴 안에 끝낸다`, desc: `${DIRECTOR.betTurns}턴 안에 이기면 건 나사의 두 배` },
-  clean: { label: '아무도 잃지 않는다', desc: '분대원이 하나도 쓰러지지 않고 이기면 건 나사의 두 배' },
+/** cond: 조건 한 줄 (D-263 — 조건 · 보상 · 실패 시를 줄마다 나눠 보여 준다) */
+export const BETS: Record<BetKind, { label: string; desc: string; cond: string }> = {
+  fast: { label: `${DIRECTOR.betTurns}턴 안에 끝낸다`, desc: `${DIRECTOR.betTurns}턴 안에 이기면 건 나사의 두 배`, cond: `${DIRECTOR.betTurns}턴 안에 승리` },
+  clean: { label: '아무도 잃지 않는다', desc: '분대원이 하나도 쓰러지지 않고 이기면 건 나사의 두 배', cond: '분대원 전원 생존' },
 };
 /** 판돈 정산: 이겼으면 +건 나사 (총 두 배), 못 이뤘으면 건 나사를 잃는다 */
 export const settleBet = (bet: BetKind, stake: number, r: { won: boolean; turns: number; fell: number }): number => {

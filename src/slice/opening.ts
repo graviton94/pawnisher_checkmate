@@ -134,9 +134,9 @@ const guideMedia = (m: GuideMedia): string => {
  * 안내서: 다섯 쪽, 이전 · 다음. 마지막 쪽 버튼 = last (첫 대국으로 / 닫기).
  * 어느 쪽에서든 ✕ · Esc · 창 바깥 탭으로 닫힌다 (페르소나 테스트 m1 — 닫기가 마지막 쪽에만 있었다).
  */
-export const guide = (open: (html: string) => HTMLElement, last: string = OPENING_TEXT.close): Promise<void> =>
+export const guide = (open: (html: string) => HTMLElement, last: string = OPENING_TEXT.close, o: { start?: number; tabs?: string; onTab?: (t: string) => void } = {}): Promise<void> =>
   new Promise((resolve) => {
-    let p = 0;
+    let p = Math.max(0, Math.min(GUIDE_PAGES.length - 1, o.start ?? 0));
     let done = false;
     const over = document.getElementById('overlay');
     const end = (): void => {
@@ -158,11 +158,13 @@ export const guide = (open: (html: string) => HTMLElement, last: string = OPENIN
     const draw = (): void => {
       if (done) return;
       const g = GUIDE_PAGES[p];
-      const el = open(`<div class="guide gd2"><button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button>
-        <div class="gd-card">${guideMedia(g.media)}<div class="gd-text"><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2>${g.lines.map((l) => `<p>${l}</p>`).join('')}${g.tip ? `<p class="gd-tip">‘${g.tip}’</p>` : ''}</div></div>
+      // 쪽 = 그림 + 제목 명패 + 「이름표 | 한 줄」 행 + 요령 테이프 (D-263)
+      const el = open(`<div class="guide gd2">${o.tabs ?? ''}<button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button>
+        <div class="gd-card">${guideMedia(g.media)}<div class="gd-text"><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2><dl class="gd-rows">${g.lines.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>${g.tip ? `<p class="gd-tip">${g.tip}</p>` : ''}</div></div>
         <div class="gd-nav"><button class="btn" type="button" data-prev${p ? '' : ' disabled'}>${OPENING_TEXT.prev}</button><div class="gd-dots">${GUIDE_PAGES.map((_, k) => `<i${k === p ? ' class="on"' : ''}></i>`).join('')}</div><button class="btn brass" type="button" data-next>${p === GUIDE_PAGES.length - 1 ? last : OPENING_TEXT.next}</button></div></div>`);
       replay(el.querySelector('.gd-media')!, 'in');
       el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), end()));
+      el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'guide') return; sfx('tap'); end(); o.onTab?.(t.dataset.tab!); }));
       el.querySelector('[data-prev]')!.addEventListener('click', () => {
         if (p > 0) (p--, sfx('tap'), draw());
       });

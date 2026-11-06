@@ -1,6 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BATTLE_HELP, BOSS_EPITHET, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
@@ -11,6 +11,7 @@ const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: red
 import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, prologue } from './opening';
+import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
@@ -37,6 +38,7 @@ import { ASC_NUM, ASCENSION, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_D
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
 import { EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
 import { runEventFx, type CardFx, type CrewFx } from './evstage';
+import { EVENT_OUTCOME } from '../data/event-outcome';
 import { bossIntro, type BossKey } from './bossintro';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
@@ -270,6 +272,8 @@ installPressy();
 let infoTok = 0;
 let toastTimer: number | undefined;
 const toast = (msg: string, ms = 1800) => {
+  // 읽을 시간 (D-263 — 사람이 못 읽을 만큼 빨리 넘어가지 않게): 글자당 70ms + 1.2초보다 짧게 두지 않는다
+  ms = Math.max(ms, 1200 + msg.length * 70);
   const t = $('toast');
   t.textContent = msg;
   toastIn(t);
@@ -1212,7 +1216,7 @@ const maybeBet = (def: BattleDef, force = false): void => {
   if (!force && (labMode || INTRO.includes(def) || def.boss || gold < DIRECTOR.betStake || R.next() > DIRECTOR.betChance)) return;
   const kinds: BetKind[] = ['fast', 'clean'];
   const kind = kinds[R.int(kinds.length)];
-  const el = openOverlay(`<div class="stand"><p class="eyebrow">판돈</p><h2>${BETS[kind].label}</h2><p class="dim">${BETS[kind].desc}. 못 이루면 건 나사를 잃습니다.</p><div class="row"><button class="btn" type="button" data-no>걸지 않는다</button><button class="btn brass" type="button" data-yes>나사 ${DIRECTOR.betStake}을 건다</button></div></div>`);
+  const el = openOverlay(`<div class="stand"><p class="eyebrow">판돈</p><h2>${BETS[kind].label}</h2><dl class="terms"><dt>조건</dt><dd>${BETS[kind].cond}</dd><dt>보상</dt><dd>판돈으로 건 나사의 두 배 <b class="up">(+${DIRECTOR.betStake * 2})</b></dd><dt>실패 시</dt><dd>판돈으로 건 나사를 잃음 <b class="down">(−${DIRECTOR.betStake})</b></dd></dl><div class="row"><button class="btn" type="button" data-no>걸지 않는다</button><button class="btn brass" type="button" data-yes>나사 ${DIRECTOR.betStake}을 건다</button></div></div>`);
   el.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
   el.querySelector('[data-yes]')!.addEventListener('click', () => {
     betNow = { kind, stake: DIRECTOR.betStake };
@@ -1538,17 +1542,19 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const exitEl = el.querySelector<HTMLElement>('.ev-exit')!;
   const alive = () => logEl.isConnected;
   /** 대화 한 줄: 서술(2인칭) · NPC(이름 + 말) — 세 줄까지만 남는다 */
-  const say = async (kind: 'narr' | 'npc', text: string): Promise<void> => {
+  const say = async (kind: 'narr' | 'npc' | 'sum', text: string, who?: string): Promise<void> => {
     if (!text || !alive()) return;
     const line = document.createElement('p');
     line.className = `ev-line ${kind}`;
-    line.innerHTML = kind === 'npc' ? `<b>${talk.npc}</b><span></span>` : '<span></span>';
+    line.innerHTML = kind === 'npc' ? `<b>${who ?? talk.npc}</b><span></span>` : kind === 'sum' ? '<b>결과</b><span></span>' : '<span></span>';
     logEl.appendChild(line);
     while (logEl.children.length > 3) logEl.firstElementChild!.remove();
     logEl.querySelectorAll('.ev-line').forEach((x, i, all) => x.classList.toggle('old', i < all.length - 1));
     replay(line, 'in');
     if (kind === 'npc') sfx('tap', 4);
-    await typeIn(line.querySelector('span')!, text, kind === 'npc' ? 26 : 18, undefined, alive);
+    // 서술은 문장마다 줄을 바꾼다 (D-263): 「…부른다.⏎장인은 잠들었고, …」
+    const shown = kind === 'narr' ? text.replace(/([.!?…])\s+(?=\S)/g, '$1\n') : text;
+    await typeIn(line.querySelector('span')!, shown, kind === 'npc' ? 26 : 18, undefined, alive);
   };
   let busy = true;
   let idleN = 0;
@@ -1660,12 +1666,55 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         await runEventFx(el.querySelector<HTMLElement>('.ev-wrap')!, { id, good, chance, cards, crew: crewFx, tap: talk.tap });
         if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
         el.querySelector('.ev-purse')!.textContent = `나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}`;
-        if (out.text) await say('narr', out.text);
-        await say('npc', good ? talk.win : talk.lose ?? talk.win);
+        // ③ 상황 + 대사 + 요약 (D-263): 무엇이 일어났는지는 서술 · 누가 무슨 말을 했는지는 대사 · 무엇이 바뀌었는지는 시스템 요약
+        const oc = EVENT_OUTCOME[id]?.[`${k}:${out.slot ?? 0}`];
+        if (oc) {
+          await say('narr', oc.scene);
+          if (oc.line) await say('npc', oc.line, oc.who);
+        } else {
+          if (out.text) await say('narr', out.text);
+          await say('npc', good ? talk.win : talk.lose ?? talk.win);
+        }
+        const sum = evSummary(before, cards, out);
+        if (sum) await say('sum', sum);
         showExit(out.partPick ? '부품을 고른다' : talk.exit, () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance, !!out.elite) : advance()));
       })();
     }),
   );
+};
+
+/** 사건 결과 요약 한 줄 (D-263): 앞뒤 상태를 비교해 바뀐 것만 — 카드 · 분대원 · 나사 · 부품 */
+const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, cards: CardFx[], out: { partPick?: boolean; elite?: boolean }): string => {
+  const sum: string[] = [];
+  const n = (fx: CardFx['fx']) => cards.filter((c) => c.fx === fx).length;
+  if (n('up')) sum.push(`카드 다듬기 ×${n('up')} (태엽 −1)`);
+  if (n('rust')) sum.push(`녹슨 카드 ×${n('rust')} (태엽 +1)`);
+  if (n('break')) sum.push(`카드 부서짐 ×${n('break')}`);
+  if (n('new')) sum.push(`새 카드 ×${n('new')}`);
+  const pcts: { name: string; d: number }[] = [];
+  for (const u0 of before.crew) {
+    const u1 = squad.find((x) => x.serial === u0.serial);
+    const name = crewLabel(u0);
+    if (!u1) { sum.push(`${name} 잃음`); continue; }
+    if (u1.t !== u0.t) sum.push(`${name} ${PIECE_NAMES_KO[u0.t]} → ${PIECE_NAMES_KO[u1.t]}`);
+    if ((u1.doors ?? 0) > (u0.doors ?? 0)) sum.push(`${name} 문턱 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`);
+    if (u1.cracked && !u0.cracked) sum.push(`${name} 심장 톱니 금`);
+    if (u1.t === u0.t) {
+      const d = Math.round((((u1.hp ?? crewMaxHp(u1)) - (u0.hp ?? crewMaxHp(u0))) / crewMaxHp(u0)) * 100);
+      if (d) pcts.push({ name, d });
+    }
+  }
+  if (pcts.length) {
+    if (pcts.length === before.crew.length && pcts.length > 1) {
+      // 최대 HP에 막힌 분대원 때문에 조금씩 다르다 — 가장 크게 바뀐 값을 5% 단위로 (규칙 수치와 같게)
+      const big = pcts.reduce((a, p) => (Math.abs(p.d) > Math.abs(a) ? p.d : a), 0);
+      sum.push(`분대 전원 HP ${big > 0 ? '+' : '−'}${Math.round(Math.abs(big) / 5) * 5}%`);
+    } else for (const p of pcts) sum.push(`${p.name} HP ${p.d > 0 ? '+' : '−'}${Math.abs(p.d)}%`);
+  }
+  for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) sum.push(`합류 · ${crewLabel(u1)} (${PIECE_NAMES_KO[u1.t]})`);
+  if (gold !== before.gold) sum.push(`나사 ${gold > before.gold ? '+' : '−'}${Math.abs(gold - before.gold)}`);
+  if (out.partPick) sum.push(out.elite ? '희귀 이상 부품 하나를 고른다' : '부품 하나를 고른다');
+  return sum.join(' · ');
 };
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */
@@ -1877,7 +1926,8 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       });
     };
     window.setTimeout(() => el.addEventListener('click', close), 1000);
-    window.setTimeout(close, boss ? 4400 : 3600);
+    // 저절로 넘어가는 때 (D-263): 서술이 다 찍히고 읽을 시간(글자당 60ms, 최소 2.4초)을 준 뒤 — 누르면 언제든 넘어간다
+    window.setTimeout(close, 720 + narr.length * 20 + Math.max(2400, narr.length * 60) + (boss ? 800 : 0));
   });
 const stageIntro = (def: BattleDef): Promise<void> => {
   const [label, name] = def.title.split(' — ');
@@ -2113,6 +2163,9 @@ const finishNow = (): void => {
       const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="near">적 킹 HP ${ek.hp} 남았습니다. 한 수였습니다.</p>` : '';
       // 1패 = 출하 끝 (D-228). 여벌 심장 톱니가 있으면 하나 깨고 그 대국을 처음부터
       const spare = charms.revive > 0;
+      // 불량 폐기 화면도 출하 중단 배경(E-02) 위에 (D-263 — 판 위에 뜨던 구식 창)
+      document.body.classList.add('between');
+      placeBg('end-fail');
       const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다. (남은 ${charms.revive})` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}<div class="row">${spare ? '<button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>깨고 다시</button>' : '<button class="btn brass" type="button" data-quit>출하 종료</button>'}</div>`);
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
@@ -2427,35 +2480,16 @@ const deathRites = async (): Promise<void> => {
   }
 };
 
-/** 분대 보기: 이름 · 시리얼 · 기벽 · 처치 · 흉터 · 이름 바꾸기 · 폐기 원부 */
+/** 분대 보기: 이름 · 시리얼 · 기벽 · 처치 · 흉터 · 폐기 원부 (이름 바꾸기는 뺐다 — 사용자 D-263) */
 const crewView = (): void => {
   const el = openOverlay(`<h2>분대 ${squad.length}</h2><div class="crew-list">${squad
-    .map((u, k) => {
+    .map((u) => {
       const q = u.quirk ? QUIRKS[u.quirk] : null;
-      return `<div class="crew-row">${pieceImg(u.t, 0, 'small', 26)}<div><b>${crewLabel(u)}</b> ${lifePips(u)} <span class="dim">${u.serial} · HP ${u.hp ?? crewMaxHp(u)}/${crewMaxHp(u)} · 처치 ${u.kills ?? 0}</span>${q ? `<br><span class="quirk">${q.name}</span> <small>${q.desc}</small>` : ''}${u.scars?.length ? ` <small class="scar">· ${u.scars.join(' · ')}</small>` : ''}</div>${u.t !== 'K' ? `<button class="btn sm" type="button" data-rename="${k}">이름</button>` : '<span></span>'}</div>`;
+      return `<div class="crew-row">${pieceImg(u.t, 0, 'small', 26)}<div><b>${crewLabel(u)}</b> ${lifePips(u)} <span class="dim">${u.serial} · HP ${u.hp ?? crewMaxHp(u)}/${crewMaxHp(u)} · 처치 ${u.kills ?? 0}</span>${q ? `<br><span class="quirk">${q.name}</span> <small>${q.desc}</small>` : ''}${u.scars?.length ? ` <small class="scar">· ${u.scars.join(' · ')}</small>` : ''}</div></div>`;
     })
     .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
   el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView());
-  el.querySelectorAll<HTMLElement>('[data-rename]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      const k = Number(btn.dataset.rename);
-      const box = btn.parentElement!;
-      box.insertAdjacentHTML('beforeend', `<form class="rename"><input maxlength="8" value="${squad[k].name ?? ''}" aria-label="새 이름"><button class="btn sm brass" type="submit">새기기</button></form>`);
-      btn.remove();
-      const form = box.querySelector('form')!;
-      const input = form.querySelector('input')!;
-      input.focus();
-      input.select();
-      form.addEventListener('submit', (ev) => {
-        ev.preventDefault();
-        const name = input.value.trim().slice(0, 8);
-        if (name) squad[k] = { ...squad[k], name };
-        sfx('stamp');
-        crewView();
-      });
-    }),
-  );
 };
 
 /** 폐기 원부: 쓰러진 분대원의 영구 기록 */
@@ -2723,38 +2757,37 @@ const dictHtml = (): string => {
   const fresh = new Set(m.termsNew ?? []);
   const list = KEYWORDS.filter(([k, , g]) => g === 'base' || on.has(k));
   const left = KEYWORDS.length - list.length;
-  return `<dl class="hp-dict">${list.map(([k, v]) => `<dt>${k}${fresh.has(k) ? ' <i class="new-tag">NEW</i>' : ''}</dt><dd>${v}</dd>`).join('')}</dl>${left ? `<p class="dim hp-more">아직 만나지 않은 용어 ${left}개 — 나아가면 열립니다.</p>` : ''}`;
+  return `<div class="hp-dict">${list.map(([k, v]) => `<div class="hd-term"><b>${k}${fresh.has(k) ? ' <i class="new-tag">NEW</i>' : ''}</b><span>${v}</span></div>`).join('')}</div>${left ? `<p class="dim hp-more">아직 만나지 않은 용어 ${left}개 — 나아가면 열립니다.</p>` : ''}`;
 };
+/**
+ * ? 도움말 (D-263, 사용자: 「지금 화면 · 용어 · 안내서 전체는 가독성 최악 — 지금 화면은 안내서에 통합」):
+ * 탭 셋 = 안내서(그림 + 핵심 행, 반장 대국이면 반장 쪽부터) · 용어 · 버그 · 짜증 제보.
+ */
+const helpTabs = (on: 'guide' | 'dict'): string =>
+  `<div class="hp-tabs"><button class="btn${on === 'guide' ? ' brass' : ''}" type="button" data-tab="guide">${HUD_TEXT.helpTitle}</button><button class="btn${on === 'dict' ? ' brass' : ''}${(readMeta(store).termsNew ?? []).length ? ' has-new' : ''}" type="button" data-tab="dict">${HUD_TEXT.dictTitle}</button><button class="btn" type="button" data-tab="bug">${PT.bug}</button></div>`;
 const help = (tab: 'now' | 'dict' = 'now'): void => {
   const opened = Date.now();
-  const boss = b.boss ? BOSS_RULES[b.bossRule] : null;
-  const body =
-    tab === 'now'
-      ? `${boss ? `<p class="hp-boss"><b>${boss.name}</b> ${boss.lines.join(' · ')}</p>` : ''}<ul class="hp-list">${BATTLE_HELP.map((l) => `<li>${l}</li>`).join('')}</ul>`
-      : dictHtml();
-  const el = openOverlay(`<div class="helpcard"><button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button>
-    <div class="hp-tabs"><button class="btn${tab === 'now' ? ' brass' : ''}" type="button" data-tab="now">${HUD_TEXT.helpTitle}</button><button class="btn${tab === 'dict' ? ' brass' : ''}" type="button" data-tab="dict">${HUD_TEXT.dictTitle}</button><button class="btn" type="button" data-full>${HUD_TEXT.fullGuide}</button><button class="btn" type="button" data-bug>${PT.bug}</button></div>
-    <div class="hp-body">${body}</div></div>`);
+  let switched = false;
+  const onTab = (t: string): void => {
+    switched = true;
+    helpSeen(tab, opened);
+    if (t === 'dict') return help('dict');
+    if (t === 'bug') return bugReport();
+    if (t === 'guide') return help('now');
+  };
+  if (tab === 'now') {
+    void guide(openOverlay, OPENING_TEXT.close, { start: b?.boss ? GUIDE_PAGES.length - 1 : 0, tabs: helpTabs('guide'), onTab }).then(() => { if (!switched) { closeOverlay(); helpSeen(tab, opened); } });
+    return;
+  }
+  const el = openOverlay(`<div class="helpcard">${helpTabs('dict')}<button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button><div class="hp-body">${dictHtml()}</div></div>`);
   const over = $('overlay');
-  const done = (): void => {
-    window.removeEventListener('keydown', onKey);
-    over.removeEventListener('click', onOut);
-  };
-  const close = (): void => (done(), closeOverlay(), helpSeen(tab, opened));
-  const onKey = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape') close();
-  };
-  const onOut = (e: MouseEvent): void => {
-    if (e.target === over) close();
-  };
+  const close = (): void => (window.removeEventListener('keydown', onKey), over.removeEventListener('click', onOut), closeOverlay(), helpSeen(tab, opened));
+  const onKey = (e: KeyboardEvent): void => { if (e.key === 'Escape') close(); };
+  const onOut = (e: MouseEvent): void => { if (e.target === over) close(); };
   window.addEventListener('keydown', onKey);
   window.setTimeout(() => over.addEventListener('click', onOut), 0);
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), close()));
-  el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => (sfx('tap'), done(), helpSeen(tab, opened), help(t.dataset.tab as 'now' | 'dict'))));
-  // NEW 표시: 사전 탭을 펼치면 탭 머리에도
-  if ((readMeta(store).termsNew ?? []).length) el.querySelector('[data-tab="dict"]')?.classList.add('has-new');
-  el.querySelector('[data-full]')!.addEventListener('click', () => (done(), void guide(openOverlay).then(closeOverlay)));
-  el.querySelector('[data-bug]')!.addEventListener('click', () => (sfx('tap'), done(), helpSeen(tab, opened), bugReport()));
+  el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'dict') return; sfx('tap'); window.removeEventListener('keydown', onKey); over.removeEventListener('click', onOut); onTab(t.dataset.tab!); }));
 };
 
 /** 도움말을 닫았다: 사전을 봤으면 NEW를 지우고, 얼마나 머물렀는지 기록 (용어 툴팁 지표 ⑦) */
