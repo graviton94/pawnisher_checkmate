@@ -271,7 +271,7 @@ ol.light {{ margin: 0; padding-left: 22px; display: grid; gap: 4px; }}
 </section>
 
 <section><h2>사건 15종 — 단순화판 (D-260) <small>실제 게임 녹화 915×412 · 끝나면 처음부터</small></h2>
-<p class="dim" style="margin-bottom:12px">컷씬(사건 그림) + 대사가 전부다. 사건 전용 소품 · 기계 · 상자는 뺐다. 확률은 동전 하나나 사각 칸 셋만, 결과는 실제 카드 얼굴 · 실제 기물 그림 + HP 바에 FX(강화 · 녹 · 파괴 / 진화 · 썰림 · HP 증감). 그림이 없는 사건은 공용 사건 배경.</p>
+<p class="dim" style="margin-bottom:12px">흐름: 대화창 + 선택지 → 고르면 오버레이에서 연출(동전은 저절로, 칸은 하나씩 눌러 · 긁어 연다) → 결과 + [확인] → 대화창에서 NPC 마무리 대사 + 나가기. 컷씬(사건 그림) + 대사가 전부다. 사건 전용 소품 · 기계 · 상자는 뺐다. 확률은 동전 하나나 사각 칸 셋만, 결과는 실제 카드 얼굴 · 실제 기물 그림 + HP 바에 FX(강화 · 녹 · 파괴 / 진화 · 썰림 · HP 증감). 그림이 없는 사건은 공용 사건 배경.</p>
 <div class="shots">{events}</div></section>
 
 <section><h2>원칙 <small>D-216 · D-213 · D-193 · D-180</small></h2><div class="grid">{rules}</div></section>

@@ -32,21 +32,26 @@ const jobs = process.argv.slice(3);
     const choices = await pg.$$('.ev-choice:not(.off)');
     const b = choices[Number(pick ?? 0)] ?? choices[0];
     await b.click(); await shot(); await pg.waitForTimeout(200); await shot(); await b.click();
-    let scraped = 0, pressed = false, tapped = 0;
+    // D-260 흐름: 오버레이에서 칸을 하나씩 누르거나 긁고 → 결과를 보고 [확인] → 대화창 마무리 대사 → 나가기
+    let scraped = 0, opened = 0, tapped = 0, okSeen = -1;
     for (let k = 0; k < 320; k++) {
       await shot();
       const card = await pg.$('.ev-cards .ev-card');
       if (card) { await card.click().catch(() => {}); continue; }
-      const tap = await pg.$('.ev-tap');
-      if (tap && id !== 'auction' && k % 5 === 4) { tapped++; await tap.click({ force: true }).catch(() => {}); continue; }
-      // 긁는 칸 셋 (D-260): 장면 가운데 세 칸 (칸 36도트 · 간격 6도트 · 1도트 = 3px)
-      if (id === 'auction' && scraped < 6 && k > 8 && k % 3 === 0 && (await pg.$('.ev-scene .ev-tap'))) {
-        const r = await (await pg.$('.ev-scene')).boundingBox();
-        const cx = r.x + r.width / 2 + ((scraped % 3) - 1) * 126, cy = r.y + r.height / 2;
-        await pg.mouse.move(cx - 50, cy - 50); await pg.mouse.down();
-        for (let z = 0; z < 12; z++) { await pg.mouse.move(cx + (z % 2 ? 50 : -50), cy - 50 + z * 9, { steps: 4 }); if (z % 3 === 2) await shot(); }
-        await pg.mouse.up(); scraped++; continue;
+      const stage = await pg.$('.ev-ov-stage');
+      if (stage && (await pg.$('.ev-ov .ev-tap'))) {
+        const r = await stage.boundingBox();
+        const cx = (i) => r.x + r.width / 2 + (i - 1) * 126, cy = r.y + r.height / 2;
+        if (id === 'brokenGacha' && opened < 3 && k % 4 === 0) { await pg.mouse.click(cx([2, 0, 1][opened]), cy); opened++; tapped++; continue; }
+        if (id === 'auction' && scraped < 6 && k % 3 === 0) {
+          const x0 = cx(scraped % 3);
+          await pg.mouse.move(x0 - 50, cy - 50); await pg.mouse.down();
+          for (let z = 0; z < 12; z++) { await pg.mouse.move(x0 + (z % 2 ? 50 : -50), cy - 50 + z * 9, { steps: 4 }); if (z % 3 === 2) await shot(); }
+          await pg.mouse.up(); scraped++; continue;
+        }
       }
+      const ok = await pg.$('.ev-ov-ok:not([hidden])');
+      if (ok) { if (okSeen < 0) okSeen = k; if (k - okSeen > 6) { await ok.click().catch(() => {}); okSeen = 1e9; } continue; }
       if (await pg.$('.ev-exit:not([hidden])')) { for (let i = 0; i < 10; i++) { await shot(); await pg.waitForTimeout(80); } break; }
     }
     fs.writeFileSync(path.join(dir, 'times.json'), JSON.stringify(times));

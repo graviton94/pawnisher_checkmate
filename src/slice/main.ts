@@ -1651,14 +1651,13 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         // 좋은 결과: 확률 선택은 첫 칸(판정기는 둘째 칸 「한 단계 위」도 좋음), 아니면 좋다
         const good = out.slot === undefined || out.slot === 0 || (id === 'brokenGacha' && out.slot === 1);
         choicesEl.hidden = true;
-        el.querySelector('.ev-stage')!.classList.add('big');
         // 확률 장치는 셋만 (D-260): 동전 · 칸 셋 · 긁는 칸 셋
         const chance: Parameters<typeof runEventFx>[1]['chance'] =
           id === 'gambler' ? { kind: 'coin', win: good }
           : id === 'brokenGacha' ? { kind: 'slots', win: good, items: out.slot === 0 ? ['gear-gold', 'gear-gold', 'gear-gold'] : out.slot === 1 ? ['crown-gold', 'crown-gold', 'crown-gold'] : ['gear-gold', 'gear-gold', 'gear-broken'] }
           : id === 'auction' ? { kind: 'scratch', win: good, items: good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'] }
           : undefined;
-        await runEventFx(scene, { id, good, chance, cards, crew: crewFx, tap: talk.tap });
+        await runEventFx(el.querySelector<HTMLElement>('.ev-wrap')!, { id, good, chance, cards, crew: crewFx, tap: talk.tap });
         if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
         el.querySelector('.ev-purse')!.textContent = `나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}`;
         if (out.text) await say('narr', out.text);

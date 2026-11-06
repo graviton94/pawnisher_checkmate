@@ -6,6 +6,7 @@
  *  ③ 기물 — 실제 기물 그림 + 아래 HP 바: 전투처럼 HP가 줄거나(흰 잔상 → 계단으로 줄어듦 · 붉은 번쩍) 차오름(초록) · 진화(흰 번쩍 → 새 기물) · 썰림(베기 선 → 두 쪽 → 잿빛 · 디더 퇴장)
  * 결과는 엔진(events.ts)이 이미 정했다 — 보여 주기만 한다 (UI 원칙 9).
  */
+import { sfx } from '../audio/sfx';
 import { FxCanvas, hex, Lights, P, Particles, PAL, Rng, WHITE } from '../view/pxfx';
 
 const D = 3;
@@ -81,20 +82,14 @@ class Layer {
   stop() { this.on = false; }
 }
 
-/** 손짓 테이프 — 누르면(또는 6초 뒤) 다음 */
-const tapOnce = (host: HTMLElement, label?: string): Promise<void> => {
-  if (!label || calm()) return Promise.resolve();
-  return new Promise((done) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'ev-tap';
-    b.textContent = `▼ ${label}`;
-    host.appendChild(b);
-    let over = false;
-    const end = () => { if (over) return; over = true; b.remove(); host.removeEventListener('pointerdown', end); done(); };
-    host.addEventListener('pointerdown', end);
-    window.setTimeout(end, 6000);
-  });
+/** 손짓 테이프 (종이) — 무엇을 할지 말한다 */
+const tape = (host: HTMLElement, label: string): HTMLButtonElement => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'ev-tap';
+  b.textContent = `▼ ${label}`;
+  host.appendChild(b);
+  return b;
 };
 
 // ── ① 확률 장치 ──
@@ -113,7 +108,7 @@ const coinToss = async (L: Layer, c: EvFxCtx): Promise<void> => {
     if (im.complete) x.drawImage(im, cx + xo, Math.round(y));
   };
   draw(0, rest);
-  await tapOnce(L.host, c.tap);
+  await wait(450); // 자동으로 튕긴다 (D-260)
   const t0 = performance.now(), T = calm() ? 0.2 : 1.6;
   await new Promise<void>((done) => {
     const step = () => {
@@ -151,8 +146,10 @@ const drawSlot = (x: CanvasRenderingContext2D, a: number, b: number, edge: strin
 
 /** 칸 셋 — 기호가 하나씩 떨어져 박힌다. 앞 둘이 같으면 셋째 칸 테가 오래 깜빡이며 애태운다 */
 const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
-  const items = c.chance!.items!;
-  const state = items.map(() => ({ y: -40, vy: 0, on: false, landed: false }));
+  const res = c.chance!.items!;
+  // 여는 순서대로 결과 기호가 들어간다 (마지막에 연 칸이 판가름)
+  const items: string[] = ['', '', ''];
+  const state = res.map(() => ({ y: -40, vy: 0, on: false, landed: false }));
   let blink = -1, edge: (string | null)[] = [null, null, null], over = false;
   const draw = (t: number) => {
     L.x.clearRect(0, 0, L.w, L.h);
@@ -170,7 +167,6 @@ const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
     }
   };
   draw(0);
-  await tapOnce(L.host, c.tap);
   const t0 = performance.now();
   const loop = () => new Promise<void>((done) => {
     let last = performance.now();
@@ -191,13 +187,36 @@ const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
   });
   const run = loop();
   const drop = (i: number) => { state[i].on = true; state[i].y = -SL; state[i].vy = 40; };
-  drop(0); await wait(550); drop(1); await wait(550);
-  if (items[0] === items[1] && !calm()) { blink = 2; await wait(1300); blink = -1; }
-  drop(2); await wait(450);
+  // 칸을 하나씩 눌러 연다 (사용자 D-260): 앞 둘이 같으면 남은 칸이 깜빡이며 애태우고, 누르면 한참 덜컹인 뒤 떨어진다
+  let last = 2;
+  await new Promise<void>((allOpen) => {
+    const hint = tape(L.host, c.tap ?? '칸을 하나씩 누른다');
+    let n = 0, busy = false;
+    const open = async (i: number) => {
+      if (busy || state[i].on || items[i]) return;
+      busy = true;
+      items[i] = res[n++];
+      if (n === 3 && res[0] === res[1] && !calm()) { blink = i; sfx('threat'); await wait(1300); blink = -1; }
+      drop(i); sfx('tap');
+      await wait(380);
+      busy = false;
+      if (n === 2 && res[0] === res[1]) blink = [0, 1, 2].find((k) => !items[k]) ?? -1;
+      if (n === 3) { last = i; hint.remove(); L.host.removeEventListener('pointerdown', on); allOpen(); }
+    };
+    const on = (e: PointerEvent) => {
+      const r = L.art.getBoundingClientRect();
+      const px = ((e.clientX - r.left) / r.width) * L.w, py = ((e.clientY - r.top) / r.height) * L.h;
+      for (let i = 0; i < 3; i++) { const b = slotBox(L, i); if (px >= b.x - 4 && px <= b.x + SL + 4 && py >= b.y - 4 && py <= b.y + SL + 4) void open(i); }
+    };
+    L.host.addEventListener('pointerdown', on);
+    hint.addEventListener('click', () => void open([0, 1, 2].find((k) => !items[k]) ?? 0));
+    if (calm()) { void open(0); void open(1); void open(2); }
+  });
+  await wait(450);
   const win = c.chance!.win;
-  edge = win ? ['#f4d27a', '#f4d27a', '#f4d27a'] : ['#41434f', '#41434f', '#e5262f'];
+  edge = win ? ['#f4d27a', '#f4d27a', '#f4d27a'] : [0, 1, 2].map((k) => (k === last ? '#e5262f' : '#41434f'));
   if (win) for (let i = 0; i < 3; i++) { const b = slotBox(L, i); L.ps.burst(b.x + SL / 2, b.y + SL / 2, 10, [40, 120], P.STAR, [0.5, 0.9], PAL.gold[5]); L.lights.add(b.x + SL / 2, b.y + SL / 2, 24, PAL.gold[5], 0.9, 0.6); }
-  else { const b = slotBox(L, 2); L.ps.burst(b.x + SL / 2, b.y + SL / 2, 18, [60, 160], P.SPARK, [0.2, 0.5], WHITE, 40); for (let k = 0; k < 8; k++) L.ps.spawn(P.SMOKE, b.x + SL / 2 + L.R.range(-8, 8), b.y, L.R.range(-10, 10), L.R.range(-40, -15), L.R.range(0.8, 1.4), 0, L.R.range(3, 5), k * 0.04); }
+  else { const b = slotBox(L, last); L.ps.burst(b.x + SL / 2, b.y + SL / 2, 18, [60, 160], P.SPARK, [0.2, 0.5], WHITE, 40); for (let k = 0; k < 8; k++) L.ps.spawn(P.SMOKE, b.x + SL / 2 + L.R.range(-8, 8), b.y, L.R.range(-10, 10), L.R.range(-40, -15), L.R.range(0.8, 1.4), 0, L.R.range(3, 5), k * 0.04); }
   await wait(1100);
   over = true;
   await run;
@@ -230,12 +249,10 @@ const scratch = async (L: Layer, c: EvFxCtx): Promise<void> => {
   draw();
   const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   return new Promise<void>((resolve) => {
-    const tape = document.createElement('button');
-    tape.type = 'button'; tape.className = 'ev-tap'; tape.textContent = `▼ ${c.tap ?? '녹을 긁어낸다'}`;
-    L.host.appendChild(tape);
+    const hint = tape(L.host, c.tap ?? '녹을 긁어낸다');
     const finish = async () => {
       if (done2) return; done2 = true;
-      tape.remove();
+      hint.remove();
       const win = c.chance!.win;
       edge = win ? ['#f4d27a', '#f4d27a', '#f4d27a'] : ['#41434f', '#41434f', '#e5262f'];
       draw();
@@ -283,7 +300,7 @@ const scratch = async (L: Layer, c: EvFxCtx): Promise<void> => {
     L.host.addEventListener('pointerdown', (e) => { e.preventDefault(); down = true; lastP = null; L.host.setPointerCapture?.(e.pointerId); scrape(e.clientX, e.clientY); });
     L.host.addEventListener('pointermove', (e) => { if (down) scrape(e.clientX, e.clientY); });
     L.host.addEventListener('pointerup', () => { down = false; lastP = null; });
-    tape.addEventListener('click', () => [0, 1, 2].forEach((i) => window.setTimeout(() => reveal(i), i * 250)));
+    hint.addEventListener('click', () => reveal([0, 1, 2].find((i) => !open[i]) ?? 0));
     if (calm()) [0, 1, 2].forEach(reveal);
   });
 };
@@ -408,18 +425,32 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
 };
 
 /**
- * 사건 연출을 돌린다 (장면 칸 host 위): 확률 장치(있으면) → 결과 줄(카드 · 기물 FX). 끝나면 결과를 남긴 채 돌아온다.
+ * 사건 연출 (D-260 흐름, 사용자): 선택지를 고르면 사건 창 위에 **오버레이**가 덮이고 연출이 돈다
+ * (동전은 저절로, 칸 셋은 하나씩 눌러 · 긁어 연다) → 결과(카드 · 기물 FX) + [확인] → 누르면 디더로 걷히고 대화창으로 돌아간다.
+ * wrap = 사건 창(.ev-wrap). 대화창에 장면 그림(컷씬)은 그대로 남는다.
  */
-export const runEventFx = async (host: HTMLElement, c: EvFxCtx): Promise<void> => {
-  host.querySelectorAll('.ev-fx, .ev-res').forEach((x) => x.remove());
+export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> => {
+  wrap.querySelectorAll('.ev-ov').forEach((x) => x.remove());
+  const ov = document.createElement('div');
+  ov.className = 'ev-ov';
+  ov.innerHTML = '<div class="ev-ov-stage"></div><div class="ev-ov-foot"><button type="button" class="btn brass ev-ov-ok" hidden>확인</button></div>';
+  wrap.appendChild(ov);
+  const host = ov.querySelector<HTMLElement>('.ev-ov-stage')!;
+  await wait(260);
   const L = new Layer(host, c.id.length * 97 + (c.good ? 1 : 2));
-  host.classList.add('fx-on');
   if (c.chance?.kind === 'coin') await coinToss(L, c);
   else if (c.chance?.kind === 'slots') await slotsDrop(L, c);
   else if (c.chance?.kind === 'scratch') await scratch(L, c);
   // 결과 줄이 있으면 확률 장치는 걷고, 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
   if (c.chance && (c.cards.length || c.crew.length)) L.x.clearRect(0, 0, L.w, L.h);
   await showResults(L, c);
-  host.classList.add(c.good ? 'fx-good' : 'fx-bad');
-  window.setTimeout(() => L.stop(), 2500);
+  const ok = ov.querySelector<HTMLButtonElement>('.ev-ov-ok')!;
+  ok.hidden = false;
+  ok.classList.add('in');
+  await new Promise<void>((r) => ok.addEventListener('click', () => r(), { once: true }));
+  sfx('tap');
+  ov.classList.add('out');
+  await wait(320);
+  L.stop();
+  ov.remove();
 };

@@ -2014,8 +2014,8 @@ body.slice .panel:has(.ev-stage) { width: min(880px, 96vw); }
 @media (prefers-reduced-motion: reduce) { .ev-tap { animation: none; } }
 
 /* D-260 사건 결과 줄: 장면(컷씬) 위 디더 띠 + 실제 카드 · 기물에 FX (전용 소품 없음) */
-.ev-scene .ev-fx-top { z-index: 4; }
-.ev-scene .ev-tap { z-index: 5; }
+.ev-fx-top { z-index: 4; }
+.ev-ov .ev-tap { z-index: 5; }
 .ev-res { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 8px; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='3' height='3' fill='%230b0b0e'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%230b0b0e'/%3E%3C/svg%3E"); }
 .ev-res.in { animation: fadeIn 280ms steps(1, end) both; }
 body.slice .er-card.reward-cards { position: relative; display: block; width: 132px; height: 160px; flex: none; margin: 0; }
@@ -2059,4 +2059,12 @@ body.slice .er-card .cf.cf { width: 100%; pointer-events: none; }
 @keyframes erCutB { 0% { translate: 0 0; } 25% { translate: 3px 2px; } 50% { translate: 6px 5px; filter: grayscale(0.6); } 100% { translate: 9px 9px; filter: grayscale(1) brightness(0.6); } }
 @keyframes erSlash { 0%, 30% { opacity: 1; } 31%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .er-card, .er-pc, .ev-res { animation-duration: 1ms !important; } }/* 손짓 테이프 (종이 = 글, D-259) */
-.ev-scene .ev-tap { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; min-height: 44px; display: grid; place-items: center; padding: 0 10px; font: 700 12px Galmuri11, sans-serif; color: #2a1a06; text-shadow: none; background: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/tape.png') 4 fill / 8px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; white-space: nowrap; animation: tapNudge 900ms steps(1) infinite; }
+.ev-ov .ev-tap, .ev-scene .ev-tap { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; min-height: 44px; display: grid; place-items: center; padding: 0 10px; font: 700 12px Galmuri11, sans-serif; color: #2a1a06; text-shadow: none; background: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/tape.png') 4 fill / 8px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; white-space: nowrap; animation: tapNudge 900ms steps(1) infinite; }
+
+/* D-260 사건 오버레이: 고르면 사건 창 위를 덮고 연출 → 결과 + [확인] → 디더로 걷히고 대화창의 마무리 대사로 */
+.ev-ov { position: absolute; inset: -8px; z-index: 6; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 6px; padding: 10px; background-color: #0b0b0e; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%2316141c'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2316141c'/%3E%3C/svg%3E"); animation: fadeIn 260ms steps(1, end) both; }
+.ev-ov.out { animation: bfOut 300ms steps(1) forwards; }
+.ev-ov-stage { position: relative; min-height: 0; touch-action: manipulation; }
+.ev-ov-foot { display: flex; justify-content: center; min-height: 52px; align-items: center; }
+.ev-ov-ok { min-width: 160px; min-height: 48px; }
+.ev-ov-ok.in { animation: pressIn 240ms steps(1, end) both; }
