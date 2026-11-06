@@ -83,3 +83,29 @@ describe('새 반장 셋 (D-274)', () => {
     }
   });
 });
+
+import { QUIRKS } from '../src/slice/crew';
+import { TRAIT } from '../src/slice/cards';
+
+describe('적 특성 넷 · 기벽 넷 (D-275)', () => {
+  it('기벽은 여덟 — 저마다 맞바꾸는 수치가 있다', () => {
+    expect(Object.keys(QUIRKS)).toHaveLength(8);
+    const b = newSliceBattle([{ t: 'K' }, { t: 'R', quirk: 'heavy' }, { t: 'R' }], ['K', 'P'], START_COMMANDS, 3);
+    const [heavy, plain] = b.s.pieces.filter((p) => p.side === 0 && p.type === 'R');
+    expect(heavy.maxHp).toBeGreaterThan(plain.maxHp);
+    expect(heavy.atk).toBeLessThan(plain.atk);
+  });
+  it('특성은 그 유형의 적에게만 수치 하나', () => {
+    const a = newSliceBattle(squad, ['K', 'N', 'B', 'Q', 'P'], START_COMMANDS, 5);
+    const b = newSliceBattle(squad, ['K', 'N', 'B', 'Q', 'P'], START_COMMANDS, 5, { traits: ['knightShoe', 'bishopLens', 'queenCrown', 'pawnDrill'] });
+    const f = (x: typeof a, t: string) => x.s.pieces.find((p) => p.side === 1 && p.type === t)!;
+    expect(f(b, 'N').shield).toBe(f(a, 'N').shield + TRAIT.knightShoe);
+    expect(f(b, 'B').atk).toBeGreaterThan(f(a, 'B').atk);
+    expect(f(b, 'Q').maxHp).toBeGreaterThan(f(a, 'Q').maxHp);
+    expect(f(b, 'P').atk).toBeGreaterThan(f(a, 'P').atk);
+  });
+  it('2 · 3막 판에는 기물에 맞는 특성이 하나 더 붙는다', () => {
+    const d = battleFor(3, 'check', new Rng(2));
+    expect((d.traits ?? []).length).toBeGreaterThan(2);
+  });
+});

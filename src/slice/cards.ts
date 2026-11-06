@@ -289,7 +289,17 @@ export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell:
 export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 6, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 3, alarmMult: 1.5 };
 
 /** 막별 적 특성 (R5-4): 2막 자폭 폰(쓰러지면 둘레 8) · 3막 방패 룩(대국 시작 방열판 15) */
-export const TRAIT = { blast: 8, rookPlate: 15 };
+export const TRAIT = { blast: 8, rookPlate: 15, knightShoe: 10, bishopLens: 1.3, queenCrown: 1.3, pawnDrill: 1.3 };
+/** 적 특성 (D-171 막별 두 가지 + D-275 넷 더): 막마다 대국 · 검문 · 반장에 하나씩 무작위로 더 붙는다 — 수치 하나만 바꾼다 */
+export type FoeTrait = 'blastPawn' | 'rookPlate' | 'knightShoe' | 'bishopLens' | 'queenCrown' | 'pawnDrill';
+export const FOE_TRAITS: Record<Exclude<FoeTrait, 'blastPawn' | 'rookPlate'>, { name: string; tell: string; line: string }> = {
+  knightShoe: { name: '쇠 편자', tell: '적 나이트는 방열판 10을 두르고 섭니다.', line: `쇠 편자 — 대국 시작 방열판 ${10}` },
+  bishopLens: { name: '날 선 렌즈', tell: '적 비숍의 공격이 1.3배입니다.', line: '날 선 렌즈 — 공격 ×1.3' },
+  queenCrown: { name: '무거운 관', tell: '적 퀸의 HP가 1.3배입니다.', line: '무거운 관 — HP ×1.3' },
+  pawnDrill: { name: '송곳 폰', tell: '적 폰의 공격이 1.3배입니다.', line: '송곳 폰 — 공격 ×1.3' },
+};
+/** 막마다 더 붙을 수 있는 특성 — 그 막에 나오는 기물 기준 */
+export const TRAIT_POOL: FoeTrait[][] = [['knightShoe', 'bishopLens'], ['knightShoe', 'bishopLens', 'pawnDrill'], ['knightShoe', 'bishopLens', 'pawnDrill', 'queenCrown']];
 
 /** 수직 조각 수치 */
 export const SLICE = {

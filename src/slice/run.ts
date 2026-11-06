@@ -1,6 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { BOSS_PAIRS, BOSS_RULES, SLICE, type BossRule, type CommandId } from './cards';
+import { BOSS_PAIRS, BOSS_RULES, FOE_TRAITS, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeTrait } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -26,7 +26,7 @@ export interface BattleDef {
   /** 승급 12: 적 하나가 정예 (왕관 · HP ×2) */
   eliteOne?: boolean;
   /** 막별 적 특성 */
-  traits?: ('blastPawn' | 'rookPlate')[];
+  traits?: FoeTrait[];
   w?: number;
   h?: number;
   place?: { side: 0 | 1; t: PieceType; x: number; y: number }[];
@@ -143,7 +143,7 @@ const NARR_BOSS: Partial<Record<BossRule, string>> = {
   alarm: '경보 반장의 등이 붉게 깜빡인다. 눈금이 하나씩 차오른다.',
 };
 const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
-const TRAITS: ('blastPawn' | 'rookPlate')[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
+const TRAITS: FoeTrait[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
 const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
 
 /** 1막 앞 두 판 (첫 10분 — D-150) */
@@ -193,6 +193,13 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   if (asc >= 5) d.enemy = [...d.enemy, 'P'];
   if (asc >= 6 && kind === 'boss') { d.kingHp *= ASC_NUM.bossHp; d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.bossHp; }
   if (asc >= 12 && kind === 'check') d.eliteOne = true;
+  // 적 특성 하나 더 (D-275): 이 판에 그 기물이 있을 때만 — 지도 rng를 건드리지 않게 판의 모양으로 정한다
+  const pool = TRAIT_POOL[act - 1].filter((t) => d.enemy.includes(t === 'knightShoe' ? 'N' : t === 'bishopLens' ? 'B' : t === 'pawnDrill' ? 'P' : 'Q'));
+  if (pool.length && (kind !== 'battle' || act > 1)) {
+    const t = pool[new Rng(d.enemy.join('').length * 131 + act * 17 + (kind === 'boss' ? 7 : kind === 'check' ? 3 : 1) + d.enemy.filter((x) => x === 'P').length * 29).int(pool.length)] as Exclude<FoeTrait, 'blastPawn' | 'rookPlate'>;
+    d.traits = [...(d.traits ?? []), t];
+    d.tell = `${d.tell}${d.tell ? ' ' : ''}${FOE_TRAITS[t].tell}`;
+  }
   return d;
 };
 

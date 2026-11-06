@@ -5,7 +5,7 @@ import { Rng } from '../engine/rng';
  * 분대원 정체성 (R2 애착, D-153 — 레퍼런스 6권: 이름 1 + 기벽 1 + 짧은 말 한 줄이면 인격이 생긴다).
  * 공장 세계관: 출하 시리얼 + 검수관이 붙인 이름(개명 가능) + 「불량 검수 사유」 = 기벽 (양날).
  */
-export type QuirkId = 'overwound' | 'welded' | 'stubborn' | 'boiler';
+export type QuirkId = 'overwound' | 'welded' | 'stubborn' | 'boiler' | 'heavy' | 'rusty' | 'spare' | 'glass';
 
 export interface QuirkDef {
   name: string;
@@ -21,12 +21,16 @@ export interface QuirkDef {
   doors?: number;
 }
 
-/** 기벽 4종 (D-155: 8 → 4, 눈에 보이는 수치만 — 숨은 발동 조건은 뺐다) */
+/** 기벽 8종 (D-155: 8 → 4, 눈에 보이는 수치만 — 숨은 발동 조건은 뺐다 · D-275: 사용자 「12종은 복잡」 → 4종 더해 8, 저마다 수치 하나를 맞바꾼다) */
 export const QUIRKS: Record<QuirkId, QuirkDef> = {
   overwound: { name: '과하게 감긴 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
   welded: { name: '납땜 흉갑', desc: '방열판 12 · 공격 −15%', shield: 12, atk: 0.85 },
   stubborn: { name: '고집 센 축', desc: '문턱 2번 · 공격 −15%', doors: 2, atk: 0.85 },
   boiler: { name: '새는 보일러', desc: '쓰러지면 둘레 폭발 20', doors: 0 },
+  heavy: { name: '무거운 받침', desc: 'HP +30% · 공격 −20%', hp: 1.3, atk: 0.8 },
+  rusty: { name: '녹슨 관절', desc: '방열판 20 · HP −20%', shield: 20, hp: 0.8 },
+  spare: { name: '여분 톱니', desc: '문턱 1번 · HP −15%', doors: 1, hp: 0.85 },
+  glass: { name: '유리 렌즈', desc: '공격 ×1.4 · HP −35%', atk: 1.4, hp: 0.65 },
 };
 
 /** 수치 (data — 근거 D-153) */

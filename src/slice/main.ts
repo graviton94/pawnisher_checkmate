@@ -18,7 +18,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, bossSkin, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, bossSkin, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -222,7 +222,14 @@ const fmtMult = (v: number): string =>
 let enemyTurn = false;
 
 /** 적 특성 한 줄 (길게 누르기, D-175) */
-const foeTraitLine = (p: { side: number; type: PieceType }): string =>
+const foeTraitLine = (p: { side: number; type: PieceType }): string => foeTraitBase(p) + foeTraitExtra(p);
+/** 적 특성 넷 (D-275) — 그 유형에 붙은 것만 */
+const foeTraitExtra = (p: { side: number; type: PieceType }): string => {
+  if (p.side !== 1) return '';
+  const key = p.type === 'N' ? 'knightShoe' : p.type === 'B' ? 'bishopLens' : p.type === 'P' ? 'pawnDrill' : p.type === 'Q' ? 'queenCrown' : null;
+  return key && (b.traits ?? []).includes(key) ? `<br><span class="enemy">${FOE_TRAITS[key].name}</span> ${FOE_TRAITS[key].line.split(' — ')[1]}` : '';
+};
+const foeTraitBase = (p: { side: number; type: PieceType }): string =>
   p.side !== 1 ? '' :
   p.type === 'K' && b.boss && b.bossRule === 'plate' ? `<br><span class="enemy">철갑 · 줄 폭격</span> 두 턴마다 철갑 ${BOSS.plate}을 다시 두르고, 두 턴마다 한 줄에 ${foeDmg(BOSS.bombDamage, b)}` :
   p.type === 'K' && b.boss && b.bossRule === 'spawn' ? `<br><span class="enemy">조립</span> 두 턴마다 곁에 폰을 찍어 낸다 (셋까지)` :
