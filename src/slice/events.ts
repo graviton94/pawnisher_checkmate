@@ -97,7 +97,6 @@ const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', appl
  * 「세부 설명이 너무 길다」). 판돈은 나사 절반 · 전부 · 분대원 · 카드 여러 장 단위로, 대가는 황금 쪽 부품 · 여러 장 다듬기 · 두 단계 같은 큰 것으로.
  * 설명(desc)은 한 줄: 확률이면 「n%: 결과 · n%: 결과」, 아니면 「무엇 → 무엇」.
  */
-const half = (s: EventState) => Math.max(20, Math.floor(s.gold / 2));
 export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   tinker: {
     title: '떠돌이 땜장이',
@@ -139,10 +138,15 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   gambler: {
     title: '동전 나이트',
-    text: '외알 안경의 나이트가 발굽 위로 동전을 굴린다. 당신의 나사가 그 소리에 떨린다. “앞면이면 두 배. 뒷면이면 내 것.”',
+    text: '외알 안경의 나이트가 발굽 위로 동전을 굴린다. “동전이 정한다. 앞면이면 내 걸 주지. 뒷면이면 네 쪽 하나를 걷어찬다.”',
     choices: [
-      { label: '나사 절반을 걸까?', desc: '50%: 건 만큼 더 · 50%: 잃는다', blocked: poor(20), apply: (s, rng) => { const bet = half(s); const win = rng.int(2) === 0; s.gold += win ? bet : -bet; return { slot: win ? 0 : 1, text: win ? `앞면. 나이트가 혀를 찬다. (나사 +${bet})` : `뒷면. 나이트가 동전을 거둔다. (나사 −${bet})` }; } },
-      { label: '전부 걸까?', desc: '50%: 두 배 + 부품 하나 · 50%: 빈털터리', blocked: poor(20), apply: (s, rng) => { const bet = s.gold; const win = rng.int(2) === 0; s.gold = win ? bet * 2 : 0; return win ? { slot: 0, text: `앞면. 나이트가 외알 안경을 떨어뜨린다. (나사 +${bet})`, partPick: true } : { slot: 1, text: `뒷면. 나이트가 당신의 나사를 전부 쓸어 담는다. (나사 −${bet})` }; } },
+      // D-254: 코인토스는 두고 나사 내기(두 배 · 몰수)를 뺐다 — 결과는 부품 · 분대원 피해
+      { label: '동전을 던지게 둘까?', desc: '앞면: 부품 하나 · 뒷면: 분대원 하나 HP −50%', blocked: (s) => (nonKing(s).length ? null : '분대원 필요'), apply: (s, rng) => {
+        if (rng.int(2) === 0) return { slot: 0, text: '앞면. 나이트가 혀를 차며 안장에서 부품을 꺼낸다.', partPick: true };
+        const u = pick(rng, nonKing(s))!;
+        s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? crewMaxHp(x)) - crewMaxHp(x) * 0.5)) } : x));
+        return { slot: 1, text: `뒷면. 발굽이 ${josa(u.name, '을')} 걷어찬다. (HP −50%)` };
+      } },
       leave('거절하기'),
     ],
   },
@@ -246,31 +250,37 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     ],
   },
   auction: {
-    title: '고철 경매',
-    text: '고철 더미 위에서 경매인이 망치를 든다. 봉인된 상자 속을 아는 자는 없다.',
+    // D-254: 고철 경매(돈을 걸고 상자를 사는 것)를 녹슨 봉인 상자로 — 거는 것 없이, 녹을 긁어 각인을 읽는다
+    title: '녹슨 봉인 상자',
+    text: '고철 더미 사이에 쇠사슬로 묶인 상자가 있다. 봉인판의 각인 세 칸이 녹에 덮여 있다. 각인이 맞으면 봉인이 풀린다.',
     choices: [
-      { label: '나사 100을 걸까?', desc: '50%: 희귀 이상 부품 · 50%: 빈 상자', blocked: poor(100), apply: (s, rng) => { s.gold -= 100; return rng.int(2) === 0 ? { slot: 0, text: '상자가 열린다. 부품이 빛난다.', partPick: true, elite: true } : { slot: 1, text: '상자는 비어 있다. 경매인이 웃지 않는다. (나사 −100)' }; } },
+      { label: '녹을 긁어낼까?', desc: '50%: 희귀 이상 부품 · 50%: 녹 독 (분대 HP −20%)', apply: (s, rng) => {
+        if (rng.int(2) === 0) return { slot: 0, text: '각인 셋이 맞물린다. 봉인이 풀리고 상자가 열린다.', partPick: true, elite: true };
+        hpRatio(s, -0.2);
+        return { slot: 1, text: '각인이 어긋난다. 녹 가루가 분대의 이음새로 스민다. (HP −20%)' };
+      } },
       leave('떠나기'),
     ],
   },
   brokenGacha: {
-    title: '쓰러진 뽑기 기계',
-    text: '쓰러진 뽑기 기계가 어둠 속에서 희미하게 깜빡인다. 레버는 아직 당신의 손을 기다린다.',
+    // D-254: 뽑기 기계(나사를 넣는 슬롯) → 고장 난 조립 판정기 — 거는 것 없이, 기계가 분대의 힘을 끌어 쓴다
+    title: '고장 난 조립 판정기',
+    text: '쓰러진 판정기의 깔때기 셋이 덜컹인다. 손잡이에 손을 대면 기계가 힘을 빨아들인다. 세 칸이 맞으면 합격품이 나온다.',
     choices: [
-      { label: '나사 60을 넣을까?', desc: '40%: 희귀 부품 · 25%: 승급 · 35%: 꽝 + 감전', blocked: poor(60), apply: (s, rng) => {
-        s.gold -= 60;
+      { label: '판정기를 돌릴까?', desc: '분대 HP −15% · 40%: 희귀 부품 · 25%: 승급 · 35%: 감전', apply: (s, rng) => {
+        hpRatio(s, -0.15);
         const r = rng.int(100);
-        if (r < 40) return { slot: 0, text: '기계가 덜컹이며 캡슐을 뱉는다.', partPick: true, elite: true };
+        if (r < 40) return { slot: 0, text: '세 칸이 맞물린다. 판정기가 합격품을 뱉는다.', partPick: true, elite: true };
         if (r < 65) {
           const u = pick(rng, s.squad.filter((x) => UP[x.t]));
           if (u) {
             const t = UP[u.t]!;
             s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-            return { slot: 1, text: `불꽃이 튄다. ${josa(u.name, '은')} 이제 ${NAMES[t]}이다.` };
+            return { slot: 1, text: `왕관 셋. 판정기가 ${josa(u.name, '을')} 끌어당겨 다시 찍어 낸다. 이제 ${NAMES[t]}이다.` };
           }
         }
-        hpRatio(s, -0.2);
-        return { slot: 2, text: '기계가 침묵하다 불꽃을 토한다. (나사 −60 · HP −20%)' };
+        hpRatio(s, -0.15);
+        return { slot: 2, text: '불량. 판정기가 불꽃을 토한다. (HP −15% 더)' };
       } },
       leave('지나가기'),
     ],

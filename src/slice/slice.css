@@ -2007,19 +2007,6 @@ body.slice .panel:has(.ev-stage) { width: min(880px, 96vw); }
 @keyframes bfOut { 0% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 25% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 75%, 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 
 /* 보상 바퀴 (D-251): 장면 위 황동 창, 한 칸 72px, 결과에 서면 창이 번쩍 */
-.rr { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; }
-.rr-win { position: relative; width: 236px; height: 72px; overflow: hidden; background: #16141c; box-shadow: 0 0 0 3px #1a1014, 0 0 0 6px #d49a22, 0 0 0 9px #1a1014, 6px 6px 0 6px #000; }
-.rr-strip { will-change: transform; }
-.rr-cell { height: 72px; display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 10px; padding: 0 14px; box-shadow: inset 0 -2px 0 #2f2e36; }
-.ev-scene .rr .rr-cell img { position: static; inset: auto; width: 48px; height: 54px; object-fit: fill; image-rendering: pixelated; }
-.rr-cell b { font: 700 24px Galmuri11, sans-serif; color: #f4d27a; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
-.rr-cell.bad b { color: #ff9a8a; }
-.rr-pin { position: absolute; top: 50%; width: 0; height: 0; margin-top: -8px; border: 8px solid transparent; }
-.rr-pin.l { left: -2px; border-left-color: #fff3c4; }
-.rr-pin.r { right: -2px; border-right-color: #fff3c4; }
-.rr.hit .rr-win { animation: rrHit 480ms steps(1) both; }
-@keyframes rrHit { 0%, 40% { box-shadow: 0 0 0 3px #1a1014, 0 0 0 6px #fff3c4, 0 0 0 9px #1a1014, 6px 6px 0 6px #000; } 20%, 60% { box-shadow: 0 0 0 3px #1a1014, 0 0 0 6px #d49a22, 0 0 0 9px #1a1014, 6px 6px 0 6px #000; } 100% { box-shadow: 0 0 0 3px #1a1014, 0 0 0 6px #f4d27a, 0 0 0 9px #1a1014, 6px 6px 0 6px #000; } }
-.rr.hit.bad .rr-win { animation: none; box-shadow: 0 0 0 3px #1a1014, 0 0 0 6px #e5262f, 0 0 0 9px #1a1014, 6px 6px 0 6px #000; }
 
 /* ── 사건 미니게임 (D-253): 사건 창 전체를 덮는다 ── */
 .ev-wrap { position: relative; }
@@ -2032,6 +2019,7 @@ body.slice .panel:has(.ev-stage) { width: min(880px, 96vw); }
 .mg-cap.good { color: #f4d27a; animation: bfName 240ms steps(1) both; }
 .mg-cap.bad { color: #ff9a8a; animation: bfName 240ms steps(1) both; }
 .mg-go { min-height: 44px; padding: 0 16px; font: 700 12px Galmuri11, sans-serif; color: #16141c; background: #f4d27a; border: 0; box-shadow: 0 0 0 2px #000, 0 3px 0 #000; animation: evTapBlink 660ms steps(1) infinite; }
-.mg-stamp { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-12deg); padding: 2px 18px; font: 400 60px/1 Galmuri14, sans-serif; color: #e5262f; box-shadow: inset 0 0 0 4px #e5262f; animation: bfName 220ms steps(1) both; pointer-events: none; }
+.mg-stamp { position: absolute; left: 50%; top: 4px; transform: translateX(-50%); padding: 2px 12px; white-space: nowrap; font: 400 45px/1 Galmuri14, sans-serif; color: #e5262f; background: #16141c; box-shadow: inset 0 0 0 3px #e5262f, 0 0 0 3px #000, 0 6px 0 #000; animation: mgStamp 300ms steps(3) both; pointer-events: none; }
+@keyframes mgStamp { 0% { transform: translateX(-50%) scale(1.6); } 34% { transform: translateX(-50%) scale(0.9); } 67%, 100% { transform: translateX(-50%) scale(1); } }
+.mg-stamp.ok { color: #7ee0a1; box-shadow: inset 0 0 0 4px #7ee0a1; }
 @media (prefers-reduced-motion: reduce) { .mg, .mg-go { animation: none; } }
-.mg-ticket-head { position: absolute; left: 0; right: 0; top: 30px; text-align: center; font: 700 24px Galmuri11, sans-serif; color: #3a2408; text-shadow: 0 2px 0 #f4c84a; pointer-events: none; }

@@ -4,8 +4,7 @@
  * 결과는 엔진(events.ts)이 이미 정했다 — 보여 주기만 한다. 누르기(tap)는 손맛용.
  */
 import type { PieceType } from '../engine';
-import { sfx } from '../audio/sfx';
-import { scratchCard, slotMachine } from './minigames';
+import { assemblyJudge, sealScrape } from './minigames';
 import { at, bayer, FxCanvas, hex, Lights, mix, OUTLINE, P, PAL, Painter, Particles, Rng, scale, WHITE, type Col } from '../view/pxfx';
 
 const D = 3;
@@ -39,7 +38,9 @@ const propImg = (n: string): HTMLImageElement => {
   if (!i) { i = new Image(); i.src = `ui/props/${n}.png`; propImgs.set(n, i); }
   return i;
 };
-['coin-0', 'coin-1', 'coin-2', 'coin-3', 'coin-4', 'coin-5', 'coin-6', 'coin-7', 'chest-0', 'chest-1', 'chest-2', 'slot', 'slot-pull', 'sym-part', 'sym-up', 'sym-miss'].forEach(propImg);
+['ic32-coin-front', 'ic32-coin-tilt', 'ic32-coin-edge', 'ic32-coin-back'].forEach(propImg);
+/** 동전 회전 8장 (D-256, ICON-01): 앞면 → 기운 타원 → 옆면 → 거울 타원 → 뒷면 → … — [그림, 좌우 뒤집기] */
+const COIN: [string, boolean][] = [['ic32-coin-front', false], ['ic32-coin-tilt', false], ['ic32-coin-edge', false], ['ic32-coin-tilt', true], ['ic32-coin-back', false], ['ic32-coin-tilt', false], ['ic32-coin-edge', true], ['ic32-coin-tilt', true]];
 const pieceImgs = new Map<string, HTMLImageElement>();
 const pieceImg = (t: PieceType, side: 0 | 1): HTMLImageElement => {
   const k = `${t}${side}`;
@@ -50,7 +51,7 @@ const pieceImg = (t: PieceType, side: 0 | 1): HTMLImageElement => {
 (['K', 'Q', 'R', 'B', 'N', 'P'] as PieceType[]).forEach((t) => { pieceImg(t, 0); pieceImg(t, 1); });
 
 /** 선명한 층에 올릴 것 (매 장 다시 그린다) */
-interface HiItem { sprite?: { n: string; x: number; y: number; k: number }; piece?: { t: PieceType; x: number; foot: number; size?: number; clip?: number }; text?: { s: string; x: number; y: number; px: number; col: string } }
+interface HiItem { sprite?: { n: string; x: number; y: number; k: number; flip?: boolean }; piece?: { t: PieceType; x: number; foot: number; size?: number; clip?: number }; text?: { s: string; x: number; y: number; px: number; col: string } }
 
 /** 무대: 도트 FX 층 + 선명한 층 + 공용 입자 · 빛 */
 class Stage {
@@ -91,12 +92,18 @@ class Stage {
   piece(t: PieceType, x: number, foot: number, size = 72, clip?: number) { this.items.push({ piece: { t, x, foot, size, clip } }); }
   text(s: string, x: number, y: number, px = 24, col = '#f4f1ea') { this.items.push({ text: { s, x, y, px, col } }); }
   /** 소품 에셋 (1도트 = 3px, 왼위 모서리 도트 좌표) */
-  sprite(n: string, x: number, y: number, k = 1) { this.items.push({ sprite: { n, x, y, k } }); }
+  sprite(n: string, x: number, y: number, k = 1, flip = false) { this.items.push({ sprite: { n, x, y, k, flip } }); }
   private paintHi() {
     const x = this.hx;
     x.clearRect(0, 0, this.w * D, this.h * D);
     for (const it of this.items) {
-      if (it.sprite) { const i = propImg(it.sprite.n); if (i.complete) x.drawImage(i, Math.round((it.sprite.x + this.shake) * D), Math.round(it.sprite.y * D), i.naturalWidth * D * it.sprite.k, i.naturalHeight * D * it.sprite.k); }
+      if (it.sprite) {
+        const i = propImg(it.sprite.n), sp = it.sprite;
+        if (i.complete) {
+          const w = i.naturalWidth * D * sp.k, h = i.naturalHeight * D * sp.k, ax = Math.round((sp.x + this.shake) * D), ay = Math.round(sp.y * D);
+          if (sp.flip) { x.save(); x.translate(ax + w, ay); x.scale(-1, 1); x.drawImage(i, 0, 0, w, h); x.restore(); } else x.drawImage(i, ax, ay, w, h);
+        }
+      }
       if (it.piece) {
         const i = pieceImg(it.piece.t, 0), sz = it.piece.size ?? 72, top = Math.round(it.piece.foot * D - sz);
         const vis = it.piece.clip === undefined ? sz : Math.max(0, Math.min(sz, it.piece.clip * D - top));
@@ -210,39 +217,6 @@ const impact = (s: Stage, x: number, y: number, col: Col = PAL.fire[6], n = 18) 
 };
 const hero = (p: Painter, s: Stage, t: number, t0: number) => { if (t >= t0 && t < t0 + 0.06) p.rect(0, 0, s.w, s.h, WHITE, 0.85); };
 
-/**
- * 보상 바퀴 (D-251, 사용자: 「실제 보상은 슬롯머신 돌아가듯이 오버레이 연출」): 장면 위 황동 창 안에서 보상 칸이 세로로 돌다가
- * 계단으로 느려져(4px 단위, 감속) 실제 결과 칸에 선다 → 창이 번쩍 · 이름이 박힌다. 결과는 이미 정해져 있다.
- */
-export const rewardReel = (host: HTMLElement, items: { icon: string; label: string; good: boolean }[], win: number): Promise<void> =>
-  new Promise((done) => {
-    const CELL = 72;
-    const loops = 4;
-    const el = document.createElement('div');
-    el.className = 'rr';
-    const cells = Array.from({ length: (loops + 1) * items.length }, (_, i) => items[i % items.length]);
-    el.innerHTML = `<div class="rr-win"><div class="rr-strip">${cells.map((it) => `<div class="rr-cell${it.good ? '' : ' bad'}"><img src="ui/props/${it.icon}.png" alt=""><b>${it.label}</b></div>`).join('')}</div><span class="rr-pin l"></span><span class="rr-pin r"></span></div>`;
-    host.appendChild(el);
-    const strip = el.querySelector<HTMLElement>('.rr-strip')!;
-    const target = (loops * items.length + win) * CELL;
-    const dur = calm() ? 200 : 1700;
-    const t0 = performance.now();
-    let lastCell = -1;
-    const tick = (now: number) => {
-      if (!el.isConnected) return done();
-      const k = Math.min(1, (now - t0) / dur);
-      const y = Math.round((target * (1 - Math.pow(1 - k, 4))) / 4) * 4;
-      strip.style.transform = `translateY(${-y}px)`;
-      const c = Math.floor((y + CELL / 2) / CELL);
-      if (c !== lastCell) { lastCell = c; sfx('tap'); }
-      if (k < 1) return void requestAnimationFrame(tick);
-      el.classList.add('hit', items[win].good ? 'good' : 'bad');
-      sfx(items[win].good ? 'jackpot' : 'hurt');
-      window.setTimeout(done, 650);
-    };
-    requestAnimationFrame(tick);
-  });
-
 type Fx = (s: Stage, c: EvFxCtx) => Promise<void>;
 const firstCrew = (c: EvFxCtx): PieceType => c.diff.gone[0] ?? c.diff.changed[0]?.from ?? 'P';
 
@@ -251,9 +225,9 @@ const FX: Record<string, Fx> = {
    *  → 떨어져 튕기며 앞/뒤에 선다 · 먼지 → 앞면: 나사 분수 · 빛 / 뒷면: 빛을 잃고 미끄러져 간다 */
   async gambler(s, c) {
     const cx = s.w / 2, g = s.floor - 36;
-    await s.tap(c.tap, (t, p) => { s.dim(p); s.ground(p, PAL.wood); p.glow(cx, g + 18, 26, PAL.gold[4], 0.18); s.sprite('coin-0', cx - 18, g + (Math.floor(t * 4) % 2), 2); if (Math.floor(t * 3) % 3 === 0) p.sparkle(cx - 4, g + 3, 2, PAL.gold[5], PAL.gold[3]); });
+    await s.tap(c.tap, (t, p) => { s.dim(p); s.ground(p, PAL.wood); p.glow(cx, g + 18, 26, PAL.gold[4], 0.18); s.sprite('ic32-coin-front', cx - 16, g + (Math.floor(t * 4) % 2)); if (Math.floor(t * 3) % 3 === 0) p.sparkle(cx - 4, g + 3, 2, PAL.gold[5], PAL.gold[3]); });
     const peak = 4;
-    const endFrame = c.good ? 0 : 6;
+    const endFrame = c.good ? 0 : 4;
     await s.play(
       2600,
       (t, p) => {
@@ -261,13 +235,13 @@ const FX: Record<string, Fx> = {
         let y = g, f = 0, x = cx;
         if (t < 0.12) y = g + 2;
         else if (t < 1.25) { const k = (t - 0.12) / 1.13; y = g + (peak - g) * (1 - Math.pow(2 * k - 1, 2)); f = Math.floor(t * 16) % 8; }
-        else if (t < 1.4) { f = endFrame === 0 ? 7 : 5; y = g - Math.sin(((t - 1.25) / 0.15) * Math.PI) * 4; }
+        else if (t < 1.4) { f = endFrame === 0 ? 7 : 3; y = g - Math.sin(((t - 1.25) / 0.15) * Math.PI) * 4; }
         else { f = endFrame; y = g; }
         if (!c.good && t > 1.7) x = cx + inE((t - 1.7) / 0.8) * 46;
         const sh = Math.max(3, 9 - (g - y) / 6);
         p.ellipse(cx, s.floor + 1, sh, 1.5, PAL.wood[1]);
         p.glow(x, y + 18, 24, PAL.gold[4], c.good || t < 1.4 ? 0.22 : 0.08);
-        s.sprite(`coin-${f}`, x - 18, y, 2);
+        s.sprite(COIN[f][0], x - 16, y, 1, COIN[f][1]);
         if (t > 0.62 && t < 0.78) p.sparkle(cx + 12, peak + 6, 4, PAL.gold[5], PAL.gold[3]);
         s.jolt(t, 1.25, 0.1, 1);
         hero(p, s, t, 1.4);
@@ -275,7 +249,8 @@ const FX: Record<string, Fx> = {
       },
       (dt, t) => {
         if (t > 1.25 && t - dt <= 1.25) for (let i = 0; i < 6; i++) s.ps.spawn(P.DUST, cx + s.R.range(-10, 10), s.floor, s.R.range(-40, 40), s.R.range(-10, -2), 0.6, PAL.wood[3], 3);
-        if (c.good && t > 1.42 && t - dt <= 1.42) { screwBurst(s, cx, g + 10, 18); s.lights.add(cx, g + 18, 40, PAL.gold[5], 1, 0.6); }
+        if (c.good && t > 1.42 && t - dt <= 1.42) { s.ps.burst(cx, g + 16, 18, [60, 150], P.STAR, [0.5, 1], PAL.gold[5]); s.lights.add(cx, g + 18, 44, PAL.gold[5], 1, 0.8); }
+        if (!c.good && t > 1.7 && t - dt <= 1.7) for (let i = 0; i < 6; i++) s.ps.spawn(P.GRIT, cx + s.R.range(-6, 6), s.floor - 2, s.R.range(20, 90), s.R.range(-50, -10), 0.6, PAL.wood[4], 1);
       },
     );
   },
@@ -305,26 +280,16 @@ const FX: Record<string, Fx> = {
     );
   },
 
-  /** 쓰러진 뽑기 기계 (D-253): 사건 창 전체를 덮는 3구 슬롯 — 희귀 부품 = 7 7 7 · 승급 = 왕관 셋 · 꽝 = 7 7 나사 */
+  /** 고장 난 조립 판정기 (D-256): 사건 창 전체를 덮는 공장 기계 — 깔때기 셋에서 부품이 떨어져 받침에 박힌다.
+   *  금 톱니 셋 = 희귀 부품 · 금 왕관 셋 = 승급 · 톱니 둘 + 금 간 톱니 = 불량(감전) */
   async brokenGacha(s, c) {
-    const pick = c.diff.changed.length ? 'crown' : c.good ? 'seven' : 'miss';
-    await slotMachine(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, pick, { title: '레버를 당겨라', win: pick === 'seven' ? '잭팟! 희귀 부품' : '왕관 셋! 한 단계 위로', lose: '꽝 — 불꽃이 튄다' });
+    const pick = c.diff.changed.length ? 'up' : c.good ? 'part' : 'miss';
+    await assemblyJudge(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, pick, { title: '판정기가 덜컹거린다', win: pick === 'part' ? '합격 — 금 톱니 셋' : '합격 — 금 왕관 셋', lose: '불량 — 불꽃이 튄다' });
   },
 
-  /** 고철 경매 (D-253): 망치 세 번으로 낙찰 → 봉인 상자 복권을 긁는다 — 톱니 셋이면 희귀 부품, 아니면 빈 상자 */
+  /** 녹슨 봉인 상자 (D-256): 봉인판의 각인 칸 셋을 덮은 녹을 손가락으로 긁는다 — 금 톱니 셋이면 봉인이 풀린다, 아니면 녹 독 */
   async auction(s, c) {
-    const cx = s.w / 2, top = s.floor - 18;
-    const podium = (p: Painter) => { const W = PAL.wood; p.rect(cx - 30, top, 60, 18, INK); p.rect(cx - 29, top + 1, 58, 17, W[3]); p.rect(cx - 29, top + 1, 58, 2, W[5]); p.rect(cx - 29, top + 6, 58, 1, W[1]); p.rect(cx - 29, top + 7, 58, 2, PAL.brass[4]); p.rect(cx + 27, top + 1, 2, 17, W[1]); };
-    const words = ['하나', '둘', '낙찰!'];
-    for (let i = 0; i < 3; i++) {
-      await s.tap(c.tap && `${c.tap} (${i + 1}/3)`, (t, p) => { s.dim(p); s.ground(p, PAL.wood); podium(p); hammer(p, cx + 18, top - 2, 1.1 + (Math.floor(t * 5) % 2 ? 0.1 : 0)); s.text('호가 100', cx, 14, 24, '#f4d27a'); });
-      await s.play(400, (t, p) => {
-        s.dim(p); s.ground(p, PAL.wood); podium(p); hammer(p, cx + 18, top - 2, t < 0.07 ? 1.2 - (t / 0.07) * 1.1 : 0.1);
-        s.jolt(t, 0.07, 0.12, i === 2 ? 2 : 1); if (i === 2) hero(p, s, t, 0.07);
-        s.text(words[i], cx, 14, i === 2 ? 36 : 24, i === 2 ? '#e5262f' : '#f4f1ea');
-      }, (dt, t) => { if (t > 0.07 && t - dt <= 0.07) impact(s, cx + 6, top, PAL.gold[5], i === 2 ? 18 : 8); });
-    }
-    await scratchCard(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, c.good ? ['gear', 'gear', 'gear'] : ['gear', 'gear', 'broken'], c.good, { title: '봉인 상자 — 은박을 긁어라', win: '톱니 셋! 희귀 부품', lose: '빈 상자' });
+    await sealScrape(s.host.closest('.ev-wrap') as HTMLElement ?? s.host, c.good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'], c.good, { title: '봉인판의 녹을 긁어낸다', win: '봉인이 풀렸다', lose: '녹 독이 피어오른다' });
   },
 
   /** 쇳물 담금질: 도가니(불 · 불씨 · 빛) 위로 사슬이 계단으로 내려가 잠김(김이 솟음) → 끌어올림: 달아오른 새 기물(번쩍) / 빈 갈고리에서 쇳물이 떨어짐 */

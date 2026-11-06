@@ -180,169 +180,12 @@ def chest(open_k=0):
 
 
 # ── 뽑기 기계 (44×58) ──
-def slot(lever_down=False):
-    W, H = 48, 60
-    img = Img(W, H)
-    bx, by, bw, bh = 4, 14, 34, 40
-    # 몸통 (황동) — 왼위 빛 · 오른쪽 그림자
-    for y in range(by, by + bh):
-        for x in range(bx, bx + bw):
-            c = GOLD[3]
-            if x < bx + 3:
-                c = GOLD[4]
-            elif x > bx + bw - 5:
-                c = GOLD[2]
-            img.px(x, y, c)
-    img.hline(bx, bx + bw - 1, by, GOLD[5])
-    # 간판 (위): 톱니 문장 + 붉은 띠
-    img.rect(bx + 3, 3, bw - 6, 11, RED[1])
-    img.rect(bx + 3, 3, bw - 6, 2, RED[2])
-    img.hline(bx + 4, bx + bw - 5, 3, RED[3])
-    gx, gy = bx + bw // 2, 8
-    for a in range(8):
-        ang = a * math.pi / 4
-        img.px(gx + round(math.cos(ang) * 4) - 0.5, gy + round(math.sin(ang) * 4) - 0.5, GOLD[4])
-    for y in range(gy - 3, gy + 3):
-        for x in range(gx - 3, gx + 3):
-            if (x + 0.5 - gx) ** 2 + (y + 0.5 - gy) ** 2 <= 8:
-                img.px(x, y, GOLD[3])
-    img.rect(gx - 1, gy - 1, 2, 2, RED[0])
-    for i in range(6):
-        img.px(bx + 5 + i * 5, 12, (255, 244, 196) if i % 2 == 0 else GOLD[2])
-    # 바퀴 창 (흰 바탕 3칸 — 그림은 게임이 그린다)
-    wy = by + 5
-    img.rect(bx + 3, wy, bw - 6, 15, OL)
-    for r in range(3):
-        x0 = bx + 4 + r * 9
-        img.rect(x0, wy + 1, 8, 13, PAPER[1])
-        img.rect(x0, wy + 1, 8, 2, PAPER[0])
-        img.rect(x0, wy + 12, 8, 2, PAPER[0])
-    # 버튼 셋
-    for r in range(3):
-        x0 = bx + 6 + r * 9
-        img.rect(x0, by + 23, 4, 3, RED[2])
-        img.hline(x0, x0 + 3, by + 23, RED[3])
-    # 배출구
-    img.rect(bx + 9, by + 29, 16, 8, OL)
-    img.rect(bx + 10, by + 30, 14, 6, (60, 26, 16))
-    img.hline(bx + 10, bx + 23, by + 30, (90, 40, 24))
-    # 다리
-    img.rect(bx + 2, by + bh, 6, 4, GOLD[2])
-    img.rect(bx + bw - 8, by + bh, 6, 4, GOLD[2])
-    # 레버
-    lx = bx + bw + 2
-    if lever_down:
-        img.rect(lx, by + 18, 2, 10, STEEL[3])
-        img.rect(lx - 1, by + 27, 4, 4, RED[2])
-        img.px(lx, by + 27, RED[3])
-    else:
-        img.rect(lx, by + 6, 2, 14, STEEL[3])
-        img.vline(lx, by + 6, by + 19, STEEL[4])
-        img.rect(lx - 1, by + 3, 4, 4, RED[2])
-        img.px(lx, by + 3, RED[3])
-    img.rect(lx - 2, by + 18, 2, 4, STEEL[2])
-    img.outline()
-    return img
-
-
-# ── 바퀴 그림 (8×9): 부품 · 승급 · 꽝 ──
-def symbol(kind):
-    img = Img(8, 9)
-    if kind == 'part':
-        for y in range(9):
-            for x in range(8):
-                if (x + 0.5 - 4) ** 2 + (y + 0.5 - 4.5) ** 2 <= 10:
-                    img.px(x, y, GOLD[3])
-        for x, y in ((3, 0), (4, 0), (0, 4), (7, 4), (3, 8), (4, 8)):
-            img.px(x, y, GOLD[3])
-        img.rect(3, 4, 2, 2, OL)
-        img.px(2, 2, GOLD[5])
-    elif kind == 'up':
-        for i in range(4):
-            img.hline(3 - i, 4 + i, 1 + i, TEAL[2])
-        img.rect(2, 5, 4, 4, TEAL[1])
-        img.vline(2, 5, 8, TEAL[3])
-        img.px(3, 1, TEAL[3])
-    else:
-        # 해골 대신 붉은 X 볼트 (공장)
-        for i in range(7):
-            img.px(i, i + 1, RED[2])
-            img.px(i + 1, i + 1, RED[1])
-            img.px(6 - i, i + 1, RED[2])
-            img.px(7 - i, i + 1, RED[1])
-    img.outline()
-    return img
-
-
-# ── 슬롯 바퀴 그림 (16×16, D-253): 7 · 부품 톱니 · 왕관 · 나사 · 부서진 톱니 ──
-def reel_symbol(kind):
-    img = Img(16, 16)
-    if kind == 'seven':
-        # 굵은 붉은 7 (가로획 4줄 · 사선 4칸 폭) + 왼위 빛 · 오른쪽 그림자
-        img.rect(1, 1, 14, 4, RED[2])
-        img.hline(1, 14, 1, RED[3])
-        for i in range(10):
-            x = 10 - int(i * 0.55)
-            img.rect(x, 5 + i, 4, 1, RED[2])
-            img.px(x, 5 + i, RED[3])
-            img.px(x + 3, 5 + i, RED[1])
-        img.rect(13, 1, 2, 4, RED[1])
-    elif kind == 'gear':
-        for y in range(16):
-            for x in range(16):
-                d = ((x + 0.5 - 8) ** 2 + (y + 0.5 - 8) ** 2) ** 0.5
-                a = math.atan2(y + 0.5 - 8, x + 0.5 - 8)
-                tooth = (math.cos(a * 8) > 0.3)
-                if d <= 4.6 or (d <= 6.8 and tooth):
-                    c = GOLD[3]
-                    if x + y < 13:
-                        c = GOLD[4]
-                    if x + y > 19:
-                        c = GOLD[2]
-                    img.px(x, y, c)
-        img.rect(7, 7, 2, 2, OL)
-        img.px(5, 5, GOLD[5])
-    elif kind == 'crown':
-        base = [(2, 12), (13, 12)]
-        img.rect(2, 10, 12, 4, GOLD[3])
-        img.hline(2, 13, 10, GOLD[4])
-        for cx in (2, 7, 12):
-            for i in range(6):
-                img.hline(cx + (1 if cx == 7 else 0) - i // 3, cx + (1 if cx == 7 else 0) + i // 3, 9 - i, GOLD[3])
-        img.px(3, 4, GOLD[5]); img.px(8, 3, GOLD[5]); img.px(13, 4, GOLD[5])
-        img.px(7, 12, RED[2]); img.px(8, 12, RED[2]); img.px(4, 12, TEAL[2]); img.px(11, 12, TEAL[2])
-    elif kind == 'screw':
-        # 나사 머리 + 몸통 (강철)
-        img.rect(4, 2, 8, 4, STEEL[3])
-        img.hline(4, 11, 2, STEEL[4])
-        img.rect(7, 2, 2, 4, STEEL[1])
-        for y in range(6, 14):
-            img.rect(6, y, 4, 1, STEEL[2] if y % 2 else STEEL[3])
-        img.px(7, 14, STEEL[2])
-    else:  # broken: 금 간 회색 톱니 (꽝)
-        for y in range(16):
-            for x in range(16):
-                d = ((x + 0.5 - 8) ** 2 + (y + 0.5 - 8) ** 2) ** 0.5
-                a = math.atan2(y + 0.5 - 8, x + 0.5 - 8)
-                if (d <= 4.6 or (d <= 6.8 and math.cos(a * 8) > 0.3)) and not (x > 8 and y < 7):
-                    img.px(x, y, STEEL[2] if x + y > 16 else STEEL[3])
-        for i in range(7):
-            img.px(5 + i, 3 + i + (i % 2), OL)
-    img.outline()
-    return img
-
-
 def main():
     for i in range(8):
         coin_frame(i).save(f'coin-{i}.png')
     for k in range(3):
         chest(k).save(f'chest-{k}.png')
-    slot(False).save('slot.png')
-    slot(True).save('slot-pull.png')
-    for k in ('part', 'up', 'miss'):
-        symbol(k).save(f'sym-{k}.png')
-    for k in ('seven', 'gear', 'crown', 'screw', 'broken'):
-        reel_symbol(k).save(f'reel-{k}.png')
+    # 슬롯 · 7 · 릴 기호는 심의 회피로 걷었다 (D-254 · D-256) — 판정기 · 봉인판 기호는 ICON-01 (sheet-slice.py)
     # 확인용 낱장 (배율 4, 투명 바탕 위)
     sheet = Image.new('RGBA', (18 * 8 * 4 + 34 * 3 * 4 + 48 * 4 * 2, 60 * 4), (240, 236, 232, 255))
     x = 0
@@ -352,9 +195,6 @@ def main():
     for k in range(3):
         im = Image.open(os.path.join(OUT, f'chest-{k}.png')).resize((136, 120), Image.NEAREST)
         sheet.alpha_composite(im, (x, 0)); x += 136
-    for n in ('slot', 'slot-pull'):
-        im = Image.open(os.path.join(OUT, f'{n}.png')).resize((192, 240), Image.NEAREST)
-        sheet.alpha_composite(im, (x, 0)); x += 192
     sheet.save(os.path.join(ROOT, 'build-res', 'props-sheet.png'))
     print('ok')
 
