@@ -17,7 +17,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { gradeOf, rollGrade, GRADE, baseOf, isRefined, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -36,7 +36,7 @@ import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry 
 import { ASC_NUM, ASCENSION, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
 import { EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
-import { runEventFx, sceneStill, type EvDiff } from './evstage';
+import { runEventFx, type CardFx, type CrewFx } from './evstage';
 import { bossIntro, type BossKey } from './bossintro';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
@@ -1531,8 +1531,8 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     })
     .join('')}</div><div class="ev-exit" hidden></div><p class="dim ev-purse">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
   const scene = el.querySelector<HTMLElement>('.ev-scene')!;
-  // 장면 그림이 아직 없는 사건은 같은 문법의 정지 장면 (D-259)
-  scene.querySelector('img')?.addEventListener('error', (e) => { (e.target as HTMLElement).remove(); sceneStill(scene, id); }, { once: true });
+  // 장면 그림이 아직 없는 사건은 공용 사건 배경 컷씬 (D-260)
+  scene.querySelector('img')?.addEventListener('error', (e) => { (e.target as HTMLImageElement).src = 'scenes/bg-event.png'; }, { once: true });
   const logEl = el.querySelector<HTMLElement>('.ev-log')!;
   const choicesEl = el.querySelector<HTMLElement>('.ev-choices')!;
   const exitEl = el.querySelector<HTMLElement>('.ev-exit')!;
@@ -1602,7 +1602,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           await say('npc', talk.bye);
           return showExit(talk.exit, advance);
         }
-        const before = { squad: squad.map((u) => u.t), deck: deck.map((x) => COMMANDS[x].name), gold, hp: squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)), 0) };
+        const before = { crew: squad.map((u) => ({ ...u })), deck: [...deck], gold };
         const s0 = st();
         const out = c.apply(s0, sub());
         // 저울추 (D-247): 같은 창 안에서 카드를 고른다
@@ -1625,26 +1625,40 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         refined.splice(0, refined.length, ...s0.refined);
         gold = s0.gold;
         if (out.recruit) squad.push(crewOf(out.recruit));
-        // 바뀐 것 (장치 연출이 쓴다)
-        const after = { squad: squad.map((u) => u.t), deck: deck.map((x) => COMMANDS[x].name) };
+        // 바뀐 것 (D-260): 실제 카드 · 기물에 FX — 같은 바탕 카드끼리는 강화 · 녹, 나머지는 파괴 · 새 카드
         const minus = <T,>(a: T[], b: T[]) => { const r = [...b]; return a.filter((x) => { const i = r.indexOf(x); if (i < 0) return true; r.splice(i, 1); return false; }); };
-        const goneT = minus(before.squad, after.squad);
-        const addT = minus(after.squad, before.squad);
-        const diff: EvDiff = {
-          gone: goneT.slice(addT.length),
-          changed: goneT.slice(0, addT.length).map((f, i) => ({ from: f, to: addT[i] })),
-          added: addT.slice(goneT.length),
-          cardsOut: minus(before.deck, after.deck),
-          cardsIn: minus(after.deck, before.deck),
-          gold: gold - before.gold,
-          hp: squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)), 0) - before.hp,
-        };
-        if (id === 'tinker') diff.changed = [{ from: squad.find((u) => (u.doors ?? 0) > 0)?.t ?? 'P', to: squad.find((u) => (u.doors ?? 0) > 0)?.t ?? 'P' }];
-        // 좋은 결과: 확률 선택은 첫 칸(뽑기는 둘째 칸 「한 단계 위」도 좋음), 아니면 좋다
+        const outs = minus(before.deck, deck), ins = minus(deck, before.deck);
+        const face = (cid: CommandId) => cardFace(cid, 'tabindex="-1" aria-hidden="true"');
+        const cards: CardFx[] = [];
+        for (const o of outs) {
+          const k = ins.findIndex((x) => baseOf(x) === baseOf(o));
+          if (k >= 0) { const n = ins.splice(k, 1)[0]; cards.push({ before: face(o), after: face(n), fx: isRusted(n) ? 'rust' : 'up' }); }
+          else cards.push({ before: face(o), fx: 'break' });
+        }
+        for (const n of ins) cards.push({ after: face(n), fx: 'new' });
+        const src = (t: PieceType) => `pieces/l-${t}0.png`;
+        const crewFx: CrewFx[] = [];
+        for (const u0 of before.crew) {
+          const u1 = squad.find((x) => x.serial === u0.serial);
+          const max = crewMaxHp(u0), hp0 = u0.hp ?? max;
+          if (!u1) { crewFx.push({ src: src(u0.t), name: crewLabel(u0), hp0, hp1: 0, max, fx: 'die' }); continue; }
+          const hp1 = u1.hp ?? crewMaxHp(u1);
+          if (u1.t !== u0.t) crewFx.push({ src: src(u0.t), toSrc: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'evolve' });
+          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: '문턱 +1' });
+          else if (hp1 !== hp0) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'hp' });
+        }
+        for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: u1.hp ?? crewMaxHp(u1), hp1: u1.hp ?? crewMaxHp(u1), max: crewMaxHp(u1), fx: 'new' });
+        // 좋은 결과: 확률 선택은 첫 칸(판정기는 둘째 칸 「한 단계 위」도 좋음), 아니면 좋다
         const good = out.slot === undefined || out.slot === 0 || (id === 'brokenGacha' && out.slot === 1);
         choicesEl.hidden = true;
         el.querySelector('.ev-stage')!.classList.add('big');
-        await runEventFx(scene, { id, good, diff, tap: talk.tap });
+        // 확률 장치는 셋만 (D-260): 동전 · 칸 셋 · 긁는 칸 셋
+        const chance: Parameters<typeof runEventFx>[1]['chance'] =
+          id === 'gambler' ? { kind: 'coin', win: good }
+          : id === 'brokenGacha' ? { kind: 'slots', win: good, items: out.slot === 0 ? ['gear-gold', 'gear-gold', 'gear-gold'] : out.slot === 1 ? ['crown-gold', 'crown-gold', 'crown-gold'] : ['gear-gold', 'gear-gold', 'gear-broken'] }
+          : id === 'auction' ? { kind: 'scratch', win: good, items: good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'] }
+          : undefined;
+        await runEventFx(scene, { id, good, chance, cards, crew: crewFx, tap: talk.tap });
         if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
         el.querySelector('.ev-purse')!.textContent = `나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}`;
         if (out.text) await say('narr', out.text);
@@ -3303,4 +3317,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

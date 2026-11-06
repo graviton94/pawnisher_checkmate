@@ -16,7 +16,7 @@ const jobs = process.argv.slice(3);
     await pg.evaluate(() => localStorage.setItem('pawnisher.slice.meta', JSON.stringify({ tut: ['battle', 'map', 'recruit', 'kit', 'promote'], runs: 3 })));
     await pg.goto('http://localhost:4173/?debug');
     await pg.waitForTimeout(2500);
-    await pg.evaluate(([i, s]) => { window.sliceApi.gold(300); if (s) window.sliceApi.seed(Number(s)); window.sliceApi.event(i); }, [id, seed]);
+    await pg.evaluate(([i, s]) => { window.sliceApi.gold(300); window.sliceApi.hurt(0.6); if (s) window.sliceApi.seed(Number(s)); window.sliceApi.event(i); }, [id, seed]);
     const dir = path.join(out, job.replace(/:/g, '-'));
     fs.mkdirSync(dir, { recursive: true });
     const times = [];
@@ -38,18 +38,14 @@ const jobs = process.argv.slice(3);
       const card = await pg.$('.ev-cards .ev-card');
       if (card) { await card.click().catch(() => {}); continue; }
       const tap = await pg.$('.ev-tap');
-      if (tap && k % 5 === 4) { tapped++; await tap.click({ force: true }).catch(() => {}); continue; }
-      const mg = await pg.$('.mg-stage');
-      if (mg) {
-        const r = await mg.boundingBox();
-        if (id === 'brokenGacha' && !pressed && k > 8) { pressed = true; await pg.mouse.click(r.x + r.width * 0.9, r.y + r.height * 0.55); continue; }
-        if (id === 'auction' && scraped < 6 && k > 8 && k % 3 === 0) {
-          // 칸 하나씩 지그재그로 긁는다 (봉인판 칸: 가로 0.29 · 0.51 · 0.72, 세로 0.52 ~ 0.84)
-          const cx = r.x + r.width * [0.29, 0.51, 0.72][scraped % 3], top = r.y + r.height * 0.53;
-          await pg.mouse.move(cx - 44, top); await pg.mouse.down();
-          for (let z = 0; z < 12; z++) { await pg.mouse.move(cx + (z % 2 ? 44 : -44), top + z * 9, { steps: 4 }); if (z % 3 === 2) await shot(); }
-          await pg.mouse.up(); scraped++; continue;
-        }
+      if (tap && id !== 'auction' && k % 5 === 4) { tapped++; await tap.click({ force: true }).catch(() => {}); continue; }
+      // 긁는 칸 셋 (D-260): 장면 가운데 세 칸 (칸 36도트 · 간격 6도트 · 1도트 = 3px)
+      if (id === 'auction' && scraped < 6 && k > 8 && k % 3 === 0 && (await pg.$('.ev-scene .ev-tap'))) {
+        const r = await (await pg.$('.ev-scene')).boundingBox();
+        const cx = r.x + r.width / 2 + ((scraped % 3) - 1) * 126, cy = r.y + r.height / 2;
+        await pg.mouse.move(cx - 50, cy - 50); await pg.mouse.down();
+        for (let z = 0; z < 12; z++) { await pg.mouse.move(cx + (z % 2 ? 50 : -50), cy - 50 + z * 9, { steps: 4 }); if (z % 3 === 2) await shot(); }
+        await pg.mouse.up(); scraped++; continue;
       }
       if (await pg.$('.ev-exit:not([hidden])')) { for (let i = 0; i < 10; i++) { await shot(); await pg.waitForTimeout(80); } break; }
     }
