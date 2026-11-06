@@ -23,6 +23,8 @@ export interface BattleDef {
   reward: Reward;
   boss?: boolean;
   bossRule?: BossRule;
+  /** 승급 12: 적 하나가 정예 (왕관 · HP ×2) */
+  eliteOne?: boolean;
   /** 막별 적 특성 */
   traits?: ('blastPawn' | 'rookPlate')[];
   w?: number;
@@ -87,17 +89,28 @@ export const MAP = {
 const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;
 
 /**
- * 승급 (R6, D-174): 출하를 끝내면 다음 단계가 열린다. 단계는 쌓인다 (승급 3 = 1 + 2 + 3).
- * 수치는 구조용 — 조정은 R7 (D-080). 화면은 이름 + 한 줄.
+ * 승급 13단 (R6 D-174 → D-273, 각본 docs/script.md §10 「조항 13」): 출하를 끝내면 다음 단계가 열린다. 단계는 쌓인다.
+ * 이야기: 승급한 아홉째(새 도금왕)가 다음 등반자를 막으려고 규격판에 새긴 조항 = 다음 출하의 효과.
+ * name = 짧은 이름 · law = 규격판에 새긴 글 · desc = 효과. 수치는 구조용 — 조정은 대과제 3 (D-080).
  */
-export const ASCENSION: { name: string; desc: string }[] = [
-  { name: '날 선 쇠', desc: '적 기물 HP +10%' },
-  { name: '굳은 검수', desc: '검문 · 반장의 킹 HP +10% · 여벌 심장 톱니 없이 시작 · 예고 공격을 맞으면 기어 쇼크' },
-  { name: '짧은 휴식', desc: '대국 사이 회복이 절반으로' },
-  { name: '비싼 고물', desc: '고물상 값 +25%' },
-  { name: '불어난 무리', desc: '대국마다 적 폰 하나 더' },
+export const ASCENSION: { name: string; law: string; desc: string }[] = [
+  { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +10%' },
+  { name: '굳은 검수', law: '검수대 앞에 저울을 하나 더 둔다', desc: '검문 · 반장의 킹 HP +10% · 여벌 심장 톱니 없이 시작 · 예고 공격을 맞으면 기어 쇼크' },
+  { name: '짧은 휴식', law: '정비 라인은 반만 돌린다', desc: '대국 사이 회복이 절반으로' },
+  { name: '비싼 고물', law: '고물상은 값을 올려 받는다', desc: '고물상 값 +25%' },
+  { name: '불어난 무리', law: '흑 세트마다 폰을 하나 더 넣는다', desc: '대국마다 적 폰 하나 더' },
+  { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +15%' },
+  { name: '녹슨 명령서', law: '불량 세트의 명령서에는 녹을 섞는다', desc: '시작 덱의 카드 한 장이 녹슨 카드 (태엽 +1)' },
+  { name: '마른 나사', law: '불량 세트에는 나사를 덜 내준다', desc: '속전 보상 −25%' },
+  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +10%' },
+  { name: '금 간 심장', law: '불량 세트의 심장 톱니는 금 간 것으로 끼운다', desc: '분대원 하나가 깨진 심장 톱니로 시작' },
+  { name: '얇은 보상', law: '불량 세트에는 명령서를 둘만 내준다', desc: '대국 보상 카드 선택지 3 → 2' },
+  { name: '정예 검문', law: '검문마다 정예를 세운다', desc: '검문 적 하나가 정예 (왕관 · HP ×2)' },
+  { name: '열세 겹', law: '포장대의 금은 열세 겹으로 칠한다', desc: '도금왕 HP +20% · 마지막 장' },
 ];
-export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.25 };
+export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.25, bossHp: 1.15, coinMul: 0.75, enemyAtk: 1.1, rewardChoices: 2, finalHp: 1.2 };
+/** 이 승급에서 그 조항이 켜졌나 — 조항 번호(1 ~ 13)는 ASCENSION 순서 */
+export const ascOn = (asc: number, law: number): boolean => asc >= law;
 export const ASC_MAX = ASCENSION.length;
 /** 막마다 적 HP 배율 · 적 킹 HP (구조용 — 난이도 조정은 R7, D-080) */
 const ACT_SCALE = [
@@ -171,6 +184,8 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   if (asc >= 1) d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.enemyHp;
   if (asc >= 2 && kind !== 'battle') d.kingHp += ASC_NUM.eliteKing;
   if (asc >= 5) d.enemy = [...d.enemy, 'P'];
+  if (asc >= 6 && kind === 'boss') { d.kingHp *= ASC_NUM.bossHp; d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.bossHp; }
+  if (asc >= 12 && kind === 'check') d.eliteOne = true;
   return d;
 };
 
@@ -192,8 +207,8 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng)
  */
 export const FINAL_BOSS = (asc = 0): BattleDef => ({
   enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 5 ? (['P'] as PieceType[]) : [])],
-  kingHp: 1.25,
-  enemyHp: asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05,
+  kingHp: 1.25 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
+  enemyHp: (asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05) * (asc >= 6 ? ASC_NUM.bossHp : 1),
   w: 8,
   h: 7,
   title: '종막 — 도금왕',

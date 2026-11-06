@@ -18,7 +18,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
+import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -637,7 +637,7 @@ const gauges = (): void => {
   if (coinPrev !== b.coins || !$('coins').childElementCount) {
     const was = coinPrev;
     coinPrev = b.coins;
-    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track} 보상</span><b title="이기면 받는 나사"><i class="scr"></i>+${b.coins * SLICE.coinValue}</b><span class="boiler" style="--n:${SLICE.coins}"><i class="lava" style="--c:${was !== null && was > b.coins && !calmNow() ? was : b.coins}"></i><i class="ticks"></i></span>`;
+    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track} 보상</span><b title="이기면 받는 나사"><i class="scr"></i>+${Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1))}</b><span class="boiler" style="--n:${SLICE.coins}"><i class="lava" style="--c:${was !== null && was > b.coins && !calmNow() ? was : b.coins}"></i><i class="ticks"></i></span>`;
     // 쇳물이 한 칸 빠진다: 이전 높이로 그린 뒤 다음 장면에 새 높이로 — 2도트씩 끊겨 줄어든다
     if (was !== null && was > b.coins && !calmNow()) {
       const lava = $('coins').querySelector<HTMLElement>('.lava')!;
@@ -1274,7 +1274,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, deck.filter(usable)) : deck.filter(usable), 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard });
+  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, deck.filter(usable)) : deck.filter(usable), 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: asc >= 9 ? ASC_NUM.enemyAtk : 1, eliteOne: def.eliteOne });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
@@ -2211,7 +2211,7 @@ const finishNow = (): void => {
     if (notes.length) window.setTimeout(() => toast(notes.join(' · '), 3600), 300);
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
     const overGold = Math.floor(b.overkill / 10);
-    const earned = b.coins * SLICE.coinValue + overGold;
+    const earned = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + overGold;
     gold += earned;
     // 나사 받기 (D-184): 판 가운데서 도트 나사가 튀어 올라 나사 칸으로 빨려 든다
     { const r = $('board').getBoundingClientRect(); screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, $('coins'), Math.round(earned / 6)); }
@@ -2295,7 +2295,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     // 칸마다 등급을 먼저 뽑는다 (D-216) — 그 축에 그 등급이 없으면 아무 등급
     const elite = !!cur.boss || cur.reward === 'part' || partDone;
     for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
-      if (offers.length >= (closeTier === 2 ? 4 : 3)) break;
+      if (offers.length >= (closeTier === 2 ? 4 : 3) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0)) break;
       const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id));
       const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
       const same = pool.filter((id) => gradeOf(id) === g);
@@ -3058,6 +3058,8 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   refined = [];
   parts = [];
   deck = [...START_DECK];
+  // 승급 7 (조항 「불량 세트의 명령서에는 녹을 섞는다」): 시작 덱 한 장이 녹슨 카드
+  if (level >= 7) deck[deck.length - 1] = rustOnce(deck[deck.length - 1]);
   picked = [[], [], []];
   // 최근 출하에서 만난 사건은 이번 가방에서 뺀다 (D-247, 사용자: 「랜덤 인카운터가 너무 동일하게 반복」) — 가방이 비면 다시 전부
   { const recent = readMeta(store).evRecent ?? []; eventBag = SLICE_EVENT_IDS.filter((x) => !recent.includes(x)); if (eventBag.length < 4) eventBag = [...SLICE_EVENT_IDS]; }
@@ -3065,6 +3067,8 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   squad = [];
   metaCache = null;
   for (const t of START_SQUAD) squad.push(crewOf(t));
+  // 승급 10 (조항 「심장 톱니는 금 간 것으로」): 킹이 아닌 분대원 하나가 깨진 심장 톱니로 시작
+  if (level >= 10) { const i = squad.findIndex((u) => u.t !== 'K'); if (i >= 0) squad[i] = { ...squad[i], cracked: true }; }
   clutchLeft = dir.clutch(level);
   sacLeft = dir.sacrifice(level);
   closeActs = [];
@@ -3120,7 +3124,7 @@ const runEnd = (cleared: boolean): void => {
     <div class="tally"><div>이긴 대국 <b data-v="${won}">${won}</b></div><div>처치 <b data-v="${kills}">${kills}</b></div><div>나사 <b data-v="${gold}">${gold}</b></div><div>덱 <b data-v="${deck.length}">${deck.length}</b></div></div>
     <div class="re-row">${squad.map((u) => chip(u.name ?? PIECE_NAMES_KO[u.t], u.t)).join('')}${fallenNow.map((r) => chip(r.name, r.t, true)).join('')}</div>
     ${highlight ? `<p class="hl"><span class="pass-tag">묘수</span> ${highlight.where} ${highlight.turn}턴 — 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : ''}
-    ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
+    ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. 규격판에 새 조항 — 「${ASCENSION[m.ascOpen - 1].law}」 (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
     <div class="row"><button class="btn" type="button" data-survey>${PT.survey}</button><button class="btn" type="button" data-export>${PT.export}</button><button class="btn brass" type="button" data-restart>처음 화면</button></div>
     <p class="dim re-note">시험판입니다. 막힌 곳 · 좋았던 순간을 알려 주십시오.</p>`);
   el.querySelector('[data-restart]')!.addEventListener('click', () => (sessionStorage.setItem('op-menu', '1'), location.reload()));
