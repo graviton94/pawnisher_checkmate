@@ -36,7 +36,7 @@ export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
   const cap = !!s.rules.capture;
   const foe = (x: number, y: number) => cap && inBounds(s, x, y) && at(s, grid, x, y)?.side === otherSideOf(piece.side);
   const stepTo = (x: number, y: number) => (empty(x, y) || foe(x, y)) && out.push({ x, y });
-  switch (piece.type) {
+  switch (piece.asPawn ? 'P' : piece.type) {
     case 'P': {
       const f = forward(piece.side);
       if (empty(piece.x, piece.y + f)) {
@@ -89,7 +89,7 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
     const p = at(s, grid, x, y);
     if (p && p.side !== piece.side) targets.push(p);
   };
-  switch (piece.type) {
+  switch (piece.asPawn ? 'P' : piece.type) {
     case 'P': {
       const f = forward(piece.side);
       point(piece.x - 1, piece.y + f);

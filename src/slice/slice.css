@@ -2179,3 +2179,33 @@ body.between #right, body.between #left { visibility: hidden; }
 .promo .btn.dead { background: #2f2e36; color: #56545e; box-shadow: 0 0 0 2px #000; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .promo .btn.tremble { animation: none; } }
 .prologue .pl-mono.long { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; }
+
+/* D-277 승급 13 최종장 — 이긴 뒤 판 위 연출 (finale.ts): 5×6 칸, 폰이 한 칸씩 걷고, 두 칸 중 하나를 누른다 */
+.finale { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; align-content: start; gap: 10px; padding-top: 40px; background: #0b0b0e; }
+.fn-board { position: relative; display: grid; grid-template-columns: repeat(5, 44px); grid-template-rows: repeat(6, 44px); box-shadow: 0 0 0 2px #000, 0 0 0 4px #8c6239, 0 0 0 6px #000; }
+.fn-sq { position: relative; background: #2f2e36; }
+.fn-sq.dk { background: #1c1d22; }
+.fn-sq.gold { background: #8c6239; box-shadow: inset 0 0 0 2px #facc15; }
+.fn-sq.fn-pick { cursor: pointer; animation: fnPick 0.6s steps(2, jump-none) infinite; z-index: 2; }
+@keyframes fnPick { 0% { box-shadow: inset 0 0 0 2px #facc15; } 100% { box-shadow: inset 0 0 0 4px #fff3b0; } }
+.fn-lbl { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px); white-space: nowrap; font: 700 12px Galmuri11, sans-serif; color: #f4d27a; text-shadow: 1px 1px 0 #000; z-index: 4; pointer-events: none; }
+.fn-sq.gold .fn-lbl { top: auto; bottom: 100%; transform: translate(-50%, -2px); }
+.fn-pc { position: absolute; left: calc(var(--c) * 44px); top: calc(var(--r) * 44px); width: 44px; height: 44px; display: grid; place-items: center; pointer-events: none; z-index: 3; }
+.fn-pc img, .fn-pc canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+.fn-king { transform: rotate(-12deg); filter: brightness(0.8); }
+.fn-king.laugh { animation: fnLaugh 0.18s steps(2, jump-none) 4; }
+@keyframes fnLaugh { 0% { transform: rotate(-12deg) translateY(0); } 100% { transform: rotate(-8deg) translateY(-3px); } }
+.fn-me.fn-step { animation: fnStep 0.36s steps(4) both; }
+@keyframes fnStep { 0% { transform: translateY(2px); } 40% { transform: translateY(-8px); } 70% { transform: translateY(1px); } 100% { transform: translateY(0); } }
+.fn-bubbles { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.fn-bub { position: absolute; left: calc(var(--c) * 44px + 22px); top: calc(var(--r) * 44px - 6px); transform: translate(-50%, -100%); white-space: nowrap; font: 12px Galmuri11, sans-serif; font-style: normal; color: #16141c; background: #f4f1ea; padding: 2px 6px; box-shadow: 0 0 0 2px #000, 2px 2px 0 2px #000; animation: fnBub 0.24s steps(3) both; }
+@keyframes fnBub { 0% { transform: translate(-50%, -80%) scale(0.6); } 100% { transform: translate(-50%, -100%) scale(1); } }
+.fn-text { width: min(720px, 86vw); display: grid; gap: 8px; text-align: center; min-height: 64px; }
+.fn-text p { margin: 0; text-shadow: 2px 2px 0 #000; }
+.finale .pl-narr { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ece8de; }
+.finale .pl-say { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ffd8cf; }
+.finale .pl-who { font: 700 12px Galmuri11, sans-serif; color: #f4d27a; margin-right: 6px; }
+.finale .pl-mono { font: 24px/1.5 Galmuri11, sans-serif; color: #f4d27a; }
+.finale .pl-mono.long { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; }
+.finale .pl-tap { position: absolute; right: 16px; bottom: 10px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
+@media (prefers-reduced-motion: reduce) { .fn-sq.fn-pick, .fn-king.laugh, .fn-me.fn-step, .fn-bub { animation: none; } }

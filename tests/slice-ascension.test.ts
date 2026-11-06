@@ -109,3 +109,18 @@ describe('적 특성 넷 · 기벽 넷 (D-275)', () => {
     expect((d.traits ?? []).length).toBeGreaterThan(2);
   });
 });
+
+import { legalMoves } from '../src/engine';
+
+describe('승급 13 최종장 — 폰이 된 아홉째 (D-277)', () => {
+  it('종이 왕관을 벗은 킹은 폰처럼 앞으로만 간다 (뒤 · 옆 없음)', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P'], START_COMMANDS, 3, { width: 6, height: 6 });
+    const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
+    const before = legalMoves(b.s, k);
+    k.asPawn = true;
+    const after = legalMoves(b.s, k);
+    expect(before.length).toBeGreaterThan(after.length);
+    const f = k.side === 0 ? 1 : -1;
+    for (const m of after) expect(m.y - k.y === f || m.y - k.y === 2 * f).toBe(true);
+  });
+});

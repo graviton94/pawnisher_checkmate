@@ -506,7 +506,7 @@ class BoardScene extends Phaser.Scene {
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
+    const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);

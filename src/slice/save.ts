@@ -71,6 +71,8 @@ export interface Meta {
   termsNew?: string[];
   /** 최근 출하들에서 만난 사건 (D-247 — 다음 출하에서는 뒤로 미룬다) */
   evRecent?: string[];
+  /** 진 엔딩을 봤다 (승급 13 · 뒤로 한 발, D-277) */
+  trueEnd?: boolean;
 }
 
 export interface Store {
