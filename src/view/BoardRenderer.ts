@@ -258,7 +258,7 @@ class BoardScene extends Phaser.Scene {
     this.tilesC = this.add.container(0, 0).setDepth(0);
     this.marksG = this.add.graphics().setDepth(1);
     this.animG = this.add.graphics().setDepth(1.5);
-    this.arrowsG = this.add.graphics().setDepth(1.6);
+    this.arrowsG = this.add.graphics().setDepth(3.9); // 기물 위 · 순번 배지 아래 (D-245: 예고선이 기물 발밑에 깔려 끊겨 보였다)
     this.boardTopC = this.add.container(0, 0).setDepth(4.5);
     this.animTopG = this.add.graphics().setDepth(4.6);
     this.fxG = this.add.graphics().setDepth(6);
@@ -1621,12 +1621,15 @@ class BoardScene extends Phaser.Scene {
       dragging = false;
       pressed = false;
       const pos = worldTile(p);
-      const ev = p.event as PointerEvent;
+      // 터치에서는 p.event가 TouchEvent라 clientX가 없다 → 캔버스 좌표를 화면 좌표로 바꿔 넘긴다 (D-245)
+      const cr = this.game.canvas.getBoundingClientRect();
+      const cx = cr.left + (p.x / this.scale.width) * cr.width;
+      const cy = cr.top + (p.y / this.scale.height) * cr.height;
       window.clearTimeout(pressTimer);
       if (pos) {
         pressTimer = window.setTimeout(() => {
           pressed = true;
-          this.input2.longPress(pos, ev.clientX, ev.clientY);
+          this.input2.longPress(pos, cx, cy);
         }, 450);
       }
     });

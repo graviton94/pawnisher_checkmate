@@ -8,7 +8,7 @@ import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
 /** 동작 줄이기 */
 const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-import { dissolveUp, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
+import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, prologue } from './opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
@@ -239,8 +239,13 @@ const renderer = new BoardRenderer(
       el.dataset.pid = String(p.id);
       el.hidden = false;
       el.classList.remove('pxout');
-      el.style.left = `${Math.max(8, x - 80)}px`;
-      el.style.top = `${Math.max(8, y - 90)}px`;
+      // 손가락에 가리지 않게 누른 곳의 왼쪽 위에 (오른쪽 아래 모서리가 손끝 24px 위 · 왼쪽), 화면 밖이면 반대쪽으로 (D-245)
+      const iw = el.offsetWidth;
+      const ih = el.offsetHeight;
+      const lx = x - iw - 16 >= 8 ? x - iw - 16 : Math.min(innerWidth - iw - 8, x + 24);
+      const ty = y - ih - 24 >= 8 ? y - ih - 24 : Math.min(innerHeight - ih - 8, y + 32);
+      el.style.left = `${Math.round(lx)}px`;
+      el.style.top = `${Math.round(ty)}px`;
       // 손끝 정보는 도트 쓸기로 (D-193) — 누르고 있는 동안 거듭 불려도 처음 한 번만
       if (fresh) sweep(el, true, undefined, 260);
     },
@@ -1707,9 +1712,14 @@ const forgeScreen = (): void => {
 /** 다듬기 화면 — back = 그만두면 돌아갈 곳, done = 다듬은 뒤 (작업대: 다음 노드로 · 고물상: 값을 치르고 고물상으로, D-218) */
 const refineScreen = (back: () => void = forgeScreen, done: () => void = advance): void => {
   const ids = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
-  const el = openOverlay(`<h2>다듬기 — 카드 하나</h2><p>고른 카드 한 장이 「+」가 되어 태엽 −1이 됩니다. 같은 카드가 여러 장이면 한 장만.</p><div class="deck-grid removing">${ids
-    .map((id) => { const c = COMMANDS[id]; return `<button type="button" class="cmd deckcard t-${c.who}" data-ref="${id}">${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}</b></span><span class="cnt">태엽 ${c.cost} → ${c.cost - 1}</span></button>`; })
-    .join('') || '<p class="dim">다듬을 카드가 없습니다.</p>'}</div><div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
+  // D-245 (사용자: 「다듬기 화면 쓰레기 같다」): 잘린 목록 대신 보상 화면과 같은 카드 얼굴을 가로로 — 꼬리에 「태엽 2 → 1」
+  const el = openOverlay(`<h2>다듬기 <span class="dim">— 카드 하나</span></h2><p>고른 카드 한 장이 「+」가 되어 태엽이 하나 줄어듭니다.</p>${ids.length
+    ? `<div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards refine-cards">${ids
+        .map((id) => cardFace(id, `data-ref="${id}"`, `<span class="price ptag refine" aria-label="태엽 ${COMMANDS[id].cost}에서 ${COMMANDS[id].cost - 1}로">태엽 ${COMMANDS[id].cost} → <b>${COMMANDS[id].cost - 1}</b></span>`))
+        .join('')}</div></div></div>`
+    : '<p class="dim">다듬을 카드가 없습니다.</p>'}<div class="row"><button class="btn" type="button" data-back>그만두기</button></div>`);
+  const rs = el.querySelector<HTMLElement>('.reward-scroll');
+  if (rs) pxRail(rs);
   el.querySelector('[data-back]')!.addEventListener('click', back);
   el.querySelectorAll<HTMLElement>('[data-ref]').forEach((btn) =>
     btn.addEventListener('click', () =>
@@ -1874,7 +1884,7 @@ const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
   // D-184: 안 고른 것은 아래부터 도트로 흩어지고, 고른 카드 · 부품은 기울며 들렸다가 덱 · 부품 칸으로 빨려 든다
   const group = btn.parentElement ? [...btn.parentElement.children].filter((x): x is HTMLElement => x !== btn && x instanceof HTMLElement && (x.matches('.cmd, .part-card'))) : [];
   // 고물상은 하나를 사도 나머지 물건이 그대로 남는다 — 흩어지게 하지 않는다
-  if (!btn.matches('[data-buy]')) group.forEach((x) => dissolveUp(x));
+  if (!btn.matches('[data-buy]')) dissolveAll(group);
   // 덱 · 부품 칸으로 날아가는 것은 실제로 손에 들어오는 카드 · 부품뿐 (정비 · 수리 · 카드 빼기 같은 일은 제자리에서 연출)
   const isPart = btn.matches('[data-part], [data-buy^="part:"]');
   const isCard = isPart || btn.matches('.cmd');
@@ -3189,4 +3199,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cardPieces, cardMoves, previewPlay, screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), forge: () => forgeScreen(), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

@@ -1925,3 +1925,7 @@ body.slice.lay-f .gtop .turn-label .th-cog { animation: gearsMini16 1.2s steps(1
 .roul-needle { position: absolute; top: -10px; bottom: -10px; left: -2px; width: 4px; background: #fff; box-shadow: 0 0 0 2px #000; pointer-events: none; }
 .roul-needle::before { content: ''; position: absolute; top: -6px; left: -6px; border: 8px solid transparent; border-top: 8px solid #fff; border-bottom: 0; }
 .ev-result.bad h2 { color: #ff9a8a; } .ev-result.good h2 { color: #f4d27a; }
+
+/* 다듬기 (D-245): 카드 얼굴 꼬리의 태엽 값 */
+body.slice .cf .cf-foot .ptag.refine { padding: 0 8px; font: 700 12px Galmuri11, sans-serif; color: #16141c; }
+body.slice .cf .cf-foot .ptag.refine b { font-weight: 700; color: #7a1e1e; }

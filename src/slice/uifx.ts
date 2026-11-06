@@ -135,54 +135,73 @@ export const installPressy = (): void => {
   document.addEventListener('pointercancel', () => release(false), { passive: true });
 };
 
-/** 도트로 사라지기 (연구소 「보상 카드」): 아래 칸부터 떨어져 나가 작은 도트로 떠오른다 */
-export const dissolveUp = (el: HTMLElement, ms = 520): void => {
-  if (calm()) return void (el.style.visibility = 'hidden');
+/**
+ * 도트로 사라지기 (연구소 「보상 카드」): 아래 칸부터 떨어져 나가 작은 도트로 떠오른다.
+ * D-245 (사용자: 「하나 고르면 나머지 연기 효과가 다 개별로 돌아서 렉이 심하다」): 예전엔 요소마다 rAF + 매 프레임 canvas.toDataURL()이었다 →
+ * 디더 문양 하나로 6단 마스크를 한 번만 굽고(모든 요소가 같이 쓴다), 시계 하나가 6단을 계단으로 넘긴다. 떠오르는 도트는 한 번에 최대 24개.
+ */
+const DIS_STEPS = 6;
+let disMasks: string[] | null = null;
+const disMaskSet = (): string[] => {
+  if (disMasks) return disMasks;
   const cols = 8;
   const rows = 11;
-  const r = el.getBoundingClientRect();
-  const bw = r.width / cols;
-  const bh = r.height / rows;
   const th: number[] = [];
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) th.push(((rows - 1 - j) / rows) * 0.8 + Math.random() * 0.2);
-  const mask = document.createElement('canvas');
-  mask.width = cols;
-  mask.height = rows;
-  const m = mask.getContext('2d')!;
-  const gone = new Set<number>();
-  const t0 = performance.now();
-  const step = (now: number) => {
-    const k = Math.min(1, (now - t0) / ms);
+  // 같은 문양이라도 아래부터 무너지는 디더 (고정 순서표 — 매번 무작위를 다시 굽지 않는다)
+  const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) th.push(((rows - 1 - j) / rows) * 0.8 + (bayer[(j % 4) * 4 + (i % 4)] / 16) * 0.2);
+  const c = document.createElement('canvas');
+  c.width = cols;
+  c.height = rows;
+  const m = c.getContext('2d')!;
+  disMasks = [];
+  for (let s = 1; s <= DIS_STEPS; s++) {
+    const k = s / (DIS_STEPS + 1);
     m.clearRect(0, 0, cols, rows);
     m.fillStyle = '#000';
-    th.forEach((v, idx) => {
-      const i = idx % cols;
-      const j = Math.floor(idx / cols);
-      if (k < v) m.fillRect(i, j, 1, 1);
-      else if (!gone.has(idx)) {
-        gone.add(idx);
-        if (idx % 2) return;
-        const b = document.createElement('i');
-        b.className = 'spk';
-        b.style.background = ['#56545e', '#8a8794', '#45434f'][idx % 3];
-        b.style.left = `${r.left + i * bw + bw / 2}px`;
-        b.style.top = `${r.top + j * bh + bh / 2}px`;
-        b.style.setProperty('--x', `${(Math.random() - 0.5) * 10}px`);
-        b.style.setProperty('--y', `${-18 - Math.random() * 22}px`);
-        b.style.setProperty('--d', '480ms');
-        document.body.appendChild(b);
-        window.setTimeout(() => b.remove(), 520);
-      }
-    });
-    const url = `url(${mask.toDataURL()})`;
-    el.style.setProperty('-webkit-mask-image', url);
-    el.style.maskImage = url;
+    th.forEach((v, idx) => k < v && m.fillRect(idx % cols, Math.floor(idx / cols), 1, 1));
+    disMasks.push(`url(${c.toDataURL()})`);
+  }
+  return disMasks;
+};
+export const dissolveUp = (el: HTMLElement, ms = 520): void => dissolveAll([el], ms);
+/** 여럿을 한꺼번에 도트로 흩어지게 (시계 하나 · 마스크 공유) */
+export const dissolveAll = (els: HTMLElement[], ms = 520): void => {
+  if (!els.length) return;
+  if (calm()) return void els.forEach((el) => (el.style.visibility = 'hidden'));
+  const masks = disMaskSet();
+  // 도트는 요소마다 몇 알씩, 전체 24알까지
+  const per = Math.max(1, Math.floor(24 / els.length));
+  els.forEach((el) => {
     el.style.setProperty('-webkit-mask-size', '100% 100%');
     el.style.maskSize = '100% 100%';
-    if (k < 1) requestAnimationFrame(step);
-    else el.style.visibility = 'hidden';
+    const r = el.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    for (let n = 0; n < Math.min(per, 4); n++) {
+      const b = document.createElement('i');
+      b.className = 'spk';
+      b.style.background = ['#56545e', '#8a8794', '#45434f'][n % 3];
+      b.style.left = `${r.left + r.width * (0.15 + 0.7 * Math.random())}px`;
+      b.style.top = `${r.top + r.height * (0.55 + 0.4 * Math.random())}px`;
+      b.style.setProperty('--x', `${(Math.random() - 0.5) * 10}px`);
+      b.style.setProperty('--y', `${-18 - Math.random() * 22}px`);
+      b.style.setProperty('--d', '480ms');
+      b.style.animationDelay = `${Math.round(Math.random() * ms * 0.5)}ms`;
+      document.body.appendChild(b);
+      window.setTimeout(() => b.remove(), ms + 520);
+    }
+  });
+  let s = 0;
+  const tick = (): void => {
+    if (s >= DIS_STEPS) return void els.forEach((el) => (el.style.visibility = 'hidden'));
+    const url = masks[s++];
+    els.forEach((el) => {
+      el.style.setProperty('-webkit-mask-image', url);
+      el.style.maskImage = url;
+    });
+    window.setTimeout(tick, ms / DIS_STEPS);
   };
-  requestAnimationFrame(step);
+  tick();
 };
 
 /** 요소 복제가 기울며 들렸다가 목표 쪽으로 빨려 들어간다 (고른 카드 → 덱, 부품 → 부품 칸) */
