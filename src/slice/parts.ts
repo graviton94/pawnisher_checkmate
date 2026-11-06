@@ -104,7 +104,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   piggyGear: { name: '저금 톱니', axis: null, icon: 'piggyGear', desc: '대국을 이기면 나사 +12.' },
   loupe: { name: '확대경', axis: null, icon: 'loupe', desc: '카드 보상에 한 장 더.' },
   stopwatch: { name: '초시계', axis: null, icon: 'stopwatch', desc: '대국 첫 손패 +2.' },
-  calipers: { name: '캘리퍼스', axis: null, icon: 'calipers', desc: '적 킹을 칠 수 있는 공격 +10.' },
+  calipers: { name: '측량 컴퍼스', axis: null, icon: 'calipers', desc: '적 킹을 칠 수 있는 공격 +10.' },
 };
 
 /** 부품 수치 */

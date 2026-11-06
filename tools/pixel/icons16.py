@@ -1448,7 +1448,7 @@ PART_KEYS = {
     'mirror': '쌍거울', 'pinNeedle': '고정 바늘', 'whistle': '행군 호루라기', 'shieldWall': '방패벽', 'jumpSpring': '도약 용수철', 'saddle': '철 안장',
     'royalSeal': '옥새', 'queenFan': '여왕의 부채', 'rampart': '성가퀴', 'recoilSpring': '반동 용수철', 'mortar': '회반죽', 'tally': '셈 막대',
     'stainedGlass': '색유리', 'flywheel': '무거운 플라이휠', 'redLine': '붉은 눈금', 'coolant': '냉각수 통', 'piggyGear': '저금 톱니',
-    'loupe': '확대경', 'stopwatch': '초시계', 'calipers': '캘리퍼스',
+    'loupe': '확대경', 'stopwatch': '초시계', 'calipers': '측량 컴퍼스',
 }
 for _k, _n in PART_KEYS.items():
     if _k not in ICONS:
