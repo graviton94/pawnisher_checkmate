@@ -2524,15 +2524,15 @@ const crewView = (): void => {
       const q = u.quirk ? QUIRKS[u.quirk] : null;
       return `<div class="crew-row">${pieceImg(u.t, 0, 'small', 26)}<div><b>${crewLabel(u)}</b> ${lifePips(u)} <span class="dim">${u.serial} · HP ${u.hp ?? crewMaxHp(u)}/${crewMaxHp(u)} · 처치 ${u.kills ?? 0}</span>${q ? `<br><span class="quirk">${q.name}</span> <small>${q.desc}</small>` : ''}${u.scars?.length ? ` <small class="scar">· ${u.scars.join(' · ')}</small>` : ''}</div></div>`;
     })
-    .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>폐기 원부 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
+    .join('')}</div><div class="row"><button class="btn" type="button" data-ledger>도감 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
   el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView());
 };
 
-/** 폐기 원부: 쓰러진 분대원의 영구 기록 */
+/** 도감 (옛 폐기 원부, D-288): 쓰러진 분대원의 영구 기록 */
 const ledgerView = (back: () => void = crewView): void => {
   const rows = readLedger();
-  const el = openOverlay(`<h2>폐기 원부</h2><p>쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><div class="ledger">${
+  const el = openOverlay(`<h2>도감</h2><p>쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><div class="ledger">${
     rows.length
       ? rows.map((r) => `<div class="ledger-row">${pieceImg(r.t, 0, 'small', 22)} <b>${r.name}${r.nick ? ` 「${r.nick}」` : ''}</b> <span class="dim">${r.serial}</span> · 처치 ${r.kills} · 대국 ${r.battles}<br><small>${r.cause} · ${r.run}</small></div>`).join('')
       : '<p class="dim">아직 기록이 없습니다.</p>'
@@ -3368,7 +3368,7 @@ const begin = async (seed: number, level: number, day: string | null): Promise<v
 /**
  * 메인 오프닝 화면 (D-192): 게임 판 위에 겹친 창이 아니라 화면 전체를 쓰는 장면.
  * 베인 타이틀 문장 + 「화면을 눌러 시작」 → 처음이면 프롤로그 → 안내서 → 첫 대국(도움말),
- * 프롤로그를 본 사람은 누르면 메뉴(이어하기 · 출하 + 승급 · 오늘의 출하 / 안내서 · 원부 · 프롤로그). 시험장 · 기록 보내기는 ?debug에서만 (D-286).
+ * 프롤로그를 본 사람은 누르면 메뉴(이어하기 · 출하 + 승급 · 오늘의 출하 / 안내서 · 도감 · 프롤로그). 시험장 · 기록 보내기는 ?debug에서만 (D-286).
  */
 const opening = (): void => {
   document.querySelector('.opening')?.remove();
@@ -3415,7 +3415,7 @@ const opening = (): void => {
     nav.innerHTML = `${sv ? `<button class="btn brass op-main" type="button" data-cont><b>이어하기</b><small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
       <div class="op-run"><button class="btn ${sv ? '' : 'brass'} op-main" type="button" data-go><b>${sv ? '새 출하' : '출하 시작'}</b>${m.ascOpen ? `<small data-asc-line>${ascLine()}</small>` : ''}</button>${m.ascOpen ? `<div class="op-asc"><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▲</button><b data-asc-n>${level}</b><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">▼</button></div>` : ''}</div>
       <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 출하${doneToday ? ' ✓' : ''}</b></button>
-      <div class="op-sub"><button class="btn" type="button" data-guide>안내서</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-prologue>프롤로그</button></div>
+      <div class="op-sub"><button class="btn" type="button" data-guide>안내서</button><button class="btn" type="button" data-ledger>도감</button><button class="btn" type="button" data-prologue>프롤로그</button></div>
       ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-export>${PT.export}</button></div>` : ''}`;
     nav.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
       btn.addEventListener('click', () => {
