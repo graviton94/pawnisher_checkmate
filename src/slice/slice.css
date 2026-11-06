@@ -1880,3 +1880,6 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
 .tut .tut-next { position: absolute; right: 6px; bottom: 4px; }
 .tut .tut-skip { position: absolute; right: 0; bottom: calc(100% + 6px); min-height: 28px; padding: 0 8px; background: #16141c; box-shadow: 0 0 0 2px #000; text-decoration: none; }
 .tut .tut-talk.top .tut-skip { bottom: auto; top: calc(100% + 6px); }
+/* 부관 박차 초상 N-01 (56도트, 1도트 = 1px 그대로) */
+.tut .tut-face { width: 60px; height: 60px; }
+.tut .tut-face img { width: 56px; height: 56px; image-rendering: pixelated; }

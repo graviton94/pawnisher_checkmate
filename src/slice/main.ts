@@ -2884,7 +2884,7 @@ const tutMark = (part: string): void => {
 const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
   tutActive = true;
   document.querySelector('.coach-line')?.remove();
-  const done = await runTutorial(steps, { name: TUT.name, skip: TUT.skip, next: TUT.next, face: pieceImg('N', 0, 'large', 36), tick: () => sfx('tap', 3) });
+  const done = await runTutorial(steps, { name: TUT.name, skip: TUT.skip, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
   tutActive = false;
   tutMark(part);
   track('tutorial', { part, completed: done });
