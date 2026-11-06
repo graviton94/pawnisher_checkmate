@@ -122,3 +122,9 @@ export const IMPACT = {
   /** 자원 희생: 웅크림 · 도약 · 킹 미끄러짐 */
   sacrifice: { crouch: 250, leap: 220 },
 } as const;
+
+/**
+ * 판 그리기 예산 (D-240, 사용자: 「게임이 죄다 버벅인다」 — 측정: CPU 4배 느린 폰에서 대국 화면 19fps, 판 캔버스가 비용의 거의 전부).
+ * dprCap = 판을 그리는 해상도 상한 (폰 배율 2.6~3 → 2) · idleFps = 연출이 없을 때 판 프레임 상한 (연출 중에는 상한 없음).
+ */
+export const RENDER = { dprCap: 2, idleFps: 30 };

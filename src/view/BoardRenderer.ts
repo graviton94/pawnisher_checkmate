@@ -8,7 +8,7 @@ import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower,
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
-import { FX_CAMERA, IMPACT, MOVE_MS, TURN_SUMMARY } from '../data/fx';
+import { FX_CAMERA, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { drawGearTarget } from './target';
 
@@ -1675,7 +1675,8 @@ export class BoardRenderer implements BoardView {
   private whenReady: Promise<void>;
 
   constructor(private host: HTMLElement, input: BoardInput, announce: (text: string) => void = () => {}) {
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    // 그리는 해상도 상한 (D-240): 폰 배율 2.6~3 그대로 그리면 판 하나가 프레임을 다 먹었다 (CPU 4배 느린 측정에서 19fps → 2배 상한으로 32fps, 아래 프레임 상한과 함께)
+    const dpr = Math.min(window.devicePixelRatio || 1, RENDER.dprCap);
     this.scene = new BoardScene();
     this.scene.announce = announce;
     this.scene.dpr = dpr;
@@ -1692,8 +1693,39 @@ export class BoardRenderer implements BoardView {
       scene: this.scene,
       banner: false,
       input: { activePointers: 2 },
+      fps: { limit: RENDER.idleFps },
+      // 줄여 그린 캔버스를 화면 크기로 늘릴 때 도트가 번지지 않게
+      pixelArt: true,
     });
+    this.game.canvas.style.imageRendering = 'pixelated';
     window.addEventListener('resize', () => this.resize());
+    // 판이 안 보이는 화면(지도 · 고물상 · 보상 · 사건)에서는 판 그리기를 멈춘다 (D-240)
+    new MutationObserver(() => this.sleepIfHidden()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  private hot = 0;
+  /** 연출 중에는 60fps, 가만히 있을 때는 RENDER.idleFps (D-240 — 깜빡임 · 도는 과녁은 계단 박자라 30이면 충분) */
+  private heat<T>(job: Promise<T>): Promise<T> {
+    this.hot += 1;
+    this.fpsLimit(0);
+    return job.finally(() => {
+      this.hot = Math.max(0, this.hot - 1);
+      if (!this.hot) this.fpsLimit(RENDER.idleFps);
+    });
+  }
+  private fpsLimit(n: number): void {
+    const loop = this.game?.loop as unknown as { fpsLimit: number; hasFpsLimit: boolean; _limitRate: number } | undefined;
+    if (!loop) return;
+    loop.fpsLimit = n;
+    loop.hasFpsLimit = n > 0;
+    loop._limitRate = n > 0 ? 1000 / n : 0;
+  }
+  private sleepIfHidden(): void {
+    const loop = this.game?.loop;
+    if (!loop) return;
+    const hidden = document.body.classList.contains('between');
+    if (hidden && loop.running) loop.sleep();
+    else if (!hidden && !loop.running) loop.wake();
   }
 
   private size() {
@@ -1747,17 +1779,17 @@ export class BoardRenderer implements BoardView {
   /** 판 세우기 (D-189) */
   async boardIntro(): Promise<void> {
     await this.whenReady;
-    await this.scene.boardIntro();
+    await this.heat(this.scene.boardIntro());
   }
   /** 원수 낙하 (D-180) */
   async dropIn(pieceId: number): Promise<void> {
     await this.whenReady;
-    await this.scene.dropIn(pieceId);
+    await this.heat(this.scene.dropIn(pieceId));
   }
   /** 자원 희생 도약 (D-180) */
   async swapLeap(crewId: number, kingId: number): Promise<void> {
     await this.whenReady;
-    await this.scene.swapLeap(crewId, kingId);
+    await this.heat(this.scene.swapLeap(crewId, kingId));
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => this.scene.setupBoard(state));
@@ -1785,7 +1817,7 @@ export class BoardRenderer implements BoardView {
 
   async play(before: BattleState, events: BattleEvent[]): Promise<void> {
     await this.whenReady;
-    await this.scene.play(before, events);
+    await this.heat(this.scene.play(before, events));
   }
 
   async showPlan(state: BattleState, plan: Plan): Promise<void> {
@@ -1800,7 +1832,7 @@ export class BoardRenderer implements BoardView {
 
   async summary(side: Side, damage: number, kills: number): Promise<void> {
     await this.whenReady;
-    await this.scene.summary(side, damage, kills);
+    await this.heat(this.scene.summary(side, damage, kills));
   }
 
   flashLog(entry: LogEntry): void {
