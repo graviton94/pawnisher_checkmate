@@ -2148,3 +2148,10 @@ body.between .coach-line, body:has(#overlay:not([hidden])) .coach-line { display
 body.between #info { visibility: hidden; }
 body.slice .overlay .panel .stand > h2 { align-self: flex-start; display: inline-flex; width: fit-content; align-items: center; margin: 0; min-height: 34px; padding: 0 12px; color: #2a1a06; text-shadow: 0 1px 0 #fff1c0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/plate.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 3px 0 #000; }
 body.between #right, body.between #left { visibility: hidden; }
+/* 안내서 (D-264): 개념 · 로직 · 활용 세 줄 + 팁 한 줄 */
+.gd-lines { display: grid; gap: 4px; }
+.gd-lines p { margin: 0; font: 15px/1.45 Galmuri14, Galmuri11, sans-serif; color: #f2ede4; word-break: keep-all; }
+/* 용어 낱장 (D-264): 설명은 최대 두 줄(지정한 자리에서만 줄바꿈), 모든 칸 같은 높이 */
+.hp-dict { grid-auto-rows: 1fr; }
+.hd-term { grid-template-rows: auto 1fr; min-height: 76px; }
+.hd-term span { white-space: pre-line; }

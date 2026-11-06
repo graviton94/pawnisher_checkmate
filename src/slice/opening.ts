@@ -119,7 +119,7 @@ export const prologue = (short = false): Promise<void> =>
 const guideMedia = (m: GuideMedia): string => {
   if ('img' in m) return `<div class="gd-media shot"><img src="guide/${m.img}.png" alt=""></div>`;
   if (m.anim === 'king')
-    return `<div class="gd-media anim king"><span class="gd-crowned">${pieceImg('P', 0, 'large', 64)}<img class="pl-crown" src="ui/hud/paper-crown.png" alt=""></span><b>vs</b><span class="gd-foe">${pieceImg('K', 1, 'large', 64)}</span></div>`;
+    return `<div class="gd-media anim king"><span class="gd-crowned">${pieceImg('K', 0, 'large', 64)}</span><b>vs</b><span class="gd-foe">${pieceImg('K', 1, 'large', 64)}</span></div>`;
   if (m.anim === 'formula')
     return `<div class="gd-media anim formula" aria-label="피해 = (공격 + 합) × 곱">
       <div class="fx-row r1"><span class="gd-pc">${pieceImg('P', 0, 'small', 30)}</span><span>공격</span><b>10</b></div>
@@ -160,7 +160,7 @@ export const guide = (open: (html: string) => HTMLElement, last: string = OPENIN
       const g = GUIDE_PAGES[p];
       // 쪽 = 그림 + 제목 명패 + 「이름표 | 한 줄」 행 + 요령 테이프 (D-263)
       const el = open(`<div class="guide gd2">${o.tabs ?? ''}<button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button>
-        <div class="gd-card">${guideMedia(g.media)}<div class="gd-text"><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2><dl class="gd-rows">${g.lines.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>${g.tip ? `<p class="gd-tip">${g.tip}</p>` : ''}</div></div>
+        <div class="gd-card">${guideMedia(g.media)}<div class="gd-text"><p class="sf-eyebrow">안내서 ${p + 1} / ${GUIDE_PAGES.length}</p><h2>${g.title}</h2><div class="gd-lines">${g.lines.map((l) => `<p>${l}</p>`).join('')}</div>${g.tip ? `<p class="gd-tip">“${g.tip}”</p>` : ''}</div></div>
         <div class="gd-nav"><button class="btn" type="button" data-prev${p ? '' : ' disabled'}>${OPENING_TEXT.prev}</button><div class="gd-dots">${GUIDE_PAGES.map((_, k) => `<i${k === p ? ' class="on"' : ''}></i>`).join('')}</div><button class="btn brass" type="button" data-next>${p === GUIDE_PAGES.length - 1 ? last : OPENING_TEXT.next}</button></div></div>`);
       replay(el.querySelector('.gd-media')!, 'in');
       el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), end()));
