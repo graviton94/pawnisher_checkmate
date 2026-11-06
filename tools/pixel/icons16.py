@@ -1448,7 +1448,7 @@ PART_KEYS = {
     'mirror': '쌍거울', 'pinNeedle': '고정 바늘', 'whistle': '행군 호루라기', 'shieldWall': '방패벽', 'jumpSpring': '도약 용수철', 'saddle': '철 안장',
     'royalSeal': '옥새', 'queenFan': '여왕의 부채', 'rampart': '성가퀴', 'recoilSpring': '반동 용수철', 'mortar': '회반죽', 'tally': '셈 막대',
     'stainedGlass': '색유리', 'flywheel': '무거운 플라이휠', 'redLine': '붉은 눈금', 'coolant': '냉각수 통', 'piggyGear': '저금 톱니',
-    'loupe': '확대경', 'stopwatch': '초시계', 'calipers': '측량 컴퍼스',
+    'loupe': '확대경', 'stopwatch': '초시계', 'calipers': '측량 컴퍼스', 'rewind': '역회전 톱니',
 }
 for _k, _n in PART_KEYS.items():
     if _k not in ICONS:
@@ -1583,6 +1583,13 @@ def export(out):
             continue
         centered(rows).save(os.path.join(out, f'{k}.png'))
         centered(rows, 1).save(os.path.join(out, f'{k}@16.png'))
+    # 손그림 표(ICONS)에 없는 키도 32도트 원본이 있으면 내보낸다 (예: c.vent — 옛 그림은 손으로 넣은 PNG였다)
+    for f in sorted(os.listdir(m32)) if os.path.isdir(m32) else []:
+        k = f[:-4]
+        if f.endswith('.png') and k not in ICONS:
+            big = Image.open(os.path.join(m32, f)).convert('RGBA')
+            big.save(os.path.join(out, f'{k}.png'))
+            small(big).save(os.path.join(out, f'{k}@16.png'))
     print(out, len(ICONS))
 
 if __name__ == '__main__':
