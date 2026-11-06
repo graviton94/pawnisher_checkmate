@@ -319,6 +319,49 @@ def main():
     print(OUT)
 
 
+def tip_match(t, down=False, H=32, hazard=False):
+    """화살 끝 — 단추 그림(frame_e)의 층을 그대로 이어 받는다 (D-293, 사용자: 「출하 시작이 옆 삼각형이랑 안 맞다」).
+    CSS가 24칸 단추를 H칸 높이로 9-slice 할 때와 똑같이 줄을 맞춘 뒤(위 9 · 아래 9 고정, 가운데 늘림),
+    화살 빗변에서 안쪽으로 먹 → 쇠틀 빛/그늘 → 쇠틀 → 먹 → 판(그 줄의 가운데 색) 순으로 칠한다."""
+    src = frame_e(t, down, hazard)
+    S = 24
+
+    def srow(y):
+        if y < 9:
+            return y
+        if y >= H - 9:
+            return S - (H - y)
+        return 9 + (y - 9) * 6 // (H - 18)
+
+    mid = [src.getpixel((12, srow(y))) for y in range(H)]
+    fr = R['iron']
+    W = H // 2
+    px = Pix(W, H)
+    top = next(y for y in range(H) if mid[y][3])      # 눌린 그림은 위가 비어 있다
+    bot = H - 1
+    while not mid[bot][3]:
+        bot -= 1
+    cy = (top + bot) / 2
+    half = (bot - top) / 2
+    for y in range(top, bot + 1):
+        reach = int(round((half - abs(y - cy)) * (W - 1) / half))
+        for x in range(0, reach + 1):
+            d = reach - x
+            upper = y < cy
+            if d == 0:
+                c = INK
+            elif d == 1:
+                c = fr[5] if upper else fr[2]
+            elif d == 2:
+                c = fr[3]
+            elif d == 3:
+                c = INK if mid[y][:3] != hx(fr[3])[:3] else fr[3]
+            else:
+                c = mid[y]
+            px.p(x, y, c)
+    return px.im
+
+
 def game():
     """확정 (D-293, 사용자: 「E로 해라」): E 단추 · 쇠 함 판을 게임 그림으로 — src/assets/ui/chrome (tools/draw-ui.py의 단추 · 판을 대신한다)"""
     g = os.path.join('src', 'assets', 'ui', 'chrome')
@@ -326,7 +369,7 @@ def game():
         hz = name == 'crimson'
         frame_e(t, hazard=hz).save(f'{g}/btn-{name}.png'); frame_e(t, True, hz).save(f'{g}/btn-{name}-down.png')
         tip_e(t).save(f'{g}/tip-{name}.png'); tip_e(t, True).save(f'{g}/tip-{name}-down.png')
-        tip_e(t, H=32).save(f'{g}/tip32-{name}.png'); tip_e(t, True, H=32).save(f'{g}/tip32-{name}-down.png')
+        tip_match(t, H=32, hazard=hz).save(f'{g}/tip32-{name}.png'); tip_match(t, True, H=32, hazard=hz).save(f'{g}/tip32-{name}-down.png')
     panel_cab().save(f'{g}/panel-e.png')
     hang_plate().save(f'{g}/hang.png')
     print(g)
