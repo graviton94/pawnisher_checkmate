@@ -178,3 +178,20 @@ describe('부품 확장 (D-282)', () => {
   });
 });
 function crewKR() { return [{ t: 'K' as const }, { t: 'R' as const }, { t: 'B' as const }, { t: 'P' as const }]; }
+
+import { STARTER_CARDS, STARTER_PARTS, UNLOCK_ORDER, nextUnlocks, unlockCount } from '../src/data/unlocks';
+import { REWARD_COMMANDS as RC } from '../src/slice/cards';
+import { SLICE_PARTS as SP } from '../src/slice/parts';
+
+describe('해금 (D-284)', () => {
+  it('처음 풀 + 해금 순서 = 전체 풀, 겹침 없음', () => {
+    const all = new Set([...STARTER_CARDS, ...STARTER_PARTS, ...UNLOCK_ORDER]);
+    expect(all.size).toBe(RC.length + Object.keys(SP).length);
+    for (const id of RC) expect(all.has(id)).toBe(true);
+  });
+  it('출하마다 2 ~ 6개, 순서대로', () => {
+    expect(unlockCount(1, false)).toBe(2);
+    expect(unlockCount(4, true)).toBe(6);
+    expect(nextUnlocks([UNLOCK_ORDER[0]], 2)).toEqual(UNLOCK_ORDER.slice(1, 3));
+  });
+});

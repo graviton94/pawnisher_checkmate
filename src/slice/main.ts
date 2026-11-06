@@ -15,6 +15,7 @@ import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_ENTRY, BOSS_STORY, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
 import { finaleScene } from './finale';
+import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { creditsScene } from './credits';
 import { CREDIT_TEXT } from '../data/credits';
 import { pieceImg } from '../ui/sprites';
@@ -134,6 +135,9 @@ const COST_ORDER: Partial<Record<PieceType, number>> = { Q: 5, R: 4, B: 3, N: 3,
 let runSeed = (Date.now() ^ 0x2f17) & 0xffffff;
 /** 승급 단계 (D-174) · 오늘의 출하 날짜 */
 let asc = 0;
+/** 이번 출하에 열려 있는 카드 · 부품 (D-284 해금) — 오늘의 출하 · 시험장은 전부 */
+let openIds: Set<string> | null = null;
+const isOpen = (id: string): boolean => !openIds || openIds.has(baseOf(id as CommandId)) || openIds.has(id);
 /** 이번 출하에서 쓰러뜨린 반장 (도금왕의 비꼼 · 거울, 각본 §8.1 · §10.1) */
 let runBosses: StoryBoss[] = [];
 let daily: string | null = null;
@@ -1748,10 +1752,10 @@ const shopScreen = (): void => {
   document.body.classList.add('between');
   placeBg('bg-shop');
   const rng = sub();
-  const pool = REWARD_COMMANDS.filter(usable);
+  const pool = REWARD_COMMANDS.filter((id) => usable(id) && isOpen(id));
   const cards: CommandId[] = [];
   while (cards.length < SHOP.cards && pool.length) cards.push(pool.splice(rng.int(pool.length), 1)[0]);
-  const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
+  const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts));
   // 첫 출하의 첫 고물상 (D-232, Balatro 첫 상점 보장): 쥔 핵심 부품과 같은 축의 보통 등급 부품을 꼭 하나 — 「맞물린다」를 처음 손에 쥐게
   const mineAx = parts.map((id) => SLICE_PARTS[id].axis).filter(Boolean);
   const fits = firstShip && shopsSeen === 0 ? partPool.filter((id) => mineAx.includes(SLICE_PARTS[id].axis) && (PART_GRADE[id] ?? 'common') === 'common') : [];
@@ -2330,7 +2334,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     const elite = !!cur.boss || cur.reward === 'part' || partDone;
     for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
       if (offers.length >= (closeTier === 2 ? 4 : 3) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0)) break;
-      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id));
+      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id) && isOpen(id));
       const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
       const same = pool.filter((id) => gradeOf(id) === g);
       const from = same.length ? same : pool;
@@ -2653,7 +2657,7 @@ const gainPart = (id: SlicePartId, done: (took: boolean) => void): void => {
 /** 부품 고르기 (검문! 통과): 셋 중 하나 */
 const partPick = (head: string, then: () => void, elite = false): void => {
   const rng = sub();
-  const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
+  const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts));
   const offers: SlicePartId[] = [];
   // 칸마다 등급을 먼저 뽑고 그 등급에서 하나 (없으면 아무 등급) — 검문 · 반장은 높은 등급이 잘 나온다 (D-216)
   while (offers.length < 3 && pool.length) {
@@ -3075,6 +3079,7 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   runSeed = seed;
   asc = level;
   runBosses = [];
+  openIds = day ? null : new Set([...STARTER_CARDS, ...STARTER_PARTS, ...(readMeta(store).unlocked ?? [])]);
   daily = day;
   firstShip = readMeta(store).runs === 0 && !day;
   runAt = Date.now();
@@ -3122,6 +3127,7 @@ const loadRun = (sv: RunSave): void => {
   runSeed = sv.seed;
   asc = sv.asc;
   daily = sv.daily;
+  openIds = sv.daily ? null : new Set([...STARTER_CARDS, ...STARTER_PARTS, ...(readMeta(store).unlocked ?? [])]);
   firstShip = !!sv.first;
   svcUsed = sv.svc ?? { refine: 0, remove: 0 };
   runBosses = (sv.bosses ?? []) as StoryBoss[];
@@ -3220,7 +3226,11 @@ const runEndNow = (cleared: boolean): void => {
   placeBg(cleared ? 'end-clear' : 'end-fail');
   const m0 = readMeta(store);
   const m = recordRun(m0, { cleared, act: actI + 1, won, asc, daily });
+  // 해금 (D-284): 출하를 끝낼 때마다 몇 개씩 — 도달한 막 · 완주에 따라
+  const fresh = daily ? [] : nextUnlocks(m.unlocked ?? [], unlockCount(Math.min(4, actI + 1), cleared));
+  if (fresh.length) m.unlocked = [...(m.unlocked ?? []), ...fresh];
   writeMeta(store, m);
+  const freshNames = fresh.map((id) => (id in SLICE_PARTS ? `부품 「${SLICE_PARTS[id as SlicePartId].name}」` : `카드 「${COMMANDS[id as CommandId]?.name ?? id}」`));
   const unlocked = m.ascOpen > m0.ascOpen;
   const fallenNow = readLedger().filter((r) => r.run === runId);
   const kills = squad.reduce((n, u) => n + (u.kills ?? 0), 0) + fallenNow.reduce((n, r) => n + r.kills, 0);
@@ -3230,6 +3240,7 @@ const runEndNow = (cleared: boolean): void => {
     <div class="tally"><div>이긴 대국 <b data-v="${won}">${won}</b></div><div>처치 <b data-v="${kills}">${kills}</b></div><div>나사 <b data-v="${gold}">${gold}</b></div><div>덱 <b data-v="${deck.length}">${deck.length}</b></div></div>
     <div class="re-row">${squad.map((u) => chip(u.name ?? PIECE_NAMES_KO[u.t], u.t)).join('')}${fallenNow.map((r) => chip(r.name, r.t, true)).join('')}</div>
     ${highlight ? `<p class="hl"><span class="pass-tag">묘수</span> ${highlight.where} ${highlight.turn}턴 — 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : ''}
+    ${freshNames.length ? `<p class="asc-open">새로 열렸습니다 — ${freshNames.join(' · ')}</p>` : ''}
     ${unlocked ? `<p class="asc-open">승급 ${m.ascOpen} 「${ASCENSION[m.ascOpen - 1].name}」이 열렸습니다. 규격판에 새 조항 — 「${ASCENSION[m.ascOpen - 1].law}」 (${ASCENSION[m.ascOpen - 1].desc})</p>` : ''}
     <div class="row"><button class="btn" type="button" data-survey>${PT.survey}</button><button class="btn" type="button" data-export>${PT.export}</button><button class="btn brass" type="button" data-restart>처음 화면</button></div>
     <p class="dim re-note">시험판입니다. 막힌 곳 · 좋았던 순간을 알려 주십시오.</p>`);

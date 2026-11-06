@@ -73,6 +73,8 @@ export interface Meta {
   evRecent?: string[];
   /** 진 엔딩을 봤다 (승급 13 · 뒤로 한 발, D-277) */
   trueEnd?: boolean;
+  /** 해금된 카드 · 부품 (D-284) — 처음 풀 밖의 것만 */
+  unlocked?: string[];
 }
 
 export interface Store {
