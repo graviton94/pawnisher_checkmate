@@ -1,4 +1,4 @@
-# 출처 표기 (게임 크레딧 화면에도 넣는다)
+# 출처 표기 — 스튜디오 페이지(https://graviton94.github.io/)에 적는다. 게임 크레딧에는 넣지 않는다 (사용자 결정 D-286)
 
 ## 아이콘·픽토그램 (도트로 다시 그림 — `tools/pixelize-icons.cjs`)
 - **game-icons.net** — Lorc, Delapouite 외 기여자. [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).

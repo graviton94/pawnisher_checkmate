@@ -22,9 +22,11 @@ const hasImg = (src: string): Promise<boolean> =>
   });
 
 /** 자리 그림: 기물 도트를 화면 비율 자리에 */
+/** 대역 그림의 발끝은 화면 58% 위에서 멈춘다 — 아래는 글 자리 (D-286: 폰이 서술 줄을 덮었다) */
+const ART_FLOOR = 58;
 const standIn = (c: Cut): string =>
   `<div class="pl-standin" style="--a:${c.bg[0]};--b:${c.bg[1]}">${c.glow ? `<i class="pl-glow" style="--g:${c.glow}"></i>` : ''}${c.art
-    .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${p.y}%;height:${p.h}%">${pieceImg(p.t, p.side, 'large', 220)}${p.crown ? '<img class="pl-crown" src="ui/hud/paper-crown.png" alt="">' : ''}</span>`)
+    .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${Math.min(p.y, ART_FLOOR)}%;height:${p.h}%">${pieceImg(p.t, p.side, 'large', 220)}${p.crown ? '<img class="pl-crown" src="ui/hud/paper-crown.png" alt="">' : ''}</span>`)
     .join('')}</div>`;
 
 /** 베인 타이틀 문장 마크업 (메인 화면 · 프롤로그 끝 공통) */

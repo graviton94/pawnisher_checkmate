@@ -1,10 +1,10 @@
 /**
- * 크레딧 · 기록 사진 (각본 S11, D-279): 진 엔딩 뒤. 한 장씩 계단 프레임으로 나타나고 도트로 사라진다 (D-216 — 선형 슬라이드 금지).
+ * 크레딧 · 기록 사진 (각본 S11, D-279 · 크레딧 두 줄 D-286): 진 엔딩 뒤. 한 장씩 계단 프레임으로 나타나고 도트로 사라진다 (D-216 — 선형 슬라이드 금지).
  * 마지막 장 = 기록 사진: 이번 출하의 분대 도트를 한 줄로 세운 「단체 사진」 + 기록지 12.
  */
 import { sfx } from '../audio/sfx';
 import type { PieceType } from '../engine';
-import { CREDIT_TEXT, CREDITS } from '../data/credits';
+import { CREDIT_TEXT, CREDITS, STUDIO_URL } from '../data/credits';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay } from './fx3';
 
@@ -14,8 +14,8 @@ export const creditsScene = (crew: PieceType[], meta: string): Promise<void> =>
   new Promise((resolve) => {
     const pages = [
       `<h2 class="cr-title">${CREDIT_TEXT.title}</h2>`,
-      ...CREDITS.map((c) => `<p class="cr-role">${c.role}</p>${c.names.map((n) => `<p class="cr-name">${n}</p>`).join('')}`),
-      `<p class="cr-name">${CREDIT_TEXT.thanks}</p>`,
+      // 크레딧은 두 줄 한 장 (D-286): Made by 스튜디오(+주소) · Coworked by Claude
+      `${CREDITS.map((c, k) => `<p class="cr-role">${c.role}</p>${c.names.map((n) => `<p class="cr-name${k === 0 ? ' cr-lead' : ''}">${n}</p>`).join('')}${k === 0 ? `<p class="cr-meta">${STUDIO_URL.replace(/^https:\/\//, '').replace(/\/$/, '')}</p>` : ''}`).join('<i class="cr-gap"></i>')}`,
       `<p class="cr-role">${CREDIT_TEXT.photo}</p><div class="cr-photo"><span class="cr-pc king">${pieceImg('P', 0, 'large', 64)}<img class="cr-crown" src="ui/hud/paper-crown.png" alt=""></span>${crew.map((t) => `<span class="cr-pc">${pieceImg(t, 0, 'large', 64)}</span>`).join('')}</div><p class="cr-meta">${meta}</p><p class="cr-rec">${CREDIT_TEXT.record}</p>`,
     ];
     const el = document.createElement('div');

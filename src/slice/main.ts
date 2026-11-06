@@ -17,7 +17,6 @@ import { ACT_ENTRY, BOSS_STORY, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMO
 import { finaleScene } from './finale';
 import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { creditsScene } from './credits';
-import { CREDIT_TEXT } from '../data/credits';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
@@ -761,7 +760,7 @@ const coach = (): void => {
   if (el.dataset.k === key) return;
   el.dataset.k = key;
   // 부관 박차가 말한다 (D-242 화자 통일): 얼굴 + 이름 + 말
-  el.innerHTML = `<img class="cl-face" src="ui/hud/adjutant.png" alt="" width="40" height="40"><span><b>${TUT.name}</b>${COACH_LINES[key].replace(/\n/g, '<br>')}</span>`;
+  el.innerHTML = `<span class="cl-face"><img src="ui/hud/adjutant.png" alt="" width="56" height="56"></span><span><b>${TUT.name}</b>${COACH_LINES[key].replace(/\n/g, '<br>')}</span>`;
   const r = $('board').getBoundingClientRect();
   el.style.left = `${r.left + r.width / 2}px`;
   // 두 줄이 되어도 판 아래쪽에 붙는다 (아래 기준)
@@ -3369,7 +3368,7 @@ const begin = async (seed: number, level: number, day: string | null): Promise<v
 /**
  * 메인 오프닝 화면 (D-192): 게임 판 위에 겹친 창이 아니라 화면 전체를 쓰는 장면.
  * 베인 타이틀 문장 + 「화면을 눌러 시작」 → 처음이면 프롤로그 → 안내서 → 첫 대국(도움말),
- * 프롤로그를 본 사람은 누르면 메뉴(이어하기 · 출하 · 오늘의 출하 · 시험장 · 원부 · 안내서 · 프롤로그).
+ * 프롤로그를 본 사람은 누르면 메뉴(이어하기 · 출하 + 승급 · 오늘의 출하 / 안내서 · 원부 · 프롤로그). 시험장 · 기록 보내기는 ?debug에서만 (D-286).
  */
 const opening = (): void => {
   document.querySelector('.opening')?.remove();
@@ -3377,7 +3376,7 @@ const opening = (): void => {
   const el = document.createElement('div');
   el.className = 'opening';
   el.innerHTML = `<div class="op-bg"><i class="op-fog"></i><i class="op-glow"></i></div><h1 class="sr-only">Pawnisher : Checkmate</h1>
-    <div class="op-logo">${crestHtml()}<p class="op-tag">${OPENING_TEXT.tagline}</p>${m0.trueEnd ? `<p class="op-crown-note"><img src="ui/hud/paper-crown.png" alt="">${CREDIT_TEXT.crownNote}</p>` : ''}</div>
+    <div class="op-logo">${crestHtml()}<p class="op-tag">${OPENING_TEXT.tagline}</p></div>
     <p class="op-press">${OPENING_TEXT.press}</p><nav class="op-menu" hidden></nav>`;
   document.body.appendChild(el);
   void (async () => {
@@ -3412,16 +3411,17 @@ const opening = (): void => {
     const doneToday = m.daily[today];
     let level = m.ascOpen;
     const ascLine = () => (level ? `승급 ${level} — ${ASCENSION[level - 1].name}` : '승급 없음');
-    nav.innerHTML = `${sv ? `<button class="btn brass op-main" type="button" data-cont>이어하기<small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
-      <button class="btn ${sv ? '' : 'brass'} op-main" type="button" data-go>${sv ? '새 출하' : '출하 시작'}${m.ascOpen ? `<small data-asc-line>${ascLine()}</small>` : ''}</button>
-      ${m.ascOpen ? `<div class="asc-pick"><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">◀</button><span>승급</span><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▶</button></div>` : ''}
-      <button class="btn cyan op-main" type="button" data-daily>오늘의 출하${doneToday ? ' ✓' : ''}<small>모두가 같은 지도 · 같은 분대</small></button>
-      <div class="op-sub"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-guide>안내서</button><button class="btn" type="button" data-prologue>프롤로그</button><button class="btn" type="button" data-export>${PT.export}</button></div>
-      <p class="op-rec">출하 ${m.runs} · 완주 ${m.clears}${m.bestAct ? ` · 최고 ${m.bestAct > 3 ? '완주' : `${m.bestAct}막`}` : ''}${doneToday ? ` · 오늘 ${doneToday.cleared ? '완주' : `${doneToday.act}막`}` : ''}</p>`;
+    const dev = new URLSearchParams(location.search).has('debug');
+    nav.innerHTML = `${sv ? `<button class="btn brass op-main" type="button" data-cont><b>이어하기</b><small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
+      <div class="op-run"><button class="btn ${sv ? '' : 'brass'} op-main" type="button" data-go><b>${sv ? '새 출하' : '출하 시작'}</b>${m.ascOpen ? `<small data-asc-line>${ascLine()}</small>` : ''}</button>${m.ascOpen ? `<div class="op-asc"><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▲</button><b data-asc-n>${level}</b><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">▼</button></div>` : ''}</div>
+      <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 출하${doneToday ? ' ✓' : ''}</b></button>
+      <div class="op-sub"><button class="btn" type="button" data-guide>안내서</button><button class="btn" type="button" data-ledger>원부</button><button class="btn" type="button" data-prologue>프롤로그</button></div>
+      ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-export>${PT.export}</button></div>` : ''}`;
     nav.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
       btn.addEventListener('click', () => {
         level = Math.max(0, Math.min(m.ascOpen, level + Number(btn.dataset.asc)));
         nav.querySelector('[data-asc-line]')!.textContent = ascLine();
+        nav.querySelector('[data-asc-n]')!.textContent = String(level);
         sfx('tap');
       }),
     );
@@ -3443,10 +3443,10 @@ const opening = (): void => {
     });
     nav.querySelector('[data-daily]')!.addEventListener('click', () => begin(dailySeed(today), 0, today));
     nav.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(closeOverlay));
-    nav.querySelector('[data-lab-open]')!.addEventListener('click', labPick);
+    nav.querySelector('[data-lab-open]')?.addEventListener('click', labPick);
     nav.querySelector('[data-guide]')!.addEventListener('click', () => void guide(openOverlay).then(closeOverlay));
     nav.querySelector('[data-prologue]')!.addEventListener('click', () => void prologue(true));
-    nav.querySelector('[data-export]')!.addEventListener('click', () => exportScreen(closeOverlay));
+    nav.querySelector('[data-export]')?.addEventListener('click', () => exportScreen(closeOverlay));
     replay(nav, 'in');
   };
   // 프롤로그를 본 사람이 출하를 끝내고 돌아오면(처음 화면) 바로 메뉴

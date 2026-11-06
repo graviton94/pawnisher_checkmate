@@ -2225,7 +2225,32 @@ body.between #right, body.between #left { visibility: hidden; }
 .cr-meta { margin: 0; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
 .cr-rec { margin: 0; font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; }
 .credits .pl-tap { position: absolute; right: 16px; bottom: 10px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
-.op-crown-note { display: inline-flex; gap: 6px; align-items: center; font: 12px Galmuri11, sans-serif; color: #e8ddb5; }
-.op-crown-note img { width: 24px; height: auto; image-rendering: pixelated; transform: rotate(-8deg) scaleY(0.6); }
 @media (prefers-reduced-motion: reduce) { .cr-page.in { animation: none; } }
 .ax-tactic.axis { background: #c9a0ff; }
+/* ───────── 메인 메뉴 다시 짜기 (D-286, 사용자: 「난잡하고 버튼이 쓰레기 같다」) ─────────
+   오른쪽 한 줄 기둥: 큰 단추 셋(이어하기 · 출하 + 승급 다이얼 · 오늘의 출하) → 얇은 줄 하나(안내서 · 원부 · 프롤로그).
+   부제는 이어하기의 상태 한 줄과 승급 이름만. 기록 줄 · 시험장 · 기록 보내기는 메뉴에서 뺀다(시험 도구는 ?debug). */
+body.slice .op-menu { width: min(320px, 40vw); gap: 10px; right: max(40px, env(safe-area-inset-right, 0px)); }
+body.slice .op-main { min-height: 60px; padding: 0 18px 4px; display: grid; justify-items: start; align-content: center; gap: 2px; text-align: left; }
+body.slice .op-main b { font: 400 24px/1 Galmuri11, sans-serif; letter-spacing: 0.04em; }
+body.slice .op-main small { font: 400 12px/1.2 Galmuri11, sans-serif; opacity: 1; color: inherit; }
+body.slice .op-main.brass small { color: #3a2408; }
+body.slice .op-main:not(.brass) small { color: #c9c0b0; }
+body.slice .op-run { display: flex; gap: 6px; align-items: stretch; }
+body.slice .op-run .op-main { flex: 1 1 auto; min-width: 0; }
+body.slice .op-asc { flex: none; display: grid; grid-template-rows: 1fr auto 1fr; justify-items: center; width: 52px; }
+body.slice .op-asc .btn.sq { min-width: 52px; min-height: 0; height: 22px; padding: 0; font-size: 12px; line-height: 1; }
+body.slice .op-asc b { font: 400 24px/1 Galmuri11, sans-serif; color: #f4d27a; text-shadow: 2px 2px 0 #000; padding: 2px 0; }
+body.slice .op-daily b { font-size: 24px; color: #8ee8ea; }
+body.slice .op-sub { display: flex; gap: 8px; margin-top: 4px; }
+body.slice .op-sub .btn { flex: 1 1 0; min-height: 44px; padding: 0 4px 4px; font: 400 15px Galmuri14, Galmuri11, sans-serif; }
+body.slice .op-sub.op-dev .btn { font: 400 12px Galmuri11, sans-serif; opacity: 0.8; }
+/* 부관 박차 초상 (D-286): 테는 진짜 border(그림 위로 칠해지지 않는 inset 그림자 대신) + 그림과 테 사이 2px 먹 틈 — 56도트 그림 그대로 */
+.tut .tut-face { box-sizing: border-box; width: 64px; height: 64px; padding: 2px; border: 2px solid #c89b3c; box-shadow: 0 0 0 2px #000; overflow: hidden; }
+.tut .tut-face img { display: block; width: 56px; height: 56px; }
+/* 코치 줄은 56도트 그림을 줄이지 않고(40px로 줄이면 도트가 뭉갠다) 머리 · 가슴만 보이는 창으로 자른다 */
+.coach-line .cl-face { position: relative; box-sizing: border-box; flex: none; width: 48px; height: 48px; border: 2px solid #c89b3c; background: #0b0b0e; box-shadow: none; overflow: hidden; }
+.coach-line .cl-face img { position: absolute; left: 50%; top: 2px; width: 56px; height: 56px; margin-left: -28px; image-rendering: pixelated; }
+.credits .cr-gap { display: block; height: 24px; }
+.credits .cr-lead { font: 400 24px/1.6 Galmuri11, sans-serif; color: #f4ead6; }
+.pl-text p { text-wrap: balance; word-break: keep-all; }
