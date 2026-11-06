@@ -26,6 +26,8 @@ export interface EventOutcome {
   partPick?: boolean;
   /** 새로 들어온 분대원 (이름 붙이기는 화면이) */
   recruit?: PieceType;
+  /** 확률 선택이면 실제로 걸린 칸 (desc의 「n%: …」 순서, 0부터) — 화면이 룰렛을 그 칸에 세운다 (D-244) */
+  slot?: number;
 }
 
 export interface SliceEventChoice {
@@ -100,7 +102,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '동전 나이트',
     text: '외알 안경의 나이트가 발굽 위로 동전을 굴린다. 당신의 나사가 그 소리에 떨린다. “앞면이면 두 배. 뒷면이면 내 것.”',
     choices: [
-      { label: '나사 30을 걸까?', desc: '50%: 나사 +30 · 50%: 나사 −30', blocked: poor(30), apply: (s, rng) => { const win = rng.int(2) === 0; s.gold += win ? 30 : -30; return { text: win ? '앞면. 나이트가 혀를 찬다. (나사 +30)' : '뒷면. 나이트가 동전을 거둔다. (나사 −30)' }; } },
+      { label: '나사 30을 걸까?', desc: '50%: 나사 +30 · 50%: 나사 −30', blocked: poor(30), apply: (s, rng) => { const win = rng.int(2) === 0; s.gold += win ? 30 : -30; return { slot: win ? 0 : 1, text: win ? '앞면. 나이트가 혀를 찬다. (나사 +30)' : '뒷면. 나이트가 동전을 거둔다. (나사 −30)' }; } },
       leave('거절하기'),
     ],
   },
@@ -109,10 +111,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '어린 폰이 제 몸보다 큰 망치를 쥐고 떨고 있다. 당신은 그 손을 믿을 수 있는가.',
     choices: [
       { label: '망치를 맡길까?', desc: '50%: 무작위 카드 다듬기 · 50%: 무작위 카드 한 장이 부서진다', apply: (s, rng) => {
-        if (rng.int(2) === 0) return { text: `망치가 정확히 떨어진다. ${refineRandom(s, rng)}` };
+        if (rng.int(2) === 0) return { slot: 0, text: `망치가 정확히 떨어진다. ${refineRandom(s, rng)}` };
         const i = rng.int(s.deck.length);
         const [gone] = s.deck.splice(i, 1);
-        return { text: `망치가 빗나간다. ${gone ? `${COMMANDS[gone].name} 한 장이 부서졌다.` : ''}` };
+        return { slot: 1, text: `망치가 빗나간다. ${gone ? `${COMMANDS[gone].name} 한 장이 부서졌다.` : ''}` };
       } },
       leave('거절하기'),
     ],
@@ -139,10 +141,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) {
           const u = pick(rng, s.squad.filter((x) => x.t === 'P'))!;
           s.squad = s.squad.map((x) => (x === u ? { ...x, t: 'N', hp: undefined } : x));
-          return { text: `도장이 찍힌다. ${josa(u.name, '은')} 이제 나이트다.` };
+          return { slot: 0, text: `도장이 찍힌다. ${josa(u.name, '은')} 이제 나이트다.` };
         }
         s.gold = Math.max(0, s.gold - 40);
-        return { text: '저울이 눈을 뜬다. 벌금이 매겨진다. (나사 −40)' };
+        return { slot: 1, text: '저울이 눈을 뜬다. 벌금이 매겨진다. (나사 −40)' };
       } },
       leave('지나가기'),
     ],
@@ -176,10 +178,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) {
           const t = UP[u.t]!;
           s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-          return { text: `${josa(u.name, '이')} 붉게 달아올라 다시 선다. 이제 ${NAMES[t]}이다.` };
+          return { slot: 0, text: `${josa(u.name, '이')} 붉게 달아올라 다시 선다. 이제 ${NAMES[t]}이다.` };
         }
         s.squad = s.squad.filter((x) => x !== u);
-        return { text: `집게가 비어 올라온다. ${josa(u.name, '은')} 돌아오지 않았다.` };
+        return { slot: 1, text: `집게가 비어 올라온다. ${josa(u.name, '은')} 돌아오지 않았다.` };
       } },
       leave('거절하기'),
     ],
@@ -201,7 +203,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '고철 경매',
     text: '고철 더미 위에서 경매인이 망치를 든다. 봉인된 상자 속을 아는 자는 없다.',
     choices: [
-      { label: '나사 60을 걸까?', desc: '50%: 부품 하나를 고른다 · 50%: 빈 상자', blocked: poor(60), apply: (s, rng) => { s.gold -= 60; return rng.int(2) === 0 ? { text: '상자가 열린다. 부품이 빛난다.', partPick: true } : { text: '상자는 비어 있다. 경매인이 웃지 않는다. (나사 −60)' }; } },
+      { label: '나사 60을 걸까?', desc: '50%: 부품 하나를 고른다 · 50%: 빈 상자', blocked: poor(60), apply: (s, rng) => { s.gold -= 60; return rng.int(2) === 0 ? { slot: 0, text: '상자가 열린다. 부품이 빛난다.', partPick: true } : { slot: 1, text: '상자는 비어 있다. 경매인이 웃지 않는다. (나사 −60)' }; } },
       leave('떠나기'),
     ],
   },
@@ -212,16 +214,16 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '나사 40을 넣을까?', desc: '45%: 부품 하나를 고른다 · 25%: 분대원 하나가 한 단계 위로 · 30%: 꽝', blocked: poor(40), apply: (s, rng) => {
         s.gold -= 40;
         const r = rng.int(100);
-        if (r < 45) return { text: '기계가 덜컹이며 캡슐을 뱉는다.', partPick: true };
+        if (r < 45) return { slot: 0, text: '기계가 덜컹이며 캡슐을 뱉는다.', partPick: true };
         if (r < 70) {
           const u = pick(rng, s.squad.filter((x) => UP[x.t]));
           if (u) {
             const t = UP[u.t]!;
             s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-            return { text: `불꽃이 튄다. ${josa(u.name, '은')} 이제 ${NAMES[t]}이다.` };
+            return { slot: 1, text: `불꽃이 튄다. ${josa(u.name, '은')} 이제 ${NAMES[t]}이다.` };
           }
         }
-        return { text: '기계가 침묵한다. 나사는 돌아오지 않는다. (나사 −40)' };
+        return { slot: 2, text: '기계가 침묵한다. 나사는 돌아오지 않는다. (나사 −40)' };
       } },
       leave('지나가기'),
     ],

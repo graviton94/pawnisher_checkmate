@@ -126,8 +126,9 @@ const one = (seed: number) => {
         let ok = false;
         let fell: Squad[] = [];
         for (let tryN = 0; !ok && (TRIES ? tryN < TRIES : tryN === 0 || (revive > 0 && (revive--, bump(T, 'revive'), true))); tryN++) {
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: process.env.ESHOCK !== '0' });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: process.env.ESHOCK !== '0', guard: def.guard });
           const r = STYLE === 'search' ? playOutSearch(b, 40, 3, 4) : playOut(b, 40, (c) => bump(T, `play:${baseOf(c as CommandId)}`), STYLE);
+          bump(T, `battles${ai + 1}`); bump(T, `turns${ai + 1}`, r.turns); if (def.boss) { bump(T, `bossN${ai + 1}`); bump(T, `bossT${ai + 1}`, r.turns); }
           if (r.won) {
             ok = true;
             // 목숨 둘 (D-219): 처음 쓰러지면 톱니가 깨진 채 HP 50%로 돌아오고, 깨진 채 쓰러지면 폐기
@@ -203,6 +204,7 @@ it('성장 설계 시뮬레이션', () => {
   for (const r of rs) for (const [k, v] of Object.entries(r.T)) bump(all, k, v);
   const per = Object.fromEntries(Object.entries(all).map(([k, v]) => [k, +(v / RUNS).toFixed(2)]));
   console.log('완주', rs.filter((r) => r.cleared).length, '/', RUNS);
+  for (const a of [1, 2, 3]) console.log(`${a}막 대국 평균 ${((all[`turns${a}`] ?? 0) / Math.max(1, all[`battles${a}`] ?? 0)).toFixed(2)}턴 · 반장 ${((all[`bossT${a}`] ?? 0) / Math.max(1, all[`bossN${a}`] ?? 0)).toFixed(2)}턴`);
   console.log('출하 한 판 평균', JSON.stringify(per));
   writeFileSync(`sim/economy-result${TAG}.json`, JSON.stringify({ runs: RUNS, map: MAP, per, results: rs.map((r) => ({ cleared: r.cleared, ended: r.ended, T: r.T, curve: r.curve, checkpoints: r.checkpoints, final: { deck: r.deck.length, squad: r.squad.length, parts: r.parts.length, deckIds: r.deck.map((id) => baseOf(id)), partIds: r.parts, squadT: r.squad.map((u) => u.t) } })) }, null, 0));
 });

@@ -21,7 +21,7 @@ export const DIRECTOR = {
   closeCall: [3, 3, 2, 2, 1, 0],
   closeCallGold: 40,
   /** 사선 판정: 킹 HP 비율 이하 · 분대원 쓰러짐 · 마지막 한 수 사용 */
-  closeKingHp: 0.3,
+  closeKingHp: 0.15,
   /** ① 원수 현상금 (나사) · 유품 반환(쓰러진 분대원 되살리기)이 되는 승급 상한 */
   bounty: [90, 75, 60, 50, 40, 30],
   heirloomUpTo: 2,
@@ -53,6 +53,7 @@ export const dir = {
 };
 
 /** 사선을 넘었나 (승리한 대국) */
+/** 사선 (D-244, 사용자: 「동료 한 번 쓰러진 것만으로 계속 나오면 너무 흔하다」): fell = 이번 대국에서 폐기된(심장 톱니 둘 다 깨진) 분대원 수 */
 export const isCloseCall = (r: { kingHp: number; kingMax: number; fell: number; clutched: boolean }): boolean =>
   r.clutched || r.fell > 0 || r.kingHp <= r.kingMax * DIRECTOR.closeKingHp;
 

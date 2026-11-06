@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { burnFallen, promotedIn, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, planEnemy, playCard, rewind, squadAfter } from '../src/slice/battle';
+import { burnFallen, promotedIn, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, planEnemy, playCard, previewPlay, rewind, squadAfter } from '../src/slice/battle';
 import { START_COMMANDS, SLICE } from '../src/slice/cards';
 import { findPiece } from '../src/engine';
 
@@ -86,10 +86,14 @@ describe('교착 압박 (D-196)', () => {
     expect(plan.some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K')).toBe(true);
   });
   it('다른 적이 있으면 킹은 뒤에 남는다 — 단 정해진 턴부터는 나선다', () => {
-    const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 7);
+    const b = newSliceBattle(squad, ['K', 'P', 'P'], START_COMMANDS, 7);
     const kingMoves = (turn: number) => planEnemy(b.s, false, turn).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K');
     expect(kingMoves(1)).toBe(false);
     expect(kingMoves(SLICE.kingMarchTurn)).toBe(true);
+  });
+  it('발악 (D-243): 호위가 하나 이하로 남으면 킹도 1턴부터 나선다', () => {
+    const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 7);
+    expect(planEnemy(b.s, false, 1).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K')).toBe(true);
   });
 });
 
@@ -160,5 +164,30 @@ describe('카드 태우기 · 승격은 대국에서만 (D-198)', () => {
     const after = squadAfter(b, squad0);
     expect(after[1].t).toBe('P');
     expect(after[1].hp).toBe(9);
+  });
+});
+
+/** 난이도 구조 (D-243) */
+describe('킹 호위 방열판 · 반장 2단계', () => {
+  it('호위가 있으면 적 킹이 방열판을 두르고 시작한다', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P', 'P'], START_COMMANDS, 5, { guard: 0.3 });
+    const k = b.s.pieces.find((p) => p.side === 1 && p.type === 'K')!;
+    expect(k.shield).toBeGreaterThanOrEqual(Math.round(k.maxHp * 0.3));
+  });
+  it('반장 킹은 처음 쓰러지면 HP 일부로 다시 일어서고 호위 폰이 선다 — 두 번째에 이긴다', () => {
+    const b = newSliceBattle([{ t: 'K' }, { t: 'R' }], ['K', 'P'], ['rookLine', 'rookLine', 'rookLine', 'rookLine', 'rookLine'], 5, { boss: true, bossRule: 'thorns' });
+    const k = b.s.pieces.find((p) => p.side === 1 && p.type === 'K')!;
+    const r = b.s.pieces.find((p) => p.side === 0 && p.type === 'R')!;
+    k.hp = 1;
+    k.shield = 0;
+    r.atk = 999;
+    const i = b.hand.indexOf('rookLine');
+    const to = cardMoves(b, i, r.id).find((m) => previewPlay(b, i, r.id, m)?.events.some((e) => e.type === 'attack' && e.hits.some((h) => h.targetId === k.id)));
+    if (!to) return; // 이 배치로 닿지 않으면 건너뛴다
+    playCard(b, i, r.id, to);
+    expect(b.s.winner).toBeNull();
+    expect(b.phase2).toBe(true);
+    const k2 = b.s.pieces.find((p) => p.side === 1 && p.type === 'K')!;
+    expect(k2.hp).toBe(Math.round(k2.maxHp * SLICE.bossPhase2Hp));
   });
 });

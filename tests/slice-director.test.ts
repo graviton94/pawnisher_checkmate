@@ -22,9 +22,9 @@ describe('심리 연출 감독 (D-178)', () => {
     expect(dir.mercy(3, 1)).toBe(0);
     expect(dir.mercy(3, 2)).toBeGreaterThan(0);
   });
-  it('사선: 킹 HP 30% 이하 · 분대원 쓰러짐 · 마지막 한 수 중 하나', () => {
+  it('사선: 킹 HP 15% 이하 · 분대원 폐기(두 번째 쓰러짐) · 마지막 한 수 중 하나', () => {
     expect(isCloseCall({ kingHp: 50, kingMax: 100, fell: 0, clutched: false })).toBe(false);
-    expect(isCloseCall({ kingHp: 30, kingMax: 100, fell: 0, clutched: false })).toBe(true);
+    expect(isCloseCall({ kingHp: 15, kingMax: 100, fell: 0, clutched: false })).toBe(true);
     expect(isCloseCall({ kingHp: 90, kingMax: 100, fell: 1, clutched: false })).toBe(true);
     expect(isCloseCall({ kingHp: 90, kingMax: 100, fell: 0, clutched: true })).toBe(true);
   });

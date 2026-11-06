@@ -1045,6 +1045,20 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   if (gain) {
     toast(`처치 — 태엽 +${gain}${parts.includes('horseshoe') && moverType === 'N' ? ` (${SLICE_PARTS.horseshoe.name})` : ''}`);
   }
+  // 첫 승격 (D-244): 부관이 칭찬하며 승격 규칙을 알려 준다 — 출하를 통틀어 한 번
+  const promo = r.events.find((e) => e.type === 'promote');
+  if (promo && !tutDone('promote') && b.s.winner === null) {
+    const pp = findPiece(b.s, (promo as { pieceId: number }).pieceId);
+    await tutorial('promote', [{ text: TUT.promote, target: () => (pp ? tileRect(pp) : null) }]);
+  }
+  // 반장 2단계 (D-243): 쓰러진 반장이 다시 일어선다
+  if (r.events.some((e) => e.type === 'respawn' && e.label === '반장 2단계')) {
+    sfx('threat');
+    await banner('반장이 다시 일어선다', false);
+    toast('2단계 — 반장이 호위를 부르며 다시 일어섰습니다. 한 번 더 쓰러뜨리십시오.', 3200);
+    renderer.setup(b.s);
+    refresh();
+  }
   if (b.s.winner !== null) return finish();
 };
 let prevKills = 0;
@@ -1244,7 +1258,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, deck.filter(usable)) : deck.filter(usable), 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind, shock: asc >= 2 });
+  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, deck.filter(usable)) : deck.filter(usable), 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
@@ -1355,7 +1369,7 @@ const enterNode = (n: MapNode): void => {
       const roll = R.next();
       const charm = roll < CHARM_NUM.chestRevive ? 'revive' : roll < CHARM_NUM.chestRevive + CHARM_NUM.chestRewind ? 'rewind' : null;
       if (charm) charms[charm] += 1;
-      partPick(`<div class="stamp-big good">상자를 열었다</div><h2>부품 하나 — 나사 +${screws}${charm ? ` · ${CHARMS[charm].name} +1` : ''}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, advance);
+      partPick(`<h2><span class="pass-tag">상자</span> 부품 하나 — 나사 +${screws}${charm ? ` · ${CHARMS[charm].name} +1` : ''}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, advance);
     });
   }
   if (n.kind === 'forge') return void sceneIntro(NODE_NAMES.forge, '꺼지지 않은 화덕', '화덕이 당신을 부른다. 모루는 아직 뜨겁다.', `<i class="sf-ico" style="${iconArt('n.forge')}"></i>`).then(forgeScreen);
@@ -1491,14 +1505,25 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}</button>`;
     })
     .join('')}</div><p class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
-  // 서술은 타자로 (D-193 — 서술 = 타자, 시스템 글 = 즉시)
+  // 서술은 타자로 (D-193). 따옴표 대사는 말하는 이의 말풍선으로 따로 (D-244, 사용자: 「대화도 이펙트도 없이 너무 심플하다」)
   const evText = el.querySelector<HTMLElement>('.ev-text')!;
-  void typeIn(evText, ev.text, 18, undefined, () => evText.isConnected);
+  const m = ev.text.match(/^(.*?)\s*(“[^”]+”)(.*)$/);
+  const narr = m ? (m[1] + (m[3] ? ` ${m[3].trim()}` : '')).trim() : ev.text;
+  void typeIn(evText, narr, 18, undefined, () => evText.isConnected).then(() => {
+    if (!m || !evText.isConnected) return;
+    const say = document.createElement('p');
+    say.className = 'ev-say';
+    say.innerHTML = `<b>${ev.title}</b><span></span>`;
+    evText.after(say);
+    replay(say, 'in');
+    sfx('tap', 4);
+    void typeIn(say.querySelector('span')!, m[2], 26, undefined, () => say.isConnected);
+  });
   el.querySelectorAll<HTMLElement>('[data-ev]').forEach((btn) =>
     btn.addEventListener('click', () => {
       if (btn.classList.contains('off')) return toast('지금은 고를 수 없습니다.');
       const c = ev.choices[Number(btn.dataset.ev)];
-      choose(btn, c.label.replace(/\?$/, ''), () => {
+      choose(btn, c.label.replace(/\?$/, ''), async () => {
         const s0 = st();
         const out = c.apply(s0, sub());
         squad = s0.squad;
@@ -1506,13 +1531,69 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         refined.splice(0, refined.length, ...s0.refined);
         gold = s0.gold;
         if (out.recruit) squad.push(crewOf(out.recruit));
-        sfx(out.partPick ? 'rare' : 'stamp');
-        const res = openOverlay(`<h2>${ev.title}</h2><p class="ev-text">${out.text}</p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div>`);
+        // 확률 선택이면 룰렛이 돌아 그 칸에 선다
+        const segs = [...c.desc.matchAll(/(\d+)%:\s*([^·]+)/g)].map((x) => ({ p: Number(x[1]), label: x[2].trim() }));
+        let mood: 'good' | 'bad' | '' = out.partPick || out.recruit ? 'good' : '';
+        if (segs.length > 1 && out.slot !== undefined) {
+          await roulette(segs, out.slot, `${ev.title} — ${c.label.replace(/\?$/, '')}`);
+          mood = BAD_SEG.test(segs[out.slot].label) ? 'bad' : 'good';
+        }
+        const res = openOverlay(`<div class="ev-result ${mood}"><h2>${ev.title}</h2><p class="ev-text"></p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div></div>`);
+        sfx(mood === 'bad' ? 'hurt' : out.partPick ? 'rare' : 'stamp');
+        const box = res.querySelector<HTMLElement>('.ev-result')!;
+        if (mood === 'bad') shake(box, 2);
+        if (mood === 'good') {
+          const r = box.getBoundingClientRect();
+          sparksAt(r.left + r.width / 2, r.top + 30, 14, 60);
+        }
+        void typeIn(res.querySelector<HTMLElement>('.ev-text')!, out.text, 18);
         res.querySelector('[data-next]')!.addEventListener('click', () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
       });
     }),
   );
 };
+
+/** 나쁜 칸 (룰렛 색 · 결과 연출) */
+const BAD_SEG = /−|꽝|소실|부서진다|발각|빈 상자/;
+/**
+ * 사건 룰렛 (D-244): 확률 칸들(폭 = 확률)이 한 줄로 서고, 바늘이 두 바퀴 반 돌다 느려져 실제로 걸린 칸에 선다.
+ * 바늘은 4px 계단으로 움직이고(도트) 칸 경계를 넘을 때마다 딸깍. 결과는 이미 정해져 있다 — 보여 주기만 한다.
+ */
+const roulette = (segs: { p: number; label: string }[], slot: number, title: string): Promise<void> =>
+  new Promise((done) => {
+    const total = segs.reduce((a, x) => a + x.p, 0);
+    const el = openOverlay(`<div class="roul"><p class="eyebrow">${title}</p><div class="roul-bar">${segs
+      .map((x, k) => `<i class="${BAD_SEG.test(x.label) ? 'bad' : 'good'}" style="flex:${x.p}" data-k="${k}"><span>${x.p}%</span><small>${x.label}</small></i>`)
+      .join('')}<b class="roul-needle"></b></div></div>`);
+    const bar = el.querySelector<HTMLElement>('.roul-bar')!;
+    const needle = el.querySelector<HTMLElement>('.roul-needle')!;
+    const W = bar.clientWidth;
+    const start = segs.slice(0, slot).reduce((a, x) => a + x.p, 0) / total;
+    const width = segs[slot].p / total;
+    const target = (start + width * (0.2 + Math.random() * 0.6)) * W;
+    const dist = W * 2 + target;
+    const dur = calmNow() ? 300 : 2200;
+    const t0 = performance.now();
+    let lastSeg = -1;
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      const x = Math.round(((dist * e) % W) / 4) * 4;
+      needle.style.transform = `translateX(${x}px)`;
+      const seg = segs.findIndex((_, i) => x / W < segs.slice(0, i + 1).reduce((a, y) => a + y.p, 0) / total);
+      if (seg !== lastSeg) {
+        lastSeg = seg;
+        sfx('tap', 2 + seg);
+      }
+      if (k < 1) return void requestAnimationFrame(tick);
+      const won = bar.querySelector<HTMLElement>(`[data-k="${slot}"]`)!;
+      won.classList.add('hit');
+      shake(bar, 1);
+      sfx(BAD_SEG.test(segs[slot].label) ? 'threat' : 'coin');
+      window.setTimeout(done, 900);
+    };
+    requestAnimationFrame(tick);
+  });
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */
 const shopScreen = (): void => {
@@ -1968,7 +2049,7 @@ const finishNow = (): void => {
     const kingNow = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
     const kingMax = kingNow?.maxHp ?? 1;
     closeTier = 0;
-    if (isCloseCall({ kingHp: kingNow?.hp ?? 0, kingMax, fell: b.falls.length, clutched: clutchedNow }) && !closeActs.includes(actI) && dir.closeCall(asc) > 0) {
+    if (isCloseCall({ kingHp: kingNow?.hp ?? 0, kingMax, fell: crackOrScrap(fallenAfter(b, squad).map((f) => f.crew)).scrapped.length, clutched: clutchedNow }) && !closeActs.includes(actI) && dir.closeCall(asc) > 0) {
       closeActs.push(actI);
       closeTier = dir.closeCall(asc);
       if (closeTier === 1) gold += DIRECTOR.closeCallGold;
@@ -2039,11 +2120,11 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     // 사선 보상 3등급: 부품 하나 더 (검문 부품과 겹치지 않게 먼저)
     if (closeTier === 3 && !partDone) {
       closeTier = 0;
-      return partPick(`<div class="stamp-big good">사선을 넘었다</div><h2>부품 하나 더</h2><p>겨우 넘은 대국입니다. 부품을 하나 고릅니다.</p>`, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); });
+      return partPick(`<h2><span class="pass-tag bad">사선</span> 겨우 넘었다 — 부품 하나 더</h2><p>잃은 것이 있는 대국이었습니다. 부품을 하나 더 고릅니다.</p>`, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); });
     }
     // 검문 · 반장 (D-216): 부품 → 새 분대원(상한 아래면 확정) → 카드
     if (reward === 'part' && !partDone)
-      return partPick(`<div class="stamp-big good">${cur.boss ? '반장 격파' : '검문 통과'}</div><h2>부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () =>
+      return partPick(`<h2><span class="pass-tag">${cur.boss ? '반장 격파' : '검문 통과'}</span> 부품 상자 — 나사 +${earned}</h2><p>부품을 하나 고릅니다. 장착하면 규칙이 바뀝니다.</p>`, () =>
         squad.length < SLICE.squadMax ? (won -= 1, recruitPick(`<h2>새 분대원</h2>`, () => rewardFlow(earned, overGold, fallen, true), true)) : rewardFlow(earned, overGold, fallen, true), true);
     if (reward === 'end') return runEnd(true);
     const rng = sub();

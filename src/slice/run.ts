@@ -1,6 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { BOSS_RULES, type BossRule, type CommandId } from './cards';
+import { BOSS_RULES, SLICE, type BossRule, type CommandId } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -28,6 +28,8 @@ export interface BattleDef {
   w?: number;
   h?: number;
   place?: { side: 0 | 1; t: PieceType; x: number; y: number }[];
+  /** 킹 호위 방열판 비율 (D-243) */
+  guard?: number;
   /** 짜 둔 손패 (입문 판, D-232): 덱을 이 순서로 놓고 섞지 않는다 */
   order?: CommandId[];
 }
@@ -119,7 +121,7 @@ const NARR_CHECK = ['검수관의 저울이 기울어 있다. 이 문을 지난 
 const NARR_BOSS = ['철갑을 두른 반장이 기다린다. 발밑 한 줄이 벌겋게 달아오른다.', '조립 반장이 당신의 부품을 하나하나 센다. 집게 끝에서 검은 폰이 찍혀 나온다.', '출하 반장. 이 문 너머는 바깥이다. 갑옷의 가시가 당신을 겨눈다.'];
 const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
 const TRAITS: ('blastPawn' | 'rookPlate')[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
-const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다.'];
+const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
 
 /** 1막 앞 두 판 (첫 10분 — D-150) */
 /**
@@ -158,6 +160,11 @@ export const FTUE = { firstBossHp: 0.65 };
 /** 대국 하나 만들기 */
 export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0): BattleDef => {
   const d = battleBase(act, kind, rng);
+  // 난이도 구조 (D-243): 막마다 판이 넓어지고, 일반 · 검문 적 킹은 호위가 있는 동안 방열판을 두른다
+  const [w, h] = SLICE.boardByAct[act - 1];
+  d.w ??= w;
+  d.h ??= h;
+  if (kind !== 'boss') d.guard = SLICE.guardByAct[act - 1];
   if (asc >= 1) d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.enemyHp;
   if (asc >= 2 && kind !== 'battle') d.kingHp += ASC_NUM.eliteKing;
   if (asc >= 5) d.enemy = [...d.enemy, 'P'];

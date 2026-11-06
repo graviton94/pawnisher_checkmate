@@ -1898,3 +1898,30 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
 
 /* D-242: 메인 문장(왕관 폰 · 붉은 사선)이 연출 뒤 사라지던 것 — 시작 상태를 디더로 숨겼으니 보이는 단계에서 마스크를 걷는다 */
 .tfx-em.tremble img, .tfx-em.cut img, .tfx-em.done img { -webkit-mask-image: none; mask-image: none; }
+
+/* D-244: 적 차례에 오른쪽 위 속전 칸이 깨지던 것 — 차례 표지 안 톱니 · 등 · 점을 16px 한 줄 안에 가둔다 */
+body.slice.lay-f .gtop .turn-label { overflow: hidden; max-width: 110px; }
+body.slice.lay-f .gtop .turn-label .th-lamp, body.slice.lay-f .gtop .turn-label .th-dots { display: none; }
+body.slice.lay-f .gtop .turn-label .th-cog { width: 16px; height: 16px; margin: 0; background-size: 256px 16px; }
+body.slice.lay-f .gtop .coins .boiler { grid-column: 1 / -1; }
+body.slice.lay-f .gtop .turn-label .th-cog { animation: gearsMini16 1.2s steps(16) infinite; }
+@keyframes gearsMini16 { from { background-position: 0 0; } to { background-position: -256px 0; } }
+
+/* ── 사건 대사 · 룰렛 · 결과 (D-244) ── */
+.ev-say { margin: 0; display: grid; gap: 2px; padding: 6px 10px; background: #16141c; box-shadow: 0 0 0 2px #000, inset 3px 0 0 #f4d27a; }
+.ev-say b { font: 12px Galmuri11, sans-serif; font-weight: 700; color: #f4d27a; }
+.ev-say span { font: 15px/1.5 Galmuri14, Galmuri11, sans-serif; color: #f2ede4; }
+.roul { display: grid; gap: 12px; min-width: min(560px, 80vw); }
+.roul-bar { position: relative; display: flex; height: 72px; box-shadow: 0 0 0 2px #000, 0 0 0 4px #8a6a32; }
+.roul-bar i { position: relative; display: grid; place-content: center; gap: 2px; min-width: 0; font-style: normal; text-align: center; box-shadow: inset -2px 0 0 #000; }
+.roul-bar i.good { background: #3a3220; color: #f4d27a; }
+.roul-bar i.bad { background: #3a1c1e; color: #ff9a8a; }
+.roul-bar i span { font: 700 24px Galmuri11, sans-serif; }
+.roul-bar i small { font: 12px Galmuri11, sans-serif; color: #d6d0c6; white-space: nowrap; overflow: hidden; text-overflow: clip; padding: 0 4px; }
+.roul-bar i.hit { animation: roulHit 480ms steps(1) both; }
+.roul-bar i.hit.good { background: #f4d27a; color: #16141c; } .roul-bar i.hit.bad { background: #e5262f; color: #fff; }
+.roul-bar i.hit small { color: inherit; }
+@keyframes roulHit { 0%, 50% { filter: brightness(1.8); } 25%, 75% { filter: brightness(0.7); } 100% { filter: none; } }
+.roul-needle { position: absolute; top: -10px; bottom: -10px; left: -2px; width: 4px; background: #fff; box-shadow: 0 0 0 2px #000; pointer-events: none; }
+.roul-needle::before { content: ''; position: absolute; top: -6px; left: -6px; border: 8px solid transparent; border-top: 8px solid #fff; border-bottom: 0; }
+.ev-result.bad h2 { color: #ff9a8a; } .ev-result.good h2 { color: #f4d27a; }

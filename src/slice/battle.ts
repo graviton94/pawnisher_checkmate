@@ -48,6 +48,12 @@ export interface SliceBattle {
   graze?: number[];
   /** 기어 쇼크 (D-229, 보고서 제안 4): 지난 적 차례에 예고 공격을 맞은 내 기물 — 이번 턴 그 기물의 공격 ×0.6 */
   shocked?: number[];
+  /** 반장 2단계에 들어섰나 (D-243) */
+  phase2?: boolean;
+  /** 킹 호위 방열판 비율 (킹 최대 HP 대비, D-243) */
+  guard?: number;
+  /** 적 HP 배율 (층별 — 2단계 호위 폰에 쓴다) */
+  foeHpK?: number;
   /** 기어 쇼크를 끈 대국 (D-233 — 승급 2부터 켜진다. 기본 난이도의 첫 판들은 패널티 없이 회피의 보상만) */
   noShock?: boolean;
   /** 순수 회피 (D-230, 보고서 2): 예고 칸에서 빈 칸으로 빠지기만 한 기물 — 이번 턴 다음 공격 ×1.4 */
@@ -206,7 +212,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: ('blastPawn' | 'rookPlate')[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -280,6 +286,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   }
   if (opts.mercy) b.mercy = opts.mercy;
   if (opts.shock === false) b.noShock = true;
+  b.foeHpK = hpK;
+  if (opts.guard) b.guard = opts.guard;
+  guardUp(b);
   // 원수: 그 유형의 적 하나 (킹이 아니면 킹이 아닌 쪽부터) — 단계마다 HP +25%
   if (opts.nemesis) {
     const n = opts.nemesis;
@@ -387,7 +396,9 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
       score += dmg >= t.hp + t.shield ? valueOf(t) + dmg : (dmg / Math.max(1, t.hp + t.shield)) * valueOf(t) * SLICE.aiFinishWeight;
     }
     // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196 · 반장은 1턴부터 D-201)
-    const kingMarch = p.type === 'K' && (o.boss || s.pieces.every((q) => q.side !== 1 || q.type === 'K') || turn >= SLICE.kingMarchTurn);
+    // 발악 (D-243, 사용자: 「지고 있으면 킹으로 발악해야지 — 동귀어진」): 호위가 거의 없거나 킹 HP가 절반 아래면 킹도 나선다
+    const desperate = p.type === 'K' && (s.pieces.filter((q) => q.side === 1 && q.type !== 'K').length <= SLICE.desperate || p.hp < p.maxHp / 2);
+    const kingMarch = p.type === 'K' && (o.boss || desperate || turn >= SLICE.kingMarchTurn);
     const approach = score === 0;
     // 다가가기 (D-214, 사용자: "1층 적이 아무것도 안 하는 게 부지기수"): 내 킹 또는 가장 가까운 내 기물 쪽으로 — 둘 중 더 줄어드는 쪽.
     // 거리가 줄지 않아도 내 진영 쪽으로 한 줄 나아가면 조금 쳐 준다 (나이트처럼 거리가 안 줄어 서 있던 기물)
@@ -400,7 +411,7 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
     // 맞을 칸을 꺼린다 (D-201): 내 기물이 다음 차례에 칠 수 있는 칸이면 감점 — 공격이면 값의 일부, 다가가기면 같은 거리 중 안전한 칸을 고르게
     // 혼자 남은 킹은 겁내지 않는다 (D-214 — 맞을 칸 감점 −30 때문에 옆의 폰도 안 치고 매 턴 서 있었다)
     const alone = s.pieces.every((q) => q.side !== 1 || q.type === 'K');
-    if (o.reach?.has(`${to.x},${to.y}`)) score -= approach ? SLICE.aiRiskStep : valueOf(p) * SLICE.aiRiskAttack + (p.type === 'K' && !alone ? SLICE.aiRiskKing : 0);
+    if (o.reach?.has(`${to.x},${to.y}`)) score -= approach ? SLICE.aiRiskStep : valueOf(p) * SLICE.aiRiskAttack + (p.type === 'K' && !alone && !desperate ? SLICE.aiRiskKing : 0);
     if (!best || score > best.score) best = { to, score };
   }
   return best && best.score > 0 ? best : null;
@@ -765,7 +776,49 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   b.hand.splice(i, 1);
   (b.played ??= []).push(id);
   burnFallen(b);
+  bossRise(b, before, events);
   return { events, before };
+};
+
+/**
+ * 반장 2단계 (D-243, 사용자: 「반장이 1~2턴에 끝난다」): 반장 킹이 처음 쓰러지면 HP 일부로 다시 일어서고 곁에 호위 폰이 선다.
+ * 두 번째로 쓰러져야 이긴다. 화면은 사건 'phase2'를 보고 띠를 띄운다.
+ */
+const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): void => {
+  if (!b.boss || b.phase2 || b.s.winner !== 0) return;
+  const old = before.pieces.find((p) => p.side === 1 && p.type === 'K');
+  if (!old) return;
+  b.phase2 = true;
+  const k = makePiece(old.id, 'K', 1, old.x, old.y);
+  k.maxHp = old.maxHp;
+  k.hp = Math.max(1, Math.round(old.maxHp * SLICE.bossPhase2Hp));
+  k.atk = old.atk;
+  b.s = { ...b.s, winner: null, pieces: [...b.s.pieces.filter((p) => p.id !== old.id), k] };
+  // 호위 폰 둘 (빈 둘레 칸)
+  const atkK = b.atkK ?? 1;
+  let n = 0;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1], [0, 1]]) {
+    if (n >= SLICE.bossPhase2Guards) break;
+    const q = { x: k.x + dx, y: k.y + dy };
+    if (!inBounds(b.s, q.x, q.y) || b.s.pieces.some((p) => p.x === q.x && p.y === q.y)) continue;
+    const pawn = makePiece(Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds) + 1, 'P', 1, q.x, q.y);
+    pawn.maxHp = pawn.hp = Math.round(pawn.maxHp * (b.foeHpK ?? 1));
+    pawn.atk = Math.max(1, Math.round(pawn.atk * atkK));
+    b.s.pieces.push(pawn);
+    events.push({ type: 'respawn', pieceId: pawn.id, pos: q, label: '반장 호위' });
+    n += 1;
+  }
+  events.push({ type: 'respawn', pieceId: k.id, pos: { x: k.x, y: k.y }, label: '반장 2단계' });
+  b.intents = planFor(b);
+  markTelegraph(b);
+};
+
+/** 킹 호위 방열판 (D-243): 적 킹은 호위(킹 아닌 적)가 남아 있는 동안 턴마다 방열판을 두른다 — 첫 턴에 킹부터 끝낼 수 없게 */
+const guardUp = (b: SliceBattle): void => {
+  if (!b.guard || b.boss) return;
+  const k = kingOf(b.s, 1);
+  if (!k || !b.s.pieces.some((p) => p.side === 1 && p.type !== 'K')) return;
+  k.shield = Math.max(k.shield, Math.round(k.maxHp * b.guard));
 };
 
 /** 내 킹이 예고된 칸에 서 있나 (자살 수 경고) */
@@ -1059,6 +1112,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.evaded = [];
     drawCards(b, b.handSize - ((b.shocked ?? []).length ? SLICE.shockDraw : 0));
     bossTurnStart(b);
+    guardUp(b);
     b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));
     markTelegraph(b);
     b.snap = JSON.stringify({ ...b, snap: '' });
