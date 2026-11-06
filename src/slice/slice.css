@@ -2156,3 +2156,26 @@ body.between #right, body.between #left { visibility: hidden; }
 .hp-dict { grid-auto-rows: 1fr; }
 .hd-term { grid-template-rows: auto 1fr; min-height: 76px; }
 .hd-term span { white-space: pre-line; }
+
+/* D-276 각본 컷신: 서술은 길어져 본문 15px(갈무리14) · 대사 이름표 · 속말은 강조 24px. 두 줄씩 넘긴다 */
+.prologue .pl-narr { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ece8de; }
+.prologue .pl-say { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ffd8cf; }
+.prologue .pl-who { font: 700 12px Galmuri11, sans-serif; color: #f4d27a; margin-right: 6px; }
+.prologue .pl-mono { font: 24px/1.5 Galmuri11, sans-serif; color: #f4d27a; }
+.prologue .pl-text { gap: 10px; }
+.pl-stage.fx-gold::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='%23facc15' opacity='.18'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
+
+/* D-276 승급 칸 (각본 S6): 왼쪽 도금왕 초상(겹 단계) · 오른쪽 증언 · 속말 · 두 단추 */
+.promo { display: grid; grid-template-columns: 168px 1fr; gap: 18px; align-items: center; max-width: 680px; }
+.promo-art { width: 168px; height: 168px; display: grid; place-items: center; background: #0b0b0e; box-shadow: inset 0 0 0 2px #c89b3c, 0 0 0 2px #000; overflow: hidden; }
+.promo-art img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.promo-body { display: grid; gap: 10px; }
+.promo-say { margin: 0; font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ffd8cf; }
+.promo-say b { font: 700 12px Galmuri11, sans-serif; color: #f4d27a; margin-right: 6px; }
+.promo-mono { margin: 0; font: 24px/1.5 Galmuri11, sans-serif; color: #f4d27a; }
+.promo-stuck { margin: 0; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
+.promo .btn.tremble { animation: promoTremble 0.12s steps(2, jump-none) infinite; }
+@keyframes promoTremble { 0% { transform: translate(-2px, 0); } 100% { transform: translate(2px, 0); } }
+.promo .btn.dead { background: #2f2e36; color: #56545e; box-shadow: 0 0 0 2px #000; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .promo .btn.tremble { animation: none; } }
+.prologue .pl-mono.long { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; }

@@ -44,6 +44,8 @@ export interface RunSave {
   first?: boolean;
   /** 고물상 다듬기 · 빼기 쓴 횟수 (D-247 — 값이 오른다) */
   svc?: { refine: number; remove: number };
+  /** 이번 출하에서 쓰러뜨린 반장 (각본 — 도금왕의 비꼼 · 거울, D-276) */
+  bosses?: string[];
 }
 
 /** 쌓이는 기록 (출하를 넘어 남는다) */

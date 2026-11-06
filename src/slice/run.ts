@@ -1,5 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
+import { BOSS_STORY, GILDED_STORY } from '../data/script';
 import { BOSS_PAIRS, BOSS_RULES, FOE_TRAITS, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeTrait } from './cards';
 
 /**
@@ -134,14 +135,8 @@ const NARR_BATTLE = [
   ['포장 상자 사이로 찬 바람이 분다. 출하가 가깝다.', '도장 찍힌 기물들이 줄지어 서 있다. 하나도 웃지 않는다.', '출하구의 빛이 보인다. 그 앞을 검은 것이 막는다.'],
 ];
 const NARR_CHECK = ['검수관의 저울이 기울어 있다. 이 문을 지난 자는 많지 않다.', '두 번째 검문. 저울 위에 당신의 이름이 적혀 있다.', '마지막 검문. 저울은 이미 당신을 재고 있다.'];
-const NARR_BOSS: Partial<Record<BossRule, string>> = {
-  plate: '철갑을 두른 반장이 기다린다. 발밑 한 줄이 벌겋게 달아오른다.',
-  inspect: '검수 반장의 렌즈가 당신의 분대를 하나씩 훑는다. 붉은 도장이 손끝에서 마르지 않는다.',
-  spawn: '조립 반장이 당신의 부품을 하나하나 센다. 집게 끝에서 검은 폰이 찍혀 나온다.',
-  magnet: '자석 반장의 가슴에서 낮은 울림이 번진다. 바닥의 나사들이 그쪽으로 미끄러진다.',
-  thorns: '출하 반장. 이 문 너머는 바깥이다. 갑옷의 가시가 당신을 겨눈다.',
-  alarm: '경보 반장의 등이 붉게 깜빡인다. 눈금이 하나씩 차오른다.',
-};
+/** 반장 등장 서술 (각본 §8, D-276): 3인칭 과거 한 줄 + 반장의 첫 마디 */
+const NARR_BOSS: Partial<Record<BossRule, string>> = Object.fromEntries(Object.entries(BOSS_STORY).map(([k, v]) => [k, `${v.intro}\n${v.name} “${v.say}”`]));
 const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
 const TRAITS: FoeTrait[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
 const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
@@ -226,7 +221,7 @@ export const FINAL_BOSS = (asc = 0): BattleDef => ({
   w: 8,
   h: 7,
   title: '종막 — 도금왕',
-  narr: '포장대 위, 금 왕관을 칠한 킹이 당신을 내려다본다. 모양이 운명이라고 쓴 손이다.',
+  narr: `${GILDED_STORY.intro}\n도금왕 “${GILDED_STORY.say(asc)}”`,
   tell: BOSS_RULES.gilded.tell,
   reward: 'end',
   boss: true,

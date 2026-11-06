@@ -3,7 +3,8 @@
  * 컷마다 그림(public/scenes/prologue-0N.png)이 있으면 그것을, 없으면 기물 도트로 짠 자리 그림을 쓴다.
  */
 import { sfx } from '../audio/sfx';
-import { GUIDE_PAGES, OPENING_TEXT, PROLOGUE_CUTS, type GuideMedia, type PrologueCut, type StandIn } from '../data/opening';
+import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
+import { PROLOGUE, type Cut, type Line } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
@@ -21,7 +22,7 @@ const hasImg = (src: string): Promise<boolean> =>
   });
 
 /** 자리 그림: 기물 도트를 화면 비율 자리에 */
-const standIn = (c: PrologueCut): string =>
+const standIn = (c: Cut): string =>
   `<div class="pl-standin" style="--a:${c.bg[0]};--b:${c.bg[1]}">${c.glow ? `<i class="pl-glow" style="--g:${c.glow}"></i>` : ''}${c.art
     .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${p.y}%;height:${p.h}%">${pieceImg(p.t, p.side, 'large', 220)}${p.crown ? '<img class="pl-crown" src="ui/hud/paper-crown.png" alt="">' : ''}</span>`)
     .join('')}</div>`;
@@ -31,19 +32,23 @@ export const crestHtml = (): string =>
   `<div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-logo.png" alt=""></div><div class="tfx-flash"></div></div>`;
 
 /**
- * 프롤로그: 컷마다 그림이 천천히 밀려 들어오고(켄 번스) 서술 · 대사 · 독백이 한 자씩. 탭 = 다음(찍는 중이면 끝까지),
- * 「건너뛰기」 = 바로 끝. short면 ★컷만. 마지막엔 베인 타이틀 문장이 내리꽂힌다.
+ * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체): 컷마다 그림이 천천히 밀려 들어오고(켄 번스), 줄이 두 줄씩 한 자씩 찍힌다.
+ * 탭 = 다음(찍는 중이면 그 쪽을 한 번에) · 「건너뛰기」 = 바로 끝. logo면 마지막에 베인 타이틀 문장이 내리꽂힌다.
+ * 줄: 서술(3인칭 과거) · 대사(이름 + “ ”) · 속말(‘ ’) — 글은 src/data/script.ts.
  */
-export const prologue = (short = false): Promise<void> =>
+export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void> =>
   new Promise((resolve) => {
-    const cuts = short ? PROLOGUE_CUTS.filter((c) => c.key) : PROLOGUE_CUTS;
     const el = document.createElement('div');
     el.className = 'prologue';
     el.innerHTML = `<div class="pl-stage"></div><i class="pl-bar t"></i><i class="pl-bar b"></i><div class="pl-text"></div><button class="btn pl-skip" type="button">${OPENING_TEXT.skip}</button><p class="pl-tap">▼</p>`;
     document.body.appendChild(el);
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
     const text = el.querySelector<HTMLElement>('.pl-text')!;
+    // 쪽 = (컷 번호, 그 컷의 줄 두 개)
+    const pages: { c: number; lines: Line[] }[] = [];
+    cuts.forEach((c, k) => { for (let a = 0; a < c.lines.length; a += 2) pages.push({ c: k, lines: c.lines.slice(a, a + 2) }); });
     let i = -1;
+    let shown = -1;
     let typing = false;
     let ended = false;
     let token = 0;
@@ -51,61 +56,58 @@ export const prologue = (short = false): Promise<void> =>
       if (ended) return;
       ended = true;
       token++;
-      // 마지막: 검은 막 위로 베인 타이틀 문장
-      stage.innerHTML = `<div class="pl-logo">${crestHtml()}</div>`;
-      text.innerHTML = '';
-      el.classList.add('logo');
-      void titleFx(stage.querySelector<HTMLElement>('.tfx'));
-      await wait(calm() ? 300 : 1900);
-      // 도트 퇴장 (D-193)
-      pxOut(el, () => {
-        el.remove();
-        resolve();
-      }, 300);
+      if (o.logo) {
+        stage.innerHTML = `<div class="pl-logo">${crestHtml()}</div>`;
+        text.innerHTML = '';
+        el.classList.add('logo');
+        void titleFx(stage.querySelector<HTMLElement>('.tfx'));
+        await wait(calm() ? 300 : 1900);
+      }
+      pxOut(el, () => { el.remove(); resolve(); }, 300);
     };
+    const fill = (l: Line): string => (l.k === 's' ? `“${l.t}”` : l.k === 'm' ? `‘${l.t}’` : l.t);
+    const lineHtml = (l: Line): string => (l.k === 's' ? `<p class="pl-say">${l.who ? `<b class="pl-who">${l.who}</b> ` : ''}<span></span></p>` : `<p class="pl-${l.k === 'm' ? `mono${l.t.length > 20 ? ' long' : ''}` : 'narr'}"><span></span></p>`);
     const show = async (k: number): Promise<void> => {
       const my = ++token;
-      const c = cuts[k];
-      // 컷 사이: 짧은 암전 (레트로 컷 전환)
-      el.classList.add('dip');
-      await wait(calm() ? 0 : 140);
-      if (my !== token) return;
-      const src = `scenes/${c.img}.png`;
-      stage.innerHTML = (await hasImg(src)) ? `<img class="pl-img" src="${src}" alt="">` : standIn(c);
-      if (my !== token) return;
-      stage.className = `pl-stage kb${k % 2}${c.fx ? ` fx-${c.fx}` : ''}`;
-      replay(stage, 'in');
-      el.classList.remove('dip');
-      if (c.fx === 'alarm' || c.fx === 'red') {
-        sfx('threat');
-        window.setTimeout(() => shake(stage, 1), 200);
-      } else sfx('tap');
-      text.innerHTML = `${c.narr ? '<p class="pl-narr"></p>' : ''}${c.say ? '<p class="pl-say"></p>' : ''}${c.mono ? '<p class="pl-mono"></p>' : ''}`;
+      const pg = pages[k];
+      const c = cuts[pg.c];
+      if (pg.c !== shown) {
+        shown = pg.c;
+        el.classList.add('dip');
+        await wait(calm() ? 0 : 140);
+        if (my !== token) return;
+        const src = `scenes/${c.img}.png`;
+        stage.innerHTML = (await hasImg(src)) ? `<img class="pl-img" src="${src}" alt="">` : standIn(c);
+        if (my !== token) return;
+        stage.className = `pl-stage kb${pg.c % 2}${c.fx ? ` fx-${c.fx}` : ''}`;
+        replay(stage, 'in');
+        el.classList.remove('dip');
+        if (c.fx === 'alarm' || c.fx === 'red') {
+          sfx('threat');
+          window.setTimeout(() => shake(stage, 1), 200);
+        } else sfx('tap');
+        await wait(calm() ? 0 : 260);
+      } else sfx('tap', 3);
+      text.innerHTML = pg.lines.map(lineHtml).join('');
       typing = true;
-      await wait(calm() ? 0 : 260);
-      if (c.narr && my === token) await typeIn(text.querySelector<HTMLElement>('.pl-narr')!, c.narr, 34, undefined, () => my === token);
-      if (c.say && my === token) await typeIn(text.querySelector<HTMLElement>('.pl-say')!, `“${c.say}”`, 34, undefined, () => my === token);
-      if (c.mono && my === token) {
-        await wait(calm() ? 0 : 200);
-        if (my === token) await typeIn(text.querySelector<HTMLElement>('.pl-mono')!, `‘${c.mono}’`, 44, undefined, () => my === token);
+      const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
+      for (let a = 0; a < pg.lines.length && my === token; a++) {
+        if (pg.lines[a].k === 'm') await wait(calm() ? 0 : 200);
+        if (my === token) await typeIn(ps[a], fill(pg.lines[a]), pg.lines[a].k === 'm' ? 44 : 30, undefined, () => my === token);
       }
       if (my === token) typing = false;
     };
     const next = (): void => {
       if (ended) return;
       if (typing) {
-        // 찍는 중이면 그 컷 글을 한 번에
         token++;
         typing = false;
-        const c = cuts[i];
-        const set = (sel: string, v?: string) => { const p = text.querySelector<HTMLElement>(sel); if (p && v) p.textContent = v; };
-        set('.pl-narr', c.narr);
-        set('.pl-say', c.say && `“${c.say}”`);
-        set('.pl-mono', c.mono && `‘${c.mono}’`);
+        const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
+        pages[i].lines.forEach((l, a) => ps[a] && (ps[a].textContent = fill(l)));
         return;
       }
       i += 1;
-      if (i >= cuts.length) return void finish();
+      if (i >= pages.length) return void finish();
       void show(i);
     };
     el.addEventListener('click', (ev) => {
@@ -114,6 +116,9 @@ export const prologue = (short = false): Promise<void> =>
     });
     next();
   });
+
+/** 프롤로그 (S1): 처음 출하 앞 · 메뉴 「프롤로그 다시 보기」(short = ★컷만) */
+export const prologue = (short = false): Promise<void> => playCuts(short ? PROLOGUE.filter((c) => c.key) : PROLOGUE, { logo: true });
 
 /** 안내서 왼쪽 정사각 (D-205): 실제 게임 화면을 자른 그림, 또는 코드 애니메이션 */
 const guideMedia = (m: GuideMedia): string => {

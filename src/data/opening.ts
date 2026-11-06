@@ -38,43 +38,7 @@ export interface PrologueCut {
   fx?: 'alarm' | 'red' | 'spot' | 'path';
 }
 
-export const PROLOGUE_CUTS: PrologueCut[] = [
-  {
-    img: 'prologue-01', key: true, narr: '체크메이트 공장. 모양이 곧 값이고, 값이 곧 길이다.',
-    bg: ['#0b0b0e', '#2a1a10'], glow: '#e8783c',
-    art: [{ t: 'R', side: 1, x: 22, y: 62, h: 34, dim: true }, { t: 'B', side: 1, x: 38, y: 58, h: 30, dim: true }, { t: 'Q', side: 1, x: 54, y: 60, h: 38, dim: true }, { t: 'N', side: 1, x: 70, y: 58, h: 30, dim: true }, { t: 'K', side: 1, x: 84, y: 62, h: 36, dim: true }],
-  },
-  {
-    img: 'prologue-02', narr: '그날, 한 세트의 킹 자리에 폰이 들어갔다. 경고등이 깜빡이다, 꺼졌다.',
-    bg: ['#0a1620', '#16141c'], glow: '#38bdf8', fx: 'alarm',
-    art: [{ t: 'R', side: 0, x: 26, y: 64, h: 26, dim: true }, { t: 'N', side: 0, x: 38, y: 64, h: 26, dim: true }, { t: 'P', side: 0, x: 50, y: 60, h: 26 }, { t: 'Q', side: 0, x: 62, y: 64, h: 28, dim: true }, { t: 'B', side: 0, x: 74, y: 64, h: 26, dim: true }],
-  },
-  {
-    img: 'prologue-03', key: true, narr: '검수 전광판이 붉게 물든다. 세트 전체, 불량 처리 예정.', mono: '나 때문이다.',
-    bg: ['#3a0a10', '#0b0b0e'], glow: '#e5262f', fx: 'red',
-    art: [{ t: 'R', side: 0, x: 18, y: 64, h: 24 }, { t: 'N', side: 0, x: 28, y: 64, h: 24 }, { t: 'B', side: 0, x: 38, y: 64, h: 24 }, { t: 'Q', side: 0, x: 48, y: 64, h: 26 }, { t: 'B', side: 0, x: 58, y: 64, h: 24 }, { t: 'N', side: 0, x: 68, y: 64, h: 24 }, { t: 'R', side: 0, x: 78, y: 64, h: 24 }, { t: 'P', side: 0, x: 90, y: 68, h: 18 }],
-  },
-  {
-    img: 'prologue-04', say: '폰이 킹 자리에? 우리까지 녹이려고.', mono: '폰이 맞다. 그래서?',
-    bg: ['#2a1e12', '#0b0b0e'],
-    art: [{ t: 'Q', side: 0, x: 30, y: 52, h: 40, dim: true }, { t: 'R', side: 0, x: 72, y: 50, h: 36, dim: true, flip: true }, { t: 'B', side: 0, x: 86, y: 56, h: 32, dim: true, flip: true }, { t: 'P', side: 0, x: 52, y: 70, h: 20 }],
-  },
-  {
-    img: 'prologue-05', key: true, narr: '상자 귀퉁이를 오려 왕관을 만든다. 너무 커서 눈을 덮는다.', mono: '크다. …그래도 쓴다.',
-    bg: ['#16141c', '#0b0b0e'], glow: '#f4f1ea', fx: 'spot',
-    art: [{ t: 'P', side: 0, x: 50, y: 68, h: 40, crown: true }],
-  },
-  {
-    img: 'prologue-06', narr: '따르는 것은 몇뿐이다. 나머지는 지켜본다.',
-    bg: ['#1e2630', '#0b0b0e'],
-    art: [{ t: 'Q', side: 0, x: 76, y: 40, h: 22, dim: true }, { t: 'R', side: 0, x: 86, y: 40, h: 20, dim: true }, { t: 'P', side: 0, x: 30, y: 62, h: 30, crown: true }, { t: 'P', side: 0, x: 44, y: 64, h: 24 }, { t: 'P', side: 0, x: 54, y: 64, h: 24 }, { t: 'N', side: 0, x: 64, y: 62, h: 28 }],
-  },
-  {
-    img: 'prologue-07', key: true, mono: '녹게 두지 않는다. 아무도.',
-    bg: ['#0e1220', '#2a1e08'], glow: '#c89b3c', fx: 'path',
-    art: [{ t: 'P', side: 0, x: 50, y: 70, h: 30, crown: true }, { t: 'R', side: 1, x: 18, y: 48, h: 20, dim: true }, { t: 'B', side: 1, x: 82, y: 48, h: 20, dim: true }],
-  },
-];
+/** 프롤로그 글 · 컷은 각본 데이터로 옮겼다 (src/data/script.ts PROLOGUE, D-276) */
 
 /** 안내서 (처음 한 번 · 메뉴에서 다시): 쪽마다 그림 한 줄 + 글 두 줄 (시스템 투) */
 /**
