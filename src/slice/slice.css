@@ -2068,3 +2068,36 @@ body.slice .er-card .cf.cf { width: 100%; pointer-events: none; }
 .ev-ov-foot { display: flex; justify-content: center; min-height: 52px; align-items: center; }
 .ev-ov-ok { min-width: 160px; min-height: 48px; }
 .ev-ov-ok.in { animation: pressIn 240ms steps(1, end) both; }
+
+/* ===== D-262 UI 통일성 마무리 (주물 공방 문법 고칠 목록) ===== */
+/* 디더 막: 모달 뒤를 반투명 대신 2×2 먹 체크로 (D-216 — 투명도 보간 · 번짐 금지) */
+body.slice .overlay { background-color: transparent; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%230b0b0e' fill-opacity='.55'/%3E%3Crect width='2' height='2' fill='%230b0b0e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%230b0b0e'/%3E%3C/svg%3E"); image-rendering: pixelated; }
+/* 팝업 제목 = 황동 명패 (창 이름은 명패 하나). 머리 줄(.shop-head 등) 안의 h2도 같다 */
+body.slice .overlay .panel > h2:first-child:not(:has(.pass-tag)), body.slice .overlay .panel > .eyebrow + h2, body.slice .overlay .panel > h2:first-of-type:not(.pt-q):not(:has(.pass-tag)) {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; margin: 0; min-height: 34px; padding: 0 12px;
+  color: #2a1a06; text-shadow: 0 1px 0 #fff1c0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/plate.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 3px 0 #000;
+}
+body.slice .overlay .panel > h2 .dim { color: #5a3a0e; }
+body.slice .overlay .panel > .eyebrow { color: #c89b3c; letter-spacing: 0.06em; }
+/* 적 차례 · 내 차례 띠: 납작한 색 띠(그라데이션 속도선) → 크롬 쇠 띠 + 리벳 + 도트 속도선(단색) */
+.tb4 .band { background: none; border-style: solid; border-width: 12px 0; border-image: url('../assets/ui/chrome/btn-brass.png') 4 0 fill / 12px 0 stretch; image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.tb4.foe .band { border-image-source: url('../assets/ui/chrome/btn-crimson.png'); }
+.tb4 .band::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; animation: streak 300ms steps(6) infinite; }
+.tb4.foe .band::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23ff6b6b'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23ff6b6b'/%3E%3C/svg%3E"); }
+.tb4 .glint { background: #fff; }
+.tb4 .txt { text-shadow: 0 3px 0 #000; }
+.tb4:not(.foe) .txt { text-shadow: 0 2px 0 #fff1c0; }
+/* KO 띠: 같은 문법 (먹 테 + 단색 도트 줄무늬) */
+.ko3 .koband::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='4'%3E%3Crect width='14' height='4' fill='%232c2a10'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; }
+.ko3.lose .koband::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='4'%3E%3Crect width='14' height='4' fill='%233a0e12'/%3E%3C/svg%3E"); }
+/* 원수 도발 · 부관 말풍선 · 반장 규칙: 얇은 선 상자 → 크롬 패널 / 움푹 칸 */
+.taunt { background: none; box-shadow: 0 4px 0 #000; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; padding: 0 6px; }
+.tut .tut-talk { background: none; border: 0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; padding: 0 2px; }
+.boss-rules { background: none; box-shadow: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-crimson.png') 4 fill / 8px stretch; image-rendering: pixelated; padding: 0 4px 2px; color: #fff; }
+.boss-rules b { color: #fff1c0; }
+/* 작업대 선택지 등 카드 얼굴이 아닌 .part-card: 얇은 선 상자 → 철 단추(크롬), 누르면 내려감 */
+body.slice .part-card:not(.cf) { background: none; box-shadow: 0 3px 0 #000; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / 8px stretch; image-rendering: pixelated; padding: 6px 4px 8px; }
+body.slice .part-card:not(.cf):active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); translate: 0 2px; box-shadow: 0 1px 0 #000; }
+/* 고물상 머리 줄의 이름도 같은 황동 명패 */
+body.slice .overlay .shop-head > h2 { flex: none; width: auto; margin-right: auto; display: inline-flex; align-items: center; gap: 8px; margin: 0; min-height: 34px; padding: 0 12px; color: #2a1a06; text-shadow: 0 1px 0 #fff1c0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/plate.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 3px 0 #000; }
+body.slice .overlay .shop-head > h2 .dim { color: #5a3a0e; }
