@@ -70,14 +70,14 @@ h1{font:var(--t24);color:var(--brass);margin:0}h2{font:var(--t24);margin:0}p{mar
 .bt[aria-disabled=true]{filter:grayscale(1) brightness(.55);cursor:not-allowed}
 .bt:focus-visible{outline:2px solid var(--brass);outline-offset:4px}
 .bt.big::before,.bt.big::after{content:'';position:absolute;top:50%;background-repeat:no-repeat;image-rendering:pixelated;pointer-events:none}
-.v-D .bt:active>span,.v-D .bt.down>span{transform:translateY(4px)}
+.v-D .bt:active>*,.v-D .bt.down>*{transform:translateY(4px)}
 .v-D .bt.big::before{left:-24px;width:28px;height:60px;margin-top:-32px;background-size:28px 60px;z-index:1}
 .v-D .bt.big::after{right:-12px;width:16px;height:44px;margin-top:-24px;background-size:16px 44px}
 .v-D .bt.big{margin:0 12px 0 22px}
-.v-E .bt:active>span,.v-E .bt.down>span{transform:translateY(4px)}
+.v-E .bt:active>*,.v-E .bt.down>*{transform:translateY(4px)}
 .v-E .bt.big{height:48px;min-height:48px;margin-right:22px;border-right-width:0;border-image-width:18px 0 18px 18px}
 .v-E .bt.big::after{right:-24px;width:24px;height:48px;margin-top:-24px;background-size:24px 48px}
-.v-F .bt:active>span,.v-F .bt.down>span{transform:translateY(2px)}
+.v-F .bt:active>*,.v-F .bt.down>*{transform:translateY(2px)}
 .v-F .bt.big::before,.v-F .bt.big::after{width:24px;height:40px;margin-top:-18px;background-size:24px 40px;z-index:-1}
 .v-F .bt.big::before{left:-18px}.v-F .bt.big::after{right:-18px}
 .v-F .bt.big{margin:0 16px;isolation:isolate}
