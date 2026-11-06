@@ -2209,3 +2209,22 @@ body.between #right, body.between #left { visibility: hidden; }
 .finale .pl-mono.long { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; }
 .finale .pl-tap { position: absolute; right: 16px; bottom: 10px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
 @media (prefers-reduced-motion: reduce) { .fn-sq.fn-pick, .fn-king.laugh, .fn-me.fn-step, .fn-bub { animation: none; } }
+
+/* D-279 크레딧 · 기록 사진 — 한 장씩 계단 프레임으로 (선형 슬라이드 없음) */
+.credits { position: fixed; inset: 0; z-index: 61; display: grid; place-items: center; background: #0b0b0e; text-align: center; }
+.cr-page { display: grid; gap: 8px; justify-items: center; }
+.cr-page.in { animation: crIn 0.32s steps(4) both; }
+@keyframes crIn { 0% { -webkit-mask-image: var(--px3); mask-image: var(--px3); transform: translateY(6px); } 50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { -webkit-mask-image: none; mask-image: none; transform: none; } }
+.cr-title { margin: 0; font: 700 36px Galmuri11, sans-serif; color: #f4d27a; text-shadow: 3px 3px 0 #000; }
+.cr-role { margin: 0; font: 700 12px Galmuri11, sans-serif; color: #c89b3c; letter-spacing: 1px; }
+.cr-name { margin: 0; font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ece8de; }
+.cr-photo { display: flex; gap: 6px; align-items: end; padding: 10px 14px 6px; background: #1c1d22; box-shadow: 0 0 0 2px #000, 0 0 0 4px #e8ddb5, 0 0 0 6px #000; }
+.cr-pc { position: relative; width: 48px; height: 56px; display: grid; place-items: end center; }
+.cr-pc img, .cr-pc canvas { width: 44px; height: 44px; image-rendering: pixelated; }
+.cr-pc .cr-crown { position: absolute; top: 0; left: 50%; width: 28px; height: auto; transform: translateX(-50%) rotate(-8deg); }
+.cr-meta { margin: 0; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
+.cr-rec { margin: 0; font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; }
+.credits .pl-tap { position: absolute; right: 16px; bottom: 10px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
+.op-crown-note { display: inline-flex; gap: 6px; align-items: center; font: 12px Galmuri11, sans-serif; color: #e8ddb5; }
+.op-crown-note img { width: 24px; height: auto; image-rendering: pixelated; transform: rotate(-8deg) scaleY(0.6); }
+@media (prefers-reduced-motion: reduce) { .cr-page.in { animation: none; } }
