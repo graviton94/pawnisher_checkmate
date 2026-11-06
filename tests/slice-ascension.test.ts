@@ -177,6 +177,27 @@ describe('부품 확장 (D-282)', () => {
     if (b.s.winner === null) expect(b.kills).toBe(2);
   });
 });
+describe('부품 확장 2차 (D-287)', () => {
+  it('시작 부품: 방패벽 · 회반죽 · 붉은 눈금 · 냉각수 통 · 초시계', () => {
+    const sq = [{ t: 'K' as const }, { t: 'R' as const }, { t: 'P' as const }];
+    const a = newSliceBattle(sq, ['K', 'P'], START_COMMANDS, 3);
+    const b = newSliceBattle(sq, ['K', 'P'], START_COMMANDS, 3, { parts: ['shieldWall', 'mortar', 'redLine', 'coolant', 'stopwatch'] });
+    const f = (x: typeof a, t: string) => x.s.pieces.find((p) => p.side === 0 && p.type === t)!;
+    expect(f(b, 'P').shield).toBeGreaterThan(f(a, 'P').shield);
+    expect(f(b, 'R').maxHp).toBeGreaterThan(f(a, 'R').maxHp);
+    expect(f(b, 'K').hp).toBeLessThan(f(a, 'K').hp);
+    expect(b.noShock).toBe(true);
+    expect(b.hand.length).toBe(a.hand.length + 2);
+  });
+  it('무거운 플라이휠: 남은 태엽 최대 2가 넘어간다', () => {
+    const a = newSliceBattle(crewKR(), ['K', 'P'], START_COMMANDS, 3);
+    const b = newSliceBattle(crewKR(), ['K', 'P'], START_COMMANDS, 3, { parts: ['flywheel'] });
+    a.ap = 3; b.ap = 3;
+    endT2(a, true);
+    endT2(b, true);
+    if (a.s.winner === null && b.s.winner === null) expect(b.ap).toBe(a.ap + 2);
+  });
+});
 function crewKR() { return [{ t: 'K' as const }, { t: 'R' as const }, { t: 'B' as const }, { t: 'P' as const }]; }
 
 import { STARTER_CARDS, STARTER_PARTS, UNLOCK_ORDER, nextUnlocks, unlockCount } from '../src/data/unlocks';

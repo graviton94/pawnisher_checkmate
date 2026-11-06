@@ -295,6 +295,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   for (const p of s.pieces) if (p.side === 0) {
     if (p.type === 'R' && has(b, 'thickWall')) p.shield += PART_NUM.thickWall;
     if (p.type === 'N' && has(b, 'stirrup')) p.shield += PART_NUM.stirrup;
+    if (p.type === 'P' && has(b, 'shieldWall')) p.shield += PART_NUM.shieldWall;
+    if (p.type === 'R' && has(b, 'mortar')) { p.maxHp = Math.round(p.maxHp * PART_NUM.mortar); p.hp = Math.round(p.hp * PART_NUM.mortar); }
+    if (p.type === 'K' && has(b, 'redLine')) p.hp = Math.max(1, Math.round(p.hp * (1 - PART_NUM.redLineCost)));
     if (p.type === 'P' && has(b, 'thickCast')) { p.maxHp = Math.round(p.maxHp * PART_NUM.thickCast); p.hp = Math.round(p.hp * PART_NUM.thickCast); }
   }
   if (has(b, 'firstSpring')) b.ap += PART_NUM.firstSpring;
@@ -319,7 +322,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     }
   }
   if (opts.mercy) b.mercy = opts.mercy;
-  if (opts.shock === false) b.noShock = true;
+  if (opts.shock === false || has(b, 'coolant')) b.noShock = true;
   b.foeHpK = hpK;
   if (opts.guard) b.guard = opts.guard;
   guardUp(b);
@@ -333,7 +336,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     }
   }
   b.atkK = atkK;
-  drawCards(b, b.handSize);
+  drawCards(b, b.handSize + (has(b, 'stopwatch') ? PART_NUM.stopwatch : 0));
   bossTurnStart(b);
   b.intents = planFor(b);
   markTelegraph(b);
@@ -653,7 +656,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     if (c.carve) p.carve = c.carve;
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
-    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork : 1) * (b.nextMult ?? 1)
+    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork + (has(b, 'mirror') ? PART_NUM.mirror : 0) : 1) * (b.nextMult ?? 1)
       // 부품 확장 (D-282)
       * (has(b, 'vise') && (b.pinned ?? []).length && targetsFrom(b.s, p, to).some((id) => (b.pinned ?? []).includes(id)) ? PART_NUM.vise : 1)
       * (p.type === 'Q' && has(b, 'queenCrown') ? PART_NUM.queenCrown : 1)
@@ -661,7 +664,10 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
       * (grazeOn(b, pieceId, to) && has(b, 'ventHole') ? PART_NUM.ventGraze / SLICE.grazeMult : 1)
       * (b.boss && has(b, 'bossBane') ? PART_NUM.bossBane : 1);
     const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0)
+      // 부품 확장 2차 (D-287)
+      + (p.type === 'N' && has(b, 'jumpSpring') ? PART_NUM.jumpSpring : 0) + (p.type === 'B' && has(b, 'stainedGlass') ? PART_NUM.stainedGlass : 0) + (has(b, 'redLine') ? PART_NUM.redLine : 0)
+      + (has(b, 'calipers') && targetsFrom(b.s, p, to).includes(kingOf(b.s, 1)?.id ?? -1) ? PART_NUM.calipers : 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -709,6 +715,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
       const ids = sim.events.flatMap((e) => (e.type === 'attack' || e.type === 'blast' ? e.hits.filter((h) => !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1 && before.pieces.find((q) => q.id === h.targetId)?.type !== 'K').map((h) => h.targetId) : []));
       b.pinned = [...new Set([...(b.pinned ?? []), ...ids])];
       for (const id of ids) { const q = findPiece(b.s, id); if (q) q.shield = 0; }
+      if (ids.length && has(b, 'pinNeedle') && !b.once.includes('pinNeedle')) { b.once.push('pinNeedle'); gained += 1; events.push({ type: 'apGain', side: 0, amount: 1 }); }
       if (ids.length && has(b, 'chainReel')) { const me = findPiece(b.s, pieceId); if (me) { me.shield += PART_NUM.chainReel; events.push({ type: 'shield', pieceId: me.id, amount: PART_NUM.chainReel }); } }
     }
     if (grazed) {
@@ -725,6 +732,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.kills += chainGain(b, k, c.chainPerKill);
     // 연쇄 사슬: 충돌로 쓰러뜨린 적마다 연쇄 +1
     if (has(b, 'chainShot')) b.kills += PART_NUM.chainShotGain * sim.events.filter((e) => e.type === 'blast').reduce((a, e) => a + (e.type === 'blast' ? e.hits.filter((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1).length : 0), 0);
+    // 반동 용수철 (D-287): 충돌로 쓰러뜨리면 태엽 +1 (턴에 한 번)
+    if (has(b, 'recoilSpring') && !b.once.includes('recoilSpring') && sim.events.some((e) => e.type === 'blast' && e.hits.some((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1))) { b.once.push('recoilSpring'); gained += 1; }
     // 둘레의 폰이 따라 전진한다 (기마 돌격 · 근위대)
     const landed = findPiece(b.s, pieceId);
     if (c.rally && landed && b.s.winner === null) {
@@ -756,7 +765,13 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         gained += k;
         events.push({ type: 'apGain', side: 0, amount: k });
       }
-      drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0) + (p.type === 'B' && has(b, 'rosary') ? k : 0));
+      drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0) + (p.type === 'B' && has(b, 'rosary') ? k : 0) + (p.type === 'K' && has(b, 'royalSeal') ? PART_NUM.royalSeal : 0));
+      // 부품 확장 2차 (D-287): 기물별 처치 받침
+      const once1 = (id: string): boolean => (b.once.includes(id) ? false : (b.once.push(id), true));
+      if ((p.type === 'P' && has(b, 'whistle') && once1('whistle')) || (p.type === 'Q' && has(b, 'queenFan') && once1('queenFan'))) { gained += 1; events.push({ type: 'apGain', side: 0, amount: 1 }); }
+      const me = findPiece(b.s, pieceId);
+      const sh = me ? (me.type === 'N' && has(b, 'saddle') ? PART_NUM.saddle : 0) + (me.type === 'R' && has(b, 'rampart') ? PART_NUM.rampart : 0) : 0;
+      if (me && sh) { me.shield += sh; events.push({ type: 'shield', pieceId: me.id, amount: sh }); }
     }
     // 금박 끝 줄 (D-282): 폰이 승격하면 카드 +2 · 태엽 +1
     if (has(b, 'goldRank') && events.some((e) => e.type === 'promote')) { drawCards(b, 2); gained += 1; events.push({ type: 'apGain', side: 0, amount: 1 }); }
@@ -850,6 +865,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
       events = [{ type: 'blast', pos: k ? { x: k.x, y: k.y } : { x: 0, y: 0 }, label: '증기 폭발!', hits, fx: 'steam' }];
     }
   }
+  // 셈 막대 (D-287): 연쇄가 4에 닿으면 카드 +2 (턴에 한 번)
+  if (has(b, 'tally') && b.kills >= PART_NUM.tallyAt && !b.once.includes('tally')) { b.once.push('tally'); drawCards(b, PART_NUM.tallyDraw); }
   // 도화선: 이번 턴 연쇄가 3에 닿으면 한 장 (턴에 한 번)
   if (has(b, 'fuse') && b.kills >= PART_NUM.fuseAt && !b.once.includes('fuse')) {
     b.once.push('fuse');
@@ -1239,7 +1256,8 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.turn += 1;
     b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
     // 도금 방패: 지난 적 차례에 킹이 맞았으면 태엽 +1
-    b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0));
+    // 무거운 플라이휠 (D-287): 남은 태엽 최대 2가 넘어간다
+    b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0) + (has(b, 'flywheel') ? Math.min(PART_NUM.flywheel, Math.max(0, b.ap)) : 0));
     // 잔열 (D-282): 연쇄 절반이 남는다
     b.kills = has(b, 'afterheat') ? Math.floor(b.kills / 2) : 0;
     // 땜질 도구함 (D-282): 가장 다친 내 기물 HP +4

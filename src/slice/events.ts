@@ -1,7 +1,7 @@
 import type { PieceType } from '../engine';
 import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
-import { COMMANDS, isRefined, REWARD_COMMANDS, refineOnce, rustOnce, type CommandId } from './cards';
+import { COMMANDS, isRefined, isRusted, REWARD_COMMANDS, refineOnce, rustOnce, SLICE, type CommandId } from './cards';
 import type { Crew } from './crew';
 import { crewMaxHp } from './battle';
 
@@ -9,7 +9,9 @@ import { crewMaxHp } from './battle';
  * 사건 (R5-3, D-170): 본편 돌발 12종(D-158 문체)을 시험판 체계(분대원 · 카드 · 부품 · 나사)로 옮겼다.
  * 효과는 순수 함수 — 화면은 결과 문구와 후속(부품 고르기)만 받는다. 무작위가 걸린 선택은 「?」(말투 원칙 11).
  */
-export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe' | 'counterweight' | 'conveyor' | 'oilMerchant' | 'blueprint' | 'scrapTrade';
+export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe' | 'counterweight' | 'conveyor' | 'oilMerchant' | 'blueprint' | 'scrapTrade'
+  // 사건 2차 (D-287)
+  | 'lostPawn' | 'scrapHeap' | 'rustBath' | 'drillRook' | 'cardSharp' | 'castMold' | 'crownAltar' | 'duelKnight' | 'bookCart' | 'sleepingKing' | 'echoWell' | 'copyPress' | 'fieldMedic' | 'coldForge' | 'tollGate' | 'mirrorHall' | 'overtime';
 
 /** 사건이 바꿀 수 있는 출하 상태 */
 export interface EventState {
@@ -100,6 +102,10 @@ const oneHurt = (s: EventState, pct: number): string => {
   s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? max) - max * pct)) } : x));
   return u.name ?? NAMES[u.t];
 };
+/** 분대가 가득 찼으면 이유 (새 분대원이 드는 선택지) */
+const full = (s: EventState): string | null => (s.squad.length >= SLICE.squadMax ? '분대가 가득 찼습니다' : null);
+/** 분대원 n명이 각각 pct만큼 HP를 잃는다 (가장 성한 쪽부터 · 킹 제외) — 이름들을 돌려준다 */
+const someHurt = (s: EventState, n: number, pct: number): string => Array.from({ length: n }, () => oneHurt(s, pct)).filter((x, i, a) => a.indexOf(x) === i).join(' · ');
 const poor = (n: number) => (s: EventState) => (s.gold < n ? `나사 ${n} 필요` : null);
 const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', apply: () => ({ text: '당신은 발걸음을 돌린다.' }) });
 
@@ -355,6 +361,238 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     choices: [
       { label: '나사 100을 낼까?', desc: '부품 하나를 고른다', blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고 상자 하나가 밀려 나온다.', partPick: true }; } },
       leave('지나가기'),
+    ],
+  },
+  // ---- 사건 2차 (D-287, 대과제 3-3): 거래 · 내기 · 덱 손질 · 분대 — 장면 그림은 발주서 V-19 ~ V-35 ----
+  lostPawn: {
+    title: '길 잃은 폰',
+    text: '포장 라인에서 떨어져 나온 폰 하나가 길가에 서 있다. 등에 붙은 출하표가 반쯤 찢겨 있다. “…출구가 어느 쪽이에요?”',
+    choices: [
+      { label: '데려간다', desc: '폰 하나가 분대에 든다', blocked: full, apply: () => ({ text: '폰이 당신의 줄 맨 끝에 붙는다.', recruit: 'P' }) },
+      { label: '길을 알려 준다', desc: '나사 +25', apply: (s) => { s.gold += 25; return { text: '폰이 주머니를 털어 나사를 내민다. (나사 +25)' }; } },
+      leave('지나가기'),
+    ],
+  },
+  scrapHeap: {
+    title: '고철 더미',
+    text: '녹슨 고철이 산처럼 쌓여 있다. 그 아래 어딘가에서 나사 구르는 소리가 난다. 더미가 삐걱인다.',
+    choices: [
+      { label: '파고들까?', desc: '60%: 나사 +70 · 40%: 분대원 하나 HP −40%', apply: (s, rng) => {
+        if (rng.int(10) < 6) { s.gold += 70; return { slot: 0, text: '고철 틈에서 나사 주머니가 딸려 나온다. (나사 +70)' }; }
+        const who = oneHurt(s, 0.4);
+        return { slot: 1, text: `더미가 무너진다. ${josa(who, '이')} 깔린다. (HP −40%)` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  rustBath: {
+    title: '녹 벗기는 통',
+    text: '시큼한 냄새가 나는 통 옆에서 비숍 하나가 장갑을 낀다. “녹슨 명령서는 이리. 한 장에 나사 스물.”',
+    choices: [
+      { label: '녹슨 카드를 맡긴다', desc: '녹슨 카드의 녹을 벗긴다 (장당 나사 20)', blocked: (s) => (!s.deck.some(isRusted) ? '녹슨 카드 없음' : s.gold < 20 ? '나사 20 필요' : null), apply: (s) => {
+        const done: string[] = [];
+        s.deck = s.deck.map((id) => { if (!isRusted(id) || s.gold < 20) return id; s.gold -= 20; done.push(COMMANDS[id].name); return refineOnce(id); });
+        return { text: `통에서 꺼낸 명령서가 다시 빛난다. ${done.join(' · ')}` };
+      } },
+      { label: '통째로 담글까?', desc: '50%: 카드 2장 다듬기 · 50%: 카드 2장 녹슨다', apply: (s, rng) => {
+        if (rng.int(2) === 0) return { slot: 0, text: `산이 군살만 벗겨 낸다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` };
+        const hit: string[] = [];
+        for (let n = 0; n < 2; n++) { const k = rng.int(s.deck.length); if (!isRusted(s.deck[k])) { hit.push(COMMANDS[s.deck[k]].name); s.deck[k] = rustOnce(s.deck[k]); } }
+        return { slot: 1, text: `산이 너무 진하다. ${hit.join(' · ') || '명령서'} — 녹이 슨다.` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  drillRook: {
+    title: '교관 룩',
+    text: '연병장 한가운데 룩이 버티고 서 있다. “한 놈 보내라. 하루 만에 쇠로 만들어 주지. 살아남는다면.”',
+    choices: [
+      { label: '하나를 맡긴다', desc: '가장 덜 싸운 분대원 · 문턱 +1 · 그 분대원 HP −40%', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
+        const u = [...nonKing(s)].sort((a, b) => (a.kills ?? 0) - (b.kills ?? 0))[0];
+        const max = crewMaxHp(u);
+        s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.4)) } : x));
+        return { text: `${josa(u.name ?? NAMES[u.t], '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (문턱 +1 · HP −40%)` };
+      } },
+      leave('거절하기'),
+    ],
+  },
+  cardSharp: {
+    title: '명령서 사기꾼',
+    text: '뒤집힌 상자 위에서 흑 비숍이 명령서를 섞는다. “한 장 팔 테냐, 한 장 살 테냐.”',
+    choices: [
+      { label: '한 장 판다', desc: '무작위 카드 1장 → 나사 +45', blocked: (s) => (s.deck.length > 6 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
+        const id = s.deck.splice(rng.int(s.deck.length), 1)[0];
+        s.gold += 45;
+        return { text: `${josa(COMMANDS[id].name, '이')} 비숍의 소매 속으로 사라진다. (나사 +45)` };
+      } },
+      { label: '나사 55를 낼까?', desc: '새 카드 1장 (무엇일지는 모른다)', blocked: poor(55), apply: (s, rng) => {
+        s.gold -= 55;
+        const id = REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
+        s.deck.push(id);
+        return { text: `비숍이 한 장을 뒤집어 내민다. ${COMMANDS[id].name}.` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  castMold: {
+    title: '버려진 주물틀',
+    text: '식은 주물틀이 열린 채 놓여 있다. 안쪽에 폰 모양이 새겨져 있다. 국자에는 쇳물이 조금 남았다.',
+    choices: [
+      { label: '쇳물을 부어 볼까?', desc: '50%: 폰 하나가 분대에 든다 · 50%: 분대원 하나 HP −45%', blocked: full, apply: (s, rng) => {
+        if (rng.int(2) === 0) return { slot: 0, text: '틀이 갈라지며 갓 굳은 폰이 일어선다.', recruit: 'P' };
+        const who = oneHurt(s, 0.45);
+        return { slot: 1, text: `쇳물이 튄다. ${josa(who, '이')} 데인다. (HP −45%)` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  crownAltar: {
+    title: '녹슨 왕관 제단',
+    text: '부서진 제단 위에 녹슨 왕관 하나가 놓여 있다. 그 앞 접시에 나사가 수북하다. 누군가 바치고 간 것이다.',
+    choices: [
+      { label: '가진 나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹 아래에서 무언가가 빛난다.', partPick: true, elite: true }; } },
+      { label: '접시의 나사를 가져갈까?', desc: '50%: 나사 +80 · 50%: 분대원 둘 HP −30%', apply: (s, rng) => {
+        if (rng.int(2) === 0) { s.gold += 80; return { slot: 0, text: '아무 일도 일어나지 않는다. 접시가 가벼워진다. (나사 +80)' }; }
+        const who = someHurt(s, 2, 0.3);
+        return { slot: 1, text: `제단이 무너져 내린다. ${who} — 파편에 긁힌다. (HP −30%)` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  duelKnight: {
+    title: '결투하는 나이트',
+    text: '길 한가운데 나이트 하나가 창을 세운다. “너희 중 가장 센 놈. 한 판.”',
+    choices: [
+      { label: '결투를 받을까?', desc: '60%: 문턱 +1 · 나사 +40 · 40%: 심장 톱니가 깨진다', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
+        const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t])[0];
+        if (rng.int(10) < 6) {
+          s.gold += 40;
+          s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1 } : x));
+          return { slot: 0, text: `${josa(u.name ?? NAMES[u.t], '이')} 창을 쳐낸다. 나이트가 말에서 떨어진다. (문턱 +1 · 나사 +40)` };
+        }
+        s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
+        return { slot: 1, text: `창끝이 ${u.name ?? NAMES[u.t]}의 가슴을 꿰뚫는다. 심장 톱니에 금이 간다.` };
+      } },
+      leave('비켜 간다'),
+    ],
+  },
+  bookCart: {
+    title: '기보 수레',
+    text: '낡은 기보를 실은 수레가 멈춘다. 책장 사이에 접힌 명령서가 끼워져 있다. “한 권 나사 예순. 수읽기는 덤이다.”',
+    choices: [
+      { label: '나사 60을 낼까?', desc: '수읽기 카드 2장', blocked: poor(60), apply: (s, rng) => {
+        s.gold -= 60;
+        const pool = REWARD_COMMANDS.filter((id) => COMMANDS[id].axis === 'tactic' || COMMANDS[id].axis2 === 'tactic');
+        const got: string[] = [];
+        for (let n = 0; n < 2 && pool.length; n++) { const id = pool[rng.int(pool.length)]; s.deck.push(id); got.push(COMMANDS[id].name); }
+        return { text: `책장 사이에서 명령서 두 장이 떨어진다. ${got.join(' · ')}` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  sleepingKing: {
+    title: '조는 남의 킹',
+    text: '다른 공장의 킹이 포장대 옆에서 졸고 있다. 왕관에 박힌 보석이 반짝인다. 호위는 보이지 않는다.',
+    choices: [
+      { label: '보석을 뽑을까?', desc: '50%: 나사 +110 · 50%: 분대원 둘 HP −35%', apply: (s, rng) => {
+        if (rng.int(2) === 0) { s.gold += 110; return { slot: 0, text: '보석이 소리 없이 빠진다. 킹은 계속 존다. (나사 +110)' }; }
+        const who = someHurt(s, 2, 0.35);
+        return { slot: 1, text: `킹의 눈이 뜨인다. 홀이 휘둘린다. ${who} — 얻어맞는다. (HP −35%)` };
+      } },
+      leave('조용히 지나간다'),
+    ],
+  },
+  echoWell: {
+    title: '메아리 우물',
+    text: '마른 우물 바닥에서 당신의 발소리가 늦게 돌아온다. 무엇을 던지면, 그것만 돌아오지 않는다.',
+    choices: [
+      { label: '카드 한 장을 던진다', desc: '녹슨 카드 하나 (없으면 무작위 카드) 영영 뺀다', blocked: (s) => (s.deck.length > 6 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
+        const rusted = s.deck.map((id, k) => [id, k] as const).filter(([id]) => isRusted(id));
+        const k = rusted.length ? rusted[rng.int(rusted.length)][1] : rng.int(s.deck.length);
+        const id = s.deck.splice(k, 1)[0];
+        return { text: `${josa(COMMANDS[id].name, '이')} 어둠 속으로 떨어진다. 메아리가 돌아오지 않는다.` };
+      } },
+      { label: '나사 30을 던질까?', desc: '50%: 나사 +70 · 50%: 아무 일도 없다', blocked: poor(30), apply: (s, rng) => {
+        s.gold -= 30;
+        if (rng.int(2) === 0) { s.gold += 70; return { slot: 0, text: '나사 소리가 두 배로 돌아온다. 우물 벽 틈에서 나사가 쏟아진다. (나사 +40)' }; }
+        return { slot: 1, text: '나사가 바닥에 닿는 소리조차 들리지 않는다. (나사 −30)' };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  copyPress: {
+    title: '낡은 압인기',
+    text: '명령서를 찍어 내던 압인기가 멈춰 서 있다. 레버 옆에 긁어 쓴 글씨가 있다. 「한 장 넣으면 두 장」.',
+    choices: [
+      { label: '나사 50을 낼까?', desc: '무작위 카드 1장 복제', blocked: poor(50), apply: (s, rng) => {
+        s.gold -= 50;
+        const ok = s.deck.filter((id) => !isRusted(id));
+        const id = ok.length ? ok[rng.int(ok.length)] : s.deck[rng.int(s.deck.length)];
+        s.deck.push(id);
+        return { text: `압인기가 쿵 내려앉는다. ${josa(COMMANDS[id].name, '이')} 두 장이 된다.` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  fieldMedic: {
+    title: '순회 수리 비숍',
+    text: '구급 가방을 멘 비숍이 깨진 톱니를 찾아 분대를 훑는다. “고쳐 주지. 대신 명령서 한 장이 녹슨다. 기름이 모자라거든.”',
+    choices: [
+      { label: '맡긴다', desc: '깨진 심장 톱니 하나 수리 · 무작위 카드 1장 녹슨다', blocked: (s) => (s.squad.some((u) => u.cracked) ? null : '깨진 심장 톱니 없음'), apply: (s, rng) => {
+        const u = s.squad.find((x) => x.cracked)!;
+        s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: false } : x));
+        const ks = s.deck.map((id, k) => [id, k] as const).filter(([id]) => !isRusted(id));
+        const o = ks.length ? ks[rng.int(ks.length)] : null;
+        if (o) s.deck[o[1]] = rustOnce(o[0]);
+        return { text: `${u.name ?? NAMES[u.t]}의 가슴에서 새 톱니가 돈다.${o ? ` 대신 ${josa(COMMANDS[o[0]].name, '이')} 녹슨다.` : ''}` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  coldForge: {
+    title: '식은 대장간',
+    text: '주인 없는 대장간. 모루는 식었지만 화로는 다시 지필 수 있다. 풀무가 무겁다.',
+    choices: [
+      { label: '풀무를 밟는다', desc: '카드 1장 다듬기 · 분대원 하나 HP −25%', blocked: (s) => (refinable(s).length ? null : '다듬을 카드 없음'), apply: (s, rng) => {
+        const who = oneHurt(s, 0.25);
+        return { text: `${josa(who, '이')} 풀무를 밟는다. 불이 붙는다. ${refineRandom(s, rng)}` };
+      } },
+      leave('지나가기'),
+    ],
+  },
+  tollGate: {
+    title: '통행 문',
+    text: '쇠창살 문 앞에 룩 둘이 버티고 있다. 팻말이 걸려 있다. 「통행세 나사 40」. 문 옆 상자에서 나사 소리가 난다.',
+    choices: [
+      { label: '나사 40을 낸다', desc: '분대 전원 HP +20% (초소에서 쉰다)', blocked: poor(40), apply: (s) => { s.gold -= 40; hpRatio(s, 0.2); return { text: '룩들이 비켜선다. 초소의 난로가 분대를 녹인다. (HP +20%)' }; } },
+      { label: '문을 부술까?', desc: '60%: 나사 +60 · 40%: 분대원 하나 HP −60%', apply: (s, rng) => {
+        if (rng.int(10) < 6) { s.gold += 60; return { slot: 0, text: '창살이 휜다. 룩들이 달아나고 상자가 남는다. (나사 +60)' }; }
+        const who = oneHurt(s, 0.6);
+        return { slot: 1, text: `룩이 버틴다. ${josa(who, '이')} 문짝에 부딪혀 나뒹군다. (HP −60%)` };
+      } },
+      leave('돌아간다'),
+    ],
+  },
+  mirrorHall: {
+    title: '거울 복도',
+    text: '양쪽 벽이 모두 거울이다. 분대원 하나의 그림자가 거울 속에서 한 발 늦게 움직인다.',
+    choices: [
+      { label: '그림자를 붙잡을까?', desc: '50%: 같은 기물 하나가 분대에 든다 · 50%: 그 분대원 HP −50%', blocked: (s) => (!nonKing(s).length ? '분대원 필요' : full(s)), apply: (s, rng) => {
+        const u = pick(rng, nonKing(s))!;
+        if (rng.int(2) === 0) return { slot: 0, text: `거울 속 ${josa(u.name ?? NAMES[u.t], '이')} 걸어 나온다. 하나가 둘이 된다.`, recruit: u.t };
+        const max = crewMaxHp(u);
+        s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.5)) } : x));
+        return { slot: 1, text: `거울이 깨진다. 파편이 ${josa(u.name ?? NAMES[u.t], '을')} 벤다. (HP −50%)` };
+      } },
+      leave('눈을 돌린다'),
+    ],
+  },
+  overtime: {
+    title: '연장 근무',
+    text: '라인의 사이렌이 울린다. 감독 룩이 소리친다. “연장이다! 한 바퀴 더 돌면 수당이 두 배!”',
+    choices: [
+      { label: '연장을 뛴다', desc: '분대 전원 HP −20% · 나사 +90', apply: (s) => { hpRatio(s, -0.2); s.gold += 90; return { text: '라인이 밤새 돈다. 분대가 휘청이며 수당을 받는다. (HP −20% · 나사 +90)' }; } },
+      { label: '쉬겠다고 한다', desc: '분대 전원 HP +15%', apply: (s) => { hpRatio(s, 0.15); return { text: '감독이 혀를 찬다. 분대는 구석에서 눈을 붙인다. (HP +15%)' }; } },
     ],
   },
 };

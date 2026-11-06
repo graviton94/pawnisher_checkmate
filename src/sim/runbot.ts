@@ -123,7 +123,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             ok = true;
             const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
             fell = cs.scrapped;
-            gold += Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10));
+            gold += Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10)) + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
             squad = [...restSquad(squadAfter(b, squad)), ...cs.back];
           }
         }

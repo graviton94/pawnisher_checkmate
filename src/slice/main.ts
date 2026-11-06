@@ -2248,7 +2248,7 @@ const finishNow = (): void => {
     if (notes.length) window.setTimeout(() => toast(notes.join(' · '), 3600), 300);
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
     const overGold = Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10));
-    const earned = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + overGold;
+    const earned = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + overGold + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
     gold += earned;
     // 나사 받기 (D-184): 판 가운데서 도트 나사가 튀어 올라 나사 칸으로 빨려 든다
     { const r = $('board').getBoundingClientRect(); screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, $('coins'), Math.round(earned / 6)); }
@@ -2332,7 +2332,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     // 칸마다 등급을 먼저 뽑는다 (D-216) — 그 축에 그 등급이 없으면 아무 등급
     const elite = !!cur.boss || cur.reward === 'part' || partDone;
     for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
-      if (offers.length >= (closeTier === 2 ? 4 : 3) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0)) break;
+      if (offers.length >= (closeTier === 2 ? 4 : 3) + (parts.includes('loupe') ? 1 : 0) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0)) break;
       const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id) && isOpen(id));
       const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
       const same = pool.filter((id) => gradeOf(id) === g);

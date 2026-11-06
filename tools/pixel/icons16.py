@@ -1439,11 +1439,30 @@ icon('c.smash', '분쇄', g.done())
 KEEP_OLD = {'n.check', 'c.finisher', 'c.repair', 'banner', 'greed', 'bloodPact', 'n.chest'}
 
 
+# ── 부품 확장 1 · 2차 전용 아이콘 (D-287): 빌려 쓰던 42장 → 새 키 (그림은 icons16_v2/batch_E~H.py)
+PART_KEYS = {
+    'whetstone': '닳은 숫돌', 'vise': '죔쇠', 'forkGear': '갈래 톱니', 'openGate': '열린 문', 'chainReel': '쇠사슬 감개', 'gameRecord': '낡은 기보',
+    'gateHinge': '성문 경첩', 'queenCrown': '여왕의 관', 'lightCloak': '가벼운 망토', 'goldRank': '금박 끝 줄', 'thickWall': '두꺼운 성벽',
+    'rosary': '사제의 묵주', 'stirrup': '기수의 등자', 'thickCast': '두꺼운 주물', 'scrapMagnet': '고철 자석', 'firstSpring': '선제 태엽',
+    'lastAxle': '버팀 축', 'toolbox': '땜질 도구함', 'ventHole': '바람 구멍', 'afterheat': '잔열', 'bossBane': '반장 사냥꾼', 'lightMag': '가벼운 탄창',
+    'mirror': '쌍거울', 'pinNeedle': '고정 바늘', 'whistle': '행군 호루라기', 'shieldWall': '방패벽', 'jumpSpring': '도약 용수철', 'saddle': '철 안장',
+    'royalSeal': '옥새', 'queenFan': '여왕의 부채', 'rampart': '성가퀴', 'recoilSpring': '반동 용수철', 'mortar': '회반죽', 'tally': '셈 막대',
+    'stainedGlass': '색유리', 'flywheel': '무거운 플라이휠', 'redLine': '붉은 눈금', 'coolant': '냉각수 통', 'piggyGear': '저금 톱니',
+    'loupe': '확대경', 'stopwatch': '초시계', 'calipers': '캘리퍼스',
+}
+for _k, _n in PART_KEYS.items():
+    if _k not in ICONS:
+        icon(_k, _n, [])
+
+
 def _load_v2():
     import runpy
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icons16_v2')
-    for b in 'ABCD':
-        for k, rows in runpy.run_path(os.path.join(here, f'batch_{b}.py'))['NEW'].items():
+    for b in 'ABCDEFGH':
+        f = os.path.join(here, f'batch_{b}.py')
+        if not os.path.exists(f):
+            continue
+        for k, rows in runpy.run_path(f)['NEW'].items():
             if k in ICONS and k not in KEEP_OLD:
                 ICONS[k] = rows
 
