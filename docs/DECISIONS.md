@@ -2115,3 +2115,8 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - 그리개 `tools/pixel/icons32.py`: 32×32 글자 + 칸마다 견본(재질 램프 0 ~ 6) — 명암을 직접 칠하고, 바깥선만 자동. 원본 `tools/pixel/icons32_src/I-0N.py` → `build` → `tools/pixel/icons32/<키>.png` → `icons16.py export`가 게임 그림으로.
 - 그리는 원칙 `tools/pixel/icons32_src/BRIEF.md`: 사용자가 준 레퍼런스(32px 체스 기물 steampunk_brass · ember_forge · copper_patina, 황동 램프, 톱니, 16px 아이템 1,243장)의 원칙 — 실루엣 · 빛 왼위 4 ~ 5단 · 덩어리 명암 · 셀아웃 안쪽 선 · 고른 곡선 계단. 도트는 베끼지 않는다.
 - 순서: 가장 덜 읽히던 I-04(마구 · 집게) · I-01(긴 무기)을 먼저 그려 검수 → 나머지 8시트.
+
+## D-292 버튼 · 판 시안 (사용자: 「버튼이나 사각형 디자인 — 웹사이트 버튼보다 못하다. 시안 가져와」) — 고르기 전
+- 지금 단추(12×12, 단색 판 + 빛 한 줄)는 두께 · 재질 · 눌리는 맛이 없다. 세 갈래를 1도트 = 1px로 찍었다 (`tools/draw-chrome2.py` → `build-res/ui-proposals/`): A 리벳 명판(옆면 3도트 · 리벳 넷) · B 주물 키캡(깎은 모서리 · 새긴 홈 · 옆면 4도트) · C 쇠틀 모서리(다른 금속 L자 쇠붙이 + 나사). 판: PA 리벳 철판 · PB 황동 테 + 우물 · PC 움푹한 칸 · 이름판.
+- 18×18, 9-slice 8 7 8 7 — 리벳 · 홈 · 쇠붙이는 모서리 칸 안에만(늘어나는 칸에 걸리면 번진다). 장식은 테두리보다 넓게 그려 글자 자리를 지킨다(border-image-width > border-width).
+- 시안 페이지(아티팩트 「버튼 · 판 시안」, `tools/ui-proposal-page.py`) — 사용자가 고르면 `src/assets/ui/chrome`에 갈아 끼우고 모든 화면을 다시 찍는다.
