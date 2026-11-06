@@ -23,7 +23,7 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   // 설계 보정: 맹세(사용자 결정 — 폰 전용 고등급) 황금, 탐욕의 저울(나사 두 배 — 경제는 봇이 못 잰다) · 되감는 테이프(봇은 되감기를 안 쓴다) 희귀
   bloodPact: 'gold', hammer: 'gold', whetstone: 'gold', coil: 'gold',
   // 부품 확장 (D-282) — 설계 등급
-  vise: 'rare', gameRecord: 'rare', queenCrown: 'rare', lightCloak: 'rare', lastAxle: 'rare', ventHole: 'rare', afterheat: 'gold', bossBane: 'rare', lightMag: 'rare',
+  toolbox: 'rare', vise: 'rare', gameRecord: 'rare', queenCrown: 'rare', lightCloak: 'rare', lastAxle: 'rare', ventHole: 'rare', afterheat: 'gold', bossBane: 'rare', lightMag: 'rare',
   bishopLens: 'rare', rookBolt: 'rare', crown: 'rare', lance: 'rare', anvilPlate: 'rare', spare: 'rare', drum: 'rare', assembly: 'rare', brittle: 'rare', gilded: 'rare', throne: 'rare', conductor: 'rare', greed: 'rare', tape: 'rare', oath: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
