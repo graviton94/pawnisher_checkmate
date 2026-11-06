@@ -8,6 +8,8 @@ export const HUD_TEXT = {
   /** 첫 출하 (D-233): 「회피 반격」이라는 이름 없이 행동만 */
   grazePlain: '빠지며 치기 — ×1.5 · 카드 +1',
   /** 새 용어가 사전에 들어왔다 (D-233) */
+  /** 경보 반장 (D-274) — ⑨ 표지 */
+  alarm: '경보 — 이번 적 차례 공격 ×1.5',
   newTerm: (names: string) => `새 용어 「${names}」 — ? 의 「용어」에서 볼 수 있습니다.`,
   shock: '기어 쇼크 — 예고 공격을 맞은 기물은 이번 턴 공격이 약해지고, 손패가 한 장 줄었습니다. (×0.5)',
   /** 헛방 경직 → 「기절」 평문 (D-233: 고유 명사를 지우고 별 딱지 + 평문으로) */
@@ -105,7 +107,10 @@ export const KEYWORDS: [string, string, TermGate][] = [
 ];
 
 /** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */
-export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded', string> = {
+export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm', string> = {
+  inspect: '틀린 것을 찾는 렌즈',
+  magnet: '제자리로 끌어당기는 자',
+  alarm: '시간을 세는 붉은 등',
   plate: '용광로를 등에 진 자',
   spawn: '끝없이 찍어 내는 손',
   thorns: '가시 갑옷의 문지기',

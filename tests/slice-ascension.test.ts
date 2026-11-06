@@ -33,3 +33,53 @@ describe('승급 13단 — 규격판 조항 (D-273)', () => {
     expect(b.atkK).toBeCloseTo(a.atkK! * ASC_NUM.enemyAtk);
   });
 });
+
+import { endTurn as endT } from '../src/slice/battle';
+import { BOSS_NUM, BOSS_PAIRS } from '../src/slice/cards';
+import { buildRun } from '../src/slice/run';
+
+const crew = [{ t: 'K' as const }, { t: 'R' as const }, { t: 'N' as const }, { t: 'P' as const }];
+
+describe('새 반장 셋 (D-274)', () => {
+  it('막마다 반장은 둘 중 하나 · 처음 출하는 처음 반장', () => {
+    const seen = new Set<string>();
+    for (let s = 1; s <= 40; s++) for (const [i, a] of buildRun(s).slice(0, 3).entries()) {
+      const r = a.rows.at(-1)![0].battle!.bossRule!;
+      expect(BOSS_PAIRS[i]).toContain(r);
+      seen.add(r);
+    }
+    expect(seen.size).toBe(6);
+    expect(buildRun(5, 0, true).slice(0, 3).map((a) => a.rows.at(-1)![0].battle!.bossRule)).toEqual(['plate', 'spawn', 'thorns']);
+  });
+  it('검수: 첫 턴부터 가장 센 내 기물에 도장', () => {
+    const b = newSliceBattle(crew, ['K', 'P', 'P'], START_COMMANDS, 3, { boss: true, bossRule: 'inspect' });
+    const strongest = b.s.pieces.filter((p) => p.side === 0 && p.type !== 'K').sort((x, y) => y.atk - x.atk || x.id - y.id)[0];
+    expect(b.stampId).toBe(strongest.id);
+  });
+  it('자석: 끌려갈 기물을 예고하고, 적 차례 끝에 한 칸 끌려간다', () => {
+    const b = newSliceBattle(crew, ['K', 'P'], START_COMMANDS, 3, { boss: true, bossRule: 'magnet', width: 6, height: 6 });
+    expect(b.pull).toBeTruthy();
+    const { id, to } = b.pull!;
+    const r = endT(b, true);
+    if (r === 'warn') throw new Error('warn');
+    const p = b.s.pieces.find((q) => q.id === id);
+    const moved = r.events.some((e) => e.type === 'move' && e.pieceId === id && e.to.x === to.x && e.to.y === to.y);
+    // 끌려갈 칸을 적이 먼저 차지했으면 끌려가지 않는다
+    const blocked = b.s.pieces.some((q) => q.id !== id && q.x === to.x && q.y === to.y);
+    if (p && b.s.winner === null) expect(moved || blocked).toBe(true);
+    if (moved) expect([p!.x, p!.y]).toEqual([to.x, to.y]);
+  });
+  it('경보: 눈금이 차면 그 차례 적 공격이 오르고, 끝나면 되돌아간다', () => {
+    const b = newSliceBattle(crew, ['K', 'R'], START_COMMANDS, 3, { boss: true, bossRule: 'alarm' });
+    const rook = b.s.pieces.find((p) => p.side === 1 && p.type === 'R')!;
+    const base = rook.atk;
+    for (let i = 0; i < BOSS_NUM.alarmFull - 1 && b.s.winner === null; i++) { const r = endT(b, true); if (r === 'warn') break; }
+    if (b.s.winner === null) {
+      expect(b.alarmAtk).toBeTruthy();
+      expect(b.s.pieces.find((p) => p.id === rook.id)?.atk).toBe(Math.round(base * BOSS_NUM.alarmMult));
+      endT(b, true);
+      const r2 = b.s.pieces.find((p) => p.id === rook.id);
+      if (r2 && b.s.winner === null) expect(r2.atk).toBe(base);
+    }
+  });
+});

@@ -272,14 +272,21 @@ export const FOE = {
  * 막별 반장 규칙 (R5-4, D-171): 반장마다 빌드에 던지는 질문 하나 + 레일 표시 문구.
  * plate = 철갑 · 줄 폭격(1막) · spawn = 2턴마다 킹 곁에 폰(2막 — 빨리 끝낼 수 있나) · thorns = 철갑 + 맞으면 되받아침(3막 — 한 방에 몰아칠 수 있나)
  */
-export type BossRule = 'plate' | 'spawn' | 'thorns' | 'gilded';
+export type BossRule = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
+/** 막마다 반장 둘 중 하나 (D-274): 1막 철갑 · 검수 · 2막 조립 · 자석 · 3막 출하 · 경보 */
+export const BOSS_PAIRS: [BossRule, BossRule][] = [['plate', 'inspect'], ['spawn', 'magnet'], ['thorns', 'alarm']];
+/** 새 반장의 판 · 기물 색 · 등장 FX는 같은 막 반장의 것을 빌린다 (전용 그림이 오기 전까지) */
+export const bossSkin = (r: BossRule): 'plate' | 'spawn' | 'thorns' | 'gilded' => (r === 'inspect' ? 'plate' : r === 'magnet' ? 'spawn' : r === 'alarm' ? 'thorns' : r);
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
   plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '첫 턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
   spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '첫 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
   gilded: { name: '도금왕', lines: ['금칠 방열판 · 2턴마다 다시', '폰 찍어 내기 · 줄 폭격 · 되받아침'], tell: '앞의 세 반장이 쓰던 것을 모두 씁니다 — 홀수 턴엔 곁에 폰을 찍어 내고, 짝수 턴엔 한 줄을 불태우고, 못 쓰러뜨린 공격은 가시로 돌려줍니다.' },
+  inspect: { name: '검수 반장', lines: ['철갑 20 · 2턴마다 다시', '2턴마다 불량 도장 — 찍힌 기물의 공격 ×0.5'], tell: '두 턴마다 당신의 가장 센 기물에 불량 도장을 찍습니다. 도장 찍힌 기물은 공격이 절반이 됩니다 — 다른 기물로 치십시오.' },
+  magnet: { name: '자석 반장', lines: ['2턴마다 가장 가까운 기물을 끌어당긴다', '끌려가는 기물에 자석 표시'], tell: '두 턴마다 반장에게 가장 가까운 기물 하나가 한 칸 끌려갑니다. 자석 표시가 붙은 기물을 미리 빼내십시오.' },
+  alarm: { name: '경보 반장', lines: ['철갑 20 · 2턴마다 다시', `턴마다 경보 +1 · ${3}이 차면 적 공격 ×1.5`], tell: '턴마다 경보 눈금이 오릅니다. 셋이 차면 그 적 차례의 공격이 1.5배 — 그 전에 끝내거나, 그 차례를 버티십시오.' },
   thorns: { name: '출하 반장', lines: ['철갑 20 · 2턴마다 다시', `못 쓰러뜨리면 친 기물이 ${Math.round(6 * FOE.atk)} 되받는다`], tell: '가시 갑옷 — 반장을 치고 못 쓰러뜨리면 가시가 친 기물에게 되돌아갑니다. 한 번에 몰아치십시오.' },
 };
-export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 6 };
+export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 6, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 3, alarmMult: 1.5 };
 
 /** 막별 적 특성 (R5-4): 2막 자폭 폰(쓰러지면 둘레 8) · 3막 방패 룩(대국 시작 방열판 15) */
 export const TRAIT = { blast: 8, rookPlate: 15 };

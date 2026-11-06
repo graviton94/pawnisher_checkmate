@@ -103,6 +103,13 @@ export interface SliceBattle {
   blastPawns: boolean;
   /** 다음 적 차례에 폭격할 줄 (y) — 예고 */
   bombRow: number | null;
+  /** 검수 반장: 불량 도장이 찍힌 내 기물 (공격 ×0.5) */
+  stampId?: number | null;
+  /** 자석 반장: 이번 적 차례 끝에 끌려갈 내 기물과 칸 */
+  pull?: { id: number; to: { x: number; y: number } } | null;
+  /** 경보 반장: 경보 눈금 · 가득 찬 차례의 원래 공격 */
+  alarm?: number;
+  alarmAtk?: Record<number, number>;
   /** 턴마다 태엽 · 손패 (여분 태엽이면 +1 · −1) */
   apMax: number;
   handSize: number;
@@ -601,7 +608,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
     const perKill = c.multPerKill ? 1 + b.kills * c.multPerKill : 1;
-    const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1);
+    const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
@@ -986,8 +993,9 @@ export const hasThorns = (b: SliceBattle): boolean => b.bossRule === 'thorns' ||
 const bossTurnStart = (b: SliceBattle): void => {
   if (!b.boss) return;
   const k = kingOf(b.s, 1);
-  if (k && b.bossRule !== 'spawn' && (b.turn - 1) % BOSS.plateEvery === 0) k.shield = Math.max(k.shield, BOSS.plate);
+  if (k && b.bossRule !== 'spawn' && b.bossRule !== 'magnet' && (b.turn - 1) % BOSS.plateEvery === 0) k.shield = Math.max(k.shield, BOSS.plate);
   b.bombRow = null;
+  if (b.bossRule === 'inspect' || b.bossRule === 'magnet' || b.bossRule === 'alarm') return newBossTurn(b, k);
   // 조립 반장: 2턴마다 킹 곁에 폰 (셋까지)
   // 도금왕 (D-252): 세 반장을 다 쓴다 — 방열판(위) · 홀수 턴 폰 찍기 · 짝수 턴 줄 폭격 · 되받아침(아래 hasThorns)
   if (b.bossRule === 'spawn' || b.bossRule === 'gilded') {
@@ -1005,6 +1013,53 @@ const bossTurnStart = (b: SliceBattle): void => {
   for (const p of b.s.pieces) if (p.side === 0) rows.set(p.y, (rows.get(p.y) ?? 0) + valueOf(p));
   const best = [...rows.entries()].sort((x, y) => y[1] - x[1] || x[0] - y[0])[0];
   if (best) b.bombRow = best[0];
+};
+
+/** 새 반장 셋의 턴 시작 (D-274) — 검수: 불량 도장 · 자석: 끌어당길 기물 예고 · 경보: 눈금 +1, 가득 차면 이번 적 차례 공격 ×1.5 */
+const newBossTurn = (b: SliceBattle, k: Piece | undefined): void => {
+  const mine = b.s.pieces.filter((p) => p.side === 0 && p.type !== 'K');
+  if (b.bossRule === 'inspect') {
+    if ((b.turn - 1) % BOSS_NUM.stampEvery !== 0) return;
+    b.stampId = [...mine].sort((x, y) => y.atk - x.atk || x.id - y.id)[0]?.id ?? null;
+    return;
+  }
+  if (b.bossRule === 'magnet') {
+    b.pull = null;
+    if (!k || (b.turn - 1) % BOSS_NUM.magnetEvery !== 0) return;
+    const cheb = (p: Piece) => Math.max(Math.abs(p.x - k.x), Math.abs(p.y - k.y));
+    for (const p of [...mine].sort((x, y) => cheb(x) - cheb(y) || x.id - y.id)) {
+      if (cheb(p) <= 1) continue;
+      const to = { x: p.x + Math.sign(k.x - p.x), y: p.y + Math.sign(k.y - p.y) };
+      if (inBounds(b.s, to.x, to.y) && !b.s.pieces.some((q) => q.x === to.x && q.y === to.y)) { b.pull = { id: p.id, to }; return; }
+    }
+    return;
+  }
+  // 경보
+  b.alarm = (b.alarm ?? 0) + 1;
+  if (b.alarm >= BOSS_NUM.alarmFull && !b.alarmAtk) {
+    b.alarmAtk = {};
+    for (const p of b.s.pieces) if (p.side === 1) { b.alarmAtk[p.id] = p.atk; p.atk = Math.max(1, Math.round(p.atk * BOSS_NUM.alarmMult)); }
+  }
+};
+
+/** 새 반장 셋의 적 차례 끝 — 자석이 끌어당기고, 경보가 울렸으면 공격을 되돌리고 눈금을 비운다 */
+const newBossAfter = (b: SliceBattle): BattleEvent[] => {
+  const out: BattleEvent[] = [];
+  if (b.pull) {
+    const p = findPiece(b.s, b.pull.id);
+    const to = b.pull.to;
+    if (p && p.side === 0 && Math.max(Math.abs(p.x - to.x), Math.abs(p.y - to.y)) === 1 && !b.s.pieces.some((q) => q.x === to.x && q.y === to.y)) {
+      out.push({ type: 'move', order: 0, pieceId: p.id, from: { x: p.x, y: p.y }, to: { ...to } });
+      Object.assign(p, { x: to.x, y: to.y });
+    }
+    b.pull = null;
+  }
+  if (b.alarmAtk) {
+    for (const p of b.s.pieces) if (b.alarmAtk[p.id] !== undefined) p.atk = b.alarmAtk[p.id];
+    b.alarmAtk = undefined;
+    b.alarm = 0;
+  }
+  return out;
 };
 
 /** 줄 폭격 실행 */
@@ -1059,6 +1114,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
       if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
     }
   }
+  if (b.boss) events.push(...newBossAfter(b));
   return { events };
 };
 

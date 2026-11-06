@@ -1,6 +1,6 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { BOSS_RULES, SLICE, type BossRule, type CommandId } from './cards';
+import { BOSS_PAIRS, BOSS_RULES, SLICE, type BossRule, type CommandId } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -134,7 +134,14 @@ const NARR_BATTLE = [
   ['포장 상자 사이로 찬 바람이 분다. 출하가 가깝다.', '도장 찍힌 기물들이 줄지어 서 있다. 하나도 웃지 않는다.', '출하구의 빛이 보인다. 그 앞을 검은 것이 막는다.'],
 ];
 const NARR_CHECK = ['검수관의 저울이 기울어 있다. 이 문을 지난 자는 많지 않다.', '두 번째 검문. 저울 위에 당신의 이름이 적혀 있다.', '마지막 검문. 저울은 이미 당신을 재고 있다.'];
-const NARR_BOSS = ['철갑을 두른 반장이 기다린다. 발밑 한 줄이 벌겋게 달아오른다.', '조립 반장이 당신의 부품을 하나하나 센다. 집게 끝에서 검은 폰이 찍혀 나온다.', '출하 반장. 이 문 너머는 바깥이다. 갑옷의 가시가 당신을 겨눈다.'];
+const NARR_BOSS: Partial<Record<BossRule, string>> = {
+  plate: '철갑을 두른 반장이 기다린다. 발밑 한 줄이 벌겋게 달아오른다.',
+  inspect: '검수 반장의 렌즈가 당신의 분대를 하나씩 훑는다. 붉은 도장이 손끝에서 마르지 않는다.',
+  spawn: '조립 반장이 당신의 부품을 하나하나 센다. 집게 끝에서 검은 폰이 찍혀 나온다.',
+  magnet: '자석 반장의 가슴에서 낮은 울림이 번진다. 바닥의 나사들이 그쪽으로 미끄러진다.',
+  thorns: '출하 반장. 이 문 너머는 바깥이다. 갑옷의 가시가 당신을 겨눈다.',
+  alarm: '경보 반장의 등이 붉게 깜빡인다. 눈금이 하나씩 차오른다.',
+};
 const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
 const TRAITS: ('blastPawn' | 'rookPlate')[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
 const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
@@ -174,8 +181,8 @@ export const INTRO: BattleDef[] = [
 export const FTUE = { firstBossHp: 0.65 };
 
 /** 대국 하나 만들기 */
-export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0): BattleDef => {
-  const d = battleBase(act, kind, rng);
+export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0, rule?: BossRule): BattleDef => {
+  const d = battleBase(act, kind, rng, rule);
   // 난이도 구조 (D-243): 막마다 판이 넓어지고, 일반 · 검문 적 킹은 호위가 있는 동안 방열판을 두른다
   const [w, h] = SLICE.boardByAct[act - 1];
   d.w ??= w;
@@ -189,12 +196,12 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   return d;
 };
 
-const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng): BattleDef => {
+const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, rule: BossRule = BOSS_RULE[act - 1]): BattleDef => {
   const a = act - 1;
   const sc = ACT_SCALE[a];
   const label = `${act}막`;
   if (kind === 'boss')
-    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[BOSS_RULE[a]].name}`, narr: NARR_BOSS[a], tell: BOSS_RULES[BOSS_RULE[a]].tell, reward: 'part', boss: true, bossRule: BOSS_RULE[a], traits: TRAITS[a] };
+    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[rule].name}`, narr: NARR_BOSS[rule] ?? '', tell: BOSS_RULES[rule].tell, reward: 'part', boss: true, bossRule: rule, traits: TRAITS[a] };
   if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
   return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
@@ -230,7 +237,9 @@ export const buildRun = (seed: number, asc = 0, first = false): Act[] => {
     // 두 번째 결정 (D-232): 1막 첫 줄 대국을 이기면 핵심 부품 셋 (예전 연마 공정 자리)
     if (act === 1) for (const n of graph[0]) if (n.battle) n.battle.reward = 'kit';
     rows.push(...graph);
-    const boss = battleFor(act, 'boss', rng, asc);
+    // 막마다 반장 둘 중 하나 (D-274) — 지도 rng를 건드리지 않게 따로 뽑는다. 처음 출하는 처음 반장 그대로
+    const rule = first ? BOSS_RULE[act - 1] : BOSS_PAIRS[act - 1][new Rng(seed ^ (0x5b0 + act * 97)).int(2)];
+    const boss = battleFor(act, 'boss', rng, asc, rule);
     if (act === 1 && first) {
       boss.kingHp *= FTUE.firstBossHp;
       boss.enemyHp = (boss.enemyHp ?? 1) * FTUE.firstBossHp;

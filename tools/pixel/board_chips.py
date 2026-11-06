@@ -8,6 +8,8 @@
   chip-skull : 원수 (해골) — 진홍 명패 · 미색 해골 · 검은 눈
   chip-stun  : 경직 (헛방, D-229) — 검은 쇠 명패 · 노란 별 셋
   chip-shock : 기어 쇼크 (D-229) — 내 기물, 검은 쇠 명패 · 주황 번개
+  chip-stamp : 불량 도장 (검수 반장, D-274) — 내 기물, 미색 종이 명패 대신 쇠 명패 · 붉은 X 도장
+  chip-magnet: 자석이 끌어당길 기물 (자석 반장, D-274) — 내 기물, 쇠 명패 · 붉은/회색 말굽 자석
 출력: public/ui/board/chip-*.png (16×16, 화면에서 정수배는 판 크기에 따라 다르므로 렌더러가 칸의 36%로)
 사용: python3 -I tools/pixel/board_chips.py
 """
@@ -111,9 +113,33 @@ GLYPH = {
         '..WWWWWW..',
         '..........',
     ],
+    'stamp': [
+        '.RRRRRRRR.',
+        'R........R',
+        'R.RR..RR.R',
+        'R..RRRR..R',
+        'R...RR...R',
+        'R..RRRR..R',
+        'R.RR..RR.R',
+        'R........R',
+        '.RRRRRRRR.',
+        '..........',
+    ],
+    'magnet': [
+        '..........',
+        '.RRR..WWW.',
+        '.RRR..WWW.',
+        '.RR....WW.',
+        '.RR....WW.',
+        '.RRR..WWW.',
+        '..RRRWWW..',
+        '...RRWW...',
+        '..........',
+        '..........',
+    ],
 }
 GLYPH['claw'] = [r.replace('X', 'W') for r in GLYPH['claw']]
-MAT = {'flame': 'd', 'claw': 'd', 'crown': 'd', 'skull': 'r', 'stun': 'g', 'shock': 'g'}
+MAT = {'flame': 'd', 'claw': 'd', 'crown': 'd', 'skull': 'r', 'stun': 'g', 'shock': 'g', 'stamp': 'g', 'magnet': 'g'}
 
 
 def chip(name):

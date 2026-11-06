@@ -113,8 +113,8 @@ describe('저울추 · 녹슨 카드 (D-247)', () => {
 });
 
 describe('막별 반장 · 적 특성 (D-171)', () => {
-  it('막마다 반장 규칙이 다르고, 2 · 3막 판에는 적 특성이 붙는다', () => {
-    const run = buildRun(5);
+  it('막마다 반장 규칙이 다르고 (처음 출하 기준, D-274), 2 · 3막 판에는 적 특성이 붙는다', () => {
+    const run = buildRun(5, 0, true);
     expect(run.map((a) => a.rows.at(-1)![0].battle!.bossRule)).toEqual(['plate', 'spawn', 'thorns', 'gilded']);
     expect(run[1].rows.flat().find((n) => n.kind === 'check')!.battle!.traits).toContain('blastPawn');
     expect(run[2].rows.flat().find((n) => n.kind === 'check')!.battle!.traits).toContain('rookPlate');

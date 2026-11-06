@@ -96,7 +96,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -196,6 +196,9 @@ class BoardScene extends Phaser.Scene {
   staggeredIds: number[] = [];
   /** 기어 쇼크를 먹은 내 기물 (D-229) — 오른쪽 위 번개 딱지 */
   shockedIds: number[] = [];
+  /** 새 반장 표식 (D-274): 불량 도장 · 끌려갈 기물 — 내 기물 왼쪽 위 */
+  stampId: number | null = null;
+  pullId: number | null = null;
   /** 적 계급 색: '' 보통 · elite 검문 · boss 반장 */
   foeTone: string = '';
   /** 반장 판 (D-249): plate · spawn · thorns — 전용 칸 · 기물 색 */
@@ -500,6 +503,8 @@ class BoardScene extends Phaser.Scene {
     else if (p.elite) chipAt('crown', false);
     else if (trait) chipAt(trait, false);
     if (p.id === this.nemesisId && p.side === 1) chipAt('skull', true);
+    if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
+    else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
     const hp = this.add.graphics();
@@ -1777,6 +1782,11 @@ export class BoardRenderer implements BoardView {
   setStaggered(ids: number[], shocked: number[] = []): void {
     this.scene.staggeredIds = ids;
     this.scene.shockedIds = shocked;
+  }
+  /** 새 반장 표식 (D-274): 불량 도장 찍힌 기물 · 자석에 끌려갈 기물 — setup 전에 */
+  setBossMarks(stampId: number | null, pullId: number | null): void {
+    this.scene.stampId = stampId;
+    this.scene.pullId = pullId;
   }
   /** 적 계급 색 (검문 = 검붉은 쇠, 반장 = 보라) — setup 전에 */
   setFoeTone(t: '' | 'elite' | 'boss', bossRule = ''): void {
