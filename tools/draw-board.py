@@ -306,6 +306,51 @@ for _a, _c in ACT_TILES.items():
     P.update({f'a{_a}b': _c['b'], f'a{_a}h': _c['h'], f'a{_a}l': _c['l'], f'a{_a}d': _c['d'], f'a{_a}i': _c['i'], f'a{_a}r': _c['r']})
     plate(f'a{_a}b', f'a{_a}h', f'a{_a}l', f'a{_a}r', f'a{_a}l').save(f'{OUT}/tile-light-a{_a}.png')
     plate(f'a{_a}d', f'a{_a}b', f'a{_a}i', f'a{_a}b', f'a{_a}i').save(f'{OUT}/tile-dark-a{_a}.png')
+
+# 반장 판 (D-249, 사용자: 「반장 체스판이 기본 판보다 훨씬 구리다 — 반장 초상화에서 비롯된 라운드 특화 판」).
+# 명도는 기본 판과 같게(기물 · 표식 대비 유지), 색조 · 무늬만 반장 것. 무늬는 칸 안쪽 1도트 선 · 점 몇 개뿐 (판이 시끄럽지 않게).
+BOSS_TILES = {
+    'plate': {'b': (0x5A, 0x4C, 0x46), 'h': (0x84, 0x70, 0x64), 'l': (0x32, 0x28, 0x25), 'd': (0x38, 0x2C, 0x28), 'i': (0x1A, 0x12, 0x10), 'r': (0xC8, 0x8A, 0x3C), 'm': (0xE0, 0x6A, 0x24), 'm2': (0x8C, 0x34, 0x18)},
+    'spawn': {'b': (0x4A, 0x56, 0x62), 'h': (0x72, 0x84, 0x92), 'l': (0x2A, 0x32, 0x3C), 'd': (0x28, 0x30, 0x3A), 'i': (0x12, 0x18, 0x1E), 'r': (0x8A, 0xA0, 0xAE), 'm': (0x5F, 0xD4, 0xD8), 'm2': (0x2E, 0x8A, 0x90)},
+    'thorns': {'b': (0x52, 0x52, 0x5C), 'h': (0x7E, 0x7E, 0x8A), 'l': (0x2E, 0x2E, 0x36), 'd': (0x30, 0x2E, 0x36), 'i': (0x16, 0x14, 0x1A), 'r': (0xC4, 0x24, 0x30), 'm': (0xE5, 0x26, 0x2F), 'm2': (0x7A, 0x12, 0x18)},
+}
+
+
+def boss_tile(key, dark):
+    c = BOSS_TILES[key]
+    for k in c:
+        P[f'{key}{k}'] = c[k]
+    k = key
+    im = plate(f'{k}d' if dark else f'{k}b', f'{k}b' if dark else f'{k}h', f'{k}i' if dark else f'{k}l', f'{k}r', f'{k}i' if dark else f'{k}l')
+    if key == 'plate':
+        # 달군 쇠: 어두운 칸에 쇳물이 스민 금 한 줄 (꺾인 1도트 선, 끝은 식은 색)
+        if dark:
+            for x, y in ((4, 13), (5, 12), (6, 12), (7, 11), (8, 11), (9, 10), (10, 10), (11, 9), (12, 9), (13, 8), (14, 8), (15, 7)):
+                put(im, x, y, f'{k}m' if 6 <= x <= 13 else f'{k}m2')
+        else:
+            for x, y in ((5, 15), (6, 15), (14, 4)):
+                put(im, x, y, f'{k}l')
+    elif key == 'spawn':
+        # 조립 라인: 밝은 칸엔 컨베이어 홈 두 줄, 어두운 칸엔 청록 표시등 하나
+        if dark:
+            put(im, 9, 9, f'{k}m'); put(im, 10, 9, f'{k}m'); put(im, 9, 10, f'{k}m2'); put(im, 10, 10, f'{k}m2')
+        else:
+            for x in range(5, 15):
+                if x % 3 != 0:
+                    put(im, x, 8, f'{k}l'); put(im, x, 12, f'{k}l')
+    else:
+        # 출하 문: 붉은 리벳(판 공통) + 어두운 칸에 가시 홈 하나
+        if dark:
+            for x, y in ((10, 6), (9, 7), (10, 7), (11, 7), (10, 8), (10, 9), (10, 10)):
+                put(im, x, y, f'{k}i')
+            put(im, 10, 6, f'{k}m2')
+    return im
+
+
+for _k in BOSS_TILES:
+    boss_tile(_k, False).save(f'{OUT}/tile-light-b{_k}.png')
+    boss_tile(_k, True).save(f'{OUT}/tile-dark-b{_k}.png')
+
 last_move().save(f'{OUT}/last-move.png')
 crack().save(f'{OUT}/crack.png')
 range_frame(True).save(f'{OUT}/range.png')

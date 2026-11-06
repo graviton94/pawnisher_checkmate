@@ -8,6 +8,7 @@ import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower,
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
+import { BoardFx } from './boardfx';
 import { FX_CAMERA, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { drawGearTarget } from './target';
@@ -65,7 +66,11 @@ export interface BoardInput {
  * 정예(검문) · 반장 적 기물 속 칠 (2026-11-05, 체스 레퍼런스 기물 100스타일 학습: 같은 실루엣에 속 색만 바꿔 계급을 말한다).
  * 검정 기물의 속 칠 5단계만 1:1로 바꾼다 — 외곽선 · 흰 테는 그대로라 진영(명도)은 그대로 읽힌다.
  */
-const FOE_TONE: Record<'elite' | 'boss', Record<number, number>> = {
+const FOE_TONE: Record<string, Record<number, number>> = {
+  // 반장별 (D-249 — 반장 초상화에서 뽑은 색): 철갑 = 쇠녹 · 쇳물 / 조립 = 청강 · 청록 / 출하 = 총신쇠 · 핏빛
+  'boss-plate': { 0x6e717e: 0xe0904a, 0x484a55: 0x8c4a2a, 0x32343d: 0x5e2e1c, 0x26272e: 0x401e14, 0x1c1d22: 0x28120c },
+  'boss-spawn': { 0x6e717e: 0x7fe6ea, 0x484a55: 0x2e7a80, 0x32343d: 0x1e5258, 0x26272e: 0x143a3e, 0x1c1d22: 0x0c2226 },
+  'boss-thorns': { 0x6e717e: 0xe5262f, 0x484a55: 0x5a5e6c, 0x32343d: 0x3d404c, 0x26272e: 0x2a2c36, 0x1c1d22: 0x1a1a22 },
   elite: { 0x6e717e: 0xa65a5e, 0x484a55: 0x74303a, 0x32343d: 0x56202a, 0x26272e: 0x40161e, 0x1c1d22: 0x2a0e13 }, // 검붉은 쇠
   boss: { 0x6e717e: 0xc89b3c, 0x484a55: 0x6e4a8c, 0x32343d: 0x4e3266, 0x26272e: 0x38224c, 0x1c1d22: 0x241634 }, // 불길한 보라 + 금빛 반짝
 };
@@ -90,7 +95,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -191,7 +196,11 @@ class BoardScene extends Phaser.Scene {
   /** 기어 쇼크를 먹은 내 기물 (D-229) — 오른쪽 위 번개 딱지 */
   shockedIds: number[] = [];
   /** 적 계급 색: '' 보통 · elite 검문 · boss 반장 */
-  foeTone: '' | 'elite' | 'boss' = '';
+  foeTone: string = '';
+  /** 반장 판 (D-249): plate · spawn · thorns — 전용 칸 · 기물 색 */
+  bossRule = '';
+  /** 판 위 도트 FX 층 (D-249) */
+  fxHook?: BoardFx;
   /** 막 번호 (1~3) — 막마다 판 색조가 다르다 (0이면 기본 철판) */
   act = 0;
   /** 직전 적 수: 출발 · 도착 칸에 모서리 꺾쇠 */
@@ -250,6 +259,7 @@ class BoardScene extends Phaser.Scene {
       this.makeCrackedTexture(type);
       this.makeToneTexture(type, 1, 'elite', FOE_TONE.elite);
       this.makeToneTexture(type, 1, 'boss', FOE_TONE.boss);
+      for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
     }
     this.cameras.main.setZoom(this.dpr);
     this.camZoom = this.dpr;
@@ -322,7 +332,15 @@ class BoardScene extends Phaser.Scene {
       this.tweens.add({ targets: r, alpha: { from: 0, to: alpha }, delay, duration: 60, ease: 'Stepped', easeParams: [2] });
       this.tweens.add({ targets: r, alpha: 0, delay: delay + life, duration: 160, ease: 'Stepped', easeParams: [3] });
     };
-    if (kind === 'row') {
+    if (kind === 'row' && this.fxHook) {
+      sfx('threat');
+      await this.fxHook.rowBomb(pos.y, this.state.width);
+    } else if (kind === 'thorns' && from && this.fxHook) {
+      sfx('threat');
+      await this.fxHook.thorns(from, pos);
+      const sp = [...this.sprites.values()].find((v) => v.piece.x === pos.x && v.piece.y === pos.y);
+      if (sp) this.tweens.add({ targets: sp.root, x: sp.root.x + t * 0.08, duration: 40, yoyo: true, repeat: 3 });
+    } else if (kind === 'row') {
       sfx('threat');
       for (let x = 0; x < this.state.width; x++) {
         cell({ x, y: pos.y }, 0xe8783c, 0.75, x * 55, 240);
@@ -403,7 +421,7 @@ class BoardScene extends Phaser.Scene {
     for (let y = 0; y < state.height; y++)
       for (let x = 0; x < state.width; x++) {
         const w = this.world({ x, y });
-        const suf = this.act ? `-a${this.act}` : '';
+        const suf = this.bossRule ? `-b${this.bossRule}` : this.act ? `-a${this.act}` : '';
         put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? `tile-dark${suf}` : `tile-light${suf}`, w.x, w.y);
       }
     for (const p of this.lastMoves) {
@@ -1490,6 +1508,8 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'respawn') {
+        // 찍어 내기 · 반장 2단계 (D-249): 그 칸에 쾅 — 먼지 고리 · 불꽃 · 빛
+        if (e.pos && this.fxHook) this.fxHook.stamp(e.pos);
         // 양산 라인 (폰 반장 비틀기): 쓰러진 폰이 뒷줄에 다시 선다
         this.announce(e.label ?? '양산 라인 — 폰이 다시 선다');
         await this.wait(200);
@@ -1674,6 +1694,7 @@ class BoardScene extends Phaser.Scene {
 /** Phaser 게임을 감싸 컨트롤러가 쓰는 BoardView를 제공한다. */
 export class BoardRenderer implements BoardView {
   private scene: BoardScene;
+  private boardFx: BoardFx;
   private game: Phaser.Game;
   private whenReady: Promise<void>;
 
@@ -1681,6 +1702,8 @@ export class BoardRenderer implements BoardView {
     // 그리는 해상도 상한 (D-240): 폰 배율 2.6~3 그대로 그리면 판 하나가 프레임을 다 먹었다 (CPU 4배 느린 측정에서 19fps → 2배 상한으로 32fps, 아래 프레임 상한과 함께)
     const dpr = Math.min(window.devicePixelRatio || 1, RENDER.dprCap);
     this.scene = new BoardScene();
+    this.boardFx = new BoardFx(host, (p) => this.screenOf(p));
+    this.scene.fxHook = this.boardFx;
     this.scene.announce = announce;
     this.scene.dpr = dpr;
     this.scene.input2 = input;
@@ -1755,8 +1778,9 @@ export class BoardRenderer implements BoardView {
     this.scene.shockedIds = shocked;
   }
   /** 적 계급 색 (검문 = 검붉은 쇠, 반장 = 보라) — setup 전에 */
-  setFoeTone(t: '' | 'elite' | 'boss'): void {
-    this.scene.foeTone = t;
+  setFoeTone(t: '' | 'elite' | 'boss', bossRule = ''): void {
+    this.scene.foeTone = t === 'boss' && bossRule ? `boss-${bossRule}` : t;
+    this.scene.bossRule = t === 'boss' ? bossRule : '';
   }
   /** 막별 판 색 (1~3) — setup 전에 */
   setAct(act: number): void {
@@ -1795,7 +1819,18 @@ export class BoardRenderer implements BoardView {
     await this.heat(this.scene.swapLeap(crewId, kingId));
   }
   setup(state: BattleState): void {
-    void this.whenReady.then(() => this.scene.setupBoard(state));
+    void this.whenReady.then(() => {
+      this.scene.setupBoard(state);
+      // 판 위 도트 FX 층 (D-249): 반장 판이면 공기 FX, 기믹 순간 연출은 언제나
+      this.boardFx.boardSize = { w: state.width, h: state.height };
+      requestAnimationFrame(() => this.boardFx.setup(this.scene.bossRule));
+    });
+  }
+  /** 디버그: 판 위 기믹 연출을 바로 터뜨린다 */
+  debugFx(k: 'row' | 'thorns' | 'stamp'): void {
+    if (k === 'row') void this.boardFx.rowBomb(2, this.scene.state.width);
+    else if (k === 'thorns') void this.boardFx.thorns({ x: 3, y: 5 }, { x: 1, y: 1 });
+    else this.boardFx.stamp({ x: 3, y: 3 });
   }
   /** 판 칸 하나의 화면 가운데 (CSS px) — 판 밖 DOM 연출(초월 등)이 그 칸을 겨눈다 */
   screenOf(pos: Pos): { x: number; y: number } {
