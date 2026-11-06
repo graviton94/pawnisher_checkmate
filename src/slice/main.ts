@@ -2244,7 +2244,7 @@ const finishNow = (): void => {
     }
     if (notes.length) window.setTimeout(() => toast(notes.join(' · '), 3600), 300);
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
-    const overGold = Math.floor(b.overkill / 10);
+    const overGold = Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10));
     const earned = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + overGold;
     gold += earned;
     // 나사 받기 (D-184): 판 가운데서 도트 나사가 튀어 올라 나사 칸으로 빨려 든다

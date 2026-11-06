@@ -9,7 +9,7 @@ import { crewMaxHp } from './battle';
  * 사건 (R5-3, D-170): 본편 돌발 12종(D-158 문체)을 시험판 체계(분대원 · 카드 · 부품 · 나사)로 옮겼다.
  * 효과는 순수 함수 — 화면은 결과 문구와 후속(부품 고르기)만 받는다. 무작위가 걸린 선택은 「?」(말투 원칙 11).
  */
-export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe' | 'counterweight' | 'conveyor';
+export type SliceEventId = 'tinker' | 'smith' | 'gambler' | 'apprentice' | 'scout' | 'napping' | 'nightShift' | 'pact' | 'dipping' | 'swapDealer' | 'auction' | 'brokenGacha' | 'safe' | 'counterweight' | 'conveyor' | 'oilMerchant' | 'blueprint' | 'scrapTrade';
 
 /** 사건이 바꿀 수 있는 출하 상태 */
 export interface EventState {
@@ -88,6 +88,17 @@ const hpRatio = (s: EventState, pct: number) => {
     const hp = u.hp ?? max;
     return { ...u, hp: Math.max(1, Math.min(max, Math.round(hp + max * pct))) };
   });
+};
+/**
+ * 한 명이 치른다 (D-283, 사건 가치 진단 docs/reports/2026-11-06-event-value.md — 「분대 전체 HP 대가가 너무 비싸다」):
+ * 가장 성한 분대원(킹 제외) 하나가 대가를 치른다 — HP는 1 아래로 내려가지 않는다. 그 분대원 이름을 돌려준다.
+ */
+const oneHurt = (s: EventState, pct: number): string => {
+  const u = [...nonKing(s)].sort((a, b) => (b.hp ?? crewMaxHp(b)) / crewMaxHp(b) - (a.hp ?? crewMaxHp(a)) / crewMaxHp(a))[0];
+  if (!u) { hpRatio(s, -pct / 2); return '분대'; }
+  const max = crewMaxHp(u);
+  s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? max) - max * pct)) } : x));
+  return u.name ?? NAMES[u.t];
 };
 const poor = (n: number) => (s: EventState) => (s.gold < n ? `나사 ${n} 필요` : null);
 const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', apply: () => ({ text: '당신은 발걸음을 돌린다.' }) });
@@ -199,10 +210,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '꺼지지 않은 공방의 불빛이 당신을 부른다. 장인은 잠들었고, 모루는 아직 뜨겁다.',
     choices: [
       { label: '두드리기', desc: '분대 전원 HP +30%', apply: (s) => { hpRatio(s, 0.3); return { text: '쇳소리가 밤새 이어진다. 분대가 다시 선다. (HP +30%)' }; } },
-      { label: '불을 키울까?', desc: '50%: HP 가득 + 카드 1장 다듬기 · 50%: 분대 HP −30%', apply: (s, rng) => {
+      { label: '불을 키울까?', desc: '50%: HP 가득 + 카드 1장 다듬기 · 50%: 분대원 하나 HP −60%', apply: (s, rng) => {
         if (rng.int(2) === 0) { hpRatio(s, 1); return { slot: 0, text: `불길이 쇠를 새로 벼린다. 분대가 새것처럼 선다. ${refineRandom(s, rng)}` }; }
-        hpRatio(s, -0.3);
-        return { slot: 1, text: '불이 번진다. 분대가 그을린 채 빠져나온다. (HP −30%)' };
+        const who = oneHurt(s, 0.6);
+        return { slot: 1, text: `불이 번진다. ${josa(who, '이')} 그을린 채 빠져나온다. (HP −60%)` };
       } },
       leave('지나가기'),
     ],
@@ -254,10 +265,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 봉인 상자',
     text: '고철 더미 사이에 쇠사슬로 묶인 상자가 있다. 봉인판의 각인 세 칸이 녹에 덮여 있다. 각인이 맞으면 봉인이 풀린다.',
     choices: [
-      { label: '녹을 긁어낼까?', desc: '50%: 희귀 이상 부품 · 50%: 녹 독 (분대 HP −20%)', apply: (s, rng) => {
+      { label: '녹을 긁어낼까?', desc: '50%: 희귀 이상 부품 · 50%: 녹 독 (분대원 하나 HP −50%)', apply: (s, rng) => {
         if (rng.int(2) === 0) return { slot: 0, text: '각인 셋이 맞물린다. 봉인이 풀리고 상자가 열린다.', partPick: true, elite: true };
-        hpRatio(s, -0.2);
-        return { slot: 1, text: '각인이 어긋난다. 녹 가루가 분대의 이음새로 스민다. (HP −20%)' };
+        const who = oneHurt(s, 0.5);
+        return { slot: 1, text: `각인이 어긋난다. 녹 가루가 ${who}의 이음새로 스민다. (HP −50%)` };
       } },
       leave('떠나기'),
     ],
@@ -267,8 +278,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '고장 난 조립 판정기',
     text: '쓰러진 판정기의 깔때기 셋이 덜컹인다. 손잡이에 손을 대면 기계가 힘을 빨아들인다. 세 칸이 맞으면 합격품이 나온다.',
     choices: [
-      { label: '판정기를 돌릴까?', desc: '분대 HP −15% · 40%: 희귀 부품 · 25%: 승급 · 35%: 감전', apply: (s, rng) => {
-        hpRatio(s, -0.15);
+      { label: '판정기를 돌릴까?', desc: '분대원 하나 HP −35% · 40%: 희귀 부품 · 25%: 승급 · 35%: 감전', apply: (s, rng) => {
+        const who = oneHurt(s, 0.35);
         const r = rng.int(100);
         if (r < 40) return { slot: 0, text: '세 칸이 맞물린다. 판정기가 합격품을 뱉는다.', partPick: true, elite: true };
         if (r < 65) {
@@ -279,8 +290,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
             return { slot: 1, text: `왕관 셋. 판정기가 ${josa(u.name, '을')} 끌어당겨 다시 찍어 낸다. 이제 ${NAMES[t]}이다.` };
           }
         }
-        hpRatio(s, -0.15);
-        return { slot: 2, text: '불량. 판정기가 불꽃을 토한다. (HP −15% 더)' };
+        oneHurt(s, 0.3);
+        return { slot: 2, text: `불량. 판정기가 불꽃을 토한다. ${josa(who, '이')} 한 번 더 감전된다. (HP −30% 더)` };
       } },
       leave('지나가기'),
     ],
@@ -289,7 +300,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 금고',
     text: '녹슨 금고 안에서 나사가 쏟아지는 소리가 난다. 손잡이에는 날이 서 있다.',
     choices: [
-      { label: '부수기', desc: '나사 +150 · 분대 HP −35%', apply: (s) => { s.gold += 150; hpRatio(s, -0.35); return { text: '손잡이가 손을 벤다. 나사가 쏟아진다. (나사 +150 · HP −35%)' }; } },
+      { label: '부수기', desc: '나사 +150 · 분대원 하나 HP −70%', apply: (s) => { s.gold += 150; const who = oneHurt(s, 0.7); return { text: `손잡이가 ${who}의 손을 벤다. 나사가 쏟아진다. (나사 +150 · HP −70%)` }; } },
       leave('떠나기'),
     ],
   },
@@ -318,6 +329,32 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         return { text: `${josa(gone.join(' · '), '이')} 실려 가고, ${josa(got.join(' · '), '이')} 실려 온다.` };
       } },
       leave('레버를 놓는다'),
+    ],
+  },
+  // ---- 확정 거래 (D-283, 사건 가치 진단 — 「나사가 남는다, 확정 거래로 쓸 곳을」) ----
+  oilMerchant: {
+    title: '기름 장수',
+    text: '기름통을 실은 손수레가 길을 막는다. 수레 위의 룩이 국자를 흔든다. “관절에 기름 한 국자. 값은 정해져 있다.”',
+    choices: [
+      { label: '나사 60을 낼까?', desc: '분대 전원 HP +40%', blocked: poor(60), apply: (s) => { s.gold -= 60; hpRatio(s, 0.4); return { text: '국자가 관절마다 기름을 붓는다. 삐걱이던 소리가 멎는다. (HP +40%)' }; } },
+      { label: '나사 110을 낼까?', desc: '깨진 심장 톱니 하나를 고친다', blocked: (s) => (s.gold < 110 ? '나사 110 필요' : !s.squad.some((u) => u.cracked) ? '깨진 심장 톱니 없음' : null), apply: (s) => { s.gold -= 110; const u = s.squad.find((x) => x.cracked)!; s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: false } : x)); return { text: `기름 먹인 새 톱니가 ${u.name ?? NAMES[u.t]}의 가슴에 물린다. (심장 톱니 수리)` }; } },
+      leave('지나가기'),
+    ],
+  },
+  blueprint: {
+    title: '떠도는 설계도',
+    text: '바람에 날리던 설계도 한 장이 발치에 걸린다. 귀퉁이에 값이 적혀 있다. 「나사 70 — 세 장을 고쳐 그린다.」',
+    choices: [
+      { label: '나사 70을 낼까?', desc: '무작위 카드 3장 다듬기', blocked: (s) => (s.gold < 70 ? '나사 70 필요' : refinable(s).length < 1 ? '다듬을 카드 없음' : null), apply: (s, rng) => { s.gold -= 70; return { text: `설계도의 선이 고쳐진다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` }; } },
+      leave('지나가기'),
+    ],
+  },
+  scrapTrade: {
+    title: '고철 교환소',
+    text: '철망 너머에서 폰 하나가 저울을 두드린다. “나사 백. 부품 상자 하나. 고르는 건 너다.”',
+    choices: [
+      { label: '나사 100을 낼까?', desc: '부품 하나를 고른다', blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고 상자 하나가 밀려 나온다.', partPick: true }; } },
+      leave('지나가기'),
     ],
   },
 };

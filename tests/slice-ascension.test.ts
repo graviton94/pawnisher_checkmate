@@ -158,3 +158,23 @@ describe('수읽기 카드 — 핀 · 포크 · 디스커버드 · 캐슬링 (D-
     expect(b.pinned).toEqual([]);
   });
 });
+
+describe('부품 확장 (D-282)', () => {
+  it('기물별 시작 부품: 두꺼운 성벽 · 기수의 등자 · 두꺼운 주물 · 선제 태엽', () => {
+    const sq = [{ t: 'K' as const }, { t: 'R' as const }, { t: 'N' as const }, { t: 'P' as const }];
+    const a = newSliceBattle(sq, ['K', 'P'], START_COMMANDS, 3);
+    const b = newSliceBattle(sq, ['K', 'P'], START_COMMANDS, 3, { parts: ['thickWall', 'stirrup', 'thickCast', 'firstSpring'] });
+    const f = (x: typeof a, t: string) => x.s.pieces.find((p) => p.side === 0 && p.type === t)!;
+    expect(f(b, 'R').shield).toBeGreaterThan(f(a, 'R').shield);
+    expect(f(b, 'N').shield).toBeGreaterThan(f(a, 'N').shield);
+    expect(f(b, 'P').maxHp).toBeGreaterThan(f(a, 'P').maxHp);
+    expect(b.ap).toBe(a.ap + 2);
+  });
+  it('잔열: 턴이 끝나도 연쇄 절반이 남는다', () => {
+    const b = newSliceBattle(crewKR(), ['K', 'P'], START_COMMANDS, 3, { parts: ['afterheat'] });
+    b.kills = 4;
+    endT2(b, true);
+    if (b.s.winner === null) expect(b.kills).toBe(2);
+  });
+});
+function crewKR() { return [{ t: 'K' as const }, { t: 'R' as const }, { t: 'B' as const }, { t: 'P' as const }]; }

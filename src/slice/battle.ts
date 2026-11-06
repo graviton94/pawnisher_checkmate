@@ -208,7 +208,8 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   if (c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId)) return 0;
   const pawnCard = c.who === 'P' || c.kind === 'march';
   const knightCard = c.who === 'N';
-  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (knightCard && has(b, 'spurs') ? 1 : 0));
+  if (c.kind === 'swap' && has(b, 'gateHinge')) return 0;
+  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (knightCard && has(b, 'spurs') ? 1 : 0) - (c.who === 'Q' && has(b, 'lightCloak') ? 1 : 0));
 };
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
@@ -290,6 +291,14 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   // 탐욕의 저울 (2026-11-05 개편): 쥔 나사 100마다 모든 공격 +3 (합) — 쌓이기만 하던 나사를 힘으로 (D-227)
   if (has(b, 'greed')) b.greedAdd = Math.floor((opts.gold ?? 0) / PART_NUM.greedPer) * PART_NUM.greedAdd;
   if (has(b, 'scepter')) { const k = kingOf(s, 0); if (k) k.shield += PART_NUM.scepterShield; }
+  // 부품 확장 (D-282): 대국 시작에 붙는 것
+  for (const p of s.pieces) if (p.side === 0) {
+    if (p.type === 'R' && has(b, 'thickWall')) p.shield += PART_NUM.thickWall;
+    if (p.type === 'N' && has(b, 'stirrup')) p.shield += PART_NUM.stirrup;
+    if (p.type === 'P' && has(b, 'thickCast')) { p.maxHp = Math.round(p.maxHp * PART_NUM.thickCast); p.hp = Math.round(p.hp * PART_NUM.thickCast); }
+  }
+  if (has(b, 'firstSpring')) b.ap += PART_NUM.firstSpring;
+  if (has(b, 'lightMag') && deck.length <= PART_NUM.lightMagAt) b.handSize += 1;
   if (has(b, 'barracks')) spawnPawn(b, '막사의 종 — 폰이 선다');
   if (opts.lab) {
     b.lab = opts.lab;
@@ -578,6 +587,13 @@ const castlePair = (b: SliceBattle): [Piece, Piece] | null => {
   const r = k && b.s.pieces.filter((p) => p.side === 0 && p.type === 'R').sort((x, y) => chebyshev(x, k) - chebyshev(y, k))[0];
   return k && r ? [k, r] : null;
 };
+/** 이 기물이 to에 내려앉으면 칠 수 있는 적 id (죔쇠 — 묶인 적을 치나) */
+const targetsFrom = (s: BattleState, p: Piece, to: Pos): number[] => {
+  const s2 = cloneState(s);
+  const q = findPiece(s2, p.id)!;
+  Object.assign(q, { x: to.x, y: to.y });
+  return attackScan(s2, q).targets.filter((t) => t.side !== p.side).map((t) => t.id);
+};
 /** 포크 (D-281): 이 기물이 to에 내려앉으면 칠 수 있는 적 수 */
 const forkTargets = (s: BattleState, p: Piece, to: Pos): number => {
   const s2 = cloneState(s);
@@ -637,7 +653,13 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
     if (c.carve) p.carve = c.carve;
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
     const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
-    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork : 1) * (b.nextMult ?? 1);
+    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork : 1) * (b.nextMult ?? 1)
+      // 부품 확장 (D-282)
+      * (has(b, 'vise') && (b.pinned ?? []).length && targetsFrom(b.s, p, to).some((id) => (b.pinned ?? []).includes(id)) ? PART_NUM.vise : 1)
+      * (p.type === 'Q' && has(b, 'queenCrown') ? PART_NUM.queenCrown : 1)
+      * (p.type === 'K' && has(b, 'lastAxle') && p.hp < p.maxHp * PART_NUM.lastAxleAt ? PART_NUM.lastAxle : 1)
+      * (grazeOn(b, pieceId, to) && has(b, 'ventHole') ? PART_NUM.ventGraze / SLICE.grazeMult : 1)
+      * (b.boss && has(b, 'bossBane') ? PART_NUM.bossBane : 1);
     const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0) });
     if (!sim.ok) return null;
@@ -680,11 +702,14 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (struck) b.evaded = (b.evaded ?? []).filter((x) => x !== pieceId);
     // 수읽기 (D-281): 디스커버드 배율은 공격 한 번에 쓰이고, 이 카드가 디스커버드면 다음 공격에 남긴다 · 핀은 친 적을 묶는다
     if (struck) b.nextMult = undefined;
-    if (c.nextMult) b.nextMult = c.nextMult;
+    if (c.nextMult) b.nextMult = c.nextMult + (has(b, 'openGate') ? PART_NUM.openGate : 0);
+    if (c.fork && has(b, 'forkGear') && forkTargets(before, p, to) >= 2) { gained += PART_NUM.forkGearAp; events.push({ type: 'apGain', side: 0, amount: PART_NUM.forkGearAp }); }
+    if ((c.axis === 'tactic' || c.axis2 === 'tactic') && has(b, 'gameRecord') && !b.once.includes('gameRecord')) { b.once.push('gameRecord'); drawCards(b, 1); }
     if (c.stun) {
       const ids = sim.events.flatMap((e) => (e.type === 'attack' || e.type === 'blast' ? e.hits.filter((h) => !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1 && before.pieces.find((q) => q.id === h.targetId)?.type !== 'K').map((h) => h.targetId) : []));
       b.pinned = [...new Set([...(b.pinned ?? []), ...ids])];
       for (const id of ids) { const q = findPiece(b.s, id); if (q) q.shield = 0; }
+      if (ids.length && has(b, 'chainReel')) { const me = findPiece(b.s, pieceId); if (me) { me.shield += PART_NUM.chainReel; events.push({ type: 'shield', pieceId: me.id, amount: PART_NUM.chainReel }); } }
     }
     if (grazed) {
       // 회피 반격 (D-229): 예고 칸에서 빠져나온 수 — 배율은 위에서, 여기선 카드 +1 · 그 기물은 이번 턴 다시 못 받는다
@@ -731,8 +756,10 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         gained += k;
         events.push({ type: 'apGain', side: 0, amount: k });
       }
-      drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0));
+      drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0) + (p.type === 'B' && has(b, 'rosary') ? k : 0));
     }
+    // 금박 끝 줄 (D-282): 폰이 승격하면 카드 +2 · 태엽 +1
+    if (has(b, 'goldRank') && events.some((e) => e.type === 'promote')) { drawCards(b, 2); gained += 1; events.push({ type: 'apGain', side: 0, amount: 1 }); }
     // 이동식 옥좌: 킹 카드를 내면 킹 방열판
     const pk = findPiece(b.s, pieceId);
     if (pk && pk.type === 'K' && has(b, 'throne')) {
@@ -772,7 +799,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     events = [{ type: 'move', order: 0, pieceId: k.id, from: kp, to: { x: r.x, y: r.y } }, { type: 'move', order: 1, pieceId: r.id, from: { x: r.x, y: r.y }, to: kp }];
     Object.assign(k, { x: r.x, y: r.y });
     Object.assign(r, kp);
-    for (const p of [k, r]) { p.shield += c.amount ?? 0; events.push({ type: 'shield', pieceId: p.id, amount: c.amount ?? 0 }); }
+    const sh = (c.amount ?? 0) * (has(b, 'gateHinge') ? 2 : 1);
+    for (const p of [k, r]) { p.shield += sh; events.push({ type: 'shield', pieceId: p.id, amount: sh }); }
   } else if (c.kind === 'spark') {
     b.kills += 1;
     drawCards(b, 1);
@@ -1212,7 +1240,10 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
     // 도금 방패: 지난 적 차례에 킹이 맞았으면 태엽 +1
     b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0));
-    b.kills = 0;
+    // 잔열 (D-282): 연쇄 절반이 남는다
+    b.kills = has(b, 'afterheat') ? Math.floor(b.kills / 2) : 0;
+    // 땜질 도구함 (D-282): 가장 다친 내 기물 HP +4
+    if (has(b, 'toolbox')) { const w = b.s.pieces.filter((q) => q.side === 0 && q.hp < q.maxHp).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0]; if (w) w.hp = Math.min(w.maxHp, w.hp + PART_NUM.toolbox); }
     b.killers = [];
     b.once = [];
     b.refunded = 0;
