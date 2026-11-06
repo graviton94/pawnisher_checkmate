@@ -26,6 +26,9 @@ def main(src, width=640):
             im = Image.open(os.path.join(d, f)).convert('RGB')
             k = width / im.width
             frames.append(im.resize((width, round(im.height * k)), Image.LANCZOS) if k < 1 else im)
+        # 사건 창 높이가 대사에 따라 달라진다 — 가장 큰 장에 맞춰 위쪽 기준으로 바탕(먹)에 붙인다
+        H = max(f.height for f in frames)
+        frames = [f if f.height == H else (lambda c, f=f: (c.paste(f, (0, 0)), c)[1])(Image.new('RGB', (width, H), (11, 11, 14))) for f in frames]
         dur = [max(40, times[i + 1] - times[i]) for i in range(len(times) - 1)] + [1000]
         out = os.path.join(SHOTS, f'ev-{scene}.webp')
         frames[0].save(out, save_all=True, append_images=frames[1:], duration=dur[: len(frames)], loop=0, quality=70, method=4)

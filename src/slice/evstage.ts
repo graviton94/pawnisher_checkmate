@@ -581,7 +581,9 @@ const STILL_ICON: Record<string, string> = { smith: 'bolt', swapDealer: 'medal-k
  */
 export const sceneStill = (scene: HTMLElement, id: string): void => {
   const r = { width: scene.clientWidth, height: scene.clientHeight };
-  const w = Math.max(60, Math.floor(r.width / D)), h = Math.max(45, Math.floor(r.height / D));
+  // 장치(176도트)가 3px로는 장면 칸에 안 들어가면 정지 장면 전체를 2px 도트로 (줄여서 도트를 깨지 않는다)
+  const dd = id === 'brokenGacha' || id === 'auction' ? 2 : D;
+  const w = Math.max(60, Math.floor(r.width / dd)), h = Math.max(45, Math.floor(r.height / dd));
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   cv.className = 'ev-still';
@@ -601,11 +603,9 @@ export const sceneStill = (scene: HTMLElement, id: string): void => {
   pf(x, M.iron[0], 0, h - 8, w, 8); pf(x, M.iron[3], 0, h - 8, w, 1);
   for (let a = 1; a < w; a += 4) if (bay(a, 2) < 0.5) pf(x, M.iron[2], a, h - 5, 2, 1);
   const put = (art: HTMLCanvasElement) => {
-    // 장치는 정수 배율로 (가능하면 1도트 그대로) 가운데 아래에
-    const k = art.width <= w - 4 ? 1 : 0.5;
+    // 장치는 1도트 그대로 가운데 아래에 (넘치면 양옆이 잘린다 — 줄이지 않는다)
     x.imageSmoothingEnabled = false;
-    if (k === 1) x.drawImage(art, Math.round((w - art.width) / 2), h - art.height);
-    else x.drawImage(art, 0, 0, art.width, art.height, Math.round((w - art.width / 2) / 2), h - Math.round(art.height / 2) - 2, Math.round(art.width / 2), Math.round(art.height / 2));
+    x.drawImage(art, Math.round((w - art.width) / 2), h - art.height);
   };
   const label = { title: '', win: '', lose: '' };
   if (id === 'brokenGacha') void assemblyJudge(scene, 'part', label, put);
