@@ -183,11 +183,11 @@ def frame_e(t, down=False, hazard=False):
     return px.im
 
 
-def tip_e(t, down=False):
-    """오른끝 화살 12×24 — 판이 뾰족하게 앞으로 (나아가기)"""
+def tip_e(t, down=False, H=24):
+    """오른끝 화살 (H/2)×H — 판이 뾰족하게 앞으로 (나아가기). 큰 단추 64px면 H=32"""
     r = R[t]
     fr = R['iron']
-    W, H = 12, 24
+    W = H // 2
     px = Pix(W, H)
     off = 2 if down else 0
     mid = (H + off) // 2
@@ -312,6 +312,7 @@ def main():
         frame_e(t).save(f'{OUT}/E-{t}.png'); frame_e(t, True).save(f'{OUT}/E-{t}-down.png')
         frame_e(t, hazard=True).save(f'{OUT}/E-{t}-hz.png'); frame_e(t, True, True).save(f'{OUT}/E-{t}-hz-down.png')
         tip_e(t).save(f'{OUT}/E-tip-{t}.png'); tip_e(t, True).save(f'{OUT}/E-tip-{t}-down.png')
+        tip_e(t, H=32).save(f'{OUT}/E-tip32-{t}.png'); tip_e(t, True, H=32).save(f'{OUT}/E-tip32-{t}-down.png')
         frame_f(t).save(f'{OUT}/F-{t}.png'); frame_f(t, True).save(f'{OUT}/F-{t}-down.png')
         ribbon(t).save(f'{OUT}/F-rib-{t}-l.png'); ribbon(t, False).save(f'{OUT}/F-rib-{t}-r.png')
     lamp().save(f'{OUT}/lamp-on.png'); lamp(False).save(f'{OUT}/lamp-off.png')
