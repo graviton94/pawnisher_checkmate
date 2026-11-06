@@ -103,3 +103,10 @@ export const KEYWORDS: [string, string, TermGate][] = [
   ['기벽', '분대원마다 붙은 버릇. 공격 · HP · 방열판 · 문턱이 달라집니다. (셋째 출하부터)', 'quirk'],
   ['기어 쇼크', '예고 공격을 맞은 기물은 다음 턴 공격 ×0.5, 손패 −1. (승급 2부터)', 'shock'],
 ];
+
+/** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */
+export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns', string> = {
+  plate: '용광로를 등에 진 자',
+  spawn: '끝없이 찍어 내는 손',
+  thorns: '가시 갑옷의 문지기',
+};

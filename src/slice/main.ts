@@ -1,6 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BATTLE_HELP, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
+import { BATTLE_HELP, BOSS_EPITHET, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import { sfx } from '../audio/sfx';
@@ -37,6 +37,7 @@ import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, MAP, NODE_DESC, NODE_IC
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
 import { EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
 import { runEventFx, type EvDiff } from './evstage';
+import { bossIntro, type BossKey } from './bossintro';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
@@ -1863,6 +1864,11 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   const roster = [...counts].map(([t, n], i) => `<b style="animation-delay:${900 + i * 90}ms">${pieceImg(t, 1, 'small', 28)}${n > 1 ? `<small>×${n}</small>` : ''}</b>`).join('');
   // 반장 초상 (B-01~03, 실제 유닛 = 검은 킹): 그림이 있으면 그것, 없으면 큰 도트 (img onerror가 도트로 되돌린다)
   const art = def.boss ? `<img class="enc-portrait" src="scenes/${BOSS_ART[def.bossRule ?? 'plate']}.png" alt="" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(foe, 1, 'large', 220).replace(/'/g, '&#39;')}'>` : pieceImg(foe, 1, 'large', 220);
+  // 반장은 따로 (D-249): 오른쪽 끝 초상 · 디더 경계 · 경계선 FX
+  if (def.boss) {
+    const rule = (def.bossRule ?? 'plate') as BossKey;
+    return bossIntro({ rule, art: BOSS_ART[rule], act: label, name: BOSS_RULES[rule].name, title: BOSS_EPITHET[rule], narr: def.narr, rules: BOSS_RULES[rule].lines, sfx: (k) => sfx(k as never) });
+  }
   return sceneIntro(label, name, def.narr, art, def.boss, roster);
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */

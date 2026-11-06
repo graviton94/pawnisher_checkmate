@@ -9,3 +9,6 @@
 
 ## 글꼴
 - **갈무리 (Galmuri)** — Lee Minseo. SIL OFL 1.1.
+
+## FX 기법 (D-249)
+- 도트 FX 엔진 `src/view/pxfx.ts`는 pixelfx(https://github.com/patch-gg/pixelfx, MIT, © 2026 Patch · Hugo Duprez)와 Sprite Fusion의 pixel art VFX(https://www.spritefusion.com/pixel-art-vfx, MIT, © 2026 Hugo Duprez)의 기법(색 · 빛 두 버퍼, 베이어 디더 알파, 입자 종류와 움직임, 플레어 빛)을 참고해 우리 코드로 다시 짰다.
