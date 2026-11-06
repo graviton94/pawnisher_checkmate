@@ -403,7 +403,7 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .ev-text { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 1.6; font-style: normal; color: #e2d9c8; max-width: 60ch; }
 .ev-choices { display: grid; gap: 8px; }
 /* D-259: 선택지 = 철 단추(크롬 9-slice), 고르면 황동 단추 — 얇은 선 상자 금지 */
-.ev-choice { display: grid; gap: 2px; text-align: left; min-height: 52px; padding: 2px 6px 4px; color: #f2ede4; background: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / 8px stretch; image-rendering: pixelated; box-shadow: none; }
+.ev-choice { display: grid; gap: 2px; text-align: left; min-height: 52px; padding: 2px 6px 4px; color: #f2ede4; background: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 9 fill / 18px stretch; image-rendering: pixelated; box-shadow: none; }
 .ev-choice b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; } .ev-choice small { font-size: 12px; font-family: Galmuri11, sans-serif; color: #d6d0c6; } .ev-choice em { font-size: 12px; font-family: Galmuri11, sans-serif; font-style: normal; color: #ff9a8a; }
 .ev-choice.off { filter: grayscale(0.8) brightness(0.6); }
 .panel.choosing .ev-choice:not(.chosen) { filter: brightness(0.55) grayscale(0.4); }
@@ -1413,7 +1413,7 @@ body.slice.lay-f .apbar .seg { width: 36px; height: 36px; background-size: 36px 
 body.slice.lay-f .apbar .seg .key { margin: 0; }
 body.slice.lay-f .rail.left > .apbar { grid-template-rows: 14px 1fr; row-gap: 2px; }
 body.slice.lay-f .deckrow .deck-btn { border-style: solid; border-width: calc(var(--px) * 4); }
-body.slice.lay-f .deckrow .deck-btn { border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / calc(var(--px) * 4) stretch; }
+body.slice.lay-f .deckrow .deck-btn { border-image: url('../assets/ui/chrome/btn-iron.png') 9 fill / calc(var(--px) * 9) stretch; }
 body.slice.lay-f .deckrow .deck-btn:active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); }
 @keyframes tubeFlick { 0%, 62%, 64%, 100% { background-position: 0 0; } 63% { background-position: -12px 0; } }
 
@@ -2079,7 +2079,7 @@ body.slice .overlay .panel > h2:first-child:not(:has(.pass-tag)), body.slice .ov
 body.slice .overlay .panel > h2 .dim { color: #5a3a0e; }
 body.slice .overlay .panel > .eyebrow { color: #c89b3c; letter-spacing: 0.06em; }
 /* 적 차례 · 내 차례 띠: 납작한 색 띠(그라데이션 속도선) → 크롬 쇠 띠 + 리벳 + 도트 속도선(단색) */
-.tb4 .band { background: none; border-style: solid; border-width: 12px 0; border-image: url('../assets/ui/chrome/btn-brass.png') 4 0 fill / 12px 0 stretch; image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.tb4 .band { background: none; border-style: solid; border-width: 12px 0; border-image: url('../assets/ui/chrome/btn-brass.png') 9 0 fill / 18px 0 stretch; image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
 .tb4.foe .band { border-image-source: url('../assets/ui/chrome/btn-crimson.png'); }
 .tb4 .band::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; animation: streak 300ms steps(6) infinite; }
 .tb4.foe .band::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23ff6b6b'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23ff6b6b'/%3E%3C/svg%3E"); }
@@ -2093,10 +2093,10 @@ body.slice .overlay .panel > .eyebrow { color: #c89b3c; letter-spacing: 0.06em; 
 .taunt { background: none; box-shadow: 0 4px 0 #000; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; padding: 0 6px; }
 .tut .tut-talk { background: none; border: 0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; padding: 0 22px 0 2px; }
 .tut .tut-talk .tut-next { right: 4px; bottom: 0; }
-.boss-rules { background: none; box-shadow: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-crimson.png') 4 fill / 8px stretch; image-rendering: pixelated; padding: 0 4px 2px; color: #fff; }
+.boss-rules { background: none; box-shadow: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-crimson.png') 9 fill / 18px stretch; image-rendering: pixelated; padding: 0 4px 2px; color: #fff; }
 .boss-rules b { color: #fff1c0; }
 /* 작업대 선택지 등 카드 얼굴이 아닌 .part-card: 얇은 선 상자 → 철 단추(크롬), 누르면 내려감 */
-body.slice .part-card:not(.cf) { background: none; box-shadow: 0 3px 0 #000; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 4 fill / 8px stretch; image-rendering: pixelated; padding: 6px 4px 8px; }
+body.slice .part-card:not(.cf) { background: none; box-shadow: 0 3px 0 #000; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 9 fill / 18px stretch; image-rendering: pixelated; padding: 6px 4px 8px; }
 body.slice .part-card:not(.cf):active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); translate: 0 2px; box-shadow: 0 1px 0 #000; }
 /* 고물상 머리 줄의 이름도 같은 황동 명패 */
 body.slice .overlay .shop-head > h2 { flex: none; width: auto; margin-right: auto; display: inline-flex; align-items: center; gap: 8px; margin: 0; min-height: 34px; padding: 0 12px; color: #2a1a06; text-shadow: 0 1px 0 #fff1c0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/plate.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 3px 0 #000; }
@@ -2254,3 +2254,13 @@ body.slice .op-sub.op-dev .btn { font: 400 12px Galmuri11, sans-serif; opacity: 
 .credits .cr-gap { display: block; height: 24px; }
 .credits .cr-lead { font: 400 24px/1.6 Galmuri11, sans-serif; color: #f4ead6; }
 .pl-text p { text-wrap: balance; word-break: keep-all; }
+/* ───────── D-293 단추 E 「레버 판」 확정 (사용자: 「E로 해라」) ─────────
+   단추 그림: tools/draw-chrome3.py --game (24×24, 9-slice 9 — 그림 18px가 테두리 8px보다 넓어 글자 자리를 지킨다).
+   큰 주 단추(메인 메뉴 이어하기 · 출하 시작)는 오른끝이 화살처럼 뾰족하다 — 오른쪽 틀 대신 화살 끝 그림(32도트 = 64px).
+   누르면 단추 안의 것이 모두 내려앉는다(글자 · 작은 줄 · 램프). */
+.btn:active:not(:disabled) > *, .btn.down > * { transform: translateY(2px); }
+body.slice .op-main.brass { position: relative; height: 64px; min-height: 64px; margin-right: 30px; border-right-width: 0; border-image-width: calc(var(--px) * 9) 0 calc(var(--px) * 9) calc(var(--px) * 9); }
+body.slice .op-main.brass::after { content: ''; position: absolute; top: -8px; right: -32px; width: 32px; height: 64px; background: url('../assets/ui/chrome/tip32-brass.png') 0 0 / 32px 64px no-repeat; image-rendering: pixelated; pointer-events: none; }
+body.slice .op-main.brass:active::after { background-image: url('../assets/ui/chrome/tip32-brass-down.png'); }
+body.slice .op-run { gap: 36px; }
+.ev-choice { padding: 4px 12px 6px; } /* E 판 테에 글자가 붙지 않게 */

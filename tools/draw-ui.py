@@ -120,9 +120,7 @@ TINTS = {
     'crimson': ('R', 'Rh', 'R2', 'r'),
     'cyan': ('C2', 'C', 'c', 'K'),
 }
-for name, (face, hi, lo, deep) in TINTS.items():
-    button(face, hi, lo, deep).save(f'{OUT}/btn-{name}.png')
-    button(face, hi, lo, deep, down=True).save(f'{OUT}/btn-{name}-down.png')
+# 단추는 D-293부터 E 레버 판 (tools/draw-chrome3.py --game) — 여기서는 찍지 않는다
 panel().save(f'{OUT}/panel.png')
 plate().save(f'{OUT}/plate.png')
 tape().save(f'{OUT}/tape.png')

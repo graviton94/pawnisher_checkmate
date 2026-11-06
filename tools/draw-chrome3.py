@@ -60,7 +60,6 @@ def grain(px, x0, y0, x1, y1, r):
         px.r(x0, y, x1, y, c)
     gy = y0 + 1 if h > 6 else y0
     px.r(x0 + 2, gy, x0 + 4, gy, r[6])
-    px.p(x0 + 6, gy, r[6])
 
 
 def rivet(px, x, y, r):
@@ -170,8 +169,8 @@ def frame_e(t, down=False, hazard=False):
     px.r(3, top - 1, W - 4, fb + 1, INK)
     grain(px, 4, top, W - 5, fb, r)
     px.r(4, top, W - 5, top, r[6]); px.r(4, top, 4, fb, r[5]); px.r(4, fb, W - 5, fb, r[2]); px.r(W - 5, top + 1, W - 5, fb, r[2])
-    # 위 리벳 줄 (쇠틀 위, 8칸마다)
-    for x in (3, 11, 19):
+    # 리벳 (쇠틀 위 양 귀퉁이만 — 가운데 칸에 두면 늘어나며 막대로 번진다)
+    for x in (3, 19):
         px.p(x, 2 + off, fr[6]); px.p(x + 1, 2 + off, fr[2])
     # 아래 두께
     if not down:
@@ -320,5 +319,21 @@ def main():
     print(OUT)
 
 
+def game():
+    """확정 (D-293, 사용자: 「E로 해라」): E 단추 · 쇠 함 판을 게임 그림으로 — src/assets/ui/chrome (tools/draw-ui.py의 단추 · 판을 대신한다)"""
+    g = os.path.join('src', 'assets', 'ui', 'chrome')
+    for name, t in (('iron', 'iron'), ('brass', 'brass'), ('crimson', 'crimson'), ('cyan', 'teal')):
+        hz = name == 'crimson'
+        frame_e(t, hazard=hz).save(f'{g}/btn-{name}.png'); frame_e(t, True, hz).save(f'{g}/btn-{name}-down.png')
+        tip_e(t).save(f'{g}/tip-{name}.png'); tip_e(t, True).save(f'{g}/tip-{name}-down.png')
+        tip_e(t, H=32).save(f'{g}/tip32-{name}.png'); tip_e(t, True, H=32).save(f'{g}/tip32-{name}-down.png')
+    panel_cab().save(f'{g}/panel-e.png')
+    hang_plate().save(f'{g}/hang.png')
+    print(g)
+
+
 if __name__ == '__main__':
+    import sys
     main()
+    if '--game' in sys.argv:
+        game()
