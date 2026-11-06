@@ -35,6 +35,8 @@ const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) 
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
+import { EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
+import { runEventFx, type EvDiff } from './evstage';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
@@ -1503,122 +1505,146 @@ let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
 /** 다음 출하에서 뒤로 미룰 최근 사건 수 (15종 중) */
 const EV_RECENT = 7;
 /** 사건 화면 (R5-3, D-170): 서술 · 선택지(고를 수 없으면 이유) → 결과 한 줄 → 계속 (부품이면 고르기) */
+/**
+ * 사건 무대 (D-248, 사용자: 「선택지 → 해당 대화창에서 연출이 계속돼야지, 팝업 여러 개 휙휙 전환이 아니라」 · 슬더스식 흐름):
+ * 한 창 안에서 ① 그림 + 서술 + NPC 첫마디 → ② 선택지 (한 번 누르면 NPC가 반응하고 한 번 더 누르면 확정, 오래 망설이면 NPC가 한마디)
+ * → ③ 그 사건만의 장치가 그림 위에서 돈다 (evstage.ts — 동전 · 뽑기 바퀴 · 망치 · 담금질 …, 누르면 손맛) → ④ 결과 서술 + NPC 마무리
+ * → ⑤ 사건마다 다른 나가기 버튼 (「동전 소리를 등진다」). 결과는 엔진이 먼저 정한다 — 화면은 보여 주기만 (UI 원칙 9).
+ */
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
+  const talk: EventTalk = EVENT_TALK[id] ?? { npc: ev.title, react: [], idle: [], win: '', bye: '', exit: '떠난다' };
   const st = (): EventState => ({ squad, deck, refined, gold });
-  // 장소 배경 (BG-03): 공장 뒷길 — 사건 창은 가운데 그대로
   document.body.classList.add('between');
   placeBg('bg-event');
-  // 장면 칸 (슬더스식 왼쪽 그림): public/scenes/<사건>.png가 오면 그 그림, 없으면 물음표 문양 (발주 docs/asset-order-scenes-prompts.md)
-  const el = openOverlay(`<div class="ev-wrap"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><p class="ev-text"></p><div class="ev-choices">${ev.choices
+  const el = openOverlay(`<div class="ev-wrap ev-stage"><div class="ev-scene"><img src="scenes/${id}.png" alt="" onerror="this.remove()"><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><div class="ev-log" aria-live="polite"></div><div class="ev-choices" hidden>${ev.choices
     .map((c, k) => {
       const why = c.blocked?.(st()) ?? null;
-      return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}</button>`;
+      return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}<i class="ev-again">한 번 더 누르면 정한다</i></button>`;
     })
-    .join('')}</div><p class="dim">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
-  // 서술은 타자로 (D-193). 따옴표 대사는 말하는 이의 말풍선으로 따로 (D-244, 사용자: 「대화도 이펙트도 없이 너무 심플하다」)
-  const evText = el.querySelector<HTMLElement>('.ev-text')!;
+    .join('')}</div><div class="ev-exit" hidden></div><p class="dim ev-purse">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
+  const scene = el.querySelector<HTMLElement>('.ev-scene')!;
+  const logEl = el.querySelector<HTMLElement>('.ev-log')!;
+  const choicesEl = el.querySelector<HTMLElement>('.ev-choices')!;
+  const exitEl = el.querySelector<HTMLElement>('.ev-exit')!;
+  const alive = () => logEl.isConnected;
+  /** 대화 한 줄: 서술(2인칭) · NPC(이름 + 말) — 세 줄까지만 남는다 */
+  const say = async (kind: 'narr' | 'npc', text: string): Promise<void> => {
+    if (!text || !alive()) return;
+    const line = document.createElement('p');
+    line.className = `ev-line ${kind}`;
+    line.innerHTML = kind === 'npc' ? `<b>${talk.npc}</b><span></span>` : '<span></span>';
+    logEl.appendChild(line);
+    while (logEl.children.length > 3) logEl.firstElementChild!.remove();
+    logEl.querySelectorAll('.ev-line').forEach((x, i, all) => x.classList.toggle('old', i < all.length - 1));
+    replay(line, 'in');
+    if (kind === 'npc') sfx('tap', 4);
+    await typeIn(line.querySelector('span')!, text, kind === 'npc' ? 26 : 18, undefined, alive);
+  };
+  let busy = true;
+  let idleN = 0;
+  let lastAct = performance.now();
+  const idle = window.setInterval(() => {
+    if (!alive()) return window.clearInterval(idle);
+    if (busy || performance.now() - lastAct < 7000 || idleN >= talk.idle.length) return;
+    lastAct = performance.now();
+    void say('npc', talk.idle[idleN++]);
+  }, 1000);
   const m = ev.text.match(/^(.*?)\s*(“[^”]+”)(.*)$/);
   const narr = m ? (m[1] + (m[3] ? ` ${m[3].trim()}` : '')).trim() : ev.text;
-  void typeIn(evText, narr, 18, undefined, () => evText.isConnected).then(() => {
-    if (!m || !evText.isConnected) return;
-    const say = document.createElement('p');
-    say.className = 'ev-say';
-    say.innerHTML = `<b>${ev.title}</b><span></span>`;
-    evText.after(say);
-    replay(say, 'in');
-    sfx('tap', 4);
-    void typeIn(say.querySelector('span')!, m[2], 26, undefined, () => say.isConnected);
-  });
+  void (async () => {
+    await say('narr', narr);
+    if (m) await say('npc', m[2]);
+    choicesEl.hidden = false;
+    replay(choicesEl, 'in');
+    busy = false;
+    lastAct = performance.now();
+  })();
+  /** ⑤ 나가기 */
+  const showExit = (label: string, go: () => void): void => {
+    exitEl.innerHTML = `<button class="btn brass" type="button">${label}</button>`;
+    exitEl.hidden = false;
+    replay(exitEl, 'in');
+    exitEl.querySelector('button')!.addEventListener('click', () => { window.clearInterval(idle); go(); }, { once: true });
+  };
+  let picked = -1;
   el.querySelectorAll<HTMLElement>('[data-ev]').forEach((btn) =>
     btn.addEventListener('click', () => {
+      if (busy) return;
       if (btn.classList.contains('off')) return toast('지금은 고를 수 없습니다.');
-      const c = ev.choices[Number(btn.dataset.ev)];
-      choose(btn, c.label.replace(/\?$/, ''), async () => {
+      const k = Number(btn.dataset.ev);
+      lastAct = performance.now();
+      // 첫 탭: 고르는 중 — NPC가 반응한다
+      if (picked !== k) {
+        picked = k;
+        choicesEl.querySelectorAll('.ev-choice').forEach((x) => x.classList.toggle('chosen', x === btn));
+        sfx('lift');
+        void say('npc', talk.react[k] ?? talk.react[talk.react.length - 1] ?? '');
+        return;
+      }
+      // 두 번째 탭: 정한다
+      busy = true;
+      sfx('stamp');
+      const c = ev.choices[k];
+      choicesEl.querySelectorAll<HTMLElement>('.ev-choice:not(.chosen)').forEach((x) => (x.style.visibility = 'hidden'));
+      void (async () => {
+        if (!c.desc) {
+          choicesEl.hidden = true;
+          await say('npc', talk.bye);
+          return showExit(talk.exit, advance);
+        }
+        const before = { squad: squad.map((u) => u.t), deck: deck.map((x) => COMMANDS[x].name), gold, hp: squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)), 0) };
         const s0 = st();
         const out = c.apply(s0, sub());
+        // 저울추 (D-247): 같은 창 안에서 카드를 고른다
+        if (out.cardPick === 'counterweight') {
+          choicesEl.hidden = true;
+          const rid = await new Promise<CommandId>((done) => {
+            const ids = weighable(s0);
+            const strip = document.createElement('div');
+            strip.className = 'ev-cards';
+            strip.innerHTML = ids.map((x) => `<button type="button" class="ev-card" data-cw="${x}">${keysHtml(COMMANDS[x].cost)}<b>${COMMANDS[x].name}</b><small>태엽 ${COMMANDS[x].cost} → <i>${COMMANDS[x].cost - 1}</i></small></button>`).join('');
+            choicesEl.after(strip);
+            replay(strip, 'in');
+            strip.querySelectorAll<HTMLElement>('[data-cw]').forEach((cb) => cb.addEventListener('click', () => { strip.remove(); done(cb.dataset.cw as CommandId); }, { once: true }));
+          });
+          counterweight(s0, rid, sub());
+          out.text = '';
+        }
         squad = s0.squad;
         deck = s0.deck;
         refined.splice(0, refined.length, ...s0.refined);
         gold = s0.gold;
         if (out.recruit) squad.push(crewOf(out.recruit));
-        // 확률 선택이면 룰렛이 돌아 그 칸에 선다
-        const segs = [...c.desc.matchAll(/(\d+)%:\s*([^·]+)/g)].map((x) => ({ p: Number(x[1]), label: x[2].trim() }));
-        let mood: 'good' | 'bad' | '' = out.partPick || out.recruit ? 'good' : '';
-        if (segs.length > 1 && out.slot !== undefined) {
-          await roulette(segs, out.slot, `${ev.title} — ${c.label.replace(/\?$/, '')}`);
-          mood = BAD_SEG.test(segs[out.slot].label) ? 'bad' : 'good';
-        }
-        // 저울추 (D-247): 카드를 고른 뒤에 결과
-        if (out.cardPick === 'counterweight')
-          return pickCardScreen(`${ev.title} — 카드 하나`, '고른 카드는 태엽 −1, 반대쪽 접시의 다른 카드 한 장(무작위)은 녹슬어 태엽 +1.', weighable(st()), (rid) => {
-            const s1 = st();
-            const text = counterweight(s1, rid, sub());
-            deck = s1.deck;
-            refined.splice(0, refined.length, ...s1.refined);
-            evResult(ev.title, { text }, 'good', advance);
-          }, () => eventScreen(id));
-        evResult(ev.title, out, mood, () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
-      });
+        // 바뀐 것 (장치 연출이 쓴다)
+        const after = { squad: squad.map((u) => u.t), deck: deck.map((x) => COMMANDS[x].name) };
+        const minus = <T,>(a: T[], b: T[]) => { const r = [...b]; return a.filter((x) => { const i = r.indexOf(x); if (i < 0) return true; r.splice(i, 1); return false; }); };
+        const goneT = minus(before.squad, after.squad);
+        const addT = minus(after.squad, before.squad);
+        const diff: EvDiff = {
+          gone: goneT.slice(addT.length),
+          changed: goneT.slice(0, addT.length).map((f, i) => ({ from: f, to: addT[i] })),
+          added: addT.slice(goneT.length),
+          cardsOut: minus(before.deck, after.deck),
+          cardsIn: minus(after.deck, before.deck),
+          gold: gold - before.gold,
+          hp: squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)), 0) - before.hp,
+        };
+        if (id === 'tinker') diff.changed = [{ from: squad.find((u) => (u.doors ?? 0) > 0)?.t ?? 'P', to: squad.find((u) => (u.doors ?? 0) > 0)?.t ?? 'P' }];
+        // 좋은 결과: 확률 선택은 첫 칸(뽑기는 둘째 칸 「한 단계 위」도 좋음), 아니면 좋다
+        const good = out.slot === undefined || out.slot === 0 || (id === 'brokenGacha' && out.slot === 1);
+        choicesEl.hidden = true;
+        el.querySelector('.ev-stage')!.classList.add('big');
+        await runEventFx(scene, { id, good, diff, tap: talk.tap });
+        if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
+        el.querySelector('.ev-purse')!.textContent = `나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}`;
+        if (out.text) await say('narr', out.text);
+        await say('npc', good ? talk.win : talk.lose ?? talk.win);
+        showExit(out.partPick ? '부품을 고른다' : talk.exit, () => (out.partPick ? partPick(`<h2>${ev.title} — 부품 하나</h2>`, advance) : advance()));
+      })();
     }),
   );
 };
-
-/** 사건 결과 창: 좋으면 금빛 제목 + 불꽃, 나쁘면 붉은 제목 + 흔들림, 결과 글은 한 자씩 (D-244) */
-const evResult = (title: string, out: { text: string; partPick?: boolean }, mood: 'good' | 'bad' | '', next: () => void): void => {
-  const res = openOverlay(`<div class="ev-result ${mood}"><h2>${title}</h2><p class="ev-text"></p><div class="row"><button class="btn brass" type="button" data-next>계속</button></div></div>`);
-  sfx(mood === 'bad' ? 'hurt' : out.partPick ? 'rare' : 'stamp');
-  const box = res.querySelector<HTMLElement>('.ev-result')!;
-  if (mood === 'bad') shake(box, 2);
-  if (mood === 'good') {
-    const r = box.getBoundingClientRect();
-    sparksAt(r.left + r.width / 2, r.top + 30, 14, 60);
-  }
-  void typeIn(res.querySelector<HTMLElement>('.ev-text')!, out.text, 18);
-  res.querySelector('[data-next]')!.addEventListener('click', next);
-};
-
-/** 나쁜 칸 (룰렛 색 · 결과 연출) */
-const BAD_SEG = /−|꽝|소실|부서진다|발각|빈 상자/;
-/**
- * 사건 룰렛 (D-244): 확률 칸들(폭 = 확률)이 한 줄로 서고, 바늘이 두 바퀴 반 돌다 느려져 실제로 걸린 칸에 선다.
- * 바늘은 4px 계단으로 움직이고(도트) 칸 경계를 넘을 때마다 딸깍. 결과는 이미 정해져 있다 — 보여 주기만 한다.
- */
-const roulette = (segs: { p: number; label: string }[], slot: number, title: string): Promise<void> =>
-  new Promise((done) => {
-    const total = segs.reduce((a, x) => a + x.p, 0);
-    const el = openOverlay(`<div class="roul"><p class="eyebrow">${title}</p><div class="roul-bar">${segs
-      .map((x, k) => `<i class="${BAD_SEG.test(x.label) ? 'bad' : 'good'}" style="flex:${x.p}" data-k="${k}"><span>${x.p}%</span><small>${x.label}</small></i>`)
-      .join('')}<b class="roul-needle"></b></div></div>`);
-    const bar = el.querySelector<HTMLElement>('.roul-bar')!;
-    const needle = el.querySelector<HTMLElement>('.roul-needle')!;
-    const W = bar.clientWidth;
-    const start = segs.slice(0, slot).reduce((a, x) => a + x.p, 0) / total;
-    const width = segs[slot].p / total;
-    const target = (start + width * (0.2 + Math.random() * 0.6)) * W;
-    const dist = W * 2 + target;
-    const dur = calmNow() ? 300 : 2200;
-    const t0 = performance.now();
-    let lastSeg = -1;
-    const tick = (now: number) => {
-      const k = Math.min(1, (now - t0) / dur);
-      const e = 1 - Math.pow(1 - k, 3);
-      const x = Math.round(((dist * e) % W) / 4) * 4;
-      needle.style.transform = `translateX(${x}px)`;
-      const seg = segs.findIndex((_, i) => x / W < segs.slice(0, i + 1).reduce((a, y) => a + y.p, 0) / total);
-      if (seg !== lastSeg) {
-        lastSeg = seg;
-        sfx('tap', 2 + seg);
-      }
-      if (k < 1) return void requestAnimationFrame(tick);
-      const won = bar.querySelector<HTMLElement>(`[data-k="${slot}"]`)!;
-      won.classList.add('hit');
-      shake(bar, 1);
-      sfx(BAD_SEG.test(segs[slot].label) ? 'threat' : 'coin');
-      window.setTimeout(done, 900);
-    };
-    requestAnimationFrame(tick);
-  });
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */
 const shopScreen = (): void => {
@@ -1674,7 +1700,7 @@ const shopScreen = (): void => {
         const label = kind === 'card' ? `${josa(COMMANDS[id as CommandId].name, '을')} 산다 — 나사 ${cost}` : kind === 'part' ? `${josa(SLICE_PARTS[id as SlicePartId].name, '을')} 산다 — 나사 ${cost}` : kind === 'heal' ? `분대를 정비한다 — 나사 ${cost}` : kind === 'rewind' || kind === 'revive' ? `${josa(CHARMS[kind].name, '을')} 산다 — 나사 ${cost}` : `카드 한 장을 뺀다 — 나사 ${cost}`;
         choose(btn, label, () => {
           // 나사로 다듬기 (D-218 — 남는 나사를 쓸 곳 · 강화 경로): 고르면 값을 치르고 고물상으로 돌아온다
-          if (kind === 'refine') return refineScreen(render, () => { gold -= cost; svcUsed.refine += 1; sold.add(key); render(); });
+          if (kind === 'refine') return refineScreen(render, () => { gold -= cost; svcUsed.refine += 1; sold.add(key); render(); }, 'shop');
           if (kind === 'remove') {
             return deckView('remove', (removed) => {
               if (removed) {
@@ -1742,8 +1768,8 @@ const forgeScreen = (): void => {
 
 /** 다듬기: 태엽 1 이상이고 아직 다듬지 않은 카드 중 하나 */
 /** 다듬기 화면 — back = 그만두면 돌아갈 곳, done = 다듬은 뒤 (작업대: 다음 노드로 · 고물상: 값을 치르고 고물상으로, D-218) */
-const refineScreen = (back: () => void = forgeScreen, done: () => void = advance): void =>
-  pickCardScreen('다듬기 <span class="dim">— 카드 하나</span>', '고른 카드 한 장이 「+」가 되어 태엽이 하나 줄어듭니다. 녹슨 카드는 녹을 벗습니다.', [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1), (rid) => {
+const refineScreen = (back: () => void = forgeScreen, done: () => void = advance, who: keyof typeof REFINE_TALK = 'forge'): void =>
+  pickCardScreen('다듬기 <span class="dim">— 카드 하나</span>', `<span class="npc-line"><b>${REFINE_TALK[who].npc}</b> ${REFINE_TALK[who].line}</span>`, [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1), (rid) => {
     deck[deck.indexOf(rid)] = refineOnce(rid);
     refined.push(rid);
     sfx('stamp');
