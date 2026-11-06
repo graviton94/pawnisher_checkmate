@@ -9,7 +9,7 @@
       },
     }
 - 명암은 그리는 사람이 직접 칠한다 (32칸은 자동 명암이 밋밋하다): 재질마다 견본 0(가장 어둠) ~ 6(가장 밝음) 중 4 ~ 5단계.
-- 바깥선은 그리개가 두른다: 그림과 닿은 빈칸(상하좌우)에 먹 #0B0B0E. 직접 'ink'를 칠해도 된다(안쪽 선 · 구멍).
+- 바깥선은 그리개가 두른다: 그림 둘레에 먹 #0B0B0E 두 겹(OUTLINE = 2, D-291). 그림은 가운데 28칸 안쪽에 두면 먹선이 잘리지 않는다. 직접 'ink'를 칠해도 된다(안쪽 선 · 구멍).
 - 색은 SWATCH에서만 — 우리 재질 램프(pxkit M) + 나무 · 보라 · 금 · 구리 · 하늘.
 사용:
     python3 -I tools/pixel/icons32.py preview I-01 <out.png>   지금 → 새 그림 (4배 · 2배 · 1배 · 16px 축소)
@@ -68,19 +68,40 @@ def check(key, icon):
     return bad
 
 
+OUTLINE = 2  # 바깥 먹선 두께 (D-291: 사용자 「지금보다 두 배 — 1도트는 너무 고해상도 스타일」)
+
+
 def render(icon):
-    """32×32 RGBA — 칠한 그대로 + 바깥선"""
+    """32×32 RGBA — 칠한 그대로 + 바깥 먹선 OUTLINE도트(상하좌우로 한 겹씩).
+    먹선이 32칸 밖으로 넘치지 않게 넓은 판에 그린 뒤 실제 범위를 잘라 정중앙에 다시 놓는다
+    (그림이 30칸을 넘으면 바깥 먹선이 가장자리에서 조금 잘린다 — 그리는 쪽에서 28칸 안쪽 권장)."""
     rows, pal = icon['rows'], icon['pal']
-    out = Image.new('RGBA', (N, N), (0, 0, 0, 0))
-    px = out.load()
-    filled = lambda x, y: 0 <= x < N and 0 <= y < N and rows[y][x] != '.'
+    M = N + 2 * OUTLINE
+    big = Image.new('RGBA', (M, M), (0, 0, 0, 0))
+    px = big.load()
+    filled = set()
     for y in range(N):
         for x in range(N):
             c = rows[y][x]
             if c != '.':
-                px[x, y] = hexc(SWATCH[pal[c]])
-            elif any(filled(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                px[x + OUTLINE, y + OUTLINE] = hexc(SWATCH[pal[c]])
+                filled.add((x + OUTLINE, y + OUTLINE))
+    for _ in range(OUTLINE):
+        ring = {(x + dx, y + dy) for x, y in filled for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - filled
+        for x, y in ring:
+            if 0 <= x < M and 0 <= y < M:
                 px[x, y] = hexc(INK)
+        filled |= ring
+    box = big.getbbox()
+    out = Image.new('RGBA', (N, N), (0, 0, 0, 0))
+    if not box:
+        return out
+    crop = big.crop(box)
+    if crop.width > N or crop.height > N:
+        l = max(0, (crop.width - N) // 2)
+        tp = max(0, (crop.height - N) // 2)
+        crop = crop.crop((l, tp, l + min(N, crop.width), tp + min(N, crop.height)))
+    out.paste(crop, ((N - crop.width) // 2, (N - crop.height) // 2), crop)
     return out
 
 
