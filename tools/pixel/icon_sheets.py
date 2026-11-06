@@ -130,6 +130,13 @@ SHEETS = {
         ('c.recall', '회수', '쇠 갈고리 + 감긴 밧줄'),
         ('c.vent', '배기', '증기를 뿜는 쇠 밸브 바퀴'),
     ]),
+    'I-11': ('수읽기 · 정비 카드 (확장 때 빠진 것, D-295)', [
+        ('c.stepAside', '비켜서기', '길을 비켜 주는 흰 폰 — 옆으로 한 칸 물러서는 몸짓(뒤에 짧은 잔상 두 줄), 앞으로 열린 길에 금빛 줄'),
+        ('c.checkCall', '체크!', '검은 킹 머리를 향해 겨눈 쇠 갈고리 사슬 — 사슬이 킹을 묶는다 (핀)'),
+        ('c.oilCan', '기름칠', '작은 황동 기름병에서 떨어지는 황금빛 기름 방울 + 톱니 하나'),
+        ('c.forkAny', '양수겸장', '두 갈래로 갈라지는 쇠 집게 · 쇠스랑 끝 — 양쪽에 붉은 과녁 둘'),
+        ('c.fieldPlate', '덧댄 판', '리벳 넷으로 덧댄 사각 쇠 조각 판 (방열판), 가장자리가 구부러진 땜질 자국'),
+    ]),
 }
 
 # 우리 팔레트 (어두움 · 바탕 · 밝음) — tools/pixel/icons16.py RAMP와 같다
@@ -221,5 +228,5 @@ def refs():
 
 if __name__ == '__main__':
     keys = [k for _, (t, it) in SHEETS.items() for k, n, w in it]
-    assert len(keys) == len(set(keys)) == 100, (len(keys), len(set(keys)))
+    assert len(keys) == len(set(keys)) == 105, (len(keys), len(set(keys)))
     {'doc': doc, 'refs': refs}[sys.argv[1]]()
