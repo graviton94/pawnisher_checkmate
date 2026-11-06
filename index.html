@@ -11,13 +11,17 @@
   <!-- 부팅 화면 (D-238): 묶음 파일이 내려오는 동안 검은 화면 대신 황동 도트 셋이 차례로 깜빡인다 (글꼴이 아직 없어 글은 쓰지 않는다) -->
   <style>
     #boot { position: fixed; inset: 0; z-index: 9999; background: #0b0b0e; display: grid; place-items: center; }
+    #boot > div { display: grid; justify-items: center; gap: 14px; }
+    /* 진행 막대: 12칸이 계단으로 찬다 (--k = 찬 칸 수) */
+    #boot .boot-bar { width: 196px; height: 16px; padding: 2px; background: #16141c; box-shadow: 0 0 0 2px #000, 0 0 0 4px #c89b3c, 4px 4px 0 4px #000; }
+    #boot .boot-bar b { display: block; height: 100%; width: calc(var(--k, 0) * 16px); background: repeating-linear-gradient(90deg, #f4d27a 0 14px, #16141c 14px 16px); }
     #boot i { display: inline-block; width: 12px; height: 12px; margin: 0 6px; background: #c89b3c; box-shadow: 4px 4px 0 #000; animation: bootDot 0.9s steps(1, end) infinite; }
     #boot i:nth-child(2) { animation-delay: 0.3s; } #boot i:nth-child(3) { animation-delay: 0.6s; }
     @keyframes bootDot { 0% { background: #f4d27a; } 33% { background: #5a4520; } }
   </style>
 </head>
 <body class="slice">
-  <div id="boot" aria-hidden="true"><div><i></i><i></i><i></i></div></div>
+  <div id="boot" aria-hidden="true"><div><div class="boot-bar"><b></b></div><span><i></i><i></i><i></i></span></div></div>
   <div id="app">
     <aside id="left" class="rail left"><div id="vials" class="apbar" aria-label="남은 태엽"></div><div id="hand" class="hand"></div></aside>
     <main id="board"></main>

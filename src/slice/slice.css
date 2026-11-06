@@ -530,7 +530,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes tfxpunch { 0% { transform: scale(1.22); } 100% { transform: none; } }
 .tfx.inv > * { filter: invert(1) contrast(1.6); }
 .tfx-em { position: relative; width: 205px; height: 124px; margin-top: -14px; }
-.tfx-em img { position: absolute; inset: 0; width: 205px; height: 124px; image-rendering: pixelated; opacity: 0; }
+.tfx-em img { position: absolute; inset: 0; width: 205px; height: 124px; image-rendering: pixelated; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .tfx-em .h1 { clip-path: polygon(0 0, 77.6% 0, 20% 100%, 0 100%); }
 .tfx-em .h2 { clip-path: polygon(77.6% 0, 100% 0, 100% 100%, 20% 100%); }
 .tfx-em.run .h1, .tfx-em.run .h2 { animation: tfxdrop 260ms both; }
@@ -547,17 +547,17 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .tfx-em.done .h1 { opacity: 1; transform: translate(-5px, -5px) rotate(-2deg); } .tfx-em.done .h2 { opacity: 1; transform: translate(5px, 5px) rotate(2deg); }
 .tfx-em.done .sl { opacity: 1; animation: tfxglow 1600ms ease-in-out infinite; }
 @keyframes tfxglow { 0%, 100% { filter: drop-shadow(0 0 0 transparent); } 50% { filter: drop-shadow(0 0 0 transparent) brightness(1.15); } }
-.tfx-glint { position: absolute; width: 40px; height: 5px; margin: -2px 0 0 -20px; background: linear-gradient(transparent, transparent); opacity: 0; pointer-events: none; mix-blend-mode: screen; z-index: 3; }
-.tfx-rays { position: absolute; left: 50%; top: 34%; width: 560px; height: 560px; margin: -280px 0 0 -280px; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)); border-radius: 0; opacity: 0; pointer-events: none; }
+.tfx-glint { position: absolute; width: 40px; height: 5px; margin: -2px 0 0 -20px; background: linear-gradient(transparent, transparent); -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; mix-blend-mode: screen; z-index: 3; }
+.tfx-rays { position: absolute; left: 50%; top: 34%; width: 560px; height: 560px; margin: -280px 0 0 -280px; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)); border-radius: 0; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; }
 .tfx-rays.on { animation: tfxrays 420ms var(--decel) forwards; }
 @keyframes tfxrays { 0% { transform: scale(0.3) rotate(0); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 25.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 50.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 75.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.4) rotate(14deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.tfx-vig { position: fixed; inset: 0; background: linear-gradient(transparent, transparent); opacity: 0; pointer-events: none; z-index: -1; }
+.tfx-vig { position: fixed; inset: 0; background: linear-gradient(transparent, transparent); -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; z-index: -1; }
 .tfx-vig.on { animation: tfxvig 1200ms ease-out forwards; }
 @keyframes tfxvig { 0% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 7.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 11.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 15% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 57.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } }
-.tfx-flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 120; }
+.tfx-flash { position: fixed; inset: 0; background: #fff; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; z-index: 120; }
 .tfx-flash.on { animation: tfxfl 220ms var(--decel) forwards; }
 @keyframes tfxfl { 0% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 33.33% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 66.67% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.tfx-word { position: relative; width: 177px; height: 54px; overflow: hidden; opacity: 0; -webkit-mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; }
+.tfx-word { position: relative; width: 177px; height: 54px; overflow: hidden; -webkit-mask-image: var(--px4); mask-image: var(--px4); -webkit-mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; }
 .tfx-word img { position: absolute; left: 0; top: -95px; width: 177px; height: 149px; image-rendering: pixelated; }
 .tfx-word.in, .tfx-word.shown { opacity: 1; }
 .tfx-word.in { animation: tfxword 300ms both; }
@@ -580,7 +580,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .overlay .panel.m3out { animation: m3out 220ms var(--accel) both; }
 @keyframes m3in { 0% { transform: translateY(-90px) scale(0.92, 1.12); animation-timing-function: var(--accel); -webkit-mask-image: var(--px2); mask-image: var(--px2); } 22.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 45% { transform: translateY(0) scale(1.06, 0.9); animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 70% { transform: translateY(-5px) scale(0.98, 1.03); animation-timing-function: ease-in-out; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 @keyframes m3out { 0% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 30% { transform: scale(1.04, 0.92); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 65.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: scale(1.12, 0.02); -webkit-mask-image: var(--px2); mask-image: var(--px2); } }
-.fx3-rv { position: absolute; z-index: 2; width: 4px; height: 4px; background: #fff3b0; box-shadow: 1px 1px 0 #3a2a0a; opacity: 0; pointer-events: none; animation: rvpop 1ms steps(1) forwards; }
+.fx3-rv { position: absolute; z-index: 2; width: 4px; height: 4px; background: #fff3b0; box-shadow: 1px 1px 0 #3a2a0a; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; animation: rvpop 1ms steps(1) forwards; }
 @keyframes rvpop { 100% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 /* 2 알림 */
 .toast.t3in { animation: t3in 380ms var(--snap) both; }
@@ -606,31 +606,31 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .tb4 .band::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 14px, transparent 14px 70px); animation: streak 300ms linear infinite; }
 @keyframes streak { to { background-position: 70px 0; } }
 .tb4.foe .band { background: #e5262f; box-shadow: 0 -4px 0 #0b0b0e, 0 4px 0 #0b0b0e, 0 -8px 0 #ff6b6b, 0 8px 0 #5a0e12; }
-.tb4 .txt { position: absolute; left: 0; right: 0; top: 50%; margin-top: -17px; text-align: center; font: 400 30px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.06em; color: #16141c; opacity: 0; }
+.tb4 .txt { position: absolute; left: 0; right: 0; top: 50%; margin-top: -17px; text-align: center; font: 400 30px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.06em; color: #16141c; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .tb4.foe .txt { color: #fff; }
 .tb4.run .band { animation: tb4band 1200ms both; }
 .tb4.run .txt { animation: tb4txt 1200ms both; }
 @keyframes tb4band { 0% { transform: translateX(-130%) skewX(-30deg); animation-timing-function: var(--accel); } 14% { transform: translateX(3%) skewX(-8deg); animation-timing-function: var(--decel); } 22% { transform: none; } 76% { transform: none; animation-timing-function: var(--accel); } 100% { transform: translateX(130%) skewX(30deg); } }
 @keyframes tb4txt { 0% { transform: scale(3.2) skewX(-14deg); text-shadow: -14px 0 #ff2a6d, 14px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 14% { transform: scale(3.2) skewX(-14deg); text-shadow: -14px 0 #ff2a6d, 14px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 16.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 18.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 20.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 22% { transform: scale(0.9, 1.1); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 30% { transform: scale(1.06, 0.94); text-shadow: 0 0 transparent; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 38% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 74% { transform: none; animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 87.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 93.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translateX(120px) skewX(20deg); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.tb4 .glint { position: absolute; top: 50%; height: 50px; margin-top: -25px; width: 24px; left: -40px; background: rgba(255, 255, 255, 0.7); transform: skewX(-25deg); opacity: 0; }
+.tb4 .glint { position: absolute; top: 50%; height: 50px; margin-top: -25px; width: 24px; left: -40px; background: rgba(255, 255, 255, 0.7); transform: skewX(-25deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .tb4.run .glint { animation: tb4glint 1200ms both; }
 @keyframes tb4glint { 0% { left: -40px; -webkit-mask-image: var(--px4); mask-image: var(--px4); } 38% { left: -40px; -webkit-mask-image: var(--px4); mask-image: var(--px4); } 38.25% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 38.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 38.75% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 39% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 62% { left: 110%; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 62.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 62.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 62.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 63% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 /* 7 승패 K.O. */
 .ko3 { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
-.ko3 .rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: linear-gradient(rgba(250, 204, 21, 0.32), rgba(250, 204, 21, 0.32)); opacity: 0; border-radius: 0; }
+.ko3 .rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: linear-gradient(rgba(250, 204, 21, 0.32), rgba(250, 204, 21, 0.32)); -webkit-mask-image: var(--px4); mask-image: var(--px4); border-radius: 0; }
 .ko3.win.run .rays { animation: korays 1500ms var(--decel) both; }
 @keyframes korays { 0% { transform: scale(0.2) rotate(0); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 7.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 11.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 15% { transform: scale(1) rotate(20deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: scale(1.05) rotate(70deg); -webkit-mask-image: var(--px1); mask-image: var(--px1); } 86.67% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 93.33% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.3) rotate(90deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.ko3 .tint { position: absolute; inset: 0; background: linear-gradient(transparent, transparent); opacity: 0; }
+.ko3 .tint { position: absolute; inset: 0; background: linear-gradient(transparent, transparent); -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .ko3.lose.run .tint { animation: kotint 1500ms ease-out both; }
 @keyframes kotint { 0% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 5.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 10.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 15.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 20% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 27.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 35% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 42.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 50% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 85% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 88.75% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 92.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 96.25% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.ko3 .word { position: relative; font: 400 45px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.08em; color: #facc15; -webkit-text-stroke: 2px #16141c; text-shadow: 4px 4px 0 #16141c; opacity: 0; overflow: hidden; padding: 0 6px; }
+.ko3 .word { position: relative; font: 400 45px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.08em; color: #facc15; -webkit-text-stroke: 2px #16141c; text-shadow: 4px 4px 0 #16141c; -webkit-mask-image: var(--px4); mask-image: var(--px4); overflow: hidden; padding: 0 6px; }
 .ko3.lose .word { color: #f4f1ea; text-shadow: 4px 4px 0 #5a0e12; }
 .ko3.win.run .word { animation: kowin 1500ms both; }
 .ko3.lose.run .word { animation: kolose 1500ms both; }
 .ko3:not(.run) .word { opacity: 1; }
 @keyframes kowin { 0% { transform: scale(4) rotate(-8deg); text-shadow: -18px 0 #ff2a6d, 18px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 6.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 9.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 12% { transform: scale(0.88) rotate(0); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 20% { transform: scale(1.08); text-shadow: 4px 4px 0 #16141c; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 28% { transform: scale(1); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: scale(1.02); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 85.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 90.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.6); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 @keyframes kolose { 0% { transform: translateY(-150px) scale(0.9, 1.2); animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 4.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 9.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 13.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 18% { transform: translateY(0) scale(1.15, 0.8); animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 26% { transform: translateY(-12px) scale(0.97, 1.04); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 33% { transform: translateY(0) scale(1.04, 0.96); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 40% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 82% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 86.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 91.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translateY(30px); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.ko3 .word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18px; left: -30px; background: rgba(255, 255, 255, 0.8); transform: skewX(-20deg); mix-blend-mode: overlay; opacity: 0; }
+.ko3 .word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18px; left: -30px; background: rgba(255, 255, 255, 0.8); transform: skewX(-20deg); mix-blend-mode: overlay; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .ko3.win.run .word::after { animation: koglint 1500ms both; }
 @keyframes koglint { 0% { left: -30px; -webkit-mask-image: var(--px4); mask-image: var(--px4); } 32% { left: -30px; -webkit-mask-image: var(--px4); mask-image: var(--px4); } 32.25% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 32.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 32.75% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 33% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 55% { left: 105%; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 55.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 55.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 55.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 56% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 /* 8 도장 */
@@ -644,7 +644,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes ink3 { 0% { transform: translate(var(--ix), var(--iy)) scale(0); } 100% { transform: none; } }
 /* 9 결과 집계 */
 .tally { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #ece8de; }
-.tally div { display: flex; justify-content: space-between; opacity: 0; }
+.tally div { display: flex; justify-content: space-between; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .tally div.in { animation: rv3 320ms var(--snap) forwards; }
 @keyframes rv3 { 0% { transform: translateX(-40px) skewX(-15deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 .tally b { color: #facc15; display: inline-block; }
@@ -652,7 +652,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes tick3 { 0% { transform: translateY(-4px) scale(1.35); color: #fff; } 100% { transform: none; } }
 /* 10 쓰러짐 막: 줄 계단 + 타자 */
 .deathfx.dc3 { background: none; backdrop-filter: none; animation: none; }
-.dc-row { position: absolute; left: 0; right: 0; height: 12.6%; background: #0b0b0e; opacity: 0; animation: rowd 300ms var(--accel) forwards; }
+.dc-row { position: absolute; left: 0; right: 0; height: 12.6%; background: #0b0b0e; -webkit-mask-image: var(--px4); mask-image: var(--px4); animation: rowd 300ms var(--accel) forwards; }
 @keyframes rowd { 0% { transform: translateY(-100%) scaleY(0.4); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; -webkit-mask-image: var(--px1); mask-image: var(--px1); } }
 .deathfx.dc3 > div { position: relative; z-index: 2; }
 .deathfx.dc3 > div > :not(.narr) { opacity: 0; }
@@ -734,36 +734,36 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 /* ---------- 전환 화면 새 문법 (D-191): 빛줄기 · 떨어져 박히는 적 · 명패 · 내리꽂히는 이름 · 타자 서술 · 적 구성 ---------- */
 .stagefx.enc { animation: none; overflow: hidden; background: linear-gradient(transparent, transparent); }
 .stagefx.enc.boss { background: linear-gradient(transparent, transparent); }
-.enc-rays { position: absolute; left: 25%; top: 55%; width: 820px; height: 820px; margin: -410px 0 0 -410px; border-radius: 0; background: linear-gradient(rgba(200, 155, 60, 0.13), rgba(200, 155, 60, 0.13)); opacity: 0; pointer-events: none; }
+.enc-rays { position: absolute; left: 25%; top: 55%; width: 820px; height: 820px; margin: -410px 0 0 -410px; border-radius: 0; background: linear-gradient(rgba(200, 155, 60, 0.13), rgba(200, 155, 60, 0.13)); -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; }
 .stagefx.enc.boss .enc-rays { background: linear-gradient(rgba(229, 38, 47, 0.2), rgba(229, 38, 47, 0.2)); }
 .stagefx.enc.run .enc-rays { animation: encrays 520ms var(--decel) 320ms both, encspin 24s linear 840ms infinite; }
 @keyframes encrays { 0% { transform: scale(0.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 25.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 50.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 75.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 @keyframes encspin { to { transform: rotate(360deg); } }
 .stagefx.enc .sf-art { position: relative; opacity: 1; filter: none; animation: none; display: grid; justify-items: center; }
-.enc-piece { position: relative; opacity: 0; }
+.enc-piece { position: relative; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .enc-piece img { width: min(200px, 42vh); height: auto; image-rendering: pixelated; display: block; }
 .enc-piece .sf-ico { width: min(170px, 38vh); height: min(170px, 38vh); }
 .stagefx.enc.boss .enc-piece img { width: min(230px, 48vh); }
 .stagefx.enc.run .enc-piece { animation: encdrop 440ms 150ms both; transform-origin: 50% 100%; }
 @keyframes encdrop { 0% { transform: translateY(-260px) scale(0.9, 1.25); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 42% { transform: translateY(0) scale(1.22, 0.78); filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6) brightness(1.6); animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 68% { transform: translateY(-8px) scale(0.96, 1.05); filter: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-.enc-shadow { position: absolute; left: 50%; bottom: 4px; width: 62%; height: 14px; margin-left: -31%; background: #000; opacity: 0; clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%); }
+.enc-shadow { position: absolute; left: 50%; bottom: 4px; width: 62%; height: 14px; margin-left: -31%; background: #000; -webkit-mask-image: var(--px4); mask-image: var(--px4); clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%); }
 .stagefx.enc.run .enc-shadow { animation: encshadow 330ms var(--accel) 150ms both; }
 @keyframes encshadow { 0% { transform: scaleX(0.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 50.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: none; -webkit-mask-image: var(--px2); mask-image: var(--px2); } }
 /* 명패 (지도 명패와 같은 황동 판) */
 .enc-plate { justify-self: start; padding: 2px 14px 3px; font: 700 12px Galmuri11, sans-serif; letter-spacing: 0.12em; color: #2a1e08; text-shadow: 0 1px 0 #f4d27a;
   background: linear-gradient(#3a2a0a, #3a2a0a) 5px 50% / 3px 3px no-repeat, linear-gradient(#3a2a0a, #3a2a0a) calc(100% - 5px) 50% / 3px 3px no-repeat, #c89b3c;
-  box-shadow: 0 0 0 2px #000, inset 0 2px 0 #fff3b0, inset 0 -3px 0 #7a5a12, inset 2px 0 0 #e2b85a, inset -2px 0 0 #9a6f14; opacity: 0; }
+  box-shadow: 0 0 0 2px #000, inset 0 2px 0 #fff3b0, inset 0 -3px 0 #7a5a12, inset 2px 0 0 #e2b85a, inset -2px 0 0 #9a6f14; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .stagefx.enc.boss .enc-plate { background-color: #c84a3c; color: #fff3e8; text-shadow: 0 1px 0 #5a0e12; box-shadow: 0 0 0 2px #000, inset 0 2px 0 #ffb0a0, inset 0 -3px 0 #5a0e12, inset 2px 0 0 #e07060, inset -2px 0 0 #7a1218; }
 .stagefx.enc.run .enc-plate { animation: plaquein 380ms var(--snap) 380ms both; }
 @keyframes plaquein { 0% { transform: translateY(-30px) rotate(-8deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 60% { transform: rotate(3deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-.stagefx.enc h1 { opacity: 0; animation: none; transform-origin: 0 50%; }
+.stagefx.enc h1 { -webkit-mask-image: var(--px4); mask-image: var(--px4); animation: none; transform-origin: 0 50%; }
 .stagefx.enc.boss h1 { color: #ff6b6b; }
 .stagefx.enc.run h1 { animation: encname 420ms 520ms both; }
 @keyframes encname { 0% { transform: scale(2.2) translateY(-8px); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 45% { transform: scale(0.92); text-shadow: -2px 0 #ff2a6d, 2px 0 #2de2e6; animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 70% { transform: scale(1.04); text-shadow: 3px 3px 0 #000; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; text-shadow: 3px 3px 0 #000; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 .stagefx.enc .sf-narr { animation: none; min-height: 3.2em; }
 .enc-foes { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .enc-foes > span { font-size: 12px; font-family: Galmuri11, sans-serif; letter-spacing: 0.2em; color: #a89f92; margin-right: 2px; }
-.enc-foes b { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #7a1218; opacity: 0; }
+.enc-foes b { position: relative; display: inline-grid; place-items: center; width: 36px; height: 36px; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #7a1218; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .enc-foes b img { width: 28px; height: 28px; image-rendering: pixelated; }
 .enc-foes b small { position: absolute; right: -6px; bottom: -6px; padding: 0 3px; font: 700 12px Galmuri11, sans-serif; color: #fff; background: #7a1218; box-shadow: 0 0 0 2px #000; }
 .stagefx.enc.run .enc-foes b { animation: foepop 300ms var(--snap) both; }
@@ -1067,7 +1067,7 @@ body.slice .overlay .panel:has(.gd2) { width: min(860px, 96vw); }
 @keyframes gdbob { from { transform: translateY(0); } to { transform: translateY(-6px); } }
 /* 피해 식: 한 줄씩 들어와 — 공격 10 → + 합 8 → = 18 → × 곱 1.5 → 피해 27, 다시 처음부터 */
 .gd-media.formula { align-content: center; justify-items: stretch; gap: 4px; padding: 10px 14px; }
-.fx-row { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 6px; font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #e8e2d6; opacity: 0; animation: fxrow 6s steps(1) infinite; }
+.fx-row { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 6px; font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #e8e2d6; -webkit-mask-image: var(--px4); mask-image: var(--px4); animation: fxrow 6s steps(1) infinite; }
 .fx-row b { font-size: 24px; font-family: Galmuri11, sans-serif; color: #f2ede4; }
 .fx-row b.add { color: #7fdcea; } .fx-row b.mul { color: #ffb15a; }
 .fx-row.sum, .fx-row.total { border-top: 2px solid #46404f; padding-top: 4px; }
@@ -1863,3 +1863,20 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
 .tut .tut-next[hidden] { display: none; }
 .tut .tut-skip { align-self: flex-start; flex: none; min-height: 32px; padding: 0 8px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; background: none; border: 0; text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .tut .tut-frame, .tut .tut-next, .tut .tut-talk { animation: none; } }
+
+/* 전환 카드는 판을 완전히 가린다 (D-239 — 비쳐 보이던 판 위에 서술만 찍혔다): 짙은 바탕 + 체크 디더 한 겹 */
+.stagefx.enc { background: #0b0b0e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%2316141c'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2316141c'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
+/* 부관 말풍선 2판 (D-239, 사용자: 「장황하고 줄 바꿈이 엉망」): 글 길이에 맞춘 한 줄 — 얼굴 · 이름+말 · ▼ · 건너뛰기가 한 줄로 */
+.tut .tut-talk { width: auto; max-width: calc(100vw - 32px); padding: 8px 10px; gap: 10px; }
+.tut .tut-face { width: 44px; height: 44px; }
+.tut .tut-body { grid-template-columns: auto auto; align-items: baseline; column-gap: 8px; }
+.tut .tut-name { grid-column: 1 / -1; }
+.tut .tut-text { min-height: 0; white-space: nowrap; }
+.tut .tut-next { justify-self: start; }
+.tut .tut-skip { align-self: center; }
+@media (max-width: 700px) { .tut .tut-text { white-space: normal; } }
+/* ▼는 말풍선 오른쪽 아래 귀퉁이, 건너뛰기는 말풍선 위 오른쪽 바깥 — 서로 겹치지 않게 */
+.tut .tut-talk { padding-right: 26px; }
+.tut .tut-next { position: absolute; right: 6px; bottom: 4px; }
+.tut .tut-skip { position: absolute; right: 0; bottom: calc(100% + 6px); min-height: 28px; padding: 0 8px; background: #16141c; box-shadow: 0 0 0 2px #000; text-decoration: none; }
+.tut .tut-talk.top .tut-skip { bottom: auto; top: calc(100% + 6px); }
