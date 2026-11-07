@@ -187,7 +187,7 @@ const taunt = (cue: TauntCue, force = false): void => {
   const el = document.createElement('div');
   el.className = 'taunt tq3';
   // 말하는 왕의 얼굴 (2026-11-05): 반장이면 반장 초상화의 왕관 · 머리, 보통 대국은 검정 킹 — 같은 황동 틀
-  const face = b?.boss ? `<i class="taunt-face tf-boss" style="background-image:url(ui/hud/avatar-${bossSkin(b.bossRule)}.png)"></i>` : `<i class="taunt-face">${pieceImg('K', 1, 'small', 40)}</i>`;
+  const face = b?.boss ? `<i class="taunt-face tf-boss" style="background-image:url(ui/hud/avatar-${b.bossRule ?? 'plate'}.png)"></i>` : `<i class="taunt-face">${pieceImg('K', 1, 'small', 40)}</i>`;
   el.innerHTML = `${face}<span></span>`;
   document.body.appendChild(el);
   // D-189: 말풍선이 튀어나오고 글자가 타자처럼 찍히다 마지막 낱말에서 떨린다

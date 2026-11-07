@@ -12,19 +12,20 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 S = 60
-# 반장 규칙 → (초상화, 왼쪽 위 x, y) — 왕관 십자가 가운데 오게 손으로 맞춘 칸
+# 반장 규칙 → (초상화, 왕관 십자가 가운데 x) — 위에서부터 초상 폭 절반 정사각(상반신)을 60칸으로 (D-308, 사용자: 「대사창 얼굴은 각 초상의 상반신」)
 CROPS = {
-    'plate': ('public/scenes/boss-plate.png', 72, 2),
-    'spawn': ('public/scenes/boss-assembly.png', 53, 4),
-    'thorns': ('public/scenes/boss-thorns.png', 82, 4),
+    'plate': ('boss-plate', 102), 'spawn': ('boss-assembly', 83), 'thorns': ('boss-thorns', 112),
+    'inspect': ('boss-inspector', 109), 'magnet': ('boss-magnet', 147), 'alarm': ('boss-alarm', 172), 'gilded': ('boss-gilded', 128),
 }
 
 
 def main():
     out = os.path.join(ROOT, 'public', 'ui', 'hud')
-    for key, (rel, x, y) in CROPS.items():
-        im = Image.open(os.path.join(ROOT, rel)).convert('RGB')
-        im.crop((x, y, x + S, y + S)).save(os.path.join(out, f'avatar-{key}.png'))
+    for key, (name, cx) in CROPS.items():
+        im = Image.open(os.path.join(ROOT, 'public', 'scenes', f'{name}.png')).convert('RGB')
+        s = round(im.width * 0.5)
+        x = max(0, min(im.width - s, cx - s // 2))
+        im.crop((x, 0, x + s, s)).resize((S, S), Image.BOX).save(os.path.join(out, f'avatar-{key}.png'))
     print('public/ui/hud/avatar-*.png', list(CROPS))
 
 
