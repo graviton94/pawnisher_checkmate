@@ -21,7 +21,10 @@ ATTACH = [
     ('①', '기물 도트', 'build-res/pieces-small-source.png', 900),
     ('②', '화풍 기준 — 쇳물 위 그림자 킹', 'build-res/order/V-07-pact-source.png', 720),
     ('③', '게임 속 검은 킹 도트 (반장 · 도금왕만)', 'build-res/order/K-black-new-source.png', 0),
+    ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
 ]
+# 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
+REDO = {'promote', 'promote-betray', 'promote-rule'}
 
 
 def data_uri(path, width):
@@ -148,7 +151,7 @@ def render_blocks(blocks, start_id):
 
 def main(out_path):
     secs = parse()
-    have = {f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')}
+    have = {f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')} - REDO
     if os.path.isdir(EXT):
         have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
     intro = next(s for s in secs if s['head'].startswith('0.'))
@@ -180,6 +183,8 @@ def main(out_path):
         total += len(fs)
         got += n_have
         status = '받음' if fs and n_have == len(fs) else (f'{n_have}/{len(fs)} 받음' if n_have else '대기')
+        if any(f in REDO for f in fs):
+            status = '다시 받기 (화풍)'
         cls = 'done' if status == '받음' else ''
         nav.append(f'<a href="#r{g["rank"]}" class="{cls}"><span>{g["rank"]}</span>{inline(g["head"].split("→")[0].split(" (")[0].strip())}</a>')
         head_html, pid = render_blocks(g['sec']['blocks'], pid)
