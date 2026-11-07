@@ -4,6 +4,7 @@
 > 이야기 · 대사의 정본은 `docs/script.md` — 각 상자의 「쓰는 곳」이 그 장면 번호(S1 ~ S11)를 가리킨다.
 > **이 파일이 남은 발주의 정본이다.** 옛 발주서(`asset-order-scenes-prompts.md` · `asset-order-prologue.md`)의 상자는 여기로 옮겼고, 그 파일들은 받은 기록만 남긴다.
 > 받는 방법은 모두 같다: **새 채팅 → 상자 위에 적힌 첨부 → 상자 하나를 통째로 붙여 넣기.** 채팅 한 번에 한 장.
+> **아티팩트 「그림 발주서」 https://claude.ai/artifact/JKxX7h326oRg84qppCEhJn** — 이 파일에서 만든다: `python3 -I tools/order/order_page.py <out.html>` (D-300).
 > 받은 그림 넣기: `python3 -I tools/scene-import.py <그림> <파일 이름> <번호>` → `public/scenes/<파일 이름>.png`. 넣으면 Claude가 게임에 붙인다.
 
 ## 0. 한눈에 — 무엇을 먼저 (2026-11-06 개정: 각본 정본 `docs/script.md`에서 뽑은 순서)
