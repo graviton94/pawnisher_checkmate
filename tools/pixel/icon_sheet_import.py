@@ -119,7 +119,10 @@ def main(src, sid, dry=False):
     for i, (k, name, _) in enumerate(items):
         cx, cy = i % 5, i // 5
         rows = (len(items) + 4) // 5  # 5장짜리 시트는 한 줄 (I-11)
-        cell = sheet.crop((round(W * cx / 5), round(H * cy / rows), round(W * (cx + 1) / 5), round(H * (cy + 1) / rows)))
+        # 칸은 늘 정사각 — 받은 시트 높이가 칸 수와 안 맞아도(한 줄 시트가 2000×667로 오는 등) 세로로 찌그러뜨리지 않는다 (D-306)
+        cw = W / 5
+        top = (H - cw * rows) / 2
+        cell = sheet.crop((round(cw * cx), round(top + cw * cy), round(cw * (cx + 1)), round(top + cw * (cy + 1))))
         icn = cell16(cell)
         game = thicken(centered(icn))
         f = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')
