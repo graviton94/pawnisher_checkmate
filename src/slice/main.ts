@@ -13,7 +13,7 @@ import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discard
 import { crestHtml, guide, playCuts, prologue } from './opening';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
-import { ACT_ENTRY, BOSS_STORY, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
+import { ACT_ENTRY, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
 import { finaleScene } from './finale';
 import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { creditsScene } from './credits';
@@ -182,7 +182,7 @@ const taunt = (cue: TauntCue, force = false): void => {
   if (tauntedNow || labMode) return;
   if (!force && R.next() > DIRECTOR.taunt) return;
   tauntedNow = true;
-  const lines = TAUNTS[cue];
+  const lines = (b?.boss && BOSS_TAUNTS[(b.bossRule ?? 'plate') as keyof typeof BOSS_TAUNTS]?.[cue]) || TAUNTS[cue]; // 반장마다 제 말 (D-310)
   const line = lines[R.int(lines.length)];
   const el = document.createElement('div');
   el.className = 'taunt tq3';
