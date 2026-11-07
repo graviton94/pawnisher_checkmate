@@ -167,6 +167,12 @@ def build():
                 continue
             render(v).save(os.path.join(OUT, f'{k}.png'))
             n += 1
+    # 받은 시트에서 들여온 그림이 손그림을 덮는다 (D-301 — tools/pixel/icons32_ext/<키>.png, icon_sheet_import + 2도트 먹선)
+    ext = os.path.join(HERE, 'icons32_ext')
+    for f in sorted(os.listdir(ext)) if os.path.isdir(ext) else []:
+        if f.endswith('.png'):
+            Image.open(os.path.join(ext, f)).save(os.path.join(OUT, f))
+            n += 1
     print(OUT, n)
 
 
