@@ -109,6 +109,24 @@ it('측정', () => {
       L.push('', `## 4. 조합 이상치 — 부품 둘을 함께 넣은 진행 차 − 따로의 합 (쌍 ${comboParts.reduce((a, c) => a + c.rows.length, 0)}개 / 전체 ${comboParts[0].of}개를 같은 축 위주로 골랐다)`, '', '| 부품 A | 부품 B | 함께 | 따로 합 | 덤 |', '| :-- | :-- | :-: | :-: | :-: |');
       for (const r of top) L.push(`| ${SLICE_PARTS[r.a as SlicePartId]?.name ?? r.a} | ${SLICE_PARTS[r.b as SlicePartId]?.name ?? r.b} | ${r.both} | ${r.sum} | ${r.extra >= 0 ? '+' : ''}${r.extra} |`);
     }
+    // 회귀 (D-297): 지난 기준선과 비교 — 힘 값이 크게 움직인 아이템 · 새로 들어온 아이템 · 승급 곡선 변화
+    if (existsSync('sim/measure-baseline.json')) {
+      const old = JSON.parse(readFileSync('sim/measure-baseline.json', 'utf8')) as { date: string; asc: typeof asc; power: typeof power };
+      if (old.date !== DATE || process.env.MFORCE) {
+        L.push('', `## 5. 회귀 — 지난 기준선(${old.date})과 비교`, '');
+        if (asc.length && old.asc?.length) {
+          L.push('| 승급 · 봇 | 완주 (전 → 지금) | 진행 (전 → 지금) |', '| :-- | :-: | :-: |');
+          for (const r of asc) { const o = old.asc.find((x) => x.asc === r.asc && x.style === r.style); if (o) L.push(`| ${r.asc} · ${r.style} | ${o.clear}% → ${r.clear}% | ${o.prog} → ${r.prog} |`); }
+        }
+        if (power.length && old.power?.length) {
+          const om = new Map(old.power.map((r) => [`${r.kind}:${r.id}`, r]));
+          const moved = power.filter((r) => om.has(`${r.kind}:${r.id}`) && Math.abs(r.dProg - om.get(`${r.kind}:${r.id}`)!.dProg) >= 0.5).sort((a, b) => Math.abs(b.dProg - om.get(`${b.kind}:${b.id}`)!.dProg) - Math.abs(a.dProg - om.get(`${a.kind}:${a.id}`)!.dProg));
+          const fresh = power.filter((r) => !om.has(`${r.kind}:${r.id}`));
+          L.push('', `힘 값이 0.5 이상 움직인 아이템 ${moved.length}개 · 새 아이템 ${fresh.length}개 (진행 차는 씨앗 ${N}판 평균 — 0.3 안쪽은 소음).`, '');
+          if (moved.length) { L.push('| 이름 | 전 | 지금 |', '| :-- | :-: | :-: |'); for (const r of moved) L.push(`| ${r.name} | ${om.get(`${r.kind}:${r.id}`)!.dProg} | ${r.dProg} |`); }
+        }
+      }
+    }
     writeFileSync(`docs/reports/${DATE}-measure.md`, L.join('\n') + '\n');
     writeFileSync('sim/measure-baseline.json', JSON.stringify({ date: DATE, asc, power, combo: combo.slice(0, 50) }));
     console.log(L.join('\n'));
