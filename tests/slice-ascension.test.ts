@@ -216,3 +216,22 @@ describe('해금 (D-284)', () => {
     expect(nextUnlocks([UNLOCK_ORDER[0]], 2)).toEqual(UNLOCK_ORDER.slice(1, 3));
   });
 });
+
+import { endTurn } from '../src/slice/battle';
+describe('땜질 도구함 (D-299)', () => {
+  it('턴 시작에 킹을 뺀 가장 다친 기물 둘만 고친다', () => {
+    const b = newSliceBattle(crewKR(), ['K', 'P'], START_COMMANDS, 3, { parts: ['toolbox'] });
+    b.intents = [];
+    const mine = b.s.pieces.filter((p) => p.side === 0);
+    const k = mine.find((p) => p.type === 'K')!;
+    const [r, bi, p] = (['R', 'B', 'P'] as const).map((t) => mine.find((q) => q.type === t)!);
+    k.hp = k.maxHp - 50; r.hp = r.maxHp - 20; bi.hp = bi.maxHp - 15; p.hp = p.maxHp - 3;
+    const before = { k: k.hp, r: r.hp, bi: bi.hp, p: p.hp };
+    endTurn(b, true);
+    const hp = (id: number) => b.s.pieces.find((q) => q.id === id)!.hp;
+    expect(hp(k.id)).toBe(before.k);
+    expect(hp(r.id)).toBe(before.r + PART_NUM.toolbox);
+    expect(hp(bi.id)).toBe(before.bi + PART_NUM.toolbox);
+    expect(hp(p.id)).toBe(before.p);
+  });
+});

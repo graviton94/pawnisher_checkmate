@@ -1260,8 +1260,9 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0) + (has(b, 'flywheel') ? Math.min(PART_NUM.flywheel, Math.max(0, b.ap)) : 0));
     // 잔열 (D-282): 연쇄 절반이 남는다
     b.kills = has(b, 'afterheat') ? Math.floor(b.kills / 2) : 0;
-    // 땜질 도구함 (D-282): 가장 다친 내 기물 HP +4
-    if (has(b, 'toolbox')) { const w = b.s.pieces.filter((q) => q.side === 0 && q.hp < q.maxHp).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0]; if (w) w.hp = Math.min(w.maxHp, w.hp + PART_NUM.toolbox); }
+    // 땜질 도구함 (D-282 → D-299): 킹을 뺀 가장 다친(잃은 HP가 큰) 내 기물 toolboxN개 HP +toolbox — 킹을 고치면 출하 목숨 보험이 되어 힘 값이 양과 무관하게 튀었다
+    if (has(b, 'toolbox'))
+      for (const w of b.s.pieces.filter((q) => q.side === 0 && q.type !== 'K' && q.hp < q.maxHp).sort((x, y) => (y.maxHp - y.hp) - (x.maxHp - x.hp) || x.id - y.id).slice(0, PART_NUM.toolboxN)) w.hp = Math.min(w.maxHp, w.hp + PART_NUM.toolbox);
     b.killers = [];
     b.once = [];
     b.refunded = 0;

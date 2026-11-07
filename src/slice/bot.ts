@@ -1,6 +1,7 @@
 import { chebyshev, findPiece, kingOf, samePos } from '../engine';
 import { COMMANDS } from './cards';
-import { canPlay, cardMoves, cardPieces, dangerSquares, endTurn, isInstant, playCard, previewPlay, type SliceBattle } from './battle';
+import { canPlay, cardMoves, cardPieces, dangerSquares, endTurn, intentHits, isInstant, playCard, previewPlay, type SliceBattle } from './battle';
+import { BOT } from '../data/bot';
 
 /**
  * 자동 플레이 봇 (R5 끝 조건 · R7 밸런스용, D-173): 사람처럼 "지금 가장 많이 치는 수"를 고르는 탐욕 봇.
@@ -38,7 +39,7 @@ export const scoreMove = (b: SliceBattle, i: number, pieceId: number, to: { x: n
 
 /**
  * 봇 성향 (난이도 설계 D-228 — 「두뇌 플레이는 깨고, 무뇌 플레이는 막힌다」를 재려고):
- * random = 무뇌(낼 수 있는 수 중 아무거나), naive = 단순(지금 가장 세게 치는 수 — 예고된 위험 무시), greedy = 보통(위험 피함), search = 두뇌(playOutSearch).
+ * random = 무뇌(낼 수 있는 수 중 아무거나), naive = 단순(지금 가장 세게 치는 수 — 예고된 위험 무시), greedy = 보통(위험 피함 + 킹의 수는 적 차례를 미리 돌려 쓰러질 수를 피함, D-299), search = 두뇌(playOutSearch).
  */
 export type BotStyle = 'random' | 'naive' | 'greedy';
 
@@ -46,6 +47,7 @@ export type BotStyle = 'random' | 'naive' | 'greedy';
 export const bestAction = (b: SliceBattle, style: BotStyle = 'greedy'): BotAction | null => {
   if (b.s.winner !== null) return null;
   if (style === 'random') return randomAction(b);
+  if (style === 'greedy') return carefulAction(b);
   const danger = style === 'naive' ? [] : dangerSquares(b);
   let best: BotAction | null = null;
   for (let i = 0; i < b.hand.length; i++) {
@@ -73,6 +75,72 @@ export const bestAction = (b: SliceBattle, style: BotStyle = 'greedy'): BotActio
       }
   }
   return best && best.score > 0 ? best : null;
+};
+
+/**
+ * 지금 턴을 끝내면 받을 피해의 무게 (보통 봇, D-299) — 화면 예고와 같은 enemyPhase를 미리 돌린 실제 피해.
+ * 킹이 쓰러지면 패배라 가장 무겁고, 분대원이 쓰러지면 기물 값만큼 더 무겁다.
+ */
+export const threatOf = (b: SliceBattle): number => {
+  if (b.s.winner === 0) return 0;
+  if (b.s.winner === 1) return BOT.kingLost;
+  let v = 0;
+  for (const h of intentHits(b)) {
+    const p = findPiece(b.s, h.pieceId);
+    if (!p) continue;
+    if (p.type === 'K') v += h.killed ? BOT.kingLost : h.damage * BOT.kingHurt;
+    else v += h.damage * BOT.crewHurt + (h.killed ? BOT.crewLost * VALUE[p.type] : 0);
+  }
+  return v;
+};
+
+/**
+ * 보통 봇 (D-299, 사용자: 「보통봇 올리고」 — 규칙은 그대로, 봇만 똑똑하게): 한 수 앞 + 적 차례 미리 보기 (어디까지 보는지는 src/data/bot.ts).
+ * 수마다 「지금 치는 값(scoreMove, 예고 칸 감점 그대로) + 이 수로 줄어드는 받을 피해(BOT 무게)」를 매긴다.
+ * 지금 무게: 킹의 수만 미리 봐서 킹이 쓰러질 자리를 피한다 · 방열판은 예전처럼 예고 칸의 킹에게. 무게를 다 켜면 두뇌 봇과 붙는다(src/data/bot.ts).
+ * 수의 순서(두 수 이상 앞)는 보지 않는다 — 그건 두뇌 봇(playOutSearch)의 몫.
+ */
+const carefulAction = (b: SliceBattle): BotAction | null => {
+  const danger = dangerSquares(b);
+  const now = threatOf(b);
+  // 미리 보기는 킹이 지금 예고 칸에 있을 때만 (BOT.lookOnlyThreatened) — 수가 킹을 새로 드러내는 것은 못 본다
+  const k0 = kingOf(b.s, 0);
+  const look = !BOT.lookOnlyThreatened || (!!k0 && danger.some((d) => samePos(d, k0)));
+  const gain = (i: number, pieceId?: number, to?: { x: number; y: number }): number | null => {
+    if (!look) return 0;
+    const nb = clone(b);
+    const r = playCard(nb, i, pieceId, to);
+    if (typeof r === 'string') return null;
+    return now - threatOf(nb);
+  };
+  let best: BotAction | null = null;
+  const take = (a: BotAction) => { if (!best || a.score > best.score) best = a; };
+  for (let i = 0; i < b.hand.length; i++) {
+    if (!canPlay(b, i)) continue;
+    const c = COMMANDS[b.hand[i]];
+    if (isInstant(b.hand[i])) { take({ i, score: c.kind === 'draw' || c.kind === 'spark' ? 20 : 8 }); continue; }
+    if (c.kind !== 'move') {
+      // 방열판 · 땜질: 받을 피해가 줄어드는 만큼 — 킹이 쓰러질 수가 아니어도 예고 칸의 킹에겐 예전 보통 봇처럼 낮은 우선(15)으로 낸다
+      const k = kingOf(b.s, 0);
+      for (const p of cardPieces(b, i)) {
+        const g = gain(i, p.id);
+        if (g === null) continue;
+        const usual = k && p.id === k.id ? (danger.some((d) => samePos(d, k)) ? 15 : 1) : 0;
+        take({ i, pieceId: p.id, score: BOT.shieldLookahead ? Math.max(g - c.cost * 2, usual) : usual });
+      }
+      continue;
+    }
+    for (const p of cardPieces(b, i))
+      for (const to of cardMoves(b, i, p.id)) {
+        const sc = scoreMove(b, i, p.id, to, danger);
+        if (sc === null) continue;
+        if (sc >= 50000) return { i, pieceId: p.id, to, score: sc };
+        const g = BOT.lookKingOnly && p.type !== 'K' ? 0 : gain(i, p.id, to);
+        if (g !== null) take({ i, pieceId: p.id, to, score: sc + g });
+      }
+  }
+  const pick = best as BotAction | null;
+  return pick && pick.score > 0 ? pick : null;
 };
 
 /** 무뇌: 낼 수 있는 수를 모두 모아 아무거나 (씨앗은 판 상태에서 — 결정론). 태엽이 남아도 30% 확률로 그냥 턴을 끝낸다 */

@@ -79,7 +79,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   scrapMagnet: { name: '고철 자석', axis: null, icon: 'scrapMagnet', desc: '넘친 피해 5마다 나사 1개. (기본 10마다)' },
   firstSpring: { name: '선제 태엽', axis: null, icon: 'firstSpring', desc: '대국 첫 턴 태엽 +2.' },
   lastAxle: { name: '버팀 축', axis: 'king', icon: 'lastAxle', desc: '킹 HP 30% 아래면 킹의 공격 ×1.6.' },
-  toolbox: { name: '땜질 도구함', axis: null, icon: 'toolbox', desc: '턴 시작에 가장 다친 내 기물 HP +3.' },
+  toolbox: { name: '땜질 도구함', axis: null, icon: 'toolbox', desc: '가장 깊이 패인 둘부터 땜질한다. (턴 시작 · 킹 뺀 가장 다친 기물 2 · HP +6)' },
   ventHole: { name: '바람 구멍', axis: null, icon: 'ventHole', desc: '회피 반격 배율 ×1.5 → ×1.8.' },
   afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', desc: '턴이 끝나도 연쇄 절반이 남는다.' },
   bossBane: { name: '반장 사냥꾼', axis: null, icon: 'bossBane', desc: '반장 판에서 모든 공격 ×1.2.' },
@@ -108,7 +108,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
 };
 
 /** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 피의 계약 ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 */
-export const PART_NUM = { mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 3, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
+export const PART_NUM = { mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).
