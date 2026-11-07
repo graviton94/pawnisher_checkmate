@@ -8,7 +8,7 @@ E 계열 사각형 일괄 (D-294, 사용자: 「버튼 말고 배경 사각형�
   창          chrome/panel                                       16×16 (5, fill)
   이름판      chrome/plate (고물상 · 부품 하나 같은 제목)            16×16 (5, fill)
   우물        chrome/inset                                        8×8 (3, fill)
-  성질 태그   kit/tag-<축>.png                                    10×10 (3, fill) — 보병 · 기병 · 왕관 · 연쇄 · 밀치기 · 수읽기
+  성질 태그   kit/tag-<축>.png                                    10×10 (3, fill) — 보병 · 기병 · 왕관 · 연쇄 · 밀치기 · 수읽기 · 합(add) · 곱(mul)
 사용: python3 -I tools/draw-chrome-e.py
 """
 import os
@@ -163,6 +163,7 @@ def inset():
 
 
 # ───────── 성질 태그 10×10 (3, fill) — 색 미니 판 ─────────
+OPS = {'add': '#2e969c', 'mul': '#ec6a1a'}
 AXES = {'inf': '#9aa7b8', 'cav': '#5fc28a', 'king': '#f4d27a', 'chain': '#ff8a5a', 'push': '#7ab8ff', 'tactic': '#c9a0ff'}
 
 
@@ -208,6 +209,8 @@ def main():
     for k, c in tones.items():
         mag(c).save(f'{KIT}/mag-{k}.png')
     for k, c in AXES.items():
+        tag(c).save(f'{KIT}/tag-{k}.png')
+    for k, c in OPS.items():  # 합 · 곱 표지도 성질 태그와 같은 판 (D-304 — 사용자: 「가격표 · 보병 기병 태그와 크기 · 디자인을 맞춰라」)
         tag(c).save(f'{KIT}/tag-{k}.png')
     print('ok')
 
