@@ -24,7 +24,7 @@ ATTACH = [
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO = {'promote', 'promote-betray'}
+REDO: set[str] = set()
 
 
 def data_uri(path, width):
