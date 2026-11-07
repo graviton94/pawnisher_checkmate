@@ -117,7 +117,7 @@ export const KEYWORDS: [string, string, TermGate][] = [
 export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm', string> = {
   inspect: '남의 흠으로 키를 재는 눈',
   magnet: '놓아준 적 없는 손',
-  alarm: '시간을 세는 붉은 등',
+  alarm: '앞선 자를 용서 못 하는 붉은 등',
   plate: '두께가 곧 힘이라 믿은 자',
   spawn: '찍어도 찍어도 배고픈 라인',
   thorns: '맞은 만큼 찌르는 가시',
