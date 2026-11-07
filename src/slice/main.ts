@@ -431,7 +431,7 @@ const cardArt = (id: CommandId): string => {
   if (c.who === 'any') return `<span class="art any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>`;
   // 기물 아이콘 (D-162 — 행마 판보다 「누가 움직이나」가 먼저 읽힌다. 범위는 판 위 표시가 보여 준다)
   // 기물 그림은 72칸 캔버스 아래쪽에 서 있다(위 8줄은 왕관 자리) — 실제 몸통 가운데가 창 가운데에 오게 올린다 (2026-11-05, 사용자: 「아이템 가운데 정렬 — 일부는 바닥, 일부는 가운데」)
-  const dy = Math.round((0.5 - (PIECE_ART_CENTER[c.who] ?? 0.5)) * 44);
+  const dy = Math.round((0.5 - (PIECE_ART_CENTER[c.who] ?? 0.5)) * 36); // 그림 36px 기준 (D-305)
   return `<span class="art" style="transform:translateY(${dy}px)">${pieceImg(c.who, 0, 'large', 44)}</span>`;
 };
 /** 기물 그림(l-*.png) 안 보이는 몸통의 세로 가운데 (0~1) — tools/pixel/maker.py가 바뀌면 다시 잰다 */

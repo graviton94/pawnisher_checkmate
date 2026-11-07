@@ -163,7 +163,6 @@ def inset():
 
 
 # ───────── 성질 태그 10×10 (3, fill) — 색 미니 판 ─────────
-OPS = {'add': '#2e969c', 'mul': '#ec6a1a'}
 AXES = {'inf': '#9aa7b8', 'cav': '#5fc28a', 'king': '#f4d27a', 'chain': '#ff8a5a', 'push': '#7ab8ff', 'tactic': '#c9a0ff'}
 
 
@@ -174,6 +173,26 @@ def tag(base):
     px.r(1, 1, 8, 7, r[4])
     px.r(1, 1, 8, 1, r[6]); px.r(1, 1, 1, 6, r[5]); px.r(2, 7, 8, 7, r[2]); px.r(8, 2, 8, 7, r[2])
     px.r(1, 8, 8, 8, r[1])
+    return px.im
+
+
+# ───────── 표지판 32×32 (10, fill) — 받은 합/곱 배지(I-12, kit/op-add)와 같은 꼴 (D-305) ─────────
+# 사용자: 「새로 가져온 합 곱 배지 디자인에 가격표랑 태그표(기병 보병 등)를 맞추라」 — 굵은 먹선 2 · 황동 테 2 · 모서리 리벳 넷 · 색 판(빛 왼위 · 그늘 오른아래)
+def badge(tone, frame='brass'):
+    r = ramp_from(tone) if tone.startswith('#') else R[tone]
+    f = R[frame]
+    px = Pix(32, 32)
+    px.r(3, 1, 28, 30, INK); px.r(1, 3, 30, 28, INK); px.r(2, 2, 29, 29, INK)       # 먹 (모서리 깎음)
+    px.r(4, 3, 27, 28, f[4]); px.r(3, 4, 28, 27, f[4])                                # 황동 테
+    px.r(4, 3, 27, 3, f[6]); px.r(3, 4, 3, 27, f[5]); px.r(4, 4, 27, 4, f[5])        # 테 빛 (위 · 왼)
+    px.r(4, 28, 27, 28, f[2]); px.r(28, 4, 28, 27, f[2]); px.r(4, 27, 27, 27, f[3])  # 테 그늘 (아래 · 오른)
+    px.r(5, 5, 26, 26, INK)                                                           # 판 테두리
+    px.r(6, 6, 25, 25, r[4])                                                          # 색 판
+    px.r(6, 6, 25, 6, r[5]); px.r(6, 6, 6, 25, r[5]); px.p(6, 6, r[6])                # 판 빛
+    px.r(7, 25, 25, 25, r[2]); px.r(25, 7, 25, 25, r[2]); px.r(7, 24, 24, 24, r[3])  # 판 그늘
+    for x, y in ((4, 4), (24, 4), (4, 24), (24, 24)):                                 # 리벳 4×4 — 테 모서리에 박힌 둥근 머리 (받은 배지처럼 크게)
+        px.r(x + 1, y, x + 2, y + 3, INK); px.r(x, y + 1, x + 3, y + 2, INK)
+        px.r(x + 1, y + 1, x + 2, y + 2, f[5]); px.p(x + 1, y + 1, f[6]); px.p(x + 2, y + 2, f[3])
     return px.im
 
 
@@ -210,8 +229,9 @@ def main():
         mag(c).save(f'{KIT}/mag-{k}.png')
     for k, c in AXES.items():
         tag(c).save(f'{KIT}/tag-{k}.png')
-    for k, c in OPS.items():  # 합 · 곱 표지도 성질 태그와 같은 판 (D-304 — 사용자: 「가격표 · 보병 기병 태그와 크기 · 디자인을 맞춰라」)
-        tag(c).save(f'{KIT}/tag-{k}.png')
+    for k, c in AXES.items():  # 성질 태그 · 가격표 = 받은 합/곱 배지 꼴 32×32 (D-305)
+        badge(c).save(f'{KIT}/badge-{k}.png')
+    badge('brass').save(f'{KIT}/badge-price.png'); badge('iron', 'iron').save(f'{KIT}/badge-price-poor.png')
     print('ok')
 
 
