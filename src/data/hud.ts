@@ -11,7 +11,7 @@ export const HUD_TEXT = {
   /** 승급 13 최종장 (D-277) — 종이 왕관을 벗은 뒤 */
   pawnMode: '종이 왕관을 벗었습니다 — 이제부터 폰처럼 앞으로만 움직이고, 대각선 앞으로만 칩니다.',
   /** 경보 반장 (D-274) — ⑨ 표지 */
-  alarm: '경보 — 이번 적 차례 공격 ×1.5',
+  alarm: '앞선 자를 용서 못 하는 붉은 등',
   newTerm: (names: string) => `새 용어 「${names}」 — ? 의 「용어」에서 볼 수 있습니다.`,
   shock: '기어 쇼크 — 예고 공격을 맞은 기물은 이번 턴 공격이 약해지고, 손패가 한 장 줄었습니다. (×0.5)',
   /** 헛방 경직 → 「기절」 평문 (D-233: 고유 명사를 지우고 별 딱지 + 평문으로) */
@@ -113,12 +113,13 @@ export const KEYWORDS: [string, string, TermGate][] = [
 ];
 
 /** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */
+/** 반장 칭호 (D-315 — 칠죄종을 이름 없이 칭호로만: 철갑 허영 · 검수 교만 · 조립 탐식 · 자석 탐욕 · 출하 분노 · 경보 질투) */
 export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm', string> = {
-  inspect: '틀린 것을 찾는 렌즈',
-  magnet: '제자리로 끌어당기는 자',
+  inspect: '남의 흠으로 키를 재는 눈',
+  magnet: '놓아준 적 없는 손',
   alarm: '시간을 세는 붉은 등',
-  plate: '용광로를 등에 진 자',
-  spawn: '끝없이 찍어 내는 손',
-  thorns: '가시 갑옷의 문지기',
+  plate: '두께가 곧 힘이라 믿은 자',
+  spawn: '찍어도 찍어도 배고픈 라인',
+  thorns: '맞은 만큼 찌르는 가시',
   gilded: '모양이 운명이라 쓴 손',
 };
