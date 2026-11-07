@@ -24,7 +24,7 @@ ATTACH = [
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = set()
+REDO = {'promote-crew', 'ending-crew'}  # 조합 컷 — 따로 받으면 지운다 (D-314)
 
 
 def data_uri(path, width):
@@ -170,7 +170,7 @@ def main(out_path):
     for s in secs:
         m = re.match(r'(\d+)위 · (.*)', s['head'])
         if m:
-            if int(m.group(1)) >= 13:
+            if int(m.group(1)) >= 14:
                 break
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
             groups.append(g)

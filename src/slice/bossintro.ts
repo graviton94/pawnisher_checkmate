@@ -133,7 +133,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     at(700, () => { el.classList.add('name'); o.sfx?.('stamp'); });
     at(1000, () => void typeIn(el.querySelector('.bf-title')!, o.title, 40, undefined, () => el.isConnected));
     // 문장마다 줄을 바꾼다 (사용자: 「반장 소개 문구 2문장 — 문장별로 엔터」)
-    at(1500, () => void typeIn(el.querySelector('.bf-narr')!, o.narr.replace(/([.!?…])\s+/g, '$1\n'), 20, undefined, () => el.isConnected));
+    at(1500, () => void typeIn(el.querySelector('.bf-narr')!, o.narr.split(/(“[^”]*”)/).map((s) => (s.startsWith('“') ? s : s.replace(/([.!?…])\s+/g, '$1\n'))).join('') /* 따옴표 안은 한 줄 (D-314) */, 20, undefined, () => el.isConnected));
     o.rules.forEach((r, i) => at(2400 + i * 260, () => { const li = el.querySelectorAll('.bf-rules li')[i] as HTMLElement; li.textContent = r; li.classList.add('in'); }));
     at(1100, () => el.addEventListener('click', close));
     at(5600, close);
