@@ -30,11 +30,11 @@ def dark(im, k):
 # S7-2 금칠이 받침에서 차오른다 → 도금왕 초상(첫 겹)
 portrait21('boss-gilded').save(S + 'promote-gild.png')
 # S7-3 분대가 올려다보며 말린다 → 종이 왕관 폰 · 긁힌 나이트 · 폰 둘 (P-06)
-cut21('prologue-06', cy=0.55).save(S + 'promote-crew.png')
+# (받음: C-05 promote-crew — D-314) cut21('prologue-06', cy=0.55).save(S + 'promote-crew.png')
 # S7-4 어둠 속 독백 → 상자 속 홀로 남은 폰 (P-04), 어둡게
 dark(cut21('prologue-04', cy=0.5), 0.55).save(S + 'promote-dark.png')
 # S10 금칠이 벗겨진 도금왕 → 반쪽이 흰 폰으로 드러난 겹 (B-04c)
 portrait21('boss-gilded-3').save(S + 'ending-peel.png')
 # S10 분대와 퀸 · 룩 · 비숍이 다시 모인다 → 킹 자리가 빈 흰 세트 상자 (P-02)
-cut21('prologue-02', cy=0.6).save(S + 'ending-crew.png')
+# (받음: E-03e ending-crew — D-314) cut21('prologue-02', cy=0.6).save(S + 'ending-crew.png')
 print('compose ok')
