@@ -79,7 +79,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void>
         await wait(calm() ? 0 : 140);
         if (my !== token) return;
         const src = `scenes/${c.img}.png`;
-        stage.innerHTML = (await hasImg(src)) ? `<img class="pl-img" src="${src}" alt="">` : standIn(c);
+        stage.innerHTML = (await hasImg(src)) ? `<img class="pl-img${c.img.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 잘리지 않게 가운데 통째로 (D-313)
         if (my !== token) return;
         stage.className = `pl-stage kb${pg.c % 2}${c.fx ? ` fx-${c.fx}` : ''}`;
         replay(stage, 'in');
