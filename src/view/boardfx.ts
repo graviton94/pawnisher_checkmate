@@ -80,7 +80,7 @@ export class BoardFx {
     this.flash -= dt;
     if (!this.rule || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const B = this.bounds(this.boardSize.w, this.boardSize.h), R = this.R;
-    this.acc += dt * (this.rule === 'plate' ? 9 : this.rule === 'spawn' ? 4 : this.rule === 'gilded' ? 7 : 5);
+    this.acc += dt * (this.rule === 'plate' ? 9 : this.rule === 'spawn' ? 4 : this.rule === 'gilded' ? 7 : this.rule === 'alarm' ? 3 : 5);
     for (; this.acc > 1; this.acc--) {
       if (this.rule === 'plate') {
         // 판 아래 가장자리에서 불씨가 오른다
@@ -93,6 +93,16 @@ export class BoardFx {
         // 금가루가 위에서 천천히 내려앉고, 가끔 금빛이 반짝인다
         if (R.chance(0.7)) this.ps.spawn(P.MOTE, R.range(B.x0, B.x1), B.y0 - 4, R.range(-4, 4), R.range(6, 14), R.range(2, 3.4), hex('#f4c84a'), 0.5);
         else this.ps.spawn(P.STAR, R.range(B.x0, B.x1), R.range(B.y0, B.y1), 0, 0, R.range(0.5, 0.9), hex('#ffe68a'), R.range(0.8, 1.8));
+      } else if (this.rule === 'inspect') {
+        // 검사등 먼지: 찬 청록 티끌이 천천히 내려앉는다 (D-309)
+        this.ps.spawn(P.MOTE, R.range(B.x0, B.x1), B.y0 - 2, R.range(-3, 3), R.range(5, 10), R.range(2, 3), hex('#9ee8f0'), 0.5);
+      } else if (this.rule === 'magnet') {
+        // 쇳가루: 보라 티끌이 판 가운데로 끌려간다 (D-309)
+        const x = R.chance(0.5) ? B.x0 - 2 : B.x1 + 2, y = R.range(B.y0, B.y1), cx = (B.x0 + B.x1) / 2, cy = (B.y0 + B.y1) / 2;
+        this.ps.spawn(P.MOTE, x, y, (cx - x) * 0.35, (cy - y) * 0.35, R.range(1.6, 2.6), hex('#d08af0'), 0.5);
+      } else if (this.rule === 'alarm') {
+        // 경보: 붉은 불티가 가장자리에서 튄다 (D-309)
+        this.ps.spawn(P.SPARK, R.chance(0.5) ? B.x0 : B.x1, R.range(B.y0, B.y1), R.range(-30, 30), R.range(-50, -10), R.range(0.2, 0.4), hex('#ff6b6b'), 1);
       } else {
         // 흰 역광 먼지가 천천히 떠오른다
         this.ps.spawn(P.MOTE, R.range(B.x0, B.x1), R.range(B.y0, B.y1), R.range(-4, 4), R.range(-12, -4), R.range(1.2, 2.2), hex('#d8d4dc'), 0.5);
@@ -116,6 +126,14 @@ export class BoardFx {
         for (let x = B.x0; x < B.x1; x++) if (bayer(Math.floor(x), Math.floor(y) + 1) < 0.35) p.px(x, y + 1, PAL.teal[4]);
         p.glowLine(B.x0, y, B.x1, y, 4, PAL.teal[5], 0.35);
       }
+    } else if (this.rule === 'alarm') {
+      // 경고등 박자: 1.2초마다 판 테두리가 두 번 붉게 깜빡인다 (계단 — 켜짐/꺼짐만)
+      const k = (this.t % 1.2) / 1.2;
+      if (k < 0.08 || (k > 0.16 && k < 0.24)) for (const [x0, y0, x1, y1] of [[B.x0, B.y0, B.x1, B.y0], [B.x0, B.y1, B.x1, B.y1], [B.x0, B.y0, B.x0, B.y1], [B.x1, B.y0, B.x1, B.y1]]) p.glowLine(x0, y0, x1, y1, 4, PAL.blood[6], 0.3);
+    } else if (this.rule === 'inspect') {
+      // 검사등: 4.8초마다 흰 청록 사각 테가 칸 하나를 훑고 지나간다
+      const ph = (this.t % 4.8) / 1.6;
+      if (ph < 1) { const td = this.tileDots(); const x = B.x0 + Math.floor(ph * ((B.x1 - B.x0) / td)) * td; p.line(x, B.y0, x, B.y1, PAL.teal[6], 0.5); }
     } else if (this.rule === 'thorns') {
       // 네 모서리에 붉은 반짝 (차례로)
       const corners = [[B.x0, B.y0], [B.x1, B.y0], [B.x1, B.y1], [B.x0, B.y1]];

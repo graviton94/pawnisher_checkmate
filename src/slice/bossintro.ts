@@ -8,7 +8,7 @@
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
 
-export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded';
+export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
 export interface BossIntroOpts {
   rule: BossKey;
   art: string;
@@ -23,8 +23,11 @@ export interface BossIntroOpts {
 const LOOK: Record<BossKey, { accent: string; seam: number }> = {
   plate: { accent: '#ff8a2a', seam: 0 },
   spawn: { accent: '#5fd4d8', seam: 0 },
-  thorns: { accent: '#e5262f', seam: 0 },
+  thorns: { accent: '#e8e4ec', seam: 0 },
   gilded: { accent: '#f4c84a', seam: 0 },
+  inspect: { accent: '#9ee8f0', seam: 0 },
+  magnet: { accent: '#d08af0', seam: 0 },
+  alarm: { accent: '#ff6b6b', seam: 0 },
 };
 
 /** 초상 왼쪽 band칸을 베이어 디더로 깎는다 (그림 도트 단위) */
@@ -60,7 +63,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     const fx = new FxCanvas(Math.ceil(W / 3), Math.ceil(H / 3), 3);
     el.querySelector('.bf-fx')!.appendChild(fx.canvas);
     const R = new Rng(o.rule.length * 31 + 7);
-    const ps = new Particles(R, () => Infinity, o.rule === 'spawn' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'thorns' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
+    const ps = new Particles(R, () => Infinity, o.rule === 'spawn' || o.rule === 'inspect' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'magnet' ? [hex('#f2d4ff'), hex('#d08af0'), hex('#7e34a0')] : o.rule === 'thorns' ? [hex('#ffffff'), hex('#e8e4ec'), hex('#8a8794')] : o.rule === 'alarm' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
     const lights = new Lights();
     const barH = Math.round(H * 0.16);
     // 초상: 화면 높이를 덮는 정수배, 오른쪽 끝에 붙인다

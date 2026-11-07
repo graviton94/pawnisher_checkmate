@@ -22,7 +22,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, bossSkin, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -1326,7 +1326,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
   renderer.setBossFinish(!!def.boss);
   // 막별 판 색 · 직전 수는 새 대국에서 비운다 (2026-11-05)
   renderer.setAct(actI + 1);
-  renderer.setFoeTone(def.boss ? 'boss' : def.reward === 'part' ? 'elite' : '', def.boss ? bossSkin(def.bossRule ?? 'plate') : '');
+  renderer.setFoeTone(def.boss ? 'boss' : def.reward === 'part' ? 'elite' : '', def.boss ? (def.bossRule ?? 'plate') : ''); // 반장마다 자기 판 · 기물 색 (D-309)
+  if (def.boss) document.body.dataset.boss = def.bossRule ?? 'plate'; else delete document.body.dataset.boss;
   renderer.lastMovesClear();
   renderer.setStaggered([]);
   renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
@@ -1973,7 +1974,7 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   // 반장은 따로 (D-249): 오른쪽 끝 초상 · 디더 경계 · 경계선 FX
   if (def.boss) {
     const real = def.bossRule ?? 'plate';
-    const rule = bossSkin(real) as BossKey;
+    const rule = real as BossKey;
     return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], narr: def.narr, rules: BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
   return sceneIntro(label, name, def.narr, art, def.boss, roster);
