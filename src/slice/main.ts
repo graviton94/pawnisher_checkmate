@@ -169,6 +169,8 @@ let lossDef: BattleDef | null = null;
 /** 이번 대국: 마지막 한 수를 썼나 · 도발을 했나 · 판돈 · 원수 */
 let clutchedNow = false;
 let tauntedNow = false;
+let tauntCount = 0;
+let begSaid = false;
 let betNow: { kind: BetKind; stake: number } | null = null;
 let nemesisNow: Nemesis | null = null;
 /** 사선 보상 등급 (보상 흐름에서 쓴다) */
@@ -179,9 +181,12 @@ const setNemeses = (list: Nemesis[]): void => writeMeta(store, { ...readMeta(sto
 
 /** 적 킹의 한 마디 (대국마다 한 줄까지, 확률로만 — 매 판 떠들지 않는다) */
 const taunt = (cue: TauntCue, force = false): void => {
-  if (tauntedNow || labMode) return;
-  if (!force && R.next() > DIRECTOR.taunt) return;
+  if (labMode) return;
+  // 반장은 판에서 셋까지 말한다(규칙 발동 · 몰림 · 처치 — 상황마다 제 말, D-311), 보통 적 킹은 한 번
+  if (b?.boss ? tauntCount >= 3 : tauntedNow) return;
+  if (!force && R.next() > (b?.boss && cue !== 'cheese' && cue !== 'gloat' ? 0.6 : DIRECTOR.taunt)) return;
   tauntedNow = true;
+  tauntCount += 1;
   const lines = (b?.boss && BOSS_TAUNTS[(b.bossRule ?? 'plate') as keyof typeof BOSS_TAUNTS]?.[cue]) || TAUNTS[cue]; // 반장마다 제 말 (D-310)
   const line = lines[R.int(lines.length)];
   const el = document.createElement('div');
@@ -1051,6 +1056,12 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   refresh();
   showBefore(r.before);
   await renderer.play(r.before, r.events);
+  if (b.boss) {
+    // 반장 상황 대사 (D-311): 출하 · 도금왕 되받아침 → sig, 반장 킹이 3할 아래로 → beg (한 번)
+    if (r.events.some((e) => e.type === 'blast' && e.fx === 'thorns')) taunt('sig');
+    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    if (ek && !begSaid && ek.hp <= ek.maxHp * 0.3) { begSaid = true; taunt('beg'); }
+  }
   if (gain) {
     // 처치 → 돌아온 열쇠가 감기며 불꽃이 튄다
     apHold = null;
@@ -1110,6 +1121,7 @@ const onEndInner = async (): Promise<void> => {
   if (busy || b.s.winner !== null) return;
   const burn0 = b.burned?.length ?? 0;
   const aimed0 = (b.aimed ?? []).length;
+  const alarm0 = !!b.alarmAtk; // 경보가 이번에 막 찼는지 알아보려고 (D-311)
   const r = endTurn(b);
   if (r === 'warn') {
     sfx('threat');
@@ -1159,6 +1171,13 @@ const onEndInner = async (): Promise<void> => {
   renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
   renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
   renderer.setup(b.s);
+  if (b.boss && b.s.winner === null) {
+    // 반장 규칙이 막 발동했으면 그 말 (D-311): 줄 폭격 · 폰 찍기 · 불량 도장 · 끌어당김 예고 · 경보 가득
+    const pawns = (s: typeof b.s) => s.pieces.filter((p) => p.side === 1 && p.type === 'P').length;
+    const fired = r.events.some((e) => e.type === 'blast' && e.fx === 'row') || pawns(b.s) > pawns(r.before)
+      || (b.bossRule === 'inspect' && b.stampId != null && (b.turn - 1) % BOSS_NUM.stampEvery === 0) || !!b.pull || (!!b.alarmAtk && !alarm0);
+    if (fired) taunt('sig');
+  }
   // 헛방 (D-229): 예고를 피해 빈 땅을 친 적은 경직 · 맞은 기물은 기어 쇼크 — 한 번 알린다
   if (b.s.winner === null && b.staggered?.length) toast(HUD_TEXT.whiff(b.staggered.length), 2600);
   else if (b.s.winner === null && b.shocked?.length) toast(HUD_TEXT.shock, 2400);
@@ -1298,6 +1317,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
   }
   clutchedNow = false;
   tauntedNow = false;
+  tauntCount = 0;
+  begSaid = false;
   betNow = null;
   blog = [];
   apKey = '';

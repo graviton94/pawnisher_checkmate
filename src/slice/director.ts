@@ -99,12 +99,14 @@ export const addNemesis = (list: Nemesis[], t: PieceType, victim: { t: PieceType
 };
 
 // ---------- ② 도발 (적 킹의 말 — 대국마다 한 줄까지) ----------
-export type TauntCue = 'cheese' | 'beg' | 'gloat' | 'meet';
+/** sig = 그 반장의 규칙이 막 발동한 순간 (반장마다 다른 상황 — D-311) */
+export type TauntCue = 'cheese' | 'beg' | 'gloat' | 'meet' | 'sig';
 export const TAUNTS: Record<TauntCue, string[]> = {
   cheese: ['“비겁한 태엽 같으니!”', '“뒤에서 찌르다니, 공장의 수치다.”', '“그건… 반칙 아닌가?”'],
   beg: ['“자, 잠깐… 거래하자.”', '“나사라면 얼마든지 주겠다!”', '“내 왕관만은…”'],
   gloat: ['“불량품은 용광로로.”', '“하나 줄었군.”'],
   meet: ['“…또 만났군.”', '“그 녀석의 태엽 소리가 아직 들린다.”'],
+  sig: ['“이것이 이 판의 법이다.”'],
 };
 
 // ---------- ⑦ 판돈 ----------
