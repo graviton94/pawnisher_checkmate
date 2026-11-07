@@ -15,7 +15,7 @@ S = 60
 # 반장 규칙 → (초상화, 왼쪽 위 x, y) — 왕관 십자가 가운데 오게 손으로 맞춘 칸
 CROPS = {
     'plate': ('public/scenes/boss-plate.png', 72, 2),
-    'spawn': ('public/scenes/boss-assembly.png', 163, 4),
+    'spawn': ('public/scenes/boss-assembly.png', 53, 4),
     'thorns': ('public/scenes/boss-thorns.png', 82, 4),
 }
 
