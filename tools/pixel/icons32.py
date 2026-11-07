@@ -65,18 +65,7 @@ def check(key, icon):
         bad.append(f'{key}: 견본 없는 글자 {c!r}')
     if any(c != '.' for c in rows[0] + rows[-1] + ''.join(r[0] + r[-1] for r in rows)):
         bad.append(f'{key}: 맨 바깥 1칸은 비워 둔다 (바깥선 자리)')
-    for b in icon.get('base', []):
-        t, side, x, y, n = b
-        if t not in 'PNBRQK' or side not in (0, 1) or not (16 <= n <= 30) or x < 0 or y < 0 or x + n > N or y + n > N:
-            bad.append(f'{key}: base {b} — (유형, 진영, x, y, 크기 16~30), 32칸 안')
     return bad
-
-
-def base_piece(t, side, n):
-    """기물 정본(pieces64) → n칸 작은 도트판 (maker.mini — 게임의 m-*.png와 같은 방식). 아이콘이 기물을 새로 그리지 않고 정본을 그대로 쓴다 (D-296)"""
-    sys.path.insert(0, HERE)
-    import maker
-    return maker.mini(maker.pad72(maker.load64()[(t, side)]), side, n)
 
 
 OUTLINE = 2  # 바깥 먹선 두께 (D-291: 사용자 「지금보다 두 배 — 1도트는 너무 고해상도 스타일」)
@@ -91,11 +80,6 @@ def render(icon):
     big = Image.new('RGBA', (M, M), (0, 0, 0, 0))
     px = big.load()
     filled = set()
-    # 밑그림: 기물 정본 (D-296 — 덱 카드 아이콘은 그 카드가 부리는 기물 모양을 쓴다). 칠한 칸이 그 위에 덮인다
-    for t, side, bx, by, n in icon.get('base', []):
-        pc = base_piece(t, side, n)
-        big.alpha_composite(pc, (bx + OUTLINE, by + OUTLINE))
-        filled |= {(x + bx + OUTLINE, y + by + OUTLINE) for y in range(n) for x in range(n) if pc.getpixel((x, y))[3]}
     for y in range(N):
         for x in range(N):
             c = rows[y][x]
