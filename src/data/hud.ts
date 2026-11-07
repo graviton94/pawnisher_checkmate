@@ -121,5 +121,5 @@ export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'ins
   plate: '두께가 곧 힘이라 믿은 자',
   spawn: '찍어도 찍어도 배고픈 라인',
   thorns: '맞은 만큼 찌르는 가시',
-  gilded: '모양이 운명이라 쓴 손',
+  gilded: '금으로 덮은 원죄',
 };
