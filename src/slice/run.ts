@@ -105,13 +105,14 @@ export const ASCENSION: { name: string; law: string; desc: string }[] = [
   { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +15%' },
   { name: '녹슨 명령서', law: '불량 세트의 명령서에는 녹을 섞는다', desc: '시작 덱의 카드 한 장이 녹슨 카드 (태엽 +1)' },
   { name: '마른 나사', law: '불량 세트에는 나사를 덜 내준다', desc: '속전 보상 −25%' },
-  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +10%' },
+  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +5%' },
   { name: '금 간 심장', law: '불량 세트의 심장 톱니는 금 간 것으로 끼운다', desc: '분대원 하나가 깨진 심장 톱니로 시작' },
   { name: '얇은 보상', law: '불량 세트에는 명령서를 둘만 내준다', desc: '대국 보상 카드 선택지 3 → 2' },
   { name: '정예 검문', law: '검문마다 정예를 세운다', desc: '검문 적 하나가 정예 (왕관 · HP ×2)' },
-  { name: '열세 겹', law: '포장대의 금은 열세 겹으로 칠한다', desc: '도금왕 HP +20% · 마지막 장' },
+  { name: '열세 겹', law: '포장대의 금은 열세 겹으로 칠한다', desc: '도금왕 HP +10% · 마지막 장' },
 ];
-export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.25, bossHp: 1.15, coinMul: 0.75, enemyAtk: 1.1, rewardChoices: 2, finalHp: 1.2 };
+// D-316: enemyAtk 1.1 → 1.05 · finalHp 1.2 → 1.1 — 두뇌 봇 승급 13 완주 17.5%(120판)를 목표 20~35%로
+export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.25, bossHp: 1.15, coinMul: 0.75, enemyAtk: 1.05, rewardChoices: 2, finalHp: 1.1 };
 /** 이 승급에서 그 조항이 켜졌나 — 조항 번호(1 ~ 13)는 ASCENSION 순서 */
 export const ascOn = (asc: number, law: number): boolean => asc >= law;
 export const ASC_MAX = ASCENSION.length;

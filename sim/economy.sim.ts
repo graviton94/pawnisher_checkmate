@@ -2,7 +2,7 @@ import { it } from 'vitest';
 import { writeFileSync, readFileSync } from 'node:fs';
 import type { PieceType } from '../src/engine';
 import { Rng } from '../src/engine/rng';
-import { COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type CommandId, type Grade } from '../src/slice/cards';
+import { cardFits, COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type CommandId, type Grade } from '../src/slice/cards';
 import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../src/slice/parts';
 import { makeCrew } from '../src/slice/crew';
 import { buildRun, battleFor, MAP, type MapNode } from '../src/slice/run';
@@ -69,7 +69,7 @@ const one = (seed: number) => {
   const curve: { act: number; floor: number; deck: number; dead: number; types: number; squad: number; parts: number; gold: number; avgVal: number; hpK: number; atkK: number }[] = [];
   const checkpoints: { act: number; win: number; turns: number }[] = [];
   const has = (t: PieceType) => squad.some((u) => u.t === t);
-  const usable = (id: CommandId) => COMMANDS[id].who === 'any' || has(COMMANDS[id].who as PieceType);
+  const usable = (id: CommandId) => cardFits(id, squad.map((u) => u.t));
   const hpRatio = () => squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)) / crewMaxHp(u), 0) / Math.max(1, squad.length);
   const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; squad.push(makeCrew(r.t, rng, squad.map((u) => u.name ?? ''))); deck.push(...r.cards); bump(T, 'recruit'); };
   const partOf = (elite: boolean) => {

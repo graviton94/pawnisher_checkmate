@@ -118,6 +118,16 @@ const carefulAction = (b: SliceBattle): BotAction | null => {
   for (let i = 0; i < b.hand.length; i++) {
     if (!canPlay(b, i)) continue;
     const c = COMMANDS[b.hand[i]];
+    if (c.kind === 'swap') {
+      // 캐슬링 (D-316): 예전엔 다른 즉시 카드처럼 무조건 먼저 냈다(킹을 예고 칸으로 옮기기도). 이제 킹이 예고 칸에서 빠질 때만
+      const nb = clone(b);
+      if (typeof playCard(nb, i) === 'string') continue;
+      const k1 = kingOf(nb.s, 0);
+      const before = !!k0 && danger.some((d) => samePos(d, k0));
+      const after = !!k1 && dangerSquares(nb).some((d) => samePos(d, k1));
+      take({ i, score: (before && !after ? 15 : 0) + (now - threatOf(nb) > 0 ? 50 : 0) });
+      continue;
+    }
     if (isInstant(b.hand[i])) { take({ i, score: c.kind === 'draw' || c.kind === 'spark' ? 20 : 8 }); continue; }
     if (c.kind !== 'move') {
       // 방열판 · 땜질: 받을 피해가 줄어드는 만큼 — 킹이 쓰러질 수가 아니어도 예고 칸의 킹에겐 예전 보통 봇처럼 낮은 우선(15)으로 낸다

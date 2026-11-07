@@ -165,13 +165,13 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   queenStride: { name: '여왕의 행보', cost: 2, who: 'Q', kind: 'move', desc: '어느 길로든 나아간다.', flavor: '모든 길의 주인', title: '모든 길' },
   queenFork: { axis: 'tactic', name: '여왕의 포크', cost: 2, who: 'Q', kind: 'move', fork: 1.8, desc: '여덟 갈래 중 둘을 고른다. (칠 적이 둘 이상이면 ×1.8)' },
   queenPin: { axis: 'tactic', name: '여왕의 못', cost: 2, who: 'Q', kind: 'move', stun: true, carve: 'pierce', desc: '줄 위의 둘을 꿰어 박는다. (핀, 뒤의 1기까지)' },
-  queenWrath: { axis: 'chain', name: '여왕의 진노', cost: 3, who: 'Q', kind: 'move', mult: 2.2, desc: '모든 길이 한 점으로 모인다. (×2.2)' },
+  queenWrath: { axis: 'chain', name: '여왕의 진노', cost: 3, who: 'Q', kind: 'move', mult: 2.7, desc: '모든 길이 한 점으로 모인다. (×2.7)' },
   queenSkewer: { axis: 'tactic', name: '여왕의 창', cost: 2, who: 'Q', kind: 'move', carve: 'pierce', add: 8, desc: '줄 끝까지 꿰뚫는다. (+8, 뒤의 1기까지)' },
   queenDecree: { axis: 'chain', name: '여왕의 칙령', cost: 2, who: 'Q', kind: 'move', chainPerKill: 2, desc: '여왕 앞에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
   queenShield: { axis: 'king', name: '여왕의 망토', cost: 1, who: 'Q', kind: 'shield', amount: 25, desc: '망토를 두른다. (퀸 방열판 +25)' },
   queenSweep: { axis: 'chain', name: '여왕의 휩쓸기', cost: 2, who: 'Q', kind: 'move', carve: 'cross', mult: 1.3, desc: '내려앉으며 둘레를 쓴다. (×1.3, 상하좌우 50%)' },
-  stepAside: { axis: 'tactic', name: '비켜서기', cost: 1, who: 'any', kind: 'move', nextMult: 1.6, desc: '길을 내어 준다. (디스커버드 — 다음 공격 ×1.6)' },
-  checkCall: { axis: 'tactic', name: '체크!', cost: 2, who: 'any', kind: 'move', stun: true, add: 6, desc: '외침과 함께 묶는다. (+6, 핀)', flavor: '“체크!”' },
+  stepAside: { axis: 'tactic', name: '비켜서기', cost: 1, who: 'any', kind: 'move', nextMult: 1.3, desc: '길을 내어 준다. (디스커버드 — 다음 공격 ×1.3)' },
+  checkCall: { axis: 'tactic', name: '체크!', cost: 2, who: 'any', kind: 'move', stun: true, desc: '외침과 함께 묶는다. (핀)', flavor: '“체크!”' },
   oilCan: { name: '기름칠', cost: 1, who: 'any', kind: 'repair', amount: 22, desc: '삐걱이는 관절에 기름을 먹인다. (HP +22)' },
   forkAny: { axis: 'tactic', name: '양수겸장', cost: 2, who: 'any', kind: 'move', fork: 1.5, desc: '둘을 한꺼번에 겨눈다. (칠 적이 둘 이상이면 ×1.5)' },
   fieldPlate: { name: '덧댄 판', cost: 0, who: 'any', kind: 'shield', amount: 10, desc: '쇳조각을 덧댄다. (방열판 +10)' },
@@ -210,6 +210,17 @@ export const START_COMMANDS: CommandId[] = ['advance', 'advance', 'advance', 'le
  */
 /** 시작 분대 (D-241: 비숍 → 나이트 — 부관 박차가 나이트라 첫 판부터 곁에서 싸운다, 착지 짓밟기로 1턴 3연쇄) */
 export const START_SQUAD: PieceType[] = ['K', 'P', 'N'];
+/**
+ * 내는 기물 말고도 분대에 있어야 쓸모 있는 기물 (D-316): 캐슬링은 킹이 내지만 룩이 없으면 낼 수 없다 —
+ * 룩 없는 분대에 보상으로 나와 손패만 막던 죽은 카드(힘 값 −0.95)를 막는다.
+ */
+export const CARD_NEEDS: Partial<Record<BaseCommandId, PieceType>> = { castle: 'R' };
+/** 이 분대(기물 유형들)로 쓸 수 있는 카드인가 — 내는 기물 + CARD_NEEDS */
+export const cardFits = (id: CommandId, types: readonly string[]): boolean => {
+  const c = COMMANDS[id];
+  const need = CARD_NEEDS[baseOf(id)];
+  return (c.who === 'any' || types.includes(c.who)) && (!need || types.includes(need));
+};
 export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order', 'order'];
 
 /** 영입: 기물 하나 + 그 기물의 카드 */
@@ -351,6 +362,8 @@ export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }
   // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 되받아침은 그대로
   spawn: { king: 0.8, atk: 0.7 },
   thorns: { king: 0.7, atk: 0.7 },
+  // D-316: 2막 자석 반장 42% (보통 봇, D-299) — 끌어당기기는 그대로
+  magnet: { king: 0.85, atk: 0.8 },
 };
 
 /** 막별 적 특성 (R5-4): 2막 자폭 폰(쓰러지면 둘레 8) · 3막 방패 룩(대국 시작 방열판 15) */

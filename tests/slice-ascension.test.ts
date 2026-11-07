@@ -235,3 +235,14 @@ describe('땜질 도구함 (D-299)', () => {
     expect(hp(p.id)).toBe(before.p);
   });
 });
+
+import { cardFits } from '../src/slice/cards';
+describe('캐슬링은 룩이 있을 때만 (D-316)', () => {
+  it('룩 없는 분대에는 쓸 수 없는 카드', () => {
+    expect(cardFits('castle', ['K', 'P', 'N'])).toBe(false);
+    expect(cardFits('castle', ['K', 'R'])).toBe(true);
+    expect(cardFits('castle+', ['K', 'R'])).toBe(true);
+    expect(cardFits('advance', ['K', 'P'])).toBe(true);
+    expect(cardFits('advance', ['K', 'N'])).toBe(false);
+  });
+});

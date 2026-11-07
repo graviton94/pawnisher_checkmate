@@ -5,7 +5,7 @@
  */
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
+import { cardFits, COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
 import { PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
@@ -61,8 +61,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const bosses: BossLog[] = [];
   let battles = 0;
   let turnsAll = 0;
-  const has = (t: PieceType) => squad.some((u) => u.t === t);
-  const usable = (id: CommandId) => COMMANDS[id].who === 'any' || has(COMMANDS[id].who as PieceType);
+  const usable = (id: CommandId) => cardFits(id, squad.map((u) => u.t));
   const hpRatio = () => squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)) / crewMaxHp(u), 0) / Math.max(1, squad.length);
   const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; squad.push(makeCrew(r.t, rng, squad.map((u) => u.name ?? ''))); deck.push(...r.cards); };
   const shopMul = (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
