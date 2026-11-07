@@ -3,7 +3,7 @@
 python3 -I tools/order/order_page.py <out.html>
 
 md가 정본이다 — 상자를 고치면 md를 고치고 이 스크립트로 다시 만든다.
-12위(아이콘 시트)는 D-291로 Claude가 직접 그려 끝났으니 페이지에서 뺀다. 받은 그림(public/scenes/<이름>.png가 있는 것)은 「받음」으로 표시한다.
+받은 그림(public/scenes/<이름>.png가 있는 것)은 「받음」으로 표시한다. 12위 아이콘 시트는 D-301로 다시 발주 — 시트의 10장이 모두 tools/pixel/icons32_ext에 있으면 「받음」.
 """
 import base64
 import html
@@ -66,7 +66,22 @@ def parse():
     return secs
 
 
+EXT = os.path.join(ROOT, 'tools', 'pixel', 'icons32_ext')
+
+
+def sheet_files(head):
+    """I-0N 상자 → 그 시트 10장 키 (받음 = icons32_ext에 있음, D-301)"""
+    m = re.match(r'(I-\d+)', head)
+    if not m:
+        return []
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'pixel'))
+    import icon_sheets
+    return ['ext:' + k for k, *_ in icon_sheets.SHEETS.get(m.group(1), ('', []))[1]]
+
+
 def files_of(head):
+    if re.match(r'I-\d+', head):
+        return sheet_files(head)
     fs = re.findall(r'`(?:public/scenes/)?([A-Za-z0-9-]+)\.png`', head)
     m = re.search(r'`([A-Za-z-]+)-(\d+)\.png` ~ `\1-(\d+)\.png`', head)  # boss-gilded-1 ~ 4 같은 범위
     if m:
@@ -134,12 +149,14 @@ def render_blocks(blocks, start_id):
 def main(out_path):
     secs = parse()
     have = {f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')}
+    if os.path.isdir(EXT):
+        have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
     intro = next(s for s in secs if s['head'].startswith('0.'))
     groups, g = [], None
     for s in secs:
         m = re.match(r'(\d+)위 · (.*)', s['head'])
         if m:
-            if int(m.group(1)) >= 12:
+            if int(m.group(1)) >= 13:
                 break
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
             groups.append(g)
@@ -149,11 +166,9 @@ def main(out_path):
     # 한눈에 표: 12위 줄은 끝났다고 고쳐 적는다
     rows = []
     for ln in intro['blocks']:
-        if ln[0] == 'text' and ln[1].startswith('| 12 '):
-            continue
         rows.append(ln)
     intro_html = render_text([b for k, b in rows if k == 'text'])
-    intro_html = intro_html.replace('합계 47장 + 아이콘 시트 10장.', '합계 47장.')
+    intro_html = intro_html.replace('Claude 손그림 도트', 'Claude 손그림 도트 (받은 시트는 외곽선 2도트로 보완해 교체 — D-301)')
 
     pid = 0
     nav, body = [], []
@@ -255,7 +270,7 @@ pre { margin: 0; padding: 12px 14px; font: 13px/1.6 var(--mono); white-space: pr
 </nav>
 <main>
 <h1>그림 발주서</h1>
-<p class="lede">남은 장면 그림 전부를 우선순위 순으로 모았습니다. 위에서부터 받으면 각본(프롤로그 → 승급 → 진 엔딩)이 화면에 차례로 올라갑니다. 아이콘은 Claude가 32도트로 직접 그려 끝났으므로 여기서 뺐습니다.</p>
+<p class="lede">남은 그림 전부를 우선순위 순으로 모았습니다. 위에서부터 받으면 각본(프롤로그 → 승급 → 진 엔딩)이 화면에 차례로 올라갑니다. 12위 아이콘 시트는 받은 그대로 주시면 외곽선을 2도트로 보완해 넣습니다.</p>
 <div class="meter">받은 그림 %GOT% / %TOTAL%<i style="--w: calc(%GOT% / %TOTAL% * 100%)"></i></div>
 <div class="how"><b>받는 법</b><ol><li>새 채팅을 엽니다. (채팅 한 번에 한 장 — 2위 도금왕 겹 단계만 한 채팅에서 이어서)</li><li>상자 위에 적힌 첨부 그림(①②③④)을 붙입니다.</li><li>프롬프트를 <b>복사</b>해 통째로 붙여 넣습니다.</li><li>받은 그림을 저에게 주면 게임에 붙입니다.</li></ol></div>
 <section class="att" id="att"><h2>첨부 그림</h2><div class="figs">%ATT%</div></section>

@@ -1066,7 +1066,7 @@
 ## 12위 · 아이콘 시트 I-01 ~ I-10 (32×32 × 10장씩, 100장 전부) — D-289 · D-290
 모든 16칸 아이콘(부품 70 · 부적 3 · 지도 노드 7 · 서비스 4 · 기물 없는 카드 16)을 **모양이 비슷한 것끼리** 10장씩 묶었다 — 같은 시트 안에서 생성기가 같은 구도 · 같은 크기 감각을 쓰게.
 첨부: `build-res/order/I-0N-now.png` (그 시트의 지금 그림 10장, 8배 — 화풍 기준). 상자를 통째로 붙여 넣는다. 정본 표: `tools/pixel/icon_sheets.py`.
-받은 시트 넣기: `python3 -I tools/pixel/icon_sheet_import.py <받은 그림> I-0N` → 칸마다 32×32로 다시 도트화 · 우리 팔레트로 맞춤 · 바깥선 → `public/ui/icons16/<키>.png` + 확인용 `build-res/order/I-0N-check.png`(지금 · 받은 것 나란히).
+받은 시트 넣기: `python3 -I tools/pixel/icon_sheet_import.py <받은 그림> I-0N` → 칸마다 32×32로 다시 도트화 · 우리 팔레트로 맞춤 · 바깥선 2도트로 보완(D-301, 받은 그림은 1도트로 와도 된다) · `tools/pixel/icons32_ext/` 보관 → `public/ui/icons16/<키>.png` + 확인용 `build-res/order/I-0N-check.png`(지금 · 받은 것 나란히).
 
 | 시트 | 묶음 | 10장 |
 | :-- | :-- | :-- |

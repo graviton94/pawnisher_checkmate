@@ -5,8 +5,8 @@
   ① 시트를 5×2로 나누고, 칸을 32×32 격자로 다시 도트화 — 격자 한 칸 가운데 60% 영역의 중앙값 색 (안티앨리어싱 · 압축 얼룩 제거)
   ② 마젠타(#FF00FF 근처) = 투명
   ③ 우리 팔레트(icon_sheets.PALETTE)에서 가장 가까운 색으로 맞춘다
-  ④ 둘레 바깥선 보정: 물건 가장자리에 붙은 투명 칸 중 바깥선이 빠진 곳을 먹(#0B0B0E)으로
-  ⑤ 원본 tools/pixel/icons32/<키>.png (32×32, 정중앙) — icons16.py export가 16칸 손그림 대신 이것을 쓴다 → public/ui/icons16/<키>.png
+  ④ 둘레 바깥선 보정: 물건 가장자리에 붙은 투명 칸 중 바깥선이 빠진 곳을 먹(#0B0B0E)으로 + 한 겹 더 둘러 2도트 (D-301)
+  ⑤ tools/pixel/icons32_ext/<키>.png 에 보관 (icons32.py build가 손그림 위에 덮는다) · 원본 tools/pixel/icons32/<키>.png (32×32, 정중앙) — icons16.py export가 16칸 손그림 대신 이것을 쓴다 → public/ui/icons16/<키>.png
      작은 칸(16px)용 <키>@16.png도 함께 (2×2 → 많은 색, 바깥선 우선)
 확인용: build-res/order/<시트>-check.png (지금 → 받은 것, 8배)
 --dry 면 게임 그림은 쓰지 않고 확인용만.
@@ -90,6 +90,27 @@ def centered(icn, scale=1):
     return res
 
 
+def thicken(icn):
+    """바깥 먹선 한 겹 더 (받은 그림 1도트 → 2도트, D-291 · D-301). 32칸을 넘으면 줄이지 않고 가운데에서 자른다"""
+    n = icn.width
+    px = icn.load()
+    filled = {(x, y) for y in range(n) for x in range(n) if px[x, y][3] > 0}
+    ring = {(x + dx, y + dy) for x, y in filled for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - filled
+    big = Image.new('RGBA', (n + 2, n + 2), (0, 0, 0, 0))
+    big.alpha_composite(icn, (1, 1))
+    bp = big.load()
+    for x, y in ring:
+        bp[x + 1, y + 1] = INK + (255,)
+    box = big.getbbox()
+    crop = big.crop(box)
+    if crop.width > n or crop.height > n:
+        l, tp = max(0, (crop.width - n) // 2), max(0, (crop.height - n) // 2)
+        crop = crop.crop((l, tp, l + min(n, crop.width), tp + min(n, crop.height)))
+    out = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    out.paste(crop, ((n - crop.width) // 2, (n - crop.height) // 2), crop)
+    return out
+
+
 def main(src, sid, dry=False):
     title, items = icon_sheets.SHEETS[sid]
     sheet = Image.open(src).convert('RGB')
@@ -99,7 +120,7 @@ def main(src, sid, dry=False):
         cx, cy = i % 5, i // 5
         cell = sheet.crop((round(W * cx / 5), round(H * cy / 2), round(W * (cx + 1) / 5), round(H * (cy + 1) / 2)))
         icn = cell16(cell)
-        game = centered(icn)
+        game = thicken(centered(icn))
         f = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')
         master = os.path.join(HERE, 'icons32', f'{k}.png')
         if os.path.exists(f):
@@ -110,6 +131,8 @@ def main(src, sid, dry=False):
         if not dry:
             os.makedirs(os.path.dirname(master), exist_ok=True)
             game.save(master)
+            os.makedirs(os.path.join(HERE, 'icons32_ext'), exist_ok=True)
+            game.save(os.path.join(HERE, 'icons32_ext', f'{k}.png'))  # icons32.py build가 손그림 위에 덮는다 (D-301)
             game.save(f)
             small(game).save(f.replace('.png', '@16.png'))
         print(f'{k:14} {name}')
