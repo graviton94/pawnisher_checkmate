@@ -1,7 +1,7 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
-import { BOSS_PAIRS, BOSS_RULES, FOE_TRAITS, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeTrait } from './cards';
+import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, FOE_TRAITS, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeTrait } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -33,6 +33,8 @@ export interface BattleDef {
   place?: { side: 0 | 1; t: PieceType; x: number; y: number }[];
   /** 킹 호위 방열판 비율 (D-243) */
   guard?: number;
+  /** 이 판 적 공격 배율 (D-298 — 반장 규칙별 BOSS_TUNE) */
+  atk?: number;
   /** 짜 둔 손패 (입문 판, D-232): 덱을 이 순서로 놓고 섞지 않는다 */
   order?: CommandId[];
 }
@@ -203,7 +205,7 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
   const sc = ACT_SCALE[a];
   const label = `${act}막`;
   if (kind === 'boss')
-    return { enemy: BOSS[a], kingHp: sc.king + 0.1, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[rule].name}`, narr: NARR_BOSS[rule] ?? '', tell: BOSS_RULES[rule].tell, reward: 'part', boss: true, bossRule: rule, traits: TRAITS[a] };
+    return { enemy: BOSS[a], kingHp: (sc.king + 0.1) * (BOSS_TUNE[rule]?.king ?? 1), atk: BOSS_TUNE[rule]?.atk, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[rule].name}`, narr: NARR_BOSS[rule] ?? '', tell: BOSS_RULES[rule].tell, reward: 'part', boss: true, bossRule: rule, traits: TRAITS[a] };
   if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
   return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };

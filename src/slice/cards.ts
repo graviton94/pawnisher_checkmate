@@ -109,7 +109,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   march: { axis: 'inf', name: '총진격', cost: 0, who: 'P', kind: 'march', desc: '폰 전원이 한 칸 전진해 친다.', flavor: '“전군, 진격하라!”' },
   draft: { axis: 'inf', name: '땜질 보충병', cost: 0, who: 'any', kind: 'draft', desc: '고철로 땜질한 폰 하나가 킹 곁에 선다. (이번 대국만)', flavor: '“빈자리를 채워라.”' },
   wrath: { axis: 'king', name: '왕의 분노', cost: 1, who: 'K', kind: 'move', rage: true, desc: '상처 입은 만큼 분노한다. (잃은 HP 비율만큼, 최대 ×3)' },
-  royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 30, desc: '왕이 갑주를 두른다. (방열판 +30)' },
+  royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 22, desc: '왕이 갑주를 두른다. (방열판 +22)' },
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1, 카드 +1)' },
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '쌓인 열기를 갑옷으로 돌린다. (연쇄를 모두 써서 킹 방열판 +연쇄×14)', flavor: '“식기 전에 입어라.”' },
@@ -131,9 +131,9 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   rookCharge: { axis: 'push', name: '성벽 돌진', cost: 2, who: 'R', kind: 'move', push: true, add: 8, desc: '요새가 통째로 밀고 들어간다. (+8, 밀치기)' },
   kingDecree: { axis: 'king', axis2: 'chain', name: '왕명', cost: 1, who: 'K', kind: 'move', chainPerKill: 2, desc: '왕의 손에 쓰러진 자는 둘로 센다. (처치 1회 = 연쇄 2칸)' },
   overload: { axis: 'chain', name: '과부하', cost: 3, who: 'any', kind: 'move', mult: 2.5, desc: '태엽을 끝까지 감는다. (×2.5)' },
-  quickFix: { name: '덧댐', cost: 0, who: 'any', kind: 'repair', amount: 8, desc: '급한 대로 덧댄다. (HP +8)' },
+  quickFix: { name: '덧댐', cost: 0, who: 'any', kind: 'repair', amount: 6, desc: '급한 대로 덧댄다. (HP +6)' },
   tempo: { axis: 'chain', name: '박자', cost: 0, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 +3)' },
-  bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 25, desc: '몸으로 막아선다. (방열판 +25)' },
+  bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 20, desc: '몸으로 막아선다. (방열판 +20)' },
   bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (상하좌우 50%, 처치 1회 = 연쇄 2칸)' },
   gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +3, 카드 +2, 태엽 +1)', flavor: '“기꺼이.”' },
 
@@ -146,7 +146,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   anklePin: { axis: 'tactic', axis2: 'inf', name: '발목 잡기', cost: 1, who: 'P', kind: 'move', stun: true, desc: '작은 손이 발목을 붙든다. (핀 — 친 적은 이번 적 차례에 못 움직인다)' },
   pawnFork: { axis: 'tactic', axis2: 'inf', name: '폰 포크', cost: 1, who: 'P', kind: 'move', fork: 1.8, desc: '두 적 사이에 파고든다. (칠 적이 둘 이상이면 ×1.8)' },
   pawnShield: { axis: 'inf', name: '방패 세우기', cost: 1, who: 'P', kind: 'shield', amount: 18, desc: '작은 방패를 세운다. (폰 방열판 +18)' },
-  lastRank: { axis: 'inf', name: '끝 줄의 꿈', cost: 2, who: 'P', kind: 'move', mult: 2, desc: '끝 줄을 꿈꾸며 내지른다. (×2)', flavor: '“언젠가는, 저 끝까지.”' },
+  lastRank: { axis: 'inf', name: '끝 줄의 꿈', cost: 1, who: 'P', kind: 'move', mult: 2.5, desc: '끝 줄을 꿈꾸며 내지른다. (×2.5)', flavor: '“언젠가는, 저 끝까지.”' },
   knightFork: { axis: 'tactic', axis2: 'cav', name: '나이트 포크', cost: 1, who: 'N', kind: 'move', fork: 1.8, desc: '두 적을 한 번에 노린다. (칠 적이 둘 이상이면 ×1.8)', flavor: '체스에서 가장 오래된 함정' },
   hobble: { axis: 'tactic', axis2: 'cav', name: '말발굽 족쇄', cost: 1, who: 'N', kind: 'move', stun: true, drawOnKill: 1, desc: '짓밟아 묶는다. (핀, 처치 시 카드 +1)' },
   skewer: { axis: 'tactic', axis2: 'chain', name: '스큐어', cost: 1, who: 'B', kind: 'move', carve: 'pierce', add: 6, desc: '앞의 자와 뒤의 자를 함께 꿴다. (+6, 뒤의 1기까지)' },
@@ -321,7 +321,8 @@ export const FOE = {
    */
   // 등반 봇 40판: 시작 0.72 · ×1.05 → 완주 28 (1막 대국 ≈0.8 · 1막 반장 ≈1.06 · 3막 끝 ≈1.5) — 곡선 없음(계단 1/1.15/1.3)은 31
   hpStart: 0.72,
-  hpGrow: 1.075,
+  // D-298 (확장 뒤 밸런스 패치): 1.075 → 1.06 — D-243 판 구조 · D-252 종막 · 3막 깊이 20에서 HP가 4.25배로 불어 두뇌 봇도 50%였다
+  hpGrow: 1.06,
   atkGrow: 0.07,
 };
 
@@ -334,16 +335,23 @@ export type BossRule = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'ma
 export const BOSS_PAIRS: [BossRule, BossRule][] = [['plate', 'inspect'], ['spawn', 'magnet'], ['thorns', 'alarm']];
 /** 새 반장의 판 · 기물 색 · 등장 FX는 같은 막 반장의 것을 빌린다 (전용 그림이 오기 전까지) */
 export const bossSkin = (r: BossRule): 'plate' | 'spawn' | 'thorns' | 'gilded' => (r === 'inspect' ? 'plate' : r === 'magnet' ? 'spawn' : r === 'alarm' ? 'thorns' : r);
+/** 반장 규칙 수치 — 되받아침 6 → 4 (D-298) */
+export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 4, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 3, alarmMult: 1.5 };
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
-  plate: { name: '철갑 반장', lines: ['철갑 20 · 2턴마다 다시', `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '첫 턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
+  plate: { name: '철갑 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '첫 턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
   spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '첫 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
   gilded: { name: '도금왕', lines: ['금칠 방열판 · 2턴마다 다시', '폰 찍어 내기 · 줄 폭격 · 되받아침'], tell: '앞의 세 반장이 쓰던 것을 모두 씁니다 — 홀수 턴엔 곁에 폰을 찍어 내고, 짝수 턴엔 한 줄을 불태우고, 못 쓰러뜨린 공격은 가시로 돌려줍니다.' },
-  inspect: { name: '검수 반장', lines: ['철갑 20 · 2턴마다 다시', '2턴마다 불량 도장 — 찍힌 기물의 공격 ×0.5'], tell: '두 턴마다 당신의 가장 센 기물에 불량 도장을 찍습니다. 도장 찍힌 기물은 공격이 절반이 됩니다 — 다른 기물로 치십시오.' },
+  inspect: { name: '검수 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, '2턴마다 불량 도장 — 찍힌 기물의 공격 ×0.5'], tell: '두 턴마다 당신의 가장 센 기물에 불량 도장을 찍습니다. 도장 찍힌 기물은 공격이 절반이 됩니다 — 다른 기물로 치십시오.' },
   magnet: { name: '자석 반장', lines: ['2턴마다 가장 가까운 기물을 끌어당긴다', '끌려가는 기물에 자석 표시'], tell: '두 턴마다 반장에게 가장 가까운 기물 하나가 한 칸 끌려갑니다. 자석 표시가 붙은 기물을 미리 빼내십시오.' },
-  alarm: { name: '경보 반장', lines: ['철갑 20 · 2턴마다 다시', `턴마다 경보 +1 · ${3}이 차면 적 공격 ×1.5`], tell: '턴마다 경보 눈금이 오릅니다. 셋이 차면 그 적 차례의 공격이 1.5배 — 그 전에 끝내거나, 그 차례를 버티십시오.' },
-  thorns: { name: '출하 반장', lines: ['철갑 20 · 2턴마다 다시', `못 쓰러뜨리면 친 기물이 ${Math.round(6 * FOE.atk)} 되받는다`], tell: '가시 갑옷 — 반장을 치고 못 쓰러뜨리면 가시가 친 기물에게 되돌아갑니다. 한 번에 몰아치십시오.' },
+  alarm: { name: '경보 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `턴마다 경보 +1 · ${BOSS_NUM.alarmFull}이 차면 적 공격 ×${BOSS_NUM.alarmMult}`], tell: '턴마다 경보 눈금이 오릅니다. 셋이 차면 그 적 차례의 공격이 1.5배 — 그 전에 끝내거나, 그 차례를 버티십시오.' },
+  thorns: { name: '출하 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `못 쓰러뜨리면 친 기물이 ${Math.round(BOSS_NUM.thorns * FOE.atk)} 되받는다`], tell: '가시 갑옷 — 반장을 치고 못 쓰러뜨리면 가시가 친 기물에게 되돌아갑니다. 한 번에 몰아치십시오.' },
 };
-export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 6, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 3, alarmMult: 1.5 };
+/** 반장 규칙별 보정 (D-298): king = 킹 HP 배율 · atk = 그 판 적 공격 배율 — 기믹은 그대로 두고 벽이 된 반장만 덜어 낸다 */
+export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }>> = {
+  // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 되받아침은 그대로
+  spawn: { king: 0.8, atk: 0.7 },
+  thorns: { king: 0.7, atk: 0.7 },
+};
 
 /** 막별 적 특성 (R5-4): 2막 자폭 폰(쓰러지면 둘레 8) · 3막 방패 룩(대국 시작 방열판 15) */
 export const TRAIT = { blast: 8, rookPlate: 15, knightShoe: 10, bishopLens: 1.3, queenCrown: 1.3, pawnDrill: 1.3 };

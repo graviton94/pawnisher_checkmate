@@ -974,7 +974,7 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
 };
 
 /**
- * 내 공격 뒤 반응 (R5-4): 출하 반장의 되받아치기(반장을 친 내 기물에 6) · 자폭 폰(쓰러지면 둘레 내 기물에 8).
+ * 내 공격 뒤 반응 (R5-4): 출하 반장의 되받아치기(반장을 친 내 기물에 BOSS_NUM.thorns) · 자폭 폰(쓰러지면 둘레 내 기물에 8).
  * 미리보기에는 보이지 않는다 — 레일의 반장 규칙 · 대국 안내가 알려 준다.
  */
 const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[]): BattleEvent[] => {

@@ -1302,7 +1302,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, deck.filter(usable)) : deck.filter(usable), 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: asc >= 9 ? ASC_NUM.enemyAtk : 1, eliteOne: def.eliteOne });
+  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, deck.filter(usable)) : deck.filter(usable), 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: INTRO.includes(def) ? 0 : depthNow(), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);

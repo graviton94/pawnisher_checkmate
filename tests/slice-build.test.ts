@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { backlashOf, canPlay, liveIntents, cardMoves, cardPieces, chainMult, costOf, dangerSquares, endTurn, newSliceBattle, playCard, previewPlay, rewind, type SliceBattle } from '../src/slice/battle';
 import { BOSS, COMMANDS, PUSH, SLICE, START_COMMANDS, type CommandId } from '../src/slice/cards';
 import { playOut } from '../src/slice/bot';
-import type { SlicePartId } from '../src/slice/parts';
+import { PART_NUM, type SlicePartId } from '../src/slice/parts';
 
 const squad = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'P' as const }, { t: 'N' as const }, { t: 'B' as const }];
 const mk = (parts: SlicePartId[] = [], hand?: CommandId[]): SliceBattle => {
@@ -266,7 +266,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
     expect(k.maxHp).toBe(Math.round(100 * 0.8));
     const g = newSliceBattle([{ t: 'K' }, { t: 'P' }], ['K', 'P'], ['advance'], 3, { parts: ['greed'], gold: 250 });
-    expect(g.greedAdd).toBe(6);
+    expect(g.greedAdd).toBe(Math.floor(250 / PART_NUM.greedPer) * PART_NUM.greedAdd);
     const bp = mk(['bloodPact']);
     const kb = bp.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
     bp.intents = [];

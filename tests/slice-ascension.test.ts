@@ -187,7 +187,7 @@ describe('부품 확장 2차 (D-287)', () => {
     expect(f(b, 'R').maxHp).toBeGreaterThan(f(a, 'R').maxHp);
     expect(f(b, 'K').hp).toBeLessThan(f(a, 'K').hp);
     expect(b.noShock).toBe(true);
-    expect(b.hand.length).toBe(a.hand.length + 2);
+    expect(b.hand.length).toBe(a.hand.length + PART_NUM.stopwatch);
   });
   it('무거운 플라이휠: 남은 태엽 최대 2가 넘어간다', () => {
     const a = newSliceBattle(crewKR(), ['K', 'P'], START_COMMANDS, 3);
@@ -202,7 +202,7 @@ function crewKR() { return [{ t: 'K' as const }, { t: 'R' as const }, { t: 'B' a
 
 import { STARTER_CARDS, STARTER_PARTS, UNLOCK_ORDER, nextUnlocks, unlockCount } from '../src/data/unlocks';
 import { REWARD_COMMANDS as RC } from '../src/slice/cards';
-import { SLICE_PARTS as SP } from '../src/slice/parts';
+import { PART_NUM, SLICE_PARTS as SP } from '../src/slice/parts';
 
 describe('해금 (D-284)', () => {
   it('처음 풀 + 해금 순서 = 전체 풀, 겹침 없음', () => {
