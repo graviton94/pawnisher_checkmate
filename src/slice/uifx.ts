@@ -1,3 +1,4 @@
+import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
 import { arcFly } from './fx3';
 
@@ -30,7 +31,7 @@ let screwUrl = '';
 
 /** CSS 변수로 쓰는 도트 그림들 (철문 판재 · 경고 줄무늬 · 손잡이 · 나사) — 시작할 때 한 번 */
 export const installUiSprites = (): void => {
-  screwUrl = pixelSprite(['...KKK...', '.KKTTYKK.', '.KTTKYYK.', 'KTTYKYYAK', 'KTKKKKKAK', 'KYYYKYAAK', '.KYYKYAK.', '.KKAAAKK.', '...KKK...'], GOLDPAL, 2);
+  screwUrl = screwPng; // 받은 시트 I-12 나사 동전 16칸판 (D-303) — 가격표 · 나사 받기 연출이 같은 그림
   const root = document.documentElement.style;
   // 철문 판 (D-194: 사용자 "셔터가 너무 촘촘해" → 판 하나 40px, 리벳은 양끝에만)
   root.setProperty('--door', `url(${pixelSprite(['HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH', 'LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL', 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', 'BRrBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBRrB', 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS', 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', 'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK'], { H: '#6b6876', L: '#4a4854', B: '#3a3843', R: '#8a8794', r: '#1c1b22', S: '#2c2a33', D: '#1c1b22', K: '#0b0b0e' }, 4)})`);

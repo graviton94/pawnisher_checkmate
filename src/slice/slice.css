@@ -1030,9 +1030,9 @@ body.placebg .shop-grid .cmd b, body.placebg .shop-grid .part-card b { font-size
 body.placebg .panel .row .btn { white-space: normal; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 1.2; padding-left: 6px; padding-right: 6px; min-width: 0; flex: 1 1 0; }
 /* 고물상 값표 (사용자: "나사 25가 왼쪽에 딱 붙어 있다 — 여백 + 나사 그림"): 가운데 정렬 · 나사 아이콘 · 숫자 */
 body.slice .price { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 3px 8px; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-/* 화폐 나사 = 나사 받기 연출과 같은 둥근 황동 나사 머리 (uifx.ts --screw) */
-.scr { display: inline-block; width: 16px; height: 16px; background: var(--screw) 0 0 / 100% 100%; image-rendering: pixelated; flex: none; }
-.scr.big { width: 36px; height: 36px; }
+/* 화폐 나사 = 받은 시트 I-12 나사 동전 (D-303 — 16칸판 · 32칸판, 정수 배율로만) */
+.scr { display: inline-block; width: 16px; height: 16px; background: url('../assets/ui/kit/screw16.png') 0 0 / 100% 100%; image-rendering: pixelated; flex: none; }
+.scr.big { width: 32px; height: 32px; background-image: url('../assets/ui/kit/screw.png'); }
 body.slice .price.poor .scr { filter: grayscale(1) brightness(.8); }
 
 /* 합(+) · 곱(×) 표지 (D-205): 합 = 청록 사각, 곱 = 주황 사각 — 카드 · 부품 · 계기판 같은 색 */
@@ -1296,7 +1296,7 @@ body.slice .apbar .seg.wind img { animation: keyWind 420ms steps(4, end) both; a
 body.slice .coins { display: grid; grid-template-columns: 1fr auto; row-gap: 3px; align-items: center; }
 body.slice .coins .lbl { margin: 0; color: #f0c48a; font-size: 12px; font-family: Galmuri11, sans-serif; }
 body.slice .coins > b { display: inline-flex; align-items: center; gap: 3px; margin: 0; color: #f4d27a; font: 400 15px Galmuri14, Galmuri11, sans-serif; }
-body.slice .coins > b .scr { width: 14px; height: 14px; }
+body.slice .coins > b .scr { width: 16px; height: 16px; }
 body.slice .coins .tubes { grid-column: 1 / -1; display: flex; gap: 2px; padding: 3px 4px 0; background: #0b0b0e; box-shadow: inset 0 -2px 0 #000; }
 body.slice .coins .tube { flex: 1; height: 20px; min-width: 0; border-radius: 0; background: linear-gradient(#26232b, #26232b); box-shadow: 0 0 0 1px #000, inset 0 -3px 0 #121016; position: relative; }
 body.slice .coins .tube::after { content: ''; position: absolute; left: 35%; right: 35%; top: 30%; bottom: 22%; background: #4a4450; }
@@ -1378,10 +1378,10 @@ body.slice.lay-f .rail.left > #hand, body.slice.lay-f #right > .rmid { backgroun
 body.slice.lay-f .rail.left > .apbar, body.slice.lay-f #right > .gtop { background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/gauge.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; padding: 0 2px; }
 /* 태엽: 팔각 열쇠 구멍(14도트) 속 열쇠(16도트) — 쓰면 열쇠 띠가 90도씩 네 번 넘어가며 빈 열쇠로 (steps = 도트 그대로) */
 body.slice.lay-f .apbar .keys { gap: 2px; justify-content: space-between; align-items: center; background: url('../assets/ui/kit/manifold.png') 0 50% / 8px 16px repeat-x; image-rendering: pixelated; } /* 구멍을 잇는 황동 관 (2026-11-05) */
-body.slice.lay-f .apbar .seg { flex: 0 0 auto; width: 28px; height: 28px; background: url('../assets/ui/kit/socket.png') 0 0 / 28px 28px no-repeat; image-rendering: pixelated; clip-path: none; box-shadow: none; display: grid; place-items: center; animation: none; filter: none; }
+body.slice.lay-f .apbar .seg { flex: 0 0 auto; width: 32px; height: 32px; background: url('../assets/ui/kit/socket.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; clip-path: none; box-shadow: none; display: grid; place-items: center; animation: none; filter: none; }
 body.slice.lay-f .apbar .seg.on { background-image: url('../assets/ui/kit/socket-lit.png'); }
 body.slice.lay-f .apbar .seg.bonus.on { background-image: url('../assets/ui/kit/socket-bonus.png'); }
-body.slice.lay-f .apbar .seg .key { display: block; width: 32px; height: 32px; margin: -2px; background: url('../assets/ui/kit/key-spin.png') -128px 0 / 160px 32px no-repeat; image-rendering: pixelated; }
+body.slice.lay-f .apbar .seg .key { display: block; width: 32px; height: 32px; margin: 0; background: url('../assets/ui/kit/key-spin.png') -128px 0 / 160px 32px no-repeat; image-rendering: pixelated; }
 body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
 body.slice.lay-f .apbar .seg.bonus .key { background-image: url('../assets/ui/kit/key-spin-bonus.png'); }
 body.slice.lay-f .apbar .seg.spend .key { animation: keySpin 360ms steps(4, jump-none) both; }
@@ -1398,7 +1398,7 @@ body.slice.lay-f .gtop .coins .tube.dying { animation: tubeOut 900ms steps(1, en
 @keyframes tubeOut { 0% { background-position: 0 0; } 15% { background-position: -24px 0; } 30% { background-position: -48px 0; } 45% { background-position: -24px 0; } 60% { background-position: -36px 0; } 80%, 100% { background-position: -48px 0; } }
 /* 단추: 모두 같은 철 · 황동 도트 버튼 (덱 · 분대도) */
 body.slice.lay-f .deckrow .deck-btn { background: none; box-shadow: none; color: #ece6da; font: 700 12px Galmuri11, sans-serif; margin: 0; min-width: 0; }
-body.slice.lay-f #btn-rewind .ico-rew { display: block; width: 22px; height: 14px; background: url('../assets/ui/kit/ico-rewind.png') 0 0 / 22px 14px no-repeat; image-rendering: pixelated; }
+body.slice.lay-f #btn-rewind .ico-rew { display: block; width: 32px; height: 32px; background: url('../assets/ui/kit/ico-rewind.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
 body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 64px; width: 64px; }
 /* 도움말: 판 무대 오른쪽 위, 태엽 톱니 안의 ? */
 #board > .cog-help { position: absolute; top: 4px; right: 4px; z-index: 6; width: 48px; height: 48px; min-width: 0; min-height: 0; padding: 0; border: 0; border-image: none; background: none; display: grid; place-items: center; }
@@ -1538,7 +1538,7 @@ body.slice .cf.g-rare .cf-gem { background-image: url('../assets/ui/kit/gem-rare
 /* 고물상 가격표: 황동판 도트 · 끈 구멍 — 카드 아래에 매달린다 (보석은 왼쪽 아래로 비킨다) */
 body.slice .cf .ptag { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); z-index: 3; display: inline-flex; align-items: center; gap: 3px; margin: 0; padding: 0 6px 0 10px; height: 24px; box-sizing: border-box;
   border-style: solid; border-width: 8px; border-image: url('../assets/ui/kit/price-tag.png') 4 fill / 8px stretch; background: none; box-shadow: none; image-rendering: pixelated; color: #1a1408; font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap; }
-body.slice .cf .ptag .scr { width: 12px; height: 12px; margin: -4px 0; }
+body.slice .cf .ptag .scr { width: 16px; height: 16px; margin: -4px 0; }
 body.slice .cf .ptag.poor { border-image-source: url('../assets/ui/kit/price-tag-poor.png'); color: #5a0a10; }
 body.slice .cf .price.sold { position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); font: 700 12px/1 Galmuri11, sans-serif; color: #a8a1b1; background: #0b0b0e; padding: 3px 6px; box-shadow: 0 0 0 2px #2e2a35; }
 body.slice .shop-grid .cf.cf, body.slice .reward-cards .cf.cf, body.slice .part-cards .cf.cf { padding-bottom: 20px; }
@@ -1670,7 +1670,7 @@ body.slice .cf .cf-desc { flex: 1 1 auto; display: flex; flex-direction: column;
 body.slice .cf .cf-desc .dl { display: block; line-height: 15px; }
 body.slice .shop-grid .cf .cf-desc { max-height: 64px; }
 /* 합 · 곱 표지: 도트 판 (op-add / op-mul 12×12 → 24px) */
-body.slice .cf .op.op-add, body.slice .cf .op.op-mul { width: 24px; min-width: 24px; height: 24px; padding: 0; margin: 0 2px; font-size: 0; color: transparent; box-shadow: none; background: url('../assets/ui/kit/op-add.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.slice .cf .op.op-add, body.slice .cf .op.op-mul { width: 32px; min-width: 32px; height: 32px; padding: 0; margin: 0 2px; font-size: 0; color: transparent; box-shadow: none; background: url('../assets/ui/kit/op-add.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
 body.slice .cf .op.op-mul { background-image: url('../assets/ui/kit/op-mul.png'); }
 /* 고물상 2차 (2026-11-05): 설명 세로 가운데 · 카드 높이 · 도트 스크롤 막대 */
 body.slice .shop-grid .cf .cf-desc.cf-desc { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1 1 auto; max-height: none; line-height: 15px; }
@@ -1684,7 +1684,7 @@ body.slice .px-rail > i { position: absolute; left: -4px; right: -4px; top: -4px
 /* 고물상 3차 (2026-11-05): 가격은 카드 한가운데 · 나사는 숫자 왼쪽 · 성질 칩(+ × 기병…)은 가격 오른쪽에 매달림 */
 body.slice .cf .cf-foot { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); z-index: 3; display: block; height: 24px; }
 body.slice .cf .cf-foot .ptag, body.slice .cf .cf-foot .price.sold { position: relative; left: auto; bottom: auto; transform: none; display: inline-flex; justify-content: center; padding: 0 12px; min-width: 56px; }
-body.slice .cf .cf-foot .ptag .scr { position: absolute; left: 0; top: 50%; margin: -6px 0 0; }
+body.slice .cf .cf-foot .ptag .scr { position: absolute; left: -2px; top: 50%; margin: -8px 0 0; } /* 16칸 나사 (D-303) */
 body.slice .cf .cf-chips { position: absolute; left: calc(100% + 4px); top: 0; height: 24px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
 body.slice .cf .cf-chips .op.op-add, body.slice .cf .cf-chips .op.op-mul { margin: 0; }
 /* 축 칩: 글자를 칩 한가운데에 (격자로 가운데, 좌우 여백 같게) */
