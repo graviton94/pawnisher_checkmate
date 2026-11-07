@@ -82,6 +82,17 @@ def sheet_files(head):
     return ['ext:' + k for k, *_ in icon_sheets.SHEETS.get(m.group(1), ('', []))[1]]
 
 
+def where(f):
+    """받은 그림이 게임 안 어디에 있나"""
+    return f'tools/pixel/icons32_ext/{f[4:]}.png → public/ui/icons16/' if f.startswith('ext:') else f'public/scenes/{f}.png'
+
+
+def where_all(fs):
+    if fs and all(f.startswith('ext:') for f in fs):
+        return f'<code>tools/pixel/icons32_ext/</code> → <code>public/ui/icons16/</code> ({len(fs)}장: ' + ' · '.join(f[4:] for f in fs) + ')'
+    return ' · '.join(f'<code>{where(f)}</code>' for f in fs)
+
+
 def files_of(head):
     if re.match(r'I-\d+', head):
         return sheet_files(head)
@@ -187,12 +198,20 @@ def main(out_path):
             status = '다시 받기 (화풍)'
         cls = 'done' if status == '받음' else ''
         nav.append(f'<a href="#r{g["rank"]}" class="{cls}"><span>{g["rank"]}</span>{inline(g["head"].split("→")[0].split(" (")[0].strip())}</a>')
+        if cls == 'done':  # 다 받은 순위: 프롬프트는 지우고 완료 + 저장 위치만 (D-309)
+            head_html = '<p class="donepath">완료 — 저장 위치: ' + where_all(fs) + '</p>'
+            body.append(f'<article class="rank {cls}" id="r{g["rank"]}"><header><div class="num">{g["rank"]}<small>위</small></div>'
+                        f'<h2>{inline(g["head"])}</h2><span class="st">{status}</span></header>{head_html}</article>')
+            continue
         head_html, pid = render_blocks(g['sec']['blocks'], pid)
         items_html = []
         for it in g['items']:
-            ih, pid = render_blocks(it['blocks'], pid)
             f = files_of(it['head'])
             done_it = bool(f) and all(x in have for x in f)
+            if done_it:
+                items_html.append(f'<section class="item"><h3>{inline(it["head"])}<em class="got">완료</em></h3><p class="donepath">저장 위치: ' + ' · '.join(f'<code>{where(x)}</code>' for x in f) + '</p></section>')
+                continue
+            ih, pid = render_blocks(it['blocks'], pid)
             mark = '<em class="got">받음</em>' if done_it else ''
             ms = re.match(r'(I-\d+)', it['head'])
             if ms and not done_it:  # 아직 안 받은 아이콘 시트: 첨부할 그림을 상자 바로 위에
@@ -259,6 +278,7 @@ article.rank > header { display: grid; grid-template-columns: auto minmax(0, 1fr
 article.rank h2 { font: 700 17px/1.4 var(--body); margin: 0; text-wrap: balance; }
 .st { font: 500 12px/1 var(--mono); padding: 6px 8px; border: 2px solid var(--brass-dk); color: var(--brass); white-space: nowrap; }
 article.rank.done .st { border-color: var(--ok); color: var(--ok); }
+p.donepath { color: var(--dim); font-size: 13px; } p.donepath code { color: var(--ok); }
 .item { border-top: 2px dashed var(--line); padding-top: 12px; margin-top: 16px; }
 .item h3 { font: 700 15.5px/1.4 var(--body); margin: 0 0 6px; color: var(--paper); }
 em.got { font-style: normal; font: 500 11px/1 var(--mono); color: var(--ok); border: 1px solid var(--ok); padding: 3px 5px; margin-left: 8px; vertical-align: 2px; }
