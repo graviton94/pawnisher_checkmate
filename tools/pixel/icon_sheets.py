@@ -130,7 +130,19 @@ SHEETS = {
         ('c.recall', '회수', '쇠 갈고리 + 감긴 밧줄'),
         ('c.vent', '배기', '증기를 뿜는 쇠 밸브 바퀴'),
     ]),
-    'I-11': ('수읽기 · 정비 카드 (확장 때 빠진 것, D-295)', [
+    'I-12': ('전투 화면 자원 · 표시 (매 판 보이는 것, D-302 1순위)', [
+        ('hud.key.full', '태엽 열쇠 — 감긴 것', '나비 손잡이 황동 태엽 열쇠 (금빛, 반짝임) — 남은 태엽 한 칸. 손잡이가 위, 축이 아래로 곧게 선 정면'),
+        ('hud.key.spent', '태엽 열쇠 — 쓴 것', '같은 열쇠 모양이지만 빛을 잃은 검은 쇠 (회색, 반짝임 없음) — 써 버린 태엽 칸'),
+        ('hud.key.bonus', '태엽 열쇠 — 보너스', '같은 열쇠 모양, 청록 유리빛이 도는 황동 + 둘레에 작은 청록 반짝임 둘 — 이번 턴만 더 받은 태엽'),
+        ('hud.help', '도움말 톱니', '금빛 톱니바퀴 한가운데 검은 구멍에 물음표 모양 홈이 새겨져 있다 (홈은 검은 쇠, 톱니 이 8개)'),
+        ('hud.rewind', '되감기', '태엽 테이프가 감긴 작은 황동 릴 + 릴 옆에 뒤로 감기는 테이프 끝 (되돌리기 단추 그림)'),
+        ('hud.screw', '나사 (돈)', '쇠 육각 볼트 머리를 위에서 본 동전 모양 — 가운데 십자 홈, 테두리 황동 링 (게임의 돈 단위 「나사」)'),
+        ('hud.add', '합 배지 (+)', '청록 유리 사각 판에 흰 굵은 십자 — 더하기 수치 표시. 판 둘레 황동 테, 모서리 리벳 넷'),
+        ('hud.mul', '곱 배지 (×)', '주황 쇳물 사각 판에 흰 굵은 X — 곱하기 배율 표시. 판 둘레 황동 테, 모서리 리벳 넷'),
+        ('hud.socket', '빈 태엽 소켓', '태엽 열쇠를 꽂는 빈 구멍 — 두꺼운 검은 쇠 링, 가운데는 검은 빈 구멍, 링에 리벳 넷'),
+        ('hud.socket.lit', '불 켜진 소켓', '같은 쇠 링이 안쪽부터 주황 쇳물빛으로 달아올랐다 — 이번 턴 쓸 수 있는 칸 표시'),
+    ]),
+    'I-11': ('수읽기 · 정비 카드 (확장 때 빠진 것, D-295 · D-302 2순위)', [
         ('c.stepAside', '비켜서기', '길을 비켜 주는 흰 폰 — 옆으로 한 칸 물러서는 몸짓(뒤에 짧은 잔상 두 줄), 앞으로 열린 길에 금빛 줄'),
         ('c.checkCall', '체크!', '검은 킹 머리를 향해 겨눈 쇠 갈고리 사슬 — 사슬이 킹을 묶는다 (핀)'),
         ('c.oilCan', '기름칠', '작은 황동 기름병에서 떨어지는 황금빛 기름 방울 + 톱니 하나'),
@@ -155,6 +167,14 @@ PALETTE = [
     ('구리', ['#7A3B1C', '#C56A3A', '#F6B38A']),
 ]
 
+# 아이콘 칸이 아닌 그림의 지금 파일 (I-12 전투 자원 — refs가 이걸 첨부 그림에 쓴다)
+NOW_SRC = {
+    'hud.key.full': 'public/ui/hud/key-full.png', 'hud.key.spent': 'public/ui/hud/key-spent.png', 'hud.key.bonus': 'public/ui/hud/key-bonus.png',
+    'hud.help': 'src/assets/ui/kit/cog-help.png', 'hud.rewind': 'src/assets/ui/kit/ico-rewind.png', 'hud.screw': 'public/ui/props/ic32-bolt.png',
+    'hud.add': 'src/assets/ui/kit/op-add.png', 'hud.mul': 'src/assets/ui/kit/op-mul.png',
+    'hud.socket': 'src/assets/ui/kit/socket.png', 'hud.socket.lit': 'src/assets/ui/kit/socket-lit.png',
+}
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 
@@ -163,10 +183,13 @@ def prompt(sid):
     title, items = SHEETS[sid]
     pal = '\n'.join(f'  - {n}: {" · ".join(c)}' for n, c in PALETTE)
     cells = '\n'.join(f'{i + 1}. {name} — {what}' for i, (k, name, what) in enumerate(items))
-    return f"""게임 아이템 픽셀 아트 아이콘 10개를 한 장의 시트로 그려 줘. 묶음: {title}.
+    n, rows = len(items), (len(items) + 4) // 5
+    no_text = ('- 글자 · 숫자 · 화살표 기호 금지. (이 시트만: 4번 톱니의 물음표 홈 · 7번의 흰 십자 · 8번의 흰 X는 그림의 일부로 그린다.)'
+               if sid == 'I-12' else '- 글자 · 숫자 · 화살표 기호 · 물음표 금지.')
+    return f"""게임 아이템 픽셀 아트 아이콘 {n}개를 한 장의 시트로 그려 줘. 묶음: {title}.
 
 [시트 — 반드시 지킬 것]
-- 전체 1600×640 픽셀. 가로 5칸 × 세로 2칸, 칸 하나는 320×320.
+- 전체 1600×{320 * rows} 픽셀. 가로 5칸 × 세로 {rows}칸, 칸 하나는 320×320.
 - 칸마다 32×32 도트 격자. 도트 하나 = 10×10 픽셀의 꽉 찬 정사각형 한 색. 도트 경계는 칸 격자에 정확히 맞춘다 (반 도트 · 기울어진 도트 없음).
 - 바탕은 모든 칸 단색 마젠타 #FF00FF (오려 내는 색). 바탕에 무늬 · 그림자 · 바닥 금지. 칸 사이 선 · 여백 · 번호 · 글자 없음.
 - 그라데이션 · 안티앨리어싱 · 흐림 · 광택 · 반투명 금지. 한 도트 = 한 색.
@@ -179,10 +202,10 @@ def prompt(sid):
 {pal}
 - 긴 물건(무기 · 도구 · 막대)은 왼쪽 아래 → 오른쪽 위 45도 대각선.
 - 세계: 태엽으로 움직이는 체스 기물들의 스팀펑크 공장 — 황동 · 쇠 · 나무 · 가죽 · 쇳물. 기물이 나오면 체스 기물 모양 그대로, 얼굴 없음.
-- 글자 · 숫자 · 화살표 기호 · 물음표 금지.
+{no_text}
 - 세부: 32칸이니 이음매 · 못 머리 · 나뭇결 같은 세부를 넣되, 한 도트짜리 점이 흩뿌려지지 않게 재질 덩어리는 크게. 명암 사이에 체크무늬 디더를 조금 써도 된다.
-- 기준: 32×32 그대로(1배) 봐도 무엇인지 한눈에 읽혀야 한다. 첨부한 그림은 지금 게임에 들어간 같은 10장(16칸을 2배로 키운 것)이다 — 화풍(바깥선 · 3단 명암 · 채도)은 맞추고, 모양은 더 또렷하고 정교하게 32칸으로 새로 그린다.
-- 같은 시트 안 10개는 실루엣이 서로 달라야 한다.
+- 기준: 32×32 그대로(1배) 봐도 무엇인지 한눈에 읽혀야 한다. 첨부한 그림은 지금 게임에 들어간 같은 10장이다 — 무엇을 그릴지만 참고하고, 모양은 더 또렷하고 정교하게 32칸으로 새로 그린다. (화풍 기준 그림이 함께 붙어 있으면 그 그림의 바깥선 · 명암 · 채도 · 재질 표현을 그대로 따른다.)
+- 같은 시트 안 {n}개는 실루엣이 서로 달라야 한다.
 
 [칸 순서 — 왼쪽 위부터 가로로]
 {cells}
@@ -197,7 +220,7 @@ def doc():
     head = '## 12위 · '
     if head in t:
         t = t[: t.index(head)].rstrip('\n').rstrip('-').rstrip('\n') + '\n'
-    out = ['', '---', '', '## 12위 · 아이콘 시트 I-01 ~ I-10 (32×32 × 10장씩, 100장 전부) — D-289 · D-290',
+    out = ['', '---', '', '## 12위 · 아이콘 시트 I-01 ~ I-12 (32×32 × 10장씩) — D-289 · D-290 · D-302 (I-01 ~ I-10 받음 · I-12 전투 자원 1순위 · I-11 카드 5장 2순위)',
            '모든 16칸 아이콘(부품 70 · 부적 3 · 지도 노드 7 · 서비스 4 · 기물 없는 카드 16)을 **모양이 비슷한 것끼리** 10장씩 묶었다 — 같은 시트 안에서 생성기가 같은 구도 · 같은 크기 감각을 쓰게.',
            '첨부: `build-res/order/I-0N-now.png` (그 시트의 지금 그림 10장, 8배 — 화풍 기준). 상자를 통째로 붙여 넣는다. 정본 표: `tools/pixel/icon_sheets.py`.',
            '받은 시트 넣기: `python3 -I tools/pixel/icon_sheet_import.py <받은 그림> I-0N` → 칸마다 32×32로 다시 도트화 · 우리 팔레트로 맞춤 · 바깥선 → `public/ui/icons16/<키>.png` + 확인용 `build-res/order/I-0N-check.png`(지금 · 받은 것 나란히).',
@@ -205,7 +228,9 @@ def doc():
     for sid, (title, items) in SHEETS.items():
         out.append(f'| {sid} | {title} | {" · ".join(n for k, n, w in items)} |')
     for sid in SHEETS:
-        out += ['', f'## {sid} · {SHEETS[sid][0]}  →  `public/ui/icons16/` 10장', f'첨부: `build-res/order/{sid}-now.png`', '', '```', prompt(sid), '```']
+        n = len(SHEETS[sid][1])
+        att = f'첨부: `build-res/order/{sid}-now.png`' + ('' if sid <= 'I-10' else ' + 화풍 기준 `build-res/order/I-05-received.png` (받은 시트 — 이 그림의 바깥선 · 명암 · 재질을 따른다)')
+        out += ['', f'## {sid} · {SHEETS[sid][0]}  →  `public/ui/icons16/` {n}장', att, '', '```', prompt(sid), '```']
     open(p, 'w', encoding='utf-8').write(t + '\n'.join(out) + '\n')
     print('doc ok')
 
@@ -215,18 +240,20 @@ def refs():
     from PIL import Image
     out = os.path.join(ROOT, 'build-res', 'order')
     for sid, (title, items) in SHEETS.items():
-        im = Image.new('RGBA', (1600, 640), (255, 0, 255, 255))
+        im = Image.new('RGBA', (1600, 320 * ((len(items) + 4) // 5)), (255, 0, 255, 255))
         for i, (k, n, w) in enumerate(items):
-            f = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')
+            f = os.path.join(ROOT, NOW_SRC.get(k, os.path.join('public', 'ui', 'icons16', f'{k}.png')))
             if not os.path.exists(f):
                 continue
-            ic = Image.open(f).convert('RGBA').resize((16, 16), Image.NEAREST).resize((320, 320), Image.NEAREST)
-            im.paste(ic, ((i % 5) * 320, (i // 5) * 320), ic)
+            ic = Image.open(f).convert('RGBA')
+            s = max(1, 256 // max(ic.width, ic.height))
+            ic = ic.resize((ic.width * s, ic.height * s), Image.NEAREST)
+            im.paste(ic, ((i % 5) * 320 + (320 - ic.width) // 2, (i // 5) * 320 + (320 - ic.height) // 2), ic)
         im.convert('RGB').save(os.path.join(out, f'{sid}-now.png'))
     print('refs ok', len(SHEETS))
 
 
 if __name__ == '__main__':
     keys = [k for _, (t, it) in SHEETS.items() for k, n, w in it]
-    assert len(keys) == len(set(keys)) == 105, (len(keys), len(set(keys)))
+    assert len(keys) == len(set(keys)) == 115, (len(keys), len(set(keys)))
     {'doc': doc, 'refs': refs}[sys.argv[1]]()

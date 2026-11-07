@@ -118,7 +118,8 @@ def main(src, sid, dry=False):
     chk = Image.new('RGB', (5 * 2 * 136, 2 * 136), (24, 23, 30))
     for i, (k, name, _) in enumerate(items):
         cx, cy = i % 5, i // 5
-        cell = sheet.crop((round(W * cx / 5), round(H * cy / 2), round(W * (cx + 1) / 5), round(H * (cy + 1) / 2)))
+        rows = (len(items) + 4) // 5  # 5장짜리 시트는 한 줄 (I-11)
+        cell = sheet.crop((round(W * cx / 5), round(H * cy / rows), round(W * (cx + 1) / 5), round(H * (cy + 1) / rows)))
         icn = cell16(cell)
         game = thicken(centered(icn))
         f = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')

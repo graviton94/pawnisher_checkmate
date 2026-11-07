@@ -187,7 +187,14 @@ def main(out_path):
         for it in g['items']:
             ih, pid = render_blocks(it['blocks'], pid)
             f = files_of(it['head'])
-            mark = '<em class="got">받음</em>' if f and all(x in have for x in f) else ''
+            done_it = bool(f) and all(x in have for x in f)
+            mark = '<em class="got">받음</em>' if done_it else ''
+            ms = re.match(r'(I-\d+)', it['head'])
+            if ms and not done_it:  # 아직 안 받은 아이콘 시트: 첨부할 그림을 상자 바로 위에
+                figs = [(f'build-res/order/{ms.group(1)}-now.png', '지금 그림 (무엇을 그릴지)')]
+                if ms.group(1) > 'I-10':
+                    figs.append(('build-res/order/I-05-received.png', '화풍 기준 (받은 시트)'))
+                ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 800)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
             items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
         body.append(
             f'<article class="rank {cls}" id="r{g["rank"]}"><header><div class="num">{g["rank"]}<small>위</small></div>'
@@ -232,7 +239,7 @@ nav.side a span { font: 400 18px/1 var(--display); color: var(--brass); text-ali
 nav.side a:hover, nav.side a:focus-visible { background: var(--plate); border-left-color: var(--brass); outline: none; }
 nav.side a.done { color: var(--dim); } nav.side a.done span { color: var(--ok); }
 section.att h2, .intro h2 { font: 400 22px/1.2 var(--display); margin: 0 0 12px; }
-.att .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 30px; }
+.att .figs, .item .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 30px; }
 figure { margin: 0; background: var(--plate); border: 2px solid var(--line); padding: 10px; }
 figure img { display: block; width: 100%; height: 180px; object-fit: contain; image-rendering: pixelated; background: #0b0b0e; }
 figcaption { font-size: 13px; color: var(--dim); margin-top: 8px; } figcaption b { color: var(--brass); }
