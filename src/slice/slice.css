@@ -2469,3 +2469,18 @@ body[data-place="bg-reward"] .overlay { justify-content: center; padding-right: 
 body[data-place="bg-reward"] .overlay .panel { max-width: min(80vw, 720px); }
 /* 나사 + 글자 (테스터: 너무 흐리다) */
 .panel h2 .dim { color: #f4d27a; }
+
+/* D-319 사건: 얻는 것 · 잃는 것 색 · 용어 풀이 · 창 높이 고정 (테스터: 들썩거림) */
+.ev-choice .ev-desc .ev-good { color: #8ee8ea; }
+.ev-choice .ev-desc .ev-bad { color: #ff8a80; }
+.ev-choice .ev-desc .ev-mid { color: #d9cfbd; }
+.ev-choice .ev-dot { font-style: normal; color: #6f6770; }
+.ev-choice .ev-terms { display: block; margin-top: 2px; color: #a89f92; font: 12px Galmuri11, sans-serif; }
+.ev-choice .ev-terms b { color: #f4d27a; font-weight: 700; margin-right: 4px; }
+.ev-choice .ev-term + .ev-term::before { content: ' / '; color: #6f6770; }
+.ev-stage .ev-log { min-height: 128px; align-content: end; }
+.ev-stage .ev-body { grid-template-rows: auto 128px 1fr auto; align-content: start; min-height: 330px; }
+.ev-stage .ev-choice .ev-again { display: block; visibility: hidden; animation: none; }
+.ev-stage .ev-choice.chosen .ev-again { visibility: visible; color: #2b1a06; }
+.ev-stage .ev-choice.chosen .ev-desc span, .ev-stage .ev-choice.chosen .ev-terms { color: #2b1a06; }
+body.slice .panel:has(.ev-stage) { height: min(392px, 95vh); }

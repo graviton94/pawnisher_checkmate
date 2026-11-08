@@ -1617,6 +1617,17 @@ const EV_RECENT = 7;
  * → ③ 그 사건만의 장치가 그림 위에서 돈다 (evstage.ts — 동전 · 뽑기 바퀴 · 망치 · 담금질 …, 누르면 손맛) → ④ 결과 서술 + NPC 마무리
  * → ⑤ 사건마다 다른 나가기 버튼 (「동전 소리를 등진다」). 결과는 엔진이 먼저 정한다 — 화면은 보여 주기만 (UI 원칙 9).
  */
+/**
+ * 사건 선택지 설명 (테스터: 「문턱 +1이 뭔지도 모르는데」 · 「이 선택이 값어치가 있나 모르겠다」):
+ * ' · '로 나뉜 조각마다 얻는 것(청록) · 잃는 것(붉은)을 칠하고, 안에 든 용어는 아래에 한 줄 풀이를 붙인다.
+ */
+const evDesc = (desc: string): string => {
+  const bad = /−|-\d|깨진다|잃|녹슨|빠진다|쓰러/;
+  const good = /\+|되살|회복|얻/;
+  const parts = desc.split(' · ').map((t) => `<span class="${bad.test(t) ? 'ev-bad' : good.test(t) ? 'ev-good' : 'ev-mid'}">${t}</span>`).join('<i class="ev-dot"> · </i>');
+  const terms = KEYWORDS.filter(([name]) => name.length >= 2 && !/[+×]/.test(name) && desc.includes(name)).map(([name, text]) => `<span class="ev-term"><b>${name}</b> ${text.replace(/\n/g, ' ')}</span>`);
+  return `<small class="ev-desc">${parts}</small>${terms.length ? `<small class="ev-terms">${terms.join('')}</small>` : ''}`;
+};
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const talk: EventTalk = EVENT_TALK[id] ?? { npc: ev.title, react: [], idle: [], win: '', bye: '', exit: '떠난다' };
@@ -1626,7 +1637,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const el = openOverlay(`<div class="ev-wrap ev-stage"><div class="ev-scene"><img src="scenes/${id}.png" alt=""><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><div class="ev-log" aria-live="polite"></div><div class="ev-choices" hidden>${ev.choices
     .map((c, k) => {
       const why = c.blocked?.(st()) ?? null;
-      return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? `<small>${c.desc}</small>` : ''}${why ? `<em>${why}</em>` : ''}<i class="ev-again">한 번 더 누르면 정한다</i></button>`;
+      return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? evDesc(c.desc) : ''}${why ? `<em>${why}</em>` : ''}<i class="ev-again">한 번 더 누르면 정한다</i></button>`;
     })
     .join('')}</div><div class="ev-exit" hidden></div><p class="dim ev-purse">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
   const scene = el.querySelector<HTMLElement>('.ev-scene')!;
@@ -1636,13 +1647,18 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const choicesEl = el.querySelector<HTMLElement>('.ev-choices')!;
   const exitEl = el.querySelector<HTMLElement>('.ev-exit')!;
   const alive = () => logEl.isConnected;
-  /** 대화 한 줄: 서술(2인칭) · NPC(이름 + 말) — 세 줄까지만 남는다 */
-  const say = async (kind: 'narr' | 'npc' | 'sum', text: string, who?: string): Promise<void> => {
+  /**
+   * 대화 한 줄: 서술(2인칭) · NPC(이름 + 말) — 세 줄까지만 남는다.
+   * slot = 같은 자리를 다시 쓰는 줄 (테스터: 고를 때마다 아래로 줄이 늘어 창이 들썩였다 — 고른 단추가 바뀌면 그 줄에서 새로 찍힌다)
+   */
+  const say = async (kind: 'narr' | 'npc' | 'sum', text: string, who?: string, slot?: string): Promise<void> => {
     if (!text || !alive()) return;
-    const line = document.createElement('p');
+    const old = slot ? logEl.querySelector<HTMLElement>(`[data-slot="${slot}"]`) : null;
+    const line = old ?? document.createElement('p');
     line.className = `ev-line ${kind}`;
+    if (slot) line.dataset.slot = slot;
     line.innerHTML = kind === 'npc' ? `<b>${who ?? talk.npc}</b><span></span>` : kind === 'sum' ? '<b>결과</b><span></span>' : '<span></span>';
-    logEl.appendChild(line);
+    if (!old) logEl.appendChild(line);
     while (logEl.children.length > 3) logEl.firstElementChild!.remove();
     logEl.querySelectorAll('.ev-line').forEach((x, i, all) => x.classList.toggle('old', i < all.length - 1));
     replay(line, 'in');
@@ -1658,7 +1674,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     if (!alive()) return window.clearInterval(idle);
     if (busy || performance.now() - lastAct < 7000 || idleN >= talk.idle.length) return;
     lastAct = performance.now();
-    void say('npc', talk.idle[idleN++]);
+    void say('npc', talk.idle[idleN++], undefined, 'react');
   }, 1000);
   const m = ev.text.match(/^(.*?)\s*(“[^”]+”)(.*)$/);
   const narr = m ? (m[1] + (m[3] ? ` ${m[3].trim()}` : '')).trim() : ev.text;
@@ -1689,7 +1705,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         picked = k;
         choicesEl.querySelectorAll('.ev-choice').forEach((x) => x.classList.toggle('chosen', x === btn));
         sfx('lift');
-        void say('npc', talk.react[k] ?? talk.react[talk.react.length - 1] ?? '');
+        void say('npc', talk.react[k] ?? talk.react[talk.react.length - 1] ?? '', undefined, 'react');
         return;
       }
       // 두 번째 탭: 정한다
