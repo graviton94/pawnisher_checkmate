@@ -43,7 +43,7 @@ export class BoardFx {
       Object.assign(this.fx.canvas.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: '5' });
       this.host.appendChild(this.fx.canvas);
     }
-    this.ps = new Particles(this.R, () => Infinity, rule === 'gilded' ? [hex('#fffbe0'), hex('#f4c84a'), hex('#9a6a14')] : rule === 'spawn' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : rule === 'thorns' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
+    this.ps = new Particles(this.R, () => Infinity, rule === 'gilded' ? [hex('#fffbe0'), hex('#f4c84a'), hex('#9a6a14')] : rule === 'spawn' ? [hex('#efffdc'), hex('#7fd45a'), hex('#3e8c3a')] : rule === 'thorns' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
     this.start();
   }
   private running = false;
@@ -118,13 +118,13 @@ export class BoardFx {
       // 아래 가장자리가 달아오른다 (빛만, 칸은 덮지 않는다)
       for (let x = B.x0; x < B.x1; x += 6) p.glow(x, B.y1 + 2, 10, PAL.fire[4], 0.1 + 0.04 * Math.sin(this.t * 3 + x));
     } else if (this.rule === 'spawn') {
-      // 3.6초마다 청록 줄이 판을 위에서 아래로 훑는다 (4도트 계단)
+      // 3.6초마다 초록 줄이 판을 위에서 아래로 훑는다 (4도트 계단, D-347)
       const ph = (this.t % 3.6) / 1.2;
       if (ph < 1) {
         const y = B.y0 + Math.floor((ph * (B.y1 - B.y0)) / 2) * 2;
-        p.line(B.x0, y, B.x1, y, PAL.teal[6], 0.8);
-        for (let x = B.x0; x < B.x1; x++) if (bayer(Math.floor(x), Math.floor(y) + 1) < 0.35) p.px(x, y + 1, PAL.teal[4]);
-        p.glowLine(B.x0, y, B.x1, y, 4, PAL.teal[5], 0.35);
+        p.line(B.x0, y, B.x1, y, PAL.toxic[6], 0.8);
+        for (let x = B.x0; x < B.x1; x++) if (bayer(Math.floor(x), Math.floor(y) + 1) < 0.35) p.px(x, y + 1, PAL.toxic[4]);
+        p.glowLine(B.x0, y, B.x1, y, 4, PAL.toxic[5], 0.35);
       }
     } else if (this.rule === 'alarm') {
       // 경고등 박자: 1.2초마다 판 테두리가 두 번 붉게 깜빡인다 (계단 — 켜짐/꺼짐만)
@@ -183,8 +183,9 @@ export class BoardFx {
     const c = this.dot(at), td = this.tileDots();
     for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; this.ps.spawn(P.DUST, c.x + Math.cos(a) * 3, c.y + td / 3, Math.cos(a) * 80, Math.sin(a) * 26 - 6, 0.8, PAL.smoke[5], 4.5); }
     this.ps.burst(c.x, c.y, 22, [80, 220], P.SPARK, [0.25, 0.6], WHITE, 50);
-    for (let i = 0; i < 8; i++) this.ps.spawn(P.STAR, c.x + this.R.range(-td / 2, td / 2), c.y + this.R.range(-td / 2, td / 3), 0, 0, this.R.range(0.4, 0.8), PAL.teal[6], this.R.range(1.2, 2.4), this.R.range(0, 0.2));
-    this.lights.add(c.x, c.y, td, PAL.teal[5], 0.9, 0.5);
+    const tone = this.rule === 'spawn' ? PAL.toxic : PAL.teal;
+    for (let i = 0; i < 8; i++) this.ps.spawn(P.STAR, c.x + this.R.range(-td / 2, td / 2), c.y + this.R.range(-td / 2, td / 3), 0, 0, this.R.range(0.4, 0.8), tone[6], this.R.range(1.2, 2.4), this.R.range(0, 0.2));
+    this.lights.add(c.x, c.y, td, tone[5], 0.9, 0.5);
     this.flash = 0.05;
   }
 }

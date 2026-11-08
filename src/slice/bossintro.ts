@@ -22,7 +22,7 @@ export interface BossIntroOpts {
 
 const LOOK: Record<BossKey, { accent: string; seam: number }> = {
   plate: { accent: '#ff8a2a', seam: 0 },
-  spawn: { accent: '#5fd4d8', seam: 0 },
+  spawn: { accent: '#7fd45a', seam: 0 },
   thorns: { accent: '#e8e4ec', seam: 0 },
   gilded: { accent: '#f4c84a', seam: 0 },
   inspect: { accent: '#9ee8f0', seam: 0 },
@@ -63,7 +63,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     const fx = new FxCanvas(Math.ceil(W / 3), Math.ceil(H / 3), 3);
     el.querySelector('.bf-fx')!.appendChild(fx.canvas);
     const R = new Rng(o.rule.length * 31 + 7);
-    const ps = new Particles(R, () => Infinity, o.rule === 'spawn' || o.rule === 'inspect' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'magnet' ? [hex('#f2d4ff'), hex('#d08af0'), hex('#7e34a0')] : o.rule === 'thorns' ? [hex('#ffffff'), hex('#e8e4ec'), hex('#8a8794')] : o.rule === 'alarm' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
+    const ps = new Particles(R, () => Infinity, o.rule === 'spawn' ? [hex('#efffdc'), hex('#7fd45a'), hex('#3e8c3a')] : o.rule === 'inspect' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'magnet' ? [hex('#f2d4ff'), hex('#d08af0'), hex('#7e34a0')] : o.rule === 'thorns' ? [hex('#ffffff'), hex('#e8e4ec'), hex('#8a8794')] : o.rule === 'alarm' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
     const lights = new Lights();
     const barH = Math.round(H * 0.16);
     // 초상: 화면 높이를 덮는 정수배, 오른쪽 끝에 붙인다
@@ -160,9 +160,9 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
             if (R.chance(0.55)) ps.spawn(P.FIRE, x, y, R.range(-8, 6), R.range(-30, -10), R.range(0.3, 0.6), 0, R.range(1.2, 2.6), 0, R.chance(0.25));
             else ps.spawn(P.EMBER, x, y, R.range(-30, 10), R.range(-50, -10), R.range(0.8, 1.6), WHITE, R.range(1, 2));
           } else if (o.rule === 'spawn') {
-            // 청록 전기: 경계선 위로 짧은 줄기(MOTE)가 튀고, 별이 반짝인다
-            if (R.chance(0.7)) ps.spawn(P.MOTE, x, y, R.range(-90, -30), R.range(-20, 20), R.range(0.2, 0.45), PAL.teal[5], R.range(0.6, 1.2));
-            else ps.spawn(P.STAR, x, y, 0, 0, R.range(0.4, 0.8), PAL.teal[6], R.range(0.6, 1.8));
+            // 초록 전기 (D-347): 경계선 위로 짧은 줄기(MOTE)가 튀고, 별이 반짝인다
+            if (R.chance(0.7)) ps.spawn(P.MOTE, x, y, R.range(-90, -30), R.range(-20, 20), R.range(0.2, 0.45), PAL.toxic[5], R.range(0.6, 1.2));
+            else ps.spawn(P.STAR, x, y, 0, 0, R.range(0.4, 0.8), PAL.toxic[6], R.range(0.6, 1.8));
           } else {
             // 가시: 붉은 쇳조각이 떨어지고, 흰 역광 먼지가 떠오른다
             if (R.chance(0.35)) ps.spawn(P.SHARD, x, y, R.range(-50, -5), R.range(-30, 10), R.range(0.6, 1.2), R.chance(0.5) ? PAL.blood[5] : PAL.blood[3], R.range(1, 2));
@@ -184,7 +184,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
             let y = seamY0, x = sx;
             const r2 = new Rng(f + 3);
             p.fade = 1;
-            while (y < seamY1) { const ny = y + r2.range(3, 7), nx = sx + r2.range(-4, 4); p.line(x, y, nx, ny, r2.chance(0.3) ? WHITE : PAL.teal[6]); p.glow(nx, ny, 4, PAL.teal[5], 0.25); x = nx; y = ny; }
+            while (y < seamY1) { const ny = y + r2.range(3, 7), nx = sx + r2.range(-4, 4); p.line(x, y, nx, ny, r2.chance(0.3) ? WHITE : PAL.toxic[6]); p.glow(nx, ny, 4, PAL.toxic[5], 0.25); x = nx; y = ny; }
           }
         }
         ps.draw(p, 'back');
