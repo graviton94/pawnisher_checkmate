@@ -24,7 +24,7 @@ ATTACH = [
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = set()
+REDO: set[str] = {"boss-fall-inspect"}  # D-344: 검수 1차는 철갑과 같은 구도라 임시로만
 
 
 def data_uri(path, width):
@@ -223,8 +223,10 @@ def main(out_path):
             if mb and not done_it:  # 반장 격파 컷: 그 반장 초상(④)을 상자 바로 위에 — 「같은 카메라로 무너진 뒤」의 기준
                 port = re.search(r'public/scenes/(boss-[a-z]+)\.png', '\n'.join(b[1] if isinstance(b[1], str) else '' for b in it['blocks']))
                 figs = [(f'public/scenes/{port.group(1)}.png', '④ 이 반장의 초상 — 같은 몸 · 같은 빛')] if port else []
+                if mb.group(0) == 'BF-02' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-02-boss-fall-inspect-source.png')):
+                    figs.append(('build-res/order/BF-02-boss-fall-inspect-source.png', '1차 — 화풍은 좋다. 다시: 철갑과 같은 구도 → 렌즈 클로즈업으로'))
                 if mb.group(0) != 'BF-01' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-boss-fall-plate-source.png')):
-                    figs.append(('build-res/order/BF-01-boss-fall-plate-source.png', '⑥ 정답 예시 — 완성된 철갑 격파 컷 (같은 구도 · 빛줄기 · 화풍, 반장만 바꾼다)'))
+                    figs.append(('build-res/order/BF-01-boss-fall-plate-source.png', '⑥ 화풍 정답 — 완성된 철갑 격파 컷 (화풍 · 빛 · 극적인 정도만. 구도는 따라 하지 않는다)'))
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
             items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
         body.append(
