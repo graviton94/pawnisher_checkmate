@@ -2601,3 +2601,10 @@ body.slice .cf .sty-guard { background: #46c4c8; } body.slice .cf .sty-strike { 
 body.slice .cf .t3-fx { min-width: 20px; color: #0b0b0e; }
 body.slice .cf .fx-add { background: #2dd4bf; } body.slice .cf .fx-mul { background: #ec6a1a; color: #fff6d8; } body.slice .cf .fx-rule { background: #41434f; color: #e8e0cc; }
 body.slice .cf .sty-tempo { background: #f4d27a; }
+
+/* D-327 덱 한 줄 (그림을 가리지 않는다) */
+body.slice .cf .fit-line { display: block; margin-top: -1px; font: 12px/14px Galmuri11, sans-serif; color: #a89f92; white-space: nowrap; }
+body.slice .cf .fit-line b { font-weight: 700; color: #f4d27a; }
+body.slice .cf .fit-line.good b { color: #8ee8ea; }
+body.slice .cf .fit-line.bad { color: #ff8a80; font-weight: 700; }
+body.slice .cf small.fit-line > b { display: inline; font: 700 12px/14px Galmuri11, sans-serif; margin: 0; padding: 0; }

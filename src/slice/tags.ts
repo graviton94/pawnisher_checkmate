@@ -2,7 +2,7 @@
  * 카드 · 부품 세 갈래 태그 (D-325, 사용자: 「누가 쓰는지 · 어떤 수인지 · 합이냐 곱이냐 — 모든 카드 · 유물에 같은 세 칸」).
  *   누가  = 폰 · 나이트 · 비숍 · 룩 · 퀸 · 킹 · 공용
  *   어떤  = 연쇄(처치를 이어 간다) · 밀치기(밀어 부딪친다) · 수읽기(핀 · 포크 · 체크 같은 체스 수) · 방어(막고 고친다) · 돌격(한 방 치고 들어간다) · 운영(태엽 · 카드 · 나사를 불린다)
- *   효과  = 합(+ 공격에 더한다) · 곱(× 배율) · 규칙(태엽 · 카드 · 이동처럼 수치 밖을 바꾼다)
+ *   효과  = 합(+ 공격에 더한다) · 곱(× 배율) · 그 밖은 하는 일 한 낱말(태엽 · 카드 · 방열 · 회복 · 핀 · 증원 · 충돌 · 이동 …) — D-327: 「규칙」이 154장 중 92장이라 정보가 없었다
  * 예전 「축」(기병 · 보병 · 왕관 · 연쇄 · 밀치기 · 수읽기)은 맞물림 계산에만 남고, 화면에는 이 세 칸만 보인다.
  * 기병 · 보병 · 왕관 축은 「누가」(나이트 · 폰 · 킹)로 옮겨 간다.
  */
@@ -35,17 +35,27 @@ const styleFromText = (t: string): Style =>
 /** 글에서 합 · 곱을 읽는다 (수치 필드에 없는 배율 — 포크 · 핀 · 디스커버드 ×1.5 같은 것) */
 const effectFromText = (t: string): Effect => (/×\s?\d/.test(t) ? '×' : /\(\+\d|공격 \+\d|피해 \+\d/.test(t) ? '+' : 'rule');
 
+/** 합 · 곱이 아닐 때 하는 일 한 낱말 (D-327) */
+const wordFromText = (t: string): string =>
+  /핀|묶/.test(t) ? '핀' : /포크/.test(t) ? '포크' : /체크/.test(t) ? '체크' : /캐슬링|자리를 바꾼/.test(t) ? '교대'
+  : /곁에 폰|폰 \+1|보충/.test(t) ? '증원' : /밀|충돌|부딪/.test(t) ? '충돌' : /방열판/.test(t) ? '방열' : /HP|땜질|회복|고친/.test(t) ? '회복'
+  : /손패|카드 \+|카드를/.test(t) ? '카드' : /태엽/.test(t) ? '태엽' : /나사|값/.test(t) ? '나사' : /되감기/.test(t) ? '되감기' : /쇼크/.test(t) ? '면역'
+  : /연쇄/.test(t) ? '연쇄' : /전진|진격|앞으로/.test(t) ? '진격' : '이동';
+const KIND_WORD: Record<string, string> = { shield: '방열', repair: '회복', draw: '카드', spark: '점화', spend: '방출', draft: '증원', swap: '교대', march: '진격', gambit: '제물' };
+
 /** 카드의 세 칸 */
-export const cardTags = (id: CommandId): { who: Who; style: Style; effect: Effect } => {
+export const cardTags = (id: CommandId): { who: Who; style: Style; effect: Effect; word: string } => {
   const c = COMMANDS[id];
   const ax = [c.axis, c.axis2].find((a) => a && AXIS_STYLE[a]);
   const style: Style = ax ? AXIS_STYLE[ax]! : c.rage ? 'strike' : c.kind === 'shield' || c.kind === 'repair' || c.kind === 'draft' ? 'guard' : c.kind === 'spark' || c.kind === 'spend' ? 'chain' : c.kind === 'draw' ? 'tempo' : styleFromText(c.desc ?? '');
   const effect: Effect = c.add ? '+' : c.mult || c.multPerKill || c.rage ? '×' : effectFromText(c.desc ?? '');
-  return { who: c.who as Who, style, effect };
+  const w = effect === 'rule' ? KIND_WORD[c.kind] ?? wordFromText(c.desc ?? '') : '';
+  // 「어떤」과 같은 낱말이면 겹치지 않게 (연쇄 · 연쇄 → 연쇄 · 증폭)
+  return { who: c.who as Who, style, effect, word: w === STYLE_NAMES[style] ? '증폭' : w };
 };
 
 /** 부품의 세 칸 */
-export const partTags = (id: SlicePartId): { who: Who; style: Style; effect: Effect } => {
+export const partTags = (id: SlicePartId): { who: Who; style: Style; effect: Effect; word: string } => {
   const d = SLICE_PARTS[id];
   const fromAxis = d.axis ? AXIS_WHO[d.axis] : undefined;
   // 글에 가장 먼저 나오는 기물 이름 (「적 킹」은 대상이라 빼고) → 없으면 축의 기물 → 없으면 공용. 「모든 · 분대 · 전원」이면 공용
@@ -54,9 +64,11 @@ export const partTags = (id: SlicePartId): { who: Who; style: Style; effect: Eff
   const who: Who = /모든|분대|전원/.test(text) ? 'any' : hits[0]?.t ?? fromAxis ?? 'any';
   const style: Style = d.axis && AXIS_STYLE[d.axis] ? AXIS_STYLE[d.axis]! : styleFromText(d.desc);
   const op = PART_OP[id];
-  return { who, style, effect: op ?? effectFromText(d.desc) };
+  const effect = op ?? effectFromText(d.desc);
+  const w = effect === 'rule' ? wordFromText(text) : '';
+  return { who, style, effect, word: w === STYLE_NAMES[style] ? '증폭' : w };
 };
 
 /** 세 칸 칩 HTML (카드 얼굴 · 부품 얼굴 · 확인 창이 같이 쓴다) */
-export const tags3Html = (t: { who: Who; style: Style; effect: Effect }): string =>
-  `<span class="t3"><i class="t3-who">${WHO_NAMES[t.who]}</i><i class="t3-sty sty-${t.style}">${STYLE_NAMES[t.style]}</i><i class="t3-fx fx-${t.effect === '+' ? 'add' : t.effect === '×' ? 'mul' : 'rule'}">${t.effect === 'rule' ? '규칙' : t.effect}</i></span>`;
+export const tags3Html = (t: { who: Who; style: Style; effect: Effect; word?: string }): string =>
+  `<span class="t3"><i class="t3-who">${WHO_NAMES[t.who]}</i><i class="t3-sty sty-${t.style}">${STYLE_NAMES[t.style]}</i><i class="t3-fx fx-${t.effect === '+' ? 'add' : t.effect === '×' ? 'mul' : 'rule'}">${t.effect === 'rule' ? t.word || '규칙' : t.effect}</i></span>`;

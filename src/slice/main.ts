@@ -11,7 +11,7 @@ const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: red
 import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
-import { cardTags, partTags, tags3Html } from './tags';
+import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_ENTRY, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
@@ -1887,23 +1887,18 @@ const shopStatus = (): string => {
   const ptLine = parts.map((id) => `<i class="ico" title="${SLICE_PARTS[id].name}" style="${iconArt(SLICE_PARTS[id].icon)}"></i>`).join('');
   return `<div class="shop-status"><span class="ss-k">분대</span>${pcLine}<span class="ss-k">덱 ${deck.length}</span>${axLine}${ptLine ? `<span class="ss-k">부품</span>${ptLine}` : ''}</div>`;
 };
-/** 물건 하나가 지금 출하와 맞물리는지 — 한 줄 (맞물림 = 청록 · 쓸 수 없음 = 붉은 · 그 밖 = 회색) */
+/**
+ * 물건 하나가 지금 덱과 얼마나 맞는지 — 그림을 가리지 않는 한 줄 (D-327, 사용자: 「~와 맞물림은 자리를 차지하고 직관적이지 않다 — 내 덱에 나이트 N장 · 연쇄 N장」).
+ * 「덱 나이트 3 · 연쇄 4」 = 내 덱에서 같은 「누가」 카드 수 · 같은 「어떤」 카드 수. 그 기물이 분대에 없으면 붉은 「분대에 룩 없음」.
+ */
 const fitHint = (kind: 'card' | 'part', id: string): { text: string; tone: 'good' | 'bad' | 'mid' } | null => {
-  const has = (t: PieceType) => squad.filter((u) => u.t === t).length;
-  if (kind === 'card') {
-    const c = COMMANDS[id as CommandId];
-    if (!c) return null;
-    if (c.who !== 'any' && !has(c.who as PieceType)) return { text: `분대에 ${PIECE_NAMES_KO[c.who as PieceType]} 없음`, tone: 'bad' };
-    const pm = parts.find((p) => c.axis && (SLICE_PARTS[p].axis === c.axis || SLICE_PARTS[p].axis === c.axis2));
-    if (pm) return { text: `${SLICE_PARTS[pm].name}과 맞물림`, tone: 'good' };
-    const same = deck.filter((d) => COMMANDS[d]?.axis && COMMANDS[d].axis === c.axis).length;
-    if (c.who !== 'any') return { text: `${PIECE_NAMES_KO[c.who as PieceType]} ${has(c.who as PieceType)}기 보유${same ? ` · 같은 띠 ${same}장` : ''}`, tone: same >= 2 ? 'good' : 'mid' };
-    return same ? { text: `같은 띠 카드 ${same}장`, tone: same >= 2 ? 'good' : 'mid' } : null;
-  }
-  const d = SLICE_PARTS[id as SlicePartId];
-  if (!d?.axis) return null;
-  const n = deck.filter((x) => COMMANDS[x]?.axis === d.axis || COMMANDS[x]?.axis2 === d.axis).length;
-  return { text: n ? `맞물리는 카드 ${n}장` : '맞물리는 카드 없음', tone: n >= 2 ? 'good' : n ? 'mid' : 'bad' };
+  const t = kind === 'card' ? cardTags(id as CommandId) : partTags(id as SlicePartId);
+  if (t.who !== 'any' && t.who !== 'K' && !squad.some((u) => u.t === t.who)) return { text: `분대에 ${PIECE_NAMES_KO[t.who]} 없음`, tone: 'bad' };
+  const dt = deck.map((d) => cardTags(d));
+  const nWho = t.who === 'any' ? 0 : dt.filter((x) => x.who === t.who).length;
+  const nSty = dt.filter((x) => x.style === t.style).length;
+  const bits = [t.who !== 'any' ? `${PIECE_NAMES_KO[t.who]} <b>${nWho}</b>` : '', `${STYLE_NAMES[t.style]} <b>${nSty}</b>`].filter(Boolean);
+  return { text: `덱 ${bits.join(' · ')}`, tone: nWho + nSty >= 4 ? 'good' : 'mid' };
 };
 const shopScreen = (): void => {
   // 장소 배경 (D-200): 녹슨 룩의 고물상 BG-01 — 창은 오른쪽
@@ -1952,7 +1947,7 @@ const shopScreen = (): void => {
     el.querySelectorAll<HTMLElement>('[data-buy^="card:"], [data-buy^="part:"]').forEach((btn) => {
       const [kind, id] = btn.dataset.buy!.split(':');
       const h = fitHint(kind as 'card' | 'part', id);
-      if (h) (btn.querySelector('.cf-win') ?? btn).insertAdjacentHTML('beforeend', `<em class="fit-hint ${h.tone}">${h.text}</em>`);
+      if (h) (btn.querySelector('.cf-type') ?? btn).insertAdjacentHTML('afterend', `<small class="fit-line ${h.tone}">${h.text}</small>`);
     });
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
     el.querySelectorAll<HTMLElement>('[data-buy]').forEach((btn) =>
