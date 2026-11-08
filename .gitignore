@@ -7,3 +7,8 @@ production/qa/evidence/*.png
 production/qa/evidence/**/
 production/fxlab.html
 __pycache__/
+
+# 측정 중간 조각 (MM=merge가 보고서 · 기준선으로 합친다)
+sim/measure-asc*.json
+sim/measure-power*.json
+sim/measure-combo*.json
