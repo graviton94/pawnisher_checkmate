@@ -1419,7 +1419,18 @@ const startBattle = (def: BattleDef, silent = false): void => {
     void stageIntro(def).then(() => {
       document.body.classList.remove('between');
       refresh();
-      void battleIntro();
+      const ready = battleIntro();
+      // 반장을 처음 만나면 부관이 규칙을 짚는다 (테스터: 반장 첫 만남은 온보딩 팝업처럼 설명해야) — 반장마다 한 번
+      if (def.boss && !labMode && !tutDone(`boss-${def.bossRule ?? 'plate'}`)) {
+        const rule = def.bossRule ?? 'plate';
+        const R0 = BOSS_RULES[rule];
+        void ready.then(() => tutorial(`boss-${rule}`, [
+          { text: TUT.boss.meet(R0.name), target: () => $('board').querySelector('canvas') ?? $('board') },
+          { text: R0.tell.replace(/([.!?])\s+/g, '$1\n'), target: () => $('board').querySelector('canvas') ?? $('board') },
+          { text: TUT.boss.badge, target: () => $('boss') },
+        ]));
+        return;
+      }
       if (nemesisNow) return nemesisMeet(nemesisNow);
       const cracked = squad.filter((u) => u.cracked);
       toast(cracked.length ? `${def.tell} · ${LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · '))}` : def.tell, 3600);
@@ -1848,6 +1859,35 @@ const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, ca
 };
 
 /** 고물상 (R5-2): 카드 4 · 부품 1 · 정비 · 카드 빼기. 여러 개 사도 된다, 떠나기로 끝 */
+/** 지금 분대 · 덱의 축 · 부품 한 줄 (고물상 머리) */
+const shopStatus = (): string => {
+  const ax = new Map<Axis, number>();
+  for (const id of deck) { const c = COMMANDS[id]; if (c?.axis) ax.set(c.axis, (ax.get(c.axis) ?? 0) + 1); }
+  const pc = new Map<PieceType, number>();
+  for (const u of squad) pc.set(u.t, (pc.get(u.t) ?? 0) + 1);
+  const axLine = [...ax].sort((a, b) => b[1] - a[1]).map(([a, n]) => `<span class="axis ax-${a}">${AXIS_NAMES[a]} ${n}</span>`).join('');
+  const pcLine = (['K', 'Q', 'R', 'B', 'N', 'P'] as PieceType[]).filter((t) => pc.get(t)).map((t) => `<span class="ssp">${pieceImg(t, 0, 'small', 18)}${pc.get(t)}</span>`).join('');
+  const ptLine = parts.map((id) => `<i class="ico" title="${SLICE_PARTS[id].name}" style="${iconArt(SLICE_PARTS[id].icon)}"></i>`).join('');
+  return `<div class="shop-status"><span class="ss-k">분대</span>${pcLine}<span class="ss-k">덱 ${deck.length}</span>${axLine}${ptLine ? `<span class="ss-k">부품</span>${ptLine}` : ''}</div>`;
+};
+/** 물건 하나가 지금 출하와 맞물리는지 — 한 줄 (맞물림 = 청록 · 쓸 수 없음 = 붉은 · 그 밖 = 회색) */
+const fitHint = (kind: 'card' | 'part', id: string): { text: string; tone: 'good' | 'bad' | 'mid' } | null => {
+  const has = (t: PieceType) => squad.filter((u) => u.t === t).length;
+  if (kind === 'card') {
+    const c = COMMANDS[id as CommandId];
+    if (!c) return null;
+    if (c.who !== 'any' && !has(c.who as PieceType)) return { text: `분대에 ${PIECE_NAMES_KO[c.who as PieceType]} 없음`, tone: 'bad' };
+    const pm = parts.find((p) => c.axis && (SLICE_PARTS[p].axis === c.axis || SLICE_PARTS[p].axis === c.axis2));
+    if (pm) return { text: `${SLICE_PARTS[pm].name}과 맞물림`, tone: 'good' };
+    const same = deck.filter((d) => COMMANDS[d]?.axis && COMMANDS[d].axis === c.axis).length;
+    if (c.who !== 'any') return { text: `${PIECE_NAMES_KO[c.who as PieceType]} ${has(c.who as PieceType)}기 보유${same ? ` · 같은 띠 ${same}장` : ''}`, tone: same >= 2 ? 'good' : 'mid' };
+    return same ? { text: `같은 띠 카드 ${same}장`, tone: same >= 2 ? 'good' : 'mid' } : null;
+  }
+  const d = SLICE_PARTS[id as SlicePartId];
+  if (!d?.axis) return null;
+  const n = deck.filter((x) => COMMANDS[x]?.axis === d.axis || COMMANDS[x]?.axis2 === d.axis).length;
+  return { text: n ? `맞물리는 카드 ${n}장` : '맞물리는 카드 없음', tone: n >= 2 ? 'good' : n ? 'mid' : 'bad' };
+};
 const shopScreen = (): void => {
   // 장소 배경 (D-200): 녹슨 룩의 고물상 BG-01 — 창은 오른쪽
   document.body.classList.add('between');
@@ -1890,6 +1930,13 @@ const shopScreen = (): void => {
         ${svcShown.has('remove') ? `<button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><small class="cf-desc">${descLines('덱에서 카드 한 장을 버린다. (영구)')}</small>${tag('remove', removePrice())}</button>` : ''}
       </div></div></div>`);
     pxRail(el.querySelector<HTMLElement>('.shop-scroll')!);
+    // 시너지 힌트 (테스터: 「내 덱 · 현황에 맞게 무엇을 골라야 할지 감이 안 온다 — 기병 시너지면 보유 나이트 n기 같은 힌트」)
+    el.querySelector('.shop-head')!.insertAdjacentHTML('afterend', shopStatus());
+    el.querySelectorAll<HTMLElement>('[data-buy^="card:"], [data-buy^="part:"]').forEach((btn) => {
+      const [kind, id] = btn.dataset.buy!.split(':');
+      const h = fitHint(kind as 'card' | 'part', id);
+      if (h) (btn.querySelector('.cf-win') ?? btn).insertAdjacentHTML('beforeend', `<em class="fit-hint ${h.tone}">${h.text}</em>`);
+    });
     el.querySelector('[data-leave]')!.addEventListener('click', advance);
     el.querySelectorAll<HTMLElement>('[data-buy]').forEach((btn) =>
       btn.addEventListener('click', () => {

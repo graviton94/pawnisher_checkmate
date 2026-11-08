@@ -2500,3 +2500,18 @@ body.slice.lay-f .apbar.regain .seg.on::before { content: ''; position: absolute
 @keyframes apPop { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 30% { transform: scale(0.82, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 65% { transform: scale(1.18, 0.9); } 100% { transform: none; } }
 @keyframes apRing { 0% { visibility: visible; inset: 4px; } 99% { visibility: visible; inset: -8px; } 100% { visibility: hidden; inset: -8px; } }
 @media (prefers-reduced-motion: reduce) { body.slice.lay-f #vials .seg.apb, body.slice.lay-f .apbar.regain .seg.on { animation: none; } }
+
+/* D-319 고물상 시너지 힌트 · 현황 줄 */
+.shop-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 6px; padding: 4px 8px; background: #16141c; box-shadow: 0 0 0 2px #0b0b0e; font: 12px Galmuri11, sans-serif; color: #c9c0b0; }
+.shop-status .ss-k { font-weight: 700; color: #f4d27a; }
+.shop-status .ssp { display: inline-flex; align-items: center; gap: 1px; }
+.shop-status .ssp img, .shop-status .ssp .piece-img { width: 18px; height: 18px; image-rendering: pixelated; }
+.shop-status .axis { padding: 0 4px; }
+.shop-status .ico { display: inline-block; width: 18px; height: 18px; }
+.cf { position: relative; }
+.cf .fit-hint { position: absolute; left: 50%; top: -9px; transform: translateX(-50%); z-index: 3; max-width: 96%; padding: 0 5px; font: 700 12px/16px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 0 0 2px #0b0b0e; }
+.cf .fit-hint.good { background: #2dd4bf; color: #06222a; }
+.cf .fit-hint.mid { background: #41434f; color: #e8e0cc; }
+.cf .fit-hint.bad { background: #9a141e; color: #ffc0c0; }
+.cf .cf-win { position: relative; }
+.cf .cf-win .fit-hint { top: auto; bottom: 2px; }
