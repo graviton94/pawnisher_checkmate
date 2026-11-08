@@ -2633,3 +2633,16 @@ body.slice .pick-confirm .kc-one > .cf .cf-win img, body.slice .pick-confirm .kc
 body.slice .pick-confirm .kc-one > .cf .cf-win .ico, body.slice .pick-confirm .kc-one > .cf .cf-win .art.any .ico16, body.slice .pick-confirm .kc-one > .cf .cf-win .art .ico16 { width: 64px; height: 64px; }
 /* 손패: 표지가 없는 기본 이동 카드는 이름을 두 줄 가운데에 */
 body.slice.lay-f #hand > .cmd.mag .mg-head > b:last-child { grid-row: 1 / 3; align-self: center; }
+/* 설명 문단 (D-333): ① 묘사 최대 2줄(낱말 안 끊김) ② (기능) 1줄 ③ 조건 1줄 — 모든 카드 · 부품 · 선택지 */
+body.slice .cf .cf-desc .dl { display: block; word-break: keep-all; overflow-wrap: normal; text-align: center; }
+body.slice .cf .cf-desc .dl-say { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; color: #ece6da; text-wrap: balance; max-height: 36px; overflow: hidden; }
+body.slice .cf .cf-desc .dl-fx { margin-top: 4px; font: 700 12px/15px Galmuri11, sans-serif; color: #f5c542; white-space: nowrap; }
+body.slice .cf .cf-desc .dl-if { font: 400 12px/15px Galmuri11, sans-serif; color: #b9b4c2; white-space: nowrap; }
+body.slice .cf .cf-desc.cf-desc { justify-content: center; gap: 0; }
+body.slice .cf .fit-line.kit-plus { color: #8ee8ea; font: 700 12px/15px Galmuri11, sans-serif; text-align: center; }
+body.slice .cf .cf-desc .dl { flex: none; }
+body.slice .crail.crail > .cf .cf-win { height: 80px; }
+body.slice .crail.crail > .cf .cf-desc.cf-desc { justify-content: flex-start; padding-top: 2px; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-say { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; color: #ece6da; margin-top: 0; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { font: 700 12px/15px Galmuri11, sans-serif; color: #f5c542; margin-top: 4px; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { font: 400 12px/15px Galmuri11, sans-serif; color: #b9b4c2; margin-top: 0; }

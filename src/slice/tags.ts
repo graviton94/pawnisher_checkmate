@@ -59,7 +59,7 @@ export const partTags = (id: SlicePartId): { who: Who; style: Style; effect: Eff
   const d = SLICE_PARTS[id];
   const fromAxis = d.axis ? AXIS_WHO[d.axis] : undefined;
   // 글에 가장 먼저 나오는 기물 이름 (「적 킹」은 대상이라 빼고) → 없으면 축의 기물 → 없으면 공용. 「모든 · 분대 · 전원」이면 공용
-  const text = d.desc.replace(/적 킹/g, '').split('대가:')[0];
+  const text = d.desc.replace(/적 킹|킹은 빼고|킹 곁에/g, '').split('대가:')[0];
   const hits = PIECE_WORD.map(([re, t]) => ({ t, i: text.search(re) })).filter((h) => h.i >= 0).sort((x, y) => x.i - y.i);
   const who: Who = /모든|분대|전원/.test(text) ? 'any' : hits[0]?.t ?? fromAxis ?? 'any';
   const style: Style = d.axis && AXIS_STYLE[d.axis] ? AXIS_STYLE[d.axis]! : styleFromText(d.desc);

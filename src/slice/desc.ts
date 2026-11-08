@@ -1,0 +1,38 @@
+/**
+ * 카드 · 부품 · 선택지 설명 문단 (사용자 결정 D-333): 최대 네 줄, 줄마다 할 일이 하나.
+ *  ① 묘사 — 비장한 한 문장, 자연스러운 줄바꿈으로 최대 2줄
+ *  ② (기능) — 괄호 안 성능 1줄 요약
+ *  ③ 조건 — 추가 조건 · 대가 · 덧말 1줄
+ * 데이터 문법: 카드 `묘사. (기능 — 조건)` · 부품 `flavor` + desc `기능 — 조건` (대가는 `— 대가: …`).
+ */
+export interface DescParts {
+  say: string;
+  fx: string;
+  cond: string;
+}
+
+/** 글을 세 칸으로 나눈다. flavor가 있으면 text 전체가 기능(— 조건) */
+export const splitDesc = (text: string, flavor?: string): DescParts => {
+  const t = text.trim();
+  if (flavor !== undefined) {
+    const [fx, ...rest] = t.replace(/\.$/, '').split(' — ');
+    return { say: flavor, fx: fx.trim(), cond: rest.join(' — ').trim() };
+  }
+  const m = t.match(/^(.*?)\s*\((.*)\)\s*$/);
+  if (!m) return { say: t, fx: '', cond: '' };
+  const [fx, ...rest] = m[2].split(' — ');
+  return { say: m[1].trim(), fx: fx.trim(), cond: rest.join(' — ').trim() };
+};
+
+/** 세 칸 HTML — 묘사(2줄까지) · (기능) · 조건 */
+export const descHtml = (text: string, flavor?: string): string => {
+  const d = splitDesc(text, flavor);
+  return `${d.say ? `<span class="dl dl-say">${d.say}</span>` : ''}${d.fx ? `<span class="dl dl-fx">(${d.fx})</span>` : ''}${d.cond ? `<span class="dl dl-if">${d.cond}</span>` : ''}`;
+};
+
+/** 글 폭 어림 (갈무리: 한글 1칸, 영숫자 · 기호 0.6, 빈칸 0.35) — 테스트가 줄 넘침을 잡는다 */
+export const textWidth = (s: string): number =>
+  [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === ' ' ? 0.35 : /[×−—·→「」]/.test(ch) ? 0.9 : 0.6), 0);
+
+/** 줄 한도 (레일 카드 196px 기준 — 묘사 15px 두 줄, 기능 · 조건 12px 한 줄) */
+export const DESC_LIMIT = { say: 22, fx: 14, cond: 14 };
