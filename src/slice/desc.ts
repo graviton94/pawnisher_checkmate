@@ -1,8 +1,8 @@
 /**
  * 카드 · 부품 · 선택지 설명 문단 (사용자 결정 D-333): 최대 네 줄, 줄마다 할 일이 하나.
  *  ① 묘사 — 비장한 한 문장, 자연스러운 줄바꿈으로 최대 2줄
- *  ② (기능) — 괄호 안 성능 1줄 요약
- *  ③ 조건 — 추가 조건 · 대가 · 덧말 1줄
+ *  ② 조건 — 발동 조건 · 대가 · 덧말 1줄 (셀 배경으로 강조 — 사용자 D-334)
+ *  ③ (기능) — 괄호 안 성능 1줄 요약
  * 데이터 문법: 카드 `묘사. (기능 — 조건)` · 부품 `flavor` + desc `기능 — 조건` (대가는 `— 대가: …`).
  */
 export interface DescParts {
@@ -24,10 +24,10 @@ export const splitDesc = (text: string, flavor?: string): DescParts => {
   return { say: m[1].trim(), fx: fx.trim(), cond: rest.join(' — ').trim() };
 };
 
-/** 세 칸 HTML — 묘사(2줄까지) · (기능) · 조건 */
+/** 세 칸 HTML — 묘사(2줄까지) · 조건(셀) · (기능) */
 export const descHtml = (text: string, flavor?: string): string => {
   const d = splitDesc(text, flavor);
-  return `${d.say ? `<span class="dl dl-say">${d.say}</span>` : ''}${d.fx ? `<span class="dl dl-fx">(${d.fx})</span>` : ''}${d.cond ? `<span class="dl dl-if">${d.cond}</span>` : ''}`;
+  return `${d.say ? `<span class="dl dl-say">${d.say}</span>` : ''}${d.cond ? `<span class="dl dl-if"><i>${d.cond}</i></span>` : ''}${d.fx ? `<span class="dl dl-fx">(${d.fx})</span>` : ''}`;
 };
 
 /** 글 폭 어림 (갈무리: 한글 1칸, 영숫자 · 기호 0.6, 빈칸 0.35) — 테스트가 줄 넘침을 잡는다 */

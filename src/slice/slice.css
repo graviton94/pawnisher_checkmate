@@ -2646,3 +2646,8 @@ body.slice .crail.crail > .cf .cf-desc.cf-desc { justify-content: flex-start; pa
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-say { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; color: #ece6da; margin-top: 0; }
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { font: 700 12px/15px Galmuri11, sans-serif; color: #f5c542; margin-top: 4px; }
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { font: 400 12px/15px Galmuri11, sans-serif; color: #b9b4c2; margin-top: 0; }
+/* D-334: 조건은 셀 배경으로 강조하고 (기능) 위에 — 「처치할 때마다」 아래 (카드 +1) */
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { margin-top: 4px; color: #f4efe2; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if > i { display: inline-block; font-style: normal; padding: 0 5px; background: #3a3442; box-shadow: 0 0 0 1px #0b0b0e, inset 0 1px 0 #56505e; line-height: 15px; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { margin-top: 2px; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 4px; }
