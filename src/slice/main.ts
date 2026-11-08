@@ -382,7 +382,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const mid = (b.hand.length - 1) / 2;
   const fan = `--r:${((i - mid) * 5).toFixed(1)}deg;--fy:${Math.round(Math.abs(i - mid) ** 1.4 * 6)}px`;
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" style="${fan}" ${off ? 'aria-disabled="true"' : ''}>${opTag(opOfCard(c)) ? `<span class="op-corner">${opTag(opOfCard(c))}</span>` : ''}
-    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${tags3Html(cardTags(id))}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}${selCard === i ? `<span class="full">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</span>` : ''}</span></button>`;
+    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}${handChips(id)}</b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}${selCard === i ? `<span class="full">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</span>` : ''}</span></button>`;
 };
 
 /**
@@ -406,7 +406,7 @@ const magHtml = (id: CommandId, i: number): string => {
   // 움직이는 카드는 한 번 누르면 펼치며 바로 장전(기물 → 칸) — 즉시 카드만 한 번 더 눌러 쓴다 (D-212)
   const hint = off ? `<p class="mg-use">${why || '지금은 쓸 수 없음'}</p>` : isInstant(id) && selCard !== i ? '<p class="mg-use">눌러서 사용</p>' : '';
   return `<button type="button" class="cmd mag t-${c.who}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
-    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.title : c.name}</b><span class="chips">${tags3Html(cardTags(id))}</span></span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
+    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.title : c.name}</b>${handChips(id)}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
 };
 
 /**
@@ -2421,6 +2421,11 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
   };
   el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), leave(onNo)));
   el.querySelector('[data-yes]')!.addEventListener('click', () => leave(onYes));
+};
+/** 손패 표지 (D-332 · UX 점검): 기본 이동 카드(돌격 · 이동)는 모두 같은 표지라 잡음 — 손패에서는 뺀다 */
+const handChips = (id: CommandId): string => {
+  const t = cardTags(id);
+  return t.effect === 'rule' && t.word === '이동' && t.style === 'strike' ? '' : `<span class="chips">${tags3Html(t)}</span>`;
 };
 /** 반장 격파 컷 (각본 §8 · D-319 발주 14위 BF-01~06): 쓰러지는 모습 + 아홉째의 대꾸. 받은 그림이 있으면 그것, 없으면 초상 */
 const bossFallCut = async (rule: StoryBoss): Promise<void> => {

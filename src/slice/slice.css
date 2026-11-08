@@ -2627,3 +2627,9 @@ body.slice.lay-f #hand > .cmd.mag .mg-head > b { grid-column: 3; grid-row: 1; }
 body.slice.lay-f #hand > .cmd.mag .mg-head > .chips { grid-column: 3; grid-row: 2; margin: 0; justify-self: start; }
 body.slice.lay-f #hand > .cmd.mag .chips .t3 { margin-left: 0; }
 body.slice.lay-f #hand > .cmd.mag .chips .t3 > i { height: 14px; line-height: 14px; }
+/* UX 점검 (2026-11-08): 큰 확인 창의 그림은 레일과 같은 크기 (레일 밖으로 복제되면 32칸으로 줄던 것) */
+body.slice .pick-confirm .kc-one > .cf .cf-win { flex: none; height: 96px; }
+body.slice .pick-confirm .kc-one > .cf .cf-win img, body.slice .pick-confirm .kc-one > .cf .cf-win .piece-img { width: 72px; height: 72px; }
+body.slice .pick-confirm .kc-one > .cf .cf-win .ico, body.slice .pick-confirm .kc-one > .cf .cf-win .art.any .ico16, body.slice .pick-confirm .kc-one > .cf .cf-win .art .ico16 { width: 64px; height: 64px; }
+/* 손패: 표지가 없는 기본 이동 카드는 이름을 두 줄 가운데에 */
+body.slice.lay-f #hand > .cmd.mag .mg-head > b:last-child { grid-row: 1 / 3; align-self: center; }
