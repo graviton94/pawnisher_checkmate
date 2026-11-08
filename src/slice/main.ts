@@ -11,6 +11,7 @@ const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: red
 import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
+import { cardTags, partTags, tags3Html } from './tags';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_ENTRY, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
@@ -23,7 +24,7 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
-import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, PART_OP, partFits, SLICE_PARTS, type SlicePartId } from './parts';
+import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -545,13 +546,14 @@ const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-l
 const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string => {
   const c = COMMANDS[id];
   const g = gradeOf(id);
-  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span>${footed(extra, attrs) ? '' : `<span class="cf-type">${opTag(opOfCard(c))}${axisTag(seeAx(c.axis))}${axisTag(seeAx(c.axis2))}</span>`}<small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, `${opTag(opOfCard(c))}${axisTag(seeAx(c.axis))}${axisTag(seeAx(c.axis2))}`) : extra}</button>`;
+  // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
   const d = SLICE_PARTS[id];
   const g = PART_GRADE[id] ?? 'common';
-  return `<button type="button" class="cf part-card g-${g}${d.axis ? ` ax-${d.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span>${footed(extra) ? '' : `<span class="cf-type">${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}</span>`}<small class="cf-desc">${descLines(d.desc)}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra) ? cfFoot(extra, `${opTag(PART_OP[id])}${axisTag(d.axis ?? undefined)}`) : extra}</button>`;
+  return `<button type="button" class="cf part-card g-${g}${d.axis ? ` ax-${d.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type">${tags3Html(partTags(id))}</span><small class="cf-desc">${descLines(d.desc)}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra) ? cfFoot(extra, '') : extra}</button>`;
 };
 
 const partHtml = (id: SlicePartId, big = false): string => {
@@ -2875,7 +2877,7 @@ const kitPick = (head: string, then: () => void): void => {
     .map((k, n) => {
       const d = SLICE_PARTS[k.part];
       const g = PART_GRADE[k.part] ?? 'common';
-      return `<button type="button" class="cf part-card g-${g}" data-kit="${n}" data-grade="${g}"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><small class="cf-desc">${d.desc.replace(/\s*\([^)]*\)\s*/g, ' ').trim() || d.desc}<span class="kit-plus">+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${cfFoot('', `${opTag(PART_OP[k.part])}${axisTag(d.axis ?? undefined)}`)}</button>`;
+      return `<button type="button" class="cf part-card g-${g}" data-kit="${n}" data-grade="${g}"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type">${tags3Html(partTags(k.part))}</span><small class="cf-desc">${d.desc.replace(/\s*\([^)]*\)\s*/g, ' ').trim() || d.desc}<span class="kit-plus">+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i></button>`;
     })
     .join('')}</div></div></div>`);
   if (!tutDone('kit')) void tutorial('kit', [{ text: TUT.kit, target: () => el.querySelector('.shop-scrollbox') }]);

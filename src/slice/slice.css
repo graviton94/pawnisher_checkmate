@@ -2589,3 +2589,15 @@ body.slice .overlay .panel:has(.reward-scroll .crail) .row .btn { min-height: 44
 .taunt.crew-say .cs-name { grid-row: 1; font: 700 12px Galmuri11, sans-serif; color: #8ee8ea; }
 .taunt.crew-say .tq-ghost, .taunt.crew-say .tq-live { grid-row: 2; grid-column: 1; }
 .taunt.crew-say .taunt-face { box-shadow: 0 0 0 2px #000, 0 0 0 4px #46c4c8, inset 0 0 0 2px #000; }
+
+/* ===== D-325 세 칸 태그: 누가 · 어떤 · 합/곱/규칙 (모든 카드 · 부품 같은 자리 · 같은 모양) ===== */
+body.slice .cf .cf-type { display: flex; justify-content: center; }
+body.slice .cf .t3 { display: inline-flex; gap: 3px; align-items: center; flex-wrap: nowrap; }
+body.slice .cf .t3 > i { display: inline-grid; place-items: center; height: 20px; padding: 0 5px; font: 700 12px/20px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; box-shadow: 0 0 0 2px #0b0b0e; }
+body.slice .cf .t3-who { background: #e8e0cc; color: #16141c; }
+body.slice .cf .t3-sty { color: #0b0b0e; }
+body.slice .cf .sty-chain { background: #f8a03a; } body.slice .cf .sty-push { background: #b9bdc8; } body.slice .cf .sty-tactic { background: #c8a2f0; }
+body.slice .cf .sty-guard { background: #46c4c8; } body.slice .cf .sty-strike { background: #ff6b6b; }
+body.slice .cf .t3-fx { min-width: 20px; color: #0b0b0e; }
+body.slice .cf .fx-add { background: #2dd4bf; } body.slice .cf .fx-mul { background: #ec6a1a; color: #fff6d8; } body.slice .cf .fx-rule { background: #41434f; color: #e8e0cc; }
+body.slice .cf .sty-tempo { background: #f4d27a; }
