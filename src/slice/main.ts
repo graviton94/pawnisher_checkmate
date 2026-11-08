@@ -382,7 +382,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const mid = (b.hand.length - 1) / 2;
   const fan = `--r:${((i - mid) * 5).toFixed(1)}deg;--fy:${Math.round(Math.abs(i - mid) ** 1.4 * 6)}px`;
   return `<button type="button" class="cmd t-${c.who}${selCard === i ? ' armed' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" style="${fan}" ${off ? 'aria-disabled="true"' : ''}>${opTag(opOfCard(c)) ? `<span class="op-corner">${opTag(opOfCard(c))}</span>` : ''}
-    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${opTag(opOfCard(c))}${axisChip(seeAx(c.axis))}${axisChip(seeAx(c.axis2))}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}${selCard === i ? `<span class="full">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</span>` : ''}</span></button>`;
+    ${keysHtml(cost, b.ap)}${art}<span class="txt"><b>${c.name}<span class="chips">${tags3Html(cardTags(id))}</span></b>${why || (c.desc ? `<small>${handDesc(c.desc)}</small>` : '')}${selCard === i ? `<span class="full">${c.desc || '움직여, 내려앉은 자리에서 공격한다.'}</span>` : ''}</span></button>`;
 };
 
 /**
@@ -406,7 +406,7 @@ const magHtml = (id: CommandId, i: number): string => {
   // 움직이는 카드는 한 번 누르면 펼치며 바로 장전(기물 → 칸) — 즉시 카드만 한 번 더 눌러 쓴다 (D-212)
   const hint = off ? `<p class="mg-use">${why || '지금은 쓸 수 없음'}</p>` : isInstant(id) && selCard !== i ? '<p class="mg-use">눌러서 사용</p>' : '';
   return `<button type="button" class="cmd mag t-${c.who}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
-    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.title : c.name}</b>${opTag(opOfCard(c))}</span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
+    <span class="mg-head">${keysHtml(cost, b.ap)}${cardArt(id)}<b>${titled ? c.title : c.name}</b><span class="chips">${tags3Html(cardTags(id))}</span></span>${open ? `<span class="mg-body">${shape}<span class="mg-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
 };
 
 /**
@@ -535,8 +535,6 @@ const opTag = (op: '+' | '×' | null | undefined): string => (op ? `<i class="op
 const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
 /** 카드의 부품 띠를 보여 주나 (D-233 3단계): 첫 출하에서는 내가 단 부품의 띠만 — 「이 카드가 내 부품과 맞물린다」만 읽히게. 둘째 출하부터 다섯 띠 모두 */
 const seeAx = (a?: Axis): Axis | undefined => (!a || readMetaCached().runs >= 1 || parts.some((id) => SLICE_PARTS[id].axis === a) ? a : undefined);
-/** 손패용 짧은 축 띠: 한 글자 색 칩 (이름은 보상 화면 · 읽기용 라벨에) */
-const axisChip = (a?: Axis): string => (a ? `<i class="axis mini ax-${a}" aria-label="${AXIS_NAMES[a]}">${AXIS_NAMES[a][0]}</i>` : '');
 
 /** 부품 칩 (레일 · 고르기 화면) */
 /**
@@ -2676,7 +2674,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const cards = ids
     .map((id) => {
       const c = COMMANDS[id];
-      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}>${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${opTag(opOfCard(c))}${axisChip(seeAx(c.axis))}${axisChip(seeAx(c.axis2))}</span></b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span>${usable(id) ? '' : '<em class="shelved">기물 없음 — 보관 중</em>'}</button>`;
+      return `<button type="button" class="cmd deckcard t-${c.who}" data-rm="${id}" ${mode === 'view' ? 'tabindex="-1"' : ''}>${keysHtml(c.cost)}${cardArt(id)}<span class="txt"><b>${c.name}<span class="chips">${tags3Html(cardTags(id))}</span></b>${c.desc ? `<small>${c.desc}</small>` : ''}${c.flavor ? `<i class="flv">${c.flavor}</i>` : ''}</span><span class="cnt">×${counts.get(id)}</span>${usable(id) ? '' : '<em class="shelved">기물 없음 — 보관 중</em>'}</button>`;
     })
     .join('');
   const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>덱에서 카드 한 장을 영구히 뺍니다.</p>`;
