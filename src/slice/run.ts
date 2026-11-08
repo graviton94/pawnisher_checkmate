@@ -93,7 +93,8 @@ export const MAP = {
   max: { shop: 3, forge: 2, check: 3 } as Record<string, number>,
 };
 
-const ACT_NAMES = ['주조 층', '조립 층', '출하 층'] as const;
+// 막 이름 = 공정 (D-320: 프롤로그 「주조, 조립, 검수 — 공정마다 반장이 지키는 대국」과 같은 말)
+const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'] as const;
 
 /**
  * 승급 13단 (R6 D-174 → D-273, 각본 docs/script.md §10 「조항 13」): 출하를 끝내면 다음 단계가 열린다. 단계는 쌓인다.
