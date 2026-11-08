@@ -2119,6 +2119,24 @@ const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void =>
     bar.className = 'confirm-bar';
     panel.appendChild(bar);
   }
+  // 카드 · 부품 · 기물을 얻는 고르기는 크게 펼쳐 확인 · 취소 (테스터: 1초 뒤 저절로 덱에 들어가 너무 빨랐다 — 크게 보이고 묻는 게 낫다)
+  if (quick && btn.matches('.cmd, .cf, .part-card')) {
+    panel.classList.remove('choosing');
+    btn.classList.remove('chosen');
+    bar.remove();
+    const cf = document.createElement('div');
+    cf.className = 'kit-confirm pick-confirm';
+    const big = btn.cloneNode(true) as HTMLElement;
+    big.removeAttribute('data-pick'); big.removeAttribute('data-part'); big.removeAttribute('data-recruit'); big.removeAttribute('data-rec');
+    big.classList.remove('chosen', 'picked');
+    cf.innerHTML = `<div class="kc-panel"><h2>${label.replace(/^‘|’$/g, '')}</h2><div class="kc-cards kc-one"></div><div class="row"><button class="btn" type="button" data-no>취소</button><button class="btn brass" type="button" data-yes>확인</button></div></div>`;
+    cf.querySelector('.kc-cards')!.appendChild(big);
+    document.body.appendChild(cf);
+    replay(cf.querySelector('.kc-panel')!, 'in');
+    cf.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), cf.remove()));
+    cf.querySelector('[data-yes]')!.addEventListener('click', () => { cf.remove(); confirmChoice(btn, onConfirm); });
+    return;
+  }
   bar.classList.toggle('quick', quick);
   bar.innerHTML = quick
     ? `<span>‘${label}’</span><i class="cb-fill" style="--ms:${QUICK_MS}ms"></i><button class="btn" type="button" data-unchoose>되돌리기</button>`
@@ -2447,7 +2465,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
             return cardFace(id, `data-pick="${id}"`);
           })
           .join('')}${recruitOffer && recruitCrew ? `<button type="button" class="cf part-card recruit g-${RECRUIT_ODDS[recruitOffer.t].grade}" data-recruit data-grade="${RECRUIT_ODDS[recruitOffer.t].grade}"><em class="rec-tag">새 분대원</em><b class="cf-name">${PIECE_NAMES_KO[recruitOffer.t]} · ${recruitCrew.name}</b><span class="cf-win"><span class="art" style="transform:translateY(${Math.round((0.5 - (PIECE_ART_CENTER[recruitOffer.t] ?? 0.5)) * 44)}px)">${pieceImg(recruitOffer.t, 0, 'large', 44)}</span></span><small class="cf-desc">${recruitCrew.quirk ? `<span class="dl rec-name">${QUIRKS[recruitCrew.quirk].name}</span><span class="dl">(${QUIRKS[recruitCrew.quirk].desc})</span>` : ''}<span class="dl">(+ ${recruitOffer.cards.map((id) => COMMANDS[id].name).join(' · ')})</span></small><i class="cf-gem" aria-label="희귀"></i></button>` : ''}</div>
-        <p class="rest-line">정비 완료 · 남은 분대 HP +${Math.round(REST.heal * 100)}% ${squad.map((u) => `<span class="rest-u" title="${u.name ?? PIECE_NAMES_KO[u.t]}">${pieceImg(u.t, 0, 'small', 18)}${u.hp}${lifePips(u, justCracked.includes(u.serial ?? '') ? 'break' : '')}</span>`).join('')}${fallen.length ? ` <span class="bad">쓰러짐 ${fallen.length}</span>` : ''}</p></div></div>
+        <div class="squad-strip"><p class="ss-head">정비 완료 · 남은 분대 HP +${Math.round(REST.heal * 100)}%${fallen.length ? ` · <span class="bad">쓰러짐 ${fallen.length}</span>` : ''}</p>${squad.map((u) => { const mx = crewMaxHp(u); const k = Math.max(0, Math.min(1, (u.hp ?? mx) / mx)); return `<span class="ss-u${k < 0.35 ? ' low' : ''}">${pieceImg(u.t, 0, 'small', 24)}<span class="ss-t"><b>${u.name ?? PIECE_NAMES_KO[u.t]}</b><i class="ss-bar"><i style="width:${Math.round(k * 100)}%"></i></i></span><small>${u.hp ?? mx}/${mx}${lifePips(u, justCracked.includes(u.serial ?? '') ? 'break' : '')}</small></span>`; }).join('')}</div></div></div>
         <div class="row">
           <button class="btn" type="button" data-skip>건너뛰기</button>
           <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${josa([...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name, '을')} HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
