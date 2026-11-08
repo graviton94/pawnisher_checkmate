@@ -24,7 +24,7 @@ ATTACH = [
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = set()
+REDO: set[str] = {"boss-fall-plate"}  # D-341: 5차 시안을 임시로 넣었지만 핵심이 글상자에 가려 한 번 더
 
 
 def data_uri(path, width):
@@ -224,7 +224,7 @@ def main(out_path):
                 port = re.search(r'public/scenes/(boss-[a-z]+)\.png', '\n'.join(b[1] if isinstance(b[1], str) else '' for b in it['blocks']))
                 figs = [(f'public/scenes/{port.group(1)}.png', '④ 이 반장의 초상 — 같은 몸 · 같은 빛')] if port else []
                 if mb.group(0) == 'BF-01':
-                    figs += [(f, c) for f, c in [('build-res/order/BF-01-draft3.png', '3차 — 가장 가까운 방향 (여기서 반장을 더 크게, 불꽃 대신 균열의 빛)'), ('build-res/order/BF-01-draft4.png', '4차 — 다시 (주인공이 주인공 — 보스 격파가 아니다)'), ('build-res/order/BF-01-draft2.png', '2차 — 다시 (정면 수평 = 평범한 장면)'), ('build-res/order/BF-01-bad-draft.png', '1차 — 다시 (붓 질감 · 소품 · 균열 · 작은 일반 킹)')] if os.path.exists(os.path.join(ROOT, f))]
+                    figs += [(f, c) for f, c in [('build-res/order/BF-01-draft5.png', '5차 — 거의 완성 (임시로 게임에 넣음). 고칠 점: 안의 작은 킹이 아래쪽이라 글상자에 가린다 → 화면 세로 한가운데로'), ('build-res/order/BF-01-draft3.png', '3차 — 방향 참고'), ('build-res/order/BF-01-draft4.png', '4차 — 다시 (주인공이 주인공 — 보스 격파가 아니다)'), ('build-res/order/BF-01-draft2.png', '2차 — 다시 (정면 수평 = 평범한 장면)'), ('build-res/order/BF-01-bad-draft.png', '1차 — 다시 (붓 질감 · 소품 · 균열 · 작은 일반 킹)')] if os.path.exists(os.path.join(ROOT, f))]
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
             items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
         body.append(
