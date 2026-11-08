@@ -223,8 +223,8 @@ def main(out_path):
             if mb and not done_it:  # 반장 격파 컷: 그 반장 초상(④)을 상자 바로 위에 — 「같은 카메라로 무너진 뒤」의 기준
                 port = re.search(r'public/scenes/(boss-[a-z]+)\.png', '\n'.join(b[1] if isinstance(b[1], str) else '' for b in it['blocks']))
                 figs = [(f'public/scenes/{port.group(1)}.png', '④ 이 반장의 초상 — 같은 몸 · 같은 빛')] if port else []
-                if mb.group(0) == 'BF-01' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-bad-draft.png')):
-                    figs.append(('build-res/order/BF-01-bad-draft.png', '첫 시안 — 이렇게 나오면 다시 (붓 질감 · 소품 · 균열 · 작은 일반 킹)'))
+                if mb.group(0) == 'BF-01':
+                    figs += [(f, c) for f, c in [('build-res/order/BF-01-bad-draft.png', '1차 — 다시 (붓 질감 · 소품 · 균열 · 작은 일반 킹)'), ('build-res/order/BF-01-draft2.png', '2차 — 다시 (깔끔하지만 정면 수평 = 평범한 장면)')] if os.path.exists(os.path.join(ROOT, f))]
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
             items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
         body.append(
