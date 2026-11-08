@@ -232,6 +232,24 @@ export const RECRUITS: { t: PieceType; cards: CommandId[]; line: string }[] = [
   { t: 'R', cards: ['rookLine'], line: '살아 움직이는 요새' },
   { t: 'Q', cards: ['queenStride'], line: '모든 길의 주인' },
 ];
+/**
+ * 기물 등급 · 나올 무게 (D-319, 테스터: 「기물별 등장 확률이 같나? 레어리티 없나?」 — 예전엔 폰과 퀸이 똑같이 1/5).
+ * 폰 일반 · 나이트 · 비숍 일반 · 룩 희귀 · 퀸 황금. 무게 합 100 = 퍼센트.
+ */
+export const RECRUIT_ODDS: Record<PieceType, { w: number; grade: Grade }> = {
+  P: { w: 32, grade: 'common' },
+  N: { w: 26, grade: 'common' },
+  B: { w: 26, grade: 'common' },
+  R: { w: 12, grade: 'rare' },
+  Q: { w: 4, grade: 'gold' },
+  K: { w: 0, grade: 'gold' },
+};
+/** 무게대로 영입 기물 하나 (pool에서 뽑아 낸다) */
+export const rollRecruit = <T extends { t: PieceType }>(pool: T[], r: number): T => {
+  let x = r * pool.reduce((n, o) => n + RECRUIT_ODDS[o.t].w, 0);
+  for (const o of pool) if ((x -= RECRUIT_ODDS[o.t].w) < 0) return o;
+  return pool[pool.length - 1];
+};
 
 /** 부품 상자 (첫 사기 조합 확정): 부품 + 맞물리는 카드 둘. needs = 분대에 있어야 하는 기물 */
 export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[] = [

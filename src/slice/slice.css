@@ -2362,3 +2362,61 @@ body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px
 .ko3 .word { white-space: nowrap; color: #16141c; text-shadow: 0 3px 0 #fff1c0; }
 .ko3.lose .word { color: #fff; text-shadow: 0 3px 0 #000; }
 .ko3 .word::after { mix-blend-mode: normal; background: #fff; }
+
+/* D-319 도발 말풍선: 다 찍힌 글 너비로 고정 — 보이지 않는 전문 위에 겹쳐 찍는다 */
+.taunt .tq-t { display: grid; }
+.taunt .tq-t > b { grid-area: 1 / 1; font-weight: 400; }
+.taunt .tq-ghost { visibility: hidden; }
+
+/* D-319 보상의 기물 카드: 카드가 아니라 기물을 얻는다는 띠 */
+.cf.recruit { position: relative; }
+.cf.recruit .rec-tag { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); z-index: 3; padding: 0 6px; background: #2dd4bf; color: #0b0b0e; font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; box-shadow: 0 0 0 2px #0b0b0e, 0 2px 0 2px #000; }
+
+/* ===== D-319 진입 화면 리뉴얼 (entry2) — 작업대 판 위: 이름표 → 무대 → 이름 도장 → 서술 ===== */
+.stagefx.entry2 { display: grid; place-items: center; grid-template-columns: 1fr; animation: none; }
+.entry2 .en-table { position: relative; width: min(660px, 92vw); display: grid; justify-items: center; gap: 8px; padding: 18px 24px 20px; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 6px 0 #000; }
+.entry2.has-bg .en-table { box-shadow: 0 6px 0 #000, 0 0 0 9999px rgba(6, 5, 9, 0.35); }
+.entry2 .en-plate { margin: 0; padding: 0 14px; font: 700 12px/26px Galmuri11, sans-serif; letter-spacing: 0.2em; color: #2b1a06; border-style: solid; border-width: 6px 8px; border-image: url('../assets/ui/chrome/plate.png') 6 8 fill / 6px 8px stretch; image-rendering: pixelated; visibility: hidden; }
+.entry2.run .en-plate { animation: enplate 320ms var(--snap) both; }
+@keyframes enplate { 0% { visibility: visible; transform: translateY(-14px) scale(1.2, 0.7); } 60% { transform: translateY(2px) scale(0.94, 1.08); } 100% { visibility: visible; transform: none; } }
+.entry2 .en-stage { position: relative; width: 100%; height: 108px; display: grid; place-items: end center; }
+.entry2 .en-name { margin: 0; font: 700 36px Galmuri11, sans-serif; color: #f4e6c4; text-shadow: 0 3px 0 #000; visibility: hidden; animation: none; }
+.entry2.named .en-name { animation: enstamp 360ms both; }
+@keyframes enstamp { 0% { visibility: visible; transform: scale(2.2) rotate(-5deg); color: #fff3c4; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 45% { transform: scale(0.92, 1.08); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 70% { transform: scale(1.04, 0.96); } 100% { visibility: visible; transform: none; } }
+.entry2 .en-narr { min-height: 1.6em; max-width: 46ch; text-align: center; animation: none; }
+.entry2.closing .en-table, .entry2.closing .sf-tip, .entry2.closing .sf-skip { visibility: hidden; }
+/* 대국 · 검문: 컨베이어에 기물이 하나씩 떨어져 박힌다 */
+.entry2 .en-line { position: relative; z-index: 2; display: flex; gap: 10px; align-items: flex-end; padding-bottom: 12px; }
+.entry2 .en-pc { display: block; width: 40px; height: 40px; visibility: hidden; }
+.entry2 .en-pc img, .entry2 .en-pc .piece-img { width: 40px; height: 40px; image-rendering: pixelated; }
+.entry2.run .en-pc { animation: endrop 420ms calc(260ms + var(--i) * 110ms) both; }
+@keyframes endrop { 0% { visibility: visible; transform: translateY(-80px) scale(0.8, 1.3); animation-timing-function: cubic-bezier(0.7, 0, 1, 0.5); } 55% { transform: translateY(0) scale(1.3, 0.7); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 78% { transform: translateY(-5px) scale(0.94, 1.08); } 100% { visibility: visible; transform: none; } }
+.entry2 .en-belt { position: absolute; left: 8%; right: 8%; bottom: 0; height: 14px; background: #2c2d38 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='14'%3E%3Crect width='16' height='2' fill='%235d606d'/%3E%3Crect y='12' width='16' height='2' fill='%2314131a'/%3E%3Crect x='2' y='4' width='6' height='6' fill='%2341434f'/%3E%3Crect x='2' y='4' width='6' height='1' fill='%23868a98'/%3E%3C/svg%3E") 0 0 / 16px 14px repeat-x; image-rendering: pixelated; box-shadow: 0 0 0 2px #0b0b0e, 0 4px 0 2px #000; }
+.entry2.run .en-belt { animation: enbelt 480ms steps(4) infinite; }
+.entry2.en-check.named .en-belt { animation: none; }
+@keyframes enbelt { to { background-position: -16px 0; } }
+.entry2 .en-scan { position: absolute; z-index: 3; top: 4px; bottom: 16px; left: 8%; width: 6px; background: #e5262f; box-shadow: 0 0 0 2px #5a0c12; visibility: hidden; }
+.entry2.run .en-scan { animation: enscan 900ms steps(14) var(--scan-at, 900ms) 2 both; }
+@keyframes enscan { 0% { visibility: visible; left: 8%; } 100% { visibility: visible; left: 92%; } }
+.entry2 .en-stamp { position: absolute; z-index: 4; right: 10%; top: 0; padding: 2px 10px; font: 700 24px Galmuri11, sans-serif; color: #e5262f; box-shadow: 0 0 0 3px #e5262f, 0 0 0 5px #0b0b0e; transform: rotate(-12deg); visibility: hidden; }
+.entry2.run .en-stamp { animation: enhit 380ms calc(var(--scan-at, 900ms) + 1800ms) both; }
+@keyframes enhit { 0% { visibility: visible; transform: rotate(-12deg) scale(2.6); animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 50% { transform: rotate(-12deg) scale(0.9, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 100% { visibility: visible; transform: rotate(-12deg); } }
+/* 소품 (고물상 · 사건 · 상자 · 작업대 · 막) */
+.entry2 .en-prop { position: relative; z-index: 2; }
+.entry2 .en-prop .sf-ico { width: 96px; height: 96px; }
+.entry2.run .en-prop { animation: enprop 460ms 120ms both; }
+@keyframes enprop { 0% { transform: translateY(-40px) scale(0.7, 1.3); animation-timing-function: cubic-bezier(0.7, 0, 1, 0.5); } 55% { transform: scale(1.25, 0.75); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 100% { transform: none; } }
+.entry2.en-shop.run .en-prop { animation: enprop 460ms 120ms both, enswing 1.6s 600ms infinite; transform-origin: 50% 10%; }
+@keyframes enswing { 0%, 100% { transform: rotate(-8deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); } 50% { transform: rotate(8deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); } }
+.entry2 .en-screw { position: absolute; z-index: 3; bottom: 6px; left: calc(42% + var(--i) * 14px); width: 16px; height: 16px; background: url('../assets/ui/kit/screw16.png') 0 0 / 16px 16px; image-rendering: pixelated; visibility: hidden; }
+.entry2.run .en-screw { animation: endrop 420ms calc(520ms + var(--i) * 120ms) both; }
+.entry2.en-event.run .en-prop { animation: enprop 460ms 120ms both, enflip 600ms 620ms steps(6) 1; }
+@keyframes enflip { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } 100% { transform: scaleX(1); } }
+.entry2.en-chest.run .en-prop { animation: enprop 460ms 120ms both, enrattle 300ms 560ms steps(6) 1, enpop 380ms 900ms both; }
+@keyframes enrattle { 0%, 100% { transform: none; } 25% { transform: translateX(-4px) rotate(-4deg); } 75% { transform: translateX(4px) rotate(4deg); } }
+@keyframes enpop { 0% { transform: none; animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 40% { transform: translateY(-14px) scale(1.2); } 100% { transform: none; } }
+.entry2.en-forge.run .en-prop { animation: enprop 460ms 120ms both, enpound 380ms 380ms 3; }
+@keyframes enpound { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 35% { transform: translateY(-10px) rotate(-6deg); animation-timing-function: cubic-bezier(0.7, 0, 1, 0.5); } 50% { transform: translateY(2px) scale(1.18, 0.82); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .entry2 * { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; } }
+.entry2 .en-plate { border: 0; border-image: none; padding: 0 12px; background: #d9a838; color: #2b1a06; box-shadow: inset 0 2px 0 #fff1c0, inset 0 -2px 0 #8a5a14, 0 0 0 2px #0b0b0e, 0 4px 0 2px #000; font: 700 12px/24px Galmuri11, sans-serif; }
+.entry2 .en-pc, .entry2 .en-pc img, .entry2 .en-pc .piece-img { width: 48px; height: 48px; }

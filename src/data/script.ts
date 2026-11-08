@@ -239,7 +239,7 @@ export const CROWN_OFF: Cut = {
 export const BOSS_TAUNTS: Record<StoryBoss | 'gilded', Record<'cheese' | 'beg' | 'gloat' | 'meet' | 'sig', string[]>> = {
   plate: {
     cheese: ['“틈을 노렸나. 다음엔 한 겹 더 두른다.”', '“얇은 데를 찔렀군. 비겁한 폰.”'],
-    beg: ['“한 겹만… 한 겹만 더 있었으면.”', '“철판을 줄게. 전부 가져가.”'],
+    beg: ['“한 겹만… 한 겹만 더 있었으면.”', '“이 철판, 너한테 둘러 주마. 그러니 그만…”'],
     gloat: ['“얇은 것은 녹는다.”', '“규격 미달. 용광로로.”'],
     meet: ['“또 왔군. 이번엔 더 두껍다.”', '“그때 벗겨진 철판, 다시 박았다.”'],
     sig: ['“한 줄, 녹여 주지.”', '“그 줄은 얇았다.”'],

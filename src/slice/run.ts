@@ -12,6 +12,8 @@ export type Reward = 'recruit' | 'kit' | 'card' | 'part' | 'end';
 
 export interface BattleDef {
   enemy: PieceType[];
+  /** 일반 대국 편성 이름 (D-319 — 갈림길마다 다른 상대) */
+  foe?: string;
   kingHp: number;
   /** 적 기물 HP 배율 (막마다) */
   enemyHp?: number;
@@ -123,10 +125,36 @@ const ACT_SCALE = [
   { hp: 1, king: 0.75 },
   { hp: 1, king: 0.9 },
 ];
-const NORMAL: PieceType[][][] = [
-  [['K', 'P', 'P', 'N'], ['K', 'P', 'P', 'B'], ['K', 'P', 'N', 'B']],
-  [['K', 'P', 'P', 'N', 'B'], ['K', 'P', 'R', 'N'], ['K', 'P', 'P', 'B', 'B']],
-  [['K', 'P', 'N', 'B', 'R'], ['K', 'P', 'P', 'R', 'R'], ['K', 'Q', 'P', 'P']],
+/**
+ * 일반 대국 편성 (D-319, 테스터: 「같은 줄의 대국 갈림길이 똑같은 상대 — 선택의 의미가 없다」):
+ * 막마다 이름 붙은 편성 여섯 — 같은 줄의 갈림길은 서로 다른 편성이 나오고(buildGraph), 지도 · 진입 화면에 이름이 보인다.
+ * 세기는 막 안에서 비슷하게(예전 세 편성 기준: 1막 4기 · 2막 5기 · 3막 5기 언저리 — 약한 기물이 많으면 수를 늘렸다).
+ */
+const NORMAL: { name: string; enemy: PieceType[] }[][] = [
+  [
+    { name: '척후 기병', enemy: ['K', 'P', 'P', 'N'] },
+    { name: '사선 감시', enemy: ['K', 'P', 'P', 'B'] },
+    { name: '혼성 소대', enemy: ['K', 'P', 'N', 'B'] },
+    { name: '보병 줄', enemy: ['K', 'P', 'P', 'P', 'P'] },
+    { name: '쌍발굽', enemy: ['K', 'N', 'N'] },
+    { name: '쌍렌즈', enemy: ['K', 'B', 'B'] },
+  ],
+  [
+    { name: '혼성 중대', enemy: ['K', 'P', 'P', 'N', 'B'] },
+    { name: '돌격 요새', enemy: ['K', 'P', 'R', 'N'] },
+    { name: '사제단', enemy: ['K', 'P', 'P', 'B', 'B'] },
+    { name: '기병대', enemy: ['K', 'P', 'P', 'N', 'N'] },
+    { name: '성벽 보병', enemy: ['K', 'P', 'P', 'P', 'R'] },
+    { name: '사선 기수', enemy: ['K', 'P', 'N', 'B', 'B'] },
+  ],
+  [
+    { name: '정규 대대', enemy: ['K', 'P', 'N', 'B', 'R'] },
+    { name: '쌍탑', enemy: ['K', 'P', 'P', 'R', 'R'] },
+    { name: '여왕 근위', enemy: ['K', 'Q', 'P', 'P'] },
+    { name: '기병 사단', enemy: ['K', 'P', 'N', 'N', 'B'] },
+    { name: '대성당', enemy: ['K', 'P', 'B', 'B', 'R'] },
+    { name: '여왕 기마', enemy: ['K', 'Q', 'N', 'P'] },
+  ],
 ];
 const CHECK: PieceType[][] = [['K', 'P', 'P', 'B', 'R'], ['K', 'P', 'N', 'R', 'R'], ['K', 'Q', 'R', 'N', 'P']];
 // 1막 반장: 퀸 → 룩 (D-214 — 1막 대국 넷에서 반장 판 퀸 포함 다섯으로 뛰던 계단을 낮춘다)
@@ -210,7 +238,8 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
     return { enemy: BOSS[a], kingHp: (sc.king + 0.1) * (BOSS_TUNE[rule]?.king ?? 1), atk: BOSS_TUNE[rule]?.atk, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[rule].name}`, narr: NARR_BOSS[rule] ?? '', tell: BOSS_RULES[rule].tell, reward: 'part', boss: true, bossRule: rule, traits: TRAITS[a] };
   if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
-  return { enemy: pool[rng.int(pool.length)], kingHp: sc.king, enemyHp: sc.hp, title: `${label} — 대국`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
+  const pick = pool[rng.int(pool.length)];
+  return { enemy: [...pick.enemy], foe: pick.name, kingHp: sc.king, enemyHp: sc.hp, title: `${label} — ${pick.name}`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
 };
 
 
@@ -307,5 +336,11 @@ export const buildGraph = (act: 1 | 2 | 3, rng: Rng, asc = 0): MapNode[][] => {
     if (cand.length) cand[rng.int(cand.length)].kind = 'check';
   }
   for (const n of rows.flat()) if (n.kind === 'battle' || n.kind === 'check') n.battle = battleFor(act, n.kind, rng, asc);
+  // 같은 줄 · 바로 앞 줄과 편성이 겹치면 다시 뽑는다 (D-319 — 갈림길마다 다른 상대). 몇 번 뽑아도 겹치면 그대로
+  rows.forEach((row, f) => row.forEach((n) => {
+    if (n.kind !== 'battle' || !n.battle) return;
+    const near = () => [...row, ...(rows[f - 1] ?? [])].filter((m) => m !== n && m.battle?.foe).map((m) => m.battle!.foe);
+    for (let t = 0; t < 6 && near().includes(n.battle.foe); t++) n.battle = battleFor(act, 'battle', rng, asc);
+  }));
   return rows;
 };
