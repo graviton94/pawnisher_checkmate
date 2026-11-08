@@ -35,4 +35,4 @@ export const textWidth = (s: string): number =>
   [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === ' ' ? 0.35 : /[×−—·→「」]/.test(ch) ? 0.9 : 0.6), 0);
 
 /** 줄 한도 (레일 카드 196px 기준 — 묘사 15px 두 줄, 기능 · 조건 12px 한 줄) */
-export const DESC_LIMIT = { say: 22, fx: 14, cond: 14 };
+export const DESC_LIMIT = { say: 22, fx: 14, cond: 14 }; // 조건은 두 줄까지 (D-336) — 묘사 + 조건 + 성능 ≤ 4줄은 allFaces 측정으로

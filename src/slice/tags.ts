@@ -37,9 +37,9 @@ const effectFromText = (t: string): Effect => (/×\s?\d/.test(t) ? '×' : /\(\+\
 
 /** 합 · 곱이 아닐 때 하는 일 한 낱말 (D-327) */
 const wordFromText = (t: string): string =>
-  /핀|묶/.test(t) ? '핀' : /포크/.test(t) ? '포크' : /체크/.test(t) ? '체크' : /캐슬링|자리를 바꾼/.test(t) ? '교대'
-  : /곁에 폰|폰 \+1|보충/.test(t) ? '증원' : /밀|충돌|부딪/.test(t) ? '충돌' : /방열판/.test(t) ? '방열' : /HP|땜질|회복|고친/.test(t) ? '회복'
-  : /손패|카드 \+|카드를/.test(t) ? '카드' : /태엽/.test(t) ? '태엽' : /나사|값/.test(t) ? '나사' : /되감기/.test(t) ? '되감기' : /쇼크/.test(t) ? '면역'
+  /핀|묶/.test(t) ? '핀' : /포크|두 적/.test(t) ? '포크' : /체크/.test(t) ? '체크' : /캐슬링|자리를 바꾼/.test(t) ? '교대'
+  : /곁에 폰|폰 \+1|폰 하나$|폰 하나 |보충/.test(t) ? '증원' : /곁의 폰/.test(t) ? '진격' : /밀|충돌|부딪/.test(t) ? '충돌' : /방열판/.test(t) ? '방열' : /HP|땜질|회복|고친/.test(t) ? '회복'
+  : /손패|카드 \+|카드 \d장|카드를/.test(t) ? '카드' : /태엽/.test(t) ? '태엽' : /나사|값/.test(t) ? '나사' : /되감기/.test(t) ? '되감기' : /쇼크/.test(t) ? '면역'
   : /연쇄/.test(t) ? '연쇄' : /전진|진격|앞으로/.test(t) ? '진격' : '이동';
 const KIND_WORD: Record<string, string> = { shield: '방열', repair: '회복', draw: '카드', spark: '점화', spend: '방출', draft: '증원', swap: '교대', march: '진격', gambit: '제물' };
 

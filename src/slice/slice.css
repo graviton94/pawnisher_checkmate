@@ -2656,3 +2656,9 @@ body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { margin-top: 4px; color
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { margin-top: 3px; }
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx > i { display: inline-block; font-style: normal; padding: 1px 6px; background: #3a2c10; color: #ffd64a; box-shadow: 0 0 0 1px #0b0b0e, inset 0 1px 0 #8a6416; line-height: 15px; }
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 5px; }
+/* D-336: 조건은 쉬운 말이라 길 수 있다 — 낱말 단위로 두 줄까지 (묘사 + 조건 + 성능 ≤ 4줄은 측정으로 지킨다) */
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { white-space: normal; text-wrap: balance; }
+/* 손패를 펼쳤을 때도 같은 문단 (D-336) */
+body.slice #hand .mg-desc .dl { display: block; word-break: keep-all; }
+body.slice #hand .mg-desc .dl-if { color: #b9b4c2; font: 400 12px/15px Galmuri11, sans-serif; }
+body.slice #hand .mg-desc .dl-fx > i { display: inline-block; font-style: normal; margin-top: 2px; padding: 0 5px; background: #3a2c10; color: #ffd64a; font: 700 12px/15px Galmuri11, sans-serif; box-shadow: 0 0 0 1px #0b0b0e; }
