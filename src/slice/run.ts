@@ -167,7 +167,8 @@ export const INTRO: BattleDef[] = [
       { side: 1, t: 'P', x: 4, y: 3 },
       { side: 1, t: 'P', x: 3, y: 4 },
     ],
-    order: ['advance', 'leap', 'kingStep', 'advance', 'leap', 'order', 'advance', 'order'],
+    // 손패를 짜 둔다 (테스터 피드백 B): 1턴 = 폰 · 나이트 · (처치로 뽑는) 지휘 / 2턴 = 폰 둘(되감기 실습 · 승격) · 나이트(빠지며 치기)
+    order: ['advance', 'leap', 'kingStep', 'leap', 'kingStep', 'order', 'kingStep', 'advance', 'advance', 'leap', 'order', 'kingStep', 'advance', 'leap', 'order'],
     title: '입문 — 시험대',
     narr: '흰 기물들이 처음으로 눈을 뜬다. 검은 것이 앞을 막는다.',
     tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.',

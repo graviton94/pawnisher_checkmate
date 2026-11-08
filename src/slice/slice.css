@@ -1855,6 +1855,7 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23050607' fill-opacity='.85'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23050607' fill-opacity='.85'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
 .tut .tut-catch { position: absolute; inset: 0; pointer-events: auto; }
 .tut .tut-catch[hidden] { display: none; }
+.tut .tut-peeks > i { position: absolute; pointer-events: auto; }
 /* 짚은 곳: 황동 꺾쇠 넷이 한 칸씩 숨 쉰다 (steps) */
 .tut .tut-frame { position: absolute; pointer-events: none; animation: tutBreath 0.8s steps(2, jump-none) infinite; }
 .tut .tut-frame::before, .tut .tut-frame::after { content: ''; position: absolute; inset: -4px; border: 4px solid #f4d27a; filter: drop-shadow(2px 2px 0 #000);
@@ -2349,3 +2350,15 @@ body[data-boss="magnet"] .boss-rules { filter: hue-rotate(-75deg); } /* 진홍 �
 /* D-314 반장 등장: 규칙 줄이 아래 띠를 넘던 것 — 이름 60 → 45px(갈무리14 격자), 글 묶음 간격을 좁힌다 */
 .bossfx .bf-name { font-size: 45px; }
 .bossfx .bf-text { gap: 4px; top: calc(16vh + 10px); }
+
+/* D-318 테스터 피드백 B — 되감기 남은 수는 단추 모서리 배지로 (아이콘 아래 숫자가 칸을 넘쳤다) */
+body.slice.lay-f #btn-rewind { position: relative; }
+body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px; margin: 0; min-width: 14px; padding: 0 2px; line-height: 14px; text-align: center; background: #0b0b0e; color: #f4d27a; box-shadow: 0 0 0 1px #5a4a2a; font: 700 12px Galmuri11, sans-serif; }
+/* 대국 끝 띠 (테스터: 「적 킹 격파」만 다른 화면과 디자인이 달랐다) — 차례 띠(tb4)와 같은 황동 · 진홍 9칸 띠, 글자는 한 줄 */
+.ko3 .koband { height: 96px; margin-top: -48px; background: none; border-style: solid; border-width: 12px 0; border-image: url('../assets/ui/chrome/btn-brass.png') 9 0 fill / 18px 0 stretch; image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.ko3.lose .koband { background: none; border-image-source: url('../assets/ui/chrome/btn-crimson.png'); box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.ko3 .koband::before, .ko3.lose .koband::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; opacity: 0.5; }
+.ko3.lose .koband::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23ff6b6b'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23ff6b6b'/%3E%3C/svg%3E"); }
+.ko3 .word { white-space: nowrap; color: #16141c; text-shadow: 0 3px 0 #fff1c0; }
+.ko3.lose .word { color: #fff; text-shadow: 0 3px 0 #000; }
+.ko3 .word::after { mix-blend-mode: normal; background: #fff; }

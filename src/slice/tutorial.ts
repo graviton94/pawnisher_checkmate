@@ -15,6 +15,10 @@ export interface TutStep {
   wait?: () => boolean;
   /** 구멍 둘레 여백 (px) */
   pad?: number;
+  /** 보이기만 하는 구멍 (누를 수 없다) — 예: 과녁을 짚는 동안 고른 카드가 같이 흐려지지 않게 (테스터 피드백) */
+  peek?: () => (Element | DOMRect | null | undefined)[];
+  /** 이 걸음에 들어설 때 한 번 */
+  enter?: () => void;
 }
 
 export interface TutOpts {
@@ -44,11 +48,12 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
   new Promise((resolve) => {
     const root = document.createElement('div');
     root.className = 'tut';
-    root.innerHTML = `<div class="tut-dim"></div><div class="tut-frame" hidden></div><div class="tut-catch"></div>
+    root.innerHTML = `<div class="tut-dim"></div><div class="tut-frame" hidden></div><div class="tut-peeks"></div><div class="tut-catch"></div>
       <div class="tut-talk"><i class="tut-face">${o.face}</i><div class="tut-body"><b class="tut-name">${o.name}</b><p class="tut-text"></p><small class="tut-next" hidden>${o.next}</small></div><button type="button" class="tut-skip">${o.skip}</button></div>`;
     document.body.appendChild(root);
     const dim = root.querySelector<HTMLElement>('.tut-dim')!;
     const frame = root.querySelector<HTMLElement>('.tut-frame')!;
+    const peeks = root.querySelector<HTMLElement>('.tut-peeks')!;
     const catcher = root.querySelector<HTMLElement>('.tut-catch')!;
     const talk = root.querySelector<HTMLElement>('.tut-talk')!;
     const textEl = root.querySelector<HTMLElement>('.tut-text')!;
@@ -71,18 +76,21 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       const r = rectOf(s?.target?.());
       const W = innerWidth;
       const H = innerHeight;
-      if (!r) {
-        dim.style.clipPath = '';
-        frame.hidden = true;
-      } else {
-        const p = s.pad ?? 6;
-        const x = Math.max(0, Math.round(r.left - p));
-        const y = Math.max(0, Math.round(r.top - p));
-        const w = Math.round(r.width + p * 2);
-        const h = Math.round(r.height + p * 2);
-        dim.style.clipPath = `path(evenodd, 'M0 0H${W}V${H}H0Z M${x} ${y}h${w}v${h}h${-w}Z')`;
-        Object.assign(frame.style, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+      const box = (q: DOMRect, p: number) => ({ x: Math.max(0, Math.round(q.left - p)), y: Math.max(0, Math.round(q.top - p)), w: Math.round(q.width + p * 2), h: Math.round(q.height + p * 2) });
+      const extra = (s?.peek?.() ?? []).map(rectOf).filter((q): q is DOMRect => !!q).map((q) => box(q, 4));
+      const holes = [...(r ? [box(r, s.pad ?? 6)] : []), ...extra];
+      dim.style.clipPath = holes.length ? `path(evenodd, 'M0 0H${W}V${H}H0Z ${holes.map((q) => `M${q.x} ${q.y}h${q.w}v${q.h}h${-q.w}Z`).join(' ')}')` : '';
+      if (!r) frame.hidden = true;
+      else {
+        const q = holes[0];
+        Object.assign(frame.style, { left: `${q.x}px`, top: `${q.y}px`, width: `${q.w}px`, height: `${q.h}px` });
         frame.hidden = false;
+      }
+      // 보이기만 하는 구멍 위에는 투명 막 — 눌러도 게임으로 가지 않는다
+      const key = extra.map((q) => `${q.x},${q.y},${q.w},${q.h}`).join('|');
+      if (peeks.dataset.k !== key) {
+        peeks.dataset.k = key;
+        peeks.innerHTML = extra.map((q) => `<i style="left:${q.x}px;top:${q.y}px;width:${q.w}px;height:${q.h}px"></i>`).join('');
       }
       // 말풍선은 짚은 곳을 가리지 않게: 짚은 곳이 아래쪽이면 위에, 아니면 아래에
       const low = r ? r.top + r.height / 2 > H * 0.5 : false;
@@ -95,6 +103,7 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       // 기다리는 걸음: 구멍 안만 누를 수 있다 (막은 구멍 밖을 막는다). 누르는 걸음: 어디를 눌러도 다음
       catcher.hidden = !!s.wait;
       root.classList.toggle('act', !!s.wait);
+      s.enter?.();
       next.hidden = true;
       place();
       typing = true;

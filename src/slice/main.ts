@@ -1095,7 +1095,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   }
   // 첫 승격 (D-244): 부관이 칭찬하며 승격 규칙을 알려 준다 — 출하를 통틀어 한 번
   const promo = r.events.find((e) => e.type === 'promote');
-  if (promo && !tutDone('promote') && b.s.winner === null) {
+  if (promo && !tutDone('promote') && !tutActive && b.s.winner === null) {
     const pp = findPiece(b.s, (promo as { pieceId: number }).pieceId);
     await tutorial('promote', [{ text: TUT.promote, target: () => (pp ? tileRect(pp) : null) }]);
   }
@@ -3287,7 +3287,7 @@ const tutMark = (part: string): void => {
 const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
   tutActive = true;
   document.querySelector('.coach-line')?.remove();
-  const done = await runTutorial(steps, { pause: () => enemyTurn || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
+  const done = await runTutorial(steps, { pause: () => enemyTurn || document.body.classList.contains('rev-freeze') || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
   tutActive = false;
   tutMark(part);
   track('tutorial', { part, completed: done });
@@ -3309,8 +3309,16 @@ const battleTutorial = async (): Promise<void> => {
   // 판이 다 설 때까지 기다린다
   while (busy) await new Promise((r) => window.setTimeout(r, 120));
   const T = TUT.battle;
-  const pawn = myPiece('P');
-  const knight = myPiece('N');
+  // 기물은 수마다 새 객체로 바뀐다 — 자리는 늘 지금 판에서 id로 찾는다
+  const pawnId = myPiece('P')?.id ?? -1;
+  const knightId = myPiece('N')?.id ?? -1;
+  const at = (id: number) => { const q = b.s.pieces.find((p) => p.id === id); return q ? tileRect(q) : null; };
+  const ahead = (id: number) => { const q = b.s.pieces.find((p) => p.id === id); return q ? tileRect({ x: q.x, y: q.y + 1 }) : null; };
+  const foeK = () => b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+  const selCardEl = () => (selCard !== null ? document.querySelector(`#hand [data-card="${selCard}"]`) : null);
+  const plays = () => playsMade;
+  let p0 = 0;
+  // 1턴 (테스터 피드백 B): 폰 처치 → 나이트 둘 짓밟기 → 칭찬 → 지휘로 연쇄 한 방 → 턴 끝 → 적이 친다
   const ok = await tutorial('battle-a', [
     { text: T.hello },
     { text: T.board, target: () => $('board').querySelector('canvas') ?? $('board') },
@@ -3318,39 +3326,71 @@ const battleTutorial = async (): Promise<void> => {
     { text: T.gauge, target: () => $('vials') },
     { text: T.hand, target: () => $('hand') },
     { text: T.card1, target: () => cardEl('advance'), wait: () => selCard !== null && b.hand[selCard] === 'advance' },
-    { text: T.piece1, target: () => (pawn ? tileRect(pawn) : null), wait: () => !!pawn && selPiece === pawn.id },
-    { text: T.square1, target: () => tileRect({ x: 1, y: 2 }), wait: () => b.kills >= 1 && !busy },
+    { text: T.piece1, target: () => at(pawnId), wait: () => selPiece === pawnId },
+    // 고른 카드는 흐리지 않는다 (테스터: 과녁을 짚을 때 내가 고른 카드까지 흐려졌다)
+    { text: T.marks, target: () => $('board').querySelector('canvas') ?? $('board'), peek: () => [selCardEl()] },
+    { text: T.square1, target: () => tileRect({ x: 1, y: 2 }), peek: () => [selCardEl()], wait: () => b.kills >= 1 && !busy },
     { text: T.chain, target: () => $('vials') },
     { text: T.card2, target: () => cardEl('leap'), wait: () => selCard !== null && b.hand[selCard] === 'leap' },
-    { text: T.piece2, target: () => (knight ? tileRect(knight) : null), wait: () => !!knight && selPiece === knight.id },
-    { text: T.square2, target: () => tileRect({ x: 2, y: 2 }), wait: () => b.kills >= 2 && !busy },
+    { text: T.piece2, target: () => at(knightId), peek: () => [selCardEl()], wait: () => selPiece === knightId },
+    { text: T.square2, target: () => tileRect({ x: 2, y: 2 }), peek: () => [selCardEl()], wait: () => b.kills >= 3 && !busy },
+    { text: T.praise, target: () => at(knightId) },
+    { text: T.order, target: () => cardEl('order'), wait: () => selCard !== null && b.hand[selCard] === 'order' },
+    { text: T.piece4, target: () => at(knightId), peek: () => [selCardEl()], wait: () => selPiece === knightId },
+    { text: T.square4, target: () => tileRect({ x: 4, y: 3 }), peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
+    { text: T.big, target: () => { const k = foeK(); return k ? tileRect(k) : null; } },
     { text: T.end, target: () => $('btn-end'), wait: () => b.turn >= 2 && !busy && !enemyTurn },
   ]);
   if (!ok || b.s.winner !== null) return;
-  // 2턴: 적이 겨눈 우리 기물 하나를 골라 빠지며 치기를 짚는다 (나이트 → 대장 → 폰 순 — 붉은 칸 밖에서 칠 수 있는 것)
-  const steps: TutStep[] = [];
-  const CARD_OF: Partial<Record<PieceType, CommandId>> = { N: 'leap', K: 'kingStep', P: 'advance' };
-  const pick = (['N', 'K', 'P'] as PieceType[])
-    .map((t) => myPiece(t))
-    .filter((p): p is NonNullable<typeof p> => !!p && (b.graze ?? []).includes(p.id))
-    .map((p) => ({ p, cid: [CARD_OF[p.type], 'order' as CommandId].find((c) => c && b.hand.includes(c)) }))
-    .find((x) => x.cid && grazeSquareFor(b.hand.indexOf(x.cid), x.p.id));
-  if (pick) {
-    const { p: gp, cid } = pick;
-    const plays0 = playsMade;
+  // 2턴: 맞은 기물 → 길막기 → 되감기 실습 → 퀸 승격 → 빠지며 치기
+  const hurt = b.s.pieces.find((p) => p.side === 0 && p.hp < p.maxHp && p.type !== 'K');
+  const steps: TutStep[] = [
+    { text: T.hit, target: () => (hurt ? tileRect(hurt) : null) },
+    { text: T.block, target: () => $('board').querySelector('canvas') ?? $('board') },
+  ];
+  if (b.s.pieces.some((p) => p.id === pawnId) && b.hand.filter((c) => c === 'advance').length >= 2 && b.rewinds > 0) {
+    let rw0 = 0;
     steps.push(
-      { text: T.graze, target: () => tileRect(gp) },
-      { text: T.card3, target: () => cardEl(cid!), wait: () => selCard !== null && b.hand[selCard] === cid },
-      { text: T.piece3, target: () => tileRect(gp), wait: () => selPiece === gp.id },
-      { text: T.square3, target: () => (selCard !== null ? grazeSquareFor(selCard, gp.id) : null) ?? $('board'), wait: () => playsMade > plays0 && !busy },
+      { text: T.promo, target: () => cardEl('advance'), wait: () => selCard !== null && b.hand[selCard] === 'advance' },
+      { text: T.piece1, target: () => at(pawnId), peek: () => [selCardEl()], wait: () => selPiece === pawnId },
+      { text: T.square1.replace('금빛 ', ''), target: () => ahead(pawnId), peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
+      { text: T.rewind, target: () => $('btn-rewind'), enter: () => (rw0 = rewindsUsedRun), wait: () => rewindsUsedRun > rw0 && !busy },
+      // 실습으로 쓴 톱니는 돌려준다 (입문 판에서 출하 자원을 깎지 않는다)
+      { text: T.rewound, target: () => $('btn-rewind'), enter: () => { b.rewinds += 1; rewindsAtStart += 1; refresh(); } },
+      { text: T.promo, target: () => cardEl('advance'), wait: () => selCard !== null && b.hand[selCard] === 'advance' },
+      { text: T.piece1, target: () => at(pawnId), peek: () => [selCardEl()], wait: () => selPiece === pawnId },
+      { text: T.square1.replace('금빛 ', ''), target: () => ahead(pawnId), peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
+      { text: T.promo2, target: () => cardEl('advance'), wait: () => selCard !== null && b.hand[selCard] === 'advance' },
+      { text: T.piece1, target: () => at(pawnId), peek: () => [selCardEl()], wait: () => selPiece === pawnId },
+      { text: T.square1.replace('금빛 ', ''), target: () => ahead(pawnId), peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
+      { text: TUT.promoteTut, target: () => at(pawnId), enter: () => tutMark('promote') },
     );
-  } else {
-    // 맞는 카드가 손에 없으면 설명만 — 노려진 기물을 짚는다
-    const any = b.s.pieces.find((p) => p.side === 0 && (b.graze ?? []).includes(p.id));
-    if (any) steps.push({ text: T.graze, target: () => tileRect(any) });
   }
-  steps.push({ text: T.rewind, target: () => $('btn-rewind') }, { text: T.help, target: () => $('btn-help') }, { text: T.free });
-  await tutorial('battle', steps);
+  // 빠지며 치기: 적이 겨눈 우리 기물 하나를 골라 (나이트 → 대장 → 폰 → 퀸 순 — 붉은 칸 밖에서 칠 수 있는 것)
+  const CARD_OF: Partial<Record<PieceType, CommandId>> = { N: 'leap', K: 'kingStep', P: 'advance' };
+  steps.push({
+    text: T.graze,
+    target: () => { const g = b.s.pieces.find((p) => p.side === 0 && (b.graze ?? []).includes(p.id)); return g ? tileRect(g) : null; },
+  });
+  const grazeSteps = (): TutStep[] => {
+    const pick = (['N', 'K', 'P', 'Q'] as PieceType[])
+      .map((t) => myPiece(t))
+      .filter((p): p is NonNullable<typeof p> => !!p && (b.graze ?? []).includes(p.id))
+      .map((p) => ({ p, cid: [CARD_OF[p.type], 'order' as CommandId].find((c) => c && b.hand.includes(c)) }))
+      .find((x) => x.cid && grazeSquareFor(b.hand.indexOf(x.cid), x.p.id));
+    if (!pick) return [];
+    const { p: gp, cid } = pick;
+    return [
+      { text: T.card3, target: () => cardEl(cid!), wait: () => selCard !== null && b.hand[selCard] === cid },
+      { text: T.piece3, target: () => tileRect(gp), peek: () => [selCardEl()], wait: () => selPiece === gp.id },
+      { text: T.square3, target: () => (selCard !== null ? grazeSquareFor(selCard, gp.id) : null) ?? $('board'), peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
+    ];
+  };
+  const ok2 = await tutorial('battle-b', steps);
+  if (!ok2 || b.s.winner !== null) return;
+  // 승격 뒤의 판에서 빠지며 칠 수가 있으면 짚고, 없으면 설명으로 끝
+  const g = grazeSteps();
+  await tutorial('battle', [...g, { text: T.help, target: () => $('btn-help') }, { text: T.free }]);
 };
 /** 이 카드로 빠지며 칠 수 있는 칸 (붉은 칸 밖 · 적을 친다) */
 const grazeSquareFor = (ci: number, pieceId: number): DOMRect | null => {

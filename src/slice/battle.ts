@@ -529,6 +529,35 @@ export const liveIntents = (b: SliceBattle): Intent[] => {
       out.push({ pieceId: p.id, to: alt.to });
     }
   }
+  // 대체 행동 (테스터: 「움직이려던 기물이 죽으면 아무것도 안 한다」): 계획한 기물이 쓰러져 남은 태엽으로
+  // 아직 계획이 없는 적이 지금 보드에서 가장 좋은 수를 둔다 — 같은 기준(bestFor) · 같은 태엽 한도라 예고 = 실행 그대로
+  let ap = SLICE.enemyAp - out.reduce((n, it) => n + SLICE.moveCost[findPiece(b.s, it.pieceId)!.type], 0);
+  const lost = b.intents.some((it) => !findPiece(b.s, it.pieceId));
+  if (lost && ap > 0) {
+    const busy = new Set(out.map((it) => it.pieceId));
+    const reach = playerReach(b.s);
+    const spare = b.s.pieces
+      .filter((q) => q.side === 1 && !busy.has(q.id) && !(b.pinned ?? []).includes(q.id) && !(b.staggered ?? []).includes(q.id))
+      .map((q) => ({ q, best: bestFor(b.s, q, taken, b.turn, { reach, boss: b.boss }) }))
+      .filter((x) => x.best)
+      .sort((x, y) => y.best!.score - x.best!.score || x.q.id - y.q.id);
+    for (const { q, best } of spare) {
+      const cost = SLICE.moveCost[q.type];
+      if (cost > ap || taken.has(`${best!.to.x},${best!.to.y}`)) continue;
+      ap -= cost;
+      taken.add(`${best!.to.x},${best!.to.y}`);
+      out.push({ pieceId: q.id, to: best!.to });
+    }
+    // 한 턴을 통째로 쉬지 않는다 (planEnemy와 같은 D-214 규칙): 겁나서 고른 게 없으면 위험을 무릅쓰고 가장 좋은 수 하나
+    if (!out.length) {
+      const bold = b.s.pieces
+        .filter((q) => q.side === 1 && SLICE.moveCost[q.type] <= SLICE.enemyAp && !(b.pinned ?? []).includes(q.id) && !(b.staggered ?? []).includes(q.id))
+        .map((q) => ({ q, best: bestFor(b.s, q, taken, b.turn, { boss: b.boss }) }))
+        .filter((x) => x.best)
+        .sort((x, y) => y.best!.score - x.best!.score || x.q.id - y.q.id)[0];
+      if (bold) out.push({ pieceId: bold.q.id, to: bold.best!.to });
+    }
+  }
   return out;
 };
 
