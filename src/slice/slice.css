@@ -2515,3 +2515,10 @@ body.slice.lay-f .apbar.regain .seg.on::before { content: ''; position: absolute
 .cf .fit-hint.bad { background: #9a141e; color: #ffc0c0; }
 .cf .cf-win { position: relative; }
 .cf .cf-win .fit-hint { top: auto; bottom: 2px; }
+
+/* D-319 장소 화면(작업대 · 고물상 · 보상 · 사건) 덮개는 옅게 — 짙은 디더가 배경 그림을 거의 지웠다 (테스터: 작업대는 왜 배경이 없나) */
+body.slice.placebg .overlay { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%230b0b0e'/%3E%3C/svg%3E"); background-color: transparent; }
+body.slice.placebg .overlay { background-image: none; }
+.part-cards.forge4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.part-cards.forge4 .part-card small { font-size: 12px; font-family: Galmuri11, sans-serif; }
+body[data-place="bg-forge"] .overlay .panel { max-width: min(62vw, 640px); }

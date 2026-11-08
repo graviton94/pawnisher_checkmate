@@ -1982,6 +1982,18 @@ const shopScreen = (): void => {
 /** 작업대 (R5-2): 셋 중 하나 — 다듬기(한 장 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) */
 /** 종막 최종 정비 (D-252): 선택지 셋 다 · 들어오면 분대 HP 가득 */
 let forgeFinal = false;
+/** 작업대 보강 (D-319): 분대원 하나 — 문턱 +FORGE.braceDoors (킹 제외) */
+const braceScreen = (): void => {
+  const list = squad.map((u, i) => ({ u, i })).filter(({ u }) => u.t !== 'K');
+  const el = openOverlay(`<h2>보강 <span class="dim">— 축을 덧댈 분대원 하나</span></h2><div class="part-cards">${list.map(({ u, i }) => `<button type="button" class="part-card" data-brace="${i}"><span class="rec-art">${pieceImg(u.t, 0, 'large', 48)}</span><b>${u.name ?? PIECE_NAMES_KO[u.t]}</b><small>문턱 ${u.doors ?? 0} → ${(u.doors ?? 0) + FORGE.braceDoors}</small></button>`).join('')}</div>`);
+  el.querySelectorAll<HTMLElement>('[data-brace]').forEach((btn) => btn.addEventListener('click', () => {
+    const i = Number(btn.dataset.brace);
+    squad[i] = { ...squad[i], doors: (squad[i].doors ?? 0) + FORGE.braceDoors };
+    sfx('stamp');
+    toast(`${squad[i].name ?? PIECE_NAMES_KO[squad[i].t]}의 축이 두꺼워졌다. (문턱 +${FORGE.braceDoors})`);
+    window.setTimeout(advance, 600);
+  }));
+};
 const forgeScreen = (): void => {
   // 장소 배경 (D-200): 외눈 정비공의 작업대 BG-02 — 정비공이 왼쪽, 창은 오른쪽
   document.body.classList.add('between');
@@ -1992,21 +2004,25 @@ const forgeScreen = (): void => {
   // 셋 중 둘만 (D-247): 출하 씨앗으로 정해 이어하기에서도 같다
   const frng = sub();
   const hide = (['refine', 'remove', 'repair'] as const)[frng.int(3)];
-  const opt = (k: 'refine' | 'remove' | 'repair', html: string) => (forgeFinal || ECON.forgeOpts >= 3 || k !== hide ? html : '');
+  void hide;
+  // 넷 다 보인다 (테스터: 「작업대가 할 수 있는 게 너무 적다」 — 예전엔 셋 중 둘). 고르는 건 여전히 하나
+  const opt = (_k: 'refine' | 'remove' | 'repair' | 'brace', html: string) => html;
   if (forgeFinal) squad = squad.map((u) => ({ ...u, hp: crewMaxHp(u) }));
   // 최종 정비 (각본 S5): 외눈 정비공의 마지막 말
   if (forgeFinal) window.setTimeout(() => toast(GILDED_STORY.forge.map((l) => `${l.who} “${l.t}”`).join(' '), 4200), 600);
   const el = openOverlay(`<h2>${forgeFinal ? '최종 정비 <span class="dim">— 분대 HP 가득 · 하나를 더 고릅니다</span>' : '작업대 <span class="dim">— 하나를 고릅니다</span>'}</h2>${mend.mended.length ? `<p class="mend-line">${mend.mended.map((u) => `<span class="mend">${lifePips(u, 'mend')} ${u.name}</span>`).join(' ')} <span class="dim">${LIFE_TEXT.mended(mend.mended.map((u) => u.name ?? '').join(' · '))}</span></p>` : ''}
-    <div class="part-cards">
+    <div class="part-cards forge4">
       ${opt('refine', `<button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>`)}
       ${opt('remove', `<button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small></button>`)}
       ${opt('repair', `<button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>`)}
+      ${squad.some((u) => u.t !== 'K') ? `<button type="button" class="part-card" data-forge="brace"><i class="ico" style="${iconArt('shieldWall')}"></i><b>보강</b><small>분대원 하나의 축을 덧댄다. (문턱 +${FORGE.braceDoors})</small></button>` : ''}
     </div>`);
   el.querySelectorAll<HTMLElement>('[data-forge]').forEach((btn) =>
     btn.addEventListener('click', () => {
       const k = btn.dataset.forge;
-      const label = k === 'refine' ? '카드 하나를 다듬는다' : k === 'remove' ? '카드 한 장을 뺀다' : '분대를 수리한다';
+      const label = k === 'refine' ? '카드 하나를 다듬는다' : k === 'remove' ? '카드 한 장을 뺀다' : k === 'brace' ? '분대원 하나를 보강한다' : '분대를 수리한다';
       choose(btn, label, () => {
+        if (k === 'brace') return braceScreen();
         if (k === 'remove') return deckView('remove', (removed) => (removed ? advance() : forgeScreen()));
         if (k === 'refine') return refineScreen();
         squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * FORGE.repairPct)) }));
