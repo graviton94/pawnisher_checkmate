@@ -1985,7 +1985,7 @@ let forgeFinal = false;
 /** 작업대 보강 (D-319): 분대원 하나 — 문턱 +FORGE.braceDoors (킹 제외) */
 const braceScreen = (): void => {
   const list = squad.map((u, i) => ({ u, i })).filter(({ u }) => u.t !== 'K');
-  const el = openOverlay(`<h2>보강 <span class="dim">— 축을 덧댈 분대원 하나</span></h2><div class="part-cards">${list.map(({ u, i }) => `<button type="button" class="part-card" data-brace="${i}"><span class="rec-art">${pieceImg(u.t, 0, 'large', 48)}</span><b>${u.name ?? PIECE_NAMES_KO[u.t]}</b><small>문턱 ${u.doors ?? 0} → ${(u.doors ?? 0) + FORGE.braceDoors}</small></button>`).join('')}</div>`);
+  const el = openOverlay(`<h2>보강 <span class="dim">— 축을 덧댈 분대원 하나</span></h2><div class="part-cards">${list.map(({ u, i }) => optFace({ name: u.name ?? PIECE_NAMES_KO[u.t], art: pieceImg(u.t, 0, 'large', 72), desc: `${PIECE_NAMES_KO[u.t]} · 문턱 ${u.doors ?? 0} → ${(u.doors ?? 0) + FORGE.braceDoors}`, attrs: `data-brace="${i}"` })).join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-brace]').forEach((btn) => btn.addEventListener('click', () => {
     const i = Number(btn.dataset.brace);
     squad[i] = { ...squad[i], doors: (squad[i].doors ?? 0) + FORGE.braceDoors };
@@ -2011,11 +2011,11 @@ const forgeScreen = (): void => {
   // 최종 정비 (각본 S5): 외눈 정비공의 마지막 말
   if (forgeFinal) window.setTimeout(() => toast(GILDED_STORY.forge.map((l) => `${l.who} “${l.t}”`).join(' '), 4200), 600);
   const el = openOverlay(`<h2>${forgeFinal ? '최종 정비 <span class="dim">— 분대 HP 가득 · 하나를 더 고릅니다</span>' : '작업대 <span class="dim">— 하나를 고릅니다</span>'}</h2>${mend.mended.length ? `<p class="mend-line">${mend.mended.map((u) => `<span class="mend">${lifePips(u, 'mend')} ${u.name}</span>`).join(' ')} <span class="dim">${LIFE_TEXT.mended(mend.mended.map((u) => u.name ?? '').join(' · '))}</span></p>` : ''}
-    <div class="part-cards forge4">
-      ${opt('refine', `<button type="button" class="part-card" data-forge="refine"><i class="ico" style="${iconArt('s.refine')}"></i><b>다듬기</b><small>카드 한 장을 골라 태엽 −1.</small></button>`)}
-      ${opt('remove', `<button type="button" class="part-card" data-forge="remove"><i class="ico" style="${iconArt('s.remove')}"></i><b>카드 빼기</b><small>덱에서 카드 1장 영구 제거.</small></button>`)}
-      ${opt('repair', `<button type="button" class="part-card" data-forge="repair"><i class="ico" style="${iconArt('s.repair')}"></i><b>수리</b><small>분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%</small></button>`)}
-      ${squad.some((u) => u.t !== 'K') ? `<button type="button" class="part-card" data-forge="brace"><i class="ico" style="${iconArt('shieldWall')}"></i><b>보강</b><small>분대원 하나의 축을 덧댄다. (문턱 +${FORGE.braceDoors})</small></button>` : ''}
+    <div class="part-cards">
+      ${opt('refine', optFace({ name: '다듬기', art: `<i class="ico" style="${iconArt('s.refine')}"></i>`, desc: '카드 한 장을 고르게 깎는다. (그 카드 태엽 −1)', attrs: 'data-forge="refine"' }))}
+      ${opt('remove', optFace({ name: '카드 빼기', art: `<i class="ico" style="${iconArt('s.remove')}"></i>`, desc: '덱에서 한 장을 덜어 낸다. (영구 제거)', attrs: 'data-forge="remove"' }))}
+      ${opt('repair', optFace({ name: '수리', art: `<i class="ico" style="${iconArt('s.repair')}"></i>`, desc: `분대 전원을 손본다. (HP +${Math.round(FORGE.repairPct * 100)}%)`, attrs: 'data-forge="repair"' }))}
+      ${squad.some((u) => u.t !== 'K') ? opt('brace', optFace({ name: '보강', art: `<i class="ico" style="${iconArt('shieldWall')}"></i>`, desc: `분대원 하나의 축을 덧댄다. (문턱 +${FORGE.braceDoors})`, attrs: 'data-forge="brace"', grade: 'rare' })) : ''}
     </div>`);
   el.querySelectorAll<HTMLElement>('[data-forge]').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -2218,7 +2218,7 @@ const choose = (btn: HTMLElement, label: string, onConfirm: () => void): void =>
     panel.appendChild(bar);
   }
   // 카드 · 부품 · 기물을 얻는 고르기는 크게 펼쳐 확인 · 취소 (테스터: 1초 뒤 저절로 덱에 들어가 너무 빨랐다 — 크게 보이고 묻는 게 낫다)
-  if (quick && btn.matches('.cmd, .cf, .part-card')) {
+  if (btn.matches('.cf')) {
     panel.classList.remove('choosing');
     btn.classList.remove('chosen');
     bar.remove();
@@ -2295,8 +2295,48 @@ const openOverlay = (html: string): HTMLElement => {
   if (wasHidden) modalIn($('overlay'), panel);
   // 도장은 내리꽂혀 잉크가 튄다
   panel.querySelectorAll<HTMLElement>('.stamp-big').forEach(stampFx);
+  railify(panel);
   return panel;
 };
+/**
+ * 고르기 줄 (D-322, 사용자: 「가로 슬라이드로, 카드 하나 · 선택지 하나를 자세하게 — 카드 · 선택지 디자인 통일」):
+ * 보상 · 고물상 · 핵심 부품 · 부품 · 영입 · 작업대 · 다듬기의 카드 묶음을 모두 같은 「큰 카드 가로 줄」로 바꾼다.
+ * 카드는 한 장씩 맞물려 멈추고(스냅), 넘칠 때만 ◀ ▶ 단추가 선다. 넘기면 줄이 살짝 밀렸다 돌아온다(계단, 페이드 없음).
+ */
+const railify = (root: HTMLElement): void => {
+  root.querySelectorAll<HTMLElement>('.shop-grid, .reward-cards, .part-cards').forEach((rail) => {
+    if (rail.classList.contains('crail')) return;
+    rail.classList.add('crail');
+    const wrap = document.createElement('div');
+    wrap.className = 'rail-wrap';
+    rail.before(wrap);
+    wrap.innerHTML = `<button type="button" class="btn sq rail-arrow prev" aria-label="이전">◀</button><button type="button" class="btn sq rail-arrow next" aria-label="다음">▶</button>`;
+    wrap.insertBefore(rail, wrap.lastElementChild);
+    const step = (): number => { const c = rail.querySelector<HTMLElement>('.cf, .cmd, .part-card'); return c ? c.offsetWidth + 12 : 220; };
+    const sync = (): void => {
+      const over = rail.scrollWidth > rail.clientWidth + 4;
+      wrap.classList.toggle('over', over);
+      wrap.querySelector<HTMLButtonElement>('.prev')!.disabled = rail.scrollLeft <= 2;
+      wrap.querySelector<HTMLButtonElement>('.next')!.disabled = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 2;
+    };
+    const go = (dir: number): void => {
+      rail.scrollLeft += dir * step();
+      sfx('tap');
+      rail.classList.remove('nudge-l', 'nudge-r');
+      void rail.offsetWidth;
+      rail.classList.add(dir > 0 ? 'nudge-r' : 'nudge-l');
+      sync();
+    };
+    wrap.querySelector('.prev')!.addEventListener('click', (e) => (e.stopPropagation(), go(-1)));
+    wrap.querySelector('.next')!.addEventListener('click', (e) => (e.stopPropagation(), go(1)));
+    rail.addEventListener('scroll', sync, { passive: true });
+    window.setTimeout(sync, 0);
+    window.setTimeout(sync, 400);
+  });
+};
+/** 카드 모양 선택지 하나 (작업대 · 영입 · 보강 — 카드 · 부품과 같은 틀, D-322) */
+const optFace = (o: { name: string; art: string; desc: string; attrs: string; grade?: 'common' | 'rare' | 'gold'; tag?: string }): string =>
+  `<button type="button" class="cf part-card opt g-${o.grade ?? 'common'}" data-grade="${o.grade ?? 'common'}" ${o.attrs}><b class="cf-name">${o.name}</b><span class="cf-win">${o.art}</span>${o.tag ? `<span class="cf-type">${o.tag}</span>` : ''}<small class="cf-desc">${descLines(o.desc)}</small><i class="cf-gem"></i></button>`;
 /** 창 닫기: 가로로 접혀 사라진다 (D-189). 접히는 사이 다시 열리면 취소된다 */
 const closeOverlay = (): void => {
   if ($('overlay').hidden) return;
@@ -2768,7 +2808,7 @@ const recruitPick = (head: string, then: () => void, _elite = false): void => {
       const c = crews[k];
       const q = c.quirk ? QUIRKS[c.quirk] : null;
       const g = RECRUIT_ODDS[r.t].grade;
-      return `<button type="button" class="part-card recruit g-${g}" data-rec="${k}" data-grade="${g}"><em class="gtag g-${g}">${PIECE_NAMES_KO[r.t]} · ${GRADE.names[g]}</em><span class="rec-art">${pieceImg(r.t, 0, 'large', 56)}</span><b>${c.name}</b>${q ? `<small class="quirk-line"><b>${q.name}</b><br>${q.desc}</small>` : ''}<span class="kit-cards">+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')}</span></button>`;
+      return optFace({ name: `${PIECE_NAMES_KO[r.t]} · ${c.name}`, art: pieceImg(r.t, 0, 'large', 72), desc: `${q ? `${q.name} — ${q.desc} ` : ''}(+ ${r.cards.map((id) => COMMANDS[id].name).join(' · ')})`, attrs: `data-rec="${k}"`, grade: g, tag: `<i class="axis rec-g">${GRADE.names[g]} 기물</i>` }).replace('class="cf part-card opt', 'class="cf part-card opt recruit');
     })
     .join('')}</div>`);
   // 부관 안내 (D-238): 첫 영입은 무엇을 고르는지 짚는다
