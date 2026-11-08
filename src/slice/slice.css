@@ -2651,3 +2651,8 @@ body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { margin-top: 4px; color
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if > i { display: inline-block; font-style: normal; padding: 0 5px; background: #3a3442; box-shadow: 0 0 0 1px #0b0b0e, inset 0 1px 0 #56505e; line-height: 15px; }
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { margin-top: 2px; }
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 4px; }
+/* D-335: 조건은 괄호(회색), 성능은 셀 배경 + 가장 강조 */
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { margin-top: 4px; color: #b9b4c2; font: 400 12px/15px Galmuri11, sans-serif; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { margin-top: 3px; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx > i { display: inline-block; font-style: normal; padding: 1px 6px; background: #3a2c10; color: #ffd64a; box-shadow: 0 0 0 1px #0b0b0e, inset 0 1px 0 #8a6416; line-height: 15px; }
+body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 5px; }
