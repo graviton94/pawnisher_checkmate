@@ -35,7 +35,7 @@ export interface Piece {
   carve?: CarveId;
   /** 검문! 정예 (HP ×2, 표식 하나) */
   elite?: boolean;
-  /** 폰처럼 움직이고 친다 (승급 13 최종장 — 종이 왕관을 벗은 아홉째, D-277) */
+  /** 폰처럼 움직이고 친다 (승급 13 최종장 — 종이 왕관을 벗은 종이왕, D-277) */
   asPawn?: boolean;
 }
 

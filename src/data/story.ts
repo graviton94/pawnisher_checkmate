@@ -4,7 +4,7 @@ import type { PieceType } from '../engine/types';
 
 /**
  * 이야기 (D-130 · D-131 · D-135 — docs/story.md v5): 컷 · 대사 · 독백 · 기록지를 한 곳에.
- * 말투 (D-158): 서술(tell, 「* 」 없이 담담한 한 줄) · 기물 대사 「」(say, who = 말하는 이) · 아홉째 폰 독백 ‘ ’(mono). 짧고 무겁게, 설교하지 않는다.
+ * 말투 (D-158): 서술(tell, 「* 」 없이 담담한 한 줄) · 기물 대사 「」(say, who = 말하는 이) · 종이왕 독백 ‘ ’(mono). 짧고 무겁게, 설교하지 않는다.
  */
 export type LineKind = 'tell' | 'say' | 'mono';
 export interface Line {
@@ -62,7 +62,7 @@ export const ACT_ENTRY: Cut[] = [
   { bg: 'top', actors: [{ npc: 'scale', x: 72, y: 50, size: 110, mood: 'narrow' }, me(32, 64, 96)], lines: [tell('검수 공정. 틀린 것은 지나갈 수 없다.'), mono('틀렸다는 도장. 많이 받았다.')] },
 ];
 
-/** 반장: 신념 한 줄 · 쓰러질 때 서술 · 아홉째 폰이 건네는 말 */
+/** 반장: 신념 한 줄 · 쓰러질 때 서술 · 종이왕이 건네는 말 */
 export const BOSS_STORY: Record<BossId, { npc: NpcId; belief: string; fall: string; reply: string }> = {
   knight: { npc: 'bossKnight', belief: '무거운 것이 밟는다. 나이트는 뛰고, 폰은 밟힌다 — 그가 믿는 것.', fall: '편자가 철판에 미끄러진다. 몸의 숫자 3에 금이 간다.', reply: '밟히는 쪽이 정해져 있다고 누가 그랬지.' },
   bishop: { npc: 'bossBishop', belief: '사선만이 바른 길이다 — 그가 믿는 것.', fall: '렌즈가 깨진다. 몸의 숫자 3에 금이 간다.', reply: '가까이서 보면, 길은 사선만이 아니다.' },

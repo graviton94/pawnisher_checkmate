@@ -2420,11 +2420,11 @@ const handChips = (id: CommandId): string => {
   const t = cardTags(id);
   return t.effect === 'rule' && t.word === '이동' && t.style === 'strike' ? '' : `<span class="chips">${tags3Html(t)}</span>`;
 };
-/** 반장 격파 컷 (각본 §8 · D-319 발주 14위 BF-01~06): 쓰러지는 모습 + 아홉째의 대꾸. 받은 그림이 있으면 그것, 없으면 초상 */
+/** 반장 격파 컷 (각본 §8 · D-319 발주 14위 BF-01~06): 쓰러지는 모습 + 종이왕의 대꾸. 받은 그림이 있으면 그것, 없으면 초상 */
 const bossFallCut = async (rule: StoryBoss): Promise<void> => {
   const st = BOSS_STORY[rule];
   const fallImg = await new Promise<string>((res) => { const im = new Image(); im.onload = () => res(`boss-fall-${rule}`); im.onerror = () => res(BOSS_ART[rule]); im.src = `scenes/boss-fall-${rule}.png`; });
-  await playCuts([{ img: fallImg, bg: ['#16141c', '#0b0b0e'], glow: '#e5262f', art: [{ t: 'K', side: 1, x: 50, y: 58, h: 44, dim: true }], lines: [{ k: 'n', t: st.fall }, { k: 's', who: '아홉째', t: st.reply }] }]);
+  await playCuts([{ img: fallImg, bg: ['#16141c', '#0b0b0e'], glow: '#e5262f', art: [{ t: 'K', side: 1, x: 50, y: 58, h: 44, dim: true }], lines: [{ k: 'n', t: st.fall }, { k: 's', who: '종이왕', t: st.reply }] }]);
 };
 const finishNow = (): void => {
   const isWin = b.s.winner === 0;
@@ -2445,7 +2445,7 @@ const finishNow = (): void => {
   if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
     await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
-    // 반장 격파 (각본 §8, D-276): 쓰러지는 모습 + 아홉째가 건네는 말 — 도금왕은 엔딩 흐름에서
+    // 반장 격파 (각본 §8, D-276): 쓰러지는 모습 + 종이왕이 건네는 말 — 도금왕은 엔딩 흐름에서
     if (isWin && cur.boss && cur.bossRule && cur.bossRule !== 'gilded' && BOSS_STORY[cur.bossRule as StoryBoss]) {
       runBosses = [...runBosses, cur.bossRule as StoryBoss];
       await bossFallCut(cur.bossRule as StoryBoss);
@@ -3442,7 +3442,7 @@ const gildedPhase2 = async (): Promise<void> => {
   const last = runBosses.at(-1);
   await playCuts([{ img: gildedArt(), bg: ['#2a1e08', '#0b0b0e'], glow: '#facc15', fx: 'gold', art: [{ t: 'K', side: 1, x: 50, y: 56, h: 46 }],
     lines: [{ k: 'n', t: '금칠이 갈라진 틈으로 쇳물빛이 샜다.' }, { k: 's', who: '도금왕', t: GILDED_STORY.phase2(asc) }, ...(last ? [{ k: 's' as const, who: '도금왕', t: BOSS_STORY[last].mock }] : []), { k: 's', who: '도금왕', t: GILDED_STORY.phase2End }] }]);
-  // 승급 13 (각본 §2.5): 마지막 증언 → 싸움 중에 종이 왕관을 벗는다 — 여기부터 아홉째는 폰처럼 움직이고 친다
+  // 승급 13 (각본 §2.5): 마지막 증언 → 싸움 중에 종이 왕관을 벗는다 — 여기부터 종이왕은 폰처럼 움직이고 친다
   if (asc >= 13) {
     await playCuts([CROWN_OFF]);
     const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
@@ -3454,7 +3454,7 @@ const gildedPhase2 = async (): Promise<void> => {
 };
 /** 도금왕 초상 — 겹 단계 (B-04 · B-04a ~ d, 승급 0 ~ 2 · 3 ~ 5 · 6 ~ 8 · 9 ~ 12 · 13) */
 const gildedArt = (): string => `boss-gilded${asc <= 2 ? '' : asc <= 5 ? '-1' : asc <= 8 ? '-2' : asc <= 12 ? '-3' : '-4'}`;
-/** 승급 칸 (각본 S6): 앞선 아홉째의 증언 → 속말 → 「승급한다」 · 「내려놓는다」(승급 12까지는 떨리다 꺼진다) */
+/** 승급 칸 (각본 S6): 앞선 종이왕의 증언 → 속말 → 「승급한다」 · 「내려놓는다」(승급 12까지는 떨리다 꺼진다) */
 const promoteScreen = (): Promise<void> =>
   new Promise((done) => {
     const tm = TESTIMONY[Math.min(TESTIMONY.length - 1, asc)];

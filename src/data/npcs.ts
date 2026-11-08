@@ -28,7 +28,7 @@ export const NPCS: Record<NpcId, NpcDef> = {
   coinKnight: { name: '동전 나이트', body: { piece: 'N', side: 1 }, props: ['monocle', 'coin'], mood: 'glare' },
   apprentice: { name: '견습 폰', body: { piece: 'P', side: 0, scale: 0.8 }, props: ['hammer'], mood: 'wide' },
   blackBishop: { name: '다른 공장의 흑 비숍', body: { piece: 'B', side: 1 }, props: ['stamp'], mood: 'narrow' },
-  ninth: { name: '아홉째 폰', body: { piece: 'P', side: 0 }, props: ['paperCrown'], mood: 'calm' },
+  ninth: { name: '종이왕', body: { piece: 'P', side: 0 }, props: ['paperCrown'], mood: 'calm' },
   // 이야기 (D-135): 지켜보던 흰 기물 · 반장 · 도금왕
   whiteQueen: { name: '흰 퀸', body: { piece: 'Q', side: 0 }, props: [], mood: 'glare' },
   whiteRook: { name: '흰 룩', body: { piece: 'R', side: 0 }, props: [], mood: 'narrow' },

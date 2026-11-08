@@ -30,7 +30,7 @@ export const TERM = {
 export const TEXT = {
   pressStart: '화면을 눌러 시작',
   skip: '건너뛰기',
-  tagline: '킹 자리에 잘못 들어간 아홉째 폰이, 규격을 체크메이트로 깬다',
+  tagline: '킹 자리에 잘못 들어간 폰 「종이왕」이, 규격을 체크메이트로 깬다',
   menu: {
     continue: '이어서 출하',
     newRun: '새 출하',
