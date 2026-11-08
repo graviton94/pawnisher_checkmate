@@ -305,13 +305,27 @@ class BoardScene extends Phaser.Scene {
     if (this.anim.fire.length) {
       // 줄 폭격 예고: 칸 아래에서 도트 불꽃 혀가 일렁인다 — 일반 위협(붉은 깜빡임)과 다른 모양
       const d = t / BOARD_DOTS;
+      // 도트 불꽃 (테스터: 빨강 · 노랑 막대가 피아노 건반 같았다): 칸 아래에서 혀 모양 불길 — 겉 붉은 쇳물 → 주황 → 노란 심,
+      // 2도트 기둥마다 높이가 다르고 8박자 계단으로 일렁인다 (부드러운 보간 없음)
+      const fr = Math.floor(ms / 120);
+      const hash = (a: number, b: number) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+      const cols = Math.floor(BOARD_DOTS / 2);
       this.anim.fire.forEach((w, i) => {
-        g.fillStyle(0xe8783c, 0.18).fillRect(w.x, w.y, t, t);
-        for (let k = 0; k < 4; k++) {
-          const ph = Math.sin(ms / 140 + i * 1.7 + k * 2.1);
-          const h = Math.round((0.28 + 0.14 * ph) * BOARD_DOTS) * d;
-          const x = w.x + (k * 4 + 1) * d * (BOARD_DOTS / 16);
-          g.fillStyle(k % 2 ? 0xfacc15 : 0xe8783c, 0.85).fillRect(x, w.y + t - h, d * 2, h);
+        g.fillStyle(0x7a1c08, 0.22).fillRect(w.x, w.y + t * 0.5, t, t * 0.5);
+        for (let c = 0; c < cols; c++) {
+          // 가운데가 높은 혀 모양 + 기둥마다 흔들림
+          const mid = 1 - Math.abs((c + 0.5) / cols - 0.5) * 1.6;
+          const n = hash(i * 13 + c, fr + c * 0.37 + (c % 3));
+          const hd = Math.max(2, Math.round(BOARD_DOTS * (0.22 + 0.58 * mid * (0.55 + 0.45 * n))));
+          const x = w.x + c * 2 * d;
+          const base = w.y + t;
+          g.fillStyle(0xc23a0c, 1).fillRect(x, base - hd * d, d * 2, hd * d);
+          const h2 = Math.round(hd * 0.68);
+          g.fillStyle(0xf8a03a, 1).fillRect(x, base - h2 * d, d * 2, h2 * d);
+          const h3 = Math.round(hd * 0.36);
+          if (h3 > 0) g.fillStyle(0xffd27a, 1).fillRect(x, base - h3 * d, d * 2, h3 * d);
+          // 끝에서 튀는 불씨 한 점 (가끔)
+          if (n > 0.82) g.fillStyle(0xffd27a, 1).fillRect(x + (fr % 2) * d, base - (hd + 2) * d, d, d);
         }
       });
     }

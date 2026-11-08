@@ -942,6 +942,20 @@ const flashParts = (ids: SlicePartId[]): void => {
 };
 
 /** 처치 순간 (연쇄): 판 한가운데 큰 글자 + 판 흔들림 + 음이 올라간다 */
+/** 길막기 딱지: 차지한 칸 위에 「막음!」 도장이 내리꽂히고 한 번 안내 */
+let blockTold = false;
+const blockPop = (pos: Pos): void => {
+  const c = renderer.screenOf(pos);
+  const el = document.createElement('div');
+  el.className = 'block-pop';
+  el.textContent = HUD_TEXT.blockPop;
+  el.style.left = `${c.x}px`;
+  el.style.top = `${c.y}px`;
+  document.body.appendChild(el);
+  sfx('stamp');
+  window.setTimeout(() => pxOut(el, () => el.remove(), 220), 900);
+  if (!blockTold) { blockTold = true; window.setTimeout(() => toast(HUD_TEXT.blockTip, 3000), 500); }
+};
 /** 즉시 카드 연출: 손패의 그 카드 복제가 움츠렸다(예비) 튀어 오르며 금빛 테로 터지고 도트로 흩어진다 */
 const castFx = (src: HTMLElement | null): void => {
   if (!src || calmNow()) return;
@@ -1069,8 +1083,12 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const k0 = b.kills;
   const burn0 = b.burned?.length ?? 0;
   const ev0 = (b.evaded ?? []).length;
+  // 길막기 (테스터: 「적이 갈 칸을 먼저 차지해 공격을 막는 것도 이 게임의 요소로 느껴지게」): 적이 가려던 칸을 우리 기물이 차지하면 알린다
+  const aimed = b.s.rules.capture ? [] : liveIntents(b).map((it) => `${it.to.x},${it.to.y}`);
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
+  const mover = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
+  const blockedAt = mover && mover.side === 0 && aimed.includes(`${mover.x},${mover.y}`) ? { x: mover.x, y: mover.y } : null;
   playsMade += 1;
   if ((b.evaded ?? []).length > ev0) tg.evade += 1;
   if (b.grazedNow !== undefined) {
@@ -1107,6 +1125,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     });
     sfx('coin', 9);
   }
+  if (blockedAt && b.s.winner === null) blockPop(blockedAt);
   await deathRites();
   // 내 카드 연출 끝 → 다음 조작 사이 짧은 숨 (D-204)
   if (!calmNow()) await new Promise((res) => window.setTimeout(res, PACE.afterMine));

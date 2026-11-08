@@ -2484,3 +2484,19 @@ body[data-place="bg-reward"] .overlay .panel { max-width: min(80vw, 720px); }
 .ev-stage .ev-choice.chosen .ev-again { visibility: visible; color: #2b1a06; }
 .ev-stage .ev-choice.chosen .ev-desc span, .ev-stage .ev-choice.chosen .ev-terms { color: #2b1a06; }
 body.slice .panel:has(.ev-stage) { height: min(392px, 95vh); }
+
+/* D-319 길막기 딱지 */
+.block-pop { position: fixed; z-index: 45; transform: translate(-50%, -110%) rotate(-8deg); padding: 0 6px; font: 700 24px/30px Galmuri11, sans-serif; color: #8ee8ea; background: #06222a; box-shadow: 0 0 0 2px #46c4c8, 0 0 0 4px #0b0b0e, 0 4px 0 4px #000; pointer-events: none; animation: blockpop 360ms both; }
+@keyframes blockpop { 0% { transform: translate(-50%, -110%) rotate(-8deg) scale(2.4); animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 50% { transform: translate(-50%, -110%) rotate(-8deg) scale(0.9, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 100% { transform: translate(-50%, -110%) rotate(-8deg); } }
+/* D-319 태엽 FX 다시 (테스터: 없을 때 반짝임 · 차오르는 연출이 별로) —
+   모자람 = 빈 구멍이 좌우로 떨고 붉은 테가 두 번 켜진다(구멍 그림은 그대로) · 차오름 = 열쇠가 감기는 순간 구멍이 움츠렸다 튀고 황동 고리가 계단으로 퍼진다 */
+body.slice.lay-f #vials .seg.apb { animation: apNo 360ms both; position: relative; }
+body.slice.lay-f #vials .seg.apb::after { content: ''; position: absolute; inset: 2px; box-shadow: inset 0 0 0 2px #e5262f; animation: apNoRing 360ms steps(1) both; }
+@keyframes apNo { 0% { transform: none; } 20% { transform: translateX(-3px); } 45% { transform: translateX(3px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
+@keyframes apNoRing { 0%, 40% { visibility: visible; } 20%, 60%, 100% { visibility: hidden; } }
+body.slice.lay-f .apbar.regain { animation: none; }
+body.slice.lay-f .apbar.regain .seg.on { position: relative; animation: apPop 340ms calc(var(--k, 0) * 60ms) both; }
+body.slice.lay-f .apbar.regain .seg.on::before { content: ''; position: absolute; inset: 0; box-shadow: 0 0 0 2px #f4d27a; visibility: hidden; animation: apRing 340ms calc(var(--k, 0) * 60ms) steps(3) both; pointer-events: none; }
+@keyframes apPop { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 30% { transform: scale(0.82, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 65% { transform: scale(1.18, 0.9); } 100% { transform: none; } }
+@keyframes apRing { 0% { visibility: visible; inset: 4px; } 99% { visibility: visible; inset: -8px; } 100% { visibility: hidden; inset: -8px; } }
+@media (prefers-reduced-motion: reduce) { body.slice.lay-f #vials .seg.apb, body.slice.lay-f .apbar.regain .seg.on { animation: none; } }
