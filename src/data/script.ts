@@ -13,6 +13,12 @@ export interface Cut {
   glow?: string;
   art: StandIn[];
   fx?: 'alarm' | 'red' | 'spot' | 'path' | 'gold';
+  /**
+   * 카메라 (테스터 피드백: 모든 배경이 한 방향으로 흘렀다) — 장면 속 요소에 맞춰 천천히 움직인다.
+   * pan-l/pan-r = 카메라가 왼/오른쪽으로 · tilt-u/tilt-d = 위/아래로 · in/out = 다가감/물러남 (at = 초점, 화면 % "x% y%") · still = 가만히
+   */
+  cam?: 'pan-l' | 'pan-r' | 'tilt-u' | 'tilt-d' | 'in' | 'out' | 'still';
+  at?: string;
   lines: Line[];
   /** 두 번째 출하부터 「프롤로그 다시 보기」에 나오는 컷 */
   key?: boolean;
@@ -26,45 +32,45 @@ const P = (x: number, y: number, h: number, o: Partial<StandIn> = {}): StandIn =
 /** S1 프롤로그 (7컷) */
 export const PROLOGUE: Cut[] = [
   {
-    img: 'prologue-01', key: true, bg: ['#0b0b0e', '#2a1a10'], glow: '#e8783c',
+    img: 'prologue-01', key: true, bg: ['#0b0b0e', '#2a1a10'], glow: '#e8783c', cam: 'pan-r',
     art: [{ t: 'R', side: 1, x: 22, y: 62, h: 34, dim: true }, { t: 'B', side: 1, x: 38, y: 58, h: 30, dim: true }, { t: 'Q', side: 1, x: 54, y: 60, h: 38, dim: true }, { t: 'N', side: 1, x: 70, y: 58, h: 30, dim: true }, { t: 'K', side: 1, x: 84, y: 62, h: 36, dim: true }],
-    lines: [n('체스 — 정해진 말이, 정해진 대로 움직이는 승부.'), n('그 말들을 찍어 내는 곳이 있었다. 체크메이트 공장이었다.')],
+    lines: [n('체스 — 정해진 말이, 정해진 대로 움직이는 승부.'), n('그 말들을 찍어 내는 곳이 있었다. <em>체크메이트 공장</em>이었다.'), n('공장은 <em>완벽한 세트</em>만 내보냈다. 한 기라도 어긋나면 — 세트째 — 용광로로 돌아갔다.')],
   },
   {
-    img: 'prologue-02', bg: ['#0a1620', '#16141c'], glow: '#38bdf8', fx: 'alarm',
+    img: 'prologue-02', bg: ['#0a1620', '#16141c'], glow: '#38bdf8', fx: 'alarm', cam: 'in', at: '50% 30%',
     art: [{ t: 'R', side: 0, x: 26, y: 64, h: 26, dim: true }, { t: 'N', side: 0, x: 38, y: 64, h: 26, dim: true }, P(50, 60, 26), { t: 'Q', side: 0, x: 62, y: 64, h: 28, dim: true }, { t: 'B', side: 0, x: 74, y: 64, h: 26, dim: true }],
-    lines: [n('그날, 체크메이트 공장에서는 — 알 수 없는 이유로 — 킹 자리에 폰이 섞여 들어갔다.'), n('경고등이 한 번 깜빡였고, 이내 꺼졌다. 누가 껐는지는 아무도 몰랐다.')],
+    lines: [n('그날, 체크메이트 공장에서는 — <em>알 수 없는 이유로</em> — 킹 자리에 <em>폰</em>이 섞여 들어갔다.'), n('경고등이 한 번 깜빡였고, 이내 꺼졌다. 누가 껐는지는 아무도 몰랐다.')],
   },
   {
-    img: 'prologue-03', key: true, bg: ['#3a0a10', '#0b0b0e'], glow: '#e5262f', fx: 'red',
+    img: 'prologue-03', key: true, bg: ['#3a0a10', '#0b0b0e'], glow: '#e5262f', fx: 'red', cam: 'out', at: '50% 22%',
     art: [{ t: 'R', side: 0, x: 18, y: 64, h: 24 }, { t: 'N', side: 0, x: 28, y: 64, h: 24 }, { t: 'B', side: 0, x: 38, y: 64, h: 24 }, { t: 'Q', side: 0, x: 48, y: 64, h: 26 }, { t: 'B', side: 0, x: 58, y: 64, h: 24 }, { t: 'N', side: 0, x: 68, y: 64, h: 24 }, { t: 'R', side: 0, x: 78, y: 64, h: 24 }, P(90, 68, 18)],
-    lines: [n('검수 전광판이 붉게 물들었다. 「세트 전체 불량 처리 예정」.'), n('열여섯 기물의 시선이 — 한꺼번에 — 그에게로 향했다.'), m('나 때문이다.')],
+    lines: [n('검수 전광판이 붉게 물들었다. <em>「세트 전체 불량 처리 예정」</em>.'), n('열여섯 기물의 시선이 — 한꺼번에 — 그에게로 향했다.'), m('나 때문이다.')],
   },
   {
-    img: 'prologue-04', bg: ['#2a1e12', '#0b0b0e'],
+    img: 'prologue-04', bg: ['#2a1e12', '#0b0b0e'], cam: 'tilt-d',
     art: [{ t: 'Q', side: 0, x: 30, y: 52, h: 40, dim: true }, { t: 'R', side: 0, x: 72, y: 50, h: 36, dim: true, flip: true }, { t: 'B', side: 0, x: 86, y: 56, h: 32, dim: true, flip: true }, P(52, 70, 20)],
-    lines: [n('흰 퀸이 그를 내려다보았다.'), s('흰 퀸', '폰이 킹 자리에? 우리까지 녹이려고.'), n('룩은 등을 돌렸고, 비숍은 말없이 고개를 저었다.'), m('폰이 맞다. 그래서?')],
+    lines: [n('흰 퀸이 그를 내려다보았다.'), s('흰 퀸', '킹 자리에 폰이? 젠장, 우리 세트는 <em>불량 처리</em>되겠군.'), n('룩은 등을 돌렸고, 비숍은 말없이 고개를 저었다.'), m('나 때문에 모두를 위험에 빠뜨릴 수는 없다.')],
   },
   {
-    img: 'prologue-05', key: true, bg: ['#16141c', '#0b0b0e'], glow: '#f4f1ea', fx: 'spot',
+    img: 'prologue-05', key: true, bg: ['#16141c', '#0b0b0e'], glow: '#f4f1ea', fx: 'spot', cam: 'in', at: '50% 40%',
     art: [P(50, 68, 40, { crown: true })],
-    lines: [n('그는 상자 귀퉁이를 오려 왕관을 만들었다. 너무 커서, 쓰자마자 눈까지 흘러내렸다.'), n('그는 그것을 밀어 올렸다. 그리고 다시 한 번.'), m('크다. …그래도 쓴다.')],
+    lines: [n('그는 상자 귀퉁이를 오려 <em>왕관</em>을 만들었다. 너무 커서, 쓰자마자 눈까지 흘러내렸다.'), n('그는 그것을 밀어 올렸다. 그리고 다시 한 번.'), m('크다. …그래도 쓴다.')],
   },
   {
-    img: 'prologue-06', bg: ['#1e2630', '#0b0b0e'],
+    img: 'prologue-06', bg: ['#1e2630', '#0b0b0e'], cam: 'pan-l',
     art: [{ t: 'Q', side: 0, x: 76, y: 40, h: 22, dim: true }, { t: 'R', side: 0, x: 86, y: 40, h: 20, dim: true }, P(30, 62, 30, { crown: true }), { t: 'N', side: 0, x: 44, y: 60, h: 30 }, P(56, 66, 22), P(66, 66, 22)],
-    lines: [n('대부분은 상자 구석에서 지켜보기만 했다. 다만 — 흰 나이트 하나가 앞으로 나섰다.'), s('박차', 'L자밖에 못 뛴다고, 저도 불량 소리를 들었습니다.'), s('박차', '대장이라 부르겠습니다.')],
+    lines: [n('대부분은 상자 구석에서 지켜보기만 했다. 다만 — <em>흰 나이트</em> 하나가 앞으로 나섰다.'), s('박차', '흠집 하나 났다고, 나도 불량 소리를 들었지.'), s('박차', '그 용기는 존중해 주지. 좋아 — 네가 <em>대장</em>이다.')],
   },
   {
-    img: 'prologue-07', key: true, bg: ['#0e1220', '#2a1e08'], glow: '#c89b3c', fx: 'path',
+    img: 'prologue-07', key: true, bg: ['#0e1220', '#2a1e08'], glow: '#c89b3c', fx: 'path', cam: 'in', at: '50% 34%',
     art: [P(50, 70, 30, { crown: true }), { t: 'R', side: 1, x: 18, y: 48, h: 20, dim: true }, { t: 'B', side: 1, x: 82, y: 48, h: 20, dim: true }],
-    lines: [n('첫 검수대에 불이 들어왔다. 그는 — 누구보다 먼저 — 판 위에 올라섰다.'), m('녹게 두지 않는다. 아무도.')],
+    lines: [n('첫 검수대에 불이 들어왔다. 그는 — 누구보다 먼저 — 판 위에 올라섰다.'), m('<em>녹게 두지 않는다.</em> 아무도.')],
   },
 ];
 
 /** S1′ 포장대의 그림자 — 두 번째 출하부터, 승급(압력) 묶음마다 속말이 바뀐다 */
 export const shadowCut = (asc: number): Cut => ({
-  img: 'prologue-shadow', bg: ['#0a1620', '#0b0b0e'], glow: '#c89b3c',
+  img: 'prologue-shadow', bg: ['#0a1620', '#0b0b0e'], glow: '#c89b3c', cam: 'tilt-u',
   art: [{ t: 'K', side: 1, x: 50, y: 30, h: 30, dim: true }, P(50, 74, 18)],
   lines: [n('포장대 위에서, 누군가 라인을 내려다보고 있었다. 그 그림자는 — 출하가 거듭될수록 — 조금씩 두꺼워졌다.'), m(asc <= 4 ? '…저기 누가 서 있다.' : asc <= 9 ? '저 그림자, 왕관 모양이 이상하다.' : '저것도 — 폰이었던 것 같다.')],
 });

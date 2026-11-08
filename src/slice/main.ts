@@ -10,7 +10,7 @@ import { PACE } from '../data/motion';
 const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
-import { crestHtml, guide, playCuts, prologue } from './opening';
+import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_ENTRY, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
@@ -1355,7 +1355,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 전환 화면 (D-165): 판이 바뀔 때마다 — 서술 한 줄 + 도움말, 눌러서 넘긴다. 판 위 규칙 한 줄은 그 뒤에
   if (!silent)
     void stageIntro(def).then(() => {
-      battleIntro();
+      void battleIntro();
       if (nemesisNow) return nemesisMeet(nemesisNow);
       const cracked = squad.filter((u) => u.cracked);
       toast(cracked.length ? `${def.tell} · ${LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · '))}` : def.tell, 3600);
@@ -1378,15 +1378,15 @@ const arrange = (order: CommandId[], cards: CommandId[]): CommandId[] => {
 };
 
 /** 판 세우기 (D-189): 칸이 대각선 물결로 깔리고 기물이 떨어져 박힌 뒤 손패가 한 장씩 들어온다 */
-const battleIntro = (): void => {
+const battleIntro = (): Promise<void> => {
   // 판이 다 서기 전에는 누르지 못한다 (페르소나 테스트 m5)
   busy = true;
   refresh();
-  void renderer.boardIntro().finally(() => {
+  window.setTimeout(() => dealHand($('hand')), 450);
+  return renderer.boardIntro().finally(() => {
     busy = false;
     refresh();
   });
-  window.setTimeout(() => dealHand($('hand')), 450);
 };
 
 /**
@@ -3378,11 +3378,12 @@ const begin = async (seed: number, level: number, day: string | null): Promise<v
   sfx('submit');
   // 처음 온 사람 (D-238): 전환 카드 · 안내 알림 대신 판을 세우고 부관이 짚는다 — 글이 겹치지 않게 한 목소리만
   if (!tutDone('battle')) {
-    battleIntro();
-    return void window.setTimeout(() => void battleTutorial(), 1400);
+    // 판이 다 서고 한 박자 쉰 뒤에 부관이 말을 건다 (테스터: 컷신 → 온보딩이 숨 돌릴 틈 없이 붙었다)
+    void battleIntro().then(() => new Promise((r) => window.setTimeout(r, 900))).then(() => void battleTutorial());
+    return;
   }
   void stageIntro(INTRO[0]).then(() => {
-    battleIntro();
+    void battleIntro();
     toast(INTRO[0].tell, 3200);
   });
 };
@@ -3399,8 +3400,9 @@ const opening = (): void => {
   el.className = 'opening';
   el.innerHTML = `<div class="op-bg"><i class="op-fog"></i><i class="op-glow"></i></div><h1 class="sr-only">Pawnisher : Checkmate</h1>
     <div class="op-logo">${crestHtml()}<p class="op-tag">${OPENING_TEXT.tagline}</p></div>
-    <p class="op-press">${OPENING_TEXT.press}</p><nav class="op-menu" hidden></nav>`;
+    <p class="op-press">${pressHtml(OPENING_TEXT.press)}</p><nav class="op-menu" hidden></nav>`;
   document.body.appendChild(el);
+  document.body.classList.add('cover-op');
   void (async () => {
     const im = new Image();
     im.onload = () => el.querySelector<HTMLElement>('.op-bg')!.style.setProperty('--img', `url(${im.src})`);
@@ -3419,9 +3421,10 @@ const opening = (): void => {
   });
   /** 처음 온 사람: 프롤로그 → 첫 대국 (도움말 켜짐). 안내서는 건너뛴다 — 판이 직접 가르친다 (D-232, 보고서 3: 60초 안에 첫 조작). 안내서는 메뉴 · ? 에 남는다 */
   const firstRun = async (): Promise<void> => {
-    await prologue();
-    writeMeta(store, { ...readMeta(store), prologue: true });
-    begin((Date.now() ^ 0x2f17) & 0xffffff, 0, null);
+    await prologue(false, () => {
+      writeMeta(store, { ...readMeta(store), prologue: true });
+      return begin((Date.now() ^ 0x2f17) & 0xffffff, 0, null);
+    });
   };
   const openMenu = (): void => {
     el.classList.add('menu');
@@ -3480,7 +3483,10 @@ const opening = (): void => {
 /** 오프닝 화면을 걷는다 (대국 · 지도로 들어갈 때) */
 const closeOpening = (): void => {
   const el = document.querySelector<HTMLElement>('.opening');
+  document.body.classList.remove('cover-op');
   if (!el) return;
+  // 컷신이 위를 덮고 있으면 걷는 연출 없이 바로 (보이지 않는 연출에 힘을 쓰지 않는다)
+  if (document.body.classList.contains('cover-pl')) return el.remove();
   pxOut(el, () => el.remove(), 300);
 };
 

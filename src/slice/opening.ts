@@ -38,12 +38,13 @@ export const crestHtml = (): string =>
  * 탭 = 다음(찍는 중이면 그 쪽을 한 번에) · 「건너뛰기」 = 바로 끝. logo면 마지막에 베인 타이틀 문장이 내리꽂힌다.
  * 줄: 서술(3인칭 과거) · 대사(이름 + “ ”) · 속말(‘ ’) — 글은 src/data/script.ts.
  */
-export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void> =>
+export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown } = {}): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'prologue';
-    el.innerHTML = `<div class="pl-stage"></div><i class="pl-bar t"></i><i class="pl-bar b"></i><div class="pl-text"></div><button class="btn pl-skip" type="button">${OPENING_TEXT.skip}</button><p class="pl-tap">▼</p>`;
+    el.innerHTML = `<div class="pl-stage"></div><i class="pl-flash"></i><i class="pl-bar t"></i><i class="pl-bar b"></i><div class="pl-text"></div><button class="btn pl-skip" type="button">${OPENING_TEXT.skip}</button><p class="pl-tap">▼</p>`;
     document.body.appendChild(el);
+    document.body.classList.add('cover-pl');
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
     const text = el.querySelector<HTMLElement>('.pl-text')!;
     // 쪽 = (컷 번호, 그 컷의 줄 두 개)
@@ -59,12 +60,23 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void>
       ended = true;
       token++;
       if (o.logo) {
+        stage.className = 'pl-stage';
         stage.innerHTML = `<div class="pl-logo">${crestHtml()}</div>`;
         text.innerHTML = '';
         el.classList.add('logo');
         void titleFx(stage.querySelector<HTMLElement>('.tfx'));
         await wait(calm() ? 300 : 1900);
+        // 로고 뒤에 숨을 돌린다: 누를 때까지 기다린다 (테스터: 끝나자마자 메인 → 온보딩으로 저절로 넘어갔다)
+        const go = document.createElement('p');
+        go.className = 'op-press pl-go';
+        go.innerHTML = pressHtml(OPENING_TEXT.pressGo);
+        el.appendChild(go);
+        await new Promise<void>((r) => el.addEventListener('click', () => r(), { once: true }));
+        sfx('submit');
       }
+      // 다음 화면을 뒤에 먼저 세우고 걷는다 — 걷는 사이 메인 화면이 비치지 않게
+      await o.before?.();
+      document.body.classList.remove('cover-pl');
       pxOut(el, () => { el.remove(); resolve(); }, 300);
     };
     const fill = (l: Line): string => (l.k === 's' ? `“${l.t}”` : l.k === 'm' ? `‘${l.t}’` : l.t);
@@ -81,7 +93,12 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void>
         const src = `scenes/${c.img}.png`;
         stage.innerHTML = (await hasImg(src)) ? `<img class="pl-img${c.img.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 잘리지 않게 가운데 통째로 (D-313)
         if (my !== token) return;
-        stage.className = `pl-stage kb${pg.c % 2}${c.fx ? ` fx-${c.fx}` : ''}`;
+        // 카메라: 장면마다 정한 방향 (없으면 다가감 · 물러남을 번갈아)
+        const cam = c.img.startsWith('boss-') ? 'still' : c.cam ?? (pg.c % 2 ? 'out' : 'in');
+        stage.className = `pl-stage cam-${cam}${c.fx ? ` fx-${c.fx}` : ''}`;
+        stage.style.setProperty('--at', c.at ?? '50% 50%');
+        el.style.setProperty('--em', c.glow && c.glow !== '#f4f1ea' ? c.glow : '#f4d27a');
+        el.classList.toggle('alarm', c.fx === 'red');
         replay(stage, 'in');
         el.classList.remove('dip');
         if (c.fx === 'alarm' || c.fx === 'red') {
@@ -105,7 +122,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void>
         token++;
         typing = false;
         const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
-        pages[i].lines.forEach((l, a) => ps[a] && (ps[a].textContent = fill(l)));
+        pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = fill(l)));
         return;
       }
       i += 1;
@@ -113,14 +130,18 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean } = {}): Promise<void>
       void show(i);
     };
     el.addEventListener('click', (ev) => {
+      if (ended) return;
       if ((ev.target as HTMLElement).closest('.pl-skip')) return void finish();
       next();
     });
     next();
   });
 
-/** 프롤로그 (S1): 처음 출하 앞 · 메뉴 「프롤로그 다시 보기」(short = ★컷만) */
-export const prologue = (short = false): Promise<void> => playCuts(short ? PROLOGUE.filter((c) => c.key) : PROLOGUE, { logo: true });
+/** 프롤로그 (S1): 처음 출하 앞 · 메뉴 「프롤로그 다시 보기」(short = ★컷만). before = 걷기 전에 뒤에 세울 다음 화면 */
+export const prologue = (short = false, before?: () => unknown): Promise<void> => playCuts(short ? PROLOGUE.filter((c) => c.key) : PROLOGUE, { logo: true, before });
+
+/** 「화면을 눌러 …」 — 글자마다 한 칸씩 차례로 튀어 오르는 물결 (테스터: 깜빡임이 뚝뚝 끊겼다) */
+export const pressHtml = (t: string): string => [...t].map((ch, k) => (ch === ' ' ? ' ' : `<span style="--k:${k}">${ch}</span>`)).join('');
 
 /** 안내서 왼쪽 정사각 (D-205): 실제 게임 화면을 자른 그림, 또는 코드 애니메이션 */
 const guideMedia = (m: GuideMedia): string => {

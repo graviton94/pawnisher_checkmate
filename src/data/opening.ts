@@ -79,6 +79,8 @@ export const COACH_LINES = {
 /** 오프닝 화면 글 */
 export const OPENING_TEXT = {
   press: '화면을 눌러 시작',
+  /** 프롤로그 끝 로고 아래 — 누르면 첫 대국 (테스터: 끝나자마자 메인 → 온보딩으로 저절로 넘어가 숨 돌릴 틈이 없었다) */
+  pressGo: '화면을 눌러 출하',
   tagline: '체스 규칙을 부수는 태엽 분대',
   skip: '건너뛰기',
   next: '다음',

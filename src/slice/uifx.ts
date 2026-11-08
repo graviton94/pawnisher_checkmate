@@ -390,7 +390,8 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   window.setTimeout(() => re(word, 'shine'), 420);
   await wait(700);
   // 대기: 칼빛 · 반짝 띠 · 불씨 (타이틀이 닫히면 멈춘다)
-  const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); glintRun(500); re(word, 'shine'); }, 2600);
+  // 대기 중에는 글자 반짝 띠만 (칼빛 · 혼합 모드 반복은 모바일에서 프레임을 먹었다 — 테스터: 타이틀 버벅임)
+  const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); re(word, 'shine'); }, 3200);
   const emb = window.setInterval(() => {
     if (!root.isConnected) return void window.clearInterval(emb);
     const r = panel.getBoundingClientRect();
@@ -401,5 +402,5 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
     document.body.appendChild(m);
     m.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${(Math.random() - 0.5) * 30}px,-${120 + Math.random() * 80}px)`, opacity: 0 }], { duration: 2200, easing: 'cubic-bezier(.2,.6,.4,1)', fill: 'forwards' });
     window.setTimeout(() => m.remove(), 2300);
-  }, 300);
+  }, 520);
 };

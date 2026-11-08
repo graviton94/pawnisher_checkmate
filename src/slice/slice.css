@@ -545,9 +545,9 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes tfxh1 { 0% { transform: none; filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6); animation-timing-function: var(--decel); } 18% { transform: translate(-16px, -15px) rotate(-7deg); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: cubic-bezier(0.3, 1.6, 0.4, 1); } 100% { transform: translate(-5px, -5px) rotate(-2deg); filter: none; } }
 @keyframes tfxh2 { 0% { transform: none; filter: drop-shadow(-6px 0 #ff2a6d) drop-shadow(6px 0 #2de2e6); animation-timing-function: var(--decel); } 18% { transform: translate(16px, 15px) rotate(6deg); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: cubic-bezier(0.3, 1.6, 0.4, 1); } 100% { transform: translate(5px, 5px) rotate(2deg); filter: none; } }
 .tfx-em.done .h1 { opacity: 1; transform: translate(-5px, -5px) rotate(-2deg); } .tfx-em.done .h2 { opacity: 1; transform: translate(5px, 5px) rotate(2deg); }
-.tfx-em.done .sl { opacity: 1; animation: tfxglow 1600ms ease-in-out infinite; }
+.tfx-em.done .sl { opacity: 1; } /* 끝없이 도는 밝기 필터는 매 프레임 다시 그려서 뺐다 (테스터: 타이틀 버벅임) */
 @keyframes tfxglow { 0%, 100% { filter: drop-shadow(0 0 0 transparent); } 50% { filter: drop-shadow(0 0 0 transparent) brightness(1.15); } }
-.tfx-glint { position: absolute; width: 40px; height: 5px; margin: -2px 0 0 -20px; background: #0b0b0e; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; mix-blend-mode: screen; z-index: 3; }
+.tfx-glint { position: absolute; width: 40px; height: 5px; margin: -2px 0 0 -20px; background: #fff3c4; pointer-events: none; z-index: 3; opacity: 0; }
 .tfx-rays { position: absolute; left: 50%; top: 34%; width: 560px; height: 560px; margin: -280px 0 0 -280px; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)); border-radius: 0; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; }
 .tfx-rays.on { animation: tfxrays 420ms var(--decel) forwards; }
 @keyframes tfxrays { 0% { transform: scale(0.3) rotate(0); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 25.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 50.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 75.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.4) rotate(14deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
@@ -562,9 +562,9 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .tfx-word.in, .tfx-word.shown { opacity: 1; }
 .tfx-word.in { animation: tfxword 300ms both; }
 @keyframes tfxword { 0% { transform: scale(2.2) translateY(-10px); filter: drop-shadow(-8px 0 #ff2a6d) drop-shadow(8px 0 #2de2e6) brightness(2); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 55% { transform: scale(0.94); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; filter: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-.tfx-word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 24px; left: -40px; background: rgba(255, 255, 255, 0.85); transform: skewX(-22deg); mix-blend-mode: overlay; opacity: 0; }
-.tfx-word.shine::after { animation: tfxshine 600ms ease-in-out both; }
-@keyframes tfxshine { 0% { left: -40px; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { left: 110%; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
+.tfx-word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 12px; left: 0; background: #fff3c4; transform: translateX(-40px) skewX(-22deg); visibility: hidden; }
+.tfx-word.shine::after { visibility: visible; animation: tfxshine 480ms steps(12) both; }
+@keyframes tfxshine { 0% { transform: translateX(-40px) skewX(-22deg); } 100% { transform: translateX(200px) skewX(-22deg); } }
 .tfx-blood { position: fixed; z-index: 121; width: 5px; height: 5px; background: #e5262f; box-shadow: 0 0 0 1px #0b0b0e; pointer-events: none; }
 .tfx-ember { position: fixed; z-index: 41; width: 3px; height: 3px; background: #ff6b5a; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; -webkit-mask-image: none; mask-image: none; } .tfx-em.done .sl { animation: none; } }
@@ -783,7 +783,11 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .op-bg[style*="--img"] .op-fog, .op-bg[style*="--img"] .op-glow { display: none; }
 .op-logo { position: absolute; inset: 0 0 34px 0; display: grid; place-content: center; justify-items: center; gap: 8px; zoom: 1.3; transition: right 520ms var(--decel); }
 .op-tag { margin: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #c9c0b0; text-shadow: 2px 2px 0 #000; }
-.op-press { position: absolute; left: 0; right: 0; bottom: 30px; margin: 0; text-align: center; font: 400 15px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #f4d27a; text-shadow: 2px 2px 0 #000; animation: blink 1.4s steps(2) infinite; }
+.op-press { position: absolute; left: 0; right: 0; bottom: 30px; margin: 0; text-align: center; font: 400 15px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #f4d27a; text-shadow: 2px 2px 0 #000; }
+/* 「화면을 눌러 시작」: 글자가 차례로 3px 튀어 오르고 그 순간만 밝아진다 — 깜빡임(마스크 on/off) 대신 (테스터: 뚝뚝 끊겼다) */
+.op-press > span { display: inline-block; animation: presswave 2.4s calc(var(--k) * 70ms) infinite; }
+@keyframes presswave { 0%, 14%, 100% { transform: none; color: #f4d27a; animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 5% { transform: translateY(-3px); color: #fff3c4; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } }
+.pl-go { z-index: 5; bottom: 12%; }
 .opening.menu { cursor: default; }
 .opening.menu .op-press { display: none; }
 .opening.menu .op-logo { right: 46%; bottom: 0; zoom: 1.15; }
@@ -805,9 +809,16 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .pl-stage.in { animation: plin 380ms var(--decel) both; }
 @keyframes plin { 0% { filter: brightness(2.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 7.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 15.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 22.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 30% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { filter: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 .pl-stage > .pl-img, .pl-stage > .pl-standin { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; image-rendering: pixelated; }
-.pl-stage.kb0 > * { animation: kb0 9s ease-out both; } .pl-stage.kb1 > * { animation: kb1 9s ease-out both; }
-@keyframes kb0 { from { transform: scale(1.08) translate(-1.5%, 1%); } to { transform: none; } }
-@keyframes kb1 { from { transform: scale(1) translate(1.5%, 0); } to { transform: scale(1.07) translate(-1%, -1%); } }
+/* 카메라 (테스터 피드백): 장면 속 요소에 맞춰 — 컨베이어는 옆으로, 집게 · 왕관은 다가가고, 전광판은 물러나고, 상자는 내려다본다 */
+.pl-stage[class*="cam-"] > * { transform-origin: var(--at, 50% 50%); animation: var(--cam) 14s cubic-bezier(0.45, 0, 0.55, 1) both; will-change: transform; }
+.pl-stage.cam-pan-r { --cam: campr; } .pl-stage.cam-pan-l { --cam: campl; } .pl-stage.cam-tilt-d { --cam: camtd; } .pl-stage.cam-tilt-u { --cam: camtu; }
+.pl-stage.cam-in { --cam: camin; } .pl-stage.cam-out { --cam: camout; } .pl-stage.cam-still > * { animation: none; }
+@keyframes campr { from { transform: translate3d(3%, 0, 0); } to { transform: translate3d(-3%, 0, 0); } }
+@keyframes campl { from { transform: translate3d(-3%, 0, 0); } to { transform: translate3d(3%, 0, 0); } }
+@keyframes camtd { from { transform: translate3d(0, 3%, 0); } to { transform: translate3d(0, -3%, 0); } }
+@keyframes camtu { from { transform: translate3d(0, -3%, 0); } to { transform: translate3d(0, 3%, 0); } }
+@keyframes camin { from { transform: scale(1); } to { transform: scale(1.09); } }
+@keyframes camout { from { transform: scale(1.12); } to { transform: scale(1); } }
 .prologue.dip .pl-stage { opacity: 0; transition: none; }
 .pl-standin { background: #0b0b0e; }
 .pl-glow { position: absolute; left: 50%; top: 18%; width: 120px; height: 120px; margin-left: -60px; background: var(--g); opacity: 0.18; clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
@@ -818,7 +829,10 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .pl-crown, .gd-crowned .pl-crown { position: absolute; left: 50%; top: -14%; width: 62%; transform: translateX(-46%) rotate(-12deg); image-rendering: pixelated; }
 .pl-stage.fx-alarm::after { content: ''; position: absolute; right: 12%; top: 16%; width: 18px; height: 18px; background: #e5262f; box-shadow: 0 0 0 3px #000; animation: alarm 1.8s steps(1) forwards; }
 @keyframes alarm { 0% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 2.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 5.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 7.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 10% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 12.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 15.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 17.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 20% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 22.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 25.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 27.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 30% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 32.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 35.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 37.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 40% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 42.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 45.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 47.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 50% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.pl-stage.fx-red::after { content: ''; position: absolute; inset: 0; background: rgba(229, 38, 47, 0.18); animation: lamp 900ms steps(2) 3; }
+/* 전광판 경보: 화면 전체가 붉게 깜빡인다 (테스터: 위쪽만 깜빡였다) — 무대 밖 층이라 카메라 · 흔들림과 따로 논다 */
+.pl-flash { position: absolute; inset: 0; z-index: 1; pointer-events: none; display: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%23e5262f'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23e5262f'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
+.prologue.alarm .pl-flash { display: block; animation: plalarm 1.1s steps(1) infinite; }
+@keyframes plalarm { 0% { visibility: visible; } 22% { visibility: hidden; } 30% { visibility: visible; } 46% { visibility: hidden; } 100% { visibility: hidden; } }
 .pl-stage.fx-spot::after { content: ''; position: absolute; left: 50%; top: 0; width: 34%; height: 100%; margin-left: -17%; background: rgba(244, 241, 234, 0.08); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); }
 .pl-stage.fx-path::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 60%; height: 55%; margin-left: -30%; background: rgba(200, 155, 60, 0.14); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); }
 .pl-bar { position: absolute; left: 0; right: 0; height: 8%; background: #000; z-index: 2; }
@@ -829,7 +843,8 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .pl-say { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #ffb4a8; }
 .pl-mono { font-size: 24px; font-family: Galmuri11, sans-serif; font-style: normal; color: #f4d27a; }
 .pl-skip { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 12px; z-index: 4; min-height: 44px; font-size: 12px; font-family: Galmuri11, sans-serif; }
-.pl-tap { position: absolute; right: 24px; bottom: 9%; z-index: 3; margin: 0; color: #f4d27a; animation: blink 1.2s steps(2) infinite; }
+.pl-tap { position: absolute; right: 24px; bottom: 9%; z-index: 3; margin: 0; color: #f4d27a; animation: plbob 1.2s infinite; }
+@keyframes plbob { 0%, 100% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 50% { transform: translateY(3px); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } }
 .prologue.logo .pl-text, .prologue.logo .pl-tap { display: none; }
 .pl-logo { position: absolute; inset: 0; display: grid; place-content: center; zoom: 1.4; }
 /* 안내서 */
@@ -2179,6 +2194,9 @@ body.between #right, body.between #left { visibility: hidden; }
 .promo .btn.dead { background: #2f2e36; color: #56545e; box-shadow: 0 0 0 2px #000; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .promo .btn.tremble { animation: none; } }
 .prologue .pl-mono.long { font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; }
+/* 컷신 강조 글자 (테스터: 「알 수 없는 이유로」 같은 말에 색) — 장면 빛깔로, 찍힐 때 한 번 튄다 */
+.pl-text em { font-style: normal; color: var(--em, #f4d27a); display: inline-block; }
+.pl-text em.wshake { animation: wshake 420ms var(--decel); }
 
 /* D-277 승급 13 최종장 — 이긴 뒤 판 위 연출 (finale.ts): 5×6 칸, 폰이 한 칸씩 걷고, 두 칸 중 하나를 누른다 */
 .finale { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; align-content: start; gap: 10px; padding-top: 40px; background: #0b0b0e; }
@@ -2325,7 +2343,6 @@ body[data-boss="spawn"] .boss-rules, body[data-boss="inspect"] .boss-rules { bor
 body[data-boss="thorns"] .boss-rules { border-image-source: url('../assets/ui/chrome/btn-iron.png'); }
 body[data-boss="magnet"] .boss-rules { filter: hue-rotate(-75deg); } /* 진홍 판을 보라로 — 색만 돌린다(도트 그대로) */
 /* D-313 컷신 글 받침: 밝은 그림(하늘 · 쇳물) 위에서도 읽히게 — 글 줄마다 검은 띠 + 그림 맨 아래 2할만 성긴 디더(4칸에 1칸)로 살짝 어둡게 (반투명 그라데이션 금지) */
-.pl-stage::after { content: ''; position: absolute; inset: auto 0 0 0; height: 22%; z-index: 2; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%230b0b0e'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
 .pl-text p:not(:empty) { justify-self: center; background: #0b0b0e; padding: 2px 10px; box-shadow: 0 0 0 2px #0b0b0e; }
 .pl-stage > .pl-img.pl-portrait { inset: 0; width: 100%; height: 100%; object-fit: contain; background: #0b0b0e; } /* D-313: 2 : 1 화면에서 정사각 초상이 잘리던 것 */
 

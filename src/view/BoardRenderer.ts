@@ -1759,7 +1759,9 @@ export class BoardRenderer implements BoardView {
   private sleepIfHidden(): void {
     const loop = this.game?.loop;
     if (!loop) return;
-    const hidden = document.body.classList.contains('between');
+    // 타이틀 · 컷신이 화면을 덮은 동안에도 멈춘다 (테스터: 타이틀 뒤에서 판이 돌아 로고 연출이 버벅였다)
+    const cl = document.body.classList;
+    const hidden = cl.contains('between') || cl.contains('cover-op') || cl.contains('cover-pl');
     if (hidden && loop.running) loop.sleep();
     else if (!hidden && !loop.running) loop.wake();
   }
