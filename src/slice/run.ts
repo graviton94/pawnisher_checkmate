@@ -14,6 +14,8 @@ export interface BattleDef {
   enemy: PieceType[];
   /** 일반 대국 편성 이름 (D-319 — 갈림길마다 다른 상대) */
   foe?: string;
+  /** 이 대국만 쓰는 덱 (입문 판 — 짜 둔 손패가 2턴까지 이어지게, D-318). 없으면 출하 덱 */
+  deck?: CommandId[];
   kingHp: number;
   /** 적 기물 HP 배율 (막마다) */
   enemyHp?: number;
@@ -197,6 +199,7 @@ export const INTRO: BattleDef[] = [
     ],
     // 손패를 짜 둔다 (테스터 피드백 B): 1턴 = 폰 · 나이트 · (처치로 뽑는) 지휘 / 2턴 = 폰 둘(되감기 실습 · 승격) · 나이트(빠지며 치기)
     order: ['advance', 'leap', 'kingStep', 'leap', 'kingStep', 'order', 'kingStep', 'advance', 'advance', 'leap', 'order', 'kingStep', 'advance', 'leap', 'order'],
+    deck: ['advance', 'leap', 'kingStep', 'leap', 'kingStep', 'order', 'kingStep', 'advance', 'advance', 'leap', 'order', 'kingStep', 'advance', 'leap', 'order'],
     title: '입문 — 시험대',
     narr: '흰 기물들이 처음으로 눈을 뜬다. 검은 것이 앞을 막는다.',
     tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.',
