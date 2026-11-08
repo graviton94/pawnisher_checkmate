@@ -22,6 +22,8 @@ ATTACH = [
     ('②', '화풍 기준 — 쇳물 위 그림자 킹', 'build-res/order/V-07-pact-source.png', 720),
     ('③', '게임 속 검은 킹 도트 (반장 · 도금왕만)', 'build-res/order/K-black-new-source.png', 0),
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
+    ('⑧', '이야기 컷 정답 「말리는 분대」 — 15위 컷의 구도 · 밀도 (D-346)', 'build-res/order/C-05-promote-crew-source.png', 720),
+    ('⑨', '이야기 컷 정답 「조항 새김」 — 금칠 킹 생김새 · 15위 컷 (D-346)', 'build-res/order/C-02-promote-rule-source.png', 720),
     ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
@@ -220,13 +222,15 @@ def main(out_path):
                 if ms.group(1) > 'I-10':
                     figs.append(('build-res/order/I-05-received.png', '화풍 기준 (받은 시트)'))
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 800)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
-            mb = re.match(r'BF-\d+', it['head'])
+            mb = re.match(r'BF-\d+|C-06', it['head'])
             if mb and not done_it:  # 반장 격파 컷: 그 반장 초상(④)을 상자 바로 위에 — 「같은 카메라로 무너진 뒤」의 기준
                 port = re.search(r'public/scenes/(boss-[a-z]+)\.png', '\n'.join(b[1] if isinstance(b[1], str) else '' for b in it['blocks']))
                 figs = [(f'public/scenes/{port.group(1)}.png', '④ 이 반장의 초상 — 같은 몸 · 같은 빛')] if port else []
                 if mb.group(0) == 'BF-02' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-02-boss-fall-inspect-source.png')):
                     figs.append(('build-res/order/BF-02-boss-fall-inspect-source.png', '1차 — 화풍은 좋다. 다시: 철갑과 같은 구도 → 렌즈 클로즈업으로'))
-                if mb.group(0) != 'BF-01' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-boss-fall-plate-source.png')):
+                if mb.group(0) == 'C-06':
+                    figs = [('build-res/order/C-06-bad-draft.png', '1차 — 다시 (평평 · 텅 빈 화면 · 팔처럼 늘어난 금칠 · 작은 주인공)')]
+                if mb.group(0) != 'BF-01' and not mb.group(0).startswith('C-') and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-boss-fall-plate-source.png')):
                     figs.append(('build-res/order/BF-01-boss-fall-plate-source.png', '⑥ 화풍 정답 — 완성된 철갑 격파 컷 (화풍 · 빛 · 극적인 정도만. 구도는 따라 하지 않는다)'))
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
             items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
