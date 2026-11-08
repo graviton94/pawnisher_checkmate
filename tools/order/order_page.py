@@ -223,8 +223,8 @@ def main(out_path):
             if mb and not done_it:  # 반장 격파 컷: 그 반장 초상(④)을 상자 바로 위에 — 「같은 카메라로 무너진 뒤」의 기준
                 port = re.search(r'public/scenes/(boss-[a-z]+)\.png', '\n'.join(b[1] if isinstance(b[1], str) else '' for b in it['blocks']))
                 figs = [(f'public/scenes/{port.group(1)}.png', '④ 이 반장의 초상 — 같은 몸 · 같은 빛')] if port else []
-                if mb.group(0) == 'BF-01':
-                    figs += [(f, c) for f, c in [('build-res/order/BF-01-draft5.png', '5차 — 거의 완성 (임시로 게임에 넣음). 고칠 점: 안의 작은 킹이 아래쪽이라 글상자에 가린다 → 화면 세로 한가운데로'), ('build-res/order/BF-01-draft3.png', '3차 — 방향 참고'), ('build-res/order/BF-01-draft4.png', '4차 — 다시 (주인공이 주인공 — 보스 격파가 아니다)'), ('build-res/order/BF-01-draft2.png', '2차 — 다시 (정면 수평 = 평범한 장면)'), ('build-res/order/BF-01-bad-draft.png', '1차 — 다시 (붓 질감 · 소품 · 균열 · 작은 일반 킹)')] if os.path.exists(os.path.join(ROOT, f))]
+                if mb.group(0) != 'BF-01' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-boss-fall-plate-source.png')):
+                    figs.append(('build-res/order/BF-01-boss-fall-plate-source.png', '⑥ 정답 예시 — 완성된 철갑 격파 컷 (같은 구도 · 빛줄기 · 화풍, 반장만 바꾼다)'))
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
             items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
         body.append(
