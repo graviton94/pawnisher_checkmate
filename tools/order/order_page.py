@@ -170,11 +170,11 @@ def main(out_path):
     for s in secs:
         m = re.match(r'(\d+)위 · (.*)', s['head'])
         if m:
-            if int(m.group(1)) >= 14:
+            if int(m.group(1)) >= 15:
                 break
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
             groups.append(g)
-        elif g and re.match(r'[A-Z]-\d', s['head']):
+        elif g and re.match(r'[A-Z]{1,2}-\d', s['head']):
             g['items'].append(s)
 
     # 한눈에 표: 12위 줄은 끝났다고 고쳐 적는다
