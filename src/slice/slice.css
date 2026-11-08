@@ -2582,3 +2582,10 @@ body.slice .overlay .panel:has(.reward-scroll .crail) .squad-strip { grid-templa
 body.slice .overlay .panel:has(.reward-scroll .crail) .squad-strip .ss-head { grid-column: auto; white-space: nowrap; }
 body.slice .overlay .panel:has(.reward-scroll .crail) .ss-t { width: 76px; }
 body.slice .overlay .panel:has(.reward-scroll .crail) .row .btn { min-height: 44px; }
+
+/* D-324 합류 말풍선 — 흰 기물 · 청록 테 (반장 도발과 구분) */
+.taunt.crew-say { box-shadow: 0 4px 0 #000; max-width: min(640px, 90vw); }
+.taunt.crew-say .tq-t { grid-template-rows: auto auto; }
+.taunt.crew-say .cs-name { grid-row: 1; font: 700 12px Galmuri11, sans-serif; color: #8ee8ea; }
+.taunt.crew-say .tq-ghost, .taunt.crew-say .tq-live { grid-row: 2; grid-column: 1; }
+.taunt.crew-say .taunt-face { box-shadow: 0 0 0 2px #000, 0 0 0 4px #46c4c8, inset 0 0 0 2px #000; }

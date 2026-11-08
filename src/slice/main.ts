@@ -40,6 +40,7 @@ const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) 
 /** 16px 칸용 (D-290: 아이콘이 32도트가 되면 반으로 줄인 그림을 따로 쓴다 — 브라우저 축소는 바깥선을 끊는다) */
 const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
 import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
+import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
 import { EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
@@ -180,6 +181,20 @@ const nemeses = (): Nemesis[] => readMeta(store).nemeses ?? [];
 const setNemeses = (list: Nemesis[]): void => writeMeta(store, { ...readMeta(store), nemeses: list });
 
 /** 적 킹의 한 마디 (대국마다 한 줄까지, 확률로만 — 매 판 떠들지 않는다) */
+/** 합류 대사 (D-324): 새 분대원이 제 성격대로 한마디 — 흰 기물 얼굴의 말풍선, 이름 아래 */
+const crewSay = (t: PieceType, name: string): void => {
+  const lines = CREW_VOICE[t as CrewKind]?.join;
+  if (!lines) return void toast(`${josa(name, '이')} 분대에 합류했습니다.`);
+  const line = lines[R.int(lines.length)];
+  document.querySelector('.taunt.crew-say')?.remove();
+  const el = document.createElement('div');
+  el.className = 'taunt tq3 crew-say';
+  el.innerHTML = `<i class="taunt-face">${pieceImg(t, 0, 'small', 40)}</i><span class="tq-t"><b class="cs-name">${name} — 합류</b><b class="tq-ghost" aria-hidden="true">${line}</b><b class="tq-live"></b></span>`;
+  document.body.appendChild(el);
+  sfx('rare');
+  window.setTimeout(() => void typeIn(el.querySelector<HTMLElement>('.tq-live')!, line, 30), 200);
+  window.setTimeout(() => pxOut(el, () => el.remove()), 1200 + line.length * 55);
+};
 const taunt = (cue: TauntCue, force = false): void => {
   if (labMode) return;
   // 반장은 판에서 셋까지 말한다(규칙 발동 · 몰림 · 처치 — 상황마다 제 말, D-311), 보통 적 킹은 한 번
@@ -2628,7 +2643,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
             draft('card', [...offers, `crew:${recruitOffer.t}`], `crew:${recruitOffer.t}`);
             squad.push(recruitCrew);
             deck.push(...recruitOffer.cards);
-            toast(`${josa(recruitCrew.name, '이')} 분대에 합류했습니다.`);
+            crewSay(recruitCrew.t, crewLabel(recruitCrew));
             advance();
           }),
         );
@@ -2742,7 +2757,10 @@ const deathRites = async (): Promise<void> => {
     fx.className = 'deathfx dc3';
     // 킹(대장)은 「대장, 먼저 갑니다」를 말하지 않는다 (페르소나 테스트 c4) — 대장을 부르는 대사는 분대원에게만
     const pool = c.t === 'K' ? DEATHS.filter((x) => !x.line.includes('대장')) : DEATHS;
-    const d = pool[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % pool.length];
+    const d0 = pool[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % pool.length];
+    // 분대원은 제 성격대로 깨달음을 남기고 쓰러진다 (D-324) — 킹은 예전 대사
+    const voice = c.t !== 'K' ? CREW_VOICE[c.t as CrewKind]?.fall : undefined;
+    const d = voice ? { narr: d0.narr, line: voice[((c.serial ?? '').charCodeAt(2) + f.turn) % voice.length] } : d0;
     // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158). D-189: 검은 막이 한 줄씩 계단으로 내려오고 서술이 한 자씩 찍힌다
     fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
     curtainRows(fx);
@@ -2758,7 +2776,8 @@ const deathRites = async (): Promise<void> => {
       x.classList.add('in');
       await new Promise((r) => window.setTimeout(r, 60));
     }
-    await new Promise((r) => window.setTimeout(r, 650));
+    // 마지막 말을 읽을 시간 (글자당 45ms)
+    await new Promise((r) => window.setTimeout(r, calmNow() ? 650 : 650 + d.line.length * 45));
     if (froze) document.body.classList.remove('rev-freeze');
     fx.classList.add('out');
     pxOut(fx.querySelector<HTMLElement>(':scope > div'), undefined, 200);
@@ -2825,7 +2844,7 @@ const recruitPick = (head: string, then: () => void, _elite = false): void => {
         ftue('first_pick');
         squad.push(crews[Number(btn.dataset.rec)]);
         deck.push(...r.cards);
-        toast(`${josa(crews[Number(btn.dataset.rec)].name, '이')} 분대에 합류했습니다.`);
+        crewSay(crews[Number(btn.dataset.rec)].t, crewLabel(crews[Number(btn.dataset.rec)]));
         then();
       }),
     ),
@@ -3794,4 +3813,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: () => { void gildedPhase2(); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), kit: () => kitPick('<h2>핵심 부품</h2>', () => showMap()), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: () => { void gildedPhase2(); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick('<h2>핵심 부품</h2>', () => showMap()), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
