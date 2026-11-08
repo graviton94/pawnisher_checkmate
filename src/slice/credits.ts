@@ -20,7 +20,7 @@ export const creditsScene = (crew: PieceType[], meta: string): Promise<void> =>
     ];
     const el = document.createElement('div');
     el.className = 'credits';
-    el.innerHTML = `<div class="cr-page"></div><p class="pl-tap">▼</p>`;
+    el.innerHTML = `<img class="cr-bg" src="scenes/credits-bg.png" alt="" onerror="this.remove()"><div class="cr-page"></div><p class="pl-tap">▼</p>`; // 크레딧 배경 E-06 (D-346) — 받기 전엔 검은 바탕
     document.body.appendChild(el);
     const page = el.querySelector<HTMLElement>('.cr-page')!;
     let i = -1;

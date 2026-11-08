@@ -90,8 +90,9 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         el.classList.add('dip');
         await wait(calm() ? 0 : 140);
         if (my !== token) return;
-        const src = `scenes/${c.img}.png`;
-        stage.innerHTML = (await hasImg(src)) ? `<img class="pl-img${c.img.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 잘리지 않게 가운데 통째로 (D-313)
+        const pick = (await hasImg(`scenes/${c.img}.png`)) ? c.img : c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
+        const src = `scenes/${pick}.png`;
+        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 잘리지 않게 가운데 통째로 (D-313)
         if (my !== token) return;
         // 카메라: 장면마다 정한 방향 (없으면 다가감 · 물러남을 번갈아)
         const cam = c.img.startsWith('boss-') ? 'still' : c.cam ?? (pg.c % 2 ? 'out' : 'in');

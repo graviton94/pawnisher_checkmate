@@ -22,6 +22,7 @@ ATTACH = [
     ('②', '화풍 기준 — 쇳물 위 그림자 킹', 'build-res/order/V-07-pact-source.png', 720),
     ('③', '게임 속 검은 킹 도트 (반장 · 도금왕만)', 'build-res/order/K-black-new-source.png', 0),
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
+    ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
 REDO: set[str] = set()
@@ -96,7 +97,7 @@ def where_all(fs):
 def files_of(head):
     if re.match(r'I-\d+', head):
         return sheet_files(head)
-    fs = re.findall(r'`(?:public/scenes/)?([A-Za-z0-9-]+)\.png`', head)
+    fs = re.findall(r'`(?:public/scenes/|public/ui/hud/)?([A-Za-z0-9-]+)\.png`', head)
     m = re.search(r'`([A-Za-z-]+)-(\d+)\.png` ~ `\1-(\d+)\.png`', head)  # boss-gilded-1 ~ 4 같은 범위
     if m:
         fs = [f for f in fs if not f.startswith(m.group(1) + '-')] + [f'{m.group(1)}-{i}' for i in range(int(m.group(2)), int(m.group(3)) + 1)]
@@ -162,7 +163,7 @@ def render_blocks(blocks, start_id):
 
 def main(out_path):
     secs = parse()
-    have = {f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')} - REDO
+    have = ({f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')} | {f[:-4] for f in os.listdir(os.path.join(ROOT, 'public', 'ui', 'hud')) if f.startswith('crew-') and f.endswith('.png')}) - REDO
     if os.path.isdir(EXT):
         have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
     intro = next(s for s in secs if s['head'].startswith('0.'))
@@ -170,7 +171,7 @@ def main(out_path):
     for s in secs:
         m = re.match(r'(\d+)위 · (.*)', s['head'])
         if m:
-            if int(m.group(1)) >= 15:
+            if int(m.group(1)) >= 16:
                 break
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
             groups.append(g)
