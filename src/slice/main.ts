@@ -13,7 +13,7 @@ import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, s
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, shake, stampFx, sweep, tally, toastIn, toastOut, turnBanner, turnLabel, typeIn } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
-import { descHtml, splitDesc } from './desc';
+import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_ENTRY, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
@@ -544,7 +544,7 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
   const g = gradeOf(id);
   // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
   // D-367 카드 틀: 비용 = 톱니 메달 숫자 · 그림 = 분대원 초상(공용은 아이콘) · 종류 판 = 누가 · 어떤 · 합/곱
-  const art = c.who === 'any' ? cardArt(id) : `<img class="cf-face" src="${c.who === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${c.who}.png`}" alt="">`;
+  const art = c.who === 'any' ? cardArt(id) : `<img class="cf-face" src="ui/hud/crew-${c.who}.png" alt="">`;
   return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost${c.cost === 1 ? ' c1' : ''}" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${c.name}</b><span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
 /**
@@ -565,21 +565,27 @@ const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; sh
 const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: number; lives?: number; kills?: number; dmg?: number; say?: string }, src?: string, cls = ''): string => {
   const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
   const q = u.quirk ? QUIRKS[u.quirk] : null;
-  const art = src ?? (u.t === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${u.t}.png`);
+  const art = src ?? `ui/hud/crew-${u.t}.png`;
   const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1));
   const lives = o.lives ?? (u.doors ?? 0) + (q?.doors ?? 0);
   const pct = `${Math.max(0, Math.min(100, Math.round((o.hp / o.max) * 100)))}%`;
   const kills = (u.kills ?? 0) + (o.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(o.dmg ?? 0);
-  const hearts = Array.from({ length: lives }, () => '<i class="cb-life"></i>').join('');
+  // 생명 자리 (D-377): 늘 둘 이상 — 남은 생명은 태엽 하트, 빈 자리는 깨진(검은) 하트
+  const hearts = Array.from({ length: Math.max(2, lives) }, (_, k) => `<i class="cb-life${k < lives ? '' : ' off'}"></i>`).join('');
+  // 본문 (D-377): 위 칸 = 기록(이름 · 숫자) 또는 첫마디 2줄 · 아래 칸 = 특성 이름 / 효과 · 효과 (또는 조건 / 효과) 한 줄씩
+  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>넘김</i>${u.defied ?? 0}</span></span>`];
+  const bot = q
+    ? [lineHtml(q.name, 'name'), ...bottomLines('', q.desc).slice(0, 2).map((l) => lineHtml(l.t, l.k === 'fx' ? 'say' : 'if'))]
+    : u.t === 'K'
+      ? [lineHtml('분대의 심장', 'name'), lineHtml('쓰러지면 끝')]
+      : u.scars?.length
+        ? [lineHtml(`흉터 · ${u.scars[0]}`, 'name'), ...splitTwo(SCAR_DESC[u.scars[0]] ?? '').map((x) => lineHtml(x))]
+        : [];
   return `<div class="cf crew-card g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${crewLabel(u)}</b>`
     + `<span class="cf-win"><span class="er-pc"><img src="${art}" alt=""></span></span>`
     + `<b class="cb cb-atk${atk >= 100 ? ' n3' : ''}">${atk}</b><b class="cb cb-hp${Math.round(o.hp) >= 100 ? ' n3' : ''}"><span class="er-hpn">${Math.round(o.hp)}</span></b><span class="cb-lives">${hearts}</span>`
     + `<span class="cb-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span></span>`
-    + `<small class="cf-desc">${o.say ? `<span class="dl dl-say">${o.say}</span>` : `<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>넘김</i>${u.defied ?? 0}</span></span>`}`
-    + (!q && u.t === 'K' ? '<b class="cs-qn">출하의 심장</b><span class="cs-q">쓰러지면 출하가 끝난다.</span>' : '')
-    + (q ? `<b class="cs-qn">${q.name}</b><span class="cs-q">${q.desc.split(' · ').map((x) => `<span class="fxi">${x}</span>`).join('<span class="sep">·</span>')}</span>` : '')
-    // D-376: 아래 칸은 3줄 — 기벽이 있으면 기벽(이름 + 풀이)만, 흉터는 받침 · 분대 보기로. 기벽이 없을 때만 흉터 하나가 아래 칸에 든다
-    + (!q && u.t !== 'K' && u.scars?.length ? `<b class="cs-sc">흉터 · ${u.scars[0]}</b><span class="cs-q">${SCAR_DESC[u.scars[0]] ?? ''}</span>` : '')
+    + `<small class="cf-desc">${bodyHtml(top, bot)}`
     + `</small><i class="cf-gem"></i></div>`;
 };
 /**
@@ -2361,32 +2367,27 @@ const openOverlay = (html: string): HTMLElement => {
  * 카드는 한 장씩 맞물려 멈추고(스냅), 넘칠 때만 ◀ ▶ 단추가 선다. 넘기면 줄이 살짝 밀렸다 돌아온다(계단, 페이드 없음).
  */
 /**
- * 카드 설명 맞춤 (D-372 · D-373): 카드는 한 크기라 글이 넘치면 카드를 키우지 않고 글을 맞춘다 —
- * ① 줄 간격 13px → ② 작은 글씨(갈무리9 10px, 사용자 허락) → ③ 그래도 넘치면 묘사 줄 · 흉터 풀이를 접는다.
+ * 카드 본문 줄 맞춤 (사용자 결정 D-377): 줄은 정해진 칸 — 넘치면 줄바꿈 대신 그 줄 글자를 줄인다.
+ * 12px(갈무리11) → 10px(갈무리9) → 8px(갈무리7) → 그래도 넘치면 가로로만 눌러 담는다. 카드 폭이 바뀌면(등장 연출 · 글꼴 늦게 옴) 다시 잰다.
  */
+const fitLines = (d: HTMLElement): void => {
+  d.querySelectorAll<HTMLElement>('.ln').forEach((ln) => {
+    ln.classList.remove('s10', 's8');
+    ln.style.transform = '';
+    const over = (): boolean => ln.scrollWidth > ln.clientWidth + 1;
+    if (over()) ln.classList.add('s10');
+    if (over()) { ln.classList.remove('s10'); ln.classList.add('s8'); }
+    if (over()) ln.style.transform = `scaleX(${(ln.clientWidth / ln.scrollWidth).toFixed(3)})`;
+  });
+};
+const lineWatch = new ResizeObserver((es) => es.forEach((e) => fitLines(e.target as HTMLElement)));
 const fitCardDesc = (card: HTMLElement): void => {
   const d = card.querySelector<HTMLElement>('.cf-desc');
   if (!d || !card.offsetParent) return;
   card.dataset.fit = '1';
-  d.classList.remove('tight', 'small', 'fold');
-  const over = (): boolean => d.scrollHeight > d.clientHeight + 1;
-  for (const k of ['tight', 'small', 'fold']) if (over()) d.classList.add(k);
-  sepFix(d);
-  sepWatch.observe(d);
+  fitLines(d);
+  lineWatch.observe(d);
 };
-/**
- * 줄 끝 · 줄 머리에 가운뎃점이 홀로 남지 않게 (D-375 리뷰): 다음 항목이 앞 항목과 다른 줄이면 그 사이 「·」를 감춘다.
- * 카드 폭이 나중에 바뀌어도(등장 연출 · 글꼴 늦게 옴) 다시 잰다 — 한 줄인데 감춰져 「생명 2공격」처럼 붙는 일이 없게.
- */
-const sepFix = (d: HTMLElement): void => {
-  const seps = [...d.querySelectorAll<HTMLElement>('.sep')];
-  seps.forEach((sep) => (sep.style.visibility = ''));
-  seps.forEach((sep) => {
-    const a = sep.previousElementSibling as HTMLElement | null, b = sep.nextElementSibling as HTMLElement | null;
-    if (a && b && b.offsetTop > a.offsetTop + 2) sep.style.visibility = 'hidden';
-  });
-};
-const sepWatch = new ResizeObserver((es) => es.forEach((e) => sepFix(e.target as HTMLElement)));
 /**
  * 카드 받침 (D-373, 사용자: 「카드 디자인은 정본, 가격 · 추가 정보는 화면에 걸맞게」):
  * 카드 위에 덧그리던 화면별 정보(가격 · 덱 맞물림 · 함께 오는 카드)를 카드 밖, 바로 아래 철판 하나로 옮긴다.

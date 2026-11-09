@@ -4,13 +4,14 @@
 사용: python3 -I tools/pixel/crew_faces.py   (원본 build-res/order/N-crew-{P,N,B,R,Q}-source.png → public/ui/hud/crew-*.png)
 """
 import os
+import sys
 from collections import Counter
 
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 N, RING = 56, 0  # D-353: 흰 테 없이 — 액자 바탕이 종이(흰색)라 검은 외곽선만으로 선다
-CROP = {'P': 0.74, 'N': 0.66, 'B': 0.8, 'R': 0.64, 'Q': 0.62}  # 기물 키 중 초상에 담을 위쪽 몫 (비숍은 십자가, 룩은 도장까지)
+CROP = {'K': 0.7, 'P': 0.74, 'N': 0.66, 'B': 0.8, 'R': 0.64, 'Q': 0.62}  # 기물 키 중 초상에 담을 위쪽 몫 (비숍은 십자가, 룩은 도장까지)
 WHITE, INK = (244, 241, 234), (11, 11, 14)
 N4 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 N8 = N4 + [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -77,5 +78,5 @@ def one(t):
 
 
 if __name__ == '__main__':
-    for t in 'PNBRQ':
+    for t in (sys.argv[1:] or 'KPNBRQ'):
         one(t)

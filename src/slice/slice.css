@@ -2960,3 +2960,27 @@ body.slice .cinfo .kit-with.kw-inline > i { color: #8ee8ea; }
 body.slice .cf.cf.cf.cf > .cf-type > i { font: 400 12px/12px Galmuri11, sans-serif !important; color: #cfc6b0 !important; }
 body.slice .kit-confirm .kc-panel > h2 { text-align: center; }
 body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: 0; }
+
+/* ===================== D-377 카드 본문 2 : 3 고정 칸 (사용자 결정) =====================
+   위 칸(2줄) · 점선 · 아래 칸(3줄). 점선은 본문 높이의 2/5 자리에 고정. 한 칸뿐이면 점선 없이 본문 한가운데.
+   줄마다 한 줄 그대로 — 넘치면 fitLines가 그 줄 글자를 줄인다 (줄바꿈 없음). 모든 글은 가로 · 세로 가운데. */
+body.slice .cf.cf.cf.cf > .cf-desc { display: block; overflow: hidden; padding: 0 !important; gap: 0; }
+body.slice .cf.cf.cf.cf > .cf-desc > .db { position: absolute; inset: 0; display: grid; }
+body.slice .cf.cf.cf.cf > .cf-desc > .db.two { grid-template-rows: 2fr 3fr; }
+body.slice .cf.cf.cf.cf > .cf-desc > .db.one { grid-template-rows: 1fr; }
+body.slice .cf.cf.cf.cf > .cf-desc .db-top, body.slice .cf.cf.cf.cf > .cf-desc .db-bot { min-height: 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0; }
+body.slice .cf.cf.cf.cf > .cf-desc > .db.two > .db-bot { border-top: 2px dotted #a8782a; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln { display: block; width: 100%; white-space: nowrap; overflow: visible; text-align: center; transform-origin: 50% 50%;
+  font: 400 12px/15px Galmuri11, sans-serif !important; color: #3a342a; word-break: keep-all; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-if { color: #4a4436; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx b { font-weight: 700 !important; color: #2a2620; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-fx em { font-style: normal; color: #a8222e; font: inherit !important; color: #a8222e; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color: #1f6b70; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln.s10, body.slice .cf.cf.cf.cf > .cf-desc .ln.s10 * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln.s8, body.slice .cf.cf.cf.cf > .cf-desc .ln.s8 * { font-family: Galmuri7, Galmuri9, sans-serif !important; font-size: 8px !important; line-height: 15px !important; font-weight: 400 !important; }
+body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }
+/* 카드 밖(지도 안내 등)에서 쓰는 같은 본문은 그냥 줄 */
+.mg-desc .db, .mg-desc .db-top, .mg-desc .db-bot, .mg-desc .ln { display: block; }
+/* 생명 빈 자리 = 깨진(검은) 태엽 하트 */
+body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }
+body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; } /* D-377: 옛 규칙(b · em 블록/플렉스)이 한 줄을 쪼개지 않게 */
