@@ -8,6 +8,8 @@ import { REWARD_COMMANDS, type CommandId } from '../src/slice/cards';
  * RL_ITEMS=base,lastBreath,... · RL_N · RL_OFF · RL_ASC · RL_STYLE · RL_BASE(씨앗 시작) · RL_TAG (결과 sim/relic-<tag>.json)
  */
 it('relic', () => {
+  // RL_NOPOOL=1: 기록 유물 넷을 보상 풀에서 뺀 세상 (D-363 이전과 같은 풀) — 런타임에만 지운다
+  if (process.env.RL_NOPOOL) for (const id of ['lastBreath', 'ledger', 'veteran', 'deathMark']) delete (SLICE_PARTS as Record<string, unknown>)[id];
   const N = Number(process.env.RL_N ?? 40), off = Number(process.env.RL_OFF ?? 0), asc = Number(process.env.RL_ASC ?? 0);
   const style = (process.env.RL_STYLE ?? 'greedy') as RunStyle, sb = Number(process.env.RL_BASE ?? 52000);
   let items = (process.env.RL_ITEMS ?? 'base').split(',');
