@@ -543,7 +543,7 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
   // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
   // D-367 카드 틀: 비용 = 톱니 메달 숫자 · 그림 = 분대원 초상(공용은 아이콘) · 종류 판 = 누가 · 어떤 · 합/곱
   const art = c.who === 'any' ? cardArt(id) : `<img class="cf-face" src="${c.who === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${c.who}.png`}" alt="">`;
-  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${c.name}</b><span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost${c.cost === 1 ? ' c1' : ''}" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${c.name}</b><span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
 /**
  * 분대원 카드 (D-362, 사용자: 「기물도 하나하나의 카드가 되는 거지」): 카드 · 부품과 같은 틀 —
@@ -574,7 +574,8 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
     + `<b class="cb cb-atk${atk >= 100 ? ' n3' : ''}">${atk}</b><b class="cb cb-hp${Math.round(o.hp) >= 100 ? ' n3' : ''}"><span class="er-hpn">${Math.round(o.hp)}</span></b><span class="cb-lives">${hearts}</span>`
     + `<span class="cb-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span></span>`
     + `<small class="cf-desc">${o.say ? `<span class="dl dl-say">${o.say}</span>` : `<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>넘김</i>${u.defied ?? 0}</span></span>`}`
-    + (q ? `<b class="cs-qn">${q.name}</b><span class="cs-q">${q.desc.split(' · ').map((x) => `<span class="fxi">${x}</span>`).join(' · ')}</span>` : '')
+    + (!q && u.t === 'K' ? '<b class="cs-qn">출하의 심장</b><span class="cs-q">쓰러지면 출하가 끝난다.</span>' : '')
+    + (q ? `<b class="cs-qn">${q.name}</b><span class="cs-q">${q.desc.split(' · ').map((x) => `<span class="fxi">${x}</span>`).join('<span class="sep"> · </span>')}</span>` : '')
     + (u.scars?.length ? u.scars.map((x) => `<b class="cs-sc">흉터 · ${x}</b><span class="cs-q">${SCAR_DESC[x] ?? ''}</span>`).join('') : '')
     + `</small><i class="cf-gem"></i></div>`;
 };
@@ -1979,7 +1980,7 @@ const shopScreen = (): void => {
         ${charmOffer ? `<button type="button" class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}${sold.has(charmOffer) ? ' sold' : ''}" data-buy="${charmOffer}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><span class="cf-type"><span class="t3"><i>부적</i></span></span><small class="cf-desc">${descLines(CHARMS[charmOffer].desc)}</small>${tag(charmOffer, ascPrice(charmOffer === 'revive' ? CHARM_NUM.shopRevivePrice : CHARM_NUM.shopRewindPrice))}</button>` : ''}
         ${svcShown.has('heal') ? `<button type="button" class="cf part-card svc g-common${sold.has('heal') ? ' sold' : ''}" data-buy="heal"><b class="cf-name">정비</b><span class="cf-win"><i class="ico" style="${iconArt('s.heal')}"></i></span><span class="cf-type"><span class="t3"><i>분대 손질</i></span></span><small class="cf-desc">${descLines(`삐걱이는 관절을 하나씩 조인다. (분대 전원 HP +${Math.round(SHOP.healPct * 100)}%)`)}</small>${tag('heal', ascPrice(SHOP.healPrice))}</button>` : ''}
         ${svcShown.has('refine') ? `<button type="button" class="cf part-card svc g-common${sold.has('refine') ? ' sold' : ''}" data-buy="refine"><b class="cf-name">다듬기</b><span class="cf-win"><i class="ico" style="${iconArt('s.refine')}"></i></span><span class="cf-type"><span class="t3"><i>카드 손질</i></span></span><small class="cf-desc">${descLines('거친 날을 고르게 깎는다. (카드 한 장 태엽 −1)')}</small>${tag('refine', refinePrice())}</button>` : ''}
-        ${svcShown.has('remove') ? `<button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><span class="cf-type"><span class="t3"><i>덱 손질</i></span></span><small class="cf-desc">${descLines('쓸모없는 명령서를 찢어 버린다. (카드 한 장 제거 — 영구)')}</small>${tag('remove', removePrice())}</button>` : ''}
+        ${svcShown.has('remove') ? `<button type="button" class="cf part-card svc g-common${sold.has('remove') ? ' sold' : ''}" data-buy="remove"><b class="cf-name">카드 빼기</b><span class="cf-win"><i class="ico" style="${iconArt('s.remove')}"></i></span><span class="cf-type"><span class="t3"><i>덱 손질</i></span></span><small class="cf-desc">${descLines('낡은 명령서를 찢는다. (카드 한 장 영구 제거)')}</small>${tag('remove', removePrice())}</button>` : ''}
       </div></div></div>`);
     pxRail(el.querySelector<HTMLElement>('.shop-scroll')!);
     // 시너지 힌트 (테스터: 「내 덱 · 현황에 맞게 무엇을 골라야 할지 감이 안 온다 — 기병 시너지면 보유 나이트 n기 같은 힌트」)
@@ -2066,7 +2067,7 @@ const forgeScreen = (): void => {
   const el = openOverlay(`<h2>${forgeFinal ? '최종 정비 <span class="dim">— 분대 HP 가득 · 하나를 더 고릅니다</span>' : '작업대 <span class="dim">— 하나를 고릅니다</span>'}</h2>${mend.mended.length ? `<p class="mend-line">${mend.mended.map((u) => `<span class="mend">${lifePips(u, 'mend')} ${u.name}</span>`).join(' ')} <span class="dim">${LIFE_TEXT.mended(mend.mended.map((u) => u.name ?? '').join(' · '))}</span></p>` : ''}
     <div class="part-cards">
       ${opt('refine', optFace({ name: '다듬기', art: `<i class="ico" style="${iconArt('s.refine')}"></i>`, desc: '거친 날을 고르게 깎는다. (카드 한 장 태엽 −1)', tag: '<i>카드 손질</i>', attrs: 'data-forge="refine"' }))}
-      ${opt('remove', optFace({ name: '카드 빼기', art: `<i class="ico" style="${iconArt('s.remove')}"></i>`, desc: '쓸모없는 명령서를 찢어 버린다. (카드 한 장 제거 — 영구)', tag: '<i>덱 손질</i>', attrs: 'data-forge="remove"' }))}
+      ${opt('remove', optFace({ name: '카드 빼기', art: `<i class="ico" style="${iconArt('s.remove')}"></i>`, desc: '낡은 명령서를 찢는다. (카드 한 장 영구 제거)', tag: '<i>덱 손질</i>', attrs: 'data-forge="remove"' }))}
       ${opt('repair', optFace({ name: '수리', art: `<i class="ico" style="${iconArt('s.repair')}"></i>`, desc: `삐걱이는 관절을 하나씩 조인다. (분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%)`, tag: '<i>분대 손질</i>', attrs: 'data-forge="repair"' }))}
       ${squad.some((u) => u.t !== 'K') ? opt('brace', optFace({ name: '보강', art: `<i class="ico" style="${iconArt('shieldWall')}"></i>`, desc: `무너질 자리에 버팀목을 댄다. (분대원 하나 생명 +${FORGE.braceDoors})`, tag: '<i>분대 손질</i>', attrs: 'data-forge="brace"', grade: 'rare' })) : ''}
     </div>`);
@@ -2367,6 +2368,12 @@ const fitCardDesc = (card: HTMLElement): void => {
   d.classList.remove('tight', 'small', 'fold');
   const over = (): boolean => d.scrollHeight > d.clientHeight + 1;
   for (const k of ['tight', 'small', 'fold']) if (over()) d.classList.add(k);
+  // 줄 끝 · 줄 머리에 가운뎃점이 홀로 남지 않게 (D-375 리뷰): 다음 항목이 새 줄에서 시작하면 그 앞 「 · 」를 감춘다
+  d.querySelectorAll<HTMLElement>('.sep').forEach((sep) => {
+    sep.style.display = '';
+    const a = sep.previousElementSibling as HTMLElement | null, b = sep.nextElementSibling as HTMLElement | null;
+    if (a && b && b.offsetTop > a.offsetTop + 2) sep.style.display = 'none';
+  });
 };
 /**
  * 카드 받침 (D-373, 사용자: 「카드 디자인은 정본, 가격 · 추가 정보는 화면에 걸맞게」):
@@ -2403,7 +2410,7 @@ const slotCard = (card: HTMLElement): void => {
   plate.addEventListener('click', () => card.click());
 };
 const fitAll = (): void => {
-  document.querySelectorAll<HTMLElement>('.shop-grid > .cf, .reward-cards > .cf, .part-cards > .cf, .deck-grid > .cf').forEach(slotCard);
+  document.querySelectorAll<HTMLElement>('.shop-grid > .cf, .reward-cards > .cf, .part-cards > .cf').forEach(slotCard);
   document.querySelectorAll<HTMLElement>('.cf:not([data-fit])').forEach(fitCardDesc);
 };
 new MutationObserver(() => requestAnimationFrame(fitAll)).observe(document.body, { childList: true, subtree: true });
@@ -2784,10 +2791,10 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const ids = [...counts.keys()].sort((x, y) => order.indexOf(COMMANDS[x].axis) - order.indexOf(COMMANDS[y].axis) || COMMANDS[x].cost - COMMANDS[y].cost);
   // D-374: 덱 보기 · 카드 빼기도 정본 카드 그대로 — 같은 카드가 여럿이면 받침에 장수
   const cards = ids
-    .map((id) => cardFace(id, `data-rm="${id}"${mode === 'view' ? ' tabindex="-1"' : ''}`).replace(/<\/button>$/, `${(counts.get(id) ?? 1) > 1 ? `<small class="fit-line">${counts.get(id)}장</small>` : ''}</button>`))
+    .map((id) => cardFace(id, `data-rm="${id}"${mode === 'view' ? ' tabindex="-1"' : ''}`).replace(/<\/button>$/, `<small class="fit-line">${counts.get(id) ?? 1}장</small></button>`))
     .join('');
   const head = mode === 'view' ? `<h2>덱 ${deck.length}장</h2>` : `<h2>카드 빼기 — 한 장</h2><p>덱에서 카드 한 장을 영구히 뺍니다.</p>`;
-  const el = openOverlay(`${head}<div class="deck-grid${mode === 'remove' ? ' removing' : ''}">${cards}</div><div class="row">${mode === 'view' ? '<button class="btn brass" type="button" data-close-deck>닫기</button>' : '<button class="btn" type="button" data-cancel>그만두기</button>'}</div>`);
+  const el = openOverlay(`${head}<div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards deck-rail${mode === 'remove' ? ' removing' : ''}">${cards}</div></div></div><div class="row">${mode === 'view' ? '<button class="btn brass" type="button" data-close-deck>닫기</button>' : '<button class="btn" type="button" data-cancel>그만두기</button>'}</div>`);
   if (mode === 'view') {
     el.querySelector('[data-close-deck]')!.addEventListener('click', closeOverlay);
     return;
@@ -2893,7 +2900,7 @@ const deathRites = async (): Promise<void> => {
 const crewView = (): void => {
   // D-374: 분대 보기도 분대원 카드 그대로 — 받침에 일련번호 · 대국 수
   const el = openOverlay(`<h2>분대 ${squad.length}</h2><div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards">${squad
-    .map((u) => crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }).replace(/<\/div>$/, `<small class="fit-line">${u.serial ?? ''} · ${PIECE_NAMES_KO[u.t]}</small></div>`))
+    .map((u) => crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }).replace(/<\/div>$/, `<small class="fit-line">${PIECE_NAMES_KO[u.t]} · 대국 ${u.battles ?? 0}</small></div>`))
     .join('')}</div></div></div><div class="row"><button class="btn" type="button" data-ledger>도감 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
   el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView());

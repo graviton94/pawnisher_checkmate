@@ -2930,3 +2930,23 @@ body.slice .overlay .panel:has(.deck-grid) > .deck-grid { grid-column: 1 / -1; m
 body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) .squad-strip .ss-t b { display: none; }
 body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) .squad-strip .ss-t { width: 48px; }
 body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) .squad-strip .ss-head { white-space: normal; max-width: 132px; line-height: 14px; }
+/* ===================== D-375 리뷰 2차 ===================== */
+body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background: none !important; text-decoration: none; box-shadow: none !important; }
+body.slice .cf.cf.cf .cf-desc .sep { white-space: pre; }
+body.slice .kit-confirm .kc-panel > h2 { text-wrap: balance; word-break: keep-all; }
+/* 영입: 안내 문단 대신 제목만 — 받침(함께 오는 카드)이 패널 안에 들게 */
+body.slice .overlay .panel:has([data-rec]) > p { display: none; }
+body.slice .overlay .panel:has([data-rec]) .part-cards.part-cards.part-cards { padding-top: 0; }
+/* 비용 1 · HP 세 자리: 글자 잉크를 도형 가운데로 */
+body.slice .cf.cf.cf.cf > .cf-cost.c1 { padding-left: 3px; box-sizing: border-box; }
+body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: -1px; font-size: 12px; }
+/* 고물상 레일: 네 장 폭에 딱 맞춰 가운데 — 다섯째 카드가 실오라기처럼 비치지 않게 (◀ ▶로 넘긴다) */
+body.slice .overlay .panel:has(.shop-head) .shop-scroll.shop-scroll { max-width: calc(4 * var(--card-w) + 3 * 18px + 24px); margin: 0 auto; scroll-snap-type: x mandatory; }
+body.slice .overlay .panel:has(.shop-head) .shop-grid > .cslot, body.slice .overlay .panel:has(.shop-head) .shop-grid > .cf { scroll-snap-align: start; }
+/* 분대원 카드 두루마리 위 여백 (길게 누름에서 기록 이름 윗줄이 잘렸다) */
+body.slice .cf.cf.cf.cf.crew-card > .cf-desc { padding-top: 3px; box-sizing: border-box; }
+/* 덱 보기 레일: 닫기 단추는 제목 줄 */
+body.slice .overlay .panel:has(.deck-rail) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+body.slice .overlay .panel:has(.deck-rail) > h2, body.slice .overlay .panel:has(.deck-rail) > p { grid-column: 1; margin: 0; }
+body.slice .overlay .panel:has(.deck-rail) > .row { grid-column: 2; grid-row: 1; margin: 0; }
+body.slice .overlay .panel:has(.deck-rail) > .shop-scrollbox { grid-column: 1 / -1; }
