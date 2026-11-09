@@ -191,7 +191,7 @@ const crewSay = (t: PieceType, name: string): void => {
   document.querySelector('.taunt.crew-say')?.remove();
   const el = document.createElement('div');
   el.className = 'taunt tq3 crew-say';
-  el.innerHTML = `<i class="taunt-face"><img class="crew-face" src="ui/hud/crew-${t}.png" alt="" width="40" height="40" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(t, 0, 'small', 40).replace(/'/g, '&#39;')}'></i><span class="tq-t"><b class="cs-name">${name} — 합류</b><b class="tq-ghost" aria-hidden="true">${line}</b><b class="tq-live"></b></span>`;
+  el.innerHTML = `<i class="taunt-face"><img class="crew-face" src="ui/hud/crew-${t}.png" alt="" width="56" height="56" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(t, 0, 'small', 40).replace(/'/g, '&#39;')}'></i><span class="tq-t"><b class="cs-name">${name} — 합류</b><b class="tq-ghost" aria-hidden="true">${line}</b><b class="tq-live"></b></span>`;
   document.body.appendChild(el);
   sfx('rare');
   window.setTimeout(() => void typeIn(el.querySelector<HTMLElement>('.tq-live')!, line, 30), 200);

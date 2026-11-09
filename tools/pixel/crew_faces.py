@@ -10,6 +10,7 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 N, RING = 56, 2
+CROP = {'P': 0.74, 'N': 0.66, 'B': 0.8, 'R': 0.64, 'Q': 0.62}  # 기물 키 중 초상에 담을 위쪽 몫 (비숍은 십자가, 룩은 도장까지)
 WHITE, INK = (244, 241, 234), (11, 11, 14)
 N4 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 N8 = N4 + [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -26,14 +27,16 @@ def one(t):
             if not is_bg(px[x, y]):
                 xs.append(x); ys.append(y)
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-    side = max(x1 - x0, y1 - y0) * 1.04
-    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-    box = (cx - side / 2, cy - side / 2)
-    cs = side / (N - 2 * RING)  # 테 자리를 남기고 기물을 담는다
+    # 초상 (D-352): 기물 위쪽(머리 + 알아보는 표식)만 잘라 크게 — 아래는 액자 밑변에 잘린다
+    yc = y0 + (y1 - y0) * CROP[t]
+    top = [x for x, y in zip(xs, ys) if y <= yc]
+    xl, xr = min(top), max(top)
+    cs = max((xr - xl) / (N - 2 * RING - 2), (yc - y0) / (N - RING - 1))
+    box = ((xl + xr) / 2 - (N / 2) * cs, y0 - (RING + 1) * cs)
     grid = {}
     for j in range(N):
         for i in range(N):
-            fx, fy = box[0] + (i - RING) * cs, box[1] + (j - RING) * cs
+            fx, fy = box[0] + i * cs, box[1] + j * cs
             pix = [px[int(xx), int(yy)] for yy in range(int(fy), int(fy + cs)) for xx in range(int(fx), int(fx + cs)) if 0 <= xx < im.width and 0 <= yy < im.height]
             if not pix or sum(map(is_bg, pix)) > len(pix) * 0.5:
                 continue

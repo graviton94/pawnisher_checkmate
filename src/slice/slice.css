@@ -2668,3 +2668,6 @@ body.slice #hand .mg-desc .dl-fx > i { display: inline-block; font-style: normal
 .taunt-face .crew-face { display: block; image-rendering: pixelated; }
 /* 크레딧 글 받침 (D-349): 배경 그림 위에서도 읽히게 — 어두운 철판 한 장 */
 .credits .cr-bg ~ .cr-page { background: rgba(11, 11, 14, 0.86); padding: 14px 28px; box-shadow: 0 0 0 2px #2f2e36, 0 0 0 4px #0b0b0e, 0 6px 0 4px rgba(0, 0, 0, 0.6); }
+/* D-352 합류 초상: 상반신을 액자 가득, 밑변에 붙여 잘린 몸이 액자 아래로 이어지게 */
+.taunt.crew-say .taunt-face { place-items: end center; overflow: hidden; }
+.taunt.crew-say .taunt-face img.crew-face { width: 56px; height: 56px; }
