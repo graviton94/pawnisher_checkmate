@@ -19,7 +19,8 @@
   --h-plate: calc(var(--px) * 19);
   /* 창 세 단계 (폭 · 높이 상한) — 이 셋만 */
   --win-s: 352px; --win-m: 592px; --win-l: min(883px, calc(100vw - 2 * var(--G)));
-  --win-h-s: 240px; --win-h: 364px;
+  /* 높이 상한 = min(364, 화면 − 48) — 가장 작은 폰 667×375에서도 잘리지 않게 (D-391 기기 표: 폰 667×375 ~ 932×430 · PC 683×384 ~ 960×540) */
+  --win-h-s: min(240px, calc(100vh - 48px)); --win-h: min(364px, calc(100vh - 48px));
   /* 글 색 — 한 줄에 본문 + 강조 1 */
   --t-body: #ece6da; --t-dim: #a89f92; --t-gold: #f4d27a; --t-loss: #ff7b7b; --t-ally: #5eead4; --t-ink: #0b0b0e; --t-brass-ink: #2a1a06;
   /* 9-slice 테 (원본 도트) — 화면 폭 = 도트 × --px */
@@ -252,6 +253,7 @@
 /* 도움말: 위 탭 줄 · 쪽(그림 + 글 단) · 용어 2단 */
 .win .tabs { display: flex; gap: var(--s2); }
 .win .tabs > .btn { flex: 0 0 calc(var(--px) * 56); }
+.win textarea.inset { flex: 0 1 auto; min-height: calc(var(--px) * 24); }
 .win .gd3 { display: grid; grid-template-columns: calc(var(--px) * 82) minmax(0, 1fr); gap: var(--s3); height: calc(var(--px) * 82); }
 .win .gd3 > .inset { padding: 0; overflow: hidden; display: grid; }
 .win .gd3 > .inset > .gd-media { width: 100%; height: 100%; aspect-ratio: auto; box-shadow: none; }
@@ -278,3 +280,9 @@
 .kit-sheet .ks-col { width: 260px; }
 .kit-sheet .ks-row { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
 .kit-sheet .ks-row > .note { width: 56px; }
+/* 낮은 화면(높이 412 미만 — 667×375 폰 · 683×384 PC): 창 상한이 327 안팎이라 묶음 사이를 8로 줄이고 안내서 그림 칸을 접는다 (글 > 그림) */
+@media (max-height: 411px) {
+  #overlay-panel.win, .kit-sheet .win { gap: var(--s2); }
+  .win .gd3 { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .win .gd3 > .inset { display: none; }
+}
