@@ -310,7 +310,7 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
 /** gradePrice · partGradePrice (D-217 3): 고물상 값은 등급으로 — 일반 · 희귀 · 황금 */
 /** refinePrice (D-218): 고물상 다듬기 — 남는 나사를 강화로 */
 export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 5, parts: 1 }; // 진열대 = 카드 5 + 부품 1 (부적이 나오면 카드 한 자리), 아래 줄 정비 · 다듬기 · 빼기 고정 (2026-11-05 3×3)
-/** braceDoors = 작업대 「보강」 문턱 수 (D-319) */
+/** braceDoors = 작업대 「보강」 생명 수 (D-319) */
 export const FORGE = { repairPct: 0.4, braceDoors: 1 };
 /**
  * 경제 압박 (D-247, 사용자: 「수리 · 강화 · 빼기를 너무 자주 고를 수 있고 슬롯도 없어 돈을 펑펑 쓰면 된다 — 한정된 재화로 고민하는 게 아니라」):
@@ -382,7 +382,7 @@ export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }
   spawn: { king: 0.8, atk: 0.7 },
   thorns: { king: 0.6, atk: 0.6 }, // D-358: 킹 0.7 → 0.6 · 공격 0.7 → 0.6 (확정 측정 58%)
   alarm: { king: 0.85, atk: 0.85 }, // D-358: 확정 측정에서 보통 봇 50% — 반장 중 가장 낮았다
-  // D-358: 1막 둘은 보통 봇 90 · 95%로 문턱이 아니었다 → 킹 HP ×1.25 · 공격 ×1.1 (×1.5는 승급 6에서 벽이 됐다)
+  // D-358: 1막 둘은 보통 봇 90 · 95%로 생명이 아니었다 → 킹 HP ×1.25 · 공격 ×1.1 (×1.5는 승급 6에서 벽이 됐다)
   plate: { king: 1.25, atk: 1.1 },
   inspect: { king: 1.25, atk: 1.1 },
   // D-316: 2막 자석 반장 42% (보통 봇, D-299) — 끌어당기기는 그대로

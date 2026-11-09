@@ -64,7 +64,7 @@ export class Rng {
 }
 
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
-/** 베이어 문턱 (x, y 칸) — 디더 퇴장 · 디더 경계에 쓴다 */
+/** 베이어 생명 (x, y 칸) — 디더 퇴장 · 디더 경계에 쓴다 */
 export const bayer = (x: number, y: number): number => BAYER[((y & 3) << 2) | (x & 3)];
 
 /** 한 장: 색 버퍼 + 빛 버퍼 */

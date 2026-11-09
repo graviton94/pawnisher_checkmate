@@ -121,23 +121,23 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     choices: [
       {
         label: '나사 40을 낼까?',
-        desc: '최다 처치 분대원 · 문턱 +1 (영구)',
+        desc: '최다 처치 분대원 · 생명 +1 (영구)',
         blocked: (s) => (s.gold < 40 ? '나사 40 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
         apply: (s) => {
           s.gold -= 40;
           const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
           u.doors = (u.doors ?? 0) + 1;
-          return { text: `불꽃이 튄다. ${u.name ?? NAMES[u.t]}, 그 축이 두꺼워졌다. (문턱 +1)` };
+          return { text: `불꽃이 튄다. ${u.name ?? NAMES[u.t]}, 그 축이 두꺼워졌다. (생명 +1)` };
         },
       },
       {
         label: '축을 끝까지 조일까?',
-        desc: '50%: 문턱 +2 · 50%: 심장 톱니가 깨진다',
+        desc: '50%: 생명 +2 · 50%: 심장 톱니가 깨진다',
         blocked: (s) => (s.gold < 40 ? '나사 40 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
         apply: (s, rng) => {
           s.gold -= 40;
           const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
-          if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]}의 문턱 +2.` }; }
+          if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]}의 생명 +2.` }; }
           s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
           return { slot: 1, text: `쩍. 축이 비명을 지르며 갈라진다. ${u.name ?? NAMES[u.t]}의 심장 톱니에 금이 갔다.` };
         },
@@ -407,11 +407,11 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '교관 룩',
     text: '연병장 한가운데 룩이 버티고 서 있다. “한 놈 보내라. 하루 만에 쇠로 만들어 주지. 살아남는다면.”',
     choices: [
-      { label: '하나를 맡긴다', desc: '가장 덜 싸운 분대원 · 문턱 +1 · 그 분대원 HP −40%', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
+      { label: '하나를 맡긴다', desc: '가장 덜 싸운 분대원 · 생명 +1 · 그 분대원 HP −40%', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
         const u = [...nonKing(s)].sort((a, b) => (a.kills ?? 0) - (b.kills ?? 0))[0];
         const max = crewMaxHp(u);
         s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.4)) } : x));
-        return { text: `${josa(u.name ?? NAMES[u.t], '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (문턱 +1 · HP −40%)` };
+        return { text: `${josa(u.name ?? NAMES[u.t], '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (생명 +1 · HP −40%)` };
       } },
       leave('거절하기'),
     ],
@@ -463,12 +463,12 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '결투하는 나이트',
     text: '길 한가운데 나이트 하나가 창을 세운다. “너희 중 가장 센 놈. 한 판.”',
     choices: [
-      { label: '결투를 받을까?', desc: '60%: 문턱 +1 · 나사 +40 · 40%: 심장 톱니가 깨진다', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
+      { label: '결투를 받을까?', desc: '60%: 생명 +1 · 나사 +40 · 40%: 심장 톱니가 깨진다', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
         const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t])[0];
         if (rng.int(10) < 6) {
           s.gold += 40;
           s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1 } : x));
-          return { slot: 0, text: `${josa(u.name ?? NAMES[u.t], '이')} 창을 쳐낸다. 나이트가 말에서 떨어진다. (문턱 +1 · 나사 +40)` };
+          return { slot: 0, text: `${josa(u.name ?? NAMES[u.t], '이')} 창을 쳐낸다. 나이트가 말에서 떨어진다. (생명 +1 · 나사 +40)` };
         }
         s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
         return { slot: 1, text: `창끝이 ${u.name ?? NAMES[u.t]}의 가슴을 꿰뚫는다. 심장 톱니에 금이 간다.` };

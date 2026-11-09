@@ -191,7 +191,7 @@ describe('애착 (D-153)', () => {
     const p = b.s.pieces.find((q) => q.id === b.squadIds[1])!;
     expect(p.maxHp).toBe(Math.round(25 * QUIRKS.overwound.hp!));
   });
-  it('죽음의 문턱 (D-217): 기본은 없다 · 고집 센 축 2 · 영구 문턱은 그 분대원만 · 맹세는 폰마다 1', () => {
+  it('죽음의 생명 (D-217): 기본은 없다 · 고집 센 축 2 · 영구 생명은 그 분대원만 · 맹세는 폰마다 1', () => {
     const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N', quirk: 'stubborn' }, { t: 'B', doors: 1 }], ['K', 'P'], START_COMMANDS, 3);
     const [, pid, nid, bid] = b.squadIds;
     expect(b.s.doorIds?.filter((x) => x === pid) ?? []).toHaveLength(0);
@@ -258,7 +258,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     const { SLICE_PARTS } = await import('../src/slice/parts');
     expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+') && !k.endsWith('~')).length).toBe(92); // + 카드 확장 43 (D-281)
     expect(REWARD_COMMANDS.length).toBe(86); // + 연쇄 소모 3 (D-203) · 빌드 다양성 6 (D-217 4)
-    expect(Object.keys(SLICE_PARTS).length).toBe(70); // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
+    expect(Object.keys(SLICE_PARTS).length).toBe(74); // + 기록 유물 넷 (D-363) // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
   });
   it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(나사 100마다 공격 +3, D-227) · 피의 계약(턴 끝 킹 −4)', () => {
     const b = mk(['brittle']);

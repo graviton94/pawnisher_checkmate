@@ -4,7 +4,7 @@ import type { Axis } from './cards';
  * 부품 (수직 조각 — 규칙을 깨는 유물, D-144). Balatro 조커 · StS 유물처럼 카드와 맞물려 빌드를 "부순다".
  * 축마다 둘: 하나는 그 축 카드를 싸게/여러 번, 하나는 판을 바꾼다.
  */
-export type SlicePartId = 'rookBolt' | 'bishopLens' | 'pawnPike' | 'oath' | 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
+export type SlicePartId = 'lastBreath' | 'ledger' | 'veteran' | 'deathMark' | 'rookBolt' | 'bishopLens' | 'pawnPike' | 'oath' | 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
   | 'lance' | 'spurs' | 'barracks' | 'banner' | 'scepter' | 'gilded' | 'fuse' | 'conductor' | 'anvilPlate' | 'chainShot' | 'bloodPact' | 'brittle' | 'greed' | 'whetstone'
   // 부품 확장 (D-282)
   | 'vise' | 'forkGear' | 'openGate' | 'chainReel' | 'gameRecord' | 'gateHinge' | 'queenCrown' | 'lightCloak' | 'goldRank' | 'thickWall' | 'rosary' | 'stirrup' | 'thickCast' | 'scrapMagnet' | 'firstSpring' | 'lastAxle' | 'toolbox' | 'ventHole' | 'afterheat' | 'bossBane' | 'lightMag'
@@ -27,6 +27,7 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   // 설계 보정: 맹세(사용자 결정 — 폰 전용 고등급) 황금, 탐욕의 저울(나사 두 배 — 경제는 봇이 못 잰다) · 되감는 테이프(봇은 되감기를 안 쓴다) 희귀
   // D-358: 막사의 종은 일반인데 힘 값 +2.4(±2σ 밖) → 희귀
   barracks: 'rare',
+  lastBreath: 'rare', ledger: 'rare', veteran: 'rare', deathMark: 'rare',
   bloodPact: 'gold', hammer: 'gold', whetstone: 'gold', coil: 'gold',
   // 부품 확장 (D-282) — 설계 등급
   toolbox: 'rare', vise: 'rare', gameRecord: 'rare', queenCrown: 'rare', lightCloak: 'rare', lastAxle: 'rare', ventHole: 'rare', afterheat: 'gold', bossBane: 'rare', lightMag: 'rare',
@@ -35,6 +36,11 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   bishopLens: 'rare', rookBolt: 'rare', crown: 'rare', lance: 'rare', anvilPlate: 'rare', spare: 'rare', drum: 'rare', assembly: 'rare', brittle: 'rare', gilded: 'rare', throne: 'rare', conductor: 'rare', greed: 'rare', tape: 'rare', oath: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
+  // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
+  lastBreath: { name: '마지막 숨', axis: null, icon: 'brittle', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명이 하나 남은 분대원' },
+  ledger: { name: '피의 장부', axis: null, icon: 'gameRecord', flavor: '흘리게 한 피는 한 줄도 빠짐없이 적힌다.', desc: '공격 +1 — 그 분대원의 누적 피해 60마다 (최대 +8)' },
+  veteran: { name: '백전 훈장', axis: null, icon: 'goldRank', flavor: '쓰러뜨린 수만큼 훈장이 무겁다.', desc: '최대 HP +25% · 공격 +3 — 누적 처치 8 이상 분대원' },
+  deathMark: { name: '죽음 넘긴 자의 표식', axis: null, icon: 'oath', flavor: '용광로 문턱에서 돌아온 자는 눈빛이 다르다.', desc: '공격 +2 — 그 분대원이 죽음을 넘긴 횟수마다 (최대 +10)' },
   rookBolt: { name: '공성 쇠뇌', axis: 'push', icon: 'rookBolt', flavor: '성벽 위에서 쇠뇌를 당긴다.', desc: '룩의 공격 ×1.3' },
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', flavor: '한쪽 눈으로 죄를 가려낸다.', desc: '비숍의 공격 ×1.3' },
   pawnPike: { name: '개척자의 창', axis: 'inf', icon: 'pawnPike', flavor: '작은 손에 긴 창을 쥐여 준다.', desc: '폰의 공격 +8' },
@@ -112,7 +118,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
 };
 
 /** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 피의 계약 ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 */
-export const PART_NUM = { mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
+export const PART_NUM = { lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).
@@ -131,7 +137,7 @@ export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePart
  * 합(+) · 곱(×) 표지 (D-205, 사용자: "+, × 연산을 정본 시스템으로"): 최종 피해 = (공격 + 합) × 곱.
  * 합은 지금 세고(작은 수에 크게 붙는다), 곱은 나중에 세다(큰 수에 곱해진다 — 층별 성장 D-203이 지수로 커지는 HP를 받친다).
  */
-export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { mirror: '×', jumpSpring: '+', stainedGlass: '+', redLine: '+', calipers: '+', vise: '×', openGate: '×', queenCrown: '×', lastAxle: '×', toolbox: '+', ventHole: '×', bossBane: '×', rookBolt: '×', bishopLens: '×', pawnPike: '+', conductor: '+', anvilPlate: '+', coil: '×', lance: '×', banner: '×', crown: '×', hammer: '×', bloodPact: '×', echo: '+', whetstone: '+' };
+export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { lastBreath: '×', ledger: '+', veteran: '+', deathMark: '+', mirror: '×', jumpSpring: '+', stainedGlass: '+', redLine: '+', calipers: '+', vise: '×', openGate: '×', queenCrown: '×', lastAxle: '×', toolbox: '+', ventHole: '×', bossBane: '×', rookBolt: '×', bishopLens: '×', pawnPike: '+', conductor: '+', anvilPlate: '+', coil: '×', lance: '×', banner: '×', crown: '×', hammer: '×', bloodPact: '×', echo: '+', whetstone: '+' };
 
 /**
  * 부적 (D-228, 사용자: "1패는 즉시 사망, 희귀한 1회 부활 아이템을 풀에 · 저승급은 기본으로 · 슬롯을 차지하지 않는 부적 · 되감기도 아이템화").

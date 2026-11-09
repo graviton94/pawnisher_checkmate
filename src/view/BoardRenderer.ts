@@ -549,7 +549,7 @@ class BoardScene extends Phaser.Scene {
 
   /**
    * 떠오르는 숫자 · 낱말 (D-193 숫자 통일): 숫자는 모두 타격과 같은 도트 숫자 — 내가 맞음 진홍 · 적이 맞음 흰 · 회복 초록 · 방열판 은빛.
-   * 「문턱!」 같은 낱말은 딱지(검은 테 + 색 판)로 튀어나와 머문 뒤 계단으로 접힌다.
+   * 「생명!」 같은 낱말은 딱지(검은 테 + 색 판)로 튀어나와 머문 뒤 계단으로 접힌다.
    */
   private floatText(sp: PieceSprite, text: string, color: string): void {
     const t = this.tile;
@@ -1613,10 +1613,10 @@ class BoardScene extends Phaser.Scene {
         const sp = this.sprites.get(h.targetId);
         if (sp) this.floatText(sp, '비상 퓨즈', '#FDE68A');
       }
-      // 죽음의 문턱 (D-153): 이름 붙은 기물이 HP 1로 버틴다
+      // 죽음의 생명 (D-153): 이름 붙은 기물이 HP 1로 버틴다
       for (const h of e.hits.filter((x) => x.door)) {
         const sp = this.sprites.get(h.targetId);
-        if (sp) this.floatText(sp, '문턱!', '#FCA5A5');
+        if (sp) this.floatText(sp, '생명!', '#FCA5A5');
       }
       const checked = e.hits.find((h) => h.checked);
       if (checked) sfx('check');

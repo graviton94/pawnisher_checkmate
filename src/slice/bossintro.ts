@@ -40,7 +40,7 @@ const ditherEdge = (img: HTMLImageElement, band: number, src: CanvasImageSource 
   const d = x.getImageData(0, 0, c.width, c.height);
   for (let yy = 0; yy < c.height; yy++)
     for (let xx = 0; xx < Math.min(band, c.width); xx++) {
-      // 왼쪽 끝일수록 많이 빠진다 (x/band가 베이어 문턱보다 작으면 지운다), 가장자리 몇 칸은 거의 다 빠짐
+      // 왼쪽 끝일수록 많이 빠진다 (x/band가 베이어 생명보다 작으면 지운다), 가장자리 몇 칸은 거의 다 빠짐
       const keep = xx / band;
       if (keep * keep <= bayer(xx, yy)) d.data[(yy * c.width + xx) * 4 + 3] = 0;
     }

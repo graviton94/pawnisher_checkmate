@@ -85,7 +85,7 @@ const applyDamage = (s: BattleState, t: Piece, damage: number, splash = false): 
   const door = !checked && !fuse && t.hp <= 0 && !!s.doorIds?.includes(t.id);
   if (door) {
     t.hp = 1;
-    // 한 번만 지운다 (문턱 두 번인 기물은 id가 두 번 들어 있다)
+    // 한 번만 지운다 (생명 두 번인 기물은 id가 두 번 들어 있다)
     s.doorIds = [...s.doorIds!];
     s.doorIds.splice(s.doorIds.indexOf(t.id), 1);
   }

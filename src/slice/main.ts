@@ -294,7 +294,7 @@ const renderer = new BoardRenderer(
       const ci = b.squadIds.indexOf(p.id);
       const c = ci >= 0 ? squad[ci] : null;
       el.innerHTML = c
-        ? `<b>${pieceImg(p.type, 0, 'small', 24)} ${crewLabel(c)}</b> <span class="dim">${c.serial}</span><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · 처치 ${(c.kills ?? 0) + Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0)}${c.quirk ? `<br><span class="quirk">${QUIRKS[c.quirk].name}</span> ${QUIRKS[c.quirk].desc}` : ''}${b.s.doorIds?.includes(p.id) ? '<br>문턱 남음' : ''}`
+        ? `<b>${pieceImg(p.type, 0, 'small', 24)} ${crewLabel(c)}</b> <span class="dim">${c.serial}</span><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · 처치 ${(c.kills ?? 0) + Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0)}${c.quirk ? `<br><span class="quirk">${QUIRKS[c.quirk].name}</span> ${QUIRKS[c.quirk].desc}` : ''}${b.s.doorIds?.includes(p.id) ? '<br>생명 남음' : ''}`
         : `<b>${pieceImg(p.type, p.side, 'small', 24)} ${p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>'} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · ATK ${p.atk}${foeTraitLine(p)}`;
       infoTok++;
       const fresh = el.hidden || el.dataset.pid !== String(p.id);
@@ -542,12 +542,12 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
 };
 /**
  * 분대원 카드 (D-362, 사용자: 「기물도 하나하나의 카드가 되는 거지」): 카드 · 부품과 같은 틀 —
- * 이름(별칭) · 그림 창(기물) · 태그(기물 · 문턱 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
+ * 이름(별칭) · 그림 창(기물) · 태그(기물 · 생명 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
  */
 const crewFace = (u: Crew, hp: number, max: number, src = u.t === 'K' ? `pieces/l-K0.png` : `ui/hud/crew-${u.t}.png`): string => {
   const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
   const pct = `${Math.max(0, Math.min(100, Math.round((hp / max) * 100)))}%`;
-  const tags = [PIECE_NAMES_KO[u.t], `문턱 ${u.doors ?? 0}`, u.cracked ? '금 간 심장' : ''].filter(Boolean).map((t) => `<i class="tg">${t}</i>`).join('');
+  const tags = [PIECE_NAMES_KO[u.t], `생명 ${u.doors ?? 0}`, u.cracked ? '금 간 심장' : ''].filter(Boolean).map((t) => `<i class="tg">${t}</i>`).join('');
   return `<div class="cf crew-card big t-${u.t} g-${g}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${crewLabel(u)}</b><span class="cf-win"><span class="er-pc"><img src="${src}" alt=""></span></span><span class="cf-type">${tags}</span><small class="cf-desc"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><span class="er-hpn">HP ${Math.round(hp)} / ${max}</span></small><i class="cf-gem"></i></div>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
@@ -1666,7 +1666,7 @@ const EV_RECENT = 7;
  * → ⑤ 사건마다 다른 나가기 버튼 (「동전 소리를 등진다」). 결과는 엔진이 먼저 정한다 — 화면은 보여 주기만 (UI 원칙 9).
  */
 /**
- * 사건 선택지 설명 (테스터: 「문턱 +1이 뭔지도 모르는데」 · 「이 선택이 값어치가 있나 모르겠다」):
+ * 사건 선택지 설명 (테스터: 「생명 +1이 뭔지도 모르는데」 · 「이 선택이 값어치가 있나 모르겠다」):
  * ' · '로 나뉜 조각마다 얻는 것(청록) · 잃는 것(붉은)을 칠하고 안에 든 용어는 아래에 한 줄 풀이를 붙인다.
  */
 const evDesc = (desc: string): string => {
@@ -1809,7 +1809,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           if (!u1) { crewFx.push({ src: src(u0.t), name: crewLabel(u0), hp0, hp1: 0, max, fx: 'die', card: crewFace(u0, hp0, max) }); continue; }
           const hp1 = u1.hp ?? crewMaxHp(u1);
           if (u1.t !== u0.t) crewFx.push({ src: src(u0.t), toSrc: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'evolve', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, crewMaxHp(u1)) });
-          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: `문턱 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
+          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: `생명 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
           else if (hp1 !== hp0 || (u1.cracked && !u0.cracked)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: u1.cracked && !u0.cracked ? 'crack' : 'hp', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
         }
         for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: u1.hp ?? crewMaxHp(u1), hp1: u1.hp ?? crewMaxHp(u1), max: crewMaxHp(u1), fx: 'new', card: crewFace(u1, u1.hp ?? crewMaxHp(u1), crewMaxHp(u1)) });
@@ -1857,7 +1857,7 @@ const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, ca
     const name = crewLabel(u0);
     if (!u1) { sum.push(`${name} 잃음`); continue; }
     if (u1.t !== u0.t) sum.push(`${name} ${PIECE_NAMES_KO[u0.t]} → ${PIECE_NAMES_KO[u1.t]}`);
-    if ((u1.doors ?? 0) > (u0.doors ?? 0)) sum.push(`${name} 문턱 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`);
+    if ((u1.doors ?? 0) > (u0.doors ?? 0)) sum.push(`${name} 생명 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`);
     if (u1.cracked && !u0.cracked) sum.push(`${name} 심장 톱니 금`);
     if (u1.t === u0.t) {
       const d = Math.round((((u1.hp ?? crewMaxHp(u1)) - (u0.hp ?? crewMaxHp(u0))) / crewMaxHp(u0)) * 100);
@@ -1996,15 +1996,15 @@ const shopScreen = (): void => {
 /** 작업대 (R5-2): 셋 중 하나 — 다듬기(한 장 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) */
 /** 종막 최종 정비 (D-252): 선택지 셋 다 · 들어오면 분대 HP 가득 */
 let forgeFinal = false;
-/** 작업대 보강 (D-319): 분대원 하나 — 문턱 +FORGE.braceDoors (킹 제외) */
+/** 작업대 보강 (D-319): 분대원 하나 — 생명 +FORGE.braceDoors (킹 제외) */
 const braceScreen = (): void => {
   const list = squad.map((u, i) => ({ u, i })).filter(({ u }) => u.t !== 'K');
-  const el = openOverlay(`<h2>보강 <span class="dim">— 축을 덧댈 분대원 하나</span></h2><div class="part-cards">${list.map(({ u, i }) => optFace({ name: u.name ?? PIECE_NAMES_KO[u.t], art: pieceImg(u.t, 0, 'large', 72), desc: `한 번 더 버틸 축을 덧댄다. (문턱 ${u.doors ?? 0} → ${(u.doors ?? 0) + FORGE.braceDoors})`, attrs: `data-brace="${i}"` })).join('')}</div>`);
+  const el = openOverlay(`<h2>보강 <span class="dim">— 축을 덧댈 분대원 하나</span></h2><div class="part-cards">${list.map(({ u, i }) => optFace({ name: u.name ?? PIECE_NAMES_KO[u.t], art: pieceImg(u.t, 0, 'large', 72), desc: `한 번 더 버틸 축을 덧댄다. (생명 ${u.doors ?? 0} → ${(u.doors ?? 0) + FORGE.braceDoors})`, attrs: `data-brace="${i}"` })).join('')}</div>`);
   el.querySelectorAll<HTMLElement>('[data-brace]').forEach((btn) => btn.addEventListener('click', () => {
     const i = Number(btn.dataset.brace);
     squad[i] = { ...squad[i], doors: (squad[i].doors ?? 0) + FORGE.braceDoors };
     sfx('stamp');
-    toast(`${squad[i].name ?? PIECE_NAMES_KO[squad[i].t]}의 축이 두꺼워졌다. (문턱 +${FORGE.braceDoors})`);
+    toast(`${squad[i].name ?? PIECE_NAMES_KO[squad[i].t]}의 축이 두꺼워졌다. (생명 +${FORGE.braceDoors})`);
     window.setTimeout(advance, 600);
   }));
 };
@@ -2029,7 +2029,7 @@ const forgeScreen = (): void => {
       ${opt('refine', optFace({ name: '다듬기', art: `<i class="ico" style="${iconArt('s.refine')}"></i>`, desc: '거친 날을 고르게 깎는다. (카드 한 장 태엽 −1)', attrs: 'data-forge="refine"' }))}
       ${opt('remove', optFace({ name: '카드 빼기', art: `<i class="ico" style="${iconArt('s.remove')}"></i>`, desc: '쓸모없는 명령서를 찢어 버린다. (카드 한 장 제거 — 영구)', attrs: 'data-forge="remove"' }))}
       ${opt('repair', optFace({ name: '수리', art: `<i class="ico" style="${iconArt('s.repair')}"></i>`, desc: `삐걱이는 관절을 하나씩 조인다. (분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%)`, attrs: 'data-forge="repair"' }))}
-      ${squad.some((u) => u.t !== 'K') ? opt('brace', optFace({ name: '보강', art: `<i class="ico" style="${iconArt('shieldWall')}"></i>`, desc: `무너질 자리에 버팀목을 댄다. (분대원 하나 문턱 +${FORGE.braceDoors})`, attrs: 'data-forge="brace"', grade: 'rare' })) : ''}
+      ${squad.some((u) => u.t !== 'K') ? opt('brace', optFace({ name: '보강', art: `<i class="ico" style="${iconArt('shieldWall')}"></i>`, desc: `무너질 자리에 버팀목을 댄다. (분대원 하나 생명 +${FORGE.braceDoors})`, attrs: 'data-forge="brace"', grade: 'rare' })) : ''}
     </div>`);
   el.querySelectorAll<HTMLElement>('[data-forge]').forEach((btn) =>
     btn.addEventListener('click', () => {

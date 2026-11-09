@@ -127,11 +127,13 @@ export interface SliceBattle {
   quirks: Record<number, QuirkId>;
   /** 이 대국 처치 수 (기물 id → 적 유형별) */
   pk: Record<number, Partial<Record<PieceType, number>>>;
+  /** 이 대국에서 기물마다 준 피해 (D-363 누적 피해) */
+  pd?: Record<number, number>;
   /** 반장 킹을 쓰러뜨린 기물 */
   bossKiller: number | null;
   /** 이 대국에서 쓰러진 분대원 */
   falls: Fall[];
-  /** 문턱을 넘은 분대원 */
+  /** 생명을 넘은 분대원 */
   doorUsed: number[];
   /** 턴에 한 번 효과 (풀린 브레이크) */
   once: string[];
@@ -233,14 +235,19 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const squadIds = squad.map((u) => {
     const p = s.pieces.find((q) => q.side === 0 && q.type === u.t && !used.has(q.id))!;
     used.add(p.id);
-    // 기벽: 최대 HP · 방열판 · 공격 · 문턱
+    // 기벽: 최대 HP · 방열판 · 공격 · 생명
     const q = u.quirk ? QUIRKS[u.quirk] : null;
     p.maxHp = crewMaxHp(u);
     p.hp = p.maxHp;
     if (q?.shield) p.shield += q.shield;
     if (q?.atk) p.atk = Math.round(p.atk * q.atk);
+    // 기록 유물 (D-363): 누적 피해 · 처치 · 죽음 넘김이 대국 시작 때 힘이 된다
+    const has0 = (id: SlicePartId) => (opts.parts ?? []).includes(id);
+    if (has0('ledger')) p.atk += Math.min(PART_NUM.ledgerCap, Math.floor((u.dmg ?? 0) / PART_NUM.ledgerPer));
+    if (has0('deathMark')) p.atk += Math.min(PART_NUM.deathMarkCap, PART_NUM.deathMarkAdd * (u.defied ?? 0));
+    if (has0('veteran') && (u.kills ?? 0) >= PART_NUM.veteranAt) { p.atk += PART_NUM.veteranAtk; p.maxHp = Math.round(p.maxHp * PART_NUM.veteranHp); p.hp = p.maxHp; }
     if (u.hp !== undefined) p.hp = Math.max(1, Math.min(p.maxHp, u.hp));
-    // 문턱 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 문턱 + 폰 전용 황금 부품 「작은 개척자의 맹세」
+    // 생명 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 생명 + 폰 전용 황금 부품 「작은 개척자의 맹세」
     const doors = (q?.doors ?? 0) + (u.doors ?? 0) + (p.type === 'P' && (opts.parts ?? []).includes('oath') ? 1 : 0);
     if (p.type !== 'K') for (let k = 0; k < doors; k++) (s.doorIds ??= []).push(p.id);
     return p.id;
@@ -285,7 +292,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = (parts.includes('spare') ? 1 : 0) + (parts.includes('brittle') ? 1 : 0);
-  const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, pd: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   // 시작 부품: 깨지는 유리 심장(분대 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 녹슨 홀(킹 방열판) · 막사의 종(폰 +1)
   if (has(b, 'brittle')) for (const p of s.pieces) if (p.side === 0) { p.maxHp = Math.round(p.maxHp * PART_NUM.brittleHp); p.hp = Math.min(p.hp, p.maxHp); }
   // 탐욕의 저울 (2026-11-05 개편): 쥔 나사 100마다 모든 공격 +3 (합) — 쌓이기만 하던 나사를 힘으로 (D-227)
@@ -315,7 +322,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     b.refunded = 0;
     b.ap = b.apMax = LAB.ap;
     if (opts.lab === 'B') {
-      // 진짜 잡기: 체력 · 방열판 · 문턱 없음 — 잡히면 끝
+      // 진짜 잡기: 체력 · 방열판 · 생명 없음 — 잡히면 끝
       s.rules = { ...s.rules, capture: true, checkmate: false };
       for (const p of s.pieces) Object.assign(p, { hp: 1, maxHp: 1, shield: 0 });
       s.doorIds = [];
@@ -684,7 +691,7 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
   if (c.kind === 'move' && to) {
     if (c.carve) p.carve = c.carve;
     const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
-    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1);
+    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1) * (has(b, 'lastBreath') && p.side === 0 && (b.s.doorIds ?? []).filter((x) => x === p.id).length === 1 ? PART_NUM.lastBreath : 1);
     const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork + (has(b, 'mirror') ? PART_NUM.mirror : 0) : 1) * (b.nextMult ?? 1)
       // 부품 확장 (D-282)
       * (has(b, 'vise') && (b.pinned ?? []).length && targetsFrom(b.s, p, to).some((id) => (b.pinned ?? []).includes(id)) ? PART_NUM.vise : 1)
@@ -1065,6 +1072,8 @@ const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[],
     if (e.type !== 'attack' && !(e.type === 'blast' && mover !== undefined)) continue;
     const by = e.type === 'attack' ? e.attackerId : mover!;
     for (const h of e.hits) {
+      const tgt = before.pieces.find((p) => p.id === h.targetId);
+      if (tgt && tgt.side === 1 && h.damage > 0) (b.pd ??= {})[by] = ((b.pd ??= {})[by] ?? 0) + h.damage;
       if (!h.killed) continue;
       const t = before.pieces.find((p) => p.id === h.targetId);
       if (!t || t.side !== 1) continue;
@@ -1075,7 +1084,7 @@ const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[],
   }
 };
 
-/** 적 차례 뒤처리: 맞은 원한의 톱니 · 문턱 · 쓰러진 분대원 기록 · 새는 보일러 터짐 */
+/** 적 차례 뒤처리: 맞은 원한의 톱니 · 생명 · 쓰러진 분대원 기록 · 새는 보일러 터짐 */
 const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[], by: string): BattleEvent[] => {
   const extra: BattleEvent[] = [];
   for (const e of events) {
@@ -1403,7 +1412,7 @@ export const burnFallen = (b: SliceBattle): { t: PieceType; ids: CommandId[] }[]
 /** 대국 뒤 성장: 처치 · 대국 수 · 흉터 · 별명 (자동으로 붙는다 — 레퍼런스 6권 원리 3 · 5) */
 export const growCrew = (b: SliceBattle, u: Squad, id: number, hp: number, t: PieceType = u.t): Squad => {
   const kills = Object.values(b.pk[id] ?? {}).reduce((a, n) => a + (n ?? 0), 0);
-  const c: Squad = { ...u, t, hp, kills: (u.kills ?? 0) + kills, battles: (u.battles ?? 0) + 1, scars: [...(u.scars ?? [])] };
+  const c: Squad = { ...u, t, hp, kills: (u.kills ?? 0) + kills, battles: (u.battles ?? 0) + 1, dmg: (u.dmg ?? 0) + Math.round(b.pd?.[id] ?? 0), defied: (u.defied ?? 0) + b.doorUsed.filter((x) => x === id).length, scars: [...(u.scars ?? [])] };
   if (b.doorUsed.includes(id) && !c.scars!.includes('납땜 자국')) c.scars!.push('납땜 자국');
   if ((c.battles ?? 0) >= CREW.scarAfterBattles && !c.scars!.includes('용접 흉터')) c.scars!.push('용접 흉터');
   if (b.bossKiller === id) c.nick = '반장 사냥꾼';

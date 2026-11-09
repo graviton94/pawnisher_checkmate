@@ -59,7 +59,7 @@ export const lamp = (x: X, cx: number, cy: number, rad: number, on: Ramp | null)
   f(x, '#ffffff', cx - Math.ceil(rad / 2), cy - Math.ceil(rad / 2), 1, 1);
 };
 
-/** 갈무리 글씨를 도트로 (알파 문턱 → 단색) · 먹 테 1도트 · 새김(아래 1도트 밝은 줄)
+/** 갈무리 글씨를 도트로 (알파 생명 → 단색) · 먹 테 1도트 · 새김(아래 1도트 밝은 줄)
  *  px: 12(갈무리11 굵게) 배수만 — 캔버스 1도트 = 글씨 1px이므로 화면에서는 도트 배율만큼 커진다 */
 export const pixelText = (x: X, text: string, cx: number, top: number, col: string, o: { px?: number; under?: string; outline?: string } = {}) => {
   const px = o.px ?? 12;
