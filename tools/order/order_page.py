@@ -24,6 +24,8 @@ ATTACH = [
     ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
     ('⑧', '이야기 컷 정답 「말리는 분대」 — 15위 컷의 구도 · 밀도 (D-346)', 'build-res/order/C-05-promote-crew-source.png', 720),
     ('⑨', '이야기 컷 정답 「조항 새김」 — 금칠 킹 생김새 · 15위 컷 (D-346)', 'build-res/order/C-02-promote-rule-source.png', 720),
+    ('⑥', '막 배경 화풍 기준 — 검수 공정 (17위 막 배경 2장, D-381)', 'public/scenes/act-3.png', 720),
+    ('⑥b', '막 배경 화풍 기준 — 주조 공정 (17위)', 'public/scenes/act-1.png', 720),
     ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
@@ -173,8 +175,9 @@ def main(out_path):
     for s in secs:
         m = re.match(r'(\d+)위 · (.*)', s['head'])
         if m:
-            if int(m.group(1)) >= 16:
-                break
+            if int(m.group(1)) == 16:  # 카드 틀은 D-367부터 cardart.py가 직접 그린다 — 발주 안 함
+                g = None
+                continue
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
             groups.append(g)
         elif g and re.match(r'[A-Z]{1,2}-\d', s['head']):
