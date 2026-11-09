@@ -194,11 +194,11 @@ def main(out_path):
     rows = []
     for ln in intro['blocks']:
         rows.append(ln)
-    intro_html = render_text([b for k, b in rows if k == 'text'])
+    intro_html = render_text([b for k, b in rows if k == 'text' and not (b.strip().startswith('|') and ('~~' in b or '받음' in b))])
     intro_html = intro_html.replace('Claude 손그림 도트', 'Claude 손그림 도트 (받은 시트는 외곽선 2도트로 보완해 교체 — D-301)')
 
     pid = 0
-    nav, body = [], []
+    nav, body, done_list = [], [], []
     total, got = 0, 0
     for g in groups:
         units = g['items'] or [g['sec']]
@@ -211,18 +211,16 @@ def main(out_path):
             status = '다시 받기 (화풍)'
         cls = 'done' if status == '받음' else ''
         nav.append(f'<a href="#r{g["rank"]}" class="{cls}"><span>{g["rank"]}</span>{inline(g["head"].split("→")[0].split(" (")[0].strip())}</a>')
-        if cls == 'done':  # 다 받은 순위: 프롬프트는 지우고 완료 + 저장 위치만 (D-309)
-            head_html = '<p class="donepath">완료 — 저장 위치: ' + where_all(fs) + '</p>'
-            body.append(f'<article class="rank {cls}" id="r{g["rank"]}"><header><div class="num">{g["rank"]}<small>위</small></div>'
-                        f'<h2>{inline(g["head"])}</h2><span class="st">{status}</span></header>{head_html}</article>')
+        if cls == 'done':  # 다 받은 순위는 페이지에서 뺀다 (D-393, 사용자: 「완료된 것은 싹 정리 — html 용량」) — 맨 위 한 줄 목록에만
+            nav.pop()
+            done_list.append(f'{g["rank"]}위 {g["head"].split("→")[0].split(" (")[0].strip()}')
             continue
         head_html, pid = render_blocks(g['sec']['blocks'], pid)
         items_html = []
         for it in g['items']:
             f = files_of(it['head'])
             done_it = bool(f) and all(x in have for x in f)
-            if done_it:
-                items_html.append(f'<section class="item"><h3>{inline(it["head"])}<em class="got">완료</em></h3><p class="donepath">저장 위치: ' + ' · '.join(f'<code>{where(x)}</code>' for x in f) + '</p></section>')
+            if done_it:  # 받은 항목도 뺀다 (D-393)
                 continue
             ih, pid = render_blocks(it['blocks'], pid)
             mark = '<em class="got">받음</em>' if done_it else ''
@@ -251,7 +249,8 @@ def main(out_path):
             f'<h2>{inline(g["head"])}</h2><span class="st">{status}</span></header>{head_html}{"".join(items_html)}</article>'
         )
 
-    att = ''.join(f'<figure><img src="{data_uri(p, w)}" alt="{html.escape(name)}"><figcaption><b>{k}</b> {html.escape(name)}<br><code>{p}</code></figcaption></figure>' for k, name, p, w in ATTACH)
+    # 첨부 그림은 붙이지 않는다 (D-388: 발주는 첨부 없이 글로 · D-393: 용량) — 끝난 순위는 한 줄 목록만
+    att = ('<p class="donepath">끝난 순위 (' + str(len(done_list)) + '): ' + ' · '.join(html.escape(d) for d in done_list) + '</p>') if done_list else ''
     page = TEMPLATE.replace('%NAV%', '\n'.join(nav)).replace('%BODY%', '\n'.join(body)).replace('%INTRO%', intro_html).replace('%ATT%', att).replace('%GOT%', str(got)).replace('%TOTAL%', str(total))
     open(out_path, 'w', encoding='utf-8').write(page)
     print(out_path, f'{len(groups)}개 순위 · 그림 {total}장 (받음 {got}) · 프롬프트 {pid}개 · {os.path.getsize(out_path) // 1024}KB')

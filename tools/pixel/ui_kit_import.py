@@ -1,6 +1,6 @@
 """
 받은 UI 키트 시트(발주 19위 UI-01 ~ UI-04, D-386 · D-388) → 부품마다 진짜 도트 PNG.
-  python3 -I tools/pixel/ui_kit_import.py <받은 그림> UI-0N
+  python3 -I tools/pixel/ui_kit_import.py <받은 그림> UI-0N [발주 원본 가로 도트 수]
 하는 일: ① 시트 전체의 숨은 도트 격자를 찾아 칸 하나 = 1px로(snap.py) ② 마젠타 = 투명
 ③ 발주 팔레트 15색으로 맞춤 ④ 붙어 있는 덩어리마다 잘라 이름을 붙여 src/assets/ui/chrome/v2/<이름>.png
 확인용: build-res/order/UI-0N-check.png (부품 ×4 + 이름)
@@ -25,6 +25,9 @@ NAMES = {
     'UI-02': [f'btn-{m}-{s}' for m in ('brass', 'iron', 'crimson', 'teal') for s in ('up', 'down', 'off')],
     'UI-03': ['choice-up', 'choice-down', 'choice-sel', 'choice-off', 'tag-brass', 'tag-crimson', 'info-up', 'info-down', 'wallet'],
     'UI-04': ['scene-frame', 'portrait-frame', 'card-slot', 'card-slot-sel'],  # 받은 시트의 줄 순서대로 (D-390 확인)
+    'UI-05': ['tab-iron-up', 'tab-brass-sel'],
+    'UI-07': ['intent-attack', 'intent-approach', 'intent-guard', 'intent-blast', 'intent-shield', 'intent-rest'],
+    'UI-08': ['sub-cap-l', 'sub-cap-r'],
 }
 
 
@@ -80,9 +83,32 @@ def order(boxes):
     return [b for r in rows for b in r]
 
 
-def main(src, sid):
+def merge(boxes, gap=3):
+    """가까운 덩어리를 하나로 (발자국 두 개처럼 한 아이콘이 둘로 갈린 것)"""
+    out = list(boxes)
+    changed = True
+    while changed:
+        changed = False
+        for i in range(len(out)):
+            for j in range(i + 1, len(out)):
+                a, b = out[i], out[j]
+                if a[0] - gap <= b[2] and b[0] - gap <= a[2] and a[1] - gap <= b[3] and b[1] - gap <= a[3]:
+                    out[i] = (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
+                    out.pop(j)
+                    changed = True
+                    break
+            if changed:
+                break
+    return out
+
+
+def main(src, sid, native_w=None):
     img = Image.open(src).convert('RGB')
-    px, ox, py, oy, score = snap.detect_pitch(img, lo=7.0)  # 받은 시트의 도트는 ~10px — 그 절반(5px)을 잘못 잡지 않게
+    if native_w:  # 발주한 원본 캔버스 가로 도트 수를 알면 칸 크기를 그것으로 (자동 찾기가 반 칸 · 다른 배수를 잡을 때)
+        lo = img.width / native_w * 0.9
+        px, ox, py, oy, score = snap.detect_pitch(img, lo=lo, hi=img.width / native_w * 1.1)
+    else:
+        px, ox, py, oy, score = snap.detect_pitch(img, lo=7.0)  # 받은 시트의 도트는 ~10px — 그 절반(5px)을 잘못 잡지 않게
     a = np.asarray(img, dtype=float)
     cuts = (snap.dp_cuts(snap._profile(a, 1), img.width, px), snap.dp_cuts(snap._profile(a, 0), img.height, py))
     small = snap.snap(img, px, ox, py, oy, 0, cuts=cuts).convert('RGBA')
@@ -93,10 +119,11 @@ def main(src, sid):
             c = p[x, y]
             p[x, y] = (0, 0, 0, 0) if is_key(c) else (*near(c), 255)
     mask = np.asarray(small)[:, :, 3] > 0
-    boxes = order(comps(mask))
+    boxes = order(merge(comps(mask), int(os.environ.get("UIKIT_GAP", "1"))))
     names = NAMES[sid]
     print(f'{sid}: 칸 {px:.2f}×{py:.2f}px · 시트 {W}×{H}도트 · 덩어리 {len(boxes)} (이름 {len(names)})')
-    outdir = os.path.join(ROOT, 'src', 'assets', 'ui', 'chrome', 'v2')
+    # 적 의도 아이콘(UI-07)은 다른 아이콘과 같은 곳, 나머지는 UI 크롬
+    outdir = os.path.join(ROOT, 'public', 'ui', 'icons16') if sid == 'UI-07' else os.path.join(ROOT, 'src', 'assets', 'ui', 'chrome', 'v2')
     os.makedirs(outdir, exist_ok=True)
     parts = []
     for i, b in enumerate(boxes):
@@ -118,4 +145,4 @@ def main(src, sid):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], float(sys.argv[3]) if len(sys.argv) > 3 else None)
