@@ -44,7 +44,7 @@ const pawns = (n: number, y = 74, size = 56, from = 14, step = 9): Actor[] => Ar
 export const PROLOGUE: Cut[] = [
   { bg: 'factory', actors: [], lines: [tell('체크메이트 공장.'), tell('모양이 곧 값이고 값이 곧 길이다.')] },
   { bg: 'line', actors: [...pawns(8), me(88, 70, 72, 'wide')], lines: [tell('그날 한 세트에'), tell('킹 대신 폰이 들어갔다.')], fx: 'alarm' },
-  { bg: 'box', actors: [me(50, 60, 120, 'wide')], lines: [tell('검수 전광판: 킹 자리에 폰. 세트 전체 불량 처리 예정.'), mono('나 때문이다.')], fx: 'stamp' },
+  { bg: 'box', actors: [me(50, 60, 120, 'wide')], lines: [tell('검수 전광판: 킹 자리에 폰. 세트 전체 폐기 처분 예정.'), mono('나 때문이다.')], fx: 'stamp' },
   {
     bg: 'box',
     actors: [{ npc: 'whiteQueen', x: 24, y: 48, size: 110, mood: 'glare' }, { npc: 'whiteRook', x: 76, y: 52, size: 100, mood: 'narrow', dim: true }, { npc: 'whiteBishop', x: 50, y: 40, size: 92, mood: 'look', dim: true }, me(50, 78, 76, 'calm')],
@@ -125,7 +125,7 @@ export const TRUE_ENDING: Cut[] = [
 export const ENDING_A_MONO = mono('맞는다. 너무.');
 
 /** 패배 (용광로) */
-export const DEFEAT: Cut = { bg: 'furnace', actors: [me(50, 60, 110, 'sleepy')], lines: [tell('불량 혼입. 집게가 상자째 용광로로. 다시 주조.'), mono('또 아홉째다. 이번엔 누가 먼저 설까.')], fx: 'stamp' };
+export const DEFEAT: Cut = { bg: 'furnace', actors: [me(50, 60, 110, 'sleepy')], lines: [tell('하자 혼입. 집게가 상자째 용광로로. 다시 주조.'), mono('또 아홉째다. 이번엔 누가 먼저 설까.')], fx: 'stamp' };
 
 /** 지켜보던 흰 기물의 합류 (새 기물 보상) */
 export const JOIN: Record<Exclude<PieceType, 'K'>, string> = {
@@ -138,7 +138,7 @@ export const JOIN: Record<Exclude<PieceType, 'K'>, string> = {
 /** 진 흑 기물의 영입 */
 export const RECRUIT = '쓰러진 흑 기물이 일어나 판 이쪽으로 건너온다. “…정해진 대로만 두다 졌다.”';
 /** 흑 세트의 비웃음 (일반 대국 · 검문! 시작) */
-export const TAUNTS = ['“폰이 킹 흉내를.”', '“괴짜 세트다.”', '“모양부터 틀렸어.”', '“정해진 대로 둬.”', '“저건 불량이다. 보면 안다.”', '“폰은 앞으로만 가는 거다.”'];
+export const TAUNTS = ['“폰이 킹 흉내를.”', '“괴짜 세트다.”', '“모양부터 틀렸어.”', '“정해진 대로 둬.”', '“저건 하자품이다. 보면 안다.”', '“폰은 앞으로만 가는 거다.”'];
 
 /** 검수 기록지 12장 (도감) — 풀리는 조건은 run/meta.ts recordsOpen */
 export const RECORDS: { title: string; need: string; text: string }[] = [

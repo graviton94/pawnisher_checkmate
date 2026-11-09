@@ -2460,10 +2460,10 @@ const finishNow = (): void => {
       const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="near">적 킹 HP ${ek.hp} 남았습니다. 한 수였습니다.</p>` : '';
       // 1패 = 출하 끝 (D-228). 여벌 심장 톱니가 있으면 하나 깨고 그 대국을 처음부터
       const spare = charms.revive > 0;
-      // 불량 폐기 화면도 출하 중단 배경(E-02) 위에 (D-263 — 판 위에 뜨던 구식 창)
+      // 하자 폐기 화면도 출하 중단 배경(E-02) 위에 (D-263 — 판 위에 뜨던 구식 창)
       document.body.classList.add('between');
       placeBg('end-fail');
-      const el = openOverlay(`<div class="stamp-big bad">불량 폐기</div><p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다. (남은 ${charms.revive})` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}<div class="row">${spare ? '<button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>깨고 다시</button>' : '<button class="btn brass" type="button" data-quit>출하 종료</button>'}</div>`);
+      const el = openOverlay(`<div class="stamp-big bad">하자 폐기</div><p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다. (남은 ${charms.revive})` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}<div class="row">${spare ? '<button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>깨고 다시</button>' : '<button class="btn brass" type="button" data-quit>출하 종료</button>'}</div>`);
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
         startBattle(cur);
@@ -3388,7 +3388,7 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   refined = [];
   parts = [];
   deck = [...START_DECK];
-  // 승급 7 (조항 「불량 세트의 명령서에는 녹을 섞는다」): 시작 덱 한 장이 녹슨 카드
+  // 승급 7 (조항 「하자 세트의 명령서에는 녹을 섞는다」): 시작 덱 한 장이 녹슨 카드
   if (level >= 7) deck[deck.length - 1] = rustOnce(deck[deck.length - 1]);
   picked = [[], [], []];
   // 최근 출하에서 만난 사건은 이번 가방에서 뺀다 (D-247, 사용자: 「랜덤 인카운터가 너무 동일하게 반복」) — 가방이 비면 다시 전부

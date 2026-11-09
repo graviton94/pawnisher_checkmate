@@ -7,7 +7,7 @@ export type CoachKey =
   | 'reward' | 'shop' | 'forge' | 'altar' | 'event' | 'puzzle' | 'elite' | 'boss' | 'epic' | 'contract';
 
 export const COACH: Record<CoachKey, string> = {
-  start: '불량 판정을 받은 시작 세트입니다. 셋 중 하나를 고릅니다.',
+  start: '하자 판정을 받은 시작 세트입니다. 셋 중 하나를 고릅니다.',
   map: '공정 지도입니다. 지금 층의 칸만 고를 수 있습니다. 끝에서 기다리는 반장 카드를 누르면 준비할 것이 보입니다.',
   select: '흰 기물이 당신의 군단입니다. 하나를 누릅니다.',
   targets: '점은 갈 수 있는 칸, 붉은 과녁은 가서 칠 수 있는 칸입니다. 움직인 기물만 칩니다.',

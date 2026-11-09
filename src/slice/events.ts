@@ -297,7 +297,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           }
         }
         oneHurt(s, 0.3);
-        return { slot: 2, text: `불량. 판정기가 불꽃을 토한다. ${josa(who, '이')} 한 번 더 감전된다. (HP −30% 더)` };
+        return { slot: 2, text: `하자. 판정기가 불꽃을 토한다. ${josa(who, '이')} 한 번 더 감전된다. (HP −30% 더)` };
       } },
       leave('지나가기'),
     ],

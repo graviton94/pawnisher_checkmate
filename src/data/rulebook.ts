@@ -23,7 +23,7 @@ export const RULEBOOK: RulePage[] = [
     title: '출하',
     icon: 'flag',
     body: [
-      `불량 판정을 받은 기물 몇 기로 공장을 거슬러 오른다. ${ACT_NAMES.join(' → ')} — 공정마다 ${FLOORS_PER_ACT}층, 모두 ${TOTAL_FLOORS}층.`,
+      `하자 판정을 받은 기물 몇 기로 공장을 거슬러 오른다. ${ACT_NAMES.join(' → ')} — 공정마다 ${FLOORS_PER_ACT}층, 모두 ${TOTAL_FLOORS}층.`,
       `공정 끝마다 <b>반장</b>, ${TOTAL_FLOORS}층에 <b>도금왕</b>. 도금왕을 쓰러뜨리면 출하가 끝난다.`,
       '대국에서 지면 출하가 끝난다. 쓰러진 기물은 다음 대국에 다시 선다. 잃는 것은 대국 하나다.',
       '지도에서 층마다 칸 하나를 고른다: 대국 · 검문! · 고물상 · 공방 · 돌발.',
