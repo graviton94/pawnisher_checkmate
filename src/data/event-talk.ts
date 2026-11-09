@@ -329,3 +329,18 @@ export const REFINE_TALK = {
   forge: { npc: '외눈 정비공', line: '“어느 걸 깎아 줄까. 덜 감아도 돌 거다.”' },
   shop: { npc: '녹슨 룩', line: '“하나 골라. 군살을 빼 주지. 값은 이미 받았고.”' },
 };
+
+/**
+ * 사건 창 글 예산 (D-395, `.win-scene` — 가장 작은 화면 667×375의 오른쪽 단 352px 기준, 단위 = 한글 한 자 · desc.textWidth).
+ * narr: 서술 한 문장(15px 한 줄) · say: 대사 칸 두 줄(이름표 몫 뺌) · res: 선택지 결과 12px 한 줄(정보 단추 몫 뺌) · info: 풀이 12px 두 줄.
+ */
+export const EVENT_TEXT_BUDGET = { narr: 23, say: 34, res: 22, info: 40 };
+
+/** 사건 그림 초점 (D-395 · D-386): 액자에 비율 그대로 덮어 자를 때 칸 안에 남길 자리 — [가로, 세로] 0~1. 없으면 가운데 */
+export const EVENT_FOCUS: Record<string, [number, number]> = {
+  tinker: [0.42, 0.6], smith: [0.55, 0.6], apprentice: [0.45, 0.45], napping: [0.55, 0.45], nightShift: [0.8, 0.55], pact: [0.5, 0.45],
+  dipping: [0.5, 0.35], swapDealer: [0.5, 0.6], auction: [0.55, 0.5], brokenGacha: [0.55, 0.5], safe: [0.65, 0.5], counterweight: [0.55, 0.5],
+  conveyor: [0.3, 0.6], oilMerchant: [0.4, 0.5], scrapTrade: [0.5, 0.55], lostPawn: [0.45, 0.6], scrapHeap: [0.5, 0.6], rustBath: [0.3, 0.55],
+  drillRook: [0.2, 0.6], cardSharp: [0.4, 0.45], castMold: [0.35, 0.5], crownAltar: [0.5, 0.4], duelKnight: [0.55, 0.4], bookCart: [0.4, 0.55],
+  sleepingKing: [0.45, 0.4], echoWell: [0.4, 0.5], copyPress: [0.45, 0.45], fieldMedic: [0.35, 0.55], coldForge: [0.4, 0.5], mirrorHall: [0.5, 0.6], overtime: [0.6, 0.55],
+};
