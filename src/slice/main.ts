@@ -1570,18 +1570,19 @@ const enterNode = (n: MapNode): void => {
     saveRun('battle', picked[actI][rowI] ?? 0);
     return startBattle(n.battle);
   }
-  if (n.kind === 'shop') return void sceneIntro(NODE_NAMES.shop, '고물 더미', '고물 더미 사이로 저울이 흔들린다. 나사 냄새가 난다.', `<i class="sf-ico" style="${iconArt('n.shop')}"></i>`, false, '', '', 'shop').then(shopScreen);
+  // 장소 진입은 모달 없이 철문 전환만 (D-388) — 화면 자체가 장소를 말한다
+  if (n.kind === 'shop') return void shutter(shopScreen);
   if (n.kind === 'event') {
     if (!eventBag.length) eventBag = [...SLICE_EVENT_IDS];
     const id = eventBag.splice(R.int(eventBag.length), 1)[0];
     { const m = readMeta(store); writeMeta(store, { ...m, evRecent: [id, ...(m.evRecent ?? []).filter((x) => x !== id)].slice(0, EV_RECENT) }); }
-    const ev = SLICE_EVENTS[id];
-    return void sceneIntro(NODE_NAMES.event, ev.title, ev.text.split('.')[0] + '.', `<i class="sf-ico" style="${iconArt('n.event')}"></i>`, false, '', '', 'event').then(() => eventScreen(id));
+
+    return void shutter(() => eventScreen(id));
   }
   if (n.kind === 'chest') {
     // 부품 상자 (D-215): 나사 한 줌 + 부품 하나 — 지도 가운데 층에 고정
     const screws = SLICE.chestGold[0] + R.int(SLICE.chestGold[1] - SLICE.chestGold[0] + 1);
-    return void sceneIntro(NODE_NAMES.chest, '녹슨 자물쇠', '자물쇠가 삐걱이며 풀린다. 안에서 기름 냄새가 난다.', `<i class="sf-ico" style="${iconArt('n.chest')}"></i>`, false, '', '', 'chest').then(() => {
+    return void shutter(() => {
       gold += screws;
       // 부적 (D-228): 가끔 상자 바닥에 — 여벌 심장은 드물게
       const roll = R.next();
@@ -1591,8 +1592,8 @@ const enterNode = (n: MapNode): void => {
     });
   }
   forgeFinal = !!n.final;
-  if (n.final) return void sceneIntro('종막', '최종 정비', '출하구 앞 마지막 화덕. 분대가 숨을 고른다.', `<i class="sf-ico" style="${iconArt('n.forge')}"></i>`, false, '', '', 'forge').then(forgeScreen);
-  if (n.kind === 'forge') return void sceneIntro(NODE_NAMES.forge, '꺼지지 않은 화덕', '화덕이 당신을 부른다. 모루는 아직 뜨겁다.', `<i class="sf-ico" style="${iconArt('n.forge')}"></i>`, false, '', '', 'forge').then(forgeScreen);
+  if (n.final) return void shutter(forgeScreen);
+  if (n.kind === 'forge') return void shutter(forgeScreen);
 };
 
 /**
@@ -1680,8 +1681,12 @@ const showMap = (): void => {
         ln.classList.toggle('snap', !me);
         ln.classList.toggle('live', me);
       });
-      const foes = nd.battle ? `<span class="nd-foes">${nd.battle.enemy.map((t) => pieceImg(t, 1, 'small', 22)).join('')}</span>` : '';
-      info.innerHTML = `<i class="ico nd-${nd.kind}" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="txt"><b>${NODE_NAMES[nd.kind]}${nd.battle?.foe ? ` · ${nd.battle.foe}` : ''}</b><small>${NODE_DESC[nd.kind]}</small></div>${foes}<button class="btn brass" type="button" data-go>진입</button>`;
+      // 노드 미리보기 (D-388 — 진입 창 대신, 발라트로 블라인드 · ITB 임무 미리보기처럼 누르기 전에): 이름 · 적 명단 · 규칙 줄
+      const cnt = new Map<PieceType, number>();
+      for (const t of nd.battle?.enemy ?? []) cnt.set(t, (cnt.get(t) ?? 0) + 1);
+      const foes = nd.battle ? `<span class="nd-foes">${[...cnt].map(([t, n]) => `<span class="nd-foe">${pieceImg(t, 1, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('')}</span>` : '';
+      const rules = (nd.battle && !nd.battle.boss ? entryLines(nd.battle).join(' · ') : '') || NODE_DESC[nd.kind];
+      info.innerHTML = `<i class="ico nd-${nd.kind}" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="txt"><b>${NODE_NAMES[nd.kind]}${nd.battle?.foe ? ` · ${nd.battle.foe}` : ''}</b><small>${rules}</small></div>${foes}<button class="btn brass" type="button" data-go>진입</button>`;
       info.querySelector('[data-go]')!.addEventListener('click', () => go(k));
     }),
   );
@@ -2228,6 +2233,12 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
     const lead = foes.length ? 260 + foes.length * 110 + 680 : 840;
     window.setTimeout(close, lead + (kind === 'check' ? 600 : 0) + narr.length * 20 + Math.max(2400, narr.length * 60));
   });
+/** 대국 규칙 짧은 줄 (D-385 · D-388): 보상 · 적 특성 · 호위 — 지도 미리보기 · 입문 진입에서 같이 쓴다 */
+const entryLines = (def: BattleDef): string[] => [...new Set(def.title.startsWith('입문') ? ['적 킹을 쓰러뜨리면 승리'] : [
+  ...(def.reward === 'part' ? [ENTRY_LINES.reward] : []),
+  ...(def.traits ?? []).map((t) => (t === 'blastPawn' || t === 'rookPlate' ? ENTRY_LINES[t] : FOE_TRAITS[t].line)),
+  ...(/호위/.test(def.tell ?? '') ? [ENTRY_LINES.guard] : []),
+])];
 const stageIntro = (def: BattleDef): Promise<void> => {
   const [label, name] = def.title.split(' — ');
   const foe: PieceType = def.boss ? 'K' : def.enemy.find((t) => t !== 'K' && t !== 'P') ?? 'K';
@@ -2243,17 +2254,10 @@ const stageIntro = (def: BattleDef): Promise<void> => {
     const rule = real as BossKey;
     return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], narr: def.narr, rules: asc <= BOSS_PHASE_TEXT.upTo ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
-  // 적 줄: 킹은 맨 끝 (기물이 하나씩 떨어져 박힌다 — ×n 배지를 없앴다, 테스터: 사각형에 가려졌다)
-  void roster;
-  const line = [...def.enemy.filter((t) => t !== 'K'), ...def.enemy.filter((t) => t === 'K')];
-  // 입문 시험대는 전용 배경 act-0 (D-382 · SC-01)
-  // 테이프 = 짧은 줄만 (D-385): 보상 · 적 특성 · 호위 — 입문은 판 목표 한 줄
-  const tape = def.title.startsWith('입문') ? ['적 킹을 쓰러뜨리면 승리'] : [
-    ...(def.reward === 'part' ? [ENTRY_LINES.reward] : []),
-    ...(def.traits ?? []).map((t) => (t === 'blastPawn' || t === 'rookPlate' ? ENTRY_LINES[t] : FOE_TRAITS[t].line)),
-    ...(/호위/.test(def.tell ?? '') ? [ENTRY_LINES.guard] : []),
-  ];
-  return sceneIntro(label, name, def.narr, art, false, '', def.title.startsWith('입문') ? 'act-0' : '', def.reward === 'part' ? 'check' : 'battle', line, [...new Set(tape)].join('\n'));
+  // 대국 · 검문은 진입 창(모달)을 띄우지 않는다 (D-388, 사용자: 「배경에 기물 얹는 진입 창 자체가 최악」 · /game-ui-design 0장: 행동이 없는 정보 = 모달 금지).
+  // 정보(적 명단 · 규칙 · 보상)는 지도에서 노드를 고를 때 미리 보여 주고, 들어갈 때는 철문 전환 뒤 판 위 띠 한 번만 (⑨ 표지).
+  void roster; void art;
+  return shutter(() => undefined).then(() => void window.setTimeout(() => turnBanner($('board'), name ? `${label} · ${name}` : label, false), 120));
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
 const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' };
