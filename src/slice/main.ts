@@ -540,6 +540,16 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
   // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
   return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
+/**
+ * 분대원 카드 (D-362, 사용자: 「기물도 하나하나의 카드가 되는 거지」): 카드 · 부품과 같은 틀 —
+ * 이름(별칭) · 그림 창(기물) · 태그(기물 · 문턱 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
+ */
+const crewFace = (u: Crew, hp: number, max: number, src = u.t === 'K' ? `pieces/l-K0.png` : `ui/hud/crew-${u.t}.png`): string => {
+  const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
+  const pct = `${Math.max(0, Math.min(100, Math.round((hp / max) * 100)))}%`;
+  const tags = [PIECE_NAMES_KO[u.t], `문턱 ${u.doors ?? 0}`, u.cracked ? '금 간 심장' : ''].filter(Boolean).map((t) => `<i class="tg">${t}</i>`).join('');
+  return `<div class="cf crew-card big t-${u.t} g-${g}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${crewLabel(u)}</b><span class="cf-win"><span class="er-pc"><img src="${src}" alt=""></span></span><span class="cf-type">${tags}</span><small class="cf-desc"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><span class="er-hpn">HP ${Math.round(hp)} / ${max}</span></small><i class="cf-gem"></i></div>`;
+};
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
   const d = SLICE_PARTS[id];
@@ -1796,13 +1806,13 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         for (const u0 of before.crew) {
           const u1 = squad.find((x) => x.serial === u0.serial);
           const max = crewMaxHp(u0), hp0 = u0.hp ?? max;
-          if (!u1) { crewFx.push({ src: src(u0.t), name: crewLabel(u0), hp0, hp1: 0, max, fx: 'die' }); continue; }
+          if (!u1) { crewFx.push({ src: src(u0.t), name: crewLabel(u0), hp0, hp1: 0, max, fx: 'die', card: crewFace(u0, hp0, max) }); continue; }
           const hp1 = u1.hp ?? crewMaxHp(u1);
-          if (u1.t !== u0.t) crewFx.push({ src: src(u0.t), toSrc: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'evolve' });
-          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: '문턱 +1' });
-          else if (hp1 !== hp0) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'hp' });
+          if (u1.t !== u0.t) crewFx.push({ src: src(u0.t), toSrc: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'evolve', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, crewMaxHp(u1)) });
+          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: `문턱 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
+          else if (hp1 !== hp0 || (u1.cracked && !u0.cracked)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: u1.cracked && !u0.cracked ? 'crack' : 'hp', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
         }
-        for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: u1.hp ?? crewMaxHp(u1), hp1: u1.hp ?? crewMaxHp(u1), max: crewMaxHp(u1), fx: 'new' });
+        for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: u1.hp ?? crewMaxHp(u1), hp1: u1.hp ?? crewMaxHp(u1), max: crewMaxHp(u1), fx: 'new', card: crewFace(u1, u1.hp ?? crewMaxHp(u1), crewMaxHp(u1)) });
         // 좋은 결과: 확률 선택은 첫 칸(판정기는 둘째 칸 「한 단계 위」도 좋음), 아니면 좋다
         const good = out.slot === undefined || out.slot === 0 || (id === 'brokenGacha' && out.slot === 1);
         choicesEl.hidden = true;

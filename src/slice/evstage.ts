@@ -16,7 +16,7 @@ const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, calm() ? Mat
 /** 카드 하나의 변화 — before/after는 카드 얼굴 HTML */
 export interface CardFx { before?: string; after?: string; fx: 'up' | 'rust' | 'break' | 'new' }
 /** 분대원 하나의 변화 — src는 기물 그림 */
-export interface CrewFx { src: string; toSrc?: string; name: string; hp0: number; hp1: number; max: number; fx: 'hp' | 'up' | 'evolve' | 'die' | 'new'; tag?: string }
+export interface CrewFx { src: string; toSrc?: string; name: string; hp0: number; hp1: number; max: number; fx: 'hp' | 'up' | 'evolve' | 'die' | 'new' | 'crack'; tag?: string; /** 분대원 카드 (D-362) — 있으면 카드와 같은 틀 · 같은 연출 */ card?: string; cardAfter?: string }
 export interface EvFxCtx {
   id: string;
   good: boolean;
@@ -324,6 +324,14 @@ const showResults = async (L: Layer, c: EvFxCtx): Promise<void> => {
   }
   for (const cr of crew) {
     const el = document.createElement('div');
+    if (cr.card) {
+      // 분대원 카드 (D-362): 카드와 같은 틀 · 같은 자리 — 바뀐 값은 카드 위 도장으로
+      el.className = `er-card reward-cards er-crewcard fx-${cr.fx}`;
+      el.innerHTML = cr.card + (cr.tag ? `<b class="er-stamp" hidden>${cr.tag}</b>` : '');
+      row.appendChild(el);
+      items.push({ el, run: () => crewCardFx(L, el, cr) });
+      continue;
+    }
     el.className = `er-crew fx-${cr.fx}`;
     const pct = (v: number) => `${Math.max(0, Math.min(100, Math.round((v / cr.max) * 100)))}%`;
     el.innerHTML = `<div class="er-pc"><img src="${cr.src}" alt=""></div><div class="er-hp"><i class="er-ghost" style="width:${pct(cr.hp0)}"></i><i class="er-fill" style="width:${pct(cr.hp0)}"></i></div><b class="er-name">${cr.name}</b>${cr.tag ? `<small class="er-tag" hidden>${cr.tag}</small>` : ''}`;
@@ -370,6 +378,52 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
     for (let i = 0; i < 20; i++) L.ps.spawn(P.SHARD, b.x + L.R.range(4, b.w - 4), b.y + L.R.range(4, b.h - 4), L.R.range(-90, 90), L.R.range(-120, -30), L.R.range(0.8, 1.4), hex(i % 2 ? '#868a98' : '#b9bdc8'), L.R.range(1, 2));
     await cls(el, 'gone', 340); // 디더 퇴장
   }
+};
+
+/** 분대원 카드 연출 (D-362): 카드 연출(cardFx)과 같은 말 — 다듬기 = 빛 · 녹/상처 = 붉게 · 죽음 = 갈라져 디더 퇴장 · 승격 = 그림이 바뀌어 찍힘 */
+const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> => {
+  const pct = (v: number) => `${Math.max(0, Math.min(100, Math.round((v / cr.max) * 100)))}%`;
+  const swap = () => { if (cr.cardAfter) { const st = el.querySelector('.er-stamp'); el.innerHTML = cr.cardAfter; if (st) el.appendChild(st); } };
+  const stamp = async () => { const st = el.querySelector<HTMLElement>('.er-stamp'); if (st) { st.hidden = false; await cls(st, 'in', 300); } };
+  const b = () => L.at(el);
+  if (cr.fx === 'new') return cardFx(L, el, { fx: 'new' });
+  if (cr.fx === 'up') {
+    await cls(el, 'pre', 300); el.classList.remove('pre');
+    await cls(el, 'flash', 120); swap(); el.classList.remove('flash');
+    const r = b(); L.ps.burst(r.x + r.w / 2, r.y + r.h / 2, 22, [50, 150], P.STAR, [0.3, 0.6], PAL.gold[5], 40); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 40, PAL.gold[5], 0.9, 0.5);
+    await cls(el, 'upped', 500); await stamp();
+    return;
+  }
+  if (cr.fx === 'evolve') {
+    await cls(el, 'pre', 320); el.classList.remove('pre');
+    await cls(el, 'flash', 140); swap(); el.classList.remove('flash');
+    const r = b(); L.ps.burst(r.x + r.w / 2, r.y + r.h / 2, 24, [60, 170], P.STAR, [0.5, 1], PAL.gold[5]); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 46, PAL.gold[5], 1, 0.7);
+    await cls(el, 'upped', 500);
+    return;
+  }
+  if (cr.fx === 'die') {
+    await cls(el, 'pre', 300); el.classList.remove('pre');
+    await cls(el, 'greying', 360); await cls(el, 'cracked', 220);
+    const r = b(); for (let i = 0; i < 20; i++) L.ps.spawn(P.SHARD, r.x + L.R.range(4, r.w - 4), r.y + L.R.range(4, r.h - 4), L.R.range(-90, 90), L.R.range(-120, -30), L.R.range(0.8, 1.4), hex(i % 2 ? '#868a98' : '#b9bdc8'), L.R.range(1, 2));
+    await cls(el, 'gone', 340);
+    return;
+  }
+  // hp · crack: 상처는 붉게 떨고 HP 막대가 계단으로 · 회복은 초록 기운 · 심장 톱니 금은 금이 그어진다
+  const fill = el.querySelector<HTMLElement>('.er-fill'), ghost = el.querySelector<HTMLElement>('.er-ghost');
+  const hurt = cr.hp1 < cr.hp0;
+  const r = b();
+  if (hurt || cr.fx === 'crack') {
+    await cls(el, 'hit', 200); el.classList.remove('hit');
+    L.ps.burst(r.x + r.w / 2, r.y + r.h * 0.4, 14, [40, 120], P.SPARK, [0.2, 0.4], hex('#e5262f'), 20);
+    if (fill && ghost) { fill.style.width = pct(cr.hp1); await wait(260); ghost.classList.add('drain'); ghost.style.width = pct(cr.hp1); }
+    if (cr.fx === 'crack') await cls(el, 'cracked', 260);
+  } else {
+    if (fill && ghost) { ghost.style.width = pct(cr.hp1); fill.classList.add('grow'); fill.style.width = pct(cr.hp1); }
+    for (let i = 0; i < 10; i++) L.ps.spawn(P.MOTE, r.x + L.R.range(4, r.w - 4), r.y + r.h - 6, L.R.range(-6, 6), L.R.range(-70, -30), L.R.range(0.5, 0.9), PAL.heal[6], 1, i * 0.04);
+    await cls(el, 'upped', 500);
+  }
+  await wait(300);
+  const n = el.querySelector('.er-hpn'); if (n) n.textContent = `HP ${Math.round(cr.hp1)} / ${cr.max}`;
 };
 
 const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) => string): Promise<void> => {

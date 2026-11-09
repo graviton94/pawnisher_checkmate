@@ -2674,3 +2674,17 @@ body.slice #hand .mg-desc .dl-fx > i { display: inline-block; font-style: normal
 /* D-353 · D-354 합류 초상 층: 종이(바탕) → 초상(img) → 검은 액자 → 파란 액자 (액자 둘은 ::after로 초상 위에 덮는다) */
 .taunt.crew-say .taunt-face { position: relative; background: #e8e0cc; box-shadow: none; }
 .taunt.crew-say .taunt-face::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 2px #46c4c8, inset 0 0 0 4px #000; } /* 바깥 파랑 2 · 안쪽 검정 2 — 둘 다 초상 위 */
+/* D-362 분대원 카드 (사건 결과): 카드와 같은 틀 · 그림 창에 기물 · 설명 칸에 HP 막대 */
+body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
+.cf.crew-card .cf-win { display: grid; place-items: center; }
+.cf.crew-card .er-pc { width: 32px; height: 32px; background: #e8e0cc; box-shadow: 0 0 0 2px #000, 0 0 0 3px #46c4c8; margin: 0; overflow: hidden; }
+.cf.crew-card .er-pc img { width: 32px; height: 32px; }
+.cf.crew-card .cf-type { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
+.cf.crew-card .cf-type .tg { font-style: normal; font: 12px/1 var(--f11, 'Galmuri11'); padding: 2px 3px; background: #24232b; box-shadow: 0 0 0 1px #000; color: #e8e0cc; }
+.cf.crew-card .cf-desc { display: grid; justify-items: center; gap: 3px; }
+.cf.crew-card .er-hp { width: 80%; }
+.cf.crew-card .er-hpn { font-size: 12px; color: #c9c1ad; }
+.er-card.hit { animation: erShake 200ms steps(1) both; filter: brightness(1.6) sepia(1) saturate(5) hue-rotate(-40deg); }
+.er-card .er-stamp { position: absolute; top: 46%; right: -14px; z-index: 6; font: 12px/1 'Galmuri11'; font-weight: 700; padding: 3px 5px; background: #46c4c8; color: #0b0b0e; box-shadow: 0 0 0 2px #000, 2px 2px 0 2px #000; }
+.er-card .er-stamp.in { animation: erStamp 300ms steps(3) both; }
+@keyframes erStamp { 0% { transform: scale(2.4) rotate(-14deg); } 66% { transform: scale(0.9) rotate(3deg); } 100% { transform: none; } }
