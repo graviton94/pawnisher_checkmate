@@ -27,7 +27,7 @@ ATTACH = [
     ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = {"promote-alarm"}  # D-351: C-06 기획 변경 — 덮는 그림자  # D-349: C-06 2차 — 킹 실루엣 · 폰 상자 위치만 수정 발주
+REDO: set[str] = set()  # D-355: C-06 그림자안 받음 (D-351 · D-349 이력)
 
 
 def data_uri(path, width):
