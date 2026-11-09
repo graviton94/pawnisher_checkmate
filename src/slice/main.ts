@@ -419,10 +419,9 @@ const magHtml = (id: CommandId, i: number): string => {
  * 카드 크게 보기 (D-166, 슬더스식): 손패를 길게 누르거나(터치) 마우스를 올리면 카드 모양으로 전체 효과.
  * 손패는 이름 · 비용 · 수치만 짧게, 자세한 문장 · 각주 · 띠 이름은 여기서.
  */
-const peekHtml = (id: CommandId, cost: number): string => {
-  const c = COMMANDS[id];
-  return `<div class="peek-card t-${c.who}"><div class="pk-top">${keysHtml(cost)}<b>${c.name}</b></div><div class="pk-art">${c.who === 'any' ? `<span class="pk-any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>` : pieceImg(c.who, 0, 'large', 72)}</div><div class="pk-axes">${opTag(opOfCard(c))}${axisTag(seeAx(c.axis))}${axisTag(seeAx(c.axis2))}</div>${c.desc ? `<p class="pk-desc">${c.desc}</p>` : c.who !== 'any' ? `<div class="pk-shape">${shapeHtml(c.who, 9)}</div>` : ''}${c.flavor ? `<p class="pk-flv">${c.flavor}</p>` : ''}</div>`;
-};
+/** 손패 크게 보기 (D-379, 사용자: 「전투 손패는 기본 유지, 설명 팝업은 지금 카드로」): 정본 카드 그대로 — 지금 비용만 톱니에 */
+const peekHtml = (id: CommandId, cost: number): string =>
+  cardFace(id, 'tabindex="-1"').replace(/(<b class="cf-cost[^"]*" aria-label="태엽 )\d+(">)\d+(<\/b>)/, `$1${cost}$2${cost}$3`);
 let peekEl: HTMLElement | null = null;
 const showPeek = (cardEl: HTMLElement): void => {
   const i = Number(cardEl.dataset.card);
@@ -529,10 +528,6 @@ const descLines = (text: string, flavor?: string): string => descHtml(text, flav
 const footed = (extra: string, attrs = ''): boolean => extra.includes('class="price') || attrs.includes('data-pick');
 const cfFoot = (price: string, chips: string): string => `<span class="cf-foot">${price}${chips ? `<span class="cf-chips">${chips}</span>` : ''}</span>`;
 const opTag = (op: '+' | '×' | null | undefined): string => (op ? `<i class="op op-${op === '+' ? 'add' : 'mul'}" aria-label="${op === '+' ? '합' : '곱'}">${op}</i>` : '');
-/** 빌드 축 띠 */
-const axisTag = (a?: Axis): string => (a ? ` <i class="axis ax-${a}">${AXIS_NAMES[a]}</i>` : '');
-/** 카드의 부품 띠를 보여 주나 (D-233 3단계): 첫 출하에서는 내가 단 부품의 띠만 — 「이 카드가 내 부품과 맞물린다」만 읽히게. 둘째 출하부터 다섯 띠 모두 */
-const seeAx = (a?: Axis): Axis | undefined => (!a || readMetaCached().runs >= 1 || parts.some((id) => SLICE_PARTS[id].axis === a) ? a : undefined);
 
 /** 부품 칩 (레일 · 고르기 화면) */
 /**
