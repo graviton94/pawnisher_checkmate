@@ -102,22 +102,22 @@ const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'] as const;
  * name = 짧은 이름 · law = 규격판에 새긴 글 · desc = 효과. 수치는 구조용 — 조정은 대과제 3 (D-080).
  */
 export const ASCENSION: { name: string; law: string; desc: string }[] = [
-  { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +10%' },
-  { name: '굳은 검수', law: '검수대 앞에 저울을 하나 더 둔다', desc: '검문 · 반장의 킹 HP +10% · 예고 공격을 맞으면 기어 쇼크' },
-  { name: '짧은 휴식', law: '정비 라인은 반만 돌린다', desc: '대국 사이 회복이 절반으로' },
+  { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +30%' },
+  { name: '굳은 검수', law: '검수대 앞에 저울을 하나 더 둔다', desc: '검문 · 반장의 킹 HP +20% · 예고 공격을 맞으면 기어 쇼크' },
+  { name: '짧은 휴식', law: '정비 라인은 반만 돌린다', desc: '대국 사이 회복이 30%로' },
   { name: '비싼 고물', law: '고물상은 값을 올려 받는다', desc: '고물상 값 +25%' },
   { name: '불어난 무리', law: '흑 세트마다 폰을 하나 더 넣는다', desc: '대국마다 적 폰 하나 더 · 여벌 심장 톱니 없이 시작' },
-  { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +15%' },
+  { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +20%' },
   { name: '녹슨 명령서', law: '하자 세트의 명령서에는 녹을 섞는다', desc: '시작 덱의 카드 한 장이 녹슨 카드 (태엽 +1)' },
   { name: '마른 나사', law: '하자 세트에는 나사를 덜 내준다', desc: '속전 보상 −25%' },
-  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +10%' },
+  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +45%' },
   { name: '금 간 심장', law: '하자 세트의 심장 톱니는 금 간 것으로 끼운다', desc: '분대원 하나가 깨진 심장 톱니로 시작' },
   { name: '얇은 보상', law: '하자 세트에는 명령서를 둘만 내준다', desc: '대국 보상 카드 선택지 3 → 2' },
   { name: '정예 검문', law: '검문마다 정예를 세운다', desc: '검문 적 하나가 정예 (왕관 · HP ×2)' },
-  { name: '열세 겹', law: '포장대의 금은 열세 겹으로 칠한다', desc: '도금왕 HP +40% · 마지막 장' },
+  { name: '열세 겹', law: '포장대의 금은 열세 겹으로 칠한다', desc: '도금왕 HP +180% · 마지막 장' },
 ];
 // D-316: enemyAtk 1.1 → 1.05 · finalHp 1.2 → 1.1 — 두뇌 봇 승급 13 완주 17.5%(120판)를 목표 20~35%로
-export const ASC_NUM = { enemyHp: 1.1, eliteKing: 0.1, restMul: 0.5, shopMul: 1.25, bossHp: 1.15, coinMul: 0.75, enemyAtk: 1.1, rewardChoices: 2, finalHp: 1.4 };
+export const ASC_NUM = { enemyHp: 1.3, eliteKing: 0.2, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.45, rewardChoices: 2, finalHp: 2.8 };
 /** 이 승급에서 그 조항이 켜졌나 — 조항 번호(1 ~ 13)는 ASCENSION 순서 */
 export const ascOn = (asc: number, law: number): boolean => asc >= law;
 export const ASC_MAX = ASCENSION.length;
