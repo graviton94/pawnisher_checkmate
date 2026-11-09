@@ -1819,7 +1819,8 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         const oc = EVENT_OUTCOME[id]?.[`${k}:${out.slot ?? 0}`];
         if (oc) {
           await say('narr', oc.scene);
-          if (oc.line) await say('npc', oc.line, oc.who);
+          // 독백(‘ ’)은 이름표 없이 서술 칸으로 (D-360 — NPC가 없는 사건)
+          if (oc.line) await say(oc.line.startsWith('‘') ? 'narr' : 'npc', oc.line, oc.who);
         } else {
           if (out.text) await say('narr', out.text);
           await say('npc', good ? talk.win : talk.lose ?? talk.win);
