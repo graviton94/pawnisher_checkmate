@@ -1753,6 +1753,11 @@ body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; b
 /* D-398: 카드 150 ~ 166px에서 「쓰러짐」이 1fr 칸(≈ 32px)에 안 들어 「쓰러 / 짐」으로 꺾이고 두루마리 위가 잘렸다 — 칸 폭은 글 폭대로, 사이는 고르게 */
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { grid-auto-columns: auto; justify-content: space-evenly; }
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st i { white-space: nowrap; }
+/* D-398 글자 격자(D-213): 부품 · 손질 카드 두루마리가 창의 갈무리14를 물려받아 「12px 갈무리14 굵게」가 되던 것 → 카드 글은 갈무리11(맞춤 단계 s10은 갈무리9 그대로) ·
+   분대원 카드 공격 · HP 숫자 15px 갈무리11(격자 밖) → 15px 갈무리14 보통, 세 자리는 12px 갈무리11 굵게 */
+body.slice .cf.cf.cf.cf > .cf-desc, body.slice .cf.cf.cf.cf > .cf-desc * { font-family: Galmuri11, sans-serif; }
+body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3), body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3) * { font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+body.slice .cf.cf.cf.cf.crew-card > .cb.n3, body.slice .cf.cf.cf.cf.crew-card > .cb.n3 * { font: 700 12px/1 Galmuri11, sans-serif; }
 /* 생명 빈 자리 = 깨진(검은) 태엽 하트 */
 body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }
 body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; }

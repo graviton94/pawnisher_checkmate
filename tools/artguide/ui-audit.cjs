@@ -1,5 +1,6 @@
 // UI 통일성 전수 점검 (D-262): 본편의 화면 · 팝업 · 안내창 · 띠 · 토스트를 장면마다 새 페이지로 찍는다 (915×412, 1배).
-// 사용: (빌드 · 미리보기 후) node tools/artguide/ui-audit.cjs <출력 폴더> [장면 이름 걸러내기]
+// 사용: (빌드 · 미리보기 후) node tools/artguide/ui-audit.cjs <출력 폴더> [장면 이름 걸러내기]   — 미리보기 포트는 PORT=4180 처럼 (기본 4173)
+const BASE = `http://localhost:${process.env.PORT || 4173}/?debug`;
 const { chromium } = require('playwright');
 const out = process.argv[2] || 'ui-audit';
 const only = process.argv[3];
@@ -54,6 +55,11 @@ const SCENES = [
   ['pick-brace', async (p, A, W, S) => { await A(() => window.sliceApi.brace()); await W(1400); await S(''); }],
   ['win-deck', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await S(''); }],
   ['win-remove', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('remove')); await W(1400); await S(''); }],
+  // 패스 6 (D-398): 카드 레일 · 상아 손질 카드 · 덱/분대 레일 · 낮은 화면 손패
+  ['p6-shop-rail', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(120); window.sliceApi.shop(); }); await W(2600); await A(() => { const r = document.querySelector('.scr-items'); r.scrollLeft = 9999; }); await W(800); await S(''); }],
+  ['p6-forge', async (p, A, W, S) => { await A(() => window.sliceApi.forge()); await W(2600); await p.click('[data-slot="repair"]'); await W(400); await S(''); }],
+  ['p6-deck', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await S(''); }],
+  ['p6-crew', async (p, A, W, S) => { await A(() => window.sliceApi.crew()); await W(1400); await S(''); }],
   ['endclear', async (p, A, W, S) => { await A(() => window.sliceApi.end(true)); await W(2800); await S(''); }],
 ];
 (async () => {
@@ -82,6 +88,8 @@ const SCENES = [
           const why = [];
           if (fam === 'Galmuri11' && !OK11.includes(fs)) why.push(`G11 ${fs}px`);
           else if (fam === 'Galmuri14' && !OK14.includes(fs)) why.push(`G14 ${fs}px`);
+          // 카드 글 맞춤 마지막 단계(D-373 · D-377)만 10px 갈무리9 허용
+          else if (fam === 'Galmuri9' && fs === 10 && el.closest('.cf .ln.s10')) { /* 허용 */ }
           else if (fam !== 'Galmuri11' && fam !== 'Galmuri14') why.push(`서체 ${fam} ${fs}px`);
           if (fam === 'Galmuri14' && w >= 600) why.push('G14 굵게');
           if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) why.push('말줄임');
@@ -94,9 +102,9 @@ const SCENES = [
     };
     const S = async (n) => { await p.screenshot({ path: `${out}/${name}${n ? '-' + n : ''}.png` }).catch(() => console.log('shot fail', name, n)); await TEXT(n); };
     try {
-      await p.goto('http://localhost:4173/?debug');
+      await p.goto(BASE);
       await p.evaluate((m) => localStorage.setItem('pawnisher.slice.meta', m), META);
-      await p.goto('http://localhost:4173/?debug'); await W(2400); await p.mouse.click(450, 300); await W(1200);
+      await p.goto(BASE); await W(2400); await p.mouse.click(450, 300); await W(1200);
       await fn(p, A, W, S);
     } catch (e) { console.log('FAIL', name, e.message.slice(0, 160)); }
     await p.close().catch(() => {});
