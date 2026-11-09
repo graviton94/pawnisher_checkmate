@@ -9,6 +9,8 @@ export const STARTER_CARDS: string[] = [
 export const STARTER_PARTS: string[] = [
   // 기록 유물 (D-363) — 처음부터: 분대원을 아끼게 만드는 축
   'lastBreath', 'ledger', 'veteran', 'deathMark',
+  // 기록 유물 2차 (D-384)
+  'notches', 'aceBadge', 'heavyHand', 'scarPlate', 'cleanSheet', 'sergeant',
   'rookBolt', 'bishopLens', 'pawnPike', 'oath', 'horseshoe', 'magnet', 'assembly', 'drum', 'crown', 'throne', 'coil', 'echo', 'hammer', 'spare', 'tape', 'lance', 'spurs', 'barracks', 'banner', 'scepter', 'gilded', 'fuse', 'conductor', 'anvilPlate', 'chainShot', 'bloodPact', 'brittle', 'greed', 'whetstone',
 ];
 /** 열리는 순서 — 카드 둘마다 부품 하나 */

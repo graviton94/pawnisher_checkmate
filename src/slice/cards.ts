@@ -316,9 +316,12 @@ export const FORGE = { repairPct: 0.4, braceDoors: 1 };
  * 경제 압박 (D-247, 사용자: 「수리 · 강화 · 빼기를 너무 자주 고를 수 있고 슬롯도 없어 돈을 펑펑 쓰면 된다 — 한정된 재화로 고민하는 게 아니라」):
  * 부품 칸 · 서비스 값 누적(슬더스식 빼기 값 오름) · 고물상 서비스는 셋 중 둘만 · 작업대도 셋 중 둘.
  */
+/** 이 막(0 = 1막 … 3 = 종막)의 부품 칸 수 (D-384) */
+export const partSlotsAt = (actIndex: number): number => ECON.partSlots + ECON.partSlotsPerAct * Math.max(0, actIndex);
 export const ECON = {
-  /** 부품 칸 — 넘치면 하나를 녹여(나사 meltBack) 자리를 낸다 */
+  /** 부품 칸 — 넘치면 하나를 녹여(나사 meltBack) 자리를 낸다. 막을 넘을 때마다 +partSlotsPerAct (D-384: 한 판에 부품 ~12개를 얻는데 5칸은 2막 중반에 찬다 → 1막 5 · 2막 6 · 3막 7 · 종막 8) */
   partSlots: 5,
+  partSlotsPerAct: 1,
   meltBack: 20,
   /** 고물상 다듬기 · 빼기는 출하 내내 쓸 때마다 값이 오른다 */
   svcStep: 25,

@@ -232,6 +232,10 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
+  // 기록 유물 2차 (D-384): 분대 처치 1위 · 피해 1위 (0이면 없음, 같으면 앞사람)
+  const topBy = (f: (u: Squad) => number): Squad | null => squad.reduce<Squad | null>((a, u) => (f(u) > (a ? f(a) : 0) ? u : a), null);
+  const ace = topBy((u) => u.kills ?? 0);
+  const heavy = topBy((u) => u.dmg ?? 0);
   const squadIds = squad.map((u) => {
     const p = s.pieces.find((q) => q.side === 0 && q.type === u.t && !used.has(q.id))!;
     used.add(p.id);
@@ -246,6 +250,12 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (has0('ledger')) p.atk += Math.min(PART_NUM.ledgerCap, Math.floor((u.dmg ?? 0) / PART_NUM.ledgerPer));
     if (has0('deathMark')) p.atk += Math.min(PART_NUM.deathMarkCap, PART_NUM.deathMarkAdd * (u.defied ?? 0));
     if (has0('veteran') && (u.kills ?? 0) >= PART_NUM.veteranAt) { p.atk += PART_NUM.veteranAtk; p.maxHp = Math.round(p.maxHp * PART_NUM.veteranHp); p.hp = p.maxHp; }
+    if (has0('notches')) { p.maxHp += Math.min(PART_NUM.notchCap, PART_NUM.notchHp * (u.kills ?? 0)); p.hp = p.maxHp; }
+    if (has0('cleanSheet') && (u.defied ?? 0) === 0 && (u.battles ?? 0) >= PART_NUM.cleanAt) { p.maxHp = Math.round(p.maxHp * PART_NUM.cleanHp); p.hp = p.maxHp; }
+    if (has0('scarPlate')) p.shield += Math.min(PART_NUM.scarCap, PART_NUM.scarShield * (u.defied ?? 0));
+    if (has0('sergeant')) p.atk += Math.min(PART_NUM.sergeantCap, Math.floor((u.battles ?? 0) / PART_NUM.sergeantPer));
+    if (has0('heavyHand') && heavy === u) p.atk += PART_NUM.heavyAdd;
+    if (has0('aceBadge') && ace === u) p.atk = Math.round(p.atk * PART_NUM.aceMult);
     if (u.hp !== undefined) p.hp = Math.max(1, Math.min(p.maxHp, u.hp));
     // 생명 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 생명 + 폰 전용 황금 부품 「작은 개척자의 맹세」
     const doors = (q?.doors ?? 0) + (u.doors ?? 0) + (p.type === 'P' && (opts.parts ?? []).includes('oath') ? 1 : 0);

@@ -25,7 +25,7 @@ import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 import { iconMask } from '../ui/chrome';
 
@@ -1551,7 +1551,11 @@ const advance = (): void => {
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
     squad = restSquad(squad, restHeal());
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
-    void sceneIntro(actLabel(a.act), a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`, false, '', `act-${Math.min(4, actI + 1)}`, 'act').then(showMap);
+    void sceneIntro(actLabel(a.act), a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`, false, '', `act-${Math.min(4, actI + 1)}`, 'act').then(() => {
+      showMap();
+      // 막을 넘으면 부품 칸 +1 (D-384)
+      if (actI > 0 && ECON.partSlotsPerAct) toast(`부품 칸이 하나 늘었습니다. (부품 칸 ${partSlotsAt(actI)})`, 2600);
+    });
     return;
   }
   showMap();
@@ -1656,7 +1660,7 @@ const showMap = (): void => {
   // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
   el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
-  el.innerHTML = `<header><div><p class="sf-eyebrow">${actLabel(a.act)}</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''} <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArtSmall(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArtSmall(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
+  el.innerHTML = `<header><div><p class="sf-eyebrow">${actLabel(a.act)}</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b> · 부품 <b>${parts.length}/${partSlotsAt(actI)}</b> <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArtSmall(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArtSmall(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="map-info"><p class="hint">빛나는 곳을 고릅니다.</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
       .map((k) => `<li class="nd-${k}"><i class="ico" style="${iconArt(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
@@ -3053,12 +3057,12 @@ const kitPick = (head: string, then: () => void): void => {
  * done(true) = 달았다 · done(false) = 새 부품을 버렸다
  */
 const gainPart = (id: SlicePartId, done: (took: boolean) => void): void => {
-  if (parts.length < ECON.partSlots) {
+  if (parts.length < partSlotsAt(actI)) {
     parts.push(id);
     newParts.add(id);
     return done(true);
   }
-  const el = openOverlay(`<h2><span class="pass-tag bad">칸 가득</span> 부품 칸 ${ECON.partSlots}개가 모두 찼습니다</h2><p>${josa(SLICE_PARTS[id].name, '을')} 달려면 하나를 녹여야 합니다. 녹인 부품은 나사 ${ECON.meltBack}이 됩니다.</p>
+  const el = openOverlay(`<h2><span class="pass-tag bad">칸 가득</span> 부품 칸 ${partSlotsAt(actI)}개가 모두 찼습니다</h2><p>${josa(SLICE_PARTS[id].name, '을')} 달려면 하나를 녹여야 합니다. 녹인 부품은 나사 ${ECON.meltBack}이 됩니다.</p>
     <div class="part-cards melt-cards">${parts.map((pid) => partFace(pid, `data-melt="${pid}"`)).join('')}</div>
     <div class="row"><button class="btn" type="button" data-keep>${josa(SLICE_PARTS[id].name, '을')} 두고 간다</button></div>`);
   gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
