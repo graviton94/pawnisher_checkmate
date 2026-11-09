@@ -71,4 +71,4 @@ export const partTags = (id: SlicePartId): { who: Who; style: Style; effect: Eff
 
 /** 세 칸 칩 HTML (카드 얼굴 · 부품 얼굴 · 확인 창이 같이 쓴다) */
 export const tags3Html = (t: { who: Who; style: Style; effect: Effect; word?: string }): string =>
-  `<span class="t3"><i class="t3-who">${WHO_NAMES[t.who]}</i><i class="t3-sty sty-${t.style}">${STYLE_NAMES[t.style]}</i><i class="t3-fx fx-${t.effect === '+' ? 'add' : t.effect === '×' ? 'mul' : 'rule'}">${t.effect === 'rule' ? t.word || '규칙' : t.effect}</i></span>`;
+  `<span class="t3"><i class="t3-who">${WHO_NAMES[t.who]}</i><i class="t3-sty sty-${t.style}">${STYLE_NAMES[t.style]}</i><i class="t3-fx fx-${t.effect === '+' ? 'add' : t.effect === '×' ? 'mul' : 'rule'}">${t.effect === 'rule' ? t.word || '규칙' : t.effect === '+' ? '합' : '곱'}</i></span>`; // D-375: 기호(×)가 「없음」으로 읽혀 글자 「합 · 곱」으로

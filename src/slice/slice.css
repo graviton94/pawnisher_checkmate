@@ -2900,3 +2900,33 @@ body.slice .overlay .panel:has(.reward-scroll .crail) .crail.crail { padding: 2p
 body.slice .cslot { gap: 4px; }
 body.slice .cinfo { min-height: 24px; padding: 2px 6px 3px; }
 body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) > .row .btn { height: 44px; }
+body.slice .overlay { z-index: 64; } /* D-375: 지도(mapfx 60) 위에서 여는 창(덱 보기 · 부품 고르기)이 지도 아래 깔리던 것 */
+/* D-375 고르기 확인창: 카드 왼쪽 · 제목 + 단추 오른쪽 (세로로 쌓으면 412px를 넘어 단추가 화면 밖) */
+body.slice .kit-confirm .kc-panel { grid-template-columns: auto minmax(0, 240px); grid-template-areas: "cards title" "cards row"; align-items: center; column-gap: 20px; max-height: calc(100dvh - 16px); }
+body.slice .kit-confirm .kc-panel > h2 { grid-area: title; align-self: end; margin: 0; text-align: left; }
+body.slice .kit-confirm .kc-panel > .kc-cards { grid-area: cards; }
+body.slice .kit-confirm .kc-panel > .row { grid-area: row; align-self: start; display: flex; flex-direction: column; gap: 8px; width: 100%; }
+body.slice .kit-confirm .kc-panel > .row .btn { width: 100%; min-height: 44px; }
+body.slice .kit-confirm .kc-cards.kc-cards > .cf.cf.cf.cf, body.slice .pick-confirm .kc-one.kc-one > .cf.cf.cf.cf { flex: none; width: var(--card-w); height: auto; padding: 0; margin: 0; transform: none; }
+/* D-375 분대원 카드 HP 줄 (리뷰: 종류 띠가 비어 보였다 — inline이라 크기 0) · 세 자리 숫자는 작게 */
+body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-hp { display: block; position: relative; width: 100%; height: 100%; background: #0b0b0e; box-shadow: none; }
+body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill, body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { position: absolute; left: 0; top: 0; bottom: 0; height: auto; }
+body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill { background: #4aa856; box-shadow: inset 0 2px 0 #7ad07e; }
+body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { background: #d23a3a; }
+body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { font-size: 12px; }
+body.slice .cf.cf.cf .cf-desc .fxi { vertical-align: top; } /* D-375: 줄 높이가 늘지 않게 */
+body.slice .cf.cf.cf.crew-card .cs-q .fxi { display: inline-block; vertical-align: top; }
+/* 분대 보기 (D-375 리뷰: 도감 · 닫기가 패널 아래로 잘림) — 레일 여백을 줄이고 단추 줄을 오른쪽 위로 */
+body.slice .overlay .panel:has(.reward-scroll):has([data-close-crew]) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+body.slice .overlay .panel:has(.reward-scroll):has([data-close-crew]) > h2 { grid-column: 1; margin: 0; }
+body.slice .overlay .panel:has(.reward-scroll):has([data-close-crew]) > .row { grid-column: 2; grid-row: 1; margin: 0; }
+body.slice .overlay .panel:has(.reward-scroll):has([data-close-crew]) > .shop-scrollbox { grid-column: 1 / -1; }
+/* 덱 보기도 같은 꼴 — 닫기 단추는 제목 줄 오른쪽 */
+body.slice .overlay .panel:has(.deck-grid) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; }
+body.slice .overlay .panel:has(.deck-grid) > h2, body.slice .overlay .panel:has(.deck-grid) > p { grid-column: 1; margin: 0; }
+body.slice .overlay .panel:has(.deck-grid) > .row { grid-column: 2; grid-row: 1; margin: 0; }
+body.slice .overlay .panel:has(.deck-grid) > .deck-grid { grid-column: 1 / -1; max-height: calc(100dvh - 90px); }
+/* 보상 화면 분대 줄 (D-375 리뷰: 셋째 분대원이 단추에 가림) — 이름은 빼고 기물 · HP 막대 · 숫자만, 머리말은 두 줄로 좁게 */
+body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) .squad-strip .ss-t b { display: none; }
+body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) .squad-strip .ss-t { width: 48px; }
+body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) .squad-strip .ss-head { white-space: normal; max-width: 132px; line-height: 14px; }

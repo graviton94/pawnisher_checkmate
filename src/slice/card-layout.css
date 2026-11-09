@@ -4,8 +4,8 @@ body.slice .cf.cf.cf.cf { aspect-ratio: 112 / 168; height: auto; }
 body.slice .cf.cf.cf.cf > .cf-win { left: 17.857%; top: 11.905%; width: 65.179%; height: 23.810%; z-index: 1; }
 body.slice .cf.cf.cf.cf > .cf-name { left: 16.071%; top: 35.714%; width: 68.750%; height: 7.143%; z-index: 5; display: grid; place-items: center; line-height: 1; padding: 0; margin: 0; }
 body.slice .cf.cf.cf.cf > .cf-type { left: 22.321%; top: 44.048%; width: 56.250%; height: 6.548%; z-index: 4; display: flex; align-items: center; justify-content: center; }
-body.slice .cf.cf.cf.cf > .cf-desc { left: 19.643%; top: 53.571%; width: 61.607%; height: 37.500%; }
-body.slice .cf.cf.cf.cf > .cf-gem { left: 50.446%; top: 94.940%; }
+body.slice .cf.cf.cf.cf > .cf-desc { left: 19.643%; top: 53.571%; width: 61.607%; height: 35.119%; }
+body.slice .cf.cf.cf.cf > .cf-gem { left: 50.000%; top: 95.238%; width: 7.143%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); right: auto; z-index: 3; }
 body.slice .cf.cf.cf.cf > .cf-cost { left: 0.893%; top: 0.000%; width: 18.750%; height: 12.500%; display: grid; place-items: center; line-height: 1; padding: 0; }
 body.slice .cf.cf.cf.cf > .cb-atk { left: 0.893%; top: 26.190%; width: 16.964%; height: 11.310%; }
 body.slice .cf.cf.cf.cf > .cb-hp { left: 82.143%; top: 26.190%; width: 16.964%; height: 11.310%; }

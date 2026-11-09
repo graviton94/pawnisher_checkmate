@@ -43,7 +43,7 @@ PLATE = ['#121116', '#1a1920', '#23222a', '#2e2d36']
 PAPER = ['#8a7a5a', '#b8a882', '#d8ccae', '#e8e0cc', '#f4eedc']
 MASKS = {}
 # D-374 (사용자: 「리본이 그림에 가린다 · 카드를 정보량에 맞게 키워라」): 그림 창은 리본 위에서 끝나고, 리본 아래 종류 띠, 두루마리는 더 길게
-LAYOUT = dict(art=(12, 12, 84, 51), ribbon=(4, 52, 92, 63), type=(15, 66, 81, 76), scroll=(8, 79, 88, 147), gem=(44, 147, 52, 155), cost=(3, 2), badge=45)
+LAYOUT = dict(art=(12, 12, 84, 51), ribbon=(4, 52, 92, 63), type=(15, 66, 81, 76), scroll=(7, 79, 89, 143), gem=(44, 148, 52, 156), cost=(3, 2), badge=45)
 
 
 class P:
@@ -65,7 +65,7 @@ class P:
         return self.im.getpixel((x, y)) if 0 <= x < CW and 0 <= y < CH else (0, 0, 0, 0)
 
 
-def frame(px, m):
+def frame(px, m, beads=True):
     """바깥 틀: 검은 선 · 금속 띠 4(빛 왼쪽 위) · 검은 선 · 짙은 판 · 구슬 테(2도트마다 리벳)"""
     px.r(0, 0, W - 1, H - 1, INK)
     px.r(1, 1, W - 2, H - 2, m[2])
@@ -82,6 +82,8 @@ def frame(px, m):
             if (x * 3 + y) % 7 == 0:
                 px.p(x, y, PLATE[2])
     # 구슬 테 (판 가장자리 안쪽 1도트, 3도트마다)
+    if not beads:
+        return
     for x in range(8, W - 8, 3):
         px.p(x, 7, m[3]); px.p(x, H - 8, m[2])
     for y in range(8, H - 8, 3):
@@ -240,31 +242,23 @@ def type_plate(px):
 
 
 def scroll(px):
+    """두루마리 (D-375: 말린 끝을 5도트로 줄여 종이 폭을 넓힌다)"""
     x0, y0, x1, y1 = LAYOUT['scroll']
-    # 종이
-    px.r(x0 + 3, y0, x1 - 3, y1, INK)
-    px.r(x0 + 4, y0 + 1, x1 - 4, y1 - 1, PAPER[3])
-    for x in range(x0 + 4, x1 - 3):
+    px.r(x0 + 2, y0, x1 - 2, y1, INK)
+    px.r(x0 + 3, y0 + 1, x1 - 3, y1 - 1, PAPER[3])
+    for x in range(x0 + 3, x1 - 2):
         px.p(x, y0 + 1, PAPER[4]); px.p(x, y1 - 1, PAPER[2]); px.p(x, y1 - 2, PAPER[2] if x % 5 else PAPER[3])
-    # 종이 결 (드문 점)
     for y in range(y0 + 3, y1 - 2):
-        for x in range(x0 + 6, x1 - 5):
+        for x in range(x0 + 5, x1 - 4):
             if (x * 7 + y * 13) % 41 == 0:
                 px.p(x, y, PAPER[2])
-    # 양 끝 말림 (원통)
     for side in (0, 1):
         cxs = x0 + 2 if side == 0 else x1 - 2
         for y in range(y0 - 1, y1 + 2):
-            for dx in range(-3, 4):
-                x = cxs + dx
-                if abs(dx) == 3:
-                    px.p(x, y, INK)
-                else:
-                    shade = [PAPER[1], PAPER[2], PAPER[4], PAPER[3], PAPER[2]][dx + 2]
-                    px.p(x, y, shade)
-        px.r(cxs - 3, y0 - 2, cxs + 3, y0 - 2, INK)
-        px.r(cxs - 3, y1 + 2, cxs + 3, y1 + 2, INK)
-        # 말린 끝 소용돌이
+            for dx in range(-2, 3):
+                px.p(cxs + dx, y, INK if abs(dx) == 2 else [PAPER[1], PAPER[4], PAPER[2]][dx + 1])
+        px.r(cxs - 2, y0 - 2, cxs + 2, y0 - 2, INK)
+        px.r(cxs - 2, y1 + 2, cxs + 2, y1 + 2, INK)
         for dy in (y0, y1):
             px.p(cxs, dy, PAPER[0])
 
@@ -319,17 +313,78 @@ def badges(px, m):
                         px.p(x, y, base[1] if (x - cx) + (y - cy) < -3 else base[2] if (x - cx) + (y - cy) > 4 else base[0])
 
 
+def rivet(px, x, y, m):
+    """리벳 2×2 (빛 왼쪽 위)"""
+    px.r(x - 1, y - 1, x + 2, y + 2, INK)
+    px.r(x, y, x + 1, y + 1, m[2])
+    px.p(x, y, m[4])
+
+
+def corner_jewel(px, cx, cy, col):
+    """황금 모서리 보석: 금 받침 + 붉은 마름모"""
+    for y in range(cy - 5, cy + 6):
+        for x in range(cx - 5, cx + 6):
+            d = abs(x - cx) + abs(y - cy)
+            if d <= 5:
+                px.p(x, y, INK if d == 5 else BRASS[4] if d == 4 and (x < cx or y < cy) else BRASS[2] if d == 4 else col[1] if (x - cx) + (y - cy) < -1 else col[0])
+    px.p(cx - 1, cy - 2, '#ffd0c0')
+
+
+def gold_crest(px):
+    """황금 볏 (D-375): 아치 위 틀 꼭대기에 솟은 왕관 장식 — 틀 밖 위 여백으로 튀어나온다"""
+    cx = W // 2
+    pts = []
+    for x in range(cx - 12, cx + 12):
+        dx = abs(x - cx + 0.5)
+        top = -6 if dx < 2 else -4 if 5 <= dx < 7 else -3 if 10 <= dx < 12 else -1
+        for y in range(top, 4):
+            pts.append((x, y))
+    S = set(pts)
+    for (x, y) in pts:
+        px.p(x, y, BRASS[4] if y < 0 and x < cx else BRASS[3] if y < 1 else BRASS[2])
+    for (x, y) in pts:
+        for ax, ay in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if (x + ax, y + ay) not in S:
+                px.p(x + ax, y + ay, INK)
+    # 가운데 보석
+    for y in range(-4, 1):
+        for x in range(cx - 2, cx + 2):
+            if abs(x - cx + 0.5) + abs(y + 2) <= 2.5:
+                px.p(x, y, '#d23a3a' if y < -2 else '#a8222e')
+    px.p(cx - 1, -4, '#ffd0c0')
+
+
+def side_filigree(px):
+    """황금 옆 띠 무늬: 금 테 위에 마름모 사슬"""
+    for y in range(14, H - 14, 6):
+        for x0 in (2, W - 3):
+            px.p(x0, y, BRASS[5]); px.p(x0, y + 1, BRASS[3]); px.p(x0, y - 1, BRASS[3])
+
+
 def card(kind, grade):
+    """등급마다 틀 장식이 확연히 다르다 (D-375):
+    일반 = 무쇠 틀 · 모서리 리벳만 · 구슬 테 없음 / 희귀 = 황동 틀 · 톱니 모서리 · 구슬 테 /
+    황금 = 금 틀 · 왕관 볏 · 모서리 붉은 보석 · 옆 띠 무늬 · 구슬 테"""
     px = P()
     m = FRAME[grade]
-    frame(px, m)
-    for (cx, cy, sx, sy) in ((6, 6, 1, 1), (W - 7, 6, -1, 1), (6, H - 7, 1, -1), (W - 7, H - 7, -1, -1)):
-        gear_corner(px, cx, cy, sx, sy, BRASS if grade != 'common' else FRAME['common'])
+    frame(px, m, beads=grade != 'common')
+    if grade == 'common':
+        for (x, y) in ((7, 7), (W - 9, 7), (7, H - 9), (W - 9, H - 9)):
+            rivet(px, x, y, FRAME['common'])
+    elif grade == 'rare':
+        for (cx, cy, sx, sy) in ((6, 6, 1, 1), (W - 7, 6, -1, 1), (6, H - 7, 1, -1), (W - 7, H - 7, -1, -1)):
+            gear_corner(px, cx, cy, sx, sy, BRASS)
+    else:
+        side_filigree(px)
+        for (cx, cy) in ((8, 8), (W - 9, 8), (8, H - 9), (W - 9, H - 9)):
+            corner_jewel(px, cx, cy, ('#a8222e', '#d23a3a'))
     arch_window(px, m, kind)
     scroll(px)
     type_plate(px)
     ribbon(px, RIBBON[grade])
     gem_socket(px, m)
+    if grade == 'gold':
+        gold_crest(px)
     if kind == 'cmd':
         cost_flag(px)
     if kind == 'crew':
@@ -386,8 +441,9 @@ def layout_css():
         f'{S} > .cf-name {{ {box(rb[0] + 6, rb[1], rb[2] - 6, rb[3])} z-index: 5; display: grid; place-items: center; line-height: 1; padding: 0; margin: 0; }}',
         f'{S} > .cf-type {{ {box(t[0] + 2, t[1], t[2] - 2, t[3])} z-index: 4; display: flex; align-items: center; justify-content: center; }}',
         # 종이 안쪽: 말린 끝(±3) 안쪽 + 2 여백
-        f'{S} > .cf-desc {{ {box(sc[0] + 6, sc[1] + 3, sc[2] - 6, sc[3] - 3)} }}',
-        f'{S} > .cf-gem {{ left: {pct((g[0] + g[2]) / 2 + OX + 0.5, CW)}; top: {pct((g[1] + g[3]) / 2 + OY + 0.5, CH)}; }}',
+        f'{S} > .cf-desc {{ {box(sc[0] + 7, sc[1] + 3, sc[2] - 7, sc[3] - 3)} }}',
+        # 보석 소켓 중심(도트 경계 좌표) = gem_socket의 (cx, cy)
+        f'{S} > .cf-gem {{ left: {pct((g[0] + g[2]) // 2 + OX, CW)}; top: {pct((g[1] + g[3]) // 2 + OY, CH)}; width: {pct(8, CW)}; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); right: auto; z-index: 3; }}',
         f'{S} > .cf-cost {{ left: {pct(cx - 10 + OX, CW)}; top: {pct(cy - 10 + OY, CH)}; width: {pct(21, CW)}; height: {pct(21, CH)}; display: grid; place-items: center; line-height: 1; padding: 0; }}',
         f'{S} > .cb-atk {{ left: {pct(2 - 9 + OX, CW)}; top: {pct(by - 9 + OY, CH)}; width: {pct(19, CW)}; height: {pct(19, CH)}; }}',
         f'{S} > .cb-hp {{ left: {pct(W - 3 - 9 + OX, CW)}; top: {pct(by - 9 + OY, CH)}; width: {pct(19, CW)}; height: {pct(19, CH)}; }}',

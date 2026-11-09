@@ -107,14 +107,14 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   rebound: { axis: 'cav', name: '피의 질주', cost: 1, who: 'N', kind: 'move', freeIfKiller: true, desc: '피 냄새가 발굽을 재촉한다. (태엽 0 — 이번 턴에 이미 처치했으면)' },
   hoofKick: { axis: 'cav', name: '짓밟기', cost: 1, who: 'N', kind: 'move', drawOnKill: 1, desc: '짓밟고 다음 명령을 받는다. (카드 1장 뽑기 — 이 공격으로 처치하면)' },
   march: { axis: 'inf', name: '총진격', cost: 0, who: 'P', kind: 'march', desc: '줄을 맞춰, 앞으로. (모든 폰이 한 칸 나아가 기본 공격)', flavor: '“전군, 진격하라!”' },
-  draft: { axis: 'inf', name: '땜질 보충병', cost: 0, who: 'any', kind: 'draft', desc: '고철 더미에서 하나를 일으켜 세운다. (킹 곁에 폰 하나 — 이번 대국에만 남는다)', flavor: '“빈자리를 채워라.”' },
+  draft: { axis: 'inf', name: '땜질 보충병', cost: 0, who: 'any', kind: 'draft', desc: '고철 더미에서 일으킨다. (킹 곁에 폰 하나 — 이번 대국만)', flavor: '“빈자리를 채워라.”' },
   wrath: { axis: 'king', name: '왕의 분노', cost: 1, who: 'K', kind: 'move', rage: true, desc: '상처 입은 만큼 분노한다. (피해 최대 ×3 — 킹이 잃은 HP만큼 세진다)' },
   royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 22, desc: '왕이 갑주를 두른다. (킹 방열판 +22)' },
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1 · 카드 1장 뽑기)' },
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
-  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '쌓인 열기를 갑옷으로 돌린다. (킹 방열판 +연쇄×14 — 쌓인 연쇄를 모두 쓴다)', flavor: '“식기 전에 입어라.”' },
-  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (적 전체 피해 연쇄×14 — 쌓인 연쇄를 모두 쓴다)', flavor: '“압력을 놓아라.”' },
-  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 1, desc: '흩어진 태엽을 거둔다. (태엽 +연쇄 (최대 3) — 쌓인 연쇄를 모두 쓴다)' },
+  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '열기를 갑옷으로 돌린다. (킹 방열판 +연쇄×14 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
+  burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (적 전체 피해 연쇄×14 — 연쇄를 모두 써서)', flavor: '“압력을 놓아라.”' },
+  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 1, desc: '흩어진 태엽을 거둔다. (태엽 +연쇄 · 최대 3 — 연쇄를 모두 써서)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (연쇄 1마다 피해 ×0.5 추가)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
   cavCharge: { axis: 'cav', axis2: 'inf', name: '선봉 돌파', cost: 1, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (곁의 폰들도 함께 공격)' },
@@ -135,7 +135,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   tempo: { axis: 'chain', name: '박자', cost: 0, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 3장 뽑기)' },
   bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 20, desc: '몸으로 막아선다. (방열판 +20)' },
   bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (둘레에 절반 피해 · 처치하면 연쇄 +2)' },
-  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '폰 하나를 제물로 바친다. (연쇄 +3 · 카드 2장 · 태엽 +1 — 대가: 내 폰 하나를 잃는다)', flavor: '“기꺼이.”' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '작은 것을 바친다. (연쇄 +3 · 카드 2장 · 태엽 +1 — 내 폰 하나를 바쳐)', flavor: '“기꺼이.”' },
 
   // ---- 카드 확장 (D-281, 사용자: 「체스 룰을 너무 부수지 않으면서 각 말의 명령 카드로 쓰기 좋은 풀 90장」) — 이동은 기물 고유, 체스 수는 핀 · 포크 · 스큐어 · 디스커버드 · 캐슬링 · 앙파상 ----
   castle: { axis: 'tactic', axis2: 'king', name: '캐슬링', cost: 1, who: 'K', kind: 'swap', amount: 12, desc: '왕과 요새가 맞바꾼다. (둘 다 방열판 +12 — 킹과 가까운 룩과 자리를 바꾼다)', flavor: '“성문을 바꿔 단다.”' },
@@ -154,7 +154,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   bishopFork: { axis: 'tactic', name: '갈림길의 빛', cost: 1, who: 'B', kind: 'move', fork: 1.6, desc: '두 갈래 사선을 동시에 비춘다. (피해 ×1.6 — 칠 수 있는 적이 둘 이상일 때)' },
   consecrate: { axis: 'chain', name: '축성', cost: 1, who: 'B', kind: 'shield', amount: 20, desc: '빛을 두른다. (비숍 방열판 +20)' },
   bishopStep: { axis: 'tactic', axis2: 'chain', name: '비켜서는 사제', cost: 1, who: 'B', kind: 'move', nextMult: 2, desc: '비켜서며 길을 연다. (다음 공격 피해 ×2)' },
-  cathedral: { axis: 'chain', name: '대성당의 빛', cost: 2, who: 'B', kind: 'move', carve: 'diag', mult: 1.6, chainPerKill: 2, desc: '사선 끝까지 빛이 쏟아진다. (피해 ×1.6 · 대각선 절반 · 처치하면 연쇄 +2)', flavor: '성스러운 빛의 심판자' },
+  cathedral: { axis: 'chain', name: '대성당의 빛', cost: 2, who: 'B', kind: 'move', carve: 'diag', mult: 1.6, chainPerKill: 2, desc: '빛이 쏟아진다. (피해 ×1.6 · 사선 절반 · 처치 연쇄 +2)', flavor: '성스러운 빛의 심판자' },
   rookSkewer: { axis: 'tactic', axis2: 'push', name: '성벽 꿰기', cost: 2, who: 'R', kind: 'move', carve: 'pierce', add: 8, desc: '줄을 따라 둘을 꿴다. (피해 +8 · 뒤의 적까지)' },
   rookPin: { axis: 'tactic', axis2: 'push', name: '쇠사슬', cost: 1, who: 'R', kind: 'move', stun: true, desc: '쇠사슬을 던져 묶는다. (묶기)' },
   rookFork: { axis: 'tactic', axis2: 'push', name: '십자 포격', cost: 2, who: 'R', kind: 'move', fork: 1.7, desc: '두 줄을 동시에 겨눈다. (피해 ×1.7 — 칠 수 있는 적이 둘 이상일 때)' },
