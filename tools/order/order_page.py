@@ -27,7 +27,7 @@ ATTACH = [
     ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = {"promote-alarm", "crew-N"}  # D-349: C-06 2차 — 킹 실루엣 · 폰 상자 위치만 수정 발주
+REDO: set[str] = {"promote-alarm"}  # D-351: C-06 기획 변경 — 덮는 그림자  # D-349: C-06 2차 — 킹 실루엣 · 폰 상자 위치만 수정 발주
 
 
 def data_uri(path, width):
@@ -231,7 +231,7 @@ def main(out_path):
                 if mb.group(0) == 'N-03':
                     figs = [('build-res/order/N-crew-N-source.png', '1차 — 다시 (정면 말 얼굴 · 귀 · 주둥이 → ⑦처럼 옆모습)'), ('build-res/order/N-01-adjutant-src-source.png', '⑦ 부관 박차 — 이 각도 · 실루엣으로')]
                 if mb.group(0) == 'C-06':
-                    figs = [('build-res/order/C-06-draft2.png', '2차 — 거의 됨 (임시로 게임에 넣음). 수정: 휜 킹 → 반듯한 킹 통째로 기울이기 · 폰 상자를 위로 크게'), ('build-res/order/C-06-bad-draft.png', '1차 — 다시 (평평 · 텅 빈 화면 · 팔처럼 늘어난 금칠)')]
+                    figs = [('build-res/order/C-06-draft3.png', '1 ~ 3차 — 레버 누르기 기획 폐기 (D-351, 3차는 임시로 게임에)')]
                 if mb.group(0) != 'BF-01' and not mb.group(0).startswith(('C-', 'N-')) and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-boss-fall-plate-source.png')):
                     figs.append(('build-res/order/BF-01-boss-fall-plate-source.png', '⑥ 화풍 정답 — 완성된 철갑 격파 컷 (화풍 · 빛 · 극적인 정도만. 구도는 따라 하지 않는다)'))
                 ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih

@@ -62,5 +62,5 @@ def one(t):
 
 
 if __name__ == '__main__':
-    for t in 'PBRQ':  # N(나이트)은 다시 받는 중 (D-350) — 받으면 'N'을 넣는다
+    for t in 'PNBRQ':
         one(t)
