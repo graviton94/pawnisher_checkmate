@@ -600,6 +600,73 @@ export const intentPlan = (b: SliceBattle): { by: PieceType | null; label?: stri
   return out;
 };
 
+/** 적 의도 한 줄 (오른쪽 레일 목록, 패스 4 D-396 · UI-07 아이콘 여섯) */
+export type IntentKind = 'attack' | 'approach' | 'guard' | 'blast' | 'shield' | 'rest';
+export interface IntentRow {
+  kind: IntentKind;
+  /** 움직이는 적 (반장 규칙 · 폭발은 null) */
+  pieceId: number | null;
+  t: PieceType | null;
+  /** 규칙 이름 (줄 폭격 · 자폭 등) */
+  label?: string;
+  /** 맞을 내 기물 (공격 · 폭발) */
+  hits: { t: PieceType; damage: number; killed: boolean }[];
+  /** 방열판 · 호위 양 */
+  amount?: number;
+}
+/**
+ * 적 의도 목록: 지금 턴을 끝내면 적이 할 일 — 실행과 같은 enemyPhase를 미리 돌린다(화면 = 실행).
+ * 친다(attack) · 다가온다(approach, 치지 않고 움직이기만) · 폭발(blast, 규칙 · 특성) · 방열판(shield) · 호위(guard, 킹에 방열판) · 쉰다(rest, 기절 · 묶임).
+ */
+export const intentRows = (b: SliceBattle): IntentRow[] => {
+  const c = cloneBattle(b);
+  const before = cloneState(c.s);
+  const pc = (id: number) => before.pieces.find((p) => p.id === id);
+  const rows: IntentRow[] = [];
+  const byPiece = new Map<number, IntentRow>();
+  const mine = (hs: { targetId: number; damage: number; killed: boolean }[]) =>
+    hs.flatMap((h) => {
+      const t = pc(h.targetId);
+      return t && t.side === 0 ? [{ t: t.type, damage: h.damage, killed: h.killed }] : [];
+    });
+  for (const e of enemyPhase(c).events) {
+    if (e.type === 'attack') {
+      const a = pc(e.attackerId);
+      if (!a || a.side !== 1) continue;
+      const hits = mine(e.hits);
+      if (!hits.length) continue;
+      const row = byPiece.get(a.id);
+      if (row && (row.kind === 'attack' || row.kind === 'approach')) {
+        row.kind = 'attack';
+        row.hits.push(...hits);
+      } else {
+        const r: IntentRow = { kind: 'attack', pieceId: a.id, t: a.type, hits };
+        byPiece.set(a.id, r);
+        rows.push(r);
+      }
+    } else if (e.type === 'blast') {
+      const hits = mine(e.hits);
+      if (hits.length) rows.push({ kind: 'blast', pieceId: null, t: null, label: e.label, hits });
+    } else if (e.type === 'move') {
+      const a = pc(e.pieceId);
+      if (!a || a.side !== 1 || byPiece.has(a.id)) continue;
+      const r: IntentRow = { kind: 'approach', pieceId: a.id, t: a.type, hits: [] };
+      byPiece.set(a.id, r);
+      rows.push(r);
+    } else if (e.type === 'shield') {
+      const a = pc(e.pieceId);
+      if (!a || a.side !== 1 || e.amount <= 0) continue;
+      rows.push({ kind: a.type === 'K' ? 'guard' : 'shield', pieceId: a.id, t: a.type, hits: [], amount: e.amount });
+    }
+  }
+  // 기절 · 묶임: 이번 적 차례에 움직이지 않는 적
+  for (const id of [...(b.staggered ?? []), ...(b.pinned ?? [])]) {
+    const p = findPiece(b.s, id);
+    if (p && p.side === 1 && !byPiece.has(id) && !rows.some((r) => r.kind === 'rest' && r.pieceId === id)) rows.push({ kind: 'rest', pieceId: id, t: p.type, hits: [] });
+  }
+  return rows;
+};
+
 export const intentHits = (b: SliceBattle): { pieceId: number; pos: Pos; damage: number; killed: boolean }[] => {
   const after = enemyPhase(cloneBattle(b)).events;
   const dmg = new Map<number, { damage: number; killed: boolean }>();
