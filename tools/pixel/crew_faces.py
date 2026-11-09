@@ -9,7 +9,7 @@ from collections import Counter
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-N, RING = 56, 2
+N, RING = 56, 0  # D-353: 흰 테 없이 — 액자 바탕이 종이(흰색)라 검은 외곽선만으로 선다
 CROP = {'P': 0.74, 'N': 0.66, 'B': 0.8, 'R': 0.64, 'Q': 0.62}  # 기물 키 중 초상에 담을 위쪽 몫 (비숍은 십자가, 룩은 도장까지)
 WHITE, INK = (244, 241, 234), (11, 11, 14)
 N4 = [(1, 0), (-1, 0), (0, 1), (0, -1)]
