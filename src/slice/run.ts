@@ -253,8 +253,10 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
  */
 export const FINAL_BOSS = (asc = 0): BattleDef => ({
   enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 5 ? (['P'] as PieceType[]) : [])],
-  kingHp: 1.25 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
+  // D-358: 1.25 → 1.1 — 적 대체 행동(D-318) 뒤 보통 봇 56%로 가장 많이 죽는 곳이었다
+  kingHp: 1.1 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
   enemyHp: (asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05) * (asc >= 6 ? ASC_NUM.bossHp : 1),
+  atk: 0.85, // D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)
   w: 8,
   h: 7,
   title: '종막 — 도금왕',

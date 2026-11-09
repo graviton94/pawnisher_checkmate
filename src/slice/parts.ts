@@ -25,6 +25,8 @@ export interface SlicePartDef {
 export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>> = {
   // 측정 (D-217 2): 같은 축 카드 둘과 함께 넣은 덱 vs 그 카드만 넣은 덱. 황금 = 상위 4, 희귀 = 다음 10.
   // 설계 보정: 맹세(사용자 결정 — 폰 전용 고등급) 황금, 탐욕의 저울(나사 두 배 — 경제는 봇이 못 잰다) · 되감는 테이프(봇은 되감기를 안 쓴다) 희귀
+  // D-358: 막사의 종은 일반인데 힘 값 +2.4(±2σ 밖) → 희귀
+  barracks: 'rare',
   bloodPact: 'gold', hammer: 'gold', whetstone: 'gold', coil: 'gold',
   // 부품 확장 (D-282) — 설계 등급
   toolbox: 'rare', vise: 'rare', gameRecord: 'rare', queenCrown: 'rare', lightCloak: 'rare', lastAxle: 'rare', ventHole: 'rare', afterheat: 'gold', bossBane: 'rare', lightMag: 'rare',

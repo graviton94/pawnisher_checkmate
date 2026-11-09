@@ -97,7 +97,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   bishopChain: { axis: 'chain', name: '축복의 고리', cost: 1, who: 'B', kind: 'move', chainPerKill: 2, desc: '심판받은 자는 둘로 센다. (처치하면 연쇄 +2 — 보통은 처치 한 번에 연쇄 +1)' },
   kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 2, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (피해 +6 · 한 칸 밀기 — 맞은 적을 뒤로 한 칸 민다)' },
   plate: { name: '철벽', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15 — 피해를 먼저 막아 주는 보호막)' },
-  repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 15, desc: '기물 하나를 땜질한다. (HP +15 — 기물 하나를 고친다)' },
+  repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 12, desc: '기물 하나를 땜질한다. (HP +12 — 기물 하나를 고친다)' },
   reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 1, ap: 1, desc: '태엽을 감고 탄창을 채운다. (태엽 +1 · 카드 1장 뽑기)' },
   kingBlow: { axis: 'king', name: '왕의 철퇴', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (피해 ×2)' },
   splashDiag: { axis: 'chain', name: '파편 세례', cost: 1, who: 'B', kind: 'move', carve: 'diag', desc: '착지한 자리에서 사선으로 파편이 튄다. (대각선 넷에 절반 피해 — 내려앉은 칸의 대각선 적)' },
@@ -172,7 +172,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   queenSweep: { axis: 'chain', name: '여왕의 휩쓸기', cost: 2, who: 'Q', kind: 'move', carve: 'cross', mult: 1.3, desc: '내려앉으며 둘레를 쓴다. (피해 ×1.3 · 둘레 절반 — 상하좌우 적에게 절반 피해)' },
   stepAside: { axis: 'tactic', name: '비켜서기', cost: 1, who: 'any', kind: 'move', nextMult: 1.3, desc: '길을 내어 준다. (다음 공격 피해 ×1.3 — 이 카드 다음에 내는 공격 한 번)' },
   checkCall: { axis: 'tactic', name: '체크!', cost: 2, who: 'any', kind: 'move', stun: true, desc: '외침과 함께 묶는다. (묶기 — 묶인 적은 다음 차례에 공격도 이동도 못 한다)', flavor: '“체크!”' },
-  oilCan: { name: '기름칠', cost: 1, who: 'any', kind: 'repair', amount: 22, desc: '삐걱이는 관절에 기름을 먹인다. (HP +22 — 기물 하나를 고친다)' },
+  oilCan: { name: '기름칠', cost: 1, who: 'any', kind: 'repair', amount: 16, desc: '삐걱이는 관절에 기름을 먹인다. (HP +16 — 기물 하나를 고친다)' },
   forkAny: { axis: 'tactic', name: '양수겸장', cost: 2, who: 'any', kind: 'move', fork: 1.5, desc: '둘을 한꺼번에 겨눈다. (피해 ×1.5 — 칠 수 있는 적이 둘 이상일 때)' },
   fieldPlate: { name: '덧댄 판', cost: 0, who: 'any', kind: 'shield', amount: 10, desc: '쇳조각을 덧댄다. (방열판 +10 — 피해를 먼저 막아 주는 보호막)' },
   rookRally: { axis: 'push', axis2: 'inf', name: '성벽 뒤의 행렬', cost: 2, who: 'R', kind: 'move', rally: true, desc: '요새가 나아가면 폰들이 뒤따른다. (곁의 폰들도 함께 공격 — 룩 곁의 폰이 나아가 친다)' },
@@ -343,7 +343,7 @@ export const FOE = {
   // 난이도 설계 (D-228, 1패 = 출하 끝 + 여벌 심장 1): 봇 성향별 완주 60판 — 무뇌 0% · 단순(예고 무시) 27% · 보통 30% · 두뇌(수읽기) 85%.
   // 예전 0.75 · 0.015 · 1.05는 단순 봇도 100% 완주(실력 차 없음)
   // D-229 (회피 반격 · 헛방 경직 · 기어 쇼크 뒤): 1.5 · 0.07 · 1.075 — 단순 25% · 보통 50% · 두뇌 85% (40판)
-  atk: 1.5,
+  atk: 1.65,
   /**
    * 층별 성장 곡선 (D-203, 사용자: "유저가 강해지는 만큼 적도 — 합연산은 지금 강하고 곱연산은 나중에 강하게"):
    * 적 HP는 대국마다 곱으로 (hpGrow^깊이 — 지수), 공격은 더하기로 (1 + atkGrow × 깊이 — 직선).
@@ -352,7 +352,7 @@ export const FOE = {
   // 등반 봇 40판: 시작 0.72 · ×1.05 → 완주 28 (1막 대국 ≈0.8 · 1막 반장 ≈1.06 · 3막 끝 ≈1.5) — 곡선 없음(계단 1/1.15/1.3)은 31
   hpStart: 0.72,
   // D-298 (확장 뒤 밸런스 패치): 1.075 → 1.06 — D-243 판 구조 · D-252 종막 · 3막 깊이 20에서 HP가 4.25배로 불어 두뇌 봇도 50%였다
-  hpGrow: 1.06,
+  hpGrow: 1.045,
   atkGrow: 0.07,
 };
 
@@ -380,7 +380,10 @@ export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell:
 export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }>> = {
   // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 되받아침은 그대로
   spawn: { king: 0.8, atk: 0.7 },
-  thorns: { king: 0.7, atk: 0.7 },
+  thorns: { king: 0.6, atk: 0.7 }, // D-358: 0.7 → 0.6 (60%)
+  // D-358: 1막 둘은 보통 봇 90 · 95%로 문턱이 아니었다 → 킹 HP ×1.25 · 공격 ×1.1 (×1.5는 승급 6에서 벽이 됐다)
+  plate: { king: 1.25, atk: 1.1 },
+  inspect: { king: 1.25, atk: 1.1 },
   // D-316: 2막 자석 반장 42% (보통 봇, D-299) — 끌어당기기는 그대로
   magnet: { king: 0.85, atk: 0.8 },
 };
