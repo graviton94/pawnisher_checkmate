@@ -293,8 +293,9 @@ const renderer = new BoardRenderer(
       const el = $('info');
       const ci = b.squadIds.indexOf(p.id);
       const c = ci >= 0 ? squad[ci] : null;
+      el.classList.toggle('ci-host', !!c);
       el.innerHTML = c
-        ? `<b>${pieceImg(p.type, 0, 'small', 24)} ${crewLabel(c)}</b> <span class="dim">${c.serial}</span><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · 처치 ${(c.kills ?? 0) + Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0)}${c.quirk ? `<br><span class="quirk">${QUIRKS[c.quirk].name}</span> ${QUIRKS[c.quirk].desc}` : ''}${b.s.doorIds?.includes(p.id) ? '<br>생명 남음' : ''}`
+        ? crewInfoCard(c, { atk: p.atk, hp: p.hp, max: p.maxHp, shield: p.shield, lives: (b.s.doorIds ?? []).filter((x) => x === p.id).length, kills: Object.values(b.pk[p.id] ?? {}).reduce((a, n) => a + (n ?? 0), 0), dmg: b.pd?.[p.id] ?? 0 })
         : `<b>${pieceImg(p.type, p.side, 'small', 24)} ${p.side === 0 ? '<span class="ally">아군</span>' : '<span class="enemy">적</span>'} ${PIECE_NAMES_KO[p.type]}</b><br>HP ${p.hp} / ${p.maxHp}${p.shield ? ` · 방열판 ${p.shield}` : ''} · ATK ${p.atk}${foeTraitLine(p)}`;
       infoTok++;
       const fresh = el.hidden || el.dataset.pid !== String(p.id);
@@ -549,6 +550,28 @@ const crewFace = (u: Crew, hp: number, max: number, src = u.t === 'K' ? `pieces/
   const pct = `${Math.max(0, Math.min(100, Math.round((hp / max) * 100)))}%`;
   const tags = [PIECE_NAMES_KO[u.t], `생명 ${u.doors ?? 0}`, u.cracked ? '금 간 심장' : ''].filter(Boolean).map((t) => `<i class="tg">${t}</i>`).join('');
   return `<div class="cf crew-card big t-${u.t} g-${g}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${crewLabel(u)}</b><span class="cf-win"><span class="er-pc"><img src="${src}" alt=""></span></span><span class="cf-type">${tags}</span><small class="cf-desc"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><span class="er-hpn">HP ${Math.round(hp)} / ${max}</span></small><i class="cf-gem"></i></div>`;
+};
+/**
+ * 분대원 정보 카드 (D-363, 사용자: 「판에서 꾹 눌렀을 때도 저 초상 — 전투력 · 처치 이력 · 누적 피해까지」).
+ * 카드와 같은 틀에 기록 칸을 더한다: 공격 · HP · 생명 / 처치 · 누적 피해 · 죽음 넘김 · 대국 / 기벽 · 흉터.
+ * live = 지금 대국의 기물(공격 · HP · 방열판 · 남은 생명 · 이번 대국 처치/피해).
+ */
+const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; shield: number; lives: number; kills: number; dmg: number }): string => {
+  const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
+  const max = live?.max ?? crewMaxHp(u), hp = live?.hp ?? u.hp ?? max;
+  const pct = `${Math.max(0, Math.min(100, Math.round((hp / max) * 100)))}%`;
+  const q = u.quirk ? QUIRKS[u.quirk] : null;
+  const lives = live?.lives ?? (u.doors ?? 0) + (q?.doors ?? 0);
+  const art = u.t === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${u.t}.png`;
+  const kills = (u.kills ?? 0) + (live?.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(live?.dmg ?? 0);
+  const stat = (k: string, v: string | number, cls = '') => `<span class="ci-st${cls ? ` ${cls}` : ''}"><i>${k}</i><b>${v}</b></span>`;
+  return `<div class="cf crew-info t-${u.t} g-${g}" data-grade="${g}"><b class="cf-name">${crewLabel(u)}</b><small class="ci-serial">${u.serial ?? ''} · ${PIECE_NAMES_KO[u.t]}</small>`
+    + `<span class="cf-win"><span class="er-pc"><img src="${art}" alt=""></span></span>`
+    + `<span class="ci-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><em>HP ${hp} / ${max}${live?.shield ? ` · 방열판 ${live.shield}` : ''}</em></span>`
+    + `<span class="ci-grid">${live ? stat('공격', live.atk, 'hot') : ''}${stat('생명', lives, lives ? 'life' : '')}${stat('처치', kills)}${stat('누적 피해', dmg)}${stat('죽음 넘김', u.defied ?? 0)}${stat('대국', u.battles ?? 0)}</span>`
+    + (q ? `<small class="ci-quirk"><b>${q.name}</b> ${q.desc}</small>` : '')
+    + (u.scars?.length ? `<small class="ci-scar">${u.scars.join(' · ')}</small>` : '')
+    + `<i class="cf-gem"></i></div>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {

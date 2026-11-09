@@ -2688,3 +2688,26 @@ body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 .er-card .er-stamp { position: absolute; top: 46%; right: -14px; z-index: 6; font: 12px/1 'Galmuri11'; font-weight: 700; padding: 3px 5px; background: #46c4c8; color: #0b0b0e; box-shadow: 0 0 0 2px #000, 2px 2px 0 2px #000; }
 .er-card .er-stamp.in { animation: erStamp 300ms steps(3) both; }
 @keyframes erStamp { 0% { transform: scale(2.4) rotate(-14deg); } 66% { transform: scale(0.9) rotate(3deg); } 100% { transform: none; } }
+/* D-363 분대원 정보 카드 (판에서 길게 누름 · 분대 화면) */
+#info.ci-host { padding: 0; background: none; box-shadow: none; border: 0; }
+.cf.crew-info { width: 188px; display: grid; justify-items: stretch; gap: 4px; padding-bottom: 8px; pointer-events: none; }
+.cf.crew-info .cf-name { text-align: center; }
+.cf.crew-info .ci-serial { text-align: center; font-size: 12px; color: #9a917c; margin-top: -2px; }
+.cf.crew-info .cf-win { height: 56px; display: grid; place-items: center; }
+.cf.crew-info .er-pc { width: 44px; height: 44px; background: #e8e0cc; box-shadow: 0 0 0 2px #000, 0 0 0 3px #46c4c8; overflow: hidden; }
+.cf.crew-info .er-pc img { width: 44px; height: 44px; image-rendering: pixelated; }
+.cf.crew-info .ci-bar { display: grid; justify-items: center; gap: 2px; padding: 0 10px; }
+.cf.crew-info .ci-bar .er-hp { width: 100%; }
+.cf.crew-info .ci-bar em { font-style: normal; font-size: 12px; color: #e8e0cc; }
+.cf.crew-info .ci-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px; padding: 0 8px; }
+.cf.crew-info .ci-st { display: flex; justify-content: space-between; gap: 4px; font-size: 12px; background: #18171d; box-shadow: inset 0 0 0 1px #2c2b33; padding: 1px 4px; }
+.cf.crew-info .ci-st i { font-style: normal; color: #9a917c; }
+.cf.crew-info .ci-st b { color: #f4f1ea; }
+.cf.crew-info .ci-st.hot b { color: #ffd64a; }
+.cf.crew-info .ci-st.life b { color: #5ad06a; }
+.cf.crew-info .ci-quirk, .cf.crew-info .ci-scar { font-size: 12px; padding: 0 8px; color: #c9c1ad; line-height: 1.35; }
+.cf.crew-info .ci-quirk b { color: #46c4c8; font-weight: 400; }
+.cf.crew-info .ci-scar { color: #9a917c; }
+#info .cf.crew-info { width: 204px; font-size: 12px; }
+#info .cf.crew-info .ci-st, #info .cf.crew-info .ci-st i, #info .cf.crew-info .ci-st b { font-size: 12px; line-height: 18px; white-space: nowrap; }
+#info .cf.crew-info .ci-bar em, #info .cf.crew-info .ci-quirk, #info .cf.crew-info .ci-scar, #info .cf.crew-info .ci-serial { font-size: 12px; line-height: 16px; }
