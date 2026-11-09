@@ -31,6 +31,14 @@ const SCENES = [
   ['win-export', async (p, A, W, S) => { await A(() => window.sliceApi.exportScr()); await W(1200); await S(''); }],
   ['win-survey', async (p, A, W, S) => { for (const i of [0, 1, 5, 6, 7, 8]) { await A((k) => window.sliceApi.survey(k), i); await W(900); await S(`q${i + 1}`); } }],
   ['win-lab', async (p, A, W, S) => { await A(() => window.sliceApi.labPick()); await W(1200); await S(''); }],
+  // 패스 2 고르기 · 장소 갈래 (D-394)
+  ['pick-kit', async (p, A, W, S) => { await A(() => window.sliceApi.kit()); await W(1600); await S(''); }],
+  ['pick-recruit', async (p, A, W, S) => { await A(() => window.sliceApi.recruit()); await W(1600); await S(''); }],
+  ['pick-full', async (p, A, W, S) => { await A(() => window.sliceApi.full()); await W(1400); await S(''); }],
+  ['pick-refine', async (p, A, W, S) => { await A(() => window.sliceApi.refine()); await W(1400); await S(''); }],
+  ['pick-brace', async (p, A, W, S) => { await A(() => window.sliceApi.brace()); await W(1400); await S(''); }],
+  ['win-deck', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await S(''); }],
+  ['win-remove', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('remove')); await W(1400); await S(''); }],
   ['endclear', async (p, A, W, S) => { await A(() => window.sliceApi.end(true)); await W(2800); await S(''); }],
 ];
 (async () => {
