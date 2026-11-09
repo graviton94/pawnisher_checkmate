@@ -2346,20 +2346,54 @@ const openOverlay = (html: string): HTMLElement => {
  * 카드는 한 장씩 맞물려 멈추고(스냅), 넘칠 때만 ◀ ▶ 단추가 선다. 넘기면 줄이 살짝 밀렸다 돌아온다(계단, 페이드 없음).
  */
 /**
- * 카드 설명 맞춤 (D-372): 카드는 한 크기라 글이 넘치면 카드를 키우지 않고 덜어낸다 —
- * 1단계 묘사 줄(행동 카드) · 흉터 풀이(분대원 카드)를 접고, 2단계 줄 간격을 좁힌다. 화면에 붙는 모든 카드에 한 번씩.
+ * 카드 설명 맞춤 (D-372 · D-373): 카드는 한 크기라 글이 넘치면 카드를 키우지 않고 글을 맞춘다 —
+ * ① 줄 간격 13px → ② 작은 글씨(갈무리9 10px, 사용자 허락) → ③ 그래도 넘치면 묘사 줄 · 흉터 풀이를 접는다.
  */
 const fitCardDesc = (card: HTMLElement): void => {
   const d = card.querySelector<HTMLElement>('.cf-desc');
   if (!d || !card.offsetParent) return;
   card.dataset.fit = '1';
-  d.classList.remove('tight', 'tighter');
+  d.classList.remove('tight', 'small', 'fold');
   const over = (): boolean => d.scrollHeight > d.clientHeight + 1;
-  if (over()) d.classList.add('tight');
-  if (over()) d.classList.add('tighter');
+  for (const k of ['tight', 'small', 'fold']) if (over()) d.classList.add(k);
 };
-new MutationObserver(() => requestAnimationFrame(() => document.querySelectorAll<HTMLElement>('.cf:not([data-fit])').forEach(fitCardDesc)))
-  .observe(document.body, { childList: true, subtree: true });
+/**
+ * 카드 받침 (D-373, 사용자: 「카드 디자인은 정본, 가격 · 추가 정보는 화면에 걸맞게」):
+ * 카드 위에 덧그리던 화면별 정보(가격 · 덱 맞물림 · 함께 오는 카드)를 카드 밖, 바로 아래 철판 하나로 옮긴다.
+ * 판을 눌러도 카드를 누른 것과 같다. 카드 그림 · 두루마리는 어느 화면에서나 같다.
+ */
+const slotCard = (card: HTMLElement): void => {
+  if (card.parentElement?.classList.contains('cslot')) return;
+  card.querySelectorAll<HTMLElement>(':scope > .cf-foot').forEach((f) => { if (!f.querySelector('.price')) f.remove(); });
+  const info = [...card.querySelectorAll<HTMLElement>(':scope > .cf-foot, :scope > .price, :scope > .fit-line, :scope > .kit-with')];
+  if (!info.length) return;
+  const slot = document.createElement('div');
+  slot.className = `cslot${card.classList.contains('sold') ? ' sold' : ''}`;
+  card.before(slot);
+  slot.append(card);
+  const plate = document.createElement('div');
+  plate.className = 'cinfo';
+  // 순서: 값(가장 먼저 읽는 것) → 덱 맞물림 → 함께 오는 카드
+  const price = info.find((e) => e.matches('.cf-foot, .price'));
+  if (price) {
+    const p = price.matches('.cf-foot') ? price.querySelector<HTMLElement>('.price') : price;
+    if (p) { p.className = p.className.replace(/\bptag\b/, '').trim(); p.classList.add('ci-price'); plate.append(p); }
+    price.remove();
+  }
+  info.filter((e) => e.matches('.fit-line')).forEach((e) => { e.classList.add('ci-fit'); plate.append(e); });
+  info.filter((e) => e.matches('.kit-with')).forEach((e) => plate.append(e));
+  // 값 + 덱 맞물림이 함께면 한 줄 받침(왼쪽 값 · 오른쪽 맞물림) — 화면 높이 412px 안에 들게
+  if (plate.querySelector('.ci-price') && plate.querySelector('.ci-fit')) plate.classList.add('ci-row');
+  slot.append(plate);
+  plate.addEventListener('click', () => card.click());
+};
+const fitAll = (): void => {
+  document.querySelectorAll<HTMLElement>('.shop-grid > .cf, .reward-cards > .cf, .part-cards > .cf').forEach(slotCard);
+  document.querySelectorAll<HTMLElement>('.cf:not([data-fit])').forEach(fitCardDesc);
+};
+new MutationObserver(() => requestAnimationFrame(fitAll)).observe(document.body, { childList: true, subtree: true });
+// 글꼴이 늦게 오면 잰 높이가 틀린다 — 다 온 뒤 한 번 더
+void document.fonts?.ready.then(() => document.querySelectorAll<HTMLElement>('.cf[data-fit]').forEach(fitCardDesc));
 const railify = (root: HTMLElement): void => {
   root.querySelectorAll<HTMLElement>('.shop-grid, .reward-cards, .part-cards').forEach((rail) => {
     if (rail.classList.contains('crail')) return;
@@ -2676,6 +2710,13 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
           <button class="btn cyan" type="button" data-overhaul>정비 — ${fallen.length ? `쓰러진 ${josa([...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0].name, '을')} HP 50%로 되살리고 ` : ''}모두 HP +${Math.round(REST.overhaul * 100)}%</button>
         </div>`);
       pxRail(el.querySelector<HTMLElement>('.reward-scroll')!);
+      // 분대 줄은 단추 줄 왼쪽으로 (D-373) — 카드 + 받침 자리를 412px 안에 확보
+      { const ss = el.querySelector<HTMLElement>('.squad-strip'), row = el.querySelector<HTMLElement>(':scope > .row'); if (ss && row) row.before(ss); }
+      // 덱 맞물림 (D-373): 고물상과 같은 받침 한 줄 — 무엇을 고를지 감을 준다
+      el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) => {
+        const h = fitHint('card', btn.dataset.pick!);
+        if (h) btn.insertAdjacentHTML('beforeend', `<small class="fit-line ${h.tone}">${h.text}</small>`);
+      });
       gradeReveal([...el.querySelectorAll<HTMLElement>('[data-grade]')]);
       el.querySelectorAll<HTMLElement>('[data-pick]').forEach((btn) =>
         btn.addEventListener('click', () =>
@@ -2925,7 +2966,7 @@ const kitPick = (head: string, then: () => void): void => {
     .map((k, n) => {
       const d = SLICE_PARTS[k.part];
       const g = PART_GRADE[k.part] ?? 'common';
-      return `<button type="button" class="cf part-card g-${g}" data-kit="${n}" data-grade="${g}"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type">${tags3Html(partTags(k.part))}</span><span class="fit-line kit-plus">+ ${k.cards.map((id) => COMMANDS[id].name).join(' · ')}</span><small class="cf-desc">${descLines(d.desc, d.flavor)}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i></button>`;
+      return `<button type="button" class="cf part-card g-${g}" data-kit="${n}" data-grade="${g}"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type">${tags3Html(partTags(k.part))}</span><span class="kit-with"><i>함께 오는 카드</i>${k.cards.map((id) => `<b><em class="kw-cost">${COMMANDS[id].cost}</em>${COMMANDS[id].name}</b>`).join('')}</span><small class="cf-desc">${descLines(d.desc, d.flavor)}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i></button>`;
     })
     .join('')}</div></div></div>`);
   if (!tutDone('kit')) void tutorial('kit', [{ text: TUT.kit, target: () => el.querySelector('.shop-scrollbox') }]);

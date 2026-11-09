@@ -30,7 +30,8 @@ export const descHtml = (text: string, flavor?: string): string => {
   const d = splitDesc(text, flavor);
   // D-370: 괄호 없이 — 묘사 → (점선) 조건 + 효과 한 문장. 효과는 굵게, 숫자만 붉은 먹
   const nb = (t: string) => t.replace(/(한|두|세|\d) (칸|장|번)/g, '$1\u00a0$2');
-  const fx = d.fx ? `<b class="dl-fx">${nb(d.fx).replace(/([+×−]?\d+(?:\.\d+)?%?)/g, '<em>$1</em>')}</b>` : '';
+  // 효과 항목(「 · 」로 나뉜 것)은 한 덩어리씩 — 줄은 항목 사이에서 먼저 바뀐다 (D-373)
+  const fx = d.fx ? `<b class="dl-fx">${nb(d.fx).split(' · ').map((x) => `<span class="fxi">${x.replace(/([+×−]?\d+(?:\.\d+)?%?)/g, '<em>$1</em>')}</span>`).join(' · ')}</b>` : '';
   const tail = d.cond || fx ? `<span class="dl dl-fxb">${d.cond ? `<span class="dl-if">${nb(d.cond)}</span> ` : ''}${fx}</span>` : '';
   return `${d.say ? `<span class="dl dl-say">${nb(d.say)}</span>` : ''}${tail}`;
 };
