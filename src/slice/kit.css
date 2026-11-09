@@ -164,7 +164,7 @@
 
 /* ---------- 3.5 꼬리표 · 지갑 · 구분 줄 · 움푹 칸 ---------- */
 :is(.win, .scr-pick, .scr-place, .kit) .tag {
-  display: inline-flex; align-items: center; gap: var(--s1); box-sizing: border-box; height: calc(var(--px) * 15); padding: 0 calc(var(--px) * 1); margin: 0; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: var(--s1); box-sizing: border-box; height: calc(var(--px) * 15); padding: 0 calc(var(--px) * 1) 0 calc(var(--px) * 2); margin: 0; white-space: nowrap;
   border-style: solid; border-width: calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 3) calc(var(--px) * 14);
   border-image: url('../assets/ui/chrome/v2/tag-brass.png') var(--k-tag) fill / calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 3) calc(var(--px) * 14) / 0 stretch;
   image-rendering: pixelated; background: none; box-shadow: none;
