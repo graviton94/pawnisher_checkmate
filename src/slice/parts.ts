@@ -59,10 +59,10 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   chainShot: { name: '연쇄 사슬', axis: 'push', icon: 'chainShot', flavor: '부딪힌 자가 다음을 부른다.', desc: '연쇄 +2 — 밀어 부딪쳐 처치하면' },
   bloodPact: { name: '피의 계약', axis: null, icon: 'bloodPact', flavor: '피로 쓴 계약은 지워지지 않는다.', desc: '모든 공격 ×1.3 — 대가: 턴 끝마다 킹 HP −4' },
   brittle: { name: '깨지는 유리 심장', axis: null, icon: 'brittle', flavor: '빨리 뛰는 만큼 쉽게 깨진다.', desc: '태엽 +1 — 대가: 분대 최대 HP −20%' },
-  greed: { name: '탐욕의 저울', axis: null, icon: 'greed', flavor: '쥘수록 무겁고, 무거울수록 세다.', desc: '나사 150마다 공격 +2 — 대가: 고물상 값 +25%' },
+  greed: { name: '탐욕의 저울', axis: null, icon: 'greed', flavor: '쥘수록 무겁고 무거울수록 세다.', desc: '나사 150마다 공격 +2 — 대가: 고물상 값 +25%' },
   spare: { name: '과부하 태엽', axis: null, icon: 'spare', flavor: '감을 수 있는 데까지 감는다.', desc: '태엽 +1 — 대가: 손패 −1' },
   tape: { name: '되감는 테이프', axis: null, icon: 'tape', flavor: '한 수 전으로 돌아간다.', desc: '되감기 1회 — 대국마다 · 역회전 톱니를 쓰지 않는다' },
-  // 합(+) 기본기 (D-205): 모든 공격 +3 — 약한 기물일수록 크게 느껴지고, 뒤로 갈수록 묻힌다
+  // 합(+) 기본기 (D-205): 모든 공격 +3 — 약한 기물일수록 크게 느껴지고 뒤로 갈수록 묻힌다
   whetstone: { name: '닳은 숫돌', axis: null, icon: 'whetstone', flavor: '닳도록 갈았다.', desc: '모든 공격 +3' },
   // ---- 부품 확장 (D-282, 대과제 3-3): 수읽기 축 받침 · 퀸 · 기물별 · 공용 — 전용 도트 아이콘 (D-287) ----
   vise: { name: '죔쇠', axis: 'tactic', icon: 'vise', flavor: '묶인 자는 피할 곳이 없다.', desc: '피해 ×1.5 — 묶인 적을 칠 때' },

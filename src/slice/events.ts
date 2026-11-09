@@ -71,7 +71,7 @@ const refineRandom = (s: EventState, rng: Rng): string => {
 export const weighable = (s: EventState): CommandId[] => [...new Set(s.deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
 /**
  * 비뚤어진 저울추 (D-247, 사용자: 「고른 카드 비용 1 내리지만 무작위 카드 1장 비용 1 올리는 이벤트」):
- * 고른 카드 한 장은 한 번 다듬고, 덱의 다른 카드 하나(고른 것 말고)가 녹슨다.
+ * 고른 카드 한 장은 한 번 다듬고 덱의 다른 카드 하나(고른 것 말고)가 녹슨다.
  */
 export const counterweight = (s: EventState, chosen: CommandId, rng: Rng): string => {
   const i = s.deck.indexOf(chosen);
@@ -137,7 +137,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         apply: (s, rng) => {
           s.gold -= 40;
           const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
-          if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]} — 문턱 +2.` }; }
+          if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]}의 문턱 +2.` }; }
           s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
           return { slot: 1, text: `쩍. 축이 버티지 못한다. ${u.name ?? NAMES[u.t]}의 심장 톱니에 금이 갔다.` };
         },
@@ -175,7 +175,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) return { slot: 0, text: `망치가 정확히 떨어진다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` };
         const gone: string[] = [];
         for (let n = 0; n < 2 && s.deck.length > 4; n++) gone.push(COMMANDS[s.deck.splice(rng.int(s.deck.length), 1)[0]].name);
-        return { slot: 1, text: `망치가 빗나간다. ${gone.length ? `${gone.join(' · ')} — 부서졌다.` : ''}` };
+        return { slot: 1, text: `망치가 빗나간다. ${gone.length ? `${josa(gone.join(' · '), '이')} 부서졌다.` : ''}` };
       } },
       leave('거절하기'),
     ],
@@ -202,7 +202,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) {
           const ps = s.squad.filter((x) => x.t === 'P').slice(0, 2);
           s.squad = s.squad.map((x) => (ps.includes(x) ? { ...x, t: 'N', hp: undefined } : x));
-          return { slot: 0, text: `도장이 두 번 찍힌다. ${ps.map((u) => u.name).join(' · ')} — 이제 나이트다.` };
+          return { slot: 0, text: `도장이 두 번 찍힌다. ${josa(ps.map((u) => u.name).join(' · '), '은')} 이제 나이트다.` };
         }
         const fine = Math.floor(s.gold / 2);
         s.gold -= fine;
@@ -213,7 +213,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   nightShift: {
     title: '야간 교대',
-    text: '꺼지지 않은 공방의 불빛이 당신을 부른다. 장인은 잠들었고, 모루는 아직 뜨겁다.',
+    text: '꺼지지 않은 공방의 불빛이 당신을 부른다. 장인은 잠들었고 모루는 아직 뜨겁다.',
     choices: [
       { label: '두드리기', desc: '분대 전원 HP +30%', apply: (s) => { hpRatio(s, 0.3); return { text: '쇳소리가 밤새 이어진다. 분대가 다시 선다. (HP +30%)' }; } },
       { label: '불을 키울까?', desc: '50%: HP 가득 + 카드 1장 다듬기 · 50%: 분대원 하나 HP −60%', apply: (s, rng) => {
@@ -332,7 +332,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           s.deck[k] = nid;
           got.push(COMMANDS[nid].name);
         }
-        return { text: `${josa(gone.join(' · '), '이')} 실려 가고, ${josa(got.join(' · '), '이')} 실려 온다.` };
+        return { text: `${josa(gone.join(' · '), '이')} 실려 가고 ${josa(got.join(' · '), '이')} 실려 온다.` };
       } },
       leave('레버를 놓는다'),
     ],
@@ -398,7 +398,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) return { slot: 0, text: `산이 군살만 벗겨 낸다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` };
         const hit: string[] = [];
         for (let n = 0; n < 2; n++) { const k = rng.int(s.deck.length); if (!isRusted(s.deck[k])) { hit.push(COMMANDS[s.deck[k]].name); s.deck[k] = rustOnce(s.deck[k]); } }
-        return { slot: 1, text: `산이 너무 진하다. ${hit.join(' · ') || '명령서'} — 녹이 슨다.` };
+        return { slot: 1, text: `산이 너무 진하다. ${hit.join(' · ') || '명령서'}에 녹이 슨다.` };
       } },
       leave('지나가기'),
     ],
@@ -454,7 +454,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '접시의 나사를 가져갈까?', desc: '50%: 나사 +80 · 50%: 분대원 둘 HP −30%', apply: (s, rng) => {
         if (rng.int(2) === 0) { s.gold += 80; return { slot: 0, text: '아무 일도 일어나지 않는다. 접시가 가벼워진다. (나사 +80)' }; }
         const who = someHurt(s, 2, 0.3);
-        return { slot: 1, text: `제단이 무너져 내린다. ${who} — 파편에 긁힌다. (HP −30%)` };
+        return { slot: 1, text: `제단이 무너져 내린다. ${josa(who, '이')} 파편에 긁힌다. (HP −30%)` };
       } },
       leave('지나가기'),
     ],
@@ -497,7 +497,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '보석을 뽑을까?', desc: '50%: 나사 +110 · 50%: 분대원 둘 HP −35%', apply: (s, rng) => {
         if (rng.int(2) === 0) { s.gold += 110; return { slot: 0, text: '보석이 소리 없이 빠진다. 킹은 계속 존다. (나사 +110)' }; }
         const who = someHurt(s, 2, 0.35);
-        return { slot: 1, text: `킹의 눈이 뜨인다. 홀이 휘둘린다. ${who} — 얻어맞는다. (HP −35%)` };
+        return { slot: 1, text: `킹의 눈이 뜨인다. 홀이 휘둘린다. ${josa(who, '이')} 얻어맞는다. (HP −35%)` };
       } },
       leave('조용히 지나간다'),
     ],

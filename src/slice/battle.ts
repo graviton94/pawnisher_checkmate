@@ -85,7 +85,7 @@ export interface SliceBattle {
   rewinds: number;
   /** 방금 회피 반격한 기물 (화면 알림용) */
   grazedNow?: number;
-  /** 이 대국의 공짜 되감기 (되감는 테이프) — 이것부터 쓰고, 넘으면 역회전 톱니가 깨진다 */
+  /** 이 대국의 공짜 되감기 (되감는 테이프) — 이것부터 쓰고 넘으면 역회전 톱니가 깨진다 */
   rewindFree?: number;
   /** 부품 (규칙을 깨는 유물, D-144) */
   parts: SlicePartId[];
@@ -735,7 +735,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     // 순수 회피 보너스는 그 기물의 다음 공격 한 번에 쓰이고 사라진다
     const struck = sim.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 1 && h.damage > 0));
     if (struck) b.evaded = (b.evaded ?? []).filter((x) => x !== pieceId);
-    // 수읽기 (D-281): 디스커버드 배율은 공격 한 번에 쓰이고, 이 카드가 디스커버드면 다음 공격에 남긴다 · 핀은 친 적을 묶는다
+    // 수읽기 (D-281): 디스커버드 배율은 공격 한 번에 쓰이고 이 카드가 디스커버드면 다음 공격에 남긴다 · 핀은 친 적을 묶는다
     if (struck) b.nextMult = undefined;
     if (c.nextMult) b.nextMult = c.nextMult + (has(b, 'openGate') ? PART_NUM.openGate : 0);
     if (c.fork && has(b, 'forkGear') && forkTargets(before, p, to) >= 2) { gained += PART_NUM.forkGearAp; events.push({ type: 'apGain', side: 0, amount: PART_NUM.forkGearAp }); }
@@ -835,7 +835,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     drawCards(b, SLICE.gambitDraw);
     gained += 1;
   } else if (c.kind === 'swap') {
-    // 캐슬링 (D-281): 킹과 가장 가까운 룩이 자리를 바꾸고, 둘 다 방열판
+    // 캐슬링 (D-281): 킹과 가장 가까운 룩이 자리를 바꾸고 둘 다 방열판
     const pr = castlePair(b);
     if (!pr) return '킹과 룩이 모두 있어야 합니다.';
     const [k, r] = pr;
@@ -1111,7 +1111,7 @@ const PIECE_LABEL: Record<PieceType, string> = { K: '킹', Q: '퀸', R: '룩', B
 /** 되받아침이 켜진 반장 (출하 반장 · 도금왕) */
 export const hasThorns = (b: SliceBattle): boolean => b.bossRule === 'thorns' || b.bossRule === 'gilded';
 
-/** 반장 턴 시작: 철갑을 다시 두르고, 폭격 줄을 예고한다 (내 기물 값이 가장 많이 모인 줄) */
+/** 반장 턴 시작: 철갑을 다시 두르고 폭격 줄을 예고한다 (내 기물 값이 가장 많이 모인 줄) */
 const bossTurnStart = (b: SliceBattle): void => {
   if (!b.boss) return;
   const k = kingOf(b.s, 1);
@@ -1164,7 +1164,7 @@ const newBossTurn = (b: SliceBattle, k: Piece | undefined): void => {
   }
 };
 
-/** 새 반장 셋의 적 차례 끝 — 자석이 끌어당기고, 경보가 울렸으면 공격을 되돌리고 눈금을 비운다 */
+/** 새 반장 셋의 적 차례 끝 — 자석이 끌어당기고 경보가 울렸으면 공격을 되돌리고 눈금을 비운다 */
 const newBossAfter = (b: SliceBattle): BattleEvent[] => {
   const out: BattleEvent[] = [];
   if (b.pull) {
@@ -1431,7 +1431,7 @@ export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => 
 
 /**
  * 목숨 둘 · 심장 톱니 (D-219, 다키스트 던전 2 · 와일드프로스트 · 인투 더 브리치 벤치마크): 분대원이 처음 쓰러지면 톱니 하나가 깨진 채
- * HP 50%로 돌아오고, 깨진 채로 또 쓰러지면 폐기된다. 킹은 쓰러지면 대국이 끝나므로 해당 없음.
+ * HP 50%로 돌아오고 깨진 채로 또 쓰러지면 폐기된다. 킹은 쓰러지면 대국이 끝나므로 해당 없음.
  */
 export const crackOrScrap = (fallen: Squad[]): { back: Squad[]; scrapped: Squad[] } => {
   const back: Squad[] = [];
@@ -1450,7 +1450,7 @@ export const mendSquad = (squad: Squad[]): { squad: Squad[]; mended: Squad[] } =
   return { squad: squad.map((u) => (u.cracked ? { ...u, cracked: false } : u)), mended };
 };
 
-/** 정비 (보상 대신 고를 수 있다): 쓰러진 기물 하나를 HP 50%로 되살리고, 모두 25% 더 */
+/** 정비 (보상 대신 고를 수 있다): 쓰러진 기물 하나를 HP 50%로 되살리고 모두 25% 더 */
 export const overhaulSquad = (squad: Squad[], fallen: Squad[]): { squad: Squad[]; revived?: Squad } => {
   const revived = [...fallen].sort((a, b) => PIECE_STATS[b.t].value - PIECE_STATS[a.t].value)[0];
   const healed = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * REST.overhaul)) }));

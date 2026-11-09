@@ -50,7 +50,7 @@ export const PARTS: Record<PartId, PartDef> = {
   tread: { name: '무한 궤도', grade: 'unique', desc: '멈추지 않고 짓밟는다. (나이트 처치 시 그 턴 한 번 더 이동)', lore: '바퀴는 쉬지 않는다.' },
   queenMold: { name: '여왕 거푸집', grade: 'unique', desc: '퀸이 퀸을 부른다. (퀸 처치 시 태엽 +1, 턴당 2회)', lore: '퀸이 퀸을 부른다.' },
   tyrant: { name: '폭군 왕관', grade: 'unique', desc: '왕이 직접 피를 묻힌다. (킹 공격 ×2 · 킹 처치 시 아군 전체 방열판 +15)', lore: '종이가 아니다.' },
-  phalanx: { name: '양산 명령서', grade: 'unique', desc: '대열이 함께 찌른다. (폰 공격 시 그 적에 붙은 아군 폰도 50%로 공격)', lore: '하나는 아무것도 아니다 — 그래서 여럿이다.' },
+  phalanx: { name: '양산 명령서', grade: 'unique', desc: '대열이 함께 찌른다. (폰 공격 시 그 적에 붙은 아군 폰도 50%로 공격)', lore: '하나는 아무것도 아니다. 그래서 여럿이다.' },
 
   domino: { name: '도미노 공장', grade: 'epic', desc: '쓰러진 자가 이웃을 덮친다. (처치 시 상하좌우 적에게 최대 HP의 30%)', lore: '하나가 넘어지면.' },
   solo: { name: '단독 출하', grade: 'epic', desc: '적은 수로, 세게 친다. (군단 5기 이하 시작 시 주는 피해 ×1.5 · 받는 피해 −20%)', lore: '적게, 세게.' },

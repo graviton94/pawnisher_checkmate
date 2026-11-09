@@ -79,7 +79,7 @@ export const NODE_DESC: Record<NodeKind, string> = {
 
 /**
  * 지도 (D-215, 사용자: "뭘 골라도 다음 선택지가 다 열린다 — 슬더스식으로, 길이도 늘려라"):
- * 막마다 층 floors[막]개 × 세로 lanes칸. 길 paths갈래가 아래층에서 위층으로 한 칸씩(−1 · 0 · +1) 올라가며, 길끼리 엇갈리지 않는다.
+ * 막마다 층 floors[막]개 × 세로 lanes칸. 길 paths갈래가 아래층에서 위층으로 한 칸씩(−1 · 0 · +1) 올라가며 길끼리 엇갈리지 않는다.
  * 고른 노드에서 이어진 노드로만 간다. 첫 층은 대국, 가운데 층은 부품 상자, 반장 앞 층은 작업대(쉼터) 고정.
  * 종류 가중치 · 첫 등장 층은 weights · from. 상점 · 작업대 · 검문은 같은 길에서 연달아 나오지 않는다.
  */
@@ -173,7 +173,7 @@ const NARR_CHECK = ['검수관의 저울이 기울어 있다. 이 문을 지난 
 const NARR_BOSS: Partial<Record<BossRule, string>> = Object.fromEntries(Object.entries(BOSS_STORY).map(([k, v]) => [k, `${v.intro}\n${v.name} “${v.say}”`]));
 const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
 const TRAITS: FoeTrait[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
-const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고, 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
+const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
 
 /** 1막 앞 두 판 (첫 10분 — D-150) */
 /**
@@ -214,7 +214,7 @@ export const FTUE = { firstBossHp: 0.65 };
 /** 대국 하나 만들기 */
 export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0, rule?: BossRule): BattleDef => {
   const d = battleBase(act, kind, rng, rule);
-  // 난이도 구조 (D-243): 막마다 판이 넓어지고, 일반 · 검문 적 킹은 호위가 있는 동안 방열판을 두른다
+  // 난이도 구조 (D-243): 막마다 판이 넓어지고 일반 · 검문 적 킹은 호위가 있는 동안 방열판을 두른다
   const [w, h] = SLICE.boardByAct[act - 1];
   d.w ??= w;
   d.h ??= h;
@@ -249,7 +249,7 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
 
 /**
  * 최종 보스 도금왕 (D-252, 사용자: 「3막까지 가고 그냥 끝이냐 — 슬더스처럼 최종 보스」 → 스토리 §5의 도금왕).
- * 앞 세 반장의 규칙을 모두 쓰고, 넓은 판(8×7)에 흑 세트가 거의 다 선다. 쓰러지면 2단계로 다시 일어선다(모든 반장 공통).
+ * 앞 세 반장의 규칙을 모두 쓰고 넓은 판(8×7)에 흑 세트가 거의 다 선다. 쓰러지면 2단계로 다시 일어선다(모든 반장 공통).
  */
 export const FINAL_BOSS = (asc = 0): BattleDef => ({
   enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 5 ? (['P'] as PieceType[]) : [])],

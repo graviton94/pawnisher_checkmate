@@ -1,5 +1,5 @@
 /**
- * 반장 등장 (D-249, 사용자: 「컷씬용을 따로 그릴 필요 없이 — 초상을 오른쪽 끝까지 붙이고, 이미지가 끝나 배경과 만나는 경계선은
+ * 반장 등장 (D-249, 사용자: 「컷씬용을 따로 그릴 필요 없이 — 초상을 오른쪽 끝까지 붙이고 이미지가 끝나 배경과 만나는 경계선은
  * 2막 보스 오른쪽 이펙트처럼 뭔가 이펙트를 넣거나, 도트를 서서히 제거하는 도트 그라데이션처럼」 · 「FX는 pixelfx 룰을 참고」).
  *  ① 위아래 검은 띠가 4계단으로 닫힌다 ② 흰 장 두 장(hero frame) ③ 초상이 오른쪽에서 물러섰다(예비) 꽂히고 흔들린다
  *  ④ 초상 왼쪽 가장자리는 그림 도트 단위 베이어 디더로 깎여 배경에 녹는다 ⑤ 그 경계선을 따라 반장마다 다른 FX
@@ -156,15 +156,15 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         for (; spawnAcc > 1; spawnAcc--) {
           const y = R.range(seamY0, seamY1), x = sx + R.range(-6, 4);
           if (o.rule === 'plate') {
-            // 경계선이 타오른다: 불 덩어리가 오르며 식고 연기가 되며, 불씨가 흩날린다
+            // 경계선이 타오른다: 불 덩어리가 오르며 식고 연기가 되며 불씨가 흩날린다
             if (R.chance(0.55)) ps.spawn(P.FIRE, x, y, R.range(-8, 6), R.range(-30, -10), R.range(0.3, 0.6), 0, R.range(1.2, 2.6), 0, R.chance(0.25));
             else ps.spawn(P.EMBER, x, y, R.range(-30, 10), R.range(-50, -10), R.range(0.8, 1.6), WHITE, R.range(1, 2));
           } else if (o.rule === 'spawn') {
-            // 초록 전기 (D-347): 경계선 위로 짧은 줄기(MOTE)가 튀고, 별이 반짝인다
+            // 초록 전기 (D-347): 경계선 위로 짧은 줄기(MOTE)가 튀고 별이 반짝인다
             if (R.chance(0.7)) ps.spawn(P.MOTE, x, y, R.range(-90, -30), R.range(-20, 20), R.range(0.2, 0.45), PAL.toxic[5], R.range(0.6, 1.2));
             else ps.spawn(P.STAR, x, y, 0, 0, R.range(0.4, 0.8), PAL.toxic[6], R.range(0.6, 1.8));
           } else {
-            // 가시: 붉은 쇳조각이 떨어지고, 흰 역광 먼지가 떠오른다
+            // 가시: 붉은 쇳조각이 떨어지고 흰 역광 먼지가 떠오른다
             if (R.chance(0.35)) ps.spawn(P.SHARD, x, y, R.range(-50, -5), R.range(-30, 10), R.range(0.6, 1.2), R.chance(0.5) ? PAL.blood[5] : PAL.blood[3], R.range(1, 2));
             else ps.spawn(P.MOTE, x + R.range(-10, 10), y, R.range(-10, 6), R.range(-25, -8), R.range(0.6, 1.2), hex('#d8d4dc'), 0.6);
           }

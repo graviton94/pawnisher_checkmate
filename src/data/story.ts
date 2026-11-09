@@ -42,7 +42,7 @@ const pawns = (n: number, y = 74, size = 56, from = 14, step = 9): Actor[] => Ar
 
 /** 프롤로그 (처음 출하 한 번 · 도감에서 다시) */
 export const PROLOGUE: Cut[] = [
-  { bg: 'factory', actors: [], lines: [tell('체크메이트 공장.'), tell('모양이 곧 값이고, 값이 곧 길이다.')] },
+  { bg: 'factory', actors: [], lines: [tell('체크메이트 공장.'), tell('모양이 곧 값이고 값이 곧 길이다.')] },
   { bg: 'line', actors: [...pawns(8), me(88, 70, 72, 'wide')], lines: [tell('그날 한 세트에'), tell('킹 대신 폰이 들어갔다.')], fx: 'alarm' },
   { bg: 'box', actors: [me(50, 60, 120, 'wide')], lines: [tell('검수 전광판: 킹 자리에 폰. 세트 전체 불량 처리 예정.'), mono('나 때문이다.')], fx: 'stamp' },
   {
@@ -64,7 +64,7 @@ export const ACT_ENTRY: Cut[] = [
 
 /** 반장: 신념 한 줄 · 쓰러질 때 서술 · 종이왕이 건네는 말 */
 export const BOSS_STORY: Record<BossId, { npc: NpcId; belief: string; fall: string; reply: string }> = {
-  knight: { npc: 'bossKnight', belief: '무거운 것이 밟는다. 나이트는 뛰고, 폰은 밟힌다 — 그가 믿는 것.', fall: '편자가 철판에 미끄러진다. 몸의 숫자 3에 금이 간다.', reply: '밟히는 쪽이 정해져 있다고 누가 그랬지.' },
+  knight: { npc: 'bossKnight', belief: '무거운 것이 밟는다. 나이트는 뛰고 폰은 밟힌다 — 그가 믿는 것.', fall: '편자가 철판에 미끄러진다. 몸의 숫자 3에 금이 간다.', reply: '밟히는 쪽이 정해져 있다고 누가 그랬지.' },
   bishop: { npc: 'bossBishop', belief: '사선만이 바른 길이다 — 그가 믿는 것.', fall: '렌즈가 깨진다. 몸의 숫자 3에 금이 간다.', reply: '가까이서 보면, 길은 사선만이 아니다.' },
   rook: { npc: 'bossRook', belief: '곧게, 자리를 지켜라. 벽 밖은 위험하다 — 그가 믿는 것.', fall: '성벽이 옆으로 기운다. 몸의 숫자 5에 금이 간다.', reply: '벽만 보고 섰으니 옆을 못 봤지.' },
   pawn: { npc: 'bossPawn', belief: '하나는 아무것도 아니다. 줄 맞춰 앞으로만 — 그가 믿는 것.', fall: '열이 한꺼번에 쓰러진다. 숫자 1이 여럿, 같이 갈라진다.', reply: '너희도 하나씩이었다. 줄 밖으로 나와도 된다.' },
@@ -113,7 +113,7 @@ export const AFTER_PROMOTION: Cut = {
 /** 진 엔딩 「해방」 (최고 압력 · 내려놓는다) */
 export const TRUE_ENDING: Cut[] = [
   { bg: 'top', actors: [me(50, 60, 130, 'calm')], lines: [tell('종이 왕관을 벗어 접는다. 승급 표시가 꺼진다. 울부짖음이 멈춘다.'), mono('원했다. 그래서 내려놓는다.')], fx: 'calm' },
-  { bg: 'top', actors: [{ piece: { t: 'P', side: 1 }, x: 60, y: 64, size: 96 }, { piece: { t: 'K', side: 1 }, x: 34, y: 60, size: 90 }], lines: [tell('금 왕관이 혼자 굴러가 멈춘다. 금빛이 벗겨진다 — 안에 흠집 난 폰 하나.'), say('도금왕', '“…나는, 못 했다.”')], fx: 'gold' },
+  { bg: 'top', actors: [{ piece: { t: 'P', side: 1 }, x: 60, y: 64, size: 96 }, { piece: { t: 'K', side: 1 }, x: 34, y: 60, size: 90 }], lines: [tell('금 왕관이 혼자 굴러가 멈춘다. 금빛이 벗겨지자 흠집 난 폰 하나가 드러난다.'), say('도금왕', '“…나는, 못 했다.”')], fx: 'gold' },
   { bg: 'top', actors: [{ piece: { t: 'P', side: 0 }, x: 38, y: 64, size: 96 }, { piece: { t: 'P', side: 1 }, x: 62, y: 64, size: 96 }], lines: [tell('폰 둘이 나란히 선다.'), mono('폰으로 여기까지 왔다. 그거면 됐다.')] },
   { bg: 'box', actors: [{ npc: 'whiteQueen', x: 20, y: 50, size: 90, mood: 'calm' }, { npc: 'whiteRook', x: 38, y: 54, size: 80, mood: 'calm' }, { npc: 'whiteBishop', x: 62, y: 52, size: 80, mood: 'calm' }, { piece: { t: 'N', side: 1 }, x: 80, y: 58, size: 70 }, me(50, 82, 70)], lines: [tell('아무도 그를 킹이라 부르지 않는다.'), tell('아무도 떠나지 않는다.')] },
   { bg: 'factory', actors: [], lines: [tell('경고등이 깜빡인다. 아무도 끄지 않는다.'), tell('컨베이어가 멈춘다. 공장이 처음으로 조용하다.')], fx: 'calm' },
@@ -144,7 +144,7 @@ export const TAUNTS = ['“폰이 킹 흉내를.”', '“괴짜 세트다.”',
 export const RECORDS: { title: string; need: string; text: string }[] = [
   { title: '첫 규격표', need: '첫 출하', text: '「모양이 곧 값이며 길이다.」 아래에 서명 하나. 글씨가 둥글다. 폰의 손 같다.' },
   { title: '경고등 기록', need: '처음 녹을 때', text: '경보는 울렸다. 수동으로 꺼졌다. 끈 시각은 매번 같다.' },
-  { title: '퀸의 메모', need: '흰 퀸이 합류', text: '「폰 명령은 듣지 않는다」 — 고 적었다. 두 줄로 지웠다.' },
+  { title: '퀸의 메모', need: '흰 퀸이 합류', text: '「폰 명령은 듣지 않는다」고 적었다. 두 줄로 지웠다.' },
   { title: '나이트 반장의 편자', need: '나이트 반장 해체', text: '편자 안쪽 각인: 「L자 외 이동 금지」. 누가 긁어 지우려 한 자국이 있다.' },
   { title: '비숍 반장의 렌즈 일지', need: '비숍 반장 해체', text: '렌즈는 도금왕이 갈았다. 주문: "사선만 보이게."' },
   { title: '룩 반장의 출입 명부', need: '룩 반장 해체', text: '명부 첫 줄: 도금왕 — 「폰 (임시)」.' },

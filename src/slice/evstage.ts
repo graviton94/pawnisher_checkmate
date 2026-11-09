@@ -187,7 +187,7 @@ const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
   });
   const run = loop();
   const drop = (i: number) => { state[i].on = true; state[i].y = -SL; state[i].vy = 40; };
-  // 칸을 하나씩 눌러 연다 (사용자 D-260): 앞 둘이 같으면 남은 칸이 깜빡이며 애태우고, 누르면 한참 덜컹인 뒤 떨어진다
+  // 칸을 하나씩 눌러 연다 (사용자 D-260): 앞 둘이 같으면 남은 칸이 깜빡이며 애태우고 누르면 한참 덜컹인 뒤 떨어진다
   let last = 2;
   await new Promise<void>((allOpen) => {
     const hint = tape(L.host, c.tap ?? '칸을 하나씩 누른다');
@@ -382,7 +382,7 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
     if (hurt) {
       await cls(pc, 'hit', 160); pc.classList.remove('hit');
       const b = r(); L.ps.burst(b.x + b.w / 2, b.y + b.h * 0.45, 12, [40, 120], P.SPARK, [0.2, 0.4], hex('#e5262f'), 20);
-      // 전투와 같은 HP 바: 채움이 먼저 줄고, 흰 잔상이 계단으로 따라 내려온다
+      // 전투와 같은 HP 바: 채움이 먼저 줄고 흰 잔상이 계단으로 따라 내려온다
       fill.style.width = pct(cr.hp1);
       await wait(260);
       ghost.classList.add('drain'); ghost.style.width = pct(cr.hp1);
@@ -412,7 +412,7 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
   }
   if (cr.fx === 'die') {
     await cls(pc, 'pre', 300); pc.classList.remove('pre');
-    // 베기: 대각선 흰 선이 그어지고, 기물이 두 쪽으로 갈라져 잿빛이 된다
+    // 베기: 대각선 흰 선이 그어지고 기물이 두 쪽으로 갈라져 잿빛이 된다
     const src = pc.querySelector('img')!.src;
     pc.innerHTML = `<i class="er-cut a" style="background-image:url(${src})"></i><i class="er-cut b" style="background-image:url(${src})"></i><i class="er-slash"></i>`;
     const b = r();
@@ -441,7 +441,7 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   if (c.chance?.kind === 'coin') await coinToss(L, c);
   else if (c.chance?.kind === 'slots') await slotsDrop(L, c);
   else if (c.chance?.kind === 'scratch') await scratch(L, c);
-  // 결과 줄이 있으면 확률 장치는 걷고, 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
+  // 결과 줄이 있으면 확률 장치는 걷고 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
   if (c.chance && (c.cards.length || c.crew.length)) L.x.clearRect(0, 0, L.w, L.h);
   await showResults(L, c);
   const ok = ov.querySelector<HTMLButtonElement>('.ev-ov-ok')!;

@@ -38,7 +38,7 @@ export const scoreMove = (b: SliceBattle, i: number, pieceId: number, to: { x: n
 };
 
 /**
- * 봇 성향 (난이도 설계 D-228 — 「두뇌 플레이는 깨고, 무뇌 플레이는 막힌다」를 재려고):
+ * 봇 성향 (난이도 설계 D-228 — 「두뇌 플레이는 깨고 무뇌 플레이는 막힌다」를 재려고):
  * random = 무뇌(낼 수 있는 수 중 아무거나), naive = 단순(지금 가장 세게 치는 수 — 예고된 위험 무시), greedy = 보통(위험 피함 + 킹의 수는 적 차례를 미리 돌려 쓰러질 수를 피함, D-299), search = 두뇌(playOutSearch).
  */
 export type BotStyle = 'random' | 'naive' | 'greedy';
@@ -79,7 +79,7 @@ export const bestAction = (b: SliceBattle, style: BotStyle = 'greedy'): BotActio
 
 /**
  * 지금 턴을 끝내면 받을 피해의 무게 (보통 봇, D-299) — 화면 예고와 같은 enemyPhase를 미리 돌린 실제 피해.
- * 킹이 쓰러지면 패배라 가장 무겁고, 분대원이 쓰러지면 기물 값만큼 더 무겁다.
+ * 킹이 쓰러지면 패배라 가장 무겁고 분대원이 쓰러지면 기물 값만큼 더 무겁다.
  */
 export const threatOf = (b: SliceBattle): number => {
   if (b.s.winner === 0) return 0;

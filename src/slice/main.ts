@@ -95,7 +95,7 @@ installPixelAnimate();
     top.after(mid);
     const act = right.querySelector('.actions')!;
     act.prepend(document.getElementById('btn-rewind')!);
-    // 도움말(지금 화면 · 용어 · 안내서)은 판 무대 오른쪽 위 — 자주 안 누르고, 턴 끝과 멀어야 한다 (D-211)
+    // 도움말(지금 화면 · 용어 · 안내서)은 판 무대 오른쪽 위 — 자주 안 누르고 턴 끝과 멀어야 한다 (D-211)
     const help = document.getElementById('btn-help')!;
     help.classList.add('cog-help');
     help.innerHTML = '<i aria-hidden="true"></i>';
@@ -255,7 +255,7 @@ let rewindsAtStart = 0;
 let stage = 0;
 let b: SliceBattle;
 let selCard: number | null = null;
-/** 탄창(F안)에서 펼쳐 둔 탄 — 한 번 누르면 펼치고, 펼친 탄을 한 번 더 누르면 쓴다 (D-209) */
+/** 탄창(F안)에서 펼쳐 둔 탄 — 한 번 누르면 펼치고 펼친 탄을 한 번 더 누르면 쓴다 (D-209) */
 let openCard: number | null = null;
 let selPiece: number | null = null;
 let busy = false;
@@ -276,7 +276,7 @@ const foeTraitExtra = (p: { side: number; type: PieceType }): string => {
 };
 const foeTraitBase = (p: { side: number; type: PieceType }): string =>
   p.side !== 1 ? '' :
-  p.type === 'K' && b.boss && b.bossRule === 'plate' ? `<br><span class="enemy">철갑 · 줄 폭격</span> 두 턴마다 철갑 ${BOSS.plate}을 다시 두르고, 두 턴마다 한 줄에 ${foeDmg(BOSS.bombDamage, b)}` :
+  p.type === 'K' && b.boss && b.bossRule === 'plate' ? `<br><span class="enemy">철갑 · 줄 폭격</span> 두 턴마다 철갑 ${BOSS.plate}을 다시 두르고 두 턴마다 한 줄에 ${foeDmg(BOSS.bombDamage, b)}` :
   p.type === 'K' && b.boss && b.bossRule === 'spawn' ? `<br><span class="enemy">조립</span> 두 턴마다 곁에 폰을 찍어 낸다 (셋까지)` :
   p.type === 'K' && b.boss && b.bossRule === 'inspect' ? `<br><span class="enemy">검수</span> 두 턴마다 가장 센 내 기물에 불량 도장 — 그 기물의 공격 ×${BOSS_NUM.stampMult}` :
   p.type === 'K' && b.boss && b.bossRule === 'magnet' ? `<br><span class="enemy">자석</span> 두 턴마다 가장 가까운 내 기물을 한 칸 끌어당긴다 (자석 표시)` :
@@ -442,7 +442,7 @@ const showPeek = (cardEl: HTMLElement): void => {
     peekEl.style.left = `${r.right + 10}px`;
     peekEl.style.top = `${Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2))}px`;
   }
-  // D-189: 도트가 아래에서 쓸어 올리며 드러내고, 닫을 땐 위에서 쓸어 내린다
+  // D-189: 도트가 아래에서 쓸어 올리며 드러내고 닫을 땐 위에서 쓸어 내린다
   sweep(peekEl, true);
 };
 /** 크게 보기를 연 카드 · 시각 (용어 툴팁 지표 ⑦ — 카드 설명을 몇 번 · 얼마나 오래 읽나) */
@@ -692,7 +692,7 @@ const gauges = (): void => {
 };
 
 /**
- * 탄 펼치기 · 접기 (D-209): 톱니가 걸리듯 드르륵 — 높이가 네 칸으로 끊겨 열리고 닫히며, 칸마다 딸깍.
+ * 탄 펼치기 · 접기 (D-209): 톱니가 걸리듯 드르륵 — 높이가 네 칸으로 끊겨 열리고 닫히며 칸마다 딸깍.
  * 손패가 그대로일 때만 접히는 탄을 보여 준다(쓴 탄은 그냥 빠진다).
  */
 let lastOpen: number | null = null;
@@ -1003,7 +1003,7 @@ const pickCard = (i: number): void => {
     if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'tap', b.kills + 2);
-      // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드가 움츠렸다 튀어 오르며 터지고, 새로 뽑힌 카드는 덱에서 날아든다
+      // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드가 움츠렸다 튀어 오르며 터지고 새로 뽑힌 카드는 덱에서 날아든다
       castFx(document.querySelector<HTMLElement>(`#hand [data-card="${i}"]`));
       const n0 = b.hand.length;
       playCard(b, i);
@@ -1449,7 +1449,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   $('hand').classList.toggle('hint', coachOn);
 };
 
-/** 짜 둔 손패 순서 (입문 판): 적힌 순서대로 덱에서 한 장씩 꺼내 놓고, 남은 카드는 뒤에 */
+/** 짜 둔 손패 순서 (입문 판): 적힌 순서대로 덱에서 한 장씩 꺼내 놓고 남은 카드는 뒤에 */
 const arrange = (order: CommandId[], cards: CommandId[]): CommandId[] => {
   const rest = [...cards];
   const out: CommandId[] = [];
@@ -1477,7 +1477,7 @@ const battleIntro = (): Promise<void> => {
  */
 const depthNow = (): number => depthAt(actI, rowI / Math.max(1, acts[actI].rows.length));
 
-/** 다음 노드로: 줄을 하나 넘기고, 막이 끝나면 다음 막 (전환 화면), 3막 반장 뒤면 출하 완료 */
+/** 다음 노드로: 줄을 하나 넘기고 막이 끝나면 다음 막 (전환 화면), 3막 반장 뒤면 출하 완료 */
 const advance = (): void => {
   rowI += 1;
   if (rowI >= acts[actI].rows.length) {
@@ -1569,7 +1569,7 @@ const showMap = (): void => {
         const live = r === rowI - 1 && picked[actI][r] === k && open.has(k2);
         const dead = r < rowI && picked[actI][r] !== k;
         if (dead) return;
-        // 컨베이어 체인 (D-184): 검은 바깥 줄 + 고리 무늬. 지금 갈 수 있는 길은 돌아가고, 고르면 나머지는 끊어진다
+        // 컨베이어 체인 (D-184): 검은 바깥 줄 + 고리 무늬. 지금 갈 수 있는 길은 돌아가고 고르면 나머지는 끊어진다
         const cls = walked ? 'walked' : live ? 'live' : 'far';
         const xy = `x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"`;
         lines.push(`<line ${xy} class="ch-o"/><line ${xy} class="ch-i ${cls}"${live ? ` data-to="${k2}"` : ''}/>`);
@@ -1657,7 +1657,7 @@ const EV_RECENT = 7;
  */
 /**
  * 사건 선택지 설명 (테스터: 「문턱 +1이 뭔지도 모르는데」 · 「이 선택이 값어치가 있나 모르겠다」):
- * ' · '로 나뉜 조각마다 얻는 것(청록) · 잃는 것(붉은)을 칠하고, 안에 든 용어는 아래에 한 줄 풀이를 붙인다.
+ * ' · '로 나뉜 조각마다 얻는 것(청록) · 잃는 것(붉은)을 칠하고 안에 든 용어는 아래에 한 줄 풀이를 붙인다.
  */
 const evDesc = (desc: string): string => {
   const bad = /−|-\d|깨진다|잃|녹슨|빠진다|쓰러/;
@@ -1701,7 +1701,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     logEl.querySelectorAll('.ev-line').forEach((x, i, all) => x.classList.toggle('old', i < all.length - 1));
     replay(line, 'in');
     if (kind === 'npc') sfx('tap', 4);
-    // 서술은 문장마다 줄을 바꾼다 (D-263): 「…부른다.⏎장인은 잠들었고, …」
+    // 서술은 문장마다 줄을 바꾼다 (D-263): 「…부른다.⏎장인은 잠들었고 …」
     const shown = kind === 'narr' ? text.replace(/([.!?…])\s+(?=\S)/g, '$1\n') : text;
     await typeIn(line.querySelector('span')!, shown, kind === 'npc' ? 26 : 18, undefined, alive);
   };
@@ -2110,7 +2110,7 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       const r = el.querySelector(sel)?.getBoundingClientRect();
       if (r) sparksAt(r.left + r.width / 2, r.bottom - 4, n, spread);
     };
-    // 철문 전환 (D-184): 닫힌 사이에 장면을 세우고, 문이 열리는 박자에 맞춰 연출을 시작한다
+    // 철문 전환 (D-184): 닫힌 사이에 장면을 세우고 문이 열리는 박자에 맞춰 연출을 시작한다
     void shutter(() => {
       document.body.appendChild(el);
       el.classList.add('run');
@@ -2262,7 +2262,7 @@ const confirmChoice = (btn: HTMLElement, onConfirm: () => void): void => {
   panel.classList.add('locked');
   btn.classList.add('picked');
   sfx('rare');
-  // D-184: 안 고른 것은 아래부터 도트로 흩어지고, 고른 카드 · 부품은 기울며 들렸다가 덱 · 부품 칸으로 빨려 든다
+  // D-184: 안 고른 것은 아래부터 도트로 흩어지고 고른 카드 · 부품은 기울며 들렸다가 덱 · 부품 칸으로 빨려 든다
   const group = btn.parentElement ? [...btn.parentElement.children].filter((x): x is HTMLElement => x !== btn && x instanceof HTMLElement && (x.matches('.cmd, .part-card'))) : [];
   // 고물상은 하나를 사도 나머지 물건이 그대로 남는다 — 흩어지게 하지 않는다
   if (!btn.matches('[data-buy]')) dissolveAll(group);
@@ -2365,7 +2365,7 @@ const finish = (): void => {
 };
 /**
  * 패배 직전 되감기 장면 (2026-11-05 사용자: 「턴 되감기처럼 강력하고 임팩트 있는 서사로」):
- * 판이 잿빛으로 멈추고, 가운데 톱니가 거꾸로 돈다 → 서술이 한 자씩 찍히고 「거꾸로」에서 떨린다 → 각주 대사 → 동사 버튼 둘.
+ * 판이 잿빛으로 멈추고 가운데 톱니가 거꾸로 돈다 → 서술이 한 자씩 찍히고 「거꾸로」에서 떨린다 → 각주 대사 → 동사 버튼 둘.
  * 거꾸로 감으면 큰 되감기 연출, 눈을 감으면 패배 처리.
  */
 const lossRewindScene = (): void =>
@@ -2665,7 +2665,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
 
 /**
  * 덱 보기 (view) · 카드 빼기 (remove — 보상 대신, 덱 압축: 쓸모없는 카드를 덜어 빌드를 선명하게).
- * 같은 카드는 한 칸에 ×개수로 묶고, 축 순서로 늘어놓는다.
+ * 같은 카드는 한 칸에 ×개수로 묶고 축 순서로 늘어놓는다.
  */
 const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): void => {
   const order: (Axis | undefined)[] = [undefined, 'cav', 'inf', 'king', 'chain', 'push'];
@@ -3105,7 +3105,7 @@ const help = (tab: 'now' | 'dict' = 'now'): void => {
   el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'dict') return; sfx('tap'); window.removeEventListener('keydown', onKey); over.removeEventListener('click', onOut); onTab(t.dataset.tab!); }));
 };
 
-/** 도움말을 닫았다: 사전을 봤으면 NEW를 지우고, 얼마나 머물렀는지 기록 (용어 툴팁 지표 ⑦) */
+/** 도움말을 닫았다: 사전을 봤으면 NEW를 지우고 얼마나 머물렀는지 기록 (용어 툴팁 지표 ⑦) */
 const helpSeen = (tab: 'now' | 'dict', opened: number): void => {
   const m = readMeta(store);
   if (tab === 'dict') {
@@ -3248,7 +3248,7 @@ const doRewind = (death = false): void => {
   window.setTimeout(() => fx.remove(), 800);
 };
 
-/** 죽음 되감기 「초월」 연출 (DOM 겹 + 판 dropIn). swap()에서 판이 되돌아가고, 끝나면 풀린다 */
+/** 죽음 되감기 「초월」 연출 (DOM 겹 + 판 dropIn). swap()에서 판이 되돌아가고 끝나면 풀린다 */
 const transcend = async (back: SliceBattle, swap: () => void): Promise<void> => {
   const wait = (ms: number) => new Promise((res) => window.setTimeout(res, calmNow() ? Math.min(ms, 60) : ms));
   const king = back.s.pieces.find((p) => p.side === 0 && p.type === 'K');
@@ -3657,7 +3657,7 @@ const battleTutorial = async (): Promise<void> => {
   };
   const ok2 = await tutorial('battle-b', steps);
   if (!ok2 || b.s.winner !== null) return;
-  // 승격 뒤의 판에서 빠지며 칠 수가 있으면 짚고, 없으면 설명으로 끝
+  // 승격 뒤의 판에서 빠지며 칠 수가 있으면 짚고 없으면 설명으로 끝
   const g = grazeSteps();
   await tutorial('battle', [...g, { text: T.help, target: () => $('btn-help') }, { text: T.free }]);
 };

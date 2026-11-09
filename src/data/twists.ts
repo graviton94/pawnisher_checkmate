@@ -2,7 +2,7 @@ import type { BossId } from './run';
 
 /**
  * 반장 비틀기 (규격 2.0, GDD 14장 §3.4 — Balatro 보스 블라인드식): 반장마다 규칙 하나. 지도에서 미리 보인다.
- * 반장에게 유리하지만, 무엇을 준비하면 되는지가 문장 안에 있다.
+ * 반장에게 유리하지만 무엇을 준비하면 되는지가 문장 안에 있다.
  */
 export type TwistId = 'horseshoe' | 'lens' | 'wall' | 'line' | 'molds' | 'papers' | 'gild';
 

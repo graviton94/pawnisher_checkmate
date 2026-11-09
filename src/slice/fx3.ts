@@ -149,7 +149,7 @@ export const turnLabel = (el: HTMLElement, text: string, enemy: boolean): void =
 };
 
 // ---------- 4 턴 배너 ----------
-/** 아케이드 「ROUND」식: 속도선 띠가 비스듬히 날아들어 출렁 멈추고, 글자는 색이 갈라졌다 모이며 꽝 · 반짝 띠 → 반대쪽으로 비틀며 빠짐 */
+/** 아케이드 「ROUND」식: 속도선 띠가 비스듬히 날아들어 출렁 멈추고 글자는 색이 갈라졌다 모이며 꽝 · 반짝 띠 → 반대쪽으로 비틀며 빠짐 */
 export const turnBanner = (over: HTMLElement, text: string, foe: boolean, small = false): void => {
   if (calm()) return;
   document.querySelectorAll('.tb4').forEach((x) => x.remove());
