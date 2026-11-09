@@ -51,6 +51,18 @@ def one(t):
             break
         shape -= old
     inside = lambda p: 0 <= p[0] < N and 0 <= p[1] < N
+    # D-354: 검은 외곽선 바깥에 남은 옛 흰 테 · 번진 칸을 모두 깎는다 — 바깥(빈 칸)에 닿은 검정 아닌 칸은 테다
+    #        (캔버스 밖은 바깥으로 치지 않는다 — 액자 밑변에 잘린 몸 속은 남긴다)
+    # 테는 1~2칸 두께라 두 겹만 깎는다 (첫 겹: 빈 칸에 8방향으로 닿음, 둘째 겹: 깎인 칸에 4방향으로 닿음)
+    empty = {(i, j) for i in range(N) for j in range(N)} - shape
+    gone = {p for p in shape if col[p] != INK and any((p[0] + dx, p[1] + dy) in empty for dx, dy in N8)}
+    gone |= {p for p in shape - gone if col[p] != INK and sum(col[p]) > 450 and any((p[0] + dx, p[1] + dy) in gone for dx, dy in N4)}
+    shape -= gone
+    # 깎다 생긴 외곽선 틈은 검정 1칸으로 메운다
+    for a in {(p[0] + dx, p[1] + dy) for p in shape if col[p] != INK for dx, dy in N4}:
+        if a not in shape and inside(a):
+            col[a] = INK
+            shape.add(a)
     for _ in range(RING):
         for a in {(p[0] + dx, p[1] + dy) for p in shape for dx, dy in N8}:
             if a not in shape and inside(a):
