@@ -9,7 +9,7 @@
 export const BOSS_PHASE_TEXT = {
   upTo: 4,
   /** 반장 등장 화면 규칙 줄 */
-  rule: '쓰러뜨려도 한 번 더 일어선다 — 2단계',
+  rule: '2단계 · 쓰러져도 한 번 더 선다',
   /** 대국 시작 알림 */
   start: '반장은 두 번 쓰러뜨려야 합니다. 처음 쓰러지면 호위를 부르며 다시 일어섭니다.',
   /** 반장 HP가 lowAt 아래로 처음 내려갈 때 */
@@ -23,9 +23,9 @@ export const BOSS_PHASE_TEXT = {
  */
 export const ENTRY_LINES = {
   reward: '이기면 부품 +1',
-  blastPawn: '불꽃 폰 — 쓰러지면 폭발',
-  rookPlate: '룩 — 방패를 두름',
-  guard: '적 킹 — 호위 있으면 방열판',
+  blastPawn: '불꽃 폰 · 쓰러지면 터진다',
+  rookPlate: '룩 · 방패를 두른다',
+  guard: '적 킹 · 호위가 있으면 방열판',
 };
 
 export const HUD_TEXT = {
@@ -38,7 +38,7 @@ export const HUD_TEXT = {
   grazePlain: '빠지며 치기 — ×1.5 · 카드 +1',
   /** 새 용어가 사전에 들어왔다 (D-233) */
   /** 승급 13 최종장 (D-277) — 종이 왕관을 벗은 뒤 */
-  pawnMode: '왕관을 벗었다 — 이제 폰처럼 움직입니다.',
+  pawnMode: '종이 왕관을 벗었습니다. 이제 폰처럼 움직입니다.',
   /** 경보 반장 (D-274) — ⑨ 표지 */
   alarm: '경보 — 이번 적 차례 공격 ×1.5',
   newTerm: (names: string) => `새 용어 「${names}」 — ? 의 「용어」에서 볼 수 있습니다.`,
@@ -79,7 +79,7 @@ export const HUD_TEXT = {
 export const LIFE_TEXT = {
   name: '심장 톱니',
   cracked: (names: string) => `${names} — 심장 톱니 하나가 깨졌습니다. HP 50%로 돌아옵니다.`,
-  warn: (names: string) => `깨진 심장: ${names} — 또 쓰러지면 폐기`,
+  warn: (names: string) => `${names}: 다시 쓰러지면 폐기됩니다.`,
   mended: (names: string) => `깨진 심장 톱니를 새로 끼웠습니다. (${names})`,
   riteNarr: '톱니 하나가 튕겨 나간다. 아직, 멈추지 않았다.',
   riteSys: '대국이 끝나면 HP 50%로 돌아옵니다. 또 쓰러지면 폐기됩니다.',

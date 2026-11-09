@@ -1117,7 +1117,7 @@ const onTap = async (pos: Pos): Promise<void> => {
   }
   if (p && p.side === 1) {
     const it = liveIntents(b).find((x) => x.pieceId === p.id);
-    toast(it ? '다음 차례에 공격' : '다음 차례에 쉼');
+    toast(it ? '다음 차례에 공격한다' : '다음 차례에 쉰다');
     return;
   }
   selCard = selPiece = openCard = null;
@@ -1131,7 +1131,7 @@ const burnNote = (n0: number): void => {
   const by = new Map<string, number>();
   for (const id of fresh) by.set(COMMANDS[id].who, (by.get(COMMANDS[id].who) ?? 0) + 1);
   const t = [...by.keys()][0] as PieceType;
-  toast(`${PIECE_NAMES_KO[t]} 카드 ${fresh.length}장 불탐`, 2200);
+  toast(`${PIECE_NAMES_KO[t]} 카드 ${fresh.length}장이 불탄다`, 2200);
   sfx('threat');
 };
 
@@ -1241,7 +1241,7 @@ const onEndInner = async (): Promise<void> => {
   const r = endTurn(b);
   if (r === 'warn') {
     sfx('threat');
-    toast('킹이 맞습니다 — 한 번 더 누르면 끝', 2400);
+    toast('이대로 끝내면 킹이 피격당합니다.', 2400);
     $('btn-end').classList.add('warn');
     return;
   }
