@@ -5,7 +5,7 @@
  */
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { cardFits, COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
+import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
 import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
@@ -68,6 +68,21 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const hpRatio = () => squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)) / crewMaxHp(u), 0) / Math.max(1, squad.length);
   const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; squad.push(makeCrew(r.t, rng, squad.map((u) => u.name ?? ''))); deck.push(...r.cards); };
   const shopMul = (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
+  // 부품 칸 (D-384 · 실제 게임과 같게, 2026-11-09d): 막마다 partSlotsAt 칸. 넘치면 가장 낮은 등급(같으면 오래된 것)을 녹여 나사 meltBack —
+  // 새 부품이 가진 것 모두보다 낮으면 새 것을 녹인다. 억지로 넣은 부품(forceParts — 힘 값 측정)은 녹이지 않는다.
+  let actNow = 0;
+  const rankOf = (id: SlicePartId) => GRADE_RANK[PART_GRADE[id] ?? 'common'] ?? 0;
+  const meltable = () => parts.map((id, i) => ({ id, i })).filter((x) => !(o.forceParts ?? []).includes(x.id));
+  /** 이 부품을 사면 남나 (칸이 남거나 녹일 것보다 낮지 않다) */
+  const keeps = (id: SlicePartId) => parts.length < partSlotsAt(actNow) || meltable().some((x) => rankOf(x.id) <= rankOf(id));
+  const addPart = (id: SlicePartId) => {
+    if (parts.length < partSlotsAt(actNow)) { parts.push(id); return; }
+    gold += ECON.meltBack;
+    const low = meltable().sort((x, y) => rankOf(x.id) - rankOf(y.id) || x.i - y.i)[0];
+    if (!low || rankOf(id) < rankOf(low.id)) return;
+    parts.splice(low.i, 1);
+    parts.push(id);
+  };
   const partOf = (elite: boolean) => {
     const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
     if (!pool.length) return;
@@ -80,7 +95,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
       pool.splice(pool.indexOf(id), 1);
       offers.push(id);
     }
-    parts.push(offers.sort((a, b) => (GRADE_RANK[PART_GRADE[b] ?? 'common'] ?? 0) - (GRADE_RANK[PART_GRADE[a] ?? 'common'] ?? 0))[0]);
+    addPart(offers.sort((a, b) => rankOf(b) - rankOf(a))[0]);
   };
   const cardOffers = (elite: boolean): CommandId[] => {
     const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push', 'tactic'];
@@ -103,6 +118,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   };
   const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle });
   for (const [ai, a] of acts.entries()) {
+    actNow = ai;
     let prev: MapNode | null = null;
     for (const [ri, row] of a.rows.entries()) {
       const open: MapNode[] = (prev?.to ?? row.map((_, i) => i)).map((i: number) => row[i]);
@@ -133,7 +149,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         if (!ok) return out(false, ai + 1, `${ai + 1}막 ${def.title}`);
         if (def.reward === 'end') return out(true, 4, '');
         if (def.reward === 'recruit') recruit();
-        else if (def.reward === 'kit') { const k = KITS[rng.int(KITS.length)]; parts.push(k.part); deck.push(...k.cards); }
+        else if (def.reward === 'kit') { const k = KITS[rng.int(KITS.length)]; addPart(k.part); deck.push(...k.cards); }
         else if (def.reward === 'part') { partOf(true); if (squad.length < SLICE.squadMax) recruit(); takeCard(cardOffers(true), false); }
         else if (def.reward === 'card') {
           const offers = cardOffers(false);
@@ -155,7 +171,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         }
         const pp = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
         const part = pp.length ? pp[rng.int(pp.length)] : null;
-        if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * shopMul); if (gold >= p + 30) { gold -= p; parts.push(part); } }
+        if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * shopMul); if (gold >= p + 30 && keeps(part)) { gold -= p; addPart(part); } }
         if (deck.length > 14 && gold >= SHOP.removePrice * shopMul) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= Math.round(SHOP.removePrice * shopMul); }
       } else if (n.kind === 'forge') {
         squad = mendSquad(squad).squad;
