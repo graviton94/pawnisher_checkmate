@@ -206,10 +206,10 @@ def ribbon(px, rb):
     span = x1 - x0
     for x in range(x0, x1 + 1):
         t = (x - x0) / span
-        lift = 1 if 0.25 < t < 0.75 else 0
+        lift = 0
         for y in range(y0 - lift, y1 - lift + 1):
             u = (y - (y0 - lift)) / th
-            put(x, y, rb[4] if u < 0.1 else rb[3] if u < 0.4 else rb[2] if u < 0.8 else rb[1])
+            put(x, y, rb[3] if u < 0.5 else rb[2])
     for (x, y), c in mask.items():
         px.p(x, y, c)
     for (x, y) in list(mask):
@@ -294,7 +294,7 @@ def badges(px, m):
                     d = dx + abs(dy)
                     lim = 10
                 else:
-                    d = max(dx * 1.05, abs(dy) * 0.9) if dy < 3 else dx + (dy - 3) * 1.25
+                    d = math.hypot(dx, dy) * 1.05  # 둥근 압력계 (HP)
                     lim = 9.5
                 if d <= lim + 1.1:
                     inner = d <= lim - 2
@@ -332,28 +332,20 @@ def back():
     frame(px, m)
     for (cx, cy, sx, sy) in ((6, 6, 1, 1), (W - 7, 6, -1, 1), (6, H - 7, 1, -1), (W - 7, H - 7, -1, -1)):
         gear_corner(px, cx, cy, sx, sy, BRASS)
-    cx, cy = W // 2, H // 2
-    for y in range(cy - 26, cy + 27):
-        for x in range(cx - 26, cx + 27):
-            d = math.hypot(x - cx, y - cy)
-            a = math.atan2(y - cy, x - cx)
-            tooth = 22 + (3 if math.cos(a * 10) > 0.25 else 0)
-            if 15 <= d <= tooth:
-                px.p(x, y, BRASS[4] if y < cy - 4 and x < cx else BRASS[3] if y < cy + 6 else BRASS[2])
-            elif d < 15:
-                px.p(x, y, PLATE[0])
-            elif tooth < d <= tooth + 1:
-                px.p(x, y, INK)
-    king = ['...XX...', '..XXXX..', '...XX...', '..XXXX..', '...XX...', '...XX...', '..XXXX..', '.XXXXXX.']
-    for j, row in enumerate(king):
-        for i, ch in enumerate(row):
-            if ch == 'X':
-                px.p(cx - 4 + i, cy - 2 + j, BRASS[4] if i < 4 else BRASS[3])
-    crown = ['X..X..X', 'XX.X.XX', 'XXXXXXX']
-    for j, row in enumerate(crown):
-        for i, ch in enumerate(row):
-            if ch == 'X':
-                px.p(cx - 3 + i, cy - 6 + j, PAPER[4] if j < 2 else PAPER[2])
+    # 가운데: 앱 아이콘을 흑백 도트로 (사용자 D-368) — 무쇠 액자 안
+    ic = Image.open(os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'icon-512.png')).convert('L')
+    n = 60
+    ic = ic.resize((n, n), Image.LANCZOS)
+    x0, y0 = (W - n) // 2, (H - n) // 2 - 6
+    px.r(x0 - 3, y0 - 3, x0 + n + 2, y0 + n + 2, INK)
+    px.r(x0 - 2, y0 - 2, x0 + n + 1, y0 + n + 1, FRAME['common'][3])
+    px.r(x0 - 1, y0 - 1, x0 + n, y0 + n, INK)
+    for y in range(n):
+        for x in range(n):
+            v = ic.getpixel((x, y))
+            # 4단으로 잘라 도트답게 (먹 · 철 그늘 · 철 · 흰)
+            c = '#0b0b0e' if v < 40 else '#24232b' if v < 90 else '#6e6c78' if v < 170 else '#e8e6ee'
+            px.p(x0 + x, y0 + y, c)
     return px.im
 
 
