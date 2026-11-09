@@ -158,3 +158,19 @@ export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'ins
   thorns: '맞은 만큼 찌르는 가시',
   gilded: '금으로 덮은 원죄',
 };
+
+/**
+ * 고르기 · 장소 화면 글 (D-394 UI 개편 패스 2): 명패 ≤ 12자(문장 · 수치 금지 — 수치는 꼬리표) · 단추는 동사 하나 ≤ 6자 (voice ⑧).
+ */
+export const SCREEN_TEXT = {
+  reward: '전리품', kit: '핵심 부품', recruit: '영입', newCrew: '새 분대원', part: '부품', partBox: '부품 상자', partClose: '사선',
+  full: '칸 가득', shop: '고물상', forge: '작업대', forgeFinal: '최종 정비', refine: '다듬기', brace: '보강', remove: '카드 빼기', deck: '덱', crew: '분대',
+  clear: '출하 완료', fail: '하자 폐기',
+  pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', braceGo: '덧댄다',
+  close: '닫는다', ledger: '도감', overhaul: '정비한다', note: '남긴다', home: '돌아간다',
+  sold: '팔림', newCrewTag: '새 분대원', bossTag: '반장 격파', checkTag: '검문 통과', closeTag: '부품 하나 더', fullHp: 'HP 가득', broad: '큰 세 갈래', deep: (ax: string) => `${ax} 세부 갈래`,
+  shopHint: '물건을 누르면 여기 풀이가 뜹니다.', noCards: '고를 카드가 없습니다.',
+  melt: (n: number) => `녹이면 나사 +${n}`, slots: (n: number) => `부품 칸 ${n}`, newPart: (name: string) => `새 「${name}」`,
+  clearLine: '출하구를 지났습니다.', failLine: (act: string) => `${act}에서 멈췄습니다.`, opened: '새로 열림', ascOpened: (n: number) => `승급 ${n} 열림`, daily: '오늘의 출하',
+  tally: ['이긴 대국', '처치', '나사', '덱'] as const,
+} as const;

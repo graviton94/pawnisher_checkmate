@@ -111,33 +111,169 @@ export const closeWin = (): void => {
 /** 다른 길로 창이 바뀔 때(옛 openOverlay) 막 · Esc 동작을 걷는다 */
 export const dropWinDismiss = clearDismiss;
 
-/** 하나 고르기 화면 (3.7 .scr-pick — 패스 2): 받침 누름 = 고름 + 「고른다」 켜짐, 같은 것 다시 누름 = 확정. 확인 창 없음 */
-export const pickScreen = (o: { title: string; tag?: string; items: string[]; skip?: WinBtn; go?: WinBtn; onPick: (i: number) => void }): HTMLElement => {
-  const el = document.createElement('div');
-  el.className = 'scr-pick';
-  el.innerHTML = `<div class="scr-top"><div class="plate">${o.title}</div>${o.tag ?? ''}</div><div class="scr-items">${o.items.map((h, i) => `<div class="card-slot" data-slot="${i}">${h}</div>`).join('')}</div>${btnRowHtml({ back: o.skip, go: { label: '고른다', attrs: 'data-pick', disabled: true, ...o.go } })}`;
-  let sel = -1;
-  const go = el.querySelector<HTMLButtonElement>('[data-pick]');
-  el.querySelectorAll<HTMLElement>('[data-slot]').forEach((s) =>
-    s.addEventListener('click', () => {
-      const i = Number(s.dataset.slot);
-      if (sel === i) return o.onPick(i);
-      sel = i;
-      el.querySelectorAll('.card-slot').forEach((c) => c.classList.toggle('is-sel', c === s));
-      if (go) go.disabled = false;
+/** 고르기 화면의 물건 하나 — 카드 얼굴(받침 안) + 받침 아래 한 줄(덱 맞물림 · 가격 꼬리표 · 함께 오는 카드) */
+export interface PickItem {
+  /** 고른 것을 가리키는 열쇠 (onPick으로 돌아온다) */
+  key: string;
+  /** 카드 · 부품 · 분대원 얼굴 (카드 얼굴은 바꾸지 않는다) */
+  html: string;
+  /** 받침 아래 12px 한 줄 (꼬리표 · 짧은 글) */
+  info?: string;
+  /** 팔림 · 못 삼 (받침은 그대로, 누를 수 없음) */
+  off?: boolean;
+}
+
+/**
+ * 고르기 묶음: [data-slot] 하나를 누르면 고름(받침 -sel · 선택지 sel), 같은 것을 다시 누르면 확정, 황동 [data-pick]도 확정.
+ * 고르기 · 고물상 · 덱 빼기가 모두 이것 — 확인 창은 없다 (보고서 2-3 · StS 보상 화면).
+ */
+export const bindPick = (root: HTMLElement, o: { onSelect?: (key: string, el: HTMLElement) => void; onPick: (key: string, el: HTMLElement) => void }): { select: (key: string | null) => void; selected: () => string | null } => {
+  let sel: string | null = null;
+  const go = root.querySelector<HTMLButtonElement>('[data-pick]');
+  const elOf = (k: string): HTMLElement | null => root.querySelector<HTMLElement>(`[data-slot="${k}"]`);
+  const select = (k: string | null): void => {
+    sel = k;
+    root.querySelectorAll<HTMLElement>('[data-slot]').forEach((s) => {
+      const on = s.dataset.slot === k;
+      s.classList.toggle('is-sel', on);
+      if (s.matches('button')) s.setAttribute('aria-pressed', String(on));
+    });
+    if (go) go.disabled = k === null;
+    if (k !== null) o.onSelect?.(k, elOf(k)!);
+  };
+  root.querySelectorAll<HTMLElement>('[data-slot]').forEach((s) =>
+    s.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (s.classList.contains('is-off') || root.classList.contains('locked')) return;
+      const k = s.dataset.slot!;
+      if (sel === k) return o.onPick(k, s);
+      select(k);
     }),
   );
-  go?.addEventListener('click', () => sel >= 0 && o.onPick(sel));
-  document.body.appendChild(el);
+  go?.addEventListener('click', () => sel !== null && !root.classList.contains('locked') && o.onPick(sel, elOf(sel)!));
+  if (go) go.disabled = true;
+  return { select, selected: () => sel };
+};
+
+/** 받침 줄 마크업 (고르기 · 고물상 공용) */
+export const slotsHtml = (items: PickItem[], bare = false): string =>
+  `<div class="scr-items${bare ? ' bare' : ''}">${items.map((it) => `<div class="pick-item"><div class="${bare ? 'card-bare' : 'card-slot'}${it.off ? ' is-off' : ''}" data-slot="${it.key}">${it.html}</div>${it.info !== undefined ? `<div class="slot-info">${it.info}</div>` : ''}</div>`).join('')}</div>`;
+
+/**
+ * 받침 크기 맞춤: 받침 51×69 도트를 **기기 픽셀 정수배**로 — 줄에 다 들어가는 가장 큰 배율(카드 168px 상한).
+ * 받침 안 카드 = 받침 폭 × 42/51. 받침 사이는 16 → 8 → 4로 줄여 본다. 스크롤 · 잘림 없음 (667×375에서도).
+ */
+export const fitSlots = (row: HTMLElement): void => {
+  const slots = row.querySelectorAll<HTMLElement>(':scope > .pick-item');
+  const n = slots.length;
+  if (!n || !row.clientWidth) return;
+  const dpr = window.devicePixelRatio || 1;
+  let infoH = 0;
+  row.style.removeProperty('--info-h');
+  row.querySelectorAll<HTMLElement>(':scope > .pick-item > .slot-info').forEach((i) => (infoH = Math.max(infoH, i.offsetHeight)));
+  // 받침 아래 줄 높이를 맞춰 카드 윗선이 한 줄로 선다
+  if (infoH) row.style.setProperty('--info-h', `${infoH}px`);
+  const gapIn = infoH ? 4 : 0;
+  const W = row.clientWidth, H = row.clientHeight - infoH - gapIn;
+  // 받침 없는 줄(고물상): 카드 얼굴만 — 폭 168 상한, 줄 높이 · 폭에 맞춘다 (카드 얼굴은 원래 비정수 1.5배)
+  if (row.classList.contains('bare')) {
+    const g = (W - 16 * (n - 1)) / n >= 140 ? 16 : 8;
+    const w = Math.floor(Math.min(168, (W - g * (n - 1)) / n, (H * 112) / 168));
+    row.style.setProperty('--card-w', `${w}px`);
+    row.style.setProperty('--slot-gap', `${g}px`);
+    return;
+  }
+  const cap = Math.floor(4 * dpr);
+  let best = { N: 1, g: 4 };
+  for (const g of [16, 8, 4]) {
+    const N = Math.min(cap, Math.floor((H * dpr) / 69), Math.floor(((W - g * (n - 1)) * dpr) / (51 * n)));
+    if (N > best.N) best = { N, g };
+  }
+  row.style.setProperty('--ss', `${best.N / dpr}px`);
+  row.style.setProperty('--slot-gap', `${best.g}px`);
+};
+
+/**
+ * 장면 그림을 칸에 덮기 — 비율 그대로(늘이지 않음) · 기기 픽셀 정수배 · 초점(fx, fy 0~1)이 칸 안에 오게 자른다 (D-386).
+ */
+export const coverArt = (img: HTMLImageElement): void => {
+  const box = img.parentElement;
+  if (!box || !img.naturalWidth || !box.clientWidth) return;
+  const dpr = window.devicePixelRatio || 1;
+  const bw = box.clientWidth, bh = box.clientHeight;
+  const k = Math.ceil(Math.max(bw / img.naturalWidth, bh / img.naturalHeight) * dpr) / dpr;
+  const w = img.naturalWidth * k, h = img.naturalHeight * k;
+  const fx = Number(img.dataset.fx ?? 0.5), fy = Number(img.dataset.fy ?? 0.5);
+  const snap = (v: number): number => Math.round(v * dpr) / dpr;
+  img.style.width = `${w}px`;
+  img.style.height = `${h}px`;
+  img.style.left = `${snap(Math.min(0, Math.max(bw - w, bw / 2 - fx * w)))}px`;
+  img.style.top = `${snap(Math.min(0, Math.max(bh - h, bh / 2 - fy * h)))}px`;
+};
+/** 화면이 바뀌면(회전 · 창 크기) 받침 · 장면 그림을 다시 맞춘다 */
+const refitAll = (): void => {
+  document.querySelectorAll<HTMLElement>('.scr-items').forEach(fitSlots);
+  document.querySelectorAll<HTMLImageElement>('img[data-cover]').forEach(coverArt);
+};
+if (typeof window !== 'undefined') window.addEventListener('resize', () => requestAnimationFrame(refitAll));
+const settle = (el: HTMLElement): void => {
+  const run = (): void => {
+    el.querySelectorAll<HTMLElement>('.scr-items').forEach(fitSlots);
+    el.querySelectorAll<HTMLImageElement>('img[data-cover]').forEach((im) => (im.complete ? coverArt(im) : im.addEventListener('load', () => coverArt(im), { once: true })));
+  };
+  run();
+  requestAnimationFrame(run);
+  // 글꼴이 늦게 오면 받침 아래 줄 높이가 바뀐다
+  void document.fonts?.ready.then(run);
+};
+
+export interface PickOpts {
+  /** 명패 (≤ 12자) */
+  title: string;
+  /** 머리 줄 오른쪽 (꼬리표 · 지갑) */
+  tag?: string;
+  /** 머리 줄 왼쪽 (내 편 보조 행동 — 청록 단추 하나) */
+  lead?: string;
+  /** 명패 아래 한 줄 (대사 · 안내 — 없으면 비움) */
+  say?: string;
+  items: PickItem[];
+  /** 받침 줄 대신 쓸 몸 (선택지 판 격자 등 — [data-slot]이면 같은 고르기 규칙) */
+  body?: string;
+  /** 단추 줄 왼쪽 (건너뛴다 · 그만둔다 — 철) */
+  skip?: WinBtn;
+  /** 단추 줄 오른쪽 (고른다 — 황동, 고르기 전 꺼짐) */
+  go?: Partial<WinBtn>;
+  onSelect?: (key: string, el: HTMLElement) => void;
+  onPick: (key: string, el: HTMLElement) => void;
+  cls?: string;
+}
+/**
+ * 하나 고르기 화면 (3.7 .scr-pick): 창을 띄우지 않고 화면 전체가 작업대 — 명패 · 받침 줄 · 단추 줄.
+ * 받침 누름 = 고름 + 「고른다」 켜짐, 같은 것 다시 누름 = 확정. 확인 창 없음. 막을 눌러도 닫히지 않는다.
+ */
+export const pickScreen = (o: PickOpts): HTMLElement => {
+  if (!host) throw new Error('uikit: bindWinHost 먼저');
+  clearDismiss();
+  const go: WinBtn = { label: '고른다', attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
+  go.attrs = `${go.attrs ?? ''}${go.attrs?.includes('data-pick') ? '' : ' data-pick'}`;
+  const el = host.open(
+    `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items)}${btnRowHtml({ back: o.skip, go })}`,
+    `scr-pick${o.cls ? ` ${o.cls}` : ''}`,
+  );
+  bindPick(el, o);
+  settle(el);
   return el;
 };
 
-/** 장소 화면 (3.7 .scr-place — 패스 2): 왼쪽 장면 그림 40% · 오른쪽 일 */
-export const placeScreen = (o: { bg: string; title: string; wallet?: number; body: string; back?: WinBtn; go?: WinBtn }): HTMLElement => {
-  const el = document.createElement('div');
-  el.className = 'scr-place';
-  el.innerHTML = `<div class="scr-art"><img src="scenes/${o.bg}.png" alt=""></div><div class="scr-work"><div class="win-head"><div class="plate">${o.title}</div>${o.wallet !== undefined ? `<span class="wallet push">${o.wallet}</span>` : ''}</div>${o.body}${btnRowHtml(o)}</div>`;
-  document.body.appendChild(el);
+/** 장소 화면 (3.7 .scr-place): 왼쪽 장면 그림 40% · 오른쪽 일. backdrop = 그림을 화면 전체 바탕으로(고물상) */
+export const placeScreen = (o: { art: string; focus?: [number, number]; title: string; tag?: string; wallet?: number; body: string; back?: WinBtn; go?: WinBtn; mid?: string; cls?: string; backdrop?: boolean }): HTMLElement => {
+  if (!host) throw new Error('uikit: bindWinHost 먼저');
+  clearDismiss();
+  const [fx, fy] = o.focus ?? [0.5, 0.5];
+  const art = `<div class="scr-art${o.backdrop ? '' : ' frame-scene'}"><img src="scenes/${o.art}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div>`;
+  const head = `<div class="win-head"><div class="plate">${o.title}</div>${o.tag ?? ''}${o.wallet !== undefined ? `<span class="wallet push" data-wallet>${o.wallet}</span>` : ''}</div>`;
+  const el = host.open(`${art}<div class="scr-work">${head}${o.body}${btnRowHtml(o)}</div>`, `scr-place${o.backdrop ? ' scr-backdrop' : ''}${o.cls ? ` ${o.cls}` : ''}`);
+  settle(el);
   return el;
 };
 

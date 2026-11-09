@@ -204,17 +204,80 @@
 :is(.win, .scr-pick, .scr-place, .kit) .card-slot { position: relative; display: grid; justify-items: center; align-content: start; width: calc(var(--px) * 102); height: calc(var(--px) * 138); padding-top: calc(var(--px) * 6); background: url('../assets/ui/chrome/v2/card-slot.png') 0 0 / calc(var(--px) * 102) calc(var(--px) * 138) no-repeat; image-rendering: pixelated; }
 :is(.win, .scr-pick, .scr-place, .kit) .card-slot.is-sel { background-image: url('../assets/ui/chrome/v2/card-slot-sel.png'); }
 
-/* ---------- 3.7 화면 레이아웃 두 가지 (창이 아님 — 패스 2에서 갈아 끼운다) ---------- */
-.scr-pick, .scr-place { position: fixed; inset: 0; z-index: 64; box-sizing: border-box; padding: var(--Gy) var(--G); color: var(--t-body); }
-.scr-pick { display: grid; grid-template-rows: var(--h-plate) 1fr var(--h-btn); gap: var(--s2); justify-items: center; }
-.scr-pick > .scr-top { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
-.scr-pick > .scr-top > :not(.plate) { position: absolute; right: 0; }
-.scr-pick > .scr-items { display: flex; gap: var(--s3); align-items: start; justify-content: center; }
-.scr-pick > .btn-row, .scr-place .btn-row { width: 100%; }
-.scr-place { display: grid; grid-template-columns: 40% 1fr; gap: var(--s3); }
-.scr-place > .scr-art { overflow: hidden; }
-.scr-place > .scr-art > img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
-.scr-place > .scr-work { display: flex; flex-direction: column; gap: var(--s2); min-height: 0; }
+/* ---------- 3.7 화면 레이아웃 두 가지 (창이 아님 — 패스 2 D-394) ----------
+   #overlay-panel 하나가 창(.win) · 고르기(.scr-pick) · 장소(.scr-place)를 모두 맡는다 — 등장 m3in · 퇴장 디더 · 막은 그대로.
+   고르기 · 장소는 테 없는 화면 전체: 안전 영역(G, Gy) 안에 명패 · 일 · 단추 줄. */
+#overlay-panel:is(.scr-pick, .scr-place) {
+  position: fixed; inset: 0; box-sizing: border-box; width: auto; height: auto; max-width: none; max-height: none; min-height: 0; margin: 0;
+  padding: var(--Gy) var(--G); border: 0; border-image: none; background: none; box-shadow: none; filter: none; overflow: hidden;
+  color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; text-align: left; image-rendering: pixelated;
+  word-break: keep-all; -webkit-mask-clip: no-clip; mask-clip: no-clip;
+}
+#overlay:has(> :is(.scr-pick, .scr-place)) > .fx3-rv { display: none; }
+#overlay-panel.scr-pick { display: flex; flex-direction: column; gap: var(--s2); }
+#overlay-panel.scr-pick > * { flex: none; min-width: 0; }
+#overlay-panel.scr-pick > .scr-items { flex: 1 1 0; }
+.scr-pick > .scr-top { height: var(--h-plate); }
+.scr-pick > .scr-say { margin: 0; text-align: center; color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.scr-pick > .scr-top { position: relative; display: flex; justify-content: center; align-items: center; min-width: 0; }
+.scr-pick > .scr-top > :is(.scr-lead, .scr-tag) { position: absolute; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: var(--s2); }
+.scr-pick > .scr-top > .scr-lead { left: 0; }
+.scr-pick > .scr-top > .scr-tag { right: 0; }
+:is(.scr-pick, .scr-place) .btn-row { width: 100%; }
+/* 받침 줄: 받침 51×69 도트를 기기 픽셀 정수배(--ss = uikit.fitSlots)로 — 받침 안 카드는 42 도트 폭 */
+:is(.scr-pick, .scr-place) .scr-items { --ss: 4px; display: flex; justify-content: center; align-items: center; gap: var(--slot-gap, 16px); min-height: 0; min-width: 0; }
+:is(.scr-pick, .scr-place) .pick-item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+:is(.scr-pick, .scr-place) .scr-items .card-slot {
+  --card-w: calc(var(--ss) * 42); box-sizing: border-box; width: calc(var(--ss) * 51); height: calc(var(--ss) * 69); padding-top: calc(var(--ss) * 3);
+  background-size: 100% 100%; cursor: pointer;
+}
+:is(.scr-pick, .scr-place) .card-slot > .cf { margin: 0; cursor: pointer; }
+/* 고름: 받침 -sel 그림 + 카드가 2도트 들림 (계단 2프레임) */
+:is(.scr-pick, .scr-place) .card-slot.is-sel > .cf { transform: translateY(calc(var(--ss) * -2)); animation: klift 120ms steps(2, jump-none) both; }
+@keyframes klift { 0% { transform: none; } 100% { transform: translateY(calc(var(--ss) * -2)); } }
+:is(.scr-pick, .scr-place) .card-slot.is-off { cursor: default; }
+:is(.scr-pick, .scr-place) .card-slot.is-off > .cf { filter: grayscale(1) brightness(0.55); cursor: default; }
+/* 받침 아래 한 줄 (12px): 덱 맞물림 · 함께 오는 카드 · 가격 꼬리표 */
+:is(.scr-pick, .scr-place) .slot-info { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 2px; max-width: calc(var(--ss) * 51); min-height: var(--info-h, 18px); color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; text-align: center; white-space: normal; word-break: keep-all; }
+:is(.scr-pick, .scr-place) .scr-items.bare .slot-info { max-width: var(--card-w); }
+:is(.scr-pick, .scr-place) .slot-info b { color: var(--t-body); font-weight: 700; }
+:is(.scr-pick, .scr-place) .slot-info .good { color: var(--t-ally); }
+:is(.scr-pick, .scr-place) .slot-info .bad { color: var(--t-loss); }
+/* 받침 없는 카드 줄 (고물상 · 덱 — 카드만, 고른 칸 = 청록 1도트 테 + 들림) */
+:is(.scr-pick, .scr-place, .win) .card-bare { position: relative; flex: none; cursor: pointer; }
+:is(.scr-pick, .scr-place, .win) .card-bare > .cf { margin: 0; }
+:is(.scr-pick, .scr-place, .win) .card-bare.is-sel > .cf { transform: translateY(calc(var(--px) * -2)); outline: calc(var(--px) * 1) solid var(--t-ally); outline-offset: calc(var(--px) * 1); }
+:is(.scr-pick, .scr-place, .win) .card-bare.is-off > .cf { filter: grayscale(1) brightness(0.55); }
+:is(.scr-pick, .scr-place, .win) .card-bare > .tag { position: absolute; z-index: 6; top: calc(var(--px) * -2); right: calc(var(--px) * -2); }
+
+/* 장소: 왼쪽 장면 그림 40%(액자 · 비율 그대로 정수배로 덮기 · 초점) · 오른쪽 일 */
+#overlay-panel.scr-place { display: grid; grid-template-columns: 40% minmax(0, 1fr); gap: var(--s3); background: #16141c; }
+.scr-place > .scr-art { position: relative; overflow: hidden; min-height: 0; background: #0b0b0e; }
+.scr-place > .scr-art.frame-scene { overflow: hidden; }
+.scr-place > .scr-art > img[data-cover] { position: absolute; left: 0; top: 0; max-width: none; object-fit: fill; image-rendering: pixelated; }
+.scr-place > .scr-work { position: relative; display: flex; flex-direction: column; gap: var(--s2); min-height: 0; min-width: 0; }
+.scr-place > .scr-work > .win-head { justify-content: flex-start; }
+.scr-place > .scr-work > .win-head > .plate { margin-right: var(--s2); }
+/* 고물상: 그림은 화면 바탕(덮기 + 2×2 먹 디더 막) · 앞에 카드 줄 + 오른쪽 열 선택지 */
+#overlay-panel.scr-place.scr-backdrop { grid-template-columns: minmax(0, 1fr); background: #0b0b0e; }
+.scr-place.scr-backdrop > .scr-art { position: absolute; inset: 0; }
+.scr-place.scr-backdrop > .scr-art::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%230b0b0e'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%230b0b0e'/%3E%3C/svg%3E") 0 0 / calc(var(--px) * 2) calc(var(--px) * 2); image-rendering: pixelated; }
+
+/* ---------- 탭 (UI-05 tab-iron-up · tab-brass-sel 35×19, 아래 변이 열림 — 바로 아래 움푹 칸 · 목록과 붙는다) ---------- */
+:is(.win, .scr-pick, .scr-place, .kit) .tabs { display: flex; align-items: flex-end; gap: var(--s1); }
+:is(.win, .scr-pick, .scr-place, .kit) .tab {
+  position: relative; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: calc(var(--px) * 35); height: calc(var(--px) * 19); padding: calc(var(--px) * 2) 0 0; margin: 0; border: 0;
+  background: url('../assets/ui/chrome/v2/tab-iron-up.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; box-shadow: none;
+  color: var(--t-ink); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; white-space: nowrap; cursor: pointer;
+}
+:is(.win, .scr-pick, .scr-place, .kit) .tab::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: max(48px, 100%); }
+:is(.win, .scr-pick, .scr-place, .kit) .tab:is(.sel, [aria-selected='true']) { background-image: url('../assets/ui/chrome/v2/tab-brass-sel.png'); color: var(--t-brass-ink); cursor: default; }
+:is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
+:is(.win, .scr-pick, .scr-place, .kit) .tab.has-new::after { content: ''; position: absolute; top: calc(var(--px) * -2); right: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
+/* 탭 줄 바로 아래 칸에 붙인다 (창 묶음 간격을 지운다) */
+.win > .win-head:has(> .tabs) { align-items: flex-end; }
+.win > .win-head:has(> .tabs) + * { margin-top: calc(-1 * var(--s3)); }
 
 /* ---------- 3.8 토스트 · 상태 띠 (키트 그릇 안에서만 — 전투 HUD는 패스 4에서 옮긴다) ---------- */
 :is(.scr-pick, .scr-place, .kit) .k-toast, .k-toast.k-free {
@@ -254,8 +317,6 @@
 .win .lg-row .lg-cause { font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
 .win .empty-line { margin: auto 0; text-align: center; }
 /* 도움말: 위 탭 줄 · 쪽(그림 + 글 단) · 용어 2단 */
-.win .tabs { display: flex; gap: var(--s2); }
-.win .tabs > .btn { flex: 0 0 calc(var(--px) * 56); }
 .win textarea.inset { flex: 0 1 auto; min-height: calc(var(--px) * 24); }
 .win .gd3 { display: grid; grid-template-columns: calc(var(--px) * 82) minmax(0, 1fr); gap: var(--s3); height: calc(var(--px) * 82); }
 .win .gd3 > .inset { padding: 0; overflow: hidden; display: grid; }
@@ -272,7 +333,6 @@
 .win .dict { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s3); align-content: start; }
 .win .dict .term b { display: block; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
 .win .dict .term span { display: block; font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
-.win .tabs .btn.has-new::after { content: ''; position: absolute; top: calc(var(--px) * -2); right: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
 /* 설문: 눈금 단추 줄 · 고르기 무리 */
 .win .scale { display: flex; gap: var(--s2); justify-content: center; }
 .win .scale > .btn { flex: 0 0 calc(var(--px) * 32); min-width: calc(var(--px) * 32); }
@@ -299,3 +359,45 @@
 .win .gd-media.formula .fx-row .op { width: calc(var(--px) * 11); height: calc(var(--px) * 11); font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 .win .gd-media.formula .fx-row .gd-pc img { width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
 .win .gd-media.formula .fx-row.sum, .win .gd-media.formula .fx-row.total { padding-top: 0; }
+
+/* ===================== 패스 2 화면 내용 — 부품 조합만 (D-394) ===================== */
+/* 선택지 판 + 아이콘 16도트 (작업대 · 고물상 서비스): 아이콘 두 줄 걸침 · 이름 15 · 결과 12 */
+:is(.win, .scr-pick, .scr-place, .kit) .choice.has-ico { grid-template-columns: calc(var(--px) * 16) minmax(0, 1fr); column-gap: var(--s2); }
+:is(.win, .scr-pick, .scr-place, .kit) .choice.has-ico > .ico { grid-row: 1 / span 2; align-self: center; width: calc(var(--px) * 16); height: calc(var(--px) * 16); margin: 0; image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res.up { color: var(--t-gold); }
+:is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res.down { color: var(--t-loss); }
+/* 작업대 · 최종 정비: 선택지 넷을 오른쪽 단 위쪽에 */
+.scr-place .place-choices { gap: var(--s2); max-width: calc(var(--px) * 200); }
+/* 고물상: 머리 줄 · 진열대(카드 줄 + 오른쪽 열) · 단추 줄(가운데 = 고른 물건 풀이 12px 두 줄) */
+.scr-place.scr-shop > .scr-work > .win-head > .wallet { margin-left: auto; }
+.scr-place .shop-body { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--px) * 80); gap: var(--s3); align-items: center; }
+.scr-place .shop-body > .scr-items { height: 100%; }
+.scr-place .shop-side { gap: var(--s2); }
+.scr-place .shop-side .choice-name { white-space: normal; }
+.scr-place .btn-row > .mid > .shop-say { margin: 0; max-height: 36px; overflow: hidden; text-align: center; white-space: normal; color: var(--t-body); }
+/* 덱 보기 · 카드 빼기 · 카드 견본: 움푹 칸 안 카드 격자 (칸 폭 = 카드 폭) */
+/* 카드 폭 = 우물 높이에 한 줄이 통째로 드는 크기(104 ~ 150) — 넘치는 줄만 스크롤 */
+.win .deck-grid { --dw: clamp(104px, calc((var(--win-h) - 172px) * 2 / 3), 150px); display: grid; grid-template-columns: repeat(auto-fit, var(--dw)); justify-content: center; gap: var(--s3) var(--s3); padding: var(--s2) var(--s1); }
+.win .deck-grid > .card-bare { --card-w: var(--dw); }
+.win .deck-grid > .card-bare[data-slot] { cursor: pointer; }
+#overlay-panel.win.win-deck { height: var(--win-h); }
+/* 분대: 분대원 카드 한 줄 — 창 폭 · 높이에 맞춰 줄어든다(168 상한) */
+.win .crew-row { display: flex; justify-content: center; align-items: flex-start; gap: var(--s2); min-height: 0;
+  --card-w: min(168px, calc((100% - (var(--n) - 1) * 8px) / var(--n)), calc((var(--win-h) - 124px) * 2 / 3)); }
+.win .crew-row > .cf { flex: none; margin: 0; }
+/* 결과 장면: 수치 넷(30px 숫자 + 12 이름) · 분대 칩 · 새로 열림 꼬리표 */
+.scr-place.scr-result .scr-work > p { margin: 0; }
+.scr-place .tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); max-width: none; }
+.scr-place .tally div { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.scr-place .tally b { color: var(--t-gold); font: 400 30px/36px Galmuri14, Galmuri11, sans-serif; }
+.scr-place .tally span { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; }
+.scr-place .re-row { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s3); }
+.scr-place .re-chip { display: inline-flex; align-items: center; gap: var(--s1); color: var(--t-body); font: 700 12px/24px Galmuri11, sans-serif; }
+.scr-place .re-chip img { width: 24px; height: 24px; image-rendering: pixelated; }
+.scr-place .re-chip.bad { color: var(--t-loss); }
+.scr-place .re-chip.bad img { filter: grayscale(1) brightness(0.6); }
+.scr-place .re-open { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s2); }
+.scr-place hr.divider { width: 100%; flex: none; }
+/* 칸 가득: 선택지 판 2단 격자 (부품 이름 15 · 효과 12) */
+.scr-pick > .choice-grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: var(--s2) var(--s3); width: min(100%, calc(var(--px) * 360)); margin: 0 auto; }
+.scr-pick > .choice-grid .choice-res { white-space: normal; }
