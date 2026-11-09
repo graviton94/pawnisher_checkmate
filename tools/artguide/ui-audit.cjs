@@ -13,6 +13,12 @@ const SCENES = [
   ['p4-warn', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.doom()); await W(500); await A(() => document.getElementById('btn-end').click()); await W(500); await S(''); }],
   ['p4-log', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.botMove()); await W(2600); await A(() => window.sliceApi.logPeek()); await W(500); await S(''); }],
   ['p4-tut', async (p, A, W, S) => { await A(() => window.sliceApi.start(0)); await W(4500); await A(() => window.sliceApi.tutNow()); await W(3000); await S(''); }],
+  // 패스 5 (D-397): 컷신 크롬 하나(자막 띠 · ▼ · 건너뛴다) · 막 카드 · 지도 미리보기
+  ['p5-prologue', async (p, A, W, S) => { await A(() => void window.sliceApi.pro()); await W(2600); await p.click('.prologue').catch(() => {}); await W(2600); await S(''); }],
+  ['p5-act', async (p, A, W, S) => { await A(() => { window.sliceApi.setAct(0); window.sliceApi.map(2); }); await W(800); await A(() => window.sliceApi.nextAct()); await W(4200); await S(''); }],
+  ['p5-map-preview', async (p, A, W, S) => { await A(() => window.sliceApi.map(2)); await W(1500); await p.click('.mnd.now').catch(() => {}); await W(600); await S(''); }],
+  ['p5-fall', async (p, A, W, S) => { await A(() => window.sliceApi.fallCut('plate')); await W(3500); await S(''); }],
+  ['p5-credits', async (p, A, W, S) => { await A(() => window.sliceApi.credits()); await W(4000); await S(''); }],
   ['help', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => document.getElementById('btn-help').click()); await W(900); await S(''); }],
   ['crew', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.crew()); await W(900); await S(''); }],
   ['taunt', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.taunt('gloat')); await W(900); await S(''); }],
