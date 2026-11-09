@@ -11,7 +11,7 @@ import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
 import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../slice/battle';
-import { playOut, playOutSearch, type BotStyle } from '../slice/bot';
+import { idleStats, playOut, playOutSearch, type BotStyle, type IdleStats } from '../slice/bot';
 
 export type RunStyle = BotStyle | 'search';
 export interface RunOpts {
@@ -38,6 +38,8 @@ export interface RunResult {
   deck: number;
   parts: SlicePartId[];
   squad: PieceType[];
+  /** 손 놓은 턴 (2026-11-09d) — 이 출하의 모든 대국 합 */
+  idle: IdleStats;
 }
 
 const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
@@ -61,6 +63,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const bosses: BossLog[] = [];
   let battles = 0;
   let turnsAll = 0;
+  const idle = idleStats();
   const usable = (id: CommandId) => cardFits(id, squad.map((u) => u.t));
   const hpRatio = () => squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)) / crewMaxHp(u), 0) / Math.max(1, squad.length);
   const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; squad.push(makeCrew(r.t, rng, squad.map((u) => u.name ?? ''))); deck.push(...r.cards); };
@@ -98,7 +101,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     const best = offers.sort((a, b) => val(b) - val(a))[0];
     if (best && val(best) > 0) deck.push(best);
   };
-  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t) });
+  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle });
   for (const [ai, a] of acts.entries()) {
     let prev: MapNode | null = null;
     for (const [ri, row] of a.rows.entries()) {
@@ -117,6 +120,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           const r = style === 'search' ? playOutSearch(b, 40, 3, 4) : playOut(b, 40, undefined, style);
           battles += 1;
           turnsAll += r.turns;
+          idle.turns += r.idle.turns; idle.idle += r.idle.idle; idle.apLeft += r.idle.apLeft; idle.idleAp += r.idle.idleAp;
           if (def.boss && def.bossRule) bosses.push({ rule: def.bossRule, act: ai + 1, won: r.won, turns: r.turns });
           if (r.won) {
             ok = true;

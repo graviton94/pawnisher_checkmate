@@ -22,13 +22,16 @@ it('relic', () => {
   const out: Record<string, { s: number; c: number; p: number; a: number; e: string; b: string }[]> = {};
   for (const id of items) {
     out[id] = [];
+    // 손 놓은 턴 (2026-11-09d): 태엽이 남고 낼 카드가 있었는데 끝낸 턴 비율 · 턴 끝 평균 남긴 태엽
+    const it = { turns: 0, idle: 0, apLeft: 0, idleAp: 0 };
     for (let k = 0; k < N; k++) {
       const seed = sb + (k + off) * 7919;
       const r = simulateRun(seed, { asc, style, ...(id.startsWith('card:') ? { forceCards: [id.slice(5), id.slice(5)] as CommandId[] } : { forceParts: id === 'base' ? [] : [id as SlicePartId] }) });
+      it.turns += r.idle.turns; it.idle += r.idle.idle; it.apLeft += r.idle.apLeft; it.idleAp += r.idle.idleAp;
       out[id].push({ s: seed, c: +r.cleared, p: r.battles - (r.cleared ? 0 : 1), a: r.act, e: r.ended, b: r.bosses.map((x) => `${x.act}${x.rule}:${+x.won}`).join(',') });
     }
     const rs = out[id];
-    console.log(`RL ${id} asc${asc} ${style} n${N} clear ${rs.filter((r) => r.c).length} prog ${(rs.reduce((a, r) => a + r.p, 0) / N).toFixed(2)}`);
+    console.log(`RL ${id} asc${asc} ${style} n${N} clear ${rs.filter((r) => r.c).length} prog ${(rs.reduce((a, r) => a + r.p, 0) / N).toFixed(2)} idle ${((100 * it.idle) / Math.max(1, it.turns)).toFixed(1)}% apLeft ${(it.apLeft / Math.max(1, it.turns)).toFixed(2)} idleAp ${(it.idleAp / Math.max(1, it.idle)).toFixed(2)} turns ${it.turns}`);
   }
   writeFileSync(`sim/relic-${process.env.RL_TAG ?? 'x'}.json`, JSON.stringify(brief ? { asc, style, N, rows: Object.entries(out).map(([id, rs]) => ({ id, c: rs.filter((r) => r.c).length, p: rs.reduce((a, r) => a + r.p, 0) / N })) } : { asc, style, N, off, sb, out }));
 }, 3_600_000);
