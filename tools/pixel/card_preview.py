@@ -48,8 +48,8 @@ def cmd(g, ax, cost, name, art, who, say, fx, cond=''):
 <img class="tpl" src="{b64(f'public/ui/cards/cmd-{g}.png')}">
 <b class="cost" style="{at(-5, -6, 17, 17)}">{cost}</b>
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
-<span class="type" style="{at(30, 70, 37, 7)}">{who} · {AXBG[ax][2]}</span>
-<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p>{f'<p class="cond">({cond})</p>' if cond else ''}<p class="fx">{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</p></div></div>'''
+<span class="type" style="{at(30, 70, 37, 7)}">{who if (who, ax) in (('폰', 'inf'), ('나이트', 'cav'), ('킹', 'king')) else f'{who} · {AXBG[ax][2]}'}</span>
+<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p><p class="fx">{f'<span class="cond">{cond}</span> ' if cond else ''}<b>{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</b></p></div></div>'''
 
 
 def part(g, name, icon, say, fx, cond=''):
@@ -57,7 +57,7 @@ def part(g, name, icon, say, fx, cond=''):
 <img class="tpl" src="{b64(f'public/ui/cards/part-{g}.png')}">
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <span class="type" style="{at(30, 70, 37, 7)}">부품</span>
-<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p>{f'<p class="cond">({cond})</p>' if cond else ''}<p class="fx">{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</p></div></div>'''
+<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p><p class="fx">{f'<span class="cond">{cond}</span> ' if cond else ''}<b>{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</b></p></div></div>'''
 
 
 def crew(g, name, serial, face, atk, hp, lives, kills, dmg, defied, q):
@@ -71,7 +71,7 @@ def crew(g, name, serial, face, atk, hp, lives, kills, dmg, defied, q):
 
 
 def main(out):
-    cards_cmd = cmd('common', 'inf', 0, '총진격', 'public/ui/hud/crew-P.png', '폰', '폰 전원이 한 칸 나아가 친다.', '폰 전원 기본 공격') + cmd('rare', 'cav', 1, '기습', 'public/ui/hud/crew-N.png', '나이트', '어둠 속에서 덮친다.', '피해 ×1.5', '처치하면 카드 1장') + cmd('gold', 'chain', 2, '대성당의 빛', 'public/ui/hud/crew-B.png', '비숍', '사선 끝까지 빛이 꿰뚫는다.', '사선 위 모든 적 +10', '처치마다 연쇄 +1')
+    cards_cmd = cmd('common', 'inf', 0, '총진격', 'public/ui/hud/crew-P.png', '폰', '줄을 맞춰, 앞으로.', '모든 폰이 한 칸 나아가 기본 공격') + cmd('rare', 'cav', 1, '기습', 'public/ui/hud/crew-N.png', '나이트', '어둠 속에서 덮친다.', '피해 ×1.5 · 처치하면 카드 1장') + cmd('gold', 'chain', 2, '대성당의 빛', 'public/ui/hud/crew-B.png', '비숍', '사선 끝까지 빛이 꿰뚫는다.', '사선 위 모든 적 피해 +10 · 처치마다 연쇄 +1')
     cards_part = part('common', '도화선', 'public/ui/icons16/fuse.png', '불씨가 줄을 타고 달린다.', '연쇄 +1', '한 턴에 셋을 쓰러뜨리면') + part('rare', '피의 장부', 'public/ui/icons16/gameRecord.png', '흘린 피는 빠짐없이 적힌다.', '공격 +1', '누적 피해 60마다') + part('gold', '짓누르는 왕관', 'public/ui/icons16/crown.png', '왕관의 무게가 곧 주먹의 무게.', '킹의 공격 ×2')
     cards_crew = crew('common', '먼지투성이', '#P-203 · 폰', 'public/ui/hud/crew-P.png', 9, 22, 1, 4, 120, 0, ('겁쟁이', '적이 곁에 오면 한 칸 물러선다')) + crew('rare', '굽은 지렛대', '#N-681 · 나이트', 'public/ui/hud/crew-N.png', 16, 36, 2, 9, 360, 2, ('납땜 흉갑', '방열판 12 · 공격 −15%')) + crew('gold', '콧대 높은 귀부인', '#Q-104 · 퀸', 'public/ui/hud/crew-Q.png', 24, 48, 0, 15, 820, 1, ('오만', '처치하면 태엽 +1'))
     back = f'<div class="card"><img class="tpl" src="{b64("public/ui/cards/back.png")}"></div>'
@@ -90,7 +90,7 @@ h1{{font:24px G11B;color:#ffd64a;margin:0 0 4px}} h2{{font:15px G14;color:#c9c1a
 .type{{display:grid;place-items:center;font:12px G11;color:#c9c1ad;z-index:2}}
 .scroll{{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;text-align:center;color:#2a2620;z-index:2}}
 .scroll p{{margin:0;line-height:1.3;word-break:keep-all;text-wrap:balance}} .scroll .say{{font:12px G11;color:#3a342a}} .scroll .cond{{font:12px G11;color:#6e6452}}
-.scroll .fx{{font:700 12px G11B;color:#2a2620;padding:3px 4px 0;border-top:2px dotted #a8782a;margin-top:2px;align-self:stretch}} .scroll .fx em{{font-style:normal;color:#a8222e}}
+.scroll .fx{{font:12px G11;color:#4a4436;padding:4px 2px 0;border-top:2px dotted #a8782a;margin-top:3px;align-self:stretch}} .scroll .fx b{{font:700 12px G11B;color:#2a2620}} .scroll .fx .cond{{color:#4a4436}} .scroll .fx em{{font-style:normal;color:#a8222e}}
 .scroll.crew small{{font:12px G11;color:#6e6452}} .st{{display:flex;gap:8px;font:700 12px G11B;color:#2a2620}} .st i{{font:12px G11;font-style:normal;color:#6e6452;margin-right:2px}}
 .qn{{font:700 12px G11B;color:#1f6b70}}
 .badge{{display:grid;place-items:center;font:700 15px G11B;color:#fff;text-shadow:2px 2px 0 #000;z-index:3}}
