@@ -107,7 +107,7 @@ const full = (s: EventState): string | null => (s.squad.length >= SLICE.squadMax
 /** 분대원 n명이 각각 pct만큼 HP를 잃는다 (가장 성한 쪽부터 · 킹 제외) — 이름들을 돌려준다 */
 const someHurt = (s: EventState, n: number, pct: number): string => Array.from({ length: n }, () => oneHurt(s, pct)).filter((x, i, a) => a.indexOf(x) === i).join(' · ');
 const poor = (n: number) => (s: EventState) => (s.gold < n ? `나사 ${n} 필요` : null);
-const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', apply: () => ({ text: '당신은 발걸음을 돌린다.' }) });
+const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', apply: () => ({ text: '당신은 말없이 발걸음을 돌린다.' }) });
 
 /**
  * 사건 15종 (D-250, 사용자: 「사건도 게임으로 치면 스테이지 하나 — 지금은 보너스처럼 low risk low return, 쉬어 가는 것 같다. high risk high return으로」 ·
@@ -139,7 +139,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
           if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]}의 문턱 +2.` }; }
           s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
-          return { slot: 1, text: `쩍. 축이 버티지 못한다. ${u.name ?? NAMES[u.t]}의 심장 톱니에 금이 갔다.` };
+          return { slot: 1, text: `쩍. 축이 비명을 지르며 갈라진다. ${u.name ?? NAMES[u.t]}의 심장 톱니에 금이 갔다.` };
         },
       },
       leave('지나가기'),
@@ -159,7 +159,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     choices: [
       // D-254: 코인토스는 두고 나사 내기(두 배 · 몰수)를 뺐다 — 결과는 부품 · 분대원 피해
       { label: '동전을 던지게 둘까?', desc: '앞면: 부품 하나 · 뒷면: 분대원 하나 HP −50%', blocked: (s) => (nonKing(s).length ? null : '분대원 필요'), apply: (s, rng) => {
-        if (rng.int(2) === 0) return { slot: 0, text: '앞면. 나이트가 혀를 차며 안장에서 부품을 꺼낸다.', partPick: true };
+        if (rng.int(2) === 0) return { slot: 0, text: '앞면이다. 나이트가 혀를 차며, 마지못해 안장에서 부품을 꺼낸다.', partPick: true };
         const u = pick(rng, nonKing(s))!;
         s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? crewMaxHp(x)) - crewMaxHp(x) * 0.5)) } : x));
         return { slot: 1, text: `뒷면. 발굽이 ${josa(u.name, '을')} 걷어찬다. (HP −50%)` };
@@ -206,7 +206,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         }
         const fine = Math.floor(s.gold / 2);
         s.gold -= fine;
-        return { slot: 1, text: `저울이 눈을 뜬다. 벌금이 매겨진다. (나사 −${fine})` };
+        return { slot: 1, text: `저울의 탐욕스러운 눈이 번쩍 뜨인다. 벌금이 매겨진다. (나사 −${fine})` };
       } },
       leave('지나가기'),
     ],
@@ -215,9 +215,9 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '야간 교대',
     text: '꺼지지 않은 공방의 불빛이 당신을 부른다. 장인은 잠들었고 모루는 아직 뜨겁다.',
     choices: [
-      { label: '두드리기', desc: '분대 전원 HP +30%', apply: (s) => { hpRatio(s, 0.3); return { text: '쇳소리가 밤새 이어진다. 분대가 다시 선다. (HP +30%)' }; } },
+      { label: '두드리기', desc: '분대 전원 HP +30%', apply: (s) => { hpRatio(s, 0.3); return { text: '쇳소리가 밤새 이어진다. 동이 틀 무렵, 분대가 다시 일어선다. (HP +30%)' }; } },
       { label: '불을 키울까?', desc: '50%: HP 가득 + 카드 1장 다듬기 · 50%: 분대원 하나 HP −60%', apply: (s, rng) => {
-        if (rng.int(2) === 0) { hpRatio(s, 1); return { slot: 0, text: `불길이 쇠를 새로 벼린다. 분대가 새것처럼 선다. ${refineRandom(s, rng)}` }; }
+        if (rng.int(2) === 0) { hpRatio(s, 1); return { slot: 0, text: `불길이 쇠를 새로 벼린다. 분대가, 갓 부은 쇠처럼 선다. ${refineRandom(s, rng)}` }; }
         const who = oneHurt(s, 0.6);
         return { slot: 1, text: `불이 번진다. ${josa(who, '이')} 그을린 채 빠져나온다. (HP −60%)` };
       } },
@@ -261,7 +261,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         let n = 0;
         s.squad = s.squad.filter((u) => !(u.t === 'P' && n++ < 2));
         s.deck.push('leap');
-        return { text: '폰 둘이 손수레에 오른다. 나이트가 내려선다.', recruit: 'N' };
+        return { text: '폰 둘이 손수레에 오른다. 대가로, 수레 위의 나이트가 내려선다.', recruit: 'N' };
       } },
       leave('거절하기'),
     ],
@@ -272,7 +272,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '고철 더미 사이에 쇠사슬로 묶인 상자가 있다. 봉인판의 각인 세 칸이 녹에 덮여 있다. 각인이 맞으면 봉인이 풀린다.',
     choices: [
       { label: '녹을 긁어낼까?', desc: '50%: 희귀 이상 부품 · 50%: 녹 독 (분대원 하나 HP −50%)', apply: (s, rng) => {
-        if (rng.int(2) === 0) return { slot: 0, text: '각인 셋이 맞물린다. 봉인이 풀리고 상자가 열린다.', partPick: true, elite: true };
+        if (rng.int(2) === 0) return { slot: 0, text: '각인 셋이 맞물린다. 사슬이 풀리며, 봉인된 상자가 열린다.', partPick: true, elite: true };
         const who = oneHurt(s, 0.5);
         return { slot: 1, text: `각인이 어긋난다. 녹 가루가 ${who}의 이음새로 스민다. (HP −50%)` };
       } },
@@ -287,7 +287,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '판정기를 돌릴까?', desc: '분대원 하나 HP −35% · 40%: 희귀 부품 · 25%: 승급 · 35%: 감전', apply: (s, rng) => {
         const who = oneHurt(s, 0.35);
         const r = rng.int(100);
-        if (r < 40) return { slot: 0, text: '세 칸이 맞물린다. 판정기가 합격품을 뱉는다.', partPick: true, elite: true };
+        if (r < 40) return { slot: 0, text: '세 칸이 맞물린다. 판정기가 덜컹이며, 합격품을 뱉어 낸다.', partPick: true, elite: true };
         if (r < 65) {
           const u = pick(rng, s.squad.filter((x) => UP[x.t]));
           if (u) {
@@ -342,7 +342,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '기름 장수',
     text: '기름통을 실은 손수레가 길을 막는다. 수레 위의 룩이 국자를 흔든다. “관절에 기름 한 국자. 값은 정해져 있다.”',
     choices: [
-      { label: '나사 60을 낼까?', desc: '분대 전원 HP +40%', blocked: poor(60), apply: (s) => { s.gold -= 60; hpRatio(s, 0.4); return { text: '국자가 관절마다 기름을 붓는다. 삐걱이던 소리가 멎는다. (HP +40%)' }; } },
+      { label: '나사 60을 낼까?', desc: '분대 전원 HP +40%', blocked: poor(60), apply: (s) => { s.gold -= 60; hpRatio(s, 0.4); return { text: '국자가 관절마다 기름을 붓는다. 삐걱이던 소리가, 하나씩 잦아든다. (HP +40%)' }; } },
       { label: '나사 110을 낼까?', desc: '깨진 심장 톱니 하나를 고친다', blocked: (s) => (s.gold < 110 ? '나사 110 필요' : !s.squad.some((u) => u.cracked) ? '깨진 심장 톱니 없음' : null), apply: (s) => { s.gold -= 110; const u = s.squad.find((x) => x.cracked)!; s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: false } : x)); return { text: `기름 먹인 새 톱니가 ${u.name ?? NAMES[u.t]}의 가슴에 물린다. (심장 톱니 수리)` }; } },
       leave('지나가기'),
     ],
@@ -359,7 +359,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '고철 교환소',
     text: '철망 너머에서 폰 하나가 저울을 두드린다. “나사 백. 부품 상자 하나. 고르는 건 너다.”',
     choices: [
-      { label: '나사 100을 낼까?', desc: '부품 하나를 고른다', blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고 상자 하나가 밀려 나온다.', partPick: true }; } },
+      { label: '나사 100을 낼까?', desc: '부품 하나를 고른다', blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고, 잊혀진 상자 하나가 밀려 나온다.', partPick: true }; } },
       leave('지나가기'),
     ],
   },
@@ -368,8 +368,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '길 잃은 폰',
     text: '포장 라인에서 떨어져 나온 폰 하나가 길가에 서 있다. 등에 붙은 출하표가 반쯤 찢겨 있다. “…출구가 어느 쪽이에요?”',
     choices: [
-      { label: '데려간다', desc: '폰 하나가 분대에 든다', blocked: full, apply: () => ({ text: '폰이 당신의 줄 맨 끝에 붙는다.', recruit: 'P' }) },
-      { label: '길을 알려 준다', desc: '나사 +25', apply: (s) => { s.gold += 25; return { text: '폰이 주머니를 털어 나사를 내민다. (나사 +25)' }; } },
+      { label: '데려간다', desc: '폰 하나가 분대에 든다', blocked: full, apply: () => ({ text: '폰이 말없이, 당신의 줄 맨 끝에 선다.', recruit: 'P' }) },
+      { label: '길을 알려 준다', desc: '나사 +25', apply: (s) => { s.gold += 25; return { text: '폰이 주머니를 털어 나사를 내민다. 그리고 출구를 향해, 홀로 걸어간다. (나사 +25)' }; } },
       leave('지나가기'),
     ],
   },
@@ -378,7 +378,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '녹슨 고철이 산처럼 쌓여 있다. 그 아래 어딘가에서 나사 구르는 소리가 난다. 더미가 삐걱인다.',
     choices: [
       { label: '파고들까?', desc: '60%: 나사 +70 · 40%: 분대원 하나 HP −40%', apply: (s, rng) => {
-        if (rng.int(10) < 6) { s.gold += 70; return { slot: 0, text: '고철 틈에서 나사 주머니가 딸려 나온다. (나사 +70)' }; }
+        if (rng.int(10) < 6) { s.gold += 70; return { slot: 0, text: '고철 틈으로 팔을 밀어 넣는다. 묵직한 나사 주머니가, 딸려 나온다. (나사 +70)' }; }
         const who = oneHurt(s, 0.4);
         return { slot: 1, text: `더미가 무너진다. ${josa(who, '이')} 깔린다. (HP −40%)` };
       } },
@@ -439,7 +439,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '식은 주물틀이 열린 채 놓여 있다. 안쪽에 폰 모양이 새겨져 있다. 국자에는 쇳물이 조금 남았다.',
     choices: [
       { label: '쇳물을 부어 볼까?', desc: '50%: 폰 하나가 분대에 든다 · 50%: 분대원 하나 HP −45%', blocked: full, apply: (s, rng) => {
-        if (rng.int(2) === 0) return { slot: 0, text: '틀이 갈라지며 갓 굳은 폰이 일어선다.', recruit: 'P' };
+        if (rng.int(2) === 0) return { slot: 0, text: '틀이 갈라지고, 갓 굳은 폰 하나가 일어선다.', recruit: 'P' };
         const who = oneHurt(s, 0.45);
         return { slot: 1, text: `쇳물이 튄다. ${josa(who, '이')} 데인다. (HP −45%)` };
       } },
@@ -450,9 +450,9 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 왕관 제단',
     text: '부서진 제단 위에 녹슨 왕관 하나가 놓여 있다. 그 앞 접시에 나사가 수북하다. 누군가 바치고 간 것이다.',
     choices: [
-      { label: '가진 나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹 아래에서 무언가가 빛난다.', partPick: true, elite: true }; } },
+      { label: '가진 나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹이 갈라진다. 그 아래에서, 무언가가 빛을 발한다.', partPick: true, elite: true }; } },
       { label: '접시의 나사를 가져갈까?', desc: '50%: 나사 +80 · 50%: 분대원 둘 HP −30%', apply: (s, rng) => {
-        if (rng.int(2) === 0) { s.gold += 80; return { slot: 0, text: '아무 일도 일어나지 않는다. 접시가 가벼워진다. (나사 +80)' }; }
+        if (rng.int(2) === 0) { s.gold += 80; return { slot: 0, text: '아무 일도, 일어나지 않는다. 접시만이 가벼워진다. (나사 +80)' }; }
         const who = someHurt(s, 2, 0.3);
         return { slot: 1, text: `제단이 무너져 내린다. ${josa(who, '이')} 파편에 긁힌다. (HP −30%)` };
       } },
@@ -495,9 +495,9 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '다른 공장의 킹이 포장대 옆에서 졸고 있다. 왕관에 박힌 보석이 반짝인다. 호위는 보이지 않는다.',
     choices: [
       { label: '보석을 뽑을까?', desc: '50%: 나사 +110 · 50%: 분대원 둘 HP −35%', apply: (s, rng) => {
-        if (rng.int(2) === 0) { s.gold += 110; return { slot: 0, text: '보석이 소리 없이 빠진다. 킹은 계속 존다. (나사 +110)' }; }
+        if (rng.int(2) === 0) { s.gold += 110; return { slot: 0, text: '보석이 소리 없이 빠진다. 잠든 킹은, 깨어나지 않는다. (나사 +110)' }; }
         const who = someHurt(s, 2, 0.35);
-        return { slot: 1, text: `킹의 눈이 뜨인다. 홀이 휘둘린다. ${josa(who, '이')} 얻어맞는다. (HP −35%)` };
+        return { slot: 1, text: `킹의 눈이 번쩍 뜨인다. 홀이 휘둘린다. ${josa(who, '이')} 얻어맞는다. (HP −35%)` };
       } },
       leave('조용히 지나간다'),
     ],
@@ -514,8 +514,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       } },
       { label: '나사 30을 던질까?', desc: '50%: 나사 +70 · 50%: 아무 일도 없다', blocked: poor(30), apply: (s, rng) => {
         s.gold -= 30;
-        if (rng.int(2) === 0) { s.gold += 70; return { slot: 0, text: '나사 소리가 두 배로 돌아온다. 우물 벽 틈에서 나사가 쏟아진다. (나사 +40)' }; }
-        return { slot: 1, text: '나사가 바닥에 닿는 소리조차 들리지 않는다. (나사 −30)' };
+        if (rng.int(2) === 0) { s.gold += 70; return { slot: 0, text: '나사 소리가 두 배가 되어 돌아온다. 우물 벽 틈에서, 나사가 쏟아진다. (나사 +40)' }; }
+        return { slot: 1, text: '나사가 바닥에 닿는 소리조차, 들려오지 않는다. (나사 −30)' };
       } },
       leave('지나가기'),
     ],
@@ -564,9 +564,9 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '통행 문',
     text: '쇠창살 문 앞에 룩 둘이 버티고 있다. 팻말이 걸려 있다. 「통행세 나사 40」. 문 옆 상자에서 나사 소리가 난다.',
     choices: [
-      { label: '나사 40을 낸다', desc: '분대 전원 HP +20% (초소에서 쉰다)', blocked: poor(40), apply: (s) => { s.gold -= 40; hpRatio(s, 0.2); return { text: '룩들이 비켜선다. 초소의 난로가 분대를 녹인다. (HP +20%)' }; } },
+      { label: '나사 40을 낸다', desc: '분대 전원 HP +20% (초소에서 쉰다)', blocked: poor(40), apply: (s) => { s.gold -= 40; hpRatio(s, 0.2); return { text: '룩들이 길을 비킨다. 초소의 난로가, 얼어붙은 분대를 녹인다. (HP +20%)' }; } },
       { label: '문을 부술까?', desc: '60%: 나사 +60 · 40%: 분대원 하나 HP −60%', apply: (s, rng) => {
-        if (rng.int(10) < 6) { s.gold += 60; return { slot: 0, text: '창살이 휜다. 룩들이 달아나고 상자가 남는다. (나사 +60)' }; }
+        if (rng.int(10) < 6) { s.gold += 60; return { slot: 0, text: '창살이 휜다. 겁먹은 룩들이 달아나고, 버려진 상자만 남는다. (나사 +60)' }; }
         const who = oneHurt(s, 0.6);
         return { slot: 1, text: `룩이 버틴다. ${josa(who, '이')} 문짝에 부딪혀 나뒹군다. (HP −60%)` };
       } },
@@ -591,8 +591,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '연장 근무',
     text: '라인의 사이렌이 울린다. 감독 룩이 소리친다. “연장이다! 한 바퀴 더 돌면 수당이 두 배!”',
     choices: [
-      { label: '연장을 뛴다', desc: '분대 전원 HP −20% · 나사 +90', apply: (s) => { hpRatio(s, -0.2); s.gold += 90; return { text: '라인이 밤새 돈다. 분대가 휘청이며 수당을 받는다. (HP −20% · 나사 +90)' }; } },
-      { label: '쉬겠다고 한다', desc: '분대 전원 HP +15%', apply: (s) => { hpRatio(s, 0.15); return { text: '감독이 혀를 찬다. 분대는 구석에서 눈을 붙인다. (HP +15%)' }; } },
+      { label: '연장을 뛴다', desc: '분대 전원 HP −20% · 나사 +90', apply: (s) => { hpRatio(s, -0.2); s.gold += 90; return { text: '라인이 밤새 돈다. 분대는 휘청이며, 두툼한 수당 봉투를 받아 든다. (HP −20% · 나사 +90)' }; } },
+      { label: '쉬겠다고 한다', desc: '분대 전원 HP +15%', apply: (s) => { hpRatio(s, 0.15); return { text: '감독이 혀를 찬다. 분대는 구석에 모여 눈을 붙인다. 사이렌 소리가, 멀어져 간다. (HP +15%)' }; } },
     ],
   },
 };
