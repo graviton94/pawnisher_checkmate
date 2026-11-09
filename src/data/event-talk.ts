@@ -344,3 +344,44 @@ export const EVENT_FOCUS: Record<string, [number, number]> = {
   drillRook: [0.2, 0.6], cardSharp: [0.4, 0.45], castMold: [0.35, 0.5], crownAltar: [0.5, 0.4], duelKnight: [0.55, 0.4], bookCart: [0.4, 0.55],
   sleepingKing: [0.45, 0.4], echoWell: [0.4, 0.5], copyPress: [0.45, 0.45], fieldMedic: [0.35, 0.55], coldForge: [0.4, 0.5], mirrorHall: [0.5, 0.6], overtime: [0.6, 0.55],
 };
+
+/**
+ * 사건 결과 FX (D-398, D-260 · D-180): 바뀐 것(실제 카드 · 분대원 카드 · 지갑 · 부품 상자) 위에 터지는 도트 낱말과 짧은 독백.
+ * pop = 대상 위로 튀는 도트 글(갈무리11 굵게 12px를 1도트로 — 전투 피해 숫자와 같은 그림), line = 결과 무대 아래 독백 한 줄(‘ ’, 짧은 반말 — voice ③).
+ * 색은 전투 숫자와 같은 약속: 얻음 금 · 회복 초록 · 잃음 진홍 · 녹 녹빛.
+ */
+export type EvFxKind = 'goldUp' | 'goldDown' | 'heal' | 'hurt' | 'life' | 'crack' | 'evolve' | 'recruit' | 'die' | 'up' | 'rust' | 'break' | 'new' | 'part';
+export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string>; line: Record<EvFxKind, string> } = {
+  pop: {
+    goldUp: (n = 0) => `나사 +${n}`,
+    goldDown: (n = 0) => `나사 -${n}`,
+    heal: (n = 0) => `+${n}`,
+    hurt: (n = 0) => `-${n}`,
+    life: (n = 1) => `생명 +${n}`,
+    crack: () => '금!',
+    evolve: () => '승격',
+    recruit: () => '합류',
+    die: () => '쓰러짐',
+    up: () => '태엽 -1',
+    rust: () => '태엽 +1',
+    break: () => '부서짐',
+    new: () => '새 카드',
+    part: () => '부품',
+  },
+  line: {
+    goldUp: '‘주머니가 묵직해졌다.’',
+    goldDown: '‘주머니가 가벼워졌다.’',
+    heal: '‘태엽이 다시 팽팽해진다.’',
+    hurt: '‘어딘가 삐걱인다.’',
+    life: '‘한 번 더 일어설 수 있다.’',
+    crack: '‘심장 톱니에 금이 갔다.’',
+    evolve: '‘몸이 새로 맞춰졌다.’',
+    recruit: '‘새 얼굴이 줄에 섰다.’',
+    die: '‘하나가 멈췄다.’',
+    up: '‘카드가 가벼워졌다.’',
+    rust: '‘카드에 녹이 슬었다.’',
+    break: '‘카드가 부서졌다.’',
+    new: '‘새 카드가 손에 붙는다.’',
+    part: '‘상자가 열린다.’',
+  },
+};

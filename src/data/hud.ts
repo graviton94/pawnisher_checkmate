@@ -24,9 +24,8 @@ export const BOSS_PHASE_TEXT = {
 export const MAP_TEXT = {
   hint: '빛나는 곳을 고릅니다.',
   go: '진입',
-  squad: (n: number) => `분대 ${n}`,
-  deck: (n: number) => `덱 ${n}`,
-  parts: (n: number, max: number) => `부품 ${n}/${max}`,
+  /** 머리 줄 수치 명판 하나 (D-398): 이름 12 · 값 15 */
+  stat: { squad: '분대', deck: '덱', parts: '부품', charm: '부적' },
   foes: (n: number) => `적 ×${n}`,
   reward: { card: '보상 카드', part: '보상 부품', kit: '보상 부품', recruit: '보상 영입' } as Record<string, string>,
   trait: { blastPawn: '불꽃 폰', rookPlate: '방패 룩', guard: '호위' } as Record<string, string>,

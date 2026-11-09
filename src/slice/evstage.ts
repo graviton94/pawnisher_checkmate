@@ -9,6 +9,11 @@
 import { sfx } from '../audio/sfx';
 import { coverArt } from './uikit';
 import { FxCanvas, hex, Lights, P, Particles, PAL, Rng, WHITE } from '../view/pxfx';
+import { buildPopupArt, drawPopup, POPUP_MS, type PopupArt } from '../view/popup';
+import { EVENT_FX, type EvFxKind } from '../data/event-talk';
+import { replay, shakeEl, typeIn } from './fx3';
+import { screwBurst } from './uifx';
+import walletPng from '../assets/ui/chrome/v2/wallet.png';
 
 /** 장면 층 1도트 = 3 CSS px 안팎 — 기기 픽셀 정수로 맞춘다 (D-392 · D-395: 캔버스를 100%로 늘이지 않는다) */
 const dotPx = (): number => { const r = window.devicePixelRatio || 1; return Math.round(3 * r) / r; };
@@ -30,6 +35,13 @@ export interface EvFxCtx {
   /** 결과 장면 바탕 = 사건 그림 (비율 그대로 덮고 초점, 2×2 먹 디더) — D-395 */
   scene?: string;
   focus?: [number, number];
+  /** 나사 변화량 (D-398): 지갑 그림에 나사가 날아들거나 쏟아진다 */
+  gold?: number;
+  /** 부품을 고르게 되는 결과 (D-398): 부품 상자가 열린다 */
+  part?: boolean;
+  /** 창 위 테의 나사 꼬리표 — 나사가 내려앉을 때 값을 바꾼다 */
+  purse?: HTMLElement | null;
+  goldAfter?: number;
 }
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -48,6 +60,11 @@ class Layer {
   x: CanvasRenderingContext2D;
   ps: Particles;
   lights = new Lights();
+  /** 도트 낱말 · 고리 층 (D-398) — 결과 줄 카드보다 위 */
+  pop: HTMLCanvasElement;
+  px: CanvasRenderingContext2D;
+  pops: { art: PopupArt; cx: number; by: number; t0: number }[] = [];
+  rings: { x: number; y: number; r: number; c: string; t0: number }[] = [];
   w: number;
   h: number;
   R: Rng;
@@ -65,7 +82,13 @@ class Layer {
     this.x.imageSmoothingEnabled = false;
     this.fx = new FxCanvas(this.w, this.h, D);
     this.fx.canvas.className = 'ev-fx ev-fx-top';
-    host.append(this.art, this.fx.canvas);
+    this.pop = document.createElement('canvas');
+    this.pop.width = this.w; this.pop.height = this.h;
+    this.pop.style.width = this.art.style.width;
+    this.pop.style.height = this.art.style.height;
+    this.pop.className = 'ev-fx ev-fx-pop';
+    this.px = this.pop.getContext('2d')!;
+    host.append(this.art, this.fx.canvas, this.pop);
     this.R = new Rng(seed);
     this.ps = new Particles(this.R, () => this.h + 40);
     let last = performance.now();
@@ -77,6 +100,7 @@ class Layer {
       this.fx.frame.clear();
       this.ps.draw(this.fx.painter, 'back'); this.ps.draw(this.fx.painter, 'front'); this.lights.draw(this.fx.painter);
       this.fx.present();
+      this.drawPops(now);
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -88,6 +112,40 @@ class Layer {
     return { x: (b.left - a.left - this.host.clientLeft) / k, y: (b.top - a.top - this.host.clientTop) / k, w: b.width / k, h: b.height / k };
   }
   stop() { this.on = false; }
+  /** 도트 낱말: 튀어나옴(2배 → 1배 계단) → 떠오름 → 아래부터 디더로 지워짐 — 전투 피해 숫자 drawPopup 그대로 */
+  addPop(text: string, color: number, cx: number, by: number): void {
+    this.pops.push({ art: buildPopupArt(text, color), cx, by, t0: performance.now() + (calm() ? -POPUP_MS.fadeAt * 0.5 : 0) });
+  }
+  /** 계단 고리: 반지름 3계단(45% → 80% → 100%, 마지막은 디더 반쪽) — 투명도 없이 */
+  addRing(x: number, y: number, r: number, c: string): void {
+    if (!calm()) this.rings.push({ x, y, r, c, t0: performance.now() });
+  }
+  private drawPops(now: number): void {
+    const g = this.px;
+    g.clearRect(0, 0, this.w, this.h);
+    this.rings = this.rings.filter((q) => {
+      const f = Math.floor((now - q.t0) / 60);
+      if (f > 2) return false;
+      const r = Math.round(q.r * [0.45, 0.8, 1][f]);
+      g.fillStyle = q.c;
+      const n = Math.max(12, Math.round(r * 6.3));
+      for (let k = 0; k < n; k++) {
+        if (f === 2 && k % 2) continue;
+        const a = (k / n) * Math.PI * 2;
+        g.fillRect(Math.round(q.x + Math.cos(a) * r), Math.round(q.y + Math.sin(a) * r), f === 0 ? 2 : 1, f === 0 ? 2 : 1);
+      }
+      return true;
+    });
+    const sink = { fillStyle: (c: number) => { g.fillStyle = `#${c.toString(16).padStart(6, '0')}`; }, fillRect: (x: number, y: number, w: number, h: number) => g.fillRect(x, y, w, h) };
+    this.pops = this.pops.filter((p) => {
+      // 사건 결과는 읽을 틈을 둔다: 떠오른 뒤 HOLD만큼 머물다 지워진다
+      const raw = now - p.t0, HOLD = 700;
+      const ms = raw < POPUP_MS.fadeAt ? raw : raw < POPUP_MS.fadeAt + HOLD ? POPUP_MS.fadeAt - 1 : raw - HOLD;
+      if (ms >= POPUP_MS.life) return false;
+      if (ms >= 0) drawPopup(sink, p.art, p.cx, p.by, 1, ms, 8);
+      return true;
+    });
+  }
 }
 
 /** 손짓 테이프 (종이) — 무엇을 할지 말한다 */
@@ -313,47 +371,102 @@ const scratch = async (L: Layer, c: EvFxCtx): Promise<void> => {
   });
 };
 
-// ── ② 카드 · ③ 기물 ──
+// ── ② 카드 · ③ 기물 · ④ 지갑 · 부품 상자 ──
 
-/** 결과 줄: 장면 위 디더 띠 안에 실제 카드 · 기물을 세우고 하나씩 FX */
+/** 낱말 색 (전투 숫자와 같은 약속, D-193): 얻음 금 · 회복 초록 · 잃음 진홍 · 녹 녹빛 */
+const POP_COL: Record<EvFxKind, number> = {
+  goldUp: 0xfacc15, goldDown: 0xff6b6b, heal: 0x86efac, hurt: 0xff6b6b, life: 0xfacc15, crack: 0xff6b6b, evolve: 0xfacc15,
+  recruit: 0xfacc15, die: 0xff6b6b, up: 0x86efac, rust: 0xe0904a, break: 0xff6b6b, new: 0xfacc15, part: 0xfacc15,
+};
+const BAD: ReadonlySet<EvFxKind> = new Set(['goldDown', 'hurt', 'crack', 'die', 'rust', 'break']);
+
+/**
+ * 터짐 하나 (D-398, D-180 박자): 대상이 이미 예비 동작(떨림 · 번쩍)을 마친 뒤 부른다 →
+ * 계단 고리 + 도트 불똥 + 도트 낱말이 대상 위에서 터지고 → 대상은 출렁(erLand), 잃는 결과면 무대가 짧게 흔들린다.
+ */
+const burst = (L: Layer, el: HTMLElement, kind: EvFxKind, n?: number): void => {
+  const b = L.at(el);
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  const col = POP_COL[kind];
+  const css = `#${col.toString(16).padStart(6, '0')}`;
+  L.addRing(cx, cy, Math.min(b.w, b.h) * 0.55, css);
+  L.ps.burst(cx, cy, BAD.has(kind) ? 12 : 16, [40, 130], BAD.has(kind) ? P.SPARK : P.STAR, [0.3, 0.7], BAD.has(kind) ? hex(css) : PAL.gold[5], 30);
+  // 낱말은 대상 위 3분의 1 높이에서 튀어 올라 머문다 (카드 이름 줄을 가리지 않게)
+  L.addPop(EVENT_FX.pop[kind](n), col, Math.round(cx), Math.round(b.y + b.h * 0.34));
+  replay(el, 'wob');
+  if (BAD.has(kind)) shakeEl(L.host.closest<HTMLElement>('.ev-ov'), 2, 180);
+};
+
+/** 결과 무대 아래 독백 한 줄 (voice ③ ‘ ’) — 가장 먼저 일어난 일 하나만 */
+const sayLine = (L: Layer, kind: EvFxKind | undefined): void => {
+  const p = L.host.closest('.ev-ov')?.querySelector<HTMLElement>('.ev-ov-line');
+  if (!p || !kind) return;
+  p.hidden = false;
+  replay(p, 'in');
+  void typeIn(p, EVENT_FX.line[kind], 26, undefined, () => p.isConnected);
+};
+
+/** 결과 줄: 장면 위 디더 띠 안에 실제 카드 · 기물 · 지갑 · 부품 상자를 세우고 하나씩 FX */
 const showResults = async (L: Layer, c: EvFxCtx): Promise<void> => {
   const cards = c.cards.slice(0, 3), crew = c.crew.slice(0, 4);
-  if (!cards.length && !crew.length) return;
+  const gold = c.gold ?? 0;
+  const toks = (gold ? 1 : 0) + (c.part ? 1 : 0);
+  if (!cards.length && !crew.length && !toks) return;
   const row = document.createElement('div');
   row.className = 'ev-res';
   // 카드 폭: 줄에 다 들고(사이 8) 높이(카드 = 폭 × 1.5 + 도장 여백)에 드는 가장 큰 값, 168 상한 — 기기 픽셀 정수로
   const n = cards.length + crew.length, r = window.devicePixelRatio || 1;
-  const cw = Math.min(168, (L.host.clientWidth - 16 - 8 * (n - 1)) / n, (L.host.clientHeight - 24) / 1.62);
+  const D = dotPx();
+  const tokW = toks * (36 * D + 8);
+  const cw = n ? Math.min(168, (L.host.clientWidth - 16 - tokW - 8 * (n - 1)) / n, (L.host.clientHeight - 24) / 1.62) : 0;
   row.style.setProperty('--card-w', `${Math.floor(cw * r) / r}px`);
+  row.style.setProperty('--d', `${D}px`);
   L.host.appendChild(row);
-  const items: { el: HTMLElement; run: () => Promise<void> }[] = [];
+  const items: { el: HTMLElement; kind: EvFxKind; run: () => Promise<void> }[] = [];
   for (const cd of cards) {
     const el = document.createElement('div');
     el.className = `er-card reward-cards fx-${cd.fx}`; // 보상 화면과 같은 카드 얼굴 크기
     el.innerHTML = cd.fx === 'new' ? cd.after ?? '' : cd.before ?? cd.after ?? '';
+    if (cd.fx === 'new') el.classList.add('er-wait'); // 새로 생기는 것은 제 차례에 나타난다
     row.appendChild(el);
-    items.push({ el, run: () => cardFx(L, el, cd) });
+    items.push({ el, kind: cd.fx, run: () => cardFx(L, el, cd) });
   }
   for (const cr of crew) {
     const el = document.createElement('div');
+    const kind: EvFxKind = cr.fx === 'up' ? 'life' : cr.fx === 'new' ? 'recruit' : cr.fx === 'hp' ? (cr.hp1 < cr.hp0 ? 'hurt' : 'heal') : cr.fx;
     if (cr.card) {
-      // 분대원 카드 (D-362): 카드와 같은 틀 · 같은 자리 — 바뀐 값은 카드 위 도장으로
-      el.className = `er-card reward-cards er-crewcard fx-${cr.fx}`;
-      el.innerHTML = cr.card + (cr.tag ? `<b class="er-stamp" hidden>${cr.tag}</b>` : '');
+      // 분대원 카드 (D-362): 카드와 같은 틀 · 같은 자리 — 바뀐 값은 카드 위에서 터지는 도트 낱말로 (D-398)
+      el.className = `er-card reward-cards er-crewcard fx-${cr.fx}${cr.fx === 'new' ? ' er-wait' : ''}`;
+      el.innerHTML = cr.card;
       row.appendChild(el);
-      items.push({ el, run: () => crewCardFx(L, el, cr) });
+      items.push({ el, kind, run: () => crewCardFx(L, el, cr) });
       continue;
     }
     el.className = `er-crew fx-${cr.fx}`;
     const pct = (v: number) => `${Math.max(0, Math.min(100, Math.round((v / cr.max) * 100)))}%`;
-    el.innerHTML = `<div class="er-pc"><img src="${cr.src}" alt=""></div><div class="er-hp"><i class="er-ghost" style="width:${pct(cr.hp0)}"></i><i class="er-fill" style="width:${pct(cr.hp0)}"></i></div><b class="er-name">${cr.name}</b>${cr.tag ? `<small class="er-tag" hidden>${cr.tag}</small>` : ''}`;
+    el.innerHTML = `<div class="er-pc"><img src="${cr.src}" alt=""></div><div class="er-hp"><i class="er-ghost" style="width:${pct(cr.hp0)}"></i><i class="er-fill" style="width:${pct(cr.hp0)}"></i></div><b class="er-name">${cr.name}</b>`;
     row.appendChild(el);
-    items.push({ el, run: () => crewFx(L, el, cr, pct) });
+    items.push({ el, kind, run: () => crewFx(L, el, cr, pct) });
   }
-  row.classList.add('in');
-  await wait(380);
-  for (const it of items) { await it.run(); await wait(140); }
-  await wait(500);
+  if (gold) {
+    const el = document.createElement('div');
+    el.className = 'er-tok er-gold er-wait';
+    el.innerHTML = `<img src="${walletPng}" alt="">`;
+    row.appendChild(el);
+    items.push({ el, kind: gold > 0 ? 'goldUp' : 'goldDown', run: () => goldFx(L, el, gold, c) });
+  }
+  if (c.part) {
+    const el = document.createElement('div');
+    el.className = 'er-tok er-chest er-wait';
+    el.innerHTML = '<img src="ui/props/chest-0.png" alt="">';
+    row.appendChild(el);
+    items.push({ el, kind: 'part', run: () => chestFx(L, el) });
+  }
+  replay(row, 'in');
+  sayLine(L, items[0]?.kind);
+  await wait(300);
+  for (const it of items) { it.el.classList.remove('er-wait'); await it.run(); await wait(260); }
+  await wait(700);
 };
 
 /** 계단 클래스 바꾸기 (애니메이션은 CSS steps) */
@@ -362,8 +475,9 @@ const cls = async (el: HTMLElement, name: string, ms: number) => { el.classList.
 const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
   const r = () => L.at(el);
   if (cd.fx === 'new') {
-    await cls(el, 'appear', 320);
-    const b = r(); L.ps.burst(b.x + b.w / 2, b.y + b.h / 2, 14, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]);
+    await cls(el, 'appear', 300);
+    sfx('lift');
+    burst(L, el, 'new');
     return;
   }
   await cls(el, 'pre', 300); // 예비: 떨림
@@ -372,9 +486,10 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
     el.innerHTML = cd.after ?? el.innerHTML;
     el.classList.remove('pre', 'flash');
     const b = r();
-    L.ps.burst(b.x + b.w / 2, b.y + b.h / 2, 22, [50, 150], P.SPARK, [0.3, 0.6], PAL.heal[5], 40);
     for (let i = 0; i < 10; i++) L.ps.spawn(P.MOTE, b.x + L.R.range(4, b.w - 4), b.y + b.h - 6, L.R.range(-6, 6), L.R.range(-70, -30), L.R.range(0.5, 0.9), PAL.heal[6], 1, i * 0.04);
     L.lights.add(b.x + b.w / 2, b.y + b.h / 2, 40, PAL.heal[5], 0.9, 0.5);
+    sfx('rare');
+    burst(L, el, 'up');
     await cls(el, 'upped', 500);
   } else if (cd.fx === 'rust') {
     el.classList.remove('pre');
@@ -382,34 +497,47 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
     el.innerHTML = cd.after ?? el.innerHTML;
     const b = r();
     for (let i = 0; i < 16; i++) L.ps.spawn(P.GRIT, b.x + L.R.range(4, b.w - 4), b.y + L.R.range(4, b.h - 4), L.R.range(-10, 10), L.R.range(0, 30), L.R.range(0.6, 1.1), hex(['#74361a', '#9a4c22', '#c06a30'][i % 3]), 1);
+    sfx('hurt');
+    burst(L, el, 'rust');
   } else {
     el.classList.remove('pre');
     await cls(el, 'greying', 360);
     await cls(el, 'cracked', 220);
     const b = r();
     for (let i = 0; i < 20; i++) L.ps.spawn(P.SHARD, b.x + L.R.range(4, b.w - 4), b.y + L.R.range(4, b.h - 4), L.R.range(-90, 90), L.R.range(-120, -30), L.R.range(0.8, 1.4), hex(i % 2 ? '#868a98' : '#b9bdc8'), L.R.range(1, 2));
+    sfx('hurt');
+    burst(L, el, 'break');
+    await wait(240);
     await cls(el, 'gone', 340); // 디더 퇴장
   }
 };
 
-/** 분대원 카드 연출 (D-362): 카드 연출(cardFx)과 같은 말 — 다듬기 = 빛 · 녹/상처 = 붉게 · 죽음 = 갈라져 디더 퇴장 · 승격 = 그림이 바뀌어 찍힘 */
+/** 분대원 카드 연출 (D-362 → D-398): 카드 연출(cardFx)과 같은 말 + 바뀐 값은 카드 위에서 터지는 도트 낱말 */
 const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> => {
   const pct = (v: number) => `${Math.max(0, Math.min(100, Math.round((v / cr.max) * 100)))}%`;
-  const swap = () => { if (cr.cardAfter) { const st = el.querySelector('.er-stamp'); el.innerHTML = cr.cardAfter; if (st) el.appendChild(st); } };
-  const stamp = async () => { const st = el.querySelector<HTMLElement>('.er-stamp'); if (st) { st.hidden = false; await cls(st, 'in', 300); } };
+  const swap = () => { if (cr.cardAfter) el.innerHTML = cr.cardAfter; };
   const b = () => L.at(el);
-  if (cr.fx === 'new') return cardFx(L, el, { fx: 'new' });
+  if (cr.fx === 'new') {
+    await cls(el, 'appear', 300);
+    sfx('lift');
+    burst(L, el, 'recruit');
+    return;
+  }
   if (cr.fx === 'up') {
     await cls(el, 'pre', 300); el.classList.remove('pre');
     await cls(el, 'flash', 120); swap(); el.classList.remove('flash');
-    const r = b(); L.ps.burst(r.x + r.w / 2, r.y + r.h / 2, 22, [50, 150], P.STAR, [0.3, 0.6], PAL.gold[5], 40); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 40, PAL.gold[5], 0.9, 0.5);
-    await cls(el, 'upped', 500); await stamp();
+    const r = b(); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 40, PAL.gold[5], 0.9, 0.5);
+    sfx('rare');
+    burst(L, el, 'life', Number(cr.tag?.match(/\d+/)?.[0] ?? 1));
+    await cls(el, 'upped', 500);
     return;
   }
   if (cr.fx === 'evolve') {
     await cls(el, 'pre', 320); el.classList.remove('pre');
     await cls(el, 'flash', 140); swap(); el.classList.remove('flash');
-    const r = b(); L.ps.burst(r.x + r.w / 2, r.y + r.h / 2, 24, [60, 170], P.STAR, [0.5, 1], PAL.gold[5]); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 46, PAL.gold[5], 1, 0.7);
+    const r = b(); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 46, PAL.gold[5], 1, 0.7);
+    sfx('rare');
+    burst(L, el, 'evolve');
     await cls(el, 'upped', 500);
     return;
   }
@@ -417,6 +545,9 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
     await cls(el, 'pre', 300); el.classList.remove('pre');
     await cls(el, 'greying', 360); await cls(el, 'cracked', 220);
     const r = b(); for (let i = 0; i < 20; i++) L.ps.spawn(P.SHARD, r.x + L.R.range(4, r.w - 4), r.y + L.R.range(4, r.h - 4), L.R.range(-90, 90), L.R.range(-120, -30), L.R.range(0.8, 1.4), hex(i % 2 ? '#868a98' : '#b9bdc8'), L.R.range(1, 2));
+    sfx('hurt');
+    burst(L, el, 'die');
+    await wait(240);
     await cls(el, 'gone', 340);
     return;
   }
@@ -424,14 +555,19 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
   const fill = el.querySelector<HTMLElement>('.er-fill'), ghost = el.querySelector<HTMLElement>('.er-ghost');
   const hurt = cr.hp1 < cr.hp0;
   const r = b();
+  const d = Math.abs(Math.round(cr.hp1 - cr.hp0));
   if (hurt || cr.fx === 'crack') {
     await cls(el, 'hit', 200); el.classList.remove('hit');
-    L.ps.burst(r.x + r.w / 2, r.y + r.h * 0.4, 14, [40, 120], P.SPARK, [0.2, 0.4], hex('#e5262f'), 20);
+    sfx('hurt');
+    if (d) burst(L, el, 'hurt', d);
     if (fill && ghost) { fill.style.width = pct(cr.hp1); await wait(260); ghost.classList.add('drain'); ghost.style.width = pct(cr.hp1); }
-    if (cr.fx === 'crack') await cls(el, 'cracked', 260);
+    if (cr.fx === 'crack') { await wait(d ? 420 : 0); await cls(el, 'cracked', 260); burst(L, el, 'crack'); }
   } else {
+    await cls(el, 'pre', 200); el.classList.remove('pre');
     if (fill && ghost) { ghost.style.width = pct(cr.hp1); fill.classList.add('grow'); fill.style.width = pct(cr.hp1); }
     for (let i = 0; i < 10; i++) L.ps.spawn(P.MOTE, r.x + L.R.range(4, r.w - 4), r.y + r.h - 6, L.R.range(-6, 6), L.R.range(-70, -30), L.R.range(0.5, 0.9), PAL.heal[6], 1, i * 0.04);
+    sfx('rare');
+    if (d) burst(L, el, 'heal', d);
     await cls(el, 'upped', 500);
   }
   await wait(300);
@@ -442,12 +578,13 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
   const pc = el.querySelector<HTMLElement>('.er-pc')!;
   const fill = el.querySelector<HTMLElement>('.er-fill')!, ghost = el.querySelector<HTMLElement>('.er-ghost')!;
   const r = () => L.at(pc);
-  if (cr.fx === 'new') { await cls(el, 'appear', 320); const b = r(); L.ps.burst(b.x + b.w / 2, b.y + b.h / 2, 14, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); return; }
+  if (cr.fx === 'new') { await cls(el, 'appear', 300); burst(L, pc, 'recruit'); return; }
   if (cr.fx === 'hp' || (cr.hp1 !== cr.hp0 && cr.fx !== 'die')) {
     const hurt = cr.hp1 < cr.hp0;
+    const d = Math.abs(Math.round(cr.hp1 - cr.hp0));
     if (hurt) {
       await cls(pc, 'hit', 160); pc.classList.remove('hit');
-      const b = r(); L.ps.burst(b.x + b.w / 2, b.y + b.h * 0.45, 12, [40, 120], P.SPARK, [0.2, 0.4], hex('#e5262f'), 20);
+      if (d) burst(L, pc, 'hurt', d);
       // 전투와 같은 HP 바: 채움이 먼저 줄고 흰 잔상이 계단으로 따라 내려온다
       fill.style.width = pct(cr.hp1);
       await wait(260);
@@ -457,14 +594,14 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
       fill.classList.add('grow'); fill.style.width = pct(cr.hp1);
       const b = r();
       for (let i = 0; i < 10; i++) L.ps.spawn(P.MOTE, b.x + L.R.range(4, b.w - 4), b.y + b.h - 4, L.R.range(-5, 5), L.R.range(-60, -25), L.R.range(0.5, 0.9), PAL.heal[6], 1, i * 0.05);
+      if (d) burst(L, pc, 'heal', d);
       await cls(pc, 'heal', 360);
     }
     await wait(300);
   }
   if (cr.fx === 'up') {
     await cls(pc, 'flash', 140); pc.classList.remove('flash');
-    const b = r(); L.ps.burst(b.x + b.w / 2, b.y + b.h / 2, 16, [40, 120], P.STAR, [0.4, 0.8], PAL.gold[5]); L.lights.add(b.x + b.w / 2, b.y + b.h / 2, 30, PAL.gold[5], 0.8, 0.5);
-    el.querySelector<HTMLElement>('.er-tag')?.removeAttribute('hidden');
+    burst(L, pc, 'life', Number(cr.tag?.match(/\d+/)?.[0] ?? 1));
   }
   if (cr.fx === 'evolve') {
     await cls(pc, 'pre', 320); pc.classList.remove('pre');
@@ -472,8 +609,8 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
     pc.querySelector('img')!.src = cr.toSrc ?? cr.src;
     pc.classList.remove('flash');
     const b = r();
-    L.ps.burst(b.x + b.w / 2, b.y + b.h / 2, 24, [60, 170], P.STAR, [0.5, 1], PAL.gold[5]);
     L.lights.add(b.x + b.w / 2, b.y + b.h / 2, 46, PAL.gold[5], 1, 0.7);
+    burst(L, pc, 'evolve');
     await cls(pc, 'land', 360);
   }
   if (cr.fx === 'die') {
@@ -481,13 +618,54 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
     // 베기: 대각선 흰 선이 그어지고 기물이 두 쪽으로 갈라져 잿빛이 된다
     const src = pc.querySelector('img')!.src;
     pc.innerHTML = `<i class="er-cut a" style="background-image:url(${src})"></i><i class="er-cut b" style="background-image:url(${src})"></i><i class="er-slash"></i>`;
-    const b = r();
-    L.ps.burst(b.x + b.w / 2, b.y + b.h / 2, 16, [60, 160], P.SPARK, [0.2, 0.45], WHITE, 30);
+    burst(L, pc, 'die');
     fill.style.width = '0%';
     await cls(pc, 'split', 520);
     ghost.classList.add('drain'); ghost.style.width = '0%';
     await cls(el, 'gone', 360);
   }
+};
+
+/**
+ * 지갑 (D-398): 얻으면 장면 위에서 나사가 튀어 올랐다 지갑으로 빨려 들고(구매 · 보상과 같은 나사 비행) → 지갑이 눌렸다 출렁 + 「나사 +N」,
+ * 잃으면 지갑이 떨다 아가리에서 나사 조각이 쏟아져 떨어지고 → 쪼그라들며 「나사 -N」. 창 위 테 나사 꼬리표도 그때 바뀐다.
+ */
+const goldFx = async (L: Layer, el: HTMLElement, gold: number, c: EvFxCtx): Promise<void> => {
+  const setPurse = () => { if (c.purse && c.goldAfter !== undefined) { c.purse.textContent = `나사 ${c.goldAfter}`; replay(c.purse, 'got3'); } };
+  await cls(el, 'appear', 240);
+  if (gold > 0) {
+    const h = L.host.getBoundingClientRect();
+    screwBurst({ x: h.left + h.width / 2, y: h.top + h.height * 0.2 }, el, Math.round(gold / 10));
+    await wait(calm() ? 0 : 900);
+    sfx('coin');
+    burst(L, el, 'goldUp', gold);
+    setPurse();
+    await wait(500);
+  } else {
+    await cls(el, 'pre', 300); el.classList.remove('pre');
+    const b = L.at(el);
+    for (let i = 0; i < Math.min(14, 4 + Math.round(-gold / 10)); i++) L.ps.spawn(P.SHARD, b.x + b.w / 2 + L.R.range(-4, 4), b.y + b.h * 0.25, L.R.range(-50, 50), L.R.range(-90, -40), L.R.range(0.7, 1.2), hex(i % 2 ? '#c89b3c' : '#8a8794'), 2, i * 0.03);
+    sfx('hurt');
+    burst(L, el, 'goldDown', -gold);
+    setPurse();
+    await cls(el, 'shrink', 420);
+  }
+};
+
+/** 부품 상자 (D-398): 덜컹 떨고(예비) → 뚜껑이 계단 둘로 열리며 금빛이 터지고 → 출렁 + 「부품」. 고르는 것은 결과 뒤 고르기 화면 */
+const chestFx = async (L: Layer, el: HTMLElement): Promise<void> => {
+  const im = el.querySelector('img')!;
+  await cls(el, 'appear', 240);
+  await cls(el, 'pre', 320); el.classList.remove('pre');
+  im.src = 'ui/props/chest-1.png';
+  await wait(calm() ? 0 : 90);
+  im.src = 'ui/props/chest-2.png';
+  const b = L.at(el);
+  L.lights.add(b.x + b.w / 2, b.y + b.h * 0.3, 44, PAL.gold[5], 1, 0.7);
+  for (let i = 0; i < 12; i++) L.ps.spawn(P.MOTE, b.x + L.R.range(6, b.w - 6), b.y + b.h * 0.3, L.R.range(-8, 8), L.R.range(-90, -40), L.R.range(0.5, 0.9), PAL.gold[6], 1, i * 0.03);
+  sfx('rare');
+  burst(L, el, 'part');
+  await wait(500);
 };
 
 /**
@@ -500,7 +678,7 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   const ov = document.createElement('div');
   ov.className = 'ev-ov';
   const [fx, fy] = c.focus ?? [0.5, 0.5];
-  ov.innerHTML = `${c.scene ? `<div class="ev-ov-bg"><img src="${c.scene}" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div>` : ''}<div class="ev-ov-stage"></div><div class="btn-row"><button type="button" class="btn k-brass go ev-ov-ok" hidden>넘긴다</button></div>`;
+  ov.innerHTML = `${c.scene ? `<div class="ev-ov-bg"><img src="${c.scene}" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div>` : ''}<div class="ev-ov-stage"></div><div class="btn-row"><p class="ev-ov-line inset" hidden></p><button type="button" class="btn k-brass go ev-ov-ok" hidden>넘긴다</button></div>`;
   wrap.appendChild(ov);
   const bg = ov.querySelector<HTMLImageElement>('.ev-ov-bg > img');
   if (bg) (bg.complete ? coverArt(bg) : bg.addEventListener('load', () => coverArt(bg), { once: true }));
@@ -511,7 +689,7 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   else if (c.chance?.kind === 'slots') await slotsDrop(L, c);
   else if (c.chance?.kind === 'scratch') await scratch(L, c);
   // 결과 줄이 있으면 확률 장치는 걷고 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
-  if (c.chance && (c.cards.length || c.crew.length)) L.x.clearRect(0, 0, L.w, L.h);
+  if (c.chance && (c.cards.length || c.crew.length || c.gold || c.part)) L.x.clearRect(0, 0, L.w, L.h);
   await showResults(L, c);
   const ok = ov.querySelector<HTMLButtonElement>('.ev-ov-ok')!;
   ok.hidden = false;

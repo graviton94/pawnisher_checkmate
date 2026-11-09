@@ -1603,9 +1603,10 @@ const showMap = (): void => {
   const legend = `<p class="hint">${MAP_TEXT.hint}</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
     .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
     .join('')}</ul>`;
-  // 부적 둘은 꼬리표 하나 (667 폭에서 머리 줄이 두 줄로 접히지 않게)
-  const charm = `<span class="tag" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}">${(['revive', 'rewind'] as const).map((c) => `<i class="ico" style="${iconArtSmall(CHARMS[c].icon)}"></i>${charms[c]}`).join(' ')}</span>`;
-  el.innerHTML = `<header class="map-head"><span class="tag">${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><span class="tag">${MAP_TEXT.squad(squad.length)}</span><span class="tag">${MAP_TEXT.deck(deck.length)}</span><span class="tag">${MAP_TEXT.parts(parts.length, partSlotsAt(actI))}</span>${charm}</div></header>
+  // 수치는 긴 명판 하나 (D-398, 사용자: 「꼬리표마다 배경이 따로라 읽기 어렵다」) — 이름 12 · 값 15, 부적 둘은 아이콘 + 값. 임시 철띠 — UI-22 대기
+  const stat = (k: keyof typeof MAP_TEXT.stat, v: string): string => `<span class="sp-i"><small>${MAP_TEXT.stat[k]}</small><b>${v}</b></span>`;
+  const charm = `<span class="sp-i" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><small>${MAP_TEXT.stat.charm}</small>${(['revive', 'rewind'] as const).map((c) => `<i class="ico" style="${iconArtSmall(CHARMS[c].icon)}"></i><b>${charms[c]}</b>`).join('')}</span>`;
+  el.innerHTML = `<header class="map-head"><span class="tag">${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><div class="stat-plate">${stat('squad', `${squad.length}`)}${stat('deck', `${deck.length}`)}${stat('parts', `${parts.length}/${partSlotsAt(actI)}`)}${charm}</div></div></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="inset peek-bar">${legend}</footer>`;
   document.body.appendChild(el);
@@ -1881,7 +1882,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           : id === 'brokenGacha' ? { kind: 'slots', win: good, items: out.slot === 0 ? ['gear-gold', 'gear-gold', 'gear-gold'] : out.slot === 1 ? ['crown-gold', 'crown-gold', 'crown-gold'] : ['gear-gold', 'gear-gold', 'gear-broken'] }
           : id === 'auction' ? { kind: 'scratch', win: good, items: good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'] }
           : undefined;
-        await runEventFx(el, { id, good, chance, cards, crew: crewFx, tap: talk.tap, scene: art.currentSrc || art.src, focus: [fx, fy] });
+        await runEventFx(el, { id, good, chance, cards, crew: crewFx, tap: talk.tap, scene: art.currentSrc || art.src, focus: [fx, fy], gold: gold - before.gold, part: !!out.partPick, purse: el.querySelector<HTMLElement>('.ws-purse'), goldAfter: gold });
         if (!alive()) return;
         if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
         el.querySelector('.ws-purse')!.textContent = `나사 ${gold}`;

@@ -31,9 +31,12 @@ const INK = 0x0b0b0e;
  * 글자를 도트 그림으로. 캔버스에 1px = 1도트로 그린 뒤 문턱값으로 자르고, 바깥에 8방향 1도트 검정 테두리를 두른다.
  */
 export const buildPopupArt = (text: string, color: number): PopupArt => {
-  const W = text.length * 9 + 16;
   const H = 14;
   const cv = document.createElement('canvas');
+  // 폭은 실제 글자 폭으로 (한글 낱말 「생명 +1」도 잘리지 않게 — D-398)
+  const m = cv.getContext('2d')!;
+  m.font = POPUP_FONT;
+  const W = Math.max(text.length * 9, Math.ceil(m.measureText(text).width)) + 16;
   cv.width = W;
   cv.height = H;
   const g = cv.getContext('2d')!;
