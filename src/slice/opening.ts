@@ -8,7 +8,7 @@ import { PROLOGUE, type Cut, type Line } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
-import type { WinOpts } from './uikit';
+import { cutChromeHtml, cutFill, cutLineHtml, cutSay, type WinOpts } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -36,18 +36,20 @@ export const crestHtml = (): string =>
 
 /**
  * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체): 컷마다 그림이 천천히 밀려 들어오고(켄 번스), 줄이 두 줄씩 한 자씩 찍힌다.
- * 탭 = 다음(찍는 중이면 그 쪽을 한 번에) · 「건너뛰기」 = 바로 끝. logo면 마지막에 베인 타이틀 문장이 내리꽂힌다.
+ * 탭 = 다음(찍는 중이면 그 쪽을 한 번에) · 「건너뛴다」 = 바로 끝. logo면 마지막에 베인 타이틀 문장이 내리꽂힌다.
  * 줄: 서술(3인칭 과거) · 대사(이름 + “ ”) · 속말(‘ ’) — 글은 src/data/script.ts.
+ * 크롬은 컷신 하나(D-397): 그림이 화면을 채우고(레터박스 없음) 아래 자막 띠 · ▼ · 「건너뛴다」(uikit.cutChromeHtml).
  */
 export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown } = {}): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
-    el.className = 'prologue';
-    el.innerHTML = `<div class="pl-stage"></div><i class="pl-flash"></i><i class="pl-bar t"></i><i class="pl-bar b"></i><div class="pl-text"></div><button class="btn pl-skip" type="button">${OPENING_TEXT.skip}</button><p class="pl-tap">▼</p>`;
+    el.className = 'prologue kit';
+    el.innerHTML = `<div class="pl-stage"></div><i class="pl-flash"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}`;
     document.body.appendChild(el);
     document.body.classList.add('cover-pl');
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
-    const text = el.querySelector<HTMLElement>('.pl-text')!;
+    const text = el.querySelector<HTMLElement>('.cut-lines')!;
+    const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     // 쪽 = (컷 번호, 그 컷의 줄 두 개)
     const pages: { c: number; lines: Line[] }[] = [];
     cuts.forEach((c, k) => { for (let a = 0; a < c.lines.length; a += 2) pages.push({ c: k, lines: c.lines.slice(a, a + 2) }); });
@@ -67,11 +69,10 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         el.classList.add('logo');
         void titleFx(stage.querySelector<HTMLElement>('.tfx'));
         await wait(calm() ? 300 : 1900);
-        // 로고 뒤에 숨을 돌린다: 누를 때까지 기다린다 (테스터: 끝나자마자 메인 → 온보딩으로 저절로 넘어갔다)
-        const go = document.createElement('p');
-        go.className = 'op-press pl-go';
-        go.innerHTML = pressHtml(OPENING_TEXT.pressGo);
-        el.appendChild(go);
+        // 로고 뒤에 숨을 돌린다: 누를 때까지 기다린다 (테스터: 끝나자마자 메인 → 온보딩으로 저절로 넘어갔다) — 「눌러 출하」도 같은 띠 · ▼ 자리 (D-397)
+        cutSay(el, [{ k: 'n', t: OPENING_TEXT.pressGo }]);
+        sub.classList.remove('typing');
+        el.classList.add('go-wait');
         await new Promise<void>((r) => el.addEventListener('click', () => r(), { once: true }));
         sfx('submit');
       }
@@ -80,8 +81,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       document.body.classList.remove('cover-pl');
       pxOut(el, () => { el.remove(); resolve(); }, 300);
     };
-    const fill = (l: Line): string => (l.k === 's' ? `“${l.t}”` : l.k === 'm' ? `‘${l.t}’` : l.t);
-    const lineHtml = (l: Line): string => (l.k === 's' ? `<p class="pl-say">${l.who ? `<b class="pl-who">${l.who}</b> ` : ''}<span></span></p>` : `<p class="pl-${l.k === 'm' ? `mono${l.t.length > 20 ? ' long' : ''}` : 'narr'}"><span></span></p>`);
+    const fill = (l: Line): string => cutFill(l);
     const show = async (k: number): Promise<void> => {
       const my = ++token;
       const pg = pages[k];
@@ -93,7 +93,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         if (my !== token) return;
         const pick = (await hasImg(`scenes/${c.img}.png`)) ? c.img : c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
         const src = `scenes/${pick}.png`;
-        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 잘리지 않게 가운데 통째로 (D-313)
+        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 비율 그대로 덮고 위 30%에 초점 (D-388)
         if (my !== token) return;
         // 카메라: 장면마다 정한 방향 (없으면 다가감 · 물러남을 번갈아)
         const cam = c.img.startsWith('boss-') ? 'still' : c.cam ?? (pg.c % 2 ? 'out' : 'in');
@@ -109,20 +109,22 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         } else sfx('tap');
         await wait(calm() ? 0 : 260);
       } else sfx('tap', 3);
-      text.innerHTML = pg.lines.map(lineHtml).join('');
+      text.innerHTML = pg.lines.map(cutLineHtml).join('');
       typing = true;
+      sub.classList.add('typing');
       const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
       for (let a = 0; a < pg.lines.length && my === token; a++) {
         if (pg.lines[a].k === 'm') await wait(calm() ? 0 : 200);
         if (my === token) await typeIn(ps[a], fill(pg.lines[a]), pg.lines[a].k === 'm' ? 44 : 30, undefined, () => my === token);
       }
-      if (my === token) typing = false;
+      if (my === token) { typing = false; sub.classList.remove('typing'); }
     };
     const next = (): void => {
       if (ended) return;
       if (typing) {
         token++;
         typing = false;
+        sub.classList.remove('typing');
         const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
         pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = fill(l)));
         return;
@@ -133,7 +135,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     };
     el.addEventListener('click', (ev) => {
       if (ended) return;
-      if ((ev.target as HTMLElement).closest('.pl-skip')) return void finish();
+      if ((ev.target as HTMLElement).closest('.cut-skip')) return void finish();
       next();
     });
     next();

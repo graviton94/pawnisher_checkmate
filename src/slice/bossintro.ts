@@ -3,10 +3,12 @@
  * 2막 보스 오른쪽 이펙트처럼 뭔가 이펙트를 넣거나, 도트를 서서히 제거하는 도트 그라데이션처럼」 · 「FX는 pixelfx 룰을 참고」).
  *  ① 위아래 검은 띠가 4계단으로 닫힌다 ② 흰 장 두 장(hero frame) ③ 초상이 오른쪽에서 물러섰다(예비) 꽂히고 흔들린다
  *  ④ 초상 왼쪽 가장자리는 그림 도트 단위 베이어 디더로 깎여 배경에 녹는다 ⑤ 그 경계선을 따라 반장마다 다른 FX
- *  ⑥ 이름이 내리꽂히고 칭호 · 서술 · 규칙이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
+ *  ⑥ 이름이 내리꽂히고 칭호 · 규칙(움푹 칸) · 아래 자막 띠 두 줄이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
+ * 글 크기 (D-397): 막 꼬리표 12 · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙 12 굵게 · 자막 15. 자막 띠 · ▼는 모든 컷과 같은 자리(uikit.cutChromeHtml).
  */
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
+import { cutChromeHtml, cutFill, cutLineHtml, type CutLine } from './uikit';
 
 export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
 export interface BossIntroOpts {
@@ -15,7 +17,8 @@ export interface BossIntroOpts {
   act: string;
   name: string;
   title: string;
-  narr: string;
+  /** 자막 띠 두 줄 (BOSS_CARD — 서술 + 대사) */
+  lines: CutLine[];
   rules: string[];
   sfx?: (k: string) => void;
 }
@@ -52,11 +55,13 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
   new Promise((resolve) => {
     const look = LOOK[o.rule];
     const el = document.createElement('div');
-    el.className = `bossfx b-${o.rule}`;
+    el.className = `bossfx kit b-${o.rule}`;
     el.style.setProperty('--accent', look.accent);
-    el.innerHTML = `<div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i><i class="bf-bar bot"></i>
-      <div class="bf-text"><p class="bf-act">${o.act}</p><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><p class="bf-narr"></p><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul></div>
-      <p class="bf-skip">눌러서 계속</p>`;
+    el.innerHTML = `<div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i>
+      <div class="bf-text"><span class="tag tag-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><ul class="inset bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul></div>
+      ${cutChromeHtml()}`;
+    const sub = el.querySelector<HTMLElement>('.cut-sub')!;
+    sub.classList.add('typing');
     document.body.appendChild(el);
     const W = innerWidth, H = innerHeight;
     // 도트 FX 판 (1도트 = 3px, 화면 전체)
@@ -132,8 +137,14 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     at(360, () => el.classList.add('port'));
     at(700, () => { el.classList.add('name'); o.sfx?.('stamp'); });
     at(1000, () => void typeIn(el.querySelector('.bf-title')!, o.title, 40, undefined, () => el.isConnected));
-    // 문장마다 줄을 바꾼다 (사용자: 「반장 소개 문구 2문장 — 문장별로 엔터」)
-    at(1500, () => void typeIn(el.querySelector('.bf-narr')!, o.narr.split(/(“[^”]*”)/).map((s) => (s.startsWith('“') ? s : s.replace(/([.!?…])\s+/g, '$1\n'))).join('') /* 따옴표 안은 한 줄 (D-314) */, 20, undefined, () => el.isConnected));
+    // 자막 띠 두 줄 (D-397): 서술 한 줄 → 대사 한 줄, 다 찍히면 ▼
+    at(1500, async () => {
+      const box = el.querySelector<HTMLElement>('.cut-lines')!;
+      box.innerHTML = o.lines.map(cutLineHtml).join('');
+      const ps = [...box.querySelectorAll<HTMLElement>('p > span')];
+      for (let i = 0; i < o.lines.length && el.isConnected; i++) await typeIn(ps[i], cutFill(o.lines[i]), 24, undefined, () => el.isConnected);
+      sub.classList.remove('typing');
+    });
     o.rules.forEach((r, i) => at(2400 + i * 260, () => { const li = el.querySelectorAll('.bf-rules li')[i] as HTMLElement; li.textContent = r; li.classList.add('in'); }));
     at(1100, () => el.addEventListener('click', close));
     at(5600, close);

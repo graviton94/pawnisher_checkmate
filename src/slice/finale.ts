@@ -9,6 +9,7 @@ import type { PieceType } from '../engine';
 import { FINALE, type Line } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
+import { cutChromeHtml, cutFill, cutLineHtml, cutSay } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, calm() ? Math.min(ms, 60) : ms));
@@ -20,16 +21,17 @@ const ROWS = 6;
 export const finaleScene = (crew: PieceType[]): Promise<'front' | 'back'> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
-    el.className = 'finale';
+    el.className = 'finale kit';
     const cells = Array.from({ length: COLS * ROWS }, (_, i) => `<i class="fn-sq${(Math.floor(i / COLS) + (i % COLS)) % 2 ? ' dk' : ''}${i === 2 ? ' gold' : ''}" data-i="${i}"></i>`).join('');
     el.innerHTML = `<div class="fn-board">${cells}<span class="fn-pc fn-king" style="--c:0;--r:0">${pieceImg('K', 1, 'large', 88)}</span><span class="fn-pc fn-me" style="--c:2;--r:5">${pieceImg('P', 0, 'large', 88)}</span>${crew
       .slice(0, 4)
       .map((t, k) => `<span class="fn-pc fn-crew" style="--c:${[0, 1, 3, 4][k]};--r:5">${pieceImg(t, 0, 'large', 88)}</span>`)
-      .join('')}<div class="fn-bubbles"></div></div><div class="fn-text"></div><p class="pl-tap">▼</p>`;
+      .join('')}<div class="fn-bubbles"></div></div>${cutChromeHtml()}`; // 자막 띠 · ▼는 모든 컷과 같은 자리 (D-397)
     document.body.appendChild(el);
     const board = el.querySelector<HTMLElement>('.fn-board')!;
     const me = el.querySelector<HTMLElement>('.fn-me')!;
-    const text = el.querySelector<HTMLElement>('.fn-text')!;
+    const text = el.querySelector<HTMLElement>('.cut-lines')!;
+    const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     let tap: (() => void) | null = null;
     el.addEventListener('click', (ev) => {
       if ((ev.target as HTMLElement).closest('.fn-pick')) return;
@@ -40,19 +42,22 @@ export const finaleScene = (crew: PieceType[]): Promise<'front' | 'back'> =>
     const speak = async (lines: Line[]): Promise<void> => {
       for (let a = 0; a < lines.length; a += 2) {
         const pg = lines.slice(a, a + 2);
-        text.innerHTML = pg.map((l) => (l.k === 's' ? `<p class="pl-say"><b class="pl-who">${l.who}</b> <span></span></p>` : `<p class="pl-${l.k === 'm' ? 'mono' : 'narr'}${l.k === 'm' && l.t.length > 20 ? ' long' : ''}"><span></span></p>`)).join('');
+        text.innerHTML = pg.map(cutLineHtml).join('');
+        sub.classList.add('typing');
         const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
         let skip = false;
         tap = () => (skip = true);
         for (let k = 0; k < pg.length; k++) {
-          const s = pg[k].k === 's' ? `“${pg[k].t}”` : pg[k].k === 'm' ? `‘${pg[k].t}’` : pg[k].t;
+          const s = cutFill(pg[k]);
           if (skip) ps[k].textContent = s;
           else await typeIn(ps[k], s, 30, undefined, () => !skip);
           if (skip) ps[k].textContent = s;
         }
+        sub.classList.remove('typing');
         await waitTap();
       }
       text.innerHTML = '';
+      sub.classList.add('typing');
     };
     const stepTo = async (r: number): Promise<void> => {
       me.style.setProperty('--r', String(r));
@@ -65,6 +70,7 @@ export const finaleScene = (crew: PieceType[]): Promise<'front' | 'back'> =>
       await wait(500);
       await speak(FINALE.walk.slice(0, 1));
       text.innerHTML = '';
+      sub.classList.add('typing');
       for (const r of [4, 3, 2, 1]) await stepTo(r);
       await speak(FINALE.walk.slice(1));
       el.querySelector<HTMLElement>('.fn-king')!.classList.add('laugh');
@@ -78,13 +84,15 @@ export const finaleScene = (crew: PieceType[]): Promise<'front' | 'back'> =>
         sq.classList.add('fn-pick');
         sq.insertAdjacentHTML('beforeend', `<b class="fn-lbl">${label}</b>`);
       }
-      text.innerHTML = `<p class="pl-narr"><span>${FINALE.choose}</span></p>`;
+      cutSay(el, [{ k: 'n', t: FINALE.choose }]);
+      sub.classList.add('typing'); // 고르는 동안은 ▼ 없음 — 누를 곳은 판 위 두 칸
       const pick = await new Promise<'front' | 'back'>((r) => {
         front.addEventListener('click', () => r('front'), { once: true });
         back.addEventListener('click', () => r('back'), { once: true });
       });
       for (const sq of [front, back]) { sq.classList.remove('fn-pick'); sq.querySelector('.fn-lbl')?.remove(); }
       text.innerHTML = '';
+      sub.classList.add('typing');
       if (pick === 'front') {
         await stepTo(0);
         sfx('submit');

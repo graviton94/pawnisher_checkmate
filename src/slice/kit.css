@@ -350,13 +350,11 @@
 .k-peek .log-row.foe em { color: var(--t-loss); }
 .k-peek .log-turn { color: var(--t-dim); font: 700 12px/1.4 Galmuri11, sans-serif; }
 
-/* ---------- 3.10 컷신 크롬 (패스 5에서 옮긴다 — 부품만 먼저) ---------- */
-.kit-sheet .cut-sub { box-sizing: border-box; max-width: 640px; padding: var(--s2) var(--s3); background: #0b0b0e; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
-.kit-sheet .cut-next { color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
+/* ---------- 3.10 컷신 크롬 — 아래 「패스 5」 단 (D-397) ---------- */
 @keyframes kblink { 50% { visibility: hidden; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up, .state-band.k-in, .talk.in, .k-peek.k-in, .kit-sheet .cut-next { animation: none; }
+  .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up, .state-band.k-in, .talk.in, .k-peek.k-in, .cut-next { animation: none; }
 }
 
 /* ===================== 패스 1 창 내용 — 부품 조합만 (D-391) ===================== */
@@ -688,3 +686,116 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 @keyframes apPop { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 30% { transform: scale(0.82, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 65% { transform: scale(1.18, 0.9); } 100% { transform: none; } }
 @keyframes apRing { 0% { visibility: visible; inset: 4px; } 99% { visibility: visible; inset: -8px; } 100% { visibility: hidden; inset: -8px; } }
 @media (prefers-reduced-motion: reduce) { #vials .seg.apb, #vials.regain .seg.on { animation: none; } }
+
+/* ===================== 패스 5 — 컷신 크롬 · 막 카드 · 반장 등장 · 지도 (D-397, 보고서 2026-11-09f 2-1 · 3.10) ===================== */
+/* 자막 띠 .cut-sub: 아래 가운데 먹 띠 — 양 끝 = UI-08 띠 끝 장식(sub-cap-l/r 10×22, 1도트 = 2·--px 정수배), 가운데 = 먹 + 위아래 철 줄 1도트.
+   줄 둘(15px, 줄마다 CUT_TEXT_BUDGET 안 — 접히지 않는다) · 띠 안 오른쪽 끝 ▼(.cut-next) · 건너뛴다(.cut-skip)는 띠 오른쪽 아래 구석.
+   모든 컷(프롤로그 · 막 카드 · 반장 등장 · 격파 · 승급 · 엔딩 · 크레딧 · 최종장)이 이 자리 하나를 쓴다. */
+.cut-sub {
+  --cap: calc(var(--px) * 2);
+  --cut-w: min(640px, calc(100vw - 2 * var(--G) - 2 * (var(--px) * 56 + 16px)));
+  position: absolute; z-index: 6; box-sizing: border-box; pointer-events: none;
+  left: calc((100vw - var(--cut-w)) / 2); left: round(calc((100vw - var(--cut-w)) / 2), var(--px));
+  bottom: var(--Gy); width: var(--cut-w); height: calc(var(--cap) * 22);
+}
+.cut-sub::before, .cut-sub::after { content: ''; position: absolute; z-index: 1; top: 0; width: calc(var(--cap) * 10); height: 100%; background: url('../assets/ui/chrome/v2/sub-cap-l.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+.cut-sub::before { left: 0; }
+.cut-sub::after { right: 0; background-image: url('../assets/ui/chrome/v2/sub-cap-r.png'); }
+.cut-lines {
+  position: absolute; top: 0; bottom: 0; left: calc(var(--cap) * 7); right: calc(var(--cap) * 7); box-sizing: border-box;
+  padding: 0 calc(var(--cap) * 3 + 24px) 0 calc(var(--cap) * 3 + 8px);
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0;
+  background: #0b0b0e;
+  box-shadow: inset 0 var(--cap) 0 #0b0b0e, inset 0 calc(var(--cap) * 2) 0 #56545e, inset 0 calc(var(--cap) * -1) 0 #0b0b0e, inset 0 calc(var(--cap) * -2) 0 #33313b;
+}
+.cut-lines p { margin: 0; max-width: 100%; white-space: nowrap; overflow: hidden; color: var(--t-body); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; text-shadow: none; }
+.cut-lines p.cl-m { color: var(--t-gold); }
+.cut-lines p.cl-s > span { color: #ffd8cf; }
+.cut-lines .cl-who { margin-right: var(--s2); color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; }
+.cut-lines em { font-style: normal; color: var(--em, var(--t-gold)); }
+.cut-lines em.wshake { display: inline-block; animation: wshake 420ms var(--decel); }
+.cut-next { position: absolute; z-index: 2; right: calc(var(--cap) * 10); top: 50%; margin-top: -6px; color: var(--t-gold); font: 700 12px/12px Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
+.cut-sub.typing .cut-next { visibility: hidden; }
+.kit .cut-skip.btn { position: absolute; z-index: 7; left: auto; top: auto; right: var(--G); bottom: var(--Gy); width: calc(var(--px) * 56); }
+/* 좁은 화면(< 900): 띠가 화면 폭을 쓰고 「건너뛴다」는 띠 바로 위 오른쪽 */
+@media (max-width: 899px) {
+  .cut-sub { --cut-w: calc(100vw - 2 * var(--G)); }
+  .kit .cut-skip.btn { bottom: calc(var(--Gy) + var(--px) * 44 + var(--s2)); }
+}
+/* 프롤로그: 로고 동안 띠 · 건너뛴다를 걷고, 「눌러 출하」가 같은 띠에 */
+.prologue.logo:not(.go-wait) .cut-sub, .prologue.logo .cut-skip { visibility: hidden; }
+.prologue.logo .pl-logo { bottom: calc(var(--Gy) + var(--px) * 44); }
+
+/* 막 타이틀 카드 (D-388 · D-389): 위 = 막 그림(비율 그대로 덮기) · 아래 먹 바닥 = 막 꼬리표 → 이름 36 → 자막 띠 */
+.actcard { --floor: calc(var(--Gy) + var(--px) * 44 + var(--s3) + 44px + var(--s2) + var(--px) * 15 + var(--s3)); position: fixed; inset: 0; z-index: 85; overflow: hidden; background: #0b0b0e; cursor: pointer; }
+.actcard .ac-art { position: absolute; left: 0; right: 0; top: 0; bottom: var(--floor); overflow: hidden; box-shadow: 0 var(--px) 0 #33313b; }
+.actcard .ac-art > img { position: absolute; left: 0; top: 0; max-width: none; image-rendering: pixelated; }
+.actcard .ac-floor { position: absolute; left: 0; right: 0; bottom: calc(var(--Gy) + var(--px) * 44 + var(--s3)); display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.actcard .ac-name { margin: 0; color: #f4ead6; font: 700 36px/44px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; visibility: hidden; }
+.actcard.named .ac-name { visibility: visible; animation: bfName 240ms steps(1) both; }
+
+/* 반장 등장 (D-249 연출 그대로): 왼쪽 글 단 = 막 꼬리표(진홍) · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙(움푹 칸, 12 굵게) — 서술 · 대사는 아래 자막 띠 */
+.bossfx .bf-text { position: absolute; z-index: 4; left: var(--G); top: calc(16vh + var(--s2)); width: min(46vw, 420px); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+.bossfx .bf-name { margin: 0; color: #f4f1ea; font: 700 36px/44px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; visibility: hidden; }
+.bossfx.name .bf-name { visibility: visible; animation: bfName 240ms steps(1) both; }
+.bossfx .bf-title { margin: 0; min-height: 30px; color: #f4d27a; font: 700 24px/30px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; }
+.bossfx .bf-rules { list-style: none; display: grid; gap: var(--s1); min-width: 0; max-width: 100%; }
+.bossfx .bf-rules li { position: relative; padding-left: calc(var(--px) * 6); visibility: hidden; color: var(--t-body); font: 700 12px/18px Galmuri11, sans-serif; }
+.bossfx .bf-rules li::before { content: ''; position: absolute; left: 0; top: 6px; width: calc(var(--px) * 3); height: calc(var(--px) * 3); background: var(--accent); box-shadow: 0 0 0 var(--px) #000; }
+.bossfx .bf-rules li.in { visibility: visible; animation: bfName 200ms steps(1) both; }
+@media (max-height: 411px) { .bossfx .bf-text { top: calc(16vh - var(--s2)); gap: var(--s1); } }
+
+/* 크레딧 장: 철판 창 (반투명 먹 판 대신) */
+.credits .cr-page { box-sizing: border-box; padding: calc(var(--px) * 4) calc(var(--px) * 12); border-style: solid; border-width: calc(var(--k-win) * var(--px)); border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round; image-rendering: pixelated; background: none; box-shadow: none; margin-bottom: calc(var(--px) * 44); }
+/* 최종장 판 위 연출: 자막은 띠 하나 */
+.finale .cut-sub { z-index: 6; }
+
+/* ---------- 지도 (출하 지도 D-169 → D-397) ---------- */
+/* 불투명 바닥: 먹 → 막 그림 덮기 → 2×2 먹 디더 (뒤 전투가 비치지 않는다) */
+.mapfx { position: fixed; inset: 0; z-index: 60; isolation: isolate; overflow: hidden; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--s2); padding: var(--Gy) var(--G); background: #0b0b0e; animation: pxin 300ms steps(5) both; }
+.mapfx::before { content: ''; position: absolute; inset: 0; z-index: -3; background: var(--act) center / cover no-repeat; image-rendering: pixelated; }
+.mapfx::after { content: ''; position: absolute; inset: 0; z-index: -2; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%230b0b0e'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%230b0b0e'/%3E%3C/svg%3E") 0 0 / calc(var(--px) * 2) calc(var(--px) * 2); image-rendering: pixelated; }
+.mapfx .map-head { display: flex; align-items: center; gap: var(--s2); min-height: 48px; }
+.mapfx .map-head h2 { margin: 0; color: #f4e6c4; font: 700 24px/30px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; white-space: nowrap; }
+.mapfx .map-res { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--s1) var(--s2); }
+.mapfx .map-res .wallet { text-shadow: var(--px) var(--px) 0 #000; }
+.mapfx .tag .ico { width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); flex: none; }
+.mapfx .map-body { position: relative; margin: 0 4%; }
+.mapfx .map-body svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mapfx .map-body line { vector-effect: non-scaling-stroke; }
+.mapfx .map-body line.ch-o { stroke: #0b0b0e; stroke-width: 8; stroke-linecap: square; }
+.mapfx .map-body line.ch-i { stroke-width: 4; stroke-linecap: butt; stroke-dasharray: 5 3; }
+.mapfx .map-body line.ch-i.far { stroke: #4a4854; }
+.mapfx .map-body line.ch-i.live { stroke: #8a8794; }
+.mapfx .map-body line.ch-i.walked { stroke: #c89b3c; }
+.mapfx .map-body line.ch-i.pick { stroke: #facc15; animation: chainrun 240ms steps(4) infinite; }
+.mapfx .map-body line.snap { animation: snap 420ms steps(4) forwards; }
+/* 노드 = 황동 메달(uifx --medal) + 아이콘(32칸, 아이콘 층 도트 --px1). 이름은 아래 띠가 말한다 */
+.mapfx .mnd { position: absolute; transform: translate(-50%, -50%); box-sizing: border-box; width: calc(var(--px) * 26); height: calc(var(--px) * 26); padding: 0; margin: 0; border: 0; display: grid; place-items: center; background: var(--medal) center / 100% 100% no-repeat; image-rendering: pixelated; box-shadow: none; cursor: default; }
+.mapfx .mnd.nd-boss { width: calc(var(--px) * 32); height: calc(var(--px) * 32); background-image: var(--medal-r); }
+.mapfx .mnd i { width: calc(var(--px1) * 32); height: calc(var(--px1) * 32); }
+.mapfx .mnd span { display: none; }
+.mapfx .mnd.later { filter: brightness(0.6); }
+.mapfx .mnd.skip { filter: grayscale(1) brightness(0.35); }
+/* 갈 수 있는 곳 = 멈춘 황동 톱니 테(초점이 여럿이 되지 않게), 고른 하나만 돈다 + 3도트 들림 */
+.mapfx .mnd.now { cursor: pointer; }
+.mapfx .mnd.now::before { content: ''; position: absolute; inset: calc(var(--px) * -5); z-index: -1; background: var(--cog) center / 100% 100% no-repeat; image-rendering: pixelated; }
+.mapfx .mnd.now.chosen { transform: translate(-50%, calc(-50% - var(--px) * 3)); }
+.mapfx .mnd.now.chosen::before { animation: cogturn 400ms steps(4) infinite; }
+/* 아래 미리보기 띠 (D-388): 움푹 칸 하나 — 안내 + 범례 / 고르면 아이콘 · 이름 24 · 꼬리표 ≤ 3 · 적 명단 · 「진입」 */
+.mapfx .peek-bar.inset { display: flex; align-items: center; gap: var(--s3); min-height: 72px; padding: var(--s1) var(--s2) var(--s1) var(--s3); }
+.mapfx .peek-bar .hint { margin: 0; color: var(--t-dim); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.mapfx .map-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s1) var(--s3); margin: 0 0 0 auto; padding: 0; list-style: none; }
+.mapfx .map-legend li { display: flex; align-items: center; gap: var(--s1); color: #c9c1b4; font: 400 12px/18px Galmuri11, sans-serif; }
+.mapfx .map-legend .ico { width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); }
+.mapfx .peek-bar .pb-ico { flex: none; width: calc(var(--px1) * 32); height: calc(var(--px1) * 32); }
+.mapfx .peek-bar .pb-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--s1); }
+.mapfx .peek-bar .pb-name { color: #f4e6c4; font: 700 24px/30px Galmuri11, sans-serif; white-space: nowrap; }
+.mapfx .peek-bar .pb-tags { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.mapfx .peek-bar .pb-desc { color: var(--t-dim); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
+.mapfx .peek-bar .pb-foes { flex: none; display: flex; gap: var(--s1); align-items: flex-end; }
+.mapfx .peek-bar .pb-foe { display: inline-flex; align-items: flex-end; }
+.mapfx .peek-bar .pb-foe i { color: var(--t-body); font: 700 12px/1 Galmuri11, sans-serif; font-style: normal; }
+.mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
+@media (max-width: 760px) { .mapfx .peek-bar .pb-foes { display: none; } }
+@media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd.now.chosen::before, .mapfx .map-body line { animation: none; } }

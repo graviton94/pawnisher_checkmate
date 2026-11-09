@@ -7,6 +7,7 @@ import type { PieceType } from '../engine';
 import { CREDIT_TEXT, CREDITS, STUDIO_URL } from '../data/credits';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay } from './fx3';
+import { cutChromeHtml, cutSay } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -16,11 +17,12 @@ export const creditsScene = (crew: PieceType[], meta: string): Promise<void> =>
       `<h2 class="cr-title">${CREDIT_TEXT.title}</h2>`,
       // 크레딧은 두 줄 한 장 (D-286): Made by 스튜디오(+주소) · Coworked by Claude
       `${CREDITS.map((c, k) => `<p class="cr-role">${c.role}</p>${c.names.map((n) => `<p class="cr-name${k === 0 ? ' cr-lead' : ''}">${n}</p>`).join('')}${k === 0 ? `<p class="cr-meta">${STUDIO_URL.replace(/^https:\/\//, '').replace(/\/$/, '')}</p>` : ''}`).join('<i class="cr-gap"></i>')}`,
-      `<p class="cr-role">${CREDIT_TEXT.photo}</p><div class="cr-photo"><span class="cr-pc king">${pieceImg('P', 0, 'large', 64)}<img class="cr-crown" src="ui/hud/paper-crown.png" alt=""></span>${crew.map((t) => `<span class="cr-pc">${pieceImg(t, 0, 'large', 64)}</span>`).join('')}</div><p class="cr-meta">${meta}</p><p class="cr-rec">${CREDIT_TEXT.record}</p>`,
+      `<p class="cr-role">${CREDIT_TEXT.photo}</p><div class="cr-photo"><span class="cr-pc king">${pieceImg('P', 0, 'large', 64)}<img class="cr-crown" src="ui/hud/paper-crown.png" alt=""></span>${crew.map((t) => `<span class="cr-pc">${pieceImg(t, 0, 'large', 64)}</span>`).join('')}</div><p class="cr-meta">${meta}</p>`,
     ];
     const el = document.createElement('div');
-    el.className = 'credits';
-    el.innerHTML = `<img class="cr-bg" src="scenes/credits-bg.png" alt="" onerror="this.remove()"><div class="cr-page"></div><p class="pl-tap">▼</p>`; // 크레딧 배경 E-06 (D-346) — 받기 전엔 검은 바탕
+    el.className = 'credits kit';
+    // 크레딧 배경 E-06 (D-346) — 받기 전엔 검은 바탕. 아래 자막 띠 · ▼는 모든 컷과 같은 자리 (D-397) — 기록지 12는 마지막 장 띠에
+    el.innerHTML = `<img class="cr-bg" src="scenes/credits-bg.png" alt="" onerror="this.remove()"><div class="cr-page"></div>${cutChromeHtml()}`;
     document.body.appendChild(el);
     const page = el.querySelector<HTMLElement>('.cr-page')!;
     let i = -1;
@@ -28,6 +30,7 @@ export const creditsScene = (crew: PieceType[], meta: string): Promise<void> =>
       i += 1;
       if (i >= pages.length) return pxOut(el, () => { el.remove(); resolve(); }, 300);
       page.innerHTML = pages[i];
+      cutSay(el, i === pages.length - 1 ? [{ k: 'n', t: CREDIT_TEXT.record }] : []);
       replay(page, 'in');
       sfx('tap', 3);
     };

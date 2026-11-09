@@ -1,12 +1,12 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BOSS_EPITHET, BOSS_PHASE_TEXT, ENTRY_LINES, HUD_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
-import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, btnRowHtml, closeWin, coverArt, dropWinDismiss, fitSlots, infoPeek, makeTalk, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, talkAt, type PickItem, type WinBtn } from './uikit';
+import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, btnRowHtml, closeWin, coverArt, cutChromeHtml, cutFill, cutLineHtml, dropWinDismiss, fitSlots, infoPeek, makeTalk, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, talkAt, type CutLine, type PickItem, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
@@ -19,7 +19,7 @@ import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
-import { ACT_CARD, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
+import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, oneLine, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
 import { finaleScene } from './finale';
 import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { creditsScene } from './credits';
@@ -30,7 +30,6 @@ import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
-import { iconMask } from '../ui/chrome';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
 // 심장 톱니 그림은 public 경로라 문서 기준으로 푼다 (base './' — CSS 파일 안 상대 경로는 Vite가 묶으려 든다)
@@ -326,7 +325,7 @@ const kitSheet = (page = 1): number => {
         <div class="ks-col"><button type="button" class="choice"><span class="choice-name">보통 선택지</span><span class="choice-res">결과 한 줄 <span class="up">+20</span></span></button><button type="button" class="choice down"><span class="choice-name">눌림</span><span class="choice-res">1도트 아래</span></button><button type="button" class="choice is-sel"><span class="choice-name">고름</span><span class="choice-res">청록 테</span><i class="btn-info" role="button"></i></button><button type="button" class="choice" disabled><span class="choice-name">꺼짐</span><span class="choice-res">나사 40 필요</span></button></div>
         <div class="ks-col"><div class="ks-row"><span class="tag">나사 45</span><span class="tag tag-crimson">실패 시 −10</span></div><div class="ks-row"><span class="wallet">150</span><i class="btn-info" role="button"></i></div><div class="divider"></div><div class="inset"><p>움푹 칸 — 대사 · 목록 · 입력.</p></div><div class="ks-row"><div class="plate">명패 열두 자</div></div></div>`
       : `<div class="ks-row"><div class="frame-portrait"><img src="scenes/boss-gilded.png" alt=""></div><div class="frame-portrait f96"><img src="scenes/boss-gilded.png" alt=""></div><div class="frame-portrait f64">${pieceImg('N', 0, 'large', 32)}</div><div class="frame-scene" style="width:352px;height:264px"><img class="fs-plate" src="${new URL('../assets/ui/chrome/v2/scene-frame-plate.png', import.meta.url).href}" alt=""><img src="scenes/bg-forge.png" alt=""></div><div class="card-slot is-sel"></div></div>
-        <div class="ks-row"><span class="state-band k-toast">${pieceImg('P', 0, 'small', 24)}<span>토스트 한 줄 스무 자 안</span></span><span class="cut-sub">자막 띠 — 서술 한 줄 32자 이하.</span><span class="cut-next">▼ 눌러서 계속</span></div>`;
+        <div class="ks-row"><span class="state-band k-toast">${pieceImg('P', 0, 'small', 24)}<span>토스트 한 줄 스무 자 안</span></span></div>`;
   el.addEventListener('click', () => el.remove());
   document.body.appendChild(el);
   return 0;
@@ -1489,7 +1488,7 @@ const advance = (): void => {
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
     squad = restSquad(squad, restHeal());
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
-    void sceneIntro(actLabel(a.act), a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`, false, '', `act-${Math.min(4, actI + 1)}`, 'act').then(() => {
+    void actCard(actLabel(a.act), a.name, ACT_NARR[actI], `act-${Math.min(4, actI + 1)}`).then(() => {
       showMap();
       // 막을 넘으면 부품 칸 +1 (D-384)
       if (actI > 0 && ECON.partSlotsPerAct) toast(`부품 칸이 하나 늘었습니다. (부품 칸 ${partSlotsAt(actI)})`, 2600);
@@ -1537,9 +1536,11 @@ const enterNode = (n: MapNode): void => {
 };
 
 /**
- * 출하 지도 (D-169, 슬더스식 전체 화면): 막 전체가 왼쪽 → 오른쪽으로 펼쳐진다. 줄마다 노드(황동 메달), 지나온 길은 금빛 선,
- * 다음 갈 곳만 빛나고 누를 수 있다. 누르면 아래 정보 띠(이름 · 설명 · 적 구성) + 「간다」. 앞으로 남은 줄도 다 보인다(계획).
- * 고정 노드(입문 · 연마)는 지도 없이 바로.
+ * 출하 지도 (D-169, 슬더스식 전체 화면): 막 전체가 왼쪽 → 오른쪽으로 펼쳐진다. 줄마다 노드(황동 메달), 지나온 길은 금빛 선.
+ * 패스 5 (D-397, 보고서 2026-11-09f 2-1): 바닥은 불투명(막 그림 덮기 + 2×2 먹 디더 — 뒤 전투가 비치지 않는다) ·
+ * 머리 줄 = 막 꼬리표 + 이름 24 · 오른쪽 지갑(나사) + 꼬리표(분대 · 덱 · 부품 · 부적) ·
+ * 갈 수 있는 곳은 멈춘 황동 톱니 테, 고른 하나만 돈다 · 아래 미리보기 띠 `.peek-bar`(움푹 칸, 높이 72) = 아이콘 · 이름 24 · 꼬리표 ≤ 3 · 적 명단 · 황동 「진입」 112×48.
+ * 아무것도 고르지 않았을 때 그 띠는 안내 한 줄 + 범례. 고정 노드(입문 · 연마)는 지도 없이 바로.
  */
 /** 지나온 길: 막마다 줄 → 고른 노드 번호 */
 let picked: number[][] = [[], [], [], []];
@@ -1595,18 +1596,21 @@ const showMap = (): void => {
     )
     .join('');
   const el = document.createElement('div');
-  el.className = 'mapfx';
+  el.className = 'mapfx kit';
   // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
   el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
-  el.innerHTML = `<header><div><p class="sf-eyebrow">${actLabel(a.act)}</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b> · 부품 <b>${parts.length}/${partSlotsAt(actI)}</b> <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArtSmall(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArtSmall(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
+  const legend = `<p class="hint">${MAP_TEXT.hint}</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
+    .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
+    .join('')}</ul>`;
+  // 부적 둘은 꼬리표 하나 (667 폭에서 머리 줄이 두 줄로 접히지 않게)
+  const charm = `<span class="tag" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}">${(['revive', 'rewind'] as const).map((c) => `<i class="ico" style="${iconArtSmall(CHARMS[c].icon)}"></i>${charms[c]}`).join(' ')}</span>`;
+  el.innerHTML = `<header class="map-head"><span class="tag">${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><span class="tag">${MAP_TEXT.squad(squad.length)}</span><span class="tag">${MAP_TEXT.deck(deck.length)}</span><span class="tag">${MAP_TEXT.parts(parts.length, partSlotsAt(actI))}</span>${charm}</div></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
-    <footer class="map-info"><p class="hint">빛나는 곳을 고릅니다.</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
-      .map((k) => `<li class="nd-${k}"><i class="ico" style="${iconArt(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
-      .join('')}</ul></footer>`;
+    <footer class="inset peek-bar">${legend}</footer>`;
   document.body.appendChild(el);
   sfx('lift');
-  const info = el.querySelector<HTMLElement>('.map-info')!;
+  const info = el.querySelector<HTMLElement>('.peek-bar')!;
   el.querySelectorAll<HTMLElement>('[data-node]').forEach((btn) =>
     btn.addEventListener('click', () => {
       const k = Number(btn.dataset.node);
@@ -1621,12 +1625,17 @@ const showMap = (): void => {
         ln.classList.toggle('snap', !me);
         ln.classList.toggle('live', me);
       });
-      // 노드 미리보기 (D-388 — 진입 창 대신, 발라트로 블라인드 · ITB 임무 미리보기처럼 누르기 전에): 이름 · 적 명단 · 규칙 줄
+      // 노드 미리보기 (D-388 — 진입 창 대신, 발라트로 블라인드 · ITB 임무 미리보기처럼 누르기 전에) · D-397 키트 부품:
+      // 아이콘 · 이름 24 · 꼬리표 ≤ 3(적 수 · 보상 · 특성) · 적 명단 · 황동 「진입」. 장소 노드는 꼬리표 대신 한 줄 설명
+      const def = nd.battle;
       const cnt = new Map<PieceType, number>();
-      for (const t of nd.battle?.enemy ?? []) cnt.set(t, (cnt.get(t) ?? 0) + 1);
-      const foes = nd.battle ? `<span class="nd-foes">${[...cnt].map(([t, n]) => `<span class="nd-foe">${pieceImg(t, 1, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('')}</span>` : '';
-      const rules = (nd.battle && !nd.battle.boss ? entryLines(nd.battle).join(' · ') : '') || NODE_DESC[nd.kind];
-      info.innerHTML = `<i class="ico nd-${nd.kind}" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="txt"><b>${NODE_NAMES[nd.kind]}${nd.battle?.foe ? ` · ${nd.battle.foe}` : ''}</b><small>${rules}</small></div>${foes}<button class="btn brass" type="button" data-go>진입</button>`;
+      for (const t of def?.enemy ?? []) cnt.set(t, (cnt.get(t) ?? 0) + 1);
+      const foes = def ? `<span class="pb-foes">${[...cnt].map(([t, n]) => `<span class="pb-foe">${pieceImg(t, 1, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('')}</span>` : '';
+      const tags = def
+        ? [`<span class="tag tag-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="tag">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name).filter(Boolean).slice(0, 1).map((t) => `<span class="tag">${t}</span>`)].slice(0, 3).join('')
+        : '';
+      const name = `${NODE_NAMES[nd.kind]}${def?.foe ? ` · ${def.foe}` : def?.boss && def.bossRule ? ` · ${BOSS_RULES[def.bossRule].name}` : ''}`;
+      info.innerHTML = `<i class="ico pb-ico" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="pb-txt"><b class="pb-name">${name}</b>${def ? `<span class="pb-tags">${tags}</span>` : `<span class="pb-desc">${NODE_DESC[nd.kind]}</span>`}</div>${foes}<button class="btn k-brass pb-go" type="button" data-go>${MAP_TEXT.go}</button>`;
       info.querySelector('[data-go]')!.addEventListener('click', () => go(k));
     }),
   );
@@ -2168,120 +2177,64 @@ const pickCardScreen = (title: string, say: string, ids: CommandId[], onPick: (i
   }).querySelector('[data-back]')!.addEventListener('click', back);
 };
 
-/** 판 전환 도움말 (스카이림식 — 전환 화면 아래 한 줄) */
-const TIPS = [
-  '카드를 쓰기 전에 붉은 과녁과 금색 칸을 보십시오. 금색은 처치입니다.',
-  '한 턴에 여럿을 처치할수록 연쇄 배율이 오릅니다. 순서가 곧 화력입니다.',
-  '적의 공격은 미리 보입니다. 먼저 쓰러뜨리거나, 비키거나, 길을 막으십시오.',
-  '되감기는 대국마다 한 번. 이번 턴을 처음으로 되돌립니다.',
-  HUD_TEXT.trackHint,
-  '쓰러진 분대원은 돌아오지 않습니다. 정비로 한 기를 되살릴 수 있습니다.',
-  '부품은 같은 띠의 카드와 맞물립니다. 띠를 맞추면 배율이 폭발합니다.',
-  '기물을 길게 누르면 이름 · 기벽 · 체력을 볼 수 있습니다.',
-];
-
 /**
- * 전환 화면 (D-165 → D-191 새 문법): 철문이 열리면 — 빛줄기 앞으로 적(또는 장소 문양)이 떨어져 박히고 → 명패 아래 이름이 내리꽂히고
- * (색 갈림) → 서술이 한 자씩 → 적 구성이 하나씩 튀어나온다. 눌러서 넘기거나 약 3.5초 뒤 저절로.
+ * 막 소개 타이틀 카드 (D-388 · D-389 · D-397, 보고서 2026-11-09f 2-1 · 3.10): 팝업이 아니라 영화식 —
+ * 막 그림이 위를 채우고(비율 그대로 기기 픽셀 정수배로 덮기, coverArt) 아래 먹 바닥에 막 꼬리표 → 막 이름 36 → 자막 띠 두 줄(서술 + 독백) · ▼.
+ * 철문 전환으로 열고 닫는다. 누르면 넘어가고, 다 찍힌 뒤 읽을 시간(글자당 60ms, 최소 2.4초)이 지나면 저절로 (D-263).
  */
-/**
- * 진입 화면 (D-319 전면 리뉴얼, 테스터: 「대국 진입 꾸밈이 어색 · ×2가 사각형에 가려짐 · 진입마다 제각기의 연출」).
- * 작업대 판 위에 「이름표 → 무대 → 이름 도장 → 서술」. 무대는 진입마다 다르다:
- *   battle = 컨베이어에 적 기물이 하나씩 떨어져 박힌다 · check = 같은 줄을 붉은 렌즈가 훑고 「검문」 도장 · shop = 저울이 흔들리고 나사가 떨어진다
- *   event = 물음 카드가 뒤집힌다 · chest = 자물쇠가 떨다 튄다 · forge = 망치가 세 번 내리친다 · act = 막 표지 그림 위 깃발
- * 모든 움직임은 예비 동작 → 터짐 → 출렁임, 사라짐은 철문(shutter) — 페이드 없음 (D-216).
- */
-type EntryKind = 'battle' | 'check' | 'shop' | 'event' | 'chest' | 'forge' | 'act';
-const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false, roster = '', bg = '', kind: EntryKind = 'act', foes: PieceType[] = [], tell = ''): Promise<void> =>
+const actCard = (label: string, name: string, narr: string, art: string): Promise<void> =>
   new Promise((resolve) => {
-    void boss;
-    void roster;
     const el = document.createElement('div');
-    el.className = `stagefx entry2 en-${kind}${bg ? ' has-bg' : ''}`;
-    if (foes.length) el.style.setProperty('--scan-at', `${260 + foes.length * 110 + 340}ms`);
-    if (bg) el.style.setProperty('--sf-bg', `url(${new URL(`scenes/${bg}.png`, location.href).href})`);
-    const lineup = foes.length
-      ? `<div class="en-line">${foes.map((t, i) => `<span class="en-pc" style="--i:${i}">${pieceImg(t, 1, 'small', 48)}</span>`).join('')}</div><i class="en-belt"></i>${kind === 'check' ? '<i class="en-scan"></i><b class="en-stamp">검문</b>' : ''}`
-      : `<div class="en-prop">${art}</div>${kind === 'shop' ? Array.from({ length: 5 }, (_, i) => `<i class="en-screw" style="--i:${i}"></i>`).join('') : ''}`;
-    // D-383 진입 창 (사용자: 「시험대 팝업 모달 자체 퀄리티가 떨어진다」): 철판 패널 + 위 가장자리에 걸친 황동 명패,
-    // 왼쪽 = 움푹한 작업 칸(벽 무늬 · 컨베이어 · 떨어지는 기물 / 소품), 오른쪽 = 이름 · 서술(문장마다 줄) · 적 명단 칩 · 알림 테이프
-    const cnt = new Map<PieceType, number>();
-    for (const t of foes) cnt.set(t, (cnt.get(t) ?? 0) + 1);
-    const chips = foes.length ? `<ul class="en-roster">${[...cnt].map(([t, n], i) => `<li class="inset" style="--i:${i}">${pieceImg(t, 1, 'small', 24)}<b>${PIECE_NAMES_KO[t]}</b>${n > 1 ? `<i>×${n}</i>` : ''}</li>`).join('')}</ul>` : '';
-    const tape = tell ? `<p class="en-tell">${tell}</p>` : '';
-    // 작업 칸 그림 = 받은 장면 그림 (D-385, 사용자: 「직접 찍지 말고 이미지 에셋을 쓰거나 발주를 내라」) — 전용 무대 그림(발주 18위 EN-01 ~ 03)이 오면 바꾼다
-    const bay = ({ shop: 'bg-shop', forge: 'bg-forge', event: 'bg-event', chest: 'bg-reward' } as Partial<Record<EntryKind, string>>)[kind] ?? (bg || `act-${Math.min(4, actI + 1)}`);
-    el.innerHTML = `<div class="en-table${foes.length ? ' has-foes' : ''}"><p class="en-plate">${label}</p><div class="en-bay" style="--bay:url(${new URL(`scenes/${bay}.png`, location.href).href});${kind === 'battle' || kind === 'check' ? `--bay2:url(${new URL(`scenes/entry-${kind}.png`, location.href).href})` : ''}"><div class="en-stage">${lineup}</div></div><div class="en-copy"><h1 class="en-name">${name}</h1><p class="sf-narr en-narr"></p>${chips}${tape}</div></div>
-      <p class="sf-tip">${TIPS[Math.floor(Math.random() * TIPS.length)]}</p><p class="sf-skip">눌러서 계속</p>`;
+    el.className = 'actcard kit';
+    el.innerHTML = `<div class="ac-art"><img src="scenes/${art}.png" alt="" data-cover data-fx="0.5" data-fy="0.42"></div><div class="ac-floor"><span class="tag">${label}</span><h1 class="ac-name">${name}</h1></div>${cutChromeHtml()}`;
+    const sub = el.querySelector<HTMLElement>('.cut-sub')!;
+    sub.classList.add('typing');
+    const lines: CutLine[] = narr.split('\n').filter(Boolean).map((t) => (/^‘.*’$/.test(t) ? { k: 'm', t: t.slice(1, -1) } : { k: 'n', t }));
+    const img = el.querySelector<HTMLImageElement>('.ac-art > img')!;
+    const fit = (): void => void (img.complete && coverArt(img));
+    img.addEventListener('load', fit);
     const T: number[] = [];
-    const at = (ms: number, fn: () => void) => T.push(window.setTimeout(fn, ms));
-    const hitAt = (sel: string, n: number, spread: number) => {
-      const r = el.querySelector(sel)?.getBoundingClientRect();
-      if (r) sparksAt(r.left + r.width / 2, r.bottom - 4, n, spread);
-    };
-    // 철문 전환 (D-184): 닫힌 사이에 장면을 세우고 문이 열리는 박자에 맞춰 연출을 시작한다
     void shutter(() => {
       document.body.appendChild(el);
+      fit();
+      requestAnimationFrame(fit);
       el.classList.add('run');
-      // 기물이 떨어질 때마다 쿵 (대국 · 검문)
-      foes.forEach((_, i) => at(260 + i * 110 + 150, () => { sfx('land'); if (i === foes.length - 1) shake(el.querySelector('.en-stage'), 1); }));
-      const after = foes.length ? 260 + foes.length * 110 + 260 : 420;
-      if (kind === 'check') { at(after + 80, () => sfx('threat')); at(after + 900, () => { sfx('stamp'); shake(el, 2); hitAt('.en-stamp', 10, 50); }); }
-      if (kind === 'shop') [0, 1, 2, 3, 4].forEach((i) => at(520 + i * 120, () => sfx('coin' as never)));
-      if (kind === 'chest') at(900, () => { sfx('rare'); shake(el, 2); hitAt('.en-prop', 14, 60); });
-      if (kind === 'forge') [520, 900, 1280].forEach((ms) => at(ms, () => { sfx('stamp'); hitAt('.en-prop', 8, 46); shake(el.querySelector('.en-stage'), 1); }));
-      if (kind === 'event') at(760, () => sfx('lift'));
-      if (kind === 'act') at(380, () => { sfx('land'); hitAt('.en-prop', 8, 44); });
-      // 이름 도장 → 서술
-      at(after + (kind === 'check' ? 700 : 120), () => { sfx('stamp'); el.classList.add('named'); });
-      at(after + (kind === 'check' ? 1000 : 420), () => void typeIn(el.querySelector<HTMLElement>('.en-narr')!, narr.replace(/([.!?…])\s+/g, '$1\n'), 20));
-      at(after + (kind === 'check' ? 1100 : 520), () => el.classList.add('told'));
+      T.push(window.setTimeout(() => { sfx('stamp'); el.classList.add('named'); }, 260));
+      T.push(window.setTimeout(async () => {
+        const box = el.querySelector<HTMLElement>('.cut-lines')!;
+        box.innerHTML = lines.map(cutLineHtml).join('');
+        const ps = [...box.querySelectorAll<HTMLElement>('p > span')];
+        for (let i = 0; i < lines.length && !done; i++) await typeIn(ps[i], cutFill(lines[i]), 24, undefined, () => !done);
+        sub.classList.remove('typing');
+      }, 520));
     });
     let done = false;
-    const close = () => {
+    const close = (): void => {
       if (done) return;
       done = true;
       T.forEach(clearTimeout);
-      // 글은 바로 걷는다 — 철문이 닫히는 동안 서술이 다음 판 위에 남아 겹쳐 보였다 (2026-11-06 APK 피드백)
-      el.classList.add('closing');
-      // 닫힌 사이에 다음 화면을 세운다 (resolve → 부른 쪽이 곧바로 판 · 화면을 만든다)
       void shutter(() => {
         el.remove();
-        // 입력 위생 (페르소나 테스트 m4): 전환 화면을 넘긴 탭이 곧바로 다음 화면의 물건을 고르지 않게 잠깐 막는다
+        // 입력 위생 (페르소나 테스트 m4): 넘긴 탭이 곧바로 다음 화면의 물건을 고르지 않게 잠깐 막는다
         gateUntil = performance.now() + 350;
         resolve();
         return new Promise((r) => window.setTimeout(r, 80));
       });
     };
-    window.setTimeout(() => el.addEventListener('click', close), 1000);
-    // 저절로 넘어가는 때 (D-263): 서술이 다 찍히고 읽을 시간(글자당 60ms, 최소 2.4초)을 준 뒤 — 누르면 언제든 넘어간다
-    const lead = foes.length ? 260 + foes.length * 110 + 680 : 840;
-    window.setTimeout(close, lead + (kind === 'check' ? 600 : 0) + narr.length * 20 + Math.max(2400, narr.length * 60));
+    window.setTimeout(() => el.addEventListener('click', close), 800);
+    window.setTimeout(close, 520 + narr.length * 24 + Math.max(2400, narr.length * 60));
   });
-/** 대국 규칙 짧은 줄 (D-385 · D-388): 보상 · 적 특성 · 호위 — 지도 미리보기 · 입문 진입에서 같이 쓴다 */
-const entryLines = (def: BattleDef): string[] => [...new Set(def.title.startsWith('입문') ? ['적 킹을 쓰러뜨리면 승리'] : [
-  ...(def.reward === 'part' ? [ENTRY_LINES.reward] : []),
-  ...(def.traits ?? []).map((t) => (t === 'blastPawn' || t === 'rookPlate' ? ENTRY_LINES[t] : FOE_TRAITS[t].line)),
-  ...(/호위/.test(def.tell ?? '') ? [ENTRY_LINES.guard] : []),
-])];
+/** 대국 들어가기: 반장 = 등장 컷(bossintro) · 그 밖 = 철문 전환 뒤 판 위 띠 한 번 (D-388) */
 const stageIntro = (def: BattleDef): Promise<void> => {
   const [label, name] = def.title.split(' — ');
-  const foe: PieceType = def.boss ? 'K' : def.enemy.find((t) => t !== 'K' && t !== 'P') ?? 'K';
-  // 적 구성: 같은 유형은 묶어 ×n
-  const counts = new Map<PieceType, number>();
-  for (const t of def.enemy) counts.set(t, (counts.get(t) ?? 0) + 1);
-  const roster = [...counts].map(([t, n], i) => `<b style="animation-delay:${900 + i * 90}ms">${pieceImg(t, 1, 'small', 28)}${n > 1 ? `<small>×${n}</small>` : ''}</b>`).join('');
-  // 반장 초상 (B-01~03, 실제 유닛 = 검은 킹): 그림이 있으면 그것, 없으면 큰 도트 (img onerror가 도트로 되돌린다)
-  const art = def.boss ? `<img class="enc-portrait" src="scenes/${BOSS_ART[def.bossRule ?? 'plate']}.png" alt="" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(foe, 1, 'large', 220).replace(/'/g, '&#39;')}'>` : pieceImg(foe, 1, 'large', 220);
   // 반장은 따로 (D-249): 오른쪽 끝 초상 · 디더 경계 · 경계선 FX
   if (def.boss) {
     const real = def.bossRule ?? 'plate';
     const rule = real as BossKey;
-    return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], narr: def.narr, rules: asc <= BOSS_PHASE_TEXT.upTo ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
+    return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], lines: BOSS_CARD[real === 'gilded' ? (asc >= 1 ? 'gilded+' : 'gilded') : (real as StoryBoss)], rules: asc <= BOSS_PHASE_TEXT.upTo ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
   // 대국 · 검문은 진입 창(모달)을 띄우지 않는다 (D-388, 사용자: 「배경에 기물 얹는 진입 창 자체가 최악」 · /game-ui-design 0장: 행동이 없는 정보 = 모달 금지).
   // 정보(적 명단 · 규칙 · 보상)는 지도에서 노드를 고를 때 미리 보여 주고, 들어갈 때는 철문 전환 뒤 판 위 띠 한 번만 (⑨ 표지).
-  void roster; void art;
   return shutter(() => undefined).then(() => void window.setTimeout(() => band(name ? `${label} · ${name}` : label, 'brass'), 120));
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
@@ -2370,15 +2323,14 @@ const openOverlay = (html: string, cls = ''): HTMLElement => {
 };
 /**
  * 카드 본문 줄 맞춤 (사용자 결정 D-377): 줄은 정해진 칸 — 넘치면 줄바꿈 대신 그 줄 글자를 줄인다.
- * 12px(갈무리11) → 10px(갈무리9) → 8px(갈무리7) → 그래도 넘치면 가로로만 눌러 담는다. 카드 폭이 바뀌면(등장 연출 · 글꼴 늦게 옴) 다시 잰다.
+ * 12px(갈무리11) → 10px(갈무리9) → 그래도 넘치면 가로로만 눌러 담는다 (8px 갈무리7 단계는 D-397에서 뺐다 — 판독 불가). 카드 폭이 바뀌면(등장 연출 · 글꼴 늦게 옴) 다시 잰다.
  */
 const fitLines = (d: HTMLElement): void => {
   d.querySelectorAll<HTMLElement>('.ln').forEach((ln) => {
-    ln.classList.remove('s10', 's8');
+    ln.classList.remove('s10');
     ln.style.transform = '';
     const over = (): boolean => ln.scrollWidth > ln.clientWidth + 1;
     if (over()) ln.classList.add('s10');
-    if (over()) { ln.classList.remove('s10'); ln.classList.add('s8'); }
     if (over()) ln.style.transform = `scaleX(${(ln.clientWidth / ln.scrollWidth).toFixed(3)})`;
   });
 };
@@ -2478,7 +2430,7 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
 const bossFallCut = async (rule: StoryBoss): Promise<void> => {
   const st = BOSS_STORY[rule];
   const fallImg = await new Promise<string>((res) => { const im = new Image(); im.onload = () => res(`boss-fall-${rule}`); im.onerror = () => res(BOSS_ART[rule]); im.src = `scenes/boss-fall-${rule}.png`; });
-  await playCuts([{ img: fallImg, bg: ['#16141c', '#0b0b0e'], glow: '#e5262f', art: [{ t: 'K', side: 1, x: 50, y: 58, h: 44, dim: true }], lines: [{ k: 'n', t: st.fall }, { k: 's', who: '종이왕', t: st.reply }] }]);
+  await playCuts([{ img: fallImg, bg: ['#16141c', '#0b0b0e'], glow: '#e5262f', art: [{ t: 'K', side: 1, x: 50, y: 58, h: 44, dim: true }], lines: [...st.fall.split('\n').map((t) => ({ k: 'n' as const, t })), ...st.reply.split('\n').map((t) => ({ k: 's' as const, who: '종이왕', t }))] }]);
 };
 const finishNow = (): void => {
   const isWin = b.s.winner === 0;
@@ -3533,7 +3485,7 @@ const loadRun = (sv: RunSave): void => {
 const gildedPhase2 = async (): Promise<void> => {
   const last = runBosses.at(-1);
   await playCuts([{ img: gildedArt(), bg: ['#2a1e08', '#0b0b0e'], glow: '#facc15', fx: 'gold', art: [{ t: 'K', side: 1, x: 50, y: 56, h: 46 }],
-    lines: [{ k: 'n', t: '금칠이 갈라진 틈으로 쇳물빛이 샜다.' }, { k: 's', who: '도금왕', t: GILDED_STORY.phase2(asc) }, ...(last ? [{ k: 's' as const, who: '도금왕', t: BOSS_STORY[last].mock }] : []), { k: 's', who: '도금왕', t: GILDED_STORY.phase2End }] }]);
+    lines: [{ k: 'n', t: '금칠이 갈라진 틈으로 쇳물빛이 샜다.' }, ...[...GILDED_STORY.phase2(asc).split('\n'), ...(last ? BOSS_STORY[last].mock.split('\n') : []), GILDED_STORY.phase2End].map((t) => ({ k: 's' as const, who: '도금왕', t }))] }]);
   // 승급 13 (각본 §2.5): 마지막 증언 → 싸움 중에 종이 왕관을 벗는다 — 여기부터 종이왕은 폰처럼 움직이고 친다
   if (asc >= 13) {
     await playCuts([CROWN_OFF]);
@@ -3555,7 +3507,7 @@ const promoteScreen = (): Promise<void> =>
     const el = openWin({
       size: 'm',
       title: asc ? `승급 ${asc}` : '승급',
-      body: `<div class="promo2"><div class="frame-portrait"><img src="scenes/${gildedArt()}.png" alt="" onerror="if(!this.dataset.t){this.dataset.t='1';this.src='scenes/boss-gilded.png'}else{this.outerHTML=this.dataset.fb}" data-fb='${pieceImg('K', 1, 'large', 104).replace(/'/g, '&#39;')}'></div><div class="stack"><p class="say"><span class="who">도금왕</span>“${tm.say}”</p>${asc === 6 && last ? `<p class="say">“${BOSS_STORY[last].mock}”</p>` : ''}<p class="mono">‘${tm.mono}’</p><p class="note promo-stuck" hidden>${PROMOTE_TEXT.hint} ‘${PROMOTE_TEXT.stuck}’</p></div></div>`,
+      body: `<div class="promo2"><div class="frame-portrait"><img src="scenes/${gildedArt()}.png" alt="" onerror="if(!this.dataset.t){this.dataset.t='1';this.src='scenes/boss-gilded.png'}else{this.outerHTML=this.dataset.fb}" data-fb='${pieceImg('K', 1, 'large', 104).replace(/'/g, '&#39;')}'></div><div class="stack"><p class="say"><span class="who">도금왕</span>“${tm.say}”</p>${asc === 6 && last ? `<p class="say">“${oneLine(BOSS_STORY[last].mock)}”</p>` : ''}<p class="mono">‘${tm.mono}’</p><p class="note promo-stuck" hidden>${PROMOTE_TEXT.hint} ‘${PROMOTE_TEXT.stuck}’</p></div></div>`,
       back: { label: PROMOTE_TEXT.lay, attrs: 'data-lay' },
       go: { label: PROMOTE_TEXT.promote, attrs: 'data-promote' },
     });

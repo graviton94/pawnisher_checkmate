@@ -18,14 +18,18 @@ export const BOSS_PHASE_TEXT = {
 };
 
 /**
- * 진입 창 종이 테이프 (D-385, 사용자: 「이 긴 문장 다 읽히겠냐」): 판 규칙을 한 줄씩 짧게 — 보상 · 적 특성 · 호위.
- * 긴 설명은 기물 길게 누르기 · ? 용어에서.
+ * 지도 (D-397, 보고서 2026-11-09f 2-1): 머리 줄 꼬리표 · 아래 미리보기 띠(.peek-bar) 꼬리표 ≤ 3 · 단추.
+ * 미리보기 꼬리표는 짧은 이름만(≤ 6자) — 긴 규칙 문장은 전투 안 반장 규칙 · 엿보기가 말한다.
  */
-export const ENTRY_LINES = {
-  reward: '이기면 부품 +1',
-  blastPawn: '불꽃 폰 · 쓰러지면 터진다',
-  rookPlate: '룩 · 방패를 두른다',
-  guard: '적 킹 · 호위가 있으면 방열판',
+export const MAP_TEXT = {
+  hint: '빛나는 곳을 고릅니다.',
+  go: '진입',
+  squad: (n: number) => `분대 ${n}`,
+  deck: (n: number) => `덱 ${n}`,
+  parts: (n: number, max: number) => `부품 ${n}/${max}`,
+  foes: (n: number) => `적 ×${n}`,
+  reward: { card: '보상 카드', part: '보상 부품', kit: '보상 부품', recruit: '보상 영입' } as Record<string, string>,
+  trait: { blastPawn: '불꽃 폰', rookPlate: '방패 룩', guard: '호위' } as Record<string, string>,
 };
 
 export const HUD_TEXT = {

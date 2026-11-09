@@ -439,3 +439,24 @@ export const closePeek = (el: HTMLElement | null = peekNow): void => {
   if (peekNow === el) peekNow = null;
   pxOut(el, () => el.remove(), 160);
 };
+
+/**
+ * 컷신 크롬 하나 (3.10, D-397): 프롤로그 · 막 카드 · 반장 등장 · 격파 · 승급 · 엔딩 · 크레딧 · 최종장이 모두 이 마크업을 쓴다.
+ * `.cut-sub` = 아래 가운데 먹 띠(UI-08 띠 끝 장식 sub-cap-l/r 정수배, 줄 둘 · 줄마다 CUT_TEXT_BUDGET 안) · 띠 안 오른쪽 끝 `.cut-next` ▼ ·
+ * `.cut-skip` = 철 단추 「건너뛴다」 112×48 아래 오른쪽. 부르는 쪽 뿌리에 `kit` 클래스를 달면 꼬리표 · 움푹 칸도 키트 그대로.
+ */
+export const cutChromeHtml = (o: { skip?: string } = {}): string =>
+  `<div class="cut-sub"><div class="cut-lines" aria-live="polite"></div><span class="cut-next" aria-hidden="true">▼</span></div>${o.skip ? `<button type="button" class="btn k-iron cut-skip">${o.skip}</button>` : ''}`;
+/** 자막 한 줄: n 서술 · s 대사(이름 12 굵게 + “ ”) · m 독백(‘ ’) */
+export interface CutLine { k: 'n' | 's' | 'm'; t: string; who?: string }
+/** 줄 글자 (따옴표까지) — 찍기(typeIn)와 한 번에 채우기가 같은 글을 쓴다 */
+export const cutFill = (l: CutLine): string => (l.k === 's' ? `“${l.t}”` : l.k === 'm' ? `‘${l.t}’` : l.t);
+/** 줄 빈 틀 (글은 <span>에 찍는다) */
+export const cutLineHtml = (l: CutLine): string => `<p class="cl-${l.k}">${l.k === 's' && l.who ? `<b class="cl-who">${l.who}</b>` : ''}<span></span></p>`;
+/** 띠에 줄을 바로 채운다 (찍기 없이) */
+export const cutSay = (root: HTMLElement, lines: CutLine[]): void => {
+  const box = root.querySelector<HTMLElement>('.cut-lines');
+  if (!box) return;
+  box.innerHTML = lines.map(cutLineHtml).join('');
+  box.querySelectorAll<HTMLElement>('p > span').forEach((s, i) => (s.innerHTML = cutFill(lines[i])));
+};
