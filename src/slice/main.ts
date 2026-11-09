@@ -6,7 +6,7 @@ import './slice.css';
 import './card-layout.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
-import { bindPick, bindWinHost, btnHtml, closeWin, dropWinDismiss, openWin, pickScreen, placeScreen, slotsHtml, type PickItem, type WinBtn } from './uikit';
+import { bindPick, bindWinHost, btnHtml, btnRowHtml, closeWin, coverArt, dropWinDismiss, fitSlots, openWin, pickScreen, placeScreen, slotsHtml, type PickItem, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
@@ -43,8 +43,8 @@ const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
 import { CREW, DEATHS, QUIRKS, SCAR_DESC, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
-import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
-import { EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
+import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
+import { EVENT_FOCUS, EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
 import { runEventFx, type CardFx, type CrewFx } from './evstage';
 import { EVENT_OUTCOME } from '../data/event-outcome';
 import { bossIntro, type BossKey } from './bossintro';
@@ -1743,62 +1743,84 @@ const showMap = (): void => {
 let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
 /** 다음 출하에서 뒤로 미룰 최근 사건 수 (15종 중) */
 const EV_RECENT = 7;
-/** 사건 화면 (R5-3, D-170): 서술 · 선택지(고를 수 없으면 이유) → 결과 한 줄 → 계속 (부품이면 고르기) */
+/** 장면 액자 위 황동 명패 조각 (UI-04 scene-frame-plate, D-391 다듬기) */
+const SCENE_PLATE = new URL('../assets/ui/chrome/v2/scene-frame-plate.png', import.meta.url).href;
 /**
- * 사건 무대 (D-248, 사용자: 「선택지 → 해당 대화창에서 연출이 계속돼야지, 팝업 여러 개 휙휙 전환이 아니라」 · 슬더스식 흐름):
- * 한 창 안에서 ① 그림 + 서술 + NPC 첫마디 → ② 선택지 (한 번 누르면 NPC가 반응하고 한 번 더 누르면 확정, 오래 망설이면 NPC가 한마디)
- * → ③ 그 사건만의 장치가 그림 위에서 돈다 (evstage.ts — 동전 · 뽑기 바퀴 · 망치 · 담금질 …, 누르면 손맛) → ④ 결과 서술 + NPC 마무리
- * → ⑤ 사건마다 다른 나가기 버튼 (「동전 소리를 등진다」). 결과는 엔진이 먼저 정한다 — 화면은 보여 주기만 (UI 원칙 9).
+ * 선택지 결과 한 줄 (D-395, 보고서 3.4 — 한 줄에 본문 + 강조 1): ' · ' 조각 가운데 잃는 것만 손해 색으로.
+ * 용어 풀이는 줄에 붙이지 않는다 — 정보 단추가 대사 칸에 띄운다 (evPages).
  */
-/**
- * 사건 선택지 설명 (테스터: 「생명 +1이 뭔지도 모르는데」 · 「이 선택이 값어치가 있나 모르겠다」):
- * ' · '로 나뉜 조각마다 얻는 것(청록) · 잃는 것(붉은)을 칠하고 안에 든 용어는 아래에 한 줄 풀이를 붙인다.
- */
-const evDesc = (desc: string): string => {
-  const bad = /−|-\d|깨진다|잃|녹슨|빠진다|쓰러/;
-  const good = /\+|되살|회복|얻/;
-  const parts = desc.split(' · ').map((t) => `<span class="${bad.test(t) ? 'ev-bad' : good.test(t) ? 'ev-good' : 'ev-mid'}">${t}</span>`).join('<i class="ev-dot"> · </i>');
-  const terms = KEYWORDS.filter(([name]) => name.length >= 2 && !/[+×]/.test(name) && desc.includes(name)).map(([name, text]) => `<span class="ev-term"><b>${name}</b> ${text.replace(/\n/g, ' ')}</span>`);
-  return `<small class="ev-desc">${parts}</small>${terms.length ? `<small class="ev-terms">${terms.join('')}</small>` : ''}`;
+const evRes = (desc: string): string => {
+  const bad = /−|잃|녹슮|부서짐|금$|몰수|감전/;
+  return desc.split(' · ').map((t) => (bad.test(t) ? `<span class="down">${t}</span>` : t)).join(' · ');
 };
+/** 정보 단추가 넘겨 보이는 쪽: 풀이(info) → 결과 줄에 든 용어(KEYWORDS, 기본 용어 나사 · 태엽 빼고) 하나씩. 쪽마다 대사 칸 두 줄 */
+const evPages = (c: SliceEventChoice): { who: string; text: string }[] => [
+  ...(c.info ? [{ who: '풀이', text: c.info }] : []),
+  ...KEYWORDS.filter(([name, , gate]) => gate !== 'base' && name.length >= 2 && !/[+×]/.test(name) && c.desc.includes(name)).map(([name, text]) => ({ who: name, text })),
+];
+/**
+ * 사건 창 (D-395, 보고서 2026-11-09f 3.7 `.win-scene` — 흐름은 D-248 · D-260 · D-263 그대로):
+ * L 창 하나 = 위 테 명패(사건 이름) · 오른쪽 위 테 나사 꼬리표 ·
+ * 왼쪽 = 액자(받은 그림을 비율 그대로 덮고 초점 EVENT_FOCUS) + 아래 단추 줄 [떠난다 철 | 고른다 황동] ·
+ * 오른쪽 = 서술(두 줄) → 대사 칸(이름 + 두 줄) → 선택지 판 ≤ 2(이름 + 결과 한 줄 · 세부는 정보 단추 → 대사 칸에 풀이).
+ * 판을 누르면 고름(판 -sel + NPC 반응, 오래 망설이면 한마디), 같은 판을 다시 누르거나 「고른다」 = 정함 →
+ * 창 안을 결과 장면이 덮고 확률 장치 · 실제 카드 · 기물 FX(evstage) → 「넘긴다」 → 결과 서술 · 대사 · 요약(⑦) + 「떠난다」(부품이면 「고른다」).
+ * 결과는 엔진(events.ts)이 먼저 정한다 — 화면은 보여 주기만 (UI 원칙 9). 고를 때까지 막을 눌러도 닫히지 않는다.
+ */
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const talk: EventTalk = EVENT_TALK[id] ?? { npc: ev.title, react: [], idle: [], win: '', bye: '', exit: '떠난다' };
   const st = (): EventState => ({ squad, deck, refined, gold });
   document.body.classList.add('between');
   placeBg('bg-event');
-  const el = openOverlay(`<div class="ev-wrap ev-stage"><div class="ev-scene"><img src="scenes/${id}.png" alt=""><i style="${iconArt('n.event')}"></i></div><div class="ev-body"><h2>${ev.title}</h2><div class="ev-log" aria-live="polite"></div><div class="ev-choices" hidden>${ev.choices
+  const [fx, fy] = EVENT_FOCUS[id] ?? [0.5, 0.5];
+  const leaveK = ev.choices.findIndex((c) => !c.desc);
+  const choices = ev.choices
     .map((c, k) => {
+      if (!c.desc) return '';
       const why = c.blocked?.(st()) ?? null;
-      return `<button type="button" class="ev-choice${why ? ' off' : ''}" data-ev="${k}" ${why ? 'aria-disabled="true"' : ''}><b>${c.label}</b>${c.desc ? evDesc(c.desc) : ''}${why ? `<em>${why}</em>` : ''}<i class="ev-again">한 번 더 누르면 정한다</i></button>`;
+      const info = !why && evPages(c).length ? `<span class="btn-info" role="button" tabindex="0" aria-label="풀이" data-info="${k}"></span>` : '';
+      return `<button type="button" class="choice" data-slot="${k}"${why ? ' disabled' : ''}><span class="choice-name">${c.label}</span><span class="choice-res">${why ?? evRes(c.desc)}</span>${info}</button>`;
     })
-    .join('')}</div><div class="ev-exit" hidden></div><p class="dim ev-purse">나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}</p></div></div>`);
-  const scene = el.querySelector<HTMLElement>('.ev-scene')!;
-  // 장면 그림이 아직 없는 사건은 공용 사건 배경 컷씬 (D-260)
-  scene.querySelector('img')?.addEventListener('error', (e) => { (e.target as HTMLImageElement).src = 'scenes/bg-event.png'; }, { once: true });
-  const logEl = el.querySelector<HTMLElement>('.ev-log')!;
-  const choicesEl = el.querySelector<HTMLElement>('.ev-choices')!;
-  const exitEl = el.querySelector<HTMLElement>('.ev-exit')!;
-  const alive = () => logEl.isConnected;
-  /**
-   * 대화 한 줄: 서술(2인칭) · NPC(이름 + 말) — 세 줄까지만 남는다.
-   * slot = 같은 자리를 다시 쓰는 줄 (테스터: 고를 때마다 아래로 줄이 늘어 창이 들썩였다 — 고른 단추가 바뀌면 그 줄에서 새로 찍힌다)
-   */
-  const say = async (kind: 'narr' | 'npc' | 'sum', text: string, who?: string, slot?: string): Promise<void> => {
+    .join('');
+  const el = openWin({
+    size: 'l',
+    cls: 'win-scene',
+    title: ev.title,
+    body: `<div class="ws-left"><div class="ws-art frame-scene"><div class="ws-pic"><img src="scenes/${id}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div><img class="fs-plate" src="${SCENE_PLATE}" alt=""></div>${btnRowHtml({ back: leaveK >= 0 ? { label: '떠난다', attrs: 'data-leave' } : undefined, go: { label: '고른다', attrs: 'data-pick', disabled: true } })}</div>
+      <div class="ws-work"><p class="ws-narr" aria-live="polite"></p><div class="inset ws-say is-empty"><span class="who"></span><span class="ws-line"></span></div><div class="ws-choices">${choices}</div><p class="ws-sum" hidden><span class="tag">결과</span><span class="ws-sum-t"></span></p></div>
+      <span class="tag ws-purse">나사 ${gold}</span>`,
+  });
+  const art = el.querySelector<HTMLImageElement>('.ws-pic > img[data-cover]')!;
+  // 장면 그림이 없는 사건은 공용 사건 배경 (D-260)
+  art.addEventListener('error', () => (art.src = 'scenes/bg-event.png'), { once: true });
+  const fit = (): void => void (art.complete && coverArt(art));
+  art.addEventListener('load', fit);
+  fit();
+  requestAnimationFrame(fit);
+  void document.fonts?.ready.then(fit);
+  const narrEl = el.querySelector<HTMLElement>('.ws-narr')!;
+  const sayEl = el.querySelector<HTMLElement>('.ws-say')!;
+  const choicesEl = el.querySelector<HTMLElement>('.ws-choices')!;
+  const sumEl = el.querySelector<HTMLElement>('.ws-sum')!;
+  const leaveBtn = el.querySelector<HTMLButtonElement>('[data-leave]');
+  const goBtn = el.querySelector<HTMLButtonElement>('[data-pick]')!;
+  const alive = () => narrEl.isConnected;
+  let lastSay = { who: '', text: '' };
+  /** 서술(2인칭, 문장마다 줄바꿈 D-263) · NPC 대사(이름표 + 큰따옴표) · 독백(‘ ’, 이름표 없이) — 자리는 하나씩, 새 줄이 옛 줄을 갈아 쓴다 */
+  const say = async (kind: 'narr' | 'npc', text: string, who?: string): Promise<void> => {
     if (!text || !alive()) return;
-    const old = slot ? logEl.querySelector<HTMLElement>(`[data-slot="${slot}"]`) : null;
-    const line = old ?? document.createElement('p');
-    line.className = `ev-line ${kind}`;
-    if (slot) line.dataset.slot = slot;
-    line.innerHTML = kind === 'npc' ? `<b>${who ?? talk.npc}</b><span></span>` : kind === 'sum' ? '<b>결과</b><span></span>' : '<span></span>';
-    if (!old) logEl.appendChild(line);
-    while (logEl.children.length > 3) logEl.firstElementChild!.remove();
-    logEl.querySelectorAll('.ev-line').forEach((x, i, all) => x.classList.toggle('old', i < all.length - 1));
-    replay(line, 'in');
-    if (kind === 'npc') sfx('tap', 4);
-    // 서술은 문장마다 줄을 바꾼다 (D-263): 「…부른다.⏎장인은 잠들었고 …」
-    const shown = kind === 'narr' ? text.replace(/([.!?…])\s+(?=\S)/g, '$1\n') : text;
-    await typeIn(line.querySelector('span')!, shown, kind === 'npc' ? 26 : 18, undefined, alive);
+    if (kind === 'narr') {
+      replay(narrEl, 'in');
+      return typeIn(narrEl, text.replace(/([.!?…])\s+(?=\S)/g, '$1\n'), 18, undefined, alive);
+    }
+    const name = text.startsWith('‘') ? '' : who ?? talk.npc;
+    lastSay = { who: name, text };
+    sayEl.classList.remove('is-empty', 'is-info');
+    sayEl.querySelector('.who')!.textContent = name;
+    replay(sayEl, 'in');
+    sfx('tap', 4);
+    await typeIn(sayEl.querySelector<HTMLElement>('.ws-line')!, text, 26, undefined, alive);
   };
   let busy = true;
   let idleN = 0;
@@ -1807,66 +1829,93 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     if (!alive()) return window.clearInterval(idle);
     if (busy || performance.now() - lastAct < 7000 || idleN >= talk.idle.length) return;
     lastAct = performance.now();
-    void say('npc', talk.idle[idleN++], undefined, 'react');
+    void say('npc', talk.idle[idleN++]);
   }, 1000);
   const m = ev.text.match(/^(.*?)\s*(“[^”]+”)(.*)$/);
   const narr = m ? (m[1] + (m[3] ? ` ${m[3].trim()}` : '')).trim() : ev.text;
+  el.classList.add('locked');
   void (async () => {
     await say('narr', narr);
     if (m) await say('npc', m[2]);
-    choicesEl.hidden = false;
-    replay(choicesEl, 'in');
+    el.classList.remove('locked');
     busy = false;
     lastAct = performance.now();
   })();
-  /** ⑤ 나가기 */
-  const showExit = (label: string, go: () => void): void => {
-    exitEl.innerHTML = `<button class="btn brass" type="button">${label}</button>`;
-    exitEl.hidden = false;
-    replay(exitEl, 'in');
-    exitEl.querySelector('button')!.addEventListener('click', () => { window.clearInterval(idle); go(); }, { once: true });
-  };
-  let picked = -1;
-  el.querySelectorAll<HTMLElement>('[data-ev]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      if (busy) return;
-      if (btn.classList.contains('off')) return toast('지금은 고를 수 없습니다.');
-      const k = Number(btn.dataset.ev);
+  // 정보 단추: 풀이 → 용어를 한 쪽씩 대사 칸에 (모달 안에 모달을 띄우지 않는다), 끝까지 넘기면 하던 대사로
+  let infoAt = { k: -1, i: -1 };
+  el.querySelectorAll<HTMLElement>('[data-info]').forEach((b) => {
+    const show = (e: Event): void => {
+      e.stopPropagation();
+      e.preventDefault();
+      const k = Number(b.dataset.info);
+      const pages = evPages(ev.choices[k]);
+      const i = infoAt.k === k ? infoAt.i + 1 : 0;
+      sfx('tap', 3);
       lastAct = performance.now();
-      // 첫 탭: 고르는 중 — NPC가 반응한다
-      if (picked !== k) {
-        picked = k;
-        choicesEl.querySelectorAll('.ev-choice').forEach((x) => x.classList.toggle('chosen', x === btn));
-        sfx('lift');
-        void say('npc', talk.react[k] ?? talk.react[talk.react.length - 1] ?? '', undefined, 'react');
+      if (i >= pages.length) {
+        infoAt = { k: -1, i: -1 };
+        sayEl.classList.remove('is-info');
+        sayEl.classList.toggle('is-empty', !lastSay.text);
+        sayEl.querySelector('.who')!.textContent = lastSay.who;
+        sayEl.querySelector('.ws-line')!.textContent = lastSay.text;
         return;
       }
-      // 두 번째 탭: 정한다
+      infoAt = { k, i };
+      sayEl.classList.remove('is-empty');
+      sayEl.classList.add('is-info');
+      sayEl.querySelector('.who')!.textContent = pages[i].who;
+      sayEl.querySelector('.ws-line')!.textContent = pages[i].text;
+      replay(sayEl, 'in');
+    };
+    b.addEventListener('click', show);
+    b.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && show(e));
+  });
+  /** 고른 뒤 · 결과 뒤 단추 줄: 왼쪽 떠나기는 걷고 오른쪽 황동 하나만 */
+  const finalGo = (label: string, go: () => void): void => {
+    if (leaveBtn) leaveBtn.hidden = true;
+    const g = goBtn.cloneNode(true) as HTMLButtonElement;
+    goBtn.replaceWith(g);
+    g.textContent = label;
+    g.disabled = false;
+    g.removeAttribute('data-pick');
+    replay(g, 'up');
+    g.addEventListener('click', () => (window.clearInterval(idle), go()), { once: true });
+  };
+  leaveBtn?.addEventListener('click', () => {
+    if (busy) return;
+    busy = true;
+    el.classList.add('locked');
+    window.clearInterval(idle);
+    sfx('tap');
+    choicesEl.hidden = true;
+    leaveBtn.disabled = goBtn.disabled = true;
+    void say('npc', talk.bye).then(() => alive() && window.setTimeout(advance, calmMs(700)));
+  });
+  bindPick(el, {
+    onSelect: (key) => {
+      const k = Number(key);
+      lastAct = performance.now();
+      infoAt = { k: -1, i: -1 };
+      sfx('lift');
+      void say('npc', talk.react[k] ?? talk.react[talk.react.length - 1] ?? '');
+    },
+    onPick: (key) => {
+      if (busy) return;
       busy = true;
+      // 고른 뒤에는 판을 더 누를 수 없다 (창 전체를 막으면 결과 장면의 장치 · 「넘긴다」도 막힌다)
+      choicesEl.inert = true;
       sfx('stamp');
+      const k = Number(key);
       const c = ev.choices[k];
-      choicesEl.querySelectorAll<HTMLElement>('.ev-choice:not(.chosen)').forEach((x) => (x.style.visibility = 'hidden'));
+      if (leaveBtn) leaveBtn.disabled = true;
+      goBtn.disabled = true;
       void (async () => {
-        if (!c.desc) {
-          choicesEl.hidden = true;
-          await say('npc', talk.bye);
-          return showExit(talk.exit, advance);
-        }
         const before = { crew: squad.map((u) => ({ ...u })), deck: [...deck], gold };
         const s0 = st();
         const out = c.apply(s0, sub());
-        // 저울추 (D-247): 같은 창 안에서 카드를 고른다
+        // 저울추 (D-247): 같은 창 안에서 실제 카드를 고른다
         if (out.cardPick === 'counterweight') {
-          choicesEl.hidden = true;
-          const rid = await new Promise<CommandId>((done) => {
-            const ids = weighable(s0);
-            const strip = document.createElement('div');
-            strip.className = 'ev-cards';
-            strip.innerHTML = ids.map((x) => `<button type="button" class="ev-card" data-cw="${x}">${keysHtml(COMMANDS[x].cost)}<b>${COMMANDS[x].name}</b><small>태엽 ${COMMANDS[x].cost} → <i>${COMMANDS[x].cost - 1}</i></small></button>`).join('');
-            choicesEl.after(strip);
-            replay(strip, 'in');
-            strip.querySelectorAll<HTMLElement>('[data-cw]').forEach((cb) => cb.addEventListener('click', () => { strip.remove(); done(cb.dataset.cw as CommandId); }, { once: true }));
-          });
+          const rid = await evCardPick(el, weighable(s0), talk.react[k] ?? '');
           counterweight(s0, rid, sub());
           out.text = '';
         }
@@ -1881,8 +1930,8 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         const face = (cid: CommandId) => cardFace(cid, 'tabindex="-1" aria-hidden="true"');
         const cards: CardFx[] = [];
         for (const o of outs) {
-          const k = ins.findIndex((x) => baseOf(x) === baseOf(o));
-          if (k >= 0) { const n = ins.splice(k, 1)[0]; cards.push({ before: face(o), after: face(n), fx: isRusted(n) ? 'rust' : 'up' }); }
+          const j = ins.findIndex((x) => baseOf(x) === baseOf(o));
+          if (j >= 0) { const n = ins.splice(j, 1)[0]; cards.push({ before: face(o), after: face(n), fx: isRusted(n) ? 'rust' : 'up' }); }
           else cards.push({ before: face(o), fx: 'break' });
         }
         for (const n of ins) cards.push({ after: face(n), fx: 'new' });
@@ -1900,33 +1949,57 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: u1.hp ?? crewMaxHp(u1), hp1: u1.hp ?? crewMaxHp(u1), max: crewMaxHp(u1), fx: 'new', card: crewFace(u1, u1.hp ?? crewMaxHp(u1), crewMaxHp(u1)) });
         // 좋은 결과: 확률 선택은 첫 칸(판정기는 둘째 칸 「한 단계 위」도 좋음), 아니면 좋다
         const good = out.slot === undefined || out.slot === 0 || (id === 'brokenGacha' && out.slot === 1);
-        choicesEl.hidden = true;
         // 확률 장치는 셋만 (D-260): 동전 · 칸 셋 · 긁는 칸 셋
         const chance: Parameters<typeof runEventFx>[1]['chance'] =
           id === 'gambler' ? { kind: 'coin', win: good }
           : id === 'brokenGacha' ? { kind: 'slots', win: good, items: out.slot === 0 ? ['gear-gold', 'gear-gold', 'gear-gold'] : out.slot === 1 ? ['crown-gold', 'crown-gold', 'crown-gold'] : ['gear-gold', 'gear-gold', 'gear-broken'] }
           : id === 'auction' ? { kind: 'scratch', win: good, items: good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'] }
           : undefined;
-        await runEventFx(el.querySelector<HTMLElement>('.ev-wrap')!, { id, good, chance, cards, crew: crewFx, tap: talk.tap });
+        await runEventFx(el, { id, good, chance, cards, crew: crewFx, tap: talk.tap, scene: art.currentSrc || art.src, focus: [fx, fy] });
+        if (!alive()) return;
         if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
-        el.querySelector('.ev-purse')!.textContent = `나사 ${gold} · 분대 ${squad.length} · 덱 ${deck.length}`;
-        // ③ 상황 + 대사 + 요약 (D-263): 무엇이 일어났는지는 서술 · 누가 무슨 말을 했는지는 대사 · 무엇이 바뀌었는지는 시스템 요약
+        el.querySelector('.ws-purse')!.textContent = `나사 ${gold}`;
+        // 결과 (D-263): 무엇이 일어났는지는 서술 · 누가 무슨 말을 했는지는 대사 · 무엇이 바뀌었는지는 요약
+        choicesEl.hidden = true;
+        el.classList.add('ws-done');
         const oc = EVENT_OUTCOME[id]?.[`${k}:${out.slot ?? 0}`];
+        const sum = evSummary(before, cards, out);
+        if (sum) {
+          sumEl.querySelector('.ws-sum-t')!.textContent = sum;
+          sumEl.hidden = false;
+          replay(sumEl, 'in');
+        }
         if (oc) {
           await say('narr', oc.scene);
-          // 독백(‘ ’)은 이름표 없이 서술 칸으로 (D-360 — NPC가 없는 사건)
-          if (oc.line) await say(oc.line.startsWith('‘') ? 'narr' : 'npc', oc.line, oc.who);
+          if (oc.line) await say('npc', oc.line, oc.who);
         } else {
           if (out.text) await say('narr', out.text);
           await say('npc', good ? talk.win : talk.lose ?? talk.win);
         }
-        const sum = evSummary(before, cards, out);
-        if (sum) await say('sum', sum);
-        showExit(out.partPick ? '부품을 고른다' : talk.exit, () => (out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="tag">${ev.title}</span>`) : advance()));
+        finalGo(out.partPick ? '고른다' : '떠난다', () => (out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="tag">${ev.title}</span>`) : advance()));
       })();
-    }),
-  );
+    },
+  });
 };
+/** 줄인 움직임이면 기다림도 줄인다 */
+const calmMs = (ms: number): number => (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? Math.min(ms, 120) : ms);
+/**
+ * 저울추 카드 고르기 (D-247 → D-395): 사건 창 안을 덮는 받침 없는 카드 줄(실제 카드 얼굴, 고르기 규칙 bindPick) + [올린다 황동].
+ * 카드 아래 한 줄 = 태엽 n → n−1.
+ */
+const evCardPick = (panel: HTMLElement, ids: CommandId[], line: string): Promise<CommandId> =>
+  new Promise((done) => {
+    const ov = document.createElement('div');
+    ov.className = 'ev-ov ev-cw';
+    ov.innerHTML = `${line ? `<p class="ev-ov-say">${line}</p>` : ''}${slotsHtml(ids.map((x) => ({ key: x, html: cardFace(x, 'tabindex="-1" aria-hidden="true"'), info: `태엽 ${COMMANDS[x].cost} → <b>${COMMANDS[x].cost - 1}</b>` })), true)}${btnRowHtml({ go: { label: '올린다', attrs: 'data-pick' } })}`;
+    panel.appendChild(ov);
+    replay(ov, 'in');
+    const row = ov.querySelector<HTMLElement>('.scr-items')!;
+    const fitNow = (): void => fitSlots(row);
+    fitNow();
+    requestAnimationFrame(fitNow);
+    bindPick(ov, { onSelect: () => sfx('lift'), onPick: (k) => { ov.classList.add('locked'); sfx('stamp'); pxOut(ov, () => ov.remove(), 240); done(k as CommandId); } });
+  });
 
 /** 사건 결과 요약 한 줄 (D-263): 앞뒤 상태를 비교해 바뀐 것만 — 카드 · 분대원 · 나사 · 부품 */
 const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, cards: CardFx[], out: { partPick?: boolean; elite?: boolean }): string => {

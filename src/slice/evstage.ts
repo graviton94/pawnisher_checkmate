@@ -7,9 +7,11 @@
  * 결과는 엔진(events.ts)이 이미 정했다 — 보여 주기만 한다 (UI 원칙 9).
  */
 import { sfx } from '../audio/sfx';
+import { coverArt } from './uikit';
 import { FxCanvas, hex, Lights, P, Particles, PAL, Rng, WHITE } from '../view/pxfx';
 
-const D = 3;
+/** 장면 층 1도트 = 3 CSS px 안팎 — 기기 픽셀 정수로 맞춘다 (D-392 · D-395: 캔버스를 100%로 늘이지 않는다) */
+const dotPx = (): number => { const r = window.devicePixelRatio || 1; return Math.round(3 * r) / r; };
 const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, calm() ? Math.min(ms, 80) : ms));
 
@@ -25,6 +27,9 @@ export interface EvFxCtx {
   cards: CardFx[];
   crew: CrewFx[];
   tap?: string;
+  /** 결과 장면 바탕 = 사건 그림 (비율 그대로 덮고 초점, 2×2 먹 디더) — D-395 */
+  scene?: string;
+  focus?: [number, number];
 }
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -48,10 +53,13 @@ class Layer {
   R: Rng;
   private on = true;
   constructor(public host: HTMLElement, seed: number) {
+    const D = dotPx();
     this.w = Math.floor(host.clientWidth / D);
     this.h = Math.floor(host.clientHeight / D);
     this.art = document.createElement('canvas');
     this.art.width = this.w; this.art.height = this.h;
+    this.art.style.width = `${this.w * D}px`;
+    this.art.style.height = `${this.h * D}px`;
     this.art.className = 'ev-fx';
     this.x = this.art.getContext('2d')!;
     this.x.imageSmoothingEnabled = false;
@@ -76,7 +84,7 @@ class Layer {
   /** 화면 좌표(요소) → 도트 좌표 */
   at(el: Element): { x: number; y: number; w: number; h: number } {
     const a = this.host.getBoundingClientRect(), b = el.getBoundingClientRect();
-    const k = this.art.getBoundingClientRect().width / this.w || D;
+    const k = this.art.getBoundingClientRect().width / this.w || dotPx();
     return { x: (b.left - a.left - this.host.clientLeft) / k, y: (b.top - a.top - this.host.clientTop) / k, w: b.width / k, h: b.height / k };
   }
   stop() { this.on = false; }
@@ -313,6 +321,10 @@ const showResults = async (L: Layer, c: EvFxCtx): Promise<void> => {
   if (!cards.length && !crew.length) return;
   const row = document.createElement('div');
   row.className = 'ev-res';
+  // 카드 폭: 줄에 다 들고(사이 8) 높이(카드 = 폭 × 1.5 + 도장 여백)에 드는 가장 큰 값, 168 상한 — 기기 픽셀 정수로
+  const n = cards.length + crew.length, r = window.devicePixelRatio || 1;
+  const cw = Math.min(168, (L.host.clientWidth - 16 - 8 * (n - 1)) / n, (L.host.clientHeight - 24) / 1.62);
+  row.style.setProperty('--card-w', `${Math.floor(cw * r) / r}px`);
   L.host.appendChild(row);
   const items: { el: HTMLElement; run: () => Promise<void> }[] = [];
   for (const cd of cards) {
@@ -487,8 +499,11 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   wrap.querySelectorAll('.ev-ov').forEach((x) => x.remove());
   const ov = document.createElement('div');
   ov.className = 'ev-ov';
-  ov.innerHTML = '<div class="ev-ov-stage"></div><div class="ev-ov-foot"><button type="button" class="btn brass ev-ov-ok" hidden>확인</button></div>';
+  const [fx, fy] = c.focus ?? [0.5, 0.5];
+  ov.innerHTML = `${c.scene ? `<div class="ev-ov-bg"><img src="${c.scene}" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div>` : ''}<div class="ev-ov-stage"></div><div class="btn-row"><button type="button" class="btn k-brass go ev-ov-ok" hidden>넘긴다</button></div>`;
   wrap.appendChild(ov);
+  const bg = ov.querySelector<HTMLImageElement>('.ev-ov-bg > img');
+  if (bg) (bg.complete ? coverArt(bg) : bg.addEventListener('load', () => coverArt(bg), { once: true }));
   const host = ov.querySelector<HTMLElement>('.ev-ov-stage')!;
   await wait(260);
   const L = new Layer(host, c.id.length * 97 + (c.good ? 1 : 2));

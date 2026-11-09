@@ -401,3 +401,66 @@
 /* 칸 가득: 선택지 판 2단 격자 (부품 이름 15 · 효과 12) */
 .scr-pick > .choice-grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: var(--s2) var(--s3); width: min(100%, calc(var(--px) * 360)); margin: 0 auto; }
 .scr-pick > .choice-grid .choice-res { white-space: normal; }
+
+/* ===================== 패스 3 사건 갈래 — .win-scene (D-395, 보고서 3.7) =====================
+   L 창 하나: 명패(사건 이름, 위 테) · 나사 꼬리표(위 테 오른쪽) ·
+   왼쪽 = 장면 액자(받은 그림 비율 그대로 덮기 + 초점, uikit.coverArt) + 단추 줄 [떠난다 철 | 고른다 황동] ·
+   오른쪽 단(352 ~ 456) = 서술 두 줄 → 대사 칸(이름 + 두 줄) → 선택지 판 ≤ 2.
+   세로 예산(안쪽 높이 = 창 − 72): 915 → 292 중 44 + 8 + 68 + 8 + (53×2 + 8) = 242 · 667×375 → 255 중 248. 글은 데이터에서 맞춘다(tests/event-text). */
+#overlay-panel.win.win-scene {
+  --ws-work: clamp(352px, 56%, 456px);
+  height: var(--win-hmax); display: grid; grid-template-columns: minmax(0, 1fr) var(--ws-work); grid-template-rows: minmax(0, 1fr); gap: var(--s3); align-items: stretch;
+}
+.win-scene > .ws-left { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; min-height: 0; }
+.win-scene > .ws-left > .ws-art { flex: 1 1 0; min-height: 0; width: 100%; }
+.win-scene .ws-pic { position: absolute; inset: 0; overflow: hidden; }
+.win-scene :is(.ws-pic, .ev-ov-bg) > img[data-cover] { position: absolute; left: 0; top: 0; max-width: none; object-fit: fill; image-rendering: pixelated; }
+.win-scene > .ws-left > .ws-art > .fs-plate { z-index: 1; }
+/* 왼쪽 단 단추 줄: 둘이 반씩 (667에서 왼쪽 단 195px — 단추 최소 폭을 풀고 누름 영역 48은 그대로) */
+.win-scene > .ws-left > .btn-row > .btn { flex: 0 1 calc(50% - var(--s1)); min-width: 0; }
+.win-scene > .ws-left > .btn-row > .go { margin-left: auto; }
+.win-scene > .ws-work { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; min-height: 0; }
+.win-scene > .ws-work > * { flex: none; min-width: 0; }
+/* 서술: 15px 두 줄 자리를 늘 비워 둔다(타자 중에 아래가 들썩이지 않게) · 문장마다 줄바꿈 */
+.win-scene .ws-narr { min-height: 44px; margin: 0; color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
+/* 대사 칸: 움푹 칸 + 이름(12 굵게 황동) 뒤에 이어 쓰는 두 줄 — 정보 단추의 풀이도 여기에 */
+.win-scene .ws-say.inset { min-height: calc(var(--k-inset) * var(--px) * 2 + 44px); padding: 0 var(--s2); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
+.win-scene .ws-say .who { margin-right: var(--s2); color: var(--t-gold); font: 700 12px/22px Galmuri11, sans-serif; white-space: nowrap; }
+.win-scene .ws-say .who:empty { display: none; }
+.win-scene .ws-say.is-empty > * { visibility: hidden; }
+.win-scene .ws-say.is-info .ws-line { color: var(--t-dim); }
+.win-scene .ws-choices { display: flex; flex-direction: column; gap: var(--s2); margin-top: auto; }
+.win-scene .ws-choices[hidden] { display: none; }
+.win-scene .choice .choice-res .down { color: var(--t-loss); }
+.win-scene .choice:disabled .choice-res { color: var(--t-loss); }
+.win-scene .choice > .btn-info { display: block; }
+/* 결과 요약 (⑦): 「결과」 꼬리표 + 바뀐 것 12px — 두 줄까지 */
+.win-scene .ws-sum { display: flex; align-items: flex-start; gap: var(--s2); margin: 0; color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; }
+.win-scene .ws-sum[hidden] { display: none; }
+.win-scene .ws-sum > .tag { flex: none; }
+.win-scene .ws-sum > .ws-sum-t { padding-top: calc(var(--px) * 3 - 2px); }
+/* 나사: 위 테 오른쪽에 걸친 꼬리표 (명패와 같은 줄 — 세로 예산을 먹지 않는다) */
+.win-scene > .ws-purse { position: absolute; z-index: 2; right: calc(var(--px) * 12); top: calc(-1 * var(--k-win) * var(--px) - var(--px) * 7.5); }
+/* 등장: 위에서 아래로 3계단 드러남 (투명도 보간 없음) */
+.win-scene :is(.ws-narr, .ws-say, .ws-sum).in, .win-scene .ev-ov { animation: kstepin 210ms steps(3, jump-none) both; }
+@keyframes kstepin { 0% { clip-path: inset(0 0 66% 0); } 50% { clip-path: inset(0 0 33% 0); } 100% { clip-path: inset(0); } }
+
+/* 결과 장면 (evstage 오버레이): 창 안쪽을 덮는다 — 바탕 = 사건 그림 덮기 + 2×2 먹 디더 · 가운데 확률 장치 · 카드 · 기물 · 아래 [넘긴다 황동] */
+.win-scene .ev-ov { position: absolute; inset: 0; z-index: 6; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: var(--s2); padding: var(--s2); background: #0b0b0e; }
+.win-scene .ev-ov.out { animation: bfOut 300ms steps(1) forwards; }
+.win-scene .ev-ov-bg { position: absolute; inset: 0; overflow: hidden; }
+.win-scene .ev-ov-bg::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%230b0b0e'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%230b0b0e'/%3E%3C/svg%3E") 0 0 / calc(var(--px) * 2) calc(var(--px) * 2); image-rendering: pixelated; }
+.win-scene .ev-ov > :not(.ev-ov-bg) { position: relative; z-index: 1; min-height: 0; }
+.win-scene .ev-ov-stage { touch-action: manipulation; }
+.win-scene .ev-ov > .btn-row > .btn { flex: 0 0 calc(var(--px) * 80); }
+.win-scene .ev-fx { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: none; z-index: 2; }
+.win-scene .ev-ov .ev-tap { position: absolute; z-index: 5; left: 50%; bottom: var(--s2); transform: translateX(-50%); margin: 0; min-height: 44px; display: grid; place-items: center; padding: 0 var(--s2); color: var(--t-brass-ink); font: 700 12px Galmuri11, sans-serif; text-shadow: none; background: none; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/chrome/tape.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; box-shadow: none; filter: drop-shadow(0 calc(var(--px) * 2) 0 #0b0b0e); white-space: nowrap; animation: tapNudge 900ms steps(1) infinite; }
+/* 저울추 카드 고르기: 대사 한 줄(움푹 칸) · 받침 없는 카드 줄 · [올린다] */
+.win-scene .ev-cw { grid-template-rows: auto minmax(0, 1fr) auto; }
+.win-scene .ev-cw > .ev-ov-say { margin: 0; justify-self: center; padding: var(--s1) var(--s3); background: #16141c; color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
+.win-scene .ev-cw .scr-items { display: flex; justify-content: center; align-items: center; gap: var(--slot-gap, 8px); min-height: 0; }
+.win-scene .ev-cw .pick-item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.win-scene .ev-cw .card-bare { --card-w: inherit; }
+.win-scene .ev-cw .slot-info { min-height: var(--info-h, 18px); color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; text-align: center; }
+.win-scene .ev-cw .slot-info b { color: var(--t-ally); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .win-scene :is(.ws-narr, .ws-say, .ws-sum).in, .win-scene .ev-ov, .win-scene .ev-ov .ev-tap { animation: none; } }
