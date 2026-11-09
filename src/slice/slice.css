@@ -2712,7 +2712,7 @@ body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 #info .cf.crew-info .ci-st, #info .cf.crew-info .ci-st i, #info .cf.crew-info .ci-st b { font-size: 12px; line-height: 18px; white-space: nowrap; }
 #info .cf.crew-info .ci-bar em, #info .cf.crew-info .ci-quirk, #info .cf.crew-info .ci-scar, #info .cf.crew-info .ci-serial { font-size: 12px; line-height: 16px; }
 /* D-364: 초상 창을 넓혀 하늘색 테가 창 안에 들게 · 기벽/흉터는 이름(줄바꿈)효과 */
-.cf.crew-info .cf-win, #info .cf.crew-info .cf-win { height: 66px; }
+/* (D-377: 옛 길게 누름 카드 그림 창 높이 66px — 새 틀의 그림 창을 넘어 리본을 덮어 지움. 자리는 card-layout.css가 정한다) */
 .cf.crew-info .er-pc { width: 52px; height: 52px; display: grid; place-items: end center; box-shadow: 0 0 0 2px #000, 0 0 0 4px #46c4c8; }
 .cf.crew-info .er-pc img { width: 46px; height: 46px; }
 .cf.crew-info .ci-quirk, .cf.crew-info .ci-scar { display: grid; justify-items: center; text-align: center; gap: 0; }
@@ -2984,3 +2984,5 @@ body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; b
 /* 생명 빈 자리 = 깨진(검은) 태엽 하트 */
 body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }
 body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; } /* D-377: 옛 규칙(b · em 블록/플렉스)이 한 줄을 쪼개지 않게 */
+/* 받침의 「함께 오는 카드」 줄도 가운데 (D-377 — 카드 본문과 같은 정렬) */
+body.slice .cinfo .kit-with > b { justify-content: center; text-align: center; }

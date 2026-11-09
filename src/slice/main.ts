@@ -573,7 +573,7 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   // 생명 자리 (D-377): 늘 둘 이상 — 남은 생명은 태엽 하트, 빈 자리는 깨진(검은) 하트
   const hearts = Array.from({ length: Math.max(2, lives) }, (_, k) => `<i class="cb-life${k < lives ? '' : ' off'}"></i>`).join('');
   // 본문 (D-377): 위 칸 = 기록(이름 · 숫자) 또는 첫마디 2줄 · 아래 칸 = 특성 이름 / 효과 · 효과 (또는 조건 / 효과) 한 줄씩
-  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>넘김</i>${u.defied ?? 0}</span></span>`];
+  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>쓰러짐</i>${u.defied ?? 0}</span></span>`];
   const bot = q
     ? [lineHtml(q.name, 'name'), ...bottomLines('', q.desc).slice(0, 2).map((l) => lineHtml(l.t, l.k === 'fx' ? 'say' : 'if'))]
     : u.t === 'K'
