@@ -7,6 +7,12 @@ require('fs').mkdirSync(out, { recursive: true });
 const META = JSON.stringify({ tut: ['battle', 'map', 'recruit', 'kit', 'promote'], runs: 3 });
 const SCENES = [
   ['battle', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2600); await S('a'); await A(() => document.getElementById('btn-end').click()); await W(350); await S('enemy-a'); await W(600); await S('enemy-b'); await W(2600); await S('after'); }],
+  // 패스 4 (D-396): 전투 HUD — 적 의도 · 엿보기 · 반장 규칙 · 턴 끝 경고 · 기록 · 튜토리얼 말풍선
+  ['p4-peek', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => { const q = window.slice().s.pieces.find((x) => x.side === 1 && x.type === 'K'); window.sliceApi.peekAt({ x: q.x, y: q.y }); }); await W(500); await S(''); }],
+  ['p4-bossrules', async (p, A, W, S) => { await A(() => window.sliceApi.bossOf('plate', 1)); await W(4000); await A(() => document.getElementById('boss').click()); await W(700); await S(''); }],
+  ['p4-warn', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.doom()); await W(500); await A(() => document.getElementById('btn-end').click()); await W(500); await S(''); }],
+  ['p4-log', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.botMove()); await W(2600); await A(() => window.sliceApi.logPeek()); await W(500); await S(''); }],
+  ['p4-tut', async (p, A, W, S) => { await A(() => window.sliceApi.start(0)); await W(4500); await A(() => window.sliceApi.tutNow()); await W(3000); await S(''); }],
   ['help', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => document.getElementById('btn-help').click()); await W(900); await S(''); }],
   ['crew', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.crew()); await W(900); await S(''); }],
   ['taunt', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.taunt('gloat')); await W(900); await S(''); }],
