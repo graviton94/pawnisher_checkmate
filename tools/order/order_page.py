@@ -29,7 +29,7 @@ ATTACH = [
     ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
 ]
 # 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = set()  # D-355: C-06 그림자안 받음 (D-351 · D-349 이력)
+REDO: set[str] = {'end-clear', 'end-fail'}  # D-391: 결과 장면 2장 다시 (UI-06) · D-355 이력
 
 
 def data_uri(path, width):
@@ -89,6 +89,8 @@ def sheet_files(head):
 
 def where(f):
     """받은 그림이 게임 안 어디에 있나"""
+    if f.startswith('recv:'):
+        return f'build-res/order/{f[5:]}-received.png → src/assets/ui/chrome/v2/'
     return f'tools/pixel/icons32_ext/{f[4:]}.png → public/ui/icons16/' if f.startswith('ext:') else f'public/scenes/{f}.png'
 
 
@@ -101,6 +103,9 @@ def where_all(fs):
 def files_of(head):
     if re.match(r'I-\d+', head):
         return sheet_files(head)
+    mu = re.match(r'(UI-\d+)', head)
+    if mu:  # UI 키트 시트 (D-390 · D-391): 받은 시트 원본이 build-res/order에 있으면 받음
+        return ['recv:' + mu.group(1)]
     fs = re.findall(r'`(?:public/scenes/|public/ui/hud/)?([A-Za-z0-9-]+)\.png`', head)
     m = re.search(r'`([A-Za-z-]+)-(\d+)\.png` ~ `\1-(\d+)\.png`', head)  # boss-gilded-1 ~ 4 같은 범위
     if m:
@@ -170,6 +175,7 @@ def main(out_path):
     have = ({f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')} | {f[:-4] for f in os.listdir(os.path.join(ROOT, 'public', 'ui', 'hud')) if f.startswith('crew-') and f.endswith('.png')}) - REDO
     if os.path.isdir(EXT):
         have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
+    have |= {'recv:' + f.split('-received')[0] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if '-received.png' in f}
     intro = next(s for s in secs if s['head'].startswith('0.'))
     groups, g = [], None
     for s in secs:
@@ -183,6 +189,7 @@ def main(out_path):
         elif g and re.match(r'[A-Z]{1,2}-\d', s['head']):
             g['items'].append(s)
 
+    groups.sort(key=lambda x: x['rank'])
     # 한눈에 표: 12위 줄은 끝났다고 고쳐 적는다
     rows = []
     for ln in intro['blocks']:
