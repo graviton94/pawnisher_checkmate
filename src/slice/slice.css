@@ -2986,3 +2986,10 @@ body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off);
 body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; } /* D-377: 옛 규칙(b · em 블록/플렉스)이 한 줄을 쪼개지 않게 */
 /* 받침의 「함께 오는 카드」 줄도 가운데 (D-377 — 카드 본문과 같은 정렬) */
 body.slice .cinfo .kit-with > b { justify-content: center; text-align: center; }
+/* D-381 손패 펼침 설명도 카드 본문과 같은 문법: 위 칸(묘사) · 점선 · 아래 칸(조건 / 효과) — 줄마다 한 줄 */
+.mg-desc .db { display: flex !important; flex-direction: column; gap: 0; }
+.mg-desc .db-top, .mg-desc .db-bot { display: flex !important; flex-direction: column; align-items: flex-start; }
+.mg-desc .db.two .db-bot { border-top: 2px dotted #a8782a; margin-top: 3px; padding-top: 3px; }
+.mg-desc .ln { display: block; white-space: nowrap; }
+.mg-desc .ln-fx b { font-weight: 700; }
+.mg-desc .ln-fx em { font-style: normal; color: #ff8a7a; }
