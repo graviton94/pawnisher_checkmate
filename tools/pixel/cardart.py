@@ -332,19 +332,26 @@ def back():
     frame(px, m)
     for (cx, cy, sx, sy) in ((6, 6, 1, 1), (W - 7, 6, -1, 1), (6, H - 7, 1, -1), (W - 7, H - 7, -1, -1)):
         gear_corner(px, cx, cy, sx, sy, BRASS)
-    # 가운데: 앱 아이콘을 흑백 도트로 (사용자 D-368) — 무쇠 액자 안
-    ic = Image.open(os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'icon-512.png')).convert('L')
-    n = 60
-    ic = ic.resize((n, n), Image.LANCZOS)
-    x0, y0 = (W - n) // 2, (H - n) // 2 - 6
-    px.r(x0 - 3, y0 - 3, x0 + n + 2, y0 + n + 2, INK)
-    px.r(x0 - 2, y0 - 2, x0 + n + 1, y0 + n + 1, FRAME['common'][3])
-    px.r(x0 - 1, y0 - 1, x0 + n, y0 + n, INK)
-    for y in range(n):
-        for x in range(n):
-            v = ic.getpixel((x, y))
-            # 4단으로 잘라 도트답게 (먹 · 철 그늘 · 철 · 흰)
-            c = '#0b0b0e' if v < 40 else '#24232b' if v < 90 else '#6e6c78' if v < 170 else '#e8e6ee'
+    # 앱 아이콘의 문장(제목 글자 빼고)만 판 전체에 음영으로 (D-369): 판과 같은 색 계열 세 단 + 칼자국만 짙은 붉은 기
+    src = Image.open(os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'icon-512.png')).convert('RGB').crop((198, 100, 314, 304))
+    th = 112
+    tw = round(src.width * th / src.height)
+    src = src.resize((tw, th), Image.LANCZOS)
+    x0, y0 = (W - tw) // 2, (H - th) // 2
+    for y in range(th):
+        for x in range(tw):
+            r, g, b = src.getpixel((x, y))
+            v = (r + g + b) / 3
+            if r > 120 and r > g * 1.8:
+                c = '#3a1a20' if r < 200 else '#4a2026'
+            elif v > 200:
+                c = '#3e3d48'
+            elif v > 120:
+                c = '#33323c'
+            elif v > 60:
+                c = '#2a2931'
+            else:
+                continue
             px.p(x0 + x, y0 + y, c)
     return px.im
 

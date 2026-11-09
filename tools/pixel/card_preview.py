@@ -4,6 +4,7 @@
 """
 import base64
 import os
+import re
 import sys
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
@@ -38,13 +39,17 @@ def art_bg(ax):
     return f'background:{a};background-image:linear-gradient(45deg,{b} 25%,transparent 25%,transparent 75%,{b} 75%),linear-gradient(45deg,{b} 25%,transparent 25%,transparent 75%,{b} 75%);background-size:4px 4px;background-position:0 0,2px 2px;'
 
 
+NB = lambda t: re.sub(r'(한|두|세|\d) (칸|장|번)', '\\1\u00a0\\2', t)
+
+
 def cmd(g, ax, cost, name, art, who, say, fx, cond=''):
+    say, cond = NB(say), NB(cond)
     return f'''<div class="card"><div class="art" style="{at(12, 12, 73, 49)}{art_bg(ax)}"><img src="{b64(art)}" style="width:84px;height:84px;margin:0"></div>
 <img class="tpl" src="{b64(f'public/ui/cards/cmd-{g}.png')}">
 <b class="cost" style="{at(-5, -6, 17, 17)}">{cost}</b>
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <span class="type" style="{at(30, 70, 37, 7)}">{who} · {AXBG[ax][2]}</span>
-<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p>{f'<p class="cond">({cond})</p>' if cond else ''}<p class="fx">{fx}</p></div></div>'''
+<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p>{f'<p class="cond">({cond})</p>' if cond else ''}<p class="fx">{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</p></div></div>'''
 
 
 def part(g, name, icon, say, fx, cond=''):
@@ -52,7 +57,7 @@ def part(g, name, icon, say, fx, cond=''):
 <img class="tpl" src="{b64(f'public/ui/cards/part-{g}.png')}">
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <span class="type" style="{at(30, 70, 37, 7)}">부품</span>
-<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p>{f'<p class="cond">({cond})</p>' if cond else ''}<p class="fx">{fx}</p></div></div>'''
+<div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p>{f'<p class="cond">({cond})</p>' if cond else ''}<p class="fx">{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</p></div></div>'''
 
 
 def crew(g, name, serial, face, atk, hp, lives, kills, dmg, defied, q):
@@ -61,7 +66,7 @@ def crew(g, name, serial, face, atk, hp, lives, kills, dmg, defied, q):
 <img class="tpl" src="{b64(f'public/ui/cards/crew-{g}.png')}">
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <b class="badge" style="{at(-8, 42, 21, 17)}">{atk}</b><b class="badge" style="{at(83, 42, 21, 17)}">{hp}</b>
-<span class="lives" style="{at(15, 46, 40, 9)}">{hearts}</span>
+<span class="lives" style="{at(58, 14, 26, 9)}">{hearts}</span>
 <div class="scroll crew" style="{at(16, 80, 65, 51)}"><small>{serial}</small><div class="st"><span><i>처치</i>{kills}</span><span><i>피해</i>{dmg}</span><span><i>넘김</i>{defied}</span></div><p class="qn">{q[0]}</p><p class="cond">{q[1]}</p></div></div>'''
 
 
@@ -78,22 +83,33 @@ h1{{font:24px G11B;color:#ffd64a;margin:0 0 4px}} h2{{font:15px G14;color:#c9c1a
 .card{{position:relative;width:{CW * S}px;height:{CH * S}px;flex:none;image-rendering:pixelated}}
 .card .tpl{{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}}
 .card>*:not(.tpl){{position:absolute}}
-.art{{display:grid;place-items:end center;overflow:hidden}} .art.mid{{place-items:center}} .art img{{image-rendering:pixelated;margin-bottom:6px}}
+.art{{display:grid;place-items:end center;overflow:hidden}} .art.mid{{place-items:center}} .art{{box-shadow:inset 0 0 0 4px rgba(0,0,0,.28),inset 0 0 0 8px rgba(0,0,0,.14)}} .art img{{image-rendering:pixelated;margin-bottom:6px}}
 .cost{{display:grid;place-items:center;font:700 24px G11B;color:#fff1c0;text-shadow:2px 2px 0 #000;z-index:2}}
 .name{{display:grid;place-items:center;font:700 12px G11B;color:#f4f1ea;text-shadow:1px 1px 0 #000;z-index:2;white-space:nowrap}}
 .name.g-gold{{color:#fff1c0}}
 .type{{display:grid;place-items:center;font:12px G11;color:#c9c1ad;z-index:2}}
 .scroll{{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;text-align:center;color:#2a2620;z-index:2}}
 .scroll p{{margin:0;line-height:1.3;word-break:keep-all;text-wrap:balance}} .scroll .say{{font:12px G11;color:#3a342a}} .scroll .cond{{font:12px G11;color:#6e6452}}
-.scroll .fx{{font:700 12px G11B;color:#ffd64a;background:#3a2c10;padding:1px 6px;box-shadow:0 0 0 2px #000}}
+.scroll .fx{{font:700 12px G11B;color:#2a2620;padding:3px 4px 0;border-top:2px dotted #a8782a;margin-top:2px;align-self:stretch}} .scroll .fx em{{font-style:normal;color:#a8222e}}
 .scroll.crew small{{font:12px G11;color:#6e6452}} .st{{display:flex;gap:8px;font:700 12px G11B;color:#2a2620}} .st i{{font:12px G11;font-style:normal;color:#6e6452;margin-right:2px}}
 .qn{{font:700 12px G11B;color:#1f6b70}}
 .badge{{display:grid;place-items:center;font:700 15px G11B;color:#fff;text-shadow:2px 2px 0 #000;z-index:3}}
-.lives{{display:flex;gap:3px;z-index:3}} .heart{{width:16px;height:16px;image-rendering:pixelated}}
+\n.review{{font:12px G11;line-height:1.6;background:#221d2c;border:2px solid #3a3346;padding:10px 14px;margin:12px 0;max-width:900px}} .review ul{{margin:2px 0 8px;padding-left:18px}} .review b{{font-family:G11B;color:#ffd64a}} .review li b{{color:#e8e0cc}}\n.lives{{display:flex;gap:2px;justify-content:flex-end;z-index:3}} .heart{{width:16px;height:16px;image-rendering:pixelated}}
 '''
     page = f'''<title>카드 2차 시안</title><style>{css}</style>
 <h1>카드 디자인 2차 — 아치 창 · 이름 리본 · 두루마리</h1>
 <p class="lead">레퍼런스(하스스톤 · 슬더스 · 픽셀 카드)의 문법: 큰 아치 그림 창, 틀 밖으로 나가는 이름 리본(등급 색 — 강철 · 청록 · 진홍), 말린 두루마리 설명, 톱니 비용 메달, 톱니 모서리 장식, 아래 보석.</p>
+<div class="review"><b>카드게임 플레이어로 본 리뷰 · 이번에 고친 것</b><ul>
+<li>한눈 읽기: 비용(왼쪽 위) → 이름(리본) → 그림 → 성능(두루마리 마지막 줄) 순서가 하스스톤 · 슬더스와 같아 처음 봐도 읽힌다.</li>
+<li>성능 줄이 혼자 튀던 검은 칸 → 종이 위 새김(황동 점선 아래 굵은 먹 글씨, 숫자만 붉은 먹) — 슬더스처럼 문장의 일부로 읽힌다.</li>
+<li>그림 창 가장자리를 두 단 어둡게(비네트) — 초상이 앞으로 나온다. 분대원 생명 하트는 초상 오른쪽 위.</li>
+<li>뒷면: 앱 문장만 판 전체에 음영으로.</li></ul>
+<b>다음에 더 할 수 있는 것 (제안)</b><ul>
+<li>황금 카드 <b>박(foil) 반짝임</b> — 발라트로처럼 테를 따라 빛 도트가 계단으로 지나간다(단순 페이드 없이). 희귀는 리본 끝만 한 번.</li>
+<li><b>다듬은 카드(+)</b>: 이름 끝에 + 와 리본 위 작은 황동 별 — 슬더스의 초록 이름처럼 한눈에.</li>
+<li><b>녹슨 카드</b>: 틀에 녹 얼룩 디더 + 리본 색 바램.</li>
+<li><b>손패에서 들었을 때</b>: 카드가 커지며 위로 튀고(예비 → 터짐 → 출렁임), 그림 창 속 초상이 한 박자 늦게 따라 올라온다.</li>
+<li><b>키워드</b>(묶기 · 연쇄 · 방열판 …)는 두루마리에서 굵은 청록 — 누르면 풀이.</li></ul></div>
 <h2>명령 카드 — 일반 · 희귀 · 황금</h2><div class="row">{cards_cmd}</div>
 <h2>부품 — 팔각 원판</h2><div class="row">{cards_part}</div>
 <h2>분대원 — 초상 · 공격 마름모 · HP 방패 · 생명 하트 · 기록</h2><div class="row">{cards_crew}{back}</div>'''
