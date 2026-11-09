@@ -2941,8 +2941,10 @@ body.slice .overlay .panel:has([data-rec]) .part-cards.part-cards.part-cards { p
 body.slice .cf.cf.cf.cf > .cf-cost.c1 { padding-left: 3px; box-sizing: border-box; }
 body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: -1px; font-size: 12px; }
 /* 고물상 레일: 네 장 폭에 딱 맞춰 가운데 — 다섯째 카드가 실오라기처럼 비치지 않게 (◀ ▶로 넘긴다) */
-body.slice .overlay .panel:has(.shop-head) .shop-scroll.shop-scroll { max-width: calc(4 * var(--card-w) + 3 * 18px + 24px); margin: 0 auto; scroll-snap-type: x mandatory; }
-body.slice .overlay .panel:has(.shop-head) .shop-grid > .cslot, body.slice .overlay .panel:has(.shop-head) .shop-grid > .cf { scroll-snap-align: start; }
+/* 고물상 레일 (D-375 3차): 스크롤하는 줄 자체를 네 장 폭에 맞추고, 화살표와 함께 가운데 — 다섯째 카드는 줄 밖에 숨는다 */
+body.slice .overlay .panel:has(.shop-head) .rail-wrap { display: flex; align-items: center; justify-content: center; gap: 8px; }
+body.slice .overlay .panel:has(.shop-head) .shop-grid.shop-grid.shop-grid { flex: none; width: calc(4 * var(--card-w) + 3 * 18px); max-width: calc(100% - 120px); padding-left: 0; padding-right: 0; justify-content: flex-start; scroll-snap-type: x mandatory; }
+body.slice .overlay .panel:has(.shop-head) .shop-grid > .cslot { scroll-snap-align: start; }
 /* 분대원 카드 두루마리 위 여백 (길게 누름에서 기록 이름 윗줄이 잘렸다) */
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc { padding-top: 3px; box-sizing: border-box; }
 /* 덱 보기 레일: 닫기 단추는 제목 줄 */
@@ -2950,3 +2952,11 @@ body.slice .overlay .panel:has(.deck-rail) { display: grid; grid-template-column
 body.slice .overlay .panel:has(.deck-rail) > h2, body.slice .overlay .panel:has(.deck-rail) > p { grid-column: 1; margin: 0; }
 body.slice .overlay .panel:has(.deck-rail) > .row { grid-column: 2; grid-row: 1; margin: 0; }
 body.slice .overlay .panel:has(.deck-rail) > .shop-scrollbox { grid-column: 1 / -1; }
+
+/* D-375 3차 리뷰 */
+body.slice .cf.cf.cf .cf-desc .sep { white-space: normal; margin: 0 4px; }
+body.slice .cinfo .kit-with.kw-inline { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 8px; row-gap: 1px; }
+body.slice .cinfo .kit-with.kw-inline > i { color: #8ee8ea; }
+body.slice .cf.cf.cf.cf > .cf-type > i { font: 400 12px/12px Galmuri11, sans-serif !important; color: #cfc6b0 !important; }
+body.slice .kit-confirm .kc-panel > h2 { text-align: center; }
+body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: 0; }

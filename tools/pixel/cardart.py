@@ -448,7 +448,7 @@ def layout_css():
         f'{S} > .cb-atk {{ left: {pct(2 - 9 + OX, CW)}; top: {pct(by - 9 + OY, CH)}; width: {pct(19, CW)}; height: {pct(19, CH)}; }}',
         f'{S} > .cb-hp {{ left: {pct(W - 3 - 9 + OX, CW)}; top: {pct(by - 9 + OY, CH)}; width: {pct(19, CW)}; height: {pct(19, CH)}; }}',
         f'{S} > .cb-bar {{ {box(t[0] + 3, t[1] + 3, t[2] - 3, t[3] - 3)} z-index: 4; }}',
-        f'{S} > .cb-lives {{ right: {pct(CW - (a[2] - 4 + OX), CW)}; top: {pct(a[1] + 4 + OY, CH)}; left: auto; }}',
+        f'{S} > .cb-lives {{ right: {pct(CW - (a[2] - 2 + OX), CW)}; top: {pct(a[1] - 4 + OY, CH)}; left: auto; }}',  # 하트는 그림 창 위 틀에 걸친다 (초상 머리를 가리지 않게)
     ]
     open(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'slice', 'card-layout.css'), 'w').write('\n'.join(L) + '\n')
 
