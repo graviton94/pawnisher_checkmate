@@ -317,28 +317,28 @@ export const playOutSearch = (b: SliceBattle, maxTurns = 40, depth = 4, k = 5): 
   let plays = 0;
   const idle = idleStats();
   while (b.s.winner === null && b.turn < maxTurns) {
-    // 찾은 순서를 다 두고도 태엽이 남으면 다시 수읽기 (2026-11-09d — 깊이 끝에서 남은 태엽을 버리던 것)
-    for (let again = 0; again < BOT.researchMax && b.s.winner === null && b.ap > 0 && anyPlay(b); again++) {
-    const seq = searchTurn(b, depth, k);
-    if (!seq.length) break;
-    let done = 0;
-    // 탐색한 순서를 다시 확인하며 둔다 (손패 번호는 앞 수에 따라 바뀌므로 기물 · 칸으로 다시 찾는다)
-    for (const a of seq) {
-      if (b.s.winner !== null) break;
-      let idx = a.i;
-      if (a.pieceId !== undefined && a.to) {
-        const want = COMMANDS[(b.hand[a.i] ?? '') as keyof typeof COMMANDS];
-        if (!want || !cardMoves(b, a.i, a.pieceId).some((q) => q.x === a.to!.x && q.y === a.to!.y)) {
-          idx = b.hand.findIndex((_, j) => canPlay(b, j) && cardMoves(b, j, a.pieceId!).some((q) => q.x === a.to!.x && q.y === a.to!.y));
-          if (idx < 0) break;
+    // 찾은 순서를 다 두고도 낼 카드가 남으면 다시 수읽기 (2026-11-09d — 깊이 끝에서 남은 태엽을 버리던 것). 0태엽 카드가 있어 태엽 0이어도 본다
+    for (let again = 0; again < BOT.researchMax && b.s.winner === null && anyPlay(b); again++) {
+      const seq = searchTurn(b, depth, k);
+      if (!seq.length) break;
+      let done = 0;
+      // 탐색한 순서를 다시 확인하며 둔다 (손패 번호는 앞 수에 따라 바뀌므로 기물 · 칸으로 다시 찾는다)
+      for (const a of seq) {
+        if (b.s.winner !== null) break;
+        let idx = a.i;
+        if (a.pieceId !== undefined && a.to) {
+          const want = COMMANDS[(b.hand[a.i] ?? '') as keyof typeof COMMANDS];
+          if (!want || !cardMoves(b, a.i, a.pieceId).some((q) => q.x === a.to!.x && q.y === a.to!.y)) {
+            idx = b.hand.findIndex((_, j) => canPlay(b, j) && cardMoves(b, j, a.pieceId!).some((q) => q.x === a.to!.x && q.y === a.to!.y));
+            if (idx < 0) break;
+          }
         }
+        const r = playCard(b, idx, a.pieceId, a.to);
+        if (typeof r === 'string') break;
+        plays++;
+        done++;
       }
-      const r = playCard(b, idx, a.pieceId, a.to);
-      if (typeof r === 'string') break;
-      plays++;
-      done++;
-    }
-    if (!done) break;
+      if (!done) break;
     }
     if (b.s.winner !== null) break;
     tally(idle, b);
