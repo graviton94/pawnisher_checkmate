@@ -184,7 +184,7 @@ export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_
         head: o.tabs,
         body: `<div class="gd3"><div class="inset">${guideMedia(g.media)}</div><div class="stack gd-text3"><p class="lead">${g.title}</p>${g.lines.map((l) => `<p>${l}</p>`).join('')}${g.tip ? `<p class="up">“${g.tip}”</p>` : ''}</div></div>`,
         back: fin && last === OPENING_TEXT.close ? undefined : { label: OPENING_TEXT.close, attrs: 'data-x' },
-        mid: `<div class="page-dots">${GUIDE_PAGES.map((_, k) => `<i${k === p ? ' class="on"' : ''}></i>`).join('')}</div>`,
+        mid: `<span class="note">${p + 1} / ${GUIDE_PAGES.length}</span>`,
         pair: [{ label: OPENING_TEXT.prev, attrs: 'data-prev', disabled: !p }, { label: fin ? last : OPENING_TEXT.next, attrs: 'data-next' }],
         dismiss: end,
       });

@@ -53,6 +53,8 @@
   word-break: keep-all; overflow-wrap: break-word;
 }
 #overlay-panel.win { --win-w: var(--win-m); --win-hmax: var(--win-h); }
+/* 등장 · 퇴장 디더(m3in · m3out의 mask)가 테 밖으로 걸친 명패를 잘라 먹지 않게 */
+#overlay-panel.win { -webkit-mask-clip: no-clip; mask-clip: no-clip; }
 #overlay-panel.win.win-s, .kit-sheet .win.win-s { --win-w: var(--win-s); --win-hmax: var(--win-h-s); }
 #overlay-panel.win.win-m, .kit-sheet .win.win-m { --win-w: var(--win-m); --win-hmax: var(--win-h); }
 #overlay-panel.win.win-l, .kit-sheet .win.win-l { --win-w: var(--win-l); --win-hmax: var(--win-h); }
@@ -107,7 +109,7 @@
   /* 면은 캔버스 위 19도트 — 글자를 1도트 위로. 눌리면 면과 함께 1도트 아래로 */
   padding: 0 calc(var(--px) * 2) calc(var(--px) * 1);
   border-style: solid; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px));
-  border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 stretch;
+  border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch; /* 가로는 반복(녹 얼룩이 번지지 않게) */
   image-rendering: pixelated; background: none; box-shadow: none; filter: none; transform: none;
   color: var(--fg); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; text-shadow: none; white-space: nowrap; cursor: pointer;
 }
@@ -259,9 +261,13 @@
 .win .gd3 > .inset > .gd-media { width: 100%; height: 100%; aspect-ratio: auto; box-shadow: none; }
 .win .gd3 .gd-title { margin: 0 0 var(--s2); }
 .win .gd3 .gd-tip { margin-top: var(--s2); }
-.win .page-dots { display: flex; gap: var(--s2); }
-.win .page-dots i { width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #46404f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
-.win .page-dots i.on { background: var(--t-gold); }
+/* 안내서 그림 칸(82도트 정사각) 안에 코드 애니메이션이 들어가게 — 기물 20도트 · 증기 칸 5도트 */
+.win .gd-media { padding: var(--s1); }
+.win .gd-media.king { gap: var(--s1); }
+.win .gd-media.king img.piece-img { width: calc(var(--px) * 20); height: calc(var(--px) * 20); }
+.win .gd-media.steam .st-track { gap: calc(var(--px) * 1); }
+.win .gd-media.steam .st-track i { width: calc(var(--px) * 5); height: calc(var(--px) * 9); }
+.win .gd-media.formula { padding: var(--s1) var(--s2); gap: 0; }
 .win .dict { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s3); align-content: start; }
 .win .dict .term b { display: block; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
 .win .dict .term span { display: block; font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
@@ -286,3 +292,9 @@
   .win .gd3 { grid-template-columns: minmax(0, 1fr); height: auto; }
   .win .gd3 > .inset { display: none; }
 }
+.win .gd-media.formula .fx-row { grid-template-columns: auto 1fr auto; gap: var(--s1); }
+.win .gd-media.formula .fx-row:is(.sum, .total) > span { grid-column: 1 / 3; }
+.win .gd-media.formula .fx-row b, .win .gd-media.formula .fx-row.total b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
+.win .gd-media.formula .fx-row .op { width: calc(var(--px) * 11); height: calc(var(--px) * 11); font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
+.win .gd-media.formula .fx-row .gd-pc img { width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
+.win .gd-media.formula .fx-row.sum, .win .gd-media.formula .fx-row.total { padding-top: 0; }
