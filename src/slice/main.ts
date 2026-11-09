@@ -307,7 +307,9 @@ const renderer = new BoardRenderer(
       // 손가락에 가리지 않게 누른 곳의 왼쪽 위에 (오른쪽 아래 모서리가 손끝 24px 위 · 왼쪽), 화면 밖이면 반대쪽으로 (D-245)
       const iw = el.offsetWidth;
       const ih = el.offsetHeight;
-      const lx = x - iw - 16 >= 8 ? x - iw - 16 : Math.min(innerWidth - iw - 8, x + 24);
+      // 분대원 카드는 판 영역 안에 (D-375 리뷰: 왼쪽 손패 줄 경계에 공격 마름모가 걸쳤다)
+      const bl = c ? $('board').getBoundingClientRect().left + 4 : 8;
+      const lx = x - iw - 16 >= bl ? x - iw - 16 : Math.min(innerWidth - iw - 8, x + 24);
       const ty = y - ih - 24 >= 8 ? y - ih - 24 : Math.min(innerHeight - ih - 8, y + 32);
       el.style.left = `${Math.round(lx)}px`;
       el.style.top = `${Math.round(ty)}px`;
@@ -576,7 +578,8 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
     + `<small class="cf-desc">${o.say ? `<span class="dl dl-say">${o.say}</span>` : `<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>넘김</i>${u.defied ?? 0}</span></span>`}`
     + (!q && u.t === 'K' ? '<b class="cs-qn">출하의 심장</b><span class="cs-q">쓰러지면 출하가 끝난다.</span>' : '')
     + (q ? `<b class="cs-qn">${q.name}</b><span class="cs-q">${q.desc.split(' · ').map((x) => `<span class="fxi">${x}</span>`).join('<span class="sep">·</span>')}</span>` : '')
-    + (u.scars?.length ? u.scars.map((x) => `<b class="cs-sc">흉터 · ${x}</b><span class="cs-q">${SCAR_DESC[x] ?? ''}</span>`).join('') : '')
+    // D-376: 아래 칸은 3줄 — 기벽이 있으면 기벽(이름 + 풀이)만, 흉터는 받침 · 분대 보기로. 기벽이 없을 때만 흉터 하나가 아래 칸에 든다
+    + (!q && u.t !== 'K' && u.scars?.length ? `<b class="cs-sc">흉터 · ${u.scars[0]}</b><span class="cs-q">${SCAR_DESC[u.scars[0]] ?? ''}</span>` : '')
     + `</small><i class="cf-gem"></i></div>`;
 };
 /**
@@ -2911,7 +2914,7 @@ const deathRites = async (): Promise<void> => {
 const crewView = (): void => {
   // D-374: 분대 보기도 분대원 카드 그대로 — 받침에 일련번호 · 대국 수
   const el = openOverlay(`<h2>분대 ${squad.length}</h2><div class="shop-scrollbox"><div class="shop-scroll reward-scroll"><div class="reward-cards">${squad
-    .map((u) => crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }).replace(/<\/div>$/, `<small class="fit-line">${PIECE_NAMES_KO[u.t]} · 대국 ${u.battles ?? 0}</small></div>`))
+    .map((u) => crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }).replace(/<\/div>$/, `<small class="fit-line">${PIECE_NAMES_KO[u.t]} · 대국 ${u.battles ?? 0}${u.scars?.length ? ` · 흉터 ${u.scars.join(' · ')}` : ''}</small></div>`))
     .join('')}</div></div></div><div class="row"><button class="btn" type="button" data-ledger>도감 ${readLedger().length}</button><button class="btn brass" type="button" data-close-crew>닫기</button></div>`);
   el.querySelector('[data-close-crew]')!.addEventListener('click', closeOverlay);
   el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView());

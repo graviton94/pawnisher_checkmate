@@ -91,7 +91,8 @@ export const modalIn = (overlay: HTMLElement, panel: HTMLElement): void => {
     sparksAt(r.left + r.width / 2, r.bottom - 4, 6, 30);
   }, 190);
   const L = panel.offsetLeft, T = panel.offsetTop, W = panel.offsetWidth, H = panel.offsetHeight;
-  [[L + 5, T + 5], [L + W - 9, T + 5], [L + 5, T + H - 10], [L + W - 9, T + H - 10]].forEach(([x, y], i) => {
+  // 리벳은 창 테두리 선 위에 (D-375 리뷰: 안쪽 4px에 박으면 받침 · 단추 위에 찍혔다)
+  [[L - 2, T - 2], [L + W - 2, T - 2], [L - 2, T + H - 2], [L + W - 2, T + H - 2]].forEach(([x, y], i) => {
     const rv = document.createElement('i');
     rv.className = 'fx3-rv';
     rv.style.left = `${x}px`;
