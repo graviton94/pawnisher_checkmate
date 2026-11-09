@@ -16,7 +16,7 @@ import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
-import { ACT_ENTRY, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
+import { ACT_CARD, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
 import { finaleScene } from './finale';
 import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { creditsScene } from './credits';
@@ -1559,7 +1559,7 @@ const advance = (): void => {
   showMap();
 };
 /** 층 진입 서술 (각본 §7, D-276) — 막 전환 화면 */
-const ACT_NARR = ['', ACT_ENTRY[1], ACT_ENTRY[2], ACT_ENTRY[3]];
+const ACT_NARR = ['', ACT_CARD[1], ACT_CARD[2], ACT_CARD[3]];
 /** 막 이름표: 4막은 종막 (D-252) */
 const actLabel = (n: number): string => (n === 4 ? '종막' : `${n}막`);
 
