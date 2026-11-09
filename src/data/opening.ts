@@ -83,8 +83,13 @@ export const OPENING_TEXT = {
   pressGo: '화면을 눌러 출하',
   tagline: '체스 규칙을 부수는 태엽 분대',
   skip: '건너뛰기',
-  next: '다음',
-  prev: '이전',
+  /** 단추 = 동사 하나 (voice ⑧, D-391) */
+  next: '넘긴다',
+  prev: '돌아간다',
   toBattle: '첫 대국으로',
-  close: '닫기',
+  close: '닫는다',
+  /** 안내서 창 명패 (≤ 12자) */
+  guideTitle: '안내서',
+  /** 도움말 창 명패 (탭 셋이 같은 창을 쓴다) */
+  helpTitle: '도움말',
 } as const;

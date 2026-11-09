@@ -1,0 +1,280 @@
+/*
+ * 주물 공방 UI 키트 — 하나의 체계 (D-391, 보고서 docs/reports/2026-11-09f-producer-review.md 3장).
+ * 받은 도트 부품 src/assets/ui/chrome/v2/ (D-390 UI-01 ~ 04, 다듬기 tools/pixel/ui_kit_normalize.py)만 쓴다.
+ * 규칙: 모든 창 · 단추 · 꼬리표는 여기 클래스를 조합해서만 만든다. 화면마다 max-width · 제목 땜질을 새로 짓지 않는다.
+ * 이 파일은 main.ts에서 **마지막**에 불린다. 옛 slice.css 선택자보다 이기기 위해 창 몸은 #overlay-panel.win(아이디 한 단),
+ * 부품은 키트 그릇(.win · .scr-pick · .scr-place · .kit-sheet) 안에서만 산다 — 옛 화면(전투 HUD · 2.0)의 .plate · .inset · .toast는 건드리지 않는다.
+ * 움직임: 등장 = m3in(예비 → 터짐 → 출렁) · 계단, 퇴장 = 디더. 투명도 보간 · 그라데이션 · 선형 슬라이드 없음 (D-216).
+ */
+
+/* ---------- 3.0 토큰 — 단위 · 안전 영역 · 간격 · 9-slice 테 (받은 PNG에서 잰 값, 도트 단위) ---------- */
+:root {
+  /* 장치 층 1도트 = --px (pxsnap.ts가 기기 픽셀 정수로 맞춘다). 키트는 --px 하나만 쓴다 */
+  --G: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --Gy: max(8px, env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px));
+  /* 도트 크기는 모두 --px의 정수배 — --px는 pxsnap.ts가 round(2·DPR)/DPR로 정한다(도트 = 기기 픽셀 정수). 창 폭 · 글자 크기만 CSS px */
+  --s1: calc(var(--px) * 2); --s2: calc(var(--px) * 4); --s3: calc(var(--px) * 8); --s4: calc(var(--px) * 12);
+  /* 단추 그림 높이 24도트. 누름 영역은 ::before로 48px 이상 (Material 48dp) */
+  --h-btn: calc(var(--px) * 24);
+  --h-plate: calc(var(--px) * 19);
+  /* 창 세 단계 (폭 · 높이 상한) — 이 셋만 */
+  --win-s: 352px; --win-m: 592px; --win-l: min(883px, calc(100vw - 2 * var(--G)));
+  --win-h-s: 240px; --win-h: 364px;
+  /* 글 색 — 한 줄에 본문 + 강조 1 */
+  --t-body: #ece6da; --t-dim: #a89f92; --t-gold: #f4d27a; --t-loss: #ff7b7b; --t-ally: #5eead4; --t-ink: #0b0b0e; --t-brass-ink: #2a1a06;
+  /* 9-slice 테 (원본 도트) — 화면 폭 = 도트 × --px */
+  --k-win: 12;            /* panel-iron 44×44 · 변 가운데 리벳 → round */
+  --k-paper-y: 14; --k-paper-x: 10; /* panel-paper 40×44 */
+  --k-plate: 12;          /* plate-brass 48×19 · 좌우만 (위아래 0) */
+  --k-btn-y: 6; --k-btn-x: 6; /* btn-* 32×20 (면 30×19, 눌림 = 1도트 아래) */
+  --k-choice: 6 6 6 16;   /* choice-* 72×24 · 왼쪽 황동 탭 16도트 */
+  --k-tag: 3 4 3 14;      /* tag-* 34×15 · 왼쪽 14 = 끈 · 구멍 (구멍 테가 13열까지) */
+  --k-inset: 6;           /* inset-well 19×19 */
+  --k-toast: 6;           /* toast-iron 19×19 */
+  --k-frame: 8;           /* scene-frame 52×31 · portrait-frame 34×34 */
+}
+
+/* ---------- 3.1 창 — .win (S 352 · M 592 · L 883) ---------- */
+#overlay-panel.win, .kit-sheet .win {
+  position: relative; box-sizing: border-box;
+  width: var(--win-w); max-width: calc(100vw - 2 * var(--G)); max-height: var(--win-hmax); min-height: 0;
+  overflow: visible;
+  display: flex; flex-direction: column; gap: var(--s3);
+  /* 테 24 + 안쪽 12 → 글 단 폭 = 창 폭 − 72 (S 280 · M 520 · L 811), 안쪽 높이 = 364 − 72 = 292 */
+  padding: calc(var(--px) * 6); margin: 0;
+  border-style: solid; border-width: calc(var(--k-win) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round;
+  background: none; box-shadow: none;
+  /* 바닥 먹 그림자 2도트 오른아래 — 단단한 그림자(흐림 0) */
+  filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e);
+  image-rendering: pixelated;
+  color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; text-align: left;
+  word-break: keep-all; overflow-wrap: break-word;
+}
+#overlay-panel.win { --win-w: var(--win-m); --win-hmax: var(--win-h); }
+#overlay-panel.win.win-s, .kit-sheet .win.win-s { --win-w: var(--win-s); --win-hmax: var(--win-h-s); }
+#overlay-panel.win.win-m, .kit-sheet .win.win-m { --win-w: var(--win-m); --win-hmax: var(--win-h); }
+#overlay-panel.win.win-l, .kit-sheet .win.win-l { --win-w: var(--win-l); --win-hmax: var(--win-h); }
+/* 이야기 재질(튜토리얼 · 부관 · 편지 전용 — 시스템 창에 쓰지 않는다) */
+#overlay-panel.win.win-paper, .kit-sheet .win.win-paper {
+  border-width: calc(var(--k-paper-y) * var(--px)) calc(var(--k-paper-x) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/panel-paper.png') var(--k-paper-y) var(--k-paper-x) fill / calc(var(--k-paper-y) * var(--px)) calc(var(--k-paper-x) * var(--px)) / 0 round;
+  color: var(--t-ink);
+}
+/* 자리: 안전 영역 안 가운데 (장소 화면의 오른쪽 붙이기 · 아래 붙이기를 창은 따르지 않는다) */
+#overlay:has(> .win) { justify-content: center; align-items: center; padding: var(--Gy) var(--G); }
+/* 옛 창 모서리 리벳 효과는 키트 창에 그리지 않는다 — 철판 그림에 리벳이 있다 */
+#overlay:has(> .win) > .fx3-rv { display: none; }
+/* 창 안 아이들: 줄어들지 않는다 (목록 우물 하나만 줄어들며 스크롤) */
+.win > * { flex: none; min-width: 0; }
+.win p { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+.win b { font-weight: 400; }
+
+/* ---------- 3.2 명패 — .plate (창 위 테 가운데에 절반 걸침, ≤ 12자) ---------- */
+:is(.win, .scr-pick, .scr-place, .kit) .plate {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0;
+  box-sizing: border-box; height: var(--h-plate); min-height: 0; padding: 0 calc(var(--px) * 1); white-space: nowrap;
+  border-style: solid; border-width: 0 calc(var(--k-plate) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/plate-brass.png') 0 var(--k-plate) fill / 0 calc(var(--k-plate) * var(--px)) stretch;
+  image-rendering: pixelated; background: none; box-shadow: none;
+  color: var(--t-brass-ink); font: 700 24px/1 Galmuri11, sans-serif; text-shadow: none;
+}
+.win > .plate { position: absolute; z-index: 2; left: 50%; top: calc(-1 * var(--k-win) * var(--px) - var(--h-plate) / 2); transform: translateX(-50%); }
+
+/* ---------- 창 머리 줄 · 본문 글 ---------- */
+:is(.win, .scr-pick, .scr-place, .kit) .win-head { display: flex; align-items: center; gap: var(--s2); min-height: calc(var(--px) * 15); flex-wrap: wrap; }
+:is(.win, .scr-pick, .scr-place, .kit) .win-head > img, :is(.win, .scr-pick, .scr-place, .kit) .win-head > .piece { width: calc(var(--px) * 24); height: calc(var(--px) * 24); image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .win-head .push { margin-left: auto; }
+/* 강조 24 (갈무리11 굵게) — 창 안 이름 · 결정 한 줄. 창마다 하나 */
+:is(.win, .scr-pick, .scr-place, .kit) .lead { margin: 0; color: var(--t-body); font: 700 24px/30px Galmuri11, sans-serif; }
+/* 대사 = 이름(12 굵게) + “ ” · 독백 = ‘ ’ 강조색 · 시스템 = 본문 · 보조 = 12 흐림 */
+:is(.win, .scr-pick, .scr-place, .kit) .say { color: var(--t-body); }
+:is(.win, .scr-pick, .scr-place, .kit) .say .who { margin-right: var(--s2); color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; }
+:is(.win, .scr-pick, .scr-place, .kit) .mono { color: var(--t-gold); }
+:is(.win, .scr-pick, .scr-place, .kit) p.note, :is(.win, .scr-pick, .scr-place, .kit) .note { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; }
+:is(.win, .scr-pick, .scr-place, .kit) .up { color: var(--t-gold); }
+:is(.win, .scr-pick, .scr-place, .kit) .down { color: var(--t-loss); }
+:is(.win, .scr-pick, .scr-place, .kit) .ally { color: var(--t-ally); }
+:is(.win, .scr-pick, .scr-place, .kit) .stack { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
+
+/* ---------- 3.3 단추 · 단추 줄 ---------- */
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal) {
+  --up: url('../assets/ui/chrome/v2/btn-iron-up.png'); --dn: url('../assets/ui/chrome/v2/btn-iron-down.png'); --off: url('../assets/ui/chrome/v2/btn-iron-off.png');
+  --fg: var(--t-ink); --fg-dn: var(--t-body); --fg-off: var(--t-dim);
+  position: relative; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  height: var(--h-btn); min-height: var(--h-btn); min-width: calc(var(--px) * 56); width: auto; margin: 0;
+  /* 면은 캔버스 위 19도트 — 글자를 1도트 위로. 눌리면 면과 함께 1도트 아래로 */
+  padding: 0 calc(var(--px) * 2) calc(var(--px) * 1);
+  border-style: solid; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px));
+  border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 stretch;
+  image-rendering: pixelated; background: none; box-shadow: none; filter: none; transform: none;
+  color: var(--fg); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; text-shadow: none; white-space: nowrap; cursor: pointer;
+}
+.btn.k-brass { --up: url('../assets/ui/chrome/v2/btn-brass-up.png'); --dn: url('../assets/ui/chrome/v2/btn-brass-down.png'); --off: url('../assets/ui/chrome/v2/btn-brass-off.png'); --fg: var(--t-ink); --fg-dn: var(--t-ink); --fg-off: var(--t-body); }
+.btn.k-crimson { --up: url('../assets/ui/chrome/v2/btn-crimson-up.png'); --dn: url('../assets/ui/chrome/v2/btn-crimson-down.png'); --off: url('../assets/ui/chrome/v2/btn-crimson-off.png'); --fg: #000; --fg-dn: #000; --fg-off: var(--t-body); }
+.btn.k-teal { --up: url('../assets/ui/chrome/v2/btn-teal-up.png'); --dn: url('../assets/ui/chrome/v2/btn-teal-down.png'); --off: url('../assets/ui/chrome/v2/btn-teal-off.png'); --fg: #000; --fg-dn: #000; --fg-off: var(--t-body); }
+/* 누름 영역: 그림은 24도트, 손가락 영역은 위아래로 늘려 48px 이상 (DPR 2.625에서 24도트 ≈ 45.7px) */
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal)::before { content: ''; position: absolute; left: calc(var(--px) * -6); right: calc(var(--px) * -6); top: 50%; height: max(48px, 100%); transform: translateY(-50%); }
+/* 눌림(손가락 · 키보드) — 그림 바꿈 + 글자 1도트 아래. 크기 · 비율은 그대로 */
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):is(:active, .down, [aria-pressed='true'], [aria-selected='true']):not(:disabled) { border-image-source: var(--dn); color: var(--fg-dn); padding: calc(var(--px) * 1) calc(var(--px) * 2) 0; }
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):is(:disabled, [aria-disabled='true']) { border-image-source: var(--off); color: var(--fg-off); filter: none; cursor: default; }
+/* 떼면 한 번 튀어 오름: 계단 3프레임(1도트 위 → 제자리) — 비정수 확대 없음 */
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up { animation: kbtnup 180ms steps(3, jump-none) both; }
+@keyframes kbtnup { 0% { transform: translateY(calc(var(--px) * 1)); } 50% { transform: translateY(calc(var(--px) * -1)); } 100% { transform: none; } }
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
+.btn:is(.k-brass, .k-iron, .k-crimson, .k-teal) small { color: inherit; font: 400 12px/1 Galmuri11, sans-serif; }
+
+/* 단추 줄: 창 맨 아래 · 왼쪽 = 뒤로(철) · 오른쪽 = 앞으로(황동) · 같은 폭 · 최대 2개 (+ 가운데 쪽 표시) */
+:is(.win, .scr-pick, .scr-place, .kit) .btn-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin: 0; margin-top: auto; }
+:is(.win, .scr-pick, .scr-place, .kit) .btn-row > .btn { flex: 0 0 calc(var(--px) * 80); min-width: 0; }
+:is(.win, .scr-pick, .scr-place, .kit) .btn-row > .go:first-child { margin-left: auto; }
+:is(.win, .scr-pick, .scr-place, .kit) .btn-row > .mid { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; gap: var(--s2); min-width: 0; }
+:is(.win, .scr-pick, .scr-place, .kit) .btn-row > .pair { display: flex; gap: var(--s2); }
+:is(.win, .scr-pick, .scr-place, .kit) .btn-row > .pair > .btn { flex: 0 0 calc(var(--px) * 80); }
+.win.win-s .btn-row > .btn { flex: 1 1 0; }
+/* 단추 무리(셋 이상 — 단추 줄이 아니라 본문 안 선택 블록) */
+:is(.win, .scr-pick, .scr-place, .kit) .btn-set { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: var(--s2); }
+:is(.win, .scr-pick, .scr-place, .kit) .btn-set > .btn { width: 100%; min-width: 0; }
+
+/* ---------- 3.4 선택지 판 — .choice (이름 15 · 결과 12, 높이 56) ---------- */
+:is(.win, .scr-pick, .scr-place, .kit) .choice {
+  position: relative; box-sizing: border-box; display: grid; align-content: center; gap: 0; width: 100%;
+  min-height: calc(var(--px) * 28); height: auto; padding: 0 var(--s2); margin: 0; text-align: left;
+  border-style: solid; border-width: calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16);
+  border-image: url('../assets/ui/chrome/v2/choice-up.png') var(--k-choice) fill / calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16) / 0 stretch;
+  image-rendering: pixelated; background: none; box-shadow: none; filter: none;
+  color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; cursor: pointer;
+}
+:is(.win, .scr-pick, .scr-place, .kit) .choice:is(:active, .down):not(:disabled) { border-image-source: url('../assets/ui/chrome/v2/choice-down.png'); padding-top: calc(var(--px) * 1); }
+:is(.win, .scr-pick, .scr-place, .kit) .choice:is(.is-sel, [aria-pressed='true']) { border-image-source: url('../assets/ui/chrome/v2/choice-sel.png'); }
+:is(.win, .scr-pick, .scr-place, .kit) .choice:disabled { border-image-source: url('../assets/ui/chrome/v2/choice-off.png'); color: var(--t-dim); filter: none; cursor: default; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice .choice-name { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res { color: var(--t-dim); font: 400 12px/14px Galmuri11, sans-serif; white-space: nowrap; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice:has(> .btn-info) { padding-right: calc(var(--px) * 24); }
+/* 정보 단추 21×21 → ×2 = 42, 누름 영역 48 */
+:is(.win, .scr-pick, .scr-place, .kit) .btn-info {
+  width: max(48px, calc(var(--px) * 24)); height: max(48px, calc(var(--px) * 24)); padding: 0; margin: 0; border: 0; cursor: pointer;
+  background: url('../assets/ui/chrome/v2/info-up.png') center / calc(var(--px) * 21) calc(var(--px) * 21) no-repeat; image-rendering: pixelated;
+}
+:is(.win, .scr-pick, .scr-place, .kit) .btn-info:active { background-image: url('../assets/ui/chrome/v2/info-down.png'); }
+:is(.win, .scr-pick, .scr-place, .kit) .choice > .btn-info { position: absolute; right: calc(var(--px) * -4); top: 50%; transform: translateY(-50%); }
+
+/* ---------- 3.5 꼬리표 · 지갑 · 구분 줄 · 움푹 칸 ---------- */
+:is(.win, .scr-pick, .scr-place, .kit) .tag {
+  display: inline-flex; align-items: center; gap: var(--s1); box-sizing: border-box; height: calc(var(--px) * 15); padding: 0 calc(var(--px) * 1); margin: 0; white-space: nowrap;
+  border-style: solid; border-width: calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 3) calc(var(--px) * 14);
+  border-image: url('../assets/ui/chrome/v2/tag-brass.png') var(--k-tag) fill / calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 3) calc(var(--px) * 14) / 0 stretch;
+  image-rendering: pixelated; background: none; box-shadow: none;
+  color: var(--t-brass-ink); font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; text-shadow: none;
+}
+:is(.win, .scr-pick, .scr-place, .kit) .tag.tag-crimson { border-image-source: url('../assets/ui/chrome/v2/tag-crimson.png'); color: #000; }
+:is(.win, .scr-pick, .scr-place, .kit) .wallet { display: inline-flex; align-items: center; gap: var(--s2); color: var(--t-body); font: 400 30px/1 Galmuri14, Galmuri11, sans-serif; }
+:is(.win, .scr-pick, .scr-place, .kit) .wallet::before { content: ''; width: calc(var(--px) * 23); height: calc(var(--px) * 25); background: url('../assets/ui/chrome/v2/wallet.png') 0 0 / calc(var(--px) * 23) calc(var(--px) * 25) no-repeat; image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .divider { height: calc(var(--px) * 6); margin: 0; border: 0; background: url('../assets/ui/chrome/v2/divider.png') 0 0 / calc(var(--px) * 42) calc(var(--px) * 6); background-repeat: round no-repeat; image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .inset {
+  box-sizing: border-box; margin: 0; padding: var(--s1) var(--s2);
+  border-style: solid; border-width: calc(var(--k-inset) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/inset-well.png') var(--k-inset) fill / calc(var(--k-inset) * var(--px)) / 0 stretch;
+  image-rendering: pixelated; background: none; box-shadow: none; color: var(--t-body);
+}
+/* 목록 화면(도감 · 용어 · 덱)만: 우물 하나가 남은 높이를 받아 안에서 스크롤 */
+:is(.win, .scr-pick, .scr-place, .kit) .inset.scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #8a8794 #1c1b22; }
+/* 텍스트 입력 = 움푹 칸 */
+:is(.win, .scr-pick, .scr-place, .kit) textarea.inset { display: block; width: 100%; resize: none; outline: none; font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; -webkit-user-select: text; user-select: text; touch-action: auto; }
+:is(.win, .scr-pick, .scr-place, .kit) textarea.inset:focus { border-image-source: url('../assets/ui/chrome/v2/toast-iron.png'); }
+:is(.win, .scr-pick, .scr-place, .kit) textarea.inset::placeholder { color: var(--t-dim); }
+
+/* ---------- 3.6 그림 액자 · 카드 받침 ---------- */
+:is(.win, .scr-pick, .scr-place, .kit) .frame-portrait, :is(.win, .scr-pick, .scr-place, .kit) .frame-scene {
+  position: relative; box-sizing: border-box; display: block; overflow: visible; background: #0b0b0e;
+  border-style: solid; border-width: calc(var(--k-frame) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/portrait-frame.png') var(--k-frame) / calc(var(--k-frame) * var(--px)) / 0 stretch;
+  image-rendering: pixelated;
+}
+:is(.win, .scr-pick, .scr-place, .kit) .frame-portrait { width: var(--fs, calc(var(--px) * 68)); height: var(--fs, calc(var(--px) * 68)); }
+:is(.win, .scr-pick, .scr-place, .kit) .frame-portrait.f64 { --fs: calc(var(--px) * 32); }
+:is(.win, .scr-pick, .scr-place, .kit) .frame-portrait.f96 { --fs: calc(var(--px) * 48); }
+:is(.win, .scr-pick, .scr-place, .kit) .frame-scene { border-image-source: url('../assets/ui/chrome/v2/scene-frame.png'); }
+:is(.win, .scr-pick, .scr-place, .kit) :is(.frame-portrait, .frame-scene) > img:not(.fs-plate) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--focus, 50% 40%); image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .frame-scene > .fs-plate { position: absolute; left: 50%; top: calc(-1 * var(--k-frame) * var(--px)); width: calc(var(--px) * 20); height: calc(var(--px) * 8); transform: translateX(-50%); image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .card-slot { position: relative; display: grid; justify-items: center; align-content: start; width: calc(var(--px) * 102); height: calc(var(--px) * 138); padding-top: calc(var(--px) * 6); background: url('../assets/ui/chrome/v2/card-slot.png') 0 0 / calc(var(--px) * 102) calc(var(--px) * 138) no-repeat; image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .card-slot.is-sel { background-image: url('../assets/ui/chrome/v2/card-slot-sel.png'); }
+
+/* ---------- 3.7 화면 레이아웃 두 가지 (창이 아님 — 패스 2에서 갈아 끼운다) ---------- */
+.scr-pick, .scr-place { position: fixed; inset: 0; z-index: 64; box-sizing: border-box; padding: var(--Gy) var(--G); color: var(--t-body); }
+.scr-pick { display: grid; grid-template-rows: var(--h-plate) 1fr var(--h-btn); gap: var(--s2); justify-items: center; }
+.scr-pick > .scr-top { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
+.scr-pick > .scr-top > :not(.plate) { position: absolute; right: 0; }
+.scr-pick > .scr-items { display: flex; gap: var(--s3); align-items: start; justify-content: center; }
+.scr-pick > .btn-row, .scr-place .btn-row { width: 100%; }
+.scr-place { display: grid; grid-template-columns: 40% 1fr; gap: var(--s3); }
+.scr-place > .scr-art { overflow: hidden; }
+.scr-place > .scr-art > img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.scr-place > .scr-work { display: flex; flex-direction: column; gap: var(--s2); min-height: 0; }
+
+/* ---------- 3.8 토스트 · 상태 띠 (키트 그릇 안에서만 — 전투 HUD는 패스 4에서 옮긴다) ---------- */
+:is(.scr-pick, .scr-place, .kit) .k-toast, .k-toast.k-free {
+  display: inline-flex; align-items: center; gap: var(--s2); box-sizing: border-box; height: calc(var(--px) * 24); max-width: 480px; padding: 0 var(--s2);
+  border-style: solid; border-width: calc(var(--k-toast) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
+  image-rendering: pixelated; color: var(--t-body); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; white-space: nowrap;
+}
+.k-toast.k-free { position: fixed; z-index: 90; left: 50%; top: var(--Gy); transform: translateX(-50%); pointer-events: auto; }
+.k-toast.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
+@keyframes ktoastin { 0% { clip-path: inset(0 0 66% 0); } 50% { clip-path: inset(0 0 33% 0); } 100% { clip-path: inset(0); } }
+.k-band { position: fixed; z-index: 90; left: 50%; top: calc(var(--Gy) + var(--px) * 24); transform: translateX(-50%); }
+.k-band .plate { min-width: 240px; }
+
+/* ---------- 3.10 컷신 크롬 (패스 5에서 옮긴다 — 부품만 먼저) ---------- */
+.kit-sheet .cut-sub { box-sizing: border-box; max-width: 640px; padding: var(--s2) var(--s3); background: #0b0b0e; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+.kit-sheet .cut-next { color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
+@keyframes kblink { 50% { visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up, .k-toast.k-in, .kit-sheet .cut-next { animation: none; }
+}
+
+/* ===================== 패스 1 창 내용 — 부품 조합만 (D-391) ===================== */
+/* 사선 · 원수 · 판돈: 머리 줄(기물 + 이름) → 대사 → 조건 꼬리표 줄 */
+.win .terms { display: grid; grid-template-columns: max-content 1fr; gap: var(--s2) var(--s3); align-items: center; margin: 0; }
+.win .terms > .tag { justify-self: start; }
+/* 승급: 초상 136 + 대사 단 */
+.win .promo2 { display: grid; grid-template-columns: calc(var(--px) * 68) minmax(0, 1fr); gap: var(--s3); align-items: center; }
+.win .btn.tremble { animation: promoTremble 0.12s steps(2, jump-none) infinite; }
+@media (prefers-reduced-motion: reduce) { .win .btn.tremble { animation: none; } }
+/* 도감: 기록 줄 = 초상 48 + 이름 12 굵게 + 사인 15 */
+.win .lg-row { display: grid; grid-template-columns: calc(var(--px) * 24) minmax(0, 1fr); gap: 0 var(--s2); align-items: center; padding: var(--s1) 0; }
+.win .lg-row + .lg-row { border-top: calc(var(--px) * 1) solid #33313b; }
+.win .lg-row img { width: calc(var(--px) * 24); height: calc(var(--px) * 24); image-rendering: pixelated; grid-row: span 2; }
+.win .lg-row .lg-name { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.win .lg-row .lg-cause { font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
+.win .empty-line { margin: auto 0; text-align: center; }
+/* 도움말: 위 탭 줄 · 쪽(그림 + 글 단) · 용어 2단 */
+.win .tabs { display: flex; gap: var(--s2); }
+.win .tabs > .btn { flex: 0 0 calc(var(--px) * 56); }
+.win .gd3 { display: grid; grid-template-columns: calc(var(--px) * 82) minmax(0, 1fr); gap: var(--s3); height: calc(var(--px) * 82); }
+.win .gd3 > .inset { padding: 0; overflow: hidden; display: grid; }
+.win .gd3 > .inset > .gd-media { width: 100%; height: 100%; aspect-ratio: auto; box-shadow: none; }
+.win .gd3 .gd-title { margin: 0 0 var(--s2); }
+.win .gd3 .gd-tip { margin-top: var(--s2); }
+.win .page-dots { display: flex; gap: var(--s2); }
+.win .page-dots i { width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #46404f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
+.win .page-dots i.on { background: var(--t-gold); }
+.win .dict { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s3); align-content: start; }
+.win .dict .term b { display: block; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.win .dict .term span { display: block; font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
+.win .tabs .btn.has-new::after { content: ''; position: absolute; top: calc(var(--px) * -2); right: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
+/* 설문: 눈금 단추 줄 · 고르기 무리 */
+.win .scale { display: flex; gap: var(--s2); justify-content: center; }
+.win .scale > .btn { flex: 0 0 calc(var(--px) * 32); min-width: calc(var(--px) * 32); }
+.win .scale-ends { display: flex; justify-content: space-between; }
+/* 근간 시험장 (개발용) */
+.win .lab-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.win .lab-pick { display: grid; gap: var(--s1); align-content: start; text-align: left; cursor: pointer; font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+.win .lab-pick .lg-name { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+/* 부품 견본 (?debug sliceApi.kitSheet) */
+.kit-sheet { position: fixed; inset: 0; z-index: 200; box-sizing: border-box; padding: var(--Gy) var(--G); display: flex; flex-wrap: wrap; gap: var(--s3); align-content: flex-start; background: #16141c; overflow: auto; }
+.kit-sheet .ks-grid, .kit-sheet .ks-col { display: flex; flex-direction: column; gap: var(--s2); }
+.kit-sheet .ks-col { width: 260px; }
+.kit-sheet .ks-row { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+.kit-sheet .ks-row > .note { width: 56px; }

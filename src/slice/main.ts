@@ -4,6 +4,9 @@ import { BOSS_EPITHET, BOSS_PHASE_TEXT, ENTRY_LINES, HUD_TEXT, KEYWORDS, LIFE_TE
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
+// 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
+import './kit.css';
+import { bindWinHost, btnHtml, closeWin, dropWinDismiss, openWin, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
@@ -327,6 +330,28 @@ const renderer = new BoardRenderer(
 installPressFeedback();
 installUiSprites();
 installPressy();
+// 키트 창은 #overlay에 뜬다 — 등장 m3in · 퇴장 디더는 openOverlay · closeOverlay 그대로 (D-391)
+bindWinHost({ open: (html, cls) => openOverlay(html, cls), close: () => closeOverlay() });
+/**
+ * 부품 견본 (?debug sliceApi.kitSheet(쪽)): 받은 부품을 키트 클래스로 한 화면에 — 915×412 촬영 검수용 (D-391 패스 0).
+ * 1쪽 = 단추 4재질 × 보통/눌림/꺼짐 · 선택지 4상태 · 꼬리표 · 지갑 · 정보 · 구분 줄 · 움푹 칸, 2쪽 = 액자 · 받침 · 토스트 · 띠 · 종이.
+ */
+const kitSheet = (page = 1): number => {
+  document.querySelector('.kit-sheet')?.remove();
+  const el = document.createElement('div');
+  el.className = 'kit kit-sheet';
+  const kinds: WinBtn['kind'][] = ['brass', 'iron', 'crimson', 'teal'];
+  el.innerHTML =
+    page === 1
+      ? `<div class="ks-grid">${kinds.map((k) => `<div class="ks-row"><span class="note">${k}</span>${btnHtml({ label: '고른다', kind: k })}<button type="button" class="btn k-${k} down">눌림</button>${btnHtml({ label: '꺼짐', kind: k, disabled: true })}</div>`).join('')}</div>
+        <div class="ks-col"><button type="button" class="choice"><span class="choice-name">보통 선택지</span><span class="choice-res">결과 한 줄 <span class="up">+20</span></span></button><button type="button" class="choice down"><span class="choice-name">눌림</span><span class="choice-res">1도트 아래</span></button><button type="button" class="choice is-sel"><span class="choice-name">고름</span><span class="choice-res">청록 테</span><i class="btn-info" role="button"></i></button><button type="button" class="choice" disabled><span class="choice-name">꺼짐</span><span class="choice-res">나사 40 필요</span></button></div>
+        <div class="ks-col"><div class="ks-row"><span class="tag">나사 45</span><span class="tag tag-crimson">실패 시 −10</span></div><div class="ks-row"><span class="wallet">150</span><i class="btn-info" role="button"></i></div><div class="divider"></div><div class="inset"><p>움푹 칸 — 대사 · 목록 · 입력.</p></div><div class="ks-row"><div class="plate">명패 열두 자</div></div></div>`
+      : `<div class="ks-row"><div class="frame-portrait"><img src="scenes/boss-gilded.png" alt=""></div><div class="frame-portrait f96"><img src="scenes/boss-gilded.png" alt=""></div><div class="frame-portrait f64">${pieceImg('N', 0, 'large', 32)}</div><div class="frame-scene" style="width:352px;height:264px"><img class="fs-plate" src="${new URL('../assets/ui/chrome/v2/scene-frame-plate.png', import.meta.url).href}" alt=""><img src="scenes/bg-forge.png" alt=""></div><div class="card-slot is-sel"></div></div>
+        <div class="ks-row"><span class="k-toast">${pieceImg('P', 0, 'small', 24)}<span>토스트 한 줄 스무 자 안</span></span><span class="cut-sub">자막 띠 — 서술 한 줄 32자 이하.</span><span class="cut-next">▼ 눌러서 계속</span></div>`;
+  el.addEventListener('click', () => el.remove());
+  document.body.appendChild(el);
+  return 0;
+};
 
 /** 길게 누르기 정보: 손을 뗀 뒤 지워지는 사이 다시 누르면 새 정보가 숨지 않게 */
 let infoTok = 0;
@@ -1327,7 +1352,15 @@ const lastStand = async (force = false): Promise<void> => {
     const who = ci >= 0 ? squad[ci] : null;
     if (who) {
       const ok = await new Promise<boolean>((res) => {
-        const el = openOverlay(`<div class="stand"><p class="eyebrow">사선</p><h2>${pieceImg(who.t, 0, 'small', 28)} ${crewLabel(who)}</h2><p class="line">“제가 맞겠습니다, 대장.”</p><p class="dim">받아들이면 킹과 자리를 바꿉니다. 이 분대원이 대신 맞습니다.</p><div class="row"><button class="btn" type="button" data-no>거절한다</button><button class="btn brass" type="button" data-yes>받아들인다</button></div></div>`);
+        // M 창 (D-391): 명패 「사선」 · 머리 줄 = 분대원 · 대사 · 규칙 한 줄 · [거절한다 | 받아들인다]
+        const el = openWin({
+          size: 'm',
+          title: '사선',
+          head: `${pieceImg(who.t, 0, 'small', 48)}<p class="lead">${crewLabel(who)}</p>`,
+          body: `<p class="say"><span class="who">${who.name ?? PIECE_NAMES_KO[who.t]}</span>“제가 맞겠습니다, 대장.”</p><p>받아들이면 킹과 자리를 바꿉니다. 이 분대원이 대신 맞습니다.</p>`,
+          back: { label: '거절한다', attrs: 'data-no' },
+          go: { label: '받아들인다', attrs: 'data-yes' },
+        });
         el.querySelector('[data-yes]')!.addEventListener('click', () => res(true));
         el.querySelector('[data-no]')!.addEventListener('click', () => res(false));
       });
@@ -1363,7 +1396,14 @@ const lastStand = async (force = false): Promise<void> => {
 
 /** 원수와 다시 만났다 (전환 화면 뒤): 이름 · 쓰러뜨린 분대원 · 단계 */
 const nemesisMeet = (n: Nemesis): void => {
-  const el = openOverlay(`<div class="stand nemesis"><p class="eyebrow">원수</p><h2>${pieceImg(n.t, 1, 'small', 30)} ${n.name}</h2><p class="line">${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><p class="dim">쓰러뜨린 분대원: ${n.victims.join(' · ')} · ${n.rank}단계 (HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%)<br>쓰러뜨리면 현상금 나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${josa(n.heir.name, '이')} 돌아온다` : ''}.</p><div class="row"><button class="btn brass" type="button" data-go>맞선다</button></div></div>`);
+  // M 창 (D-391): 명패 「원수」 · 머리 줄 = 원수 이름 + 단계 꼬리표 · 대사 · 조건 꼬리표 줄 · [맞선다]
+  const el = openWin({
+    size: 'm',
+    title: '원수',
+    head: `${pieceImg(n.t, 1, 'small', 48)}<p class="lead down">${n.name}</p><span class="tag tag-crimson push">${n.rank}단계 · HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%</span>`,
+    body: `<p class="say"><span class="who">${n.name}</span>${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><div class="terms"><span class="tag tag-crimson">쓰러뜨림</span><p>${n.victims.join(' · ')}</p><span class="tag">현상금</span><p>나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${josa(n.heir.name, '이')} 돌아온다` : ''}</p></div>`,
+    go: { label: '맞선다', attrs: 'data-go' },
+  });
   sfx('threat');
   el.querySelector('[data-go]')!.addEventListener('click', async () => {
     closeOverlay();
@@ -1383,8 +1423,17 @@ const maybeBet = (def: BattleDef, force = false): void => {
   if (!force && (labMode || INTRO.includes(def) || def.boss || gold < DIRECTOR.betStake || R.next() > DIRECTOR.betChance)) return;
   const kinds: BetKind[] = ['fast', 'clean'];
   const kind = kinds[R.int(kinds.length)];
-  const el = openOverlay(`<div class="stand"><p class="eyebrow">판돈</p><h2>${BETS[kind].label}</h2><dl class="terms"><dt>조건</dt><dd>${BETS[kind].cond}</dd><dt>보상</dt><dd>판돈으로 건 나사의 두 배 <b class="up">(+${DIRECTOR.betStake * 2})</b></dd><dt>실패 시</dt><dd>판돈으로 건 나사를 잃음 <b class="down">(−${DIRECTOR.betStake})</b></dd></dl><div class="row"><button class="btn" type="button" data-no>걸지 않는다</button><button class="btn brass" type="button" data-yes>나사 ${DIRECTOR.betStake}을 건다</button></div></div>`);
-  el.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
+  // M 창 (D-391): 명패 「판돈」 · 건 것 한 줄(24) · 조건 · 보상 · 실패 꼬리표 줄 · [걸지 않는다 | 건다]
+  const el = openWin({
+    size: 'm',
+    title: '판돈',
+    head: `<p class="lead">${BETS[kind].label}</p><span class="tag push">판돈 나사 ${DIRECTOR.betStake}</span>`,
+    body: `<div class="terms"><span class="tag">조건</span><p>${BETS[kind].cond}</p><span class="tag">보상</span><p>건 나사의 두 배 <span class="up">(+${DIRECTOR.betStake * 2})</span></p><span class="tag tag-crimson">실패 시</span><p>건 나사를 잃는다 <span class="down">(−${DIRECTOR.betStake})</span></p></div>`,
+    back: { label: '걸지 않는다', attrs: 'data-no' },
+    go: { label: '건다', attrs: 'data-yes' },
+    dismiss: closeWin,
+  });
+  el.querySelector('[data-no]')!.addEventListener('click', closeWin);
   el.querySelector('[data-yes]')!.addEventListener('click', () => {
     betNow = { kind, stake: DIRECTOR.betStake };
     sfx('rare');
@@ -2379,8 +2428,15 @@ const keepNumbers = (root: HTMLElement): void => {
     if (/ (?=[+\-−×]?\d)/.test(t)) n.nodeValue = t.replace(/ (?=[+\-−×]?\d)/g, '\u00a0');
   }
 };
-const openOverlay = (html: string): HTMLElement => {
+/** 창 틀 클래스 (키트 창 → 옛 창으로 바뀔 때 걷어 낸다) */
+let panelCls: string[] = [];
+const openOverlay = (html: string, cls = ''): HTMLElement => {
   const panel = $('overlay-panel');
+  // 키트 창(openWin)이 아니면 막 · Esc 닫기와 틀 클래스를 걷는다 (D-391)
+  if (!cls) dropWinDismiss();
+  panel.classList.remove(...panelCls);
+  panelCls = cls.split(' ').filter(Boolean);
+  panel.classList.add(...panelCls);
   panel.innerHTML = html;
   keepNumbers(panel);
   const wasHidden = $('overlay').hidden || panel.classList.contains('m3out');
@@ -2498,6 +2554,7 @@ const optFace = (o: { name: string; art: string; desc: string; attrs: string; gr
   `<button type="button" class="cf part-card opt g-${o.grade ?? 'common'}" data-grade="${o.grade ?? 'common'}" ${o.attrs}><b class="cf-name">${o.name}</b><span class="cf-win">${o.art}</span>${o.tag ? `<span class="cf-type">${o.tag}</span>` : ''}<small class="cf-desc">${descLines(o.desc)}</small><i class="cf-gem"></i></button>`;
 /** 창 닫기: 가로로 접혀 사라진다 (D-189). 접히는 사이 다시 열리면 취소된다 */
 const closeOverlay = (): void => {
+  dropWinDismiss();
   if ($('overlay').hidden) return;
   modalOut($('overlay'), $('overlay-panel'), () => ($('overlay').hidden = true));
 };
@@ -2613,13 +2670,21 @@ const finishNow = (): void => {
       if (betNow) gold = Math.max(0, gold - betNow.stake);
       // 아까운 패배 (D-178): 적 킹이 거의 다 깎였으면 「한 수였습니다」 — 가까웠던 만큼 다시 누르게
       const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
-      const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="near">적 킹 HP ${ek.hp} 남았습니다. 한 수였습니다.</p>` : '';
+      const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="mono">‘적 킹 HP ${ek.hp}. 한 수였어.’</p>` : '';
       // 1패 = 출하 끝 (D-228). 여벌 심장 톱니가 있으면 하나 깨고 그 대국을 처음부터
       const spare = charms.revive > 0;
       // 하자 폐기 화면도 출하 중단 배경(E-02) 위에 (D-263 — 판 위에 뜨던 구식 창)
       document.body.classList.add('between');
       placeBg('end-fail');
-      const el = openOverlay(`<div class="stamp-big bad">하자 폐기</div><p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다. (남은 ${charms.revive})` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}<div class="row">${spare ? '<button class="btn" type="button" data-quit>출하 종료</button><button class="btn brass" type="button" data-again>깨고 다시</button>' : '<button class="btn brass" type="button" data-quit>출하 종료</button>'}</div>`);
+      // M 창 (D-391): 명패 「하자 폐기」 · 남은 부적 꼬리표 · 규칙 한 줄 · 독백 · [끝낸다 | 다시 둔다] — 결정 대기라 막을 눌러도 안 닫힘
+      const el = openWin({
+        size: 'm',
+        title: '하자 폐기',
+        head: spare ? `<span class="tag tag-crimson">${CHARMS.revive.name} ${charms.revive}</span>` : undefined,
+        body: `<p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다.` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}`,
+        back: spare ? { label: '끝낸다', attrs: 'data-quit' } : undefined,
+        go: spare ? { label: '다시 둔다', attrs: 'data-again' } : { label: '끝낸다', attrs: 'data-quit' },
+      });
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
         startBattle(cur);
@@ -2955,11 +3020,17 @@ const crewView = (): void => {
 /** 도감 (옛 폐기 원부, D-288): 쓰러진 분대원의 영구 기록 */
 const ledgerView = (back: () => void = crewView): void => {
   const rows = readLedger();
-  const el = openOverlay(`<h2>도감</h2><p>쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><div class="ledger">${
-    rows.length
-      ? rows.map((r) => `<div class="ledger-row">${pieceImg(r.t, 0, 'small', 22)} <b>${r.name}${r.nick ? ` 「${r.nick}」` : ''}</b> <span class="dim">${r.serial}</span> · 처치 ${r.kills} · 대국 ${r.battles}<br><small>${r.cause} · ${r.run}</small></div>`).join('')
-      : '<p class="dim">아직 기록이 없습니다.</p>'
-  }</div><div class="row"><button class="btn brass" type="button" data-back>${back === crewView ? '분대로' : '닫기'}</button></div>`);
+  // L 목록 창 (D-391): 명패 「도감」 · 머리 줄 = 안내 12 + 기록 수 꼬리표 · 움푹 칸 하나(안에서만 스크롤) · [돌아간다/닫는다]
+  const el = openWin({
+    size: 'l',
+    title: '도감',
+    head: `<p class="note">쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><span class="tag push">기록 ${rows.length}</span>`,
+    body: rows.length
+      ? `<div class="inset scroll">${rows.map((r) => `<div class="lg-row">${pieceImg(r.t, 0, 'small', 48)}<p class="lg-name">${r.name}${r.nick ? ` 「${r.nick}」` : ''} · ${r.serial} · 처치 ${r.kills} · 대국 ${r.battles}</p><p class="lg-cause">${r.cause} · ${r.run}</p></div>`).join('')}</div>`
+      : `<p class="mono empty-line">‘아직 아무도 잃지 않았어.’</p>`,
+    back: { label: back === crewView ? '돌아간다' : '닫는다', attrs: 'data-back' },
+    dismiss: () => back(),
+  });
   el.querySelector('[data-back]')!.addEventListener('click', () => back());
 };
 
@@ -3141,8 +3212,16 @@ const stateDump = (): Record<string, unknown> => ({
 });
 /** 버그 · 짜증 제보: 한 줄 + 지금 상태를 기록에 남긴다 (Monster Train F8 · 보고서 3 C-4) */
 const bugReport = (): void => {
-  const el = openOverlay(`<div class="pt-card"><h2>${PT.bugTitle}</h2><p class="dim">${PT.bugNote}</p><textarea class="pt-text" rows="3" maxlength="300" placeholder="${PT.bugHint}"></textarea><div class="row"><button class="btn" type="button" data-x>${PT.close}</button><button class="btn brass" type="button" data-send>${PT.send}</button></div></div>`);
-  el.querySelector('[data-x]')!.addEventListener('click', closeOverlay);
+  // M 입력 창 (D-391): 명패 「제보」 · 안내 · 움푹 칸 입력 하나 · [닫는다 | 남긴다]
+  const el = openWin({
+    size: 'm',
+    title: PT.bugTitle,
+    body: `<p>${PT.bugNote}</p><textarea class="inset pt-text" rows="3" maxlength="300" placeholder="${PT.bugHint}"></textarea>`,
+    back: { label: PT.close, attrs: 'data-x' },
+    go: { label: PT.send, attrs: 'data-send' },
+    dismiss: closeWin,
+  });
+  el.querySelector('[data-x]')!.addEventListener('click', closeWin);
   el.querySelector('[data-send]')!.addEventListener('click', () => {
     track('bug_report', { note: el.querySelector<HTMLTextAreaElement>('.pt-text')!.value.trim(), state: stateDump() });
     closeOverlay();
@@ -3165,7 +3244,16 @@ const copyText = async (text: string, box: HTMLTextAreaElement): Promise<void> =
 const exportScreen = (back: () => void): void => {
   const all = telemetryAll();
   const payload = (): string => JSON.stringify({ v: 1, exported: new Date().toISOString(), session: telemetrySession(), meta: { runs: readMeta(store).runs, clears: readMeta(store).clears, ascOpen: readMeta(store).ascOpen }, events: telemetryAll() });
-  const el = openOverlay(`<div class="pt-card"><h2>${PT.exportTitle}</h2><p>${PT.exportNote(all.length)}</p><textarea class="pt-text pt-dump" rows="4" readonly hidden></textarea><div class="row"><button class="btn" type="button" data-x>${PT.close}</button><button class="btn" type="button" data-clear>${PT.clear}</button><button class="btn" type="button" data-file>${PT.save}</button><button class="btn brass" type="button" data-copy>${PT.copy}</button></div></div>`);
+  // M 창 (D-391): 명패 「시험판 기록」 · 건수 꼬리표 · 안내 · 보조 단추 무리(저장 · 지우기) · [닫는다 | 복사한다]
+  const el = openWin({
+    size: 'm',
+    title: PT.exportTitle,
+    head: `<span class="tag">${PT.exportCount(all.length)}</span>`,
+    body: `<p>${PT.exportNote}</p><div class="btn-set">${btnHtml({ label: PT.save, attrs: 'data-file' })}${btnHtml({ label: PT.clear, attrs: 'data-clear', kind: 'crimson' })}</div><textarea class="inset pt-text pt-dump" rows="3" readonly hidden></textarea>`,
+    back: { label: PT.close, attrs: 'data-x' },
+    go: { label: PT.copy, attrs: 'data-copy' },
+    dismiss: back,
+  });
   const box = el.querySelector<HTMLTextAreaElement>('.pt-dump')!;
   el.querySelector('[data-x]')!.addEventListener('click', back);
   el.querySelector('[data-copy]')!.addEventListener('click', () => void copyText(payload(), box));
@@ -3188,12 +3276,20 @@ const surveyScreen = (i: number, ans: Record<string, unknown>, then: () => void)
   const cur0 = ans[q.id];
   const body =
     q.kind === 'scale'
-      ? `<div class="pt-scale">${q.zero ? `<button type="button" class="btn${cur0 === 0 ? ' brass' : ''}" data-v="0">0</button>` : ''}${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="btn${cur0 === n ? ' brass' : ''}" data-v="${n}">${n}</button>`).join('')}</div><p class="pt-ends dim"><span>1 = ${q.lo}</span><span>5 = ${q.hi}</span></p>${q.zero ? `<p class="dim pt-zero">0 = ${q.zero}</p>` : ''}`
+      ? `<div class="stack"><div class="scale">${(q.zero ? [0, 1, 2, 3, 4, 5] : [1, 2, 3, 4, 5]).map((n) => btnHtml({ label: String(n), attrs: `data-v="${n}"`, kind: cur0 === n ? 'teal' : 'iron' })).join('')}</div><div class="scale-ends"><span class="note">1 = ${q.lo}</span>${q.zero ? `<span class="note">0 = ${q.zero}</span>` : ''}<span class="note">5 = ${q.hi}</span></div></div>`
       : q.kind === 'text'
-        ? `<textarea class="pt-text" rows="3" maxlength="300">${typeof cur0 === 'string' ? cur0 : ''}</textarea>`
-        : `<div class="pt-opts">${q.opts.map((o, k) => `<button type="button" class="btn${(q.kind === 'many' ? ((cur0 as number[]) ?? []).includes(k) : cur0 === k) ? ' brass' : ''}" data-o="${k}">${o}</button>`).join('')}</div>`;
+        ? `<textarea class="inset pt-text" rows="3" maxlength="300">${typeof cur0 === 'string' ? cur0 : ''}</textarea>`
+        : `<div class="btn-set" style="--cols:${q.kind === 'many' ? 5 : 2}">${q.opts.map((o, k) => btnHtml({ label: o, attrs: `data-o="${k}"`, kind: (q.kind === 'many' ? ((cur0 as number[]) ?? []).includes(k) : cur0 === k) ? 'teal' : 'iron' })).join('')}</div>`;
   const last = i === SURVEY.length - 1;
-  const el = openOverlay(`<div class="pt-card"><p class="eyebrow">${PT.surveyTitle} ${i + 1} / ${SURVEY.length}</p><h2 class="pt-q">${q.q}</h2>${body}<div class="row"><button class="btn" type="button" data-prev>${i ? '이전' : PT.close}</button><button class="btn brass" type="button" data-next>${last ? '마치기' : '다음'}</button></div>${i === 0 ? `<p class="dim re-note">${PT.surveyNote}</p>` : ''}</div>`);
+  // L 창 (D-391): 명패 「설문」 · 머리 줄 = 쪽 꼬리표 + 물음 · 답(고른 것 = 청록) · [돌아간다 | 넘긴다]
+  const el = openWin({
+    size: 'l',
+    title: PT.surveyTitle,
+    head: `<span class="tag">${i + 1} / ${SURVEY.length}</span><p>${q.q}</p>`,
+    body: `${body}${i === 0 ? `<p class="note">${PT.surveyNote}</p>` : ''}`,
+    back: { label: i ? PT.prev : PT.close, attrs: 'data-prev' },
+    go: { label: last ? PT.done : PT.next, attrs: 'data-next' },
+  });
   el.querySelectorAll<HTMLElement>('[data-v]').forEach((btn) => btn.addEventListener('click', () => (sfx('tap'), (ans[q.id] = Number(btn.dataset.v)), surveyScreen(i, ans, then))));
   el.querySelectorAll<HTMLElement>('[data-o]').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -3232,14 +3328,15 @@ const dictHtml = (): string => {
   const fresh = new Set(m.termsNew ?? []);
   const list = KEYWORDS.filter(([k, , g]) => g === 'base' || on.has(k));
   const left = KEYWORDS.length - list.length;
-  return `<div class="hp-dict">${list.map(([k, v]) => `<div class="hd-term"><b>${k}${fresh.has(k) ? ' <i class="new-tag">NEW</i>' : ''}</b><span>${v}</span></div>`).join('')}</div>${left ? `<p class="dim hp-more">아직 만나지 않은 용어 ${left}개 — 나아가면 열립니다.</p>` : ''}`;
+  return `<div class="dict">${list.map(([k, v]) => `<div class="term"><b>${k}${fresh.has(k) ? ' <i class="new-tag">NEW</i>' : ''}</b><span>${v}</span></div>`).join('')}</div>${left ? `<p class="note">아직 만나지 않은 용어 ${left}개 — 나아가면 열립니다.</p>` : ''}`;
 };
 /**
  * ? 도움말 (D-263, 사용자: 「지금 화면 · 용어 · 안내서 전체는 가독성 최악 — 지금 화면은 안내서에 통합」):
  * 탭 셋 = 안내서(그림 + 핵심 행, 반장 대국이면 반장 쪽부터) · 용어 · 버그 · 짜증 제보.
  */
+/** 도움말 탭 줄 (창 머리 줄 안) — 지금 탭 = 눌린 철, 황동은 단추 줄 하나만 (D-391) */
 const helpTabs = (on: 'guide' | 'dict'): string =>
-  `<div class="hp-tabs"><button class="btn${on === 'guide' ? ' brass' : ''}" type="button" data-tab="guide">${HUD_TEXT.helpTitle}</button><button class="btn${on === 'dict' ? ' brass' : ''}${(readMeta(store).termsNew ?? []).length ? ' has-new' : ''}" type="button" data-tab="dict">${HUD_TEXT.dictTitle}</button><button class="btn" type="button" data-tab="bug">${PT.bug}</button></div>`;
+  `<div class="tabs">${btnHtml({ label: HUD_TEXT.helpTitle, attrs: `data-tab="guide"${on === 'guide' ? ' aria-selected="true"' : ''}` })}${btnHtml({ label: HUD_TEXT.dictTitle, attrs: `data-tab="dict"${on === 'dict' ? ' aria-selected="true"' : ''}`, cls: (readMeta(store).termsNew ?? []).length ? 'has-new' : '' })}${btnHtml({ label: PT.bug, attrs: 'data-tab="bug"' })}</div>`;
 const help = (tab: 'now' | 'dict' = 'now'): void => {
   const opened = Date.now();
   let switched = false;
@@ -3251,18 +3348,14 @@ const help = (tab: 'now' | 'dict' = 'now'): void => {
     if (t === 'guide') return help('now');
   };
   if (tab === 'now') {
-    void guide(openOverlay, OPENING_TEXT.close, { start: b?.boss ? GUIDE_PAGES.length - 1 : 0, tabs: helpTabs('guide'), onTab }).then(() => { if (!switched) { closeOverlay(); helpSeen(tab, opened); } });
+    void guide(openWin, OPENING_TEXT.close, { start: b?.boss ? GUIDE_PAGES.length - 1 : 0, tabs: helpTabs('guide'), onTab }).then(() => { if (!switched) { closeWin(); helpSeen(tab, opened); } });
     return;
   }
-  const el = openOverlay(`<div class="helpcard">${helpTabs('dict')}<button class="btn sq gd-x" type="button" data-x aria-label="${OPENING_TEXT.close}">✕</button><div class="hp-body">${dictHtml()}</div></div>`);
-  const over = $('overlay');
-  const close = (): void => (window.removeEventListener('keydown', onKey), over.removeEventListener('click', onOut), closeOverlay(), helpSeen(tab, opened));
-  const onKey = (e: KeyboardEvent): void => { if (e.key === 'Escape') close(); };
-  const onOut = (e: MouseEvent): void => { if (e.target === over) close(); };
-  window.addEventListener('keydown', onKey);
-  window.setTimeout(() => over.addEventListener('click', onOut), 0);
+  // 용어 = 안내서와 같은 L 창 (탭을 눌러도 창 폭이 튀지 않는다) · 움푹 칸 하나 안에서만 스크롤
+  const close = (): void => (closeWin(), helpSeen(tab, opened));
+  const el = openWin({ size: 'l', title: OPENING_TEXT.helpTitle, head: helpTabs('dict'), body: `<div class="inset scroll">${dictHtml()}</div>`, back: { label: OPENING_TEXT.close, attrs: 'data-x' }, dismiss: close });
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), close()));
-  el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'dict') return; sfx('tap'); window.removeEventListener('keydown', onKey); over.removeEventListener('click', onOut); onTab(t.dataset.tab!); }));
+  el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'dict') return; sfx('tap'); onTab(t.dataset.tab!); }));
 };
 
 /** 도움말을 닫았다: 사전을 봤으면 NEW를 지우고 얼마나 머물렀는지 기록 (용어 툴팁 지표 ⑦) */
@@ -3498,8 +3591,9 @@ const startLab = (mode: 'A' | 'B'): void => {
 
 /** 시험장 고르기 화면 */
 const labPick = (): void => {
-  const card = (m: 'A' | 'B') => `<button type="button" class="lab-card" data-lab="${m}"><b>${LAB_TEXT[m].name}</b><ul>${LAB_TEXT[m].how.map((h) => `<li>${h}</li>`).join('')}</ul><small>이김 ${labScore[m].w} · 짐 ${labScore[m].l}</small></button>`;
-  const el = openOverlay(`<h2>근간 시험장</h2><p>같은 판 · 같은 적 · 같은 덱입니다. 둘 다 해 보고 어느 쪽이 손에 붙는지 알려 주십시오.</p><div class="lab-row">${card('A')}${card('B')}</div><div class="row"><button class="btn" type="button" data-lab-back>처음 화면</button></div>`);
+  // L 창 (D-391, 개발용): 명패 「근간 시험장」 · 두 규칙 = 움푹 칸 단추 둘 · [돌아간다]
+  const card = (m: 'A' | 'B') => `<button type="button" class="inset lab-pick" data-lab="${m}"><span class="lg-name">${LAB_TEXT[m].name} · 이김 ${labScore[m].w} · 짐 ${labScore[m].l}</span>${LAB_TEXT[m].how.map((h) => `<span>${h}</span>`).join('')}</button>`;
+  const el = openWin({ size: 'l', title: '근간 시험장', body: `<p>같은 판 · 같은 적 · 같은 덱입니다. 둘 다 해 보고 어느 쪽이 손에 붙는지 알려 주십시오.</p><div class="lab-row">${card('A')}${card('B')}</div>`, back: { label: '돌아간다', attrs: 'data-lab-back' } });
   el.querySelectorAll<HTMLElement>('[data-lab]').forEach((btn) => btn.addEventListener('click', () => startLab(btn.dataset.lab as 'A' | 'B')));
   el.querySelector('[data-lab-back]')!.addEventListener('click', () => (sessionStorage.setItem('op-menu', '1'), location.assign(location.pathname)));
 };
@@ -3511,7 +3605,7 @@ const labEnd = (isWin: boolean): void => {
   labScore[m].turns += b.turn;
   window.setTimeout(async () => {
     await banner(isWin ? '적 킹 격파' : '킹 파괴', isWin);
-    const el = openOverlay(`<h2>${LAB_TEXT[m].name}</h2><p>${isWin ? '이겼습니다' : '졌습니다'} · ${b.turn}턴 · 남은 내 기물 ${b.s.pieces.filter((p) => p.side === 0).length} / ${LAB.squad.length}</p><p class="dim">이 규칙 — 이김 ${labScore[m].w} · 짐 ${labScore[m].l}</p><div class="row"><button class="btn" type="button" data-lab-pick>고르기 화면</button><button class="btn brass" type="button" data-lab-again>한 판 더</button></div>`);
+    const el = openWin({ size: 'm', title: `시험장 ${m}`, head: `<span class="tag">이김 ${labScore[m].w} · 짐 ${labScore[m].l}</span>`, body: `<p>${isWin ? '이겼습니다' : '졌습니다'} · ${b.turn}턴 · 남은 내 기물 ${b.s.pieces.filter((p) => p.side === 0).length} / ${LAB.squad.length}</p>`, back: { label: '돌아간다', attrs: 'data-lab-pick' }, go: { label: '다시 둔다', attrs: 'data-lab-again' } });
     el.querySelector('[data-lab-pick]')!.addEventListener('click', labPick);
     el.querySelector('[data-lab-again]')!.addEventListener('click', () => startLab(m));
   }, 700);
@@ -3620,7 +3714,14 @@ const promoteScreen = (): Promise<void> =>
   new Promise((done) => {
     const tm = TESTIMONY[Math.min(TESTIMONY.length - 1, asc)];
     const last = runBosses.at(-1);
-    const el = openOverlay(`<div class="promo"><span class="promo-art"><img src="scenes/${gildedArt()}.png" alt="" onerror="if(!this.dataset.t){this.dataset.t='1';this.src='scenes/boss-gilded.png'}else{this.outerHTML=this.dataset.fb}" data-fb='${pieceImg('K', 1, 'large', 150).replace(/'/g, '&#39;')}'></span><div class="promo-body"><p class="eyebrow">승급 칸${asc ? ` · 승급 ${asc}` : ''}</p><p class="promo-say"><b>도금왕</b> “${tm.say}”</p>${asc === 6 && last ? `<p class="promo-say">“${BOSS_STORY[last].mock}”</p>` : ''}<p class="promo-mono">‘${tm.mono}’</p><div class="row"><button class="btn brass" type="button" data-promote>${PROMOTE_TEXT.promote}</button><button class="btn" type="button" data-lay>${PROMOTE_TEXT.lay}</button></div><p class="promo-stuck" hidden>${PROMOTE_TEXT.hint} ‘${PROMOTE_TEXT.stuck}’</p></div></div>`);
+    // M 창 (D-391): 명패 「승급 N」 · 왼쪽 초상 액자 136 · 오른쪽 대사 + 독백 · [내려놓는다 | 승급한다] — 진행은 다른 창과 같이 오른쪽
+    const el = openWin({
+      size: 'm',
+      title: asc ? `승급 ${asc}` : '승급',
+      body: `<div class="promo2"><div class="frame-portrait"><img src="scenes/${gildedArt()}.png" alt="" onerror="if(!this.dataset.t){this.dataset.t='1';this.src='scenes/boss-gilded.png'}else{this.outerHTML=this.dataset.fb}" data-fb='${pieceImg('K', 1, 'large', 104).replace(/'/g, '&#39;')}'></div><div class="stack"><p class="say"><span class="who">도금왕</span>“${tm.say}”</p>${asc === 6 && last ? `<p class="say">“${BOSS_STORY[last].mock}”</p>` : ''}<p class="mono">‘${tm.mono}’</p><p class="note promo-stuck" hidden>${PROMOTE_TEXT.hint} ‘${PROMOTE_TEXT.stuck}’</p></div></div>`,
+      back: { label: PROMOTE_TEXT.lay, attrs: 'data-lay' },
+      go: { label: PROMOTE_TEXT.promote, attrs: 'data-promote' },
+    });
     const lay = el.querySelector<HTMLButtonElement>('[data-lay]')!;
     lay.addEventListener('click', () => {
       if (lay.disabled) return;
@@ -3630,13 +3731,12 @@ const promoteScreen = (): Promise<void> =>
       window.setTimeout(() => {
         lay.classList.remove('tremble');
         lay.disabled = true;
-        lay.classList.add('dead');
         el.querySelector<HTMLElement>('.promo-stuck')!.hidden = false;
       }, 300 + asc * 180);
     });
     el.querySelector('[data-promote]')!.addEventListener('click', () => {
       sfx('submit');
-      closeOverlay();
+      closeWin();
       done();
     });
   });
@@ -3931,16 +4031,17 @@ const opening = (): void => {
     const seed = () => (Date.now() ^ 0x2f17) & 0xffffff;
     nav.querySelector('[data-go]')!.addEventListener('click', () => {
       if (!sv) return begin(seed(), level, null);
-      const ok = openOverlay(`<h2>새 출하</h2><p>저장한 출하를 버리고 새로 시작합니다.</p><div class="row"><button class="btn" type="button" data-no>그만둔다</button><button class="btn brass" type="button" data-yes>새로 시작한다</button></div>`);
-      ok.querySelector('[data-no]')!.addEventListener('click', closeOverlay);
+      // S 확인 창 (D-391): 저장을 버리는 되돌릴 수 없는 일 = 진홍, 철 취소와 짝
+      const ok = openWin({ size: 's', title: '새 출하', body: '<p>저장한 출하를 버리고 새로 시작합니다.</p>', back: { label: '그만둔다', attrs: 'data-no' }, go: { label: '시작한다', attrs: 'data-yes', kind: 'crimson' }, dismiss: closeWin });
+      ok.querySelector('[data-no]')!.addEventListener('click', closeWin);
       ok.querySelector('[data-yes]')!.addEventListener('click', () => begin(seed(), level, null));
     });
     nav.querySelector('[data-daily]')!.addEventListener('click', () => begin(dailySeed(today), 0, today));
-    nav.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(closeOverlay));
+    nav.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(closeWin));
     nav.querySelector('[data-lab-open]')?.addEventListener('click', labPick);
-    nav.querySelector('[data-guide]')!.addEventListener('click', () => void guide(openOverlay).then(closeOverlay));
+    nav.querySelector('[data-guide]')!.addEventListener('click', () => void guide(openWin).then(closeWin));
     nav.querySelector('[data-prologue]')!.addEventListener('click', () => void prologue(true));
-    nav.querySelector('[data-export]')?.addEventListener('click', () => exportScreen(closeOverlay));
+    nav.querySelector('[data-export]')?.addEventListener('click', () => exportScreen(closeWin));
     replay(nav, 'in');
   };
   // 프롤로그를 본 사람이 출하를 끝내고 돌아오면(처음 화면) 바로 메뉴
@@ -3969,4 +4070,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces: () => { openOverlay(`<div class="shop-grid">${(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => cardFace(id, `data-face="${id}"`, '<span class="price ptag"><i class="scr"></i>45</span>').replace('</span><small class="cf-desc"', `</span>${((h) => (h ? `<small class="fit-line ${h.tone}">${h.text}</small>` : ''))(fitHint('card', id))}<small class="cf-desc"`)).join('')}${(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => partFace(id, `data-face="${id}"`, '<span class="price ptag"><i class="scr"></i>45</span>').replace('</span><small class="cf-desc"', `</span>${((h) => (h ? `<small class="fit-line ${h.tone}">${h.text}</small>` : ''))(fitHint('part', id))}<small class="cf-desc"`)).join('')}</div>`); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(3, "먼지투성이", "폰은 킹 자리에 설 수 없다.", "").slice(-1)), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick('<h2>핵심 부품</h2>', () => showMap()), recruit: () => recruitPick('<h2>영입</h2>', () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { kitSheet, win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 3) => { asc = a; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces: () => { openOverlay(`<div class="shop-grid">${(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => cardFace(id, `data-face="${id}"`, '<span class="price ptag"><i class="scr"></i>45</span>').replace('</span><small class="cf-desc"', `</span>${((h) => (h ? `<small class="fit-line ${h.tone}">${h.text}</small>` : ''))(fitHint('card', id))}<small class="cf-desc"`)).join('')}${(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => partFace(id, `data-face="${id}"`, '<span class="price ptag"><i class="scr"></i>45</span>').replace('</span><small class="cf-desc"', `</span>${((h) => (h ? `<small class="fit-line ${h.tone}">${h.text}</small>` : ''))(fitHint('part', id))}<small class="cf-desc"`)).join('')}</div>`); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(3, "먼지투성이", "폰은 킹 자리에 설 수 없다.", "").slice(-1)), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick("<h2>부품 하나</h2>", () => showMap()), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick('<h2>핵심 부품</h2>', () => showMap()), recruit: () => recruitPick('<h2>영입</h2>', () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
