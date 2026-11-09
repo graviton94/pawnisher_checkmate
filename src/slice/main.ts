@@ -1,6 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, ENTRY_LINES, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
@@ -902,7 +902,7 @@ const unlockTerms = (gate: TermGate, quiet = false): void => {
   if (isNew.length) {
     $('btn-help').classList.add('has-new');
     track('term_unlock', { terms: isNew });
-    if (!quiet && !tutActive && !INTRO.includes(cur)) window.setTimeout(() => toast(HUD_TEXT.newTerm(isNew.join(' · ')), 2600), 900);
+    void quiet; // 새 용어 알림은 ? 의 NEW 표시로만 (D-385 — 상단 알림은 상태만)
   }
 };
 /** 지금 판 · 출하 상태에서 만난 것들을 연다 (refresh마다 — 이미 연 때는 바로 넘어간다) */
@@ -1013,7 +1013,7 @@ const blockPop = (pos: Pos): void => {
   document.body.appendChild(el);
   sfx('stamp');
   window.setTimeout(() => pxOut(el, () => el.remove(), 220), 900);
-  if (!blockTold) { blockTold = true; window.setTimeout(() => toast(HUD_TEXT.blockTip, 3000), 500); }
+  void blockTold; // 길막기는 판 위 「막음!」으로만 (D-385)
 };
 /** 즉시 카드 연출: 손패의 그 카드 복제가 움츠렸다(예비) 튀어 오르며 금빛 테로 터지고 도트로 흩어진다 */
 const castFx = (src: HTMLElement | null): void => {
@@ -1117,7 +1117,7 @@ const onTap = async (pos: Pos): Promise<void> => {
   }
   if (p && p.side === 1) {
     const it = liveIntents(b).find((x) => x.pieceId === p.id);
-    toast(it ? '다음 차례에 움직이는 적입니다. 붉은 칸을 공격합니다.' : '다음 차례에는 움직이지 않습니다.');
+    toast(it ? '다음 차례에 공격' : '다음 차례에 쉼');
     return;
   }
   selCard = selPiece = openCard = null;
@@ -1131,7 +1131,7 @@ const burnNote = (n0: number): void => {
   const by = new Map<string, number>();
   for (const id of fresh) by.set(COMMANDS[id].who, (by.get(COMMANDS[id].who) ?? 0) + 1);
   const t = [...by.keys()][0] as PieceType;
-  toast(`${josa(PIECE_NAMES_KO[t], '이')} 모두 쓰러져 ${PIECE_NAMES_KO[t]} 카드 ${fresh.length}장이 불탑니다. (이번 대국만)`, 3000);
+  toast(`${PIECE_NAMES_KO[t]} 카드 ${fresh.length}장 불탐`, 2200);
   sfx('threat');
 };
 
@@ -1223,7 +1223,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     await banner(gilded ? '도금왕이 일어선다' : '반장이 다시 일어선다', false);
     // 2단계 (각본 §8 · §9, D-276): 반장은 한 마디, 도금왕은 이번 출하에 쓰러뜨린 반장에게 한 말을 비꼰다
     if (gilded) await gildedPhase2();
-    else toast(`${BOSS_RULES[b.bossRule].name} “${BOSS_STORY[b.bossRule as StoryBoss]?.phase2 ?? ''}” — 2단계: 호위를 부르며 다시 일어섰습니다.`, 4200);
+    // 띠가 「반장이 다시 일어선다」를 말한다 — 상단 알림은 따로 띄우지 않는다 (D-385)
     renderer.setup(b.s);
     refresh();
   }
@@ -1241,7 +1241,7 @@ const onEndInner = async (): Promise<void> => {
   const r = endTurn(b);
   if (r === 'warn') {
     sfx('threat');
-    toast('이대로 턴을 끝내면 킹이 피격당합니다. 한 번 더 누르면 끝냅니다.', 2600);
+    toast('킹이 맞습니다 — 한 번 더 누르면 끝', 2400);
     $('btn-end').classList.add('warn');
     return;
   }
@@ -1375,7 +1375,6 @@ const nemesisMeet = (n: Nemesis): void => {
       busy = false;
       refresh();
     }
-    toast(cur.tell, 3200);
   });
 };
 
@@ -1502,9 +1501,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
       }
       if (nemesisNow) return nemesisMeet(nemesisNow);
       const cracked = squad.filter((u) => u.cracked);
-      // 반장 2단계 예고 (D-383): 낮은 승급에서는 시작할 때 미리 알린다
-      const tell = def.boss && asc <= BOSS_PHASE_TEXT.upTo ? `${def.tell} ${BOSS_PHASE_TEXT.start}` : def.tell;
-      toast(cracked.length ? `${tell} · ${LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · '))}` : tell, def.boss ? 5200 : 3600);
+      // 상단 알림은 상태만 (D-385, 사용자: 「위에서 내려오는 설명은 읽히지도 않는다 — 태엽 부족 같은 상태만」): 판 규칙 · 적 특성은 진입 창과 길게 누르기에서
+      if (cracked.length) toast(LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · ')), 2600);
       maybeBet(def);
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
@@ -2180,8 +2178,10 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
     const cnt = new Map<PieceType, number>();
     for (const t of foes) cnt.set(t, (cnt.get(t) ?? 0) + 1);
     const chips = foes.length ? `<ul class="en-roster">${[...cnt].map(([t, n], i) => `<li class="inset" style="--i:${i}">${pieceImg(t, 1, 'small', 24)}<b>${PIECE_NAMES_KO[t]}</b>${n > 1 ? `<i>×${n}</i>` : ''}</li>`).join('')}</ul>` : '';
-    const tape = tell ? `<p class="en-tell">${tell.replace(/([.!?])\s+/g, '$1\n')}</p>` : '';
-    el.innerHTML = `<div class="en-table${foes.length ? ' has-foes' : ''}"><p class="en-plate">${label}</p><div class="en-bay"><div class="en-stage">${lineup}</div></div><div class="en-copy"><h1 class="en-name">${name}</h1><p class="sf-narr en-narr"></p>${chips}${tape}</div></div>
+    const tape = tell ? `<p class="en-tell">${tell}</p>` : '';
+    // 작업 칸 그림 = 받은 장면 그림 (D-385, 사용자: 「직접 찍지 말고 이미지 에셋을 쓰거나 발주를 내라」) — 전용 무대 그림(발주 18위 EN-01 ~ 03)이 오면 바꾼다
+    const bay = ({ shop: 'bg-shop', forge: 'bg-forge', event: 'bg-event', chest: 'bg-reward' } as Partial<Record<EntryKind, string>>)[kind] ?? (bg || `act-${Math.min(4, actI + 1)}`);
+    el.innerHTML = `<div class="en-table${foes.length ? ' has-foes' : ''}"><p class="en-plate">${label}</p><div class="en-bay" style="--bay:url(${new URL(`scenes/${bay}.png`, location.href).href});${kind === 'battle' || kind === 'check' ? `--bay2:url(${new URL(`scenes/entry-${kind}.png`, location.href).href})` : ''}"><div class="en-stage">${lineup}</div></div><div class="en-copy"><h1 class="en-name">${name}</h1><p class="sf-narr en-narr"></p>${chips}${tape}</div></div>
       <p class="sf-tip">${TIPS[Math.floor(Math.random() * TIPS.length)]}</p><p class="sf-skip">눌러서 계속</p>`;
     const T: number[] = [];
     const at = (ms: number, fn: () => void) => T.push(window.setTimeout(fn, ms));
@@ -2247,7 +2247,13 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   void roster;
   const line = [...def.enemy.filter((t) => t !== 'K'), ...def.enemy.filter((t) => t === 'K')];
   // 입문 시험대는 전용 배경 act-0 (D-382 · SC-01)
-  return sceneIntro(label, name, def.narr, art, false, '', def.title.startsWith('입문') ? 'act-0' : '', def.reward === 'part' ? 'check' : 'battle', line, def.tell ?? '');
+  // 테이프 = 짧은 줄만 (D-385): 보상 · 적 특성 · 호위 — 입문은 판 목표 한 줄
+  const tape = def.title.startsWith('입문') ? ['적 킹을 쓰러뜨리면 승리'] : [
+    ...(def.reward === 'part' ? [ENTRY_LINES.reward] : []),
+    ...(def.traits ?? []).map((t) => (t === 'blastPawn' || t === 'rookPlate' ? ENTRY_LINES[t] : FOE_TRAITS[t].line)),
+    ...(/호위/.test(def.tell ?? '') ? [ENTRY_LINES.guard] : []),
+  ];
+  return sceneIntro(label, name, def.narr, art, false, '', def.title.startsWith('입문') ? 'act-0' : '', def.reward === 'part' ? 'check' : 'battle', line, [...new Set(tape)].join('\n'));
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
 const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' };
@@ -3844,7 +3850,6 @@ const begin = async (seed: number, level: number, day: string | null): Promise<v
   }
   void stageIntro(INTRO[0]).then(() => {
     void battleIntro();
-    toast(INTRO[0].tell, 3200);
   });
 };
 

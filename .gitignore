@@ -12,3 +12,4 @@ __pycache__/
 sim/measure-asc*.json
 sim/measure-power*.json
 sim/measure-combo*.json
+production/qa/run/

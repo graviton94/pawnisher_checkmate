@@ -10,6 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sim": "vitest run --config vitest.sim.config.ts",
+    "climb": "node tools/climb.mjs",
+    "review": "node tools/qa/fullrun.cjs",
     "android:sync": "npm run build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
     "pc:dev": "npm run build && electron .",

@@ -57,5 +57,5 @@
 ## 사용할 스킬
 - `/ui-ux-pro-max` — UI/UX 검색 DB (`python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<질의>" --domain ux`)
 - `/ux-review` — 우리 게임용 UX 점검표
-- `/balance-check` — 자동 등반 시뮬레이션으로 곡선 점검
+- `/balance-check` — 퀵 등반 머신 `npm run climb`(화면 없이 · 표 한 장)으로 곡선 점검. 화면 흐름 점검은 따로 `npm run review` (D-385 — 둘을 섞지 않는다)
 - `/run-and-observe` — 실제 화면 조작·스크린샷 증거
