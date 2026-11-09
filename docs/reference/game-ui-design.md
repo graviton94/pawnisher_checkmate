@@ -131,6 +131,11 @@ https://github.com/godotengine/godot-docs `tutorials/rendering/multiple_resoluti
 - 안전 여백 `G` = max(16px, env(safe-area-inset-left/right)) 좌우, max(8px, env(safe-area-inset-top/bottom)) 위아래.
   → 노치 없는 기기 쓸 수 있는 칸: **883×396**, 노치 48px 기기: **819×396**.
 
+### 3.0b 기기 행렬 (D-392 — PC · 모바일)
+- 논리 화면(CSS px)은 **667×375 ~ 약 1000×560**: 작은 폰 667×375 · 기준 915×412(DPR 2.625) · PC 1080p는 일렉트론 ×2 확대로 960×540 · 1366×768 → 683×384 · 1440p → ×3 853×480.
+- `--px` = round(2·DPR)/DPR (런타임) — 도트 = 기기 픽셀 정수. 모든 도트 단위 크기는 `calc(var(--px) * N)`.
+- 점검은 세 곳: 667×375 DPR 2 · 915×412 DPR 2.625 · 960×540 DPR 2. L 창 = min(883, 100vw − 32), 높이 상한 = min(364, 100vh − 48).
+
 ### 3.1 창 크기 세 단계 (이 셋만 쓴다)
 | 단계 | 폭 | 높이 상한 | 화면 대비 | 근거 | 쓰는 곳 |
 |---|---|---|---|---|---|
