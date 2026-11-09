@@ -2954,7 +2954,7 @@ body.slice .overlay .panel:has(.deck-rail) > .row { grid-column: 2; grid-row: 1;
 body.slice .overlay .panel:has(.deck-rail) > .shop-scrollbox { grid-column: 1 / -1; }
 
 /* D-375 3차 리뷰 */
-body.slice .cf.cf.cf .cf-desc .sep { white-space: normal; margin: 0 4px; }
+body.slice .cf.cf.cf .cf-desc .sep { white-space: normal; margin: 0 3px; }
 body.slice .cinfo .kit-with.kw-inline { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 8px; row-gap: 1px; }
 body.slice .cinfo .kit-with.kw-inline > i { color: #8ee8ea; }
 body.slice .cf.cf.cf.cf > .cf-type > i { font: 400 12px/12px Galmuri11, sans-serif !important; color: #cfc6b0 !important; }

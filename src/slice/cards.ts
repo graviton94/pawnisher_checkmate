@@ -134,8 +134,8 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   quickFix: { name: '덧댐', cost: 0, who: 'any', kind: 'repair', amount: 6, desc: '급한 대로 덧댄다. (HP +6)' },
   tempo: { axis: 'chain', name: '박자', cost: 0, who: 'any', kind: 'draw', amount: 3, desc: '숨을 고르고 다음 수를 본다. (카드 3장 뽑기)' },
   bulwark: { axis: 'king', axis2: 'push', name: '방벽', cost: 1, who: 'any', kind: 'shield', amount: 20, desc: '몸으로 막아선다. (방열판 +20)' },
-  bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (둘레에 절반 피해 · 처치하면 연쇄 +2)' },
-  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '작은 것을 바친다. (연쇄 +3 · 카드 2장 · 태엽 +1 — 내 폰 하나를 바쳐)', flavor: '“기꺼이.”' },
+  bladeRain: { axis: 'cav', axis2: 'chain', name: '칼날 세례', cost: 2, who: 'N', kind: 'move', carve: 'cross', chainPerKill: 2, desc: '뛰어내리며 사방을 벤다. (둘레 절반 · 처치 연쇄 +2)' },
+  gambit: { axis: 'inf', axis2: 'chain', name: '제물', cost: 0, who: 'P', kind: 'gambit', desc: '작은 것을 바친다. (연쇄 +3 · 카드 2 · 태엽 +1 — 폰을 바쳐)', flavor: '“기꺼이.”' },
 
   // ---- 카드 확장 (D-281, 사용자: 「체스 룰을 너무 부수지 않으면서 각 말의 명령 카드로 쓰기 좋은 풀 90장」) — 이동은 기물 고유, 체스 수는 핀 · 포크 · 스큐어 · 디스커버드 · 캐슬링 · 앙파상 ----
   castle: { axis: 'tactic', axis2: 'king', name: '캐슬링', cost: 1, who: 'K', kind: 'swap', amount: 12, desc: '왕과 요새가 맞바꾼다. (둘 다 방열판 +12 — 킹과 가까운 룩과 자리를 바꾼다)', flavor: '“성문을 바꿔 단다.”' },
