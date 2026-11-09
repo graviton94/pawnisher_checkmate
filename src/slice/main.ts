@@ -41,7 +41,7 @@ let justCracked: string[] = [];
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
 /** 16px 칸용 (D-290: 아이콘이 32도트가 되면 반으로 줄인 그림을 따로 쓴다 — 브라우저 축소는 바깥선을 끊는다) */
 const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
-import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
+import { CREW, DEATHS, QUIRKS, SCAR_DESC, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
 import { ASC_NUM, ASCENSION, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventId } from './events';
@@ -569,8 +569,9 @@ const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; sh
     + `<span class="cf-win"><span class="er-pc"><img src="${art}" alt=""></span></span>`
     + `<span class="ci-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><em>HP ${hp} / ${max}${live?.shield ? ` · 방열판 ${live.shield}` : ''}</em></span>`
     + `<span class="ci-grid">${live ? stat('공격', live.atk, 'hot') : ''}${stat('생명', lives, lives ? 'life' : '')}${stat('처치', kills)}${stat('누적 피해', dmg)}${stat('죽음 넘김', u.defied ?? 0)}${stat('대국', u.battles ?? 0)}</span>`
-    + (q ? `<small class="ci-quirk"><b>${q.name}</b> ${q.desc}</small>` : '')
-    + (u.scars?.length ? `<small class="ci-scar">${u.scars.join(' · ')}</small>` : '')
+    + (q ? `<small class="ci-quirk"><b>${q.name}</b><span>${q.desc}</span></small>` : '')
+    // 흉터 (D-364): 이름만 두면 뜻을 모른다 — 「흉터 · 납땜 자국」 + 풀이
+    + (u.scars?.length ? `<small class="ci-scar">${u.scars.map((x) => `<b>흉터 · ${x}</b><span>${SCAR_DESC[x] ?? ''}</span>`).join('')}</small>` : '')
     + `<i class="cf-gem"></i></div>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */

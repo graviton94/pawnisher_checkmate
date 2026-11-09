@@ -34,6 +34,8 @@ export const QUIRKS: Record<QuirkId, QuirkDef> = {
 };
 
 /** 수치 (data — 근거 D-153) */
+/** 흉터 풀이 (D-364): 흉터는 이력이 남긴 자국 — 효과는 없고 이야기만 */
+export const SCAR_DESC: Record<string, string> = { '납땜 자국': '생명으로 쓰러짐을 버틴 적이 있다', '용접 흉터': '대국 셋을 넘게 싸워 살아남았다' };
 export const CREW = { boilerBlast: 20, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
 
 /** 이름 풀: 상태를 묘사하는 별칭 (다키스트 던전식, D-158 — 사용자 예시: 먼지투성이 · 구부러진 못 …) */

@@ -2711,3 +2711,11 @@ body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 #info .cf.crew-info { width: 204px; font-size: 12px; }
 #info .cf.crew-info .ci-st, #info .cf.crew-info .ci-st i, #info .cf.crew-info .ci-st b { font-size: 12px; line-height: 18px; white-space: nowrap; }
 #info .cf.crew-info .ci-bar em, #info .cf.crew-info .ci-quirk, #info .cf.crew-info .ci-scar, #info .cf.crew-info .ci-serial { font-size: 12px; line-height: 16px; }
+/* D-364: 초상 창을 넓혀 하늘색 테가 창 안에 들게 · 기벽/흉터는 이름(줄바꿈)효과 */
+.cf.crew-info .cf-win, #info .cf.crew-info .cf-win { height: 66px; }
+.cf.crew-info .er-pc { width: 52px; height: 52px; display: grid; place-items: end center; box-shadow: 0 0 0 2px #000, 0 0 0 4px #46c4c8; }
+.cf.crew-info .er-pc img { width: 46px; height: 46px; }
+.cf.crew-info .ci-quirk, .cf.crew-info .ci-scar { display: grid; justify-items: center; text-align: center; gap: 0; }
+.cf.crew-info .ci-quirk b, .cf.crew-info .ci-scar b { display: block; }
+.cf.crew-info .ci-scar b { color: #c9a06a; font-weight: 400; margin-top: 2px; }
+.cf.crew-info .ci-scar span { color: #9a917c; }
