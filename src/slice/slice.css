@@ -6,11 +6,8 @@ body.slice .rail { display: flex; flex-direction: column; gap: 6px; }
 .coins .coin.gone { background: #2b2832; box-shadow: 0 0 0 1px #000; }
 .coins b { margin-left: 6px; color: #f4d27a; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 /* 손패: 왼쪽 기둥 전체를 쓴다 — 카드 한 장이 한 줄, 큰 그림 · 큰 글 (D-143) */
-body.slice #app { grid-template-columns: 236px 1fr 188px; }
 body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow: inset -2px 0 0 #24212c; padding: 8px 8px 8px 10px; }
 .hand { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; padding: 2px 4px 6px 2px; }
-.hand .empty { color: var(--text2); font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-.hand-head { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
 .cmd { --tone: #8a8494; position: relative; display: grid; grid-template-columns: 44px 1fr; align-items: center; column-gap: 8px; min-height: 64px; padding: 6px 10px 6px 34px; text-align: left; color: #f2ede4; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #46404f; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1),   box-shadow 140ms; }
 .cmd.t-P { --tone: #9aa7b8; } .cmd.t-N { --tone: #5fc28a; } .cmd.t-B { --tone: #b07ae8; } .cmd.t-R { --tone: #e88a4a; } .cmd.t-Q { --tone: #e85a8a; } .cmd.t-K { --tone: #f4d27a; } .cmd.t-any { --tone: #4ec3d6; }
 .cmd .art { display: grid; place-items: center; width: 44px; height: 44px; background: rgba(0, 0, 0, 0.35); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.5); }
@@ -33,25 +30,13 @@ body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow
 
 .rest-line { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #cfe8d0; } .rest-line .bad { color: #ff9a8a; }
 .btn.cyan { color: #d8f6fb; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #4ec3d6; }
-.btn.rewind { min-width: 72px; }
-.btn.btn-go.warn { box-shadow: 0 0 0 2px #000; }
 .help { padding-left: 18px; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 1.55; }
 .help li { margin: 2px 0; }
 #board { position: relative; }
-.meter { position: absolute; right: 12px; top: 10px; z-index: 5; display: grid; justify-items: end; padding: 4px 10px; background: rgba(8, 7, 11, 0.8); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; pointer-events: none; }
-.meter small { font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
-.meter .dmg { font: 700 24px Galmuri11, sans-serif; color: #fff; line-height: 1; }
-.meter b { font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #f4d27a; }
-.meter.lv2 b { font-size: 24px; font-family: Galmuri11, sans-serif; color: #f4b740; }
-.meter.lv3 b { font-size: 24px; font-family: Galmuri11, sans-serif; color: #ff9f40; }
-.meter.lv4 b { font-size: 24px; font-family: Galmuri11, sans-serif; color: #ff6b4a; text-shadow: 3px 3px 0 #000; }
-.meter.pop { animation: meter-pop 260ms cubic-bezier(0.2, 1.6, 0.4, 1); }
-@keyframes meter-pop { from { transform: scale(1.5); } }
 /* 연쇄 팝: 처치 순간 판 한가운데 — 연쇄가 쌓일수록 크고 뜨겁게 */
-.chainpop { position: fixed; z-index: 40; display: grid; justify-items: center; pointer-events: none; font: 400 45px Galmuri14, Galmuri11, sans-serif; color: #f4d27a; text-shadow: 0 0 0 #000, 3px 3px 0 #000; transform: translate(-50%, -50%); animation: chainpop 900ms cubic-bezier(0.2, 1.6, 0.4, 1) forwards; }
+.chainpop { position: fixed; z-index: 40; display: grid; justify-items: center; pointer-events: none; font: 400 45px Galmuri14, Galmuri11, sans-serif; color: #f4d27a; text-shadow: 3px 3px 0 #000; transform: translate(-50%, -50%); animation: cp3 900ms forwards; }
 .chainpop small { font-size: 24px; font-family: Galmuri11, sans-serif; color: #fff; }
 .chainpop.lv2 { font-size: 60px; font-family: Galmuri14, Galmuri11, sans-serif; color: #f4b740; } .chainpop.lv3 { font-size: 60px; font-family: Galmuri14, Galmuri11, sans-serif; color: #ff9f40; } .chainpop.lv4 { font-size: 60px; font-family: Galmuri14, Galmuri11, sans-serif; color: #ff6b4a; text-shadow: 3px 3px 0 #000; }
-@keyframes chainpop { 0% { transform: translate(-50%, -50%) scale(2.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 4.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 9.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 13.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 18% { transform: translate(-50%, -50%) scale(0.92); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 30% { transform: translate(-50%, -50%) scale(1.05); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 75% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 81.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 87.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 93.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translate(-50%, -80%) scale(1); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 #board.jolt { animation: jolt 260ms ease-out; }
 @keyframes jolt { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
 /* 되감기: 테이프가 거꾸로 — 청록 번짐 + 주사선 + 화면이 옆으로 밀린다 */
@@ -59,17 +44,12 @@ body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow
 .tapefx span { font: 400 45px Galmuri14, Galmuri11, sans-serif; color: #bff4fb; text-shadow: 4px 0 0 rgba(255, 60, 90, 0.7), -4px 0 0 rgba(60, 200, 255, 0.7), 3px 3px 0 #000; animation: tapetxt 800ms steps(8) forwards; }
 @keyframes tape { 0% { transform: translateX(0); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 7.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 11.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 15% { transform: translateX(-14px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 50% { transform: translateX(10px) skewX(-4deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: translateX(-4px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 85.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 90.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: none; -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 @keyframes tapetxt { 0% { transform: scale(1.4); } 30% { transform: scale(1); } 100% { transform: translateX(-30px); } }
-.btn.rewind small { font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
 @media (prefers-reduced-motion: reduce) { .chainpop, .tapefx, .tapefx span, #board.jolt { animation-duration: 1ms; } }
-@media (prefers-reduced-motion: reduce) { .meter.pop { animation: none; } .cmd { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .cmd { transition: none; } }
 /* 오른쪽 레일: 좁으니 세로로 쌓는다 */
-body.slice #app { grid-template-columns: 236px 1fr 210px; }
 body.slice .turn-label { white-space: nowrap; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 body.slice .coins { flex-wrap: nowrap; white-space: nowrap; }
 body.slice .coins .coin { width: 8px; }
-body.slice .actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
-body.slice .actions .btn { width: 100%; min-height: 48px; white-space: nowrap; }
-body.slice .actions { height: auto; max-height: none; flex: none; grid-template-columns: none; }
 /* 빌드 축 띠 · 부품 (D-144) */
 .axis { display: inline-block; margin-left: 4px; padding: 1px 5px; font: 700 12px Galmuri11, sans-serif; font-style: normal; vertical-align: 2px; color: #111; background: #aaa; box-shadow: 0 0 0 1px #000; }
 .ax-cav.axis { background: #5fc28a; } .ax-inf.axis { background: #9aa7b8; } .ax-king.axis { background: #f4d27a; } .ax-chain.axis { background: #ff8a5a; }
@@ -91,22 +71,12 @@ body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; 
 .shape-pc img { image-rendering: pixelated; }
 .cmd .art .shape { margin: 0; }
 .cmd .art .shape-pc img { width: 14px; height: 14px; }
-.hand .cmd { flex: none; }
 .cmd b { display: flex; align-items: center; gap: 4px; }
 .cmd .chips { display: inline-flex; gap: 2px; margin-left: auto; }
 .axis.mini { margin: 0; width: 20px; height: 20px; padding: 0; display: inline-grid; place-items: center; vertical-align: 0; font-size: 12px; font-family: Galmuri11, sans-serif; }
-body.slice #app { grid-template-columns: 272px 1fr 210px; }
 .hand { gap: 6px; }
 .cmd b { white-space: nowrap; }
-/* 덱 보기 · 카드 빼기 (D-147) */
-.deck-btn { min-height: 32px; padding: 2px 8px; font: 700 12px Galmuri11, sans-serif; color: #f4d27a; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; margin-right: 6px; }
-
-/* 반장 규칙 (D-148) */
-.boss-rules { display: grid; gap: 2px; padding: 6px 8px; font-size: 12px; font-family: Galmuri11, sans-serif; color: #f2d6d0; background: #2a1518; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #e5262f; }
-.boss-rules b { font-size: 12px; font-family: Galmuri11, sans-serif; color: #ff6b6b; }
-.boss-rules .hot { color: #fff; font-weight: 700; animation: bosshot 900ms ease-in-out infinite alternate; }
 @keyframes bosshot { to { color: #ff6b5a; } }
-@media (prefers-reduced-motion: reduce) { .boss-rules .hot { animation: none; } }
 /* 행마 그림 다시 (D-149): 52px 도트 판, 틀 없이 */
 .cmd .art.mvplate { width: 52px; height: 52px; background: none; box-shadow: 0 0 0 2px #000; }
 .cmd .art.mvplate .shape svg { width: 52px; height: 52px; }
@@ -114,10 +84,8 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 /* 첫 10분 (D-150): 영입 · 부품 상자 · 입문 손패 빛 */
 .part-card.recruit .rec-art img { width: 56px; height: 56px; image-rendering: pixelated; }
 .part-card .kit-cards { font-size: 12px; font-family: Galmuri11, sans-serif; color: #f4d27a; }
-@media (prefers-reduced-motion: reduce) { .hand.hint .cmd { animation: none; } }
 .pass-tag { display: inline-block; padding: 0 8px; margin-right: 6px; color: #16141c; background: #f4d27a; box-shadow: 0 0 0 2px #000; transform: rotate(-3deg); }
 /* 애착 (D-153): 분대 · 원부 · 유품 · 사망 의식 */
-.hand-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .quirk { color: #ffb36b; font-weight: 700; }
 .scar { color: #c9b8a8; }
 .part-card .quirk-line { font-size: 12px; font-family: Galmuri11, sans-serif; color: #f2d6b8; }
@@ -154,14 +122,7 @@ body.slice .cmd { grid-template-columns: 52px 1fr; }
 .decrees .part-chip .ico { width: 32px; height: 32px; }
 .decrees .part-chip.fire { animation: decree 700ms cubic-bezier(0.2, 1.6, 0.4, 1); }
 @keyframes decree { 0% { transform: translateY(0) scale(1); } 25% { transform: translateY(-10px) scale(1.15); color: #fff; background: #c89b3c; box-shadow: 0 0 0 2px #000; } 100% { transform: none; } }
-.meter { min-width: 120px; padding: 6px 12px; }
-.meter .mult { font: 700 36px Galmuri11, sans-serif; line-height: 1; color: #f4d27a; }
-.meter.lv1 .mult { font-size: 36px; font-family: Galmuri11, sans-serif; } .meter.lv2 .mult { font-size: 45px; font-family: Galmuri14, Galmuri11, sans-serif; color: #f4b740; } .meter.lv3 .mult { font-size: 45px; font-family: Galmuri14, Galmuri11, sans-serif; color: #ff9f40; } .meter.lv4 .mult { font-size: 60px; font-family: Galmuri14, Galmuri11, sans-serif; color: #ff6b4a; text-shadow: 3px 3px 0 #000; }
-.meter b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #f2ede4; }
-.meter .dmg { font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #fff; }
 @media (prefers-reduced-motion: reduce) { .decrees .part-chip.fire { animation: none; } }
-/* 배수 계기판은 오른쪽 레일 가운데 (판을 가리지 않는다) */
-body.slice .rail .meter { position: static; justify-items: center; align-self: stretch; margin: 4px 0; }
 /* 각주 · 사망 서술 (D-158) */
 .cmd .flv, .part-card .flv { font-size: 12px; font-family: Galmuri11, sans-serif; font-style: normal; color: #b9a98a; }
 .deathfx .narr { margin: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #d6d0c6; font-style: normal; }
@@ -200,14 +161,6 @@ body.slice .cmd { grid-template-columns: 30px 48px 1fr; }
 .cmd .costgear.short img { filter: grayscale(1) brightness(0.6) drop-shadow(1px 1px 0 #000); }
 .cmd .art { width: 48px; height: 48px; }
 .cmd .art img { width: 44px; height: 44px; }
-
-.apbar { display: flex; align-items: center; gap: 4px; padding: 4px 8px; margin-bottom: 6px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #3a3542; }
-.apbar .lbl { font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); margin-right: 2px; }
-.apbar .seg { flex: 1; height: 28px; display: grid; place-items: center; background: #2a2630; box-shadow: inset 0 0 0 2px #1a1820; }
-.apbar .seg.on { background: linear-gradient(#f4d27a, #f4d27a); box-shadow: inset 0 0 0 2px #7a5a1c, inset 0 2px 0 #fff3b0; }
-.apbar .seg.bonus.on { background: linear-gradient(#8ff0c8, #8ff0c8); }
-.apbar .seg img { width: 20px; height: 20px; image-rendering: pixelated; opacity: 0.9; }
-.apbar b { font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #f4d27a; margin-left: 4px; min-width: 30px; text-align: right; }
 body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 0; }
 body.slice .parts .part-chip { width: 38px; height: 38px; padding: 0; justify-content: center; }
 body.slice .parts .part-chip span { display: none; }
@@ -216,21 +169,10 @@ body.slice .parts .part-chip.fire { animation: decree 700ms cubic-bezier(0.2, 1.
 body.slice { --railL: clamp(216px, 30vw, 280px); --railR: clamp(168px, 23vw, 214px); }
 body.slice #app { grid-template-columns: var(--railL) 1fr var(--railR); }
 body.slice #board { border-top: 48px solid #0e0d12; }
-body.slice .toast {
-  left: calc(var(--railL) + (100vw - var(--railL) - var(--railR)) / 2);
-  max-width: calc(100vw - var(--railL) - var(--railR) - 12px);
-  width: max-content; top: 4px; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 1.3; border-width: 6px; padding: 0 8px 1px;
-}
-.apbar { gap: 3px; padding: 3px 6px; min-width: 0; }
-.apbar .lbl { display: none; }
-.apbar .seg { min-width: 0; height: 26px; }
-.apbar b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; min-width: 0; margin-left: 2px; }
 body.slice .cmd { grid-template-columns: 28px 44px minmax(0, 1fr); column-gap: 6px; padding: 4px 8px 4px 6px; }
 .cmd .costgear img { width: 28px; height: 28px; }
 .cmd .art { width: 44px; height: 44px; }
 .cmd .art img { width: 40px; height: 40px; }
-.hand .cmd small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.hand .cmd { min-height: 56px; }
 /* 보상 · 부품 · 영입 칸: 글이 묻히지 않게 위에서부터 쌓고 칸 높이는 내용대로 */
 
 .part-card { min-height: 0; padding: 12px 10px; align-content: start; }
@@ -243,8 +185,7 @@ body.slice .panel { max-height: 96vh; }
 body.slice .panel h2 { margin: 0; font-size: 24px; font-family: Galmuri11, sans-serif; }
 body.slice .panel p { margin: 0; }
 body.slice .panel .row .btn { min-height: 48px; white-space: nowrap; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-.cmd .shelved { grid-column: 1 / -1; font-size: 12px; font-family: Galmuri11, sans-serif; font-style: normal; color: #ff9a8a; } 
-body.slice .toast { white-space: pre-line; } body.slice .toast::first-line { color: #f4d27a; font-weight: 700; }
+.cmd .shelved { grid-column: 1 / -1; font-size: 12px; font-family: Galmuri11, sans-serif; font-style: normal; color: #ff9a8a; }
 /* 전환 화면 (D-165, 스카이림식): 어둠 속 큰 실루엣이 천천히 다가오고, 판 이름 · 서술 한 줄 · 아래 도움말 */
 .stagefx { position: fixed; inset: 0; z-index: 70; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 24px max(32px, env(safe-area-inset-right, 0px)) 24px max(32px, env(safe-area-inset-left, 0px)); background: #0b0b0e; color: #e9e2d4; cursor: pointer; animation: sfin 520ms ease-out both; }
 .stagefx.boss { background: #0b0b0e; }
@@ -273,16 +214,6 @@ body.slice .toast { white-space: pre-line; } body.slice .toast::first-line { col
 @media (prefers-reduced-motion: reduce) { .stagefx, .stagefx.out, .sf-art, .stagefx h1, .sf-narr, .slashfx { animation-duration: 1ms; } }
 /* 손패 줄이기 (D-166): 비용 · 기물 · 이름 · 수치 한 줄 — 자세한 건 길게 누르기 */
 .hand { gap: 5px; }
-body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-template-columns: 26px 36px minmax(0, 1fr); column-gap: 6px; }
-.hand .cmd .costgear img { width: 26px; height: 26px; }
-.hand .cmd .art { width: 36px; height: 36px; }
-.hand .cmd .art img { width: 32px; height: 32px; }
-.hand .cmd .art.any { font-size: 24px; font-family: Galmuri11, sans-serif; }
-.hand .cmd b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-.hand .cmd small { font-size: 12px; font-family: Galmuri11, sans-serif; -webkit-line-clamp: 1; }
-.hand .cmd em { font-size: 12px; font-family: Galmuri11, sans-serif; }
-.hand .cmd .axis.mini { width: 18px; height: 18px; font-size: 12px; font-family: Galmuri11, sans-serif; }
-.hand .cmd { -webkit-touch-callout: none; user-select: none; }
 /* 크게 보기 카드 */
 .peek { position: fixed; z-index: 55; pointer-events: none; animation: peekin 140ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
 .peek-card { --tone: #8a8494; width: 200px; display: grid; gap: 6px; justify-items: center; padding: 10px 12px 12px; text-align: center; color: #f2ede4;
@@ -369,13 +300,9 @@ body.slice .hand .cmd { min-height: 46px; padding: 3px 8px 3px 6px; grid-templat
 .asc-pick .btn.sq { min-width: 44px; min-height: 44px; }
 
 /* 근간 시험장 (D-177) */
-
-/* 심리 연출 (D-178) */
-.taunt { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #16141c; color: #f4e6c4; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; font-style: normal; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #7a1218; animation: barin 220ms ease-out both; pointer-events: none; }
-.taunt.out { opacity: 0; transition: none; }
 .near { color: #f4d27a; font-weight: 700; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 .hl { color: #f4d27a; }
-@media (prefers-reduced-motion: reduce) { .taunt, .clutchfx { animation-duration: 1ms; } }
+@media (prefers-reduced-motion: reduce) { .clutchfx { animation-duration: 1ms; } }
 
 /* 반장 마무리 영화 띠 (D-180) */
 .lbox { position: fixed; left: 0; right: 0; z-index: 40; background: #000; transform: scaleY(0); transition: transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; }
@@ -419,7 +346,6 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .nope { animation: nope 360ms cubic-bezier(0.36, 0.07, 0.19, 0.97); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #e5262f !important; }
 @keyframes nope { 15% { transform: translateX(-8px); } 30% { transform: translateX(7px); } 45% { transform: translateX(-5px); } 60% { transform: translateX(4px); } 75% { transform: translateX(-2px); } 100% { transform: none; } }
 #vials .seg.apb { animation: apb 160ms steps(2) 3; }
-@keyframes apb { 50% { background: #e5262f; } }
 /* 부품 장착: 비틀려 들어와 철컥 */
 .part-chip.mount { animation: mount 420ms steps(4) both; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #facc15 !important; }
 @keyframes mount { 0% { transform: rotate(-90deg) scale(1.4); filter: brightness(1.8); } 70% { transform: rotate(6deg) scale(0.96); } 100% { transform: none; } }
@@ -451,7 +377,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .mnd.nd-boss i { width: 48px; height: 48px; }
 .mapfx { animation: mapin 300ms steps(5) both; }
 @keyframes mapin { 0% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-@media (prefers-reduced-motion: reduce) { .btn.up, .shutterfx .shut, .nope, .part-chip.mount, .toast.tin, .overlay .panel.pop, .mnd.now::before, .map-body line { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .btn.up, .shutterfx .shut, .nope, .part-chip.mount, .overlay .panel.pop, .mnd.now::before, .map-body line { animation: none !important; } }
 
 /* 타이틀 도트 로고 (D-185): 원본 로고를 4px 칸으로 도트화(넓이 평균 → 고정 8색) · 배경 투명. 왼쪽 로고 · 오른쪽 설명 */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -513,9 +439,6 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes m3out { 0% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 30% { transform: scale(1.04, 0.92); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 65.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: scale(1.12, 0.02); -webkit-mask-image: var(--px2); mask-image: var(--px2); } }
 .fx3-rv { position: absolute; z-index: 2; width: 4px; height: 4px; background: #fff3b0; box-shadow: 1px 1px 0 #3a2a0a; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; animation: rvpop 1ms steps(1) forwards; }
 @keyframes rvpop { 100% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-/* 2 알림 */
-.toast.t3in { animation: t3in 380ms var(--snap) both; }
-.toast.t3out { animation: t3out 200ms var(--accel) both; }
 @keyframes t3in { 0% { transform: translate(-50%, -70px) scaleY(1.3); } 100% { transform: translate(-50%, 0); } }
 @keyframes t3out { 0% { transform: translate(-50%, 0); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 35% { transform: translate(-50%, 4px) scale(1.04, 0.9); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 51.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 67.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 83.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translate(-50%, -60px) scale(0.9, 1.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 /* 3 적이 생각 중 */
@@ -531,21 +454,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 @keyframes dot3 { 0% { transform: none; -webkit-mask-image: var(--px3); mask-image: var(--px3); } 10.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 20.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 30% { transform: translateY(-4px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 50% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 66.67% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 83.33% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 100% { transform: none; -webkit-mask-image: var(--px3); mask-image: var(--px3); } }
 .th-lamp { width: 6px; height: 6px; flex: none; background: #e5262f; box-shadow: 0 0 0 2px #000, 0 0 0 2px #e5262f; animation: lamp 700ms steps(2) infinite; }
 @keyframes lamp { 50% { background: #5a0e12; box-shadow: 0 0 0 2px #000; } }
-/* 4 턴 배너 */
-.tb4 { position: fixed; z-index: 44; pointer-events: none; overflow: hidden; }
-.tb4 .band { position: absolute; left: -10%; right: -10%; top: 50%; height: 50px; margin-top: -25px; background: #c89b3c; box-shadow: 0 -4px 0 #0b0b0e, 0 4px 0 #0b0b0e, 0 -8px 0 #fff3b0, 0 8px 0 #7a5a12; transform: translateX(-130%) skewX(-30deg); overflow: hidden; }
-.tb4 .band::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 14px, transparent 14px 70px); animation: streak 300ms linear infinite; }
 @keyframes streak { to { background-position: 70px 0; } }
-.tb4.foe .band { background: #e5262f; box-shadow: 0 -4px 0 #0b0b0e, 0 4px 0 #0b0b0e, 0 -8px 0 #ff6b6b, 0 8px 0 #5a0e12; }
-.tb4 .txt { position: absolute; left: 0; right: 0; top: 50%; margin-top: -17px; text-align: center; font: 400 30px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.06em; color: #16141c; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
-.tb4.foe .txt { color: #fff; }
-.tb4.run .band { animation: tb4band 1200ms both; }
-.tb4.run .txt { animation: tb4txt 1200ms both; }
-@keyframes tb4band { 0% { transform: translateX(-130%) skewX(-30deg); animation-timing-function: var(--accel); } 14% { transform: translateX(3%) skewX(-8deg); animation-timing-function: var(--decel); } 22% { transform: none; } 76% { transform: none; animation-timing-function: var(--accel); } 100% { transform: translateX(130%) skewX(30deg); } }
-@keyframes tb4txt { 0% { transform: scale(3.2) skewX(-14deg); text-shadow: -14px 0 #ff2a6d, 14px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 14% { transform: scale(3.2) skewX(-14deg); text-shadow: -14px 0 #ff2a6d, 14px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 16.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 18.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 20.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 22% { transform: scale(0.9, 1.1); text-shadow: -3px 0 #ff2a6d, 3px 0 #2de2e6; animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 30% { transform: scale(1.06, 0.94); text-shadow: 0 0 transparent; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 38% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 74% { transform: none; animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 87.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 93.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translateX(120px) skewX(20deg); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.tb4 .glint { position: absolute; top: 50%; height: 50px; margin-top: -25px; width: 24px; left: -40px; background: rgba(255, 255, 255, 0.7); transform: skewX(-25deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); }
-.tb4.run .glint { animation: tb4glint 1200ms both; }
-@keyframes tb4glint { 0% { left: -40px; -webkit-mask-image: var(--px4); mask-image: var(--px4); } 38% { left: -40px; -webkit-mask-image: var(--px4); mask-image: var(--px4); } 38.25% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 38.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 38.75% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 39% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 62% { left: 110%; -webkit-mask-image: var(--px0); mask-image: var(--px0); } 62.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 62.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 62.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 63% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 /* 7 승패 K.O. */
 .ko3 { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
 .ko3 .rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: linear-gradient(rgba(250, 204, 21, 0.32), rgba(250, 204, 21, 0.32)); -webkit-mask-image: var(--px4); mask-image: var(--px4); border-radius: 0; }
@@ -589,25 +498,14 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .deathfx.dc3 > div > :not(.narr) { opacity: 0; }
 .deathfx.dc3 > div > .in { animation: bbpop 360ms var(--snap) forwards; }
 @keyframes bbpop { 0% { transform: translateY(14px) scale(0.85, 1.15); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-/* 11 도발 */
-.taunt.tq3 { animation: tq3 360ms var(--snap) both; }
-@keyframes tq3 { 0% { transform: translateX(-50%) scale(0.2, 0.6) rotate(-6deg); } 100% { transform: translateX(-50%); } }
-.taunt.out { animation: t3up 220ms var(--accel) forwards; transition: none; }
 @keyframes t3up { 0% { transform: translateX(-50%); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 35% { transform: translateX(-50%) scale(1.04, 0.9); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 51.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 67.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 83.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translateX(-50%) translateY(-50px) scale(0.9, 1.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.taunt em { font-style: normal; color: #ff6b6b; display: inline-block; }
-.taunt em.wshake { animation: wshake 420ms var(--decel); }
 @keyframes wshake { 0% { transform: scale(1.8) rotate(-8deg); } 30% { transform: scale(0.9) translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 70% { transform: translate(-1px, 0); } 100% { transform: none; } }
 /* 13 연쇄 팝: 크게 내리찍혀 출렁 + 색 갈림 */
-.chainpop { text-shadow: 3px 3px 0 #000; animation: cp3 900ms forwards; }
-.chainpop.lv4 { text-shadow: 3px 3px 0 #000; }
 @keyframes cp3 { 0% { transform: translate(-50%, -50%) scale(3) rotate(-12deg); text-shadow: -10px 0 #ff2a6d, 10px 0 #2de2e6; animation-timing-function: var(--accel); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 4.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 9.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 13.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 18% { transform: translate(-50%, -50%) scale(0.85) rotate(3deg); text-shadow: 3px 3px 0 #000; animation-timing-function: var(--decel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 34% { transform: translate(-50%, -50%) scale(1.08) rotate(-1deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 46% { transform: translate(-50%, -50%) scale(1); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 78% { transform: translate(-50%, -50%); clip-path: inset(0 0 0 0); animation-timing-function: steps(4); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { transform: translate(-50%, -62%) scale(0.92, 1.08); clip-path: inset(0 0 100% 0); -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 /* 14 꺾쇠 맥박: 손패 안내 · 반장 규칙 · 지금 갈 곳 */
-.hand.hint .cmd:not(.off) { animation: none; }
-.hand.hint .cmd:not(.off)::after, .boss-rules::after, .mnd.now::after { content: ''; position: absolute; inset: -5px; pointer-events: none; z-index: 3; --c: #facc15;
+.mnd.now::after { content: ''; position: absolute; inset: -5px; pointer-events: none; z-index: 3; --c: #facc15;
   background: linear-gradient(transparent, transparent) 0 0 / 10px 3px, linear-gradient(transparent, transparent) 0 0 / 3px 10px, linear-gradient(transparent, transparent) 100% 0 / 10px 3px, linear-gradient(transparent, transparent) 100% 0 / 3px 10px, linear-gradient(transparent, transparent) 0 100% / 10px 3px, linear-gradient(transparent, transparent) 0 100% / 3px 10px, linear-gradient(transparent, transparent) 100% 100% / 10px 3px, linear-gradient(transparent, transparent) 100% 100% / 3px 10px;
   background-repeat: no-repeat; animation: brk3 1000ms var(--snap) infinite; }
-.boss-rules { position: relative; }
-.boss-rules::after { --c: #ff6b6b; }
 .mnd.now::after { inset: -3px; }
 @keyframes brk3 { 0%, 55% { transform: scale(1.06); } 70% { transform: none; } 100% { transform: scale(1.06); } }
 /* 15 구매 · 회복 */
@@ -626,10 +524,9 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 /* 16 카드 크게 보기: 도트 쓸기 (끼어드는 등장 애니메이션은 끈다) */
 .peek { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  .overlay.m3on, .overlay.m3off, .overlay .panel.m3in, .overlay .panel.m3out, .toast.t3in, .toast.t3out, .turn-label.th-pop, .th-cog, .th-dots i, .th-lamp, .stamp-big.st3, .pass-tag.st3, .tally div.in, .dc-row, .deathfx.dc3 > div > .in, .taunt.tq3, .taunt.out, .chainpop, .hand.hint .cmd:not(.off)::after, .boss-rules::after, .mnd.now::after, .got3, .heal3 { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
+  .overlay.m3on, .overlay.m3off, .overlay .panel.m3in, .overlay .panel.m3out, .turn-label.th-pop, .th-cog, .th-dots i, .th-lamp, .stamp-big.st3, .pass-tag.st3, .tally div.in, .dc-row, .deathfx.dc3 > div > .in, .chainpop, .mnd.now::after, .got3, .heal3 { animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
   .tally div, .deathfx.dc3 > div > :not(.narr) { opacity: 1; -webkit-mask-image: none; mask-image: none; }
 }
-.hand.dealing .cmd { visibility: hidden; }
 .tally { max-width: 380px; }
 .panel .stamp-big { align-self: center; margin: 6px 0 10px; }
 .overlay.m3off { pointer-events: none; }
@@ -780,15 +677,7 @@ body.stage-shake #app, body.stage-shake .mapfx, body.stage-shake .stagefx { anim
 .pl-logo { position: absolute; inset: 0; display: grid; place-content: center; zoom: 1.4; }
 /* 안내서 */
 .gd-crowned { position: relative; display: inline-block; }
-/* 첫 대국 도움말 */
-.coach-line { position: fixed; z-index: 42; transform: translateX(-50%); padding: 6px 14px; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #f4e6c4; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; pointer-events: none; white-space: nowrap; }
-.coach-line.in { animation: coachin 320ms var(--snap); }
-@keyframes coachin { 0% { transform: translate(-50%, -20px) scaleY(1.3); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 25.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 50.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 75.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: translateX(-50%); -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-.btn.btn-go.coach-end { position: relative; }
-.btn.btn-go.coach-end::after { content: ''; position: absolute; inset: -6px; pointer-events: none; --c: #facc15;
-  background: linear-gradient(transparent, transparent) 0 0 / 10px 3px, linear-gradient(transparent, transparent) 0 0 / 3px 10px, linear-gradient(transparent, transparent) 100% 0 / 10px 3px, linear-gradient(transparent, transparent) 100% 0 / 3px 10px, linear-gradient(transparent, transparent) 0 100% / 10px 3px, linear-gradient(transparent, transparent) 0 100% / 3px 10px, linear-gradient(transparent, transparent) 100% 100% / 10px 3px, linear-gradient(transparent, transparent) 100% 100% / 3px 10px;
-  background-repeat: no-repeat; animation: brk3 1000ms var(--snap) infinite; }
-@media (prefers-reduced-motion: reduce) { .op-bg .op-fog, .op-bg .op-glow, .op-press, .op-menu.in > *, .pl-stage.in, .pl-stage > *, .pl-tap, .coach-line.in, .btn.btn-go.coach-end::after { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .op-bg .op-fog, .op-bg .op-glow, .op-press, .op-menu.in > *, .pl-stage.in, .pl-stage > *, .pl-tap { animation: none !important; } }
 /* ---------- 도트 퇴장 (D-193, 사용자: "사라지는 효과는 도트스럽게 — 그라데이션 페이드 말고") — 4×4 베이어 체크무늬가 다섯 단계로 지워진다 ---------- */
 :root { --px0: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='8' height='8'/%3E%3C/svg%3E"); /* D-375: 2×2 조각 16개로 그리면 소수 배율(2.625)에서 이음매가 비쳐 뒤 화면이 격자로 보였다 — 끝 상태는 통짜 */ --px1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect x='0' y='0' width='2' height='2'/%3E%3Crect x='2' y='0' width='2' height='2'/%3E%3Crect x='4' y='0' width='2' height='2'/%3E%3Crect x='6' y='0' width='2' height='2'/%3E%3Crect x='2' y='2' width='2' height='2'/%3E%3Crect x='6' y='2' width='2' height='2'/%3E%3Crect x='0' y='4' width='2' height='2'/%3E%3Crect x='2' y='4' width='2' height='2'/%3E%3Crect x='4' y='4' width='2' height='2'/%3E%3Crect x='6' y='4' width='2' height='2'/%3E%3Crect x='2' y='6' width='2' height='2'/%3E%3Crect x='6' y='6' width='2' height='2'/%3E%3C/svg%3E"); --px2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect x='0' y='0' width='2' height='2'/%3E%3Crect x='4' y='0' width='2' height='2'/%3E%3Crect x='2' y='2' width='2' height='2'/%3E%3Crect x='6' y='2' width='2' height='2'/%3E%3Crect x='0' y='4' width='2' height='2'/%3E%3Crect x='4' y='4' width='2' height='2'/%3E%3Crect x='2' y='6' width='2' height='2'/%3E%3Crect x='6' y='6' width='2' height='2'/%3E%3C/svg%3E"); --px3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect x='0' y='0' width='2' height='2'/%3E%3Crect x='4' y='0' width='2' height='2'/%3E%3Crect x='0' y='4' width='2' height='2'/%3E%3Crect x='4' y='4' width='2' height='2'/%3E%3C/svg%3E"); --px4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3C/svg%3E"); }
 .pxout { -webkit-mask-size: 8px 8px; mask-size: 8px 8px; -webkit-mask-repeat: repeat; mask-repeat: repeat; animation: pxout var(--pxms, 240ms) linear forwards !important; pointer-events: none !important; }
@@ -804,12 +693,6 @@ body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 
 .row .btn.chosen { transform: translateY(-6px) !important; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 #000 !important; animation: lift4 180ms var(--snap) both; }
 @keyframes lift4 { from { transform: translateY(0); } to { transform: translateY(-6px); } }
 .mnd.now.chosen { transform: translate(-50%, calc(-50% - 6px)); }
-/* 안내: 꺾쇠 하나 — 금 = 할 것, 진홍 = 위험 (부드러운 깜빡 · 번진 빛 대신) */
-.boss-rules .hot { animation: none; color: #ff6b6b; }
-.btn.btn-go.warn { position: relative; box-shadow: 0 0 0 2px #000; }
-.btn.btn-go.warn::after { content: ''; position: absolute; inset: -6px; pointer-events: none; --c: #e5262f;
-  background: linear-gradient(transparent, transparent) 0 0 / 10px 3px, linear-gradient(transparent, transparent) 0 0 / 3px 10px, linear-gradient(transparent, transparent) 100% 0 / 10px 3px, linear-gradient(transparent, transparent) 100% 0 / 3px 10px, linear-gradient(transparent, transparent) 0 100% / 10px 3px, linear-gradient(transparent, transparent) 0 100% / 3px 10px, linear-gradient(transparent, transparent) 100% 100% / 10px 3px, linear-gradient(transparent, transparent) 100% 100% / 3px 10px;
-  background-repeat: no-repeat; animation: brk3 1000ms var(--snap) infinite; }
 /* 등장: 아래 띠 · 칩 = 아래에서 snap (계단 대신) */
 
 @keyframes barsnap { 0% { transform: translateY(100%) scaleY(1.3); } 100% { transform: none; } }
@@ -818,21 +701,16 @@ body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 
 /* 지도는 장면 — 도트로 나타나고(퇴장의 반대) 도트로 사라진다 */
 .mapfx { animation: pxin 300ms linear both; -webkit-mask-size: 8px 8px; mask-size: 8px 8px; }
 @keyframes pxin { 0% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 20% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 40% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 60% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 80%, 100% { -webkit-mask-image: none; mask-image: none; } }
-/* 시간 단계: 알림 260 · 창 400 */
-.toast.t3in { animation-duration: 260ms; }
 /* 쓰러짐 막 퇴장: 줄이 아래부터 걷힘 (투명 없이) */
 @keyframes rowu { 0% { transform: none; } 100% { transform: translateY(-100%) scaleY(0); } }
 .deathfx.dc3.out > div { animation: none; }
-/* 판 위 상황 알림 띠 (작은 글) */
-.tb4.sm .txt { font-size: 24px; font-family: Galmuri11, sans-serif; margin-top: -12px; letter-spacing: 0.02em; }
-.tb4.sm .band { height: 40px; margin-top: -20px; }
 /* 판정 = 도장(외곽선) 하나 — 채운 꼬리표 대신 작은 도장 */
 .pass-tag { background: none; color: #facc15; border: 2px solid currentColor; box-shadow: none; padding: 0 6px 1px; font-weight: 700; transform: rotate(-4deg); }
 .pass-tag.bad { background: none; color: #e5262f; }
 .stamp-big { text-shadow: 3px 3px 0 #000; }
 /* 창 머리 하나: 왼쪽 정렬 제목 + 흐린 부제, 분류는 제목 위 머리말(중립색) */
 .stagefx .sf-eyebrow.enc-plate { color: #2a1e08; }
-@media (prefers-reduced-motion: reduce) { .part-chip.mount, .mapfx, .btn.btn-go.warn::after { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .part-chip.mount, .mapfx { animation: none !important; } }
 
 /* 승패 글자 받침 띠 (D-194: 사용자 "적 킹 격파가 글자 배경 없이 어색") — 글자가 꽂히는 순간 가운데서 펼쳐지는 검은 판 + 위아래 금(패배는 진홍) 줄 */
 .ko3 .koband { position: absolute; left: 0; right: 0; top: 50%; height: 92px; margin-top: -46px; background: #16141c; box-shadow: 0 -4px 0 #facc15, 0 4px 0 #facc15, 0 -8px 0 #0b0b0e, 0 8px 0 #0b0b0e; transform: scaleX(0); }
@@ -846,11 +724,6 @@ body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 
 /* ---------- 화면 정리 · 층 순서 (D-195) ---------- */
 /* 층: 판 · 레일 < 도움말 한 줄(41) < 띠(44) < 쓰러짐 막(45) < 창(50) < 알림 · 도발(60) < 전환 장면(70) */
 .overlay { z-index: 50; }
-.coach-line { z-index: 41; }
-/* 길게 누르기 정보 = 잠깐 뜨는 것 → CSS 틀 (청록 = 내 것 정보) */
-body.slice .info { border: 0; border-image: none; background: #16141c; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #38bdf8; padding: 8px 12px; z-index: 46; }
-/* 반장 규칙 꺾쇠는 레일 안으로 */
-.boss-rules::after { inset: 2px; }
 /* 결과 화면 */
 
 /* ---------- 페르소나 테스트 버그 수정 (D-197) ---------- */
@@ -860,12 +733,10 @@ body.slice .info { border: 0; border-image: none; background: #16141c; box-shado
 /* 판 사이: 끝난 대국의 판 · 손패 · 숫자를 내린다 (덱 · 분대 · 나사 · 부품 칸은 날아드는 자리라 남긴다) */
 body.between #board, body.between #hand > .cmd, body.between #hand > .empty, body.between #vials, body.between #turn-label, body.between #boss, body.between #meter, body.between #coins, body.between .actions { visibility: hidden; }
 /* 한국어 줄바꿈: 낱말 가운데서 끊지 않는다 (페르소나 테스트 c5 「끝납니 / 다」) */
-body.slice .toast, body.slice .panel, body.slice .koband, body.slice .turn-banner { word-break: keep-all; overflow-wrap: anywhere; }
+body.slice .panel, body.slice .koband, body.slice .turn-banner { word-break: keep-all; overflow-wrap: anywhere; }
 /* 오른쪽 레일이 넘쳐 「턴 끝」이 화면 밖으로 밀리지 않게 (페르소나 테스트 M6): 버튼 · 부품은 줄지 않고, 배율판만 줄어든다 */
 body.slice #right { overflow: hidden; }
-body.slice #right > .actions, body.slice #right > .parts, body.slice #right > .rail-head, body.slice #right > .boss-rules { flex: none; }
-body.slice #right > .meter { flex: 0 1 auto; min-height: 0; overflow: hidden; }
-body.slice #right .meter .mult { font-size: clamp(26px, 9vh, 44px) !important; white-space: nowrap; }
+body.slice #right > .actions, body.slice #right > .parts { flex: none; }
 /* 카드 문구 잘림 (페르소나 테스트 m6): 고물상 · 덱 창은 설명을 끝까지 */
 
 /* 한 번 탭 고르기 (D-198): 띠 아래로 금빛 줄이 차오르면 확정 — 그 전에 「되돌리기」 */
@@ -878,25 +749,10 @@ body.slice .coins .coin.gone { background: #2b2832; box-shadow: 0 0 0 1px #000; 
 body.slice .coins .lbl { color: #cfe3ea; }
 body.slice .coins b { display: inline-flex; align-items: center; gap: 2px; }
 body.slice .coins b .screw { width: 14px; height: 14px; image-rendering: pixelated; }
-/* ? 한 장 도움말 (D-198) */
-
-/* ---------- 판 배치 시안 (D-198 7번 — 사용자가 고르기 전까지 ?layout=b|c 로만 켠다) ---------- */
-/* B: 안내 띠를 판 위 여백에 겹치고 레일을 좁힌다 */
-body.slice.lay-b, body.slice.lay-c { --railL: clamp(200px, 25vw, 236px); --railR: clamp(150px, 18vw, 170px); }
-body.slice.lay-b #board, body.slice.lay-c #board { border-top: 0; }
-body.slice.lay-b .rail.left, body.slice.lay-c .rail.left { padding: 6px; }
-/* C: B + 판 위아래 여백을 줄이고, 손패 카드는 한 줄(설명은 길게 누르기) */
-body.slice.lay-c { --railL: clamp(180px, 22vw, 210px); --railR: clamp(140px, 16vw, 160px); }
-body.slice.lay-c .hand .cmd small { display: none; }
-body.slice.lay-c .hand .cmd { min-height: 52px; }
-body.slice.lay-c .turn-label { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 /* 증기 칸은 레일 폭에 맞춰 줄고, 끝의 나사 숫자는 줄지 않는다 */
 body.slice .coins .coin { flex: 1 1 0; min-width: 3px; width: auto; max-width: 10px; }
 body.slice .coins .lbl, body.slice .coins b { flex: none; }
 body.slice .coins b { margin-left: 4px; }
-/* 좁은 레일(시안 B · C): 턴 표시 · 반장 규칙이 낱말 중간에서 끊기지 않게 */
-body.slice.lay-b .turn-label, body.slice.lay-c .turn-label { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; padding-left: 4px; padding-right: 4px; white-space: nowrap; }
-body.slice .boss-rules { word-break: keep-all; }
 
 /* ---------- 받은 그림 넣기 (D-200) ---------- */
 /* 장소 배경: 판 사이 화면 전체에 그림, 끝난 대국 화면은 통째로 내린다 */
@@ -929,9 +785,6 @@ body.slice .price.poor .scr { filter: grayscale(1) brightness(.8); }
 .op { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin: 0 2px; padding: 0 3px; font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; font-style: normal; color: #0b0a0e; box-shadow: 0 0 0 2px #000; vertical-align: middle; }
 .op.op-add { background: #5cc4d4; }
 .op.op-mul { background: #ff9f40; }
-.meter .mult em { font-style: normal; display: inline-block; margin: 0 2px; }
-.meter .mult .op-add { color: #7fdcea; }
-.meter .mult .op-mul { color: #ffb15a; }
 
 /* ---------- 안내서 가로 카드 (D-205) — 왼쪽 정사각 예시 · 오른쪽 설명 ---------- */
 .gd-media { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; background: #0e0d12; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; display: grid; place-items: center; }
@@ -966,207 +819,21 @@ body.slice .price.poor .scr { filter: grayscale(1) brightness(.8); }
 .gd-media.steam p { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #a59fae; }
 @media (prefers-reduced-motion: reduce) { .gd-media.shot img, .gd-crowned, .gd-foe { animation: none; } .fx-row, .st-out { animation: none; opacity: 1; } }
 
-/* ===================== 전투 화면 4안 (D-206) — 판 무대 · 아래 부채꼴 손패 · 판 옆 적 초상 ===================== */
-body.slice.lay-d { --railL: clamp(200px, 25vw, 240px); --railR: clamp(200px, 25vw, 240px); --handPeek: 70px; }
-body.slice.lay-d #board { border-top: 0; border-bottom: var(--handPeek) solid #0e0d12; }
-/* 왼쪽 기둥: 턴 · ? / 태엽 / 증기 / 반장 규칙 / 부품 — 아래 구석에 덱 · 분대 · 뽑을 · 버림 */
-body.slice.lay-d .rail.left { padding: 8px; gap: 6px; overflow: visible; }
-body.slice.lay-d .rail.left .rail-head { display: flex; gap: 6px; }
-body.slice.lay-d .rail.left .rail-head .turn-label { flex: 1; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-body.slice.lay-d #right { padding: 8px; gap: 8px; justify-content: flex-start; }
-body.slice.lay-d #right > .actions { margin-top: auto; flex-direction: row; gap: 8px; }
-body.slice.lay-d #right > .actions .btn-go { flex: 1.6; min-height: 64px; font-size: 24px; font-family: Galmuri11, sans-serif; }
-body.slice.lay-d #right > .actions .rewind { flex: 1; min-height: 64px; font-size: 12px; font-family: Galmuri11, sans-serif; padding: 0 2px; white-space: nowrap; letter-spacing: -0.02em; }
-/* 손패: 화면 아래 가운데, 카드 윗부분만 보인다. 누르면(고르면) 들려 올라온다 */
-body.slice.lay-d #hand { flex-direction: row; overflow: visible; gap: 0; flex: none; position: fixed; left: calc(var(--railL) + (100vw - var(--railL) - var(--railR)) / 2); bottom: 0; transform: translateX(-50%); width: calc(100vw - var(--railL) - var(--railR)); height: 160px; display: flex; justify-content: center; align-items: flex-end; z-index: 30; pointer-events: none; padding: 0; }
-body.slice.lay-d #hand .hand-head { position: absolute; left: calc(8px - var(--railL)); bottom: 8px; width: calc(var(--railL) - 16px); margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: auto; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
-body.slice.lay-d #hand > .cmd { pointer-events: auto; position: relative; flex: none; width: 90px; height: 150px; margin: 0 -8px; padding: 26px 6px 8px; display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; justify-items: center; align-content: start; row-gap: 4px; text-align: center; transform-origin: 50% 120%; transform: translateY(calc(150px - var(--handPeek) + var(--fy))) rotate(var(--r)); transition: transform 160ms cubic-bezier(.2, 1.2, .4, 1),   box-shadow 140ms; box-shadow: 0 0 0 2px #000, inset 4px 0 0 var(--tone), inset 0 0 0 2px #46404f; }
-body.slice.lay-d #hand > .cmd:hover, body.slice.lay-d #hand > .cmd:focus-visible { z-index: 2; }
-body.slice.lay-d #hand > .cmd.armed { z-index: 3; transform: translateY(calc(150px - var(--handPeek) - 22px)) rotate(0deg); box-shadow: 0 0 0 2px #000, 0 0 0 4px #facc15, inset 4px 0 0 var(--tone); }
-body.slice.lay-d #hand > .cmd .costgear { position: absolute; left: 4px; top: 4px; }
-body.slice.lay-d #hand > .cmd .costgear img { width: 26px; height: 26px; }
-body.slice.lay-d #hand > .cmd .op-corner { position: absolute; right: 4px; top: 6px; }
-body.slice.lay-d #hand > .cmd .art { width: 48px; height: 48px; }
-body.slice.lay-d #hand > .cmd .art img { width: 44px; height: 44px; }
-body.slice.lay-d #hand > .cmd .txt { display: grid; gap: 2px; justify-items: center; min-width: 0; }
-body.slice.lay-d #hand > .cmd .txt b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; display: grid; justify-items: center; gap: 2px; }
-body.slice.lay-d #hand > .cmd .txt .chips .op { display: none; }
-body.slice.lay-d #hand > .cmd .txt small { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 1.25; }
-body.slice.lay-d #hand > .cmd .txt em { font-size: 12px; font-family: Galmuri11, sans-serif; }
-body.slice.lay-d #hand > .cmd.off { filter: grayscale(.7) brightness(.75); }
-body.slice.lay-d #hand > .empty { pointer-events: none; margin-bottom: 20px; }
-/* 오른쪽 기둥 위: 적 초상 */
-.portrait { display: grid; gap: 4px; }
-.portrait .pt-frame { position: relative; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; background: #0b0b0e; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #5a2026; }
-.portrait .pt-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; image-rendering: pixelated; }
-.portrait .pt-art + .pt-piece { display: none; }
-.portrait .pt-piece img { width: 62%; height: auto; image-rendering: pixelated; }
-.portrait .pt-name { margin: 0; font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #ff8a8a; text-align: center; }
-.portrait:not(.boss) .pt-name { color: #e8e2d6; }
-.portrait .pt-hp { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #c9c2cc; text-align: center; font-variant-numeric: tabular-nums; }
-body.slice:not(.lay-d) .portrait { display: none; }
-@media (prefers-reduced-motion: reduce) { body.slice.lay-d #hand > .cmd { transition: none; } }
-body.slice.lay-d #hand > .cmd .txt { order: -1; }
-body.slice.lay-d #hand > .cmd { padding-top: 32px; }
-body.slice.lay-d #hand > .cmd .txt b { white-space: nowrap; }
-
-/* ===================== 전투 화면 E안 (D-207) — 왼쪽 = 내 선택지 · 가운데 = 판(높이 꽉) · 오른쪽 = 적의 수 ===================== */
-body.slice.lay-e { --railL: clamp(250px, 31vw, 290px); --railR: clamp(190px, 23vw, 214px); }
-body.slice.lay-e #board { border-top: 0; }
-/* 왼쪽: 태엽 · 손패 2열(설명까지) · 맨 아래 덱 · 분대 · 뽑을 · 버림 */
-body.slice.lay-e .rail.left { padding: 6px; gap: 6px; }
-body.slice.lay-e #hand { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: min-content; gap: 6px; overflow-y: auto; align-content: start; padding: 0; }
-body.slice.lay-e #hand .hand-head { grid-column: 1 / -1; order: 9; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
-body.slice.lay-e #hand .empty { grid-column: 1 / -1; }
-body.slice.lay-e #hand > .cmd { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto; row-gap: 2px; min-height: 92px; padding: 6px 6px 6px 8px; transform: none; align-content: start; }
-body.slice.lay-e #hand > .cmd .costgear { position: absolute; left: 4px; top: 4px; }
-body.slice.lay-e #hand > .cmd .costgear img { width: 24px; height: 24px; }
-body.slice.lay-e #hand > .cmd .art { position: absolute; right: 4px; top: 4px; width: 30px; height: 30px; }
-body.slice.lay-e #hand > .cmd .art img, body.slice.lay-e #hand > .cmd .art .ico16 { width: 28px; height: 28px; }
-body.slice.lay-e #hand > .cmd .op-corner { display: none; }
-body.slice.lay-e #hand > .cmd .txt { padding-top: 28px; display: grid; gap: 2px; min-width: 0; }
-body.slice.lay-e #hand > .cmd .txt b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-body.slice.lay-e #hand > .cmd .txt small { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 1.3; }
-body.slice.lay-e #hand > .cmd.armed { box-shadow: 0 0 0 2px #000, 0 0 0 4px #facc15, inset 4px 0 0 var(--tone); }
-/* 오른쪽: 턴 · ? / 적의 수 / 반장 규칙 / 증기 / 부품 / 연쇄 · 되감기 · 턴 끝 */
-body.slice.lay-e #right { padding: 6px; gap: 6px; }
-body.slice.lay-e #right .rail-head .turn-label { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-.foeplan { display: grid; gap: 4px; padding: 6px; background: #1a1418; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #5a2026; }
-.foeplan .fp-head { margin: 0; font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #ff8a8a; display: flex; justify-content: space-between; align-items: baseline; }
-.foeplan .fp-head small { font: 400 12px Galmuri11, sans-serif; color: #a59fae; }
-.fp-row { display: flex; align-items: center; gap: 4px; font-size: 12px; font-family: Galmuri11, sans-serif; min-height: 26px; }
-.fp-row .fp-n { display: inline-grid; place-items: center; width: 18px; height: 18px; background: #7a1218; color: #fff; font-size: 12px; font-family: Galmuri11, sans-serif; box-shadow: 0 0 0 1px #000; }
-.fp-row img { width: 22px; height: 22px; image-rendering: pixelated; }
-.fp-row .fp-arrow { color: #a59fae; }
-.fp-row .fp-hit { display: inline-flex; align-items: center; gap: 1px; }
-.fp-row .fp-hit em { font-style: normal; font-weight: 700; color: #ff6b6b; font-variant-numeric: tabular-nums; }
-.fp-row.kill { background: rgba(229, 38, 47, 0.18); }
-.fp-row .fp-rule { font-size: 12px; font-family: Galmuri11, sans-serif; color: #ffb15a; white-space: nowrap; }
-.foeplan .fp-none { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #a59fae; }
-body.slice.lay-e #right > .meter { position: static; margin: 0; }
-body.slice.lay-e #right > .actions { margin-top: auto; }
-body.slice.lay-e #hand > .cmd { min-height: 70px; }
-.fp-row { flex-wrap: wrap; row-gap: 0; }
-.fp-row .fp-move { font-size: 12px; font-family: Galmuri11, sans-serif; color: #a59fae; }
-.fp-row .fp-hit em { font-size: 12px; font-family: Galmuri11, sans-serif; }
-
 /* ===================== 전투 화면 F안 탄창 (D-208) — 왼쪽 = 손패를 탄약처럼 얇게 적재 · 가운데 = 판 · 오른쪽 = 직전 공격 · 전투 기록 ===================== */
-body.slice.lay-f { --railL: clamp(188px, 22vw, 210px); --railR: clamp(196px, 23vw, 220px); }
 body.slice.lay-f #board { border-top: 0; }
 body.slice.lay-f .rail.left { padding: 6px; gap: 6px; }
-body.slice.lay-f #hand { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding: 0; }
-body.slice.lay-f #hand .hand-head { order: 9; margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
-/* 탄 한 발: 비용 · 기물 · 이름 한 줄 (높이 48 = 터치 하한) */
-body.slice.lay-f #hand > .cmd { display: grid; grid-template-columns: 26px 30px minmax(0, 1fr); grid-template-rows: 48px; align-items: center; column-gap: 6px; min-height: 48px; padding: 0 8px 0 8px; transform: none; }
-body.slice.lay-f #hand > .cmd .op-corner { display: none; }
-body.slice.lay-f #hand > .cmd .costgear { position: static; display: grid; place-items: center; }
-body.slice.lay-f #hand > .cmd .costgear img { width: 24px; height: 24px; }
-body.slice.lay-f #hand > .cmd .art { position: static; width: 30px; height: 30px; background: none; box-shadow: none; }
-body.slice.lay-f #hand > .cmd .art img, body.slice.lay-f #hand > .cmd .art .ico16 { width: 28px; height: 28px; }
-body.slice.lay-f #hand > .cmd .txt { display: contents; }
-body.slice.lay-f #hand > .cmd .txt b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; white-space: nowrap; }
-body.slice.lay-f #hand > .cmd .txt b .chips { margin-left: auto; }
-body.slice.lay-f #hand > .cmd .txt b .chips > :not(.op) { display: none; }
-body.slice.lay-f #hand > .cmd .txt small, body.slice.lay-f #hand > .cmd .txt em { display: none; }
-/* 장전(고른 탄): 그 자리에서 펼쳐 전체 설명 */
-body.slice.lay-f #hand > .cmd.armed { grid-template-rows: 48px auto; padding-bottom: 8px; box-shadow: 0 0 0 2px #000, 0 0 0 4px #facc15, inset 4px 0 0 var(--tone); }
-body.slice.lay-f #hand > .cmd .full { grid-column: 1 / -1; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 1.4; color: #e8e2d8; white-space: normal; }
 /* 오른쪽 */
 body.slice.lay-f #right { padding: 6px; gap: 6px; }
-body.slice.lay-f #right .rail-head .turn-label { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; background: none; box-shadow: none; color: #ece6da; justify-content: flex-start; padding-left: 2px; }
-body.slice.lay-f #right .rail-head .turn-label::before, body.slice.lay-f #right .rail-head .turn-label::after { display: none; }
-body.slice.lay-f .boss-rules { cursor: pointer; padding: 4px 8px; }
-body.slice.lay-f .boss-rules > span:not(.hot) { display: none; }
-body.slice.lay-f .boss-rules b::after { content: ' · 규칙 보기'; font: 400 12px Galmuri11, sans-serif; color: #c9a9a4; }
-body.slice.lay-f #right > .meter { position: static; margin: 0; flex: none; justify-items: start; }
-body.slice.lay-f #right .meter .mult { font-size: 24px; font-family: Galmuri11, sans-serif; }
 body.slice.lay-f #right > .actions { margin-top: auto; }
-.blog { display: grid; gap: 6px; min-height: 0; flex: 1 1 auto; overflow: hidden; align-content: start; }
-.blog .bl-h { margin: 0; font: 700 12px Galmuri11, sans-serif; color: #a8a1b1; }
-.blog .bl-last { display: grid; gap: 2px; padding: 6px 8px; background: #1d1a22; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #46404f; }
-.blog .bl-who, .blog .bl-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: 24px; }
-.blog img { image-rendering: pixelated; }
-.blog .bl-arrow { color: #8f889a; }
-.blog .bl-hit { display: inline-flex; align-items: center; gap: 1px; }
-.blog .bl-hit em { font: 400 15px Galmuri14, Galmuri11, sans-serif; font-style: normal; color: #ffd27a; font-variant-numeric: tabular-nums; }
-.blog .bl-row.foe .bl-hit em { color: #ff7a7a; }
-.blog .bl-calc { margin: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; font-size: 12px; font-family: Galmuri11, sans-serif; color: #d6d0c6; }
-.blog .bl-calc em { font-style: normal; font-weight: 700; }
-.blog .bl-eq b { font: 700 24px Galmuri11, sans-serif; color: #fff; }
-.blog .bl-list { display: grid; gap: 1px; min-height: 0; overflow: hidden; }
-.blog .bl-turn { margin: 4px 0 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #9ec7dc; }
-.blog .bl-turn.foe { color: #ff9a9a; }
-.blog .bl-lbl { font-size: 12px; font-family: Galmuri11, sans-serif; color: #ffb15a; }
-.blog .bl-none { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #a8a1b1; }
-body.slice.lay-f #right .rail-head .turn-label { border-image: none; border: 0; }
-.deckrow .hand-head { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
-body.slice.lay-f #right > .deckrow { flex: none; }
-body.slice.lay-f #right > .meter { display: none !important; }
-body.slice.lay-f #hand > .cmd.armed { margin-block: 4px; }
-.blog .bl-tot, .blog .bl-next { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #d6d0c6; display: flex; gap: 4px; align-items: baseline; flex-wrap: wrap; }
-.blog .bl-tot b { font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #fff; }
-.blog .bl-next em { font-style: normal; font-weight: 700; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
-.deckrow .hand-head { flex-wrap: nowrap; white-space: nowrap; }
-.blog .bl-calc img { image-rendering: pixelated; }
-.blog .bl-calc .kill { color: #ffd27a; }
-.blog .bl-eq b { font-size: 24px; font-family: Galmuri11, sans-serif; }
-.blog .bl-last { gap: 0; padding: 4px 8px; }
 /* 되감기 · 턴 끝 가로 나란히 (턴 끝이 오른쪽 아래 모서리 — 되돌릴 수 없는 버튼을 자주 누르는 버튼과 떼어 놓는다) */
 body.slice.lay-f #right > .actions { flex-direction: row; gap: 10px; }
 body.slice.lay-f #right > .actions .rewind { flex: 0 0 80px; min-width: 0; min-height: 60px; padding: 0 4px; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 1.15; white-space: normal; display: grid; place-content: center; text-align: center; }
-body.slice.lay-f #right > .actions .btn-go { flex: 1; min-height: 60px; font-size: 24px; font-family: Galmuri11, sans-serif; }
-.blog .bl-k { color: #a8a1b1; font-size: 12px; font-family: Galmuri11, sans-serif; }
 body.slice.lay-f #right > .actions .rewind > span, body.slice.lay-f #right > .actions .rewind > small { display: block; white-space: nowrap; }
-.blog .bl-list { -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent); }
-
-/* ===================== D-209 탄창 다듬기 · 계기 ===================== */
-/* 탄 한 발: 머리(비용 · 기물 · 이름) 40px — 펼치면 아래 몸(설명) 칸이 따로 붙는다 */
-body.slice.lay-f #hand { gap: 4px; padding: 2px 2px 6px; scrollbar-width: thin; overscroll-behavior: contain; }
-body.slice.lay-f #hand > .cmd.mag { display: flex; flex-direction: column; align-items: stretch; min-height: 0; padding: 0; grid-template-rows: none; flex: none; overflow: hidden; }
-body.slice.lay-f #hand > .cmd.mag .mg-head { display: grid; grid-template-columns: 24px 26px minmax(0, 1fr) auto; align-items: center; column-gap: 6px; height: 40px; padding: 0 8px 0 9px; }
-body.slice.lay-f #hand > .cmd.mag .costgear img { width: 22px; height: 22px; }
-body.slice.lay-f #hand > .cmd.mag .art { position: static; width: 26px; height: 26px; background: none; box-shadow: none; }
-body.slice.lay-f #hand > .cmd.mag .art img, body.slice.lay-f #hand > .cmd.mag .art .ico16 { width: 26px; height: 26px; }
-body.slice.lay-f #hand > .cmd.mag .mg-head b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-body.slice.lay-f #hand > .cmd.mag .mg-body { display: flex; gap: 8px; align-items: flex-start; padding: 7px 9px 8px 11px; overflow: hidden;
-  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px), #15131a;
-  box-shadow: inset 0 2px 0 #000, inset 0 3px 0 #3a3542, inset 3px 0 0 var(--tone); }
-body.slice.lay-f #hand > .cmd.mag .mg-shape svg { display: block; width: 37px; height: 37px; }
-body.slice.lay-f #hand > .cmd.mag .mg-txt { display: grid; gap: 3px; min-width: 0; }
-body.slice.lay-f #hand > .cmd.mag .mg-desc { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 1.4; color: #ece6da; white-space: normal; }
-body.slice.lay-f #hand > .cmd.mag .mg-flv { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; font-style: normal; color: #c9b48a; white-space: normal; }
-body.slice.lay-f #hand > .cmd.mag .mg-use { margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #9ec7dc; white-space: normal; }
-body.slice.lay-f #hand > .cmd.mag.off .mg-use { color: #ff9a8a; }
-body.slice.lay-f #hand > .cmd.mag.open:not(.armed) { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #8f889a, inset 3px 0 0 var(--tone); }
-body.slice.lay-f #hand > .cmd.mag.armed { margin-block: 3px; box-shadow: 0 0 0 2px #000, 0 0 0 4px #facc15, inset 3px 0 0 var(--tone); }
-body.slice.lay-f #hand > .cmd.mag.off.open { filter: grayscale(0.5) brightness(0.85); }
 /* 덱 · 분대 · 버림: 왼쪽 아래 고정 */
 body.slice.lay-f .rail.left { display: flex; flex-direction: column; min-height: 0; }
-body.slice.lay-f .rail.left #hand { flex: 1 1 auto; min-height: 0; }
-body.slice.lay-f .rail.left > .deckrow { flex: none; padding-top: 4px; box-shadow: 0 -2px 0 #000, 0 -3px 0 #2e2a35; }
-body.slice.lay-f .deckrow .hand-head { justify-content: flex-start; }
-/* 되감기: 턴 옆 작은 단추 (◀◀ + 남은 수) */
-body.slice.lay-f #right .rail-head { display: flex; gap: 6px; align-items: center; }
-body.slice.lay-f #right .rail-head .btn-rewind, body.slice.lay-f #right .rail-head #btn-rewind { flex: none; width: 56px; min-width: 0; height: 48px; padding: 0; display: grid; place-content: center; line-height: 1; font-size: 12px; font-family: Galmuri11, sans-serif; }
 body.slice.lay-f #btn-rewind .rw-t { display: none; }
 body.slice.lay-f #btn-rewind .rw-i { display: block; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 body.slice.lay-f #btn-rewind small { display: block; margin-top: 3px; }
-body.slice.lay-f #right > .actions .btn-go { flex: 1; min-height: 56px; }
-
-/* 태엽: 열쇠 구멍(팔각 홈) 속 황동 열쇠 — 켜지면 뒤에서 따뜻한 빛 */
-body.slice .apbar .seg { position: relative; height: 30px; background: #0b0b0e; clip-path: polygon(22% 0, 78% 0, 100% 22%, 100% 78%, 78% 100%, 22% 100%, 0 78%, 0 22%); box-shadow: none; }
-body.slice .apbar .seg.on { background: #0b0b0e; }
-body.slice .apbar .seg.bonus.on { background: #0b0b0e; }
-body.slice .apbar .seg img { width: 24px; height: 24px; filter: drop-shadow(1px 1px 0 #000); }
-body.slice .apbar .seg:not(.on) img { opacity: 0.45; }
-/* 쓸 때: 감긴 태엽이 풀리듯 거꾸로 빠르게 돌다 느려지고, 빛이 한 번 튀고 꺼진다 */
-body.slice .apbar .seg.spend img { animation: keyUnwind 620ms cubic-bezier(0.15, 0.7, 0.3, 1) both; }
-body.slice .apbar .seg.spend { animation: sockOut 620ms ease-out both; }
-@keyframes keyUnwind { 0% { transform: rotate(0) scale(1.15); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 70% { transform: rotate(-600deg) scale(0.95); -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: rotate(-720deg) scale(1); -webkit-mask-image: var(--px2); mask-image: var(--px2); } }
-@keyframes sockOut { 0% { background: #0b0b0e; } 25% { filter: brightness(1.6); } 100% { filter: none; } }
-/* 감길 때: 앞으로 딸깍딸깍 돌며 켜진다 */
-body.slice .apbar .seg.wind img { animation: keyWind 420ms steps(4, end) both; animation-delay: calc(var(--k) * 70ms); }
-@keyframes keyWind { 0% { transform: rotate(-180deg); -webkit-mask-image: var(--px2); mask-image: var(--px2); } 50.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: rotate(0); -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 
 /* 속전: 진공관 줄 — 머리에 「속전 보상 +50」, 아래로 관 12개. 켜진 관은 필라멘트가 은은히 떨린다 */
 body.slice .coins { display: grid; grid-template-columns: 1fr auto; row-gap: 3px; align-items: center; }
@@ -1189,19 +856,12 @@ body.slice .coins .tube.dying { animation: tubeDie 1100ms steps(1, end) both; }
   54% { background: #0b0b0e; }
   70%, 100% { background: linear-gradient(#26232b, #26232b); box-shadow: 0 0 0 1px #000; }
 }
-@media (prefers-reduced-motion: reduce) { body.slice .coins .tube.lit, body.slice .coins .tube.dying, body.slice .apbar .seg.spend, body.slice .apbar .seg.spend img, body.slice .apbar .seg.wind img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { body.slice .coins .tube.lit, body.slice .coins .tube.dying { animation: none; } }
 
 /* ===================== D-210 좌우 거울 배치 — 같은 폭 · 같은 세 단(계기 64 · 밀리는 칸 · 단추 줄 52) ===================== */
-.apbar .keys { display: flex; flex: 1; gap: 3px; min-width: 0; }
-body.slice.lay-f { --railL: clamp(196px, 23vw, 214px); --railR: clamp(196px, 23vw, 214px); --gTop: 64px; --gBot: 52px; }
 body.slice.lay-f .rail.left, body.slice.lay-f #right { display: flex; flex-direction: column; gap: 6px; padding: 6px; min-height: 0; overflow: hidden; }
 /* 위: 계기 판 — 왼쪽 태엽 / 오른쪽 턴 · 속전 */
-body.slice.lay-f .rail.left > .apbar, body.slice.lay-f #right > .gtop { flex: none; height: var(--gTop); margin: 0; box-sizing: border-box; padding: 5px 8px 6px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #3a3542; }
-body.slice.lay-f .rail.left > .apbar { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 16px 1fr; row-gap: 4px; align-items: center; }
-body.slice.lay-f .apbar .lbl { display: block; margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; color: #f0c48a; }
-body.slice.lay-f .apbar > b { margin: 0; min-width: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 16px; }
-body.slice.lay-f .apbar .keys { grid-column: 1 / -1; height: 100%; }
-body.slice.lay-f .apbar .seg { height: auto; }
+body.slice.lay-f #right > .gtop { flex: none; height: var(--gTop); margin: 0; box-sizing: border-box; padding: 5px 8px 6px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #3a3542; }
 body.slice.lay-f #right > .gtop { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: 16px 1fr; row-gap: 4px; column-gap: 6px; align-items: center; }
 body.slice.lay-f .gtop #coins { display: contents; }
 body.slice.lay-f .gtop .turn-label { height: 16px !important; min-height: 0 !important; padding: 0 !important; margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 16px; background: none; border: 0; border-image: none; box-shadow: none; color: #ece6da; justify-content: flex-start; }
@@ -1210,59 +870,13 @@ body.slice.lay-f .gtop .coins .lbl { justify-self: end; font-size: 12px; font-fa
 body.slice.lay-f .gtop .coins > b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 16px; }
 body.slice.lay-f .gtop .coins .tubes { grid-column: 1 / -1; height: 100%; box-sizing: border-box; padding: 2px 2px 0; }
 body.slice.lay-f .gtop .coins .tube { height: 100%; }
-/* 가운데: 밀리는 칸 — 같은 틀 */
-body.slice.lay-f .rail.left > #hand, body.slice.lay-f #right > .rmid { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 4px; background: #0f0e13; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #24212b; }
-body.slice.lay-f #right > .rmid { display: flex; flex-direction: column; gap: 6px; }
-body.slice.lay-f .rmid > .boss-rules, body.slice.lay-f .rmid > .parts { flex: none; }
-body.slice.lay-f .rmid > .blog { flex: none; overflow: visible; }
-body.slice.lay-f .blog .bl-list { overflow: visible; -webkit-mask-image: none; mask-image: none; }
 /* 아래: 단추 줄 — 같은 높이 */
-body.slice.lay-f .rail.left > .deckrow, body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0; padding: 0; box-shadow: none; display: flex; align-items: stretch; gap: 6px; }
-body.slice.lay-f .rail.left > .deckrow .hand-head { width: 100%; height: 100%; margin: 0; gap: 6px; align-items: stretch; }
-body.slice.lay-f .deckrow .deck-btn { flex: 1; min-height: 0; height: 100%; padding: 0 6px; }
-body.slice.lay-f .deckrow .hand-head > span { align-self: center; font-size: 12px; font-family: Galmuri11, sans-serif; white-space: nowrap; }
+body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0; padding: 0; box-shadow: none; display: flex; align-items: stretch; gap: 6px; }
 body.slice.lay-f #right > .actions #btn-help, body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 48px; width: 48px; min-width: 0; height: 100%; min-height: 0; padding: 0; display: grid; place-content: center; line-height: 1; font-size: 12px; font-family: Galmuri11, sans-serif; }
-body.slice.lay-f #right > .actions .btn-go { flex: 1; height: 100%; min-height: 0; font-size: 24px; font-family: Galmuri11, sans-serif; }
-body.slice.lay-f .apbar .lbl { grid-row: 1; grid-column: 1; }
-body.slice.lay-f .apbar > b { grid-row: 1; grid-column: 2; }
-body.slice.lay-f .apbar .keys { grid-row: 2; }
 body.slice.lay-f #btn-rewind .rw-t { display: none !important; }
 body.slice.lay-f #btn-rewind small { margin-top: 2px; font-size: 12px; font-family: Galmuri11, sans-serif; }
-
-/* ===================== D-211 도트 철학 맞추기 — 레일의 모든 그림을 public/ui/kit 도트(tools/draw-hud.py)로, 1도트 = --px ===================== */
-/* 탄 머리판: 기물 색 띠 + 리벳이 찍힌 철판 9-slice (그라데이션 · 둥근 리벳 없이) */
-body.slice.lay-f #hand > .cmd.mag { background: none; border: 0; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/mag-P.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; box-shadow: none; filter: none; }
-body.slice.lay-f #hand > .cmd.mag::before, body.slice.lay-f #hand > .cmd.mag::after { content: none; }
-body.slice.lay-f #hand > .cmd.mag.t-N { border-image-source: url('../assets/ui/kit/mag-N.png'); }
-body.slice.lay-f #hand > .cmd.mag.t-B { border-image-source: url('../assets/ui/kit/mag-B.png'); }
-body.slice.lay-f #hand > .cmd.mag.t-R { border-image-source: url('../assets/ui/kit/mag-R.png'); }
-body.slice.lay-f #hand > .cmd.mag.t-Q { border-image-source: url('../assets/ui/kit/mag-Q.png'); }
-body.slice.lay-f #hand > .cmd.mag.t-K { border-image-source: url('../assets/ui/kit/mag-K.png'); }
-body.slice.lay-f #hand > .cmd.mag.t-any { border-image-source: url('../assets/ui/kit/mag-any.png'); }
-body.slice.lay-f #hand > .cmd.mag .mg-head { height: 32px; padding: 0 2px 0 4px; }
-/* 펼친 몸: 오목한 홈 9-slice — 머리와 칸이 갈린다 */
-body.slice.lay-f #hand > .cmd.mag .mg-body { margin: 2px -2px -2px 0; background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 2); border-image: url('../assets/ui/kit/mag-body.png') 2 fill / calc(var(--px) * 2) stretch; padding: 4px 6px 5px; }
-/* 고름 · 장전: 단단한 2도트 테두리만 (빛 번짐 없음) */
-body.slice.lay-f #hand > .cmd.mag.open:not(.armed) { box-shadow: 0 0 0 var(--px) #8a8794; }
-body.slice.lay-f #hand > .cmd.mag.armed { box-shadow: 0 0 0 var(--px) #000, 0 0 0 calc(var(--px) * 2) #facc15; }
-body.slice.lay-f #hand > .cmd.mag.off { filter: none; opacity: 0.55; }
-body.slice.lay-f #hand > .cmd.mag.off.open { filter: none; opacity: 0.8; }
-/* 탄창 · 기록 칸 틀: 오목한 홈 */
-body.slice.lay-f .rail.left > #hand, body.slice.lay-f #right > .rmid { background: #0f0e13; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 2); border-image: url('../assets/ui/kit/mag-body.png') 2 fill / calc(var(--px) * 2) stretch; }
 /* 계기 창(태엽 · 속전): 리벳 창 9-slice */
-body.slice.lay-f .rail.left > .apbar, body.slice.lay-f #right > .gtop { background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/gauge.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; padding: 0 2px; }
-/* 태엽: 팔각 열쇠 구멍(14도트) 속 열쇠(16도트) — 쓰면 열쇠 띠가 90도씩 네 번 넘어가며 빈 열쇠로 (steps = 도트 그대로) */
-body.slice.lay-f .apbar .keys { gap: 2px; justify-content: space-between; align-items: center; background: url('../assets/ui/kit/manifold.png') 0 50% / 8px 16px repeat-x; image-rendering: pixelated; } /* 구멍을 잇는 황동 관 (2026-11-05) */
-body.slice.lay-f .apbar .seg { flex: 0 0 auto; width: 32px; height: 32px; background: url('../assets/ui/kit/socket.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; clip-path: none; box-shadow: none; display: grid; place-items: center; animation: none; filter: none; }
-body.slice.lay-f .apbar .seg.on { background-image: url('../assets/ui/kit/socket-lit.png'); }
-body.slice.lay-f .apbar .seg.bonus.on { background-image: url('../assets/ui/kit/socket-bonus.png'); }
-body.slice.lay-f .apbar .seg .key { display: block; width: 32px; height: 32px; margin: 0; background: url('../assets/ui/kit/key-spin.png') -128px 0 / 160px 32px no-repeat; image-rendering: pixelated; }
-body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
-body.slice.lay-f .apbar .seg.bonus .key { background-image: url('../assets/ui/kit/key-spin-bonus.png'); }
-body.slice.lay-f .apbar .seg.spend .key { animation: keySpin 360ms steps(4, jump-none) both; }
-body.slice.lay-f .apbar .seg.wind .key { animation: keyWind2 280ms steps(4, jump-none) both; animation-delay: calc(var(--k) * 60ms); }
-@keyframes keySpin { from { background-position: 0 0; } to { background-position: -128px 0; } }
-@keyframes keyWind2 { from { background-position: -128px 0; } to { background-position: 0 0; } }
+body.slice.lay-f #right > .gtop { background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 4); border-image: url('../assets/ui/kit/gauge.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated; padding: 0 2px; }
 /* 속전: 진공관 띠(6×14도트) — 켜짐은 가끔 한 칸 어두워지는 떨림, 꺼질 땐 번쩍 → 불씨 → 꺼짐 */
 body.slice.lay-f .gtop .coins .tubes { background: none; box-shadow: none; padding: 0; gap: 2px; justify-content: space-between; align-items: end; }
 body.slice.lay-f .gtop .coins .tube { flex: 0 0 auto; width: 12px; height: 28px; border-radius: 0; box-shadow: none; filter: none; background: url('../assets/ui/kit/tube.png') -48px 0 / 60px 28px no-repeat; image-rendering: pixelated; animation: none; }
@@ -1272,24 +886,9 @@ body.slice.lay-f .gtop .coins .tube.lit { background-position: 0 0; animation: t
 body.slice.lay-f .gtop .coins .tube.dying { animation: tubeOut 900ms steps(1, end) both; }
 @keyframes tubeOut { 0% { background-position: 0 0; } 15% { background-position: -24px 0; } 30% { background-position: -48px 0; } 45% { background-position: -24px 0; } 60% { background-position: -36px 0; } 80%, 100% { background-position: -48px 0; } }
 /* 단추: 모두 같은 철 · 황동 도트 버튼 (덱 · 분대도) */
-body.slice.lay-f .deckrow .deck-btn { background: none; box-shadow: none; color: #ece6da; font: 700 12px Galmuri11, sans-serif; margin: 0; min-width: 0; }
 body.slice.lay-f #btn-rewind .ico-rew { display: block; width: 32px; height: 32px; background: url('../assets/ui/kit/ico-rewind.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
 body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 64px; width: 64px; }
-/* 도움말: 판 무대 오른쪽 위, 태엽 톱니 안의 ? */
-#board > .cog-help { position: absolute; top: 4px; right: 4px; z-index: 6; width: 48px; height: 48px; min-width: 0; min-height: 0; padding: 0; border: 0; border-image: none; background: none; display: grid; place-items: center; }
-#board > .cog-help i { display: block; width: 32px; height: 32px; background: url('../assets/ui/kit/cog-help.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
-#board > .cog-help:active i { transform: translateY(var(--px)); }
 @media (prefers-reduced-motion: reduce) { body.slice.lay-f .gtop .coins .tube.lit { animation: none; } }
-body.slice.lay-f #hand > .cmd.mag { border-width: calc(var(--px) * 5); border-image-slice: 5 fill; border-image-width: calc(var(--px) * 5); }
-body.slice.lay-f #hand > .cmd.mag .mg-head { height: auto; min-height: 30px; padding: 0 0 0 2px; }
-body.slice.lay-f #hand > .cmd.mag .mg-head b { white-space: normal; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 1.15; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-body.slice.lay-f #hand > .cmd.mag .mg-body { margin: 4px -4px -4px -2px; }
-body.slice.lay-f .apbar .seg { width: 36px; height: 36px; background-size: 36px 36px; }
-body.slice.lay-f .apbar .seg .key { margin: 0; }
-body.slice.lay-f .rail.left > .apbar { grid-template-rows: 14px 1fr; row-gap: 2px; }
-body.slice.lay-f .deckrow .deck-btn { border-style: solid; border-width: calc(var(--px) * 4); }
-body.slice.lay-f .deckrow .deck-btn { border-image: url('../assets/ui/chrome/btn-iron.png') 9 fill / calc(var(--px) * 9) stretch; }
-body.slice.lay-f .deckrow .deck-btn:active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); }
 @keyframes tubeFlick { 0%, 62%, 64%, 100% { background-position: 0 0; } 63% { background-position: -12px 0; } }
 
 /* ===================== D-212 속전 보일러관 · 탄창 글씨 ===================== */
@@ -1302,30 +901,7 @@ body.slice.lay-f .gtop .coins .lava.drain { transition: width 700ms steps(7, end
 body.slice.lay-f .gtop .coins .ticks { position: absolute; inset: 0; background: url('../assets/ui/kit/tick.png') 0 0 / 14px 20px repeat-x; image-rendering: pixelated; }
 @keyframes boil { from { background-position: 0 0; } to { background-position: -28px 0; } }
 @media (prefers-reduced-motion: reduce) { body.slice.lay-f .gtop .coins .lava { animation: none; } }
-/* 탄창 글씨: 갈무리 정체로 통일 (기울임 · 다른 서체 없음), 머리 칭호는 작게 */
-
-body.slice.lay-f #hand > .cmd.mag .mg-head b { font: 700 12px/1.2 Galmuri11, sans-serif; -webkit-line-clamp: 1; white-space: nowrap; }
-body.slice.lay-f #hand > .cmd.mag .mg-desc, body.slice.lay-f #hand > .cmd.mag .mg-use, body.slice.lay-f #hand > .cmd.mag .mg-flv { font: 400 12px/1.4 Galmuri11, sans-serif; font-style: normal; }
-body.slice.lay-f #hand > .cmd.mag .mg-shape svg { width: 30px; height: 30px; }
-/* 태엽 5칸: 구멍 30px로 줄여 한 줄에 */
-body.slice.lay-f .apbar .seg { width: 32px; height: 32px; background-size: 32px 32px; }
-body.slice.lay-f .apbar .seg .key { width: 28px; height: 28px; margin: 2px; background-size: 140px 28px; background-position: -112px 0; }
-body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
-@keyframes keySpin { from { background-position: 0 0; } to { background-position: -112px 0; } }
-@keyframes keyWind2 { from { background-position: -112px 0; } to { background-position: 0 0; } }
-body.slice.lay-f .apbar .seg { width: 32px; height: 32px; background-size: 32px 32px; }
-body.slice.lay-f .apbar .seg .key { width: 32px; height: 32px; margin: 0; background-size: 160px 32px; background-position: -128px 0; }
-body.slice.lay-f .apbar .seg.on .key { background-position: 0 0; }
-body.slice.lay-f .apbar .seg:not(.on) .key { opacity: 0.5; }
-@keyframes keySpin { from { background-position: 0 0; } to { background-position: -128px 0; } }
-@keyframes keyWind2 { from { background-position: -128px 0; } to { background-position: 0 0; } }
 body.slice.lay-f .gtop .turn-label { min-width: max-content; overflow: visible; white-space: nowrap; }
-/* 탄 머리 칭호 (D-213): 갈무리11 굵게 12px 한 줄 — 8자(96px)가 들어갈 폭을 늘 비워 둔다 */
-body.slice.lay-f #hand > .cmd.mag .mg-head { grid-template-columns: 22px 24px minmax(96px, 1fr) auto; column-gap: 4px; }
-body.slice.lay-f #hand > .cmd.mag .mg-head b { font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap; overflow: visible; display: block; -webkit-line-clamp: unset; }
-body.slice.lay-f #hand > .cmd.mag .art img, body.slice.lay-f #hand > .cmd.mag .art .ico16 { width: 24px; height: 24px; }
-body.slice.lay-f #hand > .cmd.mag .art { width: 24px; height: 24px; }
-body.slice.lay-f #hand > .cmd.mag .costgear img { width: 20px; height: 20px; }
 /* 타이틀 화면 전체 반전 (D-214): body 위 덮개 — 두 프레임만 */
 .tfx-inv { position: fixed; inset: 0; z-index: 119; pointer-events: none; display: none; backdrop-filter: invert(1) contrast(1.6); -webkit-backdrop-filter: invert(1) contrast(1.6); }
 .tfx-inv.on { display: block; }
@@ -1547,17 +1123,9 @@ body.slice .rest-line { display: flex; flex-wrap: wrap; align-items: center; gap
 body.slice .rest-line .rest-u { display: inline-flex; align-items: center; gap: 2px; color: #ece6da; }
 body.slice .rest-line .rest-u img { width: 18px; height: 18px; image-rendering: pixelated; }
 
-/* 적 왕 말풍선 얼굴 (2026-11-05): 황동 틀 속 반장 초상화(원래 도트 1:1) 또는 검정 킹 */
-.taunt .taunt-face { flex: none; width: 60px; height: 60px; display: grid; place-items: center; background: #0b0b0e center / 60px 60px no-repeat; image-rendering: pixelated; box-shadow: 0 0 0 2px #000, 0 0 0 4px #8c6239, inset 0 0 0 2px #000; margin: 2px 6px 2px 2px; }
-.taunt .taunt-face img { width: 40px; height: 40px; image-rendering: pixelated; }
-.taunt { padding: 8px 16px 8px 10px; }
-.taunt .taunt-face.tf-boss { min-width: 60px; min-height: 60px; }
-
 /* ---------- 용어 단계 공개 (D-233): NEW 딱지 · ? 톱니의 빨간 점 ---------- */
 .new-tag { display: inline-block; margin-left: 6px; padding: 0 4px; font: 700 12px/16px Galmuri11, sans-serif; font-style: normal; color: #fff; background: #c8322a; border: 2px solid #120c08; box-shadow: 2px 2px 0 #120c08; vertical-align: 2px; }
-#board > .cog-help.has-new::after { content: ''; position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; background: #e8443a; border: 2px solid #120c08; box-shadow: 2px 2px 0 #120c08; animation: newBlink 1.2s steps(2, jump-none) infinite; }
 @keyframes newBlink { 0% { transform: translateY(0); } 100% { transform: translateY(-2px); } }
-@media (prefers-reduced-motion: reduce) { #board > .cog-help.has-new::after { animation: none; } }
 
 /* ---------- 시험판 도구 (D-234): 버그 제보 · 기록 보내기 · 설문 ---------- */
 /* 설문 · 기록 보내기는 출하 끝 그림 위에서도 화면 높이를 다 쓴다 (64vh 상한에 버튼이 잘렸다) */
@@ -1655,53 +1223,14 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
 .tut .tut-frame::after { inset: 0; border: 2px solid #120c08; filter: none; }
 @keyframes tutBreath { 0% { transform: scale(1); } 100% { transform: scale(1.04); } }
 .tut .tut-frame[hidden] { display: none; }
-/* 부관 말풍선: 얼굴 + 이름 + 말 · 아래(짚은 곳이 아래면 위) */
-.tut .tut-talk { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(620px, calc(100vw - 32px)); display: flex; align-items: center; gap: 12px; padding: 10px 12px; pointer-events: auto;
-  background: #16141c; border: 2px solid #0b0b0e; box-shadow: 0 0 0 2px #c89b3c, 4px 4px 0 2px #000; animation: tutIn 240ms steps(4) both; }
-.tut .tut-talk.top { bottom: auto; top: 12px; }
 @keyframes tutIn { 0% { -webkit-mask-image: var(--px3); mask-image: var(--px3); transform: translate(-50%, 6px); } 50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { -webkit-mask-image: none; mask-image: none; transform: translate(-50%, 0); } }
-.tut .tut-face { flex: none; width: 56px; height: 56px; display: grid; place-items: center; background: #0b0b0e; box-shadow: inset 0 0 0 2px #c89b3c, 0 0 0 2px #000; }
-.tut .tut-face img, .tut .tut-face canvas { image-rendering: pixelated; }
-.tut .tut-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.tut .tut-name { font: 700 12px Galmuri11, sans-serif; color: #c89b3c; }
-.tut .tut-text { margin: 0; font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; color: #f4ead6; min-height: 2.8em; word-break: keep-all; }
-.tut .tut-text em { font-style: normal; color: #f4d27a; display: inline-block; }
-.tut .tut-next { font: 12px Galmuri11, sans-serif; color: #a8a4b2; justify-self: end; animation: tutBreath 0.8s steps(2, jump-none) infinite; }
-.tut .tut-next[hidden] { display: none; }
-.tut .tut-skip { align-self: flex-start; flex: none; min-height: 32px; padding: 0 8px; font: 12px Galmuri11, sans-serif; color: #a8a4b2; background: none; border: 0; text-decoration: underline; }
-@media (prefers-reduced-motion: reduce) { .tut .tut-frame, .tut .tut-next, .tut .tut-talk { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tut .tut-frame { animation: none; } }
 
 /* 전환 카드는 판을 완전히 가린다 (D-239 — 비쳐 보이던 판 위에 서술만 찍혔다): 짙은 바탕 + 체크 디더 한 겹 */
 .stagefx.enc { background: #0b0b0e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%2316141c'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2316141c'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
-/* 부관 말풍선 2판 (D-239, 사용자: 「장황하고 줄 바꿈이 엉망」): 글 길이에 맞춘 한 줄 — 얼굴 · 이름+말 · ▼ · 건너뛰기가 한 줄로 */
-.tut .tut-talk { width: auto; max-width: calc(100vw - 32px); padding: 8px 10px; gap: 10px; }
-.tut .tut-face { width: 44px; height: 44px; }
-.tut .tut-body { grid-template-columns: auto auto; align-items: baseline; column-gap: 8px; }
-.tut .tut-name { grid-column: 1 / -1; }
-.tut .tut-text { min-height: 0; white-space: nowrap; }
-.tut .tut-next { justify-self: start; }
-.tut .tut-skip { align-self: center; }
-@media (max-width: 700px) { .tut .tut-text { white-space: normal; } }
-/* ▼는 말풍선 오른쪽 아래 귀퉁이, 건너뛰기는 말풍선 위 오른쪽 바깥 — 서로 겹치지 않게 */
-.tut .tut-talk { padding-right: 26px; }
-.tut .tut-next { position: absolute; right: 6px; bottom: 4px; }
-.tut .tut-skip { position: absolute; right: 0; bottom: calc(100% + 6px); min-height: 28px; padding: 0 8px; background: #16141c; box-shadow: 0 0 0 2px #000; text-decoration: none; }
-.tut .tut-talk.top .tut-skip { bottom: auto; top: calc(100% + 6px); }
-/* 부관 박차 초상 N-01 (56도트, 1도트 = 1px 그대로) */
-.tut .tut-face { width: 60px; height: 60px; }
-.tut .tut-face img { width: 56px; height: 56px; image-rendering: pixelated; }
 
 /* D-242: 안내가 잠시 쉰다 (적 차례 · 연출 중) — 판이 흐려진 채 진행되지 않게 */
-.tut.paused .tut-dim, .tut.paused .tut-frame, .tut.paused .tut-talk, .tut.paused .tut-catch { visibility: hidden; }
-/* 코치 줄 = 부관 박차가 말한다 (화자 통일) */
-.coach-line { display: flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; white-space: normal; text-align: left; line-height: 1.35; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c, 4px 4px 0 2px #000; }
-.coach-line .cl-face { flex: none; width: 40px; height: 40px; image-rendering: pixelated; background: #0b0b0e; box-shadow: inset 0 0 0 2px #c89b3c; }
-.coach-line span { white-space: nowrap; }
-.coach-line b { display: block; font: 700 12px Galmuri11, sans-serif; color: #c89b3c; }
-/* 태엽이 돌아온다: 계기 테가 두 번 번쩍 (steps) */
-.apbar.regain { animation: apRegain 420ms steps(2, jump-none) 2; }
-@keyframes apRegain { 0% { box-shadow: 0 0 0 2px #000, 0 0 0 4px #f4d27a; } 100% { box-shadow: 0 0 0 2px #000, 0 0 0 4px #6fe3f2; } }
-@media (prefers-reduced-motion: reduce) { .apbar.regain { animation: none; } }
+.tut.paused .tut-dim, .tut.paused .tut-frame, .tut.paused .tut-catch { visibility: hidden; }
 
 /* D-242: 메인 문장(왕관 폰 · 붉은 사선)이 연출 뒤 사라지던 것 — 시작 상태를 디더로 숨겼으니 보이는 단계에서 마스크를 걷는다 */
 .tfx-em.tremble img, .tfx-em.cut img, .tfx-em.done img { -webkit-mask-image: none; mask-image: none; }
@@ -1820,25 +1349,9 @@ body.slice .er-card .cf.cf { width: 100%; pointer-events: none; }
 /* ===== D-262 UI 통일성 마무리 (주물 공방 문법 고칠 목록) ===== */
 /* 디더 막: 모달 뒤를 반투명 대신 2×2 먹 체크로 (D-216 — 투명도 보간 · 번짐 금지) */
 body.slice .overlay { background-color: transparent; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%230b0b0e' fill-opacity='.55'/%3E%3Crect width='2' height='2' fill='%230b0b0e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%230b0b0e'/%3E%3C/svg%3E"); image-rendering: pixelated; }
-/* 팝업 제목 = 황동 명패 (창 이름은 명패 하나). 머리 줄(.shop-head 등) 안의 h2도 같다 */
-
-/* 적 차례 · 내 차례 띠: 납작한 색 띠(그라데이션 속도선) → 크롬 쇠 띠 + 리벳 + 도트 속도선(단색) */
-.tb4 .band { background: none; border-style: solid; border-width: 12px 0; border-image: url('../assets/ui/chrome/btn-brass.png') 9 0 fill / 18px 0 stretch; image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
-.tb4.foe .band { border-image-source: url('../assets/ui/chrome/btn-crimson.png'); }
-.tb4 .band::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; animation: streak 300ms steps(6) infinite; }
-.tb4.foe .band::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23ff6b6b'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23ff6b6b'/%3E%3C/svg%3E"); }
-.tb4 .glint { background: #fff; }
-.tb4 .txt { text-shadow: 0 3px 0 #000; }
-.tb4:not(.foe) .txt { text-shadow: 0 2px 0 #fff1c0; }
 /* KO 띠: 같은 문법 (먹 테 + 단색 도트 줄무늬) */
 .ko3 .koband::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='4'%3E%3Crect width='14' height='4' fill='%232c2a10'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; }
 .ko3.lose .koband::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='4'%3E%3Crect width='14' height='4' fill='%233a0e12'/%3E%3C/svg%3E"); }
-/* 원수 도발 · 부관 말풍선 · 반장 규칙: 얇은 선 상자 → 크롬 패널 / 움푹 칸 */
-.taunt { background: none; box-shadow: 0 4px 0 #000; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; padding: 0 6px; }
-.tut .tut-talk { background: none; border: 0; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; padding: 0 22px 0 2px; }
-.tut .tut-talk .tut-next { right: 4px; bottom: 0; }
-.boss-rules { background: none; box-shadow: none; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-crimson.png') 9 fill / 18px stretch; image-rendering: pixelated; padding: 0 4px 2px; color: #fff; }
-.boss-rules b { color: #fff1c0; }
 /* 작업대 선택지 등 카드 얼굴이 아닌 .part-card: 얇은 선 상자 → 철 단추(크롬), 누르면 내려감 */
 body.slice .part-card:not(.cf) { background: none; box-shadow: 0 3px 0 #000; border-style: solid; border-width: 8px; border-image: url('../assets/ui/chrome/btn-iron.png') 9 fill / 18px stretch; image-rendering: pixelated; padding: 6px 4px 8px; }
 body.slice .part-card:not(.cf):active { border-image-source: url('../assets/ui/chrome/btn-iron-down.png'); translate: 0 2px; box-shadow: 0 1px 0 #000; }
@@ -1857,17 +1370,11 @@ body.between .gtop { visibility: hidden; }
 /* ===== D-263 FX · 글 정리 ===== */
 /* 반투명 줄무늬 질감(그라데이션) → 단색 도트 무늬 (svg, 픽셀 그대로) */
 .mapfx { background-image: none; }
-body.slice.lay-f #hand > .cmd.mag .mg-body { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%2315131a'/%3E%3Crect width='4' height='2' fill='%23191720'/%3E%3C/svg%3E"); }
 .tapefx { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5'%3E%3Crect width='4' height='5' fill='%230a1e24'/%3E%3Crect width='4' height='2' fill='%231e5a66'/%3E%3Crect x='1' y='3' width='1' height='1' fill='%23123a42'/%3E%3Crect x='3' y='4' width='1' height='1' fill='%23123a42'/%3E%3C/svg%3E"); image-rendering: pixelated; mix-blend-mode: screen; }
-/* 기록 목록 끝의 흐려짐(그라데이션 가면) → 딱 자른다 */
-.blog .bl-list { -webkit-mask-image: none; mask-image: none; }
 /* 말줄임 없애기: 이름은 줄을 바꿔 다 보여 준다 (단어 단위) */
 .er-name { overflow: visible; text-overflow: clip; white-space: normal; word-break: keep-all; text-align: center; line-height: 1.3; }
 /* 갈무리14는 보통만 (D-213 · D-263 글자 전수 검사): 단추 · 선택지 · 분대 줄 · 작업대 · 집계 · 승급 알림 · 기벽의 굵게를 걷는다 */
 body.slice .btn, body.slice .crew-row b, body.slice .part-card:not(.cf) b, body.slice .tally b, body.slice .quirk, body.slice .tick, body.slice .mapfx .res b, body.slice .crew-row .quirk { font-weight: 400; }
-/* 부관 말풍선은 대국 판 위에서만 (D-263 — 지도 · 작업대 · 보상 뒤에 남아 비치던 것) */
-body.between .coach-line, body:has(#overlay:not([hidden])) .coach-line { display: none; }
-.coach-line { background: none; border-style: solid; border-width: 10px; border-image: url('../assets/ui/chrome/panel.png') 5 fill / 10px stretch; image-rendering: pixelated; box-shadow: 0 4px 0 #000; }
 /* 판 사이에는 전투 오른쪽 기록 칸도 숨긴다 (지도 뒤에 비치던 「직전 공격」) · 사선 · 판돈 창 제목도 황동 명패 */
 body.between #info { visibility: hidden; }
 body.between #right, body.between #left { visibility: hidden; }
@@ -1954,12 +1461,6 @@ body.slice .op-daily b { font-size: 24px; color: #8ee8ea; }
 body.slice .op-sub { display: flex; gap: 8px; margin-top: 4px; }
 body.slice .op-sub .btn { flex: 1 1 0; min-height: 44px; padding: 0 4px 4px; font: 400 15px Galmuri14, Galmuri11, sans-serif; }
 body.slice .op-sub.op-dev .btn { font: 400 12px Galmuri11, sans-serif; opacity: 0.8; }
-/* 부관 박차 초상 (D-286): 테는 진짜 border(그림 위로 칠해지지 않는 inset 그림자 대신) + 그림과 테 사이 2px 먹 틈 — 56도트 그림 그대로 */
-.tut .tut-face { box-sizing: border-box; width: 64px; height: 64px; padding: 2px; border: 2px solid #c89b3c; box-shadow: 0 0 0 2px #000; overflow: hidden; }
-.tut .tut-face img { display: block; width: 56px; height: 56px; }
-/* 코치 줄은 56도트 그림을 줄이지 않고(40px로 줄이면 도트가 뭉갠다) 머리 · 가슴만 보이는 창으로 자른다 */
-.coach-line .cl-face { position: relative; box-sizing: border-box; flex: none; width: 48px; height: 48px; border: 2px solid #c89b3c; background: #0b0b0e; box-shadow: none; overflow: hidden; }
-.coach-line .cl-face img { position: absolute; left: 50%; top: 2px; width: 56px; height: 56px; margin-left: -28px; image-rendering: pixelated; }
 .credits .cr-gap { display: block; height: 24px; }
 .credits .cr-lead { font: 400 24px/1.6 Galmuri11, sans-serif; color: #f4ead6; }
 .pl-text p { text-wrap: balance; word-break: keep-all; }
@@ -2008,10 +1509,8 @@ body.slice .cf .ax-push.axis { border-image-source: url('../assets/ui/kit/badge-
 body.slice .cf .ax-tactic.axis { border-image-source: url('../assets/ui/kit/badge-tactic.png'); }
 
 /* ── D-305 카드 그림 크기 통일: 기물 36px (72칸 정본 ÷ 2 — 몸통 ≈ 27px) · 32칸 아이콘 32px (몸통 ≈ 29px) — 손패 · 고물상 · 보상 어디서나 같은 키 ── */
-body.slice .cmd .art img.piece-img, body.slice .cf .cf-win .art img.piece-img, body.slice.lay-f #hand > .cmd.mag .art img.piece-img { width: 36px; height: 36px; }
-body.slice .cmd .art.any .ico16, body.slice .cf .cf-win .art.any .ico16, body.slice.lay-f #hand > .cmd.mag .art .ico16 { width: 32px; height: 32px; }
-body.slice.lay-f #hand > .cmd.mag .art { width: 36px; height: 36px; }
-body.slice.lay-f #hand > .cmd.mag .mg-head { grid-template-columns: 22px 36px minmax(96px, 1fr) auto; } /* 그림 칸 24 → 36 (D-305) */
+body.slice .cmd .art img.piece-img, body.slice .cf .cf-win .art img.piece-img { width: 36px; height: 36px; }
+body.slice .cmd .art.any .ico16, body.slice .cf .cf-win .art.any .ico16 { width: 32px; height: 32px; } /* 그림 칸 24 → 36 (D-305) */
 /* ── D-309 반장별 강조색: 대사창 테 · 강조 글자 · 얼굴 테 · 규칙 띠가 그 반장 초상 색을 따른다 (body[data-boss] — 반장 대국 동안만) ── */
 body[data-boss="plate"] { --boss-a: #ff8a2a; --boss-d: #8c4a2a; --boss-t: #ffb15a; }
 body[data-boss="spawn"] { --boss-a: #7fd45a; --boss-d: #1e4a26; --boss-t: #b8f08a; }
@@ -2019,16 +1518,7 @@ body[data-boss="thorns"] { --boss-a: #e8e4ec; --boss-d: #5a5e6c; --boss-t: #ffff
 body[data-boss="inspect"] { --boss-a: #9ee8f0; --boss-d: #2a4c58; --boss-t: #c8f6fa; }
 body[data-boss="magnet"] { --boss-a: #d08af0; --boss-d: #5a2276; --boss-t: #e9b8ff; }
 body[data-boss="alarm"] { --boss-a: #ff6b6b; --boss-d: #7a1218; --boss-t: #ff8a8a; }
-body[data-boss="gilded"] { --boss-a: #f4c84a; --boss-d: #8a5a14; --boss-t: #ffe68a; }
-body[data-boss] .taunt { box-shadow: 0 0 0 2px #000, inset 0 0 0 2px var(--boss-d); }
-body[data-boss] .taunt em { color: var(--boss-t); }
-body[data-boss] .taunt .taunt-face.tf-boss { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--boss-a), inset 0 0 0 2px #000; }
-body[data-boss] .boss-rules::after { --c: var(--boss-a); }
-body[data-boss="plate"] .boss-rules, body[data-boss="gilded"] .boss-rules { border-image-source: url('../assets/ui/chrome/btn-brass.png'); }
-body[data-boss="plate"] .boss-rules, body[data-boss="plate"] .boss-rules b, body[data-boss="gilded"] .boss-rules, body[data-boss="gilded"] .boss-rules b { color: #1a1206; }
-body[data-boss="inspect"] .boss-rules { border-image-source: url('../assets/ui/chrome/btn-cyan.png'); }
-body[data-boss="thorns"] .boss-rules { border-image-source: url('../assets/ui/chrome/btn-iron.png'); }
-body[data-boss="magnet"] .boss-rules { filter: hue-rotate(-75deg); } /* 진홍 판을 보라로 — 색만 돌린다(도트 그대로) */
+body[data-boss="gilded"] { --boss-a: #f4c84a; --boss-d: #8a5a14; --boss-t: #ffe68a; } /* 진홍 판을 보라로 — 색만 돌린다(도트 그대로) */
 /* D-313 컷신 글 받침: 밝은 그림(하늘 · 쇳물) 위에서도 읽히게 — 글 줄마다 검은 띠 + 그림 맨 아래 2할만 성긴 디더(4칸에 1칸)로 살짝 어둡게 (반투명 그라데이션 금지) */
 .pl-text p:not(:empty) { justify-self: center; background: #0b0b0e; padding: 2px 10px; box-shadow: 0 0 0 2px #0b0b0e; }
 .pl-stage > .pl-img.pl-portrait { inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; background: #0b0b0e; } /* D-388: 사용자 「잘라 써」 — 비율 그대로 칸을 채우고 얼굴(위 30%)에 초점 (D-313의 contain 레터박스를 대신) */
@@ -2041,18 +1531,13 @@ body[data-boss="magnet"] .boss-rules { filter: hue-rotate(-75deg); } /* 진홍 �
 body.slice.lay-f #btn-rewind { position: relative; }
 body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px; margin: 0; min-width: 14px; padding: 0 2px; line-height: 14px; text-align: center; background: #0b0b0e; color: #f4d27a; box-shadow: 0 0 0 1px #5a4a2a; font: 700 12px Galmuri11, sans-serif; }
 /* 대국 끝 띠 (테스터: 「적 킹 격파」만 다른 화면과 디자인이 달랐다) — 차례 띠(tb4)와 같은 황동 · 진홍 9칸 띠, 글자는 한 줄 */
-.ko3 .koband { height: 96px; margin-top: -48px; background: none; border-style: solid; border-width: 12px 0; border-image: url('../assets/ui/chrome/btn-brass.png') 9 0 fill / 18px 0 stretch; image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
-.ko3.lose .koband { background: none; border-image-source: url('../assets/ui/chrome/btn-crimson.png'); box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.ko3 .koband { height: 96px; margin-top: -48px; background: none; border-style: solid; border-width: calc(var(--px) * 6) 0; border-image: url('../assets/ui/chrome/v2/btn-brass-up.png') 6 0 fill / calc(var(--px) * 6) 0 / 0 round stretch; /* 위아래 변은 반복(round) — 줄무늬가 늘어나지 않게 (D-396) */ image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.ko3.lose .koband { background: none; border-image-source: url('../assets/ui/chrome/v2/btn-crimson-up.png'); box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
 .ko3 .koband::before, .ko3.lose .koband::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; opacity: 0.5; }
 .ko3.lose .koband::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23ff6b6b'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23ff6b6b'/%3E%3C/svg%3E"); }
 .ko3 .word { white-space: nowrap; color: #16141c; text-shadow: 0 3px 0 #fff1c0; }
 .ko3.lose .word { color: #fff; text-shadow: 0 3px 0 #000; }
 .ko3 .word::after { mix-blend-mode: normal; background: #fff; }
-
-/* D-319 도발 말풍선: 다 찍힌 글 너비로 고정 — 보이지 않는 전문 위에 겹쳐 찍는다 */
-.taunt .tq-t { display: grid; }
-.taunt .tq-t > b { grid-area: 1 / 1; font-weight: 400; }
-.taunt .tq-ghost { visibility: hidden; }
 
 /* D-319 보상의 기물 카드: 카드가 아니라 기물을 얻는다는 띠 */
 .cf.recruit { position: relative; }
@@ -2147,14 +1632,7 @@ body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px
    모자람 = 빈 구멍이 좌우로 떨고 붉은 테가 두 번 켜진다(구멍 그림은 그대로) · 차오름 = 열쇠가 감기는 순간 구멍이 움츠렸다 튀고 황동 고리가 계단으로 퍼진다 */
 body.slice.lay-f #vials .seg.apb { animation: apNo 360ms both; position: relative; }
 body.slice.lay-f #vials .seg.apb::after { content: ''; position: absolute; inset: 2px; box-shadow: inset 0 0 0 2px #e5262f; animation: apNoRing 360ms steps(1) both; }
-@keyframes apNo { 0% { transform: none; } 20% { transform: translateX(-3px); } 45% { transform: translateX(3px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
-@keyframes apNoRing { 0%, 40% { visibility: visible; } 20%, 60%, 100% { visibility: hidden; } }
-body.slice.lay-f .apbar.regain { animation: none; }
-body.slice.lay-f .apbar.regain .seg.on { position: relative; animation: apPop 340ms calc(var(--k, 0) * 60ms) both; }
-body.slice.lay-f .apbar.regain .seg.on::before { content: ''; position: absolute; inset: 0; box-shadow: 0 0 0 2px #f4d27a; visibility: hidden; animation: apRing 340ms calc(var(--k, 0) * 60ms) steps(3) both; pointer-events: none; }
-@keyframes apPop { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 30% { transform: scale(0.82, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 65% { transform: scale(1.18, 0.9); } 100% { transform: none; } }
-@keyframes apRing { 0% { visibility: visible; inset: 4px; } 99% { visibility: visible; inset: -8px; } 100% { visibility: hidden; inset: -8px; } }
-@media (prefers-reduced-motion: reduce) { body.slice.lay-f #vials .seg.apb, body.slice.lay-f .apbar.regain .seg.on { animation: none; } }
+@media (prefers-reduced-motion: reduce) { body.slice.lay-f #vials .seg.apb { animation: none; } }
 
 /* D-319 고물상 시너지 힌트 · 현황 줄 */
 
@@ -2178,23 +1656,6 @@ body.slice.placebg .overlay { background-image: none; }
 @keyframes railNudgeR { 0% { transform: translateX(14px); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 60% { transform: translateX(-3px); } 100% { transform: none; } }
 @keyframes railNudgeL { 0% { transform: translateX(-14px); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 60% { transform: translateX(3px); } 100% { transform: none; } }
 
-/* 고물상: 머리 · 현황 줄 · 카드 줄 한 화면 */
-
-/* 줄 맞춤: 다 들어가면 가운데, 넘치면 첫 장부터 (가장자리 카드가 잘려 시작하지 않게) · 한 화면(412) 높이에 가격표까지 */
-
- 
-
-/* 확인 창의 카드도 줄의 카드와 같은 크기 · 같은 속 (D-322) */
-
-/* 보상 화면: 카드 줄 + 남은 분대 한 줄 + 단추가 한 화면에 (D-322) */
-
-/* D-324 합류 말풍선 — 흰 기물 · 청록 테 (반장 도발과 구분) */
-.taunt.crew-say { box-shadow: 0 4px 0 #000; max-width: min(640px, 90vw); }
-.taunt.crew-say .tq-t { grid-template-rows: auto auto; }
-.taunt.crew-say .cs-name { grid-row: 1; font: 700 12px Galmuri11, sans-serif; color: #8ee8ea; }
-.taunt.crew-say .tq-ghost, .taunt.crew-say .tq-live { grid-row: 2; grid-column: 1; }
-.taunt.crew-say .taunt-face { box-shadow: 0 0 0 2px #000, 0 0 0 4px #46c4c8, inset 0 0 0 2px #000; }
-
 /* ===== D-325 세 칸 태그: 누가 · 어떤 · 합/곱/규칙 (모든 카드 · 부품 같은 자리 · 같은 모양) ===== */
 body.slice .cf .cf-type { display: flex; justify-content: center; }
 body.slice .cf .t3 { display: inline-flex; gap: 3px; align-items: center; flex-wrap: nowrap; }
@@ -2215,22 +1676,7 @@ body.slice .cf .sty-tempo { background: #f4d27a; }
 .cmd .chips .t3-who { display: none !important; } /* 손패는 기물 그림이 이미 「누가」 */
 .cmd .chips .sty-chain { background: #f8a03a; } .cmd .chips .sty-push { background: #b9bdc8; } .cmd .chips .sty-tactic { background: #c8a2f0; } .cmd .chips .sty-guard { background: #46c4c8; } .cmd .chips .sty-strike { background: #ff6b6b; } .cmd .chips .sty-tempo { background: #f4d27a; }
 .cmd .chips .fx-add { background: #2dd4bf; } .cmd .chips .fx-mul { background: #ec6a1a; color: #fff6d8; } .cmd .chips .fx-rule { background: #41434f; color: #e8e0cc; }
-body.slice.lay-f #hand > .cmd .txt b .chips > .t3 { display: inline-flex; }
-body.slice.lay-f #hand > .cmd .op-corner { display: none; }
-body.slice .cmd.mag .mg-head .chips { margin-left: auto; flex: none; }
-body.slice .cmd.mag .mg-head > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* 손패: 세 칸 표지(어떤 · 효과)는 이름 아래 둘째 줄 — 좁은 칸에서 이름을 자르지 않게 */
-body.slice.lay-f #hand > .cmd.mag .mg-head { grid-template-columns: 22px 36px minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 1px; padding-block: 3px; }
-body.slice.lay-f #hand > .cmd.mag .mg-head > .costgear { grid-row: 1 / 3; }
-body.slice.lay-f #hand > .cmd.mag .mg-head > .art, body.slice.lay-f #hand > .cmd.mag .mg-head > .cf-art, body.slice.lay-f #hand > .cmd.mag .mg-head > :nth-child(2) { grid-row: 1 / 3; }
-body.slice.lay-f #hand > .cmd.mag .mg-head > b { grid-column: 3; grid-row: 1; }
-body.slice.lay-f #hand > .cmd.mag .mg-head > .chips { grid-column: 3; grid-row: 2; margin: 0; justify-self: start; }
-body.slice.lay-f #hand > .cmd.mag .chips .t3 { margin-left: 0; }
-body.slice.lay-f #hand > .cmd.mag .chips .t3 > i { height: 14px; line-height: 14px; }
 /* UX 점검 (2026-11-08): 큰 확인 창의 그림은 레일과 같은 크기 (레일 밖으로 복제되면 32칸으로 줄던 것) */
-
-/* 손패: 표지가 없는 기본 이동 카드는 이름을 두 줄 가운데에 */
-body.slice.lay-f #hand > .cmd.mag .mg-head > b:last-child { grid-row: 1 / 3; align-self: center; }
 /* 설명 문단 (D-333): ① 묘사 최대 2줄(낱말 안 끊김) ② (기능) 1줄 ③ 조건 1줄 — 모든 카드 · 부품 · 선택지 */
 body.slice .cf .cf-desc .dl { display: block; word-break: keep-all; overflow-wrap: normal; text-align: center; }
 body.slice .cf .cf-desc .dl-say { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; color: #ece6da; text-wrap: balance; max-height: 36px; overflow: hidden; }
@@ -2255,22 +1701,11 @@ body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx > i { display: inline-bl
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 5px; }
 /* D-336: 조건은 쉬운 말이라 길 수 있다 — 낱말 단위로 두 줄까지 (묘사 + 조건 + 성능 ≤ 4줄은 측정으로 지킨다) */
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { white-space: normal; text-wrap: balance; }
-/* 손패를 펼쳤을 때도 같은 문단 (D-336) */
-body.slice #hand .mg-desc .dl { display: block; word-break: keep-all; }
-body.slice #hand .mg-desc .dl-if { color: #b9b4c2; font: 400 12px/15px Galmuri11, sans-serif; }
-body.slice #hand .mg-desc .dl-fx > i { display: inline-block; font-style: normal; margin-top: 2px; padding: 0 5px; background: #3a2c10; color: #ffd64a; font: 700 12px/15px Galmuri11, sans-serif; box-shadow: 0 0 0 1px #0b0b0e; }
 /* 크레딧 배경 (D-346 · E-06): 받은 그림이 있으면 뒤에 깐다 */
 .credits .cr-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; z-index: 0; pointer-events: none; }
 .credits .cr-page, .credits .pl-tap { position: relative; z-index: 1; }
-.taunt-face .crew-face { display: block; image-rendering: pixelated; }
 /* 크레딧 글 받침 (D-349): 배경 그림 위에서도 읽히게 — 어두운 철판 한 장 */
-.credits .cr-bg ~ .cr-page { background: rgba(11, 11, 14, 0.86); padding: 14px 28px; box-shadow: 0 0 0 2px #2f2e36, 0 0 0 4px #0b0b0e, 0 6px 0 4px rgba(0, 0, 0, 0.6); }
-/* D-352 합류 초상: 상반신을 액자 가득, 밑변에 붙여 잘린 몸이 액자 아래로 이어지게 */
-.taunt.crew-say .taunt-face { place-items: end center; overflow: hidden; }
-.taunt.crew-say .taunt-face img.crew-face { width: 56px; height: 56px; }
-/* D-353 · D-354 합류 초상 층: 종이(바탕) → 초상(img) → 검은 액자 → 파란 액자 (액자 둘은 ::after로 초상 위에 덮는다) */
-.taunt.crew-say .taunt-face { position: relative; background: #e8e0cc; box-shadow: none; }
-.taunt.crew-say .taunt-face::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 2px #46c4c8, inset 0 0 0 4px #000; } /* 바깥 파랑 2 · 안쪽 검정 2 — 둘 다 초상 위 */
+.credits .cr-bg ~ .cr-page { background: rgba(11, 11, 14, 0.86); padding: 14px 28px; box-shadow: 0 0 0 2px #2f2e36, 0 0 0 4px #0b0b0e, 0 6px 0 4px rgba(0, 0, 0, 0.6); } /* 바깥 파랑 2 · 안쪽 검정 2 — 둘 다 초상 위 */
 /* D-362 분대원 카드 (사건 결과): 카드와 같은 틀 · 그림 창에 기물 · 설명 칸에 HP 막대 */
 body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 .cf.crew-card .cf-win { display: grid; place-items: center; }
@@ -2286,7 +1721,6 @@ body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 .er-card .er-stamp.in { animation: erStamp 300ms steps(3) both; }
 @keyframes erStamp { 0% { transform: scale(2.4) rotate(-14deg); } 66% { transform: scale(0.9) rotate(3deg); } 100% { transform: none; } }
 /* D-363 분대원 정보 카드 (판에서 길게 누름 · 분대 화면) */
-#info.ci-host { padding: 0; background: none; box-shadow: none; border: 0; }
 .cf.crew-info { width: 188px; display: grid; justify-items: stretch; gap: 4px; padding-bottom: 8px; pointer-events: none; }
 .cf.crew-info .cf-name { text-align: center; }
 .cf.crew-info .ci-serial { text-align: center; font-size: 12px; color: #9a917c; margin-top: -2px; }
@@ -2398,14 +1832,12 @@ body.slice .cf.cf.cf.crew-card .cs-sc { color: #8c6239 !important; font-weight: 
 /* 사건 결과 오버레이 · 길게 누름 크기 */
 body.slice .er-card.reward-cards.er-crewcard { width: 150px; height: auto; }
 body.slice .er-crewcard .cf.cf.cf.crew-card { width: 150px; }
-#info.ci-host .cf.cf.cf.crew-card { width: 200px; }
 
 /* ===================== D-372 화면을 카드에 맞춘다 (사용자: 「화면마다 카드를 줄이지 말고, 화면을 새 카드에 맞춰」) =====================
    카드는 어디서나 한 크기(--card-w). 카드를 늘어놓는 화면(고물상 · 보상 · 부품 고르기 · 핵심 부품 · 다듬기 · 사건 결과)은
    가로 한 줄 레일 — 넘치면 옆으로 민다(기존 ◀ ▶). 비용 톱니 · 리본 꼬리 · 가격표가 잘리지 않게 위아래 여유. */
 :root { --card-w: 168px; }
-body.slice .cf.cf.cf,
-body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card, #info.ci-host .cf.cf.cf.crew-card { width: var(--card-w); flex: none; }
+body.slice .cf.cf.cf, body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card { width: var(--card-w); flex: none; }
 
 body.slice .er-card.reward-cards.er-crewcard, body.slice .er-card.reward-cards { width: var(--card-w); height: auto; }
 body.slice .er-card.reward-cards .cf.cf.cf { width: var(--card-w); }
@@ -2507,20 +1939,9 @@ body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color
 body.slice .cf.cf.cf.cf > .cf-desc .ln.s10, body.slice .cf.cf.cf.cf > .cf-desc .ln.s10 * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
 body.slice .cf.cf.cf.cf > .cf-desc .ln.s8, body.slice .cf.cf.cf.cf > .cf-desc .ln.s8 * { font-family: Galmuri7, Galmuri9, sans-serif !important; font-size: 8px !important; line-height: 15px !important; font-weight: 400 !important; }
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }
-/* 카드 밖(지도 안내 등)에서 쓰는 같은 본문은 그냥 줄 */
-.mg-desc .db, .mg-desc .db-top, .mg-desc .db-bot, .mg-desc .ln { display: block; }
 /* 생명 빈 자리 = 깨진(검은) 태엽 하트 */
 body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }
-body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; } /* D-377: 옛 규칙(b · em 블록/플렉스)이 한 줄을 쪼개지 않게 */
-/* 받침의 「함께 오는 카드」 줄도 가운데 (D-377 — 카드 본문과 같은 정렬) */
-
-/* D-381 손패 펼침 설명도 카드 본문과 같은 문법: 위 칸(묘사) · 점선 · 아래 칸(조건 / 효과) — 줄마다 한 줄 */
-.mg-desc .db { display: flex !important; flex-direction: column; gap: 0; }
-.mg-desc .db-top, .mg-desc .db-bot { display: flex !important; flex-direction: column; align-items: flex-start; }
-.mg-desc .db.two .db-bot { border-top: 2px dotted #a8782a; margin-top: 3px; padding-top: 3px; }
-.mg-desc .ln { display: block; white-space: nowrap; }
-.mg-desc .ln-fx b { font-weight: 700; }
-.mg-desc .ln-fx em { font-style: normal; color: #ff8a7a; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; }
 
 /* ===== D-385 진입 창 (D-383을 고침 — 사용자: 「직접 찍지 말고 이미지 에셋을 쓰거나 발주를 내라」):
    철판 패널(크롬) + 걸친 황동 꼬리표 · 왼쪽 움푹 칸 = 받은 장면 그림(막 · 고물상 · 작업대 · 사건) 위에 실제 기물 · 소품 · 오른쪽 이름 · 서술 · 명단 칩 · 종이 테이프.

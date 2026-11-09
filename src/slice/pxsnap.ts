@@ -8,6 +8,8 @@ const apply = (): void => {
   const dpr = window.devicePixelRatio || 1;
   const dev = Math.max(1, Math.round(2 * dpr));
   document.documentElement.style.setProperty('--px', `${dev / dpr}px`);
+  // 아이콘 층 도트 하나 = 기기 픽셀 round(DPR)개 (16칸 아이콘 · 적 의도 아이콘을 레일 한 줄 32px 안에 — D-396)
+  document.documentElement.style.setProperty('--px1', `${Math.max(1, Math.round(dpr)) / dpr}px`);
   document.documentElement.dataset.dpr = String(Math.round(dpr * 1000) / 1000);
 };
 let mq: MediaQueryList | null = null;

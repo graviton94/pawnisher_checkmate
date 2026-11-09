@@ -41,7 +41,7 @@ export const HUD_TEXT = {
   pawnMode: '종이 왕관을 벗었습니다. 이제 폰처럼 움직입니다.',
   /** 경보 반장 (D-274) — ⑨ 표지 */
   alarm: '경보 — 이번 적 차례 공격 ×1.5',
-  newTerm: (names: string) => `새 용어 「${names}」 — ? 의 「용어」에서 볼 수 있습니다.`,
+  newTerm: (names: string) => `새 용어 「${names}」`,
   shock: '기어 쇼크 — 공격 ×0.5 · 손패 −1',
   /** 헛방 경직 → 「기절」 평문 (D-233: 고유 명사를 지우고 별 딱지 + 평문으로) */
   whiff: (n: number) => `헛친 적 ${n}기 기절`,
@@ -68,6 +68,20 @@ export const HUD_TEXT = {
     wake: '태엽이 다시 감긴다. 당신은, 눈을 뜬다.',
   },
   track: '속전',
+  /** 오른쪽 레일 적 의도 목록 (패스 4 D-396 — ITB식: 적마다 아이콘 + 대상 + 값) */
+  intentHead: '적의 수',
+  logOpen: '적의 수 — 누르면 지난 기록',
+  logTitle: '기록',
+  logNone: '아직 기록이 없습니다.',
+  intentNone: '움직일 적이 없습니다.',
+  intentMore: (n: number) => `그 밖에 ${n}`,
+  intentWord: { approach: '다가옴', guard: '호위', shield: '방열판', rest: '쉼' },
+  /** 턴 끝 경고 (보고서 2-2): 확인 창 없이 상태 띠 한 줄 + 진홍 단추 — 한 번 더 누르면 끝 */
+  warnEnd: '이대로면 킹이 맞습니다.',
+  /** 반장 규칙 엿보기 명패 */
+  bossRules: '반장 규칙',
+  /** 연쇄 줄 (레일) */
+  chainNow: (k: number, op: string) => `연쇄 ${k} · 다음 ${op}`,
   trackHint: '속전 보상은 턴마다 한 칸 줄어듭니다. 이기면 남은 칸 × 5 나사를 받습니다.',
   dmg: '피해',
   helpTitle: '안내서',

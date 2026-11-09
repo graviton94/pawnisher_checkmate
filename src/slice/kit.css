@@ -36,7 +36,7 @@
 }
 
 /* ---------- 3.1 창 — .win (S 352 · M 592 · L 883) ---------- */
-#overlay-panel.win, .kit-sheet .win {
+#overlay-panel.win, .kit-sheet .win, .k-peek.win {
   position: relative; box-sizing: border-box;
   width: var(--win-w); max-width: calc(100vw - 2 * var(--G)); max-height: var(--win-hmax); min-height: 0;
   overflow: visible;
@@ -279,18 +279,76 @@
 .win > .win-head:has(> .tabs) { align-items: flex-end; }
 .win > .win-head:has(> .tabs) + * { margin-top: calc(-1 * var(--s3)); }
 
-/* ---------- 3.8 토스트 · 상태 띠 (키트 그릇 안에서만 — 전투 HUD는 패스 4에서 옮긴다) ---------- */
-:is(.scr-pick, .scr-place, .kit) .k-toast, .k-toast.k-free {
-  display: inline-flex; align-items: center; gap: var(--s2); box-sizing: border-box; height: calc(var(--px) * 24); max-width: 480px; padding: 0 var(--s2);
-  border-style: solid; border-width: calc(var(--k-toast) * var(--px));
-  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
-  image-rendering: pixelated; color: var(--t-body); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; white-space: nowrap;
+/* ---------- 3.8 상태 띠 · 토스트 — 한 자리에 줄 선다 (uikit.stateBand, 패스 4 D-396) ----------
+   전투 중 = 가운데 열(판) 맨 위 48px, 그 밖 = 화면 위 가운데. 높이 24도트 · 폭 내용대로 ≤ 480 · 동시에 1개. */
+.state-band {
+  position: fixed; z-index: 90; left: 50%; top: var(--Gy); transform: translateX(-50%);
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  min-height: calc(var(--px) * 24); max-width: min(480px, calc(100vw - 2 * var(--G))); padding: 0 var(--s2); margin: 0;
+  border-style: solid; image-rendering: pixelated; cursor: pointer; pointer-events: auto;
+  text-align: center; white-space: nowrap; word-break: keep-all;
 }
-.k-toast.k-free { position: fixed; z-index: 90; left: 50%; top: var(--Gy); transform: translateX(-50%); pointer-events: auto; }
-.k-toast.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
+.state-band > img { flex: none; width: calc(var(--px) * 12); height: calc(var(--px) * 12); image-rendering: pixelated; }
+.state-band.k-toast {
+  border-width: calc(var(--k-toast) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
+  color: var(--t-body); font: 400 15px/1.4 Galmuri14, Galmuri11, sans-serif; white-space: normal; /* 20자 넘는 옛 문구는 두 줄로 (잘리지 않게) */
+}
+/* 턴 · 판 · 경고 띠: 받은 단추 그림(UI-02)을 띠로 — 가운데 면은 단색, 가로 변은 반복(round)이라 녹 얼룩 · 줄무늬가 늘어나지 않는다 */
+.state-band:is(.k-brass, .k-crimson) {
+  min-width: min(240px, 100%); padding: 0 var(--s3);
+  border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px));
+  border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch;
+  font: 700 24px/1 Galmuri11, sans-serif;
+}
+.state-band.k-brass { --up: url('../assets/ui/chrome/v2/btn-brass-up.png'); color: var(--t-brass-ink); }
+.state-band.k-crimson { --up: url('../assets/ui/chrome/v2/btn-crimson-up.png'); color: #000; }
+/* 등장: 아래로 펼쳐지는 계단 3프레임 (투명도 보간 없음) · 퇴장은 pxOut 디더 */
+.state-band.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
 @keyframes ktoastin { 0% { clip-path: inset(0 0 66% 0); } 50% { clip-path: inset(0 0 33% 0); } 100% { clip-path: inset(0); } }
-.k-band { position: fixed; z-index: 90; left: 50%; top: calc(var(--Gy) + var(--px) * 24); transform: translateX(-50%); }
-.k-band .plate { min-width: 240px; }
+/* 견본 쪽(kitSheet)에서 토스트 모양만 */
+.kit-sheet .k-toast { position: static; transform: none; }
+
+/* ---------- 말풍선 .talk — 초상 액자 + 움푹 칸 (튜토리얼 · 부관 · 적 킹 · 반장 · 분대원, 패스 4 D-396) ---------- */
+.talk {
+  position: fixed; z-index: 62; box-sizing: border-box; display: flex; align-items: flex-start; gap: var(--s2);
+  left: 50%; top: var(--Gy); transform: translateX(-50%); width: max-content; max-width: min(592px, calc(100vw - 2 * var(--G)));
+  pointer-events: none; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e);
+}
+.talk .talk-face { flex: none; display: grid; place-items: end center; overflow: hidden; }
+.talk .talk-face > :is(img, canvas, .piece) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; image-rendering: pixelated; }
+.talk .talk-body { flex: 1 1 auto; min-width: 0; display: grid; gap: var(--s1); align-content: start; min-height: calc(var(--px) * 32); }
+.talk .who { display: block; color: var(--t-gold); font: 700 12px/1.4 Galmuri11, sans-serif; }
+.talk .line { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; overflow-wrap: break-word; }
+.talk .line em { font-style: normal; color: var(--t-gold); display: inline-block; }
+.talk.foe .line em { color: var(--t-loss); }
+.talk.ally .who { color: var(--t-ally); }
+/* 레일 위: 레일 폭에 맞춰 세로로 쌓는다 (초상 · 이름 줄 → 말 칸) — 판을 가리지 않는다 */
+.talk.on-rail { transform: none; flex-direction: column; align-items: stretch; max-width: none; }
+.talk.on-rail .talk-face { align-self: flex-start; }
+/* 이야기 재질(종이 판): 튜토리얼 · 부관 — 시스템 창(철)과 구별 */
+.talk.win-paper {
+  padding: 0; border-style: solid; border-width: calc(var(--k-paper-y) * var(--px)) calc(var(--k-paper-x) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/panel-paper.png') var(--k-paper-y) var(--k-paper-x) fill / calc(var(--k-paper-y) * var(--px)) calc(var(--k-paper-x) * var(--px)) / 0 round;
+  background: #f1ede4 padding-box; image-rendering: pixelated;
+}
+.talk.in { animation: ktoastin 240ms steps(3, jump-none) both; }
+
+/* ---------- 정보 엿보기 .k-peek — 비모달 S 창 (길게 누름 · 반장 규칙 · 기록, 패스 4 D-396) ---------- */
+.k-peek { position: fixed; z-index: 64; pointer-events: none; }
+.k-peek.win.win-s { --win-w: var(--win-s); --win-hmax: var(--win-h-s); gap: var(--s2); max-width: min(var(--win-s), calc(100vw - 2 * var(--G))); }
+.k-peek.k-in { animation: ktoastin 200ms steps(3, jump-none) both; }
+.k-peek .win-head .lead { font: 700 24px/30px Galmuri11, sans-serif; }
+.k-peek .win-head > .piece-img, .k-peek .win-head > img { width: calc(var(--px) * 24); height: calc(var(--px) * 24); }
+.k-peek p { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+.k-peek .stats { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
+.k-peek.bare { padding: 0; }
+/* 기록 엿보기: 한 줄 = 공격자 → 맞은 기물 −피해 */
+.k-peek .log-row { display: flex; align-items: center; gap: var(--s1); min-height: calc(var(--px) * 12); color: var(--t-body); font: 400 12px/1.4 Galmuri11, sans-serif; }
+.k-peek .log-row img { width: calc(var(--px) * 10); height: calc(var(--px) * 10); image-rendering: pixelated; }
+.k-peek .log-row em { font-style: normal; color: var(--t-gold); }
+.k-peek .log-row.foe em { color: var(--t-loss); }
+.k-peek .log-turn { color: var(--t-dim); font: 700 12px/1.4 Galmuri11, sans-serif; }
 
 /* ---------- 3.10 컷신 크롬 (패스 5에서 옮긴다 — 부품만 먼저) ---------- */
 .kit-sheet .cut-sub { box-sizing: border-box; max-width: 640px; padding: var(--s2) var(--s3); background: #0b0b0e; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
@@ -298,7 +356,7 @@
 @keyframes kblink { 50% { visibility: hidden; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up, .k-toast.k-in, .kit-sheet .cut-next { animation: none; }
+  .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up, .state-band.k-in, .talk.in, .k-peek.k-in, .kit-sheet .cut-next { animation: none; }
 }
 
 /* ===================== 패스 1 창 내용 — 부품 조합만 (D-391) ===================== */
@@ -464,3 +522,169 @@
 .win-scene .ev-cw .slot-info { min-height: var(--info-h, 18px); color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; text-align: center; }
 .win-scene .ev-cw .slot-info b { color: var(--t-ally); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .win-scene :is(.ws-narr, .ws-say, .ws-sum).in, .win-scene .ev-ov, .win-scene .ev-ov .ev-tap { animation: none; } }
+
+/* ===================== 패스 4 — 전투 HUD 구역 (3.9, D-396) =====================
+   왼쪽 레일 = 태엽(64) · 손패(선택지 판) · 덱 줄(52) / 가운데 = 상태 띠 48 + 판 / 오른쪽 = 턴 · 속전(64) · 적 의도 목록(움푹 칸) · 되감기 + 턴 끝(52).
+   레일 폭 180 ~ 214: 667 폭에서도 가운데 열 ≥ 305 → 판 칸 50 (터치 48 하한). */
+body.slice.lay-f { --railL: clamp(183px, 23vw, 214px); --railR: clamp(183px, 23vw, 214px); --gTop: 64px; --gBot: 52px; }
+body.slice.lay-f #left.rail, body.slice.lay-f #right.rail { display: flex; flex-direction: column; gap: 6px; padding: 6px; min-height: 0; overflow: hidden; }
+
+/* 태엽 계기 (지금 그대로 — 받침 · 열쇠 그림은 D-211 도트) */
+body.slice.lay-f #vials.apbar {
+  flex: none; height: var(--gTop); margin: 0; box-sizing: border-box; padding: 0 2px;
+  display: grid; grid-template-columns: 1fr auto; grid-template-rows: 14px 1fr; row-gap: 2px; align-items: center;
+  background: none; box-shadow: none; border-style: solid; border-width: calc(var(--px) * 4);
+  border-image: url('../assets/ui/kit/gauge.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated;
+}
+#vials .lbl { grid-row: 1; grid-column: 1; display: block; margin: 0; color: #f0c48a; font: 400 12px/14px Galmuri11, sans-serif; }
+#vials > b { grid-row: 1; grid-column: 2; margin: 0; min-width: 0; color: #f4d27a; font: 400 15px/16px Galmuri14, Galmuri11, sans-serif; }
+#vials .keys { grid-row: 2; grid-column: 1 / -1; height: 100%; min-width: 0; display: flex; gap: 2px; justify-content: space-between; align-items: center; background: url('../assets/ui/kit/manifold.png') 0 50% / 8px 16px repeat-x; image-rendering: pixelated; }
+#vials .seg { position: relative; flex: 0 0 auto; width: 32px; height: 32px; display: grid; place-items: center; background: url('../assets/ui/kit/socket.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
+#vials .seg.on { background-image: url('../assets/ui/kit/socket-lit.png'); }
+#vials .seg.bonus.on { background-image: url('../assets/ui/kit/socket-bonus.png'); }
+#vials .seg .key { display: block; width: 32px; height: 32px; margin: 0; background: url('../assets/ui/kit/key-spin.png') -128px 0 / 160px 32px no-repeat; image-rendering: pixelated; }
+#vials .seg.on .key { background-position: 0 0; }
+#vials .seg:not(.on) .key { opacity: 0.5; }
+#vials .seg.bonus .key { background-image: url('../assets/ui/kit/key-spin-bonus.png'); }
+#vials .seg.spend .key { animation: keySpin 360ms steps(4, jump-none) both; }
+#vials .seg.wind .key { animation: keyWind2 280ms steps(4, jump-none) both; animation-delay: calc(var(--k) * 60ms); }
+@keyframes keySpin { from { background-position: 0 0; } to { background-position: -128px 0; } }
+@keyframes keyWind2 { from { background-position: -128px 0; } to { background-position: 0 0; } }
+
+/* 손패 = 선택지 판(UI-03 choice) 한 줄씩: 황동 탭 = 태엽 비용 · 그림 · 이름(12 굵게) · 효과 한 줄(12) — 누르면 펼쳐 전체 문장 (D-379 짧은 줄 유지) */
+body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--s1); margin: 0; padding: 0 0 2px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8a8794 #1c1b22; }
+#hand > .hc {
+  position: relative; flex: none; display: flex; flex-direction: column; align-items: stretch; box-sizing: border-box; width: 100%; min-width: 0;
+  margin: 0; padding: 0 0 0 calc(var(--px) * 1); text-align: left; color: var(--t-body); background: none; box-shadow: none; filter: none; cursor: pointer;
+  border-style: solid; border-width: calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16);
+  border-image: url('../assets/ui/chrome/v2/choice-up.png') var(--k-choice) fill / calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16) / 0 stretch;
+  image-rendering: pixelated; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
+}
+#hand > .hc:is(:active, .down):not(.off) { border-image-source: url('../assets/ui/chrome/v2/choice-down.png'); padding-top: calc(var(--px) * 1); }
+#hand > .hc.armed { border-image-source: url('../assets/ui/chrome/v2/choice-sel.png'); }
+#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/choice-off.png'); }
+#hand > .hc .hc-head { position: relative; display: grid; grid-template-columns: calc(var(--px) * 16) minmax(0, 1fr); column-gap: var(--s1); align-items: center; min-height: calc(var(--px) * 16); }
+/* 비용 톱니 = 황동 탭 위 (탭 16도트 가운데) */
+#hand > .hc .costgear { position: absolute; left: calc(var(--px) * -14); top: 50%; transform: translateY(-50%); display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
+#hand > .hc .costgear img { display: block; width: 100%; height: 100%; image-rendering: pixelated; filter: none; }
+#hand > .hc .costgear.short img { filter: grayscale(1) brightness(0.6); }
+#hand > .hc .art { position: relative; display: grid; place-items: center; width: calc(var(--px) * 16); height: calc(var(--px) * 16); overflow: visible; background: none; box-shadow: none; transform: none !important; }
+#hand > .hc .art img { width: calc(var(--px) * 16); height: calc(var(--px) * 16); image-rendering: pixelated; }
+#hand > .hc .art .ico16 { display: block; width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); }
+#hand > .hc .hc-t { display: grid; gap: 0; min-width: 0; }
+#hand > .hc .hc-t > b { color: var(--t-body); font: 700 12px/1.3 Galmuri11, sans-serif; white-space: nowrap; }
+#hand > .hc .hc-fx { color: var(--t-gold); font: 400 12px/1.3 Galmuri11, sans-serif; word-break: keep-all; }
+#hand > .hc.off .hc-fx { color: #ffc4bc; }
+#hand > .hc.off .hc-t > b, #hand > .hc.off .art { opacity: 0.6; }
+/* 펼친 몸: 움푹 칸 — 행마 그림 · 문장 · 각주 */
+#hand > .hc .hc-body {
+  display: flex; gap: var(--s2); align-items: flex-start; margin: var(--s1) 0 0 calc(var(--px) * -10); padding: var(--s1);
+  border-style: solid; border-width: calc(var(--k-inset) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/inset-well.png') var(--k-inset) fill / calc(var(--k-inset) * var(--px)) / 0 stretch; image-rendering: pixelated;
+}
+#hand > .hc .hc-shape svg { display: block; width: 30px; height: 30px; }
+#hand > .hc .hc-txt { display: grid; gap: 3px; min-width: 0; }
+#hand > .hc .hc-txt p { margin: 0; color: var(--t-body); font: 400 12px/1.4 Galmuri11, sans-serif; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+#hand > .hc .hc-flv { color: #c9b48a !important; }
+#hand > .hc .hc-use { color: var(--t-ally) !important; }
+#hand > .hc.off .hc-use { color: #ffc4bc !important; }
+#hand .hc-desc .dl { display: block; word-break: keep-all; overflow-wrap: anywhere; }
+#hand .hc-desc .dl-if { color: #b9b4c2; }
+#hand .hc-desc .dl-fx > i { display: inline-block; font-style: normal; margin-top: 2px; padding: 0 5px; background: #3a2c10; color: #ffd64a; font: 700 12px/15px Galmuri11, sans-serif; }
+#hand > .empty { margin: var(--s2); color: var(--t-dim); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+/* 첫 대국 코치: 카드를 고를 차례면 쓸 수 있는 판에 황동 1도트 테가 계단으로 깜빡 */
+#hand.hint > .hc:not(.off) { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); animation: kblink 1s steps(2, jump-none) infinite; }
+#hand.dealing > .hc { visibility: hidden; }
+
+/* 덱 줄: [덱 N | 분대 N] 철 단추 + 버림 수 */
+body.slice.lay-f #deckrow { flex: none; height: var(--gBot); margin: 0; padding: 0; display: flex; align-items: center; gap: var(--s1); box-shadow: none; }
+#deckrow .btn.k-iron { flex: 1 1 0; min-width: 0; padding: 0; font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+#deckrow .pile { flex: none; color: var(--t-dim); font: 400 12px/1 Galmuri11, sans-serif; white-space: nowrap; }
+
+/* 오른쪽 가운데: 움푹 칸 하나 — 머리(적의 수 · ?) · 반장 칩 · 의도 목록 · 연쇄 · 부품 */
+body.slice.lay-f #right > .rmid {
+  flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--s1); margin: 0; padding: 0 var(--s1) var(--s1); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #8a8794 #1c1b22;
+  background: none; box-shadow: none; border-style: solid; border-width: calc(var(--k-inset) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/inset-well.png') var(--k-inset) fill / calc(var(--k-inset) * var(--px)) / 0 stretch; image-rendering: pixelated;
+}
+.rmid > * { flex: none; }
+.rmid .r-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); min-height: 48px; }
+.rmid .r-head .r-lbl { color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; }
+#btn-help.btn.k-iron { position: relative; flex: none; width: max(48px, calc(var(--px) * 24)); min-width: 0; padding: 0; font: 700 24px/1 Galmuri11, sans-serif; }
+/* 새 용어가 들어왔다: 단추 오른쪽 위 붉은 점(2×2도트 · 계단 깜빡) — 단추 안에 붙어 판 위로 새지 않는다 */
+#btn-help.has-new::after { content: ''; position: absolute; top: calc(var(--px) * -2); right: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; animation: kblink 1.2s steps(2, jump-none) infinite; }
+/* 반장 규칙 칩: 진홍 단추(UI-02) — 누르면 규칙 S 창 */
+#boss.btn.k-crimson { width: 100%; min-width: 0; padding: 0 var(--s1); font: 700 12px/1.2 Galmuri11, sans-serif; white-space: nowrap; }
+#boss[hidden] { display: none; }
+/* 적 의도 목록 (UI-07 아이콘): 적 그림 · 의도 · 대상 · 값 — 줄 32 · 최대 5 */
+.intents { display: grid; gap: 0; min-width: 0; padding: 0; margin: 0; background: none; border: 0; text-align: left; color: var(--t-body); cursor: pointer; }
+.intents .it-row { display: grid; grid-template-columns: 24px calc(var(--px1) * 20) minmax(0, 1fr); align-items: center; column-gap: var(--s1); min-height: 32px; font: 400 12px/1.2 Galmuri11, sans-serif; }
+.intents .it-row > .who { display: grid; place-items: center; width: 24px; height: 24px; }
+.intents .it-row > .who img, .intents .it-res img { width: 24px; height: 24px; image-rendering: pixelated; }
+.intents .it-ico { justify-self: center; display: block; image-rendering: pixelated; }
+.intents .it-res { display: flex; align-items: center; gap: 2px; min-width: 0; white-space: nowrap; }
+.intents .it-res em { font-style: normal; color: var(--t-loss); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.intents .it-res em.kill { color: var(--t-gold); }
+.intents .it-res .it-w { color: var(--t-dim); }
+.intents .it-res .it-g { color: var(--t-ally); }
+.intents .it-none, .intents .it-more { margin: 0; color: var(--t-dim); font: 400 12px/1.4 Galmuri11, sans-serif; }
+.rmid .chain-now { margin: 0; color: var(--t-gold); font: 700 12px/1.4 Galmuri11, sans-serif; }
+.rmid .chain-now em { font-style: normal; }
+.rmid > #parts[hidden] { display: none; }
+/* 코치 말풍선(첫 대국)은 의도 목록 아래 같은 칸 안에 (판을 가리지 않는다) */
+.rmid > .talk { position: static; transform: none; width: auto; max-width: none; filter: none; flex-direction: row; align-items: flex-start; gap: var(--s1); }
+.rmid > .talk .line { font: 400 12px/1.4 Galmuri11, sans-serif; }
+/* 레일 폭(≤ 214)에서는 초상을 빼고 이름표로 말하는 이를 밝힌다 — 초상 64를 두면 말 칸이 한 줄 5자로 좁아진다 */
+.rmid > .talk .talk-face { display: none; }
+.rmid > .talk .talk-body { width: 100%; }
+
+/* 아래 단추 줄: [되감기 철 64] [턴 끝 황동] — 경고 상태는 진홍으로 바뀐다 (확인 창 없음 · 두 번째 누름 = 실행) */
+body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0; padding: 0; display: flex; align-items: center; gap: var(--s1); box-shadow: none; }
+#btn-rewind.btn.k-iron { position: relative; flex: 0 0 64px; min-width: 0; padding: 0; display: grid; place-items: center; }
+#btn-rewind .ico-rew { display: block; width: 32px; height: 32px; background: url('../assets/ui/kit/ico-rewind.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
+#btn-rewind small { position: absolute; right: 0; bottom: 0; min-width: 14px; padding: 0 2px; background: #0b0b0e; color: var(--t-body); font: 700 12px/14px Galmuri11, sans-serif; text-align: center; }
+#btn-end.btn:is(.k-brass, .k-crimson) { flex: 1 1 auto; min-width: 0; padding: 0; font: 700 24px/1 Galmuri11, sans-serif; white-space: nowrap; }
+#btn-end.coach-end { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 2); animation: kblink 1s steps(2, jump-none) infinite; }
+body.between #right .rmid, body.between #right .actions, body.between #vials, body.between #hand > .hc, body.between #hand > .empty, body.between #turn-label, body.between #coins { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  #hand.hint > .hc:not(.off), #btn-end.coach-end, #btn-help.has-new::after, #vials .seg.spend .key, #vials .seg.wind .key { animation: none; }
+}
+
+/* 튜토리얼 말풍선 (부관 · 종이 판, 패스 4 D-396): 전투 = 짚은 곳 반대쪽 레일 위 · 그 밖 = 위 또는 아래 가운데. 누르면 다음 */
+.tut .talk { pointer-events: auto; cursor: pointer; z-index: 1; }
+.tut .talk.top { top: var(--Gy); bottom: auto; }
+.tut .talk.bottom { top: auto; bottom: var(--Gy); }
+.tut .talk:not(.on-rail) { width: min(592px, calc(100vw - 2 * var(--G))); }
+.tut .talk .talk-body { min-width: 0; }
+.tut .talk .talk-foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--s2); }
+.tut .talk .talk-next { margin-right: auto; color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
+.tut .talk .talk-next[hidden] { display: inline; visibility: hidden; }
+.tut .talk .tut-skip { flex: 0 0 auto; min-width: calc(var(--px) * 56); }
+.tut.paused .talk { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .tut .talk .talk-next { animation: none; } }
+
+/* 좁은 폰(레일 183): 태엽 다섯 구멍 · 속전 관 열이 테 안에 다 들도록 레일 안쪽 여백 3 · 손패 그림 12도트 · 속전 이름 줄임 */
+@media (max-width: 760px) {
+  body.slice.lay-f #left.rail, body.slice.lay-f #right.rail { padding: 3px; }
+  body.slice.lay-f #vials.apbar { padding: 0; }
+  #vials .keys { gap: 0; margin: 0 calc(var(--px) * -2); }
+  #hand > .hc .hc-head { grid-template-columns: calc(var(--px) * 12) minmax(0, 1fr); }
+  #hand > .hc .art, #hand > .hc .art img { width: calc(var(--px) * 12); height: calc(var(--px) * 12); }
+  .gtop .coins .lbl { display: none; }
+  .gtop .coins > b { grid-column: 2 / 4; justify-self: end; }
+  body.slice.lay-f #right > .gtop { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .gtop .coins .boiler { margin-inline: 0; }
+  body.slice.lay-f #right > .gtop { padding: 0; column-gap: 2px; }
+  .gtop .turn-label :is(.th-lamp, .th-cog, .th-dots) { display: none; }
+}
+
+/* 태엽 계기 반응 (D-242 그대로 옮김): 모자라면 구멍이 떨리며 진홍 테 깜빡 · 처치 환급이면 켜진 열쇠가 차례로 튀며 황동 고리 */
+#vials .seg.apb { animation: apNo 360ms both; }
+#vials .seg.apb::after { content: ''; position: absolute; inset: 2px; box-shadow: inset 0 0 0 2px #e5262f; animation: apNoRing 360ms steps(1) both; }
+@keyframes apNo { 0% { transform: none; } 20% { transform: translateX(-3px); } 45% { transform: translateX(3px); } 70% { transform: translateX(-2px); } 100% { transform: none; } }
+@keyframes apNoRing { 0%, 40% { visibility: visible; } 20%, 60%, 100% { visibility: hidden; } }
+#vials.regain .seg.on { animation: apPop 340ms calc(var(--k, 0) * 60ms) both; }
+#vials.regain .seg.on::before { content: ''; position: absolute; inset: 0; box-shadow: 0 0 0 2px #f4d27a; visibility: hidden; animation: apRing 340ms calc(var(--k, 0) * 60ms) steps(3) both; pointer-events: none; }
+@keyframes apPop { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 30% { transform: scale(0.82, 1.1); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 65% { transform: scale(1.18, 0.9); } 100% { transform: none; } }
+@keyframes apRing { 0% { visibility: visible; inset: 4px; } 99% { visibility: visible; inset: -8px; } 100% { visibility: hidden; inset: -8px; } }
+@media (prefers-reduced-motion: reduce) { #vials .seg.apb, #vials.regain .seg.on { animation: none; } }

@@ -277,25 +277,165 @@ export const placeScreen = (o: { art: string; focus?: [number, number]; title: s
   return el;
 };
 
-/** 토스트 (3.8): 한 줄 20자 이하 · 1.2초 + 글자당 70ms · 누르면 넘김. 등장 계단, 퇴장 디더 */
-export const toast = (text: string, icon = ''): HTMLElement => {
+/**
+ * 상태 띠 한 자리 (3.8 `.state-band`, D-385 · D-396): 토스트 · 턴 띠 · 판 띠 · 턴 끝 경고가 **한 자리를 줄 세워** 쓴다 — 동시에 1개.
+ * 전투 중이면 가운데 열(판) 맨 위 48px, 그 밖은 화면 위 가운데. 짧은 상태 한 줄만 (≤ 20자).
+ * kind: toast = 철 토스트(15px) · brass = 내 차례 · 알림 띠 · crimson = 적 차례 · 경고 띠(24px). 누르면 넘긴다.
+ */
+export type BandKind = 'toast' | 'brass' | 'crimson';
+interface BandItem {
+  text: string;
+  kind: BandKind;
+  ms: number;
+  icon: string;
+}
+const bandQ: BandItem[] = [];
+let bandNow: { item: BandItem; el: HTMLElement; t: number } | null = null;
+/** 띠를 붙일 곳: 전투 HUD가 보이면 판 열 위, 아니면 화면 위 가운데 (부르는 쪽이 정한다) */
+let bandAnchor: () => DOMRect | null = () => null;
+export const setBandAnchor = (fn: () => DOMRect | null): void => {
+  bandAnchor = fn;
+};
+/** 지금 띠 높이 (판 위 자리 예약 — 판 그리기가 이만큼 위를 비운다) */
+export const BAND_ZONE = 48;
+const placeBand = (el: HTMLElement): void => {
+  const r = bandAnchor();
+  el.classList.toggle('on-board', !!r);
+  el.style.left = r ? `${Math.round(r.left + r.width / 2)}px` : '50%';
+  el.style.top = r ? `${Math.round(r.top + Math.max(0, (BAND_ZONE - el.offsetHeight) / 2))}px` : '';
+  // 판 열보다 넓으면 판 열 폭에 맞춘다 (667 폭에서 띠가 레일을 덮지 않게)
+  el.style.maxWidth = r ? `${Math.min(480, Math.floor(r.width - 8))}px` : '';
+};
+const bandNext = (): void => {
+  const item = bandQ.shift();
+  if (!item) return void (bandNow = null);
   const el = document.createElement('div');
-  el.className = 'k-toast k-free k-in';
-  el.innerHTML = `${icon}<span>${text}</span>`;
+  el.className = `state-band k-${item.kind} k-in`;
+  el.setAttribute('role', 'status');
+  el.innerHTML = `${item.icon}<span>${item.text}</span>`;
   document.body.appendChild(el);
-  const out = (): void => pxOut(el, () => el.remove(), 200);
-  const t = window.setTimeout(out, 1200 + 70 * text.length);
-  el.addEventListener('click', () => (window.clearTimeout(t), out()));
+  placeBand(el);
+  const out = (): void => {
+    if (bandNow?.el !== el) return;
+    window.clearTimeout(bandNow.t);
+    bandNow = null;
+    pxOut(el, () => (el.remove(), bandNext()), 160);
+  };
+  el.addEventListener('click', out);
+  bandNow = { item, el, t: window.setTimeout(out, item.ms) };
+};
+/**
+ * 상태 띠에 한 줄 올리기. 같은 글이 이미 떠 있거나 줄에 있으면 다시 올리지 않는다.
+ * 줄이 길어지면(셋 넘게) 오래된 토스트부터 버린다 — 띠(턴 · 경고)는 버리지 않는다.
+ * urgent = 지금 떠 있는 토스트를 바로 걷고 이것부터 (턴 띠 · 턴 끝 경고).
+ */
+export const stateBand = (text: string, kind: BandKind = 'toast', o: { ms?: number; icon?: string; urgent?: boolean } = {}): void => {
+  if (bandNow?.item.text === text || bandQ.some((q) => q.text === text)) return;
+  const ms = o.ms ?? (kind === 'toast' ? Math.max(1200 + 70 * text.length, 1600) : 900);
+  const item: BandItem = { text, kind, ms, icon: o.icon ?? '' };
+  if (o.urgent) {
+    for (let k = bandQ.length - 1; k >= 0; k--) if (bandQ[k].kind === 'toast') bandQ.splice(k, 1);
+    bandQ.unshift(item);
+    if (bandNow && bandNow.item.kind === 'toast') {
+      const cur = bandNow;
+      window.clearTimeout(cur.t);
+      bandNow = null;
+      cur.el.remove();
+    }
+  } else {
+    bandQ.push(item);
+    while (bandQ.length > 3) {
+      const k = bandQ.findIndex((q) => q.kind === 'toast');
+      if (k < 0) break;
+      bandQ.splice(k, 1);
+    }
+  }
+  if (!bandNow) bandNext();
+};
+/** 띠를 모두 걷는다 (화면이 바뀔 때) */
+export const clearBand = (): void => {
+  bandQ.length = 0;
+  if (bandNow) {
+    window.clearTimeout(bandNow.t);
+    bandNow.el.remove();
+    bandNow = null;
+  }
+};
+/** 토스트 (3.8): 한 줄 20자 이하 · 1.2초 + 글자당 70ms — 상태 띠 자리에 줄 선다 */
+export const toast = (text: string, icon = ''): void => stateBand(text, 'toast', { icon });
+/** 띠 (3.10 막 · 턴 · KO): 글자는 처음부터 또렷 · 계단 등장 · 0.9초 뒤 디더 퇴장 — 상태 띠 자리 */
+export const band = (text: string, kind: 'brass' | 'crimson' = 'brass'): void => stateBand(text, kind, { urgent: true });
+
+/**
+ * 말풍선 (3.8 · 2-2 `.talk`, D-396): 말하는 이 = 초상 액자(UI-04 portrait-frame 64) · 말 = 움푹 칸(이름 12 + 15px).
+ * 튜토리얼 · 부관 · 적 킹 · 반장 · 분대원이 모두 이 하나. paper = 이야기 재질 종이 판(튜토리얼 · 부관)에 얹는다.
+ * 자리는 부르는 쪽이 정한다(판을 가리지 않는 레일 위 — talkAt).
+ */
+export const talkHtml = (o: { face: string; name: string; text?: string; paper?: boolean; cls?: string }): string =>
+  `<div class="frame-portrait f64 talk-face">${o.face}</div><div class="inset talk-body"><b class="who">${o.name}</b><p class="line">${o.text ?? ''}</p></div>`;
+export const makeTalk = (o: { face: string; name: string; text?: string; paper?: boolean; cls?: string }): HTMLElement => {
+  const el = document.createElement('div');
+  el.className = `talk kit${o.paper ? ' win-paper' : ''}${o.cls ? ` ${o.cls}` : ''}`;
+  el.innerHTML = talkHtml(o);
   return el;
 };
+/**
+ * 말풍선 자리: 판을 가리지 않게 레일 위에 (side = 어느 레일). 레일이 안 보이면(지도 · 고르기 화면) 화면 위 가운데.
+ * top = 레일 안 위쪽 기준 높이(px) — 계기(64) 아래.
+ */
+export const talkAt = (el: HTMLElement, side: 'left' | 'right'): void => {
+  const rail = document.getElementById(side === 'left' ? 'left' : 'right');
+  const r = rail && rail.offsetParent !== null && !document.body.classList.contains('between') ? rail.getBoundingClientRect() : null;
+  el.classList.toggle('on-rail', !!r);
+  if (!r || !r.width) {
+    el.style.left = '50%';
+    el.style.top = '';
+    el.style.width = '';
+    return;
+  }
+  el.style.left = `${Math.round(r.left + 4)}px`;
+  el.style.width = `${Math.round(r.width - 8)}px`;
+  el.style.top = `${Math.round(r.top + 76)}px`;
+};
 
-/** 상태 띠 (3.8 · 3.10): 황동 띠, 글자는 처음부터 또렷 · 계단 등장 · 0.9초 뒤 디더 퇴장 */
-export const band = (text: string, kind: 'brass' | 'crimson' = 'brass'): HTMLElement => {
+/**
+ * 정보 엿보기 (3.8 `.peek` → `.k-peek`, D-396): 비모달 S 창 — 머리 줄(아이콘 48 + 이름 24) · 본문 ≤ 4줄 · 단추 없음 · 아무 데나 누르면 닫힘.
+ * 판 위 기물이면 그 진영 레일 위에 붙여 판을 가리지 않는다(내 편 = 왼쪽 · 적 = 오른쪽). 같은 것을 다시 열면 그대로 둔다.
+ */
+let peekNow: HTMLElement | null = null;
+export const infoPeek = (o: { key: string; head: string; body: string; side: 'left' | 'right'; bare?: boolean; maxW?: number }): HTMLElement => {
+  if (peekNow && peekNow.dataset.key === o.key && peekNow.isConnected) return peekNow;
+  peekNow?.remove();
   const el = document.createElement('div');
-  el.className = `k-band kit k-${kind}`;
-  el.innerHTML = `<div class="plate">${text}</div>`;
-  el.querySelector('.plate')!.classList.add('k-in');
+  el.className = `k-peek kit${o.bare ? ' bare' : ' win win-s'}`;
+  el.dataset.key = o.key;
+  el.innerHTML = o.bare ? o.body : `<div class="win-head">${o.head}</div>${o.body}`;
+  // 판 칸을 덮지 않는 폭까지만 (레일 + 판 옆 빈칸)
+  if (o.maxW && !o.bare) el.style.maxWidth = `${Math.floor(o.maxW)}px`;
   document.body.appendChild(el);
-  window.setTimeout(() => pxOut(el, () => el.remove(), 200), 900);
+  const rail = document.getElementById(o.side === 'left' ? 'left' : 'right');
+  const board = document.getElementById('board');
+  const r = rail && rail.offsetParent !== null ? rail.getBoundingClientRect() : null;
+  if (r && board) {
+    // 레일 + 판 옆 빈칸까지만 (판 칸을 덮지 않게) — 창 폭 S 352를 넘지 않는다
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    const x = o.side === 'left' ? r.left + 4 : Math.max(r.right - w - 4, 4);
+    el.style.left = `${Math.round(x)}px`;
+    el.style.top = `${Math.round(Math.max(8, Math.min(innerHeight - h - 8, r.top + 76)))}px`;
+  } else {
+    el.style.left = `${Math.round((innerWidth - el.offsetWidth) / 2)}px`;
+    el.style.top = `${Math.round((innerHeight - el.offsetHeight) / 2)}px`;
+  }
+  el.classList.add('k-in');
+  peekNow = el;
+  // 아무 데나 누르면 닫힘 (여는 누름이 바로 닫지 않게 한 박자 뒤)
+  window.setTimeout(() => document.addEventListener('pointerdown', () => closePeek(el), { once: true, capture: true }), 0);
   return el;
+};
+/** 엿보기 닫기 (디더 퇴장) */
+export const closePeek = (el: HTMLElement | null = peekNow): void => {
+  if (!el) return;
+  if (peekNow === el) peekNow = null;
+  pxOut(el, () => el.remove(), 160);
 };

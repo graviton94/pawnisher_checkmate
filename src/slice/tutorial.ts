@@ -5,6 +5,7 @@
  * 게임 상태는 건드리지 않는다 — 짚고 기다리기만 한다 (UI 원칙 9).
  */
 import { typeIn } from './fx3';
+import { makeTalk, talkAt } from './uikit';
 
 export interface TutStep {
   /** 부관의 말 (<em>낱말</em>은 한 번에 박힌다) */
@@ -48,16 +49,18 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
   new Promise((resolve) => {
     const root = document.createElement('div');
     root.className = 'tut';
-    root.innerHTML = `<div class="tut-dim"></div><div class="tut-frame" hidden></div><div class="tut-peeks"></div><div class="tut-catch"></div>
-      <div class="tut-talk"><i class="tut-face">${o.face}</i><div class="tut-body"><b class="tut-name">${o.name}</b><p class="tut-text"></p><small class="tut-next" hidden>${o.next}</small></div><button type="button" class="tut-skip">${o.skip}</button></div>`;
+    root.innerHTML = `<div class="tut-dim"></div><div class="tut-frame" hidden></div><div class="tut-peeks"></div><div class="tut-catch"></div>`;
+    // 말풍선 = 키트 .talk (패스 4 D-396): 종이 판 + 초상 액자 + 움푹 칸 — 이름 · 말 · ▼ · [건너뛴다]
+    const talk = makeTalk({ face: o.face, name: o.name, paper: true, cls: 'tut-say ally' });
+    talk.querySelector('.talk-body')!.insertAdjacentHTML('beforeend', `<span class="talk-foot"><b class="talk-next" hidden>${o.next}</b><button type="button" class="btn k-iron tut-skip">${o.skip}</button></span>`);
+    root.appendChild(talk);
     document.body.appendChild(root);
     const dim = root.querySelector<HTMLElement>('.tut-dim')!;
     const frame = root.querySelector<HTMLElement>('.tut-frame')!;
     const peeks = root.querySelector<HTMLElement>('.tut-peeks')!;
     const catcher = root.querySelector<HTMLElement>('.tut-catch')!;
-    const talk = root.querySelector<HTMLElement>('.tut-talk')!;
-    const textEl = root.querySelector<HTMLElement>('.tut-text')!;
-    const next = root.querySelector<HTMLElement>('.tut-next')!;
+    const textEl = talk.querySelector<HTMLElement>('.line')!;
+    const next = talk.querySelector<HTMLElement>('.talk-next')!;
     let i = -1;
     let typing = false;
     let timer = 0;
@@ -92,9 +95,23 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
         peeks.dataset.k = key;
         peeks.innerHTML = extra.map((q) => `<i style="left:${q.x}px;top:${q.y}px;width:${q.w}px;height:${q.h}px"></i>`).join('');
       }
-      // 말풍선은 짚은 곳을 가리지 않게: 짚은 곳이 아래쪽이면 위에, 아니면 아래에
-      const low = r ? r.top + r.height / 2 > H * 0.5 : false;
-      talk.classList.toggle('top', low);
+      // 말풍선은 짚은 곳을 가리지 않게 (보고서 2-2): 전투 화면이면 짚은 곳 반대쪽 레일 위(판을 가리지 않는다),
+      // 그 밖(지도 · 고르기)은 짚은 곳이 아래쪽이면 위에, 아니면 아래에
+      const battle = document.body.classList.contains('lay-f') && !document.body.classList.contains('between') && !!document.getElementById('left')?.offsetWidth && document.getElementById('overlay')?.hidden !== false;
+      if (battle) {
+        const side = r && r.left + r.width / 2 < W / 2 ? 'right' : 'left';
+        if (talk.dataset.side !== side) talkAt(talk, side);
+        talk.dataset.side = side;
+        talk.classList.remove('top', 'bottom');
+      } else {
+        delete talk.dataset.side;
+        talk.classList.remove('on-rail');
+        talk.style.left = talk.style.width = '';
+        const low = r ? r.top + r.height / 2 > H * 0.5 : false;
+        talk.style.top = low ? '' : 'auto';
+        talk.classList.toggle('top', low);
+        talk.classList.toggle('bottom', !low);
+      }
     };
     const go = (): void => {
       i += 1;

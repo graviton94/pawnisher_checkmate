@@ -174,7 +174,7 @@ export const turnBanner = (over: HTMLElement, text: string, foe: boolean, small 
 // ---------- 5 손패 ----------
 /** 남은 손패가 기울며 호를 그려 버림 더미로 빨려 든다 */
 export const discardHand = async (hand: HTMLElement): Promise<void> => {
-  const cards = [...hand.querySelectorAll<HTMLElement>('.cmd')];
+  const cards = [...hand.querySelectorAll<HTMLElement>('.hc')];
   if (!cards.length || calm()) return;
   const head = hand.querySelector('.hand-head') ?? hand;
   const to = head.getBoundingClientRect();
@@ -194,7 +194,7 @@ export const dealHand = (hand: HTMLElement): void => {
   if (calm()) return;
   const deck = hand.querySelector('[data-deck]') ?? hand;
   const from = deck.getBoundingClientRect();
-  hand.querySelectorAll<HTMLElement>('.cmd').forEach((c, i) => {
+  hand.querySelectorAll<HTMLElement>('.hc').forEach((c, i) => {
     const r = c.getBoundingClientRect();
     const dx = from.left + from.width / 2 - (r.left + r.width / 2);
     const dy = from.top + from.height / 2 - (r.top + r.height / 2);

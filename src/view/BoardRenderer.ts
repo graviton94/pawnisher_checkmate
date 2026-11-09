@@ -87,13 +87,21 @@ const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8
 const PIECE_SIZE = 0.82 * (72 / 64);
 const PIECE_Y = 0.84 - PIECE_SIZE / 2;
 const BOARD_TILE_TOUCH_MAX = 54; // 도트 내림(DPR 2.625 → 칸 53.3px)이 48 아래로 가지 않게
+/** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
+let boardTopInset = 0;
+/** 판 열 위쪽을 상태 띠 자리로 비운다 (본편 전투 HUD가 부른다) */
+export const setBoardTopInset = (px: number): void => {
+  boardTopInset = px;
+};
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // 터치 기기 칸 상한 약 53px (D-214, 사용자: "4×4 · 6×6이 화면을 꽉 채워 부담스럽다") — 터치 하한 48은 지킨다
   const want = window.matchMedia('(pointer: coarse)').matches ? BOARD_TILE_TOUCH_MAX : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
   // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
   // 판 배치 시안 C (D-198): 위아래 여백을 줄여 판을 키운다
-  const vPad = document.body.matches('.lay-c, .lay-d, .lay-e, .lay-f') ? 0.45 : 0.9;
-  const fit = Math.min(want, viewH / (rows + vPad), viewW / (cols + 0.5));
+  const vPad = document.body.matches('.lay-f') ? 0.45 : 0.9;
+  // 양옆 여백: 본편은 판 옆이 레일(안쪽 여백이 있다)이라 0칸 (667 폭에서도 칸 50 — 터치 48 하한, D-396)
+  const hPad = document.body.matches('.lay-f') ? 0 : 0.5;
+  const fit = Math.min(want, (viewH - boardTopInset) / (rows + vPad), viewW / (cols + hPad));
   // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게). 예전 하한 5도트는 DPR 2 아래 기기 · PC에서 판을 화면 밖으로 밀었다
   const dots = Math.max(1, Math.floor((fit * dpr) / BOARD_DOTS));
   return (dots * BOARD_DOTS) / dpr;
@@ -477,7 +485,8 @@ class BoardScene extends Phaser.Scene {
     const viewH = cam.height / cam.zoom;
     const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
     const x = bw + 2 * m <= viewW ? bw / 2 : clamp(cx, -m + viewW / 2, bw + m - viewW / 2);
-    const y = bh + m - top <= viewH ? (top + bh + m) / 2 : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
+    // 판이 다 들어오면 위 상태 띠 자리(boardTopInset)를 뺀 나머지의 가운데 — 아래 끝이 화면 밖으로 나가지 않게
+    const y = bh + m - top <= viewH ? Math.max((top + bh + m) / 2 - boardTopInset / 2, bh + m - viewH / 2) : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
     this.camCenter = { x, y };
     cam.centerOn(x, y);
   }
@@ -795,13 +804,35 @@ class BoardScene extends Phaser.Scene {
         if (!sp) continue;
         this.drawHp(sp, sp.piece.hp, Math.max(0, Math.min(sp.piece.hp, sp.piece.hp + sp.piece.shield - h.damage)));
         if (!h.killed && !m.threat) continue;
-        const w = this.world(h.pos);
-        const g = this.add.graphics().setDepth(7);
-        drawPopup(g, buildPopupArt(`-${h.damage}`, h.killed ? 0xfacc15 : 0xff6b6b), w.x + t * 0.72, w.y + t, d * 0.6, 400, 0);
-        this.dynamic.push(g);
+        this.dmgTag(h.pos, h.damage, h.killed);
       }
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
+  }
+
+  /**
+   * 피해 예측 꼬리표 (총괄 리뷰 2-2 · D-396): 칸 위 테에 걸친 진홍 꼬리표(12px 굵게) — 기물 얼굴을 가리지 않는다.
+   * 칸 오른쪽 위 모서리에 반쯤 걸쳐 둔다(위 칸 기물의 발치 오른쪽 끝 · 이 칸 기물의 머리 위 빈칸). 처치면 금빛.
+   */
+  private dmgTag(pos: Pos, damage: number, killed: boolean): void {
+    const t = this.tile;
+    const d = t / BOARD_DOTS;
+    const w = this.world(pos);
+    const txt = this.add
+      .text(0, 0, killed ? `☠${damage}` : `-${damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: '#0B0B0E' })
+      .setOrigin(0.5)
+      .setResolution(this.dpr);
+    const bw = Math.ceil((txt.width + 4 * d) / d) * d;
+    const bh = Math.ceil((txt.height + 1 * d) / d) * d;
+    const x = Math.round(w.x + t - bw - d);
+    const y = Math.round(w.y - bh / 2);
+    const g = this.add.graphics();
+    g.fillStyle(0x0b0b0e, 1).fillRect(x - d, y - d, bw + 2 * d, bh + 2 * d);
+    g.fillStyle(killed ? 0xfacc15 : 0xe5262f, 1).fillRect(x, y, bw, bh);
+    g.fillStyle(killed ? 0xfff1a8 : 0xff6b6b, 1).fillRect(x, y, bw, d);
+    txt.setPosition(x + bw / 2, y + bh / 2 + d / 2);
+    const c = this.add.container(0, 0, [g, txt]).setDepth(7);
+    this.dynamic.push(c);
   }
 
   // ---------- 연출 ----------
