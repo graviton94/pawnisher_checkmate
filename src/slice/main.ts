@@ -1587,9 +1587,11 @@ const enterNode = (n: MapNode): void => {
  * 고정 노드(입문 · 연마)는 지도 없이 바로.
  */
 /** 지나온 길: 막마다 줄 → 고른 노드 번호 */
-let picked: number[][] = [[], [], []];
+let picked: number[][] = [[], [], [], []];
 const showMap = (): void => {
   const a = acts[actI];
+  // 4막(종막 · 출하구)도 지나온 길 칸이 있어야 한다 — 예전 저장(세 칸)으로 이어해도 (4막 진입 시 지도가 안 뜨던 버그)
+  while (picked.length < acts.length) picked.push([]);
   const row = a.rows[rowI];
   if (row.length === 1 && row[0].battle && INTRO.includes(row[0].battle)) {
     picked[actI][rowI] = 0;
@@ -3514,7 +3516,7 @@ const newRun = (seed: number, level: number, day: string | null): void => {
   deck = [...START_DECK];
   // 승급 7 (조항 「하자 세트의 명령서에는 녹을 섞는다」): 시작 덱 한 장이 녹슨 카드
   if (level >= 7) deck[deck.length - 1] = rustOnce(deck[deck.length - 1]);
-  picked = [[], [], []];
+  picked = [[], [], [], []];
   // 최근 출하에서 만난 사건은 이번 가방에서 뺀다 (D-247, 사용자: 「랜덤 인카운터가 너무 동일하게 반복」) — 가방이 비면 다시 전부
   { const recent = readMeta(store).evRecent ?? []; eventBag = SLICE_EVENT_IDS.filter((x) => !recent.includes(x)); if (eventBag.length < 4) eventBag = [...SLICE_EVENT_IDS]; }
   runId = `${new Date().toISOString().slice(0, 16).replace('T', ' ')}${day ? ' · 오늘의 출하' : ''}${level ? ` · 승급 ${level}` : ''}`;
@@ -3549,6 +3551,7 @@ const loadRun = (sv: RunSave): void => {
   acts = buildRun(sv.seed, sv.asc, firstShip);
   R = new Rng(sv.rng);
   ({ runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag } = sv);
+  while (picked.length < 4) picked.push([]); // 예전 저장은 세 막 몫만 — 종막 몫을 채운다
   // 옛 저장 (D-183 전 — 다듬기가 카드 종류 전부였다): 그 종류를 모두 「+」로 옮겨 그 판은 그대로 이어 간다
   if (refined.length && !deck.some(isRefined)) deck = deck.map((id) => (refined.includes(id) ? refinedOf(baseOf(id)) : id));
   clutchLeft = sv.clutchLeft ?? dir.clutch(sv.asc);
