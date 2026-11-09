@@ -186,8 +186,21 @@ export const SCREEN_TEXT = {
   pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', braceGo: '덧댄다',
   close: '닫는다', ledger: '도감', overhaul: '정비한다', note: '남긴다', home: '돌아간다',
   sold: '팔림', newCrewTag: '새 분대원', bossTag: '반장 격파', checkTag: '검문 통과', closeTag: '부품 하나 더', fullHp: 'HP 가득', broad: '큰 세 갈래', deep: (ax: string) => `${ax} 세부 갈래`,
-  shopHint: '물건을 누르면 여기 풀이가 뜹니다.', noCards: '고를 카드가 없습니다.',
+  shopHint: '물건을 누르면 여기 풀이가 뜹니다.', forgeHint: '손질 하나를 고르세요.', noCards: '고를 카드가 없습니다.',
   melt: (n: number) => `녹이면 나사 +${n}`, slots: (n: number) => `부품 칸 ${n}`, newPart: (name: string) => `새 「${name}」`,
   clearLine: '출하구를 지났습니다.', failLine: (act: string) => `${act}에서 멈췄습니다.`, opened: '새로 열림', ascOpened: (n: number) => `승급 ${n} 열림`, daily: '오늘의 출하',
   tally: ['이긴 대국', '처치', '나사', '덱'] as const,
+} as const;
+
+/**
+ * 손질 카드 (D-398, 사용자: 「정비 · 카드 빼기도 같은 크기 카드로, 색 컨셉은 상아색」): 고물상 · 작업대의 서비스.
+ * 카드 말투(voice ⑥) — 「비장한 한 문장. (효과 — 대상)」. 띠 글 = kind. 수치는 부르는 쪽이 넣는다(src/data/run.ts SHOP · FORGE).
+ */
+export const SERVICE_CARDS = {
+  kind: '손질',
+  heal: { name: '정비', icon: 's.heal', desc: (pct: number) => `삐걱이는 관절을 하나씩 조인다. (HP +${pct}% — 분대 전원)` },
+  repair: { name: '수리', icon: 's.repair', desc: (pct: number) => `찌그러진 장갑을 두드려 편다. (HP +${pct}% — 분대 전원)` },
+  refine: { name: '다듬기', icon: 's.refine', desc: () => '거친 날을 고르게 깎는다. (태엽 −1 — 카드 한 장)' },
+  remove: { name: '카드 빼기', icon: 's.remove', desc: () => '낡은 명령서를 찢어 버린다. (영구 제거 — 카드 한 장)' },
+  brace: { name: '보강', icon: 'shieldWall', desc: (n: number) => `축에 쇠를 한 겹 덧댄다. (생명 +${n} — 분대원 하나)` },
 } as const;

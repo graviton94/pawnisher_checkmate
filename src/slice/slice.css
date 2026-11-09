@@ -492,7 +492,9 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 @keyframes fogmove { to { transform: translateX(90px); } }
 .op-bg .op-glow { position: absolute; right: 12%; bottom: 10%; width: 14px; height: 14px; background: #e8783c; box-shadow: 0 0 0 6px rgba(232, 120, 60, 0.35), 0 0 0 14px rgba(232, 120, 60, 0.12); animation: lamp 1.4s steps(2) infinite; }
 .op-bg[style*="--img"] .op-fog, .op-bg[style*="--img"] .op-glow { display: none; }
-.op-logo { position: absolute; inset: 0 0 34px 0; display: grid; place-content: center; justify-items: center; gap: 8px; zoom: 1.3; transition: right 520ms var(--decel); }
+.op-logo { position: absolute; inset: 0 0 34px 0; display: grid; place-content: center; justify-items: center; gap: 8px; transition: right 520ms var(--decel); }
+/* 타이틀 문장 확대는 기기 픽셀 정수배 하나(--logo-k, pxsnap.ts) — 글(op-tag)은 확대하지 않는다 (D-398) */
+.op-logo > .tfx, .pl-logo > .tfx { zoom: var(--logo-k, 1); }
 .op-tag { margin: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #c9c0b0; text-shadow: 2px 2px 0 #000; }
 .op-press { position: absolute; left: 0; right: 0; bottom: 30px; margin: 0; text-align: center; font: 400 15px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #f4d27a; text-shadow: 2px 2px 0 #000; }
 /* 「화면을 눌러 시작」: 글자가 차례로 3px 튀어 오르고 그 순간만 밝아진다 — 깜빡임(마스크 on/off) 대신 (테스터: 뚝뚝 끊겼다) */
@@ -501,7 +503,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 
 .opening.menu { cursor: default; }
 .opening.menu .op-press { display: none; }
-.opening.menu .op-logo { right: 46%; bottom: 0; zoom: 1.15; }
+.opening.menu .op-logo { right: 46%; bottom: 0; }
 .opening:not(.menu).busy .op-press { display: none; }
 .op-menu { position: absolute; right: max(28px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); width: min(340px, 42vw); display: grid; gap: 8px; }
 .op-menu.in > * { animation: menuin 360ms var(--snap) backwards; /* backwards: 끝난 뒤 mask가 남으면 칸 밖 터치(▲▼ 넓힌 영역)를 잘라 낸다 */ }
@@ -550,7 +552,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
  
 
 
-.pl-logo { position: absolute; inset: 0; display: grid; place-content: center; zoom: 1.4; }
+.pl-logo { position: absolute; inset: 0; display: grid; place-content: center; }
 /* 안내서 */
 .gd-crowned { position: relative; display: inline-block; }
 @media (prefers-reduced-motion: reduce) { .op-bg .op-fog, .op-bg .op-glow, .op-press, .op-menu.in > *, .pl-stage.in, .pl-stage > * { animation: none !important; } }
@@ -1329,6 +1331,13 @@ body.slice .op-menu > .op-main.brass { margin-right: 32px; }
 body.slice .op-daily { height: 56px; min-height: 56px; }
 body.slice .op-sub { margin-top: 0; height: 48px; }
 body.slice .op-sub .btn { height: 48px; min-height: 48px; }
+/* 메뉴 한 줄 목록 (D-398): 안내서 · 도감 · 프롤로그도 위 칸과 같은 폭 · 48px로 세로에. 낮은 화면(≤ 420)은 층 간격 6 · 위아래 12 · 오늘의 출하 48 —
+   이어하기가 있을 때 64 + 64 + 48 + 48 × 3 + 6 × 5 + 24 = 374 (667×375 안) */
+body.slice .op-menu > .op-main.op-minor { height: 48px; min-height: 48px; }
+@media (max-height: 420px) {
+  body.slice .op-menu { gap: 6px; padding-block: 12px; }
+  body.slice .op-daily { height: 48px; min-height: 48px; }
+}
 /* ───────── D-294 글자 바탕 E 계열 (tools/draw-chrome-e.py) — 성질 태그는 색 미니 판 ───────── */
 .axis { background: none; box-shadow: none; border-style: solid; border-width: 4px; border-image: url('../assets/ui/kit/tag-inf.png') 3 fill / 6px stretch; image-rendering: pixelated; padding: 0 3px 1px; color: #111; }
 .ax-cav.axis { background: none; border-image-source: url('../assets/ui/kit/tag-cav.png'); }
@@ -1741,6 +1750,9 @@ body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color
 body.slice .cf.cf.cf.cf > .cf-desc .ln.s10, body.slice .cf.cf.cf.cf > .cf-desc .ln.s10 * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
 
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }
+/* D-398: 카드 150 ~ 166px에서 「쓰러짐」이 1fr 칸(≈ 32px)에 안 들어 「쓰러 / 짐」으로 꺾이고 두루마리 위가 잘렸다 — 칸 폭은 글 폭대로, 사이는 고르게 */
+body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { grid-auto-columns: auto; justify-content: space-evenly; }
+body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st i { white-space: nowrap; }
 /* 생명 빈 자리 = 깨진(검은) 태엽 하트 */
 body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }
 body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; }

@@ -159,9 +159,13 @@ export const bindPick = (root: HTMLElement, o: { onSelect?: (key: string, el: HT
 export const slotsHtml = (items: PickItem[], bare = false): string =>
   `<div class="scr-items${bare ? ' bare' : ''}">${items.map((it) => `<div class="pick-item"><div class="${bare ? 'card-bare' : 'card-slot'}${it.off ? ' is-off' : ''}" data-slot="${it.key}">${it.html}</div>${it.info !== undefined ? `<div class="slot-info">${it.info}</div>` : ''}</div>`).join('')}</div>`;
 
+/** 카드 폭 (D-372 정본 168 · D-398 하한 150 — 이보다 작으면 두루마리 글이 10px 아래로 내려가 겹친다) */
+export const CARD_W = { max: 168, min: 150 } as const;
+
 /**
- * 받침 크기 맞춤: 받침 51×69 도트를 **기기 픽셀 정수배**로 — 줄에 다 들어가는 가장 큰 배율(카드 168px 상한).
- * 받침 안 카드 = 받침 폭 × 42/51. 받침 사이는 16 → 8 → 4로 줄여 본다. 스크롤 · 잘림 없음 (667×375에서도).
+ * 받침 크기 맞춤 (D-394 → D-398): 카드는 줄이지 않는다 — 정본 폭(168, 높이가 모자라면 150까지)을 지키고,
+ * 줄에 다 들지 않으면 **가로로 미는 줄(레일)**이 된다. 받침(51×69 도트)은 기기 픽셀 정수배로, 그 안 카드가 150 아래로
+ * 줄어야 들어가는 높이(667×375 등)에서는 받침 그림을 접고 카드만 놓는다. 스크롤바 대신 가장자리에 다음 카드가 걸쳐 보인다.
  */
 export const fitSlots = (row: HTMLElement): void => {
   const slots = row.querySelectorAll<HTMLElement>(':scope > .pick-item');
@@ -173,24 +177,132 @@ export const fitSlots = (row: HTMLElement): void => {
   row.querySelectorAll<HTMLElement>(':scope > .pick-item > .slot-info').forEach((i) => (infoH = Math.max(infoH, i.offsetHeight)));
   // 받침 아래 줄 높이를 맞춰 카드 윗선이 한 줄로 선다
   if (infoH) row.style.setProperty('--info-h', `${infoH}px`);
-  const gapIn = infoH ? 4 : 0;
-  const W = row.clientWidth, H = row.clientHeight - infoH - gapIn;
-  // 받침 없는 줄(고물상): 카드 얼굴만 — 폭 168 상한, 줄 높이 · 폭에 맞춘다 (카드 얼굴은 원래 비정수 1.5배)
-  if (row.classList.contains('bare')) {
-    const g = (W - 16 * (n - 1)) / n >= 140 ? 16 : 8;
-    const w = Math.floor(Math.min(168, (W - g * (n - 1)) / n, (H * 112) / 168));
+  const cs = getComputedStyle(row);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const W = row.clientWidth - 2 * parseFloat(cs.paddingRight); // 왼쪽 여백은 레일이 바꾼다 — 오른쪽(G)으로 잰다
+  const H = row.clientHeight - padY - infoH - (infoH ? 4 : 0);
+  let w: number, g = 16;
+  // 받침 줄: 받침 높이가 드는 가장 큰 정수배 — 그 안 카드(42도트)가 하한 이상이면 받침을 쓴다
+  const N = Math.min(Math.floor((CARD_W.max * dpr) / 42), Math.floor((H * dpr) / 69));
+  const slotted = !row.classList.contains('bare') && (42 * N) / dpr >= CARD_W.min;
+  row.classList.toggle('no-slot', !row.classList.contains('bare') && !slotted);
+  if (slotted) {
+    row.style.setProperty('--ss', `${N / dpr}px`);
+    w = (51 * N) / dpr;
+  } else {
+    // 카드만: 높이에 드는 만큼(2:3) — 정본 168, 하한 150
+    w = Math.max(CARD_W.min, Math.min(CARD_W.max, Math.floor((H * 2) / 3)));
     row.style.setProperty('--card-w', `${w}px`);
-    row.style.setProperty('--slot-gap', `${g}px`);
-    return;
   }
-  const cap = Math.floor(4 * dpr);
-  let best = { N: 1, g: 4 };
-  for (const g of [16, 8, 4]) {
-    const N = Math.min(cap, Math.floor((H * dpr) / 69), Math.floor(((W - g * (n - 1)) * dpr) / (51 * n)));
-    if (N > best.N) best = { N, g };
+  // 다 들면 가운데 한 줄, 아니면 레일 — 오른쪽 끝에 다음 카드가 30 ~ 60% 걸쳐 보이게 사이(12 ~ 32)와 왼쪽 여백(G ~ G+80)을 고른다
+  const rail = n * w + (n - 1) * g > W + 1;
+  row.classList.toggle('is-rail', rail);
+  row.style.removeProperty('--rail-start');
+  if (rail) {
+    const G = parseFloat(cs.paddingRight) || 16, cw = row.clientWidth;
+    let best = { score: Infinity, g: 16, s: G };
+    for (let gg = 12; gg <= 32; gg += 2)
+      for (let ss = G; ss <= G + 80; ss += 2) {
+        const k = Math.floor((cw - ss + gg) / (w + gg));
+        const part = (cw - ss - k * (w + gg)) / w;
+        const score = Math.abs(part - 0.45) * 4 + (ss - G) / 80 + Math.abs(gg - 16) / 32;
+        if (score < best.score) best = { score, g: gg, s: ss };
+      }
+    g = best.g;
+    row.style.setProperty('--rail-start', `${best.s}px`);
   }
-  row.style.setProperty('--ss', `${best.N / dpr}px`);
-  row.style.setProperty('--slot-gap', `${best.g}px`);
+  row.style.setProperty('--slot-gap', `${g}px`);
+  if (!row.dataset.rail) bindRail(row);
+};
+
+/**
+ * 레일 밀기 (D-398): 손가락 = 기본 가로 스크롤(관성 그대로), 마우스 = 끌기 · 휠(세로 휠도 가로로).
+ * 손을 떼면 가까운 카드 왼쪽 끝에 **계단으로 붙는다** — 지나쳤다 돌아오는 4프레임(예비 → 터짐 → 출렁임, D-216 · 선형 미끄럼 없음).
+ * 끌다 뗀 누름은 카드 고르기로 치지 않는다.
+ */
+export const bindRail = (row: HTMLElement): void => {
+  row.dataset.rail = '1';
+  let anim = 0, idle = 0, drag: { x: number; left: number; moved: boolean } | null = null, eatClick = false;
+  const items = (): HTMLElement[] => [...row.querySelectorAll<HTMLElement>(':scope > .pick-item')];
+  const pad = (): number => parseFloat(getComputedStyle(row).paddingLeft) || 0;
+  const max = (): number => row.scrollWidth - row.clientWidth;
+  /** 계단 붙기: 목표까지 55% → 108% → 97% → 100% (45ms 간격) */
+  const glide = (to: number): void => {
+    window.clearTimeout(anim);
+    const from = row.scrollLeft, d = Math.max(0, Math.min(max(), to)) - from;
+    if (Math.abs(d) < 1) return;
+    const k = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? [1] : [0.55, 1.08, 0.97, 1];
+    let i = 0;
+    const step = (): void => {
+      row.scrollLeft = from + d * k[i];
+      if (++i < k.length) anim = window.setTimeout(step, 45);
+      else anim = 0;
+    };
+    row.dataset.gliding = '1';
+    step();
+    window.setTimeout(() => delete row.dataset.gliding, 45 * k.length + 30);
+  };
+  const nearest = (): number => {
+    const x0 = row.scrollLeft + pad();
+    let best = 0, dist = Infinity;
+    for (const it of items()) {
+      const d = Math.abs(it.offsetLeft - x0);
+      const left = it.offsetLeft - pad();
+      if (d < dist) (dist = d, best = left);
+    }
+    return best;
+  };
+  const settle = (): void => {
+    window.clearTimeout(idle);
+    idle = window.setTimeout(() => {
+      if (drag || row.dataset.gliding || !row.classList.contains('is-rail')) return;
+      glide(row.scrollLeft >= max() - 2 ? max() : nearest());
+    }, 140);
+  };
+  row.addEventListener('scroll', () => !row.dataset.gliding && settle(), { passive: true });
+  row.addEventListener('wheel', (e) => {
+    if (!row.classList.contains('is-rail')) return;
+    e.preventDefault();
+    window.clearTimeout(anim);
+    delete row.dataset.gliding;
+    row.scrollLeft += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+  }, { passive: false });
+  row.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || !row.classList.contains('is-rail')) return;
+    window.clearTimeout(anim);
+    delete row.dataset.gliding;
+    drag = { x: e.clientX, left: row.scrollLeft, moved: false };
+  });
+  // 6px 넘게 끌면 그때 누름을 붙잡는다 (그 전에 붙잡으면 마우스 누름이 카드에 닿지 않는다)
+  row.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    if (!drag.moved && Math.abs(e.clientX - drag.x) > 6) (drag.moved = true, row.setPointerCapture(e.pointerId));
+    if (drag.moved) row.scrollLeft = drag.left - (e.clientX - drag.x);
+  });
+  const up = (): void => {
+    if (!drag) return;
+    eatClick = drag.moved;
+    drag = null;
+    settle();
+  };
+  row.addEventListener('pointerup', up);
+  row.addEventListener('pointercancel', up);
+  row.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && !row.hasPointerCapture(e.pointerId) && up());
+  // 끌기 끝의 누름은 고르기가 아니다 (바깥 단계에서 먼저 먹는다) · 고른 카드가 가장자리에 걸쳐 있으면 안으로 들인다
+  row.addEventListener('click', (e) => {
+    if (eatClick) {
+      eatClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+    const it = (e.target as HTMLElement).closest<HTMLElement>('.pick-item');
+    if (!it || !row.classList.contains('is-rail')) return;
+    const left = it.offsetLeft - pad(), right = left + it.offsetWidth;
+    const vw = row.clientWidth - 2 * pad();
+    if (left < row.scrollLeft) glide(left);
+    else if (right > row.scrollLeft + vw) glide(right - vw);
+  }, true);
 };
 
 /**
@@ -241,8 +353,8 @@ export interface PickOpts {
   body?: string;
   /** 단추 줄 왼쪽 (건너뛴다 · 그만둔다 — 철) */
   skip?: WinBtn;
-  /** 단추 줄 오른쪽 (고른다 — 황동, 고르기 전 꺼짐) */
-  go?: Partial<WinBtn>;
+  /** 단추 줄 오른쪽 (고른다 — 황동, 고르기 전 꺼짐). null = 진행 단추 없음(덱 보기) */
+  go?: Partial<WinBtn> | null;
   onSelect?: (key: string, el: HTMLElement) => void;
   onPick: (key: string, el: HTMLElement) => void;
   cls?: string;
@@ -254,8 +366,8 @@ export interface PickOpts {
 export const pickScreen = (o: PickOpts): HTMLElement => {
   if (!host) throw new Error('uikit: bindWinHost 먼저');
   clearDismiss();
-  const go: WinBtn = { label: '고른다', attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
-  go.attrs = `${go.attrs ?? ''}${go.attrs?.includes('data-pick') ? '' : ' data-pick'}`;
+  const go: WinBtn | undefined = o.go === null ? undefined : { label: '고른다', attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
+  if (go) go.attrs = `${go.attrs ?? ''}${go.attrs?.includes('data-pick') ? '' : ' data-pick'}`;
   const el = host.open(
     `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items)}${btnRowHtml({ back: o.skip, go })}`,
     `scr-pick${o.cls ? ` ${o.cls}` : ''}`,

@@ -1,6 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, SERVICE_CARDS, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
@@ -540,6 +540,21 @@ const fitInfo = (kind: 'card' | 'part', id: string): string => {
 /** 선택지 판 하나 (작업대 · 고물상 서비스): 아이콘 16도트 + 이름 15 + 결과 12 */
 const choiceHtml = (o: { key: string; icon?: string; name: string; res: string; off?: boolean; resCls?: string }): string =>
   `<button type="button" class="choice${o.icon ? ' has-ico' : ''}" data-slot="${o.key}"${o.off ? ' disabled' : ''}>${o.icon ? `<i class="ico" style="${iconArt(o.icon)}"></i>` : ''}<span class="choice-name">${o.name}</span><span class="choice-res${o.resCls ? ` ${o.resCls}` : ''}">${o.res}</span></button>`;
+/** 손질 카드 갈래 (D-398) */
+type SvcKey = 'heal' | 'repair' | 'refine' | 'remove' | 'brace';
+/**
+ * 손질 카드 얼굴 (D-398): 고물상 · 작업대의 서비스도 카드와 같은 크기 · 같은 틀 — 상아 틀(svc-ivory) · 이름 리본 · 아이콘 창 ·
+ * 「손질」 띠 · 두루마리(묘사 / 대상 / 효과). n = 수치(정비 · 수리 %, 보강 생명). 명령 카드와 색 갈래로 구별한다.
+ */
+const svcFace = (k: SvcKey, n = 0): string => {
+  const d = SERVICE_CARDS[k];
+  return `<div class="cf part-card svc svc-card" data-grade="common"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type"><span class="t3"><i>${SERVICE_CARDS.kind}</i></span></span><small class="cf-desc">${descLines(d.desc(n))}</small></div>`;
+};
+/** 손질 카드 풀이 한 줄 (단추 줄 가운데, ⑦ 결과 요약): 「정비 — 분대 전원 HP +25%」 */
+const svcLine = (k: SvcKey, n = 0): string => {
+  const d = splitDesc(SERVICE_CARDS[k].desc(n));
+  return `${SERVICE_CARDS[k].name} — ${[d.cond, d.fx].filter(Boolean).join(' ')}`;
+};
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
   const d = SLICE_PARTS[id];
@@ -2008,11 +2023,7 @@ const shopScreen = (): void => {
   const removePrice = () => ascPrice(SHOP.removePrice + ECON.svcStep * svcUsed.remove);
   const price = (id: CommandId) => ascPrice(SHOP.gradePrice[gradeOf(id)]);
   const partPrice = (id: SlicePartId) => ascPrice(SHOP.partGradePrice[PART_GRADE[id] ?? 'common']);
-  const SVC = {
-    heal: { name: '정비', icon: 's.heal', desc: `삐걱이는 관절을 하나씩 조인다. (분대 전원 HP +${Math.round(SHOP.healPct * 100)}%)` },
-    refine: { name: '다듬기', icon: 's.refine', desc: '거친 날을 고르게 깎는다. (카드 한 장 태엽 −1)' },
-    remove: { name: '카드 빼기', icon: 's.remove', desc: '낡은 명령서를 찢는다. (카드 한 장 영구 제거)' },
-  } as const;
+  const healPct = Math.round(SHOP.healPct * 100);
   /** 열쇠 = card:id · part:id · heal · refine · remove · rewind · revive */
   const keyOf = (k: string): string => (k.startsWith('card:') ? k.slice(5) : k.startsWith('part:') ? 'part' : k);
   const costOf = (k: string): number => {
@@ -2025,18 +2036,19 @@ const shopScreen = (): void => {
     if (kind === 'card') return `${COMMANDS[id as CommandId].name} — 덱에 한 장`;
     if (kind === 'part') return `${SLICE_PARTS[id as SlicePartId].name} — ${SLICE_PARTS[id as SlicePartId].desc}`;
     if (kind === 'rewind' || kind === 'revive') return `${CHARMS[kind].name} — 부적`;
-    return SVC[kind as keyof typeof SVC].desc;
+    return svcLine(kind as SvcKey, healPct);
   };
+  /**
+   * 진열대 (D-398): 카드 · 부품 · 부적 · 손질(상아 카드)이 모두 같은 크기 카드로 한 줄 — 넘치면 가로로 민다.
+   * 가격 꼬리표는 카드 오른쪽 위 모서리(모자라면 · 팔림 = 진홍), 카드 아래 한 줄은 덱 맞물림.
+   */
   const render = (): void => {
     const tag = (k: string): string => (sold.has(keyOf(k)) ? `<span class="tag tag-crimson">${SCREEN_TEXT.sold}</span>` : `<span class="tag${gold < costOf(k) ? ' tag-crimson' : ''}">나사 ${costOf(k)}</span>`);
-    const items: PickItem[] = cards.map((id) => ({ key: `card:${id}`, html: cardFace(id, ''), info: `${tag(`card:${id}`)}${fitInfo('card', id)}`, off: sold.has(id) }));
+    const items: PickItem[] = cards.map((id) => ({ key: `card:${id}`, html: cardFace(id, '') + tag(`card:${id}`), info: fitInfo('card', id), off: sold.has(id) }));
+    if (part) items.push({ key: `part:${part}`, html: partFace(part, '') + tag(`part:${part}`), info: fitInfo('part', part), off: sold.has('part') });
     if (charmOffer)
-      items.push({ key: charmOffer, html: `<div class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><span class="cf-type"><span class="t3"><i>부적</i></span></span><small class="cf-desc">${descLines(CHARMS[charmOffer].desc)}</small></div>`, info: tag(charmOffer), off: sold.has(charmOffer) });
-    const res = (k: string): { res: string; resCls?: string } => (sold.has(keyOf(k)) ? { res: SCREEN_TEXT.sold, resCls: 'down' } : { res: `나사 ${costOf(k)}`, resCls: gold < costOf(k) ? 'down' : 'up' });
-    const side = [
-      part ? choiceHtml({ key: `part:${part}`, name: SLICE_PARTS[part].name, off: sold.has('part'), ...res(`part:${part}`) }) : '',
-      ...svcAll.filter((k) => svcShown.has(k)).map((k) => choiceHtml({ key: k, name: SVC[k].name, off: sold.has(k), ...res(k) })),
-    ].join('');
+      items.push({ key: charmOffer, html: `<div class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><span class="cf-type"><span class="t3"><i>부적</i></span></span><small class="cf-desc">${descLines(CHARMS[charmOffer].desc)}</small></div>${tag(charmOffer)}`, info: '', off: sold.has(charmOffer) });
+    for (const k of svcAll) if (svcShown.has(k)) items.push({ key: k, html: svcFace(k, healPct) + tag(k), info: '', off: sold.has(k) });
     const el = placeScreen({
       art: 'bg-shop',
       focus: [0.72, 0.45],
@@ -2044,7 +2056,7 @@ const shopScreen = (): void => {
       title: SCREEN_TEXT.shop,
       wallet: gold,
       cls: 'scr-shop',
-      body: `<div class="shop-body">${slotsHtml(items, true)}<div class="shop-side stack">${side}</div></div>`,
+      body: slotsHtml(items, true),
       back: { label: SCREEN_TEXT.leave, attrs: 'data-leave' },
       go: { label: SCREEN_TEXT.buy, attrs: 'data-pick' },
       mid: `<p class="note shop-say">${SCREEN_TEXT.shopHint}</p>`,
@@ -2075,10 +2087,14 @@ const shopScreen = (): void => {
           if (kind === 'card') deck.push(id as CommandId);
           if (kind === 'rewind' || kind === 'revive') charms[kind] += 1;
           if (kind === 'heal') squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * SHOP.healPct)) }));
+          const left = $('overlay-panel').querySelector<HTMLElement>('.scr-items')?.scrollLeft ?? 0;
           render();
+          // 다시 그려도 레일 자리를 지킨다
+          const row = $('overlay-panel').querySelector<HTMLElement>('.scr-items');
+          if (row) requestAnimationFrame(() => (row.scrollLeft = left));
           // 구매 · 회복 (D-189): 나사가 날아와 꽂히고 물건이 튄다 / 정비는 초록 고리 · 십자 반짝이
           const got = $('overlay-panel').querySelector<HTMLElement>(`[data-slot="${k}"]`);
-          if (kind === 'heal') healFx(got, `HP +${Math.round(SHOP.healPct * 100)}%`);
+          if (kind === 'heal') healFx(got, `HP +${healPct}%`);
           else buyFx(got, $('overlay-panel').querySelector('[data-wallet]'));
         }, true);
       },
@@ -2122,32 +2138,37 @@ const forgeScreen = (): void => {
   if (forgeFinal) squad = squad.map((u) => ({ ...u, hp: crewMaxHp(u) }));
   // 최종 정비 (각본 S5): 외눈 정비공의 마지막 말
   if (forgeFinal) window.setTimeout(() => toast(GILDED_STORY.forge.map((l) => `${l.who} “${l.t}”`).join(' '), 4200), 600);
-  const opts = [
-    choiceHtml({ key: 'refine', icon: 's.refine', name: '다듬기', res: '카드 한 장 태엽 −1' }),
-    choiceHtml({ key: 'remove', icon: 's.remove', name: '카드 빼기', res: '카드 한 장 영구 제거' }),
-    choiceHtml({ key: 'repair', icon: 's.repair', name: '수리', res: `분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%` }),
-    squad.some((u) => u.t !== 'K') ? choiceHtml({ key: 'brace', icon: 'shieldWall', name: '보강', res: `분대원 하나 생명 +${FORGE.braceDoors}` }) : '',
-  ].join('');
+  // 손질 카드 넷 (D-398): 고물상과 같은 상아 카드 한 줄 — 바탕은 정비공 그림(덮기 + 디더), 넘치면 가로로 민다
+  const repairPct = Math.round(FORGE.repairPct * 100);
+  const keys: SvcKey[] = ['refine', 'remove', 'repair', ...(squad.some((u) => u.t !== 'K') ? (['brace'] as const) : [])];
+  const items: PickItem[] = keys.map((k) => ({ key: k, html: svcFace(k, k === 'repair' ? repairPct : k === 'brace' ? FORGE.braceDoors : 0) }));
   const el = placeScreen({
     art: 'bg-forge',
-    focus: [0.22, 0.55],
+    focus: [0.22, 0.4],
+    backdrop: true,
     title: forgeFinal ? SCREEN_TEXT.forgeFinal : SCREEN_TEXT.forge,
     tag: forgeFinal ? `<span class="tag">${SCREEN_TEXT.fullHp}</span>` : '',
-    body: `<div class="stack place-choices">${opts}</div>`,
+    cls: 'scr-forge',
+    body: slotsHtml(items, true),
     back: { label: SCREEN_TEXT.leave, attrs: 'data-leave' },
     go: { label: SCREEN_TEXT.pick, attrs: 'data-pick' },
+    mid: `<p class="note shop-say">${SCREEN_TEXT.forgeHint}</p>`,
   });
   el.querySelector('[data-leave]')!.addEventListener('click', advance);
+  const say = el.querySelector<HTMLElement>('.shop-say')!;
   bindPick(el, {
-    onSelect: () => sfx('lift'),
+    onSelect: (k) => {
+      sfx('lift');
+      say.textContent = svcLine(k as SvcKey, k === 'repair' ? repairPct : FORGE.braceDoors);
+    },
     onPick: (k, btn) => {
       if (k === 'brace') return braceScreen();
       if (k === 'remove') return deckView('remove', (removed) => (removed ? advance() : forgeScreen()));
       if (k === 'refine') return refineScreen();
       squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * FORGE.repairPct)) }));
       sfx('awaken');
-      healFx(btn, `HP +${Math.round(FORGE.repairPct * 100)}%`);
-      toast(`분대 전원 HP +${Math.round(FORGE.repairPct * 100)}%`);
+      healFx(btn, `HP +${repairPct}%`);
+      toast(`분대 전원 HP +${repairPct}%`);
       takeFx(btn, () => window.setTimeout(advance, 300));
     },
   });
@@ -2672,19 +2693,24 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const counts = new Map<CommandId, number>();
   for (const id of deck) counts.set(id, (counts.get(id) ?? 0) + 1);
   const ids = [...counts.keys()].sort((x, y) => order.indexOf(COMMANDS[x].axis) - order.indexOf(COMMANDS[y].axis) || COMMANDS[x].cost - COMMANDS[y].cost);
-  // 목록 창 (D-394): L 창 · 움푹 칸 하나 안에서만 세로 스크롤 · 정본 카드 격자 · 장수는 카드 위 꼬리표 「×3」
-  const cells = ids.map((id) => `<div class="card-bare"${mode === 'remove' ? ` data-slot="${id}"` : ''}>${cardFace(id, 'tabindex="-1"')}${(counts.get(id) ?? 1) > 1 ? `<span class="tag">×${counts.get(id)}</span>` : ''}</div>`).join('');
-  const body = `<div class="inset scroll"><div class="deck-grid">${cells}</div></div>`;
+  // 덱 보기 · 카드 빼기 (D-394 → D-398): 창 안 격자는 667×375에서 카드가 104px로 줄어 글이 깨졌다 —
+  // 고르기 화면과 같은 카드 레일(정본 168 · 하한 150, 넘치면 가로로 민다) · 장수는 카드 위 꼬리표 「×3」 · 전체 장수는 명패 옆 꼬리표
+  const items: PickItem[] = ids.map((id) => ({ key: id, html: `${cardFace(id, 'tabindex="-1"')}${(counts.get(id) ?? 1) > 1 ? `<span class="tag">×${counts.get(id)}</span>` : ''}` }));
   const count = `<span class="tag">${deck.length}장</span>`;
   if (mode === 'view') {
-    const el = openWin({ size: 'l', title: SCREEN_TEXT.deck, body, mid: count, back: { label: SCREEN_TEXT.close, attrs: 'data-x' }, dismiss: closeWin, cls: 'win-deck' });
+    const el = pickScreen({ title: SCREEN_TEXT.deck, tag: count, items: [], body: slotsHtml(items, true), cls: 'scr-deck', skip: { label: SCREEN_TEXT.close, attrs: 'data-x' }, go: null, onPick: () => {} });
     el.querySelector('[data-x]')!.addEventListener('click', closeWin);
     return;
   }
-  // 카드 빼기: 고름 = 청록 테 · 진행 = 진홍 「뺀다」(되돌릴 수 없는 손해 — 철 「그만둔다」와 짝). 안내 줄은 두지 않는다(카드 한 줄이 우물에 통째로 들게)
-  const el = openWin({ size: 'l', title: SCREEN_TEXT.remove, body, mid: count, back: { label: SCREEN_TEXT.stop, attrs: 'data-back' }, go: { label: SCREEN_TEXT.cut, kind: 'crimson', attrs: 'data-pick', disabled: true }, cls: 'win-deck' });
-  el.querySelector('[data-back]')!.addEventListener('click', () => then?.(false));
-  bindPick(el, {
+  // 카드 빼기: 고름 = 청록 테 · 진행 = 진홍 「뺀다」(되돌릴 수 없는 손해 — 철 「그만둔다」와 짝)
+  const el = pickScreen({
+    title: SCREEN_TEXT.remove,
+    tag: count,
+    items: [],
+    body: slotsHtml(items, true),
+    cls: 'scr-deck',
+    skip: { label: SCREEN_TEXT.stop, attrs: 'data-back' },
+    go: { label: SCREEN_TEXT.cut, kind: 'crimson' },
     onSelect: () => sfx('lift'),
     onPick: (id) => {
       deck.splice(deck.indexOf(id as CommandId), 1);
@@ -2693,6 +2719,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
       then?.(true);
     },
   });
+  el.querySelector('[data-back]')!.addEventListener('click', () => then?.(false));
 };
 
 // ---------- 애착 (D-153) ----------
@@ -2780,19 +2807,23 @@ const deathRites = async (): Promise<void> => {
 
 /** 분대 보기: 이름 · 시리얼 · 기벽 · 처치 · 흉터 · 폐기 원부 (이름 바꾸기는 뺐다 — 사용자 D-263) */
 const crewView = (): void => {
-  // L 창 (D-394): 명패 「분대」 · 분대원 카드 한 줄(창 폭 · 높이에 맞춰 줄어듦) · [닫는다 | 도감]
-  const el = openWin({
-    size: 'l',
+  // 분대 (D-394 → D-398): 카드를 줄이지 않는다 — 고르기 화면과 같은 카드 레일(168 · 하한 150) · 명패 옆 인원 꼬리표 · [닫는다 | 도감]
+  const el = pickScreen({
     title: SCREEN_TEXT.crew,
-    mid: `<span class="tag">${squad.length}명</span>`,
-    body: `<div class="crew-row" style="--n:${squad.length}">${squad.map((u) => crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) })).join('')}</div>`,
-    back: { label: SCREEN_TEXT.close, attrs: 'data-x' },
+    tag: `<span class="tag">${squad.length}명</span>`,
+    items: [],
+    body: slotsHtml(squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }) })), true),
+    cls: 'scr-crew',
+    skip: { label: SCREEN_TEXT.close, attrs: 'data-x' },
     go: { label: SCREEN_TEXT.ledger, kind: 'iron', attrs: 'data-ledger' },
-    dismiss: closeWin,
-    cls: 'win-crew',
+    onPick: () => {},
   });
+  const led = el.querySelector<HTMLButtonElement>('[data-ledger]')!;
+  led.disabled = false;
   el.querySelector('[data-x]')!.addEventListener('click', closeWin);
-  el.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView());
+  led.addEventListener('click', () => ledgerView());
+  // 카드를 눌러도 도감 단추는 그대로 (고르기 규칙이 진행 단추를 끄지 않게)
+  el.querySelectorAll('[data-slot]').forEach((x) => x.addEventListener('click', () => (led.disabled = false)));
 };
 
 /** 도감 (옛 폐기 원부, D-288): 쓰러진 분대원의 영구 기록 */
@@ -3807,7 +3838,7 @@ const opening = (): void => {
     nav.innerHTML = `${sv ? `<button class="btn brass op-main" type="button" data-cont><b>이어하기</b><small>${sv.daily ? '오늘의 출하 · ' : ''}${sv.asc ? `승급 ${sv.asc} · ` : ''}${sv.actI + 1}막 · 분대 ${sv.squad.length} · 나사 ${sv.gold}</small></button>` : ''}
       <div class="op-run"><button class="btn ${sv ? '' : 'brass'} op-main" type="button" data-go><b>${sv ? '새 출하' : '출하 시작'}</b>${m.ascOpen ? `<small data-asc-line>${ascLine()}</small>` : ''}</button>${m.ascOpen ? `<div class="op-asc"><button class="btn sq" type="button" data-asc="1" aria-label="승급 높이기">▲</button><b data-asc-n>${level}</b><button class="btn sq" type="button" data-asc="-1" aria-label="승급 낮추기">▼</button></div>` : ''}</div>
       <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 출하${doneToday ? ' ✓' : ''}</b></button>
-      <div class="op-sub"><button class="btn" type="button" data-guide>안내서</button><button class="btn" type="button" data-ledger>도감</button><button class="btn" type="button" data-prologue>프롤로그</button></div>
+      <button class="btn op-main op-minor" type="button" data-guide>안내서</button><button class="btn op-main op-minor" type="button" data-ledger>도감</button><button class="btn op-main op-minor" type="button" data-prologue>프롤로그</button>
       ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-export>${PT.export}</button></div>` : ''}`;
     nav.querySelectorAll<HTMLElement>('[data-asc]').forEach((btn) =>
       btn.addEventListener('click', () => {
