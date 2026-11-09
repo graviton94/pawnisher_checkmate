@@ -6,7 +6,7 @@
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
 import { cardFits, COMMANDS, GRADE, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
-import { PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
+import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
@@ -57,7 +57,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const parts: SlicePartId[] = [...(o.forceParts ?? [])];
   const refined: CommandId[] = [];
   let gold = 0;
-  let revive = o.revive ?? (asc >= 2 ? 0 : 1);
+  let revive = o.revive ?? (asc > CHARM_NUM.startReviveUpTo ? 0 : 1);
   const bosses: BossLog[] = [];
   let battles = 0;
   let turnsAll = 0;

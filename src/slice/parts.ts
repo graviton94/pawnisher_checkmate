@@ -151,9 +151,9 @@ export const CHARMS: Record<CharmId, { name: string; icon: string; desc: string 
   rewind: { name: '역회전 톱니', icon: 'rewind', desc: '이번 턴을 처음으로 되감는다. (되감기 1회)' },
 };
 export const CHARM_NUM = {
-  /** 출하 시작: 되감기 2 · 승급 0~1은 여벌 심장 1 */
+  /** 출하 시작: 되감기 2 · 승급 0~4는 여벌 심장 1 (D-382: 조항 2에서 조항 5로 옮겨 승급 곡선을 고르게) */
   startRewind: 2,
-  startReviveUpTo: 1,
+  startReviveUpTo: 4,
   /** 부품 상자에서 부적이 나올 확률 (여벌 심장은 드물게) */
   chestRewind: 0.3,
   chestRevive: 0.08,

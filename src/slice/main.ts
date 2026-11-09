@@ -1539,7 +1539,7 @@ const advance = (): void => {
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
     squad = restSquad(squad, restHeal());
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
-    void sceneIntro(actLabel(a.act), a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`, false, '', `act-${Math.min(3, actI + 1)}`, 'act').then(showMap);
+    void sceneIntro(actLabel(a.act), a.name, ACT_NARR[actI], `<i class="sf-ico" style="${iconMask('flag')}"></i>`, false, '', `act-${Math.min(4, actI + 1)}`, 'act').then(showMap);
     return;
   }
   showMap();
@@ -1643,7 +1643,7 @@ const showMap = (): void => {
   el.className = 'mapfx';
   // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
-  el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(3, actI + 1)}.png`, location.href).href})`);
+  el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
   el.innerHTML = `<header><div><p class="sf-eyebrow">${actLabel(a.act)}</p><h2>${a.name}</h2></div><p class="res">나사 <b>${gold}</b> · 분대 <b>${squad.length}</b> · 덱 <b>${deck.length}</b>${parts.length ? ` · 부품 <b>${parts.length}</b>` : ''} <span class="charm-res" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><i class="ico" style="${iconArtSmall(CHARMS.revive.icon)}"></i><b>${charms.revive}</b><i class="ico" style="${iconArtSmall(CHARMS.rewind.icon)}"></i><b>${charms.rewind}</b></span></p></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="map-info"><p class="hint">빛나는 곳을 고릅니다.</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
@@ -2223,7 +2223,8 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   // 적 줄: 킹은 맨 끝 (기물이 하나씩 떨어져 박힌다 — ×n 배지를 없앴다, 테스터: 사각형에 가려졌다)
   void roster;
   const line = [...def.enemy.filter((t) => t !== 'K'), ...def.enemy.filter((t) => t === 'K')];
-  return sceneIntro(label, name, def.narr, art, false, '', '', def.reward === 'part' ? 'check' : 'battle', line);
+  // 입문 시험대는 전용 배경 act-0 (D-382 · SC-01)
+  return sceneIntro(label, name, def.narr, art, false, '', def.title.startsWith('입문') ? 'act-0' : '', def.reward === 'part' ? 'check' : 'battle', line);
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
 const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' };
