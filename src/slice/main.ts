@@ -1,6 +1,6 @@
 import '../fonts.css';
 import { josa } from '../data/josa';
-import { BOSS_EPITHET, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, KEYWORDS, LIFE_TEXT, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
@@ -1211,6 +1211,11 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     const pp = findPiece(b.s, (promo as { pieceId: number }).pieceId);
     await tutorial('promote', [{ text: TUT.promote, target: () => (pp ? tileRect(pp) : null) }]);
   }
+  // 반장 2단계 예고 (D-383): 1단계 반장 HP가 낮아지면 한 번 — 「한 번 더 일어선다」
+  if (b.boss && !b.phase2 && !phaseWarned && asc <= BOSS_PHASE_TEXT.upTo && b.s.winner === null) {
+    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    if (ek && ek.hp <= ek.maxHp * BOSS_PHASE_TEXT.lowAt) { phaseWarned = true; toast(BOSS_PHASE_TEXT.low, 3600); }
+  }
   // 반장 2단계 (D-243): 쓰러진 반장이 다시 일어선다
   if (r.events.some((e) => e.type === 'respawn' && e.label === '반장 2단계')) {
     sfx('threat');
@@ -1407,7 +1412,10 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
 
 // ---------- 흐름 ----------
 /** 대국 시작 (지도에서 고른 판 · 다시 하기) */
+/** 반장 2단계 예고를 이번 대국에 이미 했나 (D-383) */
+let phaseWarned = false;
 const startBattle = (def: BattleDef, silent = false): void => {
+  phaseWarned = false;
   battlesFought += 1;
   handView = null;
   closeOpening();
@@ -1487,12 +1495,16 @@ const startBattle = (def: BattleDef, silent = false): void => {
           { text: TUT.boss.meet(R0.name), target: () => $('board').querySelector('canvas') ?? $('board') },
           { text: R0.tell.replace(/([.!?])\s+/g, '$1\n'), target: () => $('board').querySelector('canvas') ?? $('board') },
           { text: TUT.boss.badge, target: () => $('boss') },
+          // 2단계 예고 (D-383): 낮은 승급에서는 처음 만날 때 부관이 짚는다
+          ...(asc <= BOSS_PHASE_TEXT.upTo ? [{ text: BOSS_PHASE_TEXT.start.replace(/([.!?])\s+/g, '$1\n'), target: () => $('boss') }] : []),
         ]));
         return;
       }
       if (nemesisNow) return nemesisMeet(nemesisNow);
       const cracked = squad.filter((u) => u.cracked);
-      toast(cracked.length ? `${def.tell} · ${LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · '))}` : def.tell, 3600);
+      // 반장 2단계 예고 (D-383): 낮은 승급에서는 시작할 때 미리 알린다
+      const tell = def.boss && asc <= BOSS_PHASE_TEXT.upTo ? `${def.tell} ${BOSS_PHASE_TEXT.start}` : def.tell;
+      toast(cracked.length ? `${tell} · ${LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · '))}` : tell, def.boss ? 5200 : 3600);
       maybeBet(def);
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
@@ -2148,7 +2160,7 @@ const TIPS = [
  * 모든 움직임은 예비 동작 → 터짐 → 출렁임, 사라짐은 철문(shutter) — 페이드 없음 (D-216).
  */
 type EntryKind = 'battle' | 'check' | 'shop' | 'event' | 'chest' | 'forge' | 'act';
-const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false, roster = '', bg = '', kind: EntryKind = 'act', foes: PieceType[] = []): Promise<void> =>
+const sceneIntro = (label: string, name: string, narr: string, art: string, boss = false, roster = '', bg = '', kind: EntryKind = 'act', foes: PieceType[] = [], tell = ''): Promise<void> =>
   new Promise((resolve) => {
     void boss;
     void roster;
@@ -2159,7 +2171,13 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
     const lineup = foes.length
       ? `<div class="en-line">${foes.map((t, i) => `<span class="en-pc" style="--i:${i}">${pieceImg(t, 1, 'small', 48)}</span>`).join('')}</div><i class="en-belt"></i>${kind === 'check' ? '<i class="en-scan"></i><b class="en-stamp">검문</b>' : ''}`
       : `<div class="en-prop">${art}</div>${kind === 'shop' ? Array.from({ length: 5 }, (_, i) => `<i class="en-screw" style="--i:${i}"></i>`).join('') : ''}`;
-    el.innerHTML = `<div class="en-table"><p class="en-plate">${label}</p><div class="en-stage">${lineup}</div><h1 class="en-name">${name}</h1><p class="sf-narr en-narr"></p></div>
+    // D-383 진입 창 (사용자: 「시험대 팝업 모달 자체 퀄리티가 떨어진다」): 철판 패널 + 위 가장자리에 걸친 황동 명패,
+    // 왼쪽 = 움푹한 작업 칸(벽 무늬 · 컨베이어 · 떨어지는 기물 / 소품), 오른쪽 = 이름 · 서술(문장마다 줄) · 적 명단 칩 · 알림 테이프
+    const cnt = new Map<PieceType, number>();
+    for (const t of foes) cnt.set(t, (cnt.get(t) ?? 0) + 1);
+    const chips = foes.length ? `<ul class="en-roster">${[...cnt].map(([t, n], i) => `<li class="inset" style="--i:${i}">${pieceImg(t, 1, 'small', 24)}<b>${PIECE_NAMES_KO[t]}</b>${n > 1 ? `<i>×${n}</i>` : ''}</li>`).join('')}</ul>` : '';
+    const tape = tell ? `<p class="en-tell">${tell.replace(/([.!?])\s+/g, '$1\n')}</p>` : '';
+    el.innerHTML = `<div class="en-table${foes.length ? ' has-foes' : ''}"><p class="en-plate">${label}</p><div class="en-bay"><div class="en-stage">${lineup}</div></div><div class="en-copy"><h1 class="en-name">${name}</h1><p class="sf-narr en-narr"></p>${chips}${tape}</div></div>
       <p class="sf-tip">${TIPS[Math.floor(Math.random() * TIPS.length)]}</p><p class="sf-skip">눌러서 계속</p>`;
     const T: number[] = [];
     const at = (ms: number, fn: () => void) => T.push(window.setTimeout(fn, ms));
@@ -2182,7 +2200,8 @@ const sceneIntro = (label: string, name: string, narr: string, art: string, boss
       if (kind === 'act') at(380, () => { sfx('land'); hitAt('.en-prop', 8, 44); });
       // 이름 도장 → 서술
       at(after + (kind === 'check' ? 700 : 120), () => { sfx('stamp'); el.classList.add('named'); });
-      at(after + (kind === 'check' ? 1000 : 420), () => void typeIn(el.querySelector<HTMLElement>('.en-narr')!, narr, 20));
+      at(after + (kind === 'check' ? 1000 : 420), () => void typeIn(el.querySelector<HTMLElement>('.en-narr')!, narr.replace(/([.!?…])\s+/g, '$1\n'), 20));
+      at(after + (kind === 'check' ? 1100 : 520), () => el.classList.add('told'));
     });
     let done = false;
     const close = () => {
@@ -2218,13 +2237,13 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   if (def.boss) {
     const real = def.bossRule ?? 'plate';
     const rule = real as BossKey;
-    return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], narr: def.narr, rules: BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
+    return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], narr: def.narr, rules: asc <= BOSS_PHASE_TEXT.upTo ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
   // 적 줄: 킹은 맨 끝 (기물이 하나씩 떨어져 박힌다 — ×n 배지를 없앴다, 테스터: 사각형에 가려졌다)
   void roster;
   const line = [...def.enemy.filter((t) => t !== 'K'), ...def.enemy.filter((t) => t === 'K')];
   // 입문 시험대는 전용 배경 act-0 (D-382 · SC-01)
-  return sceneIntro(label, name, def.narr, art, false, '', def.title.startsWith('입문') ? 'act-0' : '', def.reward === 'part' ? 'check' : 'battle', line);
+  return sceneIntro(label, name, def.narr, art, false, '', def.title.startsWith('입문') ? 'act-0' : '', def.reward === 'part' ? 'check' : 'battle', line, def.tell ?? '');
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
 const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' };
