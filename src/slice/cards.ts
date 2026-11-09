@@ -380,7 +380,8 @@ export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell:
 export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }>> = {
   // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 되받아침은 그대로
   spawn: { king: 0.8, atk: 0.7 },
-  thorns: { king: 0.6, atk: 0.7 }, // D-358: 0.7 → 0.6 (60%)
+  thorns: { king: 0.6, atk: 0.6 }, // D-358: 킹 0.7 → 0.6 · 공격 0.7 → 0.6 (확정 측정 58%)
+  alarm: { king: 0.85, atk: 0.85 }, // D-358: 확정 측정에서 보통 봇 50% — 반장 중 가장 낮았다
   // D-358: 1막 둘은 보통 봇 90 · 95%로 문턱이 아니었다 → 킹 HP ×1.25 · 공격 ×1.1 (×1.5는 승급 6에서 벽이 됐다)
   plate: { king: 1.25, atk: 1.1 },
   inspect: { king: 1.25, atk: 1.1 },
