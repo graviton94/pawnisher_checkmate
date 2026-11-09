@@ -52,7 +52,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   crown: { name: '짓누르는 왕관', axis: 'king', icon: 'crown', flavor: '무게가 곧 힘이다.', desc: '킹의 공격 ×2' },
   throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', flavor: '왕이 걸으면 옥좌도 따라 걷는다.', desc: '킹 방열판 +4 — 킹 카드를 쓸 때마다' },
   coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '연쇄 피해가 곱으로 — 처치마다 ×1.5 · 최대 ×16' },
-  echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', flavor: '쓰러지는 소리가 두 번 울린다.', desc: '처치하면 연쇄 +2 — 보통은 처치 한 번에 연쇄 +1' },
+  echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', flavor: '쓰러지는 소리가 두 번 울린다.', desc: '처치하면 연쇄 +2' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'hammer', flavor: '부딪히는 소리가 곧 피해다.', desc: '충돌 피해 ×2 — 밀린 적이 막혀 부딪칠 때' },
   // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
   lance: { name: '기사의 창', axis: 'cav', icon: 'lance', flavor: '달려온 무게를 창끝에 싣는다.', desc: '나이트의 공격 ×1.5' },
@@ -90,7 +90,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   firstSpring: { name: '선제 태엽', axis: null, icon: 'firstSpring', flavor: '먼저 감은 태엽이 먼저 돈다.', desc: '태엽 +2 — 대국 첫 턴' },
   lastAxle: { name: '버팀 축', axis: 'king', icon: 'lastAxle', flavor: '무너지기 직전에 가장 세게 버틴다.', desc: '킹의 공격 ×1.6 — 킹 HP 30% 아래면' },
   toolbox: { name: '땜질 도구함', axis: null, icon: 'toolbox', flavor: '가장 깊이 패인 둘부터 땜질한다.', desc: '다친 기물 둘 HP +6 — 턴 시작에 · 킹은 빼고' },
-  ventHole: { name: '바람 구멍', axis: null, icon: 'ventHole', flavor: '숨을 고르고 되받아친다.', desc: '그 공격 피해 ×1.8 — 적이 노린 칸에서 빠져나와 칠 때 (기본 ×1.5)' },
+  ventHole: { name: '바람 구멍', axis: null, icon: 'ventHole', flavor: '숨을 고르고 되받아친다.', desc: '회피 반격 피해 ×1.8 — 노린 칸에서 빠져나와 칠 때' },
   afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', flavor: '불은 꺼져도 쇠는 식지 않는다.', desc: '연쇄 절반 유지 — 턴이 끝나도' },
   bossBane: { name: '반장 사냥꾼', axis: null, icon: 'bossBane', flavor: '반장의 냄새를 안다.', desc: '모든 공격 ×1.2 — 반장 판에서' },
   lightMag: { name: '가벼운 탄창', axis: null, icon: 'lightMag', flavor: '가벼운 탄창은 빨리 갈린다.', desc: '손패 +1 — 덱이 12장 이하면' },

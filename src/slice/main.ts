@@ -22,7 +22,7 @@ import { creditsScene } from './credits';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
-import { PIECE_NAMES_KO } from '../data/pieces';
+import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
@@ -301,6 +301,7 @@ const renderer = new BoardRenderer(
       const fresh = el.hidden || el.dataset.pid !== String(p.id);
       el.dataset.pid = String(p.id);
       el.hidden = false;
+      el.querySelectorAll<HTMLElement>('.cf').forEach(fitCardDesc);
       el.classList.remove('pxout');
       // 손가락에 가리지 않게 누른 곳의 왼쪽 위에 (오른쪽 아래 모서리가 손끝 24px 위 · 왼쪽), 화면 밖이면 반대쪽으로 (D-245)
       const iw = el.offsetWidth;
@@ -539,40 +540,42 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
   const c = COMMANDS[id];
   const g = gradeOf(id);
   // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
-  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}>${keysHtml(c.cost)}<b class="cf-name">${c.name}</b><span class="cf-win">${cardArt(id)}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small>${c.flavor && !c.title ? `<i class="cf-flv">${c.flavor}</i>` : ''}<i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
+  // D-367 카드 틀: 비용 = 톱니 메달 숫자 · 그림 = 분대원 초상(공용은 아이콘) · 종류 판 = 누가 · 어떤 · 합/곱
+  const art = c.who === 'any' ? cardArt(id) : `<img class="cf-face" src="${c.who === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${c.who}.png`}" alt="">`;
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${c.name}</b><span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
 /**
  * 분대원 카드 (D-362, 사용자: 「기물도 하나하나의 카드가 되는 거지」): 카드 · 부품과 같은 틀 —
  * 이름(별칭) · 그림 창(기물) · 태그(기물 · 생명 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
  */
-const crewFace = (u: Crew, hp: number, max: number, src = u.t === 'K' ? `pieces/l-K0.png` : `ui/hud/crew-${u.t}.png`): string => {
-  const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
-  const pct = `${Math.max(0, Math.min(100, Math.round((hp / max) * 100)))}%`;
-  const tags = [PIECE_NAMES_KO[u.t], `생명 ${u.doors ?? 0}`, u.cracked ? '금 간 심장' : ''].filter(Boolean).map((t) => `<i class="tg">${t}</i>`).join('');
-  return `<div class="cf crew-card big t-${u.t} g-${g}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${crewLabel(u)}</b><span class="cf-win"><span class="er-pc"><img src="${src}" alt=""></span></span><span class="cf-type">${tags}</span><small class="cf-desc"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><span class="er-hpn">HP ${Math.round(hp)} / ${max}</span></small><i class="cf-gem"></i></div>`;
-};
+const crewFace = (u: Crew, hp: number, max: number, src?: string): string => crewCard(u, { hp, max }, src);
 /**
  * 분대원 정보 카드 (D-363, 사용자: 「판에서 꾹 눌렀을 때도 저 초상 — 전투력 · 처치 이력 · 누적 피해까지」).
  * 카드와 같은 틀에 기록 칸을 더한다: 공격 · HP · 생명 / 처치 · 누적 피해 · 죽음 넘김 · 대국 / 기벽 · 흉터.
  * live = 지금 대국의 기물(공격 · HP · 방열판 · 남은 생명 · 이번 대국 처치/피해).
  */
-const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; shield: number; lives: number; kills: number; dmg: number }): string => {
+const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; shield: number; lives: number; kills: number; dmg: number }): string => crewCard(u, live ?? { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }, undefined, 'crew-info');
+/**
+ * 분대원 카드 (D-367 틀 · D-363 기록): 리본 이름 · 초상 창 · 공격 마름모 · HP 압력계 · 생명 하트(초상 오른쪽 위) · 두루마리에 기록과 특성.
+ * 사건 결과 오버레이 · 판 길게 누름 · 분대 화면이 모두 이 카드.
+ */
+const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: number; lives?: number; kills?: number; dmg?: number }, src?: string, cls = ''): string => {
   const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
-  const max = live?.max ?? crewMaxHp(u), hp = live?.hp ?? u.hp ?? max;
-  const pct = `${Math.max(0, Math.min(100, Math.round((hp / max) * 100)))}%`;
   const q = u.quirk ? QUIRKS[u.quirk] : null;
-  const lives = live?.lives ?? (u.doors ?? 0) + (q?.doors ?? 0);
-  const art = u.t === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${u.t}.png`;
-  const kills = (u.kills ?? 0) + (live?.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(live?.dmg ?? 0);
-  const stat = (k: string, v: string | number, cls = '') => `<span class="ci-st${cls ? ` ${cls}` : ''}"><i>${k}</i><b>${v}</b></span>`;
-  return `<div class="cf crew-info t-${u.t} g-${g}" data-grade="${g}"><b class="cf-name">${crewLabel(u)}</b><small class="ci-serial">${u.serial ?? ''} · ${PIECE_NAMES_KO[u.t]}</small>`
+  const art = src ?? (u.t === 'K' ? 'pieces/l-K0.png' : `ui/hud/crew-${u.t}.png`);
+  const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1));
+  const lives = o.lives ?? (u.doors ?? 0) + (q?.doors ?? 0);
+  const pct = `${Math.max(0, Math.min(100, Math.round((o.hp / o.max) * 100)))}%`;
+  const kills = (u.kills ?? 0) + (o.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(o.dmg ?? 0);
+  const hearts = Array.from({ length: lives }, () => '<i class="cb-life"></i>').join('');
+  return `<div class="cf crew-card g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${crewLabel(u)}</b>`
     + `<span class="cf-win"><span class="er-pc"><img src="${art}" alt=""></span></span>`
-    + `<span class="ci-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span><em>HP ${hp} / ${max}${live?.shield ? ` · 방열판 ${live.shield}` : ''}</em></span>`
-    + `<span class="ci-grid">${live ? stat('공격', live.atk, 'hot') : ''}${stat('생명', lives, lives ? 'life' : '')}${stat('처치', kills)}${stat('누적 피해', dmg)}${stat('죽음 넘김', u.defied ?? 0)}${stat('대국', u.battles ?? 0)}</span>`
-    + (q ? `<small class="ci-quirk"><b>${q.name}</b><span>${q.desc}</span></small>` : '')
-    // 흉터 (D-364): 이름만 두면 뜻을 모른다 — 「흉터 · 납땜 자국」 + 풀이
-    + (u.scars?.length ? `<small class="ci-scar">${u.scars.map((x) => `<b>흉터 · ${x}</b><span>${SCAR_DESC[x] ?? ''}</span>`).join('')}</small>` : '')
-    + `<i class="cf-gem"></i></div>`;
+    + `<b class="cb cb-atk">${atk}</b><b class="cb cb-hp"><span class="er-hpn">${Math.round(o.hp)}</span></b><span class="cb-lives">${hearts}</span>`
+    + `<span class="cb-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span></span>`
+    + `<small class="cf-desc"><span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>넘김</i>${u.defied ?? 0}</span></span>`
+    + (q ? `<b class="cs-qn">${q.name}</b><span class="cs-q">${q.desc}</span>` : '')
+    + (u.scars?.length ? u.scars.map((x) => `<b class="cs-sc">흉터 · ${x}</b><span class="cs-q">${SCAR_DESC[x] ?? ''}</span>`).join('') : '')
+    + `</small><i class="cf-gem"></i></div>`;
 };
 /** 부품 얼굴 (D-217 3): 카드 얼굴과 같은 틀 · 같은 자리 */
 const partFace = (id: SlicePartId, attrs: string, extra = '', cls = ''): string => {
@@ -1923,8 +1926,9 @@ const fitHint = (kind: 'card' | 'part', id: string): { text: string; tone: 'good
   const dt = deck.map((d) => cardTags(d));
   const nWho = t.who === 'any' ? 0 : dt.filter((x) => x.who === t.who).length;
   const nSty = dt.filter((x) => x.style === t.style).length;
-  const bits = [t.who !== 'any' ? `${PIECE_NAMES_KO[t.who]} 카드 <b>${nWho}</b>` : '', `${STYLE_NAMES[t.style]} <b>${nSty}</b>`].filter(Boolean);
-  return { text: `내 덱 ${bits.join(' · ')}`, tone: nWho + nSty >= 4 ? 'good' : 'mid' };
+  // D-367: 카드 틀 그림 창 안 한 줄 — 「덱 [기물 그림] n · 돌격 n」
+  const bits = [t.who !== 'any' ? `<img class="fit-pc" src="pieces/l-${t.who}0.png" alt="${PIECE_NAMES_KO[t.who]}"><b>${nWho}</b>` : '', `${STYLE_NAMES[t.style]} <b>${nSty}</b>`].filter(Boolean);
+  return { text: `덱 ${bits.join(' · ')}`, tone: nWho + nSty >= 4 ? 'good' : 'mid' };
 };
 const shopScreen = (): void => {
   // 장소 배경 (D-200): 녹슨 룩의 고물상 BG-01 — 창은 오른쪽
@@ -2341,6 +2345,21 @@ const openOverlay = (html: string): HTMLElement => {
  * 보상 · 고물상 · 핵심 부품 · 부품 · 영입 · 작업대 · 다듬기의 카드 묶음을 모두 같은 「큰 카드 가로 줄」로 바꾼다.
  * 카드는 한 장씩 맞물려 멈추고(스냅), 넘칠 때만 ◀ ▶ 단추가 선다. 넘기면 줄이 살짝 밀렸다 돌아온다(계단, 페이드 없음).
  */
+/**
+ * 카드 설명 맞춤 (D-372): 카드는 한 크기라 글이 넘치면 카드를 키우지 않고 덜어낸다 —
+ * 1단계 묘사 줄(행동 카드) · 흉터 풀이(분대원 카드)를 접고, 2단계 줄 간격을 좁힌다. 화면에 붙는 모든 카드에 한 번씩.
+ */
+const fitCardDesc = (card: HTMLElement): void => {
+  const d = card.querySelector<HTMLElement>('.cf-desc');
+  if (!d || !card.offsetParent) return;
+  card.dataset.fit = '1';
+  d.classList.remove('tight', 'tighter');
+  const over = (): boolean => d.scrollHeight > d.clientHeight + 1;
+  if (over()) d.classList.add('tight');
+  if (over()) d.classList.add('tighter');
+};
+new MutationObserver(() => requestAnimationFrame(() => document.querySelectorAll<HTMLElement>('.cf:not([data-fit])').forEach(fitCardDesc)))
+  .observe(document.body, { childList: true, subtree: true });
 const railify = (root: HTMLElement): void => {
   root.querySelectorAll<HTMLElement>('.shop-grid, .reward-cards, .part-cards').forEach((rail) => {
     if (rail.classList.contains('crail')) return;

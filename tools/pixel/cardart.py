@@ -3,8 +3,8 @@
 레퍼런스 문법: 아치형 큰 그림 창(카드의 절반) · 그림과 설명 사이를 가로지르는 이름 리본(등급 색, 틀 밖으로 꼬리) ·
 양 끝이 말린 두루마리 설명지 · 장식 모서리와 구슬 테 · 왼쪽 위 비용 깃발 · 종류 판 · 아래 보석 소켓.
 우리 세계(주물 공장)로 옮김: 장식 = 황동 톱니 · 리벳, 그림 창 = 용광로 아치 문(명령) · 팔각 원판(부품) · 방패 초상(분대원).
-  public/ui/cards/{cmd,part,crew}-{common,rare,gold}.png   96×136 템플릿 (글 · 그림은 게임이 얹는다)
-  public/ui/cards/back.png                                 96×136 뒷면
+  src/assets/ui/cards/{cmd,part,crew}-{common,rare,gold}.png   96×136 템플릿 (글 · 그림은 게임이 얹는다)
+  src/assets/ui/cards/back.png                                 96×136 뒷면
 레이아웃(도트)은 아래 LAYOUT — CSS가 같은 비율(%)로 글을 얹는다.
 사용: python3 -I tools/pixel/cardart.py [미리보기.png]
 """
@@ -14,7 +14,7 @@ import sys
 
 from PIL import Image
 
-OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'ui', 'cards')
+OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'assets', 'ui', 'cards')
 W, H = 96, 142
 # 틀 밖 여백 (리본 꼬리 · 비용 톱니 · 배지가 튀어나온다)
 OX, OY = 8, 8
@@ -41,7 +41,8 @@ RIBBON = {
 BRASS = ['#4a3008', '#7a5414', '#a8782a', '#d4a24a', '#f4d27a', '#fff2c0']
 PLATE = ['#121116', '#1a1920', '#23222a', '#2e2d36']
 PAPER = ['#8a7a5a', '#b8a882', '#d8ccae', '#e8e0cc', '#f4eedc']
-LAYOUT = dict(art=(12, 12, 84, 60), ribbon=(4, 57, 92, 68), type=(30, 70, 66, 76), scroll=(10, 79, 86, 132), gem=(44, 132, 52, 140), cost=(2, 0, 18, 22))
+MASKS = {}
+LAYOUT = dict(art=(12, 12, 84, 54), ribbon=(4, 51, 92, 62), type=(30, 70, 66, 76), scroll=(10, 67, 86, 132), gem=(44, 132, 52, 140), cost=(2, 0, 18, 22))
 
 
 class P:
@@ -157,6 +158,14 @@ def arch_window(px, m, kind):
             if r3(x, y):
                 px.p(x, y, m[4] if (x - cx) + (y - y0) * 0.6 < 0 else m[3] if x < cx else m[1])
     outline_shape(px, lambda x, y: ins(x, y) or r3(x, y), INK)
+    # 창 모양 마스크 (CSS mask-image — 그림 창 칸이 아치 · 팔각 · 방패를 따른다, D-371)
+    x0m, y0m, x1m, y1m = LAYOUT['art']
+    mk = Image.new('L', (x1m - x0m + 1, y1m - y0m + 1), 0)
+    for yy in range(y0m, y1m + 1):
+        for xx in range(x0m, x1m + 1):
+            if ins(xx, yy):
+                mk.putpixel((xx - x0m, yy - y0m), 255)
+    MASKS[kind] = mk
     # 창 안: 비운다(투명) + 안쪽 검은 선
     for y in range(H):
         for x in range(W):
@@ -286,7 +295,7 @@ def cost_flag(px):
 def badges(px, m):
     """분대원: 공격(왼쪽 아래 붉은 마름모) · HP(오른쪽 아래 초록 방패) — 리본 위 양 끝, 틀 밖으로 반쯤"""
     for cx, kind in ((2, 'atk'), (W - 3, 'hp')):
-        cy = 50
+        cy = 45
         for y in range(cy - 11, cy + 12):
             for x in range(cx - 11, cx + 12):
                 dx, dy = abs(x - cx), y - cy
@@ -316,8 +325,6 @@ def card(kind, grade):
     arch_window(px, m, kind)
     scroll(px)
     ribbon(px, RIBBON[grade])
-    if kind != 'crew':
-        type_plate(px)
     gem_socket(px, m)
     if kind == 'cmd':
         cost_flag(px)
@@ -364,6 +371,8 @@ if __name__ == '__main__':
             im = card(kind, g)
             im.save(os.path.join(OUT, f'{kind}-{g}.png'))
             ims.append(im)
+    for k, mk in MASKS.items():
+        Image.merge('RGBA', (mk, mk, mk, mk)).save(os.path.join(OUT, f'mask-{k}.png'))
     b = back()
     b.save(os.path.join(OUT, 'back.png'))
     ims.append(b)

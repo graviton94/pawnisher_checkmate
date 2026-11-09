@@ -45,7 +45,7 @@ NB = lambda t: re.sub(r'(한|두|세|\d) (칸|장|번)', '\\1\u00a0\\2', t)
 def cmd(g, ax, cost, name, art, who, say, fx, cond=''):
     say, cond = NB(say), NB(cond)
     return f'''<div class="card"><div class="art" style="{at(12, 12, 73, 49)}{art_bg(ax)}"><img src="{b64(art)}" style="width:84px;height:84px;margin:0"></div>
-<img class="tpl" src="{b64(f'public/ui/cards/cmd-{g}.png')}">
+<img class="tpl" src="{b64(f'src/assets/ui/cards/cmd-{g}.png')}">
 <b class="cost" style="{at(-5, -6, 17, 17)}">{cost}</b>
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <span class="type" style="{at(30, 70, 37, 7)}">{who if (who, ax) in (('폰', 'inf'), ('나이트', 'cav'), ('킹', 'king')) else f'{who} · {AXBG[ax][2]}'}</span>
@@ -54,7 +54,7 @@ def cmd(g, ax, cost, name, art, who, say, fx, cond=''):
 
 def part(g, name, icon, say, fx, cond=''):
     return f'''<div class="card"><div class="art mid" style="{at(12, 12, 73, 49)}background:#141319"><img src="{b64(icon)}" style="width:64px;height:64px;margin:0"></div>
-<img class="tpl" src="{b64(f'public/ui/cards/part-{g}.png')}">
+<img class="tpl" src="{b64(f'src/assets/ui/cards/part-{g}.png')}">
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <span class="type" style="{at(30, 70, 37, 7)}">부품</span>
 <div class="scroll" style="{at(16, 80, 65, 51)}"><p class="say">{say}</p><p class="fx">{f'<span class="cond">{cond}</span> ' if cond else ''}<b>{re.sub(r'([+×−]?\d+(?:\.\d+)?)', r'<em>\1</em>', fx)}</b></p></div></div>'''
@@ -63,7 +63,7 @@ def part(g, name, icon, say, fx, cond=''):
 def crew(g, name, serial, face, atk, hp, lives, kills, dmg, defied, q):
     hearts = ''.join(f'<img class="heart" src="{b64("public/ui/icons16/life@16.png")}">' for _ in range(lives))
     return f'''<div class="card"><div class="art" style="{at(12, 12, 73, 52)}background:#e8e0cc"><img src="{b64(face)}" style="width:84px;height:84px;margin:0"></div>
-<img class="tpl" src="{b64(f'public/ui/cards/crew-{g}.png')}">
+<img class="tpl" src="{b64(f'src/assets/ui/cards/crew-{g}.png')}">
 <b class="name g-{g}" style="{at(4, 57, 89, 11)}">{name}</b>
 <b class="badge" style="{at(-8, 42, 21, 17)}">{atk}</b><b class="badge" style="{at(83, 42, 21, 17)}">{hp}</b>
 <span class="lives" style="{at(58, 14, 26, 9)}">{hearts}</span>
@@ -74,7 +74,7 @@ def main(out):
     cards_cmd = cmd('common', 'inf', 0, '총진격', 'public/ui/hud/crew-P.png', '폰', '줄을 맞춰, 앞으로.', '모든 폰이 한 칸 나아가 기본 공격') + cmd('rare', 'cav', 1, '기습', 'public/ui/hud/crew-N.png', '나이트', '어둠 속에서 덮친다.', '피해 ×1.5 · 처치하면 카드 1장') + cmd('gold', 'chain', 2, '대성당의 빛', 'public/ui/hud/crew-B.png', '비숍', '사선 끝까지 빛이 꿰뚫는다.', '사선 위 모든 적 피해 +10 · 처치마다 연쇄 +1')
     cards_part = part('common', '도화선', 'public/ui/icons16/fuse.png', '불씨가 줄을 타고 달린다.', '연쇄 +1', '한 턴에 셋을 쓰러뜨리면') + part('rare', '피의 장부', 'public/ui/icons16/gameRecord.png', '흘린 피는 빠짐없이 적힌다.', '공격 +1', '누적 피해 60마다') + part('gold', '짓누르는 왕관', 'public/ui/icons16/crown.png', '왕관의 무게가 곧 주먹의 무게.', '킹의 공격 ×2')
     cards_crew = crew('common', '먼지투성이', '#P-203 · 폰', 'public/ui/hud/crew-P.png', 9, 22, 1, 4, 120, 0, ('겁쟁이', '적이 곁에 오면 한 칸 물러선다')) + crew('rare', '굽은 지렛대', '#N-681 · 나이트', 'public/ui/hud/crew-N.png', 16, 36, 2, 9, 360, 2, ('납땜 흉갑', '방열판 12 · 공격 −15%')) + crew('gold', '콧대 높은 귀부인', '#Q-104 · 퀸', 'public/ui/hud/crew-Q.png', 24, 48, 0, 15, 820, 1, ('오만', '처치하면 태엽 +1'))
-    back = f'<div class="card"><img class="tpl" src="{b64("public/ui/cards/back.png")}"></div>'
+    back = f'<div class="card"><img class="tpl" src="{b64("src/assets/ui/cards/back.png")}"></div>'
     css = f'''
 @font-face{{font-family:G11;src:url({font('dist/assets/Galmuri11.woff2')})}}@font-face{{font-family:G11B;src:url({font('dist/assets/Galmuri11-Bold.woff2')})}}@font-face{{font-family:G14;src:url({font('dist/assets/Galmuri14.woff2')})}}
 body{{background:#1a1622;color:#ece6d8;font:12px G11,sans-serif;padding:24px max(16px,env(safe-area-inset-left,0px));margin:0}}

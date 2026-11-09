@@ -2719,3 +2719,118 @@ body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 .cf.crew-info .ci-quirk b, .cf.crew-info .ci-scar b { display: block; }
 .cf.crew-info .ci-scar b { color: #c9a06a; font-weight: 400; margin-top: 2px; }
 .cf.crew-info .ci-scar span { color: #9a917c; }
+
+/* ===================== D-367 · D-370 카드 틀 (tools/pixel/cardart.py) — 아치 그림 창 · 이름 리본 · 두루마리 · 톱니 비용 =====================
+   템플릿 112×158 (틀 96×142 + 여백 8). 글 · 그림은 같은 비율(%) 자리에 얹는다. */
+body.slice .cf.cf.cf { width: 170px; height: auto; aspect-ratio: 112 / 158; padding: 0; gap: 0; display: block; background: url('../assets/ui/cards/cmd-common.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; box-shadow: none; filter: drop-shadow(3px 3px 0 #000); }
+body.slice .cf.cf.cf::before, body.slice .cf.cf.cf::after { content: none; border: 0; animation: none; }
+body.slice .cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); }
+body.slice .cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); }
+body.slice .cf.cf.cf.part-card { background-image: url('../assets/ui/cards/part-common.png'); }
+body.slice .cf.cf.cf.part-card.g-rare { background-image: url('../assets/ui/cards/part-rare.png'); }
+body.slice .cf.cf.cf.part-card.g-gold { background-image: url('../assets/ui/cards/part-gold.png'); }
+body.slice .cf.cf.cf > * { position: absolute; margin: 0; }
+body.slice .cf.cf.cf .cf-cost { left: 2%; top: 0; width: 15.6%; height: 12.6%; display: grid; place-items: center; z-index: 3; font: 700 24px/1 Galmuri11, sans-serif; color: #fff1c0; text-shadow: 2px 2px 0 #000; }
+body.slice .cf.cf.cf .cf-name { left: 10.7%; top: 37.3%; width: 79.5%; height: 7.6%; right: auto; display: grid; place-items: center; z-index: 3; font: 700 12px/1 Galmuri11, sans-serif; color: #f4f1ea; text-shadow: 1px 1px 0 #000; white-space: nowrap; overflow: visible; }
+body.slice .cf.cf.cf.g-rare .cf-name { color: #f4f1ea; } body.slice .cf.cf.cf.g-gold .cf-name { color: #fff1c0; }
+body.slice .cf.cf.cf .cf-win { left: 17.9%; top: 12.7%; width: 65.2%; height: 26.6%; z-index: 0; display: grid; place-items: end center; overflow: hidden; background: #24232b; box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.28), inset 0 0 0 8px rgba(0, 0, 0, 0.14); }
+body.slice .cf.cf.cf.cmd .cf-win { --wa: #2c2b34; --wb: #35343e; background-color: var(--wa); background-image: linear-gradient(45deg, var(--wb) 25%, transparent 25%, transparent 75%, var(--wb) 75%), linear-gradient(45deg, var(--wb) 25%, transparent 25%, transparent 75%, var(--wb) 75%); background-size: 4px 4px; background-position: 0 0, 2px 2px; }
+body.slice .cf.cf.cf.ax-inf .cf-win { --wa: #2f4a35; --wb: #3d5f44; } body.slice .cf.cf.cf.ax-cav .cf-win { --wa: #4a3324; --wb: #5e4230; }
+body.slice .cf.cf.cf.ax-chain .cf-win { --wa: #352a4a; --wb: #45375e; } body.slice .cf.cf.cf.ax-king .cf-win { --wa: #4a3d1a; --wb: #5e4e22; }
+body.slice .cf.cf.cf.ax-push .cf-win { --wa: #3a3a42; --wb: #4a4a54; } body.slice .cf.cf.cf.ax-tactic .cf-win { --wa: #22404a; --wb: #2c525e; }
+body.slice .cf.cf.cf .cf-win .cf-face { width: 60%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+body.slice .cf.cf.cf .cf-win .art { width: auto; height: auto; place-self: center; }
+body.slice .cf.cf.cf .cf-win .art img, body.slice .cf.cf.cf .cf-win .ico, body.slice .cf.cf.cf .cf-win .art.any .ico16 { width: 40px; height: 40px; }
+body.slice .cf.cf.cf.part-card .cf-win { place-items: center; background: #141319; }
+body.slice .cf.cf.cf .cf-type { left: 19.5%; top: 31.6%; width: auto; height: 12px; justify-content: flex-start; background: rgba(11, 11, 14, 0.78); padding: 1px 3px !important; display: flex; justify-content: center; align-items: center; gap: 0; padding: 0; border: 0; z-index: 3; }
+body.slice .cf.cf.cf .cf-type .t3 { display: flex; gap: 0; } body.slice .cf.cf.cf .cf-type .t3 i { font: 12px/1 Galmuri11, sans-serif; font-style: normal; color: #c9c1ad; background: none; box-shadow: none; padding: 0 2px; }
+body.slice .cf.cf.cf .cf-type .t3 i + i::before { content: '·'; margin-right: 3px; color: #6e6c78; }
+body.slice .cf.cf.cf .cf-type .t3-fx.fx-add { color: #46c4c8; } body.slice .cf.cf.cf .cf-type .t3-fx.fx-mul { color: #f08a3a; }
+body.slice .cf.cf.cf .cf-desc { left: 21%; top: 47.6%; width: 58%; height: 40.5%; padding: 0; border: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; z-index: 3; color: #2a2620; overflow: hidden; }
+body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl { display: block; margin: 0; font: 400 12px/1.3 Galmuri11, sans-serif; word-break: keep-all; text-wrap: balance; }
+body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl.dl-say { color: #3a342a; }
+body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl.dl-fxb { align-self: stretch; border-top: 2px dotted #a8782a; padding-top: 3px; color: #4a4436; }
+body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-if { color: #4a4436; }
+body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-fx { font: 700 12px/1.3 Galmuri11, sans-serif; color: #2a2620; background: none; box-shadow: none; padding: 0; }
+body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-fx em { font-style: normal; color: #a8222e; }
+body.slice .cf.cf.cf .cf-flv { display: none; }
+body.slice .cf.cf.cf .cf-gem { left: 50%; top: 91.1%; right: auto; width: 14px; height: 14px; transform: translate(-50%, -50%); z-index: 3; }
+body.slice .cf.cf.cf .fit-line { left: 18%; width: 64%; top: 36.5%; z-index: 2; font: 12px/16px Galmuri11, sans-serif; text-align: center; background: rgba(11, 11, 14, 0.78); color: #e8e0cc; white-space: nowrap; overflow: hidden; }
+body.slice .cf.cf.cf .ptag, body.slice .cf.cf.cf .price.sold { top: auto; bottom: -10px; }
+body.slice .cf.cf.cf .cf-foot { left: 0; right: 0; bottom: -12px; display: flex; justify-content: center; z-index: 4; }
+
+body.slice .shop-grid .cf.cf.cf, body.slice .reward-cards .cf.cf.cf, body.slice .part-cards .cf.cf.cf { width: 170px; height: auto; padding: 0; }
+body.slice .cf.cf.cf .cf-desc.cf-desc .dl-if, body.slice .cf.cf.cf .cf-desc.cf-desc .dl-fx { white-space: normal; }
+body.slice .cf.cf.cf .fit-line { text-overflow: ellipsis; }
+body.slice .cf.cf.cf .cf-desc, body.slice .cf.cf.cf .cf-desc * { font-size: 12px !important; line-height: 15px !important; letter-spacing: 0; }
+body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-shadow: none !important; border: 0 !important; padding: 0 1px !important; min-width: 0; height: auto; }
+body.slice .cf.cf.cf .cf-type .t3 { background: none; box-shadow: none; border: 0; padding: 0; }
+body.slice .cf.cf.cf .fit-line { top: 13.6%; font-size: 12px; line-height: 15px; }
+body.slice .shop-grid .cf.cf.cf { width: 150px; }
+body.slice .shop-grid.shop-grid.shop-grid { display: flex; gap: 16px; grid-auto-rows: auto; align-items: flex-start; padding: 6px 4px 22px; }
+body.slice .shop-grid .cf.cf.cf { width: 180px; flex: none; }
+body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; display: inline !important; }
+body.slice .cf.cf.cf .cf-type .t3-who { display: none !important; }
+body.slice .cf.cf.cf .cf-type .t3 i + i::before { content: none; }
+body.slice .cf.cf.cf .cf-type .t3 { gap: 4px; }
+body.slice .cf.cf.cf .cf-win .cf-face { width: 52%; }
+body.slice .cf.cf.cf > * { position: absolute !important; }
+body.slice .cf.cf.cf .fit-line { left: 19%; width: auto; max-width: 62%; top: 13.6%; padding: 0 3px; }
+body.slice .cf.cf.cf .fit-line .fit-pc { width: 14px; height: 14px; vertical-align: -3px; image-rendering: pixelated; }
+body.slice .cf.cf.cf .cf-type { left: auto; right: 18.5%; top: 32.6%; }
+body.slice .cf.cf.cf .cf-desc { left: 19.5%; width: 61%; }
+body.slice .cf.cf.cf .cf-type .t3 i.t3-who.t3-who { display: none !important; }
+/* D-371 그림 창 = 템플릿의 창 모양 (아치 · 팔각) 마스크 */
+body.slice .cf.cf.cf .cf-win { left: 17.86%; width: 65.18%; top: 12.66%; height: 27.2%; -webkit-mask: url('../assets/ui/cards/mask-cmd.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-cmd.png') 0 0 / 100% 100% no-repeat; box-shadow: none; }
+body.slice .cf.cf.cf.part-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-part.png'); mask-image: url('../assets/ui/cards/mask-part.png'); }
+body.slice .cf.cf.cf .cf-win .cf-face { width: 50%; margin-bottom: 1px; }
+/* D-367 분대원 카드 — 초상 창(방패 마스크) · 공격 마름모 · HP 압력계 · 생명 하트 · 기록 두루마리 */
+body.slice .cf.cf.cf.crew-card { background-image: url('../assets/ui/cards/crew-common.png'); width: 170px; }
+body.slice .cf.cf.cf.crew-card.g-rare { background-image: url('../assets/ui/cards/crew-rare.png'); }
+body.slice .cf.cf.cf.crew-card.g-gold { background-image: url('../assets/ui/cards/crew-gold.png'); }
+body.slice .cf.cf.cf.crew-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('../assets/ui/cards/mask-crew.png'); background: #e8e0cc; place-items: end center; }
+body.slice .cf.cf.cf.crew-card .er-pc { position: static !important; width: 62%; height: auto; aspect-ratio: 1; background: none; box-shadow: none; overflow: visible; display: block; }
+body.slice .cf.cf.cf.crew-card .er-pc img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+body.slice .cf.cf.cf.crew-card .cb { display: grid; place-items: center; z-index: 4; font: 700 15px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 2px 2px 0 #000; }
+body.slice .cf.cf.cf.crew-card .cb-atk { left: 0; top: 30.2%; width: 18.75%; height: 13.9%; }
+body.slice .cf.cf.cf.crew-card .cb-hp { left: 81.25%; top: 30.2%; width: 18.75%; height: 13.9%; }
+body.slice .cf.cf.cf.crew-card .cb-hp .er-hpn { font: inherit; color: inherit; }
+body.slice .cf.cf.cf.crew-card .cb-lives { right: 19%; top: 13.9%; display: flex; gap: 1px; z-index: 4; }
+body.slice .cf.cf.cf.crew-card .cb-life { width: 16px; height: 16px; background: var(--life-on) center / contain no-repeat; image-rendering: pixelated; }
+body.slice .cf.cf.cf.crew-card .cb-bar { left: 22%; width: 56%; top: 46%; height: 6px; z-index: 4; }
+body.slice .cf.cf.cf.crew-card .cb-bar .er-hp { width: 100%; height: 6px; }
+body.slice .cf.cf.cf.crew-card .cf-desc { top: 49.5%; height: 38%; gap: 1px; }
+body.slice .cf.cf.cf.crew-card .cf-desc > * { display: block; text-align: center; color: #4a4436; font-size: 12px !important; line-height: 14px !important; }
+body.slice .cf.cf.cf.crew-card .cs-serial { color: #6e6452 !important; }
+body.slice .cf.cf.cf.crew-card .cs-st { display: flex !important; gap: 6px; justify-content: center; color: #2a2620 !important; font-weight: 700; }
+body.slice .cf.cf.cf.crew-card .cs-st i { font-style: normal; font-weight: 400; color: #6e6452; margin-right: 2px; }
+body.slice .cf.cf.cf.crew-card .cs-qn { color: #1f6b70 !important; margin-top: 2px; }
+body.slice .cf.cf.cf.crew-card .cs-sc { color: #8c6239 !important; font-weight: 400; margin-top: 2px; }
+/* 사건 결과 오버레이 · 길게 누름 크기 */
+body.slice .er-card.reward-cards.er-crewcard { width: 150px; height: auto; }
+body.slice .er-crewcard .cf.cf.cf.crew-card { width: 150px; }
+#info.ci-host .cf.cf.cf.crew-card { width: 200px; }
+
+/* ===================== D-372 화면을 카드에 맞춘다 (사용자: 「화면마다 카드를 줄이지 말고, 화면을 새 카드에 맞춰」) =====================
+   카드는 어디서나 한 크기(--card-w). 카드를 늘어놓는 화면(고물상 · 보상 · 부품 고르기 · 핵심 부품 · 다듬기 · 사건 결과)은
+   가로 한 줄 레일 — 넘치면 옆으로 민다(기존 ◀ ▶). 비용 톱니 · 리본 꼬리 · 가격표가 잘리지 않게 위아래 여유. */
+:root { --card-w: 168px; }
+body.slice .cf.cf.cf, body.slice .shop-grid .cf.cf.cf, body.slice .reward-cards .cf.cf.cf, body.slice .part-cards .cf.cf.cf,
+body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card, #info.ci-host .cf.cf.cf.crew-card { width: var(--card-w); flex: none; }
+body.slice .shop-grid.shop-grid.shop-grid, body.slice .reward-cards.reward-cards.reward-cards, body.slice .part-cards.part-cards.part-cards {
+  display: flex; flex-wrap: nowrap; justify-content: safe center; align-items: flex-start; gap: 18px; grid-template-columns: none; grid-auto-rows: auto;
+  padding: 10px 12px 24px; margin: 0; }
+body.slice .shop-scroll.shop-scroll { max-height: none; overflow-x: auto; overflow-y: visible; padding: 0; margin: 0; }
+body.slice .er-card.reward-cards.er-crewcard, body.slice .er-card.reward-cards { width: var(--card-w); height: auto; }
+body.slice .er-card.reward-cards .cf.cf.cf { width: var(--card-w); }
+/* D-372 분대원 카드 두루마리: 고정 크기 안에 들어가게 — 기록은 세 칸(이름 위 · 숫자 아래), 일련번호 줄은 뺀다(초상이 기물을 말한다) */
+body.slice .cf.cf.cf.crew-card .cf-desc { left: 17.5%; width: 65%; top: 48.5%; height: 40%; gap: 2px; justify-content: center; }
+body.slice .cf.cf.cf.crew-card .cf-desc > * { line-height: 13px !important; }
+body.slice .cf.cf.cf.crew-card .cs-st { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; width: 100%; padding-bottom: 3px; border-bottom: 2px dotted #a8782a; }
+body.slice .cf.cf.cf.crew-card .cs-st > span { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+body.slice .cf.cf.cf.crew-card .cs-st i { margin: 0; font-size: 12px !important; line-height: 13px !important; }
+/* D-372 설명 맞춤 (fitCardDesc): 넘치면 묘사 줄 → 흉터 풀이를 접고, 그래도 넘치면 줄 간격을 좁힌다 */
+body.slice .cf.cf.cf .cf-desc.tight .dl.dl.dl.dl-say { display: none; }
+body.slice .cf.cf.cf .cf-desc.tight .dl.dl.dl.dl-fxb { border-top: 0; padding-top: 0; }
+body.slice .cf.cf.cf.crew-card .cf-desc.tight .cs-sc + .cs-q { display: none; }
+body.slice .cf.cf.cf .cf-desc.tighter, body.slice .cf.cf.cf .cf-desc.tighter * { line-height: 13px !important; }

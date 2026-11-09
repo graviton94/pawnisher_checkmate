@@ -423,7 +423,7 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
     await cls(el, 'upped', 500);
   }
   await wait(300);
-  const n = el.querySelector('.er-hpn'); if (n) n.textContent = `HP ${Math.round(cr.hp1)} / ${cr.max}`;
+  const n = el.querySelector('.er-hpn'); if (n) n.textContent = `${Math.round(cr.hp1)}`;
 };
 
 const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) => string): Promise<void> => {
