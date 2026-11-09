@@ -2879,3 +2879,24 @@ body.slice .cf.cf.cf .cf-desc { justify-content: safe center; }
 body.slice .cf.cf.cf .cf-desc .fxi { display: inline-block; }
 body.slice .cf.cf.cf.crew-card .cf-desc > * { white-space: normal; word-break: keep-all; }
 body.slice .cf.cf.cf .cf-desc .dl.dl.dl { max-height: none; overflow: visible; flex: none; }
+
+/* ===================== D-374 틀 키우기 (사용자: 「리본이 그림에 가린다 · 배지 숫자가 도형 아래로 치우쳤다 · 카드를 정보량에 맞게 키워라」) =====================
+   틀 112×168 (리본 아래 종류 띠 · 두루마리 +12). 글 자리는 src/slice/card-layout.css (cardart.py가 틀과 같은 숫자로 만든다). */
+body.slice .cf.cf.cf.cf > .cf-type { background: none; padding: 0; gap: 6px; color: #cfc6b0; overflow: hidden; white-space: nowrap; }
+body.slice .cf.cf.cf.cf > .cf-type .t3 { display: flex; gap: 6px; align-items: center; }
+body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0 !important; font: 400 12px/12px Galmuri11, sans-serif !important; }
+body.slice .cf.cf.cf.cf > .cf-name { font: 700 12px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000, 1px 0 0 #000, 0 1px 0 #000; white-space: nowrap; }
+body.slice .cf.cf.cf.cf > .cf-cost { font: 700 24px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 2px 2px 0 #000; }
+body.slice .cf.cf.cf.cf.crew-card > .cb { display: grid; place-items: center; }
+body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-hp { height: 100%; }
+/* 덱 보기 · 카드 빼기: 정본 카드 격자 (세로로 민다) */
+body.slice .deck-grid.deck-grid { display: grid; grid-template-columns: repeat(auto-fill, var(--card-w)); justify-content: center; gap: 14px 18px; padding: 12px 8px 8px; max-height: calc(100dvh - 120px); overflow-y: auto; }
+body.slice .deck-grid.deck-grid > .cslot, body.slice .deck-grid.deck-grid > .cf { width: var(--card-w); }
+body.slice .shop-head .shop-status { flex: none; margin: 0; }
+body.slice .shop-head h2 { white-space: nowrap; }
+/* 높이 412 맞춤 (D-374): 레일 위아래 여백 · 받침 간격을 줄인다 — 비용 톱니는 틀 그림 안 여백에 있다 */
+body.slice .shop-grid.shop-grid.shop-grid, body.slice .reward-cards.reward-cards.reward-cards, body.slice .part-cards.part-cards.part-cards { padding-top: 2px; padding-bottom: 2px; }
+body.slice .overlay .panel:has(.reward-scroll .crail) .crail.crail { padding: 2px 4px; }
+body.slice .cslot { gap: 4px; }
+body.slice .cinfo { min-height: 24px; padding: 2px 6px 3px; }
+body.slice .overlay .panel:has(.reward-scroll .crail):has([data-overhaul]) > .row .btn { height: 44px; }

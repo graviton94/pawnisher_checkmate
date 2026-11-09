@@ -15,10 +15,10 @@ import sys
 from PIL import Image
 
 OUT = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'assets', 'ui', 'cards')
-W, H = 96, 142
-# 틀 밖 여백 (리본 꼬리 · 비용 톱니 · 배지가 튀어나온다)
-OX, OY = 8, 8
-CW, CH = W + 2 * OX, H + 2 * OY
+W, H = 96, 158
+# 틀 밖 여백 (리본 꼬리 · 배지는 옆으로, 비용 톱니는 위로 튀어나온다 — 아래는 2만, D-374)
+OX, OY, OYB = 8, 8, 2
+CW, CH = W + 2 * OX, H + OY + OYB
 INK = '#0b0b0e'
 
 
@@ -42,7 +42,8 @@ BRASS = ['#4a3008', '#7a5414', '#a8782a', '#d4a24a', '#f4d27a', '#fff2c0']
 PLATE = ['#121116', '#1a1920', '#23222a', '#2e2d36']
 PAPER = ['#8a7a5a', '#b8a882', '#d8ccae', '#e8e0cc', '#f4eedc']
 MASKS = {}
-LAYOUT = dict(art=(12, 12, 84, 54), ribbon=(4, 51, 92, 62), type=(30, 70, 66, 76), scroll=(10, 67, 86, 132), gem=(44, 132, 52, 140), cost=(2, 0, 18, 22))
+# D-374 (사용자: 「리본이 그림에 가린다 · 카드를 정보량에 맞게 키워라」): 그림 창은 리본 위에서 끝나고, 리본 아래 종류 띠, 두루마리는 더 길게
+LAYOUT = dict(art=(12, 12, 84, 51), ribbon=(4, 52, 92, 63), type=(15, 66, 81, 76), scroll=(8, 79, 88, 147), gem=(44, 147, 52, 155), cost=(3, 2), badge=45)
 
 
 class P:
@@ -143,11 +144,11 @@ def arch_window(px, m, kind):
     else:
         # 방패 초상: 위 평평 · 아래 뾰족
         def ins(x, y):
-            if not (x0 <= x <= x1 and y0 <= y <= y1 + 4):
+            if not (x0 <= x <= x1 and y0 <= y <= y1):
                 return False
-            if y <= y1 - 14:
+            if y <= y1 - 12:
                 return True
-            k = (y - (y1 - 14)) / 18
+            k = (y - (y1 - 12)) / 15
             return abs(x - cx) <= rx * (1 - k * k)
     # 바깥 금속 테 3도트 (빛 왼쪽 위)
     def ring(d):
@@ -228,12 +229,14 @@ def ribbon(px, rb):
 
 
 def type_plate(px):
+    """종류 띠 (D-374): 리본 아래 새긴 철판 — 「연쇄 · 합」 같은 종류 글을 그림 위가 아니라 여기에 얹는다"""
     x0, y0, x1, y1 = LAYOUT['type']
     px.r(x0, y0, x1, y1, INK)
-    px.r(x0 + 1, y0 + 1, x1 - 1, y1 - 1, PLATE[3])
+    px.r(x0 + 1, y0 + 1, x1 - 1, y1 - 1, PLATE[0])
     for x in range(x0 + 1, x1):
-        px.p(x, y0 + 1, '#3c3b46')
-    px.p(x0 + 2, (y0 + y1) // 2, BRASS[4]); px.p(x1 - 2, (y0 + y1) // 2, BRASS[4])
+        px.p(x, y1 - 1, '#2e2d36')
+    for x in (x0 + 2, x1 - 2):
+        px.p(x, (y0 + y1) // 2, BRASS[3])
 
 
 def scroll(px):
@@ -278,7 +281,7 @@ def gem_socket(px, m):
 
 def cost_flag(px):
     """비용 톱니 메달 (왼쪽 위 모서리에 걸쳐 틀 밖으로) — 숫자는 게임이 얹는다"""
-    cx, cy = 3, 2
+    cx, cy = LAYOUT['cost']
     for y in range(cy - 12, cy + 13):
         for x in range(cx - 12, cx + 13):
             d = math.hypot(x - cx, y - cy)
@@ -295,7 +298,7 @@ def cost_flag(px):
 def badges(px, m):
     """분대원: 공격(왼쪽 아래 붉은 마름모) · HP(오른쪽 아래 초록 방패) — 리본 위 양 끝, 틀 밖으로 반쯤"""
     for cx, kind in ((2, 'atk'), (W - 3, 'hp')):
-        cy = 45
+        cy = LAYOUT['badge']
         for y in range(cy - 11, cy + 12):
             for x in range(cx - 11, cx + 12):
                 dx, dy = abs(x - cx), y - cy
@@ -324,6 +327,7 @@ def card(kind, grade):
         gear_corner(px, cx, cy, sx, sy, BRASS if grade != 'common' else FRAME['common'])
     arch_window(px, m, kind)
     scroll(px)
+    type_plate(px)
     ribbon(px, RIBBON[grade])
     gem_socket(px, m)
     if kind == 'cmd':
@@ -363,8 +367,39 @@ def back():
     return px.im
 
 
+def layout_css():
+    """틀 그림과 같은 숫자로 글 자리를 낸다 (D-374) — 손으로 % 를 맞추지 않는다"""
+    def pct(v, tot):
+        return f'{v / tot * 100:.3f}%'
+
+    def box(x0, y0, x1, y1):
+        return f'left: {pct(x0 + OX, CW)}; top: {pct(y0 + OY, CH)}; width: {pct(x1 - x0 + 1, CW)}; height: {pct(y1 - y0 + 1, CH)};'
+    a, rb, t, sc, g = LAYOUT['art'], LAYOUT['ribbon'], LAYOUT['type'], LAYOUT['scroll'], LAYOUT['gem']
+    cx, cy = LAYOUT['cost']
+    by = LAYOUT['badge']
+    S = 'body.slice .cf.cf.cf.cf'
+    L = [
+        '/* 자동 생성 — tools/pixel/cardart.py (D-374). 손으로 고치지 않는다. */',
+        f':root {{ --card-ar: {CW} / {CH}; }}',
+        f'{S} {{ aspect-ratio: {CW} / {CH}; height: auto; }}',
+        f'{S} > .cf-win {{ {box(*a)} z-index: 1; }}',
+        f'{S} > .cf-name {{ {box(rb[0] + 6, rb[1], rb[2] - 6, rb[3])} z-index: 5; display: grid; place-items: center; line-height: 1; padding: 0; margin: 0; }}',
+        f'{S} > .cf-type {{ {box(t[0] + 2, t[1], t[2] - 2, t[3])} z-index: 4; display: flex; align-items: center; justify-content: center; }}',
+        # 종이 안쪽: 말린 끝(±3) 안쪽 + 2 여백
+        f'{S} > .cf-desc {{ {box(sc[0] + 6, sc[1] + 3, sc[2] - 6, sc[3] - 3)} }}',
+        f'{S} > .cf-gem {{ left: {pct((g[0] + g[2]) / 2 + OX + 0.5, CW)}; top: {pct((g[1] + g[3]) / 2 + OY + 0.5, CH)}; }}',
+        f'{S} > .cf-cost {{ left: {pct(cx - 10 + OX, CW)}; top: {pct(cy - 10 + OY, CH)}; width: {pct(21, CW)}; height: {pct(21, CH)}; display: grid; place-items: center; line-height: 1; padding: 0; }}',
+        f'{S} > .cb-atk {{ left: {pct(2 - 9 + OX, CW)}; top: {pct(by - 9 + OY, CH)}; width: {pct(19, CW)}; height: {pct(19, CH)}; }}',
+        f'{S} > .cb-hp {{ left: {pct(W - 3 - 9 + OX, CW)}; top: {pct(by - 9 + OY, CH)}; width: {pct(19, CW)}; height: {pct(19, CH)}; }}',
+        f'{S} > .cb-bar {{ {box(t[0] + 3, t[1] + 3, t[2] - 3, t[3] - 3)} z-index: 4; }}',
+        f'{S} > .cb-lives {{ right: {pct(CW - (a[2] - 4 + OX), CW)}; top: {pct(a[1] + 4 + OY, CH)}; left: auto; }}',
+    ]
+    open(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'slice', 'card-layout.css'), 'w').write('\n'.join(L) + '\n')
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
+    layout_css()
     ims = []
     for kind in ('cmd', 'part', 'crew'):
         for g in ('common', 'rare', 'gold'):
