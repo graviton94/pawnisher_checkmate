@@ -45,7 +45,8 @@
   padding: calc(var(--px) * 6); margin: 0;
   border-style: solid; border-width: calc(var(--k-win) * var(--px));
   border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round;
-  background: none; box-shadow: none;
+  /* 철판 속 색을 바탕에도 — 분수 위치에서 9-slice 조각 사이 1기기픽셀 틈이 비치지 않게 */
+  background: #33313b padding-box; box-shadow: none;
   /* 바닥 먹 그림자 2도트 오른아래 — 단단한 그림자(흐림 0) */
   filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e);
   image-rendering: pixelated;
@@ -62,7 +63,7 @@
 #overlay-panel.win.win-paper, .kit-sheet .win.win-paper {
   border-width: calc(var(--k-paper-y) * var(--px)) calc(var(--k-paper-x) * var(--px));
   border-image: url('../assets/ui/chrome/v2/panel-paper.png') var(--k-paper-y) var(--k-paper-x) fill / calc(var(--k-paper-y) * var(--px)) calc(var(--k-paper-x) * var(--px)) / 0 round;
-  color: var(--t-ink);
+  background: #f1ede4 padding-box; color: var(--t-ink);
 }
 /* 자리: 안전 영역 안 가운데 (장소 화면의 오른쪽 붙이기 · 아래 붙이기를 창은 따르지 않는다) */
 #overlay:has(> .win) { justify-content: center; align-items: center; padding: var(--Gy) var(--G); }
@@ -277,7 +278,7 @@
 .win .scale > .btn { flex: 0 0 calc(var(--px) * 32); min-width: calc(var(--px) * 32); }
 .win .scale-ends { display: flex; justify-content: space-between; }
 /* 근간 시험장 (개발용) */
-.win .lab-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+.win .lab-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .win .lab-pick { display: grid; gap: var(--s1); align-content: start; text-align: left; cursor: pointer; font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 .win .lab-pick .lg-name { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
 /* 부품 견본 (?debug sliceApi.kitSheet) */

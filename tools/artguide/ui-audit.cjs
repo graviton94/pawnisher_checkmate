@@ -22,6 +22,15 @@ const SCENES = [
   ['event', async (p, A, W, S) => { await A(() => window.sliceApi.event('nightShift')); await W(2600); await S(''); }],
   ['boss', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'boss')); await W(2500); await S('intro-a'); await W(2500); await S('intro-b'); await W(5000); await S('battle'); }],
   ['endfail', async (p, A, W, S) => { await A(() => window.sliceApi.end(false)); await W(2800); await S(''); }],
+  // 패스 1 창 갈래 (D-391)
+  ['win-nemesis', async (p, A, W, S) => { await A(() => window.sliceApi.nemesisOf()); await W(1200); await S(''); }],
+  ['win-promote', async (p, A, W, S) => { await A(() => { window.sliceApi.promote(3); }); await W(1200); await S(''); }],
+  ['win-ledger', async (p, A, W, S) => { await A(() => window.sliceApi.ledger()); await W(1200); await S(''); }],
+  ['win-dict', async (p, A, W, S) => { await A(() => window.sliceApi.help('dict')); await W(1200); await S(''); }],
+  ['win-bug', async (p, A, W, S) => { await A(() => window.sliceApi.bug()); await W(1200); await S(''); }],
+  ['win-export', async (p, A, W, S) => { await A(() => window.sliceApi.exportScr()); await W(1200); await S(''); }],
+  ['win-survey', async (p, A, W, S) => { for (const i of [0, 1, 5, 6, 7, 8]) { await A((k) => window.sliceApi.survey(k), i); await W(900); await S(`q${i + 1}`); } }],
+  ['win-lab', async (p, A, W, S) => { await A(() => window.sliceApi.labPick()); await W(1200); await S(''); }],
   ['endclear', async (p, A, W, S) => { await A(() => window.sliceApi.end(true)); await W(2800); await S(''); }],
 ];
 (async () => {

@@ -2727,6 +2727,15 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - 부품: 철판 창 44×44 · 종이 창 40×44 · 황동 명패 48×19 · 움푹 칸 · 토스트 띠 19×19 · 구분 줄 42×6 · 단추 4재질 × 보통/눌림/꺼짐(≈30×18) · 선택지 판 4상태 ≈70×23 · 꼬리표 황동/진홍 34×15 · 정보 단추 2 · 지갑 · 장면 액자 52×32 · 초상 액자 34×34 · 카드 받침 보통/고름 ≈51×69. 확인판 `build-res/order/UI-0N-check.png`.
 - 적용은 총괄 리뷰 설계서(`docs/reports/2026-11-09f-producer-review.md`)의 공용 체계로 한 번에(부분 땜질 없이).
 
+## D-391 UI 개편 패스 0 · 1 — 키트 한 벌 + 창 갈래를 통째로 (총괄 리뷰 `docs/reports/2026-11-09f-producer-review.md` 3 · 4장)
+- **패스 0 (토대)**: `tools/pixel/ui_kit_normalize.py`(몇 번 돌려도 같은 결과) — 받은 단추 12장을 한 캔버스 32×20(면 30×19, 눌림 = 1도트 아래), 선택지 판 4장을 72×24로, 정보 단추 21×21 · 카드 받침 51×69로 맞춤. 장면 액자 위 황동 명패는 `scene-frame-plate.png`로 떼고 그 자리는 옆 민 테로 이음 → 9-slice 변이 고르다. 새로 그린 도트 없음(정렬 · 자르기 · 빈칸 · 9-slice 가운데 줄 겹침/뺌만).
+- 9-slice 테 값(도트)은 `src/slice/kit.css` 맨 위 토큰 한 곳: 창 12 · 종이 14/10 · 명패 좌우 12 · 단추 6 · 선택지 6 6 6 16 · 꼬리표 3 4 3 14 · 움푹 칸 6 · 토스트 6 · 액자 8. 도트 크기는 모두 `calc(var(--px) * N)`(D-392 pxsnap과 맞물림), 창 폭 S 352 · M 592 · L min(883, 100vw − 32)과 글 크기만 CSS px. 높이 상한 = min(364, 100vh − 48) (S는 240).
+- **하나의 체계**: `src/slice/kit.css`(main.ts에서 마지막) — `.win .win-s/-m/-l/-paper` · `.plate`(위 테 가운데 걸침) · `.btn.k-brass/-iron/-crimson/-teal`(보통/눌림/꺼짐 = 그림 바꿈, 누름 영역 48px 이상) · `.btn-row`(왼쪽 철 = 뒤로 · 오른쪽 황동 = 앞으로, 같은 폭) · `.choice` · `.btn-info` · `.tag` · `.wallet` · `.divider` · `.inset`(목록 창만 안에서 스크롤) · `.frame-portrait/-scene` · `.card-slot` · `.scr-pick/.scr-place` · 토스트 · 띠 · 컷 크롬 부품. `src/slice/uikit.ts` — `openWin` · `closeWin` · `pickScreen` · `placeScreen` · `toast` · `band`. 부품 견본 `?debug` `sliceApi.kitSheet(1|2)`.
+- **패스 1 (창 갈래)**: 사선 · 판돈 · 원수 · 승급 · 하자 폐기(부적 깨고 다시) · 도감 · 도움말(안내서 · 용어 — 탭을 눌러도 같은 L 창) · 메뉴 안내서 · 제보 · 기록 보내기 · 설문 · 새 출하 확인 · 근간 시험장을 모두 `openWin`으로. 위 모서리 X 없앰, 명패 하나(≤ 12자), 진행은 늘 오른쪽. 단추 글은 동사(닫는다 · 남긴다 · 복사한다 · 넘긴다 · 돌아간다 …), 설문 선택지 둘을 짧게(`없음` · `당장 한 판 더 하고 싶다`) 해 667×375에서도 잘리지 않게. 낮은 화면(높이 < 412)은 묶음 사이 8 · 안내서 그림 칸을 접는다.
+- **지운 옛 선택자 129개**(slice.css): 창 내용 갈래 `.stand` · `.ledger` · `.guide/.gd2/.gd-*` · `.helpcard/.hp-*/.hd-term` · `.pt-*` · `.promo*` · `.terms` · `.lab-card`, 창 폭 땜질 `:has(.gd2)` · `:has(.rw-ask)` · `:has(.pt-card)` · `.stand > h2` · `.eyebrow` 제목, **반투명 금 실선 창**(`body.placebg .overlay .panel`), 같은 선택자로 덮어쓰던 장소 창 폭 · 높이 8줄(마지막 값만 남김), m3in 중복, word-break 중복.
+- 남긴 것(그 패스에서 지움): 제목 땜질 `.panel > h2:first-of-type`(고물상 · 작업대 · 보상이 아직 h2 제목 — 패스 2) · 장소 창 폭 4줄과 `:has(.crail)` · `:has([data-forge])`(패스 2) · 부품 칸 가득(카드 여럿 고르기라 패스 2 `pickScreen`) · 반장 규칙 · 기물 정보 엿보기(전투 HUD — 패스 4).
+- 점검: 915×412 · 667×375 · 960×540 촬영 `production/qa/evidence/2026-11-09-p1-*.png`, `ui-audit.cjs`에 창 장면 추가(창 안 TXT 0).
+
 ## D-392 범용 기기 대응 — 도트는 기기 픽셀 정수 · PC는 정수 배율 확대 (사용자: 「범용 기기 환경에 맞춰. 배포 대상 PC · 모바일에 맞춰 설계」)
 - 확인: PC 1920×1080에서 게임이 모바일 크기 그대로 그려져 화면의 일부만 썼다(`production/qa/evidence/` 대신 스크래치 `pc-1920-*`).
 - `--px`(장치 층 도트 하나) = round(2 × DPR) / DPR — 런타임 `src/slice/pxsnap.ts`(index.html에서 main보다 먼저). DPR 1 · 2 · 3 → 2px, 1.25 → 2.4px, 2.625 → 1.905px. 어느 기기든 도트 하나가 기기 픽셀 정수라 9-slice 테 · 단추 두께가 고르다. DPR이 바뀌면(창 이동 · 확대) 다시 계산.
