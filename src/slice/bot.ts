@@ -297,7 +297,8 @@ export const searchTurn = (b: SliceBattle, depth = 4, k = 5): BotAction[] => {
     // 여기서 턴을 끝내 본다
     const end = clone(cur);
     if (end.s.winner === null) endTurn(end, true);
-    const v = evalBoard(end);
+    // 둔 수마다 BOT.evalPlay (2026-11-09d): 판이 같으면 턴을 끝내기보다 두는 쪽 — 점화 · 뽑기처럼 판값이 안 바뀌는 수가 손 놓기에 지던 것
+    const v = evalBoard(end) + BOT.evalPlay * seq.length;
     if (v > best.v) best = { v, seq };
     if (d === 0 || cur.s.winner !== null) return;
     for (const a of candidates(cur, k)) {
