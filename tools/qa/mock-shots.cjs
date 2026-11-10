@@ -29,11 +29,19 @@ const BASE = process.env.OBSERVE_URL || 'http://localhost:4183/';
     await tapSel('.ev-ov-ok'); await pg.waitForTimeout(4200); await shot('result');
   } else if (kind === 'end') {
     await A(() => window.sliceApi.startAt(3, 'boss')); await pg.waitForTimeout(1500);
-    await A(() => { const api = window.sliceApi; api.setAct(2); });
+    await A(() => { const api = window.sliceApi; api.mockRun(); api.setAct(2); });
     await A(() => window.sliceApi.endNow(true));
-    const fr = +(process.env.FRAMES || 4);
-    for (let i = 0; i < fr; i++) { await pg.waitForTimeout(i === 0 ? 120 : 220); await shot(`f${i}`); }
-    await pg.waitForTimeout(3500); await shot('final');
+    const fr = +(process.env.FRAMES || 0), step = +(process.env.STEP || 120), at = +(process.env.AT || 0);
+    if (at) await pg.waitForTimeout(at);
+    for (let i = 0; i < fr; i++) { await shot('f' + i); await pg.waitForTimeout(step); }
+    await pg.waitForTimeout(+(process.env.FINAL || 7500)); await shot('final');
+  } else if (kind === 'act') {
+    await A(() => window.sliceApi.startAt(1, 'boss')); await pg.waitForTimeout(1500);
+    await A(() => { const api = window.sliceApi; api.mockRun(); api.setAct(0); api.nextAct(); });
+    const fr = +(process.env.FRAMES || 0), step = +(process.env.STEP || 120), at = +(process.env.AT || 0);
+    if (at) await pg.waitForTimeout(at);
+    for (let i = 0; i < fr; i++) { await shot('f' + i); await pg.waitForTimeout(step); }
+    await pg.waitForTimeout(+(process.env.FINAL || 7500)); await shot('final');
   } else if (kind === 'map') {
     const geo = () => pg.evaluate(() => { const b = document.querySelector('.peek-bar').getBoundingClientRect(); const n = document.querySelector('.mnd.now').getBoundingClientRect(); return 'bar ' + b.top.toFixed(1) + '-' + b.bottom.toFixed(1) + ' h' + b.height.toFixed(1) + ' node ' + n.top.toFixed(1); });
     await A(() => window.sliceApi.map(2)); await pg.waitForTimeout(900); await shot('legend'); console.log('legend', await geo());

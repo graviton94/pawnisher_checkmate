@@ -915,3 +915,149 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   border-image: url('../assets/ui/chrome/v2/slip-paper.png') var(--k-slip) fill / calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 8) calc(var(--px) * 7) / 0 repeat; image-rendering: pixelated;
   color: var(--t-ink); }
 .slip::before { content: ''; position: absolute; left: calc(50% - var(--px) * 9); top: calc(var(--px) * -12); width: calc(var(--px) * 15); height: calc(var(--px) * 9); background: url('../assets/ui/chrome/v2/slip-clip.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+
+/* ===================== 시안 (2026-11-10 · ?mock=…, 기본 화면은 그대로) =====================
+   사건 대사 · 결과 짜임 ev-a · ev-b · ev-c / 출하 완료 · 막 마침 end-a · end-b · end-c. 고르면 그 시안만 기본으로 옮기고 이 단은 걷는다. */
+/* 대사 칸: 이름 한 줄(12 굵게) + 대사 두 줄(15) — 이름 옆에서 대사가 꺾이지 않게 */
+.win-scene.mk-ev .ws-say.inset { min-height: calc(var(--k-inset) * var(--px) * 2 + 18px + 44px); padding: 0 var(--s2); }
+.win-scene.mk-ev .ws-say .who { display: block; margin: 0; line-height: 18px; }
+.win-scene.mk-ev .ws-say .who:empty { display: none; }
+.win-scene.mk-ev .ws-say .ws-line { display: block; }
+/* 결과 쪽지: 「결과」 띠 대신 클립 아래 머리 한 줄 · 바뀐 것은 한 줄에 하나 · 선택지가 있던 아래 자리를 채운다 */
+.win-scene.mk-ev .ws-sum.slip { flex-direction: column; align-items: stretch; gap: 0; margin-top: auto; padding: var(--s1) var(--s3) var(--s1); }
+.win-scene .mk-sum-h { color: #56545e; font: 700 12px/18px Galmuri11, sans-serif; }
+.win-scene .mk-sum-i { color: var(--t-ink); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
+.win-scene .mk-sum-i::before { content: '· '; color: #56545e; }
+/* ev-b: NPC 대사는 창 아래 전체 폭 자막 띠(컷신 띠 .cut-sub과 같은 먹 띠 + UI-08 띠 끝 장식) — 오른쪽 단은 서술 · 선택지만 */
+.win-scene.mk-ev-b > .ws-say.mk-sub { --cap: calc(var(--px) * 2); position: relative; z-index: 2; grid-column: 1 / -1; box-sizing: border-box; min-height: calc(var(--cap) * 22); margin: 0; padding: var(--s1) calc(var(--cap) * 10); display: flex; flex-direction: column; justify-content: center;
+  background: #0b0b0e; box-shadow: inset 0 var(--cap) 0 #0b0b0e, inset 0 calc(var(--cap) * 2) 0 #56545e, inset 0 calc(var(--cap) * -1) 0 #0b0b0e, inset 0 calc(var(--cap) * -2) 0 #33313b;
+  color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
+.win-scene.mk-ev-b > .ws-say.mk-sub::before, .win-scene.mk-ev-b > .ws-say.mk-sub::after { content: ''; position: absolute; top: 0; width: calc(var(--cap) * 10); height: 100%; background: url('../assets/ui/chrome/v2/sub-cap-l.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+.win-scene.mk-ev-b > .ws-say.mk-sub::before { left: 0; }
+.win-scene.mk-ev-b > .ws-say.mk-sub::after { right: 0; background-image: url('../assets/ui/chrome/v2/sub-cap-r.png'); }
+.win-scene.mk-ev-b > .ws-say.mk-sub .who { display: block; margin: 0; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.win-scene.mk-ev-b > .ws-say.mk-sub.is-empty { visibility: hidden; }
+#overlay-panel.win.win-scene.mk-ev-b { grid-template-rows: minmax(0, 1fr) auto; row-gap: var(--s2); }
+.win-scene.mk-ev-b .ws-narr { min-height: 22px; }
+/* ev-c: 결과 무대가 결과 화면 — 아래 대사 칸(이름 + 두 줄) · 오른쪽 위 쪽지 · 「떠난다」 */
+.win-scene .ev-ov.mk-c > .btn-row { align-items: flex-end; }
+.win-scene .ev-ov.mk-c > .btn-row > .ev-ov-line.mk-talk { display: flex; flex-direction: column; justify-content: center; align-items: stretch; min-height: calc(var(--k-inset) * var(--px) * 2 + 18px + 44px); white-space: pre-line; }
+.win-scene .ev-ov.mk-c .mk-talk .who { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.win-scene .ev-ov.mk-c .mk-talk .who:empty { display: none; }
+.win-scene .ev-ov.mk-c .mk-talk .ln { display: block; }
+.win-scene .ev-ov > .slip.mk-pin { position: absolute; z-index: 6; right: var(--s3); top: calc(var(--s3) + var(--px) * 8); width: min(280px, 34%); display: flex; flex-direction: column; padding: var(--s1) var(--s2); }
+.win-scene .ev-ov > .slip.mk-pin.in { animation: kstepin 210ms steps(3, jump-none) both; }
+/* 출하 완료 · 막 마침 시안 (mockend.ts): 화면 하나 = 작업대 위 물건 — 장면 그림(액자) · 종이 증명서(UI-25) · 도장(royalSeal 아이콘 ×3) · 강조 띠(UI-24) */
+.mk-end { position: fixed; inset: 0; z-index: 70; isolation: isolate; box-sizing: border-box; padding: var(--Gy) var(--G); background: #0b0b0e; color: var(--t-body); animation: pxin 300ms steps(5) both; }
+.mk-end.mk-end-a, .mk-end.mk-end-c { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: var(--s3); }
+.mk-end .mk-art { position: relative; overflow: hidden; min-height: 0; background: #0b0b0e; }
+.mk-end .mk-art > img[data-cover], .mk-end .mk-bg > img[data-cover] { position: absolute; left: 0; top: 0; max-width: none; image-rendering: pixelated; }
+.mk-end .mk-art > .mk-stamp { position: absolute; z-index: 2; right: var(--s3); bottom: var(--s3); visibility: hidden; }
+.mk-end .mk-art > .mk-stamp.on { visibility: visible; }
+.mk-end .mk-work { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; min-height: 0; }
+.mk-end .mk-head { display: flex; align-items: center; gap: var(--s2); min-height: 48px; }
+.mk-end .mk-head .plate { margin: 0; }
+/* 증명서: 장부 줄 두 단 — 이름 · 점선 · 값(15) · 단위(12). 글 줄(반장 · 부품)은 한 줄을 다 쓴다 */
+.mk-end .mk-cert { display: flex; flex-direction: column; gap: var(--s1); padding: var(--s1) var(--s3); margin-top: calc(var(--px) * 6); }
+.mk-end .mk-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s4); }
+.mk-end .mk-row { display: flex; align-items: baseline; gap: var(--s1); margin: 0; min-width: 0; color: #56545e; font: 400 12px/22px Galmuri11, sans-serif; }
+.mk-end .mk-row > i { flex: 1 1 auto; min-width: var(--s2); border-bottom: var(--px) dotted #8e877a; }
+.mk-end .mk-row > b { color: var(--t-ink); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.mk-end .mk-row > small { color: #56545e; font: 400 12px/22px Galmuri11, sans-serif; white-space: nowrap; }
+.mk-end p.mk-row { grid-column: 1 / -1; }
+.mk-end .mk-row > b.txt { white-space: normal; text-align: right; word-break: keep-all; }
+.mk-end .mk-rows > div { -webkit-mask-image: var(--px4); mask-image: var(--px4); }
+.mk-end .mk-rows > div.in { animation: rv3 320ms var(--snap) forwards; }
+.mk-end .mk-rows b.tick, .mk-end .mk-tally b.tick { animation: tick3 120ms var(--snap); }
+.mk-end .mk-mvp { display: flex; align-items: center; gap: var(--s2); padding-top: var(--s1); border-top: var(--px) solid #bfb9ad; color: var(--t-ink); visibility: hidden; }
+.mk-end .mk-mvp.on { visibility: visible; }
+.mk-end .mk-mvp.in { animation: kstepin 210ms steps(3, jump-none) both; }
+.mk-end .mk-mvp img { width: calc(var(--px) * 16); height: calc(var(--px) * 16); image-rendering: pixelated; }
+.mk-end .mk-mvp-k, .mk-end .mk-mvp-s { color: #56545e; font: 700 12px/18px Galmuri11, sans-serif; }
+.mk-end .mk-mvp-s { font-weight: 400; margin-left: auto; }
+.mk-end .mk-mvp b { font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
+.mk-end .mk-opens { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s2); }
+.mk-end .mk-lab { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; }
+/* 다음 예고: 진홍 띠(머리말) + 묘사 한 문장(15) + (수치)(15 황금) — 카드 말투 ⑥ */
+.mk-end .mk-next { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); }
+.mk-end .mk-omen { margin: 0; color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; word-break: keep-all; }
+.mk-end .mk-num { color: var(--t-gold); }
+.mk-end .mk-wait { visibility: hidden; }
+.mk-end :is(.mk-next, .mk-opens).in { animation: kstepin 210ms steps(3, jump-none) both; }
+.mk-end .btn-row { margin-top: auto; }
+/* 도장 · 왕관: 받은 아이콘을 장치 층 정수배로. 예비(들어 올려 모음) → 내리꽂힘(납작) → 출렁 → 들려 나감 — 모두 계단 */
+.mk-end .mk-slam { position: absolute; z-index: 8; width: calc(var(--px) * 48); height: calc(var(--px) * 48); margin: calc(var(--px) * -40) 0 0 calc(var(--px) * -24); image-rendering: pixelated; pointer-events: none; animation: mkSlam 520ms both; }
+@keyframes mkSlam {
+  0% { transform: translateY(-60%) scale(1.3); animation-timing-function: steps(1, end); }
+  20% { transform: translateY(-80%) scale(1.25, 1.35); animation-timing-function: steps(1, end); }
+  45% { transform: translateY(-95%) scale(1.2, 1.4); animation-timing-function: steps(1, end); }
+  63% { transform: translateY(0) scale(1.25, 0.8); animation-timing-function: steps(1, end); }
+  75% { transform: translateY(-6%) scale(0.95, 1.08); animation-timing-function: steps(1, end); }
+  88% { transform: translateY(0) scale(1.03, 0.97); animation-timing-function: steps(1, end); }
+  100% { transform: translateY(0) scale(1); }
+}
+.mk-end .mk-slam.mk-lift { animation: mkLift 240ms steps(3) forwards; }
+@keyframes mkLift { 0% { transform: none; -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: translateY(-60%); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
+.mk-end .mk-hit { animation: erLand 360ms steps(1) both; }
+/* end-b 분대 단상: 막 그림 덮기 + 2×2 먹 디더 바닥 · 분대원 한 줄(기물 그림 정수배 · 이름 · 처치 · 피해) · 으뜸 = 왕관 + 3도트 들림 */
+.mk-end.mk-end-b { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: var(--s2); }
+.mk-end .mk-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.mk-end .mk-bg::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%230b0b0e'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%230b0b0e'/%3E%3C/svg%3E") 0 0 / calc(var(--px) * 2) calc(var(--px) * 2); image-rendering: pixelated; }
+.mk-end-b .mk-head { justify-content: center; }
+.mk-end .mk-line { display: flex; justify-content: center; align-items: flex-end; gap: var(--s4); min-height: 0; }
+.mk-end .mk-mem { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; }
+.mk-end .mk-mem .mk-pc { width: calc(var(--px) * 36); height: calc(var(--px) * 36); image-rendering: pixelated; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
+.mk-end .mk-mem b { color: var(--t-body); font: 700 12px/18px Galmuri11, sans-serif; white-space: nowrap; text-shadow: var(--px) var(--px) 0 #000; }
+.mk-end .mk-mem > span:last-child { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; white-space: nowrap; text-shadow: var(--px) var(--px) 0 #000; }
+.mk-end .mk-mem.fallen .mk-pc { filter: grayscale(1) brightness(0.55); }
+.mk-end .mk-mem.mvp { transform: translateY(calc(var(--px) * -6)); }
+.mk-end .mk-mem.mvp b { color: var(--t-gold); }
+.mk-end .mk-crown { height: calc(var(--px) * 16); visibility: hidden; }
+.mk-end .mk-crown img { width: calc(var(--px) * 16); height: calc(var(--px) * 16); image-rendering: pixelated; }
+.mk-end .mk-crown.mk-crown-in { visibility: visible; animation: mkCrown 420ms both; }
+@keyframes mkCrown {
+  0% { transform: translateY(-120%) scale(1.4); animation-timing-function: steps(1, end); }
+  40% { transform: translateY(-160%) scale(1.5, 1.6); animation-timing-function: steps(1, end); }
+  70% { transform: translateY(0) scale(1.3, 0.8); animation-timing-function: steps(1, end); }
+  85% { transform: translateY(-10%) scale(0.95, 1.08); animation-timing-function: steps(1, end); }
+  100% { transform: none; }
+}
+.mk-end .mk-mem { -webkit-mask-image: var(--px4); mask-image: var(--px4); }
+.mk-end .mk-mem.mk-drop { animation: mkDrop 300ms both; }
+@keyframes mkDrop {
+  0% { transform: translateY(calc(var(--px) * -16)); -webkit-mask-image: var(--px2); mask-image: var(--px2); animation-timing-function: steps(1, end); }
+  35% { transform: translateY(calc(var(--px) * 2)) scale(1.06, 0.92); -webkit-mask-image: none; mask-image: none; animation-timing-function: steps(1, end); }
+  70% { transform: translateY(calc(var(--px) * -2)) scale(0.97, 1.03); -webkit-mask-image: none; mask-image: none; animation-timing-function: steps(1, end); }
+  100% { transform: none; -webkit-mask-image: none; mask-image: none; }
+}
+.mk-end .mk-mem.mvp.mk-drop { animation-name: mkDropUp; }
+@keyframes mkDropUp {
+  0% { transform: translateY(calc(var(--px) * -22)); -webkit-mask-image: var(--px2); mask-image: var(--px2); animation-timing-function: steps(1, end); }
+  35% { transform: translateY(calc(var(--px) * -4)) scale(1.06, 0.92); -webkit-mask-image: none; mask-image: none; animation-timing-function: steps(1, end); }
+  70% { transform: translateY(calc(var(--px) * -8)) scale(0.97, 1.03); -webkit-mask-image: none; mask-image: none; animation-timing-function: steps(1, end); }
+  100% { transform: translateY(calc(var(--px) * -6)); -webkit-mask-image: none; mask-image: none; }
+}
+.mk-end .mk-foot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s3); align-items: center; }
+.mk-end .mk-tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); padding: var(--s1) var(--s3); margin-top: calc(var(--px) * 6); }
+.mk-end .mk-tally div { display: flex; flex-direction: column; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
+.mk-end .mk-tally div.in { animation: rv3 320ms var(--snap) forwards; }
+.mk-end .mk-tally b { color: var(--t-ink); font: 400 30px/36px Galmuri14, Galmuri11, sans-serif; }
+.mk-end .mk-tally span { color: #56545e; font: 400 12px/18px Galmuri11, sans-serif; }
+@media (max-height: 400px) {
+  .mk-end .mk-mem .mk-pc { width: calc(var(--px) * 30); height: calc(var(--px) * 30); }
+  .mk-end .mk-tally b { font-size: 15px; line-height: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-end, .mk-end .mk-slam, .mk-end .mk-crown.mk-crown-in, .mk-end .mk-mem.mk-drop, .mk-end .mk-hit, .mk-end :is(.mk-next, .mk-opens, .mk-mvp).in, .mk-end .mk-rows > div.in, .mk-end .mk-tally div.in { animation: none; -webkit-mask-image: none; mask-image: none; }
+}
+.mk-end > .ev-fx { position: absolute; left: 0; top: 0; z-index: 9; pointer-events: none; image-rendering: pixelated; }
+.mk-end .mk-bg > img[data-cover] { filter: brightness(0.5); }
+.mk-end .mk-art > .mk-opens { position: absolute; z-index: 2; left: var(--s2); top: var(--s2); flex-direction: column; align-items: flex-start; gap: var(--s1); }
+.mk-end .mk-art > .mk-opens .mk-lab { color: var(--t-body); text-shadow: var(--px) var(--px) 0 #000; }
+@media (max-height: 400px) {
+  .mk-end .mk-work { gap: var(--s1); }
+  .mk-end .mk-row, .mk-end .mk-row > b, .mk-end .mk-row > small { line-height: 18px; }
+  .mk-end .mk-cert { gap: 0; }
+  .mk-end .mk-mvp { padding-top: 0; }
+  .mk-end .mk-next { gap: 0; }
+}

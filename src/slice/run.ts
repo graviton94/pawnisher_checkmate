@@ -128,6 +128,41 @@ const ACT_SCALE = [
   { hp: 1, king: 0.75 },
   { hp: 1, king: 0.9 },
 ];
+/** 배율 → 「+30%」 */
+const pctUp = (k: number): string => `+${Math.round((k - 1) * 100)}%`;
+/**
+ * 다음 출하 예고 (시안 · 출하 완료 화면, 사용자: 「『흑 기물의 쇠는 더 두껍게 붓는다』는 무슨 말인지 모르겠다 — 『다음 장의 흑 기물들이 진열을 가다듬는다. (상대 체력 +20%)』처럼」).
+ * 카드 말투(voice ⑥): 무슨 일이 생기는지 그림이 그려지는 한 문장 + 괄호 수치. 수치는 ASC_NUM에서 읽는다. 순서 = ASCENSION(조항 1 ~ 13).
+ * law(규격판에 새긴 글)는 승급 컷 · 각인으로 그대로 둔다 — 화면에서 「다음에 무엇이 바뀌나」를 말할 때만 이 줄을 쓴다.
+ */
+export const ASC_OMEN: [string, string][] = [
+  ['다음 출하의 흑 기물들은 쇠를 한 겹 더 두르고 기다린다.', `적 기물 HP ${pctUp(ASC_NUM.enemyHp)}`],
+  ['검문과 반장 앞에 저울이 하나 더 놓인다.', `검문 · 반장 킹 HP +${Math.round(ASC_NUM.eliteKing * 100)}% · 예고 공격에 맞으면 기어 쇼크`],
+  ['정비 라인이 반만 돈다. 상처가 덜 아문다.', `대국 사이 회복 ${Math.round(ASC_NUM.restMul * 100)}%`],
+  ['고물상이 값을 올려 부른다.', `고물상 값 ${pctUp(ASC_NUM.shopMul)}`],
+  ['흑 세트마다 폰이 하나씩 더 줄을 선다.', '대국마다 적 폰 +1 · 여벌 심장 톱니 없이 시작'],
+  ['반장들이 철판을 한 겹 더 덧대고 기다린다.', `반장 · 도금왕 HP ${pctUp(ASC_NUM.bossHp)}`],
+  ['손에 쥔 명령서 한 장에 녹이 번져 있다.', '시작 덱 카드 1장 녹슮 · 태엽 +1'],
+  ['나사 상자가 눈에 띄게 가벼워진다.', `속전 보상 나사 −${Math.round((1 - ASC_NUM.coinMul) * 100)}%`],
+  ['흑 기물들이 공격 날을 세워 둔다.', `적 공격 ${pctUp(ASC_NUM.enemyAtk)}`],
+  ['분대원 하나의 심장 톱니에 금이 간 채 출발한다.', '분대원 1명 심장 톱니 금'],
+  ['전리품 상자에 명령서가 둘만 든다.', `대국 보상 카드 3장 → ${ASC_NUM.rewardChoices}장`],
+  ['검문마다 왕관 쓴 정예가 선다.', '검문 적 1기 정예 · 왕관 · HP ×2'],
+  ['도금왕이 금을 열세 겹으로 칠하고 기다린다.', `도금왕 HP ${pctUp(ASC_NUM.finalHp)} · 마지막 장`],
+];
+/**
+ * 다음 막 예고 (시안 · 막 마침 화면): 막이 바뀌면 적이 얼마나 단단해지나 — 막 시작 깊이(SLICE.depthActs)로 계산한 HP · 공격 배율과 적 킹 HP(ACT_SCALE).
+ * next = 다음 막 번호(0부터 1 · 2), 3이면 종막(도금왕).
+ */
+export const actOmen = (next: number): [string, string] => {
+  if (next >= ACT_SCALE.length) return ['포장대 위에서 금칠한 킹 하나가 기다린다.', '반장 없이 도금왕 하나 · 지면 출하 끝'];
+  const d0 = SLICE.depthActs[next - 1][0], d1 = SLICE.depthActs[next][0];
+  const hp = Math.pow(SLICE.foeHpGrow, d1 - d0);
+  const atk = (1 + SLICE.foeAtkGrow * d1) / (1 + SLICE.foeAtkGrow * d0);
+  const king = `적 킹 HP ${Math.round(ACT_SCALE[next - 1].king * 100)}% → ${Math.round(ACT_SCALE[next].king * 100)}%`;
+  const line = next === 1 ? '조립 라인의 흑 기물들이 대열을 다시 짠다.' : '검수대의 흑 기물들은 쇠를 더 두껍게 부어 나온다.';
+  return [line, `적 HP ${pctUp(hp)} · 공격 ${pctUp(atk)} · ${king}`];
+};
 /**
  * 일반 대국 편성 (D-319, 테스터: 「같은 줄의 대국 갈림길이 똑같은 상대 — 선택의 의미가 없다」):
  * 막마다 이름 붙은 편성 여섯 — 같은 줄의 갈림길은 서로 다른 편성이 나오고(buildGraph), 지도 · 진입 화면에 이름이 보인다.

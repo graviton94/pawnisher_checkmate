@@ -42,6 +42,8 @@ export interface EvFxCtx {
   /** 창 위 테의 나사 꼬리표 — 나사가 내려앉을 때 값을 바꾼다 */
   purse?: HTMLElement | null;
   goldAfter?: number;
+  /** 시안 ev-c (결과 = 한 장면): 결과 줄이 다 터진 뒤 「넘긴다」 대신 이 손이 무대를 이어 쓴다 — 끝나면 무대를 걷는다 */
+  onStage?: (ov: HTMLElement, L: Layer) => Promise<void>;
 }
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -54,7 +56,7 @@ for (let i = 0; i < 12; i++) img(`ui/props/flip-${i}.png`);
 ['gear-gold', 'crown-gold', 'gear-broken', 'rust'].forEach((n) => img(`ui/props/ic32-${n}.png`));
 
 /** 장면 위 도트 층 하나 (입자 · 빛 + 그림 캔버스) — 장면 칸 안쪽을 그대로 덮는다 */
-class Layer {
+export class Layer {
   fx: FxCanvas;
   art: HTMLCanvasElement;
   x: CanvasRenderingContext2D;
@@ -415,6 +417,17 @@ const burst = (L: Layer, el: HTMLElement, kind: EvFxKind, n?: number): void => {
   if (BAD.has(kind)) shakeEl(L.host.closest<HTMLElement>('.ev-ov'), 2, 180);
 };
 
+/** 터짐 하나를 낱말 · 색을 골라 (시안 — 출하 완료 도장 · MVP 왕관): 계단 고리 + 도트 불똥 + 도트 낱말 → 대상 출렁 */
+export const burstWord = (L: Layer, el: HTMLElement, text: string, col: number): void => {
+  const b = L.at(el);
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+  const css = `#${col.toString(16).padStart(6, '0')}`;
+  L.addRing(cx, cy, Math.min(b.w, b.h) * 0.6, css);
+  L.ps.burst(cx, cy, 18, [40, 140], P.STAR, [0.3, 0.7], PAL.gold[5], 30);
+  if (text) L.addPop(text, col, Math.round(cx), Math.round(b.y + b.h * 0.2));
+  replay(el, 'wob');
+};
+
 /** 결과 무대 아래 독백 한 줄 (voice ③ ‘ ’) — 가장 먼저 일어난 일 하나만 */
 const sayLine = (L: Layer, kind: EvFxKind | undefined): void => {
   const p = L.host.closest('.ev-ov')?.querySelector<HTMLElement>('.ev-ov-line');
@@ -709,6 +722,14 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   // 결과 줄이 있으면 확률 장치는 걷고 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
   if (c.chance && (c.cards.length || c.crew.length || c.gold || c.part)) L.x.clearRect(0, 0, L.w, L.h);
   await showResults(L, c);
+  if (c.onStage) {
+    await c.onStage(ov, L);
+    ov.classList.add('out');
+    await wait(320);
+    L.stop();
+    ov.remove();
+    return;
+  }
   const ok = ov.querySelector<HTMLButtonElement>('.ev-ov-ok')!;
   ok.hidden = false;
   ok.classList.add('in');
