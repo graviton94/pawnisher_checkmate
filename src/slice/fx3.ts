@@ -308,9 +308,21 @@ export const tally = (box: HTMLElement, stamp?: HTMLElement | null): void => {
 };
 
 // ---------- 10 쓰러짐 막 · 11 도발 ----------
-/** 한 자씩 찍는다. <em>낱말</em>은 한 번에 찍히며 떨린다 */
+/** 찍는 중인 줄 — 같은 자리에 새 줄이 오면 옛 줄은 멈추고, 누르면(typeSkip) 바로 끝까지 */
+const typing = new WeakMap<HTMLElement, () => void>();
+/** 문장 부호 뒤 쉼 (D-403 타자기): 끝 부호 ×6 · 쉼표 · 가운뎃점 ×3 */
+const typePause = (ch: string): number => (/[.!?…]/.test(ch) ? 6 : /[,·]/.test(ch) ? 3 : 1);
+/** 찍는 중인 줄을 한 번에 끝낸다 (탭) — 찍는 중이었으면 true */
+export const typeSkip = (el: HTMLElement): boolean => {
+  const f = typing.get(el);
+  if (!f) return false;
+  f();
+  return true;
+};
+/** 한 자씩 찍는다 (문장 부호에서 쉰다). <em>낱말</em>은 한 번에 찍히며 떨린다. 같은 자리에 다시 부르면 앞 줄은 그 자리에서 끝난다 */
 export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () => void, alive?: () => boolean): Promise<void> =>
   new Promise((done) => {
+    typing.get(el)?.();
     if (calm()) {
       el.innerHTML = html;
       return done();
@@ -319,9 +331,23 @@ export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () =>
     el.innerHTML = '';
     let i = 0;
     let j = 0;
+    let t = 0;
+    let over = false;
+    const end = (full: boolean): void => {
+      if (over) return;
+      over = true;
+      window.clearTimeout(t);
+      if (typing.get(el) === stop) typing.delete(el);
+      if (full) el.innerHTML = html;
+      done();
+    };
+    // 누름 = 끝까지 한 번에 · 새 줄이 덮음 = 거기서 멈춤 (새 줄이 innerHTML을 갈아 쓴다)
+    const stop = (): void => end(true);
+    typing.set(el, stop);
     const tick = (): void => {
+      if (over) return;
       // 찍던 화면이 바뀌면(탭으로 건너뜀 등) 거기서 멈춘다
-      if (i >= parts.length || (alive && !alive())) return done();
+      if (i >= parts.length || (alive && !alive())) return end(false);
       const p = parts[i];
       if (p.startsWith('<em>')) {
         const em = document.createElement('em');
@@ -331,11 +357,14 @@ export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () =>
         onWord?.();
         i++;
         j = 0;
-        return void window.setTimeout(tick, speed * 3);
+        t = window.setTimeout(tick, speed * 3);
+        return;
       }
       if (j < p.length) {
-        el.appendChild(document.createTextNode(p[j++]));
-        return void window.setTimeout(tick, speed);
+        const ch = p[j++];
+        el.appendChild(document.createTextNode(ch));
+        t = window.setTimeout(tick, speed * (j < p.length || i < parts.length - 1 ? typePause(ch) : 1));
+        return;
       }
       i++;
       j = 0;

@@ -13,7 +13,7 @@ import { PACE } from '../data/motion';
 /** 동작 줄이기 */
 const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
-import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn } from './fx3';
+import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
@@ -1822,7 +1822,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     if (kind === 'npc' && /^\(.*\)$/.test(text)) return say('narr', text.slice(1, -1));
     if (kind === 'narr') {
       replay(narrEl, 'in');
-      return typeIn(narrEl, text.replace(/([.!?…])\s+(?=\S)/g, '$1\n'), 18, undefined, alive);
+      return typeIn(narrEl, text.replace(/([.!?…])\s+(?=\S)/g, '$1\n'), 22, undefined, alive);
     }
     const name = text.startsWith('‘') ? '' : who ?? talk.npc;
     lastSay = { who: name, text };
@@ -1830,8 +1830,13 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     sayEl.querySelector('.who')!.textContent = name;
     replay(sayEl, 'in');
     sfx('tap', 4);
-    await typeIn(sayEl.querySelector<HTMLElement>('.ws-line')!, text, 26, undefined, alive);
+    // 타자기 (D-403): 한 자 30ms · 문장 부호에서 쉼 · 누르면 바로 끝까지 (줄인 움직임이면 한 번에)
+    await typeIn(sayEl.querySelector<HTMLElement>('.ws-line')!, text, 30, undefined, alive);
   };
+  // 찍는 중인 줄을 누르면 바로 끝까지 — 대사 칸 · 서술 띠 · 결과 쪽지 글
+  sayEl.addEventListener('click', () => typeSkip(sayEl.querySelector<HTMLElement>('.ws-line')!));
+  el.querySelector<HTMLElement>('.ws-cap')!.addEventListener('click', () => typeSkip(narrEl));
+  sumEl.addEventListener('click', () => typeSkip(sumEl.querySelector<HTMLElement>('.ws-sum-n')!));
   let busy = true;
   let idleN = 0;
   let lastAct = performance.now();
@@ -1846,7 +1851,9 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   el.classList.add('locked');
   void (async () => {
     await say('narr', narr);
+    // 소개 대사: 사건 글 속 “ ” — 없으면 NPC의 첫 마디(hi)
     if (m) await say('npc', m[2]);
+    else if (talk.hi) await say('npc', talk.hi);
     el.classList.remove('locked');
     busy = false;
     lastAct = performance.now();
@@ -1860,6 +1867,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       const k = Number(b.dataset.info);
       const pages = evPages(ev.choices[k]);
       const i = infoAt.k === k ? infoAt.i + 1 : 0;
+      typeSkip(sayEl.querySelector<HTMLElement>('.ws-line')!);
       sfx('tap', 3);
       lastAct = performance.now();
       if (i >= pages.length) {
@@ -3649,21 +3657,23 @@ const promoteScreen = (): Promise<void> =>
       done();
     });
   });
-/** 도금왕을 쓰러뜨린 뒤: 승급 칸 → 승급 7컷(조항 · 거울) → 결과 */
+/** 이번 출하가 어느 엔딩으로 끝났나 (D-403 — 크레딧 닫는 장 꼬리표): 승급(0 ~ 12) · 앞(엔딩 A) · 뒤(진 엔딩 「해방」) */
+let endKind: 'promote' | 'front' | 'back' = 'promote';
+/** 도금왕을 쓰러뜨린 뒤: 승급 칸 → 승급 7컷(조항 · 거울) → 크레딧 + 출하 끝 장부 (D-403 — 모든 완주가 엔딩이고, 크레딧은 그 뒤마다 돈다) */
 const endingFlow = async (): Promise<void> => {
   // 승급 13 최종장 (D-270 · D-277): 승급 화면 없이 판 위 연출 → 뒤(진 엔딩) · 앞(엔딩 A)
   if (asc >= 13) {
     const crew = squad.filter((u) => u.t !== 'K').map((u) => u.t);
     const pick = await finaleScene(crew);
+    endKind = pick === 'front' ? 'front' : 'back';
     if (pick === 'front') await playCuts([ENDING_A]);
     else {
       await playCuts(trueEndingCuts(crew.slice(0, 6).map((t, k) => ({ t, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 }))));
       writeMeta(store, { ...readMeta(store), trueEnd: true });
-      // 크레딧 · 기록 사진 (각본 S11)
-      await creditsScene(crew.slice(0, 8), `출하 ${readMeta(store).runs + 1}번째 · 승급 ${asc} · ${new Date().toISOString().slice(0, 10)}`);
     }
     return runEnd(true);
   }
+  endKind = 'promote';
   await promoteScreen();
   const crewName = squad.find((u) => u.t !== 'K')?.name ?? '분대원';
   const last = runBosses.at(-1);
@@ -3694,19 +3704,23 @@ const runEndNow = (cleared: boolean): void => {
   const unlocked = m.ascOpen > m0.ascOpen;
   const fallenNow = readLedger().filter((r) => r.run === runId);
   const kills = squad.reduce((n, u) => n + (u.kills ?? 0), 0) + fallenNow.reduce((n, r) => n + r.kills, 0);
-  // 결과 장면 (D-394 .scr-place): 왼쪽 결과 그림 40% · 오른쪽 명패 → 한 줄 → 수치 넷(30px) → 분대 칩 → 구분 줄 → 새로 열림 꼬리표 · [남긴다 | 돌아간다]
+  // 결과 장면 (D-394 .scr-place): 왼쪽 결과 그림 40% · 오른쪽 명패 → 한 줄 → 수치 넷(30px) → 분대 칩 → 구분 줄 → 새로 열림 꼬리표 · [결과 공유하기 | 메인 화면으로]
   const chip = (name: string, t: PieceType, bad = false) => `<span class="re-chip${bad ? ' bad' : ''}">${pieceImg(t, 0, 'small', 24)}${name}</span>`;
   const opens = [...freshNames.slice(0, 3), ...(unlocked ? [SCREEN_TEXT.ascOpened(m.ascOpen)] : [])];
   const nums = [won, kills, gold, deck.length];
-  // 출하 끝 (D-402, 사용자 결정 end2-a): 막 장부 넷을 모은 장부 + 「정품 판정」 도장 · 다음 출하(승급) 예고 — 진 출하는 아래 결과 장면 그대로
+  // 출하 끝 (D-402 → D-403): 크레딧(제목 → 두 줄 → 기록 사진) 마지막 장 = 출하 끝 장부 — 막 장부 넷을 모은 장부 + 「정품 판정」 도장 ·
+  // 어느 엔딩이었나 꼬리표 · 다음 출하(승급) 예고 · [결과 공유하기 | 메인 화면으로]. 따로 서는 결과 화면은 없다 — 진 출하는 아래 결과 장면 그대로
   if (cleared) {
     const nextAsc = Math.min(ASC_OMEN.length - 1, unlocked ? m.ascOpen - 1 : asc);
     const mvp = mvpOf([...squad.filter((u) => u.t !== 'K').map((u) => ({ name: u.name ?? PIECE_NAMES_KO[u.t], t: u.t, kills: u.kills ?? 0, dmg: u.dmg ?? 0 })), ...fallenNow.map((r) => ({ name: r.name, t: r.t, kills: r.kills, dmg: 0 }))]);
     const home = (): void => (sessionStorage.setItem('op-menu', '1'), location.reload());
-    void clearScreen({
+    const kind = endKind;
+    endKind = 'promote';
+    const ledger = (): Promise<unknown> => clearScreen({
       mode: 'run',
+      inCredits: true,
       title: SCREEN_TEXT.clear,
-      tag: `${daily ? `<span class="ribbon">${SCREEN_TEXT.daily}</span>` : ''}${asc ? `<span class="ribbon r-crimson">승급 ${asc}</span>` : ''}`,
+      tag: `${daily ? `<span class="ribbon">${SCREEN_TEXT.daily}</span>` : ''}<span class="ribbon${kind === 'back' ? '' : ' r-crimson'}">${SCREEN_TEXT.endName(kind, asc)}</span>`,
       tabs: clearTabs(3, true),
       rows: [
         { k: SCREEN_TEXT.tally[0], v: won },
@@ -3725,6 +3739,9 @@ const runEndNow = (cleared: boolean): void => {
       back: SCREEN_TEXT.note,
       go: SCREEN_TEXT.home,
     }).then((r) => (r === 'go' ? home() : surveyScreen(0, {}, () => exportScreen(home))));
+    const crew = [...squad.filter((u) => u.t !== 'K').map((u) => u.t), ...fallenNow.map((r) => r.t)].slice(0, 8);
+    // 기록 사진의 한 줄 = 출하 몇 번째 · 날짜 (승급 · 엔딩 이름은 닫는 장 꼬리표에만)
+    void creditsScene(crew, `출하 ${m.runs}번째 · ${new Date().toISOString().slice(0, 10)}`, { record: kind === 'back', close: ledger });
     return;
   }
   const el = placeScreen({
@@ -3742,7 +3759,7 @@ const runEndNow = (cleared: boolean): void => {
     back: { label: SCREEN_TEXT.note, attrs: 'data-survey' },
     go: { label: SCREEN_TEXT.home, attrs: 'data-restart' },
   });
-  // 시험판 (D-234): 남긴다 = 설문 → 기록 보내기 — 닫으면 이 결과 화면으로 돌아오지 않고 처음 화면으로
+  // 시험판 (D-234): 결과 공유하기 = 설문 → 기록 보내기 — 닫으면 이 결과 화면으로 돌아오지 않고 처음 화면으로
   const home = (): void => (sessionStorage.setItem('op-menu', '1'), location.reload());
   el.querySelector('[data-restart]')!.addEventListener('click', home);
   el.querySelector('[data-survey]')!.addEventListener('click', () => surveyScreen(0, {}, () => exportScreen(home)));

@@ -506,7 +506,9 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 /* 대사 칸: 움푹 칸 맨 위 — 이름 한 줄(12 굵게 황동) + 두 줄 15px. 정보 단추의 풀이도 여기에 */
 .win-scene .ws-say.inset { min-height: calc(var(--k-inset) * var(--px) * 2 + 18px + 44px); padding: 0 var(--s2); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
 .win-scene .ws-say .who { display: block; margin: 0; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; white-space: nowrap; }
-.win-scene .ws-say .who:empty { display: none; }
+/* 이름 없는 줄(독백)도 이름 자리 18을 비워 둔다 — 찍는 동안 · 단계가 바뀌어도 칸이 뛰지 않게 (D-403) */
+.win-scene .ws-say .who:empty { visibility: hidden; }
+.win-scene .ws-say .ws-line { min-height: 44px; }
 .win-scene .ws-say .ws-line { display: block; }
 .win-scene .ws-say.is-empty > * { visibility: hidden; }
 .win-scene .ws-say.is-info .ws-line { color: var(--t-dim); }
@@ -833,6 +835,8 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 
 /* 크레딧 장: 철판 창 (반투명 먹 판 대신) */
 .credits .cr-page { box-sizing: border-box; padding: calc(var(--px) * 4) calc(var(--px) * 12); border-style: solid; border-width: calc(var(--k-win) * var(--px)); border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round; image-rendering: pixelated; background: none; box-shadow: none; margin-bottom: calc(var(--px) * 44); }
+/* 닫는 장 (D-403): 기록 사진 판 · 자막 띠는 걷고 크레딧 그림만 남긴다 — 그 위에 출하 끝 장부(.clr.clr-cr) */
+.credits.cr-closing :is(.cr-page, .cut-sub, .cut-next) { visibility: hidden; }
 /* 최종장 판 위 연출: 자막은 띠 하나 */
 .finale .cut-sub { z-index: 6; }
 
@@ -947,12 +951,13 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 
 /* ===================== 막 장부 — .clr (D-402, 사용자 결정 2차 시안 end2-a 「펼친 장부」 · actclear.ts) =====================
    막 마침과 출하 끝이 같은 뼈대: 왼쪽 장면 액자(쓰러진 반장 · 완료 그림) + 도장 띠 · 오른쪽 = 명패 → 쪽 띠 넷 → 장부(UI-25 쪽지) + 으뜸 한 줄 → 다음 예고 → 단추.
-   도장 = royalSeal(임시 — 발주 22위 UI-26 도장 자국 대기). 세로 예산(667×375, 안쪽 375 − 2Gy): 명패 48 + 쪽 띠 36 + 장부(5줄 ×18 + 으뜸 18) + 예고 띠 + 두 줄 + 단추 48. */
+   도장 = UI-26 도장 자국(D-403 — 정품 판정 황동 잉크 · 반장 격파 진홍, 51×50 도트 정수배). 세로 예산(667×375, 안쪽 375 − 2Gy): 명패 48 + 쪽 띠 36 + 장부(5줄 ×18 + 으뜸 18) + 예고 띠 + 두 줄 + 단추 48. */
 .clr { position: fixed; inset: 0; z-index: 70; isolation: isolate; box-sizing: border-box; padding: var(--Gy) var(--G); background: #0b0b0e; color: var(--t-body);
   display: grid; grid-template-columns: minmax(0, 36%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: var(--s3); animation: pxin 300ms steps(5) both; }
 .clr .clr-art { position: relative; overflow: hidden; min-height: 0; background: #0b0b0e; }
 .clr .clr-art > img[data-cover] { position: absolute; left: 0; top: 0; max-width: none; image-rendering: pixelated; }
-.clr .clr-art > .clr-stamp { position: absolute; z-index: 2; right: var(--s3); bottom: var(--s3); visibility: hidden; }
+.clr .clr-art > .clr-stamp { position: absolute; z-index: 2; right: var(--s3); bottom: var(--s3); display: flex; flex-direction: column; align-items: center; gap: var(--s1); visibility: hidden; }
+.clr .clr-stamp > .clr-mark { display: block; width: calc(var(--px) * 51); height: calc(var(--px) * 50); image-rendering: pixelated; }
 .clr .clr-art > .clr-stamp.on { visibility: visible; }
 .clr .clr-art > .clr-opens { position: absolute; z-index: 2; left: var(--s2); top: var(--s2); flex-direction: column; align-items: flex-start; gap: var(--s1); }
 .clr .clr-art > .clr-opens .clr-lab { color: var(--t-body); text-shadow: var(--px) var(--px) 0 #000; }
@@ -961,39 +966,47 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .clr .clr-head .plate { margin: 0; }
 /* 쪽 띠: 칸 넷 — 철 움푹 칸 위 이름 12 굵게 + 반장 12, 찍힌 칸은 도장 자국 · 진홍 아래 줄, 다음 칸은 황동 아래 줄 */
 .clr-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s1); flex: none; }
-.clr-tab { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 40px; box-sizing: border-box; padding: 0 calc(var(--px1) * 20) 0 var(--s2);
+.clr-tab { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 40px; box-sizing: border-box; padding: 0 calc(var(--px1) * 30) 0 var(--s2); overflow: hidden;
   background: #16141c; box-shadow: inset 0 calc(var(--px) * -1) 0 #33313b, inset 0 calc(var(--px) * 1) 0 #0b0b0e; }
 .clr-tab b { color: var(--t-body); font: 700 12px/18px Galmuri11, sans-serif; }
 .clr-tab span { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: clip; }
-.clr-tab .clr-seal { position: absolute; right: calc(var(--px1) * 2); top: 50%; margin-top: calc(var(--px1) * -8); width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); image-rendering: pixelated; }
+/* 쪽 자국 = 도장 자국 1배(51×50)를 칸 오른쪽 끝에 반쯤 걸쳐 찍는다 — 칸 밖은 잘린다(줄이지 않는다, D-386) */
+.clr-tab .clr-seal { position: absolute; right: calc(var(--px1) * -22); top: 50%; margin-top: calc(var(--px1) * -25); width: calc(var(--px1) * 51); height: calc(var(--px1) * 50); max-width: none; image-rendering: pixelated; pointer-events: none; }
 .clr-tab:is(.done, .now) { box-shadow: inset 0 calc(var(--px) * -2) 0 #7a1218, inset 0 calc(var(--px) * 1) 0 #0b0b0e; }
 .clr-tab.now b { color: var(--t-gold); }
 .clr-tab.next { box-shadow: inset 0 calc(var(--px) * -2) 0 #c89b3c, inset 0 calc(var(--px) * 1) 0 #0b0b0e; }
 .clr-tab.next span { color: var(--t-gold); }
 .clr-tab.todo b { color: var(--t-dim); }
-/* 장부 (UI-25 쪽지): 줄마다 이름 12 · 점선 · 값 15 · 단위 12, 두 칸 */
+/* 장부 (UI-25 쪽지): 줄마다 이름 12 · 점선 · 값 15 · 단위 12, 두 칸.
+   한 가운데 줄 (D-403): 줄 높이(--clr-lh) 하나에 모두 align-items center — 갈무리 잉크는 12px · 15px 모두 상자 가운데보다 0.5 ~ 1px 위라
+   (915·667·960 실측) 같은 줄 높이 상자면 0.5px 안에서 한 줄에 선다. 점선은 글 잉크 바로 아래(줄 아래에서 --clr-dot). */
 .clr .clr-cert { display: flex; flex-direction: column; gap: var(--s1); padding: var(--s1) var(--s3); margin-top: calc(var(--px) * 6); flex: none; }
 .clr .clr-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s4); }
-.clr .clr-row { display: flex; align-items: baseline; gap: var(--s1); margin: 0; min-width: 0; color: #56545e; font: 400 12px/22px Galmuri11, sans-serif; }
-.clr .clr-row > i { flex: 1 1 auto; min-width: var(--s2); border-bottom: var(--px) dotted #8e877a; }
-.clr .clr-row > b { color: var(--t-ink); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
-.clr .clr-row > small { color: #56545e; font: 400 12px/22px Galmuri11, sans-serif; white-space: nowrap; }
+.clr { --clr-lh: 22px; --clr-dot: 5px; }
+.clr .clr-row { display: flex; align-items: center; gap: var(--s1); margin: 0; min-width: 0; min-height: var(--clr-lh); color: #56545e; font: 400 12px/var(--clr-lh) Galmuri11, sans-serif; }
+.clr .clr-row > span { display: block; flex: none; }
+.clr .clr-row > i { flex: 1 1 auto; align-self: stretch; min-width: var(--s2); margin-bottom: var(--clr-dot); border-bottom: var(--px1) dotted #8e877a; }
+.clr .clr-row > b { display: block; color: var(--t-ink); font: 400 15px/var(--clr-lh) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.clr .clr-row > small { display: block; color: #56545e; font: 400 12px/var(--clr-lh) Galmuri11, sans-serif; white-space: nowrap; }
 .clr p.clr-row { grid-column: 1 / -1; }
 .clr .clr-row > b.txt { white-space: normal; text-align: right; word-break: keep-all; }
 .clr .clr-rows > div { -webkit-mask-image: var(--px4); mask-image: var(--px4); }
 .clr .clr-rows > div.in { animation: rv3 320ms var(--snap) forwards; }
 .clr .clr-rows b.tick { animation: tick3 120ms var(--snap); }
 /* 으뜸 한 줄 (사용자): 왕관 · 「으뜸」 · 이름 · 기물 그림 — 수치는 한 줄에 들 때만(fitMvp가 걷는다) */
-.clr .clr-mvp { display: flex; align-items: center; gap: var(--s1); padding-top: var(--s1); border-top: var(--px) solid #bfb9ad; color: var(--t-ink); white-space: nowrap; overflow: hidden; visibility: hidden; }
+.clr .clr-mvp { display: flex; align-items: center; gap: var(--s1); min-height: 24px; padding-top: var(--s1); border-top: var(--px) solid #bfb9ad; color: var(--t-ink); white-space: nowrap; overflow: hidden; visibility: hidden; }
 .clr .clr-mvp.on { visibility: visible; }
 .clr .clr-mvp.in { animation: kstepin 210ms steps(3, jump-none) both; }
+.clr .clr-mvp > * { display: block; }
 .clr .clr-mvp .clr-crown { flex: none; width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); image-rendering: pixelated; }
 .clr .clr-mvp .clr-crown.clr-crown-in { animation: clrCrown 420ms both; }
-.clr .clr-mvp-k { flex: none; color: #56545e; font: 700 12px/18px Galmuri11, sans-serif; }
-.clr .clr-mvp b { flex: none; font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; }
+.clr .clr-mvp-k { flex: none; color: #56545e; font: 700 12px/24px Galmuri11, sans-serif; }
+.clr .clr-mvp b { flex: none; font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; }
+/* 15px 갈무리14는 12px 갈무리11보다 잉크 가운데가 ~1px 높다(숫자는 더) — 1px 내려 한 줄에 */
+.clr :is(.clr-row, .clr-mvp) > b { position: relative; top: 1px; }
 .clr .clr-mvp-pc { flex: none; display: inline-flex; align-items: center; }
-.clr .clr-mvp-pc > * { display: block; }
-.clr .clr-mvp-s { flex: none; margin-left: auto; color: #56545e; font: 400 12px/18px Galmuri11, sans-serif; }
+.clr .clr-mvp-pc > * { display: block; image-rendering: pixelated; }
+.clr .clr-mvp-s { flex: none; margin-left: auto; color: #56545e; font: 400 12px/24px Galmuri11, sans-serif; }
 .clr .clr-mvp-s[hidden] { display: none; }
 @keyframes clrCrown {
   0% { transform: translateY(-120%) scale(1.4); animation-timing-function: steps(1, end); }
@@ -1012,7 +1025,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .clr :is(.clr-next, .clr-opens).in { animation: kstepin 210ms steps(3, jump-none) both; }
 .clr .clr-work > .btn-row { margin-top: auto; flex: none; }
 /* 도장 내리꽂기: 예비 들어 올림(크게 · 위) → 내리꽂힘(눌림) → 출렁 → 들려 나감(디더) */
-.clr .clr-slam { position: absolute; z-index: 8; width: calc(var(--px) * 48); height: calc(var(--px) * 48); margin: calc(var(--px) * -40) 0 0 calc(var(--px) * -24); image-rendering: pixelated; pointer-events: none; animation: clrSlam 520ms both; }
+.clr .clr-slam { position: absolute; z-index: 8; width: calc(var(--px) * 51); height: calc(var(--px) * 50); margin: calc(var(--px) * -25) 0 0 calc(var(--px) * -25); image-rendering: pixelated; pointer-events: none; animation: clrSlam 520ms both; }
 @keyframes clrSlam {
   0% { transform: translateY(-30%) scale(1.3); animation-timing-function: steps(1, end); }
   35% { transform: translateY(-60%) scale(1.45); animation-timing-function: steps(1, end); }
@@ -1030,13 +1043,17 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   70% { transform: translateY(calc(var(--px) * -2)) scale(0.97, 1.03); animation-timing-function: steps(1, end); }
   100% { transform: none; }
 }
+/* 크레딧 마지막 장 (D-403): 출하 끝 장부는 크레딧 그림 위에 — 바탕을 비우고, 크레딧 무대(z 61) 위에 선다 */
+.clr.clr-cr { background: none; }
+/* 오른쪽 단은 먹 판 위에 — 크레딧 그림 위에서도 글 대비 4.5:1 (단색 판 + 철 테 1도트, 자리는 그대로) */
+.clr.clr-cr .clr-work { background: #0b0b0e; box-shadow: 0 0 0 var(--s2) #0b0b0e, 0 0 0 calc(var(--s2) + var(--px)) #33313b; }
 .clr > .ev-fx { position: absolute; left: 0; top: 0; z-index: 9; pointer-events: none; image-rendering: pixelated; }
 /* 낮은 화면(≤ 420 — 667×375 · 915×412): 줄 사이를 18로 · 쪽 띠 36 · 예고는 한 덩이(띠 옆에 수치) — 「나아간다」가 테 안에 든다 */
 @media (max-height: 420px) {
   .clr .clr-work { gap: var(--s1); }
   .clr .clr-head { min-height: 44px; }
   .clr-tab { min-height: 36px; }
-  .clr .clr-row, .clr .clr-row > b, .clr .clr-row > small { line-height: 18px; }
+  .clr { --clr-lh: 18px; --clr-dot: 3px; }
   .clr .clr-cert { gap: 0; margin-top: calc(var(--px) * 4); }
   .clr .clr-mvp { padding-top: 0; }
   .clr .clr-next { gap: 0; }

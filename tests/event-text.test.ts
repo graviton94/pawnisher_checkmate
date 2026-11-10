@@ -36,7 +36,7 @@ describe('사건 창 글 예산 (D-395)', () => {
     }
   });
   it('NPC 한마디(반응 · 망설임 · 결과 · 작별)와 결과 대사는 대사 칸 두 줄 안', () => {
-    for (const [id, t] of Object.entries(EVENT_TALK)) for (const l of [...t.react, ...t.idle, t.win, t.lose ?? '', t.bye]) if (l) expect.soft(textWidth(l), `${id}: ${l}`).toBeLessThanOrEqual(B.say);
+    for (const [id, t] of Object.entries(EVENT_TALK)) for (const l of [t.hi ?? '', ...t.react, ...t.idle, t.win, t.lose ?? '', t.bye]) if (l) expect.soft(textWidth(l), `${id}: ${l}`).toBeLessThanOrEqual(B.say);
     for (const [id, m] of Object.entries(EVENT_OUTCOME)) for (const [k, o] of Object.entries(m)) if (o.line) expect.soft(textWidth(o.line), `${id} ${k}: ${o.line}`).toBeLessThanOrEqual(B.say);
   });
 });
@@ -45,6 +45,24 @@ describe('사건 창 글 예산 (D-395)', () => {
  * 알고 치르는 나사 (D-402): 나사가 모자라 막히는 선택지는 고르는 순간 치를 값이 있어야 한다 — 화면은 그 값만 꼬리표 숫자로 굴리고,
  * 확률로 잃거나 얻는 나사만 결과 FX로 보인다. 값은 apply가 실제로 깎는 값과 같아야 한다(확률 결과로 얻는 나사는 빼고 본다).
  */
+/**
+ * 단계마다 대사가 바뀐다 (D-403 타자기): 말하는 NPC(반응이 괄호 묘사가 아닌 사건)는 소개 대사(사건 글 속 “ ” 또는 hi)가 있고,
+ * 떠나기를 뺀 선택지마다 제 반응 한 줄이 있다.
+ */
+describe('사건 대사 단계 (D-403)', () => {
+  it('소개 → 고름 반응 → 결과: 말하는 NPC는 소개 대사 · 선택지마다 반응', () => {
+    for (const id of SLICE_EVENT_IDS) {
+      const t = EVENT_TALK[id];
+      expect.soft(t, id).toBeTruthy();
+      if (!t) continue;
+      const ev = SLICE_EVENTS[id];
+      ev.choices.forEach((c, k) => c.desc && expect.soft(t.react[k], `${id} 선택지 ${k} 반응`).toBeTruthy());
+      const speaks = t.react.some((r) => !/^\(.*\)$/.test(r));
+      if (speaks) expect.soft(/“[^”]+”/.test(ev.text) || !!t.hi, `${id} 소개 대사`).toBe(true);
+    }
+  });
+});
+
 describe('알고 치르는 나사 (D-402)', () => {
   it('「나사 N 필요」로 막히는 선택지는 치를 값이 있고, 실제로 깎이는 값과 맞는다', async () => {
     const { Rng } = await import('../src/engine/rng');

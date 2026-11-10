@@ -3,9 +3,11 @@
  * 이펙트 + NPC 대사로 마무리 → 「문을 닫는다」 같은 나가기 버튼. 사건마다 틀은 같되 연출 · 미니게임 · NPC 상호작용은 제각각」).
  * 말투 (D-158): NPC 대사는 큰따옴표 짧은 말, 서술은 2인칭. 농담은 NPC의 성격에서만 — 주절대지 않는다.
  *   react[k] = k번째 선택지를 한 번 눌렀을 때 · idle = 오래 망설일 때 · win / lose = 결과 · bye = 거절했을 때 · exit = 나가기 버튼
+ *   hi = 처음 대사 — 사건 글에 “ ” 대사가 없는 말하는 NPC만 (D-403: 소개 → 고름 반응 → 결과, 단계마다 대사 칸이 바뀐다 · voice ④ 두 줄 · 줄마다 30자 이하)
  */
 export interface EventTalk {
   npc: string;
+  hi?: string;
   react: string[];
   idle: string[];
   win: string;
@@ -46,6 +48,7 @@ export const EVENT_TALK: Record<string, EventTalk> = {
   },
   apprentice: {
     npc: '견습 폰',
+    hi: '“사, 사부님 대신… 제가 고쳐 볼게요.”',
     react: ['“두, 두 번이나요? …눈 감고 내리칠게요.”', '“…네. 저도 제 손이 무서워요.”'],
     idle: ['“망치가 자꾸 미끄러져요…”', '“사부님은 한 번에 맞히셨는데…”'],
     win: '“맞혔어요! 사부님, 보셨어요?”',
@@ -64,6 +67,7 @@ export const EVENT_TALK: Record<string, EventTalk> = {
   },
   napping: {
     npc: '검수 저울',
+    hi: '“…드르렁… 다음 서류… 올려…”',
     react: ['“…드르렁… 무게… 정확…”', '“…음냐… 통과…”'],
     idle: ['“…드르렁…”', '“…누가… 내 도장을…”'],
     win: '“…드르렁… 승인…”',
@@ -119,6 +123,7 @@ export const EVENT_TALK: Record<string, EventTalk> = {
   },
   brokenGacha: {
     npc: '고장 난 조립 판정기',
+    hi: '[ 재가동 · 판정 대기 중 ]',
     react: ['[ 판정 대기 · 동력을 공급하십시오 ]', '[ 판정 보류 ]'],
     idle: ['[ 깔때기 · 이상 없음 · 아마도 ]', '[ 합격률 · 측정 불가 ]'],
     win: '[ 합격 · 합격 · 합ㄱ ]',
@@ -146,6 +151,7 @@ export const EVENT_TALK: Record<string, EventTalk> = {
   },
   conveyor: {
     npc: '레버 옆의 낙서',
+    hi: '“넣은 건 돌려준다. 다른 모양으로.”',
     react: ['“당겨라. 무엇이 나올지는 아무도 모른다.”', '“겁쟁이는 레버를 놓는다.”'],
     idle: ['(컨베이어가 덜컹이며 거꾸로 돈다.)', '“지난번엔 퀸이 나왔다고 한다. 아마도.”'],
     win: '(낯선 상자가 당신 앞에 멈춘다.)',
@@ -298,6 +304,7 @@ export const EVENT_TALK: Record<string, EventTalk> = {
   },
   tollGate: {
     npc: '문지기 룩',
+    hi: '“멈춰라. 여기서부턴 값을 낸다.”',
     react: ['“마흔. 정확히 마흔이다.”', '“해 보든가.”', '“돌아가는 길은 공짜다.”'],
     idle: ['“팻말 못 읽나?”', '“우리도 받아서 위에 바친다. 규정이다.”'],
     win: '“…통과. 규정대로다.”',
