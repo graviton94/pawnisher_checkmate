@@ -28,6 +28,8 @@ export const setSfx = (on: boolean): void => {
 
 const audio = (): AudioContext | null => {
   if (!sfxOn()) return null;
+  // 첫 탭 전에는 소리 장치를 만들지 않는다 (페르소나 테스트 c9 — 브라우저 경고)
+  if ((navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive === false) return null;
   if (!ctx) {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;

@@ -19,6 +19,9 @@ export const toUnits = (deck: Deck): Unit[] => deck.map((d) => (typeof d === 'st
 
 /** 보드 폭별 후열 기본 순서 (GDD 6장 §6.4). null = 한도 초과 기물용 추가 슬롯 */
 const BACK_ROW: Record<number, (PieceType | null)[]> = {
+  // 4 · 5: 수직 조각 입문 판 (D-150 — 첫 판은 작게, 첫 턴부터 교전)
+  4: ['N', 'K', 'B', 'R'],
+  5: ['R', 'N', 'K', 'B', 'Q'],
   6: ['R', 'N', 'Q', 'K', 'B', 'R'],
   8: ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
   10: ['R', 'N', null, 'B', 'Q', 'K', 'B', null, 'N', 'R'],

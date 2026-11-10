@@ -1,0 +1,561 @@
+<!doctype html>
+<!--
+  D-246 시안 (사용자 피드백 8 · 9 · 10 · 12 · 13, 2026-11-06): 반장 등장 컷신 · 반장 판/기물 색 · 반장 기믹 연출 · 엔딩 크레딧/기록 사진 · 사건 맞춤 연출.
+  결정론: window.render(t)가 t(ms) 한 장을 그린다 → tools/artguide/mock/record.cjs가 12fps로 찍어 webp로 굽는다.
+  도트 층 305×137을 ×3으로 키운다 (1도트 = 3px). 글씨만 915×412 위에 갈무리로.
+  D-216: 페이드 · 그라데이션 · 선형 슬라이드 없음 — 모든 움직임은 계단(프레임 양자화), 사라짐은 체크 디더.
+  사용: 저장소 뿌리에서 http 서버 → /tools/artguide/mock/d246.html?s=boss-plate
+-->
+<meta charset="utf-8">
+<style>
+@font-face { font-family: G11; src: url(../../../node_modules/galmuri/dist/Galmuri11.woff2); }
+@font-face { font-family: G11; font-weight: 700; src: url(../../../node_modules/galmuri/dist/Galmuri11-Bold.woff2); }
+@font-face { font-family: G14; src: url(../../../node_modules/galmuri/dist/Galmuri14.woff2); }
+html, body { margin: 0; background: #0b0b0e; }
+canvas { display: block; image-rendering: pixelated; }
+</style>
+<canvas id="hi" width="915" height="412"></canvas>
+<script>
+const W = 305, H = 137, S = 3;
+const hi = document.getElementById('hi').getContext('2d');
+hi.imageSmoothingEnabled = false;
+const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; return [c, x]; };
+const [backC, B] = mk();
+const [frontC, F] = mk();
+const INK = '#0b0b0e';
+const q = (v) => Math.max(0, Math.min(1, v));
+/** 프레임 양자화 계단 */
+const st = (v, n) => Math.floor(q(v) * n) / n;
+const outE = (v) => 1 - Math.pow(1 - q(v), 3);
+const inE = (v) => Math.pow(q(v), 3);
+const rnd = (i) => { let x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const R = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+/** 검은 테 · 왼위 빛 · 오른아래 그림자 상자 */
+const box = (c, x, y, w, h, fill, light, dark) => {
+  R(c, x, y, w, h, INK); R(c, x + 1, y + 1, w - 2, h - 2, fill);
+  if (light) { R(c, x + 1, y + 1, w - 2, 1, light); R(c, x + 1, y + 1, 1, h - 2, light); }
+  if (dark) { R(c, x + 1, y + h - 2, w - 2, 1, dark); R(c, x + w - 2, y + 1, 1, h - 2, dark); }
+};
+/** 체크 디더로 덮기 (k 0~1: 0 = 없음, 1 = 다 덮음) — 사라짐 · 어둡힘 */
+const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const dither = (c, k, col, x0 = 0, y0 = 0, w = W, h = H) => {
+  if (k <= 0) return; c.fillStyle = col;
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (BAY[(y % 4) * 4 + (x % 4)] / 16 < k) c.fillRect(x, y, 1, 1);
+};
+const disc = (c, cx, cy, rx, ry, col) => { c.fillStyle = col; for (let y = -ry; y <= ry; y++) for (let x = -rx; x <= rx; x++) if ((x * x) / (rx * rx + 0.5) + (y * y) / (ry * ry + 0.5) <= 1) c.fillRect(Math.round(cx + x), Math.round(cy + y), 1, 1); };
+/** 빛살: 중심에서 n갈래 쐐기 (픽셀마다 각도 판정 — 번짐 없음) */
+const rays = (c, cx, cy, n, rot, col, r0, r1, x0 = 0, y0 = 0, w = W, h = H) => {
+  c.fillStyle = col;
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+    const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy); if (d < r0 || d > r1) continue;
+    const a = (Math.atan2(dy, dx) + Math.PI * 2 + rot) % (Math.PI * 2 / n);
+    if (a < Math.PI / n) c.fillRect(x, y, 1, 1);
+  }
+};
+const font = (px, f = 'G14', b = false) => `${b ? '700 ' : ''}${px}px ${f}`;
+/** 글씨: 단단한 그림자(3px = 1도트) + 본색 */
+const T = (s, x, y, px, col = '#f4f1ea', f = 'G14', b = false, align = 'left', shadow = INK) => {
+  hi.font = font(px, f, b); hi.textAlign = align; hi.textBaseline = 'alphabetic';
+  if (shadow) { hi.fillStyle = shadow; hi.fillText(s, x + 3, y + 3); }
+  hi.fillStyle = col; hi.fillText(s, x, y);
+};
+/** 한 자씩 (D-193 서술 = 타자) */
+const typed = (s, t, t0, ms = 45) => s.slice(0, Math.max(0, Math.floor((t - t0) / ms)));
+const img = {};
+const load = (k, src) => new Promise((ok) => { const i = new Image(); i.onload = () => { img[k] = i; ok(); }; i.onerror = () => ok(); i.src = src; });
+/** 검은 기물 속 칠을 반장 색으로 (외곽선 · 흰 테는 그대로 — D-221 흑백 통일 문법) */
+const tint = (src, ramp) => {
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const x = c.getContext('2d'); x.drawImage(src, 0, 0); const d = x.getImageData(0, 0, c.width, c.height); const p = d.data;
+  const shades = [[28, 29, 34], [38, 39, 46], [50, 52, 61], [72, 74, 85], [110, 113, 126]];
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  for (let i = 0; i < p.length; i += 4) {
+    if (!p[i + 3]) continue;
+    const k = shades.findIndex((s) => Math.abs(s[0] - p[i]) < 3 && Math.abs(s[1] - p[i + 1]) < 3 && Math.abs(s[2] - p[i + 2]) < 3);
+    if (k >= 0) { const [r, g, b] = hex(ramp[k]); p[i] = r; p[i + 1] = g; p[i + 2] = b; }
+  }
+  x.putImageData(d, 0, 0); return c;
+};
+/** 기물 (72도트 그림을 hi 위에 1도트 = 1px로) */
+const piece = (k, x, y, size = 72) => { const i = img[k]; if (i) hi.drawImage(i, Math.round(x), Math.round(y), size, size); };
+
+// ── 반장 셋: 초상화에서 뽑은 색 ──
+const BOSS = {
+  plate: { act: '1막 반장', name: '철갑 반장', title: '용광로를 등에 진 자', rule: '철갑 20 · 두 턴마다 불꽃 줄 폭격', art: 'boss-plate',
+    accent: '#ff8a3a', ramp: ['#1a0f0c', '#291c20', '#442b2b', '#6e3a26', '#ae5d2f'], tiles: ['#2b1f1e', '#1d1515'], rivet: '#ff8a3a', bar: '#ae5d2f' },
+  spawn: { act: '2막 반장', name: '조립 반장', title: '끝없이 찍어 내는 손', rule: '두 턴마다 곁에 폰을 찍어 낸다 · 셋까지', art: 'boss-assembly',
+    accent: '#5fd4d8', ramp: ['#090c10', '#14171d', '#1c2a32', '#2a4a52', '#35676e'], tiles: ['#26303a', '#1a2129'], rivet: '#5fd4d8', bar: '#35676e' },
+  thorns: { act: '3막 반장', name: '출하 반장', title: '가시 갑옷의 문지기', rule: '못 쓰러뜨리면 가시가 되돌아온다', art: 'boss-thorns',
+    accent: '#e5262f', ramp: ['#0d0d12', '#1a1a22', '#2a2c36', '#5a1c22', '#a8282e'], tiles: ['#3a3e4a', '#2a2c36'], rivet: '#e5262f', bar: '#7a1e22' },
+};
+
+/** 반장 판 칸 (lo 좌표) — 반장마다 칸 무늬가 다르다 */
+const tile = (c, bk, x, y, s, dark, t = 0) => {
+  const b = BOSS[bk];
+  R(c, x, y, s, s, dark ? b.tiles[1] : b.tiles[0]);
+  R(c, x, y, s, 1, INK); R(c, x, y, 1, s, INK);
+  if (bk === 'plate') { // 그을린 철판 · 어두운 칸에 쇳물 금
+    R(c, x + 2, y + 2, 1, 1, b.rivet); R(c, x + s - 3, y + s - 3, 1, 1, b.rivet);
+    if (dark) { const g = Math.floor(t / 250 + x) % 3 === 0 ? '#ffb35a' : '#ae5d2f'; R(c, x + 3, y + s / 2, s / 2 - 2, 1, g); R(c, x + s / 2, y + s / 2, 1, s / 3, g); }
+  } else if (bk === 'spawn') { // 컨베이어 철판 · 청록 램프 점 · 화살 무늬
+    R(c, x + 2, y + 2, 1, 1, '#0d0e12'); R(c, x + s - 3, y + 2, 1, 1, '#0d0e12');
+    if (dark) R(c, x + s / 2 - 1, y + s - 4, 2, 1, b.rivet);
+    else for (let i = 0; i < 3; i++) R(c, x + 4 + i * 5 + (Math.floor(t / 166) % 5), y + s / 2, 2, 1, '#1c2a32');
+  } else { // 닦은 쇠 · 붉은 리벳 · 가시 홈
+    R(c, x + 1, y + 1, s - 1, 1, dark ? '#33353f' : '#4a4e5c');
+    R(c, x + 2, y + 2, 1, 1, b.rivet); R(c, x + s - 3, y + s - 3, 1, 1, b.rivet);
+    if (dark) { R(c, x + s / 2, y + 3, 1, 2, '#1a1a22'); R(c, x + s / 2 - 1, y + 5, 3, 1, '#1a1a22'); }
+  }
+};
+
+// ── 장면들 ──
+const SCENES = {};
+
+/** 9. 반장 등장 — 영화 띠가 닫히고 → 빛번쩍 → 초상화가 물러섰다 꽂힌다 → 이름이 내리꽂히고 → 칭호 · 규칙이 한 자씩 → 띠가 닫혔다 열리며 반장 판으로 */
+const bossIntro = (bk) => (t) => {
+  const b = BOSS[bk]; const DUR = 4200;
+  // 바탕: 반장 판을 디더로 어둡게
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 13; x++) tile(B, bk, x * 24 - 6, y * 24 - 8, 24, (x + y) % 2 === 1, t);
+  dither(B, 0.75, INK);
+  const barH = 28;
+  // 띠: 계단 4장으로 닫힘 (0~240), 끝에 다 닫혔다(3500~3800) 열림(3800~4200)
+  let bh = st(t / 240, 4) * barH;
+  if (t > 3500) bh = barH + st((t - 3500) / 300, 4) * (H / 2 - barH);
+  if (t > 3800) bh = (1 - st((t - 3800) / 400, 4)) * (H / 2);
+  const win = { y: Math.round(bh), h: Math.round(H - bh * 2) };
+  // 초상화 (hi 층, 띠 안만 보인다): 물러서기(오른쪽 +8도트) → 3계단에 꽂힘 → 흔들림
+  const portraitOn = t >= 320 && t < 3800;
+  let px = 0;
+  if (t < 440) px = 60 + st((t - 320) / 120, 2) * 10; else if (t < 560) px = 70 * (1 - st((t - 440) / 120, 3)); else px = 0;
+  const shake = t >= 560 && t < 760 ? (Math.floor(t / 41) % 2 ? 2 : -2) * (1 - st((t - 560) / 200, 3)) : 0;
+  // 빛번쩍 한 장 (240~320): 반장 색 체크
+  if (t >= 240 && t < 320) dither(B, 0.5, b.accent);
+  // 앞 효과 (도트)
+  if (t > 560 && t < 3800) bossFx(bk, t, win);
+  // 띠 + 반장 색 실선
+  R(F, 0, 0, W, win.y, INK); R(F, 0, win.y + win.h, W, H, INK);
+  if (bh > 2 && t < 3500) { const flash = t >= 560 && t < 680; R(F, 0, win.y, W, 1, flash ? '#fff' : b.bar); R(F, 0, win.y + win.h - 1, W, 1, flash ? '#fff' : b.bar); }
+  // 조립: 아래 띠 위 컨베이어 폰
+  if (bk === 'spawn' && t > 560 && t < 3500) for (let i = 0; i < 9; i++) { const x = ((i * 40 + Math.floor(t / 83) * 2) % (W + 40)) - 20; R(F, x, win.y + win.h + 6, 5, 2, '#35676e'); R(F, x + 1, win.y + win.h + 3, 3, 3, '#35676e'); R(F, x + 2, win.y + win.h + 1, 1, 2, '#35676e'); }
+  compose(() => {
+    if (portraitOn && img[b.art]) {
+      const im = img[b.art]; const sc = 2; const pw = im.width * sc;
+      hi.save(); hi.beginPath(); hi.rect(0, win.y * S + 3, 915, win.h * S - 6); hi.clip();
+      hi.drawImage(im, 915 - pw - 24 + px * S + shake * S, win.y * S - 12 * S, pw, im.height * sc);
+      hi.restore();
+    }
+  });
+  // 글씨 (hi 층 — compose 안에서)
+  if (t > 560 && t < 3500) compose(() => {
+    const ex = 48;
+    T(typed(b.act, t, 560, 60), ex, win.y * S + 66, 12, b.accent, 'G11', true);
+    // 이름: 색 갈림 두 장 → 제자리 (낙하 12→0px 계단)
+    if (t > 640) {
+      const k = st((t - 640) / 160, 3); const dy = Math.round((1 - k) * 18); const split = Math.round((1 - k) * 9);
+      if (split) { T(b.name, ex - split, win.y * S + 132 - dy, 60, b.accent, 'G14', false, 'left', null); T(b.name, ex + split, win.y * S + 132 - dy, 60, '#38bdf8', 'G14', false, 'left', null); }
+      T(b.name, ex, win.y * S + 132 - dy, 60, '#f4f1ea');
+    }
+    T(typed(b.title, t, 900, 70), ex, win.y * S + 180, 24, '#f4d27a', 'G11', true);
+    T(typed('「' + b.rule + '」', t, 1700, 40), 457, (win.y + win.h) * S + 52, 15, '#e9e2d4', 'G14', false, 'center');
+  });
+  if (t > 3800) { // 띠가 열리면 반장 판
+    // (다음 대국 화면으로 이어짐을 보여 준다)
+  }
+  return DUR;
+};
+/** 반장별 앞 효과 */
+const bossFx = (bk, t, win) => {
+  const b = BOSS[bk];
+  if (bk === 'plate') {
+    // 불씨: 아래에서 위로, 3색 깜빡 (프레임마다 1도트씩 · 계단)
+    for (let i = 0; i < 46; i++) {
+      const life = 1400 + rnd(i) * 900; const ph = (t + rnd(i + 9) * life) % life; const k = ph / life;
+      const x = Math.round(rnd(i + 3) * W + Math.sin(k * 6 + i) * 3); const y = Math.round(win.y + win.h - k * (win.h + 10));
+      F.fillStyle = ['#ffb35a', '#ff8a3a', '#e5262f'][Math.floor(t / 83 + i) % 3]; F.fillRect(x, y, 1, 1);
+    }
+    // 아래 불혀: 120ms마다 높이가 바뀌는 기둥
+    const f = Math.floor(t / 120);
+    for (let x = 0; x < W; x += 3) { const h = 2 + Math.floor(rnd(x * 7 + f) * 7); R(F, x, win.y + win.h - h, 3, h, h > 6 ? '#ffb35a' : '#ae5d2f'); }
+  } else if (bk === 'spawn') {
+    // 청록 훑는 줄: 600ms마다 위→아래 4도트 계단
+    const y = win.y + (Math.floor(((t % 600) / 600) * (win.h / 4)) * 4);
+    R(F, W - 170, y, 170, 1, '#5fd4d8'); dither(F, 0.25, '#5fd4d8', W - 170, y + 1, 170, 3);
+    // 램프 불꽃 (오른쪽 위)
+    for (let i = 0; i < 14; i++) { const ph = (t + i * 97) % 700; const k = outE(ph / 700); const a = rnd(i) * Math.PI - Math.PI; F.fillStyle = i % 2 ? '#5fd4d8' : '#e8fbfc'; F.fillRect(Math.round(W - 70 + Math.cos(a) * k * 30), Math.round(win.y + 14 + Math.abs(Math.sin(a)) * k * 24), 1, 1); }
+  } else {
+    // 등장 순간 붉은 가시 파편이 사방으로 (감속) → 떨어짐
+    if (t < 1500) for (let i = 0; i < 30; i++) {
+      const a = rnd(i) * Math.PI * 2; const sp = 40 + rnd(i + 5) * 60; const k = outE((t - 560) / 700);
+      const x = W - 105 + Math.cos(a) * sp * k; const y = H / 2 + Math.sin(a) * sp * k * 0.6 + inE((t - 900) / 600) * 30;
+      R(F, x, y, i % 3 ? 1 : 2, 1, i % 4 ? '#e5262f' : '#ff9a8a');
+    }
+    // 가시 끝 반짝: 십자 1장씩
+    for (let i = 0; i < 3; i++) { const f = Math.floor(t / 333) + i * 7; const x = Math.round(W - 160 + rnd(f) * 110); const y = Math.round(win.y + 10 + rnd(f + 1) * (win.h - 30)); R(F, x - 2, y, 5, 1, '#ff9a8a'); R(F, x, y - 2, 1, 5, '#ff9a8a'); R(F, x, y, 1, 1, '#fff'); }
+  }
+};
+SCENES['boss-plate'] = bossIntro('plate');
+SCENES['boss-spawn'] = bossIntro('spawn');
+SCENES['boss-thorns'] = bossIntro('thorns');
+
+/** 10. 반장 판 셋: 초상화 색으로 칸 · 기물 속 칠 */
+SCENES['boss-boards'] = (t) => {
+  R(B, 0, 0, W, H, '#0e0d12');
+  const keys = ['plate', 'spawn', 'thorns'];
+  keys.forEach((bk, n) => { const ox = 4 + n * 101; for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) tile(B, bk, ox + x * 24, 26 + y * 24, 24, (x + y) % 2 === 1, t); R(B, ox, 122, 97, 1, INK); R(B, ox + 96, 26, 1, 97, INK); });
+  compose(() => {
+    keys.forEach((bk, n) => {
+      const ox = (4 + n * 101) * S; const b = BOSS[bk];
+      T(b.name, ox + 4, 40, 24, b.accent, 'G11', true);
+      T(bk === 'plate' ? '그을린 철판 · 쇳물 금' : bk === 'spawn' ? '컨베이어 · 청록 램프' : '닦은 쇠 · 붉은 리벳', ox + 4, 66, 12, '#a8a2b0', 'G11');
+      piece(`K-${bk}`, ox + 72 * 1, 78 + 0, 72); piece(`P-${bk}`, ox + 0, 78 + 72, 72); piece(`R-${bk}`, ox + 72 * 3, 78, 72); piece(`N-${bk}`, ox + 72 * 2, 78 + 72, 72);
+      piece('P0', ox + 72 * 1, 78 + 144, 72); piece('N0', ox + 72 * 3, 78 + 144, 72);
+    });
+  });
+  return 1;
+};
+
+/** 10. 반장 기믹 연출 */
+const board4 = (bk, t, rows = 4) => { for (let y = 0; y < rows; y++) for (let x = 0; x < 7; x++) tile(B, bk, 47 + x * 30, 8 + y * 30, 30, (x + y) % 2 === 1, t); };
+const TS = 30; const BX = 47, BY = 8;
+const at = (x, y) => [(BX + x * TS) * S, (BY + y * TS) * S];
+SCENES['fx-plate'] = (t) => {
+  const DUR = 2400; board4('plate', t);
+  const row = 2;
+  // 0~700 예고: 붉은 띠가 150ms 계단으로 깜빡 · 바닥 불꽃 점
+  if (t < 700 && Math.floor(t / 150) % 2 === 0) for (let x = 0; x < 7; x++) { R(B, BX + x * TS + 1, BY + row * TS + 1, TS - 1, TS - 1, '#5a1a14'); dither(B, 0.5, '#e5262f', BX + x * TS + 1, BY + row * TS + 1, TS - 1, TS - 1); }
+  // 700~780 예비: 판 전체 한 장 어둡게
+  if (t >= 700 && t < 780) dither(B, 0.5, INK);
+  // 780~ 불기둥: 3계단으로 솟고, 1300부터 디더로 꺼짐
+  if (t >= 780) {
+    const k = st((t - 780) / 160, 3); const off = t > 1300 ? st((t - 1300) / 700, 6) : 0;
+    for (let x = 0; x < 7; x++) {
+      const cx = BX + x * TS; const top = BY + row * TS + TS - Math.round(k * (TS + 18));
+      const f = Math.floor(t / 83);
+      for (let c = 0; c < TS; c += 2) { const hgt = Math.round(k * (TS + 8 + rnd(x * 31 + c + f) * 14)); R(F, cx + c, BY + row * TS + TS - hgt, 2, hgt, c % 4 ? '#ff8a3a' : '#ffb35a'); }
+      R(F, cx + 6, top + 10, TS - 12, 6, '#fff3c4');
+      if (off) dither(F, off, '#000', cx, BY + row * TS - 30, TS, 60);
+    }
+    for (let i = 0; i < 30; i++) { const ph = ((t - 780) + rnd(i) * 900) % 900; const k2 = ph / 900; F.fillStyle = ['#ffb35a', '#ff8a3a', '#e5262f'][i % 3]; F.fillRect(Math.round(BX + rnd(i + 2) * 210), Math.round(BY + row * TS + 20 - k2 * 60), 1, 1); }
+  }
+  // 불길 뒤 지운 자국 (지운 칸 위 디더 재)
+  const shake = t >= 780 && t < 1000 ? (Math.floor(t / 41) % 2 ? 2 : -2) : 0;
+  compose(() => {
+    const [kx, ky] = at(5, 0); piece('K-plate', kx, ky + 6, 72);
+    const [px, py] = at(2, row); const hit = t >= 860 && t < 1000;
+    if (!(hit && Math.floor(t / 41) % 2)) piece('P0', px, py + 6, 72);
+    const [nx, ny] = at(4, 3); piece('N0', nx, ny + 6, 72);
+    if (t > 860) { const k = st((t - 860) / 300, 4); T('−12', px + 36, py - 6 - k * 24, 36, '#ff6b6b', 'G11', true, 'center'); }
+    if (t < 700) T('줄 폭격 예고 — 이 줄에서 벗어나십시오', 457, 400, 15, '#ff9a8a', 'G14', false, 'center');
+    if (t >= 780) T('「불꽃 줄 폭격」', 457, 400, 24, '#ffb35a', 'G11', true, 'center');
+  }, shake);
+  return DUR;
+};
+SCENES['fx-spawn'] = (t) => {
+  const DUR = 2200; board4('spawn', t);
+  const tx = 4, ty = 1; const cx = BX + tx * TS, cy = BY + ty * TS;
+  // 프레스: 0~600 천천히 들림(예비, 위로 6도트) → 600~680 2계단 쾅 → 680~1200 계단으로 올라감
+  let py;
+  if (t < 600) py = -34 - st(t / 600, 3) * 6; else if (t < 680) py = -40 + st((t - 600) / 80, 2) * 40; else if (t < 900) py = 0; else py = -st((t - 900) / 300, 4) * 44;
+  const shake = t >= 680 && t < 860 ? (Math.floor(t / 41) % 2 ? 2 : -2) : 0;
+  // 먼지: 쾅 순간 네모 조각이 좌우로 (감속)
+  if (t >= 680 && t < 1300) for (let i = 0; i < 16; i++) { const k = outE((t - 680) / 500); const dir = i % 2 ? 1 : -1; const x = cx + TS / 2 + dir * (6 + rnd(i) * 22) * k; const y = cy + TS - 2 - rnd(i + 4) * 10 * k + inE((t - 900) / 400) * 6; if (t < 1100 || i % 2) R(F, x, y, 2, 2, i % 3 ? '#4a5560' : '#7d8a96'); }
+  // 프레스 몸 (청록 램프 눈)
+  R(F, cx + 4, 0, TS - 8, Math.max(0, cy + py), '#14171d');
+  box(F, cx - 2, cy + py - 2, TS + 4, 14, '#2a3440', '#3d4b58', '#161b22');
+  R(F, cx + TS / 2 - 3, cy + py + 3, 6, 2, Math.floor(t / 166) % 2 ? '#5fd4d8' : '#e8fbfc');
+  compose(() => {
+    const [kx, ky] = at(5, 1); piece('K-spawn', kx, ky + 6, 72);
+    const [ax, ay] = at(5, 2); piece('P-spawn', ax, ay + 6, 72);
+    if (t >= 680) { const [px2, py2] = at(tx, ty); const bounce = t < 900 ? 0 : t < 980 ? -9 : 0; if (t > 900) piece('P-spawn', px2, py2 + 6 + bounce, 72); }
+    const [wx, wy] = at(1, 3); piece('N0', wx, wy + 6, 72);
+    if (t >= 980) T('찍혀 나왔다 — 폰 +1 (셋까지)', 457, 400, 15, '#5fd4d8', 'G14', false, 'center');
+    else T('「조립」 두 턴마다 반장 곁에', 457, 400, 15, '#a8a2b0', 'G14', false, 'center');
+  }, shake);
+  return DUR;
+};
+SCENES['fx-thorns'] = (t) => {
+  const DUR = 2400; board4('thorns', t);
+  // 나이트: 0~300 몸 낮춤(예비) → 300~380 돌진(2계단) → 치고 → 가시가 3계단으로 돋음(450~650) → 붉은 파편이 나이트로 되돌아감(650~900, 감속) → 나이트 붉게 번쩍
+  const kxT = 4, kyT = 1; const nFrom = [2, 3], nTo = [3, 2];
+  const k = t < 300 ? 0 : st((t - 300) / 80, 2);
+  const nx = nFrom[0] + (nTo[0] - nFrom[0]) * k, ny = nFrom[1] + (nTo[1] - nFrom[1]) * k;
+  const spike = t < 450 ? 0 : t < 1500 ? st((t - 450) / 200, 3) : 1 - st((t - 1500) / 400, 3);
+  const bcx = BX + kxT * TS + TS / 2, bcy = BY + kyT * TS + TS / 2;
+  if (spike > 0) for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const len = Math.round(spike * 10); for (let r = 0; r < len; r++) { const w = Math.max(1, Math.round((len - r) / 4)); R(B, bcx + Math.cos(a) * (12 + r) - w / 2, bcy + Math.sin(a) * (12 + r) - w / 2, w, w, r > len - 3 ? '#ff9a8a' : '#e5262f'); } }
+  if (t >= 650 && t < 1000) for (let i = 0; i < 18; i++) { const kk = outE((t - 650) / 300); const tx2 = BX + nTo[0] * TS + TS / 2, ty2 = BY + nTo[1] * TS + TS / 2; const sx = bcx + (rnd(i) - 0.5) * 16, sy = bcy + (rnd(i + 3) - 0.5) * 16; R(F, sx + (tx2 - sx) * kk, sy + (ty2 - sy) * kk, 2, 1, i % 3 ? '#e5262f' : '#fff'); }
+  const shake = (t >= 380 && t < 480) || (t >= 900 && t < 1040) ? (Math.floor(t / 41) % 2 ? 2 : -2) : 0;
+  compose(() => {
+    const [kx, ky] = at(kxT, kyT); const bossHit = t >= 380 && t < 480 && Math.floor(t / 41) % 2;
+    if (!bossHit) piece('K-thorns', kx, ky + 6, 72);
+    const [px, py] = at(nx, ny); const dip = t < 300 ? st(t / 300, 3) * 6 : 0; const red = t >= 900 && t < 1100 && Math.floor(t / 41) % 2;
+    if (!red) piece('N0', px, py + 6 + dip, 72); else piece('N-red', px, py + 6, 72);
+    if (t > 380) { const kk = st((t - 380) / 300, 4); T('−18', kx + 36, ky - 6 - kk * 24, 36, '#facc15', 'G11', true, 'center'); }
+    if (t > 900) { const kk = st((t - 900) / 300, 4); T('−6', px + 36, py - 6 - kk * 24, 36, '#ff6b6b', 'G11', true, 'center'); }
+    T(t > 650 ? '「되받아침」 못 쓰러뜨리면 가시가 돌아온다' : '반장을 친다', 457, 400, 15, t > 650 ? '#ff9a8a' : '#a8a2b0', 'G14', false, 'center');
+  }, shake);
+  return DUR;
+};
+
+/** 12. 엔딩 크레딧: E-01을 ×2로 깔고 디더로 어둡게, 글줄이 1도트 계단으로 올라간다 */
+const CREDITS = [
+  ['출하 완료', 36, '#f4d27a', 'G11', true], ['', 24], ['PAWNISHER : CHECKMATE', 24, '#f4f1ea', 'G11', true], ['', 30],
+  ['기획 · 세계 · 그림 감독', 12, '#c89b3c', 'G11', true], ['(제작자 이름)', 24, '#f4f1ea', 'G11', true], ['', 15],
+  ['구현 · 연출 · 밸런스', 12, '#c89b3c', 'G11', true], ['Claude', 24, '#f4f1ea', 'G11', true], ['', 15],
+  ['기물 도트', 12, '#c89b3c', 'G11', true], ['도트 메이커 64칸', 15, '#e9e2d4'], ['', 15],
+  ['글꼴', 12, '#c89b3c', 'G11', true], ['갈무리 — quiet-of-moon', 15, '#e9e2d4'], ['', 30],
+  ['이번 출하를 끝까지 함께한 분대', 12, '#38bdf8', 'G11', true], ['대장 · 금 간 렌즈 · 쉿소리 뭉치 · 이 나간 톱니', 15, '#e9e2d4'], ['그을린 장갑 · 구부러진 못 · 괴팍한 흠집 · 깨진 문자판', 15, '#e9e2d4'], ['', 15],
+  ['쓰러진 이들', 12, '#e5262f', 'G11', true], ['찢긴 가죽끈 #P-201 — 2막 검문', 15, '#ff9a8a'], ['괴팍한 흠집 #P-137 — 3막 대국', 15, '#ff9a8a'], ['', 45],
+  ['그리고, 끝까지 감아 준 당신에게.', 24, '#f4d27a', 'G11', true],
+];
+SCENES['ending-credits'] = (t) => {
+  const DUR = 9500;
+  compose(() => {
+    const im = img['end-clear']; if (im) { hi.drawImage(im, 0, 0, im.width, im.height, -(im.width * 2 - 915) / 2, -60, im.width * 2, im.height * 2); }
+  }, 0, true);
+  dither(F, 0.62, INK);
+  // 왼쪽 글 기둥 (그림의 실루엣이 오른쪽에 보이게)
+  compose(() => {
+    let y = 430 - Math.floor(t / 83) * 6; // 83ms마다 2도트 = 6px 계단
+    if (t > 8200) y = 430 - Math.floor(8200 / 83) * 6;
+    for (const [s, px, col, f, b] of CREDITS) { y += px === 36 ? 52 : px === 24 ? 38 : px === 15 ? 26 : 22; if (s && y > -40 && y < 452) T(s, 230, y, px, col || '#fff', f || 'G14', !!b, 'center'); }
+  });
+  return DUR;
+};
+/** 12. 엔딩 기록 사진: 셔터 → 액자가 들렸다 박힘 → 분대가 한 기씩 → 도장 */
+SCENES['ending-photo'] = (t) => {
+  const DUR = 3600;
+  R(B, 0, 0, W, H, '#16141c'); dither(B, 0.3, '#221f2a');
+  const flash = t < 160;
+  const lift = t < 160 ? -12 : t < 360 ? -12 - st((t - 160) / 200, 2) * 4 : t < 440 ? -16 + st((t - 360) / 80, 2) * 16 : 0;
+  const shake = t >= 440 && t < 600 ? (Math.floor(t / 41) % 2 ? 2 : -2) : 0;
+  const fx = 22, fy = 8 + lift, fw = 170, fh = 118;
+  box(F, fx, fy, fw, fh, '#e9e2d4', '#fff', '#b8ae9c');
+  R(F, fx + 6, fy + 6, fw - 12, fh - 30, INK);
+  compose(() => {
+    const im = img['end-clear']; const x0 = (fx + 7) * S, y0 = (fy + 7) * S, w = (fw - 14) * S, h = (fh - 32) * S;
+    if (im) { hi.save(); hi.beginPath(); hi.rect(x0, y0, w, h); hi.clip(); hi.drawImage(im, x0 - 130, y0 - 40, im.width, im.height); hi.restore(); }
+    // 분대가 한 기씩 계단으로 (킹 → …)
+    const crew = ['K0', 'Q0', 'N0', 'B0', 'R0', 'P0'];
+    crew.forEach((k, i) => { const t0 = 700 + i * 160; if (t < t0) return; const up = t < t0 + 80 ? 12 : 0; piece(k, x0 + 30 + i * 70, y0 + h - 84 + up, 72); });
+    T('출하 기록 · 1회째', (fx + 10) * S, (fy + fh - 10) * S, 15, '#16141c', 'G14', false, 'left', null);
+    T('2026.11.06 · 63분', (fx + fw - 10) * S, (fy + fh - 10) * S, 12, '#5a5462', 'G11', false, 'right', null);
+    // 도장 (2000~): 크게 → 쾅 → 잉크 튐
+    if (t > 1900) {
+      const k = st((t - 1900) / 120, 2); const s = 48 - k * 12;
+      hi.save(); hi.translate((fx + fw - 40) * S, (fy + 30) * S); hi.rotate(-0.12);
+      hi.strokeStyle = '#e5262f'; hi.lineWidth = 6; hi.strokeRect(-110, -s, 220, s * 1.4);
+      T('출하 완료', 0, s * 0.25, s === 36 ? 36 : 36, '#e5262f', 'G11', true, 'center', null); hi.restore();
+    }
+    // 오른쪽 기록
+    const rx = 620; const lines = [['이긴 대국', '19'], ['처치', '76'], ['나사', '1180'], ['덱', '36'], ['묘수', '3막 대국 1턴 · 처치 6']];
+    lines.forEach(([a, v], i) => { const t0 = 2300 + i * 120; if (t < t0) return; T(a, rx, 70 + i * 40, 15, '#a8a2b0'); T(v, 890, 70 + i * 40, i === 4 ? 12 : 24, '#f4d27a', 'G11', true, 'right'); });
+    if (t > 3000) { T('[ 사진 저장 ]', rx, 330, 24, '#f4f1ea', 'G11', true); T('[ 다시 출하 ]', rx, 372, 24, '#38bdf8', 'G11', true); }
+  }, shake);
+  if (t > 1960 && t < 2400) for (let i = 0; i < 12; i++) { const k = outE((t - 1960) / 300); const a = rnd(i) * Math.PI * 2; R(F, fx + fw - 40 + Math.cos(a) * 26 * k, fy + 26 + Math.sin(a) * 14 * k, 1, 1, '#e5262f'); }
+  if (flash) R(F, 0, 0, W, H, '#f4f1ea');
+  return DUR;
+};
+
+/** 13. 사건 맞춤 연출 — 공통 무대: 공장 뒷길 바탕(디더) + 아래 결과 칩 */
+const stage = () => { R(B, 0, 0, W, H, '#14121a'); for (let x = 0; x < W; x += 16) R(B, x, 0, 1, H, '#1b1922'); R(B, 0, 100, W, 37, '#1d1a14'); R(B, 0, 100, W, 1, INK); dither(B, 0.25, '#2a2418', 0, 101, W, 36); };
+const chips = (items, pick, t, t0) => {
+  // 확률 칩: 고른 칸만 남고 나머지는 디더로 꺼진다
+  const n = items.length; const w = 260 / n;
+  items.forEach(([p, label, good], i) => {
+    const x = 22 + i * w; const lit = t > t0 && i === pick; const gone = t > t0 && i !== pick ? st((t - t0) / 300, 4) : 0;
+    box(F, x, 112, w - 4, 20, lit ? (good ? '#f4d27a' : '#e5262f') : good ? '#3a3220' : '#3a1c1e', null, null);
+    if (gone) dither(F, gone * 0.8, INK, x + 1, 113, w - 6, 18);
+  });
+  compose(() => items.forEach(([p, label, good], i) => { const x = (22 + i * w) * S; const lit = t > t0 && i === pick; T(`${p}  ${label}`, x + ((w - 4) * S) / 2, 112 * S + 39, 15, lit ? '#16141c' : good ? '#f4d27a' : '#ff9a8a', 'G14', false, 'center', lit ? null : INK); }));
+};
+const sparks = (cx, cy, t, t0, n = 16, col = ['#f4d27a', '#fff3c4', '#c89b3c']) => { if (t < t0 || t > t0 + 700) return; for (let i = 0; i < n; i++) { const k = outE((t - t0) / 500); const a = rnd(i + n) * Math.PI * 2; const r = 10 + rnd(i) * 26; R(F, cx + Math.cos(a) * r * k, cy + Math.sin(a) * r * k * 0.8 + inE((t - t0 - 300) / 400) * 10, i % 3 ? 1 : 2, 1, col[i % col.length]); } };
+
+/** 동전 나이트: 동전이 튕겨 올라 5장 회전(앞 · 비스듬 · 옆 · 비스듬 · 뒤) → 떨어져 찌그러짐 → 앞면 → 나사 튐 */
+SCENES['ev-coin'] = (t) => {
+  const DUR = 3000; stage();
+  const cx = 152; const ground = 92;
+  let y = ground, phase = 0;
+  if (t < 300) y = ground + st(t / 300, 2) * 2; // 엄지에 눌림
+  else if (t < 1500) { const k = (t - 300) / 1200; y = ground - Math.round(Math.sin(k * Math.PI) * 70); phase = Math.floor((t - 300) / 70); }
+  const widths = [10, 7, 1, 7, 10]; const faces = ['front', 'front', 'edge', 'back', 'back'];
+  let w = 10, face = 'front';
+  if (t >= 300 && t < 1500) { w = widths[phase % 5]; face = faces[phase % 5]; }
+  if (t >= 1500 && t < 1580) { w = 12; y = ground + 1; } // 찌그러짐
+  if (t >= 1580 && t < 1660) y = ground - 3;
+  // 그림자
+  R(B, cx - 8, ground + 11, 16, 2, '#0e0c08');
+  disc(F, cx, y, w + 1, 11, INK);
+  if (w > 1) { disc(F, cx, y, w, 10, face === 'front' ? '#f4d27a' : '#c89b3c'); disc(F, cx - 1, y - 1, Math.max(1, w - 3), 7, face === 'front' ? '#facc15' : '#a8792c');
+    if (face === 'front' && w >= 7) { R(F, cx - 2, y - 4, 4, 2, INK); R(F, cx - 3, y - 2, 3, 4, INK); R(F, cx, y - 2, 2, 6, INK); } // 나이트 머리
+    if (face === 'back' && w >= 7) { R(F, cx - 3, y - 3, 6, 6, INK); R(F, cx - 2, y - 2, 4, 4, '#c89b3c'); } } // 톱니 구멍
+  else R(F, cx, y - 10, 1, 21, '#f4d27a');
+  sparks(cx, y, t, 1700, 14);
+  if (t > 1700) for (let i = 0; i < 6; i++) { const k = outE((t - 1700) / 600); R(F, cx + (i - 2.5) * 14 * k, y - 18 * k + inE((t - 2000) / 500) * 24, 3, 2, '#c8c2b0'); }
+  chips([['50%', '앞면 · 나사 +30', true], ['50%', '뒷면 · 나사 −30', false]], 0, t, 1700);
+  compose(() => {
+    T('“앞면이면 두 배. 뒷면이면 내 것.”', 457, 60, 15, '#e9e2d4', 'G14', false, 'center');
+    if (t > 1700) T('앞면!', 457, 210, 36, '#f4d27a', 'G11', true, 'center');
+  });
+  return DUR;
+};
+/** 쓰러진 뽑기 기계: 세 바퀴가 돌다 하나씩 선다(넘쳤다 되돌아옴) → 캡슐이 떨어져 두 쪽으로 열림 */
+const SYM = { part: ['#c89b3c', 'gear'], up: ['#38bdf8', 'up'], miss: ['#e5262f', 'x'] };
+const sym = (c, kind, x, y) => { const [col, s] = SYM[kind]; box(c, x, y, 14, 14, '#1b1922', null, null);
+  if (s === 'gear') { disc(c, x + 7, y + 7, 4, 4, col); R(c, x + 6, y + 1, 2, 12, col); R(c, x + 1, y + 6, 12, 2, col); R(c, x + 6, y + 6, 2, 2, INK); }
+  if (s === 'up') { for (let i = 0; i < 5; i++) R(c, x + 7 - i, y + 3 + i, 1 + i * 2, 1, col); R(c, x + 5, y + 8, 4, 4, col); }
+  if (s === 'x') for (let i = 0; i < 9; i++) { R(c, x + 2 + i, y + 2 + i, 2, 1, col); R(c, x + 11 - i, y + 2 + i, 2, 1, col); } };
+SCENES['ev-gacha'] = (t) => {
+  const DUR = 3400; stage();
+  const mx = 112, my = 14;
+  box(F, mx, my, 82, 88, '#7a2a20', '#a8442e', '#4a1a14'); box(F, mx + 6, my + 8, 70, 24, '#14121a', null, null);
+  R(F, mx + 30, my + 60, 22, 20, INK); R(F, mx + 32, my + 62, 18, 16, '#2a1410'); // 배출구
+  const order = ['part', 'up', 'miss']; const stops = [1000, 1400, 1900];
+  for (let r = 0; r < 3; r++) {
+    const x = mx + 10 + r * 22; let k;
+    if (t < 300) k = 0; else if (t < stops[r]) k = Math.floor((t - 300) / 50); else k = -1;
+    if (k >= 0) { sym(F, order[k % 3], x, my + 12 + ((k % 2) ? -3 : 3)); dither(F, 0.4, INK, x, my + 9, 14, 22); }
+    else { const bounce = t < stops[r] + 80 ? 2 : 0; sym(F, 'part', x, my + 13 + bounce); }
+  }
+  // 레버: 0~300 당김
+  const lv = t < 300 ? st(t / 300, 3) * 10 : 10 - st((t - 300) / 200, 2) * 10; R(F, mx + 84, my + 30 + lv, 3, 18, INK); disc(F, mx + 85, my + 28 + lv, 4, 4, '#e5262f');
+  // 캡슐: 2100 떨어짐 → 2300 튕김 → 2500 열림
+  if (t > 2100) {
+    const cy = t < 2300 ? my + 56 + st((t - 2100) / 200, 3) * 40 : t < 2380 ? my + 92 : my + 96;
+    const open = t > 2500 ? st((t - 2500) / 160, 2) * 8 : 0;
+    if (t > 2500) rays(B, mx + 41, cy, 10, (t - 2500) / 200 - ((t - 2500) / 200) % 0.2, '#3a3220', 6, 50, 0, 0, W, 104);
+    disc(F, mx + 41 - open, cy, 7, 7, INK); disc(F, mx + 41 - open, cy, 6, 6, '#38bdf8'); disc(F, mx + 41 + open, cy, 7, 7, INK); disc(F, mx + 41 + open, cy, 6, 6, '#f4f1ea');
+    if (open) sym(F, 'part', mx + 34, cy - 20 - st((t - 2500) / 200, 3) * 8);
+    sparks(mx + 41, cy - 10, t, 2560, 18);
+  }
+  chips([['45%', '부품 하나', true], ['25%', '한 단계 위로', true], ['30%', '꽝', false]], 0, t, 1900);
+  compose(() => { if (t > 2600) T('부품 하나!', 457, 40, 36, '#f4d27a', 'G11', true, 'center'); });
+  return DUR;
+};
+/** 견습 폰 망치 — 같은 장면 두 갈래(성공 | 실패) 나란히: 망치가 비틀대며 오르고(예비) → 쾅 */
+const card = (c, x, y, crackK = 0) => { box(c, x, y, 26, 36, '#2a2832', '#3d3a48', '#1b1922'); R(c, x + 3, y + 3, 20, 4, '#3d3a48'); R(c, x + 5, y + 10, 16, 12, '#14121a'); R(c, x + 11, y + 13, 4, 6, '#e9e2d4'); R(c, x + 10, y + 19, 6, 2, '#e9e2d4');
+  if (crackK) { for (let i = 0; i < 36; i++) R(c, x + 13 + Math.round(Math.sin(i * 1.7) * 2), y + i, 1, 1, INK); } };
+const hammer = (c, x, y, ang) => { const L = 26; for (let i = 0; i < L; i++) R(c, x + Math.round(Math.cos(ang) * i), y - Math.round(Math.sin(ang) * i), 2, 2, '#6e4a2a'); const hx = x + Math.round(Math.cos(ang) * L), hy = y - Math.round(Math.sin(ang) * L); box(c, hx - 6, hy - 4, 12, 9, '#6a6e7c', '#9a9eac', '#383c48'); };
+SCENES['ev-hammer'] = (t) => {
+  const DUR = 2800; stage();
+  [[0, true], [1, false]].forEach(([n, ok]) => {
+    const ox = 40 + n * 150; R(B, ox + 10, 88, 60, 12, '#2a2c36'); R(B, ox + 18, 76, 44, 12, '#383c48'); R(B, ox + 18, 76, 44, 1, '#6a6e7c'); // 모루
+    const hit = 900; let ang;
+    if (t < hit - 100) ang = 0.3 + st(t / (hit - 100), 4) * 1.1 + (Math.floor(t / 120) % 2 ? 0.08 : -0.08); else if (t < hit) ang = 1.4 - st((t - hit + 100) / 100, 2) * 1.3; else ang = 0.1;
+    const split = !ok && t > hit ? st((t - hit) / 500, 4) : 0;
+    if (split) { const d = Math.round(split * 10); card(F, ox + 27 - d, 40 + Math.round(inE((t - hit) / 700) * 30)); dither(F, split * 0.9, '#14121a', ox + 20 - d, 30, 50, 70); card(F, ox + 27 + d, 40 + Math.round(inE((t - hit) / 600) * 34)); dither(F, split * 0.9, '#14121a', ox + 20 + d, 30, 50, 70); }
+    else card(F, ox + 27, 40, 0);
+    if (ok && t > hit) { const k = st((t - hit) / 160, 2); R(F, ox + 46, 34 - k * 4, 8, 2, '#f4d27a'); R(F, ox + 49, 31 - k * 4, 2, 8, '#f4d27a'); }
+    hammer(F, ox + 74, 62, ang);
+    if (ok) sparks(ox + 40, 58, t, hit, 18); else sparks(ox + 40, 58, t, hit, 12, ['#6a6e7c', '#a8a2b0', '#383c48']);
+  });
+  const shake = t >= 900 && t < 1040 ? (Math.floor(t / 41) % 2 ? 2 : -2) : 0;
+  compose(() => {
+    T('50% 성공', 240, 50, 24, '#f4d27a', 'G11', true, 'center'); T('50% 실패', 690, 50, 24, '#ff9a8a', 'G11', true, 'center');
+    if (t > 1100) { T('다듬어졌다 · 태엽 −1', 240, 340, 15, '#f4d27a', 'G14', false, 'center'); T('카드 한 장이 부서졌다', 690, 340, 15, '#ff9a8a', 'G14', false, 'center'); }
+  }, shake);
+  return DUR;
+};
+/** 쇳물 담금질 — 사슬에 매달린 기물이 내려가 잠겼다(거품 · 김) → 들어 올림: 성공 = 한 단계 위(나이트, 달아오른 테) | 실패 = 사슬만 */
+SCENES['ev-dip'] = (t) => {
+  const DUR = 3200; stage();
+  [[0, true], [1, false]].forEach(([n, ok]) => {
+    const ox = 30 + n * 150;
+    // 도가니
+    box(B, ox + 10, 74, 90, 28, '#2a1d1c', '#442b2b', '#1a0f0c'); R(B, ox + 13, 76, 84, 5, '#ff8a3a'); R(B, ox + 13, 76, 84, 1, '#ffb35a');
+    for (let i = 0; i < 6; i++) { const f = Math.floor(t / 120) + i * 3; if (rnd(f) > 0.5) disc(B, ox + 18 + rnd(f + 1) * 74, 77, 1 + Math.round(rnd(f + 2)), 1, '#ffb35a'); }
+    // 사슬 위치: 0~900 내려감(계단), 900~1600 잠김, 1600~2200 올라옴
+    let dy = t < 900 ? st(t / 900, 6) * 44 : t < 1600 ? 44 : 44 - st((t - 1600) / 600, 6) * 44;
+    for (let y = 0; y < 26 + dy; y += 3) R(F, ox + 54, y, 2, 2, '#6a6e7c');
+    if (t > 900 && t < 1700) for (let i = 0; i < 10; i++) { const ph = ((t - 900) + i * 80) % 600; R(F, ox + 30 + rnd(i) * 50, 74 - ph / 20, 2, 2, ph < 300 ? '#a8a2b0' : '#5a5462'); }
+    state[n] = { ox, dy, ok };
+  });
+  compose(() => {
+    [0, 1].forEach((n) => { const { ox, dy, ok } = state[n]; const y = (26 + dy) * S;
+      hi.save(); hi.beginPath(); hi.rect(0, 0, 915, 76 * S); hi.clip();
+      if (t < 1600) piece('P0', (ox + 55) * S - 36, y - 6, 72);
+      else if (ok) { const glow = t < 2400 && Math.floor(t / 83) % 2; piece(glow ? 'N-hot' : 'N0', (ox + 55) * S - 36, y - 6, 72); }
+      hi.restore(); });
+    T('50% 한 단계 위로', 255, 50, 24, '#f4d27a', 'G11', true, 'center'); T('50% 소실', 705, 50, 24, '#ff9a8a', 'G11', true, 'center');
+    if (t > 2300) { T('폰이 나이트로 다시 섰다', 255, 340, 15, '#f4d27a', 'G14', false, 'center'); T('녹아 사라졌다', 705, 340, 15, '#ff9a8a', 'G14', false, 'center'); }
+  });
+  if (t > 2200) sparks(85, 50, t, 2200, 16, ['#ffb35a', '#ff8a3a', '#fff3c4']);
+  return DUR;
+};
+const state = [];
+/** 상자를 열었다: 세 번 들썩(점점 크게) → 뚜껑이 튀어 돌며 날아감 → 계단 빛살 → 부품 셋이 날아올라 카드로 내려앉아 뒤집힘 */
+SCENES['ev-chest'] = (t) => {
+  const DUR = 3200; stage();
+  const cx = 152, cy = 70;
+  const jolt = t < 900 ? [[150, 2], [450, 3], [750, 5]].reduce((a, [t0, h]) => (t >= t0 && t < t0 + 120 ? -h : a), 0) : 0;
+  if (t > 900) rays(B, cx, cy - 6, 12, Math.floor((t - 900) / 166) * 0.13, '#3a3220', 14, 140, 0, 0, W, 100);
+  // 상자 몸
+  box(F, cx - 22, cy - 10 + jolt, 44, 28, '#6e4a2a', '#8a6038', '#4a3018'); R(F, cx - 22, cy - 2 + jolt, 44, 3, '#c89b3c'); R(F, cx - 3, cy - 4 + jolt, 6, 7, '#c89b3c'); R(F, cx - 1, cy - 2 + jolt, 2, 3, INK);
+  // 뚜껑: 900 전에는 몸 위, 뒤로는 돌며 날아감 (계단)
+  if (t < 900) box(F, cx - 24, cy - 20 + jolt * 2, 48, 12, '#7a5430', '#9a6a3a', '#4a3018');
+  else if (t < 1500) { const k = (t - 900) / 600; const lx = cx - 24 + k * 90, ly = cy - 20 - Math.sin(k * Math.PI) * 50 + k * 30; const thin = [12, 6, 2, 6][Math.floor((t - 900) / 83) % 4]; box(F, lx, ly, 48 - (12 - thin) * 2, thin, '#7a5430', null, null); }
+  if (t >= 900 && t < 1300) dither(F, 1 - st((t - 900) / 400, 4), '#fff3c4', cx - 20, cy - 30, 40, 20);
+  sparks(cx, cy - 12, t, 900, 22);
+  // 부품 셋: 1100~ 날아올라 세 자리로 (감속) → 1700~ 카드 뒷면 → 뒤집힘(폭 계단)
+  const slots = [-80, 0, 80];
+  slots.forEach((dx, i) => {
+    const t0 = 1100 + i * 90; if (t < t0) return; const k = outE((t - t0) / 500);
+    const x = cx + dx * k, y = cy - 14 - Math.sin(Math.min(1, (t - t0) / 500) * Math.PI) * 30 - k * 20;
+    if (t < 1700 + i * 120) disc(F, x, y, 4, 4, ['#c89b3c', '#38bdf8', '#f4d27a'][i]);
+    else { const f = Math.min(3, Math.floor((t - 1700 - i * 120) / 83)); const w = [26, 14, 4, 26][f]; const back = f < 2; box(F, x - w / 2, y - 18, w, 36, back ? '#3a2a1a' : '#2a2832', back ? '#5a4028' : '#3d3a48', null); if (!back) disc(F, x, y - 4, 5, 5, ['#c89b3c', '#38bdf8', '#f4d27a'][i]); }
+  });
+  compose(() => {
+    if (t > 1000) { const k = st((t - 1000) / 120, 2); const s = k < 1 ? 45 : 36; hi.save(); hi.translate(457, 70); hi.rotate(-0.04); T('상자를 열었다', 0, 0, s, '#f4d27a', 'G11', true, 'center'); hi.restore(); }
+    if (t > 2200) T('부품 하나를 고르십시오', 457, 370, 15, '#e9e2d4', 'G14', false, 'center');
+  }, t >= 900 && t < 1040 ? (Math.floor(t / 41) % 2 ? 2 : -2) : 0);
+  return DUR;
+};
+/** 고철 경매: 호가가 계단으로 오르고 망치 세 번(하나 · 둘 · 셋) → 낙찰 도장 */
+SCENES['ev-auction'] = (t) => {
+  const DUR = 3000; stage();
+  box(B, 100, 54, 104, 46, '#3a2a1a', '#5a4028', '#22180e'); R(B, 100, 66, 104, 2, '#c89b3c');
+  const knocks = [700, 1200, 1700];
+  let ang = 1.2; knocks.forEach((k0, i) => { if (t >= k0 - 250 && t < k0) ang = 0.2 + st((t - k0 + 250) / 250, 3) * (i === 2 ? 1.6 : 1); if (t >= k0 && t < k0 + 120) ang = 0.05; });
+  hammer(F, 188, 52, ang);
+  const knock = knocks.findIndex((k0) => t >= k0 && t < k0 + 120);
+  const shake = knock === 2 ? (Math.floor(t / 41) % 2 ? 2 : -2) : knock >= 0 ? (Math.floor(t / 41) % 2 ? 1 : -1) : 0;
+  if (t > 1700) sparks(150, 52, t, 1700, 18);
+  compose(() => {
+    const bid = Math.min(60, 20 + Math.floor(t / 166) * 5);
+    T(`호가 ${bid}`, 457, 76, 36, '#f4d27a', 'G11', true, 'center');
+    ['하나', '둘', '낙찰!'].forEach((w, i) => { if (t >= knocks[i]) T(w, 300 + i * 160, 136, i === 2 ? 36 : 24, i === 2 ? '#e5262f' : '#e9e2d4', 'G11', true, 'center'); });
+    if (t > 2200) T('부품 상자가 굴러온다', 457, 300, 15, '#e9e2d4', 'G14', false, 'center');
+  }, shake);
+  chips([['50%', '부품 하나', true], ['50%', '빈 상자', false]], 0, t, 2200);
+  return DUR;
+};
+
+/** 층 합성: 뒤 도트 → (hi 그림 · 글씨) → 앞 도트. underFront = 그림을 앞 도트보다 먼저 */
+let pending = [];
+const compose = (fn, shake = 0, underFront = false) => pending.push({ fn, shake, underFront });
+
+window.render = (t) => {
+  const s = new URLSearchParams(location.search).get('s') || 'boss-plate';
+  B.clearRect(0, 0, W, H); F.clearRect(0, 0, W, H); pending = [];
+  const dur = SCENES[s](t);
+  const shake = pending.reduce((a, p) => a || p.shake, 0) * S;
+  hi.fillStyle = INK; hi.fillRect(0, 0, 915, 412);
+  hi.save(); hi.translate(shake, 0);
+  hi.drawImage(backC, 0, 0, W * S, H * S);
+  pending.filter((p) => p.underFront).forEach((p) => p.fn());
+  hi.drawImage(frontC, 0, 0, W * S, H * S);
+  pending.filter((p) => !p.underFront).forEach((p) => p.fn());
+  hi.restore();
+  return dur;
+};
+window.ready = (async () => {
+  const P = '../../../public/';
+  await Promise.all([
+    ...['boss-plate', 'boss-assembly', 'boss-thorns', 'end-clear'].map((k) => load(k, `${P}scenes/${k}.png`)),
+    ...['K', 'Q', 'N', 'B', 'R', 'P'].flatMap((k) => [load(`${k}0`, `${P}pieces/l-${k}0.png`), load(`${k}1`, `${P}pieces/l-${k}1.png`)]),
+    document.fonts.load('15px G14'), document.fonts.load('12px G11'), document.fonts.load('700 24px G11'),
+  ]);
+  for (const bk of Object.keys(BOSS)) for (const k of ['K', 'P', 'R', 'N']) if (img[`${k}1`]) img[`${k}-${bk}`] = tint(img[`${k}1`], BOSS[bk].ramp);
+  if (img.N0) { img['N-red'] = tint(img.N0, ['#7a1e22', '#a8282e', '#e5262f', '#ff6b6b', '#ff9a8a']); img['N-hot'] = tint(img.N0, ['#ae5d2f', '#ff8a3a', '#ffb35a', '#fff3c4', '#fff']); }
+  return true;
+})();
+</script>

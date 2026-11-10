@@ -35,6 +35,8 @@ export interface Piece {
   carve?: CarveId;
   /** 검문! 정예 (HP ×2, 표식 하나) */
   elite?: boolean;
+  /** 폰처럼 움직이고 친다 (승급 13 최종장 — 종이 왕관을 벗은 종이왕, D-277) */
+  asPawn?: boolean;
 }
 
 /** 진영의 장비: 부품 (유물) */
@@ -53,6 +55,8 @@ export interface BattleRules {
   foresight: number;
   /** 한 턴 명령 상한 (검문 반장의 「서류 검문」) — 없으면 제한 없음 */
   maxOrders?: number;
+  /** 시험장 B (D-177): 진짜 체스 잡기 — 적 칸에 들어가 잡는다, 착지 공격 없음 */
+  capture?: boolean;
 }
 
 export interface BattleState {
@@ -88,6 +92,8 @@ export interface BattleState {
   checkGuard?: number[];
   /** 비상 퓨즈 부품을 쓴 진영 */
   fuseUsed?: [boolean, boolean];
+  /** 죽음의 생명이 남은 기물 (HP 0이 되면 한 번 HP 1로 버틴다 — 수직 조각 애착, D-153) */
+  doorIds?: number[];
   /** 진영별 대국 기록 (결정타 · 처치 수) */
   record?: [BattleRecord, BattleRecord];
 }
@@ -123,12 +129,14 @@ export interface HitResult {
   checked?: boolean;
   /** 비상 퓨즈 부품으로 HP 1에서 버텼다 */
   fuse?: boolean;
+  /** 죽음의 생명으로 HP 1에서 버텼다 */
+  door?: boolean;
 }
 
 export type BattleEvent =
   | { type: 'move'; order: number; pieceId: number; from: Pos; to: Pos }
   | { type: 'promote'; pieceId: number; from: PieceType; to: PieceType }
-  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number }
+  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number; /** 더한 피해 (합, D-205 — 화면 표시용) */ add?: number }
   | { type: 'gameOver'; winner: Side }
   /** 명예로운 항복: 그 진영 킹이 왕관을 내려놓았다 (D-077) */
   | { type: 'resign'; side: Side; pieceId: number }
@@ -141,7 +149,7 @@ export type BattleEvent =
   | { type: 'heal'; pieceId: number; amount: number }
   | { type: 'apGain'; side: Side; amount: number }
   /** 터짐 (도미노 부품 등): 그 칸에서 주변으로 */
-  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[] }
+  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[]; /** 특수 기믹 연출 (D-203): 줄 폭격 · 되받아침 · 자폭 · 증기 폭발 — 일반 공격과 다른 모양 */ fx?: 'row' | 'thorns' | 'burst' | 'steam'; /** 되받아침: 반장 칸 */ from?: Pos }
   /** 양산 라인 비틀기: 쓰러진 폰이 뒷줄에 다시 섰다 */
   | { type: 'respawn'; pieceId: number; pos: Pos; /** 화면 안내 (없으면 양산 라인) */ label?: string };
 

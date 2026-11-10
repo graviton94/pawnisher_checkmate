@@ -1,11 +1,12 @@
 /**
  * 공격 연출 박자와 고른 안 (GDD 12장 §12.3, D-035·D-036).
- * 그래픽 결정은 FX 랩 아티팩트(tools/fxlab)에서 사용자가 보고 고른다. 고른 안을 여기 적으면 게임에 그대로 쓰인다.
+ * 그래픽 결정은 「그래픽 정본」 아티팩트(tools/artguide, D-220)에서 사용자가 보고 고른다. 고른 안을 여기 적으면 게임에 그대로 쓰인다.
  * 곡선은 선형이 아니라 지수형: 모을 때는 천천히→빠르게(ease-in expo), 터질 때는 빠르게→천천히(ease-out expo).
  */
 
 /** 이동 (ms, 1배속): 들기 → 지수형 이동 → 착지 출렁임 */
-export const MOVE_MS = { lift: 80, travel: 230, land: 130 };
+/** D-180: 들기 → 웅크림(예비 동작, 길게), 이동은 가속, 착지는 길게 출렁 */
+export const MOVE_MS = { lift: 170, travel: 150, land: 230 };
 
 /** 공격 박자 (ms, 1배속). 1회 ≤ 1초 (D-036, 속도 옵션으로 줄인다) */
 export const FX_MS = {
@@ -34,7 +35,7 @@ export type KingFx = 'A' | 'B';
 /** 퀸·킹 안 — 사용자 결정 (D-038): 퀸 D 톱날 부메랑, 킹 B 종소리 파동 */
 export const FX_CHOICE: { Q: QueenFx; K: KingFx } = { Q: 'D', K: 'B' };
 
-/** 안 이름 (FX 랩 표시용) */
+/** 안 이름 (표시용) */
 export const FX_VARIANT_NAMES: { Q: Record<QueenFx, string>; K: Record<KingFx, string> } = {
   Q: { C: '회전 광선 (등대)', D: '톱날 부메랑', A: '8방향 섬광 (이전 안)' },
   K: { B: '종소리 파동', A: '사각 충격파' },
@@ -58,10 +59,10 @@ export const FX_POWER = {
 };
 
 /** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
-export const FX_SHAKE = { damage: 4, ms: 160, intensity: 0.005, killIntensity: 0.009, vibrateHit: 25, vibrateKill: 45 };
+export const FX_SHAKE = { damage: 4, ratio: 0.35, ms: 160, intensity: 0.003, killIntensity: 0.005, vibrateHit: 25, vibrateKill: 45 };
 /**
  * 타격 카메라 (D-115): 공격이 닿은 거리만큼 — 붙어서 치면 그쪽으로 당겨 들어가고(줌 인), 멀리 닿으면 물러나 판을 보여 준다(줌 아웃).
- * 큰 피해(대상 최대 HP 대비)는 흔들림을 키우고, 처치는 한 번 더 툭 당긴다. 배율은 기본 줌(DPR) 대비.
+ * 큰 피해(대상 최대 HP 대비)는 흔들림을 키우고 처치는 한 번 더 툭 당긴다. 배율은 기본 줌(DPR) 대비.
  */
 export const FX_CAMERA = {
   /** 닿은 거리(칸, 체비셰프) → 줌 배율: 1칸 · 2칸 · 3칸 이상 */
@@ -82,3 +83,48 @@ export const FX_CAMERA = {
 
 /** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
 export const TURN_SUMMARY = { bigDamage: 40 };
+
+/**
+ * 타격감 연구실 확정안 (D-180, 아티팩트 https://claude.ai/artifact/MWkNrybMzHSEsvCUD5CKWd 6판).
+ * 원리: 모으기는 길게 · 터짐은 한 박 · 정지는 분명히 · 여운은 길게. FX는 판 칸과 같은 도트(칸당 16)로만.
+ */
+export const IMPACT = {
+  /** 이동: 웅크림(예비) → 가속 이동 → 착지 출렁 */
+  move: { crouch: 170, travel: 150, land: 230 },
+  /** 흰 그림자 잔상 셋: 경로 위치 · 투명도 · 크기 · 늘어짐 (오래된 것일수록 작고 옅고 길다) */
+  ghosts: [
+    { at: 0.38, alpha: 0.16, scale: 0.8, stretch: 1.22 },
+    { at: 0.66, alpha: 0.3, scale: 0.88, stretch: 1.12 },
+    { at: 0.86, alpha: 0.5, scale: 0.95, stretch: 1.05 },
+  ],
+  /** 맞은 쪽 찌그러짐 → 출렁 복귀 */
+  squash: { sx: 1.16, sy: 0.84, ms: 420 },
+  /** 정지 프레임 (ms): 타격(피해 비율로 70~120) · 처치 · 킹 처치 */
+  stop: { min: 70, max: 120, kill: 200, king: 120 },
+  /** 처치: 기물 그림 16조각 · 불씨 · 도트 고리 */
+  shatter: { ms: 900, embers: 22, ringMs: 520 },
+  /** 킹 마무리 (D-180): 멈춤 → 총알 시간(빛의 금) → 슬로 산산이 → 왕관. 반장이면 영화 띠 */
+  finisher: { hold: 120, crack: 650, charge: 750, shatterMs: 1500, crownMs: 1100, bossBars: 24 },
+  /** 처치 조각 수 (보로노이 — 그림을 들쭉날쭉하게 오린다, D-184) */
+  shards: 14,
+  /** 내 기물 피격 (연구소 「내가 맞을 때」): 붉은 실루엣 · 좌우 감쇠 떨림 */
+  hurt: { flash: 90, tremble: 500, amp: 0.06 },
+  /** 강타 (최대 HP의 heavyAt 이상): 붉은 컷 · 정지 두 배 · 반 칸 밀림 → 출렁 복귀 · 가장자리 맥 두 번 */
+  heavy: { heavyAt: 0.4, cut: 60, knock: 0.25, knockMs: 140, back: 420 },
+  /** 밀치기 충돌: 감속 미끄러짐 → 가로 납작 → 출렁 */
+  push: { slide: 280, squash: 0.65, wobble: 550 },
+  /** 연쇄 (같은 턴 처치마다): 정지가 길어진다 ×(1 + streak·k), 최대 max배 */
+  chain: { k: 0.55, max: 2.4 },
+  /** 적 예고 과녁: 2배 크기 · −40°에서 떨어져 철컥 박힌다 */
+  aim: { drop: 160, fromScale: 2, fromAngle: -40 },
+  /** 원수 낙하: 그림자 · 낙하 · 판 물결 */
+  drop: { shadow: 600, fall: 120, ripple: 900 },
+  /** 자원 희생: 웅크림 · 도약 · 킹 미끄러짐 */
+  sacrifice: { crouch: 250, leap: 220 },
+} as const;
+
+/**
+ * 판 그리기 예산 (D-240, 사용자: 「게임이 죄다 버벅인다」 — 측정: CPU 4배 느린 폰에서 대국 화면 19fps, 판 캔버스가 비용의 거의 전부).
+ * dprCap = 판을 그리는 해상도 상한 (폰 배율 2.6~3 → 2) · idleFps = 연출이 없을 때 판 프레임 상한 (연출 중에는 상한 없음).
+ */
+export const RENDER = { dprCap: 2, idleFps: 30 };

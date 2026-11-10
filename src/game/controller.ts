@@ -105,6 +105,8 @@ export interface BoardModel {
   threat: { moves: Pos[]; hits: Pos[] } | null;
   /** 적 의도: 지금 예약대로 제출하면 적이 둘 수와 내 기물이 받을 피해 */
   intent: Intent | null;
+  /** 줄 폭격 예고 줄 (D-203) — 일반 위협과 다른 불길 표식 */
+  fireRow?: number | null;
 }
 
 export interface Intent {

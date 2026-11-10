@@ -31,6 +31,16 @@ const createWindow = () => {
     title: 'Pawnisher : Checkmate',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true },
   });
+  // PC 화면 맞춤 (D-392): 게임 화면은 모바일 가로 기준이고, 가장 작은 지원 화면은 667×375(작은 폰 가로)다 — 창이 그 몇 배인지 보고 **정수 배율**로 확대한다.
+  // 정수라야 도트 그림이 고르게 커진다(1366×768 → ×2 = 논리 683×384, 1920×1080 → ×2 = 960×540, 2560×1440 → ×3 = 853×480, 3840×2160 → ×5). 확대하면 DPR이 바뀌고 pxsnap.ts가 --px를 다시 맞춘다.
+  const fit = () => {
+    const [w, h] = win.getContentSize();
+    const s = Math.max(1, Math.floor(Math.min(w / 667, h / 375)));
+    if (win.webContents.getZoomFactor() !== s) win.webContents.setZoomFactor(s);
+  };
+  win.on('resize', fit);
+  win.webContents.on('did-finish-load', fit);
+  win.maximize();
   win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 };
 

@@ -6,8 +6,8 @@ export default defineConfig({
     target: 'es2022',
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
-      // 수직 조각 (D-142): 따로 여는 페이지
-      input: { main: 'index.html', slice: 'slice.html' },
+      // 본편 = 리뉴얼판 (R6, D-174). 2.0은 legacy.html로 남긴다
+      input: { main: 'index.html', legacy: 'legacy.html' },
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',

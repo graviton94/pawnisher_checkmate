@@ -26,6 +26,7 @@ export const cloneState = (s: BattleState): BattleState => ({
   pieces: s.pieces.map((p) => ({ ...p })),
   fallen: s.fallen ? [...s.fallen] : [],
   fuseUsed: s.fuseUsed ? ([...s.fuseUsed] as [boolean, boolean]) : undefined,
+  doorIds: s.doorIds ? [...s.doorIds] : undefined,
   relaunch: s.relaunch ? [...s.relaunch] : undefined,
   record: s.record ? [{ ...s.record[0] }, { ...s.record[1] }] : undefined,
 });

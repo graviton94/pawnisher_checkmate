@@ -236,9 +236,9 @@ save(grow_rim(crown), 'public/ui/hud/paper-crown.png')
 # 왕관 쓴 폰 킹은 폐기 (D-079) — 킹은 원래 기물 그림
 
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
-save(outline(art(full)), 'public/ui/hud/key-full.png')
-save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
-save(outline(art(full), 'k', 'o'), 'public/ui/hud/key-bonus.png')
+# (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(full)), 'public/ui/hud/key-full.png')
+# (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
+# (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(full), 'k', 'o'), 'public/ui/hud/key-bonus.png')
 save(PIP, 'public/ui/hud/pip.png')
 for kind in ('panel', 'button', 'button-pressed', 'card-iron', 'card-paper', 'slot'):
     save(frame(kind), f'public/ui/frames/{kind}.png')

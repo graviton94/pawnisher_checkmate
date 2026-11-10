@@ -19,7 +19,7 @@ const CASES = {
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 915, height: 412 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
-  await page.goto('http://localhost:4173/?debug&fxslow');
+  await page.goto('http://localhost:4173/legacy.html?debug&fxslow');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForTimeout(800);

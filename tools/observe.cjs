@@ -6,7 +6,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const OUT = path.join(__dirname, '..', 'production', 'qa', 'evidence');
-const URL = process.env.OBSERVE_URL || 'http://localhost:4173/?debug&nointro';
+const URL = process.env.OBSERVE_URL || 'http://localhost:4173/legacy.html?debug&nointro';
 const stamp = new Date().toISOString().slice(0, 10);
 
 const runFixture = (stage) => ({

@@ -110,6 +110,14 @@ PAL64 = {
     '.': None, 'O': (0xF4, 0xF1, 0xEA), 'K': (0x0B, 0x0B, 0x0E),
     'W': (0xF1, 0xEE, 0xEC), 'S': (0xC5, 0xC3, 0xC3), 'G': (0x85, 0x84, 0x88), 'D': None,
     'B': (0x32, 0x34, 0x3D), 'M': (0x48, 0x4A, 0x55), 'H': (0x6E, 0x71, 0x7E), 'L': (0xA8, 0xAB, 0xB8),
+    # 왕관 (가짜 왕, D-181): 금 · 그늘 · 연노랑 · 보석 진홍 · 보석 그늘
+    'Y': (0xFA, 0xCC, 0x15), 'A': (0x9A, 0x6F, 0x14), 'T': (0xFF, 0xF3, 0xB0), 'R': (0xE5, 0x26, 0x2F), 'X': (0x7A, 0x12, 0x18),
+    # 왕관 다듬기 (D-181): 황동 그늘 · 보석 빛 · 옆 작은 청록 보석
+    'U': (0xC8, 0x9B, 0x3C), 'P': (0xFF, 0xC2, 0xC2), 'C': (0x38, 0xBD, 0xF8),
+    # 흑백 통일 그림자 4단계 (2026-11-05): 흰 진영 빛 · 검은 진영 그늘
+    'V': (0xFF, 0xFF, 0xFF), 'E': (0xE2, 0xDE, 0xD6), 'Z': (0x26, 0x27, 0x2E),
+    # 주인공 종이 왕관 (2026-11-05, 오프닝 P-05의 마분지 왕관): 빛 · 바탕 · 그늘 · 뚫린 구멍
+    'F': (0xE0, 0xA8, 0x62), 'Q': (0xB5, 0x7C, 0x3C), 'J': (0x7A, 0x4C, 0x22), 'I': (0x2E, 0x1C, 0x10),
 }
 DARK = {0: (0x3A, 0x39, 0x3E), 1: (0x1C, 0x1D, 0x22)}
 
@@ -170,11 +178,23 @@ def mini(grid, side, n=22):
     return render64([''.join(r) for r in out], side)
 
 
+CANVAS72 = 72
+
+
+def pad72(grid):
+    """64칸 그림을 72칸 캔버스에 — 위로 8줄 · 좌우 4칸씩 (아래 맞춤). 주인공 왕관이 머리 위로 솟을 자리를 모든 기물이 같이 갖는다"""
+    if len(grid) >= CANVAS72:
+        return grid
+    pad = (CANVAS72 - len(grid)) // 2
+    top = CANVAS72 - len(grid)
+    return ['.' * CANVAS72] * top + ['.' * pad + r + '.' * pad for r in grid]
+
+
 def piece(name, side, scale=1):
-    """유형(또는 유형:이형) · 진영 → 그림"""
+    """유형(또는 유형:이형) · 진영 → 그림 (72칸 캔버스)"""
     hi = load64()
     if (name, side) in hi:
-        return render64(hi[(name, side)], side, scale)
+        return render64(pad72(hi[(name, side)]), side, scale)
     data = load()
     if name not in data:
         raise SystemExit(f'pieces64.txt · pieces.txt에 [{name}] 블록이 없습니다')
@@ -188,13 +208,13 @@ def export():
         for side in (0, 1):
             piece(t, side, 2).save(os.path.join(out, f's-{t}{side}.png'))
             piece(t, side, 3).save(os.path.join(out, f'l-{t}{side}.png'))
-            mini(load64()[(t, side)], side).save(os.path.join(out, f'm-{t}{side}.png'))
-    print('public/pieces/s-*.png (128px) · l-*.png (192px) · m-*.png (22px 작은 도트판) — 64×64 정본에서 12종씩')
+            mini(pad72(load64()[(t, side)]), side, 25).save(os.path.join(out, f'm-{t}{side}.png'))
+    print('public/pieces/s-*.png (144px) · l-*.png (216px) · m-*.png (25px 작은 도트판) — 72칸 캔버스(64칸 정본 + 위 8줄), 12종씩')
 
 
 def sheet(path, scale=3):
     names = list('PNBRQK')
-    size = 64 * scale
+    size = 72 * scale
     im = Image.new('RGBA', (size * len(names), size * 2), (0, 0, 0, 0))
     for i, n in enumerate(names):
         for side in (0, 1):

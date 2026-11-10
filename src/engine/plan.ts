@@ -82,7 +82,14 @@ const applyDamage = (s: BattleState, t: Piece, damage: number, splash = false): 
     t.hp = 1;
     (s.fuseUsed ??= [false, false])[t.side] = true;
   }
-  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(fuse ? { fuse } : {}) };
+  const door = !checked && !fuse && t.hp <= 0 && !!s.doorIds?.includes(t.id);
+  if (door) {
+    t.hp = 1;
+    // 한 번만 지운다 (생명 두 번인 기물은 id가 두 번 들어 있다)
+    s.doorIds = [...s.doorIds!];
+    s.doorIds.splice(s.doorIds.indexOf(t.id), 1);
+  }
+  return { targetId: t.id, damage, shieldAbsorbed, hpAfter: t.hp, killed: t.hp <= 0, ...(splash ? { splash } : {}), ...(checked ? { checked } : {}), ...(fuse ? { fuse } : {}), ...(door ? { door } : {}) };
 };
 
 /** 튐 (각인 · 번개 편자): 그 칸 주변 적에게 dmg × ratio */
@@ -171,7 +178,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
 };
 
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 처치 수를 돌려준다 */
-const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number): number => {
+const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number, add = 0): number => {
   const { targets, area } = attackScan(s, attacker);
   let mult = baseMult;
   // 연쇄 보너스 (D-077): 이번 턴 앞 순번 처치 수만큼
@@ -184,7 +191,7 @@ const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: 
   let landDmg = 0;
   for (const t of targets) {
     if (t.hp <= 0) continue;
-    let dmg = damageOf(s, attacker, t, mult);
+    let dmg = damageOf(s, attacker, t, mult, add);
     if (part(s, side, 'blade') && t.hp <= t.maxHp * PART_FX.bladeAt) dmg = Math.round(dmg * PART_FX.blade);
     if (t.type === 'K' && part(s, side, 'hunter')) dmg = Math.round(dmg * PART_FX.hunter);
     landDmg = Math.max(landDmg, dmg);
@@ -199,7 +206,7 @@ const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: 
   // 튐 각인: 착지 칸 주변으로 (이 공격에서 가장 큰 피해 기준)
   if (landDmg > 0 && attacker.carve === 'cross') hits.push(...splashAround(s, attacker, land, ORTHO, landDmg, CARVE_FX.splash, skip));
   if (landDmg > 0 && attacker.carve === 'diag') hits.push(...splashAround(s, attacker, land, DIAG, landDmg, CARVE_FX.splash, skip));
-  ctx.events.push({ type: 'attack', order: ctx.order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}) });
+  ctx.events.push({ type: 'attack', order: ctx.order, attackerId: attacker.id, area, hits, ...(mult > 1.05 ? { mult: Math.round(mult * 100) / 100 } : {}), ...(add > 0 ? { add } : {}) });
   // 양산 명령서: 폰이 치면 그 적에 붙어 있는 다른 아군 폰도 50%로
   if (attacker.type === 'P' && part(s, side, 'phalanx')) {
     for (const h of hits.filter((x) => !x.splash)) {
@@ -237,8 +244,10 @@ const orderCap = (s: BattleState, side: Side): number => (side === 0 && s.twist 
 export interface SimOptions {
   /** 이번 턴 앞서 처치한 수 (명령 카드가 한 장씩 실행될 때 연쇄 보너스를 이어 간다) */
   kills?: number;
-  /** 이 계획 전체에 곱할 공격 배율 (카드 효과) */
+  /** 이 계획 전체에 곱할 공격 배율 (카드 효과 — ×) */
   mult?: number;
+  /** 공격력에 먼저 더하는 피해 (합 — +, D-205). 최종 = (공격 + 합) × 곱 */
+  add?: number;
   /** 태엽 검사를 건너뛴다 (카드가 태엽을 따로 셀 때) */
   freeAp?: boolean;
 }
@@ -268,17 +277,33 @@ export const simulate = (input: BattleState, plan: Plan, opts: SimOptions = {}):
 
     const from = { x: piece.x, y: piece.y };
     const before = piece.type;
+    // 잡기 규칙(시험장 B, D-177): 적이 선 칸에 들어가면 그 적을 잡는다 (체력과 무관하게 한 번에)
+    let captured = 0;
+    if (s.rules.capture) {
+      const victim = s.pieces.find((p) => p.x === step.to.x && p.y === step.to.y && p.side !== side);
+      if (victim) {
+        const hit = applyDamage(s, victim, victim.hp + victim.shield);
+        if (victim.hp > 0) victim.hp = 0;
+        ctx.events.push({ type: 'attack', order, attackerId: piece.id, area: [{ ...step.to }], hits: [{ ...hit, hpAfter: 0, killed: true }] });
+        captured = resolveDeaths(s, ctx, piece);
+        if (victim.type === 'K') s.winner = side;
+      }
+    }
     applyMove(s, piece, step.to);
     ctx.events.push({ type: 'move', order, pieceId: piece.id, from, to: { ...step.to } });
     if (piece.type !== before) ctx.events.push({ type: 'promote', pieceId: piece.id, from: before, to: piece.type });
     ctx.acted.add(piece.id);
+    if (s.rules.capture) {
+      prevKilled = captured > 0;
+      continue;
+    }
 
     // 이번 명령의 배율: 선봉 톱니 · 마무리 망치 · 연쇄 지휘
     let mult = opts.mult ?? 1;
     if (order === 0 && part(s, side, 'firstCog')) mult *= PART_FX.firstCog;
     if (order >= PART_FX.lastFrom && part(s, side, 'lastHammer')) mult *= PART_FX.lastHammer;
     if (prevKilled && part(s, side, 'command')) mult *= PART_FX.command;
-    const killed = performAttack(s, piece, ctx, mult);
+    const killed = performAttack(s, piece, ctx, mult, opts.add ?? 0);
     prevKilled = killed > 0;
     if (s.winner !== null) continue;
 
