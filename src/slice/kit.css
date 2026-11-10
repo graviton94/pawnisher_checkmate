@@ -33,6 +33,13 @@
   --k-inset: 6;           /* inset-well 19×19 */
   --k-toast: 6;           /* toast-iron 19×19 */
   --k-frame: 8;           /* scene-frame 52×31 · portrait-frame 34×34 */
+  /* 21위 (D-400, 받은 UI-21 ~ 25 — tools/pixel/ui_kit_refine21.py로 다듬음) */
+  --k-boss: 12 10 8 8;    /* boss-plate(-2) 46×44 · 위 12 = 머리 띠 자리(띠는 boss-head를 따로 얹는다) */
+  --k-bstat: 5 4 4 13;    /* boss-stat 30×17 · 왼쪽 13 = 먹 아이콘 칸 10도트 */
+  --k-stat: 3 10 4 10;    /* stat-plate 56×16 · 좌우 황동 꺾쇠 10 */
+  --k-badge: 0 6;         /* badge-num-* 23×15 · 좌우만 */
+  --k-ribbon: 0 9;        /* ribbon-* 42×13 · 좌우 제비꼬리 + 리벳 */
+  --k-slip: 8 4 8 7;      /* slip-paper 37×30 · 위 8 = 접힌 모서리 · 아래 8 = 찢은 자국 (클립은 slip-clip을 따로) */
 }
 
 /* ---------- 3.1 창 — .win (S 352 · M 592 · L 883) ---------- */
@@ -248,7 +255,7 @@
 :is(.scr-pick, .scr-place, .win) .card-bare > .cf { margin: 0; }
 :is(.scr-pick, .scr-place, .win) .card-bare.is-sel > .cf { transform: translateY(calc(var(--px) * -2)); outline: calc(var(--px) * 1) solid var(--t-ally); outline-offset: calc(var(--px) * 1); }
 :is(.scr-pick, .scr-place, .win) .card-bare.is-off > .cf { filter: grayscale(1) brightness(0.55); }
-:is(.scr-pick, .scr-place, .win) .card-bare > .tag { position: absolute; z-index: 6; top: calc(var(--px) * -2); right: calc(var(--px) * -2); }
+:is(.scr-pick, .scr-place, .win) .card-bare > :is(.tag, .badge-n) { position: absolute; z-index: 6; top: calc(var(--px) * -2); right: calc(var(--px) * -2); }
 
 /* ---------- 레일 (D-399, 사용자: 「카드를 원래 크기로 — 줄이지 말고 가로로 밀어」) ----------
    uikit.fitSlots: 카드 정본 168(높이가 모자라면 150까지) · 다 들면 가운데 한 줄, 넘치면 .is-rail = 가로로 민다.
@@ -374,7 +381,7 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 /* ===================== 패스 1 창 내용 — 부품 조합만 (D-391) ===================== */
 /* 사선 · 원수 · 판돈: 머리 줄(기물 + 이름) → 대사 → 조건 꼬리표 줄 */
 .win .terms { display: grid; grid-template-columns: max-content 1fr; gap: var(--s2) var(--s3); align-items: center; margin: 0; }
-.win .terms > .tag { justify-self: start; }
+.win .terms > :is(.tag, .ribbon) { justify-self: start; }
 /* 승급: 초상 136 + 대사 단 */
 .win .promo2 { display: grid; grid-template-columns: calc(var(--px) * 68) minmax(0, 1fr); gap: var(--s3); align-items: center; }
 .win .btn.tremble { animation: promoTremble 0.12s steps(2, jump-none) infinite; }
@@ -460,8 +467,9 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 }
 .scr-place .tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); max-width: none; }
 .scr-place .tally div { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
-.scr-place .tally b { color: var(--t-gold); font: 400 30px/36px Galmuri14, Galmuri11, sans-serif; }
-.scr-place .tally span { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; }
+.scr-place .tally b { color: var(--t-ink); font: 400 30px/36px Galmuri14, Galmuri11, sans-serif; }
+/* 출하 결과 수치 = UI-25 결과 쪽지 위 먹 글 (D-400) — 이름 #56545e (종이 #f1ede4 위 6.4:1) */
+.scr-place .tally span { color: #56545e; font: 400 12px/18px Galmuri11, sans-serif; }
 .scr-place .re-row { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s3); }
 .scr-place .re-chip { display: inline-flex; align-items: center; gap: var(--s1); color: var(--t-body); font: 700 12px/24px Galmuri11, sans-serif; }
 .scr-place .re-chip img { width: 24px; height: 24px; image-rendering: pixelated; }
@@ -505,11 +513,11 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .win-scene .choice .choice-res .down { color: var(--t-loss); }
 .win-scene .choice:disabled .choice-res { color: var(--t-loss); }
 .win-scene .choice > .btn-info { display: block; }
-/* 결과 요약 (⑦): 「결과」 꼬리표 + 바뀐 것 12px — 두 줄까지 */
-.win-scene .ws-sum { display: flex; align-items: flex-start; gap: var(--s2); margin: 0; color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; }
+/* 결과 요약 (⑦): UI-25 결과 쪽지 위에 「결과」 강조 띠 + 바뀐 것 12px 먹 — 두 줄까지 (D-400) */
+.win-scene .ws-sum { display: flex; align-items: flex-start; gap: var(--s2); color: var(--t-ink); font: 400 12px/18px Galmuri11, sans-serif; }
 .win-scene .ws-sum[hidden] { display: none; }
-.win-scene .ws-sum > .tag { flex: none; }
-.win-scene .ws-sum > .ws-sum-t { padding-top: calc(var(--px) * 3 - 2px); }
+.win-scene .ws-sum > .ribbon { flex: none; }
+.win-scene .ws-sum > .ws-sum-t { padding-top: calc(var(--px) * 2 - 2px); }
 /* 나사: 위 테 오른쪽에 걸친 꼬리표 (명패와 같은 줄 — 세로 예산을 먹지 않는다) */
 .win-scene > .ws-purse { position: absolute; z-index: 2; right: calc(var(--px) * 12); top: calc(-1 * var(--k-win) * var(--px) - var(--px) * 7.5); }
 /* 등장: 위에서 아래로 3계단 드러남 (투명도 보간 없음) */
@@ -779,12 +787,16 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .actcard.named .ac-name { visibility: visible; animation: bfName 240ms steps(1) both; }
 
 /* 반장 등장 (D-249 연출 그대로): 왼쪽 글 단 = 막 꼬리표(진홍) · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙(움푹 칸, 12 굵게) — 서술 · 대사는 아래 자막 띠 */
-.bossfx .bf-text { position: absolute; z-index: 4; left: var(--G); top: calc(16vh + var(--s2)); width: min(46vw, 420px); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+.bossfx .bf-text { position: absolute; z-index: 4; left: var(--G); top: calc(16vh + var(--s2)); width: min(54vw, 460px); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
 .bossfx .bf-name { margin: 0; color: #f4f1ea; font: 700 36px/44px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; visibility: hidden; }
 .bossfx.name .bf-name { visibility: visible; animation: bfName 240ms steps(1) both; }
 .bossfx .bf-title { margin: 0; min-height: 30px; color: #f4d27a; font: 700 24px/30px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; }
-/* 반장 규칙 칸 = 움푹 칸 (임시 — UI-21 반장 수배판 대기, D-398) */
-.bossfx .bf-rules { list-style: none; display: grid; gap: var(--s1); min-width: 0; max-width: 100%; }
+/* 반장 규칙 = UI-21 반장 수배판 (D-400): 붉은 칠 쇠 게시판 9-slice + 머리 띠 · 안에 규칙 줄 + HP · 공격 수치 칸 둘 */
+/* 규칙 줄 | 수치 칸 둘(세로) — 667×375에서도 아래 자막 띠에 닿지 않게 옆으로 놓는다 */
+.bossfx .bf-board { visibility: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--s3); min-width: 0; max-width: 100%; padding-top: 0; padding-bottom: 0; }
+.bossfx.name .bf-board { visibility: visible; animation: bfName 240ms steps(1) both; }
+.bossfx .bf-stats { display: flex; flex-direction: column; gap: var(--s1); }
+.bossfx .bf-rules { list-style: none; display: grid; gap: var(--s1); min-width: 0; max-width: 100%; margin: 0; padding: 0; }
 .bossfx .bf-rules li { position: relative; padding-left: calc(var(--px) * 6); visibility: hidden; color: var(--t-body); font: 700 12px/18px Galmuri11, sans-serif; }
 .bossfx .bf-rules li::before { content: ''; position: absolute; left: 0; top: 6px; width: calc(var(--px) * 3); height: calc(var(--px) * 3); background: var(--accent); box-shadow: 0 0 0 var(--px) #000; }
 .bossfx .bf-rules li.in { visibility: visible; animation: bfName 200ms steps(1) both; }
@@ -803,12 +815,16 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .map-head { display: flex; align-items: center; gap: var(--s2); min-height: 48px; }
 .mapfx .map-head h2 { margin: 0; color: #f4e6c4; font: 700 24px/30px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; white-space: nowrap; }
 .mapfx .map-res { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--s1) var(--s2); }
-.mapfx .map-res .wallet { text-shadow: var(--px) var(--px) 0 #000; }
+/* 주머니는 명판 높이에 맞춰 작게 (D-400, 사용자: 「주머니가 너무 크다」): 아이콘 층 도트(--px1) 23×25 · 값 15 갈무리14 */
+.mapfx .map-res .wallet { gap: var(--s1); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; }
+.mapfx .map-res .wallet::before { width: calc(var(--px1) * 23); height: calc(var(--px1) * 25); background-size: calc(var(--px1) * 23) calc(var(--px1) * 25); }
 .mapfx .tag .ico { width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); flex: none; }
-/* 수치 명판 하나 (D-398): 꼬리표 넷 → 긴 철띠 하나(임시 toast-iron 9-slice — UI-22 수치 명판 대기). 이름 12 갈무리11 흐림 · 값 15 갈무리14 밝음 */
-.stat-plate { display: inline-flex; align-items: center; gap: var(--s3); box-sizing: border-box; min-height: calc(var(--px) * 19); padding: 0 var(--s2);
-  border-style: solid; border-width: calc(var(--k-toast) * var(--px));
-  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch; image-rendering: pixelated; white-space: nowrap; }
+/* 수치 명판 하나 (D-398 → D-400 UI-22 받음): 긴 철판 + 황동 꺾쇠 9-slice, 칸 사이 = 세로 홈(stat-sep). 이름 12 갈무리11 · 값 15 갈무리14 */
+.stat-plate { display: inline-flex; align-items: center; gap: var(--s2); box-sizing: border-box; height: calc(var(--px) * 16); padding: 0 var(--s1);
+  border-style: solid; border-width: calc(var(--px) * 3) calc(var(--px) * 10) calc(var(--px) * 4);
+  border-image: url('../assets/ui/chrome/v2/stat-plate.png') var(--k-stat) fill / calc(var(--px) * 3) calc(var(--px) * 10) calc(var(--px) * 4) / 0 stretch; image-rendering: pixelated; white-space: nowrap; }
+.stat-plate .sp-sep { flex: none; align-self: center; box-sizing: border-box; width: calc(var(--px) * 3); height: calc(var(--px) * 12); border-style: solid; border-width: calc(var(--px) * 3) 0;
+  border-image: url('../assets/ui/chrome/v2/stat-sep.png') 3 0 fill / calc(var(--px) * 3) 0 / 0 stretch; image-rendering: pixelated; }
 .stat-plate .sp-i { display: inline-flex; align-items: center; gap: var(--s1); }
 .stat-plate .sp-i small { color: #ddd6c8; font: 400 12px/18px Galmuri11, sans-serif; }
 .stat-plate .sp-i b { color: #f4f1ea; font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; }
@@ -837,9 +853,9 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .mnd.now.chosen::before { animation: cogturn 400ms steps(4) infinite; }
 /* 아래 미리보기 띠 (D-388): 움푹 칸 하나 — 안내 + 범례 / 고르면 아이콘 · 이름 24 · 꼬리표 ≤ 3 · 적 명단 · 「진입」 */
 .mapfx .peek-bar.inset { display: flex; align-items: center; gap: var(--s3); min-height: 72px; padding: var(--s1) var(--s2) var(--s1) var(--s3); }
-.mapfx .peek-bar .hint { margin: 0; color: var(--t-dim); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
-.mapfx .map-legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--s1) var(--s3); margin: 0 0 0 auto; padding: 0; list-style: none; }
-.mapfx .map-legend li { display: flex; align-items: center; gap: var(--s1); color: #c9c1b4; font: 400 12px/18px Galmuri11, sans-serif; }
+/* 범례 = 한 줄 가운데 (D-400): 667 폭에서도 접히지 않게 nowrap · 칸 사이 s2 */
+.mapfx .map-legend { display: flex; flex-wrap: nowrap; justify-content: center; gap: var(--s2); margin: 0 auto; padding: 0; list-style: none; }
+.mapfx .map-legend li { display: flex; align-items: center; gap: var(--s1); white-space: nowrap; color: #c9c1b4; font: 400 12px/18px Galmuri11, sans-serif; }
 .mapfx .map-legend .ico { width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); }
 .mapfx .peek-bar .pb-ico { flex: none; width: calc(var(--px1) * 32); height: calc(var(--px1) * 32); }
 .mapfx .peek-bar .pb-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--s1); }
@@ -852,3 +868,40 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
 @media (max-width: 760px) { .mapfx .peek-bar .pb-foes { display: none; } }
 @media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd.now.chosen::before, .mapfx .map-body line { animation: none; } }
+
+/* ===================== 21위 부품 (D-398 발주 → D-400 받음 · tools/pixel/ui_kit_refine21.py) =====================
+ * 꼬리표(tag)는 값을 치르는 것(가격 · 판돈 · 나사 보상)만. 역할마다 바탕을 따로:
+ * UI-21 수배판 .boss-plate · 수치 칸 .bstat / UI-22 수치 명판 .stat-plate(지도 칸에 위) / UI-23 숫자 배지 .badge-n / UI-24 강조 띠 .ribbon / UI-25 결과 쪽지 .slip
+ * 모두 1도트 = --px 정수배 9-slice, 변 가운데는 단색이라 늘여도 무늬가 깨지지 않는다. 머리 띠 · 클립처럼 늘이면 안 되는 것은 따로 떼어 정수배 그대로 얹는다. */
+/* UI-21 반장 수배판: 위 12 · 오른 10 · 아래 8 · 왼 8 */
+.boss-plate { position: relative; box-sizing: border-box; padding: var(--s1) var(--s2);
+  border-style: solid; border-width: calc(var(--px) * 12) calc(var(--px) * 10) calc(var(--px) * 8) calc(var(--px) * 8);
+  border-image: url('../assets/ui/chrome/v2/boss-plate.png') var(--k-boss) fill / calc(var(--px) * 12) calc(var(--px) * 10) calc(var(--px) * 8) calc(var(--px) * 8) / 0 stretch; image-rendering: pixelated; }
+.boss-plate::before { content: ''; position: absolute; left: calc(50% - var(--px) * 8); top: calc(var(--px) * -9); width: calc(var(--px) * 19); height: calc(var(--px) * 5); background: url('../assets/ui/chrome/v2/boss-head.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+.boss-plate.p2 { border-image-source: url('../assets/ui/chrome/v2/boss-plate-2.png'); }
+.boss-plate.p2::before { left: calc(50% - var(--px) * 12); width: calc(var(--px) * 27); background-image: url('../assets/ui/chrome/v2/boss-head-2.png'); }
+/* 수치 칸: 왼쪽 먹 칸 10도트에 아이콘(아이콘 층 16칸) · 오른쪽 움푹 면에 값 15 갈무리14 */
+.bstat { position: relative; display: inline-flex; align-items: center; box-sizing: border-box; height: calc(var(--px) * 17); min-width: calc(var(--px) * 30); padding: 0 var(--s1);
+  border-style: solid; border-width: calc(var(--px) * 5) calc(var(--px) * 4) calc(var(--px) * 4) calc(var(--px) * 13);
+  border-image: url('../assets/ui/chrome/v2/boss-stat.png') var(--k-bstat) fill / calc(var(--px) * 5) calc(var(--px) * 4) calc(var(--px) * 4) calc(var(--px) * 13) / 0 stretch; image-rendering: pixelated;
+  color: #f4f1ea; font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; text-shadow: none; }
+.bstat > i { position: absolute; left: calc(var(--px) * -10); top: calc(var(--px) * -2); width: calc(var(--px) * 10); height: calc(var(--px) * 10); display: grid; place-items: center; }
+.bstat > i::before { content: ''; width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); background: var(--ic) center / 100% 100% no-repeat; image-rendering: pixelated; }
+/* UI-23 숫자 배지: 높이 15 · 좌우 6 — 숫자 하나 (×N · 장수 · 명수 · 기록 수) */
+.badge-n { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: calc(var(--px) * 15); min-width: calc(var(--px) * 16); padding: 0; margin: 0;
+  border-style: solid; border-width: 0 calc(var(--px) * 6);
+  border-image: url('../assets/ui/chrome/v2/badge-num-brass.png') var(--k-badge) fill / 0 calc(var(--px) * 6) / 0 stretch; image-rendering: pixelated;
+  color: var(--t-brass-ink); font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; text-shadow: none; }
+.badge-n.b-crimson { border-image-source: url('../assets/ui/chrome/v2/badge-num-crimson.png'); color: #000; }
+/* UI-24 강조 띠: 높이 13 · 좌우 9 (제비꼬리 + 리벳) — 머리말 · 조건 · 보상 · 실패 시 · 새로 열림 · 막 이름 */
+.ribbon { display: inline-flex; align-items: center; gap: var(--s1); box-sizing: border-box; height: calc(var(--px) * 13); padding: 0 var(--px); margin: 0;
+  border-style: solid; border-width: 0 calc(var(--px) * 9);
+  border-image: url('../assets/ui/chrome/v2/ribbon-brass.png') var(--k-ribbon) fill / 0 calc(var(--px) * 9) / 0 stretch; image-rendering: pixelated;
+  color: var(--t-brass-ink); font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; text-shadow: none; }
+.ribbon.r-crimson { border-image-source: url('../assets/ui/chrome/v2/ribbon-crimson.png'); color: #000; }
+/* UI-25 결과 쪽지: 위 8 · 오른 4 · 아래 8 · 왼 7, 변은 같은 크기로 되풀이(찢은 자국이 늘어나지 않게) · 클립 15×9는 위 가운데에 */
+.slip { position: relative; box-sizing: border-box; margin-top: calc(var(--px) * 4); padding: 0 var(--s1);
+  border-style: solid; border-width: calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 8) calc(var(--px) * 7);
+  border-image: url('../assets/ui/chrome/v2/slip-paper.png') var(--k-slip) fill / calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 8) calc(var(--px) * 7) / 0 repeat; image-rendering: pixelated;
+  color: var(--t-ink); }
+.slip::before { content: ''; position: absolute; left: calc(50% - var(--px) * 9); top: calc(var(--px) * -12); width: calc(var(--px) * 15); height: calc(var(--px) * 9); background: url('../assets/ui/chrome/v2/slip-clip.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }

@@ -22,7 +22,6 @@ export const BOSS_PHASE_TEXT = {
  * 미리보기 꼬리표는 짧은 이름만(≤ 6자) — 긴 규칙 문장은 전투 안 반장 규칙 · 엿보기가 말한다.
  */
 export const MAP_TEXT = {
-  hint: '빛나는 곳을 고릅니다.',
   go: '진입',
   /** 머리 줄 수치 명판 하나 (D-398): 이름 12 · 값 15 */
   stat: { squad: '분대', deck: '덱', parts: '부품', charm: '부적' },

@@ -1,5 +1,5 @@
 """
-받은 21위 부품(UI-21 ~ UI-25, D-398 발주 → D-399 받음) 다듬기 — ui_kit_import.py 다음에 한 번.
+받은 21위 부품(UI-21 ~ UI-25, D-398 발주 → D-400 받음) 다듬기 — ui_kit_import.py 다음에 한 번.
   python3 -I tools/pixel/ui_kit_import.py build-res/order/UI-21-received.png UI-21 160   (22 = 80 · 23 = 56 · 24 = 96 · 25 = 48)
   python3 -I tools/pixel/ui_kit_refine21.py      # 몇 번 돌려도 같은 결과
 

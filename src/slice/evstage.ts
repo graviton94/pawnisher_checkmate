@@ -64,6 +64,12 @@ class Layer {
   pop: HTMLCanvasElement;
   px: CanvasRenderingContext2D;
   pops: { art: PopupArt; cx: number; by: number; t0: number }[] = [];
+  /** 낱말 층 (D-400, 사용자: 「생명 +1 · 부품 · 합류 낱말이 너무 크다」): 장면 도트(3px)가 아닌 장치 층 도트(--px, 기기 픽셀 round(2·DPR))
+   *  — 글 12칸이 36px → 24px(갈무리 12 격자 「강조 24」) */
+  word: HTMLCanvasElement;
+  wx: CanvasRenderingContext2D;
+  /** 장면 도트 하나 = 낱말 도트 몇 개 */
+  wk: number;
   rings: { x: number; y: number; r: number; c: string; t0: number }[] = [];
   w: number;
   h: number;
@@ -88,7 +94,17 @@ class Layer {
     this.pop.style.height = this.art.style.height;
     this.pop.className = 'ev-fx ev-fx-pop';
     this.px = this.pop.getContext('2d')!;
-    host.append(this.art, this.fx.canvas, this.pop);
+    const r = window.devicePixelRatio || 1;
+    const W2 = Math.max(1, Math.round(2 * r)) / r;
+    this.wk = D / W2;
+    this.word = document.createElement('canvas');
+    this.word.width = Math.floor(host.clientWidth / W2);
+    this.word.height = Math.floor(host.clientHeight / W2);
+    this.word.style.width = `${this.word.width * W2}px`;
+    this.word.style.height = `${this.word.height * W2}px`;
+    this.word.className = 'ev-fx ev-fx-pop';
+    this.wx = this.word.getContext('2d')!;
+    host.append(this.art, this.fx.canvas, this.pop, this.word);
     this.R = new Rng(seed);
     this.ps = new Particles(this.R, () => this.h + 40);
     let last = performance.now();
@@ -114,7 +130,7 @@ class Layer {
   stop() { this.on = false; }
   /** 도트 낱말: 튀어나옴(2배 → 1배 계단) → 떠오름 → 아래부터 디더로 지워짐 — 전투 피해 숫자 drawPopup 그대로 */
   addPop(text: string, color: number, cx: number, by: number): void {
-    this.pops.push({ art: buildPopupArt(text, color), cx, by, t0: performance.now() + (calm() ? -POPUP_MS.fadeAt * 0.5 : 0) });
+    this.pops.push({ art: buildPopupArt(text, color), cx: Math.round(cx * this.wk), by: Math.round(by * this.wk), t0: performance.now() + (calm() ? -POPUP_MS.fadeAt * 0.5 : 0) });
   }
   /** 계단 고리: 반지름 3계단(45% → 80% → 100%, 마지막은 디더 반쪽) — 투명도 없이 */
   addRing(x: number, y: number, r: number, c: string): void {
@@ -136,13 +152,15 @@ class Layer {
       }
       return true;
     });
-    const sink = { fillStyle: (c: number) => { g.fillStyle = `#${c.toString(16).padStart(6, '0')}`; }, fillRect: (x: number, y: number, w: number, h: number) => g.fillRect(x, y, w, h) };
+    const w = this.wx;
+    w.clearRect(0, 0, this.word.width, this.word.height);
+    const sink = { fillStyle: (c: number) => { w.fillStyle = `#${c.toString(16).padStart(6, '0')}`; }, fillRect: (x: number, y: number, ww: number, h: number) => w.fillRect(x, y, ww, h) };
     this.pops = this.pops.filter((p) => {
       // 사건 결과는 읽을 틈을 둔다: 떠오른 뒤 HOLD만큼 머물다 지워진다
       const raw = now - p.t0, HOLD = 700;
       const ms = raw < POPUP_MS.fadeAt ? raw : raw < POPUP_MS.fadeAt + HOLD ? POPUP_MS.fadeAt - 1 : raw - HOLD;
       if (ms >= POPUP_MS.life) return false;
-      if (ms >= 0) drawPopup(sink, p.art, p.cx, p.by, 1, ms, 8);
+      if (ms >= 0) drawPopup(sink, p.art, p.cx, p.by, 1, ms, Math.round(8 * this.wk));
       return true;
     });
   }

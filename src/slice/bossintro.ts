@@ -3,7 +3,7 @@
  * 2막 보스 오른쪽 이펙트처럼 뭔가 이펙트를 넣거나, 도트를 서서히 제거하는 도트 그라데이션처럼」 · 「FX는 pixelfx 룰을 참고」).
  *  ① 위아래 검은 띠가 4계단으로 닫힌다 ② 흰 장 두 장(hero frame) ③ 초상이 오른쪽에서 물러섰다(예비) 꽂히고 흔들린다
  *  ④ 초상 왼쪽 가장자리는 그림 도트 단위 베이어 디더로 깎여 배경에 녹는다 ⑤ 그 경계선을 따라 반장마다 다른 FX
- *  ⑥ 이름이 내리꽂히고 칭호 · 규칙(움푹 칸) · 아래 자막 띠 두 줄이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
+ *  ⑥ 이름이 내리꽂히고 칭호 · 규칙(UI-21 수배판, D-400) · 아래 자막 띠 두 줄이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
  * 글 크기 (D-397): 막 꼬리표 12 · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙 12 굵게 · 자막 15. 자막 띠 · ▼는 모든 컷과 같은 자리(uikit.cutChromeHtml).
  */
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
@@ -20,6 +20,10 @@ export interface BossIntroOpts {
   /** 자막 띠 두 줄 (BOSS_CARD — 서술 + 대사) */
   lines: CutLine[];
   rules: string[];
+  /** 수배판 수치 칸 (D-400 UI-21): 반장 HP · 공격 */
+  stats?: { hp: number; atk: number };
+  /** 2단계가 있는 반장 — 수배판 2상태(진홍 빛 줄 · 경고등) */
+  phase2?: boolean;
   sfx?: (k: string) => void;
 }
 
@@ -58,7 +62,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     el.className = `bossfx kit b-${o.rule}`;
     el.style.setProperty('--accent', look.accent);
     el.innerHTML = `<div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i>
-      <div class="bf-text"><span class="tag tag-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><ul class="inset bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul></div>
+      <div class="bf-text"><span class="ribbon r-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><div class="boss-plate bf-board${o.phase2 ? ' p2' : ''}"><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul>${o.stats ? `<div class="bf-stats"><span class="bstat" aria-label="HP ${o.stats.hp}" style="--ic:url(${new URL('ui/icons16/life@16.png', location.href).href})"><i></i>${o.stats.hp}</span><span class="bstat" aria-label="공격 ${o.stats.atk}" style="--ic:url(${new URL('ui/icons16/c.smash@16.png', location.href).href})"><i></i>${o.stats.atk}</span></div>` : ''}</div></div>
       ${cutChromeHtml()}`;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');

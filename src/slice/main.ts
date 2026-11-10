@@ -1306,8 +1306,8 @@ const nemesisMeet = (n: Nemesis): void => {
     size: 'm',
     title: '원수',
     // 말하는 이 = 초상 액자 (보고서 2-2 원수 — 말풍선 문법과 같은 부품)
-    head: `<div class="frame-portrait f64">${pieceImg(n.t, 1, 'small', 32)}</div><p class="lead down">${n.name}</p><span class="tag tag-crimson push">${n.rank}단계 · HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%</span>`,
-    body: `<p class="say"><span class="who">${n.name}</span>${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><div class="terms"><span class="tag tag-crimson">쓰러뜨림</span><p>${n.victims.join(' · ')}</p><span class="tag">현상금</span><p>나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${josa(n.heir.name, '이')} 돌아온다` : ''}</p></div>`,
+    head: `<div class="frame-portrait f64">${pieceImg(n.t, 1, 'small', 32)}</div><p class="lead down">${n.name}</p><span class="ribbon r-crimson push">${n.rank}단계 · HP +${Math.round(n.rank * DIRECTOR.nemesisHp * 100)}%</span>`,
+    body: `<p class="say"><span class="who">${n.name}</span>${TAUNTS.meet[R.int(TAUNTS.meet.length)]}</p><div class="terms"><span class="ribbon r-crimson">쓰러뜨림</span><p>${n.victims.join(' · ')}</p><span class="ribbon">현상금</span><p>나사 ${dir.bounty(asc)}${asc <= DIRECTOR.heirloomUpTo && n.heir ? ` · ${josa(n.heir.name, '이')} 돌아온다` : ''}</p></div>`,
     go: { label: '맞선다', attrs: 'data-go' },
   });
   sfx('threat');
@@ -1334,7 +1334,7 @@ const maybeBet = (def: BattleDef, force = false): void => {
     size: 'm',
     title: '판돈',
     head: `<p class="lead">${BETS[kind].label}</p><span class="tag push">판돈 나사 ${DIRECTOR.betStake}</span>`,
-    body: `<div class="terms"><span class="tag">조건</span><p>${BETS[kind].cond}</p><span class="tag">보상</span><p>건 나사의 두 배 <span class="up">(+${DIRECTOR.betStake * 2})</span></p><span class="tag tag-crimson">실패 시</span><p>건 나사를 잃는다 <span class="down">(−${DIRECTOR.betStake})</span></p></div>`,
+    body: `<div class="terms"><span class="ribbon">조건</span><p>${BETS[kind].cond}</p><span class="ribbon">보상</span><p>건 나사의 두 배 <span class="up">(+${DIRECTOR.betStake * 2})</span></p><span class="ribbon r-crimson">실패 시</span><p>건 나사를 잃는다 <span class="down">(−${DIRECTOR.betStake})</span></p></div>`,
     back: { label: '걸지 않는다', attrs: 'data-no' },
     go: { label: '건다', attrs: 'data-yes' },
     dismiss: closeWin,
@@ -1615,13 +1615,14 @@ const showMap = (): void => {
   // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
   el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
-  const legend = `<p class="hint">${MAP_TEXT.hint}</p><ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
+  // 범례 한 줄 (D-400, 사용자: 「범례가 두 줄로 접힌다 · 『빛나는 곳을 고릅니다』는 필요 없다」)
+  const legend = `<ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
     .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
     .join('')}</ul>`;
-  // 수치는 긴 명판 하나 (D-398, 사용자: 「꼬리표마다 배경이 따로라 읽기 어렵다」) — 이름 12 · 값 15, 부적 둘은 아이콘 + 값. 임시 철띠 — UI-22 대기
-  const stat = (k: keyof typeof MAP_TEXT.stat, v: string): string => `<span class="sp-i"><small>${MAP_TEXT.stat[k]}</small><b>${v}</b></span>`;
+  // 수치는 긴 명판 하나 (D-398, 사용자: 「꼬리표마다 배경이 따로라 읽기 어렵다」) — 이름 12 · 값 15, 부적 둘은 아이콘 + 값. UI-22 수치 명판 · 칸 사이 홈 (D-399)
+  const stat = (k: keyof typeof MAP_TEXT.stat, v: string): string => `<span class="sp-i"><small>${MAP_TEXT.stat[k]}</small><b>${v}</b></span><i class="sp-sep"></i>`;
   const charm = `<span class="sp-i" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><small>${MAP_TEXT.stat.charm}</small>${(['revive', 'rewind'] as const).map((c) => `<i class="ico" style="${iconArtSmall(CHARMS[c].icon)}"></i><b>${charms[c]}</b>`).join('')}</span>`;
-  el.innerHTML = `<header class="map-head"><span class="tag">${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><div class="stat-plate">${stat('squad', `${squad.length}`)}${stat('deck', `${deck.length}`)}${stat('parts', `${parts.length}/${partSlotsAt(actI)}`)}${charm}</div></div></header>
+  el.innerHTML = `<header class="map-head"><span class="ribbon">${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><div class="stat-plate">${stat('squad', `${squad.length}`)}${stat('deck', `${deck.length}`)}${stat('parts', `${parts.length}/${partSlotsAt(actI)}`)}${charm}</div></div></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <footer class="inset peek-bar">${legend}</footer>`;
   document.body.appendChild(el);
@@ -1648,7 +1649,7 @@ const showMap = (): void => {
       for (const t of def?.enemy ?? []) cnt.set(t, (cnt.get(t) ?? 0) + 1);
       const foes = def ? `<span class="pb-foes">${[...cnt].map(([t, n]) => `<span class="pb-foe">${pieceImg(t, 1, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('')}</span>` : '';
       const tags = def
-        ? [`<span class="tag tag-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="tag">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name).filter(Boolean).slice(0, 1).map((t) => `<span class="tag">${t}</span>`)].slice(0, 3).join('')
+        ? [`<span class="ribbon r-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="ribbon">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name).filter(Boolean).slice(0, 1).map((t) => `<span class="ribbon">${t}</span>`)].slice(0, 3).join('')
         : '';
       const name = `${NODE_NAMES[nd.kind]}${def?.foe ? ` · ${def.foe}` : def?.boss && def.bossRule ? ` · ${BOSS_RULES[def.bossRule].name}` : ''}`;
       info.innerHTML = `<i class="ico pb-ico" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="pb-txt"><b class="pb-name">${name}</b>${def ? `<span class="pb-tags">${tags}</span>` : `<span class="pb-desc">${NODE_DESC[nd.kind]}</span>`}</div>${foes}<button class="btn k-brass pb-go" type="button" data-go>${MAP_TEXT.go}</button>`;
@@ -1730,7 +1731,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     cls: 'win-scene',
     title: ev.title,
     body: `<div class="ws-left"><div class="ws-art frame-scene"><div class="ws-pic"><img src="scenes/${id}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div><img class="fs-plate" src="${SCENE_PLATE}" alt=""></div>${btnRowHtml({ back: leaveK >= 0 ? { label: '떠난다', attrs: 'data-leave' } : undefined, go: { label: '고른다', attrs: 'data-pick', disabled: true } })}</div>
-      <div class="ws-work"><p class="ws-narr" aria-live="polite"></p><div class="inset ws-say is-empty"><span class="who"></span><span class="ws-line"></span></div><div class="ws-choices">${choices}</div><p class="ws-sum" hidden><span class="tag">결과</span><span class="ws-sum-t"></span></p></div>
+      <div class="ws-work"><p class="ws-narr" aria-live="polite"></p><div class="inset ws-say is-empty"><span class="who"></span><span class="ws-line"></span></div><div class="ws-choices">${choices}</div><p class="ws-sum slip" hidden><span class="ribbon">결과</span><span class="ws-sum-t"></span></p></div>
       <span class="tag ws-purse">나사 ${gold}</span>`,
   });
   const art = el.querySelector<HTMLImageElement>('.ws-pic > img[data-cover]')!;
@@ -1918,7 +1919,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           if (out.text) await say('narr', out.text);
           await say('npc', good ? talk.win : talk.lose ?? talk.win);
         }
-        finalGo(out.partPick ? '고른다' : '떠난다', () => (out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="tag">${ev.title}</span>`) : advance()));
+        finalGo(out.partPick ? '고른다' : '떠난다', () => (out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="ribbon">${ev.title}</span>`) : advance()));
       })();
     },
   });
@@ -2208,7 +2209,7 @@ const actCard = (label: string, name: string, narr: string, art: string): Promis
   new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'actcard kit';
-    el.innerHTML = `<div class="ac-art"><img src="scenes/${art}.png" alt="" data-cover data-fx="0.5" data-fy="0.42"></div><div class="ac-floor"><span class="tag">${label}</span><h1 class="ac-name">${name}</h1></div>${cutChromeHtml()}`;
+    el.innerHTML = `<div class="ac-art"><img src="scenes/${art}.png" alt="" data-cover data-fx="0.5" data-fy="0.42"></div><div class="ac-floor"><span class="ribbon">${label}</span><h1 class="ac-name">${name}</h1></div>${cutChromeHtml()}`;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');
     const lines: CutLine[] = narr.split('\n').filter(Boolean).map((t) => (/^‘.*’$/.test(t) ? { k: 'm', t: t.slice(1, -1) } : { k: 'n', t }));
@@ -2253,7 +2254,10 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   if (def.boss) {
     const real = def.bossRule ?? 'plate';
     const rule = real as BossKey;
-    return bossIntro({ rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], lines: BOSS_CARD[real === 'gilded' ? (asc >= 1 ? 'gilded+' : 'gilded') : (real as StoryBoss)], rules: asc <= BOSS_PHASE_TEXT.upTo ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
+    // 수배판 (D-400 UI-21): HP · 공격 수치 칸, 2단계가 있으면(승급 ≤ upTo) 진홍 빛 줄 상태
+    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    const two = asc <= BOSS_PHASE_TEXT.upTo;
+    return bossIntro({ stats: ek ? { hp: ek.maxHp, atk: ek.atk } : undefined, phase2: two, rule, art: BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], lines: BOSS_CARD[real === 'gilded' ? (asc >= 1 ? 'gilded+' : 'gilded') : (real as StoryBoss)], rules: two ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
   // 대국 · 검문은 진입 창(모달)을 띄우지 않는다 (D-388, 사용자: 「배경에 기물 얹는 진입 창 자체가 최악」 · /game-ui-design 0장: 행동이 없는 정보 = 모달 금지).
   // 정보(적 명단 · 규칙 · 보상)는 지도에서 노드를 고를 때 미리 보여 주고, 들어갈 때는 철문 전환 뒤 판 위 띠 한 번만 (⑨ 표지).
@@ -2606,12 +2610,12 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     // 사선 보상 3등급: 부품 하나 더 (검문 부품과 겹치지 않게 먼저)
     if (closeTier === 3 && !partDone) {
       closeTier = 0;
-      return partPick(SCREEN_TEXT.partClose, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); }, false, `<span class="tag tag-crimson">${SCREEN_TEXT.closeTag}</span>`);
+      return partPick(SCREEN_TEXT.partClose, () => { won -= 1; rewardFlow(earned, overGold, fallen, reward !== 'part'); }, false, `<span class="ribbon r-crimson">${SCREEN_TEXT.closeTag}</span>`);
     }
     // 검문 · 반장 (D-216): 부품 → 새 분대원(상한 아래면 확정) → 카드
     if (reward === 'part' && !partDone)
       return partPick(SCREEN_TEXT.partBox, () =>
-        squad.length < SLICE.squadMax ? (won -= 1, recruitPick(SCREEN_TEXT.newCrew, () => rewardFlow(earned, overGold, fallen, true))) : rewardFlow(earned, overGold, fallen, true), true, `<span class="tag">${cur.boss ? SCREEN_TEXT.bossTag : SCREEN_TEXT.checkTag}</span>${goldTag}`);
+        squad.length < SLICE.squadMax ? (won -= 1, recruitPick(SCREEN_TEXT.newCrew, () => rewardFlow(earned, overGold, fallen, true))) : rewardFlow(earned, overGold, fallen, true), true, `<span class="ribbon">${cur.boss ? SCREEN_TEXT.bossTag : SCREEN_TEXT.checkTag}</span>${goldTag}`);
     if (reward === 'end') return void endingFlow();
     const rng = sub();
     // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
@@ -2695,8 +2699,8 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const ids = [...counts.keys()].sort((x, y) => order.indexOf(COMMANDS[x].axis) - order.indexOf(COMMANDS[y].axis) || COMMANDS[x].cost - COMMANDS[y].cost);
   // 덱 보기 · 카드 빼기 (D-394 → D-399): 창 안 격자는 667×375에서 카드가 104px로 줄어 글이 깨졌다 —
   // 고르기 화면과 같은 카드 레일(정본 168 · 하한 150, 넘치면 가로로 민다) · 장수는 카드 위 꼬리표 「×3」 · 전체 장수는 명패 옆 꼬리표
-  const items: PickItem[] = ids.map((id) => ({ key: id, html: `${cardFace(id, 'tabindex="-1"')}${(counts.get(id) ?? 1) > 1 ? `<span class="tag">×${counts.get(id)}</span>` : ''}` }));
-  const count = `<span class="tag">${deck.length}장</span>`;
+  const items: PickItem[] = ids.map((id) => ({ key: id, html: `${cardFace(id, 'tabindex="-1"')}${(counts.get(id) ?? 1) > 1 ? `<span class="badge-n">×${counts.get(id)}</span>` : ''}` }));
+  const count = `<span class="badge-n">${deck.length}장</span>`;
   if (mode === 'view') {
     const el = pickScreen({ title: SCREEN_TEXT.deck, tag: count, items: [], body: slotsHtml(items, true), cls: 'scr-deck', skip: { label: SCREEN_TEXT.close, attrs: 'data-x' }, go: null, onPick: () => {} });
     el.querySelector('[data-x]')!.addEventListener('click', closeWin);
@@ -2810,7 +2814,7 @@ const crewView = (): void => {
   // 분대 (D-394 → D-399): 카드를 줄이지 않는다 — 고르기 화면과 같은 카드 레일(168 · 하한 150) · 명패 옆 인원 꼬리표 · [닫는다 | 도감]
   const el = pickScreen({
     title: SCREEN_TEXT.crew,
-    tag: `<span class="tag">${squad.length}명</span>`,
+    tag: `<span class="badge-n">${squad.length}명</span>`,
     items: [],
     body: slotsHtml(squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }) })), true),
     cls: 'scr-crew',
@@ -2833,7 +2837,7 @@ const ledgerView = (back: () => void = crewView): void => {
   const el = openWin({
     size: 'l',
     title: '도감',
-    head: `<p class="note">쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><span class="tag push">기록 ${rows.length}</span>`,
+    head: `<p class="note">쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><span class="badge-n push">기록 ${rows.length}</span>`,
     body: rows.length
       ? `<div class="inset scroll">${rows.map((r) => `<div class="lg-row">${pieceImg(r.t, 0, 'small', 48)}<p class="lg-name">${r.name}${r.nick ? ` 「${r.nick}」` : ''} · ${r.serial} · 처치 ${r.kills} · 대국 ${r.battles}</p><p class="lg-cause">${r.cause} · ${r.run}</p></div>`).join('')}</div>`
       : `<p class="mono empty-line">‘아직 아무도 잃지 않았어.’</p>`,
@@ -2909,7 +2913,7 @@ const kitPick = (title: string, then: () => void, tag = ''): void => {
   // 고르기 화면 (D-394 — 「이 조합으로 가시겠습니까?」 확인 창을 없앴다): 부품 받침 셋 · 받침 아래 함께 오는 카드 두 장 · 같은 받침을 다시 누르면 확정
   const el = pickScreen({
     title,
-    tag: `<span class="tag">${deep ? SCREEN_TEXT.deep(AXIS_NAMES[deep as Axis]) : SCREEN_TEXT.broad}</span>${tag}`,
+    tag: `<span class="ribbon">${deep ? SCREEN_TEXT.deep(AXIS_NAMES[deep as Axis]) : SCREEN_TEXT.broad}</span>${tag}`,
     items: offers.map((k, n) => ({ key: String(n), html: partFace(k.part, ''), info: withCards(k.cards) })),
     skip: { label: SCREEN_TEXT.skip, attrs: 'data-skip' },
     onSelect: () => sfx('lift'),
@@ -2943,8 +2947,8 @@ const gainPart = (id: SlicePartId, done: (took: boolean) => void): void => {
   // 칸 가득 (D-394 고르기 화면): 지금 부품 받침 · 받침 아래 「녹이면 나사 +N」 · [두고 간다 | 녹인다(진홍)]
   const el = pickScreen({
     title: SCREEN_TEXT.full,
-    lead: `<span class="tag tag-crimson">${SCREEN_TEXT.slots(partSlotsAt(actI))}</span>`,
-    tag: `<span class="tag">${SCREEN_TEXT.newPart(SLICE_PARTS[id].name)}</span>`,
+    lead: `<span class="ribbon r-crimson">${SCREEN_TEXT.slots(partSlotsAt(actI))}</span>`,
+    tag: `<span class="ribbon">${SCREEN_TEXT.newPart(SLICE_PARTS[id].name)}</span>`,
     items: [],
     // 부품이 많아(최대 칸 수) 카드 얼굴이 작아지면 읽히지 않는다 → 선택지 판 2단(아이콘 · 이름 · 효과 한 줄)
     body: `<div class="choice-grid">${parts.map((pid) => choiceHtml({ key: pid, icon: SLICE_PARTS[pid].icon, name: SLICE_PARTS[pid].name, res: SLICE_PARTS[pid].desc })).join('')}</div><p class="scr-say note">${SCREEN_TEXT.melt(ECON.meltBack)}</p>`,
@@ -3056,7 +3060,7 @@ const exportScreen = (back: () => void): void => {
   const el = openWin({
     size: 'm',
     title: PT.exportTitle,
-    head: `<span class="tag">${PT.exportCount(all.length)}</span>`,
+    head: `<span class="badge-n">${PT.exportCount(all.length)}</span>`,
     body: `<p>${PT.exportNote}</p><div class="btn-set">${btnHtml({ label: PT.save, attrs: 'data-file' })}${btnHtml({ label: PT.clear, attrs: 'data-clear', kind: 'crimson' })}</div><textarea class="inset pt-text pt-dump" rows="3" readonly hidden></textarea>`,
     back: { label: PT.close, attrs: 'data-x' },
     go: { label: PT.copy, attrs: 'data-copy' },
@@ -3093,7 +3097,7 @@ const surveyScreen = (i: number, ans: Record<string, unknown>, then: () => void)
   const el = openWin({
     size: 'l',
     title: PT.surveyTitle,
-    head: `<span class="tag">${i + 1} / ${SURVEY.length}</span><p>${q.q}</p>`,
+    head: `<span class="badge-n">${i + 1} / ${SURVEY.length}</span><p>${q.q}</p>`,
     body: `${body}${i === 0 ? `<p class="note">${PT.surveyNote}</p>` : ''}`,
     back: { label: i ? PT.prev : PT.close, attrs: 'data-prev' },
     go: { label: last ? PT.done : PT.next, attrs: 'data-next' },
@@ -3614,13 +3618,13 @@ const runEndNow = (cleared: boolean): void => {
     art: cleared ? 'end-clear' : 'end-fail',
     focus: cleared ? [0.27, 0.62] : [0.33, 0.72],
     title: cleared ? SCREEN_TEXT.clear : SCREEN_TEXT.fail,
-    tag: `${daily ? `<span class="tag">${SCREEN_TEXT.daily}</span>` : ''}${asc ? `<span class="tag">승급 ${asc}</span>` : ''}`,
+    tag: `${daily ? `<span class="ribbon">${SCREEN_TEXT.daily}</span>` : ''}${asc ? `<span class="ribbon r-crimson">승급 ${asc}</span>` : ''}`,
     cls: 'scr-result',
     body: `<p>${cleared ? SCREEN_TEXT.clearLine : SCREEN_TEXT.failLine(actLabel(actI + 1))}</p>
-      <div class="tally">${SCREEN_TEXT.tally.map((k, i) => `<div><b data-v="${nums[i]}">${nums[i]}</b><span>${k}</span></div>`).join('')}</div>
+      <div class="tally slip">${SCREEN_TEXT.tally.map((k, i) => `<div><b data-v="${nums[i]}">${nums[i]}</b><span>${k}</span></div>`).join('')}</div>
       <div class="re-row">${squad.map((u) => chip(u.name ?? PIECE_NAMES_KO[u.t], u.t)).join('')}${fallenNow.map((r) => chip(r.name, r.t, true)).join('')}</div>
       ${opens.length || highlight ? '<hr class="divider">' : ''}
-      ${opens.length ? `<div class="re-open"><span class="note">${SCREEN_TEXT.opened}</span>${opens.map((n) => `<span class="tag">${n}</span>`).join('')}</div>` : ''}
+      ${opens.length ? `<div class="re-open"><span class="note">${SCREEN_TEXT.opened}</span>${opens.map((n) => `<span class="ribbon">${n}</span>`).join('')}</div>` : ''}
       ${highlight ? `<p class="note">묘수 — ${highlight.where} ${highlight.turn}턴 · 처치 ${highlight.kills} · 피해 ${highlight.damage}</p>` : unlocked ? `<p class="note">「${ASCENSION[m.ascOpen - 1].law}」</p>` : ''}`,
     back: { label: SCREEN_TEXT.note, attrs: 'data-survey' },
     go: { label: SCREEN_TEXT.home, attrs: 'data-restart' },
