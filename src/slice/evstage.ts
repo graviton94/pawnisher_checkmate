@@ -44,6 +44,8 @@ export interface EvFxCtx {
   goldAfter?: number;
   /** 시안 ev-c (결과 = 한 장면): 결과 줄이 다 터진 뒤 「넘긴다」 대신 이 손이 무대를 이어 쓴다 — 끝나면 무대를 걷는다 */
   onStage?: (ov: HTMLElement, L: Layer) => Promise<void>;
+  /** 2차 시안 ev2 (결과 두 박자): 1박은 FX만 — 독백 한 줄도 띄우지 않는다 */
+  quiet?: boolean;
 }
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -494,7 +496,7 @@ const showResults = async (L: Layer, c: EvFxCtx): Promise<void> => {
     items.push({ el, kind: 'part', run: () => chestFx(L, el) });
   }
   replay(row, 'in');
-  sayLine(L, items[0]?.kind);
+  if (!c.quiet) sayLine(L, items[0]?.kind);
   await wait(300);
   for (const it of items) { it.el.classList.remove('er-wait'); await it.run(); await wait(260); }
   await wait(700);

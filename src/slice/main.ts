@@ -45,7 +45,7 @@ import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, FINAL_BOSS,
 import { counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
 import { EVENT_FOCUS, EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
 import { runEventFx, type CardFx, type CrewFx } from './evstage';
-import { mockEndScreen, type MockMember } from './mockend';
+import { mockEnd2Screen, mockEndScreen, type ActPage, type MockMember } from './mockend';
 import { EVENT_OUTCOME } from '../data/event-outcome';
 import { bossIntro, type BossKey } from './bossintro';
 import { addNemesis, betterHighlight, BETS, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
@@ -1506,7 +1506,7 @@ const advance = (): void => {
     rowI = 0;
     if (actI >= acts.length) return runEnd(true);
     // 시안 end-c 막 마침 장부: 막 반장을 쓰러뜨리면 장부 → 다음 막 예고 → 그다음 막 카드
-    if (MOCK === 'end-c' && !mockActShown) {
+    if (/^end(-c|2-[ab])$/.test(MOCK) && !mockActShown) {
       mockActShown = true;
       actI -= 1;
       rowI = acts[actI].rows.length - 1;
@@ -1532,7 +1532,51 @@ let mockActSnap = { won: 0, kills: 0, gold: 0, deck: START_DECK.length, parts: 0
 const killsNow = (): number => squad.reduce((n, u) => n + (u.kills ?? 0), 0) + readLedger().filter((r) => r.run === runId).reduce((n, r) => n + r.kills, 0);
 const mockMember = (u: Crew, fallen = false): MockMember => ({ name: u.name ?? PIECE_NAMES_KO[u.t], img: `pieces/l-${u.t}0.png`, kills: u.kills ?? 0, dmg: u.dmg ?? 0, fallen });
 /** 시안 end-c — 막 마침 장부 (쓰러진 막 반장 그림에 「격파」 도장 · 이번 막 수치 · 이번 막 으뜸 · 다음 막 예고) */
+/** 2차 시안 end2-*: 막마다 찍힌 쪽 (막 반장을 쓰러뜨리면 하나씩) */
+let mockPages: ActPage[] = [];
+const MOCK_SLOTS = ['1막', '2막', '3막', '종막'];
+/** 2차 시안: 쪽 하나 — 이번 막 값(지금 − 막 시작) · 이번 막 으뜸 */
+const mockPageNow = (boss: StoryBoss | 'gilded'): ActPage => {
+  const s0 = mockActSnap;
+  const mem = squad.filter((u) => u.t !== 'K').map((u) => mockMember(u));
+  const mvp = mem.reduce<MockMember | undefined>((b, m) => (!b || m.kills > b.kills ? m : b), undefined);
+  return { label: actLabel(actI + 1), name: acts[actI].name, boss: boss === 'gilded' ? '도금왕' : BOSS_STORY[boss].name, art: boss === 'gilded' ? 'boss-gilded' : `boss-fall-${boss}`, won: won - s0.won, kills: killsNow() - s0.kills, gold: Math.max(0, gold - s0.gold), mvp };
+};
+/** 2차 시안 end2-a · end2-b — 막 마침 = 이번 막 쪽에 「반장 격파」 */
+const mockActClear2 = async (): Promise<void> => {
+  const s0 = mockActSnap;
+  const boss = runBosses[actI] ?? runBosses.at(-1) ?? 'plate';
+  const page = mockPages[actI] ?? mockPageNow(boss);
+  mockPages = [...mockPages.slice(0, actI), page];
+  const [line, num] = actOmen(actI + 1);
+  const nextName = acts[actI + 1]?.name ?? '포장대';
+  await mockEnd2Screen(MOCK as 'end2-a' | 'end2-b', {
+    mode: 'act',
+    title: `${actLabel(actI + 1)} 마침`,
+    tag: `<span class="ribbon">${acts[actI].name}</span>`,
+    slots: MOCK_SLOTS,
+    pages: mockPages,
+    rows: [
+      { k: '이긴 대국', v: page.won },
+      { k: '처치', v: page.kills },
+      { k: '나사', v: page.gold, unit: `(지갑 ${gold})` },
+      { k: '덱', v: deck.length, unit: deck.length - s0.deck > 0 ? `(+${deck.length - s0.deck})` : '' },
+      { k: '부품', v: `${parts.length}/${partSlotsAt(actI)}` },
+    ],
+    mvp: page.mvp,
+    nextArt: `act-${Math.min(4, actI + 2)}`,
+    opens: [],
+    next: { head: `다음 · ${actLabel(actI + 2)} ${nextName}`, line, num },
+    art: page.art,
+    focus: [0.5, 0.45],
+    stampTag: '반장 격파',
+    stampWord: '격파!',
+    go: '나아간다',
+  });
+  mockActSnap = { won, kills: killsNow(), gold, deck: deck.length, parts: parts.length, squad: squad.length, serials: squad.map((u) => u.serial ?? '') };
+};
 const mockActClear = async (): Promise<void> => {
+  if (/^end2-/.test(MOCK)) return mockActClear2();
   const s0 = mockActSnap;
   const boss = runBosses[actI] ?? runBosses.at(-1) ?? 'plate';
   const mem = squad.filter((u) => u.t !== 'K').map((u) => mockMember(u));
@@ -1788,7 +1832,24 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   });
   const art = el.querySelector<HTMLImageElement>('.ws-pic > img[data-cover]')!;
   // 시안: 대사 칸 짜임 (ev-a · ev-c = 이름 한 줄 + 대사 두 줄, ev-b = 창 아래 전체 폭 자막 띠 — 컷신 띠와 같은 물건)
-  const evMock = /^ev-[abc]$/.test(MOCK) ? MOCK : '';
+  // 2차 시안 ev2-r1 · ev2-r2 (사용자: 「단추가 왼쪽 아래라 부자연스럽다 — 눈은 오른쪽 아래에서 끝난다」): 읽는 길 = 그림 → 이름 + 대사 → 선택지 → 오른쪽 아래 단추.
+  // 서술(⑤)은 그림 아래 먹 띠로, 단추 줄은 오른쪽 단 맨 아래로. r1 = 액자 그림, r2 = 액자 없이 그림이 창 왼쪽을 채우고 디더로 오른쪽 단에 녹는다.
+  const ev2 = /^ev2-r[12]$/.test(MOCK) ? MOCK : '';
+  const evMock = /^ev-[abc]$/.test(MOCK) ? MOCK : ev2 ? 'ev2' : '';
+  const hint = document.createElement('p');
+  if (ev2) {
+    el.classList.add(`mk2-${ev2.slice(4)}`);
+    const row = el.querySelector<HTMLElement>('.ws-left > .btn-row')!;
+    hint.className = 'mid mk2-hint';
+    hint.textContent = '한 번 더 누르면 고릅니다';
+    hint.hidden = true;
+    row.querySelector('.go')!.before(hint);
+    el.querySelector('.ws-work')!.appendChild(row);
+    const cap = document.createElement('div');
+    cap.className = 'mk2-cap';
+    cap.appendChild(el.querySelector('.ws-narr')!);
+    el.querySelector('.ws-art')!.appendChild(cap);
+  }
   if (evMock) {
     el.classList.add('mk-ev', `mk-${evMock}`);
     const sayBox = el.querySelector<HTMLElement>('.ws-say')!;
@@ -1905,6 +1966,13 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       lastAct = performance.now();
       infoAt = { k: -1, i: -1 };
       sfx('lift');
+      // 2차 시안: 고르면 결과를 미리 — 판 강조(sel) · 지갑 꼬리표에 「나사 50 → 10」 · 단추 줄에 「한 번 더 누르면 고릅니다」
+      if (ev2) {
+        if (hint.hidden) { hint.hidden = false; replay(hint, 'in'); }
+        const cost = ev.choices[k].desc.match(/나사 ([−+])(\d+)/);
+        const purse = el.querySelector<HTMLElement>('.ws-purse')!;
+        purse.innerHTML = cost ? `나사 ${gold} → <b class="${cost[1] === '−' ? 'mk2-loss' : ''}">${gold + (cost[1] === '−' ? -1 : 1) * Number(cost[2])}</b>` : `나사 ${gold}`;
+      }
       void say('npc', talk.react[k] ?? talk.react[talk.react.length - 1] ?? '');
     },
     onPick: (key) => {
@@ -1965,9 +2033,31 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           : undefined;
         const after = (): void => (out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="ribbon">${ev.title}</span>`) : advance());
         // 시안 ev-c (결과 = 한 장면): 결과 무대를 걷지 않고 그 자리에서 대사 · 요약 · 떠나기까지
-        const onStage = evMock === 'ev-c' ? (ov: HTMLElement) => mockEvStage(ov, { sum: evSummary(before, cards, out), oc: EVENT_OUTCOME[id]?.[`${k}:${out.slot ?? 0}`], text: out.text, npc: talk.npc, last: good ? talk.win : talk.lose ?? talk.win, go: out.partPick ? '고른다' : '떠난다' }) : undefined;
-        await runEventFx(el, { id, good, chance, cards, crew: crewFx, tap: talk.tap, scene: art.currentSrc || art.src, focus: [fx, fy], gold: gold - before.gold, part: !!out.partPick, purse: el.querySelector<HTMLElement>('.ws-purse'), goldAfter: gold, onStage });
+        // 2차 시안: 결과 1박 = 실제 카드 · 기물 · 지갑 위 FX만(쪽지 · 글 없음) → 잠깐 머물거나 누르면 2박(결과 쪽지)으로
+        const stage2 = async (ov: HTMLElement): Promise<void> => {
+          await Promise.race([new Promise((r) => window.setTimeout(r, calmMs(1100))), new Promise((r) => ov.addEventListener('pointerdown', r, { once: true }))]);
+        };
+        if (ev2) { el.classList.add('mk2-fx'); hint.hidden = true; el.querySelector('.ws-purse')!.textContent = `나사 ${before.gold}`; }
+        const onStage = ev2 ? stage2 : evMock === 'ev-c' ? (ov: HTMLElement) => mockEvStage(ov, { sum: evSummary(before, cards, out), oc: EVENT_OUTCOME[id]?.[`${k}:${out.slot ?? 0}`], text: out.text, npc: talk.npc, last: good ? talk.win : talk.lose ?? talk.win, go: out.partPick ? '고른다' : '떠난다' }) : undefined;
+        await runEventFx(el, { id, good, chance, cards, crew: crewFx, tap: talk.tap, scene: ev2 === 'ev2-r2' ? '' : art.currentSrc || art.src, focus: [fx, fy], gold: gold - before.gold, part: !!out.partPick, purse: el.querySelector<HTMLElement>('.ws-purse'), goldAfter: gold, onStage, quiet: !!ev2 });
         if (!alive()) return;
+        el.classList.remove('mk2-fx');
+        if (ev2) {
+          // 2박 = 결과 쪽지(UI-25): 클립 아래 「결과」 → 무슨 일이 있었나(⑤ 두 줄) → 바뀐 것(⑦) · 대사 칸에 NPC 마무리 · 오른쪽 아래 「떠난다」
+          const oc = EVENT_OUTCOME[id]?.[`${k}:${out.slot ?? 0}`];
+          const sum = evSummary(before, cards, out);
+          el.querySelector('.ws-purse')!.textContent = `나사 ${gold}`;
+          choicesEl.hidden = true;
+          el.classList.add('ws-done', 'mk2-done');
+          sumEl.innerHTML = `<b class="mk-sum-h">결과</b><span class="mk2-sum-n"></span>${sum ? `<span class="mk2-sum-i">${sum.split(' · ').map((t) => `<span>${t}</span>`).join('<i> · </i>')}</span>` : ''}`;
+          sumEl.hidden = false;
+          replay(sumEl, 'in');
+          if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
+          const scene = (oc?.scene ?? out.text ?? '').replace(/^\((.*)\)$/, '$1');
+          await typeIn(sumEl.querySelector<HTMLElement>('.mk2-sum-n')!, scene.replace(/([.!?…])\s+(?=\S)/g, '$1\n'), 18, undefined, alive);
+          await say('npc', oc?.line ?? (good ? talk.win : talk.lose ?? talk.win), oc?.who);
+          return finalGo(out.partPick ? '고른다' : '떠난다', after);
+        }
         if (onStage) {
           window.clearInterval(idle);
           return after();
@@ -3731,6 +3821,38 @@ const runEndNow = (cleared: boolean): void => {
   const opens = [...freshNames.slice(0, 3), ...(unlocked ? [SCREEN_TEXT.ascOpened(m.ascOpen)] : [])];
   const nums = [won, kills, gold, deck.length];
   // 시안 end-a · end-b (기본은 아래 그대로): 출하 증명서 / 분대 단상 — 다음 출하 예고는 카드 말투 한 문장 + (수치)
+  if (cleared && /^end2-[ab]$/.test(MOCK)) {
+    // 2차 시안: 막마다 찍힌 쪽을 모은 증명서 + 「출하 합격」
+    const nextAsc = Math.min(ASC_OMEN.length - 1, unlocked ? m.ascOpen - 1 : asc);
+    const mem = [...squad.filter((u) => u.t !== 'K').map((u) => mockMember(u)), ...fallenNow.map((r) => ({ name: r.name, img: `pieces/l-${r.t}0.png`, kills: r.kills, dmg: 0, fallen: true }))];
+    const mvp = mem.reduce<MockMember | undefined>((b, x) => (!b || x.kills > b.kills ? x : b), undefined);
+    if (mockPages.length < 4) mockPages = [...mockPages, ...[0, 1, 2, 3].slice(mockPages.length).map((i) => ({ label: MOCK_SLOTS[i], name: acts[i]?.name ?? '', boss: i < 3 ? BOSS_STORY[runBosses[i] ?? 'plate'].name : '도금왕', art: i < 3 ? `boss-fall-${runBosses[i] ?? 'plate'}` : 'boss-gilded', won: 1, kills: 0, gold: 0 }))];
+    const home = (): void => (sessionStorage.setItem('op-menu', '1'), location.reload());
+    void mockEnd2Screen(MOCK as 'end2-a' | 'end2-b', {
+      mode: 'run',
+      title: SCREEN_TEXT.clear,
+      tag: `${daily ? `<span class="ribbon">${SCREEN_TEXT.daily}</span>` : ''}${asc ? `<span class="ribbon r-crimson">승급 ${asc}</span>` : ''}`,
+      slots: MOCK_SLOTS,
+      pages: mockPages,
+      rows: [
+        { k: '이긴 대국', v: won },
+        { k: '처치', v: kills },
+        { k: '나사', v: gold },
+        { k: '덱', v: deck.length, unit: '장' },
+        { k: '부품', v: parts.map((p) => SLICE_PARTS[p].name).slice(0, 3).join(' · ') || '없음' },
+      ],
+      mvp,
+      opens,
+      next: { head: `다음 출하 · 승급 ${nextAsc + 1}`, line: ASC_OMEN[nextAsc][0], num: ASC_OMEN[nextAsc][1] },
+      art: 'end-clear',
+      focus: [0.27, 0.62],
+      stampTag: '출하 합격',
+      stampWord: '합격!',
+      back: SCREEN_TEXT.note,
+      go: SCREEN_TEXT.home,
+    }).then((r) => (r === 'go' ? home() : surveyScreen(0, {}, () => exportScreen(home))));
+    return;
+  }
   if (cleared && /^end-[abc]$/.test(MOCK)) {
     const nextAsc = Math.min(ASC_OMEN.length - 1, unlocked ? m.ascOpen - 1 : asc);
     const mem = [...squad.filter((u) => u.t !== 'K').map((u) => mockMember(u)), ...fallenNow.map((r) => ({ name: r.name, img: `pieces/l-${r.t}0.png`, kills: r.kills, dmg: 0, fallen: true }))];
@@ -3920,7 +4042,7 @@ const begin = async (seed: number, level: number, day: string | null): Promise<v
   // 두 번째 출하부터 (각본 S1′): 포장대의 그림자 한 컷
   if (readMeta(store).runs >= 1 && !labMode) await playCuts([shadowCut(level)]);
   newRun(seed, level, day);
-  if (MOCK === 'end-c') mockActSnap = { won, kills: 0, gold, deck: deck.length, parts: parts.length, squad: squad.length, serials: [] };
+  if (/^end(-c|2-[ab])$/.test(MOCK)) mockActSnap = { won, kills: 0, gold, deck: deck.length, parts: parts.length, squad: squad.length, serials: [] };
   saveRun('battle', 0);
   startBattle(INTRO[0], true);
   closeOverlay();
@@ -4050,4 +4172,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void battleTutorial(), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 3) => { asc = a; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces: () => { openWin({ size: 'l', title: '카드 견본', cls: 'win-deck', body: `<div class="inset scroll"><div class="deck-grid">${(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => `<div class="card-bare">${cardFace(id, `data-face="${id}"`)}</div>`).join('')}${(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => `<div class="card-bare">${partFace(id, `data-face="${id}"`)}</div>`).join('')}</div></div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin }); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(3, "먼지투성이", "폰은 킹 자리에 설 수 없다.", "").slice(-1)), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: () => { parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, partSlotsAt(actI)); gainPart((Object.keys(SLICE_PARTS) as SlicePartId[])[9], () => showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), mockRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void battleTutorial(), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 3) => { asc = a; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces: () => { openWin({ size: 'l', title: '카드 견본', cls: 'win-deck', body: `<div class="inset scroll"><div class="deck-grid">${(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => `<div class="card-bare">${cardFace(id, `data-face="${id}"`)}</div>`).join('')}${(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => `<div class="card-bare">${partFace(id, `data-face="${id}"`)}</div>`).join('')}</div></div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin }); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(3, "먼지투성이", "폰은 킹 자리에 설 수 없다.", "").slice(-1)), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: () => { parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, partSlotsAt(actI)); gainPart((Object.keys(SLICE_PARTS) as SlicePartId[])[9], () => showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), mockRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); const mm = squad.filter((u) => u.t !== 'K').map((u) => mockMember(u)); mockPages = [['plate', 5, 11, 64, 0], ['magnet', 4, 12, 71, 3], ['alarm', 4, 9, 77, 1], ['gilded', 1, 1, 0, 0]].map(([b, w, k, g, v], i) => ({ label: MOCK_SLOTS[i], name: acts[i]?.name ?? '', boss: b === 'gilded' ? '도금왕' : BOSS_STORY[b as StoryBoss].name, art: b === 'gilded' ? 'boss-gilded' : `boss-fall-${b}`, won: w as number, kills: k as number, gold: g as number, mvp: mm[(v as number) % mm.length] && { ...mm[(v as number) % mm.length], kills: [6, 5, 4, 1][i], dmg: [150, 132, 118, 40][i] } })); return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
