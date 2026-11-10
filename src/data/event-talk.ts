@@ -347,41 +347,44 @@ export const EVENT_FOCUS: Record<string, [number, number]> = {
 
 /**
  * 사건 결과 FX (D-398, D-260 · D-180): 바뀐 것(실제 카드 · 분대원 카드 · 지갑 · 부품 상자) 위에 터지는 도트 낱말과 짧은 독백.
- * pop = 대상 위로 튀는 도트 글(갈무리11 굵게 12px를 1도트로 — 전투 피해 숫자와 같은 그림), line = 결과 무대 아래 독백 한 줄(‘ ’, 짧은 반말 — voice ③).
+ * pop = 대상 위로 튀는 도트 글(갈무리11 굵게 12px를 1도트로 — 전투 피해 숫자와 같은 그림). 결과 1박은 FX만이라 독백 줄은 두지 않는다(D-402).
  * 색은 전투 숫자와 같은 약속: 얻음 금 · 회복 초록 · 잃음 진홍 · 녹 녹빛.
+ * D-402 (사용자: 「『심장 톱니 금』은 무슨 말인지 모르겠다」): 낱말은 처음 보는 사람도 무엇이 바뀌었는지 알게 — 금 → 「톱니 깨짐」(안내서 · 분대 보기와 같은 말),
+ * 사건에서 분대원을 잃는 것은 전투의 「쓰러짐」(다음 대국에 돌아온다)과 다르니 「폐기」, 분대원 카드 위 숫자는 「HP ±N」.
  */
 export type EvFxKind = 'goldUp' | 'goldDown' | 'heal' | 'hurt' | 'life' | 'crack' | 'evolve' | 'recruit' | 'die' | 'up' | 'rust' | 'break' | 'new' | 'part';
-export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string>; line: Record<EvFxKind, string> } = {
+export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string> } = {
   pop: {
     goldUp: (n = 0) => `나사 +${n}`,
     goldDown: (n = 0) => `나사 -${n}`,
-    heal: (n = 0) => `+${n}`,
-    hurt: (n = 0) => `-${n}`,
+    heal: (n = 0) => `HP +${n}`,
+    hurt: (n = 0) => `HP -${n}`,
     life: (n = 1) => `생명 +${n}`,
-    crack: () => '금!',
+    crack: () => '톱니 깨짐',
     evolve: () => '승격',
     recruit: () => '합류',
-    die: () => '쓰러짐',
+    die: () => '폐기',
     up: () => '태엽 -1',
     rust: () => '태엽 +1',
     break: () => '부서짐',
     new: () => '새 카드',
     part: () => '부품',
   },
-  line: {
-    goldUp: '‘주머니가 묵직해졌다.’',
-    goldDown: '‘주머니가 가벼워졌다.’',
-    heal: '‘태엽이 다시 팽팽해진다.’',
-    hurt: '‘어딘가 삐걱인다.’',
-    life: '‘한 번 더 일어설 수 있다.’',
-    crack: '‘심장 톱니에 금이 갔다.’',
-    evolve: '‘몸이 새로 맞춰졌다.’',
-    recruit: '‘새 얼굴이 줄에 섰다.’',
-    die: '‘하나가 멈췄다.’',
-    up: '‘카드가 가벼워졌다.’',
-    rust: '‘카드에 녹이 슬었다.’',
-    break: '‘카드가 부서졌다.’',
-    new: '‘새 카드가 손에 붙는다.’',
-    part: '‘상자가 열린다.’',
-  },
+
 };
+
+/**
+ * 사건 결과 쪽지의 바뀐 것 (⑦, D-402 — 사용자: 「『심장 톱니 금』은 처음 보면 무슨 말인지 모른다」):
+ * 처음 보는 사람도 무엇이 바뀌었고 그래서 어떻게 되는지 알게 괄호로 뜻을 붙인다(안내서 · 분대 보기 KEYWORDS와 같은 말).
+ */
+export const EVENT_SUM = {
+  life: (name: string, n: number) => `${name} 생명 +${n} (쓰러질 피해를 한 번 버팀)`,
+  crack: (name: string) => `${name} 심장 톱니 깨짐 (다시 쓰러지면 폐기)`,
+};
+/** 사건 창 단추 줄 (D-402): 판을 한 번 누르면 고름 — 같은 판을 다시 누르면 정함(예비 「고른다」 단추 없음) · 오른쪽 아래 끝 단추 하나 = 떠나기 */
+export const EVENT_HINT = { again: '한 번 더 누르면 고릅니다', leave: '무시하고 떠난다' };
+/**
+ * 결과 1박 머묾 (D-402, 사용자: 「1박이 너무 빨리 넘어가 읽을 수 없다」): 바뀐 것 하나면 2.2초, 하나 늘 때마다 0.6초 더. 누르면 바로 넘어간다.
+ * 1박은 창 전체를 덮는다(바뀐 것을 강조 — 사용자 승인).
+ */
+export const EVENT_BEAT = { hold: 2200, perThing: 600 };

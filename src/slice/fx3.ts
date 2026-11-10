@@ -254,6 +254,31 @@ export const stampFx = (s: HTMLElement): void => {
 };
 
 // ---------- 9 결과 집계 ----------
+/**
+ * 숫자 굴려 내리기 (D-402 — 사건 창 나사 꼬리표, 알고 치른 값): 예비(꼬리표가 움찔 눌림) → 숫자가 계단으로 굴러감
+ * (처음 크게 · 끝에서 잘게 — 지수형, 칸마다 째깍) → 터짐(마지막 숫자 번쩍 · 꼬리표 튐) → 출렁. 투명도 보간 · 선형 미끄럼 없음.
+ * num = 숫자 칸(b), host = 흔들 물건(꼬리표). 줄인 움직임이면 바로 마지막 값.
+ */
+export const rollNumber = async (num: HTMLElement, from: number, to: number, host: HTMLElement = num): Promise<void> => {
+  const nap = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
+  if (calm() || from === to) { num.textContent = String(to); return; }
+  replay(host, 'roll-pre');
+  sfx('lift', 6);
+  await nap(170);
+  const n = Math.min(9, Math.abs(from - to));
+  for (let k = 1; k <= n; k++) {
+    // 지수형: 앞 칸은 크게 · 뒤 칸은 잘게, 사이는 점점 길게 (빠르게 → 느리게)
+    num.textContent = String(Math.round(from + (to - from) * (1 - Math.pow(1 - k / n, 3))));
+    replay(num, 'tick');
+    if (k % 2) sfx('coin', 3 + k);
+    await nap(34 + k * 9);
+  }
+  num.textContent = String(to);
+  host.classList.remove('roll-pre');
+  replay(host, 'roll-hit');
+  sfx('stamp', 4);
+  await nap(380);
+};
 /** 줄이 하나씩 밀려 들어오고 숫자가 째깍째깍 올라간 뒤 → 등급 도장 */
 export const tally = (box: HTMLElement, stamp?: HTMLElement | null): void => {
   const rows = [...box.querySelectorAll<HTMLElement>('div')];

@@ -45,9 +45,17 @@ export interface SliceEventChoice {
   info?: string;
   /** 고를 수 없으면 이유 */
   blocked?: (s: EventState) => string | null;
+  /**
+   * 고르며 알고 치르는 나사 (D-402) — 화면은 이 값만큼 나사 꼬리표 숫자를 굴려 내리고, 결과 FX에는 넣지 않는다.
+   * 없으면 결과 줄 맨 앞 「나사 −N」을 읽는다. 확률로 잃거나 얻는 나사는 결과(FX)다.
+   */
+  pay?: (s: EventState) => number;
   /** 상태를 바꾸고 결과를 돌려준다 (s를 직접 고친다) */
   apply: (s: EventState, rng: Rng) => EventOutcome;
 }
+
+/** 고르며 알고 치르는 나사 (D-402): pay가 있으면 그 값, 없으면 결과 줄 맨 앞 「나사 −N」 */
+export const choicePay = (c: SliceEventChoice, s: EventState): number => c.pay?.(s) ?? Number(c.desc.match(/^나사 −(\d+)/)?.[1] ?? 0);
 
 export interface SliceEventDef {
   title: string;
@@ -136,15 +144,16 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       },
       {
         label: '축을 끝까지 조인다',
-        desc: '50% 생명 +2 · 50% 심장 톱니 금',
+        desc: '50% 생명 +2 · 50% 심장 톱니 깨짐',
         info: '나사 40을 냅니다. 대상은 최다 처치 분대원입니다.',
+        pay: () => 40,
         blocked: (s) => (s.gold < 40 ? '나사 40 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
         apply: (s, rng) => {
           s.gold -= 40;
           const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
           if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]}의 생명 +2.` }; }
           s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
-          return { slot: 1, text: `쩍. 축이 비명을 지르며 갈라진다. ${u.name ?? NAMES[u.t]}의 심장 톱니에 금이 갔다.` };
+          return { slot: 1, text: `쩍. 축이 비명을 지르며 갈라진다. ${u.name ?? NAMES[u.t]}의 심장 톱니 하나가 깨졌다. (다시 쓰러지면 폐기)` };
         },
       },
       leave('지나가기'),
@@ -394,7 +403,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹 벗기는 통',
     text: '시큼한 통 옆에서 비숍이 장갑을 낀다. “녹슨 명령서는 이리. 한 장에 나사 스물.”',
     choices: [
-      { label: '녹슨 카드를 맡긴다', desc: '녹슨 카드 녹 벗기기 · 장당 나사 −20', info: '녹슨 카드는 태엽이 1 더 듭니다.', blocked: (s) => (!s.deck.some(isRusted) ? '녹슨 카드 없음' : s.gold < 20 ? '나사 20 필요' : null), apply: (s) => {
+      { label: '녹슨 카드를 맡긴다', desc: '녹슨 카드 녹 벗기기 · 장당 나사 −20', info: '녹슨 카드는 태엽이 1 더 듭니다.', pay: (s) => 20 * Math.min(s.deck.filter(isRusted).length, Math.floor(s.gold / 20)), blocked: (s) => (!s.deck.some(isRusted) ? '녹슨 카드 없음' : s.gold < 20 ? '나사 20 필요' : null), apply: (s) => {
         const done: string[] = [];
         s.deck = s.deck.map((id) => { if (!isRusted(id) || s.gold < 20) return id; s.gold -= 20; done.push(COMMANDS[id].name); return refineOnce(id); });
         return { text: `통에서 꺼낸 명령서가 다시 빛난다. ${done.join(' · ')}` };
@@ -455,7 +464,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 왕관 제단',
     text: '부서진 제단 위에 녹슨 왕관이 놓여 있다. 그 앞 접시에 나사가 수북하다.',
     choices: [
-      { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹이 갈라진다. 그 아래에서, 무언가가 빛을 발한다.', partPick: true, elite: true }; } },
+      { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', pay: (s) => s.gold, blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹이 갈라진다. 그 아래에서, 무언가가 빛을 발한다.', partPick: true, elite: true }; } },
       { label: '접시를 비운다', desc: '50% 나사 +80 · 50% 둘 HP −30%', info: '나쁜 쪽이면 분대원 둘이 다칩니다.', apply: (s, rng) => {
         if (rng.int(2) === 0) { s.gold += 80; return { slot: 0, text: '아무 일도, 일어나지 않는다. 접시만이 가벼워진다. (나사 +80)' }; }
         const who = someHurt(s, 2, 0.3);
@@ -468,7 +477,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '결투하는 나이트',
     text: '길 한가운데 나이트 하나가 창을 세운다. “너희 중 가장 센 놈. 한 판.”',
     choices: [
-      { label: '결투를 받는다', desc: '60% 생명 +1 · 40% 심장 톱니 금', info: '이기면 나사 +40도 받습니다. 가장 센 분대원이 나갑니다.', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
+      { label: '결투를 받는다', desc: '60% 생명 +1 · 40% 심장 톱니 깨짐', info: '이기면 나사 +40도 받습니다. 가장 센 분대원이 나갑니다.', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
         const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t])[0];
         if (rng.int(10) < 6) {
           s.gold += 40;
@@ -476,7 +485,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           return { slot: 0, text: `${josa(u.name ?? NAMES[u.t], '이')} 창을 쳐낸다. 나이트가 말에서 떨어진다. (생명 +1 · 나사 +40)` };
         }
         s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
-        return { slot: 1, text: `창끝이 ${u.name ?? NAMES[u.t]}의 가슴을 꿰뚫는다. 심장 톱니에 금이 간다.` };
+        return { slot: 1, text: `창끝이 ${u.name ?? NAMES[u.t]}의 가슴을 꿰뚫는다. 심장 톱니 하나가 깨진다. (다시 쓰러지면 폐기)` };
       } },
       leave('비켜 간다'),
     ],

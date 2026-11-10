@@ -46,7 +46,12 @@ export interface RunSave {
   svc?: { refine: number; remove: number };
   /** 이번 출하에서 쓰러뜨린 반장 (각본 — 도금왕의 비꼼 · 거울, D-276) */
   bosses?: string[];
+  /** 이번 막 시작 때의 값 (D-402 막 장부 = 지금 − 이것) — kb · db = 분대원 일련번호 → 처치 · 피해 */
+  actSnap?: ActSnap;
 }
+
+/** 막 시작 때의 값 (D-402 막 장부) */
+export interface ActSnap { won: number; kills: number; gold: number; deck: number; kb: Record<string, number>; db: Record<string, number> }
 
 /** 쌓이는 기록 (출하를 넘어 남는다) */
 export interface Meta {

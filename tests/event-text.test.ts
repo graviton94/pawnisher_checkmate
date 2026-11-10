@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SLICE_EVENTS, SLICE_EVENT_IDS } from '../src/slice/events';
+import { choicePay, SLICE_EVENTS, SLICE_EVENT_IDS } from '../src/slice/events';
 import { EVENT_TALK } from '../src/data/event-talk';
 import { EVENT_OUTCOME } from '../src/data/event-outcome';
 import { textWidth } from '../src/slice/desc';
@@ -38,5 +38,29 @@ describe('사건 창 글 예산 (D-395)', () => {
   it('NPC 한마디(반응 · 망설임 · 결과 · 작별)와 결과 대사는 대사 칸 두 줄 안', () => {
     for (const [id, t] of Object.entries(EVENT_TALK)) for (const l of [...t.react, ...t.idle, t.win, t.lose ?? '', t.bye]) if (l) expect.soft(textWidth(l), `${id}: ${l}`).toBeLessThanOrEqual(B.say);
     for (const [id, m] of Object.entries(EVENT_OUTCOME)) for (const [k, o] of Object.entries(m)) if (o.line) expect.soft(textWidth(o.line), `${id} ${k}: ${o.line}`).toBeLessThanOrEqual(B.say);
+  });
+});
+
+/**
+ * 알고 치르는 나사 (D-402): 나사가 모자라 막히는 선택지는 고르는 순간 치를 값이 있어야 한다 — 화면은 그 값만 꼬리표 숫자로 굴리고,
+ * 확률로 잃거나 얻는 나사만 결과 FX로 보인다. 값은 apply가 실제로 깎는 값과 같아야 한다(확률 결과로 얻는 나사는 빼고 본다).
+ */
+describe('알고 치르는 나사 (D-402)', () => {
+  it('「나사 N 필요」로 막히는 선택지는 치를 값이 있고, 실제로 깎이는 값과 맞는다', async () => {
+    const { Rng } = await import('../src/engine/rng');
+    const { START_COMMANDS } = await import('../src/slice/cards');
+    const mk = () => ({ squad: [{ t: 'K' as const }, { t: 'P' as const, name: 'a', kills: 3 }, { t: 'N' as const, name: 'c' }, { t: 'B' as const, name: 'd', cracked: true }], deck: [...START_COMMANDS, 'order~' as never, 'leap~' as never], refined: [] as never[], gold: 300 });
+    const poor = { squad: mk().squad, deck: mk().deck, refined: [], gold: 0 };
+    for (const id of SLICE_EVENT_IDS)
+      for (const c of SLICE_EVENTS[id].choices) {
+        if (!c.desc) continue;
+        const why = c.blocked?.(poor as never) ?? '';
+        const pay = choicePay(c, mk() as never);
+        if (/나사 \d+/.test(why)) expect.soft(pay, `${id}: ${c.label}`).toBeGreaterThan(0);
+        if (!pay || c.blocked?.(mk() as never)) continue;
+        // 결과가 나사를 더 주지 않는 시드에서는 깎인 값 = pay
+        const drops = [0, 1, 2, 3, 4, 5, 6, 7].map((k) => { const s = mk(); c.apply(s as never, new Rng(k)); return 300 - s.gold; });
+        expect.soft(Math.max(...drops), `${id}: ${c.label} ${drops}`).toBe(pay);
+      }
   });
 });

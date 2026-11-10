@@ -11,7 +11,7 @@ import { coverArt } from './uikit';
 import { FxCanvas, hex, Lights, P, Particles, PAL, Rng, WHITE } from '../view/pxfx';
 import { buildPopupArt, drawPopup, POPUP_MS, type PopupArt } from '../view/popup';
 import { EVENT_FX, type EvFxKind } from '../data/event-talk';
-import { replay, shakeEl, typeIn } from './fx3';
+import { replay, shakeEl } from './fx3';
 import { screwBurst } from './uifx';
 import walletPng from '../assets/ui/chrome/v2/wallet.png';
 
@@ -42,10 +42,8 @@ export interface EvFxCtx {
   /** 창 위 테의 나사 꼬리표 — 나사가 내려앉을 때 값을 바꾼다 */
   purse?: HTMLElement | null;
   goldAfter?: number;
-  /** 시안 ev-c (결과 = 한 장면): 결과 줄이 다 터진 뒤 「넘긴다」 대신 이 손이 무대를 이어 쓴다 — 끝나면 무대를 걷는다 */
-  onStage?: (ov: HTMLElement, L: Layer) => Promise<void>;
-  /** 2차 시안 ev2 (결과 두 박자): 1박은 FX만 — 독백 한 줄도 띄우지 않는다 */
-  quiet?: boolean;
+  /** 결과 1박 머묾 (D-402): 결과 줄이 다 터진 뒤 이만큼 머물고 걷힌다 — 누르면 바로 */
+  hold: number;
 }
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -419,7 +417,7 @@ const burst = (L: Layer, el: HTMLElement, kind: EvFxKind, n?: number): void => {
   if (BAD.has(kind)) shakeEl(L.host.closest<HTMLElement>('.ev-ov'), 2, 180);
 };
 
-/** 터짐 하나를 낱말 · 색을 골라 (시안 — 출하 완료 도장 · MVP 왕관): 계단 고리 + 도트 불똥 + 도트 낱말 → 대상 출렁 */
+/** 터짐 하나를 낱말 · 색을 골라 (막 장부 도장 · 으뜸 왕관 — actclear.ts): 계단 고리 + 도트 불똥 + 도트 낱말 → 대상 출렁 */
 export const burstWord = (L: Layer, el: HTMLElement, text: string, col: number): void => {
   const b = L.at(el);
   const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
@@ -428,15 +426,6 @@ export const burstWord = (L: Layer, el: HTMLElement, text: string, col: number):
   L.ps.burst(cx, cy, 18, [40, 140], P.STAR, [0.3, 0.7], PAL.gold[5], 30);
   if (text) L.addPop(text, col, Math.round(cx), Math.round(b.y + b.h * 0.2));
   replay(el, 'wob');
-};
-
-/** 결과 무대 아래 독백 한 줄 (voice ③ ‘ ’) — 가장 먼저 일어난 일 하나만 */
-const sayLine = (L: Layer, kind: EvFxKind | undefined): void => {
-  const p = L.host.closest('.ev-ov')?.querySelector<HTMLElement>('.ev-ov-line');
-  if (!p || !kind) return;
-  p.hidden = false;
-  replay(p, 'in');
-  void typeIn(p, EVENT_FX.line[kind], 26, undefined, () => p.isConnected);
 };
 
 /** 결과 줄: 장면 위 디더 띠 안에 실제 카드 · 기물 · 지갑 · 부품 상자를 세우고 하나씩 FX */
@@ -496,10 +485,8 @@ const showResults = async (L: Layer, c: EvFxCtx): Promise<void> => {
     items.push({ el, kind: 'part', run: () => chestFx(L, el) });
   }
   replay(row, 'in');
-  if (!c.quiet) sayLine(L, items[0]?.kind);
   await wait(300);
   for (const it of items) { it.el.classList.remove('er-wait'); await it.run(); await wait(260); }
-  await wait(700);
 };
 
 /** 계단 클래스 바꾸기 (애니메이션은 CSS steps) */
@@ -664,7 +651,7 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
  * 잃으면 지갑이 떨다 아가리에서 나사 조각이 쏟아져 떨어지고 → 쪼그라들며 「나사 -N」. 창 위 테 나사 꼬리표도 그때 바뀐다.
  */
 const goldFx = async (L: Layer, el: HTMLElement, gold: number, c: EvFxCtx): Promise<void> => {
-  const setPurse = () => { if (c.purse && c.goldAfter !== undefined) { c.purse.textContent = `나사 ${c.goldAfter}`; replay(c.purse, 'got3'); } };
+  const setPurse = () => { if (c.purse && c.goldAfter !== undefined) { c.purse.innerHTML = `나사 <b>${c.goldAfter}</b>`; replay(c.purse, 'got3'); } };
   await cls(el, 'appear', 240);
   if (gold > 0) {
     const h = L.host.getBoundingClientRect();
@@ -702,16 +689,16 @@ const chestFx = async (L: Layer, el: HTMLElement): Promise<void> => {
 };
 
 /**
- * 사건 연출 (D-260 흐름, 사용자): 선택지를 고르면 사건 창 위에 **오버레이**가 덮이고 연출이 돈다
- * (동전은 저절로, 칸 셋은 하나씩 눌러 · 긁어 연다) → 결과(카드 · 기물 FX) + [확인] → 누르면 디더로 걷히고 대화창으로 돌아간다.
- * wrap = 사건 창(.ev-wrap). 대화창에 장면 그림(컷씬)은 그대로 남는다.
+ * 사건 결과 1박 (D-260 → D-402): 고른 선택지를 정하면 사건 창 전체를 결과 장면이 덮는다(바뀐 것을 강조 — 사용자 승인) →
+ * 확률 장치(동전은 저절로, 칸 셋은 하나씩 눌러 · 긁어 연다) → 실제 카드 · 기물 · 지갑 · 부품 상자 위 FX만(글 · 쪽지 없음) →
+ * 내용만큼 머물고(c.hold, 누르면 바로) 디더로 걷힌다. 무슨 일이었나 · 바뀐 것 요약은 2박(사건 창의 결과 쪽지)이 말한다.
  */
 export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> => {
   wrap.querySelectorAll('.ev-ov').forEach((x) => x.remove());
   const ov = document.createElement('div');
   ov.className = 'ev-ov';
   const [fx, fy] = c.focus ?? [0.5, 0.5];
-  ov.innerHTML = `${c.scene ? `<div class="ev-ov-bg"><img src="${c.scene}" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div>` : ''}<div class="ev-ov-stage"></div><div class="btn-row"><p class="ev-ov-line inset" hidden></p><button type="button" class="btn k-brass go ev-ov-ok" hidden>넘긴다</button></div>`;
+  ov.innerHTML = `${c.scene ? `<div class="ev-ov-bg"><img src="${c.scene}" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div>` : ''}<div class="ev-ov-stage"></div>`;
   wrap.appendChild(ov);
   const bg = ov.querySelector<HTMLImageElement>('.ev-ov-bg > img');
   if (bg) (bg.complete ? coverArt(bg) : bg.addEventListener('load', () => coverArt(bg), { once: true }));
@@ -724,19 +711,8 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   // 결과 줄이 있으면 확률 장치는 걷고 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
   if (c.chance && (c.cards.length || c.crew.length || c.gold || c.part)) L.x.clearRect(0, 0, L.w, L.h);
   await showResults(L, c);
-  if (c.onStage) {
-    await c.onStage(ov, L);
-    ov.classList.add('out');
-    await wait(320);
-    L.stop();
-    ov.remove();
-    return;
-  }
-  const ok = ov.querySelector<HTMLButtonElement>('.ev-ov-ok')!;
-  ok.hidden = false;
-  ok.classList.add('in');
-  await new Promise<void>((r) => ok.addEventListener('click', () => r(), { once: true }));
-  sfx('tap');
+  // 읽을 시간 — 누르면 바로 넘어간다 (줄인 움직임이면 짧게)
+  await Promise.race([new Promise((r) => window.setTimeout(r, calm() ? 400 : c.hold)), new Promise((r) => ov.addEventListener('pointerdown', r, { once: true }))]);
   ov.classList.add('out');
   await wait(320);
   L.stop();

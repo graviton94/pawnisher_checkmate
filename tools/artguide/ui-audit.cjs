@@ -35,7 +35,11 @@ const SCENES = [
   ['event', async (p, A, W, S) => { await A(() => window.sliceApi.event('nightShift')); await W(2600); await S(''); }],
   // 패스 3 (D-395): 사건 창 · 정보 풀이 · 결과 장면 · 결과
   ['event-info', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(2600); await p.click("[data-info='1']"); await W(500); await S(''); }],
-  ['event-result', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(2600); await p.click(".choice[data-slot='0']"); await W(500); await p.click(".choice[data-slot='0']"); await W(4500); await S('fx'); await p.click('.ev-ov-ok'); await W(4500); await S(''); }],
+  ['event-result', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(2600); await p.click(".choice[data-slot='0']"); await W(500); await p.click(".choice[data-slot='0']"); await W(4500); await S('fx'); await W(6000); await S(''); }],
+  // D-402: 사건 창 Z 읽는 길(단추 하나) · 막 장부 · 출하 끝 장부
+  ['p10-event-sel', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(2600); await p.click(".choice[data-slot='1']"); await W(1500); await S(''); }],
+  ['p10-act-clear', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'boss')); await W(1500); await A(() => { const api = window.sliceApi; api.richRun(); api.setAct(0); api.nextAct(); }); await W(7500); await S(''); }],
+  ['p10-run-clear', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(3, 'boss')); await W(1500); await A(() => { const api = window.sliceApi; api.richRun(); api.setAct(2); api.endNow(true); }); await W(7500); await S(''); }],
   ['boss', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'boss')); await W(2500); await S('intro-a'); await W(2500); await S('intro-b'); await W(5000); await S('battle'); }],
   ['endfail', async (p, A, W, S) => { await A(() => window.sliceApi.end(false)); await W(2800); await S(''); }],
   // 패스 1 창 갈래 (D-391)
