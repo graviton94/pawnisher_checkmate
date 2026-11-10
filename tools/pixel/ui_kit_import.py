@@ -1,6 +1,7 @@
 """
 받은 UI 키트 시트(발주 19위 UI-01 ~ UI-04, D-386 · D-388) → 부품마다 진짜 도트 PNG.
   python3 -I tools/pixel/ui_kit_import.py <받은 그림> UI-0N [발주 원본 가로 도트 수]
+  (UI-26 도장은 발주 72가 아니라 받은 그림 도트가 ~14.7px — 114로 준다, D-403)
 하는 일: ① 시트 전체의 숨은 도트 격자를 찾아 칸 하나 = 1px로(snap.py) ② 마젠타 = 투명
 ③ 발주 팔레트 15색으로 맞춤 ④ 붙어 있는 덩어리마다 잘라 이름을 붙여 src/assets/ui/chrome/v2/<이름>.png
 확인용: build-res/order/UI-0N-check.png (부품 ×4 + 이름)
@@ -34,6 +35,15 @@ NAMES = {
     'UI-23': ['badge-num-brass', 'badge-num-crimson'],
     'UI-24': ['ribbon-brass', 'ribbon-crimson'],
     'UI-25': ['slip-paper'],
+    # 22위 (D-402 → D-403): 도장 자국 — 왼쪽 정품 판정 · 오른쪽 반장 격파
+    'UI-26': ['stamp-pass', 'stamp-fall'],
+}
+
+# 받은 뒤 팔레트 바꿔 칠하기 (D-403, 사용자: 「정품 판정은 빨강이 아니어야」 — 승인 · 상은 황동 잉크, 격파는 진홍 그대로)
+RECOLOR = {
+    'stamp-pass': {'#E5262F': '#C89B3C', '#7A1218': '#8A6416', '#FF7B7B': '#F5C542', '#BFB9AD': '#F5C542'},
+    # 잉크 빈 도트가 마젠타와 섞여 회색 종이로 잡힌 것 → 같은 재질의 밝은 단
+    'stamp-fall': {'#BFB9AD': '#FF7B7B'},
 }
 
 
@@ -129,12 +139,20 @@ def main(src, sid, native_w=None):
     names = NAMES[sid]
     print(f'{sid}: 칸 {px:.2f}×{py:.2f}px · 시트 {W}×{H}도트 · 덩어리 {len(boxes)} (이름 {len(names)})')
     # 적 의도 아이콘(UI-07)은 다른 아이콘과 같은 곳, 나머지는 UI 크롬
-    outdir = os.path.join(ROOT, 'public', 'ui', 'icons16') if sid == 'UI-07' else os.path.join(ROOT, 'src', 'assets', 'ui', 'chrome', 'v2')
+    outdir = os.path.join(ROOT, 'public', 'ui', 'icons16') if sid == 'UI-07' else os.path.join(ROOT, 'src', 'assets', 'ui', 'fx') if sid == 'UI-26' else os.path.join(ROOT, 'src', 'assets', 'ui', 'chrome', 'v2')
     os.makedirs(outdir, exist_ok=True)
     parts = []
     for i, b in enumerate(boxes):
         nm = names[i] if i < len(names) else f'{sid}-extra{i}'
         part = small.crop(b)
+        if nm in RECOLOR:
+            sw = {tuple(int(h[i:i + 2], 16) for i in (1, 3, 5)): tuple(int(v[i:i + 2], 16) for i in (1, 3, 5)) for h, v in RECOLOR[nm].items()}
+            q = part.load()
+            for y in range(part.height):
+                for x in range(part.width):
+                    c = q[x, y]
+                    if c[3] and c[:3] in sw:
+                        q[x, y] = (*sw[c[:3]], 255)
         part.save(os.path.join(outdir, f'{nm}.png'))
         parts.append((nm, part))
         print(f'  {nm}: {part.size[0]}×{part.size[1]}')
