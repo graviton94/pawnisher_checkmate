@@ -159,11 +159,11 @@ export const bindPick = (root: HTMLElement, o: { onSelect?: (key: string, el: HT
 export const slotsHtml = (items: PickItem[], bare = false): string =>
   `<div class="scr-items${bare ? ' bare' : ''}">${items.map((it) => `<div class="pick-item"><div class="${bare ? 'card-bare' : 'card-slot'}${it.off ? ' is-off' : ''}" data-slot="${it.key}">${it.html}</div>${it.info !== undefined ? `<div class="slot-info">${it.info}</div>` : ''}</div>`).join('')}</div>`;
 
-/** 카드 폭 (D-372 정본 168 · D-398 하한 150 — 이보다 작으면 두루마리 글이 10px 아래로 내려가 겹친다) */
+/** 카드 폭 (D-372 정본 168 · D-399 하한 150 — 이보다 작으면 두루마리 글이 10px 아래로 내려가 겹친다) */
 export const CARD_W = { max: 168, min: 150 } as const;
 
 /**
- * 받침 크기 맞춤 (D-394 → D-398): 카드는 줄이지 않는다 — 정본 폭(168, 높이가 모자라면 150까지)을 지키고,
+ * 받침 크기 맞춤 (D-394 → D-399): 카드는 줄이지 않는다 — 정본 폭(168, 높이가 모자라면 150까지)을 지키고,
  * 줄에 다 들지 않으면 **가로로 미는 줄(레일)**이 된다. 받침(51×69 도트)은 기기 픽셀 정수배로, 그 안 카드가 150 아래로
  * 줄어야 들어가는 높이(667×375 등)에서는 받침 그림을 접고 카드만 놓는다. 스크롤바 대신 가장자리에 다음 카드가 걸쳐 보인다.
  */
@@ -216,7 +216,7 @@ export const fitSlots = (row: HTMLElement): void => {
 };
 
 /**
- * 레일 밀기 (D-398): 손가락 = 기본 가로 스크롤(관성 그대로), 마우스 = 끌기 · 휠(세로 휠도 가로로).
+ * 레일 밀기 (D-399): 손가락 = 기본 가로 스크롤(관성 그대로), 마우스 = 끌기 · 휠(세로 휠도 가로로).
  * 손을 떼면 가까운 카드 왼쪽 끝에 **계단으로 붙는다** — 지나쳤다 돌아오는 4프레임(예비 → 터짐 → 출렁임, D-216 · 선형 미끄럼 없음).
  * 끌다 뗀 누름은 카드 고르기로 치지 않는다.
  */

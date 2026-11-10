@@ -55,7 +55,7 @@ const SCENES = [
   ['pick-brace', async (p, A, W, S) => { await A(() => window.sliceApi.brace()); await W(1400); await S(''); }],
   ['win-deck', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await S(''); }],
   ['win-remove', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('remove')); await W(1400); await S(''); }],
-  // 패스 6 (D-398): 카드 레일 · 상아 손질 카드 · 덱/분대 레일 · 낮은 화면 손패
+  // 패스 6 (D-399): 카드 레일 · 상아 손질 카드 · 덱/분대 레일 · 낮은 화면 손패
   ['p6-shop-rail', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(120); window.sliceApi.shop(); }); await W(2600); await A(() => { const r = document.querySelector('.scr-items'); r.scrollLeft = 9999; }); await W(800); await S(''); }],
   ['p6-forge', async (p, A, W, S) => { await A(() => window.sliceApi.forge()); await W(2600); await p.click('[data-slot="repair"]'); await W(400); await S(''); }],
   ['p6-deck', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await S(''); }],

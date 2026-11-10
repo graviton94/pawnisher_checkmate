@@ -493,7 +493,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .op-bg .op-glow { position: absolute; right: 12%; bottom: 10%; width: 14px; height: 14px; background: #e8783c; box-shadow: 0 0 0 6px rgba(232, 120, 60, 0.35), 0 0 0 14px rgba(232, 120, 60, 0.12); animation: lamp 1.4s steps(2) infinite; }
 .op-bg[style*="--img"] .op-fog, .op-bg[style*="--img"] .op-glow { display: none; }
 .op-logo { position: absolute; inset: 0 0 34px 0; display: grid; place-content: center; justify-items: center; gap: 8px; transition: right 520ms var(--decel); }
-/* 타이틀 문장 확대는 기기 픽셀 정수배 하나(--logo-k, pxsnap.ts) — 글(op-tag)은 확대하지 않는다 (D-398) */
+/* 타이틀 문장 확대는 기기 픽셀 정수배 하나(--logo-k, pxsnap.ts) — 글(op-tag)은 확대하지 않는다 (D-399) */
 .op-logo > .tfx, .pl-logo > .tfx { zoom: var(--logo-k, 1); }
 .op-tag { margin: 0; font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #c9c0b0; text-shadow: 2px 2px 0 #000; }
 .op-press { position: absolute; left: 0; right: 0; bottom: 30px; margin: 0; text-align: center; font: 400 15px Galmuri14, Galmuri11, sans-serif; letter-spacing: 0.2em; color: #f4d27a; text-shadow: 2px 2px 0 #000; }
@@ -1331,7 +1331,7 @@ body.slice .op-menu > .op-main.brass { margin-right: 32px; }
 body.slice .op-daily { height: 56px; min-height: 56px; }
 body.slice .op-sub { margin-top: 0; height: 48px; }
 body.slice .op-sub .btn { height: 48px; min-height: 48px; }
-/* 메뉴 한 줄 목록 (D-398): 안내서 · 도감 · 프롤로그도 위 칸과 같은 폭 · 48px로 세로에. 낮은 화면(≤ 420)은 층 간격 6 · 위아래 12 · 오늘의 출하 48 —
+/* 메뉴 한 줄 목록 (D-399): 안내서 · 도감 · 프롤로그도 위 칸과 같은 폭 · 48px로 세로에. 낮은 화면(≤ 420)은 층 간격 6 · 위아래 12 · 오늘의 출하 48 —
    이어하기가 있을 때 64 + 64 + 48 + 48 × 3 + 6 × 5 + 24 = 374 (667×375 안) */
 body.slice .op-menu > .op-main.op-minor { height: 48px; min-height: 48px; }
 @media (max-height: 420px) {
@@ -1750,10 +1750,10 @@ body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color
 body.slice .cf.cf.cf.cf > .cf-desc .ln.s10, body.slice .cf.cf.cf.cf > .cf-desc .ln.s10 * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
 
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }
-/* D-398: 카드 150 ~ 166px에서 「쓰러짐」이 1fr 칸(≈ 32px)에 안 들어 「쓰러 / 짐」으로 꺾이고 두루마리 위가 잘렸다 — 칸 폭은 글 폭대로, 사이는 고르게 */
+/* D-399: 카드 150 ~ 166px에서 「쓰러짐」이 1fr 칸(≈ 32px)에 안 들어 「쓰러 / 짐」으로 꺾이고 두루마리 위가 잘렸다 — 칸 폭은 글 폭대로, 사이는 고르게 */
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { grid-auto-columns: auto; justify-content: space-evenly; }
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st i { white-space: nowrap; }
-/* D-398 글자 격자(D-213): 부품 · 손질 카드 두루마리가 창의 갈무리14를 물려받아 「12px 갈무리14 굵게」가 되던 것 → 카드 글은 갈무리11(맞춤 단계 s10은 갈무리9 그대로) ·
+/* D-399 글자 격자(D-213): 부품 · 손질 카드 두루마리가 창의 갈무리14를 물려받아 「12px 갈무리14 굵게」가 되던 것 → 카드 글은 갈무리11(맞춤 단계 s10은 갈무리9 그대로) ·
    분대원 카드 공격 · HP 숫자 15px 갈무리11(격자 밖) → 15px 갈무리14 보통, 세 자리는 12px 갈무리11 굵게 */
 body.slice .cf.cf.cf.cf > .cf-desc, body.slice .cf.cf.cf.cf > .cf-desc * { font-family: Galmuri11, sans-serif; }
 body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3), body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3) * { font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }

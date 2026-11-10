@@ -32,7 +32,7 @@ export const creditsScene = (crew: PieceType[], meta: string): Promise<void> =>
       page.innerHTML = pages[i];
       const say = i === pages.length - 1 ? [{ k: 'n' as const, t: CREDIT_TEXT.record }] : [];
       cutSay(el, say);
-      // 글이 없는 장(제목 · 크레딧)은 빈 띠를 걷는다 — ▼ 자리만 남은 빈 먹 띠 (D-398). 앞 두 장은 저절로 넘어간다
+      // 글이 없는 장(제목 · 크레딧)은 빈 띠를 걷는다 — ▼ 자리만 남은 빈 먹 띠 (D-399). 앞 두 장은 저절로 넘어간다
       el.querySelector<HTMLElement>('.cut-sub')?.style.setProperty('visibility', say.length ? '' : 'hidden');
       replay(page, 'in');
       sfx('tap', 3);

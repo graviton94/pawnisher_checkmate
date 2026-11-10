@@ -193,7 +193,7 @@ export const SCREEN_TEXT = {
 } as const;
 
 /**
- * 손질 카드 (D-398, 사용자: 「정비 · 카드 빼기도 같은 크기 카드로, 색 컨셉은 상아색」): 고물상 · 작업대의 서비스.
+ * 손질 카드 (D-399, 사용자: 「정비 · 카드 빼기도 같은 크기 카드로, 색 컨셉은 상아색」): 고물상 · 작업대의 서비스.
  * 카드 말투(voice ⑥) — 「비장한 한 문장. (효과 — 대상)」. 띠 글 = kind. 수치는 부르는 쪽이 넣는다(src/data/run.ts SHOP · FORGE).
  */
 export const SERVICE_CARDS = {

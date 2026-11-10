@@ -540,10 +540,10 @@ const fitInfo = (kind: 'card' | 'part', id: string): string => {
 /** 선택지 판 하나 (작업대 · 고물상 서비스): 아이콘 16도트 + 이름 15 + 결과 12 */
 const choiceHtml = (o: { key: string; icon?: string; name: string; res: string; off?: boolean; resCls?: string }): string =>
   `<button type="button" class="choice${o.icon ? ' has-ico' : ''}" data-slot="${o.key}"${o.off ? ' disabled' : ''}>${o.icon ? `<i class="ico" style="${iconArt(o.icon)}"></i>` : ''}<span class="choice-name">${o.name}</span><span class="choice-res${o.resCls ? ` ${o.resCls}` : ''}">${o.res}</span></button>`;
-/** 손질 카드 갈래 (D-398) */
+/** 손질 카드 갈래 (D-399) */
 type SvcKey = 'heal' | 'repair' | 'refine' | 'remove' | 'brace';
 /**
- * 손질 카드 얼굴 (D-398): 고물상 · 작업대의 서비스도 카드와 같은 크기 · 같은 틀 — 상아 틀(svc-ivory) · 이름 리본 · 아이콘 창 ·
+ * 손질 카드 얼굴 (D-399): 고물상 · 작업대의 서비스도 카드와 같은 크기 · 같은 틀 — 상아 틀(svc-ivory) · 이름 리본 · 아이콘 창 ·
  * 「손질」 띠 · 두루마리(묘사 / 대상 / 효과). n = 수치(정비 · 수리 %, 보강 생명). 명령 카드와 색 갈래로 구별한다.
  */
 const svcFace = (k: SvcKey, n = 0): string => {
@@ -2039,7 +2039,7 @@ const shopScreen = (): void => {
     return svcLine(kind as SvcKey, healPct);
   };
   /**
-   * 진열대 (D-398): 카드 · 부품 · 부적 · 손질(상아 카드)이 모두 같은 크기 카드로 한 줄 — 넘치면 가로로 민다.
+   * 진열대 (D-399): 카드 · 부품 · 부적 · 손질(상아 카드)이 모두 같은 크기 카드로 한 줄 — 넘치면 가로로 민다.
    * 가격 꼬리표는 카드 오른쪽 위 모서리(모자라면 · 팔림 = 진홍), 카드 아래 한 줄은 덱 맞물림.
    */
   const render = (): void => {
@@ -2138,7 +2138,7 @@ const forgeScreen = (): void => {
   if (forgeFinal) squad = squad.map((u) => ({ ...u, hp: crewMaxHp(u) }));
   // 최종 정비 (각본 S5): 외눈 정비공의 마지막 말
   if (forgeFinal) window.setTimeout(() => toast(GILDED_STORY.forge.map((l) => `${l.who} “${l.t}”`).join(' '), 4200), 600);
-  // 손질 카드 넷 (D-398): 고물상과 같은 상아 카드 한 줄 — 바탕은 정비공 그림(덮기 + 디더), 넘치면 가로로 민다
+  // 손질 카드 넷 (D-399): 고물상과 같은 상아 카드 한 줄 — 바탕은 정비공 그림(덮기 + 디더), 넘치면 가로로 민다
   const repairPct = Math.round(FORGE.repairPct * 100);
   const keys: SvcKey[] = ['refine', 'remove', 'repair', ...(squad.some((u) => u.t !== 'K') ? (['brace'] as const) : [])];
   const items: PickItem[] = keys.map((k) => ({ key: k, html: svcFace(k, k === 'repair' ? repairPct : k === 'brace' ? FORGE.braceDoors : 0) }));
@@ -2693,7 +2693,7 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
   const counts = new Map<CommandId, number>();
   for (const id of deck) counts.set(id, (counts.get(id) ?? 0) + 1);
   const ids = [...counts.keys()].sort((x, y) => order.indexOf(COMMANDS[x].axis) - order.indexOf(COMMANDS[y].axis) || COMMANDS[x].cost - COMMANDS[y].cost);
-  // 덱 보기 · 카드 빼기 (D-394 → D-398): 창 안 격자는 667×375에서 카드가 104px로 줄어 글이 깨졌다 —
+  // 덱 보기 · 카드 빼기 (D-394 → D-399): 창 안 격자는 667×375에서 카드가 104px로 줄어 글이 깨졌다 —
   // 고르기 화면과 같은 카드 레일(정본 168 · 하한 150, 넘치면 가로로 민다) · 장수는 카드 위 꼬리표 「×3」 · 전체 장수는 명패 옆 꼬리표
   const items: PickItem[] = ids.map((id) => ({ key: id, html: `${cardFace(id, 'tabindex="-1"')}${(counts.get(id) ?? 1) > 1 ? `<span class="tag">×${counts.get(id)}</span>` : ''}` }));
   const count = `<span class="tag">${deck.length}장</span>`;
@@ -2807,7 +2807,7 @@ const deathRites = async (): Promise<void> => {
 
 /** 분대 보기: 이름 · 시리얼 · 기벽 · 처치 · 흉터 · 폐기 원부 (이름 바꾸기는 뺐다 — 사용자 D-263) */
 const crewView = (): void => {
-  // 분대 (D-394 → D-398): 카드를 줄이지 않는다 — 고르기 화면과 같은 카드 레일(168 · 하한 150) · 명패 옆 인원 꼬리표 · [닫는다 | 도감]
+  // 분대 (D-394 → D-399): 카드를 줄이지 않는다 — 고르기 화면과 같은 카드 레일(168 · 하한 150) · 명패 옆 인원 꼬리표 · [닫는다 | 도감]
   const el = pickScreen({
     title: SCREEN_TEXT.crew,
     tag: `<span class="tag">${squad.length}명</span>`,

@@ -250,7 +250,7 @@
 :is(.scr-pick, .scr-place, .win) .card-bare.is-off > .cf { filter: grayscale(1) brightness(0.55); }
 :is(.scr-pick, .scr-place, .win) .card-bare > .tag { position: absolute; z-index: 6; top: calc(var(--px) * -2); right: calc(var(--px) * -2); }
 
-/* ---------- 레일 (D-398, 사용자: 「카드를 원래 크기로 — 줄이지 말고 가로로 밀어」) ----------
+/* ---------- 레일 (D-399, 사용자: 「카드를 원래 크기로 — 줄이지 말고 가로로 밀어」) ----------
    uikit.fitSlots: 카드 정본 168(높이가 모자라면 150까지) · 다 들면 가운데 한 줄, 넘치면 .is-rail = 가로로 민다.
    줄은 화면 끝까지 걸쳐(좌우 −G) 오른쪽 끝에 다음 카드가 잘려 보인다(스크롤바 없음). 붙기는 uikit.bindRail 계단. */
 :is(.scr-pick, .scr-place.scr-backdrop) .scr-items { position: relative; box-sizing: border-box; margin: 0 calc(-1 * var(--G)); padding: calc(var(--px) * 4) var(--G) 0; }
@@ -261,7 +261,7 @@
 :is(.scr-pick, .scr-place) .scr-items.no-slot .card-slot { --card-w: inherit; width: auto; height: auto; padding: 0; background: none; }
 :is(.scr-pick, .scr-place) .scr-items.no-slot .card-slot.is-sel > .cf { transform: translateY(calc(var(--px) * -2)); outline: calc(var(--px) * 1) solid var(--t-ally); outline-offset: calc(var(--px) * 1); animation: none; }
 :is(.scr-pick, .scr-place) .scr-items.no-slot .slot-info { max-width: var(--card-w); }
-/* 상아 손질 카드 (D-398): 부품 틀을 팔레트로 색만 바꾼 svc-ivory.png (tools/pixel/card_ivory.py) — 명령 카드와 다른 갈래 */
+/* 상아 손질 카드 (D-399): 부품 틀을 팔레트로 색만 바꾼 svc-ivory.png (tools/pixel/card_ivory.py) — 명령 카드와 다른 갈래 */
 body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc-ivory.png'); }
 
 /* 장소: 왼쪽 장면 그림 40%(액자 · 비율 그대로 정수배로 덮기 · 초점) · 오른쪽 일 */
@@ -436,7 +436,7 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 :is(.win, .scr-pick, .scr-place, .kit) .choice.has-ico > .ico { grid-row: 1 / span 2; align-self: center; width: calc(var(--px) * 16); height: calc(var(--px) * 16); margin: 0; image-rendering: pixelated; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res.up { color: var(--t-gold); }
 :is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res.down { color: var(--t-loss); }
-/* 고물상 · 작업대 (D-398): 바탕형 — 머리 줄(명패 · 지갑) · 카드 레일 · 단추 줄(가운데 = 고른 것 풀이 12px 두 줄) */
+/* 고물상 · 작업대 (D-399): 바탕형 — 머리 줄(명패 · 지갑) · 카드 레일 · 단추 줄(가운데 = 고른 것 풀이 12px 두 줄) */
 .scr-place.scr-backdrop > .scr-work > .scr-items { flex: 1 1 0; }
 .scr-place:is(.scr-shop, .scr-forge) > .scr-work > .win-head > :is(.wallet, .tag) { margin-left: auto; }
 .scr-place .btn-row > .mid > .shop-say { margin: 0; max-height: 36px; overflow: hidden; text-align: center; white-space: normal; color: var(--t-body); }
@@ -452,7 +452,7 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .win .crew-row > .cf { flex: none; margin: 0; }
 /* 결과 장면: 수치 넷(30px 숫자 + 12 이름) · 분대 칩 · 새로 열림 꼬리표 */
 .scr-place.scr-result .scr-work > p { margin: 0; }
-/* 결과 내용 묶음은 명패와 단추 줄 사이 가운데에 (D-398 — 큰 화면에서 아래 절반이 비던 것). 높은 화면은 묶음 사이 16 · 수치 45 */
+/* 결과 내용 묶음은 명패와 단추 줄 사이 가운데에 (D-399 — 큰 화면에서 아래 절반이 비던 것). 높은 화면은 묶음 사이 16 · 수치 45 */
 .scr-place.scr-result > .scr-work > .win-head + * { margin-top: auto; }
 @media (min-height: 480px) {
   .scr-place.scr-result > .scr-work { gap: var(--s3); }
@@ -628,7 +628,7 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
 /* 첫 대국 코치: 카드를 고를 차례면 쓸 수 있는 판에 황동 1도트 테가 계단으로 깜빡 */
 #hand.hint > .hc:not(.off) { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); animation: kblink 1s steps(2, jump-none) infinite; }
 #hand.dealing > .hc { visibility: hidden; }
-/* 낮은 화면(≤ 400, 667×375 · 683×384): 손패 다섯 장이 스크롤 없이 들게 (D-398) — 아래 단추 줄 48 · 판 사이 1px ·
+/* 낮은 화면(≤ 400, 667×375 · 683×384): 손패 다섯 장이 스크롤 없이 들게 (D-399) — 아래 단추 줄 48 · 판 사이 1px ·
    그림 12도트 · 두 줄을 12px 줄높이로: 판 하나 48 × 5 + 4 = 244 ≤ 375 − 6 − 64 − 48 − 12 = 245 */
 @media (max-height: 400px) {
   body.slice.lay-f { --gBot: 48px; }
