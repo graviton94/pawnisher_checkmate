@@ -28,6 +28,12 @@ NAMES = {
     'UI-05': ['tab-iron-up', 'tab-brass-sel'],
     'UI-07': ['intent-attack', 'intent-approach', 'intent-guard', 'intent-blast', 'intent-shield', 'intent-rest'],
     'UI-08': ['sub-cap-l', 'sub-cap-r'],
+    # 21위 (D-398 → D-399): 꼬리표 말고 다른 바탕 5종
+    'UI-21': ['boss-plate', 'boss-plate-2', 'boss-stat'],
+    'UI-22': ['stat-plate', 'stat-sep'],
+    'UI-23': ['badge-num-brass', 'badge-num-crimson'],
+    'UI-24': ['ribbon-brass', 'ribbon-crimson'],
+    'UI-25': ['slip-paper'],
 }
 
 
