@@ -852,7 +852,17 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .mnd.now.chosen { transform: translate(-50%, calc(-50% - var(--px) * 3)); }
 .mapfx .mnd.now.chosen::before { animation: cogturn 400ms steps(4) infinite; }
 /* 아래 미리보기 띠 (D-388): 움푹 칸 하나 — 안내 + 범례 / 고르면 아이콘 · 이름 24 · 꼬리표 ≤ 3 · 적 명단 · 「진입」 */
-.mapfx .peek-bar.inset { display: flex; align-items: center; gap: var(--s3); min-height: 72px; padding: var(--s1) var(--s2) var(--s1) var(--s3); }
+/* 띠 높이 둘 (D-401, 사용자: 「범례가 한 줄인데 띠가 너무 높다」): 범례만 = 낮은 띠(단추 없음 — 48 누름 칸이 필요 없다) · 고르면 높은 띠(「진입」 48).
+   지도 칸은 높은 띠 몫을 늘 비워 둔다 — 띠가 자라도 노드가 움직이지 않는다(고른 노드를 다시 누르는 자리가 그대로). 띠는 아래에 붙어 계단으로 자란다 */
+.mapfx { --peek-lo: calc(var(--k-inset) * var(--px) * 2 + 20px); --peek-hi: calc(var(--k-inset) * var(--px) * 2 + 62px); grid-template-rows: auto minmax(0, 1fr) var(--peek-hi); }
+.mapfx .peek-bar.inset { align-self: end; display: flex; align-items: center; gap: var(--s3); height: var(--peek-lo); overflow: hidden; padding: 0 var(--s2) 0 var(--s3); }
+.mapfx .peek-bar.inset.open { height: var(--peek-hi); animation: pbOpen 200ms both; }
+@keyframes pbOpen {
+  0% { height: var(--peek-lo); animation-timing-function: steps(1, end); }
+  30% { height: calc(var(--peek-hi) - var(--px) * 10); animation-timing-function: steps(1, end); }
+  60% { height: calc(var(--peek-hi) + var(--px) * 3); animation-timing-function: steps(1, end); }
+  100% { height: var(--peek-hi); }
+}
 /* 범례 = 한 줄 가운데 (D-400): 667 폭에서도 접히지 않게 nowrap · 칸 사이 s2 */
 .mapfx .map-legend { display: flex; flex-wrap: nowrap; justify-content: center; gap: var(--s2); margin: 0 auto; padding: 0; list-style: none; }
 .mapfx .map-legend li { display: flex; align-items: center; gap: var(--s1); white-space: nowrap; color: #c9c1b4; font: 400 12px/18px Galmuri11, sans-serif; }
@@ -867,7 +877,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .peek-bar .pb-foe i { color: var(--t-body); font: 700 12px/1 Galmuri11, sans-serif; font-style: normal; }
 .mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
 @media (max-width: 760px) { .mapfx .peek-bar .pb-foes { display: none; } }
-@media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd.now.chosen::before, .mapfx .map-body line { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd.now.chosen::before, .mapfx .map-body line, .mapfx .peek-bar.inset.open { animation: none; } }
 
 /* ===================== 21위 부품 (D-398 발주 → D-400 받음 · tools/pixel/ui_kit_refine21.py) =====================
  * 꼬리표(tag)는 값을 치르는 것(가격 · 판돈 · 나사 보상)만. 역할마다 바탕을 따로:

@@ -1554,7 +1554,7 @@ const enterNode = (n: MapNode): void => {
  * 출하 지도 (D-169, 슬더스식 전체 화면): 막 전체가 왼쪽 → 오른쪽으로 펼쳐진다. 줄마다 노드(황동 메달), 지나온 길은 금빛 선.
  * 패스 5 (D-397, 보고서 2026-11-09f 2-1): 바닥은 불투명(막 그림 덮기 + 2×2 먹 디더 — 뒤 전투가 비치지 않는다) ·
  * 머리 줄 = 막 꼬리표 + 이름 24 · 오른쪽 지갑(나사) + 꼬리표(분대 · 덱 · 부품 · 부적) ·
- * 갈 수 있는 곳은 멈춘 황동 톱니 테, 고른 하나만 돈다 · 아래 미리보기 띠 `.peek-bar`(움푹 칸, 높이 72) = 아이콘 · 이름 24 · 꼬리표 ≤ 3 · 적 명단 · 황동 「진입」 112×48.
+ * 갈 수 있는 곳은 멈춘 황동 톱니 테, 고른 하나만 돈다 · 아래 미리보기 띠 `.peek-bar`(움푹 칸 — 범례만이면 낮은 띠, 고르면 높은 띠 · D-401) = 아이콘 · 이름 24 · 꼬리표 ≤ 3 · 적 명단 · 황동 「진입」 112×48.
  * 아무것도 고르지 않았을 때 그 띠는 안내 한 줄 + 범례. 고정 노드(입문 · 연마)는 지도 없이 바로.
  */
 /** 지나온 길: 막마다 줄 → 고른 노드 번호 */
@@ -1652,6 +1652,8 @@ const showMap = (): void => {
         ? [`<span class="ribbon r-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="ribbon">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name).filter(Boolean).slice(0, 1).map((t) => `<span class="ribbon">${t}</span>`)].slice(0, 3).join('')
         : '';
       const name = `${NODE_NAMES[nd.kind]}${def?.foe ? ` · ${def.foe}` : def?.boss && def.bossRule ? ` · ${BOSS_RULES[def.bossRule].name}` : ''}`;
+      // 낮은 범례 띠 → 높은 미리보기 띠는 처음 고를 때 한 번만 계단으로 자란다 (D-401)
+      info.classList.add('open');
       info.innerHTML = `<i class="ico pb-ico" style="${iconArt(NODE_ICONS[nd.kind])}"></i><div class="pb-txt"><b class="pb-name">${name}</b>${def ? `<span class="pb-tags">${tags}</span>` : `<span class="pb-desc">${NODE_DESC[nd.kind]}</span>`}</div>${foes}<button class="btn k-brass pb-go" type="button" data-go>${MAP_TEXT.go}</button>`;
       info.querySelector('[data-go]')!.addEventListener('click', () => go(k));
     }),
