@@ -679,12 +679,12 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
   position: relative; flex: none; display: flex; flex-direction: column; align-items: stretch; box-sizing: border-box; width: 100%; min-width: 0;
   margin: 0; padding: 0 0 0 calc(var(--px) * 1); text-align: left; color: var(--t-body); background: none; box-shadow: none; filter: none; cursor: pointer;
   border-style: solid; border-width: calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16);
-  border-image: url('../assets/ui/chrome/v2/choice-up.png') var(--k-choice) fill / calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16) / 0 stretch;
+  border-image: url('../assets/ui/chrome/v2/hand-choice-up.png') var(--k-choice) fill / calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16) / 0 stretch;
   image-rendering: pixelated; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
 }
-#hand > .hc:is(:active, .down):not(.off) { border-image-source: url('../assets/ui/chrome/v2/choice-down.png'); padding-top: calc(var(--px) * 1); }
-#hand > .hc.armed { border-image-source: url('../assets/ui/chrome/v2/choice-sel.png'); }
-#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/choice-off.png'); }
+#hand > .hc:is(:active, .down):not(.off) { border-image-source: url('../assets/ui/chrome/v2/hand-choice-down.png'); padding-top: calc(var(--px) * 1); }
+#hand > .hc.armed { border-image-source: url('../assets/ui/chrome/v2/hand-choice-sel.png'); }
+#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/hand-choice-off.png'); }
 #hand > .hc .hc-head { position: relative; display: grid; grid-template-columns: calc(var(--px) * 16) minmax(0, 1fr); column-gap: var(--s1); align-items: center; min-height: calc(var(--px) * 16); }
 /* 비용 톱니 = 황동 탭 위. 탭 황동은 choice 24줄 중 4~17줄(아래 18~19줄은 먹 받침)이라 판 가운데보다 1도트 위 → 톱니(11도트)를 머리 줄 가운데에서 7도트 위에 놓아 도트 격자에 맞춘다(옛 자리보다 1.5도트 위, D-398) */
 #hand > .hc .costgear { position: absolute; left: calc(var(--px) * -14); top: calc(50% - var(--px) * 7 + 1px); display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }

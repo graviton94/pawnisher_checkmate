@@ -63,6 +63,7 @@ BOSS_FRAMES = [('boss-600.jpg', '0.6초 · 모으기와 조명'), ('boss-1000.jp
                ('boss-1700.jpg', '1.7초 · 기물이 조각으로 부서짐'), ('boss-2200.jpg', '2.2초 · 파편 · 불씨'), ('boss-2900.jpg', '2.9초 · 여운')]
 
 SCREENS = [
+    ('손패 비용 대비 · UI 마감 (D-430)', [('hand-charcoal.png', '금색 비용 태엽·흰 숫자 유지 — 경첩만 차콜, 다른 선택지 원본 유지')]),
     ('네 대표 화면 · 능력치 헤더 (D-429)', [('battle-pc.png', 'PC 1280×720 — 6×6 보드 240→480px'), ('unit-info-large.png', '아이콘 오른쪽 상단에 이름, 아래 수치는 전부 왼쪽 정렬'), ('unit-info-large-667x375.png', '작은 모바일 667×375'), ('unit-info-large-1024x768.png', '태블릿 1024×768 — PC와 같은 큰 칸 목표'), ('unit-info-large-1280x720.png', 'PC 1280×720 — 큰 수치와 헤더')]),
     ('원본 전체 보존 · 문구 보정 (D-428)', [('whole-ui-originals.png', '원본 프레임 전체 픽셀화 — 상징·핀 분리/합성 없음, 원래 색 유지'), ('unit-info-large.png', '체력·방열판·공격·방어 원본 네 칸 + 세 줄 능력'), ('unit-info-large-1280x720.png', 'PC 1280×720 — 폰 위 해골 대신 붉은 X와 피해 수치'), ('clear-ledger.png', '금색 핀은 원본 종이 프레임 안에 유지'), ('battle-revised.png', '폰 위 해골 대신 위험 X — 왼쪽 비용 태엽만 1px 아래')]),
     ('본편 3장 · 선택 도전 (D-425)', [('campaign-menu-locked.png', '본편/도전 분리 — 본편 세 장 뒤 도전 개방'), ('campaign-chapters.png', '서막·둘째 장·셋째 장 — 순차 진행과 다시 도전'), ('campaign-choice-1.png', '서막의 유혹 — 돌아보기는 실제 동료를 보는 행동'), ('campaign-choice-3.png', '셋째 장 — 왕의 몸/함께 출하의 유효한 두 선택'), ('campaign-ending-3.png', '함께 출하 — 실제 생존자 이름, 정품 판정이 아님'), ('campaign-menu-challenge.png', '본편 뒤 선택 도전 — 현재 기존 곡선의 11개 난이도'), ('campaign-difficulty.png', '누적 규정·별도 도전 기록'), ('campaign-child-dialogue.png', '부모의 반품/아이의 환대 — S-01 수령 원화 — 비율·정수 도트 보존'), ('campaign-legacy-resume-667x375.png', '옛 저장은 도전으로 이어가기 — 새 본편은 미관람으로 분리')]),
