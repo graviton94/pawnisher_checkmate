@@ -8,6 +8,12 @@ module.exports = async (pg, shot) => {
     assert.equal(await popup.count(), 1);
     const text = await popup.innerText();
     for (const label of ['적 기물', '체력', '공격', '방어']) assert(text.includes(label));
+    const art = (name) => require('node:fs').readFileSync(`src/assets/ui/chrome/v2/${name}.png`).toString('base64');
+    assert((await popup.evaluate((e) => getComputedStyle(e).borderImageSource)).includes(art('unit-inspect-panel')));
+    for (const [selector, art] of [['.unit-life', 'unit-stat-hp'], ['.unit-attack', 'unit-stat-attack'], ['.unit-defense', 'unit-stat-defense']]) {
+      const expected = require('node:fs').readFileSync(`src/assets/ui/chrome/v2/${art}.png`).toString('base64');
+      assert((await popup.locator(selector).evaluate((e) => getComputedStyle(e).borderImageSource)).includes(expected));
+    }
     const bad = await popup.evaluate((root) => {
       const r = root.getBoundingClientRect();
       const issues = [];
@@ -28,8 +34,9 @@ module.exports = async (pg, shot) => {
     });
     assert.deepEqual(bad, []);
     await shot(name);
-    await pg.touchscreen.tap(450, 80);
-    await pg.waitForTimeout(200);
+    await pg.touchscreen.tap(4, 4);
+    await pg.waitForTimeout(260);
+    assert.equal(await popup.count(), 0);
   };
   await pg.evaluate(() => window.sliceApi.startAt(1, 'battle'));
   await pg.waitForTimeout(400);

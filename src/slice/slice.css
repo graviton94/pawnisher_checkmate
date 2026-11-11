@@ -522,6 +522,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .pl-stage.in { animation: plin 380ms var(--decel) both; }
 @keyframes plin { 0% { filter: brightness(2.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 7.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 15.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 22.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 30% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { filter: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
 .pl-stage > .pl-img, .pl-stage > .pl-standin { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; image-rendering: pixelated; }
+.pl-stage > .pl-img.pl-pixel { inset: auto; max-width: none; }
 /* 카메라 (테스터 피드백): 장면 속 요소에 맞춰 — 컨베이어는 옆으로, 집게 · 왕관은 다가가고, 전광판은 물러나고, 상자는 내려다본다 */
 .pl-stage[class*="cam-"] > * { transform-origin: var(--at, 50% 50%); animation: var(--cam) 14s cubic-bezier(0.45, 0, 0.55, 1) both; will-change: transform; }
 .pl-stage.cam-pan-r { --cam: campr; } .pl-stage.cam-pan-l { --cam: campl; } .pl-stage.cam-tilt-d { --cam: camtd; } .pl-stage.cam-tilt-u { --cam: camtu; }

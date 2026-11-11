@@ -290,7 +290,8 @@ const movePeek = (pos: Pos): boolean => {
 };
 /**
  * 기물 정보 엿보기 (길게 누름, 패스 4 D-396): 비모달 S 창 — 내 편이면 분대원 카드를 왼쪽 레일 위에, 적이면 이름 · 수치 · 특성을 오른쪽 레일 위에.
- * 판을 가리지 않는다. 아무 데나 누르면 닫힌다. (?debug sliceApi.peekAt(pos)가 같은 길로 연다 — Phaser 길게 누름은 자동 조작이 닿지 않는다)
+ * 판 옆 너비가 256px 미만이면 S 정보판으로 펼친다. 아무 데나 누르면 닫힌다.
+ * (?debug sliceApi.peekAt(pos)가 같은 길로 연다 — Phaser 길게 누름은 자동 조작이 닿지 않는다)
  */
 const pieceInfo = (pos: Pos): void => {
   const p = b.s.pieces.find((q) => q.x === pos.x && q.y === pos.y);
@@ -305,15 +306,17 @@ const pieceInfo = (pos: Pos): void => {
   }
   const side = p.side === 0 ? 'left' : 'right';
   const maxW = offBoardW(side);
+  // 능력 본문 약 200px + 고정 테·안쪽 여백. 부족하면 S 폭으로 읽는 동안 펼친다.
+  const expanded = maxW < 256;
   const abilities = p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b));
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
   const el = infoPeek({
-    cls: `unit-peek${p.side === 0 ? ' unit-ally' : ''}`,
+    cls: `unit-peek${expanded ? ' unit-peek-expanded' : ''}${p.side === 0 ? ' unit-ally' : ''}`,
     key,
     side,
-    maxW: Math.min(352, maxW),
-    head: `<div class="frame-portrait">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${liveIntents(b).some((it) => it.pieceId === p.id) ? '행동 예정' : '대기'}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
-    body: `<div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset"><span>공격</span><strong>${p.atk}</strong></div><div class="inset"><span>방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
+    maxW: expanded ? 352 : Math.min(352, maxW),
+    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${liveIntents(b).some((it) => it.pieceId === p.id) ? '행동 예정' : '대기'}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
+    body: `<div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset unit-attack"><span>공격</span><strong>${p.atk}</strong></div><div class="inset unit-defense"><span>방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
   bindAbilities(el, abilities);
 };

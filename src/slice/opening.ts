@@ -8,7 +8,7 @@ import { PROLOGUE, type Cut, type Line } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
-import { cutChromeHtml, cutFill, cutLineHtml, cutSay, type WinOpts } from './uikit';
+import { clearBand, coverArt, cutChromeHtml, cutFill, cutLineHtml, cutSay, type WinOpts } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -42,6 +42,7 @@ export const crestHtml = (): string =>
  */
 export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown } = {}): Promise<void> =>
   new Promise((resolve) => {
+    clearBand();
     const el = document.createElement('div');
     el.className = 'prologue kit';
     el.innerHTML = `<div class="pl-stage"></div><i class="pl-flash"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}`;
@@ -93,7 +94,12 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         if (my !== token) return;
         const pick = !c.standIn && (await hasImg(`scenes/${c.img}.png`)) ? c.img : !c.standIn && c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
         const src = `scenes/${pick}.png`;
-        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 비율 그대로 덮고 위 30%에 초점 (D-388)
+        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}${c.pixelCover ? ' pl-pixel' : ''}" src="${src}" alt=""${c.pixelCover ? ' data-cover' : ''}>` : standIn(c); // 정사각 초상(반장 · 도금왕)은 비율 그대로 덮고 위 30%에 초점 (D-388)
+        const pixel = stage.querySelector<HTMLImageElement>('img[data-cover]');
+        if (pixel) {
+          if (pixel.complete) coverArt(pixel);
+          else pixel.addEventListener('load', () => coverArt(pixel), { once: true });
+        }
         if (my !== token) return;
         // 카메라: 장면마다 정한 방향 (없으면 다가감 · 물러남을 번갈아)
         const cam = c.img.startsWith('boss-') ? 'still' : c.cam ?? (pg.c % 2 ? 'out' : 'in');

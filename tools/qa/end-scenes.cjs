@@ -87,6 +87,10 @@ module.exports = async (pg, shot) => {
   assert((await pg.locator('.cr-page').innerText()).includes('당신의 하루 스튜디오'));
   await pg.locator('[data-cr-next]').tap();
   await pg.locator('.clr').waitFor({ state: 'visible' }); await wait(1600);
+  const ledgerArt = require('node:fs').readFileSync('src/assets/ui/chrome/v2/ledger-slip.png').toString('base64');
+  assert((await pg.locator('.clr-cert').evaluate((e) => getComputedStyle(e).borderImageSource)).includes(ledgerArt));
+  assert.equal(await pg.locator('.clr-cert').evaluate((e) => getComputedStyle(e, '::before').display), 'none');
+  assert.equal(await pg.locator('.state-band').count(), 0);
   await check('.clr'); await shot('clear-ledger');
   assert.deepEqual(errors, [], '브라우저 오류/경고');
   console.log('PASS end-scenes: events, story choices 1/2/3, credits, result ledger');

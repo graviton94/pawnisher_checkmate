@@ -1,6 +1,11 @@
 const assert = require('node:assert/strict');
 
 module.exports = async (pg, shot) => {
+  const dismiss = async () => {
+    // 작은 폰의 펼친 S 검사판에도 항상 바깥인 안전 여백을 누른다.
+    await pg.touchscreen.tap(4, 4); await pg.waitForTimeout(260);
+    assert.equal(await pg.locator('.k-peek').count(), 0);
+  };
   const check = async (name, selector = '.unit-peek') => {
     const result = await pg.locator(selector).evaluate((root) => {
       const r = root.getBoundingClientRect();
@@ -39,7 +44,7 @@ module.exports = async (pg, shot) => {
       assert.equal((await check(`${rule}-wrap`)).name, first.name);
     }
     await shot(`ability-${rule}`);
-    await pg.touchscreen.tap(450, 80); await pg.waitForTimeout(200);
+    await dismiss();
   }
   // 같은 폰의 자폭·공격 강화가 모두 남는지 확인한다.
   await pg.evaluate(() => { window.sliceApi.startAt(2, 'battle'); const b = window.slice(); b.traits = ['blastPawn', 'pawnDrill']; b.blastPawns = true; });
@@ -50,7 +55,7 @@ module.exports = async (pg, shot) => {
   await pg.locator('.unit-peek [data-ability-next]').tap();
   assert.equal((await check('compound-2')).name, '[송곳 폰]');
   await shot('ability-compound');
-  await pg.touchscreen.tap(450, 80); await pg.waitForTimeout(200);
+  await dismiss();
   await pg.evaluate(() => window.sliceApi.bossOf('inspect', 1));
   await pg.waitForTimeout(250);
   await pg.tap('#boss'); await pg.waitForTimeout(350);
@@ -65,7 +70,7 @@ module.exports = async (pg, shot) => {
     await pg.locator('.part-detail [data-ability-next]').tap();
     assert.notEqual((await check(`${part}-2`, '.part-detail')).name, name);
     await shot(`ability-${part}`);
-    await pg.touchscreen.tap(450, 80); await pg.waitForTimeout(200);
+    await dismiss();
   }
   console.log('Abilities: seven bosses, every page, compound pawn, rules/parts, three lines, tap persistence, bounds PASS');
 };

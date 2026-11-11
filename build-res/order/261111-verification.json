@@ -1,0 +1,19 @@
+{
+  "archive": "261111.zip",
+  "originalBytesPreserved": {
+    "UI-31-source.png": true,
+    "UI-32-source.png": true,
+    "UI-33-source.png": true,
+    "S-01-epilogue-hands-source.png": true
+  },
+  "regeneratedRgbaMatches": {
+    "src/assets/ui/chrome/v2/unit-inspect-panel.png": true,
+    "src/assets/ui/chrome/v2/unit-stat-hp.png": true,
+    "src/assets/ui/chrome/v2/unit-stat-shield.png": true,
+    "src/assets/ui/chrome/v2/unit-shield-symbol.png": true,
+    "src/assets/ui/chrome/v2/unit-stat-attack.png": true,
+    "src/assets/ui/chrome/v2/unit-stat-defense.png": true,
+    "src/assets/ui/chrome/v2/ledger-slip.png": true,
+    "public/scenes/epilogue-hands.png": true
+  }
+}

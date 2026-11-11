@@ -110,6 +110,8 @@ export const closeWin = (): void => {
 };
 /** 전체 장면의 입력·키보드 초점을 배경 UI에서 격리한다. 닫을 때 반환 함수를 호출한다. */
 export const sceneFocus = (el: HTMLElement): (() => void) => {
+  clearBand();
+  closePeek();
   const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const siblings = [...document.body.children].filter((e): e is HTMLElement => e instanceof HTMLElement && e !== el).map((e) => ({ el: e, inert: e.inert }));
   siblings.forEach(({ el: node }) => { node.inert = true; });
@@ -464,6 +466,8 @@ const bandNext = (): void => {
  * urgent = 지금 떠 있는 토스트를 바로 걷고 이것부터 (턴 띠 · 턴 끝 경고).
  */
 export const stateBand = (text: string, kind: BandKind = 'toast', o: { ms?: number; icon?: string; urgent?: boolean } = {}): void => {
+  // 대국 진입의 지연된 띠가 엔딩·결정 장면 위에 다시 올라오지 않는다. 조작 결과 토스트는 허용한다.
+  if (kind !== 'toast' && document.querySelector('.prologue, .promotion, .credits, .clr')) return;
   if (bandNow?.item.text === text || bandQ.some((q) => q.text === text)) return;
   const ms = o.ms ?? (kind === 'toast' ? Math.max(1200 + 70 * text.length, 1600) : 900);
   const item: BandItem = { text, kind, ms, icon: o.icon ?? '' };
@@ -544,8 +548,12 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
   el.className = `k-peek kit${o.bare ? ' bare' : ' win win-s'}${o.cls ? ` ${o.cls}` : ''}`;
   el.dataset.key = o.key;
   el.innerHTML = o.bare ? o.body : `${o.head ? `<div class="win-head">${o.head}</div>` : ''}${o.body}`;
-  // 판 칸을 덮지 않는 폭까지만 (레일 + 판 옆 빈칸)
-  if (o.maxW && !o.bare) el.style.maxWidth = `${Math.floor(o.maxW)}px`;
+  // 세 줄 능력도 기물 검사표와 같은 최소 읽기 폭을 보장한다(작은 폰의 부품 상세 포함).
+  if (o.maxW && !o.bare) {
+    const expanded = o.maxW < 256 && !!el.querySelector('.ability-block');
+    el.style.maxWidth = `${expanded ? 352 : Math.floor(o.maxW)}px`;
+    el.classList.toggle('peek-expanded', expanded);
+  }
   document.body.appendChild(el);
   const rail = document.getElementById(o.side === 'left' ? 'left' : 'right');
   const board = document.getElementById('board');

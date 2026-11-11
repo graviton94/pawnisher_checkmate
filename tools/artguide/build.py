@@ -63,10 +63,10 @@ BOSS_FRAMES = [('boss-600.jpg', '0.6초 · 모으기와 조명'), ('boss-1000.jp
                ('boss-1700.jpg', '1.7초 · 기물이 조각으로 부서짐'), ('boss-2200.jpg', '2.2초 · 파편 · 불씨'), ('boss-2900.jpg', '2.9초 · 여운')]
 
 SCREENS = [
-    ('본편 3장 · 선택 도전 (D-425)', [('campaign-menu-locked.png', '본편/도전 분리 — 본편 세 장 뒤 도전 개방'), ('campaign-chapters.png', '서막·둘째 장·셋째 장 — 순차 진행과 다시 읽기'), ('campaign-choice-1.png', '서막의 유혹 — 돌아보기는 실제 동료를 보는 행동'), ('campaign-choice-3.png', '셋째 장 — 왕의 몸/함께 출하의 유효한 두 선택'), ('campaign-ending-3.png', '함께 출하 — 실제 생존자 이름, 정품 판정이 아님'), ('campaign-menu-challenge.png', '본편 뒤 선택 도전 — 현재 기존 곡선의 11개 난도'), ('campaign-difficulty.png', '누적 규정·별도 도전 기록'), ('campaign-child-dialogue.png', '부모의 반품/아이의 환대 — S-01 손 원화 전 임시 종이왕 무대'), ('campaign-legacy-resume-667x375.png', '옛 저장은 도전으로 이어가기 — 새 본편은 미관람으로 분리')]),
+    ('본편 3장 · 선택 도전 (D-425)', [('campaign-menu-locked.png', '본편/도전 분리 — 본편 세 장 뒤 도전 개방'), ('campaign-chapters.png', '서막·둘째 장·셋째 장 — 순차 진행과 다시 읽기'), ('campaign-choice-1.png', '서막의 유혹 — 돌아보기는 실제 동료를 보는 행동'), ('campaign-choice-3.png', '셋째 장 — 왕의 몸/함께 출하의 유효한 두 선택'), ('campaign-ending-3.png', '함께 출하 — 실제 생존자 이름, 정품 판정이 아님'), ('campaign-menu-challenge.png', '본편 뒤 선택 도전 — 현재 기존 곡선의 11개 난도'), ('campaign-difficulty.png', '누적 규정·별도 도전 기록'), ('campaign-child-dialogue.png', '부모의 반품/아이의 환대 — S-01 수령 원화 — 비율·정수 도트 보존'), ('campaign-legacy-resume-667x375.png', '옛 저장은 도전으로 이어가기 — 새 본편은 미관람으로 분리')]),
     ('출하 끝 · 승급 결정 (D-424)', [('run-clear.png', '출하 크레딧 — 실제 동료 이름·역할, 아이콘 단체사진 폐기'), ('credits-makers.png', '제작진 — 기존 두 역할, 결과 장부로 이어지는 버튼'), ('campaign-choice-3.png', '왕의 몸 앞에서 — 본편 셋째 장의 실제 선택'), ('campaign-choice-1.png', '서막의 왕위 계승 — 거절이 실패하는 옛 버튼을 폐기'), ('event-info.png', 'NPC 대사를 유지한 별도 효과 쪽지, 이득 초록 · 손실 빨강 · 수치 굵게'), ('event-result.png', '사건 결과 — 바뀐 수치도 득실 색으로'), ('clear-ledger.png', '크레딧 뒤 출하 장부 — 통계 · 해금 · 다음 회차')]),
     ('능력 세 줄 (D-422)', [('ability-inspect.png', '명칭 / 조건·행동 / : 상세 효과 — 복합 능력은 같은 자리에서 넘김'), ('ability-compound.png', '복합 특성 폰 — 자폭·송곳을 생략하지 않고 각각 세 줄로 표시')]),
-    ('기물 검사표 (D-421)', [('unit-info-normal.png', '적 기물 탭 — 초상·소속/예정 행동·체력·공격/방어, 기존 에셋으로 검증'), ('unit-info-large.png', '반장·큰 수·방열판·특성 — 글자 경계와 턴 종료 버튼 가림 검사, UI-31/32 원화 대기')]),
+    ('기물 검사표 (D-426)', [('unit-info-normal.png', '적 기물 탭 — UI-31 검사판 + UI-32 수치 칸, 소속·행동·체력·공격·방어'), ('unit-info-large.png', '반장·큰 수·방열판·특성 — 수령 원화 적용, 글자·턴 종료 경계 검증'), ('unit-info-large-667x375.png', '667×375 — S 352 펼침, 머리 한 줄·가로 수치, 턴 종료 비가림'), ('unit-info-large-740x360.png', '740×360 — 낮은 화면의 큰 수치·세 줄 능력'), ('ability-siegeLatch-667x375.png', '작은 폰의 부품 상세도 S 폭으로 펼쳐 세 줄 조건·효과를 보존')]),
     ('빌드 검증판 (D-420)', [('builds-pick.png', '혼성·나이트·룩 — 동일 분대·전장 비교 선택'), ('builds-rook-preview.png', '갈 칸 길게 누름 — 실행 전 태엽·방열판·적 HP 예측'), ('builds-rook-detail.png', '부품 조건 엿보기 — 기존 아이콘 대체 중, I-14A/B 원본 파일 반입 대기')]),
     ('출하 흐름', [('title.jpg', '타이틀 — 공장 배경 · 정품 폰 도장 · 붉은 사선 · 로고'), ('menu-gears.jpg', '메뉴 — 오른쪽 아래 맞물려 도는 도트 톱니 (D-225)'), ('map1.jpg', '1막 지도 (D-397) — 불투명 바닥(막 표지 덮기 + 2×2 먹 디더) · 머리 줄 막 꼬리표 · 이름 24 · 지갑 + 수치 명판 하나(D-398, 임시 철띠 — UI-22 대기) · 갈 곳은 멈춘 황동 톱니 테 · 아래 움푹 칸에 안내 + 범례'), ('map-boss.jpg', '지도 노드 미리보기 (D-388 · D-397) — 고른 하나만 톱니가 돈다 · 아래 띠 = 아이콘 · 이름 24 · 꼬리표 ≤ 3(적 수 · 보상 · 특성) · 적 명단 · 황동 「진입」'),
                  ('map2.jpg', '2막 지도 — A-02'), ('map3.jpg', '3막 지도 — A-03'), ('actintro.jpg', '막 타이틀 카드 (D-388 · D-389 · D-397) — 위 막 그림 덮기 · 아래 먹 바닥에 막 꼬리표 · 이름 36 · 자막 띠 두 줄(서술 + 독백)')]),
@@ -206,12 +206,7 @@ EVENTS = [
 ]
 
 # 현재 발주만. 과거 발주는 docs/asset-order-history.md, 복사할 정본은 asset-order-master.md.
-ASK = [
-    ('UI-31 기물 검사판', '현재 발주. 초상·체력·능력치를 담는 도트 외곽. 독립 프롬프트는 docs/asset-order-master.md.'),
-    ('UI-32 능력치 칸', '현재 발주. 공격·방어 숫자 우물. 독립 프롬프트는 docs/asset-order-master.md.'),
-    ('S-01 에필로그의 두 손', '부모의 반품 제안과 아이의 환대. 종이왕만 그려 생존 분대와 충돌하지 않는 한 장. docs/asset-order-master.md#s01-epilogue-hands.'),
-    ('UI-33 결과 장부 (선택 제작)', '기존 장부로 구현 가능, 추가 제작은 선택. docs/asset-order-master.md의 정본 프롬프트를 사용한다.'),
-]
+ASK = []  # UI-31~33·S-01 수령·반입 완료. I-14 네 원본만 반입 대기.
 
 
 def page():
@@ -283,7 +278,7 @@ ol.light {{ margin: 0; padding-left: 22px; display: grid; gap: 4px; }}
     # 녹화는 크기가 커서 아티팩트 보조 파일(ev/…)로 올린다 — 같은 이름으로 files에 넣어 publish
     events = ''.join(f'<figure><img class="shot" src="ev/{f}" alt="{html.escape(t)}" loading="lazy"><figcaption><b class="evt">{t}</b><br>{c}</figcaption></figure>' for f, t, c in EVENTS if os.path.exists(os.path.join(SHOTS, f)))
     uiaudit = ''.join(f'<figure>{img(f, c)}<figcaption>{c}</figcaption></figure>' for f, c in UI_AUDIT)
-    ask = ''.join(f'<div class="card"><b>{a}</b><p>{b}</p></div>' for a, b in ASK)
+    ask = ''.join(f'<div class="card"><b>{a}</b><p>{b}</p></div>' for a, b in ASK) or '<p>현재 새 제작 요청 없음. UI-31~33·S-01은 반입 완료했으며, I-14 네 장은 원본 반입 대기입니다.</p>'
     return f"""<title>Pawnisher 그래픽 정본</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>{css}</style>

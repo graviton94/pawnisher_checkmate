@@ -1,17 +1,17 @@
 # 현재 에셋 발주서
 
-2026-11-11 · **지금 제작할 프롬프트만** 모았습니다. 아래 코드 상자 전체를 각각 새 생성 작업에 복사하세요. 첨부는 필요 없습니다.
+2026-11-11 · **현재 새 제작 요청은 0건입니다.** UI-31·32·33·S-01은 `261111.zip`으로 수령해 실제 격자 변환과 게임 연결을 마쳤습니다. [반입·화면 검수 기록](reports/2026-11-11-delivered-assets.md).
 
 ## 0. 지금 할 일
 
-| 순서 | 발주 | 용도 | 상태 |
-|---|---|---|---|
-| **1** | [UI-31 기물 검사판](#1위--ui-31--기물-검사판-외곽--우선-제작) | 적 기물 정보창 외곽 | 제작 요청 |
-| **2** | [UI-32 능력치 계기 칸](#2위--ui-32--능력치-계기-칸--ui-31-다음) | 체력·방열판·공격·방어 | 제작 요청 |
-| **스토리** | [S-01 에필로그 손](#s01-epilogue-hands) | 새 이야기 마지막 장면 | 제작 요청 · 현재 상자 배경 대체 |
-| 3 | [UI-33 결과 장부](#3위--ui-33--결과-장부-종이판--선택-제작-p2) | 막 결과·출하 결과의 종이판 | **선택 제작** |
+| 발주 | 용도 | 상태 |
+|---|---|---|
+| UI-31 기물 검사판 | 적 기물 정보창 외곽 | **반입 완료** |
+| UI-32 능력치 계기 칸 | 체력·방열판·공격·방어 | **반입 완료** |
+| UI-33 결과 장부 | 막 결과·출하 결과의 종이판 | **반입 완료** |
+| S-01 에필로그 손 | 부모의 반품 제안과 아이의 환대 | **반입 완료** |
 
-**기물 그림·스킨·옛 이야기 컷은 현재 추가 발주하지 않습니다.** [과거 발주 기록 전체](asset-order-history.md)는 보관 파일로 옮겼습니다. 과거 기록의 ‘미수령·우선순위’를 현재 요청으로 해석하지 마세요.
+완료한 프롬프트는 [보관본](asset-order-history.md#2026-11-11-수령-완료--ui-3133--s-01)에 옮겼습니다. 과거 기록의 ‘제작 요청·미수령’을 현재 발주로 해석하지 마세요.
 
 <a id="build-prototype-assets"></a>
 
@@ -19,94 +19,24 @@
 
 | 발주 | 그림 | 진행 |
 |---|---|---|
-| I-14A | 맞물린 톱니 | 사용자 제작 완료. 게임용 원본 파일 반입 대기 |
-| I-14B | 공성 걸쇠 | 사용자 제작 완료. 게임용 원본 파일 반입 대기 |
+| I-14A | 맞물린 톱니 | 사용자 제작 완료. 원본 파일 반입 대기 |
+| I-14B | 공성 걸쇠 | 사용자 제작 완료. 원본 파일 반입 대기 |
 | I-14C | 맞댄 철판 | 사용자 제작 완료. 원본 반입·V3 기능 연결 대기 |
 | I-14D | 분대 인장 | 사용자 제작 완료. 원본 반입·V4 기능 연결 대기 |
 
-위 네 장은 **다시 제작할 요청이 아닙니다.** 당시 프롬프트는 [보관본의 I-14A~D](asset-order-history.md#build-prototype-assets)에 있습니다. 기존 문서의 이 위치 링크도 반입 상태를 찾는 용도로 유지합니다.
+위 네 장은 **재제작 요청이 아닙니다.** 이번 ZIP에는 포함되지 않았습니다. 당시 프롬프트는 [보관본의 I-14A~D](asset-order-history.md#build-prototype-assets)에 있습니다.
+
+<a id="ui-polish-orders"></a>
+<a id="1위--ui-31--기물-검사판-외곽--우선-제작"></a>
+<a id="2위--ui-32--능력치-계기-칸--ui-31-다음"></a>
+<a id="3위--ui-33--결과-장부-종이판--선택-제작-p2"></a>
+<a id="s01-epilogue-hands"></a>
+
+## 반입된 파일
+
+원본은 `build-res/order/UI-31-source.png`, `UI-32-source.png`, `UI-33-source.png`, `S-01-epilogue-hands-source.png`에 그대로 보관합니다.
+게임용 UI는 `src/assets/ui/chrome/v2/unit-inspect-panel.png`, `unit-stat-*.png`, `ledger-slip.png`, 에필로그는 `public/scenes/epilogue-hands.png`입니다.
 
 ### 반입 규칙
 
-**개발 측이 도구를 직접 실행합니다.** 원본 보관 → 논리 격자 복원 → 팔레트/알파 검사 → 게임용 자르기 → 실제 화면 확인 순서입니다. 아이콘은 32×32와 16×16, 기물은 64×64 원본을 72×72 캔버스에, UI는 각 발주서의 원본 격자를 따릅니다. 장면 그림은 격자만 맞추고 팔레트는 유지합니다. 확대는 최근접 이웃이며, 크기가 다른 그림을 칸에 억지로 늘려 넣지 않습니다. [반입 도구와 확인 기록](reports/2026-11-11-ability-and-orders.md#이미지-격자-확인).
-
-<a id="ui-polish-orders"></a>
-
-## 1위 · UI-31 · 기물 검사판 외곽 — 우선 제작
-
-```text
-Pawnisher : Checkmate라는 모바일 가로 화면/PC용 다크 스팀펑크 체스 게임의 실제 게임 UI 에셋을 그려 주세요. 기물은 금속 공장에서 만들어지고, 플레이어는 종이 왕관을 쓴 불량 폰과 동료를 이끕니다. 필요한 것은 상대 기물의 정보가 적힌 ‘검사판’ 바탕입니다. 캐릭터나 게임 화면을 그리는 의뢰가 아닙니다.
-
-납품: 투명 PNG 한 장. 논리 원본은 정확히 64×64 픽셀. 이를 최근접 이웃으로 정확히 8배 확대해 512×512로 출력하세요. 1원본 도트는 출력의 정확한 8×8 단색 블록입니다. 노이즈·질감 사진·블러·안티앨리어싱·그라데이션·글로·드롭섀도 블러 금지. 확대된 이미지에 작은 가짜 도트를 더하지 마세요.
-
-실루엣: 책상 위에 걸어 두는 작고 단단한 금속 검사판. 어두운 무쇠 본체, 왼쪽 위 작은 황동 고정쇠, 서로 다른 모양의 대각선 모서리 잠금쇠 두 쌍. 네 변이 모두 똑같은 사각 리벳 창처럼 보이지 않게 하되, 실루엣은 촘촘하고 장식은 적게. 왼쪽 위 광원, 검은 1도트 외곽선, 철 밝음/중간/어둠의 명확한 세 면. 톱니바퀴·전선·증기·해골·십자가를 장식으로 늘어놓지 마세요.
-
-9-slice 규격: 좌/우/위/아래 고정 테 각각 12원본 픽셀. 모든 고정쇠·깎인 모서리는 네 12×12 모서리 안에 완전히 들어갑니다. 각 변 가운데는 가로/세로로 늘려도 자연스러운 단순한 금속 테만 둡니다. 중앙 40×40은 글자를 얹을 평평하고 불투명한 어두운 면(#25242B). 내부 구획·초상 구멍·숫자창·문양·종이·상태 막대를 그리지 마세요. 테 바깥은 알파 0이며, 검은 사각 배경을 깔지 마세요.
-
-최대 14색, 아래 팔레트만 사용:
-#0B0B0E #25242B #33313B #56545E #8A8794 #A8A4B2 #ECEBF2
-#8A6416 #C89B3C #F5C542 #6D292E #C94850 #FF7A80 #F1EDE4
-붉은색은 사용하더라도 모서리 작은 검수표시 한두 도트만. 글자·숫자·로고·워터마크 없음. 꾸민 미리보기 목업 없이 에셋 한 장만.
-```
-
-반입: 원본 `build-res/order/UI-31-source.png`; 게임용 후보 `src/assets/ui/chrome/v2/unit-inspect-panel.png`. 현재 검사판 크기 352px 이하·높이 364px 이하, 레일 옆 빈 폭 안에서 9-slice로 쓴다. 초상·체력·능력치는 별도 HTML 구성이다.
-
-## 2위 · UI-32 · 능력치 계기 칸 — UI-31 다음
-
-```text
-Pawnisher : Checkmate라는 다크 스팀펑크 체스 공장 게임의 UI 부품 시트를 그려 주세요. 상대 기물의 ‘체력·방열판·공격·방어’를 재빨리 읽는 작은 계기 칸 네 개입니다. 그림 속 숫자는 코드에서 별도로 표시하므로 그리지 않습니다.
-
-납품: 투명 PNG 한 장. 정확히 128×32 논리 픽셀, 이를 최근접 이웃으로 정확히 8배 확대해 1024×256으로 출력. 가로 네 칸이며 각 칸은 정확히 32×32 원본 픽셀, 칸 사이 여백 없음. 1원본 도트는 출력의 8×8 단색 블록. 노이즈·질감·블러·안티앨리어싱·그라데이션·광택 번짐·흐린 그림자 금지. 전체 그림에 모조 작은 픽셀을 보태지 마세요.
-
-왼쪽부터 체력/방열판/공격/방어. 네 계기는 같은 무쇠 부품 가족이지만 작은 표시등 색과 한 모서리 표시가 다릅니다: 체력은 절제한 붉은색, 방열판은 청록, 공격은 황동, 방어는 밝은 철. 표시는 각 칸의 좌상단 8×8 안에 각각 작은 금속 심장/겹친 얇은 철판/칼끝/두꺼운 방패 실루엣으로 표현합니다. 새 캐릭터·기물 그림을 넣지 마세요. 표시 면적은 작게, 중앙의 숫자가 주인공입니다.
-
-각 32×32 칸은 9-slice 부품입니다. 네 변 고정 테 각각 8원본 픽셀, 중앙 16×16은 불투명한 #25242B 빈 면. 상징·리벳·색 표시를 모서리 8×8 안에만 두세요. 가장자리 중간 부분은 단순한 단색 계단 홈으로, 가로로 늘려도 문양이 늘어나 보이지 않게 합니다. 바깥 모서리 밖은 알파 0. 네 칸 모두 같은 바깥 치수·같은 두께의 검은 1도트 선, 왼쪽 위 광원, 금속 세 면.
-
-최대 15색, 이 팔레트만:
-#0B0B0E #25242B #33313B #56545E #8A8794 #A8A4B2 #ECEBF2
-#8A6416 #C89B3C #F5C542 #C94850 #FF7A80 #1F8A7A #5EEAD4 #E6FFFB
-한글·영어·숫자·게이지 채움·라벨·워터마크 없음. 시트 밖에 미리보기·설명문·테두리 여백을 추가하지 마세요.
-```
-
-반입: `build-res/order/UI-32-source.png`; 각 칸을 `unit-stat-{hp,shield,attack,defense}.png`로 분리한다. 체력 막대는 계속 코드로 채우며 숫자 크기·뜻을 이미지에 굽지 않는다. 현재 구현의 기존 `inset-well` 대체 후보다.
-
-## 3위 · UI-33 · 결과 장부 종이판 — 선택 제작, P2
-
-```text
-Pawnisher : Checkmate라는 다크 스팀펑크 체스 공장 게임의 결과 장부 바탕 에셋을 그려 주세요. 공정이 끝나면 플레이어는 살아남은 동료와 획득한 물건의 기록을 읽습니다. 현재 UI의 평평한 흰 직사각형 대신 사용할, 작은 황동 고정핀에 끼운 검수용 종이판입니다. 책 전체나 게임 화면을 그리는 의뢰가 아닙니다.
-
-납품: 투명 PNG 한 장. 논리 원본 정확히 64×32 픽셀, 최근접 이웃 정확히 8배 확대 512×256 PNG. 1원본 도트는 출력의 정확한 8×8 단색 블록. 사진 종이질감·노이즈·반투명 얼룩·블러·안티앨리어싱·그라데이션·글로 금지.
-
-9-slice: 네 변 고정 테 각각 8원본 픽셀. 좌상단과 우상단 8×8 모서리 안에 작은 황동 고정핀, 오른쪽 아래 8×8 안에 종이 접힘 한 군데. 위와 옆은 얇고 단단한 종이 단면 두세 도트, 바깥선은 #0B0B0E 1도트. 가운데 48×16 면은 #F1EDE4의 빈 종이이며, 숫자와 한글을 읽을 수 있게 완전히 평평하게 유지합니다. 고정 장식이 중앙이나 변의 늘어나는 구간에 걸치지 않습니다. 바깥은 알파 0.
-
-세계관 느낌은 풍부한 장식 대신 ‘만져지는 물건’의 실루엣에서 냅니다. 왼쪽 위 광원. 장부 글·표·줄·도장·숫자·로고·기물 그림·체크무늬는 그리지 마세요. 실제 기록과 도장은 코드에서 별도로 올립니다.
-
-최대 10색, 이 팔레트만:
-#0B0B0E #33313B #56545E #8A8794 #8A6416 #C89B3C #F5C542 #9B9589 #BFB9AD #F1EDE4
-미리보기 목업이나 배경을 붙이지 말고 에셋 하나만 출력하세요.
-```
-
-반입: `build-res/order/UI-33-source.png` → `src/assets/ui/chrome/v2/ledger-slip.png`. 막 결과·출하 결과의 기록판에 공용으로 쓴다. 글·수치·항목 수는 모두 코드가 배치한다. 기존 사건 종이나 모든 창을 일괄 교체하지 않는다.
-
-
-<a id="s01-epilogue-hands"></a>
-
-## 4위 · S-01 · 새 에필로그: 아이와 부모의 손
-
-원고의 결말만 바뀌고 그림은 옛 동료 행렬로 남는 문제를 막는 한 장입니다. 수령 전에는 기존 열린 상자 배경·실제 종이왕 대역을 사용합니다. 반입 목표: `public/scenes/epilogue-hands.png`. 원본 반입·실제 픽셀화는 개발 측이 수행합니다.
-
-```text
-Create one final epilogue scene for the pixel-art game “Pawnisher : Checkmate”. It is a dark steampunk chess-factory story whose ending takes place in an ordinary quiet home. A pawn was placed in the missing king's slot. After winning, it refused a perfect king's body and left with its imperfect companions. A parent sees a missing king and wants to return the defective set; the child wants THIS set. Convey a modest, personal welcome. Do not depict the world or factory becoming perfect.
-
-Native logical canvas: exactly 480 × 216 pixels. Draw natively on this grid, then enlarge exactly 4× with NEAREST NEIGHBOR to 1920 × 864 PNG. Fully opaque scene. Every contour, highlight and shadow must follow whole logical pixels. Hard clusters, solid colors, no intermediate resampling colors.
-
-Composition: a worn wooden chessboard and a partly visible open shipping box in a quiet room. At center-left, a child's small hand carefully places ONE paper-crowned white pawn on the board. A parent's larger hand is visible at the upper-right edge, pointing to the empty king-shaped compartment of the box. Show only these hands, no faces or full human figures. Keep the lower 25% visually quiet and dark enough for a separate dialogue band. No lettering or interface painted into the image.
-
-The ONLY visible chess character is the protagonist, the paper king. Its body is an ivory PAWN with a simple round pawn head and pawn base. Its oversized, uneven four-point PAPER crown is tilted, made of ochre/brown cardboard, with ONE small cyan square decoration on the front. It is visibly handmade and remains imperfect. No king cross, no bishop slit, no metal gold crown, no royal humanoid. Never use the discarded tiny bright-yellow fork-shaped crown. Preserve the pawn's small scratch; the child does not repair or polish it.
-
-Do not draw any companion pieces, especially no black knight. Actual survivors vary by the player's run; fixed companions would resurrect dead characters. The box can extend outside the crop; do not imply a fixed complete set or a new restored king. The embrace is expressed by the careful hand, not glowing magic.
-
-Palette limit: 24 colors, warm desaturated ivory and wood amber balanced against blue-gray shadows. Core colors #0b0b0e #1c1d22 #33313b #56545e #8e877a #c8bba4 #f4f1ea #8c6239 #c89b3c and restrained #38bdf8 for the single cyan decoration. Lighting from upper left with at most three hard shadow steps per material. Restrained hope, no celebration confetti.
-
-STRICT PIXEL ART: no painterly textures, no brush strokes, no blur, no antialiasing, no gradient, no soft shadows, no photographic lighting, no grain/noise, no smooth curved vector edges, no typography, no watermark, no UI frame. One scene, no sheet, no alternate versions, no extra companions.
-```
+**개발 측이 직접 수행합니다.** 원본 보관 → 논리 격자 복원 → 팔레트·알파 검사 → 게임용 자르기 → 실제 화면 확인 순서입니다. UI-31~33 재생성은 `python3 -I tools/pixel/ui_delivery_import.py`, 장면 재생성은 `tools/scene-import.py`를 사용합니다. UI는 고정 모서리와 민 테를 나눠 늘리고, 장면은 비율과 색을 유지하며 정수 도트로 표시합니다. CSS의 `pixelated` 설정만으로 반입 완료라 하지 않습니다.

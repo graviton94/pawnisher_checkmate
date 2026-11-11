@@ -8,12 +8,15 @@ export interface Cut {
   at?: string; lines: Line[]; key?: boolean;
   /** 인물 생사를 고정해 그린 옛 컷 대신 실제 출하의 배우만 보여 준다. */
   standIn?: boolean;
+  /** 정지 장면 그림을 비율·기기 픽셀 정수배로 덮는다. */
+  pixelCover?: boolean;
 }
 const n = (t: string): Line => ({ k: 'n', t });
 const s = (who: string, t: string): Line => ({ k: 's', who, t });
 const m = (t: string): Line => ({ k: 'm', t });
 const pawn = (x = 48, y = 56, h = 30): StandIn => ({ t: 'K', side: 0, x, y, h });
 const cut = (img: string, lines: Line[], art: StandIn[] = [pawn()], standIn = false): Cut => ({ img, bg: ['#16141c', '#0b0b0e'], art, lines, standIn });
+const homeCut = (lines: Line[]): Cut => ({ ...cut('epilogue-hands', lines), cam: 'still', pixelCover: true });
 export const CUT_TEXT_BUDGET = { line: 30 };
 export const oneLine = (t: string): string => t.replace(/\n/g, ' ');
 
@@ -99,9 +102,9 @@ export const trueEndingCuts = (crew: StandIn[], company?: StoryCompany): Cut[] =
     cut('credits-bg', [s('종이왕', '반품되더라도 같이 가자.'), ...(witness ? [s(witness.name, '나가서도 내 흠집은 남겠지.')] : [n('그는 남겨진 이름들을 챙겼다.')])], [pawn(), ...crew], true),
     cut('credits-bg', [n('정품으로 고친 이는 없었다.'), n('종이왕도 같은 상자에 올라탔다.'), n('그들 뒤에서 공장은 계속 돌아갔다.')]),
     cut('credits-bg', lost ? [n(`${lost}의 자리는 비어 있었다.`), n('그는 그 자리에 원부를 놓았다.')] : witness ? [n('운송 중인 상자에서 동료가 잠들었다.'), n('종이왕은 곁에서 태엽을 감았다.')] : [n('상자가 문 밖으로 움직였다.'), n('그는 남겨진 이름 곁을 지켰다.')]),
-    cut('credits-bg', [n('어느 집에서 아이의 손이 상자를 열었다.')], [pawn()], true),
-    cut('credits-bg', [s('부모', '킹이 없네. 불량이야. 반품하자.'), s('아이', '싫어. 난 이 세트가 좋아.')], [pawn()], true),
-    cut('credits-bg', [n('아이가 종이왕을 판 위에 놓았다.'), n('손끝은 흠집 위에서 멈추지 않았다.')], [pawn()], true),
+    homeCut([n('어느 집에서 아이의 손이 상자를 열었다.')]),
+    homeCut([s('부모', '킹이 없네. 불량이야. 반품하자.'), s('아이', '싫어. 난 이 세트가 좋아.')]),
+    homeCut([n('아이가 종이왕을 판 위에 놓았다.'), n('손끝은 흠집 위에서 멈추지 않았다.')]),
   ];
 };
 /** 폐기된 전생 컷을 부르는 도구 호환. 본편 전투의 행마는 바꾸지 않는다. */

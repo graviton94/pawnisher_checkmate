@@ -1,0 +1,17 @@
+{
+  "source": "build-res/order/S-01-epilogue-hands-source.png",
+  "sourceSize": [
+    1870,
+    841
+  ],
+  "sourceSha256": "8c78ea7206709e43f1b05bb2f8bff5c20f62584ce767e5eeba539e0cec415b26",
+  "file": "public/scenes/epilogue-hands.png",
+  "size": [
+    300,
+    135
+  ],
+  "samplePitch": 6.233333333333333,
+  "uniform": true,
+  "colors": "preserved",
+  "rgbaSha256": "7725d2069baa7f81c4ac2341496394cf27253f2960a5385bb97233d0e190a84b"
+}

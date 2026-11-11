@@ -1,0 +1,181 @@
+[
+  {
+    "file": "src/assets/ui/chrome/v2/unit-inspect-panel.png",
+    "size": [
+      64,
+      64
+    ],
+    "colors": 9,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-31-source.png",
+    "sourceSha256": "f0f0de166bb2071ffa5eb16e40bd6ce95602243095885891d85ebcf17e69c5fb",
+    "sourceCrop": [
+      68,
+      78,
+      1186,
+      1175
+    ],
+    "samplePitch": 17.46875,
+    "sliceXY": [
+      18,
+      18
+    ],
+    "rgbaSha256": "1ca8e3f9c7ca78ae9942de42e5f1b19aa378bd0794bec1e3b12c1e30c878b3dc"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-stat-hp.png",
+    "size": [
+      32,
+      32
+    ],
+    "colors": 7,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      0,
+      80,
+      543,
+      643
+    ],
+    "samplePitch": 17.59375,
+    "sliceXY": [
+      9,
+      9
+    ],
+    "rgbaSha256": "5f572ecf0e56d8376e0630fcf68e37917b37791aaf80ca8be15ae106b92986c7"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-stat-shield.png",
+    "size": [
+      32,
+      32
+    ],
+    "colors": 7,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      0,
+      80,
+      543,
+      643
+    ],
+    "samplePitch": 17.59375,
+    "sliceXY": [
+      9,
+      9
+    ],
+    "rgbaSha256": "52c0421f9068025f0cef5a4c7b1bba647acb668b29238989ced7ec74bb8acd5d"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-shield-symbol.png",
+    "size": [
+      8,
+      8
+    ],
+    "colors": 6,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      0,
+      80,
+      543,
+      643
+    ],
+    "samplePitch": 17.59375,
+    "sliceXY": null,
+    "rgbaSha256": "cc0b651feff626305cf7c63767be083640c2422397d66850d9242d91d721192b"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-stat-attack.png",
+    "size": [
+      32,
+      32
+    ],
+    "colors": 8,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      0,
+      80,
+      543,
+      643
+    ],
+    "samplePitch": 17.59375,
+    "sliceXY": [
+      9,
+      9
+    ],
+    "rgbaSha256": "21efa60d1f1ecc58ac7f16dfe1f5bebce1499e5e13826dc885cf0b12bc6c21df"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-stat-defense.png",
+    "size": [
+      32,
+      32
+    ],
+    "colors": 7,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      0,
+      80,
+      543,
+      643
+    ],
+    "samplePitch": 17.59375,
+    "sliceXY": [
+      9,
+      9
+    ],
+    "rgbaSha256": "1ef935d5d7452be88cea43288ece470c458ef82200ea889bb848a047063d4a45"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/ledger-slip.png",
+    "size": [
+      64,
+      25
+    ],
+    "colors": 10,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-33-source.png",
+    "sourceSha256": "729e472a28930d74a7b2150be628b97a0de0cacd8a69fc0500856d49f5e49753",
+    "sourceCrop": [
+      41,
+      110,
+      1734,
+      759
+    ],
+    "samplePitch": 26.453125,
+    "sliceXY": [
+      10,
+      8
+    ],
+    "rgbaSha256": "05d511fd609e63a673423c3b2a7927c9400940c570508d8bfcd9ffbd7c2db9e7"
+  }
+]

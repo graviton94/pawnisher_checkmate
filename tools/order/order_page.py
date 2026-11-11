@@ -17,7 +17,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MD = os.path.join(ROOT, 'docs', 'asset-order-master.md')
 SCENES = os.path.join(ROOT, 'public', 'scenes')
-ATTACH = []  # 현재 UI-31~33·S-01은 첨부 없이 독립 제작한다.
+ATTACH = []  # 현재 새 제작 요청 없음. 완료 프롬프트는 보관 문서에 있다.
 REDO: set[str] = set()
 
 
@@ -81,7 +81,8 @@ def sheet_files(head):
 def where(f):
     """받은 그림이 게임 안 어디에 있나"""
     if f.startswith('recv:'):
-        return f'build-res/order/{f[5:]}-received.png → src/assets/ui/chrome/v2/'
+        suffix = 'source' if os.path.exists(os.path.join(ROOT, 'build-res/order', f'{f[5:]}-source.png')) else 'received'
+        return f'build-res/order/{f[5:]}-{suffix}.png → src/assets/ui/chrome/v2/'
     return f'tools/pixel/icons32_ext/{f[4:]}.png → public/ui/icons16/' if f.startswith('ext:') else f'public/scenes/{f}.png'
 
 
@@ -170,6 +171,7 @@ def main(out_path):
     if os.path.isdir(EXT):
         have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
     have |= {'recv:' + f.split('-received')[0] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if '-received.png' in f}
+    have |= {'recv:' + f[:-11] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if re.match(r'UI-\d+-source\.png$', f)}
     intro = next(s for s in secs if s['head'].startswith('0.'))
     groups, g = [], None
     for s in secs:
@@ -245,7 +247,9 @@ def main(out_path):
 
     # 첨부 그림은 붙이지 않는다 (D-388: 발주는 첨부 없이 글로 · D-393: 용량) — 끝난 순위는 한 줄 목록만
     att = ('<p class="donepath">끝난 순위 (' + str(len(done_list)) + '): ' + ' · '.join(html.escape(d) for d in done_list) + '</p>') if done_list else ''
-    page = TEMPLATE.replace('%NAV%', '\n'.join(nav)).replace('%BODY%', '\n'.join(body)).replace('%INTRO%', intro_html).replace('%ATT%', att).replace('%GOT%', str(got)).replace('%TOTAL%', str(total))
+    meter = f'<div class="meter">받은 그림 {got} / {total}<i style="--w: {got / total * 100}%"></i></div>' if total else '<p class="donepath">현재 새 제작 요청은 없습니다.</p>'
+    how = '<div class="how"><b>받는 법</b><ol><li>상자마다 새 생성 작업을 엽니다.</li><li>프롬프트를 복사해 통째로 붙여 넣습니다.</li><li>결과 원본을 전달하면 개발 측이 격자·팔레트·알파를 검사하고 게임에 반영합니다.</li></ol></div>' if groups else ''
+    page = TEMPLATE.replace('%NAV%', '\n'.join(nav)).replace('%BODY%', '\n'.join(body)).replace('%INTRO%', intro_html).replace('%ATT%', att).replace('%METER%', meter).replace('%HOW%', how)
     open(out_path, 'w', encoding='utf-8').write(page)
     print(out_path, f'{len(groups)}개 순위 · 그림 {total}장 (받음 {got}) · 프롬프트 {pid}개 · {os.path.getsize(out_path) // 1024}KB')
 
@@ -321,9 +325,9 @@ pre { margin: 0; padding: 12px 14px; font: 13px/1.6 var(--mono); white-space: pr
 </nav>
 <main>
 <h1>그림 발주서</h1>
-<p class="lede">현재 제작할 UI-31·UI-32·S-01과 선택 제작 UI-33을 모았습니다. 각 상자를 독립 생성 작업에 복사하세요. I-14 네 장은 제작 완료·원본 반입 대기이며 재제작 요청이 아닙니다.</p>
-<div class="meter">받은 그림 %GOT% / %TOTAL%<i style="--w: calc(%GOT% / %TOTAL% * 100%)"></i></div>
-<div class="how"><b>받는 법</b><ol><li>상자마다 새 생성 작업을 엽니다.</li><li>첨부 그림은 필요 없습니다.</li><li>프롬프트를 <b>복사</b>해 통째로 붙여 넣습니다.</li><li>결과 PNG 원본을 전달하면 격자·팔레트·알파를 검사한 뒤 게임에 붙입니다.</li></ol></div>
+<p class="lede">새 제작 요청과 반입 상태를 모았습니다. 완료 프롬프트는 보관 문서에 있습니다. I-14 네 장은 제작 완료·원본 반입 대기이며 재제작 요청이 아닙니다.</p>
+%METER%
+%HOW%
 %ATT%
 <section class="intro"><h2>한눈에</h2>%INTRO%</section>
 %BODY%

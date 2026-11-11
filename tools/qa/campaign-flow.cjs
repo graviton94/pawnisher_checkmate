@@ -72,6 +72,9 @@ module.exports = async (pg, shot) => {
       for (let i = 0; i < 14 && !(await pg.locator('.cut-lines').innerText()).includes('반품하자'); i++) { await pg.locator('.prologue').tap({ position: { x: 100, y: 100 } }); await wait(60); }
       const parent = await pg.locator('.cut-lines').innerText();
       assert(parent.includes('부모') && parent.includes('아이') && parent.includes('난 이 세트가 좋아'));
+      assert.equal(await pg.locator('.prologue .pl-img[data-cover]').getAttribute('src'), 'scenes/epilogue-hands.png');
+      assert.equal(await pg.locator('.prologue .pl-pc').count(), 0, '고정 동료 대역을 집 장면에 겹치지 않는다');
+      assert.equal(await pg.locator('.state-band').count(), 0, '이전 대국 띠가 엔딩을 덮지 않는다');
       await bounds(pg, '.prologue'); await shot('campaign-child-dialogue');
     }
     await finishCuts();

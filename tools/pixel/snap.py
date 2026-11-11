@@ -170,7 +170,7 @@ def snap(img, px, ox, py, oy, colors=24, core=0.6, cuts=None):
     return small
 
 
-def run(src, dst, colors=24, pitch=None, preview=None, scale=4):
+def run(src, dst, colors=24, pitch=None, preview=None, scale=4, uniform=False):
     img = Image.open(src)
     if pitch:
         px = py = float(pitch)
@@ -179,7 +179,7 @@ def run(src, dst, colors=24, pitch=None, preview=None, scale=4):
     else:
         px, ox, py, oy, score = detect_pitch(img)
     a = np.asarray(img.convert('RGB'), dtype=float)
-    cuts = (dp_cuts(_profile(a, 1), img.width, px), dp_cuts(_profile(a, 0), img.height, py))
+    cuts = None if uniform else (dp_cuts(_profile(a, 1), img.width, px), dp_cuts(_profile(a, 0), img.height, py))
     small = snap(img, px, ox, py, oy, colors, cuts=cuts)
     small.save(dst)
     if preview:

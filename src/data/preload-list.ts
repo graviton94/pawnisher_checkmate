@@ -98,6 +98,7 @@ export const PRELOAD: string[] = [
   "scenes/ending-peel.png",
   "scenes/entry-battle.png",
   "scenes/entry-check.png",
+  "scenes/epilogue-hands.png",
   "scenes/fieldMedic.png",
   "scenes/gambler.png",
   "scenes/lostPawn.png",
