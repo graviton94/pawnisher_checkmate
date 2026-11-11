@@ -44,14 +44,14 @@ module.exports = async (pg, shot) => {
   assert(effect.every((e) => e.weight === '700'));
   await check('.win-scene'); await shot('event-gains');
 
-  for (const asc of [0, 3, 6, 12]) {
+  for (const asc of [0, 1, 2]) {
     await pg.evaluate((a) => window.sliceApi.promote(a), asc); await wait(300);
     await pg.locator('.pm-dialogue').tap();
     const save = await pg.evaluate(() => JSON.stringify(localStorage));
     await check('.promotion');
     await pg.keyboard.press('Tab');
     assert(await pg.evaluate(() => !!document.activeElement.closest('.promotion')), '결정 장면 안에서 키보드 초점 유지');
-    if (asc === 3 || asc === 12) {
+    if (asc < 2) {
       await shot(`promote-${asc}`);
       await pg.locator('[data-lay]').tap();
       await pg.locator('.pm-stuck').waitFor({ state: 'visible' });
@@ -89,5 +89,5 @@ module.exports = async (pg, shot) => {
   await pg.locator('.clr').waitFor({ state: 'visible' }); await wait(1600);
   await check('.clr'); await shot('clear-ledger');
   assert.deepEqual(errors, [], '브라우저 오류/경고');
-  console.log('PASS end-scenes: events, promotion 0/3/6/12, credits, result ledger');
+  console.log('PASS end-scenes: events, story choices 1/2/3, credits, result ledger');
 };

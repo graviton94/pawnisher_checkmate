@@ -97,14 +97,13 @@ export const MAP = {
 const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'] as const;
 
 /**
- * 승급 13단 (R6 D-174 → D-273, 각본 docs/script.md §10 「조항 13」): 출하를 끝내면 다음 단계가 열린다. 단계는 쌓인다.
- * 이야기: 승급한 종이왕(새 도금왕)가 다음 등반자를 막으려고 규격판에 새긴 조항 = 다음 출하의 효과.
- * name = 짧은 이름 · law = 규격판에 새긴 글 · desc = 효과. 수치는 구조용 — 조정은 대과제 3 (D-080).
+ * D-425 누적 전투 규정. 인덱스 0~2는 본편, 3~13은 선택 도전이다.
+ * 본편 두 왕이 남긴 실제 경비 규정은 다음 폰에게 적용된다. 도전은 그 뒤의 별도 플레이다.
  */
 export const ASCENSION: { name: string; law: string; desc: string }[] = [
   { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +30%' },
   { name: '굳은 검수', law: '검수대 앞에 저울을 하나 더 둔다', desc: '검문 · 반장의 킹 HP +20% · 예고 공격을 맞으면 기어 쇼크' },
-  { name: '짧은 휴식', law: '정비 라인은 반만 돌린다', desc: '대국 사이 회복이 30%로' },
+  { name: '짧은 휴식', law: '정비 라인의 회복을 줄인다', desc: '대국 사이 회복이 30%로' },
   { name: '비싼 고물', law: '고물상은 값을 올려 받는다', desc: '고물상 값 +25%' },
   { name: '불어난 무리', law: '흑 세트마다 폰을 하나 더 넣는다', desc: '대국마다 적 폰 하나 더 · 여벌 심장 톱니 없이 시작' },
   { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +20%' },
@@ -114,7 +113,7 @@ export const ASCENSION: { name: string; law: string; desc: string }[] = [
   { name: '금 간 심장', law: '하자 세트의 심장 톱니는 금 간 것으로 끼운다', desc: '분대원 하나가 깨진 심장 톱니로 시작' },
   { name: '얇은 보상', law: '하자 세트에는 명령서를 둘만 내준다', desc: '대국 보상 카드 선택지 3 → 2' },
   { name: '정예 검문', law: '검문마다 정예를 세운다', desc: '검문 적 하나가 정예 (왕관 · HP ×2)' },
-  { name: '열세 겹', law: '포장대의 금은 열세 겹으로 칠한다', desc: '도금왕 HP +180% · 마지막 장' },
+  { name: '최종 경비', law: '왕좌의 경비를 최대로 강화한다', desc: '도금왕 HP +180%' },
 ];
 // D-316: enemyAtk 1.1 → 1.05 · finalHp 1.2 → 1.1 — 두뇌 봇 승급 13 완주 17.5%(120판)를 목표 20~35%로
 export const ASC_NUM = { enemyHp: 1.3, eliteKing: 0.2, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.45, rewardChoices: 2, finalHp: 2.8 };
@@ -138,7 +137,7 @@ const pctUp = (k: number): string => `+${Math.round((k - 1) * 100)}%`;
 export const ASC_OMEN: [string, string][] = [
   ['다음 출하의 흑 기물들은 쇠를 한 겹 더 두르고 기다린다.', `적 기물 HP ${pctUp(ASC_NUM.enemyHp)}`],
   ['검문과 반장 앞에 저울이 하나 더 놓인다.', `검문 · 반장 킹 HP +${Math.round(ASC_NUM.eliteKing * 100)}% · 예고 공격에 맞으면 기어 쇼크`],
-  ['정비 라인이 반만 돈다. 상처가 덜 아문다.', `대국 사이 회복 ${Math.round(ASC_NUM.restMul * 100)}%`],
+  ['정비 라인이 느려져 상처가 덜 아문다.', `대국 사이 회복 ${Math.round(ASC_NUM.restMul * 100)}%`],
   ['고물상이 값을 올려 부른다.', `고물상 값 ${pctUp(ASC_NUM.shopMul)}`],
   ['흑 세트마다 폰이 하나씩 더 줄을 선다.', '대국마다 적 폰 +1 · 여벌 심장 톱니 없이 시작'],
   ['반장들이 철판을 한 겹 더 덧대고 기다린다.', `반장 · 도금왕 HP ${pctUp(ASC_NUM.bossHp)}`],
@@ -148,7 +147,7 @@ export const ASC_OMEN: [string, string][] = [
   ['분대원 하나가 심장 톱니 하나를 깨뜨린 채 출발한다.', '분대원 1명 심장 톱니 깨짐 — 다시 쓰러지면 폐기'],
   ['전리품 상자에 명령서가 둘만 든다.', `대국 보상 카드 3장 → ${ASC_NUM.rewardChoices}장`],
   ['검문마다 왕관 쓴 정예가 선다.', '검문 적 1기 정예 · 왕관 · HP ×2'],
-  ['도금왕이 금을 열세 겹으로 칠하고 기다린다.', `도금왕 HP ${pctUp(ASC_NUM.finalHp)} · 마지막 장`],
+  ['도금왕이 왕좌의 경비를 최대로 강화한다.', `도금왕 HP ${pctUp(ASC_NUM.finalHp)}`],
 ];
 /**
  * 다음 막 예고 (시안 · 막 마침 화면): 막이 바뀌면 적이 얼마나 단단해지나 — 막 시작 깊이(SLICE.depthActs)로 계산한 HP · 공격 배율과 적 킹 HP(ACT_SCALE).

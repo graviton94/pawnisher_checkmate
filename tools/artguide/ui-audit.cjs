@@ -111,7 +111,7 @@ const SCENES = [
     try {
       await p.goto(BASE);
       await p.evaluate((m) => localStorage.setItem('pawnisher.slice.meta', m), META);
-      await p.goto(BASE); await W(2400); await p.mouse.click(450, 300); await W(1200);
+      await p.goto(BASE); await p.waitForSelector('#boot', { state: 'detached' }); await W(2400); await p.mouse.click(450, 300); await W(1200);
       await fn(p, A, W, S);
     } catch (e) { console.log('FAIL', name, e.message.slice(0, 160)); }
     await p.close().catch(() => {});

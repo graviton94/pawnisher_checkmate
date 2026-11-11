@@ -63,7 +63,8 @@ BOSS_FRAMES = [('boss-600.jpg', '0.6초 · 모으기와 조명'), ('boss-1000.jp
                ('boss-1700.jpg', '1.7초 · 기물이 조각으로 부서짐'), ('boss-2200.jpg', '2.2초 · 파편 · 불씨'), ('boss-2900.jpg', '2.9초 · 여운')]
 
 SCREENS = [
-    ('출하 끝 · 승급 결정 (D-424)', [('run-clear.png', '출하 크레딧 — 실제 동료 이름·역할, 아이콘 단체사진 폐기'), ('credits-makers.png', '제작진 — 기존 두 역할, 결과 장부로 이어지는 버튼'), ('promote-3.png', '승급 결정 — 큰 도금왕 그림 · 증언 · 속말 · 결정'), ('promote-12-refuse.png', '내려놓기 시도 뒤 — 원래 서사의 손을 거두지 못하는 반응'), ('event-info.png', 'NPC 대사를 유지한 별도 효과 쪽지, 이득 초록 · 손실 빨강 · 수치 굵게'), ('event-result.png', '사건 결과 — 바뀐 수치도 득실 색으로'), ('clear-ledger.png', '크레딧 뒤 출하 장부 — 통계 · 해금 · 다음 회차')]),
+    ('본편 3장 · 선택 도전 (D-425)', [('campaign-menu-locked.png', '본편/도전 분리 — 본편 세 장 뒤 도전 개방'), ('campaign-chapters.png', '서막·둘째 장·셋째 장 — 순차 진행과 다시 읽기'), ('campaign-choice-1.png', '서막의 유혹 — 돌아보기는 실제 동료를 보는 행동'), ('campaign-choice-3.png', '셋째 장 — 왕의 몸/함께 출하의 유효한 두 선택'), ('campaign-ending-3.png', '함께 출하 — 실제 생존자 이름, 정품 판정이 아님'), ('campaign-menu-challenge.png', '본편 뒤 선택 도전 — 현재 기존 곡선의 11개 난도'), ('campaign-difficulty.png', '누적 규정·별도 도전 기록'), ('campaign-child-dialogue.png', '부모의 반품/아이의 환대 — S-01 손 원화 전 임시 종이왕 무대'), ('campaign-legacy-resume-667x375.png', '옛 저장은 도전으로 이어가기 — 새 본편은 미관람으로 분리')]),
+    ('출하 끝 · 승급 결정 (D-424)', [('run-clear.png', '출하 크레딧 — 실제 동료 이름·역할, 아이콘 단체사진 폐기'), ('credits-makers.png', '제작진 — 기존 두 역할, 결과 장부로 이어지는 버튼'), ('campaign-choice-3.png', '왕의 몸 앞에서 — 본편 셋째 장의 실제 선택'), ('campaign-choice-1.png', '서막의 왕위 계승 — 거절이 실패하는 옛 버튼을 폐기'), ('event-info.png', 'NPC 대사를 유지한 별도 효과 쪽지, 이득 초록 · 손실 빨강 · 수치 굵게'), ('event-result.png', '사건 결과 — 바뀐 수치도 득실 색으로'), ('clear-ledger.png', '크레딧 뒤 출하 장부 — 통계 · 해금 · 다음 회차')]),
     ('능력 세 줄 (D-422)', [('ability-inspect.png', '명칭 / 조건·행동 / : 상세 효과 — 복합 능력은 같은 자리에서 넘김'), ('ability-compound.png', '복합 특성 폰 — 자폭·송곳을 생략하지 않고 각각 세 줄로 표시')]),
     ('기물 검사표 (D-421)', [('unit-info-normal.png', '적 기물 탭 — 초상·소속/예정 행동·체력·공격/방어, 기존 에셋으로 검증'), ('unit-info-large.png', '반장·큰 수·방열판·특성 — 글자 경계와 턴 종료 버튼 가림 검사, UI-31/32 원화 대기')]),
     ('빌드 검증판 (D-420)', [('builds-pick.png', '혼성·나이트·룩 — 동일 분대·전장 비교 선택'), ('builds-rook-preview.png', '갈 칸 길게 누름 — 실행 전 태엽·방열판·적 HP 예측'), ('builds-rook-detail.png', '부품 조건 엿보기 — 기존 아이콘 대체 중, I-14A/B 원본 파일 반입 대기')]),
@@ -164,7 +165,7 @@ UI_AUDIT = [
     ('cut-logo.jpg', '프롤로그 끝 로고 — 「화면을 눌러 출하」도 같은 띠'),
     ('cut-boss.jpg', '반장 등장 — 이름 36 · 칭호 24 · 규칙은 움푹 칸 · 서술 + 대사는 자막 띠 (D-397)'),
     ('cut-promo.jpg', '승급 컷 — 같은 띠, 줄마다 한글 30자 폭 안 (tests/cut-text)'),
-    ('cut-finale.jpg', '최종장 판 위 연출 — 자막도 같은 띠'),
+    ('campaign-choice-3.png', '셋째 장의 결정 — 폰 행마 강제 전환·13단 판을 폐기'),
     ('credits-makers.png', '크레딧 — 배경 옆 이름과 역할, D-424'),
     ('ui-forge.jpg', '작업대 — 상아 손질 카드 넷, 고른 것 풀이는 단추 줄 가운데 (D-399)'),
     ('ui-bet.jpg', '판돈 — 명패 + 조건 · 보상 · 실패 시 한 줄씩'),
@@ -208,6 +209,7 @@ EVENTS = [
 ASK = [
     ('UI-31 기물 검사판', '현재 발주. 초상·체력·능력치를 담는 도트 외곽. 독립 프롬프트는 docs/asset-order-master.md.'),
     ('UI-32 능력치 칸', '현재 발주. 공격·방어 숫자 우물. 독립 프롬프트는 docs/asset-order-master.md.'),
+    ('S-01 에필로그의 두 손', '부모의 반품 제안과 아이의 환대. 종이왕만 그려 생존 분대와 충돌하지 않는 한 장. docs/asset-order-master.md#s01-epilogue-hands.'),
     ('UI-33 결과 장부 (선택 제작)', '기존 장부로 구현 가능, 추가 제작은 선택. docs/asset-order-master.md의 정본 프롬프트를 사용한다.'),
 ]
 

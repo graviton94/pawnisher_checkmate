@@ -8,6 +8,7 @@
 |---|---|---|---|
 | **1** | [UI-31 기물 검사판](#1위--ui-31--기물-검사판-외곽--우선-제작) | 적 기물 정보창 외곽 | 제작 요청 |
 | **2** | [UI-32 능력치 계기 칸](#2위--ui-32--능력치-계기-칸--ui-31-다음) | 체력·방열판·공격·방어 | 제작 요청 |
+| **스토리** | [S-01 에필로그 손](#s01-epilogue-hands) | 새 이야기 마지막 장면 | 제작 요청 · 현재 상자 배경 대체 |
 | 3 | [UI-33 결과 장부](#3위--ui-33--결과-장부-종이판--선택-제작-p2) | 막 결과·출하 결과의 종이판 | **선택 제작** |
 
 **기물 그림·스킨·옛 이야기 컷은 현재 추가 발주하지 않습니다.** [과거 발주 기록 전체](asset-order-history.md)는 보관 파일로 옮겼습니다. 과거 기록의 ‘미수령·우선순위’를 현재 요청으로 해석하지 마세요.
@@ -86,3 +87,26 @@ Pawnisher : Checkmate라는 다크 스팀펑크 체스 공장 게임의 결과 �
 ```
 
 반입: `build-res/order/UI-33-source.png` → `src/assets/ui/chrome/v2/ledger-slip.png`. 막 결과·출하 결과의 기록판에 공용으로 쓴다. 글·수치·항목 수는 모두 코드가 배치한다. 기존 사건 종이나 모든 창을 일괄 교체하지 않는다.
+
+
+<a id="s01-epilogue-hands"></a>
+
+## 4위 · S-01 · 새 에필로그: 아이와 부모의 손
+
+원고의 결말만 바뀌고 그림은 옛 동료 행렬로 남는 문제를 막는 한 장입니다. 수령 전에는 기존 열린 상자 배경·실제 종이왕 대역을 사용합니다. 반입 목표: `public/scenes/epilogue-hands.png`. 원본 반입·실제 픽셀화는 개발 측이 수행합니다.
+
+```text
+Create one final epilogue scene for the pixel-art game “Pawnisher : Checkmate”. It is a dark steampunk chess-factory story whose ending takes place in an ordinary quiet home. A pawn was placed in the missing king's slot. After winning, it refused a perfect king's body and left with its imperfect companions. A parent sees a missing king and wants to return the defective set; the child wants THIS set. Convey a modest, personal welcome. Do not depict the world or factory becoming perfect.
+
+Native logical canvas: exactly 480 × 216 pixels. Draw natively on this grid, then enlarge exactly 4× with NEAREST NEIGHBOR to 1920 × 864 PNG. Fully opaque scene. Every contour, highlight and shadow must follow whole logical pixels. Hard clusters, solid colors, no intermediate resampling colors.
+
+Composition: a worn wooden chessboard and a partly visible open shipping box in a quiet room. At center-left, a child's small hand carefully places ONE paper-crowned white pawn on the board. A parent's larger hand is visible at the upper-right edge, pointing to the empty king-shaped compartment of the box. Show only these hands, no faces or full human figures. Keep the lower 25% visually quiet and dark enough for a separate dialogue band. No lettering or interface painted into the image.
+
+The ONLY visible chess character is the protagonist, the paper king. Its body is an ivory PAWN with a simple round pawn head and pawn base. Its oversized, uneven four-point PAPER crown is tilted, made of ochre/brown cardboard, with ONE small cyan square decoration on the front. It is visibly handmade and remains imperfect. No king cross, no bishop slit, no metal gold crown, no royal humanoid. Never use the discarded tiny bright-yellow fork-shaped crown. Preserve the pawn's small scratch; the child does not repair or polish it.
+
+Do not draw any companion pieces, especially no black knight. Actual survivors vary by the player's run; fixed companions would resurrect dead characters. The box can extend outside the crop; do not imply a fixed complete set or a new restored king. The embrace is expressed by the careful hand, not glowing magic.
+
+Palette limit: 24 colors, warm desaturated ivory and wood amber balanced against blue-gray shadows. Core colors #0b0b0e #1c1d22 #33313b #56545e #8e877a #c8bba4 #f4f1ea #8c6239 #c89b3c and restrained #38bdf8 for the single cyan decoration. Lighting from upper left with at most three hard shadow steps per material. Restrained hope, no celebration confetti.
+
+STRICT PIXEL ART: no painterly textures, no brush strokes, no blur, no antialiasing, no gradient, no soft shadows, no photographic lighting, no grain/noise, no smooth curved vector edges, no typography, no watermark, no UI frame. One scene, no sheet, no alternate versions, no extra companions.
+```

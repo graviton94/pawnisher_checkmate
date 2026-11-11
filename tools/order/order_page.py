@@ -17,7 +17,7 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MD = os.path.join(ROOT, 'docs', 'asset-order-master.md')
 SCENES = os.path.join(ROOT, 'public', 'scenes')
-ATTACH = []  # 현재 UI-31~33은 첨부 없이 독립 제작한다.
+ATTACH = []  # 현재 UI-31~33·S-01은 첨부 없이 독립 제작한다.
 REDO: set[str] = set()
 
 
@@ -319,7 +319,7 @@ pre { margin: 0; padding: 12px 14px; font: 13px/1.6 var(--mono); white-space: pr
 </nav>
 <main>
 <h1>그림 발주서</h1>
-<p class="lede">현재 제작할 UI-31·UI-32와 선택 제작 UI-33만 모았습니다. 각 상자를 독립 생성 작업에 복사하세요. I-14 네 장은 제작 완료·원본 반입 대기이며 재제작 요청이 아닙니다.</p>
+<p class="lede">현재 제작할 UI-31·UI-32·S-01과 선택 제작 UI-33을 모았습니다. 각 상자를 독립 생성 작업에 복사하세요. I-14 네 장은 제작 완료·원본 반입 대기이며 재제작 요청이 아닙니다.</p>
 <div class="meter">받은 그림 %GOT% / %TOTAL%<i style="--w: calc(%GOT% / %TOTAL% * 100%)"></i></div>
 <div class="how"><b>받는 법</b><ol><li>상자마다 새 생성 작업을 엽니다.</li><li>첨부 그림은 필요 없습니다.</li><li>프롬프트를 <b>복사</b>해 통째로 붙여 넣습니다.</li><li>결과 PNG 원본을 전달하면 격자·팔레트·알파를 검사한 뒤 게임에 붙입니다.</li></ol></div>
 %ATT%

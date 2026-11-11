@@ -3,6 +3,8 @@ import type { Crew } from './crew';
 import type { SliceEventId } from './events';
 import type { SlicePartId } from './parts';
 import { ASC_MAX } from './run';
+import { CAMPAIGN_VERSION, CHALLENGE_START, STORY_COUNT, type RunMode, type StoryChapter, type EndingKind, type CrownRecord, type StoryPromise } from '../data/campaign';
+import { UNLOCK_ORDER } from '../data/unlocks';
 import type { Highlight, Nemesis } from './director';
 
 /**
@@ -14,6 +16,10 @@ export interface RunSave {
   v: 2;
   seed: number;
   asc: number;
+  mode?: RunMode;
+  chapter?: StoryChapter;
+  promise?: StoryPromise;
+  storyBeats?: number[];
   /** 오늘의 출하 (날짜 시드) — 기록에만 따로 남는다 */
   daily: string | null;
   runId: string;
@@ -55,9 +61,16 @@ export interface ActSnap { won: number; kills: number; gold: number; deck: numbe
 
 /** 쌓이는 기록 (출하를 넘어 남는다) */
 export interface Meta {
+  campaignVersion?: number;
+  storyCleared?: number;
+  challengeOpen?: number;
+  crownedKings?: CrownRecord[];
+  challengeRecords?: Record<string, { attempts: number; clears: number }>;
+  storyAttempts?: number[];
+  legacyStory?: { ascOpen: number; trueEnd: boolean };
   runs: number;
   clears: number;
-  /** 열린 승급 단계 (0 = 기본만) */
+  /** 옛 호출/저장 호환용. 새 UI는 storyCleared·challengeOpen을 사용한다. */
   ascOpen: number;
   /** 가장 멀리 간 막 */
   bestAct: number;
@@ -76,7 +89,7 @@ export interface Meta {
   termsNew?: string[];
   /** 최근 출하들에서 만난 사건 (D-247 — 다음 출하에서는 뒤로 미룬다) */
   evRecent?: string[];
-  /** 진 엔딩을 봤다 (승급 13 · 뒤로 한 발, D-277) */
+  /** 새 본편 셋째 장에서 함께 출하를 골랐다 (D-425) */
   trueEnd?: boolean;
   /** 해금된 카드 · 부품 (D-284) — 처음 풀 밖의 것만 */
   unlocked?: string[];
@@ -122,20 +135,62 @@ export const readSave = (st: Store): RunSave | null =>
     const raw = st.getItem(SAVE_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as RunSave;
-    return s && s.v === 2 && Array.isArray(s.squad) && s.squad.length ? s : null;
+    if (!s || s.v !== 2 || !Array.isArray(s.squad) || !s.squad.length || !Number.isInteger(s.asc) || s.asc < 0 || s.asc > ASC_MAX) return null;
+    if (s.mode && !['story', 'challenge', 'daily'].includes(s.mode)) return null;
+    if (s.mode === 'story' && (s.chapter === undefined || ![0, 1, 2].includes(s.chapter) || s.asc !== s.chapter)) return null;
+    return s;
   }, null);
 export const clearSave = (st: Store): void => safe(() => st.removeItem(SAVE_KEY), undefined);
 
-export const emptyMeta = (): Meta => ({ runs: 0, clears: 0, ascOpen: 0, bestAct: 0, daily: {}, nemeses: [] });
-export const readMeta = (st: Store): Meta => safe(() => ({ ...emptyMeta(), ...(JSON.parse(st.getItem(META_KEY) ?? '{}') as Partial<Meta>) }), emptyMeta());
+export const emptyMeta = (): Meta => ({ runs: 0, clears: 0, ascOpen: 0, bestAct: 0, daily: {}, nemeses: [], campaignVersion: CAMPAIGN_VERSION, storyCleared: 0, challengeOpen: CHALLENGE_START, crownedKings: [], trueEnd: false, challengeRecords: {}, storyAttempts: [0, 0, 0] });
+/** 옛 13단의 통계·해금·진행 중 출하는 보존하되 새 본편을 보았다고 간주하지 않는다. */
+export const readMeta = (st: Store): Meta => safe(() => {
+  const raw = JSON.parse(st.getItem(META_KEY) ?? '{}') as Partial<Meta>;
+  const m = { ...emptyMeta(), ...raw };
+  if (raw.campaignVersion !== CAMPAIGN_VERSION) {
+    m.legacyStory = { ascOpen: raw.ascOpen ?? 0, trueEnd: !!raw.trueEnd };
+    m.campaignVersion = CAMPAIGN_VERSION;
+    m.storyCleared = 0;
+    m.trueEnd = false;
+    m.challengeOpen = Math.max(CHALLENGE_START, Math.min(ASC_MAX, raw.ascOpen ?? 0));
+    m.crownedKings = [];
+    // 빈 저장소에는 불필요한 과거 기록을 만들지 않는다.
+    if (!st.getItem(META_KEY)) delete m.legacyStory;
+  }
+  m.storyCleared = Math.max(0, Math.min(STORY_COUNT, Math.floor(Number(m.storyCleared) || 0)));
+  m.challengeOpen = Math.max(CHALLENGE_START, Math.min(ASC_MAX, Math.floor(Number(m.challengeOpen) || CHALLENGE_START)));
+  return m;
+}, emptyMeta());
 
 /** 출하가 끝났을 때 기록을 더한다. 승급 n을 끝내면 n+1이 열린다 (오늘의 출하는 승급을 열지 않는다) */
-export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: number; asc: number; daily: string | null }): Meta => {
+export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: number; asc: number; daily: string | null; mode?: RunMode; chapter?: StoryChapter; ending?: EndingKind; crown?: CrownRecord }): Meta => {
   const out: Meta = { ...m, daily: { ...m.daily }, nemeses: [...(m.nemeses ?? [])] };
+  if (!r.daily && r.mode === 'challenge') {
+    const old = m.challengeRecords?.[r.asc] ?? { attempts: 0, clears: 0 };
+    out.challengeRecords = { ...(m.challengeRecords ?? {}), [r.asc]: { attempts: old.attempts + 1, clears: old.clears + Number(r.cleared) } };
+  }
+  if (!r.daily && r.mode === 'story') {
+    out.storyAttempts = [...(m.storyAttempts ?? [0, 0, 0])];
+    out.storyAttempts[r.chapter ?? 0] += 1;
+  }
   out.runs += 1;
   if (r.cleared) out.clears += 1;
   out.bestAct = Math.max(out.bestAct, r.cleared ? 4 : r.act);
-  if (r.cleared && !r.daily && r.asc >= out.ascOpen) out.ascOpen = Math.min(ASC_MAX, r.asc + 1);
+  if (r.cleared && !r.daily) {
+    if (r.mode === 'story') {
+      const chapter = r.chapter ?? 0;
+      // 재관람이나 조작된 미래 장이 순차 진행을 건너뛰지 않는다.
+      const legal = chapter < 2 ? r.ending === 'throne' : r.ending === 'throne' || r.ending === 'depart';
+      if (legal && chapter === (out.storyCleared ?? 0)) {
+        out.storyCleared = Math.min(STORY_COUNT, chapter + 1);
+        if (r.ending === 'throne' && r.crown) out.crownedKings = [...(out.crownedKings ?? []), r.crown];
+      }
+      if ((out.storyCleared ?? 0) >= STORY_COUNT && chapter === 2 && r.ending === 'depart') out.trueEnd = true;
+      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER])];
+    } else if (r.mode === 'challenge') {
+      if ((out.storyCleared ?? 0) >= STORY_COUNT && r.asc === (out.challengeOpen ?? CHALLENGE_START)) out.challengeOpen = Math.min(ASC_MAX, r.asc + 1);
+    } else if (!r.mode && r.asc >= out.ascOpen) out.ascOpen = Math.min(ASC_MAX, r.asc + 1); // 옛 호출 호환
+  }
   if (r.daily && !out.daily[r.daily]) out.daily[r.daily] = { cleared: r.cleared, act: r.act, won: r.won };
   return out;
 };

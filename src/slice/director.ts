@@ -1,4 +1,5 @@
 import type { PieceType } from '../engine';
+import { CREW } from './crew';
 
 /**
  * 심리 연출 감독 (D-178). 사용자 원칙: 유저는 ① 똑똑해 보이고 싶지만 복잡한 건 싫고 ② 이기면 내 실력, 지면 게임 탓
@@ -22,7 +23,7 @@ export const DIRECTOR = {
   closeCallGold: 40,
   /** 사선 판정: 킹 HP 비율 이하 · 분대원 쓰러짐 · 마지막 한 수 사용 */
   closeKingHp: 0.15,
-  /** ① 원수 현상금 (나사) · 유품 반환(쓰러진 분대원 되살리기)이 되는 승급 상한 */
+  /** ① 원수 현상금 (나사) · 유품 회수(폐기 인물은 되살리지 않음)이 되는 승급 상한 */
   bounty: [90, 75, 60, 50, 40, 30],
   heirloomUpTo: 2,
   /** 원수가 다음 대국에 나타날 확률 (같은 출하) · 원수 강화 (HP 배율, 단계마다) */
@@ -108,7 +109,7 @@ export const TAUNTS: Record<TauntCue, string[]> = {
   cheese: ['“하, 비겁한 수를 쓰는군. 폰답네.”', '“한 번에 둘? …운이 좋았을 뿐이야.”', '“그건 반칙 아닌가? 정품은 그렇게 안 둬.”', '“규격 외 수로 이겨 봐야, 하자품은 하자품이지.”', '“흥, 겁도 없는 폰이로군.”'],
   beg: ['“자, 잠깐. 거래하지. 나사라면 넉넉히…”', '“정품 킹을 부수면 너희만 손해야. 알지?”', '“왕관만은… 왕관만은 두고 가.”'],
   gloat: ['“하. 하자품은 용광로로.”', '“하나 줄었군. 킹 없는 세트답게.”'],
-  meet: ['“…또 만났군, 종이 왕관.”', '“지난번엔 운이었어. 이번엔 아니야.”'],
+  meet: ['“또 다른 종이 왕관이군.”', '“이전 세트의 이름은 원부에서 찾아라.”'],
   sig: ['“이게 정품의 수다.”'],
 };
 
@@ -134,3 +135,6 @@ export interface Highlight {
 }
 /** 더 멋진 턴인가 (처치 수 우선, 같으면 피해) */
 export const betterHighlight = (a: Highlight | null, b: Highlight): boolean => !a || b.kills > a.kills || (b.kills === a.kills && b.damage > a.damage);
+
+/** 폐기 이력을 유지하고 유품의 기존 나사 가치만 돌려준다 (D-425). */
+export const recoverHeirloom = (n: Nemesis, asc: number): number => n.heir && asc <= DIRECTOR.heirloomUpTo ? CREW.heirloomScrews : 0;

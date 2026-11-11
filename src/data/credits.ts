@@ -10,5 +10,5 @@ export const CREDITS: { role: string; names: string[] }[] = [
 export const CREDIT_TEXT = {
   title: 'Pawnisher : Checkmate',
   /** 기록지 12 (각본 §15) */
-  record: '「접힌 종이 왕관」 — 접은 자국이 열세 겹이다.',
+  record: '왕관은 종이인 채로 남았다.',
 };

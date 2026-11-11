@@ -1,6 +1,6 @@
 /**
  * 본편 오프닝 (D-192): 프롤로그 컷 · 안내서 쪽 · 첫 대국 도움말.
- * 이야기 정본 `docs/story.md` §9.1, 말투 D-158 (서술 = 비장한 한 문장, 독백 = 작은따옴표 짧은 반말, 대사 = 「 」).
+ * 이야기 정본 `docs/brief/scenario-runtime.md`, 말투 D-158 (서술 = 비장한 한 문장, 독백 = 작은따옴표 짧은 반말, 대사 = 「 」).
  * 그림은 `docs/asset-order-prologue.md` P-00 ~ P-07 — 오기 전까지는 기물 도트로 짠 자리 그림(art)으로 돈다.
  */
 import type { PieceType } from '../engine';
@@ -81,7 +81,7 @@ export const OPENING_TEXT = {
   press: '화면을 눌러 시작',
   /** 프롤로그 끝 로고 아래 — 누르면 첫 대국 (테스터: 끝나자마자 메인 → 온보딩으로 저절로 넘어가 숨 돌릴 틈이 없었다) */
   pressGo: '화면을 눌러 출하',
-  tagline: '체스 규칙을 부수는 태엽 분대',
+  tagline: '폰도 자기 삶을 고를 수 있다',
   skip: '건너뛴다',
   /** 단추 = 동사 하나 (voice ⑧, D-391) */
   next: '넘긴다',

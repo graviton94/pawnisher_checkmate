@@ -25,6 +25,7 @@ const day = new Date().toISOString().slice(0, 10);
     await pg.goto(BASE + '?debug'); await pg.waitForSelector('#boot', { state: 'detached' }); await pg.waitForTimeout(200); await skip();
     const A = (fn, arg) => pg.evaluate(fn, arg);
     if (sc === 'builds') await require('./qa/build-prototype.cjs')(pg, shot);
+    else if (sc === 'campaign') await require('./qa/campaign-flow.cjs')(pg, shot);
     else if (sc === 'event-layout') await require('./qa/event-layout.cjs')(pg, shot);
     else if (sc === 'end-scenes') await require('./qa/end-scenes.cjs')(pg, shot);
     else if (sc === 'unit-info') await require('./qa/unit-info.cjs')(pg, shot);

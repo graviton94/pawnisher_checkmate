@@ -91,7 +91,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         el.classList.add('dip');
         await wait(calm() ? 0 : 140);
         if (my !== token) return;
-        const pick = (await hasImg(`scenes/${c.img}.png`)) ? c.img : c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
+        const pick = !c.standIn && (await hasImg(`scenes/${c.img}.png`)) ? c.img : !c.standIn && c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
         const src = `scenes/${pick}.png`;
         stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="">` : standIn(c); // 정사각 초상(반장 · 도금왕)은 비율 그대로 덮고 위 30%에 초점 (D-388)
         if (my !== token) return;

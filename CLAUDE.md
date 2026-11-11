@@ -5,13 +5,13 @@
 ## 스택
 - TypeScript + Vite + Phaser 3 (보드 렌더링) + HTML/CSS 오버레이 (UI) · Vitest
 - 결정론적 엔진 `src/engine/` (시드 RNG, 같은 입력 = 같은 결과) — 미리보기·AI·실행이 같은 `simulate()` 하나를 쓴다
-- **본편 = 리뉴얼판** `index.html` → `src/slice/` (분대 · 명령 덱 · 3막 출하 · 저장 · 승급 · 오늘의 출하, GDD 16장 · D-174). 2.0은 `legacy.html`로 남는다 (`src/run/` `src/ui/` `src/game/`).
+- **본편 = 리뉴얼판** `index.html` → `src/slice/` (분대 · 명령 덱 · 3막 출하 · 본편 3장 · 선택 도전 · 오늘의 도전 · 저장, GDD 16장 · D-174). 2.0은 `legacy.html`로 남는다 (`src/run/` `src/ui/` `src/game/`).
 - 공용: 엔진 `src/engine/`, 데이터 `src/data/`, 판 그리기 `src/view/`, AI `src/ai/`
 - 빌드: 웹 `npm run build` · 안드로이드 Capacitor (CI가 APK를 `apk-latest` 릴리스로 올림) · PC Electron
 
 ## 문서
 - 정본 기획: `docs/gdd/` · 결정 로그: `docs/DECISIONS.md` (D-번호) · 시뮬레이션 보고: `docs/reports/`
-- 세계관·테마: `docs/world.md` · 스토리보드: `docs/story.md` · 아트 바이블: `docs/art-bible.md` · 에셋 생산(원본 vs 조합): `docs/art-assets.md` · 발주 프롬프트: `docs/asset-order-master.md` (남은 그림 전부 · 우선순위)
+- 이야기·진행 정본: `docs/brief/scenario-runtime.md` (D-425: 본편 3장 + 별도 도전). 선택한 주제: `docs/brief/scenario-core.md`. `docs/book/`, `docs/story.md`, `docs/story-bible.md`, `docs/script.md`의 옛 줄거리·겹·13단 엔딩은 보관용이다. 세계 용어·재질: `docs/world.md` · 아트 바이블: `docs/art-bible.md` · 에셋 생산(원본 vs 조합): `docs/art-assets.md` · 발주 프롬프트: `docs/asset-order-master.md` (남은 그림 전부 · 우선순위)
 - 레퍼런스 스터디: `docs/reference/reference-study.md` · 외부 도구 목록: `docs/reference/tools.md`
 - 새 이름·문구는 `docs/world.md` 이름 규칙을, 새 그림은 `docs/art-assets.md` §1 순서(조합 → 문양 → 전용 그림)를 따른다.
 - 기획을 바꾸면 해당 GDD 장 + DECISIONS에 같이 남긴다.
