@@ -10,6 +10,7 @@ import './slice.css';
 import './card-layout.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
+import { chooseBuildCard, chooseBuildPart, firstShopParts } from './build-offers';
 import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, btnRowHtml, closeWin, coverArt, cutChromeHtml, cutFill, cutLineHtml, dropWinDismiss, fitSlots, infoPeek, makeTalk, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, talkAt, type CutLine, type PickItem, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
 import { installPressFeedback } from '../ui/motion';
@@ -528,7 +529,7 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   // 생명 자리 (D-377): 늘 둘 이상 — 남은 생명은 태엽 하트, 빈 자리는 깨진(검은) 하트
   const hearts = Array.from({ length: Math.max(2, lives) }, (_, k) => `<i class="cb-life${k < lives ? '' : ' off'}"></i>`).join('');
   // 본문 (D-377): 위 칸 = 기록(이름 · 숫자) 또는 첫마디 2줄 · 아래 칸 = 특성 이름 / 효과 · 효과 (또는 조건 / 효과) 한 줄씩
-  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i>쓰러짐</i>${u.defied ?? 0}</span></span>`];
+  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="생명을 소모해 죽음을 넘긴 횟수">버팀</i>${u.defied ?? 0}</span></span>`];
   const bot = q
     ? [lineHtml(q.name, 'name'), ...bottomLines('', q.desc).slice(0, 2).map((l) => lineHtml(l.t, l.k === 'fx' ? 'say' : 'if'))]
     : u.t === 'K'
@@ -1078,6 +1079,7 @@ const run = (i: number, pieceId?: number, to?: Pos): Promise<void> => guarded(()
 const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> => {
   const cardId = b.hand[i];
   const moverType = pieceId !== undefined ? findPiece(b.s, pieceId)?.type : undefined;
+  const seal0 = b.once.includes('relaySeal');
   const k0 = b.kills;
   const burn0 = b.burned?.length ?? 0;
   const ev0 = (b.evaded ?? []).length;
@@ -1114,6 +1116,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const latchEvent = r.events.find((e) => e.type === 'attack' && e.shieldSpent);
   if (relayEvent?.type === 'apGain') toast(BUILD_TEXT.relay(relayEvent.amount));
   if (latchEvent?.type === 'attack') toast(BUILD_TEXT.latch(latchEvent.shieldSpent!));
+  if (!seal0 && b.once.includes('relaySeal')) toast(BUILD_TEXT.seal);
   if (gain) {
     // 처치 → 돌아온 열쇠가 감기며 불꽃이 튄다
     apHold = null;
@@ -2111,11 +2114,9 @@ const shopScreen = (): void => {
   const pool = REWARD_COMMANDS.filter((id) => usable(id) && isOpen(id));
   const cards: CommandId[] = [];
   while (cards.length < SHOP.cards && pool.length) cards.push(pool.splice(rng.int(pool.length), 1)[0]);
-  const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts));
-  // 첫 출하의 첫 고물상 (D-232, Balatro 첫 상점 보장): 쥔 핵심 부품과 같은 축의 보통 등급 부품을 꼭 하나 — 「맞물린다」를 처음 손에 쥐게
-  const mineAx = parts.map((id) => SLICE_PARTS[id].axis).filter(Boolean);
-  const fits = firstShip && shopsSeen === 0 ? partPool.filter((id) => mineAx.includes(SLICE_PARTS[id].axis) && (PART_GRADE[id] ?? 'common') === 'common') : [];
-  const from = fits.length ? fits : partPool;
+  const partPool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts, squad));
+  // D-431: 매 출하 첫 상점의 일반 보조품. 혼성의 null 축도 실제 기능군으로 연결한다.
+  const from = firstShopParts(partPool, parts, shopsSeen);
   const part = from.length ? from[rng.int(from.length)] : null;
   shopsSeen += 1;
   if (shopsSeen === 1) ftue('first_shop');
@@ -2674,7 +2675,7 @@ const finishNow = (): void => {
     // 원수가 생긴다: 내 분대원을 쓰러뜨린 적 (킹 · 입문 판 제외)
     for (const { crew, fall } of fallenList) if (crew.t !== 'K' && fall.byType && fall.byType !== 'K' && !INTRO.includes(cur)) setNemeses(addNemesis(nemeses(), fall.byType, { t: crew.t, name: crew.name ?? PIECE_NAMES_KO[crew.t], serial: crew.serial }, R.int(1000)));
     // 폐기 원부: 영구 기록 (D-153)
-    writeLedger(fallenList.map(({ crew, fall }) => ({ serial: crew.serial ?? '', name: crew.name ?? '', t: crew.t, quirk: crew.quirk, kills: crew.kills ?? 0, battles: crew.battles ?? 0, nick: crew.nick, cause: `${cur.title} ${fall.turn}턴 · ${fall.by}`, run: runId })));
+    writeLedger(fallenList.map(({ crew, fall }) => ({ serial: crew.serial ?? '', name: crew.name ?? '', t: crew.t, quirk: crew.quirk, kills: crew.kills ?? 0, battles: crew.battles ?? 0, dmg: crew.dmg ?? 0, wins: crew.wins ?? 0, protectedDamage: crew.protectedDamage ?? 0, defied: crew.defied ?? 0, nick: crew.nick, cause: `${cur.title} ${fall.turn}턴 · ${fall.by}`, run: runId })));
     // 판 사이 기본 회복: 남은 분대 최대 HP의 30%
     {
       const rested = restSquad(survived, restHeal());
@@ -2745,11 +2746,11 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     const elite = !!cur.boss || cur.reward === 'part' || partDone;
     for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
       if (offers.length >= (closeTier === 2 ? 4 : 3) + (parts.includes('loupe') ? 1 : 0) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0)) break;
-      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id) && isOpen(id));
+      const pool = REWARD_COMMANDS.filter((id) => (offers.length === 0 || COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id) && isOpen(id));
       const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
       const same = pool.filter((id) => gradeOf(id) === g);
       const from = same.length ? same : pool;
-      if (from.length) offers.push(from[rng.int(from.length)]);
+      if (from.length) offers.push(offers.length === 0 && same.length > 0 ? chooseBuildCard(from, parts, rng) : from[rng.int(from.length)]);
     }
     // 기물 수집 (D-216): 대국 보상에 가끔 새 분대원 한 명이 섞인다 — 카드 대신 고를 수 있다
     const recruitOffer = !elite && squad.length < SLICE.squadMax && (rng.next() < SLICE.recruitChance || debugRecruit) ? rollRecruit(RECRUITS, rng.next()) : null;
@@ -2928,7 +2929,7 @@ const crewView = (): void => {
     title: SCREEN_TEXT.crew,
     tag: `<span class="badge-n">${squad.length}명</span>`,
     items: [],
-    body: slotsHtml(squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }) })), true),
+    body: slotsHtml(squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>생존 승리 <b>${u.wins ?? 0}</b> · 보호 <b>${u.protectedDamage ?? 0}</b></span>` })), true),
     cls: 'scr-crew',
     skip: { label: SCREEN_TEXT.close, attrs: 'data-x' },
     go: { label: SCREEN_TEXT.ledger, kind: 'iron', attrs: 'data-ledger' },
@@ -3007,7 +3008,7 @@ const recruitPick = (title: string, then: () => void, tag = ''): void => {
 /** 부품 상자 (1판 뒤 — 첫 사기 조합 확정): 부품 + 맞물리는 카드 둘, 셋 중 하나 */
 const kitPick = (title: string, then: () => void, tag = ''): void => {
   const rng = sub();
-  const pool = KITS.filter((k) => !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)) && k.cards.every(usable));
+  const pool = KITS.filter((k) => (PART_GRADE[k.part] ?? 'common') !== 'gold' && !parts.includes(k.part) && (!k.needs || squad.some((u) => u.t === k.needs)) && k.cards.every(usable));
   // 빌드 확정 (D-230, 보고서 4 · 5 — Monster Train 챔피언 · Balatro 앤티 2 · StS 첫 정예): 두 번째 대국 뒤 「핵심 부품」 셋은 서로 다른 축에서 — 고르는 순간 이번 출하의 방향이 선다
   // 두 갈래 (사용자 결정 D-231): ① 큰 세 갈래 — 서로 다른 축 셋 ② 한 갈래의 세부 — 한 축 안의 셋. 세부는 그 축에 셋이 있을 때만
   const offers: typeof KITS = [];
@@ -3084,14 +3085,14 @@ const gainPart = (id: SlicePartId, done: (took: boolean) => void): void => {
 /** 부품 고르기 (검문! 통과): 셋 중 하나 */
 const partPick = (title: string, then: () => void, elite = false, tag = ''): void => {
   const rng = sub();
-  const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts));
+  const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts, squad));
   const offers: SlicePartId[] = [];
   // 칸마다 등급을 먼저 뽑고 그 등급에서 하나 (없으면 아무 등급) — 검문 · 반장은 높은 등급이 잘 나온다 (D-216)
   while (offers.length < 3 && pool.length) {
     const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
     const same = pool.filter((id) => (PART_GRADE[id] ?? 'common') === g);
     const pickFrom = same.length ? same : pool;
-    const id = pickFrom[rng.int(pickFrom.length)];
+    const id = chooseBuildPart(pickFrom, parts, rng, offers.length === 0 && same.length > 0);
     pool.splice(pool.indexOf(id), 1);
     offers.push(id);
   }
@@ -3377,7 +3378,7 @@ $('parts').addEventListener('click', (e) => {
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-part-info]');
   if (!el) return;
   const id = el.dataset.partInfo as SlicePartId;
-  if (id === 'relayGear' || id === 'siegeLatch') {
+  if (id === 'relayGear' || id === 'siegeLatch' || id === 'relaySeal' || id === 'sharedPlate') {
     const abilities = BUILD_PART_ABILITIES[id];
     const peek = infoPeek({ cls: 'part-detail', key: `part:${id}`, side: 'left', maxW: Math.min(352, Math.floor(offBoardW('left'))), head: '', body: abilityHtml(abilities) });
     bindAbilities(peek, abilities);
@@ -3669,7 +3670,7 @@ const newRun = (seed: number, level: number, day: string | null, mode: RunMode =
 
 /** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
 const saveRun = (at: 'map' | 'battle', node?: number): void =>
-  writeSave(store, { v: 2, seed: runSeed, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, svc: svcUsed, bosses: runBosses, actSnap });
+  writeSave(store, { v: 2, seed: runSeed, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, actSnap });
 
 /** 저장한 출하를 되살린다 */
 const loadRun = (sv: RunSave): void => {
@@ -3682,6 +3683,7 @@ const loadRun = (sv: RunSave): void => {
   daily = sv.daily;
   openIds = sv.daily ? null : new Set([...STARTER_CARDS, ...STARTER_PARTS, ...(readMeta(store).unlocked ?? [])]);
   firstShip = !!sv.first;
+  shopsSeen = sv.shopsSeen ?? 0;
   svcUsed = sv.svc ?? { refine: 0, remove: 0 };
   runBosses = (sv.bosses ?? []) as StoryBoss[];
   runLive = true;

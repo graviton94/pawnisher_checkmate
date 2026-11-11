@@ -37,7 +37,9 @@ export const enemyAbilityText = (type: PieceType, traits: FoeTrait[], damage = (
 };
 
 /** 부품 상세도 같은 표시 계약을 사용한다. */
-export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch', AbilityText[]> = {
+export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch' | 'relaySeal' | 'sharedPlate', AbilityText[]> = {
+  relaySeal: [{ name: '분대 인장', description: '적을 친 2유형 뒤 새 분대 유형', effect: `첫 직접 피해 ×${PART_NUM.relaySeal} · 턴에 1회` }],
+  sharedPlate: [{ name: '맞댄 철판', description: '3승 고참이 카드로 방열판 받으면', effect: `상하좌우 동료 1기 방열판 +${PART_NUM.sharedPlate}` }, { name: '보호 대상', description: '킹 외 고참 · 낮은 체력 비율 우선', effect: '임시 폰 제외 · 매턴 1회' }],
   relayGear: [{ name: '맞물린 톱니', description: '분대 2유형이 적에게 피해', effect: `태엽 +${PART_NUM.relayGear} · 턴에 1회` }, { name: '동료 판정', description: '입장 시 영구 분대 유형 기준', effect: '임시 폰·승격·반사 제외' }],
   siegeLatch: [{ name: '공성 걸쇠', description: '기본 2태엽↑ 룩 이동 공격', effect: `방열판 ≤${PART_NUM.siegeLatch} → 첫 피해` }, { name: '소모 횟수', description: '룩마다 매턴 1회 소모', effect: '관통 뒷 대상·튐·충돌 제외' }],
 };

@@ -14,6 +14,7 @@ export const BUILD_TEXT = {
   preview: '공격 예측',
   previewHint: '갈 칸을 길게 누르면 피해와 소모를 봅니다.',
   relay: (n: number) => n ? `맞물린 톱니 · 태엽 +${n}` : '맞물린 톱니 · 태엽 상한',
+  seal: '분대 인장 · 첫 타격 ×1.8',
   latch: (n: number) => `공성 걸쇠 · 방열판 −${n}`,
 
 };

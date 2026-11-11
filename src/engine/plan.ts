@@ -178,7 +178,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
 };
 
 /** 착지한 기물의 공격 한 번 (GDD 3장 §3.1). 처치 수를 돌려준다 */
-const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number, add = 0, shieldStrike = 0): number => {
+const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: number, add = 0, shieldStrike = 0, firstMult = 1): number => {
   const { targets, area } = attackScan(s, attacker);
   let mult = baseMult;
   // 연쇄 보너스 (D-077): 이번 턴 앞 순번 처치 수만큼
@@ -197,7 +197,7 @@ const performAttack = (s: BattleState, attacker: Piece, ctx: TurnCtx, baseMult: 
     attacker.shield -= spent;
     shieldSpent += spent;
     let splashDmg = damageOf(s, attacker, t, mult, add);
-    let dmg = spent ? damageOf(s, attacker, t, mult, add + spent) : splashDmg;
+    let dmg = damageOf(s, attacker, t, mult * (!hits.length ? firstMult : 1), add + spent);
     if (part(s, side, 'blade') && t.hp <= t.maxHp * PART_FX.bladeAt) dmg = Math.round(dmg * PART_FX.blade);
     if (t.type === 'K' && part(s, side, 'hunter')) dmg = Math.round(dmg * PART_FX.hunter);
     if (part(s, side, 'blade') && t.hp <= t.maxHp * PART_FX.bladeAt) splashDmg = Math.round(splashDmg * PART_FX.blade);
@@ -258,6 +258,8 @@ export interface SimOptions {
   add?: number;
   /** 첫 직접 대상에 방열판을 이만큼까지 소모해 합산한다. 빈 공격에는 소모하지 않는다. */
   shieldStrike?: number;
+  /** 첫 직접 대상만 강화한다. 튐·관통 뒷 대상에는 전파하지 않는다. */
+  firstMult?: number;
   /** 태엽 검사를 건너뛴다 (카드가 태엽을 따로 셀 때) */
   freeAp?: boolean;
 }
@@ -313,7 +315,7 @@ export const simulate = (input: BattleState, plan: Plan, opts: SimOptions = {}):
     if (order === 0 && part(s, side, 'firstCog')) mult *= PART_FX.firstCog;
     if (order >= PART_FX.lastFrom && part(s, side, 'lastHammer')) mult *= PART_FX.lastHammer;
     if (prevKilled && part(s, side, 'command')) mult *= PART_FX.command;
-    const killed = performAttack(s, piece, ctx, mult, opts.add ?? 0, opts.shieldStrike ?? 0);
+    const killed = performAttack(s, piece, ctx, mult, opts.add ?? 0, opts.shieldStrike ?? 0, opts.firstMult ?? 1);
     prevKilled = killed > 0;
     if (s.winner !== null) continue;
 

@@ -61,6 +61,10 @@ export interface Crew {
   quirk?: QuirkId;
   kills?: number;
   battles?: number;
+  /** 승리한 대국에서 생존한 횟수. 옛 battles를 승리로 추정하지 않는다. */
+  wins?: number;
+  /** 직접 나눈 방열판이 실제 적 피해를 흡수한 양. */
+  protectedDamage?: number;
   /** 누적 준 피해 (D-363) */
   dmg?: number;
   /** 생명으로 죽음을 넘긴 횟수 (D-363) */
@@ -83,6 +87,10 @@ export interface LedgerEntry {
   quirk?: QuirkId;
   kills: number;
   battles: number;
+  dmg?: number;
+  wins?: number;
+  protectedDamage?: number;
+  defied?: number;
   nick?: string;
   cause: string;
   run: string;

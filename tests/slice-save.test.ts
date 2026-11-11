@@ -6,7 +6,7 @@ const memStore = (): Store => {
   const m = new Map<string, string>();
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v), removeItem: (k) => void m.delete(k) };
 };
-const sample = (): RunSave => ({ v: 2, seed: 7, asc: 2, daily: null, runId: 'r', actI: 1, rowI: 3, picked: [[0, 0, 1], [2], []], squad: [{ t: 'K', name: '대장' }], deck: ['advance'], parts: ['coil'], gold: 40, won: 6, stage: 9, refined: [], eventBag: ['smith'], rng: 12345, at: 'map' });
+const sample = (): RunSave => ({ v: 2, seed: 7, asc: 2, daily: null, runId: 'r', actI: 1, rowI: 3, picked: [[0, 0, 1], [2], []], squad: [{ t: 'K', name: '대장', wins: 3, protectedDamage: 12 }], deck: ['advance'], parts: ['coil'], gold: 40, won: 6, stage: 9, refined: [], eventBag: ['smith'], rng: 12345, at: 'map', shopsSeen: 1 });
 
 describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
   it('저장 → 읽기 → 지우기', () => {

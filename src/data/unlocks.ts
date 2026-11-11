@@ -7,7 +7,7 @@ export const STARTER_CARDS: string[] = [
   'pierceDiag', 'crossLeap', 'charge', 'plate', 'repair', 'reload', 'kingBlow', 'splashDiag', 'smash', 'rebound', 'hoofKick', 'march', 'draft', 'wrath', 'royalGuard', 'spark', 'finisher', 'cavCharge', 'kingGuard', 'doubleLeap', 'gambit', 'shove', 'shieldBash', 'ram', 'pawnStorm', 'knightRaid', 'bishopRay', 'rookCharge', 'kingDecree', 'overload', 'quickFix', 'tempo', 'bulwark', 'bladeRain', 'vent', 'burst', 'recall', 'rookPierce', 'scrapToss', 'phalanx', 'pawnExecute', 'bishopChain', 'kingCharge',
 ];
 export const STARTER_PARTS: string[] = [
-  'relayGear', 'siegeLatch',
+  'relayGear', 'siegeLatch', 'relaySeal', 'sharedPlate',
   // 기록 유물 (D-363) — 처음부터: 분대원을 아끼게 만드는 축
   'lastBreath', 'ledger', 'veteran', 'deathMark',
   // 기록 유물 2차 (D-384)

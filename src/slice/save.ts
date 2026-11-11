@@ -50,6 +50,8 @@ export interface RunSave {
   first?: boolean;
   /** 고물상 다듬기 · 빼기 쓴 횟수 (D-247 — 값이 오른다) */
   svc?: { refine: number; remove: number };
+  /** 첫 상점 보조 공급을 출하마다 한 번만 적용한다. */
+  shopsSeen?: number;
   /** 이번 출하에서 쓰러뜨린 반장 (각본 — 도금왕의 비꼼 · 거울, D-276) */
   bosses?: string[];
   /** 이번 막 시작 때의 값 (D-402 막 장부 = 지금 − 이것) — kb · db = 분대원 일련번호 → 처치 · 피해 */
