@@ -1,0 +1,34 @@
+[
+  {
+    "preset": "small-mobile",
+    "width": 667,
+    "height": 375,
+    "dpr": 2.625,
+    "tileCssPx": 50,
+    "boardCssPx": 300
+  },
+  {
+    "preset": "mobile",
+    "width": 915,
+    "height": 412,
+    "dpr": 2.625,
+    "tileCssPx": 50,
+    "boardCssPx": 300
+  },
+  {
+    "preset": "tablet",
+    "width": 1024,
+    "height": 768,
+    "dpr": 2,
+    "tileCssPx": 80,
+    "boardCssPx": 480
+  },
+  {
+    "preset": "pc",
+    "width": 1280,
+    "height": 720,
+    "dpr": 1,
+    "tileCssPx": 80,
+    "boardCssPx": 480
+  }
+]

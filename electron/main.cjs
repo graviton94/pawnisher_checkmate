@@ -31,11 +31,12 @@ const createWindow = () => {
     title: 'Pawnisher : Checkmate',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true },
   });
-  // PC 화면 맞춤 (D-392): 게임 화면은 모바일 가로 기준이고, 가장 작은 지원 화면은 667×375(작은 폰 가로)다 — 창이 그 몇 배인지 보고 **정수 배율**로 확대한다.
-  // 정수라야 도트 그림이 고르게 커진다(1366×768 → ×2 = 논리 683×384, 1920×1080 → ×2 = 960×540, 2560×1440 → ×3 = 853×480, 3840×2160 → ×5). 확대하면 DPR이 바뀌고 pxsnap.ts가 --px를 다시 맞춘다.
+  // D-429: 기본 모바일 915×412의 읽기 크기를 기준으로 PC UI 전체를 확대한다.
+  // 1280 폭에서 정수 내림으로 ×1에 머물던 문제를 제거한다.
+  // 확대 뒤 실제 DPR의 도트 정렬은 pxsnap.ts와 BoardRenderer가 담당한다.
   const fit = () => {
     const [w, h] = win.getContentSize();
-    const s = Math.max(1, Math.floor(Math.min(w / 667, h / 375)));
+    const s = Math.max(1, Math.min(w / 915, h / 412));
     if (win.webContents.getZoomFactor() !== s) win.webContents.setZoomFactor(s);
   };
   win.on('resize', fit);

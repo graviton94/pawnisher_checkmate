@@ -7,6 +7,7 @@ import type { BoardModel, BoardView, LogEntry } from '../game/controller';
 import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
 import { drawArrow, drawDropDot, drawGauge } from './marks';
 import { BOARD_DOTS, PixelPen } from './pixel';
+import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
 import { FX_CAMERA, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
@@ -86,7 +87,6 @@ const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8
  */
 const PIECE_SIZE = 0.82 * (72 / 64);
 const PIECE_Y = 0.84 - PIECE_SIZE / 2;
-const BOARD_TILE_TOUCH_MAX = 54; // 도트 내림(DPR 2.625 → 칸 53.3px)이 48 아래로 가지 않게
 /** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
 let boardTopInset = 0;
 /** 판 열 위쪽을 상태 띠 자리로 비운다 (본편 전투 HUD가 부른다) */
@@ -94,8 +94,8 @@ export const setBoardTopInset = (px: number): void => {
   boardTopInset = px;
 };
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
-  // 터치 기기 칸 상한 약 53px (D-214, 사용자: "4×4 · 6×6이 화면을 꽉 채워 부담스럽다") — 터치 하한 48은 지킨다
-  const want = window.matchMedia('(pointer: coarse)').matches ? BOARD_TILE_TOUCH_MAX : window.innerHeight >= 1000 ? 96 : window.innerHeight >= 760 ? 72 : 56;
+  // D-429: 네 대표 규격으로 크기를 정한다. PC/태블릿을 폰의 54px 상한으로 제한하지 않는다.
+  const want = displayPreset(window.innerWidth, window.innerHeight).tile;
   // 판 전체가 한 화면에 들어오게 (D-074): 위 여백 0.65칸(배지) + 아래 0.25칸, 양옆 0.25칸
   // 판 배치 시안 C (D-198): 위아래 여백을 줄여 판을 키운다
   const vPad = document.body.matches('.lay-f') ? 0.45 : 0.9;

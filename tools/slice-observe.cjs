@@ -7,9 +7,13 @@ const day = new Date().toISOString().slice(0, 10);
 (async () => {
   const sc = process.argv[2] || 'title';
   const br = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
-  const width = Number(process.env.OBSERVE_WIDTH || 915), height = Number(process.env.OBSERVE_HEIGHT || 412);
+  // D-429: 대표 규격 네 개만 기본 검수한다. 임의 크기는 문제 재현 때만 사용한다.
+  const presets = { 'small-mobile': [667, 375, 2.625], mobile: [915, 412, 2.625], tablet: [1024, 768, 2], pc: [1280, 720, 1] };
+  const preset = presets[process.env.OBSERVE_PRESET || 'mobile'];
+  if (!preset) throw new Error('OBSERVE_PRESET: small-mobile | mobile | tablet | pc');
+  const width = Number(process.env.OBSERVE_WIDTH || preset[0]), height = Number(process.env.OBSERVE_HEIGHT || preset[1]);
   const suffix = width === 915 && height === 412 ? '' : `-${width}x${height}`;
-  const pg = await br.newPage({ viewport: { width, height }, deviceScaleFactor: Number(process.env.OBSERVE_DPR || 2.625), hasTouch: true, isMobile: width < 1024 });
+  const pg = await br.newPage({ viewport: { width, height }, deviceScaleFactor: Number(process.env.OBSERVE_DPR || preset[2]), hasTouch: true, isMobile: width < 1024 });
   pg.on('pageerror', (e) => console.log('ERR', e.message));
   const shot = (n) => pg.screenshot({ path: `production/qa/evidence/${day}-slice-${n}${suffix}.png` });
   const skip = async () => { const s = await pg.$('.stagefx'); if (s) { await s.click(); await pg.waitForTimeout(500); } };
