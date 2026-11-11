@@ -521,7 +521,7 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
   const el = document.createElement('div');
   el.className = `k-peek kit${o.bare ? ' bare' : ' win win-s'}${o.cls ? ` ${o.cls}` : ''}`;
   el.dataset.key = o.key;
-  el.innerHTML = o.bare ? o.body : `<div class="win-head">${o.head}</div>${o.body}`;
+  el.innerHTML = o.bare ? o.body : `${o.head ? `<div class="win-head">${o.head}</div>` : ''}${o.body}`;
   // 판 칸을 덮지 않는 폭까지만 (레일 + 판 옆 빈칸)
   if (o.maxW && !o.bare) el.style.maxWidth = `${Math.floor(o.maxW)}px`;
   document.body.appendChild(el);
@@ -544,7 +544,14 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
   el.classList.add('k-in');
   peekNow = el;
   // 아무 데나 누르면 닫힘 (여는 누름이 바로 닫지 않게 한 박자 뒤)
-  window.setTimeout(() => document.addEventListener('pointerdown', () => closePeek(el), { once: true, capture: true }), 0);
+  const outside = (event: PointerEvent): void => {
+    if (el.contains(event.target as Node) && (event.target as HTMLElement).closest('[data-peek-action]')) {
+      document.addEventListener('pointerdown', outside, { once: true, capture: true });
+      return;
+    }
+    closePeek(el);
+  };
+  window.setTimeout(() => document.addEventListener('pointerdown', outside, { once: true, capture: true }), 0);
   return el;
 };
 /** 엿보기 닫기 (디더 퇴장) */

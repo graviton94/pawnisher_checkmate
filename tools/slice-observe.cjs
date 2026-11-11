@@ -24,6 +24,7 @@ const day = new Date().toISOString().slice(0, 10);
     const A = (fn, arg) => pg.evaluate(fn, arg);
     if (sc === 'builds') await require('./qa/build-prototype.cjs')(pg, shot);
     else if (sc === 'unit-info') await require('./qa/unit-info.cjs')(pg, shot);
+    else if (sc === 'ability-info') await require('./qa/ability-info.cjs')(pg, shot);
     else if (sc.startsWith('event:')) { await A((id) => { window.sliceApi.gold(50); window.sliceApi.event(id); }, sc.slice(6)); }
     else if (sc === 'map') await A(() => window.sliceApi.map(2));
     else if (sc === 'shop') await A(() => { window.sliceApi.gold(120); window.sliceApi.shop(); });

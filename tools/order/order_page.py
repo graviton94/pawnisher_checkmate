@@ -17,19 +17,9 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MD = os.path.join(ROOT, 'docs', 'asset-order-master.md')
 SCENES = os.path.join(ROOT, 'public', 'scenes')
-ATTACH = [
-    ('①', '기물 도트', 'build-res/pieces-small-source.png', 900),
-    ('②', '화풍 기준 — 쇳물 위 그림자 킹', 'build-res/order/V-07-pact-source.png', 720),
-    ('③', '게임 속 검은 킹 도트 (반장 · 도금왕만)', 'build-res/order/K-black-new-source.png', 0),
-    ('⑤', '화풍 정답 「폰 둘」 — 컷 그림은 ② 대신 이것 (D-307)', 'build-res/order/E-03b-ending-3-source.png', 720),
-    ('⑧', '이야기 컷 정답 「말리는 분대」 — 15위 컷의 구도 · 밀도 (D-346)', 'build-res/order/C-05-promote-crew-source.png', 720),
-    ('⑨', '이야기 컷 정답 「조항 새김」 — 금칠 킹 생김새 · 15위 컷 (D-346)', 'build-res/order/C-02-promote-rule-source.png', 720),
-    ('⑥', '막 배경 화풍 기준 — 검수 공정 (17위 막 배경 2장, D-381)', 'public/scenes/act-3.png', 720),
-    ('⑥b', '막 배경 화풍 기준 — 주조 공정 (17위)', 'public/scenes/act-1.png', 720),
-    ('⑦', '부관 박차 얼굴 — 분대원 얼굴 5장의 규격 정답 (D-346)', 'build-res/order/N-01-adjutant-src-source.png', 360),
-]
-# 받았지만 화풍이 어긋나 다시 받는 그림 (D-307) — 파일이 있어도 「다시 받기」로 보인다
-REDO: set[str] = {'end-clear', 'end-fail'}  # D-391: 결과 장면 2장 다시 (UI-06) · D-355 이력
+ATTACH = []  # 현재 UI-31~33은 첨부 없이 독립 제작한다.
+REDO: set[str] = set()
+
 
 
 def data_uri(path, width):
@@ -48,6 +38,7 @@ def inline(s):
     s = html.escape(s)
     s = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', s)
     s = re.sub(r'`([^`]+)`', r'<code>\1</code>', s)
+    s = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', s)
     return s
 
 
@@ -101,6 +92,7 @@ def where_all(fs):
 
 
 def files_of(head):
+    head = re.sub(r'^\d+위 ·\s*', '', head)
     if re.match(r'I-\d+', head):
         return sheet_files(head)
     mu = re.match(r'(UI-\d+)', head)
@@ -322,15 +314,15 @@ pre { margin: 0; padding: 12px 14px; font: 13px/1.6 var(--mono); white-space: pr
 </style>
 <div class="wrap">
 <nav class="side" aria-label="순위"><p class="cap">우선순위</p>
-<a href="#att"><span>첨</span>첨부 그림 (모든 상자 공통)</a>
+
 %NAV%
 </nav>
 <main>
 <h1>그림 발주서</h1>
-<p class="lede">남은 그림 전부를 우선순위 순으로 모았습니다. 위에서부터 받으면 각본(프롤로그 → 승급 → 진 엔딩)이 화면에 차례로 올라갑니다. 12위 아이콘 시트는 받은 그대로 주시면 외곽선을 2도트로 보완해 넣습니다.</p>
+<p class="lede">현재 제작할 UI-31·UI-32와 선택 제작 UI-33만 모았습니다. 각 상자를 독립 생성 작업에 복사하세요. I-14 네 장은 제작 완료·원본 반입 대기이며 재제작 요청이 아닙니다.</p>
 <div class="meter">받은 그림 %GOT% / %TOTAL%<i style="--w: calc(%GOT% / %TOTAL% * 100%)"></i></div>
-<div class="how"><b>받는 법</b><ol><li>새 채팅을 엽니다. (채팅 한 번에 한 장 — 2위 도금왕 겹 단계만 한 채팅에서 이어서)</li><li>상자 위에 적힌 첨부 그림(①②③④)을 붙입니다.</li><li>프롬프트를 <b>복사</b>해 통째로 붙여 넣습니다.</li><li>받은 그림을 저에게 주면 게임에 붙입니다.</li></ol></div>
-<section class="att" id="att"><h2>첨부 그림</h2><div class="figs">%ATT%</div></section>
+<div class="how"><b>받는 법</b><ol><li>상자마다 새 생성 작업을 엽니다.</li><li>첨부 그림은 필요 없습니다.</li><li>프롬프트를 <b>복사</b>해 통째로 붙여 넣습니다.</li><li>결과 PNG 원본을 전달하면 격자·팔레트·알파를 검사한 뒤 게임에 붙입니다.</li></ol></div>
+%ATT%
 <section class="intro"><h2>한눈에</h2>%INTRO%</section>
 %BODY%
 </main>

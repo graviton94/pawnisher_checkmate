@@ -82,7 +82,7 @@
 
 ## 5. 발주와 반입
 
-복사할 프롬프트는 [발주서 정본의 I-14A~D](../asset-order-master.md#build-prototype-assets)에 있다. **한 상자 전체를 새 생성 작업에 한 번씩 붙여 넣는다. 첨부 없이 사용할 수 있다.** A/B가 우선이다. 실제 그림 생성은 이번 작업에 포함하지 않는다.
+I-14A~D는 사용자 제작 완료 상태다. [현재 반입 상태](../asset-order-master.md#build-prototype-assets)와 [당시 프롬프트 보관본](../asset-order-history.md#build-prototype-assets)을 구분해서 읽는다. 최초 발주 계획 당시에는 다음 지침을 사용했다: **한 상자 전체를 새 생성 작업에 한 번씩 붙여 넣는다. 첨부 없이 사용할 수 있다.** A/B가 우선이다. 실제 그림 생성은 이번 작업에 포함하지 않는다.
 
 - 납품: 512×512 투명 PNG 각각 한 장. 원본 논리 격자는 32×32이며 정확히 16배 확대된 도트여야 한다.
 - 원본 보관 후보: `build-res/order/I-14A-source.png` 등. 받은 원본은 보존한다.

@@ -1,4 +1,6 @@
 import '../fonts.css';
+import { bossAbilityText, enemyAbilityText, BUILD_PART_ABILITIES } from '../data/ability-text';
+import { abilityHtml, bindAbilities } from './ability';
 import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from '../data/build-trial';
 import { createBuildAct, createBuildTrial } from './build-trial';
 import { josa } from '../data/josa';
@@ -30,7 +32,7 @@ import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { findPiece, samePos, type PieceType, type Pos } from '../engine';
-import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, TRAIT, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -245,22 +247,6 @@ const fmtMult = (v: number): string =>
 /** 적이 두는 중 (레일 상태 표시) */
 let enemyTurn = false;
 
-/** 적 특성 한 줄 (길게 누르기, D-175) */
-const foeTraitLine = (p: { side: number; type: PieceType }): string => foeTraitBase(p) + foeTraitExtra(p);
-/** 적 특성 넷 (D-275) — 그 유형에 붙은 것만 */
-const foeTraitExtra = (p: { side: number; type: PieceType }): string => {
-  if (p.side !== 1) return '';
-  const key = p.type === 'N' ? 'knightShoe' : p.type === 'B' ? 'bishopLens' : p.type === 'P' ? 'pawnDrill' : p.type === 'Q' ? 'queenCrown' : null;
-  return key && (b.traits ?? []).includes(key) ? `<br><span class="enemy">${FOE_TRAITS[key].name}</span> ${FOE_TRAITS[key].line.split(' — ')[1]}` : '';
-};
-const foeTraitBase = (p: { side: number; type: PieceType }): string =>
-  p.side !== 1 ? '' :
-  p.type === 'K' && b.boss && b.bossRule === 'plate' ? `<br><span class="enemy">철갑 · 줄 폭격</span> 두 턴마다 철갑 ${BOSS.plate}을 다시 두르고 두 턴마다 한 줄에 ${foeDmg(BOSS.bombDamage, b)}` :
-  p.type === 'K' && b.boss && b.bossRule === 'spawn' ? `<br><span class="enemy">조립</span> 두 턴마다 곁에 폰을 찍어 낸다 (셋까지)` :
-  p.type === 'K' && b.boss && b.bossRule === 'inspect' ? `<br><span class="enemy">검수</span> 두 턴마다 가장 센 내 기물에 불량 도장 — 그 기물의 공격 ×${BOSS_NUM.stampMult}` :
-  p.type === 'K' && b.boss && b.bossRule === 'magnet' ? `<br><span class="enemy">자석</span> 두 턴마다 가장 가까운 내 기물을 한 칸 끌어당긴다 (자석 표시)` :
-  p.type === 'K' && b.boss && b.bossRule === 'alarm' ? `<br><span class="enemy">경보 ${b.alarm ?? 0}/${BOSS_NUM.alarmFull}</span> 눈금이 차면 그 적 차례 공격 ×${BOSS_NUM.alarmMult}` : p.type === 'P' && b.blastPawns ? `<br><span class="enemy">자폭</span> 쓰러지면 둘레 내 기물에 ${foeDmg(TRAIT.blast, b)}` : p.type === 'K' && b.boss && (b.bossRule === 'thorns' || b.bossRule === 'gilded') ? `<br><span class="enemy">되받아침</span> 치고 못 쓰러뜨리면 친 기물이 ${foeDmg(BOSS_NUM.thorns, b)}을 받는다` : '';
-
 const renderer = new BoardRenderer(
   $('board'),
   {
@@ -312,16 +298,17 @@ const pieceInfo = (pos: Pos): void => {
   }
   const side = p.side === 0 ? 'left' : 'right';
   const maxW = offBoardW(side);
-  const trait = foeTraitLine(p).replace(/^<br>/, '').split('<br>').filter(Boolean).map((l) => `<p>${l}</p>`).join('');
+  const abilities = p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b));
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
-  infoPeek({
+  const el = infoPeek({
     cls: `unit-peek${p.side === 0 ? ' unit-ally' : ''}`,
     key,
     side,
     maxW: Math.min(352, maxW),
     head: `<div class="frame-portrait">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${liveIntents(b).some((it) => it.pieceId === p.id) ? '행동 예정' : '대기'}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
-    body: `<div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset"><span>공격</span><strong>${p.atk}</strong></div><div class="inset"><span>방어</span><strong>${p.def}</strong></div></div>${trait ? `<div class="unit-traits">${trait}</div>` : ''}`,
+    body: `<div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset"><span>공격</span><strong>${p.atk}</strong></div><div class="inset"><span>방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
+  bindAbilities(el, abilities);
 };
 installPressFeedback();
 installUiSprites();
@@ -3366,22 +3353,22 @@ document.getElementById('deckrow')?.addEventListener('click', (e) => {
 $('boss').addEventListener('click', () => {
   if (!b.boss) return;
   const r = BOSS_RULES[b.bossRule];
-  // 규칙 S 창 (보고서 2-2): 명패 「반장 규칙」 · 머리 줄 = 반장 이름 · 규칙 줄 — 막 · 단추 = 닫기
-  openWin({
-    size: 's',
-    title: HUD_TEXT.bossRules,
-    head: `<p class="lead down">${r.name}</p>`,
-    body: r.lines.map((l) => `<p>${l.replace(/(줄 폭격 −)\d+/, `$1${foeDmg(BOSS.bombDamage, b)}`).replace(/(친 기물이 )\d+/, `$1${foeDmg(BOSS_NUM.thorns, b)}`)}</p>`).join(''),
-    back: { label: '닫는다', attrs: 'data-x' },
-    dismiss: closeWin,
-  }).querySelector('[data-x]')!.addEventListener('click', closeWin);
+  const abilities = bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b));
+  const el = openWin({
+    size: 's', title: r.name, body: abilityHtml(abilities),
+    back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin,
+  });
+  el.querySelector('[data-x]')!.addEventListener('click', closeWin);
+  bindAbilities(el, abilities);
 });
 $('parts').addEventListener('click', (e) => {
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-part-info]');
   if (!el) return;
   const id = el.dataset.partInfo as SlicePartId;
   if (id === 'relayGear' || id === 'siegeLatch') {
-    infoPeek({ cls: 'part-detail', key: `part:${id}`, side: 'left', maxW: Math.min(352, Math.floor(offBoardW('left'))), head: `<p class="lead">${SLICE_PARTS[id].name}</p>`, body: BUILD_TEXT.detail[id].map((line) => `<p>${line}</p>`).join('') });
+    const abilities = BUILD_PART_ABILITIES[id];
+    const peek = infoPeek({ cls: 'part-detail', key: `part:${id}`, side: 'left', maxW: Math.min(352, Math.floor(offBoardW('left'))), head: '', body: abilityHtml(abilities) });
+    bindAbilities(peek, abilities);
     return;
   }
   // 카드 모양 팝업 (테스터: 맨 위 한 줄 알림이라 거의 안 보였다) — 누른 부품 아래에 실제 부품 카드, 아무 데나 누르면 닫힌다

@@ -365,7 +365,7 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .k-peek .stats { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
 .k-peek.bare { padding: 0; }
 /* D-421: 기물 검사표. 초상 → 체력 → 공격/방어 → 특성, 기존 액자·움푹 칸 재사용. */
-.k-peek.win.unit-peek { gap: var(--s1); padding: var(--s2); }
+.k-peek.win.unit-peek { gap: var(--s1); padding: var(--s1); }
 .k-peek.win:is(.unit-peek, .part-detail, .move-preview) { --win-hmax: var(--win-h); }
 .unit-peek .win-head { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: var(--s2); align-items: center; }
 .unit-peek .unit-ident { display: flex; flex-direction: column; gap: 0; }
@@ -374,7 +374,7 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .unit-peek .unit-ident .lead { margin: 0; }
 .unit-peek .frame-portrait { width: 48px; height: 48px; }
 .unit-peek .frame-portrait .piece-img { width: 32px; height: 32px; }
-.unit-peek .unit-life.inset { padding: var(--s1) var(--s2); }
+.unit-peek .unit-life.inset { padding: 0 var(--s2); }
 .unit-peek .unit-life-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
 .unit-peek .unit-life-line > span, .unit-peek .unit-combat span { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); }
 .unit-peek strong { font: 700 24px/30px Galmuri11, sans-serif; color: var(--t-body); }
@@ -387,6 +387,16 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .unit-peek .unit-combat > div.inset { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: var(--s1) var(--s2); }
 .unit-peek .unit-traits { border-top: 2px solid var(--t-dim); padding-top: var(--s1); }
 .unit-peek .unit-traits p { font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+/* D-422: 능력 하나는 이름 / 행동 / : 상세 효과, 정확히 세 줄. 말줄임·축소 없음. */
+.ability-block { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; padding: 0; margin: 0; border: 0; background: none; text-align: left; color: var(--t-body); }
+.ability-block[data-ability-next] { pointer-events: auto; cursor: pointer; }
+.ability-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); height: 18px; }
+.ability-name { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.ability-next { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; }
+.ability-description { font: 400 15px/22.5px Galmuri14, Galmuri11, sans-serif; }
+.ability-effect { color: var(--t-body); font: 700 12px/18px Galmuri11, sans-serif; }
+.ability-description, .ability-effect, .ability-name, .ability-next { display: block; white-space: nowrap; }
+.ability-block:focus-visible { outline: 2px solid var(--t-gold); outline-offset: 2px; }
 .win .build-options { display: flex; flex-direction: column; gap: max(8px, var(--s2)); }
 .win .choice.build-option { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--s2); align-items: center; min-height: 56px; }
 .win .choice.build-option .ico { width: 32px; height: 32px; }

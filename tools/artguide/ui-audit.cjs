@@ -7,6 +7,7 @@ const only = process.argv[3];
 require('fs').mkdirSync(out, { recursive: true });
 const META = JSON.stringify({ tut: ['battle', 'map', 'recruit', 'kit', 'promote'], runs: 3 });
 const SCENES = [
+  ['ability-info', async (p, A, W, S) => { await require('../qa/ability-info.cjs')(p, S); }],
   ['unit-info', async (p, A, W, S) => { await require('../qa/unit-info.cjs')(p, S); }],
   ['builds', async (p, A, W, S) => { await require('../qa/build-prototype.cjs')(p, S); }],
   ['battle', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2600); await S('a'); await A(() => document.getElementById('btn-end').click()); await W(350); await S('enemy-a'); await W(600); await S('enemy-b'); await W(2600); await S('after'); }],
