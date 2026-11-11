@@ -23,10 +23,12 @@ import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
-import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROMOTE_TEXT, TESTIMONY, oneLine, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
+import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, TESTIMONY, oneLine, promotionCuts, shadowCut, trueEndingCuts, type StoryBoss } from '../data/script';
 import { finaleScene } from './finale';
 import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { creditsScene } from './credits';
+import { promotionScene } from './promotion';
+import { effectHtml, effectNumbers } from './effect-text';
 import { pieceImg } from '../ui/sprites';
 import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
@@ -1755,15 +1757,7 @@ let eventBag: SliceEventId[] = [...SLICE_EVENT_IDS];
 const EV_RECENT = 7;
 /** 장면 액자 위 황동 명패 조각 (UI-04 scene-frame-plate, D-391 다듬기) */
 const SCENE_PLATE = new URL('../assets/ui/chrome/v2/scene-frame-plate.png', import.meta.url).href;
-/**
- * 선택지 결과 한 줄 (D-395, 보고서 3.4 — 한 줄에 본문 + 강조 1): ' · ' 조각 가운데 잃는 것만 손해 색으로.
- * 용어 풀이는 줄에 붙이지 않는다 — 정보 단추가 대사 칸에 띄운다 (evPages).
- */
-const evRes = (desc: string): string => {
-  const bad = /−|잃|녹슮|부서짐|금$|몰수|감전/;
-  return desc.split(' · ').map((t) => (bad.test(t) ? `<span class="down">${t}</span>` : t)).join(' · ');
-};
-/** 정보 단추가 넘겨 보이는 쪽: 풀이(info) → 결과 줄에 든 용어(KEYWORDS, 기본 용어 나사 · 태엽 빼고) 하나씩. 쪽마다 대사 칸 두 줄 */
+/** 정보 단추가 넘겨 보이는 쪽: 풀이(info) → 결과 줄에 든 용어(KEYWORDS, 기본 용어 나사 · 태엽 빼고) 하나씩. 왼쪽 효과 쪽지에서 넘김 */
 const evPages = (c: SliceEventChoice): { who: string; text: string }[] => [
   ...(c.info ? [{ who: '풀이', text: c.info }] : []),
   ...KEYWORDS.filter(([name, , gate]) => gate !== 'base' && name.length >= 2 && !/[+×]/.test(name) && c.desc.includes(name)).map(([name, text]) => ({ who: name, text })),
@@ -1774,7 +1768,7 @@ const evPay = choicePay;
  * 사건 창 (D-395 → D-402, 보고서 2026-11-09f 3.7 `.win-scene` — 흐름은 D-248 · D-260 · D-263 그대로).
  * 읽는 길은 Z (D-402, 사용자: 「단추가 왼쪽 아래라 부자연스럽다 — 눈은 오른쪽 아래에서 끝난다」):
  * 왼쪽 = 액자(받은 그림을 비율 그대로 덮고 초점 EVENT_FOCUS) + 그림 아래 서술 띠(먹 띠, 문장마다 줄바꿈) ·
- * 오른쪽 = 대사 칸(이름 한 줄 + 두 줄) → 선택지 판 ≤ 2(이름 + 결과 한 줄 · 세부는 정보 단추 → 대사 칸에 풀이) →
+ * 오른쪽 = 대사 칸(이름 한 줄 + 두 줄) → 선택지 판 ≤ 2(이름 + 결과 한 줄 · 세부는 정보 단추 → 왼쪽 효과 쪽지) →
  * 단추 줄 = 오른쪽 아래 끝에 단추 하나만(사용자: 고르는 동안 「무시하고 떠난다」 철 — 떠날 수 없는 사건이면 비움, 결과 뒤 「떠난다」 황동) ·
  * 위 테 = 명패(사건 이름) · 오른쪽 위 나사 꼬리표.
  * 판을 누르면 고름(판 -sel + NPC 반응 + 나사 꼬리표에 「나사 50 → 10」 + 단추 줄에 「한 번 더 누르면 고릅니다」), 같은 판을 다시 누르면 정함 — 예비 「고른다」 단추는 없다.
@@ -1795,18 +1789,23 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     .map((c, k) => {
       if (!c.desc) return '';
       const why = c.blocked?.(st()) ?? null;
-      const info = !why && evPages(c).length ? `<span class="btn-info" role="button" tabindex="0" aria-label="풀이" data-info="${k}"></span>` : '';
-      return `<button type="button" class="choice" data-slot="${k}"${why ? ' disabled' : ''}><span class="choice-name">${c.label}</span><span class="choice-res">${why ?? evRes(c.desc)}</span>${info}</button>`;
+      const info = !why && evPages(c).length ? `<button type="button" class="btn-info" aria-label="${c.label} 효과 설명" aria-expanded="false" data-info="${k}"></button>` : '';
+      const pay = choicePay(c, st());
+      // 확률 줄에 빠진 확정 비용도 고르기 전에 보인다. 이미 적힌 고정 비용은 중복하지 않는다.
+      const cost = !why && pay > 0 && !/^나사 −\d/.test(c.desc) ? `<span class="choice-cost">${effectHtml(`나사 −${pay}`, ['loss'])}</span>` : '';
+      return `<div class="ws-option${info ? ' has-info' : ''}"><button type="button" class="choice" data-slot="${k}"${why ? ' disabled' : ''}><span class="choice-head"><span class="choice-name">${c.label}</span>${cost}</span><span class="choice-res">${why ? effectNumbers(why) : effectHtml(c.desc, c.tones)}</span></button>${info}</div>`;
     })
     .join('');
   const el = openWin({
     size: 'l',
     cls: 'win-scene',
     title: ev.title,
-    body: `<div class="ws-left"><div class="ws-art frame-scene"><div class="ws-pic"><img src="scenes/${id}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div><img class="fs-plate" src="${SCENE_PLATE}" alt=""><div class="ws-cap"><p class="ws-narr" aria-live="polite"></p></div></div></div>
+    body: `<div class="ws-left"><div class="ws-art frame-scene"><div class="ws-pic"><img src="scenes/${id}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div><img class="fs-plate" src="${SCENE_PLATE}" alt=""><div class="ws-cap"><p class="ws-narr" aria-live="polite"></p></div><section class="ws-detail" aria-label="선택 효과 설명" hidden><header><b class="ws-detail-title"></b><button type="button" class="ws-detail-close" aria-label="효과 설명 닫기">닫기</button></header><p class="ws-detail-text"></p><footer><span class="ws-detail-count"></span><button type="button" class="ws-detail-next">다음 설명</button></footer></section></div></div>
       <div class="ws-work"><div class="inset ws-say is-empty"><span class="who"></span><span class="ws-line"></span></div><div class="ws-choices">${choices}</div><div class="ws-sum slip" hidden><b class="ws-sum-h">결과</b><span class="ws-sum-n"></span><span class="ws-sum-i"></span></div>${btnRowHtml({ mid: EVENT_HINT.again, go: leaveK >= 0 ? { label: EVENT_HINT.leave, attrs: 'data-leave', kind: 'iron' } : undefined })}</div>
       <span class="tag ws-purse">나사 <b>${gold}</b></span>`,
   });
+  // 같은 패널을 재사용해도 앞 사건의 결과/연출 상태를 다음 사건에 물려주지 않는다.
+  el.classList.remove('ws-done', 'ws-beat', 'locked');
   const art = el.querySelector<HTMLImageElement>('.ws-pic > img[data-cover]')!;
   // 장면 그림이 없는 사건은 공용 사건 배경 (D-260)
   art.addEventListener('error', () => (art.src = 'scenes/bg-event.png'), { once: true });
@@ -1824,7 +1823,6 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const leaveBtn = el.querySelector<HTMLButtonElement>('[data-leave]');
   hint.hidden = true;
   const alive = () => narrEl.isConnected;
-  let lastSay = { who: '', text: '' };
   /** 서술(2인칭, 문장마다 줄바꿈 D-263) · NPC 대사(이름표 + 큰따옴표) · 독백(‘ ’, 이름표 없이) — 자리는 하나씩, 새 줄이 옛 줄을 갈아 쓴다 */
   const say = async (kind: 'narr' | 'npc', text: string, who?: string): Promise<void> => {
     if (!text || !alive()) return;
@@ -1835,7 +1833,6 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       return typeIn(narrEl, text.replace(/([.!?…])\s+(?=\S)/g, '$1\n'), 22, undefined, alive);
     }
     const name = text.startsWith('‘') ? '' : who ?? talk.npc;
-    lastSay = { who: name, text };
     sayEl.classList.remove('is-empty', 'is-info');
     sayEl.querySelector('.who')!.textContent = name;
     replay(sayEl, 'in');
@@ -1868,36 +1865,35 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     busy = false;
     lastAct = performance.now();
   })();
-  // 정보 단추: 풀이 → 용어를 한 쪽씩 대사 칸에 (모달 안에 모달을 띄우지 않는다), 끝까지 넘기면 하던 대사로
-  let infoAt = { k: -1, i: -1 };
-  el.querySelectorAll<HTMLElement>('[data-info]').forEach((b) => {
-    const show = (e: Event): void => {
-      e.stopPropagation();
-      e.preventDefault();
-      const k = Number(b.dataset.info);
-      const pages = evPages(ev.choices[k]);
-      const i = infoAt.k === k ? infoAt.i + 1 : 0;
-      typeSkip(sayEl.querySelector<HTMLElement>('.ws-line')!);
-      sfx('tap', 3);
-      lastAct = performance.now();
-      if (i >= pages.length) {
-        infoAt = { k: -1, i: -1 };
-        sayEl.classList.remove('is-info');
-        sayEl.classList.toggle('is-empty', !lastSay.text);
-        sayEl.querySelector('.who')!.textContent = lastSay.who;
-        sayEl.querySelector('.ws-line')!.textContent = lastSay.text;
-        return;
-      }
-      infoAt = { k, i };
-      sayEl.classList.remove('is-empty');
-      sayEl.classList.add('is-info');
-      sayEl.querySelector('.who')!.textContent = pages[i].who;
-      sayEl.querySelector('.ws-line')!.textContent = pages[i].text;
-      replay(sayEl, 'in');
-    };
-    b.addEventListener('click', show);
-    b.addEventListener('keydown', (e) => (e.key === 'Enter' || e.key === ' ') && show(e));
-  });
+  // 효과 설명은 왼쪽 장면에 붙인 별도 쪽지다. NPC 대사·타자기·선택 상태는 건드리지 않는다.
+  const detail = el.querySelector<HTMLElement>('.ws-detail')!;
+  let infoAt = { k: -1, i: 0 };
+  const hideInfo = (): void => {
+    detail.hidden = true;
+    el.querySelectorAll('[data-info]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    infoAt = { k: -1, i: 0 };
+  };
+  const showInfo = (k: number, i = 0): void => {
+    const pages = evPages(ev.choices[k]);
+    if (!pages.length) return;
+    infoAt = { k, i: i % pages.length };
+    const page = pages[infoAt.i];
+    detail.querySelector('.ws-detail-title')!.textContent = ev.choices[k].label;
+    detail.querySelector('.ws-detail-text')!.innerHTML = effectNumbers(page.text);
+    detail.querySelector('.ws-detail-count')!.textContent = `${page.who === '풀이' ? '효과' : page.who} · ${infoAt.i + 1} / ${pages.length}`;
+    detail.querySelector<HTMLButtonElement>('.ws-detail-next')!.hidden = pages.length < 2;
+    el.querySelectorAll<HTMLElement>('[data-info]').forEach((b) => b.setAttribute('aria-expanded', String(Number(b.dataset.info) === k)));
+    detail.hidden = false;
+    replay(detail, 'in');
+    lastAct = performance.now();
+    sfx('tap', 3);
+  };
+  detail.querySelector('.ws-detail-close')!.addEventListener('click', hideInfo);
+  detail.querySelector('.ws-detail-next')!.addEventListener('click', () => showInfo(infoAt.k, infoAt.i + 1));
+  el.querySelectorAll<HTMLElement>('[data-info]').forEach((b) => b.addEventListener('click', () => {
+    const k = Number(b.dataset.info);
+    if (infoAt.k === k) hideInfo(); else showInfo(k);
+  }));
   /** 결과 뒤 단추 줄 (D-402): 오른쪽 아래 끝에 황동 하나만 — 「무시하고 떠난다」 · 안내는 걷는다 */
   const finalGo = (label: string, go: () => void): void => {
     leaveBtn?.remove();
@@ -1922,9 +1918,9 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const purseHtml = (v: number, to?: number): string => `나사 <b>${v}</b>${to === undefined || to === v ? '' : ` → <b class="${to < v ? 'loss' : ''}">${to}</b>`}`;
   bindPick(el, {
     onSelect: (key) => {
+      hideInfo();
       const k = Number(key);
       lastAct = performance.now();
-      infoAt = { k: -1, i: -1 };
       sfx('lift');
       // 고르면 결과를 미리 (D-402): 판 강조(sel) · 나사 꼬리표에 알고 치를 값 「나사 50 → 10」 · 단추 줄에 「한 번 더 누르면 고릅니다」
       if (hint.hidden) { hint.hidden = false; replay(hint, 'in'); }
@@ -1935,6 +1931,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     onPick: (key) => {
       if (busy) return;
       busy = true;
+      hideInfo();
       // 고른 뒤에는 판을 더 누를 수 없다 (창 전체를 막으면 결과 장면의 장치도 막힌다)
       choicesEl.inert = true;
       sfx('stamp');
@@ -2010,7 +2007,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         choicesEl.hidden = true;
         el.classList.add('ws-done');
         const items = sumEl.querySelector<HTMLElement>('.ws-sum-i')!;
-        items.innerHTML = sum ? sum.split(' · ').map((t) => `<span>${t}</span>`).join('<i> · </i>') : '';
+        items.innerHTML = sum ? effectHtml(sum) : '';
         items.hidden = !sum;
         sumEl.hidden = false;
         replay(sumEl, 'in');
@@ -3699,36 +3696,12 @@ const gildedPhase2 = async (): Promise<void> => {
 /** 도금왕 초상 — 겹 단계 (B-04 · B-04a ~ d, 승급 0 ~ 2 · 3 ~ 5 · 6 ~ 8 · 9 ~ 12 · 13) */
 const gildedArt = (): string => `boss-gilded${asc <= 2 ? '' : asc <= 5 ? '-1' : asc <= 8 ? '-2' : asc <= 12 ? '-3' : '-4'}`;
 /** 승급 칸 (각본 S6): 앞선 종이왕의 증언 → 속말 → 「승급한다」 · 「내려놓는다」(승급 12까지는 떨리다 꺼진다) */
-const promoteScreen = (): Promise<void> =>
-  new Promise((done) => {
-    const tm = TESTIMONY[Math.min(TESTIMONY.length - 1, asc)];
-    const last = runBosses.at(-1);
-    // M 창 (D-391): 명패 「승급 N」 · 왼쪽 초상 액자 136 · 오른쪽 대사 + 독백 · [내려놓는다 | 승급한다] — 진행은 다른 창과 같이 오른쪽
-    const el = openWin({
-      size: 'm',
-      title: asc ? `승급 ${asc}` : '승급',
-      body: `<div class="promo2"><div class="frame-portrait"><img src="scenes/${gildedArt()}.png" alt="" onerror="if(!this.dataset.t){this.dataset.t='1';this.src='scenes/boss-gilded.png'}else{this.outerHTML=this.dataset.fb}" data-fb='${pieceImg('K', 1, 'large', 104).replace(/'/g, '&#39;')}'></div><div class="stack"><p class="say"><span class="who">도금왕</span>“${tm.say}”</p>${asc === 6 && last ? `<p class="say">“${oneLine(BOSS_STORY[last].mock)}”</p>` : ''}<p class="mono">‘${tm.mono}’</p><p class="note promo-stuck" hidden>${PROMOTE_TEXT.hint} ‘${PROMOTE_TEXT.stuck}’</p></div></div>`,
-      back: { label: PROMOTE_TEXT.lay, attrs: 'data-lay' },
-      go: { label: PROMOTE_TEXT.promote, attrs: 'data-promote' },
-    });
-    const lay = el.querySelector<HTMLButtonElement>('[data-lay]')!;
-    lay.addEventListener('click', () => {
-      if (lay.disabled) return;
-      sfx('threat');
-      lay.classList.add('tremble');
-      // 손이 떨어지지 않는다 — 승급이 오를수록 더 오래 버틴다 (D-131)
-      window.setTimeout(() => {
-        lay.classList.remove('tremble');
-        lay.disabled = true;
-        el.querySelector<HTMLElement>('.promo-stuck')!.hidden = false;
-      }, 300 + asc * 180);
-    });
-    el.querySelector('[data-promote]')!.addEventListener('click', () => {
-      sfx('submit');
-      closeWin();
-      done();
-    });
-  });
+const promoteScreen = (): Promise<void> => {
+  const tm = TESTIMONY[Math.min(TESTIMONY.length - 1, asc)];
+  const last = runBosses.at(-1);
+  closeWin();
+  return promotionScene({ asc, art: gildedArt(), say: tm.say, mono: tm.mono, echo: asc === 6 && last ? oneLine(BOSS_STORY[last].mock) : undefined });
+};
 /** 이번 출하가 어느 엔딩으로 끝났나 (D-403 — 크레딧 닫는 장 꼬리표): 승급(0 ~ 12) · 앞(엔딩 A) · 뒤(진 엔딩 「해방」) */
 let endKind: 'promote' | 'front' | 'back' = 'promote';
 /** 도금왕을 쓰러뜨린 뒤: 승급 칸 → 승급 7컷(조항 · 거울) → 크레딧 + 출하 끝 장부 (D-403 — 모든 완주가 엔딩이고, 크레딧은 그 뒤마다 돈다) */
@@ -3780,7 +3753,7 @@ const runEndNow = (cleared: boolean): void => {
   const chip = (name: string, t: PieceType, bad = false) => `<span class="re-chip${bad ? ' bad' : ''}">${pieceImg(t, 0, 'small', 24)}${name}</span>`;
   const opens = [...freshNames.slice(0, 3), ...(unlocked ? [SCREEN_TEXT.ascOpened(m.ascOpen)] : [])];
   const nums = [won, kills, gold, deck.length];
-  // 출하 끝 (D-402 → D-403): 크레딧(제목 → 두 줄 → 기록 사진) 마지막 장 = 출하 끝 장부 — 막 장부 넷을 모은 장부 + 「정품 판정」 도장 ·
+  // 출하 끝 (D-424): 크레딧(동료 이름 → 제작진) 마지막 장 = 출하 끝 장부 — 막 장부 넷을 모은 장부 + 「정품 판정」 도장 ·
   // 어느 엔딩이었나 꼬리표 · 다음 출하(승급) 예고 · [결과 공유하기 | 메인 화면으로]. 따로 서는 결과 화면은 없다 — 진 출하는 아래 결과 장면 그대로
   if (cleared) {
     const nextAsc = Math.min(ASC_OMEN.length - 1, unlocked ? m.ascOpen - 1 : asc);
@@ -3811,9 +3784,9 @@ const runEndNow = (cleared: boolean): void => {
       back: SCREEN_TEXT.note,
       go: SCREEN_TEXT.home,
     }).then((r) => (r === 'go' ? home() : surveyScreen(0, {}, () => exportScreen(home))));
-    const crew = [...squad.filter((u) => u.t !== 'K').map((u) => u.t), ...fallenNow.map((r) => r.t)].slice(0, 8);
-    // 기록 사진의 한 줄 = 출하 몇 번째 · 날짜 (승급 · 엔딩 이름은 닫는 장 꼬리표에만)
-    void creditsScene(crew, `출하 ${m.runs}번째 · ${new Date().toISOString().slice(0, 10)}`, { record: kind === 'back', close: ledger });
+    const crew = [...squad.filter((u) => u.t !== 'K').map((u) => ({ t: u.t, name: crewLabel(u) })), ...fallenNow.map((r) => ({ t: r.t, name: r.name, fallen: true }))];
+    // 크레딧 머리 줄 = 출하 몇 번째 · 날짜 (승급 · 엔딩 이름은 닫는 장 꼬리표에만)
+    void creditsScene(crew, `출하 ${m.runs}번째 · ${new Date().toISOString().slice(0, 10)}`, { record: kind === 'back', ending: SCREEN_TEXT.endName(kind, asc), close: ledger });
     return;
   }
   const el = placeScreen({
@@ -4107,4 +4080,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   else if (qs.has('lab')) labPick();
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
-if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { buildPick, buildTrial: startBuildTrial, movePeek, kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void battleTutorial(), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 3) => { asc = a; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: () => { void creditsScene(['P', 'N', 'B', 'R'], '출하 14번째 · 승급 13 · 2026-11-06'); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces: () => { openWin({ size: 'l', title: '카드 견본', cls: 'win-deck', body: `<div class="inset scroll"><div class="deck-grid">${(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => `<div class="card-bare">${cardFace(id, `data-face="${id}"`)}</div>`).join('')}${(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => `<div class="card-bare">${partFace(id, `data-face="${id}"`)}</div>`).join('')}</div></div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin }); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(3, "먼지투성이", "폰은 킹 자리에 설 수 없다.", "").slice(-1)), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: () => { parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, partSlotsAt(actI)); gainPart((Object.keys(SLICE_PARTS) as SlicePartId[])[9], () => showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), richRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); actSnap = { won: 9, kills: 20, gold: 140, deck: deck.length - 4, kb: Object.fromEntries(squad.map((u, i) => [u.serial ?? '', Math.max(0, (u.kills ?? 0) - [3, 6, 2, 4, 1][i % 5])])), db: {} }; return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { buildPick, buildTrial: startBuildTrial, movePeek, kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void battleTutorial(), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 3) => { asc = a; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1) => begin(s, 0, null), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { asc = a; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: (count = 4, record = false) => { void creditsScene(Array.from({ length: count }, (_, i) => ({ t: (['P', 'N', 'B', 'R'] as PieceType[])[i % 4], name: `먼지투성이 ${i + 1}`, fallen: i % 2 === 1 })), '출하 14번째 · 2026-11-11', { record }); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces: () => { openWin({ size: 'l', title: '카드 견본', cls: 'win-deck', body: `<div class="inset scroll"><div class="deck-grid">${(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => `<div class="card-bare">${cardFace(id, `data-face="${id}"`)}</div>`).join('')}${(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => `<div class="card-bare">${partFace(id, `data-face="${id}"`)}</div>`).join('')}</div></div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin }); return 0; }, defeat: () => runEnd(false), shadow: (a = 3) => playCuts([shadowCut(a)]), trueEnd: () => playCuts(trueEndingCuts(['N', 'P', 'B'].map((t, k) => ({ t: t as PieceType, side: 0 as const, x: 14 + k * 9, y: 66, h: 22 })))), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(3, "먼지투성이", "폰은 킹 자리에 설 수 없다.", "").slice(-1)), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: () => { parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, partSlotsAt(actI)); gainPart((Object.keys(SLICE_PARTS) as SlicePartId[])[9], () => showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; taunt(c, true); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), eventIds: SLICE_EVENT_IDS, event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), richRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); actSnap = { won: 9, kills: 20, gold: 140, deck: deck.length - 4, kb: Object.fromEntries(squad.map((u, i) => [u.serial ?? '', Math.max(0, (u.kills ?? 0) - [3, 6, 2, 4, 1][i % 5])])), db: {} }; return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

@@ -142,17 +142,7 @@ PROPS = {
 
 # ---------------- 주인공·HUD ----------------
 
-# 종이 왕관 (D-063·D-065): 사용자가 준 7×5 도트 그림 (검정 틀 + 노랑 + 가운데 청록 보석), 양 위 끝은 검정, 바깥 1도트 흰 테두리.
-# 기울이기는 화면이 이 그림을 크게 구운 뒤 부드럽게 돌려 그린다 (계단 없이).
-CROWN_ART = [
-    'k.....k',
-    'kk.k.kk',
-    'kykykyk',
-    'kyycyyk',
-    'kkkkkkk',
-]
-CROWN_COLORS = {'k': (0x00, 0x00, 0x00), 'y': (0xFD, 0xE8, 0x3E), 'c': (0x04, 0xA9, 0xF4)}
-
+# 종이왕은 tools/pixel/paperking.py의 K0 정본만 사용한다 (D-424).
 
 # 태엽 감개 (D-058·D-059): 제미나이 I 시트의 디자인(큰 구멍 뚫린 고리 날개 둘 — 구멍이 작으면 하트처럼 보였다 + 가운데 청록 축 + 이 달린 막대)을
 # 우리 격자에 옮겨 찍음 (날개는 대칭, 막대는 곧고 길게 · 이는 한쪽만 — 진짜 열쇠처럼). 제미나이 원본은 두 배 해상도·막대 치우침이라 그대로 못 씀 (build-res/order/I.png).
@@ -225,15 +215,6 @@ for name, rows in PROPS.items():
     continue  # D-056·D-057: 지형 소품 5종은 모두 제미나이 그림을 잘라 쓴다 (tools/order/) — 아래 코드 그림은 쓰지 않음
     save(outline(mirror(art(rows))), f'public/ui/props/{name}.png')
 
-
-crown = Image.new('RGBA', (7, 5), (0, 0, 0, 0))
-for y, row in enumerate(CROWN_ART):
-    for x, ch in enumerate(row):
-        if ch != '.':
-            crown.putpixel((x, y), CROWN_COLORS[ch] + (255,))
-save(grow_rim(crown), 'public/ui/hud/paper-crown.png')
-
-# 왕관 쓴 폰 킹은 폐기 (D-079) — 킹은 원래 기물 그림
 
 full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = 청록)
 # (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(full)), 'public/ui/hud/key-full.png')

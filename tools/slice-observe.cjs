@@ -7,9 +7,11 @@ const day = new Date().toISOString().slice(0, 10);
 (async () => {
   const sc = process.argv[2] || 'title';
   const br = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
-  const pg = await br.newPage({ viewport: { width: 915, height: 412 }, deviceScaleFactor: 2.625, hasTouch: true, isMobile: true });
+  const width = Number(process.env.OBSERVE_WIDTH || 915), height = Number(process.env.OBSERVE_HEIGHT || 412);
+  const suffix = width === 915 && height === 412 ? '' : `-${width}x${height}`;
+  const pg = await br.newPage({ viewport: { width, height }, deviceScaleFactor: Number(process.env.OBSERVE_DPR || 2.625), hasTouch: true, isMobile: width < 1024 });
   pg.on('pageerror', (e) => console.log('ERR', e.message));
-  const shot = (n) => pg.screenshot({ path: `production/qa/evidence/${day}-slice-${n}.png` });
+  const shot = (n) => pg.screenshot({ path: `production/qa/evidence/${day}-slice-${n}${suffix}.png` });
   const skip = async () => { const s = await pg.$('.stagefx'); if (s) { await s.click(); await pg.waitForTimeout(500); } };
   if (sc === 'title' || sc === 'continue') {
     await pg.goto(BASE); await pg.evaluate(() => localStorage.clear()); await pg.reload(); await pg.waitForTimeout(1200);
@@ -23,6 +25,8 @@ const day = new Date().toISOString().slice(0, 10);
     await pg.goto(BASE + '?debug'); await pg.waitForSelector('#boot', { state: 'detached' }); await pg.waitForTimeout(200); await skip();
     const A = (fn, arg) => pg.evaluate(fn, arg);
     if (sc === 'builds') await require('./qa/build-prototype.cjs')(pg, shot);
+    else if (sc === 'event-layout') await require('./qa/event-layout.cjs')(pg, shot);
+    else if (sc === 'end-scenes') await require('./qa/end-scenes.cjs')(pg, shot);
     else if (sc === 'unit-info') await require('./qa/unit-info.cjs')(pg, shot);
     else if (sc === 'ability-info') await require('./qa/ability-info.cjs')(pg, shot);
     else if (sc.startsWith('event:')) { await A((id) => { window.sliceApi.gold(50); window.sliceApi.event(id); }, sc.slice(6)); }

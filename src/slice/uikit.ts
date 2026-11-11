@@ -108,6 +108,28 @@ export const closeWin = (): void => {
   clearDismiss();
   host?.close();
 };
+/** 전체 장면의 입력·키보드 초점을 배경 UI에서 격리한다. 닫을 때 반환 함수를 호출한다. */
+export const sceneFocus = (el: HTMLElement): (() => void) => {
+  const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const siblings = [...document.body.children].filter((e): e is HTMLElement => e instanceof HTMLElement && e !== el).map((e) => ({ el: e, inert: e.inert }));
+  siblings.forEach(({ el: node }) => { node.inert = true; });
+  const buttons = (): HTMLButtonElement[] => [...el.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].filter((b) => b.checkVisibility());
+  const onKey = (e: KeyboardEvent): void => {
+    if (e.key !== 'Tab') return;
+    const items = buttons();
+    if (!items.length) return;
+    e.preventDefault();
+    const at = items.indexOf(document.activeElement as HTMLButtonElement);
+    items[(at + (e.shiftKey ? -1 : 1) + items.length) % items.length].focus({ preventScroll: true });
+  };
+  el.addEventListener('keydown', onKey);
+  requestAnimationFrame(() => { if (el.isConnected) buttons()[0]?.focus({ preventScroll: true }); });
+  return () => {
+    el.removeEventListener('keydown', onKey);
+    siblings.forEach(({ el: node, inert }) => { node.inert = inert; });
+    if (previous?.isConnected && !previous.closest('[inert]')) previous.focus({ preventScroll: true });
+  };
+};
 /** 다른 길로 창이 바뀔 때(옛 openOverlay) 막 · Esc 동작을 걷는다 */
 export const dropWinDismiss = clearDismiss;
 

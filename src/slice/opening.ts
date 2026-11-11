@@ -27,7 +27,7 @@ const hasImg = (src: string): Promise<boolean> =>
 const ART_FLOOR = 58;
 const standIn = (c: Cut): string =>
   `<div class="pl-standin" style="--a:${c.bg[0]};--b:${c.bg[1]}">${c.glow ? `<i class="pl-glow" style="--g:${c.glow}"></i>` : ''}${c.art
-    .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${Math.min(p.y, ART_FLOOR)}%;height:${p.h}%">${pieceImg(p.t, p.side, 'large', 220)}${p.crown ? '<img class="pl-crown" src="ui/hud/paper-crown.png" alt="">' : ''}</span>`)
+    .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${Math.min(p.y, ART_FLOOR)}%;height:${p.h}%">${pieceImg(p.crown ? 'K' : p.t, p.side, 'large', 220)}</span>`)
     .join('')}</div>`;
 
 /** 베인 타이틀 문장 마크업 (메인 화면 · 프롤로그 끝 공통) */

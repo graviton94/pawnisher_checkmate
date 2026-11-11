@@ -1,5 +1,5 @@
 """
-가짜 왕 시안 (D-181): 주인공 흰 폰 머리에 반장 마무리 때 떨어진 그 도트 왕관을 씌운 시안 넷.
+폐기된 가짜 왕 시안 (D-181, D-424에서 반입 차단): 주인공 흰 폰 머리에 반장 마무리 때 떨어진 그 도트 왕관을 씌운 시안 넷.
 64×64 정본 [P 0]에 왕관 도트를 얹고, 왕관 둘레에 검정 외곽선 2칸 · 흰 테두리 2칸을 다시 두른다.
 사용: python3 -I tools/pixel/fakeking.py <시안 그림.png>   (고른 안은 pieces64.txt에 [P:fakeking 0]으로 넣는다)
 """
@@ -149,28 +149,7 @@ def main(path):
 
 
 def apply(key='a'):
-    """고른 안을 정본에 넣는다: 흰 킹(우리 대장 = 가짜 왕) 자리에. 옛 킹 그림은 [K:classic 0]으로 남긴다"""
-    path = os.path.join(HERE, 'pieces64.txt')
-    hi = maker.load64()
-    grid = crowned(hi[('P', 0)], key)
-    text = open(path, encoding='utf-8').read()
-    lines = text.split('\n')
-    out, skip = [], False
-    for ln in lines:
-        if ln.startswith('['):
-            skip = ln.strip() in ('[K 0]', '[K:classic 0]')
-            if ln.strip() == '[K 0]':
-                if ('K:classic', 0) not in hi:
-                    out += ['[K:classic 0]'] + hi[('K', 0)] + ['']
-                out += ['[K 0]', f'# 가짜 왕 (D-181): 폰 머리에 반장의 도트 왕관 — tools/pixel/fakeking.py apply {key}'] + grid + ['']
-                continue
-            if ln.strip() == '[K:classic 0]':
-                out += ['[K:classic 0]'] + hi[('K:classic', 0)] + ['']
-                continue
-        if not skip:
-            out.append(ln)
-    open(path, 'w', encoding='utf-8').write('\n'.join(out))
-    print('pieces64.txt [K 0] = 가짜 왕', key)
+    raise SystemExit('폐기된 종이왕 시안입니다. 정본 변경은 tools/pixel/paperking.py를 사용하세요 (D-424).')
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 /**
- * 크레딧 (각본 S11, D-279 → D-286) — 진 엔딩 뒤.
+ * 크레딧 (각본 S11, D-279 → D-286) — 모든 출하 완료 뒤.
  * 사용자 결정 D-286: 크레딧은 두 줄뿐이다. 글꼴 · 아이콘 같은 출처는 스튜디오 페이지에 따로 적는다 (docs/CREDITS.md).
  */
 export const STUDIO_URL = 'https://graviton94.github.io/';
@@ -9,7 +9,6 @@ export const CREDITS: { role: string; names: string[] }[] = [
 ];
 export const CREDIT_TEXT = {
   title: 'Pawnisher : Checkmate',
-  photo: '기록 사진',
   /** 기록지 12 (각본 §15) */
   record: '「접힌 종이 왕관」 — 접은 자국이 열세 겹이다.',
 };

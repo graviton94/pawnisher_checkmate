@@ -539,7 +539,6 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .pl-pc > .piece-img { height: 100%; width: auto; image-rendering: pixelated; }
 .pl-pc.dim > .piece-img { filter: brightness(0.45); }
 .pl-pc.flip > .piece-img { transform: scaleX(-1); }
-.pl-crown, .gd-crowned .pl-crown { position: absolute; left: 50%; top: -14%; width: 62%; transform: translateX(-46%) rotate(-12deg); image-rendering: pixelated; }
 .pl-stage.fx-alarm::after { content: ''; position: absolute; right: 12%; top: 16%; width: 18px; height: 18px; background: #e5262f; box-shadow: 0 0 0 3px #000; animation: alarm 1.8s steps(1) forwards; }
 @keyframes alarm { 0% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 2.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 5.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 7.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 10% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 12.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 15.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 17.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 20% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 22.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 25.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 27.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 30% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 32.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 35.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 37.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 40% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 42.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 45.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 47.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 50% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 /* 전광판 경보: 화면 전체가 붉게 깜빡인다 (테스터: 위쪽만 깜빡였다) — 무대 밖 층이라 카메라 · 흔들림과 따로 논다 */
@@ -669,7 +668,6 @@ body.slice .price.poor .scr { filter: grayscale(1) brightness(.8); }
 .gd-media.king { grid-auto-flow: column; gap: 12px; background: #0b0b0e; }
 .gd-media.king b { color: #f4d27a; font: 700 24px Galmuri11, sans-serif; }
 .gd-media.king .gd-crowned { position: relative; animation: gdbob 1.6s steps(4) infinite alternate; }
-.gd-media.king .gd-crowned .pl-crown { position: absolute; left: 50%; top: -14%; width: 70%; transform: translateX(-50%) rotate(-8deg); image-rendering: pixelated; }
 .gd-media.king .gd-foe { animation: gdbob 1.6s steps(4) infinite alternate-reverse; }
 @keyframes gdbob { from { transform: translateY(0); } to { transform: translateY(-6px); } }
 /* 피해 식: 한 줄씩 들어와 — 공격 10 → + 합 8 → = 18 → × 곱 1.5 → 피해 27, 다시 처음부터 */
@@ -1271,22 +1269,6 @@ body.between #right, body.between #left { visibility: hidden; }
 
 @media (prefers-reduced-motion: reduce) { .fn-sq.fn-pick, .fn-king.laugh, .fn-me.fn-step, .fn-bub { animation: none; } }
 
-/* D-279 크레딧 · 기록 사진 — 한 장씩 계단 프레임으로 (선형 슬라이드 없음) */
-.credits { position: fixed; inset: 0; z-index: 61; display: grid; place-items: center; background: #0b0b0e; text-align: center; }
-.cr-page { display: grid; gap: 8px; justify-items: center; }
-.cr-page.in { animation: crIn 0.32s steps(4) both; }
-@keyframes crIn { 0% { -webkit-mask-image: var(--px3); mask-image: var(--px3); transform: translateY(6px); } 50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { -webkit-mask-image: none; mask-image: none; transform: none; } }
-.cr-title { margin: 0; font: 700 36px Galmuri11, sans-serif; color: #f4d27a; text-shadow: 3px 3px 0 #000; }
-.cr-role { margin: 0; font: 700 12px Galmuri11, sans-serif; color: #c89b3c; letter-spacing: 1px; }
-.cr-name { margin: 0; font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #ece8de; }
-.cr-photo { display: flex; gap: 6px; align-items: end; padding: 10px 14px 6px; background: #1c1d22; box-shadow: 0 0 0 2px #000, 0 0 0 4px #e8ddb5, 0 0 0 6px #000; }
-.cr-pc { position: relative; width: 48px; height: 56px; display: grid; place-items: end center; }
-.cr-pc img, .cr-pc canvas { width: 44px; height: 44px; image-rendering: pixelated; }
-.cr-pc .cr-crown { position: absolute; top: 0; left: 50%; width: 28px; height: auto; transform: translateX(-50%) rotate(-8deg); }
-.cr-meta { margin: 0; font: 12px Galmuri11, sans-serif; color: #a8a4b2; }
-.cr-rec { margin: 0; font: 15px/1.7 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; }
-
-@media (prefers-reduced-motion: reduce) { .cr-page.in { animation: none; } }
 .ax-tactic.axis { background: #c9a0ff; }
 /* ───────── 메인 메뉴 다시 짜기 (D-286, 사용자: 「난잡하고 버튼이 쓰레기 같다」) ─────────
    오른쪽 한 줄 기둥: 큰 단추 셋(이어하기 · 출하 + 승급 다이얼 · 오늘의 출하) → 얇은 줄 하나(안내서 · 원부 · 프롤로그).
@@ -1310,7 +1292,6 @@ body.slice .op-sub { display: flex; gap: 8px; margin-top: 4px; }
 body.slice .op-sub .btn { flex: 1 1 0; min-height: 44px; padding: 0 4px 4px; font: 400 15px Galmuri14, Galmuri11, sans-serif; }
 body.slice .op-sub.op-dev .btn { font: 400 12px Galmuri11, sans-serif; opacity: 0.8; }
 .credits .cr-gap { display: block; height: 24px; }
-.credits .cr-lead { font: 400 24px/1.6 Galmuri11, sans-serif; color: #f4ead6; }
 
 /* ───────── D-293 단추 E 「레버 판」 확정 (사용자: 「E로 해라」) ─────────
    단추 그림: tools/draw-chrome3.py --game (24×24, 9-slice 9 — 그림 18px가 테두리 8px보다 넓어 글자 자리를 지킨다).
@@ -1513,7 +1494,6 @@ body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 
 /* D-336: 조건은 쉬운 말이라 길 수 있다 — 낱말 단위로 두 줄까지 (묘사 + 조건 + 성능 ≤ 4줄은 측정으로 지킨다) */
 body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { white-space: normal; text-wrap: balance; }
 /* 크레딧 배경 (D-346 · E-06): 받은 그림이 있으면 뒤에 깐다 */
-.credits .cr-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; z-index: 0; pointer-events: none; }
 .credits .cr-page { position: relative; z-index: 1; }
 /* 크레딧 글 받침 (D-349): 배경 그림 위에서도 읽히게 — 어두운 철판 한 장 */
  /* 바깥 파랑 2 · 안쪽 검정 2 — 둘 다 초상 위 */

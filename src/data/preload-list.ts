@@ -242,7 +242,6 @@ export const PRELOAD: string[] = [
   "ui/hud/key-bonus.png",
   "ui/hud/key-full.png",
   "ui/hud/key-spent.png",
-  "ui/hud/paper-crown.png",
   "ui/hud/pip.png",
   "ui/hud/skull-small.png",
   "ui/icons/anvil.png",
