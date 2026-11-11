@@ -19,6 +19,7 @@
 ## 작업 방식 (사용자 결정)
 - 사용자는 기획 방향을 주고, 구현·검증·밸런스·문서·빌드는 끝까지 알아서 한다. 결과만 짧게 한국어로 보고.
 - 그래픽·세계관·에셋 디자인과 유저 테스트는 사용자 담당.
+- **원본 → 픽셀화 → 반입은 개발 측이 직접 수행한다 (D-423)**: 사용자가 준 원본에 반입 도구를 실제 실행해 격자 복원·픽셀화·팔레트/알파 확인·게임 연결까지 한다. CSS `pixelated`나 파일 크기 확인만으로 픽셀화 완료라고 하지 않는다. 실행 명령과 원본/결과 대조 근거를 남기고, 수동 격자값은 `tools/pixel/scene_recipe.py`에 보존한다.
 - **기물 그림은 도트 메이커로 100% 재현한다** (사용자 결정 D-086 · D-221): 정본 = `tools/pixel/pieces64.txt` 64×64 격자. **흑백 통일**(D-221): 기물마다 외곽선 · 흰 테 3칸을 흑백이 공용하고 속 칠 색만 다르다, 빛은 왼쪽 위 3단계, 킹 · 퀸 · 룩 · 폰은 좌우 대칭 — `tools/pixel/unify.py`. 주인공(흰 킹 자리)은 종이 왕관을 쓴 폰 72×72 — `tools/pixel/paperking.py`. 게임 그림은 모두 72칸 캔버스(64칸 + 위 8줄)로 `python3 -I tools/pixel/maker.py export`가 `public/pieces/`를 찍는다. 사용자가 Piskel로 고칠 때는 `tools/pixel/piskel.py export | import` (`build-res/piskel/`). P·R·Q·K 좌우 대칭과 십자가는 `tools/pixel/symmetry.py`가 맞춘다 (D-092). 기물 하나를 달라고 하면 `maker.py one <유형[:이형]> <진영> <배율> <파일>`로 배경 없는 PNG를 낸다. 이형 기물 전용 그림도 같은 파일에 `[N:hammer]`처럼 더한다. `public/pieces/`를 손으로 고치지 않는다.
   예외(사용자 결정 D-044·D-047·D-049): 판 칸·표식·소품·프레임은 **코드로 직접 찍고** (`tools/draw-board.py`, `tools/draw-assets.py`), 아이콘은 **공개 픽토그램을 도트화**한다 (`tools/pixelize-icons.cjs`, 출처 `docs/CREDITS.md`). 정 안 되는 것만 제미나이.
 - 커밋·푸시는 작업 단위마다. PR은 요청할 때만. **아티팩트(웹 플레이 링크)는 사용자가 말할 때만 갱신.**

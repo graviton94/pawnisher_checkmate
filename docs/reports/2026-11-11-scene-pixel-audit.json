@@ -1,0 +1,464 @@
+{
+  "method": "Regenerate from received originals; compare RGBA dimensions and pixels with live game assets.",
+  "commands": [
+    "python3 -I tools/qa/scene-pixel-audit.py --output-dir /tmp/scene-pixel-audit"
+  ],
+  "summary": {
+    "match": 15,
+    "different": 0,
+    "error": 0
+  },
+  "algorithm_sha256": "17910968e024b4c885e043e6f55b51694dbf4381c2c056211e92fe9188e8078e",
+  "recipe_sha256": "48658f52b21db1902865081cbde0351cee54b9b6083a196b2c011be82469015a",
+  "assets": [
+    {
+      "source": "build-res/order/A-01-act-1-source.png",
+      "game": "public/scenes/act-1.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "16d5d22f7bb766f1f5039b73d44d22e978b365280166aa4f7ef7a94d4ca6b1c9",
+      "game_sha256": "d63185ad8c826b97c2a0bca4cb15ab261136bbd9ffd7d97fa346c49b110249a6",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        273,
+        141
+      ],
+      "reproduced_size": [
+        273,
+        141
+      ],
+      "detected_pitch": [
+        6.649999999999997,
+        6.649999999999997
+      ],
+      "game_pixel_sha256": "8206c45875f6f51276d60d8414333a2570b018b99fd2e7852794926b1ab74bf5",
+      "reproduced_pixel_sha256": "8206c45875f6f51276d60d8414333a2570b018b99fd2e7852794926b1ab74bf5",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/A-02-act-2-source.png",
+      "game": "public/scenes/act-2.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "88450164f63a32c1b7f77ec0c37dee6be86fb84131a7cb17d788b53d8ed302f9",
+      "game_sha256": "38232e113ee99e51a7c6b621c00ac64f0aebf1d6844d7d045935675cdc99a491",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        273,
+        138
+      ],
+      "reproduced_size": [
+        273,
+        138
+      ],
+      "detected_pitch": [
+        6.379999999999998,
+        6.379999999999998
+      ],
+      "game_pixel_sha256": "11ce253f3cf06b14d2c2e5c74bcaf2268a0950841ebda6fc247ea25d764ab5f1",
+      "reproduced_pixel_sha256": "11ce253f3cf06b14d2c2e5c74bcaf2268a0950841ebda6fc247ea25d764ab5f1",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/A-03-act-3-source.png",
+      "game": "public/scenes/act-3.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "3ee30b973c986d7779e6a96012f63bd47729165dbe2029fe262a2164e2fe5871",
+      "game_sha256": "46066ef9a1b5a833746b85dff62f2ba3bece81636ae5c349743b27f9bc42b6ed",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        364,
+        179
+      ],
+      "reproduced_size": [
+        364,
+        179
+      ],
+      "detected_pitch": [
+        4.1599999999999975,
+        4.1599999999999975
+      ],
+      "game_pixel_sha256": "78718d6dd82e7ac2f323fac0d821654e80835e665e329adf8873906a8ec76497",
+      "reproduced_pixel_sha256": "78718d6dd82e7ac2f323fac0d821654e80835e665e329adf8873906a8ec76497",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/BG-01-bg-shop-source.png",
+      "game": "public/scenes/bg-shop.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "b751fb8f0f9c2eb98569af2a8f80994df3d788071fb6b70c1ade3b68d7c006ed",
+      "game_sha256": "f3663359bd818bcac5d9a16ef9f9fa8bac8ede7523541aa98ef4fab3526ee19c",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        259,
+        136
+      ],
+      "reproduced_size": [
+        259,
+        136
+      ],
+      "detected_pitch": [
+        6.749999999999998,
+        6.749999999999998
+      ],
+      "game_pixel_sha256": "5a2f7092dcf965b273ced4f707715321beed66a79169495bcc2157f66391f7b3",
+      "reproduced_pixel_sha256": "5a2f7092dcf965b273ced4f707715321beed66a79169495bcc2157f66391f7b3",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/BG-02-bg-forge-source.png",
+      "game": "public/scenes/bg-forge.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "2b2d7a403d4c267eca6edebac2e1437f1a08731a6884f5a608c76fcacad69344",
+      "game_sha256": "6d689c9ffbdc0d35619832aabb8a2fe0412affce51892a329b796625d6e7d739",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        371,
+        186
+      ],
+      "reproduced_size": [
+        371,
+        186
+      ],
+      "detected_pitch": [
+        4.339999999999997,
+        4.339999999999997
+      ],
+      "game_pixel_sha256": "db1b37f1aa40e6e816a3bafab9786e0d5ab3fdb0a81ef334f2fb0a607be9a1f1",
+      "reproduced_pixel_sha256": "db1b37f1aa40e6e816a3bafab9786e0d5ab3fdb0a81ef334f2fb0a607be9a1f1",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/BG-03-bg-event-source.png",
+      "game": "public/scenes/bg-event.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "e4072c821f6180117e7938373f194e8b2648f842f2ab1d33aefaa1c78988e5fb",
+      "game_sha256": "8d0af8058f9d224dca23eedea6649d162d783a9815829f42af867ba55c40a316",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        283,
+        150
+      ],
+      "reproduced_size": [
+        283,
+        150
+      ],
+      "detected_pitch": [
+        5.829999999999998,
+        5.829999999999998
+      ],
+      "game_pixel_sha256": "eec25d0787a8f740976608d4c13df67908e67388ab92fcfb4e8f257eb62b826a",
+      "reproduced_pixel_sha256": "eec25d0787a8f740976608d4c13df67908e67388ab92fcfb4e8f257eb62b826a",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/BG-04-bg-reward-source.png",
+      "game": "public/scenes/bg-reward.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "ebb79febd3c452c04b5ccd1887090489263b96caf732d3fee131987c67743b65",
+      "game_sha256": "5e60667237c67f757c27da16d9a8026bd8f0d0e1f667419e0dcf09b3fac0e4c8",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        284,
+        149
+      ],
+      "reproduced_size": [
+        284,
+        149
+      ],
+      "detected_pitch": [
+        6.0299999999999985,
+        6.0299999999999985
+      ],
+      "game_pixel_sha256": "310e40c305542bb83675868ea6858dba93e52c722a33626fb28872097c628497",
+      "reproduced_pixel_sha256": "310e40c305542bb83675868ea6858dba93e52c722a33626fb28872097c628497",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/E-06-credits-bg-source.png",
+      "game": "public/scenes/credits-bg.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": 5.9
+      },
+      "source_sha256": "5942e1ef6759fa52a94fe51a8ab5b76c1dca7cbbadb1e1e29ce3e58f7e3cb07f",
+      "game_sha256": "d2f01499ea329676300a74a77103f230dd23e8feaf4a5756615ffd07eb491eeb",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        293,
+        146
+      ],
+      "reproduced_size": [
+        293,
+        146
+      ],
+      "detected_pitch": [
+        5.9,
+        5.9
+      ],
+      "game_pixel_sha256": "aee7fefe2ebce96a79e42f26e21c5d32286c179e00e784b2458418140dd38e9b",
+      "reproduced_pixel_sha256": "aee7fefe2ebce96a79e42f26e21c5d32286c179e00e784b2458418140dd38e9b",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/EN-01-entry-battle-source.png",
+      "game": "public/scenes/entry-battle.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "ad8b5067c0415d669bd44737bdba9bfea97bafba6a339e4c1b804da2407dcd84",
+      "game_sha256": "7688e77e6fe1a0ee0af022725611587a33e53999869999249439bde80b2a40e0",
+      "source_size": [
+        1536,
+        1024
+      ],
+      "game_size": [
+        494,
+        319
+      ],
+      "reproduced_size": [
+        494,
+        319
+      ],
+      "detected_pitch": [
+        3.16,
+        3.16
+      ],
+      "game_pixel_sha256": "673ad682f7ce7c3ea5097bfdf18732393c7af0e85411a7243cf0e4721d6efe1d",
+      "reproduced_pixel_sha256": "673ad682f7ce7c3ea5097bfdf18732393c7af0e85411a7243cf0e4721d6efe1d",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/EN-02-entry-check-source.png",
+      "game": "public/scenes/entry-check.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "e845aa7712f912afd00605882418765d6fe151a1ed13871fc300d3ff10100f28",
+      "game_sha256": "2a6500158669ac6c0f586b8782f03710fe201855aeba13f4ae55e22dae4de51f",
+      "source_size": [
+        1536,
+        1024
+      ],
+      "game_size": [
+        497,
+        335
+      ],
+      "reproduced_size": [
+        497,
+        335
+      ],
+      "detected_pitch": [
+        3.0700000000000003,
+        3.0700000000000003
+      ],
+      "game_pixel_sha256": "fda45c6f9c07ee093ce80324439044c7cd71a6c4b418e6eeb66d87206d6dbe60",
+      "reproduced_pixel_sha256": "fda45c6f9c07ee093ce80324439044c7cd71a6c4b418e6eeb66d87206d6dbe60",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/P-00-prologue-00-source.png",
+      "game": "public/scenes/prologue-00.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "31940d07e7deab4a5d590a6621f09f653800931e37ebe850a6162bdb45019a00",
+      "game_sha256": "123440d42bc1128ea5a124a12a5de0db0479750bd1333e41c858734823803814",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        287,
+        144
+      ],
+      "reproduced_size": [
+        287,
+        144
+      ],
+      "detected_pitch": [
+        6.329999999999998,
+        6.329999999999998
+      ],
+      "game_pixel_sha256": "a2559707b74c7c66f7466f78ed4ef4d6dc0bb3932e07897854d4b0265d049bbf",
+      "reproduced_pixel_sha256": "a2559707b74c7c66f7466f78ed4ef4d6dc0bb3932e07897854d4b0265d049bbf",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/SC-01-act-0-source.png",
+      "game": "public/scenes/act-0.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "4436206ce694cd97504baccf9ad61c797241e613852055cb87c2646b0304c639",
+      "game_sha256": "fa482c45e7f86d77ab1a24de9a68ee4580dab0f54c26a5d6c26a587a0a27d36c",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        856,
+        416
+      ],
+      "reproduced_size": [
+        856,
+        416
+      ],
+      "detected_pitch": [
+        2.49,
+        2.49
+      ],
+      "game_pixel_sha256": "4d185cb4e389e0b16afbe7b9404ffefecfdad003304d835e117fb59a049fcea4",
+      "reproduced_pixel_sha256": "4d185cb4e389e0b16afbe7b9404ffefecfdad003304d835e117fb59a049fcea4",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/SC-02-act-4-source.png",
+      "game": "public/scenes/act-4.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "81aa70c05277e403998faff52f342150113cb74bb2aaaecbb186dde6111e83b6",
+      "game_sha256": "ef57a4d148a266db7476e3ac44de9dad4565b2d82a5bfbc2bcd611ce6acf6be0",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        593,
+        300
+      ],
+      "reproduced_size": [
+        593,
+        300
+      ],
+      "detected_pitch": [
+        2.94,
+        2.94
+      ],
+      "game_pixel_sha256": "2e2cf153e4e307c4a363d3dfdd946adda94f7d38ce2fb8d62f6556d1fda3416b",
+      "reproduced_pixel_sha256": "2e2cf153e4e307c4a363d3dfdd946adda94f7d38ce2fb8d62f6556d1fda3416b",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/UI-06a-end-clear-source.png",
+      "game": "public/scenes/end-clear.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "c7e2b59f16d5cefe7874d3cee9434bff4a2ad8a6d91e219faa089c365e16eb57",
+      "game_sha256": "202aabdac29a4bb65dbe8b17ec3f569b43702ba68ac3800288ead7692977fae6",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        312,
+        165
+      ],
+      "reproduced_size": [
+        312,
+        165
+      ],
+      "detected_pitch": [
+        5.45,
+        5.45
+      ],
+      "game_pixel_sha256": "9e9bb5ecac4586a6d2feae90bd19204ca6dbc32b3755d47d4563e4d55f4ed1eb",
+      "reproduced_pixel_sha256": "9e9bb5ecac4586a6d2feae90bd19204ca6dbc32b3755d47d4563e4d55f4ed1eb",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/UI-06b-end-fail-source.png",
+      "game": "public/scenes/end-fail.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": null
+      },
+      "source_sha256": "0300f5758434fd4708e3adde9bffb1d290d7a51659743a466b0b32941d33f4ad",
+      "game_sha256": "95fc0b3d27539f1a4c9adee72cb6d61450fe72484ca9b4bdf5f35b4ef124ca81",
+      "source_size": [
+        1774,
+        887
+      ],
+      "game_size": [
+        272,
+        140
+      ],
+      "reproduced_size": [
+        272,
+        140
+      ],
+      "detected_pitch": [
+        6.429999999999998,
+        6.429999999999998
+      ],
+      "game_pixel_sha256": "4b803cc6d15a74e87a101aba04ab5215d2fa7994a3e2e99daa1c21d27b283d2c",
+      "reproduced_pixel_sha256": "4b803cc6d15a74e87a101aba04ab5215d2fa7994a3e2e99daa1c21d27b283d2c",
+      "status": "match"
+    }
+  ],
+  "cli_import_checks": [
+    {
+      "scene": "bg-shop",
+      "tool": "tools/scene-import.py",
+      "archived_original_matches": true,
+      "generated_game_pixels_match": true
+    },
+    {
+      "scene": "credits-bg",
+      "tool": "tools/scene-import.py",
+      "archived_original_matches": true,
+      "generated_game_pixels_match": true
+    }
+  ]
+}
