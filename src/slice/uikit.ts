@@ -515,11 +515,11 @@ export const talkAt = (el: HTMLElement, side: 'left' | 'right'): void => {
  * 판 위 기물이면 그 진영 레일 위에 붙여 판을 가리지 않는다(내 편 = 왼쪽 · 적 = 오른쪽). 같은 것을 다시 열면 그대로 둔다.
  */
 let peekNow: HTMLElement | null = null;
-export const infoPeek = (o: { key: string; head: string; body: string; side: 'left' | 'right'; bare?: boolean; maxW?: number }): HTMLElement => {
+export const infoPeek = (o: { key: string; head: string; body: string; side: 'left' | 'right'; bare?: boolean; maxW?: number; cls?: string }): HTMLElement => {
   if (peekNow && peekNow.dataset.key === o.key && peekNow.isConnected) return peekNow;
   peekNow?.remove();
   const el = document.createElement('div');
-  el.className = `k-peek kit${o.bare ? ' bare' : ' win win-s'}`;
+  el.className = `k-peek kit${o.bare ? ' bare' : ' win win-s'}${o.cls ? ` ${o.cls}` : ''}`;
   el.dataset.key = o.key;
   el.innerHTML = o.bare ? o.body : `<div class="win-head">${o.head}</div>${o.body}`;
   // 판 칸을 덮지 않는 폭까지만 (레일 + 판 옆 빈칸)
@@ -534,7 +534,9 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
     const h = el.offsetHeight;
     const x = o.side === 'left' ? r.left + 4 : Math.max(r.right - w - 4, 4);
     el.style.left = `${Math.round(x)}px`;
-    el.style.top = `${Math.round(Math.max(8, Math.min(innerHeight - h - 8, r.top + 76)))}px`;
+    const end = document.getElementById('btn-end');
+    const bottom = o.cls?.includes('unit-peek') && end && end.offsetParent !== null ? Math.min(innerHeight - 8, end.getBoundingClientRect().top - 8) : innerHeight - 8;
+    el.style.top = `${Math.round(Math.max(8, Math.min(bottom - h, r.top + 76)))}px`;
   } else {
     el.style.left = `${Math.round((innerWidth - el.offsetWidth) / 2)}px`;
     el.style.top = `${Math.round((innerHeight - el.offsetHeight) / 2)}px`;

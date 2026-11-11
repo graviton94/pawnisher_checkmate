@@ -4,7 +4,7 @@ import type { Axis } from './cards';
  * 부품 (수직 조각 — 규칙을 깨는 유물, D-144). Balatro 조커 · StS 유물처럼 카드와 맞물려 빌드를 "부순다".
  * 축마다 둘: 하나는 그 축 카드를 싸게/여러 번, 하나는 판을 바꾼다.
  */
-export type SlicePartId = 'lastBreath' | 'ledger' | 'veteran' | 'deathMark' | 'notches' | 'aceBadge' | 'scarPlate' | 'cleanSheet' | 'heavyHand' | 'sergeant' | 'rookBolt' | 'bishopLens' | 'pawnPike' | 'oath' | 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
+export type SlicePartId = 'relayGear' | 'siegeLatch' | 'lastBreath' | 'ledger' | 'veteran' | 'deathMark' | 'notches' | 'aceBadge' | 'scarPlate' | 'cleanSheet' | 'heavyHand' | 'sergeant' | 'rookBolt' | 'bishopLens' | 'pawnPike' | 'oath' | 'horseshoe' | 'magnet' | 'assembly' | 'drum' | 'crown' | 'throne' | 'coil' | 'echo' | 'hammer' | 'spare' | 'tape'
   | 'lance' | 'spurs' | 'barracks' | 'banner' | 'scepter' | 'gilded' | 'fuse' | 'conductor' | 'anvilPlate' | 'chainShot' | 'bloodPact' | 'brittle' | 'greed' | 'whetstone'
   // 부품 확장 (D-282)
   | 'vise' | 'forkGear' | 'openGate' | 'chainReel' | 'gameRecord' | 'gateHinge' | 'queenCrown' | 'lightCloak' | 'goldRank' | 'thickWall' | 'rosary' | 'stirrup' | 'thickCast' | 'scrapMagnet' | 'firstSpring' | 'lastAxle' | 'toolbox' | 'ventHole' | 'afterheat' | 'bossBane' | 'lightMag'
@@ -26,7 +26,7 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   // 측정 (D-217 2): 같은 축 카드 둘과 함께 넣은 덱 vs 그 카드만 넣은 덱. 황금 = 상위 4, 희귀 = 다음 10.
   // 설계 보정: 맹세(사용자 결정 — 폰 전용 고등급) 황금, 탐욕의 저울(나사 두 배 — 경제는 봇이 못 잰다) · 되감는 테이프(봇은 되감기를 안 쓴다) 희귀
   // D-358: 막사의 종은 일반인데 힘 값 +2.4(±2σ 밖) → 희귀
-  barracks: 'rare',
+  barracks: 'rare', siegeLatch: 'rare',
   lastBreath: 'rare', ledger: 'rare', veteran: 'rare', deathMark: 'rare',
   // 기록 유물 2차 (D-384) — 처치 · 피해 · 쓰러짐 · 대국 수
   aceBadge: 'rare', heavyHand: 'rare', cleanSheet: 'rare', scarPlate: 'rare',
@@ -38,6 +38,9 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   bishopLens: 'rare', rookBolt: 'rare', crown: 'rare', lance: 'rare', anvilPlate: 'rare', spare: 'rare', drum: 'rare', assembly: 'rare', brittle: 'rare', gilded: 'rare', throne: 'rare', conductor: 'rare', greed: 'rare', tape: 'rare', oath: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
+  // I-14A/B 원본 파일 반입 전 기존 그림을 빌린다 (D-420).
+  relayGear: { name: '맞물린 톱니', axis: null, icon: 'forkGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 분대 두 유형이 공격 · 턴에 한 번' },
+  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'anvilPlate', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판 최대 12 → 첫 피해 — 룩 2태엽↑ · 턴에 한 번' },
   // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
   lastBreath: { name: '마지막 숨', axis: null, icon: 'brittle', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남으면' },
   ledger: { name: '피의 장부', axis: null, icon: 'gameRecord', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },
@@ -127,13 +130,13 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
 };
 
 /** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 피의 계약 ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 */
-export const PART_NUM = { notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.2, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
+export const PART_NUM = { relayGear: 1, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.2, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 16, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).
  * 폰 부품은 폰을 만들어 내는 부품(생산선 · 막사)이 있으면 괜찮다.
  */
-export const PART_NEEDS: Partial<Record<SlicePartId, 'N' | 'P' | 'R' | 'B' | 'Q'>> = { whistle: 'P', shieldWall: 'P', jumpSpring: 'N', saddle: 'N', queenFan: 'Q', rampart: 'R', mortar: 'R', stainedGlass: 'B', queenCrown: 'Q', lightCloak: 'Q', thickWall: 'R', rosary: 'B', stirrup: 'N', thickCast: 'P', goldRank: 'P', gateHinge: 'R', rookBolt: 'R', bishopLens: 'B', pawnPike: 'P', oath: 'P', horseshoe: 'N', lance: 'N', spurs: 'N', drum: 'P', banner: 'P' };
+export const PART_NEEDS: Partial<Record<SlicePartId, 'N' | 'P' | 'R' | 'B' | 'Q'>> = { siegeLatch: 'R', whistle: 'P', shieldWall: 'P', jumpSpring: 'N', saddle: 'N', queenFan: 'Q', rampart: 'R', mortar: 'R', stainedGlass: 'B', queenCrown: 'Q', lightCloak: 'Q', thickWall: 'R', rosary: 'B', stirrup: 'N', thickCast: 'P', goldRank: 'P', gateHinge: 'R', rookBolt: 'R', bishopLens: 'B', pawnPike: 'P', oath: 'P', horseshoe: 'N', lance: 'N', spurs: 'N', drum: 'P', banner: 'P' };
 
 /** 지금 분대 · 부품으로 이 부품이 쓸모 있는가 */
 export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePartId[]): boolean => {

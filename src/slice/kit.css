@@ -364,6 +364,34 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .k-peek p { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 .k-peek .stats { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
 .k-peek.bare { padding: 0; }
+/* D-421: 기물 검사표. 초상 → 체력 → 공격/방어 → 특성, 기존 액자·움푹 칸 재사용. */
+.k-peek.win.unit-peek { gap: var(--s1); padding: var(--s2); }
+.k-peek.win:is(.unit-peek, .part-detail, .move-preview) { --win-hmax: var(--win-h); }
+.unit-peek .win-head { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: var(--s2); align-items: center; }
+.unit-peek .unit-ident { display: flex; flex-direction: column; gap: 0; }
+.unit-peek .unit-ident > span { color: var(--t-loss); font: 400 12px/18px Galmuri11, sans-serif; }
+.unit-peek.unit-ally .unit-ident > span { color: var(--t-body); }
+.unit-peek .unit-ident .lead { margin: 0; }
+.unit-peek .frame-portrait { width: 48px; height: 48px; }
+.unit-peek .frame-portrait .piece-img { width: 32px; height: 32px; }
+.unit-peek .unit-life.inset { padding: var(--s1) var(--s2); }
+.unit-peek .unit-life-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+.unit-peek .unit-life-line > span, .unit-peek .unit-combat span { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); }
+.unit-peek strong { font: 700 24px/30px Galmuri11, sans-serif; color: var(--t-body); }
+.unit-peek strong small { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); white-space: nowrap; }
+.unit-peek .unit-hp-track { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s1); }
+.unit-peek .er-hp { flex: 1; width: auto; }
+.unit-peek .er-fill { background: var(--t-loss); box-shadow: none; transition: none; }
+.unit-peek .unit-shield { color: var(--t-cyan, #5eead4); font: 400 12px/18px Galmuri11, sans-serif; white-space: nowrap; }
+.unit-peek .unit-combat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
+.unit-peek .unit-combat > div.inset { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: var(--s1) var(--s2); }
+.unit-peek .unit-traits { border-top: 2px solid var(--t-dim); padding-top: var(--s1); }
+.unit-peek .unit-traits p { font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
+.win .build-options { display: flex; flex-direction: column; gap: max(8px, var(--s2)); }
+.win .choice.build-option { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--s2); align-items: center; min-height: 56px; }
+.win .choice.build-option .ico { width: 32px; height: 32px; }
+.win .choice.build-option .choice-name, .win .choice.build-option .choice-res { display: block; }
+.win .choice.build-option .choice-res { color: var(--t-body); }
 /* 기록 엿보기: 한 줄 = 공격자 → 맞은 기물 −피해 */
 .k-peek .log-row { display: flex; align-items: center; gap: var(--s1); min-height: calc(var(--px) * 12); color: var(--t-body); font: 400 12px/1.4 Galmuri11, sans-serif; }
 .k-peek .log-row img { width: calc(var(--px) * 10); height: calc(var(--px) * 10); image-rendering: pixelated; }

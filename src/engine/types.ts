@@ -136,7 +136,7 @@ export interface HitResult {
 export type BattleEvent =
   | { type: 'move'; order: number; pieceId: number; from: Pos; to: Pos }
   | { type: 'promote'; pieceId: number; from: PieceType; to: PieceType }
-  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number; /** 더한 피해 (합, D-205 — 화면 표시용) */ add?: number }
+  | { type: 'attack'; order: number; attackerId: number; area: Pos[]; hits: HitResult[]; /** 주 대상 공격에 소모한 방열판 (D-420) */ shieldSpent?: number; /** 피해 배율 (1.05 초과일 때만, 화면 표시용) */ mult?: number; /** 더한 피해 (합, D-205 — 화면 표시용) */ add?: number }
   | { type: 'gameOver'; winner: Side }
   /** 명예로운 항복: 그 진영 킹이 왕관을 내려놓았다 (D-077) */
   | { type: 'resign'; side: Side; pieceId: number }
@@ -147,7 +147,7 @@ export type BattleEvent =
   | { type: 'suddenDeath'; hits: { pieceId: number; damage: number; hpAfter: number }[] }
   | { type: 'shield'; pieceId: number; amount: number }
   | { type: 'heal'; pieceId: number; amount: number }
-  | { type: 'apGain'; side: Side; amount: number }
+  | { type: 'apGain'; side: Side; amount: number; source?: 'relayGear' }
   /** 터짐 (도미노 부품 등): 그 칸에서 주변으로 */
   | { type: 'blast'; pos: Pos; label: string; hits: HitResult[]; /** 특수 기믹 연출 (D-203): 줄 폭격 · 되받아침 · 자폭 · 증기 폭발 — 일반 공격과 다른 모양 */ fx?: 'row' | 'thorns' | 'burst' | 'steam'; /** 되받아침: 반장 칸 */ from?: Pos }
   /** 양산 라인 비틀기: 쓰러진 폰이 뒷줄에 다시 섰다 */

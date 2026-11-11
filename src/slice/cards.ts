@@ -253,6 +253,8 @@ export const rollRecruit = <T extends { t: PieceType }>(pool: T[], r: number): T
 
 /** 부품 상자 (첫 사기 조합 확정): 부품 + 맞물리는 카드 둘. needs = 분대에 있어야 하는 기물 */
 export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[] = [
+  { part: 'relayGear', cards: ['advance', 'leap'] },
+  { part: 'siegeLatch', cards: ['rookCharge', 'plate'], needs: 'R' },
   { part: 'coil', cards: ['spark', 'finisher'] },
   { part: 'drum', cards: ['march', 'march'] },
   { part: 'assembly', cards: ['gambit', 'draft'] },

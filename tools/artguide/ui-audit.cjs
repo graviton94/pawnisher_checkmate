@@ -7,6 +7,8 @@ const only = process.argv[3];
 require('fs').mkdirSync(out, { recursive: true });
 const META = JSON.stringify({ tut: ['battle', 'map', 'recruit', 'kit', 'promote'], runs: 3 });
 const SCENES = [
+  ['unit-info', async (p, A, W, S) => { await require('../qa/unit-info.cjs')(p, S); }],
+  ['builds', async (p, A, W, S) => { await require('../qa/build-prototype.cjs')(p, S); }],
   ['battle', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2600); await S('a'); await A(() => document.getElementById('btn-end').click()); await W(350); await S('enemy-a'); await W(600); await S('enemy-b'); await W(2600); await S('after'); }],
   // 패스 4 (D-396): 전투 HUD — 적 의도 · 엿보기 · 반장 규칙 · 턴 끝 경고 · 기록 · 튜토리얼 말풍선
   ['p4-peek', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => { const q = window.slice().s.pieces.find((x) => x.side === 1 && x.type === 'K'); window.sliceApi.peekAt({ x: q.x, y: q.y }); }); await W(500); await S(''); }],
@@ -27,9 +29,9 @@ const SCENES = [
   ['bet', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.bet()); await W(1500); await S(''); }],
   ['death', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => { window.sliceApi.die(); }); await W(1500); await S('a'); await W(2000); await S('b'); }],
   ['doom', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.doom()); await A(() => document.getElementById('btn-end').click()); await W(3000); await S('a'); await W(2000); await S('b'); }],
-  ['reward', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2400); await A(() => window.sliceApi.finish()); await W(2600); await S('a'); await W(2500); await S('b'); }],
+  ['reward', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2400); await A(() => { window.slice().s.winner = 0; window.sliceApi.finish(); }); await W(2600); await S('a'); await W(2500); await S('b'); }],
   ['map', async (p, A, W, S) => { await A(() => window.sliceApi.map(2)); await W(2600); await S(''); }],
-  ['shop', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(10); window.sliceApi.shop(); }); await W(2600); await S('a'); await p.click('#overlay [data-buy]').catch(() => {}); await W(400); await S('toast'); }],
+  ['shop', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(10); window.sliceApi.shop(); }); await W(2600); await S('a'); await p.locator('[data-slot]').first().click({ force: true }); await W(400); await S('unaffordable'); }],
   ['forge', async (p, A, W, S) => { await A(() => window.sliceApi.forge()); await W(2600); await S(''); }],
   ['partpick', async (p, A, W, S) => { await A(() => window.sliceApi.partPick()); await W(2200); await S(''); }],
   ['event', async (p, A, W, S) => { await A(() => window.sliceApi.event('nightShift')); await W(2600); await S(''); }],
@@ -67,7 +69,7 @@ const SCENES = [
   ['endclear', async (p, A, W, S) => { await A(() => window.sliceApi.end(true)); await W(2800); await S(''); }],
 ];
 (async () => {
-  const br = await chromium.launch();
+  const br = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
   for (const [name, fn] of SCENES) {
     if (only && !name.includes(only)) continue;
     const p = await br.newPage({ viewport: { width: 915, height: 412 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });

@@ -4,7 +4,7 @@ import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
-import { BOSS, BOSS_NUM, COMMANDS, LAB, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
+import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -123,6 +123,8 @@ export interface SliceBattle {
   snap: string;
   /** 분대 기물 id ↔ 분대 번호 */
   squadIds: number[];
+  /** 입장 시 영구 분대 유형. 승격·임시 증원은 혼성 조건을 늘리지 않는다. */
+  squadTypes?: Record<number, PieceType>;
   /** 분대원 기벽 (기물 id → 기벽) */
   quirks: Record<number, QuirkId>;
   /** 이 대국 처치 수 (기물 id → 적 유형별) */
@@ -303,6 +305,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const parts = opts.parts ?? [];
   const spare = (parts.includes('spare') ? 1 : 0) + (parts.includes('brittle') ? 1 : 0);
   const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, pd: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  b.squadTypes = Object.fromEntries(squadIds.map((id) => [id, findPiece(s, id)!.type]));
   // 시작 부품: 깨지는 유리 심장(분대 최대 HP −20%) · 탐욕의 저울(적 HP +20%) · 녹슨 홀(킹 방열판) · 막사의 종(폰 +1)
   if (has(b, 'brittle')) for (const p of s.pieces) if (p.side === 0) { p.maxHp = Math.round(p.maxHp * PART_NUM.brittleHp); p.hp = Math.min(p.hp, p.maxHp); }
   // 탐욕의 저울 (2026-11-05 개편): 쥔 나사 100마다 모든 공격 +3 (합) — 쌓이기만 하던 나사를 힘으로 (D-227)
@@ -751,6 +754,12 @@ const markTelegraph = (b: SliceBattle): void => {
   b.aimed = [...new Set(enemyPhase(c).events.flatMap((e) => (e.type === 'attack' && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 0) ? [e.attackerId] : [])))];
 };
 
+/** 수동 배치 시험의 첫 턴도 본편과 같은 예고·회피 계산을 사용한다. */
+export const replanTelegraph = (b: SliceBattle): void => {
+  b.intents = planFor(b);
+  markTelegraph(b);
+};
+
 /** 이 카드 · 이 기물로 갈 수 있는 칸 */
 export const cardMoves = (b: SliceBattle, i: number, pieceId: number): Pos[] => {
   const c = COMMANDS[b.hand[i]];
@@ -777,7 +786,8 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
       * (grazeOn(b, pieceId, to) && has(b, 'ventHole') ? PART_NUM.ventGraze / SLICE.grazeMult : 1)
       * (b.boss && has(b, 'bossBane') ? PART_NUM.bossBane : 1);
     const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
-    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0)
+    const shieldStrike = p.type === 'R' && c.who === 'R' && COMMANDS[baseOf(b.hand[i])].cost >= 2 && has(b, 'siegeLatch') && !b.once.includes(`siegeLatch:${pieceId}`) ? PART_NUM.siegeLatch : 0;
+    const sim = simulate(s, [{ pieceId, to }], { freeAp: true, shieldStrike, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0)
       // 부품 확장 2차 (D-287)
       + (p.type === 'N' && has(b, 'jumpSpring') ? PART_NUM.jumpSpring : 0) + (p.type === 'B' && has(b, 'stainedGlass') ? PART_NUM.stainedGlass : 0) + (has(b, 'redLine') ? PART_NUM.redLine : 0)
       + (has(b, 'calipers') && targetsFrom(b.s, p, to).includes(kingOf(b.s, 1)?.id ?? -1) ? PART_NUM.calipers : 0) });
@@ -803,6 +813,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   const cost = costOf(b, i, pieceId);
   if (cost > b.ap) return '‘태엽이 모자라.’';
   const before = cloneState(b.s);
+  // 이전 저장은 대국 시작 상태만 저장하므로 현재 영구 분대에서 안전하게 이관한다.
+  b.squadTypes ??= Object.fromEntries(before.pieces.filter((p) => b.squadIds.includes(p.id)).map((p) => [p.id, p.type]));
   let events: BattleEvent[] = [];
   let gained = 0;
   if (c.kind === 'move') {
@@ -811,10 +823,11 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (!p || p.side !== 0 || (c.who !== 'any' && c.who !== p.type)) return '이 카드로 움직일 수 없는 기물입니다.';
     // 지배 전략 정리 (D-201, K교수): 아무 기물 카드(지휘 등)로는 한 기물을 한 턴에 한 번만 — 센 기물 하나를 지휘로 거듭 굴리지 못하게
     if (c.who === 'any' && b.once.includes(`cmd:${p.id}`)) return '이번 턴에 이미 지휘한 기물입니다.';
-    if (c.who === 'any') b.once.push(`cmd:${p.id}`);
     const grazed = grazeOn(b, pieceId, to);
     const sim = previewPlay(b, i, pieceId, to);
     if (!sim) return '갈 수 없는 칸입니다.';
+    if (c.who === 'any') b.once.push(`cmd:${p.id}`);
+    if (sim.events.some((e) => e.type === 'attack' && e.shieldSpent)) b.once.push(`siegeLatch:${pieceId}`);
     b.s = sim.state;
     // 순수 회피 보너스는 그 기물의 다음 공격 한 번에 쓰이고 사라진다
     const struck = sim.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 1 && h.damage > 0));
@@ -839,7 +852,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
       // 순수 회피 (D-230): 아무도 못 치고 빈 칸으로 빠지기만 했으면 다음 공격 ×1.4로 남긴다 (회피 턴이 손해가 되지 않게)
       if (!struck) b.evaded = [...(b.evaded ?? []), pieceId];
     }
-    events = sim.events;
+    events = [...sim.events, ...events];
     b.overkill += overkillOf(before, sim.events);
     let k = sim.removed.filter((q) => q.side === 1).length;
     b.kills += chainGain(b, k, c.chainPerKill);
@@ -986,8 +999,31 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     drawCards(b, 1);
     gained += 1;
   }
+  // 직접 명령·행진·돌격에 참여한 영구 동료만 센다. 자동 반사(area 없음)는 제외.
+  let relay = 0;
+  if (has(b, 'relayGear') && !b.once.includes('relayGear')) {
+    for (const e of events) {
+      if (e.type !== 'attack' || !e.area.length || !b.squadIds.includes(e.attackerId)) continue;
+      const t = b.squadTypes[e.attackerId];
+      if (t && e.hits.some((h) => h.damage > 0 && before.pieces.some((p) => p.id === h.targetId && p.side === 1))) {
+        const key = `relayType:${t}`;
+        if (!b.once.includes(key)) b.once.push(key);
+      }
+    }
+    if (b.once.filter((x) => x.startsWith('relayType:')).length >= 2) {
+      b.once.push('relayGear');
+      relay = PART_NUM.relayGear;
+      gained += relay;
+    }
+  }
   creditKills(b, before, events, c.kind === 'move' ? pieceId : undefined);
   events.push(...afterMyHits(b, before, events));
+  // 상한에서 사라진 환급을 얻은 것처럼 표시하지 않는다. 부품 발동 자체는 소모된다.
+  const actualGain = Math.max(0, Math.min(gained, SLICE.apCap - (b.ap - cost)));
+  const relayGain = Math.max(0, actualGain - (gained - relay));
+  events = events.filter((e) => e.type !== 'apGain');
+  if (actualGain > relayGain) events.push({ type: 'apGain', side: 0, amount: actualGain - relayGain });
+  if (relay) events.push({ type: 'apGain', side: 0, amount: relayGain, source: 'relayGear' });
   b.ap = Math.min(SLICE.apCap, b.ap - cost + gained);
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
