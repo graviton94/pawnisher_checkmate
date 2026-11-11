@@ -95,6 +95,8 @@ def files_of(head):
     head = re.sub(r'^\d+위 ·\s*', '', head)
     if re.match(r'I-\d+', head):
         return sheet_files(head)
+    if head.startswith('S-01'):
+        return ['epilogue-hands']
     mu = re.match(r'(UI-\d+)', head)
     if mu:  # UI 키트 시트 (D-390 · D-391): 받은 시트 원본이 build-res/order에 있으면 받음
         return ['recv:' + mu.group(1)]
