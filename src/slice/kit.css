@@ -364,9 +364,9 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .k-peek p { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 .k-peek .stats { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
 .k-peek.bare { padding: 0; }
-/* D-426: 받은 UI-31/32. 고정 모서리는 18/9도트, 기기 픽셀 정수인 --px1 배율. */
+/* D-428: 원본 프레임 전체. 상징·핀은 원본 안에 두고 분리하지 않는다. */
 .k-peek.win.unit-peek { gap: var(--s1); padding: var(--s1);
-  border-width: calc(18 * var(--px1));
+  border-width: calc(10 * var(--px1));
   border-image: url('../assets/ui/chrome/v2/unit-inspect-panel.png') 18 fill / calc(18 * var(--px1)) / 0 stretch;
   background: #25242b padding-box; }
 .k-peek:is(.unit-peek-expanded, .peek-expanded) { pointer-events: auto; }
@@ -382,31 +382,25 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .unit-peek-expanded .unit-portrait, .unit-peek-expanded .unit-portrait .piece-img { width: 32px; height: 32px; }
 .unit-peek-expanded .unit-ident { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--s2); }
 .unit-peek-expanded .unit-ident .lead { order: -1; }
-.unit-peek .inset { border-width: calc(9 * var(--px1));
-  border-image: url('../assets/ui/chrome/v2/unit-stat-hp.png') 9 fill / calc(9 * var(--px1)) / 0 stretch;
+.unit-peek .inset { border-width: calc(18 * var(--px-detail));
+  border-image: url('../assets/ui/chrome/v2/unit-stat-hp.png') 18 fill / calc(18 * var(--px-detail)) / 0 stretch;
   background: #25242b padding-box; }
 .unit-peek .unit-attack.inset { border-image-source: url('../assets/ui/chrome/v2/unit-stat-attack.png'); }
 .unit-peek .unit-defense.inset { border-image-source: url('../assets/ui/chrome/v2/unit-stat-defense.png'); }
-.unit-peek .unit-life.inset { padding: 0 var(--s2); }
-.unit-peek .unit-life-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
-.unit-peek .unit-life-line > span, .unit-peek .unit-combat span { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); }
-.unit-peek .unit-label { display: inline-flex; align-items: center; gap: var(--px1); }
-.unit-peek .unit-label::before { content: ''; flex: none; width: calc(16 * var(--px1)); height: calc(16 * var(--px1)); background: center / 100% 100% no-repeat; image-rendering: pixelated; }
-.unit-peek .unit-hp-label::before { background-image: url('../assets/ui/chrome/v2/unit-glyph-hp.png'); }
-.unit-peek .unit-attack .unit-label::before { background-image: url('../assets/ui/chrome/v2/unit-glyph-attack.png'); }
-.unit-peek .unit-defense .unit-label::before { background-image: url('../assets/ui/chrome/v2/unit-glyph-defense.png'); }
+.unit-peek .unit-shield.inset { border-image-source: url('../assets/ui/chrome/v2/unit-stat-shield.png'); }
+.unit-peek .unit-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s1); }
+.unit-peek .unit-stats > .inset { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); padding: 0 calc(4 * var(--px1)); }
+.unit-peek .unit-stats > .unit-life { display: block; }
+.unit-peek .unit-life-line { display: flex; flex-direction: column; gap: 0; }
+.unit-peek .unit-life-line strong { align-self: flex-end; white-space: nowrap; }
+.unit-peek .unit-stats span { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); }
 .unit-peek strong { font: 700 24px/30px Galmuri11, sans-serif; color: var(--t-body); }
 .unit-peek strong small { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); white-space: nowrap; }
-.unit-peek .unit-hp-track { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s1); }
+.unit-peek .unit-hp-track { display: flex; align-items: center; margin-top: var(--px1); }
+.unit-peek .unit-hp-track .er-hp { height: 4px; }
 .unit-peek .er-hp { flex: 1; width: auto; }
 .unit-peek .er-fill { background: var(--t-loss); box-shadow: none; transition: none; }
-.unit-peek .unit-shield { display: flex; align-items: center; gap: var(--s1); color: var(--t-cyan, #5eead4); font: 400 12px/18px Galmuri11, sans-serif; white-space: nowrap; }
-.unit-peek .unit-shield::before { content: ''; flex: none; width: calc(16 * var(--px1)); height: calc(16 * var(--px1)); background: url('../assets/ui/chrome/v2/unit-glyph-shield.png') center / 100% 100%; image-rendering: pixelated; }
-.unit-peek .unit-combat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
-.unit-peek .unit-combat > div.inset { display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: var(--s1) var(--s2); }
-.unit-peek .unit-combat strong { align-self: flex-end; }
-.unit-peek-expanded .unit-combat > div.inset { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--s1); }
-.unit-peek-expanded .unit-combat strong { align-self: center; }
+.unit-peek .unit-shield strong { color: var(--t-ally); }
 .unit-peek .unit-traits { border-top: 2px solid var(--t-dim); padding-top: var(--s1); }
 .unit-peek .unit-traits p { font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 /* D-422: 능력 하나는 이름 / 행동 / : 상세 효과, 정확히 세 줄. 말줄임·축소 없음. */
@@ -693,7 +687,7 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
 #hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/choice-off.png'); }
 #hand > .hc .hc-head { position: relative; display: grid; grid-template-columns: calc(var(--px) * 16) minmax(0, 1fr); column-gap: var(--s1); align-items: center; min-height: calc(var(--px) * 16); }
 /* 비용 톱니 = 황동 탭 위. 탭 황동은 choice 24줄 중 4~17줄(아래 18~19줄은 먹 받침)이라 판 가운데보다 1도트 위 → 톱니(11도트)를 머리 줄 가운데에서 7도트 위에 놓아 도트 격자에 맞춘다(옛 자리보다 1.5도트 위, D-398) */
-#hand > .hc .costgear { position: absolute; left: calc(var(--px) * -14); top: calc(50% - var(--px) * 7); display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
+#hand > .hc .costgear { position: absolute; left: calc(var(--px) * -14); top: calc(50% - var(--px) * 7 + 1px); display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
 #hand > .hc .costgear img { display: block; width: 100%; height: 100%; image-rendering: pixelated; filter: none; }
 #hand > .hc .costgear.short img { filter: grayscale(1) brightness(0.6); }
 #hand > .hc .art { position: relative; display: grid; place-items: center; width: calc(var(--px) * 16); height: calc(var(--px) * 16); overflow: visible; background: none; box-shadow: none; transform: none !important; }
@@ -1032,11 +1026,8 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
    (915·667·960 실측) 같은 줄 높이 상자면 0.5px 안에서 한 줄에 선다. 점선은 글 잉크 바로 아래(줄 아래에서 --clr-dot). */
 .clr .clr-cert { display: flex; flex-direction: column; gap: var(--s1); padding: var(--s1) var(--s3); margin-top: var(--s1); flex: none;
   border-width: calc(8 * var(--px1)) calc(10 * var(--px1));
-  border-image: url('../assets/ui/chrome/v2/ledger-slip.png') 8 10 fill / calc(8 * var(--px1)) calc(10 * var(--px1)) / 0 stretch; }
-.clr .clr-cert::before, .clr .clr-cert::after { content: ''; display: block; position: absolute; pointer-events: none;
-  left: calc(-8 * var(--px1)); top: calc(-8 * var(--px1)); width: calc(16 * var(--px1)); height: calc(16 * var(--px1));
-  background: url('../assets/ui/chrome/v2/ledger-pin-left.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
-.clr .clr-cert::after { left: auto; right: calc(-8 * var(--px1)); background-image: url('../assets/ui/chrome/v2/ledger-pin-right.png'); }
+  border-image: url('../assets/ui/chrome/v2/ledger-slip.png') 16 20 fill / calc(16 * var(--px-detail)) calc(20 * var(--px-detail)) / 0 stretch; }
+.clr .clr-cert::before, .clr .clr-cert::after { content: none; display: none; }
 .clr .clr-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s4); }
 .clr { --clr-lh: 22px; --clr-dot: 5px; }
 .clr .clr-row { display: flex; align-items: center; gap: var(--s1); margin: 0; min-width: 0; min-height: var(--clr-lh); color: #56545e; font: 400 12px/var(--clr-lh) Galmuri11, sans-serif; }

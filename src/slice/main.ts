@@ -290,7 +290,7 @@ const movePeek = (pos: Pos): boolean => {
 };
 /**
  * 기물 정보 엿보기 (길게 누름, 패스 4 D-396): 비모달 S 창 — 내 편이면 분대원 카드를 왼쪽 레일 위에, 적이면 이름 · 수치 · 특성을 오른쪽 레일 위에.
- * 판 옆 너비가 256px 미만이면 S 정보판으로 펼친다. 아무 데나 누르면 닫힌다.
+ * 원본 능력치 판 네 칸을 S 정보판으로 표시한다. 아무 데나 누르면 닫힌다.
  * (?debug sliceApi.peekAt(pos)가 같은 길로 연다 — Phaser 길게 누름은 자동 조작이 닿지 않는다)
  */
 const pieceInfo = (pos: Pos): void => {
@@ -306,8 +306,7 @@ const pieceInfo = (pos: Pos): void => {
   }
   const side = p.side === 0 ? 'left' : 'right';
   const maxW = offBoardW(side);
-  // 능력 본문 약 200px + 고정 테·안쪽 여백. 부족하면 S 폭으로 읽는 동안 펼친다.
-  const expanded = maxW < 256;
+  const expanded = maxW < 352;
   const abilities = p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b));
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
   const el = infoPeek({
@@ -316,7 +315,7 @@ const pieceInfo = (pos: Pos): void => {
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
     head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${liveIntents(b).some((it) => it.pieceId === p.id) ? '행동 예정' : '대기'}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
-    body: `<div class="unit-life inset"><div class="unit-life-line"><span class="unit-label unit-hp-label">체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset unit-attack"><span class="unit-label">공격</span><strong>${p.atk}</strong></div><div class="inset unit-defense"><span class="unit-label">방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
+    body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div></div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
   bindAbilities(el, abilities);
 };
@@ -625,7 +624,7 @@ const logPeek = (): void => {
   for (const r of [...blog].reverse().slice(0, 7)) {
     const h = `${r.turn}턴 · ${r.side ? '적' : '나'}`;
     if (h !== head) rows += `<p class="log-turn">${(head = h)}</p>`;
-    rows += `<div class="log-row${r.side ? ' foe' : ''}">${r.by ? pieceImg(r.by, r.side, 'small', 20) : `<span>${r.label ?? ''}</span>`}<span>→</span>${r.hits.map((h) => `${pieceImg(h.t, h.side, 'small', 20)}<em>${h.killed ? '☠' : `−${h.dmg}`}</em>`).join('')}</div>`;
+    rows += `<div class="log-row${r.side ? ' foe' : ''}">${r.by ? pieceImg(r.by, r.side, 'small', 20) : `<span>${r.label ?? ''}</span>`}<span>→</span>${r.hits.map((h) => `${pieceImg(h.t, h.side, 'small', 20)}<em>${h.killed ? '×' : `−${h.dmg}`}</em>`).join('')}</div>`;
   }
   infoPeek({ key: `log:${blog.length}`, side: 'right', maxW: offBoardW('right'), head: `<p class="lead">${HUD_TEXT.logTitle}</p>`, body: rows || `<p class="note">${HUD_TEXT.logNone}</p>` });
 };
@@ -646,7 +645,7 @@ const intentList = (): void => {
   const W = HUD_TEXT.intentWord;
   const res = (r: IntentRow): string => {
     if (r.kind === 'attack' || r.kind === 'blast')
-      return `${r.label ? `<span class="it-w">${r.label}</span>` : ''}${r.hits.slice(0, 2).map((h) => `${pieceImg(h.t, 0, 'small', 24)}<em${h.killed ? ' class="kill"' : ''}>${h.killed ? '☠' : `−${h.damage}`}</em>`).join('')}${r.hits.length > 2 ? `<span class="it-w">+${r.hits.length - 2}</span>` : ''}`;
+      return `${r.label ? `<span class="it-w">${r.label}</span>` : ''}${r.hits.slice(0, 2).map((h) => `${pieceImg(h.t, 0, 'small', 24)}<em${h.killed ? ' class="kill"' : ''}>${h.killed ? '×' : `−${h.damage}`}</em>`).join('')}${r.hits.length > 2 ? `<span class="it-w">+${r.hits.length - 2}</span>` : ''}`;
     if (r.kind === 'guard' || r.kind === 'shield') return `<span class="it-g">${W[r.kind]} +${r.amount ?? 0}</span>`;
     return `<span class="it-w">${W[r.kind]}</span>`;
   };
@@ -3611,7 +3610,7 @@ const labEnd = (isWin: boolean): void => {
 };
 
 // ---------- 저장 · 승급 · 오늘의 출하 (R6, D-174) ----------
-/** 대국 사이 회복 (난도 3부터 기본 회복의 30%) */
+/** 대국 사이 회복 (난이도 3부터 기본 회복의 30%) */
 const restHeal = (): number => REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1);
 /** 고물상 값 (승급 4부터 비싸다) */
 /** 고물상 값: 승급 4 이상 · 탐욕의 저울(대가 +25%)이면 오른다 */
@@ -3764,14 +3763,14 @@ const runEndNow = (cleared: boolean): void => {
   const kills = squad.reduce((n, u) => n + (u.kills ?? 0), 0) + fallenNow.reduce((n, r) => n + r.kills, 0);
   // 결과 장면 (D-394 .scr-place): 왼쪽 결과 그림 40% · 오른쪽 명패 → 한 줄 → 수치 넷(30px) → 분대 칩 → 구분 줄 → 새로 열림 꼬리표 · [결과 공유하기 | 메인 화면으로]
   const chip = (name: string, t: PieceType, bad = false) => `<span class="re-chip${bad ? ' bad' : ''}">${pieceImg(t, 0, 'small', 24)}${name}</span>`;
-  const opens = [...(freshNames.length > 10 ? ['기본 카드·부품 모두 열림'] : freshNames.slice(0, 3)), ...(nextChapter ? [(m.storyCleared ?? 0) < STORY_COUNT ? chapterLabel(m.storyCleared!) : '도전 난도 열림'] : []), ...(unlocked ? [runLabel('challenge', m.challengeOpen!)] : [])];
+  const opens = [...(freshNames.length > 10 ? ['기본 카드·부품 모두 해금'] : freshNames.slice(0, 3)), ...(nextChapter ? [(m.storyCleared ?? 0) < STORY_COUNT ? chapterLabel(m.storyCleared!) : '도전 모드 해금'] : []), ...(unlocked ? [runLabel('challenge', m.challengeOpen!)] : [])];
   const nums = [won, kills, gold, deck.length];
   // 출하 끝 (D-424): 크레딧(동료 이름 → 제작진) 마지막 장 = 출하 끝 장부 — 막 장부 넷을 모은 장부 + 「정품 판정」 도장 ·
   // 어느 엔딩이었나 꼬리표 · 다음 출하(승급) 예고 · [결과 공유하기 | 메인 화면으로]. 따로 서는 결과 화면은 없다 — 진 출하는 아래 결과 장면 그대로
   if (cleared) {
     const storyNext = (m.storyCleared ?? 0) < STORY_COUNT;
     const nextAsc = Math.max(0, Math.min(ASC_OMEN.length - 1, (storyNext ? m.storyCleared ?? 0 : m.challengeOpen ?? CHALLENGE_START) - 1));
-    const nextPreview = storyNext ? { head: `다음 · ${chapterLabel(m.storyCleared ?? 0)}`, line: (m.storyCleared ?? 0) === 0 ? '새 폰과 분대가 함께 나갈 길을 찾습니다.' : ASC_OMEN[nextAsc][0], num: (m.storyCleared ?? 0) === 0 ? '본편 1 / 3' : ASC_OMEN[nextAsc][1] } : runMode === 'challenge' && asc === ASCENSION.length ? { head: '최고 도전 완주', line: '모든 도전 난도를 넘었습니다.', num: '본편과 도전 기록은 따로 남습니다.' } : { head: `선택 도전 · 난도 ${(m.challengeOpen ?? CHALLENGE_START) - CHALLENGE_START + 1}`, line: ASC_OMEN[nextAsc][0], num: ASC_OMEN[nextAsc][1] };
+    const nextPreview = storyNext ? { head: `다음 · ${chapterLabel(m.storyCleared ?? 0)}`, line: (m.storyCleared ?? 0) === 0 ? '새 폰과 분대가 함께 나갈 길을 찾습니다.' : ASC_OMEN[nextAsc][0], num: (m.storyCleared ?? 0) === 0 ? '본편 1 / 3' : ASC_OMEN[nextAsc][1] } : runMode === 'challenge' && asc === ASCENSION.length ? { head: '최고 난이도 완료', line: '모든 도전 난이도를 완료했습니다.', num: '본편과 도전 기록은 따로 남습니다.' } : { head: `도전 모드 · 난이도 ${(m.challengeOpen ?? CHALLENGE_START) - CHALLENGE_START + 1}`, line: ASC_OMEN[nextAsc][0], num: ASC_OMEN[nextAsc][1] };
     const mvp = mvpOf([...squad.filter((u) => u.t !== 'K').map((u) => ({ name: u.name ?? PIECE_NAMES_KO[u.t], t: u.t, kills: u.kills ?? 0, dmg: u.dmg ?? 0 })), ...fallenNow.map((r) => ({ name: r.name, t: r.t, kills: r.kills, dmg: 0 }))]);
     const home = (): void => (sessionStorage.setItem('op-menu', '1'), location.reload());
     const kind = endKind;
@@ -4038,21 +4037,21 @@ const opening = (): void => {
       const level = mode === 'story' ? chapter : challenge;
       const dev = new URLSearchParams(location.search).has('debug');
       const openChallenge = (meta.storyCleared ?? 0) >= STORY_COUNT;
-      nav.innerHTML = `<div class="op-modes"><button type="button" class="btn k-${mode === 'story' ? 'brass' : 'iron'}" data-mode="story" aria-pressed="${mode === 'story'}">본편</button><button type="button" class="btn k-${mode === 'challenge' ? 'brass' : 'iron'}" data-mode="challenge" aria-pressed="${mode === 'challenge'}"${openChallenge ? '' : ' disabled aria-label="본편 세 장 완주 뒤 도전이 열립니다"'}>도전${openChallenge ? '' : ' · 잠김'}</button></div>
+      nav.innerHTML = `<div class="op-modes"><button type="button" class="btn k-${mode === 'story' ? 'brass' : 'iron'}" data-mode="story" aria-pressed="${mode === 'story'}">본편</button><button type="button" class="btn k-${mode === 'challenge' ? 'brass' : 'iron'}" data-mode="challenge" aria-pressed="${mode === 'challenge'}"${openChallenge ? '' : ' disabled aria-label="본편 3장을 완료하면 도전 모드가 열립니다"'}>도전${openChallenge ? '' : ' · 잠김'}</button></div>
         ${sv ? `<button class="btn op-main" type="button" data-cont><b>이어하기</b><small>${runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0)} · ${actLabel(sv.actI + 1)}</small></button>` : ''}
-        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? CHAPTERS[chapter].name : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 장 선택' : '도전 난도 선택'}">${mode === 'story' ? `${chapter + 1}장` : `난도 ${challenge - CHALLENGE_START + 1}`} ▾</button></div>
+        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? CHAPTERS[chapter].name : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 장 선택' : '도전 난이도 선택'}">${mode === 'story' ? `${chapter + 1}장` : `난이도 ${challenge - CHALLENGE_START + 1}`} ▾</button></div>
         <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 도전</b><small>${meta.daily[today] ? '기록 완료 · 다시 도전' : today}</small></button>
         <div class="op-tools"><button class="btn op-minor" type="button" data-guide>안내서</button><button class="btn op-minor" type="button" data-ledger>도감</button><button class="btn op-minor" type="button" data-prologue>프롤로그</button></div>
         ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
       nav.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((button) => button.addEventListener('click', () => { mode = button.dataset.mode as typeof mode; draw(); nav.querySelector<HTMLButtonElement>(`[data-mode="${mode}"]`)?.focus(); }));
       nav.querySelector('[data-level-pick]')!.addEventListener('click', () => {
         if (mode === 'story') {
-          const panel = openWin({ size: 'm', title: '본편의 장', body: `<div class="stack">${CHAPTERS.map((ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${ch.label} · ${ch.name}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 읽기' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '앞 장을 완주하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
+          const panel = openWin({ size: 'm', title: '장 선택', body: `<div class="stack">${CHAPTERS.map((ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${ch.label} · ${ch.name}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 도전' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '이전 장을 완료하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
           panel.querySelector('[data-x]')!.addEventListener('click', closeWin);
           panel.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b) => b.addEventListener('click', () => { chapter = Number(b.dataset.chapter); closeWin(); draw(); }));
         } else {
           let pick = challenge;
-          const panel = openWin({ size: 'm', title: '도전 난도', body: `<p class="lead" data-difficulty></p><p data-difficulty-desc></p><p class="note" data-difficulty-record></p><div class="btn-set">${btnHtml({ label: '이전', attrs: 'data-prev' })}${btnHtml({ label: '다음', attrs: 'data-next' })}</div>`, back: { label: '돌아간다', attrs: 'data-x' }, go: { label: '고른다', attrs: 'data-set' }, dismiss: closeWin });
+          const panel = openWin({ size: 'm', title: '난이도 선택', body: `<p class="lead" data-difficulty></p><p data-difficulty-desc></p><p class="note" data-difficulty-record></p><div class="btn-set">${btnHtml({ label: '이전', attrs: 'data-prev' })}${btnHtml({ label: '다음', attrs: 'data-next' })}</div>`, back: { label: '돌아간다', attrs: 'data-x' }, go: { label: '고른다', attrs: 'data-set' }, dismiss: closeWin });
           const paint = () => {
             panel.querySelector('[data-difficulty]')!.textContent = runLabel('challenge', pick);
             panel.querySelector('[data-difficulty-desc]')!.textContent = `${ASCENSION[pick - 1].name} · ${ASCENSION[pick - 1].desc} (이전 규정 유지)`;

@@ -753,7 +753,7 @@ class BoardScene extends Phaser.Scene {
         const hit = m.hitDests.find((h) => h.pos.x === p.x && h.pos.y === p.y);
         if (hit) {
           this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
-          if (hit.kill) img('skull', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTint(0xfacc15);
+          if (hit.kill) img('kill', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTintFill(0xfacc15);
         } else if (isPending) img('select', w.x, w.y, t, 1.7, 0.6);
         else img('move-dot', w.x + 8 * d, w.y + 8 * d, 4 * d);
       }
@@ -812,26 +812,29 @@ class BoardScene extends Phaser.Scene {
 
   /**
    * 피해 예측 꼬리표 (총괄 리뷰 2-2 · D-396): 칸 위 테에 걸친 진홍 꼬리표(12px 굵게) — 기물 얼굴을 가리지 않는다.
-   * 칸 오른쪽 위 모서리에 반쯤 걸쳐 둔다(위 칸 기물의 발치 오른쪽 끝 · 이 칸 기물의 머리 위 빈칸). 처치면 금빛.
+   * 칸 오른쪽 위에 두며, 쓰러질 내 기물에는 짙은 붉은 바탕과 기존 X 표식을 쓴다.
    */
   private dmgTag(pos: Pos, damage: number, killed: boolean): void {
     const t = this.tile;
     const d = t / BOARD_DOTS;
     const w = this.world(pos);
     const txt = this.add
-      .text(0, 0, killed ? `☠${damage}` : `-${damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: '#0B0B0E' })
+      .text(0, 0, killed ? `${damage}` : `-${damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: killed ? '#F1EDE4' : '#0B0B0E' })
       .setOrigin(0.5)
       .setResolution(this.dpr);
-    const bw = Math.ceil((txt.width + 4 * d) / d) * d;
+    const iconSize = killed ? 5 * d : 0;
+    const iconGap = killed ? d : 0;
+    const bw = Math.ceil((txt.width + iconSize + iconGap + 4 * d) / d) * d;
     const bh = Math.ceil((txt.height + 1 * d) / d) * d;
     const x = Math.round(w.x + t - bw - d);
     const y = Math.round(w.y - bh / 2);
     const g = this.add.graphics();
     g.fillStyle(0x0b0b0e, 1).fillRect(x - d, y - d, bw + 2 * d, bh + 2 * d);
-    g.fillStyle(killed ? 0xfacc15 : 0xe5262f, 1).fillRect(x, y, bw, bh);
-    g.fillStyle(killed ? 0xfff1a8 : 0xff6b6b, 1).fillRect(x, y, bw, d);
-    txt.setPosition(x + bw / 2, y + bh / 2 + d / 2);
-    const c = this.add.container(0, 0, [g, txt]).setDepth(7);
+    g.fillStyle(killed ? 0x7a1218 : 0xe5262f, 1).fillRect(x, y, bw, bh);
+    g.fillStyle(killed ? 0xc94850 : 0xff6b6b, 1).fillRect(x, y, bw, d);
+    txt.setPosition(x + (bw + iconSize + iconGap) / 2, y + bh / 2 + d / 2);
+    const icon = killed ? this.add.image(x + 2 * d + iconSize / 2, y + bh / 2, boardKey('kill')).setDisplaySize(iconSize, iconSize).setTintFill(0xf1ede4) : null;
+    const c = this.add.container(0, 0, icon ? [g, icon, txt] : [g, txt]).setDepth(7);
     this.dynamic.push(c);
   }
 

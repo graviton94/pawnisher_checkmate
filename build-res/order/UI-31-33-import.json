@@ -5,7 +5,8 @@
       64,
       64
     ],
-    "colors": 9,
+    "method": "whole source frame; original colors; no detached ornaments",
+    "colors": 237,
     "alpha": [
       0,
       255
@@ -23,15 +24,16 @@
       18,
       18
     ],
-    "rgbaSha256": "1ca8e3f9c7ca78ae9942de42e5f1b19aa378bd0794bec1e3b12c1e30c878b3dc"
+    "rgbaSha256": "eb8a2e001cbd5601f2337a9c0b2a1605777f2bd8d81fb1bcf89b644cf3d055a9"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-hp.png",
     "size": [
-      32,
-      32
+      64,
+      64
     ],
-    "colors": 5,
+    "method": "whole source frame; original colors; no detached ornaments",
+    "colors": 393,
     "alpha": [
       0,
       255
@@ -44,43 +46,21 @@
       543,
       643
     ],
-    "samplePitch": 17.59375,
+    "samplePitch": 8.796875,
     "sliceXY": [
-      9,
-      9
+      18,
+      18
     ],
-    "rgbaSha256": "4f32efd1a9fb07c5556d88c6b20ad76c2e3c2bcfd423c79931a855b675393a11"
-  },
-  {
-    "file": "src/assets/ui/chrome/v2/unit-glyph-hp.png",
-    "size": [
-      16,
-      16
-    ],
-    "colors": 3,
-    "alpha": [
-      0,
-      255
-    ],
-    "source": "UI-32-source.png",
-    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
-    "sourceCrop": [
-      28,
-      110,
-      140,
-      222
-    ],
-    "samplePitch": 7.0,
-    "sliceXY": null,
-    "rgbaSha256": "5be63538e5cb5877024a360688350cbd2cdde60eceb78d4160f2152420365040"
+    "rgbaSha256": "21eb4fa3dad0ca48543639d66cff744709ad20728369bb7126b20c5a644ad391"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-shield.png",
     "size": [
-      32,
-      32
+      64,
+      64
     ],
-    "colors": 5,
+    "method": "whole source frame; original colors; no detached ornaments",
+    "colors": 380,
     "alpha": [
       0,
       255
@@ -93,43 +73,21 @@
       1086,
       643
     ],
-    "samplePitch": 17.59375,
+    "samplePitch": 8.796875,
     "sliceXY": [
-      9,
-      9
+      18,
+      18
     ],
-    "rgbaSha256": "c1b2aa24eaae817aa720916efcfc720aed02bdf3b511e3ab93ed1a0808ac9565"
-  },
-  {
-    "file": "src/assets/ui/chrome/v2/unit-glyph-shield.png",
-    "size": [
-      16,
-      16
-    ],
-    "colors": 4,
-    "alpha": [
-      0,
-      255
-    ],
-    "source": "UI-32-source.png",
-    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
-    "sourceCrop": [
-      571,
-      110,
-      683,
-      222
-    ],
-    "samplePitch": 7.0,
-    "sliceXY": null,
-    "rgbaSha256": "0d79931dc24e55c90101377b5c2d5dade4363908cc8c222766556ff6695756d2"
+    "rgbaSha256": "8cbd77de88f048d9dfc6f70b88e6cd60d73184123174deebe30ca9f27d514e26"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-attack.png",
     "size": [
-      32,
-      32
+      64,
+      64
     ],
-    "colors": 5,
+    "method": "whole source frame; original colors; no detached ornaments",
+    "colors": 390,
     "alpha": [
       0,
       255
@@ -142,43 +100,21 @@
       1629,
       643
     ],
-    "samplePitch": 17.59375,
+    "samplePitch": 8.796875,
     "sliceXY": [
-      9,
-      9
+      18,
+      18
     ],
-    "rgbaSha256": "0971430ce2ae9f515d8ed7e4352b1929f42edcd7f0f4b9db66fa1e88eaa9cf28"
-  },
-  {
-    "file": "src/assets/ui/chrome/v2/unit-glyph-attack.png",
-    "size": [
-      16,
-      16
-    ],
-    "colors": 4,
-    "alpha": [
-      0,
-      255
-    ],
-    "source": "UI-32-source.png",
-    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
-    "sourceCrop": [
-      1114,
-      110,
-      1226,
-      222
-    ],
-    "samplePitch": 7.0,
-    "sliceXY": null,
-    "rgbaSha256": "055ddbbc96d29f41fd61c97107b1fe15c3108d14e0b239b85371861a37564da6"
+    "rgbaSha256": "8a9d68cb732c628908562b8aa5bee0fd23fcfbe4be216d6f2880e6482e72a593"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-defense.png",
     "size": [
-      32,
-      32
+      64,
+      64
     ],
-    "colors": 5,
+    "method": "whole source frame; original colors; no detached ornaments",
+    "colors": 384,
     "alpha": [
       0,
       255
@@ -191,43 +127,21 @@
       2172,
       643
     ],
-    "samplePitch": 17.59375,
+    "samplePitch": 8.796875,
     "sliceXY": [
-      9,
-      9
+      18,
+      18
     ],
-    "rgbaSha256": "a2ab60ac2d1c374f69bf8cd4cc9fb78c360c2aa4737eeaae9abbf66f88dee06b"
-  },
-  {
-    "file": "src/assets/ui/chrome/v2/unit-glyph-defense.png",
-    "size": [
-      16,
-      16
-    ],
-    "colors": 5,
-    "alpha": [
-      0,
-      255
-    ],
-    "source": "UI-32-source.png",
-    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
-    "sourceCrop": [
-      1657,
-      110,
-      1769,
-      222
-    ],
-    "samplePitch": 7.0,
-    "sliceXY": null,
-    "rgbaSha256": "b54dc87663132388c0a2ffda39ddb323f91042751452a71649c911345bd2415c"
+    "rgbaSha256": "0d83a5c0c4cc8117fbcc5f0d06284a8c0c937e61ac53b4e7e506f94e68a2c79d"
   },
   {
     "file": "src/assets/ui/chrome/v2/ledger-slip.png",
     "size": [
-      64,
-      25
+      128,
+      49
     ],
-    "colors": 5,
+    "method": "whole source frame; original colors; no detached ornaments",
+    "colors": 373,
     "alpha": [
       0,
       255
@@ -240,67 +154,11 @@
       1734,
       759
     ],
-    "samplePitch": 26.453125,
+    "samplePitch": 13.2265625,
     "sliceXY": [
-      10,
-      8
-    ],
-    "rgbaSha256": "9100848b691260b388e6fe4681c976c72e943f67e47eb8dab9b5611d81098b27"
-  },
-  {
-    "file": "src/assets/ui/chrome/v2/ledger-pin-left.png",
-    "size": [
-      16,
+      20,
       16
     ],
-    "colors": 6,
-    "alpha": [
-      0,
-      255
-    ],
-    "source": "UI-33-source.png",
-    "sourceSha256": "729e472a28930d74a7b2150be628b97a0de0cacd8a69fc0500856d49f5e49753",
-    "sourceCrop": [
-      82,
-      135,
-      256,
-      309
-    ],
-    "samplePitch": 10.875,
-    "sliceXY": null,
-    "rgbaSha256": "2f22973906f331a4fe2bff54ee6f1dbd04d1422f3d9d324136c0e3c1f1956a7b",
-    "detailGrid": [
-      16,
-      16
-    ],
-    "contourPitch": 21.75
-  },
-  {
-    "file": "src/assets/ui/chrome/v2/ledger-pin-right.png",
-    "size": [
-      16,
-      16
-    ],
-    "colors": 6,
-    "alpha": [
-      0,
-      255
-    ],
-    "source": "UI-33-source.png",
-    "sourceSha256": "729e472a28930d74a7b2150be628b97a0de0cacd8a69fc0500856d49f5e49753",
-    "sourceCrop": [
-      1535,
-      135,
-      1709,
-      309
-    ],
-    "samplePitch": 10.875,
-    "sliceXY": null,
-    "rgbaSha256": "05abc1e91861128b942b6bc571c83cfe45575480d4c0d5b2f3e9f3ad8be7da87",
-    "detailGrid": [
-      16,
-      16
-    ],
-    "contourPitch": 21.75
+    "rgbaSha256": "6f3dba5f1acc45502ab731eddbc38d8fd4296fbf5b65302acfa8afdcfc4b37b4"
   }
 ]
