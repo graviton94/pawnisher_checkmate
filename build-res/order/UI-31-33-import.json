@@ -31,7 +31,7 @@
       32,
       32
     ],
-    "colors": 7,
+    "colors": 5,
     "alpha": [
       0,
       255
@@ -49,7 +49,30 @@
       9,
       9
     ],
-    "rgbaSha256": "5f572ecf0e56d8376e0630fcf68e37917b37791aaf80ca8be15ae106b92986c7"
+    "rgbaSha256": "4f32efd1a9fb07c5556d88c6b20ad76c2e3c2bcfd423c79931a855b675393a11"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-glyph-hp.png",
+    "size": [
+      16,
+      16
+    ],
+    "colors": 3,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      28,
+      110,
+      140,
+      222
+    ],
+    "samplePitch": 7.0,
+    "sliceXY": null,
+    "rgbaSha256": "5be63538e5cb5877024a360688350cbd2cdde60eceb78d4160f2152420365040"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-shield.png",
@@ -57,7 +80,7 @@
       32,
       32
     ],
-    "colors": 7,
+    "colors": 5,
     "alpha": [
       0,
       255
@@ -65,9 +88,9 @@
     "source": "UI-32-source.png",
     "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
     "sourceCrop": [
-      0,
-      80,
       543,
+      80,
+      1086,
       643
     ],
     "samplePitch": 17.59375,
@@ -75,15 +98,15 @@
       9,
       9
     ],
-    "rgbaSha256": "52c0421f9068025f0cef5a4c7b1bba647acb668b29238989ced7ec74bb8acd5d"
+    "rgbaSha256": "c1b2aa24eaae817aa720916efcfc720aed02bdf3b511e3ab93ed1a0808ac9565"
   },
   {
-    "file": "src/assets/ui/chrome/v2/unit-shield-symbol.png",
+    "file": "src/assets/ui/chrome/v2/unit-glyph-shield.png",
     "size": [
-      8,
-      8
+      16,
+      16
     ],
-    "colors": 6,
+    "colors": 4,
     "alpha": [
       0,
       255
@@ -91,14 +114,14 @@
     "source": "UI-32-source.png",
     "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
     "sourceCrop": [
-      0,
-      80,
-      543,
-      643
+      571,
+      110,
+      683,
+      222
     ],
-    "samplePitch": 17.59375,
+    "samplePitch": 7.0,
     "sliceXY": null,
-    "rgbaSha256": "cc0b651feff626305cf7c63767be083640c2422397d66850d9242d91d721192b"
+    "rgbaSha256": "0d79931dc24e55c90101377b5c2d5dade4363908cc8c222766556ff6695756d2"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-attack.png",
@@ -106,7 +129,7 @@
       32,
       32
     ],
-    "colors": 8,
+    "colors": 5,
     "alpha": [
       0,
       255
@@ -114,9 +137,9 @@
     "source": "UI-32-source.png",
     "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
     "sourceCrop": [
-      0,
+      1086,
       80,
-      543,
+      1629,
       643
     ],
     "samplePitch": 17.59375,
@@ -124,7 +147,30 @@
       9,
       9
     ],
-    "rgbaSha256": "21efa60d1f1ecc58ac7f16dfe1f5bebce1499e5e13826dc885cf0b12bc6c21df"
+    "rgbaSha256": "0971430ce2ae9f515d8ed7e4352b1929f42edcd7f0f4b9db66fa1e88eaa9cf28"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-glyph-attack.png",
+    "size": [
+      16,
+      16
+    ],
+    "colors": 4,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      1114,
+      110,
+      1226,
+      222
+    ],
+    "samplePitch": 7.0,
+    "sliceXY": null,
+    "rgbaSha256": "055ddbbc96d29f41fd61c97107b1fe15c3108d14e0b239b85371861a37564da6"
   },
   {
     "file": "src/assets/ui/chrome/v2/unit-stat-defense.png",
@@ -132,7 +178,7 @@
       32,
       32
     ],
-    "colors": 7,
+    "colors": 5,
     "alpha": [
       0,
       255
@@ -140,9 +186,9 @@
     "source": "UI-32-source.png",
     "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
     "sourceCrop": [
-      0,
+      1629,
       80,
-      543,
+      2172,
       643
     ],
     "samplePitch": 17.59375,
@@ -150,7 +196,30 @@
       9,
       9
     ],
-    "rgbaSha256": "1ef935d5d7452be88cea43288ece470c458ef82200ea889bb848a047063d4a45"
+    "rgbaSha256": "a2ab60ac2d1c374f69bf8cd4cc9fb78c360c2aa4737eeaae9abbf66f88dee06b"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/unit-glyph-defense.png",
+    "size": [
+      16,
+      16
+    ],
+    "colors": 5,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-32-source.png",
+    "sourceSha256": "8dab8f093224de3b697eb59e28628cb93b10b360fc9cd167c9dd221a1b29e866",
+    "sourceCrop": [
+      1657,
+      110,
+      1769,
+      222
+    ],
+    "samplePitch": 7.0,
+    "sliceXY": null,
+    "rgbaSha256": "b54dc87663132388c0a2ffda39ddb323f91042751452a71649c911345bd2415c"
   },
   {
     "file": "src/assets/ui/chrome/v2/ledger-slip.png",
@@ -158,7 +227,7 @@
       64,
       25
     ],
-    "colors": 10,
+    "colors": 5,
     "alpha": [
       0,
       255
@@ -176,6 +245,62 @@
       10,
       8
     ],
-    "rgbaSha256": "05d511fd609e63a673423c3b2a7927c9400940c570508d8bfcd9ffbd7c2db9e7"
+    "rgbaSha256": "9100848b691260b388e6fe4681c976c72e943f67e47eb8dab9b5611d81098b27"
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/ledger-pin-left.png",
+    "size": [
+      16,
+      16
+    ],
+    "colors": 6,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-33-source.png",
+    "sourceSha256": "729e472a28930d74a7b2150be628b97a0de0cacd8a69fc0500856d49f5e49753",
+    "sourceCrop": [
+      82,
+      135,
+      256,
+      309
+    ],
+    "samplePitch": 10.875,
+    "sliceXY": null,
+    "rgbaSha256": "2f22973906f331a4fe2bff54ee6f1dbd04d1422f3d9d324136c0e3c1f1956a7b",
+    "detailGrid": [
+      16,
+      16
+    ],
+    "contourPitch": 21.75
+  },
+  {
+    "file": "src/assets/ui/chrome/v2/ledger-pin-right.png",
+    "size": [
+      16,
+      16
+    ],
+    "colors": 6,
+    "alpha": [
+      0,
+      255
+    ],
+    "source": "UI-33-source.png",
+    "sourceSha256": "729e472a28930d74a7b2150be628b97a0de0cacd8a69fc0500856d49f5e49753",
+    "sourceCrop": [
+      1535,
+      135,
+      1709,
+      309
+    ],
+    "samplePitch": 10.875,
+    "sliceXY": null,
+    "rgbaSha256": "05abc1e91861128b942b6bc571c83cfe45575480d4c0d5b2f3e9f3ad8be7da87",
+    "detailGrid": [
+      16,
+      16
+    ],
+    "contourPitch": 21.75
   }
 ]

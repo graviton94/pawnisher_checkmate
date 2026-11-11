@@ -86,10 +86,17 @@ module.exports = async (pg, shot) => {
   await check('.credits'); await shot('credits-makers');
   assert((await pg.locator('.cr-page').innerText()).includes('당신의 하루 스튜디오'));
   await pg.locator('[data-cr-next]').tap();
-  await pg.locator('.clr').waitFor({ state: 'visible' }); await wait(1600);
+  await pg.locator('.clr').waitFor({ state: 'visible' });
+  await pg.waitForFunction(() => [...document.querySelectorAll('.clr-rows > div')].every((r) => r.classList.contains('in'))
+    && [...document.querySelectorAll('.clr-rows b[data-v]')].every((b) => b.textContent === b.dataset.v));
+  await wait(350);
   const ledgerArt = require('node:fs').readFileSync('src/assets/ui/chrome/v2/ledger-slip.png').toString('base64');
   assert((await pg.locator('.clr-cert').evaluate((e) => getComputedStyle(e).borderImageSource)).includes(ledgerArt));
-  assert.equal(await pg.locator('.clr-cert').evaluate((e) => getComputedStyle(e, '::before').display), 'none');
+  for (const [pseudo, name] of [['::before', 'left'], ['::after', 'right']]) {
+    const pin = require('node:fs').readFileSync(`src/assets/ui/chrome/v2/ledger-pin-${name}.png`).toString('base64');
+    const actual = await pg.locator('.clr-cert').evaluate((e, pseudo) => getComputedStyle(e, pseudo).backgroundImage, pseudo);
+    assert(actual.includes(pin), `${name} pin uses its original-derived sprite`);
+  }
   assert.equal(await pg.locator('.state-band').count(), 0);
   await check('.clr'); await shot('clear-ledger');
   assert.deepEqual(errors, [], '브라우저 오류/경고');

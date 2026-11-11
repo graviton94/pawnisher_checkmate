@@ -132,7 +132,7 @@ def dp_cuts(prof, n, p, slack=0.25):
     return cuts
 
 
-def snap(img, px, ox, py, oy, colors=24, core=0.6, cuts=None):
+def snap(img, px, ox, py, oy, colors=24, core=0.6, cuts=None, opaque_colors=False):
     """칸마다 가운데 영역의 최빈색 → 칸 하나 = 1px. 그 뒤 색 수를 줄인다"""
     rgba = np.asarray(img.convert('RGBA'))
     H, W = rgba.shape[:2]
@@ -153,6 +153,12 @@ def snap(img, px, ox, py, oy, colors=24, core=0.6, cuts=None):
             blk = rgba[cy0:cy1, cx0:cx1].reshape(-1, 4)
             if len(blk) == 0:
                 continue
+            alpha = 255 if np.median(blk[:, 3]) >= 128 else 0
+            if opaque_colors:
+                # 따로 마스킹한 상징의 투명 배경 RGB가 실제 색의 최빈값을 덮지 않게 한다.
+                if not alpha:
+                    continue
+                blk = blk[blk[:, 3] >= 128]
             # 최빈값: 색을 5비트로 묶어 세고, 그 묶음의 평균색
             q = (blk[:, :3] >> 3).astype(np.int32)
             key = (q[:, 0] << 10) | (q[:, 1] << 5) | q[:, 2]
@@ -160,7 +166,7 @@ def snap(img, px, ox, py, oy, colors=24, core=0.6, cuts=None):
             top = vals[cnt.argmax()]
             sel = blk[key == top]
             out[j, i, :3] = sel[:, :3].mean(axis=0)
-            out[j, i, 3] = 255 if np.median(blk[:, 3]) >= 128 else 0
+            out[j, i, 3] = alpha
     small = Image.fromarray(out, 'RGBA')
     if colors:
         alpha = small.getchannel('A')

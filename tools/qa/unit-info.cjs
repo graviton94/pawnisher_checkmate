@@ -14,6 +14,14 @@ module.exports = async (pg, shot) => {
       const expected = require('node:fs').readFileSync(`src/assets/ui/chrome/v2/${art}.png`).toString('base64');
       assert((await popup.locator(selector).evaluate((e) => getComputedStyle(e).borderImageSource)).includes(expected));
     }
+    for (const [selector, kind] of [['.unit-hp-label', 'hp'], ['.unit-attack .unit-label', 'attack'], ['.unit-defense .unit-label', 'defense'], ['.unit-shield', 'shield']]) {
+      const label = popup.locator(selector);
+      if (!await label.count()) continue;
+      const glyph = art(`unit-glyph-${kind}`);
+      const shown = await label.evaluate((e) => { const s = getComputedStyle(e, '::before'); return { source: s.backgroundImage, scale: parseFloat(s.width) / 16 * devicePixelRatio }; });
+      assert(shown.source.includes(glyph), `${kind}: 원본 추출 상징 사용`);
+      assert(Math.abs(shown.scale - Math.round(shown.scale)) < 0.01, `${kind}: 정수 기기 픽셀 배율`);
+    }
     const bad = await popup.evaluate((root) => {
       const r = root.getBoundingClientRect();
       const issues = [];

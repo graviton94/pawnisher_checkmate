@@ -316,7 +316,7 @@ const pieceInfo = (pos: Pos): void => {
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
     head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${liveIntents(b).some((it) => it.pieceId === p.id) ? '행동 예정' : '대기'}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
-    body: `<div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset unit-attack"><span>공격</span><strong>${p.atk}</strong></div><div class="inset unit-defense"><span>방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
+    body: `<div class="unit-life inset"><div class="unit-life-line"><span class="unit-label unit-hp-label">체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div>${p.shield ? `<span class="unit-shield">방열판 ${p.shield}</span>` : ''}</div></div><div class="unit-combat"><div class="inset unit-attack"><span class="unit-label">공격</span><strong>${p.atk}</strong></div><div class="inset unit-defense"><span class="unit-label">방어</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
   bindAbilities(el, abilities);
 };
