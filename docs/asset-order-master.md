@@ -1,8 +1,20 @@
 # 현재 아트 발주서 — 제작할 것만 여기서 확인
 
-2026-11-12 · D-434 · 후속 브랜치 `content-art-audit-20261112`. **이번 발주 이미지 전부 수령, 신규 제작 요청0건.** 완료된 프롬프트는 [보관본](asset-order-history.md#delivery-20261112-completed)에 옮겼다. main과 테스트 APK는 갱신하지 않는다.
+2026-11-12 · D-435 · 후속 브랜치 `content-art-audit-20261112`. **D-434 발주 이미지는 전부 수령. D-435 전용 서사 일러스트3장을 다음 발주로 준비했다.** 완료된 프롬프트는 [보관본](asset-order-history.md#delivery-20261112-completed)에 옮겼다. main과 테스트 APK는 갱신하지 않는다.
 
-## 0. 이번 수령·연결 현황
+## 0. 다음 제작 — 전용 서사 일러스트3장 (D-435)
+
+현재 배경+전투 아이콘 합성은 임시다. 인물과 배경을 같은 원근·광원으로 그린 완성 컷으로 바꾼다. **각 프롬프트는 [전용 발주서](asset-order-story-cinematics.md)에 있으며 첨부 없이 그대로 전달할 수 있다.**
+
+| 순서 | 번호 | 그림 | 프롬프트 |
+|---|---|---|---|
+| 1 | S-05 | 문턱을 넘는 폰 — 함께 출하 | [복사할 명세](asset-order-story-cinematics.md#scene-threshold) |
+| 2 | S-06 | 상자 안의 종이왕 — 운송 | [복사할 명세](asset-order-story-cinematics.md#scene-shipping) |
+| 3 | S-07 | 왕만 남은 출하구 — 배신 결말 | [복사할 명세](asset-order-story-cinematics.md#scene-solitude) |
+
+그림의 주인공과 상황을 완성하고 동료 전원을 고정해서 그리지 않는다. 현재 생존자 이름과 대사 분기는 유지한다. 전용 원화 수령 뒤 해당 컷의 `showActors`를 끄므로, 완성 그림 위에 전투 기물 아이콘을 다시 얹지 않는다. 받은 배경3종과 아이템4종의 동일 이미지 재제작 요청은 아니다.
+
+## 1. 이번 수령·연결 현황
 
 | 번호 | 수령한 그림 | 상태·연결 |
 |---|---|---|
@@ -17,7 +29,7 @@
 
 아이템4종은 다른 부품과 공유하던 임시 그림에서 분리했다. 장면에는 고정 기물 인원이 없고, 출하/운송에서는 현재 생존 분대만 게임이 표시한다. 부모·아이 S-01 장면에는 추가 기물 대역을 겹치지 않는다.
 
-## 1. 추가 제작하지 않는 기존 항목
+## 2. 추가 제작하지 않는 기존 항목
 
 | 번호 | 상태 |
 |---|---|
@@ -34,7 +46,7 @@ I-14 당시 제작 명세는 [보관본](asset-order-history.md#build-prototype-
 <a id="3위--ui-33--결과-장부-종이판--선택-제작-p2"></a>
 <a id="s01-epilogue-hands"></a>
 
-## 2. 원본·반입 정본
+## 3. 원본·반입 정본
 
 - 수령한 PNG6개는 `build-res/order/I-15ABC-source.png`, `I-15D-source.png`, `UI-34-source.png`, `S-02-throne-mold-source.png`, `S-03-departure-dock-source.png`, `S-04-shipping-interior-source.png`에 바이트 그대로 보관한다.
 - 원본 이름·SHA256·출력 크기/알파: `build-res/order/2026-11-12-delivery.json`. 아이콘의 칸 분리·바깥 투명 여백·단일 샘플링 값: `I-15-UI-34-import.json`.

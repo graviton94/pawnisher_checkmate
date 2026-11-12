@@ -60,3 +60,6 @@ python3 -I tools/scene-import.py build-res/order/S-04-shipping-interior-source.p
 [아이템 카드](../../tools/artguide/shots/delivery-items.png) · [왕위 결정](../../tools/artguide/shots/delivery-choice.png) · [출하](../../tools/artguide/shots/delivery-departure.png) · [운송](../../tools/artguide/shots/delivery-shipping.png) · [태블릿10명](../../tools/artguide/shots/delivery-full-company-1024x768.png).
 
 UI/UX 판정은 **APPROVED — 이번 원화 연결·배우 합성·대사 영역 범위**다. 실기기 프레임률·전체 접근성·모든 편성의 실제 플레이 재미는 **NOT ASSESSED**다. UI-34의 표시 상태는 아직 로직/게임 검수 대상이 아니다.
+
+
+후속 판정(D-435): 사용자가 배경+아이콘 합성의 연출 완성도를 지적했다. 위 PASS는 원본 반입·연결·글/이미지 경계·분대 데이터 보존에 대한 기록이다. **출하·운송·배신의 최종 미학적 완성도는 NEEDS REVISION**으로 분리하고 [전용 일러스트3장](../asset-order-story-cinematics.md)을 준비한다. 현재 그림은 임시 연출이며, 전용 그림을 수령하면 해당 컷에서 전투 기물 합성을 제거한다.
