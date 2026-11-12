@@ -12,6 +12,7 @@
 ## 문서
 - 정본 기획: `docs/gdd/` · 결정 로그: `docs/DECISIONS.md` (D-번호) · 시뮬레이션 보고: `docs/reports/`
 - 이야기·진행 정본: `docs/brief/scenario-runtime.md` (D-425: 본편 3장 + 별도 도전). 선택한 주제: `docs/brief/scenario-core.md`. `docs/book/`, `docs/story.md`, `docs/story-bible.md`, `docs/script.md`의 옛 줄거리·겹·13단 엔딩은 보관용이다. 세계 용어·재질: `docs/world.md` · 아트 바이블: `docs/art-bible.md` · 에셋 생산(원본 vs 조합): `docs/art-assets.md` · 발주 프롬프트: `docs/asset-order-master.md` (남은 그림 전부 · 우선순위)
+- **리뷰용 스토리보드(모든 대사 · 어투 · 장면 순서)**: `docs/storyboard.md` — 손으로 고치지 않고 `npx jiti tools/storyboard.ts`로 다시 뽑는다 (D-448).
 - 레퍼런스 스터디: `docs/reference/reference-study.md` · 외부 도구 목록: `docs/reference/tools.md`
 - 새 이름·문구는 `docs/world.md` 이름 규칙을, 새 그림은 `docs/art-assets.md` §1 순서(조합 → 문양 → 전용 그림)를 따른다.
 - 기획을 바꾸면 해당 GDD 장 + DECISIONS에 같이 남긴다.
