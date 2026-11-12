@@ -1,0 +1,79 @@
+{
+  "base_commit": "7224044f6b660e525df4fa79b6e601f9aa061ba6",
+  "source_sha256": {
+    "src/slice/main.ts": "72f3df0da38a9a71ad0b17a8763fbcae2bb0eaf913533a6cdd3a1233f68e1b72",
+    "src/slice/part-state.ts": "21e86265f16c0b2fe7cdb0157e8e62e725383503c6c2fd0b28ccdd0a4596bdee",
+    "src/slice/actclear.ts": "e4f2a2946dcf3bbe1972fd761fc02463482b1bcdb355c0a482ca5f5a0f455777",
+    "src/view/cover.ts": "1a8aff245aa3f1f9bfb9b3e1feb915f4522f8bae3e69cb7fb84d5b3b145ac598",
+    "src/sim/runbot.ts": "d52ef5d98fe98d98e83b7e67b94e7cc3cd587c206122729987133758feddc6b6"
+  },
+  "logs": {
+    "d443-tests-exact-release": [
+      " Test Files  36 passed (36)",
+      "      Tests  308 passed (308)"
+    ],
+    "d443-campaign-final": [
+      "PASS campaign-flow: 3 distinct pawns, promise/resume, real departure, unlocks, separate challenge, empty company, legacy resume"
+    ],
+    "d443-parts-final-small": [
+      "PASS part-rules: 84 replacement rules + 84 details, 6/8 slots, fixed96px, paging/reset, skip/replace, saved run preserved"
+    ],
+    "d443-unit-final-pc": [
+      "Unit info: enemy tap, normal/boss/large stats, panel/text bounds PASS"
+    ],
+    "d443-audit-pc-map-final": [
+      "AUDIT {\"preset\":\"pc\",\"scenarios\":3,\"screenshots\":3,\"issues\":0}"
+    ],
+    "d443-covers-small-mobile": [
+      "PASS illustrations: 97 actual cut images, aspect/coverage/device grid/text/touch bounds"
+    ],
+    "d443-covers-mobile": [
+      "PASS illustrations: 97 actual cut images, aspect/coverage/device grid/text/touch bounds"
+    ],
+    "d443-covers-tablet": [
+      "PASS illustrations: 97 actual cut images, aspect/coverage/device grid/text/touch bounds"
+    ],
+    "d443-covers-pc": [
+      "PASS illustrations: 97 actual cut images, aspect/coverage/device grid/text/touch bounds"
+    ],
+    "d443-covers-1024x748": [
+      "PASS illustrations: 97 actual cut images, aspect/coverage/device grid/text/touch bounds"
+    ],
+    "d443-builds-final-small-mobile": [
+      "Build UI: touch preview, execution, rewind, three builds, first-act transitions, save isolation PASS"
+    ],
+    "d443-builds-final-mobile": [
+      "Build UI: touch preview, execution, rewind, three builds, first-act transitions, save isolation PASS"
+    ],
+    "d443-builds-final-tablet": [
+      "Build UI: touch preview, execution, rewind, three builds, first-act transitions, save isolation PASS"
+    ],
+    "d443-builds-final-pc": [
+      "Build UI: touch preview, execution, rewind, three builds, first-act transitions, save isolation PASS"
+    ],
+    "d443-input-confirm-small-mobile": [
+      "PASS scene-input: twelve real scene transitions clear inspection; inactive battle input cannot reopen or mutate"
+    ],
+    "d443-input-confirm-mobile": [
+      "PASS scene-input: twelve real scene transitions clear inspection; inactive battle input cannot reopen or mutate"
+    ],
+    "d443-input-confirm-tablet": [
+      "PASS scene-input: twelve real scene transitions clear inspection; inactive battle input cannot reopen or mutate"
+    ],
+    "d443-input-confirm-pc": [
+      "PASS scene-input: twelve real scene transitions clear inspection; inactive battle input cannot reopen or mutate"
+    ],
+    "d443-audit-small-mobile-boss-final": [
+      "AUDIT {\"preset\":\"small-mobile\",\"scenarios\":1,\"screenshots\":3,\"issues\":0}"
+    ],
+    "d443-audit-mobile-boss-final": [
+      "AUDIT {\"preset\":\"mobile\",\"scenarios\":1,\"screenshots\":3,\"issues\":0}"
+    ],
+    "d443-audit-tablet-boss-final": [
+      "AUDIT {\"preset\":\"tablet\",\"scenarios\":1,\"screenshots\":3,\"issues\":0}"
+    ],
+    "d443-audit-pc-boss-final": [
+      "AUDIT {\"preset\":\"pc\",\"scenarios\":1,\"screenshots\":3,\"issues\":0}"
+    ]
+  }
+}

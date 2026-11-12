@@ -1,6 +1,12 @@
 // PC(스팀) 빌드 진입점 (GDD 10장 M9). 웹 빌드(dist)를 창 하나로 띄운다.
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const smoke = process.argv.includes('--smoke-test');
+if (smoke) {
+  app.setPath('userData', path.join(require('node:os').tmpdir(), `pawnisher-smoke-${process.pid}`));
+  app.disableHardwareAcceleration();
+  setTimeout(() => { console.error('SMOKE timeout'); app.exit(1); }, 60000).unref();
+}
 
 // 스팀 연동은 steamworks.js가 설치되어 있고 STEAM_APP_ID가 있을 때만 켠다 (개발 중에는 없어도 실행된다)
 let steam = null;
@@ -28,6 +34,7 @@ const createWindow = () => {
     minHeight: 540,
     backgroundColor: '#16141C',
     autoHideMenuBar: true,
+    show: !smoke,
     title: 'Pawnisher : Checkmate',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true },
   });
@@ -41,7 +48,21 @@ const createWindow = () => {
   };
   win.on('resize', fit);
   win.webContents.on('did-finish-load', fit);
-  win.maximize();
+  if (!smoke) win.maximize();
+  if (smoke) {
+    win.webContents.on('did-fail-load', (_e, code, message) => { console.error('SMOKE load', code, message); app.exit(1); });
+    win.webContents.on('render-process-gone', (_e, details) => { console.error('SMOKE renderer', details.reason); app.exit(1); });
+    win.webContents.on('did-finish-load', async () => {
+      try {
+        const result = await win.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const until=Date.now()+30000;const timer=setInterval(()=>{if(document.querySelector('.op-menu,.prologue')?.checkVisibility()&&!document.querySelector('#boot')&&document.fonts.status==='loaded'){clearInterval(timer);resolve({title:document.title,width:innerWidth,height:innerHeight})}else if(Date.now()>until){clearInterval(timer);reject(new Error('game UI did not start'))}},100)})`);
+        if (process.env.SMOKE_SHOT) require('node:fs').writeFileSync(process.env.SMOKE_SHOT, (await win.webContents.capturePage()).toPNG());
+        const proof = { success: true, ...result, version: app.getVersion(), platform: process.platform, arch: process.arch };
+        if (process.env.SMOKE_META) require('node:fs').writeFileSync(process.env.SMOKE_META, JSON.stringify(proof, null, 2));
+        console.log('SMOKE PASS', JSON.stringify(proof));
+        app.exit(0);
+      } catch (e) { console.error('SMOKE failed', String(e)); app.exit(1); }
+    });
+  }
   win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 };
 

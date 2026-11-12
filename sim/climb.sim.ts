@@ -1,5 +1,6 @@
 import { it } from 'vitest';
-import { simulateRun, type RunStyle } from '../src/sim/runbot';
+import type { RunStyle, RunBuild } from '../src/sim/runbot';
+import { climbSample } from '../src/sim/climb-sample';
 
 /**
  * 퀵 등반 머신 조각 (D-385, 사용자: 「밸런스 모니터링용 · 토큰과 세션을 아끼는 데이터 수집용 퀵 등반 머신과 화면 리뷰용은 따로」).
@@ -8,9 +9,11 @@ import { simulateRun, type RunStyle } from '../src/sim/runbot';
  */
 it('climb', () => {
   const style = (process.env.CL_STYLE ?? 'greedy') as RunStyle;
+  const build = (process.env.CL_BUILD ?? 'neutral') as RunBuild;
+  const pool = (process.env.CL_POOL ?? 'all') as 'all' | 'starter';
   const asc = Number(process.env.CL_ASC ?? 0), n = Number(process.env.CL_N ?? 25), off = Number(process.env.CL_OFF ?? 0);
   for (let i = 0; i < n; i++) {
-    const r = simulateRun(70000 + off + i, { asc, style });
-    process.stdout.write(`CLIMB ${JSON.stringify({ s: style, a: asc, c: r.cleared ? 1 : 0, act: r.act, end: r.ended, p: r.parts.length, sq: r.squad.length, d: r.deck, t: r.turns, b: r.battles, it: r.idle?.turns ?? 0, ii: r.idle?.idle ?? 0, ia: r.idle?.idleAp ?? 0 })}\n`);
+    const seed = 70000 + off + i;
+    process.stdout.write(`CLIMB ${JSON.stringify(climbSample(seed, asc, style, build, pool))}\n`);
   }
 });

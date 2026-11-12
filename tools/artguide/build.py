@@ -63,6 +63,7 @@ BOSS_FRAMES = [('boss-600.jpg', '0.6초 · 모으기와 조명'), ('boss-1000.jp
                ('boss-1700.jpg', '1.7초 · 기물이 조각으로 부서짐'), ('boss-2200.jpg', '2.2초 · 파편 · 불씨'), ('boss-2900.jpg', '2.9초 · 여운')]
 
 SCREENS = [
+    ('장면 cover와 실제 부품 상태 (D-443)', [('cover-boss-pc.png', '반장 실제 등장 · 오른쪽 그림 영역을 비율 유지 확대/크롭'), ('cover-tablet-748.png', '1024×748 · 비율 유지 확대 후 크롭, 양옆 빈칸 없음'), ('part-state-ready.png', '현재 합법 명령으로 발동 가능 · 상세에 미사용 룩 수'), ('part-state-spent.png', '실제 공격 후 이번 턴 소진'), ('part-state-rewind.png', '되감기 후 실제 판과 준비 상태 함께 복구')]),
     ('전용 서사 원화 반입 완료 (D-442)', [('cinematics-S05.png', 'S-05 문턱 — 상단 대사로 받침과 경계 보존'), ('cinematics-S06.png', 'S-06 운송 상자 — 원화 속 종이왕만, 기물 합성 제거'), ('cinematics-S07.png', 'S-07 왕만 남음 — 상단 대사로 눌린 왕관 보존'), ('cinematics-S07-small.png', '667×375 작은 모바일 · 실제 결정 흐름'), ('cinematics-S06-tablet.png', '1024×768 태블릿 · 비율/도트 정수 배율 유지'), ('cinematics-S05-pc.png', '1280×720 PC · 문턱 접점과 대사 분리')]),
     ('전용 원화 R1 구도 검토 (D-436)', [('cinematics-r1-review.png', '게임 화면이 아닌 수령 원화 비교 — 왼쪽 출하는 구도 재작업, 가운데 운송은 부분 수정, 오른쪽 왕은 구도 재작업. 최종 미승인')]),
     ('수령 원화 실제 반입 (D-434)', [('delivery-items.png', 'I-15 네 전용 아이콘 — 원본 전체를32도트로, 임시 공유 그림 교체'), ('delivery-choice.png', 'S-02 빈 왕의 거푸집 — 실제 왕위 선택 장면'), ('delivery-choice-667x375.png', '작은 모바일에서도 거푸집·독백·두 선택을 보존'), ('delivery-departure.png', 'S-03 출하구 임시 합성 — D-434 당시 합성, 현재 S-05로 교체'), ('delivery-shipping.png', 'S-04 운송 상자 임시 합성 — D-434 당시 합성, 현재 S-06으로 교체'), ('delivery-full-company-1024x768.png', '기능 검수용10명 배치 — 최종 서사 원화 승인 아님'), ('delivery-shipping-1280x720.png', 'PC 임시 합성 — 비율·대사 대비의 기술 검수')]),

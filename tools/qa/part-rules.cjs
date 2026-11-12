@@ -107,7 +107,10 @@ module.exports = async (pg, shot) => {
     await pg.tap(`[data-part-info="${id}"]`); await pg.waitForTimeout(20);
     assert.equal(await pg.locator('.part-detail .ability-description').count(), 1);
     assert.equal(await pg.locator('.part-detail .ability-effect').count(), 1);
-    assert.deepEqual(await checkText('.part-detail .ability-block'), [], id);
+    assert.deepEqual(await checkText('.part-detail .ability-block,.part-state-line'), [], id);
+    const panel = await pg.locator('.part-detail').boundingBox();
+    const v = pg.viewportSize();
+    assert(panel && panel.x >= 0 && panel.y >= 0 && panel.x+panel.width <= v.width+1 && panel.y+panel.height <= v.height+1, `${id}: detail viewport`);
     const next = pg.locator('.part-detail [data-ability-next]');
     if (await next.count()) {
       const total = Number((await next.getAttribute('aria-label')).match(/\/(\d+)/)[1]);

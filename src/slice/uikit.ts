@@ -4,6 +4,7 @@
  * 화면은 게임 상태를 바꾸지 않는다: 단추 동작은 부르는 쪽이 붙인다(돌려준 요소에서 data-* 로 찾는다).
  */
 import { pxOut } from './fx3';
+import { fitCover } from '../view/cover';
 
 /** 창 크기 세 단계 — S 352 · M 592 · L 883 (game-ui-design 3.1) */
 export type WinSize = 's' | 'm' | 'l';
@@ -111,7 +112,7 @@ export const closeWin = (): void => {
 /** 전체 장면의 입력·키보드 초점을 배경 UI에서 격리한다. 닫을 때 반환 함수를 호출한다. */
 export const sceneFocus = (el: HTMLElement): (() => void) => {
   clearBand();
-  closePeek();
+  clearPeeks();
   const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const siblings = [...document.body.children].filter((e): e is HTMLElement => e instanceof HTMLElement && e !== el).map((e) => ({ el: e, inert: e.inert }));
   siblings.forEach(({ el: node }) => { node.inert = true; });
@@ -337,14 +338,13 @@ export const coverArt = (img: HTMLImageElement): void => {
   if (!box || !img.naturalWidth || !box.clientWidth) return;
   const dpr = window.devicePixelRatio || 1;
   const bw = box.clientWidth, bh = box.clientHeight;
-  const k = Math.ceil(Math.max(bw / img.naturalWidth, bh / img.naturalHeight) * dpr) / dpr;
-  const w = img.naturalWidth * k, h = img.naturalHeight * k;
   const fx = Number(img.dataset.fx ?? 0.5), fy = Number(img.dataset.fy ?? 0.5);
-  const snap = (v: number): number => Math.round(v * dpr) / dpr;
-  img.style.width = `${w}px`;
-  img.style.height = `${h}px`;
-  img.style.left = `${snap(Math.min(0, Math.max(bw - w, bw / 2 - fx * w)))}px`;
-  img.style.top = `${snap(Math.min(0, Math.max(bh - h, bh / 2 - fy * h)))}px`;
+  const r = fitCover(img.naturalWidth, img.naturalHeight, bw, bh, dpr, fx, fy);
+  img.style.width = `${r.width}px`;
+  img.style.height = `${r.height}px`;
+  img.style.left = `${r.x}px`;
+  img.style.top = `${r.y}px`;
+  img.style.objectFit = 'cover';
 };
 /** 화면이 바뀌면(회전 · 창 크기) 받침 · 장면 그림을 다시 맞춘다 */
 const refitAll = (): void => {
@@ -546,6 +546,8 @@ let peekNow: HTMLElement | null = null;
 export const infoPeek = (o: { key: string; head: string; body: string; side: 'left' | 'right'; bare?: boolean; maxW?: number; cls?: string }): HTMLElement => {
   if (peekNow && peekNow.dataset.key === o.key && peekNow.isConnected) return peekNow;
   peekNow?.remove();
+  // 빠르게 다른 기물을 누르면 퇴장 중인 옛 검사판을 새 판과 겹치지 않는다.
+  document.querySelectorAll('.k-peek.pxout').forEach(e => e.remove());
   const el = document.createElement('div');
   el.className = `k-peek kit${o.bare ? ' bare' : ' win win-s'}${o.cls ? ` ${o.cls}` : ''}`;
   el.dataset.key = o.key;
@@ -585,6 +587,11 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
   };
   window.setTimeout(() => document.addEventListener('pointerdown', outside, { once: true, capture: true }), 0);
   return el;
+};
+/** 장면을 바꿀 때 전투 정보판을 즉시 정리한다. 퇴장 중인 판도 남기지 않는다. */
+export const clearPeeks = (): void => {
+  peekNow = null;
+  document.querySelectorAll('.k-peek').forEach(el => el.remove());
 };
 /** 엿보기 닫기 (디더 퇴장) */
 export const closePeek = (el: HTMLElement | null = peekNow): void => {

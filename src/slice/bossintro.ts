@@ -8,6 +8,7 @@
  */
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
+import { fitCover } from '../view/cover';
 import { cutChromeHtml, cutFill, cutLineHtml, type CutLine } from './uikit';
 
 export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
@@ -75,25 +76,25 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     const ps = new Particles(R, () => Infinity, o.rule === 'spawn' ? [hex('#efffdc'), hex('#7fd45a'), hex('#3e8c3a')] : o.rule === 'inspect' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'magnet' ? [hex('#f2d4ff'), hex('#d08af0'), hex('#7e34a0')] : o.rule === 'thorns' ? [hex('#ffffff'), hex('#e8e4ec'), hex('#8a8794')] : o.rule === 'alarm' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
     const lights = new Lights();
     const barH = Math.round(H * 0.16);
-    // 초상: 화면 높이를 덮는 정수배, 오른쪽 끝에 붙인다
+    // 초상도 공통 cover 규칙으로 오른쪽 그림 영역 전체를 채운다.
     const port = el.querySelector<HTMLElement>('.bf-port')!;
     let seamX = W * 0.45; // 경계선 (화면 px)
     let portW = 0;
     const img = new Image();
     let fallbackSrc: HTMLImageElement | null = null;
     img.onload = () => {
-      // 띠 사이를 덮는 정수배, 다만 폭은 화면의 70%까지 (가로로 긴 2막 초상이 글씨를 덮지 않게)
-      let k = Math.max(1, Math.ceil((H - barH * 2) / img.naturalHeight));
-      while (k > 1 && img.naturalWidth * k > W * 0.7) k -= 1;
-      // 위끝(왕관)을 띠 바로 아래에 — 몸 아래쪽이 아래 띠에 잘린다
-      port.style.top = `${barH - Math.round(img.naturalHeight * k * 0.03)}px`;
+      const targetW = W * 0.7;
+      const r = fitCover(img.naturalWidth, img.naturalHeight, targetW, H, devicePixelRatio || 1, .5, .15);
+      const k = r.scale;
+      Object.assign(port.style, { top: '0px', width: `${targetW}px`, height: `${H}px`, overflow: 'hidden' });
       const band = Math.round(img.naturalWidth * 0.32);
       const cv = ditherEdge(img, band, fallbackSrc ?? img);
       cv.style.width = `${img.naturalWidth * k}px`;
       cv.style.height = `${img.naturalHeight * k}px`;
+      Object.assign(cv.style, { position: 'absolute', left: `${r.x}px`, top: `${r.y}px` });
       port.appendChild(cv);
       portW = img.naturalWidth * k;
-      seamX = W - portW + band * k * 0.45;
+      seamX = W - targetW + r.x + band * k * 0.45;
     };
     // 초상 그림이 아직 없으면 (도금왕 B-04 발주 전): 검은 킹 기물을 금칠해 크게 (72칸 그림 → 정수배)
     img.onerror = () => {

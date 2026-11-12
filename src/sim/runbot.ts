@@ -5,17 +5,23 @@
  */
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
+import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, rollRecruit, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
 import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
 import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../slice/battle';
+import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
+import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
+import { chooseBuildCard, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
 import { idleStats, playOut, playOutSearch, type BotStyle, type IdleStats } from '../slice/bot';
 
 export type RunStyle = BotStyle | 'search';
+export type RunBuild = 'neutral' | 'mixed' | 'knight' | 'rook';
 export interface RunOpts {
   asc?: number;
+  build?: RunBuild;
+  pool?: 'all' | 'starter';
   style?: RunStyle;
   /** 시작 덱에 억지로 넣는 카드 (아이템 힘 값 측정) */
   forceCards?: CommandId[];
@@ -29,6 +35,7 @@ export interface RunOpts {
 export interface BossLog { rule: BossRule; act: number; won: boolean; turns: number }
 export interface RunResult {
   cleared: boolean;
+  familyParts: number;
   /** 마지막으로 도달한 막 (1 ~ 4, 4 = 종막) */
   act: number;
   ended: string;
@@ -48,7 +55,11 @@ const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
 export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const asc = o.asc ?? 0;
   const style = o.style ?? 'greedy';
-  const val = o.value ?? ((id: CommandId) => GRADE_RANK[gradeOf(id)] ?? 10);
+  const build = o.build ?? 'neutral';
+  const family = BUILD_FAMILIES[build] ?? [];
+  const open = new Set([...STARTER_CARDS, ...STARTER_PARTS]);
+  const isOpen = (id: string) => o.pool !== 'starter' || open.has(id);
+  const val = o.value ?? ((id: CommandId) => (GRADE_RANK[gradeOf(id)] ?? 10) + (SUPPORT_CARDS[build]?.includes(id) ? 18 : 0) + (build === 'knight' && COMMANDS[id].who === 'N' || build === 'rook' && COMMANDS[id].who === 'R' ? 10 : 0));
   const rng = new Rng(seed);
   const acts = buildRun(seed, asc);
   let squad: Squad[] = [];
@@ -66,12 +77,18 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const idle = idleStats();
   const usable = (id: CommandId) => cardFits(id, squad.map((u) => u.t));
   const hpRatio = () => squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)) / crewMaxHp(u), 0) / Math.max(1, squad.length);
-  const recruit = () => { const r = RECRUITS[rng.int(RECRUITS.length)]; squad.push(makeCrew(r.t, rng, squad.map((u) => u.name ?? ''))); deck.push(...r.cards); };
-  const shopMul = (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
+  const recruit = (single = false) => {
+    const pool = [...RECRUITS], offered: typeof RECRUITS = [];
+    while (pool.length && offered.length < (single ? 1 : 3)) { const r = rollRecruit(pool, rng.next()); offered.push(r); pool.splice(pool.indexOf(r), 1); }
+    const r = offered.sort((a, z) => Number(build === 'rook' ? z.t === 'R' : build === 'knight' ? z.t === 'N' : !squad.some(u => u.t === z.t)) - Number(build === 'rook' ? a.t === 'R' : build === 'knight' ? a.t === 'N' : !squad.some(u => u.t === a.t)))[0];
+    if (r) { squad.push(makeCrew(r.t, rng, squad.map(u => u.name ?? ''))); deck.push(...r.cards); }
+  };
+  let shopsSeen = 0;
+  const shopMul = () => (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
   // 부품 칸 (D-384 · 실제 게임과 같게, 2026-11-09d): 막마다 partSlotsAt 칸. 넘치면 가장 낮은 등급(같으면 오래된 것)을 녹여 나사 meltBack —
   // 새 부품이 가진 것 모두보다 낮으면 새 것을 녹인다. 억지로 넣은 부품(forceParts — 힘 값 측정)은 녹이지 않는다.
   let actNow = 0;
-  const rankOf = (id: SlicePartId) => GRADE_RANK[PART_GRADE[id] ?? 'common'] ?? 0;
+  const rankOf = (id: SlicePartId) => (GRADE_RANK[PART_GRADE[id] ?? 'common'] ?? 0) + (family.includes(id) ? 18 : 0);
   const meltable = () => parts.map((id, i) => ({ id, i })).filter((x) => !(o.forceParts ?? []).includes(x.id));
   /** 이 부품을 사면 남나 (칸이 남거나 녹일 것보다 낮지 않다) */
   const keeps = (id: SlicePartId) => parts.length < partSlotsAt(actNow) || meltable().some((x) => rankOf(x.id) <= rankOf(id));
@@ -84,14 +101,14 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     parts.push(id);
   };
   const partOf = (elite: boolean) => {
-    const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
+    const pool = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts, squad));
     if (!pool.length) return;
     const offers: SlicePartId[] = [];
     while (offers.length < 3 && pool.length) {
       const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
       const same = pool.filter((id) => (PART_GRADE[id] ?? 'common') === g);
       const from = same.length ? same : pool;
-      const id = from[rng.int(from.length)];
+      const id = chooseBuildPart(from, parts, rng, offers.length === 0 && same.length > 0);
       pool.splice(pool.indexOf(id), 1);
       offers.push(id);
     }
@@ -103,20 +120,20 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     const n = 3 - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0);
     for (const a of axes.sort(() => rng.next() - 0.5)) {
       if (out.length >= n) break;
-      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !out.includes(id) && usable(id));
+      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !out.includes(id) && usable(id) && isOpen(id));
       const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
       const same = pool.filter((id) => gradeOf(id) === g);
       const from = same.length ? same : pool;
-      if (from.length) out.push(from[rng.int(from.length)]);
+      if (from.length) out.push(out.length === 0 ? chooseBuildCard(from, parts, rng) : from[rng.int(from.length)]);
     }
     return out;
   };
   const takeCard = (offers: CommandId[], recruitOffer: boolean) => {
-    if (recruitOffer && squad.length < SLICE.squadMax && (squad.length < 6 || rng.next() < 0.5)) return recruit();
+    if (recruitOffer && squad.length < SLICE.squadMax && (squad.length < 6 || rng.next() < 0.5)) return recruit(true);
     const best = offers.sort((a, b) => val(b) - val(a))[0];
     if (best && val(best) > 0) deck.push(best);
   };
-  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle });
+  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle });
   for (const [ai, a] of acts.entries()) {
     actNow = ai;
     let prev: MapNode | null = null;
@@ -149,7 +166,11 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         if (!ok) return out(false, ai + 1, `${ai + 1}막 ${def.title}`);
         if (def.reward === 'end') return out(true, 4, '');
         if (def.reward === 'recruit') recruit();
-        else if (def.reward === 'kit') { const k = KITS[rng.int(KITS.length)]; addPart(k.part); deck.push(...k.cards); }
+        else if (def.reward === 'kit') {
+          const pool = KITS.filter(k => (PART_GRADE[k.part] ?? 'common') !== 'gold' && !parts.includes(k.part) && (!k.needs || squad.some(u => u.t === k.needs)) && k.cards.every(usable));
+          const { offers } = kitOffers(pool, rng); const k = offers.sort((a, z) => rankOf(z.part) - rankOf(a.part))[0];
+          if (k) { addPart(k.part); deck.push(...k.cards); }
+        }
         else if (def.reward === 'part') { partOf(true); if (squad.length < SLICE.squadMax) recruit(); takeCard(cardOffers(true), false); }
         else if (def.reward === 'card') {
           const offers = cardOffers(false);
@@ -161,18 +182,19 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         gold += SLICE.chestGold[0] + rng.int(SLICE.chestGold[1] - SLICE.chestGold[0] + 1);
         partOf(false);
       } else if (n.kind === 'shop') {
-        const pool = REWARD_COMMANDS.filter(usable);
+        const pool = REWARD_COMMANDS.filter(id => usable(id) && isOpen(id));
         const offers: CommandId[] = [];
         while (offers.length < SHOP.cards && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
-        if (hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul) { gold -= Math.round(SHOP.healPrice * shopMul); squad = restSquad(squad, SHOP.healPct); }
+        if (hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul()) { gold -= Math.round(SHOP.healPrice * shopMul()); squad = restSquad(squad, SHOP.healPct); }
         for (const id of offers.sort((x, y) => val(y) - val(x))) {
-          const p = Math.round(SHOP.gradePrice[gradeOf(id) as Grade] * shopMul);
+          const p = Math.round(SHOP.gradePrice[gradeOf(id) as Grade] * shopMul());
           if (val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); break; }
         }
-        const pp = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && partFits(id, squad.map((u) => u.t), parts));
-        const part = pp.length ? pp[rng.int(pp.length)] : null;
-        if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * shopMul); if (gold >= p + 30 && keeps(part)) { gold -= p; addPart(part); } }
-        if (deck.length > 14 && gold >= SHOP.removePrice * shopMul) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= Math.round(SHOP.removePrice * shopMul); }
+        const pp = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts, squad));
+        const from = firstShopParts(pp, parts, shopsSeen++);
+        const part = from.length ? from[rng.int(from.length)] : null;
+        if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * shopMul()); if (gold >= p + 30 && keeps(part)) { gold -= p; addPart(part); } }
+        if (deck.length > 14 && gold >= SHOP.removePrice * shopMul()) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= Math.round(SHOP.removePrice * shopMul()); }
       } else if (n.kind === 'forge') {
         squad = mendSquad(squad).squad;
         if (hpRatio() < 0.6) squad = restSquad(squad, FORGE.repairPct * (asc >= 3 ? ASC_NUM.restMul : 1));

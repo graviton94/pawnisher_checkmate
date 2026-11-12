@@ -11,6 +11,9 @@ module.exports = async (pg, selector) => {
         const scale = r.width / img.naturalWidth * devicePixelRatio;
         if (Math.abs(scale - Math.round(scale)) > 0.01) bad.push('fractional device pixel scale');
         if (Math.abs(r.width / r.height - img.naturalWidth / img.naturalHeight) > 0.01) bad.push('image aspect distortion');
+        const p = img.parentElement, pr = p.getBoundingClientRect();
+        const left = pr.left + p.clientLeft, top = pr.top + p.clientTop;
+        if (r.left > left + 1 || r.top > top + 1 || r.right < left + p.clientWidth - 1 || r.bottom < top + p.clientHeight - 1) bad.push('illustration does not cover its scene');
       }
       for (const e of root.querySelectorAll('button,p,h2,b,span')) {
         if (!visible(e)) continue;

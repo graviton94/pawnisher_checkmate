@@ -26,7 +26,13 @@ describe('플레이테스트 기록', () => {
     const st = fake();
     st.setItem(TELEMETRY_KEY, '{깨진');
     telemetryStore(st);
-    for (let i = 0; i < TELEMETRY_MAX + 5; i++) track('x', { i });
+    track('x', { i: 0 });
+    const first = telemetryAll()[0];
+    expect(telemetryAll()).toHaveLength(1); // 깨진 저장소에서 복구
+    // 4천 번 전체 JSON을 쓰는 성능 시험 대신 실제 상한 경계의 전/후를 검증한다.
+    st.setItem(TELEMETRY_KEY, JSON.stringify(Array.from({ length: TELEMETRY_MAX }, (_, i) => ({ ...first, i }))));
+    telemetryStore(st);
+    for (let i = TELEMETRY_MAX; i < TELEMETRY_MAX + 5; i++) track('x', { i });
     const all = telemetryAll();
     expect(all).toHaveLength(TELEMETRY_MAX);
     expect(all[0].i).toBe(5);

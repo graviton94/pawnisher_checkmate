@@ -13,7 +13,7 @@
 import { sfx } from '../audio/sfx';
 import { burstWord, Layer } from './evstage';
 import { replay, shakeEl, tally } from './fx3';
-import { btnRowHtml, coverArt } from './uikit';
+import { btnRowHtml, clearPeeks, coverArt } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, calm() ? Math.min(ms, 60) : ms));
@@ -131,6 +131,7 @@ const inkCenter = (img: HTMLImageElement): void => {
 
 /** 막 장부 하나를 연다. 단추를 누르면 끝난다 */
 export const clearScreen = async (d: ClearData): Promise<'back' | 'go'> => {
+  clearPeeks();
   document.querySelector('.clr')?.remove();
   const el = document.createElement('div');
   el.className = `clr kit clr-${d.mode}${d.inCredits ? ' clr-cr' : ''}`;

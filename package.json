@@ -1,7 +1,7 @@
 {
   "name": "pawnisher-checkmate",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -46,7 +46,8 @@
       "output": "release"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "Pawnisher-Checkmate-${version}-Windows-${arch}-Setup.${ext}"
     },
     "mac": {
       "target": "dmg"

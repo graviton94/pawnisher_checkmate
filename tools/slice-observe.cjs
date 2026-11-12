@@ -28,7 +28,9 @@ const day = new Date().toISOString().slice(0, 10);
   } else {
     await pg.goto(BASE + '?debug'); await pg.waitForSelector('#boot', { state: 'detached' }); await pg.waitForTimeout(200); await skip();
     const A = (fn, arg) => pg.evaluate(fn, arg);
-    if (sc === 'cinematics') await require('./qa/cinematics.cjs')(pg, shot);
+    if (sc === 'scene-input') await require('./qa/scene-input.cjs')(pg, shot);
+    else if (sc === 'illustrations') await require('./qa/illustrations.cjs')(pg, shot);
+    else if (sc === 'cinematics') await require('./qa/cinematics.cjs')(pg, shot);
     else if (sc === 'asset-delivery') await require('./qa/asset-delivery.cjs')(pg, shot);
     else if (sc === 'part-rules') await require('./qa/part-rules.cjs')(pg, shot);
     else if (sc === 'content-states') await require('./qa/content-states.cjs')(pg, shot);

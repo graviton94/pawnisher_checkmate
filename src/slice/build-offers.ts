@@ -1,8 +1,24 @@
 import { BUILD_FAMILIES, SUPPORT_CARDS, BUILD_SUPPLY_WEIGHT } from '../data/build-supply';
 export { BUILD_FAMILIES } from '../data/build-supply';
-import type { CommandId } from './cards';
+import { KITS, SLICE, type CommandId } from './cards';
 import { Rng } from '../engine/rng';
 import { SLICE_PARTS, PART_GRADE, type SlicePartId } from './parts';
+
+/** 실제 화면과 경량 봇이 같은 세 갈래/한 축 상자를 공급한다. 선택 정책은 호출자가 정한다. */
+export const kitOffers = (pool: typeof KITS, rng: Rng): { offers: typeof KITS; deep: string | null } => {
+  const offers: typeof KITS = [];
+  const axisOf = (k: (typeof KITS)[number]) => SLICE_PARTS[k.part].axis ?? 'none';
+  const deepAxes = [...new Set(pool.map(axisOf))].filter(ax => ax !== 'none' && pool.filter(k => axisOf(k) === ax).length >= 3);
+  const deep = deepAxes.length > 0 && rng.next() < SLICE.kitDeepChance ? deepAxes[rng.int(deepAxes.length)] : null;
+  const src = deep ? pool.filter(k => axisOf(k) === deep) : [...pool];
+  while (offers.length < 3 && src.length) {
+    const fresh = deep ? src : src.filter(k => !offers.some(o => axisOf(o) === axisOf(k)));
+    const from = fresh.length ? fresh : src;
+    const k = from[rng.int(from.length)];
+    src.splice(src.indexOf(k), 1); offers.push(k);
+  }
+  return { offers, deep };
+};
 
 /** 이미 고른 운영의 다른 역할을 보조한다. 무관한 후보도 남겨 전환을 막지 않는다. */
 export const buildAffinity = (id: SlicePartId, owned: SlicePartId[]): boolean => {

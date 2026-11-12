@@ -39,6 +39,17 @@ module.exports = async (pg, shot) => {
   };
   await pg.evaluate(() => window.sliceApi.startAt(1, 'battle'));
   await pg.waitForTimeout(400);
+  const rapid = await pg.evaluate(async () => {
+    const k = window.slice().s.pieces.find(p => p.side === 1 && p.type === 'K');
+    window.sliceApi.peekAt(k);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    window.sliceApi.peekAt(k);
+    return document.querySelectorAll('.unit-peek').length;
+  });
+  assert.equal(rapid, 1, '퇴장 중인 옛 검사판과 새 검사판이 겹치지 않음');
+  await pg.touchscreen.tap(4,4);
+  await pg.waitForFunction(() => !document.querySelector('.unit-peek'));
   await inspect('unit-info-normal');
   await pg.evaluate(() => window.sliceApi.bossOf('inspect', 1));
   await pg.waitForTimeout(600);

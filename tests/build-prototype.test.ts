@@ -8,6 +8,7 @@ import { STARTER_PARTS } from '../src/data/unlocks';
 import { PART_GRADE, partFits } from '../src/slice/parts';
 import type { CommandId } from '../src/slice/cards';
 import type { SlicePartId } from '../src/slice/parts';
+import { partStatuses } from '../src/slice/part-state';
 
 const setup = (parts: SlicePartId[] = ['siegeLatch']) => {
   const b = newSliceBattle([{ t: 'K' }, { t: 'R' }, { t: 'N' }, { t: 'P' }], ['K', 'P', 'P', 'P', 'P'], [], 420, { parts, width: 6, height: 6, rewindCharms: 1 });
@@ -262,5 +263,65 @@ describe('수명주기와 비교 조건', () => {
     expect(partFits('siegeLatch', ['K', 'R'], [])).toBe(true);
     expect(PART_GRADE.siegeLatch).toBe('rare');
     expect(BUILD_TRIAL.knight.part).toBe('horseshoe');
+  });
+});
+
+
+describe('실제 조건에 따른 UI-34 상태', () => {
+  it('공성 걸쇠는 실제 타격 가능/룩별 소진/되감기를 구분한다', () => {
+    const { b, rook } = setup();
+    b.hand = ['rookLine'];
+    const original = JSON.stringify(b);
+    expect(partStatuses(b).siegeLatch?.state).toBe('ready');
+    expect(JSON.stringify(b)).toBe(original);
+    b.snap = JSON.stringify(b);
+    expect(typeof playCard(b, 0, rook, { x: 0, y: 1 })).not.toBe('string');
+    expect(partStatuses(b).siegeLatch?.state).toBe('spent');
+    const back = rewind(b) as SliceBattle;
+    expect(partStatuses(back).siegeLatch?.state).toBe('ready');
+    back.ap = 0;
+    expect(partStatuses(back).siegeLatch?.state).toBe('waiting');
+    const other = makePiece(1000, 'R', 0, 3, 0); other.shield = 10;
+    b.s.pieces.push(other); b.hand = [];
+    expect(partStatuses(b).siegeLatch?.state).toBe('waiting');
+    expect(partStatuses(b).siegeLatch?.detail).toContain('1/2');
+  });
+  it('맞댄 철판은 3승/인접 동료/실제 낼 수 있는 방열판 카드를 모두 요구한다', () => {
+    const { b, rook, pawn } = setup(['sharedPlate']);
+    Object.assign(findPiece(b.s, pawn)!, { x: 1, y: 0 });
+    b.squadWins![rook] = 2; b.hand = ['plate'];
+    expect(partStatuses(b).sharedPlate?.state).toBe('waiting');
+    b.squadWins![rook] = 3;
+    expect(partStatuses(b).sharedPlate?.state).toBe('ready');
+    b.ap = 0; expect(partStatuses(b).sharedPlate?.state).toBe('waiting'); b.ap = 5;
+    playCard(b, 0, rook);
+    expect(partStatuses(b).sharedPlate?.state).toBe('spent');
+    endTurn(b);
+    expect(partStatuses(b).sharedPlate?.state).not.toBe('spent');
+  });
+  it('연쇄·처치 조건은 실행 복제로 확인하고 실제 판과 RNG는 보존한다', () => {
+    const { b, pawn } = setup(['fuse', 'tally', 'whistle']);
+    b.hand = ['advance']; b.kills = 2;
+    for (const p of b.s.pieces) if (p.side === 1 && p.type !== 'K') p.hp = 1;
+    const before = JSON.stringify(b);
+    const states = partStatuses(b);
+    expect(states.fuse?.state).toBe('ready');
+    expect(states.tally?.state).toBe('ready');
+    expect(states.whistle?.state).toBe('ready');
+    expect(JSON.stringify(b)).toBe(before);
+    playCard(b, 0, pawn, { x: 1, y: 2 });
+    expect(partStatuses(b).fuse?.state).toBe('spent');
+    expect(partStatuses(b).tally?.state).toBe('spent');
+    expect(partStatuses(b).whistle?.state).toBe('spent');
+  });
+  it('공격 유형과 소진은 실제 기록을 사용하고 상시 효과에는 배지를 만들지 않는다', () => {
+    const { b } = setup(['relayGear', 'relaySeal', 'ledger']);
+    b.hand = [];
+    expect(partStatuses(b).relayGear?.state).toBe('waiting');
+    b.once.push('relayType:P', 'relayType:N', 'relayGear');
+    expect(partStatuses(b).relayGear?.state).toBe('spent');
+    expect(partStatuses(b).relaySeal?.detail).toContain('2/3');
+    expect(partStatuses(b).ledger).toBeUndefined();
+    b.s.winner = 0; expect(partStatuses(b)).toEqual({});
   });
 });

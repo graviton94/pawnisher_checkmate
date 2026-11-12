@@ -4,6 +4,9 @@ const BASE = `http://localhost:${process.env.PORT || 4173}/?debug`;
 const { chromium } = require('playwright');
 const out = process.argv[2] || 'ui-audit';
 const only = process.argv[3];
+const PRESETS = { 'small-mobile': [667,375,2.625], mobile: [915,412,2.625], tablet: [1024,768,2], pc: [1280,720,1] };
+const preset = PRESETS[process.env.OBSERVE_PRESET || 'mobile'];
+if (!preset) throw new Error('unknown OBSERVE_PRESET');
 require('fs').mkdirSync(out, { recursive: true });
 const META = JSON.stringify({ tut: ['battle', 'map', 'recruit', 'kit', 'promote'], runs: 3 });
 const SCENES = [
@@ -43,7 +46,17 @@ const SCENES = [
   ['p10-event-sel', async (p, A, W, S) => { await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(2600); await p.click(".choice[data-slot='1']"); await W(1500); await S(''); }],
   ['p10-act-clear', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'boss')); await W(1500); await A(() => { const api = window.sliceApi; api.richRun(); api.setAct(0); api.nextAct(); }); await W(7500); await S(''); }],
   ['p10-run-clear', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(3, 'boss')); await W(1500); await A(() => { const api = window.sliceApi; api.richRun(); api.setAct(2); api.endNow(true); }); await W(1200); await S(''); await p.click('[data-cr-next]'); await W(350); await S('makers'); }],
-  ['boss', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'boss')); await W(2500); await S('intro-a'); await W(2500); await S('intro-b'); await W(5000); await S('battle'); }],
+  ['boss', async (p, A, W, S) => {
+    await A(() => window.sliceApi.intro(2, 'boss'));
+    await p.locator('.bossfx .bf-port canvas').waitFor({state:'attached'});
+    const fits = await p.locator('.bf-port canvas').evaluate(c => {
+      const r=c.getBoundingClientRect(),q=c.parentElement.getBoundingClientRect(),k=r.width/c.width*devicePixelRatio;
+      return Math.abs(r.width/r.height-c.width/c.height)<.01 && Math.abs(k-Math.round(k))<.01 && r.left<=q.left+1 && r.right>=q.right-1 && r.top<=q.top+1 && r.bottom>=q.bottom-1;
+    });
+    if(!fits) throw new Error('boss illustration aspect/coverage/device grid');
+    await W(1200); await S('intro-a'); await W(1000); await S('intro-b');
+    await p.locator('.bossfx').waitFor({state:'detached'}); await W(500); await S('battle');
+  }],
   ['endfail', async (p, A, W, S) => { await A(() => window.sliceApi.end(false)); await W(2800); await S(''); }],
   // 패스 1 창 갈래 (D-391)
   ['win-nemesis', async (p, A, W, S) => { await A(() => window.sliceApi.nemesisOf()); await W(1200); await S(''); }],
@@ -70,12 +83,14 @@ const SCENES = [
   ['endclear', async (p, A, W, S) => { await A(() => window.sliceApi.end(true)); await W(2800); await S(''); }],
 ];
 (async () => {
+  let scenarios = 0, screenshots = 0; const issues = [];
   const br = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
   for (const [name, fn] of SCENES) {
-    if (only && !name.includes(only)) continue;
-    const p = await br.newPage({ viewport: { width: 915, height: 412 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
-    p.on('pageerror', (e) => console.log('ERR', name, e.message));
-    const A = (f, a) => p.evaluate(f, a).catch((e) => console.log('A', name, e.message.slice(0, 120)));
+    if (only && !(only.includes(',') ? only.split(',').includes(name) : name.includes(only))) continue;
+    scenarios++;
+    const p = await br.newPage({ viewport: { width: preset[0], height: preset[1] }, deviceScaleFactor: preset[2], hasTouch: true, isMobile: preset[0] < 1024 });
+    p.on('pageerror', (e) => { issues.push(`ERR ${name} ${e.message}`); console.log('ERR', name, e.message); });
+    const A = (f, a) => p.evaluate(f, a).catch((e) => { issues.push(`A ${name} ${e.message}`); console.log('A', name, e.message.slice(0,120)); });
     const W = (ms) => p.waitForTimeout(ms);
     // 찍을 때마다 글자 점검 (D-263): 갈무리 격자 크기 · 서체 · 넘침 · 말줄임
     const TEXT = async (n) => {
@@ -105,16 +120,21 @@ const SCENES = [
         }
         return [...new Set(out)];
       }).catch(() => []);
-      for (const b of bad) console.log('TXT', name + (n ? '-' + n : ''), b);
+      for (const b of bad) { issues.push(`TXT ${name} ${b}`); console.log('TXT', name + (n ? '-' + n : ''), b); }
     };
-    const S = async (n) => { await p.screenshot({ path: `${out}/${name}${n ? '-' + n : ''}.png` }).catch(() => console.log('shot fail', name, n)); await TEXT(n); };
+    const S = async (n) => {
+      const stale = await p.evaluate(() => { const b=document.getElementById('board'); const overlay=document.getElementById('overlay'); const inactive=document.body.classList.contains('between') || document.body.classList.contains('cover-pl') || b?.closest('[inert]') || overlay && !overlay.hidden; return !!inactive && !!document.querySelector('.k-peek:not(.pxout)'); });
+      if (stale) { issues.push(`STALE_PEEK ${name}`); console.log('STALE_PEEK',name,n); }
+      screenshots++; await p.screenshot({ path: `${out}/${name}${n ? '-' + n : ''}.png` }).catch(() => { issues.push(`shot fail ${name} ${n}`); console.log('shot fail', name, n); }); await TEXT(n); };
     try {
       await p.goto(BASE);
       await p.evaluate((m) => localStorage.setItem('pawnisher.slice.meta', m), META);
       await p.goto(BASE); await p.waitForSelector('#boot', { state: 'detached' }); await W(2400); await p.mouse.click(450, 300); await W(1200);
       await fn(p, A, W, S);
-    } catch (e) { console.log('FAIL', name, e.message.slice(0, 160)); }
+    } catch (e) { issues.push(`FAIL ${name} ${e.message}`); console.log('FAIL', name, e.stack); }
     await p.close().catch(() => {});
   }
   await br.close();
+  console.log('AUDIT', JSON.stringify({preset:process.env.OBSERVE_PRESET || 'mobile',scenarios,screenshots,issues:issues.length}));
+  if (issues.length) process.exitCode = 1;
 })();
