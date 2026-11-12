@@ -12,6 +12,10 @@ on:
         description: 'PC 설치 파일도 만든다 (Windows/macOS/Linux, 약 430MB — 저장 용량을 쓴다)'
         type: boolean
         default: false
+      release_tag:
+        description: '검수 릴리스 이름 (예: v1.1.1-test.20261112.2). 주면 Actions가 그 이름으로 릴리스·태그를 만들어 설치 파일을 올린다 (-test. 이면 PC는 Windows만)'
+        type: string
+        default: ''
   # 태그 푸시는 위 push에도 걸린다
 
 jobs:
@@ -50,9 +54,10 @@ jobs:
           cp android/app/build/outputs/apk/debug/app-debug.apk pawnisher-checkmate.apk
           gh release view apk-latest >/dev/null 2>&1 || gh release create apk-latest --prerelease --target "$GITHUB_SHA" --title "최신 테스트 APK" --notes "사용자 요청으로 실행한 테스트 APK"
           gh release upload apk-latest pawnisher-checkmate.apk --clobber
-          if [[ "$GITHUB_REF_NAME" == *-test.* ]]; then
-            gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --prerelease --target "$GITHUB_SHA" --title "검수 빌드 $GITHUB_REF_NAME" --notes "검수 대상 커밋: $GITHUB_SHA" || gh release view "$GITHUB_REF_NAME"
-            gh release upload "$GITHUB_REF_NAME" pawnisher-checkmate.apk --clobber
+          REL="${{ inputs.release_tag }}"; REL="${REL:-$GITHUB_REF_NAME}"
+          if [[ "$REL" == *-test.* ]]; then
+            gh release view "$REL" >/dev/null 2>&1 || gh release create "$REL" --prerelease --target "$GITHUB_SHA" --title "검수 빌드 $REL" --notes "검수 대상 커밋: $GITHUB_SHA" || gh release view "$REL"
+            gh release upload "$REL" pawnisher-checkmate.apk --clobber
           fi
 
   pc:
@@ -62,7 +67,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.pc)
     strategy:
       matrix:
-        os: ${{ fromJSON(contains(github.ref_name, '-test.') && '["windows-latest"]' || '["windows-latest","macos-latest","ubuntu-latest"]') }}
+        os: ${{ fromJSON((contains(github.ref_name, '-test.') || contains(inputs.release_tag, '-test.')) && '["windows-latest"]' || '["windows-latest","macos-latest","ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -85,13 +90,14 @@ jobs:
           if ($p.ExitCode -ne 0) { throw "Windows launch failed: $($p.ExitCode)" }
           if (-not (Test-Path release/windows-launch.png)) { throw "Windows render proof missing" }
       - name: Publish requested test installers
-        if: startsWith(github.ref, 'refs/tags/') && contains(github.ref_name, '-test.')
+        if: (startsWith(github.ref, 'refs/tags/') && contains(github.ref_name, '-test.')) || contains(inputs.release_tag, '-test.')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --prerelease --target "$GITHUB_SHA" --title "검수 빌드 $GITHUB_REF_NAME" --notes "검수 대상 커밋: $GITHUB_SHA" || gh release view "$GITHUB_REF_NAME"
-          gh release upload "$GITHUB_REF_NAME" release/*.exe release/windows-launch.png release/windows-smoke.json --clobber
+          REL="${{ inputs.release_tag }}"; REL="${REL:-$GITHUB_REF_NAME}"
+          gh release view "$REL" >/dev/null 2>&1 || gh release create "$REL" --prerelease --target "$GITHUB_SHA" --title "검수 빌드 $REL" --notes "검수 대상 커밋: $GITHUB_SHA" || gh release view "$REL"
+          gh release upload "$REL" release/*.exe release/windows-launch.png release/windows-smoke.json --clobber
       - uses: actions/upload-artifact@v4
         with:
           name: pawnisher-pc-${{ matrix.os }}
