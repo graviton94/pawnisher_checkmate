@@ -1,0 +1,38 @@
+[
+  {
+    "file": "paperking-864.png",
+    "source": "docs/art/reference/preview/paperking-864.png",
+    "sha256": "1733683daac59e2b2a44054b8d7e982280cd51dd91398f42f99856d74170b601",
+    "transform": "byte-identical copy"
+  },
+  {
+    "file": "king-form-only-864.png",
+    "source": "docs/art/reference/preview/king-form-only-864.png",
+    "sha256": "39524d713d3a02fdbd759358f0939614757fe3209c6dd5bc7f3a9a99ff47c5d0",
+    "transform": "byte-identical copy"
+  },
+  {
+    "file": "style-shipping-320.png",
+    "source": "public/scenes/shipping-interior.png",
+    "sha256": "0945255145bdc538bc05dfdad79def6e9294e6b1b6fa7a186c5b2528a17e8723",
+    "transform": "byte-identical copy"
+  },
+  {
+    "file": "style-shipping-1920.png",
+    "source": "public/scenes/shipping-interior.png",
+    "sha256": "85f53a5f04ec3d6946bd96a54612e1f1d0c7209612d47f98363aeb5f2e485540",
+    "transform": "nearest-neighbor 6x"
+  },
+  {
+    "file": "style-departure-320.png",
+    "source": "public/scenes/departure-dock.png",
+    "sha256": "026bdfec0cdd8bad7ae557e3fd314f8ce3dc71c44854f47b993c2608843c4cfc",
+    "transform": "byte-identical copy"
+  },
+  {
+    "file": "style-departure-1920.png",
+    "source": "public/scenes/departure-dock.png",
+    "sha256": "cce3cfab7bc194df3da660843d4fde60d1f0a95530fbd198eeb6d12f939640e4",
+    "transform": "nearest-neighbor 6x"
+  }
+]

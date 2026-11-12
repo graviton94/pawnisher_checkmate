@@ -1,22 +1,18 @@
 # 현재 아트 발주서 — 제작할 것만 여기서 확인
 
-2026-11-12 · D-436 · 후속 브랜치 `content-art-audit-20261112`. **D-434 반입 완료. 전용 서사 컷 R1 세 장도 수령했으며 구도 검토 중이다. S-05/S-07은 구도 재작업, S-06은 부분 수정한다.** 완료된 프롬프트는 [보관본](asset-order-history.md#delivery-20261112-completed)에 옮겼다. main과 테스트 APK는 갱신하지 않는다.
+2026-11-12 · D-439 · 후속 브랜치 `content-art-audit-20261112`. **이번 결과7장은 인물·화풍 수정이 필요하다. 지금은 S-06 상자 한 장만 수정한다.** main과 테스트 APK는 갱신하지 않는다.
 
-**D-438 정정: 종이왕의 청록 장식은 원형이다. 사각으로 바꾸라는 이전 지시는 철회한다.**
+## 0. 현재 수정 발주 — 한 장씩 R3
 
-## 0. 현재 수정 발주 — 전용 서사 컷 R2 (D-436)
+[바로 전달할 S-06 프롬프트](asset-order-story-cinematics.md#scene-shipping) · [참고 PNG와 프롬프트 ZIP](art/cinematic-reference/pawnisher-cinematic-reference.zip) · [이번 결과 리뷰](reports/2026-11-12-cinematics-r2-review.md).
 
-**인물 참고 파일도 함께 전달한다(D-437): [전체 PNG ZIP](art/reference/pawnisher-character-reference.zip) · [종이왕 PNG](art/reference/preview/paperking-864.png) · [한 장 비교표](art/reference/character-sheet.png) · [장면별 첨부 안내](art/reference/README.md).** 종이왕 K0가 정본이고, K1은 새 금빛 왕의 형태 참고만 한다. 설명문만 보내지 말고 해당 PNG를 프롬프트와 함께 첨부한다.
+| 순서 | 대상 | 할 일 |
+|---|---|---|
+| 지금 | S-06 컬러 상자 | 현재 구도 유지. 청록 원형 장식 총1개, 기존 게임 도트 화풍으로 수정 |
+| 위 결과 확인 뒤 | S-05 세 번째 문턱 근접안 | 받침·문턱 관계 유지, 불명확한 상단 가림과 도트 밀도 수정 |
+| 앞 단계 확인 뒤 | S-07 다섯 번째 눌린 왕관안 | 반복 장식 제거, 눌린 종이·금속·떠나는 상자 관계 유지 |
 
-R1 세 장은 [구도 리뷰](reports/2026-11-12-cinematics-r1-review.md)에 근거를 남겼다. 아직 최종 원화로 승인하지 않고 실행용 그림은 유지한다. **[현재 R2 프롬프트](asset-order-story-cinematics.md)는 이전 R1의 전신/일률적 하단 여백 강제를 해제한다.**
-
-| 순서 | 번호 | 이번 작업 | 프롬프트 |
-|---|---|---|---|
-| 1 | S-05 출하 | ‘문 앞 정물’→‘경계를 넘는 순간’. 흑백 구도3안 먼저 | [복사](asset-order-story-cinematics.md#scene-threshold) |
-| 2 | S-07 금빛 왕 | ‘트로피 전시’→‘새 몸의 무게와 버린 왕관의 관계’. 흑백 구도3안 먼저 | [복사](asset-order-story-cinematics.md#scene-solitude) |
-| 3 | S-06 운송 | 낮은 시점/천/사선 빛 유지. 좁은 빛·몸과 왕관 비례 부분 수정 | [복사](asset-order-story-cinematics.md#scene-shipping) |
-
-인물·배경은 같은 원근/광원으로 그린다. 구도 확정 뒤 대사 위치를 맞추며, 완성 그림 위에 전투 기물 아이콘을 다시 얹지 않는다. 동료의 인원/생존과 대사 분기는 유지한다. 수령한 R1 원본은 `build-res/order/cinematics-r1/`에 보관했다.
+고칠 결과물1장 + 인물 참고 + 해당 장면 화풍 PNG를 실제 첨부한다. 프로젝트에 참고 자료가 있다는 전제로 생략하지 않는다. 새 구도3안씩 동시 제작하지 않는다. 이전 R1/R2 발주 문구는 [보관본](asset-order-history.md)에만 남긴다.
 
 ## 1. D-434 반입 완료분
 
