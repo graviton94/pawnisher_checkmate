@@ -1,0 +1,21 @@
+{
+  "status": "review only; not accepted or mounted in runtime",
+  "sources": [
+    {
+      "name": "蒸汽工厂里的黄金国王.png",
+      "sha256": "44762540f1744ab699a5983edbf28f16e70c8e40267a397e596c3c848637544a",
+      "storedSource": "build-res/order/cinematics-r1/S-07-r1-source.png"
+    },
+    {
+      "name": "상자 속 왕관 쓴 체스 폰.png",
+      "sha256": "6272eeee5034726a7e5f0110f0efd5401f49fcaf5e804ca4efe306e8b7021966",
+      "storedSource": "build-res/order/cinematics-r1/S-06-r1-source.png"
+    },
+    {
+      "name": "하늘색 원이 있는 판지 왕관 폰.png",
+      "sha256": "90847ce105dda0777a8e4135d396d7338ca48b55a0deee5c61d9131b4376f73b",
+      "storedSource": "build-res/order/cinematics-r1/S-05-r1-source.png"
+    }
+  ],
+  "archiveSha256": "bc9c2d757d055dee8dd64c5d8ac87305a04a8f2d5febe59fd52db6c76dee306a"
+}

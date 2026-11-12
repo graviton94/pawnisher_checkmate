@@ -1,20 +1,20 @@
 # 현재 아트 발주서 — 제작할 것만 여기서 확인
 
-2026-11-12 · D-435 · 후속 브랜치 `content-art-audit-20261112`. **D-434 발주 이미지는 전부 수령. D-435 전용 서사 일러스트3장을 다음 발주로 준비했다.** 완료된 프롬프트는 [보관본](asset-order-history.md#delivery-20261112-completed)에 옮겼다. main과 테스트 APK는 갱신하지 않는다.
+2026-11-12 · D-436 · 후속 브랜치 `content-art-audit-20261112`. **D-434 반입 완료. 전용 서사 컷 R1 세 장도 수령했으며 구도 검토 중이다. S-05/S-07은 구도 재작업, S-06은 부분 수정한다.** 완료된 프롬프트는 [보관본](asset-order-history.md#delivery-20261112-completed)에 옮겼다. main과 테스트 APK는 갱신하지 않는다.
 
-## 0. 다음 제작 — 전용 서사 일러스트3장 (D-435)
+## 0. 현재 수정 발주 — 전용 서사 컷 R2 (D-436)
 
-현재 배경+전투 아이콘 합성은 임시다. 인물과 배경을 같은 원근·광원으로 그린 완성 컷으로 바꾼다. **각 프롬프트는 [전용 발주서](asset-order-story-cinematics.md)에 있으며 첨부 없이 그대로 전달할 수 있다.**
+R1 세 장은 [구도 리뷰](reports/2026-11-12-cinematics-r1-review.md)에 근거를 남겼다. 아직 최종 원화로 승인하지 않고 실행용 그림은 유지한다. **[현재 R2 프롬프트](asset-order-story-cinematics.md)는 이전 R1의 전신/일률적 하단 여백 강제를 해제한다.**
 
-| 순서 | 번호 | 그림 | 프롬프트 |
+| 순서 | 번호 | 이번 작업 | 프롬프트 |
 |---|---|---|---|
-| 1 | S-05 | 문턱을 넘는 폰 — 함께 출하 | [복사할 명세](asset-order-story-cinematics.md#scene-threshold) |
-| 2 | S-06 | 상자 안의 종이왕 — 운송 | [복사할 명세](asset-order-story-cinematics.md#scene-shipping) |
-| 3 | S-07 | 왕만 남은 출하구 — 배신 결말 | [복사할 명세](asset-order-story-cinematics.md#scene-solitude) |
+| 1 | S-05 출하 | ‘문 앞 정물’→‘경계를 넘는 순간’. 흑백 구도3안 먼저 | [복사](asset-order-story-cinematics.md#scene-threshold) |
+| 2 | S-07 금빛 왕 | ‘트로피 전시’→‘새 몸의 무게와 버린 왕관의 관계’. 흑백 구도3안 먼저 | [복사](asset-order-story-cinematics.md#scene-solitude) |
+| 3 | S-06 운송 | 낮은 시점/천/사선 빛 유지. 좁은 빛·왕관 사각 장식 부분 수정 | [복사](asset-order-story-cinematics.md#scene-shipping) |
 
-그림의 주인공과 상황을 완성하고 동료 전원을 고정해서 그리지 않는다. 현재 생존자 이름과 대사 분기는 유지한다. 전용 원화 수령 뒤 해당 컷의 `showActors`를 끄므로, 완성 그림 위에 전투 기물 아이콘을 다시 얹지 않는다. 받은 배경3종과 아이템4종의 동일 이미지 재제작 요청은 아니다.
+인물·배경은 같은 원근/광원으로 그린다. 구도 확정 뒤 대사 위치를 맞추며, 완성 그림 위에 전투 기물 아이콘을 다시 얹지 않는다. 동료의 인원/생존과 대사 분기는 유지한다. 수령한 R1 원본은 `build-res/order/cinematics-r1/`에 보관했다.
 
-## 1. 이번 수령·연결 현황
+## 1. D-434 반입 완료분
 
 | 번호 | 수령한 그림 | 상태·연결 |
 |---|---|---|
