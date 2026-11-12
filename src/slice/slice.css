@@ -1336,9 +1336,9 @@ body[data-boss="gilded"] { --boss-a: #f4c84a; --boss-d: #8a5a14; --boss-t: #ffe6
 body.slice.lay-f #btn-rewind { position: relative; }
 body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px; margin: 0; min-width: 14px; padding: 0 2px; line-height: 14px; text-align: center; background: #0b0b0e; color: #f4d27a; box-shadow: 0 0 0 1px #5a4a2a; font: 700 12px Galmuri11, sans-serif; }
 /* 대국 끝 띠 (테스터: 「적 킹 격파」만 다른 화면과 디자인이 달랐다) — 차례 띠(tb4)와 같은 황동 · 진홍 9칸 띠, 글자는 한 줄 */
-.ko3 .koband { height: 96px; margin-top: -48px; background: none; border-style: solid; border-width: calc(var(--px) * 6) 0; border-image: url('../assets/ui/chrome/v2/btn-brass-up.png') 6 0 fill / calc(var(--px) * 6) 0 / 0 round stretch; /* 위아래 변은 반복(round) — 줄무늬가 늘어나지 않게 (D-396) */ image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
+.ko3 .koband { height: 96px; margin-top: -48px; background: none; border-style: solid; border-width: calc(var(--px) * 6) 0; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); border-image: url('../assets/ui/chrome/v2/btn-brass-up.png') var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch; /* 단추 한 장을 9칸으로 — 예전(옆 조각 0)은 단추가 통째로 되풀이돼 건전지 줄처럼 보였다 (1.1.1 테스터) */ image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
 .ko3.lose .koband { background: none; border-image-source: url('../assets/ui/chrome/v2/btn-crimson-up.png'); box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
-.ko3 .koband::before, .ko3.lose .koband::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; opacity: 0.5; }
+.ko3 .koband::before, .ko3.lose .koband::before { display: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23fff1c0'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23fff1c0'/%3E%3C/svg%3E") repeat; image-rendering: pixelated; opacity: 0.5; }
 .ko3.lose .koband::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='4'%3E%3Crect x='0' y='0' width='16' height='2' fill='%23ff6b6b'/%3E%3Crect x='40' y='2' width='8' height='2' fill='%23ff6b6b'/%3E%3C/svg%3E"); }
 .ko3 .word { white-space: nowrap; color: #16141c; text-shadow: 0 3px 0 #fff1c0; }
 .ko3.lose .word { color: #fff; text-shadow: 0 3px 0 #000; }
@@ -1732,3 +1732,27 @@ body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-spa
 
 /* D-434: 수령한 장면 위에 현재 출하의 배우만 표시한다. */
 .pl-stage > .pl-standin.pl-actors { background: none; pointer-events: none; }
+
+/* 1.1.1 테스터: 「적 킹 격파」 뒤 반투명 햇살 도형이 어색하다 → 햇살을 걷고 띠 하나 + 섬광 · 불똥만 남긴다 */
+.ko3 .rays { display: none; }
+
+/* ---------- 1.1.1 테스터 피드백: 부품 · 카드 고르기 ----------
+   ① 꼬리표는 이름 아래 [방어] [방열]처럼 낱낱이 (한 덩어리 글로 읽혔다)
+   ② 등급 오라 — 희귀 = 푸른 쇳빛, 황금 = 금빛. 흐림 없는 단단한 도트 고리 두 겹이 계단으로 숨 쉰다 (그라데이션 · 페이드 금지 D-216) */
+body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::before { content: '[' !important; margin: 0 !important; color: #8f8a7c; }
+body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::after { content: ']'; color: #8f8a7c; }
+body.slice .cf.cf.cf.cf > .cf-type .t3 i.t3-sty { color: #e8e0cc !important; }
+body.slice .cf.cf.cf.cf.g-rare:not(.taken), body.slice .cf.cf.cf.cf.g-gold:not(.taken) { --aura: #6fb2ff; animation: kaura 1200ms steps(1, jump-end) infinite; }
+body.slice .cf.cf.cf.cf.g-gold:not(.taken) { --aura: #f4d27a; animation-duration: 900ms; }
+@keyframes kaura {
+  0% { box-shadow: 0 0 0 2px #0b0b0e, 0 0 0 4px var(--aura), 0 0 0 6px #0b0b0e; }
+  33% { box-shadow: 0 0 0 2px #0b0b0e, 0 0 0 4px var(--aura), 0 0 0 6px #0b0b0e, 0 0 0 8px var(--aura), 0 0 0 10px #0b0b0e; }
+  66% { box-shadow: 0 0 0 2px var(--aura), 0 0 0 4px #0b0b0e, 0 0 0 6px var(--aura), 0 0 0 8px #0b0b0e; }
+}
+@media (prefers-reduced-motion: reduce) { body.slice .cf.cf.cf.cf.g-rare, body.slice .cf.cf.cf.cf.g-gold { animation: none; box-shadow: 0 0 0 2px #0b0b0e, 0 0 0 4px var(--aura), 0 0 0 6px #0b0b0e; } }
+body.slice .cf.cf.cf.cf.g-pop.g-rare:not(.taken) { animation: gpop 420ms both, kaura 1200ms steps(1, jump-end) 420ms infinite; }
+body.slice .cf.cf.cf.cf.g-pop.g-gold:not(.taken) { animation: gpop 420ms both, kaura 900ms steps(1, jump-end) 420ms infinite; }
+/* 함께 오는 카드 줄 (부품 상자): 단추 사이 가운데 — 보조 12 · 이름 금 */
+.btn-row > .mid > .with-cards { margin: 0; max-width: 520px; font: 400 12px/1.4 Galmuri11, sans-serif; color: #cfc6b0; text-align: center; word-break: keep-all; }
+.btn-row > .mid > .with-cards b { color: var(--t-gold); font-weight: 700; }
+.btn-row > .mid > .with-cards .lbl { color: #8f8a7c; }

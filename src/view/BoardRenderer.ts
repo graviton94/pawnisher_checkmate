@@ -89,9 +89,12 @@ const PIECE_SIZE = 0.82 * (72 / 64);
 const PIECE_Y = 0.84 - PIECE_SIZE / 2;
 /** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
 let boardTopInset = 0;
-/** 판 열 위쪽을 상태 띠 자리로 비운다 (본편 전투 HUD가 부른다) */
-export const setBoardTopInset = (px: number): void => {
+/** 판 아래 자리 (CSS px) — 부관 안내 띠 자리. 위아래를 같게 두면 판이 세로 가운데에 선다 (1.1.1 테스터: 판이 아래로 치우침) */
+let boardBottomInset = 0;
+/** 판 열 위(상태 띠) · 아래(부관 안내) 자리를 비운다 (본편 전투 HUD가 부른다) */
+export const setBoardTopInset = (px: number, bottom = 0): void => {
   boardTopInset = px;
+  boardBottomInset = bottom;
 };
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // D-429: 네 대표 규격으로 크기를 정한다. PC/태블릿을 폰의 54px 상한으로 제한하지 않는다.
@@ -101,7 +104,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
   const vPad = document.body.matches('.lay-f') ? 0.45 : 0.9;
   // 양옆 여백: 본편은 판 옆이 레일(안쪽 여백이 있다)이라 0칸 (667 폭에서도 칸 50 — 터치 48 하한, D-396)
   const hPad = document.body.matches('.lay-f') ? 0 : 0.5;
-  const fit = Math.min(want, (viewH - boardTopInset) / (rows + vPad), viewW / (cols + hPad));
+  const fit = Math.min(want, (viewH - boardTopInset - boardBottomInset) / (rows + vPad), viewW / (cols + hPad));
   // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게). 예전 하한 5도트는 DPR 2 아래 기기 · PC에서 판을 화면 밖으로 밀었다
   const dots = Math.max(1, Math.floor((fit * dpr) / BOARD_DOTS));
   return (dots * BOARD_DOTS) / dpr;
@@ -485,8 +488,9 @@ class BoardScene extends Phaser.Scene {
     const viewH = cam.height / cam.zoom;
     const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
     const x = bw + 2 * m <= viewW ? bw / 2 : clamp(cx, -m + viewW / 2, bw + m - viewW / 2);
-    // 판이 다 들어오면 위 상태 띠 자리(boardTopInset)를 뺀 나머지의 가운데 — 아래 끝이 화면 밖으로 나가지 않게
-    const y = bh + m - top <= viewH ? Math.max((top + bh + m) / 2 - boardTopInset / 2, bh + m - viewH / 2) : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
+    // 판이 다 들어오면 칸 격자를 위(상태 띠) · 아래(부관 안내) 자리를 뺀 나머지의 가운데에 — 아래 끝이 화면 밖으로 나가지 않게
+    const mid = bh / 2 - (boardTopInset - boardBottomInset) / 2;
+    const y = bh + m - top <= viewH ? Math.max(Math.min(mid, viewH / 2 - boardTopInset), bh + m - viewH / 2) : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
     this.camCenter = { x, y };
     cam.centerOn(x, y);
   }

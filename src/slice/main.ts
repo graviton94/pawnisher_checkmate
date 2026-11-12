@@ -18,7 +18,7 @@ import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
 /** 동작 줄이기 */
 const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-import { dissolveAll, flyTo, installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
+import { installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
@@ -78,7 +78,8 @@ installPixelAnimate();
 {
   document.body.classList.add('lay-f');
   // 판 열 위 48px = 상태 띠 자리 (토스트 · 턴 띠 · 경고가 판을 덮지 않는다)
-  setBoardTopInset(BAND_ZONE);
+  // 판 아래도 같은 높이를 비워 판을 세로 가운데에 (부관 안내 띠 자리 — 1.1.1 테스터: 판이 아래로 치우침)
+  setBoardTopInset(BAND_ZONE, BAND_ZONE);
   const dr = document.createElement('div');
   dr.id = 'deckrow';
   dr.className = 'deckrow';
@@ -319,7 +320,7 @@ const pieceInfo = (pos: Pos): void => {
     key,
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
-    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${liveIntents(b).some((it) => it.pieceId === p.id) ? '행동 예정' : '대기'}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
+    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
     body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div></div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격력</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어력</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
   bindAbilities(el, abilities);
@@ -551,6 +552,12 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
 /** 영입 카드 (D-375): 분대원 카드 그대로 — 두루마리엔 첫마디 · 기벽. 함께 오는 카드는 받침 아래 줄(withCards) */
 const recruitFace = (u: Crew, line: string): string => crewCard(u, { hp: crewMaxHp(u), max: crewMaxHp(u), say: line.replace(/\.?$/, '.') });
 /** 받침 아래 줄: 함께 오는 카드 이름 (12px) */
+/** 함께 오는 카드 한 장의 요지 — 설명 끝 괄호 수치(「(킹 방열판 +22)」), 없으면 설명 전체 (1.1.1 테스터: 함께 오는 카드 설명이 전혀 없다) */
+const cardGist = (id: CommandId): string => {
+  const d = COMMANDS[id].desc;
+  const m = d.match(/\(([^()]+)\)\s*$/);
+  return `<b>${COMMANDS[id].name}</b> ${m ? m[1] : d}`;
+};
 const withCards = (ids: CommandId[], lead = ''): string => `<span>${lead ? `<b class="good">${lead}</b> ` : ''}+ ${ids.map((id) => `<b>${COMMANDS[id].name}</b>`).join(' · ')}</span>`;
 /** 받침 아래 줄: 덱 맞물림 (fitHint) */
 const fitInfo = (kind: 'card' | 'part', id: string): string => {
@@ -652,12 +659,18 @@ const intentList = (): void => {
     if (r.kind === 'guard' || r.kind === 'shield') return `<span class="it-g">${W[r.kind]} +${r.amount ?? 0}</span>`;
     return `<span class="it-w">${W[r.kind]}</span>`;
   };
+  // 판 위 붉은 번호 딱지와 같은 번호를 줄 앞에 (1.1.1 테스터: 적 머리 위 숫자 설명이 어디에도 없다)
+  const order = live ? liveIntents(b).map((st) => st.pieceId) : [];
+  const num = (r: IntentRow): string => {
+    const k = r.pieceId === null ? -1 : order.indexOf(r.pieceId);
+    return k >= 0 ? `<img class="it-n" src="ui/board/badge-e${Math.min(9, k + 1)}.png" alt="${k + 1}번">` : '';
+  };
   const html = !live
     ? ''
     : rows.length
       ? rows
           .slice(0, 5)
-          .map((r) => `<span class="it-row k-${r.kind}"><span class="who">${r.t ? pieceImg(r.t, 1, 'small', 24) : ''}</span>${intentIco(r.kind)}<span class="it-res">${res(r)}</span></span>`)
+          .map((r) => `<span class="it-row k-${r.kind}"><span class="who">${r.t ? pieceImg(r.t, 1, 'small', 24) : ''}${num(r)}</span>${intentIco(r.kind)}<span class="it-res">${res(r)}</span></span>`)
           .join('') + (rows.length > 5 ? `<span class="it-more">${HUD_TEXT.intentMore(rows.length - 5)}</span>` : '')
       : `<span class="it-none">${HUD_TEXT.intentNone}</span>`;
   if (html === intentKey) return;
@@ -783,26 +796,39 @@ const refresh = (): void => {
  */
 let coachOn = false;
 const coach = (): void => {
-  let el = document.querySelector<HTMLElement>('.rmid > .talk.coach');
-  const live = coachOn && !tutActive && cur === INTRO[0] && b.s.winner === null && !busy && !enemyTurn;
+  let el = document.querySelector<HTMLElement>('.coach-band');
+  const live = coachOn && !tutActive && cur === INTRO[0] && b.s.winner === null && !busy && !enemyTurn && document.body.classList.contains('between') === false;
   $('btn-end').classList.toggle('coach-end', false);
   if (!live) return void (el && !el.classList.contains('pxout') && pxOut(el, () => el?.remove()));
   const canPlay = b.hand.some((_, i) => canPlay2(i));
   // 입문 두 턴 (D-232): 1턴 첫 처치 뒤 = 연쇄, 2턴부터 붉은 칸 위의 내 기물 = 빠지며 치기 (용어 없이 행동으로)
   const grazeNow = b.turn >= 2 && (b.graze ?? []).some((id) => b.s.pieces.some((p) => p.id === id));
-  const key: keyof typeof COACH_LINES = !canPlay ? 'end' : selCard === null ? (grazeNow ? 'graze' : b.turn === 1 && b.kills === 1 ? 'chain' : 'card') : selPiece === null ? 'piece' : 'square';
+  // 카드를 고르기 전 한 줄은 턴마다 다르다: 1턴 = 목표 · 2턴 = 적 번호 딱지 · 그 뒤 = 카드 (1.1.1 테스터: 첫 판 설명이 너무 적다)
+  const idle: keyof typeof COACH_LINES = grazeNow ? 'graze' : b.turn === 1 && b.kills === 1 ? 'chain' : b.turn === 1 ? 'card' : b.turn === 2 ? 'intent' : 'cardAgain';
+  const key: keyof typeof COACH_LINES = !canPlay ? 'end' : selCard === null ? idle : selPiece === null ? 'piece' : 'square';
   $('btn-end').classList.toggle('coach-end', key === 'end');
-  $('hand').classList.toggle('hint', key === 'card');
+  $('hand').classList.toggle('hint', key === 'card' || key === 'cardAgain');
   if (!el) {
-    // 부관 박차가 말한다 (D-242 화자 통일) — 오른쪽 레일 움푹 칸 안, 의도 목록 아래 (판을 가리지 않는다, 패스 4 D-396)
-    el = makeTalk({ face: '<img src="ui/hud/adjutant.png" alt="">', name: TUT.name, cls: 'coach ally' });
-    // 첫 대국의 주인공은 이 한 줄 — 의도 목록보다 위 (좁은 폰에서 칸이 모자라면 목록이 칸 안에서 밀린다)
-    document.querySelector('.rmid > .r-head')?.after(el);
+    // 부관 박차가 말한다 (D-242 화자 통일) — 판 아래 안내 띠 (1.1.1 테스터: 레일 속 말풍선이 어색하다 → 판 아래 토스트 자리)
+    el = document.createElement('div');
+    el.className = 'state-band k-toast coach-band';
+    el.setAttribute('role', 'status');
+    el.innerHTML = `<b class="who">${TUT.name}</b><span class="line"></span>`;
+    document.body.appendChild(el);
   }
+  placeCoach(el);
   if (el.dataset.k === key) return;
   el.dataset.k = key;
-  el.querySelector('.line')!.innerHTML = COACH_LINES[key].replace(/\n/g, ' ');
-  replay(el, 'in');
+  el.querySelector('.line')!.innerHTML = COACH_LINES[key].replace(/\n/g, '<br>');
+  placeCoach(el);
+  replay(el, 'k-in');
+};
+/** 부관 안내 띠 자리: 판 칸 격자 아래 빈 자리(BAND_ZONE) 가운데 */
+const placeCoach = (el: HTMLElement): void => {
+  const r = $('board').getBoundingClientRect();
+  el.style.left = `${Math.round(r.left + r.width / 2)}px`;
+  el.style.maxWidth = `${Math.min(520, Math.floor(r.width - 8))}px`;
+  el.style.top = `${Math.round(r.bottom - Math.max(BAND_ZONE, el.offsetHeight) - 2)}px`;
 };
 const canPlay2 = (i: number): boolean => canPlay(b, i);
 
@@ -2419,16 +2445,24 @@ const takeFx = (slot: HTMLElement, then: () => void, keep = false): void => {
   panel.classList.add('locked');
   sfx('rare');
   const face = slot.matches('.cf') ? slot : slot.querySelector<HTMLElement>(':scope > .cf');
-  if (!keep) dissolveAll([...panel.querySelectorAll<HTMLElement>('[data-slot] > .cf')].filter((x) => x !== face));
-  // 덱 · 부품 칸으로 날아가는 것은 실제로 손에 들어오는 카드 · 부품뿐 (분대원 · 부적 · 정비는 제자리에서)
-  const isPart = !!face?.matches('.part-card:not(.svc)');
-  const isCard = isPart || !!face?.matches('.cmd');
-  const target = isPart ? $('parts') : document.querySelector('[data-deck]');
-  if (face && isCard && target) void flyTo(face, target);
+  // 1.1.1 테스터: 고른 카드가 창에 가려진 레일로 작게 날아가고, 나머지는 검은 덩어리로 무너지며 받침 아래 줄만 남아 어색했다 →
+  // 고르지 않은 받침은 받침 아래 줄까지 통째로 도트 디더 퇴장, 고른 것은 제자리에서 들렸다 눌리며(예비 → 터짐 → 출렁) 불똥.
+  if (!keep) {
+    const hide = (x: HTMLElement): void => pxOut(x, () => (x.style.visibility = 'hidden'), 240);
+    const items = [...panel.querySelectorAll<HTMLElement>('.pick-item')];
+    const pool = items.length ? items : [...panel.querySelectorAll<HTMLElement>('[data-slot]')];
+    pool.filter((x) => !face || !x.contains(face)).forEach(hide);
+    pool.find((x) => face && x.contains(face))?.querySelectorAll<HTMLElement>('.slot-info').forEach(hide);
+  }
+  if (face) {
+    replay(face, 'taken');
+    const r = face.getBoundingClientRect();
+    window.setTimeout(() => sparksAt(r.left + r.width / 2, r.top + r.height / 2, 14, 60), 160);
+  }
   window.setTimeout(() => {
     panel.classList.remove('locked');
     then();
-  }, isCard ? 640 : 450);
+  }, 620);
 };
 
 /**
@@ -2590,7 +2624,7 @@ const finishNow = (): void => {
     coachOn = false;
     writeMeta(store, { ...readMeta(store), onboarded: true });
   }
-  document.querySelector('.talk.coach')?.remove();
+  document.querySelector('.coach-band')?.remove();
   if (buildTrialId) return buildTrialEnd(isWin);
   if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
@@ -3024,7 +3058,12 @@ const kitPick = (title: string, then: () => void, tag = ''): void => {
     tag: `<span class="ribbon">${deep ? SCREEN_TEXT.deep(AXIS_NAMES[deep as Axis]) : SCREEN_TEXT.broad}</span>${tag}`,
     items: offers.map((k, n) => ({ key: String(n), html: partFace(k.part, ''), info: withCards(k.cards) })),
     skip: { label: SCREEN_TEXT.skip, attrs: 'data-skip' },
-    onSelect: () => sfx('lift'),
+    mid: `<p class="with-cards note">${SCREEN_TEXT.withHint}</p>`,
+    onSelect: (key) => {
+      sfx('lift');
+      const m = el.querySelector<HTMLElement>('.with-cards');
+      if (m) m.innerHTML = `<span class="lbl">${SCREEN_TEXT.withHead}</span> ${offers[Number(key)].cards.map(cardGist).join(' / ')}`;
+    },
     onPick: (key, slot) =>
       takeFx(slot, () => {
         const k = offers[Number(key)];
@@ -3564,7 +3603,7 @@ const startBuildTrial = (id: BuildTrialId, condition: BuildTrialCase = 'ready'):
   blog = []; apKey = ''; apPrev = coinPrev = apHold = null;
   selCard = selPiece = openCard = null;
   busy = false; coachOn = false; turnDmg = 0; prevKills = 0; ritesDone = 0;
-  document.querySelector('.talk.coach')?.remove();
+  document.querySelector('.coach-band')?.remove();
   closeOverlay(); closeOpening();
   $('hand').classList.remove('dealing');
   renderer.setFoeTraits([]); renderer.setNemesis(null); renderer.setBossFinish(false); renderer.setAct(1); renderer.setFoeTone('', ''); renderer.lastMovesClear();
@@ -3849,7 +3888,7 @@ const tutMark = (part: string): void => {
 /** 안내 한 묶음 — 건너뛰면 남은 묶음도 모두 건너뛴 것으로 */
 const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
   tutActive = true;
-  document.querySelector('.talk.coach')?.remove();
+  document.querySelector('.coach-band')?.remove();
   const done = await runTutorial(steps, { pause: () => enemyTurn || document.body.classList.contains('rev-freeze') || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
   tutActive = false;
   tutMark(part);

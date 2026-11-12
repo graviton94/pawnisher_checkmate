@@ -185,7 +185,7 @@ export const SCREEN_TEXT = {
   pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', braceGo: '덧댄다',
   // 출하 끝 단추 (D-403, 사용자: 「남긴다 · 돌아간다는 어색하다 — 시스템 낱말로」): 결과 공유하기 = 설문 → 기록 보내기 · 메인 화면으로 = 처음 화면
   close: '닫는다', ledger: '도감', overhaul: '정비한다', note: '결과 공유하기', home: '메인 화면으로',
-  sold: '팔림', newCrewTag: '새 분대원', bossTag: '반장 격파', checkTag: '검문 통과', closeTag: '부품 하나 더', fullHp: 'HP 가득', broad: '큰 세 갈래', deep: (ax: string) => `${ax} 세부 갈래`,
+  sold: '팔림', newCrewTag: '새 분대원', bossTag: '반장 격파', checkTag: '검문 통과', closeTag: '부품 하나 더', fullHp: 'HP 가득', broad: '큰 세 갈래', withHint: '받침을 누르면 함께 오는 카드가 보입니다.', withHead: '함께 오는 카드', deep: (ax: string) => `${ax} 세부 갈래`,
   shopHint: '물건을 누르면 여기 풀이가 뜹니다.', forgeHint: '손질 하나를 고르세요.', noCards: '고를 카드가 없습니다.',
   melt: (n: number) => `녹이면 나사 +${n}`, slots: (n: number) => `부품 칸 ${n}`, newPart: (name: string) => `새 「${name}」`,
   clearLine: '출하구를 지났습니다.', failLine: (act: string) => `${act}에서 멈췄습니다.`, opened: '새로 열림', daily: '오늘의 도전',

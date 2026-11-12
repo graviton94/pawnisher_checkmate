@@ -453,11 +453,19 @@ const bandNext = (): void => {
   el.innerHTML = `${item.icon}<span>${item.text}</span>`;
   document.body.appendChild(el);
   placeBand(el);
+  // 걷기는 한 번만. 디더 퇴장 중에 새 띠가 먼저 떴으면 그 띠를 건드리지 않는다
+  // (전에는 퇴장 끝에 bandNext가 빈 줄을 보고 bandNow를 비워, 새 띠가 타이머를 잃고 영영 남았다 — 1.1.1 테스터)
   const out = (): void => {
-    if (bandNow?.el !== el) return;
-    window.clearTimeout(bandNow.t);
-    bandNow = null;
-    pxOut(el, () => (el.remove(), bandNext()), 160);
+    if (el.dataset.out) return;
+    el.dataset.out = '1';
+    if (bandNow?.el === el) {
+      window.clearTimeout(bandNow.t);
+      bandNow = null;
+    }
+    pxOut(el, () => {
+      el.remove();
+      if (!bandNow) bandNext();
+    }, 160);
   };
   el.addEventListener('click', out);
   bandNow = { item, el, t: window.setTimeout(out, item.ms) };
@@ -500,6 +508,7 @@ export const clearBand = (): void => {
     bandNow.el.remove();
     bandNow = null;
   }
+  document.querySelectorAll('.state-band:not(.coach-band)').forEach((e) => e.remove());
 };
 /** 토스트 (3.8): 한 줄 20자 이하 · 1.2초 + 글자당 70ms — 상태 띠 자리에 줄 선다 */
 export const toast = (text: string, icon = ''): void => stateBand(text, 'toast', { icon });

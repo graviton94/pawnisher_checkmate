@@ -332,6 +332,10 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 /* 등장: 아래로 펼쳐지는 계단 3프레임 (투명도 보간 없음) · 퇴장은 pxOut 디더 */
 .state-band.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
 @keyframes ktoastin { 0% { clip-path: inset(0 0 66% 0); } 50% { clip-path: inset(0 0 33% 0); } 100% { clip-path: inset(0); } }
+/* 부관 안내 띠 (1.1.1 테스터): 판 아래 자리에 고정 — 이름(금 12) + 할 일(15). 상태 띠와 같은 쇠 토스트 */
+.state-band.coach-band { z-index: 80; transform: translateX(-50%); display: flex; flex-direction: row; align-items: center; gap: var(--s2); text-align: left; padding: 0 var(--s2); cursor: default; pointer-events: none; }
+.state-band.coach-band .who { flex: none; color: var(--t-ally); font: 700 12px/1.4 Galmuri11, sans-serif; }
+.state-band.coach-band .line { font: 400 15px/1.4 Galmuri14, Galmuri11, sans-serif; }
 /* 견본 쪽(kitSheet)에서 토스트 모양만 */
 .kit-sheet .k-toast { position: static; transform: none; }
 
@@ -756,7 +760,9 @@ body.slice.lay-f #right > .rmid {
 /* 적 의도 목록 (UI-07 아이콘): 적 그림 · 의도 · 대상 · 값 — 줄 32 · 최대 5 */
 .intents { display: grid; gap: 0; min-width: 0; padding: 0; margin: 0; background: none; border: 0; text-align: left; color: var(--t-body); cursor: pointer; }
 .intents .it-row { display: grid; grid-template-columns: 24px calc(var(--px1) * 20) minmax(0, 1fr); align-items: center; column-gap: var(--s1); min-height: 32px; font: 400 12px/1.2 Galmuri11, sans-serif; }
-.intents .it-row > .who { display: grid; place-items: center; width: 24px; height: 24px; }
+.intents .it-row > .who { position: relative; display: grid; place-items: center; width: 24px; height: 24px; }
+/* 판 위 적 순번 딱지(11도트)와 같은 그림 — 기물 왼쪽 위에 걸친다 */
+.intents .it-row > .who > img.it-n { position: absolute; left: calc(var(--px) * -4); top: calc(var(--px) * -4); width: calc(var(--px) * 11); height: calc(var(--px) * 11); image-rendering: pixelated; }
 .intents .it-row > .who img, .intents .it-res img { width: 24px; height: 24px; image-rendering: pixelated; }
 .intents .it-ico { justify-self: center; display: block; image-rendering: pixelated; }
 .intents .it-res { display: flex; align-items: center; gap: 2px; min-width: 0; white-space: nowrap; }
@@ -1229,3 +1235,8 @@ body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {
 .part-replace-rule > strong { font-weight: 700; }
 .part-pages { display: flex; gap: 8px; align-items: center; font: 400 12px/18px Galmuri11, sans-serif; }
 .part-pages > .btn { width: 48px; min-width: 48px; height: 48px; padding: 0; font: 700 24px/36px Galmuri11, sans-serif; }
+
+/* 고른 받침 (1.1.1 테스터): 제자리에서 모았다(눌림) → 들림(터짐) → 출렁 — 계단 프레임 */
+.cf.taken { animation: ktaken 520ms steps(1, jump-end) both; z-index: 2; }
+@keyframes ktaken { 0% { transform: translateY(2px) scale(0.97); } 25% { transform: translateY(-10px) scale(1.06); } 50% { transform: translateY(-6px) scale(1.04); } 75% { transform: translateY(-8px) scale(1.05); } 100% { transform: translateY(-7px) scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .cf.taken { animation: none; } }
