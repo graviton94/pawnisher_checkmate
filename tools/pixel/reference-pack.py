@@ -61,6 +61,8 @@ def main():
             assert draw.textlength(line, font=font) <= 336, line
             draw.text((x + 24, y + 340 + j * 32), line, font=font, fill='#C89B3C')
         manifest['characters'].append({'id': slug, 'source': str(runtime_path.relative_to(ROOT)), 'source_sha256': digest(runtime_path), 'runtime_rgba_match': True, 'native': str(small_path.relative_to(OUT)), 'native_sha256': digest(small_path), 'preview': str(large_path.relative_to(OUT)), 'preview_sha256': digest(large_path)})
+    for j, line in enumerate(['왕관의 청록 장식은', '원형입니다.', '저해상도 도트의', '각진 외곽을 사각형으로', '해석하지 않습니다.']):
+        draw.text((1176, 656 + j * 36), line, font=font, fill='#BFB9AD')
     sheet.save(OUT / 'character-sheet.png')
     (OUT / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     files = [OUT / 'README.md', OUT / 'manifest.json', OUT / 'character-sheet.png', *sorted((OUT / 'native').glob('*.png')), *sorted((OUT / 'preview').glob('*.png'))]

@@ -2,6 +2,8 @@
 
 2026-11-12 · D-436 · 후속 브랜치 `content-art-audit-20261112`. **D-434 반입 완료. 전용 서사 컷 R1 세 장도 수령했으며 구도 검토 중이다. S-05/S-07은 구도 재작업, S-06은 부분 수정한다.** 완료된 프롬프트는 [보관본](asset-order-history.md#delivery-20261112-completed)에 옮겼다. main과 테스트 APK는 갱신하지 않는다.
 
+**D-438 정정: 종이왕의 청록 장식은 원형이다. 사각으로 바꾸라는 이전 지시는 철회한다.**
+
 ## 0. 현재 수정 발주 — 전용 서사 컷 R2 (D-436)
 
 **인물 참고 파일도 함께 전달한다(D-437): [전체 PNG ZIP](art/reference/pawnisher-character-reference.zip) · [종이왕 PNG](art/reference/preview/paperking-864.png) · [한 장 비교표](art/reference/character-sheet.png) · [장면별 첨부 안내](art/reference/README.md).** 종이왕 K0가 정본이고, K1은 새 금빛 왕의 형태 참고만 한다. 설명문만 보내지 말고 해당 PNG를 프롬프트와 함께 첨부한다.
@@ -12,7 +14,7 @@ R1 세 장은 [구도 리뷰](reports/2026-11-12-cinematics-r1-review.md)에 근
 |---|---|---|---|
 | 1 | S-05 출하 | ‘문 앞 정물’→‘경계를 넘는 순간’. 흑백 구도3안 먼저 | [복사](asset-order-story-cinematics.md#scene-threshold) |
 | 2 | S-07 금빛 왕 | ‘트로피 전시’→‘새 몸의 무게와 버린 왕관의 관계’. 흑백 구도3안 먼저 | [복사](asset-order-story-cinematics.md#scene-solitude) |
-| 3 | S-06 운송 | 낮은 시점/천/사선 빛 유지. 좁은 빛·왕관 사각 장식 부분 수정 | [복사](asset-order-story-cinematics.md#scene-shipping) |
+| 3 | S-06 운송 | 낮은 시점/천/사선 빛 유지. 좁은 빛·몸과 왕관 비례 부분 수정 | [복사](asset-order-story-cinematics.md#scene-shipping) |
 
 인물·배경은 같은 원근/광원으로 그린다. 구도 확정 뒤 대사 위치를 맞추며, 완성 그림 위에 전투 기물 아이콘을 다시 얹지 않는다. 동료의 인원/생존과 대사 분기는 유지한다. 수령한 R1 원본은 `build-res/order/cinematics-r1/`에 보관했다.
 
