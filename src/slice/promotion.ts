@@ -1,6 +1,7 @@
 /** D-425 왕의 몸과 동료 사이의 결정. 장 진행·저장은 호출자가 처리한다. */
 import { sfx } from '../audio/sfx';
 import { TESTIMONY } from '../data/script';
+import { josa } from '../data/josa';
 import { chapterLabel } from '../data/campaign';
 import { pxOut, replay, typeIn, typeSkip } from './fx3';
 import { btnHtml, coverArt, sceneFocus } from './uikit';
@@ -14,7 +15,7 @@ export const promotionScene = (o: { chapter: number; art: string; companion?: st
     <div class="pm-content"><header><p class="pm-chapter">${chapterLabel(o.chapter)}</p><h2 id="promotion-title">왕의 몸 앞에서</h2></header>
     <div class="pm-dialogue"><b class="pm-who">도금왕</b><p class="pm-say"></p></div>
     <div class="pm-inner"><b class="pm-who">종이왕</b><p>‘${tm.mono}’</p><p class="pm-stuck" aria-live="polite" hidden></p></div>
-    <footer><p class="pm-prompt">${final ? '왕이 되어 남거나, 이 몸으로 나간다.' : '그는 함께 나갈 약속을 알고 있었다.'}</p><div class="pm-actions">${btnHtml({ label: final ? '함께 나간다' : '돌아본다', attrs: 'data-lay' })}${btnHtml({ label: '왕이 된다', attrs: 'data-promote', kind: 'brass' })}</div></footer></div>`;
+    <footer><p class="pm-prompt">${final ? '왕이 되어 남거나, 이 몸으로 나간다.' : '동료들이 출하 상자 곁에서 기다린다.'}</p><div class="pm-actions">${btnHtml({ label: final ? '함께 나간다' : '돌아본다', attrs: 'data-lay' })}${btnHtml({ label: '왕이 된다', attrs: 'data-promote', kind: 'brass' })}</div></footer></div>`;
   document.body.appendChild(el);
   const release = sceneFocus(el), art = el.querySelector<HTMLImageElement>('.pm-art img')!;
   art.addEventListener('load', () => coverArt(art)); if (art.complete) coverArt(art);
@@ -32,7 +33,7 @@ export const promotionScene = (o: { chapter: number; art: string; companion?: st
     if (final) return finish('depart');
     const memo = el.querySelector<HTMLElement>('.pm-stuck')!;
     // 실제 동료를 돌아보는 행동이다. 거절할 수 있는 척하는 비활성 선택지는 없다.
-    memo.textContent = o.companion ? `${o.companion}이 기다리고 있다.` : o.promisedLost ? `${o.promisedLost}의 자리는 비어 있다.` : '출하 자리에는 빈칸만 남았다.';
+    memo.textContent = `${o.companion ? `${josa(o.companion, '이')} 손을 흔든다.` : o.promisedLost ? `${o.promisedLost}의 자리는 비어 있다.` : '출하 자리에는 빈칸만 남았다.'} ‘그래도… 저 몸이 갖고 싶어.’`;
     memo.hidden = false; typeSkip(say); sfx('tap');
   });
   replay(el.querySelector<HTMLElement>('.pm-content')!, 'in');

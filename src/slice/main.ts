@@ -2602,12 +2602,12 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
   el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), leave(onNo)));
   el.querySelector('[data-yes]')!.addEventListener('click', () => leave(onYes));
 };
-/** 반장 격파 컷 (각본 §8 · D-319 발주 14위 BF-01~06): 쓰러지는 모습 + 종이왕의 대꾸. 받은 그림이 있으면 그것, 없으면 초상 */
+/** 반장 격파 컷 (D-447 순서): 쓰러짐 서술 → 반장의 마지막 유혹 → 종이왕의 대답 → 끌리는 속마음. 받은 그림이 있으면 그것, 없으면 초상 */
 const bossFallCut = async (rule: StoryBoss): Promise<void> => {
   const st = BOSS_STORY[rule];
   const fallImg = await new Promise<string>((res) => { const im = new Image(); im.onload = () => res(`boss-fall-${rule}`); im.onerror = () => res(BOSS_ART[rule]); im.src = `scenes/boss-fall-${rule}.png`; });
   if (runMode !== 'story') return;
-  await playCuts([{ img: fallImg, bg: ['#16141c', '#0b0b0e'], glow: '#e5262f', art: [{ t: 'K', side: 1, x: 50, y: 58, h: 44, dim: true }], lines: [{ k: 's' as const, who: st.name, t: st.temptation }, { k: 'm' as const, t: st.deny }, ...st.fall.split('\n').map((t) => ({ k: 'n' as const, t })), ...st.reply.split('\n').map((t) => ({ k: 's' as const, who: '종이왕', t }))] }]);
+  await playCuts([{ img: fallImg, bg: ['#16141c', '#0b0b0e'], glow: '#e5262f', art: [{ t: 'K', side: 1, x: 50, y: 58, h: 44, dim: true }], lines: [...st.fall.split('\n').map((t) => ({ k: 'n' as const, t })), { k: 's' as const, who: st.name, t: st.temptation }, ...st.reply.split('\n').map((t) => ({ k: 's' as const, who: '종이왕', t })), { k: 'm' as const, t: st.deny }] }]);
 };
 const finishNow = (): void => {
   const isWin = b.s.winner === 0;
