@@ -107,6 +107,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         stage.style.setProperty('--at', c.at ?? '50% 50%');
         el.style.setProperty('--em', c.glow && c.glow !== '#f4f1ea' ? c.glow : '#f4d27a');
         el.classList.toggle('alarm', c.fx === 'red');
+        el.classList.toggle('caption-top', c.caption === 'top');
         replay(stage, 'in');
         el.classList.remove('dip');
         if (c.fx === 'alarm' || c.fx === 'red') {

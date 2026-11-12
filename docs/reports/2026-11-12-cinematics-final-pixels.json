@@ -1,0 +1,100 @@
+{
+  "method": "Regenerate from received originals; compare RGBA dimensions and pixels with live game assets.",
+  "summary": {
+    "match": 3,
+    "different": 0,
+    "error": 0
+  },
+  "assets": [
+    {
+      "source": "build-res/order/S-05-departure-decision-source.png",
+      "game": "public/scenes/departure-decision.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": 5.227777777777778,
+        "uniform": true
+      },
+      "source_sha256": "d5d2bc87e40b4143cc29fa306e67128b8cdb2aa49c5e08f10b3584a8958161eb",
+      "game_sha256": "d718f5474327c2351f429e8d8944bcefcba4b202fc8240063aa00ac09fb80943",
+      "source_size": [
+        1672,
+        941
+      ],
+      "game_size": [
+        320,
+        180
+      ],
+      "reproduced_size": [
+        320,
+        180
+      ],
+      "detected_pitch": [
+        5.227777777777778,
+        5.227777777777778
+      ],
+      "game_pixel_sha256": "7fafe93d461d28d5b0cd4cd6649980d0e2b3bae5dd1424d93eee37c44009857e",
+      "reproduced_pixel_sha256": "7fafe93d461d28d5b0cd4cd6649980d0e2b3bae5dd1424d93eee37c44009857e",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/S-06-shipping-company-source.png",
+      "game": "public/scenes/shipping-company.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": 5.227777777777778,
+        "uniform": true
+      },
+      "source_sha256": "dbd7be3f4caabd69ef7f2f2a13508d26d770f91d1c208576890703cb8b5db14e",
+      "game_sha256": "d62d26f9f5c5d5354cec75cef7abfa80fbca72fb3d4d8ce82f4e31f02f768af8",
+      "source_size": [
+        1672,
+        941
+      ],
+      "game_size": [
+        320,
+        180
+      ],
+      "reproduced_size": [
+        320,
+        180
+      ],
+      "detected_pitch": [
+        5.227777777777778,
+        5.227777777777778
+      ],
+      "game_pixel_sha256": "c55d07a4bba78bfdb5a755fd7ef7db74fb35f027e058fd95f6575070bec6e777",
+      "reproduced_pixel_sha256": "c55d07a4bba78bfdb5a755fd7ef7db74fb35f027e058fd95f6575070bec6e777",
+      "status": "match"
+    },
+    {
+      "source": "build-res/order/S-07-gilded-solitude-source.png",
+      "game": "public/scenes/gilded-solitude.png",
+      "recipe": {
+        "colors": 0,
+        "pitch": 5.227777777777778,
+        "uniform": true
+      },
+      "source_sha256": "e8f87ff8976f4238f1361ec032f8a2ddf0b57ae7166ef2df2c5010c7415b0d07",
+      "game_sha256": "678ba9ff1af0780318fe61b5ad4fe60ea180b1dfbb073c63963511567b1e5ae6",
+      "source_size": [
+        1672,
+        941
+      ],
+      "game_size": [
+        320,
+        180
+      ],
+      "reproduced_size": [
+        320,
+        180
+      ],
+      "detected_pitch": [
+        5.227777777777778,
+        5.227777777777778
+      ],
+      "game_pixel_sha256": "e14e3ce577aa4c2db8bd8c1720d7b717f55c6e8b23ec10dea04ce6e597869feb",
+      "reproduced_pixel_sha256": "e14e3ce577aa4c2db8bd8c1720d7b717f55c6e8b23ec10dea04ce6e597869feb",
+      "status": "match"
+    }
+  ]
+}

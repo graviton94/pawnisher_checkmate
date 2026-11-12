@@ -859,6 +859,13 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .prologue.logo:not(.go-wait) .cut-sub, .prologue.logo .cut-skip { visibility: hidden; }
 .prologue.logo .pl-logo { bottom: calc(var(--Gy) + var(--px) * 44); }
 
+/* D-442: 문턱 접점·눌린 왕관이 하단에 있는 완성 컷은 기존 대사 띠를 상단에 둔다. */
+.prologue.caption-top .cut-sub { top: var(--Gy); bottom: auto; }
+.prologue.caption-top .cut-skip.btn { top: var(--Gy); bottom: auto; }
+@media (max-width: 899px) {
+  .prologue.caption-top .cut-skip.btn { top: calc(var(--Gy) + var(--px) * 44 + var(--s2)); bottom: auto; }
+}
+
 /* 막 타이틀 카드 (D-388 · D-389): 위 = 막 그림(비율 그대로 덮기) · 아래 먹 바닥 = 막 꼬리표 → 이름 36 → 자막 띠 */
 .actcard { --floor: calc(var(--Gy) + var(--px) * 44 + var(--s3) + 44px + var(--s2) + var(--px) * 15 + var(--s3)); position: fixed; inset: 0; z-index: 85; overflow: hidden; background: #0b0b0e; cursor: pointer; }
 .actcard .ac-art { position: absolute; left: 0; right: 0; top: 0; bottom: var(--floor); overflow: hidden; box-shadow: 0 var(--px) 0 #33313b; }

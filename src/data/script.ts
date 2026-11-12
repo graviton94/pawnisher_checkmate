@@ -8,10 +8,12 @@ export interface Cut {
   at?: string; lines: Line[]; key?: boolean;
   /** 인물 생사를 고정해 그린 옛 컷 대신 실제 출하의 배우만 보여 준다. */
   standIn?: boolean;
-  /** 새 배경 위에 실제 생존 기물만 겹친다. 배경 그림에 배우를 굽지 않는다. */
+  /** 빈 배경에서만 실제 생존 기물을 겹친다. 인물이 있는 완성 원화에는 쓰지 않는다. */
   showActors?: boolean;
   /** 정지 장면 그림을 비율·기기 픽셀 정수배로 덮는다. */
   pixelCover?: boolean;
+  /** 하단의 핵심 행동을 가리지 않도록 해당 컷만 대사창을 상단에 둔다. */
+  caption?: 'top' | 'bottom';
 }
 const n = (t: string): Line => ({ k: 'n', t });
 const s = (who: string, t: string): Line => ({ k: 's', who, t });
@@ -19,10 +21,6 @@ const m = (t: string): Line => ({ k: 'm', t });
 const pawn = (x = 48, y = 56, h = 30): StandIn => ({ t: 'K', side: 0, x, y, h });
 const cut = (img: string, lines: Line[], art: StandIn[] = [pawn()], standIn = false): Cut => ({ img, bg: ['#16141c', '#0b0b0e'], art, lines, standIn });
 const sceneCut = (img: string, lines: Line[], art: StandIn[] = []): Cut => ({ ...cut(img, lines, art), pixelCover: true, showActors: art.length > 0, cam: 'still' });
-/** 출하 인원(최대10)에 맞춰 한 줄에 배치한다. 좌표를 고정 인원으로 그려 넣지 않는다. */
-const sceneCast = (members: StandIn[], floor: number): StandIn[] => members.map((u, i) => ({
-  ...u, x: 50 + (i - (members.length - 1) / 2) * Math.min(14, 80 / members.length), y: floor, h: u.t === 'K' ? 22 : 18,
-}));
 const homeCut = (lines: Line[]): Cut => ({ ...cut('epilogue-hands', lines), cam: 'still', pixelCover: true });
 export const CUT_TEXT_BUDGET = { line: 30 };
 export const oneLine = (t: string): string => t.replace(/\n/g, ' ');
@@ -95,20 +93,20 @@ export const promotionCuts = (chapter: number, crew: string, law: string, mirror
   const actor = alive.find((u) => u.name === company?.promised?.name) ?? alive[0];
   return [
     cut('promote-gild', [n('종이왕이 왕의 거푸집에 들어갔다.'), n('새 몸은 흠집 하나 없이 굳었다.'), m(chapter === 0 ? '이제 누구도 나를 잘못 넣지 못한다.' : '내가 다스리면 달라질 것이다.')]),
-    sceneCut('departure-dock', actor ? [s(actor.name, '대장, 안 오세요?'), s('새 도금왕', '출하해라.'), n('상자는 그를 두고 문을 지났다.')] : [n('출하 자리에는 빈칸만 남아 있었다.'), n('그는 남겨진 이름을 부르지 않았다.')], sceneCast(alive.map((u) => ({ t: u.t, side: 0 as const, x: 0, y: 0, h: 18 })), 68)),
+    { ...sceneCut('gilded-solitude', actor ? [s(actor.name, '대장, 안 오세요?'), s('새 도금왕', '출하해라.'), n('상자는 그를 두고 문을 지났다.')] : [n('출하 자리에는 빈칸만 남아 있었다.'), n('그는 남겨진 이름을 부르지 않았다.')]), caption: 'top' },
     cut('promote-rule', [n('아래에서 새 세트 하나가 올라오고 있었다.'), m('저 폰이 이 자리를 빼앗으면.'), n(`「${law}」`), ...(mirror ? [n(mirror)] : [])]),
   ];
 };
 export const ENDING_A: Cut = cut('promote-rule', [n('그는 동료들이 떠난 자리에 남았다.'), n('이제 다음 폰이 그를 넘어야 했다.')]);
 export const DEFEAT: Cut = cut('end-fail', [n('패한 세트가 용광로로 옮겨졌다.'), n('그들의 태엽이 멎었다.'), n('다음 상자는 다른 이들의 것이었다.')]);
-export const trueEndingCuts = (crew: StandIn[], company?: StoryCompany): Cut[] => {
+export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] => {
   const witness = company?.alive.find((u) => u.name === company.promised?.name) ?? company?.alive[0];
   const lost = company?.promised && !company.promised.alive ? company.promised.name : '';
   return [
     sceneCut('throne-mold', [n('왕의 몸은 그대로 비어 있었다.'), m('갖고 싶다. 지금도.')]),
-    sceneCut('departure-dock', [s('종이왕', '반품되더라도 같이 가자.'), ...(witness ? [s(witness.name, '나가서도 내 흠집은 남겠지.')] : [n('그는 남겨진 이름들을 챙겼다.')])], sceneCast([pawn(), ...crew], 68)),
-    sceneCut('departure-dock', [n('정품으로 고친 이는 없었다.'), n('종이왕도 같은 상자에 올라탔다.'), n('그들 뒤에서 공장은 계속 돌아갔다.')]),
-    sceneCut('shipping-interior', lost ? [n(`${lost}의 자리는 비어 있었다.`), n('그는 그 자리에 원부를 놓았다.')] : witness ? [n('운송 중인 상자에서 동료가 잠들었다.'), n('종이왕은 곁에서 태엽을 감았다.')] : [n('상자가 문 밖으로 움직였다.'), n('그는 남겨진 이름 곁을 지켰다.')], sceneCast([pawn(), ...crew], 64)),
+    { ...sceneCut('departure-decision', [s('종이왕', '반품되더라도 같이 가자.'), ...(witness ? [s(witness.name, '나가서도 내 흠집은 남겠지.')] : [n('그는 남겨진 이름들을 챙겼다.')])]), caption: 'top' },
+    { ...sceneCut('departure-decision', [n('정품으로 고친 이는 없었다.'), n('종이왕도 같은 상자에 올라탔다.'), n('그들 뒤에서 공장은 계속 돌아갔다.')]), caption: 'top' },
+    sceneCut('shipping-company', lost ? [n(`${lost}의 자리는 비어 있었다.`), n('그는 그 자리에 원부를 놓았다.')] : witness ? [n('운송 중인 상자에서 동료가 잠들었다.'), n('종이왕은 곁에서 태엽을 감았다.')] : [n('상자가 문 밖으로 움직였다.'), n('그는 남겨진 이름 곁을 지켰다.')]),
     homeCut([n('어느 집에서 아이의 손이 상자를 열었다.')]),
     homeCut([s('부모', '킹이 없네. 불량이야. 반품하자.'), s('아이', '싫어. 난 이 세트가 좋아.')]),
     homeCut([n('아이가 종이왕을 판 위에 놓았다.'), n('손끝은 흠집 위에서 멈추지 않았다.')]),

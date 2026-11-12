@@ -1,23 +1,17 @@
-# 서사 그림 제작 — ChatGPT 프로젝트 방식 D-441
+# 전용 서사 일러스트 — S-05~07 반입 완료 D-442
 
-**이전 매번 채팅 첨부 방식은 폐기한다.** 프로젝트 지침과 소스는 한 번 등록하고 이후 채팅에는 프롬프트만 쓴다.
-
-1. [프로젝트 지침](art/chatgpt-project/project-instructions.txt)을 프로젝트 지침 칸에 붙여 넣는다.
-2. [프로젝트 소스 ZIP](art/chatgpt-project/project-sources.zip)을 풀어 PNG13개와 `ASSET-PROFILES.md`·`ART-SOURCE-GUIDE.md`를 프로젝트 소스에 등록한다.
-
-[설정 안내](art/chatgpt-project/README.md). 지침 파일·예시 채팅은 소스에 중복 등록하지 않는다. 공통 지침은 모든 게임 에셋에 적용하고, 규격/화풍은 유형별 기준 문서, 인물/장면은 개별 기준 문서로 구분한다. 이번 종이왕 장식은 청록 원형 총1개다.
-
-<a id="scene-shipping"></a>
-
-## 지금 채팅에 입력할 프롬프트
-
-```text
-S-06을 다시 그려 줘. 카메라는 닫힌 운송 상자 안이다. 가까운 판지 벽과 천, 왼쪽 종이왕, 오른쪽 위 작은 틈의 사선 빛만 남겨. 열린 목재 궤짝과 공장 전경, 옆으로 걸쳐 누운 포즈를 없애. 화풍은 기존 사건·보스 참고를 따르고 무작위 얼룩과 바닥 체크 무늬를 줄여. 왕관 장식은 청록 원형1개. 컬러1장만.
-```
+이번 ZIP의 최종3장을 원본 보존 후 실제 격자 복원·게임 연결·네 대표 화면에서 검수했다. [완료 보고](reports/2026-11-12-cinematics-final-import.md)와 [화면 비교](reports/2026-11-12-cinematics-final-screens.png)를 따른다. **이 세 장을 다시 발주하지 않는다.**
 
 <a id="scene-threshold"></a>
+<a id="scene-shipping"></a>
 <a id="scene-solitude"></a>
 
-후속 S-05/S-07 장면과 수정은 [짧은 채팅 예시](art/chatgpt-project/chat-prompts.txt)를 사용한다. 장면의 내용과 참고 파일 역할은 프로젝트 소스 기준 문서에 들어 있다. 새 구도3안씩 동시 제작하지 않는다.
+| 번호 | 실행용 PNG | 사용 |
+|---|---|---|
+| S-05 | `public/scenes/departure-decision.png` | 진엔딩 출하, 대사 상단 |
+| S-06 | `public/scenes/shipping-company.png` | 진엔딩 운송, 대사 하단 |
+| S-07 | `public/scenes/gilded-solitude.png` | 왕위 선택 후 배신 장면, 대사 상단 |
 
-최신 S-06과 공통 기준은 [D-441 리뷰](reports/2026-11-12-s06-style-review.md)에, 이전 첨부 결과의 [리뷰](reports/2026-11-12-cinematics-r2-review.md)는 보존한다. 이전 [R3 프롬프트](asset-order-history.md#cinematics-r3-prompts)는 당시 기록이며 현재 작업 방식이 아니다. 실제 생성 결과의 인물·화풍·격자는 개발 측에서 검수한다. 게임·main/APK 변경 없음.
+모두 같은320×180 출력이며 기물 아이콘을 얹지 않는다. 원본은 `build-res/order/S-05-departure-decision-source.png`, `S-06-shipping-company-source.png`, `S-07-gilded-solitude-source.png`다. 색상 수를 임의로 줄이지 않았다. 수령본에 있는 디더링과 재질 표현을 보존한다.
+
+프로젝트의 [게임 전체 공통 지침](art/chatgpt-project/project-instructions.txt)·[유형별 프로필](art/chatgpt-project/ASSET-PROFILES.md)·[개별 설정](art/chatgpt-project/ART-SOURCE-GUIDE.md)은 이후 신규 작업용으로 유지한다. 예전 [구도 리뷰](reports/2026-11-12-cinematics-r2-review.md)와 [S-06 이전안 리뷰](reports/2026-11-12-s06-style-review.md)는 당시 기록이며 최종본 반입 상태를 뜻하지 않는다.

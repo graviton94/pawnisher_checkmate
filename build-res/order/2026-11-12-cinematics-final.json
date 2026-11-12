@@ -1,0 +1,77 @@
+{
+  "archive_sha256": "b065daea3c2006b9b2fec4365c2218a27b132c5396099b2e9337b23d379a3b66",
+  "entries": [
+    {
+      "id": "S-05",
+      "archive_entry": "문턱을 넘는 종이 왕руз erotikk.png",
+      "source": "build-res/order/S-05-departure-decision-source.png",
+      "source_sha256": "d5d2bc87e40b4143cc29fa306e67128b8cdb2aa49c5e08f10b3584a8958161eb",
+      "source_size": [
+        1672,
+        941
+      ],
+      "output": "public/scenes/departure-decision.png",
+      "output_size": [
+        320,
+        180
+      ],
+      "output_sha256": "d718f5474327c2351f429e8d8944bcefcba4b202fc8240063aa00ac09fb80943",
+      "recipe": {
+        "pitch": 5.227777777777778,
+        "uniform": true,
+        "colors": 0
+      },
+      "alpha_values": [
+        255
+      ]
+    },
+    {
+      "id": "S-06",
+      "archive_entry": "상자 속 종이 왕관 폰.png",
+      "source": "build-res/order/S-06-shipping-company-source.png",
+      "source_sha256": "dbd7be3f4caabd69ef7f2f2a13508d26d770f91d1c208576890703cb8b5db14e",
+      "source_size": [
+        1672,
+        941
+      ],
+      "output": "public/scenes/shipping-company.png",
+      "output_size": [
+        320,
+        180
+      ],
+      "output_sha256": "d62d26f9f5c5d5354cec75cef7abfa80fbca72fb3d4d8ce82f4e31f02f768af8",
+      "recipe": {
+        "pitch": 5.227777777777778,
+        "uniform": true,
+        "colors": 0
+      },
+      "alpha_values": [
+        255
+      ]
+    },
+    {
+      "id": "S-07",
+      "archive_entry": "황금 왕좌와 부서진 왕관, 공장 회랑.png",
+      "source": "build-res/order/S-07-gilded-solitude-source.png",
+      "source_sha256": "e8f87ff8976f4238f1361ec032f8a2ddf0b57ae7166ef2df2c5010c7415b0d07",
+      "source_size": [
+        1672,
+        941
+      ],
+      "output": "public/scenes/gilded-solitude.png",
+      "output_size": [
+        320,
+        180
+      ],
+      "output_sha256": "678ba9ff1af0780318fe61b5ad4fe60ea180b1dfbb073c63963511567b1e5ae6",
+      "recipe": {
+        "pitch": 5.227777777777778,
+        "uniform": true,
+        "colors": 0
+      },
+      "alpha_values": [
+        255
+      ]
+    }
+  ]
+}

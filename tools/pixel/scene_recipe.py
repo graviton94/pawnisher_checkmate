@@ -4,13 +4,16 @@
 # credits-bg는 원본 재변환과 현재 PNG의 RGBA 전 픽셀 일치로 재확인했다(D-423).
 MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     # D-434: 수령본 1672×941 → 320×180. 전체를 한 번 샘플링하고 마지막 경계는 원본 끝.
-    'throne-mold': 941 / 180, 'departure-dock': 941 / 180, 'shipping-interior': 941 / 180}
+    'throne-mold': 941 / 180, 'departure-dock': 941 / 180, 'shipping-interior': 941 / 180,
+    # D-442: S-05~07 원본1672×941 → 전체320×180 격자, 색 수 축소 없음.
+    'departure-decision': 941 / 180, 'shipping-company': 941 / 180, 'gilded-solitude': 941 / 180}
 
 
 def options(name):
     """그림의 색은 유지하고, 수동값이 없는 장면은 기존 자동 격자 복원을 쓴다."""
     opts = {'colors': 0, 'pitch': MANUAL_PITCH.get(name)}
     # S-01: 자동 검출 6.21px 확인. 균일한 300×135 격자로 원본 1870:841 비율을 보존한다.
-    if name in ('epilogue-hands', 'throne-mold', 'departure-dock', 'shipping-interior'):
+    if name in ('epilogue-hands', 'throne-mold', 'departure-dock', 'shipping-interior',
+                'departure-decision', 'shipping-company', 'gilded-solitude'):
         opts['uniform'] = True
     return opts

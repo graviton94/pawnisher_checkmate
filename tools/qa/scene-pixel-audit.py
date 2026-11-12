@@ -54,7 +54,7 @@ def main():
     generated.mkdir(parents=True, exist_ok=True)
     pairs = []
     for source in sorted((ROOT / 'build-res' / 'order').glob('*-source.png')):
-        match = re.match(r'^(?:A-\d+|BG-\d+|SC-\d+|UI-06[ab]|E-06|EN-0[12]|P-00)-(.+)-source\.png$', source.name)
+        match = re.match(r'^(?:A-\d+|BG-\d+|SC-\d+|S-\d+|UI-06[ab]|E-06|EN-0[12]|P-00)-(.+)-source\.png$', source.name)
         if not match:
             continue
         if options.scene and match[1] not in options.scene:
