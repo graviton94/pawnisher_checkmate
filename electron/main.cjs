@@ -54,7 +54,7 @@ const createWindow = () => {
     win.webContents.on('render-process-gone', (_e, details) => { console.error('SMOKE renderer', details.reason); app.exit(1); });
     win.webContents.on('did-finish-load', async () => {
       try {
-        const result = await win.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const until=Date.now()+30000;const timer=setInterval(()=>{if(document.querySelector('.op-menu,.prologue')?.checkVisibility()&&!document.querySelector('#boot')&&document.fonts.status==='loaded'){clearInterval(timer);resolve({title:document.title,width:innerWidth,height:innerHeight})}else if(Date.now()>until){clearInterval(timer);reject(new Error('game UI did not start'))}},100)})`);
+        const result = await win.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const until=Date.now()+30000;const timer=setInterval(()=>{if(document.querySelector('.op-press,.op-menu,.prologue')?.checkVisibility()&&!document.querySelector('#boot')&&document.fonts.status==='loaded'){clearInterval(timer);resolve({title:document.title,width:innerWidth,height:innerHeight})}else if(Date.now()>until){clearInterval(timer);reject(new Error('game UI did not start'))}},100)})`);
         if (process.env.SMOKE_SHOT) require('node:fs').writeFileSync(process.env.SMOKE_SHOT, (await win.webContents.capturePage()).toPNG());
         const proof = { success: true, ...result, version: app.getVersion(), platform: process.platform, arch: process.arch };
         if (process.env.SMOKE_META) require('node:fs').writeFileSync(process.env.SMOKE_META, JSON.stringify(proof, null, 2));
