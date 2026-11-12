@@ -1,0 +1,75 @@
+{
+  "source_commit": "695b4ec63b6f81cca2011b91ac58ed5f29d0f5b3",
+  "characters": [
+    {
+      "id": "paperking",
+      "source": "public/pieces/l-K0.png",
+      "source_sha256": "114d3eb1b14d3912d831ec45372718dcab337bbf49ef102a870a55bb902e2fd8",
+      "runtime_rgba_match": true,
+      "native": "native/paperking-72.png",
+      "native_sha256": "5123c5751df15a27002eb574e0ee1d95b767a59d132aea728a3ec0a767cd6e41",
+      "preview": "preview/paperking-864.png",
+      "preview_sha256": "1733683daac59e2b2a44054b8d7e982280cd51dd91398f42f99856d74170b601"
+    },
+    {
+      "id": "pawn",
+      "source": "public/pieces/l-P0.png",
+      "source_sha256": "aa227053627d4977bed26a45a72a2fddb13986717d73e916bc33c7aa6c4ba890",
+      "runtime_rgba_match": true,
+      "native": "native/pawn-72.png",
+      "native_sha256": "ace7ed5ff26dee194f04f495e712d65f1748d66c9a2bcff807f12cd60bac6bfc",
+      "preview": "preview/pawn-864.png",
+      "preview_sha256": "107aac436dd4796e0de2156e7896e49e370b86ced007191cdee0ba9bb050fca8"
+    },
+    {
+      "id": "knight",
+      "source": "public/pieces/l-N0.png",
+      "source_sha256": "e09e755d6b332bd628758a8c725ada311097b50951d777cf20d3dcf672add4f6",
+      "runtime_rgba_match": true,
+      "native": "native/knight-72.png",
+      "native_sha256": "4fd7a4b17451fd8d6dc91747eef56ccfcdd39c1e8c65269b543d6de540a6377d",
+      "preview": "preview/knight-864.png",
+      "preview_sha256": "7d58e8dbfe78db4c65426f91d4bd3a0c5fa018c85d09d5d20266fe6a9ffe3f7a"
+    },
+    {
+      "id": "bishop",
+      "source": "public/pieces/l-B0.png",
+      "source_sha256": "0d11935d0492a6e5c7c000abc1835e105b20ecccaa78344e63cdb28840fb40f1",
+      "runtime_rgba_match": true,
+      "native": "native/bishop-72.png",
+      "native_sha256": "4810824e7ad2eadc7b73ba15af00490576b15af351df1af41bb4a6a62d875b59",
+      "preview": "preview/bishop-864.png",
+      "preview_sha256": "f455b39a9727a8c5eaefa5133989635fbc41ec5583991e024c210b05ac4837ef"
+    },
+    {
+      "id": "rook",
+      "source": "public/pieces/l-R0.png",
+      "source_sha256": "fb941f2b13aaca134c898b38b3563410e3f314aaaa2e072af425359c291d6cd8",
+      "runtime_rgba_match": true,
+      "native": "native/rook-72.png",
+      "native_sha256": "de091f8c420c4dbc795caa48ab4055b39f63db48ba5b098bae5dedc94824c64d",
+      "preview": "preview/rook-864.png",
+      "preview_sha256": "8bed3886a5521edd49c55788896485cabe20b7318ecb08682ee1b2d0f080a6ac"
+    },
+    {
+      "id": "queen",
+      "source": "public/pieces/l-Q0.png",
+      "source_sha256": "f65f466a912be18dd30e5a6408555436f39166aaac0f49478dbe1478ddb1de0e",
+      "runtime_rgba_match": true,
+      "native": "native/queen-72.png",
+      "native_sha256": "6f29918ca5d84f58be72d1ee324731303bafddd45cd060959fa5dd22bda32035",
+      "preview": "preview/queen-864.png",
+      "preview_sha256": "fbad3d646d2dcff32436f666f9a9d2492fc97733df0e9af10bf4932b22aecdee"
+    },
+    {
+      "id": "king-form-only",
+      "source": "public/pieces/l-K1.png",
+      "source_sha256": "18d68fd3692cddfdd64dc9ec5fd3694a90004c5bd839b1ce71f10d768e1dc341",
+      "runtime_rgba_match": true,
+      "native": "native/king-form-only-72.png",
+      "native_sha256": "16a0e24d93664b4d9a13a1b95f4c9ab899ae7f2e97c41af04e1ccccfa17ef3db",
+      "preview": "preview/king-form-only-864.png",
+      "preview_sha256": "39524d713d3a02fdbd759358f0939614757fe3209c6dd5bc7f3a9a99ff47c5d0"
+    }
+  ]
+}

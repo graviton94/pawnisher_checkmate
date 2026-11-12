@@ -4,6 +4,8 @@
 
 ## 0. 현재 수정 발주 — 전용 서사 컷 R2 (D-436)
 
+**인물 참고 파일도 함께 전달한다(D-437): [전체 PNG ZIP](art/reference/pawnisher-character-reference.zip) · [종이왕 PNG](art/reference/preview/paperking-864.png) · [한 장 비교표](art/reference/character-sheet.png) · [장면별 첨부 안내](art/reference/README.md).** 종이왕 K0가 정본이고, K1은 새 금빛 왕의 형태 참고만 한다. 설명문만 보내지 말고 해당 PNG를 프롬프트와 함께 첨부한다.
+
 R1 세 장은 [구도 리뷰](reports/2026-11-12-cinematics-r1-review.md)에 근거를 남겼다. 아직 최종 원화로 승인하지 않고 실행용 그림은 유지한다. **[현재 R2 프롬프트](asset-order-story-cinematics.md)는 이전 R1의 전신/일률적 하단 여백 강제를 해제한다.**
 
 | 순서 | 번호 | 이번 작업 | 프롬프트 |
