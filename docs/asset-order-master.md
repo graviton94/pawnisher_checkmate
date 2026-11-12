@@ -1,13 +1,13 @@
 # 현재 아트 발주서 — 제작할 것만 여기서 확인
 
-2026-11-12 · D-440 · 후속 브랜치 `content-art-audit-20261112`. **프로젝트에 지침·소스를 한 번 등록하고 이후 채팅에는 프롬프트만 쓴다.** main/APK 변경 없음.
+2026-11-12 · D-441 · 후속 브랜치 `content-art-audit-20261112`. **프로젝트에 지침·소스를 한 번 등록하고 이후 채팅에는 프롬프트만 쓴다.** main/APK 변경 없음.
 
-## 0. ChatGPT 프로젝트 등록 — 이것만 사용
+## 0. ChatGPT 프로젝트 등록 — 게임 전체 공통 기준
 
 1. [프로젝트 지침 문장](art/chatgpt-project/project-instructions.txt)을 지침 칸에 넣는다.
-2. [프로젝트 소스 ZIP](art/chatgpt-project/project-sources.zip)을 풀어 PNG9개와 기준 문서1개를 소스로 등록한다.
+2. [프로젝트 소스 ZIP](art/chatgpt-project/project-sources.zip)을 풀어 PNG13개와 공통/개별 기준 문서2개를 소스로 등록한다.
 
-[이후 채팅 프롬프트](art/chatgpt-project/chat-prompts.txt) · [설정 안내](art/chatgpt-project/README.md). 첫 작업은 S-06 상자1장. 이전의 매번 참고 PNG를 채팅에 다시 첨부하라는 요구는 폐기한다. 인물·화풍·장면 내용은 프로젝트 소스로 고정한다. 기존 오류 시안은 정본 참고로 사용하지 않는다.
+[이후 채팅 프롬프트](art/chatgpt-project/chat-prompts.txt) · [설정 안내](art/chatgpt-project/README.md). 지침은 게임 전체 공통, 소스는 유형별 규격/화풍과 개별 인물/장면으로 나눈다. 기존 사건2·보스2를 기준으로 [S-06 리뷰](reports/2026-11-12-s06-style-review.md)에 따라 닫힌 상자 장면부터 수정한다. 이전의 매번 참고 PNG를 채팅에 다시 첨부하라는 요구는 폐기한다. 인물·화풍·장면 내용은 프로젝트 소스로 고정한다. 기존 오류 시안은 정본 참고로 사용하지 않는다.
 
 ## 1. D-434 반입 완료분
 

@@ -1,0 +1,46 @@
+[
+  {
+    "file": "style-event-smith.png",
+    "source": "public/scenes/smith.png",
+    "native_size": [
+      256,
+      192
+    ],
+    "transform": "nearest-neighbor 4x",
+    "source_sha256": "0f98a8b21f349c6f3d8b8a7cd97ca54eec4ab13c0216a1d3672cb721398619bc",
+    "sha256": "bc5632c97607fe4e0991caed7a00211bf58a8ffab39e7d13298809ee8ce5eb7d"
+  },
+  {
+    "file": "style-event-gambler.png",
+    "source": "public/scenes/gambler.png",
+    "native_size": [
+      239,
+      179
+    ],
+    "transform": "nearest-neighbor 4x",
+    "source_sha256": "8247bdb4f46db8fe5a4c610f28e29bdea7b743222418a24200489983485b9dd4",
+    "sha256": "dd77fdfd8946ee091d0bb5df6b2d4d9fc19bde2f66f639e1fd8926009f522dfd"
+  },
+  {
+    "file": "style-boss-inspector.png",
+    "source": "public/scenes/boss-inspector.png",
+    "native_size": [
+      219,
+      215
+    ],
+    "transform": "nearest-neighbor 4x",
+    "source_sha256": "9e5a0c494cc3cc4a8cea3ed643669810b25d54d93ddc89eb792aa8a460fee5e3",
+    "sha256": "2412b56100599a9dd5021e48ce3c1aa91220ebd5466785794c1051fca87ecf69"
+  },
+  {
+    "file": "style-boss-gilded.png",
+    "source": "public/scenes/boss-gilded.png",
+    "native_size": [
+      256,
+      245
+    ],
+    "transform": "nearest-neighbor 4x",
+    "source_sha256": "7653431230f05910798c422b10088e338930561fe10ec145d98832bf92f855c5",
+    "sha256": "8c53066017f8bbaea33e936d23bf3e502b442c45424488f9401e55cc062dcf7f"
+  }
+]

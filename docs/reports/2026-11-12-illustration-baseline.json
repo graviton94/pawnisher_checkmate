@@ -1,0 +1,604 @@
+{
+  "method": "Opaque/visible pixels alpha>=128; RGB exact colors; top32 pixel coverage; Rec709-weighted sRGB code values, not linear luminance. No automated dithering or style verdict.",
+  "inventory_count": 94,
+  "inventory": [
+    {
+      "file": "act-0.png",
+      "width": 856,
+      "height": 416
+    },
+    {
+      "file": "act-1.png",
+      "width": 273,
+      "height": 141
+    },
+    {
+      "file": "act-2.png",
+      "width": 273,
+      "height": 138
+    },
+    {
+      "file": "act-3.png",
+      "width": 364,
+      "height": 179
+    },
+    {
+      "file": "act-4.png",
+      "width": 593,
+      "height": 300
+    },
+    {
+      "file": "apprentice.png",
+      "width": 239,
+      "height": 183
+    },
+    {
+      "file": "auction.png",
+      "width": 256,
+      "height": 196
+    },
+    {
+      "file": "bg-event.png",
+      "width": 283,
+      "height": 150
+    },
+    {
+      "file": "bg-forge.png",
+      "width": 371,
+      "height": 186
+    },
+    {
+      "file": "bg-reward.png",
+      "width": 284,
+      "height": 149
+    },
+    {
+      "file": "bg-shop.png",
+      "width": 259,
+      "height": 136
+    },
+    {
+      "file": "blueprint.png",
+      "width": 254,
+      "height": 186
+    },
+    {
+      "file": "bookCart.png",
+      "width": 258,
+      "height": 189
+    },
+    {
+      "file": "boss-alarm.png",
+      "width": 398,
+      "height": 394
+    },
+    {
+      "file": "boss-assembly.png",
+      "width": 152,
+      "height": 152
+    },
+    {
+      "file": "boss-fall-alarm.png",
+      "width": 311,
+      "height": 157
+    },
+    {
+      "file": "boss-fall-inspect.png",
+      "width": 311,
+      "height": 158
+    },
+    {
+      "file": "boss-fall-magnet.png",
+      "width": 316,
+      "height": 163
+    },
+    {
+      "file": "boss-fall-plate.png",
+      "width": 281,
+      "height": 136
+    },
+    {
+      "file": "boss-fall-spawn.png",
+      "width": 311,
+      "height": 153
+    },
+    {
+      "file": "boss-fall-thorns.png",
+      "width": 302,
+      "height": 153
+    },
+    {
+      "file": "boss-gilded-1.png",
+      "width": 272,
+      "height": 275
+    },
+    {
+      "file": "boss-gilded-2.png",
+      "width": 284,
+      "height": 280
+    },
+    {
+      "file": "boss-gilded-3.png",
+      "width": 275,
+      "height": 267
+    },
+    {
+      "file": "boss-gilded-4.png",
+      "width": 265,
+      "height": 258
+    },
+    {
+      "file": "boss-gilded.png",
+      "width": 256,
+      "height": 245
+    },
+    {
+      "file": "boss-inspector.png",
+      "width": 219,
+      "height": 215
+    },
+    {
+      "file": "boss-magnet.png",
+      "width": 260,
+      "height": 237
+    },
+    {
+      "file": "boss-plate.png",
+      "width": 211,
+      "height": 206
+    },
+    {
+      "file": "boss-thorns.png",
+      "width": 221,
+      "height": 216
+    },
+    {
+      "file": "brokenGacha.png",
+      "width": 265,
+      "height": 201
+    },
+    {
+      "file": "cardSharp.png",
+      "width": 258,
+      "height": 199
+    },
+    {
+      "file": "castMold.png",
+      "width": 261,
+      "height": 197
+    },
+    {
+      "file": "coldForge.png",
+      "width": 254,
+      "height": 198
+    },
+    {
+      "file": "conveyor.png",
+      "width": 255,
+      "height": 187
+    },
+    {
+      "file": "copyPress.png",
+      "width": 258,
+      "height": 192
+    },
+    {
+      "file": "counterweight.png",
+      "width": 259,
+      "height": 193
+    },
+    {
+      "file": "credits-bg.png",
+      "width": 293,
+      "height": 146
+    },
+    {
+      "file": "crownAltar.png",
+      "width": 265,
+      "height": 193
+    },
+    {
+      "file": "departure-dock.png",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "file": "dipping.png",
+      "width": 242,
+      "height": 182
+    },
+    {
+      "file": "drillRook.png",
+      "width": 267,
+      "height": 204
+    },
+    {
+      "file": "duelKnight.png",
+      "width": 248,
+      "height": 188
+    },
+    {
+      "file": "echoWell.png",
+      "width": 260,
+      "height": 197
+    },
+    {
+      "file": "end-clear.png",
+      "width": 312,
+      "height": 165
+    },
+    {
+      "file": "end-fail.png",
+      "width": 272,
+      "height": 140
+    },
+    {
+      "file": "ending-1.png",
+      "width": 300,
+      "height": 153
+    },
+    {
+      "file": "ending-3.png",
+      "width": 267,
+      "height": 135
+    },
+    {
+      "file": "ending-5.png",
+      "width": 294,
+      "height": 155
+    },
+    {
+      "file": "ending-6.png",
+      "width": 282,
+      "height": 141
+    },
+    {
+      "file": "ending-7.png",
+      "width": 263,
+      "height": 119
+    },
+    {
+      "file": "ending-a.png",
+      "width": 308,
+      "height": 142
+    },
+    {
+      "file": "ending-crew.png",
+      "width": 359,
+      "height": 175
+    },
+    {
+      "file": "ending-peel.png",
+      "width": 534,
+      "height": 267
+    },
+    {
+      "file": "entry-battle.png",
+      "width": 494,
+      "height": 319
+    },
+    {
+      "file": "entry-check.png",
+      "width": 497,
+      "height": 335
+    },
+    {
+      "file": "epilogue-hands.png",
+      "width": 300,
+      "height": 135
+    },
+    {
+      "file": "fieldMedic.png",
+      "width": 262,
+      "height": 195
+    },
+    {
+      "file": "gambler.png",
+      "width": 239,
+      "height": 179
+    },
+    {
+      "file": "lostPawn.png",
+      "width": 250,
+      "height": 195
+    },
+    {
+      "file": "mirrorHall.png",
+      "width": 237,
+      "height": 185
+    },
+    {
+      "file": "napping.png",
+      "width": 241,
+      "height": 181
+    },
+    {
+      "file": "nightShift.png",
+      "width": 245,
+      "height": 182
+    },
+    {
+      "file": "oilMerchant.png",
+      "width": 252,
+      "height": 189
+    },
+    {
+      "file": "overtime.png",
+      "width": 255,
+      "height": 196
+    },
+    {
+      "file": "pact.png",
+      "width": 242,
+      "height": 174
+    },
+    {
+      "file": "prologue-00.png",
+      "width": 287,
+      "height": 144
+    },
+    {
+      "file": "prologue-01.png",
+      "width": 306,
+      "height": 149
+    },
+    {
+      "file": "prologue-02.png",
+      "width": 304,
+      "height": 147
+    },
+    {
+      "file": "prologue-03.png",
+      "width": 302,
+      "height": 151
+    },
+    {
+      "file": "prologue-04.png",
+      "width": 279,
+      "height": 143
+    },
+    {
+      "file": "prologue-05.png",
+      "width": 277,
+      "height": 143
+    },
+    {
+      "file": "prologue-06.png",
+      "width": 289,
+      "height": 144
+    },
+    {
+      "file": "prologue-07.png",
+      "width": 362,
+      "height": 187
+    },
+    {
+      "file": "prologue-shadow.png",
+      "width": 284,
+      "height": 150
+    },
+    {
+      "file": "promote-alarm.png",
+      "width": 308,
+      "height": 156
+    },
+    {
+      "file": "promote-betray.png",
+      "width": 299,
+      "height": 157
+    },
+    {
+      "file": "promote-crew.png",
+      "width": 297,
+      "height": 156
+    },
+    {
+      "file": "promote-dark.png",
+      "width": 279,
+      "height": 139
+    },
+    {
+      "file": "promote-gild.png",
+      "width": 490,
+      "height": 245
+    },
+    {
+      "file": "promote-rule.png",
+      "width": 308,
+      "height": 153
+    },
+    {
+      "file": "promote.png",
+      "width": 278,
+      "height": 145
+    },
+    {
+      "file": "rustBath.png",
+      "width": 252,
+      "height": 191
+    },
+    {
+      "file": "safe.png",
+      "width": 251,
+      "height": 190
+    },
+    {
+      "file": "scout.png",
+      "width": 241,
+      "height": 175
+    },
+    {
+      "file": "scrapHeap.png",
+      "width": 256,
+      "height": 194
+    },
+    {
+      "file": "scrapTrade.png",
+      "width": 265,
+      "height": 189
+    },
+    {
+      "file": "shipping-interior.png",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "file": "sleepingKing.png",
+      "width": 257,
+      "height": 185
+    },
+    {
+      "file": "smith.png",
+      "width": 256,
+      "height": 192
+    },
+    {
+      "file": "swapDealer.png",
+      "width": 251,
+      "height": 190
+    },
+    {
+      "file": "throne-mold.png",
+      "width": 320,
+      "height": 180
+    },
+    {
+      "file": "tinker.png",
+      "width": 248,
+      "height": 186
+    },
+    {
+      "file": "tollGate.png",
+      "width": 246,
+      "height": 185
+    }
+  ],
+  "samples": [
+    {
+      "name": "smith",
+      "size": [
+        256,
+        192
+      ],
+      "visible_exact_rgb_colors": 16627,
+      "top32_coverage_pct": 20.74,
+      "srgb_code_luma_p10_p50_p90": [
+        15.09,
+        36.99,
+        92.37
+      ]
+    },
+    {
+      "name": "gambler",
+      "size": [
+        239,
+        179
+      ],
+      "visible_exact_rgb_colors": 7240,
+      "top32_coverage_pct": 31.96,
+      "srgb_code_luma_p10_p50_p90": [
+        10.5,
+        29.72,
+        95.05
+      ]
+    },
+    {
+      "name": "pact",
+      "size": [
+        242,
+        174
+      ],
+      "visible_exact_rgb_colors": 8117,
+      "top32_coverage_pct": 30.33,
+      "srgb_code_luma_p10_p50_p90": [
+        9.36,
+        27.93,
+        139.1
+      ]
+    },
+    {
+      "name": "boss-inspector",
+      "size": [
+        219,
+        215
+      ],
+      "visible_exact_rgb_colors": 12003,
+      "top32_coverage_pct": 20.45,
+      "srgb_code_luma_p10_p50_p90": [
+        12.08,
+        35.59,
+        113.24
+      ]
+    },
+    {
+      "name": "boss-assembly",
+      "size": [
+        152,
+        152
+      ],
+      "visible_exact_rgb_colors": 4181,
+      "top32_coverage_pct": 27.96,
+      "srgb_code_luma_p10_p50_p90": [
+        8.29,
+        25.57,
+        79.45
+      ]
+    },
+    {
+      "name": "boss-gilded",
+      "size": [
+        256,
+        245
+      ],
+      "visible_exact_rgb_colors": 11572,
+      "top32_coverage_pct": 46.58,
+      "srgb_code_luma_p10_p50_p90": [
+        9.71,
+        13.49,
+        132.61
+      ]
+    },
+    {
+      "name": "departure-dock",
+      "size": [
+        320,
+        180
+      ],
+      "visible_exact_rgb_colors": 9865,
+      "top32_coverage_pct": 32.36,
+      "srgb_code_luma_p10_p50_p90": [
+        13.36,
+        55.64,
+        122.92
+      ]
+    },
+    {
+      "name": "shipping-interior",
+      "size": [
+        320,
+        180
+      ],
+      "visible_exact_rgb_colors": 8384,
+      "top32_coverage_pct": 17.28,
+      "srgb_code_luma_p10_p50_p90": [
+        42.48,
+        67.15,
+        110.45
+      ]
+    },
+    {
+      "name": "epilogue-hands",
+      "size": [
+        300,
+        135
+      ],
+      "visible_exact_rgb_colors": 8864,
+      "top32_coverage_pct": 28.01,
+      "srgb_code_luma_p10_p50_p90": [
+        21.36,
+        57.95,
+        187.67
+      ]
+    }
+  ]
+}
