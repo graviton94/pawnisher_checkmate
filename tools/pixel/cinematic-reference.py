@@ -46,6 +46,21 @@ def main():
         for path in files:
             assert z.read('pawnisher-cinematic-reference/' + path.name) == path.read_bytes()
     print(f'인물2종·장면2종 native/최근접 확대·ZIP 검증 완료: {archive}')
+    # D-440: 사용자는 참고를 프로젝트 소스에 한 번 등록하고 채팅에는 프롬프트만 쓴다.
+    project = ROOT / 'docs/art/chatgpt-project'
+    sources = [ROOT / f'docs/art/reference/preview/{name}-864.png' for name in ('paperking', 'pawn', 'knight', 'bishop', 'rook', 'queen', 'king-form-only')]
+    sources += [OUT / 'style-shipping-1920.png', OUT / 'style-departure-1920.png', project / 'ART-SOURCE-GUIDE.md']
+    assert len(sources) == 10 and len({p.name for p in sources}) == 10
+    with zipfile.ZipFile(project / 'project-sources.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+        for path in sources:
+            info = zipfile.ZipInfo(path.name, (2026, 11, 12, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            z.writestr(info, path.read_bytes())
+    with zipfile.ZipFile(project / 'project-sources.zip') as z:
+        assert z.testzip() is None
+        for path in sources:
+            assert z.read(path.name) == path.read_bytes()
+    print('프로젝트 소스: PNG9개 + 기준 문서1개, 지침/채팅 예시와 분리')
 
 
 if __name__ == '__main__':

@@ -1,18 +1,13 @@
 # 현재 아트 발주서 — 제작할 것만 여기서 확인
 
-2026-11-12 · D-439 · 후속 브랜치 `content-art-audit-20261112`. **이번 결과7장은 인물·화풍 수정이 필요하다. 지금은 S-06 상자 한 장만 수정한다.** main과 테스트 APK는 갱신하지 않는다.
+2026-11-12 · D-440 · 후속 브랜치 `content-art-audit-20261112`. **프로젝트에 지침·소스를 한 번 등록하고 이후 채팅에는 프롬프트만 쓴다.** main/APK 변경 없음.
 
-## 0. 현재 수정 발주 — 한 장씩 R3
+## 0. ChatGPT 프로젝트 등록 — 이것만 사용
 
-[바로 전달할 S-06 프롬프트](asset-order-story-cinematics.md#scene-shipping) · [참고 PNG와 프롬프트 ZIP](art/cinematic-reference/pawnisher-cinematic-reference.zip) · [이번 결과 리뷰](reports/2026-11-12-cinematics-r2-review.md).
+1. [프로젝트 지침 문장](art/chatgpt-project/project-instructions.txt)을 지침 칸에 넣는다.
+2. [프로젝트 소스 ZIP](art/chatgpt-project/project-sources.zip)을 풀어 PNG9개와 기준 문서1개를 소스로 등록한다.
 
-| 순서 | 대상 | 할 일 |
-|---|---|---|
-| 지금 | S-06 컬러 상자 | 현재 구도 유지. 청록 원형 장식 총1개, 기존 게임 도트 화풍으로 수정 |
-| 위 결과 확인 뒤 | S-05 세 번째 문턱 근접안 | 받침·문턱 관계 유지, 불명확한 상단 가림과 도트 밀도 수정 |
-| 앞 단계 확인 뒤 | S-07 다섯 번째 눌린 왕관안 | 반복 장식 제거, 눌린 종이·금속·떠나는 상자 관계 유지 |
-
-고칠 결과물1장 + 인물 참고 + 해당 장면 화풍 PNG를 실제 첨부한다. 프로젝트에 참고 자료가 있다는 전제로 생략하지 않는다. 새 구도3안씩 동시 제작하지 않는다. 이전 R1/R2 발주 문구는 [보관본](asset-order-history.md)에만 남긴다.
+[이후 채팅 프롬프트](art/chatgpt-project/chat-prompts.txt) · [설정 안내](art/chatgpt-project/README.md). 첫 작업은 S-06 상자1장. 이전의 매번 참고 PNG를 채팅에 다시 첨부하라는 요구는 폐기한다. 인물·화풍·장면 내용은 프로젝트 소스로 고정한다. 기존 오류 시안은 정본 참고로 사용하지 않는다.
 
 ## 1. D-434 반입 완료분
 
