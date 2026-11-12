@@ -1,5 +1,5 @@
 import { BOSS, BOSS_NUM, FOE_TRAITS, TRAIT, type BossRule, type FoeTrait } from '../slice/cards';
-import { PART_NUM } from '../slice/parts';
+import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../slice/parts';
 import type { PieceType } from '../engine';
 
 /** 능력 표시 계약: 명칭·조건/행동·상세 효과 세 줄. 수치는 전투 데이터에서 읽는다. */
@@ -43,3 +43,15 @@ export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch' | 'relaySea
   relayGear: [{ name: '맞물린 톱니', description: '분대 2유형이 적에게 피해', effect: `태엽 +${PART_NUM.relayGear} · 턴에 1회` }, { name: '동료 판정', description: '입장 시 영구 분대 유형 기준', effect: '임시 폰·승격·반사 제외' }],
   siegeLatch: [{ name: '공성 걸쇠', description: '기본 2태엽↑ 룩 이동 공격', effect: `방열판 ≤${PART_NUM.siegeLatch} → 첫 피해` }, { name: '소모 횟수', description: '룩마다 매턴 1회 소모', effect: '관통 뒷 대상·튐·충돌 제외' }],
 };
+
+/** 획득·교체·상점의 공통 부품 문법. 비용은 조건으로 오인하지 않도록 효과에 둔다. */
+export const partSummaryText = (id: SlicePartId): AbilityText => {
+  const d = SLICE_PARTS[id];
+  const [effect, ...conditions] = d.desc.split(' — ');
+  return { name: d.name, description: conditions.join(' · ') || '장착한 동안', effect };
+};
+
+/** 모든 부품 상세를 세 줄씩 읽는다. 복합 판정은 다음 장에 보존한다. */
+export const partAbilityText = (id: SlicePartId): AbilityText[] =>
+  id in BUILD_PART_ABILITIES ? BUILD_PART_ABILITIES[id as keyof typeof BUILD_PART_ABILITIES]
+    : id === 'conductor' ? [{ ...partSummaryText(id), effect: `${partSummaryText(id).effect} · 기본 +4` }] : [partSummaryText(id)];

@@ -373,6 +373,8 @@ export interface PickOpts {
   /** 명패 아래 한 줄 (대사 · 안내 — 없으면 비움) */
   say?: string;
   items: PickItem[];
+  /** 아래 단추 사이 페이지 이동 등 보조 조작 */
+  mid?: string;
   /** 받침 줄 대신 쓸 몸 (선택지 판 격자 등 — [data-slot]이면 같은 고르기 규칙) */
   body?: string;
   /** 단추 줄 왼쪽 (건너뛴다 · 그만둔다 — 철) */
@@ -393,7 +395,7 @@ export const pickScreen = (o: PickOpts): HTMLElement => {
   const go: WinBtn | undefined = o.go === null ? undefined : { label: '고른다', attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
   if (go) go.attrs = `${go.attrs ?? ''}${go.attrs?.includes('data-pick') ? '' : ' data-pick'}`;
   const el = host.open(
-    `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items)}${btnRowHtml({ back: o.skip, go })}`,
+    `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items)}${btnRowHtml({ back: o.skip, go, mid: o.mid })}`,
     `scr-pick${o.cls ? ` ${o.cls}` : ''}`,
   );
   bindPick(el, o);

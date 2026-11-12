@@ -177,6 +177,7 @@ export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'ins
  * 고르기 · 장소 화면 글 (D-394 UI 개편 패스 2): 명패 ≤ 12자(문장 · 수치 금지 — 수치는 꼬리표) · 단추는 동사 하나 ≤ 6자 (voice ⑧).
  */
 export const SCREEN_TEXT = {
+  partPages: '보유 부품 페이지', partPrev: '이전 부품', partNext: '다음 부품',
   reward: '전리품', kit: '핵심 부품', recruit: '영입', newCrew: '새 분대원', part: '부품', partBox: '부품 상자', partClose: '사선',
   full: '칸 가득', shop: '고물상', forge: '작업대', forgeFinal: '최종 정비', refine: '다듬기', brace: '보강', remove: '카드 빼기', deck: '덱', crew: '분대',
   // 출하 끝 (D-402, 사용자: 「『출하 완료』는 마지막 장을 끝낸 느낌이 아니다」): 하자품이라 불리던 세트가 도금왕을 꺾고 받는 판정 — 「하자 폐기」의 맞짝

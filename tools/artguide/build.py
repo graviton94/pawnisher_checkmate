@@ -11,7 +11,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 SHOTS = os.path.join(HERE, 'shots')
-UPDATED = '2026-11-11'
+UPDATED = '2026-11-12'
 
 
 def b64(path):
@@ -63,6 +63,7 @@ BOSS_FRAMES = [('boss-600.jpg', '0.6초 · 모으기와 조명'), ('boss-1000.jp
                ('boss-1700.jpg', '1.7초 · 기물이 조각으로 부서짐'), ('boss-2200.jpg', '2.2초 · 파편 · 불씨'), ('boss-2900.jpg', '2.9초 · 여운')]
 
 SCREENS = [
+    ('부품 문법·고정 높이·6→8칸 (D-433)', [('part-rule-cards.png', '기존 그림 카드 비율 유지 — 묘사 대신 세 행의 조건/효과'), ('parts-six-page1.png', '교체판96px · 이름/조건/:효과 세 줄 · 네 개씩'), ('parts-six-page2.png', '6칸의 둘째 페이지 — 두 개여도 높이 유지'), ('parts-eight-page2.png', '8칸의 둘째 페이지 — 선택 초기화·한 개만 교체'), ('parts-eight-hud.png', '전투 HUD에서 여덟 부품과 마지막 부품 탭 접근'), ('part-rule-detail.png', '복합 부품의 판정 조건은 같은 자리의 다음 장에 보존'), ('part-rule-cost.png', '상시 효과와 대가를 발동 조건과 분리')]),
     ('콘텐츠·아트 감사 (D-432)', [('audit-catalog.png', '본편과 같은 카드 레일에서 명령92·부품84 전체 글 경계 검사'), ('audit-long-crew-667x375.png', '긴 본명은 명패, 자동 별명은 받침 정보 — 작은 모바일'), ('audit-long-crew-1024x768.png', '태블릿에서 별명·기록 보존'), ('audit-long-crew-1280x720.png', 'PC 카드 명패의 이름 말줄임 제거')]),
     ('세 빌드 · 실제 연속 행동 (D-431)', [('builds-complete-mixed.png', '다른 두 유형의 준비 → 환급 → 세 번째 유형의 첫 타격 ×1.8'), ('builds-seal-detail.png', '황금 완성 부품 분대 인장 — 기존 세 줄 설명'), ('builds-shared-plate.png', '생존3승 고참이 받은 방열판을 이웃 룩에게 +6'), ('builds-complete-rook.png', '룩 방열판21→9 — 남길 방어와 일격의 대가'), ('builds-complete-knight.png', '기습 처치→태엽·드로우→피의 질주 처치'), ('builds-crew-record.png', '기존 받침 정보에 생존 승리·실제 보호량'), ('builds-first-shop.png', '첫 상점의 일반 보조품 — 70나사 구매와 정비 예산 경쟁')]),
     ('손패 비용 대비 · UI 마감 (D-430)', [('hand-charcoal.png', '금색 비용 태엽·흰 숫자 유지 — 경첩만 차콜, 다른 선택지 원본 유지')]),

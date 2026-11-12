@@ -1,4 +1,6 @@
-import type { AbilityText } from '../data/ability-text';
+import type { SlicePartId } from './parts';
+import { bottomLines, lineHtml } from './desc';
+import { partSummaryText, type AbilityText } from '../data/ability-text';
 
 const escape = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
@@ -20,4 +22,22 @@ export const bindAbilities = (host: HTMLElement, abilities: AbilityText[]): void
     button.outerHTML = abilityHtml(abilities, (Number(button.dataset.abilityIndex) + 1) % abilities.length);
     host.querySelector<HTMLButtonElement>('[data-ability-next]')?.focus({ preventScroll: true });
   });
+};
+
+/** 좁은 그림 카드도 조건 → : 효과 순서. 묘사는 빼고 같은 세 행을 예약한다. */
+export const partCardRuleHtml = (id: SlicePartId): string => {
+  const a = partSummaryText(id);
+  let firstEffect = true;
+  // 공성의 조건 두 줄+긴 효과를 네 줄로 만들지 않는다. 조건을 한 줄로 모으고 변환을 두 줄로 읽는다.
+  const rules = id === 'siegeLatch'
+    ? [{ t: a.description.replace(' · 턴에 한 번', '·턴1회'), k: 'if' as const },
+      { t: a.effect.split(' → ')[0], k: 'fx' as const }, { t: `→ ${a.effect.split(' → ')[1]}`, k: 'fx' as const }]
+    : bottomLines(a.description, a.effect);
+  const lines = rules.map((l) => {
+    const text = l.k === 'fx' && firstEffect ? `: ${l.t}` : l.t;
+    if (l.k === 'fx') firstEffect = false;
+    return lineHtml(text, l.k);
+  });
+  while (lines.length < 3) lines.push('<span class="ln" aria-hidden="true"></span>');
+  return `<span class="part-rule-lines">${lines.join('')}</span>`;
 };

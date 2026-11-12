@@ -1199,3 +1199,20 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 body.slice .opening .op-menu { padding-block: 0; gap: 8px; width: min(352px, 44vw); }
 
 .opening .op-menu { z-index: 3; } /* 장식 톱니보다 조작·문구가 앞선다. */
+
+/* D-433: 부품은 조건 → : 효과, 그림 카드 세 행 · 교체판 세 줄/96px. */
+body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {
+  position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center;
+}
+.scr-pick > .part-replace-grid { grid-template-rows: repeat(2, 96px); }
+.scr-pick .choice.part-replace {
+  height: 96px; min-height: 96px; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 8px;
+}
+.scr-pick .part-replace > .ico { width: 24px; height: 24px; }
+.part-replace-rule { display: grid; grid-template-rows: repeat(3, 18px); min-width: 0; }
+.part-replace-rule > :is(b, span, strong) { display: block; white-space: nowrap; font: 400 12px/18px Galmuri11, sans-serif; }
+.part-replace-rule > b { font-weight: 700; color: var(--t-gold); }
+.part-replace-rule > span { color: var(--t-body); }
+.part-replace-rule > strong { font-weight: 700; }
+.part-pages { display: flex; gap: 8px; align-items: center; font: 400 12px/18px Galmuri11, sans-serif; }
+.part-pages > .btn { width: 48px; min-width: 48px; height: 48px; padding: 0; font: 700 24px/36px Galmuri11, sans-serif; }
