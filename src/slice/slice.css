@@ -1729,3 +1729,6 @@ body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-spa
 
 /* D-388 막 소개 = 영화식 타이틀 카드: 막 그림이 화면을 채우고(cover), 아래 먹 띠에 막 · 이름 · 서술. 패널 · 작업 칸 없음 */
 
+
+/* D-434: 수령한 장면 위에 현재 출하의 배우만 표시한다. */
+.pl-stage > .pl-standin.pl-actors { background: none; pointer-events: none; }

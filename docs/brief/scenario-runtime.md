@@ -45,4 +45,4 @@
 
 실행 각본 `src/data/script.ts`, 장/모드 정의 `src/data/campaign.ts`, 진행/호환 `src/slice/save.ts`, 실제 연결 `src/slice/main.ts`가 이 문서와 함께 움직인다. `docs/world.md`는 명칭·재질을, `docs/voice.md`는 말투를 맡는다.
 
-옛 배신 컷의 용광로와 진엔딩의 고정 분대/검은 나이트 행렬은 새 결말에 쓰지 않는다. 생존자 장면은 실제 기물로 구성한다. 아이·부모 손을 담은 S-01은 수령·반입 완료했다(D-426·D-428). 집의 세 컷은 `epilogue-hands`를 공용하며 부모·아이 장면에 공장 배경을 남기지 않는다. 원본은 `build-res/order/S-01-epilogue-hands-source.png`에 보존한다. 출하 직전·운송 컷은 현재 `credits-bg`를 재사용하므로 새 이야기용 배경을 준비한다(현재 발주서 S-02·S-03).
+옛 배신 컷의 용광로와 진엔딩의 고정 분대/검은 나이트 행렬은 새 결말에 쓰지 않는다. 생존자 장면은 실제 기물로 구성한다. 아이·부모 손을 담은 S-01은 수령·반입 완료했다(D-426·D-428). 집의 세 컷은 `epilogue-hands`를 공용하며 부모·아이 장면에 공장 배경을 남기지 않는다. 원본은 `build-res/order/S-01-epilogue-hands-source.png`에 보존한다. S-02 왕 거푸집·S-03 출하구·S-04 운송 상자도 수령·반입했다(D-434). 왕위 결정과 빈 몸은 `throne-mold`, 출하 직전은 `departure-dock`, 운송은 `shipping-interior`를 쓴다. 출하/운송에는 실제 생존 분대만 배경 위에 겹치며 고정 인원을 그려 넣지 않는다.

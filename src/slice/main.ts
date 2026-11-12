@@ -3533,10 +3533,10 @@ const startLab = (mode: 'A' | 'B'): void => {
 };
 
 /** 전체 견본은 본편과 같은 카드 받침·글 배율을 사용한다. */
-const allFaces = (): void => {
+const allFaces = (onlyParts?: SlicePartId[]): void => {
   const items: PickItem[] = [
-    ...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => ({ key: `card:${id}`, html: cardFace(id, '') })),
-    ...(Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => ({ key: `part:${id}`, html: partFace(id, '') })),
+    ...(onlyParts ? [] : (Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => ({ key: `card:${id}`, html: cardFace(id, '') }))),
+    ...(onlyParts ?? Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => ({ key: `part:${id}`, html: partFace(id, '') })),
   ];
   const el = pickScreen({ title: '카드 견본', items, skip: { label: '닫는다', attrs: 'data-x' }, onPick: () => {} });
   el.querySelector('[data-x]')!.addEventListener('click', closeWin);
@@ -3729,7 +3729,7 @@ const gildedArt = (): string => `boss-gilded${runMode === 'story' ? storyChapter
 const promoteScreen = (): Promise<'throne' | 'depart'> => {
   closeWin();
   const company = storyCompany();
-  return promotionScene({ chapter: storyChapter, art: gildedArt(), companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined });
+  return promotionScene({ chapter: storyChapter, art: 'throne-mold', companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined });
 };
 let endKind: EndingKind = 'throne';
 const endingFlow = async (): Promise<void> => {

@@ -27,5 +27,7 @@ if sys.argv[1] == '--redo':
             one(f, m.group(1))
 else:
     src, name, vid = sys.argv[1], sys.argv[2], sys.argv[3]
-    shutil.copy(src, f'build-res/order/{vid}-{name}-source.png')
+    stored = f'build-res/order/{vid}-{name}-source.png'
+    if os.path.realpath(src) != os.path.realpath(stored):
+        shutil.copy(src, stored)
     one(src, name)

@@ -46,10 +46,10 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   relayGear: { name: '맞물린 톱니', axis: null, icon: 'forkGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 분대 두 유형이 공격 · 턴에 한 번' },
   siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'anvilPlate', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판≤12 → 첫 피해 — 룩 2태엽↑ · 턴에 한 번' },
   // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
-  lastBreath: { name: '마지막 숨', axis: null, icon: 'brittle', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남으면' },
-  ledger: { name: '피의 장부', axis: null, icon: 'gameRecord', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },
-  veteran: { name: '백전 훈장', axis: null, icon: 'goldRank', flavor: '쓰러뜨린 만큼 훈장이 무겁다.', desc: 'HP +25% · 공격 +3 — 처치 8 이상' },
-  deathMark: { name: '죽음 넘긴 자의 표식', shortName: '죽음 넘긴 표식', axis: null, icon: 'oath', flavor: '죽음에서 돌아온 눈빛.', desc: '공격 +2 · 최대 +10 — 죽음 넘길 때마다' },
+  lastBreath: { name: '마지막 숨', axis: null, icon: 'lastBreath', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남으면' },
+  ledger: { name: '피의 장부', axis: null, icon: 'ledger', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },
+  veteran: { name: '백전 훈장', axis: null, icon: 'veteran', flavor: '쓰러뜨린 만큼 훈장이 무겁다.', desc: 'HP +25% · 공격 +3 — 처치 8 이상' },
+  deathMark: { name: '죽음 넘긴 자의 표식', shortName: '죽음 넘긴 표식', axis: null, icon: 'deathMark', flavor: '죽음에서 돌아온 눈빛.', desc: '공격 +2 · 최대 +10 — 죽음 넘길 때마다' },
   // 기록 유물 2차 (D-384, 사용자: 「분대원 누적 처치 · 피해 · 쓰러짐 조건으로 유물을 더」) — 대국 시작 때 그 분대원의 기록으로 힘이 정해진다
   notches: { name: '칼자루 눈금', axis: null, icon: 'notches', flavor: '쓰러뜨린 수만큼 금을 긋는다.', desc: 'HP +2 · 최대 +20 — 처치마다' },
   aceBadge: { name: '에이스 견장', axis: null, icon: 'aceBadge', flavor: '최다 처치자의 어깨에 단다.', desc: '공격 ×1.3 — 분대 처치 1위' },

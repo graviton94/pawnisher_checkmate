@@ -1,0 +1,243 @@
+{
+  "date": "2026-11-12",
+  "archive": "Downloads (2).zip",
+  "archiveSha256": "afa1d089fe890fa9cece5391b1dea1bd42bb1764a69fe658d542137ac2e864ff",
+  "sources": [
+    {
+      "deliveredName": "裂痕缝合的破损狗牌.png",
+      "storedSource": "build-res/order/I-15D-source.png",
+      "sha256": "471f90bc21e189c4425e152890c7435df51952a146f7f8d6dd0cb54bbc7c9e88",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "deliveredName": "빛줄기 스며든 낡은 상자 속.png",
+      "storedSource": "build-res/order/S-04-shipping-interior-source.png",
+      "sha256": "4abe1ec5e65a9075c9fa206187f1203f9c0c9a758f7baad123fd3ed7a6768297",
+      "size": [
+        1672,
+        941
+      ]
+    },
+    {
+      "deliveredName": "스팀펑크 공장 출하장 내부.png",
+      "storedSource": "build-res/order/S-03-departure-dock-source.png",
+      "sha256": "ac7438231aaca9da8dfbfb65ecdc906c6c9919f4f0f6f41dac2bac4a1a8621e8",
+      "size": [
+        1672,
+        941
+      ]
+    },
+    {
+      "deliveredName": "픽셀 기어 아이콘 세트.png",
+      "storedSource": "build-res/order/UI-34-source.png",
+      "sha256": "c49448fa7e40187720d71b174b9b0f6265f011ca847359210d7c4eaff75a1fcb",
+      "size": [
+        2172,
+        724
+      ]
+    },
+    {
+      "deliveredName": "픽셀 아트 대장간 랜턴, 가죽 서적과 메달.png",
+      "storedSource": "build-res/order/I-15ABC-source.png",
+      "sha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+      "size": [
+        2172,
+        724
+      ]
+    },
+    {
+      "deliveredName": "황금빛 체스 왕 몰드의 제련소.png",
+      "storedSource": "build-res/order/S-02-throne-mold-source.png",
+      "sha256": "616aa535104e49d6cdd3d79fdbfbe5d94419b57a1c9ad1bf35b3e748ca1d0be0",
+      "size": [
+        1672,
+        941
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "file": "public/ui/icons16/lastBreath.png",
+      "size": [
+        32,
+        32
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "f102156242bfc075b186874ea7b4eba871da19f17232aae730fc1b714469eaf6",
+      "rgbaSha256": "a5e6eb38602bb58705ad56116a16a494b16a560407ecb8384d691adca6cb15e7"
+    },
+    {
+      "file": "public/ui/icons16/lastBreath@16.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "f60c2799ef7036d163abc85ed66bb5e8b782822d649d0f7639f3656213d6d880",
+      "rgbaSha256": "01a801b9449b35abc6f60e8d7baf68e14774e090fb0d8cfe655f5e9f08337c89"
+    },
+    {
+      "file": "public/ui/icons16/ledger.png",
+      "size": [
+        32,
+        32
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "3b627794edfa2d5d5d959daa803047dcebb97fa2edc108b5813501ce797c446c",
+      "rgbaSha256": "38118aea5e478b7d5bc351650157dbdb171e408eee24e05f897485f3ac45e53c"
+    },
+    {
+      "file": "public/ui/icons16/ledger@16.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "f574ca6e081f8e408ebc6451862b41294bb5104946e55002b1d6ed374b04763c",
+      "rgbaSha256": "fac1c917b4b044b500dbf6d4c22ea1ad6977ec45af27feedb78f8960cae9e1e3"
+    },
+    {
+      "file": "public/ui/icons16/veteran.png",
+      "size": [
+        32,
+        32
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "3399b0c6228e6ec6ca37459a1c53a9649af75aebeb6c09017ec9d1273afa0707",
+      "rgbaSha256": "ee9326282dc0b05e16df1621af06aa56d8d261a164f0b53cb4345b74a85eb3e8"
+    },
+    {
+      "file": "public/ui/icons16/veteran@16.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "595d2e66eb18e51dc516796ba596fa219439c91199b30317091e0532c349b203",
+      "rgbaSha256": "521b218b835e75528484e8fbe8324d2f0e35bed58ca96825dd0660541d0fd4ed"
+    },
+    {
+      "file": "public/ui/icons16/deathMark.png",
+      "size": [
+        32,
+        32
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "f118ba0a1c7fbb85ec380b120144e2b0973781f71c100829659882a23a590a54",
+      "rgbaSha256": "1dd0207436348a99f46f9c948df025bb1e690fed5c4b72414a0fa0de22429f4c"
+    },
+    {
+      "file": "public/ui/icons16/deathMark@16.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "0530cb45f76f3bd932297ce2ddaefd1d25b39cc9b597339ca2bce2c71e23efb2",
+      "rgbaSha256": "fff0a9f759f2b1a30bdb9115e8f572c911b68d4ad54fdfa410b16ef055b6d8b3"
+    },
+    {
+      "file": "public/ui/part-state/waiting.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "3735099a5343f39ab90cb142a8167ca04119aa970dbebd8ad123923e52448429",
+      "rgbaSha256": "696f8f4b260f6a360bc8d5a8aa43be8620f281d8ae799e2bdc2c159c29f30d82"
+    },
+    {
+      "file": "public/ui/part-state/ready.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "70aff0c27eac369a62726efd06003d4728e4affd506c3bd6afc390ca0541b762",
+      "rgbaSha256": "2ba257d554b10bcfd5dd0f8220d7f6604d13bb70ff5763a9cfb83a06be074a06"
+    },
+    {
+      "file": "public/ui/part-state/spent.png",
+      "size": [
+        16,
+        16
+      ],
+      "alpha": [
+        0,
+        255
+      ],
+      "sha256": "7f72af9e57eecc56f3338774e4cf91a330bcbca75867dfbf38e4ca02593b8952",
+      "rgbaSha256": "24e8c30e63b6f8000938d8f5a0b9d7b3c0fdce1094e2b43847d3a0d052bb894b"
+    },
+    {
+      "file": "public/scenes/throne-mold.png",
+      "size": [
+        320,
+        180
+      ],
+      "alpha": [
+        255
+      ],
+      "sha256": "972429ce5e8b139b288aeb2ca5c83ee93f621fa9cc9b946bc64825651e5dcb20",
+      "rgbaSha256": "74c197040bfb5d974b91748208eac829bf7b2202e38910be981ed7e3c4ed120b"
+    },
+    {
+      "file": "public/scenes/departure-dock.png",
+      "size": [
+        320,
+        180
+      ],
+      "alpha": [
+        255
+      ],
+      "sha256": "026bdfec0cdd8bad7ae557e3fd314f8ce3dc71c44854f47b993c2608843c4cfc",
+      "rgbaSha256": "a572b1c058dc379688edc44b6c9cb77b5c536a085448a545757c58da25d67bc6"
+    },
+    {
+      "file": "public/scenes/shipping-interior.png",
+      "size": [
+        320,
+        180
+      ],
+      "alpha": [
+        255
+      ],
+      "sha256": "0945255145bdc538bc05dfdad79def6e9294e6b1b6fa7a186c5b2528a17e8723",
+      "rgbaSha256": "62690e2abf44880ee2711de19ceaea0405881a3898b244803f8fed9896fbedc2"
+    }
+  ],
+  "ui34": "imported, awaiting truthful condition-state display logic; not mounted in gameplay"
+}

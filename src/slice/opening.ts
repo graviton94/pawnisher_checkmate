@@ -25,9 +25,9 @@ const hasImg = (src: string): Promise<boolean> =>
 /** 자리 그림: 기물 도트를 화면 비율 자리에 */
 /** 대역 그림의 발끝은 화면 58% 위에서 멈춘다 — 아래는 글 자리 (D-286: 폰이 서술 줄을 덮었다) */
 const ART_FLOOR = 58;
-const standIn = (c: Cut): string =>
-  `<div class="pl-standin" style="--a:${c.bg[0]};--b:${c.bg[1]}">${c.glow ? `<i class="pl-glow" style="--g:${c.glow}"></i>` : ''}${c.art
-    .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${Math.min(p.y, ART_FLOOR)}%;height:${p.h}%">${pieceImg(p.crown ? 'K' : p.t, p.side, 'large', 220)}</span>`)
+const standIn = (c: Cut, overlay = false): string =>
+  `<div class="pl-standin${overlay ? ' pl-actors' : ''}" style="--a:${c.bg[0]};--b:${c.bg[1]}">${c.glow ? `<i class="pl-glow" style="--g:${c.glow}"></i>` : ''}${c.art
+    .map((p: StandIn) => `<span class="pl-pc${p.dim ? ' dim' : ''}${p.flip ? ' flip' : ''}" style="left:${p.x}%;top:${Math.min(p.y, overlay ? 70 : ART_FLOOR)}%;height:${overlay ? `min(${p.h}%, ${Math.min(12, 72 / c.art.length)}vw)` : `${p.h}%`}">${pieceImg(p.crown ? 'K' : p.t, p.side, 'large', 220)}</span>`)
     .join('')}</div>`;
 
 /** 베인 타이틀 문장 마크업 (메인 화면 · 프롤로그 끝 공통) */
@@ -94,7 +94,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         if (my !== token) return;
         const pick = !c.standIn && (await hasImg(`scenes/${c.img}.png`)) ? c.img : !c.standIn && c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
         const src = `scenes/${pick}.png`;
-        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}${c.pixelCover ? ' pl-pixel' : ''}" src="${src}" alt=""${c.pixelCover ? ' data-cover' : ''}>` : standIn(c); // 정사각 초상(반장 · 도금왕)은 비율 그대로 덮고 위 30%에 초점 (D-388)
+        stage.innerHTML = pick ? `<img class="pl-img${pick.startsWith('boss-') ? ' pl-portrait' : ''}${c.pixelCover ? ' pl-pixel' : ''}" src="${src}" alt=""${c.pixelCover ? ' data-cover' : ''}>` + (c.showActors ? standIn(c, true) : '') : standIn(c); // 정사각 초상(반장 · 도금왕)은 비율 그대로 덮고 위 30%에 초점 (D-388)
         const pixel = stage.querySelector<HTMLImageElement>('img[data-cover]');
         if (pixel) {
           if (pixel.complete) coverArt(pixel);

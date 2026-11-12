@@ -1,0 +1,262 @@
+[
+  {
+    "id": "lastBreath",
+    "source": "I-15ABC-source.png",
+    "sourceSha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+    "sourceCrop": [
+      0,
+      0,
+      724,
+      724
+    ],
+    "transparentTrim": [
+      97,
+      22,
+      672,
+      692
+    ],
+    "paddedSide": 766,
+    "samplePitch": [
+      23.9375,
+      23.9375
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 229,
+    "rgbaSha256": "a5e6eb38602bb58705ad56116a16a494b16a560407ecb8384d691adca6cb15e7",
+    "outputs": [
+      "tools/pixel/icons32_ext/lastBreath.png",
+      "tools/pixel/icons32/lastBreath.png",
+      "public/ui/icons16/lastBreath.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  },
+  {
+    "id": "ledger",
+    "source": "I-15ABC-source.png",
+    "sourceSha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+    "sourceCrop": [
+      724,
+      0,
+      1448,
+      724
+    ],
+    "transparentTrim": [
+      57,
+      58,
+      648,
+      691
+    ],
+    "paddedSide": 724,
+    "samplePitch": [
+      22.625,
+      22.625
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 283,
+    "rgbaSha256": "38118aea5e478b7d5bc351650157dbdb171e408eee24e05f897485f3ac45e53c",
+    "outputs": [
+      "tools/pixel/icons32_ext/ledger.png",
+      "tools/pixel/icons32/ledger.png",
+      "public/ui/icons16/ledger.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  },
+  {
+    "id": "veteran",
+    "source": "I-15ABC-source.png",
+    "sourceSha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+    "sourceCrop": [
+      1448,
+      0,
+      2172,
+      724
+    ],
+    "transparentTrim": [
+      65,
+      44,
+      575,
+      697
+    ],
+    "paddedSide": 747,
+    "samplePitch": [
+      23.34375,
+      23.34375
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 285,
+    "rgbaSha256": "ee9326282dc0b05e16df1621af06aa56d8d261a164f0b53cb4345b74a85eb3e8",
+    "outputs": [
+      "tools/pixel/icons32_ext/veteran.png",
+      "tools/pixel/icons32/veteran.png",
+      "public/ui/icons16/veteran.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  },
+  {
+    "id": "deathMark",
+    "source": "I-15D-source.png",
+    "sourceSha256": "471f90bc21e189c4425e152890c7435df51952a146f7f8d6dd0cb54bbc7c9e88",
+    "sourceCrop": [
+      0,
+      0,
+      1254,
+      1254
+    ],
+    "transparentTrim": [
+      287,
+      58,
+      1054,
+      1179
+    ],
+    "paddedSide": 1282,
+    "samplePitch": [
+      40.0625,
+      40.0625
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 181,
+    "rgbaSha256": "1dd0207436348a99f46f9c948df025bb1e690fed5c4b72414a0fa0de22429f4c",
+    "outputs": [
+      "tools/pixel/icons32_ext/deathMark.png",
+      "tools/pixel/icons32/deathMark.png",
+      "public/ui/icons16/deathMark.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  },
+  {
+    "id": "waiting",
+    "source": "UI-34-source.png",
+    "sourceSha256": "c49448fa7e40187720d71b174b9b0f6265f011ca847359210d7c4eaff75a1fcb",
+    "sourceCrop": [
+      0,
+      0,
+      724,
+      724
+    ],
+    "transparentTrim": [
+      136,
+      106,
+      620,
+      603
+    ],
+    "paddedSide": 568,
+    "samplePitch": [
+      35.5,
+      35.5
+    ],
+    "size": [
+      16,
+      16
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 56,
+    "rgbaSha256": "696f8f4b260f6a360bc8d5a8aa43be8620f281d8ae799e2bdc2c159c29f30d82",
+    "outputs": [
+      "public/ui/part-state/waiting.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  },
+  {
+    "id": "ready",
+    "source": "UI-34-source.png",
+    "sourceSha256": "c49448fa7e40187720d71b174b9b0f6265f011ca847359210d7c4eaff75a1fcb",
+    "sourceCrop": [
+      724,
+      0,
+      1448,
+      724
+    ],
+    "transparentTrim": [
+      119,
+      105,
+      603,
+      603
+    ],
+    "paddedSide": 570,
+    "samplePitch": [
+      35.625,
+      35.625
+    ],
+    "size": [
+      16,
+      16
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 68,
+    "rgbaSha256": "2ba257d554b10bcfd5dd0f8220d7f6604d13bb70ff5763a9cfb83a06be074a06",
+    "outputs": [
+      "public/ui/part-state/ready.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  },
+  {
+    "id": "spent",
+    "source": "UI-34-source.png",
+    "sourceSha256": "c49448fa7e40187720d71b174b9b0f6265f011ca847359210d7c4eaff75a1fcb",
+    "sourceCrop": [
+      1448,
+      0,
+      2172,
+      724
+    ],
+    "transparentTrim": [
+      102,
+      106,
+      589,
+      603
+    ],
+    "paddedSide": 568,
+    "samplePitch": [
+      35.5,
+      35.5
+    ],
+    "size": [
+      16,
+      16
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 71,
+    "rgbaSha256": "24e8c30e63b6f8000938d8f5a0b9d7b3c0fdce1094e2b43847d3a0d052bb894b",
+    "outputs": [
+      "public/ui/part-state/spent.png"
+    ],
+    "method": "whole cell; original colors; one pass; no added outline; no detached details"
+  }
+]
