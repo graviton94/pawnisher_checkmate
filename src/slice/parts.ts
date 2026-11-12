@@ -13,6 +13,8 @@ export type SlicePartId = 'relaySeal' | 'sharedPlate' | 'relayGear' | 'siegeLatc
 
 export interface SlicePartDef {
   name: string;
+  /** 작은 카드 명패용. 정식 명칭은 name에 보존한다. */
+  shortName?: string;
   axis: Axis | null;
   /** public/ui/icons16 도트 아이콘 키 (tools/pixel/icons16.py, D-182) — 부품마다 고유 */
   icon: string;
@@ -39,32 +41,32 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   relaySeal: { name: '분대 인장', axis: null, icon: 'royalSeal', flavor: '세 번째 손이 약속을 완성한다.', desc: '첫 피해 ×1.8 — 세 번째 분대 유형 · 턴에 한 번' },
-  sharedPlate: { name: '맞댄 철판', axis: null, icon: 'shieldWall', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 3승 고참이 방열판 받으면 · 턴에 한 번' },
+  sharedPlate: { name: '맞댄 철판', axis: null, icon: 'shieldWall', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 3승 동료에 방열판 · 턴에 한 번' },
   // I-14A/B 원본 파일 반입 전 기존 그림을 빌린다 (D-420).
   relayGear: { name: '맞물린 톱니', axis: null, icon: 'forkGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 분대 두 유형이 공격 · 턴에 한 번' },
-  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'anvilPlate', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판 최대 12 → 첫 피해 — 룩 2태엽↑ · 턴에 한 번' },
+  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'anvilPlate', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판≤12 → 첫 피해 — 룩 2태엽↑ · 턴에 한 번' },
   // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
   lastBreath: { name: '마지막 숨', axis: null, icon: 'brittle', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남으면' },
   ledger: { name: '피의 장부', axis: null, icon: 'gameRecord', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },
-  veteran: { name: '백전 훈장', axis: null, icon: 'goldRank', flavor: '쓰러뜨린 만큼 훈장이 무겁다.', desc: 'HP +25% · 공격 +3 — 처치 8 넘으면' },
-  deathMark: { name: '죽음 넘긴 자의 표식', axis: null, icon: 'oath', flavor: '죽음에서 돌아온 눈빛.', desc: '공격 +2 · 최대 +10 — 죽음 넘길 때마다' },
+  veteran: { name: '백전 훈장', axis: null, icon: 'goldRank', flavor: '쓰러뜨린 만큼 훈장이 무겁다.', desc: 'HP +25% · 공격 +3 — 처치 8 이상' },
+  deathMark: { name: '죽음 넘긴 자의 표식', shortName: '죽음 넘긴 표식', axis: null, icon: 'oath', flavor: '죽음에서 돌아온 눈빛.', desc: '공격 +2 · 최대 +10 — 죽음 넘길 때마다' },
   // 기록 유물 2차 (D-384, 사용자: 「분대원 누적 처치 · 피해 · 쓰러짐 조건으로 유물을 더」) — 대국 시작 때 그 분대원의 기록으로 힘이 정해진다
   notches: { name: '칼자루 눈금', axis: null, icon: 'notches', flavor: '쓰러뜨린 수만큼 금을 긋는다.', desc: 'HP +2 · 최대 +20 — 처치마다' },
   aceBadge: { name: '에이스 견장', axis: null, icon: 'aceBadge', flavor: '최다 처치자의 어깨에 단다.', desc: '공격 ×1.3 — 분대 처치 1위' },
   heavyHand: { name: '무거운 손', axis: null, icon: 'heavyHand', flavor: '가장 많이 때린 손이 가장 무겁다.', desc: '공격 +4 — 분대 피해 1위' },
   scarPlate: { name: '덧댄 철판', axis: null, icon: 'scarPlate', flavor: '쓰러졌던 자리마다 철판을 덧댄다.', desc: '방열판 +6 · 최대 +18 — 죽음 넘길 때마다' },
-  cleanSheet: { name: '무사고 명판', axis: null, icon: 'cleanSheet', flavor: '쓰러진 적 없는 이름만 새긴다.', desc: 'HP +20% — 대국 3번 무사고' },
+  cleanSheet: { name: '무사고 명판', axis: null, icon: 'cleanSheet', flavor: '끝까지 남은 이름을 새긴다.', desc: 'HP +20% — 대국 3번 · 생명 소모 없음' },
   sergeant: { name: '고참 계급장', axis: null, icon: 'sergeant', flavor: '살아남은 만큼 계급이 오른다.', desc: '공격 +1 · 최대 +6 — 대국 2번마다' },
   rookBolt: { name: '공성 쇠뇌', axis: 'push', icon: 'rookBolt', flavor: '성벽 위에서 쇠뇌를 당긴다.', desc: '룩의 공격 ×1.3' },
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', flavor: '한쪽 눈으로 죄를 가려낸다.', desc: '비숍의 공격 ×1.3' },
   pawnPike: { name: '개척자의 창', axis: 'inf', icon: 'pawnPike', flavor: '작은 손에 긴 창을 쥐여 준다.', desc: '폰의 공격 +8' },
-  oath: { name: '작은 개척자의 맹세', axis: 'inf', icon: 'oath', flavor: '물러서지 않겠다고 맹세했다.', desc: '폰 공격 +4 · 폰마다 한 번 버팀' },
+  oath: { name: '작은 개척자의 맹세', shortName: '개척자의 맹세', axis: 'inf', icon: 'oath', flavor: '물러서지 않겠다고 맹세했다.', desc: '폰 공격 +4 · 폰마다 한 번 버팀' },
   horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', flavor: '짓밟은 피가 아직 젖어 있다.', desc: '태엽 +1 — 나이트가 처치하면' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', flavor: '쓰러진 자의 주머니를 턴다.', desc: '카드 1장 뽑기 — 처치할 때마다' },
   assembly: { name: '끝없는 생산선', axis: 'inf', icon: 'assembly', flavor: '비어 가는 줄을 쉬지 않고 채운다.', desc: '킹 곁에 폰 하나 — 턴 시작에 · 폰 2기 이하면' },
   drum: { name: '진군의 북', axis: 'inf', icon: 'drum', flavor: '북소리에 맞춰 발을 맞춘다.', desc: '폰 카드 태엽 −1' },
   crown: { name: '짓누르는 왕관', axis: 'king', icon: 'crown', flavor: '무게가 곧 힘이다.', desc: '킹의 공격 ×2' },
-  throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', flavor: '왕이 걸으면 옥좌도 걷는다.', desc: '킹 방열판 +4 — 킹 카드마다' },
+  throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', flavor: '왕이 걸으면 옥좌도 걷는다.', desc: '킹 방열판 +4 — 킹 이동 명령마다' },
   coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '연쇄 피해 ×1.5 · 최대 ×16 — 처치마다' },
   echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', flavor: '쓰러지는 소리가 두 번 울린다.', desc: '처치하면 연쇄 +2' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'hammer', flavor: '부딪히는 소리가 곧 피해다.', desc: '충돌 피해 ×2 — 밀어 부딪칠 때' },
@@ -80,7 +82,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   anvilPlate: { name: '모루 장갑', axis: 'push', icon: 'anvilPlate', flavor: '모루처럼 단단한 판을 댄다.', desc: '충돌 피해 +10 — 밀어 부딪칠 때' },
   chainShot: { name: '연쇄 사슬', axis: 'push', icon: 'chainShot', flavor: '부딪힌 자가 다음을 부른다.', desc: '연쇄 +2 — 충돌로 처치하면' },
   bloodPact: { name: '피의 계약', axis: null, icon: 'bloodPact', flavor: '피로 쓴 계약은 지워지지 않는다.', desc: '모든 공격 ×1.3 · 턴 끝 킹 HP −4' },
-  brittle: { name: '깨지는 유리 심장', axis: null, icon: 'brittle', flavor: '빨리 뛰는 만큼 쉽게 깨진다.', desc: '태엽 +1 · 분대 HP −20%' },
+  brittle: { name: '깨지는 유리 심장', shortName: '유리 심장', axis: null, icon: 'brittle', flavor: '빨리 뛰는 만큼 쉽게 깨진다.', desc: '태엽 +1 · 분대 HP −20%' },
   greed: { name: '탐욕의 저울', axis: null, icon: 'greed', flavor: '쥘수록 무겁고 무거울수록 세다.', desc: '나사 150마다 공격 +2 · 고물상 값 +25%' },
   spare: { name: '과부하 태엽', axis: null, icon: 'spare', flavor: '감을 수 있는 데까지 감는다.', desc: '태엽 +1 — 대가: 손패 −1' },
   tape: { name: '되감는 테이프', axis: null, icon: 'tape', flavor: '한 수 전으로 돌아간다.', desc: '되감기 1회 — 대국마다 · 역회전 톱니 없이' },
@@ -88,7 +90,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   whetstone: { name: '닳은 숫돌', axis: null, icon: 'whetstone', flavor: '닳도록 갈았다.', desc: '모든 공격 +3' },
   // ---- 부품 확장 (D-282, 대과제 3-3): 수읽기 축 받침 · 퀸 · 기물별 · 공용 — 전용 도트 아이콘 (D-287) ----
   vise: { name: '죔쇠', axis: 'tactic', icon: 'vise', flavor: '묶인 자는 피할 곳이 없다.', desc: '피해 ×1.5 — 묶인 적을 칠 때' },
-  forkGear: { name: '갈래 톱니', axis: 'tactic', icon: 'forkGear', flavor: '갈래가 많을수록 잘 돈다.', desc: '태엽 +1 — 두 적을 칠 때' },
+  forkGear: { name: '갈래 톱니', axis: 'tactic', icon: 'forkGear', flavor: '갈래가 많을수록 잘 돈다.', desc: '태엽 +1 — 포크로 2기를 겨누면' },
   openGate: { name: '열린 문', axis: 'tactic', icon: 'openGate', flavor: '비켜선 자리로 빛이 든다.', desc: '다음 공격 배율 +0.5 — 비켜서는 카드에' },
   chainReel: { name: '쇠사슬 감개', axis: 'tactic', icon: 'chainReel', flavor: '감을수록 사슬이 갑옷이 된다.', desc: '그 기물 방열판 +8 — 적을 묶을 때마다' },
   gameRecord: { name: '낡은 기보', axis: 'tactic', icon: 'gameRecord', flavor: '옛 기보에 답이 있다.', desc: '카드 1장 — 수읽기를 내면 · 턴에 한 번' },
@@ -120,7 +122,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   rampart: { name: '성가퀴', axis: 'push', icon: 'rampart', flavor: '쓰러뜨린 자리에 돌을 쌓는다.', desc: '그 룩 방열판 +8 — 룩이 처치하면' },
   recoilSpring: { name: '반동 용수철', axis: 'push', icon: 'recoilSpring', flavor: '부딪친 힘이 되돌아온다.', desc: '태엽 +1 — 충돌로 처치하면 · 턴에 한 번' },
   mortar: { name: '회반죽', axis: 'push', icon: 'mortar', flavor: '틈마다 회반죽을 채운다.', desc: '룩 최대 HP +25%' },
-  tally: { name: '셈 막대', axis: 'chain', icon: 'tally', flavor: '넷을 세면 손이 바빠진다.', desc: '카드 2장 — 연쇄 4에 닿으면 · 턴에 한 번' },
+  tally: { name: '셈 막대', axis: 'chain', icon: 'tally', flavor: '넷을 세면 손이 바빠진다.', desc: '카드 2장 — 연쇄 4 이상 · 턴에 한 번' },
   stainedGlass: { name: '색유리', axis: 'chain', icon: 'stainedGlass', flavor: '빛이 색을 입고 날카로워진다.', desc: '비숍의 공격 +6' },
   flywheel: { name: '무거운 플라이휠', axis: null, icon: 'flywheel', flavor: '무거운 바퀴는 쉽게 서지 않는다.', desc: '남은 태엽 이월 · 최대 2' },
   redLine: { name: '붉은 눈금', axis: null, icon: 'redLine', flavor: '바늘이 붉은 칸을 넘었다.', desc: '모든 공격 +6 · 대국마다 킹 HP −15%' },

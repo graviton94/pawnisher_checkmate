@@ -63,6 +63,7 @@ BOSS_FRAMES = [('boss-600.jpg', '0.6초 · 모으기와 조명'), ('boss-1000.jp
                ('boss-1700.jpg', '1.7초 · 기물이 조각으로 부서짐'), ('boss-2200.jpg', '2.2초 · 파편 · 불씨'), ('boss-2900.jpg', '2.9초 · 여운')]
 
 SCREENS = [
+    ('콘텐츠·아트 감사 (D-432)', [('audit-catalog.png', '본편과 같은 카드 레일에서 명령92·부품84 전체 글 경계 검사'), ('audit-long-crew-667x375.png', '긴 본명은 명패, 자동 별명은 받침 정보 — 작은 모바일'), ('audit-long-crew-1024x768.png', '태블릿에서 별명·기록 보존'), ('audit-long-crew-1280x720.png', 'PC 카드 명패의 이름 말줄임 제거')]),
     ('세 빌드 · 실제 연속 행동 (D-431)', [('builds-complete-mixed.png', '다른 두 유형의 준비 → 환급 → 세 번째 유형의 첫 타격 ×1.8'), ('builds-seal-detail.png', '황금 완성 부품 분대 인장 — 기존 세 줄 설명'), ('builds-shared-plate.png', '생존3승 고참이 받은 방열판을 이웃 룩에게 +6'), ('builds-complete-rook.png', '룩 방열판21→9 — 남길 방어와 일격의 대가'), ('builds-complete-knight.png', '기습 처치→태엽·드로우→피의 질주 처치'), ('builds-crew-record.png', '기존 받침 정보에 생존 승리·실제 보호량'), ('builds-first-shop.png', '첫 상점의 일반 보조품 — 70나사 구매와 정비 예산 경쟁')]),
     ('손패 비용 대비 · UI 마감 (D-430)', [('hand-charcoal.png', '금색 비용 태엽·흰 숫자 유지 — 경첩만 차콜, 다른 선택지 원본 유지')]),
     ('네 대표 화면 · 능력치 헤더 (D-429)', [('battle-pc.png', 'PC 1280×720 — 6×6 보드 240→480px'), ('unit-info-large.png', '아이콘 오른쪽 상단에 이름, 아래 수치는 전부 왼쪽 정렬'), ('unit-info-large-667x375.png', '작은 모바일 667×375'), ('unit-info-large-1024x768.png', '태블릿 1024×768 — PC와 같은 큰 칸 목표'), ('unit-info-large-1280x720.png', 'PC 1280×720 — 큰 수치와 헤더')]),

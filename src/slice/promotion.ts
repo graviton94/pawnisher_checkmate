@@ -10,7 +10,7 @@ export const promotionScene = (o: { chapter: number; art: string; companion?: st
   const el = document.createElement('section');
   el.className = 'promotion kit';
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'promotion-title');
-  el.innerHTML = `<div class="pm-art"><img src="scenes/${o.art}.png" data-cover data-fy="0.38" alt="빈 거푸집 곁의 도금왕"></div>
+  el.innerHTML = `<div class="pm-art"><img src="scenes/${o.art}.png" data-cover data-fy="0.38" alt="왕의 몸을 권하는 도금왕"></div>
     <div class="pm-content"><header><p class="pm-chapter">${chapterLabel(o.chapter)}</p><h2 id="promotion-title">왕의 몸 앞에서</h2></header>
     <div class="pm-dialogue"><b class="pm-who">도금왕</b><p class="pm-say"></p></div>
     <div class="pm-inner"><b class="pm-who">종이왕</b><p>‘${tm.mono}’</p><p class="pm-stuck" aria-live="polite" hidden></p></div>

@@ -1,0 +1,788 @@
+{
+  "baseline": "2d020418",
+  "entry": "src/slice/main.ts",
+  "reachableModules": [
+    "src/ai/evaluate.ts",
+    "src/ai/search.ts",
+    "src/audio/sfx.ts",
+    "src/data/ability-text.ts",
+    "src/data/aiWeights.ts",
+    "src/data/battle.ts",
+    "src/data/bot.ts",
+    "src/data/build-supply.ts",
+    "src/data/build-trial.ts",
+    "src/data/campaign.ts",
+    "src/data/carves.ts",
+    "src/data/companion-scenes.ts",
+    "src/data/credits.ts",
+    "src/data/crew-voice.ts",
+    "src/data/display.ts",
+    "src/data/event-outcome.ts",
+    "src/data/event-talk.ts",
+    "src/data/fx.ts",
+    "src/data/grades.ts",
+    "src/data/hud.ts",
+    "src/data/josa.ts",
+    "src/data/motion.ts",
+    "src/data/opening.ts",
+    "src/data/parts.ts",
+    "src/data/pieces.ts",
+    "src/data/playtest.ts",
+    "src/data/preload-list.ts",
+    "src/data/run.ts",
+    "src/data/script.ts",
+    "src/data/text.ts",
+    "src/data/tutorial.ts",
+    "src/data/twists.ts",
+    "src/data/unlocks.ts",
+    "src/engine/board.ts",
+    "src/engine/index.ts",
+    "src/engine/plan.ts",
+    "src/engine/resolve.ts",
+    "src/engine/rng.ts",
+    "src/engine/rules.ts",
+    "src/engine/setup.ts",
+    "src/engine/turnstart.ts",
+    "src/engine/types.ts",
+    "src/game/controller.ts",
+    "src/slice/ability.ts",
+    "src/slice/actclear.ts",
+    "src/slice/battle.ts",
+    "src/slice/bossintro.ts",
+    "src/slice/bot.ts",
+    "src/slice/build-offers.ts",
+    "src/slice/build-trial.ts",
+    "src/slice/cards.ts",
+    "src/slice/credits.ts",
+    "src/slice/crew.ts",
+    "src/slice/desc.ts",
+    "src/slice/director.ts",
+    "src/slice/effect-text.ts",
+    "src/slice/events.ts",
+    "src/slice/evstage.ts",
+    "src/slice/fx3.ts",
+    "src/slice/main.ts",
+    "src/slice/opening.ts",
+    "src/slice/parts.ts",
+    "src/slice/promotion.ts",
+    "src/slice/run.ts",
+    "src/slice/save.ts",
+    "src/slice/shape.ts",
+    "src/slice/tags.ts",
+    "src/slice/telemetry.ts",
+    "src/slice/tutorial.ts",
+    "src/slice/uifx.ts",
+    "src/slice/uikit.ts",
+    "src/slice/warmup.ts",
+    "src/ui/juice.ts",
+    "src/ui/motion.ts",
+    "src/ui/sprites.ts",
+    "src/view/BoardRenderer.ts",
+    "src/view/attackFx.ts",
+    "src/view/boardfx.ts",
+    "src/view/impact.ts",
+    "src/view/marks.ts",
+    "src/view/pixel.ts",
+    "src/view/popup.ts",
+    "src/view/pxfx.ts",
+    "src/view/target.ts"
+  ],
+  "counts": {
+    "cards": 92,
+    "rewardCards": 86,
+    "parts": 84,
+    "referencedAssets": 125
+  },
+  "missingAssets": [],
+  "incompleteSupply": [],
+  "invalidUnlocks": [],
+  "unreachableParts": [],
+  "noRuntimeLiteral": [],
+  "sharedIcons": [
+    {
+      "icon": "royalSeal",
+      "consumers": [
+        "relaySeal",
+        "royalSeal"
+      ]
+    },
+    {
+      "icon": "shieldWall",
+      "consumers": [
+        "sharedPlate",
+        "shieldWall"
+      ]
+    },
+    {
+      "icon": "forkGear",
+      "consumers": [
+        "relayGear",
+        "forkGear"
+      ]
+    },
+    {
+      "icon": "anvilPlate",
+      "consumers": [
+        "siegeLatch",
+        "anvilPlate"
+      ]
+    },
+    {
+      "icon": "brittle",
+      "consumers": [
+        "lastBreath",
+        "brittle"
+      ]
+    },
+    {
+      "icon": "gameRecord",
+      "consumers": [
+        "ledger",
+        "gameRecord"
+      ]
+    },
+    {
+      "icon": "goldRank",
+      "consumers": [
+        "veteran",
+        "goldRank"
+      ]
+    },
+    {
+      "icon": "oath",
+      "consumers": [
+        "deathMark",
+        "oath"
+      ]
+    }
+  ],
+  "legacyStoryImported": false,
+  "assets": [
+    {
+      "file": "public/ui/icons16/royalSeal.png",
+      "consumer": "part:relaySeal",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/shieldWall.png",
+      "consumer": "part:sharedPlate",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/forkGear.png",
+      "consumer": "part:relayGear",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/anvilPlate.png",
+      "consumer": "part:siegeLatch",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/brittle.png",
+      "consumer": "part:lastBreath",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/gameRecord.png",
+      "consumer": "part:ledger",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/goldRank.png",
+      "consumer": "part:veteran",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/oath.png",
+      "consumer": "part:deathMark",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/notches.png",
+      "consumer": "part:notches",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/aceBadge.png",
+      "consumer": "part:aceBadge",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/heavyHand.png",
+      "consumer": "part:heavyHand",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/scarPlate.png",
+      "consumer": "part:scarPlate",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/cleanSheet.png",
+      "consumer": "part:cleanSheet",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/sergeant.png",
+      "consumer": "part:sergeant",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/rookBolt.png",
+      "consumer": "part:rookBolt",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/bishopLens.png",
+      "consumer": "part:bishopLens",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/pawnPike.png",
+      "consumer": "part:pawnPike",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/oath.png",
+      "consumer": "part:oath",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/horseshoe.png",
+      "consumer": "part:horseshoe",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/magnet.png",
+      "consumer": "part:magnet",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/assembly.png",
+      "consumer": "part:assembly",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/drum.png",
+      "consumer": "part:drum",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/crown.png",
+      "consumer": "part:crown",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/throne.png",
+      "consumer": "part:throne",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/coil.png",
+      "consumer": "part:coil",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/echo.png",
+      "consumer": "part:echo",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/hammer.png",
+      "consumer": "part:hammer",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/lance.png",
+      "consumer": "part:lance",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/spurs.png",
+      "consumer": "part:spurs",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/barracks.png",
+      "consumer": "part:barracks",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/banner.png",
+      "consumer": "part:banner",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/scepter.png",
+      "consumer": "part:scepter",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/gilded.png",
+      "consumer": "part:gilded",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/fuse.png",
+      "consumer": "part:fuse",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/conductor.png",
+      "consumer": "part:conductor",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/anvilPlate.png",
+      "consumer": "part:anvilPlate",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/chainShot.png",
+      "consumer": "part:chainShot",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/bloodPact.png",
+      "consumer": "part:bloodPact",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/brittle.png",
+      "consumer": "part:brittle",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/greed.png",
+      "consumer": "part:greed",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/spare.png",
+      "consumer": "part:spare",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/tape.png",
+      "consumer": "part:tape",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/whetstone.png",
+      "consumer": "part:whetstone",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/vise.png",
+      "consumer": "part:vise",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/forkGear.png",
+      "consumer": "part:forkGear",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/openGate.png",
+      "consumer": "part:openGate",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/chainReel.png",
+      "consumer": "part:chainReel",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/gameRecord.png",
+      "consumer": "part:gameRecord",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/gateHinge.png",
+      "consumer": "part:gateHinge",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/queenCrown.png",
+      "consumer": "part:queenCrown",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/lightCloak.png",
+      "consumer": "part:lightCloak",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/goldRank.png",
+      "consumer": "part:goldRank",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/thickWall.png",
+      "consumer": "part:thickWall",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/rosary.png",
+      "consumer": "part:rosary",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/stirrup.png",
+      "consumer": "part:stirrup",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/thickCast.png",
+      "consumer": "part:thickCast",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/scrapMagnet.png",
+      "consumer": "part:scrapMagnet",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/firstSpring.png",
+      "consumer": "part:firstSpring",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/lastAxle.png",
+      "consumer": "part:lastAxle",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/toolbox.png",
+      "consumer": "part:toolbox",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/ventHole.png",
+      "consumer": "part:ventHole",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/afterheat.png",
+      "consumer": "part:afterheat",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/bossBane.png",
+      "consumer": "part:bossBane",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/lightMag.png",
+      "consumer": "part:lightMag",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/mirror.png",
+      "consumer": "part:mirror",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/pinNeedle.png",
+      "consumer": "part:pinNeedle",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/whistle.png",
+      "consumer": "part:whistle",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/shieldWall.png",
+      "consumer": "part:shieldWall",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/jumpSpring.png",
+      "consumer": "part:jumpSpring",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/saddle.png",
+      "consumer": "part:saddle",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/royalSeal.png",
+      "consumer": "part:royalSeal",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/queenFan.png",
+      "consumer": "part:queenFan",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/rampart.png",
+      "consumer": "part:rampart",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/recoilSpring.png",
+      "consumer": "part:recoilSpring",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/mortar.png",
+      "consumer": "part:mortar",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/tally.png",
+      "consumer": "part:tally",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/stainedGlass.png",
+      "consumer": "part:stainedGlass",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/flywheel.png",
+      "consumer": "part:flywheel",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/redLine.png",
+      "consumer": "part:redLine",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/coolant.png",
+      "consumer": "part:coolant",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/piggyGear.png",
+      "consumer": "part:piggyGear",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/loupe.png",
+      "consumer": "part:loupe",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/stopwatch.png",
+      "consumer": "part:stopwatch",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/calipers.png",
+      "consumer": "part:calipers",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.order.png",
+      "consumer": "card:order",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.plate.png",
+      "consumer": "card:plate",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.repair.png",
+      "consumer": "card:repair",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.reload.png",
+      "consumer": "card:reload",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.smash.png",
+      "consumer": "card:smash",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.draft.png",
+      "consumer": "card:draft",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.spark.png",
+      "consumer": "card:spark",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.vent.png",
+      "consumer": "card:vent",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.burst.png",
+      "consumer": "card:burst",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.recall.png",
+      "consumer": "card:recall",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.finisher.png",
+      "consumer": "card:finisher",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.shove.png",
+      "consumer": "card:shove",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.overload.png",
+      "consumer": "card:overload",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.quickFix.png",
+      "consumer": "card:quickFix",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.tempo.png",
+      "consumer": "card:tempo",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.bulwark.png",
+      "consumer": "card:bulwark",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.stepAside.png",
+      "consumer": "card:stepAside",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.checkCall.png",
+      "consumer": "card:checkCall",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.oilCan.png",
+      "consumer": "card:oilCan",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.forkAny.png",
+      "consumer": "card:forkAny",
+      "present": true
+    },
+    {
+      "file": "public/ui/icons16/c.fieldPlate.png",
+      "consumer": "card:fieldPlate",
+      "present": true
+    },
+    {
+      "file": "public/ui/hud/crew-P.png",
+      "consumer": "crew:P",
+      "present": true
+    },
+    {
+      "file": "public/ui/hud/crew-N.png",
+      "consumer": "crew:N",
+      "present": true
+    },
+    {
+      "file": "public/ui/hud/crew-B.png",
+      "consumer": "crew:B",
+      "present": true
+    },
+    {
+      "file": "public/ui/hud/crew-R.png",
+      "consumer": "crew:R",
+      "present": true
+    },
+    {
+      "file": "public/ui/hud/crew-Q.png",
+      "consumer": "crew:Q",
+      "present": true
+    },
+    {
+      "file": "public/ui/hud/crew-K.png",
+      "consumer": "crew:K",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-00.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-01.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-02.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-03.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-04.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-05.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-06.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/prologue-07.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/promote-rule.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/end-fail.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/promote.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/credits-bg.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/epilogue-hands.png",
+      "consumer": "story-cut",
+      "present": true
+    },
+    {
+      "file": "public/scenes/promote-gild.png",
+      "consumer": "story-cut",
+      "present": true
+    }
+  ],
+  "limitations": "공급/리소스/정적 참조 감사. 효과의 정확성과 모든 상태의 가독성은 실행 검사와 구분한다."
+}
