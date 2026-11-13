@@ -3920,7 +3920,16 @@ const battleTutorial = async (): Promise<void> => {
   const selCardEl = () => (selCard !== null ? document.querySelector(`#hand [data-card="${selCard}"]`) : null);
   const plays = () => playsMade;
   let p0 = 0;
-  // 1턴 = 배치 턴 (D-454): 폰으로 첫 타격 → 나이트 둘 짓밟기(연쇄) → 칭찬 → 지휘로 연쇄 실은 한 방(아직 25%) → 턴 끝 → 적이 친다
+  const praiseStep: TutStep = { text: '', target: () => at(knightId) };
+  /** 둘째 나이트 카드로 적 킹 옆에 내려앉는 칸 (D-458: 예전엔 고정 칸 (4,3) — 배치 턴엔 그 칸 적 폰이 살아 있어 킹이 아닌 폰을 짚었다) */
+  const kingSquare = (): Pos | null => {
+    const k = foeK();
+    if (!k || selCard === null) return null;
+    const ms = cardMoves(b, selCard, knightId);
+    return ms.find((q) => Math.max(Math.abs(q.x - k.x), Math.abs(q.y - k.y)) === 1 && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y)) ?? ms[0] ?? null;
+  };
+  praiseStep.enter = () => { praiseStep.text = T.praise(b.kills, chainAdd(b.kills, b.parts)); };
+  // 1턴 = 배치 턴 (D-454): 폰으로 첫 타격 → 나이트 둘 짓밟기(연쇄) → 칭찬 → 둘째 나이트 카드로 연쇄 실은 한 방(아직 25%) → 턴 끝 → 적이 친다
   const ok = await tutorial('battle-a', [
     { text: T.hello },
     { text: T.board, target: () => $('board').querySelector('canvas') ?? $('board') },
@@ -3937,10 +3946,10 @@ const battleTutorial = async (): Promise<void> => {
     { text: T.card2, target: () => cardEl('leap'), wait: () => selCard !== null && b.hand[selCard] === 'leap' },
     { text: T.piece2, target: () => at(knightId), peek: () => [selCardEl()], wait: () => selPiece === knightId },
     { text: T.square2, target: () => tileRect({ x: 2, y: 2 }), peek: () => [selCardEl()], wait: () => b.kills >= 3 && !busy },
-    { text: T.praise, target: () => at(knightId) },
-    { text: T.order, target: () => cardEl('order'), wait: () => selCard !== null && b.hand[selCard] === 'order' },
+    praiseStep,
+    { text: T.order, target: () => cardEl('leap'), wait: () => selCard !== null && b.hand[selCard] === 'leap' },
     { text: T.piece4, target: () => at(knightId), peek: () => [selCardEl()], wait: () => selPiece === knightId },
-    { text: T.square4, target: () => tileRect({ x: 4, y: 3 }), peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
+    { text: T.square4, target: () => { const q = kingSquare(); return q ? tileRect(q) : $('board'); }, peek: () => [selCardEl()], enter: () => (p0 = plays()), wait: () => plays() > p0 && !busy },
     { text: T.big, target: () => { const k = foeK(); return k ? tileRect(k) : null; } },
     { text: T.end, target: () => $('btn-end'), wait: () => b.turn >= 2 && !busy && !enemyTurn },
   ]);
