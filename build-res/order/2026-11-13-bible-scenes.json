@@ -124,6 +124,36 @@
    ]
   },
   {
+   "id": "S-17",
+   "source": "build-res/order/S-17-casting-floor-source.webp",
+   "source_sha256": "3f4bb7ead19719705acf0589febafe35bab3e82cf950a9dff3ce655e1d7ca170",
+   "source_size": [
+    1671,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/casting-floor.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "dc4f8d21b5eed4cbda6cdb493152a9762be7e66e7efebea17c99a834d01ab20b",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 29602,
+   "upscale_mean_abs_diff_rgb": [
+    10.71,
+    6.68,
+    4.95
+   ]
+  },
+  {
    "id": "S-18",
    "source": "build-res/order/S-18-gold-cast-source.webp",
    "source_sha256": "47f739db7db8510a96a7f0f0c908681e42cecb8c344916f14a6dbecf7b5177ee",
@@ -151,6 +181,66 @@
     7.88,
     5.91,
     4.76
+   ]
+  },
+  {
+   "id": "S-19",
+   "source": "build-res/order/S-19-crown-gears-source.webp",
+   "source_sha256": "fb17c449034b676daf0afdf096bdfb06bb619f3455e3de700377f04cc8d44f05",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/crown-gears.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "974ddd8f75d44a1f2fc79b4241cbb5e88b11b2b456ce5c159277fb88664ca489",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 25233,
+   "upscale_mean_abs_diff_rgb": [
+    8.3,
+    5.69,
+    4.86
+   ]
+  },
+  {
+   "id": "S-20",
+   "source": "build-res/order/S-20-white-land-source.webp",
+   "source_sha256": "6f4edb813baba77df787dcdad5a93c02526a2e9ad4b461b94fb172548815e252",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/white-land.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "ec6631c37c78c42b3898f6c29639103cce92d8e1f66a04c1aac22868abd2e17f",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 14221,
+   "upscale_mean_abs_diff_rgb": [
+    5.47,
+    3.39,
+    3.03
    ]
   }
  ]
