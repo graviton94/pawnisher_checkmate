@@ -39,7 +39,8 @@ for (const style of styles) {
     if (r.cleared) cleared++;
   }
   console.log(`\n[${style} · ${build}${forceParts.length ? ` · ${forceParts.join('+')}` : ''}] 승급 ${asc} · ${n}출하 · 완주 ${pct(cleared, n)} · 대국 ${all.length}`);
-  console.log('구간            대국   평균턴  1턴승  ≤2턴승  3턴+승   패배   한턴에2기↓');
+  // D-460: 종막(도금왕)은 이기면 출하가 끝난다 — 거기서 잃는 분대원은 대가가 아니라 수단이라 「한 턴에 2기↓」에서 뺀다
+console.log('구간            대국   평균턴  1턴승  ≤2턴승  3턴+승   패배   한턴에2기↓(종막 제외)');
   const groups: [string, (b: BattleLog) => boolean][] = [
     ['1막 일반', (b) => b.act === 1 && b.kind === 'battle'], ['1막 검문', (b) => b.act === 1 && b.kind === 'check'], ['1막 반장', (b) => b.act === 1 && b.kind === 'boss'],
     ['2막 일반', (b) => b.act === 2 && b.kind === 'battle'], ['2막 검문', (b) => b.act === 2 && b.kind === 'check'], ['2막 반장', (b) => b.act === 2 && b.kind === 'boss'],
@@ -50,7 +51,7 @@ for (const style of styles) {
     const g = all.filter(f);
     if (!g.length) continue;
     const w = g.filter((b) => b.won);
-    console.log(`${name.padEnd(10, '　')} ${String(g.length).padStart(5)}  ${(w.reduce((a, b) => a + b.turns, 0) / Math.max(1, w.length)).toFixed(1).padStart(6)}  ${pct(w.filter((b) => b.turns <= 1).length, g.length)}   ${pct(w.filter((b) => b.turns <= 2).length, g.length)}    ${pct(w.filter((b) => b.turns >= 3).length, g.length)}   ${pct(g.length - w.length, g.length)}   ${pct(g.filter((b) => b.maxFellInTurn >= 2).length, g.length)}`);
+    console.log(`${name.padEnd(10, '　')} ${String(g.length).padStart(5)}  ${(w.reduce((a, b) => a + b.turns, 0) / Math.max(1, w.length)).toFixed(1).padStart(6)}  ${pct(w.filter((b) => b.turns <= 1).length, g.length)}   ${pct(w.filter((b) => b.turns <= 2).length, g.length)}    ${pct(w.filter((b) => b.turns >= 3).length, g.length)}   ${pct(g.length - w.length, g.length)}   ${name.startsWith('종막') ? '  —' : pct(g.filter((b) => b.act < 4 && b.maxFellInTurn >= 2).length, g.filter((b) => b.act < 4).length)}`);
   }
   // 덧붙임: 1턴 승리는 킹만 잡은 것인가 · 누가 우리 기물을 쓰러뜨리나
   const one = all.filter((b) => b.won && b.turns <= 1);

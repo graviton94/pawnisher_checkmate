@@ -50,7 +50,7 @@ for (const [key, g] of groups) {
     const a = all.filter((l) => l.act === act);
     if (!a.length) continue;
     const w = a.filter((l) => l.won);
-    out.push(`| ${key} | ${act === 4 ? '종막' : `${act}막`} | ${a.length} | ${avg(w.map((l) => l.turns)).toFixed(1)} | ${Math.round(avg(a.map((l) => l.dpt)))} | ${q(a.map((l) => l.peak), 0.5)} / ${q(a.map((l) => l.peak), 0.9)} | ${pct(a.filter((l) => l.maxFell >= 2).length / a.length)} |`);
+    out.push(`| ${key} | ${act === 4 ? '종막' : `${act}막`} | ${a.length} | ${avg(w.map((l) => l.turns)).toFixed(1)} | ${Math.round(avg(a.map((l) => l.dpt)))} | ${q(a.map((l) => l.peak), 0.5)} / ${q(a.map((l) => l.peak), 0.9)} | ${act === 4 ? '— (종막은 다 걸어도 된다)' : pct(a.filter((l) => l.maxFell >= 2).length / a.length)} |`);
   }
 }
 out.push('', '기준: 턴당 준 피해가 막마다 적 HP 성장(대국마다 ×1.05)과 비슷하게 올라야 성장이 느껴진다 — 피해가 덜 오르면 대국 턴이 막마다 늘어난다.', '');
