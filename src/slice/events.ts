@@ -5,7 +5,8 @@ import { cardFits, COMMANDS, gradeOf, isRefined, isRusted, REWARD_COMMANDS, refi
 import type { Crew, QuirkId } from './crew';
 import type { EffectTone } from './effect-text';
 import { crewMaxHp } from './battle';
-import type { SlicePartId } from './parts';
+import { PART_GRADE, SLICE_PARTS, type SlicePartId } from './parts';
+import { QUIRKS } from './crew';
 
 /**
  * 사건 (R5-3, D-170): 본편 돌발 12종(D-158 문체)을 시험판 체계(분대원 · 카드 · 부품 · 나사)로 옮겼다.
@@ -21,8 +22,10 @@ export interface EventState {
   deck: CommandId[];
   refined: CommandId[];
   gold: number;
-  /** 쥔 부품 (D-459 — 같은 부품을 두 번 주지 않게) */
+  /** 쥔 부품 (D-459 — 같은 부품을 두 번 주지 않게 · D-464 부품 맞바꾸기는 여기서 뺀다) */
   parts?: SlicePartId[];
+  /** 부적 (D-464): 역회전 톱니 · 여벌 심장 톱니 — 사건이 직접 더하고 뺀다 */
+  charms?: { revive: number; rewind: number };
 }
 
 export interface EventOutcome {
@@ -404,23 +407,43 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '기름 장수',
     text: '기름통을 실은 수레 위에서 룩이 국자를 흔든다. “관절에 기름 한 국자. 값은 정해져 있다.”',
     choices: [
-      { label: '기름을 붓는다', desc: '나사 −60 · 분대 전원 HP +40%', tones: ['loss', 'gain'], blocked: poor(60), apply: (s) => { s.gold -= 60; hpRatio(s, 0.4); return { text: '국자가 관절마다 기름을 붓는다. 삐걱이던 소리가, 하나씩 잦아든다. (HP +40%)' }; } },
-      { label: '새 톱니를 끼운다', desc: '나사 −110 · 깨진 심장 톱니 수리', tones: ['loss', 'gain'], blocked: (s) => (s.gold < 110 ? '나사 110 필요' : !s.squad.some((u) => u.cracked) ? '깨진 심장 톱니 없음' : null), apply: (s) => { s.gold -= 110; const u = s.squad.find((x) => x.cracked)!; s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: false } : x)); return { text: `기름 먹인 새 톱니가 ${u.name ?? NAMES[u.t]}의 가슴에 물린다. (심장 톱니 수리)` }; } },
+      // D-464: 사건마다 고유한 판돈 — 기름 장수는 「역회전 톱니」(되감기)를 판다. 치료는 비싸게 한 번에
+      { label: '톱니에 기름을 먹인다', desc: '나사 −70 · 역회전 톱니 +1', tones: ['loss', 'gain'], info: '역회전 톱니는 이번 턴을 처음으로 되감습니다(되감기 1회).', blocked: poor(70), apply: (s) => { s.gold -= 70; if (s.charms) s.charms.rewind += 1; return { text: '국자가 톱니 홈마다 기름을 붓는다. 거꾸로 돌려도 이제 걸리지 않는다. (역회전 톱니 +1)' }; } },
+      { label: '통째로 붓는다', desc: '나사 −90 · 분대 전원 HP 가득', tones: ['loss', 'gain'], blocked: poor(90), apply: (s) => { s.gold -= 90; hpRatio(s, 1); return { text: '룩이 통을 기울인다. 관절마다 기름이 흘러넘친다. (HP 가득)' }; } },
       leave('지나가기'),
     ],
   },
   blueprint: {
     title: '떠도는 설계도',
-    text: '날리던 설계도 한 장이 발치에 걸린다. 귀퉁이 글씨 「나사 70, 세 장을 고친다」.',
+    text: '날리던 설계도 한 장이 발치에 걸린다. 귀퉁이 글씨 「나사 70, 귀한 두 장을 고친다」.',
     choices: [
-      { label: '설계도를 산다', desc: '나사 −70 · 무작위 카드 3장 다듬기', tones: ['loss', 'gain'], info: '다듬은 카드는 태엽이 1 덜 듭니다.', blocked: (s) => (s.gold < 70 ? '나사 70 필요' : refinable(s).length < 1 ? '다듬을 카드 없음' : null), apply: (s, rng) => { s.gold -= 70; return { text: `설계도의 선이 고쳐진다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` }; } },
+      // D-464: 무작위 3장 → 가장 귀한 카드 2장을 골라 다듬는다 (덱의 핵심을 갈아 낸다)
+      { label: '설계도를 산다', desc: '나사 −70 · 가장 귀한 카드 2장 다듬기', tones: ['loss', 'gain'], info: '등급이 높은 카드부터 다듬습니다. 다듬은 카드는 태엽이 1 덜 듭니다.', blocked: (s) => (s.gold < 70 ? '나사 70 필요' : refinable(s).length < 1 ? '다듬을 카드 없음' : null), apply: (s) => {
+        s.gold -= 70;
+        const done: string[] = [];
+        for (let n = 0; n < 2; n++) {
+          const id = [...refinable(s)].sort((a, b) => GRADE_RANK[gradeOf(b)] - GRADE_RANK[gradeOf(a)])[0];
+          if (!id) break;
+          s.deck[s.deck.indexOf(id)] = refineOnce(id);
+          s.refined.push(id);
+          done.push(COMMANDS[id].name);
+        }
+        return { text: `설계도의 선이 ${done.join(' · ')}을 고친다. (태엽 −1)` };
+      } },
       leave('지나가기'),
     ],
   },
   scrapTrade: {
     title: '고철 교환소',
-    text: '철망 너머에서 폰 하나가 저울을 두드린다. “나사 백. 상자 하나. 고르는 건 너다.”',
+    text: '철망 너머에서 폰 하나가 저울을 두드린다. “헌 부품 하나 올려. 저울이 기울면 더 좋은 걸 주지.”',
     choices: [
+      // D-464: 고유한 판돈 — 쥔 부품 중 가장 낮은 것을 녹여 희귀 이상으로 맞바꾼다
+      { label: '헌 부품을 올린다', desc: '가장 낮은 부품 → 희귀 이상 부품', tones: ['loss', 'gain'], info: '쥔 부품 중 등급이 가장 낮은 것(같으면 먼저 얻은 것)이 사라집니다.', blocked: (s) => ((s.parts ?? []).length ? null : '올릴 부품이 없음'), apply: (s) => {
+        const ps = s.parts!;
+        const low = [...ps].sort((a, b) => GRADE_RANK[PART_GRADE[a] ?? 'common'] - GRADE_RANK[PART_GRADE[b] ?? 'common'] || ps.indexOf(a) - ps.indexOf(b))[0];
+        ps.splice(ps.indexOf(low), 1);
+        return { text: `${josa(SLICE_PARTS[low].name, '이')} 저울 위에서 녹아내린다. 저울이 기운다.`, partPick: true, elite: true };
+      } },
       { label: '상자를 산다', desc: '나사 −100 · 부품 하나를 고른다', tones: ['loss', 'gain'], blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고, 잊혀진 상자 하나가 밀려 나온다.', partPick: true }; } },
       leave('지나가기'),
     ],
@@ -441,13 +464,15 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '녹슨 고철이 산처럼 쌓여 있다. 그 아래에서 태엽 감기는 소리가 난다.',
     choices: [
       // D-459: 60% 나사 +70 → 60% 대가 붙은 부품 「과부하 태엽」(태엽 +1 · 손패 −1)
-      { label: '더미를 파고든다', desc: '60% 과부하 태엽 · 40% 분대원 HP −40%', tones: ['gain', 'loss'], info: '과부하 태엽은 태엽 +1 · 손패 −1인 부품입니다. 이미 있으면 나사 +70입니다.', apply: (s, rng) => {
+      { label: '더미를 파고든다', desc: '60% 과부하 태엽 · 40% 카드 1장 부서짐', tones: ['gain', 'loss'], info: '과부하 태엽: 태엽 +1 · 손패 −1. 무너지면 명령서 한 장이 찢어집니다.', apply: (s, rng) => {
         if (rng.int(10) < 6) {
           if (hasPart(s, 'spare')) { s.gold += 70; return { slot: 0, text: '고철 틈에서 나사 주머니가 딸려 나온다. (나사 +70)' }; }
           return { slot: 0, text: '고철 틈에서 끝까지 감긴 태엽 하나가 딸려 나온다.', givePart: 'spare' };
         }
-        const who = oneHurt(s, 0.4);
-        return { slot: 1, text: `더미가 무너진다. ${josa(who, '이')} 깔린다. (HP −40%)` };
+        // D-464: 실패 HP → 명령서 한 장이 고철에 깔려 부서진다
+        const k = rng.int(s.deck.length);
+        const gone = s.deck.length > 6 ? s.deck.splice(k, 1)[0] : null;
+        return { slot: 1, text: gone ? `더미가 무너진다. ${josa(COMMANDS[gone].name, '이')} 고철 아래 짓눌려 찢어진다.` : '더미가 무너진다. 다행히 명령서는 무사하다.' };
       } },
       leave('지나가기'),
     ],
@@ -514,10 +539,11 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '버려진 주물틀',
     text: '식은 주물틀 안쪽에 폰 모양이 새겨져 있다. 국자에는 쇳물이 조금 남았다.',
     choices: [
-      { label: '쇳물을 붓는다', desc: '50% 폰 합류 · 50% 분대원 HP −45%', tones: ['gain', 'loss'], blocked: full, apply: (s, rng) => {
-        if (rng.int(2) === 0) return { slot: 0, text: '틀이 갈라지고, 갓 굳은 폰 하나가 일어선다.', recruit: 'P' };
-        const who = oneHurt(s, 0.45);
-        return { slot: 1, text: `쇳물이 튄다. ${josa(who, '이')} 데인다. (HP −45%)` };
+      // D-464: 50% 폰 · 50% HP → 에이스의 본을 떠서 같은 기벽을 가진 폰을 붓는다
+      { label: '에이스의 본을 뜬다', desc: '나사 −50 · 에이스 기벽의 폰 합류', tones: ['loss', 'gain'], info: '최다 처치 분대원의 기벽을 그대로 물려받은 폰이 합류합니다.', blocked: (s) => (s.gold < 50 ? '나사 50 필요' : !nonKing(s).length ? '본을 뜰 분대원 없음' : full(s)), apply: (s) => {
+        s.gold -= 50;
+        const u = aceOf(s);
+        return { text: `${nameOf(u)}의 몸에 쇳물을 덮어 본을 뜬다. 틀에서 그를 닮은 폰이 일어선다.`, recruit: 'P', recruitQuirk: u.quirk };
       } },
       leave('지나가기'),
     ],
@@ -539,17 +565,14 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   duelKnight: {
     title: '결투하는 나이트',
-    text: '길 한가운데 나이트 하나가 창을 세운다. “너희 중 가장 센 놈. 한 판.”',
+    text: '길 한가운데 나이트 하나가 창을 세운다. “너희 중 가장 센 놈. 이기면 내 솜씨를 주지.”',
     choices: [
-      { label: '결투를 받는다', desc: '60% 생명 +1 · 40% 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '이기면 나사 +40도 받습니다. 가장 센 분대원이 나갑니다.', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
-        const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t])[0];
-        if (rng.int(10) < 6) {
-          s.gold += 40;
-          s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1 } : x));
-          return { slot: 0, text: `${josa(u.name ?? NAMES[u.t], '이')} 창을 쳐낸다. 나이트가 말에서 떨어진다. (생명 +1 · 나사 +40)` };
-        }
-        s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
-        return { slot: 1, text: `창끝이 ${u.name ?? NAMES[u.t]}의 가슴을 꿰뚫는다. 심장 톱니 하나가 깨진다. (다시 쓰러지면 폐기)` };
+      // D-464: 고유한 판돈 — 단련을 건 결투 (이기면 영구 공격 +5 · 지면 영구 −3)
+      { label: '결투를 받는다', desc: '60% 에이스 공격 +5 · 40% 공격 −3', tones: ['gain', 'loss'], info: '가장 센 분대원이 나갑니다. 오르든 내리든 영구히 남습니다.', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
+        const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t] || (b.kills ?? 0) - (a.kills ?? 0))[0];
+        if (rng.int(10) < 6) { temper(s, u, 5); return { slot: 0, text: `${josa(nameOf(u), '이')} 창을 쳐낸다. 나이트가 말에서 떨어지며 창술을 남긴다. (공격 +5)` }; }
+        temper(s, u, -3);
+        return { slot: 1, text: `창끝이 ${nameOf(u)}의 손목을 꿰뚫는다. 쥐는 힘이 예전 같지 않다. (공격 −3)` };
       } },
       leave('비켜 간다'),
     ],
@@ -621,7 +644,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   fieldMedic: {
     title: '순회 수리 비숍',
-    text: '구급 가방을 멘 비숍이 깨진 톱니를 찾는다. “고쳐 주지. 대신 명령서 한 장이 녹슨다.”',
+    text: '구급 가방을 멘 비숍이 깨진 톱니를 찾는다. “고쳐 주지. 대신 명령서가 녹슨다.”',
     choices: [
       { label: '수리를 맡긴다', desc: '심장 톱니 수리 · 카드 1장 녹슮', tones: ['gain', 'loss'], info: '녹슨 카드는 태엽이 1 더 듭니다.', blocked: (s) => (s.squad.some((u) => u.cracked) ? null : '깨진 심장 톱니 없음'), apply: (s, rng) => {
         const u = s.squad.find((x) => x.cracked)!;
@@ -630,6 +653,13 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         const o = ks.length ? ks[rng.int(ks.length)] : null;
         if (o) s.deck[o[1]] = rustOnce(o[0]);
         return { text: `${u.name ?? NAMES[u.t]}의 가슴에서 새 톱니가 돈다.${o ? ` 대신 ${josa(COMMANDS[o[0]].name, '이')} 녹슨다.` : ''}` };
+      } },
+      // D-464: 고유한 판돈 — 「여벌 심장 톱니」(킹 대신 깨진다)를 명령서 두 장의 녹으로
+      { label: '여벌 심장을 맞춘다', desc: '카드 2장 녹슮 · 여벌 심장 톱니 +1', tones: ['loss', 'gain'], info: '여벌 심장 톱니는 킹이 쓰러질 때 대신 깨져 그 대국을 처음부터 다시 합니다.', blocked: (s) => (s.deck.filter((id) => !isRusted(id)).length >= 2 ? null : '녹일 명령서 없음'), apply: (s, rng) => {
+        const hit: string[] = [];
+        for (let n = 0; n < 2; n++) { const ks = s.deck.map((id, k) => [id, k] as const).filter(([id]) => !isRusted(id)); const o = pick(rng, ks); if (o) { s.deck[o[1]] = rustOnce(o[0]); hit.push(COMMANDS[o[0]].name); } }
+        if (s.charms) s.charms.revive += 1;
+        return { text: `비숍이 가방 바닥에서 여벌 톱니를 꺼낸다. 값으로 ${hit.join(' · ')}에 녹이 슨다. (여벌 심장 톱니 +1)` };
       } },
       leave('지나가기'),
     ],
@@ -649,9 +679,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   tollGate: {
     title: '통행 문',
-    text: '쇠창살 문 앞을 룩 둘이 막고 있다. 팻말 「통행세 나사 40」.',
+    text: '쇠창살 문 앞을 룩 둘이 막고 있다. 한 놈은 초소가 지겨운 눈치다.',
     choices: [
-      { label: '통행세를 낸다', desc: '나사 −40 · 분대 전원 HP +20%', tones: ['loss', 'gain'], blocked: poor(40), apply: (s) => { s.gold -= 40; hpRatio(s, 0.2); return { text: '룩들이 길을 비킨다. 초소의 난로가, 얼어붙은 분대를 녹인다. (HP +20%)' }; } },
       // D-459: 문 부수기(나사 · HP) → 문지기 룩 하나를 매수해 데려간다
       { label: '문지기를 매수한다', desc: '나사 −120 · 룩 합류', tones: ['loss', 'gain'], info: '룩과 함께 룩 카드 한 장이 덱에 들어옵니다.', blocked: (s) => (s.gold < 120 ? '나사 120 필요' : full(s)), apply: (s) => {
         s.gold -= 120;
@@ -665,12 +694,14 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '거울 복도',
     text: '양쪽 벽이 모두 거울이다. 그림자 하나가 한 발 늦게 움직인다.',
     choices: [
-      { label: '그림자를 붙잡는다', desc: '50% 같은 기물 합류 · 50% HP −50%', tones: ['gain', 'loss'], info: '나쁜 쪽이면 거울 앞의 분대원이 다칩니다.', blocked: (s) => (!nonKing(s).length ? '분대원 필요' : full(s)), apply: (s, rng) => {
+      // D-464: 실패 HP −50% → 거울상 — 그 분대원의 기벽이 무작위로 뒤바뀐다
+      { label: '그림자를 붙잡는다', desc: '50% 같은 기물 합류 · 50% 기벽 뒤바뀜', tones: ['gain', 'neutral'], info: '나쁜 쪽이면 거울 앞 분대원의 기벽이 다른 기벽으로 무작위로 바뀝니다.', blocked: (s) => (!nonKing(s).length ? '분대원 필요' : full(s)), apply: (s, rng) => {
         const u = pick(rng, nonKing(s))!;
-        if (rng.int(2) === 0) return { slot: 0, text: `거울 속 ${josa(u.name ?? NAMES[u.t], '이')} 걸어 나온다. 하나가 둘이 된다.`, recruit: u.t };
-        const max = crewMaxHp(u);
-        s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.5)) } : x));
-        return { slot: 1, text: `거울이 깨진다. 파편이 ${josa(u.name ?? NAMES[u.t], '을')} 벤다. (HP −50%)` };
+        if (rng.int(2) === 0) return { slot: 0, text: `거울 속 ${josa(nameOf(u), '이')} 걸어 나온다. 하나가 둘이 된다.`, recruit: u.t, recruitQuirk: u.quirk };
+        const ids = (Object.keys(QUIRKS) as QuirkId[]).filter((q) => q !== u.quirk);
+        const q = pick(rng, ids)!;
+        setQuirk(s, u, q);
+        return { slot: 1, text: `거울이 깨진다. 돌아선 ${josa(nameOf(u), '은')} 어딘가 낯설다. (기벽 → ${QUIRKS[q].name})` };
       } },
       leave('눈을 돌린다'),
     ],

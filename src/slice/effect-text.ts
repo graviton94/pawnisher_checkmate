@@ -7,7 +7,7 @@ export const effectNumbers = (text: string): string => text.split(/([+−×]?\d+
 /** 상태 차이에서 만든 결과 문구용. 자유 서술과 확률 자체에는 득실 색을 부여하지 않는다. */
 const resultTone = (s: string): EffectTone => {
   if (/다듬기|녹 벗기기|수리/.test(s)) return 'gain';
-  if (/깨짐|깨졌다|부서짐|녹슨|녹슮|폐기|빠짐|몰수|감전|잃/.test(s)) return 'loss';
+  if (/깨짐|깨졌다|부서짐|녹슨|녹슮|폐기|빠짐|몰수|감전|잃|사라짐/.test(s)) return 'loss';
   if (/[−-]\d/.test(s)) return 'loss';
   if (/\+\d|새 카드|합류|부품/.test(s)) return 'gain';
   return 'neutral';

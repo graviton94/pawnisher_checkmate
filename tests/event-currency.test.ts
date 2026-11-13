@@ -7,7 +7,7 @@ import type { Crew } from '../src/slice/crew';
 
 /** 사건의 새 화폐 (D-459): 기벽 갈아 끼우기 · 단련(영구 공격) · 대가 붙은 부품 · 덱 수술 · 심장 톱니 */
 const crew = (): Crew[] => [{ t: 'K', serial: 'K1', name: '종이왕' }, { t: 'N', serial: 'N1', name: '박차', kills: 7, battles: 9 }, { t: 'P', serial: 'P1', name: '먼지투성이', kills: 1, battles: 2 }];
-const state = (): EventState => ({ squad: crew(), deck: [...START_DECK], refined: [], gold: 200, parts: [] });
+const state = (): EventState => ({ squad: crew(), deck: [...START_DECK], refined: [], gold: 200, parts: [], charms: { revive: 0, rewind: 0 } });
 const choose = (id: keyof typeof SLICE_EVENTS, k: number, s = state()) => ({ s, out: SLICE_EVENTS[id].choices[k].apply(s, new Rng(3)) });
 
 describe('사건의 새 화폐 (D-459)', () => {
@@ -41,5 +41,28 @@ describe('사건의 새 화폐 (D-459)', () => {
     expect(a.deck.filter((id) => (START_DECK as string[]).includes(id)).length).toBe(START_DECK.length - 3);
     const b = choose('echoWell', 1).s;
     expect(b.deck.includes('advance')).toBe(false);
+  });
+  it('D-464 고유한 판돈: 기름 장수 = 역회전 톱니 · 수리 비숍 = 여벌 심장 · 교환소 = 부품 맞바꾸기', () => {
+    expect(choose('oilMerchant', 0).s.charms!.rewind).toBe(1);
+    const med = choose('fieldMedic', 1).s;
+    expect(med.charms!.revive).toBe(1);
+    expect(med.deck.filter((id) => id.endsWith('~')).length).toBe(2);
+    const t = state(); t.parts = ['whistle', 'coil'];
+    const out = SLICE_EVENTS.scrapTrade.choices[0].apply(t, new Rng(1));
+    expect(t.parts).toEqual(['coil']);
+    expect(out.partPick && out.elite).toBe(true);
+  });
+  it('주물틀은 에이스의 기벽을 물려받은 폰 · 결투는 지면 영구 공격 −3', () => {
+    const s = state(); s.squad[1] = { ...s.squad[1], quirk: 'glass' };
+    const out = SLICE_EVENTS.castMold.choices[0].apply(s, new Rng(1));
+    expect(out.recruit).toBe('P');
+    expect(out.recruitQuirk).toBe('glass');
+    let lost = false;
+    for (let seed = 0; seed < 20 && !lost; seed++) {
+      const d = state();
+      const r = SLICE_EVENTS.duelKnight.choices[0].apply(d, new Rng(seed));
+      if (r.slot === 1) { lost = true; expect(d.squad.find((u) => u.serial === 'N1')!.temper).toBe(-3); }
+    }
+    expect(lost).toBe(true);
   });
 });

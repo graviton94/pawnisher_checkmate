@@ -256,12 +256,12 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         }
       } else if (n.kind === 'event') {
         const id = SLICE_EVENT_IDS[rng.int(SLICE_EVENT_IDS.length)];
-        const st: EventState = { squad, deck, refined, gold, parts };
+        const st: EventState = { squad, deck, refined, gold, parts, charms: { revive, rewind: 0 } };
         const ch = SLICE_EVENTS[id].choices.filter((c) => c.desc && !c.blocked?.(st));
         if (ch.length) {
           const c = ch[rng.int(ch.length)];
           const res = c.apply(st, rng);
-          squad = st.squad; deck = st.deck; gold = st.gold;
+          squad = st.squad; deck = st.deck; gold = st.gold; revive = st.charms?.revive ?? revive;
           if (res.partPick) partOf(false);
           if (res.givePart && !parts.includes(res.givePart)) addPart(res.givePart);
           if (res.recruit) squad.push({ ...makeCrew(res.recruit, rng, squad.map((u) => u.name ?? '')), ...(res.recruitQuirk ? { quirk: res.recruitQuirk } : {}) });
