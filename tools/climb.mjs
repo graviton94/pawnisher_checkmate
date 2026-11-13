@@ -33,7 +33,7 @@ if (cache) await bundle({ configFile: false, logLevel: 'silent', build: { ssr: j
 
 const tasks = [];
 if (![N,jobs,shard].every(x => Number.isInteger(x) && x > 0) || ascs.some(a => !Number.isInteger(a) || a < 0 || a > 13)
-  || styles.some(s => !['search','greedy','naive','random'].includes(s)) || builds.some(b => !['neutral','mixed','knight','rook'].includes(b)) || pools.some(p => !['starter','all'].includes(p)) || personas.some(p => !['standard','risky','hoarder'].includes(p))) throw new Error('invalid climb arguments');
+  || styles.some(s => !['search','greedy','naive','random'].includes(s)) || builds.some(b => !['neutral','mixed','knight','rook','ax-cav','ax-inf','ax-king','ax-chain','ax-push','ax-tactic'].includes(b)) || pools.some(p => !['starter','all'].includes(p)) || personas.some(p => !['standard','risky','hoarder'].includes(p))) throw new Error('invalid climb arguments');
 for (const s of styles) for (const a of ascs) for (const f of builds) for (const pool of pools) for (const pe of personas) for (let off = 0; off < N; off += shard) tasks.push({ s, a, f, pool, pe, n: Math.min(shard, N - off), off });
 const rows = [];
 const run = (t) => new Promise((done, fail) => {

@@ -17,7 +17,10 @@ import { chooseBuildCard, chooseBuildPart, firstShopParts, kitOffers } from '../
 import { idleStats, playOut, playOutSearch, type BotStyle, type IdleStats } from '../slice/bot';
 
 export type RunStyle = BotStyle | 'search';
-export type RunBuild = 'neutral' | 'mixed' | 'knight' | 'rook';
+export type RunBuild = 'neutral' | 'mixed' | 'knight' | 'rook' | AxisBuild;
+/** 빌드 축 집착형 (D-461 실험실): 그 축의 부품 · 카드를 우선 고른다 */
+export type AxisBuild = 'ax-cav' | 'ax-inf' | 'ax-king' | 'ax-chain' | 'ax-push' | 'ax-tactic';
+const axisOf = (b: RunBuild): Axis | null => (b.startsWith('ax-') ? (b.slice(3) as Axis) : null);
 export interface RunOpts {
   asc?: number;
   build?: RunBuild;
@@ -74,10 +77,11 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const offersLog: RunResult['offers'] = [];
   let goldAtFinal = -1;
   const build = o.build ?? 'neutral';
-  const family = BUILD_FAMILIES[build] ?? [];
+  const ax = axisOf(build);
+  const family = ax ? (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => SLICE_PARTS[id].axis === ax) : BUILD_FAMILIES[build] ?? [];
   const open = new Set([...STARTER_CARDS, ...STARTER_PARTS]);
   const isOpen = (id: string) => o.pool !== 'starter' || open.has(id);
-  const val = o.value ?? ((id: CommandId) => (GRADE_RANK[gradeOf(id)] ?? 10) + (SUPPORT_CARDS[build]?.includes(id) ? 18 : 0) + (build === 'knight' && COMMANDS[id].who === 'N' || build === 'rook' && COMMANDS[id].who === 'R' ? 10 : 0));
+  const val = o.value ?? ((id: CommandId) => (GRADE_RANK[gradeOf(id)] ?? 10) + (SUPPORT_CARDS[build]?.includes(id) || (ax && (COMMANDS[id].axis === ax || COMMANDS[id].axis2 === ax)) ? 18 : 0) + (build === 'knight' && COMMANDS[id].who === 'N' || build === 'rook' && COMMANDS[id].who === 'R' ? 10 : 0));
   const rng = new Rng(seed);
   const acts = buildRun(seed, asc);
   let squad: Squad[] = [];
@@ -257,7 +261,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           squad = st.squad; deck = st.deck; gold = st.gold;
           if (res.partPick) partOf(false);
           if (res.givePart && !parts.includes(res.givePart)) addPart(res.givePart);
-          if (res.recruit) squad.push(makeCrew(res.recruit, rng, squad.map((u) => u.name ?? '')));
+          if (res.recruit) squad.push({ ...makeCrew(res.recruit, rng, squad.map((u) => u.name ?? '')), ...(res.recruitQuirk ? { quirk: res.recruitQuirk } : {}) });
         }
       }
     }

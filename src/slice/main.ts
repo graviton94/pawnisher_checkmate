@@ -2004,7 +2004,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         deck = s0.deck;
         refined.splice(0, refined.length, ...s0.refined);
         gold = s0.gold;
-        if (out.recruit) squad.push(crewOf(out.recruit));
+        if (out.recruit) squad.push({ ...crewOf(out.recruit), ...(out.recruitQuirk ? { quirk: out.recruitQuirk } : {}) });
         // 바뀐 것 (D-260): 실제 카드 · 기물에 FX — 같은 바탕 카드끼리는 강화 · 녹, 나머지는 파괴 · 새 카드
         const minus = <T,>(a: T[], b: T[]) => { const r = [...b]; return a.filter((x) => { const i = r.indexOf(x); if (i < 0) return true; r.splice(i, 1); return false; }); };
         const outs = minus(before.deck, deck), ins = minus(deck, before.deck);

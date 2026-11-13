@@ -36,6 +36,8 @@ export interface EventOutcome {
   givePart?: SlicePartId;
   /** 새로 들어온 분대원 (이름 붙이기는 화면이) */
   recruit?: PieceType;
+  /** 새 분대원의 기벽을 정해 준다 (D-459) */
+  recruitQuirk?: QuirkId;
   /** 카드를 하나 고르게 한 뒤 counterweight()로 마무리한다 (D-247 저울추) */
   cardPick?: 'counterweight';
   /** 확률 선택이면 실제로 걸린 칸 (desc의 「n%: …」 순서, 0부터) — 화면이 룰렛을 그 칸에 세운다 (D-244) */
@@ -429,7 +431,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '라인에서 떨어진 폰 하나가 길가에 서 있다. 출하표가 반쯤 찢겨 있다. “…출구가 어느 쪽이에요?”',
     choices: [
       { label: '데려간다', desc: '폰 하나가 분대에 든다', tones: ['gain'], blocked: full, apply: () => ({ text: '폰이 말없이, 당신의 줄 맨 끝에 선다.', recruit: 'P' }) },
-      { label: '길을 알려 준다', desc: '나사 +25', tones: ['gain'], apply: (s) => { s.gold += 25; return { text: '폰이 주머니를 털어 나사를 내민다. 그리고 출구를 향해, 홀로 걸어간다. (나사 +25)' }; } },
+      // D-459: 나사 +25 → 출하표를 고쳐 붙여 준다 — 나사를 치르고 고집 센 축(생명 2 · 공격 −15%)으로 합류
+      { label: '출하표를 고쳐 준다', desc: '나사 −40 · 생명 2인 폰 합류', tones: ['loss', 'gain'], info: '폰의 기벽이 「고집 센 축」(생명 2 · 공격 −15%)이 됩니다.', blocked: (s) => (s.gold < 40 ? '나사 40 필요' : full(s)), apply: (s) => { s.gold -= 40; return { text: '찢긴 출하표 위에 새 도장이 찍힌다. 폰의 축이 단단히 물린다.', recruit: 'P', recruitQuirk: 'stubborn' }; } },
       leave('지나가기'),
     ],
   },
@@ -649,10 +652,11 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '쇠창살 문 앞을 룩 둘이 막고 있다. 팻말 「통행세 나사 40」.',
     choices: [
       { label: '통행세를 낸다', desc: '나사 −40 · 분대 전원 HP +20%', tones: ['loss', 'gain'], blocked: poor(40), apply: (s) => { s.gold -= 40; hpRatio(s, 0.2); return { text: '룩들이 길을 비킨다. 초소의 난로가, 얼어붙은 분대를 녹인다. (HP +20%)' }; } },
-      { label: '문을 부순다', desc: '60% 나사 +60 · 40% 분대원 HP −60%', tones: ['gain', 'loss'], apply: (s, rng) => {
-        if (rng.int(10) < 6) { s.gold += 60; return { slot: 0, text: '창살이 휜다. 겁먹은 룩들이 달아나고, 버려진 상자만 남는다. (나사 +60)' }; }
-        const who = oneHurt(s, 0.6);
-        return { slot: 1, text: `룩이 버틴다. ${josa(who, '이')} 문짝에 부딪혀 나뒹군다. (HP −60%)` };
+      // D-459: 문 부수기(나사 · HP) → 문지기 룩 하나를 매수해 데려간다
+      { label: '문지기를 매수한다', desc: '나사 −120 · 룩 합류', tones: ['loss', 'gain'], info: '룩과 함께 룩 카드 한 장이 덱에 들어옵니다.', blocked: (s) => (s.gold < 120 ? '나사 120 필요' : full(s)), apply: (s) => {
+        s.gold -= 120;
+        s.deck.push('rookLine');
+        return { text: '룩 하나가 창을 내려놓는다. 초소를 떠나 당신의 줄 끝에 선다.', recruit: 'R' };
       } },
       leave('돌아간다'),
     ],
@@ -676,7 +680,14 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '라인의 사이렌이 울린다. “연장이다! 한 바퀴 더 돌면 수당이 두 배!”',
     choices: [
       { label: '연장을 뛴다', desc: '분대 전원 HP −20% · 나사 +90', tones: ['loss', 'gain'], apply: (s) => { hpRatio(s, -0.2); s.gold += 90; return { text: '라인이 밤새 돈다. 분대는 휘청이며, 두툼한 수당 봉투를 받아 든다. (HP −20% · 나사 +90)' }; } },
-      { label: '쉬겠다고 한다', desc: '분대 전원 HP +15%', tones: ['gain'], apply: (s) => { hpRatio(s, 0.15); return { text: '감독이 혀를 찬다. 분대는 구석에 모여 눈을 붙인다. 사이렌 소리가, 멀어져 간다. (HP +15%)' }; } },
+      // D-459: 쉬기 HP +15% → 감독의 금고에서 명령서를 빼 온다 (희귀 이상 카드 · 분대원 하나 HP −30%)
+      { label: '감독실을 턴다', desc: '희귀 카드 1장 · 분대원 하나 HP −30%', tones: ['gain', 'loss'], info: '분대가 쓸 수 있는 희귀 이상 카드입니다. 가장 성한 분대원이 붙잡힙니다.', apply: (s, rng) => {
+        const pool = REWARD_COMMANDS.filter((id) => gradeOf(id) !== 'common' && cardFits(id, s.squad.map((u) => u.t)));
+        const id = pick(rng, pool) ?? REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
+        s.deck.push(id);
+        const who = oneHurt(s, 0.3);
+        return { text: `감독의 서랍에서 ${josa(COMMANDS[id].name, '을')} 빼낸다. ${josa(who, '이')} 붙잡혀 얻어맞는다. (HP −30%)` };
+      } },
     ],
   },
 };
