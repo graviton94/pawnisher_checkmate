@@ -4,7 +4,7 @@ import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
-import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
+import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -153,6 +153,9 @@ export interface SliceBattle {
   lab?: 'A' | 'B';
   /** 이번 턴 환급받은 태엽 */
   refunded?: number;
+  /** 이번 턴에 더 얻은 태엽 · 더 뽑은 카드 (판 길이 제동 PACE) */
+  apGained?: number;
+  drawnExtra?: number;
   /** 자살 수 경고를 이미 보였나 (이번 턴) */
   warned: boolean;
 }
@@ -166,7 +169,12 @@ const shuffle = <T>(rng: Rng, a: T[]): T[] => {
   return out;
 };
 
-const drawCards = (b: SliceBattle, n: number): void => {
+/** deal = 턴 시작 손패 (판 길이 제동의 뽑기 상한에 들지 않는다 — PACE.drawPerTurn) */
+const drawCards = (b: SliceBattle, n: number, deal = false): void => {
+  if (!deal && PACE.drawPerTurn) {
+    n = Math.max(0, Math.min(n, PACE.drawPerTurn - (b.drawnExtra ?? 0)));
+    b.drawnExtra = (b.drawnExtra ?? 0) + n;
+  }
   const rng = new Rng(b.rng);
   for (let i = 0; i < n; i++) {
     if (!b.draw.length) {
@@ -218,7 +226,9 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   const pawnCard = c.who === 'P' || c.kind === 'march';
   const knightCard = c.who === 'N';
   if (c.kind === 'swap' && has(b, 'gateHinge')) return 0;
-  return Math.max(0, c.cost - (pawnCard && has(b, 'drum') ? 1 : 0) - (knightCard && has(b, 'spurs') ? 1 : 0) - (c.who === 'Q' && has(b, 'lightCloak') ? 1 : 0));
+  // 판 길이 제동 (D-449): 할인 부품은 턴마다 그 종류 첫 장에만 (등자로 나이트 카드가 모두 0태엽이 되어 턴이 끝나지 않았다)
+  const off = (id: SlicePartId, on: boolean): number => (on && has(b, id) && !(PACE.discountOnce && b.once.includes(`off:${id}`)) ? 1 : 0);
+  return Math.max(0, c.cost - off('drum', pawnCard) - off('spurs', knightCard) - off('lightCloak', c.who === 'Q'));
 };
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
@@ -363,7 +373,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     }
   }
   b.atkK = atkK;
-  drawCards(b, b.handSize + (has(b, 'stopwatch') ? PART_NUM.stopwatch : 0));
+  drawCards(b, b.handSize + (has(b, 'stopwatch') ? PART_NUM.stopwatch : 0), true);
   bossTurnStart(b);
   b.intents = planFor(b);
   markTelegraph(b);
@@ -1076,6 +1086,11 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   plateEvents(b, before, events);
   for (const p of b.s.pieces) if (p.side === 0) syncPlate(b, p);
   events.push(...afterMyHits(b, before, events));
+  // 판 길이 제동 (D-449): 한 턴에 더 얻는 태엽은 출처를 가리지 않고 합쳐서 상한까지
+  if (PACE.apGainPerTurn) {
+    gained = Math.max(0, Math.min(gained, PACE.apGainPerTurn - (b.apGained ?? 0)));
+    b.apGained = (b.apGained ?? 0) + gained;
+  }
   // 상한에서 사라진 환급을 얻은 것처럼 표시하지 않는다. 부품 발동 자체는 소모된다.
   const actualGain = Math.max(0, Math.min(gained, SLICE.apCap - (b.ap - cost)));
   const relayGain = Math.max(0, actualGain - (gained - relay));
@@ -1083,6 +1098,12 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   if (actualGain > relayGain) events.push({ type: 'apGain', side: 0, amount: actualGain - relayGain });
   if (relay) events.push({ type: 'apGain', side: 0, amount: relayGain, source: 'relayGear' });
   b.ap = Math.min(SLICE.apCap, b.ap - cost + gained);
+  // 할인 부품을 이번 턴에 썼다고 적는다 (PACE.discountOnce — costOf가 본다)
+  if (PACE.discountOnce && c.cost > 0) {
+    if ((c.who === 'P' || c.kind === 'march') && has(b, 'drum')) b.once.push('off:drum');
+    if (c.who === 'N' && has(b, 'spurs')) b.once.push('off:spurs');
+    if (c.who === 'Q' && has(b, 'lightCloak')) b.once.push('off:lightCloak');
+  }
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
   (b.played ??= []).push(id);
@@ -1485,6 +1506,8 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.killers = [];
     b.once = [];
     b.refunded = 0;
+    b.apGained = 0;
+    b.drawnExtra = 0;
     b.warned = false;
     // 조립 라인: 폰이 적으면 킹 옆에 하나
     if (has(b, 'assembly') && b.s.pieces.filter((p) => p.side === 0 && p.type === 'P').length <= PART_NUM.assemblyBelow) {
@@ -1493,7 +1516,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     }
     // 기어 쇼크 (D-230, 보고서 2): 맞은 기물이 있으면 다음 턴 손패 −1 (턴에 최대 −1)
     b.evaded = [];
-    drawCards(b, b.handSize - ((b.shocked ?? []).length ? SLICE.shockDraw : 0));
+    drawCards(b, b.handSize - ((b.shocked ?? []).length ? SLICE.shockDraw : 0), true);
     bossTurnStart(b);
     guardUp(b);
     b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));

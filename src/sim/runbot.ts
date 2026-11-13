@@ -47,7 +47,10 @@ export interface RunResult {
   squad: PieceType[];
   /** 손 놓은 턴 (2026-11-09d) — 이 출하의 모든 대국 합 */
   idle: IdleStats;
+  /** 대국마다 (D-449 판 길이 점검): 막 · 종류 · 턴 수 · 승패 · 쓰러진 분대원 · 한 적 턴에 가장 많이 쓰러진 수 */
+  log: BattleLog[];
 }
+export interface BattleLog { act: number; kind: 'battle' | 'check' | 'boss'; title: string; turns: number; won: boolean; fell: number; maxFellInTurn: number; kingHpLost: number; /** 이겼을 때 살아 있던 적 수 (킹만 잡고 끝냈나) · 처음 적 수 */ enemiesLeft: number; enemies: number; /** 분대원을 쓰러뜨린 적 유형 */ killers: string }
 
 const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
 
@@ -75,6 +78,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   let battles = 0;
   let turnsAll = 0;
   const idle = idleStats();
+  const log: BattleLog[] = [];
   const usable = (id: CommandId) => cardFits(id, squad.map((u) => u.t));
   const hpRatio = () => squad.reduce((a, u) => a + (u.hp ?? crewMaxHp(u)) / crewMaxHp(u), 0) / Math.max(1, squad.length);
   const recruit = (single = false) => {
@@ -133,7 +137,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     const best = offers.sort((a, b) => val(b) - val(a))[0];
     if (best && val(best) > 0) deck.push(best);
   };
-  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle });
+  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle, log });
   for (const [ai, a] of acts.entries()) {
     actNow = ai;
     let prev: MapNode | null = null;
@@ -155,6 +159,12 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           turnsAll += r.turns;
           idle.turns += r.idle.turns; idle.idle += r.idle.idle; idle.apLeft += r.idle.apLeft; idle.idleAp += r.idle.idleAp;
           if (def.boss && def.bossRule) bosses.push({ rule: def.bossRule, act: ai + 1, won: r.won, turns: r.turns });
+          {
+            const byTurn = new Map<number, number>();
+            for (const f of b.falls) byTurn.set(f.turn, (byTurn.get(f.turn) ?? 0) + 1);
+            const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
+            log.push({ act: ai + 1, kind: def.boss ? 'boss' : n.kind === 'check' ? 'check' : 'battle', title: def.title, turns: r.turns, won: r.won, fell: b.falls.length, maxFellInTurn: Math.max(0, ...byTurn.values()), kingHpLost: k ? k.maxHp - Math.max(0, k.hp) : 999, enemiesLeft: b.s.pieces.filter((p) => p.side === 1 && p.hp > 0).length, enemies: def.enemy.length, killers: b.falls.map((f) => f.byType ?? '?').join('') });
+          }
           if (r.won) {
             ok = true;
             const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));

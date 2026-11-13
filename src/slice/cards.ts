@@ -408,6 +408,15 @@ export const FOE_TRAITS: Record<Exclude<FoeTrait, 'blastPawn' | 'rookPlate'>, { 
 export const TRAIT_POOL: FoeTrait[][] = [['knightShoe', 'bishopLens'], ['knightShoe', 'bishopLens', 'pawnDrill'], ['knightShoe', 'bishopLens', 'pawnDrill', 'queenCrown']];
 
 /** 수직 조각 수치 */
+/**
+ * 판 길이 제동 (D-449, 1.1.1 테스터 기보: 18판 중 1턴 승리 7판 · 반장도 1~2턴 — 「수싸움이 아니라 한 방 연쇄로 끝난다」).
+ * 한 턴에 끝없이 이어지던 행동(0태엽 카드 + 처치 환급 + 뽑기)을 턴 단위 상한으로 묶는다. 0 = 제한 없음.
+ * apGainPerTurn = 한 턴에 더 얻는 태엽 합계(처치 환급 · 편자 · 도화선 · 회수 … 모든 출처)
+ * drawPerTurn = 한 턴에 더 뽑는 카드 합계(턴 시작 손패는 빼고)
+ * discountOnce = 태엽 할인 부품(등자 · 행진 북 · 가벼운 망토)은 턴마다 그 종류 첫 장에만
+ */
+export const PACE = { apGainPerTurn: 0, drawPerTurn: 0, discountOnce: false };
+
 export const SLICE = {
   hand: 5,
   ap: 3,
