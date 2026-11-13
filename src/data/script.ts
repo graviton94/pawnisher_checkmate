@@ -38,9 +38,9 @@ export const PROLOGUE: Cut[] = [
   { ...cut('prologue-07', [n('맞은편에 검은 세트가 줄지어 섰다.'), n('그들도 녹지 않으려고 싸우는 세트였다.'), n('출하구 위 왕좌에는 도금왕이 앉아 있다.'), m('미안해. 우선 이 판부터 넘는다.')]), key: true },
 ];
 /** 다음 장의 폰은 새 인물이다. 앞 장의 기억이 아니라 남겨진 검수 규정을 만난다. */
-export const shadowCut = (chapter: number, law?: string): Cut => cut('prologue-shadow', chapter === 0
-  ? [n('앞선 상자는 용광로로 갔다.'), n('다른 상자에서 또 한 폰이 눈을 떴다.'), n('뚜껑에는 같은 딱지가 찍혀 있었다.'), m('이번엔 내가 끝까지 간다.')]
-  : [n('새 상자. 킹 자리에 또 다른 폰이 있었다.'), n('검수대에 새 규정이 붙어 있었다.'), n(law ? `「${law}」` : '「선대 왕의 검수 규정」'), n('지난 출하에서 왕이 된 종이왕의 글이다.'), m('그 왕도 나처럼 시작했을까.')]);
+export const shadowCut = (chapter: number, law?: string): Cut => chapter === 0 ? cut('prologue-shadow', [n('앞선 상자는 용광로로 갔다.'), n('다른 상자에서 또 한 폰이 눈을 떴다.'), n('뚜껑에는 같은 딱지가 찍혀 있었다.'), m('이번엔 내가 끝까지 간다.')])
+  // 둘째 · 셋째 장: 선대 왕의 규정판을 올려다보는 새 폰 (D-450 · S-11)
+  : sceneCut('new-law', [n('새 상자. 킹 자리에 또 다른 폰이 있었다.'), n('검수대에 새 규정이 붙어 있었다.'), n(law ? `「${law}」` : '「선대 왕의 검수 규정」'), n('지난 출하에서 왕이 된 종이왕의 글이다.'), m('그 왕도 나처럼 시작했을까.')]);
 export const ACT_CARD = [
   // [0]은 프롤로그가 대신한다. [1]~[3] = 2막 · 3막 · 종막에 들어설 때 (서술 한 줄 + 독백 한 줄)
   '첫 공정 판 위로 흰 세트가 올라선다.\n‘한 판도 지면 안 돼.’',
@@ -121,7 +121,8 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
   const witness = company?.alive.find((u) => u.name === company.promised?.name) ?? company?.alive[0];
   const lost = company?.promised && !company.promised.alive ? company.promised.name : '';
   return [
-    sceneCut('throne-mold', [n('도금왕이 쓰러지자 거푸집이 열렸다.'), n('들어가면 진짜 킹의 몸이 된다.'), m('갖고 싶다. 지금도.')]),
+    // 쓰러진 도금왕이 그림 아래쪽에 있어 자막을 위로 올린다 (D-450)
+    { ...sceneCut('gilded-fallen', [n('도금왕이 쓰러지자 거푸집이 열렸다.'), n('들어가면 진짜 킹의 몸이 된다.'), m('갖고 싶다. 지금도.')]), caption: 'top' },
     { ...sceneCut('departure-decision', [s('종이왕', '반품되더라도 같이 가자.'), ...(witness ? [s(witness.name, '흠집 난 채로요?'), s('종이왕', '응. 이 몸 그대로.')] : [n('그는 남겨진 이름들을 챙겼다.')])]), caption: 'top' },
     { ...sceneCut('departure-decision', [n('종이왕은 거푸집에 등을 돌렸다.'), n('정품으로 고쳐진 이는 아무도 없었다.'), n('그래도 모두 같은 상자에 올라탔다.'), n('그들 뒤에서 공장은 계속 돌아갔다.')]), caption: 'top' },
     sceneCut('shipping-company', lost ? [n(`${lost}의 자리는 비어 있었다.`), n('그는 그 자리에 원부를 놓아 두었다.')] : witness ? [n('운송 상자 안에서 동료들이 잠들었다.'), n('종이왕은 약속대로 곁에서 망을 봤다.')] : [n('상자가 문 밖으로 움직였다.'), n('그는 남겨진 이름 곁을 지켰다.')]),

@@ -1,0 +1,127 @@
+{
+ "date": "2026-11-13",
+ "decision": "D-450",
+ "command": "python3 -I tools/scene-import.py <받은 webp> <이름> <S-번호>",
+ "entries": [
+  {
+   "id": "S-08",
+   "source": "build-res/order/S-08-companion-rest-source.webp",
+   "source_sha256": "ff1543127c865b1a03ecf85aa7f048d651bb25ab92562c1789dde5a51d6a74d9",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/companion-rest.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "e2112b9fd971aecc00395a0335f2da10d5cc558391070dd27d8919d9c2466036",
+   "recipe": {
+    "pitch": 5.227777777777778,
+    "uniform": true,
+    "colors": 0
+   },
+   "alpha_values": [
+    255
+   ]
+  },
+  {
+   "id": "S-09",
+   "source": "build-res/order/S-09-companion-crossroad-source.webp",
+   "source_sha256": "b1322d1c7668dcdc595395b7187b74b21e1fed7de838bdb4bf7a1ee95d464471",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/companion-crossroad.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "a72c6f5f295c811d4f23a103c1364bb567fc5a62e75e2d054409dc260fb619a7",
+   "recipe": {
+    "pitch": 5.227777777777778,
+    "uniform": true,
+    "colors": 0
+   },
+   "alpha_values": [
+    255
+   ]
+  },
+  {
+   "id": "S-10",
+   "source": "build-res/order/S-10-returned-box-source.webp",
+   "source_sha256": "1ce088d4d3f4a012d63695385f8510e5b70f02e52875e634f2cd7f0ad0e28b6f",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/returned-box.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "5c3d0b3154bb9ff754d48ae1e24e4b0c20c68266ecd07afbdc80357abaf97ce7",
+   "recipe": {
+    "pitch": 5.227777777777778,
+    "uniform": true,
+    "colors": 0
+   },
+   "alpha_values": [
+    255
+   ]
+  },
+  {
+   "id": "S-11",
+   "source": "build-res/order/S-11-new-law-source.webp",
+   "source_sha256": "e46692ad9125c55447c66757fc521cf8215c8553f684e6ab28ad2cc1597fe30a",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/new-law.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "d6544f78b2bfb73b2d9a7e3a15e399bcacd0f4800f2ba9921a578d4a486900ce",
+   "recipe": {
+    "pitch": 5.227777777777778,
+    "uniform": true,
+    "colors": 0
+   },
+   "alpha_values": [
+    255
+   ]
+  },
+  {
+   "id": "S-12",
+   "source": "build-res/order/S-12-gilded-fallen-source.webp",
+   "source_sha256": "f0c355049deaf9a9f5906c253d6d19a4d2cfadfaa486de600dced151d57696c0",
+   "source_size": [
+    1671,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/gilded-fallen.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "ba936b6f95c3cdb57dbd6caec2e97fbeaa2a934c8f099fc70e6ac8b389b30dca",
+   "recipe": {
+    "pitch": 5.227777777777778,
+    "uniform": true,
+    "colors": 0
+   },
+   "alpha_values": [
+    255
+   ]
+  }
+ ]
+}

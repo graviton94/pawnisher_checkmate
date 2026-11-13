@@ -1563,7 +1563,7 @@ const advance = (): void => {
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
     squad = restSquad(squad, restHeal());
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
-    void actCard(actLabel(a.act), a.name, ACT_NARR[actI], `act-${Math.min(4, actI + 1)}`).then(() => {
+    void actCard(actLabel(a.act), a.name, ACT_NARR[actI], actI === 2 ? 'returned-box' : `act-${Math.min(4, actI + 1)}`).then(() => {
       showMap();
       // 막을 넘으면 부품 칸 +1 (D-384)
       if (actI > 0 && partSlotsAt(actI) > partSlotsAt(actI - 1)) toast(`부품 칸이 하나 늘었습니다. (부품 칸 ${partSlotsAt(actI)})`, 2600);
@@ -3768,7 +3768,7 @@ const gildedArt = (): string => `boss-gilded${runMode === 'story' ? storyChapter
 const promoteScreen = (): Promise<'throne' | 'depart'> => {
   closeWin();
   const company = storyCompany();
-  return promotionScene({ chapter: storyChapter, art: 'throne-mold', companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined });
+  return promotionScene({ chapter: storyChapter, art: 'gilded-fallen', companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined });
 };
 let endKind: EndingKind = 'throne';
 const endingFlow = async (): Promise<void> => {

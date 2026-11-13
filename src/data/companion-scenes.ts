@@ -32,5 +32,8 @@ export const companionScene = (act: number, alive: CompanionActor[], promise?: S
     if (actor) lines.push({ k: 's', who: actor.name, t: FEAR[actor.t] }, { k: 's', who: '종이왕', t: '돌아와도 괜찮아. 같이 있으면 돼.' }, { k: 'm', t: '정말 그럴까. 저 거푸집이라면….' });
     else lines.push({ k: 'm', t: '이겨도, 나가도, 또 판정받는구나.' });
   }
-  return { promise: made, cuts: [{ img: 'credits-bg', bg: ['#16141c', '#0b0b0e'], art: alive.map((u, i) => ({ t: u.t, side: 0, x: 18 + i * 8, y: 56, h: 22 })), standIn: true, lines }] };
+  // 전용 원화 (D-450 · S-08~10): 인물이 그림 안에 있으므로 기물을 겹치지 않는다. 동료가 없으면 그림(잠든 동료 · 곁의 동료)이 맞지 않아 옛 배경으로.
+  const art = ['companion-rest', 'companion-crossroad', 'returned-box'][Math.min(2, act)];
+  if (actor || act >= 2) return { promise: made, cuts: [{ img: art, bg: ['#16141c', '#0b0b0e'], art: [], lines, pixelCover: true, cam: 'still' }] };
+  return { promise: made, cuts: [{ img: 'credits-bg', bg: ['#16141c', '#0b0b0e'], art: [], standIn: true, lines }] };
 };

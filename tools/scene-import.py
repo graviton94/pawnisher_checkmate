@@ -27,7 +27,9 @@ if sys.argv[1] == '--redo':
             one(f, m.group(1))
 else:
     src, name, vid = sys.argv[1], sys.argv[2], sys.argv[3]
-    stored = f'build-res/order/{vid}-{name}-source.png'
+    # 받은 파일의 바이트 · 형식을 그대로 둔다 (webp로 받은 것을 png 이름으로 바꾸지 않는다 — D-450)
+    ext = os.path.splitext(src)[1].lower() or '.png'
+    stored = f'build-res/order/{vid}-{name}-source{ext}'
     if os.path.realpath(src) != os.path.realpath(stored):
         shutil.copy(src, stored)
     one(src, name)

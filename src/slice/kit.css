@@ -1240,3 +1240,6 @@ body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {
 .cf.taken { animation: ktaken 520ms steps(1, jump-end) both; z-index: 2; }
 @keyframes ktaken { 0% { transform: translateY(2px) scale(0.97); } 25% { transform: translateY(-10px) scale(1.06); } 50% { transform: translateY(-6px) scale(1.04); } 75% { transform: translateY(-8px) scale(1.05); } 100% { transform: translateY(-7px) scale(1.05); } }
 @media (prefers-reduced-motion: reduce) { .cf.taken { animation: none; } }
+
+/* 부관 안내 띠는 판 위에서만: 창 · 컷신 · 왕위 결정 화면이 뜨면 숨는다 (D-450 — 왕위 결정 화면 위에 띠가 남았다) */
+body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has(.promotion, .prologue, .credits, .actcard) .coach-band { display: none; }
