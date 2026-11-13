@@ -88,11 +88,11 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   order: { name: '지휘', cost: 2, who: 'any', kind: 'move', desc: '누구든 하나를 부린다. (아무 기물로 · 공격력만큼 피해)' },
   pierceDiag: { axis: 'chain', name: '심판의 창', cost: 1, who: 'B', kind: 'move', carve: 'pierce', desc: '첫 적을 꿰뚫는다. (뒤의 적도 피해 — 첫 적을 치면)' },
   crossLeap: { axis: 'cav', name: '지축 강타', cost: 1, who: 'N', kind: 'move', carve: 'cross', desc: '발굽이 땅을 가른다. (상하좌우 적 · 절반 피해 — 내려앉으면)' },
-  charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', add: 8, desc: '일격을 휘두른다. (피해 +8)' },
+  charge: { axis: 'inf', name: '쇄도', cost: 1, who: 'P', kind: 'move', add: 12, desc: '일격을 휘두른다. (피해 +12)' },
   // 빌드 다양성 묶음 (D-217 4): 축마다 「그 축으로 가고 싶게」 만드는 카드
   rookPierce: { axis: 'push', name: '관통 포격', cost: 2, who: 'R', kind: 'move', carve: 'pierce', mult: 1.2, desc: '요새가 줄을 꿰뚫는다. (피해 ×1.2 · 뒤의 적도 피해)' },
   scrapToss: { axis: 'push', name: '고철 투척', cost: 1, who: 'R', kind: 'move', add: 10, desc: '쇳덩이를 내던진다. (피해 +10)' },
-  phalanx: { axis: 'inf', name: '방진', cost: 1, who: 'P', kind: 'move', rally: true, add: 5, desc: '어깨를 맞대고 나아간다. (피해 +5 · 곁의 폰도 공격)', flavor: '“한 발도 물러서지 마라.”' },
+  phalanx: { axis: 'inf', name: '방진', cost: 1, who: 'P', kind: 'move', rally: true, add: 8, desc: '어깨를 맞대고 나아간다. (피해 +8 · 곁의 폰도 공격)', flavor: '“한 발도 물러서지 마라.”' },
   pawnExecute: { axis: 'inf', axis2: 'chain', name: '개척자의 처단', cost: 1, who: 'P', kind: 'move', multPerKill: 1, desc: '작은 칼끝이 연쇄를 끝맺는다. (피해 ×1 추가 — 연쇄 1마다)' },
   bishopChain: { axis: 'chain', name: '축복의 고리', cost: 1, who: 'B', kind: 'move', chainPerKill: 2, desc: '심판받은 자는 둘로 센다. (연쇄 +2 — 처치하면)' },
   kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 2, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (피해 +6 · 맞은 적 뒤로 1칸)' },
@@ -109,21 +109,22 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   march: { axis: 'inf', name: '총진격', cost: 0, who: 'P', kind: 'march', desc: '줄을 맞춰, 앞으로. (모든 폰 전진 · 각자 공격)', flavor: '“전군, 진격하라!”' },
   draft: { axis: 'inf', name: '땜질 보충병', cost: 0, who: 'any', kind: 'draft', desc: '고철 더미에서 일으킨다. (킹 곁에 폰 하나 — 이번 대국만)', flavor: '“빈자리를 채워라.”' },
   wrath: { axis: 'king', name: '왕의 분노', cost: 1, who: 'K', kind: 'move', rage: true, desc: '상처 입은 만큼 분노한다. (피해 최대 ×3 — 잃은 HP만큼)' },
-  royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 22, desc: '왕이 갑주를 두른다. (킹 방열판 +22)' },
+  royalGuard: { axis: 'king', name: '황금 흉갑', cost: 1, who: 'K', kind: 'shield', amount: 16, desc: '왕이 갑주를 두른다. (킹 방열판 +16)' },
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1 · 카드 1장 뽑기)' },
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
-  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 0, who: 'any', kind: 'spend', spend: 'shield', amount: 14, desc: '열기를 갑옷으로 돌린다. (연쇄 ×14만큼 · 킹 방열판 획득 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
+  // D-461: ×14 → ×6 — 연쇄가 적중 기준(D-454)이 된 뒤 한 턴 연쇄 5~6이라 0태엽에 킹 방열판 70~80. 실험실 짝 비교: 쥐여 주기만 해도 완주 24 → 94%
+  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 1, who: 'any', kind: 'spend', spend: 'shield', amount: 6, desc: '열기를 갑옷으로 돌린다. (연쇄 ×6 · 최대 24 킹 방열판 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
   burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄 ×14만큼 · 적 전체 피해 — 연쇄를 모두 써서)', flavor: '“압력을 놓아라.”' },
-  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 1, desc: '흩어진 태엽을 거둔다. (연쇄만큼 태엽 · 최대 3 — 연쇄를 모두 써서)' },
+  recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 0.5, desc: '흩어진 태엽을 거둔다. (연쇄 2마다 태엽 1 · 최대 2 — 연쇄를 모두 써서)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (피해 ×0.5 추가 — 연쇄 1마다)' },
   // ---- 교차 브릿지 (D-145): 두 축에 걸친다 ----
   cavCharge: { axis: 'cav', axis2: 'inf', name: '선봉 돌파', cost: 1, who: 'N', kind: 'move', rally: true, desc: '기병이 앞장서고 보병이 뒤따른다. (곁의 폰도 공격)' },
   kingGuard: { axis: 'king', axis2: 'inf', name: '근위대 진군', cost: 1, who: 'K', kind: 'move', rally: true, desc: '왕이 나서자 근위대가 따른다. (곁의 폰도 공격)' },
   doubleLeap: { axis: 'cav', axis2: 'chain', name: '광란의 도약', cost: 1, who: 'N', kind: 'move', chainPerKill: 2, desc: '피를 볼수록 발이 빨라진다. (연쇄 +2 — 처치하면)' },
   // ---- 밀치기 (D-154): 친 적을 한 칸 민다, 막히면 충돌 ----
-  shove: { axis: 'push', name: '몰아치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '적을 밀어낸다. (맞은 적 뒤로 1칸 · 막히면 피해 18)' },
-  shieldBash: { axis: 'push', axis2: 'inf', name: '방패 돌진', cost: 1, who: 'P', kind: 'move', push: true, desc: '방패로 밀쳐 낸다. (맞은 적 뒤로 1칸 · 막히면 피해 18)' },
-  ram: { axis: 'push', axis2: 'cav', name: '파성추', cost: 1, who: 'N', kind: 'move', push: true, desc: '들이받아 밀어낸다. (맞은 적 뒤로 1칸 · 막히면 피해 18)' },
+  shove: { axis: 'push', name: '몰아치기', cost: 2, who: 'any', kind: 'move', push: true, desc: '적을 밀어낸다. (맞은 적 뒤로 1칸 · 막히면 피해 30)' },
+  shieldBash: { axis: 'push', axis2: 'inf', name: '방패 돌진', cost: 1, who: 'P', kind: 'move', push: true, desc: '방패로 밀쳐 낸다. (맞은 적 뒤로 1칸 · 막히면 피해 30)' },
+  ram: { axis: 'push', axis2: 'cav', name: '파성추', cost: 1, who: 'N', kind: 'move', push: true, desc: '들이받아 밀어낸다. (맞은 적 뒤로 1칸 · 막히면 피해 30)' },
   // ---- 볼륨 (R5-5, D-172): 있는 장치(배율 · 각인 · 밀치기 · 뽑기 · 연쇄)만 조합 ----
   pawnStorm: { axis: 'inf', name: '선두 분쇄', cost: 1, who: 'P', kind: 'move', push: true, add: 5, desc: '앞으로 밀어붙인다. (피해 +5 · 맞은 적 뒤로 1칸)' },
   knightRaid: { axis: 'cav', name: '기습', cost: 1, who: 'N', kind: 'move', mult: 1.5, drawOnKill: 1, desc: '어둠 속에서 덮친다. (피해 ×1.5 · 처치 시 카드 1장)' },
@@ -142,11 +143,11 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   regalGaze: { axis: 'tactic', axis2: 'king', name: '왕의 시선', cost: 1, who: 'K', kind: 'move', stun: true, add: 4, desc: '노려본 자는 발이 묶인다. (피해 +4 · 다음 턴 행동 불가 — 맞은 적)' },
   kingTax: { axis: 'king', name: '왕의 세금', cost: 1, who: 'K', kind: 'move', drawOnKill: 2, desc: '쓰러뜨린 자에게서 거둔다. (카드 2장 뽑기 — 처치하면)' },
   crownSlam: { axis: 'king', axis2: 'chain', name: '왕관 내리찍기', cost: 2, who: 'K', kind: 'move', carve: 'cross', mult: 1.5, desc: '왕관째로 내리찍는다. (피해 ×1.5 · 사방 절반 피해)', flavor: '화려한 왕관, 잔혹한 무게' },
-  enPassant: { axis: 'tactic', axis2: 'inf', name: '앙파상', cost: 1, who: 'P', kind: 'move', carve: 'cross', add: 4, desc: '곁을 지나치는 자까지 벤다. (피해 +4 · 사방 절반 피해)' },
+  enPassant: { axis: 'tactic', axis2: 'inf', name: '앙파상', cost: 1, who: 'P', kind: 'move', carve: 'cross', add: 8, desc: '곁을 지나치는 자까지 벤다. (피해 +8 · 사방 절반 피해)' },
   anklePin: { axis: 'tactic', axis2: 'inf', name: '발목 잡기', cost: 1, who: 'P', kind: 'move', stun: true, desc: '작은 손이 발목을 붙든다. (다음 턴 행동 불가 · 방열판 0 — 맞은 적)' },
-  pawnFork: { axis: 'tactic', axis2: 'inf', name: '폰 포크', cost: 1, who: 'P', kind: 'move', fork: 1.8, desc: '두 적 사이에 파고든다. (피해 ×1.8 — 두 적을 칠 때)' },
-  pawnShield: { axis: 'inf', name: '방패 세우기', cost: 1, who: 'P', kind: 'shield', amount: 18, desc: '작은 방패를 세운다. (폰 방열판 +18)' },
-  lastRank: { axis: 'inf', name: '끝 줄의 꿈', cost: 1, who: 'P', kind: 'move', mult: 2.5, desc: '끝 줄을 꿈꾸며 내지른다. (피해 ×2.5)', flavor: '“언젠가는, 저 끝까지.”' },
+  pawnFork: { axis: 'tactic', axis2: 'inf', name: '폰 포크', cost: 1, who: 'P', kind: 'move', fork: 2.2, desc: '두 적 사이에 파고든다. (피해 ×2.2 — 두 적을 칠 때)' },
+  pawnShield: { axis: 'inf', name: '방패 세우기', cost: 1, who: 'P', kind: 'shield', amount: 24, desc: '작은 방패를 세운다. (폰 방열판 +24)' },
+  lastRank: { axis: 'inf', name: '끝 줄의 꿈', cost: 1, who: 'P', kind: 'move', mult: 3, desc: '끝 줄을 꿈꾸며 내지른다. (피해 ×3)', flavor: '“언젠가는, 저 끝까지.”' },
   knightFork: { axis: 'tactic', axis2: 'cav', name: '나이트 포크', cost: 1, who: 'N', kind: 'move', fork: 1.8, desc: '두 적을 한 번에 노린다. (피해 ×1.8 — 두 적을 칠 때)', flavor: '체스에서 가장 오래된 함정' },
   hobble: { axis: 'tactic', axis2: 'cav', name: '말발굽 족쇄', cost: 1, who: 'N', kind: 'move', stun: true, drawOnKill: 1, desc: '짓밟아 묶는다. (다음 턴 행동 불가 · 처치 시 카드 1장 — 맞은 적)' },
   skewer: { axis: 'tactic', axis2: 'chain', name: '스큐어', cost: 1, who: 'B', kind: 'move', carve: 'pierce', add: 6, desc: '앞뒤의 둘을 함께 꿴다. (피해 +6 · 뒤의 적도 피해)' },
@@ -335,7 +336,8 @@ export const ECON = {
 
 /** 밀치기 충돌 피해 (밀린 적과 부딪힌 기물 둘 다) */
 // 18: 조합 봇에서 쇠망치 + 밀치기 카드가 기준의 약 1.9배 (12일 땐 1.5배 — 축 단독 2배 목표, D-154)
-export const PUSH = { collide: 18 };
+// D-461: 18 → 30 — 밀치기 축 완주 25%로 바닥권(실험실). 충돌도 공정 열기를 받아 초반엔 약하다
+export const PUSH = { collide: 30 };
 
 /** 철갑 반장 (D-214 완화): 철갑 20 → 15, 폭격 18 → 12, 첫 폭격은 2턴 끝 */
 export const BOSS = { plate: 15, plateEvery: 2, bombEvery: 2, bombFirst: 2, bombDamage: 12 };
@@ -348,9 +350,10 @@ export const FOE = {
   // 난이도 설계 (D-228, 1패 = 출하 끝 + 여벌 심장 1): 봇 성향별 완주 60판 — 무뇌 0% · 단순(예고 무시) 27% · 보통 30% · 두뇌(수읽기) 85%.
   // 예전 0.75 · 0.015 · 1.05는 단순 봇도 100% 완주(실력 차 없음)
   // D-229 (회피 반격 · 헛방 경직 · 기어 쇼크 뒤): 1.5 · 0.07 · 1.075 — 단순 25% · 보통 50% · 두뇌 85% (40판)
+  // D-461: 1.2 → 1.25 — 약한 축(보병 · 밀치기)을 올린 만큼 전체가 쉬워져 보통 봇 53% → 43%
   // D-454 (공정 열기 · 적중 연쇄 뒤): 1.5 · 0.07 → 1.2 · 0.04 — 열기가 다 오른 뒤 3막에서 한 적 턴에 분대원 둘 이상을 잃는 판이
   // 두뇌 봇 36% → 15% (전체 19% → 10%), 이긴 대국 길이 2막 3.9 · 3막 5.1턴 (pace 24출하). HP를 올리면 판이 길어져 열기 최대 턴이 늘고 손실이 도로 는다
-  atk: 1.2,
+  atk: 1.25,
   /**
    * 층별 성장 곡선 (D-203, 사용자: "유저가 강해지는 만큼 적도 — 합연산은 지금 강하고 곱연산은 나중에 강하게"):
    * 적 HP는 대국마다 곱으로 (hpGrow^깊이 — 지수), 공격은 더하기로 (1 + atkGrow × 깊이 — 직선).
@@ -490,7 +493,9 @@ export const SLICE = {
   /** 태엽 칸 (D-212, 사용자: "최대 5개를 깔아 두고 3개만 켠다") — 한 턴에 가질 수 있는 태엽 상한 */
   apCap: 5,
   /** 회수(연쇄 소모 → 뽑기) 최대 장수 */
-  recallMax: 3,
+  recallMax: 2, // D-461: 3 → 2 — 적중 연쇄라 회수가 거의 늘 태엽 3이었다
+  /** 방출 상한 (D-461): 한 번에 킹 방열판 최대 */
+  ventCap: 24,
   /** 회피 반격 (D-229): 예고 칸에서 빠져나오며 친 수의 배율 · 뽑는 카드 */
   /** 핵심 부품 고르기 (D-231): 「한 갈래의 세부 셋」으로 나올 확률 — 나머지는 「큰 세 갈래」 */
   kitDeepChance: 0.4,

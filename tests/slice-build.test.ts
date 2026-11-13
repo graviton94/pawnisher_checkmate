@@ -104,7 +104,7 @@ describe('빌드 축 · 부품 (D-144)', () => {
       e.hp = e.maxHp = 999;
     }
     const dmg = (b: SliceBattle) => previewPlay(b, 0, k.id, tos[0])!.events.flatMap((e) => (e.type === 'attack' ? e.hits : [])).reduce((a, h) => a + h.damage, 0);
-    expect(dmg(crown)).toBeGreaterThan(dmg(plain) * 1.8);
+    expect(dmg(crown)).toBeGreaterThan(dmg(plain) * 1.5); // D-461: 왕관 ×2 → ×1.7
   });
 });
 
@@ -364,7 +364,7 @@ describe('배율 쓰기 (D-203)', () => {
     const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
     const sh0 = k.shield;
     expect(typeof playCard(b, 0)).toBe('object');
-    expect(k.shield).toBe(sh0 + 28);
+    expect(k.shield).toBe(sh0 + 12); // D-461: 연쇄 2 × 6
     expect(b.kills).toBe(0);
     b.kills = 3;
     const foes = b.s.pieces.filter((p) => p.side === 1).map((p) => ({ id: p.id, hp: p.hp + p.shield }));

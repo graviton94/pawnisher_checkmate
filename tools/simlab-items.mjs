@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { build as bundle } from 'vite';
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
+const build = arg('build', 'neutral');
 const kind = arg('kind', 'part'), style = arg('style', 'greedy'), asc = Number(arg('asc', 2)), N = Number(arg('n', 40)), jobs = Number(arg('jobs', 6)), temp = arg('temp', '0');
 const here = dirname(fileURLToPath(import.meta.url));
 const cache = mkdtempSync(join(tmpdir(), 'pawnisher-simlab-'));
@@ -27,7 +28,7 @@ for (let i = 0; i < items.length; i += 4) chunks.push(items.slice(i, i + 4));
 const rows = [];
 const t0 = Date.now();
 const run = (chunk) => new Promise((ok, no) => {
-  const p = spawn(process.execPath, [join(cache, 'worker.cjs')], { env: { ...process.env, SL_STYLE: style, SL_ASC: String(asc), SL_N: String(N), SL_TEMP: temp, SL_ITEMS: chunk.join(',') } });
+  const p = spawn(process.execPath, [join(cache, 'worker.cjs')], { env: { ...process.env, SL_STYLE: style, SL_ASC: String(asc), SL_N: String(N), SL_TEMP: temp, SL_BUILD: build, SL_ITEMS: chunk.join(',') } });
   let b = '', e = '';
   p.stdout.on('data', (d) => (b += d)); p.stderr.on('data', (d) => (e += d));
   p.on('close', (c) => { if (c) return no(new Error(e.slice(-800))); rows.push(...b.split('\n').filter((l) => l.startsWith('SL ')).map((l) => JSON.parse(l.slice(3)))); ok(); });
@@ -49,7 +50,7 @@ for (const [item, m] of by) {
 const baseClear = [...base.values()].filter(([c]) => c).length / base.size;
 const baseWon = [...base.values()].reduce((a, [, w]) => a + w, 0) / base.size;
 res.sort((a, b) => b.dWon - a.dWon);
-console.log(`| ${kind === 'part' ? '부품' : '카드'} (${style} · 승급 ${asc} · 짝 ${N}출하) | 완주 | Δ완주 | Δ이긴 대국 (±표준오차) | 판정 |`);
+console.log(`| ${kind === 'part' ? '부품' : '카드'} (${style} · 승급 ${asc} · ${build} · 짝 ${N}출하) | 완주 | Δ완주 | Δ이긴 대국 (±표준오차) | 판정 |`);
 console.log('|---|---|---|---|---|');
 console.log(`| (기준 — 안 쥠) | ${Math.round(baseClear * 100)}% | — | 평균 ${baseWon.toFixed(1)}대국 | |`);
 for (const r of res) {

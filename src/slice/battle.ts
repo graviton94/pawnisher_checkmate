@@ -252,7 +252,8 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   const knightCard = c.who === 'N';
   if (c.kind === 'swap' && has(b, 'gateHinge')) return 0;
   // 판 길이 제동 (D-449): 할인 부품은 턴마다 그 종류 첫 장에만 (등자로 나이트 카드가 모두 0태엽이 되어 턴이 끝나지 않았다)
-  const off = (id: SlicePartId, on: boolean): number => (on && has(b, id) && !(PACE.discountOnce && b.once.includes(`off:${id}`)) ? 1 : 0);
+  // D-461: 진군의 북은 제동에서 뺀다 — 싼 폰 카드를 여러 장 내는 보병 축이 턴당 첫 장 제동으로 완주 10%까지 떨어졌다
+  const off = (id: SlicePartId, on: boolean): number => (on && has(b, id) && !(PACE.discountOnce && id !== 'drum' && b.once.includes(`off:${id}`)) ? 1 : 0);
   return Math.max(0, c.cost - off('drum', pawnCard) - off('spurs', knightCard) - off('lightCloak', c.who === 'Q'));
 };
 
@@ -1061,12 +1062,14 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (c.spend === 'shield') {
       const k = kingOf(b.s, 0);
       if (k) {
-        k.shield += n * (c.amount ?? 0);
-        events = [{ type: 'shield', pieceId: k.id, amount: n * (c.amount ?? 0) }];
+        // D-461: 상한 SLICE.ventCap — 적중 연쇄로 매 턴 킹 방열판 수십이 쌓여 킹이 쓰러지지 않았다
+        const add = Math.min(SLICE.ventCap, n * (c.amount ?? 0));
+        k.shield += add;
+        events = [{ type: 'shield', pieceId: k.id, amount: add }];
       }
     } else if (c.spend === 'ap') {
       // 회수 (D-227 개편): 쌓인 연쇄를 태엽으로 — 카드 뽑기는 태엽이 모자라면 쓸모가 없었다
-      gained += Math.min(SLICE.recallMax, n * (c.amount ?? 1));
+      gained += Math.min(SLICE.recallMax, Math.floor(n * (c.amount ?? 1)));
     } else if (c.spend === 'draw') {
       drawCards(b, Math.min(SLICE.recallMax, n * (c.amount ?? 1)));
     } else if (c.spend === 'blast') {
