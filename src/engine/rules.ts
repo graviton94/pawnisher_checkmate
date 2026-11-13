@@ -169,5 +169,7 @@ export const takenMult = (s: BattleState, attacker: Piece | null, t: Piece): num
 export const damageOf = (s: BattleState, attacker: Piece, target: Piece, multiplier = 1, add = 0): number => {
   const atk = Math.floor((attacker.atk + add) * attackMult(s, attacker) * multiplier);
   const raw = Math.max(1, atk - Math.max(0, target.def));
-  return Math.max(1, Math.round(raw * takenMult(s, attacker, target)));
+  return Math.max(1, Math.round(raw * takenMult(s, attacker, target) * (s.heat ?? 1)));
 };
+/** 고정 피해(충돌 · 폭격 · 증기 폭발 …)에 공정 열기를 건다 (D-454) — 양쪽 같은 배율 */
+export const heatDmg = (s: BattleState, n: number): number => (n > 0 ? Math.max(1, Math.round(n * (s.heat ?? 1))) : 0);

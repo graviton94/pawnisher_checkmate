@@ -132,7 +132,7 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
     if (depth === 0 && part(s, otherSide(d.side), 'domino')) {
       const hits = s.pieces
         .filter((p) => p.side === d.side && p.hp > 0 && Math.abs(p.x - d.x) + Math.abs(p.y - d.y) === 1)
-        .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.maxHp * PART_FX.domino)), true));
+        .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.maxHp * PART_FX.domino * (s.heat ?? 1))), true));
       if (hits.length) ctx.events.push({ type: 'blast', pos: { x: d.x, y: d.y }, label: '도미노', hits });
     }
     if (d.type === 'P' && twistOn(s, d, 'line')) respawnPawn(s, d, ctx);

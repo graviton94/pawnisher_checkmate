@@ -8,13 +8,13 @@ export interface AbilityText { name: string; description: string; effect: string
 /** 반장의 모든 규칙을 한 능력씩 읽는다. 보조 철갑도 생략하지 않는다. */
 export const bossAbilityText = (rule: BossRule, alarm = 0, damage = (n: number) => n): AbilityText[] => {
   const armor = { name: '철갑', description: `${BOSS.plateEvery}턴마다 방열판 재생`, effect: `방열판 최소 ${BOSS.plate}로 충전` };
-  const spawn = { name: '조립', description: '홀수 턴, 반장 곁 빈칸', effect: `폰 1기 생성 · 최대 ${BOSS_NUM.spawnMax}기` };
+  const spawn = { name: '조립', description: '1턴부터 홀수 턴, 반장 곁', effect: `폰 1기 생성 · 최대 ${BOSS_NUM.spawnMax}기` };
   const bomb = { name: '줄 폭격', description: `${BOSS.bombFirst}턴부터 ${BOSS.bombEvery}턴마다 예고`, effect: `예고한 줄 아군 피해 ${damage(BOSS.bombDamage)}` };
   const thorns = { name: '되받아침', description: '반장을 치고 못 쓰러뜨리면', effect: `친 기물 피해 ${damage(BOSS_NUM.thorns)}` };
   switch (rule) {
     case 'inspect': return [{ name: '검수', description: `${BOSS_NUM.stampEvery}턴마다 최강 동료에 도장`, effect: `해당 동료 공격 ×${BOSS_NUM.stampMult}` }, armor];
     case 'magnet': return [{ name: '자석', description: `${BOSS_NUM.magnetEvery}턴마다 당길 동료 예고`, effect: '반장 쪽으로 1칸 이동' }];
-    case 'alarm': return [{ name: '경보', description: `매턴 +1 · 현재 ${alarm}/${BOSS_NUM.alarmFull}`, effect: `경보 시 그 턴 적 공격 ×${BOSS_NUM.alarmMult}` }, armor];
+    case 'alarm': return [{ name: '경보', description: `적을 칠 때마다 +1 · ${alarm}/${BOSS_NUM.alarmFull}`, effect: `가득 차면 그 적 차례 공격 ×${BOSS_NUM.alarmMult}` }, armor];
     case 'plate': return [bomb, armor];
     case 'spawn': return [spawn];
     case 'thorns': return [thorns, armor];

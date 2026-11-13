@@ -348,17 +348,20 @@ export const FOE = {
   // 난이도 설계 (D-228, 1패 = 출하 끝 + 여벌 심장 1): 봇 성향별 완주 60판 — 무뇌 0% · 단순(예고 무시) 27% · 보통 30% · 두뇌(수읽기) 85%.
   // 예전 0.75 · 0.015 · 1.05는 단순 봇도 100% 완주(실력 차 없음)
   // D-229 (회피 반격 · 헛방 경직 · 기어 쇼크 뒤): 1.5 · 0.07 · 1.075 — 단순 25% · 보통 50% · 두뇌 85% (40판)
-  atk: 1.5,
+  // D-454 (공정 열기 · 적중 연쇄 뒤): 1.5 · 0.07 → 1.2 · 0.04 — 열기가 다 오른 뒤 3막에서 한 적 턴에 분대원 둘 이상을 잃는 판이
+  // 두뇌 봇 36% → 15% (전체 19% → 10%), 이긴 대국 길이 2막 3.9 · 3막 5.1턴 (pace 24출하). HP를 올리면 판이 길어져 열기 최대 턴이 늘고 손실이 도로 는다
+  atk: 1.2,
   /**
    * 층별 성장 곡선 (D-203, 사용자: "유저가 강해지는 만큼 적도 — 합연산은 지금 강하고 곱연산은 나중에 강하게"):
    * 적 HP는 대국마다 곱으로 (hpGrow^깊이 — 지수), 공격은 더하기로 (1 + atkGrow × 깊이 — 직선).
    * 합연산 빌드(고정 피해 · +% 연쇄)는 초반을 쉽게 넘지만 뒤로 갈수록 지수로 불어나는 HP를 못 따라가고 곱연산 빌드(코일 · ×배율)가 뒤에서 따라잡는다.
    */
   // 등반 봇 40판: 시작 0.72 · ×1.05 → 완주 28 (1막 대국 ≈0.8 · 1막 반장 ≈1.06 · 3막 끝 ≈1.5) — 곡선 없음(계단 1/1.15/1.3)은 31
-  hpStart: 0.72,
+  // D-454: 0.72 · 1.043 → 0.85 · 1.05 — 적 공격을 낮춘 만큼 HP로 버티게 (보통 봇 완주 83% → 58%, 두뇌 봇 손실 12%)
+  hpStart: 0.85,
   // D-298 (확장 뒤 밸런스 패치): 1.075 → 1.06 — D-243 판 구조 · D-252 종막 · 3막 깊이 20에서 HP가 4.25배로 불어 두뇌 봇도 50%였다
-  hpGrow: 1.043,
-  atkGrow: 0.07,
+  hpGrow: 1.05,
+  atkGrow: 0.04,
 };
 
 /**
@@ -371,14 +374,15 @@ export const BOSS_PAIRS: [BossRule, BossRule][] = [['plate', 'inspect'], ['spawn
 /** 새 반장의 판 · 기물 색 · 등장 FX는 같은 막 반장의 것을 빌린다 (전용 그림이 오기 전까지) */
 export const bossSkin = (r: BossRule): 'plate' | 'spawn' | 'thorns' | 'gilded' => (r === 'inspect' ? 'plate' : r === 'magnet' ? 'spawn' : r === 'alarm' ? 'thorns' : r);
 /** 반장 규칙 수치 — 되받아침 6 → 4 (D-298) */
-export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 4, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 3, alarmMult: 1.5 };
+/** alarmFull (D-454 경보 개편): 우리가 적을 친 횟수로 눈금이 찬다 — 이만큼 차면 그 적 차례 공격 ×alarmMult */
+export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 4, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 6, alarmMult: 1.5 };
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
-  plate: { name: '철갑 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '첫 턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
-  spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '첫 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 빨리 끝내십시오.' },
+  plate: { name: '철갑 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '2턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
+  spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '배치 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 찍힌 폰도 치면 연쇄가 쌓입니다.' },
   gilded: { name: '도금왕', lines: ['금칠 방열판 · 2턴마다 다시', '폰 찍어 내기 · 줄 폭격 · 되받아침'], tell: '앞의 세 반장이 쓰던 것을 모두 씁니다 — 홀수 턴엔 곁에 폰을 찍어 내고 짝수 턴엔 한 줄을 불태우고 못 쓰러뜨린 공격은 가시로 돌려줍니다.' },
   inspect: { name: '검수 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, '2턴마다 불량 도장 — 찍힌 기물의 공격 ×0.5'], tell: '두 턴마다 당신의 가장 센 기물에 불량 도장을 찍습니다. 도장 찍힌 기물은 공격이 절반이 됩니다 — 다른 기물로 치십시오.' },
   magnet: { name: '자석 반장', lines: ['2턴마다 가장 가까운 기물을 끌어당긴다', '끌려가는 기물에 자석 표시'], tell: '두 턴마다 반장에게 가장 가까운 기물 하나가 한 칸 끌려갑니다. 자석 표시가 붙은 기물을 미리 빼내십시오.' },
-  alarm: { name: '경보 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `턴마다 경보 +1 · ${BOSS_NUM.alarmFull}이 차면 적 공격 ×${BOSS_NUM.alarmMult}`], tell: '턴마다 경보 눈금이 오릅니다. 셋이 차면 그 적 차례의 공격이 1.5배 — 그 전에 끝내거나, 그 차례를 버티십시오.' },
+  alarm: { name: '경보 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `적을 칠 때마다 경보 +1 · ${BOSS_NUM.alarmFull}이 차면 적 공격 ×${BOSS_NUM.alarmMult}`], tell: `적을 칠 때마다 경보 눈금이 오릅니다. ${BOSS_NUM.alarmFull}이 차면 그 적 차례의 공격이 ${BOSS_NUM.alarmMult}배 — 몰아칠지, 나눠 칠지 고르십시오.` },
   thorns: { name: '출하 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `못 쓰러뜨리면 친 기물이 ${Math.round(BOSS_NUM.thorns * FOE.atk)} 되받는다`], tell: '가시 갑옷 — 반장을 치고 못 쓰러뜨리면 가시가 친 기물에게 되돌아갑니다. 한 번에 몰아치십시오.' },
 };
 /** 반장 규칙별 보정 (D-298): king = 킹 HP 배율 · atk = 그 판 적 공격 배율 — 기믹은 그대로 두고 벽이 된 반장만 덜어 낸다 */
@@ -417,6 +421,9 @@ export const TRAIT_POOL: FoeTrait[][] = [['knightShoe', 'bishopLens'], ['knightS
  */
 export const PACE = { apGainPerTurn: 0, drawPerTurn: 0, discountOnce: false };
 
+/** 공정 열기 기본값 (D-454) — SLICE.heat의 처음 값. 테스트가 열기를 껐다 켤 때 되돌리는 기준 */
+export const HEAT_DEFAULT = [0.25, 0.5, 0.75, 1] as const;
+
 export const SLICE = {
   hand: 5,
   ap: 3,
@@ -425,10 +432,17 @@ export const SLICE = {
   /** 연쇄: 이번 턴 처치마다 +25% (Balatro 정산 — 순서가 곧 화력) */
   /** 연쇄 (D-205 — 합 +): 이번 턴 처치마다 다음 공격 피해 +이만큼, 상한 chainCap 처치 */
   chainAddPerKill: 4,
+  /**
+   * 공정 열기 (D-454 · GDD 19장): 턴마다 양쪽이 주고받는 피해 배율. [1턴, 2턴, 3턴, 4턴부터] — 1턴은 자리 잡기 위주(큰 감쇄),
+   * 판이 갈수록 한 수가 치명적이 된다. 나와 적에게 같은 배율.
+   */
+  heat: [...HEAT_DEFAULT] as number[],
+  /** 연쇄 = 이번 턴 적중 (D-454): 적을 칠 때마다 +1, 이번 턴에 이미 친 적을 다시 치면 이만큼 */
+  chainRepeatHit: 2,
   chainPerKill: 0.25,
   chainCap: 4,
   /** 나사 트랙 (Pawnbarian 루트 트랙): 턴마다 한 칸씩 사라진다 */
-  coins: 10,
+  coins: 11, // D-454: 배치 턴만큼 한 칸 늘렸다
   coinValue: 4, // D-218: 5 → 4 — 한 판에 나사 약 1000을 벌고 550만 써서 400이 남았다
   /** 교착 압박 (D-196): 적 킹은 원래 뒤에 남지만 혼자 남았거나 이 턴부터는 내 킹에게 다가온다 — 판이 끝나지 않는 교착을 막는다 */
   kingMarchTurn: 12,
@@ -458,7 +472,7 @@ export const SLICE = {
   bossPriority: 1.5,
   bossPriorityFlat: 8,
   /** 처치 환급 (D-203): 처치마다 태엽 +1, 턴당 최대 */
-  refundCap: 2,
+  refundCap: 1, // D-454: 2 → 1 — 처치가 턴을 끝없이 이어 가지 않게 (게임성 패치)
   /** 적 AI 다가가기: 거리가 안 줄어도 내 진영 쪽으로 한 줄 나아가면 더하는 점수 (D-214) */
   aiAdvance: 1,
   /** 적 성장 깊이: 막 하나에 이만큼 (D-215 — 지도가 길어져도 성장 곡선은 그대로) */

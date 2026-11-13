@@ -34,7 +34,8 @@ describe('승급 13단 — 규격판 조항 (D-273)', () => {
   });
 });
 
-import { endTurn as endT } from '../src/slice/battle';
+import { endTurn as endT, previewPlay } from '../src/slice/battle';
+import { findPiece } from '../src/engine';
 import { BOSS_NUM, BOSS_PAIRS } from '../src/slice/cards';
 import { buildRun } from '../src/slice/run';
 
@@ -69,18 +70,27 @@ describe('새 반장 셋 (D-274)', () => {
     if (p && b.s.winner === null) expect(moved || blocked).toBe(true);
     if (moved) expect([p!.x, p!.y]).toEqual([to.x, to.y]);
   });
-  it('경보: 눈금이 차면 그 차례 적 공격이 오르고, 끝나면 되돌아간다', () => {
+  it('경보 (D-454): 우리가 적을 친 횟수로 눈금이 차면 그 차례 적 공격이 오르고, 끝나면 되돌아간다', () => {
     const b = newSliceBattle(crew, ['K', 'R'], START_COMMANDS, 3, { boss: true, bossRule: 'alarm' });
     const rook = b.s.pieces.find((p) => p.side === 1 && p.type === 'R')!;
     const base = rook.atk;
-    for (let i = 0; i < BOSS_NUM.alarmFull - 1 && b.s.winner === null; i++) { const r = endT(b, true); if (r === 'warn') break; }
-    if (b.s.winner === null) {
-      expect(b.alarmAtk).toBeTruthy();
-      expect(b.s.pieces.find((p) => p.id === rook.id)?.atk).toBe(Math.round(base * BOSS_NUM.alarmMult));
-      endT(b, true);
-      const r2 = b.s.pieces.find((p) => p.id === rook.id);
-      if (r2 && b.s.winner === null) expect(r2.atk).toBe(base);
-    }
+    // 턴이 지나기만 해서는 차지 않는다
+    endT(b, true);
+    expect(b.alarmAtk).toBeFalsy();
+    // 한 칸 남긴 채로 적을 한 번 치면 가득 차 곧바로 오른다(예고 HP 바에 보이게)
+    b.alarm = BOSS_NUM.alarmFull - 1;
+    b.hand = ['order']; b.ap = 3;
+    const hit = b.s.pieces.filter((q) => q.side === 0).flatMap((p) => cardMoves(b, 0, p.id).map((to) => ({ p, to })))
+      .find(({ p, to }) => previewPlay(b, 0, p.id, to)?.events.some((e) => e.type === 'attack' && e.hits.some((h) => findPiece(b.s, h.targetId)?.side === 1 && h.damage > 0 && !h.killed)));
+    if (!hit) return;
+    playCard(b, 0, hit.p.id, hit.to);
+    if (b.s.winner !== null) return;
+    expect(b.alarmAtk).toBeTruthy();
+    const r1 = b.s.pieces.find((p) => p.id === rook.id);
+    if (r1) expect(r1.atk).toBe(Math.round(base * BOSS_NUM.alarmMult));
+    endT(b, true);
+    const r2 = b.s.pieces.find((p) => p.id === rook.id);
+    if (r2 && b.s.winner === null) { expect(r2.atk).toBe(base); expect(b.alarm).toBe(0); }
   });
 });
 

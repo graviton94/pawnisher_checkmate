@@ -1,5 +1,5 @@
 import { PIECE_STATS } from '../data/pieces';
-import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
+import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
@@ -75,8 +75,10 @@ export interface SliceBattle {
   /** 쓰러진 분대원과 함께 탄 카드 (D-198) — 이번 대국에서만 빠진다 */
   burned?: CommandId[];
   ap: number;
-  /** 이번 턴 처치 수 (연쇄) */
+  /** 연쇄 (D-454: 이번 턴 적중으로 쌓인다 — 이름은 옛 「처치 수」 그대로) */
   kills: number;
+  /** 이번 턴에 이미 친 적 (같은 적을 다시 치면 연쇄를 더 준다) */
+  hitIds?: number[];
   turn: number;
   intents: Intent[];
   /** 나사 트랙 */
@@ -196,8 +198,26 @@ export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
 export const chainAdd = (kills: number, parts: SlicePartId[] = []): number =>
   parts.includes('coil') ? 0 : Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorAdd : SLICE.chainAddPerKill);
 
-/** 처치 k개가 올리는 연쇄 칸 (이중 톱니 · 연속 도약은 재발동 — 3단 성장의 셋째 단) */
-const chainGain = (b: SliceBattle, k: number, perKill = 1): number => k * perKill * (has(b, 'echo') ? 2 : 1);
+/**
+ * 연쇄 = 이번 턴 적중 (D-454 · GDD 19장): 적을 칠 때마다(피해 > 0) +1, 이번 턴에 이미 친 적을 다시 치면 SLICE.chainRepeatHit.
+ * 처치는 따로 세지 않는다(「왕명」처럼 처치를 더 쳐 주는 카드만 perKill − 1을 더한다). 이중 톱니는 두 배.
+ */
+const hitChain = (b: SliceBattle, before: BattleState, events: BattleEvent[], kills: number, perKill = 1): number => {
+  let n = 0;
+  let count = 0;
+  for (const e of events) {
+    if (e.type !== 'attack' && e.type !== 'blast') continue;
+    for (const h of e.hits) {
+      if (h.damage <= 0 || before.pieces.find((q) => q.id === h.targetId)?.side !== 1) continue;
+      const again = (b.hitIds ??= []).includes(h.targetId);
+      n += again ? SLICE.chainRepeatHit : 1;
+      count += 1;
+      if (!again) b.hitIds.push(h.targetId);
+    }
+  }
+  alarmHit(b, count);
+  return (n + kills * (perKill - 1)) * (has(b, 'echo') ? 2 : 1);
+};
 
 /** 넘친 피해 (적 HP를 넘어선 만큼) — 나사로 바꾼다 (Inscryption 오버킬) */
 export const overkillOf = (before: BattleState, events: BattleEvent[]): number => {
@@ -217,6 +237,8 @@ export const overkillOf = (before: BattleState, events: BattleEvent[]): number =
 };
 
 const has = (b: SliceBattle, id: SlicePartId) => b.parts.includes(id);
+/** 공정 열기 (D-454): 이 턴의 피해 배율 — 양쪽 같다 */
+export const heatAt = (turn: number): number => SLICE.heat[Math.max(0, Math.min(SLICE.heat.length - 1, turn - 1))];
 
 /** 카드의 실제 태엽 (행진 북 · 재도약). pieceId를 주면 그 기물로 낼 때 */
 export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
@@ -320,6 +342,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const parts = opts.parts ?? [];
   const spare = (parts.includes('spare') ? 1 : 0) + (parts.includes('brittle') ? 1 : 0);
   const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, pd: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
+  b.s.heat = heatAt(1);
   b.squadTypes = Object.fromEntries(squadIds.map((id) => [id, findPiece(s, id)!.type]));
   b.squadWins = Object.fromEntries(squadIds.map((id, i) => [id, squad[i].wins ?? 0]));
   b.squadSerials = Object.fromEntries(squadIds.map((id, i) => [id, squad[i].serial ?? String(id).padStart(8, '0')]));
@@ -919,7 +942,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     events = [...sim.events, ...events];
     b.overkill += overkillOf(before, sim.events);
     let k = sim.removed.filter((q) => q.side === 1).length;
-    b.kills += chainGain(b, k, c.chainPerKill);
+    b.kills += hitChain(b, before, sim.events, k, c.chainPerKill);
     // 연쇄 사슬: 충돌로 쓰러뜨린 적마다 연쇄 +1
     if (has(b, 'chainShot')) b.kills += PART_NUM.chainShotGain * sim.events.filter((e) => e.type === 'blast').reduce((a, e) => a + (e.type === 'blast' ? e.hits.filter((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1).length : 0), 0);
     // 반동 용수철 (D-287): 충돌로 쓰러뜨리면 태엽 +1 (턴에 한 번)
@@ -935,7 +958,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         events = [...events, ...s2.events];
         b.overkill += overkillOf(mid, s2.events);
         const k2 = s2.removed.filter((q) => q.side === 1).length;
-        b.kills += chainGain(b, k2);
+        b.kills += hitChain(b, mid, s2.events, k2);
         k += k2;
       }
     }
@@ -979,7 +1002,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.s = sim.state;
     events = sim.events;
     b.overkill += overkillOf(before, sim.events);
-    b.kills += chainGain(b, sim.removed.filter((q) => q.side === 1).length);
+    b.kills += hitChain(b, before, sim.events, sim.removed.filter((q) => q.side === 1).length);
     if (has(b, 'magnet')) drawCards(b, sim.removed.filter((q) => q.side === 1).length);
   } else if (c.kind === 'draft') {
     const e = spawnPawn(b, '땜질 보충병 — 폰이 선다');
@@ -1043,7 +1066,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     } else if (c.spend === 'draw') {
       drawCards(b, Math.min(SLICE.recallMax, n * (c.amount ?? 1)));
     } else if (c.spend === 'blast') {
-      const dmg = n * (c.amount ?? 0);
+      const dmg = heatDmg(b.s, n * (c.amount ?? 0));
       const hits = b.s.pieces.filter((p) => p.side === 1).map((p) => {
         const absorbed = Math.min(p.shield, dmg);
         p.shield -= absorbed;
@@ -1170,7 +1193,7 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
   const s = sim.state;
   const me = findPiece(s, pieceId);
   if (!me) return;
-  const dmg = (PUSH.collide + (b.parts.includes('anvilPlate') ? PART_NUM.anvilPlate : 0)) * (b.parts.includes('hammer') ? PART_NUM.hammerMult : 1);
+  const dmg = heatDmg(s, (PUSH.collide + (b.parts.includes('anvilPlate') ? PART_NUM.anvilPlate : 0)) * (b.parts.includes('hammer') ? PART_NUM.hammerMult : 1));
   const targets = sim.events.flatMap((e) => (e.type === 'attack' && e.attackerId === pieceId ? e.hits.filter((h) => !h.killed) : []));
   for (const h of targets) {
     const t = findPiece(s, h.targetId);
@@ -1207,7 +1230,8 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
  */
 const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[]): BattleEvent[] => {
   const out: BattleEvent[] = [];
-  const hurt = (p: Piece, dmg: number) => {
+  const hurt = (p: Piece, dmg0: number) => {
+    const dmg = heatDmg(b.s, dmg0);
     const absorbed = Math.min(p.shield, dmg);
     p.shield -= absorbed;
     p.hp = Math.max(0, p.hp - (dmg - absorbed));
@@ -1301,10 +1325,11 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
         b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn, t: dead?.type, ...(attacker && attacker.side === 1 ? { byType: attacker.type, byId: attacker.id } : {}) });
         if (dead && b.quirks[h.targetId] === 'boiler') {
           const hits = b.s.pieces.filter((p) => p.side === 1 && chebyshev(p, dead) === 1).map((p) => {
-            const absorbed = Math.min(p.shield, CREW.boilerBlast);
+            const boom = heatDmg(b.s, CREW.boilerBlast);
+            const absorbed = Math.min(p.shield, boom);
             p.shield -= absorbed;
-            p.hp = Math.max(0, p.hp - (CREW.boilerBlast - absorbed));
-            return { targetId: p.id, damage: CREW.boilerBlast, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
+            p.hp = Math.max(0, p.hp - (boom - absorbed));
+            return { targetId: p.id, damage: boom, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
           });
           const kingDead = hits.some((x) => x.killed && findPiece(b.s, x.targetId)?.type === 'K');
           b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
@@ -1367,12 +1392,15 @@ const newBossTurn = (b: SliceBattle, k: Piece | undefined): void => {
     }
     return;
   }
-  // 경보
-  b.alarm = (b.alarm ?? 0) + 1;
-  if (b.alarm >= BOSS_NUM.alarmFull && !b.alarmAtk) {
-    b.alarmAtk = {};
-    for (const p of b.s.pieces) if (p.side === 1) { b.alarmAtk[p.id] = p.atk; p.atk = Math.max(1, Math.round(p.atk * BOSS_NUM.alarmMult)); }
-  }
+  // 경보 (D-454): 턴이 아니라 우리가 적을 친 횟수로 찬다 — alarmHit()
+};
+/** 경보 반장: 적을 친 만큼 눈금 +, 가득 차면 곧바로 적 공격 ×1.5 (예고 HP 바에 바로 보인다 — 예고 = 실행) */
+const alarmHit = (b: SliceBattle, hits: number): void => {
+  if (b.bossRule !== 'alarm' || !hits || b.alarmAtk) return;
+  b.alarm = Math.min(BOSS_NUM.alarmFull, (b.alarm ?? 0) + hits);
+  if (b.alarm < BOSS_NUM.alarmFull) return;
+  b.alarmAtk = {};
+  for (const p of b.s.pieces) if (p.side === 1) { b.alarmAtk[p.id] = p.atk; p.atk = Math.max(1, Math.round(p.atk * BOSS_NUM.alarmMult)); }
 };
 
 /** 새 반장 셋의 적 차례 끝 — 자석이 끌어당기고 경보가 울렸으면 공격을 되돌리고 눈금을 비운다 */
@@ -1400,7 +1428,7 @@ const bombard = (b: SliceBattle): BattleEvent | null => {
   if (b.bombRow === null) return null;
   const row = b.bombRow;
   const hits = b.s.pieces.filter((p) => p.side === 0 && p.y === row).map((p) => {
-    const bomb = foeDmg(BOSS.bombDamage, b);
+    const bomb = heatDmg(b.s, foeDmg(BOSS.bombDamage, b));
     const absorbed = Math.min(p.shield, bomb);
     p.shield -= absorbed;
     p.hp = Math.max(0, p.hp - (bomb - absorbed));
@@ -1494,12 +1522,13 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   const gildedHit = b.once.includes('gilded');
   if (b.s.winner === null) {
     b.turn += 1;
-    b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0 };
+    b.s = { ...b.s, turnNumber: b.s.turnNumber + 2, turnSide: 0, heat: heatAt(b.turn) };
     // 도금 방패: 지난 적 차례에 킹이 맞았으면 태엽 +1
     // 무거운 플라이휠 (D-287): 남은 태엽 최대 2가 넘어간다
     b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0) + (has(b, 'flywheel') ? Math.min(PART_NUM.flywheel, Math.max(0, b.ap)) : 0));
     // 잔열 (D-282): 연쇄 절반이 남는다
     b.kills = has(b, 'afterheat') ? Math.floor(b.kills / 2) : 0;
+    b.hitIds = [];
     // 땜질 도구함 (D-282 → D-299): 킹을 뺀 가장 다친(잃은 HP가 큰) 내 기물 toolboxN개 HP +toolbox — 킹을 고치면 출하 목숨 보험이 되어 힘 값이 양과 무관하게 튀었다
     if (has(b, 'toolbox'))
       for (const w of b.s.pieces.filter((q) => q.side === 0 && q.type !== 'K' && q.hp < q.maxHp).sort((x, y) => (y.maxHp - y.hp) - (x.maxHp - x.hp) || x.id - y.id).slice(0, PART_NUM.toolboxN)) w.hp = Math.min(w.maxHp, w.hp + PART_NUM.toolbox);

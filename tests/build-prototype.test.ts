@@ -115,7 +115,8 @@ describe('맞물린 톱니 — 영구 동료의 서로 다른 입장 유형', ()
     play(b, 'advance', pawn, { x: 1, y: 2 });
     expect(b.ap).toBe(4);
     const ev = play(b, 'leap', knight, { x: 3, y: 2 });
-    expect(b.kills).toBe(0);
+    // D-454: 처치가 없어도 맞힌 만큼 연쇄가 쌓인다 (폰 1 + 나이트가 친 둘)
+    expect(b.kills).toBe(3);
     expect(b.ap).toBe(4);
     expect(ev).toContainEqual({ type: 'apGain', side: 0, amount: 1, source: 'relayGear' });
     play(b, 'rookLine', rook, { x: 0, y: 1 });

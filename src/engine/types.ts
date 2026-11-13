@@ -73,6 +73,8 @@ export interface BattleState {
   rules: BattleRules;
   /** 정체 압박 (D-072): 피해 없이 지난 라운드 수 · 이번 라운드에 피해가 났는가 */
   stall?: { count: number; dealt: boolean };
+  /** 공정 열기 (D-454): 이번 턴 양쪽이 주고받는 피해 배율 — 1턴 배치 턴은 크게 줄고 턴마다 오른다. 없으면 1 */
+  heat?: number;
   /** 완전히 무너진 테두리 줄 수 (표시용) */
   ring: number;
   /** 무너진 칸 (y × width + x) */

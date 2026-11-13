@@ -37,7 +37,8 @@ describe('분대 인장 — 순서·직접 타격·수명주기', () => {
     const normal = JSON.parse(saved) as SliceBattle;
     normal.parts = normal.parts.filter((id) => id !== 'relaySeal');
     const regular = previewPlay(normal, 0, rook, { x: 0, y: 1 })!;
-    expect(attacks(predicted.events, rook)[0].damage).toBe(({ rookLine: 39, rookPierce: 47, rookCharge: 54 })[card]);
+    // D-454: 앞의 두 수가 적을 맞힌 만큼 연쇄가 쌓여(처치가 아니라 적중) 피해에 더해진다 — 옛 값 39 · 47 · 54
+    expect(attacks(predicted.events, rook)[0].damage).toBe(({ rookLine: 61, rookPierce: 73, rookCharge: 75 })[card]);
     expect(attacks(predicted.events, rook).slice(1)).toEqual(attacks(regular.events, rook).slice(1));
     const collision = (events: BattleEvent[]) => events.flatMap((e) => e.type === 'blast' ? e.hits.map((h) => ({ targetId: h.targetId, damage: h.damage })) : []);
     expect(collision(predicted.events)).toEqual(collision(regular.events));

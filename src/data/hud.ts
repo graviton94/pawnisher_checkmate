@@ -41,6 +41,9 @@ export const HUD_TEXT = {
   /** 새 용어가 사전에 들어왔다 (D-233) */
   /** 경보 반장 (D-274) — ⑨ 표지 */
   alarm: '경보 — 이번 적 차례 공격 ×1.5',
+  /** 공정 열기 (D-454): 턴 표시 · 내 차례 띠 — 피해 배율을 숫자로 */
+  turnHeat: (turn: number, heat: number): string => (turn === 1 ? '1턴 · 배치' : heat >= 1 ? `${turn}턴 · 최대` : `${turn}턴 · ${Math.round(heat * 100)}%`),
+  heatBand: (turn: number, heat: number) => (turn === 1 ? '배치 턴 · 피해 25%' : heat >= 1 ? `${turn}턴 · 열기 최대` : `${turn}턴 · 열기 ${Math.round(heat * 100)}%`),
   newTerm: (names: string) => `새 용어 「${names}」`,
   shock: '기어 쇼크 — 공격 ×0.5 · 손패 −1',
   /** 헛방 경직 → 「기절」 평문 (D-233: 고유 명사를 지우고 별 딱지 + 평문으로) */

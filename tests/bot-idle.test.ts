@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newSliceBattle } from '../src/slice/battle';
-import { START_COMMANDS } from '../src/slice/cards';
+import { HEAT_DEFAULT, SLICE, START_COMMANDS } from '../src/slice/cards';
 import { bestAction, idleStats, playOut, playOutSearch, type IdleStats } from '../src/slice/bot';
 
 /**
@@ -26,9 +26,12 @@ describe('손 놓은 턴 (2026-11-09d)', () => {
       expect(st.turns).toBeGreaterThan(0);
       expect(st.idle / st.turns).toBeLessThan(0.1);
     });
-  it('search: 손 놓은 턴이 20% 아래', () => {
+  it('search: 손 놓은 턴이 20% 아래 (실제 공정 열기 D-454)', () => {
+    const keep = SLICE.heat;
+    SLICE.heat = [...HEAT_DEFAULT];
     const st = idleStats();
     for (let k = 0; k < 2; k++) add(st, playOutSearch(mk(40 + k), 20, 3, 4).idle);
+    SLICE.heat = keep;
     expect(st.turns).toBeGreaterThan(0);
     expect(st.idle / st.turns).toBeLessThan(0.2);
   }, 60_000);

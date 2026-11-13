@@ -762,7 +762,7 @@ const refresh = (): void => {
   hidePeek();
   if (holdView) showBefore(holdView);
   else renderer.render(model());
-  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : `${b.turn}턴`, enemyTurn);
+  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : HUD_TEXT.turnHeat(b.turn, b.s.heat ?? 1), enemyTurn);
   const alive = b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length;
   $('deckrow').innerHTML = `<button type="button" class="btn k-iron" data-deck>덱 ${deck.length}</button><button type="button" class="btn k-iron" data-crew>분대 ${alive}</button><span class="pile">버림 ${b.discard.length + (b.played?.length ?? 0)}</span>`;
   if (openCard !== null && openCard >= b.hand.length) openCard = null;
@@ -1287,7 +1287,7 @@ const onEndInner = async (): Promise<void> => {
   refresh();
   // 적 차례 끝 → 내 차례 사이 숨 (D-204)
   await new Promise((res) => window.setTimeout(res, calmNow() ? 0 : PACE.turnHold));
-  band(`${b.turn}턴 · 내 차례`, 'brass');
+  band(HUD_TEXT.heatBand(b.turn, b.s.heat ?? 1), 'brass');
   handView = null;
   refresh();
   dealHand($('hand'));
@@ -2400,7 +2400,8 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   }
   // 대국 · 검문은 진입 창(모달)을 띄우지 않는다 (D-388, 사용자: 「배경에 기물 얹는 진입 창 자체가 최악」 · /game-ui-design 0장: 행동이 없는 정보 = 모달 금지).
   // 정보(적 명단 · 규칙 · 보상)는 지도에서 노드를 고를 때 미리 보여 주고, 들어갈 때는 철문 전환 뒤 판 위 띠 한 번만 (⑨ 표지).
-  return shutter(() => undefined).then(() => void window.setTimeout(() => band(name ? `${label} · ${name}` : label, 'brass'), 120));
+  // 대국 이름 띠 다음에 배치 턴 띠 (D-454 — 첫 턴은 서로 피해 25%)
+  return shutter(() => undefined).then(() => void window.setTimeout(() => { band(name ? `${label} · ${name}` : label, 'brass'); band(HUD_TEXT.heatBand(1, b.s.heat ?? 1), 'brass'); }, 120));
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
 const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' };
@@ -3919,11 +3920,12 @@ const battleTutorial = async (): Promise<void> => {
   const selCardEl = () => (selCard !== null ? document.querySelector(`#hand [data-card="${selCard}"]`) : null);
   const plays = () => playsMade;
   let p0 = 0;
-  // 1턴 (테스터 피드백 B): 폰 처치 → 나이트 둘 짓밟기 → 칭찬 → 지휘로 연쇄 한 방 → 턴 끝 → 적이 친다
+  // 1턴 = 배치 턴 (D-454): 폰으로 첫 타격 → 나이트 둘 짓밟기(연쇄) → 칭찬 → 지휘로 연쇄 실은 한 방(아직 25%) → 턴 끝 → 적이 친다
   const ok = await tutorial('battle-a', [
     { text: T.hello },
     { text: T.board, target: () => $('board').querySelector('canvas') ?? $('board') },
     { text: T.threat, target: () => $('board').querySelector('canvas') ?? $('board') },
+    { text: T.heat, target: () => $('turn-label') },
     { text: T.gauge, target: () => $('vials') },
     { text: T.hand, target: () => $('hand') },
     { text: T.card1, target: () => cardEl('advance'), wait: () => selCard !== null && b.hand[selCard] === 'advance' },
