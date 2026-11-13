@@ -4,7 +4,7 @@ import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
-import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
+import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -93,6 +93,8 @@ export interface SliceBattle {
   parts: SlicePartId[];
   /** 이번 턴에 처치한 내 기물 (재도약) */
   killers: number[];
+  /** 쇳물 서약으로 녹인 내 기물 (D-462) — 대국 뒤 분대에서 영영 빠진다 */
+  melted?: number[];
   /** 실험실 지표 (D-456): 턴마다 우리가 적에게 준 실제 피해 · 한 번에 준 가장 큰 피해 — 화면은 쓰지 않는다 */
   dealt?: number[];
   peakHit?: number;
@@ -346,6 +348,8 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
   const spare = (parts.includes('spare') ? 1 : 0) + (parts.includes('brittle') ? 1 : 0);
+  // 종막 (D-462): 쇳물 서약 한 장이 덱에 들어온다
+  if (opts.bossRule === 'gilded') deck = [...deck, 'meltOath'];
   const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, pd: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   b.s.heat = heatAt(1);
   b.squadTypes = Object.fromEntries(squadIds.map((id) => [id, findPiece(s, id)!.type]));
@@ -739,7 +743,7 @@ export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return [];
   if (isInstant(b.hand[i])) return [];
-  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0) && !(c.who === 'any' && c.kind === 'move' && b.once.includes(`cmd:${p.id}`)));
+  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && !(c.kind === 'melt' && p.type === 'K') && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0) && !(c.who === 'any' && c.kind === 'move' && b.once.includes(`cmd:${p.id}`)));
 };
 
 /** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
@@ -1037,6 +1041,21 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   } else if (c.kind === 'spark') {
     b.kills += 1;
     drawCards(b, 1);
+  } else if (c.kind === 'melt') {
+    // 쇳물 서약 (D-462): 킹이 아닌 내 기물 하나를 녹여 적 킹을 친다 — 그 분대원은 출하에서 영영 빠진다(b.melted)
+    const p = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
+    const k = kingOf(b.s, 1);
+    if (!p || p.side !== 0 || p.type === 'K') return '녹일 분대원을 고르십시오.';
+    if (!k) return '칠 왕관이 없습니다.';
+    b.s.pieces = b.s.pieces.filter((q) => q.id !== p.id);
+    (b.melted ??= []).push(p.id);
+    if (!b.falls.some((f) => f.pieceId === p.id)) b.falls.push({ pieceId: p.id, by: '쇳물 서약', turn: b.turn, t: p.type });
+    const dmg = heatDmg(b.s, Math.round(p.maxHp * MELT.mult));
+    const absorbed = Math.min(k.shield, dmg);
+    k.shield -= absorbed;
+    k.hp = Math.max(0, k.hp - (dmg - absorbed));
+    events = [{ type: 'attack', order: 0, attackerId: p.id, area: [{ x: k.x, y: k.y }], hits: [{ targetId: k.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: k.hp, killed: k.hp <= 0 }] }];
+    if (k.hp <= 0) { b.s.pieces = b.s.pieces.filter((q) => q.id !== k.id); b.s.winner = 0; }
   } else if (c.kind === 'shield' || c.kind === 'repair') {
     const p = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
     if (!p || p.side !== 0) return '내 기물을 선택하십시오.';
@@ -1671,7 +1690,8 @@ export const fallenAfter = (b: SliceBattle, squad: Squad[]): { crew: Squad; fall
     const id = b.squadIds[i];
     if (findPiece(b.s, id)) return [];
     const fall = b.falls.find((f) => f.pieceId === id) ?? { pieceId: id, by: '알 수 없음', turn: b.turn };
-    return [{ crew: growCrew(b, u, id, 0), fall }];
+    // 쇳물 서약으로 녹인 분대원은 깨진 심장 톱니로 버티지 못한다 — 폐기 (D-462)
+    return [{ crew: { ...growCrew(b, u, id, 0), ...((b.melted ?? []).includes(id) ? { cracked: true } : {}) }, fall }];
   });
 
 /** 판 사이 회복 (사용자: 누적되면 너무 약해진다): 살아남은 분대는 최대 HP의 일부를 되찾는다 */

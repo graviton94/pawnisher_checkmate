@@ -7,7 +7,7 @@ import type { SlicePartId } from './parts';
  * 내려앉은 자리에서 다음에 갈 수 있는 칸을 친다. 카드는 「누가 · 얼마에 · 무엇을 더」만 정한다.
  */
 export type BaseCommandId =
-  | 'advance' | 'leap' | 'diagonal' | 'kingStep' | 'order'
+  | 'advance' | 'leap' | 'diagonal' | 'kingStep' | 'order' | 'meltOath'
   | 'rookPierce' | 'phalanx' | 'bishopChain' | 'scrapToss' | 'pawnExecute' | 'kingCharge'
   | 'pierceDiag' | 'crossLeap' | 'charge' | 'plate' | 'repair' | 'reload' | 'kingBlow' | 'splashDiag' | 'smash' | 'rookLine'
   | 'rebound' | 'hoofKick' | 'march' | 'draft' | 'wrath' | 'royalGuard' | 'spark' | 'finisher'
@@ -36,7 +36,7 @@ export interface CommandDef {
   /** 움직일 수 있는 기물 (any = 아무나) */
   who: PieceType | 'any';
   /** move = 기물 하나를 움직여 친다 · march = 폰 모두 한 칸 전진 · draft = 킹 옆에 폰 · spark = 연쇄 +1 */
-  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit' | 'spend' | 'swap';
+  kind: 'move' | 'shield' | 'repair' | 'draw' | 'march' | 'draft' | 'spark' | 'gambit' | 'spend' | 'swap' | 'melt';
   /** spend: 쌓인 연쇄를 모두 써서 — 킹 방열판 · 적 전체 피해 · 카드 뽑기 (D-203). amount = 연쇄 하나마다 */
   spend?: 'shield' | 'blast' | 'draw' | 'ap';
   /** 빌드 축 (보상에서 축이 고루 나오게, 카드에 띠로 표시) */
@@ -113,6 +113,8 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   spark: { axis: 'chain', name: '점화', cost: 0, who: 'any', kind: 'spark', desc: '불씨를 지핀다. (연쇄 +1 · 카드 1장 뽑기)' },
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   // D-461: ×14 → ×6 — 연쇄가 적중 기준(D-454)이 된 뒤 한 턴 연쇄 5~6이라 0태엽에 킹 방열판 70~80. 실험실 짝 비교: 쥐여 주기만 해도 완주 24 → 94%
+  // D-462 종막 전용 (사용자: 「도금왕은 깨면 끝 — 모든 걸 다 걸어도 된다」): 동료를 녹여 왕관을 친다. 보상으로 나오지 않는다
+  meltOath: { name: '쇳물 서약', cost: 0, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 최대 HP ×1.5 — 분대원 하나를 영영 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
   vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 1, who: 'any', kind: 'spend', spend: 'shield', amount: 6, desc: '열기를 갑옷으로 돌린다. (연쇄 ×6 · 최대 24 킹 방열판 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
   burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄 ×14만큼 · 적 전체 피해 — 연쇄를 모두 써서)', flavor: '“압력을 놓아라.”' },
   recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 0.5, desc: '흩어진 태엽을 거둔다. (연쇄 2마다 태엽 1 · 최대 2 — 연쇄를 모두 써서)' },
@@ -428,6 +430,8 @@ export const PACE = { apGainPerTurn: 0, drawPerTurn: 0, discountOnce: true };
 /** 공정 열기 기본값 (D-454) — SLICE.heat의 처음 값. 테스트가 열기를 껐다 켤 때 되돌리는 기준 */
 export const HEAT_DEFAULT = [0.25, 0.5, 0.75, 1] as const;
 
+/** 쇳물 서약 (D-462): 녹인 분대원 최대 HP × 이만큼 도금왕에게 */
+export const MELT = { mult: 1.5 };
 export const SLICE = {
   hand: 5,
   ap: 3,

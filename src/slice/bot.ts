@@ -59,6 +59,8 @@ export const scoreMove = (b: SliceBattle, i: number, pieceId: number, to: { x: n
 const scoreGuard = (b: SliceBattle, i: number, p: Piece, danger: { x: number; y: number }[]): number | null => {
   const c = COMMANDS[b.hand[i]];
   const cost = c.cost * BOT.costW;
+  // 쇳물 서약 (D-462)은 봇이 쓰지 않는다 — 사람의 선택으로 남긴다
+  if (c.kind === 'melt') return null;
   if (c.kind === 'repair') {
     const heal = Math.min(p.maxHp - p.hp, c.amount ?? 0);
     return heal > 0 ? heal * BOT.healW - cost : null;

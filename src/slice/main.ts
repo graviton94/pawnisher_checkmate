@@ -1077,7 +1077,7 @@ const onTap = async (pos: Pos): Promise<void> => {
   if (p && p.side === 0) {
     const c = selCard !== null ? COMMANDS[b.hand[selCard]] : null;
     // 방열판 · 땜질: 기물을 누르면 바로
-    if (c && (c.kind === 'shield' || c.kind === 'repair') && cardPieces(b, selCard!).some((q) => q.id === p.id)) return run(selCard!, p.id);
+    if (c && (c.kind === 'shield' || c.kind === 'repair' || c.kind === 'melt') && cardPieces(b, selCard!).some((q) => q.id === p.id)) return run(selCard!, p.id);
     if (selCard !== null && cardPieces(b, selCard).some((q) => q.id === p.id)) selPiece = p.id;
     else {
       const ci = autoCard(p.id);
@@ -2914,7 +2914,8 @@ const deathRites = async (): Promise<void> => {
     const c = squad[b.squadIds.indexOf(f.pieceId)];
     if (!c) continue;
     // 목숨 둘 (D-219): 성한 분대원이 처음 쓰러지면 폐기 의식 대신 짧은 「톱니가 깨진다」 — 판 가운데 톱니가 흔들리다 튕겨 나간다
-    if (c.t !== 'K' && !c.cracked) {
+    const melted = (b.melted ?? []).includes(f.pieceId);
+    if (c.t !== 'K' && !c.cracked && !melted) {
       const fx = document.createElement('div');
       fx.className = 'crackfx';
       fx.innerHTML = `<div><span class="lifes big"><i class="life"></i><i class="life breaking"></i></span><p class="narr"></p><b>${crewLabel(c)}</b><small>${LIFE_TEXT.riteSys}</small></div>`;
@@ -2942,9 +2943,9 @@ const deathRites = async (): Promise<void> => {
     const d0 = pool[((c.serial ?? '').charCodeAt(3) + (c.kills ?? 0) + f.turn) % pool.length];
     // 분대원은 제 성격대로 깨달음을 남기고 쓰러진다 (D-324) — 킹은 예전 대사
     const voice = c.t !== 'K' ? CREW_VOICE[c.t as CrewKind]?.fall : undefined;
-    const d = voice ? { narr: d0.narr, line: voice[((c.serial ?? '').charCodeAt(2) + f.turn) % voice.length] } : d0;
+    const d = melted ? { narr: LIFE_TEXT.meltNarr, line: voice ? voice[((c.serial ?? '').charCodeAt(2) + f.turn) % voice.length] : d0.line } : voice ? { narr: d0.narr, line: voice[((c.serial ?? '').charCodeAt(2) + f.turn) % voice.length] } : d0;
     // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158). D-189: 검은 막이 한 줄씩 계단으로 내려오고 서술이 한 자씩 찍힌다
-    fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${c.serial} · ${f.by}에게 파괴되었습니다.</small></div>`;
+    fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${melted ? LIFE_TEXT.meltSys(c.serial ?? '') : `${c.serial} · ${f.by}에게 파괴되었습니다.`}</small></div>`;
     curtainRows(fx);
     document.body.appendChild(fx);
     // 전체 화면 장면 (되감기 장면과 같은 문법): 판이 잿빛으로 멈춘다

@@ -257,7 +257,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
   it('수량', async () => {
     const { REWARD_COMMANDS } = await import('../src/slice/cards');
     const { SLICE_PARTS } = await import('../src/slice/parts');
-    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+') && !k.endsWith('~')).length).toBe(92); // + 카드 확장 43 (D-281)
+    expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+') && !k.endsWith('~')).length).toBe(93); // + 카드 확장 43 (D-281) · 쇳물 서약 (D-462, 종막 전용)
     expect(REWARD_COMMANDS.length).toBe(86); // + 연쇄 소모 3 (D-203) · 빌드 다양성 6 (D-217 4)
     expect(Object.keys(SLICE_PARTS).length).toBe(84); // + 기록 유물 2차 여섯 (D-384) · 넷 (D-363) // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
   });

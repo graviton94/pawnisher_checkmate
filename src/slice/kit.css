@@ -722,6 +722,10 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
 #hand .hc-desc .dl { display: block; word-break: keep-all; overflow-wrap: anywhere; }
 #hand .hc-desc .dl-if { color: #b9b4c2; }
 #hand .hc-desc .dl-fx > i { display: inline-block; font-style: normal; margin-top: 2px; padding: 0 5px; background: #3a2c10; color: #ffd64a; font: 700 12px/15px Galmuri11, sans-serif; }
+/* D-462: 설명 줄이 .dl → .ln(descHtml)으로 바뀐 뒤 손패 펼침 칸만 줄이 나뉘지 않아 「갑옷으로돌린다」처럼 붙었다 */
+#hand .hc-desc .ln { display: block; word-break: keep-all; overflow-wrap: anywhere; }
+#hand .hc-desc .ln-if { color: #b9b4c2; }
+#hand .hc-desc .ln-fx > b { color: #ffd64a; font: 700 12px/15px Galmuri11, sans-serif; }
 #hand > .empty { margin: var(--s2); color: var(--t-dim); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 /* 첫 대국 코치: 카드를 고를 차례면 쓸 수 있는 판에 황동 1도트 테가 계단으로 깜빡 */
 #hand.hint > .hc:not(.off) { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); animation: handHint 1s steps(2, jump-none) infinite; }
