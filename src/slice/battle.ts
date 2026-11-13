@@ -194,7 +194,7 @@ export const chainMult = (kills: number, parts: SlicePartId[] = []): number =>
   // 연쇄의 곱(×)은 폭주 코일이 있을 때만 (D-205) — 기본 연쇄는 합(+)이다 (chainAdd)
   parts.includes('coil') ? Math.min(PART_NUM.coilCap, Math.pow(PART_NUM.coilPerKill, kills)) : 1;
 
-/** 연쇄의 합(+) (D-205): 이번 턴 처치마다 다음 공격 피해 +4 (전도 코일 +7), 상한 4처치. 코일이 있으면 곱으로 바뀌고 합은 없다 */
+/** 연쇄의 합(+) (D-205 · D-454): 이번 턴 연쇄 하나마다 다음 공격 피해 +4 (전도 코일 +10), 상한 4. 코일이 있으면 곱으로 바뀌고 합은 없다 */
 export const chainAdd = (kills: number, parts: SlicePartId[] = []): number =>
   parts.includes('coil') ? 0 : Math.min(kills, SLICE.chainCap) * (parts.includes('conductor') ? PART_NUM.conductorAdd : SLICE.chainAddPerKill);
 

@@ -56,7 +56,8 @@ describe('부품 조합의 보유·표시 계약', () => {
   });
   it('대가와 처치 조건을 구별하고 복합 판정의 제외 대상을 보존한다', () => {
     expect(partSummaryText('spare')).toMatchObject({ description: '장착한 동안', effect: '태엽 +1 · 손패 −1' });
-    expect(partSummaryText('echo')).toMatchObject({ description: '처치하면', effect: '연쇄 +2' });
+    expect(partSummaryText('echo')).toMatchObject({ description: '적중마다', effect: '쌓이는 연쇄 ×2' }); // D-454: 연쇄 = 적중
+    expect(partSummaryText('chainShot')).toMatchObject({ description: '충돌로 처치하면', effect: '연쇄 +2' });
     expect(partAbilityText('conductor')[0].effect).toContain('기본 +4');
     expect(partAbilityText('sharedPlate')[1].effect).toContain('임시 폰 제외');
   });

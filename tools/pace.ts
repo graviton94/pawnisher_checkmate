@@ -4,7 +4,7 @@
  * 실행: `npx jiti tools/pace.ts [n=40] [styles=greedy,search] [asc=0]`
  */
 import { simulateRun, type BattleLog, type RunBuild, type RunStyle } from '../src/sim/runbot';
-import type { SlicePartId } from '../src/slice/parts';
+import { PART_NUM, type SlicePartId } from '../src/slice/parts';
 import { PACE, SLICE } from '../src/slice/cards';
 
 const n = Number(process.argv[2] ?? 40);
@@ -25,6 +25,7 @@ for (const kv of (process.argv[7] ?? '').split(',').filter(Boolean)) {
   else if (k === 'atkGrow') (SLICE as { foeAtkGrow: number }).foeAtkGrow = x;
   else if (k === 'hp') (SLICE as { foeHpStart: number }).foeHpStart = x;
   else if (k === 'hpGrow') (SLICE as { foeHpGrow: number }).foeHpGrow = x;
+  else if (k === 'coilCap') PART_NUM.coilCap = x;
   else throw new Error(`모르는 실험 키: ${k}`);
 }
 console.log(`제동: 태엽 +${PACE.apGainPerTurn || '∞'}/턴 · 뽑기 +${PACE.drawPerTurn || '∞'}/턴 · 할인 ${PACE.discountOnce ? '턴당 첫 장' : '모든 장'} · 처치 환급 ${SLICE.refundCap} | 적 공격 ×${SLICE.foeAtk} (+${SLICE.foeAtkGrow}/깊이) · 적 HP ×${SLICE.foeHpStart} (×${SLICE.foeHpGrow}/깊이)`);

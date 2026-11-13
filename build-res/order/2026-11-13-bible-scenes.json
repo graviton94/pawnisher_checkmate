@@ -1,0 +1,157 @@
+{
+ "date": "2026-11-13",
+ "decision": "D-455",
+ "command": "python3 -I tools/scene-import.py <받은 webp> <이름> <S-번호>",
+ "entries": [
+  {
+   "id": "S-13",
+   "source": "build-res/order/S-13-chained-door-source.webp",
+   "source_sha256": "0114af2a05e19c9579947e64934045a61d63b999f4a3105f6bfb96480862130b",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/chained-door.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "23721ceb36c4e960b5dc17e781934c6b3c338f1ab9fdb6a249114d3de221c505",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 21191,
+   "upscale_mean_abs_diff_rgb": [
+    9.63,
+    6.61,
+    5.66
+   ]
+  },
+  {
+   "id": "S-14",
+   "source": "build-res/order/S-14-old-spring-source.webp",
+   "source_sha256": "414646ee08bd9cd5563118ebd2744d042660e476b093c02d75484a6d07846411",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/old-spring.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "28cc986dfb90275bed40e5f5060c94627d80d22d1ae491878e44bb04bef7fada",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 26847,
+   "upscale_mean_abs_diff_rgb": [
+    8.06,
+    5.44,
+    4.48
+   ]
+  },
+  {
+   "id": "S-15",
+   "source": "build-res/order/S-15-scarred-wall-source.webp",
+   "source_sha256": "de3c85fd356ea58dd95f93e291049b71917ede7030974c4c31abfe36c31d056b",
+   "source_size": [
+    1672,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/scarred-wall.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "e1eefdcf96304737d689803924e0b1b84e9f6625b1159f4da05a195b80b62091",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 31043,
+   "upscale_mean_abs_diff_rgb": [
+    11.09,
+    7.81,
+    5.94
+   ]
+  },
+  {
+   "id": "S-16",
+   "source": "build-res/order/S-16-crown-dais-source.webp",
+   "source_sha256": "81054554c167d03112fe63442ea2c0175312ac7061d1d1561fe8c5b408b6a0d4",
+   "source_size": [
+    1671,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/crown-dais.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "bab037b243c7e077c8d8777ed1781f51c84ccb8d8d83da7fbbe9fe5920999244",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 28803,
+   "upscale_mean_abs_diff_rgb": [
+    9.71,
+    7.31,
+    5.52
+   ]
+  },
+  {
+   "id": "S-18",
+   "source": "build-res/order/S-18-gold-cast-source.webp",
+   "source_sha256": "47f739db7db8510a96a7f0f0c908681e42cecb8c344916f14a6dbecf7b5177ee",
+   "source_size": [
+    1671,
+    941
+   ],
+   "source_format": "WEBP",
+   "output": "public/scenes/gold-cast.png",
+   "output_size": [
+    320,
+    180
+   ],
+   "output_sha256": "40e404bb7bcd74e63e30ca5822f22f49cd7f4600921fc9ea76d3a08e54852021",
+   "recipe": {
+    "colors": 0,
+    "pitch": 5.227777777777778,
+    "uniform": true
+   },
+   "alpha_values": [
+    255
+   ],
+   "colors": 26643,
+   "upscale_mean_abs_diff_rgb": [
+    7.88,
+    5.91,
+    4.76
+   ]
+  }
+ ]
+}

@@ -33,9 +33,10 @@ describe('빌드 축 · 부품 (D-144)', () => {
     expect(typeof r1).toBe('object');
     expect(typeof rewind(r1 as SliceBattle)).toBe('string');
   });
-  it('증폭 코일: 처치마다 ×1.5, 최대 ×16 — 기본 연쇄는 합 (D-205)', async () => {
+  it('증폭 코일: 연쇄마다 ×1.5, 최대 ×8 (D-454) — 기본 연쇄는 합 (D-205)', async () => {
     const { chainAdd } = await import('../src/slice/battle');
-    expect(chainMult(6, ['coil'])).toBeCloseTo(Math.min(16, 1.5 ** 6));
+    expect(chainMult(4, ['coil'])).toBeCloseTo(1.5 ** 4);
+    expect(chainMult(6, ['coil'])).toBe(8);
     expect(chainMult(6)).toBe(1);
     expect(chainAdd(6)).toBe(SLICE.chainCap * SLICE.chainAddPerKill);
     expect(chainAdd(6, ['coil'])).toBe(0);
