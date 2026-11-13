@@ -31,6 +31,13 @@ export interface RunOpts {
   value?: (id: CommandId) => number;
   /** 여벌 심장 톱니 (1패 대신) */
   revive?: number;
+  /**
+   * 메타 페르소나 (D-456 실험실): standard = 지금 봇 · risky = 체력이 낮아도 검문을 고르고 수리 대신 다듬기, 상점 치료 안 함 ·
+   * hoarder = 카드 보상을 거르지 않고 다 집으며 카드를 지우지 않는다. (아키타입 집착형은 build knight · rook)
+   */
+  persona?: 'standard' | 'risky' | 'hoarder';
+  /** 두뇌 봇의 사람다운 실수 (D-456): 상위 3순서 소프트맥스 온도 — 0 = 늘 최선 */
+  temp?: number;
 }
 export interface BossLog { rule: BossRule; act: number; won: boolean; turns: number }
 export interface RunResult {
@@ -49,8 +56,13 @@ export interface RunResult {
   idle: IdleStats;
   /** 대국마다 (D-449 판 길이 점검): 막 · 종류 · 턴 수 · 승패 · 쓰러진 분대원 · 한 적 턴에 가장 많이 쓰러진 수 */
   log: BattleLog[];
+  /** 실험실 (D-456): 제시된 카드 · 부품과 고른 것 (픽률 · 보유 시 승률) */
+  offers: { id: string; part: boolean; taken: boolean }[];
+  /** 종막 직전 쥔 나사 · 끝에 덱에 남은 시작 카드 수 (경제 · 압축) */
+  goldAtFinal: number;
+  starterLeft: number;
 }
-export interface BattleLog { act: number; kind: 'battle' | 'check' | 'boss'; title: string; turns: number; won: boolean; fell: number; maxFellInTurn: number; kingHpLost: number; /** 이겼을 때 살아 있던 적 수 (킹만 잡고 끝냈나) · 처음 적 수 */ enemiesLeft: number; enemies: number; /** 분대원을 쓰러뜨린 적 유형 */ killers: string }
+export interface BattleLog { act: number; kind: 'battle' | 'check' | 'boss'; title: string; turns: number; won: boolean; fell: number; maxFellInTurn: number; kingHpLost: number; /** 이겼을 때 살아 있던 적 수 (킹만 잡고 끝냈나) · 처음 적 수 */ enemiesLeft: number; enemies: number; /** 분대원을 쓰러뜨린 적 유형 */ killers: string; /** 실험실 (D-456): 이긴 뒤 분대 체력 비율 · 우리 피해 중 가장 센 한 턴의 몫 · 가장 큰 한 방 · 턴당 준 피해 */ hpAfter: number; swing: number; peak: number; dpt: number }
 
 const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
 
@@ -58,6 +70,9 @@ const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
 export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const asc = o.asc ?? 0;
   const style = o.style ?? 'greedy';
+  const persona = o.persona ?? 'standard';
+  const offersLog: RunResult['offers'] = [];
+  let goldAtFinal = -1;
   const build = o.build ?? 'neutral';
   const family = BUILD_FAMILIES[build] ?? [];
   const open = new Set([...STARTER_CARDS, ...STARTER_PARTS]);
@@ -116,7 +131,9 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
       pool.splice(pool.indexOf(id), 1);
       offers.push(id);
     }
-    addPart(offers.sort((a, b) => rankOf(b) - rankOf(a))[0]);
+    const pick = offers.sort((a, b) => rankOf(b) - rankOf(a))[0];
+    for (const id of offers) offersLog.push({ id, part: true, taken: id === pick });
+    addPart(pick);
   };
   const cardOffers = (elite: boolean): CommandId[] => {
     const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push', 'tactic'];
@@ -135,26 +152,31 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const takeCard = (offers: CommandId[], recruitOffer: boolean) => {
     if (recruitOffer && squad.length < SLICE.squadMax && (squad.length < 6 || rng.next() < 0.5)) return recruit(true);
     const best = offers.sort((a, b) => val(b) - val(a))[0];
-    if (best && val(best) > 0) deck.push(best);
+    const take = best && (val(best) > 0 || persona === 'hoarder');
+    for (const id of offers) offersLog.push({ id, part: false, taken: !!take && id === best });
+    if (take) deck.push(best);
   };
-  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle, log });
+  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle, log, offers: offersLog, goldAtFinal, starterLeft: deck.filter((id) => (START_DECK as string[]).includes(id)).length });
   for (const [ai, a] of acts.entries()) {
     actNow = ai;
     let prev: MapNode | null = null;
     for (const [ri, row] of a.rows.entries()) {
       const open: MapNode[] = (prev?.to ?? row.map((_, i) => i)).map((i: number) => row[i]);
       const hp = hpRatio();
-      const pref = (n: MapNode) => (hp < 0.5 && n.kind === 'forge' ? 9 : 0) + (gold >= 90 && n.kind === 'shop' ? 6 : 0) + ({ battle: 3, check: hp > 0.7 ? 4 : 1, chest: 5, event: 2, forge: hp < 0.7 ? 3 : 1, shop: 1, boss: 9 } as Record<string, number>)[n.kind] + rng.next() * 2;
+      const pref = persona === 'risky'
+        ? (n: MapNode) => ({ battle: 3, check: 6, chest: 5, event: 2, forge: 1, shop: 1, boss: 9 } as Record<string, number>)[n.kind] + rng.next() * 2
+        : (n: MapNode) => (hp < 0.5 && n.kind === 'forge' ? 9 : 0) + (gold >= 90 && n.kind === 'shop' ? 6 : 0) + ({ battle: 3, check: hp > 0.7 ? 4 : 1, chest: 5, event: 2, forge: hp < 0.7 ? 3 : 1, shop: 1, boss: 9 } as Record<string, number>)[n.kind] + rng.next() * 2;
       const n: MapNode = open.sort((x: MapNode, y: MapNode) => pref(y) - pref(x))[0];
       prev = n;
       const frac = ri / a.rows.length;
       if (n.battle) {
         const def = n.battle;
+        if (ai === acts.length - 1 && def.reward === 'end' && goldAtFinal < 0) goldAtFinal = gold;
         let ok = false;
         let fell: Squad[] = [];
         for (let tryN = 0; !ok && (tryN === 0 || (revive > 0 && (revive--, true))); tryN++) {
           const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne });
-          const r = style === 'search' ? playOutSearch(b, 40, 3, 4) : playOut(b, 40, undefined, style);
+          const r = style === 'search' ? playOutSearch(b, 40, 3, 4, o.temp ?? 0) : playOut(b, 40, undefined, style);
           battles += 1;
           turnsAll += r.turns;
           idle.turns += r.idle.turns; idle.idle += r.idle.idle; idle.apLeft += r.idle.apLeft; idle.idleAp += r.idle.idleAp;
@@ -163,7 +185,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             const byTurn = new Map<number, number>();
             for (const f of b.falls) byTurn.set(f.turn, (byTurn.get(f.turn) ?? 0) + 1);
             const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
-            log.push({ act: ai + 1, kind: def.boss ? 'boss' : n.kind === 'check' ? 'check' : 'battle', title: def.title, turns: r.turns, won: r.won, fell: b.falls.length, maxFellInTurn: Math.max(0, ...byTurn.values()), kingHpLost: k ? k.maxHp - Math.max(0, k.hp) : 999, enemiesLeft: b.s.pieces.filter((p) => p.side === 1 && p.hp > 0).length, enemies: def.enemy.length, killers: b.falls.map((f) => f.byType ?? '?').join('') });
+            log.push({ act: ai + 1, kind: def.boss ? 'boss' : n.kind === 'check' ? 'check' : 'battle', title: def.title, turns: r.turns, won: r.won, fell: b.falls.length, maxFellInTurn: Math.max(0, ...byTurn.values()), kingHpLost: k ? k.maxHp - Math.max(0, k.hp) : 999, enemiesLeft: b.s.pieces.filter((p) => p.side === 1 && p.hp > 0).length, enemies: def.enemy.length, killers: b.falls.map((f) => f.byType ?? '?').join(''), hpAfter: r.won ? (() => { const sq = squadAfter(b, squad); return sq.reduce((a, u) => a + Math.min(crewMaxHp(u), Math.max(0, u.hp ?? crewMaxHp(u))), 0) / Math.max(1, sq.reduce((a, u) => a + crewMaxHp(u), 0)); })() : 0, swing: (() => { const d = Array.from(b.dealt ?? [], (x) => x ?? 0); const sum = d.reduce((a, x) => a + x, 0); return sum ? Math.max(...d) / sum : 0; })(), peak: b.peakHit ?? 0, dpt: Array.from(b.dealt ?? [], (x) => x ?? 0).reduce((a, x) => a + x, 0) / Math.max(1, r.turns) });
           }
           if (r.won) {
             ok = true;
@@ -185,7 +207,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         else if (def.reward === 'card') {
           const offers = cardOffers(false);
           const best = Math.max(...offers.map(val), -99);
-          if (fell.length && best < 25) squad = overhaulSquad(squad, fell).squad;
+          if (persona !== 'hoarder' && fell.length && best < 25) squad = overhaulSquad(squad, fell).squad;
           else takeCard(offers, rng.next() < SLICE.recruitChance);
         }
       } else if (n.kind === 'chest') {
@@ -195,7 +217,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         const pool = REWARD_COMMANDS.filter(id => usable(id) && isOpen(id));
         const offers: CommandId[] = [];
         while (offers.length < SHOP.cards && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
-        if (hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul()) { gold -= Math.round(SHOP.healPrice * shopMul()); squad = restSquad(squad, SHOP.healPct); }
+        if (persona !== 'risky' && hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul()) { gold -= Math.round(SHOP.healPrice * shopMul()); squad = restSquad(squad, SHOP.healPct); }
         for (const id of offers.sort((x, y) => val(y) - val(x))) {
           const p = Math.round(SHOP.gradePrice[gradeOf(id) as Grade] * shopMul());
           if (val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); break; }
@@ -204,10 +226,10 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         const from = firstShopParts(pp, parts, shopsSeen++);
         const part = from.length ? from[rng.int(from.length)] : null;
         if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * shopMul()); if (gold >= p + 30 && keeps(part)) { gold -= p; addPart(part); } }
-        if (deck.length > 14 && gold >= SHOP.removePrice * shopMul()) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= Math.round(SHOP.removePrice * shopMul()); }
+        if (persona !== 'hoarder' && deck.length > 14 && gold >= SHOP.removePrice * shopMul()) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= Math.round(SHOP.removePrice * shopMul()); }
       } else if (n.kind === 'forge') {
         squad = mendSquad(squad).squad;
-        if (hpRatio() < 0.6) squad = restSquad(squad, FORGE.repairPct * (asc >= 3 ? ASC_NUM.restMul : 1));
+        if (persona !== 'risky' && hpRatio() < 0.6) squad = restSquad(squad, FORGE.repairPct * (asc >= 3 ? ASC_NUM.restMul : 1));
         else {
           const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x));
           if (cand[0]) { deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); }

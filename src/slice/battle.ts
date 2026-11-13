@@ -93,6 +93,9 @@ export interface SliceBattle {
   parts: SlicePartId[];
   /** 이번 턴에 처치한 내 기물 (재도약) */
   killers: number[];
+  /** 실험실 지표 (D-456): 턴마다 우리가 적에게 준 실제 피해 · 한 번에 준 가장 큰 피해 — 화면은 쓰지 않는다 */
+  dealt?: number[];
+  peakHit?: number;
   /** 다듬은 카드 (태엽 −1) */
   refined: CommandId[];
   /** 이 대국에서 넘친 피해 합 (이기면 나사로) */
@@ -1296,6 +1299,8 @@ const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[],
         const actual = Math.max(0, left - h.hpAfter);
         hpLeft.set(tgt.id, Math.min(left, h.hpAfter));
         (b.pd ??= {})[by] = (b.pd?.[by] ?? 0) + actual;
+        (b.dealt ??= [])[b.turn - 1] = (b.dealt[b.turn - 1] ?? 0) + actual;
+        if (actual > (b.peakHit ?? 0)) b.peakHit = actual;
       }
       if (!h.killed || killed.has(h.targetId)) continue;
       killed.add(h.targetId);

@@ -290,9 +290,26 @@ const candidates = (b: SliceBattle, k: number): BotAction[] => {
   return out.sort((a, c) => c.score - a.score).filter((a) => { const key = `${a.pieceId}:${a.to?.x},${a.to?.y}:${a.pieceId === undefined ? a.i : ''}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, k);
 };
 
-/** 수읽기: 이번 턴의 수 순서를 깊이 depth까지 탐색해, 적 차례까지 끝낸 판이 가장 좋은 순서를 고른다 */
-export const searchTurn = (b: SliceBattle, depth = 4, k = 5): BotAction[] => {
+/**
+ * 사람다운 실수 (D-456 실험실): temp > 0이면 가장 좋은 순서만 고르지 않고 상위 3개 중 소프트맥스(판값 / temp)로 고른다.
+ * 주사위는 대국 RNG를 건드리지 않게 판 상태(rng · 턴 · 태엽 · 손패 수)에서 만든 값 — 같은 입력이면 같은 선택(결정론).
+ */
+const humanPick = <T extends { v: number }>(b: SliceBattle, top: T[], temp: number): T => {
+  if (temp <= 0 || top.length < 2) return top[0];
+  let h = (b.rng ^ (b.turn * 2654435761) ^ (b.ap * 40503) ^ (b.hand.length * 97)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 2246822507) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0;
+  const u = ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  const w = top.map((t) => Math.exp((t.v - top[0].v) / temp));
+  let r = u * w.reduce((a, x) => a + x, 0);
+  for (let i = 0; i < top.length; i++) { r -= w[i]; if (r <= 0) return top[i]; }
+  return top[top.length - 1];
+};
+
+/** 수읽기: 이번 턴의 수 순서를 깊이 depth까지 탐색해, 적 차례까지 끝낸 판이 가장 좋은 순서를 고른다 (temp: 사람다운 실수, 0 = 늘 최선) */
+export const searchTurn = (b: SliceBattle, depth = 4, k = 5, temp = 0): BotAction[] => {
   let best = { v: -Infinity, seq: [] as BotAction[] };
+  const top: { v: number; seq: BotAction[] }[] = [];
   const rec = (cur: SliceBattle, seq: BotAction[], d: number) => {
     // 여기서 턴을 끝내 본다
     const end = clone(cur);
@@ -300,6 +317,7 @@ export const searchTurn = (b: SliceBattle, depth = 4, k = 5): BotAction[] => {
     // 둔 수마다 BOT.evalPlay (2026-11-09d): 판이 같으면 턴을 끝내기보다 두는 쪽 — 점화 · 뽑기처럼 판값이 안 바뀌는 수가 손 놓기에 지던 것
     const v = evalBoard(end) + BOT.evalPlay * seq.length;
     if (v > best.v) best = { v, seq };
+    if (temp > 0 && seq.length) { top.push({ v, seq }); top.sort((x, y) => y.v - x.v); if (top.length > 3) top.pop(); }
     if (d === 0 || cur.s.winner !== null) return;
     for (const a of candidates(cur, k)) {
       const nb = clone(cur);
@@ -309,17 +327,18 @@ export const searchTurn = (b: SliceBattle, depth = 4, k = 5): BotAction[] => {
     }
   };
   rec(b, [], depth);
+  if (temp > 0 && top.length && top[0].v >= best.v) return humanPick(b, top, temp).seq;
   return best.seq;
 };
 
 /** 수읽기 봇으로 대국 하나 */
-export const playOutSearch = (b: SliceBattle, maxTurns = 40, depth = 4, k = 5): PlayResult => {
+export const playOutSearch = (b: SliceBattle, maxTurns = 40, depth = 4, k = 5, temp = 0): PlayResult => {
   let plays = 0;
   const idle = idleStats();
   while (b.s.winner === null && b.turn < maxTurns) {
     // 찾은 순서를 다 두고도 낼 카드가 남으면 다시 수읽기 (2026-11-09d — 깊이 끝에서 남은 태엽을 버리던 것). 0태엽 카드가 있어 태엽 0이어도 본다
     for (let again = 0; again < BOT.researchMax && b.s.winner === null && anyPlay(b); again++) {
-      const seq = searchTurn(b, depth, k);
+      const seq = searchTurn(b, depth, k, temp);
       if (!seq.length) break;
       let done = 0;
       // 탐색한 순서를 다시 확인하며 둔다 (손패 번호는 앞 수에 따라 바뀌므로 기물 · 칸으로 다시 찾는다)
