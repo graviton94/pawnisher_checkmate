@@ -1,10 +1,11 @@
 import type { PieceType } from '../engine';
 import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
-import { COMMANDS, isRefined, isRusted, REWARD_COMMANDS, refineOnce, rustOnce, SLICE, type CommandId } from './cards';
-import type { Crew } from './crew';
+import { cardFits, COMMANDS, gradeOf, isRefined, isRusted, REWARD_COMMANDS, refineOnce, rustOnce, SLICE, START_DECK, type CommandId } from './cards';
+import type { Crew, QuirkId } from './crew';
 import type { EffectTone } from './effect-text';
 import { crewMaxHp } from './battle';
+import type { SlicePartId } from './parts';
 
 /**
  * 사건 (R5-3, D-170): 본편 돌발 12종(D-158 문체)을 시험판 체계(분대원 · 카드 · 부품 · 나사)로 옮겼다.
@@ -20,6 +21,8 @@ export interface EventState {
   deck: CommandId[];
   refined: CommandId[];
   gold: number;
+  /** 쥔 부품 (D-459 — 같은 부품을 두 번 주지 않게) */
+  parts?: SlicePartId[];
 }
 
 export interface EventOutcome {
@@ -29,6 +32,8 @@ export interface EventOutcome {
   partPick?: boolean;
   /** 부품을 높은 등급 쪽으로 (검문 · 반장과 같은 확률표) */
   elite?: boolean;
+  /** 이 부품을 곧바로 준다 (D-459 — 대가가 붙은 부품을 거래로) */
+  givePart?: SlicePartId;
   /** 새로 들어온 분대원 (이름 붙이기는 화면이) */
   recruit?: PieceType;
   /** 카드를 하나 고르게 한 뒤 counterweight()로 마무리한다 (D-247 저울추) */
@@ -122,6 +127,34 @@ const full = (s: EventState): string | null => (s.squad.length >= SLICE.squadMax
 /** 분대원 n명이 각각 pct만큼 HP를 잃는다 (가장 성한 쪽부터 · 킹 제외) — 이름들을 돌려준다 */
 const someHurt = (s: EventState, n: number, pct: number): string => Array.from({ length: n }, () => oneHurt(s, pct)).filter((x, i, a) => a.indexOf(x) === i).join(' · ');
 const poor = (n: number) => (s: EventState) => (s.gold < n ? `나사 ${n} 필요` : null);
+// ---- 사건의 화폐 (D-459, 사용자: 「사건은 종류만 다양하지 대가 · 획득이 너무 평범하다」) ----
+// 나사 · HP% 대신 빌드와 분대원의 정체성을 바꾸는 것: 기벽 갈아 끼우기 · 단련(영구 공격) · 대가 붙은 부품 · 덱 수술 · 심장 톱니
+const GRADE_RANK: Record<string, number> = { common: 0, rare: 1, gold: 2 };
+const nameOf = (u: Crew): string => u.name ?? NAMES[u.t];
+/** 최다 처치 · 최다 출전 · 가장 덜 싸운 분대원 (킹 제외) */
+const aceOf = (s: EventState) => [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
+const veteranOf = (s: EventState) => [...nonKing(s)].sort((a, b) => (b.battles ?? 0) - (a.battles ?? 0))[0];
+const greenOf = (s: EventState) => [...nonKing(s)].sort((a, b) => (a.kills ?? 0) - (b.kills ?? 0))[0];
+/** 기벽을 갈아 끼운다 — HP는 같은 비율로 */
+const setQuirk = (s: EventState, u: Crew, q: QuirkId): void => {
+  const max0 = crewMaxHp(u);
+  s.squad = s.squad.map((x) => (x === u ? { ...x, quirk: q, hp: Math.max(1, Math.round(((x.hp ?? max0) / max0) * crewMaxHp({ t: x.t, quirk: q }))) } : x));
+};
+/** 단련: 영구 공격 + */
+const temper = (s: EventState, u: Crew, n: number): void => { s.squad = s.squad.map((x) => (x === u ? { ...x, temper: (x.temper ?? 0) + n } : x)); };
+/** 심장 톱니를 깬다: 아직 성한 분대원 중 가장 HP가 많은 쪽 — 없으면 이름 없음 */
+const crackOne = (s: EventState): string | null => {
+  const u = [...nonKing(s)].filter((x) => !x.cracked).sort((a, b) => (b.hp ?? crewMaxHp(b)) - (a.hp ?? crewMaxHp(a)))[0];
+  if (!u) return null;
+  s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
+  return nameOf(u);
+};
+/** 덱에서 가장 귀한 카드 (녹슨 것 빼고, 등급 높은 순 — 같으면 앞의 것) */
+const finestCard = (s: EventState): number => s.deck.map((id, k) => ({ id, k })).filter(({ id }) => !isRusted(id)).sort((a, b) => GRADE_RANK[gradeOf(b.id)] - GRADE_RANK[gradeOf(a.id)] || a.k - b.k)[0]?.k ?? -1;
+/** 가장 약한 카드들의 자리: 녹슨 것 → 시작 카드 → 등급 낮은 순 */
+const weakest = (s: EventState, n: number): number[] => s.deck.map((id, k) => ({ id, k, w: (isRusted(id) ? 0 : 10) + ((START_DECK as string[]).includes(id.replace(/[+~]$/, '')) ? 0 : 5) + GRADE_RANK[gradeOf(id)] })).sort((a, b) => a.w - b.w || a.k - b.k).slice(0, n).map((x) => x.k);
+const startIdx = (s: EventState): number[] => s.deck.map((id, k) => ({ id, k })).filter(({ id }) => (START_DECK as string[]).includes(id.replace(/[+~]$/, ''))).map((x) => x.k);
+const hasPart = (s: EventState, id: SlicePartId) => (s.parts ?? []).includes(id);
 const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', apply: () => ({ text: '당신은 말없이 발걸음을 돌린다.' }) });
 
 /**
@@ -140,23 +173,21 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         blocked: (s) => (s.gold < 40 ? '나사 40 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
         apply: (s) => {
           s.gold -= 40;
-          const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
+          const u = aceOf(s);
           u.doors = (u.doors ?? 0) + 1;
-          return { text: `불꽃이 튄다. ${u.name ?? NAMES[u.t]}, 그 축이 두꺼워졌다. (생명 +1)` };
+          return { text: `불꽃이 튄다. ${nameOf(u)}, 그 축이 두꺼워졌다. (생명 +1)` };
         },
       },
       {
-        label: '축을 끝까지 조인다',
-        desc: '50% 생명 +2 · 50% 심장 톱니 깨짐', tones: ['gain', 'loss'],
-        info: '나사 40을 냅니다. 대상은 최다 처치 분대원입니다.',
-        pay: () => 40,
-        blocked: (s) => (s.gold < 40 ? '나사 40 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
-        apply: (s, rng) => {
-          s.gold -= 40;
-          const u = [...nonKing(s)].sort((a, b) => (b.kills ?? 0) - (a.kills ?? 0))[0];
-          if (rng.int(2) === 0) { u.doors = (u.doors ?? 0) + 2; return { slot: 0, text: `축이 끝까지 물린다. ${u.name ?? NAMES[u.t]}의 생명 +2.` }; }
-          s.squad = s.squad.map((x) => (x === u ? { ...x, cracked: true } : x));
-          return { slot: 1, text: `쩍. 축이 비명을 지르며 갈라진다. ${u.name ?? NAMES[u.t]}의 심장 톱니 하나가 깨졌다. (다시 쓰러지면 폐기)` };
+        // D-459: 50% 생명 +2 · 50% 깨짐 → 에이스의 성격을 바꾼다 (유리 렌즈 — 공격 ×1.4 · HP −35%)
+        label: '렌즈를 갈아 끼운다',
+        desc: '에이스 기벽 → 공격 ×1.4 · HP −35%', tones: ['neutral', 'gain', 'loss'],
+        info: '최다 처치 분대원의 기벽이 「유리 렌즈」로 바뀝니다. 원래 기벽은 사라집니다.',
+        blocked: (s) => (!nonKing(s).length ? '맡길 분대원 없음' : aceOf(s).quirk === 'glass' ? '이미 유리 렌즈' : null),
+        apply: (s) => {
+          const u = aceOf(s);
+          setQuirk(s, u, 'glass');
+          return { text: `${nameOf(u)}의 눈에 얇은 유리알이 박힌다. (공격 ×1.4 · HP −35%)` };
         },
       },
       leave('지나가기'),
@@ -164,9 +195,15 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   smith: {
     title: '떠돌이 정비 폰',
-    text: '늙은 정비 폰이 렌치를 메고 수레에 기대앉았다. “나사 마흔. 손봐 줄 건 내가 고른다.”',
+    text: '늙은 정비 폰이 렌치를 메고 수레에 기대앉았다. “나사 예순. 제일 오래 싸운 놈을 데려와.”',
     choices: [
-      { label: '렌치에 맡긴다', desc: '나사 −40 · 무작위 카드 2장 다듬기', tones: ['loss', 'gain'], info: '다듬은 카드는 태엽이 1 덜 듭니다.', blocked: poor(40), apply: (s, rng) => { s.gold -= 40; return { text: `렌치가 두 번 돈다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` }; } },
+      // D-459: 무작위 다듬기 2장 → 한 분대원을 영구히 단련 (공격 +6)
+      { label: '렌치로 벼린다', desc: '나사 −60 · 최다 출전 분대원 공격 +6', tones: ['loss', 'gain'], info: '단련은 그 분대원에게 영구히 남습니다.', blocked: (s) => (s.gold < 60 ? '나사 60 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null), apply: (s) => {
+        s.gold -= 60;
+        const u = veteranOf(s);
+        temper(s, u, 6);
+        return { text: `렌치가 ${nameOf(u)}의 관절을 하나씩 다시 조인다. (공격 +6)` };
+      } },
       leave('지나가기'),
     ],
   },
@@ -174,25 +211,23 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '동전 나이트',
     text: '외알 안경의 나이트가 발굽 위로 동전을 굴린다. “앞면이면 내 걸 주지. 뒷면이면 하나를 걷어찬다.”',
     choices: [
-      // D-254: 코인토스는 두고 나사 내기(두 배 · 몰수)를 뺐다 — 결과는 부품 · 분대원 피해
-      { label: '동전을 던지게 둔다', desc: '앞면 부품 하나 · 뒷면 분대원 HP −50%', tones: ['gain', 'loss'], info: '앞면과 뒷면은 반반입니다.', blocked: (s) => (nonKing(s).length ? null : '분대원 필요'), apply: (s, rng) => {
-        if (rng.int(2) === 0) return { slot: 0, text: '앞면이다. 나이트가 혀를 차며, 마지못해 안장에서 부품을 꺼낸다.', partPick: true };
-        const u = pick(rng, nonKing(s))!;
-        s.squad = s.squad.map((x) => (x === u ? { ...x, hp: Math.max(1, Math.round((x.hp ?? crewMaxHp(x)) - crewMaxHp(x) * 0.5)) } : x));
-        return { slot: 1, text: `뒷면. 발굽이 ${josa(u.name, '을')} 걷어찬다. (HP −50%)` };
+      // D-459: 뒷면 HP −50% → 심장 톱니 깨짐 (영구 위험) · 앞면도 희귀 이상
+      { label: '동전을 던지게 둔다', desc: '앞면 희귀 부품 · 뒷면 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '앞면과 뒷면은 반반입니다. 톱니가 깨진 분대원이 다시 쓰러지면 폐기됩니다.', blocked: (s) => (nonKing(s).some((u) => !u.cracked) ? null : '걷어찰 분대원이 없음'), apply: (s, rng) => {
+        if (rng.int(2) === 0) return { slot: 0, text: '앞면이다. 나이트가 혀를 차며, 마지못해 안장에서 부품을 꺼낸다.', partPick: true, elite: true };
+        const who = crackOne(s);
+        return { slot: 1, text: `뒷면. 발굽이 ${josa(who ?? '분대원', '을')} 걷어찬다. 심장 톱니 하나가 깨졌다.` };
       } },
       leave('거절하기'),
     ],
   },
   apprentice: {
     title: '견습 폰',
-    text: '어린 폰이 제 몸보다 큰 망치를 쥐고 떤다. 당신은 그 손을 믿을 수 있는가.',
+    text: '어린 폰이 제 몸보다 큰 망치를 쥐고 떤다. “낡은 명령서는 펴 드릴게요. 못 펴는 건… 버려야 해요.”',
     choices: [
-      { label: '망치를 맡긴다', desc: '50% 카드 2장 다듬기 · 50% 2장 부서짐', tones: ['gain', 'loss'], info: '부서진 카드는 덱에서 사라집니다.', apply: (s, rng) => {
-        if (rng.int(2) === 0) return { slot: 0, text: `망치가 정확히 떨어진다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` };
-        const gone: string[] = [];
-        for (let n = 0; n < 2 && s.deck.length > 4; n++) gone.push(COMMANDS[s.deck.splice(rng.int(s.deck.length), 1)[0]].name);
-        return { slot: 1, text: `망치가 빗나간다. ${gone.length ? `${josa(gone.join(' · '), '이')} 부서졌다.` : ''}` };
+      // D-459: 50% 다듬기 · 50% 무작위 2장 부서짐 → 확정 덱 수술 (가장 약한 2장을 덜어 내고 1장 다듬기)
+      { label: '망치를 맡긴다', desc: '가장 약한 카드 2장 뺌 · 1장 다듬기', tones: ['gain', 'gain'], info: '녹슨 카드 → 시작 카드 → 낮은 등급 순으로 뺍니다.', blocked: (s) => (s.deck.length > 7 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
+        const gone = weakest(s, 2).sort((a, b) => b - a).map((k) => COMMANDS[s.deck.splice(k, 1)[0]].name);
+        return { text: `${josa(gone.join(' · '), '이')} 망치 아래 접힌다. ${refineRandom(s, rng)}` };
       } },
       leave('거절하기'),
     ],
@@ -233,23 +268,26 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '꺼지지 않은 공방 불빛이 당신을 부른다. 장인은 잠들었고 모루는 아직 뜨겁다.',
     choices: [
       { label: '모루를 두드린다', desc: '분대 전원 HP +30%', tones: ['gain'], apply: (s) => { hpRatio(s, 0.3); return { text: '쇳소리가 밤새 이어진다. 동이 틀 무렵, 분대가 다시 일어선다. (HP +30%)' }; } },
-      { label: '불을 키운다', desc: '50% HP 가득 · 50% 분대원 HP −60%', tones: ['gain', 'loss'], info: '좋은 쪽이면 카드 1장도 다듬습니다.', apply: (s, rng) => {
-        if (rng.int(2) === 0) { hpRatio(s, 1); return { slot: 0, text: `불길이 쇠를 새로 벼린다. 분대가, 갓 부은 쇠처럼 선다. ${refineRandom(s, rng)}` }; }
-        const who = oneHurt(s, 0.6);
-        return { slot: 1, text: `불이 번진다. ${josa(who, '이')} 그을린 채 빠져나온다. (HP −60%)` };
+      // D-459: 50% 가득 · 50% −60% → 밤새 단련 (전원 공격 +2 영구 · HP −30%)
+      { label: '밤새 단련한다', desc: '분대 전원 공격 +2 · 분대 전원 HP −30%', tones: ['gain', 'loss'], info: '단련은 분대원마다 영구히 남습니다.', apply: (s) => {
+        s.squad = s.squad.map((x) => ({ ...x, temper: (x.temper ?? 0) + 2 }));
+        hpRatio(s, -0.3);
+        return { text: '모루 소리가 밤새 멎지 않는다. 동이 트자 분대의 주먹이 단단해져 있다. (공격 +2 · HP −30%)' };
       } },
       leave('지나가기'),
     ],
   },
   pact: {
     title: '쇳물 앞의 거래',
-    text: '용광로가 가까워진다. 주인 없는 그림자가 쇳물 위에서 속삭인다. “하나를 바쳐라. 대가는 치른다.”',
+    text: '용광로가 가까워진다. 주인 없는 그림자가 쇳물 위에서 속삭인다. “하나를 바쳐라. 아니면 피로 서명해라.”',
     choices: [
       { label: '하나를 녹인다', desc: '분대원 하나 → 희귀 이상 부품', tones: ['loss', 'gain'], info: '폰과 킹은 바칠 수 없습니다.', blocked: (s) => (s.squad.some((u) => u.t !== 'K' && u.t !== 'P') ? null : '바칠 분대원이 없음'), apply: (s, rng) => {
         const u = pick(rng, s.squad.filter((x) => x.t !== 'K' && x.t !== 'P'))!;
         s.squad = s.squad.filter((x) => x !== u);
         return { text: `${josa(u.name, '이')} 쇳물 속으로 가라앉는다. 그림자가 무언가를 내민다.`, partPick: true, elite: true };
       } },
+      // D-459: 대가가 붙은 부품을 거래로 — 피의 계약 (모든 공격 ×1.4 · 턴 끝 킹 HP −4)
+      { label: '피로 서명한다', desc: '피의 계약 · 공격 ×1.4 · 킹 HP −4/턴', tones: ['neutral', 'gain', 'loss'], info: '부품 「피의 계약」을 받습니다. 부품 칸이 차 있으면 하나를 녹여야 합니다.', blocked: (s) => (hasPart(s, 'bloodPact') ? '이미 맺은 계약' : null), apply: () => ({ text: '킹이 붉은 종이에 서명한다. 쇳물이 한 번 끓어오른다.', givePart: 'bloodPact' }) },
       leave('거절하기'),
     ],
   },
@@ -288,10 +326,12 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 봉인 상자',
     text: '쇠사슬에 묶인 상자가 고철 사이에 있다. 각인 세 칸이 맞으면 봉인이 풀린다.',
     choices: [
-      { label: '녹을 긁어낸다', desc: '50% 희귀 부품 · 50% 분대원 HP −50%', tones: ['gain', 'loss'], info: '부품은 희귀 이상입니다. 어긋나면 녹 가루가 분대원 하나에 스밉니다.', apply: (s, rng) => {
+      // D-459: 실패 HP −50% → 명령서 두 장이 녹슨다
+      { label: '녹을 긁어낸다', desc: '50% 희귀 부품 · 50% 카드 2장 녹슮', tones: ['gain', 'loss'], info: '부품은 희귀 이상입니다. 어긋나면 명령서 두 장이 녹슬어 태엽이 1씩 더 듭니다.', apply: (s, rng) => {
         if (rng.int(2) === 0) return { slot: 0, text: '각인 셋이 맞물린다. 사슬이 풀리며, 봉인된 상자가 열린다.', partPick: true, elite: true };
-        const who = oneHurt(s, 0.5);
-        return { slot: 1, text: `각인이 어긋난다. 녹 가루가 ${who}의 이음새로 스민다. (HP −50%)` };
+        const hit: string[] = [];
+        for (let n = 0; n < 2; n++) { const ks = s.deck.map((id, k) => [id, k] as const).filter(([id]) => !isRusted(id)); const o = pick(rng, ks); if (o) { s.deck[o[1]] = rustOnce(o[0]); hit.push(COMMANDS[o[0]].name); } }
+        return { slot: 1, text: `각인이 어긋난다. ${hit.join(' · ') || '명령서'}에 녹이 슨다.` };
       } },
       leave('떠나기'),
     ],
@@ -323,7 +363,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 금고',
     text: '녹슨 금고 안에서 나사가 쏟아지는 소리가 난다. 손잡이에는 날이 서 있다.',
     choices: [
-      { label: '금고를 부순다', desc: '나사 +150 · 분대원 하나 HP −70%', tones: ['gain', 'loss'], info: '가장 성한 분대원이 손을 벱니다.', apply: (s) => { s.gold += 150; const who = oneHurt(s, 0.7); return { text: `손잡이가 ${who}의 손을 벤다. 나사가 쏟아진다. (나사 +150 · HP −70%)` }; } },
+      // D-459: 분대원 HP −70% → 심장 톱니 깨짐 (영구 위험)
+      { label: '금고를 부순다', desc: '나사 +150 · 분대원 하나 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '가장 성한 분대원이 손을 벱니다. 톱니가 깨진 분대원이 다시 쓰러지면 폐기됩니다.', blocked: (s) => (nonKing(s).some((u) => !u.cracked) ? null : '손을 댈 분대원이 없음'), apply: (s) => { s.gold += 150; const who = crackOne(s); return { text: `손잡이가 ${who}의 가슴을 긋는다. 나사가 쏟아진다. (나사 +150 · 심장 톱니 깨짐)` }; } },
       leave('떠나기'),
     ],
   },
@@ -337,15 +378,17 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   conveyor: {
     title: '거꾸로 도는 컨베이어',
-    text: '컨베이어가 거꾸로 돈다. 레버 옆 낙서 「넣은 만큼 바뀌어 나온다」.',
+    text: '컨베이어가 거꾸로 돈다. 레버 옆 낙서 「낡은 것이 귀한 것으로」.',
     choices: [
-      { label: '카드 둘을 올린다', desc: '무작위 카드 2장 → 새 카드 2장', tones: ['loss', 'gain'], blocked: (s) => (s.deck.length >= 6 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
+      // D-459: 무작위 2장 → 무작위 2장 → 시작 카드 3장을 희귀 이상 카드로 (나사 −50)
+      { label: '시작 카드를 올린다', desc: '나사 −50 · 시작 카드 3장 → 희귀 3장', tones: ['loss', 'loss', 'gain'], info: '새 카드는 지금 분대가 쓸 수 있는 희귀 이상 카드입니다.', blocked: (s) => (s.gold < 50 ? '나사 50 필요' : startIdx(s).length < 3 ? '시작 카드가 셋보다 적음' : null), apply: (s, rng) => {
+        s.gold -= 50;
+        const pool = REWARD_COMMANDS.filter((id) => gradeOf(id) !== 'common' && cardFits(id, s.squad.map((u) => u.t)));
         const gone: string[] = [];
         const got: string[] = [];
-        for (let n = 0; n < 2; n++) {
-          const k = rng.int(s.deck.length);
+        for (const k of startIdx(s).slice(0, 3)) {
+          const nid = pick(rng, pool) ?? REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
           gone.push(COMMANDS[s.deck[k]].name);
-          const nid = REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
           s.deck[k] = nid;
           got.push(COMMANDS[nid].name);
         }
@@ -392,10 +435,14 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   scrapHeap: {
     title: '고철 더미',
-    text: '녹슨 고철이 산처럼 쌓여 있다. 그 아래에서 나사 구르는 소리가 난다.',
+    text: '녹슨 고철이 산처럼 쌓여 있다. 그 아래에서 태엽 감기는 소리가 난다.',
     choices: [
-      { label: '더미를 파고든다', desc: '60% 나사 +70 · 40% 분대원 HP −40%', tones: ['gain', 'loss'], apply: (s, rng) => {
-        if (rng.int(10) < 6) { s.gold += 70; return { slot: 0, text: '고철 틈으로 팔을 밀어 넣는다. 묵직한 나사 주머니가, 딸려 나온다. (나사 +70)' }; }
+      // D-459: 60% 나사 +70 → 60% 대가 붙은 부품 「과부하 태엽」(태엽 +1 · 손패 −1)
+      { label: '더미를 파고든다', desc: '60% 과부하 태엽 · 40% 분대원 HP −40%', tones: ['gain', 'loss'], info: '과부하 태엽은 태엽 +1 · 손패 −1인 부품입니다. 이미 있으면 나사 +70입니다.', apply: (s, rng) => {
+        if (rng.int(10) < 6) {
+          if (hasPart(s, 'spare')) { s.gold += 70; return { slot: 0, text: '고철 틈에서 나사 주머니가 딸려 나온다. (나사 +70)' }; }
+          return { slot: 0, text: '고철 틈에서 끝까지 감긴 태엽 하나가 딸려 나온다.', givePart: 'spare' };
+        }
         const who = oneHurt(s, 0.4);
         return { slot: 1, text: `더미가 무너진다. ${josa(who, '이')} 깔린다. (HP −40%)` };
       } },
@@ -424,29 +471,38 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '교관 룩',
     text: '연병장 한가운데 룩이 버티고 서 있다. “그 물렁한 태엽으로 다음 공정을 넘겠다고? 한 놈 보내라.”',
     choices: [
-      { label: '하나를 맡긴다', desc: '덜 싸운 분대원 생명 +1 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
-        const u = [...nonKing(s)].sort((a, b) => (a.kills ?? 0) - (b.kills ?? 0))[0];
+      { label: '버티는 법을 배운다', desc: '덜 싸운 분대원 생명 +1 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
+        const u = greenOf(s);
         const max = crewMaxHp(u);
         s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.4)) } : x));
-        return { text: `${josa(u.name ?? NAMES[u.t], '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (생명 +1 · HP −40%)` };
+        return { text: `${josa(nameOf(u), '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (생명 +1 · HP −40%)` };
+      } },
+      // D-459: 단련 — 덜 싸운 분대원을 공격수로
+      { label: '치는 법을 배운다', desc: '덜 싸운 분대원 공격 +5 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다. 단련은 영구히 남습니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
+        const u = greenOf(s);
+        const max = crewMaxHp(u);
+        s.squad = s.squad.map((x) => (x === u ? { ...x, temper: (x.temper ?? 0) + 5, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.4)) } : x));
+        return { text: `${josa(nameOf(u), '이')} 주먹을 쥔 채 돌아온다. (공격 +5 · HP −40%)` };
       } },
       leave('거절하기'),
     ],
   },
   cardSharp: {
     title: '명령서 사기꾼',
-    text: '뒤집힌 상자 위에서 흑 비숍이 명령서를 섞는다. “한 장 파시오, 아니면 사시겠소? 내 소매엔 정품만 있소.”',
+    text: '뒤집힌 상자 위에서 흑 비숍이 명령서를 섞는다. “귀한 걸 파시오, 아니면 사시겠소? 내 소매엔 정품만 있소.”',
     choices: [
-      { label: '한 장 판다', desc: '무작위 카드 1장 → 나사 +45', tones: ['loss', 'gain'], blocked: (s) => (s.deck.length > 6 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
-        const id = s.deck.splice(rng.int(s.deck.length), 1)[0];
-        s.gold += 45;
-        return { text: `${josa(COMMANDS[id].name, '이')} 비숍의 소매 속으로 사라진다. (나사 +45)` };
+      // D-459: 무작위 1장 +45 · 무작위 1장 −55 → 가장 귀한 카드를 비싸게 · 황금 카드를 비싸게
+      { label: '가장 귀한 것을 판다', desc: '가장 높은 등급 카드 → 나사 +120', tones: ['loss', 'gain'], blocked: (s) => (s.deck.length > 6 ? null : '덱이 너무 얇습니다'), apply: (s) => {
+        const id = s.deck.splice(finestCard(s), 1)[0];
+        s.gold += 120;
+        return { text: `${josa(COMMANDS[id].name, '이')} 비숍의 소매 속으로 사라진다. (나사 +120)` };
       } },
-      { label: '한 장 산다', desc: '나사 −55 · 모르는 카드 1장', tones: ['loss', 'gain'], blocked: poor(55), apply: (s, rng) => {
-        s.gold -= 55;
-        const id = REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
+      { label: '황금 카드를 산다', desc: '나사 −90 · 황금 카드 1장', tones: ['loss', 'gain'], info: '지금 분대가 쓸 수 있는 황금 카드입니다.', blocked: poor(90), apply: (s, rng) => {
+        s.gold -= 90;
+        const pool = REWARD_COMMANDS.filter((id) => gradeOf(id) === 'gold' && cardFits(id, s.squad.map((u) => u.t)));
+        const id = pick(rng, pool) ?? REWARD_COMMANDS[rng.int(REWARD_COMMANDS.length)];
         s.deck.push(id);
-        return { text: `비숍이 한 장을 뒤집어 내민다. ${COMMANDS[id].name}.` };
+        return { text: `비숍이 소매에서 금박 명령서를 꺼낸다. ${COMMANDS[id].name}.` };
       } },
       leave('지나가기'),
     ],
@@ -467,11 +523,13 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '녹슨 왕관 제단',
     text: '부서진 제단 위에 녹슨 왕관이 놓여 있다. 그 앞 접시에 나사가 수북하다.',
     choices: [
-      { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', tones: ['loss', 'gain'], pay: (s) => s.gold, blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹이 갈라진다. 그 아래에서, 무언가가 빛을 발한다.', partPick: true, elite: true }; } },
-      { label: '접시를 비운다', desc: '50% 나사 +80 · 50% 둘 HP −30%', tones: ['gain', 'loss'], info: '나쁜 쪽이면 분대원 둘이 다칩니다.', apply: (s, rng) => {
-        if (rng.int(2) === 0) { s.gold += 80; return { slot: 0, text: '아무 일도, 일어나지 않는다. 접시만이 가벼워진다. (나사 +80)' }; }
-        const who = someHurt(s, 2, 0.3);
-        return { slot: 1, text: `제단이 무너져 내린다. ${josa(who, '이')} 파편에 긁힌다. (HP −30%)` };
+      { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', tones: ['loss', 'gain'], pay: (s) => s.gold, blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹 아래에서 무언가 빛난다.', partPick: true, elite: true }; } },
+      // D-459: 50% 나사 · 50% 둘 HP → 왕관을 써 본다 (킹 생명 +1 · 분대원 하나 심장 톱니 깨짐 — 바이블의 「왕관은 동료를 깎는다」)
+      { label: '왕관을 써 본다', desc: '킹 생명 +1 · 분대원 하나 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '왕관은 킹을 지키려 동료를 깎습니다. 톱니가 깨진 분대원은 다시 쓰러지면 폐기됩니다.', blocked: (s) => (!s.squad.some((u) => u.t === 'K') ? '킹이 없음' : nonKing(s).some((u) => !u.cracked) ? null : '깎일 분대원이 없음'), apply: (s) => {
+        const k = s.squad.find((u) => u.t === 'K')!;
+        s.squad = s.squad.map((x) => (x === k ? { ...x, doors: (x.doors ?? 0) + 1 } : x));
+        const who = crackOne(s);
+        return { text: `녹슨 왕관이 킹의 머리에 꼭 맞는다. 등 뒤에서 ${who}의 톱니가 깨진다. (킹 생명 +1)` };
       } },
       leave('지나가기'),
     ],
@@ -511,8 +569,10 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '조는 남의 킹',
     text: '남의 공장 킹이 포장대 옆에서 졸고 있다. 왕관의 보석이 반짝이고 호위는 없다.',
     choices: [
-      { label: '보석을 뽑는다', desc: '50% 나사 +110 · 50% 둘 HP −35%', tones: ['gain', 'loss'], info: '나쁜 쪽이면 분대원 둘이 다칩니다.', apply: (s, rng) => {
-        if (rng.int(2) === 0) { s.gold += 110; return { slot: 0, text: '보석이 소리 없이 빠진다. 잠든 킹은, 깨어나지 않는다. (나사 +110)' }; }
+      // D-459: 50% 나사 +110 → 50% 우리 킹 단련 (보석을 우리 왕관에)
+      { label: '보석을 뽑는다', desc: '50% 킹 공격 +8 · 50% 둘 HP −35%', tones: ['gain', 'loss'], info: '보석은 우리 킹의 왕관에 박힙니다(영구). 나쁜 쪽이면 분대원 둘이 다칩니다.', apply: (s, rng) => {
+        const k = s.squad.find((u) => u.t === 'K');
+        if (rng.int(2) === 0 && k) { temper(s, k, 8); return { slot: 0, text: '보석이 소리 없이 빠진다. 우리 킹의 왕관에 박히자 붉게 빛난다. (킹 공격 +8)' }; }
         const who = someHurt(s, 2, 0.35);
         return { slot: 1, text: `킹의 눈이 번쩍 뜨인다. 홀이 휘둘린다. ${josa(who, '이')} 얻어맞는다. (HP −35%)` };
       } },
@@ -529,22 +589,27 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         const id = s.deck.splice(k, 1)[0];
         return { text: `${josa(COMMANDS[id].name, '이')} 어둠 속으로 떨어진다. 메아리가 돌아오지 않는다.` };
       } },
-      { label: '나사를 던진다', desc: '나사 −30 · 50% 나사 +70', tones: ['loss', 'gain'], blocked: poor(30), apply: (s, rng) => {
-        s.gold -= 30;
-        if (rng.int(2) === 0) { s.gold += 70; return { slot: 0, text: '나사 소리가 두 배가 되어 돌아온다. 우물 벽 틈에서, 나사가 쏟아진다. (나사 +40)' }; }
-        return { slot: 1, text: '나사가 바닥에 닿는 소리조차, 들려오지 않는다. (나사 −30)' };
+      // D-459: 나사 도박 → 시작 카드 한 종류를 통째로 던진다 (덱 압축)
+      { label: '이름을 외쳐 던진다', desc: '나사 −40 · 가장 흔한 시작 카드 모두 뺌', tones: ['loss', 'gain'], info: '덱에 가장 많은 시작 카드 한 종류를 전부 뺍니다.', blocked: (s) => (s.gold < 40 ? '나사 40 필요' : startIdx(s).length < 2 ? '뺄 시작 카드 없음' : s.deck.length < 8 ? '덱이 너무 얇습니다' : null), apply: (s) => {
+        s.gold -= 40;
+        const count: Record<string, number> = {};
+        for (const k of startIdx(s)) { const b = s.deck[k].replace(/[+~]$/, ''); count[b] = (count[b] ?? 0) + 1; }
+        const base = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
+        const n = s.deck.filter((id) => id.replace(/[+~]$/, '') === base).length;
+        s.deck = s.deck.filter((id) => id.replace(/[+~]$/, '') !== base);
+        return { text: `「${COMMANDS[base as CommandId].name}」을 외친다. ${n}장이 한꺼번에 떨어진다.` };
       } },
       leave('지나가기'),
     ],
   },
   copyPress: {
     title: '낡은 압인기',
-    text: '명령서를 찍던 압인기가 멈춰 서 있다. 레버 옆 글씨 「한 장 넣으면 두 장」.',
+    text: '명령서를 찍던 압인기가 멈춰 서 있다. 레버 옆 글씨 「가장 귀한 한 장을 넣으면 두 장」.',
     choices: [
-      { label: '압인기를 돌린다', desc: '나사 −50 · 무작위 카드 1장 복제', tones: ['loss', 'gain'], blocked: poor(50), apply: (s, rng) => {
-        s.gold -= 50;
-        const ok = s.deck.filter((id) => !isRusted(id));
-        const id = ok.length ? ok[rng.int(ok.length)] : s.deck[rng.int(s.deck.length)];
+      // D-459: 무작위 1장 복제 → 가장 귀한 카드 복제
+      { label: '압인기를 돌린다', desc: '나사 −80 · 가장 귀한 카드 1장 복제', tones: ['loss', 'gain'], blocked: (s) => (s.gold < 80 ? '나사 80 필요' : finestCard(s) < 0 ? '찍을 카드 없음' : null), apply: (s) => {
+        s.gold -= 80;
+        const id = s.deck[finestCard(s)];
         s.deck.push(id);
         return { text: `압인기가 쿵 내려앉는다. ${josa(COMMANDS[id].name, '이')} 두 장이 된다.` };
       } },
@@ -570,9 +635,11 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '식은 대장간',
     text: '주인 없는 대장간의 모루가 식어 있다. 풀무를 밟으면 화로가 다시 붙는다.',
     choices: [
-      { label: '풀무를 밟는다', desc: '카드 1장 다듬기 · 분대원 HP −25%', tones: ['gain', 'loss'], blocked: (s) => (refinable(s).length ? null : '다듬을 카드 없음'), apply: (s, rng) => {
-        const who = oneHurt(s, 0.25);
-        return { text: `${josa(who, '이')} 풀무를 밟는다. 불이 붙는다. ${refineRandom(s, rng)}` };
+      // D-459: 다듬기 1장 → 무거운 받침으로 갈아 끼운다 (HP +30% · 공격 −20%) — 가장 다친 분대원이 단단해진다
+      { label: '받침을 새로 붓는다', desc: '다친 분대원 → HP +30% · 공격 −20%', tones: ['neutral', 'gain', 'loss'], info: '가장 HP가 낮은 분대원의 기벽이 「무거운 받침」으로 바뀌고 HP가 가득 찹니다.', blocked: (s) => (nonKing(s).length ? null : '분대원 필요'), apply: (s) => {
+        const u = [...nonKing(s)].sort((a, b) => (a.hp ?? crewMaxHp(a)) / crewMaxHp(a) - (b.hp ?? crewMaxHp(b)) / crewMaxHp(b))[0];
+        s.squad = s.squad.map((x) => (x === u ? { ...x, quirk: 'heavy' as QuirkId, hp: crewMaxHp({ t: x.t, quirk: 'heavy' }) } : x));
+        return { text: `${nameOf(u)}의 받침이 새 쇳물로 두꺼워진다. (HP +30% · 공격 −20%)` };
       } },
       leave('지나가기'),
     ],

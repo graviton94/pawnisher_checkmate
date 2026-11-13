@@ -287,6 +287,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     p.hp = p.maxHp;
     if (q?.shield) p.shield += q.shield;
     if (q?.atk) p.atk = Math.round(p.atk * q.atk);
+    if (u.temper) p.atk += u.temper; // 단련 (D-459)
     // 기록 유물 (D-363): 누적 피해 · 처치 · 죽음 넘김이 대국 시작 때 힘이 된다
     const has0 = (id: SlicePartId) => (opts.parts ?? []).includes(id);
     if (has0('ledger')) p.atk += Math.min(PART_NUM.ledgerCap, Math.floor((u.dmg ?? 0) / PART_NUM.ledgerPer));

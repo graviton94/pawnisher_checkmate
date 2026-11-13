@@ -527,7 +527,7 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
   const q = u.quirk ? QUIRKS[u.quirk] : null;
   const art = src ?? `ui/hud/crew-${u.t}.png`;
-  const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1));
+  const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1)) + (u.temper ?? 0);
   const lives = o.lives ?? (u.doors ?? 0) + (q?.doors ?? 0);
   const pct = `${Math.max(0, Math.min(100, Math.round((o.hp / o.max) * 100)))}%`;
   const kills = (u.kills ?? 0) + (o.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(o.dmg ?? 0);
@@ -1826,7 +1826,7 @@ const evPay = choicePay;
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
   const talk: EventTalk = EVENT_TALK[id] ?? { npc: ev.title, react: [], idle: [], win: '', bye: '', exit: '떠난다' };
-  const st = (): EventState => ({ squad, deck, refined, gold });
+  const st = (): EventState => ({ squad, deck, refined, gold, parts });
   document.body.classList.add('between');
   placeBg('bg-event');
   const [fx, fy] = EVENT_FOCUS[id] ?? [0.5, 0.5];
@@ -2024,6 +2024,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           if (!u1) { crewFx.push({ src: src(u0.t), name: crewLabel(u0), hp0, hp1: 0, max, fx: 'die', card: crewFace(u0, hp0, max) }); continue; }
           const hp1 = u1.hp ?? crewMaxHp(u1);
           if (u1.t !== u0.t) crewFx.push({ src: src(u0.t), toSrc: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'evolve', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, crewMaxHp(u1)) });
+          else if (u1.quirk !== u0.quirk || (u1.temper ?? 0) !== (u0.temper ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'up', tag: u1.quirk !== u0.quirk && u1.quirk ? QUIRKS[u1.quirk].name : `공격 +${(u1.temper ?? 0) - (u0.temper ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, crewMaxHp(u1)) });
           else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: `생명 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
           else if (hp1 !== hp0 || (u1.cracked && !u0.cracked)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: u1.cracked && !u0.cracked ? 'crack' : 'hp', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
         }
@@ -2036,7 +2037,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           : id === 'brokenGacha' ? { kind: 'slots', win: good, items: out.slot === 0 ? ['gear-gold', 'gear-gold', 'gear-gold'] : out.slot === 1 ? ['crown-gold', 'crown-gold', 'crown-gold'] : ['gear-gold', 'gear-gold', 'gear-broken'] }
           : id === 'auction' ? { kind: 'scratch', win: good, items: good ? ['gear-gold', 'gear-gold', 'gear-gold'] : ['gear-gold', 'gear-gold', 'rust'] }
           : undefined;
-        const after = (): void => (out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="ribbon">${ev.title}</span>`) : advance());
+        const after = (): void => (out.givePart ? gainPart(out.givePart, () => advance()) : out.partPick ? partPick(SCREEN_TEXT.part, advance, !!out.elite, `<span class="ribbon">${ev.title}</span>`) : advance());
         // 1박 (D-402): 결과로 바뀐 것만(알고 치른 나사는 뺀다) — 없으면 건너뛰고 바로 쪽지
         const outGold = gold - (before.gold - pay);
         const things = cards.length + crewFx.length + (outGold ? 1 : 0) + (out.partPick ? 1 : 0);
@@ -2087,7 +2088,7 @@ const evCardPick = (panel: HTMLElement, ids: CommandId[], line: string): Promise
   });
 
 /** 사건 결과 요약 한 줄 (D-263): 앞뒤 상태를 비교해 바뀐 것만 — 카드 · 분대원 · 나사 · 부품 */
-const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, cards: CardFx[], out: { partPick?: boolean; elite?: boolean }): string => {
+const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, cards: CardFx[], out: { partPick?: boolean; elite?: boolean; givePart?: SlicePartId }): string => {
   const sum: string[] = [];
   const n = (fx: CardFx['fx']) => cards.filter((c) => c.fx === fx).length;
   if (n('up')) sum.push(`카드 다듬기 ×${n('up')} (태엽 −1)`);
@@ -2102,7 +2103,10 @@ const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, ca
     if (u1.t !== u0.t) sum.push(`${name} ${PIECE_NAMES_KO[u0.t]} → ${PIECE_NAMES_KO[u1.t]}`);
     if ((u1.doors ?? 0) > (u0.doors ?? 0)) sum.push(EVENT_SUM.life(name, (u1.doors ?? 0) - (u0.doors ?? 0)));
     if (u1.cracked && !u0.cracked) sum.push(EVENT_SUM.crack(name));
-    if (u1.t === u0.t) {
+    if (u1.quirk !== u0.quirk && u1.quirk) sum.push(`${name} 기벽 → ${QUIRKS[u1.quirk].name} (${QUIRKS[u1.quirk].desc})`);
+    if ((u1.temper ?? 0) > (u0.temper ?? 0)) sum.push(`${name} 단련 · 공격 +${(u1.temper ?? 0) - (u0.temper ?? 0)}`);
+    // 기벽이 바뀐 HP 변화는 기벽 줄이 이미 말한다 (D-459)
+    if (u1.t === u0.t && u1.quirk === u0.quirk) {
       const d = Math.round((((u1.hp ?? crewMaxHp(u1)) - (u0.hp ?? crewMaxHp(u0))) / crewMaxHp(u0)) * 100);
       if (d) pcts.push({ name, d });
     }
@@ -2117,6 +2121,7 @@ const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number }, ca
   for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) sum.push(`합류 · ${crewLabel(u1)} (${PIECE_NAMES_KO[u1.t]})`);
   if (gold !== before.gold) sum.push(`나사 ${gold > before.gold ? '+' : '−'}${Math.abs(gold - before.gold)}`);
   if (out.partPick) sum.push(out.elite ? '희귀 이상 부품 하나를 고른다' : '부품 하나를 고른다');
+  if (out.givePart) sum.push(`부품 · ${SLICE_PARTS[out.givePart].name} (${SLICE_PARTS[out.givePart].desc})`);
   return sum.join(' · ');
 };
 

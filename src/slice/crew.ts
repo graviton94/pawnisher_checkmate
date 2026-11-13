@@ -78,6 +78,8 @@ export interface Crew {
   doors?: number;
   /** 심장 톱니 하나가 깨졌다 (D-219 목숨 둘) — 이 상태로 또 쓰러지면 폐기. 작업대 · 막이 바뀌면 고쳐진다 */
   cracked?: boolean;
+  /** 단련 (D-459 사건): 이 분대원만의 영구 공격 + */
+  temper?: number;
 }
 
 /** 폐기 원부 한 줄 (영구 기록) */
