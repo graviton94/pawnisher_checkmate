@@ -103,7 +103,10 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const recruit = (single = false) => {
     const pool = [...RECRUITS], offered: typeof RECRUITS = [];
     while (pool.length && offered.length < (single ? 1 : 3)) { const r = rollRecruit(pool, rng.next()); offered.push(r); pool.splice(pool.indexOf(r), 1); }
-    const r = offered.sort((a, z) => Number(build === 'rook' ? z.t === 'R' : build === 'knight' ? z.t === 'N' : !squad.some(u => u.t === z.t)) - Number(build === 'rook' ? a.t === 'R' : build === 'knight' ? a.t === 'N' : !squad.some(u => u.t === a.t)))[0];
+    // 축 집착형은 그 축의 기물을 데려온다 (D-462 — 보병 봇이 「안 가진 기물 우선」으로 폰을 더 받지 않아 폰 카드가 죽은 카드가 됐다)
+    const want: PieceType | null = build === 'rook' || ax === 'push' ? 'R' : build === 'knight' || ax === 'cav' ? 'N' : ax === 'inf' ? 'P' : null;
+    const pref = (x: { t: PieceType }) => Number(want ? x.t === want : !squad.some((u) => u.t === x.t));
+    const r = offered.sort((a, z) => pref(z) - pref(a))[0];
     if (r) { squad.push(makeCrew(r.t, rng, squad.map(u => u.name ?? ''))); deck.push(...r.cards); }
   };
   let shopsSeen = 0;

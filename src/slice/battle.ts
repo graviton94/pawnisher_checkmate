@@ -971,6 +971,12 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         k += k2;
       }
     }
+    // 행군 호루라기 (D-462): 폰이 적을 치면 태엽 +1 · 턴에 한 번 — 처치 조건은 배치 턴(D-454) 뒤 거의 발동하지 않았다
+    if (p.type === 'P' && has(b, 'whistle') && !b.once.includes('whistle') && events.some((e) => e.type === 'attack' && e.hits.some((h) => h.damage > 0 && before.pieces.find((q) => q.id === h.targetId)?.side === 1))) {
+      b.once.push('whistle');
+      gained += 1;
+      events.push({ type: 'apGain', side: 0, amount: 1 });
+    }
     // 처치 환급 (D-203, 시험장 D-177에서 본편으로): 처치마다 태엽 +1, 턴당 상한까지 — 쌓인 연쇄를 실제로 쓸 수를 번다
     if (k > 0) {
       const g = Math.min(k, (b.lab ? LAB.refundCap : SLICE.refundCap) - (b.refunded ?? 0));
@@ -990,7 +996,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
       drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0) + (p.type === 'B' && has(b, 'rosary') ? k : 0) + (p.type === 'K' && has(b, 'royalSeal') ? PART_NUM.royalSeal : 0));
       // 부품 확장 2차 (D-287): 기물별 처치 받침
       const once1 = (id: string): boolean => (b.once.includes(id) ? false : (b.once.push(id), true));
-      if ((p.type === 'P' && has(b, 'whistle') && once1('whistle')) || (p.type === 'Q' && has(b, 'queenFan') && once1('queenFan'))) { gained += 1; events.push({ type: 'apGain', side: 0, amount: 1 }); }
+      if (p.type === 'Q' && has(b, 'queenFan') && once1('queenFan')) { gained += 1; events.push({ type: 'apGain', side: 0, amount: 1 }); }
       const me = findPiece(b.s, pieceId);
       const sh = me ? (me.type === 'N' && has(b, 'saddle') ? PART_NUM.saddle : 0) + (me.type === 'R' && has(b, 'rampart') ? PART_NUM.rampart : 0) : 0;
       if (me && sh) { me.shield += sh; events.push({ type: 'shield', pieceId: me.id, amount: sh }); }
