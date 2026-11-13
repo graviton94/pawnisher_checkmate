@@ -302,7 +302,7 @@ describe('실제 조건에 따른 UI-34 상태', () => {
   });
   it('연쇄·처치 조건은 실행 복제로 확인하고 실제 판과 RNG는 보존한다', () => {
     const { b, pawn } = setup(['fuse', 'tally', 'whistle']);
-    b.hand = ['advance']; b.kills = 2;
+    b.hand = ['advance']; b.kills = 5; // D-457: 도화선 5 · 셈 막대 6 — 한 번 치면 둘 다 문턱
     for (const p of b.s.pieces) if (p.side === 1 && p.type !== 'K') p.hp = 1;
     const before = JSON.stringify(b);
     const states = partStatuses(b);

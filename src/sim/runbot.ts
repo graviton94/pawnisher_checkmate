@@ -103,6 +103,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     if (r) { squad.push(makeCrew(r.t, rng, squad.map(u => u.name ?? ''))); deck.push(...r.cards); }
   };
   let shopsSeen = 0;
+  const svcUsed = { refine: 0, remove: 0 };
   const shopMul = () => (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
   // 부품 칸 (D-384 · 실제 게임과 같게, 2026-11-09d): 막마다 partSlotsAt 칸. 넘치면 가장 낮은 등급(같으면 오래된 것)을 녹여 나사 meltBack —
   // 새 부품이 가진 것 모두보다 낮으면 새 것을 녹인다. 억지로 넣은 부품(forceParts — 힘 값 측정)은 녹이지 않는다.
@@ -217,19 +218,31 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         const pool = REWARD_COMMANDS.filter(id => usable(id) && isOpen(id));
         const offers: CommandId[] = [];
         while (offers.length < SHOP.cards && pool.length) offers.push(pool.splice(rng.int(pool.length), 1)[0]);
-        if (persona !== 'risky' && hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul()) { gold -= Math.round(SHOP.healPrice * shopMul()); squad = restSquad(squad, SHOP.healPct); }
+        // 실제 고물상과 같게 (D-457): 서비스는 셋 중 둘 · 다듬기/빼기 값은 쓸 때마다 오른다 · 살 만한 카드는 둘까지
+        const svc = new Set<string>();
+        while (svc.size < ECON.shopSvc) svc.add((['heal', 'refine', 'remove'] as const)[rng.int(3)]);
+        if (svc.has('heal') && persona !== 'risky' && hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul()) { gold -= Math.round(SHOP.healPrice * shopMul()); squad = restSquad(squad, SHOP.healPct); }
+        let bought = 0;
         for (const id of offers.sort((x, y) => val(y) - val(x))) {
           const p = Math.round(SHOP.gradePrice[gradeOf(id) as Grade] * shopMul());
-          if (val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); break; }
+          if (bought < 2 && val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); bought++; }
         }
         const pp = (Object.keys(SLICE_PARTS) as SlicePartId[]).filter((id) => !parts.includes(id) && isOpen(id) && partFits(id, squad.map((u) => u.t), parts, squad));
         const from = firstShopParts(pp, parts, shopsSeen++);
         const part = from.length ? from[rng.int(from.length)] : null;
         if (part) { const p = Math.round(SHOP.partGradePrice[(PART_GRADE[part] ?? 'common') as Grade] * shopMul()); if (gold >= p + 30 && keeps(part)) { gold -= p; addPart(part); } }
-        if (persona !== 'hoarder' && deck.length > 14 && gold >= SHOP.removePrice * shopMul()) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= Math.round(SHOP.removePrice * shopMul()); }
+        const removeCost = Math.round((SHOP.removePrice + ECON.svcStep * svcUsed.remove) * shopMul());
+        if (svc.has('remove') && persona !== 'hoarder' && deck.length > 10 && gold >= removeCost) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= removeCost; svcUsed.remove++; }
+        const refineCost = Math.round((SHOP.refinePrice + ECON.svcStep * svcUsed.refine) * shopMul());
+        if (svc.has('refine') && gold >= refineCost + 60) {
+          const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x));
+          if (cand[0]) { deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); gold -= refineCost; svcUsed.refine++; }
+        }
       } else if (n.kind === 'forge') {
         squad = mendSquad(squad).squad;
         if (persona !== 'risky' && hpRatio() < 0.6) squad = restSquad(squad, FORGE.repairPct * (asc >= 3 ? ASC_NUM.restMul : 1));
+        // 작업대 카드 빼기 (D-457 — 실제 작업대엔 있는데 봇이 쓰지 않았다): 시작 카드가 셋 이상 남으면 하나 뺀다
+        else if (persona !== 'hoarder' && deck.length > 10 && deck.filter((id) => (START_DECK as string[]).includes(id)).length >= 3) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); }
         else {
           const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x));
           if (cand[0]) { deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); }

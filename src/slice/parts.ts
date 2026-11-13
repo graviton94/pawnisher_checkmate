@@ -55,7 +55,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   aceBadge: { name: '에이스 견장', axis: null, icon: 'aceBadge', flavor: '최다 처치자의 어깨에 단다.', desc: '공격 ×1.3 — 분대 처치 1위' },
   heavyHand: { name: '무거운 손', axis: null, icon: 'heavyHand', flavor: '가장 많이 때린 손이 가장 무겁다.', desc: '공격 +4 — 분대 피해 1위' },
   scarPlate: { name: '덧댄 철판', axis: null, icon: 'scarPlate', flavor: '쓰러졌던 자리마다 철판을 덧댄다.', desc: '방열판 +6 · 최대 +18 — 죽음 넘길 때마다' },
-  cleanSheet: { name: '무사고 명판', axis: null, icon: 'cleanSheet', flavor: '끝까지 남은 이름을 새긴다.', desc: 'HP +20% — 대국 3번 · 생명 소모 없음' },
+  cleanSheet: { name: '무사고 명판', axis: null, icon: 'cleanSheet', flavor: '끝까지 남은 이름을 새긴다.', desc: 'HP +35% — 대국 3번 · 생명 소모 없음' },
   sergeant: { name: '고참 계급장', axis: null, icon: 'sergeant', flavor: '살아남은 만큼 계급이 오른다.', desc: '공격 +1 · 최대 +6 — 대국 2번마다' },
   rookBolt: { name: '공성 쇠뇌', axis: 'push', icon: 'rookBolt', flavor: '성벽 위에서 쇠뇌를 당긴다.', desc: '룩의 공격 ×1.3' },
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', flavor: '한쪽 눈으로 죄를 가려낸다.', desc: '비숍의 공격 ×1.3' },
@@ -64,24 +64,24 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', flavor: '짓밟은 피가 아직 젖어 있다.', desc: '태엽 +1 — 나이트가 처치하면' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', flavor: '쓰러진 자의 주머니를 턴다.', desc: '카드 1장 뽑기 — 처치할 때마다' },
   assembly: { name: '끝없는 생산선', axis: 'inf', icon: 'assembly', flavor: '비어 가는 줄을 쉬지 않고 채운다.', desc: '킹 곁에 폰 하나 — 턴 시작에 · 폰 2기 이하면' },
-  drum: { name: '진군의 북', axis: 'inf', icon: 'drum', flavor: '북소리에 맞춰 발을 맞춘다.', desc: '폰 카드 태엽 −1' },
+  drum: { name: '진군의 북', axis: 'inf', icon: 'drum', flavor: '북소리에 맞춰 발을 맞춘다.', desc: '폰 카드 태엽 −1 — 턴의 첫 장' },
   crown: { name: '짓누르는 왕관', axis: 'king', icon: 'crown', flavor: '무게가 곧 힘이다.', desc: '킹의 공격 ×2' },
   throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', flavor: '왕이 걸으면 옥좌도 걷는다.', desc: '킹 방열판 +4 — 킹 이동 명령마다' },
-  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '연쇄 피해 ×1.5 · 최대 ×8 — 연쇄마다' },
+  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '연쇄 피해 ×1.3 · 최대 ×6 — 연쇄마다' },
   echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', flavor: '맞는 소리가 두 번 울린다.', desc: '쌓이는 연쇄 ×2 — 적중마다' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'hammer', flavor: '부딪히는 소리가 곧 피해다.', desc: '충돌 피해 ×2 — 밀어 부딪칠 때' },
   // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
   lance: { name: '기사의 창', axis: 'cav', icon: 'lance', flavor: '달려온 무게를 창끝에 싣는다.', desc: '나이트 공격 ×1.5' },
-  spurs: { name: '녹슨 등자', axis: 'cav', icon: 'spurs', flavor: '녹슬어도 박차는 박차다.', desc: '나이트 카드 태엽 −1' },
+  spurs: { name: '녹슨 등자', axis: 'cav', icon: 'spurs', flavor: '녹슬어도 박차는 박차다.', desc: '나이트 카드 태엽 −1 — 턴의 첫 장' },
   barracks: { name: '막사의 종', axis: 'inf', icon: 'barracks', flavor: '종이 울리면 막사가 빈다.', desc: '킹 곁에 폰 하나 — 대국 시작에' },
   banner: { name: '찢긴 군기', axis: 'inf', icon: 'banner', flavor: '찢겨도 깃발은 앞을 가리킨다.', desc: '폰의 공격 ×1.5' },
-  scepter: { name: '녹슨 홀', axis: 'king', icon: 'scepter', flavor: '녹슬었어도 왕의 홀이다.', desc: '킹 방열판 +40 — 대국 시작에' },
+  scepter: { name: '녹슨 홀', axis: 'king', icon: 'scepter', flavor: '녹슬었어도 왕의 홀이다.', desc: '킹 방열판 +25 — 대국 시작에' },
   gilded: { name: '도금 방패', axis: 'king', icon: 'gilded', flavor: '맞을수록 금칠이 번쩍인다.', desc: '태엽 +1 — 킹이 맞으면 · 턴에 한 번' },
-  fuse: { name: '도화선', axis: 'chain', icon: 'fuse', flavor: '불이 붙으면 끝까지 탄다.', desc: '카드 +1 · 태엽 +1 — 연쇄 3 이상 · 턴에 한 번' },
-  conductor: { name: '전도 코일', axis: 'chain', icon: 'conductor', flavor: '열기가 줄을 타고 번진다.', desc: '연쇄 피해 +10 — 연쇄마다' },
+  fuse: { name: '도화선', axis: 'chain', icon: 'fuse', flavor: '불이 붙으면 끝까지 탄다.', desc: '카드 +1 · 태엽 +1 — 연쇄 5 이상 · 턴에 한 번' },
+  conductor: { name: '전도 코일', axis: 'chain', icon: 'conductor', flavor: '열기가 줄을 타고 번진다.', desc: '연쇄 피해 +8 — 연쇄마다' },
   anvilPlate: { name: '모루 장갑', axis: 'push', icon: 'anvilPlate', flavor: '모루처럼 단단한 판을 댄다.', desc: '충돌 피해 +10 — 밀어 부딪칠 때' },
   chainShot: { name: '연쇄 사슬', axis: 'push', icon: 'chainShot', flavor: '부딪힌 자가 다음을 부른다.', desc: '연쇄 +2 — 충돌로 처치하면' },
-  bloodPact: { name: '피의 계약', axis: null, icon: 'bloodPact', flavor: '피로 쓴 계약은 지워지지 않는다.', desc: '모든 공격 ×1.3 · 턴 끝 킹 HP −4' },
+  bloodPact: { name: '피의 계약', axis: null, icon: 'bloodPact', flavor: '피로 쓴 계약은 지워지지 않는다.', desc: '모든 공격 ×1.4 · 턴 끝 킹 HP −4' },
   brittle: { name: '깨지는 유리 심장', shortName: '유리 심장', axis: null, icon: 'brittle', flavor: '빨리 뛰는 만큼 쉽게 깨진다.', desc: '태엽 +1 · 분대 HP −20%' },
   greed: { name: '탐욕의 저울', axis: null, icon: 'greed', flavor: '쥘수록 무겁고 무거울수록 세다.', desc: '공격 +2 · 고물상 값 +25% — 나사 150마다' },
   spare: { name: '과부하 태엽', axis: null, icon: 'spare', flavor: '감을 수 있는 데까지 감는다.', desc: '태엽 +1 · 손패 −1' },
@@ -96,7 +96,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   gameRecord: { name: '낡은 기보', axis: 'tactic', icon: 'gameRecord', flavor: '옛 기보에 답이 있다.', desc: '카드 1장 — 수읽기를 내면 · 턴에 한 번' },
   gateHinge: { name: '성문 경첩', axis: 'tactic', icon: 'gateHinge', flavor: '문짝이 가볍게 돌아간다.', desc: '캐슬링 방열판 ×2 · 태엽 0' },
   queenCrown: { name: '여왕의 관', axis: 'king', icon: 'queenCrown', flavor: '관을 쓴 자는 숙이지 않는다.', desc: '퀸의 공격 ×1.4' },
-  lightCloak: { name: '가벼운 망토', axis: 'king', icon: 'lightCloak', flavor: '가벼워진 만큼 빨리 움직인다.', desc: '퀸 카드 태엽 −1' },
+  lightCloak: { name: '가벼운 망토', axis: 'king', icon: 'lightCloak', flavor: '가벼워진 만큼 빨리 움직인다.', desc: '퀸 카드 태엽 −1 — 턴의 첫 장' },
   goldRank: { name: '금박 끝 줄', axis: 'inf', icon: 'goldRank', flavor: '끝 줄에 닿은 자에게 금박을.', desc: '카드 2장 · 태엽 +1 — 폰이 승격하면' },
   thickWall: { name: '두꺼운 성벽', axis: 'push', icon: 'thickWall', flavor: '성벽은 두꺼울수록 좋다.', desc: '룩 방열판 +15 — 대국 시작에' },
   rosary: { name: '사제의 묵주', axis: 'chain', icon: 'rosary', flavor: '쓰러진 자를 위해 한 알을 넘긴다.', desc: '카드 1장 뽑기 — 비숍이 처치하면' },
@@ -107,7 +107,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   lastAxle: { name: '버팀 축', axis: 'king', icon: 'lastAxle', flavor: '무너지기 직전에 가장 세게 버틴다.', desc: '킹의 공격 ×1.6 — 킹 HP 30% 아래면' },
   toolbox: { name: '땜질 도구함', axis: null, icon: 'toolbox', flavor: '킹 말고, 가장 패인 둘부터.', desc: '다친 기물 둘 HP +6 — 턴 시작에' },
   ventHole: { name: '바람 구멍', axis: null, icon: 'ventHole', flavor: '숨을 고르고 되받아친다.', desc: '회피 반격 피해 ×1.8' },
-  afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', flavor: '불은 꺼져도 쇠는 식지 않는다.', desc: '연쇄 절반 유지 — 턴이 끝나도' },
+  afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', flavor: '불은 꺼져도 쇠는 식지 않는다.', desc: '연쇄 4분의 1 유지 — 턴이 끝나도' },
   bossBane: { name: '반장 사냥꾼', axis: null, icon: 'bossBane', flavor: '반장의 냄새를 안다.', desc: '모든 공격 ×1.2 — 반장 판에서' },
   lightMag: { name: '가벼운 탄창', axis: null, icon: 'lightMag', flavor: '가벼운 탄창은 빨리 갈린다.', desc: '손패 +1 — 덱이 12장 이하면' },
   // ---- 부품 확장 2차 (D-287): 축마다 둘 · 공용 일곱 — 아이콘은 전용 도트 (icons16_v2/batch_E~H) ----
@@ -122,7 +122,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   rampart: { name: '성가퀴', axis: 'push', icon: 'rampart', flavor: '쓰러뜨린 자리에 돌을 쌓는다.', desc: '그 룩 방열판 +8 — 룩이 처치하면' },
   recoilSpring: { name: '반동 용수철', axis: 'push', icon: 'recoilSpring', flavor: '부딪친 힘이 되돌아온다.', desc: '태엽 +1 — 충돌로 처치하면 · 턴에 한 번' },
   mortar: { name: '회반죽', axis: 'push', icon: 'mortar', flavor: '틈마다 회반죽을 채운다.', desc: '룩 최대 HP +25%' },
-  tally: { name: '셈 막대', axis: 'chain', icon: 'tally', flavor: '넷을 세면 손이 바빠진다.', desc: '카드 2장 — 연쇄 4 이상 · 턴에 한 번' },
+  tally: { name: '셈 막대', axis: 'chain', icon: 'tally', flavor: '여섯을 세면 손이 바빠진다.', desc: '카드 2장 — 연쇄 6 이상 · 턴에 한 번' },
   stainedGlass: { name: '색유리', axis: 'chain', icon: 'stainedGlass', flavor: '빛이 색을 입고 날카로워진다.', desc: '비숍의 공격 +6' },
   flywheel: { name: '무거운 플라이휠', axis: null, icon: 'flywheel', flavor: '무거운 바퀴는 쉽게 서지 않는다.', desc: '남은 태엽 이월 · 최대 2 — 턴이 끝나면' },
   redLine: { name: '붉은 눈금', axis: null, icon: 'redLine', flavor: '바늘이 붉은 칸을 넘었다.', desc: '모든 공격 +6 · 대국당 킹 HP −15%' },
@@ -134,7 +134,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
 };
 
 /** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 피의 계약 ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 */
-export const PART_NUM = { relayGear: 1, relaySeal: 1.8, sharedPlate: 6, sharedWins: 3, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.2, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 4, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 40, conductorPerKill: 0.35, conductorAdd: 10, anvilPlate: 10, bloodMult: 1.3, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 3, hammerMult: 2, coilPerKill: 1.5, coilCap: 8, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
+export const PART_NUM = { relayGear: 1, relaySeal: 1.8, sharedPlate: 6, sharedWins: 3, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.35, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 6, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 8, oathAdd: 4, lanceMult: 1.5, bannerMult: 1.5, scepterShield: 25, conductorPerKill: 0.35, conductorAdd: 8, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 5, hammerMult: 2, coilPerKill: 1.3, coilCap: 6, afterheatKeep: 0.25, crownMult: 2, throneShield: 4, assemblyBelow: 2, whetAdd: 3 };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).

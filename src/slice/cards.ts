@@ -419,7 +419,8 @@ export const TRAIT_POOL: FoeTrait[][] = [['knightShoe', 'bishopLens'], ['knightS
  * drawPerTurn = 한 턴에 더 뽑는 카드 합계(턴 시작 손패는 빼고)
  * discountOnce = 태엽 할인 부품(등자 · 행진 북 · 가벼운 망토)은 턴마다 그 종류 첫 장에만
  */
-export const PACE = { apGainPerTurn: 0, drawPerTurn: 0, discountOnce: false };
+// D-457: discountOnce 켬 — 실험실 짝 비교에서 녹슨 등자가 부품 중 가장 셌다(이긴 대국 +2.7)
+export const PACE = { apGainPerTurn: 0, drawPerTurn: 0, discountOnce: true };
 
 /** 공정 열기 기본값 (D-454) — SLICE.heat의 처음 값. 테스트가 열기를 껐다 켤 때 되돌리는 기준 */
 export const HEAT_DEFAULT = [0.25, 0.5, 0.75, 1] as const;

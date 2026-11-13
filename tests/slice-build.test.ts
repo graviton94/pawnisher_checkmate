@@ -33,10 +33,10 @@ describe('빌드 축 · 부품 (D-144)', () => {
     expect(typeof r1).toBe('object');
     expect(typeof rewind(r1 as SliceBattle)).toBe('string');
   });
-  it('증폭 코일: 연쇄마다 ×1.5, 최대 ×8 (D-454) — 기본 연쇄는 합 (D-205)', async () => {
+  it('증폭 코일: 연쇄마다 ×1.3, 최대 ×6 (D-454 · D-457) — 기본 연쇄는 합 (D-205)', async () => {
     const { chainAdd } = await import('../src/slice/battle');
-    expect(chainMult(4, ['coil'])).toBeCloseTo(1.5 ** 4);
-    expect(chainMult(6, ['coil'])).toBe(8);
+    expect(chainMult(4, ['coil'])).toBeCloseTo(1.3 ** 4);
+    expect(chainMult(9, ['coil'])).toBe(6);
     expect(chainMult(6)).toBe(1);
     expect(chainAdd(6)).toBe(SLICE.chainCap * SLICE.chainAddPerKill);
     expect(chainAdd(6, ['coil'])).toBe(0);
@@ -109,9 +109,9 @@ describe('빌드 축 · 부품 (D-144)', () => {
 });
 
 describe('3단 성장 · 교차 브릿지 (D-145)', () => {
-  it('증폭 코일은 곱해진다 (×1.5씩) · 기본은 더한다 (+4씩, D-205)', async () => {
+  it('증폭 코일은 곱해진다 (×1.3씩, D-457) · 기본은 더한다 (+4씩, D-205)', async () => {
     const { chainAdd } = await import('../src/slice/battle');
-    expect(chainMult(4, ['coil'])).toBeCloseTo(1.5 ** 4);
+    expect(chainMult(4, ['coil'])).toBeCloseTo(1.3 ** 4);
     expect(chainAdd(4)).toBe(16);
   });
   it('이중 톱니: 처치 하나가 연쇄 두 칸', () => {
@@ -274,16 +274,16 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     endTurn(bp, true);
     expect(bp.s.pieces.find((p) => p.id === kb.id)!.hp).toBe(kb.maxHp - 4);
   });
-  it('녹슨 등자: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 40 · 막사의 종: 폰 +1', () => {
+  it('녹슨 등자: 나이트 카드 태엽 −1 · 녹슨 홀: 킹 방열판 25 (D-457) · 막사의 종: 폰 +1', () => {
     const b = mk(['spurs', 'scepter', 'barracks'], ['leap', 'knightRaid']);
     expect(costOf(b, 0)).toBe(0);
     expect(costOf(b, 1)).toBe(0); // 기습 태엽 1 (D-227) − 등자 1
-    expect(b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!.shield).toBe(40);
+    expect(b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!.shield).toBe(25);
     expect(b.s.pieces.filter((p) => p.side === 0 && p.type === 'P')).toHaveLength(3);
   });
-  it('전도 코일: 연쇄 처치마다 +10 (합, D-205 · D-227)', async () => {
+  it('전도 코일: 연쇄마다 +8 (합, D-205 · D-227 · D-457)', async () => {
     const { chainAdd } = await import('../src/slice/battle');
-    expect(chainAdd(2, ['conductor'])).toBe(20);
+    expect(chainAdd(2, ['conductor'])).toBe(16);
   });
 });
 

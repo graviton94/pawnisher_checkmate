@@ -1532,7 +1532,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     // 무거운 플라이휠 (D-287): 남은 태엽 최대 2가 넘어간다
     b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0) + (has(b, 'flywheel') ? Math.min(PART_NUM.flywheel, Math.max(0, b.ap)) : 0));
     // 잔열 (D-282): 연쇄 절반이 남는다
-    b.kills = has(b, 'afterheat') ? Math.floor(b.kills / 2) : 0;
+    b.kills = has(b, 'afterheat') ? Math.floor(b.kills * PART_NUM.afterheatKeep) : 0; // D-457: 절반 → 4분의 1
     b.hitIds = [];
     // 땜질 도구함 (D-282 → D-299): 킹을 뺀 가장 다친(잃은 HP가 큰) 내 기물 toolboxN개 HP +toolbox — 킹을 고치면 출하 목숨 보험이 되어 힘 값이 양과 무관하게 튀었다
     if (has(b, 'toolbox'))

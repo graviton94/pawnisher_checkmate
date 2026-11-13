@@ -180,9 +180,9 @@ describe('부품 확장 (D-282)', () => {
     expect(f(b, 'P').maxHp).toBeGreaterThan(f(a, 'P').maxHp);
     expect(b.ap).toBe(a.ap + 2);
   });
-  it('잔열: 턴이 끝나도 연쇄 절반이 남는다', () => {
+  it('잔열: 턴이 끝나도 연쇄 4분의 1이 남는다 (D-457)', () => {
     const b = newSliceBattle(crewKR(), ['K', 'P'], START_COMMANDS, 3, { parts: ['afterheat'] });
-    b.kills = 4;
+    b.kills = 8;
     endT2(b, true);
     if (b.s.winner === null) expect(b.kills).toBe(2);
   });
