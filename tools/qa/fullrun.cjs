@@ -31,13 +31,15 @@ const note = (s) => { log.push(s); console.log(s); };
         stage: vis('.stagefx'), cut: vis('.prologue, .finale, .credits, .cutfx, .cuts'), kit: vis('.kit-confirm'), map: vis('.mapfx'),
         overlay: ov && !ov.hidden, h2, act: document.querySelector('.mapfx h1, .mapfx .map-title')?.textContent?.trim() ?? '',
         battle: !!document.querySelector('#hand [data-card]') && (!ov || ov.hidden) && !document.body.classList.contains('between') && !vis('.mapfx') && window.slice().s.winner === null,
-        ev: vis('.ev-choice'), evOk: vis('.ev-ov-ok:not([hidden])'), end: /출하 (완료|중단)/.test(panel?.textContent ?? ''),
+        ev: vis('.ev-choice'), evOk: vis('.ev-ov-ok:not([hidden])'), end: /출하 (완료|중단)/.test(panel?.textContent ?? '') || [...document.querySelectorAll('button')].some((x) => x.getClientRects().length > 0 && /메인 화면으로/.test(x.textContent)),
       };
     });
     const sig = JSON.stringify([st.stage, st.cut, st.kit, st.map, st.overlay, st.h2, st.battle, st.ev, st.evOk]);
     if (sig !== lastSig) { same = 0; lastSig = sig; await snap(st.map ? 'map' : st.battle ? 'battle' : st.kit ? 'confirm' : st.overlay ? 'ov' : st.stage ? 'stage' : st.cut ? 'cut' : 'x'); note(`#${it} ${sig}`); } else same += 1;
     if (same > 25) { note(`STUCK at ${sig}`); await snap('STUCK'); break; }
     if (st.end) { note('RUN END reached'); await snap('END'); break; }
+    // 부관 안내 (처음 보는 반장 등): 건너뛴다 — 안내 창이 화면을 덮으면 다른 단추가 눌리지 않는다
+    if (await p.evaluate(() => !!document.querySelector('.tut'))) { await clickSel('.tut-skip'); await W(900); continue; }
     if (st.kit) { (await clickSel('.kit-confirm [data-yes]')) || (await clickSel('.kit-confirm .row .btn:last-child')); await W(900); continue; }
     if (st.evOk) { await clickSel('.ev-ov-ok'); await W(1200); continue; }
     if (await clickSel('.ev-exit .btn, .ev-out .btn')) { await W(1500); continue; }
@@ -60,8 +62,10 @@ const note = (s) => { log.push(s); console.log(s); };
       await p.evaluate(() => { const b = window.slice(); b.s.pieces = b.s.pieces.filter((x) => x.side === 0); b.s.winner = 0; window.sliceApi.finish(); return 0; });
       await W(4000); continue;
     }
-    if (st.stage || st.cut) { if (!(await p.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.offsetParent !== null && /건너뛰기/.test(x.textContent)); if (b) { b.click(); return true; } return false; }))) await p.mouse.click(457, 300); await W(900); continue; }
+    // 그 밖의 화면 (막 결산 등): 진행 단추를 누른다
+    if (await p.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.getClientRects().length > 0 && !x.disabled && /나아간다|계속한다|다음으로|확인|왕관을 쓴다|^\s*다음\s*$|결과를 본다/.test(x.textContent)); if (b) { b.click(); return true; } return false; })) { await W(1500); continue; }
     await p.mouse.click(457, 300); await W(900);
+    if (st.stage || st.cut) { if (!(await p.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.offsetParent !== null && /건너뛰기|건너뛴다/.test(x.textContent)); if (b) { b.click(); return true; } return false; }))) await p.mouse.click(457, 300); await W(900); continue; }
   }
   fs.writeFileSync(OUT + 'log.txt', log.join('\n'));
   await br.close();
