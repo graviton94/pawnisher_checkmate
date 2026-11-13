@@ -1378,7 +1378,7 @@ const bossTurnStart = (b: SliceBattle): void => {
   if (best) b.bombRow = best[0];
 };
 
-/** 새 반장 셋의 턴 시작 (D-274) — 검수: 불량 도장 · 자석: 끌어당길 기물 예고 · 경보: 눈금 +1, 가득 차면 이번 적 차례 공격 ×1.5 */
+/** 새 반장 셋의 턴 시작 (D-274) — 검수: 불량 도장 · 자석: 끌어당길 기물 예고 · 경보: 눈금 +1, 가득 차면 이번 적 차례 공격 ×alarmMult */
 const newBossTurn = (b: SliceBattle, k: Piece | undefined): void => {
   const mine = b.s.pieces.filter((p) => p.side === 0 && p.type !== 'K');
   if (b.bossRule === 'inspect') {
@@ -1399,7 +1399,7 @@ const newBossTurn = (b: SliceBattle, k: Piece | undefined): void => {
   }
   // 경보 (D-454): 턴이 아니라 우리가 적을 친 횟수로 찬다 — alarmHit()
 };
-/** 경보 반장: 적을 친 만큼 눈금 +, 가득 차면 곧바로 적 공격 ×1.5 (예고 HP 바에 바로 보인다 — 예고 = 실행) */
+/** 경보 반장: 적을 친 만큼 눈금 +, 가득 차면 곧바로 적 공격 ×alarmMult (예고 HP 바에 바로 보인다 — 예고 = 실행) */
 const alarmHit = (b: SliceBattle, hits: number): void => {
   if (b.bossRule !== 'alarm' || !hits || b.alarmAtk) return;
   b.alarm = Math.min(BOSS_NUM.alarmFull, (b.alarm ?? 0) + hits);

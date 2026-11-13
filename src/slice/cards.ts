@@ -375,7 +375,7 @@ export const BOSS_PAIRS: [BossRule, BossRule][] = [['plate', 'inspect'], ['spawn
 export const bossSkin = (r: BossRule): 'plate' | 'spawn' | 'thorns' | 'gilded' => (r === 'inspect' ? 'plate' : r === 'magnet' ? 'spawn' : r === 'alarm' ? 'thorns' : r);
 /** 반장 규칙 수치 — 되받아침 6 → 4 (D-298) */
 /** alarmFull (D-454 경보 개편): 우리가 적을 친 횟수로 눈금이 찬다 — 이만큼 차면 그 적 차례 공격 ×alarmMult */
-export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 4, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 6, alarmMult: 1.5 };
+export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 4, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 8, alarmMult: 1.35 };
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
   plate: { name: '철갑 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '2턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
   spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '배치 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 찍힌 폰도 치면 연쇄가 쌓입니다.' },
@@ -390,7 +390,7 @@ export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }
   // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 되받아침은 그대로
   spawn: { king: 0.8, atk: 0.7 },
   thorns: { king: 0.6, atk: 0.6 }, // D-358: 킹 0.7 → 0.6 · 공격 0.7 → 0.6 (확정 측정 58%)
-  alarm: { king: 0.85, atk: 0.85 }, // D-358: 확정 측정에서 보통 봇 50% — 반장 중 가장 낮았다
+  alarm: { king: 0.7, atk: 0.75 }, // D-457: 0.85 · 0.85 → 0.7 · 0.75 — 실험실에서 보통 봇 3막 반장 승률 45% (경보를 꺼도 50%: 철갑 재생 + 3막 구성이 무겁다). D-358: 확정 측정에서 보통 봇 50% — 반장 중 가장 낮았다
   // D-358: 1막 둘은 보통 봇 90 · 95%로 생명이 아니었다 → 킹 HP ×1.25 · 공격 ×1.1 (×1.5는 승급 6에서 벽이 됐다)
   plate: { king: 1.25, atk: 1.1 },
   inspect: { king: 1.25, atk: 1.1 },
@@ -497,9 +497,9 @@ export const SLICE = {
   grazeMult: 1.5,
   grazeDraw: 1,
   /** 기어 쇼크 (D-229): 예고 공격을 맞은 기물의 다음 턴 공격 배율 */
-  shockMult: 0.5,
-  /** 기어 쇼크 손패 (D-230): 맞은 기물이 있으면 다음 턴 손패 −1 */
-  shockDraw: 1,
+  shockMult: 0.75,
+  /** 기어 쇼크 손패 (D-230): 맞은 기물이 있으면 다음 턴 손패 −이만큼 (D-457: 1 → 0 — 열기로 거의 매 턴 걸려 너무 무거웠다) */
+  shockDraw: 0,
   /** 순수 회피 (D-230): 예고 칸에서 빈 칸으로 빠지기만 한 기물의 다음 공격 배율 */
   evadeMult: 1.4,
   /**

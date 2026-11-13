@@ -101,7 +101,7 @@ const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'] as const;
  * 본편 세 왕이 남긴 실제 경비 규정(LAW-1~3)이 다음 폰에게 적용된다. 도전은 그 뒤의 별도 플레이다.
  */
 export const ASCENSION: { name: string; law: string; desc: string }[] = [
-  { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +30%' },
+  { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +20%' },
   { name: '굳은 검수', law: '검수대 앞에 저울을 하나 더 둔다', desc: '검문 · 반장의 킹 HP +20% · 예고 공격을 맞으면 기어 쇼크' },
   { name: '짧은 휴식', law: '정비 라인의 회복을 줄인다', desc: '대국 사이 회복이 30%로' },
   { name: '비싼 고물', law: '고물상은 값을 올려 받는다', desc: '고물상 값 +25%' },
@@ -116,8 +116,9 @@ export const ASCENSION: { name: string; law: string; desc: string }[] = [
   { name: '최종 경비', law: '왕좌의 경비를 최대로 강화한다', desc: '도금왕 HP +240%' },
 ];
 // D-316: enemyAtk 1.1 → 1.05 · finalHp 1.2 → 1.1 — 두뇌 봇 승급 13 완주 17.5%(120판)를 목표 20~35%로
+// D-457: enemyHp 1.3 → 1.2 · 기어 쇼크 ×0.75 · 손패 감소 없음 — 보통 봇 계단 38 → 35 → 20%가 38 → 30 → 25%로
 // D-454: finalHp 2.8 → 3.4 — 공정 열기 · 적 공격 1.2 뒤 두뇌 봇 승급 13 완주 45% → 40% (60판)
-export const ASC_NUM = { enemyHp: 1.3, eliteKing: 0.2, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.45, rewardChoices: 2, finalHp: 3.4 };
+export const ASC_NUM = { enemyHp: 1.2, eliteKing: 0.2, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.45, rewardChoices: 2, finalHp: 3.4 };
 /** 이 승급에서 그 조항이 켜졌나 — 조항 번호(1 ~ 13)는 ASCENSION 순서 */
 export const ascOn = (asc: number, law: number): boolean => asc >= law;
 export const ASC_MAX = ASCENSION.length;
@@ -291,7 +292,7 @@ export const FINAL_BOSS = (asc = 0): BattleDef => ({
   // D-358: 1.25 → 1.1 — 적 대체 행동(D-318) 뒤 보통 봇 56%로 가장 많이 죽는 곳이었다
   kingHp: 1.1 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
   enemyHp: (asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05) * (asc >= 6 ? ASC_NUM.bossHp : 1),
-  atk: 0.85, // D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)
+  atk: 0.7, // D-457: 0.85 → 0.7 — 두뇌 봇 한 턴 둘 이상 잃음 45% → 26%. D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)
   w: 8,
   h: 7,
   title: '종막 — 도금왕',
