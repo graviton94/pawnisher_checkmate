@@ -139,7 +139,7 @@ export const readSave = (st: Store): RunSave | null =>
     const s = JSON.parse(raw) as RunSave;
     if (!s || s.v !== 2 || !Array.isArray(s.squad) || !s.squad.length || !Number.isInteger(s.asc) || s.asc < 0 || s.asc > ASC_MAX) return null;
     if (s.mode && !['story', 'challenge', 'daily'].includes(s.mode)) return null;
-    if (s.mode === 'story' && (s.chapter === undefined || ![0, 1, 2].includes(s.chapter) || s.asc !== s.chapter)) return null;
+    if (s.mode === 'story' && (s.chapter === undefined || ![0, 1, 2, 3].includes(s.chapter) || s.asc !== s.chapter)) return null;
     return s;
   }, null);
 export const clearSave = (st: Store): void => safe(() => st.removeItem(SAVE_KEY), undefined);
@@ -172,7 +172,8 @@ export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: numb
     out.challengeRecords = { ...(m.challengeRecords ?? {}), [r.asc]: { attempts: old.attempts + 1, clears: old.clears + Number(r.cleared) } };
   }
   if (!r.daily && r.mode === 'story') {
-    out.storyAttempts = [...(m.storyAttempts ?? [0, 0, 0])];
+    out.storyAttempts = [...(m.storyAttempts ?? [])];
+    while (out.storyAttempts.length < STORY_COUNT) out.storyAttempts.push(0);
     out.storyAttempts[r.chapter ?? 0] += 1;
   }
   out.runs += 1;
@@ -182,12 +183,12 @@ export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: numb
     if (r.mode === 'story') {
       const chapter = r.chapter ?? 0;
       // 재관람이나 조작된 미래 장이 순차 진행을 건너뛰지 않는다.
-      const legal = chapter < 2 ? r.ending === 'throne' : r.ending === 'throne' || r.ending === 'depart';
+      const legal = chapter < STORY_COUNT - 1 ? r.ending === 'throne' : r.ending === 'throne' || r.ending === 'depart';
       if (legal && chapter === (out.storyCleared ?? 0)) {
         out.storyCleared = Math.min(STORY_COUNT, chapter + 1);
         if (r.ending === 'throne' && r.crown) out.crownedKings = [...(out.crownedKings ?? []), r.crown];
       }
-      if ((out.storyCleared ?? 0) >= STORY_COUNT && chapter === 2 && r.ending === 'depart') out.trueEnd = true;
+      if ((out.storyCleared ?? 0) >= STORY_COUNT && chapter === STORY_COUNT - 1 && r.ending === 'depart') out.trueEnd = true;
       if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER])];
     } else if (r.mode === 'challenge') {
       if ((out.storyCleared ?? 0) >= STORY_COUNT && r.asc === (out.challengeOpen ?? CHALLENGE_START)) out.challengeOpen = Math.min(ASC_MAX, r.asc + 1);

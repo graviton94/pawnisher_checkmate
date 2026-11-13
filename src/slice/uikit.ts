@@ -5,6 +5,7 @@
  */
 import { pxOut } from './fx3';
 import { fitCover } from '../view/cover';
+import { textWidth } from './desc';
 
 /** 창 크기 세 단계 — S 352 · M 592 · L 883 (game-ui-design 3.1) */
 export type WinSize = 's' | 'm' | 'l';
@@ -616,10 +617,67 @@ export const closePeek = (el: HTMLElement | null = peekNow): void => {
  */
 export const cutChromeHtml = (o: { skip?: string } = {}): string =>
   `<div class="cut-sub"><div class="cut-lines" aria-live="polite"></div><span class="cut-next" aria-hidden="true">▼</span></div>${o.skip ? `<button type="button" class="btn k-iron cut-skip">${o.skip}</button>` : ''}`;
-/** 자막 한 줄: n 서술 · s 대사(이름 12 굵게 + “ ”) · m 독백(‘ ’) */
-export interface CutLine { k: 'n' | 's' | 'm'; t: string; who?: string }
+/** 자막 한 줄: n 서술 · s 대사(이름 12 굵게 + “ ”) · m 독백(‘ ’). part = 긴 줄을 나눈 조각의 자리(따옴표를 처음 · 끝 조각에만) */
+export interface CutLine { k: 'n' | 's' | 'm'; t: string; who?: string; part?: 'head' | 'mid' | 'tail' }
 /** 줄 글자 (따옴표까지) — 찍기(typeIn)와 한 번에 채우기가 같은 글을 쓴다 */
-export const cutFill = (l: CutLine): string => (l.k === 's' ? `“${l.t}”` : l.k === 'm' ? `‘${l.t}’` : l.t);
+export const cutFill = (l: CutLine): string => {
+  const [o, c] = l.k === 's' ? ['“', '”'] : l.k === 'm' ? ['‘', '’'] : ['', ''];
+  return `${l.part === 'mid' || l.part === 'tail' ? '' : o}${l.t}${l.part === 'head' || l.part === 'mid' ? '' : c}`;
+};
+/**
+ * 자막 띠 쪽 나누기 (D-451 — 바이블 컷신은 글자 수 제한이 없다): 띠는 두 줄 그대로 두고, 긴 줄은 문장 끝(. ? ! … 」 ’)에서,
+ * 그래도 길면 쉼표 · 띄어쓰기에서 잘라 한 조각이 띠 두 줄 안에 들게 한다. 짧은 조각은 둘이 한 쪽을 나눠 쓴다.
+ * row = 띠 한 줄에 드는 한글 폭 (가장 좁은 667 화면 기준, 이름표 · 따옴표 포함)
+ */
+export const CUT_ROW = 28;
+const cutW = (l: CutLine): number => textWidth(cutFill(l)) + (l.k === 's' && l.who ? [...l.who].length * 0.8 + 0.6 : 0);
+const splitAt = (t: string, re: RegExp): string[] => t.split(re).map((x) => x.trim()).filter(Boolean);
+export const cutPieces = (l: CutLine, row = CUT_ROW): CutLine[] => {
+  const cap = row * 2;
+  if (cutW(l) <= cap) return [l];
+  const fits = (t: string) => cutW({ ...l, t, part: 'mid' }) + 1 <= cap;
+  const out: string[] = [];
+  // 문장 끝 → 쉼표 → 띄어쓰기 순으로 더 잘게. 잘린 마지막 조각은 다음 글과 다시 붙을 수 있다
+  const levels = [/(?<=[.?!…」’—])\s+/, /(?<=,)\s+/, /\s+/];
+  const pack = (t: string, lv: number): void => {
+    let curr = '';
+    for (const u of splitAt(t, levels[lv])) {
+      const next = curr ? `${curr} ${u}` : u;
+      if (fits(next)) { curr = next; continue; }
+      if (curr) out.push(curr);
+      curr = '';
+      if (fits(u) || lv === levels.length - 1) curr = u;
+      else { pack(u, lv + 1); curr = out.pop() ?? ''; }
+    }
+    if (curr) out.push(curr);
+  };
+  pack(l.t, 0);
+  return out.map((t, i) => ({ ...l, t, part: out.length === 1 ? undefined : i === 0 ? 'head' : i === out.length - 1 ? 'tail' : 'mid' }));
+};
+/** 쪽 = 띠 두 줄. 두 줄짜리 조각은 혼자, 한 줄짜리 둘은 함께 */
+export const cutPages = (lines: CutLine[], row = CUT_ROW): CutLine[][] => {
+  const pages: CutLine[][] = [];
+  let curr: CutLine[] = [];
+  let rows = 0;
+  for (const piece of lines.flatMap((l) => cutPieces(l, row))) {
+    const r = cutW(piece) > row ? 2 : 1;
+    if (rows + r > 2) { pages.push(curr); curr = []; rows = 0; }
+    curr.push(piece);
+    rows += r;
+  }
+  if (curr.length) pages.push(curr);
+  return pages;
+};
+/** 자막 띠에 쪽을 차례로 찍는다 (막 카드 · 반장 등장처럼 혼자 넘어가는 컷): 쪽마다 다 찍으면 hold만큼 쉬고 다음 쪽 */
+export const typeCutPages = async (box: HTMLElement, lines: CutLine[], alive: () => boolean, type: (el: HTMLElement, html: string) => Promise<unknown>, hold = (l: number) => 900 + l * 40): Promise<void> => {
+  const pages = cutPages(lines);
+  for (let k = 0; k < pages.length && alive(); k++) {
+    box.innerHTML = pages[k].map(cutLineHtml).join('');
+    const ps = [...box.querySelectorAll<HTMLElement>('p > span')];
+    for (let i = 0; i < pages[k].length && alive(); i++) await type(ps[i], cutFill(pages[k][i]));
+    if (k < pages.length - 1) await new Promise((r) => window.setTimeout(r, hold(pages[k].reduce((a, l) => a + l.t.length, 0))));
+  }
+};
 /** 줄 빈 틀 (글은 <span>에 찍는다) */
 export const cutLineHtml = (l: CutLine): string => `<p class="cl-${l.k}">${l.k === 's' && l.who ? `<b class="cl-who">${l.who}</b>` : ''}<span></span></p>`;
 /** 띠에 줄을 바로 채운다 (찍기 없이) */

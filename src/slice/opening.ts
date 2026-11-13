@@ -8,7 +8,7 @@ import { PROLOGUE, type Cut, type Line } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
-import { clearBand, clearPeeks, coverArt, cutChromeHtml, cutFill, cutLineHtml, cutSay, type WinOpts } from './uikit';
+import { clearBand, clearPeeks, coverArt, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, type CutLine, type WinOpts } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -53,8 +53,9 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const text = el.querySelector<HTMLElement>('.cut-lines')!;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     // 쪽 = (컷 번호, 그 컷의 줄 두 개)
-    const pages: { c: number; lines: Line[] }[] = [];
-    cuts.forEach((c, k) => { for (let a = 0; a < c.lines.length; a += 2) pages.push({ c: k, lines: c.lines.slice(a, a + 2) }); });
+    const pages: { c: number; lines: CutLine[] }[] = [];
+    // 긴 줄은 문장 단위 조각으로 (D-451 — cutPages): 한 쪽 = 띠 두 줄
+    cuts.forEach((c, k) => { for (const lines of cutPages(c.lines)) pages.push({ c: k, lines }); });
     let i = -1;
     let shown = -1;
     let typing = false;

@@ -853,7 +853,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   background: #0b0b0e;
   box-shadow: inset 0 var(--cap) 0 #0b0b0e, inset 0 calc(var(--cap) * 2) 0 #56545e, inset 0 calc(var(--cap) * -1) 0 #0b0b0e, inset 0 calc(var(--cap) * -2) 0 #33313b;
 }
-.cut-lines p { margin: 0; max-width: 100%; white-space: nowrap; overflow: hidden; color: var(--t-body); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; text-shadow: none; }
+.cut-lines p { margin: 0; max-width: 100%; white-space: normal; word-break: keep-all; overflow-wrap: break-word; text-align: center; overflow: hidden; color: var(--t-body); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; text-shadow: none; }
 .cut-lines p.cl-m { color: var(--t-gold); }
 .cut-lines p.cl-s > span { color: #ffd8cf; }
 .cut-lines .cl-who { margin-right: var(--s2); color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; }

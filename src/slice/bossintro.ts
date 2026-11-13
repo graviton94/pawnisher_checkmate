@@ -9,7 +9,7 @@
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
 import { fitCover } from '../view/cover';
-import { cutChromeHtml, cutFill, cutLineHtml, type CutLine } from './uikit';
+import { cutChromeHtml, typeCutPages, type CutLine } from './uikit';
 
 export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
 export interface BossIntroOpts {
@@ -145,14 +145,14 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     // 자막 띠 두 줄 (D-397): 서술 한 줄 → 대사 한 줄, 다 찍히면 ▼
     at(1500, async () => {
       const box = el.querySelector<HTMLElement>('.cut-lines')!;
-      box.innerHTML = o.lines.map(cutLineHtml).join('');
-      const ps = [...box.querySelectorAll<HTMLElement>('p > span')];
-      for (let i = 0; i < o.lines.length && el.isConnected; i++) await typeIn(ps[i], cutFill(o.lines[i]), 24, undefined, () => el.isConnected);
+      // 긴 등장 대사는 쪽을 넘긴다 (D-451 바이블 — 띠 두 줄 · cutPages)
+      await typeCutPages(box, o.lines, () => el.isConnected, (p, html) => typeIn(p, html, 24, undefined, () => el.isConnected));
       sub.classList.remove('typing');
     });
     o.rules.forEach((r, i) => at(2400 + i * 260, () => { const li = el.querySelectorAll('.bf-rules li')[i] as HTMLElement; li.textContent = r; li.classList.add('in'); }));
     at(1100, () => el.addEventListener('click', close));
-    at(5600, close);
+    // 자막을 다 읽을 시간 (긴 대사는 쪽을 넘긴다): 1.5초 시작 + 글자당 24ms 찍기 + 쪽마다 쉼 + 다 읽고 2초
+    at(Math.max(5600, 1500 + o.lines.reduce((a, l) => a + l.t.length * 64, 0) + 2000), close);
     // 경계선 FX (반장마다)
     let spawnAcc = 0;
     const seamY0 = barH / 3, seamY1 = (H - barH) / 3;

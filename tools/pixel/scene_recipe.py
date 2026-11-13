@@ -9,7 +9,10 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     'departure-decision': 941 / 180, 'shipping-company': 941 / 180, 'gilded-solitude': 941 / 180,
     # D-450: S-08~12 수령본(webp 1672×941 · S-12만 1671×941) → 320×180 균일 격자, 색 수 축소 없음.
     'companion-rest': 941 / 180, 'companion-crossroad': 941 / 180, 'returned-box': 941 / 180,
-    'new-law': 941 / 180, 'gilded-fallen': 941 / 180}
+    'new-law': 941 / 180, 'gilded-fallen': 941 / 180,
+    # D-451: S-13~S-20 (받으면 같은 320×180 균일 격자 — 원본 크기가 다르면 여기 값을 고친다)
+    'chained-door': 941 / 180, 'old-spring': 941 / 180, 'scarred-wall': 941 / 180, 'crown-dais': 941 / 180,
+    'casting-floor': 941 / 180, 'gold-cast': 941 / 180, 'crown-gears': 941 / 180, 'white-land': 941 / 180}
 
 
 def options(name):
@@ -18,6 +21,7 @@ def options(name):
     # S-01: 자동 검출 6.21px 확인. 균일한 300×135 격자로 원본 1870:841 비율을 보존한다.
     if name in ('epilogue-hands', 'throne-mold', 'departure-dock', 'shipping-interior',
                 'departure-decision', 'shipping-company', 'gilded-solitude',
-                'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen'):
+                'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen',
+                'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land'):
         opts['uniform'] = True
     return opts

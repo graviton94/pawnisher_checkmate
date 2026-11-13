@@ -294,7 +294,7 @@ export const FINAL_BOSS = (asc = 0): BattleDef => ({
   w: 8,
   h: 7,
   title: '종막 — 도금왕',
-  narr: `${GILDED_STORY.intro}\n도금왕 “${GILDED_STORY.say(asc)}”`,
+  narr: `${asc > 0 ? GILDED_STORY.introLater : GILDED_STORY.intro}\n도금왕 “${GILDED_STORY.say(asc)}”`,
   tell: BOSS_RULES.gilded.tell,
   reward: 'end',
   boss: true,

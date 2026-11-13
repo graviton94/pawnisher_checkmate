@@ -164,7 +164,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   smith: {
     title: '떠돌이 정비 폰',
-    text: '떠돌이 폰이 공구 수레 곁에서 기다린다. 등에 진 렌치가 녹슬었다. “나사 마흔. 무엇을 다듬을지는 내가 정한다.”',
+    text: '늙은 정비 폰이 렌치를 메고 수레에 기대앉았다. “나사 마흔. 손봐 줄 건 내가 고른다.”',
     choices: [
       { label: '렌치에 맡긴다', desc: '나사 −40 · 무작위 카드 2장 다듬기', tones: ['loss', 'gain'], info: '다듬은 카드는 태엽이 1 덜 듭니다.', blocked: poor(40), apply: (s, rng) => { s.gold -= 40; return { text: `렌치가 두 번 돈다. ${refineRandom(s, rng)} · ${refineRandom(s, rng)}` }; } },
       leave('지나가기'),
@@ -199,7 +199,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   scout: {
     title: '다른 공장의 흑 비숍',
-    text: '낯선 도장을 단 흑 비숍이 분대를 훑는다. “좋은 쇠다. 값은 세 배로 치르지.”',
+    text: '낯선 공장 도장을 단 흑 비숍이 분대를 훑어본다. “좋은 쇠로구려. 값은 세 배로 치르겠소.”',
     choices: [
       { label: '분대원을 판다', desc: '가장 비싼 분대원 → 나사 (값 ×3)', tones: ['loss', 'gain'], info: '폰 20 · 나이트와 비숍 40 · 룩 60 · 퀸 80의 세 배입니다.', blocked: (s) => (nonKing(s).length ? null : '팔 분대원이 없음'), apply: (s) => {
         const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t])[0];
@@ -329,7 +329,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   counterweight: {
     title: '비뚤어진 저울추',
-    text: '검수대 저울에 녹슨 추가 매달려 있다. “한쪽이 가벼워지면 다른 쪽이 무거워지지.”',
+    text: '검수대 저울 옆에 늙은 저울지기 폰이 웅크렸다. “한쪽을 가볍게 치면, 반대쪽은 무거워지는 법이지.”',
     choices: [
       { label: '카드 하나를 올린다', desc: '고른 카드 태엽 −1 · 다른 카드 하나 +1', tones: ['gain', 'loss'], info: '반대쪽 카드는 녹슬어 태엽이 1 더 듭니다.', blocked: (s) => (weighable(s).length ? null : '올릴 카드가 없습니다'), apply: () => ({ text: '저울지기가 빈 접시를 내민다.', cardPick: 'counterweight' }) },
       leave('지나가기'),
@@ -422,7 +422,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   drillRook: {
     title: '교관 룩',
-    text: '연병장 한가운데 룩이 버티고 서 있다. “한 놈 보내라. 살아남으면 쇠가 된다.”',
+    text: '연병장 한가운데 룩이 버티고 서 있다. “그 물렁한 태엽으로 다음 공정을 넘겠다고? 한 놈 보내라.”',
     choices: [
       { label: '하나를 맡긴다', desc: '덜 싸운 분대원 생명 +1 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
         const u = [...nonKing(s)].sort((a, b) => (a.kills ?? 0) - (b.kills ?? 0))[0];
@@ -435,7 +435,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   cardSharp: {
     title: '명령서 사기꾼',
-    text: '뒤집힌 상자 위에서 흑 비숍이 명령서를 섞는다. “한 장 팔 테냐, 한 장 살 테냐.”',
+    text: '뒤집힌 상자 위에서 흑 비숍이 명령서를 섞는다. “한 장 파시오, 아니면 사시겠소? 내 소매엔 정품만 있소.”',
     choices: [
       { label: '한 장 판다', desc: '무작위 카드 1장 → 나사 +45', tones: ['loss', 'gain'], blocked: (s) => (s.deck.length > 6 ? null : '덱이 너무 얇습니다'), apply: (s, rng) => {
         const id = s.deck.splice(rng.int(s.deck.length), 1)[0];
