@@ -1,4 +1,4 @@
-/* ===================== P-B 판 위 글 갈래 (D-489, 후기 #6 · #3 · #29 · #12 · #21) — src/slice/voice.ts =====================
+/* ===================== P-B 판 위 글 갈래 (D-490, 후기 #6 · #3 · #29 · #12 · #21) — src/slice/voice.ts =====================
    받은 DL-01 대사 띠 · DL-02 이름표 · 초상 액자 (2026-11-14, tools/pixel/dl_refine.py로 9-slice 띠를 고르게):
    바크 = 기물 머리 위 대사 띠(1도트 = --px1, 한 줄) + 이름표 + 꼬리 · 자막 띠 = 판 아래 같은 띠(1도트 = --px) · 시스템 = 매단 쇠 띠 ·
    독백 = 누른 자리 곁 종이 테이프. 적 = 검은 쇠 + 진홍 등 + 오른쪽 초상 홈 + 왼쪽 쐐기 / 우리 = 황동 + 종이 + 왼쪽 초상 홈 + 청록 등 —
@@ -120,7 +120,7 @@
 .bet-slot > img.drop:nth-child(3) { animation-delay: 160ms; }
 @keyframes betdrop { 0% { transform: translateY(-48px); } 55% { transform: translateY(4px) scale(1.15, 0.8); } 80% { transform: translateY(-3px); } 100% { transform: none; } }
 
-/* 반장 2단계 (#21 · D-489): 받은 CI-01 — 경보 띠(3프레임 타일, 1도트 = --px × 2) · 레터박스 타일 · 사선 베기. 2단계 초상은 「임시 — CI-02 ~ CI-08 대기」 */
+/* 반장 2단계 (#21 · D-490): 받은 CI-01 — 경보 띠(3프레임 타일, 1도트 = --px × 2) · 레터박스 타일 · 사선 베기. 2단계 초상은 「임시 — CI-02 ~ CI-08 대기」 */
 .p2-band {
   --d: calc(var(--px) * 2); position: fixed; z-index: 89; box-sizing: border-box; height: calc(var(--d) * 16); display: flex; align-items: center; justify-content: center; pointer-events: none;
   background: url('../assets/ui/chrome/v2/p2-tile-1.png') 0 0 / calc(var(--d) * 56) calc(var(--d) * 16) repeat-x; image-rendering: pixelated;
@@ -163,7 +163,7 @@ body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset
   .p2-flash { display: none; }
 }
 
-/* 사건 대사 칸 (#16 · D-489): 이름 = DL-02 이름표 — NPC = 종이 꼬리표, 종이왕 = 황동 + 청록 보석 · DL-02 우리 액자 안 얼굴.
+/* 사건 대사 칸 (#16 · D-490): 이름 = DL-02 이름표 — NPC = 종이 꼬리표, 종이왕 = 황동 + 청록 보석 · DL-02 우리 액자 안 얼굴.
    말하는 NPC가 없는 사건도 칸이 비지 않는다. NPC 초상은 아직 — 「임시 — PT-01 ~ 04 대기」 */
 .win-scene .ws-say .who:not(:empty) { --d: var(--px1); display: inline-flex; align-items: center; box-sizing: border-box; height: calc(var(--d) * 15); width: max-content; max-width: 100%;
   border-style: solid; border-width: 0 calc(var(--d) * 5) 0 calc(var(--d) * 14); border-image: url('../assets/ui/chrome/v2/name-npc.png') 0 5 0 14 fill / 0 calc(var(--d) * 5) 0 calc(var(--d) * 14) / 0 stretch;

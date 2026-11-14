@@ -116,7 +116,7 @@ installPixelAnimate();
   chain.id = 'chain-now';
   chain.className = 'chain-now';
   chain.hidden = true;
-  // 판돈 칩 (#12 · D-489): 걸었으면 반장 칩 자리 곁에 — 조건 · 진행이 대국 내내 보인다
+  // 판돈 칩 (#12 · D-490): 걸었으면 반장 칩 자리 곁에 — 조건 · 진행이 대국 내내 보인다
   const betChip = document.createElement('div');
   betChip.id = 'bet-chip';
   betChip.className = 'bet-chip';
@@ -215,7 +215,7 @@ const pickLine = (lines: string[]): string => {
 };
 /** 이번 대국에서 적 킹이 이미 한 상황 (상황마다 한 번) */
 let cuesSaid = new Set<TauntCue>();
-/** 합류 대사 (D-324): 새 분대원이 제 성격대로 한마디 — 판 위면 그 기물 머리 위 바크, 판 밖(보상 화면)이면 아래 자막 띠 (P-B D-489) */
+/** 합류 대사 (D-324): 새 분대원이 제 성격대로 한마디 — 판 위면 그 기물 머리 위 바크, 판 밖(보상 화면)이면 아래 자막 띠 (P-B D-490) */
 const crewSay = (t: PieceType, name: string): void => {
   const lines = CREW_VOICE[t as CrewKind]?.join;
   if (!lines) return void toast(`${josa(name, '이')} 분대에 합류했습니다.`);
@@ -226,7 +226,7 @@ const crewSay = (t: PieceType, name: string): void => {
 /** 적 킹 · 반장 이름 · 편 (바크 이름표) */
 const foeVoice = (): { name: string; side: VoiceSide; face: string } => (b?.boss ? { name: BOSS_RULES[b.bossRule].name, side: b.bossRule === 'gilded' ? 'gilded' : 'foe', face: `<img src="ui/hud/avatar-${b.bossRule ?? 'plate'}.png" alt="">` } : { name: '적 킹', side: 'foe', face: pieceImg('K', 1, 'small', 40) });
 /**
- * 적 킹의 한 마디 (P-B D-489): 말하는 왕의 머리 위 바크. 보통 적 킹은 상황마다 한 번 · 대국마다 VOICE_TIMING.kingCap까지,
+ * 적 킹의 한 마디 (P-B D-490): 말하는 왕의 머리 위 바크. 보통 적 킹은 상황마다 한 번 · 대국마다 VOICE_TIMING.kingCap까지,
  * 반장은 셋까지(D-311 — 반장 말이 없는 상황은 건너뛴다). 확률로만 — 매 판 떠들지 않는다.
  */
 const taunt = (cue: TauntCue, force = false): void => {
@@ -391,7 +391,7 @@ installPressy();
 bindWinHost({ open: (html, cls) => openOverlay(html, cls), close: () => closeOverlay() });
 // 상태 띠 자리 (보고서 3.8): 전투 HUD가 보이면 판 열 맨 위 48px, 그 밖(창 · 장소 · 지도)은 화면 위 가운데
 setBandAnchor(() => (document.body.classList.contains('between') || !$('overlay').hidden || !$('board').offsetWidth ? null : $('board').getBoundingClientRect()));
-// 자막 띠 자리 (P-B D-489): 전투 중이면 판 열(가로 = 판 칸 격자 · 세로 = 판 열 위아래 예약 자리), 그 밖은 화면 아래 가운데
+// 자막 띠 자리 (P-B D-490): 전투 중이면 판 열(가로 = 판 칸 격자 · 세로 = 판 열 위아래 예약 자리), 그 밖은 화면 아래 가운데
 setSubAnchor(() => {
   if (document.body.classList.contains('between') || !$('board').offsetWidth || !b) return null;
   // 판 열 전체 폭 (레일 · 턴 끝 단추를 덮지 않게 — 667 폭에서는 줄이 늘어 띠가 세로로 큰다)
@@ -890,7 +890,7 @@ const coach = (): void => {
   $('hand').classList.toggle('hint', key === 'card' || key === 'cardAgain');
   if (!el) {
     // 부관 박차가 말한다 (D-242 화자 통일) — 판 아래 안내 띠 (1.1.1 테스터: 레일 속 말풍선이 어색하다 → 판 아래 토스트 자리)
-    // P-B D-489: 이야기 · 부관 갈래 = 판 아래 자막 띠 (초상 액자 + 이름 + 줄) — 컷신 · 튜토리얼과 같은 자리 · 꼴
+    // P-B D-490: 이야기 · 부관 갈래 = 판 아래 자막 띠 (초상 액자 + 이름 + 줄) — 컷신 · 튜토리얼과 같은 자리 · 꼴
     el = document.createElement('div');
     el.className = `${subClass('ally')} coach-band`;
     el.setAttribute('role', 'status');
@@ -1054,7 +1054,7 @@ const firedParts = (cardId: CommandId, mover: PieceType | undefined, events: Bat
 /** 태엽을 돌려주는 부품 (턴에 한 번 표시가 b.once에 남는 것) */
 const AP_PARTS: SlicePartId[] = ['horseshoe', 'whistle', 'queenFan', 'recoilSpring', 'pinNeedle'];
 /**
- * 태엽 원천 FX (#29 · D-489): 돌아온 태엽마다 「원천 아이콘 + +1」 조각이 원천(처치한 적 칸 · 부품 칸)에서 태엽 계기로
+ * 태엽 원천 FX (#29 · D-490): 돌아온 태엽마다 「원천 아이콘 + +1」 조각이 원천(처치한 적 칸 · 부품 칸)에서 태엽 계기로
  * 예비 → 터짐 → 출렁 호를 타고 날아든다(fx3.arcFly). 처치 환급 = 열쇠 아이콘이 쓰러진 적 칸에서, 부품 = 그 부품 그림이 부품 칸에서.
  * 원천을 다 가리지 못한 나머지(가르는 부품 · 금박 등)는 열쇠로. 실제로 들어온 양(gain)만큼만 — 상한에 막힌 것은 날리지 않는다.
  */
@@ -1275,7 +1275,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   showBefore(r.before);
   await renderer.play(r.before, r.events);
   if (b.boss && r.events.some((e) => e.type === 'blast' && e.fx === 'thorns')) taunt('sig');
-  // 판 위 목소리 (P-B D-489): 적 킹이 3할 아래 → beg · 킹이 맞음 → danger · 처음 맞음 → firstHit · 하나 잃음 → lost(적 킹 또는 곁의 적 기물) · 우리 처치 → 분대원 한마디
+  // 판 위 목소리 (P-B D-490): 적 킹이 3할 아래 → beg · 킹이 맞음 → danger · 처음 맞음 → firstHit · 하나 잃음 → lost(적 킹 또는 곁의 적 기물) · 우리 처치 → 분대원 한마디
   {
     const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
     const hitFoe = (id: number) => r.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => h.targetId === id && h.damage > 0));
@@ -1331,14 +1331,14 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   // 반장 2단계 예고 (D-383): 1단계 반장 HP가 낮아지면 한 번 — 「한 번 더 일어선다」
   if (b.boss && !b.phase2 && !phaseWarned && asc <= BOSS_PHASE_TEXT.upTo && b.s.winner === null) {
     const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
-    // #21 · D-489: 토스트 대신 판 위를 경보 띠가 가로지른다 (받은 CI-01 경보 띠 3프레임)
+    // #21 · D-490: 토스트 대신 판 위를 경보 띠가 가로지른다 (받은 CI-01 경보 띠 3프레임)
     if (ek && ek.hp <= ek.maxHp * BOSS_PHASE_TEXT.lowAt) { phaseWarned = true; sfx('threat'); p2Warn(BOSS_PHASE_TEXT.low, gridRect()); }
   }
   // 반장 2단계 (D-243): 쓰러진 반장이 다시 일어선다
   if (r.events.some((e) => e.type === 'respawn' && e.label === BOSS_RISE_LABEL)) {
     sfx('threat');
     const gilded = b.bossRule === 'gilded';
-    // #21 · D-489: 패배 띠(koBanner lose) 대신 2단계 컷인 — 레터박스 · 진홍 번쩍 · 반장 그림 띠 + 사선 베기 · 「격노」 경보 띠
+    // #21 · D-490: 패배 띠(koBanner lose) 대신 2단계 컷인 — 레터박스 · 진홍 번쩍 · 반장 그림 띠 + 사선 베기 · 「격노」 경보 띠
     await p2Rise({ art: gilded ? gildedArt() : BOSS_ART[b.bossRule] ?? 'boss-plate', word: gilded ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다' });
     // 2단계 (각본 §8 · §9, D-276): 반장은 한 마디, 도금왕은 이번 출하에 쓰러뜨린 반장에게 한 말을 비꼰다
     if (gilded) await gildedPhase2();
@@ -1441,7 +1441,7 @@ const onEndInner = async (): Promise<void> => {
   dealHand($('hand'));
   burnNote(burn0);
   if (b.falls.some((f) => f.turn === b.turn - 1)) {
-    // 쓰러뜨린 적 기물이 먼저 말하고, 아니면 적 킹 (P-B D-489)
+    // 쓰러뜨린 적 기물이 먼저 말하고, 아니면 적 킹 (P-B D-490)
     const killer = r.events.find((e) => e.type === 'attack' && e.hits.some((h) => h.killed && r.before.pieces.find((q) => q.id === h.targetId)?.side === 0));
     if (killer?.type === 'attack' && r.before.pieces.find((q) => q.id === killer.attackerId)?.type !== 'K') foePieceSay('gloat', killer.attackerId);
     taunt('gloat');
@@ -1538,7 +1538,7 @@ const maybeBet = (def: BattleDef, force = false): void => {
   if (!force && (labMode || INTRO.includes(def) || def.boss || gold < DIRECTOR.betStake || R.next() > DIRECTOR.betChance)) return;
   const kinds: BetKind[] = ['fast', 'clean'];
   const kind = kinds[R.int(kinds.length)];
-  // M 창 (D-391 → #12 · D-489): 명패 「판돈」 · 판돈 칸(움푹 칸)에 나사 동전 셋 — D-260 「확률 = 동전 · 사각 칸」 문법 ·
+  // M 창 (D-391 → #12 · D-490): 명패 「판돈」 · 판돈 칸(움푹 칸)에 나사 동전 셋 — D-260 「확률 = 동전 · 사각 칸」 문법 ·
   // 조건 · 보상 · 실패 시 줄 · 독백 · [걸지 않는다 | 건다]. 걸면 동전이 칸에 떨어져 박히고(계단) 창이 닫힌다. 그림 = 「임시 — WG-01 · WG-02 대기」(지금 나사 아이콘)
   const coin = '<img src="ui/icons16/hud.screw.png" alt="">';
   const el = openWin({
@@ -1732,7 +1732,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
       // 상단 알림은 상태만 (D-385, 사용자: 「위에서 내려오는 설명은 읽히지도 않는다 — 태엽 부족 같은 상태만」): 판 규칙 · 적 특성은 진입 창과 길게 누르기에서
       if (cracked.length) toast(LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · ')), 2600);
       maybeBet(def);
-      // 대국 시작 한마디 (P-B D-489): 판돈 창이 없을 때만 — 적 킹이 먼저, 아니면 적 기물 하나
+      // 대국 시작 한마디 (P-B D-490): 판돈 창이 없을 때만 — 적 킹이 먼저, 아니면 적 기물 하나
       void ready.then(() => window.setTimeout(() => { if ($('overlay').hidden && !busy) { taunt('start'); if (!tauntedNow) foePieceSay('start'); } }, 500));
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
@@ -2107,7 +2107,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     }
     const name = text.startsWith('‘') && !who ? '' : who ?? talk.npc;
     sayEl.classList.remove('is-empty', 'is-info');
-    // 종이왕 독백 (#16 · P-B D-489): 말하는 NPC가 없는 사건은 종이왕 얼굴 + 이름표 — 오른쪽 위 칸이 비지 않는다
+    // 종이왕 독백 (#16 · P-B D-490): 말하는 NPC가 없는 사건은 종이왕 얼굴 + 이름표 — 오른쪽 위 칸이 비지 않는다
     const king = name === PAPER_KING_NAME;
     sayEl.classList.toggle('is-king', king);
     sayEl.querySelector('.who')!.textContent = name;

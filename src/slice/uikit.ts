@@ -467,7 +467,7 @@ const bandNext = (): void => {
   const el = document.createElement('div');
   el.className = `state-band k-${item.kind} k-in`;
   el.setAttribute('role', 'status');
-  // 시스템 갈래는 아이콘 + 한 줄 (P-B D-489, 원칙 4 — 색만으로 가르지 않는다): 아이콘을 안 준 띠는 종류마다 기본 아이콘
+  // 시스템 갈래는 아이콘 + 한 줄 (P-B D-490, 원칙 4 — 색만으로 가르지 않는다): 아이콘을 안 준 띠는 종류마다 기본 아이콘
   el.innerHTML = `${item.icon || BAND_ICON[item.kind]}<span>${item.text}</span>`;
   document.body.appendChild(el);
   placeBand(el);
@@ -509,7 +509,7 @@ export const stateBand = (text: string, kind: BandKind = 'toast', o: { ms?: numb
       cur.el.remove();
     }
   } else {
-    // 갈래마다 동시에 하나 (P-B D-489): 기다리는 토스트는 하나만 — 새 토스트가 옛 것을 바꾼다. 띠(턴 · 경고)는 버리지 않는다
+    // 갈래마다 동시에 하나 (P-B D-490): 기다리는 토스트는 하나만 — 새 토스트가 옛 것을 바꾼다. 띠(턴 · 경고)는 버리지 않는다
     if (kind === 'toast') for (let k = bandQ.length - 1; k >= 0; k--) if (bandQ[k].kind === 'toast') bandQ.splice(k, 1);
     bandQ.push(item);
   }

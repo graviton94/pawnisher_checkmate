@@ -1,5 +1,5 @@
 """
-받은 DL-01 · DL-02 · CI-01 (P-B D-489) 다듬기 — ui_kit_import.py 다음에 돌린다.
+받은 DL-01 · DL-02 · CI-01 (P-B D-490) 다듬기 — ui_kit_import.py 다음에 돌린다.
   python3 -I tools/pixel/ui_kit_import.py build-res/order/DL-01-source.png DL-01 200
   UIKIT_GAP=0 python3 -I tools/pixel/ui_kit_import.py build-res/order/DL-02-source.png DL-02 160
   python3 -I tools/pixel/ui_kit_import.py build-res/order/CI-01-source.png CI-01 240

@@ -103,7 +103,7 @@ export const addNemesis = (list: Nemesis[], t: PieceType, victim: { t: PieceType
 };
 
 // ---------- ② 도발 (적 킹의 말 — 대국마다 한 줄까지) ----------
-/** 적이 말하는 순간 · 보통 적 킹의 말 — 정본은 data/battle-voice.ts (P-B D-489: 다섯 상황 → 아홉 상황, 상황마다 셋 안팎) */
+/** 적이 말하는 순간 · 보통 적 킹의 말 — 정본은 data/battle-voice.ts (P-B D-490: 다섯 상황 → 아홉 상황, 상황마다 셋 안팎) */
 export type TauntCue = FoeCue;
 export const TAUNTS: Record<TauntCue, string[]> = FOE_KING_LINES;
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CREW_BARK, EVENT_PONDER, FOE_KING_LINES, FOE_PIECE_BARK, VOICE_TIMING } from '../src/data/battle-voice';
 import { holdMs } from '../src/slice/voice';
 
-// P-B (D-489): 판 위 목소리 데이터 — 바크는 한 줄(띠 한 줄 폭), 상황마다 되풀이되지 않을 만큼, 말투 규칙(느낌표 · 「 」 없음)
+// P-B (D-490): 판 위 목소리 데이터 — 바크는 한 줄(띠 한 줄 폭), 상황마다 되풀이되지 않을 만큼, 말투 규칙(느낌표 · 「 」 없음)
 const bare = (t: string) => t.replace(/^[“‘]|[”’]$/g, '');
 const all = [...Object.values(FOE_KING_LINES).flat(), ...Object.values(FOE_PIECE_BARK).flatMap((c) => Object.values(c).flat()), ...Object.values(CREW_BARK).flatMap((c) => Object.values(c).flat())];
 

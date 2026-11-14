@@ -20,7 +20,7 @@ const SCENES = [
   ['p4-warn', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.doom()); await W(500); await A(() => document.getElementById('btn-end').click()); await W(500); await S(''); }],
   ['p4-log', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.botMove()); await W(2600); await A(() => window.sliceApi.logPeek()); await W(500); await S(''); }],
   ['p4-tut', async (p, A, W, S) => { await A(() => window.sliceApi.start(0)); await W(4500); await A(() => window.sliceApi.tutNow()); await W(3000); await S(''); }],
-  // P-B (D-489): 판 위 글 갈래 — 바크 · 자막 띠 · 상태 띠 · 독백 · 판돈 칩 · 2단계 예고
+  // P-B (D-490): 판 위 글 갈래 — 바크 · 자막 띠 · 상태 띠 · 독백 · 판돈 칩 · 2단계 예고
   ['pb-bark', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.taunt('start')); await W(1500); await S('foe'); await A(() => window.sliceApi.allyBark()); await W(1500); await S('ally'); }],
   ['pb-sub', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.say('B')); await W(2200); await S(''); }],
   ['pb-notice', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => { window.sliceApi.stateBand('이대로 끝내면 킹이 맞습니다', 'crimson'); window.sliceApi.monoNow('‘태엽이 모자라.’'); }); await W(500); await S(''); }],

@@ -37,7 +37,7 @@ NAMES = {
     'UI-25': ['slip-paper'],
     # 22위 (D-402 → D-403): 도장 자국 — 왼쪽 정품 판정 · 오른쪽 반장 격파
     'UI-26': ['stamp-pass', 'stamp-fall'],
-    # 2026-11-14 발주 (P-B D-489): 전장 대사 띠 · 이름표 · 초상 액자 · 반장 2단계 컷인 크롬 — 받은 시트의 줄 순서대로
+    # 2026-11-14 발주 (P-B D-490): 전장 대사 띠 · 이름표 · 초상 액자 · 반장 2단계 컷인 크롬 — 받은 시트의 줄 순서대로
     'DL-01': ['talk-foe', 'talk-ally', 'talk-sys-warn', 'talk-sys'],
     'DL-02': ['name-foe', 'name-ally', 'name-npc', 'portrait-foe', 'portrait-ally', 'portrait-npc'],
     'CI-01': ['p2-band-1', 'p2-band-2', 'cutin-frame', 'p2-band-3', 'letterbox'],
