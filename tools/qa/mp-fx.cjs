@@ -49,9 +49,12 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
     const kinds = ['molten', 'quench', 'rust', 'repair', 'upgrade', 'break', 'screws', 'crate'];
     for (const k of kinds) {
       await open();
-      await pg.evaluate((kk) => { const a = window.sliceApi; a.richRun(); a.resultFx(kk); }, k);
-      for (const [i, t] of [[0, 120], [1, 260], [2, 420], [3, 700]]) { await W(t - (i ? [0, 120, 260, 420][i] : 0)); await shot(`fx-${k}-${i}`); }
-      await W(900);
+      await pg.evaluate((kk) => { const a = window.sliceApi; a.richRun(); window.__fxSlow = 6; a.resultFx(kk); }, k);
+      // 도트 연출 캔버스가 뜨는 순간부터 프레임마다 (예비 · 터짐 · 출렁 · 퇴장)
+      await pg.waitForSelector('canvas.rfx', { timeout: 12000, state: 'attached' }).catch(() => null);
+      let prev = 0;
+      for (const [i, t] of [[0, 200], [1, 1350], [2, 1700], [3, 2700]]) { await W(t - prev); prev = t; await shot(`fx-${k}-${i}`); }
+      await W(3500);
     }
   }
 
@@ -66,8 +69,10 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
       await shot(`fx-bet-chip-active`);
       if (won) { await pg.evaluate(() => window.sliceApi.betReach()); await W(260); await shot('fx-bet-chip-reach'); }
       else { await pg.evaluate(() => window.sliceApi.betSet('unhit')); await W(300); await pg.evaluate(() => window.sliceApi.betBreak()); await W(200); await shot('fx-bet-chip-break'); }
-      await pg.evaluate((w) => window.sliceApi.betEnd(w), won);
-      for (const [i, t] of [[0, 140], [1, 320], [2, 560], [3, 1000]]) { await W(t - [0, 140, 320, 560][i]); await shot(`fx-bet-${won ? 'win' : 'lose'}-${i}`); }
+      await pg.evaluate((w) => { window.__fxSlow = 6; void window.sliceApi.betEnd(w); }, won);
+      await pg.waitForSelector('canvas.rfx', { timeout: 5000, state: 'attached' }).catch(() => null);
+      let prev = 0;
+      for (const [i, t] of [[0, 200], [1, 1350], [2, 1700], [3, 2700]]) { await W(t - prev); prev = t; await shot(`fx-bet-${won ? 'win' : 'lose'}-${i}`); }
       await W(1200);
     }
   }

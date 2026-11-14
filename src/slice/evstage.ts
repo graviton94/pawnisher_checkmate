@@ -14,6 +14,7 @@ import { EVENT_FX, type EvFxKind } from '../data/event-talk';
 import { replay, shakeEl } from './fx3';
 import { screwBurst } from './uifx';
 import walletPng from '../assets/ui/chrome/v2/wallet.png';
+import { resultFx } from './resultfx';
 
 /** 장면 층 1도트 = 3 CSS px 안팎 — 기기 픽셀 정수로 맞춘다 (D-392 · D-395: 캔버스를 100%로 늘이지 않는다) */
 const dotPx = (): number => { const r = window.devicePixelRatio || 1; return Math.round(3 * r) / r; };
@@ -502,6 +503,7 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
   }
   await cls(el, 'pre', 300); // 예비: 떨림
   if (cd.fx === 'up') {
+    void resultFx(el, 'upgrade');
     await cls(el, 'flash', 120);
     el.innerHTML = cd.after ?? el.innerHTML;
     el.classList.remove('pre', 'flash');
@@ -513,6 +515,7 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
     await cls(el, 'upped', 500);
   } else if (cd.fx === 'rust') {
     el.classList.remove('pre');
+    void resultFx(el, 'rust');
     await cls(el, 'rusting', 480); // 잿빛 · 녹빛으로 3계단
     el.innerHTML = cd.after ?? el.innerHTML;
     const b = r();
@@ -522,6 +525,7 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
   } else {
     el.classList.remove('pre');
     await cls(el, 'greying', 360);
+    void resultFx(el, 'shatter');
     await cls(el, 'cracked', 220);
     const b = r();
     for (let i = 0; i < 20; i++) L.ps.spawn(P.SHARD, b.x + L.R.range(4, b.w - 4), b.y + L.R.range(4, b.h - 4), L.R.range(-90, 90), L.R.range(-120, -30), L.R.range(0.8, 1.4), hex(i % 2 ? '#868a98' : '#b9bdc8'), L.R.range(1, 2));
@@ -545,6 +549,7 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
   }
   if (cr.fx === 'up') {
     await cls(el, 'pre', 300); el.classList.remove('pre');
+    void resultFx(el, 'upgrade');
     await cls(el, 'flash', 120); swap(); el.classList.remove('flash');
     const r = b(); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 40, PAL.gold[5], 0.9, 0.5);
     sfx('rare');
@@ -554,6 +559,7 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
   }
   if (cr.fx === 'evolve') {
     await cls(el, 'pre', 320); el.classList.remove('pre');
+    void resultFx(el, 'upgrade');
     await cls(el, 'flash', 140); swap(); el.classList.remove('flash');
     const r = b(); L.lights.add(r.x + r.w / 2, r.y + r.h / 2, 46, PAL.gold[5], 1, 0.7);
     sfx('rare');
@@ -563,7 +569,7 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
   }
   if (cr.fx === 'die') {
     await cls(el, 'pre', 300); el.classList.remove('pre');
-    await cls(el, 'greying', 360); await cls(el, 'cracked', 220);
+    await cls(el, 'greying', 360); void resultFx(el, 'shatter'); await cls(el, 'cracked', 220);
     const r = b(); for (let i = 0; i < 20; i++) L.ps.spawn(P.SHARD, r.x + L.R.range(4, r.w - 4), r.y + L.R.range(4, r.h - 4), L.R.range(-90, 90), L.R.range(-120, -30), L.R.range(0.8, 1.4), hex(i % 2 ? '#868a98' : '#b9bdc8'), L.R.range(1, 2));
     sfx('hurt');
     burst(L, el, 'die');
@@ -581,9 +587,10 @@ const crewCardFx = async (L: Layer, el: HTMLElement, cr: CrewFx): Promise<void> 
     sfx('hurt');
     if (d) burst(L, el, 'hurt', d);
     if (fill && ghost) { fill.style.width = pct(cr.hp1); await wait(260); ghost.classList.add('drain'); ghost.style.width = pct(cr.hp1); }
-    if (cr.fx === 'crack') { await wait(d ? 420 : 0); await cls(el, 'cracked', 260); burst(L, el, 'crack'); }
+    if (cr.fx === 'crack') { await wait(d ? 420 : 0); void resultFx(el, 'shatter', undefined, 2); await cls(el, 'cracked', 260); burst(L, el, 'crack'); }
   } else {
     await cls(el, 'pre', 200); el.classList.remove('pre');
+    void resultFx(el, 'weld');
     if (fill && ghost) { ghost.style.width = pct(cr.hp1); fill.classList.add('grow'); fill.style.width = pct(cr.hp1); }
     for (let i = 0; i < 10; i++) L.ps.spawn(P.MOTE, r.x + L.R.range(4, r.w - 4), r.y + r.h - 6, L.R.range(-6, 6), L.R.range(-70, -30), L.R.range(0.5, 0.9), PAL.heal[6], 1, i * 0.04);
     sfx('rare');
@@ -610,6 +617,7 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
       await wait(260);
       ghost.classList.add('drain'); ghost.style.width = pct(cr.hp1);
     } else {
+      void resultFx(pc, 'weld');
       ghost.style.width = pct(cr.hp1);
       fill.classList.add('grow'); fill.style.width = pct(cr.hp1);
       const b = r();
@@ -620,11 +628,13 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
     await wait(300);
   }
   if (cr.fx === 'up') {
+    void resultFx(pc, 'upgrade');
     await cls(pc, 'flash', 140); pc.classList.remove('flash');
     burst(L, pc, 'life', Number(cr.tag?.match(/\d+/)?.[0] ?? 1));
   }
   if (cr.fx === 'evolve') {
     await cls(pc, 'pre', 320); pc.classList.remove('pre');
+    void resultFx(pc, 'upgrade');
     await cls(pc, 'flash', 140);
     pc.querySelector('img')!.src = cr.toSrc ?? cr.src;
     pc.classList.remove('flash');
@@ -638,6 +648,7 @@ const crewFx = async (L: Layer, el: HTMLElement, cr: CrewFx, pct: (v: number) =>
     // 베기: 대각선 흰 선이 그어지고 기물이 두 쪽으로 갈라져 잿빛이 된다
     const src = pc.querySelector('img')!.src;
     pc.innerHTML = `<i class="er-cut a" style="background-image:url(${src})"></i><i class="er-cut b" style="background-image:url(${src})"></i><i class="er-slash"></i>`;
+    void resultFx(pc, 'shatter');
     burst(L, pc, 'die');
     fill.style.width = '0%';
     await cls(pc, 'split', 520);
@@ -656,12 +667,14 @@ const goldFx = async (L: Layer, el: HTMLElement, gold: number, c: EvFxCtx): Prom
   if (gold > 0) {
     const h = L.host.getBoundingClientRect();
     screwBurst({ x: h.left + h.width / 2, y: h.top + h.height * 0.2 }, el, Math.round(gold / 10));
+    void resultFx(el, 'screwsUp');
     await wait(calm() ? 0 : 900);
     sfx('coin');
     burst(L, el, 'goldUp', gold);
     setPurse();
     await wait(500);
   } else {
+    void resultFx(el, 'screws');
     await cls(el, 'pre', 300); el.classList.remove('pre');
     const b = L.at(el);
     for (let i = 0; i < Math.min(14, 4 + Math.round(-gold / 10)); i++) L.ps.spawn(P.SHARD, b.x + b.w / 2 + L.R.range(-4, 4), b.y + b.h * 0.25, L.R.range(-50, 50), L.R.range(-90, -40), L.R.range(0.7, 1.2), hex(i % 2 ? '#c89b3c' : '#8a8794'), 2, i * 0.03);
@@ -677,6 +690,8 @@ const chestFx = async (L: Layer, el: HTMLElement): Promise<void> => {
   const im = el.querySelector('img')!;
   await cls(el, 'appear', 240);
   await cls(el, 'pre', 320); el.classList.remove('pre');
+  // 뚜껑이 열리는 박에 황동 빛 기둥 (D-506 — 예비 먼지 두 프레임이 덜컹과 겹친다)
+  void resultFx(el, 'crate');
   im.src = 'ui/props/chest-1.png';
   await wait(calm() ? 0 : 90);
   im.src = 'ui/props/chest-2.png';
@@ -732,6 +747,9 @@ const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> =
     await wait(520);
   } else {
     // 솟음 (예비): 아래에서 계단으로 — 쇳물이면 불씨가 같이 튄다
+    // 쇳물 사건은 솟는 자리(기물 발밑)에서 쇳물이 왕관처럼 튄다 (D-506 코드 연출 — EF-01 2줄)
+    const foot = (): DOMRect => { const q = el.getBoundingClientRect(); return new DOMRect(q.left, q.bottom - q.height * 0.3, q.width, q.height * 0.3); };
+    if (hot) void resultFx(foot(), 'molten');
     await cls(el, 'rise', 420); el.classList.remove('rise');
     spray(hot ? 18 : 10, hot ? PAL.fire[5] : PAL.gold[5]);
     sfx('lift');
@@ -739,6 +757,8 @@ const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> =
     const m = mid();
     if (cr.fx === 'evolve') {
       L.lights.add(m.x, m.y, 52, hot ? PAL.fire[5] : PAL.gold[5], 1, 0.7);
+      // 담금질(쇳물 사건) = 증기 기둥 · 그 밖 = 강화 고리 → 십자 번쩍 (D-506)
+      void resultFx(el, hot ? 'quench' : 'upgrade');
       await cls(el, 'flash', 140);
       img.src = cr.toSrc ?? cr.src;
       el.classList.remove('flash');
@@ -751,6 +771,7 @@ const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> =
     } else {
       sfx('hurt');
       spray(24, PAL.blood[5], -60);
+      void resultFx(foot(), hot ? 'molten' : 'shatter', undefined, 3);
       await cls(el, 'sink', 640);
       el.style.visibility = 'hidden';
       const q = box();
