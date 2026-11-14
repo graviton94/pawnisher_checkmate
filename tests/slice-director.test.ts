@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addNemesis, betterHighlight, dir, DIRECTOR, isCloseCall, settleBet } from '../src/slice/director';
+import { addNemesis, betOffer, betProgress, betStake, betText, betterHighlight, dir, DIRECTOR, isCloseCall, settleBet } from '../src/slice/director';
 import { clutchBoost, newSliceBattle, planEnemy, sacrificeCandidates, sacrificeSwap } from '../src/slice/battle';
 import { START_COMMANDS } from '../src/slice/cards';
 import { kingOf } from '../src/engine';
@@ -39,11 +39,28 @@ describe('심리 연출 감독 (D-178)', () => {
     for (let i = 0; i < 5; i++) list = addNemesis(list, 'N', { t: 'P', name: `x${i}` }, i);
     expect(list[0].rank).toBe(DIRECTOR.nemesisMax);
   });
-  it('판돈: 이루면 건 만큼 더, 못 이루면 건 만큼 잃는다', () => {
-    expect(settleBet('fast', 30, { won: true, turns: DIRECTOR.betTurns, fell: 2 })).toBe(30);
-    expect(settleBet('fast', 30, { won: true, turns: DIRECTOR.betTurns + 1, fell: 0 })).toBe(-30);
-    expect(settleBet('clean', 30, { won: true, turns: 9, fell: 0 })).toBe(30);
-    expect(settleBet('clean', 30, { won: false, turns: 2, fell: 0 })).toBe(-30);
+  it('판돈: 이기고 조건을 이루면 건 만큼 더, 아니면 건 만큼 잃는다 (#12 · D-503)', () => {
+    const unhit = { kind: 'unhit' as const, stake: 30, need: 2 };
+    const kills = { kind: 'kills' as const, stake: 30, need: 3 };
+    expect(settleBet(unhit, { won: true, kingHit: false, bestTurnKills: 0 })).toBe(30);
+    expect(settleBet(unhit, { won: true, kingHit: true, bestTurnKills: 5 })).toBe(-30);
+    expect(settleBet(kills, { won: true, kingHit: true, bestTurnKills: 3 })).toBe(30);
+    expect(settleBet(kills, { won: true, kingHit: false, bestTurnKills: 2 })).toBe(-30);
+    expect(settleBet(kills, { won: false, kingHit: false, bestTurnKills: 4 })).toBe(-30);
+    expect(betProgress(unhit, { kingHit: true, bestTurnKills: 0 })).toEqual({ broken: true, done: false });
+    expect(betProgress(kills, { kingHit: false, bestTurnKills: 3 })).toEqual({ broken: false, done: true });
+  });
+  it('판돈 제안: 1막 둘째 싸움부터 · 25% · 반장 없음 · 판돈 = 나사 25% (20 ~ 60)', () => {
+    const o = { act: 1, fight: 2, boss: false, gold: 100, roll: 0.1, pick: 0.2 };
+    expect(betOffer({ ...o, fight: 1 })).toBeNull();
+    expect(betOffer({ ...o, boss: true })).toBeNull();
+    expect(betOffer({ ...o, roll: DIRECTOR.betChance })).toBeNull();
+    expect(betOffer({ ...o, gold: 19 })).toBeNull();
+    expect(betOffer(o)).toEqual({ kind: 'unhit', stake: 25, need: 2 });
+    expect(betOffer({ ...o, act: 2, fight: 1, pick: 0.7 })).toEqual({ kind: 'kills', stake: 25, need: 3 });
+    expect(betStake(40)).toBe(20);
+    expect(betStake(400)).toBe(60);
+    expect(betText({ kind: 'kills', need: 2 }).cond).toBe('한 턴에 2기 처치하고 승리');
   });
   it('하이라이트: 처치 수가 먼저, 같으면 피해', () => {
     const a = { where: 'x', turn: 1, kills: 2, damage: 10 };

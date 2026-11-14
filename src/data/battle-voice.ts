@@ -95,6 +95,12 @@ export const WAGER_TEXT = {
   /** 칩 진행 줄 */
   turnsLeft: (n: number) => `남은 턴 ${n}`,
   crewAlive: (alive: number, all: number) => `분대 ${alive}/${all}`,
+  /** #12 · D-503 새 조건의 칩 진행 줄 */
+  kingSafe: '킹 무사',
+  killProg: (n: number, need: number) => `최다 ${n}/${need}`,
+  done: '달성',
+  /** 「한 턴에 n기」를 이룬 순간의 상태 띠 */
+  reached: '판돈 조건 달성 — 이기면 적중',
   broken: '깨짐',
   /** 판 표지 (⑨) */
   fail: '판돈 실패',

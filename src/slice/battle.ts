@@ -192,6 +192,11 @@ export interface SliceBattle {
   /** 교착 압박 (2026-11-14): 피해 없이 끝낸 내 턴이 몇 번 이어졌나 (from턴부터) · 녹이 시작됐나 */
   quiet?: number;
   rust?: boolean;
+  /** 판돈 조건 (피드백 #12 · D-503): 우리 킹이 적 차례에 한 번이라도 맞았나(방열판으로 막아도) · 이번 턴 처치 · 한 턴 최다 처치 · 되감은 횟수 */
+  kingHit?: boolean;
+  turnKills?: number;
+  bestTurnKills?: number;
+  rewound?: number;
 }
 
 const shuffle = <T>(rng: Rng, a: T[]): T[] => {
@@ -1581,6 +1586,8 @@ const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[],
       if (!t || t.side !== 1) continue;
       const rec = (b.pk[by] ??= {});
       rec[t.type] = (rec[t.type] ?? 0) + 1;
+      b.turnKills = (b.turnKills ?? 0) + 1;
+      b.bestTurnKills = Math.max(b.bestTurnKills ?? 0, b.turnKills);
       if (t.type === 'K' && b.boss) b.bossKiller = by;
     }
   }
@@ -1838,6 +1845,10 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.hand = [];
   const rustNow = stallDue(b);
   const { events } = enemyPhase(b);
+  // 판돈 「킹이 맞지 않는다」 (#12): 적 차례에 우리 킹에 닿은 공격 · 폭발 (방열판으로 막아도 맞은 것)
+  const myKing = kingOf(before, 0);
+  if (myKing && events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => h.targetId === myKing.id && h.damage + h.shieldAbsorbed > 0))) b.kingHit = true;
+  b.turnKills = 0;
   // 교착 압박 (2026-11-14): 이번 턴 피해가 없었으면 한 번 더 센다 — quiet번 이어지면 녹은 대국 끝까지
   b.quiet = b.turn >= STALL_PRESS.from && !((b.dealt?.[b.turn - 1] ?? 0) > 0) ? (b.quiet ?? 0) + 1 : 0;
   if (rustNow) b.rust = true;
@@ -1969,6 +1980,7 @@ export const rewind = (b: SliceBattle): SliceBattle | string => {
   const back = JSON.parse(b.snap) as SliceBattle;
   back.rewinds = b.rewinds - 1;
   back.snap = b.snap;
+  back.rewound = (b.rewound ?? 0) + 1;
   return back;
 };
 

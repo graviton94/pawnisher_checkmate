@@ -109,7 +109,7 @@
 .bet-chip .bc-prog { color: var(--t-gold); font: 700 12px/1.4 Galmuri11, sans-serif; }
 .bet-chip.broken .bc-prog { color: var(--t-loss); }
 .bet-chip.broken .bc-cond { color: var(--t-dim); text-decoration: line-through; text-decoration-thickness: 2px; }
-.bet-chip.hit .bc-prog { color: #b6edc0; }
+.bet-chip.hit .bc-prog, .bet-chip.done .bc-prog { color: #b6edc0; }
 .bet-chip.k-crack { animation: betcrack 360ms steps(4, jump-none) both; }
 @keyframes betcrack { 0% { transform: translateX(-3px); } 25% { transform: translateX(3px); } 50% { transform: translateX(-2px); } 75% { transform: translateX(1px); } 100% { transform: none; } }
 /* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */

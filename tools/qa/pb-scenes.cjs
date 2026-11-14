@@ -76,7 +76,7 @@ module.exports = {
     await wait(250);
     await shot('wager-hit');
     await wait(1600);
-    await A(() => { window.sliceApi.betSet('fast'); window.sliceApi.betBreak(); });
+    await A(() => { window.sliceApi.betSet('unhit'); window.sliceApi.betBreak(); });
     await wait(300);
     await shot('wager-broken');
     await wait(2000);
