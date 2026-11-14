@@ -4186,7 +4186,7 @@ const loadRun = (sv: RunSave): void => {
 /** 출하 결과 (끝까지 갔거나 그만뒀을 때): 분대 · 기록 · 다시. 저장을 지우고 기록을 남긴다 (승급이 열린다) */
 // ---------- 각본: 도금왕 · 승급 (docs/script.md §9 ~ §10, D-276) ----------
 /** 도금왕 2단계: 비꼼 — 이번 출하에 쓰러뜨린 반장 하나(마지막 것)에게 한 말을 되돌려 준다 */
-/** 컷신 명패 얼굴 (D-503): 이번 출하의 분대원 이름 → 그 기물 도트 */
+/** 컷신 명패 얼굴 (D-504): 이번 출하의 분대원 이름 → 그 기물 도트 */
 const crewFaces = (): Record<string, Face> => Object.fromEntries(squad.filter((u) => u.t !== 'K').map((u) => [crewLabel(u), { t: u.t, side: 0 as const }]));
 const storyCompany = () => ({
   alive: squad.filter((u) => u.t !== 'K').map((u) => ({ name: crewLabel(u), serial: u.serial, t: u.t })),

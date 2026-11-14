@@ -36,7 +36,7 @@ export const crestHtml = (): string =>
   `<div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-logo.png" alt=""></div><div class="tfx-flash"></div></div>`;
 
 /**
- * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체 → D-503 영화 문법): 모든 이야기 장면(프롤로그 · 그림자 · 동료 · 반장 격파 · 도금왕 · 돌아봄 · 결말 · 패배)이 이 하나를 쓴다.
+ * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체 → D-504 영화 문법): 모든 이야기 장면(프롤로그 · 그림자 · 동료 · 반장 격파 · 도금왕 · 돌아봄 · 결말 · 패배)이 이 하나를 쓴다.
  * - 레터박스: 위아래 먹 띠가 계단으로 닫히고, 아래 띠 안에 자막 띠(uikit.cutChromeHtml) — 그림은 띠 사이 장면 칸만 덮는다(비율 그대로, 기기 픽셀 정수배).
  * - 비트: 한 쪽 = 한 문장(cutPages). 줄의 첫 쪽에서 그 줄의 연출을 건다 — 카메라 샷(film.Camera 계단 이동) · 숨(pause) · 소리 큐(sfx) · 효과(흔들림 · 번쩍 · 붉은 경보 · 금빛).
  * - 컷 사이: 컷마다 고른 전환(디더 · 조리개 · 쇳물 · 백지 · 암전), 앞에 장 제목 카드(title), 뒤에 맺음 카드(end), 그림 없는 끝 정적(coda).

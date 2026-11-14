@@ -1,4 +1,4 @@
-// 영화 문법 컷신 실화면 확인 (D-503, 후기 #31 · #1 · #22 · #23): 프롤로그 · 반장 격파 · 왕관 결말(돌아봄 포함) · 진엔딩 · 패배 · 사건 결과를
+// 영화 문법 컷신 실화면 확인 (D-504, 후기 #31 · #1 · #22 · #23): 프롤로그 · 반장 격파 · 왕관 결말(돌아봄 포함) · 진엔딩 · 패배 · 사건 결과를
 // 실제 터치로 넘기며 프레임을 찍는다. 미리 `npm run build` · `npx vite preview --port 4196`.
 // 사용: node tools/qa/film-observe.cjs <prologue|boss|crown|true|defeat|event|all> [--small] [--calm]
 // 결과: production/qa/evidence/2026-11-14-pd-<장면>-<nn>[-667x375][-calm].png

@@ -1,5 +1,5 @@
 /**
- * 영화 문법 (D-503, 후기 #31 · #1 · #22): 컷신 재생기(opening.playCuts)가 쓰는 부품 — 레터박스 · 카메라 계단 이동 ·
+ * 영화 문법 (D-504, 후기 #31 · #1 · #22): 컷신 재생기(opening.playCuts)가 쓰는 부품 — 레터박스 · 카메라 계단 이동 ·
  * 장면 전환(디더 · 조리개 · 쇳물 · 백지 · 암전) · 장 제목 카드 · 화자 명패.
  * 새 그림 없이 받은 장면 그림만 쓴다: 확대는 기기 픽셀 정수 배율(늘리거나 찌그러뜨리지 않는다, D-386),
  * 움직임은 예비 → 터짐 → 출렁 계단(D-216 — 선형 이동 · 투명도 보간 없음), 사라짐 · 나타남은 도트 칸 단위.
@@ -13,7 +13,7 @@ const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 const dpr = (): number => window.devicePixelRatio || 1;
 
-/** 카메라 계단 박자 (D-503): 프레임 무게 — 예비(반대로 조금) → 터짐(빠르게 대부분) → 넘침 → 출렁 → 멈춤. 프레임마다 FILM.camStep ms */
+/** 카메라 계단 박자 (D-504): 프레임 무게 — 예비(반대로 조금) → 터짐(빠르게 대부분) → 넘침 → 출렁 → 멈춤. 프레임마다 FILM.camStep ms */
 export const FILM = {
   camKeys: [-0.08, 0.42, 0.84, 1.06, 0.98, 1] as const,
   camStep: 70,
@@ -88,7 +88,7 @@ export class Camera {
 }
 
 /**
- * 장면 전환 (D-503): 장면 칸 위 도트 칸 캔버스. close = 덮기(끝나면 꽉 찬 채 남는다) → 부른 쪽이 그림을 바꾸고 → open = 걷기(지운다).
+ * 장면 전환 (D-504): 장면 칸 위 도트 칸 캔버스. close = 덮기(끝나면 꽉 찬 채 남는다) → 부른 쪽이 그림을 바꾸고 → open = 걷기(지운다).
  * dither = 4×4 베이어 먹 · iris = 초점을 향해 닫히는 도트 조리개 · melt = 아래에서 쇳물(진홍 앞날)이 차오름 · white = 종이 백지 디더 · black = 암전 · cut = 바로.
  */
 export class Wipe {
@@ -167,7 +167,7 @@ export class Wipe {
   }
 }
 
-/** 장 제목 카드 (D-503): 먹 바탕 위 꼬리표(12 굵게) · 철 구분 줄(빌린 divider) · 제목(36, 좁으면 24) · 부제(15). 계단으로 차례로 서고 누르거나 머문 뒤 디더로 걷힌다 */
+/** 장 제목 카드 (D-504): 먹 바탕 위 꼬리표(12 굵게) · 철 구분 줄(빌린 divider) · 제목(36, 좁으면 24) · 부제(15). 계단으로 차례로 서고 누르거나 머문 뒤 디더로 걷힌다 */
 export const titleCardHtml = (t: TitleCard): string =>
   `<div class="film-title tone-${t.tone ?? 'brass'}" role="status"><p class="ft-kick">${t.kicker}</p><i class="ft-rule" aria-hidden="true"></i><h2 class="ft-name">${t.title}</h2>${t.sub ? `<p class="ft-sub">${t.sub}</p>` : ''}</div>`;
 export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<unknown>): Promise<void> => {
@@ -185,7 +185,7 @@ export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<u
   root?.classList.remove('titling');
 };
 
-/** 화자 명패 (D-503 · #22): 초상 액자(DL-02 portrait-*) 안에 화자 얼굴 + 이름표(name-*). 우리 편 = 띠 왼쪽 · 적 · 도금왕 = 오른쪽 · NPC = 종이 꼬리표 */
+/** 화자 명패 (D-504 · #22): 초상 액자(DL-02 portrait-*) 안에 화자 얼굴 + 이름표(name-*). 우리 편 = 띠 왼쪽 · 적 · 도금왕 = 오른쪽 · NPC = 종이 꼬리표 */
 export type PlateSide = 'ally' | 'foe' | 'gilded' | 'npc';
 export const faceHtml = (f: Face | undefined): string => {
   if (!f) return '';

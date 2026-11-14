@@ -36,7 +36,7 @@ export const promotionScene = (o: { chapter: number; art: string; companion?: st
     if (final) return finish('depart');
     if (looking || chosen) return;
     looking = true;
-    // 「돌아본다」 (#31 · D-503): 문구를 바꿔 끼우던 것을 실제 돌아보는 짧은 컷으로 — 컷이 글을 끝까지 읽힌 뒤 결정 화면으로 돌아온다.
+    // 「돌아본다」 (#31 · D-504): 문구를 바꿔 끼우던 것을 실제 돌아보는 짧은 컷으로 — 컷이 글을 끝까지 읽힌 뒤 결정 화면으로 돌아온다.
     // 돌아온 화면에는 돌아본 줄이 다 찍힌 채 남고(끊기지 않게), [돌아봤다]는 잠기고 [왕관을 쓴다]만 남는다.
     typeSkip(say); sfx('tap');
     const lay = el.querySelector<HTMLButtonElement>('[data-lay]')!;

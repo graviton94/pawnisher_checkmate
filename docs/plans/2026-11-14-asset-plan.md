@@ -140,6 +140,7 @@
 - 검수: 판돈 걸기 → 대국 중 표지 → 성공 · 실패 결과 3장면.
 
 ### 11위 — 사건 결과 FX EF-01~02 (P1)
+- **D-504**: 진화 · 폐기 · 합류 결과는 사건 그림 위 실제 기물 배우(`evstage.actorBeat`)가 먼저 들어갔다. 받은 FX 띠는 배우 위에 겹친다. 그림 속 기물과 결과가 어긋나는 것은 새 상자 EF-03(담금질 결과 장면 한 쌍).
 - 풀림: 후기 23(쇳물 담금질 결과가 허접).
 - 받으면: 프레임 띠 8장을 `src/assets/ui/fx/ev-*.png`로(새 도구 `tools/pixel/fx_sheet_import.py`: 격자 맞춤 → 프레임 자르기 → 마젠타 투명). `evstage.ts` `CardFx` · `CrewFx`의 `fx` 종류마다 띠를 실제 카드 · 기물 그림 위에 steps(8)로(D-260 — 결과는 실제 그림 위 FX). 담금질 = dipping · coldForge, 쇳물 = pact · castMold, 녹 = rustBath, 수리 = fieldMedic · tinker, 강화 = 다듬기, 파괴 = 녹임, 나사 = 지갑, 상자 = 부품 얻음.
 - 검수: dipping · rustBath · fieldMedic · 상자 사건 결과.
@@ -156,6 +157,7 @@
 - 검수: 프롤로그 전체 넘김(★ 짧은 판 포함).
 
 ### 14위 — 엔딩 영화화 ED-01~12 (P1)
+- **D-504**: 레터박스 · 장 제목 · 맺음 카드 · 끝 정적 · 화자 명패 · 계단 카메라 · 「돌아본다」 컷은 코드로 먼저 들어갔다. 받으면 그림 이름만 바꾼다(발주서 14위 머리의 배치표). 화자 초상은 새 상자 PT-09.
 - 풀림: 후기 31(장면 · 영화 같은 연출 · 화자 구분).
 - 받으면: `ED-01` 자막 판 · 제목 카드 · 왕관 문장 · 화자 표지 → `uikit.cutPages`/`playCuts`에 레터박스(CI-01) + 자막 판 + 화자 표지(서술 · 독백 · 대사 구분). 결말 시작에 장 제목 카드(「첫째 왕관」 + 문장). `promotionCuts`: crown-dais → **end-k-sight** → casting-floor → **end-k-reach** → gold-cast → **crown-N-throne**(CN) → **end-k-lock** → **law-plate**(`promote-rule` 대체). `trueEndingCuts`: gilded-fallen → **end-t-throw** → crown-gears → **end-t-silence** → white-land → **end-t-step** → 크레딧. `DEFEAT`: end-fail(재발주) → **end-f-box** → **end-f-unwind**. 「돌아본다」에서 글이 끊기는 문제는 코드 작업(장면 · 글 넘김 정리)으로 같이.
 - 검수: 첫째 왕관 END-K · 넷째 왕관 END-T · 패배 · 크레딧 롤.

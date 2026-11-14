@@ -24,7 +24,7 @@ const out: string[] = [];
 const p = (...ls: string[]): void => void out.push(...ls);
 const clean = (t: string): string => t.replace(/<\/?em>/g, '').replace(/\|/g, '｜').replace(/\n/g, ' / ');
 const KIND = { n: '서술', s: '대사', m: '독백' } as const;
-/** 비트 연출 한 칸 (D-503): 숨(ms) · 카메라(초점 x·y, 확대 z) · 소리 큐 · 효과 */
+/** 비트 연출 한 칸 (D-504): 숨(ms) · 카메라(초점 x·y, 확대 z) · 소리 큐 · 효과 */
 const FX_KO = { shake: '흔들림', flash: '흰 번쩍', red: '붉은 경보', gold: '금빛' } as const;
 const beat = (l: Line): string => [l.pause ? `숨 ${l.pause}` : '', l.shot ? `샷 ${Math.round(l.shot.x * 100)}·${Math.round(l.shot.y * 100)}${l.shot.z ? ` ×${l.shot.z}` : ''}` : '', l.sfx ? `소리 ${l.sfx}` : '', l.fx ? FX_KO[l.fx] : ''].filter(Boolean).join(' · ') || '—';
 /** 줄 표: ID · 형식 · 화자 · 원문 · 연출(비트) */
@@ -34,7 +34,7 @@ const table = (prefix: string, lines: Line[]): void => {
   p('');
 };
 const TRANS_KO = { dither: '디더', iris: '조리개', melt: '쇳물', white: '백지', black: '암전', cut: '바로' } as const;
-/** 컷 머리 연출 (D-503): 장 제목 카드 · 전환 · 첫 샷 · 끝 정적 · 맺음 카드 */
+/** 컷 머리 연출 (D-504): 장 제목 카드 · 전환 · 첫 샷 · 끝 정적 · 맺음 카드 */
 const cutHead = (c: Cut): string[] => [
   ...(c.title ? [`- **장 제목 카드**: ${c.title.kicker} / 「${c.title.title}」${c.title.sub ? ` / ${c.title.sub}` : ''}`] : []),
   `- **들어오는 전환**: ${TRANS_KO[c.trans ?? 'dither']}${c.shot ? ` · 첫 샷 ${Math.round(c.shot.x * 100)}·${Math.round(c.shot.y * 100)}${c.shot.z ? ` ×${c.shot.z}` : ''}` : ''}${c.coda ? ` · **끝 정적**(${c.coda === 'white' ? '백지' : '먹'} 위 한가운데 한 줄)` : ''}`,
@@ -232,7 +232,7 @@ rows(['자리', '원문'], [
   ['THR-돌아봄-2', `「${THRONE_TEXT.look}」 (약속한 동료가 쓰러졌을 때)`, THRONE_TEXT.lookLost('(동료 이름)')],
   ['THR-돌아봄-3', `「${THRONE_TEXT.look}」 (동료가 아무도 없을 때)`, THRONE_TEXT.lookNone],
 ]);
-cutBlock('THR-돌아봄-컷', '「돌아본다」 짧은 컷 (D-503)', lookBackCut({ companionWithJosa: '박차가' }), '`promote-crew` — 계단 아래에서 위의 승급대를 올려다보는 흰 기물들(흠집 난 나이트 · 폰). 위 승급대에서 아래 동료들로 카메라가 내려온다', '컷이 글을 끝까지 읽힌 뒤 결정 화면으로 돌아온다. 돌아온 화면엔 위 THR-돌아봄 줄이 다 찍힌 채 남고 [돌아봤다]는 잠긴다.');
+cutBlock('THR-돌아봄-컷', '「돌아본다」 짧은 컷 (D-504)', lookBackCut({ companionWithJosa: '박차가' }), '`promote-crew` — 계단 아래에서 위의 승급대를 올려다보는 흰 기물들(흠집 난 나이트 · 폰). 위 승급대에서 아래 동료들로 카메라가 내려온다', '컷이 글을 끝까지 읽힌 뒤 결정 화면으로 돌아온다. 돌아온 화면엔 위 THR-돌아봄 줄이 다 찍힌 채 남고 [돌아봤다]는 잠긴다.');
 cutBlock('BOS-격파-예', '반장 격파 컷 비트 (철갑 반장 · 둘째 반장 · 2승천 예)', bossFallCut('plate', 'boss-fall-plate', 2, 1), '`boss-fall-plate` — 갈라져 떨어지는 철판 속 웅크린 작은 폰', '여섯 반장 모두 같은 비트: 넓게(흔들림) → 살려 두고 지나감 → 반장 가까이(명패 · 위협음) → 종이왕 → 속마음.');
 
 p('### 7-2. 왕이 된 결말 END-K — 왕관을 쓴 직후의 깨달음과 지연된 배신 (1~3승천은 늘, 4승천은 「왕관을 쓴다」)', '',

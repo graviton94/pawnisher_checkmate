@@ -3,7 +3,7 @@ import type { StandIn } from './opening';
 import type { PieceType } from '../engine';
 import { CHAPTERS, endingLabel } from './campaign';
 /**
- * 비트 (D-503, 후기 #31): 한 줄 = 한 비트. 글에 더해 그 순간의 연출을 함께 적는다 — 카메라(shot) · 소리 큐(sfx) · 숨(pause, 글 앞 ms) · 효과(fx).
+ * 비트 (D-504, 후기 #31): 한 줄 = 한 비트. 글에 더해 그 순간의 연출을 함께 적는다 — 카메라(shot) · 소리 큐(sfx) · 숨(pause, 글 앞 ms) · 효과(fx).
  * 연출이 없는 줄은 앞 비트의 그림 · 초점을 그대로 이어 받는다.
  */
 export type Cue = 'tap' | 'threat' | 'land' | 'hit' | 'stamp' | 'lose' | 'win' | 'rare' | 'awaken' | 'lift' | 'hurt' | 'loss' | 'submit' | 'kill' | 'check';
@@ -29,7 +29,7 @@ export interface Cut {
   pixelCover?: boolean;
   /** 하단의 핵심 행동을 가리지 않도록 해당 컷만 대사창을 상단에 둔다. (영화 판에서는 띠가 레터박스 안에 있어 쓰지 않는다) */
   caption?: 'top' | 'bottom';
-  /** D-503 영화 문법: 컷 앞 장 제목 카드 · 컷 뒤 맺음 카드 · 들어오는 전환 · 첫 샷 · 끝 정적(그림 없이 먹/백지 위 한 줄) */
+  /** D-504 영화 문법: 컷 앞 장 제목 카드 · 컷 뒤 맺음 카드 · 들어오는 전환 · 첫 샷 · 끝 정적(그림 없이 먹/백지 위 한 줄) */
   title?: TitleCard; end?: TitleCard; trans?: Trans; shot?: Shot; coda?: 'black' | 'white';
   /** 바이블 장면 이름 (스토리보드 · 위 레터박스 머리) */
   slug?: string;
@@ -47,7 +47,7 @@ const sceneCut = (img: string, lines: Line[], art: StandIn[] = []): Cut => ({ ..
 /** 끝 정적 컷: 그림 없이 먹(또는 백지) 위 한가운데 한 줄 */
 const coda = (lines: Line[], tone: 'black' | 'white' = 'black'): Cut => ({ ...cut('', lines, []), coda: tone, trans: tone === 'white' ? 'white' : 'black' });
 /**
- * 화자 얼굴 (D-503 · #22): 컷신 대사 명패에 세울 얼굴. 분대원 이름은 출하마다 달라 부르는 쪽(playCuts faces)이 더한다.
+ * 화자 얼굴 (D-504 · #22): 컷신 대사 명패에 세울 얼굴. 분대원 이름은 출하마다 달라 부르는 쪽(playCuts faces)이 더한다.
  * 아홉째 폰은 종이 왕관을 접기 전이라 맨 폰, 그 뒤는 종이왕(K0 정본, D-424). 반장 · 도금왕은 장면 그림 얼굴 자리.
  */
 export const BOSS_FACE_ART = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' } as const;
@@ -260,7 +260,7 @@ export const THRONE_TEXT = {
   lookNone: '뒤편에는 빈칸만 남았다. ‘조금만 기다려. 이제 곧 살아서 나간다.’',
 };
 /**
- * 「돌아본다」 짧은 컷 (THR-돌아봄 · D-503 #31): 결정 화면의 문구 바꿔 끼우기 대신 — 계단 아래 동료들(promote-crew)을 실제로 돌아본다.
+ * 「돌아본다」 짧은 컷 (THR-돌아봄 · D-504 #31): 결정 화면의 문구 바꿔 끼우기 대신 — 계단 아래 동료들(promote-crew)을 실제로 돌아본다.
  * 위의 승급대(오른쪽 위)에서 아래 동료들로 카메라가 내려가고, 바이블 줄을 서술 · 속마음 두 쪽으로 끝까지 읽힌 뒤 결정 화면으로 돌아간다.
  */
 export const lookBackCut = (o: { companionWithJosa?: string; lost?: string }): Cut => ({
@@ -280,12 +280,12 @@ export interface StoryCompany { alive: { name: string; serial?: string; t: Stand
 const meltedNames = (company?: StoryCompany): string => (company?.melted ?? []).join(' · ');
 /** 결말에서 소리치는 동료: 부관 박차가 살아 있으면 박차, 아니면 약속한 동료 · 살아 있는 첫 동료 (바이블 「박차/동료」) */
 const crier = (company?: StoryCompany): string | undefined => company?.alive.find((u) => u.name === '박차')?.name ?? company?.alive.find((u) => u.name === company?.promised?.name)?.name ?? company?.alive[0]?.name;
-/** 결말 장 제목 카드 (D-503): 「첫째 왕관 · 결말」 + 장 이름 */
+/** 결말 장 제목 카드 (D-504): 「첫째 왕관 · 결말」 + 장 이름 */
 const endTitle = (chapter: number): TitleCard => ({ kicker: `${chapterKick(chapter)} · 결말`, title: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, tone: 'crimson' });
 /**
  * 일반 엔딩 (바이블 END-K — 1~3승천은 늘, 4승천은 「왕관을 쓴다」를 골랐을 때): 왕관을 쓴 직후 용해 주조가 켜지고, 그는 왕관을 벗지 못한다.
  * law = 이번에 새기는 규정 · mirror = 마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄
- * D-503 영화 문법: 장 제목 카드 → 왕의 눈(가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 금빛 굳음 → 잠긴 문 → 규정판 → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
+ * D-504 영화 문법: 장 제목 카드 → 왕의 눈(가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 금빛 굳음 → 잠긴 문 → 규정판 → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
  */
 export const promotionCuts = (chapter: number, _crew: string, law: string, mirror: string, company?: StoryCompany): Cut[] => {
   const who = crier(company);
@@ -336,7 +336,7 @@ export const DEFEAT: Cut = cut('end-fail', [
   n('열기 속에서 기물들의 태엽이 하나씩 차갑게 풀리며 멈춰 섰다.'),
 ]);
 /**
- * 패배 영화 (D-503 · END-F 세 줄을 세 비트로): 굴러떨어진 왕관(가까이) · 경보 → 쇳물 전환, 상자째 용광로(prologue-01 빌림 — ED-10 대기) →
+ * 패배 영화 (D-504 · END-F 세 줄을 세 비트로): 굴러떨어진 왕관(가까이) · 경보 → 쇳물 전환, 상자째 용광로(prologue-01 빌림 — ED-10 대기) →
  * 암전 정적 위 「태엽이 풀린다」 → 맺음 카드(END-F-창-1 시스템 문구). 다음은 결과 장면.
  */
 export const DEFEAT_CUTS: Cut[] = [
@@ -346,7 +346,7 @@ export const DEFEAT_CUTS: Cut[] = [
 ];
 /**
  * 진엔딩 (바이블 END-T — 4승천에서 「왕관을 던진다」): 왕관을 주조기 톱니에 던져 넣고, 불량 폰 그대로 백지로 걸어 나간다.
- * D-503 영화 문법: 장 제목 카드 → 종이왕(가까이) → 던짐(톱니 쪽으로) → 조리개 → 굉음 · 번쩍 · 정적(숨) → 백지 전환 하얀 땅 → 끝 정적(백지) → 맺음 카드 「왕관 파괴」.
+ * D-504 영화 문법: 장 제목 카드 → 종이왕(가까이) → 던짐(톱니 쪽으로) → 조리개 → 굉음 · 번쩍 · 정적(숨) → 백지 전환 하얀 땅 → 끝 정적(백지) → 맺음 카드 「왕관 파괴」.
  */
 export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] => {
   const who = crier(company);
@@ -379,7 +379,7 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
     { ...coda([n('정해진 행마는 끝났다. 이제 이 하얀 판 위에 첫 수를 놓는 것은 — 당신이다.', { pause: 1000 })], 'white'), end: { kicker: chapterKick(3), title: endingLabel('depart'), tone: 'paper' } },
   ];
 };
-/** 반장 격파 컷 (바이블 BOS-격파 · STG-PROG, D-503 비트): 쓰러짐(넓게) → 살려 두고 지나감 → 반장의 저주(가까이 · 명패) → 종이왕의 대답 → 속마음 */
+/** 반장 격파 컷 (바이블 BOS-격파 · STG-PROG, D-504 비트): 쓰러짐(넓게) → 살려 두고 지나감 → 반장의 저주(가까이 · 명패) → 종이왕의 대답 → 속마음 */
 export const bossFallCut = (rule: StoryBoss, img: string, nth: number, chapter: number): Cut => {
   const st = BOSS_STORY[rule];
   const [fall, pass] = st.fall.split('\n');

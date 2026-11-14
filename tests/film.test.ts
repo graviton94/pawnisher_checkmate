@@ -7,7 +7,7 @@ import { ASCENSION } from '../src/slice/run';
 import { cutPages, speakerSide } from '../src/slice/uikit';
 
 /**
- * 영화 문법 (D-503, 후기 #31 · #22): 카메라는 기기 픽셀 정수 배율만 쓰고 그림 밖을 비추지 않는다 ·
+ * 영화 문법 (D-504, 후기 #31 · #22): 카메라는 기기 픽셀 정수 배율만 쓰고 그림 밖을 비추지 않는다 ·
  * 모든 컷의 샷이 그림 안 · 대사 화자는 명패 편이 정해져 있다 · 서술 · 대사 · 독백의 표기가 섞이지 않는다.
  */
 const crew = { alive: [{ name: '삐걱거리는 경첩', t: 'P' as const }, { name: '박차', t: 'N' as const }], promised: { name: '삐걱거리는 경첩', alive: true }, melted: ['구부러진 못'] };
@@ -26,7 +26,7 @@ const allCuts = (): [string, Cut][] => {
   return out;
 };
 
-describe('카메라 계단 (D-503)', () => {
+describe('카메라 계단 (D-504)', () => {
   it('확대는 기기 픽셀 정수 배율만 · 칸을 늘 덮는다', () => {
     for (const [bw, bh, r] of [[915, 293, 2.625], [667, 252, 2], [1280, 560, 1]] as const) {
       const n0 = baseScale(320, 180, bw, bh, r);
@@ -49,7 +49,7 @@ describe('카메라 계단 (D-503)', () => {
   });
 });
 
-describe('컷 비트 · 화자 (D-503 · #22)', () => {
+describe('컷 비트 · 화자 (D-504 · #22)', () => {
   it('모든 샷 초점이 그림 안 · 확대 0~3', () => {
     for (const [where, c] of allCuts()) {
       for (const s of [c.shot, ...c.lines.map((l) => l.shot)].filter(Boolean)) {

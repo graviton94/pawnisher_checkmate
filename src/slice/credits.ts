@@ -34,7 +34,7 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
     const nextBtn = el.querySelector<HTMLButtonElement>('[data-cr-next]')!;
     let i = 0;
     let closing = false;
-    /** 엔드롤 (D-503 · #31): 장마다 이름이 계단으로 하나씩 서고, 읽을 만큼 머문 뒤 저절로 다음 장 — 누르면 바로. 마지막 장(만든 사람들)은 멈춰 기다린다 */
+    /** 엔드롤 (D-504 · #31): 장마다 이름이 계단으로 하나씩 서고, 읽을 만큼 머문 뒤 저절로 다음 장 — 누르면 바로. 마지막 장(만든 사람들)은 멈춰 기다린다 */
     let auto = 0;
     const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     const hold = (): number => 2400 + page.querySelectorAll('.cr-person, .cr-name').length * 420 + (calm ? 1200 : 0);

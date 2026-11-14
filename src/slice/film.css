@@ -1,4 +1,4 @@
-/* ===================== 영화 문법 (D-503, 후기 #31 · #1 · #22) — src/slice/film.ts · opening.playCuts =====================
+/* ===================== 영화 문법 (D-504, 후기 #31 · #1 · #22) — src/slice/film.ts · opening.playCuts =====================
    레터박스 = 위 먹 띠(받은 CI-01 letterbox-tile, 1도트 = --px) + 아래 먹 띠(자막 띠 cut-sub가 그 안에). 그림은 두 띠 사이 장면 칸만 덮는다.
    장면 칸 위 = 전환 캔버스(film-wipe, 도트 칸) · 장 제목 카드(film-title). 화자 명패(cut-who) = 띠 위 초상 액자(DL-02 portrait-*) + 이름표(name-*).
    움직임은 모두 계단(steps) · 칸 단위 — 투명도 보간 · 그라데이션 없음 (D-216). */
@@ -102,7 +102,7 @@
   .prologue.alarm .pl-flash, .prologue.red-once .pl-flash { display: none; }
 }
 
-/* 엔드롤 (credits.ts, D-503): 이름마다 기물 도트 + 계단으로 차례로 선다 · 돌아오지 못한 이름은 잿빛 */
+/* 엔드롤 (credits.ts, D-504): 이름마다 기물 도트 + 계단으로 차례로 선다 · 돌아오지 못한 이름은 잿빛 */
 .credits .cr-person { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s2); align-items: center; }
 .credits .cr-person > .cr-pc { grid-row: span 2; display: block; width: 24px; height: 24px; }
 .credits .cr-person > .cr-pc > img { display: block; width: 24px; height: 24px; image-rendering: pixelated; }
@@ -114,7 +114,7 @@
 .credits .cr-page.in .cr-makers > div:nth-child(4) { --k: 3; }
 @media (prefers-reduced-motion: reduce) { .credits .cr-page.in .cr-person, .credits .cr-page.in .cr-makers > div { animation: none; } }
 
-/* 사건 결과 — 장면 위 배우 (evstage.actorBeat, D-503 · #23): 덮던 2×2 먹 디더를 걷고(가장자리 디더만) 그림 초점 자리에 실제 기물 도트.
+/* 사건 결과 — 장면 위 배우 (evstage.actorBeat, D-504 · #23): 덮던 2×2 먹 디더를 걷고(가장자리 디더만) 그림 초점 자리에 실제 기물 도트.
    솟음 · 가라앉음 = 아래부터 잘리며 계단 이동(수면에서 나오고 들어감) · 떨어짐 = 예비 없이 낙하 → 눌림 출렁. 모두 steps(1) 프레임 */
 .win-scene .ev-ov.bare .ev-ov-bg::after {
   background:

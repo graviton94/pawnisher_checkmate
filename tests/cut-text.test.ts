@@ -51,7 +51,7 @@ describe('컷신 자막 띠 쪽 나누기 (D-451 → D-488)', () => {
     expect(cutFill(ps.at(-1)!).endsWith('”')).toBe(true);
     expect(cutPieces(n('짧은 줄.'))).toHaveLength(1);
   });
-  it('짧은 두 문장은 한 쪽에 줄을 바꿔 (D-503 · 사용자 #2) — 「대장!」 한 낱말 쪽이 잇달아 넘어가지 않게', () => {
+  it('짧은 두 문장은 한 쪽에 줄을 바꿔 (D-504 · 사용자 #2) — 「대장!」 한 낱말 쪽이 잇달아 넘어가지 않게', () => {
     const ps = cutPieces(s('박차', '대장! 갑자기 바닥이 열리고 있습니다! 쇠사슬이 우릴 아래로 끌어당기고 있어요!'));
     expect(ps[0].t).toBe('대장!\n갑자기 바닥이 열리고 있습니다!');
     expect(ps.every((p) => p.t.split('\n').length <= 2)).toBe(true);
