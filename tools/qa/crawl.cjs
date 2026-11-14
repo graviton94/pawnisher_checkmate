@@ -51,6 +51,8 @@ const rnd = (n) => { rs = (rs * 9301 + 49297) % 233280; return Math.floor((rs / 
     // 컷(프롤로그 · 그림자 · 막 카드 · 격파 컷)이 떠 있으면 먼저 넘긴다 — 아래 판을 건드리지 않는다
     if (await clickSel('.cut-skip')) { await W(900); continue; }
     if (st.tut) { await clickSel('.tut-skip'); await W(500); continue; }
+    // 사건 확률 장치(판정기 · 긁기 · 동전): 「▼ 눌러서 …」 띠를 누른다
+    if (await clickSel('.ev-tap')) { await W(700); continue; }
     if (st.kit) { (await clickSel('.kit-confirm [data-yes]')) || (await clickSel('.kit-confirm .row .btn:last-child')); await W(700); continue; }
     if (st.evOk) { await clickSel('.ev-ov-ok'); await W(900); continue; }
     if (await clickSel('.ev-exit .btn, .ev-out .btn')) { await W(1200); continue; }
