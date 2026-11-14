@@ -1,84 +1,62 @@
-# 인수인계 — 현재 진행 상황 (2026-10-30)
+# 인수인계 — 현재 진행 상황 (2026-11-14)
 
-다른 개발자(또는 새 Claude 세션)가 이어서 작업할 수 있게 정리한 문서. 먼저 `CLAUDE.md`(작업 규칙)를 읽고, 그다음 이 문서를 읽는다.
+새 세션은 먼저 `CLAUDE.md`(작업 규칙 · 사용자 결정)를 읽고, 그다음 이 문서를 읽는다. 결정의 전체 이력은 `docs/DECISIONS.md`(마지막 D-487).
 
 ## 1. 한눈에
 
-- **게임**: 체스 행마 기반 순차 공격 전술 × 로그라이크 등반 (3 Act × 12층 = 36층). 모바일 가로 우선, 스팀(PC) 동시 대응.
-- **상태**: 게임 전체가 처음부터 끝까지 돈다 (메뉴 → 시작 덱 → 맵 → 전투·상점·대장간·제단·이벤트 → 보스 → 36층 / 메타 진행).
-  그래픽은 사용자 제공 도트 에셋을 일부 적용한 단계이며, 패널·버튼·아이콘 에셋은 아직 없다.
-- **품질**: 단위 테스트 100개 통과 (`npm test`). CI(GitHub Actions)에서 테스트 + 웹 빌드 + 안드로이드 APK + PC 설치 파일.
-- **최신 APK**: https://github.com/graviton94/pawnisher_checkmate/releases/download/apk-latest/pawnisher-checkmate.apk (main/작업 브랜치 푸시마다 갱신)
+- **본편 = 리뉴얼판** `index.html` → `src/slice/` (분대 · 명령 덱 · 3막 출하 · 본편 첫째~넷째 왕관 · 도전 · 오늘의 도전 · 저장). 2.0은 `legacy.html`.
+- **버전**: 1.2.0 베타. 베타 테스터 배포본: `v1.2.0-test.20261114.2`(사이드로드 서명 APK · Windows exe). AAB는 `build.yml` 실행 산출물.
+- **품질**: `npm test` 355개 통과 · 타입체크 깨끗 · 자동 크롤(도전 6단계 · 본편 넷째 왕관) 오류 0.
+- **최근 큰 줄기 (D-481~D-487, 사용자 결정)**: 「판마다 다른 싸움」 — 기획 정본 `docs/gdd/21_variety.md`.
+  1. 이형 기물 5종(대포 · 낙타 · 메뚜기 · 대주교 · 총독) — 적으로 먼저 나오고 그 왕관을 깨면 영입 해금 (D-482, `src/data/forms.ts`, 엔진 `rules.ts` 이형 분기)
+  2. 적 편성 행동 특성 넷(수리공 · 복수의 맹세 · 방진 · 증원 대기열) + 편성에 맞춘 이형 배치 (D-483, `FOE_MARKS` in `src/slice/cards.ts`)
+  3. 거대 주물 2×2(거대 폰 · 룩 · 퀸) — 네 부위 HP 따로, 묶음째 걷고 예고 칸 내리찍기 (D-484, `src/data/giants.ts` · `src/slice/giant.ts`)
+  4. 시작 세트 — 기본 셋(표준 · 기마 · 보병) + 왕관 해금 셋(잡종 · 고철 · 무작위 배치) (D-485, `src/data/start-sets.ts`)
+  5. 공정 판 — 컨베이어 · 프레스 · 자석 레일 · 용광로 · 금 간 바닥, 반장 기믹과 짝부터, 왕관이 오를수록 자주 (D-486, `src/data/process.ts` · `src/slice/process.ts`)
+  6. 곡선 점검 — 반장 판 거대 주물을 넷째 왕관으로 (D-487)
+- **기각**: 체크메이트 처형(적 킹을 가두면 즉사)은 사용자가 기각했다.
 
-## 2. 실행
+## 2. 지금 기다리는 것 (사용자 담당)
+
+- **그림**: 이형 5종(흰 · 검 64×64, P-01~05) · 거대 주물 3종(검 128×128, G-01~03) — 발주서 `docs/asset-order-master.md` §0-C. 받으면 `tools/pixel/pieces64.txt`에 `[R:cannon 0]` · `[R:giant 1]` 같은 블록으로 넣고 `python3 -I tools/pixel/maker.py export`. 그 전까지 이형 = 바탕 기물 + 황동 글자 딱지(`BoardRenderer.makePiece`), 거대 = 바탕 기물 두 배를 네 조각으로 자르기(`GIANT_FILL`).
+- 공정 판 칸 표시는 기존 판 도트를 빌려 쓰는 중(variant-conveyor · radiator · hammer · crack · chip-magnet). 전용 그림이 필요하면 발주서부터.
+- 사용자 플레이 테스트 · 베타 피드백.
+
+## 3. 다음에 할 일 (제안 순서)
+
+1. **그림 반입** — 사용자가 P-01~05 · G-01~03을 주면 D-423 절차(격자 복원 · 픽셀화 · 팔레트 확인 · 게임 연결)로 넣고 딱지 · 자르기 임시본을 걷어낸다.
+2. **밸런스 맞춤** — 보통 봇 120출하 왕관 1 · 3 · 4 = 33 · 16 · 6% (묶음 전 34 · 28 · 15%). 셋째 · 넷째 왕관이 꺾였다. 공정 판 · 검문 거대 주물을 꺼도 그대로라 이형 · 편성 특성 몫으로 본다. 높은 왕관은 두뇌(search) 봇 목표 띠(`/balance-check`)로 재고 맞춘다. 세트별: `npm run climb -- --set <id>`.
+3. **긴 대국 확인** — 봇이 40턴 상한까지 끄는 대국이 약 0.4%(묶음 전과 같은 비율, 봇 쪽 교착). 크롤에서 넷째 왕관 2막 반장전 31턴 1건. 화면에서 재현해 원인(봇 교착 vs 판 규칙)을 가린다.
+4. 그래픽 정본 아티팩트 · 스토리보드 갱신은 사용자가 말할 때만.
+
+## 4. 실행 · 검증
 
 ```bash
 npm install
-npm run dev                         # 개발 서버 (브라우저, ?debug 붙이면 window.pawnisher 디버그)
-npm test                            # 단위 테스트
-npm run build && npx vite preview --port 4173
-node tools/observe.cjs all          # 실제 모바일 화면 조작 + 스크린샷 → production/qa/evidence/
-SIM_GAMES=60 npx vitest run -c vitest.sim.config.ts sim/run.sim.ts --silent=false   # 자동 등반 밸런스
+npm test                                   # 단위 테스트
+npm run build && npx vite preview --port 4173 --strictPort   # 화면 확인 (?debug → window.sliceApi)
+npm run climb -- --styles greedy --asc 0,1,2,3 --n 80 --jobs 8 [--set cavalry]   # 퀵 등반 곡선
+node tools/qa/crawl.cjs <출력 폴더> <story|challenge|daily> <단계> <시드>          # 자동 플레이 오류 크롤
 ```
 
-## 3. 코드 지도
+- 화면 증거: 915×412 · DPR 2.625, `production/qa/evidence/`(gitignore). 이번 묶음 = `d483`~`d486`.
+- 디버그 API(`?debug`): `sliceApi.begin(seed, level, mode)` · `startAt(act, kind)` · `bossOf(rule, act)` · `setPick()` · `peekAt(pos)` · `botMove()`. 시작 세트 고르기는 메타에 `runs ≥ 1` · `tut`에 `battle`이 있어야 뜬다.
+
+## 5. 빌드 · 배포 (사용자가 요청할 때만, D-080)
+
+- `.github/workflows/build.yml` workflow_dispatch: 입력 `pc` · `release_tag` · `make_key` · `replace_key` · `aab`. 서명 비밀은 GitHub Secrets `SIDELOAD_PASSPHRASE` · `ANDROID_UPLOAD_PASSPHRASE`(값은 절대 출력 · 커밋 금지), 키는 `android/keystore/*.jks.gpg` (D-479, `android/keystore/README.md`).
+- 작은 수정마다 APK를 굽지 않는다(사용자 지시) — 묶어서, 요청받을 때만.
+
+## 6. 코드 지도 (리뉴얼판)
 
 | 경로 | 내용 |
 | :-- | :-- |
-| `src/engine/` | 결정론적 전투 엔진. `plan.ts`의 `simulate()` 하나가 미리보기·AI·실행 모두에 쓰인다. `rules.ts` 행마·공격, `turnstart.ts` 턴 시작(붕괴·요충지), `options.ts` 특수 예약 후보 |
-| `src/ai/` | 빔 서치 AI (`search.ts`), 평가 함수 (`evaluate.ts`). 결정적이라 "적 의도 예고"가 정확하다 |
-| `src/data/` | 모든 수치: 기물, 전투 규칙, 인챈트(E01~E16), 카드(A01~A06, C01~C06), 대장간, 등반·경제·적 구성·보스 |
-| `src/run/` | 런 상태 기계 (`run.ts`), 적 군단 생성 (`legion.ts`), 덱 규칙 (`deck.ts`), 이벤트, 메타 진행 (`meta.ts`) |
-| `src/game/controller.ts` | 전투 화면 컨트롤러: 탭 → 예약, 카드 모드, 위협 범위, 적 의도, 제출·적 턴 |
-| `src/view/BoardRenderer.ts` | Phaser 보드: 타일·기물 스프라이트·표식·연출 |
-| `src/ui/` | HTML 오버레이: `hud.ts`(레일·팝업·시험용 장비), `runUi.ts`(등반 화면 전부), `sprites.ts` |
-| `src/sim/` + `sim/` | AI 대전·자동 등반 시뮬레이터 |
-| `tests/` | Vitest 단위 테스트 |
-| `android/` · `electron/` | 안드로이드(Capacitor) · PC(Electron, 스팀 업적 연결부) |
-| `public/pieces/` · `src/assets/ui/` | 사용자 도트 에셋 (기물 · AP 날개) |
-| `.claude/skills/` | 프로젝트 전용 스킬: `ux-review`, `balance-check`, `run-and-observe`, `ui-ux-pro-max` |
-
-## 4. 마일스톤
-
-| 단계 | 상태 | 비고 |
-| :-- | :-: | :-- |
-| M1 코어 전투 엔진 | ✅ | |
-| M2 그레이박스 단판 | ✅ | |
-| M3 AI 단계·요충지·교착 방지 | ✅ | 보고서 `docs/reports/M3-simulation.md` |
-| M4 성장 (덱 한도·대장간·인챈트·카드·합체) | ✅ | |
-| M5 Act 1 등반 | ✅ | 보고서 `docs/reports/M5-run-simulation.md` |
-| M6 비주얼·연출 | 🔧 진행 중 | 사용자 담당. 도트 기물·폰트·AP 날개 적용됨 |
-| M7 안드로이드 | 🔧 | 빌드·CI 완료. 실기기 터치 테스트·출시 서명 남음 |
-| M8 Act 2·3·메타 | ✅ | 36층, 최종 보스, 해금·승천 |
-| M9 스팀 | 🔧 | Electron 빌드·업적 연결부 완료. 스팀웍스 등록·앱 ID 남음 |
-
-## 5. 최근 핵심 결정 (전체는 `docs/DECISIONS.md` D-001~D-027)
-
-- **D-016** 실행 순서: 예약 순서대로 "#1 이동 → #1 공격 → #2 이동 → …". 이동한 기물만 공격한다.
-- **D-022** 체크메이트 (8×8 이상): 턴 시작 HP ≥ 2인 킹은 그 턴에 HP 1 아래로 안 떨어진다.
-- **D-024** 한 번 탭 예약 · 칸 한 쌍씩 무너지는 대성당 · 더 무너질 곳 없으면 서든데스 · 무너진 끝줄에서 승급.
-- **D-025** 재미 곡선: 초반 덱빌딩(시작 덱·기물 3지선다) → 중반 수싸움(실수 없는 AI, 위협 표시) → 후반 시너지(★ 확률 상승) + 긴장.
-- **D-026** 곱연산 시너지 인챈트 E12~E15, 배율 팝업 "×1.6".
-- **D-027** 적 의도 예고는 인챈트 E16 「미래 예지」로만 (기본은 적 기물 탭 → 위협 범위). 사용자 도트 기물 사용.
-
-## 6. 밸런스 현황 (AI 플레이어 자동 등반, 사람은 더 잘함)
-
-1~3층 99% · 4~11층 90% (엘리트 74%) · Act 1 보스 74~80% · Act 2 94% (보스 71~85%) · Act 3 96% (엘리트 74~83%) · 36층 완주 7~10%.
-목표 곡선과 판정법은 `.claude/skills/balance-check/SKILL.md`. Act 3·최종 보스는 표본이 적어 재측정 필요.
-
-## 7. 다음에 할 일 (우선순위)
-
-1. **사용자 에셋 대기 → 붙이기**: 버튼·패널 9-slice 프레임, 보드 액자, 아이콘(별·해골·되돌리기·초기화·골드). 흑 진영 큰 기물 원본이 오면 파생본(`l-*1.png`) 교체.
-2. **Gambonanza 참고 반영 후보** (사용자 관심): 다음 보스 규칙을 맵·상점에서 미리 공개 · 대성당 테마 "성유물 타일"(영구 칸 효과) · 보스까지 남은 층 상시 표시. 발라트로식 카지노 레이아웃은 따라 하지 않는다.
-3. **최후의 일격을 체크 때도 발동** (논의됨, 미구현): 체크 또는 킹만 남았을 때 중 먼저 오는 쪽, 전투당 1회.
-4. **일반 전투 무게 줄이기** (논의됨, 미구현): 일반 전투 적 수 상한을 낮추고 엘리트·보스만 꽉 찬 판. 출전 편성은 하지 않기로 함.
-5. **UX 미확인 항목**: 비활성 카드를 눌렀을 때 이유 안내, PC 레이아웃 점검 (`production/qa/ux-review-2026-10-30.md`).
-6. **콘텐츠 확장**: 인챈트·카드·이벤트 수 늘리기, 보스별 고유 기믹, 경로형 맵.
-7. 사운드(M6): 도구 후보 `docs/reference/tools.md`.
-
-## 8. 사용자와 일하는 방식 (중요)
-
-- 사용자는 기획 방향을 주고 나머지는 끝까지 알아서 처리하길 원한다. 결과는 짧게 한국어로 보고한다.
-- 그래픽·세계관·에셋은 사용자 담당. 에셋을 직접 그리지 말고 받은 것을 그대로 쓴다.
-- 웹 플레이 링크(아티팩트)는 사용자가 요청할 때만 갱신한다.
-- "왜 이렇게 됐냐"는 질문엔 실제 화면에서 먼저 재현한다 (`tools/observe.cjs`).
+| `src/engine/` | 결정론적 엔진 — `rules.ts` 행마 · 공격(이형 · 거대 부위 포함), `plan.ts` `simulate()` |
+| `src/slice/battle.ts` | 대국 상태 · 내 차례 · 적 차례(`enemyPhase` — 편성 특성 · 거대 주물 · 공정 판이 모두 여기서, 미리보기 = 실행) |
+| `src/slice/run.ts` | 지도 · 대국 정의 `battleFor`(편성 · 이형 · 거대 · 공정 배치, 지도 rng를 건드리지 않게 판 모양 해시) |
+| `src/slice/main.ts` | 화면 흐름 전부(출하 시작 · 시작 세트 고르기 · 지도 · 보상 · 대국) |
+| `src/slice/giant.ts` · `process.ts` | 거대 주물 · 공정 판 |
+| `src/data/` | 수치 · 문구(forms · giants · process · start-sets · ability-text · hud) |
+| `src/view/BoardRenderer.ts` | Phaser 판 — 이형 딱지 · 거대 조각 · 공정 칸 · 내리찍기 효과 |
+| `src/sim/runbot.ts` · `tools/climb.mjs` | 등반 봇 · 퀵 등반 |
+| `tools/qa/` | 자동 크롤 · 화면 검사 도구 (D-477) |
