@@ -45,7 +45,26 @@ jobs:
       # ubuntu-latest 러너에는 안드로이드 SDK가 이미 설치되어 있다 (ANDROID_HOME)
       - run: npm ci
         env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' }
+      # 직접 설치용 서명 키 (D-479): 저장소의 잠긴 키(android/keystore/sideload.jks.gpg)를 Secrets 의 SIDELOAD_PASSPHRASE 로 풀어 쓴다.
+      # 둘 중 하나라도 없으면 고정 시험용 디버그 키로 서명한다(D-477).
+      - name: Sideload key
+        env:
+          P: ${{ secrets.SIDELOAD_PASSPHRASE }}
+        run: |
+          if [ -n "$P" ] && [ -f android/keystore/sideload.jks.gpg ]; then
+            gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 -d -o "$RUNNER_TEMP/sideload.jks" android/keystore/sideload.jks.gpg 3<<<"$P"
+            echo "PC_SIDELOAD_STORE=$RUNNER_TEMP/sideload.jks" >> "$GITHUB_ENV"
+            echo "직접 설치용 키로 서명합니다."
+          else
+            echo "::warning::직접 설치용 키가 없어 시험용 디버그 키로 서명합니다 (SIDELOAD_PASSPHRASE + Android signing key → sideload)"
+          fi
       - run: npm run android:apk
+        env:
+          PC_SIDELOAD_STORE_PASSWORD: ${{ secrets.SIDELOAD_PASSPHRASE }}
+          PC_SIDELOAD_KEY_PASSWORD: ${{ secrets.SIDELOAD_PASSPHRASE }}
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sideload.jks"
       # 항상 같은 주소로 받을 수 있게 'apk-latest' 프리릴리스에 최신 APK를 올린다
       - name: Publish latest APK
         env:

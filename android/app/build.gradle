@@ -9,7 +9,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // D-477: CI 실행 번호로 늘 올라간다 — 새 APK가 옛 APK 위에 설치된다(저장 유지)
         versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '5').toInteger())
-        versionName "1.2.0-beta"
+        versionName (System.getenv('PC_VERSION_NAME') ?: "1.2.0-beta")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -17,8 +17,9 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // D-477: 고정 디버그 서명 — CI가 실행마다 새 디버그 키를 만들면 새 APK가 옛 APK 위에 설치되지 않아
-    // 테스터가 지우고 다시 깔아야 했고, 그때 저장이 사라졌다. 이 키는 비밀이 아니다(스토어 출시용 키는 따로).
+    // 서명 (D-479, CARPEDIEM과 같은 방식): 키는 GitHub Secrets로 잠근 파일만 저장소에 있고, CI가 풀어 경로 · 암호를 환경 변수로 넘긴다.
+    //   sideload = 직접 설치 APK (SIDELOAD_PASSPHRASE) · upload = Google Play AAB (ANDROID_UPLOAD_PASSPHRASE)
+    //   둘 다 없으면(내 컴퓨터 · 키 없는 빌드) 고정 시험용 디버그 키(beta-debug.keystore, 비밀 아님 — D-477)
     signingConfigs {
         debug {
             storeFile file('beta-debug.keystore')
@@ -26,12 +27,29 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (System.getenv('PC_SIDELOAD_STORE')) {
+            sideload {
+                storeFile file(System.getenv('PC_SIDELOAD_STORE'))
+                storePassword System.getenv('PC_SIDELOAD_STORE_PASSWORD')
+                keyAlias System.getenv('PC_SIDELOAD_KEY_ALIAS') ?: 'sideload'
+                keyPassword System.getenv('PC_SIDELOAD_KEY_PASSWORD')
+            }
+        }
+        if (System.getenv('PC_UPLOAD_STORE')) {
+            upload {
+                storeFile file(System.getenv('PC_UPLOAD_STORE'))
+                storePassword System.getenv('PC_UPLOAD_STORE_PASSWORD')
+                keyAlias System.getenv('PC_UPLOAD_KEY_ALIAS') ?: 'upload'
+                keyPassword System.getenv('PC_UPLOAD_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.findByName('sideload') ?: signingConfigs.debug
         }
         release {
+            signingConfig signingConfigs.findByName('upload') ?: signingConfigs.findByName('sideload') ?: signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

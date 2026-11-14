@@ -3441,3 +3441,9 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 
 - 사용자: 「대국 오른쪽 수집품은 세 줄 말고 한 줄에 4개씩 가득 차게.」 부품 칩을 4열 격자로 — 레일 폭을 채우고(915×412에서 칩 38px · 640×360에서 33px) 부품 칸 최대 8개가 두 줄로 선다. 전에는 3개씩 세 줄이라 낮은 화면에서 「턴 끝」 높이까지 내려왔다.
 - 낮은 화면(높이 380 이하)은 적 의도 줄을 32 → 26px로 낮춰 부품 두 줄이 스크롤 없이 보인다.
+
+### D-479 — 안드로이드 서명을 CARPEDIEM 방식으로: sideload(APK) · upload(AAB) 키 (사용자, 2026-11-14)
+
+- 사용자: 다른 앱(CARPEDIEM)처럼 Repository secrets(`ANDROID_UPLOAD_PASSPHRASE` · `SIDELOAD_PASSPHRASE`)로 APK · AAB를 배포해 왔다.
+- 같은 방식을 옮겼다: `android-signing-key.yml`(키를 GitHub 안에서 만들어 Secrets 암호로 잠근 `.jks.gpg`만 커밋) · `build.yml` APK는 sideload 키가 있으면 그것으로 서명 · `android-release.yml` Play용 AAB는 upload 키로. `build.gradle`은 `PC_SIDELOAD_*` · `PC_UPLOAD_*` 환경 변수를 읽고, 둘 다 없으면 D-477의 고정 시험용 디버그 키.
+- 순서: 사용자가 이 저장소 Secrets에 두 암호 등록 → 키 만들기 워크플로를 sideload · upload로 한 번씩 → 그 뒤 APK · AAB 빌드. sideload 키로 서명한 첫 APK는 테스터가 한 번 지우고 깔아야 한다(그 뒤로는 덮어 설치).
