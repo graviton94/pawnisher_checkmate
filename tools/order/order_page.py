@@ -102,6 +102,9 @@ def files_of(head):
     if mu:  # UI 키트 시트 (D-390 · D-391): 받은 시트 원본이 build-res/order에 있으면 받음
         return ['recv:' + mu.group(1)]
     fs = re.findall(r'`(?:public/scenes/|public/ui/hud/)?([A-Za-z0-9-]+)\.png`', head)
+    mx = re.match(r'([A-Z]{1,3}-\d+) ·', head)
+    if not fs and mx:  # §0-D (2026-11-14): 머리에 파일이 없는 상자는 받은 원본 build-res/order/<번호>-source.*로 받음 판정
+        return ['recv:' + mx.group(1)]
     m = re.search(r'`([A-Za-z-]+)-(\d+)\.png` ~ `\1-(\d+)\.png`', head)  # boss-gilded-1 ~ 4 같은 범위
     if m:
         fs = [f for f in fs if not f.startswith(m.group(1) + '-')] + [f'{m.group(1)}-{i}' for i in range(int(m.group(2)), int(m.group(3)) + 1)]
@@ -172,12 +175,13 @@ def main(out_path):
         have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
     have |= {'recv:' + f.split('-received')[0] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if '-received.png' in f}
     have |= {'recv:' + f[:-11] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if re.match(r'UI-\d+-source\.png$', f)}
-    intro = next(s for s in secs if s['head'].startswith('0.'))
+    have |= {'recv:' + m.group(1) for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) for m in [re.match(r'([A-Z]{1,3}-\d+)-source\.(?:png|webp)$', f)] if m}
+    intro = next((s for s in secs if s['head'].startswith('0-D.')), None) or next(s for s in secs if s['head'].startswith('0.'))
     groups, g = [], None
     for s in secs:
         m = re.match(r'(\d+)위 · (.*)', s['head'])
         if m:
-            if int(m.group(1)) == 16:  # 카드 틀은 D-367부터 cardart.py가 직접 그린다 — 발주 안 함
+            if int(m.group(1)) == 16 and '카드 앞뒷면' in m.group(2):  # 옛 16위 카드 틀은 D-367부터 cardart.py가 직접 그린다 — 발주 안 함
                 g = None
                 continue
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
@@ -325,7 +329,7 @@ pre { margin: 0; padding: 12px 14px; font: 13px/1.6 var(--mono); white-space: pr
 </nav>
 <main>
 <h1>그림 발주서</h1>
-<p class="lede">새 제작 요청과 반입 상태를 모았습니다. 완료 프롬프트는 보관 문서에 있습니다. I-14 네 장은 제작 완료·원본 반입 대기이며 재제작 요청이 아닙니다.</p>
+<p class="lede">2026-11-14 확장 발주(§0-D)입니다. 왼쪽 순위대로 위에서부터 만듭니다 — 1위 이형 기물 · 2위 거대 주물부터. 상자마다 프롬프트 하나를 복사해 새 생성 작업에 붙여 넣고, 결과는 「받은 그림 이름」으로 보내 주세요. 완료 프롬프트는 보관 문서에 있습니다.</p>
 %METER%
 %HOW%
 %ATT%
