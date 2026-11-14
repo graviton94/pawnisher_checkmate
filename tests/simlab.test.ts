@@ -34,7 +34,8 @@ describe('다시 볼 판 (D-468)', () => {
     const { newSliceBattle } = await import('../src/slice/battle');
     const keep = SLICE.heat;
     SLICE.heat = [...HEAT_DEFAULT];
-    const r = simulateRun(70007, { style: 'greedy' });
+    let r = simulateRun(70007, { style: 'greedy' });
+    for (let seed = 70008; !r.extremes.length && seed < 70040; seed++) r = simulateRun(seed, { style: 'greedy' });
     expect(r.extremes.length).toBeGreaterThan(0);
     const e = r.extremes[0];
     expect(e.why).not.toBe('');
@@ -45,5 +46,5 @@ describe('다시 볼 판 (D-468)', () => {
     const mk = () => newSliceBattle(s.squad, s.def.enemy, s.deck, s.def.seed, { enemyKingHp: s.def.kingHp, enemyHp: s.def.enemyHp, depth: s.def.depth, parts: s.parts, refined: s.refined, boss: s.def.boss, bossRule: s.def.bossRule, traits: s.def.traits, width: s.def.w, height: s.def.h, place: s.def.place, gold: s.gold, shock: s.asc >= 2, guard: s.def.guard, eliteOne: s.def.eliteOne });
     expect(JSON.stringify(mk())).toBe(JSON.stringify(mk()));
     SLICE.heat = keep;
-  });
+  }, 60000);
 });

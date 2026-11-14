@@ -1,5 +1,5 @@
 import { PIECE_STATS } from '../data/pieces';
-import { STALL_PRESS } from '../data/battle';
+import { FOE_AI, STALL_PRESS } from '../data/battle';
 import { FORMS } from '../data/forms';
 import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, isFallen, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
@@ -532,7 +532,17 @@ export const playerReach = (s0: BattleState): Set<string> => {
 export interface FoeOpts {
   reach?: Set<string>;
   boss?: boolean;
+  /** 이 점수를 넘는 수까지 돌려준다 (기본 0 — 남는 태엽을 쓸 때는 −FOE_AI.unspent) */
+  floor?: number;
+  /** 패색 (FOE_AI.losingKill): 킹이 아닌 분대원을 쓰러뜨리는 수를 더 쳐 준다 · 다가가기는 가장 가까운 분대원 쪽 */
+  losing?: boolean;
 }
+
+/** 적이 지고 있나 — 킹 말고 desperate기 이하가 남았거나 킹 HP가 절반 아래 */
+const foeLosing = (s: BattleState): boolean => {
+  const k = kingOf(s, 1);
+  return !!k && (s.pieces.filter((q) => q.side === 1 && q.type !== 'K').length <= SLICE.desperate || k.hp < k.maxHp / 2);
+};
 
 /**
  * 꺼진 칸(구멍)을 돌아가는 킹 걸음 수 — 출발 칸들 중 가장 가까운 것까지 (기물은 지나간다고 본다: 막힌 길은 비켜 주면 열린다).
@@ -577,7 +587,8 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
     for (const t of attackScan(s, ghost, grid).targets) {
       const dmg = damageOf(s, ghost, t);
       // 약한 기물을 노린다 (D-201): 남은 HP 대비 비율 — 거의 쓰러진 기물을 먼저 마무리한다
-      score += dmg >= t.hp + t.shield ? valueOf(t) + dmg : (dmg / Math.max(1, t.hp + t.shield)) * valueOf(t) * SLICE.aiFinishWeight;
+      const kill = dmg >= t.hp + t.shield;
+      score += (kill ? valueOf(t) + dmg : (dmg / Math.max(1, t.hp + t.shield)) * valueOf(t) * SLICE.aiFinishWeight) * (o.losing && kill && t.type !== 'K' ? FOE_AI.losingKill : 1);
     }
     // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196 · 반장은 1턴부터 D-201)
     // 발악 (D-243, 사용자: 「지고 있으면 킹으로 발악해야지 — 동귀어진」): 호위가 거의 없거나 킹 HP가 절반 아래면 킹도 나선다
@@ -590,48 +601,78 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
       // 꺼진 칸이 있으면 일직선 거리 대신 걸음 수 (2026-11-14 — 구멍 벽 앞에서 다가가기가 제자리걸음만 했다). 구멍이 없으면 둘은 같다
       const kd = walk ? (q: Pos) => walk.king(q) : (q: Pos) => chebyshev(q, myKing);
       const near = walk ? (q: Pos) => walk.near(q) : (q: Pos) => Math.min(...s.pieces.filter((m) => m.side === 0).map((m) => chebyshev(q, m)));
-      const gain = Math.max(kd(p) - kd(to), near(p) - near(to));
+      const gain = o.losing ? near(p) - near(to) : Math.max(kd(p) - kd(to), near(p) - near(to));
       score = gain * 2 + (to.y < p.y ? SLICE.aiAdvance : 0);
     }
     if (approach && p.type === 'K' && !kingMarch) continue;
+    // 옆걸음 · 뒷걸음(다가가지도 나아가지도 않는 수)은 남는 태엽으로도 두지 않는다 (2026-11-14 — 예고 줄만 어지럽힌다)
+    if (approach && score <= 0 && to.y >= p.y) continue;
     // 맞을 칸을 꺼린다 (D-201): 내 기물이 다음 차례에 칠 수 있는 칸이면 감점 — 공격이면 값의 일부, 다가가기면 같은 거리 중 안전한 칸을 고르게
     // 혼자 남은 킹은 겁내지 않는다 (D-214 — 맞을 칸 감점 −30 때문에 옆의 폰도 안 치고 매 턴 서 있었다)
     const alone = s.pieces.every((q) => q.side !== 1 || q.type === 'K');
     if (o.reach?.has(`${to.x},${to.y}`)) score -= approach ? SLICE.aiRiskStep : valueOf(p) * SLICE.aiRiskAttack + (p.type === 'K' && !alone && !desperate ? SLICE.aiRiskKing : 0);
     if (!best || score > best.score) best = { to, score };
   }
-  return best && best.score > 0 ? best : null;
+  return best && best.score > (o.floor ?? 0) ? best : null;
 };
 
 /** 적의 이번 수: 태엽 3 안에서, 내 기물을 가장 아프게 치는 칸부터. 칠 게 없으면 내 킹 쪽으로 */
 export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = false): Intent[] => {
   const s = { ...s0, turnSide: 1 as const };
-  const options: { pieceId: number; to: Pos; score: number; cost: number }[] = [];
-  const o: FoeOpts = { reach: s.rules.capture ? undefined : playerReach(s), boss };
-  for (const p of s.pieces.filter((q) => q.side === 1)) {
-    const best = bestFor(s, p, undefined, turn, o);
-    // 적도 플레이어와 같은 값표로 태엽을 쓴다 (D-202 — 예전엔 기물 고유 이동 값이라 적 퀸 4 > 태엽 3으로 영영 서 있었다)
-    // 반장(적 킹)은 같은 태엽을 쓰되 먼저 고른다 (D-201 수정, 사용자: "매 턴 추가 행동은 사기 — 같은 자원을 공유하고 값을 높여라")
-    if (best) options.push({ pieceId: p.id, to: best.to, score: boss && p.type === 'K' ? best.score * SLICE.bossPriority + SLICE.bossPriorityFlat : best.score, cost: SLICE.moveCost[p.type] });
+  // 보이지 않는 손 (D-178): 가장 아픈 수를 둘 기물 하나를 이번 차례에서 뺀다
+  const skip = new Set<number>();
+  if (skipTop) {
+    const o: FoeOpts = { reach: s.rules.capture ? undefined : playerReach(s), boss, losing: foeLosing(s) };
+    const top = s.pieces.filter((q) => q.side === 1).map((p) => ({ p, best: bestFor(s, p, undefined, turn, o) })).filter((x) => x.best).sort((x, y) => y.best!.score - x.best!.score || x.p.id - y.p.id);
+    if (top.length > 1) skip.add(top[0].p.id);
   }
-  options.sort((a, b) => b.score - a.score || a.pieceId - b.pieceId);
-  if (skipTop && options.length > 1) options.shift();
-  const out: Intent[] = [];
-  let ap = SLICE.enemyAp;
-  const taken = new Set<string>();
-  for (const o of options) {
-    if (o.cost > ap || taken.has(`${o.to.x},${o.to.y}`)) continue;
-    ap -= o.cost;
-    taken.add(`${o.to.x},${o.to.y}`);
-    out.push({ pieceId: o.pieceId, to: o.to });
-  }
+  const out = extendPlan(s, SLICE.enemyAp, turn, boss, skip);
   // 한 턴을 통째로 쉬지 않는다 (D-214): 겁나서 고른 게 없으면 위험을 무릅쓰고 가장 좋은 수 하나
-  if (!out.length && o.reach) {
+  if (!out.length && !s.rules.capture) {
     const bold = s.pieces.filter((q) => q.side === 1).map((p) => ({ p, best: bestFor(s, p, undefined, turn, { boss }) })).filter((x) => x.best && SLICE.moveCost[x.p.type] <= SLICE.enemyAp).sort((x, y) => y.best!.score - x.best!.score)[0];
     if (bold) out.push({ pieceId: bold.p.id, to: bold.best!.to });
     // 0점짜리 수만 남아도 쉬지 않는다 (D-214 같은 규칙, 2026-11-14 긴 대국 점검): 꺼진 바닥 · 제 폰 벽에 막혀
     // 양쪽 다 둘 수가 없으면 판이 영영 끝나지 않았다 — 칠 수 있는 칸까지 걸어서 가장 가까운 쪽으로 한 걸음
     else { const step = stuckStep(s); if (step) out.push(step); }
+  }
+  return out;
+};
+
+/**
+ * 적 수 이어 짜기 (피드백 #10, 2026-11-14): 남은 태엽 ap 안에서 가장 좋은 수를 하나 고르고, 그 수를 둔 판(simulate)에서 다음 수를 다시 고른다.
+ * 한 기물은 FOE_AI.perPiece번까지(두 번째 행동은 점수 × again) · 0점 이하라도 태엽을 남기는 것보다 나으면(> −unspent) 둔다.
+ * acted = 이미 움직인 횟수(이어 짜기 — liveIntents에서 쓰러진 적의 태엽을 다시 쓸 때) · skip = 이번 차례에 쉬는 기물.
+ */
+const extendPlan = (s0: BattleState, ap0: number, turn: number, boss: boolean, skip: Set<number> = new Set(), acted0?: Map<number, number>): Intent[] => {
+  let s: BattleState = { ...s0, turnSide: 1 };
+  let ap = ap0;
+  const out: Intent[] = [];
+  const acted = new Map(acted0 ?? []);
+  const dead = new Set<number>();
+  for (let k = 0; k < FOE_AI.actMax && ap > 0 && s.winner === null; k++) {
+    const capture = !!s.rules.capture;
+    const o: FoeOpts = { reach: capture ? undefined : playerReach(s), boss, losing: foeLosing(s), floor: capture ? 0 : -FOE_AI.unspent };
+    let pick: { p: Piece; to: Pos; score: number } | null = null;
+    for (const p of s.pieces.filter((q) => q.side === 1 && !skip.has(q.id) && !dead.has(q.id))) {
+      const n = acted.get(p.id) ?? 0;
+      const cost = SLICE.moveCost[p.type];
+      if (n >= (capture ? 1 : FOE_AI.perPiece) || cost > ap) continue;
+      const best = bestFor(s, p, undefined, turn, o);
+      if (!best) continue;
+      // 적도 플레이어와 같은 값표로 태엽을 쓴다 (D-202). 반장(적 킹)은 같은 태엽을 쓰되 먼저 고른다 (D-201)
+      let score = boss && p.type === 'K' && best.score > 0 ? best.score * SLICE.bossPriority + SLICE.bossPriorityFlat : best.score;
+      // 0점 이하 수(남는 태엽 쓰기)는 태엽을 남기는 감점보다 나을 때만
+      if (score <= 0 && score <= -FOE_AI.unspent * cost) continue;
+      if (n > 0) score = score > 0 ? score * FOE_AI.again : score - FOE_AI.unspent;
+      if (!pick || score > pick.score || (score === pick.score && p.id < pick.p.id)) pick = { p, to: best.to, score };
+    }
+    if (!pick) break;
+    const sim = simulate(s, [{ pieceId: pick.p.id, to: pick.to }], { freeAp: true });
+    if (!sim.ok) { dead.add(pick.p.id); k--; continue; }
+    out.push({ pieceId: pick.p.id, to: pick.to });
+    acted.set(pick.p.id, (acted.get(pick.p.id) ?? 0) + 1);
+    ap -= SLICE.moveCost[pick.p.type];
+    s = { ...sim.state, turnSide: 1 };
   }
   return out;
 };
@@ -678,9 +719,9 @@ export const dangerSquares = (b: SliceBattle): Pos[] => {
   if (b.bombRow !== null) for (let x = 0; x < b.s.width; x++) out.set(`${x},${b.bombRow}`, { x, y: b.bombRow });
   for (const a of giantDanger(b)) out.set(`${a.x},${a.y}`, a);
   for (const a of processDanger(b)) out.set(`${a.x},${a.y}`, a);
-  for (const it of liveIntents(b)) {
-    const p = findPiece(b.s, it.pieceId)!;
-    const ghostState = { ...b.s, pieces: b.s.pieces.filter((q) => q.id !== p.id) };
+  for (const { it, s } of liveSteps(b)) {
+    const p = findPiece(s, it.pieceId)!;
+    const ghostState = { ...s, pieces: s.pieces.filter((q) => q.id !== p.id) };
     for (const a of attackScan(ghostState, { ...p, x: it.to.x, y: it.to.y }).area) out.set(`${a.x},${a.y}`, a);
   }
   return [...out.values()];
@@ -691,60 +732,58 @@ export const dangerSquares = (b: SliceBattle): Pos[] => {
  * 지금 보드에서 다른 수를 고른다 (D-176 — 사용자: "차단했으면 다른 행동을 해야 하는데 그냥 쉰다").
  * 내가 피한 공격(칸은 열렸는데 칠 게 없음)은 그대로 헛친다 — 피하기는 보상이다.
  */
-export const liveIntents = (b: SliceBattle): Intent[] => {
+export const liveIntents = (b: SliceBattle): Intent[] => liveSteps(b).map((x) => x.it);
+
+/**
+ * 예고를 지금 보드에 맞춰 차례로 짚어 본다 (2026-11-14 — 한 기물의 두 번째 행동이 있어 앞 수를 둔 판에서 다음 수를 본다).
+ * s = 그 수를 두기 직전의 판. 실행(enemyPhase)도 같은 순서 · 같은 simulate라 예고 = 실행.
+ */
+const liveSteps = (b: SliceBattle): { it: Intent; s: BattleState }[] => {
   // 잡기 규칙: 적은 늘 지금 보드를 보고 둔다 — 내 수마다 예고 화살표가 바로 바뀐다 (보이는 대로 일어난다)
-  if (b.s.rules.capture) return planEnemy(b.s, false, b.turn);
-  const s1 = { ...b.s, turnSide: 1 as const };
-  const open = (it: Intent, p: Piece) => legalMoves(s1, p).some((q) => samePos(q, it.to));
-  const keep = b.intents.filter((it) => {
-    // 핀 (D-281): 묶인 적은 이번 적 차례에 움직이지 않는다 — 예고 화살표가 바로 사라진다
-    if ((b.pinned ?? []).includes(it.pieceId)) return false;
-    const p = findPiece(b.s, it.pieceId);
-    return p && open(it, p);
-  });
-  const taken = new Set(keep.map((it) => `${it.to.x},${it.to.y}`));
-  const out: Intent[] = [];
+  if (b.s.rules.capture) return planEnemy(b.s, false, b.turn).map((it) => ({ it, s: b.s }));
+  let s: BattleState = { ...b.s, turnSide: 1 };
+  const out: { it: Intent; s: BattleState }[] = [];
+  const pinned = new Set(b.pinned ?? []);
+  const acted = new Map<number, number>();
+  let ap = SLICE.enemyAp;
+  const push = (it: Intent, cost: number): boolean => {
+    const sim = simulate(s, [it], { freeAp: true });
+    if (!sim.ok) return false;
+    out.push({ it, s });
+    acted.set(it.pieceId, (acted.get(it.pieceId) ?? 0) + 1);
+    ap -= cost;
+    s = { ...sim.state, turnSide: 1 };
+    return true;
+  };
   for (const it of b.intents) {
-    const p = findPiece(b.s, it.pieceId);
-    if (!p || (b.pinned ?? []).includes(it.pieceId)) continue;
-    if (open(it, p)) {
-      out.push(it);
-      continue;
-    }
-    // 실행(enemyPhase)과 같은 선택 기준 — 화면 예고 = 실행
-    const alt = bestFor(b.s, p, taken, b.turn, { reach: playerReach(b.s), boss: b.boss });
-    if (alt) {
-      taken.add(`${alt.to.x},${alt.to.y}`);
-      out.push({ pieceId: p.id, to: alt.to });
-    }
+    // 핀 (D-281): 묶인 적은 이번 적 차례에 움직이지 않는다 — 예고 화살표가 바로 사라진다
+    if (pinned.has(it.pieceId) || s.winner !== null) continue;
+    const p = findPiece(s, it.pieceId);
+    if (!p) continue;
+    const cost = SLICE.moveCost[p.type];
+    if (cost > ap) continue;
+    if (legalMoves(s, p).some((q) => samePos(q, it.to)) && push(it, cost)) continue;
+    // 막혔으면 쉬지 않고 지금 보드에서 다시 고른다 (D-176) — 실행(enemyPhase)과 같은 선택 기준
+    const alt = bestFor(s, p, undefined, b.turn, { reach: playerReach(s), boss: b.boss, losing: foeLosing(s) });
+    if (alt) push({ pieceId: p.id, to: alt.to }, cost);
   }
   // 대체 행동 (테스터: 「움직이려던 기물이 죽으면 아무것도 안 한다」): 계획한 기물이 쓰러져 남은 태엽으로
-  // 아직 계획이 없는 적이 지금 보드에서 가장 좋은 수를 둔다 — 같은 기준(bestFor) · 같은 태엽 한도라 예고 = 실행 그대로
-  let ap = SLICE.enemyAp - out.reduce((n, it) => n + SLICE.moveCost[findPiece(b.s, it.pieceId)!.type], 0);
+  // 지금 보드에서 다시 이어 짠다 — 같은 기준(extendPlan) · 같은 태엽 한도라 예고 = 실행 그대로
   const lost = b.intents.some((it) => !findPiece(b.s, it.pieceId));
-  if (lost && ap > 0) {
-    const busy = new Set(out.map((it) => it.pieceId));
-    const reach = playerReach(b.s);
-    const spare = b.s.pieces
-      .filter((q) => q.side === 1 && !busy.has(q.id) && !(b.pinned ?? []).includes(q.id) && !(b.staggered ?? []).includes(q.id))
-      .map((q) => ({ q, best: bestFor(b.s, q, taken, b.turn, { reach, boss: b.boss }) }))
-      .filter((x) => x.best)
-      .sort((x, y) => y.best!.score - x.best!.score || x.q.id - y.q.id);
-    for (const { q, best } of spare) {
-      const cost = SLICE.moveCost[q.type];
-      if (cost > ap || taken.has(`${best!.to.x},${best!.to.y}`)) continue;
-      ap -= cost;
-      taken.add(`${best!.to.x},${best!.to.y}`);
-      out.push({ pieceId: q.id, to: best!.to });
+  if (lost && ap > 0 && s.winner === null) {
+    const skip = new Set([...pinned, ...(b.staggered ?? [])]);
+    for (const it of extendPlan(s, ap, b.turn, b.boss, skip, acted)) {
+      const p = findPiece(s, it.pieceId);
+      if (!p || !push(it, SLICE.moveCost[p.type])) break;
     }
     // 한 턴을 통째로 쉬지 않는다 (planEnemy와 같은 D-214 규칙): 겁나서 고른 게 없으면 위험을 무릅쓰고 가장 좋은 수 하나
     if (!out.length) {
-      const bold = b.s.pieces
-        .filter((q) => q.side === 1 && SLICE.moveCost[q.type] <= SLICE.enemyAp && !(b.pinned ?? []).includes(q.id) && !(b.staggered ?? []).includes(q.id))
-        .map((q) => ({ q, best: bestFor(b.s, q, taken, b.turn, { boss: b.boss }) }))
+      const bold = s.pieces
+        .filter((q) => q.side === 1 && SLICE.moveCost[q.type] <= SLICE.enemyAp && !skip.has(q.id))
+        .map((q) => ({ q, best: bestFor(s, q, undefined, b.turn, { boss: b.boss }) }))
         .filter((x) => x.best)
         .sort((x, y) => y.best!.score - x.best!.score || x.q.id - y.q.id)[0];
-      if (bold) out.push({ pieceId: bold.q.id, to: bold.best!.to });
+      if (bold) push({ pieceId: bold.q.id, to: bold.best!.to }, SLICE.moveCost[bold.q.type]);
     }
   }
   return out;
@@ -1719,7 +1758,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
     let sim = simulate(s1, [it], { freeAp: true });
     // 앞의 적이 움직이며 칸이 막혔으면 그 자리에서 다시 고른다 (쉬지 않는다)
     if (!sim.ok) {
-      const alt = bestFor(b.s, p, undefined, b.turn, { reach: playerReach(b.s), boss: b.boss });
+      const alt = bestFor(b.s, p, undefined, b.turn, { reach: playerReach(b.s), boss: b.boss, losing: foeLosing(b.s) });
       if (!alt) continue;
       it = { pieceId: p.id, to: alt.to };
       sim = simulate(s1, [it], { freeAp: true });

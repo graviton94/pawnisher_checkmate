@@ -826,8 +826,11 @@ class BoardScene extends Phaser.Scene {
     this.aimSig = aimSig;
     if (m.intent) {
       const faint = m.selectedId !== null ? 0.12 : 0.6;
+      // 같은 적의 두 번째 행동(2026-11-14)은 첫 행동이 닿은 칸에서 화살표를 잇는다
+      const at = new Map<number, Pos>();
       m.intent.plan.forEach((st, i) => {
-        for (const a of stepArrows(m.intent!.state, st)) this.arrow(a.from, a.to, a.knight, C.crimson, faint);
+        for (const a of stepArrows(m.intent!.state, st)) this.arrow(at.get(st.pieceId) ?? a.from, a.to, a.knight, C.crimson, faint);
+        at.set(st.pieceId, st.to);
         const bimg = this.badge(stepBadge(m.intent!.state, m.intent!.state, st), i + 1, faint + 0.25, true);
         if (newAim) this.dropAim(bimg, i);
       });

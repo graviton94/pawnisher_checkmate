@@ -42,3 +42,12 @@ export const defaultRules = (width: number, height: number): BattleRules => {
  * 적 킹의 방열판이 벗겨지고 턴마다 최대 HP의 rustPct만큼 녹슨다. 한 번 시작되면 멈추지 않는다.
  */
 export const STALL_PRESS = { from: 12, quiet: 2, rustPct: 0.1 };
+
+/**
+ * 적 AI 태엽 쓰기 (피드백 #10 · 2026-11-14 사용자 결정): 적도 태엽 3을 다 쓰려 한다.
+ * 수를 하나씩 정하고 그 수를 둔 판에서 다음 수를 다시 고른다(미리보기 = 실행, 같은 simulate).
+ * actMax = 한 적 차례의 최대 행동 수 · perPiece = 한 기물이 한 차례에 움직이는 최대 횟수(두 번째 행동) ·
+ * again = 같은 기물의 두 번째 행동 점수 배율(다른 기물이 먼저) · unspent = 태엽 1을 남길 때의 감점(이만큼 손해인 수까지는 둔다) ·
+ * losingKill = 패색(호위가 desperate 이하 또는 킹 HP 절반 아래)일 때 킹이 아닌 분대원을 쓰러뜨리는 수의 점수 배율(「하나는 데려간다」)
+ */
+export const FOE_AI = { actMax: 4, perPiece: 2, again: 0.8, unspent: 1.5, losingKill: 1.5 };

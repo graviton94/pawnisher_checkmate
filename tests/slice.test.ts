@@ -103,11 +103,14 @@ describe('교착 압박 (D-196)', () => {
     let hit = false;
     for (let turn = 20; turn < 26 && !hit; turn++) {
       const plan = planEnemy(s, false, turn, true);
-      expect(plan.length).toBe(1);
+      expect(plan.length).toBeGreaterThanOrEqual(1);
       const before = s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
-      const r = simulate({ ...s, turnSide: 1 }, plan, { freeAp: true });
-      expect(r.ok).toBe(true);
-      s = { ...r.state, turnSide: 0 };
+      // 한 기물의 두 번째 행동(2026-11-14)은 앞 수를 둔 판에서 — 실행(enemyPhase)처럼 한 수씩
+      for (const it of plan) {
+        const r = simulate({ ...s, turnSide: 1 }, [it], { freeAp: true });
+        expect(r.ok).toBe(true);
+        s = { ...r.state, turnSide: 0 };
+      }
       hit = s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0) < before;
     }
     expect(hit).toBe(true);
