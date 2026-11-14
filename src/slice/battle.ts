@@ -1,4 +1,5 @@
 import { PIECE_STATS } from '../data/pieces';
+import { STALL_PRESS } from '../data/battle';
 import { FORMS } from '../data/forms';
 import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, isFallen, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
@@ -182,6 +183,9 @@ export interface SliceBattle {
   drawnExtra?: number;
   /** 자살 수 경고를 이미 보였나 (이번 턴) */
   warned: boolean;
+  /** 교착 압박 (2026-11-14): 피해 없이 끝낸 내 턴이 몇 번 이어졌나 (from턴부터) · 녹이 시작됐나 */
+  quiet?: number;
+  rust?: boolean;
 }
 
 const shuffle = <T>(rng: Rng, a: T[]): T[] => {
@@ -777,8 +781,8 @@ export interface IntentRow {
   t: PieceType | null;
   /** 규칙 이름 (줄 폭격 · 자폭 등) */
   label?: string;
-  /** 맞을 내 기물 (공격 · 폭발) */
-  hits: { t: PieceType; damage: number; killed: boolean }[];
+  /** 맞을 내 기물 (공격 · 폭발) — side 1이면 적 기물(교착 압박의 적 킹) */
+  hits: { t: PieceType; damage: number; killed: boolean; side?: 0 | 1 }[];
   /** 방열판 · 호위 양 */
   amount?: number;
 }
@@ -813,7 +817,8 @@ export const intentRows = (b: SliceBattle): IntentRow[] => {
         rows.push(r);
       }
     } else if (e.type === 'blast') {
-      const hits = mine(e.hits);
+      // 교착 압박은 적 킹이 맞는다 — 적의 수 줄에 같이 보인다 (side 1)
+      const hits = e.label === STALL_LABEL ? e.hits.map((h) => ({ t: 'K' as PieceType, damage: h.damage, killed: h.killed, side: 1 as const })) : mine(e.hits);
       if (hits.length) rows.push({ kind: 'blast', pieceId: null, t: null, label: e.label, hits });
     } else if (e.type === 'move') {
       const a = pc(e.pieceId);
@@ -1321,7 +1326,7 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
 
 /** 킹 호위 방열판 (D-243): 적 킹은 호위(킹 아닌 적)가 남아 있는 동안 턴마다 방열판을 두른다 — 첫 턴에 킹부터 끝낼 수 없게 */
 const guardUp = (b: SliceBattle): void => {
-  if (!b.guard || b.boss) return;
+  if (!b.guard || b.boss || b.rust) return;
   const k = kingOf(b.s, 1);
   if (!k || !b.s.pieces.some((p) => p.side === 1 && p.type !== 'K')) return;
   k.shield = Math.max(k.shield, Math.round(k.maxHp * b.guard));
@@ -1669,6 +1674,39 @@ const procResolve = (b: SliceBattle, run: () => BattleEvent[], events: BattleEve
   if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
 };
 
+/** 교착 압박 띠 · 적의 수 줄에 쓰는 이름 (데이터: STALL_PRESS) */
+export const STALL_LABEL = '교착 압박';
+/**
+ * 교착 압박 (2026-11-14): 이번 턴을 지금 끝내면 적 킹이 녹스나 — 이미 녹이 시작됐거나, from턴부터 피해 없는 턴이 quiet번째가 되면.
+ * 적 차례(enemyPhase) 끝에 일어나므로 적의 수 미리보기(intentRows)와 실행이 같다.
+ */
+export const stallDue = (b: SliceBattle): boolean =>
+  !!b.rust || (b.turn >= STALL_PRESS.from && !((b.dealt?.[b.turn - 1] ?? 0) > 0) && (b.quiet ?? 0) + 1 >= STALL_PRESS.quiet);
+/** 교착 압박 화면 정보: 녹 피해량 · 지금 상태(off = 아무 일 없음 · warn = 압박이 켜지는 턴(from) 알림 · on = 지금 턴을 끝내면 녹슨다) */
+export const stallInfo = (b: SliceBattle): { state: 'off' | 'warn' | 'on'; dmg: number } => {
+  const k = kingOf(b.s, 1);
+  const dmg = k ? Math.max(1, Math.ceil(k.maxHp * STALL_PRESS.rustPct)) : 0;
+  if (!k || b.s.winner !== null) return { state: 'off', dmg };
+  if (stallDue(b)) return { state: 'on', dmg };
+  return { state: b.turn === STALL_PRESS.from ? 'warn' : 'off', dmg };
+};
+/** 녹: 적 킹 방열판을 벗기고 최대 HP의 rustPct — 쓰러지면 이긴다(반장은 2단계로 일어선다) */
+const stallRust = (b: SliceBattle, events: BattleEvent[]): void => {
+  if (b.s.winner !== null || !stallDue(b)) return;
+  const k = kingOf(b.s, 1);
+  if (!k) return;
+  const pre = cloneState(b.s);
+  const dmg = Math.max(1, Math.ceil(k.maxHp * STALL_PRESS.rustPct));
+  const absorbed = k.shield;
+  k.shield = 0;
+  k.hp = Math.max(0, k.hp - dmg);
+  events.push({ type: 'blast', pos: { x: k.x, y: k.y }, label: STALL_LABEL, hits: [{ targetId: k.id, damage: dmg + absorbed, shieldAbsorbed: absorbed, hpAfter: k.hp, killed: k.hp <= 0 }] });
+  if (k.hp > 0) return;
+  b.s = { ...b.s, winner: 0, pieces: b.s.pieces.filter((p) => p.id !== k.id) };
+  bossRise(b, pre, events);
+  if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
+};
+
 const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
   const events: BattleEvent[] = [];
   procResolve(b, () => processBefore(b), events);
@@ -1720,6 +1758,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
   }
   procResolve(b, () => processAfter(b), events);
   if (b.boss) events.push(...newBossAfter(b));
+  stallRust(b, events);
   return { events };
 };
 
@@ -1736,7 +1775,11 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.discard.push(...(b.played ?? []), ...b.hand);
   b.played = [];
   b.hand = [];
+  const rustNow = stallDue(b);
   const { events } = enemyPhase(b);
+  // 교착 압박 (2026-11-14): 이번 턴 피해가 없었으면 한 번 더 센다 — quiet번 이어지면 녹은 대국 끝까지
+  b.quiet = b.turn >= STALL_PRESS.from && !((b.dealt?.[b.turn - 1] ?? 0) > 0) ? (b.quiet ?? 0) + 1 : 0;
+  if (rustNow) b.rust = true;
   // 헛방 (D-229): 겨눴던 적이 빈 땅을 쳤으면 경직 — 다음 적 차례에 못 움직이고 방열판을 잃는다 (반장 킹은 방열판만)
   const hitters = new Set(events.flatMap((e) => (e.type === 'attack' && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 0) ? [e.attackerId] : [])));
   // 경직 면역: 지난번에 경직돼 한 차례 쉰 적은 이번에 다시 경직되지 않는다 (쉬고 → 움직이고 → 다시 경직 가능)

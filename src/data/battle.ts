@@ -35,3 +35,10 @@ export const defaultRules = (width: number, height: number): BattleRules => {
   const small = Math.min(width, height) <= 6;
   return { collapseStart: small ? 6 : 9, collapseInterval: 1, checkmate: true, foresight: 1 };
 };
+
+/**
+ * 교착 압박 (2026-11-14 사용자 결정 — 리뉴얼판의 정체 압박 되살리기, 체크메이트 처형은 기각):
+ * from턴부터 내가 적에게 피해를 주지 못한 턴이 quiet번 이어지면, 그 턴 끝(적 차례 끝)부터 대국이 끝날 때까지
+ * 적 킹의 방열판이 벗겨지고 턴마다 최대 HP의 rustPct만큼 녹슨다. 한 번 시작되면 멈추지 않는다.
+ */
+export const STALL_PRESS = { from: 12, quiet: 2, rustPct: 0.1 };

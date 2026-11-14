@@ -10,6 +10,7 @@ import { claimOnce } from './once';
 import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from '../data/build-trial';
 import { createBuildAct, createBuildTrial } from './build-trial';
 import { josa } from '../data/josa';
+import { STALL_PRESS } from '../data/battle';
 import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, SERVICE_CARDS, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
@@ -73,7 +74,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track as trackEvent } from './telemetry';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type ActSnap, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, stallInfo, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -660,6 +661,12 @@ const logPeek = (): void => {
   infoPeek({ key: `log:${blog.length}`, side: 'right', maxW: offBoardW('right'), head: `<p class="lead">${HUD_TEXT.logTitle}</p>`, body: rows || `<p class="note">${HUD_TEXT.logNone}</p>` });
 };
 
+/** 교착 압박 띠 (2026-11-14): 압박이 켜지는 턴 · 지금 턴을 끝내면 적 킹이 녹을 때 — 시스템 투 + 회중시계 아이콘 */
+const stallBand = (): void => {
+  const st = stallInfo(b);
+  if (st.state === 'off') return;
+  stateBand(st.state === 'on' ? HUD_TEXT.stallOn(st.dmg) : HUD_TEXT.stallWarn(STALL_PRESS.quiet), 'crimson', { urgent: true, ms: 2600, icon: '<img src="ui/icons16/stopwatch@16.png" alt="" style="width:calc(var(--px1) * 16);height:calc(var(--px1) * 16)">' });
+};
 /** 적 의도 아이콘 (UI-07, 받은 16칸 도트 — 아이콘 층 --px1 정수배) */
 const INTENT_ICON: Record<IntentKind, [number, number]> = { attack: [15, 21], approach: [16, 21], guard: [19, 22], blast: [19, 21], shield: [15, 19], rest: [20, 20] };
 const intentIco = (k: IntentKind): string => `<img class="it-ico" src="ui/icons16/intent-${k}.png" alt="" style="width:calc(var(--px1) * ${INTENT_ICON[k][0]});height:calc(var(--px1) * ${INTENT_ICON[k][1]})">`;
@@ -676,7 +683,7 @@ const intentList = (): void => {
   const W = HUD_TEXT.intentWord;
   const res = (r: IntentRow): string => {
     if (r.kind === 'attack' || r.kind === 'blast')
-      return `${r.label ? `<span class="it-w">${r.label}</span>` : ''}${r.hits.slice(0, 2).map((h) => `${pieceImg(h.t, 0, 'small', 24)}<em${h.killed ? ' class="kill"' : ''}>${h.killed ? '×' : `−${h.damage}`}</em>`).join('')}${r.hits.length > 2 ? `<span class="it-w">+${r.hits.length - 2}</span>` : ''}`;
+      return `${r.label ? `<span class="it-w">${r.label}</span>` : ''}${r.hits.slice(0, 2).map((h) => `${pieceImg(h.t, h.side ?? 0, 'small', 24)}<em${h.killed ? ' class="kill"' : ''}>${h.killed ? '×' : `−${h.damage}`}</em>`).join('')}${r.hits.length > 2 ? `<span class="it-w">+${r.hits.length - 2}</span>` : ''}`;
     if (r.kind === 'guard' || r.kind === 'shield') return `<span class="it-g">${W[r.kind]} +${r.amount ?? 0}</span>`;
     return `<span class="it-w">${W[r.kind]}</span>`;
   };
@@ -1326,6 +1333,7 @@ const onEndInner = async (): Promise<void> => {
   // 적 차례 끝 → 내 차례 사이 숨 (D-204)
   await new Promise((res) => window.setTimeout(res, calmNow() ? 0 : PACE.turnHold));
   band(HUD_TEXT.heatBand(b.turn, b.s.heat ?? 1), 'brass');
+  stallBand();
   handView = null;
   refresh();
   dealHand($('hand'));
