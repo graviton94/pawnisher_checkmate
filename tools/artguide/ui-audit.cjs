@@ -19,6 +19,8 @@ const SCENES = [
   ['p4-bossrules', async (p, A, W, S) => { await A(() => window.sliceApi.bossOf('plate', 1)); await W(4000); await A(() => document.getElementById('boss').click()); await W(700); await S(''); }],
   ['p4-warn', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.doom()); await W(500); await A(() => document.getElementById('btn-end').click()); await W(500); await S(''); }],
   ['p4-log', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.botMove()); await W(2600); await A(() => window.sliceApi.logPeek()); await W(500); await S(''); }],
+  // P-C D-491: 로딩 쪽지 · 입문 시험대 사이 안내서 한 쪽
+  ['pc-tip', async (p, A, W, S) => { await A(() => window.sliceApi.start(0)); await W(3000); await A(() => { void window.sliceApi.tipNow('battle'); }); await W(900); await S(''); }],
   ['p4-tut', async (p, A, W, S) => { await A(() => window.sliceApi.start(0)); await W(4500); await A(() => window.sliceApi.tutNow()); await W(3000); await S(''); }],
   // P-B (D-490): 판 위 글 갈래 — 바크 · 자막 띠 · 상태 띠 · 독백 · 판돈 칩 · 2단계 예고
   ['pb-bark', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.taunt('start')); await W(1500); await S('foe'); await A(() => window.sliceApi.allyBark()); await W(1500); await S('ally'); }],

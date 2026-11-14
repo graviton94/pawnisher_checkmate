@@ -42,6 +42,9 @@ const row = (kpi, value, pass, redLine, v) => rows.push(`| ${kpi} | ${value} | $
   const rate = started ? kit / started : 0;
   row('① 첫 10분: 1전투 진입(중앙값)', med === null ? '—' : `${med}초`, '≤ 30초', '> 120초', verdict(med !== null && med <= 30, med !== null && med > 120));
   row('① 첫 10분 완주율 (핵심 부품까지)', pct(kit, started), '≥ 80%', '< 65%', verdict(rate >= 0.8, started > 0 && rate < 0.65));
+  // 입문 시험대 셋 (D-491): battle1_start = 시험대 A에 손댄 순간, first_real_battle = 지도의 첫 실전 대국
+  const real = median(byTester.map((s) => s.find((e) => e.step_id === 'first_real_battle')?.elapsed_sec).filter((x) => x !== undefined));
+  row('① 첫 실전 대국 진입(중앙값, 입문 시험대 셋 뒤)', real === null ? '—' : `${real}초`, '≤ 300초', '> 480초', verdict(real !== null && real <= 300, real !== null && real > 480));
 }
 // ② 막별 · 노드별 사망 분포 · 체력 손실
 {

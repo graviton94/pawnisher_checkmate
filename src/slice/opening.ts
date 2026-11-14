@@ -8,7 +8,7 @@ import { PROLOGUE, type Cut, type Line } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { pxOut, replay, shake, typeIn } from './fx3';
 import { titleFx } from './uifx';
-import { clearBand, clearPeeks, coverArt, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, type CutLine, type WinOpts } from './uikit';
+import { clearBand, clearPeeks, coverArt, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, type CutLine, type WinBtn, type WinOpts } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -160,7 +160,7 @@ export const prologue = (short = false, before?: () => unknown): Promise<void> =
 export const pressHtml = (t: string): string => [...t].map((ch, k) => (ch === ' ' ? ' ' : `<span style="--k:${k}">${ch}</span>`)).join('');
 
 /** 안내서 왼쪽 정사각 (D-205): 실제 게임 화면을 자른 그림, 또는 코드 애니메이션 */
-const guideMedia = (m: GuideMedia): string => {
+export const guideMedia = (m: GuideMedia): string => {
   if ('img' in m) return `<div class="gd-media shot"><img src="guide/${m.img}.png" alt=""></div>`;
   if (m.anim === 'king')
     return `<div class="gd-media anim king"><span class="gd-crowned">${pieceImg('K', 0, 'large', 64)}</span><b>vs</b><span class="gd-foe">${pieceImg('K', 1, 'large', 64)}</span></div>`;
@@ -178,9 +178,10 @@ const guideMedia = (m: GuideMedia): string => {
  * 안내서 (D-391 키트 창): L 창 하나 — 위 탭 줄 · 쪽(그림 164 + 글 단) · 단추 줄 [닫는다] … 쪽 점 … [돌아간다 · 넘긴다].
  * 마지막 쪽 오른쪽 = last (첫 대국으로 / 닫는다). 어느 쪽에서든 닫는다 · Esc · 뒤 막 탭으로 닫힌다 (페르소나 테스트 m1).
  */
-export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_TEXT.close, o: { start?: number; tabs?: string; onTab?: (t: string) => void } = {}): Promise<void> =>
+export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_TEXT.close, o: { start?: number; tabs?: string; onTab?: (t: string) => void; /** 이 쪽들만 (입문 시험대 사이 한 쪽 — P-C D-491) */ only?: number[]; /** 쪽 번호 대신 가운데 글 */ mid?: string } = {}): Promise<void> =>
   new Promise((resolve) => {
-    let p = Math.max(0, Math.min(GUIDE_PAGES.length - 1, o.start ?? 0));
+    const list = o.only ?? GUIDE_PAGES.map((_, k) => k);
+    let p = Math.max(0, Math.min(list.length - 1, o.start ?? 0));
     let done = false;
     const end = (): void => {
       if (done) return;
@@ -189,28 +190,29 @@ export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_
     };
     const draw = (): void => {
       if (done) return;
-      const g = GUIDE_PAGES[p];
-      const fin = p === GUIDE_PAGES.length - 1;
+      const g = GUIDE_PAGES[list[p]];
+      const fin = p === list.length - 1;
       // 쪽 = 그림 + 제목(24) + 세 줄(합니다체) + 요령 한 줄 (D-264)
       const el = open({
         size: 'l',
         title: o.tabs ? OPENING_TEXT.helpTitle : OPENING_TEXT.guideTitle,
         head: o.tabs,
         body: `<div class="gd3"><div class="inset">${guideMedia(g.media)}</div><div class="stack gd-text3"><p class="lead">${g.title}</p>${g.lines.map((l) => `<p>${l}</p>`).join('')}${g.tip ? `<p class="up">“${g.tip}”</p>` : ''}</div></div>`,
-        back: fin && last === OPENING_TEXT.close ? undefined : { label: OPENING_TEXT.close, attrs: 'data-x' },
-        mid: `<span class="note">${p + 1} / ${GUIDE_PAGES.length}</span>`,
-        pair: [{ label: OPENING_TEXT.prev, attrs: 'data-prev', disabled: !p }, { label: fin ? last : OPENING_TEXT.next, attrs: 'data-next' }],
+        back: (fin && last === OPENING_TEXT.close) || o.only ? undefined : { label: OPENING_TEXT.close, attrs: 'data-x' },
+        mid: `<span class="note">${o.mid ?? `${p + 1} / ${list.length}`}</span>`,
+        // 한 쪽만이면 [넘긴다]만 (돌아갈 쪽이 없다)
+        ...(list.length === 1 ? { go: { label: last, attrs: 'data-next' } } : { pair: [{ label: OPENING_TEXT.prev, attrs: 'data-prev', disabled: !p }, { label: fin ? last : OPENING_TEXT.next, attrs: 'data-next' }] as [WinBtn, WinBtn] }),
         dismiss: end,
       });
       replay(el.querySelector('.gd-media')!, 'in');
       el.querySelector('[data-x]')?.addEventListener('click', () => (sfx('tap'), end()));
       el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'guide') return; sfx('tap'); end(); o.onTab?.(t.dataset.tab!); }));
-      el.querySelector('[data-prev]')!.addEventListener('click', () => {
+      el.querySelector('[data-prev]')?.addEventListener('click', () => {
         if (p > 0) (p--, sfx('tap'), draw());
       });
       el.querySelector('[data-next]')!.addEventListener('click', () => {
         sfx('tap');
-        if (p < GUIDE_PAGES.length - 1) return (p++, draw());
+        if (p < list.length - 1) return (p++, draw());
         end();
       });
     };

@@ -52,6 +52,14 @@ export interface BattleDef {
   atk?: number;
   /** 짜 둔 손패 (입문 판, D-232): 덱을 이 순서로 놓고 섞지 않는다 */
   order?: CommandId[];
+  /** 입문 시험대 (P-C D-491): a 치는 칸 · b 예고와 막기 · c 킹 잡기(= 출하 첫 대국). 화면은 이 판에 필요한 HUD만 연다 */
+  drill?: 'a' | 'b' | 'c';
+  /** 공정 열기 없이 늘 피해 100% (입문 시험대 — 「쳤는데 안 아프다」를 없앤다) */
+  flat?: boolean;
+  /** 적이 예고하지 않는다 (시험대 A — 서 있는 과녁) */
+  calm?: boolean;
+  /** 첫 턴 적의 수를 짜 둔다 (시험대 B): 그 칸의 적 → 갈 칸 */
+  script?: { from: { x: number; y: number }; to: { x: number; y: number } }[];
   /** 실험실 다시 보기 (D-468): 봇 출하와 같은 대국 시드 · 성장 깊이 */
   seed?: number;
   depth?: number;
@@ -228,32 +236,96 @@ const BOSS_RULE: BossRule[] = ['plate', 'spawn', 'thorns'];
 const TRAITS: FoeTrait[][] = [[], ['blastPawn'], ['blastPawn', 'rookPlate']];
 const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한 칸을 터뜨립니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.', ' 불꽃 표시 폰은 쓰러지면 터지고 룩은 방패를 두릅니다. 적 킹은 호위가 남은 동안 방열판을 두릅니다.'];
 
-/** 1막 앞 두 판 (첫 10분 — D-150) */
 /**
- * 입문 (D-232, 보고서 3 템플릿 1 — 첫 10분): 예전 작은 판 둘(시험대 4×4 · 연마 공정 5×5)을 90초짜리 한 판으로 합쳤다.
- * 1턴 = 연쇄 — 폰이 앞 폰을 베고(처치 · 태엽 +1) 나이트(부관 박차)가 내려앉으며 남은 폰 둘을 짓밟는다(3연쇄, D-241).
- * 2턴 = 예고 회피 — 적 킹이 나이트 · 폰 자리를 붉게 겨눈다. 붉은 칸에서 빠지며 치면 회피 반격 ×1.5.
- * 이기면 바로 첫 결정(영입 셋 중 하나), 핵심 부품 셋은 지도의 첫 대국 뒤로.
+ * 입문 시험대 셋 (P-C D-491, 후기 #4 — D-232의 「90초 한 판」을 다시 나눴다): 판 하나 = 생각 하나, 수마다 이유가 있다.
+ * 처음 출하하는 사람만 A → (안내서 한 쪽) → B → (안내서 한 쪽) → C. A · B는 출하 밖 연습판(보상 · 기록 없음), C가 출하의 첫 대국(영입 보상).
+ * 세 판 모두 공정 열기 없이 피해 100% — 실전의 배치 턴은 첫 실전 대국에서 부관이 한 줄로 짚는다.
+ * 분대는 표준 세트(킹 · 폰 · 나이트)라 자리를 짜 둔다. 판은 5×5 — 한 화면에 칸이 크게 든다.
  */
-export const INTRO: BattleDef[] = [
+export const DRILLS: BattleDef[] = [
   {
-    enemy: ['K', 'P', 'P', 'P'],
+    // A 「치는 칸」: 적은 움직이지 않는다(calm). 폰이 (1,2)에 내려앉아 대각선 앞 (2,3) 폰을, 나이트가 (2,2)에 내려앉아 L자로 (4,3) 폰을 쓰러뜨린다 — 수 둘 다 처치(금빛 과녁).
+    drill: 'a',
+    flat: true,
+    calm: true,
+    enemy: ['K', 'P', 'P'],
     kingHp: 0.35,
-    enemyHp: 0.4,
+    enemyHp: 0.3,
     w: 5,
+    // 세로 5: 끝 줄(4)이 비어 있어 폰의 두 칸 걸음 (1,3)이 승격 · 처치 칸이 되지 않는다 — 점(갈 수 있는 칸)과 금빛 과녁이 나란히 보인다
     h: 5,
     place: [
       { side: 0, t: 'K', x: 2, y: 0 },
       { side: 0, t: 'P', x: 1, y: 1 },
       { side: 0, t: 'N', x: 3, y: 0 },
-      { side: 1, t: 'K', x: 2, y: 4 },
-      { side: 1, t: 'P', x: 0, y: 3 },
+      { side: 1, t: 'K', x: 3, y: 3 },
+      { side: 1, t: 'P', x: 2, y: 3 },
       { side: 1, t: 'P', x: 4, y: 3 },
-      { side: 1, t: 'P', x: 3, y: 4 },
     ],
-    // 손패를 짜 둔다 (테스터 피드백 B): 1턴 = 폰 · 나이트 · (처치로 뽑는) 지휘 / 2턴 = 폰 둘(되감기 실습 · 승격) · 나이트(빠지며 치기)
-    order: ['advance', 'leap', 'kingStep', 'leap', 'kingStep', 'order', 'kingStep', 'advance', 'advance', 'leap', 'order', 'kingStep', 'advance', 'leap', 'order'],
-    deck: ['advance', 'leap', 'kingStep', 'leap', 'kingStep', 'order', 'kingStep', 'advance', 'advance', 'leap', 'order', 'kingStep', 'advance', 'leap', 'order'],
+    order: ['advance', 'leap', 'kingStep', 'advance', 'leap', 'advance', 'leap', 'kingStep'],
+    deck: ['advance', 'leap', 'kingStep', 'advance', 'leap', 'advance', 'leap', 'kingStep'],
+    title: '시험대 1 — 치는 칸',
+    narr: '',
+    tell: '',
+    reward: 'card',
+  },
+  {
+    // B 「예고와 막기」: 적 폰 ①이 (2,2)로 내려와 내 폰(1,1)을, 적 폰 ②가 (4,1)로 내려와 내 킹(3,0)을 겨눈다(짜 둔 수).
+    // 폰은 (1,2)로 빠지며 ①을 친다(빠지며 치기 ×1.5 — 파란 과녁, 쓰러지지 않는다) · 나이트는 (4,1)을 먼저 차지해 ②를 막는다.
+    // 태엽 3 − 1 − 1 = 1: 지휘(2)는 낼 수 없다. 턴을 끝내면 두 공격 모두 빈 칸을 친다(헛방).
+    drill: 'b',
+    flat: true,
+    enemy: ['K', 'P', 'P'],
+    kingHp: 0.35,
+    enemyHp: 0.55,
+    w: 5,
+    h: 5,
+    place: [
+      { side: 0, t: 'K', x: 3, y: 0 },
+      { side: 0, t: 'P', x: 1, y: 1 },
+      { side: 0, t: 'N', x: 2, y: 0 },
+      { side: 1, t: 'K', x: 4, y: 4 },
+      { side: 1, t: 'P', x: 2, y: 3 },
+      { side: 1, t: 'P', x: 4, y: 3 },
+    ],
+    script: [
+      { from: { x: 2, y: 3 }, to: { x: 2, y: 2 } },
+      { from: { x: 4, y: 3 }, to: { x: 4, y: 1 } },
+    ],
+    order: ['advance', 'leap', 'order', 'kingStep', 'leap', 'advance', 'leap', 'kingStep'],
+    deck: ['advance', 'leap', 'order', 'kingStep', 'leap', 'advance', 'leap', 'kingStep'],
+    title: '시험대 2 — 예고와 막기',
+    narr: '',
+    tell: '',
+    reward: 'card',
+  },
+];
+
+/**
+ * 입문 (시험대 C 「킹 잡기」, P-C D-491 — 출하의 첫 대국): 적 킹 HP 12.
+ * 나이트가 (4,2)에 내려앉아 L자로 킹(3,4)을 친다 — 피해 12 = 쓰러질 피해지만 체크로 HP 1에서 버틴다(엔진 plan.ts checkGuard).
+ * 폰이 (2,3)으로 두 칸 나아가 대각선 앞 킹을 한 번 더 치면 쓰러진다. 그 사이에 되감기 실습(톱니는 돌려준다).
+ * 적 폰 하나는 실전처럼 붉은 칸을 보인다. 이기면 바로 첫 결정(영입 셋 중 하나).
+ */
+export const INTRO: BattleDef[] = [
+  {
+    drill: 'c',
+    flat: true,
+    enemy: ['K', 'P'],
+    kingHp: 0.12,
+    enemyHp: 0.55,
+    w: 5,
+    h: 5,
+    place: [
+      { side: 0, t: 'K', x: 1, y: 0 },
+      { side: 0, t: 'P', x: 2, y: 1 },
+      { side: 0, t: 'N', x: 3, y: 0 },
+      { side: 1, t: 'K', x: 3, y: 4 },
+      { side: 1, t: 'P', x: 0, y: 3 },
+    ],
+    // 짜 둔 손패: 나이트(체크) · 폰(마무리) — 되감기 뒤에도 같은 손패라 직접 다시 둘 수 있다
+    order: ['leap', 'advance', 'kingStep', 'advance', 'leap', 'advance', 'leap', 'kingStep', 'order', 'advance', 'leap', 'kingStep'],
+    deck: ['leap', 'advance', 'kingStep', 'advance', 'leap', 'advance', 'leap', 'kingStep', 'order', 'advance', 'leap', 'kingStep'],
     title: '입문 — 시험대',
     narr: '흰 기물들이 처음으로 눈을 뜬다. 검은 것이 앞을 막는다.',
     tell: '카드를 고르고 기물을 움직여, 적 킹을 쓰러뜨리십시오.',

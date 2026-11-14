@@ -42,12 +42,12 @@ export const HUD_TEXT = {
   /** 경보 반장 (D-274) — ⑨ 표지 */
   alarm: '경보 — 이번 적 차례 공격 ×1.35',
   /** 공정 열기 (D-454): 턴 표시 · 내 차례 띠 — 피해 배율을 숫자로 */
-  turnHeat: (turn: number, heat: number): string => (turn === 1 ? '1턴 · 배치' : heat >= 1 ? `${turn}턴 · 최대` : `${turn}턴 · ${Math.round(heat * 100)}%`),
+  turnHeat: (turn: number, heat: number): string => (turn === 1 && heat < 1 ? '1턴 · 배치' : heat >= 1 ? `${turn}턴 · 최대` : `${turn}턴 · ${Math.round(heat * 100)}%`),
   /** 교착 압박 (2026-11-14): 압박이 켜지는 턴 알림 · 지금 턴을 끝내면 적 킹이 녹는다 (시스템 투) */
   // 띠는 한 줄(경보 띠 길이) — 규칙 풀이는 용어집 「교착 압박」
   stallWarn: (quiet: number) => `교착 감시 — 피해 없는 턴 ${quiet}번이면 압박`,
   stallOn: (dmg: number) => `교착 압박 — 턴 끝에 적 킹 HP −${dmg}`,
-  heatBand: (turn: number, heat: number) => (turn === 1 ? '배치 턴 · 피해 25%' : heat >= 1 ? `${turn}턴 · 열기 최대` : `${turn}턴 · 열기 ${Math.round(heat * 100)}%`),
+  heatBand: (turn: number, heat: number) => (turn === 1 && heat < 1 ? '배치 턴 · 피해 25%' : heat >= 1 ? `${turn}턴 · 열기 최대` : `${turn}턴 · 열기 ${Math.round(heat * 100)}%`),
   newTerm: (names: string) => `새 용어 「${names}」`,
   shock: '기어 쇼크 — 공격 ×0.75',
   /** 헛방 경직 → 「기절」 평문 (D-233: 고유 명사를 지우고 별 딱지 + 평문으로) */

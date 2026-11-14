@@ -8,6 +8,9 @@ import { typeIn } from './fx3';
 import { makeTalk } from './uikit';
 import { placeSub } from './voice';
 
+/** 부관 띠 최소 폭 (px) — 판 열이 좁아도 두 줄 안에 들게 (P-C D-491) */
+const SUB_MIN_W = 480;
+
 export interface TutStep {
   /** 부관의 말 (<em>낱말</em>은 한 번에 박힌다) */
   text: string;
@@ -30,6 +33,8 @@ export interface TutOpts {
   face: string;
   /** 건너뛰기 글 */
   skip: string;
+  /** 건너뛰기를 한 번 누른 뒤 글 (두 번 눌러야 건너뛴다) */
+  skipAgain?: string;
   /** 다음 표시 글 */
   next: string;
   /** 소리 (톡) */
@@ -73,7 +78,18 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       root.remove();
       resolve(done);
     };
-    root.querySelector('.tut-skip')!.addEventListener('click', (e) => (e.stopPropagation(), finish(false)));
+    // 건너뛰기는 두 번 눌러야 (P-C D-491): 「화면 아무 데나 눌러 다음」 걸음에서 손가락이 띠 속 단추에 닿아 입문 전체가 날아가던 것.
+    // 첫 탭 = 단추가 「한 번 더」로 바뀌고(armed) 2초 안에 다시 누르면 건너뛴다
+    const skipBtn = root.querySelector<HTMLButtonElement>('.tut-skip')!;
+    let armed = 0;
+    skipBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (armed && performance.now() - armed < 2000) return finish(false);
+      armed = performance.now();
+      skipBtn.textContent = o.skipAgain ?? o.skip;
+      skipBtn.classList.add('armed');
+      window.setTimeout(() => { if (alive && performance.now() - armed >= 2000) { skipBtn.textContent = o.skip; skipBtn.classList.remove('armed'); armed = 0; } }, 2050);
+    });
     /** 구멍 · 테 · 말풍선 자리를 지금 사각형에 맞춘다 */
     const place = (): void => {
       const s = steps[i];
@@ -101,11 +117,20 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       const battle = document.body.classList.contains('lay-f') && !document.body.classList.contains('between') && !!document.getElementById('left')?.offsetWidth && document.getElementById('overlay')?.hidden !== false;
       if (battle) {
         // #3 · P-B D-490: 전투 중 부관 안내 = 판 아래 가운데 자막 띠 하나 (레일 폭에 접히지 않는다). 짚은 곳이 판 아래쪽이면 판 위로
-        const low = !!r && r.top + r.height / 2 > H * 0.55;
-        talk.dataset.side = low ? 'top' : 'bottom';
+        // P-C D-491: 작은 시험대 판은 열을 거의 채워 띠가 판에 걸친다 — 아래 · 위 두 자리 중 짚은 곳 · 보이는 구멍을 덜 가리는 쪽(같으면 아래)
         talk.classList.add('on-sub');
         talk.classList.remove('top', 'bottom', 'on-rail');
-        placeSub(talk, low);
+        const keep = [...(r ? [r] : []), ...extra.map((q) => new DOMRect(q.x, q.y, q.w, q.h))];
+        const cover = (top: boolean): number => {
+          placeSub(talk, top, SUB_MIN_W);
+          const t = talk.getBoundingClientRect();
+          return keep.reduce((a, q) => a + Math.max(0, Math.min(t.right, q.right) - Math.max(t.left, q.left)) * Math.max(0, Math.min(t.bottom, q.bottom) - Math.max(t.top, q.top)), 0);
+        };
+        const low = !!r && r.top + r.height / 2 > H * 0.55;
+        const a = cover(low);
+        const flip = keep.length > 0 && cover(!low) < a;
+        if (!flip) placeSub(talk, low, SUB_MIN_W);
+        talk.dataset.side = low !== flip ? 'top' : 'bottom';
       } else {
         delete talk.dataset.side;
         talk.classList.remove('on-rail', 'on-sub');

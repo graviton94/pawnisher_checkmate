@@ -43,7 +43,7 @@
 }
 
 /* ---------- 3.1 창 — .win (S 352 · M 592 · L 883) ---------- */
-#overlay-panel.win, .kit-sheet .win, .k-peek.win {
+#overlay-panel.win, .kit-sheet .win, .k-peek.win, .ld-tip.win {
   position: relative; box-sizing: border-box;
   width: var(--win-w); max-width: calc(100vw - 2 * var(--G)); max-height: var(--win-hmax); min-height: 0;
   overflow: visible;
@@ -62,9 +62,9 @@
 }
 #overlay-panel.win { --win-w: var(--win-m); --win-hmax: var(--win-h); }
 /* 등장 · 퇴장 디더(m3in · m3out의 mask)가 테 밖으로 걸친 명패를 잘라 먹지 않게 */
-#overlay-panel.win { -webkit-mask-clip: no-clip; mask-clip: no-clip; }
+#overlay-panel.win, .ld-tip.win { -webkit-mask-clip: no-clip; mask-clip: no-clip; }
 #overlay-panel.win.win-s, .kit-sheet .win.win-s { --win-w: var(--win-s); --win-hmax: var(--win-h-s); }
-#overlay-panel.win.win-m, .kit-sheet .win.win-m { --win-w: var(--win-m); --win-hmax: var(--win-h); }
+#overlay-panel.win.win-m, .kit-sheet .win.win-m, .ld-tip.win { --win-w: var(--win-m); --win-hmax: var(--win-h); }
 #overlay-panel.win.win-l, .kit-sheet .win.win-l { --win-w: var(--win-l); --win-hmax: var(--win-h); }
 /* 이야기 재질(튜토리얼 · 부관 · 편지 전용 — 시스템 창에 쓰지 않는다) */
 #overlay-panel.win.win-paper, .kit-sheet .win.win-paper {
@@ -1262,3 +1262,15 @@ body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {
 body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has(.promotion, .prologue, .credits, .actcard) .coach-band { display: none; }
 /* D-478: 낮은 화면(16:9 폰 360)에서 부품 두 줄이 다 보이게 — 적 의도 줄만 낮춘다(32 → 26) */
 @media (max-height: 380px) { .intents .it-row { min-height: 26px; } }
+
+/* ---------- 로딩 쪽지 · 입문 시험대 HUD (P-C D-491, 후기 #4 · #5) ---------- */
+/* 쪽지 = 닫힌 철문 위 가운데 M 창(키트 철판 빌림 — 임시, LD-01 안내서 액자 · 팁 쪽지 · LD-02 작업대 바탕 대기). 누르면 넘긴다 */
+.ld-tip-wrap { position: fixed; inset: 0; z-index: 111; box-sizing: border-box; display: grid; place-items: center; padding: var(--Gy) var(--G); }
+/* 줄인 움직임 · 철문 없이 뜰 때: 먹 2×2 디더 막 (부팅 화면과 같은 바닥) */
+.ld-tip-wrap.solid { background: #0b0b0e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%2316141c'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2316141c'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
+.ld-tip.win.ld-in { animation: m3in 400ms both; transform-origin: 50% 100%; }
+.ld-tip.win .ld-more { margin: 0; text-align: center; }
+/* 입문 시험대: 그 판의 생각에 필요한 HUD만 연다 — 나머지는 자리를 지킨 채 숨긴다(레이아웃이 흔들리지 않게).
+   A 치는 칸 = 손패 · 판만 / B 예고와 막기 = + 태엽 · 턴 표시 · 적의 수 · 턴 끝 / C 킹 잡기 = 전부(되감기 포함) */
+body[data-drill='a'] #vials, body[data-drill='a'] #right > *, body[data-drill='a'] #deckrow { visibility: hidden; }
+body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='b'] #btn-help, body[data-drill='b'] #parts, body[data-drill='b'] #deckrow, body[data-drill='b'] #bet-chip { visibility: hidden; }

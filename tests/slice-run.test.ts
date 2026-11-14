@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildRun, ftueRetry, FTUE, INTRO, MAP } from '../src/slice/run';
-import { endTurn, newSliceBattle, playCard } from '../src/slice/battle';
+import { newSliceBattle, playCard } from '../src/slice/battle';
 import { START_COMMANDS } from '../src/slice/cards';
 
 describe('출하 지도 (D-168)', () => {
@@ -147,17 +147,16 @@ describe('막별 반장 · 적 특성 (D-171)', () => {
     expect(boss(b, 1).kingHp).toBe(boss(a, 1).kingHp);
     expect(b[0].rows.map((r) => r.map((n) => n.kind).join()).join('|')).toBe(a[0].rows.map((r) => r.map((n) => n.kind).join()).join('|'));
   });
-  it('입문 한 판 (D-232 · D-241): 짜 둔 손패로 1턴에 폰 → 나이트 짓밟기 3연쇄, 적 차례 뒤 붉은 칸 위의 내 기물이 빠지며 칠 수 있다', () => {
+  it('입문 = 시험대 C 「킹 잡기」 (P-C D-491): 나이트 한 방에 체크(HP 1) → 폰 한 대 더에 쓰러진다', () => {
     const d = INTRO[0];
-    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true });
-    expect(b.hand.slice(0, 2)).toEqual(['advance', 'leap']);
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true, flatHeat: d.flat });
+    expect(b.hand.slice(0, 2)).toEqual(['leap', 'advance']);
     const id = (t: string) => b.s.pieces.find((p) => p.side === 0 && p.type === t)!.id;
-    expect(typeof playCard(b, 0, id('P'), { x: 1, y: 2 })).toBe('object');
-    expect(b.kills).toBe(1);
-    expect(typeof playCard(b, b.hand.indexOf('leap'), id('N'), { x: 2, y: 2 })).toBe('object');
-    expect(b.kills).toBeGreaterThanOrEqual(3);
-    endTurn(b, true);
+    const k = () => b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    expect(typeof playCard(b, 0, id('N'), { x: 4, y: 2 })).toBe('object');
+    expect(k()!.hp).toBe(1);
     expect(b.s.winner).toBeNull();
-    expect((b.graze ?? []).length).toBeGreaterThan(0);
+    expect(typeof playCard(b, b.hand.indexOf('advance'), id('P'), { x: 2, y: 3 })).toBe('object');
+    expect(b.s.winner).toBe(0);
   });
 });
