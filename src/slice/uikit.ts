@@ -443,8 +443,8 @@ interface BandItem {
 }
 const bandQ: BandItem[] = [];
 /** 상태 띠 기본 아이콘 (경고 = 과녁 · 턴 = 태엽 열쇠 · 안내 = ?) */
-const bandIcon = (key: string): string => `<img src="ui/icons16/${key}@16.png" alt="" aria-hidden="true">`;
-const BAND_ICON: Record<BandKind, string> = { crimson: bandIcon('intent-attack'), brass: bandIcon('hud.key.full'), toast: bandIcon('hud.help') };
+const bandIcon = (file: string): string => `<img src="ui/icons16/${file}.png" alt="" aria-hidden="true">`;
+const BAND_ICON: Record<BandKind, string> = { crimson: bandIcon('intent-attack'), brass: bandIcon('hud.key.full@16'), toast: bandIcon('hud.help@16') };
 let bandNow: { item: BandItem; el: HTMLElement; t: number } | null = null;
 /** 띠를 붙일 곳: 전투 HUD가 보이면 판 열 위, 아니면 화면 위 가운데 (부르는 쪽이 정한다) */
 let bandAnchor: () => DOMRect | null = () => null;

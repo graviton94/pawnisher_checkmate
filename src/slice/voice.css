@@ -1,47 +1,88 @@
 /* ===================== P-B 판 위 글 갈래 (D-489, 후기 #6 · #3 · #29 · #12 · #21) — src/slice/voice.ts =====================
-   바크 = 기물 머리 위 철 판 + 진영 이름표 + 꼬리 · 자막 띠 = 판 아래 철 띠 + 초상 · 독백 = 누른 자리 곁 종이 테이프.
-   임시 부품 (D-386): 꼬리 chrome/tip-*(90° 돌림) · 이름표 UI-24 강조 띠 · 몸 toast-iron — DL-01(대사 띠) · DL-02(이름표 · 액자) 대기.
-   kit.css 뒤에 불린다 (토큰 --px · --k-toast · ktoastin을 쓴다). */
-.vbark {
-  position: fixed; z-index: 70; box-sizing: border-box; display: grid; gap: var(--px); max-width: 232px; padding: 0 var(--s1) var(--px);
-  border-style: solid; border-width: calc(var(--k-toast) * var(--px));
-  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
-  image-rendering: pixelated; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e); cursor: pointer; pointer-events: auto;
+   받은 DL-01 대사 띠 · DL-02 이름표 · 초상 액자 (2026-11-14, tools/pixel/dl_refine.py로 9-slice 띠를 고르게):
+   바크 = 기물 머리 위 대사 띠(1도트 = --px1, 한 줄) + 이름표 + 꼬리 · 자막 띠 = 판 아래 같은 띠(1도트 = --px) · 시스템 = 매단 쇠 띠 ·
+   독백 = 누른 자리 곁 종이 테이프. 적 = 검은 쇠 + 진홍 등 + 오른쪽 초상 홈 + 왼쪽 쐐기 / 우리 = 황동 + 종이 + 왼쪽 초상 홈 + 청록 등 —
+   색만이 아니라 재질 · 홈 자리 · 이름표 모양으로 가른다 (원칙 4). 꼬리는 아직 빌린 chrome/tip-*(90° 돌림) — 「임시 — DL 꼬리 재발주」.
+   9-slice 테 (도트, 위 · 오른 · 아래 · 왼): talk-foe 21 27 14 21 · talk-ally 9 13 18 36 · talk-sys 16 21 7 21 · talk-sys-warn 13 21 3 21 ·
+   name-foe 0 6 0 8 · name-ally 0 10 0 7 · name-npc 0 5 0 14. 등 · 보석 · 쐐기 · 초상 홈은 늘지 않는 모서리 칸 안에 있다(D-386). */
+.dl-band {
+  --d: var(--px); --lh: 12;
+  position: fixed; box-sizing: border-box; display: block; image-rendering: pixelated; border-style: solid;
+  filter: drop-shadow(var(--d) var(--d) 0 #0b0b0e);
 }
-.vbark .vb-name { justify-self: start; margin-top: calc(var(--px) * -12); }
-.vbark.side-foe .vb-name { justify-self: end; }
-.vbark .vb-line { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; overflow-wrap: break-word; white-space: normal; }
-.vbark.side-foe .vb-line { color: #ffd8cf; }
-.vbark .vb-tail {
-  position: absolute; left: calc(var(--tail-x, 50%) - var(--k-toast) * var(--px) - var(--px) * 6); top: calc(100% + var(--k-toast) * var(--px) - var(--px) * 8);
-  width: calc(var(--px) * 12); height: calc(var(--px) * 24); transform: rotate(90deg);
-  background: url('../assets/ui/chrome/tip-cyan.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; pointer-events: none;
+.dl-band.dl-foe {
+  border-width: calc(var(--d) * 21) calc(var(--d) * 27) calc(var(--d) * 14) calc(var(--d) * 21);
+  border-image: url('../assets/ui/chrome/v2/talk-foe.png') 21 27 14 21 fill / calc(var(--d) * 21) calc(var(--d) * 27) calc(var(--d) * 14) calc(var(--d) * 21) / 0 stretch;
 }
-.vbark.side-foe .vb-tail { background-image: url('../assets/ui/chrome/tip-crimson.png'); }
-.vbark.side-gilded .vb-tail { background-image: url('../assets/ui/chrome/tip-brass.png'); }
-.vbark.below .vb-tail { top: calc(-1 * var(--k-toast) * var(--px) - var(--px) * 16); transform: rotate(-90deg); }
-.vbark.below .vb-name { margin-top: 0; }
-.vbark.k-in { animation: ktoastin 200ms steps(3, jump-none) both; }
+.dl-band.dl-ally {
+  border-width: calc(var(--d) * 9) calc(var(--d) * 13) calc(var(--d) * 18) calc(var(--d) * 36);
+  border-image: url('../assets/ui/chrome/v2/talk-ally.png') 9 13 18 36 fill / calc(var(--d) * 9) calc(var(--d) * 13) calc(var(--d) * 18) calc(var(--d) * 36) / 0 stretch;
+}
+/* 글 줄: 띠 몸(적 = 쇠 10 ~ 33행 · 우리 = 종이 7 ~ 23행) 가운데에 — 테 칸 안으로 겹쳐 앉는다 */
+.dl-band .dl-line { margin: 0; font: 400 15px/calc(var(--d) * var(--lh)) Galmuri14, Galmuri11, sans-serif; word-break: keep-all; overflow-wrap: break-word; white-space: normal; }
+.dl-foe .dl-line { color: #ffd8cf; margin: calc(var(--d) * (0.5 - var(--lh) / 2)) calc(var(--d) * 1) calc(var(--d) * (1.5 - var(--lh) / 2)) calc(var(--d) * -7); }
+.dl-ally .dl-line { color: var(--t-ink); margin: calc(var(--d) * (6 - var(--lh) / 2)) calc(var(--d) * 1) calc(var(--d) * (-1 - var(--lh) / 2)) calc(var(--d) * -9); }
+/* 초상 홈: 적 = 오른쪽 60 ~ 74열 · 14 ~ 29행 / 우리 = 왼쪽 6 ~ 21열 · 8 ~ 23행 (세로로 늘면 홈도 같이 — 그림은 cover로 자른다) */
+.dl-band .dl-face { position: absolute; overflow: hidden; background: #0b0b0e; }
+.dl-foe .dl-face { right: calc(var(--d) * -19); top: calc(var(--d) * -7); bottom: calc(var(--d) * -7); width: calc(var(--d) * 15); }
+.dl-ally .dl-face { left: calc(var(--d) * -30); top: calc(var(--d) * -1); bottom: calc(var(--d) * -10); width: calc(var(--d) * 16); }
+.dl-band .dl-face > :is(img, canvas, .piece) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; image-rendering: pixelated; }
+/* 이름표 (DL-02): 띠 위 가장자리에 걸친다 — 적 = 검은 쇠 + 진홍 쐐기 · 우리 = 황동 + 청록 보석 · 도금왕 = 황동 · NPC = 종이 꼬리표 */
+.dl-name {
+  --d: inherit; position: absolute; box-sizing: border-box; display: inline-flex; align-items: center; height: calc(var(--d) * 15); padding: 0; margin: 0;
+  border-style: solid; image-rendering: pixelated; font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap;
+}
+.dl-name { border-width: 0 calc(var(--d) * 6) 0 calc(var(--d) * 8); border-image: url('../assets/ui/chrome/v2/name-foe.png') 0 6 0 8 fill / 0 calc(var(--d) * 6) 0 calc(var(--d) * 8) / 0 stretch; color: var(--t-body); }
+.dl-name.n-ally { border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); }
+.dl-foe .dl-name { top: calc(var(--d) * -29); left: calc(var(--d) * 1); }
+.dl-ally .dl-name { top: calc(var(--d) * -17); left: calc(var(--d) * -9); }
 
-.vsub {
-  position: fixed; z-index: 80; box-sizing: border-box; display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s2);
-  min-height: calc(var(--px) * 30); border-style: solid; border-width: calc(var(--k-toast) * var(--px));
-  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
-  image-rendering: pixelated; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e); cursor: pointer; pointer-events: auto;
-}
-.vsub .vs-face { --fs: calc(var(--px) * 24); flex: none; overflow: hidden; }
-.vsub .vs-face > :is(img, canvas, .piece) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; image-rendering: pixelated; }
-.vsub .vs-body { flex: 1 1 auto; min-width: 0; display: grid; gap: var(--px); }
-.vsub .vs-who { color: var(--t-body); font: 700 12px/1.4 Galmuri11, sans-serif; }
-.vsub .vs-who.side-ally { color: var(--t-ally); }
-.vsub .vs-who.side-foe { color: var(--t-loss); }
-.vsub .vs-who.side-gilded { color: var(--t-gold); }
-.vsub .vs-line { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; overflow-wrap: break-word; }
+/* 바크: 한 줄 · 1도트 = --px1 (기물 칸을 덮지 않게 작게) */
+.vbark { --d: var(--px1); --lh: 17; z-index: 70; max-width: min(400px, calc(100vw - 16px)); cursor: pointer; pointer-events: auto; }
+.vbark .dl-line { white-space: nowrap; }
+.vbark .vb-tail { position: absolute; width: calc(var(--d) * 12); height: calc(var(--d) * 24); background: url('../assets/ui/chrome/tip-cyan.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; pointer-events: none; transform: rotate(90deg); }
+.vbark.dl-foe .vb-tail { background-image: url('../assets/ui/chrome/tip-crimson.png'); left: calc(var(--tail-x, 50%) - var(--d) * 27); bottom: calc(var(--d) * -30); }
+.vbark.dl-ally .vb-tail { left: calc(var(--tail-x, 50%) - var(--d) * 42); bottom: calc(var(--d) * -34); }
+.vbark.side-gilded .vb-tail { background-image: url('../assets/ui/chrome/tip-brass.png'); }
+.vbark.below .vb-tail { bottom: auto; transform: rotate(-90deg); }
+.vbark.below.dl-foe .vb-tail { top: calc(var(--d) * -31); }
+.vbark.below.dl-ally .vb-tail { top: calc(var(--d) * -24); }
+.vbark.below.dl-foe .dl-name { top: auto; bottom: calc(var(--d) * -27); }
+.vbark.below.dl-ally .dl-name { top: auto; bottom: calc(var(--d) * -31); }
+.vbark.k-in { animation: dlin 200ms steps(3, jump-none) both; }
+/* 등장 계단 3프레임 — 이름표 · 꼬리가 띠 밖으로 나와 있어 바깥은 자르지 않는다 (끝은 clip-path 없음) */
+@keyframes dlin { 0% { clip-path: inset(-64px -64px 66% -64px); } 50% { clip-path: inset(-64px -64px 33% -64px); } 100% { clip-path: none; } }
+
+/* 자막 띠: 같은 띠 · 1도트 = --px, 두 줄까지 (세로는 띠의 고른 행이 는다) */
+.vsub { --d: var(--px); --lh: 12; z-index: 80; cursor: pointer; pointer-events: auto; }
 .vsub.coach-band { z-index: 60; pointer-events: none; cursor: default; }
-.vsub.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
-/* 튜토리얼 말풍선을 자막 띠 자리에 (#3): 전투 중이면 판 아래 가운데 한 줄 띠 — 레일 폭에 접히지 않는다 */
-.tut .talk.on-sub { transform: none; flex-direction: row; align-items: center; max-width: none; }
-.tut .talk.on-sub .talk-face { --fs: calc(var(--px) * 24); }
+.vsub.k-in { animation: dlin 240ms steps(3, jump-none) both; }
+/* 튜토리얼 말풍선을 자막 띠 자리에 (#3): 전투 중이면 판 아래 가운데 — 우리 띠(황동 + 종이), 초상은 왼쪽 홈 */
+.tut .talk.on-sub {
+  --d: var(--px); --lh: 12; transform: none; display: block; max-width: none; padding: 0; filter: drop-shadow(var(--d) var(--d) 0 #0b0b0e);
+  border-style: solid; border-width: calc(var(--d) * 9) calc(var(--d) * 13) calc(var(--d) * 18) calc(var(--d) * 36);
+  border-image: url('../assets/ui/chrome/v2/talk-ally.png') 9 13 18 36 fill / calc(var(--d) * 9) calc(var(--d) * 13) calc(var(--d) * 18) calc(var(--d) * 36) / 0 stretch; background: none;
+}
+.tut .talk.on-sub .talk-face { position: absolute; left: calc(var(--d) * -30); top: calc(var(--d) * -1); bottom: calc(var(--d) * -10); width: calc(var(--d) * 16); height: auto; border: 0; border-image: none; background: #0b0b0e; }
+.tut .talk.on-sub .talk-body { border: 0; border-image: none; background: none; padding: 0; min-height: 0; margin: calc(var(--d) * -2) calc(var(--d) * 1) calc(var(--d) * -7) calc(var(--d) * -9); gap: 0; }
+.tut .talk.on-sub .who { position: absolute; top: calc(var(--d) * -17); left: calc(var(--d) * -9); box-sizing: border-box; height: calc(var(--d) * 15); display: inline-flex; align-items: center; border-style: solid; border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); font: 700 12px/1 Galmuri11, sans-serif; image-rendering: pixelated; }
+.tut .talk.on-sub .line { color: var(--t-ink); font: 400 15px/calc(var(--d) * 12) Galmuri14, Galmuri11, sans-serif; }
+.tut .talk.on-sub .talk-next { color: var(--t-brass-ink); }
+
+/* 시스템 갈래 = 매단 쇠 띠 (DL-01 셋째 · 넷째): 안내 = 쇠 · 경고 = 양 끝 진홍 줄무늬. 한 줄 · 아이콘 + 글 */
+.state-band.k-toast {
+  border-width: calc(var(--px) * 16) calc(var(--px) * 21) calc(var(--px) * 7) calc(var(--px) * 21);
+  border-image: url('../assets/ui/chrome/v2/talk-sys.png') 16 21 7 21 fill / calc(var(--px) * 16) calc(var(--px) * 21) calc(var(--px) * 7) calc(var(--px) * 21) / 0 stretch;
+  min-height: 0; padding: 0; line-height: calc(var(--px) * 10);
+}
+.state-band.k-toast > * { margin-top: calc(var(--px) * -4); margin-bottom: calc(var(--px) * -3); }
+.state-band.k-crimson {
+  border-width: calc(var(--px) * 13) calc(var(--px) * 21) calc(var(--px) * 3) calc(var(--px) * 21);
+  border-image: url('../assets/ui/chrome/v2/talk-sys-warn.png') 13 21 3 21 fill / calc(var(--px) * 13) calc(var(--px) * 21) calc(var(--px) * 3) calc(var(--px) * 21) / 0 stretch;
+  min-height: 0; height: calc(var(--px) * 26); padding: 0; color: var(--t-body); font: 400 15px/calc(var(--px) * 10) Galmuri14, Galmuri11, sans-serif;
+}
+.state-band.k-crimson > * { position: relative; top: calc(var(--px) * 1); }
+.state-band.k-toast > img, .state-band.k-crimson > img { width: auto; height: auto; max-height: 21px; }
 
 .vmono {
   position: fixed; z-index: 85; box-sizing: border-box; max-width: 280px; padding: 0 var(--s1);
@@ -96,7 +137,13 @@ body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #b3121c, inset
   .p2-flash { display: none; }
 }
 
-/* 사건 대사 칸의 종이왕 독백 (#16): 이름표 앞 얼굴 24 — 말하는 NPC가 없는 사건도 칸이 비지 않는다. 임시 — DL-02 액자 · PT 초상 대기 */
-.win-scene .ws-say.is-king .who { display: flex; align-items: center; gap: var(--s1); color: var(--t-body); }
-.win-scene .ws-say .ws-face { width: 24px; height: 24px; object-fit: cover; object-position: 50% 30%; image-rendering: pixelated; box-shadow: 0 0 0 var(--px) #0b0b0e; }
-.win-scene .ws-say.is-king .ws-line { color: var(--t-gold); }
+/* 사건 대사 칸 (#16 · D-489): 이름 = DL-02 이름표 — NPC = 종이 꼬리표, 종이왕 = 황동 + 청록 보석 · DL-02 우리 액자 안 얼굴.
+   말하는 NPC가 없는 사건도 칸이 비지 않는다. NPC 초상은 아직 — 「임시 — PT-01 ~ 04 대기」 */
+.win-scene .ws-say .who:not(:empty) { --d: var(--px1); display: inline-flex; align-items: center; box-sizing: border-box; height: calc(var(--d) * 15); width: max-content; max-width: 100%;
+  border-style: solid; border-width: 0 calc(var(--d) * 5) 0 calc(var(--d) * 14); border-image: url('../assets/ui/chrome/v2/name-npc.png') 0 5 0 14 fill / 0 calc(var(--d) * 5) 0 calc(var(--d) * 14) / 0 stretch;
+  image-rendering: pixelated; color: var(--t-ink); line-height: 1; margin-bottom: var(--s1); }
+.win-scene .ws-say.is-king { display: grid; grid-template-columns: auto 1fr; column-gap: var(--s2); align-items: center; }
+.win-scene .ws-say.is-king .who { grid-column: 2; border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); }
+.win-scene .ws-say.is-king .ws-line { grid-column: 2; color: var(--t-gold); }
+.win-scene .ws-say .ws-face { grid-row: 1 / span 2; grid-column: 1; box-sizing: border-box; width: calc(var(--px1) * 43); height: calc(var(--px1) * 43); padding: calc(var(--px1) * 8) calc(var(--px1) * 7) calc(var(--px1) * 8) calc(var(--px1) * 7);
+  background: url('../assets/ui/chrome/v2/portrait-ally.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; image-rendering: pixelated; object-fit: cover; object-position: 50% 30%; }

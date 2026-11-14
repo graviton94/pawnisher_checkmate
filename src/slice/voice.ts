@@ -39,16 +39,18 @@ export const clearBark = (): void => {
   barkNow.el.remove();
   barkNow = null;
 };
+/** 띠 1도트 (CSS --px1) — 이름표 · 꼬리가 띠 밖으로 나온 만큼 자리를 잰다 */
+const dot1 = (): number => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--px1')) || 1;
 const placeBark = (el: HTMLElement, at: BarkAt): void => {
   const w = el.offsetWidth;
   const h = el.offsetHeight;
+  const d = dot1();
   const G = 8;
   const left = Math.round(Math.max(G, Math.min(innerWidth - w - G, at.x - w / 2)));
-  // 꼬리 높이(쐐기 12도트 → 화면 약 12px)만큼 띄워 머리 위에. 화면 위로 넘치면 기물 아래로 뒤집는다
-  const tail = 12;
-  let top = Math.round(at.y - at.half - h - tail + 4);
-  const below = top < 4;
-  if (below) top = Math.round(at.y + at.half + tail - 4);
+  // 꼬리(띠 아래로 10도트)가 머리 위에 닿게. 이름표(띠 위로 8도트)까지 화면 위로 넘치면 기물 아래로 뒤집는다(꼬리 위 · 이름표 아래)
+  let top = Math.round(at.y - at.half - h - 10 * d + 2);
+  const below = top - 8 * d < 4;
+  if (below) top = Math.round(at.y + at.half + 4 * d);
   el.classList.toggle('below', below);
   el.style.left = `${left}px`;
   el.style.top = `${top}px`;
@@ -58,7 +60,7 @@ const placeBark = (el: HTMLElement, at: BarkAt): void => {
  * 바크 한 줄 (기물의 말). 자막 띠가 떠 있거나, 더 높은 바크가 떠 있거나, 간격(VOICE_TIMING.gap) 안이면 버린다.
  * prio: 적 킹 2 · 기물 1 (같으면 새 것이 바꾼다). 떴으면 true.
  */
-export const bark = (o: { at: () => BarkAt | null; side: VoiceSide; name: string; text: string; prio?: number; force?: boolean }): boolean => {
+export const bark = (o: { at: () => BarkAt | null; side: VoiceSide; name: string; text: string; face?: string; prio?: number; force?: boolean }): boolean => {
   const prio = o.prio ?? 1;
   if (subOn || document.body.classList.contains('between')) return false;
   // 이름표가 붙은 말은 그 자체가 따옴표다 (voice.md 말풍선) — 데이터의 “ ”를 걷는다
@@ -69,12 +71,12 @@ export const bark = (o: { at: () => BarkAt | null; side: VoiceSide; name: string
   if (!at) return false;
   clearBark();
   const el = document.createElement('div');
-  el.className = `vbark kit side-${o.side}`;
+  el.className = `vbark dl-band dl-${o.side === 'ally' ? 'ally' : 'foe'} side-${o.side}`;
   el.setAttribute('role', 'status');
-  // 이름표 = 진영 재질 (적 진홍 띠 · 우리 · 도금왕 황동 띠) + 꼬리 색 — 색만이 아니라 띠 자리(적 = 오른쪽 · 우리 = 왼쪽)로도 가른다 (원칙 4)
-  el.innerHTML = `<b class="ribbon vb-name${o.side === 'foe' ? ' r-crimson' : ''}">${o.name}</b><p class="vb-line"></p><i class="vb-tail" aria-hidden="true"></i>`;
+  // 받은 DL-01 띠 + DL-02 이름표 — 적 = 검은 쇠 · 진홍 등 · 오른쪽 홈, 우리 = 황동 · 종이 · 왼쪽 홈 (원칙 4: 재질 · 홈 자리 · 이름표 모양)
+  el.innerHTML = bandHtml(o) + '<i class="vb-tail" aria-hidden="true"></i>';
   document.body.appendChild(el);
-  const line = el.querySelector<HTMLElement>('.vb-line')!;
+  const line = el.querySelector<HTMLElement>('.dl-line')!;
   // 자리는 다 찍힌 글로 먼저 잰다 (찍히는 동안 폭이 흔들리지 않게)
   line.innerHTML = o.text;
   el.style.width = `${Math.ceil(el.offsetWidth)}px`;
@@ -113,9 +115,12 @@ export const placeSub = (el: HTMLElement, top = false): void => {
   const y = top ? (r ? r.top : 8) : r ? r.bottom - h : innerHeight - h - 8;
   el.style.top = `${Math.round(Math.max(4, Math.min(innerHeight - h - 4, y)))}px`;
 };
-/** 자막 띠 틀 (초상 액자 + 이름 + 줄) — 튜토리얼도 같은 틀을 쓴다 */
-export const subHtml = (o: { face: string; who: string; side: VoiceSide }): string =>
-  `<div class="frame-portrait vs-face">${o.face}</div><div class="vs-body"><b class="vs-who side-${o.side}">${o.who}</b><p class="vs-line"></p></div>`;
+/** 대사 띠 속 (이름표 · 초상 홈 · 줄) — 바크 · 자막 띠가 같은 틀 */
+const bandHtml = (o: { face?: string; name: string; side: VoiceSide }): string =>
+  `<b class="dl-name${o.side === 'foe' ? '' : ' n-ally'}">${o.name}</b><div class="dl-face">${o.face ?? ''}</div><p class="dl-line vs-line"></p>`;
+/** 자막 띠 틀 — 부르는 쪽이 만든 요소에 넣는다 (코치 띠). 클래스는 subClass */
+export const subHtml = (o: { face: string; who: string; side: VoiceSide }): string => bandHtml({ face: o.face, name: o.who, side: o.side });
+export const subClass = (side: VoiceSide): string => `vsub dl-band dl-${side === 'ally' ? 'ally' : 'foe'}`;
 const subNext = (): void => {
   const it = subQ.shift();
   if (!it) {
@@ -127,7 +132,7 @@ const subNext = (): void => {
   clearBark();
   const { line } = it;
   const el = document.createElement('div');
-  el.className = 'vsub kit';
+  el.className = subClass(line.side);
   el.setAttribute('role', 'status');
   el.setAttribute('aria-live', 'polite');
   el.innerHTML = subHtml(line);
