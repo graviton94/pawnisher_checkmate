@@ -97,6 +97,18 @@ module.exports = {
     await wait(300);
     await shot('ap-f3');
   },
+  /** 줄인 움직임: 바크 · 2단계 컷인이 정지 컷으로 */
+  async calm({ pg, A, wait, shot }) {
+    await pg.emulateMedia({ reducedMotion: 'reduce' });
+    await A(() => window.sliceApi.startAt(1, 'boss'));
+    await wait(1800);
+    await A(() => window.sliceApi.taunt('cheese'));
+    await wait(150);
+    await shot('calm-bark');
+    await A(() => { window.__p2 = window.sliceApi.p2Rise('plate'); });
+    await wait(150);
+    await shot('calm-p2');
+  },
   /** 말 없는 사건 (#16) */
   async event({ A, wait, shot }) {
     await A(() => { window.sliceApi.gold(80); window.sliceApi.event('safe'); });
