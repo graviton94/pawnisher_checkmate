@@ -6,6 +6,8 @@ import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
 import { giantDanger, giantStrike, giantTurn, placeGiants } from './giant';
+import { processAfter, processBefore, processDanger, processTurn, setupProcess, type ProcState } from './process';
+import { PROCESS, type ProcessId } from '../data/process';
 import type { GiantType } from '../data/giants';
 import { baseOf, BOSS, BOSS_NUM, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
@@ -121,6 +123,8 @@ export interface SliceBattle {
   vengeance?: number;
   /** 거대 주물 (D-484): 묶음 id → 이번 적 차례에 내리찍을 방향 */
   giantAim?: Record<number, Pos>;
+  /** 공정 판 (D-486) */
+  proc?: ProcState;
   reinforced?: number;
   foeSeen?: number[];
   /** 다음 적 차례에 폭격할 줄 (y) — 예고 */
@@ -301,7 +305,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -453,6 +457,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   b.atkK = atkK;
   if (opts.marks?.length) { b.marks = opts.marks; markTurn(b); }
   giantTurn(b);
+  if (opts.process) { b.proc = setupProcess(b.s, opts.process, seed); processTurn(b); }
   drawCards(b, b.handSize + (has(b, 'stopwatch') ? PART_NUM.stopwatch : 0), true);
   pawnCall(b);
   bossTurnStart(b);
@@ -608,6 +613,7 @@ export const dangerSquares = (b: SliceBattle): Pos[] => {
   const out = new Map<string, Pos>();
   if (b.bombRow !== null) for (let x = 0; x < b.s.width; x++) out.set(`${x},${b.bombRow}`, { x, y: b.bombRow });
   for (const a of giantDanger(b)) out.set(`${a.x},${a.y}`, a);
+  for (const a of processDanger(b)) out.set(`${a.x},${a.y}`, a);
   for (const it of liveIntents(b)) {
     const p = findPiece(b.s, it.pieceId)!;
     const ghostState = { ...b.s, pieces: b.s.pieces.filter((q) => q.id !== p.id) };
@@ -1586,8 +1592,26 @@ const bombard = (b: SliceBattle): BattleEvent | null => {
   return { type: 'blast', pos: { x: Math.floor(b.s.width / 2), y: row }, label: '줄 폭격!', hits, fx: 'row' };
 };
 
+/** 공정 판 사건 정리 (D-486): 쓰러진 기물을 치우고 승패 — 적 킹이 쓰러지면 내 승, 내 킹이면 패. 내 분대원 쓰러짐 기록은 afterEnemyHits */
+const procResolve = (b: SliceBattle, run: () => BattleEvent[], events: BattleEvent[]): void => {
+  if (b.s.winner !== null || !b.proc) return;
+  const pre = cloneState(b.s);
+  const evs = run();
+  if (!evs.length) return;
+  const dead = (side: 0 | 1) => evs.some((e) => e.type === 'blast' && e.hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.side === side && findPiece(b.s, h.targetId)?.type === 'K'));
+  const mineDead = dead(0), foeDead = dead(1);
+  events.push(...evs);
+  b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+  if (mineDead) b.s = { ...b.s, winner: 1 };
+  else if (foeDead) b.s = { ...b.s, winner: 0 };
+  const blasts = evs.filter((e) => e.type === 'blast');
+  if (blasts.length) events.push(...afterEnemyHits(b, pre, blasts, PROCESS[b.proc.kind].name));
+  if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
+};
+
 const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
   const events: BattleEvent[] = [];
+  procResolve(b, () => processBefore(b), events);
   for (const it0 of liveIntents(b)) {
     if (b.s.winner !== null) break;
     const p = findPiece(b.s, it0.pieceId);
@@ -1634,6 +1658,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
       if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
     }
   }
+  procResolve(b, () => processAfter(b), events);
   if (b.boss) events.push(...newBossAfter(b));
   return { events };
 };
@@ -1710,6 +1735,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     guardUp(b);
     events.push(...markTurn(b));
     events.push(...giantTurn(b));
+    processTurn(b);
     b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));
     markTelegraph(b);
     b.snap = JSON.stringify({ ...b, snap: '' });

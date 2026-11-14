@@ -1,5 +1,7 @@
 import '../fonts.css';
 import { GIANTS, type GiantType } from '../data/giants';
+import { PROCESS } from '../data/process';
+import { processTiles } from './process';
 import { SET_TEXT } from '../data/hud';
 import { bossAbilityText, enemyAbilityText, formAbilityText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
@@ -398,6 +400,7 @@ const model = (): BoardModel => {
     removed: [],
     threat: b.s.winner === null && !busy ? { moves: [], hits: dangerSquares(b) } : null,
     fireRow: b.s.winner === null ? b.bombRow : null,
+    proc: processTiles(b),
     intent: b.s.winner === null && !busy ? { state: b.s, plan: liveIntents(b), hits: intentHits(b) } : null,
   };
 };
@@ -1493,7 +1496,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 시작 세트 (D-485): 표준이 아니면 입문 판의 짜 둔 손패 · 자리를 쓰지 않는다(그 손패는 폰 · 나이트 분대 몫) — 적 자리 · 킹 자리만
   const dd: BattleDef = INTRO.includes(def) && startSet !== 'standard' ? { ...def, order: undefined, deck: undefined, place: def.place?.filter((q) => q.side === 1 || q.t === 'K') } : def;
   const bSeed = def.seed ?? 100 + stage * 17 + R.int(1000);
-  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants });
+  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
@@ -1799,7 +1802,7 @@ const showMap = (): void => {
       for (const t of def?.enemy ?? []) cnt.set(t, (cnt.get(t) ?? 0) + 1);
       const foes = def ? `<span class="pb-foes">${[...cnt].map(([t, n]) => `<span class="pb-foe">${pieceImg(t, 1, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('')}</span>` : '';
       const tags = def
-        ? [`<span class="ribbon r-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="ribbon">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.giants ?? []).map((g) => GIANTS[g].name), ...(def.marks ?? []).map((m) => FOE_MARKS[m].name), ...(def.forms ?? []).map((f) => `이형 ${FORMS[f].name}`), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name)].filter(Boolean).slice(0, 1).map((t) => `<span class="ribbon">${t}</span>`)].slice(0, 3).join('')
+        ? [`<span class="ribbon r-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="ribbon">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.giants ?? []).map((g) => GIANTS[g].name), ...(def.process ? [PROCESS[def.process].name] : []), ...(def.marks ?? []).map((m) => FOE_MARKS[m].name), ...(def.forms ?? []).map((f) => `이형 ${FORMS[f].name}`), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name)].filter(Boolean).slice(0, 1).map((t) => `<span class="ribbon">${t}</span>`)].slice(0, 3).join('')
         : '';
       const name = `${NODE_NAMES[nd.kind]}${def?.foe ? ` · ${def.foe}` : def?.boss && def.bossRule ? ` · ${BOSS_RULES[def.bossRule].name}` : ''}`;
       // 낮은 범례 띠 → 높은 미리보기 띠는 처음 고를 때 한 번만 계단으로 자란다 (D-401)

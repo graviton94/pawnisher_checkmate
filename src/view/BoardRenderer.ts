@@ -473,6 +473,21 @@ class BoardScene extends Phaser.Scene {
       const w = this.world(p);
       put(this.tilesC, 'last-move', w.x, w.y);
     }
+    // 공정 판 (D-486): 칸 안쪽 2도트 테(공정 색) + 왼쪽 아래 판 도트 아이콘(7×7 → 칸 20도트 비율 그대로). 금 간 칸은 금 그림을 칸 전체에
+    const dot = t / 20;
+    for (const pt of this.procTiles) {
+      if (isFallen(state, pt.pos.x, pt.pos.y)) continue;
+      const w = this.world(pt.pos);
+      const g = this.add.graphics();
+      g.lineStyle(dot * 2, pt.frame, 1).strokeRect(w.x + dot * 2, w.y + dot * 2, t - dot * 4, t - dot * 4);
+      this.tilesC.add(g);
+      if (pt.icon === 'crack') put(this.tilesC, 'crack', w.x, w.y);
+      else if (pt.icon) {
+        const size = pt.icon === 'chip-magnet' ? dot * 8 : dot * 7;
+        const im = this.add.image(w.x + dot * 2 + size / 2, w.y + t - dot * 2 - size / 2, boardKey(pt.icon)).setDisplaySize(size, size).setFlipX(!!pt.flipX);
+        this.tilesC.add(im);
+      }
+    }
     // 다음 라운드에 무너질 칸 예고: 철판에 간 금 (D-045)
     for (const p of upcomingCollapse(state)) {
       const w = this.world(p);
@@ -482,6 +497,8 @@ class BoardScene extends Phaser.Scene {
 
   /** 카메라가 보는 월드 중심. 보드가 화면보다 작으면 가운데, 크면 보드 밖으로 나가지 않게 제한한다. */
   private camCenter = { x: 0, y: 0 };
+  /** 공정 판 칸 (D-486) — render가 모델에서 받는다 */
+  private procTiles: NonNullable<BoardModel['proc']> = [];
 
   private fitCamera(toPlayerSide = false): void {
     if (!this.state) return;
@@ -733,6 +750,7 @@ class BoardScene extends Phaser.Scene {
 
   render(m: BoardModel): void {
     this.clearDynamic();
+    this.procTiles = m.proc ?? [];
     this.drawTiles(m.state);
     const t = this.tile;
     const full = m.pending ? [...m.plan, m.pending] : m.plan;

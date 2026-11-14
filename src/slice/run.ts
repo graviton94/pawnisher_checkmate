@@ -3,6 +3,7 @@ import { FORMS, formsUpTo } from '../data/forms';
 import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
 import { GIANT_AT, GIANTS, type GiantType } from '../data/giants';
+import { PROCESS, PROCESS_AT, PROCESS_BOSS, type ProcessId } from '../data/process';
 import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, CHECK_MARK, FOE_MARKS, FOE_TRAITS, MARK_EXTRA_FROM, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
@@ -36,6 +37,8 @@ export interface BattleDef {
   traits?: FoeTrait[];
   /** 편성의 행동 특성 (D-483) */
   marks?: FoeMark[];
+  /** 공정 판 (D-486) */
+  process?: ProcessId;
   /** 거대 주물 (D-484) — 2×2 네 부위 */
   giants?: GiantType[];
   /** 이형 적 (D-481) — 적 목록 끝 바탕 기물부터 이형이 된다 */
@@ -324,6 +327,14 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
     d.enemy = enemy;
     d.giants = [gt];
     d.tell = `${d.tell}${d.tell ? ' ' : ''}「${GIANTS[gt].name}」이 2×2를 차지합니다 — ${GIANTS[gt].move}, ${GIANTS[gt].hit}. 부위마다 HP가 따로입니다.`;
+  }
+  // 공정 판 (D-486, GDD 21장 §5): 반장 판은 그 반장의 짝 공정(첫째 왕관부터), 검문은 둘째 왕관부터, 일반 대국은 셋째 왕관부터 확률
+  const pk: ProcessId | undefined = kind === 'boss' ? (d.bossRule ? PROCESS_BOSS[d.bossRule] : undefined)
+    : kind === 'check' ? (asc >= PROCESS_AT.checkFrom ? PROCESS_AT.check[act - 1] : undefined)
+    : asc >= PROCESS_AT.battleFrom && act > 1 ? ((r) => (r.next() < PROCESS_AT.battleOdds(asc) ? (Object.keys(PROCESS) as ProcessId[])[r.int(5)] : undefined))(new Rng(d.enemy.join('').length * 271 + act * 37 + asc * 13)) : undefined;
+  if (pk) {
+    d.process = pk;
+    d.tell = `${d.tell}${d.tell ? ' ' : ''}${PROCESS[pk].tell}`;
   }
   return d;
 };

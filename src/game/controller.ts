@@ -107,6 +107,8 @@ export interface BoardModel {
   intent: Intent | null;
   /** 줄 폭격 예고 줄 (D-203) — 일반 위협과 다른 불길 표식 */
   fireRow?: number | null;
+  /** 공정 판 칸 표시 (D-486): 빌린 판 도트 · 테 색 */
+  proc?: { pos: Pos; icon: string; flipX?: boolean; frame: number }[];
 }
 
 export interface Intent {
