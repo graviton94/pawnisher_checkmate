@@ -72,3 +72,17 @@ export const partTags = (id: SlicePartId): { who: Who; style: Style; effect: Eff
 /** 세 칸 칩 HTML (카드 얼굴 · 부품 얼굴 · 확인 창이 같이 쓴다) */
 export const tags3Html = (t: { who: Who; style: Style; effect: Effect; word?: string }): string =>
   `<span class="t3"><i class="t3-who">${WHO_NAMES[t.who]}</i><i class="t3-sty sty-${t.style}">${STYLE_NAMES[t.style]}</i><i class="t3-fx fx-${t.effect === '+' ? 'add' : t.effect === '×' ? 'mul' : 'rule'}">${t.effect === 'rule' ? t.word || '규칙' : t.effect === '+' ? '합' : '곱'}</i></span>`; // D-375: 기호(×)가 「없음」으로 읽혀 글자 「합 · 곱」으로
+
+/**
+ * 받침 아래 맞물림 줄 (피드백 #13 · D-503): 분대 기물 수와 덱 카드 수를 따로 센다.
+ * 예전 「덱 나이트 4」는 덱의 나이트 카드 수였는데 분대 나이트 수로 읽혔다 — 이제 「분대 나이트 1 · 나이트 카드 4 · 돌격 카드 8」.
+ * good = 공용이면 같은 갈래 카드 4장 이상 / 전용이면 분대에 그 기물이 있고 그 기물 카드 + 같은 갈래 카드 4장 이상.
+ * bad = 전용인데 분대에 그 기물이 없다 (킹은 늘 있다).
+ */
+export const fitCount = (t: { who: Who; style: Style }, deck: readonly { who: Who; style: Style }[], squadTypes: readonly PieceType[]): { squad: number | null; cards: number; style: number; tone: 'good' | 'bad' | 'mid' } => {
+  const squad = t.who === 'any' ? null : squadTypes.filter((x) => x === t.who).length;
+  const cards = t.who === 'any' ? 0 : deck.filter((x) => x.who === t.who).length;
+  const style = deck.filter((x) => x.style === t.style).length;
+  if (squad === 0 && t.who !== 'K') return { squad, cards, style, tone: 'bad' };
+  return { squad, cards, style, tone: cards + style >= 4 ? 'good' : 'mid' };
+};

@@ -2,7 +2,7 @@ import '../fonts.css';
 import { GIANTS, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
-import { SET_TEXT, SPEED_METER } from '../data/hud';
+import { FIT_TEXT, SET_TEXT, SPEED_METER } from '../data/hud';
 import { bossAbilityText, enemyAbilityText, formAbilityText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { abilityHtml, bindAbilities, partCardRuleHtml } from './ability';
@@ -31,7 +31,7 @@ import { installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, 
 import { arcFly, flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { markTip, showTip, tipDue } from './loadtip';
-import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
+import { cardTags, fitCount, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
@@ -2390,14 +2390,11 @@ const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number; char
  */
 const fitHint = (kind: 'card' | 'part', id: string): { text: string; tone: 'good' | 'bad' | 'mid' } | null => {
   const t = kind === 'card' ? cardTags(id as CommandId) : partTags(id as SlicePartId);
-  if (t.who !== 'any' && t.who !== 'K' && !squad.some((u) => u.t === t.who)) return { text: `분대에 ${PIECE_NAMES_KO[t.who]} 없음`, tone: 'bad' };
-  const dt = deck.map((d) => cardTags(d));
-  const nWho = t.who === 'any' ? 0 : dt.filter((x) => x.who === t.who).length;
-  const nSty = dt.filter((x) => x.style === t.style).length;
-  // D-367: 카드 틀 그림 창 안 한 줄 — 「덱 [기물 그림] n · 돌격 n」
-  // D-375: 그림 대신 기물 이름 — 「덱 폰 3 · 돌격 8」 (갈래 이름과 같은 글 문법)
-  const bits = [t.who !== 'any' ? `${PIECE_NAMES_KO[t.who]} <b>${nWho}</b>` : '', `${STYLE_NAMES[t.style]} <b>${nSty}</b>`].filter(Boolean);
-  return { text: `덱 ${bits.join(' · ')}`, tone: nWho + nSty >= 4 ? 'good' : 'mid' };
+  // #13 (D-503): 분대 기물 수와 덱 카드 수를 따로 — 「덱 나이트 4」가 분대 나이트 4로 읽혔다
+  const f = fitCount(t, deck.map((d) => cardTags(d)), squad.map((u) => u.t));
+  if (f.tone === 'bad' && t.who !== 'any') return { text: FIT_TEXT.none(PIECE_NAMES_KO[t.who]), tone: 'bad' };
+  const bits = [...(t.who !== 'any' ? [FIT_TEXT.squad(PIECE_NAMES_KO[t.who], f.squad ?? 0), FIT_TEXT.cards(PIECE_NAMES_KO[t.who], f.cards)] : []), FIT_TEXT.cards(STYLE_NAMES[t.style], f.style)];
+  return { text: bits.join(' · '), tone: f.tone };
 };
 const shopScreen = (): void => {
   // 장소 배경 (D-200): 녹슨 룩의 고물상 BG-01 — 그림은 화면 바탕, 앞에 진열대 (D-394 .scr-place 바탕형)

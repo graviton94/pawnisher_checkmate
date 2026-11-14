@@ -189,6 +189,13 @@ export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'ins
  * 고르기 · 장소 화면 글 (D-394 UI 개편 패스 2): 명패 ≤ 12자(문장 · 수치 금지 — 수치는 꼬리표) · 단추는 동사 하나 ≤ 6자 (voice ⑧).
  */
 /** 시작 세트 고르기 (D-485) */
+/** 받침 아래 맞물림 줄 (#13 · D-503): 분대 기물 수 · 덱 카드 수를 따로 — 가운뎃점에서만 줄을 바꾼다 */
+export const FIT_TEXT = {
+  none: (piece: string) => `분대에 ${piece} 없음`,
+  squad: (piece: string, n: number) => `분대 ${piece} <b>${n}</b>`,
+  cards: (name: string, n: number) => `${name} 카드 <b>${n}</b>`,
+} as const;
+
 export const SET_TEXT = {
   title: '시작 세트',
   page: (n: number, of: number) => `${n} / ${of}`,
