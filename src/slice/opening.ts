@@ -52,9 +52,9 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
     const text = el.querySelector<HTMLElement>('.cut-lines')!;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
-    // 쪽 = (컷 번호, 그 컷의 줄 두 개)
+    // 쪽 = (컷 번호, 그 쪽의 한 문장)
     const pages: { c: number; lines: CutLine[] }[] = [];
-    // 긴 줄은 문장 단위 조각으로 (D-451 — cutPages): 한 쪽 = 띠 두 줄
+    // 한 화면 = 한 문장 (D-451 → D-488 — cutPages): 문장은 쪽을 넘기지 않고, 같은 화자가 이어 말하면 이름표는 첫 쪽에만
     cuts.forEach((c, k) => { for (const lines of cutPages(c.lines)) pages.push({ c: k, lines }); });
     let i = -1;
     let shown = -1;

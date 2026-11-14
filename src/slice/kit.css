@@ -791,7 +791,9 @@ body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0;
 #btn-rewind .ico-rew { display: block; width: 32px; height: 32px; background: url('../assets/ui/kit/ico-rewind.png') 0 0 / 32px 32px no-repeat; image-rendering: pixelated; }
 #btn-rewind small { position: absolute; right: 0; bottom: 0; min-width: 14px; padding: 0 2px; background: #0b0b0e; color: var(--t-body); font: 700 12px/14px Galmuri11, sans-serif; text-align: center; }
 #btn-end.btn:is(.k-brass, .k-crimson) { flex: 1 1 auto; min-width: 0; padding: 0; font: 700 24px/1 Galmuri11, sans-serif; white-space: nowrap; }
-#btn-end.coach-end { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 2); animation: kblink 1s steps(2, jump-none) infinite; }
+/* 첫 판 도움이 「턴 끝」을 짚을 때 (#7 · D-488): 단추는 늘 보인다 — 바깥 황동 테만 1도트 ↔ 3도트로 계단 들썩 (예전엔 kblink가 단추째 숨겼다) */
+#btn-end.coach-end { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 2); animation: coachRing 1s steps(1, end) infinite; }
+@keyframes coachRing { 0% { outline-offset: calc(var(--px) * 1); outline-color: var(--t-gold); } 50% { outline-offset: calc(var(--px) * 3); outline-color: #b07a1c; } }
 body.between #right .rmid, body.between #right .actions, body.between #vials, body.between #hand > .hc, body.between #hand > .empty, body.between #turn-label, body.between #coins { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   #hand.hint > .hc:not(.off), #btn-end.coach-end, #btn-help.has-new::after, #vials .seg.spend .key, #vials .seg.wind .key { animation: none; }
@@ -857,10 +859,15 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   background: #0b0b0e;
   box-shadow: inset 0 var(--cap) 0 #0b0b0e, inset 0 calc(var(--cap) * 2) 0 #56545e, inset 0 calc(var(--cap) * -1) 0 #0b0b0e, inset 0 calc(var(--cap) * -2) 0 #33313b;
 }
-.cut-lines p { margin: 0; max-width: 100%; white-space: normal; word-break: keep-all; overflow-wrap: break-word; text-align: center; overflow: hidden; color: var(--t-body); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; text-shadow: none; }
+.cut-lines p { margin: 0; max-width: 100%; white-space: normal; word-break: keep-all; overflow-wrap: break-word; text-wrap: balance; text-align: center; overflow: hidden; color: var(--t-body); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; text-shadow: none; }
 .cut-lines p.cl-m { color: var(--t-gold); }
-.cut-lines p.cl-s > span { color: #ffd8cf; }
-.cut-lines .cl-who { margin-right: var(--s2); color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; }
+/* 화자 색 (#22 · D-488): 우리 편 = 종이 흰 이름 + 청록 표식 · 적 = 진홍 이름 · 도금왕 = 황동. 대사 글은 우리 편 종이 흰, 적 · 도금왕 연분홍 */
+.cut-lines p.cl-s > span { color: var(--t-body); }
+.cut-lines p.cl-s.side-foe > span, .cut-lines p.cl-s.side-gilded > span { color: #ffd8cf; }
+.cut-lines .cl-who { margin-right: var(--s2); color: var(--t-body); font: 700 12px/1 Galmuri11, sans-serif; }
+.cut-lines .side-ally .cl-who { box-shadow: inset 0 calc(var(--px) * -1) 0 var(--t-ally); }
+.cut-lines .side-foe .cl-who { color: var(--t-loss); }
+.cut-lines .side-gilded .cl-who { color: var(--t-gold); }
 .cut-lines em { font-style: normal; color: var(--em, var(--t-gold)); }
 .cut-lines em.wshake { display: inline-block; animation: wshake 420ms var(--decel); }
 .cut-next { position: absolute; z-index: 2; right: calc(var(--cap) * 10); top: 50%; margin-top: -6px; color: var(--t-gold); font: 700 12px/12px Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }

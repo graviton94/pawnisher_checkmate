@@ -630,56 +630,51 @@ export const closePeek = (el: HTMLElement | null = peekNow): void => {
  */
 export const cutChromeHtml = (o: { skip?: string } = {}): string =>
   `<div class="cut-sub"><div class="cut-lines" aria-live="polite"></div><span class="cut-next" aria-hidden="true">▼</span></div>${o.skip ? `<button type="button" class="btn k-iron cut-skip">${o.skip}</button>` : ''}`;
-/** 자막 한 줄: n 서술 · s 대사(이름 12 굵게 + “ ”) · m 독백(‘ ’). part = 긴 줄을 나눈 조각의 자리(따옴표를 처음 · 끝 조각에만) */
-export interface CutLine { k: 'n' | 's' | 'm'; t: string; who?: string; part?: 'head' | 'mid' | 'tail' }
+/**
+ * 자막 한 줄: n 서술 · s 대사(이름 12 굵게 + “ ”) · m 독백(‘ ’). part = 긴 줄을 나눈 조각의 자리(따옴표를 처음 · 끝 조각에만).
+ * cont = 같은 화자가 앞 쪽에서 이어 말한다 — 이름표를 다시 달지 않는다 (#22 · D-488)
+ */
+export interface CutLine { k: 'n' | 's' | 'm'; t: string; who?: string; part?: 'head' | 'mid' | 'tail'; cont?: boolean }
+/**
+ * 꾸밈말을 줄 끝에 홀로 두지 않는다 (#2 · D-488): 「옛 상처들」 · 「우리 모두」처럼 뒤 낱말을 꾸미는 짧은 말 뒤 빈칸을
+ * 줄바꿈 없는 빈칸(U+00A0)으로 — 띠가 낱말 단위(keep-all)로 접혀도 둘이 같은 줄에 선다.
+ */
+const BIND_NEXT = new Set(['이', '그', '저', '옛', '새', '온', '각', '두', '세', '네', '한', '몇', '모든', '우리', '그런', '이런', '저런', '어느', '아무', '제', '내', '그의', '나의', '너의', '그들의']);
+export const bindModifiers = (t: string): string => t.replace(/(?<=^|[\s\u00a0“‘「])([가-힣]{1,3}) (?=[가-힣])/g, (m, w: string) => (BIND_NEXT.has(w) ? `${w}\u00a0` : m));
 /** 줄 글자 (따옴표까지) — 찍기(typeIn)와 한 번에 채우기가 같은 글을 쓴다 */
 export const cutFill = (l: CutLine): string => {
   const [o, c] = l.k === 's' ? ['“', '”'] : l.k === 'm' ? ['‘', '’'] : ['', ''];
-  return `${l.part === 'mid' || l.part === 'tail' ? '' : o}${l.t}${l.part === 'head' || l.part === 'mid' ? '' : c}`;
+  return `${l.part === 'mid' || l.part === 'tail' ? '' : o}${bindModifiers(l.t)}${l.part === 'head' || l.part === 'mid' ? '' : c}`;
 };
 /**
- * 자막 띠 쪽 나누기 (D-451 — 바이블 컷신은 글자 수 제한이 없다): 띠는 두 줄 그대로 두고, 긴 줄은 문장 끝(. ? ! … 」 ’)에서,
- * 그래도 길면 쉼표 · 띄어쓰기에서 잘라 한 조각이 띠 두 줄 안에 들게 한다. 짧은 조각은 둘이 한 쪽을 나눠 쓴다.
- * row = 띠 한 줄에 드는 한글 폭 (가장 좁은 667 화면 기준, 이름표 · 따옴표 포함)
+ * 자막 띠 쪽 나누기 (D-451 → D-488, 사용자 #2: 「한 화면에 한 문장」): 띠는 두 줄 그대로, **한 쪽 = 한 문장**.
+ * 문장은 쪽을 넘기지 않는다 — 쉼표에서 잘라 다음 쪽으로 보내지 않고, 한 문장이 띠 두 줄 안에 들게 데이터가 맞춘다(테스트).
+ * row = 띠 한 줄에 드는 한글 폭 (띠 안쪽 실측 529px ÷ 15px = 35자, 낱말 단위 줄바꿈 여유를 빼고 32 — 이름표 · 따옴표 포함)
  */
-export const CUT_ROW = 28;
-const cutW = (l: CutLine): number => textWidth(cutFill(l)) + (l.k === 's' && l.who ? [...l.who].length * 0.8 + 0.6 : 0);
-const splitAt = (t: string, re: RegExp): string[] => t.split(re).map((x) => x.trim()).filter(Boolean);
-export const cutPieces = (l: CutLine, row = CUT_ROW): CutLine[] => {
-  const cap = row * 2;
-  if (cutW(l) <= cap) return [l];
-  const fits = (t: string) => cutW({ ...l, t, part: 'mid' }) + 1 <= cap;
+export const CUT_ROW = 32;
+/** 한 쪽(문장 하나)의 폭 — 이름표 · 따옴표 포함 (테스트가 띠 두 줄 안인지 본다) */
+export const cutW = (l: CutLine): number => textWidth(cutFill(l)) + (l.k === 's' && l.who && !l.cont ? [...l.who].length * 0.8 + 0.6 : 0);
+/** 문장 끝: . ? ! … 뒤(닫는 따옴표 · 괄호까지) 빈칸 — 「 」 뒤나 쉼표 · 줄표에서는 나누지 않는다 */
+const SENTENCE_END = /(?<=[.?!…][」’”』)]*)\s+/;
+export const cutPieces = (l: CutLine, _row = CUT_ROW): CutLine[] => {
+  // 「 」 · “ ” 안의 여러 문장(새긴 글 · 인용)은 한 쪽에 — 괄호가 쪽을 넘어 열린 채 남지 않게
   const out: string[] = [];
-  // 문장 끝 → 쉼표 → 띄어쓰기 순으로 더 잘게. 잘린 마지막 조각은 다음 글과 다시 붙을 수 있다
-  const levels = [/(?<=[.?!…」’—])\s+/, /(?<=,)\s+/, /\s+/];
-  const pack = (t: string, lv: number): void => {
-    let curr = '';
-    for (const u of splitAt(t, levels[lv])) {
-      const next = curr ? `${curr} ${u}` : u;
-      if (fits(next)) { curr = next; continue; }
-      if (curr) out.push(curr);
-      curr = '';
-      if (fits(u) || lv === levels.length - 1) curr = u;
-      else { pack(u, lv + 1); curr = out.pop() ?? ''; }
-    }
-    if (curr) out.push(curr);
-  };
-  pack(l.t, 0);
+  let open = 0;
+  for (const x of l.t.split(SENTENCE_END).map((y) => y.trim()).filter(Boolean)) {
+    if (open > 0 && out.length) out[out.length - 1] += ` ${x}`;
+    else out.push(x);
+    open += (x.match(/[「“]/g)?.length ?? 0) - (x.match(/[」”]/g)?.length ?? 0);
+  }
   return out.map((t, i) => ({ ...l, t, part: out.length === 1 ? undefined : i === 0 ? 'head' : i === out.length - 1 ? 'tail' : 'mid' }));
 };
-/** 쪽 = 띠 두 줄. 두 줄짜리 조각은 혼자, 한 줄짜리 둘은 함께 */
+/** 쪽 = 문장 하나 (띠 두 줄 안). 같은 화자가 이어 말하면 이름표는 첫 쪽에만 (cont) */
 export const cutPages = (lines: CutLine[], row = CUT_ROW): CutLine[][] => {
-  const pages: CutLine[][] = [];
-  let curr: CutLine[] = [];
-  let rows = 0;
-  for (const piece of lines.flatMap((l) => cutPieces(l, row))) {
-    const r = cutW(piece) > row ? 2 : 1;
-    if (rows + r > 2) { pages.push(curr); curr = []; rows = 0; }
-    curr.push(piece);
-    rows += r;
-  }
-  if (curr.length) pages.push(curr);
-  return pages;
+  let prev: CutLine | null = null;
+  return lines.flatMap((l) => cutPieces(l, row)).map((piece) => {
+    const cont = piece.k === 's' && !!piece.who && prev?.k === 's' && prev.who === piece.who;
+    prev = piece;
+    return [cont ? { ...piece, cont: true } : piece];
+  });
 };
 /** 자막 띠에 쪽을 차례로 찍는다 (막 카드 · 반장 등장처럼 혼자 넘어가는 컷): 쪽마다 다 찍으면 hold만큼 쉬고 다음 쪽 */
 export const typeCutPages = async (box: HTMLElement, lines: CutLine[], alive: () => boolean, type: (el: HTMLElement, html: string) => Promise<unknown>, hold = (l: number) => 900 + l * 40): Promise<void> => {
@@ -691,8 +686,16 @@ export const typeCutPages = async (box: HTMLElement, lines: CutLine[], alive: ()
     if (k < pages.length - 1) await new Promise((r) => window.setTimeout(r, hold(pages[k].reduce((a, l) => a + l.t.length, 0))));
   }
 };
-/** 줄 빈 틀 (글은 <span>에 찍는다) */
-export const cutLineHtml = (l: CutLine): string => `<p class="cl-${l.k}">${l.k === 's' && l.who ? `<b class="cl-who">${l.who}</b>` : ''}<span></span></p>`;
+/**
+ * 화자 편 (#22 · D-488): 이름 색으로 우리 편 · 적 · 도금왕을 가른다 (docs/design-system.md 신호색 — 청록/종이 = 내 편, 진홍 = 적, 황동 = 도금왕).
+ * 반장 · 적 킹 · 검수기 = 적, 도금왕 = 황동, 그 밖(종이왕 · 박차 · 분대원 · 흰 세트) = 우리 편.
+ */
+export const speakerSide = (who: string): 'ally' | 'foe' | 'gilded' => (who === '도금왕' ? 'gilded' : /반장$|^적 |검수기|감독관/.test(who) ? 'foe' : 'ally');
+/** 줄 빈 틀 (글은 <span>에 찍는다). 대사는 화자 편 색 · 이어 말하는 쪽은 이름표 없이 */
+export const cutLineHtml = (l: CutLine): string => {
+  const side = l.k === 's' && l.who ? ` side-${speakerSide(l.who)}` : '';
+  return `<p class="cl-${l.k}${side}${l.cont ? ' cont' : ''}">${l.k === 's' && l.who && !l.cont ? `<b class="cl-who">${l.who}</b>` : ''}<span></span></p>`;
+};
 /** 띠에 줄을 바로 채운다 (찍기 없이) */
 export const cutSay = (root: HTMLElement, lines: CutLine[]): void => {
   const box = root.querySelector<HTMLElement>('.cut-lines');

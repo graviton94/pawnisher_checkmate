@@ -3,26 +3,45 @@ import { ACT_CARD, BOSS_CARD, BOSS_STORY, CROWN_OFF, DEFEAT, ENDING_A, GILDED_ST
 import { companionScene } from '../src/data/companion-scenes';
 import { ASCENSION } from '../src/slice/run';
 import { textWidth } from '../src/slice/desc';
-import { CUT_ROW, cutFill, cutPages, cutPieces } from '../src/slice/uikit';
+import { CUT_ROW, cutFill, cutLineHtml, cutPages, cutPieces, cutW, speakerSide } from '../src/slice/uikit';
 
 /**
  * 컷신 자막 띠 (D-397 → D-451): 바이블 컷신은 글자 수 제한이 없다. 띠는 두 줄 그대로 두고 긴 줄은 문장 단위 조각으로 쪽을 넘긴다.
  * 여기서는 ① 모든 조각이 띠 두 줄(가장 좁은 667 화면 기준 CUT_ROW × 2) 안에 들고 ② 조각을 다시 이으면 원래 글이 그대로인지 본다.
  */
 const width = (l: Line): number => textWidth(cutFill(l)) + (l.k === 's' && l.who ? [...l.who].length * 0.8 + 0.6 : 0);
+/** 한 쪽 = 한 문장 (D-488 #2): 문장이 띠 두 줄 안 · 쉼표에서 쪽을 넘기지 않음 · 조각을 이으면 원문 그대로 */
 const check = (where: string, lines: Line[]): void => {
   for (const l of lines) {
     const pieces = cutPieces(l);
-    for (const p of pieces) expect.soft(width(p), `${where}: ${p.t}`).toBeLessThanOrEqual(CUT_ROW * 2 + 1);
+    for (const p of pieces) expect.soft(width(p), `${where}: ${p.t}`).toBeLessThanOrEqual(CUT_ROW * 2);
+    for (const p of pieces.slice(0, -1)) expect.soft(/[.?!…][」’”』)]*$/.test(p.t), `${where}: 문장 가운데서 쪽이 넘어감 — ${p.t}`).toBe(true);
     expect.soft(pieces.map((p) => p.t).join(' ').replace(/\s+/g, ' '), where).toBe(l.t.replace(/\s+/g, ' '));
   }
-  for (const page of cutPages(lines)) expect.soft(page.length, where).toBeLessThanOrEqual(2);
+  for (const page of cutPages(lines)) {
+    expect.soft(page.length, where).toBe(1);
+    expect.soft(cutW(page[0]), where).toBeLessThanOrEqual(CUT_ROW * 2);
+  }
 };
 const n = (t: string): Line => ({ k: 'n', t });
 const s = (who: string, t: string): Line => ({ k: 's', who, t });
 const crew = { alive: [{ name: '삐걱거리는 경첩', t: 'P' as const }, { name: '박차', t: 'N' as const }], promised: { name: '삐걱거리는 경첩', alive: true }, melted: ['구부러진 못', '먼지투성이'] };
 
-describe('컷신 자막 띠 쪽 나누기 (D-451)', () => {
+describe('컷신 자막 띠 쪽 나누기 (D-451 → D-488)', () => {
+  it('쉼표에서 쪽을 넘기지 않는다 — 「…치르게 하고,」 다음 쪽 「끝까지…」 (#2)', () => {
+    const ps = cutPieces(n('세 번의 공정을 치르게 하고, 끝까지 살아남은 쪽만 상자에 담긴다. 나머지는 녹는다.'));
+    expect(ps.map((p) => p.t)).toEqual(['세 번의 공정을 치르게 하고, 끝까지 살아남은 쪽만 상자에 담긴다.', '나머지는 녹는다.']);
+    expect(cutPieces(n('「금단의 승급대」 전설이 돈다.'))).toHaveLength(1);
+    expect(cutPieces(n('「킹 누락. 규격 미달 — 폐기 대기」 검수기가 찍었다.'))).toHaveLength(1);
+  });
+  it('같은 화자가 이어 말하면 이름표는 첫 쪽에만 · 적과 우리 편 이름 색이 다르다 (#22)', () => {
+    const pages = cutPages([s('박차', '박차라고 한다. 쇠가 덜 식었을 때 뜯어졌지.'), s('검수 반장', '불량이다.'), s('박차', '아니.')]);
+    expect(pages.map((p) => !!p[0].cont)).toEqual([false, true, false, false]);
+    expect(cutLineHtml(pages[1][0])).not.toContain('cl-who');
+    expect(cutLineHtml(pages[0][0])).toContain('side-ally');
+    expect(cutLineHtml(pages[2][0])).toContain('side-foe');
+    expect(speakerSide('도금왕')).toBe('gilded');
+  });
   it('긴 서술은 문장 끝에서, 대사는 따옴표를 처음 · 끝 조각에만', () => {
     const long = s('박차', '박차라고 한다. 쇠가 덜 식었을 때 틀에서 뜯어지는 바람에, 태어날 때부터 정품 상자엔 못 들어가고 뒷줄만 맴돌았지.');
     const ps = cutPieces(long);
@@ -66,5 +85,14 @@ describe('컷신 자막 띠 쪽 나누기 (D-451)', () => {
       expect.soft(ls.length, `막 ${i}`).toBe(2);
       check(`막 ${i}`, ls.map(n));
     });
+  });
+});
+
+describe('꾸밈말 줄 끝 홀로 금지 (#2 · D-488)', () => {
+  it('「옛 상처들」 · 「우리 모두」는 줄바꿈 없는 빈칸으로 묶인다', async () => {
+    const { bindModifiers } = await import('../src/slice/uikit');
+    expect(bindModifiers('깊게 패인 옛 상처들이')).toBe('깊게 패인 옛 상처들이');
+    expect(bindModifiers('이 상자의 우리 모두가 산다.')).toBe('이 상자의 우리 모두가 산다.');
+    expect(bindModifiers('상처가 이 정도다.')).toBe('상처가 이 정도다.');
   });
 });
