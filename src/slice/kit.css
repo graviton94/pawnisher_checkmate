@@ -984,6 +984,35 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .peek-bar .pb-foe i { color: var(--t-body); font: 700 12px/1 Galmuri11, sans-serif; font-style: normal; }
 .mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
 @media (max-width: 760px) { .mapfx .peek-bar .pb-foes { display: none; } }
+/* 지도 분대 현황 (피드백 #24 · D-503): 아래 띠 왼쪽 — 높은 띠 몫(--peek-hi)을 늘 쓰는 움푹 칸 · 분대원 칸 52 × 58(누름 칸 48 이상).
+   칸 = 기물 24 · HP 막대(청록 성함 · 황동 다침 · 진홍 위험 + 수) · 버팀 하트(분대 카드와 같은 그림 · 같은 수) · 금 간 심장 톱니 = 진홍 「금」 표지. 임시 — MP-01 대기 */
+.mapfx .map-foot { display: flex; align-items: flex-end; gap: var(--s2); min-width: 0; }
+.mapfx .map-foot > .peek-bar { flex: 1 1 auto; min-width: 0; }
+.mapfx .map-roster.inset { flex: none; box-sizing: border-box; height: var(--peek-hi); display: flex; align-items: center; gap: var(--s1); padding: 0 var(--s1); }
+.mapfx .mr-slot { display: grid; justify-items: center; align-content: center; row-gap: 2px; box-sizing: border-box; width: 52px; height: 58px; margin: 0; padding: 0; border: 0; background: none; color: #f1ede4; cursor: pointer; }
+.mapfx .mr-slot.chosen { box-shadow: inset 0 0 0 2px #f5c542; }
+.mapfx .mr-pc { position: relative; width: 24px; height: 24px; }
+.mapfx .mr-pc img { display: block; width: 24px; height: 24px; image-rendering: pixelated; }
+.mapfx .mr-crack { position: absolute; right: -14px; top: -2px; padding: 0 2px; background: #7a1218; box-shadow: 0 0 0 2px #0b0b0e; color: #ffc0c0; font: 700 12px/14px Galmuri11, sans-serif; font-style: normal; }
+.mapfx .mr-hp { display: flex; align-items: center; gap: 2px; height: 12px; }
+.mapfx .mr-bar { display: block; width: 22px; height: 4px; background: #33313b; box-shadow: 0 0 0 1px #0b0b0e; }
+.mapfx .mr-bar i { display: block; height: 100%; background: #5eead4; }
+.mapfx .mr-slot.hurt .mr-bar i { background: #c89b3c; }
+.mapfx .mr-slot.low .mr-bar i { background: #e5262f; }
+.mapfx .mr-hp b { font: 700 12px/12px Galmuri11, sans-serif; }
+.mapfx .mr-slot.low .mr-hp b { color: #ff7b7b; }
+.mapfx .mr-life { display: flex; height: 16px; }
+.mapfx .mr-life .life + .life { margin-left: -4px; }
+.mapfx .peek-bar .pb-crew { flex: none; display: inline-flex; }
+.mapfx .peek-bar .pb-row { display: flex; align-items: baseline; gap: var(--s2); min-width: 0; }
+.mapfx .peek-bar .pb-quirk { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; white-space: nowrap; }
+/* 좁은 화면(667 가로): 범례는 높은 띠 몫 안에서 두 줄 · 노드를 고르면 분대 현황을 접고 미리보기가 띠 전체 · 분대원을 누르면 바로 분대 창 */
+@media (max-width: 760px) {
+  .mapfx .map-foot > .peek-bar.inset:not(.open) { height: var(--peek-hi); }
+  .mapfx .map-foot .map-legend { flex-wrap: wrap; justify-content: center; row-gap: 0; }
+  .mapfx .map-foot.node-open .map-roster { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd.now.chosen::before, .mapfx .map-body line, .mapfx .peek-bar.inset.open { animation: none; } }
 
 /* ===================== 21위 부품 (D-398 발주 → D-400 받음 · tools/pixel/ui_kit_refine21.py) =====================

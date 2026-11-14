@@ -1933,6 +1933,33 @@ const enterNode = (n: MapNode): void => {
  */
 /** 지나온 길: 막마다 줄 → 고른 노드 번호 */
 let picked: number[][] = [[], [], [], []];
+/**
+ * 지도 분대 현황 (피드백 #24 · D-503): 분대원마다 기물 · HP 막대와 수 · 버팀 하트 · 심장 톱니(금 가면 표지).
+ * 값은 분대 창 · 대국과 같은 함수(crewMaxHp · livesOf · livesMax) — 화면마다 따로 세지 않는다. 판 = 움푹 칸(임시 — MP-01 대기).
+ */
+const rosterSlot = (u: Squad, i: number): string => {
+  const hp = Math.max(0, Math.round(u.hp ?? crewMaxHp(u))), max = crewMaxHp(u);
+  const left = livesOf(u, parts), all = livesMax(u, parts);
+  const pct = Math.max(0, Math.min(100, Math.round((hp / max) * 100)));
+  const T = MAP_TEXT.roster;
+  const hearts = Array.from({ length: Math.max(all, left) }, (_, k) => `<i class="life${k < left ? '' : ' off'}"></i>`).join('');
+  const label = [u.name ?? PIECE_NAMES_KO[u.t], T.hp(hp, max), T.brace(left, all), u.cracked ? T.gearCracked : T.gear, u.quirk ? QUIRKS[u.quirk].name : ''].filter(Boolean).join(' · ');
+  return `<button type="button" class="mr-slot${pct < 35 ? ' low' : pct < 100 ? ' hurt' : ''}${u.cracked ? ' cracked' : ''}" data-crew="${i}" aria-label="${label}">`
+    + `<span class="mr-pc">${pieceImg(u.t, 0, 'small', 24)}${u.cracked ? `<em class="mr-crack">${T.cracked}</em>` : ''}</span>`
+    + `<span class="mr-hp"><span class="mr-bar"><i style="width:${pct}%"></i></span><b>${hp}</b></span>`
+    + `<span class="mr-life">${hearts}</span></button>`;
+};
+const rosterHtml = (): string => `<div class="map-roster inset" role="group" aria-label="${MAP_TEXT.roster.label}">${squad.map((u, i) => rosterSlot(u, i)).join('')}</div>`;
+/** 분대 현황에서 고른 분대원 — 아래 띠 (이름 · 기벽 / HP · 버팀 · 심장 톱니 꼬리표 · 「살핀다」 = 분대 창) */
+const rosterPeek = (i: number): string => {
+  const u = squad[i];
+  const T = MAP_TEXT.roster;
+  const hp = Math.max(0, Math.round(u.hp ?? crewMaxHp(u))), max = crewMaxHp(u);
+  const q = u.quirk ? QUIRKS[u.quirk] : null;
+  const tags = [`<span class="ribbon${hp < max * 0.35 ? ' r-crimson' : ''}">${T.hp(hp, max)}</span>`, `<span class="ribbon">${T.brace(livesOf(u, parts), livesMax(u, parts))}</span>`, `<span class="ribbon${u.cracked ? ' r-crimson' : ''}">${u.cracked ? T.gearCracked : T.gear}</span>`].join('');
+  const sub = q ? `${q.name} — ${q.desc}` : u.t === 'K' ? T.king : T.noQuirk;
+  return `<span class="pb-crew">${pieceImg(u.t, 0, 'small', 48)}</span><div class="pb-txt"><span class="pb-row"><b class="pb-name">${u.name ?? PIECE_NAMES_KO[u.t]}</b><small class="pb-quirk">${sub}</small></span><span class="pb-tags">${tags}</span></div><button class="btn k-iron pb-go" type="button" data-look>${T.look}</button>`;
+};
 const showMap = (): void => {
   const a = acts[actI];
   // 4막(종막 · 출하구)도 지나온 길 칸이 있어야 한다 — 예전 저장(세 칸)으로 이어해도 (4막 진입 시 지도가 안 뜨던 버그)
@@ -1998,16 +2025,33 @@ const showMap = (): void => {
   const charm = `<span class="sp-i" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><small>${MAP_TEXT.stat.charm}</small>${(['revive', 'rewind'] as const).map((c) => `<i class="ico" style="${iconArtSmall(CHARMS[c].icon)}"></i><b>${charms[c]}</b>`).join('')}</span>`;
   el.innerHTML = `<header class="map-head"><span class="ribbon">${runMode === 'story' ? CHAPTERS[storyChapter].label : runLabel(runMode, asc)} · ${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><div class="stat-plate">${stat('squad', `${squad.length}`)}${stat('deck', `${deck.length}`)}${stat('parts', `${parts.length}/${partSlotsAt(actI)}`)}${charm}</div></div></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
-    <footer class="inset peek-bar">${legend}</footer>`;
+    <div class="map-foot">${rosterHtml()}<footer class="inset peek-bar">${legend}</footer></div>`;
   document.body.appendChild(el);
   sfx('lift');
   const info = el.querySelector<HTMLElement>('.peek-bar')!;
+  // 분대 현황 (#24): 누르면 아래 띠에 그 분대원, 다시 누르면 분대 창 — 노드 고름은 푼다
+  el.querySelectorAll<HTMLElement>('[data-crew]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      // 좁은 화면(≤760, 667 가로)은 아래 띠가 좁아 분대원 띠 대신 바로 분대 창
+      if (btn.classList.contains('chosen') || window.matchMedia?.('(max-width: 760px)').matches) return crewView();
+      el.querySelector('.map-foot')!.classList.remove('node-open');
+      el.querySelectorAll('.mnd.chosen, .mr-slot.chosen').forEach((x) => x.classList.remove('chosen'));
+      el.querySelectorAll<SVGLineElement>('line[data-to]').forEach((ln) => { ln.classList.remove('pick', 'snap'); ln.classList.add('live'); });
+      btn.classList.add('chosen');
+      sfx('tap');
+      info.classList.add('open');
+      info.innerHTML = rosterPeek(Number(btn.dataset.crew));
+      info.querySelector('[data-look]')!.addEventListener('click', () => crewView());
+    }),
+  );
   el.querySelectorAll<HTMLElement>('[data-node]').forEach((btn) =>
     btn.addEventListener('click', () => {
       const k = Number(btn.dataset.node);
       const nd = row[k];
       if (btn.classList.contains('chosen')) return go(k);
-      el.querySelectorAll('.mnd.chosen').forEach((x) => x.classList.remove('chosen'));
+      el.querySelectorAll('.mnd.chosen, .mr-slot.chosen').forEach((x) => x.classList.remove('chosen'));
+      // 좁은 화면은 노드 미리보기가 띠 전체를 쓴다 — 분대 현황은 잠시 접는다 (CSS)
+      el.querySelector('.map-foot')!.classList.add('node-open');
       btn.classList.add('chosen');
       sfx('tap');
       el.querySelectorAll<SVGLineElement>('line[data-to]').forEach((ln) => {
@@ -2550,7 +2594,7 @@ const repairScreen = (): void => {
   const after = (u: Squad): number => Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * pct));
   const el = pickScreen({
     title: SCREEN_TEXT.repair,
-    items: squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>${SCREEN_TEXT.repairInfo(u.hp ?? crewMaxHp(u), crewMaxHp(u), after(u))}</span>`, off: (u.hp ?? crewMaxHp(u)) >= crewMaxHp(u) })),
+    items: squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>${(u.hp ?? crewMaxHp(u)) < crewMaxHp(u) ? SCREEN_TEXT.repairInfo(u.hp ?? crewMaxHp(u), crewMaxHp(u), after(u)) : MAP_TEXT.roster.hp(crewMaxHp(u), crewMaxHp(u))}</span>`, off: (u.hp ?? crewMaxHp(u)) >= crewMaxHp(u) })),
     skip: { label: SCREEN_TEXT.stop, attrs: 'data-back' },
     go: { label: SCREEN_TEXT.repairGo },
     onSelect: () => sfx('lift'),

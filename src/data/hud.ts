@@ -28,6 +28,21 @@ export const MAP_TEXT = {
   foes: (n: number) => `적 ×${n}`,
   reward: { card: '보상 카드', part: '보상 부품', kit: '보상 부품', recruit: '보상 영입' } as Record<string, string>,
   trait: { blastPawn: '불꽃 폰', rookPlate: '방패 룩', guard: '호위' } as Record<string, string>,
+  /**
+   * 지도 분대 현황 (피드백 #24 · D-503): 분대원마다 기물 · HP · 버팀 하트 · 심장 톱니 — 누르면 아래 띠에 그 분대원(기벽 포함), 다시 누르면 분대 창.
+   * 판 = 움푹 칸(임시 — MP-01 대기).
+   */
+  roster: {
+    label: '분대 현황',
+    hp: (hp: number, max: number) => `HP ${hp}/${max}`,
+    brace: (left: number, max: number) => `버팀 ${left}/${max}`,
+    gear: '심장 톱니 성함',
+    gearCracked: '심장 톱니 금 감',
+    cracked: '금',
+    king: '분대의 심장 · 쓰러지면 끝',
+    noQuirk: '기벽 없음',
+    look: '살핀다',
+  },
 };
 
 export const HUD_TEXT = {

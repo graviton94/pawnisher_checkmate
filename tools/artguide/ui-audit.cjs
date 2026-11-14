@@ -88,6 +88,9 @@ const SCENES = [
   ['p6-forge', async (p, A, W, S) => { await A(() => window.sliceApi.forge()); await W(2600); await p.click('[data-slot="repair"]'); await W(400); await S(''); }],
   ['p6-deck', async (p, A, W, S) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await S(''); }],
   ['p6-crew', async (p, A, W, S) => { await A(() => window.sliceApi.crew()); await W(1400); await S(''); }],
+  // 후기 남은 항목 (D-503): 지도 분대 현황 · 분대원 띠 · 작업대 수리 고르기
+  ['pe-map-roster', async (p, A, W, S) => { await A(() => { const a = window.sliceApi; a.richRun(); const q = a.squad(); q[1].hp = 9; q[1].quirk = 'stubborn'; q[1].doorsSpent = 1; q[2].cracked = true; a.map(2); }); await W(1500); await S('a'); await p.click('.mr-slot >> nth=1').catch(() => {}); await W(600); await S('b'); }],
+  ['pe-repair', async (p, A, W, S) => { await A(() => { const a = window.sliceApi; a.richRun(); a.hurt(0.5); a.forge(); }); await W(2600); await p.click('[data-slot="repair"]'); await W(300); await p.click('[data-slot="repair"]'); await W(1400); await S(''); }],
   ['endclear', async (p, A, W, S) => { await A(() => window.sliceApi.end(true)); await W(2800); await S(''); }],
 ];
 (async () => {
