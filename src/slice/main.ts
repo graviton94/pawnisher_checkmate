@@ -920,6 +920,7 @@ const syncTerms = (): void => {
   // 수읽기 (D-281): 덱에 체스 수 카드가 들어오면
   on('tactic', deck.some((id) => COMMANDS[id]?.axis === 'tactic' || COMMANDS[id]?.axis2 === 'tactic'));
   on('spend', deck.some((id) => COMMANDS[id]?.kind === 'spend'));
+  on('call', !!b.pawnCalled);
 };
 /** 「회피 반격」이라는 이름은 둘째 출하 또는 2막부터 (첫 출하 1막은 「빠지며 쳤다」 연출로만) */
 const grazeNamed = (meta = readMetaCached()): boolean => meta.runs >= 1 || actI >= 1;

@@ -93,6 +93,8 @@ export interface SliceBattle {
   parts: SlicePartId[];
   /** 이번 턴에 처치한 내 기물 (재도약) */
   killers: number[];
+  /** 막사의 호출이 한 번이라도 일어났나 (D-466 — 용어 사전을 연다) */
+  pawnCalled?: boolean;
   /** 쇳물 서약으로 녹인 내 기물 (D-462) — 대국 뒤 분대에서 영영 빠진다 */
   melted?: number[];
   /** 실험실 지표 (D-456): 턴마다 우리가 적에게 준 실제 피해 · 한 번에 준 가장 큰 피해 — 화면은 쓰지 않는다 */
@@ -263,8 +265,12 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
  * 막사의 호출 (D-466): 우리 폰이 하나도 없는데 손에 폰 카드가 있으면 턴 시작에 킹 곁에 임시 폰 하나 (이번 대국만).
  * 폰이 다 쓰러지면 시작 덱의 「전진」까지 폰 카드가 모두 죽은 카드가 되던 것 — 보병 축이 완주 10 ~ 20%로 바닥이던 근본 원인.
  */
-const pawnCall = (b: SliceBattle): BattleEvent | null =>
-  !b.s.pieces.some((p) => p.side === 0 && p.type === 'P') && b.hand.some((id) => COMMANDS[id]?.who === 'P') ? spawnPawn(b, '막사의 호출 — 폰 카드를 쥔 손에 임시 폰이 선다') : null;
+const pawnCall = (b: SliceBattle): BattleEvent | null => {
+  if (b.s.pieces.some((p) => p.side === 0 && p.type === 'P') || !b.hand.some((id) => COMMANDS[id]?.who === 'P')) return null;
+  const e = spawnPawn(b, '막사의 호출 — 폰 카드를 쥔 손에 임시 폰이 선다');
+  if (e) b.pawnCalled = true;
+  return e;
+};
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
 const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
