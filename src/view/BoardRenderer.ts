@@ -1,7 +1,7 @@
 import { vignette } from '../ui/juice';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
-import { FORMS } from '../data/forms';
+import { FORMS, FORM_IDS } from '../data/forms';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
@@ -16,7 +16,7 @@ import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, dr
 import { drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
-import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type Side, type Plan, type PlanStep, type Pos } from '../engine';
+import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type FormId, type Side, type Plan, type PlanStep, type Pos } from '../engine';
 
 /** 판 위 글씨 크기 (D-213): 갈무리11 굵게의 격자(12px) 배수로만 — 크기마다 다른 서체처럼 보이지 않게 */
 const gpx = (px: number): number => Math.max(12, Math.round(px / 12) * 12);
@@ -25,6 +25,13 @@ const gpx = (px: number): number => Math.max(12, Math.round(px / 12) * 12);
 
 /** 기물 텍스처 키 */
 const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
+/**
+ * 발주 이형 · 거대 주물 그림 (2026-11-14 P-01~05 · G-01~03, tools/pixel/piece_import.py → maker.py export).
+ * 이형 = `pieces/s-<이형><진영>.png`(72칸 캔버스), 거대 = `pieces/s-giant<유형>1.png`(144칸 캔버스 · 한가운데가 네 부위 경계).
+ */
+const formKey = (form: FormId, side: Side) => `px-${form}-${side}`;
+const giantKey = (type: PieceType) => `px-giant${type}-1`;
+const GIANT_ART: PieceType[] = ['P', 'R', 'Q'];
 
 const C = {
   // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
@@ -231,6 +238,8 @@ class BoardScene extends Phaser.Scene {
   preload(): void {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
+    for (const f of FORM_IDS) for (const side of [0, 1] as Side[]) this.load.image(formKey(f, side), `pieces/s-${f}${side}.png`);
+    for (const type of GIANT_ART) this.load.image(giantKey(type), `pieces/s-giant${type}1.png`);
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
     for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
@@ -245,10 +254,14 @@ class BoardScene extends Phaser.Scene {
   }
   /** 기물 그림의 색을 표에 따라 1:1로 바꾼 새 그림 `<기물키>-<suffix>` */
   private makeToneTexture(type: PieceType, side: Side, suffix: string, tone: Record<number, number>): void {
+    this.makeToneFrom(pieceKey(type, side), suffix, tone);
+  }
+  /** 텍스처 `base`의 색을 표에 따라 1:1로 바꾼 새 그림 `<base>-<suffix>` (이형 · 거대 그림도 같은 규칙) */
+  private makeToneFrom(base: string, suffix: string, tone: Record<number, number>): void {
     const CRACK_TONE = tone;
-    const key = `${pieceKey(type, side)}-${suffix}`;
-    if (this.textures.exists(key)) return;
-    const src = this.textures.get(pieceKey(type, side)).getSourceImage() as HTMLImageElement;
+    const key = `${base}-${suffix}`;
+    if (this.textures.exists(key) || !this.textures.exists(base)) return;
+    const src = this.textures.get(base).getSourceImage() as HTMLImageElement;
     const tex = this.textures.createCanvas(key, src.width, src.height);
     if (!tex) return;
     const ctx = tex.getContext();
@@ -267,10 +280,17 @@ class BoardScene extends Phaser.Scene {
     tex.refresh();
     tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
-  /** 이 기물이 쓸 그림 (깨진 내 기물이면 어두운 속 칠) */
-  private glyphKey(id: number, type: PieceType, side: Side): string {
-    if (side === 1 && this.foeTone && this.textures.exists(`${pieceKey(type, 1)}-${this.foeTone}`)) return `${pieceKey(type, 1)}-${this.foeTone}`;
-    return side === 0 && this.crackedIds.includes(id) && this.textures.exists(`${pieceKey(type, 0)}-crack`) ? `${pieceKey(type, 0)}-crack` : pieceKey(type, side);
+  /** 기물의 바탕 그림 키 — 발주 이형 · 거대 그림이 있으면 그것, 없으면 바탕 기물 (P-01~05 · G-01~03) */
+  private artKey(type: PieceType, side: Side, art?: { form?: FormId; giant?: boolean }): string {
+    if (art?.giant && side === 1 && this.textures.exists(giantKey(type))) return giantKey(type);
+    if (art?.form && this.textures.exists(formKey(art.form, side))) return formKey(art.form, side);
+    return pieceKey(type, side);
+  }
+  /** 이 기물이 쓸 그림 (깨진 내 기물이면 어두운 속 칠 · 적 계급이면 그 색) */
+  private glyphKey(id: number, type: PieceType, side: Side, art?: { form?: FormId; giant?: boolean }): string {
+    const base = this.artKey(type, side, art);
+    if (side === 1 && this.foeTone && this.textures.exists(`${base}-${this.foeTone}`)) return `${base}-${this.foeTone}`;
+    return side === 0 && this.crackedIds.includes(id) && this.textures.exists(`${base}-crack`) ? `${base}-crack` : base;
   }
 
   create(): void {
@@ -282,6 +302,13 @@ class BoardScene extends Phaser.Scene {
       this.makeToneTexture(type, 1, 'elite', FOE_TONE.elite);
       this.makeToneTexture(type, 1, 'boss', FOE_TONE.boss);
       for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns', 'boss-gilded', 'boss-inspect', 'boss-magnet', 'boss-alarm']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
+    }
+    // 발주 이형 · 거대 그림: 같은 도트 · 같은 색 바꾸기 (깨짐 · 정예 · 반장 색)
+    const arts = [...FORM_IDS.flatMap((f) => [formKey(f, 0), formKey(f, 1)]), ...GIANT_ART.map(giantKey)].filter((k) => this.textures.exists(k));
+    for (const k of arts) {
+      this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      if (k.endsWith('-0')) this.makeToneFrom(k, 'crack', CRACK_TONE);
+      else for (const tone of Object.keys(FOE_TONE)) this.makeToneFrom(k, tone, FOE_TONE[tone]);
     }
     this.cameras.main.setZoom(this.dpr);
     this.camZoom = this.dpr;
@@ -549,8 +576,8 @@ class BoardScene extends Phaser.Scene {
           .setResolution(this.dpr),
       );
     }
-    // 이형 (D-481): 각인과 같은 검은 딱지 + 황동 글자 하나(포 · 낙 · 뜀 · 주 · 독) — 전용 그림을 받기 전까지. 각인이 있으면 왼쪽 아래
-    if (p.form) {
+    // 이형 (D-481): 전용 그림(P-01~05)이 있으면 그 그림만. 그림 파일이 없을 때만 대비 딱지(검은 딱지 + 황동 글자) — 각인이 있으면 왼쪽 아래
+    if (p.form && !this.textures.exists(formKey(p.form, p.side))) {
       const size = t * 0.34;
       const y0 = p.carve ? t - size - t * 0.14 : t * 0.02;
       const tag = this.add.graphics();
@@ -581,9 +608,9 @@ class BoardScene extends Phaser.Scene {
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
-    // 거대 주물 (D-484): 바탕 그림을 두 배로 키워 네 조각으로 — 부위마다 제 칸의 4분의 1만 보인다(부서지면 그 조각이 무너진다).
-    // 화면 위쪽 = 판 y가 큰 쪽(dy 1). 전용 그림(G-01~03 128×128)을 받으면 같은 자르기로 들어간다
+    const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side, { form: p.asPawn ? undefined : p.form, giant: !!p.giant })).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
+    // 거대 주물 (D-484): 그림 하나를 2×2 칸에 펴고 네 조각으로 — 부위마다 제 칸의 4분의 1만 보인다(부서지면 그 조각이 무너진다).
+    // 화면 위쪽 = 판 y가 큰 쪽(dy 1). 전용 그림(G-01~03, 144칸 캔버스)은 한가운데가 부위 경계, 없으면 바탕 기물 그림을 두 배로
     if (p.giant) {
       const left = p.giant.dx === 0, top = p.giant.dy === 1;
       const fw = glyph.frame.width, fh = glyph.frame.height;
@@ -1547,7 +1574,7 @@ class BoardScene extends Phaser.Scene {
         let landed = false;
         sfx('lift');
         // 흰 그림자 잔상 셋 (D-180): 지나온 길 위, 지금 자리 가까이 몰리고 오래된 것일수록 작고 옅고 길다
-        const ghosts = this.calm ? [] : IMPACT.ghosts.map(() => this.add.image(0, 0, pieceKey(s.piece.type, s.piece.side)).setTintFill(0xffffff).setDepth(2.4).setVisible(false));
+        const ghosts = this.calm ? [] : IMPACT.ghosts.map(() => this.add.image(0, 0, this.artKey(s.piece.type, s.piece.side, { form: s.piece.form })).setTintFill(0xffffff).setDepth(2.4).setVisible(false));
         const trail: { x: number; y: number }[] = [];
         let landAt = -1;
         await new Promise<void>((done) =>

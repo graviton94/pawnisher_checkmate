@@ -336,7 +336,7 @@ const pieceInfo = (pos: Pos): void => {
     key,
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
-    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.form ? ` · 이형(${PIECE_NAMES_KO[p.type]} 카드)` : ''}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.giant ? GIANTS[p.type as GiantType].name : p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
+    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48, p.giant ? 'giant' : p.form)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.form ? ` · 이형(${PIECE_NAMES_KO[p.type]} 카드)` : ''}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.giant ? GIANTS[p.type as GiantType].name : p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
     body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div></div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격력</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어력</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
   bindAbilities(el, abilities);
@@ -543,7 +543,8 @@ const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; sh
 const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: number; lives?: number; kills?: number; dmg?: number; say?: string }, src?: string, cls = ''): string => {
   const g = u.form ? 'gold' : RECRUIT_ODDS[u.t]?.grade ?? 'common';
   const q = u.quirk ? QUIRKS[u.quirk] : null;
-  const art = src ?? `ui/hud/crew-${u.t}.png`;
+  // 이형 분대원: 전용 초상(PT-08)을 받기 전까지 발주 기물 그림(P-01~05) — 바탕 기물 초상으로는 이형이 안 보인다
+  const art = src ?? (u.form ? `pieces/l-${u.form}0.png` : `ui/hud/crew-${u.t}.png`);
   const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1) * (u.form ? FORMS[u.form].atk : 1)) + (u.temper ?? 0);
   // 생명 (#24 · D-488): 대국과 같은 계산 하나 — 맹세(폰 +1) · 킹 생명까지. 대국 중이면 남은 수(o.lives)를 켜고 나머지는 깨진 하트
   const total = livesOf(u, parts);
@@ -1360,7 +1361,7 @@ const lastStand = async (force = false): Promise<void> => {
         const el = openWin({
           size: 'm',
           title: '사선',
-          head: `${pieceImg(who.t, 0, 'small', 48)}<p class="lead">${crewLabel(who)}</p>`,
+          head: `${pieceImg(who.t, 0, 'small', 48, who.form)}<p class="lead">${crewLabel(who)}</p>`,
           body: `<p class="say"><span class="who">${who.name ?? PIECE_NAMES_KO[who.t]}</span>“제가 맞겠습니다, 대장.”</p><p>받아들이면 킹과 자리를 바꿉니다. 이 분대원이 대신 맞습니다.</p>`,
           back: { label: '거절한다', attrs: 'data-no' },
           go: { label: '받아들인다', attrs: 'data-yes' },

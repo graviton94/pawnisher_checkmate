@@ -57,6 +57,6 @@ node tools/qa/crawl.cjs <출력 폴더> <story|challenge|daily> <단계> <시드
 | `src/slice/main.ts` | 화면 흐름 전부(출하 시작 · 시작 세트 고르기 · 지도 · 보상 · 대국) |
 | `src/slice/giant.ts` · `process.ts` | 거대 주물 · 공정 판 |
 | `src/data/` | 수치 · 문구(forms · giants · process · start-sets · ability-text · hud) |
-| `src/view/BoardRenderer.ts` | Phaser 판 — 이형 딱지 · 거대 조각 · 공정 칸 · 내리찍기 효과 |
+| `src/view/BoardRenderer.ts` | Phaser 판 — 이형 · 거대 발주 그림(`artKey`, D-489) · 거대 조각 · 공정 칸 · 내리찍기 효과 |
 | `src/sim/runbot.ts` · `tools/climb.mjs` | 등반 봇 · 퀵 등반 |
 | `tools/qa/` | 자동 크롤 · 화면 검사 도구 (D-477) |

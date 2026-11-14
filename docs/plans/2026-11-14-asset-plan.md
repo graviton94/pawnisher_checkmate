@@ -61,7 +61,7 @@
 | 지도 | 분대 현황 | 없음 (분대 화면 따로) | 없음 | MP-01 (후기 24) |
 | 막 | 막 입구 카드 | `act-1 · 2 · 4` (빈 방 배경) · ACT-3 = `chained-door` | 재발주 (바이블 장면이 안 보임) | AC-01~03 |
 | 전투 | 기물 | `public/pieces/` (maker) | OK | — |
-| 전투 | 이형 · 거대 | 바탕 기물 + 황동 딱지 (`BoardRenderer.makePiece`) · `GIANT_FILL` 네 조각 자르기 | 임시 | P-01~05 · G-01~03 |
+| 전투 | 이형 · 거대 | 발주 그림 `s-<이형><진영>.png` · `s-giant<유형>1.png` (`BoardRenderer.artKey`, D-489) — 딱지 · 두 배 자르기는 그림 없을 때 대비만 | 받음 (P-04 재발주 중 1차본) | P-04 재발주 |
 | 전투 | 공정 판 칸 | `board/variant-conveyor · radiator · hammer` · `crack` · `chip-magnet` 빌림 | 임시 | PB-01 |
 | 전투 | 적 대사 | `main.ts foeSay` — 반장 = `hud/avatar-*`, 보통 적 킹 = 기물 아이콘, 이름 띠 노랑 | 임시 · 위치 우측 · 형식 미통일 | DL-01~02 · PT-05~07 (후기 6 · 22) |
 | 전투 | 우리 대사 · 합류 | `crewSay` → `hud/crew-*` · `adjutant` | 초상 OK · 띠 없음 | DL-01~02 |
@@ -97,6 +97,7 @@
 ### 1 · 2위 — 이형 P-01~05 · 거대 G-01~03 (P1)
 - 풀림: D-482 · D-484 임시본, 21장 「판마다 다른 싸움」 그림.
 - 지금: `BoardRenderer.makePiece` 황동 글자 딱지 · `GIANT_FILL` 바탕 기물 두 배 네 조각.
+- **D-489 반입 완료**: P-01 · 02 · 03 · 05 · G-01~03 받음, P-04는 재발주(1차본 반입해 씀). 도구 `tools/pixel/piece_import.py`, 격자값 `tools/pixel/scene_recipe.py PIECE_GRID`.
 - 받으면: 64×64(거대 128×128) 격자를 `tools/pixel/pieces64.txt`에 `[R:cannon 0]` `[R:cannon 1]` · `[N:camel …]` · `[Q:hopper …]` · `[B:archbishop …]` · `[R:chancellor …]` · `[P|R|Q:giant 1]` 블록으로 옮김 → `python3 -I tools/pixel/maker.py export` → `public/pieces/`. 대칭이 필요한 것은 `tools/pixel/symmetry.py`. 코드가 파일이 있으면 새 그림을 쓰므로 딱지 · 자르기 분기를 지우고(파일 없을 때 대비 분기만 남김) 거대 네 부위는 이음매 64도트 선으로 자른다.
 - 검수: 이형 적 등장 판(`sliceApi.startAt`), 거대 주물 판(넷째 왕관 반장) — 48dp 칸에서 바탕 기물과 구분되는지, 흰 테 3칸 · 외곽선 공용인지.
 

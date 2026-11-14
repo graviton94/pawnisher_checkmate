@@ -5,6 +5,7 @@
   python3 -I tools/pixel/maker.py one N 1 8 out.png   기물 하나 (유형 · 진영 0흰/1흑 · 배율 · 파일), 배경 투명
   python3 -I tools/pixel/maker.py sheet out.png 6     전체 시트 (흰/흑 × 6종, 배율)
   유형에 이형을 붙이면 그 그림: N:hammer (pieces.txt에 [N:hammer] 블록이 있을 때)
+  export는 발주 이형 · 거대 블록([R:cannon 0] · [P:giant 1] …, VARIANT_FILES)도 s-cannon0.png · s-giantP1.png로 찍는다 (D-489)
 
 규칙: 흰 바깥 테두리 1도트는 자동 (4방향), 캔버스는 18×18 도트, 가운데 정렬 · 받침 맨 아래 맞춤.
 흑 진영은 같은 격자를 짙은 색으로 칠하고, 위·왼쪽이 외곽선에 닿은 몸 도트를 밝은 테로 (원본 흑 기물의 빛 테).
@@ -118,6 +119,8 @@ PAL64 = {
     'V': (0xFF, 0xFF, 0xFF), 'E': (0xE2, 0xDE, 0xD6), 'Z': (0x26, 0x27, 0x2E),
     # 주인공 종이 왕관 (2026-11-05, 오프닝 P-05의 마분지 왕관): 빛 · 바탕 · 그늘 · 뚫린 구멍
     'F': (0xE0, 0xA8, 0x62), 'Q': (0xB5, 0x7C, 0x3C), 'J': (0x7A, 0x4C, 0x22), 'I': (0x2E, 0x1C, 0x10),
+    # 거대 주물 녹 (2026-11-14 G-01~03 발주서 허용 두 색): 녹 · 짙은 녹
+    'N': (0x8A, 0x64, 0x16), 'n': (0x4A, 0x34, 0x14),
 }
 DARK = {0: (0x3A, 0x39, 0x3E), 1: (0x1C, 0x1D, 0x22)}
 
@@ -182,7 +185,10 @@ CANVAS72 = 72
 
 
 def pad72(grid):
-    """64칸 그림을 72칸 캔버스에 — 위로 8줄 · 좌우 4칸씩 (아래 맞춤). 주인공 왕관이 머리 위로 솟을 자리를 모든 기물이 같이 갖는다"""
+    """64칸 그림을 72칸 캔버스에 — 위로 8줄 · 좌우 4칸씩 (아래 맞춤). 주인공 왕관이 머리 위로 솟을 자리를 모든 기물이 같이 갖는다.
+    거대 주물 128칸은 144칸 캔버스에 사방 8칸씩 — 그림 한가운데(64줄 · 64칸 이음매)가 캔버스 한가운데 = 네 부위 경계 (2026-11-14)"""
+    if len(grid) == 128:
+        return ['.' * 144] * 8 + ['.' * 8 + r + '.' * 8 for r in grid] + ['.' * 144] * 8
     if len(grid) >= CANVAS72:
         return grid
     pad = (CANVAS72 - len(grid)) // 2
@@ -201,6 +207,10 @@ def piece(name, side, scale=1):
     return render(data[name], side, scale)
 
 
+# 게임 그림으로 내보내는 이형 블록 (src/data/forms.ts FormId + 거대 주물). K:classic 같은 보관 블록은 내보내지 않는다
+VARIANT_FILES = ('cannon', 'camel', 'hopper', 'archbishop', 'chancellor', 'giant')
+
+
 def export():
     """게임 그림을 다시 찍는다"""
     out = os.path.join(ROOT, 'public', 'pieces')
@@ -209,7 +219,20 @@ def export():
             piece(t, side, 2).save(os.path.join(out, f's-{t}{side}.png'))
             piece(t, side, 3).save(os.path.join(out, f'l-{t}{side}.png'))
             mini(pad72(load64()[(t, side)]), side, 25).save(os.path.join(out, f'm-{t}{side}.png'))
+    # 발주 이형 · 거대 주물 (2026-11-14 P-01~05 · G-01~03): [R:cannon 0] → s-cannon0.png · [P:giant 1] → s-giantP1.png
+    names = []
+    for (name, side), grid in load64().items():
+        if ':' not in name:
+            continue
+        t, form = name.split(':')
+        if form not in VARIANT_FILES:
+            continue
+        stem = f'giant{t}' if form == 'giant' else form
+        piece(name, side, 2).save(os.path.join(out, f's-{stem}{side}.png'))
+        piece(name, side, 3).save(os.path.join(out, f'l-{stem}{side}.png'))
+        names.append(f'{stem}{side}')
     print('public/pieces/s-*.png (144px) · l-*.png (216px) · m-*.png (25px 작은 도트판) — 72칸 캔버스(64칸 정본 + 위 8줄), 12종씩')
+    print('이형 · 거대:', ' '.join(names))
 
 
 def sheet(path, scale=3):
