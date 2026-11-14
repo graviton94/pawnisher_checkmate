@@ -3445,5 +3445,5 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 ### D-479 — 안드로이드 서명을 CARPEDIEM 방식으로: sideload(APK) · upload(AAB) 키 (사용자, 2026-11-14)
 
 - 사용자: 다른 앱(CARPEDIEM)처럼 Repository secrets(`ANDROID_UPLOAD_PASSPHRASE` · `SIDELOAD_PASSPHRASE`)로 APK · AAB를 배포해 왔다.
-- 같은 방식을 옮겼다: `android-signing-key.yml`(키를 GitHub 안에서 만들어 Secrets 암호로 잠근 `.jks.gpg`만 커밋) · `build.yml` APK는 sideload 키가 있으면 그것으로 서명 · `android-release.yml` Play용 AAB는 upload 키로. `build.gradle`은 `PC_SIDELOAD_*` · `PC_UPLOAD_*` 환경 변수를 읽고, 둘 다 없으면 D-477의 고정 시험용 디버그 키.
+- 같은 방식을 옮겼다: `build.yml` 손으로 실행할 때 선택지 `make_key`(sideload · upload — 키를 GitHub 안에서 만들어 Secrets 암호로 잠근 `.jks.gpg`만 커밋) · APK는 sideload 키가 있으면 그것으로 서명 · `aab`를 켜면 Play용 AAB를 upload 키로. 따로 워크플로 파일을 두지 않은 것은, 손으로 실행하는 워크플로는 기본 브랜치에 있는 파일만 부를 수 있어서다. `build.gradle`은 `PC_SIDELOAD_*` · `PC_UPLOAD_*` 환경 변수를 읽고, 둘 다 없으면 D-477의 고정 시험용 디버그 키.
 - 순서: 사용자가 이 저장소 Secrets에 두 암호 등록 → 키 만들기 워크플로를 sideload · upload로 한 번씩 → 그 뒤 APK · AAB 빌드. sideload 키로 서명한 첫 APK는 테스터가 한 번 지우고 깔아야 한다(그 뒤로는 덮어 설치).

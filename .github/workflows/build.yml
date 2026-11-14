@@ -16,7 +16,21 @@ on:
         description: '검수 릴리스 이름 (예: v1.1.1-test.20261112.2). 주면 Actions가 그 이름으로 릴리스·태그를 만들어 설치 파일을 올린다 (-test. 이면 PC는 Windows만)'
         type: string
         default: ''
+      make_key:
+        description: '서명 키 만들기 (한 번만, D-479) — 고르면 키만 만들어 커밋하고 빌드는 하지 않는다. sideload = 직접 설치 APK, upload = Play AAB'
+        type: choice
+        options: [none, sideload, upload]
+        default: none
+      replace_key:
+        description: '이미 있는 키를 새 키로 바꾸기 (테스터 모두 다시 설치해야 함)'
+        type: boolean
+        default: false
+      aab:
+        description: 'Google Play용 AAB도 만든다 (업로드 키 필요 — ANDROID_UPLOAD_PASSPHRASE)'
+        type: boolean
+        default: false
   # 태그 푸시는 위 push에도 걸린다
+  # (기본 브랜치에 있는 이 파일만 손으로 실행할 수 있어서, 키 만들기 · AAB도 여기 선택지로 둔다)
 
 jobs:
   test:
@@ -34,7 +48,7 @@ jobs:
     needs: test
     permissions:
       contents: write
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    if: (github.event_name == 'workflow_dispatch' && (inputs.make_key == 'none' || inputs.make_key == '')) || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +97,7 @@ jobs:
     needs: test
     permissions:
       contents: write
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.pc)
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.pc && (inputs.make_key == 'none' || inputs.make_key == ''))
     strategy:
       matrix:
         os: ${{ fromJSON((contains(github.ref_name, '-test.') || contains(inputs.release_tag, '-test.')) && '["windows-latest"]' || '["windows-latest","macos-latest","ubuntu-latest"]') }}
@@ -125,3 +139,88 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.AppImage
+
+  # 서명 키 만들기 (D-479, CARPEDIEM과 같은 방식) — 키를 GitHub 안에서 만들어 Secrets 암호로 잠근 파일만 커밋한다
+  make-key:
+    if: github.event_name == 'workflow_dispatch' && (inputs.make_key == 'sideload' || inputs.make_key == 'upload')
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Make and lock the key
+        env:
+          P_UPLOAD: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+          P_SIDELOAD: ${{ secrets.SIDELOAD_PASSPHRASE }}
+          KIND: ${{ inputs.make_key }}
+          REPLACE: ${{ inputs.replace_key }}
+        run: |
+          set -euo pipefail
+          if [ "$KIND" = upload ]; then NAME=ANDROID_UPLOAD_PASSPHRASE; P="$P_UPLOAD"; else NAME=SIDELOAD_PASSPHRASE; P="$P_SIDELOAD"; fi
+          if [ "$KIND" = upload ] && [ "$P_UPLOAD" = "$P_SIDELOAD" ]; then echo "::error::업로드 키 암호는 직접 설치용 암호와 달라야 합니다"; exit 1; fi
+          export P; unset P_UPLOAD P_SIDELOAD
+          if [ -z "$P" ]; then echo "::error::Secrets 에 $NAME 가 없습니다"; exit 1; fi
+          if [ "${#P}" -lt 16 ]; then echo "::error::$NAME 는 16자 이상이어야 합니다"; exit 1; fi
+          mkdir -p android/keystore
+          OUT=android/keystore/$KIND.jks.gpg
+          if [ -f "$OUT" ] && [ "$REPLACE" != "true" ]; then echo "::error::키가 이미 있습니다 (바꾸려면 replace 를 켜고 실행)"; exit 1; fi
+          KS="$RUNNER_TEMP/$KIND.jks"
+          keytool -genkeypair -keystore "$KS" -storetype PKCS12 -alias "$KIND" -keyalg RSA -keysize 4096 -validity 10000 \
+            -storepass:env P -keypass:env P -dname "CN=Pawnisher Checkmate $KIND, O=graviton94" >/dev/null
+          keytool -list -v -keystore "$KS" -storepass:env P -alias "$KIND" | grep -E "SHA256:" | head -1
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 -o "$OUT" "$KS" 3<<<"$P"
+          rm -f "$KS"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"
+          git commit -m "New $KIND signing key, locked with the $NAME secret"
+          git push
+
+  # Google Play용 AAB (D-479) — 업로드 키로 서명
+  aab:
+    needs: test
+    if: github.event_name == 'workflow_dispatch' && inputs.aab && (inputs.make_key == 'none' || inputs.make_key == '')
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload key is ready
+        env:
+          P: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+        run: |
+          if [ -z "$P" ] || [ ! -f android/keystore/upload.jks.gpg ]; then echo "::error::업로드 키가 없습니다 (Secrets 의 ANDROID_UPLOAD_PASSPHRASE 와 ‘Android signing key’ → upload 실행)"; exit 1; fi
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci
+        env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' }
+      - run: npm test
+      - run: npm run android:sync
+      - name: Upload key
+        env:
+          P: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+        run: gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 -d -o "$RUNNER_TEMP/upload.jks" android/keystore/upload.jks.gpg 3<<<"$P"
+      - name: Build signed AAB
+        working-directory: android
+        env:
+          PC_UPLOAD_STORE: ${{ runner.temp }}/upload.jks
+          PC_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+          PC_UPLOAD_KEY_ALIAS: upload
+          PC_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+          PC_VERSION_NAME: ${{ inputs.release_tag || '1.2.0' }}
+        run: ./gradlew bundleRelease
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pawnisher-aab-${{ inputs.release_tag || '1.2.0' }}
+          path: android/app/build/outputs/bundle/release/*.aab
