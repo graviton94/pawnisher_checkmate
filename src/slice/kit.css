@@ -1253,3 +1253,5 @@ body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {
 
 /* 부관 안내 띠는 판 위에서만: 창 · 컷신 · 왕위 결정 화면이 뜨면 숨는다 (D-450 — 왕위 결정 화면 위에 띠가 남았다) */
 body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has(.promotion, .prologue, .credits, .actcard) .coach-band { display: none; }
+/* D-478: 낮은 화면(16:9 폰 360)에서 부품 두 줄이 다 보이게 — 적 의도 줄만 낮춘다(32 → 26) */
+@media (max-height: 380px) { .intents .it-row { min-height: 26px; } }

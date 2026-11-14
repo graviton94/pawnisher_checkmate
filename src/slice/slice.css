@@ -160,8 +160,9 @@ body.slice .cmd { grid-template-columns: 30px 48px 1fr; }
 .cmd .costgear.short img { filter: grayscale(1) brightness(0.6) drop-shadow(1px 1px 0 #000); }
 .cmd .art { width: 48px; height: 48px; }
 .cmd .art img { width: 44px; height: 44px; }
-body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 0; }
-body.slice .parts .part-chip { width: 38px; height: 38px; padding: 0; justify-content: center; }
+/* D-478 (사용자): 대국 오른쪽 부품은 한 줄에 넷 — 레일 폭을 가득 채운다(부품 칸 최대 8 = 두 줄) */
+body.slice .parts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; min-height: 0; }
+body.slice .parts .part-chip { width: 100%; height: auto; aspect-ratio: 1 / 1; padding: 0; justify-content: center; }
 body.slice .parts .part-chip span { display: none; }
 body.slice .parts .part-chip.fire { animation: decree 700ms cubic-bezier(0.2, 1.6, 0.4, 1); }
 /* 작은 폰 (D-162): 양옆 기둥은 화면 폭 비율로, 판 위에 안내 띠 자리를 비워 둔다 (안내가 판을 가리지 않게) */
