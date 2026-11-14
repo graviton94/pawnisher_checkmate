@@ -3447,3 +3447,8 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - 사용자: 다른 앱(CARPEDIEM)처럼 Repository secrets(`ANDROID_UPLOAD_PASSPHRASE` · `SIDELOAD_PASSPHRASE`)로 APK · AAB를 배포해 왔다.
 - 같은 방식을 옮겼다: `build.yml` 손으로 실행할 때 선택지 `make_key`(sideload · upload — 키를 GitHub 안에서 만들어 Secrets 암호로 잠근 `.jks.gpg`만 커밋) · APK는 sideload 키가 있으면 그것으로 서명 · `aab`를 켜면 Play용 AAB를 upload 키로. 따로 워크플로 파일을 두지 않은 것은, 손으로 실행하는 워크플로는 기본 브랜치에 있는 파일만 부를 수 있어서다. `build.gradle`은 `PC_SIDELOAD_*` · `PC_UPLOAD_*` 환경 변수를 읽고, 둘 다 없으면 D-477의 고정 시험용 디버그 키.
 - 순서: 사용자가 이 저장소 Secrets에 두 암호 등록 → 키 만들기 워크플로를 sideload · upload로 한 번씩 → 그 뒤 APK · AAB 빌드. sideload 키로 서명한 첫 APK는 테스터가 한 번 지우고 깔아야 한다(그 뒤로는 덮어 설치).
+
+### D-480 — I-14A~D 부품 아이콘 반입 (2026-11-14)
+
+- 사용자가 맞물린 톱니 · 공성 걸쇠 · 맞댄 철판 · 분대 인장 원본을 줬다. 원본은 `build-res/order/I-14{A~D}-source.png`에 그대로 두고, `python3 -I tools/pixel/i14_import.py`(I-15와 같은 방법: 투명 여백 걷기 → 정사각 칸 → 칸마다 대표색 한 번 · 원본 색 · 이진 알파 · 외곽선 추가 없음)로 32×32 게임 격자를 찍었다. 대조 그림 `I-14-check.png`, 기록 `I-14-import.json`.
+- 네 부품이 빌려 쓰던 임시 아이콘(갈래 톱니 · 모루 장갑 · 방패벽 · 옥새)을 떼고 제 아이콘으로 — 915×412 대국 레일 · 카드에서 확인.

@@ -1,0 +1,134 @@
+[
+  {
+    "id": "relayGear",
+    "order": "I-14A",
+    "source": "I-14A-source.png",
+    "sourceSha256": "dc004e0800d65ca77fc9b771f9e22d038a8285a3ee5f73f244493c4e6366e30f",
+    "transparentTrim": [
+      87,
+      154,
+      1169,
+      1182
+    ],
+    "paddedSide": 1237,
+    "samplePitch": [
+      38.65625,
+      38.65625
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 77,
+    "rgbaSha256": "fed8a192f5a0d90dda4ca72700467d09e46130fdf488b6ae942fc75f001574bf",
+    "outputs": [
+      "tools/pixel/icons32_ext/relayGear.png",
+      "tools/pixel/icons32/relayGear.png",
+      "public/ui/icons16/relayGear.png"
+    ],
+    "method": "whole image; original colors; one pass; no added outline"
+  },
+  {
+    "id": "siegeLatch",
+    "order": "I-14B",
+    "source": "I-14B-source.png",
+    "sourceSha256": "7050cf25f292eab865e4b7f0b5b03a6510c734c280a294076dcc8e3c003f7c5c",
+    "transparentTrim": [
+      158,
+      173,
+      1094,
+      1157
+    ],
+    "paddedSide": 1125,
+    "samplePitch": [
+      35.15625,
+      35.15625
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 135,
+    "rgbaSha256": "32fb732172e374a6ecf97c78a667f598801efa19f91cce8782edd333a287bfc0",
+    "outputs": [
+      "tools/pixel/icons32_ext/siegeLatch.png",
+      "tools/pixel/icons32/siegeLatch.png",
+      "public/ui/icons16/siegeLatch.png"
+    ],
+    "method": "whole image; original colors; one pass; no added outline"
+  },
+  {
+    "id": "sharedPlate",
+    "order": "I-14C",
+    "source": "I-14C-source.png",
+    "sourceSha256": "6ab8b1e0ba995ebb4fa23fe5de96b439351954a9d0957b9ff530225e91b032b6",
+    "transparentTrim": [
+      213,
+      103,
+      1147,
+      1062
+    ],
+    "paddedSide": 1096,
+    "samplePitch": [
+      34.25,
+      34.25
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 210,
+    "rgbaSha256": "e46dec696fa57a9082e779aaae78e3cac4de411d45733ae75ee8437cc50810a0",
+    "outputs": [
+      "tools/pixel/icons32_ext/sharedPlate.png",
+      "tools/pixel/icons32/sharedPlate.png",
+      "public/ui/icons16/sharedPlate.png"
+    ],
+    "method": "whole image; original colors; one pass; no added outline"
+  },
+  {
+    "id": "relaySeal",
+    "order": "I-14D",
+    "source": "I-14D-source.png",
+    "sourceSha256": "1c32c827cc6b3c72735b8881cd43870082638984a96429b8e14bfbf272055006",
+    "transparentTrim": [
+      177,
+      215,
+      1077,
+      1061
+    ],
+    "paddedSide": 1029,
+    "samplePitch": [
+      32.15625,
+      32.15625
+    ],
+    "size": [
+      32,
+      32
+    ],
+    "alpha": [
+      0,
+      255
+    ],
+    "colors": 136,
+    "rgbaSha256": "a39b156b09dc83ac8587e2aef127a682adaa17ba64fec6ff6de9d21b109d6d88",
+    "outputs": [
+      "tools/pixel/icons32_ext/relaySeal.png",
+      "tools/pixel/icons32/relaySeal.png",
+      "public/ui/icons16/relaySeal.png"
+    ],
+    "method": "whole image; original colors; one pass; no added outline"
+  }
+]

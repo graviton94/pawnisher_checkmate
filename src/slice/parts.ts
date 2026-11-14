@@ -40,11 +40,11 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   bishopLens: 'rare', rookBolt: 'rare', crown: 'rare', lance: 'rare', anvilPlate: 'rare', spare: 'rare', drum: 'rare', assembly: 'rare', brittle: 'rare', gilded: 'rare', throne: 'rare', conductor: 'rare', greed: 'rare', tape: 'rare', oath: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
-  relaySeal: { name: '분대 인장', axis: null, icon: 'royalSeal', flavor: '세 번째 손이 약속을 완성한다.', desc: '첫 피해 ×1.8 — 턴에 한 번, 셋째 유형 공격 시' },
-  sharedPlate: { name: '맞댄 철판', axis: null, icon: 'shieldWall', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 턴에 한 번, 고참 방열판 시' },
+  relaySeal: { name: '분대 인장', axis: null, icon: 'relaySeal', flavor: '세 번째 손이 약속을 완성한다.', desc: '첫 피해 ×1.8 — 턴에 한 번, 셋째 유형 공격 시' },
+  sharedPlate: { name: '맞댄 철판', axis: null, icon: 'sharedPlate', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 턴에 한 번, 고참 방열판 시' },
   // I-14A/B 원본 파일 반입 전 기존 그림을 빌린다 (D-420).
-  relayGear: { name: '맞물린 톱니', axis: null, icon: 'forkGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 턴에 한 번, 두 유형 공격 시' },
-  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'anvilPlate', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판≤12 → 피해 — 턴에 한 번, 룩 2태엽↑ 시' },
+  relayGear: { name: '맞물린 톱니', axis: null, icon: 'relayGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 턴에 한 번, 두 유형 공격 시' },
+  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'siegeLatch', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판≤12 → 피해 — 턴에 한 번, 룩 2태엽↑ 시' },
   // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
   lastBreath: { name: '마지막 숨', axis: null, icon: 'lastBreath', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남은 동안' },
   ledger: { name: '피의 장부', axis: null, icon: 'ledger', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },

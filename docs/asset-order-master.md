@@ -148,7 +148,7 @@
 
 | 번호 | 상태 |
 |---|---|
-| I-14A 맞물린 톱니 / I-14B 공성 걸쇠 / I-14C 맞댄 철판 / I-14D 분대 인장 | **이전 사용자 제작 완료·원본 반입 대기.** 이번 ZIP에는 해당 네 원본이 없다. 재제작 요청 아님. 현재 기능과 임시 아이콘은 유지 |
+| I-14A 맞물린 톱니 / I-14B 공성 걸쇠 / I-14C 맞댄 철판 / I-14D 분대 인장 | **반입 완료 (D-480, 2026-11-14).** 원본 `build-res/order/I-14{A~D}-source.png` → `python3 -I tools/pixel/i14_import.py` → `public/ui/icons16/{relayGear,siegeLatch,sharedPlate,relaySeal}.png`(32×32 · 원본 색 · 이진 알파). 대조 `I-14-check.png`, 기록 `I-14-import.json`. 빌려 쓰던 임시 아이콘을 뗐다 |
 | UI-31 기물 검사판 / UI-32 능력치 네 칸 / UI-33 장부 | 기존 반입 완료. 재발주 없음 |
 | S-01 부모·아이 손 | 기존 반입 완료. 에필로그 세 컷에서 사용 |
 
