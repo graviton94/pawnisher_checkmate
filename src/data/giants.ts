@@ -21,8 +21,8 @@ export const isGiantType = (t: PieceType): t is GiantType => t === 'P' || t === 
  * [막 1~3] → 그 막에서 그 판에 세울 거대 주물 (없으면 null). 서는 만큼 같은 바탕 기물 하나(없으면 폰 둘)를 뺀다.
  */
 export const GIANT_AT = {
-  check: (act: number, level: number): GiantType | null => (act === 1 ? (level >= 2 ? 'P' : null) : act === 2 ? 'P' : level >= 3 ? 'Q' : 'R'),
-  boss: (act: number, level: number): GiantType | null => (act === 2 && level >= 2 ? 'P' : act === 3 && level >= 2 ? 'R' : null),
+  check: (act: number, level: number): GiantType | null => (act === 1 ? (level >= 3 ? 'P' : null) : act === 2 ? 'P' : level >= 3 ? 'Q' : 'R'),
+  boss: (act: number, level: number): GiantType | null => (act === 2 && level >= 3 ? 'P' : act === 3 && level >= 3 ? 'R' : null),
   /** 도전 단계(4~)의 2막 이후 일반 대국에 설 확률 */
   battleOdds: 0.25,
   battleFrom: 4,
