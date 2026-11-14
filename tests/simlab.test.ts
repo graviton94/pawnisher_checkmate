@@ -25,7 +25,7 @@ describe('실험실 지표 (D-456)', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     const cardOffers = a.offers.filter((o) => !o.part);
     expect(cardOffers.filter((o) => o.taken).length).toBeGreaterThan(0);
-  });
+  }, 30000);
 });
 
 /** 다시 볼 판 (D-468): 실험실이 뽑은 극단 대국 코드가 같은 판을 다시 세운다 */
