@@ -28,16 +28,19 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   // 측정 (D-217 2): 같은 축 카드 둘과 함께 넣은 덱 vs 그 카드만 넣은 덱. 황금 = 상위 4, 희귀 = 다음 10.
   // 설계 보정: 맹세(사용자 결정 — 폰 전용 고등급) 황금, 탐욕의 저울(나사 두 배 — 경제는 봇이 못 잰다) · 되감는 테이프(봇은 되감기를 안 쓴다) 희귀
   // D-358: 막사의 종은 일반인데 힘 값 +2.4(±2σ 밖) → 희귀
-  barracks: 'rare', magnet: 'rare', siegeLatch: 'rare', relaySeal: 'gold', sharedPlate: 'rare',
-  lastBreath: 'rare', ledger: 'rare', veteran: 'rare', deathMark: 'rare',
+  barracks: 'rare', magnet: 'rare', siegeLatch: 'rare', relaySeal: 'rare', sharedPlate: 'rare',
+  ledger: 'rare', veteran: 'rare',
   // 기록 유물 2차 (D-384) — 처치 · 피해 · 쓰러짐 · 대국 수
-  aceBadge: 'rare', heavyHand: 'rare', cleanSheet: 'rare', scarPlate: 'rare',
-  bloodPact: 'gold', hammer: 'gold', whetstone: 'gold', coil: 'gold',
+  aceBadge: 'rare', heavyHand: 'rare', cleanSheet: 'rare',
+  hammer: 'rare', whetstone: 'gold', coil: 'gold',
   // 부품 확장 (D-282) — 설계 등급
-  toolbox: 'rare', vise: 'rare', gameRecord: 'rare', queenCrown: 'rare', lightCloak: 'rare', lastAxle: 'rare', ventHole: 'rare', afterheat: 'gold', bossBane: 'rare', lightMag: 'rare',
+  toolbox: 'rare', vise: 'rare', gameRecord: 'rare', queenCrown: 'rare', lightCloak: 'rare', lastAxle: 'rare', ventHole: 'rare', afterheat: 'gold', bossBane: 'rare',
   // 부품 확장 2차 (D-287)
-  royalSeal: 'rare', tally: 'rare', flywheel: 'gold', redLine: 'rare', coolant: 'rare', loupe: 'rare', calipers: 'rare',
-  bishopLens: 'rare', rookBolt: 'rare', crown: 'rare', lance: 'rare', anvilPlate: 'rare', spare: 'rare', drum: 'rare', assembly: 'rare', brittle: 'rare', gilded: 'rare', throne: 'rare', conductor: 'rare', greed: 'rare', tape: 'rare', oath: 'rare',
+  royalSeal: 'rare', tally: 'rare', flywheel: 'rare', redLine: 'rare', loupe: 'rare', calipers: 'rare',
+  bishopLens: 'rare', rookBolt: 'rare', crown: 'rare', lance: 'rare', anvilPlate: 'rare', drum: 'rare', brittle: 'rare', gilded: 'rare', throne: 'gold', conductor: 'rare', greed: 'rare', tape: 'rare', oath: 'rare',
+  // 재측정 (2026-11-14 D-500, tools/simlab-items.mjs 보통 봇 · 승급 2 · 짝 25출하): 시작 분대(킹 · 폰 · 나이트)로 쓸 수 있는 것만 순위 →
+  // 같은 등급 수로 순위를 다시 나눈 등급과 다르고 그 경계에서 표준오차 절반 넘게 벗어난 것만 옮겼다(나머지는 표본이 작아 그대로). 올라간 것 ↓ · 내려간 것은 DECISIONS D-500
+  scepter: 'rare', spurs: 'rare', fuse: 'rare', sergeant: 'rare', recoilSpring: 'rare', chainReel: 'rare', whistle: 'rare', jumpSpring: 'rare',
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   relaySeal: { name: '분대 인장', axis: null, icon: 'relaySeal', flavor: '세 번째 손이 약속을 완성한다.', desc: '첫 피해 ×1.8 — 턴에 한 번, 셋째 유형 공격 시' },

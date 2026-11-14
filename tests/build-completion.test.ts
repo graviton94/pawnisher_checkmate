@@ -143,8 +143,9 @@ describe('획득 경로와 실제 피해 기록', () => {
     expect(KITS.some((kit) => kit.part === 'siegeLatch')).toBe(true);
   });
   it('혼성의 null 축도 일반 보조품 공급에 연결하고 첫 상점 뒤에는 풀을 제한하지 않는다', () => {
-    const pool: SlicePartId[] = ['magnet', 'sergeant', 'relaySeal'];
-    expect(firstShopParts(pool, ['relayGear'], 0)).toEqual(['sergeant']);
+    // 등급 재측정(D-500)으로 고참 계급장이 희귀가 되어 혼성의 일반 보조품은 열린 문으로 본다
+    const pool: SlicePartId[] = ['magnet', 'openGate', 'relaySeal'];
+    expect(firstShopParts(pool, ['relayGear'], 0)).toEqual(['openGate']);
     expect(firstShopParts(pool, ['relayGear'], 1)).toEqual(pool);
     expect(partFits('relaySeal', ['K', 'N'], [])).toBe(false);
     expect(partFits('sharedPlate', ['K', 'R'], [], [{ t: 'R', wins: 2 }])).toBe(false);

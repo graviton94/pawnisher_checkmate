@@ -279,14 +279,17 @@ export const KITS: { part: SlicePartId; cards: CommandId[]; needs?: PieceType }[
 export type Grade = 'common' | 'rare' | 'gold';
 export const CARD_GRADE: Partial<Record<string, Grade>> = {
   // 카드 확장 (D-281) — 설계 등급(측정 전): 체스 수는 희귀, 한 방 배율은 금
-  castle: 'rare', crownSlam: 'gold', pawnFork: 'rare', lastRank: 'gold', knightFork: 'rare', bishopPin: 'rare', bishopStep: 'rare', cathedral: 'gold', rookFork: 'rare', rookDiscover: 'rare', siegeRam: 'gold', queenFork: 'rare', queenPin: 'rare', queenWrath: 'gold', queenSweep: 'rare', checkCall: 'rare', rookRally: 'rare', bishopChase: 'rare', queenGuard: 'rare', heavyLance: 'rare', knightKing: 'rare',
+  castle: 'rare', pawnFork: 'rare', knightFork: 'rare', bishopPin: 'rare', bishopStep: 'rare', cathedral: 'gold', rookFork: 'rare', rookDiscover: 'rare', siegeRam: 'gold', queenFork: 'rare', queenPin: 'rare', queenWrath: 'gold', queenSweep: 'rare', checkCall: 'rare', rookRally: 'rare', bishopChase: 'rare', queenGuard: 'rare', heavyLance: 'rare',
   // 측정 (D-217 2, sim/rarity.sim.ts — 모든 기물 분대 · 2 · 3막 판 200번 · 넣은 덱 vs 기본 카드 덱의 승률 차 + 턴 단축 × 5):
   // 황금 = 상위 약 10% (가치 34 이상), 희귀 = 다음 35% (가치 12 이상), 나머지 일반. 봇이 못 쓰는 연쇄 마무리(처형 · 칼날 세례)만 설계 판단으로 희귀.
-  rookCharge: 'gold', shove: 'gold', overload: 'gold', wrath: 'gold', scrapToss: 'gold', rookPierce: 'rare',
-  royalGuard: 'rare', bulwark: 'rare', smash: 'rare', quickFix: 'rare', spark: 'rare', repair: 'rare', plate: 'rare', ram: 'rare', kingDecree: 'rare',
-  pawnStorm: 'rare', kingBlow: 'rare', shieldBash: 'rare', charge: 'rare', finisher: 'rare', bladeRain: 'rare',
+  rookCharge: 'gold', shove: 'gold', overload: 'rare', wrath: 'rare', scrapToss: 'gold', rookPierce: 'rare',
+  royalGuard: 'rare', bulwark: 'rare', smash: 'rare', quickFix: 'rare', plate: 'rare', ram: 'rare', kingDecree: 'rare',
+  pawnStorm: 'rare', kingBlow: 'rare', shieldBash: 'rare', finisher: 'rare',
   // 등반 감사 재측정 (D-227): 손본 뒤 가치 12 넘은 카드
-  reload: 'rare', knightRaid: 'rare', draft: 'rare', kingGuard: 'rare', bishopRay: 'rare',
+  reload: 'gold', knightRaid: 'rare', kingGuard: 'rare', bishopRay: 'rare',
+  // 재측정 (2026-11-14 D-500, tools/simlab-items.mjs 보통 봇 · 승급 2 · 짝 25출하): 시작 분대(킹 · 폰 · 나이트)로 쓸 수 있는 것만 순위 →
+  // 같은 등급 수로 순위를 다시 나눈 등급과 다르고 그 경계에서 표준오차 절반 넘게 벗어난 것만 옮겼다(나머지는 표본이 작아 그대로). 올라간 것 ↓ · 내려간 것은 DECISIONS D-500
+  kingCharge: 'gold', burst: 'rare', pawnExecute: 'rare', regalGaze: 'rare', pawnShield: 'rare',
 };
 export const gradeOf = (id: string): Grade => CARD_GRADE[id.replace(/[+~]$/, '')] ?? 'common';
 /** 보상 한 칸이 어느 등급으로 나오나 (가중치) — 검문 · 반장은 elite */
