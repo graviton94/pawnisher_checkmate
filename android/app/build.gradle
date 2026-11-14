@@ -7,8 +7,9 @@ android {
         applicationId "io.github.graviton94.pawnisher"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.1.1"
+        // D-477: CI 실행 번호로 늘 올라간다 — 새 APK가 옛 APK 위에 설치된다(저장 유지)
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '5').toInteger())
+        versionName "1.2.0-beta"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,7 +17,20 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // D-477: 고정 디버그 서명 — CI가 실행마다 새 디버그 키를 만들면 새 APK가 옛 APK 위에 설치되지 않아
+    // 테스터가 지우고 다시 깔아야 했고, 그때 저장이 사라졌다. 이 키는 비밀이 아니다(스토어 출시용 키는 따로).
+    signingConfigs {
+        debug {
+            storeFile file('beta-debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
