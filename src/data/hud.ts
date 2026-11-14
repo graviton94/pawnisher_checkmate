@@ -189,7 +189,7 @@ export const SCREEN_TEXT = {
   full: '칸 가득', shop: '고물상', forge: '작업대', forgeFinal: '최종 정비', refine: '다듬기', brace: '보강', remove: '카드 빼기', deck: '덱', crew: '분대',
   // 출하 끝 (D-402, 사용자: 「『출하 완료』는 마지막 장을 끝낸 느낌이 아니다」): 하자품이라 불리던 세트가 도금왕을 꺾고 받는 판정 — 「하자 폐기」의 맞짝
   clear: '공정 돌파', clearWord: '통과!', fail: '하자 폐기', actClear: (act: string) => `${act} 마침`, actHeal: '정비', onward: '나아간다',
-  pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', forgeStatus: { refine: '다듬을 카드', deck: '덱', cards: '장', hp: '분대 HP', hurt: '다침', doors: '가장 얇은 생명' }, braceGo: '덧댄다',
+  pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', backExit: '한 번 더 누르면 게임을 닫습니다.', forgeStatus: { refine: '다듬을 카드', deck: '덱', cards: '장', hp: '분대 HP', hurt: '다침', doors: '가장 얇은 생명' }, braceGo: '덧댄다',
   // 출하 끝 단추 (D-403, 사용자: 「남긴다 · 돌아간다는 어색하다 — 시스템 낱말로」): 결과 공유하기 = 설문 → 기록 보내기 · 메인 화면으로 = 처음 화면
   close: '닫는다', ledger: '도감', overhaul: '정비한다', note: '결과 공유하기', home: '메인 화면으로',
   sold: '팔림', newCrewTag: '새 분대원', bossTag: '반장 격파', checkTag: '검문 통과', closeTag: '부품 하나 더', fullHp: 'HP 가득', broad: '큰 세 갈래', withHint: '받침을 누르면 함께 오는 카드가 보입니다.', withHead: '함께 오는 카드', deep: (ax: string) => `${ax} 세부 갈래`,

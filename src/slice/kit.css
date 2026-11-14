@@ -1181,6 +1181,12 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   .promotion .pm-content { left: 42%; }
   .promotion .pm-inner { min-height: 0; padding: var(--s1) 0; }
 }
+/* D-477: 16:9 폰(640×360)에서 대사가 안내 줄 · 단추를 덮었다 — 낮은 화면은 대사를 보조 크기(12px 갈무리11)로, 그래도 넘치면 대사 칸 안에서 스크롤 */
+@media (max-height: 380px) {
+  .promotion :is(.pm-say, .pm-echo, .pm-inner p) { font: 400 12px/18px Galmuri11, sans-serif; }
+  .promotion .pm-dialogue { padding-top: var(--s1); }
+  .promotion :is(.pm-dialogue, .pm-inner) { min-height: 0; overflow-y: auto; }
+}
 @media (prefers-reduced-motion: reduce) {
   .credits .cr-page.in, .promotion .pm-content.in, .promotion .pm-inner.in, .promotion .pm-actions .tremble, .win-scene .ws-detail.in { animation: none; }
 }

@@ -31,7 +31,7 @@ const note = (s) => { log.push(s); console.log(s); };
         stage: vis('.stagefx'), cut: vis('.prologue, .finale, .credits, .cutfx, .cuts'), kit: vis('.kit-confirm'), map: vis('.mapfx'),
         overlay: ov && !ov.hidden, h2, act: document.querySelector('.mapfx h1, .mapfx .map-title')?.textContent?.trim() ?? '',
         battle: !!document.querySelector('#hand [data-card]') && (!ov || ov.hidden) && !document.body.classList.contains('between') && !vis('.mapfx') && window.slice().s.winner === null,
-        ev: vis('.ev-choice'), evOk: vis('.ev-ov-ok:not([hidden])'), end: /출하 (완료|중단)/.test(panel?.textContent ?? '') || [...document.querySelectorAll('button')].some((x) => x.getClientRects().length > 0 && /메인 화면으로/.test(x.textContent)),
+        ev: [...document.querySelectorAll('.ws-choices .choice')].some((x) => x.offsetParent && !x.disabled) && !document.querySelector('.ws-sum:not([hidden])'), evOk: vis('.ev-ov-ok:not([hidden])'), end: /출하 (완료|중단)/.test(panel?.textContent ?? '') || [...document.querySelectorAll('button')].some((x) => x.getClientRects().length > 0 && /메인 화면으로/.test(x.textContent)),
       };
     });
     const sig = JSON.stringify([st.stage, st.cut, st.kit, st.map, st.overlay, st.h2, st.battle, st.ev, st.evOk]);
@@ -43,7 +43,7 @@ const note = (s) => { log.push(s); console.log(s); };
     if (st.kit) { (await clickSel('.kit-confirm [data-yes]')) || (await clickSel('.kit-confirm .row .btn:last-child')); await W(900); continue; }
     if (st.evOk) { await clickSel('.ev-ov-ok'); await W(1200); continue; }
     if (await clickSel('.ev-exit .btn, .ev-out .btn')) { await W(1500); continue; }
-    if (st.ev) { await clickSel('.ev-choice:not(.off)'); await W(800); await clickSel('.ev-choice.chosen'); await W(3500); continue; }
+    if (st.ev) { await clickSel('.ws-choices .choice'); await W(800); await clickSel('.ws-choices .choice'); await W(3500); continue; }
     if (st.overlay) {
       // 화면별 첫 선택 → 없으면 넘기기 · 닫기 · 마지막 단추
       if (await clickSel('[data-pick]')) { await W(1500); continue; }

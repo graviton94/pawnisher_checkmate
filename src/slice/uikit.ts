@@ -72,9 +72,21 @@ export const winHtml = (o: WinOpts): string =>
 export const WIN_MAX_H: Record<WinSize, number> = { s: 240, m: 364, l: 364 };
 
 let offDismiss: (() => void) | null = null;
+/** 지금 창을 바깥 탭 · Esc로 닫는 함수 (뒤로 가기 키도 같은 길, D-477) */
+let curDismiss: (() => void) | null = null;
 const clearDismiss = (): void => {
   offDismiss?.();
   offDismiss = null;
+  curDismiss = null;
+};
+/** 닫을 수 있는 창이면 닫고 true — 안드로이드 뒤로 가기 키 (D-477) */
+export const dismissWin = (): boolean => {
+  const fn = curDismiss;
+  if (fn) { clearDismiss(); fn(); return true; }
+  // 바깥 탭으로 닫히지 않는 창이라도 「닫는다 · 돌아간다 · 그만둔다」 단추가 있으면 그것을 누른다
+  const back = [...document.querySelectorAll<HTMLButtonElement>('.win [data-x], .win [data-back], .win [data-no], .win [data-close]')].find((b) => b.getClientRects().length && !b.disabled);
+  if (back) { back.click(); return true; }
+  return false;
 };
 
 /**
@@ -88,6 +100,7 @@ export const openWin = (o: WinOpts): HTMLElement => {
   if (o.dismiss) {
     const over = panel.parentElement!;
     const fn = o.dismiss;
+    curDismiss = fn;
     const onOut = (e: MouseEvent): void => {
       if (e.target === over) (clearDismiss(), fn());
     };

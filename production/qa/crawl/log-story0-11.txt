@@ -1,0 +1,11 @@
+#20 [false,false,false,false,true,false,false,1,5,""]
+#60 [false,false,false,false,true,false,false,3,5,""]
+#80 [false,false,false,false,true,false,false,6,4,""]
+#120 [false,false,false,false,true,false,false,2,5,""]
+#140 [false,false,false,false,true,false,false,5,4,""]
+HANG botMove turn 8
+#160 [false,false,false,false,true,false,false,9,6,""]
+HANG botMove turn 9
+#180 [false,false,false,false,true,false,false,12,5,""]
+STUCK [false,false,false,false,false,false,false,13,0,""]
+story 0 seed 11: stuck · steps 229 · errors 0 · 613s
