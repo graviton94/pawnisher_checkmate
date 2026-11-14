@@ -72,6 +72,21 @@ describe('이형 기물 등장 · 해금 (D-481)', () => {
     // 둘째 왕관부터 메뚜기 — 첫째 왕관에는 안 나온다
     for (let s = 0; s < 30; s++) for (const k of ['battle', 'check', 'boss'] as const) expect(battleFor(3, k, new Rng(s), 0).forms ?? []).not.toContain('hopper');
   });
+  it('이형은 같은 바탕 기물을 바꾼다 (2026-11-14): 이형 수만큼 바탕 기물이 있고, 바탕 기물이 없을 때만 폰 둘을 바탕 하나로', async () => {
+    const { battleFor } = await import('../src/slice/run');
+    const { Rng } = await import('../src/engine/rng');
+    const { FORMS } = await import('../src/data/forms');
+    let seen = 0;
+    for (let a = 0; a <= 3; a++) for (let s = 0; s < 40; s++) for (const act of [1, 2, 3] as const) for (const k of ['battle', 'check', 'boss'] as const) {
+      const d = battleFor(act, k, new Rng(s), a);
+      for (const f of d.forms ?? []) {
+        seen++;
+        const base = FORMS[f].base;
+        expect(d.enemy.filter((t) => t === base).length).toBeGreaterThanOrEqual((d.forms ?? []).filter((g) => FORMS[g].base === base).length);
+      }
+    }
+    expect(seen).toBeGreaterThan(50);
+  });
   it('새 대국에서 이형 적은 이형 행마를 쓰고, 왕관을 깨면 그 이형이 해금된다', async () => {
     const { newSliceBattle } = await import('../src/slice/battle');
     const { recordRun, emptyMeta } = await import('../src/slice/save');

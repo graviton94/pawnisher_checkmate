@@ -61,7 +61,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', flavor: '한쪽 눈으로 죄를 가려낸다.', desc: '비숍 공격 ×1.3' },
   pawnPike: { name: '개척자의 창', axis: 'inf', icon: 'pawnPike', flavor: '작은 손에 긴 창을 쥐여 준다.', desc: '폰의 공격 +10' },
   oath: { name: '작은 개척자의 맹세', shortName: '개척자의 맹세', axis: 'inf', icon: 'oath', flavor: '물러서지 않겠다고 맹세했다.', desc: '폰 공격 +6 · 폰 1회 버팀' },
-  horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', flavor: '짓밟은 피가 아직 젖어 있다.', desc: '태엽 +1 — 나이트 처치 시' },
+  horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', flavor: '짓밟은 피가 아직 젖어 있다.', desc: '태엽 +1 — 턴에 한 번, 나이트 처치 시' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', flavor: '쓰러진 자의 주머니를 턴다.', desc: '카드 1장 뽑기 — 처치마다' },
   assembly: { name: '끝없는 생산선', axis: 'inf', icon: 'assembly', flavor: '비어 가는 줄을 쉬지 않고 채운다.', desc: '킹 곁에 폰 하나 — 턴 시작마다, 폰 2기 이하 시' },
   drum: { name: '진군의 북', axis: 'inf', icon: 'drum', flavor: '북소리에 맞춰 발을 맞춘다.', desc: '폰 카드 태엽 −1' },

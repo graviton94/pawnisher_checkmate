@@ -14,7 +14,7 @@ describe('쇳물 서약 (D-462)', () => {
     expect(all(other)).not.toContain('meltOath');
     expect(REWARD_COMMANDS).not.toContain('meltOath');
   });
-  it('킹은 고를 수 없고, 녹이면 도금왕이 최대 HP ×1.5만큼 맞고 그 분대원은 폐기된다', () => {
+  it('킹은 고를 수 없고, 녹이면 도금왕이 최대 HP × MELT.mult만큼 맞고 그 분대원은 폐기된다 · 대국에 한 번', () => {
     const b = newSliceBattle(squad, ['K', 'Q', 'R'], [...START_DECK], 5, { boss: true, bossRule: 'gilded' });
     b.s.heat = 1;
     b.hand = ['meltOath'];
@@ -29,9 +29,11 @@ describe('쇳물 서약 (D-462)', () => {
     const hit = typeof r === 'string' ? null : r.events.flatMap((e) => (e.type === 'attack' ? e.hits : []))[0];
     expect(hit?.damage).toBe(Math.round(rook.maxHp * MELT.mult));
     expect(hp0).toBeGreaterThan(0);
+    // 대국에 한 번 (2026-11-14): 버림 더미로 돌지 않는다
+    expect([...b.draw, ...b.hand, ...b.discard, ...(b.played ?? [])]).not.toContain('meltOath');
     const { scrapped } = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
     expect(scrapped.map((u) => u.t)).toEqual(['R']);
-    expect(COMMANDS.meltOath.cost).toBe(0);
+    expect(COMMANDS.meltOath.cost).toBe(1);
   });
 });
 

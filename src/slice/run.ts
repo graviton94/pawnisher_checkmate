@@ -304,21 +304,24 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
     const newest = avail.filter((f) => FORMS[f].chapter === Math.min(asc, 3));
     const n = kind === 'battle' ? (fr.next() < SLICE.formBattleOdds[act - 1] ? 1 : 0) : kind === 'check' ? (act >= 3 ? 2 : 1) : act >= 2 ? 1 : 0;
     const picks: FormId[] = [];
+    const enemy = [...d.enemy];
+    const left = (t: PieceType) => enemy.filter((x) => x === t).length - picks.filter((f) => FORMS[f].base === t).length;
     for (let k = 0; k < n; k++) {
       // 첫 이형은 이 왕관의 새 이형을 먼저(배우는 자리) — 그 뒤는 지금까지 나온 이형 아무거나
-      // 편성에 맞춰 (D-483): 그 뒤 이형은 편성에 이미 있는 바탕 기물의 이형을 먼저 — 기병 편성엔 낙타, 성벽 편성엔 대포 · 총독
+      // 편성에 맞춰 (D-483): 편성에 이미 있는 바탕 기물의 이형을 먼저 — 기병 편성엔 낙타, 성벽 편성엔 대포 · 총독
       const pool0 = k === 0 && newest.length && asc <= 3 ? newest : avail;
-      const themed = k === 0 ? pool0 : pool0.filter((f) => d.enemy.includes(FORMS[f].base));
-      const pool = themed.length ? themed : pool0;
-      picks.push(pool[fr.int(pool.length)]);
-    }
-    if (picks.length) {
-      const enemy = [...d.enemy];
-      for (const f of picks) {
-        const pawn = enemy.lastIndexOf('P');
-        if (pawn >= 0 && enemy.filter((t) => t === 'P').length > 1) enemy.splice(pawn, 1); // 수를 크게 늘리지 않게 폰 하나를 바꾼다
+      // 같은 바탕 기물을 바꾼다 (2026-11-14 사용자 결정): 이형은 편성의 그 바탕 기물 하나가 된다 — 폰 → 룩 · 퀸 순증을 없앴다.
+      // 바탕 기물이 없으면 폰 둘을 빼고 바탕 기물 하나(폰이 셋 이상일 때만) — 그것도 안 되면 이 이형은 나오지 않는다
+      const themed = pool0.filter((f) => left(FORMS[f].base) > 0);
+      const f = themed.length ? themed[fr.int(themed.length)] : pool0[fr.int(pool0.length)];
+      if (!themed.length) {
+        if (enemy.filter((t) => t === 'P').length < 3) continue;
+        for (let j = 0; j < 2; j++) enemy.splice(enemy.lastIndexOf('P'), 1);
         enemy.push(FORMS[f].base);
       }
+      picks.push(f);
+    }
+    if (picks.length) {
       d.enemy = enemy;
       d.forms = picks;
       d.tell = `${d.tell}${d.tell ? ' ' : ''}${[...new Set(picks)].map((f) => `이형 「${FORMS[f].name}」 — ${FORMS[f].move}, ${FORMS[f].hit}을 칩니다.`).join(' ')}`;

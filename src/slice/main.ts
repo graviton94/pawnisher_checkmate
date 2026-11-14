@@ -17,7 +17,7 @@ import './slice.css';
 import './card-layout.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
-import { chooseBuildCard, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
+import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
 import { BAND_ZONE, band, dismissWin, bindPick, bindWinHost, btnHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, makeTalk, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, talkAt, type CutLine, type PickItem, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
@@ -961,6 +961,7 @@ const syncTerms = (): void => {
   on('tactic', deck.some((id) => COMMANDS[id]?.axis === 'tactic' || COMMANDS[id]?.axis2 === 'tactic'));
   on('spend', deck.some((id) => COMMANDS[id]?.kind === 'spend'));
   on('call', !!b.pawnCalled);
+  on('stall', b.turn >= STALL_PRESS.from);
 };
 /** 「회피 반격」이라는 이름은 둘째 출하 또는 2막부터 (첫 출하 1막은 「빠지며 쳤다」 연출로만) */
 const grazeNamed = (meta = readMetaCached()): boolean => meta.runs >= 1 || actI >= 1;
@@ -1507,7 +1508,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 시작 세트 (D-485): 표준이 아니면 입문 판의 짜 둔 손패 · 자리를 쓰지 않는다(그 손패는 폰 · 나이트 분대 몫) — 적 자리 · 킹 자리만
   const dd: BattleDef = INTRO.includes(def) && startSet !== 'standard' ? { ...def, order: undefined, deck: undefined, place: def.place?.filter((q) => q.side === 1 || q.t === 'K') } : def;
   const bSeed = def.seed ?? 100 + stage * 17 + R.int(1000);
-  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process });
+  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { pawnCall: !!START_SETS[startSet].pawnCall, scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
@@ -2880,27 +2881,9 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
         squad.length < SLICE.squadMax ? (won -= 1, recruitPick(SCREEN_TEXT.newCrew, () => rewardFlow(earned, overGold, fallen, true))) : rewardFlow(earned, overGold, fallen, true), true, `<span class="ribbon">${cur.boss ? SCREEN_TEXT.bossTag : SCREEN_TEXT.checkTag}</span>${goldTag}`);
     if (reward === 'end') return void endingFlow();
     const rng = sub();
-    // 축이 고루 나오게: 서로 다른 축 셋 (가진 부품의 축이 있으면 하나는 그 축)
-    const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push', 'tactic'];
-    const mine = parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a);
-    const picks: Axis[] = mine.length ? [mine[rng.int(mine.length)]] : [];
-    while (picks.length < 3) {
-      const a = axes[rng.int(axes.length)];
-      if (!picks.includes(a)) picks.push(a);
-    }
-    // 같은 카드가 두 번 나오지 않게 (브릿지 카드는 두 축에 걸친다)
-    const offers: CommandId[] = [];
-    // 축에 쓸 수 있는 카드가 없으면 다른 축에서 채운다 (3장 유지)
-    // 칸마다 등급을 먼저 뽑는다 (D-216) — 그 축에 그 등급이 없으면 아무 등급
+    // 카드 보상 (2026-11-14): 칸마다 등급을 뽑고 그 등급의 열린 카드 전체에서 고르게 — 축은 겹치지 않게 · 첫 칸은 가진 부품의 축 · 공용 이동 카드는 덜
     const elite = !!cur.boss || cur.reward === 'part' || partDone;
-    for (const a of [...picks, ...axes.filter((x) => !picks.includes(x))]) {
-      if (offers.length >= (closeTier === 2 ? 4 : 3) + (parts.includes('loupe') ? 1 : 0) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0)) break;
-      const pool = REWARD_COMMANDS.filter((id) => (offers.length === 0 || COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !offers.includes(id) && usable(id) && isOpen(id));
-      const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
-      const same = pool.filter((id) => gradeOf(id) === g);
-      const from = same.length ? same : pool;
-      if (from.length) offers.push(offers.length === 0 && same.length > 0 ? chooseBuildCard(from, parts, rng) : from[rng.int(from.length)]);
-    }
+    const offers = cardOffers(REWARD_COMMANDS.filter((id) => usable(id) && isOpen(id)), (closeTier === 2 ? 4 : 3) + (parts.includes('loupe') ? 1 : 0) - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0), { elite, ownAxes: parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a), parts, rng });
     // 기물 수집 (D-216): 대국 보상에 가끔 새 분대원 한 명이 섞인다 — 카드 대신 고를 수 있다
     const recruitOffer = !elite && squad.length < SLICE.squadMax && (rng.next() < SLICE.recruitChance || debugRecruit) ? rollRecruit(RECRUITS, rng.next()) : null;
     const recruitCrew = recruitOffer ? crewOf(recruitOffer.t) : null;

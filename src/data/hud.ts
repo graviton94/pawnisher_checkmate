@@ -127,17 +127,18 @@ export const BATTLE_HELP: string[] = [
  * base = 처음부터 · 그 밖은 그것을 처음 만난 순간 사전에 들어오고 ? 에 NEW가 붙는다.
  * graze = 둘째 출하 또는 2막부터 (첫 출하에서는 「빠지며 치기 ×1.5」 연출로만) · quirk = 기벽이 붙는 셋째 출하부터 · shock = 승급 2부터.
  */
-export type TermGate = 'base' | 'part' | 'charm' | 'shield' | 'door' | 'crack' | 'reinforce' | 'burn' | 'heir' | 'nemesis' | 'plate' | 'thorns' | 'blast' | 'stun' | 'graze' | 'shock' | 'quirk' | 'overkill' | 'spend' | 'tactic' | 'call';
+export type TermGate = 'base' | 'part' | 'charm' | 'shield' | 'door' | 'crack' | 'reinforce' | 'burn' | 'heir' | 'nemesis' | 'plate' | 'thorns' | 'blast' | 'stun' | 'graze' | 'shock' | 'quirk' | 'overkill' | 'spend' | 'tactic' | 'call' | 'stall';
 
 /** 용어 사전: [이름, 설명, 열리는 때] — 사전에는 열린 것만 (D-233). 설명은 최대 두 줄, \n이 줄바꿈 자리 (D-264) */
 export const KEYWORDS: [string, string, TermGate][] = [
   ['태엽', '카드를 내는 힘.\n한 턴에 기본 3개가 충전됩니다.', 'base'],
   ['연쇄', '이번 턴에 적을 칠 때마다 쌓입니다.\n같은 적을 다시 치면 둘, 하나마다 다음 공격 +4.', 'base'],
   ['승격', '끝 줄에 닿은 폰은 퀸이 됩니다.\n그 대국에서만 유지됩니다.', 'base'],
-  ['막사의 호출', '폰이 하나도 없는데 폰 카드를 쥐고 있으면\n턴 시작에 킹 곁에 임시 폰이 섭니다.', 'call'],
+  ['막사의 호출', '보병 세트: 폰이 없는데 폰 카드를 쥐고 있으면\n턴 시작에 킹 곁에 임시 폰이 섭니다.', 'call'],
   ['속전', '빨리 이길수록 나사가 많습니다.', 'base'],
   ['나사', '출하 내내 쓰는 돈.\n고물상에서 씁니다.', 'base'],
-  ['지휘', '아무 기물이나 움직이는 카드.', 'base'],
+  ['지휘', '아무 기물이나 움직이는 공용 카드.\n같은 기물을 한 턴에 여러 번 부릴 수 있습니다.', 'base'],
+  ['교착 압박', '12턴부터 피해 없는 턴이 두 번 이어지면\n적 킹이 턴마다 최대 HP 10%씩 녹습니다.', 'stall'],
   ['부품', '규칙을 바꾸는 장치.\n같은 색 띠 카드와 맞물립니다.', 'part'],
   ['청록 합 표지', '공격에 먼저 더하는 피해.', 'part'],
   ['주황 곱 표지', '더한 값에 곱하는 배율.', 'part'],

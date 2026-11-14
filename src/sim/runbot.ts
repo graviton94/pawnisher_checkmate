@@ -15,7 +15,7 @@ import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events'
 import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
 import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
 import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
-import { chooseBuildCard, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
+import { cardOffers as offerCards, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
 import { idleStats, playOut, playOutSearch, type BotStyle, type IdleStats } from '../slice/bot';
 import { CLIMB } from '../data/bot';
 
@@ -155,20 +155,9 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     for (const id of offers) offersLog.push({ id, part: true, taken: id === pick });
     addPart(pick);
   };
-  const cardOffers = (elite: boolean): CommandId[] => {
-    const axes: Axis[] = ['cav', 'inf', 'king', 'chain', 'push', 'tactic'];
-    const out: CommandId[] = [];
-    const n = 3 - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0);
-    for (const a of axes.sort(() => rng.next() - 0.5)) {
-      if (out.length >= n) break;
-      const pool = REWARD_COMMANDS.filter((id) => (COMMANDS[id].axis === a || COMMANDS[id].axis2 === a) && !out.includes(id) && usable(id) && isOpen(id));
-      const g = rollGrade(rng.next(), elite ? GRADE.elite : GRADE.weights);
-      const same = pool.filter((id) => gradeOf(id) === g);
-      const from = same.length ? same : pool;
-      if (from.length) out.push(out.length === 0 ? chooseBuildCard(from, parts, rng) : from[rng.int(from.length)]);
-    }
-    return out;
-  };
+  // 카드 보상 — 화면과 같은 cardOffers (2026-11-14: 등급 안에서 열린 카드 전체에서 고르게 · 공용 이동 카드는 덜)
+  const cardOffers = (elite: boolean): CommandId[] =>
+    offerCards(REWARD_COMMANDS.filter((id) => usable(id) && isOpen(id)), 3 - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0), { elite, ownAxes: parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a), parts, rng });
   const takeCard = (offers: CommandId[], recruitOffer: boolean) => {
     if (recruitOffer && squad.length < SLICE.squadMax && (squad.length < 6 || rng.next() < 0.5)) return recruit(true);
     const best = offers.sort((a, b) => val(b) - val(a))[0];
@@ -198,7 +187,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           const def = tryN ? ftueRetry(def0) : def0;
           const bSeed = seed * 7 + ri * 131 + tryN;
           const setup = JSON.stringify({ squad, deck: deck.filter(usable), parts, refined, asc, gold, def: { ...def, seed: bSeed, depth: depthAt(ai, frac) } });
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, scatter: set.scatter ? bSeed : undefined });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, scatter: set.scatter ? bSeed : undefined, pawnCall: !!set.pawnCall });
           const r = style === 'search' ? playOutSearch(b, CLIMB.maxTurns, 3, 4, o.temp ?? 0) : playOut(b, CLIMB.maxTurns, undefined, style);
           battles += 1;
           turnsAll += r.turns;

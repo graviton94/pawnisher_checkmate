@@ -101,6 +101,8 @@ export interface SliceBattle {
   killers: number[];
   /** 막사의 호출이 한 번이라도 일어났나 (D-466 — 용어 사전을 연다) */
   pawnCalled?: boolean;
+  /** 막사의 호출이 켜진 대국 (보병 세트 전용, 2026-11-14) */
+  pawnCall?: boolean;
   /** 쇳물 서약으로 녹인 내 기물 (D-462) — 대국 뒤 분대에서 영영 빠진다 */
   melted?: number[];
   /** 실험실 지표 (D-456): 턴마다 우리가 적에게 준 실제 피해 · 한 번에 준 가장 큰 피해 — 화면은 쓰지 않는다 */
@@ -283,9 +285,10 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
 /**
  * 막사의 호출 (D-466): 우리 폰이 하나도 없는데 손에 폰 카드가 있으면 턴 시작에 킹 곁에 임시 폰 하나 (이번 대국만).
  * 폰이 다 쓰러지면 시작 덱의 「전진」까지 폰 카드가 모두 죽은 카드가 되던 것 — 보병 축이 완주 10 ~ 20%로 바닥이던 근본 원인.
+ * 2026-11-14 사용자 결정 (#15): 보병 세트 전용(b.pawnCall) — 다른 세트에서 판세와 무관하게 폰이 저절로 서던 것.
  */
 const pawnCall = (b: SliceBattle): BattleEvent | null => {
-  if (b.s.pieces.some((p) => p.side === 0 && p.type === 'P') || !b.hand.some((id) => COMMANDS[id]?.who === 'P')) return null;
+  if (!b.pawnCall || b.s.pieces.some((p) => p.side === 0 && p.type === 'P') || !b.hand.some((id) => COMMANDS[id]?.who === 'P')) return null;
   const e = spawnPawn(b, '막사의 호출 — 폰 카드를 쥔 손에 임시 폰이 선다');
   if (e) b.pawnCalled = true;
   return e;
@@ -309,7 +312,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId; /** 막사의 호출 (보병 세트 전용, 2026-11-14) */ pawnCall?: boolean } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -407,6 +410,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   if (opts.bossRule === 'gilded') deck = [...deck, 'meltOath'];
   const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, pd: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   b.s.heat = heatAt(1);
+  if (opts.pawnCall) b.pawnCall = true;
   b.squadTypes = Object.fromEntries(squadIds.map((id) => [id, findPiece(s, id)!.type]));
   b.squadWins = Object.fromEntries(squadIds.map((id, i) => [id, squad[i].wins ?? 0]));
   b.squadSerials = Object.fromEntries(squadIds.map((id, i) => [id, squad[i].serial ?? String(id).padStart(8, '0')]));
@@ -903,7 +907,7 @@ export const cardPieces = (b: SliceBattle, i: number): Piece[] => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return [];
   if (isInstant(b.hand[i])) return [];
-  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && !(c.kind === 'melt' && p.type === 'K') && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0) && !(c.who === 'any' && c.kind === 'move' && b.once.includes(`cmd:${p.id}`)));
+  return b.s.pieces.filter((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && !(c.kind === 'melt' && p.type === 'K') && costOf(b, i, p.id) <= b.ap && (c.kind !== 'move' || legalMoves(b.s, p).length > 0));
 };
 
 /** 기물을 고르지 않고 바로 내는 카드 (재장전 · 불씨 · 행진 · 징집) */
@@ -1076,12 +1080,10 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (pieceId === undefined || !to) return '기물과 칸을 선택하십시오.';
     const p = findPiece(b.s, pieceId);
     if (!p || p.side !== 0 || (c.who !== 'any' && c.who !== p.type)) return '이 카드로 움직일 수 없는 기물입니다.';
-    // 지배 전략 정리 (D-201, K교수): 아무 기물 카드(지휘 등)로는 한 기물을 한 턴에 한 번만 — 센 기물 하나를 지휘로 거듭 굴리지 못하게
-    if (c.who === 'any' && b.once.includes(`cmd:${p.id}`)) return '이번 턴에 이미 지휘한 기물입니다.';
+    // 공용 카드 한 턴 한 번 제한(D-201)은 없앴다 (2026-11-14 사용자 결정 #28): 퀸도 공용 카드로 두 번 움직일 수 있다 — 대신 공용 카드가 덜 나온다(OFFER)
     const grazed = grazeOn(b, pieceId, to);
     const sim = previewPlay(b, i, pieceId, to);
     if (!sim) return '갈 수 없는 칸입니다.';
-    if (c.who === 'any') b.once.push(`cmd:${p.id}`);
     if (sim.events.some((e) => e.type === 'attack' && e.shieldSpent)) b.once.push(`siegeLatch:${pieceId}`);
     b.s = sim.state;
     // 순수 회피 보너스는 그 기물의 다음 공격 한 번에 쓰이고 사라진다
@@ -1148,10 +1150,11 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     }
     if (k > 0) {
       if (!b.killers.includes(pieceId)) b.killers.push(pieceId);
-      // 편자: 나이트가 처치하면 태엽 +1 (처치마다)
-      if (p.type === 'N' && has(b, 'horseshoe')) {
-        gained += k;
-        events.push({ type: 'apGain', side: 0, amount: k });
+      // 편자: 나이트가 처치하면 태엽 +1 — 턴에 한 번 (2026-11-14 사용자 결정: 처치마다라 태엽이 끝없이 돌았다, 피드백 #29)
+      if (p.type === 'N' && has(b, 'horseshoe') && !b.once.includes('horseshoe')) {
+        b.once.push('horseshoe');
+        gained += 1;
+        events.push({ type: 'apGain', side: 0, amount: 1 });
       }
       drawCards(b, (has(b, 'magnet') ? k : 0) + (c.drawOnKill ? c.drawOnKill * k : 0) + (p.type === 'B' && has(b, 'rosary') ? k : 0) + (p.type === 'K' && has(b, 'royalSeal') ? PART_NUM.royalSeal : 0));
       // 부품 확장 2차 (D-287): 기물별 처치 받침
@@ -1321,7 +1324,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
   }
   // 뽑기로 손패가 늘었을 수 있다: 낸 카드는 그 자리에서 뺀다
   b.hand.splice(i, 1);
-  (b.played ??= []).push(id);
+  // 쇳물 서약은 대국에 한 번 (2026-11-14 · 피드백 #30): 버림 더미로 돌지 않고 사라진다
+  if (c.kind !== 'melt') (b.played ??= []).push(id);
   burnFallen(b);
   bossRise(b, before, events);
   return { events, before };

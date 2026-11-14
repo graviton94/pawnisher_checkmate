@@ -182,7 +182,8 @@ describe('나이트 완성 조합 — 처치가 다음 행동을 연다', () => 
     const next = b.hand.indexOf('rebound');
     expect(next).toBeGreaterThanOrEqual(0);
     const result = playCard(b, next, knight, { x: 2, y: 4 });
-    expect(typeof result).toBe('object'); expect(b.ap).toBe(5); expect(b.kills).toBe(2);
+    // 편자는 턴에 한 번 (2026-11-14 #29) — 두 번째 처치는 태엽을 더 주지 않는다
+    expect(typeof result).toBe('object'); expect(b.ap).toBe(4); expect(b.kills).toBe(2);
     expect(b.hand.length).toBe(3);
     expect(PART_GRADE.magnet).toBe('rare');
   });

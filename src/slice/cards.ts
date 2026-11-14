@@ -95,7 +95,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   phalanx: { axis: 'inf', name: '방진', cost: 1, who: 'P', kind: 'move', rally: true, add: 8, desc: '어깨를 맞대고 나아간다. (피해 +8 · 곁의 폰도 공격)', flavor: '“한 발도 물러서지 마라.”' },
   pawnExecute: { axis: 'inf', axis2: 'chain', name: '개척자의 처단', cost: 1, who: 'P', kind: 'move', multPerKill: 1, desc: '작은 칼끝이 연쇄를 끝맺는다. (피해 ×1 추가 — 연쇄 1마다)' },
   bishopChain: { axis: 'chain', name: '축복의 고리', cost: 1, who: 'B', kind: 'move', chainPerKill: 2, desc: '심판받은 자는 둘로 센다. (연쇄 +2 — 처치하면)' },
-  kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 2, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (피해 +6 · 맞은 적 뒤로 1칸)' },
+  kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 1, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (피해 +6 · 맞은 적 뒤로 1칸)' },
   plate: { name: '철벽', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15)' },
   repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 12, desc: '기물 하나를 땜질한다. (HP +12)' },
   reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 1, ap: 1, desc: '태엽을 감고 탄창을 채운다. (태엽 +1 · 카드 1장 뽑기)' },
@@ -114,7 +114,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   // D-461: ×14 → ×6 — 연쇄가 적중 기준(D-454)이 된 뒤 한 턴 연쇄 5~6이라 0태엽에 킹 방열판 70~80. 실험실 짝 비교: 쥐여 주기만 해도 완주 24 → 94%
   // D-462 종막 전용 (사용자: 「도금왕은 깨면 끝 — 모든 걸 다 걸어도 된다」): 동료를 녹여 왕관을 친다. 보상으로 나오지 않는다
-  meltOath: { name: '쇳물 서약', cost: 0, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 최대 HP ×1.5 — 동료를 영영 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
+  meltOath: { name: '쇳물 서약', cost: 1, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 최대 HP ×0.8 — 단 한 번 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
   vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 1, who: 'any', kind: 'spend', spend: 'shield', amount: 6, desc: '열기를 갑옷으로 돌린다. (연쇄 ×6 · 킹 방열판 ≤24 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
   burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄 ×14만큼 · 적 전체 피해 — 연쇄를 모두 써서)', flavor: '“압력을 놓아라.”' },
   recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 0.5, desc: '흩어진 태엽을 거둔다. (연쇄 2마다 태엽 1 · 최대 2 — 연쇄를 모두 써서)' },
@@ -224,7 +224,8 @@ export const cardFits = (id: CommandId, types: readonly string[]): boolean => {
   const need = CARD_NEEDS[baseOf(id)];
   return (c.who === 'any' || types.includes(c.who)) && (!need || types.includes(need));
 };
-export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order', 'order'];
+// 2026-11-14 사용자 결정 (#28): 공용 카드 지휘 2 → 1장 (그 자리는 전진) — 공용 카드 한 턴 한 번 제한을 없앤 대신
+export const START_DECK: CommandId[] = ['advance', 'advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order'];
 
 /** 영입: 기물 하나 + 그 기물의 카드 */
 /** 새 분대원 (D-218: 들고 오는 카드 2장 → 1장 — 분대원 8명이 카드 16장을 몰고 와 덱이 38장까지 불었다) */
@@ -445,13 +446,14 @@ export const MARK_EXTRA_FROM = 3;
  * discountOnce = 태엽 할인 부품(등자 · 행진 북 · 가벼운 망토)은 턴마다 그 종류 첫 장에만
  */
 // D-457: discountOnce 켬 — 실험실 짝 비교에서 녹슨 등자가 부품 중 가장 셌다(이긴 대국 +2.7)
-export const PACE = { apGainPerTurn: 0, drawPerTurn: 0, discountOnce: true };
+// 2026-11-14 사용자 결정 (피드백 #29 — 태엽 환급 무한 반복): 한 턴에 더 얻는 태엽 합계 2까지
+export const PACE = { apGainPerTurn: 2, drawPerTurn: 0, discountOnce: true };
 
 /** 공정 열기 기본값 (D-454) — SLICE.heat의 처음 값. 테스트가 열기를 껐다 켤 때 되돌리는 기준 */
 export const HEAT_DEFAULT = [0.25, 0.5, 0.75, 1] as const;
 
-/** 쇳물 서약 (D-462): 녹인 분대원 최대 HP × 이만큼 도금왕에게 */
-export const MELT = { mult: 1.5 };
+/** 쇳물 서약 (D-462): 녹인 분대원 최대 HP × 이만큼 도금왕에게 — 2026-11-14 사용자 결정 1.5 → 0.8 · 1태엽 · 대국에 한 번 (피드백 #30) */
+export const MELT = { mult: 0.8 };
 export const SLICE = {
   /** 이형 적이 일반 대국에 끼는 확률 — 막별 (D-481: 1막은 검문 · 반장만) */
   formBattleOdds: [0, 0.5, 0.6] as number[],
