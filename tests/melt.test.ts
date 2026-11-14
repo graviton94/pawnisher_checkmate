@@ -34,3 +34,25 @@ describe('쇳물 서약 (D-462)', () => {
     expect(COMMANDS.meltOath.cost).toBe(0);
   });
 });
+
+/** D-477 베타 점검: 킹 곁에 빈 칸이 없으면 징집(땜질 보충병)은 낼 수 없다 — 손패에서 꺼지고 봇도 고르지 않는다 */
+describe('징집 카드 — 킹 곁이 막히면 못 낸다', () => {
+  it('canPlay가 킹 곁 빈 칸을 본다', async () => {
+    const { newSliceBattle, canPlay, spawnSpot } = await import('../src/slice/battle');
+    const { START_SQUAD } = await import('../src/slice/cards');
+    const b = newSliceBattle(START_SQUAD.map((t) => ({ t })) as never, ['P', 'K'], ['draft', 'draft', 'draft', 'draft', 'draft'], 5, { width: 6, height: 6 });
+    b.ap = 5;
+    const i = b.hand.indexOf('draft');
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(canPlay(b, i)).toBe(spawnSpot(b) !== null);
+    // 킹 둘레를 모두 채운다
+    const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!;
+    let id = 900;
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+      const x = k.x + dx, y = k.y + dy;
+      if ((dx || dy) && x >= 0 && y >= 0 && x < 6 && y < 6 && !b.s.pieces.some((p) => p.x === x && p.y === y)) b.s.pieces.push({ ...k, id: id++, type: 'P', x, y, hp: 10, maxHp: 10 } as never);
+    }
+    expect(spawnSpot(b)).toBeNull();
+    expect(canPlay(b, i)).toBe(false);
+  });
+});

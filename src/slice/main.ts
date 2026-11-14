@@ -407,7 +407,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const ok = canPlay(b, i);
   const poor = !ok && cost > b.ap;
   const off = !ok || busy;
-  const why = busy ? '' : poor ? `태엽 ${cost} 필요` : !ok ? (c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : '움직일 기물 없음') : '';
+  const why = busy ? '' : poor ? `태엽 ${cost} 필요` : !ok ? (c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : c.kind === 'draft' ? '킹 곁에 빈 칸 없음' : c.kind === 'gambit' ? '바칠 폰 없음' : c.kind === 'swap' ? '캐슬링할 룩 없음' : '움직일 기물 없음') : '';
   const open = openCard === i || selCard === i;
   const shape = c.who !== 'any' && c.kind === 'move' ? `<span class="hc-shape">${shapeHtml(c.who, 7)}</span>` : '';
   const desc = c.desc ? `<p class="hc-desc">${descHtml(c.desc)}</p>` : '';

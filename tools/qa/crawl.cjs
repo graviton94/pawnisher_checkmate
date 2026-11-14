@@ -38,7 +38,7 @@ const rnd = (n) => { rs = (rs * 9301 + 49297) % 233280; return Math.floor((rs / 
       const b = window.slice();
       return {
         cut: vis('.prologue, .finale, .credits, .cutfx, .cuts, .actcard'), kit: vis('.kit-confirm'), map: vis('.mapfx'), overlay: ov && !ov.hidden,
-        battle: !!document.querySelector('#hand [data-card]') && !document.querySelector('.prologue, .actcard, .credits, .promotion') && (!ov || ov.hidden) && !document.body.classList.contains('between') && !vis('.mapfx') && b && b.s.winner === null,
+        battle: !!document.getElementById('btn-end')?.getClientRects().length && !document.querySelector('.prologue, .actcard, .credits, .promotion') && (!ov || ov.hidden) && !document.body.classList.contains('between') && !vis('.mapfx') && b && b.s.winner === null,
         ev: [...document.querySelectorAll('.ws-choices .choice')].some((x) => x.offsetParent && !x.disabled) && !document.querySelector('.ws-sum:not([hidden])'), evOk: vis('.ev-ov-ok:not([hidden])'), tut: !!document.querySelector('.tut'),
         end: [...document.querySelectorAll('button')].some((x) => x.getClientRects().length > 0 && /메인 화면으로/.test(x.textContent)),
         turn: b?.turn ?? 0, hand: b?.hand?.length ?? 0, title: (document.querySelector('#overlay-panel h2, .scr-title, .plate-title')?.textContent ?? '').trim().slice(0, 20),

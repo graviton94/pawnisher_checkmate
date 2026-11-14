@@ -13,3 +13,11 @@ sim/measure-asc*.json
 sim/measure-power*.json
 sim/measure-combo*.json
 production/qa/run/
+# 베타 점검 도구 출력 (D-477) — 사진 · 로그는 저장소에 넣지 않는다
+production/qa/crawl/
+production/qa/events/
+production/qa/matrix/
+production/qa/save/
+production/qa/firstrun/
+production/qa/endings/
+production/qa/electron/

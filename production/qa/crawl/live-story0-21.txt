@@ -1,4 +1,0 @@
-PROMPT 걸지 않는다|건다 → 걸지 않는다
-#40 [false,false,false,false,true,false,false,6,5,""]
-PROMPT 걸지 않는다|건다 → 걸지 않는다
-#60 [false,false,false,false,true,false,false,4,5,""]

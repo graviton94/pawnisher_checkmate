@@ -273,13 +273,17 @@ const pawnCall = (b: SliceBattle): BattleEvent | null => {
 };
 
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
-const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
+/** 킹 곁 빈 칸 (앞 → 옆 → 뒤 순) — 없으면 null. 징집 카드가 낼 수 있는지도 이것으로 본다 (D-477) */
+export const spawnSpot = (b: SliceBattle): Pos | null => {
   const k = kingOf(b.s, 0);
   if (!k) return null;
   const f = forward(0);
   const cand: Pos[] = [];
   for (const dy of [f, 0, -f]) for (const dx of [0, -1, 1]) if (dx || dy) cand.push({ x: k.x + dx, y: k.y + dy });
-  const spot = cand.find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
+  return cand.find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y)) ?? null;
+};
+const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
+  const spot = spawnSpot(b);
   if (!spot) return null;
   const id = Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds, 0) + 1;
   b.s.pieces.push(makePiece(id, 'P', 0, spot.x, spot.y));
@@ -788,7 +792,7 @@ const forkTargets = (s: BattleState, p: Piece, to: Pos): number => {
 export const canPlay = (b: SliceBattle, i: number): boolean => {
   const c = COMMANDS[b.hand[i]];
   if (!c || b.s.winner !== null) return false;
-  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!kingOf(b.s, 0)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P')) && (c.kind !== 'spend' || b.kills > 0) && (c.kind !== 'swap' || !!castlePair(b));
+  if (isInstant(b.hand[i])) return costOf(b, i) <= b.ap && (c.kind !== 'march' || marchPlan(b).length > 0) && (c.kind !== 'draft' || !!spawnSpot(b)) && (c.kind !== 'gambit' || b.s.pieces.some((p) => p.side === 0 && p.type === 'P')) && (c.kind !== 'spend' || b.kills > 0) && (c.kind !== 'swap' || !!castlePair(b));
   return cardPieces(b, i).length > 0;
 };
 
