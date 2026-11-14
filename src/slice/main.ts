@@ -3883,6 +3883,9 @@ const runEnd = (cleared: boolean): void => {
   runEndNow(cleared);
 };
 const runEndNow = (cleared: boolean): void => {
+  // D-477 (베타 점검): 도전 · 오늘의 도전은 마지막 보상 화면(사선 부품 · 칸 가득)이 열린 채 크레딧이 그 아래로 깔렸다 — 먼저 닫는다
+  closeWin();
+  closeOverlay();
   // 지표 ③ · ④: 한 판 길이 · 끝난 자리 · 쓰지 않고 남긴 되감기 · 부적
   track('session_exit', { ...where(), run_time_min: Math.round((Date.now() - runAt) / 6000) / 10, turn_num: b?.turn ?? 0, exit_type: cleared ? 'clear' : 'gameover' });
   if (!cleared) track('gameover_inventory', { ...where(), rewinds_left: charms.rewind, revive_charm_left: charms.revive, total_rewinds_used: rewindsUsedRun, deck_size: deck.length, parts });
