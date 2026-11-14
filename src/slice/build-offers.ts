@@ -54,7 +54,7 @@ export const isCommonMove = (id: CommandId): boolean => COMMANDS[id]?.who === 'a
 
 /**
  * 카드 보상 n장 (화면 · 등반 봇 공용, 2026-11-14): 칸마다 등급을 뽑고(GRADE — 확률 그대로) 그 등급의 열린 카드 전체에서 고르게.
- * 축이 겹치지 않는 카드를 먼저(없으면 아무 축) · 첫 칸은 가진 부품의 축(ownAxes) 하나 · 공용 이동 카드는 무게 OFFER.commonMoveW ·
+ * 이미 나온 축은 무게 OFFER.sameAxisW · 첫 칸은 가진 부품의 축(ownAxes) 하나(그 축 안에서는 카드마다 등급 무게) · 공용 이동 카드는 무게 OFFER.commonMoveW ·
  * 첫 칸만 기능 상성(chooseBuildCard 무게). pool = 호출자가 해금 · 분대 · 등급으로 먼저 거른 후보.
  */
 export const cardOffers = (pool: CommandId[], n: number, o: { elite: boolean; ownAxes: Axis[]; parts: SlicePartId[]; rng: Rng }): CommandId[] => {
@@ -67,17 +67,25 @@ export const cardOffers = (pool: CommandId[], n: number, o: { elite: boolean; ow
     const g = rollGrade(rng.next(), o.elite ? GRADE.elite : GRADE.weights);
     let cand = pool.filter((id) => !out.includes(id));
     if (!cand.length) break;
+    // 첫 칸 = 가진 부품의 축: 그 축 안에서는 등급을 먼저 뽑지 않고 카드마다 등급 무게로 고른다 —
+    // 축 · 등급 칸에 카드가 하나뿐이면(처음 풀 왕 축 일반 = 왕의 돌진) 그 한 장이 칸의 64%를 가져갔다
     if (out.length === 0 && o.ownAxes.length) {
       const a = o.ownAxes[rng.int(o.ownAxes.length)];
       const c = cand.filter((id) => axesOf(id).includes(a));
-      if (c.length) cand = c;
-    } else {
-      const fresh = cand.filter((id) => !axesOf(id).some((a) => used.has(a)));
-      if (fresh.length) cand = fresh;
+      if (c.length) {
+        const gw = o.elite ? GRADE.elite : GRADE.weights;
+        const w = c.map((id) => gw[gradeOf(id)] * (isCommonMove(id) ? OFFER.commonMoveW : 1) * (fits(id) ? BUILD_SUPPLY_WEIGHT : 1));
+        let roll = rng.next() * w.reduce((x, y) => x + y, 0);
+        const id = c.find((_, i) => (roll -= w[i]) < 0) ?? c[c.length - 1];
+        out.push(id);
+        for (const x of axesOf(id)) used.add(x);
+        continue;
+      }
     }
     const same = cand.filter((id) => gradeOf(id) === g);
     const from = same.length ? same : cand;
-    const w = from.map((id) => (isCommonMove(id) ? OFFER.commonMoveW : 1) * (out.length === 0 && same.length && fits(id) ? BUILD_SUPPLY_WEIGHT : 1));
+    // 축은 무게로만 고르게 (이미 나온 축 OFFER.sameAxisW) — 겹치지 않는 축만 남기면 남은 축 · 등급 칸이 좁아져 한 장이 몰렸다
+    const w = from.map((id) => (isCommonMove(id) ? OFFER.commonMoveW : 1) * (axesOf(id).some((a) => used.has(a)) ? OFFER.sameAxisW : 1) * (out.length === 0 && same.length && fits(id) ? BUILD_SUPPLY_WEIGHT : 1));
     let roll = rng.next() * w.reduce((a, x) => a + x, 0);
     const id = from.find((_, i) => (roll -= w[i]) < 0) ?? from[from.length - 1];
     out.push(id);
