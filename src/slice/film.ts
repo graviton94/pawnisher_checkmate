@@ -8,6 +8,7 @@
 import { bayer } from '../view/pxfx';
 import { pieceImg } from '../ui/sprites';
 import type { Face, Shot, TitleCard, Trans } from '../data/script';
+import { portraitImg } from '../data/portraits';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -190,7 +191,9 @@ export type PlateSide = 'ally' | 'foe' | 'gilded' | 'npc';
 export const faceHtml = (f: Face | undefined): string => {
   if (!f) return '';
   if ('art' in f) return `<img src="scenes/${f.art}.png" alt="" style="object-position:${f.at ?? '50% 24%'}">`;
+  if ('portrait' in f) return portraitImg(f.portrait, pieceImg('K', 0, 'large', 72));
   return pieceImg(f.t, f.side, 'large', 72);
 };
+/** who가 비면 이름표 없이 얼굴만 (종이왕 속마음 — 독백은 이름표를 달지 않는다, voice.md ③) */
 export const plateHtml = (who: string, side: PlateSide, face?: Face): string =>
-  `<div class="cut-who cw-${side}${face ? '' : ' no-face'}" aria-hidden="true">${face ? `<span class="cw-face">${faceHtml(face)}</span>` : ''}<b class="cw-name">${who}</b></div>`;
+  `<div class="cut-who cw-${side}${face ? '' : ' no-face'}${who ? '' : ' cw-mono'}" aria-hidden="true">${face ? `<span class="cw-face">${faceHtml(face)}</span>` : ''}${who ? `<b class="cw-name">${who}</b>` : ''}</div>`;

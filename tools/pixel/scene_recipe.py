@@ -77,3 +77,22 @@ BOSS_P2 = {
     'CI-06': {'dst': 'boss-thorns-p2', 'phase1': 'boss-thorns', 'pitch': 5.97},
     'CI-08': {'dst': 'boss-gilded-p2', 'phase1': 'boss-gilded', 'pitch': 6.13},
 }
+
+
+# 대사 초상 시트 (D-423 · 2026-11-14 PT-04~07): tools/pixel/portrait_import.py가 읽는다.
+# names = 시트 왼쪽부터 내보낼 public/ui/portraits/<이름>.png, pitch = 초상마다 원본 도트 간격(px, 실측 — snap.detect_pitch 후보를 눈으로 확인한 값).
+# 생성기는 64칸을 달라 해도 초상마다 다른 크기로 그린다: PT-04 ≈ 6.04px(실루엣 약 55×75칸), PT-05~07 ≈ 9.5~10px(약 47×72칸).
+# 64×64로 늘이지 않고 위 여백 1칸에 맞춰 자른다 — 아래 몸은 칸 밑변에 잘린다(발주 「바스트」 · D-386).
+# drop = 그 초상에서 쓰지 않는 팔레트 색 — 검은 쇠 기물은 보라 끼 회색이 가까운 갈색(가죽 · 녹)으로 빠지지 않게 갈색 · 청색 쇠를 뺀다.
+_BROWN = ['#201C1A', '#3A2D26', '#5C4030', '#80553A', '#A4774B', '#4A3414']
+_COOL = ['#1F3544', '#3F5968', '#7E929B']
+_IRON = _BROWN + _COOL + ['#8A6416', '#C89B3C', '#F5C542', '#38BFC7', '#BFB9AD', '#8E877A']
+PORTRAIT_GRID = {
+    'PT-04': {'names': ['paperking-calm', 'paperking-resolve', 'paperking-fear', 'paperking-pain', 'paperking-gilt'], 'pitch': [6.04] * 5,
+              'drop': [_COOL] * 5},
+    'PT-05': {'names': ['king-a1', 'king-a2', 'king-a3'], 'pitch': [9.6, 9.6, 9.6],
+              'drop': [_IRON, _BROWN[:3] + _COOL + ['#F5C542', '#38BFC7', '#BFB9AD', '#8E877A'], _IRON]},  # 2공정 = 굳은 쇳물 · 녹(주황 갈색)만 허용
+    'PT-06': {'names': ['king-check', 'foe-P', 'foe-N'], 'pitch': [9.72, 9.72, 9.72],
+              'drop': [_BROWN + _COOL[:2] + ['#BFB9AD', '#8E877A'], _IRON, _IRON]},  # 검문 = 황동 렌즈 · 청록 알 허용
+    'PT-07': {'names': ['foe-B', 'foe-R', 'foe-Q'], 'pitch': [10.1, 10.1, 10.1], 'drop': [_IRON] * 3},
+}

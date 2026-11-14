@@ -8,6 +8,9 @@ import { PROLOGUE, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } fro
 import { pieceImg } from '../ui/sprites';
 import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
+import { PAPER_FACE } from '../data/portraits';
+
+const PAPER_KING = '종이왕';
 import { titleFx } from './uifx';
 import { clearBand, clearPeeks, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, speakerSide, type CutLine, type WinBtn, type WinOpts } from './uikit';
 
@@ -115,12 +118,16 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       pxOut(el, () => { el.remove(); resolve(); }, 300);
     };
     /** 화자 명패: 대사 첫 쪽이면 새로, 이어 말하는 쪽이면 그대로, 서술 · 독백이면 걷는다 */
-    const plate = (l: CutLine): void => {
+    const plate = (l: CutLine & Partial<Line>): void => {
       const now = sub.querySelector<HTMLElement>('.cut-who');
-      if (l.k === 's' && l.cont && now) return;
+      // 종이왕 표정 (D-506): 대사는 줄의 mood로 명패 얼굴을, 속마음(m)은 mood가 있으면 이름표 없이 얼굴만
+      const face = l.mood && (l.k === 'm' || l.who === PAPER_KING) ? { portrait: PAPER_FACE[l.mood] } : l.who ? faces[l.who] : undefined;
+      const key = `${l.k === 'm' ? '' : l.who}|${l.mood ?? ''}`;
+      if (now && now.dataset.key === key && ((l.k === 's' && l.cont) || (l.k === 'm' && l.part && l.part !== 'head'))) return;
       now?.remove();
-      if (l.k !== 's' || !l.who) return;
-      sub.insertAdjacentHTML('afterbegin', plateHtml(l.who, speakerSide(l.who), faces[l.who]));
+      if (l.k === 'm' ? !l.mood : l.k !== 's' || !l.who) return;
+      sub.insertAdjacentHTML('afterbegin', plateHtml(l.k === 'm' ? '' : l.who!, l.k === 'm' ? 'ally' : speakerSide(l.who!), face));
+      sub.querySelector<HTMLElement>('.cut-who')!.dataset.key = key;
       if (!calm()) replay(sub.querySelector('.cut-who')!, 'in');
     };
     /** 컷 하나 세우기: 그림(없으면 대체 · 자리 그림) · 장면 효과 · 첫 샷 */

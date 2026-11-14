@@ -31,6 +31,8 @@ export interface BattleDef {
   reward: Reward;
   boss?: boolean;
   bossRule?: BossRule;
+  /** 검문 판 (D-506: 바크 초상이 검문 적 킹으로) */
+  check?: boolean;
   /** 승급 12: 적 하나가 정예 (왕관 · HP ×2) */
   eliteOne?: boolean;
   /** 막별 적 특성 */
@@ -427,7 +429,7 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
   const label = `${act}막`;
   if (kind === 'boss')
     return { enemy: BOSS[a], kingHp: (sc.king + 0.1) * (BOSS_TUNE[rule]?.king ?? 1), atk: BOSS_TUNE[rule]?.atk, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[rule].name}`, narr: NARR_BOSS[rule] ?? '', tell: BOSS_RULES[rule].tell, reward: 'part', boss: true, bossRule: rule, traits: TRAITS[a] };
-  if (kind === 'check') return { enemy: CHECK[a], marks: [CHECK_MARK[a]], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
+  if (kind === 'check') return { check: true, enemy: CHECK[a], marks: [CHECK_MARK[a]], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
   const pick = pool[rng.int(pool.length)];
   return { enemy: [...pick.enemy], foe: pick.name, ...(pick.mark ? { marks: [pick.mark] } : {}), kingHp: sc.king, enemyHp: sc.hp, title: `${label} — ${pick.name}`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };

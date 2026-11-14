@@ -19,8 +19,8 @@
 | 4 | P1 | 전투 HUD HB-01~02 | 2 | 13 | 7 · 8 |
 | 5 | P1 | 등급 틀 RF-01~04 | 4 | 19 | 9 · 14 |
 | 6 | P1 | 반장 2단계 CI-01~08 — CI-01 받음 · 반입(사선 액자만 **재발주**, D-490) · CI-02~06 · 08 **받음 · 반입 (D-505)** · CI-07 대기 | 8 | 10 | 21 |
-| 7 | P1 | 사건 창 초상 PT-01~04 | 4 | 26 | 16 · 6 |
-| 8 | P1 | 적 대사 초상 PT-05~07 | 3 | 9 | 6 |
+| 7 | P1 | 사건 창 초상 PT-04 — **받음 · 반입 (D-506)** · PT-01~03 **취소 — 사건 일러스트 활용 (사용자 결정)** | 1 | 5 | 16 · 6 |
+| 8 | P1 | 적 대사 초상 PT-05~07 — **받음 · 반입 (D-506)** | 3 | 9 | 6 |
 | 9 | P1 | 용어 아이콘 TI-01~02 | 2 | 16 | 27 · 설문 Q6 |
 | 10 | P1 | 판돈 WG-01~02 | 2 | 6 | 12 |
 | 11 | P1 | 사건 결과 FX EF-01~02 · 결과 장면 EF-03(D-504 새) | 3 | 10 | 23 |
@@ -33,7 +33,7 @@
 | 18 | P2 | 로딩 · 안내서 LD-01~02 | 2 | 5 | 5 |
 | 19 | P2 | 이형 분대 초상 PT-08 | 1 | 5 | D-482 영입 |
 | 20 | P3 | 킹 카드 그림 KC-01 | 1 | 8 | 26 |
-| 합 | | | **75** | **222** | |
+| 합 | | | **72** (PT-01~03 취소) | **201** | |
 
 ## 1위 · [P1] 이형 기물 5종 (§0-C P-01~05 그대로 · 사용자가 먼저 만든다)
 풀리는 것: D-482 이형 딱지 임시본 제거 · 21장
@@ -795,7 +795,9 @@
 ## 7위 · [P1] 사건 창 초상 — NPC 21 · 종이왕 독백 5표정
 풀리는 것: 피드백 16 (비대화 사건의 빈 오른쪽 위 → 독백 초상) · 6
 
-## PT-01 · 사건 NPC 초상 — 떠돌이 땜장이 · 떠돌이 정비 폰 · 동전 나이트 · 견습 폰 · 다른 공장의 흑 비숍 · 부품 교환상 · 저울지기 폰
+**D-506 (2026-11-14)**: PT-04 받음 → `tools/pixel/portrait_import.py`로 격자 복원(원본 간격 6.04px) · 팔레트 24색 · 64×64 자르기 → `public/ui/portraits/paperking-*.png`. **PT-01~03은 취소 — 사건 일러스트 활용 (사용자 결정)**: 사건 NPC 대사 칸의 얼굴은 그 사건 그림의 초점 자리(`EVENT_FOCUS`)를 비율 그대로 잘라 DL-02 NPC 액자에 앉힌다. 아래 PT-01~03 상자는 기록으로만 남긴다(발주 페이지에서 빠짐).
+
+## PT-01 · 사건 NPC 초상 — 떠돌이 땜장이 · 떠돌이 정비 폰 · 동전 나이트 · 견습 폰 · 다른 공장의 흑 비숍 · 부품 교환상 · 저울지기 폰 · 취소 — 사건 일러스트 활용 (사용자 결정)
 - 크기: 64×64 ×7 → ×8
 - 넣을 곳: `public/ui/portraits/npc-tinker.png` · `public/ui/portraits/npc-smith.png` · `public/ui/portraits/npc-gambler.png` · `public/ui/portraits/npc-apprentice.png` · `public/ui/portraits/npc-scout.png` · `public/ui/portraits/npc-swapDealer.png` · `public/ui/portraits/npc-counterweight.png`
 - 받은 그림 이름: `PT-01.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-01-source.png`에 보관)
@@ -828,7 +830,7 @@
 - 바탕(오려 낼 색)은 단색 마젠타 #FF00FF.
 ```
 
-## PT-02 · 사건 NPC 초상 — 기름 장수 룩 · 교환소 폰 · 길 잃은 폰 · 녹 벗기는 비숍 · 교관 룩 · 명령서 사기꾼 · 결투하는 나이트
+## PT-02 · 사건 NPC 초상 — 기름 장수 룩 · 교환소 폰 · 길 잃은 폰 · 녹 벗기는 비숍 · 교관 룩 · 명령서 사기꾼 · 결투하는 나이트 · 취소 — 사건 일러스트 활용 (사용자 결정)
 - 크기: 64×64 ×7 → ×8
 - 넣을 곳: `public/ui/portraits/npc-oilMerchant.png` · `public/ui/portraits/npc-scrapTrade.png` · `public/ui/portraits/npc-lostPawn.png` · `public/ui/portraits/npc-rustBath.png` · `public/ui/portraits/npc-drillRook.png` · `public/ui/portraits/npc-cardSharp.png` · `public/ui/portraits/npc-duelKnight.png`
 - 받은 그림 이름: `PT-02.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-02-source.png`에 보관)
@@ -861,7 +863,7 @@
 - 바탕(오려 낼 색)은 단색 마젠타 #FF00FF.
 ```
 
-## PT-03 · 사건 NPC 초상 — 기보 장수 · 조는 남의 킹 · 순회 수리 비숍 · 문지기 룩 · 감독 룩 · 외눈 정비공 · 녹슨 룩
+## PT-03 · 사건 NPC 초상 — 기보 장수 · 조는 남의 킹 · 순회 수리 비숍 · 문지기 룩 · 감독 룩 · 외눈 정비공 · 녹슨 룩 · 취소 — 사건 일러스트 활용 (사용자 결정)
 - 크기: 64×64 ×7 → ×8
 - 넣을 곳: `public/ui/portraits/npc-bookCart.png` · `public/ui/portraits/npc-sleepingKing.png` · `public/ui/portraits/npc-fieldMedic.png` · `public/ui/portraits/npc-tollGate.png` · `public/ui/portraits/npc-overtime.png` · `public/ui/portraits/npc-forge.png` · `public/ui/portraits/npc-shop.png`
 - 받은 그림 이름: `PT-03.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-03-source.png`에 보관)
@@ -894,7 +896,7 @@
 - 바탕(오려 낼 색)은 단색 마젠타 #FF00FF.
 ```
 
-## PT-04 · 종이왕 독백 초상 5표정
+## PT-04 · 종이왕 독백 초상 5표정 · 받음 (D-506)
 - 크기: 64×64 ×5 → ×8
 - 넣을 곳: `public/ui/portraits/paperking-{calm,resolve,fear,pain,gilt}.png` (사건 창 오른쪽 위 독백 · 비대화 사건)
 - 받은 그림 이름: `PT-04.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-04-source.png`에 보관)
@@ -928,7 +930,7 @@
 ## 8위 · [P1] 적 킹 · 적 기물 대사 초상
 풀리는 것: 피드백 6 (스테이지 킹 · 적 기물 대사 — 지금 기물 아이콘을 그대로 씀)
 
-## PT-05 · 적 초상 — 1공정 적 킹 · 2공정 적 킹 · 3공정 적 킹
+## PT-05 · 적 초상 — 1공정 적 킹 · 2공정 적 킹 · 3공정 적 킹 · 받음 (D-506)
 - 크기: 64×64 ×3 → ×8
 - 넣을 곳: `public/ui/portraits/king-a1.png` · `public/ui/portraits/king-a2.png` · `public/ui/portraits/king-a3.png` (`main.ts foeSay` — 보통 대국 적 킹 · 적 기물 대사)
 - 받은 그림 이름: `PT-05.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-05-source.png`에 보관)
@@ -957,7 +959,7 @@
 - 바탕(오려 낼 색)은 단색 마젠타 #FF00FF.
 ```
 
-## PT-06 · 적 초상 — 검문 적 킹 · 적 폰 · 적 나이트
+## PT-06 · 적 초상 — 검문 적 킹 · 적 폰 · 적 나이트 · 받음 (D-506)
 - 크기: 64×64 ×3 → ×8
 - 넣을 곳: `public/ui/portraits/king-check.png` · `public/ui/portraits/foe-P.png` · `public/ui/portraits/foe-N.png` (`main.ts foeSay` — 보통 대국 적 킹 · 적 기물 대사)
 - 받은 그림 이름: `PT-06.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-06-source.png`에 보관)
@@ -986,7 +988,7 @@
 - 바탕(오려 낼 색)은 단색 마젠타 #FF00FF.
 ```
 
-## PT-07 · 적 초상 — 적 비숍 · 적 룩 · 적 퀸
+## PT-07 · 적 초상 — 적 비숍 · 적 룩 · 적 퀸 · 받음 (D-506)
 - 크기: 64×64 ×3 → ×8
 - 넣을 곳: `public/ui/portraits/foe-B.png` · `public/ui/portraits/foe-R.png` · `public/ui/portraits/foe-Q.png` (`main.ts foeSay` — 보통 대국 적 킹 · 적 기물 대사)
 - 받은 그림 이름: `PT-07.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PT-07-source.png`에 보관)

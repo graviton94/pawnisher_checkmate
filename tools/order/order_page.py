@@ -187,6 +187,8 @@ def main(out_path):
             g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
             groups.append(g)
         elif g and re.match(r'[A-Z]{1,2}-\d', s['head']):
+            if '취소' in s['head']:  # 취소한 상자 (D-506 PT-01~03 「취소 — 사건 일러스트 활용」): 발주 페이지 · 집계에서 뺀다
+                continue
             g['items'].append(s)
 
     groups.sort(key=lambda x: x['rank'])

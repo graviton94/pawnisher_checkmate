@@ -124,7 +124,7 @@
 - 반입: `scene-import.py <원본> boss-plate-p2 CI-02` 등(정사각 초상, 비율 유지).
 - 검수: 6반장 + 도금왕 2단계 돌입, 예고 띠.
 
-### 7 · 8위 — 초상 PT-01~07 (P1)
+### 7 · 8위 — 초상 PT-01~07 (P1) — **PT-04~07 받음 · 반입 (D-506)** · PT-01~03 취소 — 사건 일러스트 활용 (사용자 결정)
 - 풀림: 후기 16(비대화 사건 오른쪽 위 빈칸 → 종이왕 독백 초상으로 고민 멘트 통합), 6(보통 적 킹 · 적 기물 대사 얼굴).
 - 받으면: 64칸 시트를 칸마다 잘라 `public/ui/portraits/<이름>.png`(새 도구 `tools/pixel/portrait_import.py` — `crew_faces.py`와 같은 격자 맞춤 · 마젠타 제거, 64×64 유지). `src/data/npcs.ts`에 사건 id → 초상 파일 표를 두고 `eventScreen`의 `.ws-say`에 DL-02 NPC 액자 + 초상, 비대화 사건(물건 사건 14종)은 `paperking-*` 표정 + 독백. `foeSay`는 보통 대국에서 막별 `king-a1~3` · 검문 `king-check`, 적 기물 대사가 생기면 `foe-*`(대사 문구 보강은 후기 6 별도 작업).
 - 검수: 대화 사건(동전 나이트) · 비대화 사건(녹슨 금고) · 보통 대국 도발 · 검문 판.
@@ -188,4 +188,4 @@
 ## 5. 도구 메모
 
 - `tools/order/order_page.py`: §0-D(`## N위 · [P*] …` + `## <번호> · …`)를 읽는다. 머리에 파일 이름이 없는 상자는 `build-res/order/<번호>-source.(png|webp)`가 있으면 「받음」. 옛 16위 카드 틀 건너뛰기는 머리에 「카드 앞뒷면」이 있을 때만.
-- 새로 필요한 반입 도구(그림 도착 때 만든다): `portrait_import.py`(64 초상 시트) · `fx_sheet_import.py`(프레임 띠 · 판 칸) · `icon_sheets.py` 4×2 정의 · `ui_kit_import.py`의 새 번호 이름표.
+- 새로 필요한 반입 도구(그림 도착 때 만든다): ~~`portrait_import.py`(64 초상 시트)~~ 만듦(D-506) · `fx_sheet_import.py`(프레임 띠 · 판 칸) · `icon_sheets.py` 4×2 정의 · `ui_kit_import.py`의 새 번호 이름표.

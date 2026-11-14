@@ -1,5 +1,36 @@
 // P-B 장면 묶음 (tools/qa/pb.cjs) — 판 위 글 갈래 · 판돈 · 반장 2단계 · 태엽 원천
 module.exports = {
+  /** D-506 초상: 적 킹(2공정) · 적 기물 · 검문 적 킹 바크 · 비대화 사건(종이왕 표정) · NPC 사건(사건 그림 자르기) · 컷신 종이왕 명패 */
+  async portraits({ pg, A, wait, shot }) {
+    await A(() => { window.sliceApi.setAct(1); window.sliceApi.startAt(2, 'battle'); });
+    await wait(1600);
+    await A(() => window.sliceApi.taunt('start'));
+    await wait(900);
+    await shot('king');
+    await wait(2600);
+    await A(() => window.sliceApi.foeBark('gloat', 'N'));
+    await A(() => window.sliceApi.foeBark('gloat'));
+    await wait(900);
+    await shot('piece');
+    await A(() => { window.sliceApi.setAct(0); window.sliceApi.startAt(1, 'check'); });
+    await wait(1600);
+    await A(() => window.sliceApi.taunt('start'));
+    await wait(900);
+    await shot('check');
+    await A(() => window.sliceApi.event('crownAltar'));
+    await wait(5200);
+    await shot('event-king');
+    await A(() => window.sliceApi.event('tinker'));
+    await wait(5200);
+    await shot('event-npc');
+    await A(() => { window.sliceApi.fallCut('plate'); });
+    for (let i = 0; i < 40; i++) {
+      await wait(700);
+      const got = await A(() => !!document.querySelector('.cut-who .cw-face img[src*="paperking"]'));
+      if (got) { await wait(900); await shot('cut'); break; }
+      await pg.mouse.click(200, 150);
+    }
+  },
   /** 갈래 넷: 적 킹 바크 · 우리 바크 · 상태 띠 · 독백 · 자막 띠(합류) */
   async channels({ pg, A, wait, shot }) {
     await A(() => window.sliceApi.startAt(1, 'battle'));

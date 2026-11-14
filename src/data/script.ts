@@ -2,12 +2,14 @@
 import type { StandIn } from './opening';
 import type { PieceType } from '../engine';
 import { CHAPTERS, endingLabel } from './campaign';
+import { PAPER_FACE, type PaperMood, type Portrait } from './portraits';
 /**
  * 비트 (D-504, 후기 #31): 한 줄 = 한 비트. 글에 더해 그 순간의 연출을 함께 적는다 — 카메라(shot) · 소리 큐(sfx) · 숨(pause, 글 앞 ms) · 효과(fx).
  * 연출이 없는 줄은 앞 비트의 그림 · 초점을 그대로 이어 받는다.
  */
 export type Cue = 'tap' | 'threat' | 'land' | 'hit' | 'stamp' | 'lose' | 'win' | 'rare' | 'awaken' | 'lift' | 'hurt' | 'loss' | 'submit' | 'kill' | 'check';
-export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold' }
+/** mood (D-506): 종이왕 표정(PT-04) — 종이왕 대사면 명패 얼굴을 바꾸고, 속마음(m)이면 이름 없이 얼굴 명패만 세운다 */
+export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold'; mood?: PaperMood }
 /** 카메라 한 샷: 그림 안 초점(0~1) + 확대 칸 z(0 = 칸을 덮는 기본 배율, 한 칸 = 기기 픽셀 정수로 약 12%씩) */
 export interface Shot { x: number; y: number; z?: number }
 /** 컷 사이 전환: 디더 · 조리개 · 쇳물 · 백지 · 암전 · 바로 */
@@ -15,7 +17,7 @@ export type Trans = 'dither' | 'iris' | 'melt' | 'white' | 'black' | 'cut';
 /** 장 제목 카드 (먹 바탕 · 꼬리표 · 제목 · 부제) */
 export interface TitleCard { kicker: string; title: string; sub?: string; tone?: 'brass' | 'crimson' | 'paper' }
 /** 화자 얼굴: 기물 도트(진영) 또는 장면 그림 한 곳(cover 초점) */
-export type Face = { t: PieceType; side: 0 | 1 } | { art: string; at?: string };
+export type Face = { t: PieceType; side: 0 | 1 } | { art: string; at?: string } | { portrait: Portrait };
 export interface Cut {
   alt?: string; img: string; bg: [string, string]; glow?: string; art: StandIn[];
   fx?: 'alarm' | 'red' | 'spot' | 'path' | 'gold';
@@ -48,11 +50,11 @@ const sceneCut = (img: string, lines: Line[], art: StandIn[] = []): Cut => ({ ..
 const coda = (lines: Line[], tone: 'black' | 'white' = 'black'): Cut => ({ ...cut('', lines, []), coda: tone, trans: tone === 'white' ? 'white' : 'black' });
 /**
  * 화자 얼굴 (D-504 · #22): 컷신 대사 명패에 세울 얼굴. 분대원 이름은 출하마다 달라 부르는 쪽(playCuts faces)이 더한다.
- * 아홉째 폰은 종이 왕관을 접기 전이라 맨 폰, 그 뒤는 종이왕(K0 정본, D-424). 반장 · 도금왕은 장면 그림 얼굴 자리.
+ * 아홉째 폰은 종이 왕관을 접기 전이라 맨 폰, 그 뒤는 종이왕(PT-04 표정 초상, D-506 — 줄의 mood로 표정). 반장 · 도금왕은 장면 그림 얼굴 자리.
  */
 export const BOSS_FACE_ART = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' } as const;
 export const SPEAKER_FACE: Record<string, Face> = {
-  종이왕: { t: 'K', side: 0 }, '아홉째 폰': { t: 'P', side: 0 }, 박차: { t: 'N', side: 0 }, '흰 퀸': { t: 'Q', side: 0 }, '흰 룩': { t: 'R', side: 0 },
+  종이왕: { portrait: PAPER_FACE.calm }, '아홉째 폰': { t: 'P', side: 0 }, 박차: { t: 'N', side: 0 }, '흰 퀸': { t: 'Q', side: 0 }, '흰 룩': { t: 'R', side: 0 },
   도금왕: { art: 'boss-gilded', at: '50% 22%' },
   '철갑 반장': { art: BOSS_FACE_ART.plate }, '검수 반장': { art: BOSS_FACE_ART.inspect }, '조립 반장': { art: BOSS_FACE_ART.spawn },
   '자석 반장': { art: BOSS_FACE_ART.magnet }, '출하 반장': { art: BOSS_FACE_ART.thorns }, '경보 반장': { art: BOSS_FACE_ART.alarm },
@@ -111,7 +113,7 @@ export const PROLOGUE: Cut[] = [
     n('무리 끝에서, 한쪽 다리에 시커먼 주조 흠집이 패인 흰 나이트 하나가 묵묵히 걸어 나와 그의 곁에 섰다.', { shot: at(0.58, 0.55, 1), sfx: 'land' }),
     s('박차', '박차라고 한다. 쇠가 덜 식었을 때 틀에서 뜯어지는 바람에, 태어날 때부터 정품 상자엔 못 들어가고 뒷줄만 맴돌았지.', { shot: at(0.6, 0.45, 2) }),
     s('박차', '네가 꼭대기에서 진짜 킹으로 승급한다 해도, 내 몸에 패인 이 흉한 흠집까지 지워지진 않을 텐데. 그래도 괜찮나?', { shot: at(0.62, 0.55, 3) }),
-    s('종이왕', '흠집 따위 지울 필요 없어. 부서진 채로 싸워 온 게 우리잖아. 이 몸 그대로 같이 문밖으로 나가자.', { shot: at(0.3, 0.4, 2) }),
+    s('종이왕', '흠집 따위 지울 필요 없어. 부서진 채로 싸워 온 게 우리잖아. 이 몸 그대로 같이 문밖으로 나가자.', { shot: at(0.3, 0.4, 2), mood: 'resolve' }),
     s('박차', '…우스운 소리군. 하지만 나쁘지 않아. 좋다, 지금부터 넌 내 대장이다. 이 낡은 말발굽이 부서질 때까지 네 곁을 지키지.', { shot: at(0.45, 0.5), pause: 400 }),
   ]), slug: '부관 박차' },
   // PRO-08 — 검은 세트(양쪽 어둠) → 거울상 → 높은 통제실(위로) → 종이왕 독백(가운데로 다가감)
@@ -119,7 +121,7 @@ export const PROLOGUE: Cut[] = [
     n('첫 번째 검수 판이 열리고, 맞은편 어둠 속에서 매끈하게 닦인 검은 기물들이 한 치의 오차도 없이 줄지어 섰다.', { shot: at(0.5, 0.7), sfx: 'threat' }),
     n('그들 역시 지면 용광로로 떨어지는 처지였다. 살기 위해 남을 부숴야 하는 잔혹한 거울상이었다.', { shot: at(0.15, 0.66, 2) }),
     n('아득히 높은 통제실 난간 너머로, 소문의 주인공인 도금왕이 황금빛 그림자를 드리운 채 아래를 내려다보고 있었다.', { shot: at(0.45, 0.12, 2), pause: 300 }),
-    m('미안하지만 여기서 멈출 순 없어. 내가 저 꼭대기에 닿아야만, 이 상자의 우리 모두가 살아서 문밖을 볼 수 있으니까.', { shot: at(0.5, 0.72, 2), pause: 400 }),
+    m('미안하지만 여기서 멈출 순 없어. 내가 저 꼭대기에 닿아야만, 이 상자의 우리 모두가 살아서 문밖을 볼 수 있으니까.', { shot: at(0.5, 0.72, 2), pause: 400, mood: 'resolve' }),
   ]), key: true, slug: '검은 세트와 먼 왕좌', trans: 'iris' },
 ];
 /**
@@ -131,7 +133,7 @@ export const shadowCut = (chapter: number, law?: string, retry = chapter === 0):
     n('조금 전, 또 하나의 불량 세트가 비명을 남긴 채 붉은 용광로 속으로 가라앉았다.', { shot: at(0.5, 0.5), sfx: 'threat' }),
     n('컨베이어의 집게는 아무 일도 없었다는 듯 차가운 쇳소리를 내며, 다른 상자의 비어 있는 킹 자리에 새로운 폰 하나를 집어 넣었다.', { shot: at(0.33, 0.7, 2), sfx: 'lift' }),
     n('상자 뚜껑에 찍힌 붉은 X표가 눈을 뜬 그의 시야를 붉게 물들였다.', { shot: at(0.33, 0.78, 3), fx: 'red' }),
-    m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { shot: at(0.75, 0.2, 1), pause: 400 }),
+    m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { shot: at(0.75, 0.2, 1), pause: 400, mood: 'fear' }),
   ]), slug: '같은 승천 재도전', title: { kicker: chapterKick(chapter), title: '또 하나의 아홉째 폰', sub: CHAPTERS[Math.max(0, Math.min(3, chapter))].name } }
   : { ...sceneCut('new-law', [
     n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.', { shot: at(0.18, 0.8, 2) }),
@@ -267,7 +269,7 @@ export const lookBackCut = (o: { companionWithJosa?: string; lost?: string }): C
   ...sceneCut('promote-crew', [
     o.companionWithJosa ? n(`${o.companionWithJosa} 지친 얼굴로 미소 지으며 고개를 끄덕인다.`, { shot: at(0.3, 0.75, 2), pause: 200 })
       : o.lost ? n(`${o.lost}의 자리는 비어 있다.`, { shot: at(0.55, 0.8, 2), pause: 200 }) : n('뒤편에는 빈칸만 남았다.', { shot: at(0.55, 0.8, 2), pause: 200 }),
-    m(o.companionWithJosa || o.lost ? '조금만 기다려. 이제 곧 우리가 살아서 나간다.' : '조금만 기다려. 이제 곧 살아서 나간다.', { shot: at(0.3, 0.7, 1), pause: 300 }),
+    m(o.companionWithJosa || o.lost ? '조금만 기다려. 이제 곧 우리가 살아서 나간다.' : '조금만 기다려. 이제 곧 살아서 나간다.', { shot: at(0.3, 0.7, 1), pause: 300, mood: 'calm' }),
   ]), slug: '돌아봄', shot: at(0.8, 0.1, 2), trans: 'iris',
 });
 export const PROMOTE_TEXT = { promote: THRONE_TEXT.crown, lay: THRONE_TEXT.throw, stuck: '', hint: '' };
@@ -299,7 +301,7 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       n('종이왕은 더 이상 망설이지 않고, 승급대 위에 놓인 찬란한 금왕관을 두 손으로 들어 올려 자신의 머리에 얹었다.', { shot: at(0.62, 0.3, 2), sfx: 'lift' }),
       // 「시야가 열렸다」 — 가까이에서 가장 넓게 물러난다
       n('왕관이 닿는 찰나, 평생 눈앞의 한 칸만 바라보며 떨던 폰의 시야가 폭발하듯 열렸다. 공장의 모든 층과 모든 기물의 움직임이 손바닥 안처럼 한눈에 내려다보였다.', { shot: at(0.5, 0.45), sfx: 'awaken', fx: 'gold' }),
-      m('아… 이것이 왕의 눈인가. 이토록 높고, 완전하며, 무엇 하나 두려울 것이 없는 눈부신 권능이라니…!', { shot: at(0.62, 0.28, 3), pause: 500 }),
+      m('아… 이것이 왕의 눈인가. 이토록 높고, 완전하며, 무엇 하나 두려울 것이 없는 눈부신 권능이라니…!', { shot: at(0.62, 0.28, 3), pause: 500, mood: 'gilt' }),
     ]), alt: 'promote-gild', slug: '왕관을 쓴 직후', shot: at(0.62, 0.35, 3), title: endTitle(chapter), trans: 'dither' },
     { ...sceneCut('casting-floor', [
       // END-K-2-1 시스템: 기계음은 이름표 「용해 주조기」(적 쇠 명패)로 — 서술과 갈라 보인다 (#22)
@@ -309,12 +311,12 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       ...(company?.melted?.length ? [n(`쇳물은 처음이 아니었다. 결전에서 그가 녹여 바친 ${meltedNames(company)}의 쇳물이, 이미 왕관 안쪽을 금빛으로 덮고 있었다.`, { shot: at(0.72, 0.1, 3) })] : []),
       ...(who ? [s(who, '대장! 갑자기 바닥이 열리고 있습니다! 쇠사슬이 우릴 아래로 끌어당기고 있어요! 이게 대체 무슨 일입니까!', { shot: at(0.35, 0.78, 2), fx: 'shake' })] : []),
       n('아직 주조가 완료되지 않았다. 지금 당장 머리의 왕관만 벗어 던지면, 아직은 공정을 멈추고 동료들을 끌어올릴 수 있는 찰나의 시간이었다. 하지만 그는 단상 위에서 한 발짝도 움직이지 못했다.', { shot: at(0.72, 0.1, 2), pause: 600 }),
-      m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 경비대에게 부서지라고?', { shot: at(0.74, 0.08, 3), pause: 300 }),
+      m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 경비대에게 부서지라고?', { shot: at(0.74, 0.08, 3), pause: 300, mood: 'gilt' }),
       ...(who ? [s(who, '대장…?! 왜 거기 서서 내려다보기만 하십니까! 손을… 그 왕관을 벗으십시오! 대장… 설마, 알고도 손을 안 뻗으시는 겁니까…?!', { shot: at(0.4, 0.8, 1), sfx: 'hurt' })] : []),
     ]), alt: 'gilded-fallen', fx: 'red', at: '72% 8%', slug: '용해 주조', shot: at(0.5, 0.5), trans: 'melt' }, // S-17: 단상 위 종이왕(오른쪽 위)이 잘리지 않게
     { ...sceneCut('gold-cast', [
       n('동료들의 믿음과 배신감이 뒤섞인 마지막 비명이 붉은 용광로 속으로 쏟아졌다. 곧이어 파이프를 타고 솟구친 황금빛 쇳물이 그의 작은 폰의 몸을 빈틈없이 감싸며 킹의 거푸집으로 굳어갔다.', { shot: at(0.5, 0.6), sfx: 'land', fx: 'gold' }),
-      m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.5, 0.3, 2), pause: 700 }),
+      m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.5, 0.3, 2), pause: 700, mood: 'gilt' }),
     ]), alt: 'promote-gild', slug: '금빛 거푸집', shot: at(0.5, 0.15, 1), trans: 'white' },
     { ...cut('promote-rule', [
       n('새 도금왕은 아래층에서 올라오는 동료들의 태엽 타는 냄새를 지우려 통제실의 경고등을 껐다. 그리고 자신의 정체가 탄로 나지 않도록 출하문을 안쪽에서 걸어 잠그고, 다음 등반자를 막을 새 규정을 새겼다.', { shot: at(0.55, 0.5) }),
@@ -352,24 +354,24 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
   const who = crier(company);
   return [
     { ...sceneCut('gilded-fallen', [
-      s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.', { shot: at(0.2, 0.78, 1) }),
+      s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.', { shot: at(0.2, 0.78, 1), mood: 'gilt' }),
       // D-465: 녹여 바친 동료를 스스로 부른다 — 왕관 탓이 아니라 내 손이었다
-      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { shot: at(0.2, 0.8, 2), pause: 400 })] : []),
-      s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { shot: at(0.2, 0.82, 2), pause: 300 }),
+      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { shot: at(0.2, 0.8, 2), pause: 400, mood: 'pain' })] : []),
+      s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { shot: at(0.2, 0.82, 2), pause: 300, mood: 'resolve' }),
       n('종이왕은 금왕관을 자신의 머리에 얹지 않았다. 대신 옆에서 맹렬히 돌아가던 용해 주조기의 거대한 톱니바퀴 틈새를 향해, 온 힘을 다해 던져 넣었다.', { shot: at(0.8, 0.3, 1), sfx: 'lift', fx: 'shake' }),
     ]), caption: 'top', slug: '왕관을 던지다', shot: at(0.45, 0.5), title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper' }, trans: 'dither' },
     { ...sceneCut('crown-gears', [
       n('세 번의 죄악이 겹겹이 도금되어 있던 단단한 금왕관이 톱니 사이에 쐐기처럼 박히며 찌그러졌다. 쇠가 부러지는 비명 같은 굉음과 함께 공장의 주조 라인 전체가 멈춰 섰다.', { shot: at(0.62, 0.35, 2), sfx: 'hit', fx: 'flash' }),
       // 멈춘 공장 — 넓게 물러나 한 박자 정적
       ...(who ? [s(who, '대장…! 왕관을 부숴 버리셨습니다. 이젠 진짜 킹이 될 수 있는 길도 사라졌고, 우리는 영원히 불량 폰으로 남게 됩니다.', { shot: at(0.5, 0.5), pause: 1200 })] : []),
-      s('종이왕', '남의 숨을 녹여야만 얻을 수 있는 정품이라면, 나는 평생 흠집 난 불량품으로 살겠다.', { shot: at(0.62, 0.4, 1), pause: who ? 0 : 1200 }),
-      s('종이왕', '한 칸 앞밖에 보지 못해도 괜찮아. 내 옆칸에 네가 함께 서 있다면, 그 작은 한 걸음은 더 이상 초라하지 않으니까.', { shot: at(0.5, 0.5) }),
+      s('종이왕', '남의 숨을 녹여야만 얻을 수 있는 정품이라면, 나는 평생 흠집 난 불량품으로 살겠다.', { shot: at(0.62, 0.4, 1), pause: who ? 0 : 1200, mood: 'resolve' }),
+      s('종이왕', '한 칸 앞밖에 보지 못해도 괜찮아. 내 옆칸에 네가 함께 서 있다면, 그 작은 한 걸음은 더 이상 초라하지 않으니까.', { shot: at(0.5, 0.5), mood: 'calm' }),
     ]), alt: 'gilded-fallen', slug: '멈춘 공장', shot: at(0.6, 0.3, 3), trans: 'iris' },
     { ...sceneCut('white-land', [
       n('주조기의 과부하로 안쪽에서 잠겨 있던 비상 출하문이 굉음을 내며 바깥으로 뜯겨 열렸다. 그 문 너머에는 검은 매연도, 쇠사슬도, 발밑을 구획 짓던 흑백의 체스판 선도 없는 끝없는 하얀 땅이 펼쳐져 있었다.', { shot: at(0.38, 0.72), sfx: 'awaken' }),
       n('차가운 바깥바람에 머리의 낡은 종이 왕관이 금방이라도 찢어질 듯 위태롭게 흔들렸다. 그래도 그들 중 누구도 그것을 황금으로 바꾸려 하지 않았다.', { shot: at(0.3, 0.6, 1) }),
       ...(who ? [s(who, '대장, 저 앞에는 우리가 밟아야 할 칸이 하나도 그려져 있지 않습니다. 이제 우리는 어느 쪽으로 몇 칸을 걸어야 합니까?', { shot: at(0.4, 0.75, 1) })] : []),
-      s('종이왕', '그러니 이제부터는, 우리가 가고 싶은 만큼 가면 된다.', { shot: at(0.35, 0.8, 2), pause: 400 }),
+      s('종이왕', '그러니 이제부터는, 우리가 가고 싶은 만큼 가면 된다.', { shot: at(0.35, 0.8, 2), pause: 400, mood: 'calm' }),
     ]), alt: 'departure-decision', caption: 'top', slug: '하얀 땅', shot: at(0.85, 0.7, 2), trans: 'white' },
     { ...sceneCut('white-land', [
       n('끝내 정품이 되지 못한 작은 말들이, 누구의 명령도 적히지 않은 세상의 규칙 바깥으로 처음으로 자신의 발걸음을 내디뎠다.', { shot: at(0.32, 0.85, 3), sfx: 'land' }),
@@ -389,8 +391,8 @@ export const bossFallCut = (rule: StoryBoss, img: string, nth: number, chapter: 
       n(fall, { shot: at(0.5, 0.5), sfx: 'hit', fx: 'shake' }),
       ...(pass ? [n(pass, { shot: at(0.5, 0.6, 1), pause: 300 })] : []),
       s(st.name, st.temptation, { shot: at(0.5, 0.35, 2), sfx: 'threat' }),
-      s('종이왕', st.reply, { shot: at(0.5, 0.5), pause: 300 }),
-      m(stageProg(nth, chapter), { shot: at(0.5, 0.45, 1), pause: 400 }),
+      s('종이왕', st.reply, { shot: at(0.5, 0.5), pause: 300, mood: 'resolve' }),
+      m(stageProg(nth, chapter), { shot: at(0.5, 0.45, 1), pause: 400, mood: 'calm' }),
     ],
   };
 };
