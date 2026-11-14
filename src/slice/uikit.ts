@@ -442,6 +442,9 @@ interface BandItem {
   icon: string;
 }
 const bandQ: BandItem[] = [];
+/** 상태 띠 기본 아이콘 (경고 = 과녁 · 턴 = 태엽 열쇠 · 안내 = ?) */
+const bandIcon = (key: string): string => `<img src="ui/icons16/${key}@16.png" alt="" aria-hidden="true">`;
+const BAND_ICON: Record<BandKind, string> = { crimson: bandIcon('intent-attack'), brass: bandIcon('hud.key.full'), toast: bandIcon('hud.help') };
 let bandNow: { item: BandItem; el: HTMLElement; t: number } | null = null;
 /** 띠를 붙일 곳: 전투 HUD가 보이면 판 열 위, 아니면 화면 위 가운데 (부르는 쪽이 정한다) */
 let bandAnchor: () => DOMRect | null = () => null;
@@ -464,7 +467,8 @@ const bandNext = (): void => {
   const el = document.createElement('div');
   el.className = `state-band k-${item.kind} k-in`;
   el.setAttribute('role', 'status');
-  el.innerHTML = `${item.icon}<span>${item.text}</span>`;
+  // 시스템 갈래는 아이콘 + 한 줄 (P-B D-489, 원칙 4 — 색만으로 가르지 않는다): 아이콘을 안 준 띠는 종류마다 기본 아이콘
+  el.innerHTML = `${item.icon || BAND_ICON[item.kind]}<span>${item.text}</span>`;
   document.body.appendChild(el);
   placeBand(el);
   // 걷기는 한 번만. 디더 퇴장 중에 새 띠가 먼저 떴으면 그 띠를 건드리지 않는다
@@ -505,12 +509,9 @@ export const stateBand = (text: string, kind: BandKind = 'toast', o: { ms?: numb
       cur.el.remove();
     }
   } else {
+    // 갈래마다 동시에 하나 (P-B D-489): 기다리는 토스트는 하나만 — 새 토스트가 옛 것을 바꾼다. 띠(턴 · 경고)는 버리지 않는다
+    if (kind === 'toast') for (let k = bandQ.length - 1; k >= 0; k--) if (bandQ[k].kind === 'toast') bandQ.splice(k, 1);
     bandQ.push(item);
-    while (bandQ.length > 3) {
-      const k = bandQ.findIndex((q) => q.kind === 'toast');
-      if (k < 0) break;
-      bandQ.splice(k, 1);
-    }
   }
   if (!bandNow) bandNext();
 };

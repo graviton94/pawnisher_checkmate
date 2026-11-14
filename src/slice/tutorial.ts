@@ -5,7 +5,8 @@
  * 게임 상태는 건드리지 않는다 — 짚고 기다리기만 한다 (UI 원칙 9).
  */
 import { typeIn } from './fx3';
-import { makeTalk, talkAt } from './uikit';
+import { makeTalk } from './uikit';
+import { placeSub } from './voice';
 
 export interface TutStep {
   /** 부관의 말 (<em>낱말</em>은 한 번에 박힌다) */
@@ -99,13 +100,15 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       // 그 밖(지도 · 고르기)은 짚은 곳이 아래쪽이면 위에, 아니면 아래에
       const battle = document.body.classList.contains('lay-f') && !document.body.classList.contains('between') && !!document.getElementById('left')?.offsetWidth && document.getElementById('overlay')?.hidden !== false;
       if (battle) {
-        const side = r && r.left + r.width / 2 < W / 2 ? 'right' : 'left';
-        if (talk.dataset.side !== side) talkAt(talk, side);
-        talk.dataset.side = side;
-        talk.classList.remove('top', 'bottom');
+        // #3 · P-B D-489: 전투 중 부관 안내 = 판 아래 가운데 자막 띠 하나 (레일 폭에 접히지 않는다). 짚은 곳이 판 아래쪽이면 판 위로
+        const low = !!r && r.top + r.height / 2 > H * 0.55;
+        talk.dataset.side = low ? 'top' : 'bottom';
+        talk.classList.add('on-sub');
+        talk.classList.remove('top', 'bottom', 'on-rail');
+        placeSub(talk, low);
       } else {
         delete talk.dataset.side;
-        talk.classList.remove('on-rail');
+        talk.classList.remove('on-rail', 'on-sub');
         talk.style.left = talk.style.width = '';
         const low = r ? r.top + r.height / 2 > H * 0.5 : false;
         talk.style.top = low ? '' : 'auto';

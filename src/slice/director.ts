@@ -1,5 +1,6 @@
 import type { PieceType } from '../engine';
 import { CREW } from './crew';
+import { FOE_KING_LINES, type FoeCue } from '../data/battle-voice';
 
 /**
  * 심리 연출 감독 (D-178). 사용자 원칙: 유저는 ① 똑똑해 보이고 싶지만 복잡한 건 싫고 ② 이기면 내 실력, 지면 게임 탓
@@ -102,16 +103,9 @@ export const addNemesis = (list: Nemesis[], t: PieceType, victim: { t: PieceType
 };
 
 // ---------- ② 도발 (적 킹의 말 — 대국마다 한 줄까지) ----------
-/** sig = 그 반장의 규칙이 막 발동한 순간 (반장마다 다른 상황 — D-311) */
-export type TauntCue = 'cheese' | 'beg' | 'gloat' | 'meet' | 'sig';
-/** 보통 적 킹 = 검은 세트의 정품 킹 (D-326 페르소나: 냉소적인 귀공자 — 반말 비아냥, 「하.」 · 「정품」을 입에 달고 산다) */
-export const TAUNTS: Record<TauntCue, string[]> = {
-  cheese: ['“하, 비겁한 수를 쓰는군. 폰답네.”', '“한 번에 둘? …운이 좋았을 뿐이야.”', '“그건 반칙 아닌가? 정품은 그렇게 안 둬.”', '“규격 외 수로 이겨 봐야, 하자품은 하자품이지.”', '“흥, 겁도 없는 폰이로군.”'],
-  beg: ['“자, 잠깐. 거래하지. 나사라면 넉넉히…”', '“정품 킹을 부수면 너희만 손해야. 알지?”', '“왕관만은… 왕관만은 두고 가.”'],
-  gloat: ['“하. 하자품은 용광로로.”', '“하나 줄었군. 킹 없는 세트답게.”'],
-  meet: ['“또 다른 종이 왕관이군.”', '“이전 세트의 이름은 원부에서 찾아라.”'],
-  sig: ['“이게 정품의 수다.”'],
-};
+/** 적이 말하는 순간 · 보통 적 킹의 말 — 정본은 data/battle-voice.ts (P-B D-489: 다섯 상황 → 아홉 상황, 상황마다 셋 안팎) */
+export type TauntCue = FoeCue;
+export const TAUNTS: Record<TauntCue, string[]> = FOE_KING_LINES;
 
 // ---------- ⑦ 판돈 ----------
 export type BetKind = 'fast' | 'clean';

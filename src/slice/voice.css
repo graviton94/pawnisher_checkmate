@@ -1,0 +1,102 @@
+/* ===================== P-B 판 위 글 갈래 (D-489, 후기 #6 · #3 · #29 · #12 · #21) — src/slice/voice.ts =====================
+   바크 = 기물 머리 위 철 판 + 진영 이름표 + 꼬리 · 자막 띠 = 판 아래 철 띠 + 초상 · 독백 = 누른 자리 곁 종이 테이프.
+   임시 부품 (D-386): 꼬리 chrome/tip-*(90° 돌림) · 이름표 UI-24 강조 띠 · 몸 toast-iron — DL-01(대사 띠) · DL-02(이름표 · 액자) 대기.
+   kit.css 뒤에 불린다 (토큰 --px · --k-toast · ktoastin을 쓴다). */
+.vbark {
+  position: fixed; z-index: 70; box-sizing: border-box; display: grid; gap: var(--px); max-width: 232px; padding: 0 var(--s1) var(--px);
+  border-style: solid; border-width: calc(var(--k-toast) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
+  image-rendering: pixelated; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e); cursor: pointer; pointer-events: auto;
+}
+.vbark .vb-name { justify-self: start; margin-top: calc(var(--px) * -12); }
+.vbark.side-foe .vb-name { justify-self: end; }
+.vbark .vb-line { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; overflow-wrap: break-word; white-space: normal; }
+.vbark.side-foe .vb-line { color: #ffd8cf; }
+.vbark .vb-tail {
+  position: absolute; left: calc(var(--tail-x, 50%) - var(--k-toast) * var(--px) - var(--px) * 6); top: calc(100% + var(--k-toast) * var(--px) - var(--px) * 8);
+  width: calc(var(--px) * 12); height: calc(var(--px) * 24); transform: rotate(90deg);
+  background: url('../assets/ui/chrome/tip-cyan.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; pointer-events: none;
+}
+.vbark.side-foe .vb-tail { background-image: url('../assets/ui/chrome/tip-crimson.png'); }
+.vbark.side-gilded .vb-tail { background-image: url('../assets/ui/chrome/tip-brass.png'); }
+.vbark.below .vb-tail { top: calc(-1 * var(--k-toast) * var(--px) - var(--px) * 16); transform: rotate(-90deg); }
+.vbark.below .vb-name { margin-top: 0; }
+.vbark.k-in { animation: ktoastin 200ms steps(3, jump-none) both; }
+
+.vsub {
+  position: fixed; z-index: 80; box-sizing: border-box; display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s2);
+  min-height: calc(var(--px) * 30); border-style: solid; border-width: calc(var(--k-toast) * var(--px));
+  border-image: url('../assets/ui/chrome/v2/toast-iron.png') var(--k-toast) fill / calc(var(--k-toast) * var(--px)) / 0 stretch;
+  image-rendering: pixelated; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e); cursor: pointer; pointer-events: auto;
+}
+.vsub .vs-face { --fs: calc(var(--px) * 24); flex: none; overflow: hidden; }
+.vsub .vs-face > :is(img, canvas, .piece) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; image-rendering: pixelated; }
+.vsub .vs-body { flex: 1 1 auto; min-width: 0; display: grid; gap: var(--px); }
+.vsub .vs-who { color: var(--t-body); font: 700 12px/1.4 Galmuri11, sans-serif; }
+.vsub .vs-who.side-ally { color: var(--t-ally); }
+.vsub .vs-who.side-foe { color: var(--t-loss); }
+.vsub .vs-who.side-gilded { color: var(--t-gold); }
+.vsub .vs-line { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; overflow-wrap: break-word; }
+.vsub.coach-band { z-index: 60; pointer-events: none; cursor: default; }
+.vsub.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
+/* 튜토리얼 말풍선을 자막 띠 자리에 (#3): 전투 중이면 판 아래 가운데 한 줄 띠 — 레일 폭에 접히지 않는다 */
+.tut .talk.on-sub { transform: none; flex-direction: row; align-items: center; max-width: none; }
+.tut .talk.on-sub .talk-face { --fs: calc(var(--px) * 24); }
+
+.vmono {
+  position: fixed; z-index: 85; box-sizing: border-box; max-width: 280px; padding: 0 var(--s1);
+  border-style: solid; border-width: calc(var(--px) * 4);
+  border-image: url('../assets/ui/chrome/tape.png') 4 fill / calc(var(--px) * 4) stretch; image-rendering: pixelated;
+  color: var(--t-ink); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; white-space: normal;
+  filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); cursor: pointer; pointer-events: auto;
+}
+.vmono.k-in { animation: ktoastin 180ms steps(3, jump-none) both; }
+
+/* 태엽 원천 (#29): 처치한 칸 · 부품 칸에서 「원천 아이콘 + +1」 조각이 태엽 계기로 날아든다 (fx3.arcFly — 예비 → 터짐 → 출렁) */
+.ap-fly {
+  position: fixed; z-index: 75; display: inline-flex; align-items: center; gap: var(--px); pointer-events: none; transform-origin: 50% 50%;
+  padding: 0 var(--px); color: var(--t-gold); font: 700 12px/16px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #0b0b0e, calc(var(--px) * -1) 0 0 #0b0b0e, 0 calc(var(--px) * -1) 0 #0b0b0e;
+}
+.ap-fly > img { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
+
+/* 판돈 칩 (#12): 레일 가운데 칸 위 — 동전(나사) + 조건 + 진행. 깨지면 진홍 띠 · 금, 적중하면 황동 띠 · 나사 쏟아짐. 임시 — WG-01 · WG-02 대기 */
+.bet-chip { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: var(--s1); row-gap: 0; margin: 0; padding: var(--px) 0; }
+.bet-chip > .tag { grid-row: span 2; }
+.bet-chip .bc-cond { color: var(--t-body); font: 700 12px/1.4 Galmuri11, sans-serif; word-break: keep-all; }
+.bet-chip .bc-prog { color: var(--t-gold); font: 700 12px/1.4 Galmuri11, sans-serif; }
+.bet-chip.broken .bc-prog { color: var(--t-loss); }
+.bet-chip.broken .bc-cond { color: var(--t-dim); text-decoration: line-through; text-decoration-thickness: 2px; }
+.bet-chip.hit .bc-prog { color: #b6edc0; }
+.bet-chip.k-crack { animation: betcrack 360ms steps(4, jump-none) both; }
+@keyframes betcrack { 0% { transform: translateX(-3px); } 25% { transform: translateX(3px); } 50% { transform: translateX(-2px); } 75% { transform: translateX(1px); } 100% { transform: none; } }
+/* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */
+.bet-slot { display: flex; align-items: flex-end; justify-content: center; gap: var(--px); min-height: 56px; padding: var(--s1) var(--s2); }
+.bet-slot > img { width: 32px; height: 32px; image-rendering: pixelated; }
+.bet-slot > img.drop { animation: betdrop 360ms steps(6, jump-none) both; }
+.bet-slot > img.drop:nth-child(2) { animation-delay: 80ms; }
+.bet-slot > img.drop:nth-child(3) { animation-delay: 160ms; }
+@keyframes betdrop { 0% { transform: translateY(-48px); } 55% { transform: translateY(4px) scale(1.15, 0.8); } 80% { transform: translateY(-3px); } 100% { transform: none; } }
+
+/* 반장 2단계 (#21): 판 정지 → 진홍 번쩍(계단) → 반장 기물 위 철판 내리찍기 → 진홍 「격노」 띠 → 자막 띠에 2단계 한마디. 임시 — CI-01 ~ CI-08 대기 */
+.p2-flash { position: fixed; inset: 0; z-index: 88; pointer-events: none; background: #b3121c; animation: p2flash 420ms steps(1, jump-end) both; }
+@keyframes p2flash { 0% { visibility: visible; background: #ffffff; } 18% { background: #b3121c; } 40% { visibility: hidden; } 58% { visibility: visible; background: #b3121c; } 72%, 100% { visibility: hidden; } }
+.p2-slam { position: fixed; z-index: 87; pointer-events: none; display: grid; place-items: center; }
+.p2-slam > .ribbon { height: calc(var(--px) * 13); }
+.p2-slam.k-in { animation: p2slam 520ms both; }
+@keyframes p2slam {
+  0% { transform: translateY(-40px) scale(1.6); animation-timing-function: cubic-bezier(.6, 0, .9, .4); }
+  35% { transform: translateY(0) scale(1.6, 1.1); animation-timing-function: steps(2, jump-none); }
+  50% { transform: scale(2, 1.25); }
+  70% { transform: scale(1.6, 1.8); }
+  100% { transform: scale(1.8); }
+}
+body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #b3121c, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }
+@media (prefers-reduced-motion: reduce) {
+  .vbark.k-in, .vsub.k-in, .vmono.k-in, .bet-chip.k-crack, .bet-slot > img.drop, .p2-slam.k-in { animation: none; }
+  .p2-flash { display: none; }
+}
+
+/* 사건 대사 칸의 종이왕 독백 (#16): 이름표 앞 얼굴 24 — 말하는 NPC가 없는 사건도 칸이 비지 않는다. 임시 — DL-02 액자 · PT 초상 대기 */
+.win-scene .ws-say.is-king .who { display: flex; align-items: center; gap: var(--s1); color: var(--t-body); }
+.win-scene .ws-say .ws-face { width: 24px; height: 24px; object-fit: cover; object-position: 50% 30%; image-rendering: pixelated; box-shadow: 0 0 0 var(--px) #0b0b0e; }
+.win-scene .ws-say.is-king .ws-line { color: var(--t-gold); }
