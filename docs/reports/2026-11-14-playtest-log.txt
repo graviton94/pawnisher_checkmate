@@ -1,0 +1,396 @@
+{"v":1,"exported":"2026-11-14T14:27:03.192Z","session":"mwgh3ie8-7iky","meta":{"runs":1,"cl
+ears":1,"ascOpen":0,"storyCleared":1,"challengeOpen":4,"challengeRecords":{}},"events":[{"e
+":"app_open","t":1794645252801,"sid":"mwg5fwx7-1taz","first":true,"runs":0,"elapsed_sec":8}
+,{"e":"run_start","t":1794645358599,"sid":"mwg5fwx7-1taz","seed":3331857,"asc":0,"daily":nu
+ll,"first":true,"run":1},{"e":"battle_start","t":1794645358608,"sid":"mwg5fwx7-1taz","act":1,"nod
+e_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"입문 —
+시험대","enemy":["K","P","P","P"]},{"e":"ftue_step","t":1794645358609,"sid":"mwg5fwx7-1taz"
+,"step_id":"battle1_start","elapsed_sec":114,"is_quit":false},{"e":"term_unlock","t":179464535
+8624,"sid":"mwg5fwx7-1taz","terms":["부적"]},{"e":"session_exit","t":1794645388466,"sid":"m
+wg5fwx7-1taz","act":1,"node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run
+_time_min":0.5,"turn_num":1,"in_battle":true,"exit_type":"background"},{"e":"session_resume
+","t":1794645518885,"sid":"mwg5fwx7-1taz","away_sec":130},{"e":"session_exit","t":1794645
+558974,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1
+,"first":true,"run_time_min":3.3,"turn_num":1,"in_battle":true,"exit_type":"background"},{"e":"s
+ession_resume","t":1794645681727,"sid":"mwg5fwx7-1taz","away_sec":123},{"e":"ftue_step"
+,"t":1794645683185,"sid":"mwg5fwx7-1taz","step_id":"battle1_turn2","elapsed_sec":439,"is_q
+uit":false},{"e":"tutorial","t":1794645690218,"sid":"mwg5fwx7-1taz","part":"battle-a","complete
+d":true},{"e":"session_exit","t":1794645691191,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"a
+sc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":5.5,"turn_num":2,"in_battle
+":true,"exit_type":"background"},{"e":"session_resume","t":1794645720849,"sid":"mwg5fwx7-
+1taz","away_sec":30},{"e":"rewind_used","t":1794645740565,"sid":"mwg5fwx7-1taz","act":1,"
+node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"turn":2,"rewinds_left":1,"de
+ath":false},{"e":"tutorial","t":1794645757404,"sid":"mwg5fwx7-1taz","part":"battle-b","complete
+d":false},{"e":"term_unlock","t":1794645759966,"sid":"mwg5fwx7-1taz","terms":["넘친
+피해"]},{"e":"tutorial","t":1794645767932,"sid":"mwg5fwx7-1taz","part":"promote","completed"
+:true},{"e":"session_exit","t":1794645778348,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"asc
+":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":7,"turn_num":2,"in_battle":tru
+e,"exit_type":"background"},{"e":"session_resume","t":1794645808606,"sid":"mwg5fwx7-1taz
+","away_sec":30},{"e":"term_unlock","t":1794645810575,"sid":"mwg5fwx7-1taz","terms":["막
+사의
+호출"]},{"e":"session_exit","t":1794645821742,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"a
+sc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":7.7,"turn_num":3,"in_battle
+":true,"exit_type":"background"},{"e":"session_resume","t":1794645880933,"sid":"mwg5fwx7-
+1taz","away_sec":59},{"e":"session_exit","t":1794645887736,"sid":"mwg5fwx7-1taz","act":1,"
+node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":8.8,"turn_nu
+m":3,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":1794645914130,"si
+d":"mwg5fwx7-1taz","away_sec":26},{"e":"battle_result","t":1794645916449,"sid":"mwg5fwx7-
+1taz","act":1,"node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"
+입문 —
+시험대","win":true,"turns":3,"hp_lost":0,"pieces_lost":0,"is_gameover":false,"rewinds_used":1
+},{"e":"telegraph_resolution","t":1794645916449,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":2,"hit_count":2,"pure_e
+vade_count":0,"counter_hit_count":4},{"e":"ftue_step","t":1794645916449,"sid":"mwg5fwx7-1t
+az","step_id":"battle1_win","elapsed_sec":672,"is_quit":false},{"e":"session_exit","t":1794645
+919034,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1
+,"first":true,"run_time_min":9.3,"turn_num":3,"in_battle":true,"exit_type":"background"},{"e":"s
+ession_resume","t":1794645934026,"sid":"mwg5fwx7-1taz","away_sec":15},{"e":"session_exi
+t","t":1794645941904,"sid":"mwg5fwx7-1taz","act":1,"node_idx":0,"asc":0,"mode":"story","cha
+pter":0,"run":1,"first":true,"run_time_min":9.7,"turn_num":3,"in_battle":false,"exit_type":"backg
+round"},{"e":"session_resume","t":1794645979792,"sid":"mwg5fwx7-1taz","away_sec":38},{"e
+":"draft_choice","t":1794645991459,"sid":"mwg5fwx7-1taz","kind":"recruit","offered_ids":["cre
+w:R","crew:P","crew:B"],"picked_id":"crew:R","is_skipped":false,"act":1,"run":1},{"e":"ftue_ste
+p","t":1794645991459,"sid":"mwg5fwx7-1taz","step_id":"first_pick","elapsed_sec":747,"is_qui
+t":false},{"e":"battle_start","t":1794645998586,"sid":"mwg5fwx7-1taz","act":1,"node_idx":1,"as
+c":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"1막 — 척후
+기병","enemy":["K","P","P","N"]},{"e":"session_exit","t":1794646021394,"sid":"mwg5fwx7-1taz
+","act":1,"node_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":11
+,"turn_num":1,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":179464602
+2999,"sid":"mwg5fwx7-1taz","away_sec":2},{"e":"rewind_used","t":1794646027283,"sid":"mw
+g5fwx7-1taz","act":1,"node_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"turn":
+1,"rewinds_left":0,"death":false},{"e":"session_exit","t":1794646029347,"sid":"mwg5fwx7-1taz
+","act":1,"node_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":11
+.2,"turn_num":1,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":1794646
+040811,"sid":"mwg5fwx7-1taz","away_sec":11},{"e":"term_unlock","t":1794646091379,"sid":"
+mwg5fwx7-1taz","terms":["기절"]},{"e":"battle_result","t":1794646161816,"sid":"mwg5fwx7-1t
+az","act":1,"node_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"1막
+— 척후
+기병","win":true,"turns":5,"hp_lost":5,"pieces_lost":0,"is_gameover":false,"rewinds_used":1},{
+"e":"telegraph_resolution","t":1794646161817,"sid":"mwg5fwx7-1taz","act":1,"node_idx":1,"as
+c":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":2,"hit_count":1,"pure_eva
+de_count":1,"counter_hit_count":2},{"e":"draft_choice","t":1794646190949,"sid":"mwg5fwx7-1
+taz","kind":"kit","offered_ids":["lance","magnet","horseshoe"],"picked_id":"lance","is_skipped":
+false,"act":1,"run":1},{"e":"ftue_step","t":1794646190950,"sid":"mwg5fwx7-1taz","step_id":"kit
+_pick","elapsed_sec":947,"is_quit":false},{"e":"session_exit","t":1794646194302,"sid":"mwg5f
+wx7-1taz","act":1,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time
+_min":13.9,"turn_num":5,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t"
+:1794646268695,"sid":"mwg5fwx7-1taz","away_sec":74},{"e":"battle_start","t":179464627002
+7,"sid":"mwg5fwx7-1taz","act":1,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first"
+:true,"enemy_id":"1막 — 혼성
+소대","enemy":["K","P","N","B"]},{"e":"term_unlock","t":1794646270033,"sid":"mwg5fwx7-1taz
+","terms":["부품","청록 합 표지","주황 곱 표지","카드 표지 세 칸","규칙
+표지"]},{"e":"session_exit","t":1794646321640,"sid":"mwg5fwx7-1taz","act":1,"node_idx":2,"a
+sc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":16.1,"turn_num":2,"in_battl
+e":true,"exit_type":"background"},{"e":"session_resume","t":1794646381382,"sid":"mwg5fwx7
+-1taz","away_sec":60},{"e":"battle_result","t":1794646474051,"sid":"mwg5fwx7-1taz","act":1,"
+node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"1막 — 혼성
+소대","win":true,"turns":5,"hp_lost":47,"pieces_lost":0,"is_gameover":false,"rewinds_used":0}
+,{"e":"telegraph_resolution","t":1794646474051,"sid":"mwg5fwx7-1taz","act":1,"node_idx":2,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":4,"hit_count":3,"pure_e
+vade_count":1,"counter_hit_count":2},{"e":"session_exit","t":1794646479215,"sid":"mwg5fwx
+7-1taz","act":1,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_
+min":18.7,"turn_num":5,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":
+1794646529101,"sid":"mwg5fwx7-1taz","away_sec":50},{"e":"draft_choice","t":17946465396
+14,"sid":"mwg5fwx7-1taz","kind":"card","offered_ids":["repair","kingCharge","bladeRain"],"pic
+ked_id":"bladeRain","is_skipped":false,"act":1,"run":1},{"e":"battle_start","t":1794646542227,"
+sid":"mwg5fwx7-1taz","act":1,"node_idx":3,"asc":0,"mode":"story","chapter":0,"run":1,"first":tr
+ue,"enemy_id":"1막 — 보병
+줄","enemy":["K","P","P","P","P"]},{"e":"session_exit","t":1794646547302,"sid":"mwg5fwx7-1ta
+z","act":1,"node_idx":3,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":1
+9.8,"turn_num":1,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":179464
+6599044,"sid":"mwg5fwx7-1taz","away_sec":52},{"e":"session_exit","t":1794646731560,"sid":
+"mwg5fwx7-1taz","act":1,"node_idx":3,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"r
+un_time_min":22.9,"turn_num":6,"in_battle":true,"exit_type":"background"},{"e":"session_res
+ume","t":1794646755844,"sid":"mwg5fwx7-1taz","away_sec":24},{"e":"battle_result","t":1794
+646758029,"sid":"mwg5fwx7-1taz","act":1,"node_idx":3,"asc":0,"mode":"story","chapter":0,"ru
+n":1,"first":true,"enemy_id":"1막 — 보병
+줄","win":true,"turns":6,"hp_lost":0,"pieces_lost":0,"is_gameover":false,"rewinds_used":0},{"e
+":"telegraph_resolution","t":1794646758030,"sid":"mwg5fwx7-1taz","act":1,"node_idx":3,"asc"
+:0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":4,"hit_count":0,"pure_evad
+e_count":1,"counter_hit_count":4},{"e":"draft_choice","t":1794646770758,"sid":"mwg5fwx7-1t
+az","kind":"card","offered_ids":["cavCharge","pawnStorm","vent"],"picked_id":"pawnStorm","is
+_skipped":false,"act":1,"run":1},{"e":"battle_start","t":1794646778055,"sid":"mwg5fwx7-1taz","
+act":1,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"1막 —
+검문","enemy":["K","P","P","B","R"]},{"e":"session_exit","t":1794646841134,"sid":"mwg5fwx7-
+1taz","act":1,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min
+":24.7,"turn_num":3,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":1794
+646883953,"sid":"mwg5fwx7-1taz","away_sec":43},{"e":"session_exit","t":1794646909497,"si
+d":"mwg5fwx7-1taz","act":1,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true
+,"run_time_min":25.8,"turn_num":4,"in_battle":true,"exit_type":"background"},{"e":"session_re
+sume","t":1794653576690,"sid":"mwg5fwx7-1taz","away_sec":6667},{"e":"battle_result","t":17
+94653725874,"sid":"mwg5fwx7-1taz","act":1,"node_idx":4,"asc":0,"mode":"story","chapter":0,
+"run":1,"first":true,"enemy_id":"1막 —
+검문","win":true,"turns":8,"hp_lost":36,"pieces_lost":0,"is_gameover":false,"rewinds_used":0}
+,{"e":"telegraph_resolution","t":1794653725875,"sid":"mwg5fwx7-1taz","act":1,"node_idx":4,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":6,"hit_count":4,"pure_e
+vade_count":2,"counter_hit_count":6},{"e":"draft_choice","t":1794653745598,"sid":"mwg5fwx
+7-1taz","kind":"part_elite","offered_ids":["gilded","scarPlate","pawnPike"],"picked_id":"pawnPi
+ke","is_skipped":false,"act":1,"run":1},{"e":"draft_choice","t":1794653750271,"sid":"mwg5fwx7
+-1taz","kind":"recruit","offered_ids":["crew:P","crew:R","crew:Q"],"picked_id":"crew:Q","is_skip
+ped":false,"act":1,"run":1},{"e":"draft_choice","t":1794653763931,"sid":"mwg5fwx7-1taz","kind
+":"card","offered_ids":["knightRaid","rookCharge","wrath"],"picked_id":"knightRaid","is_skippe
+d":false,"act":1,"run":1},{"e":"draft_choice","t":1794653781065,"sid":"mwg5fwx7-1taz","kind":"
+part","offered_ids":["oath","aceBadge","relayGear"],"picked_id":"aceBadge","is_skipped":fals
+e,"act":1,"run":1},{"e":"session_exit","t":1794653846999,"sid":"mwg5fwx7-1taz","act":1,"node
+_idx":8,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":141.5,"turn_num
+":8,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":1794653936279,"sid
+":"mwg5fwx7-1taz","away_sec":89},{"e":"session_exit","t":1794653952936,"sid":"mwg5fwx7-
+1taz","act":1,"node_idx":8,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min
+":143.2,"turn_num":8,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":17
+94653976456,"sid":"mwg5fwx7-1taz","away_sec":24},{"e":"battle_start","t":1794653982762,"
+sid":"mwg5fwx7-1taz","act":1,"node_idx":9,"asc":0,"mode":"story","chapter":0,"run":1,"first":tr
+ue,"enemy_id":"1막 — 철갑
+반장","enemy":["K","R","P","P","N"]},{"e":"ftue_step","t":1794653982763,"sid":"mwg5fwx7-1ta
+z","step_id":"act1_boss","elapsed_sec":8738,"is_quit":false},{"e":"term_unlock","t":17946539
+82780,"sid":"mwg5fwx7-1taz","terms":["방열판"]},{"e":"term_unlock","t":1794653982786,"sid":
+"mwg5fwx7-1taz","terms":["철갑","줄
+폭격"]},{"e":"tutorial","t":1794653999034,"sid":"mwg5fwx7-1taz","part":"boss-plate","complete
+d":true},{"e":"battle_result","t":1794654243845,"sid":"mwg5fwx7-1taz","act":1,"node_idx":9,"a
+sc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"1막 — 철갑
+반장","win":true,"turns":6,"hp_lost":120,"pieces_lost":1,"is_gameover":false,"rewinds_used":0
+},{"e":"telegraph_resolution","t":1794654243846,"sid":"mwg5fwx7-1taz","act":1,"node_idx":9,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":3,"hit_count":9,"pure_e
+vade_count":1,"counter_hit_count":3},{"e":"ftue_step","t":1794654243846,"sid":"mwg5fwx7-1t
+az","step_id":"act1_clear","elapsed_sec":9000,"is_quit":false},{"e":"session_exit","t":1794654
+263565,"sid":"mwg5fwx7-1taz","act":1,"node_idx":9,"asc":0,"mode":"story","chapter":0,"run":1
+,"first":true,"run_time_min":148.4,"turn_num":6,"in_battle":false,"exit_type":"background"},{"e"
+:"session_resume","t":1794654282588,"sid":"mwg5fwx7-1taz","away_sec":19},{"e":"draft_ch
+oice","t":1794654288718,"sid":"mwg5fwx7-1taz","kind":"part","offered_ids":["sergeant","horse
+shoe","fuse"],"picked_id":"sergeant","is_skipped":false,"act":1,"run":1},{"e":"draft_choice","t":1
+794654295494,"sid":"mwg5fwx7-1taz","kind":"part_elite","offered_ids":["fuse","relayGear","thr
+one"],"picked_id":"relayGear","is_skipped":false,"act":1,"run":1},{"e":"draft_choice","t":179465
+4299209,"sid":"mwg5fwx7-1taz","kind":"recruit","offered_ids":["crew:N","crew:P","crew:B"],"pi
+cked_id":"crew:N","is_skipped":false,"act":1,"run":1},{"e":"draft_choice","t":1794654303616,"s
+id":"mwg5fwx7-1taz","kind":"card","offered_ids":["doubleLeap","wrath","ram"],"picked_id":"ra
+m","is_skipped":false,"act":1,"run":1},{"e":"session_exit","t":1794654315912,"sid":"mwg5fwx7
+-1taz","act":1,"node_idx":9,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_mi
+n":149.3,"turn_num":6,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":1
+794654319460,"sid":"mwg5fwx7-1taz","away_sec":4},{"e":"session_exit","t":1794654323685,
+"sid":"mwg5fwx7-1taz","act":1,"node_idx":9,"asc":0,"mode":"story","chapter":0,"run":1,"first":tr
+ue,"run_time_min":149.4,"turn_num":6,"in_battle":false,"exit_type":"background"},{"e":"sessio
+n_resume","t":1794654329481,"sid":"mwg5fwx7-1taz","away_sec":6},{"e":"session_exit","t":1
+794654345320,"sid":"mwg5fwx7-1taz","act":1,"node_idx":9,"asc":0,"mode":"story","chapter":
+0,"run":1,"first":true,"run_time_min":149.8,"turn_num":6,"in_battle":false,"exit_type":"backgro
+und"},{"e":"session_resume","t":1794654401983,"sid":"mwg5fwx7-1taz","away_sec":57},{"e":
+"battle_start","t":1794654409245,"sid":"mwg5fwx7-1taz","act":2,"node_idx":0,"asc":0,"mode":
+"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 — 혼성
+중대","enemy":["K","P","P","N","B"]},{"e":"term_unlock","t":1794654409270,"sid":"mwg5fwx7-
+1taz","terms":["자폭"]},{"e":"term_unlock","t":1794654409271,"sid":"mwg5fwx7-1taz","terms":[
+"회피
+반격"]},{"e":"battle_result","t":1794654544917,"sid":"mwg5fwx7-1taz","act":2,"node_idx":0,"as
+c":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 — 혼성
+중대","win":true,"turns":4,"hp_lost":23,"pieces_lost":0,"is_gameover":false,"rewinds_used":0}
+,{"e":"telegraph_resolution","t":1794654544918,"sid":"mwg5fwx7-1taz","act":2,"node_idx":0,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":1,"hit_count":1,"pure_e
+vade_count":0,"counter_hit_count":2},{"e":"draft_choice","t":1794654553384,"sid":"mwg5fwx
+7-1taz","kind":"card","offered_ids":["plate","tempo","march"],"picked_id":"tempo","is_skipped":
+false,"act":2,"run":1},{"e":"battle_start","t":1794654556511,"sid":"mwg5fwx7-1taz","act":2,"nod
+e_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 —
+기병대","enemy":["K","P","P","N","N"]},{"e":"battle_result","t":1794654725758,"sid":"mwg5fwx
+7-1taz","act":2,"node_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":
+"2막 —
+기병대","win":true,"turns":4,"hp_lost":20,"pieces_lost":0,"is_gameover":false,"rewinds_used":
+0},{"e":"telegraph_resolution","t":1794654725760,"sid":"mwg5fwx7-1taz","act":2,"node_idx":1
+,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":2,"hit_count":1,"pure
+_evade_count":0,"counter_hit_count":1},{"e":"draft_choice","t":1794654734275,"sid":"mwg5f
+wx7-1taz","kind":"card","offered_ids":["knightRaid","shove","kingCharge","crew:N"],"picked_id
+":"crew:N","is_skipped":false,"act":2,"run":1},{"e":"battle_start","t":1794654737392,"sid":"mwg
+5fwx7-1taz","act":2,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy
+_id":"2막 —
+기병대","enemy":["K","P","P","N","N"]},{"e":"battle_result","t":1794654926213,"sid":"mwg5fwx
+7-1taz","act":2,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":
+"2막 —
+기병대","win":true,"turns":5,"hp_lost":104,"pieces_lost":1,"is_gameover":false,"rewinds_used
+":0},{"e":"telegraph_resolution","t":1794654926214,"sid":"mwg5fwx7-1taz","act":2,"node_idx":
+2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":4,"hit_count":6,"pur
+e_evade_count":0,"counter_hit_count":3},{"e":"draft_choice","t":1794654941389,"sid":"mwg5
+fwx7-1taz","kind":"card","offered_ids":["doubleLeap","kingCharge","phalanx"],"picked_id":"do
+ubleLeap","is_skipped":false,"act":2,"run":1},{"e":"session_exit","t":1794654959280,"sid":"mw
+g5fwx7-1taz","act":2,"node_idx":3,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_ti
+me_min":160,"turn_num":5,"in_battle":false,"exit_type":"background"},{"e":"session_resume",
+"t":1794654974302,"sid":"mwg5fwx7-1taz","away_sec":15},{"e":"battle_start","t":1794654979
+504,"sid":"mwg5fwx7-1taz","act":2,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"fir
+st":true,"enemy_id":"2막 — 혼성
+중대","enemy":["K","P","P","N","B"]},{"e":"term_unlock","t":1794654979512,"sid":"mwg5fwx7-
+1taz","terms":["심장
+톱니"]},{"e":"tooltip_inspect","t":1794655015644,"sid":"mwg5fwx7-1taz","term_id":"card:leap",
+"dwell_ms":1104,"act":2},{"e":"term_unlock","t":1794655111478,"sid":"mwg5fwx7-1taz","term
+s":["탄
+카드"]},{"e":"battle_result","t":1794655129098,"sid":"mwg5fwx7-1taz","act":2,"node_idx":4,"as
+c":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 — 혼성
+중대","win":true,"turns":4,"hp_lost":72,"pieces_lost":2,"is_gameover":false,"rewinds_used":0}
+,{"e":"telegraph_resolution","t":1794655129098,"sid":"mwg5fwx7-1taz","act":2,"node_idx":4,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":2,"hit_count":3,"pure_e
+vade_count":0,"counter_hit_count":4},{"e":"draft_choice","t":1794655142651,"sid":"mwg5fwx
+7-1taz","kind":"part","offered_ids":["chainShot","horseshoe","assembly"],"picked_id":"horsesh
+oe","is_skipped":false,"act":2,"run":1},{"e":"draft_choice","t":1794655146989,"sid":"mwg5fwx7
+-1taz","kind":"card","offered_ids":["rebound","kingCharge","draft"],"picked_id":"draft","is_skipp
+ed":false,"act":2,"run":1},{"e":"draft_choice","t":1794655155062,"sid":"mwg5fwx7-1taz","kind":
+"part","offered_ids":["chainShot","notches","throne"],"picked_id":"notches","is_skipped":false,
+"act":2,"run":1},{"e":"battle_start","t":1794655157532,"sid":"mwg5fwx7-1taz","act":2,"node_id
+x":6,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 — 사선
+기수","enemy":["K","P","N","B","B"]},{"e":"battle_result","t":1794655284511,"sid":"mwg5fwx7-
+1taz","act":2,"node_idx":6,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2
+막 — 사선
+기수","win":true,"turns":4,"hp_lost":17,"pieces_lost":0,"is_gameover":false,"rewinds_used":0}
+,{"e":"telegraph_resolution","t":1794655284513,"sid":"mwg5fwx7-1taz","act":2,"node_idx":6,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":3,"hit_count":2,"pure_e
+vade_count":0,"counter_hit_count":3},{"e":"draft_choice","t":1794655299513,"sid":"mwg5fwx
+7-1taz","kind":"card","offered_ids":["vent","bulwark","doubleLeap"],"picked_id":"doubleLeap","
+is_skipped":false,"act":2,"run":1},{"e":"battle_start","t":1794655302757,"sid":"mwg5fwx7-1taz"
+,"act":2,"node_idx":7,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 —
+기병대","enemy":["K","P","P","N","N"]},{"e":"rewind_used","t":1794655410637,"sid":"mwg5fw
+x7-1taz","act":2,"node_idx":7,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"turn":2,"re
+winds_left":1,"death":false},{"e":"battle_result","t":1794655603914,"sid":"mwg5fwx7-1taz","ac
+t":2,"node_idx":7,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 —
+기병대","win":true,"turns":4,"hp_lost":67,"pieces_lost":0,"is_gameover":false,"rewinds_used":
+1},{"e":"telegraph_resolution","t":1794655603915,"sid":"mwg5fwx7-1taz","act":2,"node_idx":7
+,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":3,"hit_count":2,"pure
+_evade_count":2,"counter_hit_count":4},{"e":"draft_choice","t":1794655611431,"sid":"mwg5f
+wx7-1taz","kind":"card","offered_ids":["tempo","phalanx","kingGuard"],"picked_id":"tempo","is
+_skipped":false,"act":2,"run":1},{"e":"session_exit","t":1794655669399,"sid":"mwg5fwx7-1taz"
+,"act":2,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":1
+71.8,"turn_num":4,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":1794
+655705730,"sid":"mwg5fwx7-1taz","away_sec":36},{"e":"battle_start","t":1794655708112,"sid
+":"mwg5fwx7-1taz","act":2,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":1,"first":true
+,"enemy_id":"2막 — 조립
+반장","enemy":["K","Q","R","P","P","N"]},{"e":"term_unlock","t":1794655708126,"sid":"mwg5f
+wx7-1taz","terms":["생명"]},{"e":"tutorial","t":1794655723201,"sid":"mwg5fwx7-1taz","part":"b
+oss-spawn","completed":true},{"e":"battle_result","t":1794656082595,"sid":"mwg5fwx7-1taz","
+act":2,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"2막 —
+조립
+반장","win":true,"turns":7,"hp_lost":181,"pieces_lost":2,"is_gameover":false,"rewinds_used":0
+},{"e":"telegraph_resolution","t":1794656082596,"sid":"mwg5fwx7-1taz","act":2,"node_idx":10
+,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":5,"hit_count":10,"pur
+e_evade_count":1,"counter_hit_count":4},{"e":"draft_choice","t":1794656098822,"sid":"mwg5
+fwx7-1taz","kind":"part_elite","offered_ids":["sharedPlate","hammer","coil"],"picked_id":"coil","
+is_skipped":false,"act":2,"run":1},{"e":"draft_choice","t":1794656113806,"sid":"mwg5fwx7-1ta
+z","kind":"recruit","offered_ids":["crew:N","crew:P","crew:B"],"picked_id":"crew:N","is_skipped
+":false,"act":2,"run":1},{"e":"draft_choice","t":1794656121316,"sid":"mwg5fwx7-1taz","kind":"c
+ard","offered_ids":["shove","gambit","cavCharge"],"picked_id":"shove","is_skipped":false,"act"
+:2,"run":1},{"e":"battle_start","t":1794656154236,"sid":"mwg5fwx7-1taz","act":3,"node_idx":0,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"3막 —
+쌍탑","enemy":["K","P","P","R","R"]},{"e":"session_exit","t":1794656262028,"sid":"mwg5fwx7-
+1taz","act":3,"node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min
+":181.7,"turn_num":3,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":179
+4664258546,"sid":"mwg5fwx7-1taz","away_sec":7997},{"e":"battle_result","t":179466440456
+2,"sid":"mwg5fwx7-1taz","act":3,"node_idx":0,"asc":0,"mode":"story","chapter":0,"run":1,"first"
+:true,"enemy_id":"3막 —
+쌍탑","win":true,"turns":6,"hp_lost":122,"pieces_lost":0,"is_gameover":false,"rewinds_used":0
+},{"e":"telegraph_resolution","t":1794664404563,"sid":"mwg5fwx7-1taz","act":3,"node_idx":0,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":3,"hit_count":3,"pure_e
+vade_count":0,"counter_hit_count":1},{"e":"draft_choice","t":1794664424805,"sid":"mwg5fwx
+7-1taz","kind":"card","offered_ids":["rebound","kingCharge","kingDecree","crew:N"],"picked_i
+d":"crew:N","is_skipped":false,"act":3,"run":1},{"e":"session_exit","t":1794664426022,"sid":"m
+wg5fwx7-1taz","act":3,"node_idx":1,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run
+_time_min":317.8,"turn_num":6,"in_battle":false,"exit_type":"background"},{"e":"session_resu
+me","t":1794664452191,"sid":"mwg5fwx7-1taz","away_sec":26},{"e":"ftue_step","t":17946644
+69089,"sid":"mwg5fwx7-1taz","step_id":"first_shop","elapsed_sec":19225,"is_quit":false},{"e":
+"battle_start","t":1794664500184,"sid":"mwg5fwx7-1taz","act":3,"node_idx":4,"asc":0,"mode":
+"story","chapter":0,"run":1,"first":true,"enemy_id":"3막 —
+대성당","enemy":["K","P","B","B","R"]},{"e":"battle_result","t":1794664784512,"sid":"mwg5fwx
+7-1taz","act":3,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":
+"3막 —
+대성당","win":true,"turns":5,"hp_lost":178,"pieces_lost":2,"is_gameover":false,"rewinds_used
+":0},{"e":"telegraph_resolution","t":1794664784513,"sid":"mwg5fwx7-1taz","act":3,"node_idx":
+4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":5,"hit_count":8,"pur
+e_evade_count":1,"counter_hit_count":5},{"e":"session_exit","t":1794664804227,"sid":"mwg5
+fwx7-1taz","act":3,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_tim
+e_min":324.1,"turn_num":5,"in_battle":false,"exit_type":"background"},{"e":"session_resume",
+"t":1794664805635,"sid":"mwg5fwx7-1taz","away_sec":1},{"e":"session_exit","t":1794664809
+303,"sid":"mwg5fwx7-1taz","act":3,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"fir
+st":true,"run_time_min":324.2,"turn_num":5,"in_battle":false,"exit_type":"background"},{"e":"s
+ession_resume","t":1794664811832,"sid":"mwg5fwx7-1taz","away_sec":3},{"e":"app_open","t
+":1794664823555,"sid":"mwgh3ie8-7iky","first":false,"runs":0,"elapsed_sec":3},{"e":"battle_st
+art","t":1794664824714,"sid":"mwgh3ie8-7iky","act":3,"node_idx":4,"asc":0,"mode":"story","ch
+apter":0,"run":1,"first":true,"enemy_id":"3막 —
+대성당","enemy":["K","P","B","B","R"]},{"e":"battle_result","t":1794665053269,"sid":"mwgh3ie
+8-7iky","act":3,"node_idx":4,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":
+"3막 —
+대성당","win":true,"turns":5,"hp_lost":27,"pieces_lost":0,"is_gameover":false,"rewinds_used":
+0},{"e":"telegraph_resolution","t":1794665053271,"sid":"mwgh3ie8-7iky","act":3,"node_idx":4,
+"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":4,"hit_count":2,"pure_
+evade_count":2,"counter_hit_count":4},{"e":"draft_choice","t":1794665061090,"sid":"mwgh3ie
+8-7iky","kind":"card","offered_ids":["scrapToss","cavCharge","kingCharge"],"picked_id":"scrap
+Toss","is_skipped":false,"act":3,"run":1},{"e":"draft_choice","t":1794665069205,"sid":"mwgh3i
+e8-7iky","kind":"part","offered_ids":["fuse","chainShot","whetstone"],"picked_id":"whetstone","
+is_skipped":false,"act":3,"run":1},{"e":"battle_start","t":1794665071449,"sid":"mwgh3ie8-7iky",
+"act":3,"node_idx":6,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"3막 —
+기병
+사단","enemy":["K","P","N","N","B"]},{"e":"battle_result","t":1794665239145,"sid":"mwgh3ie8-
+7iky","act":3,"node_idx":6,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"3
+막 — 기병
+사단","win":true,"turns":4,"hp_lost":36,"pieces_lost":0,"is_gameover":false,"rewinds_used":0}
+,{"e":"telegraph_resolution","t":1794665239147,"sid":"mwgh3ie8-7iky","act":3,"node_idx":6,"a
+sc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":3,"hit_count":1,"pure_ev
+ade_count":0,"counter_hit_count":3},{"e":"draft_choice","t":1794665249750,"sid":"mwgh3ie8-
+7iky","kind":"card","offered_ids":["doubleLeap","kingCharge","phalanx"],"picked_id":"overhaul
+","is_skipped":false,"act":3,"run":1},{"e":"battle_start","t":1794665252620,"sid":"mwgh3ie8-7ik
+y","act":3,"node_idx":7,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"3막
+— 여왕
+근위","enemy":["K","Q","P","P"]},{"e":"battle_result","t":1794665436580,"sid":"mwgh3ie8-7iky"
+,"act":3,"node_idx":7,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"3막 —
+여왕
+근위","win":true,"turns":4,"hp_lost":100,"pieces_lost":0,"is_gameover":false,"rewinds_used":0
+},{"e":"telegraph_resolution","t":1794665436581,"sid":"mwgh3ie8-7iky","act":3,"node_idx":7,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":3,"hit_count":3,"pure_e
+vade_count":1,"counter_hit_count":3},{"e":"draft_choice","t":1794665454766,"sid":"mwgh3ie8
+-7iky","kind":"card","offered_ids":["bladeRain","kingCharge","phalanx"],"picked_id":"overhaul"
+,"is_skipped":false,"act":3,"run":1},{"e":"battle_start","t":1794665503381,"sid":"mwgh3ie8-7iky
+","act":3,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"3막
+— 출하
+반장","enemy":["K","Q","R","R","B","N"]},{"e":"term_unlock","t":1794665503395,"sid":"mwgh3i
+e8-7iky","terms":["되받아침"]},{"e":"tutorial","t":1794665508905,"sid":"mwgh3ie8-7iky","part":"
+boss-thorns","completed":false},{"e":"session_exit","t":1794665720874,"sid":"mwgh3ie8-7iky"
+,"act":3,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":1
+5,"turn_num":4,"in_battle":true,"exit_type":"background"},{"e":"session_resume","t":17946657
+93164,"sid":"mwgh3ie8-7iky","away_sec":72},{"e":"session_exit","t":1794665817692,"sid":"m
+wgh3ie8-7iky","act":3,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run
+_time_min":16.6,"turn_num":5,"in_battle":true,"exit_type":"background"},{"e":"session_resum
+e","t":1794665851626,"sid":"mwgh3ie8-7iky","away_sec":34},{"e":"session_exit","t":1794665
+879024,"sid":"mwgh3ie8-7iky","act":3,"node_idx":10,"asc":0,"mode":"story","chapter":0,"run":
+1,"first":true,"run_time_min":17.6,"turn_num":5,"in_battle":true,"exit_type":"background"},{"e":
+"session_resume","t":1794665888376,"sid":"mwgh3ie8-7iky","away_sec":9},{"e":"battle_resul
+t","t":1794665889932,"sid":"mwgh3ie8-7iky","act":3,"node_idx":10,"asc":0,"mode":"story","ch
+apter":0,"run":1,"first":true,"enemy_id":"3막 — 출하
+반장","win":true,"turns":5,"hp_lost":189,"pieces_lost":0,"is_gameover":false,"rewinds_used":0
+},{"e":"telegraph_resolution","t":1794665889933,"sid":"mwgh3ie8-7iky","act":3,"node_idx":10,
+"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":5,"hit_count":10,"pure
+_evade_count":0,"counter_hit_count":1},{"e":"draft_choice","t":1794665911822,"sid":"mwgh3i
+e8-7iky","kind":"part_elite","offered_ids":["spurs","anvilPlate","fuse"],"picked_id":"spurs","is_s
+kipped":false,"act":3,"run":1},{"e":"draft_choice","t":1794665921721,"sid":"mwgh3ie8-7iky","ki
+nd":"recruit","offered_ids":["crew:B","crew:P","crew:N"],"picked_id":"crew:N","is_skipped":fals
+e,"act":3,"run":1},{"e":"ftue_step","t":1794665921723,"sid":"mwgh3ie8-7iky","step_id":"first_pi
+ck","elapsed_sec":1101,"is_quit":false},{"e":"draft_choice","t":1794665927381,"sid":"mwgh3ie
+8-7iky","kind":"card","offered_ids":["kingCharge","bulwark","vent"],"picked_id":"vent","is_skipp
+ed":false,"act":3,"run":1},{"e":"draft_choice","t":1794665940905,"sid":"mwgh3ie8-7iky","kind":
+"card","offered_ids":["kingCharge","bulwark","vent"],"picked_id":"vent","is_skipped":false,"act
+":4,"run":1},{"e":"battle_start","t":1794665966873,"sid":"mwgh3ie8-7iky","act":4,"node_idx":2,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"종막 —
+도금왕","enemy":["K","Q","R","R","B","B","N","N"]},{"e":"term_unlock","t":1794665966886,"sid
+":"mwgh3ie8-7iky","terms":["연쇄
+소모"]},{"e":"tutorial","t":1794665977327,"sid":"mwgh3ie8-7iky","part":"boss-gilded","complet
+ed":true},{"e":"session_exit","t":1794666144486,"sid":"mwgh3ie8-7iky","act":4,"node_idx":2,"
+asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_min":22.1,"turn_num":3,"in_ba
+ttle":true,"exit_type":"background"},{"e":"session_resume","t":1794666176836,"sid":"mwgh3ie
+8-7iky","away_sec":32},{"e":"battle_result","t":1794666254515,"sid":"mwgh3ie8-7iky","act":4,"
+node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"enemy_id":"종막 —
+도금왕","win":true,"turns":4,"hp_lost":193,"pieces_lost":1,"is_gameover":false,"rewinds_used
+":0},{"e":"telegraph_resolution","t":1794666254516,"sid":"mwgh3ie8-7iky","act":4,"node_idx":
+2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"telegraph_count":5,"hit_count":7,"pur
+e_evade_count":0,"counter_hit_count":5},{"e":"session_exit","t":1794666260135,"sid":"mwgh
+3ie8-7iky","act":4,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time
+_min":24,"turn_num":4,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":1
+794666278592,"sid":"mwgh3ie8-7iky","away_sec":18},{"e":"draft_choice","t":1794666284103
+,"sid":"mwgh3ie8-7iky","kind":"part","offered_ids":["banner","scepter","pawnPike"],"picked_id"
+:null,"is_skipped":true,"act":4,"run":1},{"e":"session_exit","t":1794666295597,"sid":"mwgh3ie8
+-7iky","act":4,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":true,"run_time_mi
+n":24.6,"turn_num":4,"in_battle":false,"exit_type":"background"},{"e":"session_resume","t":17
+94666323926,"sid":"mwgh3ie8-7iky","away_sec":28},{"e":"session_exit","t":1794666357051,"
+sid":"mwgh3ie8-7iky","act":4,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":1,"first":tru
+e,"run_time_min":25.6,"turn_num":4,"exit_type":"clear"},{"e":"survey","t":1794666419417,"sid
+":"mwgh3ie8-7iky","act":4,"node_idx":2,"asc":0,"mode":"story","chapter":0,"run":2,"first":true,"
+answers":{"Q1":4,"Q2":2,"Q3":2,"Q4":4,"Q5":3,"Q6":["생명","심장 톱니","부적","보충병","부품
+띠","기벽","회피 반격","기어 쇼크"],"Q7":"쓸 만큼 위험한 순간이 없었다","Q8":"시간 나면 해
+볼 것 같다","Q9":"","Q10":""}}]}
+
