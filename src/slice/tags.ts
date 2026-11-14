@@ -28,7 +28,7 @@ const styleFromText = (t: string): Style =>
   : /밀|충돌|부딪/.test(t) ? 'push'
   : /공격 [×+]|피해 [×+]|배율/.test(t) ? 'strike'
   : /처치|연쇄/.test(t) ? 'chain'
-  : /방열판|HP|생명|회복|땜질|쇼크|곁에 폰/.test(t) ? 'guard'
+  : /방열판|HP|버팀|생명|회복|땜질|쇼크|곁에 폰/.test(t) ? 'guard'
   : /태엽|카드|나사|손패|되감기|값/.test(t) ? 'tempo'
   : 'strike';
 

@@ -24,6 +24,6 @@ describe('사건 선택지의 실제 득실', () => {
   });
   it('확률과 수치를 굵게 보여도 따옴표와 HTML을 손상시키지 않는다', () => {
     expect(effectNumbers("'50%' <img> +2")).toBe('&#39;<b class="effect-num">50%</b>&#39; &lt;img&gt; <b class="effect-num">+2</b>');
-    expect(effectHtml('나사 −40 · 생명 +1', ['loss', 'gain'])).toContain('class="effect-loss">나사 <b class="effect-num">−40</b>');
+    expect(effectHtml('나사 −40 · 버팀 +1', ['loss', 'gain'])).toContain('class="effect-loss">나사 <b class="effect-num">−40</b>');
   });
 });

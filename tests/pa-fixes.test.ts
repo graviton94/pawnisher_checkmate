@@ -59,8 +59,8 @@ describe('#4 입문 되감기 실습 환급', () => {
   });
 });
 
-describe('#27 킹 생명 · #24 생명 표시', () => {
-  it('「왕관을 써 본다」의 킹 생명 +1이 대국에 실제로 들어간다', () => {
+describe('#27 킹 버팀 · #24 버팀 표시 (옛 생명)', () => {
+  it('「왕관을 써 본다」의 킹 버팀 +1이 대국에 실제로 들어간다', () => {
     const s: EventState = { squad: [{ t: 'K' }, { t: 'P', name: '먼지투성이' }], deck: [...START_COMMANDS], refined: [], gold: 0 };
     const c = SLICE_EVENTS.crownAltar.choices.find((x) => x.label === '왕관을 써 본다')!;
     c.apply(s, new Rng(1));
@@ -68,7 +68,7 @@ describe('#27 킹 생명 · #24 생명 표시', () => {
     const kingId = b.squadIds[0];
     expect(b.s.doorIds?.filter((x) => x === kingId)).toHaveLength(1);
   });
-  it('분대 카드의 생명 수 = 대국의 생명 수 (맹세 포함)', () => {
+  it('분대 카드의 버팀 수 = 대국의 버팀 수 (맹세 포함)', () => {
     const squad = [{ t: 'K' as const, doors: 1 }, { t: 'P' as const }, { t: 'N' as const, quirk: 'stubborn' as const }, { t: 'B' as const }];
     const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 3, { parts: ['oath'] });
     squad.forEach((u, i) => expect(livesOf(u, ['oath']), u.t).toBe((b.s.doorIds ?? []).filter((x) => x === b.squadIds[i]).length));

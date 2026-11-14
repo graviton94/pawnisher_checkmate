@@ -167,7 +167,7 @@ export interface SliceBattle {
   bossKiller: number | null;
   /** 이 대국에서 쓰러진 분대원 */
   falls: Fall[];
-  /** 생명을 넘은 분대원 */
+  /** 버팀(옛 생명)으로 넘긴 분대원 — 한 번마다 한 번씩 */
   doorUsed: number[];
   /** 턴에 한 번 효과 (풀린 브레이크) */
   once: string[];
@@ -323,7 +323,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const squadIds = squad.map((u) => {
     const p = s.pieces.find((q) => q.side === 0 && q.type === u.t && !used.has(q.id))!;
     used.add(p.id);
-    // 기벽: 최대 HP · 방열판 · 공격 · 생명
+    // 기벽: 최대 HP · 방열판 · 공격 · 버팀
     const q = u.quirk ? QUIRKS[u.quirk] : null;
     p.maxHp = crewMaxHp(u);
     p.hp = p.maxHp;
@@ -343,7 +343,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (has0('heavyHand') && heavy === u) p.atk += PART_NUM.heavyAdd;
     if (has0('aceBadge') && ace === u) p.atk = Math.round(p.atk * PART_NUM.aceMult);
     if (u.hp !== undefined) p.hp = Math.max(1, Math.min(p.maxHp, u.hp));
-    // 생명 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 생명 + 폰 전용 부품 「작은 개척자의 맹세」.
+    // 버팀 (D-217 → 2026-11-14): 기본 없음 — 남은 출하 버팀(기벽 + 영구 − 쓴 것) + 폰 전용 부품 「작은 개척자의 맹세」.
     // 킹도 받는다 (D-488): 사건 「왕관을 써 본다」(D-459)의 킹 생명 +1이 대가만 치르고 효과가 없었다. 체크(HP 1로 버팀)가 먼저, 생명은 그다음.
     const doors = livesOf(u, opts.parts ?? [], p.type);
     for (let k = 0; k < doors; k++) (s.doorIds ??= []).push(p.id);
@@ -443,7 +443,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     b.refunded = 0;
     b.ap = b.apMax = LAB.ap;
     if (opts.lab === 'B') {
-      // 진짜 잡기: 체력 · 방열판 · 생명 없음 — 잡히면 끝
+      // 진짜 잡기: 체력 · 방열판 · 버팀 없음 — 잡히면 끝
       s.rules = { ...s.rules, capture: true, checkmate: false };
       for (const p of s.pieces) Object.assign(p, { hp: 1, maxHp: 1, shield: 0 });
       s.doorIds = [];
@@ -1568,7 +1568,7 @@ const creditKills = (b: SliceBattle, before: BattleState, events: BattleEvent[],
   }
 };
 
-/** 적 차례 뒤처리: 맞은 원한의 톱니 · 생명 · 쓰러진 분대원 기록 · 새는 보일러 터짐 */
+/** 적 차례 뒤처리: 맞은 원한의 톱니 · 버팀 · 쓰러진 분대원 기록 · 새는 보일러 터짐 */
 const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[], by: string): BattleEvent[] => {
   plateEvents(b, before, events, true);
   for (const p of b.s.pieces) if (p.side === 0) syncPlate(b, p);
@@ -1920,11 +1920,24 @@ export const clutchBoost = (b: SliceBattle, ap: number): void => {
 };
 
 /**
- * 분대원 하나가 대국마다 갖는 생명 수 (D-217 · D-488) — 대국과 분대 카드 · 지도가 같은 계산 하나를 쓴다 (#24).
- * 기벽 생명 + 그 분대원의 영구 생명 + 폰이면 「작은 개척자의 맹세」 1. type = 판 위 유형(없으면 분대원 유형).
+ * 버팀 (옛 「생명」 — 2026-11-14 사용자 결정): 쓰러질 피해를 한 번 HP 1로 버틴다. **출하 내내 쓰는 자원** — 쓰면 줄고 대국마다 다시 차지 않는다.
+ * 최대 = 기벽 버팀 + 그 분대원이 얻은 영구 버팀(사건 · 작업대 보강) · 쓴 수 = u.doorsSpent · 다시 채움 = 막 정비(refillBrace)뿐.
+ * 대국마다 차는 몫은 부품 「작은 개척자의 맹세」(폰 +1)뿐이고, 대국에서는 그 몫부터 쓴다.
  */
-export const livesOf = (u: Squad, parts: readonly string[], type: PieceType = u.t): number =>
-  (u.quirk ? QUIRKS[u.quirk].doors ?? 0 : 0) + (u.doors ?? 0) + (type === 'P' && parts.includes('oath') ? 1 : 0);
+export const braceMax = (u: Squad): number => (u.quirk ? QUIRKS[u.quirk].doors ?? 0 : 0) + (u.doors ?? 0);
+/** 남은 출하 버팀 */
+export const braceLeft = (u: Squad): number => Math.max(0, braceMax(u) - (u.doorsSpent ?? 0));
+/** 대국마다 다시 차는 버팀 (부품 몫) — type = 판 위 유형 */
+export const braceBattle = (parts: readonly string[], type: PieceType): number => (type === 'P' && parts.includes('oath') ? 1 : 0);
+/**
+ * 분대원 하나가 이번 대국에 갖는 버팀 수 (D-217 · D-488 → 2026-11-14) — 대국과 분대 카드 · 지도가 같은 계산 하나를 쓴다 (#24).
+ * 남은 출하 버팀 + 맹세(폰 +1). type = 판 위 유형(없으면 분대원 유형). 킹도 받는다(D-488).
+ */
+export const livesOf = (u: Squad, parts: readonly string[], type: PieceType = u.t): number => braceLeft(u) + braceBattle(parts, type);
+/** 분대원 카드의 버팀 자리 수 (다 찼을 때) */
+export const livesMax = (u: Squad, parts: readonly string[], type: PieceType = u.t): number => braceMax(u) + braceBattle(parts, type);
+/** 막 정비 (2026-11-14): 쓴 버팀을 모두 다시 채운다 */
+export const refillBrace = (squad: Squad[]): Squad[] => squad.map((u) => (u.doorsSpent ? { ...u, doorsSpent: 0 } : u));
 
 /**
  * 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 역회전 톱니가 깨진다. 입문 실습처럼 b.rewinds를 돌려준 것은 쓴 것이 아니다.
@@ -1993,6 +2006,9 @@ export const burnFallen = (b: SliceBattle): { t: PieceType; ids: CommandId[] }[]
 export const growCrew = (b: SliceBattle, u: Squad, id: number, hp: number, t: PieceType = u.t): Squad => {
   const kills = Object.values(b.pk[id] ?? {}).reduce((a, n) => a + (n ?? 0), 0);
   const c: Squad = { ...u, t, hp, wins: (u.wins ?? 0) + (b.s.winner === 0 && hp > 0 ? 1 : 0), protectedDamage: (u.protectedDamage ?? 0) + (b.protection?.[id] ?? 0), kills: (u.kills ?? 0) + kills, battles: (u.battles ?? 0) + 1, dmg: (u.dmg ?? 0) + Math.round(b.pd?.[id] ?? 0), defied: (u.defied ?? 0) + b.doorUsed.filter((x) => x === id).length, scars: [...(u.scars ?? [])] };
+  // 버팀은 출하 자원 (2026-11-14): 이번 대국에 쓴 것 중 대국 몫(맹세)을 넘은 만큼 줄어든다
+  const spent = Math.max(0, b.doorUsed.filter((x) => x === id).length - braceBattle(b.parts, b.squadTypes?.[id] ?? u.t));
+  if (spent) c.doorsSpent = Math.min(braceMax(u), (u.doorsSpent ?? 0) + spent);
   if (b.doorUsed.includes(id) && !c.scars!.includes('납땜 자국')) c.scars!.push('납땜 자국');
   if ((c.battles ?? 0) >= CREW.scarAfterBattles && !c.scars!.includes('용접 흉터')) c.scars!.push('용접 흉터');
   if (b.bossKiller === id) c.nick = '반장 사냥꾼';

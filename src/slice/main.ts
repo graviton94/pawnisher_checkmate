@@ -78,7 +78,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track as trackEvent } from './telemetry';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type ActSnap, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, stallInfo, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, stallInfo, braceLeft, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -577,17 +577,17 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
 };
 /**
  * 분대원 카드 (D-362, 사용자: 「기물도 하나하나의 카드가 되는 거지」): 카드 · 부품과 같은 틀 —
- * 이름(별칭) · 그림 창(기물) · 태그(기물 · 생명 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
+ * 이름(별칭) · 그림 창(기물) · 태그(기물 · 버팀 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
  */
 const crewFace = (u: Crew, hp: number, max: number, src?: string): string => crewCard(u, { hp, max }, src);
 /**
  * 분대원 정보 카드 (D-363, 사용자: 「판에서 꾹 눌렀을 때도 저 초상 — 전투력 · 처치 이력 · 누적 피해까지」).
- * 카드와 같은 틀에 기록 칸을 더한다: 공격 · HP · 생명 / 처치 · 누적 피해 · 죽음 넘김 · 대국 / 기벽 · 흉터.
- * live = 지금 대국의 기물(공격 · HP · 방열판 · 남은 생명 · 이번 대국 처치/피해).
+ * 카드와 같은 틀에 기록 칸을 더한다: 공격 · HP · 버팀 / 처치 · 누적 피해 · 죽음 넘김 · 대국 / 기벽 · 흉터.
+ * live = 지금 대국의 기물(공격 · HP · 방열판 · 남은 버팀 · 이번 대국 처치/피해).
  */
 const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; shield: number; lives: number; kills: number; dmg: number }): string => crewCard(u, live ?? { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }, undefined, 'crew-info');
 /**
- * 분대원 카드 (D-367 틀 · D-363 기록): 리본 이름 · 초상 창 · 공격 마름모 · HP 압력계 · 생명 하트(초상 오른쪽 위) · 두루마리에 기록과 특성.
+ * 분대원 카드 (D-367 틀 · D-363 기록): 리본 이름 · 초상 창 · 공격 마름모 · HP 압력계 · 버팀 하트(초상 오른쪽 위) · 두루마리에 기록과 특성.
  * 사건 결과 오버레이 · 판 길게 누름 · 분대 화면이 모두 이 카드.
  */
 const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: number; lives?: number; kills?: number; dmg?: number; say?: string }, src?: string, cls = ''): string => {
@@ -596,15 +596,15 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   // 이형 분대원: 전용 초상(PT-08)을 받기 전까지 발주 기물 그림(P-01~05) — 바탕 기물 초상으로는 이형이 안 보인다
   const art = src ?? (u.form ? `pieces/l-${u.form}0.png` : `ui/hud/crew-${u.t}.png`);
   const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1) * (u.form ? FORMS[u.form].atk : 1)) + (u.temper ?? 0);
-  // 생명 (#24 · D-488): 대국과 같은 계산 하나 — 맹세(폰 +1) · 킹 생명까지. 대국 중이면 남은 수(o.lives)를 켜고 나머지는 깨진 하트
-  const total = livesOf(u, parts);
-  const lives = o.lives ?? total;
+  // 버팀 (#24 · D-488 → 2026-11-14 옛 생명): 대국과 같은 계산 하나 — 맹세(폰 +1) · 킹 버팀까지. 자리 = 다 찬 수, 켜진 하트 = 남은 수(대국 중이면 o.lives) — 쓴 것은 깨진 하트
+  const total = livesMax(u, parts);
+  const lives = o.lives ?? livesOf(u, parts);
   const pct = `${Math.max(0, Math.min(100, Math.round((o.hp / o.max) * 100)))}%`;
   const kills = (u.kills ?? 0) + (o.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(o.dmg ?? 0);
-  // 생명 자리 (D-377 → D-488): 하트 수 = 실제 생명 수 (예전엔 늘 둘 이상이라 생명 0이 「빈 하트 둘」로 읽혔다). 대국 중 쓴 것만 깨진 하트
+  // 버팀 자리 (D-377 → D-488): 하트 수 = 실제 버팀 수 (예전엔 늘 둘 이상이라 생명 0이 「빈 하트 둘」로 읽혔다). 대국 중 쓴 것만 깨진 하트
   const hearts = Array.from({ length: Math.max(total, lives) }, (_, k) => `<i class="cb-life${k < lives ? '' : ' off'}"></i>`).join('');
   // 본문 (D-377): 위 칸 = 기록(이름 · 숫자) 또는 첫마디 2줄 · 아래 칸 = 특성 이름 / 효과 · 효과 (또는 조건 / 효과) 한 줄씩
-  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="생명을 소모해 죽음을 넘긴 횟수">버팀</i>${u.defied ?? 0}</span></span>`];
+  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="버팀을 써서 죽음을 넘긴 횟수">넘김</i>${u.defied ?? 0}</span></span>`];
   // 이형 분대원 (D-481): 이름 · 움직임 · 공격 — 행마가 다르니 무엇보다 먼저
   const bot = u.form
     ? [lineHtml(`이형 · ${FORMS[u.form].name}`, 'name'), lineHtml(FORMS[u.form].move, 'if'), lineHtml(FORMS[u.form].hit, 'say')]
@@ -642,7 +642,7 @@ const fitInfo = (kind: 'card' | 'part', id: string): string => {
 type SvcKey = 'heal' | 'repair' | 'refine' | 'remove' | 'brace';
 /**
  * 손질 카드 얼굴 (D-399): 고물상 · 작업대의 서비스도 카드와 같은 크기 · 같은 틀 — 상아 틀(svc-ivory) · 이름 리본 · 아이콘 창 ·
- * 「손질」 띠 · 두루마리(묘사 / 대상 / 효과). n = 수치(정비 · 수리 %, 보강 생명). 명령 카드와 색 갈래로 구별한다.
+ * 「손질」 띠 · 두루마리(묘사 / 대상 / 효과). n = 수치(정비 · 수리 %, 보강 버팀). 명령 카드와 색 갈래로 구별한다.
  */
 const svcFace = (k: SvcKey, n = 0): string => {
   const d = SERVICE_CARDS[k];
@@ -1785,8 +1785,8 @@ const advance = (): void => {
       return void actClear().then(() => { advance(); actClearShown = false; });
     }
     const a = acts[actI];
-    // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
-    squad = restSquad(squad, REST.actHeal);
+    // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비) — 쓴 버팀도 이때만 다시 찬다 (2026-11-14)
+    squad = refillBrace(restSquad(squad, REST.actHeal));
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
     closeOverlay();
     void actCard(actLabel(a.act), a.name, ACT_NARR[actI], actI === 2 ? 'chained-door' : `act-${Math.min(4, actI + 1)}`).then(() => {
@@ -2262,7 +2262,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
           const hp1 = u1.hp ?? crewMaxHp(u1);
           if (u1.t !== u0.t) crewFx.push({ src: src(u0.t), toSrc: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'evolve', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, crewMaxHp(u1)) });
           else if (u1.quirk !== u0.quirk || (u1.temper ?? 0) !== (u0.temper ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: Math.round((hp0 / max) * crewMaxHp(u1)), hp1, max: crewMaxHp(u1), fx: 'up', tag: u1.quirk !== u0.quirk && u1.quirk ? QUIRKS[u1.quirk].name : `공격 ${(u1.temper ?? 0) >= (u0.temper ?? 0) ? '+' : '−'}${Math.abs((u1.temper ?? 0) - (u0.temper ?? 0))}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, crewMaxHp(u1)) });
-          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: `생명 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
+          else if ((u1.doors ?? 0) > (u0.doors ?? 0)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: 'up', tag: `버팀 +${(u1.doors ?? 0) - (u0.doors ?? 0)}`, card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
           else if (hp1 !== hp0 || (u1.cracked && !u0.cracked)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0, hp1, max, fx: u1.cracked && !u0.cracked ? 'crack' : 'hp', card: crewFace(u0, hp0, max), cardAfter: crewFace(u1, hp1, max) });
         }
         for (const u1 of squad) if (!before.crew.some((x) => x.serial === u1.serial)) crewFx.push({ src: src(u1.t), name: crewLabel(u1), hp0: u1.hp ?? crewMaxHp(u1), hp1: u1.hp ?? crewMaxHp(u1), max: crewMaxHp(u1), fx: 'new', card: crewFace(u1, u1.hp ?? crewMaxHp(u1), crewMaxHp(u1)) });
@@ -2494,12 +2494,12 @@ const shopScreen = (): void => {
 /** 작업대 (R5-2): 넷 중 하나 — 다듬기(한 장 태엽 −1) · 카드 빼기 · 수리(분대 전원 HP +40%) · 보강 */
 /** 종막 최종 정비 (D-252): 들어오면 분대 HP 가득 */
 let forgeFinal = false;
-/** 작업대 보강 (D-319): 분대원 하나 — 생명 +FORGE.braceDoors (킹 제외) */
+/** 작업대 보강 (D-319): 분대원 하나 — 버팀 +FORGE.braceDoors (최대치 · 남은 수 둘 다, 킹 제외) */
 const braceScreen = (): void => {
   const list = squad.map((u, i) => ({ u, i })).filter(({ u }) => u.t !== 'K');
   pickScreen({
     title: SCREEN_TEXT.brace,
-    items: list.map(({ u, i }) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>생명 ${u.doors ?? 0} → <b>${(u.doors ?? 0) + FORGE.braceDoors}</b></span>` })),
+    items: list.map(({ u, i }) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>버팀 ${braceLeft(u)} → <b>${braceLeft(u) + FORGE.braceDoors}</b></span>` })),
     skip: { label: SCREEN_TEXT.stop, attrs: 'data-back' },
     go: { label: SCREEN_TEXT.braceGo },
     onSelect: () => sfx('lift'),
@@ -2508,7 +2508,7 @@ const braceScreen = (): void => {
         const i = Number(k);
         squad[i] = { ...squad[i], doors: (squad[i].doors ?? 0) + FORGE.braceDoors };
         sfx('stamp');
-        toast(`${squad[i].name ?? PIECE_NAMES_KO[squad[i].t]}의 축이 두꺼워졌다. (생명 +${FORGE.braceDoors})`);
+        toast(`${squad[i].name ?? PIECE_NAMES_KO[squad[i].t]}의 축이 두꺼워졌다. (버팀 +${FORGE.braceDoors})`);
         window.setTimeout(advance, 300);
       }),
   }).querySelector('[data-back]')!.addEventListener('click', forgeScreen);
@@ -2563,7 +2563,7 @@ const forgeScreen = (): void => {
 };
 
 /**
- * 작업대 손질 카드 아래 내 현황 (D-471, 사용자 지적 「고르기 전에 각 카드에 맞는 내 현황」): 다듬을 카드 수 · 덱 장수 · 분대 HP · 가장 얇은 생명.
+ * 작업대 손질 카드 아래 내 현황 (D-471, 사용자 지적 「고르기 전에 각 카드에 맞는 내 현황」): 다듬을 카드 수 · 덱 장수 · 분대 HP · 가장 적은 버팀.
  * 좋음/나쁨은 색 + 글로 (UI 원칙 4).
  */
 const refinable = (): CommandId[] => [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
@@ -2576,7 +2576,7 @@ const forgeStatus = (k: SvcKey): string => {
     const pct = Math.round((hp / Math.max(1, max)) * 100), hurt = squad.filter((u) => (u.hp ?? crewMaxHp(u)) < crewMaxHp(u)).length;
     return `<span class="${pct < 50 ? 'bad' : pct < 85 ? 'mid' : 'good'}">${T.hp} <b>${pct}%</b> · ${T.hurt} <b>${hurt}</b></span>`;
   }
-  if (k === 'brace') { const crew = squad.filter((u) => u.t !== 'K'); const low = Math.min(...crew.map((u) => u.doors ?? 0)); return `<span class="${low ? 'mid' : 'bad'}">${T.doors} <b>${low}</b></span>`; }
+  if (k === 'brace') { const crew = squad.filter((u) => u.t !== 'K'); const low = Math.min(...crew.map((u) => braceLeft(u))); return `<span class="${low ? 'mid' : 'bad'}">${T.doors} <b>${low}</b></span>`; }
   return '';
 };
 

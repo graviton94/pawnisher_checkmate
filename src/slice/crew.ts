@@ -17,7 +17,7 @@ export interface QuirkDef {
   hp?: number;
   /** 대국 시작 방열판 */
   shield?: number;
-  /** 죽음의 생명 횟수 (기본 0 — D-217: 모두에게 주던 생명 1을 없앴다, 기벽 · 사건 · 부품으로만) */
+  /** 기벽의 버팀 (옛 생명, 기본 0 — D-217: 모두에게 주던 1을 없앴다, 기벽 · 사건 · 부품으로만) */
   doors?: number;
 }
 
@@ -25,17 +25,17 @@ export interface QuirkDef {
 export const QUIRKS: Record<QuirkId, QuirkDef> = {
   overwound: { name: '과하게 감긴 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
   welded: { name: '납땜 흉갑', desc: '방열판 12 · 공격 −15%', shield: 12, atk: 0.85 },
-  stubborn: { name: '고집 센 축', desc: '생명 2 · 공격 −15%', doors: 2, atk: 0.85 },
+  stubborn: { name: '고집 센 축', desc: '버팀 2 · 공격 −15%', doors: 2, atk: 0.85 },
   boiler: { name: '새는 보일러', desc: '쓰러지면 둘레 폭발 20', doors: 0 },
   heavy: { name: '무거운 받침', desc: 'HP +30% · 공격 −20%', hp: 1.3, atk: 0.8 },
   rusty: { name: '녹슨 관절', desc: '방열판 20 · HP −20%', shield: 20, hp: 0.8 },
-  spare: { name: '여분 톱니', desc: '생명 1 · HP −15%', doors: 1, hp: 0.85 },
+  spare: { name: '여분 톱니', desc: '버팀 1 · HP −15%', doors: 1, hp: 0.85 },
   glass: { name: '유리 렌즈', desc: '공격 ×1.4 · HP −35%', atk: 1.4, hp: 0.65 },
 };
 
 /** 수치 (data — 근거 D-153) */
 /** 흉터 풀이 (D-364): 흉터는 이력이 남긴 자국 — 효과는 없고 이야기만 */
-export const SCAR_DESC: Record<string, string> = { '주조 흠집': '주조 흠집. 전투 효과 없음', '납땜 자국': '생명으로 쓰러짐을 버틴 적이 있다', '용접 흉터': '대국 셋을 넘게 싸워 살아남았다' };
+export const SCAR_DESC: Record<string, string> = { '주조 흠집': '주조 흠집. 전투 효과 없음', '납땜 자국': '버팀으로 쓰러짐을 넘긴 적이 있다', '용접 흉터': '대국 셋을 넘게 싸워 살아남았다' };
 /** pawnHp (D-466): 우리 분대원 폰만 HP ×이만큼 — 적 폰은 그대로. 보병 축이 폰 몸이 약해 한꺼번에 녹아내렸다 */
 export const CREW = { pawnHp: 1.7, boilerBlast: 20, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
 
@@ -71,14 +71,16 @@ export interface Crew {
   protectedDamage?: number;
   /** 누적 준 피해 (D-363) */
   dmg?: number;
-  /** 생명으로 죽음을 넘긴 횟수 (D-363) */
+  /** 버팀으로 죽음을 넘긴 횟수 (D-363) */
   defied?: number;
   /** 흉터 · 상속 기록 (자동으로 붙는다) */
   scars?: string[];
   /** 업적 별명 (자동) */
   nick?: string;
-  /** 이 분대원만 갖는 영구 생명 (D-217 — 사건 「떠돌이 땜장이」 등) */
+  /** 이 분대원만 갖는 영구 버팀 (옛 생명, D-217 — 사건 「떠돌이 땜장이」 · 작업대 보강) — 최대치에 더한다 */
   doors?: number;
+  /** 이번 출하에서 쓴 버팀 (2026-11-14 — 대국마다 다시 차지 않는다, 막 정비에서 0으로) */
+  doorsSpent?: number;
   /** 심장 톱니 하나가 깨졌다 (D-219 목숨 둘) — 이 상태로 또 쓰러지면 폐기. 작업대 · 막이 바뀌면 고쳐진다 */
   cracked?: boolean;
   /** 단련 (D-459 사건): 이 분대원만의 영구 공격 + */

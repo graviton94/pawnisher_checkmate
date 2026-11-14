@@ -366,7 +366,7 @@ export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string> } = {
     goldDown: (n = 0) => `나사 -${n}`,
     heal: (n = 0) => `HP +${n}`,
     hurt: (n = 0) => `HP -${n}`,
-    life: (n = 1) => `생명 +${n}`,
+    life: (n = 1) => `버팀 +${n}`,
     crack: () => '톱니 깨짐',
     evolve: () => '승격',
     recruit: () => '합류',
@@ -385,7 +385,7 @@ export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string> } = {
  * 처음 보는 사람도 무엇이 바뀌었고 그래서 어떻게 되는지 알게 괄호로 뜻을 붙인다(안내서 · 분대 보기 KEYWORDS와 같은 말).
  */
 export const EVENT_SUM = {
-  life: (name: string, n: number) => `${name} 생명 +${n} (쓰러질 피해를 한 번 버팀)`,
+  life: (name: string, n: number) => `${name} 버팀 +${n} (쓰러질 피해를 한 번 넘김 · 출하 내내)`,
   crack: (name: string) => `${name} 심장 톱니 깨짐 (다시 쓰러지면 폐기)`,
 };
 /** 사건 창 단추 줄 (D-402): 판을 한 번 누르면 고름 — 같은 판을 다시 누르면 정함(예비 「고른다」 단추 없음) · 오른쪽 아래 끝 단추 하나 = 떠나기 */

@@ -192,7 +192,7 @@ describe('애착 (D-153)', () => {
     const p = b.s.pieces.find((q) => q.id === b.squadIds[1])!;
     expect(p.maxHp).toBe(Math.round(25 * QUIRKS.overwound.hp! * 1.7)); // D-466: 분대원 폰 HP ×1.7
   });
-  it('죽음의 생명 (D-217): 기본은 없다 · 고집 센 축 2 · 영구 생명은 그 분대원만 · 맹세는 폰마다 1', () => {
+  it('버팀 (옛 생명, D-217): 기본은 없다 · 고집 센 축 2 · 영구 버팀은 그 분대원만 · 맹세는 폰마다 1', () => {
     const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N', quirk: 'stubborn' }, { t: 'B', doors: 1 }], ['K', 'P'], START_COMMANDS, 3);
     const [, pid, nid, bid] = b.squadIds;
     expect(b.s.doorIds?.filter((x) => x === pid) ?? []).toHaveLength(0);
@@ -201,6 +201,26 @@ describe('애착 (D-153)', () => {
     const o = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'B' }], ['K', 'P'], START_COMMANDS, 3, { parts: ['oath'] });
     expect(o.s.doorIds!.filter((x) => x === o.squadIds[1])).toHaveLength(1);
     expect(o.s.doorIds?.filter((x) => x === o.squadIds[2]) ?? []).toHaveLength(0);
+  });
+  it('버팀은 출하 자원 (2026-11-14): 쓰면 다음 대국에 줄고 · 맹세 몫부터 쓰며 · 막 정비(refillBrace)에서만 다시 찬다', async () => {
+    const { growCrew, livesOf, refillBrace, braceLeft } = await import('../src/slice/battle');
+    const u = { t: 'N' as const, quirk: 'stubborn' as const };
+    const b = newSliceBattle([{ t: 'K' }, u], ['K', 'P'], START_COMMANDS, 3);
+    const nid = b.squadIds[1];
+    b.doorUsed.push(nid);
+    const after = growCrew(b, u, nid, 1);
+    expect(after.doorsSpent).toBe(1);
+    expect(livesOf(after, [])).toBe(1);
+    const b2 = newSliceBattle([{ t: 'K' }, after], ['K', 'P'], START_COMMANDS, 4);
+    expect(b2.s.doorIds!.filter((x) => x === b2.squadIds[1])).toHaveLength(1);
+    expect(braceLeft(refillBrace([after])[0])).toBe(2);
+    // 폰 + 맹세: 대국 몫(1)을 먼저 쓴다 — 출하 버팀은 그대로
+    const p = { t: 'P' as const, doors: 1 };
+    const bp = newSliceBattle([{ t: 'K' }, p], ['K', 'P'], START_COMMANDS, 5, { parts: ['oath'] });
+    bp.doorUsed.push(bp.squadIds[1]);
+    expect(growCrew(bp, p, bp.squadIds[1], 1).doorsSpent ?? 0).toBe(0);
+    bp.doorUsed.push(bp.squadIds[1]);
+    expect(growCrew(bp, p, bp.squadIds[1], 1).doorsSpent).toBe(1);
   });
   it('대국 뒤 성장: 처치가 쌓이고 3대국이면 용접 흉터 · 5처치면 별명', async () => {
     const { growCrew } = await import('../src/slice/battle');

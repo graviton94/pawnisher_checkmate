@@ -54,7 +54,7 @@ export interface SliceEventChoice {
   desc: string;
   /** 효과의 실제 득실. · 및 →로 나눈 순서. */
   tones?: readonly EffectTone[];
-  /** 정보 단추 풀이 — 확률 세부 · 대상 · 용어 (합니다체 한 문장). 용어(생명 · 심장 톱니 …)는 화면이 KEYWORDS에서 더 붙인다 */
+  /** 정보 단추 풀이 — 확률 세부 · 대상 · 용어 (합니다체 한 문장). 용어(버팀 · 심장 톱니 …)는 화면이 KEYWORDS에서 더 붙인다 */
   info?: string;
   /** 고를 수 없으면 이유 */
   blocked?: (s: EventState) => string | null;
@@ -174,17 +174,17 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     choices: [
       {
         label: '땜질을 맡긴다',
-        desc: '나사 −40 · 최다 처치 분대원 생명 +1', tones: ['loss', 'gain'],
+        desc: '나사 −40 · 최다 처치 분대원 버팀 +1', tones: ['loss', 'gain'],
         blocked: (s) => (s.gold < 40 ? '나사 40 필요' : !nonKing(s).length ? '맡길 분대원 없음' : null),
         apply: (s) => {
           s.gold -= 40;
           const u = aceOf(s);
           u.doors = (u.doors ?? 0) + 1;
-          return { text: `불꽃이 튄다. ${nameOf(u)}, 그 축이 두꺼워졌다. (생명 +1)` };
+          return { text: `불꽃이 튄다. ${nameOf(u)}, 그 축이 두꺼워졌다. (버팀 +1)` };
         },
       },
       {
-        // D-459: 50% 생명 +2 · 50% 깨짐 → 에이스의 성격을 바꾼다 (유리 렌즈 — 공격 ×1.4 · HP −35%)
+        // D-459: 50% 버팀 +2 · 50% 깨짐 → 에이스의 성격을 바꾼다 (유리 렌즈 — 공격 ×1.4 · HP −35%)
         label: '렌즈를 갈아 끼운다',
         desc: '에이스 기벽 → 공격 ×1.4 · HP −35%', tones: ['neutral', 'gain', 'loss'],
         info: '최다 처치 분대원의 기벽이 「유리 렌즈」로 바뀝니다. 원래 기벽은 사라집니다.',
@@ -454,8 +454,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '라인에서 떨어진 폰 하나가 길가에 서 있다. 출하표가 반쯤 찢겨 있다. “…출구가 어느 쪽이에요?”',
     choices: [
       { label: '데려간다', desc: '폰 하나가 분대에 든다', tones: ['gain'], blocked: full, apply: () => ({ text: '폰이 말없이, 당신의 줄 맨 끝에 선다.', recruit: 'P' }) },
-      // D-459: 나사 +25 → 출하표를 고쳐 붙여 준다 — 나사를 치르고 고집 센 축(생명 2 · 공격 −15%)으로 합류
-      { label: '출하표를 고쳐 준다', desc: '나사 −40 · 생명 2인 폰 합류', tones: ['loss', 'gain'], info: '폰의 기벽이 「고집 센 축」(생명 2 · 공격 −15%)이 됩니다.', blocked: (s) => (s.gold < 40 ? '나사 40 필요' : full(s)), apply: (s) => { s.gold -= 40; return { text: '찢긴 출하표 위에 새 도장이 찍힌다. 폰의 축이 단단히 물린다.', recruit: 'P', recruitQuirk: 'stubborn' }; } },
+      // D-459: 나사 +25 → 출하표를 고쳐 붙여 준다 — 나사를 치르고 고집 센 축(버팀 2 · 공격 −15%)으로 합류
+      { label: '출하표를 고쳐 준다', desc: '나사 −40 · 버팀 2인 폰 합류', tones: ['loss', 'gain'], info: '폰의 기벽이 「고집 센 축」(버팀 2 · 공격 −15%)이 됩니다.', blocked: (s) => (s.gold < 40 ? '나사 40 필요' : full(s)), apply: (s) => { s.gold -= 40; return { text: '찢긴 출하표 위에 새 도장이 찍힌다. 폰의 축이 단단히 물린다.', recruit: 'P', recruitQuirk: 'stubborn' }; } },
       leave('지나가기'),
     ],
   },
@@ -499,11 +499,11 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '교관 룩',
     text: '연병장 한가운데 룩이 버티고 서 있다. “그 물렁한 태엽으로 다음 공정을 넘겠다고? 한 놈 보내라.”',
     choices: [
-      { label: '버티는 법을 배운다', desc: '덜 싸운 분대원 생명 +1 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
+      { label: '버티는 법을 배운다', desc: '덜 싸운 분대원 버팀 +1 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
         const u = greenOf(s);
         const max = crewMaxHp(u);
         s.squad = s.squad.map((x) => (x === u ? { ...x, doors: (x.doors ?? 0) + 1, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.4)) } : x));
-        return { text: `${josa(nameOf(u), '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (생명 +1 · HP −40%)` };
+        return { text: `${josa(nameOf(u), '이')} 비틀거리며 돌아온다. 눈빛이 달라졌다. (버팀 +1 · HP −40%)` };
       } },
       // D-459: 단련 — 덜 싸운 분대원을 공격수로
       { label: '치는 법을 배운다', desc: '덜 싸운 분대원 공격 +5 · HP −40%', tones: ['gain', 'loss'], info: '가장 덜 싸운 분대원이 갑니다. 단련은 영구히 남습니다.', blocked: (s) => (nonKing(s).length ? null : '맡길 분대원 없음'), apply: (s) => {
@@ -553,12 +553,12 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     text: '부서진 제단 위에 녹슨 왕관이 놓여 있다. 그 앞 접시에 나사가 수북하다.',
     choices: [
       { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', tones: ['loss', 'gain'], pay: (s) => s.gold, blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹 아래에서 무언가 빛난다.', partPick: true, elite: true }; } },
-      // D-459: 50% 나사 · 50% 둘 HP → 왕관을 써 본다 (킹 생명 +1 · 분대원 하나 심장 톱니 깨짐 — 바이블의 「왕관은 동료를 깎는다」)
-      { label: '왕관을 써 본다', desc: '킹 생명 +1 · 분대원 하나 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '왕관은 킹을 지키려 동료를 깎습니다. 톱니가 깨진 분대원은 다시 쓰러지면 폐기됩니다.', blocked: (s) => (!s.squad.some((u) => u.t === 'K') ? '킹이 없음' : nonKing(s).some((u) => !u.cracked) ? null : '깎일 분대원이 없음'), apply: (s) => {
+      // D-459: 50% 나사 · 50% 둘 HP → 왕관을 써 본다 (킹 버팀 +1 · 분대원 하나 심장 톱니 깨짐 — 바이블의 「왕관은 동료를 깎는다」)
+      { label: '왕관을 써 본다', desc: '킹 버팀 +1 · 분대원 하나 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '왕관은 킹을 지키려 동료를 깎습니다. 톱니가 깨진 분대원은 다시 쓰러지면 폐기됩니다.', blocked: (s) => (!s.squad.some((u) => u.t === 'K') ? '킹이 없음' : nonKing(s).some((u) => !u.cracked) ? null : '깎일 분대원이 없음'), apply: (s) => {
         const k = s.squad.find((u) => u.t === 'K')!;
         s.squad = s.squad.map((x) => (x === k ? { ...x, doors: (x.doors ?? 0) + 1 } : x));
         const who = crackOne(s);
-        return { text: `녹슨 왕관이 킹의 머리에 꼭 맞는다. 등 뒤에서 ${who}의 톱니가 깨진다. (킹 생명 +1)` };
+        return { text: `녹슨 왕관이 킹의 머리에 꼭 맞는다. 등 뒤에서 ${who}의 톱니가 깨진다. (킹 버팀 +1)` };
       } },
       leave('지나가기'),
     ],

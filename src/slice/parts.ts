@@ -45,8 +45,8 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   // I-14A/B 원본 파일 반입 전 기존 그림을 빌린다 (D-420).
   relayGear: { name: '맞물린 톱니', axis: null, icon: 'relayGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 턴에 한 번, 두 유형 공격 시' },
   siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'siegeLatch', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판→피해 12 — 턴에 한 번, 룩 2태엽↑ 시' },
-  // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
-  lastBreath: { name: '마지막 숨', axis: null, icon: 'lastBreath', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남은 동안' },
+  // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 버팀(옛 생명)에 따른 트리거」)
+  lastBreath: { name: '마지막 숨', axis: null, icon: 'lastBreath', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 버팀 하나 남은 동안' },
   ledger: { name: '피의 장부', axis: null, icon: 'ledger', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },
   veteran: { name: '백전 훈장', axis: null, icon: 'veteran', flavor: '쓰러뜨린 만큼 훈장이 무겁다.', desc: 'HP +25% · 공격 +3 — 처치 8 달성 시' },
   deathMark: { name: '죽음 넘긴 자의 표식', shortName: '죽음 넘긴 표식', axis: null, icon: 'deathMark', flavor: '죽음에서 돌아온 눈빛.', desc: '공격 +2 · 최대 +10 — 죽음 넘길 때마다' },
@@ -55,7 +55,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   aceBadge: { name: '에이스 견장', axis: null, icon: 'aceBadge', flavor: '최다 처치자의 어깨에 단다.', desc: '공격 ×1.3 — 분대 처치 1위인 동안' },
   heavyHand: { name: '무거운 손', axis: null, icon: 'heavyHand', flavor: '가장 많이 때린 손이 가장 무겁다.', desc: '공격 +4 — 분대 피해 1위인 동안' },
   scarPlate: { name: '덧댄 철판', axis: null, icon: 'scarPlate', flavor: '쓰러졌던 자리마다 철판을 덧댄다.', desc: '방열판 +6 · 최대 +18 — 죽음 넘길 때마다' },
-  cleanSheet: { name: '무사고 명판', axis: null, icon: 'cleanSheet', flavor: '끝까지 남은 이름을 새긴다.', desc: 'HP +35% — 생명 소모 없이 3연승 시' },
+  cleanSheet: { name: '무사고 명판', axis: null, icon: 'cleanSheet', flavor: '끝까지 남은 이름을 새긴다.', desc: 'HP +35% — 버팀 소모 없이 3연승 시' },
   sergeant: { name: '고참 계급장', axis: null, icon: 'sergeant', flavor: '살아남은 만큼 계급이 오른다.', desc: '공격 +1 · 최대 +6 — 대국 2번마다' },
   rookBolt: { name: '공성 쇠뇌', axis: 'push', icon: 'rookBolt', flavor: '성벽 위에서 쇠뇌를 당긴다.', desc: '룩의 공격 ×1.3' },
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', flavor: '한쪽 눈으로 죄를 가려낸다.', desc: '비숍 공격 ×1.3' },

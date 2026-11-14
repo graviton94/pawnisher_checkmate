@@ -1744,10 +1744,10 @@ class BoardScene extends Phaser.Scene {
         const sp = this.sprites.get(h.targetId);
         if (sp) this.floatText(sp, '비상 퓨즈', '#FDE68A');
       }
-      // 죽음의 생명 (D-153): 이름 붙은 기물이 HP 1로 버틴다
+      // 버팀 (옛 죽음의 생명, D-153): 이름 붙은 기물이 HP 1로 버틴다
       for (const h of e.hits.filter((x) => x.door)) {
         const sp = this.sprites.get(h.targetId);
-        if (sp) this.floatText(sp, '생명!', '#FCA5A5');
+        if (sp) this.floatText(sp, '버팀!', '#FCA5A5');
       }
       const checked = e.hits.find((h) => h.checked);
       if (checked) sfx('check');

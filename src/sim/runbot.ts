@@ -12,7 +12,7 @@ import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartI
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, ftueRetry, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
-import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
+import { crackOrScrap, refillBrace, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
 import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
 import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
 import { cardOffers as offerCards, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
@@ -276,7 +276,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         }
       }
     }
-    squad = mendSquad(restSquad(squad, REST.actHeal)).squad; // D-469: 화면과 같은 막 정비 (전엔 봇만 다 채웠다)
+    squad = refillBrace(mendSquad(restSquad(squad, REST.actHeal)).squad); // D-469: 화면과 같은 막 정비 (전엔 봇만 다 채웠다) · 버팀도 이때만 (2026-11-14)
   }
   return out(true, 4, '');
 };
