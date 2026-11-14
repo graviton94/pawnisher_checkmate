@@ -58,6 +58,18 @@ module.exports = {
     await wait(1000);
     await shot('p2-line');
   },
+  /** 반장 2단계 초상 CI-02~06 · 08 (D-505): 반장 대국을 열고 그 반장의 2단계 돌입 컷 — 띠 그림 = boss-<이름>-p2 */
+  async p2all({ A, wait, shot }) {
+    for (const [rule, act] of [['plate', 1], ['inspect', 1], ['spawn', 2], ['magnet', 2], ['thorns', 3], ['alarm', 3], ['gilded', 3]]) {
+      if (rule === 'gilded') await A(() => window.sliceApi.finalAt(13));
+      else await A(([r, a]) => window.sliceApi.bossOf(r, a), [rule, act]);
+      await wait(1800);
+      await A((r) => { window.__p2 = window.sliceApi.p2Rise(r); }, rule);
+      await wait(640);
+      await shot(rule);
+      await wait(1800);
+    }
+  },
   /** 판돈 (#12): 창 → 거는 순간 → 대국 중 칩 → 깨짐 → 적중 / 실패 */
   async wager({ pg, A, wait, shot }) {
     await A(() => window.sliceApi.startAt(1, 'battle'));
