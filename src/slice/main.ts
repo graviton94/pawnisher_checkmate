@@ -1565,7 +1565,7 @@ const advance = (): void => {
     }
     const a = acts[actI];
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비)
-    squad = restSquad(squad, restHeal());
+    squad = restSquad(squad, REST.actHeal);
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
     void actCard(actLabel(a.act), a.name, ACT_NARR[actI], actI === 2 ? 'chained-door' : `act-${Math.min(4, actI + 1)}`).then(() => {
       showMap();
@@ -1611,6 +1611,7 @@ const actClear = async (): Promise<void> => {
       { k: SCREEN_TEXT.tally[2], v: Math.max(0, gold - s0.gold), unit: `(지갑 ${gold})` },
       { k: SCREEN_TEXT.tally[3], v: deck.length, unit: deck.length - s0.deck > 0 ? `(+${deck.length - s0.deck})` : '' },
       { k: '부품', v: `${parts.length}/${partSlotsAt(actI)}` },
+      { k: SCREEN_TEXT.actHeal, v: `HP +${Math.round(REST.actHeal * 100)}%`, unit: '(분대 전원)' },
     ],
     mvp,
     opens: [],

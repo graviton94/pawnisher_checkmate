@@ -1223,9 +1223,9 @@ body.slice .opening .op-menu { padding-block: 0; gap: 8px; width: min(352px, 44v
 
 .opening .op-menu { z-index: 3; } /* 장식 톱니보다 조작·문구가 앞선다. */
 
-/* D-433: 부품은 조건 → : 효과, 그림 카드 세 행 · 교체판 세 줄/96px. */
+/* D-433 · D-470: 부품은 언제 → : 효과, 그림 카드 세 ~ 네 행(글자를 줄이지 않는다) · 교체판 세 줄/96px. */
 body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {
-  position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center;
+  position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(var(--rows, 3), 1fr); align-items: center;
 }
 .scr-pick > .part-replace-grid { grid-template-rows: repeat(2, 96px); }
 .scr-pick .choice.part-replace {

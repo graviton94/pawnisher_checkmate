@@ -10,7 +10,7 @@ import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartI
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
-import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../slice/battle';
+import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
 import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
 import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
 import { chooseBuildCard, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
@@ -209,7 +209,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
             fell = cs.scrapped;
             gold += Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10)) + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
-            squad = [...restSquad(squadAfter(b, squad)), ...cs.back];
+            squad = [...restSquad(squadAfter(b, squad), REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1)), ...cs.back]; // 화면 restHeal()과 같게
           }
         }
         if (!ok) return out(false, ai + 1, `${ai + 1}막 ${def.title}`);
@@ -277,7 +277,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         }
       }
     }
-    squad = mendSquad(restSquad(squad, asc >= 3 ? ASC_NUM.restMul : 1)).squad;
+    squad = mendSquad(restSquad(squad, REST.actHeal)).squad; // D-469: 화면과 같은 막 정비 (전엔 봇만 다 채웠다)
   }
   return out(true, 4, '');
 };

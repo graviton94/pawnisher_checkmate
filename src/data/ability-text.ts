@@ -38,17 +38,22 @@ export const enemyAbilityText = (type: PieceType, traits: FoeTrait[], damage = (
 
 /** 부품 상세도 같은 표시 계약을 사용한다. */
 export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch' | 'relaySeal' | 'sharedPlate', AbilityText[]> = {
-  relaySeal: [{ name: '분대 인장', description: '적을 친 2유형 뒤 새 분대 유형', effect: `첫 직접 피해 ×${PART_NUM.relaySeal} · 턴에 1회` }],
-  sharedPlate: [{ name: '맞댄 철판', description: '3승 고참이 카드로 방열판 받으면', effect: `상하좌우 동료 1기 방열판 +${PART_NUM.sharedPlate}` }, { name: '보호 대상', description: '킹 외 고참 · 낮은 체력 비율 우선', effect: '임시 폰 제외 · 매턴 1회' }],
-  relayGear: [{ name: '맞물린 톱니', description: '분대 2유형이 적에게 피해', effect: `태엽 +${PART_NUM.relayGear} · 턴에 1회` }, { name: '동료 판정', description: '입장 시 영구 분대 유형 기준', effect: '임시 폰·승격·반사 제외' }],
-  siegeLatch: [{ name: '공성 걸쇠', description: '기본 2태엽↑ 룩 이동 공격', effect: `방열판 ≤${PART_NUM.siegeLatch} → 첫 피해` }, { name: '소모 횟수', description: '룩마다 매턴 1회 소모', effect: '관통 뒷 대상·튐·충돌 제외' }],
+  relaySeal: [{ name: '분대 인장', description: '턴에 한 번, 세 번째 유형 공격 시', effect: `첫 직접 피해 ×${PART_NUM.relaySeal}` }],
+  sharedPlate: [{ name: '맞댄 철판', description: '턴에 한 번, 고참 방열판 획득 시', effect: `상하좌우 동료 1기 방열판 +${PART_NUM.sharedPlate}` }, { name: '보호 대상', description: '3승 고참 · 낮은 체력 비율 우선', effect: '킹 · 임시 폰 제외' }],
+  relayGear: [{ name: '맞물린 톱니', description: '턴에 한 번, 두 유형 공격 시', effect: `태엽 +${PART_NUM.relayGear}` }, { name: '동료 판정', description: '입장 시 영구 분대 유형 기준', effect: '임시 폰·승격·반사 제외' }],
+  siegeLatch: [{ name: '공성 걸쇠', description: '턴에 한 번, 룩 2태엽↑ 공격 시', effect: `방열판 ≤${PART_NUM.siegeLatch} → 첫 피해` }, { name: '소모 횟수', description: '룩마다 매턴 1회 소모', effect: '관통 뒷 대상·튐·충돌 제외' }],
 };
 
-/** 획득·교체·상점의 공통 부품 문법. 비용은 조건으로 오인하지 않도록 효과에 둔다. */
+/**
+ * 부품 문법 (D-470, 사용자 결정): [이름] / 언제 한 줄 / : 효과 한 줄(득실 많아야 둘).
+ * 데이터 desc = 「효과 — 언제」. 언제 = 「제한, 조건 시」 · 「…마다」 · 「…인 동안」 — 제한(턴에 한 번)이 앞, 조건이 뒤. 없으면 「장착 중」.
+ * 비용은 조건으로 오인하지 않도록 효과에 둔다.
+ */
+export const PART_ALWAYS = '장착 중';
 export const partSummaryText = (id: SlicePartId): AbilityText => {
   const d = SLICE_PARTS[id];
-  const [effect, ...conditions] = d.desc.split(' — ');
-  return { name: d.name, description: conditions.join(' · ') || '장착한 동안', effect };
+  const [effect, when = ''] = d.desc.split(' — ');
+  return { name: d.name, description: when || PART_ALWAYS, effect };
 };
 
 /** 모든 부품 상세를 세 줄씩 읽는다. 복합 판정은 다음 장에 보존한다. */

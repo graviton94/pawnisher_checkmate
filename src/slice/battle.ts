@@ -1719,7 +1719,8 @@ export const fallenAfter = (b: SliceBattle, squad: Squad[]): { crew: Squad; fall
   });
 
 /** 판 사이 회복 (사용자: 누적되면 너무 약해진다): 살아남은 분대는 최대 HP의 일부를 되찾는다 */
-export const REST = { heal: 0.3, reviveHp: 0.5, overhaul: 0.25 };
+/** heal 대국 사이 · actHeal 1~3막 반장을 쓰러뜨린 뒤 정비(최대 HP 비율, 승급 조항과 별개 — D-469: 막 첫 대국에 바로 쓰러지지 않게) */
+export const REST = { heal: 0.3, actHeal: 0.5, reviveHp: 0.5, overhaul: 0.25 };
 
 /** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */
 export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * heal)) }));

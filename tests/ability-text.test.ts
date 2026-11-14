@@ -4,7 +4,9 @@ import { abilityHtml } from '../src/slice/ability';
 import { BOSS_NUM, BOSS_RULES, TRAIT } from '../src/slice/cards';
 import type { BossRule, FoeTrait } from '../src/slice/cards';
 import { partSlotsAt } from '../src/slice/cards';
-import { textWidth } from '../src/slice/desc';
+import { pxWidth, textWidth } from '../src/slice/desc';
+import { partRuleRows, PART_ROW_PX } from '../src/slice/ability';
+import { SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
 
 describe('능력 설명 세 줄 계약', () => {
   it('모든 반장의 모든 규칙이 이름·조건·효과로 나뉘고 숫자가 빠지지 않는다', () => {
@@ -55,10 +57,28 @@ describe('부품 조합의 보유·표시 계약', () => {
     [5, 6, 7, 8].forEach((oldCount, act) => expect(partSlotsAt(act)).toBeGreaterThanOrEqual(oldCount));
   });
   it('대가와 처치 조건을 구별하고 복합 판정의 제외 대상을 보존한다', () => {
-    expect(partSummaryText('spare')).toMatchObject({ description: '장착한 동안', effect: '태엽 +1 · 손패 −1' });
+    expect(partSummaryText('spare')).toMatchObject({ description: '장착 중', effect: '태엽 +1 · 손패 −1' });
     expect(partSummaryText('echo')).toMatchObject({ description: '적중마다', effect: '쌓이는 연쇄 ×2' }); // D-454: 연쇄 = 적중
-    expect(partSummaryText('chainShot')).toMatchObject({ description: '충돌로 처치하면', effect: '연쇄 +2' });
+    expect(partSummaryText('chainShot')).toMatchObject({ description: '충돌로 처치 시', effect: '연쇄 +2' });
+    expect(partSummaryText('fuse')).toMatchObject({ description: '턴에 한 번, 연쇄 5 달성 시', effect: '카드 +1 · 태엽 +1' }); // D-470 사용자 예시
     expect(partAbilityText('conductor')[0].effect).toContain('기본 +4');
     expect(partAbilityText('sharedPlate')[1].effect).toContain('임시 폰 제외');
+  });
+});
+
+/** 부품 문법 (D-470, 사용자 결정): [이름] / 언제 한 문장 / : 효과(득실 많아야 둘) — 제한(턴에 한 번)이 앞, 조건이 뒤 */
+describe('부품 문법 — 언제 · 효과', () => {
+  const ids = Object.keys(SLICE_PARTS) as SlicePartId[];
+  it('언제 줄은 「…시 · …마다 · …동안」으로 끝나거나 「장착 중」, 제한은 맨 앞', () => {
+    const bad = ids.map((id) => partSummaryText(id)).filter((a) => !(a.description === '장착 중' || /(시|마다|동안)$/.test(a.description)) || (a.description.includes('한 번') && !a.description.startsWith('턴에 한 번, ')));
+    expect(bad).toEqual([]);
+  });
+  it('효과는 득실 많아야 둘, 언제 줄에 「 · 」가 섞이지 않는다', () => {
+    expect(ids.filter((id) => partSummaryText(id).effect.split(' · ').length > 2 || partSummaryText(id).description.includes(' · '))).toEqual([]);
+  });
+  it('그림 카드에서 글자를 줄이지 않고 네 행 안에 든다 (12px 실측 폭)', () => {
+    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 4 || r.some((x) => pxWidth(x.t, x.k === 'fx') > PART_ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
+    expect(bad).toEqual([]);
+    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드 +1', '태엽 +1']); // 좁은 카드는 득실을 한 행씩
   });
 });

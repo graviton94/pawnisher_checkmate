@@ -90,5 +90,9 @@ export const descHtml = (text: string, flavor?: string): string => {
 export const textWidth = (s: string): number =>
   [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === ' ' ? 0.35 : /[×−—·→「」]/.test(ch) ? 0.9 : 0.6), 0);
 
+/** 12px 갈무리11 실측 폭(px — D-470 화면 canvas 측정, 굵게는 효과 줄). 그림 카드 부품 행은 99px */
+export const pxWidth = (s: string, bold = false): number =>
+  [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 12 : ch === ' ' ? 5 : /[0-9]/.test(ch) ? (bold ? 5 : 6) : /[.,·:]/.test(ch) ? 5 : /[+×A-Za-z]/.test(ch) ? 9 : ch === '−' ? 8 : ch === '%' && !bold ? 10 : 12), 0);
+
 /** 줄 한도 (레일 카드 196px 기준 — 묘사 15px 두 줄, 기능 · 조건 12px 한 줄) */
 export const DESC_LIMIT = { say: 17.5, fx: 14, cond: 14, tail: 26 }; // D-375: 두루마리 한 줄 ≈ 한글 8.5자 — 묘사 2줄 · 조건 + 효과 3줄 (화면 실측: tools 없이 sliceApi.allFaces 줄 수)
