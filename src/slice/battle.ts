@@ -5,7 +5,7 @@ import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
-import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeTrait } from './cards';
+import { baseOf, BOSS, BOSS_NUM, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -113,6 +113,12 @@ export interface SliceBattle {
   blastPawns: boolean;
   /** 이 대국의 적 특성 전부 (길게 누르기 설명용) */
   traits?: FoeTrait[];
+  /** 적 편성의 행동 특성 (D-483) */
+  marks?: FoeMark[];
+  /** 복수의 맹세: 지금까지 쌓인 단계 · 증원 대기열: 지금까지 세운 폰 수 · 지금까지 본 적 id (쓰러짐 세기) */
+  vengeance?: number;
+  reinforced?: number;
+  foeSeen?: number[];
   /** 다음 적 차례에 폭격할 줄 (y) — 예고 */
   bombRow: number | null;
   /** 묶인 적 — 핀 (D-281): 다음 적 차례에 못 움직인다 */
@@ -291,7 +297,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[] } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -432,6 +438,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     }
   }
   b.atkK = atkK;
+  if (opts.marks?.length) { b.marks = opts.marks; markTurn(b); }
   drawCards(b, b.handSize + (has(b, 'stopwatch') ? PART_NUM.stopwatch : 0), true);
   pawnCall(b);
   bossTurnStart(b);
@@ -1239,6 +1246,64 @@ const guardUp = (b: SliceBattle): void => {
   k.shield = Math.max(k.shield, Math.round(k.maxHp * b.guard));
 };
 
+/**
+ * 적 편성의 행동 특성 (D-483, GDD 21장 §2): 내 차례가 시작될 때 판 위에서 일어난다 — 그다음에 적의 수를 예고하므로 미리보기와 실행이 같다.
+ * 수리공 = 가장 다친 적 하나 회복 · 복수의 맹세 = 그새 쓰러진 적마다 남은 적 공격 ↑ · 방진 = 가로세로로 맞붙은 적 방열판 · 증원 대기열 = 몇 턴마다 킹 곁에 폰
+ */
+const markTurn = (b: SliceBattle): BattleEvent[] => {
+  const out: BattleEvent[] = [];
+  const marks = b.marks ?? [];
+  if (!marks.length || b.s.winner !== null) return out;
+  const foes = () => b.s.pieces.filter((p) => p.side === 1);
+  if (marks.includes('vengeance')) {
+    const fallen = (b.foeSeen ?? []).filter((id) => !findPiece(b.s, id)).length;
+    const want = Math.min(MARK.vengeanceCap, fallen);
+    const add = want - (b.vengeance ?? 0);
+    if (add > 0) {
+      const live = foes();
+      for (const p of live) p.atk = Math.max(1, Math.round(p.atk * (1 + MARK.vengeance) ** add));
+      b.vengeance = want;
+      if (live.length) out.push({ type: 'mark', label: `${FOE_MARKS.vengeance.name} — 남은 적이 이를 간다`, pieceIds: live.map((p) => p.id), tag: `공격 +${Math.round(MARK.vengeance * 100 * add)}%` });
+    }
+  }
+  if (marks.includes('reinforce') && b.turn > 1 && (b.turn - 1) % MARK.reinforceEvery === 0 && (b.reinforced ?? 0) < MARK.reinforceMax) {
+    const k = kingOf(b.s, 1);
+    const spot = k && [[0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1], [0, 1], [-1, 1], [1, 1]].map(([dx, dy]) => ({ x: k.x + dx, y: k.y + dy })).find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
+    if (spot) {
+      const id = Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds) + 1;
+      const p = makePiece(id, 'P', 1, spot.x, spot.y);
+      if (b.foeHpK && b.foeHpK !== 1) p.maxHp = p.hp = Math.max(1, Math.round(p.maxHp * b.foeHpK));
+      if (b.atkK && b.atkK !== 1) p.atk = Math.max(1, Math.round(p.atk * b.atkK));
+      b.s.pieces.push(p);
+      b.reinforced = (b.reinforced ?? 0) + 1;
+      out.push({ type: 'respawn', pieceId: id, pos: spot, label: `${FOE_MARKS.reinforce.name} — 폰이 선다` });
+    }
+  }
+  if (marks.includes('mend')) {
+    const w = foes().filter((p) => p.type !== 'K' && p.hp < p.maxHp).sort((x, y) => (y.maxHp - y.hp) - (x.maxHp - x.hp) || x.id - y.id)[0];
+    if (w) {
+      const amt = Math.min(w.maxHp - w.hp, Math.max(1, Math.round(w.maxHp * MARK.mend)));
+      w.hp += amt;
+      out.push({ type: 'mark', label: `${FOE_MARKS.mend.name} — 망치 소리`, pieceIds: [w.id], tag: '' }, { type: 'heal', pieceId: w.id, amount: amt });
+    }
+  }
+  if (marks.includes('phalanx')) {
+    const live = foes();
+    const ids: number[] = [];
+    for (const p of live) {
+      if (!live.some((q) => q !== p && Math.abs(q.x - p.x) + Math.abs(q.y - p.y) === 1)) continue;
+      const want = Math.round(p.maxHp * MARK.phalanx);
+      if (p.shield >= want) continue;
+      out.push({ type: 'shield', pieceId: p.id, amount: want - p.shield });
+      p.shield = want;
+      ids.push(p.id);
+    }
+    if (ids.length) out.unshift({ type: 'mark', label: `${FOE_MARKS.phalanx.name} — 어깨를 맞댄다`, pieceIds: ids, tag: '' });
+  }
+  b.foeSeen = [...new Set([...(b.foeSeen ?? []), ...foes().map((p) => p.id)])];
+  return out;
+};
+
 /** 내 킹이 예고된 칸에 서 있나 (자살 수 경고) */
 export const kingInDanger = (b: SliceBattle): boolean => {
   const k = kingOf(b.s, 0);
@@ -1614,6 +1679,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     { const e = pawnCall(b); if (e) events.push(e); }
     bossTurnStart(b);
     guardUp(b);
+    events.push(...markTurn(b));
     b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));
     markTelegraph(b);
     b.snap = JSON.stringify({ ...b, snap: '' });

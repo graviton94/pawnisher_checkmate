@@ -1,5 +1,5 @@
 import '../fonts.css';
-import { bossAbilityText, enemyAbilityText, formAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
+import { bossAbilityText, enemyAbilityText, formAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { abilityHtml, bindAbilities, partCardRuleHtml } from './ability';
 import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from '../data/build-trial';
@@ -38,7 +38,7 @@ import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { findPiece, samePos, type FormId, type PieceType, type Pos } from '../engine';
-import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -320,7 +320,7 @@ const pieceInfo = (pos: Pos): void => {
   const maxW = offBoardW(side);
   const expanded = maxW < 352;
   // 이형 (D-481): 행마 · 공격 규칙을 맨 앞 장으로 — 적으로 처음 만날 때 여기서 배운다
-  const abilities = [...(p.form ? [formAbilityText(p.form)] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)))];
+  const abilities = [...(p.form ? [formAbilityText(p.form)] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : [...enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)), ...(b.marks ?? []).map(markAbilityText)])];
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
   const el = infoPeek({
     cls: `unit-peek${expanded ? ' unit-peek-expanded' : ''}${p.side === 0 ? ' unit-ally' : ''}`,
@@ -1485,7 +1485,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, def.deck ?? deck.filter(usable)) : deck.filter(usable), def.seed ?? 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms });
+  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, def.deck ?? deck.filter(usable)) : deck.filter(usable), def.seed ?? 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
@@ -1791,7 +1791,7 @@ const showMap = (): void => {
       for (const t of def?.enemy ?? []) cnt.set(t, (cnt.get(t) ?? 0) + 1);
       const foes = def ? `<span class="pb-foes">${[...cnt].map(([t, n]) => `<span class="pb-foe">${pieceImg(t, 1, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('')}</span>` : '';
       const tags = def
-        ? [`<span class="ribbon r-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="ribbon">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name).filter(Boolean).slice(0, 1).map((t) => `<span class="ribbon">${t}</span>`)].slice(0, 3).join('')
+        ? [`<span class="ribbon r-crimson">${MAP_TEXT.foes(def.enemy.length)}</span>`, ...(MAP_TEXT.reward[def.reward] ? [`<span class="ribbon">${MAP_TEXT.reward[def.reward]}</span>`] : []), ...[...(def.marks ?? []).map((m) => FOE_MARKS[m].name), ...(def.forms ?? []).map((f) => `이형 ${FORMS[f].name}`), ...[...(def.traits ?? []), ...(/호위/.test(def.tell ?? '') ? ['guard'] : [])].map((t) => MAP_TEXT.trait[t] ?? FOE_TRAITS[t as keyof typeof FOE_TRAITS]?.name)].filter(Boolean).slice(0, 1).map((t) => `<span class="ribbon">${t}</span>`)].slice(0, 3).join('')
         : '';
       const name = `${NODE_NAMES[nd.kind]}${def?.foe ? ` · ${def.foe}` : def?.boss && def.bossRule ? ` · ${BOSS_RULES[def.bossRule].name}` : ''}`;
       // 낮은 범례 띠 → 높은 미리보기 띠는 처음 고를 때 한 번만 계단으로 자란다 (D-401)

@@ -417,6 +417,25 @@ export const FOE_TRAITS: Record<Exclude<FoeTrait, 'blastPawn' | 'rookPlate'>, { 
 /** 막마다 더 붙을 수 있는 특성 — 그 막에 나오는 기물 기준 */
 export const TRAIT_POOL: FoeTrait[][] = [['knightShoe', 'bishopLens'], ['knightShoe', 'bishopLens', 'pawnDrill'], ['knightShoe', 'bishopLens', 'pawnDrill', 'queenCrown']];
 
+/**
+ * 적 편성의 행동 특성 (D-483, GDD 21장 §2 — 사용자: 「매 전투마다 적들의 개성이 너무 없다」).
+ * 수치 하나를 올리는 특성(위)과 달리, 판 위에서 턴마다 눈에 보이게 일어난다 — 모두 내 차례가 시작될 때라 적의 수 예고에 그대로 들어간다.
+ * mend = 가장 다친 적(킹 제외) 하나가 최대 HP의 이만큼 고친다 · vengeance = 쓰러진 적 하나마다 남은 적 공격 +이 비율(cap번까지)
+ * phalanx = 가로세로로 맞붙은 적은 최대 HP의 이만큼 방열판 · reinforce = every턴마다 적 킹 곁에 폰(max까지)
+ */
+export type FoeMark = 'mend' | 'vengeance' | 'phalanx' | 'reinforce';
+export const MARK = { mend: 0.15, vengeance: 0.1, vengeanceCap: 3, phalanx: 0.2, reinforceEvery: 3, reinforceMax: 2 };
+export const FOE_MARKS: Record<FoeMark, { name: string; tell: string; when: string; effect: string; line: string }> = {
+  mend: { name: '수리공', tell: '수리공 — 내 차례가 올 때마다 가장 다친 적 하나가 HP를 고칩니다.', when: '내 차례 시작, 가장 다친 적 하나', effect: `최대 HP의 ${MARK.mend * 100}% 회복`, line: '망치 소리가 그치지 않는다.' },
+  vengeance: { name: '복수의 맹세', tell: '복수의 맹세 — 적이 쓰러질 때마다 남은 적의 공격이 오릅니다.', when: '적이 하나 쓰러질 때마다', effect: `남은 적 공격 +${MARK.vengeance * 100}% (${MARK.vengeanceCap}번까지)`, line: '하나가 쓰러지면, 나머지가 이를 간다.' },
+  phalanx: { name: '방진', tell: '방진 — 가로세로로 맞붙은 적은 턴마다 방열판을 두릅니다.', when: '내 차례 시작, 가로세로로 맞붙은 적', effect: `최대 HP의 ${MARK.phalanx * 100}% 방열판`, line: '어깨를 맞댄 쇠는 쉽게 뚫리지 않는다.' },
+  reinforce: { name: '증원 대기열', tell: `증원 대기열 — ${MARK.reinforceEvery}턴마다 적 킹 곁에 폰이 섭니다.`, when: `${MARK.reinforceEvery}턴마다, 적 킹 곁 빈 칸`, effect: `적 폰 하나 (${MARK.reinforceMax}번까지)`, line: '생산선은 멈추지 않는다.' },
+};
+/** 검문 편성 (막마다) — 일반 대국은 편성 이름마다 run.ts NORMAL에 적는다 */
+export const CHECK_MARK: FoeMark[] = ['mend', 'reinforce', 'vengeance'];
+/** 높은 왕관(본편 넷째 · 도전)에서 검문 · 일반 대국에 하나 더 붙는 특성 */
+export const MARK_EXTRA_FROM = 3;
+
 /** 수직 조각 수치 */
 /**
  * 판 길이 제동 (D-449, 1.1.1 테스터 기보: 18판 중 1턴 승리 7판 · 반장도 1~2턴 — 「수싸움이 아니라 한 방 연쇄로 끝난다」).

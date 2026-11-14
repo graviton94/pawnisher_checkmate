@@ -1,4 +1,4 @@
-import { BOSS, BOSS_NUM, FOE_TRAITS, TRAIT, type BossRule, type FoeTrait } from '../slice/cards';
+import { BOSS, BOSS_NUM, FOE_MARKS, FOE_TRAITS, TRAIT, type BossRule, type FoeMark, type FoeTrait } from '../slice/cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../slice/parts';
 import type { FormId, PieceType } from '../engine';
 import { FORMS } from './forms';
@@ -36,6 +36,9 @@ export const enemyAbilityText = (type: PieceType, traits: FoeTrait[], damage = (
   });
   return out;
 };
+
+/** 적 편성 특성 (D-483): 그 대국의 모든 적이 함께 지닌다 — [이름] / 언제 · 누가 / : 효과 */
+export const markAbilityText = (m: FoeMark): AbilityText => ({ name: FOE_MARKS[m].name, description: FOE_MARKS[m].when, effect: FOE_MARKS[m].effect });
 
 /** 이형 기물 (D-481): [이름] / 움직임 / : 공격 — 처음 적으로 만날 때 이 장에서 규칙을 배운다 */
 export const formAbilityText = (f: FormId): AbilityText => ({ name: FORMS[f].name, description: FORMS[f].move, effect: `${FORMS[f].hit}을 친다` });

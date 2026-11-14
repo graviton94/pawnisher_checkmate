@@ -2,7 +2,7 @@ import type { FormId, PieceType } from '../engine';
 import { FORMS, formsUpTo } from '../data/forms';
 import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
-import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, FOE_TRAITS, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeTrait } from './cards';
+import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, CHECK_MARK, FOE_MARKS, FOE_TRAITS, MARK_EXTRA_FROM, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -33,6 +33,8 @@ export interface BattleDef {
   eliteOne?: boolean;
   /** 막별 적 특성 */
   traits?: FoeTrait[];
+  /** 편성의 행동 특성 (D-483) */
+  marks?: FoeMark[];
   /** 이형 적 (D-481) — 적 목록 끝 바탕 기물부터 이형이 된다 */
   forms?: FormId[];
   w?: number;
@@ -176,30 +178,30 @@ export const actOmen = (next: number): [string, string] => {
  * 막마다 이름 붙은 편성 여섯 — 같은 줄의 갈림길은 서로 다른 편성이 나오고(buildGraph), 지도 · 진입 화면에 이름이 보인다.
  * 세기는 막 안에서 비슷하게(예전 세 편성 기준: 1막 4기 · 2막 5기 · 3막 5기 언저리 — 약한 기물이 많으면 수를 늘렸다).
  */
-const NORMAL: { name: string; enemy: PieceType[] }[][] = [
+const NORMAL: { name: string; enemy: PieceType[]; /** 편성의 행동 특성 (D-483) */ mark?: FoeMark }[][] = [
   [
     { name: '척후 기병', enemy: ['K', 'P', 'P', 'N'] },
     { name: '사선 감시', enemy: ['K', 'P', 'P', 'B'] },
     { name: '혼성 소대', enemy: ['K', 'P', 'N', 'B'] },
-    { name: '보병 줄', enemy: ['K', 'P', 'P', 'P', 'P'] },
-    { name: '쌍발굽', enemy: ['K', 'N', 'N'] },
-    { name: '쌍렌즈', enemy: ['K', 'B', 'B'] },
+    { name: '보병 줄', enemy: ['K', 'P', 'P', 'P', 'P'], mark: 'phalanx' },
+    { name: '쌍발굽', enemy: ['K', 'N', 'N'], mark: 'vengeance' },
+    { name: '쌍렌즈', enemy: ['K', 'B', 'B'], mark: 'mend' },
   ],
   [
-    { name: '혼성 중대', enemy: ['K', 'P', 'P', 'N', 'B'] },
-    { name: '돌격 요새', enemy: ['K', 'P', 'R', 'N'] },
-    { name: '사제단', enemy: ['K', 'P', 'P', 'B', 'B'] },
-    { name: '기병대', enemy: ['K', 'P', 'P', 'N', 'N'] },
-    { name: '성벽 보병', enemy: ['K', 'P', 'P', 'P', 'R'] },
-    { name: '사선 기수', enemy: ['K', 'P', 'N', 'B', 'B'] },
+    { name: '혼성 중대', enemy: ['K', 'P', 'P', 'N', 'B'], mark: 'reinforce' },
+    { name: '돌격 요새', enemy: ['K', 'P', 'R', 'N'], mark: 'vengeance' },
+    { name: '사제단', enemy: ['K', 'P', 'P', 'B', 'B'], mark: 'mend' },
+    { name: '기병대', enemy: ['K', 'P', 'P', 'N', 'N'], mark: 'vengeance' },
+    { name: '성벽 보병', enemy: ['K', 'P', 'P', 'P', 'R'], mark: 'phalanx' },
+    { name: '사선 기수', enemy: ['K', 'P', 'N', 'B', 'B'], mark: 'mend' },
   ],
   [
-    { name: '정규 대대', enemy: ['K', 'P', 'N', 'B', 'R'] },
-    { name: '쌍탑', enemy: ['K', 'P', 'P', 'R', 'R'] },
-    { name: '여왕 근위', enemy: ['K', 'Q', 'P', 'P'] },
-    { name: '기병 사단', enemy: ['K', 'P', 'N', 'N', 'B'] },
-    { name: '대성당', enemy: ['K', 'P', 'B', 'B', 'R'] },
-    { name: '여왕 기마', enemy: ['K', 'Q', 'N', 'P'] },
+    { name: '정규 대대', enemy: ['K', 'P', 'N', 'B', 'R'], mark: 'reinforce' },
+    { name: '쌍탑', enemy: ['K', 'P', 'P', 'R', 'R'], mark: 'phalanx' },
+    { name: '여왕 근위', enemy: ['K', 'Q', 'P', 'P'], mark: 'phalanx' },
+    { name: '기병 사단', enemy: ['K', 'P', 'N', 'N', 'B'], mark: 'vengeance' },
+    { name: '대성당', enemy: ['K', 'P', 'B', 'B', 'R'], mark: 'mend' },
+    { name: '여왕 기마', enemy: ['K', 'Q', 'N', 'P'], mark: 'reinforce' },
   ],
 ];
 const CHECK: PieceType[][] = [['K', 'P', 'P', 'B', 'R'], ['K', 'P', 'N', 'R', 'R'], ['K', 'Q', 'R', 'N', 'P']];
@@ -274,6 +276,13 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
     d.traits = [...(d.traits ?? []), t];
     d.tell = `${d.tell}${d.tell ? ' ' : ''}${FOE_TRAITS[t].tell}`;
   }
+  // 편성의 행동 특성 (D-483): 일반 대국은 편성마다, 검문은 막마다 — 넷째 왕관부터 검문 · 2막 이후 일반 대국에 하나 더(겹치지 않게)
+  if (kind !== 'boss' && asc >= MARK_EXTRA_FROM && (kind === 'check' || act > 1)) {
+    const all = Object.keys(FOE_MARKS) as FoeMark[];
+    const rest = all.filter((m) => !(d.marks ?? []).includes(m));
+    d.marks = [...(d.marks ?? []), rest[new Rng(d.enemy.join('').length * 389 + act * 41 + asc * 7 + (kind === 'check' ? 3 : 1)).int(rest.length)]];
+  }
+  if (d.marks?.length) d.tell = `${d.tell}${d.tell ? ' ' : ''}${d.marks.map((m) => FOE_MARKS[m].tell).join(' ')}`;
   // 이형 적 (D-481, GDD 21장 §1): 그 왕관까지 나오는 이형 — 1막은 검문부터(규칙을 배우는 자리), 2막부터 일반 대국에도.
   // 지도 rng를 건드리지 않게 판의 모양으로 정한다(옛 저장의 지도가 그대로)
   const avail = formsUpTo(asc);
@@ -284,7 +293,10 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
     const picks: FormId[] = [];
     for (let k = 0; k < n; k++) {
       // 첫 이형은 이 왕관의 새 이형을 먼저(배우는 자리) — 그 뒤는 지금까지 나온 이형 아무거나
-      const pool = k === 0 && newest.length && asc <= 3 ? newest : avail;
+      // 편성에 맞춰 (D-483): 그 뒤 이형은 편성에 이미 있는 바탕 기물의 이형을 먼저 — 기병 편성엔 낙타, 성벽 편성엔 대포 · 총독
+      const pool0 = k === 0 && newest.length && asc <= 3 ? newest : avail;
+      const themed = k === 0 ? pool0 : pool0.filter((f) => d.enemy.includes(FORMS[f].base));
+      const pool = themed.length ? themed : pool0;
       picks.push(pool[fr.int(pool.length)]);
     }
     if (picks.length) {
@@ -308,10 +320,10 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
   const label = `${act}막`;
   if (kind === 'boss')
     return { enemy: BOSS[a], kingHp: (sc.king + 0.1) * (BOSS_TUNE[rule]?.king ?? 1), atk: BOSS_TUNE[rule]?.atk, enemyHp: sc.hp, title: `${label} — ${BOSS_RULES[rule].name}`, narr: NARR_BOSS[rule] ?? '', tell: BOSS_RULES[rule].tell, reward: 'part', boss: true, bossRule: rule, traits: TRAITS[a] };
-  if (kind === 'check') return { enemy: CHECK[a], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
+  if (kind === 'check') return { enemy: CHECK[a], marks: [CHECK_MARK[a]], kingHp: sc.king + 0.05, enemyHp: sc.hp, title: `${label} — 검문`, narr: NARR_CHECK[a], tell: '이기면 부품을 하나 더 받습니다.' + TRAIT_TELL[a], reward: 'part', traits: TRAITS[a] };
   const pool = NORMAL[a];
   const pick = pool[rng.int(pool.length)];
-  return { enemy: [...pick.enemy], foe: pick.name, kingHp: sc.king, enemyHp: sc.hp, title: `${label} — ${pick.name}`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
+  return { enemy: [...pick.enemy], foe: pick.name, ...(pick.mark ? { marks: [pick.mark] } : {}), kingHp: sc.king, enemyHp: sc.hp, title: `${label} — ${pick.name}`, narr: NARR_BATTLE[a][rng.int(NARR_BATTLE[a].length)], tell: (a === 0 ? '부품과 맞물리는 카드를 함께 쓰면 배율이 오릅니다.' : '') + TRAIT_TELL[a].trim(), reward: 'card', traits: TRAITS[a] };
 };
 
 

@@ -1585,6 +1585,13 @@ class BoardScene extends Phaser.Scene {
         await this.wait(260);
         continue;
       }
+      if (e.type === 'mark') {
+        // 적 편성 특성 (D-483): 띠 안내 + 그 기물들 위에 짧은 글 (수리 · 방진은 뒤따르는 heal · shield가 숫자를 띄운다)
+        this.announce(e.label);
+        for (const id of e.tag ? e.pieceIds : []) { const sp = this.sprites.get(id); if (sp) this.floatText(sp, e.tag, '#FCA5A5'); }
+        await this.wait(e.tag ? 260 : 120);
+        continue;
+      }
       if (e.type === 'respawn') {
         // 찍어 내기 · 반장 2단계 (D-249): 그 칸에 쾅 — 먼지 고리 · 불꽃 · 빛
         if (e.pos && this.fxHook) this.fxHook.stamp(e.pos);
