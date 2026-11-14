@@ -200,7 +200,10 @@ const taunt = (cue: TauntCue, force = false): void => {
   tauntedNow = true;
   tauntCount += 1;
   const lines = (b?.boss && BOSS_TAUNTS[(b.bossRule ?? 'plate') as keyof typeof BOSS_TAUNTS]?.[cue]) || TAUNTS[cue]; // 반장마다 제 말 (D-310)
-  const line = lines[R.int(lines.length)];
+  foeSay(lines[R.int(lines.length)]);
+};
+/** 적 왕 · 반장의 말 한 줄 — 적 쪽 레일 위 초상 액자 (도발 · 2단계 공용) */
+const foeSay = (line: string): void => {
   document.querySelector('.talk.taunt')?.remove();
   // 말하는 왕의 얼굴: 반장이면 반장 초상, 보통 대국은 검정 킹 — 초상 액자 하나 (패스 4 D-396: 판 위 2줄을 가리던 말풍선 → 적 쪽 레일 위)
   const face = b?.boss ? `<img src="ui/hud/avatar-${b.bossRule ?? 'plate'}.png" alt="">` : pieceImg('K', 1, 'small', 40);
@@ -1200,6 +1203,8 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     await banner(gilded ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다', false);
     // 2단계 (각본 §8 · §9, D-276): 반장은 한 마디, 도금왕은 이번 출하에 쓰러뜨린 반장에게 한 말을 비꼰다
     if (gilded) await gildedPhase2();
+    // D-474: 반장 2단계 대사(각본 데이터에만 있던 줄)를 격노하는 순간에 한 마디
+    else { const p2 = (BOSS_STORY as Partial<Record<string, { phase2: string }>>)[b.bossRule]?.phase2; if (p2 && !labMode) foeSay(p2); }
     // 띠가 「반장이 다시 일어선다」를 말한다 — 상단 알림은 따로 띄우지 않는다 (D-385)
     renderer.setup(b.s);
     refresh();

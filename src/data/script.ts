@@ -111,7 +111,7 @@ export type StoryBoss = 'plate' | 'inspect' | 'spawn' | 'magnet' | 'thorns' | 'a
 export const BOSS_SINS = { plate: '색욕', inspect: '나태', spawn: '폭식', magnet: '탐욕', thorns: '분노', alarm: '질투', gilded: '교만' } as const;
 /**
  * 반장 (바이블 BOS-1~6, D-451 — 불살 패배): 반장들은 분대를 잃고 간수로 좌천된 낙오 정품 킹이다. 종이왕은 쓰러뜨린 반장을 녹이지 않고 지나간다.
- * intro · say = 등장 띠 / phase2 = 2단계(지금 화면엔 안 나온다) / 격파 컷 = fall(서술 두 문장) → temptation(살려 둔 반장의 저주 섞인 예언) → reply(종이왕) → STG_PROG(속마음)
+ * intro · say = 등장 띠 / phase2 = 2단계 격노 때 한 마디(D-474) / 격파 컷 = fall(서술 두 문장) → temptation(살려 둔 반장의 저주 섞인 예언) → reply(종이왕) → STG_PROG(속마음)
  * mock = 종막 2단계에서 도금왕이 들먹임 / mirror = 왕이 된 결말에서 새 왕이 이 반장을 닮아 감
  */
 export const BOSS_STORY: Record<StoryBoss, { name: string; intro: string; say: string; phase2: string; fall: string; reply: string; mock: string; mirror: string; temptation: string }> = {
