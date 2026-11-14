@@ -61,6 +61,8 @@ export interface RunResult {
   log: BattleLog[];
   /** 실험실 (D-456): 제시된 카드 · 부품과 고른 것 (픽률 · 보유 시 승률) */
   offers: { id: string; part: boolean; taken: boolean }[];
+  /** 실험실 다시 보기 (D-468): 극단적인 대국의 판 설정 — sliceApi.replay(code)로 화면에서 같은 판 */
+  extremes: { why: string; act: number; title: string; code: string }[];
   /** 종막 직전 쥔 나사 · 끝에 덱에 남은 시작 카드 수 (경제 · 압축) */
   goldAtFinal: number;
   starterLeft: number;
@@ -75,6 +77,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const style = o.style ?? 'greedy';
   const persona = o.persona ?? 'standard';
   const offersLog: RunResult['offers'] = [];
+  const extremes: RunResult['extremes'] = [];
   let goldAtFinal = -1;
   const build = o.build ?? 'neutral';
   const ax = axisOf(build);
@@ -164,7 +167,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     for (const id of offers) offersLog.push({ id, part: false, taken: !!take && id === best });
     if (take) deck.push(best);
   };
-  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle, log, offers: offersLog, goldAtFinal, starterLeft: deck.filter((id) => (START_DECK as string[]).includes(id)).length });
+  const out = (cleared: boolean, act: number, ended: string): RunResult => ({ cleared, act, ended, familyParts: parts.filter(id => family.includes(id)).length, bosses, battles, turns: turnsAll, deck: deck.length, parts: [...parts], squad: squad.map((u) => u.t), idle, log, offers: offersLog, extremes, goldAtFinal, starterLeft: deck.filter((id) => (START_DECK as string[]).includes(id)).length });
   for (const [ai, a] of acts.entries()) {
     actNow = ai;
     let prev: MapNode | null = null;
@@ -183,7 +186,9 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         let ok = false;
         let fell: Squad[] = [];
         for (let tryN = 0; !ok && (tryN === 0 || (revive > 0 && (revive--, true))); tryN++) {
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), seed * 7 + ri * 131 + tryN, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne });
+          const bSeed = seed * 7 + ri * 131 + tryN;
+          const setup = JSON.stringify({ squad, deck: deck.filter(usable), parts, refined, asc, gold, def: { ...def, seed: bSeed, depth: depthAt(ai, frac) } });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne });
           const r = style === 'search' ? playOutSearch(b, 40, 3, 4, o.temp ?? 0) : playOut(b, 40, undefined, style);
           battles += 1;
           turnsAll += r.turns;
@@ -193,6 +198,10 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             const byTurn = new Map<number, number>();
             for (const f of b.falls) byTurn.set(f.turn, (byTurn.get(f.turn) ?? 0) + 1);
             const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
+            // 실험실 다시 보기 (D-468): 극단적인 대국은 판 설정을 코드로 남긴다 (출하당 셋까지)
+            const maxFell = Math.max(0, ...byTurn.values());
+            const why = r.won && r.turns <= 1 ? '1턴 승리' : ai < 3 && maxFell >= 3 ? `한 적 턴에 ${maxFell}기 잃음` : !r.won && ai === 0 ? '1막 패배' : '';
+            if (why && extremes.length < 3) extremes.push({ why, act: ai + 1, title: def.title, code: btoa(unescape(encodeURIComponent(setup))) });
             log.push({ act: ai + 1, kind: def.boss ? 'boss' : n.kind === 'check' ? 'check' : 'battle', title: def.title, turns: r.turns, won: r.won, fell: b.falls.length, maxFellInTurn: Math.max(0, ...byTurn.values()), kingHpLost: k ? k.maxHp - Math.max(0, k.hp) : 999, enemiesLeft: b.s.pieces.filter((p) => p.side === 1 && p.hp > 0).length, enemies: def.enemy.length, killers: b.falls.map((f) => f.byType ?? '?').join(''), hpAfter: r.won ? (() => { const sq = squadAfter(b, squad); /* D-467: 분모는 출전한 분대 전체 — 쓰러진 분대원을 빼면 둘을 잃고 이겨도 「남은 체력 70%」로 나왔다 */ return sq.reduce((a, u) => a + Math.min(crewMaxHp(u), Math.max(0, u.hp ?? crewMaxHp(u))), 0) / Math.max(1, squad.reduce((a, u) => a + crewMaxHp(u), 0)); })() : 0, swing: (() => { const d = Array.from(b.dealt ?? [], (x) => x ?? 0); const sum = d.reduce((a, x) => a + x, 0); return sum ? Math.max(...d) / sum : 0; })(), peak: b.peakHit ?? 0, dpt: Array.from(b.dealt ?? [], (x) => x ?? 0).reduce((a, x) => a + x, 0) / Math.max(1, r.turns) });
           }
           if (r.won) {

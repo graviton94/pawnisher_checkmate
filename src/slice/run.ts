@@ -41,6 +41,9 @@ export interface BattleDef {
   atk?: number;
   /** 짜 둔 손패 (입문 판, D-232): 덱을 이 순서로 놓고 섞지 않는다 */
   order?: CommandId[];
+  /** 실험실 다시 보기 (D-468): 봇 출하와 같은 대국 시드 · 성장 깊이 */
+  seed?: number;
+  depth?: number;
 }
 
 export interface MapNode {

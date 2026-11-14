@@ -9,7 +9,7 @@
  * 읽는 법(봇 지표는 사람의 대리값이다): 픽률은 봇의 가치표가 정한 것이라 「사람이 고를까」가 아니라 「봇이 고르게 만든 기준이 맞나」를 본다.
  * 완주율 차(Δ)가 크게 + 이면 그 카드 · 부품이 판을 끌고 가는 것(필수 · 숨은 사기), 크게 − 이면 함정 후보.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const file = process.argv[2];
 if (!file) throw new Error('사용: node tools/simlab-report.mjs <climb.json> [--min 8]');
@@ -76,5 +76,14 @@ for (const [key, g] of groups) {
   for (const { s, d } of shown) out.push(`| ${s.id} | ${s.part ? '부품' : '카드'} | ${s.off} | ${pct(s.take / s.off)} | ${s.runs} | ${s.runs ? pct(s.wins / s.runs) : '—'} | ${s.runs ? `${d >= 0 ? '+' : ''}${Math.round(d * 100)}` : '—'} | ${tag(s)} |`);
   const flagged = list.filter((s) => tag(s));
   out.push('', `판정 붙은 것 ${flagged.length}개: ${flagged.map((s) => `${s.id}(${tag(s)})`).join(' · ') || '없음'}`, '');
+}
+// 4. 다시 볼 판 (D-468): 극단적인 대국을 화면에서 같은 조건으로 — ?debug 화면 콘솔에서 sliceApi.replay('코드')
+const ex = rows.flatMap((r) => (r.ex ?? []).map((e) => ({ ...e, s: r.s, a: r.a, seed: r.seed })));
+if (ex.length) {
+  const by = new Map();
+  for (const e of ex) by.set(e.why.replace(/\d+기/, 'N기'), (by.get(e.why.replace(/\d+기/, 'N기')) ?? 0) + 1);
+  out.push('## 4. 다시 볼 판', '', `극단적인 대국 ${ex.length}개 (${[...by].map(([k, n]) => `${k} ${n}`).join(' · ')}). 화면에서 보려면 \`?debug\` 주소의 콘솔에서 \`sliceApi.replay('코드')\` — 코드 전체는 \`${file}.replay.json\`.`, '', '| 봇 | 승급 | 출하 시드 | 막 | 대국 | 무엇 |', '|---|---|---|---|---|---|');
+  for (const e of ex.slice(0, 20)) out.push(`| ${e.s} | ${e.a} | ${e.seed} | ${e.act} | ${e.title} | ${e.why} |`);
+  writeFileSync(`${file}.replay.json`, JSON.stringify(ex, null, 1));
 }
 console.log(out.join('\n'));
