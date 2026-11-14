@@ -11,7 +11,7 @@ import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from 
 import { createBuildAct, createBuildTrial } from './build-trial';
 import { josa } from '../data/josa';
 import { STALL_PRESS } from '../data/battle';
-import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, SERVICE_CARDS, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, SERVICE_CARDS, TERM_ICON, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
@@ -57,6 +57,9 @@ import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type Sl
 // (변수 속 url은 쓰이는 CSS 파일 기준으로 풀리므로 절대 주소로 넣는다)
 document.documentElement.style.setProperty('--life-on', `url(${new URL('ui/icons16/life@16.png', document.baseURI).href})`);
 document.documentElement.style.setProperty('--life-off', `url(${new URL('ui/icons16/life.crack@16.png', document.baseURI).href})`);
+// 심장 톱니 (TI-01 · D-507): 버팀(덧댄 철판)과 다른 그림 — 성함 / 금 감
+document.documentElement.style.setProperty('--cog-on', `url(${new URL('ui/icons16/heartCog@16.png', document.baseURI).href})`);
+document.documentElement.style.setProperty('--cog-off', `url(${new URL('ui/icons16/heartCog.crack@16.png', document.baseURI).href})`);
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
 /** 16px 칸용 (D-290: 아이콘이 32도트가 되면 반으로 줄인 그림을 따로 쓴다 — 브라우저 축소는 바깥선을 끊는다) */
 const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
@@ -630,7 +633,7 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
         : [];
   return `<div class="cf crew-card g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${u.name ?? '이름 없음'}</b>`
     + `<span class="cf-win"><span class="er-pc"><img src="${art}" alt=""></span></span>`
-    + `<b class="cb cb-atk${atk >= 100 ? ' n3' : ''}">${atk}</b><b class="cb cb-hp${Math.round(o.hp) >= 100 ? ' n3' : ''}"><span class="er-hpn">${Math.round(o.hp)}</span></b><span class="cb-lives">${hearts}</span>`
+    + `<b class="cb cb-atk${atk >= 100 ? ' n3' : ''}">${atk}</b><b class="cb cb-hp${Math.round(o.hp) >= 100 ? ' n3' : ''}"><span class="er-hpn">${Math.round(o.hp)}</span></b><span class="cb-lives">${hearts}${u.cracked ? '<i class="cb-cog" title="심장 톱니 금 감"></i>' : ''}</span>`
     + `<span class="cb-bar"><span class="er-hp"><i class="er-ghost" style="width:${pct}"></i><i class="er-fill" style="width:${pct}"></i></span></span>`
     + `<small class="cf-desc">${bodyHtml(top, bot)}`
     + `</small><i class="cf-gem"></i></div>`;
@@ -1566,13 +1569,14 @@ const maybeBet = (def: BattleDef, force = false): void => {
   const { stake } = offer;
   const txt = betText(offer);
   // M 창 (D-391 → #12 · D-490): 명패 「판돈」 · 판돈 칸(움푹 칸)에 나사 동전 셋 — D-260 「확률 = 동전 · 사각 칸」 문법 ·
-  // 조건 · 보상 · 실패 시 줄 · 독백 · [걸지 않는다 | 건다]. 걸면 동전이 칸에 떨어져 박히고(계단) 창이 닫힌다. 그림 = 「임시 — WG-01 · WG-02 대기」(지금 나사 아이콘)
+  // 조건 · 보상 · 실패 시 줄 · 독백 · [걸지 않는다 | 건다]. 걸면 동전이 칸에 떨어져 박히고(계단) 창이 닫힌다.
+  // 판돈 칸 바탕 = 받은 WG-01 내기판 장면(scenes/wager-table.png, D-507) — cover로 자르고 초점은 내기판 · 동전 나이트. 동전 · 표지는 「임시 — WG-02 대기」(나사 아이콘)
   const coin = '<img src="ui/icons16/hud.screw.png" alt="">';
   const el = openWin({
     size: 'm',
     title: WAGER_TEXT.title,
     head: `<p class="lead">${txt.label}</p><span class="tag push">판돈 나사 ${stake}</span>`,
-    body: `<div class="inset bet-slot" aria-hidden="true">${coin}${coin}${coin}</div><div class="terms"><span class="ribbon">조건</span><p>${txt.cond}</p><span class="ribbon">보상</span><p>건 나사의 두 배 <span class="up">(+${stake * 2})</span></p><span class="ribbon r-crimson">실패 시</span><p>건 나사를 잃는다 <span class="down">(−${stake})</span></p></div><p class="mono">${WAGER_TEXT.mono}</p>`,
+    body: `<div class="inset bet-slot bet-scene" style="background-image:url(scenes/wager-table.png)" aria-hidden="true">${coin}${coin}${coin}</div><div class="terms"><span class="ribbon">조건</span><p>${txt.cond}</p><span class="ribbon">보상</span><p>건 나사의 두 배 <span class="up">(+${stake * 2})</span></p><span class="ribbon r-crimson">실패 시</span><p>건 나사를 잃는다 <span class="down">(−${stake})</span></p></div><p class="mono">${WAGER_TEXT.mono}</p>`,
     back: { label: '걸지 않는다', attrs: 'data-no' },
     go: { label: '건다', attrs: 'data-yes' },
     dismiss: closeWin,
@@ -1955,7 +1959,7 @@ const rosterSlot = (u: Squad, i: number): string => {
   const hearts = Array.from({ length: Math.max(all, left) }, (_, k) => `<i class="life${k < left ? '' : ' off'}"></i>`).join('');
   const label = [u.name ?? PIECE_NAMES_KO[u.t], T.hp(hp, max), T.brace(left, all), u.cracked ? T.gearCracked : T.gear, u.quirk ? QUIRKS[u.quirk].name : ''].filter(Boolean).join(' · ');
   return `<button type="button" class="mr-slot${pct < 35 ? ' low' : pct < 100 ? ' hurt' : ''}${u.cracked ? ' cracked' : ''}" data-crew="${i}" aria-label="${label}">`
-    + `<span class="mr-pc">${pieceImg(u.t, 0, 'small', 24)}${u.cracked ? `<em class="mr-crack">${T.cracked}</em>` : ''}</span>`
+    + `<span class="mr-pc">${pieceImg(u.t, 0, 'small', 24)}${u.cracked ? '<i class="mr-crack" aria-hidden="true"></i>' : ''}</span>`
     + `<span class="mr-hp"><span class="mr-bar"><i style="width:${pct}%"></i></span><b>${hp}</b></span>`
     + `<span class="mr-life">${hearts}</span></button>`;
 };
@@ -2119,6 +2123,8 @@ const EV_RECENT = 7;
 /** 장면 액자 위 황동 명패 조각 (UI-04 scene-frame-plate, D-391 다듬기) */
 const SCENE_PLATE = new URL('../assets/ui/chrome/v2/scene-frame-plate.png', import.meta.url).href;
 /** 정보 단추가 넘겨 보이는 쪽: 풀이(info) → 결과 줄에 든 용어(KEYWORDS, 기본 용어 나사 · 태엽 빼고) 하나씩. 왼쪽 효과 쪽지에서 넘김 */
+/** 용어 아이콘 한 칸 (TI-01 · 02 · D-507) — 없는 용어는 빈 글 */
+const termIcon = (name: string): string => (TERM_ICON[name] ? `<i class="term-ico" style="background-image:url(ui/icons16/${TERM_ICON[name]}.png)" aria-hidden="true"></i>` : '');
 const evPages = (c: SliceEventChoice): { who: string; text: string }[] => [
   ...(c.info ? [{ who: '풀이', text: c.info }] : []),
   ...KEYWORDS.filter(([name, , gate]) => gate !== 'base' && name.length >= 2 && !/[+×]/.test(name) && c.desc.includes(name)).map(([name, text]) => ({ who: name, text })),
@@ -2255,7 +2261,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     const page = pages[infoAt.i];
     detail.querySelector('.ws-detail-title')!.textContent = ev.choices[k].label;
     detail.querySelector('.ws-detail-text')!.innerHTML = effectNumbers(page.text);
-    detail.querySelector('.ws-detail-count')!.textContent = `${page.who === '풀이' ? '효과' : page.who} · ${infoAt.i + 1} / ${pages.length}`;
+    detail.querySelector('.ws-detail-count')!.innerHTML = `${page.who === '풀이' ? '효과' : `${termIcon(page.who)}${page.who}`} · ${infoAt.i + 1} / ${pages.length}`;
     detail.querySelector<HTMLButtonElement>('.ws-detail-next')!.hidden = pages.length < 2;
     el.querySelectorAll<HTMLElement>('[data-info]').forEach((b) => b.setAttribute('aria-expanded', String(Number(b.dataset.info) === k)));
     detail.hidden = false;
@@ -2788,8 +2794,8 @@ const stageIntro = (def: BattleDef): Promise<void> => {
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
 const BOSS_ART: Record<string, string> = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' };
-/** 반장 2단계 초상 (CI-02~08 · D-505): 받은 반장만. 경보(CI-07)는 대기 — 없으면 1단계 그림을 빌린다 */
-const BOSS_ART_P2: Record<string, string> = { plate: 'boss-plate-p2', spawn: 'boss-assembly-p2', thorns: 'boss-thorns-p2', gilded: 'boss-gilded-p2', inspect: 'boss-inspector-p2', magnet: 'boss-magnet-p2' };
+/** 반장 2단계 초상 (CI-02~08 · D-505 · 경보 CI-07 D-507): 일곱 반장 모두 받은 그림. 표에 없으면 1단계 그림을 빌린다 */
+const BOSS_ART_P2: Record<string, string> = { plate: 'boss-plate-p2', spawn: 'boss-assembly-p2', thorns: 'boss-thorns-p2', gilded: 'boss-gilded-p2', inspect: 'boss-inspector-p2', magnet: 'boss-magnet-p2', alarm: 'boss-alarm-p2' };
 const p2Art = (rule: string): string => BOSS_ART_P2[rule] ?? (rule === 'gilded' ? gildedArt() : BOSS_ART[rule] ?? 'boss-plate');
 
 /**
@@ -3304,7 +3310,7 @@ const deathRites = async (): Promise<void> => {
     if (c.t !== 'K' && !c.cracked && !melted) {
       const fx = document.createElement('div');
       fx.className = 'crackfx';
-      fx.innerHTML = `<div><span class="dr-row">${riteFace(c.t)}<span class="lifes big"><i class="life"></i><i class="life breaking"></i></span></span><p class="narr"></p><b>${crewLabel(c)}</b><small>${LIFE_TEXT.riteSys}</small></div>`;
+      fx.innerHTML = `<div><span class="dr-row">${riteFace(c.t)}<span class="lifes big cogs"><i class="life"></i><i class="life breaking"></i></span></span><p class="narr"></p><b>${crewLabel(c)}</b><small>${LIFE_TEXT.riteSys}</small></div>`;
       document.body.appendChild(fx);
       sfx('hurt');
       // D-472: 맞은 순간 — 초상이 움찔하고 판이 흔들린다
@@ -3723,7 +3729,7 @@ const dictHtml = (): string => {
   const fresh = new Set(m.termsNew ?? []);
   const list = KEYWORDS.filter(([k, , g]) => g === 'base' || on.has(k));
   const left = KEYWORDS.length - list.length;
-  return `<div class="dict">${list.map(([k, v]) => `<div class="term"><b>${k}${fresh.has(k) ? ' <i class="new-tag">NEW</i>' : ''}</b><span>${v}</span></div>`).join('')}</div>${left ? `<p class="note">아직 만나지 않은 용어 ${left}개 — 나아가면 열립니다.</p>` : ''}`;
+  return `<div class="dict">${list.map(([k, v]) => `<div class="term"><b>${termIcon(k)}${k}${fresh.has(k) ? ' <i class="new-tag">NEW</i>' : ''}</b><span>${v}</span></div>`).join('')}</div>${left ? `<p class="note">아직 만나지 않은 용어 ${left}개 — 나아가면 열립니다.</p>` : ''}`;
 };
 /**
  * ? 도움말 (D-263, 사용자: 「지금 화면 · 용어 · 안내서 전체는 가독성 최악 — 지금 화면은 안내서에 통합」):

@@ -168,7 +168,7 @@ export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { notches: '+',
  */
 export type CharmId = 'revive' | 'rewind';
 export const CHARMS: Record<CharmId, { name: string; icon: string; desc: string }> = {
-  revive: { name: '여벌 심장 톱니', icon: 'life', desc: '킹 대신 깨진다. (그 대국을 처음부터)' },
+  revive: { name: '여벌 심장 톱니', icon: 'heartCog', desc: '킹 대신 깨진다. (그 대국을 처음부터)' },
   rewind: { name: '역회전 톱니', icon: 'rewind', desc: '이번 턴을 처음으로 되감는다. (되감기 1회)' },
 };
 export const CHARM_NUM = {

@@ -857,6 +857,8 @@ body.slice .cf .cf-name { top: 4px; height: 18px; font: 700 12px/18px Galmuri11,
 .life { position: relative; display: inline-block; width: 16px; height: 16px; background: var(--life-on) center / 16px 16px no-repeat; image-rendering: pixelated; }
 .life.off { background-image: var(--life-off); }
 .lifes.big { gap: 8px; margin: 0 0 4px; }
+/* 쓰러짐 의식의 깨지는 것은 심장 톱니 (D-507 — 버팀 철판과 다른 그림) */
+.lifes.cogs { --life-on: var(--cog-on); --life-off: var(--cog-off); }
 .lifes.big .life { width: 64px; height: 64px; background-size: 64px 64px; }
 .life.breaking { animation: life-break 720ms steps(1, end) 1 both; }
 .life.breaking::after { content: ''; position: absolute; left: 50%; top: 50%; width: 2px; height: 2px; background: transparent; animation: life-shard 720ms steps(1, end) 1 both; }
@@ -1579,6 +1581,7 @@ body.slice .cf.cf.cf.crew-card .cb-atk { left: 0; top: 30.2%; width: 18.75%; hei
 body.slice .cf.cf.cf.crew-card .cb-hp { left: 81.25%; top: 30.2%; width: 18.75%; height: 13.9%; }
 body.slice .cf.cf.cf.crew-card .cb-hp .er-hpn { font: inherit; color: inherit; }
 body.slice .cf.cf.cf.crew-card .cb-lives { right: 19%; top: 13.9%; display: flex; gap: 1px; z-index: 4; }
+body.slice .cf.cf.cf.crew-card .cb-cog { width: 16px; height: 16px; margin-left: 3px; background: var(--cog-off) center / contain no-repeat; image-rendering: pixelated; }
 body.slice .cf.cf.cf.crew-card .cb-life { width: 16px; height: 16px; background: var(--life-on) center / contain no-repeat; image-rendering: pixelated; }
 body.slice .cf.cf.cf.crew-card .cb-bar { left: 22%; width: 56%; top: 46%; height: 6px; z-index: 4; }
 body.slice .cf.cf.cf.crew-card .cb-bar .er-hp { width: 100%; height: 6px; }

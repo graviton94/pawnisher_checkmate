@@ -63,7 +63,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     el.className = `bossfx kit b-${o.rule}`;
     el.style.setProperty('--accent', look.accent);
     el.innerHTML = `<div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i>
-      <div class="bf-text"><span class="ribbon r-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><div class="boss-plate bf-board${o.phase2 ? ' p2' : ''}"><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul>${o.stats ? `<div class="bf-stats"><span class="bstat" aria-label="HP ${o.stats.hp}" style="--ic:url(${new URL('ui/icons16/life@16.png', location.href).href})"><i></i>${o.stats.hp}</span><span class="bstat" aria-label="공격 ${o.stats.atk}" style="--ic:url(${new URL('ui/icons16/c.smash@16.png', location.href).href})"><i></i>${o.stats.atk}</span></div>` : ''}</div></div>
+      <div class="bf-text"><span class="ribbon r-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><div class="boss-plate bf-board${o.phase2 ? ' p2' : ''}"><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul>${o.stats ? `<div class="bf-stats"><span class="bstat" aria-label="HP ${o.stats.hp}" style="--ic:url(${new URL('ui/icons16/heart@16.png', location.href).href})"><i></i>${o.stats.hp}</span><span class="bstat" aria-label="공격 ${o.stats.atk}" style="--ic:url(${new URL('ui/icons16/c.smash@16.png', location.href).href})"><i></i>${o.stats.atk}</span></div>` : ''}</div></div>
       ${cutChromeHtml()}`;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');

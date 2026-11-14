@@ -38,7 +38,6 @@ export const MAP_TEXT = {
     brace: (left: number, max: number) => `버팀 ${left}/${max}`,
     gear: '심장 톱니 성함',
     gearCracked: '심장 톱니 금 감',
-    cracked: '금',
     king: '분대의 심장 · 쓰러지면 끝',
     noQuirk: '기벽 없음',
     look: '살핀다',
@@ -187,6 +186,16 @@ export const KEYWORDS: [string, string, TermGate][] = [
   ['둘레 절반', '상하좌우 적에게\n절반 피해.', 'tactic'],
   ['한 칸 밀기', '맞은 적을 뒤로 한 칸 밉니다.\n막히면 부딪쳐 충돌 피해.', 'tactic'],
 ];
+
+/**
+ * 용어 아이콘 (TI-01 · TI-02 · D-507 — 설문 Q6 헷갈린 말): 용어 사전 · 사건 정보 쪽에서 이름 앞에 32도트 아이콘(public/ui/icons16/<키>.png).
+ * 버팀 = 덧댄 철판(life) · 심장 톱니 = 진홍 톱니(heartCog) — 하트를 쓰지 않아 둘이 겹치지 않는다. HP 표지는 옛 하트(heart).
+ */
+export const TERM_ICON: Record<string, string> = {
+  태엽: 'key', 버팀: 'life', '심장 톱니': 'heartCog', 부적: 'charm', 방열판: 'vent', 연쇄: 'chain', '연쇄 소모': 'chain',
+  '청록 합 표지': 'signAdd', '주황 곱 표지': 'signMul', 보충병: 'reserve', 부품: 'partBelt', 기벽: 'quirk', '회피 반격': 'counter',
+  '기어 쇼크': 'gearShock', 기절: 'stun', 승격: 'promote', 속전: 'speed',
+};
 
 /** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */
 /** 반장 칭호 (D-315 — 칠죄종을 이름 없이 칭호로만: 철갑 허영 · 검수 교만 · 조립 탐식 · 자석 탐욕 · 출하 분노 · 경보 질투) */

@@ -12,7 +12,9 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     'new-law': 941 / 180, 'gilded-fallen': 941 / 180,
     # D-451: S-13~S-20 (받으면 같은 320×180 균일 격자 — 원본 크기가 다르면 여기 값을 고친다)
     'chained-door': 941 / 180, 'old-spring': 941 / 180, 'scarred-wall': 941 / 180, 'crown-dais': 941 / 180,
-    'casting-floor': 941 / 180, 'gold-cast': 941 / 180, 'crown-gears': 941 / 180, 'white-land': 941 / 180}
+    'casting-floor': 941 / 180, 'gold-cast': 941 / 180, 'crown-gears': 941 / 180, 'white-land': 941 / 180,
+    # D-507: WG-01 판돈 무대 1672×941 → 320×180 균일 격자(발주 ×6이 아니라 생성기 약 5.23px)
+    'wager-table': 941 / 180}
 
 
 def options(name):
@@ -22,7 +24,7 @@ def options(name):
     if name in ('epilogue-hands', 'throne-mold', 'departure-dock', 'shipping-interior',
                 'departure-decision', 'shipping-company', 'gilded-solitude',
                 'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen',
-                'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land'):
+                'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table'):
         opts['uniform'] = True
     return opts
 
@@ -31,12 +33,14 @@ def options(name):
 # body = 실루엣(외곽선 포함 · 흰 테 제외)의 세로 칸 수. 원본 도트 간격은 약 15px(P-03 주기 14.8px 검출, 나머지도 실루엣 ~810px / 54 ≈ 15)
 # → 원래 격자 그대로 54칸으로 복원한다(바탕 기물 47칸보다 7칸 크지만 이형이 가늘어 판 위에서 읽히려면 필요). 간격(px) = 원본 실루엣 높이 / body.
 # outline = 실루엣 안쪽 먹선 두께, mirror = 좌우 대칭('shape' 실루엣만 · 'all' 먹선까지), dx = 가로 위치 보정.
-# 실측 간격(px, 2026-11-14 반입): 대포 14.69 · 낙타 14.32 · 메뚜기 14.85 · 대주교 15.39 · 총독 15.5 · 거대 폰 11.16 · 룩 11.14 · 퀸 11.19
+# 실측 간격(px, 2026-11-14 반입): 대포 14.69 · 낙타 14.32 · 메뚜기 14.85 · 대주교 15.39(1차) → 13.86(재발주) · 총독 15.5 · 거대 폰 11.16 · 룩 11.14 · 퀸 11.19
 PIECE_GRID = {
     'R:cannon': {'body': 54, 'outline': 2, 'mirror': 'all'},
     'N:camel': {'body': 54, 'outline': 2},
     'Q:hopper': {'body': 54, 'outline': 2, 'mirror': 'shape'},
-    'B:archbishop': {'body': 54, 'outline': 2},  # 1차 원본 build-res/order/P-04-v1-source.png로 반입 — 재발주(갈기가 흐리고 판 위에서 비숍과 구분 안 됨)
+    # 재발주본(D-507) build-res/order/P-04-source.png: 원본 간격 13.86px(1774/128 — 발주 8배가 아니라 생성기 격자) · 실루엣 727px → 52칸 그대로 복원.
+    # 톱니 볏이 먹선으로 닫혀 와 판 크기에서도 비숍과 갈린다. (1차본 P-04-v1-source.png는 15.39px · 54칸이었다)
+    'B:archbishop': {'body': 52, 'outline': 2},
     'R:chancellor': {'body': 54, 'outline': 2},
     # 거대 128칸: 높이 112~120(흰 테 포함) → 몸 108칸(원본 간격 11.2px ≈ 생성기 격자 그대로), 먹선 2 · 흰 테 4.
     # 대칭은 맞추지 않는다 — 찌그러진 폰 머리 · 녹아 붙은 퀸 뿔 · 부러진 룩 성가퀴가 발주한 「불량」이다
@@ -76,6 +80,8 @@ BOSS_P2 = {
     'CI-05': {'dst': 'boss-magnet-p2', 'phase1': 'boss-magnet', 'pitch': 6.11, 'extra': ['#2F6FE0', '#7FB2FF', '#1F3C9E']},
     'CI-06': {'dst': 'boss-thorns-p2', 'phase1': 'boss-thorns', 'pitch': 5.97},
     'CI-08': {'dst': 'boss-gilded-p2', 'phase1': 'boss-gilded', 'pitch': 6.13},
+    # 경보(D-507): 진홍 테마로 옴 · 1단계와 같은 룩형 탑 · 경광등 · 사슬 · 등불 — 두 축 점수 최고 6.24px(6.0은 경계 점수 최저) → 201칸 정사각
+    'CI-07': {'dst': 'boss-alarm-p2', 'phase1': 'boss-alarm', 'pitch': 6.24},
 }
 
 

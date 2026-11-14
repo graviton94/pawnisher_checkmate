@@ -114,6 +114,8 @@
 @keyframes betcrack { 0% { transform: translateX(-3px); } 25% { transform: translateX(3px); } 50% { transform: translateX(-2px); } 75% { transform: translateX(1px); } 100% { transform: none; } }
 /* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */
 .bet-slot { display: flex; align-items: flex-end; justify-content: center; gap: var(--px); min-height: 56px; padding: var(--s1) var(--s2); }
+/* 판돈 무대 (WG-01 · D-507): 받은 장면을 비율 그대로 cover — 초점 = 내기판 가운데 위 · 동전 나이트(가로 55% · 세로 48%). 늘리지 않는다(D-386) */
+.win .bet-slot.bet-scene { min-height: clamp(56px, calc(100vh - 300px), 112px); border-image-slice: var(--k-inset); background: #0b0b0e 55% 48% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
 .bet-slot > img { width: 32px; height: 32px; image-rendering: pixelated; }
 .bet-slot > img.drop { animation: betdrop 360ms steps(6, jump-none) both; }
 .bet-slot > img.drop:nth-child(2) { animation-delay: 80ms; }

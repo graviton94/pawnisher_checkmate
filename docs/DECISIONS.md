@@ -3734,3 +3734,17 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
   - 판 위 독백 테이프(D-490 종이 테이프 한 줄)는 얼굴 없이 그대로 — 누른 자리 곁 짧은 한 줄이라 액자를 붙이지 않는다.
 - 증거: `node tools/qa/pb.cjs portraits production/qa/evidence/2026-11-14-pt-wire`(+ `OBSERVE_PRESET=small-mobile`) → `2026-11-14-pt-wire-{king,piece,check,event-king,event-npc,cut}[-667].png`(915×412 DPR 2.625 · 667×375 DPR 2).
 
+### D-507 — 받은 P-04 재발주본 · CI-07 · TI-01 · TI-02 · WG-01 반입 · 버팀과 심장 톱니 그림 가르기 (2026-11-14, D-489 P-04 재발주 · D-505 「경보만 CI-07 대기」 · D-503 「금」 표지 · D-490/D-503 판돈 「임시 — WG-01 대기」를 푼다)
+
+- **판정** (원본 · 지금 · 결과 4배 비교 `production/qa/evidence/2026-11-14-imp-{p04-compare,ci07→ci-07,ti-01,ti-02,ti-states}.png`):
+  - **P-04 대주교 재발주본 — 사용.** 투명 바탕 · 먹선 2도트 · 흰 테 없음(지시대로), 주교관 뒤 톱니 볏이 먹선으로 닫혔다. `python3 -I tools/pixel/piece_import.py build-res/order/P-04-source.png B:archbishop --write` → `maker.py export`. 원본 간격 13.86px(1774/128) · 실루엣 727px → **몸 52칸**(원래 격자 그대로, `PIECE_GRID` 54 → 52), 폭 36칸. 판 48dp에서 흰 · 검 모두 바탕 비숍과 실루엣이 갈린다(`imp-p04-board-915.png`). 1차본은 교체.
+  - **CI-07 경보 2단계 — 사용.** 1단계와 같은 룩형 탑 · 경광등 · 사슬 · 등불을 낮게, 진홍 테마. `boss_p2_import.py CI-07`, 간격 6.24px(두 축 경계 점수 최고 · 6.0은 최저) → 201칸 정사각, 39색. `BOSS_ART_P2.alarm = boss-alarm-p2` — 일곱 반장 모두 받은 2단계 그림(1단계 빌림 걷음).
+  - **TI-01 · TI-02 — 사용.** 순서 = 발주 순서 그대로. 발주 격자(168×88 · 8배)가 아니라 약 13px 도트 → 새 도구 `tools/pixel/term_icon_import.py`: 칸(4×2)마다 마젠타가 아닌 상자 → 긴 변 30칸 정사각 칸(비율 그대로) · 칸 가운데 60% 중앙값 · 발주 15색 + 아이콘 팔레트 → 먹 한 겹 = 32칸 → `icons32/` · `icons32_ext/` · `public/ui/icons16/<키>.png(+@16)`. 키: key · life · heartCog · charm · vent · chain · signAdd · signMul / reserve · partBelt · quirk · counter · gearShock · stun · promote · speed.
+    - 상태 그림은 받은 그림의 색만 바꿨다(새 그림 아님): `life.crack`(청록 유리를 끄고 한 단 어둡게) · `heartCog.crack`(불씨를 끄고 진홍 한 단 아래 + 2도트 먹 금). 옛 `life`(하트 + 톱니)는 `heart`로 보존 → 반장 등장 판 HP 표지.
+  - **WG-01 판돈 무대 — 잘라 쓰며 재발주.** 내기판 · 두 홈 · 동전 · 등불은 좋지만 동전 나이트에 **팔 · 눈 · 외눈 안경 · 입**이 그려졌다(기물 얼굴 · 팔 금지 위반) · 갈기 동전이 빠졌다. 판돈 칸 높이에서는 내기판 가운데만 보여 위반이 거의 안 보이므로 지금 쓴다. 320×180 균일 격자(5.23px, `scene_recipe` `wager-table`), 원본은 `WG-01-v1-source.png`로 옮기고 발주서 WG-01을 「팔 · 앞발 · 눈 · 외눈 안경 · 입 없음, 갈기에 동전 셋, 나사는 내기판 위」로 고쳐 다시 냈다(「도트 강제」 블록 그대로). WG-02 미수령 — 동전 · 칩은 지금 나사 아이콘.
+- **연결 — 버팀 ≠ 심장 톱니 (설문 Q6 · 피드백 #27)**:
+  - 버팀 = 덧댄 철판(`--life-on/off` = life · life.crack): 분대원 카드 · 지도 분대 현황 · 사건 결과 하트 자리 그대로(그림만 바뀜).
+  - 심장 톱니 = 진홍 톱니(`--cog-on/off`): 쓰러짐 의식에서 깨지는 것(`.lifes.cogs`), 지도 현황의 금 간 표지(옛 「금」 글자 · `MAP_TEXT.roster.cracked` 걷음 → `heartCog.crack` 16칸), 분대원 카드 버팀 줄 끝(금 갔을 때만), 부품 「여벌 심장 톱니」 아이콘.
+  - 용어 아이콘 `TERM_ICON`(`src/data/hud.ts`): 용어 사전 이름 앞 32칸(정수 1배) · 사건 정보 쪽 머리 16칸 — 태엽 · 버팀 · 심장 톱니 · 부적 · 방열판 · 연쇄 · 합 · 곱 표지 · 보충병 · 부품(부품 띠) · 기벽 · 회피 반격 · 기어 쇼크 · 기절 · 승격 · 속전.
+  - 판돈 창: 판돈 칸(움푹 칸)을 테만 남기고(가운데 채움 없는 9-slice) 속에 WG-01을 cover · 초점 55% 48%, 높이 `clamp(56px, 100vh − 300px, 112px)` — 667×375에서도 단추가 화면 안.
+- 검증: `OBSERVE_URL=… node tools/qa/imp-assets.cjs [915|667]` → `production/qa/evidence/2026-11-14-imp-{p04-board,ci07-p2,ti-map-roster,ti-crew,ti-dict,ti-rite,ti-event,wg01-wager}-{915,667}.png`(915×412 DPR 2.625 · 667×375 DPR 2, 터치). `tsc` · `npm test` 411개 통과 · `ui-audit` TXT 새 줄 없음.

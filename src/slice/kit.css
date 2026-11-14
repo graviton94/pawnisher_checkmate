@@ -467,7 +467,7 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .win .gd-media.steam .st-track i { width: calc(var(--px) * 5); height: calc(var(--px) * 9); }
 .win .gd-media.formula { padding: var(--s1) var(--s2); gap: 0; }
 .win .dict { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s3); align-content: start; }
-.win .dict .term b { display: block; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.win .dict .term b { display: flex; align-items: center; gap: 4px; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
 .win .dict .term span { display: block; font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
 /* 설문: 눈금 단추 줄 · 고르기 무리 */
 .win .scale { display: flex; gap: var(--s2); justify-content: center; }
@@ -993,7 +993,8 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .mr-slot.chosen { box-shadow: inset 0 0 0 2px #f5c542; }
 .mapfx .mr-pc { position: relative; width: 24px; height: 24px; }
 .mapfx .mr-pc img { display: block; width: 24px; height: 24px; image-rendering: pixelated; }
-.mapfx .mr-crack { position: absolute; right: -14px; top: -2px; padding: 0 2px; background: #7a1218; box-shadow: 0 0 0 2px #0b0b0e; color: #ffc0c0; font: 700 12px/14px Galmuri11, sans-serif; font-style: normal; }
+/* 금 간 심장 톱니 (TI-01 heartCog.crack · D-507 — 옛 「금」 글자 표지를 대신한다) */
+.mapfx .mr-crack { position: absolute; right: -12px; top: -4px; width: 16px; height: 16px; background: var(--cog-off) center / 16px 16px no-repeat; image-rendering: pixelated; }
 .mapfx .mr-hp { display: flex; align-items: center; gap: 2px; height: 12px; }
 .mapfx .mr-bar { display: block; width: 22px; height: 4px; background: #33313b; box-shadow: 0 0 0 1px #0b0b0e; }
 .mapfx .mr-bar i { display: block; height: 100%; background: #5eead4; }
@@ -1303,3 +1304,7 @@ body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has
    A 치는 칸 = 손패 · 판만 / B 예고와 막기 = + 태엽 · 턴 표시 · 적의 수 · 턴 끝 / C 킹 잡기 = 전부(되감기 포함) */
 body[data-drill='a'] #vials, body[data-drill='a'] #right > *, body[data-drill='a'] #deckrow { visibility: hidden; }
 body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='b'] #btn-help, body[data-drill='b'] #parts, body[data-drill='b'] #deckrow, body[data-drill='b'] #bet-chip { visibility: hidden; }
+
+/* 용어 아이콘 (TI-01 · 02 · D-507): 32도트를 정수 1배(16칸 줄이지 않고 32px) — 사전 · 사건 정보 쪽 머리 */
+.term-ico { flex: none; display: inline-block; width: 32px; height: 32px; margin: 0; background: center / 32px 32px no-repeat; image-rendering: pixelated; vertical-align: middle; }
+.win-scene .ws-detail-count .term-ico { width: 16px; height: 16px; margin: 0 4px 0 0; background-size: 16px 16px; vertical-align: -3px; }
