@@ -2049,6 +2049,16 @@ export const fallenAfter = (b: SliceBattle, squad: Squad[]): { crew: Squad; fall
 
 /** 판 사이 회복 (사용자: 누적되면 너무 약해진다): 살아남은 분대는 최대 HP의 일부를 되찾는다 */
 /** heal 대국 사이 · actHeal 1~3막 반장을 쓰러뜨린 뒤 정비(최대 HP 비율, 승급 조항과 별개 — D-469: 막 첫 대국에 바로 쓰러지지 않게) */
+/** 작업대 수리 (피드백 #17 · D-503): 고른 분대원 하나 HP +최대 HP × pct (1 = 가득) */
+export const repairOne = (squad: Squad[], i: number, pct: number): Squad[] =>
+  squad.map((u, k) => (k === i ? { ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * pct)) } : u));
+/** 잃은 HP가 가장 큰 분대원 번호 (봇 · 시뮬레이션의 수리 대상) — 모두 멀쩡하면 -1 */
+export const mostHurt = (squad: Squad[]): number => {
+  let best = -1, lost = 0;
+  squad.forEach((u, k) => { const l = crewMaxHp(u) - (u.hp ?? crewMaxHp(u)); if (l > lost) { lost = l; best = k; } });
+  return best;
+};
+
 export const REST = { heal: 0.3, actHeal: 0.5, reviveHp: 0.5, overhaul: 0.25 };
 
 /** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */

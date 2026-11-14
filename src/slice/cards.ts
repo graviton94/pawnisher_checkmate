@@ -318,8 +318,12 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
 /** gradePrice · partGradePrice (D-217 3): 고물상 값은 등급으로 — 일반 · 희귀 · 황금 */
 /** refinePrice (D-218): 고물상 다듬기 — 남는 나사를 강화로 */
 export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 }; // 진열대 = 카드 4 + 부품 1 (부적이 나오면 카드 한 자리) + 서비스 둘 — 한 화면에 4 + 3, 넘김 없음 (D-394, 총괄 리뷰 2-3)
-/** braceDoors = 작업대 「보강」 생명 수 (D-319) */
-export const FORGE = { repairPct: 0.4, braceDoors: 1 };
+/**
+ * braceDoors = 작업대 「보강」 버팀 수 (D-319).
+ * repairOne = 작업대 「수리」: 고른 분대원 하나의 HP를 최대 HP × 이 몫만큼 (1 = 가득) — 피드백 #17 · D-503.
+ * 예전 「분대 전원 HP +40%」는 고물상 정비(전원 +35%)와 겹쳤다 — 작업대는 하나를 골라 온전히.
+ */
+export const FORGE = { repairOne: 1, braceDoors: 1 };
 /**
  * 경제 압박 (D-247, 사용자: 「수리 · 강화 · 빼기를 너무 자주 고를 수 있고 슬롯도 없어 돈을 펑펑 쓰면 된다 — 한정된 재화로 고민하는 게 아니라」):
  * 부품 칸 · 서비스 값 누적(슬더스식 빼기 값 오름) · 고물상 서비스는 셋 중 둘만 · 작업대도 셋 중 둘.

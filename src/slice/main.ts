@@ -81,7 +81,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track as trackEvent } from './telemetry';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type ActSnap, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, stallInfo, braceLeft, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -2512,7 +2512,7 @@ const braceScreen = (): void => {
   const list = squad.map((u, i) => ({ u, i })).filter(({ u }) => u.t !== 'K');
   pickScreen({
     title: SCREEN_TEXT.brace,
-    items: list.map(({ u, i }) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>버팀 ${braceLeft(u)} → <b>${braceLeft(u) + FORGE.braceDoors}</b></span>` })),
+    items: list.map(({ u, i }) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>${SCREEN_TEXT.braceInfo(braceLeft(u), braceMax(u), FORGE.braceDoors)}</span>` })),
     skip: { label: SCREEN_TEXT.stop, attrs: 'data-back' },
     go: { label: SCREEN_TEXT.braceGo },
     onSelect: () => sfx('lift'),
@@ -2521,10 +2521,31 @@ const braceScreen = (): void => {
         const i = Number(k);
         squad[i] = { ...squad[i], doors: (squad[i].doors ?? 0) + FORGE.braceDoors };
         sfx('stamp');
-        toast(`${squad[i].name ?? PIECE_NAMES_KO[squad[i].t]}의 축이 두꺼워졌다. (버팀 +${FORGE.braceDoors})`);
+        toast(SCREEN_TEXT.braceDone(squad[i].name ?? PIECE_NAMES_KO[squad[i].t], FORGE.braceDoors));
         window.setTimeout(advance, 300);
       }),
   }).querySelector('[data-back]')!.addEventListener('click', forgeScreen);
+};
+/** 작업대 수리 (피드백 #17 · D-503): 분대원 하나를 골라 HP 가득 — 보강과 같은 고르기(누르면 고름 · 다시 누르면 확정). 킹도 고칠 수 있다 */
+const repairScreen = (): void => {
+  const pct = FORGE.repairOne;
+  const after = (u: Squad): number => Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * pct));
+  const el = pickScreen({
+    title: SCREEN_TEXT.repair,
+    items: squad.map((u, i) => ({ key: String(i), html: crewCard(u, { hp: u.hp ?? crewMaxHp(u), max: crewMaxHp(u) }), info: `<span>${SCREEN_TEXT.repairInfo(u.hp ?? crewMaxHp(u), crewMaxHp(u), after(u))}</span>`, off: (u.hp ?? crewMaxHp(u)) >= crewMaxHp(u) })),
+    skip: { label: SCREEN_TEXT.stop, attrs: 'data-back' },
+    go: { label: SCREEN_TEXT.repairGo },
+    onSelect: () => sfx('lift'),
+    onPick: (k, slot) => {
+      const i = Number(k);
+      squad = repairOne(squad, i, pct);
+      sfx('awaken');
+      healFx(slot, SCREEN_TEXT.fullHp);
+      toast(SCREEN_TEXT.repairDone(squad[i].name ?? PIECE_NAMES_KO[squad[i].t]));
+      takeFx(slot, () => window.setTimeout(advance, 300));
+    },
+  });
+  el.querySelector('[data-back]')!.addEventListener('click', forgeScreen);
 };
 const forgeScreen = (): void => {
   // 장소 (D-200 · D-394): 외눈 정비공의 작업대 BG-02 — 왼쪽 그림(정비공 초점) · 오른쪽 선택지 판 넷
@@ -2540,9 +2561,9 @@ const forgeScreen = (): void => {
   // 최종 정비 (각본 S5): 외눈 정비공의 마지막 말
   if (forgeFinal) window.setTimeout(() => toast(GILDED_STORY.forge.map((l) => `${l.who} “${l.t}”`).join(' '), 4200), 600);
   // 손질 카드 넷 (D-399): 고물상과 같은 상아 카드 한 줄 — 바탕은 정비공 그림(덮기 + 디더), 넘치면 가로로 민다
-  const repairPct = Math.round(FORGE.repairPct * 100);
+  const repairPct = Math.round(FORGE.repairOne * 100);
   const keys: SvcKey[] = ['refine', 'remove', 'repair', ...(squad.some((u) => u.t !== 'K') ? (['brace'] as const) : [])];
-  const items: PickItem[] = keys.map((k) => ({ key: k, html: svcFace(k, k === 'repair' ? repairPct : k === 'brace' ? FORGE.braceDoors : 0), info: forgeStatus(k) }));
+  const items: PickItem[] = keys.map((k) => ({ key: k, html: svcFace(k, k === 'repair' ? repairPct : k === 'brace' ? FORGE.braceDoors : 0), info: forgeStatus(k), off: k === 'repair' && !squad.some((u) => (u.hp ?? crewMaxHp(u)) < crewMaxHp(u)) }));
   const el = placeScreen({
     art: 'bg-forge',
     focus: [0.22, 0.4],
@@ -2562,15 +2583,11 @@ const forgeScreen = (): void => {
       sfx('lift');
       say.textContent = svcLine(k as SvcKey, k === 'repair' ? repairPct : FORGE.braceDoors);
     },
-    onPick: (k, btn) => {
+    onPick: (k) => {
       if (k === 'brace') return braceScreen();
       if (k === 'remove') return deckView('remove', (removed) => (removed ? advance() : forgeScreen()));
       if (k === 'refine') return refineScreen();
-      squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * FORGE.repairPct)) }));
-      sfx('awaken');
-      healFx(btn, `HP +${repairPct}%`);
-      toast(`분대 전원 HP +${repairPct}%`);
-      takeFx(btn, () => window.setTimeout(advance, 300));
+      if (k === 'repair') return repairScreen();
     },
   });
 };
@@ -2589,7 +2606,8 @@ const forgeStatus = (k: SvcKey): string => {
     const pct = Math.round((hp / Math.max(1, max)) * 100), hurt = squad.filter((u) => (u.hp ?? crewMaxHp(u)) < crewMaxHp(u)).length;
     return `<span class="${pct < 50 ? 'bad' : pct < 85 ? 'mid' : 'good'}">${T.hp} <b>${pct}%</b> · ${T.hurt} <b>${hurt}</b></span>`;
   }
-  if (k === 'brace') { const crew = squad.filter((u) => u.t !== 'K'); const low = Math.min(...crew.map((u) => braceLeft(u))); return `<span class="${low ? 'mid' : 'bad'}">${T.doors} <b>${low}</b></span>`; }
+  // #19 (D-503): 「가장 얇은 · 적은 버팀」은 뜻이 안 읽혔다 — 버팀이 하나도 없는 분대원 수 / 보강할 수 있는 분대원 수
+  if (k === 'brace') { const crew = squad.filter((u) => u.t !== 'K'); const none = crew.filter((u) => braceLeft(u) === 0).length; return `<span class="${none ? 'bad' : 'mid'}">${T.noBrace} <b>${none}</b> / ${crew.length}</span>`; }
   return '';
 };
 

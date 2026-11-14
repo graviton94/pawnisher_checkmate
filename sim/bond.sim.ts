@@ -7,7 +7,7 @@ import { PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '.
 import { makeCrew } from '../src/slice/crew';
 import { buildRun, battleFor, type MapNode } from '../src/slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../src/slice/events';
-import { crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../src/slice/battle';
+import { crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, mostHurt, repairOne, restSquad, squadAfter, type Squad } from '../src/slice/battle';
 import { playOut } from '../src/slice/bot';
 
 /**
@@ -240,7 +240,7 @@ const one = (seed: number, on: string) => {
         }
       } else if (n.kind === 'forge') {
         if (B && (!BOND.fixPrice || broken.size >= 2)) { repairAll(); bump(T, 'forge:fix'); }
-        else if (hpRatio() < 0.6) { squad = restSquad(squad, FORGE.repairPct); bump(T, 'forge:repair'); }
+        else if (hpRatio() < 0.6) { squad = repairOne(squad, mostHurt(squad), FORGE.repairOne); bump(T, 'forge:repair'); }
         else refineBest('forge:refine');
       } else if (n.kind === 'event') {
         const id = SLICE_EVENT_IDS[rng.int(SLICE_EVENT_IDS.length)];

@@ -211,7 +211,10 @@ export const SCREEN_TEXT = {
   full: '칸 가득', shop: '고물상', forge: '작업대', forgeFinal: '최종 정비', refine: '다듬기', brace: '보강', remove: '카드 빼기', deck: '덱', crew: '분대',
   // 출하 끝 (D-402, 사용자: 「『출하 완료』는 마지막 장을 끝낸 느낌이 아니다」): 하자품이라 불리던 세트가 도금왕을 꺾고 받는 판정 — 「하자 폐기」의 맞짝
   clear: '공정 돌파', clearWord: '통과!', fail: '하자 폐기', actClear: (act: string) => `${act} 마침`, actHeal: '정비', onward: '나아간다',
-  pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', backExit: '한 번 더 누르면 게임을 닫습니다.', forgeStatus: { refine: '다듬을 카드', deck: '덱', cards: '장', hp: '분대 HP', hurt: '다침', doors: '가장 적은 버팀' }, braceGo: '덧댄다',
+  pick: '고른다', skip: '건너뛴다', stop: '그만둔다', leave: '떠난다', buy: '산다', meltGo: '녹인다', keep: '두고 간다', cut: '뺀다', refineGo: '다듬는다', backExit: '한 번 더 누르면 게임을 닫습니다.', forgeStatus: { refine: '다듬을 카드', deck: '덱', cards: '장', hp: '분대 HP', hurt: '다침', noBrace: '버팀 없는 분대원' }, braceGo: '덧댄다', repair: '수리', repairGo: '고친다',
+  /** 수리 · 보강 고르기 받침 아래 줄 (#17 · #19): 지금 → 고친 뒤 */
+  repairInfo: (hp: number, max: number, to: number) => `HP ${hp}/${max} → <b>${to}</b>`, braceInfo: (left: number, max: number, n: number) => `버팀 ${left}/${max} → <b>${left + n}/${max + n}</b>`,
+  repairDone: (name: string) => `${name}의 장갑을 두드려 폈다. (HP 가득)`, braceDone: (name: string, n: number) => `${name}의 축이 두꺼워졌다. (버팀 +${n})`,
   // 출하 끝 단추 (D-403, 사용자: 「남긴다 · 돌아간다는 어색하다 — 시스템 낱말로」): 결과 공유하기 = 설문 → 기록 보내기 · 메인 화면으로 = 처음 화면
   close: '닫는다', ledger: '도감', overhaul: '정비한다', note: '결과 공유하기', home: '메인 화면으로',
   sold: '팔림', newCrewTag: '새 분대원', bossTag: '반장 격파', checkTag: '검문 통과', closeTag: '부품 하나 더', fullHp: 'HP 가득', broad: '큰 세 갈래', withHint: '받침을 누르면 함께 오는 카드가 보입니다.', withHead: '함께 오는 카드', deep: (ax: string) => `${ax} 세부 갈래`,
@@ -228,10 +231,11 @@ export const SCREEN_TEXT = {
 export const SERVICE_CARDS = {
   kind: '손질',
   heal: { name: '정비', icon: 's.heal', desc: (pct: number) => `삐걱이는 관절을 하나씩 조인다. (HP +${pct}% — 분대 전원)` },
-  repair: { name: '수리', icon: 's.repair', desc: (pct: number) => `찌그러진 장갑을 두드려 편다. (HP +${pct}% — 분대 전원)` },
+  repair: { name: '수리', icon: 's.repair', desc: (pct: number) => `찌그러진 장갑을 두드려 편다. (${pct >= 100 ? 'HP 가득' : `HP +${pct}%`} — 분대원 하나)` },
   refine: { name: '다듬기', icon: 's.refine', desc: () => '거친 날을 고르게 깎는다. (태엽 −1 — 카드 한 장)' },
   remove: { name: '카드 빼기', icon: 's.remove', desc: () => '낡은 명령서를 찢어 버린다. (영구 제거 — 카드 한 장)' },
-  brace: { name: '보강', icon: 'shieldWall', desc: (n: number) => `축에 쇠를 한 겹 덧댄다. (버팀 +${n} — 분대원 하나)` },
+  // #19 · D-503: 버팀이 무엇인지 카드가 말한다 — 쓰러질 피해를 HP 1로 넘기는 횟수. 출하 자원(D-496): 늘어난 칸은 출하 내내, 쓴 칸은 막 정비에서 다시 찬다
+  brace: { name: '보강', icon: 'shieldWall', desc: (n: number) => `쓰러질 피해를 한 번 더 넘긴다. (버팀 +${n} · 출하 내내 — 분대원 하나)` },
 } as const;
 
 /**

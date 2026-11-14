@@ -7,7 +7,7 @@ import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartI
 import { makeCrew } from '../src/slice/crew';
 import { buildRun, battleFor, MAP, type MapNode } from '../src/slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../src/slice/events';
-import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, restSquad, squadAfter, type Squad } from '../src/slice/battle';
+import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, mostHurt, repairOne, restSquad, squadAfter, type Squad } from '../src/slice/battle';
 import { playOut, playOutSearch, type BotStyle } from '../src/slice/bot';
 
 /**
@@ -176,7 +176,7 @@ const one = (seed: number) => {
         if (deck.length > 14 && gold >= SHOP.removePrice) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); gold -= SHOP.removePrice; bump(T, 'shop:remove'); bump(T, 'goldSpent', SHOP.removePrice); }
       } else if (n.kind === 'forge') {
         { const m = mendSquad(squad); squad = m.squad; bump(T, 'mended', m.mended.length); }
-        if (hpRatio() < 0.6) { squad = restSquad(squad, FORGE.repairPct); bump(T, 'forge:repair'); }
+        if (hpRatio() < 0.6) { squad = repairOne(squad, mostHurt(squad), FORGE.repairOne); bump(T, 'forge:repair'); }
         else {
           const cand = [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1).sort((x, y) => val(y) - val(x));
           if (cand[0]) { deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); bump(T, 'forge:refine'); }

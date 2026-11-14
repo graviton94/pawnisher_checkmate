@@ -12,7 +12,7 @@ import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartI
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, ftueRetry, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
-import { crackOrScrap, refillBrace, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
+import { crackOrScrap, refillBrace, mendSquad, mostHurt, repairOne, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
 import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
 import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
 import { cardOffers as offerCards, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
@@ -255,7 +255,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         }
       } else if (n.kind === 'forge') {
         squad = mendSquad(squad).squad;
-        if (persona !== 'risky' && hpRatio() < 0.6) squad = restSquad(squad, FORGE.repairPct * (asc >= 3 ? ASC_NUM.restMul : 1));
+        if (persona !== 'risky' && hpRatio() < 0.6) squad = repairOne(squad, mostHurt(squad), FORGE.repairOne * (asc >= 3 ? ASC_NUM.restMul : 1)); // #17 · D-503: 화면과 같게 가장 다친 하나
         // 작업대 카드 빼기 (D-457 — 실제 작업대엔 있는데 봇이 쓰지 않았다): 시작 카드가 셋 이상 남으면 하나 뺀다
         else if (persona !== 'hoarder' && deck.length > 10 && deck.filter((id) => (START_DECK as string[]).includes(id)).length >= 3) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); }
         else {
