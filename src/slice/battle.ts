@@ -1,6 +1,6 @@
 import { PIECE_STATS } from '../data/pieces';
 import { FORMS } from '../data/forms';
-import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
+import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, isFallen, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
@@ -529,10 +529,29 @@ export interface FoeOpts {
   boss?: boolean;
 }
 
+/**
+ * 꺼진 칸(구멍)을 돌아가는 킹 걸음 수 — 출발 칸들 중 가장 가까운 것까지 (기물은 지나간다고 본다: 막힌 길은 비켜 주면 열린다).
+ * 구멍이 없으면 일직선 거리(chebyshev)와 같다. 닿지 못하는 칸은 판 넓이 + 일직선 거리.
+ */
+const walkDist = (s: BattleState, from: Pos[]): ((q: Pos) => number) => {
+  const d = new Map<string, number>();
+  const queue: Pos[] = [];
+  for (const f of from) if (!d.has(`${f.x},${f.y}`)) { d.set(`${f.x},${f.y}`, 0); queue.push({ x: f.x, y: f.y }); }
+  for (let i = 0; i < queue.length; i++) {
+    const c = queue[i], n0 = d.get(`${c.x},${c.y}`)!;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const x = c.x + dx, y = c.y + dy;
+      if ((dx || dy) && inBounds(s, x, y) && !isFallen(s, x, y) && !d.has(`${x},${y}`)) { d.set(`${x},${y}`, n0 + 1); queue.push({ x, y }); }
+    }
+  }
+  return (q) => d.get(`${q.x},${q.y}`) ?? s.width * s.height + Math.min(...from.map((f) => chebyshev(q, f)));
+};
+
 const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn = 0, o: FoeOpts = {}): { to: Pos; score: number } | null => {
   const s = { ...s0, turnSide: 1 as const };
   const grid = buildGrid(s);
   const myKing = kingOf(s, 0);
+  const walk = s.fallen?.length && myKing ? { king: walkDist(s, [myKing]), near: walkDist(s, s.pieces.filter((m) => m.side === 0)) } : null;
   let best: { to: Pos; score: number } | null = null;
   // 잡기 규칙(시험장 B): 내 기물이 선 칸에 들어가 잡는다. 잡을 게 없으면 다가가되, 내가 잡을 수 있는 칸은 꺼린다
   if (s.rules.capture) {
@@ -563,8 +582,10 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
     // 다가가기 (D-214, 사용자: "1층 적이 아무것도 안 하는 게 부지기수"): 내 킹 또는 가장 가까운 내 기물 쪽으로 — 둘 중 더 줄어드는 쪽.
     // 거리가 줄지 않아도 내 진영 쪽으로 한 줄 나아가면 조금 쳐 준다 (나이트처럼 거리가 안 줄어 서 있던 기물)
     if (approach && myKing && (p.type !== 'K' || kingMarch)) {
-      const near = (q: Pos) => Math.min(...s.pieces.filter((m) => m.side === 0).map((m) => chebyshev(q, m)));
-      const gain = Math.max(chebyshev(p, myKing) - chebyshev(to, myKing), near(p) - near(to));
+      // 꺼진 칸이 있으면 일직선 거리 대신 걸음 수 (2026-11-14 — 구멍 벽 앞에서 다가가기가 제자리걸음만 했다). 구멍이 없으면 둘은 같다
+      const kd = walk ? (q: Pos) => walk.king(q) : (q: Pos) => chebyshev(q, myKing);
+      const near = walk ? (q: Pos) => walk.near(q) : (q: Pos) => Math.min(...s.pieces.filter((m) => m.side === 0).map((m) => chebyshev(q, m)));
+      const gain = Math.max(kd(p) - kd(to), near(p) - near(to));
       score = gain * 2 + (to.y < p.y ? SLICE.aiAdvance : 0);
     }
     if (approach && p.type === 'K' && !kingMarch) continue;
@@ -603,8 +624,46 @@ export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = fal
   if (!out.length && o.reach) {
     const bold = s.pieces.filter((q) => q.side === 1).map((p) => ({ p, best: bestFor(s, p, undefined, turn, { boss }) })).filter((x) => x.best && SLICE.moveCost[x.p.type] <= SLICE.enemyAp).sort((x, y) => y.best!.score - x.best!.score)[0];
     if (bold) out.push({ pieceId: bold.p.id, to: bold.best!.to });
+    // 0점짜리 수만 남아도 쉬지 않는다 (D-214 같은 규칙, 2026-11-14 긴 대국 점검): 꺼진 바닥 · 제 폰 벽에 막혀
+    // 양쪽 다 둘 수가 없으면 판이 영영 끝나지 않았다 — 칠 수 있는 칸까지 걸어서 가장 가까운 쪽으로 한 걸음
+    else { const step = stuckStep(s); if (step) out.push(step); }
   }
   return out;
+};
+
+/**
+ * 막힌 적의 한 걸음 (2026-11-14, 사용자: 「너무 한 판이 길면 안 됨」): 모든 수가 0점 이하라 적이 턴을 통째로 쉴 때만 부른다.
+ * 적 기물마다 「내 기물을 칠 수 있는 빈 칸」까지 걸음 수(구멍 · 기물은 돌아간다)가 가장 줄어드는 수 하나 — 일직선 거리만 보면
+ * 꺼진 바닥 벽 앞에서 제자리걸음만 했다. 닿을 칸이 없으면 가장 가까운 내 기물 쪽으로. 거대 주물은 따로 움직인다.
+ */
+const stuckStep = (s: BattleState): Intent | null => {
+  const grid = buildGrid(s);
+  const mine = s.pieces.filter((m) => m.side === 0);
+  if (!mine.length) return null;
+  const free = (x: number, y: number) => inBounds(s, x, y) && !isFallen(s, x, y) && !s.pieces.some((q) => q.x === x && q.y === y);
+  let best: { pieceId: number; to: Pos; d: number } | null = null;
+  for (const p of s.pieces.filter((q) => q.side === 1 && !q.giant && SLICE.moveCost[q.type] <= SLICE.enemyAp)) {
+    // 칠 수 있는 칸에서 거꾸로 퍼지는 걸음 수 (킹 걸음 — 기물마다 길은 달라도 「벽을 돌아간다」만 맞으면 된다)
+    const dist = new Map<string, number>();
+    const queue: Pos[] = [];
+    for (let y = 0; y < s.height; y++) for (let x = 0; x < s.width; x++) {
+      if (!free(x, y) && !(p.x === x && p.y === y)) continue;
+      if (attackScan(s, { ...p, x, y }, grid).targets.some((t) => t.side === 0)) { dist.set(`${x},${y}`, 0); queue.push({ x, y }); }
+    }
+    for (let i = 0; i < queue.length; i++) {
+      const c = queue[i], d = dist.get(`${c.x},${c.y}`)!;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const n = { x: c.x + dx, y: c.y + dy };
+        if ((dx || dy) && free(n.x, n.y) && !dist.has(`${n.x},${n.y}`)) { dist.set(`${n.x},${n.y}`, d + 1); queue.push(n); }
+      }
+    }
+    for (const to of legalMoves(s, p, grid)) {
+      const walk = dist.get(`${to.x},${to.y}`);
+      const d = walk !== undefined ? walk : 100 + Math.min(...mine.map((m) => chebyshev(to, m)));
+      if (!best || d < best.d) best = { pieceId: p.id, to, d };
+    }
+  }
+  return best ? { pieceId: best.pieceId, to: best.to } : null;
 };
 
 /** 지금 보드에서 예고가 칠 칸 (내 수로 막히면 바뀐다 — 화면은 늘 지금 기준) */

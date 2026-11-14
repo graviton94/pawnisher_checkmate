@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { burnFallen, promotedIn, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, liveIntents, newSliceBattle, planEnemy, playCard, previewPlay, rewind, squadAfter } from '../src/slice/battle';
 import { START_COMMANDS, SLICE } from '../src/slice/cards';
-import { findPiece } from '../src/engine';
+import { findPiece, simulate } from '../src/engine';
 
 const squad = [{ t: 'K' as const }, { t: 'P' as const }, { t: 'P' as const }, { t: 'N' as const }, { t: 'B' as const }];
 
@@ -90,6 +90,27 @@ describe('교착 압박 (D-196)', () => {
     const kingMoves = (turn: number) => planEnemy(b.s, false, turn).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K');
     expect(kingMoves(1)).toBe(false);
     expect(kingMoves(SLICE.kingMarchTurn)).toBe(true);
+  });
+  it('막힌 판 (2026-11-14): 꺼진 바닥 벽 앞에서 0점 수만 남아도 적은 쉬지 않고 벽을 돌아 내 기물에 닿는다', () => {
+    // 넷째 왕관 1막 검수 반장(시드 70151)에서 재현한 판: 내 폰 벽 뒤의 킹 · 꺼진 칸 넷 · 반장 킹 혼자 — 양쪽 다 둘 수가 없어 40턴까지 갔다
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'P' }, { t: 'P' }, { t: 'P' }], ['K'], START_COMMANDS, 7, { boss: true });
+    const at = [[5, 0], [3, 1], [5, 1], [4, 1], [4, 0]];
+    b.s.pieces.filter((p) => p.side === 0).forEach((p, i) => Object.assign(p, { x: at[i][0], y: at[i][1] }));
+    const ek = b.s.pieces.find((p) => p.side === 1)!;
+    Object.assign(ek, { x: 4, y: 3 });
+    b.s.fallen = [[4, 2], [5, 2], [3, 2], [3, 3]].map(([x, y]) => y * b.s.width + x);
+    let s = b.s;
+    let hit = false;
+    for (let turn = 20; turn < 26 && !hit; turn++) {
+      const plan = planEnemy(s, false, turn, true);
+      expect(plan.length).toBe(1);
+      const before = s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
+      const r = simulate({ ...s, turnSide: 1 }, plan, { freeAp: true });
+      expect(r.ok).toBe(true);
+      s = { ...r.state, turnSide: 0 };
+      hit = s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0) < before;
+    }
+    expect(hit).toBe(true);
   });
   it('발악 (D-243): 호위가 하나 이하로 남으면 킹도 1턴부터 나선다', () => {
     const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 7);
