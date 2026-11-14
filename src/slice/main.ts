@@ -1615,7 +1615,7 @@ const betChip = (): void => {
   const st = betState();
   chip.hidden = !st || document.body.classList.contains('between');
   if (!st || !betNow) return void (betBroke = false);
-  // 칩 표지 (D-506 코드 연출 — WG-02 취소): 걸린 동안 나사 동전이 계단 8프레임으로 돈다(받은 coin-0~7) · 조건 표지 = 킹 무사(종이 왕관) / 한 턴 처치(터짐)
+  // 칩 표지 (D-508 코드 연출 — WG-02 취소): 걸린 동안 나사 동전이 계단 8프레임으로 돈다(받은 coin-0~7) · 조건 표지 = 킹 무사(종이 왕관) / 한 턴 처치(터짐)
   const mark = betNow.kind === 'unhit' ? 'n.here@16' : 'c.burst@16';
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로 (지도 --act와 같은 방식)
   if (!chip.style.getPropertyValue('--coin0')) for (let i = 0; i < 8; i++) chip.style.setProperty(`--coin${i}`, `url(${new URL(`ui/props/coin-${i}.png`, location.href).href})`);
@@ -1646,7 +1646,7 @@ const betResolve = async (won: boolean): Promise<void> => {
   chip.classList.toggle('hit', d > 0);
   chip.classList.toggle('broken', d <= 0);
   chip.querySelector('.bc-prog')!.textContent = d > 0 ? `+${d}` : `−${betNow.stake}`;
-  // 결과 도트 연출 (D-506): 적중 = 동전 탑이 덜컹 → 튀어 두 배로 → 두 탑 출렁 · 실패 = 탑에 금 → 진홍 쇳물로 녹아 흐름 → 녹빛 얼룩 디더 퇴장
+  // 결과 도트 연출 (D-508): 적중 = 동전 탑이 덜컹 → 튀어 두 배로 → 두 탑 출렁 · 실패 = 탑에 금 → 진홍 쇳물로 녹아 흐름 → 녹빛 얼룩 디더 퇴장
   void resultFx(chip.querySelector('.bc-coin') ?? chip, d > 0 ? 'betWin' : 'betLose', deviceDot());
   if (d > 0) {
     sfx('coin', 9);
@@ -1660,7 +1660,7 @@ const betResolve = async (won: boolean): Promise<void> => {
   if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) await new Promise((res) => window.setTimeout(res, 1400));
 };
 
-/** 디버그: 사건 결과 코드 연출 하나를 실제 사건 창 위에서 (tools/qa/mp-fx.cjs — D-506) */
+/** 디버그: 사건 결과 코드 연출 하나를 실제 사건 창 위에서 (tools/qa/mp-fx.cjs — D-508) */
 const debugResultFx = async (k: string): Promise<void> => {
   const ev: Record<string, string> = { molten: 'dipping', quench: 'dipping', rust: 'rustBath', repair: 'fieldMedic', upgrade: 'smith', break: 'scrapHeap', screws: 'tollGate', crate: 'scrapHeap' };
   eventScreen(ev[k] as never);

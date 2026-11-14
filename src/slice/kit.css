@@ -987,7 +987,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .peek-bar .pb-foe i { color: var(--t-body); font: 700 12px/1 Galmuri11, sans-serif; font-style: normal; }
 .mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
 @media (max-width: 760px) { .mapfx .peek-bar .pb-foes { display: none; } }
-/* 지도 분대 현황 (피드백 #24 · D-503 → MP-01 받음, D-506): 철판(roster-body 9-slice · 테 13/11) + 황동 명패 위에 분대 칸(41×65칸 틀 셋).
+/* 지도 분대 현황 (피드백 #24 · D-503 → MP-01 받음, D-508): 철판(roster-body 9-slice · 테 13/11) + 황동 명패 위에 분대 칸(41×65칸 틀 셋).
    도트 하나 = --rp(기기 픽셀 round(0.75 × DPR)개 = --px-detail) — 받은 틀이 발주(28×36)보다 커서 장치 층(--px)이면 띠를 넘친다.
    칸 = 초상 창(얼굴 22×23) · HP 홈(25×3 — 청록 · 황동 · 진홍) · 버팀(소켓 자리에 덧댄 철판 life 16칸) · 금 간 심장 톱니 = 금 간 틀(진홍 등) + 금 간 심장 톱니 표지(D-507 heartCog.crack).
    누름 칸은 44px 이상(틀 폭과 상관없이). 667 가로(DPR 2)는 판이 띠보다 몇 px 높아 위 틈으로 넘친다(flex-end) — 지도 칸은 그대로 */

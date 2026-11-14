@@ -1,4 +1,4 @@
-// 지도 에셋 MP-01~05 · 사건 결과 / 판돈 코드 연출 (2026-11-14, D-506) 실화면 확인 — 915×412 DPR 2.625 · 667×375 DPR 2 · 터치.
+// 지도 에셋 MP-01~05 · 사건 결과 / 판돈 코드 연출 (2026-11-14, D-508) 실화면 확인 — 915×412 DPR 2.625 · 667×375 DPR 2 · 터치.
 // 사용: npm run build → npx vite preview --port <포트> → OBSERVE_URL=http://localhost:<포트>/ node tools/qa/mp-fx.cjs [915|667] [map|fx|bet|all] [--calm]
 // 증거: production/qa/evidence/2026-11-14-mp-*.png (지도) · -fx-*.png (사건 결과 · 판돈, 프레임마다)
 const { chromium } = require('playwright');

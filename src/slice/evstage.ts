@@ -690,7 +690,7 @@ const chestFx = async (L: Layer, el: HTMLElement): Promise<void> => {
   const im = el.querySelector('img')!;
   await cls(el, 'appear', 240);
   await cls(el, 'pre', 320); el.classList.remove('pre');
-  // 뚜껑이 열리는 박에 황동 빛 기둥 (D-506 — 예비 먼지 두 프레임이 덜컹과 겹친다)
+  // 뚜껑이 열리는 박에 황동 빛 기둥 (D-508 — 예비 먼지 두 프레임이 덜컹과 겹친다)
   void resultFx(el, 'crate');
   im.src = 'ui/props/chest-1.png';
   await wait(calm() ? 0 : 90);
@@ -747,7 +747,7 @@ const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> =
     await wait(520);
   } else {
     // 솟음 (예비): 아래에서 계단으로 — 쇳물이면 불씨가 같이 튄다
-    // 쇳물 사건은 솟는 자리(기물 발밑)에서 쇳물이 왕관처럼 튄다 (D-506 코드 연출 — EF-01 2줄)
+    // 쇳물 사건은 솟는 자리(기물 발밑)에서 쇳물이 왕관처럼 튄다 (D-508 코드 연출 — EF-01 2줄)
     const foot = (): DOMRect => { const q = el.getBoundingClientRect(); return new DOMRect(q.left, q.bottom - q.height * 0.3, q.width, q.height * 0.3); };
     if (hot) void resultFx(foot(), 'molten');
     await cls(el, 'rise', 420); el.classList.remove('rise');
@@ -757,7 +757,7 @@ const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> =
     const m = mid();
     if (cr.fx === 'evolve') {
       L.lights.add(m.x, m.y, 52, hot ? PAL.fire[5] : PAL.gold[5], 1, 0.7);
-      // 담금질(쇳물 사건) = 증기 기둥 · 그 밖 = 강화 고리 → 십자 번쩍 (D-506)
+      // 담금질(쇳물 사건) = 증기 기둥 · 그 밖 = 강화 고리 → 십자 번쩍 (D-508)
       void resultFx(el, hot ? 'quench' : 'upgrade');
       await cls(el, 'flash', 140);
       img.src = cr.toSrc ?? cr.src;

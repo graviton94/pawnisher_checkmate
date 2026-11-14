@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fxFramePixels, RESULT_FX_KINDS } from '../src/slice/resultfx';
 
-// D-506: 결과 도트 연출은 발주 15색만 · 8프레임 모두 무언가 찍고 · 꼬리(디더 퇴장)는 터짐보다 줄어든다
+// D-508: 결과 도트 연출은 발주 15색만 · 8프레임 모두 무언가 찍고 · 꼬리(디더 퇴장)는 터짐보다 줄어든다
 const PAL15 = new Set(['#0B0B0E', '#33313B', '#56545E', '#8A8794', '#8A6416', '#C89B3C', '#F5C542', '#8E877A', '#BFB9AD', '#F1EDE4', '#7A1218', '#E5262F', '#FF7B7B', '#1F8A7A', '#5EEAD4']);
 const fake = (cols: Set<string>) => () => {
   let fs = '';
