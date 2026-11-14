@@ -19,7 +19,7 @@ import { PACE } from '../data/motion';
 /** 동작 줄이기 */
 const calmNow = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 import { installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
-import { installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
+import { flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { cardTags, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
@@ -2944,6 +2944,8 @@ const writeLedger = (add: LedgerEntry[]): void => {
 
 /** 사망 의식 (1.2초, 조작을 막지 않는 겉막 — 레퍼런스 6권 원리 7 · 부록 B): 화면이 가라앉고 마지막 말 한 줄 */
 let ritesDone = 0;
+/** 쓰러짐 의식의 초상 (D-472): 분대원 얼굴 56px을 정수 2배로 — 없으면 큰 기물 그림 */
+const riteFace = (t: PieceType): string => `<span class="dr-face"><img src="ui/hud/crew-${t}.png" alt="" width="112" height="112" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(t, 0, 'large', 108).replace(/'/g, '&#39;')}'></span>`;
 const deathRites = async (): Promise<void> => {
   const fresh = b.falls.slice(ritesDone);
   ritesDone = b.falls.length;
@@ -2955,9 +2957,13 @@ const deathRites = async (): Promise<void> => {
     if (c.t !== 'K' && !c.cracked && !melted) {
       const fx = document.createElement('div');
       fx.className = 'crackfx';
-      fx.innerHTML = `<div><span class="lifes big"><i class="life"></i><i class="life breaking"></i></span><p class="narr"></p><b>${crewLabel(c)}</b><small>${LIFE_TEXT.riteSys}</small></div>`;
+      fx.innerHTML = `<div><span class="dr-row">${riteFace(c.t)}<span class="lifes big"><i class="life"></i><i class="life breaking"></i></span></span><p class="narr"></p><b>${crewLabel(c)}</b><small>${LIFE_TEXT.riteSys}</small></div>`;
       document.body.appendChild(fx);
       sfx('hurt');
+      // D-472: 맞은 순간 — 초상이 움찔하고 판이 흔들린다
+      flashScreen(0.35);
+      shake($('board'), 2);
+      shakeEl(fx.querySelector<HTMLElement>('.dr-face'), 5, 300);
       await new Promise((r) => window.setTimeout(r, 120));
       await typeIn(fx.querySelector<HTMLElement>('.narr')!, LIFE_TEXT.riteNarr, 14);
       await new Promise((r) => window.setTimeout(r, 650));
@@ -2982,7 +2988,8 @@ const deathRites = async (): Promise<void> => {
     const voice = c.t !== 'K' ? CREW_VOICE[c.t as CrewKind]?.fall : undefined;
     const d = melted ? { narr: LIFE_TEXT.meltNarr, line: voice ? voice[((c.serial ?? '').charCodeAt(2) + f.turn) % voice.length] : d0.line } : voice ? { narr: d0.narr, line: voice[((c.serial ?? '').charCodeAt(2) + f.turn) % voice.length] } : d0;
     // 2인칭 서술 → 이름 → 각주 대사 → 시스템 한 줄 (D-158). D-189: 검은 막이 한 줄씩 계단으로 내려오고 서술이 한 자씩 찍힌다
-    fx.innerHTML = `<div><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${melted ? LIFE_TEXT.meltSys(c.serial ?? '') : `${c.serial} · ${f.by}에게 파괴되었습니다.`}</small></div>`;
+    // D-472 (사용자: 「동료 죽을 때 너무 밋밋함」): 검은 막 위 철 액자 속 초상 → 서술 → 「폐기」 도장이 내리찍힘 → 초상이 잿빛으로 굳고 도트로 부서진다
+    fx.innerHTML = `<div><span class="dr-frame">${riteFace(c.t)}<b class="dr-stamp${melted ? ' melt' : ''}">${melted ? LIFE_TEXT.stampMelt : LIFE_TEXT.stampScrap}</b></span><p class="narr"></p><b>${crewLabel(c)}</b><i>${d.line}</i><small>${melted ? LIFE_TEXT.meltSys(c.serial ?? '') : `${c.serial} · ${f.by}에게 파괴되었습니다.`}</small></div>`;
     curtainRows(fx);
     document.body.appendChild(fx);
     // 전체 화면 장면 (되감기 장면과 같은 문법): 판이 잿빛으로 멈춘다
@@ -2991,11 +2998,29 @@ const deathRites = async (): Promise<void> => {
     sfx('loss');
     // 빠르게 (D-191): 막 0.2초 → 서술 한 자 14ms → 이름 · 대사 · 시스템 줄 60ms 간격 → 0.45초 머묾 (약 1.2초)
     await new Promise((r) => window.setTimeout(r, 200));
+    const frame = fx.querySelector<HTMLElement>('.dr-frame')!, face = frame.querySelector<HTMLElement>('.dr-face')!;
+    frame.classList.add('in');
+    // 초상 뒤로 붉은 띠가 화면 끝까지 (막 위 · 글 아래 층)
+    const band = document.createElement('i');
+    band.className = 'dr-band';
+    const placeBand = (): void => { const fr = frame.getBoundingClientRect(); band.style.top = `${Math.round(fr.top + fr.height / 2)}px`; };
+    placeBand();
+    // 서술이 찍히며 글 덩어리가 자라면 액자가 올라간다 — 띠도 따라간다
+    new ResizeObserver(placeBand).observe(fx.querySelector<HTMLElement>(':scope > div')!);
+    fx.insertBefore(band, fx.querySelector(':scope > div'));
+    band.classList.add('in');
+    shakeEl(face, 6, 320);
     await typeIn(fx.querySelector<HTMLElement>('.narr')!, d.narr, 14);
-    for (const x of fx.querySelectorAll('div > :not(.narr)')) {
+    // 도장: 크게 내려와 박히고(예비 → 터짐 → 출렁) 화면이 번쩍 · 흔들림 · 잉크 튐 — 초상은 그 순간 잿빛
+    const stamp = frame.querySelector<HTMLElement>('.dr-stamp')!;
+    stampFx(stamp);
+    window.setTimeout(() => { face.classList.add('ash'); shake(fx.querySelector<HTMLElement>(':scope > div'), 3); }, 150);
+    await new Promise((r) => window.setTimeout(r, calmNow() ? 0 : 420));
+    for (const x of fx.querySelectorAll('div > :not(.narr):not(.dr-frame)')) {
       x.classList.add('in');
       await new Promise((r) => window.setTimeout(r, 60));
     }
+    pxOut(face, () => (face.style.visibility = 'hidden'), 520);
     // 마지막 말을 읽을 시간 (글자당 45ms)
     await new Promise((r) => window.setTimeout(r, calmNow() ? 650 : 650 + d.line.length * 45));
     if (froze) document.body.classList.remove('rev-freeze');

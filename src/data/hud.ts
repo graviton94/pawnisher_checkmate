@@ -101,7 +101,7 @@ export const LIFE_TEXT = {
   riteNarr: '톱니 하나가 튕겨 나간다. 아직, 멈추지 않았다.',
   riteSys: '대국이 끝나면 HP 50%로 돌아옵니다. 또 쓰러지면 폐기됩니다.',
   // 쇳물 서약 (D-462): 녹인 분대원은 심장 톱니로 버티지 못한다
-  meltNarr: '쇳물이 그를 삼켰다. 왕관이 한 번 더 빛났다.',
+  stampScrap: '폐기', stampMelt: '녹임', meltNarr: '쇳물이 그를 삼켰다. 왕관이 한 번 더 빛났다.',
   meltSys: (serial: string) => `${serial} · 쇳물 서약으로 녹았습니다. 돌아오지 않습니다.`,
   pipOn: '심장 톱니',
   pipOff: '깨진 심장 톱니',
