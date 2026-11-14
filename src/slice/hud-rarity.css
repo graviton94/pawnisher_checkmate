@@ -1,0 +1,114 @@
+/* ===================== 2026-11-14 받은 그림 반입: 전투 HUD HB-01 · HB-02 · 등급 틀 RF-01~04 =====================
+   그림은 모두 tools/pixel/ui_kit_import.py가 받은 원본에서 찍은 도트(D-423). 늘리지 않고 --px 정수 도트로만 키운다(D-386 · D-392). */
+
+/* ---------- HB-01 턴 끝 단추 (피드백 7): 보통 · 눌림 · 잠김 + 경고 맥동 세 프레임 ----------
+   48×24 캔버스 하나에 몸 44×20 + 바깥 2도트 경고 띠 자리. 9-slice 위 8 · 아래 8 · 왼 10 · 오른 12(레버 손잡이). */
+#btn-end.btn.btn:is(.k-brass, .k-crimson) {
+  --up: url('../assets/ui/chrome/v2/btn-end-up.png'); --dn: url('../assets/ui/chrome/v2/btn-end-down.png'); --off: url('../assets/ui/chrome/v2/btn-end-lock.png');
+  --fg: var(--t-ink); --fg-dn: var(--t-ink); --fg-off: var(--t-body);
+  height: calc(var(--px) * 24); min-height: calc(var(--px) * 24);
+  border-width: calc(var(--px) * 8) calc(var(--px) * 12) calc(var(--px) * 8) calc(var(--px) * 10);
+  border-image: var(--up) 8 12 8 10 fill / calc(var(--px) * 8) calc(var(--px) * 12) calc(var(--px) * 8) calc(var(--px) * 10) stretch;
+  padding: 0 0 calc(var(--px) * 1);
+}
+/* 경고(킹이 예고된 칸 · kingInDanger)와 첫 판 도움의 「턴 끝」 짚기: 단추 몸은 그대로, 테 바깥 띠만 세 프레임 — 사라지지 않는다 (D-488의 임시 황동 고리 대체) */
+#btn-end.btn.btn:is(.warn, .coach-end):not(:disabled) { outline: none; animation: endPulse 540ms steps(1, end) infinite; }
+#btn-end.btn.btn:is(.warn, .coach-end):not(:disabled):active { animation: none; }
+@keyframes endPulse {
+  0% { border-image-source: url('../assets/ui/chrome/v2/btn-end-warn0.png'); }
+  33% { border-image-source: url('../assets/ui/chrome/v2/btn-end-warn1.png'); }
+  66%, 100% { border-image-source: url('../assets/ui/chrome/v2/btn-end-warn2.png'); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #btn-end.btn.btn:is(.warn, .coach-end):not(:disabled) { animation: none; border-image-source: url('../assets/ui/chrome/v2/btn-end-warn1.png'); }
+}
+
+/* ---------- HB-02 속전 계기 (피드백 8): 하우징 71×27 · 진공관 8×16 여섯 · 숫자 창 안쪽 12×10 ----------
+   계기 틀(gauge.png)을 걷고 받은 철 상자 하나만 — 숫자는 창 안에서만 그린다. 위 줄: 턴 이름 · 「속전 보상」 + 나사 동전 */
+body.slice.lay-f { --gTop: 68px; }
+body.slice.lay-f #right > .gtop {
+  border: 0; border-image: none; padding: 0; background: none; box-shadow: none;
+  grid-template-columns: auto minmax(0, 1fr); grid-template-rows: 14px auto; row-gap: 0; column-gap: 4px; align-content: start;
+}
+body.slice.lay-f .gtop .turn-label { height: 14px !important; line-height: 14px; }
+body.slice.lay-f .gtop .coins .lbl { display: flex; grid-column: 2; grid-row: 1; justify-self: end; align-items: center; gap: 2px; font: 400 12px/14px Galmuri11, sans-serif; color: #f0c48a; white-space: nowrap; }
+body.slice.lay-f .gtop .coins .coin-key { display: block; flex: none; width: calc(var(--px1) * 12); height: calc(var(--px1) * 12); background: url('../assets/ui/chrome/v2/coin-key.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.slice.lay-f .gtop .coins .speed { position: relative; grid-column: 1 / -1; grid-row: 2; justify-self: center; display: block; width: calc(var(--px) * 71); height: calc(var(--px) * 27); background: url('../assets/ui/chrome/v2/speed-housing.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.slice.lay-f .gtop .coins .speed > .tube {
+  position: absolute; left: calc(var(--px) * (2 + var(--k) * 8)); top: calc(var(--px) * 5); width: calc(var(--px) * 8); height: calc(var(--px) * 16); flex: none;
+  margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; filter: none;
+  background: var(--img) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; animation: none;
+}
+body.slice.lay-f .gtop .coins .speed > .tube::after { content: none; }
+body.slice.lay-f .gtop .coins .speed > .t-lit { --img: url('../assets/ui/kit/tube-lit.png'); }
+body.slice.lay-f .gtop .coins .speed > .t-dim { --img: url('../assets/ui/kit/tube-dim.png'); }
+body.slice.lay-f .gtop .coins .speed > .t-dead { --img: url('../assets/ui/kit/tube-dead.png'); }
+/* 마지막 두 턴: 남은 관이 끊긴 필라멘트와 흐린 불을 오간다 */
+body.slice.lay-f .gtop .coins .speed > .t-flick { --img: url('../assets/ui/kit/tube-flick.png'); animation: tubeUrgent 900ms steps(1, end) infinite; animation-delay: calc(var(--k) * -150ms); }
+@keyframes tubeUrgent { 0%, 60% { background-image: url('../assets/ui/kit/tube-flick.png'); } 61%, 100% { background-image: url('../assets/ui/kit/tube-dim.png'); } }
+/* 한 칸이 줄어드는 순간: 깜빡 → 켜짐 → 깜빡 → 새 상태 (페이드 없음) */
+body.slice.lay-f .gtop .coins .speed > .tube.out { animation: tubeDrop 600ms steps(1, end) both; }
+@keyframes tubeDrop {
+  0% { background-image: url('../assets/ui/kit/tube-flick.png'); }
+  30% { background-image: url('../assets/ui/kit/tube-lit.png'); }
+  55% { background-image: url('../assets/ui/kit/tube-flick.png'); }
+  80%, 100% { background-image: var(--img); }
+}
+body.slice.lay-f .gtop .coins .speed > .win {
+  position: absolute; left: calc(var(--px) * 53); top: calc(var(--px) * 9); width: calc(var(--px) * 12); height: calc(var(--px) * 10);
+  display: grid; place-items: center; margin: 0; padding: 0; overflow: hidden;
+  font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; color: #f5c542; letter-spacing: 0;
+}
+@media (max-width: 760px) {
+  body.slice.lay-f .gtop .coins .lbl { display: flex; }
+  body.slice.lay-f .gtop .coins .lbl .lbl-x { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.slice.lay-f .gtop .coins .speed > .tube { animation: none; }
+}
+
+/* ---------- RF-04 명령 카드 앞면: 재발주 대기 ----------
+   받은 틀은 설명지가 18도트(≈55px)라 D-422 세 줄 + 각주가 들어가지 않는다 → 게임에는 cardart 틀을 그대로 두고,
+   다듬은 틀 · 잰 자리는 build-res/order/RF-04-parts/(cmd_frames.py)에서만 본다. 새 틀을 받으면 그 CSS를 여기로 옮긴다. */
+
+/* ---------- RF-03 등급 보석 (12×12): 카드 아래 가운데 — 정수 도트 ---------- */
+body.slice .cf.cf.cf.cf > .cf-gem { width: calc(var(--px) * 12); height: calc(var(--px) * 12); aspect-ratio: auto; background-size: 100% 100%; }
+
+/* ---------- RF-01 등급 테 · 모서리 장식 (피드백 9) ----------
+   ① 부품 카드 그림 창을 받은 쇠 액자로(일반 철 · 희귀 청록 꺾쇠 · 금 황동) — 9-slice 6도트, 창 밖으로 3도트 걸친다
+   ② 희귀 · 금 카드는 네 귀퉁이에 받은 꺾쇠(쉬는 상태 = RF-02 마지막 프레임과 같은 자리). 바깥 파란 고리는 없다 */
+/* 그림 창은 팔각 마스크(mask-part)라 테를 창에 못 단다 — 카드의 ::after를 창 자리(card-layout.css와 같은 %)에 얹는다 */
+body.slice .cf.cf.cf.cf.part-card::after { content: ''; position: absolute; z-index: 2; pointer-events: none; left: calc(17.857% - var(--px) * 3); top: calc(11.905% - var(--px) * 3); width: calc(65.179% + var(--px) * 6); height: calc(23.810% + var(--px) * 6); box-sizing: border-box; border: calc(var(--px) * 6) solid transparent; border-image: url('../assets/ui/kit/frame-common.png') 6 / calc(var(--px) * 6) stretch; image-rendering: pixelated; animation: none; }
+body.slice .cf.cf.cf.cf.part-card.g-rare::after { border-image-source: url('../assets/ui/kit/frame-rare.png'); }
+body.slice .cf.cf.cf.cf.part-card.g-gold::after { border-image-source: url('../assets/ui/kit/frame-gold.png'); }
+/* 카드 몸의 모서리(캔버스 여백을 뺀 자리): 부품 · 분대원 = cardart 112×168(틀 96×158, 여백 8 · 8 · 2). 명령 카드는 card-cmd.css가 덮는다 */
+body.slice .cf.cf.cf.cf { --ci-l: 7.143%; --ci-r: 7.143%; --ci-t: 4.762%; --ci-b: 1.190%; }
+body.slice .cf.cf.cf.cf:is(.g-rare, .g-gold)::before {
+  content: ''; position: absolute; z-index: 6; pointer-events: none; animation: none;
+  left: calc(var(--ci-l) - var(--px) * 2); right: calc(var(--ci-r) - var(--px) * 2); top: calc(var(--ci-t) - var(--px) * 2); bottom: calc(var(--ci-b) - var(--px) * 2);
+  border: calc(var(--px) * 10) solid transparent; border-image: url('../assets/ui/kit/corners-rare.png') 10 / calc(var(--px) * 10) stretch; image-rendering: pixelated;
+}
+body.slice .cf.cf.cf.cf.g-gold::before { border-image-source: url('../assets/ui/kit/corners-gold.png'); }
+body.slice .cf.cf.cf.cf.glinting::before { visibility: hidden; }
+
+/* ---------- RF-02 등급 반짝임 (희귀 = 청록 파편 → 대각 섬광 · 금 = 꺾쇠 → 별 터짐 → 반짝) ----------
+   48×48 프레임 8장 띠를 네 귀퉁이 24×24 조각으로 나눠 카드 모서리에 앉히고 steps(8)로 한 번 — 페이드 없음.
+   움직임 줄이기면 붙이지 않는다(쉬는 꺾쇠 한 프레임만, fx3.ts gradeReveal) */
+.cf > .glint { position: absolute; z-index: 7; pointer-events: none; left: calc(var(--ci-l) - var(--px) * 3); right: calc(var(--ci-r) - var(--px) * 3); top: calc(var(--ci-t) - var(--px) * 3); bottom: calc(var(--ci-b) - var(--px) * 3); }
+.cf > .glint > i {
+  position: absolute; width: calc(var(--px) * 24); height: calc(var(--px) * 24);
+  background: url('../assets/ui/fx/glint-rare.png') 0 0 / calc(var(--px) * 384) calc(var(--px) * 48) no-repeat; image-rendering: pixelated;
+  animation: glint8 640ms steps(8, end) both;
+}
+.cf > .glint.glint-gold > i { background-image: url('../assets/ui/fx/glint-gold.png'); }
+.cf > .glint > i:nth-child(1) { left: 0; top: 0; --qx: 0; --qy: 0; }
+.cf > .glint > i:nth-child(2) { right: 0; top: 0; --qx: -24; --qy: 0; }
+.cf > .glint > i:nth-child(3) { left: 0; bottom: 0; --qx: 0; --qy: -24; }
+.cf > .glint > i:nth-child(4) { right: 0; bottom: 0; --qx: -24; --qy: -24; }
+@keyframes glint8 {
+  from { background-position: calc(var(--px) * var(--qx)) calc(var(--px) * var(--qy)); }
+  to { background-position: calc(var(--px) * (var(--qx) - 384)) calc(var(--px) * var(--qy)); }
+}
+/* 명령 카드는 왼쪽 위에 태엽 비용 톱니가 튀어나와 있다 — 그 귀퉁이 꺾쇠 · 반짝임 조각은 빼서 비용을 가리지 않는다 */
+body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { clip-path: polygon(calc(var(--px) * 12) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--px) * 12), calc(var(--px) * 12) calc(var(--px) * 12)); }
+.cf.cmd > .glint > i:nth-child(1) { display: none; }

@@ -226,3 +226,9 @@ export const SERVICE_CARDS = {
   remove: { name: '카드 빼기', icon: 's.remove', desc: () => '낡은 명령서를 찢어 버린다. (영구 제거 — 카드 한 장)' },
   brace: { name: '보강', icon: 'shieldWall', desc: (n: number) => `축에 쇠를 한 겹 덧댄다. (버팀 +${n} — 분대원 하나)` },
 } as const;
+
+/**
+ * 속전 계기 (HB-02, 2026-11-14): 받은 하우징의 진공관 홈 수 · 관 하나가 맡는 남은 턴 몫에 따른 상태 문턱.
+ * 관 i의 몫 = (남은 턴 − i × 턴/관) ÷ (턴/관). 0.75 이상 켜짐 · 0 초과 흐림 · 0 이하 꺼짐, 마지막 두 턴은 남은 관이 깜빡.
+ */
+export const SPEED_METER = { tubes: 6, litAt: 0.75, urgentTurns: 2, label: '이기면 받는 나사' } as const;

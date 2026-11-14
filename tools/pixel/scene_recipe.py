@@ -44,3 +44,15 @@ PIECE_GRID = {
     'R:giant': {'body': 108, 'outline': 2},
     'Q:giant': {'body': 108, 'outline': 2},
 }
+
+
+# 2026-11-14 §0-D UI 부품 시트 (ui_kit_import.py 셋째 인자 = 원본 가로 도트 수 → 칸 크기).
+# 정수배로 깨끗한 시트는 칸 가운데를 그대로 읽고(차이 0%), 생성기 번짐이 있는 시트만 격자 찾기 · 최빈색.
+UI_KIT_GRID = {
+    'HB-01': {'native_w': 184, 'pitch': 4.0, 'exact': True},    # 736×384 = 184×96 ×4 (발주는 ×8이었다)
+    'HB-02': {'native_w': 160, 'pitch': 8.0, 'exact': True},    # 1280×512
+    'RF-01': {'native_w': 160, 'pitch': 8.0, 'exact': True},    # 1280×704
+    'RF-03': {'native_w': 104, 'pitch': 8.0, 'exact': True},    # 832×320
+    'RF-02': {'frames': (8, 2), 'cell': 48, 'pitch': 4.85},     # 1971×798 — 옅은 칸 선으로 상자를 찾는다 · 진홍 번짐 지움 (재발주)
+    'RF-04': {'native_w': 210.7, 'pitch': 8.28},                # 1774×887 — 비정수 격자 (재발주 · 게임 미반영)
+}

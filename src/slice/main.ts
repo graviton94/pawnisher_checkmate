@@ -2,7 +2,7 @@ import '../fonts.css';
 import { GIANTS, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
-import { SET_TEXT } from '../data/hud';
+import { SET_TEXT, SPEED_METER } from '../data/hud';
 import { bossAbilityText, enemyAbilityText, formAbilityText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { abilityHtml, bindAbilities, partCardRuleHtml } from './ability';
@@ -18,6 +18,7 @@ import './card-layout.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
 import './voice.css';
+import './hud-rarity.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
 import { BAND_ZONE, band, dismissWin, bindPick, bindWinHost, btnHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn } from './uikit';
@@ -795,13 +796,14 @@ const gauges = (): void => {
   if (coinPrev !== b.coins || !$('coins').childElementCount) {
     const was = coinPrev;
     coinPrev = b.coins;
-    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}<span class="lbl-x"> 보상</span></span><b title="이기면 받는 나사"><i class="scr"></i>+${Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1))}</b><span class="boiler" style="--n:${SLICE.coins}"><i class="lava" style="--c:${was !== null && was > b.coins && !calmNow() ? was : b.coins}"></i><i class="ticks"></i></span>`;
-    // 쇳물이 한 칸 빠진다: 이전 높이로 그린 뒤 다음 장면에 새 높이로 — 2도트씩 끊겨 줄어든다
-    if (was !== null && was > b.coins && !calmNow()) {
-      const lava = $('coins').querySelector<HTMLElement>('.lava')!;
-      lava.classList.add('drain');
-      requestAnimationFrame(() => requestAnimationFrame(() => lava.style.setProperty('--c', String(b.coins))));
-    }
+    // 속전 계기 (HB-02 · 피드백 8): 받은 하우징 안 진공관 여섯 — 남은 턴만큼 켜짐 · 흐림 · 꺼짐, 보상 나사는 고정 숫자 창 안에만
+    const reward = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1));
+    const tubes = Array.from({ length: SPEED_METER.tubes }, (_, i) => {
+      const st = speedTube(b.coins, i);
+      const fx = was !== null && was > b.coins && !calmNow() && speedTube(was, i) !== st ? ' out' : '';
+      return `<i class="tube t-${st}${fx}" style="--k:${i}"></i>`;
+    }).join('');
+    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}<span class="lbl-x"> 보상</span><i class="coin-key" aria-hidden="true"></i></span><span class="speed" title="${SPEED_METER.label}">${tubes}<b class="win" aria-label="${SPEED_METER.label} ${reward}">${reward}</b></span>`;
   }
 };
 
@@ -1350,14 +1352,21 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   }
   if (b.s.winner !== null) return finish();
 };
+/** 속전 진공관 하나의 상태 (HB-02): 관마다 남은 턴의 몫으로 켜짐 · 흐림 · 꺼짐, 마지막 몇 턴은 남은 관이 깜빡 */
+const speedTube = (coins: number, i: number): 'lit' | 'dim' | 'flick' | 'dead' => {
+  const per = SLICE.coins / SPEED_METER.tubes;
+  const share = (coins - i * per) / per;
+  if (share <= 0) return 'dead';
+  if (coins <= SPEED_METER.urgentTurns) return 'flick';
+  return share >= SPEED_METER.litAt ? 'lit' : 'dim';
+};
 let prevKills = 0;
 
 /** 턴 끝 경고 상태 (보고서 2-2): 황동 → 진홍 단추 — 다음 누름이 그대로 턴을 끝낸다 */
 const endWarn = (on: boolean): void => {
   const el = $('btn-end');
+  // HB-01: 단추는 그대로 황동 — 테 바깥 띠만 경고 맥동 세 프레임을 돈다(hud-rarity.css). 단추가 사라지거나 색째 바뀌지 않는다
   el.classList.toggle('warn', on);
-  el.classList.toggle('k-crimson', on);
-  el.classList.toggle('k-brass', !on);
 };
 const onEnd = (): Promise<void> => guarded(onEndInner);
 const onEndInner = async (): Promise<void> => {

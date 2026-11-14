@@ -1,0 +1,23 @@
+/* 자동 생성 — tools/pixel/cmd_frames.py (RF-04 명령 카드 앞면 · 2026-11-14). 손으로 고치지 않는다. */
+/* 56×84 캔버스 — 글 · 그림 자리는 받은 틀의 실제 칸을 잰 비율(%) */
+body.slice .cf.cf.cf.cf.cmd.g-common { background-image: url('../assets/ui/cards/cmd-common.png'); --ci-l: 8.929%; --ci-r: 8.929%; --ci-t: 9.524%; --ci-b: 5.952%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-win { left: 17.857%; top: 30.952%; width: 62.500%; height: 21.429%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-name { left: 32.143%; top: 16.667%; width: 48.214%; height: 9.524%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-cost { left: 10.714%; top: 10.714%; width: 16.071%; height: 10.714%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-desc { left: 17.857%; top: 64.286%; width: 62.500%; height: 21.429%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-type { left: 17.857%; top: 47.619%; width: 62.500%; height: 4.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-gem { left: 50%; top: 95.238%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); --ci-l: 8.929%; --ci-r: 7.143%; --ci-t: 9.524%; --ci-b: 5.952%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-win { left: 17.857%; top: 30.952%; width: 64.286%; height: 21.429%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name { left: 30.357%; top: 16.667%; width: 50.000%; height: 9.524%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-cost { left: 10.714%; top: 10.714%; width: 14.286%; height: 10.714%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-desc { left: 17.857%; top: 64.286%; width: 64.286%; height: 21.429%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-gem { left: 50%; top: 95.238%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); --ci-l: 5.357%; --ci-r: 7.143%; --ci-t: 9.524%; --ci-b: 5.952%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-win { left: 16.071%; top: 30.952%; width: 66.071%; height: 21.429%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-name { left: 28.571%; top: 16.667%; width: 55.357%; height: 9.524%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-cost { left: 7.143%; top: 10.714%; width: 16.071%; height: 10.714%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-desc { left: 16.071%; top: 64.286%; width: 66.071%; height: 21.429%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-type { left: 16.071%; top: 47.619%; width: 66.071%; height: 4.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-gem { left: 50%; top: 95.238%; }

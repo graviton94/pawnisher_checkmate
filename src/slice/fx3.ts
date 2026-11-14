@@ -500,25 +500,33 @@ export const sweep = (el: HTMLElement, show: boolean, then?: () => void, ms = 30
 
 /**
  * 보상 등급 드러내기 (D-216): 카드가 깔린 뒤 차례로 — 희귀는 청강 불똥 · 딸깍, 황금은 화면 전체 금빛 디더 번쩍(체크무늬 다섯 단계로 들어왔다 빠짐) ·
- * 큰 불똥 · 카드 들썩(예비 눌림 → 튀어 오름 → 출렁) · 귀퉁이 반짝임 4칸이 계속 돈다. 페이드 · 그라데이션 없이 도트 단계로만.
+ * 큰 불똥 · 카드 들썩(예비 눌림 → 튀어 오름 → 출렁) · RF-02 귀퉁이 반짝임 한 번(그 뒤 RF-01 꺾쇠가 쉰다). 페이드 · 그라데이션 없이 도트 단계로만.
  */
+/** 등급 반짝임 (RF-02): 8프레임 띠를 카드 네 귀퉁이 조각으로 한 번 돌리고 지운다 — 도는 동안은 쉬는 꺾쇠를 숨긴다 */
+const glint = (c: HTMLElement, g: string): void => {
+  c.querySelector(':scope > .glint')?.remove();
+  const el = document.createElement('i');
+  el.className = `glint glint-${g}`;
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = '<i></i><i></i><i></i><i></i>';
+  c.classList.add('glinting');
+  c.appendChild(el);
+  const done = (): void => { el.remove(); c.classList.remove('glinting'); };
+  el.firstElementChild!.addEventListener('animationend', done, { once: true });
+  window.setTimeout(done, 1200); // 화면 밖 · 탭 숨김으로 animationend가 안 올 때
+};
+
 export const gradeReveal = (cards: HTMLElement[]): void => {
   cards.forEach((c, i) => {
     const g = c.dataset.grade;
     if (!g || g === 'common') return;
-    if (g === 'gold') for (const [x, y] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
-      const t = document.createElement('i');
-      t.className = 'twk';
-      t.style.left = x ? 'calc(100% - 10px)' : '-4px';
-      t.style.top = y ? 'calc(100% - 10px)' : '-4px';
-      t.style.animationDelay = `${(x * 2 + y) * -190}ms`;
-      c.appendChild(t);
-    }
+    // 쉬는 동안은 받은 꺾쇠(RF-01)만 네 귀퉁이에 — CSS ::before. 움직임 줄이기면 반짝임 없이 그 한 프레임
     if (calm()) return;
     window.setTimeout(() => {
       if (!c.isConnected) return;
       const r = centerOf(c);
       replay(c, 'g-pop');
+      glint(c, g);
       if (g === 'gold') {
         const f = document.createElement('div');
         f.className = 'fx3-gold';
