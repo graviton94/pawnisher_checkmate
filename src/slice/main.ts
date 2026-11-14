@@ -66,7 +66,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track as trackEvent } from './telemetry';
 import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type ActSnap, type RunSave } from './save';
-import { growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -1194,10 +1194,10 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     if (ek && ek.hp <= ek.maxHp * BOSS_PHASE_TEXT.lowAt) { phaseWarned = true; toast(BOSS_PHASE_TEXT.low, 3600); }
   }
   // 반장 2단계 (D-243): 쓰러진 반장이 다시 일어선다
-  if (r.events.some((e) => e.type === 'respawn' && e.label === '반장 2단계')) {
+  if (r.events.some((e) => e.type === 'respawn' && e.label === BOSS_RISE_LABEL)) {
     sfx('threat');
     const gilded = b.bossRule === 'gilded';
-    await banner(gilded ? '도금왕이 일어선다' : '반장이 다시 일어선다', false);
+    await banner(gilded ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다', false);
     // 2단계 (각본 §8 · §9, D-276): 반장은 한 마디, 도금왕은 이번 출하에 쓰러뜨린 반장에게 한 말을 비꼰다
     if (gilded) await gildedPhase2();
     // 띠가 「반장이 다시 일어선다」를 말한다 — 상단 알림은 따로 띄우지 않는다 (D-385)

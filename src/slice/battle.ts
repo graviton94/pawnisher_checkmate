@@ -1185,6 +1185,8 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
  * 반장 2단계 (D-243, 사용자: 「반장이 1~2턴에 끝난다」): 반장 킹이 처음 쓰러지면 HP 일부로 다시 일어서고 곁에 호위 폰이 선다.
  * 두 번째로 쓰러져야 이긴다. 화면은 사건 'phase2'를 보고 띠를 띄운다.
  */
+/** 반장 2단계 사건의 꼬리표 — 화면이 이 값으로 2단계 연출을 띄운다 (문구를 바꾸면 연출이 끊긴다, D-467) */
+export const BOSS_RISE_LABEL = '반장 격노 — 공격 ×1.5';
 const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): void => {
   if (!b.boss || b.phase2 || b.s.winner !== 0) return;
   const old = before.pieces.find((p) => p.side === 1 && p.type === 'K');
@@ -1210,7 +1212,7 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
     events.push({ type: 'respawn', pieceId: pawn.id, pos: q, label: '반장 호위' });
     n += 1;
   }
-  events.push({ type: 'respawn', pieceId: k.id, pos: { x: k.x, y: k.y }, label: '반장 격노 — 공격 ×1.5' });
+  events.push({ type: 'respawn', pieceId: k.id, pos: { x: k.x, y: k.y }, label: BOSS_RISE_LABEL });
   b.intents = planFor(b);
   markTelegraph(b);
 };
