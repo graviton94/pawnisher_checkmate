@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRun, FTUE, INTRO, MAP } from '../src/slice/run';
+import { buildRun, ftueRetry, FTUE, INTRO, MAP } from '../src/slice/run';
 import { endTurn, newSliceBattle, playCard } from '../src/slice/battle';
 import { START_COMMANDS } from '../src/slice/cards';
 
@@ -135,11 +135,15 @@ describe('막별 반장 · 적 특성 (D-171)', () => {
     const b = newSliceBattle([{ t: 'K' }], ['K', 'R'], START_COMMANDS, 2, { traits: ['rookPlate'] });
     expect(b.s.pieces.find((p) => p.side === 1 && p.type === 'R')!.shield).toBe(15);
   });
-  it('첫 출하 안전망 (D-232): 처음 출하면 1막 반장 HP만 −35%, 지도는 같다', () => {
+  it('첫 출하 안전망 (D-232 → 2026-11-14): 처음엔 그대로, 1막 반장에 한 번 지고 다시 둘 때만 HP −35% · 지도는 같다', () => {
     const a = buildRun(9, 0, false);
     const b = buildRun(9, 0, true);
     const boss = (r: typeof a, k: number) => r[k].rows.at(-1)![0].battle!;
-    expect(boss(b, 0).kingHp).toBeCloseTo(boss(a, 0).kingHp * FTUE.firstBossHp);
+    expect(boss(b, 0).kingHp).toBe(boss(a, 0).kingHp);
+    expect(boss(b, 0).ftue).toBe(true);
+    expect(ftueRetry(boss(b, 0)).kingHp).toBeCloseTo(boss(a, 0).kingHp * FTUE.firstBossHp);
+    expect(ftueRetry(ftueRetry(boss(b, 0))).kingHp).toBeCloseTo(boss(a, 0).kingHp * FTUE.firstBossHp);
+    expect(ftueRetry(boss(b, 1))).toBe(boss(b, 1));
     expect(boss(b, 1).kingHp).toBe(boss(a, 1).kingHp);
     expect(b[0].rows.map((r) => r.map((n) => n.kind).join()).join('|')).toBe(a[0].rows.map((r) => r.map((n) => n.kind).join()).join('|'));
   });

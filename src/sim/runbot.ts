@@ -10,13 +10,14 @@ import { FORMS } from '../data/forms';
 import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, rollRecruit, SHOP, FORGE, SLICE, START_DECK, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
 import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
-import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
+import { ASC_NUM, buildRun, ftueRetry, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
 import { crackOrScrap, mendSquad, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
 import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
 import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
 import { chooseBuildCard, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
 import { idleStats, playOut, playOutSearch, type BotStyle, type IdleStats } from '../slice/bot';
+import { CLIMB } from '../data/bot';
 
 export type RunStyle = BotStyle | 'search';
 export type RunBuild = 'neutral' | 'mixed' | 'knight' | 'rook' | AxisBuild;
@@ -45,6 +46,8 @@ export interface RunOpts {
   persona?: 'standard' | 'risky' | 'hoarder';
   /** 두뇌 봇의 사람다운 실수 (D-456): 상위 3순서 소프트맥스 온도 — 0 = 늘 최선 */
   temp?: number;
+  /** 첫 출하 조건 (처음 반장 그대로 · 1막 반장에 한 번 지면 안전망) — 없으면 처음 풀 · 첫째 왕관일 때 */
+  first?: boolean;
 }
 export interface BossLog { rule: BossRule; act: number; won: boolean; turns: number }
 export interface RunResult {
@@ -71,7 +74,7 @@ export interface RunResult {
   goldAtFinal: number;
   starterLeft: number;
 }
-export interface BattleLog { act: number; kind: 'battle' | 'check' | 'boss'; title: string; turns: number; won: boolean; fell: number; maxFellInTurn: number; kingHpLost: number; /** 이겼을 때 살아 있던 적 수 (킹만 잡고 끝냈나) · 처음 적 수 */ enemiesLeft: number; enemies: number; /** 분대원을 쓰러뜨린 적 유형 */ killers: string; /** 실험실 (D-456): 이긴 뒤 분대 체력 비율 · 우리 피해 중 가장 센 한 턴의 몫 · 가장 큰 한 방 · 턴당 준 피해 */ hpAfter: number; swing: number; peak: number; dpt: number }
+export interface BattleLog { act: number; kind: 'battle' | 'check' | 'boss'; title: string; turns: number; won: boolean; /** 턴 상한에 닿은 교착 */ stale: boolean; fell: number; maxFellInTurn: number; kingHpLost: number; /** 이겼을 때 살아 있던 적 수 (킹만 잡고 끝냈나) · 처음 적 수 */ enemiesLeft: number; enemies: number; /** 분대원을 쓰러뜨린 적 유형 */ killers: string; /** 실험실 (D-456): 이긴 뒤 분대 체력 비율 · 우리 피해 중 가장 센 한 턴의 몫 · 가장 큰 한 방 · 턴당 준 피해 */ hpAfter: number; swing: number; peak: number; dpt: number }
 
 const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
 
@@ -90,7 +93,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const isOpen = (id: string) => o.pool !== 'starter' || open.has(id);
   const val = o.value ?? ((id: CommandId) => (GRADE_RANK[gradeOf(id)] ?? 10) + (SUPPORT_CARDS[build]?.includes(id) || (ax && (COMMANDS[id].axis === ax || COMMANDS[id].axis2 === ax)) ? 18 : 0) + (build === 'knight' && COMMANDS[id].who === 'N' || build === 'rook' && COMMANDS[id].who === 'R' ? 10 : 0));
   const rng = new Rng(seed);
-  const acts = buildRun(seed, asc);
+  const acts = buildRun(seed, asc, o.first ?? (o.pool === 'starter' && asc === 0));
   let squad: Squad[] = [];
   const set = START_SETS[o.set ?? 'standard'];
   for (const t of set.squad) squad.push(makeCrew(t, rng, squad.map((u) => u.name ?? '')));
@@ -187,15 +190,16 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
       prev = n;
       const frac = ri / a.rows.length;
       if (n.battle) {
-        const def = n.battle;
-        if (ai === acts.length - 1 && def.reward === 'end' && goldAtFinal < 0) goldAtFinal = gold;
+        const def0 = n.battle;
+        if (ai === acts.length - 1 && def0.reward === 'end' && goldAtFinal < 0) goldAtFinal = gold;
         let ok = false;
         let fell: Squad[] = [];
         for (let tryN = 0; !ok && (tryN === 0 || (revive > 0 && (revive--, true))); tryN++) {
+          const def = tryN ? ftueRetry(def0) : def0;
           const bSeed = seed * 7 + ri * 131 + tryN;
           const setup = JSON.stringify({ squad, deck: deck.filter(usable), parts, refined, asc, gold, def: { ...def, seed: bSeed, depth: depthAt(ai, frac) } });
           const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, scatter: set.scatter ? bSeed : undefined });
-          const r = style === 'search' ? playOutSearch(b, 40, 3, 4, o.temp ?? 0) : playOut(b, 40, undefined, style);
+          const r = style === 'search' ? playOutSearch(b, CLIMB.maxTurns, 3, 4, o.temp ?? 0) : playOut(b, CLIMB.maxTurns, undefined, style);
           battles += 1;
           turnsAll += r.turns;
           idle.turns += r.idle.turns; idle.idle += r.idle.idle; idle.apLeft += r.idle.apLeft; idle.idleAp += r.idle.idleAp;
@@ -208,7 +212,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             const maxFell = Math.max(0, ...byTurn.values());
             const why = r.won && r.turns <= 1 ? '1턴 승리' : ai < 3 && maxFell >= 3 ? `한 적 턴에 ${maxFell}기 잃음` : !r.won && ai === 0 ? '1막 패배' : '';
             if (why && extremes.length < 3) extremes.push({ why, act: ai + 1, title: def.title, code: btoa(unescape(encodeURIComponent(setup))) });
-            log.push({ act: ai + 1, kind: def.boss ? 'boss' : n.kind === 'check' ? 'check' : 'battle', title: def.title, turns: r.turns, won: r.won, fell: b.falls.length, maxFellInTurn: Math.max(0, ...byTurn.values()), kingHpLost: k ? k.maxHp - Math.max(0, k.hp) : 999, enemiesLeft: b.s.pieces.filter((p) => p.side === 1 && p.hp > 0).length, enemies: def.enemy.length, killers: b.falls.map((f) => f.byType ?? '?').join(''), hpAfter: r.won ? (() => { const sq = squadAfter(b, squad); /* D-467: 분모는 출전한 분대 전체 — 쓰러진 분대원을 빼면 둘을 잃고 이겨도 「남은 체력 70%」로 나왔다 */ return sq.reduce((a, u) => a + Math.min(crewMaxHp(u), Math.max(0, u.hp ?? crewMaxHp(u))), 0) / Math.max(1, squad.reduce((a, u) => a + crewMaxHp(u), 0)); })() : 0, swing: (() => { const d = Array.from(b.dealt ?? [], (x) => x ?? 0); const sum = d.reduce((a, x) => a + x, 0); return sum ? Math.max(...d) / sum : 0; })(), peak: b.peakHit ?? 0, dpt: Array.from(b.dealt ?? [], (x) => x ?? 0).reduce((a, x) => a + x, 0) / Math.max(1, r.turns) });
+            log.push({ act: ai + 1, kind: def.boss ? 'boss' : n.kind === 'check' ? 'check' : 'battle', title: def.title, turns: r.turns, won: r.won, stale: r.stale, fell: b.falls.length, maxFellInTurn: Math.max(0, ...byTurn.values()), kingHpLost: k ? k.maxHp - Math.max(0, k.hp) : 999, enemiesLeft: b.s.pieces.filter((p) => p.side === 1 && p.hp > 0).length, enemies: def.enemy.length, killers: b.falls.map((f) => f.byType ?? '?').join(''), hpAfter: r.won ? (() => { const sq = squadAfter(b, squad); /* D-467: 분모는 출전한 분대 전체 — 쓰러진 분대원을 빼면 둘을 잃고 이겨도 「남은 체력 70%」로 나왔다 */ return sq.reduce((a, u) => a + Math.min(crewMaxHp(u), Math.max(0, u.hp ?? crewMaxHp(u))), 0) / Math.max(1, squad.reduce((a, u) => a + crewMaxHp(u), 0)); })() : 0, swing: (() => { const d = Array.from(b.dealt ?? [], (x) => x ?? 0); const sum = d.reduce((a, x) => a + x, 0); return sum ? Math.max(...d) / sum : 0; })(), peak: b.peakHit ?? 0, dpt: Array.from(b.dealt ?? [], (x) => x ?? 0).reduce((a, x) => a + x, 0) / Math.max(1, r.turns) });
           }
           if (r.won) {
             ok = true;
@@ -218,16 +222,16 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             squad = [...restSquad(squadAfter(b, squad), REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1)), ...cs.back]; // 화면 restHeal()과 같게
           }
         }
-        if (!ok) return out(false, ai + 1, `${ai + 1}막 ${def.title}`);
-        if (def.reward === 'end') return out(true, 4, '');
-        if (def.reward === 'recruit') recruit();
-        else if (def.reward === 'kit') {
+        if (!ok) return out(false, ai + 1, `${log[log.length - 1]?.stale ? '교착 ' : ''}${ai + 1}막 ${def0.title}`);
+        if (def0.reward === 'end') return out(true, 4, '');
+        if (def0.reward === 'recruit') recruit();
+        else if (def0.reward === 'kit') {
           const pool = KITS.filter(k => (PART_GRADE[k.part] ?? 'common') !== 'gold' && !parts.includes(k.part) && (!k.needs || squad.some(u => u.t === k.needs)) && k.cards.every(usable));
           const { offers } = kitOffers(pool, rng); const k = offers.sort((a, z) => rankOf(z.part) - rankOf(a.part))[0];
           if (k) { addPart(k.part); deck.push(...k.cards); }
         }
-        else if (def.reward === 'part') { partOf(true); if (squad.length < SLICE.squadMax) recruit(); takeCard(cardOffers(true), false); }
-        else if (def.reward === 'card') {
+        else if (def0.reward === 'part') { partOf(true); if (squad.length < SLICE.squadMax) recruit(); takeCard(cardOffers(true), false); }
+        else if (def0.reward === 'card') {
           const offers = cardOffers(false);
           const best = Math.max(...offers.map(val), -99);
           if (persona !== 'hoarder' && fell.length && best < 25) squad = overhaulSquad(squad, fell).squad;

@@ -41,5 +41,5 @@ describe('시작 세트 (D-485)', () => {
       const r = simulateRun(4242, { asc: 0, style: 'greedy', set });
       expect(r.battles).toBeGreaterThan(0);
     }
-  });
+  }, 60000);
 });

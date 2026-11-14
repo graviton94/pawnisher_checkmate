@@ -57,7 +57,7 @@ const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) 
 const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
 import { CREW, DEATHS, QUIRKS, SCAR_DESC, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
-import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
+import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, ftueRetry, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { choicePay, counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
 import { EVENT_BEAT, EVENT_FOCUS, EVENT_HINT, EVENT_SUM, EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
 import { runEventFx, type CardFx, type CrewFx } from './evstage';
@@ -2746,7 +2746,7 @@ const finishNow = (): void => {
       });
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
-        startBattle(cur);
+        startBattle(ftueRetry(cur)); // 첫 출하 1막 반장이면 이제야 안전망 (2026-11-14)
       });
       el.querySelector('[data-quit]')!.addEventListener('click', () => runEnd(false));
       return;

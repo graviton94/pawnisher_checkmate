@@ -55,6 +55,8 @@ export interface BattleDef {
   /** 실험실 다시 보기 (D-468): 봇 출하와 같은 대국 시드 · 성장 깊이 */
   seed?: number;
   depth?: number;
+  /** 첫 출하 1막 반장 — 한 번 지고 다시 두면 안전망(FTUE)을 씌운다 */
+  ftue?: boolean;
 }
 
 export interface MapNode {
@@ -259,8 +261,13 @@ export const INTRO: BattleDef[] = [
   },
 ];
 
-/** 첫 출하 안전망 (D-232 — Monster Train 첫 판 반장 체력 감산): 처음 출하하는 사람의 1막 반장 HP 배율 */
+/**
+ * 첫 출하 안전망 (D-232 — Monster Train 첫 판 반장 체력 감산): 처음 출하하는 사람의 1막 반장 HP 배율.
+ * 2026-11-14 사용자 결정(첫째 왕관에도 위험한 순간): 처음부터 깎지 않고, 그 반장에게 한 번 진 뒤 다시 둘 때만 깎는다.
+ */
 export const FTUE = { firstBossHp: 0.65 };
+/** 다시 두는 대국 — 첫 출하 1막 반장(ftue)이면 안전망을 씌운 사본, 아니면 그대로 */
+export const ftueRetry = (d: BattleDef): BattleDef => (d.ftue ? { ...d, ftue: false, kingHp: d.kingHp * FTUE.firstBossHp, enemyHp: (d.enemyHp ?? 1) * FTUE.firstBossHp } : d);
 
 /** 대국 하나 만들기 */
 export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0, rule?: BossRule): BattleDef => {
@@ -387,10 +394,8 @@ export const buildRun = (seed: number, asc = 0, first = false): Act[] => {
     // 막마다 반장 둘 중 하나 (D-274) — 지도 rng를 건드리지 않게 따로 뽑는다. 처음 출하는 처음 반장 그대로
     const rule = first ? BOSS_RULE[act - 1] : BOSS_PAIRS[act - 1][new Rng(seed ^ (0x5b0 + act * 97)).int(2)];
     const boss = battleFor(act, 'boss', rng, asc, rule);
-    if (act === 1 && first) {
-      boss.kingHp *= FTUE.firstBossHp;
-      boss.enemyHp = (boss.enemyHp ?? 1) * FTUE.firstBossHp;
-    }
+    // 첫 출하 안전망 (2026-11-14 사용자 결정): 지도에서는 깎지 않는다 — 그 반장에게 한 번 진 뒤 다시 둘 때만 ftueRetry
+    if (act === 1 && first) boss.ftue = true;
     rows.push([{ kind: 'boss', battle: boss }]);
     return { act, name: ACT_NAMES[act - 1], rows } as Act;
   }).concat([{ act: 4, name: '출하구', rows: [[{ kind: 'forge', final: true }], [{ kind: 'shop' }], [{ kind: 'boss', battle: FINAL_BOSS(asc) }]] }]);

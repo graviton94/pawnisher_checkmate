@@ -60,14 +60,25 @@ await Promise.all(Array.from({ length: Math.min(jobs, tasks.length) }, async () 
 
 const ci = (k, n) => { if (!n) return '-'; const p = k / n, z = 1.96, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = (z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))) / d; return `${Math.round((c - h) * 100)}~${Math.round((c + h) * 100)}`; };
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-console.log(`봇      전투단계 빌드    공급     판  완주% (95%)   도착 1/2/3/종막   부품 분대 덱 턴/대국 손놓음% 가족부품`);
+console.log(`봇      전투단계 빌드    공급     판  완주% (95%)   도착 1/2/3/종막   부품 분대 덱 턴/대국 손놓음% 가족부품 교착대국 교착끝`);
 for (const s of styles) for (const a of ascs) for (const f of builds) for (const pool of pools) for (const pe of personas) {
   const g = rows.filter((r) => r.s === s && r.a === a && r.f === f && r.pool === pool && r.pe === pe);
   if (!g.length) continue;
   const k = g.filter((r) => r.c).length;
   const reach = [1, 2, 3, 4].map((x) => g.filter((r) => r.act === x).length).join('/');
   const it = g.reduce((x, r) => x + r.it, 0), ii = g.reduce((x, r) => x + r.ii, 0);
-  console.log(`${s.padEnd(7)} ${String(a).padStart(3)} ${(pe === 'standard' ? f : `${f}/${pe}`).padEnd(7)} ${pool.padEnd(7)} ${String(g.length).padStart(4)} ${String(Math.round(k/g.length*100)).padStart(3)} (${ci(k,g.length).padEnd(6)}) ${reach.padEnd(15)} ${avg(g.map(r=>r.p)).toFixed(1)} ${avg(g.map(r=>r.sq)).toFixed(1)} ${avg(g.map(r=>r.d)).toFixed(0)} ${avg(g.map(r=>r.t/Math.max(1,r.b))).toFixed(1)} ${(it ? ii/it*100 : 0).toFixed(1)} ${avg(g.map(r=>r.fp)).toFixed(1)}`);
+  console.log(`${s.padEnd(7)} ${String(a).padStart(3)} ${(pe === 'standard' ? f : `${f}/${pe}`).padEnd(7)} ${pool.padEnd(7)} ${String(g.length).padStart(4)} ${String(Math.round(k/g.length*100)).padStart(3)} (${ci(k,g.length).padEnd(6)}) ${reach.padEnd(15)} ${avg(g.map(r=>r.p)).toFixed(1)} ${avg(g.map(r=>r.sq)).toFixed(1)} ${avg(g.map(r=>r.d)).toFixed(0)} ${avg(g.map(r=>r.t/Math.max(1,r.b))).toFixed(1)} ${(it ? ii/it*100 : 0).toFixed(1)} ${avg(g.map(r=>r.fp)).toFixed(1)} ${String(g.reduce((x,r)=>x+(r.st??0),0)).padStart(4)} ${String(g.reduce((x,r)=>x+(r.se??0),0)).padStart(4)}`);
+}
+// 대국 턴 분포 (긴 대국 보고 2026-11-14): 대국마다 내 턴 수 — 상한(25)에 닿은 것은 교착
+const bins = [[1,3],[4,6],[7,10],[11,14],[15,24],[25,99]];
+console.log(`턴 분포  봇 단계 공급   대국  ${bins.map(([a,z])=>z>=99?`${a}+`:`${a}-${z}`).join(' ')}  평균 중앙 90%  반장평균 반장승%`);
+for (const s of styles) for (const a of ascs) for (const f of builds) for (const pool of pools) for (const pe of personas) {
+  const g = rows.filter((r) => r.s === s && r.a === a && r.f === f && r.pool === pool && r.pe === pe);
+  const lg = g.flatMap((r) => r.lg ?? []);
+  if (!lg.length) continue;
+  const ts = lg.map((l) => l[3]).sort((x, y) => x - y);
+  const boss = lg.filter((l) => l[1] === 'o');
+  console.log(`         ${s.padEnd(7)} ${String(a).padStart(2)} ${pool.padEnd(7)} ${String(lg.length).padStart(5)}  ${bins.map(([lo,hi])=>String(ts.filter(t=>t>=lo&&t<=hi).length).padStart(lo>=10?5:3)).join(' ')}  ${avg(ts).toFixed(1)} ${ts[Math.floor(ts.length/2)]} ${ts[Math.floor(ts.length*0.9)]}  ${avg(boss.map(l=>l[3])).toFixed(1)} ${Math.round(boss.filter(l=>l[2]).length/Math.max(1,boss.length)*100)}`);
 }
 console.log(`(${rows.length}판 · ${Math.round((Date.now() - t0) / 1000)}초)`);
 if (rows.length !== styles.length*ascs.length*builds.length*pools.length*personas.length*N) throw new Error('incomplete climb grid');

@@ -58,6 +58,30 @@ describe('공정 판 (D-486)', () => {
     expect(b.s.pieces.some((q) => q.id === p.id)).toBe(false);
     expect(b.s.fallen).toContain(c.y * b.s.width + c.x);
   });
+  it('금 간 바닥 칸 고르기 (2026-11-14): 한 줄에 둘까지 · 다 꺼져도 남은 칸이 하나로 이어진다', () => {
+    for (let seed = 1; seed <= 200; seed++) for (const [w, h] of [[6, 6], [8, 6], [8, 7]]) {
+      const b = newSliceBattle(squad, ['K', 'P', 'P', 'R'], deck, seed, { process: 'crack', width: w, height: h });
+      const cells = b.proc!.cells!;
+      const rows = new Map<number, number>();
+      for (const c of cells) rows.set(c.y, (rows.get(c.y) ?? 0) + 1);
+      expect(Math.max(...rows.values())).toBeLessThanOrEqual(PROC.crackRowMax);
+      const hole = new Set(cells.map((c) => `${c.x},${c.y}`));
+      const open: string[] = [];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!hole.has(`${x},${y}`)) open.push(`${x},${y}`);
+      const seen = new Set([open[0]]);
+      const q = [open[0]];
+      while (q.length) {
+        const [x, y] = q.pop()!.split(',').map(Number);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const k = `${x + dx},${y + dy}`;
+          if (x + dx < 0 || y + dy < 0 || x + dx >= w || y + dy >= h || hole.has(k) || seen.has(k)) continue;
+          seen.add(k);
+          q.push(k);
+        }
+      }
+      expect(seen.size).toBe(open.length);
+    }
+  });
   it('반장 판은 짝 공정, 첫째 왕관 일반 대국 · 철갑 반장은 깨끗하다', () => {
     expect(battleFor(2, 'boss', new Rng(1), 0, 'magnet').process).toBe('magnet');
     expect(battleFor(1, 'boss', new Rng(1), 0, 'plate').process).toBeUndefined();

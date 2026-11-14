@@ -28,6 +28,38 @@ const key = (p: Pos) => `${p.x},${p.y}`;
 const value = (p: Piece): number => (p.type === 'K' ? 300 : PIECE_STATS[p.type].value);
 const at = (s: BattleState, p: Pos) => s.pieces.find((q) => q.x === p.x && q.y === p.y);
 
+/**
+ * 금 간 바닥 칸 고르기 (긴 대국 보고 2026-11-14 제안 4): 한 줄에 PROC.crackRowMax칸까지, 그리고 모든 칸이 꺼져도
+ * 남은 칸이 가로세로로 하나로 이어져야 한다(두 진영이 서로 닿는다) — 구멍 벽에 막혀 양쪽 다 둘 수 없는 판을 막는다.
+ */
+const pickCracks = (s: BattleState, mid: Pos[], r: Rng): Pos[] => {
+  const pool = [...mid];
+  const out: Pos[] = [];
+  const linked = (holes: Pos[]): boolean => {
+    const hole = new Set(holes.map(key));
+    const open: Pos[] = [];
+    for (let y = 0; y < s.height; y++) for (let x = 0; x < s.width; x++) if (!hole.has(key({ x, y }))) open.push({ x, y });
+    const seen = new Set([key(open[0])]);
+    const q = [open[0]];
+    while (q.length) {
+      const c = q.pop()!;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = { x: c.x + dx, y: c.y + dy };
+        if (n.x < 0 || n.y < 0 || n.x >= s.width || n.y >= s.height || hole.has(key(n)) || seen.has(key(n))) continue;
+        seen.add(key(n));
+        q.push(n);
+      }
+    }
+    return seen.size === open.length;
+  };
+  while (out.length < PROC.crackCells && pool.length) {
+    const c = pool.splice(r.int(pool.length), 1)[0];
+    if (out.filter((o) => o.y === c.y).length >= PROC.crackRowMax || !linked([...out, c])) continue;
+    out.push(c);
+  }
+  return out;
+};
+
 /** 대국 시작: 공정 판의 자리를 정한다 — 두 진영 사이 가운데 줄들, 시드대로 */
 export const setupProcess = (s: BattleState, kind: ProcessId, seed: number): ProcState => {
   const r = new Rng(seed ^ 0x9c55);
@@ -43,7 +75,7 @@ export const setupProcess = (s: BattleState, kind: ProcessId, seed: number): Pro
   if (kind === 'conveyor') return { kind, row: Math.floor((h - 1) / 2), dir: r.next() < 0.5 ? 1 : -1 };
   if (kind === 'magnet') return { kind, col: Math.floor((w - 1) / 2) };
   if (kind === 'furnace') return { kind, cells: pickCells(PROC.furnaceCells) };
-  if (kind === 'crack') return { kind, cells: pickCells(PROC.crackCells), cracks: {} };
+  if (kind === 'crack') return { kind, cells: pickCracks(s, mid, r), cracks: {} };
   return { kind, pressRow: null };
 };
 

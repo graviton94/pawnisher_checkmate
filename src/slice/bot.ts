@@ -16,12 +16,13 @@ export interface BotAction {
 
 /**
  * 자리 값 (2026-11-09d): 킹이 아닌 기물은 가장 가까운 적 · 적 킹에 붙을수록 높다 (무게는 src/data/bot.ts).
- * 다가가는 수가 「턴을 그냥 끝내기」보다 못하지 않게 — 킹은 0 (앞장서지 않는다).
+ * 다가가는 수가 「턴을 그냥 끝내기」보다 못하지 않게 — 킹은 0 (앞장서지 않는다). 단 적이 킹만 남으면 킹도 다가간다.
  */
 export const placeOf = (s: BattleState, p: Pick<Piece, 'type'>, at: { x: number; y: number }): number => {
-  if (p.type === 'K') return 0;
   const foes = s.pieces.filter((q) => q.side === 1);
   if (!foes.length) return 0;
+  // 적이 킹만 남으면 내 킹도 다가간다 (긴 대국 보고 제안 1 — 다른 색 비숍 + 서 있는 킹의 술래잡기 교착)
+  if (p.type === 'K') return foes.every((q) => q.type === 'K') ? -BOT.kingLone * Math.min(...foes.map((q) => chebyshev(q, at))) : 0;
   const near = Math.min(BOT.posNearCap, ...foes.map((q) => chebyshev(q, at)));
   const ek = kingOf(s, 1);
   return -BOT.posNear * near - BOT.posKing * (ek ? chebyshev(ek, at) : 0);
@@ -219,7 +220,8 @@ const tally = (st: IdleStats, b: SliceBattle): void => {
   st.apLeft += Math.max(0, b.ap);
   if (b.ap > 0 && anyPlay(b)) { st.idle += 1; st.idleAp += b.ap; }
 };
-export type PlayResult = { won: boolean; turns: number; plays: number; idle: IdleStats };
+/** stale = 턴 상한까지 아무도 이기지 못한 대국 (교착 — 패배와 따로 센다, 긴 대국 보고 제안 5) */
+export type PlayResult = { won: boolean; turns: number; plays: number; idle: IdleStats; stale: boolean };
 
 /** 대국 하나를 끝까지 둔다. 내 턴 수 · 낸 카드 수 · 이겼는지 · 손 놓은 턴 */
 export const playOut = (b: SliceBattle, maxTurns = 40, onPlay?: (card: string) => void, style: BotStyle = 'greedy'): PlayResult => {
@@ -240,7 +242,7 @@ export const playOut = (b: SliceBattle, maxTurns = 40, onPlay?: (card: string) =
     tally(idle, b);
     endTurn(b, true);
   }
-  return { won: b.s.winner === 0, turns: b.turn, plays, idle };
+  return { won: b.s.winner === 0, turns: b.turn, plays, idle, stale: b.s.winner === null };
 };
 
 // ---------- 수읽기 봇 (D-177): 한 턴 안의 순서를 탐색한다 ----------
@@ -365,5 +367,5 @@ export const playOutSearch = (b: SliceBattle, maxTurns = 40, depth = 4, k = 5, t
     tally(idle, b);
     endTurn(b, true);
   }
-  return { won: b.s.winner === 0, turns: b.turn, plays, idle };
+  return { won: b.s.winner === 0, turns: b.turn, plays, idle, stale: b.s.winner === null };
 };

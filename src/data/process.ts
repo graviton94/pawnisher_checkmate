@@ -8,7 +8,7 @@ import type { BossRule } from '../slice/cards';
 export type ProcessId = 'conveyor' | 'press' | 'magnet' | 'furnace' | 'crack';
 export interface ProcessDef { name: string; tell: string; when: string; effect: string; line: string }
 /** 수치: 프레스 = pressEvery턴마다 예고 줄 · 피해(난이도 공격 배율을 곱한다) / 용광로 = 칸 수 · 서 있으면 피해 / 금 간 바닥 = 칸 수 · 몇 번 밟히면 구멍 */
-export const PROC = { pressEvery: 2, pressDmg: 14, furnaceCells: 3, furnaceDmg: 8, crackCells: 4, crackSteps: 2 };
+export const PROC = { pressEvery: 2, pressDmg: 14, furnaceCells: 3, furnaceDmg: 8, crackCells: 4, crackSteps: 2, /** 금 간 칸은 한 줄에 이만큼까지 (긴 대국 보고 2026-11-14) */ crackRowMax: 2 };
 export const PROCESS: Record<ProcessId, ProcessDef> = {
   conveyor: { name: '컨베이어', tell: '컨베이어 — 적 차례가 끝날 때 가운데 줄의 기물이 모두 한 칸 흐릅니다.', when: '적 차례 끝, 화살표 줄', effect: '그 줄 기물 모두 한 칸 흐른다', line: '벨트는 멈추지 않는다.' },
   press: { name: '프레스', tell: `프레스 — ${PROC.pressEvery}턴마다 예고한 줄을 내리찍습니다. 적도 맞습니다.`, when: `${PROC.pressEvery}턴마다, 망치 표시 줄`, effect: '그 줄 모두 피해 (피아 무관)', line: '쿵. 그리고 또, 쿵.' },
