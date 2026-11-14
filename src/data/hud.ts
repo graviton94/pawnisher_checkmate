@@ -44,8 +44,9 @@ export const HUD_TEXT = {
   /** 공정 열기 (D-454): 턴 표시 · 내 차례 띠 — 피해 배율을 숫자로 */
   turnHeat: (turn: number, heat: number): string => (turn === 1 ? '1턴 · 배치' : heat >= 1 ? `${turn}턴 · 최대` : `${turn}턴 · ${Math.round(heat * 100)}%`),
   /** 교착 압박 (2026-11-14): 압박이 켜지는 턴 알림 · 지금 턴을 끝내면 적 킹이 녹는다 (시스템 투) */
-  stallWarn: (quiet: number) => `교착 — 지금부터 피해 없는 턴이 ${quiet}번 이어지면 적 킹이 녹슬기 시작합니다.`,
-  stallOn: (dmg: number) => `교착 압박 — 턴을 마치면 적 킹의 방열판이 벗겨지고 HP가 ${dmg} 녹습니다.`,
+  // 띠는 한 줄(경보 띠 길이) — 규칙 풀이는 용어집 「교착 압박」
+  stallWarn: (quiet: number) => `교착 감시 — 피해 없는 턴 ${quiet}번이면 압박`,
+  stallOn: (dmg: number) => `교착 압박 — 턴 끝에 적 킹 HP −${dmg}`,
   heatBand: (turn: number, heat: number) => (turn === 1 ? '배치 턴 · 피해 25%' : heat >= 1 ? `${turn}턴 · 열기 최대` : `${turn}턴 · 열기 ${Math.round(heat * 100)}%`),
   newTerm: (names: string) => `새 용어 「${names}」`,
   shock: '기어 쇼크 — 공격 ×0.75',

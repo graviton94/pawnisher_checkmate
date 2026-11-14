@@ -104,7 +104,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   thickCast: { name: '두꺼운 주물', axis: 'inf', icon: 'thickCast', flavor: '쇳물을 아끼지 않고 부었다.', desc: '폰 HP +25%' },
   scrapMagnet: { name: '고철 자석', axis: null, icon: 'scrapMagnet', flavor: '흩어진 쇳조각을 끌어모은다.', desc: '나사 +1 — 넘친 피해 5마다' },
   firstSpring: { name: '선제 태엽', axis: null, icon: 'firstSpring', flavor: '먼저 감은 태엽이 먼저 돈다.', desc: '태엽 +2 — 대국 첫 턴 시' },
-  lastAxle: { name: '버팀 축', axis: 'king', icon: 'lastAxle', flavor: '무너지기 직전에 가장 세게 버틴다.', desc: '킹의 공격 ×1.6 — 킹 HP 30% 미만인 동안' },
+  lastAxle: { name: '마지막 축', axis: 'king', icon: 'lastAxle', flavor: '무너지기 직전에 가장 세게 버틴다.', desc: '킹의 공격 ×1.6 — 킹 HP 30% 미만인 동안' },
   toolbox: { name: '땜질 도구함', axis: null, icon: 'toolbox', flavor: '킹 말고, 가장 패인 둘부터.', desc: '다친 둘 HP +6 — 턴 시작 시' },
   ventHole: { name: '바람 구멍', axis: null, icon: 'ventHole', flavor: '숨을 고르고 되받아친다.', desc: '회피 반격 ×1.8' },
   afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', flavor: '불은 꺼져도 쇠는 식지 않는다.', desc: '연쇄 1/4 유지 — 턴 끝 시' },

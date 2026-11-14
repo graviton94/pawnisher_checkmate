@@ -652,9 +652,11 @@ const extendPlan = (s0: BattleState, ap0: number, turn: number, boss: boolean, s
   let ap = ap0;
   const out: Intent[] = [];
   const acted = new Map(acted0 ?? []);
+  let repeats = [...acted.values()].filter((n) => n > 1).length;
   const dead = new Set<number>();
   for (let k = 0; k < FOE_AI.actMax && ap > 0 && s.winner === null; k++) {
     const capture = !!s.rules.capture;
+    const few = s.pieces.filter((q) => q.side === 1 && q.type !== 'K').length;
     const o: FoeOpts = { reach: capture ? undefined : playerReach(s), boss, losing: foeLosing(s), floor: capture ? 0 : -FOE_AI.unspent };
     let pick: { p: Piece; to: Pos; score: number } | null = null;
     for (const p of s.pieces.filter((q) => q.side === 1 && !skip.has(q.id) && !dead.has(q.id))) {
@@ -667,13 +669,15 @@ const extendPlan = (s0: BattleState, ap0: number, turn: number, boss: boolean, s
       let score = boss && p.type === 'K' && best.score > 0 ? best.score * SLICE.bossPriority + SLICE.bossPriorityFlat : best.score;
       // 0점 이하 수(남는 태엽 쓰기)는 태엽을 남기는 감점보다 나을 때만
       if (score <= 0 && score <= -FOE_AI.unspent * cost) continue;
-      if (n > 0) score = score > 0 ? score * FOE_AI.again : score - FOE_AI.unspent;
+      // 두 번째 행동은 점수가 secondMin을 넘는 수만 (남는 태엽 메우기로는 같은 기물을 두 번 움직이지 않는다)
+      if (n > 0) { if (score <= FOE_AI.secondMin || repeats >= FOE_AI.repeats || few > FOE_AI.repeatFoes) continue; score *= FOE_AI.again; }
       if (!pick || score > pick.score || (score === pick.score && p.id < pick.p.id)) pick = { p, to: best.to, score };
     }
     if (!pick) break;
     const sim = simulate(s, [{ pieceId: pick.p.id, to: pick.to }], { freeAp: true });
     if (!sim.ok) { dead.add(pick.p.id); k--; continue; }
     out.push({ pieceId: pick.p.id, to: pick.to });
+    if (acted.has(pick.p.id)) repeats++;
     acted.set(pick.p.id, (acted.get(pick.p.id) ?? 0) + 1);
     ap -= SLICE.moveCost[pick.p.type];
     s = { ...sim.state, turnSide: 1 };
