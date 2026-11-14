@@ -11,7 +11,8 @@ import type { Highlight, Nemesis } from './director';
 
 /**
  * 저장 · 이어하기 · 기록 (R6, D-174). 화면과 무관한 순수 로직 — 저장소는 주입한다 (테스트는 메모리).
- * 저장 시점: 지도에 설 때 · 대국을 시작할 때. 대국 중간에 나가면 그 대국 처음부터 이어 간다.
+ * 저장 시점: 지도에 설 때 · 대국을 시작할 때 · 대국을 이긴 직후(보상 전, D-488). 대국 중간에 나가면 그 대국 처음부터,
+ * 이긴 뒤 보상 전에 나가면 보상 화면부터 이어 간다.
  */
 export interface RunSave {
   /** 2 = 슬더스식 지도 (D-215) — 1은 예전 갈림길 지도라 버린다 */
@@ -40,9 +41,11 @@ export interface RunSave {
   eventBag: SliceEventId[];
   /** 출하 난수 상태 (보상 · 사건 · 대국 시드가 같은 순서로 이어지게) */
   rng: number;
-  /** 'map' = 지도에서, 'battle' = 그 줄의 node번째 대국 처음부터 */
-  at: 'map' | 'battle';
+  /** 'map' = 지도에서, 'battle' = 그 줄의 node번째 대국 처음부터, 'reward' = 그 대국을 이긴 뒤 보상 화면부터 (D-488) */
+  at: 'map' | 'battle' | 'reward';
   node?: number;
+  /** 이긴 대국의 남은 보상 (at = 'reward'): 정산(나사 · 분대 · 부적)은 이미 끝났고 고르기만 남았다 */
+  pending?: PendingReward;
   /** 심리 연출 (D-178): 남은 마지막 한 수 · 자원 희생, 사선 보상을 받은 막, 이번 출하 최고의 턴 */
   clutchLeft?: number;
   sacLeft?: number;
@@ -61,6 +64,22 @@ export interface RunSave {
   /** 이번 막 시작 때의 값 (D-402 막 장부 = 지금 − 이것) — kb · db = 분대원 일련번호 → 처치 · 피해 */
   actSnap?: ActSnap;
 }
+
+/** 이긴 대국 뒤 아직 고르지 않은 보상 (D-488 — 보상 전에 앱이 닫혀도 대국을 다시 굴리지 않는다) */
+export interface PendingReward { earned: number; overGold: number; fallen: Crew[]; closeTier: number }
+
+/**
+ * 이어하기 자리 (D-488): 'reward'는 남은 보상이 있어야만 — 옛 저장 · 깨진 저장은 예전처럼 대국 처음부터 · 지도.
+ */
+export const resumeAt = (s: Pick<RunSave, 'at' | 'pending'>): 'map' | 'battle' | 'reward' =>
+  s.at === 'reward' ? (s.pending && Number.isFinite(s.pending.earned) && Array.isArray(s.pending.fallen) ? 'reward' : 'battle') : s.at === 'battle' ? 'battle' : 'map';
+
+/**
+ * 저장한 덱을 그대로 되살린다 (#20 · D-488). 예전에는 「다듬은 기록(refined)이 있는데 덱에 「+」 카드가 없으면 그 종류를 모두 「+」로」
+ * 옮기는 옛 저장 이관(D-183 전)이 있었다 — 다듬은 카드가 녹 · 빼기로 사라진 뒤 앱을 다시 열면 남은 같은 카드가 전부 「+」가 되어
+ * 다듬기 목록에서 사라졌다. 저장 판 2(D-215)는 모두 D-183 뒤라 이관할 저장이 없다.
+ */
+export const restoreDeck = (s: Pick<RunSave, 'deck'>): CommandId[] => [...s.deck];
 
 /** 막 시작 때의 값 (D-402 막 장부) */
 export interface ActSnap { won: number; kills: number; gold: number; deck: number; kb: Record<string, number>; db: Record<string, number> }

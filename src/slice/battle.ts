@@ -336,9 +336,10 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (has0('heavyHand') && heavy === u) p.atk += PART_NUM.heavyAdd;
     if (has0('aceBadge') && ace === u) p.atk = Math.round(p.atk * PART_NUM.aceMult);
     if (u.hp !== undefined) p.hp = Math.max(1, Math.min(p.maxHp, u.hp));
-    // 생명 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 생명 + 폰 전용 황금 부품 「작은 개척자의 맹세」
-    const doors = (q?.doors ?? 0) + (u.doors ?? 0) + (p.type === 'P' && (opts.parts ?? []).includes('oath') ? 1 : 0);
-    if (p.type !== 'K') for (let k = 0; k < doors; k++) (s.doorIds ??= []).push(p.id);
+    // 생명 (D-217): 기본 없음 — 기벽 + 그 분대원의 영구 생명 + 폰 전용 부품 「작은 개척자의 맹세」.
+    // 킹도 받는다 (D-488): 사건 「왕관을 써 본다」(D-459)의 킹 생명 +1이 대가만 치르고 효과가 없었다. 체크(HP 1로 버팀)가 먼저, 생명은 그다음.
+    const doors = livesOf(u, opts.parts ?? [], p.type);
+    for (let k = 0; k < doors; k++) (s.doorIds ??= []).push(p.id);
     return p.id;
   });
   const quirks: Record<number, QuirkId> = {};
@@ -1831,6 +1832,19 @@ export const clutchBoost = (b: SliceBattle, ap: number): void => {
   b.hand.push('plate');
   b.snap = JSON.stringify({ ...b, snap: '' });
 };
+
+/**
+ * 분대원 하나가 대국마다 갖는 생명 수 (D-217 · D-488) — 대국과 분대 카드 · 지도가 같은 계산 하나를 쓴다 (#24).
+ * 기벽 생명 + 그 분대원의 영구 생명 + 폰이면 「작은 개척자의 맹세」 1. type = 판 위 유형(없으면 분대원 유형).
+ */
+export const livesOf = (u: Squad, parts: readonly string[], type: PieceType = u.t): number =>
+  (u.quirk ? QUIRKS[u.quirk].doors ?? 0 : 0) + (u.doors ?? 0) + (type === 'P' && parts.includes('oath') ? 1 : 0);
+
+/**
+ * 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 역회전 톱니가 깨진다. 입문 실습처럼 b.rewinds를 돌려준 것은 쓴 것이 아니다.
+ * atStart = 대국 시작 때 되감기 수, left = 지금 남은 수, free = 테이프 공짜 몫.
+ */
+export const rewindCost = (atStart: number, left: number, free = 0): number => Math.max(0, atStart - left - free);
 
 /** 되감기: 이번 턴 처음으로 (테이프의 공짜 1회 → 그다음 역회전 톱니 부적, D-228) */
 export const rewind = (b: SliceBattle): SliceBattle | string => {
