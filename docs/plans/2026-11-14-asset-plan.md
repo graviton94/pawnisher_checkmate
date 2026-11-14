@@ -101,7 +101,8 @@
 - 받으면: 64×64(거대 128×128) 격자를 `tools/pixel/pieces64.txt`에 `[R:cannon 0]` `[R:cannon 1]` · `[N:camel …]` · `[Q:hopper …]` · `[B:archbishop …]` · `[R:chancellor …]` · `[P|R|Q:giant 1]` 블록으로 옮김 → `python3 -I tools/pixel/maker.py export` → `public/pieces/`. 대칭이 필요한 것은 `tools/pixel/symmetry.py`. 코드가 파일이 있으면 새 그림을 쓰므로 딱지 · 자르기 분기를 지우고(파일 없을 때 대비 분기만 남김) 거대 네 부위는 이음매 64도트 선으로 자른다.
 - 검수: 이형 적 등장 판(`sliceApi.startAt`), 거대 주물 판(넷째 왕관 반장) — 48dp 칸에서 바탕 기물과 구분되는지, 흰 테 3칸 · 외곽선 공용인지.
 
-### 3위 — 전장 대사 크롬 DL-01~02 (P1)
+### 3위 — 전장 대사 크롬 DL-01~02 (P1) — **받음 · 반입 (D-490)**
+- 반입: `ui_kit_import.py` + `dl_refine.py`. 쓰임은 계획과 다르게 자리를 화자 기물 머리 위(바크) · 판 아래(자막 띠) · 판 위(시스템)로 — D-490 표. 꼬리는 아직 빌린 tip 쐐기.
 - 풀림: 후기 6(적 · 우리 · 시스템 대사 위치 · 형식 통일), 22(적 · 우리 같은 노랑 이름).
 - 받으면: `ui_kit_import.py <원본> DL-01 200`(새 번호를 받도록 이름표 목록 추가) → `src/assets/ui/chrome/v2/talk-{foe,ally,sys,sys-warn}.png` · `name-*` · `portrait-*`. `main.ts`의 `makeTalk` · `talkAt`을 세 자리로 정리 — 적 = 판 오른쪽 위, 우리 = 판 왼쪽 아래, 시스템 = 판 위 가운데(`stateBand` 대체), 이름표 재질로 진영 구분(색 + 모양, 원칙 4). 컷신 화자 이름표(`uikit` 장면 대사)도 같은 `name-*`를 쓴다.
 - 검수: 보통 대국 도발 · 반장 도발 · 합류 대사 · 경고 띠 4장면, 판 2줄을 가리지 않는지.
@@ -117,7 +118,7 @@
 - 받으면: `frame-{common,rare,gold}` 9-slice(6도트 경계)로 교체, `.gtag` → `rank-tag-*` 이미지, 등장 연출은 `glint-*` 8프레임 띠를 steps(8)로 1회 재생(금 = 모서리 꺾쇠 덜컹 예비 → 터짐). 카드 앞면 `cards/cmd-*` 교체 시 `tools/pixel/cardart.py`는 그림 창 · 글자 배치만 맡고 틀은 받은 그림(56×84 → ×2 = 112×168).
 - 검수: 보상 3장(일반 · 희귀 · 금) · 상점 · 덱 보기 · 작업대.
 
-### 6위 — 반장 2단계 CI-01~08 (P1)
+### 6위 — 반장 2단계 CI-01~08 (P1) — **CI-01 받음 · 반입 (D-490)**, 사선 액자 재발주(CI-01b), CI-02~08 대기
 - 풀림: 후기 21.
 - 받으면: `CI-01` → `p2-band`(3프레임 흐름) · `cutin-frame` · `letterbox`. 예고(`BOSS_PHASE_TEXT`) = 경보 띠가 판 위를 가로지름 + 반장 대사(DL 적 띠). 돌입(`battle.ts` 사건 `phase2` · `bossIntro({phase2})` · `gildedPhase2`) = 레터박스 닫힘 → 사선 액자 안 `boss-*-p2` 초상 컷인 → 화면 흔들림 → 열림(≤1.2초, `prefers-reduced-motion`이면 정지 컷). `BOSS_ART`에 `-p2` 짝을 더하고 파일 없으면 1단계 초상. `boss_avatars.py`로 `avatar-*-p2` 60×60 머리 자르기.
 - 반입: `scene-import.py <원본> boss-plate-p2 CI-02` 등(정사각 초상, 비율 유지).
