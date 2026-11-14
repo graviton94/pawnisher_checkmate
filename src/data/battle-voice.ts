@@ -101,3 +101,8 @@ export const WAGER_TEXT = {
   hit: (n: number) => `판돈 적중 — 나사 +${n}`,
   lost: (n: number) => `판돈을 잃었다 — 나사 −${n}`,
 } as const;
+
+/** 카드 자동 고르기 (#11 · D-503): 전용 카드를 쥐었는데 지금 못 써서(갈 칸 · 태엽) 공용 카드로 넘어갔을 때의 독백 */
+export const AUTO_PICK_TEXT = {
+  ownBlocked: (piece: string) => `‘${piece} 카드는 지금 못 써.’`,
+} as const;

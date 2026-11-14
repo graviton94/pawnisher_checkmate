@@ -60,3 +60,15 @@ export const BOT = {
  * 상한에 닿은 대국은 「교착」으로 따로 센다(완주율 표의 패배와 섞지 않는다 — 출하는 거기서 끝나되 끝난 까닭이 교착으로 남는다).
  */
 export const CLIMB = { maxTurns: 25 };
+
+/**
+ * 카드 자동 고르기 (피드백 #11, D-503): 카드 없이 기물을 누르면 이 점수가 가장 높은 이동 카드를 잡는다.
+ * 점수 = 전용 가산 + (그 카드로 가장 좋은 수의 미리보기 값) ÷ max(1, 태엽). 값 = 적에게 준 HP 피해 + 처치마다 kill (적 킹이면 kingKill).
+ * 같은 점수면 싼 카드 → 전용 카드 → 손패 앞쪽. 미리보기는 화면 · 실행과 같은 previewPlay(simulate) 하나.
+ * ownBonus 8: 피해가 같으면 2태엽 공용(값 ÷ 2)이 1태엽 전용을 넘지 못하고, 공용만 처치를 내면(+kill) 공용이 이긴다.
+ */
+export const AUTO_PICK = {
+  ownBonus: 8,
+  kill: 20,
+  kingKill: 1000,
+} as const;

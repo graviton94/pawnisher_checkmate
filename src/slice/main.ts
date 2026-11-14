@@ -61,8 +61,9 @@ const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) 
 const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
 import { CREW, DEATHS, QUIRKS, SCAR_DESC, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
-import { CREW_BARK, WAGER_TEXT, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
+import { AUTO_PICK_TEXT, CREW_BARK, WAGER_TEXT, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
 import { p2Clear, p2Rise, p2Warn } from './phase2fx';
+import { autoPick } from './autopick';
 import { bark, clearVoices, installTouchMemory, isMono, mono, placeSub, setSubAnchor, subClass, subHtml, subtitle, type BarkAt, type VoiceSide } from './voice';
 import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, DRILLS, ftueRetry, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { choicePay, counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
@@ -1197,15 +1198,8 @@ const pickCard = (i: number): void => {
   refresh();
 };
 
-/** 기물을 먼저 누르면 그 기물에 맞는 카드를 고른다 (전용 카드 → 아무나 카드 순, 싼 것부터) */
-const autoCard = (pieceId: number): number | null => {
-  const p = findPiece(b.s, pieceId)!;
-  const cand = b.hand
-    .map((id, i) => ({ id, i, c: COMMANDS[id] }))
-    .filter(({ c, i }) => c.kind === 'move' && cardPieces(b, i).some((q) => q.id === p.id))
-    .sort((x, y) => Number(x.c.who === 'any') - Number(y.c.who === 'any') || costOf(b, x.i, p.id) - costOf(b, y.i, p.id));
-  return cand[0]?.i ?? null;
-};
+/** 기물을 먼저 누르면 그 기물에 맞는 카드를 고른다 — 싸고 · 세고 · 전용인 카드부터 (피드백 #11 · D-503, autopick.ts) */
+const autoCard = (pieceId: number) => autoPick(b, pieceId);
 
 const onTap = async (pos: Pos): Promise<void> => {
   if (!battleInputActive() || b.s.winner !== null) return;
@@ -1219,11 +1213,13 @@ const onTap = async (pos: Pos): Promise<void> => {
     if (c && (c.kind === 'shield' || c.kind === 'repair' || c.kind === 'melt') && cardPieces(b, selCard!).some((q) => q.id === p.id)) return run(selCard!, p.id);
     if (selCard !== null && cardPieces(b, selCard).some((q) => q.id === p.id)) selPiece = p.id;
     else {
-      const ci = autoCard(p.id);
-      if (ci === null) return toast(`‘${josa(PIECE_NAMES_KO[p.type], '을')} 움직일 카드가 없어.’`);
-      selCard = ci;
-      openCard = ci;
+      const pick = autoCard(p.id);
+      if (!pick) return toast(`‘${josa(PIECE_NAMES_KO[p.type], '을')} 움직일 카드가 없어.’`);
+      selCard = pick.i;
+      openCard = pick.i;
       selPiece = p.id;
+      // 전용 카드를 쥐었는데 지금 못 써서 공용으로 넘어갔다 — 말없이 넘어가지 않는다 (#11)
+      if (pick.ownBlocked) mono(AUTO_PICK_TEXT.ownBlocked(PIECE_NAMES_KO[p.type]));
     }
     sfx('lift');
     return refresh();
