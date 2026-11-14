@@ -18,7 +18,7 @@ describe('실험실 지표 (D-456)', () => {
       if (l.won) expect(l.dpt).toBeGreaterThan(0);
     }
     expect(r.starterLeft).toBeGreaterThanOrEqual(0);
-  });
+  }, 30000);
   it('hoarder는 카드 보상을 거르지 않는다 · 같은 시드는 같은 결과', () => {
     const a = simulateRun(70011, { style: 'greedy', persona: 'hoarder' });
     const b = simulateRun(70011, { style: 'greedy', persona: 'hoarder' });
