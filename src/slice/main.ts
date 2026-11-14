@@ -1948,22 +1948,25 @@ const enterNode = (n: MapNode): void => {
 /** 지나온 길: 막마다 줄 → 고른 노드 번호 */
 let picked: number[][] = [[], [], [], []];
 /**
- * 지도 분대 현황 (피드백 #24 · D-503): 분대원마다 기물 · HP 막대와 수 · 버팀 하트 · 심장 톱니(금 가면 표지).
- * 값은 분대 창 · 대국과 같은 함수(crewMaxHp · livesOf · livesMax) — 화면마다 따로 세지 않는다. 판 = 움푹 칸(임시 — MP-01 대기).
+ * 지도 분대 현황 (피드백 #24 · D-503 → MP-01 받음): 철판(명패 · 9-slice 몸) 위에 분대 칸 — 칸 = 초상 창(분대원 얼굴) · HP 홈(청록 · 황동 · 진홍) ·
+ * 버팀(아래 소켓 자리에 덧댄 철판 — 쓴 칸은 금 간 철판, D-507 그림). HP 수는 칸에 넣지 않는다(초상 창이 작아 얼굴을 가린다) — 누르면 아래 띠 · 읽기 이름표 · 심장 톱니가 금 가면 칸 틀이 금 간 틀(진홍 등) + 금 간 황동 표지. HP 0이면 쓰러짐 틀(쇠막대).
+ * 값은 분대 창 · 대국과 같은 함수(crewMaxHp · livesOf · livesMax) — 화면마다 따로 세지 않는다.
  */
 const rosterSlot = (u: Squad, i: number): string => {
   const hp = Math.max(0, Math.round(u.hp ?? crewMaxHp(u))), max = crewMaxHp(u);
   const left = livesOf(u, parts), all = livesMax(u, parts);
   const pct = Math.max(0, Math.min(100, Math.round((hp / max) * 100)));
   const T = MAP_TEXT.roster;
-  const hearts = Array.from({ length: Math.max(all, left) }, (_, k) => `<i class="life${k < left ? '' : ' off'}"></i>`).join('');
+  const n = Math.max(all, left);
+  const lights = Array.from({ length: n }, (_, k) => `<i class="mr-lamp${k < left ? ' on' : ''}"></i>`).join('');
   const label = [u.name ?? PIECE_NAMES_KO[u.t], T.hp(hp, max), T.brace(left, all), u.cracked ? T.gearCracked : T.gear, u.quirk ? QUIRKS[u.quirk].name : ''].filter(Boolean).join(' · ');
-  return `<button type="button" class="mr-slot${pct < 35 ? ' low' : pct < 100 ? ' hurt' : ''}${u.cracked ? ' cracked' : ''}" data-crew="${i}" aria-label="${label}">`
-    + `<span class="mr-pc">${pieceImg(u.t, 0, 'small', 24)}${u.cracked ? '<i class="mr-crack" aria-hidden="true"></i>' : ''}</span>`
-    + `<span class="mr-hp"><span class="mr-bar"><i style="width:${pct}%"></i></span><b>${hp}</b></span>`
-    + `<span class="mr-life">${hearts}</span></button>`;
+  const frame = hp <= 0 ? ' down' : u.cracked ? ' cracked' : '';
+  return `<button type="button" class="mr-slot${pct < 35 ? ' low' : pct < 100 ? ' hurt' : ''}${frame}" data-crew="${i}" aria-label="${label}">`
+    + `<span class="mr-frame"><img class="mr-face" src="ui/hud/crew-${u.t}.png" alt="" draggable="false">`
+    + `<span class="mr-bar"><i style="width:${pct}%"></i></span>`
+    + `<span class="mr-lamps n${Math.min(3, n)}">${lights}</span>${u.cracked ? '<i class="mr-crack" aria-hidden="true"></i>' : ''}</span></button>`;
 };
-const rosterHtml = (): string => `<div class="map-roster inset" role="group" aria-label="${MAP_TEXT.roster.label}">${squad.map((u, i) => rosterSlot(u, i)).join('')}</div>`;
+const rosterHtml = (): string => `<div class="map-roster" role="group" aria-label="${MAP_TEXT.roster.label}"><i class="mr-plate" aria-hidden="true"></i>${squad.map((u, i) => rosterSlot(u, i)).join('')}</div>`;
 /** 분대 현황에서 고른 분대원 — 아래 띠 (이름 · 기벽 / HP · 버팀 · 심장 톱니 꼬리표 · 「살핀다」 = 분대 창) */
 const rosterPeek = (i: number): string => {
   const u = squad[i];
@@ -2020,16 +2023,16 @@ const showMap = (): void => {
         .map((nd, k) => {
           const p = pos(ri, k);
           const state = ri < rowI ? (picked[actI][ri] === k ? 'done' : 'skip') : ri === rowI ? (open.has(k) ? 'now' : 'skip') : 'later';
-          return `<button type="button" class="mnd ${state} nd-${nd.kind}" style="left:${p.x}%;top:${p.y}%" ${state === 'now' ? `data-node="${k}"` : 'tabindex="-1"'} aria-label="${NODE_NAMES[nd.kind]}"><i style="${iconArt(NODE_ICONS[nd.kind])}"></i><span>${NODE_NAMES[nd.kind]}</span></button>`;
+          return `<button type="button" class="mnd ${state} nd-${nd.kind}" style="left:${p.x}%;top:${p.y}%" ${state === 'now' ? `data-node="${k}"` : 'tabindex="-1"'} aria-label="${NODE_NAMES[nd.kind]}"><i style="${iconArt(NODE_ICONS[nd.kind])}"></i><span>${NODE_NAMES[nd.kind]}</span>${state === 'done' && ri === rowI - 1 ? `<i class="mnd-here" style="${iconArtSmall('n.here')}" aria-hidden="true"></i>` : ''}</button>`;
         })
         .join(''),
     )
     .join('');
   const el = document.createElement('div');
   el.className = 'mapfx kit';
-  // 막 표지 (A-01~03)를 지도 바탕에 어둡게 깐다 — 그림이 없으면 지금 바탕 그대로
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
-  el.style.setProperty('--act', `url(${new URL(`scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
+  // 지도 바탕 = 막마다 내려다본 공장 층(MP-03~05 받음) · 종막은 MP-06을 받기 전까지 막 표지(A-04)를 빌린다
+  el.style.setProperty('--act', `url(${new URL(actI < 3 ? `scenes/map-a${actI + 1}.png` : `scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
   // 범례 한 줄 (D-400, 사용자: 「범례가 두 줄로 접힌다 · 『빛나는 곳을 고릅니다』는 필요 없다」)
   const legend = `<ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
     .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)

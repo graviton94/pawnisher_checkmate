@@ -951,6 +951,9 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .mnd.nd-boss { width: calc(var(--px) * 32); height: calc(var(--px) * 32); background-image: var(--medal-r); }
 .mapfx .mnd i { width: calc(var(--px1) * 32); height: calc(var(--px1) * 32); }
 .mapfx .mnd span { display: none; }
+/* 지금 자리 = 종이 왕관(MP-02 n.here 16칸) — 지난 줄에서 고른 노드 위에 떠서 계단 두 박자로 까딱인다 */
+.mapfx .mnd .mnd-here { position: absolute; left: 50%; top: calc(var(--px) * -12); width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); transform: translateX(-50%); animation: hereBob 900ms steps(1, end) infinite; pointer-events: none; }
+@keyframes hereBob { 0%, 50% { margin-top: 0; } 50.01%, 100% { margin-top: calc(var(--px) * -1); } }
 .mapfx .mnd.later { filter: brightness(0.6); }
 .mapfx .mnd.skip { filter: grayscale(1) brightness(0.35); }
 /* 갈 수 있는 곳 = 멈춘 황동 톱니 테(초점이 여럿이 되지 않게), 고른 하나만 돈다 + 3도트 들림 */
@@ -984,26 +987,41 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .peek-bar .pb-foe i { color: var(--t-body); font: 700 12px/1 Galmuri11, sans-serif; font-style: normal; }
 .mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
 @media (max-width: 760px) { .mapfx .peek-bar .pb-foes { display: none; } }
-/* 지도 분대 현황 (피드백 #24 · D-503): 아래 띠 왼쪽 — 높은 띠 몫(--peek-hi)을 늘 쓰는 움푹 칸 · 분대원 칸 52 × 58(누름 칸 48 이상).
-   칸 = 기물 24 · HP 막대(청록 성함 · 황동 다침 · 진홍 위험 + 수) · 버팀 하트(분대 카드와 같은 그림 · 같은 수) · 금 간 심장 톱니 = 진홍 「금」 표지. 임시 — MP-01 대기 */
+/* 지도 분대 현황 (피드백 #24 · D-503 → MP-01 받음, D-506): 철판(roster-body 9-slice · 테 13/11) + 황동 명패 위에 분대 칸(41×65칸 틀 셋).
+   도트 하나 = --rp(기기 픽셀 round(0.75 × DPR)개 = --px-detail) — 받은 틀이 발주(28×36)보다 커서 장치 층(--px)이면 띠를 넘친다.
+   칸 = 초상 창(얼굴 22×23) · HP 홈(25×3 — 청록 · 황동 · 진홍) · 버팀(소켓 자리에 덧댄 철판 life 16칸) · 금 간 심장 톱니 = 금 간 틀(진홍 등) + 금 간 심장 톱니 표지(D-507 heartCog.crack).
+   누름 칸은 44px 이상(틀 폭과 상관없이). 667 가로(DPR 2)는 판이 띠보다 몇 px 높아 위 틈으로 넘친다(flex-end) — 지도 칸은 그대로 */
 .mapfx .map-foot { display: flex; align-items: flex-end; gap: var(--s2); min-width: 0; }
 .mapfx .map-foot > .peek-bar { flex: 1 1 auto; min-width: 0; }
-.mapfx .map-roster.inset { flex: none; box-sizing: border-box; height: var(--peek-hi); display: flex; align-items: center; gap: var(--s1); padding: 0 var(--s1); }
-.mapfx .mr-slot { display: grid; justify-items: center; align-content: center; row-gap: 2px; box-sizing: border-box; width: 52px; height: 58px; margin: 0; padding: 0; border: 0; background: none; color: #f1ede4; cursor: pointer; }
-.mapfx .mr-slot.chosen { box-shadow: inset 0 0 0 2px #f5c542; }
-.mapfx .mr-pc { position: relative; width: 24px; height: 24px; }
-.mapfx .mr-pc img { display: block; width: 24px; height: 24px; image-rendering: pixelated; }
-/* 금 간 심장 톱니 (TI-01 heartCog.crack · D-507 — 옛 「금」 글자 표지를 대신한다) */
-.mapfx .mr-crack { position: absolute; right: -12px; top: -4px; width: 16px; height: 16px; background: var(--cog-off) center / 16px 16px no-repeat; image-rendering: pixelated; }
-.mapfx .mr-hp { display: flex; align-items: center; gap: 2px; height: 12px; }
-.mapfx .mr-bar { display: block; width: 22px; height: 4px; background: #33313b; box-shadow: 0 0 0 1px #0b0b0e; }
-.mapfx .mr-bar i { display: block; height: 100%; background: #5eead4; }
-.mapfx .mr-slot.hurt .mr-bar i { background: #c89b3c; }
-.mapfx .mr-slot.low .mr-bar i { background: #e5262f; }
-.mapfx .mr-hp b { font: 700 12px/12px Galmuri11, sans-serif; }
-.mapfx .mr-slot.low .mr-hp b { color: #ff7b7b; }
-.mapfx .mr-life { display: flex; height: 16px; }
-.mapfx .mr-life .life + .life { margin-left: -4px; }
+.mapfx .map-roster { --rp: var(--px-detail, 1px); position: relative; flex: none; box-sizing: border-box; display: flex; align-items: flex-end; padding: 0 calc(var(--rp) * 4) calc(var(--rp) * 2);
+  border-style: solid; border-width: calc(var(--rp) * 13) calc(var(--rp) * 11);
+  border-image: url('../assets/ui/chrome/v2/roster-body.png') 13 11 fill / calc(var(--rp) * 13) calc(var(--rp) * 11) / 0 stretch; image-rendering: pixelated; }
+.mapfx .mr-plate { position: absolute; left: 50%; top: calc(var(--rp) * -17); width: calc(var(--rp) * 48); height: calc(var(--rp) * 15); transform: translateX(-50%); background: url('../assets/ui/chrome/v2/roster-plate.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; pointer-events: none; }
+.mapfx .mr-slot { position: relative; display: grid; place-items: end center; box-sizing: border-box; width: max(44px, calc(var(--rp) * 45)); height: calc(var(--rp) * 68); margin: 0; padding: 0; border: 0; background: none; color: #f1ede4; cursor: pointer; }
+.mapfx .mr-frame { position: relative; display: block; width: calc(var(--rp) * 41); height: calc(var(--rp) * 65); background: url('../assets/ui/chrome/v2/roster-slot.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+.mapfx .mr-slot.cracked .mr-frame { background-image: url('../assets/ui/chrome/v2/roster-slot-hurt.png'); }
+.mapfx .mr-slot.down .mr-frame { background-image: url('../assets/ui/chrome/v2/roster-slot-down.png'); }
+/* 고름 = 노드처럼 3도트 들림 + 황동 1도트 테 (계단 한 번) */
+.mapfx .mr-slot.chosen .mr-frame { transform: translateY(calc(var(--rp) * -3)); box-shadow: 0 0 0 var(--rp) #f5c542, 0 0 0 calc(var(--rp) * 2) #0b0b0e; }
+.mapfx .mr-face { position: absolute; left: calc(var(--rp) * 10); top: calc(var(--rp) * 12); width: calc(var(--rp) * 22); height: calc(var(--rp) * 23); object-fit: cover; object-position: 50% 0; image-rendering: pixelated; }
+.mapfx .mr-slot.down .mr-face { visibility: hidden; }
+.mapfx .mr-bar { position: absolute; left: calc(var(--rp) * 9); top: calc(var(--rp) * 43); width: calc(var(--rp) * 25); height: calc(var(--rp) * 3); }
+.mapfx .mr-bar i { display: block; height: 100%; background: #1f8a7a; box-shadow: inset 0 var(--rp) 0 #5eead4; }
+.mapfx .mr-slot.hurt .mr-bar i { background: #8a6416; box-shadow: inset 0 var(--rp) 0 #f5c542; }
+.mapfx .mr-slot.low .mr-bar i { background: #7a1218; box-shadow: inset 0 var(--rp) 0 #e5262f; }
+/* HP 수는 칸에 없다 — 초상 창(22칸)이 작아 얼굴을 가렸다. 누르면 아래 띠에 수 */
+/* 버팀 = 받은 칸의 소켓 두 자리에 덧댄 철판(TI-01 life · 쓴 칸 life.crack — D-507 버팀 그림 하나로), 그림 1칸 = 기기 픽셀 1개(16칸 = --rp × 8).
+   셋이면 소켓 줄 위에 6칸 간격으로 겹쳐 세운다 */
+.mapfx .mr-lamps { position: absolute; left: calc(var(--rp) * 11); top: calc(var(--rp) * 51); width: calc(var(--rp) * 20); height: calc(var(--rp) * 8); }
+.mapfx .mr-lamp { position: absolute; top: 0; width: calc(var(--rp) * 8); height: calc(var(--rp) * 8); background: var(--life-off) center / 100% 100% no-repeat; image-rendering: pixelated; }
+.mapfx .mr-lamp.on { background-image: var(--life-on); }
+.mapfx .mr-lamp:nth-child(1) { left: 0; }
+.mapfx .mr-lamp:nth-child(2) { left: calc(var(--rp) * 11); }
+.mapfx .mr-lamps.n3 .mr-lamp:nth-child(2) { left: calc(var(--rp) * 6); }
+.mapfx .mr-lamps.n3 .mr-lamp:nth-child(3) { left: calc(var(--rp) * 12); }
+.mapfx .mr-lamp:nth-child(n+4) { display: none; }
+/* 금 간 심장 톱니 = TI-01 heartCog.crack 16칸(D-507 — 심장 톱니 그림 하나로) · 아이콘 층 도트, 칸 오른쪽 위 모서리 */
+.mapfx .mr-crack { position: absolute; right: calc(var(--rp) * -4); top: calc(var(--rp) * 4); width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); background: var(--cog-off) center / 100% 100% no-repeat; image-rendering: pixelated; }
 .mapfx .peek-bar .pb-crew { flex: none; display: inline-flex; }
 .mapfx .peek-bar .pb-row { display: flex; align-items: baseline; gap: var(--s2); min-width: 0; }
 .mapfx .peek-bar .pb-quirk { color: var(--t-dim); font: 400 12px/18px Galmuri11, sans-serif; white-space: nowrap; }
@@ -1014,7 +1032,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   .mapfx .map-foot.node-open .map-roster { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd.now.chosen::before, .mapfx .map-body line, .mapfx .peek-bar.inset.open { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd .mnd-here, .mapfx .mnd.now.chosen::before, .mapfx .map-body line, .mapfx .peek-bar.inset.open { animation: none; } }
 
 /* ===================== 21위 부품 (D-398 발주 → D-400 받음 · tools/pixel/ui_kit_refine21.py) =====================
  * 꼬리표(tag)는 값을 치르는 것(가격 · 판돈 · 나사 보상)만. 역할마다 바탕을 따로:

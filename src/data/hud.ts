@@ -30,7 +30,7 @@ export const MAP_TEXT = {
   trait: { blastPawn: '불꽃 폰', rookPlate: '방패 룩', guard: '호위' } as Record<string, string>,
   /**
    * 지도 분대 현황 (피드백 #24 · D-503): 분대원마다 기물 · HP · 버팀 하트 · 심장 톱니 — 누르면 아래 띠에 그 분대원(기벽 포함), 다시 누르면 분대 창.
-   * 판 = 움푹 칸(임시 — MP-01 대기).
+   * 판 · 칸 · 표지 = MP-01 분대 현황판 크롬(받음 — 「금」 글 표지를 금 간 황동 표지로 바꿈).
    */
   roster: {
     label: '분대 현황',

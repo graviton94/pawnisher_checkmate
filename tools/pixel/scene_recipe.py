@@ -14,7 +14,9 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     'chained-door': 941 / 180, 'old-spring': 941 / 180, 'scarred-wall': 941 / 180, 'crown-dais': 941 / 180,
     'casting-floor': 941 / 180, 'gold-cast': 941 / 180, 'crown-gears': 941 / 180, 'white-land': 941 / 180,
     # D-507: WG-01 판돈 무대 1672×941 → 320×180 균일 격자(발주 ×6이 아니라 생성기 약 5.23px)
-    'wager-table': 941 / 180}
+    'wager-table': 941 / 180,
+    # 2026-11-14 지도 바탕 MP-03~05 (1671~1672×941 → 320×180 균일, map_import.py · MAP_GRID)
+    'map-a1': 941 / 180, 'map-a2': 941 / 180, 'map-a3': 941 / 180}
 
 
 def options(name):
@@ -24,7 +26,8 @@ def options(name):
     if name in ('epilogue-hands', 'throne-mold', 'departure-dock', 'shipping-interior',
                 'departure-decision', 'shipping-company', 'gilded-solitude',
                 'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen',
-                'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table'):
+                'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table',
+                'map-a1', 'map-a2', 'map-a3'):
         opts['uniform'] = True
     return opts
 
@@ -101,4 +104,29 @@ PORTRAIT_GRID = {
     'PT-06': {'names': ['king-check', 'foe-P', 'foe-N'], 'pitch': [9.72, 9.72, 9.72],
               'drop': [_BROWN + _COOL[:2] + ['#BFB9AD', '#8E877A'], _IRON, _IRON]},  # 검문 = 황동 렌즈 · 청록 알 허용
     'PT-07': {'names': ['foe-B', 'foe-R', 'foe-Q'], 'pitch': [10.1, 10.1, 10.1], 'drop': [_IRON] * 3},
+}
+
+
+# 지도 에셋 MP-01 ~ MP-05 (2026-11-14, tools/pixel/map_import.py가 읽는다).
+# MP-01: 1774×887 생성기 출력 — 발주 200×100 ×8이 아니라 비정수 8.87px. 자동 찾기는 반 · 1.4배 간격을 잡아 발주 가로 200으로 고정.
+#   board = 받은 판(roster-board.png)을 자르는 상자: 명패 · 9-slice 몸 · 다리, patch = 명패가 덮던 위 테 열(옆 열 무늬로 메움).
+# MP-02: 1437×1095 — 아이콘 덩어리마다 정사각 칸(여백 2칸)에 놓고 32칸 균일 샘플(scenario_delivery_import와 같은 방식).
+# 바탕: 1671~1672×941 → 320×180 균일 격자(941/180 = 5.23px, D-434 장면과 같다). 받은 장면과 발주서 막 이름이 달랐다 —
+#   MP-03 = 쇳물 배관 · 국자(게임 1막 「주조 공정」), MP-04 = 컨베이어 · 검수 문(2막 「조립 공정」), MP-05 = 상자 · 출하문(3막 「검수 공정」 끝 출하구).
+MAP_GRID = {
+    'MP-01': {'native_w': 200, 'pitch': 8.87,
+              'names': ['roster-board', 'roster-slot', 'roster-slot-hurt', 'roster-slot-down',
+                        'roster-chip-teal', 'roster-chip-brass', 'roster-chip-crimson',
+                        'roster-badge-life', 'roster-badge-gear', 'roster-badge-crack'],
+              # 황동의 가장 어두운 갈색 단이 15색 중 진홍으로 붙었다 → 같은 재질의 어두운 단(황동 판 · 톱니 · 금 간 판 · 다리)
+              'recolor': {k: {'#7A1218': '#8A6416', '#E5262F': '#C89B3C', '#FF7B7B': '#F5C542'}
+                          for k in ('roster-board', 'roster-badge-gear', 'roster-badge-crack', 'roster-chip-brass')},
+              # 판 86×72 → 명패(위 가운데) · 몸 9-slice(테 13 · 11) · 다리(쓰지 않음). flat = 9-slice 변 가운데를 리벳 없는 한 열/줄로 고르게
+              # (변을 늘려도 리벳이 길쭉해지지 않게 — 모서리 황동 꺾쇠 · 리벳은 그대로)
+              'board': {'plate': (19, 0, 67, 15), 'body': (0, 4, 86, 62), 'slice': (13, 11, 13, 11),
+                        'flat_top': ((0, 10, 16), (10, 13, 30)), 'flat_bottom': 30, 'flat_side': 19},
+              # 분대 칸 셋은 생성기 번짐으로 38 · 41 · 39칸 폭 — 같은 캔버스(가운데 · 아래 맞춤)에 놓아 상태가 바뀌어도 칸이 흔들리지 않게
+              'same_canvas': ['roster-slot', 'roster-slot-hurt', 'roster-slot-down']},
+    'MP-02': {'margin': 2, 'merge': 3, 'drop_pal': ('보라', '구리'), 'names': ['battle', 'check', 'boss', 'event', 'shop', 'forge', 'chest', 'rest', 'here']},
+    'bg': {'MP-03': ('map-a1', '주조 공정'), 'MP-04': ('map-a2', '조립 공정'), 'MP-05': ('map-a3', '검수 공정 · 출하')},
 }
