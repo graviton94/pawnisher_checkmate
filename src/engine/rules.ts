@@ -84,6 +84,8 @@ const otherSideOf = (side: number) => (side === 0 ? 1 : 0);
  */
 export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Pos[] => {
   const out: Pos[] = [];
+  // 거대 주물 부위 (D-484): 혼자 움직이지 않는다 — 묶음 전체가 턴 시작에 걷는다(src/slice/giant.ts)
+  if (piece.giant) return out;
   const empty = (x: number, y: number) => inBounds(s, x, y) && !at(s, grid, x, y);
   // 잡기 규칙(시험장 B): 적이 선 칸에도 들어갈 수 있다 (폰은 대각 앞으로만 잡는다)
   const cap = !!s.rules.capture;

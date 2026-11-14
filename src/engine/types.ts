@@ -41,6 +41,8 @@ export interface Piece {
   asPawn?: boolean;
   /** 이형 (D-481): 있으면 행마 · 공격이 이형 규칙을 따른다 */
   form?: FormId;
+  /** 거대 주물의 한 부위 (D-484): 같은 id 넷이 2×2를 이룬다. dx · dy = 묶음 왼아래(최소 x · y)에서의 자리. 혼자 움직이지 않는다 */
+  giant?: { id: number; dx: 0 | 1; dy: 0 | 1 };
 }
 
 /** 진영의 장비: 부품 (유물) */
@@ -155,7 +157,7 @@ export type BattleEvent =
   | { type: 'heal'; pieceId: number; amount: number }
   | { type: 'apGain'; side: Side; amount: number; source?: 'relayGear' }
   /** 터짐 (도미노 부품 등): 그 칸에서 주변으로 */
-  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[]; /** 특수 기믹 연출 (D-203): 줄 폭격 · 되받아침 · 자폭 · 증기 폭발 — 일반 공격과 다른 모양 */ fx?: 'row' | 'thorns' | 'burst' | 'steam'; /** 되받아침: 반장 칸 */ from?: Pos }
+  | { type: 'blast'; pos: Pos; label: string; hits: HitResult[]; /** 특수 기믹 연출 (D-203): 줄 폭격 · 되받아침 · 자폭 · 증기 폭발 — 일반 공격과 다른 모양 */ fx?: 'row' | 'thorns' | 'burst' | 'steam' | 'slam'; /** 되받아침: 반장 칸 */ from?: Pos; /** 거대 주물 내리찍기 (D-484): 내리찍은 칸 */ cells?: Pos[] }
   /** 양산 라인 비틀기: 쓰러진 폰이 뒷줄에 다시 섰다 */
   | { type: 'respawn'; pieceId: number; pos: Pos; /** 화면 안내 (없으면 양산 라인) */ label?: string }
   /** 적 편성 특성이 일어났다 (D-483): 화면 안내 + 그 기물들 위에 짧은 글 */

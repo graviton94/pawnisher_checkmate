@@ -2,6 +2,7 @@ import type { FormId, PieceType } from '../engine';
 import { FORMS, formsUpTo } from '../data/forms';
 import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
+import { GIANT_AT, GIANTS, type GiantType } from '../data/giants';
 import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, CHECK_MARK, FOE_MARKS, FOE_TRAITS, MARK_EXTRA_FROM, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
@@ -35,6 +36,8 @@ export interface BattleDef {
   traits?: FoeTrait[];
   /** 편성의 행동 특성 (D-483) */
   marks?: FoeMark[];
+  /** 거대 주물 (D-484) — 2×2 네 부위 */
+  giants?: GiantType[];
   /** 이형 적 (D-481) — 적 목록 끝 바탕 기물부터 이형이 된다 */
   forms?: FormId[];
   w?: number;
@@ -310,6 +313,17 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
       d.forms = picks;
       d.tell = `${d.tell}${d.tell ? ' ' : ''}${[...new Set(picks)].map((f) => `이형 「${FORMS[f].name}」 — ${FORMS[f].move}, ${FORMS[f].hit}을 칩니다.`).join(' ')}`;
     }
+  }
+  // 거대 주물 (D-484, GDD 21장 §3): 검문 · 반장 일부, 높은 왕관일수록 자주 — 같은 바탕 기물 하나(없으면 폰 둘)를 빼고 세운다
+  const gt = kind === 'check' ? GIANT_AT.check(act, asc) : kind === 'boss' ? GIANT_AT.boss(act, asc) : asc >= GIANT_AT.battleFrom && act > 1 && new Rng(d.enemy.join('').length * 613 + act * 29 + asc * 17).next() < GIANT_AT.battleOdds ? (act === 3 ? 'R' : 'P') : null;
+  if (gt) {
+    const enemy = [...d.enemy];
+    const keep = (d.forms ?? []).filter((f) => FORMS[f].base === gt).length;
+    if (enemy.filter((t) => t === gt).length > keep) enemy.splice(enemy.indexOf(gt), 1);
+    else for (let k = 0; k < 2 && enemy.filter((t) => t === 'P').length > 1; k++) enemy.splice(enemy.indexOf('P'), 1);
+    d.enemy = enemy;
+    d.giants = [gt];
+    d.tell = `${d.tell}${d.tell ? ' ' : ''}「${GIANTS[gt].name}」이 2×2를 차지합니다 — ${GIANTS[gt].move}, ${GIANTS[gt].hit}. 부위마다 HP가 따로입니다.`;
   }
   return d;
 };

@@ -13,7 +13,7 @@ export const createBuildAct = (id: BuildTrialId, step: number, squad?: Squad[]) 
   const deck = BUILD_TRIAL_DECK.filter((card) => cardFits(card, crew.map((u) => u.t)));
   const b = newSliceBattle(crew, def.enemy, deck, 420 + step, {
     parts, enemyKingHp: def.kingHp, enemyHp: def.enemyHp,
-    boss: def.boss, bossRule: def.bossRule, traits: def.traits, marks: def.marks, forms: def.forms,
+    boss: def.boss, bossRule: def.bossRule, traits: def.traits, marks: def.marks, forms: def.forms, giants: def.giants,
     width: def.w, height: def.h, guard: def.guard, atkMul: def.atk,
     depth: depthAt(0, (step + 1) / 3), rewindCharms: 1, shock: false,
   });

@@ -87,6 +87,8 @@ const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8
  * 몸 64칸이 예전처럼 칸의 82%를 차지하도록 그림 전체를 72/64배로 키우고, 바닥(칸의 84%)에 맞춘다.
  */
 const PIECE_SIZE = 0.82 * (72 / 64);
+/** 거대 주물 그림이 2×2를 채우는 비율 (D-484) — 칸 경계 너머로 조금 넘쳐도 자르기가 칸 안으로 묶는다 */
+const GIANT_FILL = 1;
 const PIECE_Y = 0.84 - PIECE_SIZE / 2;
 /** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
 let boardTopInset = 0;
@@ -354,7 +356,7 @@ class BoardScene extends Phaser.Scene {
    * 특수 기믹 연출 (D-203, 사용자: "그 특성이 확실히 드러나야 하고 일반 공격과 다른 형식"). 도트 칸 단위 · 계단 페이드.
    * row: 한 줄을 왼쪽부터 불길이 훑고 지나간다 · thorns: 반장에서 친 기물까지 가시 줄 · burst: 터진 칸 둘레 3×3이 두 번 번쩍 · steam: 맞은 적마다 김이 솟는다
    */
-  private async gimmickFx(kind: 'row' | 'thorns' | 'burst' | 'steam', pos: Pos, from: Pos | undefined, ids: number[]): Promise<void> {
+  private async gimmickFx(kind: 'row' | 'thorns' | 'burst' | 'steam' | 'slam', pos: Pos, from: Pos | undefined, ids: number[], cells: Pos[] = []): Promise<void> {
     if (this.calm || !this.state) return;
     const t = this.tile;
     const objs: Phaser.GameObjects.GameObject[] = [];
@@ -366,7 +368,16 @@ class BoardScene extends Phaser.Scene {
       this.tweens.add({ targets: r, alpha: { from: 0, to: alpha }, delay, duration: 60, ease: 'Stepped', easeParams: [2] });
       this.tweens.add({ targets: r, alpha: 0, delay: delay + life, duration: 160, ease: 'Stepped', easeParams: [3] });
     };
-    if (kind === 'row' && this.fxHook) {
+    if (kind === 'slam') {
+      // 거대 주물 내리찍기 (D-484): 예고 칸이 앞에서부터 계단으로 쾅 — 쇳물 주황 판 + 노란 속 + 큰 흔들림
+      sfx('threat');
+      cells.forEach((q, i) => {
+        cell(q, 0xe8783c, 0.8, i * 40, 220);
+        cell(q, 0xfacc15, 0.6, i * 40 + 40, 120, t * 0.28);
+      });
+      await this.wait(cells.length * 40 + 160);
+      this.shakeLv(2);
+    } else if (kind === 'row' && this.fxHook) {
       sfx('threat');
       await this.fxHook.rowBomb(pos.y, this.state.width);
     } else if (kind === 'thorns' && from && this.fxHook) {
@@ -544,7 +555,7 @@ class BoardScene extends Phaser.Scene {
       const x = left ? t * 0.02 + size / 2 : t - t * 0.02 - size / 2;
       marks.push(this.add.image(Math.round(x), Math.round(t * 0.02 + size / 2), boardKey(`chip-${name}`)).setDisplaySize(size, size));
     };
-    const trait = p.side === 1 ? (p.type === 'P' && this.foeTraits.includes('blast') ? 'flame' : p.type === 'K' && this.foeTraits.includes('thorns') ? 'claw' : null) : null;
+    const trait = p.side === 1 ? (p.type === 'P' && !p.giant && this.foeTraits.includes('blast') ? 'flame' : p.type === 'K' && this.foeTraits.includes('thorns') ? 'claw' : null) : null;
     if (p.side === 0 && this.shockedIds.includes(p.id)) chipAt('shock', false);
     if (this.staggeredIds.includes(p.id)) chipAt('stun', false);
     else if (p.elite) chipAt('crown', false);
@@ -554,6 +565,14 @@ class BoardScene extends Phaser.Scene {
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side)).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
+    // 거대 주물 (D-484): 바탕 그림을 두 배로 키워 네 조각으로 — 부위마다 제 칸의 4분의 1만 보인다(부서지면 그 조각이 무너진다).
+    // 화면 위쪽 = 판 y가 큰 쪽(dy 1). 전용 그림(G-01~03 128×128)을 받으면 같은 자르기로 들어간다
+    if (p.giant) {
+      const left = p.giant.dx === 0, top = p.giant.dy === 1;
+      const fw = glyph.frame.width, fh = glyph.frame.height;
+      glyph.setDisplaySize(t * 2 * GIANT_FILL, t * 2 * GIANT_FILL).setPosition(left ? t : 0, top ? t : 0);
+      glyph.setCrop(left ? 0 : fw / 2, top ? 0 : fh / 2, fw / 2, fh / 2);
+    }
     const hp = this.add.graphics();
     root.add([base, ...rings, glyph, ...marks, hp]);
     root.setAlpha(alpha);
@@ -567,11 +586,14 @@ class BoardScene extends Phaser.Scene {
     const pen = new PixelPen(s.hp, this.tile / BOARD_DOTS);
     const d = pen.dot;
     s.hp.clear();
-    drawGauge(pen, 3 * d, 16 * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp);
-    // 보호막: 게이지 바로 위 흰 도트 줄
+    // 거대 주물 위쪽 부위 (D-484): 게이지를 칸 위 끝에 — 큰 그림 한가운데를 가로지르지 않고 네 게이지가 테두리처럼 둘러싼다
+    const gy = s.piece.giant?.dy === 1 ? 1 : 16;
+    drawGauge(pen, 3 * d, gy * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp);
+    // 보호막: 게이지 바로 위(위쪽 부위는 바로 아래) 흰 도트 줄
     if (s.piece.shield > 0) {
       const n = Math.max(1, Math.round(12 * Math.min(1, s.piece.shield / s.piece.maxHp)));
-      for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, 15 * d + d / 2, 0xf4f1ea, 1, 1);
+      const sy = gy === 1 ? gy + 4 : gy - 1;
+      for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, sy * d + d / 2, 0xf4f1ea, 1, 1);
     }
     if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
   }
@@ -1567,7 +1589,7 @@ class BoardScene extends Phaser.Scene {
       }
       if (e.type === 'blast') {
         // 특수 기믹은 일반 공격과 다른 모양으로 먼저 (D-203): 줄 폭격 = 불길이 줄을 훑는다 · 되받아침 = 가시가 친 기물로 · 자폭 = 둘레 3×3 고리 · 증기 폭발 = 적마다 김
-        if (e.fx) await this.gimmickFx(e.fx, e.pos, e.from, e.hits.map((h) => h.targetId));
+        if (e.fx) await this.gimmickFx(e.fx, e.pos, e.from, e.hits.map((h) => h.targetId), e.cells);
         // 터짐 (D-106 보일러 폰): 그 칸에서 둘레로 — 맞은 기물마다 피격, 쓰러지면 재
         this.shakeLv(e.fx === 'row' || e.fx === 'burst' ? 2 : 1);
         sfx('kill');
