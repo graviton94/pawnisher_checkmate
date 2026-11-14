@@ -464,6 +464,8 @@ export const SLICE = {
   boardByAct: [[6, 6], [6, 6], [6, 7]] as [number, number][],
   bossPhase2Hp: 0.3,
   bossPhase2Guards: 1,
+  /** 격노 (D-467): 다시 선 반장의 공격 배율 */
+  bossPhase2Atk: 1.5,
   desperate: 1,
   /** 보충병 (D-198): 이긴 뒤 킹 말고 분대원이 이만큼 안 되면 폰이 보충된다 — 다 잃고 겨우 이긴 다음 판이 원천 봉쇄되지 않게 */
   reinforceMin: 2,

@@ -1193,7 +1193,8 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
   const k = makePiece(old.id, 'K', 1, old.x, old.y);
   k.maxHp = old.maxHp;
   k.hp = Math.max(1, Math.round(old.maxHp * SLICE.bossPhase2Hp));
-  k.atk = old.atk;
+  // 격노 (D-467): 다시 선 반장은 더 세게 친다 — 막판이 느슨하던 것 (실험실: 반장 뒤 남은 체력 중앙 70%대)
+  k.atk = Math.round(old.atk * SLICE.bossPhase2Atk);
   b.s = { ...b.s, winner: null, pieces: [...b.s.pieces.filter((p) => p.id !== old.id), k] };
   // 호위 폰 둘 (빈 둘레 칸)
   const atkK = b.atkK ?? 1;
@@ -1209,7 +1210,7 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
     events.push({ type: 'respawn', pieceId: pawn.id, pos: q, label: '반장 호위' });
     n += 1;
   }
-  events.push({ type: 'respawn', pieceId: k.id, pos: { x: k.x, y: k.y }, label: '반장 2단계' });
+  events.push({ type: 'respawn', pieceId: k.id, pos: { x: k.x, y: k.y }, label: '반장 격노 — 공격 ×1.5' });
   b.intents = planFor(b);
   markTelegraph(b);
 };
