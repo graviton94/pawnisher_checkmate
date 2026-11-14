@@ -41,7 +41,7 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   relaySeal: { name: '분대 인장', axis: null, icon: 'royalSeal', flavor: '세 번째 손이 약속을 완성한다.', desc: '첫 피해 ×1.8 — 턴에 한 번, 셋째 유형 공격 시' },
-  sharedPlate: { name: '맞댄 철판', axis: null, icon: 'shieldWall', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 턴에 한 번, 고참 방열판 획득 시' },
+  sharedPlate: { name: '맞댄 철판', axis: null, icon: 'shieldWall', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 턴에 한 번, 고참 방열판 시' },
   // I-14A/B 원본 파일 반입 전 기존 그림을 빌린다 (D-420).
   relayGear: { name: '맞물린 톱니', axis: null, icon: 'forkGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 턴에 한 번, 두 유형 공격 시' },
   siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'anvilPlate', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판≤12 → 피해 — 턴에 한 번, 룩 2태엽↑ 시' },
@@ -60,7 +60,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   rookBolt: { name: '공성 쇠뇌', axis: 'push', icon: 'rookBolt', flavor: '성벽 위에서 쇠뇌를 당긴다.', desc: '룩의 공격 ×1.3' },
   bishopLens: { name: '외눈 렌즈', axis: 'chain', icon: 'bishopLens', flavor: '한쪽 눈으로 죄를 가려낸다.', desc: '비숍 공격 ×1.3' },
   pawnPike: { name: '개척자의 창', axis: 'inf', icon: 'pawnPike', flavor: '작은 손에 긴 창을 쥐여 준다.', desc: '폰의 공격 +10' },
-  oath: { name: '작은 개척자의 맹세', shortName: '개척자의 맹세', axis: 'inf', icon: 'oath', flavor: '물러서지 않겠다고 맹세했다.', desc: '폰 공격 +6 · 폰마다 한 번 버팀' },
+  oath: { name: '작은 개척자의 맹세', shortName: '개척자의 맹세', axis: 'inf', icon: 'oath', flavor: '물러서지 않겠다고 맹세했다.', desc: '폰 공격 +6 · 폰 1회 버팀' },
   horseshoe: { name: '피 묻은 편자', axis: 'cav', icon: 'horseshoe', flavor: '짓밟은 피가 아직 젖어 있다.', desc: '태엽 +1 — 나이트 처치 시' },
   magnet: { name: '약탈자의 집게', axis: 'cav', icon: 'magnet', flavor: '쓰러진 자의 주머니를 턴다.', desc: '카드 1장 뽑기 — 처치마다' },
   assembly: { name: '끝없는 생산선', axis: 'inf', icon: 'assembly', flavor: '비어 가는 줄을 쉬지 않고 채운다.', desc: '킹 곁에 폰 하나 — 턴 시작마다, 폰 2기 이하 시' },
@@ -81,9 +81,9 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   conductor: { name: '전도 코일', axis: 'chain', icon: 'conductor', flavor: '열기가 줄을 타고 번진다.', desc: '연쇄 피해 +8 — 연쇄마다' },
   anvilPlate: { name: '모루 장갑', axis: 'push', icon: 'anvilPlate', flavor: '모루처럼 단단한 판을 댄다.', desc: '충돌 피해 +10 — 밀어 부딪칠 시' },
   chainShot: { name: '연쇄 사슬', axis: 'push', icon: 'chainShot', flavor: '부딪힌 자가 다음을 부른다.', desc: '연쇄 +2 — 충돌로 처치 시' },
-  bloodPact: { name: '피의 계약', axis: null, icon: 'bloodPact', flavor: '피로 쓴 계약은 지워지지 않는다.', desc: '모든 공격 ×1.4 · 턴 끝 킹 HP −4' },
+  bloodPact: { name: '피의 계약', axis: null, icon: 'bloodPact', flavor: '피로 쓴 계약은 지워지지 않는다.', desc: '공격 ×1.4 · 턴마다 킹 −4' },
   brittle: { name: '깨지는 유리 심장', shortName: '유리 심장', axis: null, icon: 'brittle', flavor: '빨리 뛰는 만큼 쉽게 깨진다.', desc: '태엽 +1 · 분대 HP −20%' },
-  greed: { name: '탐욕의 저울', axis: null, icon: 'greed', flavor: '쥘수록 무겁고 무거울수록 세다.', desc: '나사 150당 공격 +2 · 고물상 값 +25%' },
+  greed: { name: '탐욕의 저울', axis: null, icon: 'greed', flavor: '쥘수록 무겁고 무거울수록 세다.', desc: '공격 +2 · 고물상 값 +25% — 쥔 나사 150마다' },
   spare: { name: '과부하 태엽', axis: null, icon: 'spare', flavor: '감을 수 있는 데까지 감는다.', desc: '태엽 +1 · 손패 −1' },
   tape: { name: '되감는 테이프', axis: null, icon: 'tape', flavor: '한 수 전으로 돌아간다.', desc: '무료 되감기 1회 — 대국마다' },
   // 합(+) 기본기 (D-205): 모든 공격 +3 — 약한 기물일수록 크게 느껴지고 뒤로 갈수록 묻힌다
@@ -125,7 +125,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   tally: { name: '셈 막대', axis: 'chain', icon: 'tally', flavor: '여섯을 세면 손이 바빠진다.', desc: '카드 2장 — 턴에 한 번, 연쇄 6 달성 시' },
   stainedGlass: { name: '색유리', axis: 'chain', icon: 'stainedGlass', flavor: '빛이 색을 입고 날카로워진다.', desc: '비숍의 공격 +6' },
   flywheel: { name: '무거운 플라이휠', axis: null, icon: 'flywheel', flavor: '무거운 바퀴는 쉽게 서지 않는다.', desc: '남은 태엽 이월 · 최대 2 — 턴 끝 시' },
-  redLine: { name: '붉은 눈금', axis: null, icon: 'redLine', flavor: '바늘이 붉은 칸을 넘었다.', desc: '모든 공격 +6 · 매 대국 킹 −15%' },
+  redLine: { name: '붉은 눈금', axis: null, icon: 'redLine', flavor: '바늘이 붉은 칸을 넘었다.', desc: '공격 +6 · 킹 HP −15% — 대국마다' },
   coolant: { name: '냉각수 통', axis: null, icon: 'coolant', flavor: '찬물을 붓는다.', desc: '기어 쇼크 면역' },
   piggyGear: { name: '저금 톱니', axis: null, icon: 'piggyGear', flavor: '이길 때마다 한 닢씩 모은다.', desc: '나사 +12 — 대국 승리 시' },
   loupe: { name: '확대경', axis: null, icon: 'loupe', flavor: '한 장 더 들여다본다.', desc: '보상 선택지 +1' },

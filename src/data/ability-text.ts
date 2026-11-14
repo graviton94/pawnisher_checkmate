@@ -39,7 +39,7 @@ export const enemyAbilityText = (type: PieceType, traits: FoeTrait[], damage = (
 /** 부품 상세도 같은 표시 계약을 사용한다. */
 export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch' | 'relaySeal' | 'sharedPlate', AbilityText[]> = {
   relaySeal: [{ name: '분대 인장', description: '턴에 한 번, 세 번째 유형 공격 시', effect: `첫 직접 피해 ×${PART_NUM.relaySeal}` }],
-  sharedPlate: [{ name: '맞댄 철판', description: '턴에 한 번, 고참 방열판 획득 시', effect: `상하좌우 동료 1기 방열판 +${PART_NUM.sharedPlate}` }, { name: '보호 대상', description: '3승 고참 · 낮은 체력 비율 우선', effect: '킹 · 임시 폰 제외' }],
+  sharedPlate: [{ name: '맞댄 철판', description: '턴에 한 번, 고참 방열판 시', effect: `상하좌우 동료 1기 방열판 +${PART_NUM.sharedPlate}` }, { name: '보호 대상', description: '3승 고참 · 낮은 체력 비율 우선', effect: '킹 · 임시 폰 제외' }],
   relayGear: [{ name: '맞물린 톱니', description: '턴에 한 번, 두 유형 공격 시', effect: `태엽 +${PART_NUM.relayGear}` }, { name: '동료 판정', description: '입장 시 영구 분대 유형 기준', effect: '임시 폰·승격·반사 제외' }],
   siegeLatch: [{ name: '공성 걸쇠', description: '턴에 한 번, 룩 2태엽↑ 공격 시', effect: `방열판 ≤${PART_NUM.siegeLatch} → 첫 피해` }, { name: '소모 횟수', description: '룩마다 매턴 1회 소모', effect: '관통 뒷 대상·튐·충돌 제외' }],
 };

@@ -5,7 +5,7 @@ import { BOSS_NUM, BOSS_RULES, TRAIT } from '../src/slice/cards';
 import type { BossRule, FoeTrait } from '../src/slice/cards';
 import { partSlotsAt } from '../src/slice/cards';
 import { pxWidth, textWidth } from '../src/slice/desc';
-import { partRuleRows, PART_ROW_PX } from '../src/slice/ability';
+import { partRuleRows } from '../src/slice/ability';
 import { SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
 
 describe('능력 설명 세 줄 계약', () => {
@@ -76,9 +76,10 @@ describe('부품 문법 — 언제 · 효과', () => {
   it('효과는 득실 많아야 둘, 언제 줄에 「 · 」가 섞이지 않는다', () => {
     expect(ids.filter((id) => partSummaryText(id).effect.split(' · ').length > 2 || partSummaryText(id).description.includes(' · '))).toEqual([]);
   });
-  it('그림 카드에서 글자를 줄이지 않고 네 행 안에 든다 (12px 실측 폭)', () => {
-    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 4 || r.some((x) => pxWidth(x.t, x.k === 'fx') > PART_ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
+  it('그림 카드는 언제 한 행 · 효과 한 행 고정, 줄여도 읽힌다 (10px에서 가로 0.7배 안팎 — 화면 실측 최저 0.72, D-473)', () => {
+    const scale = (t: string, bold: boolean) => Math.min(1, 99 / ((pxWidth(t, bold) * 10) / 12));
+    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length !== 2 || r.some((x) => scale(x.t, x.k === 'fx') < 0.68) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
     expect(bad).toEqual([]);
-    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드 +1', '태엽 +1']); // 좁은 카드는 득실을 한 행씩
+    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번, 연쇄 5 달성 시', ': 카드 +1 · 태엽 +1']);
   });
 });
