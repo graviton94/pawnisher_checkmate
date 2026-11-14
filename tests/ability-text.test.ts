@@ -4,7 +4,7 @@ import { abilityHtml } from '../src/slice/ability';
 import { BOSS_NUM, BOSS_RULES, TRAIT } from '../src/slice/cards';
 import type { BossRule, FoeTrait } from '../src/slice/cards';
 import { partSlotsAt } from '../src/slice/cards';
-import { pxWidth, textWidth } from '../src/slice/desc';
+import { pxWidth, ROW_PX, textWidth } from '../src/slice/desc';
 import { partRuleRows } from '../src/slice/ability';
 import { SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
 
@@ -60,7 +60,7 @@ describe('부품 조합의 보유·표시 계약', () => {
     expect(partSummaryText('spare')).toMatchObject({ description: '장착 중', effect: '태엽 +1 · 손패 −1' });
     expect(partSummaryText('echo')).toMatchObject({ description: '적중마다', effect: '쌓이는 연쇄 ×2' }); // D-454: 연쇄 = 적중
     expect(partSummaryText('chainShot')).toMatchObject({ description: '충돌로 처치 시', effect: '연쇄 +2' });
-    expect(partSummaryText('fuse')).toMatchObject({ description: '턴에 한 번, 연쇄 5 달성 시', effect: '카드 +1 · 태엽 +1' }); // D-470 사용자 예시
+    expect(partSummaryText('fuse')).toMatchObject({ description: '턴에 한 번, 연쇄 5 달성 시', effect: '카드·태엽 +1' }); // D-470 사용자 예시 → D-488 한 행에 들게
     expect(partAbilityText('conductor')[0].effect).toContain('기본 +4');
     expect(partAbilityText('sharedPlate')[1].effect).toContain('임시 폰 제외');
   });
@@ -76,10 +76,26 @@ describe('부품 문법 — 언제 · 효과', () => {
   it('효과는 득실 많아야 둘, 언제 줄에 「 · 」가 섞이지 않는다', () => {
     expect(ids.filter((id) => partSummaryText(id).effect.split(' · ').length > 2 || partSummaryText(id).description.includes(' · '))).toEqual([]);
   });
-  it('그림 카드는 세 행 틀 — 언제 한두 행 · 효과 늘 한 행, 넷째 행이 없다 (D-475)', () => {
-    const scale = (t: string, bold: boolean) => Math.min(1, 99 / ((pxWidth(t, bold) * 10) / 12));
-    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 3 || r.filter((x) => x.k === 'fx').length !== 1 || r.some((x) => scale(x.t, x.k === 'fx') < 0.68) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
+  it('그림 카드는 세 행 틀 — 넷째 행이 없고, 어느 행도 글자를 줄이지 않고 한 행 폭 안 (D-475 · D-488)', () => {
+    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 3 || !r.some((x) => x.k === 'fx') || r.some((x) => pxWidth(x.t, x.k === 'fx') > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
     expect(bad).toEqual([]);
-    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드 +1 · 태엽 +1']);
+    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드·태엽 +1']);
+  });
+});
+
+/** 카드 본문 (D-422 · D-488): 아래 칸은 세 행 안, 어느 행도 한 행 폭(ROW_PX)을 넘지 않는다 — 화면이 글자를 줄이지 않는다 */
+describe('명령 카드 줄 — 글자 축소 없음', () => {
+  it('모든 카드의 조건 · 효과 행이 세 행 안 · 한 행 폭 안 (#18)', async () => {
+    const { COMMANDS } = await import('../src/slice/cards');
+    const { bottomLines, splitDesc } = await import('../src/slice/desc');
+    const bad = Object.entries(COMMANDS).flatMap(([id, c]) => {
+      const d = splitDesc(c.desc || '');
+      const r = bottomLines(d.cond, d.fx);
+      return r.length > 3 || r.some((x) => pxWidth(x.t, x.k === 'fx') > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : [];
+    });
+    expect(bad).toEqual([]);
+  });
+  it('개척자의 맹세: 효과 두 항목이 한 행씩 (줄이지 않는다)', () => {
+    expect(partRuleRows('oath').map((x) => x.t)).toEqual(['장착 중', ': 폰 공격 +6', '폰 1회 버팀']);
   });
 });

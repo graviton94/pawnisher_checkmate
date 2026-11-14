@@ -44,7 +44,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   sharedPlate: { name: '맞댄 철판', axis: null, icon: 'sharedPlate', flavor: '오래 버틴 등이 다른 등을 가린다.', desc: '이웃 방열판 +6 — 턴에 한 번, 고참 방열판 시' },
   // I-14A/B 원본 파일 반입 전 기존 그림을 빌린다 (D-420).
   relayGear: { name: '맞물린 톱니', axis: null, icon: 'relayGear', flavor: '서로 다른 이가 다음 수를 연다.', desc: '태엽 +1 — 턴에 한 번, 두 유형 공격 시' },
-  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'siegeLatch', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판≤12 → 피해 — 턴에 한 번, 룩 2태엽↑ 시' },
+  siegeLatch: { name: '공성 걸쇠', axis: 'push', icon: 'siegeLatch', flavor: '버티던 철을 일격에 쏟는다.', desc: '방열판→피해 12 — 턴에 한 번, 룩 2태엽↑ 시' },
   // 기록 유물 (D-363, 사용자: 「기물의 소중함 — 누적 피해 · 처치 · 죽음을 넘긴 횟수 · 남은 생명에 따른 트리거」)
   lastBreath: { name: '마지막 숨', axis: null, icon: 'lastBreath', flavor: '숨이 하나 남으면, 손이 가장 매섭다.', desc: '공격 ×1.4 — 생명 하나 남은 동안' },
   ledger: { name: '피의 장부', axis: null, icon: 'ledger', flavor: '흘린 피는 빠짐없이 적힌다.', desc: '공격 +1 · 최대 +8 — 누적 피해 60마다' },
@@ -77,7 +77,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   banner: { name: '찢긴 군기', axis: 'inf', icon: 'banner', flavor: '찢겨도 깃발은 앞을 가리킨다.', desc: '폰의 공격 ×1.6' },
   scepter: { name: '녹슨 홀', axis: 'king', icon: 'scepter', flavor: '녹슬었어도 왕의 홀이다.', desc: '킹 방열판 +25 — 대국 시작 시' },
   gilded: { name: '도금 방패', axis: 'king', icon: 'gilded', flavor: '맞을수록 금칠이 번쩍인다.', desc: '태엽 +1 — 턴에 한 번, 킹 피격 시' },
-  fuse: { name: '도화선', axis: 'chain', icon: 'fuse', flavor: '불이 붙으면 끝까지 탄다.', desc: '카드 +1 · 태엽 +1 — 턴에 한 번, 연쇄 5 달성 시' },
+  fuse: { name: '도화선', axis: 'chain', icon: 'fuse', flavor: '불이 붙으면 끝까지 탄다.', desc: '카드·태엽 +1 — 턴에 한 번, 연쇄 5 달성 시' },
   conductor: { name: '전도 코일', axis: 'chain', icon: 'conductor', flavor: '열기가 줄을 타고 번진다.', desc: '연쇄 피해 +8 — 연쇄마다' },
   anvilPlate: { name: '모루 장갑', axis: 'push', icon: 'anvilPlate', flavor: '모루처럼 단단한 판을 댄다.', desc: '충돌 피해 +10 — 밀어 부딪칠 시' },
   chainShot: { name: '연쇄 사슬', axis: 'push', icon: 'chainShot', flavor: '부딪힌 자가 다음을 부른다.', desc: '연쇄 +2 — 충돌로 처치 시' },
@@ -94,7 +94,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   openGate: { name: '열린 문', axis: 'tactic', icon: 'openGate', flavor: '비켜선 자리로 빛이 든다.', desc: '다음 배율 +0.5 — 비켜서는 카드 낼 시' },
   chainReel: { name: '쇠사슬 감개', axis: 'tactic', icon: 'chainReel', flavor: '감을수록 사슬이 갑옷이 된다.', desc: '그 기물 방열판 +8 — 적을 묶을 때마다' },
   gameRecord: { name: '낡은 기보', axis: 'tactic', icon: 'gameRecord', flavor: '옛 기보에 답이 있다.', desc: '카드 1장 — 턴에 한 번, 수읽기 낼 시' },
-  gateHinge: { name: '성문 경첩', axis: 'tactic', icon: 'gateHinge', flavor: '문짝이 가볍게 돌아간다.', desc: '캐슬링 방열판 ×2 · 태엽 0' },
+  gateHinge: { name: '성문 경첩', axis: 'tactic', icon: 'gateHinge', flavor: '문짝이 가볍게 돌아간다.', desc: '캐슬링 태엽 0 · 방열판 ×2' },
   queenCrown: { name: '여왕의 관', axis: 'king', icon: 'queenCrown', flavor: '관을 쓴 자는 숙이지 않는다.', desc: '퀸의 공격 ×1.4' },
   lightCloak: { name: '가벼운 망토', axis: 'king', icon: 'lightCloak', flavor: '가벼워진 만큼 빨리 움직인다.', desc: '퀸 카드 태엽 −1 — 턴의 첫 장일 시' },
   goldRank: { name: '금박 끝 줄', axis: 'inf', icon: 'goldRank', flavor: '끝 줄에 닿은 자에게 금박을.', desc: '카드 2장 · 태엽 +1 — 폰 승격 시' },

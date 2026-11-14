@@ -1,5 +1,5 @@
 import type { SlicePartId } from './parts';
-import { lineHtml, pxWidth } from './desc';
+import { lineHtml, pxWidth, wrapRows } from './desc';
 import { partSummaryText, type AbilityText } from '../data/ability-text';
 
 const escape = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -27,14 +27,14 @@ export const bindAbilities = (host: HTMLElement, abilities: AbilityText[]): void
 /** 그림 카드 한 행에 12px로 드는 폭 (실측 99px, 굵은 글자 반올림 여유 2px) */
 export const PART_ROW_PX = 97;
 /**
- * 좁은 그림 카드의 부품 줄 (D-470 → D-475 사용자 결정): 세 행 틀은 그대로 — 언제(길면 쉼표 뒤에서 두 행) · : 효과(늘 한 행).
- * 효과가 넘쳐 넷째 행이 생기지 않게 한다 — 넘치는 행은 fitLines가 자간 · 글자를 줄인다(D-377).
+ * 좁은 그림 카드의 부품 줄 (D-470 → D-475 → D-488): 세 행 틀은 그대로 — 언제(길면 쉼표 뒤에서 두 행) · : 효과.
+ * 글자를 줄이지 않는다(D-422): 효과가 한 행에 안 들면 「 · 」 사이에서 남는 행으로 접는다. 넷째 행은 없다 — 데이터 문구가 맞춘다(테스트).
  */
 export const partRuleRows = (id: SlicePartId): { t: string; k: 'if' | 'fx' }[] => {
   const a = partSummaryText(id);
   const comma = a.description.indexOf(', ');
   const when = pxWidth(a.description) > PART_ROW_PX && comma > 0 ? [a.description.slice(0, comma + 1), a.description.slice(comma + 2)] : [a.description];
-  return [...when.map((t) => ({ t, k: 'if' as const })), { t: `: ${a.effect}`, k: 'fx' }];
+  return [...when.flatMap((t) => wrapRows(t, false)).map((t) => ({ t, k: 'if' as const })), ...wrapRows(`: ${a.effect}`, true).map((t) => ({ t, k: 'fx' as const }))];
 };
 export const partCardRuleHtml = (id: SlicePartId): string => {
   const lines = partRuleRows(id).map((l) => lineHtml(l.t, l.k));

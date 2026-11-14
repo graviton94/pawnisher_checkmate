@@ -100,7 +100,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 12, desc: '기물 하나를 땜질한다. (HP +12)' },
   reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 1, ap: 1, desc: '태엽을 감고 탄창을 채운다. (태엽 +1 · 카드 1장 뽑기)' },
   kingBlow: { axis: 'king', name: '왕의 철퇴', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (피해 ×2)' },
-  splashDiag: { axis: 'chain', name: '파편 세례', cost: 1, who: 'B', kind: 'move', carve: 'diag', desc: '내려앉는 자리마다 유리가 깨진다. (대각선 적 · 절반 피해 — 내려앉으면)' },
+  splashDiag: { axis: 'chain', name: '파편 세례', cost: 1, who: 'B', kind: 'move', carve: 'diag', desc: '내려앉는 곳마다 유리가 깨진다. (대각선 적 · 절반 피해 — 내려앉으면)' },
   smash: { axis: 'chain', name: '분쇄', cost: 2, who: 'any', kind: 'move', mult: 1.5, desc: '온 힘을 실어 내려친다. (피해 ×1.5)' },
   rookLine: { name: '직진', cost: 2, who: 'R', kind: 'move', desc: '첫 적을 들이받는다. (공격력만큼 피해)', flavor: '살아 움직이는 요새', title: '걷는 요새' },
   // ---- 빌드 축 카드 (D-144) ----
@@ -114,8 +114,8 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   // D-461: ×14 → ×6 — 연쇄가 적중 기준(D-454)이 된 뒤 한 턴 연쇄 5~6이라 0태엽에 킹 방열판 70~80. 실험실 짝 비교: 쥐여 주기만 해도 완주 24 → 94%
   // D-462 종막 전용 (사용자: 「도금왕은 깨면 끝 — 모든 걸 다 걸어도 된다」): 동료를 녹여 왕관을 친다. 보상으로 나오지 않는다
-  meltOath: { name: '쇳물 서약', cost: 0, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 최대 HP ×1.5 — 분대원 하나를 영영 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
-  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 1, who: 'any', kind: 'spend', spend: 'shield', amount: 6, desc: '열기를 갑옷으로 돌린다. (연쇄 ×6 · 최대 24 킹 방열판 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
+  meltOath: { name: '쇳물 서약', cost: 0, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 최대 HP ×1.5 — 동료를 영영 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
+  vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 1, who: 'any', kind: 'spend', spend: 'shield', amount: 6, desc: '열기를 갑옷으로 돌린다. (연쇄 ×6 · 킹 방열판 ≤24 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
   burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄 ×14만큼 · 적 전체 피해 — 연쇄를 모두 써서)', flavor: '“압력을 놓아라.”' },
   recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 0.5, desc: '흩어진 태엽을 거둔다. (연쇄 2마다 태엽 1 · 최대 2 — 연쇄를 모두 써서)' },
   finisher: { axis: 'chain', name: '처형', cost: 2, who: 'any', kind: 'move', multPerKill: 0.5, desc: '연쇄를 끝맺는 일격. (피해 ×0.5 추가 — 연쇄 1마다)' },

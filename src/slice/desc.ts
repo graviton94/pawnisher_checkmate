@@ -44,6 +44,45 @@ export const splitTwo = (s: string): string[] => {
   return best < 0 ? [t] : [t.slice(0, best), t.slice(best + 1)];
 };
 
+/** 12px 갈무리11 한 행 폭 (그림 카드 두루마리 실측 99px — D-470, 화면 검사: 99px 줄은 넘치지 않는다) */
+export const ROW_PX = 99;
+/**
+ * 한 행에 들지 않는 줄을 여러 행으로 접는다 (D-422 · D-488 — 글자를 줄이거나 자르지 않는다).
+ * 「 · 」 사이에서 먼저 나누고, 한 항목이 그래도 길면 띄어쓰기에서 — 두 행이면 폭이 고른 자리에서 나눠 꾸밈말이 줄 끝에 홀로 남지 않게 한다.
+ */
+export const wrapRows = (t: string, bold = false, px = ROW_PX): string[] => {
+  const fits = (x: string): boolean => pxWidth(x, bold) <= px;
+  if (fits(t)) return [t];
+  const out: string[] = [];
+  let curr = '';
+  for (const item of t.split(' · ')) {
+    const next = curr ? `${curr} · ${item}` : item;
+    if (fits(next)) { curr = next; continue; }
+    if (curr) out.push(curr);
+    curr = '';
+    if (fits(item)) { curr = item; continue; }
+    // 한 항목이 한 행보다 길다 — 낱말 단위로. 두 행에 들면 두 행 폭이 가장 고른 자리(쉼표 뒤 먼저)에서 나눈다
+    const words = item.split(' ');
+    let best = -1, score = Infinity;
+    for (let k = 1; k < words.length; k++) {
+      const a = words.slice(0, k).join(' '), b = words.slice(k).join(' ');
+      if (!fits(a) || !fits(b)) continue;
+      const sc = Math.max(pxWidth(a, bold), pxWidth(b, bold)) - (/,$/.test(a) ? 24 : 0);
+      if (sc < score) { score = sc; best = k; }
+    }
+    if (best > 0) { out.push(words.slice(0, best).join(' ')); curr = words.slice(best).join(' '); continue; }
+    let line = '';
+    for (const w of words) {
+      const n = line ? `${line} ${w}` : w;
+      if (fits(n) || !line) line = n;
+      else { out.push(line); line = w; }
+    }
+    curr = line;
+  }
+  if (curr) out.push(curr);
+  return out;
+};
+
 /** 조건이 붙은 효과 한 줄을 「조건 / 효과」 두 줄로 (…하면 · …때 · …마다 · …에) */
 export const condSplit = (s: string): string[] => {
   const m = s.match(/^(.+?(?:면|때|마다|시작에|끝에)) (.+)$/);
@@ -66,7 +105,8 @@ export const bottomLines = (cond: string, fx: string): { t: string; k: 'if' | 'f
   const slots = 3 - out.length;
   if (items.length > slots) items = [...items.slice(0, slots - 1), items.slice(slots - 1).join(' · ')];
   items.forEach((t) => out.push({ t, k: 'fx' }));
-  return out;
+  // 한 행에 들지 않는 줄은 글자를 줄이지 않고 행으로 접는다 (D-422 · D-488)
+  return out.flatMap((l) => wrapRows(l.t, l.k === 'fx').map((t) => ({ t, k: l.k })));
 };
 
 /**
@@ -88,7 +128,7 @@ export const descHtml = (text: string, flavor?: string): string => {
 
 /** 글 폭 어림 (갈무리: 한글 1칸, 영숫자 · 기호 0.6, 빈칸 0.35) — 테스트가 줄 넘침을 잡는다 */
 export const textWidth = (s: string): number =>
-  [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === ' ' ? 0.35 : /[×−—·→「」]/.test(ch) ? 0.9 : 0.6), 0);
+  [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === ' ' || ch === '\u00a0' ? 0.35 : /[×−—·→「」]/.test(ch) ? 0.9 : 0.6), 0);
 
 /** 12px 갈무리11 실측 폭(px — D-470 화면 canvas 측정, 굵게는 효과 줄). 그림 카드 부품 행은 99px */
 export const pxWidth = (s: string, bold = false): number =>
