@@ -688,6 +688,83 @@ const chestFx = async (L: Layer, el: HTMLElement): Promise<void> => {
   await wait(500);
 };
 
+/** 장면 위 배우가 서는 결과 (D-503 · #23): 진화 · 폐기 · 합류 — 분대원 하나의 운명이 바뀌는 순간 */
+const ACTOR_FX: ReadonlySet<CrewFx['fx']> = new Set(['evolve', 'die', 'new']);
+/** 쇳물 사건: 배우 둘레 불씨 · 쇳물 빛 (그 밖은 금빛 먼지) */
+const MOLTEN = /dipping|pact|castMold|coldForge/;
+/**
+ * 장면 위 배우 (D-503, 사용자 #23 「쇳물 담금질 결과가 허접」): 결과 줄(카드)보다 먼저, 사건 그림 위 초점 자리에 그 분대원의 실제 기물 도트를 세운다.
+ * 덮던 2×2 먹 디더를 걷어 그림을 온전히 보이고(가장자리 디더만), 결과마다 예비 → 터짐 → 출렁:
+ *  진화 = 아래에서 계단으로 솟음 + 쇳물 불씨 → 떨림 · 달아오름(빛) → 흰 번쩍 → 새 기물 · 금 고리 · 별 → 착지 출렁
+ *  폐기 = 솟음 → 떨림 → 계단으로 가라앉음(아래부터 잘림) + 진홍 불씨 → 수면 고리 · 거품
+ *  합류 = 위에서 계단으로 떨어져 착지 출렁 + 먼지
+ * 기물 그림은 72칸 원본의 기기 픽셀 정수배(늘리지 않는다, D-386). 결과는 엔진이 정했다 — 보여 주기만 한다.
+ */
+const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> => {
+  const cr = c.crew.find((x) => ACTOR_FX.has(x.fx));
+  if (!cr || !c.scene) return;
+  ov.classList.add('bare');
+  const r = window.devicePixelRatio || 1;
+  const hw = L.host.clientWidth, hh = L.host.clientHeight;
+  const k = Math.max(1, Math.floor(((hh * 0.5) / 72) * r)) / r;
+  const size = 72 * k;
+  const el = document.createElement('div');
+  el.className = 'ev-actor';
+  el.style.width = el.style.height = `${size}px`;
+  el.style.left = `${Math.round(((hw - size) / 2) * r) / r}px`;
+  el.style.top = `${Math.round((hh * 0.46 - size / 2) * r) / r}px`;
+  el.innerHTML = `<img src="${cr.src}" alt="">`;
+  L.host.insertBefore(el, L.fx.canvas);
+  const img = el.querySelector('img')!;
+  const hot = MOLTEN.test(c.id);
+  const box = () => L.at(el);
+  const spray = (n: number, col: ReturnType<typeof hex>, up = -90) => {
+    const q = box();
+    for (let i = 0; i < n; i++) L.ps.spawn(hot ? P.EMBER : P.MOTE, q.x + L.R.range(4, q.w - 4), q.y + q.h - 6, L.R.range(-24, 24), L.R.range(up, up * 0.35), L.R.range(0.5, 1.1), col, 1, i * 0.02);
+  };
+  const mid = () => { const q = box(); return { x: q.x + q.w / 2, y: q.y + q.h / 2, w: q.w }; };
+  if (cr.fx === 'new') {
+    await cls(el, 'drop', 380); el.classList.remove('drop');
+    sfx('land');
+    const m = mid();
+    L.addRing(m.x, m.y + m.w * 0.4, m.w * 0.5, '#f4d27a');
+    L.ps.burst(m.x, m.y + m.w * 0.45, 14, [30, 90], P.DUST, [0.3, 0.7], PAL.smoke[5], 10);
+    await wait(520);
+  } else {
+    // 솟음 (예비): 아래에서 계단으로 — 쇳물이면 불씨가 같이 튄다
+    await cls(el, 'rise', 420); el.classList.remove('rise');
+    spray(hot ? 18 : 10, hot ? PAL.fire[5] : PAL.gold[5]);
+    sfx('lift');
+    await cls(el, 'pre', 340); el.classList.remove('pre');
+    const m = mid();
+    if (cr.fx === 'evolve') {
+      L.lights.add(m.x, m.y, 52, hot ? PAL.fire[5] : PAL.gold[5], 1, 0.7);
+      await cls(el, 'flash', 140);
+      img.src = cr.toSrc ?? cr.src;
+      el.classList.remove('flash');
+      sfx('rare');
+      L.addRing(m.x, m.y, m.w * 0.62, '#facc15');
+      L.ps.burst(m.x, m.y, 22, [50, 150], P.STAR, [0.3, 0.8], PAL.gold[5], 30);
+      shakeEl(L.host.closest<HTMLElement>('.ev-ov'), 2, 160);
+      await cls(el, 'land', 420); el.classList.remove('land');
+      await wait(520);
+    } else {
+      sfx('hurt');
+      spray(24, PAL.blood[5], -60);
+      await cls(el, 'sink', 640);
+      el.style.visibility = 'hidden';
+      const q = box();
+      L.addRing(q.x + q.w / 2, q.y + q.h - 4, q.w * 0.45, '#e5262f');
+      for (let i = 0; i < 6; i++) L.ps.spawn(P.MOTE, q.x + q.w / 2 + L.R.range(-10, 10), q.y + q.h - 4, 0, L.R.range(-40, -18), L.R.range(0.4, 0.8), hot ? PAL.fire[6] : PAL.smoke[6], 1, 0.2 + i * 0.08);
+      await wait(560);
+    }
+  }
+  el.classList.add('gone');
+  await wait(300);
+  el.remove();
+  ov.classList.remove('bare');
+};
+
 /**
  * 사건 결과 1박 (D-260 → D-402): 고른 선택지를 정하면 사건 창 전체를 결과 장면이 덮는다(바뀐 것을 강조 — 사용자 승인) →
  * 확률 장치(동전은 저절로, 칸 셋은 하나씩 눌러 · 긁어 연다) → 실제 카드 · 기물 · 지갑 · 부품 상자 위 FX만(글 · 쪽지 없음) →
@@ -710,6 +787,7 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   else if (c.chance?.kind === 'scratch') await scratch(L, c);
   // 결과 줄이 있으면 확률 장치는 걷고 없으면(부품을 고르는 결과 등) 마지막 장을 남긴다
   if (c.chance && (c.cards.length || c.crew.length || c.gold || c.part)) L.x.clearRect(0, 0, L.w, L.h);
+  await actorBeat(L, c, ov);
   await showResults(L, c);
   // 읽을 시간 — 누르면 바로 넘어간다 (줄인 움직임이면 짧게)
   await Promise.race([new Promise((r) => window.setTimeout(r, calm() ? 400 : c.hold)), new Promise((r) => ov.addEventListener('pointerdown', r, { once: true }))]);

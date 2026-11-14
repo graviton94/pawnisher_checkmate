@@ -3,6 +3,7 @@ import { sfx } from '../audio/sfx';
 import type { PieceType } from '../engine';
 import { CREDIT_TEXT, CREDITS, STUDIO_URL } from '../data/credits';
 import { PIECE_NAMES_KO } from '../data/pieces';
+import { pieceImg } from '../ui/sprites';
 import { pxOut, replay } from './fx3';
 import { btnHtml, coverArt, sceneFocus } from './uikit';
 
@@ -16,7 +17,7 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
     for (let k = 0; k < crew.length || k === 0; k += 6) groups.push(crew.slice(k, k + 6));
     const pages = groups.map((group) => `<p class="cr-kicker">${escape(o.ending ?? '출하 완료')}</p><h2 class="cr-title">함께 오른 이름</h2>
       <p class="cr-meta">${escape(meta)}</p>
-      <div class="cr-cast"><div class="cr-person cr-leader"><b>종이왕</b><span>분대를 이끈 폰</span></div>${group.map((u) => `<div class="cr-person"><b>${escape(u.name)}</b><span>${PIECE_NAMES_KO[u.t]}${u.fallen ? ' · 돌아오지 못함' : ''}</span></div>`).join('')}</div>`);
+      <div class="cr-cast"><div class="cr-person cr-leader" style="--k:0"><i class="cr-pc">${pieceImg('K', 0, 'small', 24)}</i><b>종이왕</b><span>분대를 이끈 폰</span></div>${group.map((u, k) => `<div class="cr-person${u.fallen ? ' cr-fallen' : ''}" style="--k:${k + 1}"><i class="cr-pc">${pieceImg(u.t, 0, 'small', 24)}</i><b>${escape(u.name)}</b><span>${PIECE_NAMES_KO[u.t]}${u.fallen ? ' · 돌아오지 못함' : ''}</span></div>`).join('')}</div>`);
     pages.push(`<p class="cr-kicker">${CREDIT_TEXT.title}</p><h2 class="cr-title">만든 사람들</h2><div class="cr-makers">${CREDITS.map((c, k) => `<div><p class="cr-role">${c.role}</p>${c.names.map((n) => `<p class="cr-name">${n}</p>`).join('')}${k === 0 ? `<p class="cr-meta">${STUDIO_URL.replace(/^https:\/\//, '').replace(/\/$/, '')}</p>` : ''}</div>`).join('')}</div>`);
     const el = document.createElement('section');
     el.className = 'credits kit';
@@ -33,17 +34,24 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
     const nextBtn = el.querySelector<HTMLButtonElement>('[data-cr-next]')!;
     let i = 0;
     let closing = false;
+    /** 엔드롤 (D-503 · #31): 장마다 이름이 계단으로 하나씩 서고, 읽을 만큼 머문 뒤 저절로 다음 장 — 누르면 바로. 마지막 장(만든 사람들)은 멈춰 기다린다 */
+    let auto = 0;
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const hold = (): number => 2400 + page.querySelectorAll('.cr-person, .cr-name').length * 420 + (calm ? 1200 : 0);
     const show = (): void => {
+      window.clearTimeout(auto);
       page.innerHTML = pages[i];
       const skip = el.querySelector<HTMLButtonElement>('[data-cr-result]');
       if (skip) skip.hidden = i === pages.length - 1;
       el.querySelector('.cr-count')!.textContent = `${i + 1} / ${pages.length}`;
       nextBtn.textContent = i === pages.length - 1 ? o.close ? '결과를 본다' : '마친다' : '다음';
       replay(page, 'in');
+      if (i < pages.length - 1) auto = window.setTimeout(() => { if (!closing && el.isConnected) { sfx('tap', 3); i++; show(); } }, hold());
     };
     const finish = (): void => {
       if (closing) return;
       closing = true;
+      window.clearTimeout(auto);
       el.querySelectorAll<HTMLButtonElement>('button').forEach((b) => { b.disabled = true; });
       sfx('submit');
       // 장부를 뒤에 먼저 세워 화면 사이에 전투판이 비치지 않게 한다.

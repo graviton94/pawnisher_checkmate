@@ -4,7 +4,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ACT_CARD, BOSS_CARD, BOSS_SINS, BOSS_STORY, BOSS_TAUNTS, DEFEAT, GILDED_STORY, PROLOGUE, STG_PROG, TESTIMONY, THRONE_TEXT, promotionCuts, shadowCut, trueEndingCuts, type Cut, type Line, type StoryBoss } from '../src/data/script';
+import { ACT_CARD, BOSS_CARD, BOSS_SINS, BOSS_STORY, BOSS_TAUNTS, DEFEAT_CUTS, GILDED_STORY, PROLOGUE, STG_PROG, TESTIMONY, THRONE_TEXT, bossFallCut, lookBackCut, promotionCuts, shadowCut, trueEndingCuts, type Cut, type Line, type StoryBoss } from '../src/data/script';
 import { companionScene, type CompanionActor } from '../src/data/companion-scenes';
 import { CHAPTERS, STORY_LAW } from '../src/data/campaign';
 import { CREW_VOICE } from '../src/data/crew-voice';
@@ -24,12 +24,22 @@ const out: string[] = [];
 const p = (...ls: string[]): void => void out.push(...ls);
 const clean = (t: string): string => t.replace(/<\/?em>/g, '').replace(/\|/g, '｜').replace(/\n/g, ' / ');
 const KIND = { n: '서술', s: '대사', m: '독백' } as const;
-/** 줄 표: ID · 형식 · 화자 · 원문 */
+/** 비트 연출 한 칸 (D-503): 숨(ms) · 카메라(초점 x·y, 확대 z) · 소리 큐 · 효과 */
+const FX_KO = { shake: '흔들림', flash: '흰 번쩍', red: '붉은 경보', gold: '금빛' } as const;
+const beat = (l: Line): string => [l.pause ? `숨 ${l.pause}` : '', l.shot ? `샷 ${Math.round(l.shot.x * 100)}·${Math.round(l.shot.y * 100)}${l.shot.z ? ` ×${l.shot.z}` : ''}` : '', l.sfx ? `소리 ${l.sfx}` : '', l.fx ? FX_KO[l.fx] : ''].filter(Boolean).join(' · ') || '—';
+/** 줄 표: ID · 형식 · 화자 · 원문 · 연출(비트) */
 const table = (prefix: string, lines: Line[]): void => {
-  p('| ID | 형식 | 화자 | 원문 |', '|---|---|---|---|');
-  lines.forEach((l, i) => p(`| ${prefix}-${i + 1} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} |`));
+  p('| ID | 형식 | 화자 | 원문 | 연출 |', '|---|---|---|---|---|');
+  lines.forEach((l, i) => p(`| ${prefix}-${i + 1} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} | ${beat(l)} |`));
   p('');
 };
+const TRANS_KO = { dither: '디더', iris: '조리개', melt: '쇳물', white: '백지', black: '암전', cut: '바로' } as const;
+/** 컷 머리 연출 (D-503): 장 제목 카드 · 전환 · 첫 샷 · 끝 정적 · 맺음 카드 */
+const cutHead = (c: Cut): string[] => [
+  ...(c.title ? [`- **장 제목 카드**: ${c.title.kicker} / 「${c.title.title}」${c.title.sub ? ` / ${c.title.sub}` : ''}`] : []),
+  `- **들어오는 전환**: ${TRANS_KO[c.trans ?? 'dither']}${c.shot ? ` · 첫 샷 ${Math.round(c.shot.x * 100)}·${Math.round(c.shot.y * 100)}${c.shot.z ? ` ×${c.shot.z}` : ''}` : ''}${c.coda ? ` · **끝 정적**(${c.coda === 'white' ? '백지' : '먹'} 위 한가운데 한 줄)` : ''}`,
+  ...(c.end ? [`- **맺음 카드**: ${c.end.kicker} / 「${c.end.title}」${c.end.sub ? ` / ${clean(c.end.sub)}` : ''}`] : []),
+];
 /** 낱줄 표: ID · 상황 · 원문 */
 const rows = (head: [string, string], items: [string, string, string][]): void => {
   p(`| ID | ${head[0]} | ${head[1]} |`, '|---|---|---|');
@@ -37,7 +47,7 @@ const rows = (head: [string, string], items: [string, string, string][]): void =
   p('');
 };
 const cutBlock = (id: string, title: string, c: Cut, picture: string, note = ''): void => {
-  p(`#### ${id} · ${title}`, '', `- **그림**: \`${c.img}.png\` — ${picture}`, ...(note ? [`- **메모**: ${note}`] : []), '');
+  p(`#### ${id} · ${title}`, '', c.coda ? '- **그림**: 없음 — 끝 정적' : `- **그림**: \`${c.img}.png\` — ${picture}`, ...cutHead(c), ...(note ? [`- **메모**: ${note}`] : []), '');
   table(id, c.lines);
 };
 
@@ -222,20 +232,24 @@ rows(['자리', '원문'], [
   ['THR-돌아봄-2', `「${THRONE_TEXT.look}」 (약속한 동료가 쓰러졌을 때)`, THRONE_TEXT.lookLost('(동료 이름)')],
   ['THR-돌아봄-3', `「${THRONE_TEXT.look}」 (동료가 아무도 없을 때)`, THRONE_TEXT.lookNone],
 ]);
+cutBlock('THR-돌아봄-컷', '「돌아본다」 짧은 컷 (D-503)', lookBackCut({ companionWithJosa: '박차가' }), '`promote-crew` — 계단 아래에서 위의 승급대를 올려다보는 흰 기물들(흠집 난 나이트 · 폰). 위 승급대에서 아래 동료들로 카메라가 내려온다', '컷이 글을 끝까지 읽힌 뒤 결정 화면으로 돌아온다. 돌아온 화면엔 위 THR-돌아봄 줄이 다 찍힌 채 남고 [돌아봤다]는 잠긴다.');
+cutBlock('BOS-격파-예', '반장 격파 컷 비트 (철갑 반장 · 둘째 반장 · 2승천 예)', bossFallCut('plate', 'boss-fall-plate', 2, 1), '`boss-fall-plate` — 갈라져 떨어지는 철판 속 웅크린 작은 폰', '여섯 반장 모두 같은 비트: 넓게(흔들림) → 살려 두고 지나감 → 반장 가까이(명패 · 위협음) → 종이왕 → 속마음.');
 
 p('### 7-2. 왕이 된 결말 END-K — 왕관을 쓴 직후의 깨달음과 지연된 배신 (1~3승천은 늘, 4승천은 「왕관을 쓴다」)', '',
   '- 4컷. 소리치는 동료는 부관 박차가 살아 있으면 박차, 아니면 약속한 동료 · 살아 있는 첫 동료. 동료가 아무도 없으면 동료 대사가 빠진다.',
   '- 셋째 컷 속마음은 승천마다 다르다(4승천에서 왕관을 쓰면 3승천 판). 넷째 컷 끝에 **이번에 새기는 규정**(§7-4)과 **마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄**(§5 「닮음」)이 붙는다.', '');
 const PR_PIC = ['`crown-dais` 발주 중 — 승급대 위에서 금왕관을 머리에 얹는 순간, 금빛 시야가 공장 전체로 열린다 (그동안 `promote-gild`: 어둠 속 받침대 위 금빛 왕의 몸)', '`casting-floor` 발주 중 — 통제실 바닥이 갈라져 쇳물과 쇠사슬이 동료들을 끌어내리고, 단상 위 금왕관의 폰이 내려다본다 (그동안 `gilded-fallen`)', '`gold-cast` 발주 중 — 황금 쇳물이 아래에서부터 폰을 감싸 킹으로 굳는다 (그동안 `promote-gild`)', '붉은 등 아래 커다란 규정판에 글을 새기는 금빛 왕. 발치에 버려진 종이 왕관'];
-const PR_TITLE = ['왕관을 쓰다', '용해 주조', '금빛으로 굳다', '문을 잠그고 규정을 새기다'];
+PR_PIC.push('`ending-a` — 금빛 왕이 커다란 규정판 앞에 섰다(빌림 — ED-05 대기)', '끝 정적');
+const PR_TITLE = ['왕관을 쓰다', '용해 주조', '금빛으로 굳다', '문을 잠그다', '규정을 새기다', '다음 폰'];
 promotionCuts(0, '', ASCENSION[STORY_LAW[0]].law, BOSS_STORY.plate.mirror, { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(`END-K-${i + 1}`, PR_TITLE[i], c, PR_PIC[i], i === 2 ? '속마음은 1승천 판. 아래 변주.' : i === 3 ? '「 」 = 1승천에서 새기는 규정. 마지막 줄 = 철갑 반장일 때.' : ''));
 p('**변주**', '');
 rows(['자리', '원문'], [1, 2].map((ch) => [`END-K-3-2-A${ch + 1}`, `셋째 컷 속마음 · ${ch + 1}승천`, `‘${promotionCuts(ch, '', '', '')[2].lines.find((l) => l.k === 'm')!.t}’`] as [string, string, string]));
 
 p('### 7-3. 진엔딩 END-T — 왕관 파괴와 백지로의 해방 (4승천 「왕관을 던진다」)', '', '- 4컷. 동료 대사는 END-K와 같은 규칙(박차 → 약속한 동료 → 첫 동료). 동료가 없으면 동료 대사가 빠진다.', '');
 const TE_PIC = ['`gilded-fallen` — 쓰러진 도금왕(금박이 벗겨져 흰 폰이 드러남)과 쇳물빛이 새는 열린 거푸집, 왼쪽 아래에 종이왕', '`crown-gears` 발주 중 — 주조기 톱니 사이에 쐐기처럼 박혀 찌그러진 금왕관 (그동안 `gilded-fallen`)', '`white-land` 발주 중 — 뜯겨 열린 비상 출하문 너머 칸 없는 하얀 땅, 문턱의 작은 흰 기물들 (그동안 `departure-decision`: 출하구 문턱의 종이왕)', '같은 그림'];
-const TE_TITLE = ['원했다, 그러니 끝낸다', '톱니에 박힌 왕관', '하얀 땅', '첫 수'];
-trueEndingCuts([], { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(`END-T-${i + 1}`, TE_TITLE[i], c, TE_PIC[i], i === 3 ? '둘째 줄이 바이블의 END-T-크레딧 줄이다.' : ''));
+TE_PIC.push('끝 정적');
+const TE_TITLE = ['원했다, 그러니 끝낸다', '톱니에 박힌 왕관', '하얀 땅', '첫걸음', '첫 수'];
+trueEndingCuts([], { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(`END-T-${i + 1}`, TE_TITLE[i], c, TE_PIC[i], i === 4 ? '바이블의 END-T-크레딧 줄 — 백지 위 끝 정적.' : ''));
 p(`- 크레딧 끝 한 줄: 「${CREDIT_TEXT.record}」`, '');
 
 p('### 7-4. 새기는 규정 LAW-1~4', '', '- 왕이 된 폰이 검수대에 새기는 글. 다음 승천의 그림자 컷(SHD-B)에 그대로 나온다. 전투 난이도는 승천 번호를 따른다(규정 글은 이야기 · 실제 효과는 아래 「난이도」).', '');
@@ -244,7 +258,8 @@ p('**난이도 조항 전체** (본편 1~4승천 = 0~3번, 그 뒤는 선택 도
 rows(['이름', '새긴 글 → 실제 효과'], ASCENSION.map((a, i) => [`ASC-${i}`, `${a.name}${i < 4 ? ` (${i + 1}승천 전투)` : ` (도전 ${i - 3})`}`, `「${a.law}」 → ${a.desc}`] as [string, string, string]));
 
 p('### 7-5. 패배 END-F', '', '- **트리거**: 우리 킹(종이왕)이 쓰러지고 되감기도 없을 때. 이 컷 뒤 결과 화면.', '');
-cutBlock('END-F', '용광로', DEFEAT, '붉은 쇳물이 흐르는 용광로 입구. 그 앞에 쓰러진 흰 폰과 구겨진 종이 왕관');
+const DF_PIC = ['붉은 쇳물이 흐르는 용광로 입구. 그 앞에 쓰러진 흰 폰과 구겨진 종이 왕관', '`prologue-01` 빌림 — 쇳물을 붓는 거푸집 줄과 검은 기물들 (ED-10 대기)', '끝 정적'];
+DEFEAT_CUTS.forEach((c, i) => cutBlock(`END-F-${i + 1}`, ['굴러떨어진 왕관', '상자째 용광로로', '풀리는 태엽'][i], c, DF_PIC[i]));
 rows(['자리', '원문'], [
   ['END-F-창-1', '패배 창 「하자 폐기」 · 시스템', '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'],
   ['END-F-창-2', '패배 창 · 속마음 (적 킹을 거의 잡았을 때)', '‘적 킹 HP (n). 한 수였어.’'],
@@ -283,8 +298,8 @@ p('## 9. 부관 박차의 안내 (튜토리얼)', '', '- 화자 = 부관 박차.
 const COACH_WHEN: Record<string, string> = { card: '1턴, 카드를 고르기 전', cardAgain: '3턴부터, 카드를 고르기 전', intent: '2턴, 카드를 고르기 전', piece: '카드를 고른 뒤', square: '기물을 고른 뒤', end: '낼 카드가 없을 때', chain: '1턴에 첫 처치를 한 뒤', graze: '내 기물이 붉은 칸 위에 있을 때' };
 rows(['언제', '원문'], Object.entries(COACH_LINES).map(([k, v]) => [`COA-${k}`, COACH_WHEN[k] ?? k, v] as [string, string, string]));
 const dump = (prefix: string, o: Record<string, unknown>): [string, string, string][] => Object.entries(o).flatMap(([k, v]) => (typeof v === 'string' ? [[`${prefix}-${k}`, k, v] as [string, string, string]] : typeof v === 'function' ? [[`${prefix}-${k}`, k, String((v as (...a: string[]) => string)('(이름)', '(이름)'))] as [string, string, string]] : []));
-p('### 9-2. 첫 대국 따라 하기 (프롤로그 직후 처음 한 번 · 부관이 판의 한 곳씩 짚는다 · 한 걸음 = 한 줄)', '');
-rows(['단계(내부 이름)', '원문'], dump('TUT-대국', TUT.battle as Record<string, unknown>));
+p('### 9-2. 입문 시험대 셋 (D-502 — 프롤로그 직후 처음 한 번 · 부관이 판의 한 곳씩 짚는다 · 한 걸음 = 한 줄)', '');
+rows(['단계(내부 이름)', '원문'], [...dump('TUT-시험대A', TUT.drillA as Record<string, unknown>), ...dump('TUT-시험대B', TUT.drillB as Record<string, unknown>), ...dump('TUT-시험대C', TUT.drillC as Record<string, unknown>)]);
 p('### 9-3. 그 밖의 안내 (처음 한 번씩)', '');
 rows(['언제', '원문'], [
   ...dump('TUT-지도', TUT.map as Record<string, unknown>).map(([id, , t]) => [id, '첫 지도', t] as [string, string, string]),

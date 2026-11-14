@@ -666,7 +666,15 @@ export const cutPieces = (l: CutLine, _row = CUT_ROW): CutLine[] => {
     else out.push(x);
     open += (x.match(/[「“]/g)?.length ?? 0) - (x.match(/[」”]/g)?.length ?? 0);
   }
-  return out.map((t, i) => ({ ...l, t, part: out.length === 1 ? undefined : i === 0 ? 'head' : i === out.length - 1 ? 'tail' : 'mid' }));
+  // 짧은 문장 둘은 한 쪽에 줄을 바꿔 (D-503, 사용자 #2 「한 화면에 두 문장이면 줄바꿈」): 「대장!」 「손을…」처럼 한 낱말 쪽이 잇달아 넘어가던 것을 줄인다.
+  // 두 문장이 저마다 띠 한 줄(CUT_ROW의 85%) 안일 때만 — 쪽은 여전히 띠 두 줄 안, 문장 가운데서는 나누지 않는다.
+  const short = (t: string): boolean => textWidth(t) <= CUT_ROW * 0.85;
+  const paired: string[] = [];
+  for (let k = 0; k < out.length; k++) {
+    if (k + 1 < out.length && short(out[k]) && short(out[k + 1])) { paired.push(`${out[k]}\n${out[k + 1]}`); k++; }
+    else paired.push(out[k]);
+  }
+  return paired.map((t, i) => ({ ...l, t, part: paired.length === 1 ? undefined : i === 0 ? 'head' : i === paired.length - 1 ? 'tail' : 'mid' }));
 };
 /** 쪽 = 문장 하나 (띠 두 줄 안). 같은 화자가 이어 말하면 이름표는 첫 쪽에만 (cont) */
 export const cutPages = (lines: CutLine[], row = CUT_ROW): CutLine[][] => {
@@ -691,7 +699,9 @@ export const typeCutPages = async (box: HTMLElement, lines: CutLine[], alive: ()
  * 화자 편 (#22 · D-488): 이름 색으로 우리 편 · 적 · 도금왕을 가른다 (docs/design-system.md 신호색 — 청록/종이 = 내 편, 진홍 = 적, 황동 = 도금왕).
  * 반장 · 적 킹 · 검수기 = 적, 도금왕 = 황동, 그 밖(종이왕 · 박차 · 분대원 · 흰 세트) = 우리 편.
  */
-export const speakerSide = (who: string): 'ally' | 'foe' | 'gilded' => (who === '도금왕' ? 'gilded' : /반장$|^적 |검수기|감독관/.test(who) ? 'foe' : 'ally');
+export const speakerSide = (who: string): 'ally' | 'foe' | 'gilded' | 'npc' => (who === '도금왕' ? 'gilded' : /반장$|^적 |검수기|감독관|주조기/.test(who) ? 'foe' : NPC_SPEAKERS.has(who) ? 'npc' : 'ally');
+/** 컷신에 나오는 우리 편도 적도 아닌 화자 (D-503 — 종이 꼬리표 명패) */
+const NPC_SPEAKERS = new Set(['외눈 정비공']);
 /** 줄 빈 틀 (글은 <span>에 찍는다). 대사는 화자 편 색 · 이어 말하는 쪽은 이름표 없이 */
 export const cutLineHtml = (l: CutLine): string => {
   const side = l.k === 's' && l.who ? ` side-${speakerSide(l.who)}` : '';

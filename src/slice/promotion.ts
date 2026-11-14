@@ -1,11 +1,12 @@
 /** 왕위 결정 화면 「금단의 승급대 앞에서」(바이블 THR, D-451). 1~3승천은 [돌아본다] [왕관을 쓴다], 4승천만 [왕관을 쓴다] [왕관을 던진다]. 진행·저장은 호출자가. */
 import { sfx } from '../audio/sfx';
-import { THRONE_TEXT, TESTIMONY } from '../data/script';
+import { THRONE_TEXT, TESTIMONY, lookBackCut, type Face } from '../data/script';
+import { playCuts } from './opening';
 import { josa } from '../data/josa';
 import { STORY_COUNT, chapterLabel } from '../data/campaign';
 import { pxOut, replay, typeIn, typeSkip } from './fx3';
 import { btnHtml, coverArt, sceneFocus } from './uikit';
-export const promotionScene = (o: { chapter: number; art: string; companion?: string; promisedLost?: string }): Promise<'throne' | 'depart'> => new Promise((resolve) => {
+export const promotionScene = (o: { chapter: number; art: string; companion?: string; promisedLost?: string; faces?: Record<string, Face> }): Promise<'throne' | 'depart'> => new Promise((resolve) => {
   const tm = TESTIMONY[Math.min(STORY_COUNT - 1, o.chapter)];
   const final = o.chapter === STORY_COUNT - 1;
   const T = THRONE_TEXT;
@@ -30,13 +31,26 @@ export const promotionScene = (o: { chapter: number; art: string; companion?: st
     sfx('submit'); pxOut(el, () => { release(); el.remove(); resolve(choice); }, 240);
   };
   el.querySelector('[data-promote]')!.addEventListener('click', () => finish('throne'));
+  let looking = false;
   el.querySelector('[data-lay]')!.addEventListener('click', () => {
     if (final) return finish('depart');
-    const memo = el.querySelector<HTMLElement>('.pm-stuck')!;
-    // 실제 동료를 돌아보는 행동이다. 거절할 수 있는 척하는 비활성 선택지는 없다.
-    memo.textContent = o.companion ? T.lookAt(josa(o.companion, '이')) : o.promisedLost ? T.lookLost(o.promisedLost) : T.lookNone;
-    // 돌아본 줄이 단추 위 안내 줄 자리를 대신한다 (겹치지 않게 — 915×412에서 안내 줄과 겹쳤다)
-    memo.hidden = false; el.querySelector<HTMLElement>('.pm-prompt')!.hidden = true; typeSkip(say); sfx('tap');
+    if (looking || chosen) return;
+    looking = true;
+    // 「돌아본다」 (#31 · D-503): 문구를 바꿔 끼우던 것을 실제 돌아보는 짧은 컷으로 — 컷이 글을 끝까지 읽힌 뒤 결정 화면으로 돌아온다.
+    // 돌아온 화면에는 돌아본 줄이 다 찍힌 채 남고(끊기지 않게), [돌아봤다]는 잠기고 [왕관을 쓴다]만 남는다.
+    typeSkip(say); sfx('tap');
+    const lay = el.querySelector<HTMLButtonElement>('[data-lay]')!;
+    const crown = el.querySelector<HTMLButtonElement>('[data-promote]')!;
+    lay.disabled = true; crown.disabled = true;
+    void playCuts([lookBackCut({ companionWithJosa: o.companion ? josa(o.companion, '이') : undefined, lost: o.companion ? undefined : o.promisedLost })], { faces: o.faces }).then(() => {
+      const memo = el.querySelector<HTMLElement>('.pm-stuck')!;
+      // 실제 동료를 돌아보는 행동이다. 거절할 수 있는 척하는 비활성 선택지는 없다.
+      memo.textContent = o.companion ? T.lookAt(josa(o.companion, '이')) : o.promisedLost ? T.lookLost(o.promisedLost) : T.lookNone;
+      // 돌아본 줄이 단추 위 안내 줄 자리를 대신한다 (겹치지 않게 — 915×412에서 안내 줄과 겹쳤다)
+      memo.hidden = false; el.querySelector<HTMLElement>('.pm-prompt')!.hidden = true;
+      replay(el.querySelector<HTMLElement>('.pm-inner')!, 'in');
+      lay.textContent = T.looked; crown.disabled = false; crown.focus();
+    });
   });
   replay(el.querySelector<HTMLElement>('.pm-content')!, 'in');
 });

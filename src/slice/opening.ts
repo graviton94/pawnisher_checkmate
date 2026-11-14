@@ -4,11 +4,12 @@
  */
 import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
-import { PROLOGUE, type Cut, type Line } from '../data/script';
+import { PROLOGUE, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
 import { pieceImg } from '../ui/sprites';
-import { pxOut, replay, shake, typeIn } from './fx3';
+import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
+import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
 import { titleFx } from './uifx';
-import { clearBand, clearPeeks, coverArt, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, type CutLine, type WinBtn, type WinOpts } from './uikit';
+import { clearBand, clearPeeks, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, speakerSide, type CutLine, type WinBtn, type WinOpts } from './uikit';
 
 const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -35,40 +36,69 @@ export const crestHtml = (): string =>
   `<div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-logo.png" alt=""></div><div class="tfx-flash"></div></div>`;
 
 /**
- * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체): 컷마다 그림이 천천히 밀려 들어오고(켄 번스), 줄이 두 줄씩 한 자씩 찍힌다.
- * 탭 = 다음(찍는 중이면 그 쪽을 한 번에) · 「건너뛴다」 = 바로 끝. logo면 마지막에 베인 타이틀 문장이 내리꽂힌다.
- * 줄: 서술(3인칭 과거) · 대사(이름 + “ ”) · 속말(‘ ’) — 글은 src/data/script.ts.
- * 크롬은 컷신 하나(D-397): 그림이 화면을 채우고(레터박스 없음) 아래 자막 띠 · ▼ · 「건너뛴다」(uikit.cutChromeHtml).
+ * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체 → D-503 영화 문법): 모든 이야기 장면(프롤로그 · 그림자 · 동료 · 반장 격파 · 도금왕 · 돌아봄 · 결말 · 패배)이 이 하나를 쓴다.
+ * - 레터박스: 위아래 먹 띠가 계단으로 닫히고, 아래 띠 안에 자막 띠(uikit.cutChromeHtml) — 그림은 띠 사이 장면 칸만 덮는다(비율 그대로, 기기 픽셀 정수배).
+ * - 비트: 한 쪽 = 한 문장(cutPages). 줄의 첫 쪽에서 그 줄의 연출을 건다 — 카메라 샷(film.Camera 계단 이동) · 숨(pause) · 소리 큐(sfx) · 효과(흔들림 · 번쩍 · 붉은 경보 · 금빛).
+ * - 컷 사이: 컷마다 고른 전환(디더 · 조리개 · 쇳물 · 백지 · 암전), 앞에 장 제목 카드(title), 뒤에 맺음 카드(end), 그림 없는 끝 정적(coda).
+ * - 화자 명패: 대사 쪽에서 띠 위에 초상 액자 + 이름표(우리 편 왼쪽 · 적 · 도금왕 오른쪽 · NPC 종이 꼬리표). 같은 화자가 이어 말하면 명패를 그대로 둔다.
+ * 탭 = 찍는 중이면 그 쪽을 한 번에 · 아니면 다음 쪽(제목 카드는 탭으로 넘김) · 「건너뛴다」 = 바로 끝. logo면 마지막에 베인 타이틀 문장.
  */
-export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown } = {}): Promise<void> =>
+export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown; faces?: Record<string, Face> } = {}): Promise<void> =>
   new Promise((resolve) => {
     clearBand();
     clearPeeks();
     const el = document.createElement('div');
-    el.className = 'prologue kit';
-    el.innerHTML = `<div class="pl-stage"></div><i class="pl-flash"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}`;
+    el.className = 'prologue kit film';
+    el.innerHTML = `<i class="film-lb lb-t" aria-hidden="true"></i><div class="film-view"><div class="pl-stage"></div><div class="film-over"></div></div><i class="pl-flash"></i><i class="film-lb lb-b" aria-hidden="true"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}`;
     document.body.appendChild(el);
     document.body.classList.add('cover-pl');
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
+    const over = el.querySelector<HTMLElement>('.film-over')!;
     const text = el.querySelector<HTMLElement>('.cut-lines')!;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
-    // 쪽 = (컷 번호, 그 쪽의 한 문장)
-    const pages: { c: number; lines: CutLine[] }[] = [];
+    const wipe = new Wipe(over);
+    wipe.full();
+    if (!calm()) replay(el, 'lb-in');
+    const faces: Record<string, Face> = { ...SPEAKER_FACE, ...(o.faces ?? {}) };
+    // 쪽 = (컷 번호, 그 쪽의 한 문장, 줄의 첫 쪽인가 — 줄의 연출은 첫 쪽에서만)
+    const pages: { c: number; lines: CutLine[]; head: boolean }[] = [];
     // 한 화면 = 한 문장 (D-451 → D-488 — cutPages): 문장은 쪽을 넘기지 않고, 같은 화자가 이어 말하면 이름표는 첫 쪽에만
-    cuts.forEach((c, k) => { for (const lines of cutPages(c.lines)) pages.push({ c: k, lines }); });
+    cuts.forEach((c, k) => { for (const lines of cutPages(c.lines)) pages.push({ c: k, lines, head: !lines[0].part || lines[0].part === 'head' }); });
     let i = -1;
     let shown = -1;
     let typing = false;
+    let busy = false;
     let ended = false;
     let token = 0;
+    let cam: Camera | null = null;
+    let shot: Shot = { x: 0.5, y: 0.5, z: 0 };
+    /** 숨 · 카메라 중에 눌렀을 때 바로 놓을 샷 */
+    let pending: Shot | null = null;
+    let waiter: (() => void) | null = null;
+    /** 제목 카드 · 숨 동안: 탭 하나를 기다린다 */
+    const tapped = (): Promise<void> => new Promise((r) => (waiter = () => { waiter = null; r(); }));
+    const refit = (): void => cam?.refit();
+    window.addEventListener('resize', refit);
     const finish = async (): Promise<void> => {
       if (ended) return;
       ended = true;
       token++;
+      window.removeEventListener('resize', refit);
+      const last = cuts[shown];
+      // 맺음 카드가 남았으면(건너뛰지 않고 끝까지 본 경우) — 막을 닫고 카드
+      if (last?.end && i >= pages.length) {
+        await wipe.close('dither', shot);
+        el.classList.remove('coda', 'coda-white');
+        text.innerHTML = '';
+        await showTitle(over, last.end, tapped());
+      }
       if (o.logo) {
         stage.className = 'pl-stage';
         stage.innerHTML = `<div class="pl-logo">${crestHtml()}</div>`;
+        wipe.clear();
         text.innerHTML = '';
+        el.querySelector('.cut-who')?.remove();
+        el.classList.remove('coda', 'coda-white');
         el.classList.add('logo');
         void titleFx(stage.querySelector<HTMLElement>('.tfx'));
         await wait(calm() ? 300 : 1900);
@@ -84,61 +114,100 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       document.body.classList.remove('cover-pl');
       pxOut(el, () => { el.remove(); resolve(); }, 300);
     };
-    const fill = (l: Line): string => cutFill(l);
+    /** 화자 명패: 대사 첫 쪽이면 새로, 이어 말하는 쪽이면 그대로, 서술 · 독백이면 걷는다 */
+    const plate = (l: CutLine): void => {
+      const now = sub.querySelector<HTMLElement>('.cut-who');
+      if (l.k === 's' && l.cont && now) return;
+      now?.remove();
+      if (l.k !== 's' || !l.who) return;
+      sub.insertAdjacentHTML('afterbegin', plateHtml(l.who, speakerSide(l.who), faces[l.who]));
+      if (!calm()) replay(sub.querySelector('.cut-who')!, 'in');
+    };
+    /** 컷 하나 세우기: 그림(없으면 대체 · 자리 그림) · 장면 효과 · 첫 샷 */
+    const mount = async (c: Cut): Promise<void> => {
+      el.classList.toggle('coda', !!c.coda);
+      el.classList.toggle('coda-white', c.coda === 'white');
+      el.classList.toggle('alarm', c.fx === 'red');
+      el.style.setProperty('--em', c.glow && c.glow !== '#f4f1ea' ? c.glow : '#f4d27a');
+      cam = null;
+      if (c.coda) { stage.className = 'pl-stage'; stage.innerHTML = ''; return; }
+      const pick = !c.standIn && c.img && (await hasImg(`scenes/${c.img}.png`)) ? c.img : !c.standIn && c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
+      const focus = c.at?.match(/([\d.]+)%\s+([\d.]+)%/);
+      shot = c.shot ?? { x: focus ? Number(focus[1]) / 100 : 0.5, y: focus ? Number(focus[2]) / 100 : pick?.startsWith('boss-') ? 0.3 : 0.5, z: 0 };
+      stage.innerHTML = pick ? `<img class="pl-img pl-pixel${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="scenes/${pick}.png" alt="" data-film>` + (c.showActors ? standIn(c, true) : '') : standIn(c);
+      stage.className = `pl-stage cam-still${c.fx ? ` fx-${c.fx}` : ''}`;
+      stage.style.setProperty('--at', c.at ?? '50% 50%');
+      const img = stage.querySelector<HTMLImageElement>('img[data-film]');
+      if (img) {
+        if (!img.complete) await new Promise((r) => { img.addEventListener('load', r, { once: true }); img.addEventListener('error', r, { once: true }); });
+        cam = new Camera(img);
+        cam.set(shot);
+      }
+    };
+    /** 줄의 효과 (첫 쪽에서): 흔들림 · 흰 번쩍 · 붉은 경보 한 번 · 금빛 */
+    const lineFx = (l: CutLine & Partial<Line>): void => {
+      if (l.sfx) sfx(l.sfx);
+      if (!l.fx) return;
+      if (l.fx === 'shake') shake(stage, 2);
+      else if (l.fx === 'flash') { flashScreen(0.9); shake(stage, 3); }
+      else if (l.fx === 'red') { if (!calm()) { replay(el, 'red-once'); window.setTimeout(() => el.classList.remove('red-once'), 640); } shake(stage, 1); }
+      else if (l.fx === 'gold') stage.classList.add('fx-gold');
+    };
     const show = async (k: number): Promise<void> => {
       const my = ++token;
       const pg = pages[k];
       const c = cuts[pg.c];
       if (pg.c !== shown) {
+        busy = true;
+        const prev = cuts[shown];
+        const trans = c.trans ?? 'dither';
+        sub.querySelector('.cut-who')?.remove();
+        text.innerHTML = '';
+        // 1 · 막 닫기 (첫 컷은 이미 먹)
+        if (shown >= 0) await wipe.close(trans, shot);
+        if (my !== token) return;
+        // 2 · 앞 컷의 맺음 카드 · 이 컷의 장 제목 카드 (막이 닫힌 먹 위)
+        if (prev?.end) { await showTitle(over, prev.end, tapped()); if (my !== token) return; }
         shown = pg.c;
-        el.classList.add('dip');
-        await wait(calm() ? 0 : 140);
+        await mount(c);
         if (my !== token) return;
-        const pick = !c.standIn && (await hasImg(`scenes/${c.img}.png`)) ? c.img : !c.standIn && c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
-        const src = `scenes/${pick}.png`;
-        const focus = c.at?.match(/([\d.]+)%\s+([\d.]+)%/);
-        const fx = focus ? Number(focus[1]) / 100 : 0.5;
-        const fy = focus ? Number(focus[2]) / 100 : pick?.startsWith('boss-') ? 0.3 : 0.5;
-        stage.innerHTML = pick ? `<img class="pl-img pl-pixel${pick.startsWith('boss-') ? ' pl-portrait' : ''}" src="${src}" alt="" data-cover data-fx="${fx}" data-fy="${fy}">` + (c.showActors ? standIn(c, true) : '') : standIn(c);
-        const pixel = stage.querySelector<HTMLImageElement>('img[data-cover]');
-        if (pixel) {
-          if (pixel.complete) coverArt(pixel);
-          else pixel.addEventListener('load', () => coverArt(pixel), { once: true });
-        }
+        if (c.title) { wipe.full('#0b0b0e'); await showTitle(over, c.title, tapped()); if (my !== token) return; }
+        if (c.coda) wipe.color = c.coda === 'white' ? '#f1ede4' : '#0b0b0e';
+        // 3 · 막 걷기 — 컷의 효과 소리
+        await wipe.open(trans === 'melt' || trans === 'white' || trans === 'black' ? 'dither' : trans, shot);
         if (my !== token) return;
-        // 카메라: 명시된 연출만 사용하고 기본은 도트 정렬을 지키는 정지 화면
-        const cam = c.img.startsWith('boss-') ? 'still' : c.cam ?? 'still';
-        stage.className = `pl-stage cam-${cam}${c.fx ? ` fx-${c.fx}` : ''}`;
-        stage.style.setProperty('--at', c.at ?? '50% 50%');
-        el.style.setProperty('--em', c.glow && c.glow !== '#f4f1ea' ? c.glow : '#f4d27a');
-        el.classList.toggle('alarm', c.fx === 'red');
-        el.classList.toggle('caption-top', c.caption === 'top');
-        replay(stage, 'in');
-        el.classList.remove('dip');
-        if (c.fx === 'alarm' || c.fx === 'red') {
-          sfx('threat');
-          window.setTimeout(() => shake(stage, 1), 200);
-        } else sfx('tap');
-        await wait(calm() ? 0 : 260);
-      } else sfx('tap', 3);
+        if (c.fx === 'alarm' || c.fx === 'red') { sfx('threat'); window.setTimeout(() => shake(stage, 1), 200); }
+        busy = false;
+      }
+      const l = pg.lines[0] as CutLine & Partial<Line>;
+      // 명패 · 빈 줄을 먼저 세운다 — 숨 · 카메라 중에 누르면 글이 바로 다 찍힌다(건너뛰지 않는다)
+      plate(l);
       text.innerHTML = pg.lines.map(cutLineHtml).join('');
       typing = true;
       sub.classList.add('typing');
       const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
-      for (let a = 0; a < pg.lines.length && my === token; a++) {
-        if (pg.lines[a].k === 'm') await wait(calm() ? 0 : 200);
-        if (my === token) await typeIn(ps[a], fill(pg.lines[a]), pg.lines[a].k === 'm' ? 44 : 30, undefined, () => my === token);
-      }
+      // 줄의 첫 쪽: 숨 → 카메라 → 효과 · 소리 (줄을 나눈 다음 쪽은 같은 그림 · 초점에서 글만)
+      if (pg.head) {
+        pending = l.shot ? { ...l.shot, z: l.shot.z ?? 0 } : null;
+        if (l.pause && !calm()) { await wait(l.pause); if (my !== token) return; }
+        if (pending && cam) { shot = pending; await cam.move(shot); if (my !== token) return; }
+        pending = null;
+        lineFx(l);
+      } else sfx('tap', 3);
+      for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
       if (my === token) { typing = false; sub.classList.remove('typing'); }
     };
     const next = (): void => {
       if (ended) return;
+      if (waiter) return void waiter();
+      if (busy) return;
       if (typing) {
         token++;
         typing = false;
         sub.classList.remove('typing');
+        if (pending) { shot = pending; cam?.set(shot); pending = null; }
         const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
-        pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = fill(l)));
+        pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = cutFill(l)));
         return;
       }
       i += 1;
@@ -147,12 +216,11 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     };
     el.addEventListener('click', (ev) => {
       if (ended) return;
-      if ((ev.target as HTMLElement).closest('.cut-skip')) return void finish();
+      if ((ev.target as HTMLElement).closest('.cut-skip')) { waiter = null; return void finish(); }
       next();
     });
     next();
   });
-
 /** 프롤로그 (S1): 처음 출하 앞 · 메뉴 「프롤로그 다시 보기」(short = ★컷만). before = 걷기 전에 뒤에 세울 다음 화면 */
 export const prologue = (short = false, before?: () => unknown): Promise<void> => playCuts(short ? PROLOGUE.filter((c) => c.key) : PROLOGUE, { logo: true, before });
 

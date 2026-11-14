@@ -35,7 +35,7 @@ describe('컷신 자막 띠 쪽 나누기 (D-451 → D-488)', () => {
     expect(cutPieces(n('「킹 누락. 규격 미달 — 폐기 대기」 검수기가 찍었다.'))).toHaveLength(1);
   });
   it('같은 화자가 이어 말하면 이름표는 첫 쪽에만 · 적과 우리 편 이름 색이 다르다 (#22)', () => {
-    const pages = cutPages([s('박차', '박차라고 한다. 쇠가 덜 식었을 때 뜯어졌지.'), s('검수 반장', '불량이다.'), s('박차', '아니.')]);
+    const pages = cutPages([s('박차', '박차라고 한다. 쇠가 덜 식었을 때 틀에서 뜯어지는 바람에 정품 상자엔 못 들어가고 뒷줄만 맴돌았지.'), s('검수 반장', '불량이다.'), s('박차', '아니.')]);
     expect(pages.map((p) => !!p[0].cont)).toEqual([false, true, false, false]);
     expect(cutLineHtml(pages[1][0])).not.toContain('cl-who');
     expect(cutLineHtml(pages[0][0])).toContain('side-ally');
@@ -50,6 +50,12 @@ describe('컷신 자막 띠 쪽 나누기 (D-451 → D-488)', () => {
     expect(cutFill(ps[0]).endsWith('”')).toBe(false);
     expect(cutFill(ps.at(-1)!).endsWith('”')).toBe(true);
     expect(cutPieces(n('짧은 줄.'))).toHaveLength(1);
+  });
+  it('짧은 두 문장은 한 쪽에 줄을 바꿔 (D-503 · 사용자 #2) — 「대장!」 한 낱말 쪽이 잇달아 넘어가지 않게', () => {
+    const ps = cutPieces(s('박차', '대장! 갑자기 바닥이 열리고 있습니다! 쇠사슬이 우릴 아래로 끌어당기고 있어요!'));
+    expect(ps[0].t).toBe('대장!\n갑자기 바닥이 열리고 있습니다!');
+    expect(ps.every((p) => p.t.split('\n').length <= 2)).toBe(true);
+    expect(cutPieces(n('아… 이것이 왕의 눈인가.'))).toHaveLength(1);
   });
   it('프롤로그 · 그림자 · 엔딩 · 패배 · 동료 장면', () => {
     PROLOGUE.forEach((c) => check(`프롤로그 ${c.img}`, c.lines));

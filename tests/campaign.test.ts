@@ -64,7 +64,7 @@ describe('본편 1~4승천과 선택 도전 (D-451)', () => {
     }
     // 부관 박차가 살아 있으면 결말에서 소리치는 이는 박차
     expect(promotionCuts(0, '', '규정', '', { alive: [{ name: '먼지투성이', t: 'P' }, { name: '박차', t: 'N' }] }).flatMap((c) => c.lines).some((l) => l.who === '박차')).toBe(true);
-    expect(promotionCuts(0, '', '경비를 강화한다', '', { alive: [] }).flatMap((c) => c.lines).some((l) => l.k === 's')).toBe(false);
+    expect(promotionCuts(0, '', '경비를 강화한다', '', { alive: [] }).flatMap((c) => c.lines).some((l) => l.k === 's' && l.who !== '용해 주조기')).toBe(false); // D-503: 기계음은 「용해 주조기」 명패 — 동료 대사만 빠진다
   });
   it('왕위 결정 증언은 네 승천이며 왕이 된 결말은 승천마다 속마음이 다르다', () => {
     expect(TESTIMONY).toHaveLength(4); expect(chapterLabel(3)).toContain('넷째 왕관');
