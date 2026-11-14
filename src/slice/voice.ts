@@ -107,10 +107,11 @@ let subEl: HTMLElement | null = null;
 /** 자막 띠 자리: 판 격자 아래 빈 자리 가운데, top이면 판 위 (짚은 곳을 가리지 않게) */
 export const placeSub = (el: HTMLElement, top = false): void => {
   const r = subAnchor();
-  const w = r ? Math.min(592, Math.max(352, Math.round(r.width)), innerWidth - 32) : Math.min(592, innerWidth - 32);
+  // 판 열 안 (레일을 덮지 않는다) · 창 M 단계 592를 넘지 않는다
+  const w = r ? Math.min(592, Math.round(r.width) - 8) : Math.min(592, innerWidth - 32);
   el.style.width = `${w}px`;
   const cx = r ? r.left + r.width / 2 : innerWidth / 2;
-  el.style.left = `${Math.round(Math.max(16, Math.min(innerWidth - w - 16, cx - w / 2)))}px`;
+  el.style.left = `${Math.round(r ? cx - w / 2 : Math.max(16, Math.min(innerWidth - w - 16, cx - w / 2)))}px`;
   const h = el.offsetHeight;
   const y = top ? (r ? r.top : 8) : r ? r.bottom - h : innerHeight - h - 8;
   el.style.top = `${Math.round(Math.max(4, Math.min(innerHeight - h - 4, y)))}px`;

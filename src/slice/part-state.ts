@@ -5,7 +5,7 @@ import { PART_NUM, type SlicePartId } from './parts';
 export type PartState = 'waiting' | 'ready' | 'spent';
 export interface PartStatus { state: PartState; detail: string }
 export const PART_STATE_LABEL: Record<PartState, string> = { waiting: '조건 대기', ready: '발동 가능', spent: '이번 턴 소진' };
-const TRACKED_PARTS = ['relayGear','relaySeal','sharedPlate','siegeLatch','gameRecord','pinNeedle','recoilSpring','whistle','queenFan','fuse','tally'] as const;
+const TRACKED_PARTS = ['horseshoe','relayGear','relaySeal','sharedPlate','siegeLatch','gameRecord','pinNeedle','recoilSpring','whistle','queenFan','fuse','tally'] as const;
 
 /** 실제 턴별 소모 기록이 있는 부품만 표시한다. 상시 효과에는 임의의 소진을 붙이지 않는다. */
 export const partStatuses = (b: SliceBattle): Partial<Record<SlicePartId, PartStatus>> => {

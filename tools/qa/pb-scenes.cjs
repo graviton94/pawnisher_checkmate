@@ -45,6 +45,58 @@ module.exports = {
     await wait(900);
     await shot('coach');
   },
+  /** 반장 2단계 예고 · 돌입 프레임 (#21) */
+  async boss({ A, wait, shot }) {
+    await A(() => window.sliceApi.startAt(1, 'boss'));
+    await wait(1800);
+    await A(() => window.sliceApi.p2Warn());
+    await wait(500);
+    await shot('p2-warn');
+    await wait(2400);
+    await A(() => { window.__p2 = window.sliceApi.p2Rise('plate'); });
+    for (const [n, ms] of [['p2-f1', 120], ['p2-f2', 260], ['p2-f3', 320], ['p2-f4', 700]]) { await wait(ms); await shot(n); }
+    await wait(1000);
+    await shot('p2-line');
+  },
+  /** 판돈 (#12): 창 → 거는 순간 → 대국 중 칩 → 깨짐 → 적중 / 실패 */
+  async wager({ pg, A, wait, shot }) {
+    await A(() => window.sliceApi.startAt(1, 'battle'));
+    await wait(1500);
+    await A(() => window.sliceApi.bet());
+    await wait(900);
+    await shot('wager-win');
+    const yes = await pg.$('[data-yes]');
+    const r = await yes.boundingBox();
+    await pg.touchscreen.tap(r.x + r.width / 2, r.y + r.height / 2);
+    await wait(200);
+    await shot('wager-drop');
+    await wait(1200);
+    await shot('wager-chip');
+    await A(() => window.sliceApi.betEnd(true));
+    await wait(250);
+    await shot('wager-hit');
+    await wait(1600);
+    await A(() => { window.sliceApi.betSet('fast'); window.sliceApi.betBreak(); });
+    await wait(300);
+    await shot('wager-broken');
+    await wait(2000);
+    await A(() => window.sliceApi.betEnd(false));
+    await wait(400);
+    await shot('wager-lose');
+  },
+  /** 태엽 원천 (#29): 처치 칸 · 부품 칸에서 「+1」이 계기로 */
+  async apfx({ A, wait, shot }) {
+    await A(() => window.sliceApi.parts(['relayGear', 'horseshoe']));
+    await A(() => window.sliceApi.startAt(1, 'battle'));
+    await wait(1600);
+    await A(() => window.sliceApi.apFx());
+    await wait(90);
+    await shot('ap-f1');
+    await wait(220);
+    await shot('ap-f2');
+    await wait(300);
+    await shot('ap-f3');
+  },
   /** 말 없는 사건 (#16) */
   async event({ A, wait, shot }) {
     await A(() => { window.sliceApi.gold(80); window.sliceApi.event('safe'); });

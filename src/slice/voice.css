@@ -103,6 +103,8 @@
 /* 판돈 칩 (#12): 레일 가운데 칸 위 — 동전(나사) + 조건 + 진행. 깨지면 진홍 띠 · 금, 적중하면 황동 띠 · 나사 쏟아짐. 임시 — WG-01 · WG-02 대기 */
 .bet-chip { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: var(--s1); row-gap: 0; margin: 0; padding: var(--px) 0; }
 .bet-chip > .tag { grid-row: span 2; }
+.bet-chip .tag > img { width: 16px; height: 16px; image-rendering: pixelated; }
+.bet-chip.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
 .bet-chip .bc-cond { color: var(--t-body); font: 700 12px/1.4 Galmuri11, sans-serif; word-break: keep-all; }
 .bet-chip .bc-prog { color: var(--t-gold); font: 700 12px/1.4 Galmuri11, sans-serif; }
 .bet-chip.broken .bc-prog { color: var(--t-loss); }
@@ -118,22 +120,46 @@
 .bet-slot > img.drop:nth-child(3) { animation-delay: 160ms; }
 @keyframes betdrop { 0% { transform: translateY(-48px); } 55% { transform: translateY(4px) scale(1.15, 0.8); } 80% { transform: translateY(-3px); } 100% { transform: none; } }
 
-/* 반장 2단계 (#21): 판 정지 → 진홍 번쩍(계단) → 반장 기물 위 철판 내리찍기 → 진홍 「격노」 띠 → 자막 띠에 2단계 한마디. 임시 — CI-01 ~ CI-08 대기 */
-.p2-flash { position: fixed; inset: 0; z-index: 88; pointer-events: none; background: #b3121c; animation: p2flash 420ms steps(1, jump-end) both; }
-@keyframes p2flash { 0% { visibility: visible; background: #ffffff; } 18% { background: #b3121c; } 40% { visibility: hidden; } 58% { visibility: visible; background: #b3121c; } 72%, 100% { visibility: hidden; } }
-.p2-slam { position: fixed; z-index: 87; pointer-events: none; display: grid; place-items: center; }
-.p2-slam > .ribbon { height: calc(var(--px) * 13); }
-.p2-slam.k-in { animation: p2slam 520ms both; }
-@keyframes p2slam {
-  0% { transform: translateY(-40px) scale(1.6); animation-timing-function: cubic-bezier(.6, 0, .9, .4); }
-  35% { transform: translateY(0) scale(1.6, 1.1); animation-timing-function: steps(2, jump-none); }
-  50% { transform: scale(2, 1.25); }
-  70% { transform: scale(1.6, 1.8); }
-  100% { transform: scale(1.8); }
+/* 반장 2단계 (#21 · D-489): 받은 CI-01 — 경보 띠(3프레임 타일, 1도트 = --px × 2) · 레터박스 타일 · 사선 베기. 2단계 초상은 「임시 — CI-02 ~ CI-08 대기」 */
+.p2-band {
+  --d: calc(var(--px) * 2); position: fixed; z-index: 89; box-sizing: border-box; height: calc(var(--d) * 16); display: flex; align-items: center; justify-content: center; pointer-events: none;
+  background: url('../assets/ui/chrome/v2/p2-tile-1.png') 0 0 / calc(var(--d) * 56) calc(var(--d) * 16) repeat-x; image-rendering: pixelated;
+  box-shadow: 0 var(--px) 0 #0b0b0e; animation: p2scroll 240ms steps(1, jump-end) infinite;
 }
-body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #b3121c, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }
+.p2-band > span { color: var(--t-body); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; white-space: nowrap; text-shadow: var(--px) var(--px) 0 #0b0b0e; }
+@keyframes p2scroll { 0% { background-image: url('../assets/ui/chrome/v2/p2-tile-1.png'); } 33% { background-image: url('../assets/ui/chrome/v2/p2-tile-2.png'); } 66% { background-image: url('../assets/ui/chrome/v2/p2-tile-3.png'); } }
+.p2-warn { clip-path: inset(0 100% 0 0); animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 300ms steps(5, jump-end) forwards; }
+@keyframes p2sweep { to { clip-path: inset(0 0 0 0); } }
+.p2cut { position: fixed; inset: 0; z-index: 88; pointer-events: auto; }
+.p2cut .p2-lb { position: absolute; left: 0; right: 0; height: 0; background: url('../assets/ui/chrome/v2/letterbox-tile.png') 0 0 / calc(var(--px) * 56) calc(var(--px) * 28) repeat-x, #0b0b0e; image-rendering: pixelated; animation: p2lb 200ms steps(3, jump-end) forwards; }
+.p2cut .p2-lb.top { top: 0; background-position: 0 100%, 0 0; }
+.p2cut .p2-lb.bot { bottom: 0; }
+@keyframes p2lb { to { height: 22vh; } }
+.p2cut .p2-strip { position: absolute; left: 0; right: 0; top: 30vh; height: 40vh; overflow: hidden; background: #0b0b0e; clip-path: inset(50% 0 50% 0); box-shadow: inset 0 calc(var(--px) * 2) 0 #7a1218, inset 0 calc(var(--px) * -2) 0 #7a1218; }
+.p2cut .p2-strip > img { display: block; height: 100%; width: auto; max-width: 100%; margin: 0 auto; object-fit: cover; image-rendering: pixelated; }
+.p2cut.go .p2-strip { animation: p2open 160ms steps(3, jump-end) forwards; }
+@keyframes p2open { to { clip-path: inset(0 0 0 0); } }
+.p2cut .p2-slash { position: absolute; left: 50%; top: 50%; width: calc(var(--px) * 282); height: calc(var(--px) * 80); margin: calc(var(--px) * -40) 0 0 calc(var(--px) * -141); background: url('../assets/ui/chrome/v2/cutin-frame.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; visibility: hidden; }
+.p2cut.go .p2-slash { visibility: visible; animation: p2slash 520ms both; }
+@keyframes p2slash {
+  0% { transform: translate(18%, -40%) scale(1.25); animation-timing-function: steps(2, jump-end); }
+  30% { transform: translate(14%, -34%) scale(1.3); animation-timing-function: cubic-bezier(.6, 0, .9, .4); }
+  55% { transform: translate(0, 0) scale(0.92, 1.1); animation-timing-function: cubic-bezier(.1, .9, .2, 1); }
+  75% { transform: scale(1.06, 0.95); }
+  100% { transform: none; }
+}
+.p2cut .p2-word { position: absolute; left: 0; right: 0; top: calc(70vh - var(--px) * 8); visibility: hidden; }
+.p2cut .p2-word > span { font: 700 24px/1 Galmuri11, sans-serif; }
+.p2cut.word .p2-word { visibility: visible; animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 200ms steps(4, jump-end) forwards; clip-path: inset(0 100% 0 0); }
+.p2cut.calm .p2-lb { height: 22vh; animation: none; }
+.p2cut.calm .p2-strip { clip-path: none; }
+.p2cut.calm :is(.p2-slash, .p2-word) { visibility: visible; animation: none; clip-path: none; }
+.p2-flash { position: fixed; inset: 0; z-index: 90; pointer-events: none; background: #b3121c; animation: p2flash 420ms steps(1, jump-end) both; }
+@keyframes p2flash { 0% { visibility: visible; background: #f1ede4; } 18% { background: #b3121c; } 40% { visibility: hidden; } 58% { visibility: visible; background: #b3121c; } 72%, 100% { visibility: hidden; } }
+body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }
 @media (prefers-reduced-motion: reduce) {
-  .vbark.k-in, .vsub.k-in, .vmono.k-in, .bet-chip.k-crack, .bet-slot > img.drop, .p2-slam.k-in { animation: none; }
+  .vbark.k-in, .vsub.k-in, .vmono.k-in, .bet-chip.k-crack, .bet-slot > img.drop { animation: none; }
+  .p2-band { animation: none; clip-path: none; }
   .p2-flash { display: none; }
 }
 
