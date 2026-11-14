@@ -301,7 +301,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -354,6 +354,14 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (!p) continue;
     placed.add(p.id);
     if (!s.pieces.some((r) => r.x === q.x && r.y === q.y)) Object.assign(p, { x: q.x, y: q.y });
+  }
+  if (opts.scatter !== undefined) {
+    const r = new Rng(opts.scatter ^ 0x5ca7);
+    const mine = s.pieces.filter((p) => p.side === 0);
+    const free: Pos[] = [];
+    for (let y = 0; y < 2; y++) for (let x = 0; x < s.width; x++) if (!s.pieces.some((p) => p.side === 1 && p.x === x && p.y === y)) free.push({ x, y });
+    for (let i = free.length - 1; i > 0; i--) { const j = r.int(i + 1); [free[i], free[j]] = [free[j], free[i]]; }
+    mine.forEach((p, i) => { if (free[i]) Object.assign(p, { x: free[i].x, y: free[i].y }); });
   }
   if (opts.giants?.length) placeGiants(s, opts.giants, squadIds);
   if (opts.enemyHp && opts.enemyHp !== 1) for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.maxHp = p.hp = Math.round(p.maxHp * opts.enemyHp);

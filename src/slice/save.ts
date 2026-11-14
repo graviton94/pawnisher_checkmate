@@ -6,6 +6,7 @@ import { ASC_MAX } from './run';
 import { CAMPAIGN_VERSION, CHALLENGE_START, STORY_COUNT, type RunMode, type StoryChapter, type EndingKind, type CrownRecord, type StoryPromise } from '../data/campaign';
 import { UNLOCK_ORDER } from '../data/unlocks';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
+import { SET_UNLOCK_AT, type StartSetId } from '../data/start-sets';
 import type { Highlight, Nemesis } from './director';
 
 /**
@@ -24,6 +25,8 @@ export interface RunSave {
   /** 오늘의 출하 (날짜 시드) — 기록에만 따로 남는다 */
   daily: string | null;
   runId: string;
+  /** 시작 세트 (D-485) — 무작위 배치처럼 출하 내내 이어지는 규칙 */
+  startSet?: StartSetId;
   actI: number;
   rowI: number;
   picked: number[][];
@@ -188,11 +191,11 @@ export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: numb
       if (legal && chapter === (out.storyCleared ?? 0)) {
         out.storyCleared = Math.min(STORY_COUNT, chapter + 1);
         // 이형 기물 해금 (D-481): 이 왕관에서 적으로 처음 나온 이형이 분대로 들어온다
-        out.unlocked = [...new Set([...(out.unlocked ?? []), ...FORM_IDS.filter((f) => FORMS[f].chapter === chapter).map(formKey)])];
+        out.unlocked = [...new Set([...(out.unlocked ?? []), ...FORM_IDS.filter((f) => FORMS[f].chapter === chapter).map(formKey), ...(SET_UNLOCK_AT[chapter] ? [SET_UNLOCK_AT[chapter]] : [])])]; // 시작 세트 해금 (D-485)
         if (r.ending === 'throne' && r.crown) out.crownedKings = [...(out.crownedKings ?? []), r.crown];
       }
       if ((out.storyCleared ?? 0) >= STORY_COUNT && chapter === STORY_COUNT - 1 && r.ending === 'depart') out.trueEnd = true;
-      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER, ...FORM_IDS.map(formKey)])];
+      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER, ...FORM_IDS.map(formKey), ...Object.values(SET_UNLOCK_AT)])];
     } else if (r.mode === 'challenge') {
       if ((out.storyCleared ?? 0) >= STORY_COUNT && r.asc === (out.challengeOpen ?? CHALLENGE_START)) out.challengeOpen = Math.min(ASC_MAX, r.asc + 1);
     } else if (!r.mode && r.asc >= out.ascOpen) out.ascOpen = Math.min(ASC_MAX, r.asc + 1); // 옛 호출 호환

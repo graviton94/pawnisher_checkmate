@@ -11,3 +11,11 @@ body.slice .cf.cf.cf.cf > .cb-atk { left: 0.893%; top: 26.190%; width: 16.964%; 
 body.slice .cf.cf.cf.cf > .cb-hp { left: 82.143%; top: 26.190%; width: 16.964%; height: 11.310%; }
 body.slice .cf.cf.cf.cf > .cb-bar { left: 23.214%; top: 45.833%; width: 54.464%; height: 2.976%; z-index: 4; }
 body.slice .cf.cf.cf.cf > .cb-lives { right: 19.643%; top: 9.524%; left: auto; }
+
+/* 시작 세트 받침 (D-485): 창 안에 분대 기물을 나란히 — 정수배 32px, 넘치면 겹쳐 앉힌다 */
+body.slice .cf.start-set > .cf-win.ss-pcs { display: flex; align-items: center; justify-content: center; gap: 0; }
+body.slice .cf.start-set .ss-pc { display: inline-flex; align-items: flex-end; flex: none; }
+body.slice .cf.start-set .ss-pc img { width: 24px; height: 24px; image-rendering: pixelated; }
+body.slice .cf.start-set .ss-pc i { font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; font-style: normal; color: #f4f1ea; margin-left: -2px; }
+body.slice .cf.start-set .ss-form { font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; color: #e8c060; background: #16141c; box-shadow: 0 0 0 2px #c89b3c; padding: 2px 3px; margin-left: 2px; font-style: normal; }
+body.slice .card-slot.is-off .cf.start-set { filter: grayscale(1) brightness(0.6); }

@@ -14,6 +14,6 @@ it('climb', () => {
   const asc = Number(process.env.CL_ASC ?? 0), n = Number(process.env.CL_N ?? 25), off = Number(process.env.CL_OFF ?? 0);
   for (let i = 0; i < n; i++) {
     const seed = 70000 + off + i;
-    process.stdout.write(`CLIMB ${JSON.stringify(climbSample(seed, asc, style, build, pool, (process.env.CL_PERSONA ?? 'standard') as 'standard' | 'risky' | 'hoarder', Number(process.env.CL_TEMP ?? 0)))}\n`);
+    process.stdout.write(`CLIMB ${JSON.stringify(climbSample(seed, asc, style, build, pool, (process.env.CL_PERSONA ?? 'standard') as 'standard' | 'risky' | 'hoarder', Number(process.env.CL_TEMP ?? 0), (process.env.CL_SET || 'standard') as never))}\n`);
   }
 });

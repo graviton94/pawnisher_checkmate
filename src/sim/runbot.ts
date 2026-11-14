@@ -5,7 +5,9 @@
  */
 import type { PieceType } from '../engine';
 import { Rng } from '../engine/rng';
-import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, rollRecruit, SHOP, FORGE, SLICE, START_DECK, START_SQUAD, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
+import { START_SETS, type StartSetId } from '../data/start-sets';
+import { FORMS } from '../data/forms';
+import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, rollRecruit, SHOP, FORGE, SLICE, START_DECK, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
 import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, type MapNode } from '../slice/run';
@@ -28,6 +30,8 @@ export interface RunOpts {
   style?: RunStyle;
   /** 시작 덱에 억지로 넣는 카드 (아이템 힘 값 측정) */
   forceCards?: CommandId[];
+  /** 시작 세트 (D-485) — 잡종은 첫 이형(대포), 무작위 배치는 대국마다 자리를 섞는다 */
+  set?: StartSetId;
   /** 시작부터 끼우는 부품 */
   forceParts?: SlicePartId[];
   /** 카드 가치표 (정책이 고를 때) — 없으면 등급 순 */
@@ -88,11 +92,13 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const rng = new Rng(seed);
   const acts = buildRun(seed, asc);
   let squad: Squad[] = [];
-  for (const t of START_SQUAD) squad.push(makeCrew(t, rng, squad.map((u) => u.name ?? '')));
+  const set = START_SETS[o.set ?? 'standard'];
+  for (const t of set.squad) squad.push(makeCrew(t, rng, squad.map((u) => u.name ?? '')));
+  if (set.form) { const c = makeCrew(FORMS.cannon.base, rng, squad.map((u) => u.name ?? '')); c.form = 'cannon'; delete c.quirk; squad.push(c); }
   if (asc >= 10) { const i = squad.findIndex((u) => u.t !== 'K'); if (i >= 0) squad[i] = { ...squad[i], cracked: true }; }
-  let deck: CommandId[] = [...(START_DECK as CommandId[]), ...(o.forceCards ?? [])];
-  if (asc >= 7) deck[START_DECK.length - 1] = rustOnce(deck[START_DECK.length - 1]);
-  const parts: SlicePartId[] = [...(o.forceParts ?? [])];
+  let deck: CommandId[] = [...set.deck, ...(set.form ? ['rookLine', 'rookLine'] as CommandId[] : []), ...(o.forceCards ?? [])];
+  if (asc >= 7) deck[set.deck.length - 1] = rustOnce(deck[set.deck.length - 1]);
+  const parts: SlicePartId[] = [...(set.part ? [set.part] : []), ...(set.randomParts ? (['spare', 'tape'] as SlicePartId[]).slice(0, set.randomParts) : []), ...(o.forceParts ?? [])];
   const refined: CommandId[] = [];
   let gold = 0;
   let revive = o.revive ?? (asc > CHARM_NUM.startReviveUpTo ? 0 : 1);
@@ -188,7 +194,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         for (let tryN = 0; !ok && (tryN === 0 || (revive > 0 && (revive--, true))); tryN++) {
           const bSeed = seed * 7 + ri * 131 + tryN;
           const setup = JSON.stringify({ squad, deck: deck.filter(usable), parts, refined, asc, gold, def: { ...def, seed: bSeed, depth: depthAt(ai, frac) } });
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, scatter: set.scatter ? bSeed : undefined });
           const r = style === 'search' ? playOutSearch(b, 40, 3, 4, o.temp ?? 0) : playOut(b, 40, undefined, style);
           battles += 1;
           turnsAll += r.turns;

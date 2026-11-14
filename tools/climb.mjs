@@ -22,6 +22,8 @@ const pools = arg('pools', 'all').split(',');
 const personas = arg('personas', 'standard').split(',');
 /** 두뇌 봇의 사람다운 실수 온도 (D-456) — 0 = 늘 최선 */
 const temp = Number(arg('temp', 0));
+/** 시작 세트 (D-485) — standard · cavalry · infantry · hybrid · scrap · scatter */
+const startSet = arg('set', 'standard');
 const N = Number(arg('n', 40)), jobs = Number(arg('jobs', 4)), shard = Number(arg('shard', 20));
 const out = arg('out', '');
 if (out) writeFileSync(`${out}.partial.ndjson`, '');
@@ -37,7 +39,7 @@ if (![N,jobs,shard].every(x => Number.isInteger(x) && x > 0) || ascs.some(a => !
 for (const s of styles) for (const a of ascs) for (const f of builds) for (const pool of pools) for (const pe of personas) for (let off = 0; off < N; off += shard) tasks.push({ s, a, f, pool, pe, n: Math.min(shard, N - off), off });
 const rows = [];
 const run = (t) => new Promise((done, fail) => {
-  const p = spawn(engine === 'node' ? process.execPath : 'npx', engine === 'node' ? [worker] : ['vitest', 'run', '--config', 'vitest.sim.config.ts', 'sim/climb.sim.ts'], { env: { ...process.env, CL_STYLE: t.s, CL_BUILD: t.f, CL_POOL: t.pool, CL_ASC: String(t.a), CL_N: String(t.n), CL_OFF: String(t.off), CL_PERSONA: t.pe, CL_TEMP: String(temp) } });
+  const p = spawn(engine === 'node' ? process.execPath : 'npx', engine === 'node' ? [worker] : ['vitest', 'run', '--config', 'vitest.sim.config.ts', 'sim/climb.sim.ts'], { env: { ...process.env, CL_STYLE: t.s, CL_BUILD: t.f, CL_POOL: t.pool, CL_ASC: String(t.a), CL_N: String(t.n), CL_OFF: String(t.off), CL_PERSONA: t.pe, CL_TEMP: String(temp), CL_SET: startSet } });
   let buf = '';
   let err = '';
   p.stdout.on('data', (d) => { buf += d; });

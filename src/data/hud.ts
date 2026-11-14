@@ -183,6 +183,16 @@ export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'ins
 /**
  * 고르기 · 장소 화면 글 (D-394 UI 개편 패스 2): 명패 ≤ 12자(문장 · 수치 금지 — 수치는 꼬리표) · 단추는 동사 하나 ≤ 6자 (voice ⑧).
  */
+/** 시작 세트 고르기 (D-485) */
+export const SET_TEXT = {
+  title: '시작 세트',
+  page: (n: number, of: number) => `${n} / ${of}`,
+  next: '다른 세트',
+  prev: '기본 세트',
+  /** 잡종 세트 받침에서 이형 자리 */
+  formMark: '?',
+};
+
 export const SCREEN_TEXT = {
   partPages: '보유 부품 페이지', partPrev: '이전 부품', partNext: '다음 부품',
   reward: '전리품', kit: '핵심 부품', recruit: '영입', newCrew: '새 분대원', part: '부품', partBox: '부품 상자', partClose: '사선',
