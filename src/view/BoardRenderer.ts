@@ -1,6 +1,7 @@
 import { vignette } from '../ui/juice';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
+import { FORMS } from '../data/forms';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
@@ -516,6 +517,21 @@ class BoardScene extends Phaser.Scene {
         tag,
         this.add
           .text(t * 0.02 + size / 2, t * 0.02 + size / 2, CARVES[p.carve].mark, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(size * 0.7)}px`, color: '#E8C060' })
+          .setOrigin(0.5)
+          .setResolution(this.dpr),
+      );
+    }
+    // 이형 (D-481): 각인과 같은 검은 딱지 + 황동 글자 하나(포 · 낙 · 뜀 · 주 · 독) — 전용 그림을 받기 전까지. 각인이 있으면 왼쪽 아래
+    if (p.form) {
+      const size = t * 0.34;
+      const y0 = p.carve ? t - size - t * 0.14 : t * 0.02;
+      const tag = this.add.graphics();
+      tag.fillStyle(0x16141c, 1).fillRect(t * 0.02, y0, size, size);
+      tag.lineStyle(Math.max(1, t * 0.03), C.brass, 1).strokeRect(t * 0.02, y0, size, size);
+      marks.push(
+        tag,
+        this.add
+          .text(t * 0.02 + size / 2, y0 + size / 2, FORMS[p.form].badge, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(size * 0.62)}px`, color: '#E8C060' })
           .setOrigin(0.5)
           .setResolution(this.dpr),
       );

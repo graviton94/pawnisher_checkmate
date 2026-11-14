@@ -1,5 +1,6 @@
 import { PIECE_STATS } from '../data/pieces';
-import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type Piece, type PieceType, type Pos } from '../engine';
+import { FORMS } from '../data/forms';
+import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
@@ -17,7 +18,7 @@ import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, MELT, PACE, PUSH, SLICE, TRAIT, 
 export type Squad = Crew;
 
 /** 기벽을 반영한 최대 HP */
-export const crewMaxHp = (u: { t: PieceType; quirk?: QuirkId }): number => Math.round(PIECE_STATS[u.t].hp * (u.quirk ? QUIRKS[u.quirk].hp ?? 1 : 1) * (u.t === 'P' ? CREW.pawnHp : 1));
+export const crewMaxHp = (u: { t: PieceType; quirk?: QuirkId; form?: FormId }): number => Math.round(PIECE_STATS[u.t].hp * (u.quirk ? QUIRKS[u.quirk].hp ?? 1 : 1) * (u.t === 'P' ? CREW.pawnHp : 1) * (u.form ? FORMS[u.form].hp : 1));
 
 /** 이 대국에서 쓰러진 분대원 기록 (사망 의식 · 원부) */
 export interface Fall {
@@ -290,7 +291,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[] } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -308,6 +309,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     if (q?.shield) p.shield += q.shield;
     if (q?.atk) p.atk = Math.round(p.atk * q.atk);
     if (u.temper) p.atk += u.temper; // 단련 (D-459)
+    if (u.form) { p.form = u.form; p.atk = Math.round(p.atk * FORMS[u.form].atk); } // 이형 분대원 (D-481)
     // 기록 유물 (D-363): 누적 피해 · 처치 · 죽음 넘김이 대국 시작 때 힘이 된다
     const has0 = (id: SlicePartId) => (opts.parts ?? []).includes(id);
     if (has0('ledger')) p.atk += Math.min(PART_NUM.ledgerCap, Math.floor((u.dmg ?? 0) / PART_NUM.ledgerPer));
@@ -327,6 +329,14 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   });
   const quirks: Record<number, QuirkId> = {};
   squad.forEach((u, i) => u.quirk && (quirks[squadIds[i]] = u.quirk));
+  // 이형 적 (D-481): 적 목록 끝에 붙은 바탕 기물부터 이형으로 — 수치는 바탕 × 이형 배율
+  for (const f of opts.forms ?? []) {
+    const p = [...s.pieces].reverse().find((q) => q.side === 1 && q.type === FORMS[f].base && !q.form);
+    if (!p) continue;
+    p.form = f;
+    p.maxHp = p.hp = Math.max(1, Math.round(p.maxHp * FORMS[f].hp));
+    p.atk = Math.max(1, Math.round(p.atk * FORMS[f].atk));
+  }
   // 같은 유형이 여럿이면 적힌 순서대로 다음 기물 (D-232 — 입문 판의 폰 셋)
   const placed = new Set<number>();
   for (const q of opts.place ?? []) {

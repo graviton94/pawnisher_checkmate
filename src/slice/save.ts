@@ -5,6 +5,7 @@ import type { SlicePartId } from './parts';
 import { ASC_MAX } from './run';
 import { CAMPAIGN_VERSION, CHALLENGE_START, STORY_COUNT, type RunMode, type StoryChapter, type EndingKind, type CrownRecord, type StoryPromise } from '../data/campaign';
 import { UNLOCK_ORDER } from '../data/unlocks';
+import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import type { Highlight, Nemesis } from './director';
 
 /**
@@ -186,10 +187,12 @@ export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: numb
       const legal = chapter < STORY_COUNT - 1 ? r.ending === 'throne' : r.ending === 'throne' || r.ending === 'depart';
       if (legal && chapter === (out.storyCleared ?? 0)) {
         out.storyCleared = Math.min(STORY_COUNT, chapter + 1);
+        // 이형 기물 해금 (D-481): 이 왕관에서 적으로 처음 나온 이형이 분대로 들어온다
+        out.unlocked = [...new Set([...(out.unlocked ?? []), ...FORM_IDS.filter((f) => FORMS[f].chapter === chapter).map(formKey)])];
         if (r.ending === 'throne' && r.crown) out.crownedKings = [...(out.crownedKings ?? []), r.crown];
       }
       if ((out.storyCleared ?? 0) >= STORY_COUNT && chapter === STORY_COUNT - 1 && r.ending === 'depart') out.trueEnd = true;
-      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER])];
+      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER, ...FORM_IDS.map(formKey)])];
     } else if (r.mode === 'challenge') {
       if ((out.storyCleared ?? 0) >= STORY_COUNT && r.asc === (out.challengeOpen ?? CHALLENGE_START)) out.challengeOpen = Math.min(ASC_MAX, r.asc + 1);
     } else if (!r.mode && r.asc >= out.ascOpen) out.ascOpen = Math.min(ASC_MAX, r.asc + 1); // 옛 호출 호환

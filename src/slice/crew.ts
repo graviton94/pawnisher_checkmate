@@ -1,4 +1,4 @@
-import type { PieceType } from '../engine';
+import type { FormId, PieceType } from '../engine';
 import { Rng } from '../engine/rng';
 
 /**
@@ -56,6 +56,8 @@ export const DEATHS: { narr: string; line: string }[] = [
 /** 분대원 (대국 사이로 이어진다) */
 export interface Crew {
   t: PieceType;
+  /** 이형 분대원 (D-481): 바탕 t의 카드로 움직이고, 행마 · 공격은 이형 규칙 */
+  form?: FormId;
   hp?: number;
   /** 출하 시리얼 #P-203 */
   serial?: string;

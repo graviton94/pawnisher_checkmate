@@ -1,6 +1,7 @@
 import { BOSS, BOSS_NUM, FOE_TRAITS, TRAIT, type BossRule, type FoeTrait } from '../slice/cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../slice/parts';
-import type { PieceType } from '../engine';
+import type { FormId, PieceType } from '../engine';
+import { FORMS } from './forms';
 
 /** 능력 표시 계약: 명칭·조건/행동·상세 효과 세 줄. 수치는 전투 데이터에서 읽는다. */
 export interface AbilityText { name: string; description: string; effect: string }
@@ -35,6 +36,9 @@ export const enemyAbilityText = (type: PieceType, traits: FoeTrait[], damage = (
   });
   return out;
 };
+
+/** 이형 기물 (D-481): [이름] / 움직임 / : 공격 — 처음 적으로 만날 때 이 장에서 규칙을 배운다 */
+export const formAbilityText = (f: FormId): AbilityText => ({ name: FORMS[f].name, description: FORMS[f].move, effect: `${FORMS[f].hit}을 친다` });
 
 /** 부품 상세도 같은 표시 계약을 사용한다. */
 export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch' | 'relaySeal' | 'sharedPlate', AbilityText[]> = {

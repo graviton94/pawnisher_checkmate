@@ -12,6 +12,59 @@ const ALL8: Pos[] = [
   { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
   { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 },
 ];
+const CAMEL: Pos[] = [
+  { x: 1, y: 3 }, { x: 3, y: 1 }, { x: 3, y: -1 }, { x: 1, y: -3 },
+  { x: -1, y: -3 }, { x: -3, y: -1 }, { x: -3, y: 1 }, { x: -1, y: 3 },
+];
+const ORTHO4: Pos[] = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+const DIAG4: Pos[] = [{ x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }];
+/**
+ * 이형 기물의 행마 · 공격 (D-481, GDD 21장 §1) — 착지는 빈 칸만, 공격은 착지 칸 기준.
+ *  대포: 룩처럼 미끄러지고, 줄에서 딱 한 기물을 넘어 그 뒤 첫 적을 친다 · 낙타: (3,1) 도약
+ *  메뚜기: 여덟 줄에서 처음 만난 기물 바로 뒤 빈 칸으로 뛰고, 둘레 여덟 칸을 친다
+ *  대주교: 비숍 + 나이트 · 총독: 룩 + 나이트
+ */
+const formMoves = (s: BattleState, piece: Piece, grid: Grid, stepTo: (x: number, y: number) => void, empty: (x: number, y: number) => boolean): void => {
+  const slide = (dirs: Pos[]) => {
+    for (const d of dirs) {
+      let x = piece.x + d.x, y = piece.y + d.y;
+      while (empty(x, y)) { stepTo(x, y); x += d.x; y += d.y; }
+    }
+  };
+  switch (piece.form) {
+    case 'cannon': slide(ORTHO4); break;
+    case 'camel': for (const d of CAMEL) if (empty(piece.x + d.x, piece.y + d.y)) stepTo(piece.x + d.x, piece.y + d.y); break;
+    case 'hopper':
+      for (const d of ALL8) {
+        let x = piece.x + d.x, y = piece.y + d.y;
+        while (inBounds(s, x, y) && !at(s, grid, x, y)) { x += d.x; y += d.y; }
+        if (inBounds(s, x, y) && empty(x + d.x, y + d.y)) stepTo(x + d.x, y + d.y);
+      }
+      break;
+    case 'archbishop': slide(DIAG4); for (const d of KNIGHT) if (empty(piece.x + d.x, piece.y + d.y)) stepTo(piece.x + d.x, piece.y + d.y); break;
+    case 'chancellor': slide(ORTHO4); for (const d of KNIGHT) if (empty(piece.x + d.x, piece.y + d.y)) stepTo(piece.x + d.x, piece.y + d.y); break;
+  }
+};
+const formAttack = (s: BattleState, piece: Piece, grid: Grid, point: (x: number, y: number) => void, line: (dirs: Pos[]) => void, area: Pos[], targets: Piece[]): void => {
+  switch (piece.form) {
+    case 'cannon':
+      for (const d of ORTHO4) {
+        let x = piece.x + d.x, y = piece.y + d.y, screened = false;
+        while (inBounds(s, x, y)) {
+          const p = at(s, grid, x, y);
+          if (screened) { area.push({ x, y }); if (p) { if (p.side !== piece.side) targets.push(p); break; } }
+          else if (p) screened = true;
+          x += d.x; y += d.y;
+        }
+      }
+      break;
+    case 'camel': for (const d of CAMEL) point(piece.x + d.x, piece.y + d.y); break;
+    case 'hopper': for (const d of ALL8) point(piece.x + d.x, piece.y + d.y); break;
+    case 'archbishop': line(DIAG4); for (const d of KNIGHT) point(piece.x + d.x, piece.y + d.y); break;
+    case 'chancellor': line(ORTHO4); for (const d of KNIGHT) point(piece.x + d.x, piece.y + d.y); break;
+  }
+};
+
 const SLIDE_DIRS: Partial<Record<PieceType, Pos[]>> = {
   B: [{ x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }],
   R: [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }],
@@ -36,6 +89,10 @@ export const legalMoves = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
   const cap = !!s.rules.capture;
   const foe = (x: number, y: number) => cap && inBounds(s, x, y) && at(s, grid, x, y)?.side === otherSideOf(piece.side);
   const stepTo = (x: number, y: number) => (empty(x, y) || foe(x, y)) && out.push({ x, y });
+  if (piece.form && !piece.asPawn) {
+    formMoves(s, piece, grid, (x, y) => { if (!out.some((q) => q.x === x && q.y === y)) out.push({ x, y }); }, empty);
+    return out;
+  }
   switch (piece.asPawn ? 'P' : piece.type) {
     case 'P': {
       const f = forward(piece.side);
@@ -89,6 +146,22 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
     const p = at(s, grid, x, y);
     if (p && p.side !== piece.side) targets.push(p);
   };
+  if (piece.form && !piece.asPawn) {
+    // 사선 공격(대주교 · 총독의 비숍 · 룩 줄): 방향마다 처음 만난 기물이 적일 때만
+    const line = (dirs: Pos[]) => {
+      for (const d of dirs) {
+        let x = piece.x + d.x, y = piece.y + d.y;
+        while (inBounds(s, x, y)) {
+          area.push({ x, y });
+          const p = at(s, grid, x, y);
+          if (p) { if (p.side !== piece.side) targets.push(p); break; }
+          x += d.x; y += d.y;
+        }
+      }
+    };
+    formAttack(s, piece, grid, point, line, area, targets);
+    return { targets: [...new Set(targets)], area };
+  }
   switch (piece.asPawn ? 'P' : piece.type) {
     case 'P': {
       const f = forward(piece.side);

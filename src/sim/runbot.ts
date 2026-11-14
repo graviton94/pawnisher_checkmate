@@ -188,7 +188,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         for (let tryN = 0; !ok && (tryN === 0 || (revive > 0 && (revive--, true))); tryN++) {
           const bSeed = seed * 7 + ri * 131 + tryN;
           const setup = JSON.stringify({ squad, deck: deck.filter(usable), parts, refined, asc, gold, def: { ...def, seed: bSeed, depth: depthAt(ai, frac) } });
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms });
           const r = style === 'search' ? playOutSearch(b, 40, 3, 4, o.temp ?? 0) : playOut(b, 40, undefined, style);
           battles += 1;
           turnsAll += r.turns;

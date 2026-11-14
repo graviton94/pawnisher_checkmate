@@ -1,4 +1,5 @@
-import type { PieceType } from '../engine';
+import type { FormId, PieceType } from '../engine';
+import { FORMS, formsUpTo } from '../data/forms';
 import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
 import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, FOE_TRAITS, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeTrait } from './cards';
@@ -32,6 +33,8 @@ export interface BattleDef {
   eliteOne?: boolean;
   /** 막별 적 특성 */
   traits?: FoeTrait[];
+  /** 이형 적 (D-481) — 적 목록 끝 바탕 기물부터 이형이 된다 */
+  forms?: FormId[];
   w?: number;
   h?: number;
   place?: { side: 0 | 1; t: PieceType; x: number; y: number }[];
@@ -270,6 +273,31 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
     const t = pool[new Rng(d.enemy.join('').length * 131 + act * 17 + (kind === 'boss' ? 7 : kind === 'check' ? 3 : 1) + d.enemy.filter((x) => x === 'P').length * 29).int(pool.length)] as Exclude<FoeTrait, 'blastPawn' | 'rookPlate'>;
     d.traits = [...(d.traits ?? []), t];
     d.tell = `${d.tell}${d.tell ? ' ' : ''}${FOE_TRAITS[t].tell}`;
+  }
+  // 이형 적 (D-481, GDD 21장 §1): 그 왕관까지 나오는 이형 — 1막은 검문부터(규칙을 배우는 자리), 2막부터 일반 대국에도.
+  // 지도 rng를 건드리지 않게 판의 모양으로 정한다(옛 저장의 지도가 그대로)
+  const avail = formsUpTo(asc);
+  if (avail.length && (kind !== 'battle' || act > 1)) {
+    const fr = new Rng(d.enemy.join('').length * 977 + act * 53 + (kind === 'boss' ? 11 : kind === 'check' ? 5 : 2) + asc * 131);
+    const newest = avail.filter((f) => FORMS[f].chapter === Math.min(asc, 3));
+    const n = kind === 'battle' ? (fr.next() < SLICE.formBattleOdds[act - 1] ? 1 : 0) : kind === 'check' ? (act >= 3 ? 2 : 1) : act >= 2 ? 1 : 0;
+    const picks: FormId[] = [];
+    for (let k = 0; k < n; k++) {
+      // 첫 이형은 이 왕관의 새 이형을 먼저(배우는 자리) — 그 뒤는 지금까지 나온 이형 아무거나
+      const pool = k === 0 && newest.length && asc <= 3 ? newest : avail;
+      picks.push(pool[fr.int(pool.length)]);
+    }
+    if (picks.length) {
+      const enemy = [...d.enemy];
+      for (const f of picks) {
+        const pawn = enemy.lastIndexOf('P');
+        if (pawn >= 0 && enemy.filter((t) => t === 'P').length > 1) enemy.splice(pawn, 1); // 수를 크게 늘리지 않게 폰 하나를 바꾼다
+        enemy.push(FORMS[f].base);
+      }
+      d.enemy = enemy;
+      d.forms = picks;
+      d.tell = `${d.tell}${d.tell ? ' ' : ''}${[...new Set(picks)].map((f) => `이형 「${FORMS[f].name}」 — ${FORMS[f].move}, ${FORMS[f].hit}을 칩니다.`).join(' ')}`;
+    }
   }
   return d;
 };

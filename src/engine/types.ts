@@ -11,6 +11,8 @@ import type { TwistId } from '../data/twists';
 export type Side = 0 | 1;
 
 export type PieceType = 'P' | 'N' | 'B' | 'R' | 'Q' | 'K';
+/** 이형 기물 (D-481, 페어리 체스): 바탕 체스 기물(type)은 그대로 두고 행마 · 공격만 바뀐다 — 카드 · 부품 · 그림은 바탕을 따른다 */
+export type FormId = 'cannon' | 'camel' | 'hopper' | 'archbishop' | 'chancellor';
 
 export interface Pos {
   x: number;
@@ -37,6 +39,8 @@ export interface Piece {
   elite?: boolean;
   /** 폰처럼 움직이고 친다 (승급 13 최종장 — 종이 왕관을 벗은 종이왕, D-277) */
   asPawn?: boolean;
+  /** 이형 (D-481): 있으면 행마 · 공격이 이형 규칙을 따른다 */
+  form?: FormId;
 }
 
 /** 진영의 장비: 부품 (유물) */

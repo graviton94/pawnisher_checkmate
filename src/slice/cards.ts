@@ -434,6 +434,8 @@ export const HEAT_DEFAULT = [0.25, 0.5, 0.75, 1] as const;
 /** 쇳물 서약 (D-462): 녹인 분대원 최대 HP × 이만큼 도금왕에게 */
 export const MELT = { mult: 1.5 };
 export const SLICE = {
+  /** 이형 적이 일반 대국에 끼는 확률 — 막별 (D-481: 1막은 검문 · 반장만) */
+  formBattleOdds: [0, 0.5, 0.6] as number[],
   hand: 5,
   ap: 3,
   /** 적도 태엽 3으로 움직인다 (같은 규칙) */

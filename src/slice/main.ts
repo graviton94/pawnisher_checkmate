@@ -1,5 +1,6 @@
 import '../fonts.css';
-import { bossAbilityText, enemyAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
+import { bossAbilityText, enemyAbilityText, formAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
+import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { abilityHtml, bindAbilities, partCardRuleHtml } from './ability';
 import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from '../data/build-trial';
 import { createBuildAct, createBuildTrial } from './build-trial';
@@ -36,7 +37,7 @@ import { pieceImg } from '../ui/sprites';
 import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { findPiece, samePos, type PieceType, type Pos } from '../engine';
+import { findPiece, samePos, type FormId, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refinedOf, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
@@ -318,14 +319,15 @@ const pieceInfo = (pos: Pos): void => {
   const side = p.side === 0 ? 'left' : 'right';
   const maxW = offBoardW(side);
   const expanded = maxW < 352;
-  const abilities = p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b));
+  // 이형 (D-481): 행마 · 공격 규칙을 맨 앞 장으로 — 적으로 처음 만날 때 여기서 배운다
+  const abilities = [...(p.form ? [formAbilityText(p.form)] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)))];
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
   const el = infoPeek({
     cls: `unit-peek${expanded ? ' unit-peek-expanded' : ''}${p.side === 0 ? ' unit-ally' : ''}`,
     key,
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
-    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${PIECE_NAMES_KO[p.type]}</p></div>`,
+    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.form ? ` · 이형(${PIECE_NAMES_KO[p.type]} 카드)` : ''}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
     body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div></div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격력</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어력</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
   });
   bindAbilities(el, abilities);
@@ -529,10 +531,10 @@ const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; sh
  * 사건 결과 오버레이 · 판 길게 누름 · 분대 화면이 모두 이 카드.
  */
 const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: number; lives?: number; kills?: number; dmg?: number; say?: string }, src?: string, cls = ''): string => {
-  const g = RECRUIT_ODDS[u.t]?.grade ?? 'common';
+  const g = u.form ? 'gold' : RECRUIT_ODDS[u.t]?.grade ?? 'common';
   const q = u.quirk ? QUIRKS[u.quirk] : null;
   const art = src ?? `ui/hud/crew-${u.t}.png`;
-  const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1)) + (u.temper ?? 0);
+  const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1) * (u.form ? FORMS[u.form].atk : 1)) + (u.temper ?? 0);
   const lives = o.lives ?? (u.doors ?? 0) + (q?.doors ?? 0);
   const pct = `${Math.max(0, Math.min(100, Math.round((o.hp / o.max) * 100)))}%`;
   const kills = (u.kills ?? 0) + (o.kills ?? 0), dmg = (u.dmg ?? 0) + Math.round(o.dmg ?? 0);
@@ -540,7 +542,10 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   const hearts = Array.from({ length: Math.max(2, lives) }, (_, k) => `<i class="cb-life${k < lives ? '' : ' off'}"></i>`).join('');
   // 본문 (D-377): 위 칸 = 기록(이름 · 숫자) 또는 첫마디 2줄 · 아래 칸 = 특성 이름 / 효과 · 효과 (또는 조건 / 효과) 한 줄씩
   const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="생명을 소모해 죽음을 넘긴 횟수">버팀</i>${u.defied ?? 0}</span></span>`];
-  const bot = q
+  // 이형 분대원 (D-481): 이름 · 움직임 · 공격 — 행마가 다르니 무엇보다 먼저
+  const bot = u.form
+    ? [lineHtml(`이형 · ${FORMS[u.form].name}`, 'name'), lineHtml(FORMS[u.form].move, 'if'), lineHtml(FORMS[u.form].hit, 'say')]
+    : q
     ? [lineHtml(q.name, 'name'), ...bottomLines('', q.desc).slice(0, 2).map((l) => lineHtml(l.t, l.k === 'fx' ? 'say' : 'if'))]
     : u.t === 'K'
       ? [lineHtml('분대의 심장', 'name'), lineHtml('쓰러지면 끝')]
@@ -1480,7 +1485,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
-  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, def.deck ?? deck.filter(usable)) : deck.filter(usable), def.seed ?? 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne });
+  b = newSliceBattle(squad, enemy, def.order ? arrange(def.order, def.deck ?? deck.filter(usable)) : deck.filter(usable), def.seed ?? 100 + stage * 17 + R.int(1000), { ordered: !!def.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
@@ -3092,8 +3097,10 @@ const ledgerView = (back: () => void = crewView): void => {
 /** 영입 (입문 뒤): 기물 셋 중 하나 — 그 기물의 카드가 같이 들어온다 */
 const recruitPick = (title: string, then: () => void, tag = ''): void => {
   const rng = sub();
-  const pool = [...RECRUITS];
-  const offers: typeof RECRUITS = [];
+  // 이형 분대원 (D-481): 그 왕관을 깨서 연 이형이 영입 칸에 섞인다(오늘의 도전 제외) — 바탕 기물의 카드가 함께 온다
+  const openForms = daily ? [] : FORM_IDS.filter((f) => (readMetaCached().unlocked ?? []).includes(formKey(f)));
+  const pool: { t: PieceType; cards: CommandId[]; line: string; form?: FormId }[] = [...RECRUITS, ...openForms.map((f) => ({ t: FORMS[f].base, cards: RECRUITS.find((r) => r.t === FORMS[f].base)?.cards ?? [], line: FORMS[f].line, form: f }))];
+  const offers: typeof pool = [];
   // 등급 무게대로 (D-319 — 퀸은 드물게)
   while (offers.length < 3 && pool.length) { const o = rollRecruit(pool, rng.next()); offers.push(pool.splice(pool.indexOf(o), 1)[0]); }
   // 셋이 서로 다른 이름 · 기벽
@@ -3101,6 +3108,7 @@ const recruitPick = (title: string, then: () => void, tag = ''): void => {
   for (const r of offers) {
     const c = makeCrew(r.t, R, [...squad, ...crews].map((u) => u.name ?? ''), crews.map((u) => u.quirk!).filter(Boolean));
     if (readMetaCached().runs < 2 && !daily) delete c.quirk;
+    if (r.form) { c.form = r.form; delete c.quirk; }
     crews.push(c);
   }
   let picked = false;
@@ -3116,7 +3124,7 @@ const recruitPick = (title: string, then: () => void, tag = ''): void => {
         const k = Number(key);
         const r = offers[k];
         picked = true;
-        draft('recruit', offers.map((o) => `crew:${o.t}`), `crew:${r.t}`);
+        draft('recruit', offers.map((o) => `crew:${o.form ?? o.t}`), `crew:${r.form ?? r.t}`);
         ftue('first_pick');
         squad.push(crews[k]);
         deck.push(...r.cards);
@@ -3126,7 +3134,7 @@ const recruitPick = (title: string, then: () => void, tag = ''): void => {
   });
   el.querySelector('[data-skip]')!.addEventListener('click', () => {
     picked = true;
-    draft('recruit', offers.map((o) => `crew:${o.t}`), null);
+    draft('recruit', offers.map((o) => `crew:${o.form ?? o.t}`), null);
     then();
   });
   // 부관 안내 (D-238): 첫 영입은 무엇을 고르는지 짚는다
