@@ -2297,7 +2297,7 @@ const forgeScreen = (): void => {
   // 손질 카드 넷 (D-399): 고물상과 같은 상아 카드 한 줄 — 바탕은 정비공 그림(덮기 + 디더), 넘치면 가로로 민다
   const repairPct = Math.round(FORGE.repairPct * 100);
   const keys: SvcKey[] = ['refine', 'remove', 'repair', ...(squad.some((u) => u.t !== 'K') ? (['brace'] as const) : [])];
-  const items: PickItem[] = keys.map((k) => ({ key: k, html: svcFace(k, k === 'repair' ? repairPct : k === 'brace' ? FORGE.braceDoors : 0) }));
+  const items: PickItem[] = keys.map((k) => ({ key: k, html: svcFace(k, k === 'repair' ? repairPct : k === 'brace' ? FORGE.braceDoors : 0), info: forgeStatus(k) }));
   const el = placeScreen({
     art: 'bg-forge',
     focus: [0.22, 0.4],
@@ -2330,9 +2330,27 @@ const forgeScreen = (): void => {
   });
 };
 
+/**
+ * 작업대 손질 카드 아래 내 현황 (D-471, 사용자 지적 「고르기 전에 각 카드에 맞는 내 현황」): 다듬을 카드 수 · 덱 장수 · 분대 HP · 가장 얇은 생명.
+ * 좋음/나쁨은 색 + 글로 (UI 원칙 4).
+ */
+const refinable = (): CommandId[] => [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1);
+const forgeStatus = (k: SvcKey): string => {
+  const T = SCREEN_TEXT.forgeStatus;
+  if (k === 'refine') { const n = refinable().length; return `<span class="${n ? 'mid' : 'bad'}">${T.refine} <b>${n}</b>${T.cards}</span>`; }
+  if (k === 'remove') return `<span class="mid">${T.deck} <b>${deck.length}</b>${T.cards}</span>`;
+  if (k === 'repair') {
+    const max = squad.reduce((a, u) => a + crewMaxHp(u), 0), hp = squad.reduce((a, u) => a + Math.min(crewMaxHp(u), u.hp ?? crewMaxHp(u)), 0);
+    const pct = Math.round((hp / Math.max(1, max)) * 100), hurt = squad.filter((u) => (u.hp ?? crewMaxHp(u)) < crewMaxHp(u)).length;
+    return `<span class="${pct < 50 ? 'bad' : pct < 85 ? 'mid' : 'good'}">${T.hp} <b>${pct}%</b> · ${T.hurt} <b>${hurt}</b></span>`;
+  }
+  if (k === 'brace') { const crew = squad.filter((u) => u.t !== 'K'); const low = Math.min(...crew.map((u) => u.doors ?? 0)); return `<span class="${low ? 'mid' : 'bad'}">${T.doors} <b>${low}</b></span>`; }
+  return '';
+};
+
 /** 다듬기 화면 — back = 그만두면 돌아갈 곳, done = 다듬은 뒤 (작업대: 다음 노드로 · 고물상: 값을 치르고 고물상으로, D-218) */
 const refineScreen = (back: () => void = forgeScreen, done: () => void = advance, who: keyof typeof REFINE_TALK = 'forge'): void =>
-  pickCardScreen(SCREEN_TEXT.refine, `<span class="who">${REFINE_TALK[who].npc}</span>${REFINE_TALK[who].line}`, [...new Set(deck)].filter((id) => !isRefined(id) && COMMANDS[id].cost >= 1), (rid) => {
+  pickCardScreen(SCREEN_TEXT.refine, `<span class="who">${REFINE_TALK[who].npc}</span>${REFINE_TALK[who].line}`, refinable(), (rid) => {
     deck[deck.indexOf(rid)] = refineOnce(rid);
     refined.push(rid);
     sfx('stamp');
@@ -2340,6 +2358,12 @@ const refineScreen = (back: () => void = forgeScreen, done: () => void = advance
     window.setTimeout(done, 300);
   }, back, SCREEN_TEXT.refineGo);
 
+/** 덱에 같은 카드가 몇 장 · 쓸 기물이 없으면 그것부터 (D-471) */
+const copiesInfo = (id: CommandId): string => {
+  const who = COMMANDS[id].who;
+  if (who && who !== 'K' && who !== 'any' && !squad.some((u) => u.t === who)) return `<span class="bad">분대에 ${PIECE_NAMES_KO[who]} 없음</span>`;
+  return `<span class="mid">덱 <b>${deck.filter((d) => d === id).length}</b>장</span>`;
+};
 /**
  * 카드 한 장 고르기 (다듬기): 고르기 화면(.scr-pick) — 받침 아래 「태엽 2 → 1」 (D-245 → D-394). 확인 창 없음.
  */
@@ -2347,7 +2371,8 @@ const pickCardScreen = (title: string, say: string, ids: CommandId[], onPick: (i
   pickScreen({
     title,
     say: ids.length ? `<span class="say">${say}</span>` : SCREEN_TEXT.noCards,
-    items: ids.map((id) => ({ key: id, html: cardFace(id, ''), info: `<span>태엽 ${COMMANDS[id].cost} → <b>${COMMANDS[id].cost - 1}</b></span>` })),
+    // D-471: 다듬기 전에 그 카드의 내 현황 — 덱에 몇 장 · 쓸 기물이 분대에 있는가
+    items: ids.map((id) => ({ key: id, html: cardFace(id, ''), info: `<span>태엽 ${COMMANDS[id].cost} → <b>${COMMANDS[id].cost - 1}</b></span> ${copiesInfo(id)}` })),
     skip: { label: SCREEN_TEXT.stop, attrs: 'data-back' },
     go: { label: verb },
     onSelect: () => sfx('lift'),
