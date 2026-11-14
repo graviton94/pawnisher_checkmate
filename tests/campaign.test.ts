@@ -67,7 +67,7 @@ describe('본편 1~4승천과 선택 도전 (D-451)', () => {
     expect(promotionCuts(0, '', '경비를 강화한다', '', { alive: [] }).flatMap((c) => c.lines).some((l) => l.k === 's')).toBe(false);
   });
   it('왕위 결정 증언은 네 승천이며 왕이 된 결말은 승천마다 속마음이 다르다', () => {
-    expect(TESTIMONY).toHaveLength(4); expect(chapterLabel(3)).toContain('4승천');
+    expect(TESTIMONY).toHaveLength(4); expect(chapterLabel(3)).toContain('넷째 왕관');
     const mono = (ch: number) => promotionCuts(ch, '', '규정', '', { alive: [] })[2].lines.find((l) => l.k === 'm')?.t;
     expect(new Set([0, 1, 2].map(mono)).size).toBe(3);
     expect(JSON.stringify([DEFEAT, trueEndingCuts([]), promotionCuts(0, '', '경비 강화', '')])).not.toMatch(/열세|경고등이 꺼|공장이.*침묵|또 아홉째|부모|아이/);

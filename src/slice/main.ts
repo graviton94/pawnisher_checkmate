@@ -2547,9 +2547,11 @@ const openOverlay = (html: string, cls = ''): HTMLElement => {
  */
 const fitLines = (d: HTMLElement): void => {
   d.querySelectorAll<HTMLElement>('.ln').forEach((ln) => {
-    ln.classList.remove('s10');
+    ln.classList.remove('s10', 'tight');
     ln.style.transform = '';
     const over = (): boolean => ln.scrollWidth > ln.clientWidth + 1;
+    // D-475: 자간부터 줄이고(빈칸 · 글자 사이 −1px) → 10px → 가로 눌러 담기
+    if (over()) ln.classList.add('tight');
     if (over()) ln.classList.add('s10');
     if (over()) ln.style.transform = `scaleX(${(ln.clientWidth / ln.scrollWidth).toFixed(3)})`;
   });
@@ -4181,7 +4183,7 @@ const opening = (): void => {
       nav.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((button) => button.addEventListener('click', () => { mode = button.dataset.mode as typeof mode; draw(); nav.querySelector<HTMLButtonElement>(`[data-mode="${mode}"]`)?.focus(); }));
       nav.querySelector('[data-level-pick]')!.addEventListener('click', () => {
         if (mode === 'story') {
-          const panel = openWin({ size: 'm', title: '승천 선택', body: `<div class="stack">${CHAPTERS.map((ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${ch.label} · ${ch.name}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 도전' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '이전 장을 완료하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
+          const panel = openWin({ size: 'm', title: '왕관 선택', body: `<div class="stack">${CHAPTERS.map((ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${ch.label} · ${ch.name}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 도전' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '이전 장을 완료하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
           panel.querySelector('[data-x]')!.addEventListener('click', closeWin);
           panel.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b) => b.addEventListener('click', () => { chapter = Number(b.dataset.chapter); closeWin(); draw(); }));
         } else {

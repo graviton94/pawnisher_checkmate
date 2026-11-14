@@ -76,10 +76,10 @@ describe('부품 문법 — 언제 · 효과', () => {
   it('효과는 득실 많아야 둘, 언제 줄에 「 · 」가 섞이지 않는다', () => {
     expect(ids.filter((id) => partSummaryText(id).effect.split(' · ').length > 2 || partSummaryText(id).description.includes(' · '))).toEqual([]);
   });
-  it('그림 카드는 언제 한 행 · 효과 한 행 고정, 줄여도 읽힌다 (10px에서 가로 0.7배 안팎 — 화면 실측 최저 0.72, D-473)', () => {
+  it('그림 카드는 세 행 틀 — 언제 한두 행 · 효과 늘 한 행, 넷째 행이 없다 (D-475)', () => {
     const scale = (t: string, bold: boolean) => Math.min(1, 99 / ((pxWidth(t, bold) * 10) / 12));
-    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length !== 2 || r.some((x) => scale(x.t, x.k === 'fx') < 0.68) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
+    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 3 || r.filter((x) => x.k === 'fx').length !== 1 || r.some((x) => scale(x.t, x.k === 'fx') < 0.68) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
     expect(bad).toEqual([]);
-    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번, 연쇄 5 달성 시', ': 카드 +1 · 태엽 +1']);
+    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드 +1 · 태엽 +1']);
   });
 });

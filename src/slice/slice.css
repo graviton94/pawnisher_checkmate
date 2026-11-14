@@ -1777,3 +1777,5 @@ body.slice .deathfx.dc3 .dr-stamp.st3 { opacity: 1; animation: st3 380ms both; }
 .dr-band.in { animation: koband 420ms both; }
 .dr-frame > .dr-face { position: relative; }
 @media (prefers-reduced-motion: reduce) { .dr-band.in { animation: none; transform: none; } }
+/* D-475: 넘치는 카드 줄은 자간부터 줄인다 */
+body.slice .cf.cf.cf.cf > .cf-desc .ln.tight { letter-spacing: -1px; word-spacing: -2px; }
