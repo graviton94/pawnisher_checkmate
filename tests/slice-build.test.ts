@@ -190,7 +190,7 @@ describe('애착 (D-153)', () => {
     expect(c.quirk).toBeTruthy();
     const b = newSliceBattle([{ t: 'K' }, { ...c, quirk: 'overwound' }], ['K', 'P'], START_COMMANDS, 3);
     const p = b.s.pieces.find((q) => q.id === b.squadIds[1])!;
-    expect(p.maxHp).toBe(Math.round(25 * QUIRKS.overwound.hp!));
+    expect(p.maxHp).toBe(Math.round(25 * QUIRKS.overwound.hp! * 1.7)); // D-466: 분대원 폰 HP ×1.7
   });
   it('죽음의 생명 (D-217): 기본은 없다 · 고집 센 축 2 · 영구 생명은 그 분대원만 · 맹세는 폰마다 1', () => {
     const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N', quirk: 'stubborn' }, { t: 'B', doors: 1 }], ['K', 'P'], START_COMMANDS, 3);

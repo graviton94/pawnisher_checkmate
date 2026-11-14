@@ -36,7 +36,8 @@ export const QUIRKS: Record<QuirkId, QuirkDef> = {
 /** 수치 (data — 근거 D-153) */
 /** 흉터 풀이 (D-364): 흉터는 이력이 남긴 자국 — 효과는 없고 이야기만 */
 export const SCAR_DESC: Record<string, string> = { '주조 흠집': '주조 흠집. 전투 효과 없음', '납땜 자국': '생명으로 쓰러짐을 버틴 적이 있다', '용접 흉터': '대국 셋을 넘게 싸워 살아남았다' };
-export const CREW = { boilerBlast: 20, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
+/** pawnHp (D-466): 우리 분대원 폰만 HP ×이만큼 — 적 폰은 그대로. 보병 축이 폰 몸이 약해 한꺼번에 녹아내렸다 */
+export const CREW = { pawnHp: 1.7, boilerBlast: 20, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
 
 /** 이름 풀: 상태를 묘사하는 별칭 (다키스트 던전식, D-158 — 사용자 예시: 먼지투성이 · 구부러진 못 …) */
 export const NAMES = ['먼지투성이', '구부러진 못', '이 나간 톱니', '벗겨진 페인트', '삐걱거리는 경첩', '괴팍한 흠집', '쇳소리 뭉치', '흠집투성이', '기울어진 축', '금 간 렌즈', '헐거운 나사', '그을린 장갑', '덜컹이는 바퀴', '찢긴 가죽끈', '굽은 지렛대', '새는 기름통', '휘어진 창살', '깨진 문자판', '눌어붙은 용접', '끊어진 태엽'];

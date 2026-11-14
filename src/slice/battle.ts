@@ -17,7 +17,7 @@ import { baseOf, BOSS, BOSS_NUM, COMMANDS, LAB, MELT, PACE, PUSH, SLICE, TRAIT, 
 export type Squad = Crew;
 
 /** 기벽을 반영한 최대 HP */
-export const crewMaxHp = (u: { t: PieceType; quirk?: QuirkId }): number => Math.round(PIECE_STATS[u.t].hp * (u.quirk ? QUIRKS[u.quirk].hp ?? 1 : 1));
+export const crewMaxHp = (u: { t: PieceType; quirk?: QuirkId }): number => Math.round(PIECE_STATS[u.t].hp * (u.quirk ? QUIRKS[u.quirk].hp ?? 1 : 1) * (u.t === 'P' ? CREW.pawnHp : 1));
 
 /** 이 대국에서 쓰러진 분대원 기록 (사망 의식 · 원부) */
 export interface Fall {
@@ -259,6 +259,13 @@ export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   return Math.max(0, c.cost - off('drum', pawnCard) - off('spurs', knightCard) - off('lightCloak', c.who === 'Q'));
 };
 
+/**
+ * 막사의 호출 (D-466): 우리 폰이 하나도 없는데 손에 폰 카드가 있으면 턴 시작에 킹 곁에 임시 폰 하나 (이번 대국만).
+ * 폰이 다 쓰러지면 시작 덱의 「전진」까지 폰 카드가 모두 죽은 카드가 되던 것 — 보병 축이 완주 10 ~ 20%로 바닥이던 근본 원인.
+ */
+const pawnCall = (b: SliceBattle): BattleEvent | null =>
+  !b.s.pieces.some((p) => p.side === 0 && p.type === 'P') && b.hand.some((id) => COMMANDS[id]?.who === 'P') ? spawnPawn(b, '막사의 호출 — 폰 카드를 쥔 손에 임시 폰이 선다') : null;
+
 /** 킹 옆 빈 칸 (앞쪽부터) — 징집 · 조립 라인 */
 const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   const k = kingOf(b.s, 0);
@@ -406,6 +413,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   }
   b.atkK = atkK;
   drawCards(b, b.handSize + (has(b, 'stopwatch') ? PART_NUM.stopwatch : 0), true);
+  pawnCall(b);
   bossTurnStart(b);
   b.intents = planFor(b);
   markTelegraph(b);
@@ -1580,6 +1588,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     // 기어 쇼크 (D-230, 보고서 2): 맞은 기물이 있으면 다음 턴 손패 −1 (턴에 최대 −1)
     b.evaded = [];
     drawCards(b, b.handSize - ((b.shocked ?? []).length ? SLICE.shockDraw : 0), true);
+    { const e = pawnCall(b); if (e) events.push(e); }
     bossTurnStart(b);
     guardUp(b);
     b.intents = planFor(b).filter((it) => !(b.staggered ?? []).includes(it.pieceId));
