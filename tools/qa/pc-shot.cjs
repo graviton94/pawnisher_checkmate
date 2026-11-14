@@ -1,4 +1,4 @@
-// P-C 점검 (D-491): 디버그 API로 장면 하나를 세우고 사진 한 장 — node tools/qa/pc-shot.cjs <출력.png> "<sliceApi 식>" [기다림ms]
+// P-C 점검 (D-502): 디버그 API로 장면 하나를 세우고 사진 한 장 — node tools/qa/pc-shot.cjs <출력.png> "<sliceApi 식>" [기다림ms]
 //   환경: PORT · VW · VH · DPR · RM=1
 const { chromium } = require('playwright');
 const W = (ms) => new Promise((r) => setTimeout(r, ms));

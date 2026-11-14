@@ -108,7 +108,7 @@ let subEl: HTMLElement | null = null;
 export const placeSub = (el: HTMLElement, top = false, minW = 0): void => {
   const r = subAnchor();
   // 판 열 안 (레일을 덮지 않는다) · 창 M 단계 592를 넘지 않는다.
-  // minW (P-C D-491 부관 안내): 판 열이 좁은 화면(667)에서 띠가 네 줄로 접혀 판 절반을 덮었다 — 이 폭까지는 레일 위로 넓힌다(화면 안 16 여백)
+  // minW (P-C D-502 부관 안내): 판 열이 좁은 화면(667)에서 띠가 네 줄로 접혀 판 절반을 덮었다 — 이 폭까지는 레일 위로 넓힌다(화면 안 16 여백)
   const w = Math.max(r ? Math.min(592, Math.round(r.width) - 8) : Math.min(592, innerWidth - 32), Math.min(minW, innerWidth - 32));
   el.style.width = `${w}px`;
   const cx = r ? r.left + r.width / 2 : innerWidth / 2;

@@ -1695,7 +1695,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   lossAsked = false;
   if (!labMode && runLive) {
     track('battle_start', { ...where(), enemy_id: def.title, enemy: def.enemy });
-    // 첫 10분 (P-C D-491): battle1_start = 처음 판에 손대는 순간(시험대 A) · 시험대마다 drill_x_start · 출하 지도의 첫 대국 = first_real_battle
+    // 첫 10분 (P-C D-502): battle1_start = 처음 판에 손대는 순간(시험대 A) · 시험대마다 drill_x_start · 출하 지도의 첫 대국 = first_real_battle
     if (def.drill) ftue('battle1_start');
     ftue(def.drill ? `drill_${def.drill}_start` : 'first_real_battle');
     if (def.boss && actI === 0) ftue('act1_boss');
@@ -1742,7 +1742,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
         ]));
         return;
       }
-      // 첫 실전 대국 (P-C D-491): 입문 시험대는 피해 100%였다 — 배치 턴 · 공정 열기를 그것이 적용되는 판에서 한 줄로
+      // 첫 실전 대국 (P-C D-502): 입문 시험대는 피해 100%였다 — 배치 턴 · 공정 열기를 그것이 적용되는 판에서 한 줄로
       if (firstShip && !def.drill && !tutDone('heat') && !labMode) {
         void ready.then(() => tutorial('heat', [{ text: TUT.heat, target: () => $('turn-label') }]));
         return;
@@ -2670,7 +2670,7 @@ const actCard = (label: string, name: string, narr: string, art: string): Promis
       T.forEach(clearTimeout);
       void shutter(async () => {
         el.remove();
-        // 막 넘김 = 로딩 (P-C D-491, 후기 #5): 닫힌 철문 위에 안내서 한 쪽
+        // 막 넘김 = 로딩 (P-C D-502, 후기 #5): 닫힌 철문 위에 안내서 한 쪽
         if (!labMode) await showTip('act');
         // 입력 위생 (페르소나 테스트 m4): 넘긴 탭이 곧바로 다음 화면의 물건을 고르지 않게 잠깐 막는다
         gateUntil = performance.now() + 350;
@@ -2696,7 +2696,7 @@ const stageIntro = (def: BattleDef): Promise<void> => {
   // 대국 · 검문은 진입 창(모달)을 띄우지 않는다 (D-388, 사용자: 「배경에 기물 얹는 진입 창 자체가 최악」 · /game-ui-design 0장: 행동이 없는 정보 = 모달 금지).
   // 정보(적 명단 · 규칙 · 보상)는 지도에서 노드를 고를 때 미리 보여 주고, 들어갈 때는 철문 전환 뒤 판 위 띠 한 번만 (⑨ 표지).
   // 대국 이름 띠 다음에 배치 턴 띠 (D-454 — 첫 턴은 서로 피해 25%)
-  // 로딩 쪽지 (P-C D-491, 후기 #5): 철문이 닫힌 사이 안내서 한 쪽 — 안 본 쪽이 남았으면 늘, 다 봤으면 몇 번에 한 번
+  // 로딩 쪽지 (P-C D-502, 후기 #5): 철문이 닫힌 사이 안내서 한 쪽 — 안 본 쪽이 남았으면 늘, 다 봤으면 몇 번에 한 번
   return shutter(async () => { if (!labMode && tipDue('battle')) await showTip('battle'); }).then(() => void window.setTimeout(() => { band(name ? `${label} · ${name}` : label, 'brass'); band(HUD_TEXT.heatBand(1, b.s.heat ?? 1), 'brass'); }, 120));
 };
 /** 반장 규칙 → 초상 그림 파일 (public/scenes/) */
@@ -4285,7 +4285,7 @@ const tilesRect = (ps: Pos[]): DOMRect | null => {
 };
 
 /**
- * 시험대 A 「치는 칸」 (P-C D-491): 폰 → (1,2)에 내려앉아 대각선 앞 (2,3) 폰 처치 · 나이트 → (2,2)에 내려앉아 L자로 (4,3) 폰 처치.
+ * 시험대 A 「치는 칸」 (P-C D-502): 폰 → (1,2)에 내려앉아 대각선 앞 (2,3) 폰 처치 · 나이트 → (2,2)에 내려앉아 L자로 (4,3) 폰 처치.
  * 적은 움직이지 않는다. 손패 · 판만 보인다. 수 둘 다 금빛 과녁(처치) — 「쳤는데 안 아프다」가 없다.
  */
 const drillA = (): Promise<boolean> => {
@@ -4309,7 +4309,7 @@ const drillA = (): Promise<boolean> => {
 };
 
 /**
- * 시험대 B 「예고와 막기」 (P-C D-491): 적의 첫 수는 짜 두었다(run.ts DRILLS[1].script) — ① 적 폰이 내 폰을, ② 적 폰이 내 킹을 겨눈다.
+ * 시험대 B 「예고와 막기」 (P-C D-502): 적의 첫 수는 짜 두었다(run.ts DRILLS[1].script) — ① 적 폰이 내 폰을, ② 적 폰이 내 킹을 겨눈다.
  * 폰은 붉은 칸에서 빠지며 ①을 친다(×1.5 · 파란 과녁) · 나이트는 ②가 내려앉을 칸을 먼저 차지한다(막기) · 태엽 하나가 남아 지휘(2)는 못 낸다 →
  * 턴 끝 → 두 공격 모두 헛방. 태엽 · 적의 수 · 턴 끝이 이 판에서 처음 열린다.
  */
@@ -4339,7 +4339,7 @@ const drillB = (): Promise<boolean> => {
 };
 
 /**
- * 시험대 C 「킹 잡기」 = 출하 첫 대국 (P-C D-491): 나이트가 적 킹을 친다 → 체크(HP 1로 버팀) → 한 대 더라는 것을 짚고,
+ * 시험대 C 「킹 잡기」 = 출하 첫 대국 (P-C D-502): 나이트가 적 킹을 친다 → 체크(HP 1로 버팀) → 한 대 더라는 것을 짚고,
  * 마무리 전에 되감기 실습(톱니는 돌려준다 — D-488) → 직접 체크 · 마무리. 이 묶음이 끝나면 입문 안내 「battle」을 마친 것으로 적는다.
  */
 const drillC = (): Promise<boolean> => {
@@ -4362,7 +4362,7 @@ const drillC = (): Promise<boolean> => {
   ]);
 };
 
-/** 입문 시험대 사이 안내서 한 쪽 (P-C D-491, 후기 #5) — 다음 시험대 번호 k */
+/** 입문 시험대 사이 안내서 한 쪽 (P-C D-502, 후기 #5) — 다음 시험대 번호 k */
 const guideOne = (title: string, k: number): Promise<void> => {
   const i = GUIDE_PAGES.findIndex((g) => g.title === title);
   if (i < 0) return Promise.resolve();
@@ -4371,7 +4371,7 @@ const guideOne = (title: string, k: number): Promise<void> => {
 };
 
 /**
- * 처음 출하하는 사람의 입문 (P-C D-491, 후기 #4 · #5 — D-238 · D-454의 한 판 안내를 대신한다):
+ * 처음 출하하는 사람의 입문 (P-C D-502, 후기 #4 · #5 — D-238 · D-454의 한 판 안내를 대신한다):
  * 안내서 「목표」 → 시험대 A 「치는 칸」 → 안내서 「카드 → 기물 → 칸」 → 시험대 B 「예고와 막기」 → 안내서 「적의 예고」 → 시험대 C 「킹 잡기」(첫 대국 · 영입 보상).
  * 판마다 생각 하나 · 그 생각에 필요한 HUD만. 어디서든 [건너뛴다]를 누르면 남은 안내 없이 C로.
  */
@@ -4410,7 +4410,7 @@ const begin = async (seed: number, level: number, day: string | null, mode: RunM
   newRun(seed, level, day, mode, pick);
   if (mode === 'story' && !day && readMeta(store).runs >= 1 && !labMode) { const meta = readMeta(store); await playCuts([shadowCut(storyChapter, meta.crownedKings?.find((k) => k.chapter === storyChapter - 1)?.law, (meta.storyAttempts?.[storyChapter] ?? 0) > 0)]); }
   saveRun('battle', 0);
-  // 처음 온 사람 (D-238 → P-C D-491): 전환 카드 · 안내 알림 대신 작은 시험대 셋 — 글이 겹치지 않게 한 목소리만
+  // 처음 온 사람 (D-238 → P-C D-502): 전환 카드 · 안내 알림 대신 작은 시험대 셋 — 글이 겹치지 않게 한 목소리만
   const first = !tutDone('battle');
   startBattle(first ? DRILLS[0] : INTRO[0], true);
   closeOverlay();

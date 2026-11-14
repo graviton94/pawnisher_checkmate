@@ -147,7 +147,7 @@ describe('막별 반장 · 적 특성 (D-171)', () => {
     expect(boss(b, 1).kingHp).toBe(boss(a, 1).kingHp);
     expect(b[0].rows.map((r) => r.map((n) => n.kind).join()).join('|')).toBe(a[0].rows.map((r) => r.map((n) => n.kind).join()).join('|'));
   });
-  it('입문 = 시험대 C 「킹 잡기」 (P-C D-491): 나이트 한 방에 체크(HP 1) → 폰 한 대 더에 쓰러진다', () => {
+  it('입문 = 시험대 C 「킹 잡기」 (P-C D-502): 나이트 한 방에 체크(HP 1) → 폰 한 대 더에 쓰러진다', () => {
     const d = INTRO[0];
     const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true, flatHeat: d.flat });
     expect(b.hand.slice(0, 2)).toEqual(['leap', 'advance']);

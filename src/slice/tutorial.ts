@@ -8,7 +8,7 @@ import { typeIn } from './fx3';
 import { makeTalk } from './uikit';
 import { placeSub } from './voice';
 
-/** 부관 띠 최소 폭 (px) — 판 열이 좁아도 두 줄 안에 들게 (P-C D-491) */
+/** 부관 띠 최소 폭 (px) — 판 열이 좁아도 두 줄 안에 들게 (P-C D-502) */
 const SUB_MIN_W = 480;
 
 export interface TutStep {
@@ -78,7 +78,7 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       root.remove();
       resolve(done);
     };
-    // 건너뛰기는 두 번 눌러야 (P-C D-491): 「화면 아무 데나 눌러 다음」 걸음에서 손가락이 띠 속 단추에 닿아 입문 전체가 날아가던 것.
+    // 건너뛰기는 두 번 눌러야 (P-C D-502): 「화면 아무 데나 눌러 다음」 걸음에서 손가락이 띠 속 단추에 닿아 입문 전체가 날아가던 것.
     // 첫 탭 = 단추가 「한 번 더」로 바뀌고(armed) 2초 안에 다시 누르면 건너뛴다
     const skipBtn = root.querySelector<HTMLButtonElement>('.tut-skip')!;
     let armed = 0;
@@ -117,7 +117,7 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       const battle = document.body.classList.contains('lay-f') && !document.body.classList.contains('between') && !!document.getElementById('left')?.offsetWidth && document.getElementById('overlay')?.hidden !== false;
       if (battle) {
         // #3 · P-B D-490: 전투 중 부관 안내 = 판 아래 가운데 자막 띠 하나 (레일 폭에 접히지 않는다). 짚은 곳이 판 아래쪽이면 판 위로
-        // P-C D-491: 작은 시험대 판은 열을 거의 채워 띠가 판에 걸친다 — 아래 · 위 두 자리 중 짚은 곳 · 보이는 구멍을 덜 가리는 쪽(같으면 아래)
+        // P-C D-502: 작은 시험대 판은 열을 거의 채워 띠가 판에 걸친다 — 아래 · 위 두 자리 중 짚은 곳 · 보이는 구멍을 덜 가리는 쪽(같으면 아래)
         talk.classList.add('on-sub');
         talk.classList.remove('top', 'bottom', 'on-rail');
         const keep = [...(r ? [r] : []), ...extra.map((q) => new DOMRect(q.x, q.y, q.w, q.h))];

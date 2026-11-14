@@ -1263,7 +1263,7 @@ body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has
 /* D-478: 낮은 화면(16:9 폰 360)에서 부품 두 줄이 다 보이게 — 적 의도 줄만 낮춘다(32 → 26) */
 @media (max-height: 380px) { .intents .it-row { min-height: 26px; } }
 
-/* ---------- 로딩 쪽지 · 입문 시험대 HUD (P-C D-491, 후기 #4 · #5) ---------- */
+/* ---------- 로딩 쪽지 · 입문 시험대 HUD (P-C D-502, 후기 #4 · #5) ---------- */
 /* 쪽지 = 닫힌 철문 위 가운데 M 창(키트 철판 빌림 — 임시, LD-01 안내서 액자 · 팁 쪽지 · LD-02 작업대 바탕 대기). 누르면 넘긴다 */
 .ld-tip-wrap { position: fixed; inset: 0; z-index: 111; box-sizing: border-box; display: grid; place-items: center; padding: var(--Gy) var(--G); }
 /* 줄인 움직임 · 철문 없이 뜰 때: 먹 2×2 디더 막 (부팅 화면과 같은 바닥) */

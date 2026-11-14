@@ -5,12 +5,12 @@ import { DRILLS, INTRO, type BattleDef } from '../src/slice/run';
 import { GUIDE_PAGES } from '../src/data/opening';
 import { TUT } from '../src/data/tutorial';
 
-/** 입문 시험대 셋 (P-C D-491): 대본의 수마다 판이 약속한 대로 반응하는가 — 실제 열기 값으로 본다(시험대는 열기 없이 100%) */
+/** 입문 시험대 셋 (P-C D-502): 대본의 수마다 판이 약속한 대로 반응하는가 — 실제 열기 값으로 본다(시험대는 열기 없이 100%) */
 const make = (d: BattleDef) => newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'N' }], d.enemy, d.order!, 5, { width: d.w, height: d.h, enemyKingHp: d.kingHp, enemyHp: d.enemyHp, place: d.place, ordered: true, flatHeat: d.flat, calm: d.calm, script: d.script });
 const id = (b: ReturnType<typeof make>, t: string) => b.s.pieces.find((p) => p.side === 0 && p.type === t)!.id;
 const at = (b: ReturnType<typeof make>, x: number, y: number) => b.s.pieces.find((p) => p.x === x && p.y === y);
 
-describe('입문 시험대 (P-C D-491)', () => {
+describe('입문 시험대 (P-C D-502)', () => {
   let saved: number[];
   beforeAll(() => { saved = SLICE.heat; SLICE.heat = [...HEAT_DEFAULT]; });
   afterAll(() => { SLICE.heat = saved; });

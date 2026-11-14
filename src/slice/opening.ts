@@ -178,7 +178,7 @@ export const guideMedia = (m: GuideMedia): string => {
  * 안내서 (D-391 키트 창): L 창 하나 — 위 탭 줄 · 쪽(그림 164 + 글 단) · 단추 줄 [닫는다] … 쪽 점 … [돌아간다 · 넘긴다].
  * 마지막 쪽 오른쪽 = last (첫 대국으로 / 닫는다). 어느 쪽에서든 닫는다 · Esc · 뒤 막 탭으로 닫힌다 (페르소나 테스트 m1).
  */
-export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_TEXT.close, o: { start?: number; tabs?: string; onTab?: (t: string) => void; /** 이 쪽들만 (입문 시험대 사이 한 쪽 — P-C D-491) */ only?: number[]; /** 쪽 번호 대신 가운데 글 */ mid?: string } = {}): Promise<void> =>
+export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_TEXT.close, o: { start?: number; tabs?: string; onTab?: (t: string) => void; /** 이 쪽들만 (입문 시험대 사이 한 쪽 — P-C D-502) */ only?: number[]; /** 쪽 번호 대신 가운데 글 */ mid?: string } = {}): Promise<void> =>
   new Promise((resolve) => {
     const list = o.only ?? GUIDE_PAGES.map((_, k) => k);
     let p = Math.max(0, Math.min(list.length - 1, o.start ?? 0));
