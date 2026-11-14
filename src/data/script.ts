@@ -220,7 +220,9 @@ export const FINALE = {
   walk: [n('도금왕이 쓰러졌다.'), n('승급대 위에 금왕관이 남았다.')],
   taunt: [s('도금왕', GILDED_STORY.phase2End)], choose: '왕관을 쓴다 · 왕관을 던진다', back: [], murmur: [], stunned: [],
 };
-export interface StoryCompany { alive: { name: string; serial?: string; t: StandIn['t'] }[]; promised?: { name: string; alive: boolean } }
+/** melted (D-465): 종막에서 쇳물 서약으로 녹여 바친 동료 이름 — 결말이 그 선택을 부른다 */
+export interface StoryCompany { alive: { name: string; serial?: string; t: StandIn['t'] }[]; promised?: { name: string; alive: boolean }; melted?: string[] }
+const meltedNames = (company?: StoryCompany): string => (company?.melted ?? []).join(' · ');
 /** 결말에서 소리치는 동료: 부관 박차가 살아 있으면 박차, 아니면 약속한 동료 · 살아 있는 첫 동료 (바이블 「박차/동료」) */
 const crier = (company?: StoryCompany): string | undefined => company?.alive.find((u) => u.name === '박차')?.name ?? company?.alive.find((u) => u.name === company?.promised?.name)?.name ?? company?.alive[0]?.name;
 /**
@@ -243,6 +245,8 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
     { ...sceneCut('casting-floor', [
       n('[금단의 승급 개시: 하급 기물(폰) → 정품 킹. 부족한 규격 중량 및 황금빛 도금을 위해, 동행 기물 전원의 용해 주조 공정을 시작합니다.]'),
       n('그 냉혹한 기계음과 동시에 통제실 바닥이 거대하게 갈라지고, 뒤에서 기다리던 동료들의 발밑으로 시뻘건 쇳물과 쇠사슬이 솟구쳐 올라왔다.'),
+      // D-465: 결전에서 녹여 바친 동료가 있으면 — 쇳물은 처음이 아니었다
+      ...(company?.melted?.length ? [n(`쇳물은 처음이 아니었다. 결전에서 그가 녹여 바친 ${meltedNames(company)}의 쇳물이, 이미 왕관 안쪽을 금빛으로 덮고 있었다.`)] : []),
       ...(who ? [s(who, '대장! 갑자기 바닥이 열리고 있습니다! 쇠사슬이 우릴 아래로 끌어당기고 있어요! 이게 대체 무슨 일입니까!')] : []),
       n('아직 주조가 완료되지 않았다. 지금 당장 머리의 왕관만 벗어 던지면, 아직은 공정을 멈추고 동료들을 끌어올릴 수 있는 찰나의 시간이었다. 하지만 그는 단상 위에서 한 발짝도 움직이지 못했다.'),
       m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 경비대에게 부서지라고?'),
@@ -273,6 +277,8 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
   return [
     { ...sceneCut('gilded-fallen', [
       s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.'),
+      // D-465: 녹여 바친 동료를 스스로 부른다 — 왕관 탓이 아니라 내 손이었다
+      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`)] : []),
       s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.'),
       n('종이왕은 금왕관을 자신의 머리에 얹는 대신, 옆에서 맹렬히 돌아가고 있던 용해 주조기의 거대한 톱니바퀴 틈새를 향해 온 힘을 다해 던져 넣었다.'),
     ]), caption: 'top' },
@@ -290,6 +296,7 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
     ]), alt: 'departure-decision', caption: 'top' },
     { ...sceneCut('white-land', [
       n('끝내 정품이 되지 못한 작은 말들이, 누구의 명령도 적히지 않은 세상의 규칙 바깥으로 처음으로 자신의 발걸음을 내디뎠다.'),
+      ...(company?.melted?.length ? [n(`그 줄에 ${meltedNames(company)}의 자리는 없었다. 종이왕은 걸음마다 그 빈칸을 세었다.`)] : []),
       n('정해진 행마는 끝났다. 이제 이 하얀 판 위에 첫 수를 놓는 것은 — 당신이다.'),
     ]), alt: 'departure-decision', caption: 'top' },
   ];

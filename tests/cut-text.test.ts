@@ -20,7 +20,7 @@ const check = (where: string, lines: Line[]): void => {
 };
 const n = (t: string): Line => ({ k: 'n', t });
 const s = (who: string, t: string): Line => ({ k: 's', who, t });
-const crew = { alive: [{ name: '삐걱거리는 경첩', t: 'P' as const }, { name: '박차', t: 'N' as const }], promised: { name: '삐걱거리는 경첩', alive: true } };
+const crew = { alive: [{ name: '삐걱거리는 경첩', t: 'P' as const }, { name: '박차', t: 'N' as const }], promised: { name: '삐걱거리는 경첩', alive: true }, melted: ['구부러진 못', '먼지투성이'] };
 
 describe('컷신 자막 띠 쪽 나누기 (D-451)', () => {
   it('긴 서술은 문장 끝에서, 대사는 따옴표를 처음 · 끝 조각에만', () => {
