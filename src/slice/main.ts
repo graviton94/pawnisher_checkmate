@@ -1,9 +1,9 @@
 import '../fonts.css';
-import { GIANTS, type GiantType } from '../data/giants';
+import { BOSS_BODY, bossArtTemp, GIANTS, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
 import { FIT_TEXT, SET_TEXT, SPEED_METER } from '../data/hud';
-import { bossAbilityText, enemyAbilityText, formAbilityText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
+import { bossAbilityText, bossBodyAbilityText, enemyAbilityText, formAbilityText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { abilityHtml, bindAbilities, partCardRuleHtml } from './ability';
 import { claimOnce } from './once';
@@ -50,7 +50,7 @@ import { pieceImg } from '../ui/sprites';
 import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
-import { findPiece, samePos, type FormId, type PieceType, type Pos } from '../engine';
+import { coreOf, findPiece, samePos, type FormId, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
@@ -377,8 +377,9 @@ const movePeek = (pos: Pos): boolean => {
  */
 const pieceInfo = (pos: Pos): void => {
   if (!battleInputActive()) return;
-  const p = b.s.pieces.find((q) => q.x === pos.x && q.y === pos.y);
-  if (!p) return;
+  const p0 = b.s.pieces.find((q) => q.x === pos.x && q.y === pos.y);
+  if (!p0) return;
+  const p = coreOf(b.s, p0); // 2×2 보스 몸 칸 → 본체 (D-513)
   const ci = b.squadIds.indexOf(p.id);
   const c = ci >= 0 ? squad[ci] : null;
   const key = `piece:${b.turn}:${b.bossRule}:${b.alarm ?? 0}:${p.id}:${p.hp}:${p.shield}:${p.atk}:${p.def}`;
@@ -391,15 +392,15 @@ const pieceInfo = (pos: Pos): void => {
   const maxW = offBoardW(side);
   const expanded = maxW < 352;
   // 이형 (D-481): 행마 · 공격 규칙을 맨 앞 장으로 — 적으로 처음 만날 때 여기서 배운다
-  const abilities = [...(p.giant ? giantAbilityText(p.type as GiantType) : []), ...(p.form ? [formAbilityText(p.form)] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : [...enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)), ...(b.marks ?? []).map(markAbilityText)])];
+  const abilities = [...(p.giant?.boss ? bossBodyAbilityText(!!p.giant.rage) : p.giant ? giantAbilityText(p.type as GiantType) : []), ...(p.form ? [formAbilityText(p.form)] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : [...enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)), ...(b.marks ?? []).map(markAbilityText)])];
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
   const el = infoPeek({
     cls: `unit-peek${expanded ? ' unit-peek-expanded' : ''}${p.side === 0 ? ' unit-ally' : ''}`,
     key,
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
-    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48, p.giant ? 'giant' : p.form)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.form ? ` · 이형(${PIECE_NAMES_KO[p.type]} 카드)` : ''}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.giant ? GIANTS[p.type as GiantType].name : p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
-    body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div></div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격력</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어력</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}`,
+    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48, p.giant && !p.giant.boss ? 'giant' : p.form)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.form ? ` · 이형(${PIECE_NAMES_KO[p.type]} 카드)` : ''}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.giant?.boss ? b.bossName ?? PIECE_NAMES_KO[p.type] : p.giant ? GIANTS[p.type as GiantType].name : p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
+    body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>체력</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div><div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div></div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격력</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어력</span><strong>${p.def}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}${p.giant?.boss && bossArtTemp(b.bossRule, !!p.giant.rage) ? `<p class="note">${BOSS_BODY.tempArt}</p>` : ''}`,
   });
   bindAbilities(el, abilities);
 };

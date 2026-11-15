@@ -2,6 +2,8 @@ import { vignette } from '../ui/juice';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
+import { BOSS_ART_RULES, BOSS_BODY, bossArtFile } from '../data/giants';
+import { PRELOAD } from '../data/preload-list';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
@@ -32,6 +34,11 @@ const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
 const formKey = (form: FormId, side: Side) => `px-${form}-${side}`;
 const giantKey = (type: PieceType) => `px-giant${type}-1`;
 const GIANT_ART: PieceType[] = ['P', 'R', 'Q'];
+/**
+ * 2×2 특별 보스 그림 (D-513 · 발주 GB-01~07 · b): `pieces64.txt` `[K:boss-<반장> 1]` · `[K:boss-<반장>-p2 1]` → maker.py export →
+ * `pieces/s-boss-<반장>1.png` · `s-boss-<반장>-p2-1.png` (144칸 캔버스). 받은 파일만 부른다(preload 목록에 있는 것) — 없으면 반장 킹 그림을 2×2로 빌린다.
+ */
+const bossArtKey = (rule: string, rage: boolean) => `px-boss-${rule}${rage ? '-p2' : ''}-1`;
 
 const C = {
   // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
@@ -240,6 +247,7 @@ class BoardScene extends Phaser.Scene {
       for (const side of [0, 1] as Side[]) this.load.image(pieceKey(type, side), `pieces/s-${type}${side}.png`);
     for (const f of FORM_IDS) for (const side of [0, 1] as Side[]) this.load.image(formKey(f, side), `pieces/s-${f}${side}.png`);
     for (const type of GIANT_ART) this.load.image(giantKey(type), `pieces/s-giant${type}1.png`);
+    for (const r of BOSS_ART_RULES) for (const rage of [false, true]) if (PRELOAD.includes(bossArtFile(r, rage))) this.load.image(bossArtKey(r, rage), bossArtFile(r, rage));
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
     for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
@@ -304,6 +312,7 @@ class BoardScene extends Phaser.Scene {
       for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns', 'boss-gilded', 'boss-inspect', 'boss-magnet', 'boss-alarm']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
     }
     // 발주 이형 · 거대 그림: 같은 도트 · 같은 색 바꾸기 (깨짐 · 정예 · 반장 색)
+    for (const r of BOSS_ART_RULES) for (const rage of [false, true]) if (this.textures.exists(bossArtKey(r, rage))) this.textures.get(bossArtKey(r, rage)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     const arts = [...FORM_IDS.flatMap((f) => [formKey(f, 0), formKey(f, 1)]), ...GIANT_ART.map(giantKey)].filter((k) => this.textures.exists(k));
     for (const k of arts) {
       this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -375,7 +384,9 @@ class BoardScene extends Phaser.Scene {
     const tp = new PixelPen(top, t / BOARD_DOTS);
     for (const r of this.anim.glints) {
       if (!r.s.root.active) continue;
-      drawGauge(tp, r.s.root.x + 3 * tp.dot, r.s.root.y + 16 * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms);
+      const big = !!r.s.piece.giant?.boss; // 2×2 보스는 위 끝 넓은 게이지 (D-513)
+      const gy = big ? 1 - BOARD_DOTS : r.s.piece.giant?.dy === 1 ? 1 : 16;
+      drawGauge(tp, r.s.root.x + 3 * tp.dot, r.s.root.y + gy * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, big ? 2 * BOARD_DOTS - 8 : 12);
     }
   }
 
@@ -556,11 +567,21 @@ class BoardScene extends Phaser.Scene {
     const t = this.tile;
     const w = this.world(pos);
     const root = this.add.container(w.x, w.y).setDepth(2 + pos.y * -0.001 + 0.5);
+    // 2×2 보스 몸 칸 (D-513): 그림 · 게이지는 본체(왼아래 칸)가 2×2로 한 장 — 몸 칸은 빈 자리표(움직임 사건만 받는다)
+    if (p.body !== undefined) {
+      const glyph = this.add.image(t / 2, t / 2, pieceKey('K', 1)).setVisible(false);
+      const hp = this.add.graphics();
+      root.add([glyph, hp]);
+      return { root, glyph, hp, piece: p };
+    }
+    const boss = !!p.giant?.boss;
+    /** 2×2 보스는 위 칸까지 — 칸 위 끝 표식(딱지 · 체크 고리)을 한 칸 올린다 */
+    const oy = boss ? -t : 0;
     // 발밑 받침은 쓰지 않는다 (D-048) — 진영은 흰/검은 기물 + HP 게이지 색
     const base = this.add.graphics();
     const rings: Phaser.GameObjects.GameObject[] = [];
     // 체크: HP 1로 버틴 킹 — 다음에 맞으면 끝 (D-022). 위 가운데가 터진 붉은 톱니 고리
-    if (p.type === 'K' && p.hp === 1 && this.state?.rules.checkmate) rings.push(this.add.image(t / 2, t / 2, boardKey('check')).setDisplaySize((t * 21) / 20, (t * 21) / 20));
+    if (p.type === 'K' && p.hp === 1 && this.state?.rules.checkmate) rings.push(boss ? this.add.image(t, 0, boardKey('check')).setDisplaySize((t * 42) / 20, (t * 42) / 20) : this.add.image(t / 2, t / 2, boardKey('check')).setDisplaySize((t * 21) / 20, (t * 21) / 20));
     const marks: Phaser.GameObjects.GameObject[] = [];
     // 각인 (규격 2.0): 왼쪽 위 검은 딱지 + 황동 글자 하나 — 길게 누르면 이름 · 효과
     if (p.carve) {
@@ -596,8 +617,8 @@ class BoardScene extends Phaser.Scene {
     // 원수 = 해골 — 왼쪽 위. 치기 전에 "이 기물은 물어뜯는다"가 보인다 (D-175 · D-178)
     const chipAt = (name: string, left: boolean) => {
       const size = Math.round(t * 0.36);
-      const x = left ? t * 0.02 + size / 2 : t - t * 0.02 - size / 2;
-      marks.push(this.add.image(Math.round(x), Math.round(t * 0.02 + size / 2), boardKey(`chip-${name}`)).setDisplaySize(size, size));
+      const x = left ? t * 0.02 + size / 2 : (boss ? 2 * t : t) - t * 0.02 - size / 2;
+      marks.push(this.add.image(Math.round(x), Math.round(oy + t * 0.02 + size / 2 + (boss ? t * 0.2 : 0)), boardKey(`chip-${name}`)).setDisplaySize(size, size));
     };
     const trait = p.side === 1 ? (p.type === 'P' && !p.giant && this.foeTraits.includes('blast') ? 'flame' : p.type === 'K' && this.foeTraits.includes('thorns') ? 'claw' : null) : null;
     if (p.side === 0 && this.shockedIds.includes(p.id)) chipAt('shock', false);
@@ -611,7 +632,25 @@ class BoardScene extends Phaser.Scene {
     const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side, { form: p.asPawn ? undefined : p.form, giant: !!p.giant })).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
     // 거대 주물 (D-484): 그림 하나를 2×2 칸에 펴고 네 조각으로 — 부위마다 제 칸의 4분의 1만 보인다(부서지면 그 조각이 무너진다).
     // 화면 위쪽 = 판 y가 큰 쪽(dy 1). 전용 그림(G-01~03, 144칸 캔버스)은 한가운데가 부위 경계, 없으면 바탕 기물 그림을 두 배로
-    if (p.giant) {
+    if (boss) {
+      // 2×2 보스 (D-513): 본체 칸에서 2×2 한 장 — 전용 그림(GB, 144칸 캔버스)이 있으면 그것(격노면 b), 없으면 반장 킹 그림(72칸)을 같은 배율 두 배로 빌린다
+      const key = bossArtKey(this.bossRule, !!p.giant!.rage);
+      const real = this.textures.exists(key) || this.textures.exists(bossArtKey(this.bossRule, false));
+      if (real) glyph.setTexture(this.textures.exists(key) ? key : bossArtKey(this.bossRule, false));
+      glyph.setDisplaySize(t * 2 * PIECE_SIZE, t * 2 * PIECE_SIZE).setPosition(t, -t + 2 * t * PIECE_Y);
+      if (!real) {
+        // 「임시」 딱지 (D-386: 받기 전에는 빌린 그림이라고 판 위에 밝힌다 — 길게 누르면 「임시 — GB 대기」) — 2×2 왼아래 귀퉁이, 받침을 가리지 않게
+        const lbl = this.add.text(0, 0, BOSS_BODY.tempChip, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: '#0B0B0E' }).setOrigin(0.5).setResolution(this.dpr);
+        const d = t / BOARD_DOTS;
+        const bw = Math.ceil((lbl.width + 4 * d) / d) * d, bh = Math.ceil((lbl.height + d) / d) * d;
+        const bx = Math.round(2 * d), by = Math.round(t - bh - d);
+        const tag = this.add.graphics();
+        tag.fillStyle(0x0b0b0e, 1).fillRect(bx - d, by - d, bw + 2 * d, bh + 2 * d);
+        tag.fillStyle(0xc89b3c, 1).fillRect(bx, by, bw, bh);
+        lbl.setPosition(bx + bw / 2, by + bh / 2 + d / 2);
+        marks.push(tag, lbl);
+      }
+    } else if (p.giant) {
       const left = p.giant.dx === 0, top = p.giant.dy === 1;
       const fw = glyph.frame.width, fh = glyph.frame.height;
       glyph.setDisplaySize(t * 2 * GIANT_FILL, t * 2 * GIANT_FILL).setPosition(left ? t : 0, top ? t : 0);
@@ -630,6 +669,18 @@ class BoardScene extends Phaser.Scene {
     const pen = new PixelPen(s.hp, this.tile / BOARD_DOTS);
     const d = pen.dot;
     s.hp.clear();
+    if (s.piece.body !== undefined) return; // 2×2 보스 몸 칸: 게이지는 본체 하나 (D-513)
+    // 2×2 보스 (D-513): 게이지 하나를 2×2 위 끝에 넓게 — 거대 주물(부위 게이지 넷)과 한눈에 갈린다
+    if (s.piece.giant?.boss) {
+      const gy = 1 - BOARD_DOTS;
+      drawGauge(pen, 3 * d, gy * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, 2 * BOARD_DOTS - 8);
+      if (s.piece.shield > 0) {
+        const n = Math.max(1, Math.round((2 * BOARD_DOTS - 8) * Math.min(1, s.piece.shield / s.piece.maxHp)));
+        for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, (gy + 4) * d + d / 2, 0xf4f1ea, 1, 1);
+      }
+      if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
+      return;
+    }
     // 거대 주물 위쪽 부위 (D-484): 게이지를 칸 위 끝에 — 큰 그림 한가운데를 가로지르지 않고 네 게이지가 테두리처럼 둘러싼다
     const gy = s.piece.giant?.dy === 1 ? 1 : 16;
     drawGauge(pen, 3 * d, gy * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp);

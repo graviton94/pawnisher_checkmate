@@ -1,4 +1,4 @@
-import { GIANTS, type GiantType } from './giants';
+import { BOSS_BODY, GIANTS, type GiantType } from './giants';
 import { BOSS, BOSS_NUM, FOE_MARKS, FOE_TRAITS, TRAIT, type BossRule, type FoeMark, type FoeTrait } from '../slice/cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../slice/parts';
 import type { FormId, PieceType } from '../engine';
@@ -45,6 +45,12 @@ export const markAbilityText = (m: FoeMark): AbilityText => ({ name: FOE_MARKS[m
 export const giantAbilityText = (t: GiantType): AbilityText[] => [
   { name: GIANTS[t].name, description: GIANTS[t].move, effect: GIANTS[t].hit },
   { name: '네 부위', description: '칸마다 HP가 따로, 밀리지 않는다', effect: '부서진 부위는 제 몫을 못 친다' },
+];
+
+/** 2×2 특별 보스 (D-513): [2×2 몸] / 걷기 / : 내리찍기 — 반장 규칙 장 앞에 */
+export const bossBodyAbilityText = (rage = false): AbilityText[] => [
+  { name: '2×2 몸', description: BOSS_BODY.move, effect: rage ? BOSS_BODY.hitRage : BOSS_BODY.hit },
+  { name: '한 몸', description: '네 칸 어디를 쳐도 킹 하나', effect: '피해는 한 공격에 한 번 · 밀리지 않는다' },
 ];
 
 /** 이형 기물 (D-481): [이름] / 움직임 / : 공격 — 처음 적으로 만날 때 이 장에서 규칙을 배운다 */

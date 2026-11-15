@@ -1,4 +1,5 @@
 import type { PieceType } from '../engine/types';
+import { PRELOAD } from './preload-list';
 
 /**
  * 거대 주물 (D-484, GDD 21장 §3) — 거푸집을 잘못 부어 규격의 두 배로 굳은 기물. 판의 2×2를 차지한다.
@@ -47,4 +48,15 @@ export const BOSS_BODY = {
   slam: (name: string): string => `${name} — 내리찍기`,
   /** 전용 그림(GB-01~07 · b)을 받기 전 판 위 딱지 (D-386: 반장 킹 그림을 2×2로 빌려 쓴다) */
   tempArt: '임시 — GB 대기',
+  /** 판 위에는 짧게 (2×2 귀퉁이 딱지) */
+  tempChip: '임시',
 };
+
+/**
+ * 2×2 보스 전용 그림 파일 (발주 GB-01~07 · b 「넣을 곳」과 같은 이름): `pieces64.txt` `[K:boss-<반장> 1]` · `[K:boss-<반장>-p2 1]`
+ * → `python3 -I tools/pixel/maker.py export` → `public/pieces/s-boss-<반장>1.png` · `s-boss-<반장>-p2-1.png` (144칸 캔버스).
+ */
+export const BOSS_ART_RULES = ['plate', 'inspect', 'spawn', 'magnet', 'thorns', 'alarm', 'gilded'] as const;
+export const bossArtFile = (rule: string, rage: boolean): string => `pieces/s-boss-${rule}${rage ? '-p2-' : ''}1.png`;
+/** 그 반장의 그림(격노면 b, 없으면 1단계)을 아직 받지 않아 반장 킹 그림을 빌리는 중인가 — 받은 파일은 preload 목록(tools/gen-preload.cjs)에 오른다 */
+export const bossArtTemp = (rule: string, rage = false): boolean => !PRELOAD.includes(bossArtFile(rule, rage)) && !PRELOAD.includes(bossArtFile(rule, false));

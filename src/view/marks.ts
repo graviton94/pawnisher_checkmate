@@ -41,21 +41,22 @@ export const LOSE_SWEEP_MS = 1600;
  * HP 게이지 14×4 도트 (D-054·D-055): 검정 테두리(모서리 비움) + 12×2 채움(밝은 줄 + 그늘 줄).
  * (x, y) = 게이지 왼쪽 위. 잃을 HP는 금색, ms를 주면 흰 반짝임이 훑는다.
  */
-export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: number, after: number, max: number, ms = -1): void => {
+/** n = 속 칸 수 (기본 12 — 2×2 보스는 넓게, D-513) */
+export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: number, after: number, max: number, ms = -1, n = 12): void => {
   const d = pen.dot;
   const cell = (i: number, j: number, c: number) => pen.px(x + i * d + d / 2, y + j * d + d / 2, c, 1, 1);
-  for (let i = 1; i < 13; i++) {
+  for (let i = 1; i < n + 1; i++) {
     cell(i, 0, 0x0b0b0e);
     cell(i, 3, 0x0b0b0e);
   }
   for (const j of [1, 2]) {
     cell(0, j, 0x0b0b0e);
-    cell(13, j, 0x0b0b0e);
+    cell(n + 1, j, 0x0b0b0e);
   }
-  const keep = Math.round((12 * Math.max(0, after)) / max);
-  const cur = Math.round((12 * Math.max(0, hp)) / max);
+  const keep = Math.round((n * Math.max(0, after)) / max);
+  const cur = Math.round((n * Math.max(0, hp)) / max);
   const sweep = ms < 0 ? -9 : Math.floor(cur - 1 - ((ms % LOSE_SWEEP_MS) / LOSE_SWEEP_MS) * (cur - keep + 2));
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < n; i++) {
     const lose = i >= keep && i < cur;
     const [top, low] = GAUGE[lose ? 'lose' : i < keep ? (side === 0 ? 'a' : 'e') : 'empty'];
     cell(1 + i, 1, lose && i === sweep ? 0xf4f1ea : top);

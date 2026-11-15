@@ -6,6 +6,7 @@
   python3 -I tools/pixel/maker.py sheet out.png 6     전체 시트 (흰/흑 × 6종, 배율)
   유형에 이형을 붙이면 그 그림: N:hammer (pieces.txt에 [N:hammer] 블록이 있을 때)
   export는 발주 이형 · 거대 블록([R:cannon 0] · [P:giant 1] …, VARIANT_FILES)도 s-cannon0.png · s-giantP1.png로 찍는다 (D-489)
+  2×2 보스 블록 [K:boss-<반장> 1] · [K:boss-<반장>-p2 1](144칸)은 s-boss-<반장>1.png · s-boss-<반장>-p2-1.png로 (D-513 · GB-01~07)
 
 규칙: 흰 바깥 테두리 1도트는 자동 (4방향), 캔버스는 18×18 도트, 가운데 정렬 · 받침 맨 아래 맞춤.
 흑 진영은 같은 격자를 짙은 색으로 칠하고, 위·왼쪽이 외곽선에 닿은 몸 도트를 밝은 테로 (원본 흑 기물의 빛 테).
@@ -225,12 +226,15 @@ def export():
         if ':' not in name:
             continue
         t, form = name.split(':')
-        if form not in VARIANT_FILES:
+        # 2×2 특별 보스 (D-513 · 발주 GB-01~07 · b): [K:boss-plate 1] → s-boss-plate1.png · [K:boss-plate-p2 1] → s-boss-plate-p2-1.png (144칸 캔버스 그대로)
+        boss = form.startswith('boss-')
+        if form not in VARIANT_FILES and not boss:
             continue
         stem = f'giant{t}' if form == 'giant' else form
-        piece(name, side, 2).save(os.path.join(out, f's-{stem}{side}.png'))
-        piece(name, side, 3).save(os.path.join(out, f'l-{stem}{side}.png'))
-        names.append(f'{stem}{side}')
+        sep = '-' if boss and form.endswith('-p2') else ''
+        piece(name, side, 2).save(os.path.join(out, f's-{stem}{sep}{side}.png'))
+        piece(name, side, 3).save(os.path.join(out, f'l-{stem}{sep}{side}.png'))
+        names.append(f'{stem}{sep}{side}')
     print('public/pieces/s-*.png (144px) · l-*.png (216px) · m-*.png (25px 작은 도트판) — 72칸 캔버스(64칸 정본 + 위 8줄), 12종씩')
     print('이형 · 거대:', ' '.join(names))
 
