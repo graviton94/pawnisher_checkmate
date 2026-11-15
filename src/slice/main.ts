@@ -1,5 +1,5 @@
 import '../fonts.css';
-import { BOSS_BODY, bossArtTemp, GIANTS, RAID_TEXT, type GiantType } from '../data/giants';
+import { BOSS_BODY, bossArtTemp, GIANTS, RAID, RAID_TEXT, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
 import { FIT_TEXT, SET_TEXT, SPEED_METER } from '../data/hud';
@@ -47,6 +47,7 @@ import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, runLab
 import { promotionScene } from './promotion';
 import { effectHtml, effectNumbers } from './effect-text';
 import { pieceImg } from '../ui/sprites';
+import { BOSS_V, HUD_V, bossProposal, speedProposal } from './hud-proposal';
 import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
@@ -828,6 +829,7 @@ const gauges = (): void => {
       const fx = was !== null && was > b.coins && !calmNow() && speedTube(was, i) !== st ? ' out' : '';
       return `<i class="tube t-${st}${fx}" style="--k:${i}"></i>`;
     }).join('');
+    if (HUD_V) return speedProposal($('coins'), { coins: b.coins, max: SLICE.coins, was, reward, per: Math.round(SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)), calm: calmNow() });
     $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}<span class="lbl-x"> 보상</span><i class="coin-key" aria-hidden="true"></i></span><span class="speed" title="${SPEED_METER.label}">${tubes}<b class="win" aria-label="${SPEED_METER.label} ${reward}">${reward}</b></span>`;
   }
 };
@@ -888,6 +890,13 @@ const refresh = (): void => {
   // 반장 규칙 칩 (보고서 2-2): 진홍 단추에 반장 이름 — 누르면 규칙 S 창
   $('boss').hidden = !b.boss;
   if (b.boss) $('boss').textContent = BOSS_RULES[b.bossRule].name;
+  if (BOSS_V) {
+    // 시안 (?boss=x|y|z): 반장 이름 띠를 줄인 꼴 — 기본 화면에는 없다
+    const k = b.boss ? b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined) : undefined;
+    let at: { x: number; y: number } | null = null;
+    if (k) { const a = renderer.screenOf({ x: k.x, y: k.y + 1 }), c = renderer.screenOf({ x: k.x + 1, y: k.y + 1 }); at = { x: (a.x + c.x) / 2, y: a.y - (c.x - a.x) / 2 }; }
+    bossProposal(b, BOSS_RULES[b.bossRule].name, b.bossPat ? RAID.names[b.bossPat] : null, at);
+  }
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   gauges();
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;

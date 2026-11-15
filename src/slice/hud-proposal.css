@@ -1,0 +1,103 @@
+/* 시안 전용 (?hud=a|b|c · ?boss=x|y|z) — 기본 화면에는 붙지 않는다. 받은 에셋만 --px 정수 도트로 (D-386 · D-216: 그라데이션 · 페이드 없음) */
+
+/* ---------- 공통: 줄어드는 순간 ---------- */
+.hp-pop {
+  position: absolute; right: 0; top: -6px; z-index: 3; pointer-events: none;
+  font: 700 24px/1 Galmuri11, sans-serif; font-style: normal; font-synthesis: none; color: #ff7b7b;
+  text-shadow: 2px 0 0 #0b0b0e, -2px 0 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 -2px 0 #0b0b0e;
+  animation: hpPop 1300ms steps(1, end) both;
+}
+/* 튀어나옴(2배 → 1배 계단) → 떠오름 → 아래부터 디더로 지워짐 — 전투 피해 숫자와 같은 박자 */
+@keyframes hpPop {
+  0% { transform: scale(2); }
+  8% { transform: scale(1.5); }
+  16% { transform: scale(1) translateY(0); }
+  40% { transform: translateY(-4px); }
+  60% { transform: translateY(-8px); -webkit-mask-image: none; mask-image: none; }
+  70% { transform: translateY(-10px); -webkit-mask-image: var(--px1); mask-image: var(--px1); }
+  80% { transform: translateY(-12px); -webkit-mask-image: var(--px2); mask-image: var(--px2); }
+  90% { transform: translateY(-14px); -webkit-mask-image: var(--px3); mask-image: var(--px3); }
+  100% { transform: translateY(-14px); -webkit-mask-image: var(--px4); mask-image: var(--px4); }
+}
+:is(.pa-w, .pb-lbl, .pc-lbl).roll-pre { animation: hpPre 170ms steps(2, jump-none) both; }
+@keyframes hpPre { 0% { transform: none; } 100% { transform: translateY(calc(var(--px) * 2)) scale(1.06, 0.86); } }
+:is(.pa-w, .pb-lbl, .pc-lbl).roll-hit { animation: erLand 300ms steps(3, end) both; }
+:is(.pa-n, .pb-n, .pc-n).tick { animation: tick3 120ms var(--snap); }
+
+body.hp-a .pa-w > .hp-pop { left: 0; right: auto; top: 0; }
+body.hp-b .pb-lbl > .hp-pop, body.hp-c .pc-lbl > .hp-pop { top: 100%; }
+
+/* ---------- A 지갑 숫자: 지갑 23×25 + 30px 숫자 + 두 줄 설명 ---------- */
+body.slice.lay-f.hp-a .gtop #coins { display: flex; grid-column: 1 / -1; grid-row: 2; align-items: center; gap: var(--s2, 8px); min-width: 0; }
+body.hp-a .pa-w { position: relative; display: inline-flex; align-items: center; gap: var(--px); color: #f4d27a; transform-origin: 50% 100%; }
+body.hp-a .pa-bag { display: block; flex: none; width: calc(var(--px) * 23); height: calc(var(--px) * 25); background: url('../assets/ui/chrome/v2/wallet.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.hp-a .pa-n { display: inline-block; min-width: 2ch; font: 400 30px/1 Galmuri14, Galmuri11, sans-serif; color: #f4d27a; }
+body.hp-a .pa-sub { display: flex; flex-direction: column; gap: 4px; min-width: 0; font: 400 12px/14px Galmuri11, sans-serif; color: #a89f92; white-space: nowrap; }
+body.hp-a .pa-sub .pa-cost { color: #ff7b7b; }
+
+/* ---------- B 한 턴 한 관: 진공관 8×16 × 11을 움푹 칸(inset-well 6) 안에 ---------- */
+body.slice.lay-f.hp-b #right > .gtop { height: 76px; }
+body.slice.lay-f.hp-b .gtop #coins { display: contents; }
+body.hp-b .pb-lbl { position: relative; grid-column: 2; grid-row: 1; justify-self: end; display: inline-flex; align-items: center; gap: 4px; font: 400 12px/14px Galmuri11, sans-serif; color: #f0c48a; white-space: nowrap; }
+body.hp-b .pb-n { font: 400 15px/14px Galmuri14, Galmuri11, sans-serif; color: #f4d27a; }
+body.hp-b .coin-key, body.hp-c .coin-key, #pc-cost .coin-key { display: block; flex: none; width: 12px; height: 12px; background: url('../assets/ui/chrome/v2/coin-key.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.hp-b .pb-row {
+  grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; gap: 0; margin-top: 4px;
+  border-style: solid; border-width: calc(var(--px) * 3); border-image: url('../assets/ui/chrome/v2/inset-well.png') 6 fill / calc(var(--px) * 3) / 0 stretch; image-rendering: pixelated;
+}
+body.hp-b .pb-t { display: block; width: calc(var(--px) * 8); height: calc(var(--px) * 16); background: var(--img) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+body.hp-b .pb-t.t-lit { --img: url('../assets/ui/kit/tube-lit.png'); }
+body.hp-b .pb-t.t-dead { --img: url('../assets/ui/kit/tube-dead.png'); }
+/* 이번 턴 끝에 꺼질 관: 켜짐과 끊긴 필라멘트를 오간다 — 「턴 끝 = 이 관 하나」를 누르기 전에 보여 준다 */
+body.hp-b .pb-t.t-next { --img: url('../assets/ui/kit/tube-lit.png'); animation: pbNext 900ms steps(1, end) infinite; }
+@keyframes pbNext { 0%, 55% { background-image: url('../assets/ui/kit/tube-lit.png'); } 56%, 100% { background-image: url('../assets/ui/kit/tube-flick.png'); } }
+body.hp-b .pb-t.out { animation: pbOut 600ms steps(1, end) both; }
+@keyframes pbOut { 0% { background-image: url('../assets/ui/kit/tube-flick.png'); transform: translateY(-2px); } 30% { background-image: url('../assets/ui/kit/tube-lit.png'); transform: none; } 55% { background-image: url('../assets/ui/kit/tube-flick.png'); } 80%, 100% { background-image: url('../assets/ui/kit/tube-dead.png'); } }
+
+/* ---------- C 턴 끝 값표: 위는 한 줄(34) — 가운데 칸이 34px 넓어진다 · 턴 끝 단추에 진홍 꼬리표 ---------- */
+body.slice.lay-f.hp-c #right > .gtop { height: 34px; grid-template-rows: 30px; align-items: center; }
+body.slice.lay-f.hp-c .gtop .turn-label { grid-row: 1; }
+body.slice.lay-f.hp-c .gtop #coins { display: contents; }
+body.hp-c .pc-lbl { position: relative; grid-column: 2; grid-row: 1; justify-self: end; display: inline-flex; align-items: center; gap: 4px; font: 400 12px/1 Galmuri11, sans-serif; color: #f0c48a; white-space: nowrap; }
+body.hp-c .pc-n { display: inline-block; min-width: 2ch; text-align: right; font: 700 24px/1 Galmuri11, sans-serif; color: #f4d27a; }
+body.slice.lay-f.hp-c #right > .actions { position: relative; }
+#pc-cost {
+  position: absolute; z-index: 2; right: 4px; top: -14px; pointer-events: none;
+  display: inline-flex; align-items: center; box-sizing: border-box; height: calc(var(--px) * 15); padding: 0 calc(var(--px) * 1) 0 0;
+  border-style: solid; border-width: calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 3) calc(var(--px) * 14);
+  border-image: url('../assets/ui/chrome/v2/tag-crimson.png') 3 4 3 14 fill / calc(var(--px) * 3) calc(var(--px) * 4) calc(var(--px) * 3) calc(var(--px) * 14) / 0 stretch;
+  image-rendering: pixelated; color: #0b0b0e; font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; transform-origin: 0 50%;
+}
+#pc-cost[hidden] { display: none; }
+#pc-cost .coin-key { margin-right: 2px; }
+/* 턴을 끝내면 값표가 「뜯긴다」: 들림 → 툭 떨어짐 → 다시 걸려 출렁 */
+#pc-cost.snap { animation: pcSnap 520ms steps(1, end) both; }
+@keyframes pcSnap { 0% { transform: translateY(-4px); } 20% { transform: translateY(6px); } 45% { transform: translateY(-2px); } 70% { transform: translateY(1px); } 100% { transform: none; } }
+
+/* ---------- 반장 띠 시안 공통: 진홍 큰 단추는 감춘다(누르면 열리는 규칙 창은 그대로 쓴다) ---------- */
+body:is(.hb-x, .hb-y, .hb-z) #boss { display: none !important; }
+
+/* X 목록 머리 명패 — 「적의 수」 자리에 적 이름 명패 (name-foe 48×15 · 0 6 0 8) */
+body.hb-x .hbx-name {
+  position: relative; display: inline-flex; align-items: center; height: calc(var(--px) * 15); padding: 0 var(--px) 0 calc(var(--px) * 2); margin: 0; cursor: pointer;
+  border-style: solid; border-width: 0 calc(var(--px) * 6) 0 calc(var(--px) * 8); border-image: url('../assets/ui/chrome/v2/name-foe.png') 0 6 0 8 fill / 0 calc(var(--px) * 6) 0 calc(var(--px) * 8) / 0 stretch; image-rendering: pixelated;
+  background: none; color: #ff7b7b; font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap;
+}
+body.hb-x .hbx-name::after { content: ''; position: absolute; inset: -9px 0; } /* 누름 면적 48 */
+
+/* Y 판 위 꼬리표 — 2×2 몸 위 가장자리 가운데에 걸린다 */
+#hby-tag {
+  position: fixed; z-index: 30; transform: translate(-50%, calc(-100% - 10px)); display: inline-flex; align-items: center; height: calc(var(--px) * 15); padding: 0 var(--px) 0 calc(var(--px) * 2); margin: 0; cursor: pointer;
+  border-style: solid; border-width: 0 calc(var(--px) * 6) 0 calc(var(--px) * 8); border-image: url('../assets/ui/chrome/v2/name-foe.png') 0 6 0 8 fill / 0 calc(var(--px) * 6) 0 calc(var(--px) * 8) / 0 stretch; image-rendering: pixelated;
+  background: none; color: #ff7b7b; font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap;
+}
+#hby-tag[hidden], body.between #hby-tag { display: none; }
+
+/* Z 의도 목록 첫 줄 — 다른 적 줄과 같은 32 줄 · 얼굴 24 */
+body.hb-z .intents .hbz-row { grid-template-columns: 24px auto minmax(0, 1fr); cursor: pointer; border-bottom: calc(var(--px) * 1) solid #3a3542; }
+body.hb-z .hbz-name { color: #ff7b7b; font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap; }
+body.hb-z .hbz-pat { color: #a89f92; font: 400 12px/1 Galmuri11, sans-serif; white-space: nowrap; overflow: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-pop, #pc-cost.snap, body.hp-b .pb-t { animation: none !important; }
+}
