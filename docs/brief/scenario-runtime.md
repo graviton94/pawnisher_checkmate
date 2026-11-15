@@ -14,7 +14,7 @@
 
 | 장면 | 바이블 ID | 코드 |
 |---|---|---|
-| 프롤로그 · 그림자 컷 | PRO · SHD-A(같은 승천 재도전) · SHD-B(2~4승천 시작) | `script.ts` `PROLOGUE` · `shadowCut(ch, law, retry)` — 재도전 판정은 `storyAttempts` |
+| 프롤로그 · 그림자 컷 | PRO · SHD-A(같은 승천 재도전) · SHD-B(2~4승천 시작) | `script.ts` `PROLOGUE`(9컷 — PRO-01의 2 · 3줄은 OP-01 `op-windup` 컷, D-509 · D-512) · `shadowCuts(ch, law, retry)`(SHD-B 2~4줄은 `law-plate`, D-510 — 글 · 줄 ID는 `shadowCut`) — 재도전 판정은 `storyAttempts` |
 | 막 입구 카드 | ACT-2~4 (ACT-1은 화면에 안 나온다) | `ACT_CARD` |
 | 동료 장면 | CO-1~3 (CO-2는 승천별) | `companion-scenes.ts` |
 | 반장 등장 · 격파 | BOS · STG-PROG | `BOSS_STORY` · `BOSS_CARD` · `stageProg` · `main.ts bossFallCut` |

@@ -28,9 +28,10 @@ const KIND = { n: '서술', s: '대사', m: '독백' } as const;
 const FX_KO = { shake: '흔들림', flash: '흰 번쩍', red: '붉은 경보', gold: '금빛' } as const;
 const beat = (l: Line): string => [l.pause ? `숨 ${l.pause}` : '', l.shot ? `샷 ${Math.round(l.shot.x * 100)}·${Math.round(l.shot.y * 100)}${l.shot.z ? ` ×${l.shot.z}` : ''}` : '', l.sfx ? `소리 ${l.sfx}` : '', l.fx ? FX_KO[l.fx] : ''].filter(Boolean).join(' · ') || '—';
 /** 줄 표: ID · 형식 · 화자 · 원문 · 연출(비트) */
-const table = (prefix: string, lines: Line[], from = 0): void => {
+/** ids: 바이블 줄 ID가 「컷-번호」 꼴이 아닌 줄(SHD-B-4-A2 · END-F-1 · END-T-크레딧 …)은 순번 대신 이 이름을 쓴다 */
+const table = (prefix: string, lines: Line[], from = 0, ids: Record<number, string> = {}): void => {
   p('| ID | 형식 | 화자 | 원문 | 연출 |', '|---|---|---|---|---|');
-  lines.forEach((l, i) => p(`| ${prefix}-${from + i + 1} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} | ${beat(l)} |`));
+  lines.forEach((l, i) => p(`| ${ids[i] ?? `${prefix}-${from + i + 1}`} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} | ${beat(l)} |`));
   p('');
 };
 const TRANS_KO = { dither: '디더', iris: '조리개', melt: '쇳물', white: '백지', black: '암전', cut: '바로' } as const;
@@ -46,9 +47,9 @@ const rows = (head: [string, string], items: [string, string, string][]): void =
   items.forEach(([id, a, b]) => p(`| ${id} | ${clean(a)} | ${clean(b)} |`));
   p('');
 };
-const cutBlock = (id: string, title: string, c: Cut, picture: string, note = '', from = 0): void => {
+const cutBlock = (id: string, title: string, c: Cut, picture: string, note = '', from = 0, ids: Record<number, string> = {}): void => {
   p(`#### ${id} · ${title}`, '', c.coda ? '- **그림**: 없음 — 끝 정적' : `- **그림**: \`${c.img}.png\` — ${picture}`, ...cutHead(c), ...(note ? [`- **메모**: ${note}`] : []), '');
-  table(id, c.lines, from);
+  table(id, c.lines, from, ids);
 };
 
 const BOSS_ORDER: StoryBoss[] = ['plate', 'inspect', 'spawn', 'magnet', 'thorns', 'alarm'];
@@ -112,7 +113,7 @@ p('## 2. 인물과 어투', '',
 // ───────────────────────── 3. 프롤로그 ─────────────────────────
 const PRO_PIC = [
   '연기에 덮인 공장 전경. 기물 문장이 걸린 건물들, 다리 위에 작은 흰 폰 하나',
-  '(OP-01 1차본 — 폰이 왕관을 써서 재발주 중) 흰 폰 옆구리의 태엽 열쇠를 황동 집게 팔이 돌린다. 발밑 체스판 칸이 밝고, 뒤로 용광로와 컨베이어 위 흰 · 검은 폰 줄',
+  '(OP-01 재발주본, D-512) 맨머리 흰 폰의 등 쪽 태엽 열쇠를 황동 집게 팔이 돌린다. 왕관은 없다(PRO-06에서 처음 접는다). 뒤로 컨베이어 위 검은 폰 줄',
   '쇳물이 쏟아지는 주조 라인. 거푸집에서 검은 기물들이 줄줄이 굳어 나온다',
   '공장 집게가 흰 폰 하나를 집어 흰 세트 상자의 킹 자리에 내려놓는다. 붉은 경고등',
   '상자 위에 커다란 붉은 X. 붉은 조명 아래 줄지어 선 흰 세트',
@@ -136,7 +137,7 @@ p(`- 끝 화면 글: 「${OPENING_TEXT.tagline}」(표어) · 「${OPENING_TEXT.
 p('### 3-1. 그림자 컷 — 둘째 출하부터 프롤로그 대신', '',
   '- **트리거**: 한 번이라도 출하를 끝낸 뒤 새 출하를 시작할 때. 주인공은 **새 폰**이다(앞 출하의 기억 없음). 같은 승천을 다시 하면 SHD-A, 2~4승천을 처음 시작하면 SHD-B.', '');
 cutBlock('SHD-A', '같은 승천 재도전', shadowCut(0, undefined, true), '집게에 들린 흰 폰이 상자들이 흐르는 컨베이어 위에 있다. 높은 통로에서 금빛 왕의 실루엣이 내려다본다');
-cutBlock('SHD-B', '2승천 시작', shadowCut(1, ASCENSION[STORY_LAW[0]].law), '`new-law` — 왕관 없는 새 폰이 커다란 황동 규정판(왕관 문양 · 새긴 줄)을 올려다본다. 위쪽 멀리 왕좌 → 2~4줄은 `law-plate`(ED-05, END-K 규정 컷과 같은 쇠판 그림 — D-510 `shadowCuts`)', '셋째 줄 「 」 = **앞 승천에서 왕이 된 종이왕이 새긴 규정**(§7-4). 마지막 속마음은 승천마다 다르다(아래).');
+cutBlock('SHD-B', '2승천 시작', shadowCut(1, ASCENSION[STORY_LAW[0]].law), '`new-law` — 왕관 없는 새 폰이 커다란 황동 규정판(왕관 문양 · 새긴 줄)을 올려다본다. 위쪽 멀리 왕좌 → 2~4줄은 `law-plate`(ED-05, END-K 규정 컷과 같은 쇠판 그림 — D-510 `shadowCuts`)', '셋째 줄 「 」 = **앞 승천에서 왕이 된 종이왕이 새긴 규정**(§7-4). 마지막 속마음은 승천마다 다르다(아래).', 0, { 3: 'SHD-B-4-A2' });
 rows(['승천', '마지막 속마음'], [2, 3].map((a) => [`SHD-B-4-A${a + 1}`, `${a + 1}승천`, `‘${shadowCut(a, '규정').lines.at(-1)!.t}’`] as [string, string, string]));
 
 // ───────────────────────── 4. 막 입구 · 동료 장면 ─────────────────────────
@@ -154,7 +155,7 @@ const actor = (t: CompanionActor['t']): CompanionActor[] => [{ serial: 'x', name
 const companion = (t: CompanionActor['t'], a: number, ch = 0) => companionScene(a, actor(t), undefined, ch).cuts[0].lines;
 p('#### CO-1 · 1공정 뒤 — 약속', '');
 table('CO-1', companion('P', 0));
-rows(['동료 기물', '같은 자리의 대사 (CO-1-2)'], (['N', 'B', 'R', 'Q'] as const).map((t) => [`CO-1-${t}`, ({ N: '나이트', B: '비숍', R: '룩', Q: '퀸' })[t], `“${companion(t, 0).find((l) => l.k === 's' && l.who !== '종이왕')?.t ?? ''}”`] as [string, string, string]));
+rows(['동료 기물', '같은 자리의 대사 (CO-1-2)'], (['N', 'B', 'R', 'Q'] as const).map((t) => [`CO-1-4-${t}`, ({ N: '나이트', B: '비숍', R: '룩', Q: '퀸' })[t], `“${companion(t, 0).find((l) => l.k === 's' && l.who !== '종이왕')?.t ?? ''}”`] as [string, string, string]));
 p('#### CO-2 · 2공정 뒤 — 전대의 흔적과 흔들리는 내면', '');
 [0, 1, 2, 3].forEach((ch) => { p(`**${ch + 1}승천**`, ''); table(`CO-2-A${ch + 1}`, companion('P', 1, ch)); });
 rows(['동료 기물', '같은 자리의 대사 (CO-2-2) ※ 바이블은 폰 판만 — 나머지는 개발 측이 말투만 옮긴 변주, 검토 필요'], (['N', 'B', 'R', 'Q'] as const).map((t) => [`CO-2-${t}`, ({ N: '나이트', B: '비숍', R: '룩', Q: '퀸' })[t], `“${companion(t, 1).find((l) => l.k === 's' && l.who !== '종이왕')?.t ?? ''}”`] as [string, string, string]));
@@ -246,17 +247,17 @@ p('### 7-2. 왕이 된 결말 END-K — 왕관을 쓴 직후의 깨달음과 지
   '- 소리치는 동료는 부관 박차가 살아 있으면 박차, 아니면 약속한 동료 · 살아 있는 첫 동료. 동료가 아무도 없으면 동료 대사가 빠진다.',
   '- 셋째 컷 속마음은 승천마다 다르다(4승천에서 왕관을 쓰면 3승천 판). 셋째 컷 끝에 **이번에 새기는 규정**(§7-4)과 **마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄**(§5 「닮음」)이 붙는다.', '');
 // 그림 · 제목 · 바이블 줄 ID(컷 · 이어 세는 줄) — promotionCuts 순서
-const PR = [
+const PR: { t: string; id: string; from: number; ids?: Record<number, string>; pic: string }[] = [
   { t: '왕관을 쓰다', id: 'END-K-1', from: 0, pic: '`crown-dais` — 승급대 위에서 금왕관을 머리에 얹는 순간 (그동안 `promote-gild`: 어둠 속 받침대 위 금빛 왕의 몸)' },
   { t: '왕의 눈', id: 'END-K-1', from: 1, pic: '`end-k-sight` (ED-02) — 통제실에서 내려다본 공장. 가운데 기물 문장을 두른 탑이 세 갈래 쇳물을 아래 용광로로 쏟고, 층층 난간 · 등불 · 톱니 · 킹 깃발이 둘러싼다' },
   { t: '용해 주조', id: 'END-K-2', from: 0, pic: '`casting-floor` — 통제실 바닥이 갈라져 쇳물과 쇠사슬이 동료들을 끌어내리고, 단상 위 금왕관의 폰이 내려다본다 (그동안 `gilded-fallen`)' },
   { t: '뻗지 않은 손', id: 'END-K-2', from: 4, pic: '`end-k-reach` (ED-03 — 나이트 입 벌림, 재발주) — 쇠사슬 목걸이에 끌려 쇳물로 잠기며 말머리를 위로 뻗은 흰 나이트, 오른쪽 위 갈라진 단상 위에 금이 번진 흰 폰 받침만 움직이지 않는다' },
-  { t: '금빛으로 굳다', id: 'END-K-3', from: 0, pic: '`gold-cast` — 황금 쇳물이 아래에서부터 폰을 감싸 킹으로 굳는다 (그동안 `promote-gild`)' },
+  { t: '금빛으로 굳다', id: 'END-K-3', from: 0, ids: { 1: 'END-K-3-2-A1' }, pic: '`gold-cast` — 황금 쇳물이 아래에서부터 폰을 감싸 킹으로 굳는다 (그동안 `promote-gild`)' },
   { t: '금칠이 덮이다', id: 'END-K-3', from: 2, pic: '`end-k-gild` (ED-04 — D-510 사용자 결정으로 「안에서 잠그는 문」 대신) — 위 고리에서 금물이 쏟아져 종이 왕관 폰을 덮는다. 왕관 · 몸 위로 금이 흘러내리고 군데군데 흰 몸이 남았다. 양옆 주조기 쇠팔도 금물을 흘린다' },
-  { t: '규정을 새기다', id: 'END-K-3', from: 3, pic: '`law-plate` (ED-05) — 검수대 기둥에 못 박힌 쇠판, 날카롭게 새긴 홈 줄 넷 · 끝의 번쩍임, 아래 금박 부스러기, 왼쪽 붉은 등' },
-  { t: '다음 폰', id: 'END-K-끝', from: 0, pic: '끝 정적' },
+  { t: '규정을 새기다', id: 'END-K-3', from: 3, ids: { 1: 'END-K-3-4-닮음' }, pic: '`law-plate` (ED-05) — 검수대 기둥에 못 박힌 쇠판, 날카롭게 새긴 홈 줄 넷 · 끝의 번쩍임, 아래 금박 부스러기, 왼쪽 붉은 등' },
+  { t: '다음 폰', id: 'END-K-끝', from: 0, ids: { 0: 'END-K-끝' }, pic: '끝 정적' },
 ];
-promotionCuts(0, '', ASCENSION[STORY_LAW[0]].law, BOSS_STORY.plate.mirror, { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(PR[i].id, PR[i].t, c, PR[i].pic, PR[i].t === '금빛으로 굳다' ? '속마음은 1승천 판. 아래 변주.' : PR[i].t === '규정을 새기다' ? '「 」 = 1승천에서 새기는 규정. 마지막 줄 = 철갑 반장일 때.' : PR[i].t === '금칠이 덮이다' ? '문을 안쪽에서 잠그는 일은 그림이 아니라 서술 끝에 남는다(그림자 컷 · 도금왕 증언이 「안에서 잠근 왕」을 부른다).' : '', PR[i].from));
+promotionCuts(0, '', ASCENSION[STORY_LAW[0]].law, BOSS_STORY.plate.mirror, { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(PR[i].id, PR[i].t, c, PR[i].pic, PR[i].t === '금빛으로 굳다' ? '속마음은 1승천 판. 아래 변주.' : PR[i].t === '규정을 새기다' ? '「 」 = 1승천에서 새기는 규정. 마지막 줄 = 철갑 반장일 때.' : PR[i].t === '금칠이 덮이다' ? '문을 안쪽에서 잠그는 일은 그림이 아니라 서술 끝에 남는다(그림자 컷 · 도금왕 증언이 「안에서 잠근 왕」을 부른다).' : '', PR[i].from, PR[i].ids));
 p('**변주**', '');
 rows(['자리', '원문'], [1, 2].map((ch) => [`END-K-3-2-A${ch + 1}`, `셋째 컷 속마음 · ${ch + 1}승천`, `‘${promotionCuts(ch, '', '', '').find((c) => c.img === 'gold-cast')!.lines.find((l) => l.k === 'm')!.t}’`] as [string, string, string]));
 
@@ -264,7 +265,7 @@ p('### 7-3. 진엔딩 END-T — 왕관 파괴와 백지로의 해방 (4승천 �
 const TE_PIC = ['`gilded-fallen` — 쓰러진 도금왕(금박이 벗겨져 흰 폰이 드러남)과 쇳물빛이 새는 열린 거푸집, 왼쪽 아래에 종이왕', '`crown-gears` 발주 중 — 주조기 톱니 사이에 쐐기처럼 박혀 찌그러진 금왕관 (그동안 `gilded-fallen`)', '`white-land` 발주 중 — 뜯겨 열린 비상 출하문 너머 칸 없는 하얀 땅, 문턱의 작은 흰 기물들 (그동안 `departure-decision`: 출하구 문턱의 종이왕)', '같은 그림'];
 TE_PIC.push('끝 정적');
 const TE_TITLE = ['원했다, 그러니 끝낸다', '톱니에 박힌 왕관', '하얀 땅', '첫걸음', '첫 수'];
-trueEndingCuts([], { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(`END-T-${i + 1}`, TE_TITLE[i], c, TE_PIC[i], i === 4 ? '바이블의 END-T-크레딧 줄 — 백지 위 끝 정적.' : ''));
+trueEndingCuts([], { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(`END-T-${i + 1}`, TE_TITLE[i], c, TE_PIC[i], i === 4 ? '바이블의 END-T-크레딧 줄 — 백지 위 끝 정적.' : '', 0, i === 4 ? { 0: 'END-T-크레딧' } : {}));
 p(`- 크레딧 끝 한 줄: 「${CREDIT_TEXT.record}」`, '');
 
 p('### 7-4. 새기는 규정 LAW-1~4', '', '- 왕이 된 폰이 검수대에 새기는 글. 다음 승천의 그림자 컷(SHD-B)에 그대로 나온다. 전투 난이도는 승천 번호를 따른다(규정 글은 이야기 · 실제 효과는 아래 「난이도」).', '');
@@ -274,7 +275,7 @@ rows(['이름', '새긴 글 → 실제 효과'], ASCENSION.map((a, i) => [`ASC-$
 
 p('### 7-5. 패배 END-F', '', '- **트리거**: 우리 킹(종이왕)이 쓰러지고 되감기도 없을 때. 이 컷 뒤 결과 화면.', '');
 const DF_PIC = ['붉은 쇳물이 흐르는 용광로 입구. 그 앞에 쓰러진 흰 폰과 구겨진 종이 왕관', '`prologue-01` 빌림 — 쇳물을 붓는 거푸집 줄과 검은 기물들 (ED-10 대기)', '끝 정적'];
-DEFEAT_CUTS.forEach((c, i) => cutBlock(`END-F-${i + 1}`, ['굴러떨어진 왕관', '상자째 용광로로', '풀리는 태엽'][i], c, DF_PIC[i]));
+DEFEAT_CUTS.forEach((c, i) => cutBlock(`END-F-${i + 1}`, ['굴러떨어진 왕관', '상자째 용광로로', '풀리는 태엽'][i], c, DF_PIC[i], '', 0, c.lines.length === 1 ? { 0: `END-F-${i + 1}` } : {}));
 rows(['자리', '원문'], [
   ['END-F-창-1', '패배 창 「하자 폐기」 · 시스템', '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'],
   ['END-F-창-2', '패배 창 · 속마음 (적 킹을 거의 잡았을 때)', '‘적 킹 HP (n). 한 수였어.’'],
