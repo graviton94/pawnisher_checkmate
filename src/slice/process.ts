@@ -204,15 +204,19 @@ export const processDanger = (b: Holder): Pos[] => {
   return [];
 };
 
-/** 칸 표시 (판 그리기): 칸 · 빌린 판 도트 · 좌우 뒤집기 · 테 색 */
-export const processTiles = (b: Holder): { pos: Pos; icon: string; flipX?: boolean; frame: number }[] => {
+/**
+ * 칸 표시 (판 그리기, PB-01 D-521): 공정 칸 그림 이름(proc-*, 렌더러가 칸 짝에 따라 -dark를 붙인다) · 좌우 뒤집기 · 테 색 · 애니.
+ * 컨베이어 = 4프레임 흐름(anim) · 자석 레일 = 양 끝 기둥 + 세로 레일 · 용광로 = 기물이 서 있으면 달아오름(적 차례 끝에 데인다) ·
+ * 금 간 바닥 = 밟힌 수만큼 금이 번지고, 보스가 버티고 선 칸(곧 꺼짐)은 구멍 · 프레스 = 예고 줄 꺾쇠.
+ */
+export const processTiles = (b: Holder): { pos: Pos; icon: string; flipX?: boolean; frame: number; anim?: boolean }[] => {
   const pr = b.proc;
   if (!pr) return [];
   const s = b.s;
-  if (pr.kind === 'conveyor' && pr.row !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.row! }, icon: 'variant-conveyor', flipX: pr.dir === -1, frame: 0xc89b3c })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
-  if (pr.kind === 'magnet' && pr.col !== undefined) return Array.from({ length: s.height }, (_, y) => ({ pos: { x: pr.col!, y }, icon: 'chip-magnet', frame: 0xb91c1c })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
-  if (pr.kind === 'furnace') return (pr.cells ?? []).map((pos) => ({ pos, icon: 'variant-radiator', frame: 0xe8783c }));
-  if (pr.kind === 'crack') return [...(pr.cells ?? []), ...(pr.under ?? [])].map((pos) => ({ pos, icon: (pr.cracks?.[key(pos)] ?? 0) > 0 ? 'crack' : '', frame: 0x8a8070 }));
-  if (pr.kind === 'press' && pr.pressRow !== null && pr.pressRow !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.pressRow! }, icon: 'variant-hammer', frame: 0xc89b3c }));
+  if (pr.kind === 'conveyor' && pr.row !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.row! }, icon: 'proc-conveyor0', flipX: pr.dir === -1, frame: 0xc89b3c, anim: true })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
+  if (pr.kind === 'magnet' && pr.col !== undefined) return Array.from({ length: s.height }, (_, y) => ({ pos: { x: pr.col!, y }, icon: y === 0 || y === s.height - 1 ? 'proc-magnet-post' : 'proc-magnet-rail', frame: 0xb91c1c })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
+  if (pr.kind === 'furnace') return (pr.cells ?? []).map((pos) => ({ pos, icon: at(s, pos) ? 'proc-furnace-hot' : 'proc-furnace', frame: 0xe8783c }));
+  if (pr.kind === 'crack') return [...(pr.cells ?? []).map((pos) => ({ pos, icon: (pr.cracks?.[key(pos)] ?? 0) > 0 ? 'proc-crack2' : 'proc-crack1', frame: 0x8a8070 })), ...(pr.under ?? []).map((pos) => ({ pos, icon: 'proc-crack3', frame: 0x8a8070 }))];
+  if (pr.kind === 'press' && pr.pressRow !== null && pr.pressRow !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.pressRow! }, icon: 'proc-press-warn', frame: 0xc89b3c }));
   return [];
 };

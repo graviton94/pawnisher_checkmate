@@ -3,6 +3,7 @@ import { dangerSquares, endTurn, intentHits, newSliceBattle } from '../src/slice
 import { battleFor } from '../src/slice/run';
 import { Rng } from '../src/engine/rng';
 import { PROC } from '../src/data/process';
+import { processTiles } from '../src/slice/process';
 
 /** 공정 판 (D-486, GDD 21장 §5) — 피아 무관, 적 차례 안에서 (예고 = 실행) */
 const squad = [{ t: 'K' }, { t: 'R' }, { t: 'N' }, { t: 'P' }] as never;
@@ -88,5 +89,19 @@ describe('공정 판 (D-486)', () => {
     expect(battleFor(1, 'check', new Rng(1), 0).process).toBeUndefined();
     expect(battleFor(1, 'check', new Rng(1), 1).process).toBe('crack');
     for (let s = 0; s < 20; s++) expect(battleFor(2, 'battle', new Rng(s), 1).process).toBeUndefined();
+  });
+  it('칸 표시 (PB-01 D-521): 공정마다 proc-* 그림 — 공정마다 제 그림', () => {
+    const icons = new Set<string>();
+    for (const kind of ['conveyor', 'press', 'magnet', 'furnace', 'crack'] as const) {
+      const b = newSliceBattle(squad, ['K', 'P'], deck, 4, { process: kind });
+      if (kind === 'press') b.proc!.pressRow = 3;
+      if (kind === 'crack') b.proc!.cracks![`${b.proc!.cells![0].x},${b.proc!.cells![0].y}`] = 1;
+      const t = processTiles(b);
+      expect(t.length).toBeGreaterThan(0);
+      for (const x of t) icons.add(x.icon);
+      if (kind === 'conveyor') expect(t.every((x) => x.anim)).toBe(true);
+      if (kind === 'magnet') expect(t.filter((x) => x.icon === 'proc-magnet-post').map((x) => x.pos.y)).toEqual([0, b.s.height - 1]);
+    }
+    for (const n of ['proc-conveyor0', 'proc-press-warn', 'proc-magnet-rail', 'proc-magnet-post', 'proc-furnace', 'proc-crack1', 'proc-crack2']) expect(icons.has(n)).toBe(true);
   });
 });

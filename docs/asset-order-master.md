@@ -29,7 +29,7 @@
 | 14 | P1 | 엔딩 영화화 ED-01~12 — 열둘 다 **받음 · 반입**(ED-03 재발주본 다문 말머리 · ED-06 ~ 08 D-514 · ED-09 ~ 12 D-516, ED-11 나이트 눈은 우리가 지움), ED-04 장면 바꿈(사용자 결정 — 새 도금왕이 되어 가는 과정) · 화자 초상 PT-09 **취소 — 기존 일러스트 잘라 쓰기 (사용자 결정, D-516)** (D-510 · D-514 · D-516) | 12 | 18 | 31 · 22 |
 | 15 | P2 | 왕관(장) 시작 · 끝 CN-01~06 — 여섯 다 **받음 · 반입 (CN-01 ~ 04 D-516 — CN-01은 종이왕 없이 흑 기물만, 사용자 결정 · CN-05 · 06 D-519)** | 6 | 6 | 31 · 1 |
 | 16 | P2 | 막 입구 카드 AC-01~03 — 셋 다 **받음 · 반입 (D-519 — AC-02는 관 속 녹은 기물 조각 없이, 사용자 결정)** | 3 | 3 | 1 |
-| 17 | P2 | 공정 판 칸 PB-01 | 1 | 13 | D-486 빌린 칸 |
+| 17 | P2 | 공정 판 칸 PB-01 — **받음 (D-521) — 두 판 합침** (b안 무늬 + a안 칸 짝 테 · 프레스 머리 · 꺼진 구멍만 a안) | 1 | 13 | D-486 빌린 칸 |
 | 18 | P2 | 로딩 · 안내서 LD-01~02 | 2 | 5 | 5 |
 | 19 | P2 | 이형 분대 초상 PT-08 | 1 | 5 | D-482 영입 |
 | 20 | P3 | 킹 카드 그림 KC-01 | 1 | 8 | 26 |
@@ -2078,9 +2078,12 @@
 ## 17위 · [P2] 공정 판 칸 — 컨베이어 · 프레스 · 자석 레일 · 용광로 · 금 간 바닥
 풀리는 것: D-486 공정 판 (지금 판 도트를 빌려 씀: variant-conveyor · radiator · hammer · crack · chip-magnet)
 
-## PB-01 · 공정 판 칸 시트 5줄
+## PB-01 · 공정 판 칸 시트 5줄 · 받음 (D-521) — 두 판 합침
+- 받은 두 판본: a안 `build-res/order/PB-01-a-source.png`(진짜 도트 · 칸 짝 테 · 무늬 흐림) · b안 `PB-01-b-source.png`(무늬 또렷 · 비정수 격자 · 칸 짝 없음). 대조판 `PB-01-check.png`(a안 · b안 · 합친 밝은 칸 · 어두운 칸).
+- 합친 방법: a안 칸 짝 테(바깥 2도트 · 3째 줄 띠) 안에 b안 무늬를 16×16 다수결 축소로 얹고, 가운데 12×12는 한 단 낮춘다(팔레트 안에서만) — `python3 -I tools/pixel/proc_tiles_import.py`, 격자값 `tools/pixel/scene_recipe.py` PB01_GRID.
+- 칸별: 컨베이어 4 · 프레스 예고 · 찍힌 자국 · 자석 레일(세로로 돌림) · 자석 기둥 · 용광로 둘 · 금 1 · 2단계 = b안 무늬 / 프레스 머리 · 꺼진 구멍 = a안(16칸에서 b안 무늬가 뭉개짐).
 - 크기: 20×20 칸, 시트 148×124 → ×8
-- 넣을 곳: `public/ui/board/proc-{conveyor0..3,press-warn,press-hit,magnet-rail,magnet-post,furnace,furnace-hot,crack1..3}.png` (`BoardRenderer` 공정 칸)
+- 넣을 곳: `public/ui/board/proc-{conveyor0..3,press-warn,press-hit,press-dent,magnet-rail,magnet-post,furnace,furnace-hot,crack1..3}.png` + 어두운 칸 `-dark` (`BoardRenderer` 공정 칸)
 - 받은 그림 이름: `PB-01.png` (원본을 이 이름으로 보내 주세요 → `build-res/order/PB-01-source.png`에 보관)
 
 ```text
