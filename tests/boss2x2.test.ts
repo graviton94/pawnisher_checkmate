@@ -252,7 +252,7 @@ describe('2×2 특별 보스 — 2단계 · 면역 · 공정 판 (D-513)', () =>
       void before;
     }
   });
-  it('금 간 바닥: 몸 밑이 꺼져도 떨어지지 않고 피해만 한 번', () => {
+  it('금 간 바닥: 몸 밑이 다 밟혀도 떨어지지 않고 피해만 한 번 — 칸은 보스가 비키면 꺼진다', () => {
     const b = boss('inspect');
     const g = group(b);
     const under = [g[1], g[3]].map((p) => ({ x: p.x, y: p.y }));
@@ -267,7 +267,13 @@ describe('2×2 특별 보스 — 2단계 · 면역 · 공정 판 (D-513)', () =>
     expect(e.hits[0].killed).toBe(false);
     expect(hp0 - (core(b).hp + core(b).shield)).toBe(e.hits[0].damage);
     expect(group(b).length).toBe(4);
+    // 몸 밑 칸은 보스가 비킬 때까지 꺼지지 않는다 (몸 칸이 구멍 위에 떠 과녁이 사라지지 않게) — 비키면 꺼진다
+    expect(b.s.fallen ?? []).toEqual([]);
+    expect(b.proc!.under!.length).toBe(2);
+    for (const p of group(b)) p.x -= 2;
+    processBefore(b);
     expect(b.s.fallen!.length).toBe(2);
+    expect(b.proc!.under!.length).toBe(0);
   });
   it('조립 반장의 폰은 몸 둘레 열두 칸에, 자석은 가장 가까운 몸 칸 쪽으로 당긴다', () => {
     const b = boss('spawn');

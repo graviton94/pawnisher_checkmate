@@ -20,6 +20,8 @@ export interface ProcState {
   cells?: Pos[];
   /** 금 간 바닥: 칸 → 밟힌 수 */
   cracks?: Record<string, number>;
+  /** 금 간 바닥: 2×2 보스 밑에서 다 밟힌 칸 — 보스가 비키면 꺼진다 (D-513: 몸 칸이 구멍 위에 떠 과녁이 사라지지 않게) */
+  under?: Pos[];
   /** 프레스: 이번 적 차례에 내리찍을 줄 */
   pressRow?: number | null;
 }
@@ -115,19 +117,30 @@ const stepCracks = (b: Holder): BattleEvent | null => {
   const fell: Piece[] = [];
   const shaken: Piece[] = [];
   const holes: Pos[] = [];
+  // 보스가 비킨 칸은 이제 꺼진다 (그새 다른 기물이 섰으면 그 기물이 떨어진다)
+  for (const c of [...(pr.under ?? [])]) {
+    const p = at(b.s, c);
+    if (p?.giant?.boss) continue;
+    pr.under = pr.under!.filter((u) => u !== c);
+    holes.push(c);
+    if (p && !p.giant) fell.push(p);
+  }
   for (const c of pr.cells ?? []) {
     const p = at(b.s, c);
     if (!p || (p.giant && !p.giant.boss)) continue;
     const n = (pr.cracks![key(c)] ?? 0) + 1;
     pr.cracks![key(c)] = n;
-    if (n >= PROC.crackSteps) { holes.push(c); (p.giant?.boss ? shaken : fell).push(p); }
+    if (n >= PROC.crackSteps) {
+      if (p.giant?.boss) { shaken.push(p); (pr.under ??= []).push(c); }
+      else { holes.push(c); fell.push(p); }
+    }
   }
-  if (!holes.length) return null;
-  pr.cells = (pr.cells ?? []).filter((c) => !holes.some((h) => h.x === c.x && h.y === c.y));
+  if (!holes.length && !shaken.length) return null;
+  pr.cells = (pr.cells ?? []).filter((c) => !holes.some((h) => h.x === c.x && h.y === c.y) && !(pr.under ?? []).includes(c));
   b.s = { ...b.s, fallen: [...(b.s.fallen ?? []), ...holes.map((h) => h.y * b.s.width + h.x)] };
   const boss = new Set(coresOf(b.s, shaken));
   const bossDmg = heatDmg(b.s, Math.max(1, Math.round(BOSS_BODY.crackDmg * (b.atkK ?? 1))));
-  return strike([...fell, ...boss], (p) => (boss.has(p) ? bossDmg : p.hp + p.shield), `${PROCESS.crack.name} — 꺼진다`, holes, 'burst');
+  return strike([...fell, ...boss], (p) => (boss.has(p) ? bossDmg : p.hp + p.shield), `${PROCESS.crack.name} — 꺼진다`, holes.length ? holes : shaken.map((p) => ({ x: p.x, y: p.y })), 'burst');
 };
 
 /** 적 차례 앞: 내가 끝낸 자리에서 금 간 칸을 밟는다 */
@@ -199,7 +212,7 @@ export const processTiles = (b: Holder): { pos: Pos; icon: string; flipX?: boole
   if (pr.kind === 'conveyor' && pr.row !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.row! }, icon: 'variant-conveyor', flipX: pr.dir === -1, frame: 0xc89b3c })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
   if (pr.kind === 'magnet' && pr.col !== undefined) return Array.from({ length: s.height }, (_, y) => ({ pos: { x: pr.col!, y }, icon: 'chip-magnet', frame: 0xb91c1c })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
   if (pr.kind === 'furnace') return (pr.cells ?? []).map((pos) => ({ pos, icon: 'variant-radiator', frame: 0xe8783c }));
-  if (pr.kind === 'crack') return (pr.cells ?? []).map((pos) => ({ pos, icon: (pr.cracks?.[key(pos)] ?? 0) > 0 ? 'crack' : '', frame: 0x8a8070 }));
+  if (pr.kind === 'crack') return [...(pr.cells ?? []), ...(pr.under ?? [])].map((pos) => ({ pos, icon: (pr.cracks?.[key(pos)] ?? 0) > 0 ? 'crack' : '', frame: 0x8a8070 }));
   if (pr.kind === 'press' && pr.pressRow !== null && pr.pressRow !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.pressRow! }, icon: 'variant-hammer', frame: 0xc89b3c }));
   return [];
 };
