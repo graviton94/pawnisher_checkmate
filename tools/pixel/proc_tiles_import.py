@@ -11,9 +11,17 @@ PB-01 공정 판 칸 — 두 판본 합치기 (D-521 · 공정 판 D-486). 격�
   ③ a안 테 안쪽(2도트부터 16×16)에 b안 무늬를 얹는다. 어두운 칸은 갈색을 한 단 내린다(같은 갈색 계단 안에서).
   ④ 가운데 12×12(기물이 서는 자리)는 밝은 색을 한 단 낮춰 차분하게 — 팔레트 안의 이웃 단으로만 바꾼다.
   ⑤ 팔레트 검사: 결과에 a안 · 발주서 밖의 색이 하나라도 있으면 멈춘다.
-출력: public/ui/board/proc-<이름>.png (밝은 칸) · proc-<이름>-dark.png (어두운 칸), 20×20
-대조판: build-res/order/PB-01-check.png (칸마다 a안 · b안 · 합친 밝은 칸 · 합친 어두운 칸, 6배)
+  ⑥ 판 색 맞춤 (2026-11-16 사용자 결정 · D-522): a안 테의 갈색 계단을 판 칸 색의 같은 명암 단으로 바꿔 끼운다 — 새로 그리지 않고 색만.
+     판 색 = tools/draw-board.py의 기본 판 · 막별 판(ACT_TILES) · 반장 판(BOSS_TILES)을 그대로 읽는다(11벌).
+     바깥 1도트는 판 칸(plate)처럼 위 · 왼쪽 빛 / 아래 · 오른쪽 그늘, 그 안은 판 칸 바닥색 → 테 바깥 2도트가 옆 판 칸과 같은 색.
+       밝은 칸: 갈색 4단(짙음→밝음) → 그림자 i · 그늘 l · 바닥 b · 빛 h    어두운 칸: 3단 → 바닥 d · 빛 b · 밝은 무늬 h
+     가운데 무늬(b안 · 쇠 · 등불 색)는 그대로. 팔레트 검사 = 발주서 색(갈색 4단 뺌) ∪ 그 판 색 밖 0.
+출력: public/ui/board/proc-sheet<판>.png — 판 색마다 한 장, 20×20 칸 14열 × 2줄(위 밝은 칸 · 아래 어두운 칸, 열 순서 = G['tiles']).
+     <판> = '' 기본 · -a1~-a3 막 · -b<반장 규칙> (렌더러 drawTiles의 판 칸 접미사와 같다)
+대조판: build-res/order/PB-01-check.png (칸마다 a안 · b안 · 합친 밝은 칸 · 합친 어두운 칸, 6배 — 갈색 원판)
+        build-res/order/PB-01-tint-check.png (판 색마다: 판 칸 · 공정 칸을 번갈아 붙인 줄 — 이음매 확인, 6배)
 """
+import ast
 import os
 import sys
 from collections import Counter
@@ -141,6 +149,53 @@ def merge(a, b, name, spec, light):
     return base
 
 
+def board_palettes():
+    """tools/draw-board.py의 판 칸 색을 읽는다 (스크립트라 import 대신 ast로 상수만) → {접미사: {b,h,l,d,i}}"""
+    src = open(os.path.join(ROOT, 'tools', 'draw-board.py'), encoding='utf-8').read()
+    consts = {}
+    for node in ast.parse(src).body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and getattr(node.targets[0], 'id', None) in ('P', 'ACT_TILES', 'BOSS_TILES'):
+            consts[node.targets[0].id] = ast.literal_eval(node.value)
+    P = consts['P']
+    # 기본 판: plate('L','G','D') / plate('D','L','INK') — draw-board.py 맨 아래와 같은 짝
+    out = {'': {'b': P['L'], 'h': P['G'], 'l': P['D'], 'd': P['D'], 'i': P['INK']}}
+    for a, c in consts['ACT_TILES'].items():
+        out[f'-a{a}'] = {k: c[k] for k in 'bhldi'}
+    for k, c in consts['BOSS_TILES'].items():
+        out[f'-b{k}'] = {kk: c[kk] for kk in 'bhldi'}
+    return out
+
+
+def tint(im, pal, light):
+    """갈색 원판 → 판 색 (테 갈색 계단만 바꿔 끼운다, ⑥)"""
+    if light:
+        edge_hi, edge_lo = pal['h'], pal['l']
+        m = {BROWN[3]: pal['h'], BROWN[2]: pal['b'], BROWN[1]: pal['l'], BROWN[0]: pal['i']}
+    else:
+        edge_hi, edge_lo = pal['b'], pal['i']
+        m = {BROWN[2]: pal['h'], BROWN[1]: pal['b'], BROWN[0]: pal['d']}
+        if BROWN[3] in {c for _, c in im.getcolors(400)}:
+            sys.exit('어두운 칸에 가장 밝은 갈색이 남았다 — merge의 한 단 내리기가 빠졌다')
+    out = im.copy()
+    for y in range(20):
+        for x in range(20):
+            p = im.getpixel((x, y))
+            out.putpixel((x, y), m.get(p, p))
+    # 바깥 1도트: 판 칸(plate)과 같은 순서 — 위 · 왼쪽 빛, 그다음 아래 · 오른쪽 그늘이 덮는다
+    for i in range(20):
+        out.putpixel((i, 0), edge_hi)
+        out.putpixel((0, i), edge_hi)
+    for i in range(20):
+        out.putpixel((i, 19), edge_lo)
+        out.putpixel((19, i), edge_lo)
+    return out
+
+
+def plate_view(suf, light):
+    """대조판용 진짜 판 칸 (draw-board.py가 찍은 public/ui/board/tile-*.png)"""
+    return Image.open(os.path.join(OUT, f'tile-{"light" if light else "dark"}{suf}.png')).convert('RGB')
+
+
 def main(dry=False):
     a = Image.open(os.path.join(ORDER, 'PB-01-a-source.png')).convert('RGB')
     b = Image.open(os.path.join(ORDER, 'PB-01-b-source.png')).convert('RGB')
@@ -152,6 +207,7 @@ def main(dry=False):
     S = 6
     tiles = G['tiles']
     check = Image.new('RGB', (4 * 20 * S + 5 * 4 * S, len(tiles) * 24 * S + 4 * S), (255, 0, 255))
+    masters = []
     for i, (name, spec) in enumerate(tiles.items()):
         r, c = spec['rc']
         lt = merge(a, b, name, spec, True)
@@ -171,11 +227,37 @@ def main(dry=False):
                 check.paste(bview, (x, y))
             else:
                 check.paste(im.resize((20 * S, 20 * S), Image.NEAREST), (x, y))
-        if not dry:
-            lt.convert('RGBA').save(os.path.join(OUT, f'proc-{name}.png'))
-            dk.convert('RGBA').save(os.path.join(OUT, f'proc-{name}-dark.png'))
+        masters.append((lt, dk))
     check.save(os.path.join(ORDER, 'PB-01-check.png'))
-    print(f'{len(tiles)}칸 × 2 (밝은 · 어두운) → public/ui/board/proc-*.png · 대조판 build-res/order/PB-01-check.png')
+    # ⑥ 판 색마다 한 장 + 이음매 대조판
+    pals = board_palettes()
+    spec_iron = set(SPEC) - set(BROWN)
+    names = list(tiles)
+    T = 6
+    tcheck = Image.new('RGB', ((len(names) * 2) * 20 * T + 8 * T, len(pals) * 2 * 20 * T + (len(pals) + 1) * 4 * T), (255, 0, 255))
+    for pi, (suf, pal) in enumerate(pals.items()):
+        sheet = Image.new('RGB', (len(names) * 20, 40))
+        ok = spec_iron | set(pal.values())
+        for i, (lt, dk) in enumerate(masters):
+            for row, (im, light) in enumerate(((lt, True), (dk, False))):
+                t = tint(im, pal, light)
+                extra = {cc for _, cc in t.getcolors(400)} - ok
+                if extra:
+                    sys.exit(f'{names[i]}{suf}: 판 · 발주서 밖 색 {extra}')
+                sheet.paste(t, (i * 20, row * 20))
+        # 대조판: 체스판처럼 밝은/어두운을 번갈아 — 위 줄은 판 칸 · 공정 칸 교대, 아래 줄은 반대 위상
+        y0 = 4 * T + pi * (40 * T + 4 * T)
+        for r in range(2):
+            for k in range(len(names) * 2):
+                light = (k + r) % 2 == 1
+                i = k // 2
+                proc = (k + r) % 4 in (0, 1)
+                im = sheet.crop((i * 20, (0 if light else 1) * 20, i * 20 + 20, (0 if light else 1) * 20 + 20)) if proc else plate_view(suf, light)
+                tcheck.paste(im.resize((20 * T, 20 * T), Image.NEAREST), (4 * T + k * 20 * T, y0 + r * 20 * T))
+        if not dry:
+            sheet.convert('RGBA').save(os.path.join(OUT, f'proc-sheet{suf}.png'))
+    tcheck.save(os.path.join(ORDER, 'PB-01-tint-check.png'))
+    print(f'{len(tiles)}칸 × 2 (밝은 · 어두운) × 판 색 {len(pals)}벌 → public/ui/board/proc-sheet*.png · 대조판 PB-01-check.png · PB-01-tint-check.png')
 
 
 if __name__ == '__main__':

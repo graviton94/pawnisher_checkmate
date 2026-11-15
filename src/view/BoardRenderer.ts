@@ -128,11 +128,19 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
 };
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
-/** 공정 판 칸 그림 (PB-01 D-521, tools/pixel/proc_tiles_import.py — 밝은 칸 · -dark 어두운 칸) */
+/**
+ * 공정 판 칸 그림 (PB-01 D-521 · 판 색 맞춤 D-522, tools/pixel/proc_tiles_import.py): 판 색마다 한 장(proc-sheet<판>.png),
+ * 20도트 칸 14열 × 2줄(위 밝은 칸 · 아래 어두운 칸). 열 순서 = 이 목록 = 도구의 G['tiles'] 순서
+ */
 const PROC_TILES = ['conveyor0', 'conveyor1', 'conveyor2', 'conveyor3', 'press-warn', 'press-hit', 'press-dent', 'magnet-rail', 'magnet-post', 'furnace', 'furnace-hot', 'crack1', 'crack2', 'crack3'];
+/** 판 칸 접미사(drawTiles와 같다) — 공정 칸 장 이름도 같은 접미사: '' 기본 · -a1~3 막 · -b<반장 규칙> */
+const PROC_SHEETS = ['', '-a1', '-a2', '-a3', '-bplate', '-bspawn', '-bthorns', '-bgilded', '-binspect', '-bmagnet', '-balarm'];
+const procSheetKey = (suf: string) => `ui-proc-sheet${suf}`;
+/** 공정 칸 이름(proc-<이름>) · 밝기 → 장 안 프레임 번호 */
+const procFrame = (name: string, dark: boolean) => PROC_TILES.indexOf(name.replace(/^proc-/, '')) + (dark ? PROC_TILES.length : 0);
 /** 컨베이어 흐름 한 프레임 (ms) — 4프레임 계단 애니(D-216: 선형 이동 대신 steps) */
 const CONVEYOR_FRAME_MS = 180;
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'tile-light-binspect', 'tile-dark-binspect', 'tile-light-bmagnet', 'tile-dark-bmagnet', 'tile-light-balarm', 'tile-dark-balarm', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...PROC_TILES.flatMap((n) => [`proc-${n}`, `proc-${n}-dark`]), ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'tile-light-binspect', 'tile-dark-binspect', 'tile-light-bmagnet', 'tile-dark-bmagnet', 'tile-light-balarm', 'tile-dark-balarm', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -253,6 +261,7 @@ class BoardScene extends Phaser.Scene {
     for (const type of GIANT_ART) this.load.image(giantKey(type), `pieces/s-giant${type}1.png`);
     for (const r of BOSS_ART_RULES) for (const rage of [false, true]) if (PRELOAD.includes(bossArtFile(r, rage))) this.load.image(bossArtKey(r, rage), bossArtFile(r, rage));
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
+    for (const suf of PROC_SHEETS) this.load.spritesheet(procSheetKey(suf), `ui/board/proc-sheet${suf}.png`, { frameWidth: 20, frameHeight: 20 });
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
     for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
   }
@@ -309,6 +318,7 @@ class BoardScene extends Phaser.Scene {
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[])
       for (const side of [0, 1] as Side[]) this.textures.get(pieceKey(type, side)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     for (const n of [...BOARD_IMAGES, 'skull']) this.textures.get(boardKey(n)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const suf of PROC_SHEETS) this.textures.get(procSheetKey(suf)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     // 컨베이어 벨트 흐름 (PB-01 D-521): 4프레임을 계단으로 넘긴다
     if (!this.calm)
       this.time.addEvent({
@@ -317,7 +327,7 @@ class BoardScene extends Phaser.Scene {
         callback: () => {
           if (!this.conveyorTiles.length) return;
           this.conveyorFrame = (this.conveyorFrame + 1) % 4;
-          for (const c of this.conveyorTiles) if (c.im.active) c.im.setTexture(boardKey(`proc-conveyor${this.conveyorFrame}${c.dark ? '-dark' : ''}`));
+          for (const c of this.conveyorTiles) if (c.im.active) c.im.setFrame(procFrame(`conveyor${this.conveyorFrame}`, c.dark));
         },
       });
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[]) {
@@ -528,6 +538,9 @@ class BoardScene extends Phaser.Scene {
     }
     // 공정 판 (D-486 · PB-01 D-521): 공정 칸 그림이 판 칸을 통째로 대신한다(칸 짝 테 포함). 옛 빌린 도트 표시는 테 + 왼쪽 아래 아이콘으로 남겨 둔다
     const dot = t / 20;
+    // 공정 칸 테는 판 색에 맞춘 장을 고른다 (D-522) — 장이 없는 새 판 색이면 기본 판 장
+    const procSuf = this.bossRule ? `-b${this.bossRule}` : this.act ? `-a${this.act}` : '';
+    const procKey = procSheetKey(this.textures.exists(procSheetKey(procSuf)) ? procSuf : '');
     this.conveyorTiles = [];
     for (const pt of this.procTiles) {
       if (isFallen(state, pt.pos.x, pt.pos.y)) continue;
@@ -536,7 +549,7 @@ class BoardScene extends Phaser.Scene {
         const dark = (pt.pos.x + pt.pos.y) % 2 === 0;
         const base = pt.anim ? 'proc-conveyor' : pt.icon;
         const name = pt.anim ? `${base}${this.conveyorFrame}` : base;
-        const im = this.add.image(w.x + t / 2, w.y + t / 2, boardKey(`${name}${dark ? '-dark' : ''}`)).setDisplaySize(t, t).setFlipX(!!pt.flipX);
+        const im = this.add.image(w.x + t / 2, w.y + t / 2, procKey, procFrame(name, dark)).setDisplaySize(t, t).setFlipX(!!pt.flipX);
         this.tilesC.add(im);
         if (pt.anim) this.conveyorTiles.push({ im, dark });
         continue;

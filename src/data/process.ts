@@ -3,7 +3,7 @@ import type { BossRule } from '../slice/cards';
 /**
  * 공정 판 (D-486, GDD 21장 §5 — 사용자: 「공정 판은 주요 스테이지에서 기믹과 collaboration 먼저 하고, 고 승천에서 빈도 늘리면」).
  * 판 자체가 기계다. 모든 공정은 적 차례 안에서 일어난다(예고 · 미리보기와 실행이 같은 enemyPhase) — 피아를 가리지 않는다.
- * 칸 표시는 PB-01 공정 칸 그림(public/ui/board/proc-*.png, 두 판본 합침 D-521 — tools/pixel/proc_tiles_import.py). 밝은 · 어두운 칸 두 벌.
+ * 칸 표시는 PB-01 공정 칸 그림(public/ui/board/proc-sheet<판>.png, 두 판본 합침 D-521 — tools/pixel/proc_tiles_import.py). 밝은 · 어두운 칸 두 벌, 테는 판 색마다 맞춘 장(D-522).
  */
 export type ProcessId = 'conveyor' | 'press' | 'magnet' | 'furnace' | 'crack';
 export interface ProcessDef { name: string; tell: string; when: string; effect: string; line: string }
