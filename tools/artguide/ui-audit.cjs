@@ -2,6 +2,7 @@
 // 사용: (빌드 · 미리보기 후) node tools/artguide/ui-audit.cjs <출력 폴더> [장면 이름 걸러내기]   — 미리보기 포트는 PORT=4180 처럼 (기본 4173)
 const BASE = `http://localhost:${process.env.PORT || 4173}/?debug`;
 const { chromium } = require('playwright');
+const textAudit = require('../qa/text-audit.cjs');
 const out = process.argv[2] || 'ui-audit';
 const only = process.argv[3];
 const PRESETS = { 'small-mobile': [667,375,2.625], mobile: [915,412,2.625], tablet: [1024,768,2], pc: [1280,720,1] };
@@ -105,32 +106,7 @@ const SCENES = [
     const W = (ms) => p.waitForTimeout(ms);
     // 찍을 때마다 글자 점검 (D-263): 갈무리 격자 크기 · 서체 · 넘침 · 말줄임
     const TEXT = async (n) => {
-      const bad = await p.evaluate(() => {
-        const OK11 = [12, 24, 36], OK14 = [15, 30, 45, 60];
-        const out = [];
-        for (const el of document.querySelectorAll('body *')) {
-          if (!el.childNodes.length || ![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
-          const r = el.getBoundingClientRect();
-          if (!r.width || !r.height) continue;
-          const cs = getComputedStyle(el);
-          if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) continue;
-          let hid = false; for (let a = el; a; a = a.parentElement) { const c = getComputedStyle(a); if (c.display === 'none' || c.visibility === 'hidden' || a.hidden) { hid = true; break; } }
-          if (hid) continue;
-          const fs = parseFloat(cs.fontSize), fam = cs.fontFamily.split(',')[0].replace(/["']/g, '').trim(), w = +cs.fontWeight;
-          const txt = [...el.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent.trim()).join(' ').slice(0, 24);
-          const why = [];
-          if (fam === 'Galmuri11' && !OK11.includes(fs)) why.push(`G11 ${fs}px`);
-          else if (fam === 'Galmuri14' && !OK14.includes(fs)) why.push(`G14 ${fs}px`);
-          // 카드 글 맞춤 마지막 단계(D-373 · D-377)만 10px 갈무리9 허용
-          else if (fam === 'Galmuri9' && fs === 10 && el.closest('.cf .ln.s10')) { /* 허용 */ }
-          else if (fam !== 'Galmuri11' && fam !== 'Galmuri14') why.push(`서체 ${fam} ${fs}px`);
-          if (fam === 'Galmuri14' && w >= 600) why.push('G14 굵게');
-          if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) why.push('말줄임');
-          if (cs.overflow !== 'visible' && (el.scrollWidth > el.clientWidth + 2) && cs.whiteSpace === 'nowrap') why.push('넘침');
-          if (why.length) out.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} 「${txt}」 ${why.join(' · ')}`);
-        }
-        return [...new Set(out)];
-      }).catch(() => []);
+      const bad = await textAudit(p);
       for (const b of bad) { issues.push(`TXT ${name} ${b}`); console.log('TXT', name + (n ? '-' + n : ''), b); }
     };
     const S = async (n) => {
