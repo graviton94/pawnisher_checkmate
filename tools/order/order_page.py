@@ -1,4 +1,4 @@
-"""발주서 아티팩트 (D-300): docs/asset-order-master.md → 한 장짜리 HTML (순위별 · 첨부 그림 · 프롬프트 복사 단추).
+"""발주서 아티팩트 (D-300 → D-510 간소판): docs/asset-order-master.md → 붙여 넣을 프롬프트만 남긴 한 장 (받음 · 취소는 뺀다).
 
 python3 -I tools/order/order_page.py <out.html>
 
@@ -168,182 +168,107 @@ def render_blocks(blocks, start_id):
     return '\n'.join(out), n
 
 
+def status_of(head, pid, src):
+    """프롬프트 하나의 상태 (D-510): 취소 · 재발주(열림) · 받음 · 새로(열림)"""
+    sid = re.match(r'([A-Z]{1,3}-\d+)', head).group(1)
+    if '취소' in head:
+        return 'cancel'
+    if head.rstrip().endswith('재발주') or pid != sid:
+        return 'redo'
+    if re.search(r'받음|수령', head) or pid in src:
+        return 'done'
+    return 'new'
+
+
 def main(out_path):
+    """붙여 넣을 프롬프트만 남긴 한 장 (D-510, 사용자: 「끝난 거 · 안 읽어도 되는 건 다 정리」)."""
     secs = parse()
-    have = ({f[:-4] for f in os.listdir(SCENES) if f.endswith('.png')} | {f[:-4] for f in os.listdir(os.path.join(ROOT, 'public', 'ui', 'hud')) if f.startswith('crew-') and f.endswith('.png')}) - REDO
-    if os.path.isdir(EXT):
-        have |= {'ext:' + f[:-4] for f in os.listdir(EXT) if f.endswith('.png')}
-    have |= {'recv:' + f.split('-received')[0] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if '-received.png' in f}
-    have |= {'recv:' + f[:-11] for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) if re.match(r'UI-\d+-source\.png$', f)}
-    have |= {'recv:' + m.group(1) for f in os.listdir(os.path.join(ROOT, 'build-res', 'order')) for m in [re.match(r'([A-Z]{1,3}-\d+)-source\.(?:png|webp)$', f)] if m}
-    intro = next((s for s in secs if s['head'].startswith('0-D.')), None) or next(s for s in secs if s['head'].startswith('0.'))
-    groups, g = [], None
+    od = os.path.join(ROOT, 'build-res', 'order')
+    src = {m.group(1) for f in os.listdir(od) for m in [re.match(r'([A-Z]{1,3}-\d+[a-z]?)-(?:source|received)\.(?:png|webp)$', f)] if m}
+    cards, n_done, n_cancel = [], 0, 0
     for s in secs:
-        m = re.match(r'(\d+)위 · (.*)', s['head'])
-        if m:
-            if int(m.group(1)) == 16 and '카드 앞뒷면' in m.group(2):  # 옛 16위 카드 틀은 D-367부터 cardart.py가 직접 그린다 — 발주 안 함
-                g = None
-                continue
-            g = {'rank': int(m.group(1)), 'head': m.group(2), 'sec': s, 'items': []}
-            groups.append(g)
-        elif g and re.match(r'[A-Z]{1,2}-\d', s['head']):
-            if '취소' in s['head']:  # 취소한 상자 (D-506 PT-01~03 「취소 — 사건 일러스트 활용」): 발주 페이지 · 집계에서 뺀다
-                continue
-            g['items'].append(s)
-
-    groups.sort(key=lambda x: x['rank'])
-    # 한눈에 표: 12위 줄은 끝났다고 고쳐 적는다
-    rows = []
-    for ln in intro['blocks']:
-        rows.append(ln)
-    intro_html = render_text([b for k, b in rows if k == 'text' and not (b.strip().startswith('|') and ('~~' in b or '받음' in b))])
-    intro_html = intro_html.replace('Claude 손그림 도트', 'Claude 손그림 도트 (받은 시트는 외곽선 2도트로 보완해 교체 — D-301)')
-
-    pid = 0
-    nav, body, done_list = [], [], []
-    total, got = 0, 0
-    for g in groups:
-        units = g['items'] or [g['sec']]
-        fs = [f for u in units for f in files_of(u['head'])] or files_of(g['sec']['head'])
-        n_have = sum(1 for f in fs if f in have)
-        total += len(fs)
-        got += n_have
-        status = '받음' if fs and n_have == len(fs) else (f'{n_have}/{len(fs)} 받음' if n_have else '대기')
-        if any(f in REDO for f in fs):
-            status = '다시 받기 (화풍)'
-        cls = 'done' if status == '받음' else ''
-        nav.append(f'<a href="#r{g["rank"]}" class="{cls}"><span>{g["rank"]}</span>{inline(g["head"].split("→")[0].split(" (")[0].strip())}</a>')
-        if cls == 'done':  # 다 받은 순위는 페이지에서 뺀다 (D-393, 사용자: 「완료된 것은 싹 정리 — html 용량」) — 맨 위 한 줄 목록에만
-            nav.pop()
-            done_list.append(f'{g["rank"]}위 {g["head"].split("→")[0].split(" (")[0].strip()}')
+        h = s['head']
+        if not re.match(r'[A-Z]{1,3}-\d+ ', h):
             continue
-        head_html, pid = render_blocks(g['sec']['blocks'], pid)
-        items_html = []
-        for it in g['items']:
-            f = files_of(it['head'])
-            done_it = bool(f) and all(x in have for x in f)
-            if done_it:  # 받은 항목도 뺀다 (D-393)
+        txt = [b for k, b in s['blocks'] if k == 'text']
+        name = next((re.search(r'`([A-Za-z0-9-]+\.png)`', t).group(1) for t in txt if '받은 그림 이름' in t and re.search(r'`([A-Za-z0-9-]+\.png)`', t)), None)
+        for k, body in s['blocks']:
+            if k != 'code':
                 continue
-            ih, pid = render_blocks(it['blocks'], pid)
-            mark = '<em class="got">받음</em>' if done_it else ''
-            ms = re.match(r'(I-\d+)', it['head'])
-            if ms and not done_it:  # 아직 안 받은 아이콘 시트: 첨부할 그림을 상자 바로 위에
-                figs = [(f'build-res/order/{ms.group(1)}-now.png', '지금 그림 (무엇을 그릴지)')]
-                if ms.group(1) > 'I-10':
-                    figs.append(('build-res/order/I-05-received.png', '화풍 기준 (받은 시트)'))
-                ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 800)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
-            mb = re.match(r'BF-\d+|C-06|N-03', it['head'])
-            if mb and not done_it:  # 반장 격파 컷: 그 반장 초상(④)을 상자 바로 위에 — 「같은 카메라로 무너진 뒤」의 기준
-                port = re.search(r'public/scenes/(boss-[a-z]+)\.png', '\n'.join(b[1] if isinstance(b[1], str) else '' for b in it['blocks']))
-                figs = [(f'public/scenes/{port.group(1)}.png', '④ 이 반장의 초상 — 같은 몸 · 같은 빛')] if port else []
-                if mb.group(0) == 'BF-02' and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-02-boss-fall-inspect-source.png')):
-                    figs.append(('build-res/order/BF-02-boss-fall-inspect-source.png', '1차 — 화풍은 좋다. 다시: 철갑과 같은 구도 → 렌즈 클로즈업으로'))
-                if mb.group(0) == 'N-03':
-                    figs = [('build-res/order/N-crew-N-source.png', '1차 — 다시 (정면 말 얼굴 · 귀 · 주둥이 → ⑦처럼 옆모습)'), ('build-res/order/N-01-adjutant-src-source.png', '⑦ 부관 박차 — 이 각도 · 실루엣으로')]
-                if mb.group(0) == 'C-06':
-                    figs = [('build-res/order/C-06-draft3.png', '1 ~ 3차 — 레버 누르기 기획 폐기 (D-351, 3차는 임시로 게임에)')]
-                if mb.group(0) != 'BF-01' and not mb.group(0).startswith(('C-', 'N-')) and os.path.exists(os.path.join(ROOT, 'build-res/order/BF-01-boss-fall-plate-source.png')):
-                    figs.append(('build-res/order/BF-01-boss-fall-plate-source.png', '⑥ 화풍 정답 — 완성된 철갑 격파 컷 (화풍 · 빛 · 극적인 정도만. 구도는 따라 하지 않는다)'))
-                ih = '<div class="figs">' + ''.join(f'<figure><img src="{data_uri(pth, 720)}" alt=""><figcaption>{html.escape(cap)}<br><code>{pth}</code></figcaption></figure>' for pth, cap in figs) + '</div>' + ih
-            items_html.append(f'<section class="item"><h3>{inline(it["head"])}{mark}</h3>{ih}</section>')
-        body.append(
-            f'<article class="rank {cls}" id="r{g["rank"]}"><header><div class="num">{g["rank"]}<small>위</small></div>'
-            f'<h2>{inline(g["head"])}</h2><span class="st">{status}</span></header>{head_html}{"".join(items_html)}</article>'
-        )
-
-    # 첨부 그림은 붙이지 않는다 (D-388: 발주는 첨부 없이 글로 · D-393: 용량) — 끝난 순위는 한 줄 목록만
-    att = ('<p class="donepath">끝난 순위 (' + str(len(done_list)) + '): ' + ' · '.join(html.escape(d) for d in done_list) + '</p>') if done_list else ''
-    meter = f'<div class="meter">받은 그림 {got} / {total}<i style="--w: {got / total * 100}%"></i></div>' if total else '<p class="donepath">현재 새 제작 요청은 없습니다.</p>'
-    how = '<div class="how"><b>받는 법</b><ol><li>상자마다 새 생성 작업을 엽니다.</li><li>프롬프트를 복사해 통째로 붙여 넣습니다.</li><li>결과 원본을 전달하면 개발 측이 격자·팔레트·알파를 검사하고 게임에 반영합니다.</li></ol></div>' if groups else ''
-    page = TEMPLATE.replace('%NAV%', '\n'.join(nav)).replace('%BODY%', '\n'.join(body)).replace('%INTRO%', intro_html).replace('%ATT%', att).replace('%METER%', meter).replace('%HOW%', how)
+            first = body.split('\n')[0]
+            m = re.search(r'/ ([A-Z]{1,3}-\d+[a-z]?) / ([^/\]]+)', first)
+            pid = m.group(1) if m else re.match(r'([A-Z]{1,3}-\d+)', h).group(1)
+            title = (m.group(2).strip() if m else h.split('·', 1)[-1].strip())
+            st = status_of(h, pid, src)
+            if st == 'done':
+                n_done += 1
+                continue
+            if st == 'cancel':
+                n_cancel += 1
+                continue
+            scene = ''
+            ls = body.split('\n')
+            if '[장면]' in ls:
+                scene = ls[ls.index('[장면]') + 1].strip()
+            if len(scene) > 90:
+                scene = scene[:88].rsplit(' ', 1)[0] + ' …'
+            send = f'{pid}.png' if pid != (name or '')[:-4] and st == 'redo' and pid.endswith(('a', 'b', 'c')) else (name or f'{pid}.png')
+            cards.append((pid, title, st, send, scene, body))
+    out = []
+    for i, (pid, title, st, send, scene, body) in enumerate(cards, 1):
+        tag = '<em class="redo">재발주</em>' if st == 'redo' else '<em>새로</em>'
+        sc = f'<p class="scene">{html.escape(scene)}</p>' if scene else ''
+        out.append(f'<section class="card" id="{pid}"><header><span class="no">{i}</span><h2><b>{pid}</b> {html.escape(title)}</h2>{tag}</header>{sc}'
+                   f'<div class="bar"><span>보낼 이름 <code>{html.escape(send)}</code></span><button type="button" class="copy" data-for="p{i}">프롬프트 복사</button></div>'
+                   f'<pre id="p{i}">{html.escape(body)}</pre></section>')
+    toc = ' '.join(f'<a href="#{c[0]}" class="{"r" if c[2] == "redo" else ""}">{c[0]}</a>' for c in cards)
+    n_redo = sum(1 for c in cards if c[2] == 'redo')
+    page = TEMPLATE.replace('%N%', str(len(cards))).replace('%REDO%', str(n_redo)).replace('%DONE%', str(n_done)).replace('%CANCEL%', str(n_cancel)).replace('%TOC%', toc).replace('%BODY%', '\n'.join(out))
     open(out_path, 'w', encoding='utf-8').write(page)
-    print(out_path, f'{len(groups)}개 순위 · 그림 {total}장 (받음 {got}) · 프롬프트 {pid}개 · {os.path.getsize(out_path) // 1024}KB')
+    print(out_path, f'남은 프롬프트 {len(cards)}개 (재발주 {n_redo}) · 받음 {n_done} · 취소 {n_cancel} · {os.path.getsize(out_path) // 1024}KB')
 
 
 TEMPLATE = r'''<title>Pawnisher 그림 발주서</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* 작업대 위 발주 장부: 왼쪽 순위 목록(넓을 때 고정) · 오른쪽 순위 카드. 철판 바탕 · 황동 강조 · 종이색 글 */
-:root {
-  --iron: #16151b; --plate: #201f27; --rivet: #2f2e38; --line: #3d3c48;
-  --paper: #ece6d8; --dim: #a39d90; --brass: #e2b04a; --brass-dk: #8a5a14; --ok: #6fc28e;
-  --display: "Black Han Sans", "Noto Sans KR", system-ui, sans-serif;
-  --body: "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-body { background: var(--iron); color: var(--paper); font: 15px/1.65 var(--body); }
-.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; }
-@media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); } nav.side { position: static !important; max-height: none !important; } }
-h1 { font: 400 34px/1.15 var(--display); margin: 0 0 6px; letter-spacing: .01em; text-wrap: balance; }
-.lede { color: var(--dim); margin: 0 0 20px; max-width: 64ch; }
-.how { background: var(--plate); border: 2px solid var(--line); padding: 14px 16px; margin-bottom: 22px; }
-.how ol { margin: 6px 0 0; padding-left: 20px; }
-.meter { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 13px; color: var(--dim); margin: 0 0 22px; }
-.meter i { flex: 1; height: 10px; background: var(--rivet); position: relative; max-width: 260px; }
-.meter i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--brass); }
-nav.side { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); align-self: start; max-height: calc(100vh - 32px); overflow: auto; display: grid; gap: 2px; }
-nav.side .cap { font: 700 12px/1 var(--body); letter-spacing: .12em; color: var(--dim); margin: 0 0 8px; }
-nav.side a { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; align-items: baseline; color: var(--paper); text-decoration: none; padding: 7px 8px; border-left: 3px solid transparent; font-size: 13.5px; line-height: 1.35; }
-nav.side a span { font: 400 18px/1 var(--display); color: var(--brass); text-align: right; }
-nav.side a:hover, nav.side a:focus-visible { background: var(--plate); border-left-color: var(--brass); outline: none; }
-nav.side a.done { color: var(--dim); } nav.side a.done span { color: var(--ok); }
-section.att h2, .intro h2 { font: 400 22px/1.2 var(--display); margin: 0 0 12px; }
-.att .figs, .item .figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 30px; }
-figure { margin: 0; background: var(--plate); border: 2px solid var(--line); padding: 10px; }
-figure img { display: block; width: 100%; height: 180px; object-fit: contain; image-rendering: pixelated; background: #0b0b0e; }
-figcaption { font-size: 13px; color: var(--dim); margin-top: 8px; } figcaption b { color: var(--brass); }
-.intro { margin-bottom: 34px; }
-.tw { overflow-x: auto; margin: 10px 0 14px; }
-table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 640px; }
-th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { color: var(--dim); font-weight: 700; font-size: 12.5px; }
-article.rank { background: var(--plate); border: 2px solid var(--line); box-shadow: 4px 4px 0 #0b0b0e; padding: 0 20px 18px; margin-bottom: 26px; scroll-margin-top: 16px; }
-article.rank > header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; margin: 0 -20px 14px; padding: 12px 20px; background: var(--rivet); border-bottom: 2px solid var(--line); }
-.num { font: 400 34px/1 var(--display); color: var(--brass); } .num small { font-size: 15px; margin-left: 2px; color: var(--dim); }
-article.rank h2 { font: 700 17px/1.4 var(--body); margin: 0; text-wrap: balance; }
-.st { font: 500 12px/1 var(--mono); padding: 6px 8px; border: 2px solid var(--brass-dk); color: var(--brass); white-space: nowrap; }
-article.rank.done .st { border-color: var(--ok); color: var(--ok); }
-p.donepath { color: var(--dim); font-size: 13px; } p.donepath code { color: var(--ok); }
-.item { border-top: 2px dashed var(--line); padding-top: 12px; margin-top: 16px; }
-.item h3 { font: 700 15.5px/1.4 var(--body); margin: 0 0 6px; color: var(--paper); }
-em.got { font-style: normal; font: 500 11px/1 var(--mono); color: var(--ok); border: 1px solid var(--ok); padding: 3px 5px; margin-left: 8px; vertical-align: 2px; }
-p { margin: 6px 0; max-width: 72ch; } p.li { padding-left: 14px; text-indent: -10px; } p.li::before { content: "· "; color: var(--brass); }
-p.note { color: var(--dim); font-size: 13.5px; border-left: 3px solid var(--line); padding-left: 10px; }
-h4 { font: 700 14px/1.4 var(--body); margin: 14px 0 4px; color: var(--brass); }
-code { font: 13px var(--mono); background: var(--iron); padding: 1px 5px; color: #d9c79a; overflow-wrap: anywhere; }
-.prompt { margin: 10px 0 12px; border: 2px solid var(--line); background: var(--iron); }
-.pbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; border-bottom: 2px solid var(--line); font: 500 12px/1 var(--mono); color: var(--dim); }
-button.copy { font: 700 13px/1 var(--body); min-height: 36px; min-width: 76px; padding: 0 14px; color: #1a1206; background: var(--brass); border: 2px solid #0b0b0e; box-shadow: 0 3px 0 var(--brass-dk); cursor: pointer; }
-button.copy:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--brass-dk); }
-button.copy:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
-button.copy.ok { background: var(--ok); box-shadow: 0 3px 0 #2c6b43; }
-pre { margin: 0; padding: 12px 14px; font: 13px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; color: var(--paper); }
-@media (prefers-reduced-motion: reduce) { button.copy:active { transform: none; } }
+:root { --iron:#16151b; --plate:#201f27; --line:#3d3c48; --paper:#ece6d8; --dim:#a39d90; --brass:#e2b04a; --brass-dk:#8a5a14; --red:#e0685f; --ok:#6fc28e;
+  --display:"Black Han Sans","Noto Sans KR",system-ui,sans-serif; --body:"Noto Sans KR",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { background:var(--iron); color:var(--paper); font:15px/1.6 var(--body); }
+.wrap { max-width:900px; margin:0 auto; padding-block:24px 64px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); }
+h1 { font:400 32px/1.15 var(--display); margin:0 0 6px; }
+.lede { color:var(--dim); margin:0 0 14px; }
+.toc { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 24px; }
+.toc a { font:500 12.5px/1 var(--mono); color:var(--paper); text-decoration:none; border:2px solid var(--line); padding:7px 8px; background:var(--plate); }
+.toc a.r { border-color:var(--red); color:var(--red); }
+.card { background:var(--plate); border:2px solid var(--line); box-shadow:4px 4px 0 #0b0b0e; margin-bottom:20px; scroll-margin-top:12px; }
+.card header { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 14px; border-bottom:2px solid var(--line); }
+.no { font:400 24px/1 var(--display); color:var(--brass); min-width:1.6em; }
+.card h2 { font:700 16px/1.4 var(--body); margin:0; text-wrap:balance; } .card h2 b { font-family:var(--mono); color:var(--brass); margin-right:4px; }
+em { font:500 12px/1 var(--mono); font-style:normal; padding:5px 7px; border:2px solid var(--line); color:var(--dim); white-space:nowrap; }
+em.redo { border-color:var(--red); color:var(--red); }
+.scene { margin:10px 14px 0; color:var(--dim); font-size:14px; }
+.bar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; padding:10px 14px; }
+code { font:13px var(--mono); background:var(--iron); padding:2px 6px; color:#d9c79a; }
+button.copy { font:700 14px/1 var(--body); min-height:44px; padding:0 18px; color:#1a1206; background:var(--brass); border:2px solid #0b0b0e; box-shadow:0 3px 0 var(--brass-dk); cursor:pointer; }
+button.copy:active { transform:translateY(2px); box-shadow:0 1px 0 var(--brass-dk); }
+button.copy.ok { background:var(--ok); box-shadow:0 3px 0 #2c6b43; }
+details { margin:0 14px 12px; } summary { cursor:pointer; color:var(--dim); font-size:13px; }
+pre { margin:0 14px 14px; padding:10px 12px; background:var(--iron); border:2px solid var(--line); font:12.5px/1.55 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; max-height:180px; overflow:auto; }
+@media (prefers-reduced-motion: reduce) { button.copy:active { transform:none; } }
 </style>
 <div class="wrap">
-<nav class="side" aria-label="순위"><p class="cap">우선순위</p>
-
-%NAV%
-</nav>
-<main>
 <h1>그림 발주서</h1>
-<p class="lede">2026-11-14 확장 발주(§0-D)입니다. 왼쪽 순위대로 위에서부터 만듭니다 — 1위 이형 기물 · 2위 거대 주물부터. 상자마다 프롬프트 하나를 복사해 새 생성 작업에 붙여 넣고, 결과는 「받은 그림 이름」으로 보내 주세요. 완료 프롬프트는 보관 문서에 있습니다.</p>
-%METER%
-%HOW%
-%ATT%
-<section class="intro"><h2>한눈에</h2>%INTRO%</section>
+<p class="lede">붙여 넣을 프롬프트 %N%개만 남겼습니다 (빨강 = 재발주 %REDO%개). 칸마다 「프롬프트 복사」 → 새 생성 작업에 통째로 붙여 넣기 → 결과를 「보낼 이름」으로 보내 주세요. 받은 %DONE%개 · 취소 %CANCEL%개는 뺐습니다.</p>
+<nav class="toc">%TOC%</nav>
 %BODY%
-</main>
 </div>
 <script>
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button.copy'); if (!b) return;
   const pre = document.getElementById(b.dataset.for); const t = pre.textContent;
-  const done = (m) => { b.textContent = m; b.classList.add('ok'); setTimeout(() => { b.textContent = '복사'; b.classList.remove('ok'); }, 1600); };
+  const done = (m) => { b.textContent = m; b.classList.add('ok'); setTimeout(() => { b.textContent = '프롬프트 복사'; b.classList.remove('ok'); }, 1600); };
   try { await navigator.clipboard.writeText(t); done('복사됨'); }
   catch { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); done('선택됨 — 직접 복사'); }
 });
