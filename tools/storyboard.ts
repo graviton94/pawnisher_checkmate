@@ -2,7 +2,7 @@
  * 스토리보드 생성기 (D-448): 게임에 실제로 들어 있는 이야기 · 대사 데이터를 그대로 뽑아 리뷰용 문서 한 장으로 만든다.
  * 실행: `npx jiti tools/storyboard.ts` → docs/storyboard.md. 대사를 고친 뒤 다시 돌리면 문서가 따라온다 (손으로 옮겨 적지 않는다).
  */
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ACT_CARD, BOSS_CARD, BOSS_SINS, BOSS_STORY, BOSS_TAUNTS, DEFEAT_CUTS, GILDED_STORY, PROLOGUE, STG_PROG, TESTIMONY, THRONE_TEXT, bossFallCut, lookBackCut, promotionCuts, shadowCut, trueEndingCuts, type Cut, type Line, type StoryBoss } from '../src/data/script';
 import { companionScene, type CompanionActor } from '../src/data/companion-scenes';
@@ -19,6 +19,42 @@ import { TAUNTS } from '../src/slice/director';
 import { DEATHS, NAMES, QUIRKS } from '../src/slice/crew';
 import { ASCENSION } from '../src/slice/run';
 import { BOSS_RULES } from '../src/slice/cards';
+
+// ───────────────────────── 그림 상태 (발주서 상자 머리 + 실제 파일) ─────────────────────────
+/** 장면 그림이 실제로 있는가 (public/scenes/<이름>.png) */
+const hasScene = (name: string): boolean => existsSync(resolve(__dirname, `../public/scenes/${name}.png`));
+/** 그림 이름 한 칸: 있으면 `이름`, 없으면 `이름` 발주 중 — 그동안 `대체` */
+const pic = (name: string, alt?: string): string => (hasScene(name) ? `\`${name}\`` : `\`${name}\` 발주 중${alt ? ` — 그동안 \`${alt}\`` : ''}`);
+/** docs/asset-order-master.md 상자 머리 → 상태 (tools/order/order_page.py status_of와 같은 판정): 받음 · 재발주(받은 그림을 쓰며 다시 맡김) · 새로(아직) · 취소 */
+const ORDER: Record<string, { st: 'done' | 'redo' | 'new' | 'cancel'; dec: string }> = Object.fromEntries(
+  readFileSync(resolve(__dirname, '../docs/asset-order-master.md'), 'utf8').split('\n').flatMap((ln) => {
+    const m = /^## ([A-Z]{1,3}-\d+) · (.*)$/.exec(ln);
+    if (!m) return [];
+    const head = m[2].trim();
+    const st = /취소/.test(head) ? 'cancel' : head.endsWith('재발주') ? 'redo' : /받음|수령/.test(head) ? 'done' : 'new';
+    return [[m[1], { st, dec: head.match(/D-\d+/g)?.join(' · ') ?? '' }]];
+  }),
+);
+/** 상자 번호 묶음 → 「OP-01 ~ 04 받음 (D-512 · D-514)」 같은 짧은 상태 글 (상태가 같은 것끼리) */
+const boxNote = (ids: string[]): string => {
+  const KO = { done: '받음', redo: '재발주 중', new: '발주 중', cancel: '취소' } as const;
+  const by = new Map<string, string[]>();
+  for (const id of ids) { const st = ORDER[id]?.st ?? 'new'; by.set(st, [...(by.get(st) ?? []), id]); }
+  return [...by].map(([st, list]) => {
+    // 같은 머리 글자끼리 이어진 번호만 「ED-02 ~ 05」로 줄인다
+    const groups: string[][] = [];
+    for (const id of list) { const g = groups.at(-1); const [pre, n] = id.split('-'); const last = g?.at(-1)?.split('-'); if (g && last && last[0] === pre && Number(last[1]) + 1 === Number(n)) g.push(id); else groups.push([id]); }
+    const span = groups.map((g) => (g.length > 2 ? `${g[0]} ~ ${g.at(-1)!.split('-')[1]}` : g.join(' · '))).join(' · ');
+    const dec = [...new Set(list.flatMap((id) => (ORDER[id]?.dec ? ORDER[id].dec.split(' · ') : [])))].join(' · ');
+    return `${span} ${KO[st as keyof typeof KO]}${dec ? ` (${dec})` : ''}`;
+  }).join(' · ');
+};
+/** 그림 목록 한 줄의 상태: 빠진 파일이 있으면 발주 중(대체 그림), 다 있으면 있음 — 상자 상태를 괄호로 */
+const picState = (files: [string, string?][], boxes: string[] = []): string => {
+  const miss = files.filter(([f]) => !hasScene(f));
+  const head = miss.length ? `**발주 중** ${miss.map(([f, alt]) => `\`${f}\`${alt ? `(그동안 \`${alt}\`)` : ''}`).join(' · ')}` : '있음';
+  return boxes.length ? `${head} — ${boxNote(boxes)}` : head;
+};
 
 const out: string[] = [];
 const p = (...ls: string[]): void => void out.push(...ls);
@@ -144,14 +180,14 @@ rows(['왕관', '마지막 속마음'], [2, 3].map((a) => [`SHD-B-4-A${a + 1}`, 
 // ───────────────────────── 4. 막 입구 · 동료 장면 ─────────────────────────
 p('## 4. 막 사이 — 입구 카드와 동료 장면', '',
   '### 4-1. 막 입구 카드', '', '- **트리거**: 다음 막 지도에 들어설 때 막 이름과 함께 뜬다. 서술 한 줄 + 속마음 한 줄 고정.', '');
-rows(['언제', '원문 (서술 / 속마음)'], ACT_CARD.map((t, i) => [`ACT-${i + 1}`, ['1막 (※ 지금은 화면에 안 나온다 — 프롤로그 · 그림자 컷 뒤 바로 첫 대국)', '2막에 들어설 때 (`act-2`)', '3막에 들어설 때 (`chained-door` 발주 중 — 그동안 `act-3`)', '종막에 들어설 때 (`act-4`)'][i], t] as [string, string, string]));
+rows(['언제', '원문 (서술 / 속마음)'], ACT_CARD.map((t, i) => [`ACT-${i + 1}`, ['1막 (※ 지금은 화면에 안 나온다 — 프롤로그 · 그림자 컷 뒤 바로 첫 대국)', `2막에 들어설 때 (${pic('act-2')})`, `3막에 들어설 때 (${pic('chained-door', 'act-3')})`, `종막에 들어설 때 (${pic('act-4')})`][i], t] as [string, string, string]));
 
 p('### 4-2. 동료 장면 (막을 넘긴 뒤 한 번씩)', '',
   '- **트리거**: 막 반장을 쓰러뜨리고 결산을 본 직후.',
   '- **말하는 동료**는 실제로 살아 있는 분대원 한 명이다(가능하면 폰, 1막에서 약속한 그 동료가 살아 있으면 계속 그 동료). 기물 종류마다 같은 뜻의 대사가 있다. 아래 표에는 폰 판을 싣고, 나머지는 변주 표로 붙인다.',
   '- CO-2는 **왕관마다 다르다**: 둘째~넷째 왕관은 전대의 흔적 서술이 먼저 나오고, 마지막 속마음이 왕관마다 바뀐다.',
   '- 살아남은 동료가 없으면 동료 대사 없이 서술 · 속마음만 나온다.',
-  '- **그림**: CO-1 `companion-rest`(상자 칸막이 안, 잠든 동료들 곁에서 등불 아래 깨어 있는 종이왕) · CO-2 `companion-crossroad`(난간에서 출하 레일을 내려다보는 종이왕과 동료의 실루엣 — 둘째 왕관은 `old-spring`, 넷째 왕관은 `scarred-wall` 발주 중) · CO-3 `chained-door` 발주 중(그동안 `departure-dock`).', '');
+  `- **그림**: CO-1 ${pic('companion-rest')}(상자 칸막이 안, 잠든 동료들 곁에서 등불 아래 깨어 있는 종이왕) · CO-2 ${pic('companion-crossroad')}(난간에서 출하 레일을 내려다보는 종이왕과 동료의 실루엣 — 둘째 왕관은 ${pic('old-spring', 'companion-crossroad')}, 넷째 왕관은 ${pic('scarred-wall', 'companion-crossroad')}) · CO-3 ${pic('chained-door', 'departure-dock')}.`, '');
 const actor = (t: CompanionActor['t']): CompanionActor[] => [{ serial: 'x', name: `(${({ P: '폰', N: '나이트', B: '비숍', R: '룩', Q: '퀸', K: '킹' })[t]} 동료)`, t }];
 const companion = (t: CompanionActor['t'], a: number, ch = 0) => companionScene(a, actor(t), undefined, ch).cuts[0].lines;
 p('#### CO-1 · 1공정 뒤 — 약속', '');
@@ -365,19 +401,19 @@ p('- 거절 공통 결과: 「당신은 말없이 발걸음을 돌린다.」', '
 // ───────────────────────── 11. 그림 목록 ─────────────────────────
 p('## 11. 장면 그림 목록', '',
   '| 장면 | 파일 | 상태 |', '|---|---|---|',
-  '| 프롤로그 10컷 | `prologue-00` ~ `prologue-07` · `op-windup` · `op-legend` | 있음 (OP-01 ~ 04 받음, D-509 · D-512 · D-514) |',
-  '| 그림자 컷 | `prologue-shadow`(재도전) · `new-law` · `law-plate` + 왕관 시작 `crown-2-open` · `crown-3-open` · `crown-4-open`(둘째~넷째 왕관 시작) | 있음 (CN-01 ~ 03 받음, D-516) |',
-  '| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 3막 **발주 중**(S-13) — 그동안 `act-3` |',
+  `| 프롤로그 10컷 | \`prologue-00\` ~ \`prologue-07\` · \`op-windup\` · \`op-legend\` | ${picState([...Array.from({ length: 8 }, (_, i): [string] => [`prologue-0${i}`]), ['op-windup'], ['op-legend']], ['OP-01', 'OP-02', 'OP-03', 'OP-04'])} |`,
+  `| 그림자 컷 | \`prologue-shadow\`(재도전) · \`new-law\` · \`law-plate\` + 왕관 시작 \`crown-2-open\` · \`crown-3-open\` · \`crown-4-open\`(둘째~넷째 왕관 시작) | ${picState([['prologue-shadow'], ['new-law'], ['law-plate'], ['crown-2-open', 'new-law'], ['crown-3-open', 'new-law'], ['crown-4-open', 'new-law']], ['CN-01', 'CN-02', 'CN-03'])} |`,
+  `| 막 입구 | \`act-2\` · \`chained-door\`(3막) · \`act-4\` | ${picState([['act-2'], ['chained-door', 'act-3'], ['act-4']], ['AC-01', 'AC-02', 'AC-03'])} |`,
   '| 반장 등장 6 + 도금왕 4 | `boss-*` | 있음 |',
   '| 반장 격파 6 | `boss-fall-*` | 있음 |',
-  '| 동료 장면 CO-1 · CO-2 · CO-3 | `companion-rest` · `companion-crossroad`(둘째 왕관 `old-spring` · 넷째 왕관 `scarred-wall`) · `chained-door` | CO-2 변주 · CO-3 **발주 중**(S-13 · S-14 · S-15) |',
-  '| 왕위 결정 | `gilded-fallen` | 있음 |',
-  '| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · (첫째 왕관 `crown-1-throne`) · `end-k-gild` · `law-plate` | 있음 (ED-02~05 받음 D-510 · ED-03 재발주본 D-514 · CN-04 D-516) |',
-  '| 진엔딩 6컷 | `gilded-fallen` · `end-t-throw` · `crown-gears` · `end-t-silence` · `white-land` · `end-t-step` | 있음 (ED-06 ~ 08 받음, D-514) |',
-  '| 패배 3컷 | `end-fail` · `end-f-box` · `end-f-unwind` | 있음 (ED-09 ~ 11 받음, D-516) |',
-  '| 크레딧 | `credits-bg` | 있음 (ED-12 받음, D-516 — 오른쪽 빈 어둠에 크레딧 글) |',
+  `| 동료 장면 CO-1 · CO-2 · CO-3 | \`companion-rest\` · \`companion-crossroad\`(둘째 왕관 \`old-spring\` · 넷째 왕관 \`scarred-wall\`) · \`chained-door\` | ${picState([['companion-rest'], ['companion-crossroad'], ['old-spring', 'companion-crossroad'], ['scarred-wall', 'companion-crossroad'], ['chained-door', 'departure-dock']])} |`,
+  `| 왕위 결정 | \`gilded-fallen\` | ${picState([['gilded-fallen']])} |`,
+  `| 왕이 된 결말 7컷 | \`crown-dais\` · \`end-k-sight\` · \`casting-floor\` · \`end-k-reach\` · \`gold-cast\` · (첫째 왕관 \`crown-1-throne\`) · \`end-k-gild\` · \`law-plate\` | ${picState([['crown-dais'], ['end-k-sight'], ['casting-floor'], ['end-k-reach'], ['gold-cast'], ['crown-1-throne', 'gold-cast'], ['end-k-gild'], ['law-plate']], ['ED-02', 'ED-03', 'ED-04', 'ED-05', 'CN-04'])} |`,
+  `| 진엔딩 6컷 | \`gilded-fallen\` · \`end-t-throw\` · \`crown-gears\` · \`end-t-silence\` · \`white-land\` · \`end-t-step\` | ${picState([['gilded-fallen'], ['end-t-throw'], ['crown-gears'], ['end-t-silence'], ['white-land'], ['end-t-step']], ['ED-06', 'ED-07', 'ED-08'])} |`,
+  `| 패배 3컷 | \`end-fail\` · \`end-f-box\` · \`end-f-unwind\` | ${picState([['end-fail'], ['end-f-box', 'end-fail'], ['end-f-unwind', 'end-fail']], ['ED-09', 'ED-10', 'ED-11'])} |`,
+  `| 크레딧 | \`credits-bg\` | ${picState([['credits-bg']], ['ED-12'])} — 오른쪽 빈 어둠에 크레딧 글 |`,
   `| 사건 ${Object.keys(SLICE_EVENTS).length}종 | 사건마다 한 장 | 있음 |`, '',
-  '발주 프롬프트 전문: `docs/asset-order-master.md` §0-B. 받기 전에는 괄호 안 대체 그림이 자동으로 쓰인다.', '');
+  '상태는 생성할 때 `public/scenes/` 실제 파일과 `docs/asset-order-master.md` 상자 머리(받음 · 재발주 · 새로 · 취소)로 판정한다. 발주 프롬프트 전문은 그 문서에 있고, 받기 전에는 괄호 안 대체 그림이 자동으로 쓰인다.', '');
 p('### 11-1. 지금 화면에 나오지 않는 글 (데이터에만 있다 — 살릴지 지울지 판단 필요)', '');
 rows(['무엇', '원문'], [
   ['UNU-1', '1막 입구 카드 (프롤로그가 대신한다)', ACT_CARD[0]],

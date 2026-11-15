@@ -235,7 +235,7 @@
 |---|---|---|
 | ACT-1 | 1막 (※ 지금은 화면에 안 나온다 — 프롤로그 · 그림자 컷 뒤 바로 첫 대국) | 첫 번째 검수 판 위로 흠집 난 흰 세트가 올라선다. / ‘이겨서 위로 간다. 한 판도 물러설 수 없어.’ |
 | ACT-2 | 2막에 들어설 때 (`act-2`) | 지난 대국에서 녹아내린 세트의 쇳물이 파이프를 타고 흘러내린다. / ‘우리가 멈추는 순간, 저 쇳물이 바로 우리 차례가 된다.’ |
-| ACT-3 | 3막에 들어설 때 (`chained-door` 발주 중 — 그동안 `act-3`) | 출하구로 향하는 거대한 철문이 바깥이 아닌 안쪽에서부터 쇠사슬로 칭칭 감겨 잠겨 있었다. / ‘밖으로 나가는 문이 왜 안쪽에서 잠겨 있지? 도금왕은 왜 나가지 않는 걸까.’ |
+| ACT-3 | 3막에 들어설 때 (`chained-door`) | 출하구로 향하는 거대한 철문이 바깥이 아닌 안쪽에서부터 쇠사슬로 칭칭 감겨 잠겨 있었다. / ‘밖으로 나가는 문이 왜 안쪽에서 잠겨 있지? 도금왕은 왜 나가지 않는 걸까.’ |
 | ACT-4 | 종막에 들어설 때 (`act-4`) | 굳게 닫힌 통제실 문 너머로 눈부신 황금빛 왕좌가 일렁인다. / ‘저기만 넘으면 된다. 이제 곧 우리 모두가 살 길이 열린다.’ |
 
 ### 4-2. 동료 장면 (막을 넘긴 뒤 한 번씩)
@@ -244,7 +244,7 @@
 - **말하는 동료**는 실제로 살아 있는 분대원 한 명이다(가능하면 폰, 1막에서 약속한 그 동료가 살아 있으면 계속 그 동료). 기물 종류마다 같은 뜻의 대사가 있다. 아래 표에는 폰 판을 싣고, 나머지는 변주 표로 붙인다.
 - CO-2는 **왕관마다 다르다**: 둘째~넷째 왕관은 전대의 흔적 서술이 먼저 나오고, 마지막 속마음이 왕관마다 바뀐다.
 - 살아남은 동료가 없으면 동료 대사 없이 서술 · 속마음만 나온다.
-- **그림**: CO-1 `companion-rest`(상자 칸막이 안, 잠든 동료들 곁에서 등불 아래 깨어 있는 종이왕) · CO-2 `companion-crossroad`(난간에서 출하 레일을 내려다보는 종이왕과 동료의 실루엣 — 둘째 왕관은 `old-spring`, 넷째 왕관은 `scarred-wall` 발주 중) · CO-3 `chained-door` 발주 중(그동안 `departure-dock`).
+- **그림**: CO-1 `companion-rest`(상자 칸막이 안, 잠든 동료들 곁에서 등불 아래 깨어 있는 종이왕) · CO-2 `companion-crossroad`(난간에서 출하 레일을 내려다보는 종이왕과 동료의 실루엣 — 둘째 왕관은 `old-spring`, 넷째 왕관은 `scarred-wall`) · CO-3 `chained-door`.
 
 #### CO-1 · 1공정 뒤 — 약속
 
@@ -1784,20 +1784,20 @@
 
 | 장면 | 파일 | 상태 |
 |---|---|---|
-| 프롤로그 10컷 | `prologue-00` ~ `prologue-07` · `op-windup` · `op-legend` | 있음 (OP-01 ~ 04 받음, D-509 · D-512 · D-514) |
-| 그림자 컷 | `prologue-shadow`(재도전) · `new-law` · `law-plate` + 왕관 시작 `crown-2-open` · `crown-3-open` · `crown-4-open`(둘째~넷째 왕관 시작) | 있음 (CN-01 ~ 03 받음, D-516) |
-| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 3막 **발주 중**(S-13) — 그동안 `act-3` |
+| 프롤로그 10컷 | `prologue-00` ~ `prologue-07` · `op-windup` · `op-legend` | 있음 — OP-01 ~ 04 받음 (D-512 · D-514) |
+| 그림자 컷 | `prologue-shadow`(재도전) · `new-law` · `law-plate` + 왕관 시작 `crown-2-open` · `crown-3-open` · `crown-4-open`(둘째~넷째 왕관 시작) | 있음 — CN-01 ~ 03 받음 (D-516) |
+| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 있음 — AC-01 ~ 03 재발주 중 |
 | 반장 등장 6 + 도금왕 4 | `boss-*` | 있음 |
 | 반장 격파 6 | `boss-fall-*` | 있음 |
-| 동료 장면 CO-1 · CO-2 · CO-3 | `companion-rest` · `companion-crossroad`(둘째 왕관 `old-spring` · 넷째 왕관 `scarred-wall`) · `chained-door` | CO-2 변주 · CO-3 **발주 중**(S-13 · S-14 · S-15) |
+| 동료 장면 CO-1 · CO-2 · CO-3 | `companion-rest` · `companion-crossroad`(둘째 왕관 `old-spring` · 넷째 왕관 `scarred-wall`) · `chained-door` | 있음 |
 | 왕위 결정 | `gilded-fallen` | 있음 |
-| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · (첫째 왕관 `crown-1-throne`) · `end-k-gild` · `law-plate` | 있음 (ED-02~05 받음 D-510 · ED-03 재발주본 D-514 · CN-04 D-516) |
-| 진엔딩 6컷 | `gilded-fallen` · `end-t-throw` · `crown-gears` · `end-t-silence` · `white-land` · `end-t-step` | 있음 (ED-06 ~ 08 받음, D-514) |
-| 패배 3컷 | `end-fail` · `end-f-box` · `end-f-unwind` | 있음 (ED-09 ~ 11 받음, D-516) |
-| 크레딧 | `credits-bg` | 있음 (ED-12 받음, D-516 — 오른쪽 빈 어둠에 크레딧 글) |
+| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · (첫째 왕관 `crown-1-throne`) · `end-k-gild` · `law-plate` | 있음 — ED-02 ~ 05 · CN-04 받음 (D-514 · D-516) |
+| 진엔딩 6컷 | `gilded-fallen` · `end-t-throw` · `crown-gears` · `end-t-silence` · `white-land` · `end-t-step` | 있음 — ED-06 ~ 08 받음 (D-514) |
+| 패배 3컷 | `end-fail` · `end-f-box` · `end-f-unwind` | 있음 — ED-09 ~ 11 받음 (D-516) |
+| 크레딧 | `credits-bg` | 있음 — ED-12 받음 (D-516) — 오른쪽 빈 어둠에 크레딧 글 |
 | 사건 35종 | 사건마다 한 장 | 있음 |
 
-발주 프롬프트 전문: `docs/asset-order-master.md` §0-B. 받기 전에는 괄호 안 대체 그림이 자동으로 쓰인다.
+상태는 생성할 때 `public/scenes/` 실제 파일과 `docs/asset-order-master.md` 상자 머리(받음 · 재발주 · 새로 · 취소)로 판정한다. 발주 프롬프트 전문은 그 문서에 있고, 받기 전에는 괄호 안 대체 그림이 자동으로 쓰인다.
 
 ### 11-1. 지금 화면에 나오지 않는 글 (데이터에만 있다 — 살릴지 지울지 판단 필요)
 
