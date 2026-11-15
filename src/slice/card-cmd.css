@@ -1,0 +1,26 @@
+/* 자동 생성 — tools/pixel/cmd_frames.py (RF-04 명령 카드 앞면 · 재발주본 D-512). 손으로 고치지 않는다. */
+/* 56×84 캔버스 — 글 · 그림 자리는 받은 틀의 실제 칸을 잰 비율(%) */
+body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-name { color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cmd > .cf-cost { color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { content: none; }
+body.slice .cf.cf.cf.cf.cmd.g-common { background-image: url('../assets/ui/cards/cmd-common.png'); --ci-l: 5.357%; --ci-r: 5.357%; --ci-t: 10.714%; --ci-b: 2.381%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-cost { left: 10.714%; top: 9.524%; width: 17.857%; height: 11.905%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-common > .cf-gem { left: 50%; top: 92.857%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); --ci-l: 5.357%; --ci-r: 5.357%; --ci-t: 10.714%; --ci-b: 2.381%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-cost { left: 8.929%; top: 9.524%; width: 19.643%; height: 11.905%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-gem { left: 50%; top: 92.857%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); --ci-l: 5.357%; --ci-r: 5.357%; --ci-t: 10.714%; --ci-b: 2.381%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-cost { left: 10.714%; top: 9.524%; width: 17.857%; height: 11.905%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }
+body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-gem { left: 50%; top: 92.857%; }

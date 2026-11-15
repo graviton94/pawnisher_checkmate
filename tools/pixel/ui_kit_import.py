@@ -41,6 +41,8 @@ NAMES = {
     'DL-01': ['talk-foe', 'talk-ally', 'talk-sys-warn', 'talk-sys'],
     'DL-02': ['name-foe', 'name-ally', 'name-npc', 'portrait-foe', 'portrait-ally', 'portrait-npc'],
     'CI-01': ['p2-band-1', 'p2-band-2', 'cutin-frame', 'p2-band-3', 'letterbox'],
+    # CI-01b 재발주(D-512): 사선 컷인 액자만 — 받은 CI-01의 cutin-frame(안쪽 홈 약 10도트)을 갈아 끼운다
+    'CI-01b': ['cutin-frame'],
     # §0-D 4위 · 5위 (2026-11-14): 전투 HUD · 등급 테. 'kit/'로 시작하면 src/assets/ui/kit/에 둔다.
     'HB-01': ['btn-end-up', 'btn-end-down', 'btn-end-lock', 'btn-end-warn0', 'btn-end-warn1', 'btn-end-warn2'],
     'HB-02': ['speed-housing', 'kit/tube-lit', 'kit/tube-dim', 'kit/tube-flick', 'kit/tube-dead', 'coin-key'],
@@ -52,9 +54,12 @@ NAMES = {
 
 # 같은 줄 부품을 같은 캔버스에 맞출 시트 (상태가 바뀌어도 단추 자리가 흔들리지 않게 — HB-01 경고 띠는 몸 바깥 2도트)
 SAME_CANVAS = {'HB-01'}
-# 프레임 시트 (칸 선으로 나뉜 애니메이션 — 덩어리가 아니라 상자로 자른다)
-FRAME_SHEETS = {'RF-02'}
-HOLD = {'RF-04': ('build-res', 'order', 'RF-04-parts')}
+# 프레임 시트 (칸 선으로 나뉜 애니메이션 — 덩어리가 아니라 상자로 자른다). RF-02 1차본(RF-02-v1-source.png)만 이 방식이었다
+FRAME_SHEETS = {'RF-02-v1'}
+# 귀퉁이 조각 시트 (D-512 RF-02 재발주본): 프레임 하나가 네 귀퉁이 조각으로 나뉘어 왔다 — 꺾쇠를 찾아 조각마다 24×24 귀퉁이로 옮긴다
+CORNER_SHEETS = {'RF-02'}
+# 재발주 대기 부품을 게임 밖에 둘 자리. RF-04 1차본은 build-res/order/RF-04-v1-parts에 있다 — 재발주본(D-512)은 게임에 넣는다
+HOLD = {}
 PAD_TO = {'kit/gem-common': (12, 12), 'kit/gem-rare': (12, 12), 'kit/gem-gold': (12, 12)}
 DROP = {(0x7A, 0x12, 0x18), (0xE5, 0x26, 0x2F), (0xFF, 0x7B, 0x7B)}
 
@@ -137,6 +142,23 @@ def merge(boxes, gap=3):
     return out
 
 
+def fixed_grid(sid):
+    """scene_recipe.UI_KIT_GRID[sid]['grid'] = (가로 간격, 가로 시작, 세로 간격, 세로 시작) px — 실측 균일 격자.
+    (D-512: 생성기 번짐이 큰 시트는 경계 동적 계획(dp_cuts)이 칸을 합쳐 9% 가까이 줄을 잃었다 — 위상 맞춤으로 잰 균일 격자를 쓴다)"""
+    import scene_recipe
+    return scene_recipe.UI_KIT_GRID.get(sid, {}).get('grid')
+
+
+def uniform_snap(img, px, ox, py, oy):
+    """균일 격자로 칸 가운데 최빈색 — 시작 앞 자투리 칸은 버린다"""
+    W, H = img.size
+    xe = list(np.arange(ox, W - px * 0.5, px)) + [min(W, ox + px * round((W - ox) / px))]
+    ye = list(np.arange(oy, H - py * 0.5, py)) + [min(H, oy + py * round((H - oy) / py))]
+    xe = sorted(set(min(W, v) for v in xe))
+    ye = sorted(set(min(H, v) for v in ye))
+    return snap.snap(img, px, ox, py, oy, 0, cuts=(xe, ye)).convert('RGBA')
+
+
 def main(src, sid, native_w=None):
     img = Image.open(src).convert('RGB')
     a0 = np.asarray(img, dtype=int)
@@ -148,12 +170,15 @@ def main(src, sid, native_w=None):
     if exact:
         small = Image.fromarray(b[:, k // 2, :, k // 2, :].astype('uint8'), 'RGB').convert('RGBA')
         px = py = float(k)
+    elif fixed_grid(sid):
+        px, ox, py, oy = fixed_grid(sid)
+        small = uniform_snap(img, px, ox, py, oy)
     elif native_w:  # 발주한 원본 캔버스 가로 도트 수를 알면 칸 크기를 그것으로 (자동 찾기가 반 칸 · 다른 배수를 잡을 때)
         lo = img.width / native_w * 0.9
         px, ox, py, oy, score = snap.detect_pitch(img, lo=lo, hi=img.width / native_w * 1.1)
     else:
         px, ox, py, oy, score = snap.detect_pitch(img, lo=float(os.environ.get('UIKIT_LO', '7.0')))  # 받은 시트의 도트는 ~10px — 그 절반(5px)을 잘못 잡지 않게
-    if not exact:
+    if not exact and not fixed_grid(sid):
         a = np.asarray(img, dtype=float)
         cuts = (snap.dp_cuts(snap._profile(a, 1), img.width, px), snap.dp_cuts(snap._profile(a, 0), img.height, py))
         small = snap.snap(img, px, ox, py, oy, 0, cuts=cuts).convert('RGBA')
@@ -282,8 +307,85 @@ def frames_main(src, sid, cell=48):
     chk.save(os.path.join(ROOT, 'build-res', 'order', f'{sid}-check.png'))
 
 
+def corners_main(src, sid):
+    """귀퉁이 조각 시트(RF-02 재발주본, D-512): 줄마다 위/아래 귀퉁이, 칸마다 왼/오른 귀퉁이 — 프레임 n = 칸 2n · 2n+1, 효과 하나 = 두 줄.
+    ① 시트 전체 격자 복원(scene_recipe.UI_KIT_GRID grid — 실측 균일 격자) · 마젠타 투명 · 15색 · 진홍 번짐 지움
+    ② 꺾쇠(철 · 황동 덩어리 중 큰 것)를 cols×rows 자리로 줄 세움 ③ 불똥 · 섬광 칸은 가장 가까운 꺾쇠의 조각으로
+    ④ 조각을 48×48 프레임의 24×24 귀퉁이에 — 꺾쇠 바깥 모서리를 프레임 모서리에서 1도트 안쪽(RF-01 쉬는 꺾쇠와 같은 자리)에 맞춘다.
+    늘리거나 새로 그리지 않는다. 24칸 밖으로 넘는 칸은 버리고 수를 찍는다."""
+    import scene_recipe
+    g = scene_recipe.UI_KIT_GRID[sid]
+    cols, rows, cell = g['cols'], g['rows'], 48
+    half = cell // 2
+    img = Image.open(src).convert('RGB')
+    px, ox, py, oy = g['grid']
+    small = uniform_snap(img, px, ox, py, oy)
+    q = small.load()
+    W, H = small.size
+    for y in range(H):
+        for x in range(W):
+            c = q[x, y]
+            n = near(c)
+            q[x, y] = (0, 0, 0, 0) if is_key(c) or n in DROP else (*n, 255)
+    arr = np.asarray(small)
+    op = arr[:, :, 3] > 0
+    # 꺾쇠 = 철 · 황동 · 먹 칸의 큰 덩어리 (섬광의 흰 · 청록 · 금빛 밝은 단은 빼고 찾는다)
+    body_cols = {PAL[i] for i in (0, 1, 2, 3, 4, 5)}
+    body = op & np.array([[tuple(arr[y, x, :3]) in body_cols for x in range(W)] for y in range(H)])
+    bx = [b for b in comps(body) if (b[2] - b[0]) >= 6 and (b[3] - b[1]) >= 6]
+    if len(bx) != cols * rows:
+        raise SystemExit(f'{sid}: 꺾쇠 {len(bx)}개 — {cols}×{rows}가 아니다')
+    bx = sorted(bx, key=lambda b: b[1])
+    grid = [sorted(bx[r * cols:(r + 1) * cols], key=lambda b: b[0]) for r in range(rows)]
+    flat = [(r, c, b) for r in range(rows) for c, b in enumerate(grid[r])]
+    # 칸마다 가장 가까운 꺾쇠(상자까지 거리)
+    owner = -np.ones((H, W), dtype=int)
+    ys, xs = np.nonzero(op)
+    for y, x in zip(ys, xs):
+        d = [max(b[0] - x, 0, x - b[2] + 1) ** 2 + max(b[1] - y, 0, y - b[3] + 1) ** 2 for _, _, b in flat]
+        owner[y, x] = int(np.argmin(d))
+    names = NAMES[sid]
+    outdir = os.path.join(ROOT, 'src', 'assets', 'ui', 'fx')
+    strips, lost, sizes = [], 0, set()
+    for e in range(rows // 2):
+        strip = Image.new('RGBA', (cell * (cols // 2), cell), (0, 0, 0, 0))
+        sq = strip.load()
+        for k, (r, c, b) in enumerate(flat):
+            if r // 2 != e:
+                continue
+            sizes.add((b[2] - b[0], b[3] - b[1]))
+            top, left = r % 2 == 0, c % 2 == 0
+            f = c // 2
+            # 귀퉁이 조각 원점: 꺾쇠 바깥 모서리 → 프레임 모서리 1도트 안
+            ax = b[0] - 1 if left else b[2] + 1 - cell
+            ay = b[1] - 1 if top else b[3] + 1 - cell
+            qx0, qy0 = (0 if left else half), (0 if top else half)
+            for y, x in zip(*np.nonzero(owner == k)):
+                fx, fy = x - ax, y - ay
+                if not (qx0 <= fx < qx0 + half and qy0 <= fy < qy0 + half):
+                    lost += 1
+                    continue
+                sq[f * cell + fx, fy] = tuple(int(v) for v in arr[y, x])
+        nm = names[e].split('/')[-1]
+        strip.save(os.path.join(outdir, f'{nm}.png'))
+        strips.append(strip)
+        print(f'  {nm}: {strip.width}×{strip.height}')
+    print(f'{sid}: 칸 {px:.2f}×{py:.2f}px · 시트 {W}×{H}도트 · 꺾쇠 {len(bx)} (크기 {sorted(sizes)}) · 귀퉁이 밖 버린 칸 {lost}')
+    sc = 4
+    chk = Image.new('RGBA', (strips[0].width * sc + 32, sum(s.height * sc + 16 for s in strips) + 16), (24, 23, 30, 255))
+    y = 16
+    for st in strips:
+        big = st.resize((st.width * sc, st.height * sc), Image.NEAREST)
+        chk.paste(big, (16, y), big)
+        y += big.height + 16
+    chk.save(os.path.join(ROOT, 'build-res', 'order', f'{sid}-check.png'))
+
+
 if __name__ == '__main__':
     if sys.argv[2] in FRAME_SHEETS:
-        frames_main(sys.argv[1], sys.argv[2])
+        frames_main(sys.argv[1], 'RF-02')
+        sys.exit(0)
+    if sys.argv[2] in CORNER_SHEETS:
+        corners_main(sys.argv[1], sys.argv[2])
         sys.exit(0)
     main(sys.argv[1], sys.argv[2], float(sys.argv[3]) if len(sys.argv) > 3 else None)

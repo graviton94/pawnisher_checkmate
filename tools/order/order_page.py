@@ -173,6 +173,8 @@ def status_of(head, pid, src):
     sid = re.match(r'([A-Z]{1,3}-\d+)', head).group(1)
     if '취소' in head:
         return 'cancel'
+    if pid != sid and f'{pid} 받음' in head:  # 상자 안 부분 재발주(CI-01b 등)를 받으면 상자 머리에 「<ID> 받음」 (D-512)
+        return 'done'
     if head.rstrip().endswith('재발주') or pid != sid:
         return 'redo'
     if re.search(r'받음|수령', head) or pid in src:

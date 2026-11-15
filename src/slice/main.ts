@@ -15,6 +15,7 @@ import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT,
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
+import './card-cmd.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
 import './voice.css';
@@ -1571,7 +1572,7 @@ const maybeBet = (def: BattleDef, force = false): void => {
   const txt = betText(offer);
   // M 창 (D-391 → #12 · D-490): 명패 「판돈」 · 판돈 칸(움푹 칸)에 나사 동전 셋 — D-260 「확률 = 동전 · 사각 칸」 문법 ·
   // 조건 · 보상 · 실패 시 줄 · 독백 · [걸지 않는다 | 건다]. 걸면 동전이 칸에 떨어져 박히고(계단) 창이 닫힌다.
-  // 판돈 칸 바탕 = 받은 WG-01 내기판 장면(scenes/wager-table.png, D-507 1차본 — D-509 나이트 뺀 재발주 대기) — cover로 자르고 초점은 내기판 가운데(나이트 팔 · 외눈은 칸 밖). 동전 · 표지는 「임시 — WG-02 대기」(나사 아이콘)
+  // 판돈 칸 바탕 = 받은 WG-01 내기판 장면(scenes/wager-table.png, D-512 재발주본 — 기물 없이 벽의 말머리 그림자만) — cover로 자르고 초점은 두 홈의 동전 · 가운데 나사(50% 62%). 동전 · 표지는 「임시 — WG-02 대기」(나사 아이콘)
   const coin = '<img src="ui/icons16/hud.screw.png" alt="">';
   const el = openWin({
     size: 'm',

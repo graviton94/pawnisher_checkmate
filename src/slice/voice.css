@@ -122,7 +122,7 @@
 /* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */
 .bet-slot { display: flex; align-items: flex-end; justify-content: center; gap: var(--px); min-height: 56px; padding: var(--s1) var(--s2); }
 /* 판돈 무대 (WG-01 · D-507): 받은 장면을 비율 그대로 cover — 초점 = 내기판 가운데 위 · 동전 나이트(가로 55% · 세로 48%). 늘리지 않는다(D-386) */
-.win .bet-slot.bet-scene { min-height: clamp(56px, calc(100vh - 300px), 112px); border-image-slice: var(--k-inset); background: #0b0b0e 55% 48% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
+.win .bet-slot.bet-scene { min-height: clamp(56px, calc(100vh - 300px), 112px); border-image-slice: var(--k-inset); background: #0b0b0e 50% 62% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
 .bet-slot > img { width: 32px; height: 32px; image-rendering: pixelated; }
 .bet-slot > img.drop { animation: betdrop 360ms steps(6, jump-none) both; }
 .bet-slot > img.drop:nth-child(2) { animation-delay: 80ms; }
@@ -148,7 +148,10 @@
 .p2cut .p2-strip > img { display: block; height: 100%; width: auto; max-width: 100%; margin: 0 auto; object-fit: cover; image-rendering: pixelated; }
 .p2cut.go .p2-strip { animation: p2open 160ms steps(3, jump-end) forwards; }
 @keyframes p2open { to { clip-path: inset(0 0 0 0); } }
-.p2cut .p2-slash { position: absolute; left: 50%; top: 50%; width: calc(var(--px) * 282); height: calc(var(--px) * 80); margin: calc(var(--px) * -40) 0 0 calc(var(--px) * -141); background: url('../assets/ui/chrome/v2/cutin-frame.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; visibility: hidden; }
+.p2cut .p2-slash { position: absolute; left: 50%; top: 50%; width: calc(var(--px) * 346); height: calc(var(--px) * 88); margin: calc(var(--px) * -44) 0 0 calc(var(--px) * -173); visibility: hidden; }
+/* CI-01b 사선 액자(173×44도트 ×2, D-512): 홈(실측 평행사변형) 안에 초상 → 위에 액자 */
+.p2cut .p2-slash > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; background: #0b0b0e; clip-path: polygon(13.873% 18.182%, 93.064% 18.182%, 86.127% 84.091%, 6.936% 84.091%); }
+.p2cut .p2-slash::after { content: ''; position: absolute; inset: 0; background: url('../assets/ui/chrome/v2/cutin-frame.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
 .p2cut.go .p2-slash { visibility: visible; animation: p2slash 520ms both; }
 @keyframes p2slash {
   0% { transform: translate(18%, -40%) scale(1.25); animation-timing-function: steps(2, jump-end); }
