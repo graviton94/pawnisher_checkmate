@@ -33,7 +33,7 @@ import { arcFly, flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, 
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { markTip, showTip, tipDue } from './loadtip';
 import { cardTags, fitCount, partTags, STYLE_NAMES, tags3Html } from './tags';
-import { bodyHtml, bottomLines, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
+import { bodyHtml, bottomLogical, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, DEFEAT_CUTS, ENDING_A, GILDED_STORY, bossFallCut as bossFallData, gildedPhase2Cut, oneLine, promotionCuts, shadowCuts, trueEndingCuts, type Face, type StoryBoss } from '../data/script';
@@ -624,9 +624,9 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="버팀을 써서 죽음을 넘긴 횟수">넘김</i>${u.defied ?? 0}</span></span>`];
   // 이형 분대원 (D-481): 이름 · 움직임 · 공격 — 행마가 다르니 무엇보다 먼저
   const bot = u.form
-    ? [lineHtml(`이형 · ${FORMS[u.form].name}`, 'name'), lineHtml(FORMS[u.form].move, 'if'), lineHtml(FORMS[u.form].hit, 'say')]
+    ? [lineHtml(`이형 · ${FORMS[u.form].name}`, 'name'), lineHtml(FORMS[u.form].move, 'if'), lineHtml(FORMS[u.form].hit, 'fx')]
     : q
-    ? [lineHtml(q.name, 'name'), ...bottomLines('', q.desc).slice(0, 2).map((l) => lineHtml(l.t, l.k === 'fx' ? 'say' : 'if'))]
+    ? [lineHtml(q.name, 'name'), ...bottomLogical('', q.desc).map((l) => lineHtml(l.t, l.k))]
     : u.t === 'K'
       ? [lineHtml('분대의 심장', 'name'), lineHtml('쓰러지면 끝')]
       : u.scars?.length
@@ -4567,7 +4567,7 @@ const setPick = (): Promise<StartSetId> => new Promise((done) => {
     const cnt = new Map<PieceType, number>();
     for (const t of st.squad) cnt.set(t, (cnt.get(t) ?? 0) + 1);
     const pcs = [...cnt].map(([t, n]) => `<span class="ss-pc">${pieceImg(t, 0, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('') + (st.form ? `<i class="ss-form">${SET_TEXT.formMark}</i>` : '');
-    return `<button type="button" class="cf part-card start-set g-${open ? (st.unlock ? 'rare' : 'common') : 'common'}" data-grade="${st.unlock ? 'rare' : 'common'}" aria-label="${st.name}"${open ? '' : ' disabled'}><b class="cf-name">${st.name}</b><span class="cf-win ss-pcs">${pcs}</span><small class="cf-desc"><span class="part-rule-lines">${st.rows.map((t, k) => lineHtml(t, k === 2 ? 'say' : k === 0 ? 'name' : 'if')).join('')}</span></small><i class="cf-gem"></i></button>`;
+    return `<button type="button" class="cf part-card start-set g-${open ? (st.unlock ? 'rare' : 'common') : 'common'}" data-grade="${st.unlock ? 'rare' : 'common'}" aria-label="${st.name}"${open ? '' : ' disabled'}><b class="cf-name">${st.name}</b><span class="cf-win ss-pcs">${pcs}</span><small class="cf-desc"><span class="part-rule-lines">${st.rows.map((t, k) => lineHtml(t, k === 2 ? 'fx' : k === 0 ? 'name' : 'if')).join('')}</span></small><i class="cf-gem"></i></button>`;
   };
   const draw = (): void => {
     const ids = pages[page];

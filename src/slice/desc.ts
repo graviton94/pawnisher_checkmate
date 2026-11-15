@@ -44,14 +44,16 @@ export const splitTwo = (s: string): string[] => {
   return best < 0 ? [t] : [t.slice(0, best), t.slice(best + 1)];
 };
 
-/** 12px 갈무리11 한 행 폭 (그림 카드 두루마리 실측 99px — D-470, 화면 검사: 99px 줄은 넘치지 않는다) */
+/** 카드 두루마리 한 행 폭 (실측 — 915×412 99px · 667×375 103px, 2026-11-15 `tools/qa/card-text.cjs`) */
 export const ROW_PX = 99;
+/** 분대원 카드 두루마리 한 행 폭 (실측 — 667×375에서 95px로 가장 좁다, 2026-11-15) — 기벽 · 이형 줄은 이 폭에 맞춘다 */
+export const CREW_ROW_PX = 95;
 /**
- * 한 행에 들지 않는 줄을 여러 행으로 접는다 (D-422 · D-488 — 글자를 줄이거나 자르지 않는다).
+ * 한 행에 들지 않는 줄을 여러 행으로 접는다 (D-422 · D-488 — 글자를 줄이거나 자르지 않는다). 안전망일 뿐 — 데이터 문구가 한 행에 맞춘다(D-511, `tools/card-text-fit.ts`).
  * 「 · 」 사이에서 먼저 나누고, 한 항목이 그래도 길면 띄어쓰기에서 — 두 행이면 폭이 고른 자리에서 나눠 꾸밈말이 줄 끝에 홀로 남지 않게 한다.
  */
-export const wrapRows = (t: string, bold = false, px = ROW_PX): string[] => {
-  const fits = (x: string): boolean => pxWidth(x, bold) <= px;
+export const wrapRows = (t: string, font: CardFont = CARD_ROW_FONT, px = ROW_PX): string[] => {
+  const fits = (x: string): boolean => pxWidth(x, font) <= px;
   if (fits(t)) return [t];
   const out: string[] = [];
   let curr = '';
@@ -67,7 +69,7 @@ export const wrapRows = (t: string, bold = false, px = ROW_PX): string[] => {
     for (let k = 1; k < words.length; k++) {
       const a = words.slice(0, k).join(' '), b = words.slice(k).join(' ');
       if (!fits(a) || !fits(b)) continue;
-      const sc = Math.max(pxWidth(a, bold), pxWidth(b, bold)) - (/,$/.test(a) ? 24 : 0);
+      const sc = Math.max(pxWidth(a, font), pxWidth(b, font)) - (/,$/.test(a) ? 24 : 0);
       if (sc < score) { score = sc; best = k; }
     }
     if (best > 0) { out.push(words.slice(0, best).join(' ')); curr = words.slice(best).join(' '); continue; }
@@ -89,8 +91,8 @@ export const condSplit = (s: string): string[] => {
   return m && textWidth(s) > LINE_W ? [m[1], m[2]] : [s];
 };
 
-/** 아래 칸 줄 (D-377): 조건 1줄 + 효과 항목 1줄씩, 많아야 3줄 — 넘치는 항목은 마지막 줄에 「 · 」로 붙인다 */
-export const bottomLines = (cond: string, fx: string): { t: string; k: 'if' | 'fx' }[] => {
+/** 아래 칸 논리 줄 (D-377): 조건 1줄 + 효과 항목 1줄씩, 많아야 3줄 — 넘치는 항목은 마지막 줄에 「 · 」로 붙인다. 줄마다 한 행에 들어야 한다(D-511) */
+export const bottomLogical = (cond: string, fx: string): { t: string; k: 'if' | 'fx' }[] => {
   const out: { t: string; k: 'if' | 'fx' }[] = [];
   let items = fx ? fx.split(' · ') : [];
   if (!cond && items.length === 1) {
@@ -105,9 +107,11 @@ export const bottomLines = (cond: string, fx: string): { t: string; k: 'if' | 'f
   const slots = 3 - out.length;
   if (items.length > slots) items = [...items.slice(0, slots - 1), items.slice(slots - 1).join(' · ')];
   items.forEach((t) => out.push({ t, k: 'fx' }));
-  // 한 행에 들지 않는 줄은 글자를 줄이지 않고 행으로 접는다 (D-422 · D-488)
-  return out.flatMap((l) => wrapRows(l.t, l.k === 'fx').map((t) => ({ t, k: l.k })));
+  return out;
 };
+/** 아래 칸 행: 한 행에 들지 않는 줄은 글자를 줄이지 않고 행으로 접는다 (D-422 · D-488 안전망 — 데이터가 한 행에 맞춘다, D-511) */
+export const bottomLines = (cond: string, fx: string): { t: string; k: 'if' | 'fx' }[] =>
+  bottomLogical(cond, fx).flatMap((l) => wrapRows(l.t).map((t) => ({ t, k: l.k })));
 
 /**
  * 카드 본문 (사용자 결정 D-377): 위 칸(2줄) · 점선 · 아래 칸(3줄). 점선은 글 길이와 상관없이 본문의 2:3 자리.
@@ -130,9 +134,23 @@ export const descHtml = (text: string, flavor?: string): string => {
 export const textWidth = (s: string): number =>
   [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 1 : ch === ' ' || ch === '\u00a0' ? 0.35 : /[×−—·→「」]/.test(ch) ? 0.9 : 0.6), 0);
 
-/** 12px 갈무리11 실측 폭(px — D-470 화면 canvas 측정, 굵게는 효과 줄). 그림 카드 부품 행은 99px */
-export const pxWidth = (s: string, bold = false): number =>
-  [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? 12 : ch === ' ' ? 5 : /[0-9]/.test(ch) ? (bold ? 5 : 6) : /[.,·:]/.test(ch) ? 5 : /[+×A-Za-z]/.test(ch) ? 9 : ch === '−' ? 8 : ch === '%' && !bold ? 10 : 12), 0);
+/**
+ * 카드 줄 글꼴 (D-511, 사용자 결정 — D-475 · D-422 정리): 조건 · 효과 줄 = 갈무리9 10px(카드 글 맞춤 전용, D-213 허용 범위) · 묘사 · 이름 줄 = 갈무리11 12px.
+ * g9 = 갈무리9 10px · g11 = 갈무리11 12px · g11b = 갈무리11 굵게 12px.
+ */
+export type CardFont = 'g9' | 'g11' | 'g11b';
+/** 글자 폭 (px, 글꼴 BDF의 DWIDTH = 화면 canvas 실측과 같음, 2026-11-15) — 한글은 g9 10 · g11 12, 표에 없는 기호는 한 칸 */
+const GLYPH: Record<CardFont, { han: number; groups: Record<number, string> }> = {
+  g9: { han: 10, groups: { 2: "'Ii", 3: '`l', 4: ' !"(),./1:;<>[\\]^j|· ', 5: '-=?EFJLSZfkrst{}「」', 6: '$*+02356789ABCDGHKMNOPQRTUVWXY_abcdeghnopquvwxyz×−', 7: '&4—', 8: '#%@m~' } },
+  g11: { han: 12, groups: { 4: '!"\'(),.:;I[]`il|·', 5: ' <>{}「」 ', 6: '*-/1=?\\^fjrt', 7: 'EFJLZachknsz', 8: '#$&+023456789ABDHKNPRSTVXY_bdegopquvxy~×−', 9: 'CGOQU', 10: '%@MWmw—' } },
+  g11b: { han: 12, groups: { 3: 'il', 5: ' !\'(),.1:;I[]`j|· ', 6: '"-=^frt{}「」', 7: '*/<>?EFL\\asz', 8: '023456789BCDGHJNOPQRSUXZ_bcdeghknopquvxy−', 9: '$+@AKTVY×', 10: '#M~—', 11: '&mw', 13: 'W' } },
+};
+const GLYPH_PX = Object.fromEntries((Object.keys(GLYPH) as CardFont[]).map((f) => [f, new Map(Object.entries(GLYPH[f].groups).flatMap(([w, cs]) => [...cs].map((c) => [c, Number(w)] as const)))])) as Record<CardFont, Map<string, number>>;
+/** 카드 조건 · 효과 줄의 글꼴 (CSS `.cf-desc .ln-if, .ln-fx`와 함께 바꾼다) */
+export const CARD_ROW_FONT: CardFont = 'g9';
+/** 한 줄의 실제 화면 폭(px, 태그 제외) — 카드 행 폭(ROW_PX)과 견준다 */
+export const pxWidth = (s: string, font: CardFont = CARD_ROW_FONT): number =>
+  [...s.replace(/<[^>]+>/g, '')].reduce((a, ch) => a + (/[가-힣]/.test(ch) ? GLYPH[font].han : GLYPH_PX[font].get(ch) ?? GLYPH[font].han), 0);
 
 /** 줄 한도 (레일 카드 196px 기준 — 묘사 15px 두 줄, 기능 · 조건 12px 한 줄) */
 export const DESC_LIMIT = { say: 17.5, fx: 14, cond: 14, tail: 26 }; // D-375: 두루마리 한 줄 ≈ 한글 8.5자 — 묘사 2줄 · 조건 + 효과 3줄 (화면 실측: tools 없이 sliceApi.allFaces 줄 수)

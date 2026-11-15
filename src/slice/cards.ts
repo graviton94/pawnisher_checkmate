@@ -114,7 +114,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   // 연쇄 소모 (D-203, 사용자: "배율은 턴 끝날 때 쌓이고 쓸 방법이 많지 않다") — 쌓인 연쇄를 모두 비우고 그만큼 효과. 연쇄 0이면 못 낸다
   // D-461: ×14 → ×6 — 연쇄가 적중 기준(D-454)이 된 뒤 한 턴 연쇄 5~6이라 0태엽에 킹 방열판 70~80. 실험실 짝 비교: 쥐여 주기만 해도 완주 24 → 94%
   // D-462 종막 전용 (사용자: 「도금왕은 깨면 끝 — 모든 걸 다 걸어도 된다」): 동료를 녹여 왕관을 친다. 보상으로 나오지 않는다
-  meltOath: { name: '쇳물 서약', cost: 1, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 최대 HP ×0.8 — 단 한 번 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
+  meltOath: { name: '쇳물 서약', cost: 1, who: 'any', kind: 'melt', desc: '동료를 녹여 왕관을 친다. (도금왕 피해 · 동료 최대 HP ×0.8 — 단 한 번 녹여)', flavor: '“왕관은 늘 누군가를 녹여 빛났다.”' },
   vent: { axis: 'chain', axis2: 'king', name: '방출', cost: 1, who: 'any', kind: 'spend', spend: 'shield', amount: 6, desc: '열기를 갑옷으로 돌린다. (연쇄 ×6 · 킹 방열판 ≤24 — 연쇄를 모두 써서)', flavor: '“식기 전에 입어라.”' },
   burst: { axis: 'chain', name: '증기 폭발', cost: 1, who: 'any', kind: 'spend', spend: 'blast', amount: 14, desc: '보일러를 연다. (연쇄 ×14만큼 · 적 전체 피해 — 연쇄를 모두 써서)', flavor: '“압력을 놓아라.”' },
   recall: { axis: 'chain', name: '회수', cost: 0, who: 'any', kind: 'spend', spend: 'ap', amount: 0.5, desc: '흩어진 태엽을 거둔다. (연쇄 2마다 태엽 1 · 최대 2 — 연쇄를 모두 써서)' },

@@ -1696,10 +1696,12 @@ body.slice .cf.cf.cf.cf > .cf-desc > .db.two > .db-bot { border-top: 2px dotted 
 body.slice .cf.cf.cf.cf > .cf-desc .ln { display: block; width: 100%; white-space: nowrap; overflow: visible; text-align: center; transform-origin: 50% 50%;
   font: 400 12px/15px Galmuri11, sans-serif !important; color: #3a342a; word-break: keep-all; }
 body.slice .cf.cf.cf.cf > .cf-desc .ln-if { color: #4a4436; }
-body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx b { font-weight: 700 !important; color: #2a2620; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx b { color: #1f1b16; }
 body.slice .cf.cf.cf.cf > .cf-desc .ln-fx em { font-style: normal; color: #a8222e; font: inherit !important; color: #a8222e; }
 body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color: #1f6b70; }
-body.slice .cf.cf.cf.cf > .cf-desc .ln.s10, body.slice .cf.cf.cf.cf > .cf-desc .ln.s10 * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
+/* D-511 (사용자 결정 — D-475 × D-422): 조건 · 효과 줄은 늘 갈무리9 10px(카드 글 맞춤 전용, D-213) — 효과는 한 행, 줄이거나 자르지 않는다. 행 높이 15px 그대로라 세 행 틀은 같다.
+   갈무리9엔 굵게가 없다(가짜 굵게 금지) — 효과 줄은 짙은 색 · 붉은 수치 · 앞의 「: 」로 가른다. 글 폭 표는 desc.ts `pxWidth` · 전수 측정 tools/card-text-fit.ts */
+body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
 
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }
 /* D-399: 카드 150 ~ 166px에서 「쓰러짐」이 1fr 칸(≈ 32px)에 안 들어 「쓰러 / 짐」으로 꺾이고 두루마리 위가 잘렸다 — 칸 폭은 글 폭대로, 사이는 고르게 */
@@ -1763,5 +1765,3 @@ body.slice .deathfx.dc3 .dr-stamp.st3 { opacity: 1; animation: st3 380ms both; }
 .dr-band.in { animation: koband 420ms both; }
 .dr-frame > .dr-face { position: relative; }
 @media (prefers-reduced-motion: reduce) { .dr-band.in { animation: none; transform: none; } }
-/* D-475: 넘치는 카드 줄은 자간부터 줄인다 */
-body.slice .cf.cf.cf.cf > .cf-desc .ln.tight { letter-spacing: -1px; word-spacing: -2px; }

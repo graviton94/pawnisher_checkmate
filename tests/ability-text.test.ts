@@ -76,8 +76,8 @@ describe('부품 문법 — 언제 · 효과', () => {
   it('효과는 득실 많아야 둘, 언제 줄에 「 · 」가 섞이지 않는다', () => {
     expect(ids.filter((id) => partSummaryText(id).effect.split(' · ').length > 2 || partSummaryText(id).description.includes(' · '))).toEqual([]);
   });
-  it('그림 카드는 세 행 틀 — 넷째 행이 없고, 어느 행도 글자를 줄이지 않고 한 행 폭 안 (D-475 · D-488)', () => {
-    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 3 || !r.some((x) => x.k === 'fx') || r.some((x) => pxWidth(x.t, x.k === 'fx') > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
+  it('그림 카드는 세 행 틀 — 효과는 늘 한 행, 넷째 행이 없고, 어느 행도 글자를 줄이지 않고 한 행 폭 안 (D-475 · D-488 · D-511)', () => {
+    const bad = ids.flatMap((id) => { const r = partRuleRows(id); return r.length > 3 || r.filter((x) => x.k === 'fx').length !== 1 || r.some((x) => pxWidth(x.t) > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
     expect(bad).toEqual([]);
     expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드·태엽 +1']);
   });
@@ -87,15 +87,29 @@ describe('부품 문법 — 언제 · 효과', () => {
 describe('명령 카드 줄 — 글자 축소 없음', () => {
   it('모든 카드의 조건 · 효과 행이 세 행 안 · 한 행 폭 안 (#18)', async () => {
     const { COMMANDS } = await import('../src/slice/cards');
-    const { bottomLines, splitDesc } = await import('../src/slice/desc');
+    const { bottomLines, bottomLogical, splitDesc } = await import('../src/slice/desc');
     const bad = Object.entries(COMMANDS).flatMap(([id, c]) => {
       const d = splitDesc(c.desc || '');
       const r = bottomLines(d.cond, d.fx);
-      return r.length > 3 || r.some((x) => pxWidth(x.t, x.k === 'fx') > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : [];
+      // D-511: 조건 · 효과 줄은 접히지 않는다 (줄 하나 = 한 행)
+      return r.length > 3 || r.length !== bottomLogical(d.cond, d.fx).length || r.some((x) => pxWidth(x.t) > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : [];
     });
     expect(bad).toEqual([]);
   });
-  it('개척자의 맹세: 효과 두 항목이 한 행씩 (줄이지 않는다)', () => {
-    expect(partRuleRows('oath').map((x) => x.t)).toEqual(['장착 중', ': 폰 공격 +6', '폰 1회 버팀']);
+  it('개척자의 맹세: 효과 두 항목이 한 행에 (D-511 — 다듬은 문구 · 갈무리9 10px)', () => {
+    expect(partRuleRows('oath').map((x) => x.t)).toEqual(['장착 중', ': 폰 공격 +6, 버팀 1']);
+  });
+  it('분대원 카드(기벽 · 이형)와 시작 세트의 조건 · 효과 줄도 한 행씩(가장 좁은 분대원 카드 폭), 이름 아래 두 행 안 (D-511)', async () => {
+    const { bottomLogical } = await import('../src/slice/desc');
+    const { QUIRKS } = await import('../src/slice/crew');
+    const { FORMS } = await import('../src/data/forms');
+    const { START_SETS } = await import('../src/data/start-sets');
+    const rows = [
+      ...Object.values(QUIRKS).map((q) => bottomLogical('', q.desc).map((l) => l.t)),
+      ...Object.values(FORMS).map((f) => [f.move, f.hit]),
+      ...Object.values(START_SETS).map((st) => st.rows.slice(1)),
+    ];
+    const { CREW_ROW_PX } = await import('../src/slice/desc');
+    expect(rows.filter((r) => r.length > 2 || r.some((t) => pxWidth(t) > CREW_ROW_PX))).toEqual([]);
   });
 });

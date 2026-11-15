@@ -1,5 +1,5 @@
 import type { SlicePartId } from './parts';
-import { lineHtml, pxWidth, wrapRows } from './desc';
+import { lineHtml, pxWidth, ROW_PX, wrapRows } from './desc';
 import { partSummaryText, type AbilityText } from '../data/ability-text';
 
 const escape = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -24,17 +24,15 @@ export const bindAbilities = (host: HTMLElement, abilities: AbilityText[]): void
   });
 };
 
-/** 그림 카드 한 행에 12px로 드는 폭 (실측 99px, 굵은 글자 반올림 여유 2px) */
-export const PART_ROW_PX = 97;
 /**
- * 좁은 그림 카드의 부품 줄 (D-470 → D-475 → D-488): 세 행 틀은 그대로 — 언제(길면 쉼표 뒤에서 두 행) · : 효과.
- * 글자를 줄이지 않는다(D-422): 효과가 한 행에 안 들면 「 · 」 사이에서 남는 행으로 접는다. 넷째 행은 없다 — 데이터 문구가 맞춘다(테스트).
+ * 좁은 그림 카드의 부품 줄 (D-470 → D-475 → D-488 → D-511): 세 행 틀 — 언제(길면 쉼표 뒤에서 두 행) · : 효과는 늘 한 행.
+ * 조건 · 효과 줄은 갈무리9 10px(카드 글 맞춤), 그래도 길면 데이터 문구를 다듬는다(테스트 · `tools/card-text-fit.ts`). wrapRows는 안전망 — 글자를 줄이거나 자르지 않는다(D-422).
  */
 export const partRuleRows = (id: SlicePartId): { t: string; k: 'if' | 'fx' }[] => {
   const a = partSummaryText(id);
   const comma = a.description.indexOf(', ');
-  const when = pxWidth(a.description) > PART_ROW_PX && comma > 0 ? [a.description.slice(0, comma + 1), a.description.slice(comma + 2)] : [a.description];
-  return [...when.flatMap((t) => wrapRows(t, false)).map((t) => ({ t, k: 'if' as const })), ...wrapRows(`: ${a.effect}`, true).map((t) => ({ t, k: 'fx' as const }))];
+  const when = pxWidth(a.description) > ROW_PX && comma > 0 ? [a.description.slice(0, comma + 1), a.description.slice(comma + 2)] : [a.description];
+  return [...when.flatMap((t) => wrapRows(t)).map((t) => ({ t, k: 'if' as const })), ...wrapRows(`: ${a.effect}`).map((t) => ({ t, k: 'fx' as const }))];
 };
 export const partCardRuleHtml = (id: SlicePartId): string => {
   const lines = partRuleRows(id).map((l) => lineHtml(l.t, l.k));
