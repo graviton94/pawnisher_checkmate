@@ -110,6 +110,26 @@ export const placeBoss = (s: BattleState, reserved: number[] = []): Piece | null
   return k;
 };
 
+/**
+ * 2×2 보스 걸음 수 (D-513): 왼아래 칸 a에서 내 킹 곁(2×2가 킹에 붙는 자리)까지 — 네 칸이 모두 판 안(꺼지지 않은 칸)인 자리만 밟는다.
+ * 기물은 지나간다고 본다(막힌 길은 비켜 주면 열린다). 닿을 수 없으면 판 넓이 + 일직선 거리.
+ */
+const bossWalk = (s: BattleState, king: Pos): ((a: Pos) => number) => {
+  const ok = (a: Pos) => blockOf(a).every((c) => inBounds(s, c.x, c.y));
+  const touch = (a: Pos) => Math.max(Math.abs(Math.min(Math.max(king.x, a.x), a.x + 1) - king.x), Math.abs(Math.min(Math.max(king.y, a.y), a.y + 1) - king.y)) <= 1;
+  const d = new Map<string, number>();
+  const q: Pos[] = [];
+  for (let y = 0; y < s.height - 1; y++) for (let x = 0; x < s.width - 1; x++) if (ok({ x, y }) && touch({ x, y })) { d.set(`${x},${y}`, 0); q.push({ x, y }); }
+  for (let i = 0; i < q.length; i++) {
+    const c = q[i], n = d.get(`${c.x},${c.y}`)!;
+    for (const st of ALL8) {
+      const m = { x: c.x + st.x, y: c.y + st.y };
+      if (ok(m) && !d.has(`${m.x},${m.y}`)) { d.set(`${m.x},${m.y}`, n + 1); q.push(m); }
+    }
+  }
+  return (a) => d.get(`${a.x},${a.y}`) ?? s.width * s.height + Math.max(Math.abs(a.x + 0.5 - king.x), Math.abs(a.y + 0.5 - king.y));
+};
+
 /** 2×2 보스 묶음의 모든 칸 (몸 칸 + 본체) — 없으면 빈 목록 */
 export const bossCells = (s: BattleState): Pos[] => s.pieces.filter((p) => p.giant?.boss).map((p) => ({ x: p.x, y: p.y }));
 
@@ -223,9 +243,11 @@ export const giantTurn = (b: GiantHolder): BattleEvent[] => {
     if (isBoss(parts)) {
       if (b.turn > 1 && (b.turn - 1) % BOSS_BODY.stepEvery === 0 && king) {
         const a = anchorOf(parts);
-        const center = { x: a.x + 0.5, y: a.y + 0.5 };
-        const dist = (c: Pos) => Math.max(Math.abs(c.x - king.x), Math.abs(c.y - king.y));
-        const steps = ALL8.filter((d) => dist({ x: center.x + d.x, y: center.y + d.y }) < dist(center)).sort((d1, d2) => dist({ x: center.x + d1.x, y: center.y + d1.y }) - dist({ x: center.x + d2.x, y: center.y + d2.y }) || Math.abs(d2.y) - Math.abs(d1.y) || Math.abs(d1.x) - Math.abs(d2.x));
+        // 걸음 수 (꺼진 칸을 돌아간다 — 기물은 비켜 주면 열린다고 본다): 2×2가 설 수 있는 자리끼리 여덟 방향, 내 킹에 닿는(붙는) 자리에서 거꾸로.
+        // 구멍이 없으면 일직선 거리와 같은 순서 — 금 간 바닥 판에서 2×2가 구멍 벽 앞에 서 버리던 것 (D-513)
+        const dist = bossWalk(b.s, king);
+        const here = dist(a);
+        const steps = ALL8.filter((d) => dist({ x: a.x + d.x, y: a.y + d.y }) < here).sort((d1, d2) => dist({ x: a.x + d1.x, y: a.y + d1.y }) - dist({ x: a.x + d2.x, y: a.y + d2.y }) || Math.abs(d2.y) - Math.abs(d1.y) || Math.abs(d1.x) - Math.abs(d2.x));
         for (const d of steps) {
           const ok = parts.every((p) => {
             const q = { x: p.x + d.x, y: p.y + d.y };

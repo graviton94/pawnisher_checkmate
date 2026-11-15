@@ -141,6 +141,18 @@ describe('2×2 특별 보스 — 걷기 · 예고 · 내리찍기 (D-513)', () =
     const k = core(b);
     for (const p of group(b)) expect([p.x - k.x, p.y - k.y]).toEqual([p.giant!.dx, p.giant!.dy]);
   });
+  it('꺼진 칸 벽은 돌아서 걷는다 (2×2가 설 수 있는 자리만 밟는 걸음 수)', () => {
+    const b = boss();
+    clearFoes(b);
+    b.s.pieces = b.s.pieces.filter((p) => p.side === 1 || p.type === 'K');
+    Object.assign(mine(b, 'K'), { x: 3, y: 0 });
+    // y=2 줄을 x 2~5 꺼뜨린다 — 2×2가 지날 틈은 왼쪽 두 칸뿐
+    b.s.fallen = [2, 3, 4, 5].map((x) => 2 * b.s.width + x);
+    b.intents = [];
+    for (let t = 0; t < 5 && b.s.winner === null; t++) { b.intents = []; const r = endTurn(b, true); if (r === 'warn') break; }
+    const a = anchor(b);
+    expect(a.y).toBeLessThanOrEqual(1);
+  });
   it('예고한 변을 적 차례 끝에 반장 킹 공격으로 내리찍는다 — 미리보기 피해 = 실제 피해', () => {
     const b = boss();
     clearFoes(b);
