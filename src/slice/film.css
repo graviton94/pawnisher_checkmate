@@ -48,6 +48,9 @@
 .cut-who.cw-npc .cw-face { width: calc(var(--d) * 44); background-image: url('../assets/ui/chrome/v2/portrait-npc.png'); }
 .cut-who .cw-face > img { position: absolute; z-index: -1; inset: calc(var(--d) * 6); width: calc(100% - var(--d) * 12); height: calc(100% - var(--d) * 12); object-fit: cover; object-position: 50% 30%; background: #16141c; image-rendering: pixelated; }
 .cut-who.cw-foe .cw-face > img { top: calc(var(--d) * 9); bottom: calc(var(--d) * 8); height: calc(100% - var(--d) * 17); }
+/* D-516 PT-09 취소: 받은 일러스트를 비율 그대로 확대해 화자 자리만 (늘이지 않는다, D-386) — 자리는 img와 같다 */
+.cut-who .cw-face > i.cw-crop { position: absolute; z-index: -1; inset: calc(var(--d) * 6); display: block; background-color: #16141c; background-repeat: no-repeat; image-rendering: pixelated; }
+.cut-who.cw-foe .cw-face > i.cw-crop { top: calc(var(--d) * 9); bottom: calc(var(--d) * 8); }
 .cut-who .cw-face > img.piece-img { object-fit: cover; object-position: 50% 20%; }
 .cut-who .cw-name {
   box-sizing: border-box; display: inline-flex; align-items: center; height: calc(var(--d) * 15); margin-bottom: calc(var(--d) * 4);

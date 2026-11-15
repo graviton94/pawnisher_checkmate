@@ -138,8 +138,8 @@ p(`- 끝 화면 글: 「${OPENING_TEXT.tagline}」(표어) · 「${OPENING_TEXT.
 p('### 3-1. 그림자 컷 — 둘째 출하부터 프롤로그 대신', '',
   '- **트리거**: 한 번이라도 출하를 끝낸 뒤 새 출하를 시작할 때. 주인공은 **새 폰**이다(앞 출하의 기억 없음). 같은 왕관을 다시 하면 SHD-A, 둘째~넷째 왕관을 처음 시작하면 SHD-B.', '');
 cutBlock('SHD-A', '같은 왕관 재도전', shadowCut(0, undefined, true), '집게에 들린 흰 폰이 상자들이 흐르는 컨베이어 위에 있다. 높은 통로에서 금빛 왕의 실루엣이 내려다본다');
-cutBlock('SHD-B', '둘째 왕관 시작', shadowCut(1, ASCENSION[STORY_LAW[0]].law), '`new-law` — 왕관 없는 새 폰이 커다란 황동 규정판(왕관 문양 · 새긴 줄)을 올려다본다. 위쪽 멀리 왕좌 → 2~4줄은 `law-plate`(ED-05, END-K 규정 컷과 같은 쇠판 그림 — D-510 `shadowCuts`)', '셋째 줄 「 」 = **앞 왕관에서 왕이 된 종이왕이 새긴 규정**(§7-4). 마지막 속마음은 왕관마다 다르다(아래).', 0, { 3: 'SHD-B-4-A2' });
-rows(['왕관', '마지막 속마음'], [2, 3].map((a) => [`SHD-B-4-A${a + 1}`, `${CHAPTERS[a].label}`, `‘${shadowCut(a, '규정').lines.at(-1)!.t}’`] as [string, string, string]));
+cutBlock('SHD-B', '둘째 왕관 시작', shadowCut(1, ASCENSION[STORY_LAW[0]].law), '`new-law` — 왕관 없는 새 폰이 커다란 황동 규정판(왕관 문양 · 새긴 줄)을 올려다본다. 위쪽 멀리 왕좌 → 2~3줄은 `law-plate`(ED-05, END-K 규정 컷과 같은 쇠판 그림 — D-510 `shadowCuts`) → 4줄 속마음은 `crown-2-open`(CN-01, D-516) — 리벳 띠를 한 겹 더 덧부은 흑 비숍 · 룩 · 킹 · 나이트를 아래에서 올려다본 그림, 뒤 기둥에 빈 쇠판. 종이왕은 일부러 넣지 않았다(흑 기물만)', '셋째 줄 「 」 = **앞 왕관에서 왕이 된 종이왕이 새긴 규정**(§7-4). 마지막 속마음은 왕관마다 다르다(아래).', 0, { 3: 'SHD-B-4-A2' });
+rows(['왕관', '마지막 속마음'], [2, 3].map((a) => [`SHD-B-4-A${a + 1}`, `${CHAPTERS[a].label} — ${['`crown-3-open`(CN-02) 차가운 청색, 두 검수 저울 사이 좁은 틈의 종이 왕관 폰(뒷모습)', '`crown-4-open`(CN-03) 절반쯤 꺼진 채 매달린 수리 집게 · 자물쇠 걸린 기름통 · 흩어진 톱니, 멀리 통제실 금빛'][a - 2]}`, `‘${shadowCut(a, '규정').lines.at(-1)!.t}’`] as [string, string, string]));
 
 // ───────────────────────── 4. 막 입구 · 동료 장면 ─────────────────────────
 p('## 4. 막 사이 — 입구 카드와 동료 장면', '',
@@ -253,12 +253,13 @@ const PR: { t: string; id: string; from: number; ids?: Record<number, string>; p
   { t: '왕의 눈', id: 'END-K-1', from: 1, pic: '`end-k-sight` (ED-02) — 통제실에서 내려다본 공장. 가운데 기물 문장을 두른 탑이 세 갈래 쇳물을 아래 용광로로 쏟고, 층층 난간 · 등불 · 톱니 · 킹 깃발이 둘러싼다' },
   { t: '용해 주조', id: 'END-K-2', from: 0, pic: '`casting-floor` — 통제실 바닥이 갈라져 쇳물과 쇠사슬이 동료들을 끌어내리고, 단상 위 금왕관의 폰이 내려다본다 (그동안 `gilded-fallen`)' },
   { t: '뻗지 않은 손', id: 'END-K-2', from: 4, pic: '`end-k-reach` (ED-03 재발주본, D-514) — 쇠사슬 목걸이에 끌려 쇳물로 잠기며 다문 말머리를 위로 뻗은 흰 나이트(몸에 시커먼 주조 흠 — 박차), 오른쪽 위 갈라진 단상 위에 금띠 두른 흰 폰 받침만 움직이지 않는다' },
-  { t: '금빛으로 굳다', id: 'END-K-3', from: 0, ids: { 1: 'END-K-3-2-A1' }, pic: '`gold-cast` — 황금 쇳물이 아래에서부터 폰을 감싸 킹으로 굳는다 (그동안 `promote-gild`)' },
+  { t: '금빛으로 굳다', id: 'END-K-3', from: 0, pic: '`gold-cast` — 황금 쇳물이 아래에서부터 폰을 감싸 킹으로 굳는다 (그동안 `promote-gild`)' },
+  { t: '새 도금왕의 왕좌', id: 'END-K-3', from: 1, ids: { 0: 'END-K-3-2-A1' }, pic: '`crown-1-throne` (CN-04, D-516) — 금칠이 흘러내리는 새 도금왕이 왕좌에 앞으로 기울어 앉았다. 금박이 벗겨진 곳마다 흰 몸, 발치 붉은 깔개 위에 찢어진 종이 왕관 조각, 뒤로 킹 깃발 · 금빛 통제실 창' },
   { t: '금칠이 덮이다', id: 'END-K-3', from: 2, pic: '`end-k-gild` (ED-04 — D-510 사용자 결정으로 「안에서 잠그는 문」 대신) — 위 고리에서 금물이 쏟아져 금왕관(십자)을 쓴 폰을 덮는다. 종이 왕관은 이미 버렸다(END-K-1-1, D-514). 왕관 · 몸 위로 금이 흘러내리고 군데군데 흰 몸이 남았다. 양옆 주조기 쇠팔도 금물을 흘린다' },
   { t: '규정을 새기다', id: 'END-K-3', from: 3, ids: { 1: 'END-K-3-4-닮음' }, pic: '`law-plate` (ED-05) — 검수대 기둥에 못 박힌 쇠판, 날카롭게 새긴 홈 줄 넷 · 끝의 번쩍임, 아래 금박 부스러기, 왼쪽 붉은 등' },
   { t: '다음 폰', id: 'END-K-끝', from: 0, ids: { 0: 'END-K-끝' }, pic: '끝 정적' },
 ];
-promotionCuts(0, '', ASCENSION[STORY_LAW[0]].law, BOSS_STORY.plate.mirror, { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(PR[i].id, PR[i].t, c, PR[i].pic, PR[i].t === '금빛으로 굳다' ? '속마음은 첫째 왕관 판. 아래 변주.' : PR[i].t === '규정을 새기다' ? '「 」 = 첫째 왕관에서 새기는 규정. 마지막 줄 = 철갑 반장일 때.' : PR[i].t === '금칠이 덮이다' ? '문을 안쪽에서 잠그는 일은 그림이 아니라 서술 끝에 남는다(그림자 컷 · 도금왕 증언이 「안에서 잠근 왕」을 부른다).' : '', PR[i].from, PR[i].ids));
+promotionCuts(0, '', ASCENSION[STORY_LAW[0]].law, BOSS_STORY.plate.mirror, { alive: [{ name: '박차', t: 'N' }] }).forEach((c, i) => cutBlock(PR[i].id, PR[i].t, c, PR[i].pic, PR[i].t === '새 도금왕의 왕좌' ? '첫째 왕관만 이 그림(CN-04). 둘째 · 셋째 왕관은 속마음이 `gold-cast`에 남는다 — 아래 변주(CN-05 · 06 받으면 같은 자리).' : PR[i].t === '규정을 새기다' ? '「 」 = 첫째 왕관에서 새기는 규정. 마지막 줄 = 철갑 반장일 때.' : PR[i].t === '금칠이 덮이다' ? '문을 안쪽에서 잠그는 일은 그림이 아니라 서술 끝에 남는다(그림자 컷 · 도금왕 증언이 「안에서 잠근 왕」을 부른다).' : '', PR[i].from, PR[i].ids));
 p('**변주**', '');
 rows(['자리', '원문'], [1, 2].map((ch) => [`END-K-3-2-A${ch + 1}`, `셋째 컷 속마음 · ${CHAPTERS[ch].label}`, `‘${promotionCuts(ch, '', '', '').find((c) => c.img === 'gold-cast')!.lines.find((l) => l.k === 'm')!.t}’`] as [string, string, string]));
 
@@ -282,8 +283,8 @@ p('**난이도 조항 전체** (본편 첫째~넷째 왕관 = 0~3번, 그 뒤는
 rows(['이름', '새긴 글 → 실제 효과'], ASCENSION.map((a, i) => [`ASC-${i}`, `${a.name}${i < 4 ? ` (${CHAPTERS[i].label} 전투)` : ` (도전 ${i - 3})`}`, `「${a.law}」 → ${a.desc}`] as [string, string, string]));
 
 p('### 7-5. 패배 END-F', '', '- **트리거**: 우리 킹(종이왕)이 쓰러지고 되감기도 없을 때. 이 컷 뒤 결과 화면.', '');
-const DF_PIC = ['붉은 쇳물이 흐르는 용광로 입구. 그 앞에 쓰러진 흰 폰과 구겨진 종이 왕관', '`prologue-01` 빌림 — 쇳물을 붓는 거푸집 줄과 검은 기물들 (ED-10 대기)', '끝 정적'];
-DEFEAT_CUTS.forEach((c, i) => cutBlock(`END-F-${i + 1}`, ['굴러떨어진 왕관', '상자째 용광로로', '풀리는 태엽'][i], c, DF_PIC[i], '', 0, c.lines.length === 1 ? { 0: `END-F-${i + 1}` } : {}));
+const DF_PIC = ['(ED-09, D-516) 붉은 빛줄기를 내리쏘는 천장 검수기 아래 젖은 검수 판 — 쓰러진 흰 폰과 앞쪽에 굴러떨어진 구겨진 종이 왕관, 멀리 검은 기물 실루엣', '(ED-10, D-516) 거대한 집게가 흰 기물이 든 나무 상자를 통째로 들어 시뻘건 용광로 위로 옮긴다. 왼쪽 난간에 검은 기물들', '(ED-11, D-516) 아래에서 올려다본 흰 룩 · 나이트 · 종이 왕관 폰 — 등의 태엽 열쇠가 풀려 멈추고 종이 조각이 흩날린다. 나이트의 눈은 우리가 지웠다(사용자 지시)'];
+DEFEAT_CUTS.forEach((c, i) => cutBlock(`END-F-${i + 1}`, ['굴러떨어진 왕관', '상자째 용광로로', '풀리는 태엽'][i], c, DF_PIC[i], i === 2 ? '이 컷 뒤 먹으로 닫고 맺음 카드 「출하 실패 / 킹이 쓰러졌습니다」.' : '', 0, c.lines.length === 1 ? { 0: `END-F-${i + 1}` } : {}));
 rows(['자리', '원문'], [
   ['END-F-창-1', '패배 창 「하자 폐기」 · 시스템', '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'],
   ['END-F-창-2', '패배 창 · 속마음 (적 킹을 거의 잡았을 때)', '‘적 킹 HP (n). 한 수였어.’'],
@@ -365,15 +366,16 @@ p('- 거절 공통 결과: 「당신은 말없이 발걸음을 돌린다.」', '
 p('## 11. 장면 그림 목록', '',
   '| 장면 | 파일 | 상태 |', '|---|---|---|',
   '| 프롤로그 10컷 | `prologue-00` ~ `prologue-07` · `op-windup` · `op-legend` | 있음 (OP-01 ~ 04 받음, D-509 · D-512 · D-514) |',
-  '| 그림자 컷 | `prologue-shadow`(재도전) · `new-law`(둘째~넷째 왕관 시작) | 있음 |',
+  '| 그림자 컷 | `prologue-shadow`(재도전) · `new-law` · `law-plate` + 왕관 시작 `crown-2-open` · `crown-3-open` · `crown-4-open`(둘째~넷째 왕관 시작) | 있음 (CN-01 ~ 03 받음, D-516) |',
   '| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 3막 **발주 중**(S-13) — 그동안 `act-3` |',
   '| 반장 등장 6 + 도금왕 4 | `boss-*` | 있음 |',
   '| 반장 격파 6 | `boss-fall-*` | 있음 |',
   '| 동료 장면 CO-1 · CO-2 · CO-3 | `companion-rest` · `companion-crossroad`(둘째 왕관 `old-spring` · 넷째 왕관 `scarred-wall`) · `chained-door` | CO-2 변주 · CO-3 **발주 중**(S-13 · S-14 · S-15) |',
   '| 왕위 결정 | `gilded-fallen` | 있음 |',
-  '| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · `end-k-gild` · `law-plate` | 있음 (ED-02~05 받음 D-510 · ED-03 재발주본 D-514) |',
+  '| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · (첫째 왕관 `crown-1-throne`) · `end-k-gild` · `law-plate` | 있음 (ED-02~05 받음 D-510 · ED-03 재발주본 D-514 · CN-04 D-516) |',
   '| 진엔딩 6컷 | `gilded-fallen` · `end-t-throw` · `crown-gears` · `end-t-silence` · `white-land` · `end-t-step` | 있음 (ED-06 ~ 08 받음, D-514) |',
-  '| 패배 | `end-fail` | 있음 |',
+  '| 패배 3컷 | `end-fail` · `end-f-box` · `end-f-unwind` | 있음 (ED-09 ~ 11 받음, D-516) |',
+  '| 크레딧 | `credits-bg` | 있음 (ED-12 받음, D-516 — 오른쪽 빈 어둠에 크레딧 글) |',
   `| 사건 ${Object.keys(SLICE_EVENTS).length}종 | 사건마다 한 장 | 있음 |`, '',
   '발주 프롬프트 전문: `docs/asset-order-master.md` §0-B. 받기 전에는 괄호 안 대체 그림이 자동으로 쓰인다.', '');
 p('### 11-1. 지금 화면에 나오지 않는 글 (데이터에만 있다 — 살릴지 지울지 판단 필요)', '');

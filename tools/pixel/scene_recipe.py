@@ -1,8 +1,8 @@
 """장면 원본을 재반입할 때도 보존할 변환값. 확인된 수동값만 등록한다."""
 
 # D-349: 이야기 컷은 가로 약 300칸, 원본 도트 간격 5.9px로 맞췄다.
-# credits-bg는 원본 재변환과 현재 PNG의 RGBA 전 픽셀 일치로 재확인했다(D-423).
-MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
+# credits-bg 옛 그림(E-06, 5.9px)은 D-516 ED-12 재발주본으로 바뀌었다 — 값은 아래 D-516 줄.
+MANUAL_PITCH = {'epilogue-hands': 1870 / 300,
     # D-434: 수령본 1672×941 → 320×180. 전체를 한 번 샘플링하고 마지막 경계는 원본 끝.
     'throne-mold': 941 / 180, 'departure-dock': 941 / 180, 'shipping-interior': 941 / 180,
     # D-442: S-05~07 원본1672×941 → 전체320×180 격자, 색 수 축소 없음.
@@ -28,7 +28,14 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     'end-k-sight': 941 / 180, 'end-k-reach': 941 / 156, 'end-k-gild': 941 / 180, 'law-plate': 941 / 180,
     # D-514: OP-03 · ED-06 · 07 · 08은 복원 오차가 칸이 잘수록 고르게 줄 뿐(130 → 190줄: OP-03 10.41 → 8.34 · ED-06 7.48 → 5.83 ·
     # ED-07 7.80 → 5.98 · ED-08 5.49 → 4.29) 뚜렷한 국소 최소가 없어 장면 관례 941/180 → 320×180. 넷 다 띠를 그려 넣지 않고 끝까지 채워 왔다.
-    'op-legend': 941 / 180, 'end-t-throw': 941 / 180, 'end-t-silence': 941 / 180, 'end-t-step': 941 / 180}
+    'op-legend': 941 / 180, 'end-t-throw': 941 / 180, 'end-t-silence': 941 / 180, 'end-t-step': 941 / 180,
+    # D-516: ED-09 · 10 · 11 · CN-01은 복원 오차가 칸이 잘수록 고르게 줄 뿐(130 → 190줄: ED-09 4.75 → 3.77 · ED-10 5.96 → 4.72 ·
+    # ED-11 4.30 → 3.76 · CN-01 7.95 → 6.20) 뚜렷한 국소 최소가 없어 장면 관례 941/180 → 320×180 (ED-09만 원본 1670폭 → 319×180).
+    # ED-12만 178줄(5.29px)이 이웃(176 · 180줄)보다 오차가 뚜렷이 낮다(1.97 / 2.04 · 2.06 — 180줄은 오히려 국소 최대) → 316×178.
+    'end-fail': 941 / 180, 'end-f-box': 941 / 180, 'end-f-unwind': 941 / 180, 'credits-bg': 941 / 178, 'crown-2-open': 941 / 180,
+    # D-516 CN-02 ~ 04 (1670~1671×941~942): CN-02만 164줄(5.74px)이 이웃(162 · 166줄)보다 오차가 뚜렷이 낮다(7.07 / 7.36 · 7.23) → 291×164.
+    # CN-03(130 → 190줄 6.55 → 5.20) · CN-04(8.12 → 6.43)는 고르게 줄 뿐 → 장면 관례 941/180 (CN-04는 1670×942 → 319×180).
+    'crown-3-open': 941 / 164, 'crown-4-open': 941 / 180, 'crown-1-throne': 941 / 180}
 
 
 def options(name):
@@ -41,7 +48,9 @@ def options(name):
                 'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table',
                 'map-a1', 'map-a2', 'map-a3', 'map-a4', 'op-windup', 'prologue-04', 'prologue-07',
                 'end-k-sight', 'end-k-reach', 'end-k-gild', 'law-plate',
-                'op-legend', 'end-t-throw', 'end-t-silence', 'end-t-step'):
+                'op-legend', 'end-t-throw', 'end-t-silence', 'end-t-step',
+                'end-fail', 'end-f-box', 'end-f-unwind', 'credits-bg', 'crown-2-open',
+                'crown-3-open', 'crown-4-open', 'crown-1-throne'):
         opts['uniform'] = True
     return opts
 
@@ -191,4 +200,29 @@ ENDING_GRID = {
     'ED-06': {'name': 'end-t-throw', 'trim_max': 30, 'trim_dark': 0.25},
     'ED-07': {'name': 'end-t-silence', 'trim_max': 30, 'trim_dark': 0.25},
     'ED-08': {'name': 'end-t-step', 'trim_max': 30, 'trim_dark': 0.25},
+    # D-516 패배 END-F 세 컷 · 크레딧 바탕 — 넷 다 띠 없이 끝까지 채워 왔다. ED-09 재발주본(옛 end-fail은 E-02-end-fail-source.png)
+    'ED-09': {'name': 'end-fail', 'trim_max': 30, 'trim_dark': 0.25},
+    'ED-10': {'name': 'end-f-box', 'trim_max': 30, 'trim_dark': 0.25},
+    # ED-11 사용자 지시(2026-11-15): 나이트의 눈은 재발주하지 않고 지운다 — 격자 복원 뒤 erase 칸을 같은 말머리 면의 이웃 칸 색(from)으로 메운다(새 색 없음).
+    #   box = (왼, 위, 오른, 아래) 도트(오른 · 아래 미포함), from = 메울 색을 읽는 이웃 칸 (x, y). 대조판 아래 줄에 전 | 후(×12)
+    #   말머리 면은 #51484B ~ #594E51 한 단(같은 명암) — 눈 · 콧구멍 · 입 홈의 먹(#181516 · #1D1A1B · #231D1D)만 그 면 색으로. 테 빛 · 턱 외곽선은 그대로.
+    'ED-11': {'name': 'end-f-unwind', 'trim_max': 30, 'trim_dark': 0.25, 'erase': [
+        {'what': '나이트 눈', 'box': (137, 118, 139, 120), 'from': (136, 119)},
+        {'what': '나이트 눈 아래 끝', 'box': (138, 120, 139, 121), 'from': (137, 120)},
+        {'what': '나이트 콧구멍', 'box': (142, 129, 143, 130), 'from': (142, 130)},
+        {'what': '나이트 입 홈', 'box': (140, 132, 141, 134), 'from': (141, 133)},
+    ]},
+    # ED-12 재발주본(옛 credits-bg는 E-06-credits-bg-source.png): 오른쪽 넓은 빈 어둠 = 크레딧 글 자리
+    'ED-12': {'name': 'credits-bg', 'trim_max': 30, 'trim_dark': 0.25},
+}
+
+
+# D-516 왕관 시작 컷 CN-01 ~ 03 (tools/pixel/ending_import.py가 같은 균일 격자 · 띠 걷기로 읽는다).
+# CN-01 사용자 결정: 종이왕을 일부러 뺐다 — 두꺼워진 흑 기물만 (LAW-1 「흑 기물의 쇠는 더 두껍게 붓는다」)
+CROWN_GRID = {
+    'CN-01': {'name': 'crown-2-open', 'trim_max': 30, 'trim_dark': 0.25},
+    # CN-02 저울 둘 (LAW-2) · CN-03 꺼진 정비 라인 (LAW-3) · CN-04 새 도금왕의 왕좌 (첫째 왕관 끝 END-K-3-2-A1)
+    'CN-02': {'name': 'crown-3-open', 'trim_max': 30, 'trim_dark': 0.25},
+    'CN-03': {'name': 'crown-4-open', 'trim_max': 30, 'trim_dark': 0.25},
+    'CN-04': {'name': 'crown-1-throne', 'trim_max': 30, 'trim_dark': 0.25},
 }

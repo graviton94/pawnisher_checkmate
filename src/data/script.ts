@@ -18,7 +18,8 @@ export type Trans = 'dither' | 'iris' | 'melt' | 'white' | 'black' | 'cut';
 /** crown = 몇째 왕관 장인지 — 꼬리표 위 왕관 문장(ED-01 crown-emblem-1~4: 종이 → 금띠 → 반금 → 금 깨짐, D-510) */
 export interface TitleCard { kicker: string; title: string; sub?: string; tone?: 'brass' | 'crimson' | 'paper'; crown?: number }
 /** 화자 얼굴: 기물 도트(진영) 또는 장면 그림 한 곳(cover 초점) */
-export type Face = { t: PieceType; side: 0 | 1 } | { art: string; at?: string } | { portrait: Portrait };
+/** art = 장면 그림 얼굴 — zoom(높이 %)이 있으면 그 그림을 비율 그대로 확대해 at 자리만 잘라 쓴다(D-516 · D-506 사건 NPC와 같은 방식) */
+export type Face = { t: PieceType; side: 0 | 1 } | { art: string; at?: string; zoom?: number } | { portrait: Portrait };
 export interface Cut {
   alt?: string; img: string; bg: [string, string]; glow?: string; art: StandIn[];
   fx?: 'alarm' | 'red' | 'spot' | 'path' | 'gold';
@@ -54,11 +55,23 @@ const coda = (lines: Line[], tone: 'black' | 'white' = 'black'): Cut => ({ ...cu
 /**
  * 화자 얼굴 (D-504 · #22): 컷신 대사 명패에 세울 얼굴. 분대원 이름은 출하마다 달라 부르는 쪽(playCuts faces)이 더한다.
  * 아홉째 폰은 종이 왕관을 접기 전이라 맨 폰, 그 뒤는 종이왕(PT-04 표정 초상, D-506 — 줄의 mood로 표정). 반장 · 도금왕은 장면 그림 얼굴 자리.
+ * PT-09 취소 (D-516 사용자 결정 — 따로 발주하면 일관성 있게 안 나온다): 아홉째 폰 · 흰 퀸 · 흰 룩 · 박차 · 용해 주조기 · 도금왕은
+ * 이미 받은 일러스트에서 그 화자 자리를 잘라 쓴다. at = background-position(초점이 칸 가운데 오게 계산한 값), zoom = 그림 높이 %.
  */
 export const BOSS_FACE_ART = { plate: 'boss-plate', spawn: 'boss-assembly', thorns: 'boss-thorns', gilded: 'boss-gilded', inspect: 'boss-inspector', magnet: 'boss-magnet', alarm: 'boss-alarm' } as const;
 export const SPEAKER_FACE: Record<string, Face> = {
-  종이왕: { portrait: PAPER_FACE.calm }, '아홉째 폰': { t: 'P', side: 0 }, 박차: { t: 'N', side: 0 }, '흰 퀸': { t: 'Q', side: 0 }, '흰 룩': { t: 'R', side: 0 },
-  도금왕: { art: 'boss-gilded', at: '50% 22%' },
+  종이왕: { portrait: PAPER_FACE.calm },
+  // OP-01 맨머리 폰(등에 태엽 열쇠) — 머리 · 목깃 (초점 42% 34%)
+  '아홉째 폰': { art: 'op-windup', at: '39% 18%', zoom: 200 },
+  // OP-02 상자 칸막이 — 기운 흰 퀸(초점 45% 64%) · 끝 칸 흰 룩(초점 12% 64%) — 둘이 말하는 그 장면(PRO-05)
+  '흰 퀸': { art: 'prologue-04', at: '44% 73%', zoom: 250 },
+  '흰 룩': { art: 'prologue-04', at: '4% 73%', zoom: 250 },
+  // PRO-07 흠집 난 흰 나이트 — 말머리 · 다리 흠 자국(초점 56% 50%)
+  박차: { art: 'prologue-06', at: '58% 50%', zoom: 200 },
+  // ED-03 오른쪽 주조기 앞면 — 리벳 몸 · 쇳물이 이글대는 아가리(초점 86% 72%)
+  '용해 주조기': { art: 'end-k-reach', at: '100% 94%', zoom: 200 },
+  // 도금왕 장면 그림 — 금 십자관 · 윗몸(초점 50% 30%)
+  도금왕: { art: 'boss-gilded', at: '50% 10%', zoom: 200 },
   '철갑 반장': { art: BOSS_FACE_ART.plate }, '검수 반장': { art: BOSS_FACE_ART.inspect }, '조립 반장': { art: BOSS_FACE_ART.spawn },
   '자석 반장': { art: BOSS_FACE_ART.magnet }, '출하 반장': { art: BOSS_FACE_ART.thorns }, '경보 반장': { art: BOSS_FACE_ART.alarm },
 };
@@ -294,16 +307,29 @@ const crier = (company?: StoryCompany): string | undefined => company?.alive.fin
 /** 결말 장 제목 카드 (D-504): 「첫째 왕관 · 결말」 + 장 이름 */
 const endTitle = (chapter: number): TitleCard => ({ kicker: `${chapterKick(chapter)} · 결말`, title: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, tone: 'crimson', crown: crownNo(chapter) });
 /**
+ * 왕관 시작 컷 (D-516 · CN-01~03): 앞 왕관이 새긴 규정이 실제로 바꾼 공장 — [그림, 이름표, 첫 샷, 속마음 샷].
+ * 둘째 = LAW-1 두꺼워진 흑 쇠(종이왕 없이 흑 기물만 — 사용자 결정) · 셋째 = LAW-2 저울 둘 사이 종이 왕관 폰 · 넷째 = LAW-3 꺼진 정비 라인(멀리 통제실 금빛)
+ */
+const CROWN_OPEN: Partial<Record<number, [string, string, Shot, Shot]>> = {
+  1: ['crown-2-open', '두꺼워진 흑 쇠', at(0.6, 0.35, 2), at(0.5, 0.45)],
+  2: ['crown-3-open', '저울 둘', at(0.5, 0.62, 2), at(0.5, 0.45)],
+  3: ['crown-4-open', '꺼진 정비 라인', at(0.2, 0.6, 2), at(0.82, 0.3, 1)],
+};
+/**
  * 그림자 컷 재생판 (D-510 · ED-05 「SHD-B 공용」): SHD-B는 첫 줄(새 폰이 검수대 앞에)만 `new-law`에 두고,
  * 2~4줄(못 박힌 쇠판 · 새긴 규정 · 속마음)은 받은 쇠판 그림 `law-plate`로 넘긴다. 줄 글 · ID는 shadowCut 그대로(바이블 SHD-B-1~4).
+ * 왕관 시작 그림(CROWN_OPEN, D-516)이 있는 왕관은 속마음(4줄)을 그 그림으로 — 규정이 찍힌 뒤 그 규정대로 바뀐 공장을 올려다보며 묻는다.
  */
 export const shadowCuts = (chapter: number, law?: string, retry = chapter === 0): Cut[] => {
   const c = shadowCut(chapter, law, retry);
   if (retry || chapter === 0) return [c];
   const [first, plate, words, mono] = c.lines;
+  const open = CROWN_OPEN[chapter];
   return [
     { ...c, lines: [first] },
-    { ...sceneCut('law-plate', [{ ...plate, shot: at(0.5, 0.45) }, { ...words, shot: at(0.5, 0.45, 1) }, { ...mono, shot: at(0.5, 0.2, 1) }]), slug: '새긴 쇠판', shot: at(0.5, 0.45, 2), trans: 'cut' },
+    { ...sceneCut('law-plate', [{ ...plate, shot: at(0.5, 0.45) }, { ...words, shot: at(0.5, 0.45, 1) }, ...(open ? [] : [{ ...mono, shot: at(0.5, 0.2, 1) }])]), slug: '새긴 쇠판', shot: at(0.5, 0.45, 2), trans: 'cut' },
+    // CN-01 리벳 띠를 덧부은 흑 킹 → 흑 기물 넷 · 빈 쇠판 / CN-02 저울 사이 종이 왕관 폰 → 두 저울 / CN-03 자물쇠 걸린 기름통 → 멀리 통제실 금빛
+    ...(open ? [{ ...sceneCut(open[0], [{ ...mono, shot: open[3], pause: 300 }]), alt: 'new-law', slug: open[1], shot: open[2], trans: 'dither' as const }] : []),
   ];
 };
 /**
@@ -311,6 +337,8 @@ export const shadowCuts = (chapter: number, law?: string, retry = chapter === 0)
  * law = 이번에 새기는 규정 · mirror = 마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄
  * D-504 영화 문법: 장 제목 카드 → 왕관을 씀 → 왕의 눈(ED-02, 가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 뻗지 않은 손(ED-03) → 금빛 굳음 → 금칠이 덮이고 문을 잠금(ED-04) → 규정판(ED-05) → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
  */
+/** 왕관 끝 왕좌 컷 (D-516 · CN-04~06): 그 왕관의 새 도금왕 속마음(END-K-3-2-A*)을 그의 왕좌 그림에. 받은 왕관만 */
+const THRONE: Partial<Record<number, string>> = { 0: 'crown-1-throne' };
 export const promotionCuts = (chapter: number, _crew: string, law: string, mirror: string, company?: StoryCompany): Cut[] => {
   const who = crier(company);
   const K3 = [
@@ -343,8 +371,10 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
     ]), fx: 'red', slug: '뻗지 않은 손', shot: at(0.55, 0.45), trans: 'cut' },
     { ...sceneCut('gold-cast', [
       n('동료들의 믿음과 배신감이 뒤섞인 마지막 비명이 붉은 용광로 속으로 쏟아졌다. 곧이어 파이프를 타고 솟구친 황금빛 쇳물이 그의 작은 폰의 몸을 빈틈없이 감싸며 킹의 거푸집으로 굳어갔다.', { shot: at(0.5, 0.6), sfx: 'land', fx: 'gold' }),
-      m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.5, 0.3, 2), pause: 700, mood: 'gilt' }),
+      ...(THRONE[chapter] ? [] : [m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.5, 0.3, 2), pause: 700, mood: 'gilt' })]),
     ]), alt: 'promote-gild', slug: '금빛 거푸집', shot: at(0.5, 0.15, 1), trans: 'white' },
+    // CN-04 새 도금왕의 왕좌 (D-516 — 첫째 왕관 끝 END-K-3-2-A1): 왕좌에 앞으로 기운 금 킹(가운데 오른쪽) → 발치 찢어진 종이 왕관(왼쪽 아래)
+    ...(THRONE[chapter] ? [{ ...sceneCut(THRONE[chapter]!, [m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.25, 0.85, 2), pause: 700, mood: 'gilt' })]), alt: 'gold-cast', slug: '새 도금왕의 왕좌', shot: at(0.62, 0.45, 1), trans: 'cut' as const }] : []),
     // ED-04 새 도금왕이 되어 가는 과정 (D-510 사용자 결정 — 옛 「안에서 잠그는 문」 대신): 위 고리에서 쏟아지는 금물이 금왕관을 쓴 폰을 덮는다.
     // D-514 사용자 결정: 그는 종이 왕관을 버리고 금왕관을 골라 썼다(END-K-1-1) — 금은 그 금왕관 위로 굳는다
     // 문을 잠그는 일은 서술 끝에 남긴다(TESTIMONY · ENDING_A · 그림자 컷이 「안에서 잠근 왕」을 부른다)
@@ -369,13 +399,14 @@ export const DEFEAT: Cut = cut('end-fail', [
   n('열기 속에서 기물들의 태엽이 하나씩 차갑게 풀리며 멈춰 섰다.'),
 ]);
 /**
- * 패배 영화 (D-504 · END-F 세 줄을 세 비트로): 굴러떨어진 왕관(가까이) · 경보 → 쇳물 전환, 상자째 용광로(prologue-01 빌림 — ED-10 대기) →
- * 암전 정적 위 「태엽이 풀린다」 → 맺음 카드(END-F-창-1 시스템 문구). 다음은 결과 장면.
+ * 패배 영화 (D-504 · END-F 세 줄을 세 비트로 · 받은 그림 D-516): 굴러떨어진 왕관(ED-09, 가까이 → 검수기 붉은 빛) · 경보 →
+ * 쇳물 전환, 상자째 용광로(ED-10, 상자 속 흰 기물 → 아래 불길) → 풀리는 태엽(ED-11, 종이 왕관 폰 등의 태엽 → 나란히 선 흰 기물, 긴 숨) →
+ * 먹으로 닫고 맺음 카드(END-F-창-1 시스템 문구). 다음은 결과 장면.
  */
 export const DEFEAT_CUTS: Cut[] = [
-  { ...cut('end-fail', [{ ...DEFEAT.lines[0], shot: at(0.45, 0.62), sfx: 'lose', fx: 'red' }]), fx: 'alarm', slug: '출하 실패', shot: at(0.5, 0.72, 3), trans: 'dither' },
-  { ...cut('prologue-01', [{ ...DEFEAT.lines[1], shot: at(0.5, 0.5, 1), sfx: 'threat' }]), slug: '용광로', shot: at(0.62, 0.3, 2), trans: 'melt' },
-  { ...coda([{ ...DEFEAT.lines[2], pause: 900 }]), end: { kicker: '출하 실패', title: '킹이 쓰러졌습니다', sub: '출하는 여기서 끝납니다.', tone: 'crimson' } },
+  { ...sceneCut('end-fail', [{ ...DEFEAT.lines[0], shot: at(0.6, 0.42, 1), sfx: 'lose', fx: 'red' }]), fx: 'alarm', slug: '출하 실패', shot: at(0.72, 0.72, 3), trans: 'dither' },
+  { ...sceneCut('end-f-box', [{ ...DEFEAT.lines[1], shot: at(0.55, 0.6), sfx: 'threat' }]), alt: 'prologue-01', slug: '상자째 용광로로', shot: at(0.62, 0.45, 2), trans: 'melt' },
+  { ...sceneCut('end-f-unwind', [{ ...DEFEAT.lines[2], shot: at(0.45, 0.62, 1), pause: 900 }]), slug: '풀리는 태엽', shot: at(0.76, 0.62, 3), trans: 'black', end: { kicker: '출하 실패', title: '킹이 쓰러졌습니다', sub: '출하는 여기서 끝납니다.', tone: 'crimson' } },
 ];
 /**
  * 진엔딩 (바이블 END-T — 넷째 왕관에서 「왕관을 던진다」): 왕관을 주조기 톱니에 던져 넣고, 불량 폰 그대로 백지로 걸어 나간다.

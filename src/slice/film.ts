@@ -193,7 +193,9 @@ export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<u
 export type PlateSide = 'ally' | 'foe' | 'gilded' | 'npc';
 export const faceHtml = (f: Face | undefined): string => {
   if (!f) return '';
-  if ('art' in f) return `<img src="scenes/${f.art}.png" alt="" style="object-position:${f.at ?? '50% 24%'}">`;
+  if ('art' in f) return f.zoom
+    ? `<i class="cw-crop" style="background-image:url('scenes/${f.art}.png');background-size:auto ${f.zoom}%;background-position:${f.at ?? '50% 50%'}"></i>`
+    : `<img src="scenes/${f.art}.png" alt="" style="object-position:${f.at ?? '50% 24%'}">`;
   if ('portrait' in f) return portraitImg(f.portrait, pieceImg('K', 0, 'large', 72));
   return pieceImg(f.t, f.side, 'large', 72);
 };

@@ -1198,7 +1198,10 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 :is(.credits, .promotion) :is(h2, p) { margin: 0; }
 :is(.cr-visual, .pm-art) { position: absolute; inset: 0 52% 0 0; overflow: hidden; }
 .credits .cr-visual .cr-bg, .promotion .pm-art > img { position: absolute; left: 0; top: 0; max-width: none; image-rendering: pixelated; }
-.credits .cr-visual .cr-bg { object-position: 50% 65%; }
+.credits .cr-visual .cr-bg { object-position: 20% 60%; }
+/* D-516 ED-12 엔드롤 바탕: 그림이 화면 전체 — 왼쪽 등불 · 종이 왕관 · 태엽 열쇠, 오른쪽 넓은 빈 어둠 위에 크레딧 글(판을 깔지 않는다) */
+.credits .cr-visual { inset: 0; }
+.credits .cr-content { background: none; }
 :is(.cr-content, .pm-content) { position: absolute; inset: var(--Gy) var(--G) var(--Gy) 48%; display: flex; flex-direction: column; gap: var(--s3); min-width: 0; padding: var(--s2) 0 var(--s2) var(--s4); box-sizing: border-box; background: #0b0b0e; text-align: left; }
 .credits .cr-page { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: var(--s2); box-sizing: border-box; padding: 0; margin: 0; border: 0; background: none; box-shadow: none; }
 .credits .cr-page.in, .promotion .pm-content.in, .promotion .pm-inner.in, .win-scene .ws-detail.in { animation: kstepin 240ms steps(3, jump-none) both; }
@@ -1214,7 +1217,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .credits .cr-content > footer { display: flex; flex: none; align-items: center; justify-content: space-between; gap: var(--s2); min-height: 48px; }
 .credits .cr-content > footer > .btn { min-width: 144px; }
 .credits > .cr-skip { position: absolute; left: var(--G); top: var(--Gy); min-width: 112px; }
-.credits .cr-record { position: absolute; left: var(--G); right: var(--s2); bottom: var(--s3); padding: var(--s2); background: #0b0b0e; color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; word-break: keep-all; }
+.credits .cr-record { position: absolute; left: var(--G); right: calc(52% + var(--s2)); bottom: var(--s3); padding: var(--s2); background: #0b0b0e; color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; word-break: keep-all; }
 .credits.cr-closing { background: transparent; pointer-events: none; }
 .credits.cr-closing > * { visibility: hidden; }
 .promotion .pm-art { right: 48%; }

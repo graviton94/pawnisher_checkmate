@@ -24,7 +24,7 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-label', '출하 크레딧');
-    el.innerHTML = `<div class="cr-visual"><img class="cr-bg" src="scenes/credits-bg.png" data-cover alt="출하를 기다리는 열린 상자">${o.record ? `<p class="cr-record">${CREDIT_TEXT.record}</p>` : ''}</div><div class="cr-content"><div class="cr-page" aria-live="polite"></div><footer><span class="cr-count"></span>${btnHtml({ label: '다음', attrs: 'data-cr-next', kind: 'brass' })}</footer></div>${o.close ? btnHtml({ label: '결과를 본다', attrs: 'data-cr-result', cls: 'cr-skip' }) : ''}`;
+    el.innerHTML = `<div class="cr-visual"><img class="cr-bg" src="scenes/credits-bg.png" data-cover data-fx="0.2" data-fy="0.6" alt="빈 검수 판 위의 낡은 종이 왕관과 태엽 열쇠들">${o.record ? `<p class="cr-record">${CREDIT_TEXT.record}</p>` : ''}</div><div class="cr-content"><div class="cr-page" aria-live="polite"></div><footer><span class="cr-count"></span>${btnHtml({ label: '다음', attrs: 'data-cr-next', kind: 'brass' })}</footer></div>${o.close ? btnHtml({ label: '결과를 본다', attrs: 'data-cr-result', cls: 'cr-skip' }) : ''}`;
     document.body.appendChild(el);
     const bg = el.querySelector<HTMLImageElement>('.cr-bg')!;
     bg.addEventListener('load', () => coverArt(bg));
