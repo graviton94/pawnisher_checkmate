@@ -1,7 +1,7 @@
 /**
  * 로딩 쪽지 (P-C D-502, 후기 #5): 대국에 들어갈 때 · 막을 넘길 때 철문이 닫힌 사이 안내서 한 쪽을 보인다.
  * 아직 안 본 쪽부터 안내서 순서대로, 다 봤으면 돌려 가며. 누르면 바로 넘어가고, 다 읽을 시간이 지나면 저절로.
- * 틀 · 바탕은 지금 있는 키트 철판 창(M) + 안내서 사진을 빌린다 — 임시, LD-01(안내서 액자 · 팁 쪽지) · LD-02(작업대 바탕) 대기.
+ * 바탕 = 받은 LD-02 작업대(scenes/loading-bench.png, cover), 사진 액자 · 요령 쪽지 · 돌아가는 톱니 = 받은 LD-01 (D-523). 창은 키트 철판 M.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9). 본 쪽 기록은 이 기기의 localStorage에만(없어도 돈다).
  */
 import { GUIDE_PAGES, OPENING_TEXT } from '../data/opening';
@@ -59,12 +59,12 @@ export const tipDue = (kind: 'battle' | 'act'): boolean => {
 /** 쪽지 한 장 마크업 — 안내서 그림 + 제목 + 개념 한 줄 + 요령 한 줄 (안내서 쪽의 위 · 아래 끝만) */
 export const tipHtml = (i: number): string => {
   const g = GUIDE_PAGES[i];
-  return `<div class="plate">${OPENING_TEXT.guideTitle}</div><div class="gd3"><div class="inset">${guideMedia(g.media)}</div><div class="stack gd-text3"><p class="lead">${g.title}</p><p>${g.lines[0]}</p>${g.tip ? `<p class="up">“${g.tip}”</p>` : ''}</div></div><p class="note ld-more">${LOAD_TIP.more}</p>`;
+  return `<div class="plate">${OPENING_TEXT.guideTitle}</div><div class="gd3"><div class="inset">${guideMedia(g.media)}</div><div class="stack gd-text3"><p class="lead">${g.title}</p><p>${g.lines[0]}</p>${g.tip ? `<p class="up">“${g.tip}”</p>` : ''}</div></div><div class="ld-foot"><i class="ld-gear" style="background-image:url(ui/hud/load-gear.png)" aria-hidden="true"></i><p class="note ld-more">${LOAD_TIP.more}</p></div>`;
 };
 
 /**
  * 쪽지를 띄우고 읽을 시간만큼(또는 누를 때까지) 기다린다. 철문이 닫혀 있는 동안 부르면 문 위에 뜬다.
- * 줄인 움직임이면 철문이 없어 쪽지 뒤에 먹 디더 막을 깐다.
+ * 쪽지 뒤에는 늘 작업대 바탕(LD-02)을 깐다 — 철문이 있든 없든(줄인 움직임) 같은 화면.
  */
 export const showTip = (kind: 'battle' | 'act'): Promise<void> =>
   new Promise((done) => {
@@ -73,7 +73,8 @@ export const showTip = (kind: 'battle' | 'act'): Promise<void> =>
     const g = GUIDE_PAGES[i];
     write({ seen: [...new Set([...log.seen, i])], at: log.seen.length >= GUIDE_PAGES.length ? log.at + 1 : log.at, n: log.n + (kind === 'battle' ? 1 : 0) });
     const wrap = document.createElement('div');
-    wrap.className = `ld-tip-wrap${calm() || !document.querySelector('.shutterfx') ? ' solid' : ''}`;
+    wrap.className = 'ld-tip-wrap';
+    wrap.style.backgroundImage = 'url(scenes/loading-bench.png)';
     wrap.setAttribute('role', 'status');
     wrap.innerHTML = `<div class="win ld-tip">${tipHtml(i)}</div>`;
     document.body.appendChild(wrap);

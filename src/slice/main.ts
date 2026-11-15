@@ -1,5 +1,5 @@
 import '../fonts.css';
-import { BOSS_BODY, bossArtTemp, GIANTS, RAID_TEXT, type GiantType } from '../data/giants';
+import { BOSS_BODY, bossArtFile, bossArtTemp, GIANTS, RAID_TEXT, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
 import { FIT_TEXT, SET_TEXT, SPEED_METER } from '../data/hud';
@@ -51,7 +51,7 @@ import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { coreOf, findPiece, samePos, type FormId, type PieceType, type Pos } from '../engine';
-import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refineOnce, ECON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refineOnce, ECON, OWN_ICON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
 import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -227,12 +227,13 @@ const pickLine = (lines: string[]): string => {
 /** 이번 대국에서 적 킹이 이미 한 상황 (상황마다 한 번) */
 let cuesSaid = new Set<TauntCue>();
 /** 합류 대사 (D-324): 새 분대원이 제 성격대로 한마디 — 판 위면 그 기물 머리 위 바크, 판 밖(보상 화면)이면 아래 자막 띠 (P-B D-490) */
-const crewSay = (t: PieceType, name: string): void => {
+const crewSay = (t: PieceType, name: string, form?: FormId): void => {
   const lines = CREW_VOICE[t as CrewKind]?.join;
   if (!lines) return void toast(`${josa(name, '이')} 분대에 합류했습니다.`);
   const line = lines[R.int(lines.length)];
   sfx('rare');
-  void subtitle({ face: `<img src="ui/hud/crew-${t}.png" alt="" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(t, 0, 'small', 40).replace(/'/g, '&#39;')}'>`, who: `${name} — 합류`, side: 'ally', text: line });
+  // 이형은 발주 기물 그림 확대가 얼굴 (D-523 — PT-08 이형 초상 취소)
+  void subtitle({ face: `<img src="${form ? `pieces/l-${form}0.png` : `ui/hud/crew-${t}.png`}" alt="" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(t, 0, 'small', 40).replace(/'/g, '&#39;')}'>`, who: `${name} — 합류`, side: 'ally', text: line });
 };
 /** 적 킹 · 반장 이름 · 편 (바크 이름표) */
 const foeVoice = (): { name: string; side: VoiceSide; face: string } => (b?.boss ? { name: BOSS_RULES[b.bossRule].name, side: b.bossRule === 'gilded' ? 'gilded' : 'foe', face: `<img src="ui/hud/avatar-${b.bossRule ?? 'plate'}.png" alt="">` } : { name: '적 킹', side: 'foe', face: foeKingFace() });
@@ -547,8 +548,8 @@ const hidePeek = (): void => {
 /** 카드 그림: 움직이는 카드는 행마 그림(갈 칸 · 칠 칸), 그 밖은 기물 그림 · 기호 */
 const cardArt = (id: CommandId): string => {
   const c = COMMANDS[id];
-  // 기물 없는 카드: 카드마다 도트 아이콘 (D-182, public/ui/icons16/c.<id>.png)
-  if (c.who === 'any') return `<span class="art any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>`;
+  // 기물 없는 카드: 카드마다 도트 아이콘 (D-182, public/ui/icons16/c.<id>.png) — 제 아이콘이 있는 기물 카드도(D-523 킹 카드 KC-01)
+  if (c.who === 'any' || OWN_ICON.has(baseOf(id))) return `<span class="art any"><i class="ico16" style="${iconArt(`c.${baseOf(id)}`)}"></i></span>`;
   // 기물 아이콘 (D-162 — 행마 판보다 「누가 움직이나」가 먼저 읽힌다. 범위는 판 위 표시가 보여 준다)
   // 기물 그림은 72칸 캔버스 아래쪽에 서 있다(위 8줄은 왕관 자리) — 실제 몸통 가운데가 창 가운데에 오게 올린다 (2026-11-05, 사용자: 「아이템 가운데 정렬 — 일부는 바닥, 일부는 가운데」)
   const dy = Math.round((0.5 - (PIECE_ART_CENTER[c.who] ?? 0.5)) * 36); // 그림 36px 기준 (D-305)
@@ -592,7 +593,7 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
   const g = gradeOf(id);
   // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
   // D-367 카드 틀: 비용 = 톱니 메달 숫자 · 그림 = 분대원 초상(공용은 아이콘) · 종류 판 = 누가 · 어떤 · 합/곱
-  const art = c.who === 'any' ? cardArt(id) : `<img class="cf-face" src="ui/hud/crew-${c.who}.png" alt="">`;
+  const art = c.who === 'any' || OWN_ICON.has(baseOf(id)) ? cardArt(id) : `<img class="cf-face" src="ui/hud/crew-${c.who}.png" alt="">`;
   return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost${c.cost === 1 ? ' c1' : ''}" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${COMMANDS[baseOf(id)].name}</b>${refineMark(id)}<span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
 /**
@@ -619,7 +620,7 @@ const crewInfoCard = (u: Crew, live?: { atk: number; hp: number; max: number; sh
 const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: number; lives?: number; kills?: number; dmg?: number; say?: string }, src?: string, cls = ''): string => {
   const g = u.form ? 'gold' : RECRUIT_ODDS[u.t]?.grade ?? 'common';
   const q = u.quirk ? QUIRKS[u.quirk] : null;
-  // 이형 분대원: 전용 초상(PT-08)을 받기 전까지 발주 기물 그림(P-01~05) — 바탕 기물 초상으로는 이형이 안 보인다
+  // 이형 분대원: 발주 기물 그림(P-01~05) 확대가 정본 (D-523 — PT-08 이형 초상 취소 · 초상은 주요 기물만) — 바탕 기물 초상으로는 이형이 안 보인다
   const art = src ?? (u.form ? `pieces/l-${u.form}0.png` : `ui/hud/crew-${u.t}.png`);
   const atk = o.atk ?? Math.round(PIECE_STATS[u.t].atk * (q?.atk ?? 1) * (u.form ? FORMS[u.form].atk : 1)) + (u.temper ?? 0);
   // 버팀 (#24 · D-488 → 2026-11-14 옛 생명): 대국과 같은 계산 하나 — 맹세(폰 +1) · 킹 버팀까지. 자리 = 다 찬 수, 켜진 하트 = 남은 수(대국 중이면 o.lives) — 쓴 것은 깨진 하트
@@ -903,12 +904,13 @@ const refresh = (): void => {
   newParts.clear();
   $('parts').hidden = !parts.length;
   // 반장 칩 (D-520 — 시안 Z + 한 줄 정리): 머리 줄 「적의 수」 곁에 얼굴 24 + 진홍 이름 — 누르면 규칙 S 창.
-  // 얼굴은 반장 얼굴 칩(발주 §0-D 23위 BF-01)을 받기 전까지 흑 킹 그림을 빌린다(D-386)
+  // 얼굴 = 그 반장의 2×2 몸 그림(GB)을 머리 쪽으로 확대해 잘라 쓴다 (D-523 — BF-01 얼굴 칩 발주 취소 · 초상 정책). 몸 그림을 받기 전이면 흑 킹 그림(D-386)
   $('boss').hidden = !b.boss;
   if (b.boss && $('boss').dataset.rule !== b.bossRule) {
     const name = BOSS_RULES[b.bossRule].name;
     $('boss').dataset.rule = b.bossRule;
-    $('boss').innerHTML = `<span class="bc-face" aria-hidden="true">${pieceImg('K', 1, 'small', 24)}</span>${name}`;
+    const face = bossArtTemp(b.bossRule) ? pieceImg('K', 1, 'small', 24) : `<i class="bc-gb" style="background-image:url(${bossArtFile(b.bossRule, false)})"></i>`;
+    $('boss').innerHTML = `<span class="bc-face" aria-hidden="true">${face}</span>${name}`;
     $('boss').setAttribute('aria-label', HUD_TEXT.bossChip(name));
   }
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
@@ -3283,7 +3285,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
               draft('card', all, `crew:${recruitOffer.t}`);
               squad.push(recruitCrew);
               deck.push(...recruitOffer.cards);
-              crewSay(recruitCrew.t, crewLabel(recruitCrew));
+              crewSay(recruitCrew.t, crewLabel(recruitCrew), recruitCrew.form);
               return advance();
             }
             const id = key.slice(5) as CommandId;
@@ -3519,7 +3521,7 @@ const recruitPick = (title: string, then: () => void, tag = ''): void => {
         ftue('first_pick');
         squad.push(crews[k]);
         deck.push(...r.cards);
-        crewSay(crews[k].t, crewLabel(crews[k]));
+        crewSay(crews[k].t, crewLabel(crews[k]), crews[k].form);
         then();
       }),
   });

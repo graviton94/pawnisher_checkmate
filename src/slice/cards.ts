@@ -186,6 +186,12 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   knightKing: { axis: 'cav', axis2: 'king', name: '왕의 기사', cost: 1, who: 'N', kind: 'move', add: 6, freeIfKiller: true, desc: '왕을 위해 다시 뛴다. (피해 +6 · 처치 턴 태엽 0)' },
 };
 
+/**
+ * 기물 카드인데 제 아이콘(public/ui/icons16/c.<id>.png)이 있는 카드 (D-523 — 받은 킹 카드 아이콘 KC-01, tools/pixel/kc_import.py).
+ * 카드 그림 창에 기물 그림 · 분대원 초상 대신 이 아이콘을 쓴다. 나머지 킹 카드(왕의 철퇴 · 캐슬링 · 왕의 세금)는 킹 그림 그대로.
+ */
+export const OWN_ICON: ReadonlySet<string> = new Set(['kingStep', 'kingDecree', 'royalGuard', 'crownSlam', 'wrath', 'kingGuard', 'kingCharge', 'regalGaze']);
+
 /** 다듬은 변형: 이름 뒤에 +, 태엽 −1 (0 아래로는 안 내려간다). 나머지는 원본 그대로 */
 export const refinedOf = (id: BaseCommandId): CommandId => `${id}+`;
 /** 변형이면 원본 id */

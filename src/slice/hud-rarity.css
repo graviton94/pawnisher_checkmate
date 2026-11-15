@@ -100,6 +100,8 @@ body.slice.lay-f .rmid .r-head .r-lbl { flex: none; white-space: nowrap; }
 #boss.boss-chip[hidden] { display: none; }
 #boss.boss-chip .bc-face { display: grid; place-items: center; flex: none; width: 24px; height: 24px; }
 #boss.boss-chip .bc-face img { width: 24px; height: 24px; image-rendering: pixelated; }
+/* 반장 2×2 몸 그림(GB, 144칸 캔버스)의 머리 · 관 쪽만 — 비율 그대로 확대해 자른다(D-386 · D-523 BF-01 대체) */
+#boss.boss-chip .bc-face .bc-gb { display: block; width: 24px; height: 24px; background: no-repeat 50% 12% / 54px 54px; image-rendering: pixelated; }
 #boss.boss-chip:active { transform: translateY(calc(var(--px) * 1)); }
 #boss.boss-chip:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
 body.slice #btn-help.btn.k-iron {

@@ -19,12 +19,13 @@
     @keyframes bootGlow { 0% { filter: brightness(1); } 100% { filter: brightness(1.15); } }
     #boot .boot-logo { width: 354px; height: 298px; image-rendering: pixelated; animation: bootGlow 1.2s steps(2, jump-none) infinite; }
     @media (max-height: 420px) { #boot .boot-logo { width: 266px; height: 224px; } }
-    #boot .boot-row { display: flex; align-items: center; gap: 12px; margin-left: -100px; }
-    #boot .boot-gear { width: 88px; height: 60px; background: url('ui/hud/gears-spin.png') 0 0 / 1408px 60px no-repeat; image-rendering: pixelated; animation: bootGears 1.6s steps(16) infinite; }
-    @keyframes bootGears { from { background-position: 0 0; } to { background-position: -1408px 0; } }
+    /* 로딩 톱니 · 진행 막대 = 받은 LD-01 (D-523): 황동 톱니 8프레임(20×18도트) · 철 홈 막대 9-slice + 황동 채움 칸 8×8 — 1도트 = 2px */
+    #boot .boot-row { display: flex; align-items: center; gap: 12px; margin-left: -52px; }
+    #boot .boot-gear { width: 40px; height: 36px; background: url('ui/hud/load-gear.png') 0 0 / 320px 36px no-repeat; image-rendering: pixelated; animation: bootGears 0.8s steps(8) infinite; }
+    @keyframes bootGears { from { background-position: 0 0; } to { background-position: -320px 0; } }
     /* 진행 막대: 12칸이 계단으로 찬다 (--k = 찬 칸 수) */
-    #boot .boot-bar { width: 196px; height: 16px; padding: 2px; background: #16141c; box-shadow: 0 0 0 2px #000, 0 0 0 4px #c89b3c, 4px 4px 0 4px #000; }
-    #boot .boot-bar b { display: block; height: 100%; width: calc(var(--k, 0) * 16px); background: repeating-linear-gradient(90deg, #f4d27a 0 14px, #16141c 14px 16px); }
+    #boot .boot-bar { box-sizing: content-box; width: 192px; height: 16px; border-style: solid; border-width: 10px 16px 2px; border-image: url('ui/hud/load-bar.png') 5 8 1 fill / 10px 16px 2px stretch; image-rendering: pixelated; }
+    #boot .boot-bar b { display: block; height: 100%; width: calc(var(--k, 0) * 16px); background: url('ui/hud/load-bar-fill.png') 0 0 / 16px 16px repeat-x; image-rendering: pixelated; }
     @media (max-height: 360px) { #boot .boot-em { transform: scale(0.8); } }
     @media (prefers-reduced-motion: reduce) { #boot .boot-gear, #boot .boot-em .sl { animation: none; } }
   </style>
