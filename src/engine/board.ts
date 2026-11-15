@@ -35,7 +35,19 @@ export const findPiece = (s: BattleState, id: number): Piece | undefined =>
   s.pieces.find((p) => p.id === id);
 
 export const kingOf = (s: BattleState, side: Side): Piece | undefined =>
-  s.pieces.find((p) => p.side === side && p.type === 'K');
+  s.pieces.find((p) => p.side === side && p.type === 'K' && p.body === undefined);
+
+/** 2×2 보스 몸 칸이면 그 킹 본체, 아니면 그대로 (D-513: 몸 어느 칸을 쳐도 킹 HP 하나에서 깎는다) */
+export const coreOf = (s: BattleState, p: Piece): Piece => (p.body !== undefined ? s.pieces.find((c) => c.id === p.body) ?? p : p);
+
+/** 기물 목록을 몸 칸 → 킹 본체로 바꾸고 겹친 것을 지운다 (한 공격 · 한 폭발이 몸 여러 칸에 닿아도 피해는 한 번) */
+export const coresOf = (s: BattleState, list: Piece[]): Piece[] => [...new Set(list.map((p) => coreOf(s, p)))];
+
+/** 살아 있는 기물만: HP 0 이하 + 본체가 쓰러진 2×2 몸 칸을 함께 치운다 (D-513) */
+export const livePieces = (pieces: Piece[]): Piece[] => {
+  const alive = pieces.filter((p) => p.hp > 0 && p.body === undefined);
+  return pieces.filter((p) => (p.body === undefined ? p.hp > 0 : alive.some((c) => c.id === p.body)));
+};
 
 /** 진영의 전방 방향 (+1 = 위, −1 = 아래) */
 export const forward = (side: Side): number => (side === 0 ? 1 : -1);

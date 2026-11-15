@@ -1,7 +1,7 @@
 import { CARVE_FX, PIERCE_TYPES } from '../data/carves';
 import { PART_FX, type PartId } from '../data/parts';
 import { TWIST_FX } from '../data/twists';
-import { at, buildGrid, chebyshev, forward, inBounds, type Grid } from './board';
+import { at, buildGrid, chebyshev, coresOf, forward, inBounds, type Grid } from './board';
 import type { BattleState, Piece, PieceType, Pos, Side } from './types';
 
 const KNIGHT: Pos[] = [
@@ -162,7 +162,7 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
       }
     };
     formAttack(s, piece, grid, point, line, area, targets);
-    return { targets: [...new Set(targets)], area };
+    return { targets: coresOf(s, targets), area };
   }
   switch (piece.asPawn ? 'P' : piece.type) {
     case 'P': {
@@ -198,7 +198,8 @@ export const attackScan = (s: BattleState, piece: Piece, grid: Grid = buildGrid(
       }
     }
   }
-  return { targets, area };
+  // 2×2 보스 (D-513): 몸 칸을 맞히면 킹 본체 — 몸 여러 칸에 닿아도 대상은 하나
+  return { targets: coresOf(s, targets), area };
 };
 
 export const attackTargets = (s: BattleState, piece: Piece, grid: Grid = buildGrid(s)): Piece[] => attackScan(s, piece, grid).targets;

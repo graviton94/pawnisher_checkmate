@@ -93,7 +93,8 @@ describe('교착 압박 (D-196)', () => {
   });
   it('막힌 판 (2026-11-14): 꺼진 바닥 벽 앞에서 0점 수만 남아도 적은 쉬지 않고 벽을 돌아 내 기물에 닿는다', () => {
     // 넷째 왕관 1막 검수 반장(시드 70151)에서 재현한 판: 내 폰 벽 뒤의 킹 · 꺼진 칸 넷 · 반장 킹 혼자 — 양쪽 다 둘 수가 없어 40턴까지 갔다
-    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'P' }, { t: 'P' }, { t: 'P' }], ['K'], START_COMMANDS, 7, { boss: true });
+    // D-513: 반장은 이제 2×2 몸(거대 주물 걸음)이라, 1칸 적 킹의 길 찾기는 반장 판이 아닌 판으로 잰다(turn ≥ kingMarchTurn이라 킹이 나선다)
+    const b = newSliceBattle([{ t: 'K' }, { t: 'P' }, { t: 'P' }, { t: 'P' }, { t: 'P' }], ['K'], START_COMMANDS, 7);
     const at = [[5, 0], [3, 1], [5, 1], [4, 1], [4, 0]];
     b.s.pieces.filter((p) => p.side === 0).forEach((p, i) => Object.assign(p, { x: at[i][0], y: at[i][1] }));
     const ek = b.s.pieces.find((p) => p.side === 1)!;

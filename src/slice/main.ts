@@ -260,7 +260,7 @@ const taunt = (cue: TauntCue, force = false): void => {
   }
   const lines = b.boss ? (BOSS_TAUNTS as Partial<Record<string, Partial<Record<TauntCue, string[]>>>>)[b.bossRule ?? 'plate']?.[cue] ?? (b.bossRule ? undefined : TAUNTS[cue]) : TAUNTS[cue]; // 반장마다 제 말 (D-310)
   if (!lines?.length) return;
-  const king = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+  const king = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
   const v = foeVoice();
   if (!bark({ at: () => barkAtPiece(king?.id), side: v.side, name: v.name, face: v.face, text: pickLine(lines), prio: 2, force })) return;
   tauntedNow = true;
@@ -1298,7 +1298,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   if (b.boss && r.events.some((e) => e.type === 'blast' && e.fx === 'thorns')) taunt('sig');
   // 판 위 목소리 (P-B D-490): 적 킹이 3할 아래 → beg · 킹이 맞음 → danger · 처음 맞음 → firstHit · 하나 잃음 → lost(적 킹 또는 곁의 적 기물) · 우리 처치 → 분대원 한마디
   {
-    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
     const hitFoe = (id: number) => r.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => h.targetId === id && h.damage > 0));
     const lostN = r.before.pieces.filter((p) => p.side === 1 && !b.s.pieces.some((q) => q.id === p.id)).length;
     const anyHit = r.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => h.damage > 0 && r.before.pieces.find((q) => q.id === h.targetId)?.side === 1));
@@ -1351,7 +1351,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   }
   // 반장 2단계 예고 (D-383): 1단계 반장 HP가 낮아지면 한 번 — 「한 번 더 일어선다」
   if (b.boss && !b.phase2 && !phaseWarned && asc <= BOSS_PHASE_TEXT.upTo && b.s.winner === null) {
-    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
     // #21 · D-490: 토스트 대신 판 위를 경보 띠가 가로지른다 (받은 CI-01 경보 띠 3프레임)
     if (ek && ek.hp <= ek.maxHp * BOSS_PHASE_TEXT.lowAt) { phaseWarned = true; sfx('threat'); p2Warn(BOSS_PHASE_TEXT.low, gridRect()); }
   }
@@ -2824,7 +2824,7 @@ const stageIntro = (def: BattleDef): Promise<void> => {
     const real = def.bossRule ?? 'plate';
     const rule = real as BossKey;
     // 수배판 (D-400 UI-21): HP · 공격 수치 칸, 2단계가 있으면(승급 ≤ upTo) 진홍 빛 줄 상태
-    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+    const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
     const two = asc <= BOSS_PHASE_TEXT.upTo;
     return bossIntro({ stats: ek ? { hp: ek.maxHp, atk: ek.atk } : undefined, phase2: two, rule, art: real === 'gilded' ? gildedArt() : BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], lines: BOSS_CARD[real === 'gilded' ? (runMode === 'story' && storyChapter > 0 ? 'gilded+' : 'gilded') : (real as StoryBoss)], rules: two ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
@@ -3082,7 +3082,7 @@ const finishNow = (): void => {
       lossesHere += 1;
       if (betNow) gold = Math.max(0, gold - betNow.stake);
       // 아까운 패배 (D-178): 적 킹이 거의 다 깎였으면 「한 수였습니다」 — 가까웠던 만큼 다시 누르게
-      const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+      const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
       const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="mono">‘적 킹 HP ${ek.hp}. 한 수였어.’</p>` : '';
       // 1패 = 출하 끝 (D-228). 여벌 심장 톱니가 있으면 하나 깨고 그 대국을 처음부터
       const spare = charms.revive > 0;
@@ -4484,7 +4484,7 @@ const drillB = (): Promise<boolean> => {
 const drillC = (): Promise<boolean> => {
   const T = TUT.drillC;
   const knightId = myPiece('N')?.id ?? -1;
-  const foeK = (): DOMRect | null => { const k = b.s.pieces.find((p) => p.side === 1 && p.type === 'K'); return k ? tileRect(k) : null; };
+  const foeK = (): DOMRect | null => { const k = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined); return k ? tileRect(k) : null; };
   let p0 = 0;
   let rw0 = 0;
   return tutorial('battle', [

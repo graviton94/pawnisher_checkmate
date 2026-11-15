@@ -1,16 +1,16 @@
 import { PIECE_STATS } from '../data/pieces';
 import { FOE_AI, STALL_PRESS } from '../data/battle';
 import { FORMS } from '../data/forms';
-import { attackScan, buildGrid, chebyshev, cloneState, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, isFallen, kingOf, legalMoves, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
+import { attackScan, buildGrid, chebyshev, cloneState, coreOf, coresOf, createBattle, damageOf, heatDmg, findPiece, forward, inBounds, isFallen, kingOf, legalMoves, livePieces, makePiece, samePos, simulate, type BattleEvent, type BattleState, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
-import { giantDanger, giantStrike, giantTurn, placeGiants } from './giant';
+import { bossAim, bossCells, bossRing, giantDanger, giantStrike, giantTurn, placeBoss, placeGiants } from './giant';
 import { processAfter, processBefore, processDanger, processTurn, setupProcess, type ProcState } from './process';
 import { PROCESS, type ProcessId } from '../data/process';
 import type { GiantType } from '../data/giants';
-import { baseOf, BOSS, BOSS_NUM, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
+import { baseOf, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -128,8 +128,10 @@ export interface SliceBattle {
   marks?: FoeMark[];
   /** 복수의 맹세: 지금까지 쌓인 단계 · 증원 대기열: 지금까지 세운 폰 수 · 지금까지 본 적 id (쓰러짐 세기) */
   vengeance?: number;
-  /** 거대 주물 (D-484): 묶음 id → 이번 적 차례에 내리찍을 방향 */
+  /** 거대 주물 (D-484): 묶음 id → 이번 적 차례에 내리찍을 방향 (2×2 보스는 가로세로 = 한 변 · 대각 = 꺾인 두 변) */
   giantAim?: Record<number, Pos>;
+  /** 2×2 보스 내리찍기 사건 이름 (D-513 — 반장 이름) */
+  bossName?: string;
   /** 공정 판 (D-486) */
   proc?: ProcState;
   reinforced?: number;
@@ -388,7 +390,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
     for (let i = free.length - 1; i > 0; i--) { const j = r.int(i + 1); [free[i], free[j]] = [free[j], free[i]]; }
     mine.forEach((p, i) => { if (free[i]) Object.assign(p, { x: free[i].x, y: free[i].y }); });
   }
-  if (opts.giants?.length) placeGiants(s, opts.giants, squadIds);
+  // 2×2 특별 보스 (D-513): 반장 판이면 적 킹이 2×2 몸으로 선다 — 한 판에 2×2는 하나라 반장 판엔 거대 주물을 세우지 않는다
+  if (opts.boss && !opts.lab) placeBoss(s, squadIds);
+  else if (opts.giants?.length) placeGiants(s, opts.giants, squadIds);
   if (opts.enemyHp && opts.enemyHp !== 1) for (const p of s.pieces) if (p.side === 1 && p.type !== 'K') p.maxHp = p.hp = Math.round(p.maxHp * opts.enemyHp);
   // 난이도 비율 (D-202): 모든 적 기물 HP(킹 제외 — 킹은 대국마다 따로) · 공격
   // 층별 성장 (D-203): 깊이(출하에서 몇 번째 대국인가)만큼 HP는 곱으로, 공격은 더하기로 — 킹 HP도 같은 곱
@@ -423,6 +427,7 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   if (opts.bossRule === 'gilded') deck = [...deck, 'meltOath'];
   const b: SliceBattle = { s, draw: opts.ordered ? [...deck] : shuffle(rng, deck), hand: [], discard: [], ap: SLICE.ap + spare, kills: 0, turn: 1, intents: [], coins: SLICE.coins, rewinds: (parts.includes('tape') ? 1 : 0) + (opts.rewindCharms ?? 0), rewindFree: parts.includes('tape') ? 1 : 0, parts, killers: [], refined: opts.refined ?? [], overkill: 0, boss: !!opts.boss, bossRule: opts.bossRule ?? 'plate', blastPawns: !!opts.traits?.includes('blastPawn'), traits: opts.traits ?? [], bombRow: null, apMax: SLICE.ap + spare, handSize: SLICE.hand - (parts.includes('spare') ? 1 : 0), snap: '', squadIds, quirks, pk: {}, pd: {}, bossKiller: null, falls: [], doorUsed: [], once: [], rng: rng.state, warned: false };
   b.s.heat = heatAt(1);
+  if (b.boss) b.bossName = BOSS_RULES[b.bossRule].name;
   if (opts.flatHeat) (b.flatHeat = true), (b.s.heat = 1);
   if (opts.calm) b.calm = true;
   if (opts.pawnCall) b.pawnCall = true;
@@ -1292,7 +1297,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
         return { targetId: p.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
       });
       const kingDead = hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K');
-      b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+      b.s.pieces = livePieces(b.s.pieces);
       if (kingDead) b.s = { ...b.s, winner: 0 };
       const k = kingOf(b.s, 0);
       events = [{ type: 'blast', pos: k ? { x: k.x, y: k.y } : { x: 0, y: 0 }, label: '증기 폭발!', hits, fx: 'steam' }];
@@ -1362,7 +1367,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
 export const BOSS_RISE_LABEL = '반장 격노 — 공격 ×1.5';
 const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): void => {
   if (!b.boss || b.phase2 || b.s.winner !== 0) return;
-  const old = before.pieces.find((p) => p.side === 1 && p.type === 'K');
+  const old = before.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
   if (!old) return;
   b.phase2 = true;
   const k = makePiece(old.id, 'K', 1, old.x, old.y);
@@ -1370,13 +1375,25 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
   k.hp = Math.max(1, Math.round(old.maxHp * SLICE.bossPhase2Hp));
   // 격노 (D-467): 다시 선 반장은 더 세게 친다 — 막판이 느슨하던 것 (실험실: 반장 뒤 남은 체력 중앙 70%대)
   k.atk = Math.round(old.atk * SLICE.bossPhase2Atk);
-  b.s = { ...b.s, winner: null, pieces: [...b.s.pieces.filter((p) => p.id !== old.id), k] };
-  // 호위 폰 둘 (빈 둘레 칸)
+  // 2×2 보스 (D-513): 제자리에서 묶음째 다시 선다 — 몸 칸을 같은 자리에, 그림은 격노 몸(rage)
+  const body = before.pieces.filter((p) => p.body === old.id).map((p) => ({ ...p }));
+  if (old.giant) { k.moved = true; k.giant = { ...old.giant, rage: true }; for (const p of body) p.giant = { ...p.giant!, rage: true }; }
+  const cells = [k, ...body];
+  const others = b.s.pieces.filter((p) => p.id !== old.id && p.body !== old.id);
+  // 몸 자리에 그새 선 기물이 있으면 가까운 빈 칸으로 비킨다 (드물다 — 밀치기 등)
+  for (const p of others.filter((q) => cells.some((c) => c.x === q.x && c.y === q.y))) {
+    const free: Pos[] = [];
+    for (let y = b.s.height - 1; y >= 0; y--) for (let x = 0; x < b.s.width; x++) if (inBounds(b.s, x, y) && !cells.some((c) => c.x === x && c.y === y) && !others.some((q) => q.x === x && q.y === y)) free.push({ x, y });
+    const to = free.sort((a, z) => chebyshev(a, p) - chebyshev(z, p) || z.y - a.y || a.x - z.x)[0];
+    if (to) Object.assign(p, { x: to.x, y: to.y });
+  }
+  b.s = { ...b.s, winner: null, pieces: [...others, k, ...body] };
+  // 호위 폰 (빈 둘레 칸 — 2×2면 몸 둘레 열두 칸, 앞줄부터)
   const atkK = b.atkK ?? 1;
   let n = 0;
-  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1], [0, 1]]) {
+  const spots = bossRing(b.s) ?? [[-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1], [0, 1]].map(([dx, dy]) => ({ x: k.x + dx, y: k.y + dy }));
+  for (const q of spots) {
     if (n >= SLICE.bossPhase2Guards) break;
-    const q = { x: k.x + dx, y: k.y + dy };
     if (!inBounds(b.s, q.x, q.y) || b.s.pieces.some((p) => p.x === q.x && p.y === q.y)) continue;
     const pawn = makePiece(Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds) + 1, 'P', 1, q.x, q.y);
     pawn.maxHp = pawn.hp = Math.round(pawn.maxHp * (b.foeHpK ?? 1));
@@ -1386,6 +1403,8 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
     n += 1;
   }
   events.push({ type: 'respawn', pieceId: k.id, pos: { x: k.x, y: k.y }, label: BOSS_RISE_LABEL });
+  // 2단계 내리찍기(꺾인 두 변)로 바로 다시 겨눈다 — 위험 칸 · 적의 수 · 실행이 같은 값
+  bossAim(b);
   b.intents = planFor(b);
   markTelegraph(b);
 };
@@ -1480,9 +1499,11 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
     if (!t || t.side === 0) continue;
     const dx = Math.sign(t.x - me.x), dy = Math.sign(t.y - me.y);
     const to = { x: t.x + dx, y: t.y + dy };
-    const blocker = s.pieces.find((p) => p.x === to.x && p.y === to.y);
-    // 거대 주물 부위는 밀리지 않는다 (D-484) — 부딪친 쪽처럼 충돌 피해만
-    if (inBounds(s, to.x, to.y) && !blocker && !t.giant) {
+    const block0 = s.pieces.find((p) => p.x === to.x && p.y === to.y);
+    // 2×2 보스 (D-513): 제 몸 칸은 벽처럼(본체만 맞는다), 남의 몸 칸에 부딪히면 그 본체가 한 번
+    const blocker = block0 && t.giant && block0.giant?.id === t.giant.id ? undefined : block0 && coreOf(s, block0) !== t ? coreOf(s, block0) : undefined;
+    // 거대 주물 부위 · 2×2 보스는 밀리지 않는다 (D-484 · D-513) — 부딪친 쪽처럼 충돌 피해만
+    if (inBounds(s, to.x, to.y) && !block0 && !t.giant) {
       sim.events.push({ type: 'move', order: 0, pieceId: t.id, from: { x: t.x, y: t.y }, to });
       t.x = to.x;
       t.y = to.y;
@@ -1501,7 +1522,7 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
       sim.removed.push(dead);
       if (dead.type === 'K') s.winner = dead.side === 1 ? 0 : 1;
     }
-    s.pieces = s.pieces.filter((p) => p.hp > 0);
+    s.pieces = livePieces(s.pieces);
   }
 };
 
@@ -1518,7 +1539,7 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
     p.hp = Math.max(0, p.hp - (dmg - absorbed));
     return { targetId: p.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
   };
-  const ek = before.pieces.find((p) => p.side === 1 && p.type === 'K');
+  const ek = before.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
   for (const e of events) {
     if (e.type !== 'attack') continue;
     if (b.boss && hasThorns(b) && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) {
@@ -1536,7 +1557,7 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
   if (out.length) {
     const kingDead = out.some((e) => e.type === 'blast' && e.hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K'));
     for (const e of out) if (e.type === 'blast') afterEnemyHits(b, before, [e], e.label.startsWith('자폭') ? '자폭 폰' : '반장');
-    b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+    b.s.pieces = livePieces(b.s.pieces);
     if (kingDead) b.s = { ...b.s, winner: 1 };
   }
   return out;
@@ -1548,7 +1569,7 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
  */
 export const backlashOf = (b: SliceBattle, sim: { state: BattleState; events: BattleEvent[] }): number => {
   let dmg = 0;
-  const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K');
+  const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
   for (const e of sim.events) {
     if (e.type !== 'attack') continue;
     if (b.boss && hasThorns(b) && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) dmg += foeDmg(BOSS_NUM.thorns, b);
@@ -1609,7 +1630,7 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
         const dead = before.pieces.find((p) => p.id === h.targetId);
         b.falls.push({ pieceId: h.targetId, by: attacker ? `적 ${PIECE_LABEL[attacker.type]}` : by, turn: b.turn, t: dead?.type, ...(attacker && attacker.side === 1 ? { byType: attacker.type, byId: attacker.id } : {}) });
         if (dead && b.quirks[h.targetId] === 'boiler') {
-          const hits = b.s.pieces.filter((p) => p.side === 1 && chebyshev(p, dead) === 1).map((p) => {
+          const hits = coresOf(b.s, b.s.pieces.filter((p) => p.side === 1 && chebyshev(p, dead) === 1)).map((p) => {
             const boom = heatDmg(b.s, CREW.boilerBlast);
             const absorbed = Math.min(p.shield, boom);
             p.shield -= absorbed;
@@ -1617,7 +1638,7 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
             return { targetId: p.id, damage: boom, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
           });
           const kingDead = hits.some((x) => x.killed && findPiece(b.s, x.targetId)?.type === 'K');
-          b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+          b.s.pieces = livePieces(b.s.pieces);
           if (kingDead) b.s = { ...b.s, winner: 0 };
           extra.push({ type: 'blast', pos: { x: dead.x, y: dead.y }, label: '보일러 폭발!', hits, fx: 'burst' });
         }
@@ -1643,7 +1664,8 @@ const bossTurnStart = (b: SliceBattle): void => {
   // 도금왕 (D-252): 세 반장을 다 쓴다 — 방열판(위) · 홀수 턴 폰 찍기 · 짝수 턴 줄 폭격 · 되받아침(아래 hasThorns)
   if (b.bossRule === 'spawn' || b.bossRule === 'gilded') {
     if (k && (b.turn - 1) % BOSS_NUM.spawnEvery === 0 && b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length < BOSS_NUM.spawnMax) {
-      const spot = [[0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1]].map(([dx, dy]) => ({ x: k.x + dx, y: k.y + dy })).find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
+      // 2×2 보스 (D-513): 「반장 곁」 = 몸 둘레 열두 칸 (앞줄부터)
+      const spot = (bossRing(b.s) ?? [[0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1]].map(([dx, dy]) => ({ x: k.x + dx, y: k.y + dy }))).find((q) => inBounds(b.s, q.x, q.y) && !b.s.pieces.some((p) => p.x === q.x && p.y === q.y));
       if (spot) b.s.pieces.push(makePiece(Math.max(...b.s.pieces.map((p) => p.id), ...b.squadIds) + 1, 'P', 1, spot.x, spot.y));
     }
     if (b.bossRule === 'spawn') return;
@@ -1669,10 +1691,15 @@ const newBossTurn = (b: SliceBattle, k: Piece | undefined): void => {
   if (b.bossRule === 'magnet') {
     b.pull = null;
     if (!k || (b.turn - 1) % BOSS_NUM.magnetEvery !== 0) return;
-    const cheb = (p: Piece) => Math.max(Math.abs(p.x - k.x), Math.abs(p.y - k.y));
+    // 2×2 보스 (D-513): 「반장 쪽으로」 = 가장 가까운 몸 칸 쪽
+    const body = bossCells(b.s);
+    const cells: Pos[] = body.length ? body : [k];
+    const near = (p: Piece): Pos => [...cells].sort((c1, c2) => chebyshev(c1, p) - chebyshev(c2, p) || c1.y - c2.y || c1.x - c2.x)[0];
+    const cheb = (p: Piece) => chebyshev(near(p), p);
     for (const p of [...mine].sort((x, y) => cheb(x) - cheb(y) || x.id - y.id)) {
       if (cheb(p) <= 1) continue;
-      const to = { x: p.x + Math.sign(k.x - p.x), y: p.y + Math.sign(k.y - p.y) };
+      const c = near(p);
+      const to = { x: p.x + Math.sign(c.x - p.x), y: p.y + Math.sign(c.y - p.y) };
       if (inBounds(b.s, to.x, to.y) && !b.s.pieces.some((q) => q.x === to.x && q.y === to.y)) { b.pull = { id: p.id, to }; return; }
     }
     return;
@@ -1720,7 +1747,7 @@ const bombard = (b: SliceBattle): BattleEvent | null => {
     return { targetId: p.id, damage: bomb, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
   });
   const kingDead = hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K');
-  b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+  b.s.pieces = livePieces(b.s.pieces);
   if (kingDead) b.s = { ...b.s, winner: 1 };
   return { type: 'blast', pos: { x: Math.floor(b.s.width / 2), y: row }, label: '줄 폭격!', hits, fx: 'row' };
 };
@@ -1734,9 +1761,9 @@ const procResolve = (b: SliceBattle, run: () => BattleEvent[], events: BattleEve
   const dead = (side: 0 | 1) => evs.some((e) => e.type === 'blast' && e.hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.side === side && findPiece(b.s, h.targetId)?.type === 'K'));
   const mineDead = dead(0), foeDead = dead(1);
   events.push(...evs);
-  b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+  b.s.pieces = livePieces(b.s.pieces);
   if (mineDead) b.s = { ...b.s, winner: 1 };
-  else if (foeDead) b.s = { ...b.s, winner: 0 };
+  else if (foeDead) { b.s = { ...b.s, winner: 0 }; bossRise(b, pre, events); } // 반장은 공정에 쓰러져도 2단계로 선다
   const blasts = evs.filter((e) => e.type === 'blast');
   if (blasts.length) events.push(...afterEnemyHits(b, pre, blasts, PROCESS[b.proc.kind].name));
   if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
@@ -1770,7 +1797,7 @@ const stallRust = (b: SliceBattle, events: BattleEvent[]): void => {
   k.hp = Math.max(0, k.hp - dmg);
   events.push({ type: 'blast', pos: { x: k.x, y: k.y }, label: STALL_LABEL, hits: [{ targetId: k.id, damage: dmg + absorbed, shieldAbsorbed: absorbed, hpAfter: k.hp, killed: k.hp <= 0 }] });
   if (k.hp > 0) return;
-  b.s = { ...b.s, winner: 0, pieces: b.s.pieces.filter((p) => p.id !== k.id) };
+  b.s = { ...b.s, winner: 0, pieces: b.s.pieces.filter((p) => p.id !== k.id && p.body !== k.id) };
   bossRise(b, pre, events);
   if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
 };
@@ -1818,7 +1845,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
     if (evs.length) {
       const kingDead = evs.some((e) => e.type === 'blast' && e.hits.some((h) => h.killed && findPiece(b.s, h.targetId)?.type === 'K'));
       events.push(...evs);
-      b.s.pieces = b.s.pieces.filter((p) => p.hp > 0);
+      b.s.pieces = livePieces(b.s.pieces);
       if (kingDead) b.s = { ...b.s, winner: 1 };
       events.push(...afterEnemyHits(b, pre, evs, '거대 주물'));
       if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });

@@ -1,6 +1,7 @@
 import { PROC, PROCESS, type ProcessId } from '../data/process';
 import { PIECE_STATS } from '../data/pieces';
-import { heatDmg, inBounds, type BattleEvent, type BattleState, type Piece, type Pos } from '../engine';
+import { BOSS_BODY } from '../data/giants';
+import { coresOf, heatDmg, inBounds, type BattleEvent, type BattleState, type Piece, type Pos } from '../engine';
 import { Rng } from '../engine/rng';
 
 /**
@@ -105,22 +106,28 @@ const strike = (targets: Piece[], dmg: (p: Piece) => number, label: string, cell
   return { type: 'blast', pos: cells[0] ?? { x: 0, y: 0 }, label, hits, fx, cells };
 };
 
-/** 금 간 바닥: 지금 그 칸에 선 기물마다 한 번 밟힘 — 다 밟히면 꺼지고 그 위 기물은 떨어진다(거대 주물은 무게를 나눠 밟지 않는다) */
+/**
+ * 금 간 바닥: 지금 그 칸에 선 기물마다 한 번 밟힘 — 다 밟히면 꺼지고 그 위 기물은 떨어진다(거대 주물은 무게를 나눠 밟지 않는다).
+ * 2×2 보스(D-513)는 밟는다 — 몸 밑이 꺼져도 떨어지지 않고 피해(BOSS_BODY.crackDmg)만 한 번 받는다(떨어지기 즉사 금지).
+ */
 const stepCracks = (b: Holder): BattleEvent | null => {
   const pr = b.proc!;
   const fell: Piece[] = [];
+  const shaken: Piece[] = [];
   const holes: Pos[] = [];
   for (const c of pr.cells ?? []) {
     const p = at(b.s, c);
-    if (!p || p.giant) continue;
+    if (!p || (p.giant && !p.giant.boss)) continue;
     const n = (pr.cracks![key(c)] ?? 0) + 1;
     pr.cracks![key(c)] = n;
-    if (n >= PROC.crackSteps) { holes.push(c); fell.push(p); }
+    if (n >= PROC.crackSteps) { holes.push(c); (p.giant?.boss ? shaken : fell).push(p); }
   }
   if (!holes.length) return null;
   pr.cells = (pr.cells ?? []).filter((c) => !holes.some((h) => h.x === c.x && h.y === c.y));
   b.s = { ...b.s, fallen: [...(b.s.fallen ?? []), ...holes.map((h) => h.y * b.s.width + h.x)] };
-  return strike(fell, (p) => p.hp + p.shield, `${PROCESS.crack.name} — 꺼진다`, holes, 'burst');
+  const boss = new Set(coresOf(b.s, shaken));
+  const bossDmg = heatDmg(b.s, Math.max(1, Math.round(BOSS_BODY.crackDmg * (b.atkK ?? 1))));
+  return strike([...fell, ...boss], (p) => (boss.has(p) ? bossDmg : p.hp + p.shield), `${PROCESS.crack.name} — 꺼진다`, holes, 'burst');
 };
 
 /** 적 차례 앞: 내가 끝낸 자리에서 금 간 칸을 밟는다 */
@@ -139,14 +146,16 @@ export const processAfter = (b: Holder): BattleEvent[] => {
   if (pr.kind === 'press' && pr.pressRow !== null && pr.pressRow !== undefined) {
     const row = pr.pressRow;
     const cells = Array.from({ length: b.s.width }, (_, x) => ({ x, y: row })).filter((c) => inBounds(b.s, c.x, c.y));
-    const e = strike(b.s.pieces.filter((p) => p.y === row), () => foe(PROC.pressDmg), PROCESS.press.name, cells);
+    // 2×2 보스 (D-513): 몸 두 칸이 줄에 걸려도 피해는 한 번
+    const e = strike(coresOf(b.s, b.s.pieces.filter((p) => p.y === row)), () => foe(PROC.pressDmg), PROCESS.press.name, cells);
     if (e) out.push(e);
     pr.pressRow = null;
   }
   if (pr.kind === 'furnace') {
     const cells = pr.cells ?? [];
-    const on = b.s.pieces.filter((p) => cells.some((c) => c.x === p.x && c.y === p.y));
-    if (on.length) { const e = strike(on, () => foe(PROC.furnaceDmg), PROCESS.furnace.name, cells.filter((c) => on.some((p) => p.x === c.x && p.y === c.y)), 'burst'); if (e) out.push(e); }
+    const on0 = b.s.pieces.filter((p) => cells.some((c) => c.x === p.x && c.y === p.y));
+    const on = coresOf(b.s, on0);
+    if (on.length) { const e = strike(on, () => foe(PROC.furnaceDmg), PROCESS.furnace.name, cells.filter((c) => on0.some((p) => p.x === c.x && p.y === c.y)), 'burst'); if (e) out.push(e); }
   }
   if (pr.kind === 'crack') { const e = stepCracks(b); if (e) out.push(e); }
   const slide = (p: Piece, to: Pos) => {

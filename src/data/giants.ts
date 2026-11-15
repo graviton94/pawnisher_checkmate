@@ -17,13 +17,34 @@ export const GIANTS: Record<GiantType, GiantDef> = {
 export const isGiantType = (t: PieceType): t is GiantType => t === 'P' || t === 'R' || t === 'Q';
 
 /**
- * 거대 주물이 서는 곳 (GDD 21장 §3 — 검문 일부 · 반장 일부, 높은 왕관일수록 자주). level = 본편 왕관(0~3) · 도전 단계(4~).
- * [막 1~3] → 그 막에서 그 판에 세울 거대 주물 (없으면 null). 서는 만큼 같은 바탕 기물 하나(없으면 폰 둘)를 뺀다.
+ * 거대 주물이 서는 곳 (GDD 21장 §3 · §3-B 갈림길 2, D-513 사용자 결정 2026-11-16): **검문 정예 미니보스로만** 선다.
+ * 반장 판은 반장 자신이 2×2 몸이라 거대 주물을 세우지 않고(한 판에 2×2 하나), 도전 일반 대국에도 세우지 않는다 → 2×2는 검문 · 반장 · 종막에만.
+ * level = 본편 왕관(0~3) · 도전 단계(4~). [막 1~3] → 그 막 검문에 세울 거대 주물 (없으면 null). 서는 만큼 같은 바탕 기물 하나(없으면 폰 둘)를 뺀다.
  */
 export const GIANT_AT = {
   check: (act: number, level: number): GiantType | null => (act === 1 ? (level >= 3 ? 'P' : null) : act === 2 ? 'P' : level >= 3 ? 'Q' : 'R'),
-  boss: (act: number, level: number): GiantType | null => (act === 2 && level >= 3 ? 'P' : act === 3 && level >= 3 ? 'R' : null),
-  /** 도전 단계(4~)의 2막 이후 일반 대국에 설 확률 */
-  battleOdds: 0.25,
+  /** 반장 판: 없음 (D-513 — 반장이 2×2 몸) */
+  boss: (_act: number, _level: number): GiantType | null => null,
+  /** 일반 대국: 없음 (D-513 — 옛 도전 단계 2막 이후 25%를 뺐다). 0이면 서지 않는다 */
+  battleOdds: 0,
   battleFrom: 4,
+};
+
+/**
+ * 2×2 특별 보스 (D-513, GDD 21장 §3-B — 사용자 결정 2026-11-16 추천안): 반장 여섯 · 도금왕이 판 위 2×2 한 몸으로 선다.
+ * 네 칸 = 킹 하나(왼아래 칸이 본체 — HP · 방열판 · 체크 보호), 몸 칸에 닿은 피해는 본체로 한 번만.
+ * 움직임 · 공격은 거대 주물(`giantTurn`)을 그대로: 내 차례 시작에 묶음째 여덟 방향 한 칸 → 한 변 네 칸 예고 → 적 차례 끝 내리찍기.
+ * 2단계(격노)는 꺾인 두 변 일곱 칸 · 공격 ×bossPhase2Atk(slice/cards.ts SLICE). 수치는 모두 반장 킹의 것을 쓴다.
+ */
+export const BOSS_BODY = {
+  /** 턴마다 한 칸 (2턴부터) */
+  stepEvery: 1,
+  /** 금 간 바닥이 몸 밑에서 꺼질 때 받는 피해 (떨어지지 않는다 — 난이도 공격 배율을 곱한다). 프레스 한 방과 같은 무게 */
+  crackDmg: 14,
+  move: '턴마다 묶음째 한 칸 다가온다',
+  hit: '몸 한 변 네 칸을 내리찍는다',
+  hitRage: '꺾인 두 변 일곱 칸을 내리찍는다',
+  slam: (name: string): string => `${name} — 내리찍기`,
+  /** 전용 그림(GB-01~07 · b)을 받기 전 판 위 딱지 (D-386: 반장 킹 그림을 2×2로 빌려 쓴다) */
+  tempArt: '임시 — GB 대기',
 };

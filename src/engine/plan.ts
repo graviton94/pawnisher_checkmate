@@ -3,7 +3,7 @@ import { CARVE_FX } from '../data/carves';
 import { PART_FX } from '../data/parts';
 import { BASE_AP, PIECE_STATS } from '../data/pieces';
 import { TWIST_FX } from '../data/twists';
-import { buildGrid, chebyshev, cloneState, findPiece, forward, inBounds, kingOf, lastRank, samePos } from './board';
+import { buildGrid, chebyshev, cloneState, coreOf, coresOf, findPiece, forward, inBounds, kingOf, lastRank, livePieces, samePos } from './board';
 import { attackScan, damageOf, legalMoves, part, takenMult, twistOn } from './rules';
 import { otherSide, type BattleEvent, type BattleState, type HitResult, type Piece, type PieceType, type Plan, type PlannedMove, type PlanStep, type Pos, type Side } from './types';
 
@@ -96,8 +96,9 @@ const applyDamage = (s: BattleState, t: Piece, damage: number, splash = false): 
 const splashAround = (s: BattleState, attacker: Piece, center: Pos, dirs: Pos[], dmg: number, ratio: number, skip: Set<number>): HitResult[] => {
   const out: HitResult[] = [];
   for (const d of dirs) {
-    const n = s.pieces.find((p) => p.x === center.x + d.x && p.y === center.y + d.y && p.side !== attacker.side && p.hp > 0);
-    if (!n || skip.has(n.id)) continue;
+    const n0 = s.pieces.find((p) => p.x === center.x + d.x && p.y === center.y + d.y && p.side !== attacker.side && p.hp > 0);
+    const n = n0 && coreOf(s, n0);
+    if (!n || n.hp <= 0 || skip.has(n.id)) continue;
     skip.add(n.id);
     out.push(applyDamage(s, n, Math.max(1, Math.round(dmg * ratio * takenMult(s, attacker, n))), true));
   }
@@ -126,12 +127,12 @@ const resolveDeaths = (s: BattleState, ctx: TurnCtx, killer: Piece | undefined, 
   const dead = s.pieces.filter((p) => p.hp <= 0);
   if (!dead.length) return 0;
   for (const p of dead) ctx.removed.push({ ...p });
-  s.pieces = s.pieces.filter((p) => p.hp > 0);
+  // 본체가 쓰러진 2×2 몸 칸도 같이 치운다 (처치 수에 들지 않는다, D-513)
+  s.pieces = livePieces(s.pieces);
   for (const d of dead) {
     // 도미노 공장 (에픽): 쓰러진 적의 상하좌우 적에게 — 한 번만 (연쇄 없음)
     if (depth === 0 && part(s, otherSide(d.side), 'domino')) {
-      const hits = s.pieces
-        .filter((p) => p.side === d.side && p.hp > 0 && Math.abs(p.x - d.x) + Math.abs(p.y - d.y) === 1)
+      const hits = coresOf(s, s.pieces.filter((p) => p.side === d.side && p.hp > 0 && Math.abs(p.x - d.x) + Math.abs(p.y - d.y) === 1))
         .map((p) => applyDamage(s, p, Math.max(1, Math.round(d.maxHp * PART_FX.domino * (s.heat ?? 1))), true));
       if (hits.length) ctx.events.push({ type: 'blast', pos: { x: d.x, y: d.y }, label: '도미노', hits });
     }

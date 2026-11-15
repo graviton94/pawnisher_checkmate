@@ -1,4 +1,4 @@
-import { GIANTS, type GiantType } from '../data/giants';
+import { BOSS_BODY, GIANTS, type GiantType } from '../data/giants';
 import { PIECE_STATS } from '../data/pieces';
 import { chebyshev, damageOf, forward, inBounds, kingOf, makePiece, type BattleEvent, type BattleState, type Piece, type Pos } from '../engine';
 
@@ -8,11 +8,14 @@ import { chebyshev, damageOf, forward, inBounds, kingOf, makePiece, type BattleE
  * 적 차례 끝에 예고한 칸을 내리찍는다. 칠 칸은 지금 판 기준(부위가 부서지면 그 몫이 빠지고, 기물로 줄을 막으면 거기서 멈춘다) —
  * 미리보기(dangerSquares · intentHits)와 실행이 같은 함수를 쓴다.
  */
-export interface GiantHolder { s: BattleState; turn: number; giantAim?: Record<number, Pos> }
+export interface GiantHolder { s: BattleState; turn: number; giantAim?: Record<number, Pos>; /** 2×2 보스가 2단계(격노)인가 — 두 변을 친다 (D-513) */ phase2?: boolean; /** 내리찍기 사건 이름 (2×2 보스) */ bossName?: string }
 
 const value = (p: Piece): number => (p.type === 'K' ? 300 : PIECE_STATS[p.type].value);
 const ORTHO: Pos[] = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }];
-const ALL8: Pos[] = [...ORTHO, { x: 1, y: -1 }, { x: -1, y: -1 }, { x: 1, y: 1 }, { x: -1, y: 1 }];
+const DIAG: Pos[] = [{ x: 1, y: -1 }, { x: -1, y: -1 }, { x: 1, y: 1 }, { x: -1, y: 1 }];
+const ALL8: Pos[] = [...ORTHO, ...DIAG];
+/** 2×2 보스 묶음인가 (D-513) */
+const isBoss = (parts: Piece[]): boolean => !!parts[0]?.giant?.boss;
 
 /** 살아 있는 거대 주물 묶음 (묶음 id → 부위들) */
 export const giantGroups = (s: BattleState): Map<number, Piece[]> => {
@@ -66,6 +69,102 @@ export const placeGiants = (s: BattleState, types: GiantType[], reserved: number
   }
 };
 
+/** 칸들 위의 기물(keep 제외)을 가까운 빈 칸으로 비킨다 — 적 진영 쪽(위) 먼저. 빈 칸이 없으면 판에서 뺀다 */
+const clearCells = (s: BattleState, cells: Pos[], keep: (p: Piece) => boolean): void => {
+  const inBlock = (q: Pos) => cells.some((c) => c.x === q.x && c.y === q.y);
+  for (const p of s.pieces.filter((q) => inBlock(q) && !keep(q))) {
+    const free: Pos[] = [];
+    for (let y = s.height - 1; y >= 0; y--) for (let x = 0; x < s.width; x++) if (inBounds(s, x, y) && !inBlock({ x, y }) && !s.pieces.some((q) => q.x === x && q.y === y)) free.push({ x, y });
+    const to = free.sort((a, b) => chebyshev(a, p) - chebyshev(b, p) || b.y - a.y || a.x - b.x)[0];
+    if (to) Object.assign(p, { x: to.x, y: to.y });
+    else s.pieces = s.pieces.filter((q) => q !== p);
+  }
+};
+
+/** 2×2 칸 (왼아래 a부터: 왼아래 · 오른아래 · 왼위 · 오른위) */
+const blockOf = (a: Pos): Pos[] => [{ x: a.x, y: a.y }, { x: a.x + 1, y: a.y }, { x: a.x, y: a.y + 1 }, { x: a.x + 1, y: a.y + 1 }];
+
+/**
+ * 2×2 특별 보스 세우기 (D-513, GDD 21장 §3-B): 적 킹(반장 · 도금왕)을 적 진영 **맨 뒤 두 줄 가운데**(6폭 x 2~3 · 8폭 x 3~4)로 옮기고
+ * 나머지 세 칸에 몸 칸(HP 없음 — 피해는 본체로)을 둔다. 그 칸에 서 있던 호위는 가까운 빈 칸으로 비킨다. 본체 = 왼아래 칸.
+ * 본체는 기물 목록에서 몸 칸보다 앞에 둔다(킹을 찾는 옛 코드가 늘 본체를 먼저 만나게).
+ */
+export const placeBoss = (s: BattleState, reserved: number[] = []): Piece | null => {
+  const k = kingOf(s, 1);
+  if (!k || s.width < 2 || s.height < 2) return null;
+  const a = { x: Math.floor((s.width - 2) / 2), y: s.height - 2 };
+  const cells = blockOf(a);
+  clearCells(s, cells, (p) => p === k);
+  Object.assign(k, { x: a.x, y: a.y, moved: true });
+  const gid = Math.max(0, ...s.pieces.map((p) => p.id), ...reserved) + 1;
+  k.giant = { id: gid, dx: 0, dy: 0, boss: true };
+  cells.slice(1).forEach((c, i) => {
+    const p = makePiece(gid + 1 + i, 'K', 1, c.x, c.y);
+    p.maxHp = p.hp = 1;
+    p.atk = 0;
+    p.moved = true;
+    p.body = k.id;
+    p.giant = { id: gid, dx: (c.x - a.x) as 0 | 1, dy: (c.y - a.y) as 0 | 1, boss: true };
+    s.pieces.push(p);
+  });
+  return k;
+};
+
+/** 2×2 보스 묶음의 모든 칸 (몸 칸 + 본체) — 없으면 빈 목록 */
+export const bossCells = (s: BattleState): Pos[] => s.pieces.filter((p) => p.giant?.boss).map((p) => ({ x: p.x, y: p.y }));
+
+/**
+ * 2×2 보스 둘레 열두 칸 (D-513: 「반장 곁」 = 몸 둘레) — 앞(우리 쪽) 줄 가운데부터 · 옆 · 뒤 순. 판 안 빈 칸만.
+ * 2×2가 아니면 null (부르는 쪽이 옛 1칸 둘레를 쓴다).
+ */
+export const bossRing = (s: BattleState): Pos[] | null => {
+  const core = s.pieces.find((p) => p.giant?.boss && p.body === undefined);
+  if (!core) return null;
+  const a = { x: core.x - core.giant!.dx, y: core.y - core.giant!.dy };
+  const ring: Pos[] = [
+    { x: a.x, y: a.y - 1 }, { x: a.x + 1, y: a.y - 1 }, { x: a.x - 1, y: a.y - 1 }, { x: a.x + 2, y: a.y - 1 },
+    { x: a.x - 1, y: a.y }, { x: a.x + 2, y: a.y }, { x: a.x - 1, y: a.y + 1 }, { x: a.x + 2, y: a.y + 1 },
+    { x: a.x, y: a.y + 2 }, { x: a.x + 1, y: a.y + 2 }, { x: a.x - 1, y: a.y + 2 }, { x: a.x + 2, y: a.y + 2 },
+  ];
+  return ring.filter((q) => inBounds(s, q.x, q.y) && !s.pieces.some((p) => p.x === q.x && p.y === q.y));
+};
+
+/**
+ * 2×2 보스가 칠 칸 (D-513): dir가 가로세로면 그 한 변(붙은 두 칸 + 양 모서리 대각 = 네 칸), 대각이면 꺾인 두 변(ㄱ자 일곱 칸).
+ * 줄이 기물에 막히지 않는다 — 몸이 그 둘레를 내리찍는다. 판 밖 · 꺼진 칸은 뺀다.
+ */
+export const bossSlamCells = (s: BattleState, a: Pos, dir: Pos): Pos[] => {
+  const side = (d: Pos): Pos[] => {
+    if (d.y === 1) return [-1, 0, 1, 2].map((i) => ({ x: a.x + i, y: a.y + 2 }));
+    if (d.y === -1) return [-1, 0, 1, 2].map((i) => ({ x: a.x + i, y: a.y - 1 }));
+    if (d.x === 1) return [-1, 0, 1, 2].map((i) => ({ x: a.x + 2, y: a.y + i }));
+    return [-1, 0, 1, 2].map((i) => ({ x: a.x - 1, y: a.y + i }));
+  };
+  const all = dir.x && dir.y ? [...side({ x: dir.x, y: 0 }), ...side({ x: 0, y: dir.y })] : side(dir);
+  const out = new Map<string, Pos>();
+  for (const q of all) if (inBounds(s, q.x, q.y)) out.set(`${q.x},${q.y}`, q);
+  return [...out.values()];
+};
+
+/**
+ * 2×2 보스 겨누기 (D-513): 1단계 = 네 변 중 하나, 2단계(격노) = 꺾인 두 변 넷 중 하나. 내 기물 값이 가장 많이 걸리는 쪽(같으면 내 킹 쪽).
+ * 2단계로 다시 설 때(bossRise)도 이것으로 바로 다시 겨눈다 — 화면 위험 칸 · 적의 수 · 실행이 같은 값.
+ */
+export const bossAim = (b: GiantHolder): void => {
+  for (const [gid, parts] of giantGroups(b.s)) {
+    if (!isBoss(parts)) continue;
+    const a = anchorOf(parts);
+    const king = kingOf(b.s, 0);
+    const dirs = b.phase2 ? DIAG : ORTHO;
+    const score = (d: Pos) => bossSlamCells(b.s, a, d).reduce((n, q) => {
+      const o = b.s.pieces.find((r) => r.x === q.x && r.y === q.y && r.side === 0);
+      return n + (o ? value(o) : 0);
+    }, 0);
+    const toward = (d: Pos) => (king ? -Math.max(Math.abs(a.x + 0.5 + d.x * 2 - king.x), Math.abs(a.y + 0.5 + d.y * 2 - king.y)) : 0);
+    (b.giantAim ??= {})[gid] = [...dirs].sort((d1, d2) => score(d2) - score(d1) || toward(d2) - toward(d1))[0];
+  }
+};
+
 /** 부위 하나가 이 방향으로 칠 칸 — 지금 판 기준. 제 몸(같은 묶음)에 막히면 없음, 다른 기물에 닿으면 그 칸까지 */
 const partCells = (s: BattleState, p: Piece, dir: Pos): Pos[] => {
   if (p.type === 'P') {
@@ -94,6 +193,13 @@ export const giantStrikes = (b: GiantHolder): { part: Piece; cells: Pos[] }[] =>
   for (const [gid, parts] of giantGroups(b.s)) {
     const dir = b.giantAim?.[gid];
     if (!dir) continue;
+    // 2×2 보스 (D-513): 몸 하나 — 본체가 한 번에 친다
+    if (isBoss(parts)) {
+      const core = parts.find((p) => p.body === undefined);
+      const cells = bossSlamCells(b.s, anchorOf(parts), dir);
+      if (core && cells.length) out.push({ part: core, cells });
+      continue;
+    }
     for (const p of parts) {
       const cells = partCells(b.s, p, dir);
       if (cells.length) out.push({ part: p, cells });
@@ -113,6 +219,30 @@ export const giantTurn = (b: GiantHolder): BattleEvent[] => {
   const events: BattleEvent[] = [];
   const king = kingOf(b.s, 0);
   for (const [gid, parts] of giantGroups(b.s)) {
+    // 2×2 보스 (D-513): 거대 퀸처럼 여덟 방향 한 칸(BOSS_BODY.stepEvery턴마다, 2턴부터) → 겨누기는 bossAim
+    if (isBoss(parts)) {
+      if (b.turn > 1 && (b.turn - 1) % BOSS_BODY.stepEvery === 0 && king) {
+        const a = anchorOf(parts);
+        const center = { x: a.x + 0.5, y: a.y + 0.5 };
+        const dist = (c: Pos) => Math.max(Math.abs(c.x - king.x), Math.abs(c.y - king.y));
+        const steps = ALL8.filter((d) => dist({ x: center.x + d.x, y: center.y + d.y }) < dist(center)).sort((d1, d2) => dist({ x: center.x + d1.x, y: center.y + d1.y }) - dist({ x: center.x + d2.x, y: center.y + d2.y }) || Math.abs(d2.y) - Math.abs(d1.y) || Math.abs(d1.x) - Math.abs(d2.x));
+        for (const d of steps) {
+          const ok = parts.every((p) => {
+            const q = { x: p.x + d.x, y: p.y + d.y };
+            const o = b.s.pieces.find((r) => r.x === q.x && r.y === q.y);
+            return inBounds(b.s, q.x, q.y) && (!o || o.giant?.id === gid);
+          });
+          if (!ok) continue;
+          for (const p of parts) {
+            events.push({ type: 'move', order: 0, pieceId: p.id, from: { x: p.x, y: p.y }, to: { x: p.x + d.x, y: p.y + d.y } });
+            p.x += d.x;
+            p.y += d.y;
+          }
+          break;
+        }
+      }
+      continue;
+    }
     const t = parts[0].type as GiantType;
     const def = GIANTS[t];
     const a = anchorOf(parts);
@@ -146,6 +276,7 @@ export const giantTurn = (b: GiantHolder): BattleEvent[] => {
     const best = [...dirs].sort((d1, d2) => score(d2) - score(d1) || toward(d2) - toward(d1))[0];
     (b.giantAim ??= {})[gid] = best;
   }
+  bossAim(b);
   for (const id of Object.keys(b.giantAim ?? {}).map(Number)) if (!giantGroups(b.s).has(id)) delete b.giantAim![id];
   return events;
 };
@@ -164,10 +295,11 @@ export const giantStrike = (b: GiantHolder): BattleEvent[] => {
       return { targetId: p.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
     }));
     const p0 = list[0].part;
-    out.push({ type: 'blast', pos: anchorOf([p0]), label: GIANTS[p0.type as GiantType].name, hits, fx: 'slam', cells: list.flatMap((g) => g.cells) });
+    const label = p0.giant?.boss ? BOSS_BODY.slam(b.bossName ?? '반장') : GIANTS[p0.type as GiantType].name;
+    out.push({ type: 'blast', pos: anchorOf([p0]), label, hits, fx: 'slam', cells: list.flatMap((g) => g.cells) });
   }
   return out;
 };
 
 /** 이 기물이 거대 주물 부위면 그 이름 (길게 누르기) */
-export const giantName = (p: Piece): string | null => (p.giant ? GIANTS[p.type as GiantType]?.name ?? null : null);
+export const giantName = (p: Piece): string | null => (p.giant && !p.giant.boss ? GIANTS[p.type as GiantType]?.name ?? null : null);
