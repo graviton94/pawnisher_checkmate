@@ -28,9 +28,9 @@ const KIND = { n: '서술', s: '대사', m: '독백' } as const;
 const FX_KO = { shake: '흔들림', flash: '흰 번쩍', red: '붉은 경보', gold: '금빛' } as const;
 const beat = (l: Line): string => [l.pause ? `숨 ${l.pause}` : '', l.shot ? `샷 ${Math.round(l.shot.x * 100)}·${Math.round(l.shot.y * 100)}${l.shot.z ? ` ×${l.shot.z}` : ''}` : '', l.sfx ? `소리 ${l.sfx}` : '', l.fx ? FX_KO[l.fx] : ''].filter(Boolean).join(' · ') || '—';
 /** 줄 표: ID · 형식 · 화자 · 원문 · 연출(비트) */
-const table = (prefix: string, lines: Line[]): void => {
+const table = (prefix: string, lines: Line[], from = 0): void => {
   p('| ID | 형식 | 화자 | 원문 | 연출 |', '|---|---|---|---|---|');
-  lines.forEach((l, i) => p(`| ${prefix}-${i + 1} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} | ${beat(l)} |`));
+  lines.forEach((l, i) => p(`| ${prefix}-${from + i + 1} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} | ${beat(l)} |`));
   p('');
 };
 const TRANS_KO = { dither: '디더', iris: '조리개', melt: '쇳물', white: '백지', black: '암전', cut: '바로' } as const;
@@ -46,9 +46,9 @@ const rows = (head: [string, string], items: [string, string, string][]): void =
   items.forEach(([id, a, b]) => p(`| ${id} | ${clean(a)} | ${clean(b)} |`));
   p('');
 };
-const cutBlock = (id: string, title: string, c: Cut, picture: string, note = ''): void => {
+const cutBlock = (id: string, title: string, c: Cut, picture: string, note = '', from = 0): void => {
   p(`#### ${id} · ${title}`, '', c.coda ? '- **그림**: 없음 — 끝 정적' : `- **그림**: \`${c.img}.png\` — ${picture}`, ...cutHead(c), ...(note ? [`- **메모**: ${note}`] : []), '');
-  table(id, c.lines);
+  table(id, c.lines, from);
 };
 
 const BOSS_ORDER: StoryBoss[] = ['plate', 'inspect', 'spawn', 'magnet', 'thorns', 'alarm'];
@@ -112,19 +112,25 @@ p('## 2. 인물과 어투', '',
 // ───────────────────────── 3. 프롤로그 ─────────────────────────
 const PRO_PIC = [
   '연기에 덮인 공장 전경. 기물 문장이 걸린 건물들, 다리 위에 작은 흰 폰 하나',
+  '(OP-01 1차본 — 폰이 왕관을 써서 재발주 중) 흰 폰 옆구리의 태엽 열쇠를 황동 집게 팔이 돌린다. 발밑 체스판 칸이 밝고, 뒤로 용광로와 컨베이어 위 흰 · 검은 폰 줄',
   '쇳물이 쏟아지는 주조 라인. 거푸집에서 검은 기물들이 줄줄이 굳어 나온다',
   '공장 집게가 흰 폰 하나를 집어 흰 세트 상자의 킹 자리에 내려놓는다. 붉은 경고등',
   '상자 위에 커다란 붉은 X. 붉은 조명 아래 줄지어 선 흰 세트',
-  '상자 안. 작은 폰 하나를 룩 · 퀸 · 비숍 · 나이트가 내려다본다',
+  '(OP-02) 열린 상자 칸막이에 흰 폰 여덟과 룩 · 나이트 · 비숍 · 퀸. 십자 홈이 파인 킹 자리에 맨머리 폰 하나, 그쪽으로 기운 퀸. 귀퉁이에 포장지',
   '어둠 속, 종이 왕관을 눌러쓴 폰의 클로즈업',
   '종이 왕관의 폰과 흠집 난 흰 나이트가 나란히 섰다. 뒤로 흰 기물들의 실루엣',
-  '저울과 왕좌가 빛나는 출하구 계단 앞. 종이왕의 뒷모습 양옆으로 검은 폰들이 줄지어 섰다',
+  '(OP-04) 왼쪽 앞에 종이 왕관 폰 · 흠집 난 흰 나이트 · 흰 폰들, 판 맞은편에 줄지어 선 검은 세트, 오른쪽 위 금빛 통제실 난간 너머 왕좌의 그림자',
 ];
-const PRO_TITLE = ['공장', '용광로', '아홉 번째 폰', '딱지', '다툼', '종이 왕관', '부관 박차', '검은 세트와 왕좌'];
-p('## 3. 프롤로그 — 첫 출하 시작 (8컷)', '',
+const PRO_TITLE = ['공장', '태엽', '용광로', '아홉 번째 폰', '딱지', '다툼', '종이 왕관', '부관 박차', '검은 세트와 왕좌'];
+p('## 3. 프롤로그 — 첫 출하 시작 (9컷 — 바이블 8컷 + OP-01 태엽 컷)', '',
   '- **트리거**: 게임을 처음 켜고 화면을 누르면 재생. 끝나면 로고 → 「화면을 눌러 출하」 → 첫 대국.',
   '- ★ 표시 컷만 이어 보는 **짧은 판**도 있다(다시 볼 때). ★ 컷만 읽어도 말이 통해야 한다.', '');
-PROLOGUE.forEach((c, i) => cutBlock(`PRO-${String(i + 1).padStart(2, '0')}`, `${PRO_TITLE[i]}${c.key ? ' ★' : ''}`, c, PRO_PIC[i]));
+// 줄 ID는 바이블과 같게: OP-01 컷(D-509)은 PRO-01의 2 · 3줄을 이어받는다 — 컷 번호 = 바이블 컷, 줄 번호는 그 컷 안에서 이어 센다
+let proN = 0, proFrom = 0;
+PROLOGUE.forEach((c, i) => {
+  if (c.img === 'op-windup') proFrom += PROLOGUE[i - 1].lines.length; else { proN++; proFrom = 0; }
+  cutBlock(`PRO-${String(proN).padStart(2, '0')}`, `${PRO_TITLE[i]}${c.key ? ' ★' : ''}`, c, PRO_PIC[i], '', proFrom);
+});
 p(`- 끝 화면 글: 「${OPENING_TEXT.tagline}」(표어) · 「${OPENING_TEXT.pressGo}」`, '');
 
 p('### 3-1. 그림자 컷 — 둘째 출하부터 프롤로그 대신', '',
@@ -340,7 +346,7 @@ p('- 거절 공통 결과: 「당신은 말없이 발걸음을 돌린다.」', '
 // ───────────────────────── 11. 그림 목록 ─────────────────────────
 p('## 11. 장면 그림 목록', '',
   '| 장면 | 파일 | 상태 |', '|---|---|---|',
-  '| 프롤로그 8컷 | `prologue-00` ~ `prologue-07` | 있음 |',
+  '| 프롤로그 9컷 | `prologue-00` ~ `prologue-07` · `op-windup` | 있음 |',
   '| 그림자 컷 | `prologue-shadow`(재도전) · `new-law`(2~4승천 시작) | 있음 |',
   '| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 3막 **발주 중**(S-13) — 그동안 `act-3` |',
   '| 반장 등장 6 + 도금왕 4 | `boss-*` | 있음 |',

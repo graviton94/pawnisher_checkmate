@@ -1571,7 +1571,7 @@ const maybeBet = (def: BattleDef, force = false): void => {
   const txt = betText(offer);
   // M 창 (D-391 → #12 · D-490): 명패 「판돈」 · 판돈 칸(움푹 칸)에 나사 동전 셋 — D-260 「확률 = 동전 · 사각 칸」 문법 ·
   // 조건 · 보상 · 실패 시 줄 · 독백 · [걸지 않는다 | 건다]. 걸면 동전이 칸에 떨어져 박히고(계단) 창이 닫힌다.
-  // 판돈 칸 바탕 = 받은 WG-01 내기판 장면(scenes/wager-table.png, D-507) — cover로 자르고 초점은 내기판 · 동전 나이트. 동전 · 표지는 「임시 — WG-02 대기」(나사 아이콘)
+  // 판돈 칸 바탕 = 받은 WG-01 내기판 장면(scenes/wager-table.png, D-507 1차본 — D-509 나이트 뺀 재발주 대기) — cover로 자르고 초점은 내기판 가운데(나이트 팔 · 외눈은 칸 밖). 동전 · 표지는 「임시 — WG-02 대기」(나사 아이콘)
   const coin = '<img src="ui/icons16/hud.screw.png" alt="">';
   const el = openWin({
     size: 'm',
@@ -2062,8 +2062,8 @@ const showMap = (): void => {
   const el = document.createElement('div');
   el.className = 'mapfx kit';
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
-  // 지도 바탕 = 막마다 내려다본 공장 층(MP-03~05 받음) · 종막은 MP-06을 받기 전까지 막 표지(A-04)를 빌린다
-  el.style.setProperty('--act', `url(${new URL(actI < 3 ? `scenes/map-a${actI + 1}.png` : `scenes/act-${Math.min(4, actI + 1)}.png`, location.href).href})`);
+  // 지도 바탕 = 막마다 내려다본 공장 층(MP-03~05) · 종막 = 통제실 계단과 왕좌(MP-06, D-509)
+  el.style.setProperty('--act', `url(${new URL(`scenes/map-a${Math.min(4, actI + 1)}.png`, location.href).href})`);
   // 범례 한 줄 (D-400, 사용자: 「범례가 두 줄로 접힌다 · 『빛나는 곳을 고릅니다』는 필요 없다」)
   const legend = `<ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
     .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)

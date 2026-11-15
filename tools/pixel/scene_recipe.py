@@ -16,7 +16,12 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     # D-507: WG-01 판돈 무대 1672×941 → 320×180 균일 격자(발주 ×6이 아니라 생성기 약 5.23px)
     'wager-table': 941 / 180,
     # 2026-11-14 지도 바탕 MP-03~05 (1671~1672×941 → 320×180 균일, map_import.py · MAP_GRID)
-    'map-a1': 941 / 180, 'map-a2': 941 / 180, 'map-a3': 941 / 180}
+    'map-a1': 941 / 180, 'map-a2': 941 / 180, 'map-a3': 941 / 180,
+    # D-509: MP-06 종막 지도 1670×941 → 320×180 균일(map-a1~3과 같다)
+    'map-a4': 941 / 180,
+    # D-509: OP-01 · OP-02는 실측 6.72px(941/140 — 복원 오차가 135 · 145줄보다 낮은 국소 최소, 격자 점수도 6.70~6.72가 최고) → 249×140,
+    # OP-04는 뚜렷한 다른 주기가 없어 장면 관례 941/180 → 320×180. 셋 다 생성기가 레터박스 검은 띠를 그려 넣어 OPENING_GRID trim으로 걷는다.
+    'op-windup': 941 / 140, 'prologue-04': 941 / 140, 'prologue-07': 941 / 180}
 
 
 def options(name):
@@ -27,7 +32,7 @@ def options(name):
                 'departure-decision', 'shipping-company', 'gilded-solitude',
                 'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen',
                 'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table',
-                'map-a1', 'map-a2', 'map-a3'):
+                'map-a1', 'map-a2', 'map-a3', 'map-a4', 'op-windup', 'prologue-04', 'prologue-07'):
         opts['uniform'] = True
     return opts
 
@@ -128,5 +133,18 @@ MAP_GRID = {
               # 분대 칸 셋은 생성기 번짐으로 38 · 41 · 39칸 폭 — 같은 캔버스(가운데 · 아래 맞춤)에 놓아 상태가 바뀌어도 칸이 흔들리지 않게
               'same_canvas': ['roster-slot', 'roster-slot-hurt', 'roster-slot-down']},
     'MP-02': {'margin': 2, 'merge': 3, 'drop_pal': ('보라', '구리'), 'names': ['battle', 'check', 'boss', 'event', 'shop', 'forge', 'chest', 'rest', 'here']},
-    'bg': {'MP-03': ('map-a1', '주조 공정'), 'MP-04': ('map-a2', '조립 공정'), 'MP-05': ('map-a3', '검수 공정 · 출하')},
+    'bg': {'MP-03': ('map-a1', '주조 공정'), 'MP-04': ('map-a2', '조립 공정'), 'MP-05': ('map-a3', '검수 공정 · 출하'),
+           'MP-06': ('map-a4', '종막 · 통제실')},
+}
+
+
+# D-509 오프닝 OP-01 · 02 · 04 (tools/pixel/opening_import.py가 읽는다): 받은 이름 → 게임 장면 이름.
+# 생성기가 레터박스(위아래 검은 띠)를 그림 안에 그려 넣었다 — 게임이 띠를 따로 얹으므로(film.css), 격자 복원 뒤
+# 먹 칸(가장 밝은 값 ≤ trim_max)이 90% 넘는 띠 줄과, 그 바로 안쪽에서 먹이 trim_dark 넘게 걸친 경계 줄 하나를 위 · 아래에서 걷는다(자르기만 — 늘리지 않는다, D-386). 걷힌 줄 수는 반입 때 찍는다.
+# 원본 띠 높이(px, 위/아래): OP-01 157/101 · OP-02 95/95 · OP-04 129/103.
+OPENING_GRID = {
+    # OP-01은 쓰며 재발주(D-509 — 태엽 감는 폰에 왕관): 받은 1차본 = OP-01-v1-source.png, 재발주본이 오면 OP-01-source.png로 바꾼다
+    'OP-01': {'name': 'op-windup', 'src': 'OP-01-v1', 'trim_max': 30, 'trim_dark': 0.25},
+    'OP-02': {'name': 'prologue-04', 'trim_max': 30, 'trim_dark': 0.25},
+    'OP-04': {'name': 'prologue-07', 'trim_max': 30, 'trim_dark': 0.25},
 }
