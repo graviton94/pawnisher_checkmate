@@ -626,7 +626,7 @@ export const closePeek = (el: HTMLElement | null = peekNow): void => {
 
 /**
  * 컷신 크롬 하나 (3.10, D-397): 프롤로그 · 막 카드 · 반장 등장 · 격파 · 승급 · 엔딩 · 크레딧 · 최종장이 모두 이 마크업을 쓴다.
- * `.cut-sub` = 아래 가운데 먹 띠(UI-08 띠 끝 장식 sub-cap-l/r 정수배, 줄 둘 · 줄마다 CUT_TEXT_BUDGET 안) · 띠 안 오른쪽 끝 `.cut-next` ▼ ·
+ * `.cut-sub` = 아래 가운데 자막 판(ED-01 subtitle-plate 9-slice · 왼끝 화자 표지, D-510 — 옛 UI-08 sub-cap-l/r 대신, 줄 둘 · 줄마다 CUT_TEXT_BUDGET 안) · 띠 안 오른쪽 끝 `.cut-next` ▼ ·
  * `.cut-skip` = 철 단추 「건너뛴다」 112×48 아래 오른쪽. 부르는 쪽 뿌리에 `kit` 클래스를 달면 꼬리표 · 움푹 칸도 키트 그대로.
  */
 export const cutChromeHtml = (o: { skip?: string } = {}): string =>

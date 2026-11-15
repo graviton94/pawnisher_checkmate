@@ -15,7 +15,8 @@ export interface Shot { x: number; y: number; z?: number }
 /** 컷 사이 전환: 디더 · 조리개 · 쇳물 · 백지 · 암전 · 바로 */
 export type Trans = 'dither' | 'iris' | 'melt' | 'white' | 'black' | 'cut';
 /** 장 제목 카드 (먹 바탕 · 꼬리표 · 제목 · 부제) */
-export interface TitleCard { kicker: string; title: string; sub?: string; tone?: 'brass' | 'crimson' | 'paper' }
+/** crown = 몇째 왕관 장인지 — 꼬리표 위 왕관 문장(ED-01 crown-emblem-1~4: 종이 → 금띠 → 반금 → 금 깨짐, D-510) */
+export interface TitleCard { kicker: string; title: string; sub?: string; tone?: 'brass' | 'crimson' | 'paper'; crown?: number }
 /** 화자 얼굴: 기물 도트(진영) 또는 장면 그림 한 곳(cover 초점) */
 export type Face = { t: PieceType; side: 0 | 1 } | { art: string; at?: string } | { portrait: Portrait };
 export interface Cut {
@@ -41,6 +42,8 @@ const s = (who: string, t: string, o: Partial<Line> = {}): Line => ({ k: 's', wh
 const m = (t: string, o: Partial<Line> = {}): Line => ({ k: 'm', t, ...o });
 /** 장 꼬리표: 「첫째 왕관」 … */
 const chapterKick = (chapter: number): string => CHAPTERS[Math.max(0, Math.min(3, chapter))].label;
+/** 왕관 문장 번호 1~4 (TitleCard.crown) */
+const crownNo = (chapter: number): number => Math.max(0, Math.min(3, chapter)) + 1;
 /** 샷 줄임: at(x, y, z) */
 const at = (x: number, y: number, z = 0): Shot => ({ x, y, z });
 const pawn = (x = 48, y = 56, h = 30): StandIn => ({ t: 'K', side: 0, x, y, h });
@@ -137,7 +140,7 @@ export const shadowCut = (chapter: number, law?: string, retry = chapter === 0):
     n('컨베이어의 집게는 아무 일도 없었다는 듯 차가운 쇳소리를 내며, 다른 상자의 비어 있는 킹 자리에 새로운 폰 하나를 집어 넣었다.', { shot: at(0.33, 0.7, 2), sfx: 'lift' }),
     n('상자 뚜껑에 찍힌 붉은 X표가 눈을 뜬 그의 시야를 붉게 물들였다.', { shot: at(0.33, 0.78, 3), fx: 'red' }),
     m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { shot: at(0.75, 0.2, 1), pause: 400, mood: 'fear' }),
-  ]), slug: '같은 승천 재도전', title: { kicker: chapterKick(chapter), title: '또 하나의 아홉째 폰', sub: CHAPTERS[Math.max(0, Math.min(3, chapter))].name } }
+  ]), slug: '같은 승천 재도전', title: { kicker: chapterKick(chapter), title: '또 하나의 아홉째 폰', sub: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, crown: crownNo(chapter) } }
   : { ...sceneCut('new-law', [
     n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.', { shot: at(0.18, 0.8, 2) }),
     n('그런데 전에는 없던 차가운 쇠판 하나가 검수대 기둥에 새로 못 박혀 있었다. 갓 새겨진 듯 글자 끝이 날카로웠다.', { shot: at(0.6, 0.5), sfx: 'stamp' }),
@@ -147,7 +150,7 @@ export const shadowCut = (chapter: number, law?: string, retry = chapter === 0):
       '두 번이나 킹이 바뀌었는데도 아래층은 여전히 지옥이군. 좋아, 그 썩은 왕좌에 내가 올라가서 이 공장의 규칙을 끝내버리겠어.',
       '앞선 세 명의 종이왕이 모두 저 위에 닿고도 공장을 더 옥죄었다. 그 높은 자리에는 대체 무엇이 도사리고 있는 걸까.',
     ][Math.max(0, Math.min(2, chapter - 1))], { shot: at(0.6, 0.12, 1), pause: 300 }),
-  ]), slug: '새긴 규정', title: { kicker: chapterKick(chapter), title: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, sub: '새로운 아홉째 폰' } };
+  ]), slug: '새긴 규정', title: { kicker: chapterKick(chapter), title: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, sub: '새로운 아홉째 폰', crown: crownNo(chapter) } };
 /** 막 입구 카드 (바이블 ACT-1~4): 서술 한 줄 + 속마음 한 줄. [0]은 프롤로그가 대신한다 */
 export const ACT_CARD = [
   '첫 번째 검수 판 위로 흠집 난 흰 세트가 올라선다.\n‘이겨서 위로 간다. 한 판도 물러설 수 없어.’',
@@ -286,11 +289,24 @@ const meltedNames = (company?: StoryCompany): string => (company?.melted ?? []).
 /** 결말에서 소리치는 동료: 부관 박차가 살아 있으면 박차, 아니면 약속한 동료 · 살아 있는 첫 동료 (바이블 「박차/동료」) */
 const crier = (company?: StoryCompany): string | undefined => company?.alive.find((u) => u.name === '박차')?.name ?? company?.alive.find((u) => u.name === company?.promised?.name)?.name ?? company?.alive[0]?.name;
 /** 결말 장 제목 카드 (D-504): 「첫째 왕관 · 결말」 + 장 이름 */
-const endTitle = (chapter: number): TitleCard => ({ kicker: `${chapterKick(chapter)} · 결말`, title: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, tone: 'crimson' });
+const endTitle = (chapter: number): TitleCard => ({ kicker: `${chapterKick(chapter)} · 결말`, title: CHAPTERS[Math.max(0, Math.min(3, chapter))].name, tone: 'crimson', crown: crownNo(chapter) });
+/**
+ * 그림자 컷 재생판 (D-510 · ED-05 「SHD-B 공용」): SHD-B는 첫 줄(새 폰이 검수대 앞에)만 `new-law`에 두고,
+ * 2~4줄(못 박힌 쇠판 · 새긴 규정 · 속마음)은 받은 쇠판 그림 `law-plate`로 넘긴다. 줄 글 · ID는 shadowCut 그대로(바이블 SHD-B-1~4).
+ */
+export const shadowCuts = (chapter: number, law?: string, retry = chapter === 0): Cut[] => {
+  const c = shadowCut(chapter, law, retry);
+  if (retry || chapter === 0) return [c];
+  const [first, plate, words, mono] = c.lines;
+  return [
+    { ...c, lines: [first] },
+    { ...sceneCut('law-plate', [{ ...plate, shot: at(0.5, 0.45) }, { ...words, shot: at(0.5, 0.45, 1) }, { ...mono, shot: at(0.5, 0.2, 1) }]), slug: '새긴 쇠판', shot: at(0.5, 0.45, 2), trans: 'cut' },
+  ];
+};
 /**
  * 일반 엔딩 (바이블 END-K — 1~3승천은 늘, 4승천은 「왕관을 쓴다」를 골랐을 때): 왕관을 쓴 직후 용해 주조가 켜지고, 그는 왕관을 벗지 못한다.
  * law = 이번에 새기는 규정 · mirror = 마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄
- * D-504 영화 문법: 장 제목 카드 → 왕의 눈(가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 금빛 굳음 → 잠긴 문 → 규정판 → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
+ * D-504 영화 문법: 장 제목 카드 → 왕관을 씀 → 왕의 눈(ED-02, 가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 뻗지 않은 손(ED-03) → 금빛 굳음 → 금칠이 덮이고 문을 잠금(ED-04) → 규정판(ED-05) → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
  */
 export const promotionCuts = (chapter: number, _crew: string, law: string, mirror: string, company?: StoryCompany): Cut[] => {
   const who = crier(company);
@@ -302,10 +318,12 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
   return [
     { ...sceneCut('crown-dais', [
       n('종이왕은 더 이상 망설이지 않고, 승급대 위에 놓인 찬란한 금왕관을 두 손으로 들어 올려 자신의 머리에 얹었다.', { shot: at(0.62, 0.3, 2), sfx: 'lift' }),
-      // 「시야가 열렸다」 — 가까이에서 가장 넓게 물러난다
-      n('왕관이 닿는 찰나, 평생 눈앞의 한 칸만 바라보며 떨던 폰의 시야가 폭발하듯 열렸다. 공장의 모든 층과 모든 기물의 움직임이 손바닥 안처럼 한눈에 내려다보였다.', { shot: at(0.5, 0.45), sfx: 'awaken', fx: 'gold' }),
-      m('아… 이것이 왕의 눈인가. 이토록 높고, 완전하며, 무엇 하나 두려울 것이 없는 눈부신 권능이라니…!', { shot: at(0.62, 0.28, 3), pause: 500, mood: 'gilt' }),
     ]), alt: 'promote-gild', slug: '왕관을 쓴 직후', shot: at(0.62, 0.35, 3), title: endTitle(chapter), trans: 'dither' },
+    // ED-02 왕의 눈 (D-510): END-K-1-2 · 1-3을 받은 그림으로 — 가운데 탑에 붙었다가(z3) 공장 전체로 물러나고(z0), 속마음은 아래 용광로
+    { ...sceneCut('end-k-sight', [
+      n('왕관이 닿는 찰나, 평생 눈앞의 한 칸만 바라보며 떨던 폰의 시야가 폭발하듯 열렸다. 공장의 모든 층과 모든 기물의 움직임이 손바닥 안처럼 한눈에 내려다보였다.', { shot: at(0.5, 0.5), sfx: 'awaken', fx: 'gold' }),
+      m('아… 이것이 왕의 눈인가. 이토록 높고, 완전하며, 무엇 하나 두려울 것이 없는 눈부신 권능이라니…!', { shot: at(0.5, 0.78, 2), pause: 500, mood: 'gilt' }),
+    ]), slug: '왕의 눈', shot: at(0.5, 0.42, 3), trans: 'cut' },
     { ...sceneCut('casting-floor', [
       // END-K-2-1 시스템: 기계음은 이름표 「용해 주조기」(적 쇠 명패)로 — 서술과 갈라 보인다 (#22)
       s('용해 주조기', '금단의 승급 개시. 하급 기물(폰)을 정품 킹으로. 부족한 규격 중량 및 황금빛 도금을 위해, 동행 기물 전원의 용해 주조 공정을 시작합니다.', { shot: at(0.72, 0.12, 1), sfx: 'threat', fx: 'red' }),
@@ -314,22 +332,28 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       ...(company?.melted?.length ? [n(`쇳물은 처음이 아니었다. 결전에서 그가 녹여 바친 ${meltedNames(company)}의 쇳물이, 이미 왕관 안쪽을 금빛으로 덮고 있었다.`, { shot: at(0.72, 0.1, 3) })] : []),
       ...(who ? [s(who, '대장! 갑자기 바닥이 열리고 있습니다! 쇠사슬이 우릴 아래로 끌어당기고 있어요! 이게 대체 무슨 일입니까!', { shot: at(0.35, 0.78, 2), fx: 'shake' })] : []),
       n('아직 주조가 완료되지 않았다. 지금 당장 머리의 왕관만 벗어 던지면, 아직은 공정을 멈추고 동료들을 끌어올릴 수 있는 찰나의 시간이었다. 하지만 그는 단상 위에서 한 발짝도 움직이지 못했다.', { shot: at(0.72, 0.1, 2), pause: 600 }),
-      m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 경비대에게 부서지라고?', { shot: at(0.74, 0.08, 3), pause: 300, mood: 'gilt' }),
-      ...(who ? [s(who, '대장…?! 왜 거기 서서 내려다보기만 하십니까! 손을… 그 왕관을 벗으십시오! 대장… 설마, 알고도 손을 안 뻗으시는 겁니까…?!', { shot: at(0.4, 0.8, 1), sfx: 'hurt' })] : []),
     ]), alt: 'gilded-fallen', fx: 'red', at: '72% 8%', slug: '용해 주조', shot: at(0.5, 0.5), trans: 'melt' }, // S-17: 단상 위 종이왕(오른쪽 위)이 잘리지 않게
+    // ED-03 뻗지 않은 손 (D-510): END-K-2-5 · 2-6 — 위 단상의 움직이지 않는 받침(속마음) → 쇠사슬에 끌려 내려가며 위로 뻗은 나이트(외침)
+    { ...sceneCut('end-k-reach', [
+      m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 경비대에게 부서지라고?', { shot: at(0.7, 0.12, 2), pause: 300, mood: 'gilt' }),
+      ...(who ? [s(who, '대장…?! 왜 거기 서서 내려다보기만 하십니까! 손을… 그 왕관을 벗으십시오! 대장… 설마, 알고도 손을 안 뻗으시는 겁니까…?!', { shot: at(0.42, 0.55, 2), sfx: 'hurt' })] : []),
+    ]), fx: 'red', slug: '뻗지 않은 손', shot: at(0.55, 0.45), trans: 'cut' },
     { ...sceneCut('gold-cast', [
       n('동료들의 믿음과 배신감이 뒤섞인 마지막 비명이 붉은 용광로 속으로 쏟아졌다. 곧이어 파이프를 타고 솟구친 황금빛 쇳물이 그의 작은 폰의 몸을 빈틈없이 감싸며 킹의 거푸집으로 굳어갔다.', { shot: at(0.5, 0.6), sfx: 'land', fx: 'gold' }),
       m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.5, 0.3, 2), pause: 700, mood: 'gilt' }),
     ]), alt: 'promote-gild', slug: '금빛 거푸집', shot: at(0.5, 0.15, 1), trans: 'white' },
-    { ...cut('promote-rule', [
-      n('새 도금왕은 아래층에서 올라오는 동료들의 태엽 타는 냄새를 지우려 통제실의 경고등을 껐다. 그리고 자신의 정체가 탄로 나지 않도록 출하문을 안쪽에서 걸어 잠그고, 다음 등반자를 막을 새 규정을 새겼다.', { shot: at(0.55, 0.5) }),
-    ]), slug: '안에서 잠긴 문', trans: 'black', shot: at(0.55, 0.2, 2) },
-    { ...sceneCut('ending-a', [
+    // ED-04 새 도금왕이 되어 가는 과정 (D-510 사용자 결정 — 옛 「안에서 잠그는 문」 대신): 위 고리에서 쏟아지는 금물이 종이 왕관 폰을 덮는다.
+    // 문을 잠그는 일은 서술 끝에 남긴다(TESTIMONY · ENDING_A · 그림자 컷이 「안에서 잠근 왕」을 부른다)
+    { ...sceneCut('end-k-gild', [
+      n('주조기의 쇠팔들이 마지막 금물을 쏟아부었다. 종이 왕관의 접힌 선 위로, 흰 몸의 흠집 위로 금이 흘러내려 굳어 갔다. 이제 그 속에 폰이 있다는 것을 알아볼 자는 아무도 없었다. 새 도금왕은 아래층에서 올라오는 태엽 타는 냄새를 등지고 통제실의 경고등을 껐다. 그리고 출하문을 안쪽에서 걸어 잠그고, 다음 등반자를 막을 새 규정을 새겼다.', { shot: at(0.5, 0.45, 1), sfx: 'land', fx: 'gold' }),
+    ]), alt: 'promote-rule', slug: '금칠이 덮이다', trans: 'black', shot: at(0.5, 0.25, 2) },
+    // ED-05 새긴 규정 (D-510): 검수대 기둥 쇠판의 홈 줄 — 규정이 찍히고(가운데) 닮음 한 줄은 아래 금박 부스러기로
+    { ...sceneCut('law-plate', [
       n(`「${law}」`, { shot: at(0.5, 0.45, 1), sfx: 'stamp', fx: 'shake' }),
-      ...(mirror ? [n(mirror, { shot: at(0.5, 0.35, 2), pause: 400 })] : []),
-    ]), slug: '새긴 규정', shot: at(0.5, 0.6), trans: 'dither' },
+      ...(mirror ? [n(mirror, { shot: at(0.45, 0.82, 2), pause: 400 })] : []),
+    ]), alt: 'ending-a', slug: '새긴 규정', shot: at(0.5, 0.45), trans: 'dither' },
     // 끝 정적: 먹 위 한 줄 (ENDING_A의 맺음 줄) → 맺음 카드
-    { ...coda([n('이제 다음 폰이 그를 넘어야 했다.', { pause: 900 })]), end: { kicker: chapterKick(chapter), title: endingLabel('throne'), sub: `「${law}」`, tone: 'crimson' } },
+    { ...coda([n('이제 다음 폰이 그를 넘어야 했다.', { pause: 900 })]), end: { kicker: chapterKick(chapter), title: endingLabel('throne'), sub: `「${law}」`, tone: 'crimson', crown: crownNo(chapter) } },
   ];
 };
 /** 옛 「왕이 되어 남는다」 한 컷 (도구 호환) */
@@ -362,7 +386,7 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
       ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { shot: at(0.2, 0.8, 2), pause: 400, mood: 'pain' })] : []),
       s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { shot: at(0.2, 0.82, 2), pause: 300, mood: 'resolve' }),
       n('종이왕은 금왕관을 자신의 머리에 얹지 않았다. 대신 옆에서 맹렬히 돌아가던 용해 주조기의 거대한 톱니바퀴 틈새를 향해, 온 힘을 다해 던져 넣었다.', { shot: at(0.8, 0.3, 1), sfx: 'lift', fx: 'shake' }),
-    ]), caption: 'top', slug: '왕관을 던지다', shot: at(0.45, 0.5), title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper' }, trans: 'dither' },
+    ]), caption: 'top', slug: '왕관을 던지다', shot: at(0.45, 0.5), title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper', crown: 4 }, trans: 'dither' },
     { ...sceneCut('crown-gears', [
       n('세 번의 죄악이 겹겹이 도금되어 있던 단단한 금왕관이 톱니 사이에 쐐기처럼 박히며 찌그러졌다. 쇠가 부러지는 비명 같은 굉음과 함께 공장의 주조 라인 전체가 멈춰 섰다.', { shot: at(0.62, 0.35, 2), sfx: 'hit', fx: 'flash' }),
       // 멈춘 공장 — 넓게 물러나 한 박자 정적
@@ -381,7 +405,7 @@ export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] 
       ...(company?.melted?.length ? [n(`그 줄에 ${meltedNames(company)}의 자리는 없었다. 종이왕은 걸음마다 그 빈칸을 세었다.`, { shot: at(0.3, 0.7, 2) })] : []),
     ]), alt: 'departure-decision', caption: 'top', slug: '첫걸음', shot: at(0.35, 0.7, 1), trans: 'cut' },
     // END-T-크레딧: 백지 위 한 줄 → 맺음 카드
-    { ...coda([n('정해진 행마는 끝났다. 이제 이 하얀 판 위에 첫 수를 놓는 것은 — 당신이다.', { pause: 1000 })], 'white'), end: { kicker: chapterKick(3), title: endingLabel('depart'), tone: 'paper' } },
+    { ...coda([n('정해진 행마는 끝났다. 이제 이 하얀 판 위에 첫 수를 놓는 것은 — 당신이다.', { pause: 1000 })], 'white'), end: { kicker: chapterKick(3), title: endingLabel('depart'), tone: 'paper', crown: 4 } },
   ];
 };
 /** 반장 격파 컷 (바이블 BOS-격파 · STG-PROG, D-504 비트): 쓰러짐(넓게) → 살려 두고 지나감 → 반장의 저주(가까이 · 명패) → 종이왕의 대답 → 속마음 */

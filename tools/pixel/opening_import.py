@@ -21,8 +21,9 @@ import snap  # noqa: E402
 ORDER = os.path.join(ROOT, 'build-res', 'order')
 
 
-def one(sid):
-    g = scene_recipe.OPENING_GRID[sid]
+def one(sid, table=None):
+    """table = 격자표(기본 OPENING_GRID — 엔딩 ED-02~05는 ending_import.py가 ENDING_GRID를 넘긴다)"""
+    g = (table or scene_recipe.OPENING_GRID)[sid]
     name = g['name']
     stem = g.get('src', sid)
     src = Image.open(os.path.join(ORDER, f'{stem}-source.png')).convert('RGB')

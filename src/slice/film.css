@@ -65,29 +65,41 @@
 .prologue.coda .cut-sub { bottom: calc(var(--lbb) + (100vh - var(--lbt) - var(--lbb) - var(--px) * 44) / 2); bottom: calc(var(--lbb) + (100dvh - var(--lbt) - var(--lbb) - var(--px) * 44) / 2); }
 .prologue.coda .cut-sub::before, .prologue.coda .cut-sub::after { display: none; }
 .prologue.coda .cut-lines { background: none; box-shadow: none; }
+.prologue.coda .cut-lines p::before { display: none; }
 .prologue.coda-white .cut-lines p, .prologue.coda-white .cut-next { color: var(--t-ink); }
 
-/* 장 제목 · 맺음 카드: 먹 바탕(진엔딩은 종이) — 꼬리표 12 굵게 → 구분 줄(빌린 divider 2배) → 제목 36(낮은 화면 24) → 부제 15 */
+/* 장 제목 · 맺음 카드: 먹 바탕(진엔딩은 종이) — 왕관 문장(ED-01 crown-emblem-N, 몇째 왕관 장) → 꼬리표 12 굵게 → 제목 명판(ED-01 title-card 9-slice — 옛 구분 줄 자리) 안 제목 36(낮은 화면 24) → 부제 15.
+   1도트 = --d(2·--px, 장치 층). 명판 9-slice = 위 9 · 오른 17 · 아래 9 · 왼 18도트(철 기둥 + 황동 모서리 실측, scene_recipe.ENDING_GRID) — 가운데는 받은 판의 한 열로 고른 면(D-510) */
 .film-title {
   position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; justify-items: center; gap: var(--s2);
   padding: 0 var(--G); background: #0b0b0e; text-align: center; pointer-events: none;
 }
 .film-title > * { margin: 0; }
 .film-title .ft-kick { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
-.film-title .ft-rule { display: block; width: calc(var(--px) * 84); height: calc(var(--px) * 12); background: url('../assets/ui/chrome/v2/divider.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
-.film-title .ft-name { color: var(--t-body); font: 700 36px/44px Galmuri11, sans-serif; word-break: keep-all; }
+.film-title { --d: calc(var(--px) * 2); }
+.film-title .ft-crown { display: block; width: calc(var(--d) * 26); height: calc(var(--d) * 23); background: url('../assets/ui/chrome/v2/crown-emblem-1.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+.film-title .ft-crown.c2 { background-image: url('../assets/ui/chrome/v2/crown-emblem-2.png'); }
+.film-title .ft-crown.c3 { background-image: url('../assets/ui/chrome/v2/crown-emblem-3.png'); }
+.film-title .ft-crown.c4 { background-image: url('../assets/ui/chrome/v2/crown-emblem-4.png'); }
+.film-title .ft-name {
+  box-sizing: border-box; display: block; max-width: 100%; height: calc(var(--d) * 40); padding: 0 var(--s2);
+  border-style: solid; border-width: calc(var(--d) * 9) calc(var(--d) * 17) calc(var(--d) * 9) calc(var(--d) * 18); image-rendering: pixelated;
+  border-image: url('../assets/ui/chrome/v2/title-card.png') 9 17 9 18 fill / calc(var(--d) * 9) calc(var(--d) * 17) calc(var(--d) * 9) calc(var(--d) * 18) / 0 stretch;
+  color: var(--t-body); font: 700 36px/calc(var(--d) * 22) Galmuri11, sans-serif; white-space: nowrap;
+}
 .film-title .ft-sub { color: var(--t-dim); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; word-break: keep-all; }
 .film-title.tone-crimson .ft-kick { color: var(--t-loss); }
 .film-title.tone-paper { background: #f1ede4; }
 .film-title.tone-paper .ft-kick { color: #6b4a10; }
-.film-title.tone-paper :is(.ft-name, .ft-sub) { color: var(--t-ink); }
+.film-title.tone-paper .ft-sub { color: var(--t-ink); }
 .film-title.in > * { animation: kstepin 240ms steps(3, jump-none) both; }
 .film-title.in > :nth-child(2) { animation-delay: 140ms; }
 .film-title.in > :nth-child(3) { animation-delay: 280ms; }
 .film-title.in > :nth-child(4) { animation-delay: 520ms; }
+.film-title.in > :nth-child(5) { animation-delay: 660ms; }
 .film-title.out { animation: ftout 220ms steps(1, jump-end) forwards; }
 @keyframes ftout { 0% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 33% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 66% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-@media (max-height: 420px) { .film-title .ft-name { font: 700 24px/32px Galmuri11, sans-serif; } }
+@media (max-height: 420px) { .film-title .ft-name { font: 700 24px/calc(var(--d) * 22) Galmuri11, sans-serif; } }
 
 /* 제목 카드 동안 빈 자막 띠 · ▼는 걷는다 */
 .prologue.titling .cut-sub { visibility: hidden; }

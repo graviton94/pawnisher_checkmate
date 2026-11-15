@@ -20,7 +20,7 @@
 | 반장 등장 · 격파 | BOS · STG-PROG | `BOSS_STORY` · `BOSS_CARD` · `stageProg` · `main.ts bossFallCut` |
 | 도금왕 | GLD | `GILDED_STORY` |
 | 왕위 결정 | THR | `TESTIMONY` · `THRONE_TEXT` · `promotion.ts` |
-| 결말 · 패배 | END-K · END-T · END-F · LAW | `promotionCuts` · `trueEndingCuts` · `DEFEAT` · `STORY_LAW` |
+| 결말 · 패배 | END-K · END-T · END-F · LAW | `promotionCuts`(END-K 7컷 — 바이블 컷을 ED-02~05 그림으로 나눔, D-510) · `trueEndingCuts` · `DEFEAT` · `STORY_LAW` · 그림자 컷 재생 `shadowCuts`(SHD-B 2~4줄 = `law-plate`) |
 | 전투 · 튜토리얼 · 사건 | PART III · IV | `crew.ts DEATHS` · `hud.ts` · `tutorial.ts` · `events.ts` · `event-talk.ts` · `event-outcome.ts` |
 
 - 컷신은 글자 수 제한이 없다. 자막 띠(두 줄)는 그대로 두고 `uikit.cutPages`가 긴 줄을 문장 단위로 나눠 쪽을 넘긴다.

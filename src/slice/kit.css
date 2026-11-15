@@ -839,7 +839,8 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 @media (prefers-reduced-motion: reduce) { #vials .seg.apb, #vials.regain .seg.on { animation: none; } }
 
 /* ===================== 패스 5 — 컷신 크롬 · 막 카드 · 반장 등장 · 지도 (D-397, 보고서 2026-11-09f 2-1 · 3.10) ===================== */
-/* 자막 띠 .cut-sub: 아래 가운데 먹 띠 — 양 끝 = UI-08 띠 끝 장식(sub-cap-l/r 10×22, 1도트 = 2·--px 정수배), 가운데 = 먹 + 위아래 철 줄 1도트.
+/* 자막 띠 .cut-sub: 아래 가운데 자막 판 — 받은 ED-01 subtitle-plate 9-slice(75×22, 위 8 · 오른 9 · 아래 7 · 왼 8도트, 1도트 = --cap = 2·--px, D-510).
+   옛 UI-08 띠 끝 장식(sub-cap-l/r) + 먹 · 철 줄을 대신한다. 띠 왼끝 = 화자 표지(ED-01 speaker-narr · mono · line — 서술 쇠 마름모 · 독백 접힌 종이 · 대사 황동 두 줄 홈, 1도트 = --px-plate).
    줄 둘(15px, 줄마다 CUT_TEXT_BUDGET 안 — 접히지 않는다) · 띠 안 오른쪽 끝 ▼(.cut-next) · 건너뛴다(.cut-skip)는 띠 오른쪽 아래 구석.
    모든 컷(프롤로그 · 막 카드 · 반장 등장 · 격파 · 승급 · 엔딩 · 크레딧 · 최종장)이 이 자리 하나를 쓴다. */
 .cut-sub {
@@ -849,16 +850,20 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   left: calc((100vw - var(--cut-w)) / 2); left: round(calc((100vw - var(--cut-w)) / 2), var(--px));
   bottom: var(--Gy); width: var(--cut-w); height: calc(var(--cap) * 22);
 }
-.cut-sub::before, .cut-sub::after { content: ''; position: absolute; z-index: 1; top: 0; width: calc(var(--cap) * 10); height: 100%; background: url('../assets/ui/chrome/v2/sub-cap-l.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
-.cut-sub::before { left: 0; }
-.cut-sub::after { right: 0; background-image: url('../assets/ui/chrome/v2/sub-cap-r.png'); }
+.cut-sub::before { content: ''; position: absolute; z-index: 0; inset: 0; box-sizing: border-box; image-rendering: pixelated;
+  border: 0 solid; border-image: url('../assets/ui/chrome/v2/subtitle-plate.png') 8 9 7 8 fill / calc(var(--cap) * 8) calc(var(--cap) * 9) calc(var(--cap) * 7) calc(var(--cap) * 8) / 0 stretch; }
 .cut-lines {
-  position: absolute; top: 0; bottom: 0; left: calc(var(--cap) * 7); right: calc(var(--cap) * 7); box-sizing: border-box;
-  padding: 0 calc(var(--cap) * 3 + 24px) 0 calc(var(--cap) * 3 + 8px);
+  position: absolute; z-index: 1; top: 0; bottom: 0; left: calc(var(--cap) * 3); right: calc(var(--cap) * 3); box-sizing: border-box;
+  padding: 0 calc(var(--cap) * 3 + 24px) 0 calc(var(--cap) * 3 + 24px);
   display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0;
-  background: #0b0b0e;
-  box-shadow: inset 0 var(--cap) 0 #0b0b0e, inset 0 calc(var(--cap) * 2) 0 #56545e, inset 0 calc(var(--cap) * -1) 0 #0b0b0e, inset 0 calc(var(--cap) * -2) 0 #33313b;
 }
+/* 화자 표지: 줄 갈래마다 띠 왼끝 (한 쪽 = 한 문장이라 표지도 하나) */
+.cut-lines p::before { content: ''; position: absolute; left: calc(var(--cap) * 3); top: 50%; width: calc(var(--px-plate, var(--px)) * 20); height: calc(var(--px-plate, var(--px)) * 18);
+  --pd: var(--px-plate, var(--px)); margin-top: calc(var(--px-plate, var(--px)) * -9);
+  background: url('../assets/ui/chrome/v2/speaker-narr.png') 50% 50% / calc(var(--pd) * 20) calc(var(--pd) * 18) no-repeat; image-rendering: pixelated; }
+.cut-lines p.cl-m::before { background-image: url('../assets/ui/chrome/v2/speaker-mono.png'); background-size: calc(var(--pd) * 16) calc(var(--pd) * 16); }
+.cut-lines p.cl-s::before { background-image: url('../assets/ui/chrome/v2/speaker-line.png'); background-size: calc(var(--pd) * 20) calc(var(--pd) * 16); }
+.cut-lines p:not(:first-child)::before { display: none; }
 .cut-lines p { margin: 0; max-width: 100%; white-space: normal; word-break: keep-all; overflow-wrap: break-word; text-wrap: balance; text-align: center; overflow: hidden; color: var(--t-body); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; text-shadow: none; }
 .cut-lines p.cl-m { color: var(--t-gold); }
 /* 화자 색 (#22 · D-488): 우리 편 = 종이 흰 이름 + 청록 표식 · 적 = 진홍 이름 · 도금왕 = 황동. 대사 글은 우리 편 종이 흰, 적 · 도금왕 연분홍 */

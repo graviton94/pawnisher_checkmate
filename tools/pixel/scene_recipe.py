@@ -21,7 +21,10 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     'map-a4': 941 / 180,
     # D-509: OP-01 · OP-02는 실측 6.72px(941/140 — 복원 오차가 135 · 145줄보다 낮은 국소 최소, 격자 점수도 6.70~6.72가 최고) → 249×140,
     # OP-04는 뚜렷한 다른 주기가 없어 장면 관례 941/180 → 320×180. 셋 다 생성기가 레터박스 검은 띠를 그려 넣어 OPENING_GRID trim으로 걷는다.
-    'op-windup': 941 / 140, 'prologue-04': 941 / 140, 'prologue-07': 941 / 180}
+    'op-windup': 941 / 140, 'prologue-04': 941 / 140, 'prologue-07': 941 / 180,
+    # D-510: 엔딩 ED-02 · 04 · 05는 복원 오차가 칸이 잘수록 고르게 줄 뿐 뚜렷한 국소 최소가 없어 장면 관례 941/180 → 320×180.
+    # ED-03만 174줄(5.41px)이 이웃(172 · 176 · 180줄)보다 오차가 뚜렷이 낮다(4.49 / 4.81 · 4.55 · 4.65) → 309×174
+    'end-k-sight': 941 / 180, 'end-k-reach': 941 / 174, 'end-k-gild': 941 / 180, 'law-plate': 941 / 180}
 
 
 def options(name):
@@ -32,7 +35,8 @@ def options(name):
                 'departure-decision', 'shipping-company', 'gilded-solitude',
                 'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen',
                 'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table',
-                'map-a1', 'map-a2', 'map-a3', 'map-a4', 'op-windup', 'prologue-04', 'prologue-07'):
+                'map-a1', 'map-a2', 'map-a3', 'map-a4', 'op-windup', 'prologue-04', 'prologue-07',
+                'end-k-sight', 'end-k-reach', 'end-k-gild', 'law-plate'):
         opts['uniform'] = True
     return opts
 
@@ -147,4 +151,24 @@ OPENING_GRID = {
     'OP-01': {'name': 'op-windup', 'src': 'OP-01-v1', 'trim_max': 30, 'trim_dark': 0.25},
     'OP-02': {'name': 'prologue-04', 'trim_max': 30, 'trim_dark': 0.25},
     'OP-04': {'name': 'prologue-07', 'trim_max': 30, 'trim_dark': 0.25},
+}
+
+
+# D-510 엔딩 ED-01 ~ 05 (tools/pixel/ending_import.py가 읽는다).
+# ED-01 크롬 시트 1774×887: 발주 240×120 ×8이 아니라 생성기 8.06px(1774/220 — detect_pitch 5~12px 자유 찾기 최고점, 7.39px로 잡으면 왕관 넷이 27 · 26 · 28 · 27칸으로 흔들린다)
+#   → native_w 220. 부품 = 받은 시트 줄 순서(자막 판 · 제목 카드 / 왕관 문장 넷 / 화자 표지 셋 — 발주 7번 「서술 마름모 · 독백 접힌 종이 · 대사 두 줄 홈」).
+#   flat = 9-slice 변 가운데를 받은 판의 깨끗한 한 열 · 한 줄로 고르게(map_import split_board와 같은 다듬기 — 새 색 없음):
+#   자막 판은 아래 변 먹 얼룩 점(19줄)을 · 제목 카드는 가운데 세로 칸막이(제목 글자가 가로지른다)를 걷는다. slice = (위, 오른, 아래, 왼) 도트.
+# ED-02 ~ 05 장면: OP와 같이 생성기가 레터박스 검은 띠를 그려 넣었다 → opening_import.one(…, ENDING_GRID)로 걷는다.
+ENDING_GRID = {
+    'ED-01': {'native_w': 220,
+              'names': ['subtitle-plate', 'title-card', 'crown-emblem-1', 'crown-emblem-2', 'crown-emblem-3', 'crown-emblem-4',
+                        'speaker-narr', 'speaker-mono', 'speaker-line'],
+              'flat': {'subtitle-plate': {'slice': (8, 9, 7, 8), 'col': 20, 'row': 11},
+                       'title-card': {'slice': (9, 17, 9, 18), 'col': 30, 'row': None}}},
+    'ED-02': {'name': 'end-k-sight', 'trim_max': 30, 'trim_dark': 0.25},
+    # ED-03은 쓰며 재발주(D-510 — 나이트 입 벌림): 1차본 = ED-03-v1-source.png, 재발주본이 오면 src를 지운다
+    'ED-03': {'name': 'end-k-reach', 'src': 'ED-03-v1', 'trim_max': 30, 'trim_dark': 0.25},
+    'ED-04': {'name': 'end-k-gild', 'trim_max': 30, 'trim_dark': 0.25},
+    'ED-05': {'name': 'law-plate', 'trim_max': 30, 'trim_dark': 0.25},
 }

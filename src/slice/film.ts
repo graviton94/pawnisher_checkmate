@@ -168,9 +168,12 @@ export class Wipe {
   }
 }
 
-/** 장 제목 카드 (D-504): 먹 바탕 위 꼬리표(12 굵게) · 철 구분 줄(빌린 divider) · 제목(36, 좁으면 24) · 부제(15). 계단으로 차례로 서고 누르거나 머문 뒤 디더로 걷힌다 */
+/**
+ * 장 제목 카드 (D-504 → D-510 ED-01): 먹 바탕 위 왕관 문장(몇째 왕관 장일 때 — crown-emblem-1~4) · 꼬리표(12 굵게) ·
+ * 제목 명판(받은 title-card 9-slice — 옛 구분 줄 자리) 안의 제목(36, 좁으면 24) · 부제(15). 계단으로 차례로 서고 누르거나 머문 뒤 디더로 걷힌다
+ */
 export const titleCardHtml = (t: TitleCard): string =>
-  `<div class="film-title tone-${t.tone ?? 'brass'}" role="status"><p class="ft-kick">${t.kicker}</p><i class="ft-rule" aria-hidden="true"></i><h2 class="ft-name">${t.title}</h2>${t.sub ? `<p class="ft-sub">${t.sub}</p>` : ''}</div>`;
+  `<div class="film-title tone-${t.tone ?? 'brass'}" role="status">${t.crown ? `<i class="ft-crown c${Math.max(1, Math.min(4, t.crown))}" aria-hidden="true"></i>` : ''}<p class="ft-kick">${t.kicker}</p><h2 class="ft-name">${t.title}</h2>${t.sub ? `<p class="ft-sub">${t.sub}</p>` : ''}</div>`;
 export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<unknown>): Promise<void> => {
   host.querySelector('.film-title')?.remove();
   host.insertAdjacentHTML('beforeend', titleCardHtml(t));
