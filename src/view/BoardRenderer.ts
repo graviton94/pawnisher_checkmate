@@ -2,7 +2,7 @@ import { vignette } from '../ui/juice';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
-import { BOSS_ART_RULES, BOSS_BODY, bossArtFile } from '../data/giants';
+import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, RAID_TEXT } from '../data/giants';
 import { PRELOAD } from '../data/preload-list';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
@@ -626,6 +626,22 @@ class BoardScene extends Phaser.Scene {
     else if (p.elite) chipAt('crown', false);
     else if (trait) chipAt(trait, false);
     if (p.id === this.nemesisId && p.side === 1) chipAt('skull', true);
+    // 약점 창 (D-518 레이드 — 패링 · 헛방 · 헛친 이형): 왼쪽 아래 검은 딱지 + 진홍 글자 「약」 (이형 대비 딱지와 같은 코드 도트 부품 — 전용 딱지는 발주 §0-D 대기)
+    if (p.weak && p.weak > 1) {
+      const size = Math.round(t * 0.34);
+      // 2×2 보스는 「임시」 딱지가 왼쪽 아래를 쓰므로 2×2 왼쪽 위(별 딱지와 같은 높이)
+      const x0 = Math.round(t * 0.04), y0 = Math.round(boss ? oy + t * 0.22 : t - size - t * 0.04);
+      const tag = this.add.graphics();
+      tag.fillStyle(0x16141c, 1).fillRect(x0, y0, size, size);
+      tag.lineStyle(Math.max(1, Math.round(t * 0.03)), 0xd0453a, 1).strokeRect(x0, y0, size, size);
+      marks.push(
+        tag,
+        this.add
+          .text(x0 + size / 2, y0 + size / 2, RAID_TEXT.weakChip, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(size * 0.62)}px`, color: '#F87171' })
+          .setOrigin(0.5)
+          .setResolution(this.dpr),
+      );
+    }
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다

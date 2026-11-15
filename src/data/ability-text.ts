@@ -1,4 +1,4 @@
-import { BOSS_BODY, GIANTS, type GiantType } from './giants';
+import { BOSS_BODY, GIANTS, RAID, type GiantType, type RaidPattern } from './giants';
 import { BOSS, BOSS_NUM, FOE_MARKS, FOE_TRAITS, TRAIT, type BossRule, type FoeMark, type FoeTrait } from '../slice/cards';
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../slice/parts';
 import type { FormId, PieceType } from '../engine';
@@ -44,17 +44,33 @@ export const markAbilityText = (m: FoeMark): AbilityText => ({ name: FOE_MARKS[m
 /** 거대 주물 (D-484): [이름] / 움직임 / : 내리찍기 + 부위 안내 두 장 */
 export const giantAbilityText = (t: GiantType): AbilityText[] => [
   { name: GIANTS[t].name, description: GIANTS[t].move, effect: GIANTS[t].hit },
-  { name: '네 부위', description: '칸마다 HP가 따로, 밀리지 않는다', effect: '부서진 부위는 제 몫을 못 친다' },
+  { name: '네 부위', description: '칸마다 HP가 따로, 밀리지 않는다', effect: `부수면 카드 +${RAID.breakDraw} · 제 몫을 못 친다` },
+  RAID_PARRY,
 ];
 
+/** 레이드 (D-518): 패링 · 헛방 장 — 2×2 반장 · 거대 주물이 함께 쓴다 */
+const RAID_PARRY: AbilityText = { name: '패링', description: '내리찍기를 방열판으로 다 받아내면', effect: `경직 — 한 턴 쉼 · 받는 피해 ×${RAID.parryWeak}` };
+const RAID_WHIFF: AbilityText = { name: '헛방', description: '예고 칸에서 모두 빠지면', effect: RAID.whiffWeak > 1 ? `철갑 벗김 · 받는 피해 ×${RAID.whiffWeak}` : '철갑 벗김' };
+
 /** 2×2 특별 보스 (D-513): [2×2 몸] / 걷기 / : 내리찍기 — 반장 규칙 장 앞에 */
-export const bossBodyAbilityText = (rage = false): AbilityText[] => [
-  { name: '2×2 몸', description: BOSS_BODY.move, effect: rage ? BOSS_BODY.hitRage : BOSS_BODY.hit },
-  { name: '한 몸', description: '네 칸 어디를 쳐도 킹 하나', effect: '피해는 한 공격에 한 번 · 밀리지 않는다' },
-];
+/**
+ * 레이드 반장 (D-518): rule이 있으면 [2×2 몸] 효과 줄 = 번갈아 쓰는 패턴, now = 이번 턴 패턴 장, stunned = 경직 중 장.
+ */
+export const bossBodyAbilityText = (rage = false, rule?: string, now?: RaidPattern, stunned = false): AbilityText[] => {
+  const list = rule ? (rage ? RAID.rage : RAID.patterns)[rule] : undefined;
+  return [
+    { name: '2×2 몸', description: BOSS_BODY.move, effect: list ? `${list.map((q) => RAID.names[q]).join(' · ')} 번갈아` : rage ? BOSS_BODY.hitRage : BOSS_BODY.hit },
+    ...(stunned ? [{ name: '경직', description: '이번 턴 걷지도 치지도 못한다', effect: `받는 피해 ×${RAID.parryWeak}` }] : now ? [{ name: `이번 턴 · ${RAID.names[now]}`, description: '붉은 칸을 친다', effect: `${RAID.hits[now]} · 피해 ×${RAID.dmg[now]}` }] : []),
+    RAID_PARRY,
+    RAID_WHIFF,
+    { name: '한 몸', description: '네 칸 어디를 쳐도 킹 하나', effect: '피해는 한 공격에 한 번 · 밀리지 않는다' },
+  ];
+};
 
 /** 이형 기물 (D-481): [이름] / 움직임 / : 공격 — 처음 적으로 만날 때 이 장에서 규칙을 배운다 */
 export const formAbilityText = (f: FormId): AbilityText => ({ name: FORMS[f].name, description: FORMS[f].move, effect: `${FORMS[f].hit}을 친다` });
+/** 이형 헛방 (D-518): 적 이형만 — 헛치면 기절에 더해 약점 */
+export const formWhiffText: AbilityText = { name: '규격 밖', description: '겨눈 공격이 빗나가면 기절', effect: `받는 피해 ×${RAID.formWeak}` };
 
 /** 부품 상세도 같은 표시 계약을 사용한다. */
 export const BUILD_PART_ABILITIES: Record<'relayGear' | 'siegeLatch' | 'relaySeal' | 'sharedPlate', AbilityText[]> = {

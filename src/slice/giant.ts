@@ -1,4 +1,4 @@
-import { BOSS_BODY, GIANTS, type GiantType } from '../data/giants';
+import { BOSS_BODY, GIANTS, RAID, raidPattern, type GiantType, type RaidPattern } from '../data/giants';
 import { PIECE_STATS } from '../data/pieces';
 import { chebyshev, damageOf, forward, inBounds, kingOf, makePiece, type BattleEvent, type BattleState, type Piece, type Pos } from '../engine';
 
@@ -8,7 +8,14 @@ import { chebyshev, damageOf, forward, inBounds, kingOf, makePiece, type BattleE
  * 적 차례 끝에 예고한 칸을 내리찍는다. 칠 칸은 지금 판 기준(부위가 부서지면 그 몫이 빠지고, 기물로 줄을 막으면 거기서 멈춘다) —
  * 미리보기(dangerSquares · intentHits)와 실행이 같은 함수를 쓴다.
  */
-export interface GiantHolder { s: BattleState; turn: number; giantAim?: Record<number, Pos>; /** 2×2 보스가 2단계(격노)인가 — 두 변을 친다 (D-513) */ phase2?: boolean; /** 내리찍기 사건 이름 (2×2 보스) */ bossName?: string }
+export interface GiantHolder {
+  s: BattleState; turn: number; giantAim?: Record<number, Pos>; /** 2×2 보스가 2단계(격노)인가 — 두 변을 친다 (D-513) */ phase2?: boolean; /** 내리찍기 사건 이름 (2×2 보스) */ bossName?: string;
+  /** 반장 규칙 — 레이드 패턴 고르기 (D-518) */ bossRule?: string;
+  /** 이번 턴 반장 패턴 (D-518 — 겨눌 때 정한다: 화면 · 적의 수 · 실행이 같은 값) */ bossPat?: RaidPattern;
+  /** 경직된 2×2 묶음 (D-518 패링): 이번 내 차례에 걷지도 겨누지도 않는다 */ giantStun?: number[];
+  /** 턴 시작에 예고 칸 위에 내 기물이 있던 묶음 (D-518 — 헛방 판정) */ giantAimedG?: number[];
+  /** 방금 적 차례에 패링당한 묶음 · 헛친 묶음 (D-518 — giantStrike가 적는다) */ parried?: number[]; whiffed?: number[];
+}
 
 const value = (p: Piece): number => (p.type === 'K' ? 300 : PIECE_STATS[p.type].value);
 const ORTHO: Pos[] = [{ x: 0, y: -1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }];
@@ -167,16 +174,44 @@ export const bossSlamCells = (s: BattleState, a: Pos, dir: Pos): Pos[] => {
 };
 
 /**
+ * 레이드 패턴이 칠 칸 (D-518, GDD 21장 §3-C): slam = 한 변(bossSlamCells) · corner = 꺾인 두 변(dir 대각) ·
+ * sweep = 그 변 바깥 한 줄 판 끝까지(기물에 막히지 않는다) · charge = 몸 폭 두 줄을 그 쪽으로 — 줄마다 첫 기물(피아 무관)까지(앞 기물이 뒤를 막아 준다).
+ */
+export const bossPatternCells = (s: BattleState, a: Pos, dir: Pos, pat: RaidPattern): Pos[] => {
+  if (pat === 'slam' || pat === 'corner') return bossSlamCells(s, a, dir);
+  const out: Pos[] = [];
+  if (pat === 'sweep') {
+    if (dir.y) { const y = dir.y < 0 ? a.y - 1 : a.y + 2; for (let x = 0; x < s.width; x++) if (inBounds(s, x, y)) out.push({ x, y }); }
+    else { const x = dir.x < 0 ? a.x - 1 : a.x + 2; for (let y = 0; y < s.height; y++) if (inBounds(s, x, y)) out.push({ x, y }); }
+    return out;
+  }
+  const lanes: Pos[] = dir.y ? [{ x: a.x, y: dir.y < 0 ? a.y - 1 : a.y + 2 }, { x: a.x + 1, y: dir.y < 0 ? a.y - 1 : a.y + 2 }] : [{ x: dir.x < 0 ? a.x - 1 : a.x + 2, y: a.y }, { x: dir.x < 0 ? a.x - 1 : a.x + 2, y: a.y + 1 }];
+  for (const st of lanes) {
+    for (let q = { ...st }; q.x >= 0 && q.y >= 0 && q.x < s.width && q.y < s.height; q = { x: q.x + dir.x, y: q.y + dir.y }) {
+      if (!inBounds(s, q.x, q.y)) continue;
+      out.push({ ...q });
+      if (s.pieces.some((p) => p.x === q.x && p.y === q.y)) break;
+    }
+  }
+  return out;
+};
+
+/**
  * 2×2 보스 겨누기 (D-513): 1단계 = 네 변 중 하나, 2단계(격노) = 꺾인 두 변 넷 중 하나. 내 기물 값이 가장 많이 걸리는 쪽(같으면 내 킹 쪽).
  * 2단계로 다시 설 때(bossRise)도 이것으로 바로 다시 겨눈다 — 화면 위험 칸 · 적의 수 · 실행이 같은 값.
  */
 export const bossAim = (b: GiantHolder): void => {
   for (const [gid, parts] of giantGroups(b.s)) {
     if (!isBoss(parts)) continue;
+    // 경직 (D-518 패링): 이번 차례엔 겨누지 않는다 — 적의 수 · 위험 칸에서 빠진다
+    if (b.giantStun?.includes(gid)) { if (b.giantAim) delete b.giantAim[gid]; continue; }
     const a = anchorOf(parts);
     const king = kingOf(b.s, 0);
-    const dirs = b.phase2 ? DIAG : ORTHO;
-    const score = (d: Pos) => bossSlamCells(b.s, a, d).reduce((n, q) => {
+    // 레이드 패턴 (D-518): 반장마다 턴마다 번갈아 — 규칙을 모르면(옛 저장 · 시험) 1단계 한 변 · 2단계 꺾인 두 변
+    const pat: RaidPattern = b.bossRule ? raidPattern(b.bossRule, !!b.phase2, b.turn) : b.phase2 ? 'corner' : 'slam';
+    b.bossPat = pat;
+    const dirs = pat === 'corner' ? DIAG : ORTHO;
+    const score = (d: Pos) => bossPatternCells(b.s, a, d, pat).reduce((n, q) => {
       const o = b.s.pieces.find((r) => r.x === q.x && r.y === q.y && r.side === 0);
       return n + (o ? value(o) : 0);
     }, 0);
@@ -216,7 +251,7 @@ export const giantStrikes = (b: GiantHolder): { part: Piece; cells: Pos[] }[] =>
     // 2×2 보스 (D-513): 몸 하나 — 본체가 한 번에 친다
     if (isBoss(parts)) {
       const core = parts.find((p) => p.body === undefined);
-      const cells = bossSlamCells(b.s, anchorOf(parts), dir);
+      const cells = bossPatternCells(b.s, anchorOf(parts), dir, b.bossPat ?? (b.phase2 ? 'corner' : 'slam'));
       if (core && cells.length) out.push({ part: core, cells });
       continue;
     }
@@ -239,6 +274,8 @@ export const giantTurn = (b: GiantHolder): BattleEvent[] => {
   const events: BattleEvent[] = [];
   const king = kingOf(b.s, 0);
   for (const [gid, parts] of giantGroups(b.s)) {
+    // 경직 (D-518 패링): 걷지도 겨누지도 않는다 — 다음 내 차례에 다시 움직인다
+    if (b.giantStun?.includes(gid)) { if (b.giantAim) delete b.giantAim[gid]; continue; }
     // 2×2 보스 (D-513): 거대 퀸처럼 여덟 방향 한 칸(BOSS_BODY.stepEvery턴마다, 2턴부터) → 겨누기는 bossAim
     if (isBoss(parts)) {
       if (b.turn > 1 && (b.turn - 1) % BOSS_BODY.stepEvery === 0 && king) {
@@ -303,21 +340,30 @@ export const giantTurn = (b: GiantHolder): BattleEvent[] => {
   return events;
 };
 
-/** 적 차례 끝: 예고한 칸을 내리찍는다 — 묶음마다 사건 하나. 쓰러진 기물 정리 · 생명 처리는 부르는 쪽(enemyPhase)이 한다 */
+/**
+ * 적 차례 끝: 예고한 칸을 내리찍는다 — 묶음마다 사건 하나. 쓰러진 기물 정리 · 생명 처리는 부르는 쪽(enemyPhase)이 한다.
+ * 패링 · 헛방 (D-518): 그 타격을 방열판으로 다 받아내고 산 내 기물이 있으면 parried, 턴 시작에 예고 칸에 있던(giantAimedG) 묶음이 아무도 못 치면 whiffed.
+ */
 export const giantStrike = (b: GiantHolder): BattleEvent[] => {
   const out: BattleEvent[] = [];
+  b.parried = [];
+  b.whiffed = [];
   const by = new Map<number, { part: Piece; cells: Pos[] }[]>();
   for (const g of giantStrikes(b)) by.set(g.part.giant!.id, [...(by.get(g.part.giant!.id) ?? []), g]);
-  for (const [, list] of by) {
+  for (const [gid, list] of by) {
+    const p0 = list[0].part;
+    const mult = p0.giant?.boss ? RAID.dmg[b.bossPat ?? (b.phase2 ? 'corner' : 'slam')] : 1;
     const hits = list.flatMap(({ part, cells }) => b.s.pieces.filter((p) => p.side === 0 && p.hp > 0 && cells.some((c) => c.x === p.x && c.y === p.y)).map((p) => {
-      const dmg = damageOf(b.s, part, p);
+      const dmg = damageOf(b.s, part, p, mult);
       const absorbed = Math.min(p.shield, dmg);
       p.shield -= absorbed;
       p.hp = Math.max(0, p.hp - (dmg - absorbed));
       return { targetId: p.id, damage: dmg, shieldAbsorbed: absorbed, hpAfter: p.hp, killed: p.hp <= 0 };
     }));
-    const p0 = list[0].part;
-    const label = p0.giant?.boss ? BOSS_BODY.slam(b.bossName ?? '반장') : GIANTS[p0.type as GiantType].name;
+    if (hits.some((h) => h.damage > 0 && h.shieldAbsorbed >= h.damage && !h.killed)) b.parried.push(gid);
+    else if (!hits.length && b.giantAimedG?.includes(gid)) b.whiffed.push(gid);
+    // 표지 (voice ⑨ 터짐 — 적의 수 줄에 들게 짧게, 반장 이름은 줄 머리에 이미 있다)
+    const label = p0.giant?.boss ? `${RAID.names[b.bossPat ?? (b.phase2 ? 'corner' : 'slam')]}!` : GIANTS[p0.type as GiantType].name;
     out.push({ type: 'blast', pos: anchorOf([p0]), label, hits, fx: 'slam', cells: list.flatMap((g) => g.cells) });
   }
   return out;

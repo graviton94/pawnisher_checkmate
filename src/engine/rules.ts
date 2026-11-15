@@ -222,6 +222,7 @@ export const attackMult = (s: BattleState, a: Piece): number => {
 export const takenMult = (s: BattleState, attacker: Piece | null, t: Piece): number => {
   let m = 1;
   if (t.carve === 'plate') m *= CARVE_FX.plateCut;
+  if (t.weak) m *= t.weak; // 경직 · 약점 창 (D-518)
   if (t.type === 'K' && part(s, t.side, 'helmet')) m *= PART_FX.helmetCut;
   if (t.type !== 'K' && part(s, t.side, 'guard')) {
     const k = s.pieces.find((p) => p.side === t.side && p.type === 'K' && p.hp > 0);

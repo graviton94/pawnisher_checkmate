@@ -262,6 +262,8 @@ const evalBoard = (b: SliceBattle): number => {
     if (p.side !== 0) continue;
     v += VALUE[p.type] * 0.6 * BOT.evalShield * (Math.min(p.shield, hpK) / hpK) + BOT.evalPos * placeOf(b.s, p, p);
   }
+  // 레이드 (D-518): 적 차례 뒤 2×2가 경직 · 약점 창인가 (endTurn이 패링 · 헛방을 창으로 연 뒤) — 패링 · 회피를 찾게
+  v += BOT.evalStun * (b.giantStun ?? []).length + BOT.evalWeak * (b.giantWhiffNow ?? []).length;
   return v;
 };
 

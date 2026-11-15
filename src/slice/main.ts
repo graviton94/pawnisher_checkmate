@@ -1,9 +1,9 @@
 import '../fonts.css';
-import { BOSS_BODY, bossArtTemp, GIANTS, type GiantType } from '../data/giants';
+import { BOSS_BODY, bossArtTemp, GIANTS, RAID_TEXT, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
 import { FIT_TEXT, SET_TEXT, SPEED_METER } from '../data/hud';
-import { bossAbilityText, bossBodyAbilityText, enemyAbilityText, formAbilityText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
+import { bossAbilityText, bossBodyAbilityText, enemyAbilityText, formAbilityText, formWhiffText, giantAbilityText, markAbilityText, partAbilityText, partSummaryText } from '../data/ability-text';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { abilityHtml, bindAbilities, partCardRuleHtml } from './ability';
 import { claimOnce } from './once';
@@ -392,7 +392,7 @@ const pieceInfo = (pos: Pos): void => {
   const maxW = offBoardW(side);
   const expanded = maxW < 352;
   // 이형 (D-481): 행마 · 공격 규칙을 맨 앞 장으로 — 적으로 처음 만날 때 여기서 배운다
-  const abilities = [...(p.giant?.boss ? bossBodyAbilityText(!!p.giant.rage) : p.giant ? giantAbilityText(p.type as GiantType) : []), ...(p.form ? [formAbilityText(p.form)] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : [...enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)), ...(b.marks ?? []).map(markAbilityText)])];
+  const abilities = [...(p.giant?.boss ? bossBodyAbilityText(!!p.giant.rage, b.bossRule, b.giantAim?.[p.giant.id] ? b.bossPat : undefined, (b.giantStun ?? []).includes(p.giant.id)) : p.giant ? giantAbilityText(p.type as GiantType) : []), ...(p.form ? [formAbilityText(p.form), ...(p.side === 1 ? [formWhiffText] : [])] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : [...enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)), ...(b.marks ?? []).map(markAbilityText)])];
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
   const el = infoPeek({
     cls: `unit-peek${expanded ? ' unit-peek-expanded' : ''}${p.side === 0 ? ' unit-ally' : ''}`,
@@ -1035,6 +1035,8 @@ const syncTerms = (): void => {
   on('call', !!b.pawnCalled);
   on('stall', b.turn >= STALL_PRESS.from);
 };
+/** 레이드 경직 (D-518): 패링당해 이번 턴 걷지도 치지도 않는 2×2의 본체 · 부위 — 별 딱지 */
+const raidStunIds = (b: SliceBattle): number[] => b.s.pieces.filter((p) => p.giant && p.body === undefined && (b.giantStun ?? []).includes(p.giant.id)).map((p) => p.id);
 /** 「회피 반격」이라는 이름은 둘째 출하 또는 2막부터 (첫 출하 1막은 「빠지며 쳤다」 연출로만) */
 const grazeNamed = (meta = readMetaCached()): boolean => meta.runs >= 1 || actI >= 1;
 let metaCache: { at: number; m: ReturnType<typeof readMeta> } | null = null;
@@ -1335,7 +1337,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   burnNote(burn0);
   turnDmg += dealt(r.events, 0, r.before);
   // 핀 (D-281): 묶인 적에게 경직 딱지
-  renderer.setStaggered([...(b.staggered ?? []), ...(b.pinned ?? [])], b.shocked ?? []);
+  renderer.setStaggered([...(b.staggered ?? []), ...(b.pinned ?? []), ...raidStunIds(b)], b.shocked ?? []);
   renderer.setup(b.s);
   refresh();
   if (b.kills > prevKills) chainPop(b.kills);
@@ -1445,7 +1447,7 @@ const onEndInner = async (): Promise<void> => {
   if (r.events.some((e) => e.type === 'respawn' && e.label?.startsWith('끝없는'))) flashParts(['assembly']);
   busy = false;
   enemyTurn = false;
-  renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
+  renderer.setStaggered([...(b.staggered ?? []), ...raidStunIds(b)], b.shocked ?? []);
   renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
   renderer.setup(b.s);
   if (b.boss && b.s.winner === null) {
@@ -1456,7 +1458,11 @@ const onEndInner = async (): Promise<void> => {
     if (fired) taunt('sig');
   }
   // 헛방 (D-229): 예고를 피해 빈 땅을 친 적은 경직 · 맞은 기물은 기어 쇼크 — 한 번 알린다
-  if (b.s.winner === null && b.staggered?.length) toast(HUD_TEXT.whiff(b.staggered.length), 2600);
+  // 레이드 (D-518): 패링 → 경직 · 헛방 → 약점 — 2×2가 이번 턴에 무엇을 못 하고 얼마나 더 맞는지 한 번 알린다 (띠 · 몸 위 글은 사건 'mark'가 띄운다)
+  const raidName = b.boss ? b.bossName ?? '반장' : '거대 주물';
+  if (b.s.winner === null && b.giantStun?.length) toast(RAID_TEXT.stunToast(raidName), 3000);
+  else if (b.s.winner === null && r.events.some((e) => e.type === 'mark' && e.tag === RAID_TEXT.whiffTag)) toast(RAID_TEXT.whiffToast(raidName), 2600);
+  else if (b.s.winner === null && b.staggered?.length) toast(HUD_TEXT.whiff(b.staggered.length), 2600);
   else if (b.s.winner === null && b.shocked?.length) toast(HUD_TEXT.shock, 2400);
   if (b.s.winner === null && b.alarmAtk) band(HUD_TEXT.alarm, 'crimson');
   if (b.s.winner !== null) { handView = null; refresh(); return finish(); }

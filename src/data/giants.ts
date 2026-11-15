@@ -1,5 +1,6 @@
 import type { PieceType } from '../engine/types';
 import { PRELOAD } from './preload-list';
+import { josa } from './josa';
 
 /**
  * 거대 주물 (D-484, GDD 21장 §3) — 거푸집을 잘못 부어 규격의 두 배로 굳은 기물. 판의 2×2를 차지한다.
@@ -60,3 +61,65 @@ export const BOSS_ART_RULES = ['plate', 'inspect', 'spawn', 'magnet', 'thorns', 
 export const bossArtFile = (rule: string, rage: boolean): string => `pieces/s-boss-${rule}${rage ? '-p2-' : ''}1.png`;
 /** 그 반장의 그림(격노면 b, 없으면 1단계)을 아직 받지 않아 반장 킹 그림을 빌리는 중인가 — 받은 파일은 preload 목록(tools/gen-preload.cjs)에 오른다 */
 export const bossArtTemp = (rule: string, rage = false): boolean => !PRELOAD.includes(bossArtFile(rule, rage)) && !PRELOAD.includes(bossArtFile(rule, false));
+
+/**
+ * 레이드 반장 (D-518, GDD 21장 §3-C — 사용자 방향 2026-11-16: 「2×2라 쉬워진 만큼 레이드처럼 · 때리는 맛 · 패링 · 회피하며 공격」).
+ * 새 규칙은 최소로 — 기존 예고 칸 · 방열판 · 헛방 경직 · 경직 면역을 2×2에 잇는다.
+ * - 패턴: 반장마다 기본 「내리찍기」 + 색깔 패턴 하나를 턴마다 번갈아 예고(도금왕은 셋). 격노(2단계)는 「꺾어 찍기」(ㄱ자 일곱 칸) + 색깔 패턴.
+ * - 패링(막기): 그 타격을 방열판으로 다 받아낸 내 기물이 있으면 → 경직: 다음 내 차례에 걷지도 치지도 못하고 철갑을 잃고 받는 피해 ×parryWeak.
+ * - 회피(헛방): 턴 시작에 예고 칸에 있던 내 기물이 모두 빠져 빈 땅을 치면 → 철갑을 잃는다(whiffWeak > 1이면 약점까지) (기존 헛방 「반장은 방열판만」을 2×2에 잇는다).
+ * - 실패: 막지도 피하지도 못하면 패턴 피해(반장 킹 공격 × dmg) 그대로 — 내리찍기는 한 방이 무겁다.
+ * - 경직은 연달아 걸리지 않는다(D-230 경직 면역): 경직이 풀린 바로 다음 타격은 막아도 경직이 없다(약점만).
+ * 거대 주물(검문 정예)도 같은 패링 · 경직을 받는다. 이형 기물은 헛치면 기절에 더해 약점.
+ */
+export type RaidPattern = 'slam' | 'sweep' | 'charge' | 'corner';
+export const RAID = {
+  /** 반장마다 턴마다 번갈아 쓰는 패턴 (1단계) — 첫째가 1턴 */
+  patterns: {
+    plate: ['slam', 'sweep'], inspect: ['slam', 'charge'], spawn: ['slam', 'sweep'], magnet: ['slam', 'charge'],
+    thorns: ['slam', 'charge'], alarm: ['slam', 'sweep'], gilded: ['slam', 'sweep', 'charge'],
+  } as Record<string, RaidPattern[]>,
+  /** 격노(2단계): 꺾어 찍기 + 색깔 패턴 */
+  rage: {
+    plate: ['corner', 'sweep'], inspect: ['corner', 'charge'], spawn: ['corner', 'sweep'], magnet: ['corner', 'charge'],
+    thorns: ['corner', 'charge'], alarm: ['corner', 'sweep'], gilded: ['corner', 'sweep', 'charge'],
+  } as Record<string, RaidPattern[]>,
+  /** 패턴 피해 배율 (반장 킹 공격 × 이것) — 좁고 무거운 내리찍기 · 넓고 가벼운 쓸기 · 앞 기물이 막아 주는 돌진 */
+  dmg: { slam: 1.5, sweep: 0.9, charge: 1.3, corner: 1.1 } as Record<RaidPattern, number>,
+  /** 2×2 넓은 과녁만큼 반장 킹 HP (네 칸 어디든 킹 — 피격 면적이 넷) */
+  hp: 1.5,
+  /** 패링 → 경직 창: 받는 피해 배율 */
+  parryWeak: 1.6,
+  /** 회피(헛방) → 약점 창: 받는 피해 배율 — D-518 측정: 1.25면 보통 봇이 거의 매 턴 피해 반장이 도로 쉬워졌다(77%) → 1(철갑 벗김만, 작은 보상) */
+  whiffWeak: 1,
+  /** 이형 기물이 헛치면 기절에 더해 약점 (하이 리스크 하이 리턴) */
+  formWeak: 1.4,
+  /** 거대 주물 부위를 부수면 카드 + */
+  breakDraw: 1,
+  names: { slam: '내리찍기', sweep: '쓸기', charge: '돌진', corner: '꺾어 찍기' } as Record<RaidPattern, string>,
+  /** 길게 누르기 효과 줄 (D-422 · D-515 — 한 행) */
+  hits: { slam: '한 변 네 칸', sweep: '앞 한 줄 끝까지', charge: '몸 폭 두 줄 · 첫 기물까지', corner: '꺾인 두 변 일곱 칸' } as Record<RaidPattern, string>,
+};
+/** 레이드 표지 · 안내 (docs/voice.md ⑨ 표지 · ① 시스템 투) */
+export const RAID_TEXT = {
+  /** 띠 (⑨ 상태 — 명사구 + 덧말) */
+  parry: (name: string): string => `패링! ${name} 경직 — 받는 피해 ×${RAID.parryWeak}`,
+  parryImmune: (name: string): string => `막음 — ${josa(name, '이')} 버틴다`,
+  whiff: (name: string): string => `헛방 — ${name} 철갑이 벗겨진다`,
+  /** 몸 위 짧은 글 (⑨ 터짐) */
+  stunTag: '경직!',
+  weakTag: '약점!',
+  whiffTag: '헛방!',
+  holdTag: '막음!',
+  /** 판 위 딱지 글자 (약점 창 — 경직은 별 딱지) */
+  weakChip: '약',
+  /** 토스트 (① 시스템 투) */
+  stunToast: (name: string): string => `${josa(name, '이')} 경직되었습니다. 이번 턴은 움직이지 않고, 받는 피해가 ×${RAID.parryWeak}입니다.`,
+  whiffToast: (name: string): string => `${name}의 철갑이 벗겨졌습니다.`,
+};
+
+/** 이번 턴 반장 패턴 (rule = 반장 규칙, rage = 2단계) — 턴마다 번갈아 */
+export const raidPattern = (rule: string, rage: boolean, turn: number): RaidPattern => {
+  const list = (rage ? RAID.rage : RAID.patterns)[rule] ?? (rage ? ['corner'] : ['slam']);
+  return list[(Math.max(1, turn) - 1) % list.length];
+};

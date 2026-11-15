@@ -49,7 +49,7 @@ export interface RunOpts {
   /** 첫 출하 조건 (처음 반장 그대로 · 1막 반장에 한 번 지면 안전망) — 없으면 처음 풀 · 첫째 왕관일 때 */
   first?: boolean;
 }
-export interface BossLog { rule: BossRule; act: number; won: boolean; turns: number }
+export interface BossLog { rule: BossRule; act: number; won: boolean; turns: number; /** 레이드 (D-518): 경직 · 헛방 약점 창을 연 횟수 */ stun?: number; whiff?: number }
 export interface RunResult {
   cleared: boolean;
   familyParts: number;
@@ -192,7 +192,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           battles += 1;
           turnsAll += r.turns;
           idle.turns += r.idle.turns; idle.idle += r.idle.idle; idle.apLeft += r.idle.apLeft; idle.idleAp += r.idle.idleAp;
-          if (def.boss && def.bossRule) bosses.push({ rule: def.bossRule, act: ai + 1, won: r.won, turns: r.turns });
+          if (def.boss && def.bossRule) bosses.push({ rule: def.bossRule, act: ai + 1, won: r.won, turns: r.turns, stun: b.raidStat?.stun ?? 0, whiff: b.raidStat?.whiff ?? 0 });
           {
             const byTurn = new Map<number, number>();
             for (const f of b.falls) byTurn.set(f.turn, (byTurn.get(f.turn) ?? 0) + 1);

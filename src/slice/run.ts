@@ -443,7 +443,8 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
 export const FINAL_BOSS = (asc = 0): BattleDef => ({
   enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 5 ? (['P'] as PieceType[]) : [])],
   // D-358: 1.25 → 1.1 — 적 대체 행동(D-318) 뒤 보통 봇 56%로 가장 많이 죽는 곳이었다
-  kingHp: 1.1 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
+  // D-518: 1.1 → 0.8 — 레이드 HP(×RAID.hp 1.5)와 도금왕 세 패턴(8폭 쓸기)이 겹쳐 보통 봇 54% (실효 1.2)
+  kingHp: 0.8 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
   enemyHp: (asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05) * (asc >= 6 ? ASC_NUM.bossHp : 1),
   // D-460: 0.7 → 0.85 되돌림 (사용자: 「도금왕은 이기면 끝 — 기물을 다 걸어도 이기기만 하면 된다」). 종막의 손실은 대가가 아니라 수단이다 — 종막은 승률로만 맞춘다(보통 봇 75% 안팎).
   atk: 0.85, // D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)

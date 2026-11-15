@@ -42,6 +42,7 @@ const day = new Date().toISOString().slice(0, 10);
     else if (sc === 'unit-info') await require('./qa/unit-info.cjs')(pg, shot);
     else if (sc === 'ability-info') await require('./qa/ability-info.cjs')(pg, shot);
     else if (sc === 'boss2x2') await require('./qa/boss2x2.cjs')(pg, shot);
+    else if (sc === 'raid') await require('./qa/raid.cjs')(pg, shot);
     else if (sc === 'card-text') await require('./qa/card-text.cjs')(pg, (n) => pg.screenshot({ path: `production/qa/evidence/2026-11-15-cardtext-${n}${suffix}.png` }));
     else if (sc.startsWith('event:')) { await A((id) => { window.sliceApi.gold(50); window.sliceApi.event(id); }, sc.slice(6)); }
     else if (sc === 'map') await A(() => window.sliceApi.map(2));

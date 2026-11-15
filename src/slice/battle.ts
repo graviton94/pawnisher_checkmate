@@ -6,10 +6,10 @@ import { PART_NUM, type SlicePartId } from './parts';
 import { CREW, QUIRKS, type Crew, type QuirkId } from './crew';
 import { DIRECTOR } from './director';
 import { Rng } from '../engine/rng';
-import { bossAim, bossCells, bossRing, giantDanger, giantStrike, giantTurn, placeBoss, placeGiants } from './giant';
+import { bossAim, bossCells, bossRing, giantDanger, giantGroups, giantStrike, giantStrikes, giantTurn, placeBoss, placeGiants } from './giant';
 import { processAfter, processBefore, processDanger, processTurn, setupProcess, type ProcState } from './process';
 import { PROCESS, type ProcessId } from '../data/process';
-import type { GiantType } from '../data/giants';
+import { RAID, RAID_TEXT, type GiantType, type RaidPattern } from '../data/giants';
 import { baseOf, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
@@ -132,6 +132,21 @@ export interface SliceBattle {
   giantAim?: Record<number, Pos>;
   /** 2×2 보스 내리찍기 사건 이름 (D-513 — 반장 이름) */
   bossName?: string;
+  /**
+   * 레이드 (D-518, GDD 21장 §3-C): bossPat = 이번 턴 반장 패턴 · giantStun = 패링당해 이번 내 차례에 경직된 2×2 묶음(걷지도 치지도 않는다) ·
+   * giantStunImmune = 방금 경직이 풀린 묶음(한 차례 다시 경직되지 않는다 — D-230 경직 면역과 같은 규칙) · giantAimedG = 턴 시작에 예고 칸에 내 기물이 있던 묶음 ·
+   * parried · whiffed = 방금 적 차례에 패링당한 · 헛친 묶음 (giantStrike가 적는다)
+   */
+  bossPat?: RaidPattern;
+  giantStun?: number[];
+  giantStunImmune?: number[];
+  giantAimedG?: number[];
+  parried?: number[];
+  whiffed?: number[];
+  /** 레이드 지표 (D-518 — 퀵 등반 머신이 읽는다, 화면은 쓰지 않는다): 경직 · 헛방 약점 창을 연 횟수 */
+  raidStat?: { stun: number; whiff: number };
+  /** 이번 내 차례가 헛방으로 열린 2×2 묶음 (D-518 — 두뇌 봇 판 평가가 읽는다) */
+  giantWhiffNow?: number[];
   /** 공정 판 (D-486) */
   proc?: ProcState;
   reinforced?: number;
@@ -419,6 +434,11 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   if (opts.enemyKingHp) {
     const k = kingOf(s, 1)!;
     k.maxHp = k.hp = Math.round(k.maxHp * opts.enemyKingHp);
+  }
+  // 레이드 반장 (D-518): 2×2 넓은 과녁만큼 HP — 경직 · 약점 창에서 크게 깎이게
+  if (opts.boss && !opts.lab) {
+    const k = kingOf(s, 1);
+    if (k?.giant?.boss) k.maxHp = k.hp = Math.round(k.maxHp * RAID.hp);
   }
   const rng = new Rng(seed ^ 0x9e3779b9);
   const parts = opts.parts ?? [];
@@ -904,7 +924,9 @@ export const intentRows = (b: SliceBattle): IntentRow[] => {
     }
   }
   // 기절 · 묶임: 이번 적 차례에 움직이지 않는 적
-  for (const id of [...(b.staggered ?? []), ...(b.pinned ?? [])]) {
+  // 레이드 경직 (D-518): 패링당한 2×2 본체도 「쉰다」 줄로
+  const stunCores = b.s.pieces.filter((p) => p.giant && p.body === undefined && (b.giantStun ?? []).includes(p.giant.id) && (p.giant.boss || p.giant.dx + p.giant.dy === 0)).map((p) => p.id);
+  for (const id of [...(b.staggered ?? []), ...(b.pinned ?? []), ...stunCores]) {
     const p = findPiece(b.s, id);
     if (p && p.side === 1 && !byPiece.has(id) && !rows.some((r) => r.kind === 'rest' && r.pieceId === id)) rows.push({ kind: 'rest', pieceId: id, t: p.type, hits: [] });
   }
@@ -993,6 +1015,8 @@ const markTelegraph = (b: SliceBattle): void => {
   const c = cloneBattle(b);
   const before = cloneState(c.s);
   b.aimed = [...new Set(enemyPhase(c).events.flatMap((e) => (e.type === 'attack' && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 0) ? [e.attackerId] : [])))];
+  // 2×2 헛방 판정 (D-518): 턴 시작에 예고 칸 위에 내 기물이 있던 묶음 — 모두 빠지면 빈 땅을 친다
+  b.giantAimedG = giantStrikes(b).filter((g) => b.s.pieces.some((p) => p.side === 0 && g.cells.some((c) => samePos(c, p)))).map((g) => g.part.giant!.id);
 };
 
 /** 수동 배치 시험의 첫 턴도 본편과 같은 예고·회피 계산을 사용한다. */
@@ -1142,6 +1166,9 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     b.overkill += overkillOf(before, sim.events);
     let k = sim.removed.filter((q) => q.side === 1).length;
     b.kills += hitChain(b, before, sim.events, k, c.chainPerKill);
+    // 거대 주물 부위를 부쉈다 (D-518 파훼 보상): 부위마다 카드 +RAID.breakDraw
+    const broke = sim.removed.filter((q) => q.side === 1 && q.giant && !q.giant.boss).length;
+    if (broke) drawCards(b, broke * RAID.breakDraw);
     // 연쇄 사슬: 충돌로 쓰러뜨린 적마다 연쇄 +1
     if (has(b, 'chainShot')) b.kills += PART_NUM.chainShotGain * sim.events.filter((e) => e.type === 'blast').reduce((a, e) => a + (e.type === 'blast' ? e.hits.filter((h) => h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1).length : 0), 0);
     // 반동 용수철 (D-287): 충돌로 쓰러뜨리면 태엽 +1 (턴에 한 번)
@@ -1802,6 +1829,51 @@ const stallRust = (b: SliceBattle, events: BattleEvent[]): void => {
   if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
 };
 
+/** 패링 · 헛방 알림 (D-518): 방금 내리찍기를 막았으면 경직 · 피했으면 약점 — 화면 띠 + 그 몸 위 짧은 글 */
+const raidMarks = (b: SliceBattle): BattleEvent[] => {
+  const out: BattleEvent[] = [];
+  const groups = giantGroups(b.s);
+  const ids = (gid: number) => (groups.get(gid) ?? []).filter((p) => p.body === undefined).map((p) => p.id);
+  const name = (gid: number) => (groups.get(gid)?.[0]?.giant?.boss ? b.bossName ?? '반장' : '거대 주물');
+  for (const gid of b.parried ?? []) {
+    const immune = (b.giantStunImmune ?? []).includes(gid);
+    out.push({ type: 'mark', label: immune ? RAID_TEXT.parryImmune(name(gid)) : RAID_TEXT.parry(name(gid)), pieceIds: ids(gid), tag: immune ? RAID_TEXT.holdTag : RAID_TEXT.stunTag });
+  }
+  for (const gid of b.whiffed ?? []) if (groups.get(gid)?.[0]?.giant?.boss) out.push({ type: 'mark', label: RAID_TEXT.whiff(name(gid)), pieceIds: ids(gid), tag: RAID_TEXT.whiffTag });
+  return out;
+};
+
+/**
+ * 레이드 창 열기 (D-518): 내 차례가 시작될 때 — 지난 적 차례의 패링 · 헛방 · 이형 헛방을 경직 · 약점으로.
+ * 약점(Piece.weak)은 이 내 차례 하나 동안만 — 미리보기 · 실행이 같은 damageOf(takenMult)로 읽는다.
+ */
+const openRaidWindows = (b: SliceBattle): void => {
+  for (const p of b.s.pieces) if (p.weak) delete p.weak;
+  const immune = b.giantStunImmune ?? [];
+  const groups = giantGroups(b.s);
+  const stun = (b.parried ?? []).filter((gid) => groups.has(gid) && !immune.includes(gid));
+  b.giantStunImmune = [...(b.giantStun ?? [])];
+  b.giantStun = stun;
+  const weakAll = (gid: number, k: number, strip: boolean) => {
+    for (const p of groups.get(gid) ?? []) {
+      if (p.body !== undefined) continue;
+      if (k > 1) p.weak = Math.max(p.weak ?? 1, k);
+      if (strip) p.shield = 0;
+    }
+  };
+  for (const gid of stun) weakAll(gid, RAID.parryWeak, true);
+  const st = (b.raidStat ??= { stun: 0, whiff: 0 });
+  st.stun += stun.length;
+  b.giantWhiffNow = (b.whiffed ?? []).filter((gid) => groups.has(gid) && !stun.includes(gid));
+  st.whiff += b.giantWhiffNow.length;
+  // 경직 면역 중에 막았거나 · 2×2 반장이 헛쳤으면 약점(철갑을 잃는다 — 옛 헛방 「반장은 방열판만」)
+  for (const gid of [...(b.parried ?? []), ...(b.whiffed ?? [])]) if (groups.has(gid) && !stun.includes(gid) && (groups.get(gid)![0].giant?.boss || (b.parried ?? []).includes(gid))) weakAll(gid, RAID.whiffWeak, !!groups.get(gid)![0].giant?.boss);
+  // 이형 기물 (D-518): 헛쳐 기절했으면 약점까지 — 하이 리스크 하이 리턴
+  for (const id of b.staggered ?? []) { const p = findPiece(b.s, id); if (p?.form) p.weak = Math.max(p.weak ?? 1, RAID.formWeak); }
+  b.parried = [];
+  b.whiffed = [];
+};
+
 const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
   const events: BattleEvent[] = [];
   procResolve(b, () => processBefore(b), events);
@@ -1849,6 +1921,7 @@ const enemyPhase = (b: SliceBattle): { events: BattleEvent[] } => {
       if (kingDead) b.s = { ...b.s, winner: 1 };
       events.push(...afterEnemyHits(b, pre, evs, '거대 주물'));
       if (b.s.winner !== null) events.push({ type: 'gameOver', winner: b.s.winner });
+      else events.push(...raidMarks(b));
     }
   }
   procResolve(b, () => processAfter(b), events);
@@ -1935,6 +2008,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     { const e = pawnCall(b); if (e) events.push(e); }
     bossTurnStart(b);
     guardUp(b);
+    openRaidWindows(b);
     events.push(...markTurn(b));
     events.push(...giantTurn(b));
     processTurn(b);
