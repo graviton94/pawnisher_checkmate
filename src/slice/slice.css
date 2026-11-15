@@ -1765,3 +1765,15 @@ body.slice .deathfx.dc3 .dr-stamp.st3 { opacity: 1; animation: st3 380ms both; }
 .dr-band.in { animation: koband 420ms both; }
 .dr-frame > .dr-face { position: relative; }
 @media (prefers-reduced-motion: reduce) { .dr-band.in { animation: none; transform: none; } }
+
+/* ===================== D-515 카드 줄 규격 (사용자 결정 — 모든 카드 성격 × 모든 글 줄, 줄 수 이탈 0) =====================
+   규격표 = src/slice/card-spec.ts CARD_SPEC · 회귀 테스트 tests/card-spec.test.ts · 전수 표 npx jiti tools/card-text-fit.ts.
+   명령 카드(RF-04 틀)는 두루마리가 가장 작은 카드(150px)에서 67px — 15px 다섯 행(75px)이 들지 않아 위 칸 묘사가 잘리고 셋째 효과 행이 가려졌다.
+   위 : 아래 = 7 : 9(점선 자리는 글 길이와 상관없이 고정, D-377), 묘사 행 14px · 조건/효과 행 12px → 2 × 14 + 3 × 12 = 64px. 글자 크기는 그대로. */
+body.slice .cf.cf.cf.cf.cmd > .cf-desc > .db.two { grid-template-rows: 7fr 9fr; }
+body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln { line-height: 14px !important; }
+body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx * { line-height: 12px !important; }
+/* 다듬음(+) · 녹(−) 표: 명패에 「이름+」가 들지 않아 비용 원판 오른쪽 위에 — 기호 + 색 (D-515) */
+body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 23.5%; top: 6.5%; z-index: 6; font: 700 12px/12px Galmuri11, sans-serif; font-style: normal; font-synthesis: none; padding: 1px 2px; background: #16141c; box-shadow: 0 0 0 1px #0b0b0e; }
+body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-up { color: #7fe08a; }
+body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-rust { color: #e0894a; }

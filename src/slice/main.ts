@@ -35,6 +35,7 @@ import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { markTip, showTip, tipDue } from './loadtip';
 import { cardTags, fitCount, partTags, STYLE_NAMES, tags3Html } from './tags';
 import { bodyHtml, bottomLogical, descHtml, lineHtml, splitDesc, splitTwo } from './desc';
+import { CARD_SPEC, CREW_KING } from './card-spec';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
 import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, DEFEAT_CUTS, ENDING_A, GILDED_STORY, bossFallCut as bossFallData, gildedPhase2Cut, oneLine, promotionCuts, shadowCuts, trueEndingCuts, type Face, type StoryBoss } from '../data/script';
@@ -575,7 +576,7 @@ const usable = (id: CommandId): boolean => {
  * 문장(…다.)마다 한 줄, 괄호 묶음 (…)은 따로 한 줄. 줄 안에서는 수치가 끊기지 않게 낱말 단위로만 접힌다.
  */
 /** 설명 문단 (D-333): 묘사 · (기능) · 조건 — 모든 카드 · 부품 · 선택지가 같은 문법 */
-const descLines = (text: string, flavor?: string): string => descHtml(text, flavor);
+const descLines = (text: string, px: number = CARD_SPEC.cmd.px.row): string => descHtml(text, undefined, px);
 /** 가격표가 붙는 카드(고물상)는 성질 칩(+ · × · 축)을 가격 옆에 — 가격은 카드 한가운데, 칩은 그 오른쪽에 매달린다 */
 const footed = (extra: string, attrs = ''): boolean => extra.includes('class="price') || attrs.includes('data-pick');
 const cfFoot = (price: string, chips: string): string => `<span class="cf-foot">${price}${chips ? `<span class="cf-chips">${chips}</span>` : ''}</span>`;
@@ -591,8 +592,14 @@ const cardFace = (id: CommandId, attrs: string, extra = '', cls = ''): string =>
   // 세 칸 태그 (D-325): 누가 · 어떤 · 합/곱/규칙 — 모든 카드 같은 자리(그림 창 아래)
   // D-367 카드 틀: 비용 = 톱니 메달 숫자 · 그림 = 분대원 초상(공용은 아이콘) · 종류 판 = 누가 · 어떤 · 합/곱
   const art = c.who === 'any' ? cardArt(id) : `<img class="cf-face" src="ui/hud/crew-${c.who}.png" alt="">`;
-  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost${c.cost === 1 ? ' c1' : ''}" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${c.name}</b><span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
+  return `<button type="button" class="cf cmd big t-${c.who} g-${g}${c.axis ? ` ax-${c.axis}` : ''}${cls ? ` ${cls}` : ''}" data-grade="${g}" ${attrs}><b class="cf-cost${c.cost === 1 ? ' c1' : ''}" aria-label="태엽 ${c.cost}">${c.cost}</b><b class="cf-name">${COMMANDS[baseOf(id)].name}</b>${refineMark(id)}<span class="cf-win">${art}</span><span class="cf-type">${tags3Html(cardTags(id))}</span><small class="cf-desc">${descLines(c.desc || '')}</small><i class="cf-gem" aria-label="${GRADE.names[g]}"></i>${footed(extra, attrs) ? cfFoot(extra, '') : extra}</button>`;
 };
+/**
+ * 다듬음(+) · 녹(−) 표 (D-515): 명패 칸(72px)에 「이름+」가 들지 않아 표를 비용 원판 오른쪽 위에 따로 단다 — 명패는 본래 이름만.
+ * 기호 + 색 둘로 가른다(색만으로 구분하지 않는다). 손패 · 기록은 이름에 기호를 붙인 그대로.
+ */
+const refineMark = (id: CommandId): string =>
+  id.endsWith('+') ? '<i class="cf-mk mk-up" aria-label="다듬음">+</i>' : id.endsWith('~') ? '<i class="cf-mk mk-rust" aria-label="녹슮">−</i>' : '';
 /**
  * 분대원 카드 (D-362, 사용자: 「기물도 하나하나의 카드가 되는 거지」): 카드 · 부품과 같은 틀 —
  * 이름(별칭) · 그림 창(기물) · 태그(기물 · 버팀 · 심장 톱니) · HP 막대. 사건 결과 오버레이가 카드와 같은 연출을 건다.
@@ -622,16 +629,16 @@ const crewCard = (u: Crew, o: { hp: number; max: number; atk?: number; shield?: 
   // 버팀 자리 (D-377 → D-488): 하트 수 = 실제 버팀 수 (예전엔 늘 둘 이상이라 생명 0이 「빈 하트 둘」로 읽혔다). 대국 중 쓴 것만 깨진 하트
   const hearts = Array.from({ length: Math.max(total, lives) }, (_, k) => `<i class="cb-life${k < lives ? '' : ' off'}"></i>`).join('');
   // 본문 (D-377): 위 칸 = 기록(이름 · 숫자) 또는 첫마디 2줄 · 아래 칸 = 특성 이름 / 효과 · 효과 (또는 조건 / 효과) 한 줄씩
-  const top = o.say ? splitTwo(o.say).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="버팀을 써서 죽음을 넘긴 횟수">넘김</i>${u.defied ?? 0}</span></span>`];
+  const top = o.say ? splitTwo(o.say, CARD_SPEC.crew.px.row).map((x) => lineHtml(x)) : [`<span class="cs-st"><span><i>처치</i>${kills}</span><span><i>피해</i>${dmg}</span><span><i title="버팀을 써서 죽음을 넘긴 횟수">넘김</i>${u.defied ?? 0}</span></span>`];
   // 이형 분대원 (D-481): 이름 · 움직임 · 공격 — 행마가 다르니 무엇보다 먼저
   const bot = u.form
-    ? [lineHtml(`이형 · ${FORMS[u.form].name}`, 'name'), lineHtml(FORMS[u.form].move, 'if'), lineHtml(FORMS[u.form].hit, 'fx')]
+    ? [lineHtml(`이형 · ${FORMS[u.form].name}`, 'name'), lineHtml(FORMS[u.form].move, 'if'), lineHtml(`: ${FORMS[u.form].hit}`, 'fx')]
     : q
     ? [lineHtml(q.name, 'name'), ...bottomLogical('', q.desc).map((l) => lineHtml(l.t, l.k))]
     : u.t === 'K'
-      ? [lineHtml('분대의 심장', 'name'), lineHtml('쓰러지면 끝')]
+      ? [lineHtml(CREW_KING.name, 'name'), lineHtml(CREW_KING.say)]
       : u.scars?.length
-        ? [lineHtml(`흉터 · ${u.scars[0]}`, 'name'), ...splitTwo(SCAR_DESC[u.scars[0]] ?? '').map((x) => lineHtml(x))]
+        ? [lineHtml(`흉터 · ${u.scars[0]}`, 'name'), ...splitTwo(SCAR_DESC[u.scars[0]] ?? '', CARD_SPEC.crew.px.row).map((x) => lineHtml(x))]
         : [];
   return `<div class="cf crew-card g-${g}${cls ? ` ${cls}` : ''}" data-grade="${g}" aria-hidden="true"><b class="cf-name">${u.name ?? '이름 없음'}</b>`
     + `<span class="cf-win"><span class="er-pc"><img src="${art}" alt=""></span></span>`
@@ -664,7 +671,7 @@ type SvcKey = 'heal' | 'repair' | 'refine' | 'remove' | 'brace';
  */
 const svcFace = (k: SvcKey, n = 0): string => {
   const d = SERVICE_CARDS[k];
-  return `<div class="cf part-card svc svc-card" data-grade="common"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type"><span class="t3"><i>${SERVICE_CARDS.kind}</i></span></span><small class="cf-desc">${descLines(d.desc(n))}</small></div>`;
+  return `<div class="cf part-card svc svc-card" data-grade="common"><b class="cf-name">${d.name}</b><span class="cf-win"><i class="ico" style="${iconArt(d.icon)}"></i></span><span class="cf-type"><span class="t3"><i>${SERVICE_CARDS.kind}</i></span></span><small class="cf-desc">${descLines(d.desc(n), CARD_SPEC.svc.px.row)}</small></div>`;
 };
 /** 손질 카드 풀이 한 줄 (단추 줄 가운데, ⑦ 결과 요약): 「정비 — 분대 전원 HP +25%」 */
 const svcLine = (k: SvcKey, n = 0): string => {
@@ -2565,7 +2572,7 @@ const shopScreen = (): void => {
     const items: PickItem[] = cards.map((id) => ({ key: `card:${id}`, html: cardFace(id, '') + tag(`card:${id}`), info: fitInfo('card', id), off: sold.has(id) }));
     if (part) items.push({ key: `part:${part}`, html: partFace(part, '') + tag(`part:${part}`), info: fitInfo('part', part), off: sold.has('part') });
     if (charmOffer)
-      items.push({ key: charmOffer, html: `<div class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><span class="cf-type"><span class="t3"><i>부적</i></span></span><small class="cf-desc">${descLines(CHARMS[charmOffer].desc)}</small></div>${tag(charmOffer)}`, info: '', off: sold.has(charmOffer) });
+      items.push({ key: charmOffer, html: `<div class="cf part-card svc ${charmOffer === 'revive' ? 'g-gold' : 'g-rare'}"><b class="cf-name">${CHARMS[charmOffer].name}</b><span class="cf-win"><i class="ico" style="${iconArt(CHARMS[charmOffer].icon)}"></i></span><span class="cf-type"><span class="t3"><i>부적</i></span></span><small class="cf-desc">${descLines(CHARMS[charmOffer].desc, CARD_SPEC.charm.px.row)}</small></div>${tag(charmOffer)}`, info: '', off: sold.has(charmOffer) });
     for (const k of svcAll) if (svcShown.has(k)) items.push({ key: k, html: svcFace(k, healPct) + tag(k), info: '', off: sold.has(k) });
     const el = placeScreen({
       art: 'bg-shop',
@@ -4031,9 +4038,10 @@ const startLab = (mode: 'A' | 'B'): void => {
 };
 
 /** 전체 견본은 본편과 같은 카드 받침·글 배율을 사용한다. */
-const allFaces = (onlyParts?: SlicePartId[]): void => {
+/** 카드 견본 (디버그): variants = 다듬음(+) · 녹(~) 카드도 (D-515 표 확인) */
+const allFaces = (onlyParts?: SlicePartId[], variants = false): void => {
   const items: PickItem[] = [
-    ...(onlyParts ? [] : (Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).map((id) => ({ key: `card:${id}`, html: cardFace(id, '') }))),
+    ...(onlyParts ? [] : (Object.keys(COMMANDS) as CommandId[]).filter((id) => variants || !/[+~]$/.test(id)).map((id) => ({ key: `card:${id}`, html: cardFace(id, '') }))),
     ...(onlyParts ?? Object.keys(SLICE_PARTS) as SlicePartId[]).map((id) => ({ key: `part:${id}`, html: partFace(id, '') })),
   ];
   const el = pickScreen({ title: '카드 견본', items, skip: { label: '닫는다', attrs: 'data-x' }, onPick: () => {} });

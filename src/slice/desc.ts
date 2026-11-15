@@ -30,15 +30,23 @@ export const LINE_W = 8.5;
 const nb = (t: string): string => t.replace(/(한|두|세|\d) (칸|장|번)/g, '$1\u00a0$2');
 const red = (t: string): string => t.replace(/([+×−]?\d+(?:\.\d+)?%?)/g, '<em>$1</em>');
 
-/** 한 문장을 많아야 두 줄로: 한 줄에 들면 그대로, 아니면 두 줄 폭이 가장 고른 빈칸에서 나눈다 (쉼표 뒤를 먼저) */
-export const splitTwo = (s: string): string[] => {
+/**
+ * 한 문장을 많아야 두 행으로 (묘사 줄 — 갈무리11 12px, D-515): 한 행 폭(px)에 들면 그대로, 아니면 두 행 폭이 가장 고른 빈칸에서 나눈다 (쉼표 뒤를 먼저).
+ * 폭은 글꼴 실폭(`pxWidth`) — 카드 성격마다 행 폭이 다르다(`card-spec.ts`).
+ */
+/** 묘사 줄을 나누지 않는 자리: 꾸밈말(한 · 두 · 모든 · 숫자) 뒤 · 의존 명사(자 · 것 · 만큼 · 번 · 수 · 점) 앞 — 「한 / 번에」 같은 꺾임을 막는다 */
+const NO_BREAK_AFTER = /(?:^|\s)(?:한|두|세|네|모든|온|그|이|저|\d+)$/;
+const NO_BREAK_BEFORE = /^(?:자|것|만큼|번|수|점|칸|장|줄)(?:[은는이가을를의에도]|에게서|으로|에서|까지)?(?:\s|[.,]|$)/;
+export const splitTwo = (s: string, px = ROW_PX, font: CardFont = 'g11'): string[] => {
   const t = s.trim();
-  if (textWidth(t) <= LINE_W) return [t];
+  if (pxWidth(t, font) <= px) return [t];
   let best = -1, score = Infinity;
   for (let k = 0; k < t.length; k++) {
     if (t[k] !== ' ') continue;
     const a = t.slice(0, k), b = t.slice(k + 1);
-    const sc = Math.max(textWidth(a), textWidth(b)) - (/[,.]$/.test(a) ? 1.5 : 0);
+    if (NO_BREAK_AFTER.test(a) || NO_BREAK_BEFORE.test(b)) continue;
+    // 두 행 모두 폭 안인 자리를 먼저 (넘치는 나눔은 규격 검사가 잡는다 — tests/card-spec.test.ts)
+    const sc = Math.max(pxWidth(a, font), pxWidth(b, font)) - (/[,.]$/.test(a) ? 18 : 0) + (pxWidth(a, font) > px || pxWidth(b, font) > px ? 1000 : 0);
     if (sc < score) { score = sc; best = k; }
   }
   return best < 0 ? [t] : [t.slice(0, best), t.slice(best + 1)];
@@ -91,27 +99,33 @@ export const condSplit = (s: string): string[] => {
   return m && textWidth(s) > LINE_W ? [m[1], m[2]] : [s];
 };
 
-/** 아래 칸 논리 줄 (D-377): 조건 1줄 + 효과 항목 1줄씩, 많아야 3줄 — 넘치는 항목은 마지막 줄에 「 · 」로 붙인다. 줄마다 한 행에 들어야 한다(D-511) */
+/** 아래 칸 논리 줄 (D-377 → D-515): 조건 1줄 + 효과 항목 1줄씩(조건 아래 첫 효과는 「: 」), 많아야 3줄 — 넘치는 항목은 마지막 줄에 「 · 」로 붙인다. 줄마다 한 행에 들어야 한다(D-511) */
 export const bottomLogical = (cond: string, fx: string): { t: string; k: 'if' | 'fx' }[] => {
-  const out: { t: string; k: 'if' | 'fx' }[] = [];
   let items = fx ? fx.split(' · ') : [];
+  let conds = cond ? cond.split(' · ') : [];
   if (!cond && items.length === 1) {
     const c = condSplit(items[0]);
-    if (c.length === 2) { out.push({ t: c[0], k: 'if' }); items = [c[1]]; }
+    if (c.length === 2) { conds = [c[0]]; items = [c[1]]; }
   }
-  // 조건이 「…하면 · 턴에 한 번」처럼 둘이면 두 줄로 (효과 자리가 모자라면 효과를 한 줄로 합친다)
-  const conds = cond ? cond.split(' · ') : [];
+  return stackRows(conds, items);
+};
+/**
+ * 아래 칸 쌓기 (D-515 — 모든 카드 성격 같은 문법): 조건 행들 → 효과 항목 하나 = 한 행, 합 세 행.
+ * 조건이 셋 이상이면 둘째 행에 잇고, 효과 자리가 모자라면 남은 항목을 마지막 행에 「 · 」로 잇는다. 조건 아래 첫 효과 행은 「: 」로 시작한다(D-422).
+ */
+export const stackRows = (conds0: string[], items0: string[]): { t: string; k: 'if' | 'fx' }[] => {
+  const conds = [...conds0];
+  let items = [...items0];
   if (conds.length + Math.min(items.length, 1) > 3) conds.splice(2, conds.length, conds.slice(2).join(' · '));
-  conds.forEach((t) => out.push({ t, k: 'if' }));
-  if (items.length && out.length >= 3) out.splice(2);
+  const out: { t: string; k: 'if' | 'fx' }[] = conds.map((t) => ({ t, k: 'if' as const }));
   const slots = 3 - out.length;
   if (items.length > slots) items = [...items.slice(0, slots - 1), items.slice(slots - 1).join(' · ')];
-  items.forEach((t) => out.push({ t, k: 'fx' }));
+  items.forEach((t, i) => out.push({ t: i === 0 && out.length && !t.startsWith(': ') ? `: ${t}` : t, k: 'fx' }));
   return out;
 };
 /** 아래 칸 행: 한 행에 들지 않는 줄은 글자를 줄이지 않고 행으로 접는다 (D-422 · D-488 안전망 — 데이터가 한 행에 맞춘다, D-511) */
-export const bottomLines = (cond: string, fx: string): { t: string; k: 'if' | 'fx' }[] =>
-  bottomLogical(cond, fx).flatMap((l) => wrapRows(l.t).map((t) => ({ t, k: l.k })));
+export const bottomLines = (cond: string, fx: string, px = ROW_PX): { t: string; k: 'if' | 'fx' }[] =>
+  bottomLogical(cond, fx).flatMap((l) => wrapRows(l.t, CARD_ROW_FONT, px).map((t) => ({ t, k: l.k })));
 
 /**
  * 카드 본문 (사용자 결정 D-377): 위 칸(2줄) · 점선 · 아래 칸(3줄). 점선은 글 길이와 상관없이 본문의 2:3 자리.
@@ -124,10 +138,10 @@ export const bodyHtml = (top: string[], bottom: string[]): string => {
 export const lineHtml = (t: string, k: 'say' | 'if' | 'fx' | 'name' = 'say'): string =>
   `<span class="ln ln-${k}">${k === 'fx' ? `<b>${red(nb(t))}</b>` : nb(t)}</span>`;
 
-/** 카드 · 부품 · 선택지 설명 — 위 칸 묘사 · 아래 칸 조건 / 효과 */
-export const descHtml = (text: string, flavor?: string): string => {
+/** 카드 · 부품 · 선택지 설명 — 위 칸 묘사 · 아래 칸 조건 / 효과. px = 그 카드 성격의 두루마리 행 폭(`CARD_SPEC`, D-515) */
+export const descHtml = (text: string, flavor?: string, px = ROW_PX): string => {
   const d = splitDesc(text, flavor);
-  return bodyHtml(d.say ? splitTwo(d.say).map((x) => lineHtml(x)) : [], bottomLines(d.cond, d.fx).map((l) => lineHtml(l.t, l.k)));
+  return bodyHtml(d.say ? splitTwo(d.say, px).map((x) => lineHtml(x)) : [], bottomLines(d.cond, d.fx, px).map((l) => lineHtml(l.t, l.k)));
 };
 
 /** 글 폭 어림 (갈무리: 한글 1칸, 영숫자 · 기호 0.6, 빈칸 0.35) — 테스트가 줄 넘침을 잡는다 */

@@ -23,7 +23,7 @@ export interface QuirkDef {
 
 /** 기벽 8종 (D-155: 8 → 4, 눈에 보이는 수치만 — 숨은 발동 조건은 뺐다 · D-275: 사용자 「12종은 복잡」 → 4종 더해 8, 저마다 수치 하나를 맞바꾼다) */
 export const QUIRKS: Record<QuirkId, QuirkDef> = {
-  overwound: { name: '과하게 감긴 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
+  overwound: { name: '너무 감긴 태엽', desc: '공격 ×1.3 · HP −20%', atk: 1.3, hp: 0.8 },
   welded: { name: '납땜 흉갑', desc: '방열판 12 · 공격 −15%', shield: 12, atk: 0.85 },
   stubborn: { name: '고집 센 축', desc: '버팀 2 · 공격 −15%', doors: 2, atk: 0.85 },
   boiler: { name: '새는 보일러', desc: '쓰러지면 둘레 폭발 20', doors: 0 },
@@ -35,7 +35,7 @@ export const QUIRKS: Record<QuirkId, QuirkDef> = {
 
 /** 수치 (data — 근거 D-153) */
 /** 흉터 풀이 (D-364): 흉터는 이력이 남긴 자국 — 효과는 없고 이야기만 */
-export const SCAR_DESC: Record<string, string> = { '주조 흠집': '주조 흠집. 전투 효과 없음', '납땜 자국': '버팀으로 쓰러짐을 넘긴 적이 있다', '용접 흉터': '대국 셋을 넘게 싸워 살아남았다' };
+export const SCAR_DESC: Record<string, string> = { '주조 흠집': '주조 흠집. 전투 효과 없음', '납땜 자국': '버팀으로 죽음을 넘긴 적이 있다', '용접 흉터': '대국 셋을 넘게 싸워 살아남았다' };
 /** pawnHp (D-466): 우리 분대원 폰만 HP ×이만큼 — 적 폰은 그대로. 보병 축이 폰 몸이 약해 한꺼번에 녹아내렸다 */
 export const CREW = { pawnHp: 1.7, boilerBlast: 20, heirloomScrews: 50, scarAfterBattles: 3, nickAfterKills: 5 };
 
