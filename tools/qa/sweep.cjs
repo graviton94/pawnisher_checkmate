@@ -8,6 +8,8 @@
 //   --build = 먼저 npm run build (dist가 없으면 자동). 미리보기 서버는 빈 포트에 직접 띄우고 끝나면 닫는다(OBSERVE_URL을 주면 그 서버를 쓴다).
 //   --list = 묶음 · 화면 목록만 찍는다.
 // 결과: production/qa/evidence/sweep-<날짜>[-667][-calm]/<묶음번호>-<순번>-<화면>.png + sweep-report.md
+//   컷신은 쪽마다 재생기의 박자 표지(.prologue[data-beat=hold] — 전환 · 카메라 계단 · 글자 찍기가 다 끝남)를 기다렸다 찍고, 막 입구 카드는 글이 다 찍힌 뒤 찍는다.
+//   아직 없는 기능의 자리 장면(예: 2×2 특별 보스 D-513)은 skip()으로 「건너뜀」이 되고 실패로 세지 않는다.
 //   보고서의 「대기 에셋」 열은 docs/asset-order-master.md 머리의 상태(재발주 · 대기 · 새 발주)를 화면과 짝지은 것 — 아직 빌린/임시 그림을 쓰는 화면.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -33,8 +35,10 @@ const META = { tut: ['battle', 'battle-a', 'map', 'recruit', 'kit', 'promote', '
 
 // ── 장면 ─────────────────────────────────────────────────────────────
 // 묶음 = [이름, 설명, 장면들]. 장면 = { name, assets: 이 화면이 쓰는 발주 번호, url?: 쿼리, meta?: 저장 덮기, run(ctx) }
-// ctx: pg · A(함수, 인자) = evaluate · W(ms) · shot(이름) · film(이름, 최대 장) · tap(선택자) · tapAt(x, y)
+// ctx: pg · A(함수, 인자) = evaluate · W(ms) · shot(이름) · film(이름, 최대 장) · tap(선택자) · tapAt(x, y) · open() · skip(까닭) · actCard(이름)
 const api = (f) => async ({ A }) => A(f);
+/** 자리만 잡아 둔 장면이 아직 찍을 것이 없을 때 (실패가 아니다) */
+class Skip extends Error {}
 const GROUPS = [
   ['title', '타이틀 · 메뉴 · 안내서 · 로딩 쪽지', [
     { name: 'title-press', assets: ['LD-02'], url: '?debug&opening', run: async ({ W, shot }) => { await W(1600); await shot('title-press'); } },
@@ -99,7 +103,7 @@ const GROUPS = [
     { name: 'stand', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(1800); await A(() => { void window.sliceApi.stand(); }); await W(1500); await shot('last-stand'); } },
     { name: 'help', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(1800); await A(() => window.sliceApi.help('now')); await W(900); await shot('help-now'); } },
   ]],
-  ['boss', '반장 등장 · 규칙 · 2단계 예고 · 2단계 컷인 7종 · 격파 컷', [
+  ['boss', '반장 등장 · 규칙 · 2단계 예고 · 2단계 컷인 7종 · 2×2 특별 보스(자리) · 격파 컷', [
     { name: 'boss-intro', assets: [], run: async ({ pg, A, W, shot }) => {
       await A(() => window.sliceApi.intro(2, 'boss'));
       await pg.locator('.bossfx').waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});
@@ -112,6 +116,17 @@ const GROUPS = [
         if (rule === 'gilded') await A(() => window.sliceApi.finalAt(13)); else await A(([r, a]) => window.sliceApi.bossOf(r, a), [rule, act]);
         await W(1800); await A((r) => { window.__p2 = window.sliceApi.p2Rise(r); }, rule); await W(640); await shot(`p2-${rule}`); await W(1800);
       }
+    } },
+    // 2×2 특별 보스 (D-513 · D-516 구현 중): 반장 판에 왼아래 본체 킹이 거대 묶음(Piece.giant)으로 서면 찍는다 — 아직 1칸 킹이면 건너뛴다
+    { name: 'boss-2x2', assets: ['GB-01', 'GB-02', 'GB-03', 'GB-04', 'GB-05', 'GB-06', 'GB-07'], run: async ({ A, W, shot, skip }) => {
+      let n = 0;
+      for (const [rule, act] of [['plate', 1], ['inspect', 1], ['spawn', 2], ['magnet', 2], ['thorns', 3], ['alarm', 3], ['gilded', 3]]) {
+        if (rule === 'gilded') await A(() => window.sliceApi.finalAt(13)); else await A(([r, a]) => window.sliceApi.bossOf(r, a), [rule, act]);
+        await W(1800);
+        if (!(await A(() => window.slice().s.pieces.some((p) => p.side === 1 && p.type === 'K' && p.giant)))) continue;
+        n += 1; await shot(`boss2x2-${rule}`);
+      }
+      if (!n) skip('2×2 특별 보스가 아직 판에 서지 않는다 (D-513 구현 전)');
     } },
     { name: 'boss-fall', assets: ['ED-01', 'PT-09'], run: async ({ A, W, film }) => { await A(() => { window.sliceApi.campaign(0); window.sliceApi.fallCut('plate'); }); await W(600); await film('boss-fall', 14); } },
   ]],
@@ -174,9 +189,15 @@ const GROUPS = [
     } },
   ]],
   ['act', '막 쉼터 (막 장부 · 막 입구 카드 · 그림자 컷)', [
-    { name: 'act-clear', assets: ['AC-01', 'AC-02', 'AC-03'], run: async ({ A, W, shot }) => {
-      await A(() => window.sliceApi.startAt(1, 'boss')); await W(1500);
-      await A(() => { const a = window.sliceApi; a.richRun(); a.setAct(0); a.nextAct(); }); await W(4000); await shot('act-ledger'); await W(3500); await shot('act-card');
+    // 막 반장 뒤: 막 장부 → [다음으로] → (이야기 출하면 동료 장면 — 건너뜀) → 다음 막 입구 카드(2막 act-2 · 3막 chained-door · 종막 act-4)
+    { name: 'act-clear', assets: ['AC-01', 'AC-02', 'AC-03'], run: async ({ A, W, shot, open, actCard }) => {
+      for (const act of [0, 1, 2]) {
+        if (act) await open();
+        await A(() => window.sliceApi.startAt(1, 'boss')); await W(1500);
+        await A((i) => { const a = window.sliceApi; a.richRun(); a.setAct(i); a.nextAct(); }, act); await W(4000);
+        if (!act) await shot('act-ledger');
+        await actCard(`act-card-a${act + 2}`);
+      }
     } },
     { name: 'shadow', assets: ['CN-01', 'CN-02', 'CN-03', 'ED-05'], run: async ({ A, film }) => { await A(() => { void window.sliceApi.shadow(1); }); await film('shadow', 12); } },
   ]],
@@ -271,12 +292,14 @@ const writeReport = () => {
   L.push('| 묶음 | 화면 | 스크린샷 | TXT | 오류 | 대기 에셋 쓰는 화면 | 걸린 시간 |', '|---|---|---|---|---|---|---|');
   for (const { g, s } of rows) {
     const sh = s.shots.length ? (s.shots.length > 3 ? `${s.shots[0]} … ${s.shots[s.shots.length - 1]} (${s.shots.length}장)` : s.shots.join('<br>')) : '—';
-    L.push(`| ${g.group} | ${s.name}${s.fail ? ' **실패**' : ''} | ${sh} | ${s.txt.length} | ${s.errors.length} | ${pend(s.assets).join(' ') || '—'} | ${s.sec}s |`);
+    L.push(`| ${g.group} | ${s.name}${s.fail ? ' **실패**' : ''}${s.skip ? ' (건너뜀)' : ''} | ${sh} | ${s.txt.length} | ${s.errors.length} | ${pend(s.assets).join(' ') || '—'} | ${s.sec}s |`);
   }
   L.push('', '## 대기 · 재발주 에셋 → 화면', '');
   const byAsset = {};
   for (const { s } of rows) for (const id of s.assets) if (STATUS_KO[st[id]]) (byAsset[id] ??= []).push(s.name);
   for (const id of Object.keys(st).filter((k) => STATUS_KO[st[k]])) L.push(`- ${id} — ${STATUS_KO[st[id]]}: ${byAsset[id]?.join(' · ') || '(이 하네스가 찍는 화면 없음)'}`);
+  const skips = rows.filter((r) => r.s.skip);
+  if (skips.length) { L.push('', '## 건너뛴 자리 장면 (아직 없는 기능)', ''); for (const { g, s } of skips) L.push(`- ${g.group}/${s.name}: ${s.skip}`); }
   if (fails.length) { L.push('', '## 못 찍은 화면', ''); for (const { g, s } of fails) L.push(`- ${g.group}/${s.name}: ${s.fail}`); }
   L.push('', '## TXT · 오류 줄', '');
   for (const { g, s } of rows) {
@@ -310,35 +333,76 @@ const writeReport = () => {
         const t0 = Date.now();
         const ctx0 = await br.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: DPR, hasTouch: true, isMobile: true, reducedMotion: calm ? 'reduce' : 'no-preference' });
         const pg = await ctx0.newPage();
-        const rec = { name: sc.name, assets: sc.assets, shots: [], txt: [], errors: [], fail: null, sec: 0 };
+        const rec = { name: sc.name, assets: sc.assets, shots: [], txt: [], errors: [], fail: null, skip: null, sec: 0 };
         pg.on('pageerror', (e) => rec.errors.push(`PAGEERROR ${e.message.slice(0, 200)}`));
         pg.on('console', (m) => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) rec.errors.push(`CONSOLE ${m.text().slice(0, 200)}`); });
         pg.on('response', (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) rec.errors.push(`HTTP ${r.status()} ${r.url().replace(srv.base, '/')}`); });
         // 부른 함수가 약속(Promise)을 돌려줘도 기다리지 않는다 — 컷 · 쪽지처럼 사람이 넘길 때까지 안 끝나는 화면이 많다(기다림은 W로)
         const A = (f, a) => pg.evaluate(({ src, arg }) => { const r = (0, eval)(`(${src})`)(arg); return r && typeof r.then === 'function' ? null : r; }, { src: f.toString(), arg: a });
         const Wp = (ms) => pg.waitForTimeout(ms);
-        const shot = async (n) => {
+        /** buf = 미리 찍어 둔 화면(곧 사라지는 화면을 놓치지 않으려고) — 없으면 지금 찍는다 */
+        const shot = async (n, buf) => {
           nn += 1;
           const file = `${GG}-${String(nn).padStart(2, '0')}-${n}.png`;
-          await pg.screenshot({ path: path.join(OUT, file) });
+          if (buf) fs.writeFileSync(path.join(OUT, file), buf); else await pg.screenshot({ path: path.join(OUT, file) });
           rec.shots.push(file);
           for (const t of await textAudit(pg)) if (!rec.txt.includes(t)) rec.txt.push(t);
         };
         const tapAt = (x, y) => pg.touchscreen.tap(Math.round(x), Math.round(y));
         const tap = async (sel) => { const e = pg.locator(sel).first(); if (!(await e.count())) return false; await e.tap(); return true; };
-        /** 컷신 하나를 끝까지 넘기며 쪽마다 한 장 (최대 max장) — film-observe와 같은 넘김 */
+        /** 컷신이 한 쪽에서 멈출 때까지 (박자 표지 hold · 서 있는 제목 카드 · 로고 뒤 「눌러 출하」 · 컷신 끝) — 표지가 없는 옛 빌드면 시간으로 */
+        const settle = async () => {
+          const ok = await pg.waitForFunction(() => {
+            const el = document.querySelector('.prologue');
+            return !el || el.dataset.beat === 'hold' || el.classList.contains('go-wait') || !!el.querySelector('.film-title:not(.out)');
+          }, null, { timeout: 20000, polling: 100 }).then(() => true, () => false);
+          if (!ok) { await Wp(calm ? 250 : 700); if (await pg.locator('.cut-sub.typing').count()) await Wp(1500); return; }
+          // 제목 카드는 계단으로 차례로 선다 — 다 설 때까지 조금 더
+          if (await pg.locator('.prologue .film-title:not(.out)').count()) await Wp(calm ? 200 : 800);
+        };
+        /** 컷신 하나를 끝까지 넘기며 쪽마다 한 장 (최대 max장): 쪽이 다 선 뒤(전환 · 카메라 · 글자 찍기 끝) 찍고 탭으로 넘긴다 */
         const film = async (name, max = 40) => {
           await pg.locator('.prologue').waitFor({ state: 'attached', timeout: 10000 });
           let k = 0;
           for (let it = 0; it < 160 && (await pg.locator('.prologue').count()); it++) {
-            await Wp(calm ? 250 : 700);
-            if (await pg.locator('.cut-sub.typing').count()) await Wp(1500);
+            await settle();
             if (!(await pg.locator('.prologue').count())) break;
             if (k < max) { k += 1; await shot(`${name}-${String(k).padStart(2, '0')}`); }
             if (await pg.locator('.prologue.go-wait').count()) { await tapAt(VW / 2, VH * 0.35).catch(() => {}); break; }
             await pg.locator('.prologue').tap({ position: { x: Math.round(VW / 2), y: Math.round(VH * 0.35) }, timeout: 3000 }).catch(() => {});
+            // 탭이 먹으면 표지가 hold를 떠난다 — 같은 쪽을 두 번 찍지 않게 잠깐 기다린다
+            await pg.waitForFunction(() => { const el = document.querySelector('.prologue'); return !el || el.dataset.beat !== 'hold'; }, null, { timeout: 1500, polling: 50 }).catch(() => {});
           }
           await pg.locator('.prologue').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {});
+        };
+        /** 막 장부에서 [다음으로]를 눌러 막 입구 카드까지 가서, 카드 글이 다 찍힌 뒤 한 장 (사이 동료 장면은 건너뛴다) */
+        const actCard = async (name) => {
+          const t1 = Date.now() + 40000;
+          let went = false;
+          while (Date.now() < t1 && !(await pg.locator('.actcard').count())) {
+            const sk = pg.locator('.prologue .cut-skip');
+            if (await sk.count()) { await sk.first().click({ force: true }).catch(() => {}); await pg.locator('.prologue').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {}); }
+            else if (!went && (await pg.locator('[data-go]').count())) { went = true; await pg.locator('[data-go]').last().click({ force: true }).catch(() => {}); }
+            await Wp(150);
+          }
+          await pg.locator('.actcard.named').waitFor({ state: 'attached', timeout: 10000 });
+          // 카드는 정해진 시간 뒤 저절로 닫힌다 — 무거운 기기(DPR 2.625)에선 글자 찍기가 늦어 끝나는 순간과 닫힘이 거의 겹친다.
+          // 그래서 쪽 글이 멈출 때마다 미리 한 장 떠 두고, 다 찍히면 그 순간을, 먼저 닫히기 시작하면(철문 · 카드 사라짐) 마지막으로 떠 둔 장을 쓴다.
+          let buf = null, last = '', still = 0, opened = false;
+          for (const t2 = Date.now() + 20000; Date.now() < t2;) {
+            const st = await pg.evaluate(() => { const c = document.querySelector('.actcard'); const s = c?.querySelector('.cut-sub'); return { gone: !c || !!document.querySelector('.ld-tip-wrap'), shut: !!document.querySelector('.shutterfx'), typing: !!s?.classList.contains('typing'), txt: s?.querySelector('.cut-lines')?.textContent ?? '' }; });
+            if (process.env.SWEEP_DEBUG) console.log(JSON.stringify(st));
+            // 철문은 카드를 열 때도 잠깐 있다 — 한 번 걷힌 뒤 다시 서면 닫히는 중
+            if (st.gone || (opened && st.shut)) break;
+            if (!st.shut) opened = true;
+            if (!st.typing && st.txt.trim()) { buf = await pg.screenshot(); break; }
+            still = st.txt && st.txt === last ? still + 1 : 0; last = st.txt;
+            if (still === 2) buf = await pg.screenshot();
+            await Wp(100);
+          }
+          if (process.env.SWEEP_DEBUG) console.log('actCard', name, buf ? 'buf' : 'none');
+          if (!buf) throw new Error(`${name}: 막 입구 카드를 찍지 못했다`);
+          await shot(name, buf);
         };
         const open = async () => {
           const url = srv.base + (sc.url ?? '?debug');
@@ -349,18 +413,22 @@ const writeReport = () => {
           await pg.waitForFunction(() => window.sliceApi, null, { timeout: 10000 });
           await Wp(500);
         };
-        const ctx = { pg, A, W: Wp, shot, film, tap, tapAt, open };
+        const skip = (why) => { throw new Skip(why); };
+        const ctx = { pg, A, W: Wp, shot, film, tap, tapAt, open, skip, actCard };
         try {
           await open();
           await Promise.race([sc.run(ctx), W(180000).then(() => { throw new Error('시간 초과 180초'); })]);
           if (!rec.shots.length) throw new Error('찍힌 장면 없음');
         } catch (e) {
+          if (e instanceof Skip) rec.skip = e.message;
+          else {
           rec.fail = e.message.split('\n')[0].slice(0, 200);
           try { await shot(`${sc.name}-FAIL`); } catch { /* 페이지가 닫혔다 */ }
+          }
         }
         rec.sec = Math.round((Date.now() - t0) / 1000);
         res.scenes.push(rec);
-        console.log(`${GG} ${group}/${sc.name}: ${rec.shots.length}장 · TXT ${rec.txt.length} · 오류 ${rec.errors.length}${rec.fail ? ` · 실패 ${rec.fail}` : ''} · ${rec.sec}s`);
+        console.log(`${GG} ${group}/${sc.name}: ${rec.shots.length}장 · TXT ${rec.txt.length} · 오류 ${rec.errors.length}${rec.fail ? ` · 실패 ${rec.fail}` : ''}${rec.skip ? ` · 건너뜀 ${rec.skip}` : ''} · ${rec.sec}s`);
         await ctx0.close().catch(() => {});
       }
       fs.writeFileSync(path.join(PARTS, `${GG}-${group}.json`), JSON.stringify(res, null, 1));

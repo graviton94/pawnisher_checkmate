@@ -45,6 +45,7 @@ export const crestHtml = (): string =>
  * - 컷 사이: 컷마다 고른 전환(디더 · 조리개 · 쇳물 · 백지 · 암전), 앞에 장 제목 카드(title), 뒤에 맺음 카드(end), 그림 없는 끝 정적(coda).
  * - 화자 명패: 대사 쪽에서 띠 위에 초상 액자 + 이름표(우리 편 왼쪽 · 적 · 도금왕 오른쪽 · NPC 종이 꼬리표). 같은 화자가 이어 말하면 명패를 그대로 둔다.
  * 탭 = 찍는 중이면 그 쪽을 한 번에 · 아니면 다음 쪽(제목 카드는 탭으로 넘김) · 「건너뛴다」 = 바로 끝. logo면 마지막에 베인 타이틀 문장.
+ * 박자 표지 `data-beat` (전수 점검 tools/qa/sweep.cjs가 읽는다): move = 전환 · 카메라 · 숨 · 글자 찍는 중, hold = 한 쪽이 다 서서 탭을 기다림.
  */
 export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown; faces?: Record<string, Face> } = {}): Promise<void> =>
   new Promise((resolve) => {
@@ -52,6 +53,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     clearPeeks();
     const el = document.createElement('div');
     el.className = 'prologue kit film';
+    el.dataset.beat = 'move';
     el.innerHTML = `<i class="film-lb lb-t" aria-hidden="true"></i><div class="film-view"><div class="pl-stage"></div><div class="film-over"></div></div><i class="pl-flash"></i><i class="film-lb lb-b" aria-hidden="true"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}`;
     document.body.appendChild(el);
     document.body.classList.add('cover-pl');
@@ -86,6 +88,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       if (ended) return;
       ended = true;
       token++;
+      el.dataset.beat = 'move';
       window.removeEventListener('resize', refit);
       const last = cuts[shown];
       // 맺음 카드가 남았으면(건너뛰지 않고 끝까지 본 경우) — 막을 닫고 카드
@@ -162,6 +165,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     };
     const show = async (k: number): Promise<void> => {
       const my = ++token;
+      el.dataset.beat = 'move';
       const pg = pages[k];
       const c = cuts[pg.c];
       if (pg.c !== shown) {
@@ -202,7 +206,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         lineFx(l);
       } else sfx('tap', 3);
       for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
-      if (my === token) { typing = false; sub.classList.remove('typing'); }
+      if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; }
     };
     const next = (): void => {
       if (ended) return;
@@ -215,6 +219,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         if (pending) { shot = pending; cam?.set(shot); pending = null; }
         const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
         pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = cutFill(l)));
+        el.dataset.beat = 'hold';
         return;
       }
       i += 1;
