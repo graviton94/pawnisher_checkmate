@@ -175,8 +175,10 @@ def status_of(head, pid, src):
         return 'cancel'
     if pid != sid and f'{pid} 받음' in head:  # 상자 안 부분 재발주(CI-01b 등)를 받으면 상자 머리에 「<ID> 받음」 (D-512)
         return 'done'
-    if head.rstrip().endswith('재발주') or pid != sid:
+    if head.rstrip().endswith('재발주'):
         return 'redo'
+    if pid != sid:  # 상자 안 두 번째 그림: 받은 상자의 부분 재발주(CI-01b)면 재발주, 새 상자의 짝 그림(GB-01b 격노, D-513)이면 새로
+        return 'redo' if re.search(r'받음|수령', head) else 'new'
     if re.search(r'받음|수령', head) or pid in src:
         return 'done'
     return 'new'
@@ -214,7 +216,7 @@ def main(out_path):
                 scene = ls[ls.index('[장면]') + 1].strip()
             if len(scene) > 90:
                 scene = scene[:88].rsplit(' ', 1)[0] + ' …'
-            send = f'{pid}.png' if pid != (name or '')[:-4] and st == 'redo' and pid.endswith(('a', 'b', 'c')) else (name or f'{pid}.png')
+            send = f'{pid}.png' if pid != (name or '')[:-4] and pid.endswith(('a', 'b', 'c')) else (name or f'{pid}.png')
             cards.append((pid, title, st, send, scene, body))
     out = []
     for i, (pid, title, st, send, scene, body) in enumerate(cards, 1):
