@@ -53,7 +53,7 @@ it('text export', () => {
   // 화면 문구: 코드 속 한글 문자열 전부 (파일:줄)
   L.push('', '## 5. 화면 문구 (코드 속 한글 문자열 전부)', '');
   const seen = new Set<string>();
-  for (const f of ['src/slice/main.ts', 'src/slice/battle.ts', 'slice.html']) {
+  for (const f of ['src/slice/main.ts', 'src/slice/battle.ts', 'index.html']) {
     L.push(`### ${f}`, '');
     readFileSync(f, 'utf8').split('\n').forEach((line, n) => {
       if (/^\s*(\/\/|\*|\/\*\*)/.test(line)) return;
