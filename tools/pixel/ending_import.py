@@ -1,11 +1,11 @@
 """
-받은 엔딩 발주 ED-01 ~ ED-05 반입 (D-423 · D-510).
-  python3 -I tools/pixel/ending_import.py            (다섯 다)
+받은 엔딩 발주 ED-01 ~ ED-08 반입 (D-423 · D-510 · D-514).
+  python3 -I tools/pixel/ending_import.py            (받은 것 모두)
   python3 -I tools/pixel/ending_import.py ED-01 ED-03 …
 - ED-01 영화 자막 판 · 제목 카드 크롬 시트: ui_kit_import 파이프라인(격자 찾기 · 마젠타 투명 · 발주 15색)
   → src/assets/ui/chrome/v2/{subtitle-plate,title-card,crown-emblem-1..4,speaker-narr|mono|line}.png
   9-slice로 늘리는 판은 변 가운데를 받은 판의 깨끗한 한 열 · 한 줄로 고른다(새로 그리지 않는다, D-386) — scene_recipe.ENDING_GRID flat
-- ED-02 ~ 05 장면: opening_import.one과 같은 균일 격자 · 그려 넣은 레터박스 띠 걷기 → public/scenes/<이름>.png, 대조판 build-res/order/<ID>-check.png
+- ED-02 ~ 08 장면: opening_import.one과 같은 균일 격자 · 그려 넣은 레터박스 띠 걷기 → public/scenes/<이름>.png, 대조판 build-res/order/<ID>-check.png
 """
 import os
 import sys

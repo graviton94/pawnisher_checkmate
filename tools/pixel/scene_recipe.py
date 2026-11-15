@@ -24,7 +24,11 @@ MANUAL_PITCH = {'credits-bg': 5.9, 'epilogue-hands': 1870 / 300,
     'op-windup': 941 / 140, 'prologue-04': 941 / 140, 'prologue-07': 941 / 180,
     # D-510: 엔딩 ED-02 · 04 · 05는 복원 오차가 칸이 잘수록 고르게 줄 뿐 뚜렷한 국소 최소가 없어 장면 관례 941/180 → 320×180.
     # ED-03만 174줄(5.41px)이 이웃(172 · 176 · 180줄)보다 오차가 뚜렷이 낮다(4.49 / 4.81 · 4.55 · 4.65) → 309×174
-    'end-k-sight': 941 / 180, 'end-k-reach': 941 / 174, 'end-k-gild': 941 / 180, 'law-plate': 941 / 180}
+    # D-514: ED-03 재발주본은 156줄(6.03px)이 이웃(154 · 158줄)보다 오차가 뚜렷이 낮다(4.52 / 5.13 · 4.72) → 277×156 (1차본은 174줄이었다).
+    'end-k-sight': 941 / 180, 'end-k-reach': 941 / 156, 'end-k-gild': 941 / 180, 'law-plate': 941 / 180,
+    # D-514: OP-03 · ED-06 · 07 · 08은 복원 오차가 칸이 잘수록 고르게 줄 뿐(130 → 190줄: OP-03 10.41 → 8.34 · ED-06 7.48 → 5.83 ·
+    # ED-07 7.80 → 5.98 · ED-08 5.49 → 4.29) 뚜렷한 국소 최소가 없어 장면 관례 941/180 → 320×180. 넷 다 띠를 그려 넣지 않고 끝까지 채워 왔다.
+    'op-legend': 941 / 180, 'end-t-throw': 941 / 180, 'end-t-silence': 941 / 180, 'end-t-step': 941 / 180}
 
 
 def options(name):
@@ -36,7 +40,8 @@ def options(name):
                 'companion-rest', 'companion-crossroad', 'returned-box', 'new-law', 'gilded-fallen',
                 'chained-door', 'old-spring', 'scarred-wall', 'crown-dais', 'casting-floor', 'gold-cast', 'crown-gears', 'white-land', 'wager-table',
                 'map-a1', 'map-a2', 'map-a3', 'map-a4', 'op-windup', 'prologue-04', 'prologue-07',
-                'end-k-sight', 'end-k-reach', 'end-k-gild', 'law-plate'):
+                'end-k-sight', 'end-k-reach', 'end-k-gild', 'law-plate',
+                'op-legend', 'end-t-throw', 'end-t-silence', 'end-t-step'):
         opts['uniform'] = True
     return opts
 
@@ -160,6 +165,8 @@ OPENING_GRID = {
     'OP-01': {'name': 'op-windup', 'trim_max': 30, 'trim_dark': 0.25},
     'OP-02': {'name': 'prologue-04', 'trim_max': 30, 'trim_dark': 0.25},
     'OP-04': {'name': 'prologue-07', 'trim_max': 30, 'trim_dark': 0.25},
+    # D-514 OP-03 금단의 승급대 소문: 띠 없이 끝까지 채워 왔다(같은 걷기 규칙 — 걷힌 줄 0)
+    'OP-03': {'name': 'op-legend', 'trim_max': 30, 'trim_dark': 0.25},
 }
 
 
@@ -176,8 +183,12 @@ ENDING_GRID = {
               'flat': {'subtitle-plate': {'slice': (8, 9, 7, 8), 'col': 20, 'row': 11},
                        'title-card': {'slice': (9, 17, 9, 18), 'col': 30, 'row': None}}},
     'ED-02': {'name': 'end-k-sight', 'trim_max': 30, 'trim_dark': 0.25},
-    # ED-03은 쓰며 재발주(D-510 — 나이트 입 벌림): 1차본 = ED-03-v1-source.png, 재발주본이 오면 src를 지운다
-    'ED-03': {'name': 'end-k-reach', 'src': 'ED-03-v1', 'trim_max': 30, 'trim_dark': 0.25},
+    # ED-03 재발주본(D-514 — 다문 말머리 · 보이는 쪽 몸에 박차 흠) = ED-03-source.png. 1차본(D-510 — 나이트 입 벌림)은 ED-03-v1-source.png로 보관
+    'ED-03': {'name': 'end-k-reach', 'trim_max': 30, 'trim_dark': 0.25},
     'ED-04': {'name': 'end-k-gild', 'trim_max': 30, 'trim_dark': 0.25},
     'ED-05': {'name': 'law-plate', 'trim_max': 30, 'trim_dark': 0.25},
+    # D-514 진엔딩 END-T 새 컷 셋 — 띠 없이 끝까지 채워 왔다
+    'ED-06': {'name': 'end-t-throw', 'trim_max': 30, 'trim_dark': 0.25},
+    'ED-07': {'name': 'end-t-silence', 'trim_max': 30, 'trim_dark': 0.25},
+    'ED-08': {'name': 'end-t-step', 'trim_max': 30, 'trim_dark': 0.25},
 }

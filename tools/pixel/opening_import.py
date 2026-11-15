@@ -1,6 +1,6 @@
 """
-받은 오프닝 장면 OP-01 · OP-02 · OP-04 반입 (D-423 · D-509).
-  python3 -I tools/pixel/opening_import.py            (셋 다)
+받은 오프닝 장면 OP-01 ~ OP-04 반입 (D-423 · D-509 · D-514).
+  python3 -I tools/pixel/opening_import.py            (넷 다)
   python3 -I tools/pixel/opening_import.py OP-01 …
 - 원본 build-res/order/<ID>-source.png (재발주 중 1차본은 <ID>-v1-source.png — OPENING_GRID src) → 균일 정사각 격자(간격 = scene_recipe.MANUAL_PITCH[장면 이름], 칸 가운데 최빈색 · 색 그대로)
   → 그려 넣은 레터박스 검은 띠 줄을 위 · 아래에서 걷는다(scene_recipe.OPENING_GRID trim_max · trim_dark) → public/scenes/<장면 이름>.png

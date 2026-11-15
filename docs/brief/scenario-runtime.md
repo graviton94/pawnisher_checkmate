@@ -4,23 +4,23 @@
 
 ## 구조
 
-- **본편 = 1~4승천.** 한 승천 = 한 번의 출하(1막 · 2막 · 3막 · 종막). 승천마다 **새 아홉째 폰**이 주인공이고, 기억을 잇는 것은 플레이어뿐이다.
-- 전투 난이도는 기존 인덱스 0~3을 그대로 쓴다(수치 조정 없음). 4승천을 마치면 선택 도전(인덱스 4~13, 10단계)이 열린다. `src/data/campaign.ts` (`STORY_COUNT = 4`, `CHALLENGE_START = 4`).
-- **1~3승천**: 왕위 결정 화면의 단추는 [돌아본다] [왕관을 쓴다]뿐 — 반드시 왕관을 쓰고 왕이 된 결말(END-K: 용해 주조와 지연된 배신)을 본다. 그 왕이 다음 승천의 도금왕이 되고, 그가 새긴 규정(LAW)이 다음 승천의 그림자 컷에 나온다.
-- **4승천**: [왕관을 쓴다] [왕관을 던진다]. 던지면 진엔딩(END-T: 왕관을 주조기 톱니에 던져 부수고 하얀 땅으로 걸어 나감). 써도 4승천 완주로 기록되고, 다시 도전해 진엔딩을 볼 수 있다.
-- 반장 여섯은 **불살 패배** — 쓰러뜨린 반장을 녹이지 않고 지나간다. 격파 컷 끝의 종이왕 속마음(STG-PROG)은 그 출하에서 몇 번째 반장인가 × 몇 승천인가로 고른다.
+- **본편 = 첫째~넷째 왕관.** 한 왕관 = 한 번의 출하(1막 · 2막 · 3막 · 종막). 왕관마다 **새 아홉째 폰**이 주인공이고, 기억을 잇는 것은 플레이어뿐이다.
+- 전투 난이도는 기존 인덱스 0~3을 그대로 쓴다(수치 조정 없음). 넷째 왕관을 마치면 선택 도전(인덱스 4~13, 10단계)이 열린다. `src/data/campaign.ts` (`STORY_COUNT = 4`, `CHALLENGE_START = 4`).
+- **첫째~셋째 왕관**: 왕위 결정 화면의 단추는 [돌아본다] [왕관을 쓴다]뿐 — 반드시 왕관을 쓰고 왕이 된 결말(END-K: 용해 주조와 지연된 배신)을 본다. 그 왕이 다음 왕관의 도금왕이 되고, 그가 새긴 규정(LAW)이 다음 왕관의 그림자 컷에 나온다.
+- **넷째 왕관**: [왕관을 쓴다] [왕관을 던진다]. 던지면 진엔딩(END-T: 왕관을 주조기 톱니에 던져 부수고 하얀 땅으로 걸어 나감). 써도 넷째 왕관 완주로 기록되고, 다시 도전해 진엔딩을 볼 수 있다.
+- 반장 여섯은 **불살 패배** — 쓰러뜨린 반장을 녹이지 않고 지나간다. 격파 컷 끝의 종이왕 속마음(STG-PROG)은 그 출하에서 몇 번째 반장인가 × 몇째 왕관인가로 고른다.
 
 ## 실행 연결
 
 | 장면 | 바이블 ID | 코드 |
 |---|---|---|
-| 프롤로그 · 그림자 컷 | PRO · SHD-A(같은 승천 재도전) · SHD-B(2~4승천 시작) | `script.ts` `PROLOGUE`(9컷 — PRO-01의 2 · 3줄은 OP-01 `op-windup` 컷, D-509 · D-512) · `shadowCuts(ch, law, retry)`(SHD-B 2~4줄은 `law-plate`, D-510 — 글 · 줄 ID는 `shadowCut`) — 재도전 판정은 `storyAttempts` |
+| 프롤로그 · 그림자 컷 | PRO · SHD-A(같은 왕관 재도전) · SHD-B(둘째~넷째 왕관 시작) | `script.ts` `PROLOGUE`(10컷 — PRO-01의 2 · 3줄은 OP-01 `op-windup` 컷, D-509 · D-512 · PRO-04의 4 · 5줄은 OP-03 `op-legend` 컷, D-514) · `shadowCuts(ch, law, retry)`(SHD-B 2~4줄은 `law-plate`, D-510 — 글 · 줄 ID는 `shadowCut`) — 재도전 판정은 `storyAttempts` |
 | 막 입구 카드 | ACT-2~4 (ACT-1은 화면에 안 나온다) | `ACT_CARD` |
-| 동료 장면 | CO-1~3 (CO-2는 승천별) | `companion-scenes.ts` |
+| 동료 장면 | CO-1~3 (CO-2는 왕관별) | `companion-scenes.ts` |
 | 반장 등장 · 격파 | BOS · STG-PROG | `BOSS_STORY` · `BOSS_CARD` · `stageProg` · `main.ts bossFallCut` |
 | 도금왕 | GLD | `GILDED_STORY` |
 | 왕위 결정 | THR | `TESTIMONY` · `THRONE_TEXT` · `promotion.ts` |
-| 결말 · 패배 | END-K · END-T · END-F · LAW | `promotionCuts`(END-K 7컷 — 바이블 컷을 ED-02~05 그림으로 나눔, D-510) · `trueEndingCuts` · `DEFEAT` · `STORY_LAW` · 그림자 컷 재생 `shadowCuts`(SHD-B 2~4줄 = `law-plate`) |
+| 결말 · 패배 | END-K · END-T · END-F · LAW | `promotionCuts`(END-K 7컷 — 바이블 컷을 ED-02~05 그림으로 나눔, D-510) · `trueEndingCuts`(END-T 6컷 — 바이블 컷을 ED-06~08 그림으로 나눔, D-514) · `DEFEAT` · `STORY_LAW` · 그림자 컷 재생 `shadowCuts`(SHD-B 2~4줄 = `law-plate`) |
 | 전투 · 튜토리얼 · 사건 | PART III · IV | `crew.ts DEATHS` · `hud.ts` · `tutorial.ts` · `events.ts` · `event-talk.ts` · `event-outcome.ts` |
 
 - 컷신은 글자 수 제한이 없다. 자막 띠(두 줄)는 그대로 두고 `uikit.cutPages`가 긴 줄을 문장 단위로 나눠 쪽을 넘긴다.
