@@ -1,5 +1,5 @@
 import '../fonts.css';
-import { BOSS_BODY, bossArtTemp, GIANTS, RAID, RAID_TEXT, type GiantType } from '../data/giants';
+import { BOSS_BODY, bossArtTemp, GIANTS, RAID_TEXT, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
 import { processTiles } from './process';
 import { FIT_TEXT, SET_TEXT, SPEED_METER } from '../data/hud';
@@ -47,7 +47,6 @@ import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, runLab
 import { promotionScene } from './promotion';
 import { effectHtml, effectNumbers } from './effect-text';
 import { pieceImg } from '../ui/sprites';
-import { BOSS_V, HUD_V, bossProposal, speedProposal } from './hud-proposal';
 import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
@@ -112,13 +111,13 @@ installPixelAnimate();
   const top = document.createElement('div');
   top.className = 'gtop';
   top.append(document.getElementById('turn-label')!, document.getElementById('coins')!);
-  // 가운데 움푹 칸: 머리(적의 수 · ? 48) → 반장 규칙 칩 → 적 의도 목록 → 연쇄 → 부품
+  // 가운데 움푹 칸: 머리 한 줄(적의 수 · 반장 칩 · ? — D-520) → 적 의도 목록 → 연쇄 → 부품
   const mid = document.createElement('div');
   mid.className = 'rmid';
   const head = document.createElement('div');
   head.className = 'r-head';
   head.innerHTML = `<span class="r-lbl">${HUD_TEXT.intentHead}</span>`;
-  head.appendChild(document.getElementById('btn-help')!);
+  head.append(document.getElementById('boss')!, document.getElementById('btn-help')!);
   const intents = document.createElement('button');
   intents.type = 'button';
   intents.id = 'intents';
@@ -133,7 +132,7 @@ installPixelAnimate();
   betChip.id = 'bet-chip';
   betChip.className = 'bet-chip';
   betChip.hidden = true;
-  mid.append(head, document.getElementById('boss')!, betChip, intents, chain, document.getElementById('parts')!);
+  mid.append(head, betChip, intents, chain, document.getElementById('parts')!);
   right.prepend(top);
   top.after(mid);
   right.querySelector('.rail-head')?.remove();
@@ -802,6 +801,7 @@ const chainLine = (): void => {
 let apKey = '';
 let apPrev: number | null = null;
 let coinPrev: number | null = null;
+let coinTurn = 0;
 /** 처치 환급 연출 (D-242): 카드를 내면 먼저 쓴 만큼 풀린 채로 보이다가, 처치 연출이 끝나면 돌아온 열쇠가 감긴다 */
 let apHold: number | null = null;
 const gauges = (): void => {
@@ -819,20 +819,35 @@ const gauges = (): void => {
       return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><i class="key"></i></i>`;
     }).join('')}</span><b>${ap}/${b.apMax}</b>`;
   }
-  if (coinPrev !== b.coins || !$('coins').childElementCount) {
+  if (coinPrev !== b.coins || coinTurn !== b.turn || !$('coins').childElementCount) {
     const was = coinPrev;
     coinPrev = b.coins;
-    // 속전 계기 (HB-02 · 피드백 8): 받은 하우징 안 진공관 여섯 — 남은 턴만큼 켜짐 · 흐림 · 꺼짐, 보상 나사는 고정 숫자 창 안에만
-    const reward = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1));
-    const tubes = Array.from({ length: SPEED_METER.tubes }, (_, i) => {
-      const st = speedTube(b.coins, i);
-      const fx = was !== null && was > b.coins && !calmNow() && speedTube(was, i) !== st ? ' out' : '';
-      return `<i class="tube t-${st}${fx}" style="--k:${i}"></i>`;
+    coinTurn = b.turn;
+    // 속전 계기 (D-520 — 시안 B 확정): 진공관 10 = 한 턴 한 관 · 큰 숫자 = 이기면 받는 나사. 설명 글 없이, 이번 턴 끝에 꺼질 관 하나만 깜빡
+    const reward = speedReward(b.coins);
+    const burns = b.turn > SLICE.coinGrace && b.s.winner === null;
+    const drop = was !== null && was > b.coins && !calmNow();
+    const tubes = Array.from({ length: SLICE.coins }, (_, i) => {
+      const st = i >= b.coins ? 'dead' : burns && i === b.coins - 1 ? 'next' : 'lit';
+      return `<i class="sp-t t-${st}${drop && i >= b.coins && i < was! ? ' out' : ''}"></i>`;
     }).join('');
-    if (HUD_V) return speedProposal($('coins'), { coins: b.coins, max: SLICE.coins, was, reward, per: Math.round(SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)), calm: calmNow() });
-    $('coins').innerHTML = `<span class="lbl">${HUD_TEXT.track}<span class="lbl-x"> 보상</span><i class="coin-key" aria-hidden="true"></i></span><span class="speed" title="${SPEED_METER.label}">${tubes}<b class="win" aria-label="${SPEED_METER.label} ${reward}">${reward}</b></span>`;
+    const from = drop ? speedReward(was!) : reward;
+    $('coins').innerHTML = `<span class="sp-win"><i class="coin-key" aria-hidden="true"></i><b class="sp-n">${from}</b></span><span class="sp-row${drop ? ' drop' : ''}">${tubes}</span>`;
+    $('coins').setAttribute('aria-label', `${HUD_TEXT.track} — ${SPEED_METER.label} ${reward}`);
+    if (drop) {
+      // 예비 → 관 꺼짐 계단 → 출렁 (CSS) · 숫자는 계단으로 굴러 내려가고 잃은 나사 「−4」가 튀어 디더로 지워진다
+      const box = $('coins').querySelector<HTMLElement>('.sp-win')!;
+      const pop = document.createElement('i');
+      pop.className = 'sp-pop';
+      pop.textContent = `−${from - reward}`;
+      box.appendChild(pop);
+      window.setTimeout(() => pop.remove(), 1400);
+      void rollNumber(box.querySelector<HTMLElement>('.sp-n')!, from, reward, box);
+    }
   }
 };
+/** 속전 나사 (D-520): 남은 관 × 관 하나 값 — 도전 난도 8부터 ×coinMul. 정산(finish) · 계기가 같은 식을 쓴다 */
+const speedReward = (coins: number): number => Math.round(coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1));
 
 /**
  * 탄 펼치기 · 접기 (D-209): 톱니가 걸리듯 드르륵 — 높이가 네 칸으로 끊겨 열리고 닫히며 칸마다 딸깍.
@@ -887,15 +902,14 @@ const refresh = (): void => {
   for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
   newParts.clear();
   $('parts').hidden = !parts.length;
-  // 반장 규칙 칩 (보고서 2-2): 진홍 단추에 반장 이름 — 누르면 규칙 S 창
+  // 반장 칩 (D-520 — 시안 Z + 한 줄 정리): 머리 줄 「적의 수」 곁에 얼굴 24 + 진홍 이름 — 누르면 규칙 S 창.
+  // 얼굴은 반장 얼굴 칩(발주 §0-D 23위 BF-01)을 받기 전까지 흑 킹 그림을 빌린다(D-386)
   $('boss').hidden = !b.boss;
-  if (b.boss) $('boss').textContent = BOSS_RULES[b.bossRule].name;
-  if (BOSS_V) {
-    // 시안 (?boss=x|y|z): 반장 이름 띠를 줄인 꼴 — 기본 화면에는 없다
-    const k = b.boss ? b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined) : undefined;
-    let at: { x: number; y: number } | null = null;
-    if (k) { const a = renderer.screenOf({ x: k.x, y: k.y + 1 }), c = renderer.screenOf({ x: k.x + 1, y: k.y + 1 }); at = { x: (a.x + c.x) / 2, y: a.y - (c.x - a.x) / 2 }; }
-    bossProposal(b, BOSS_RULES[b.bossRule].name, b.bossPat ? RAID.names[b.bossPat] : null, at);
+  if (b.boss && $('boss').dataset.rule !== b.bossRule) {
+    const name = BOSS_RULES[b.bossRule].name;
+    $('boss').dataset.rule = b.bossRule;
+    $('boss').innerHTML = `<span class="bc-face" aria-hidden="true">${pieceImg('K', 1, 'small', 24)}</span>${name}`;
+    $('boss').setAttribute('aria-label', HUD_TEXT.bossChip(name));
   }
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   gauges();
@@ -1033,7 +1047,7 @@ const syncTerms = (): void => {
   on('plate', b.boss && b.bossRule === 'plate');
   on('thorns', b.boss && (b.bossRule === 'thorns' || b.bossRule === 'gilded'));
   on('blast', b.blastPawns);
-  on('stun', (b.staggered ?? []).length > 0);
+  on('stun', (b.staggered ?? []).length > 0 || raidStunIds(b).length > 0);
   on('shock', (b.shocked ?? []).length > 0);
   on('graze', grazeNamed(meta));
   on('quirk', squad.some((u) => u.quirk));
@@ -1382,14 +1396,6 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
     refresh();
   }
   if (b.s.winner !== null) return finish();
-};
-/** 속전 진공관 하나의 상태 (HB-02): 관마다 남은 턴의 몫으로 켜짐 · 흐림 · 꺼짐, 마지막 몇 턴은 남은 관이 깜빡 */
-const speedTube = (coins: number, i: number): 'lit' | 'dim' | 'flick' | 'dead' => {
-  const per = SLICE.coins / SPEED_METER.tubes;
-  const share = (coins - i * per) / per;
-  if (share <= 0) return 'dead';
-  if (coins <= SPEED_METER.urgentTurns) return 'flick';
-  return share >= SPEED_METER.litAt ? 'lit' : 'dim';
 };
 let prevKills = 0;
 
@@ -3159,7 +3165,7 @@ const finishNow = (): void => {
     if (notes.length) window.setTimeout(() => toast(notes.join(' · '), 3600), 300);
     // 넘친 피해 10마다 나사 1 (오버킬 — 큰 숫자를 만들 이유, D-145)
     const overGold = Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10));
-    const earned = Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + overGold + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
+    const earned = speedReward(b.coins) + overGold + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
     gold += earned;
     // 나사 받기 (D-184): 판 가운데서 도트 나사가 튀어 올라 나사 칸으로 빨려 든다
     { const r = $('board').getBoundingClientRect(); screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, $('coins'), Math.round(earned / 6)); }
@@ -3896,8 +3902,15 @@ document.getElementById('deckrow')?.addEventListener('click', (e) => {
   if ((e.target as HTMLElement).closest('[data-deck]')) return deckView('view');
   if ((e.target as HTMLElement).closest('[data-crew]')) return crewView();
 });
+// 속전 계기 (D-520): 화면엔 관 줄 + 숫자만 — 누르면 규칙 한 줄(시스템 투) · 자세히는 용어집 「속전」
+$('coins').addEventListener('click', () => {
+  if (!b || document.body.classList.contains('between')) return;
+  sfx('tap');
+  toast(SPEED_METER.help(b.coins, speedReward(1)));
+});
 // 반장 칸 (D-208): 레일엔 이름 · 지금 일만 — 누르면 규칙 전체
 $('boss').addEventListener('click', () => {
+  sfx('tap');
   if (!b.boss) return;
   const r = BOSS_RULES[b.bossRule];
   const abilities = bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b));

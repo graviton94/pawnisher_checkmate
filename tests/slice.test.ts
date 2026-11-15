@@ -40,12 +40,20 @@ describe('수직 조각: 분대 + 명령 덱 (D-142)', () => {
     expect(added - plain).toBe(8);
     expect(both).toBe(Math.floor((me.atk + 8) * 2) - foe.def);
   });
-  it('턴을 끝내면 예고대로 두고 · 나사가 한 칸 사라지고 · 새 손패', () => {
+  it('턴을 끝내면 예고대로 두고 · 나사가 한 칸 사라지고(배치 턴 제외 — D-520) · 새 손패', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7);
+    expect(SLICE.coins).toBe(10);
     const r = endTurn(b, true);
     expect(typeof r).toBe('object');
-    expect(b.coins).toBe(SLICE.coins - 1);
+    expect(b.coins).toBe(SLICE.coins);
     if (b.s.winner === null) expect(b.hand).toHaveLength(SLICE.hand - ((b.shocked ?? []).length ? SLICE.shockDraw : 0)); // 기어 쇼크 손패 −1 (D-230)
+  });
+  it('속전 (D-520): 배치 턴 뒤로는 턴마다 진공관 하나 — 2턴 끝에 9관', () => {
+    const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7);
+    endTurn(b, true);
+    if (b.s.winner !== null) return;
+    endTurn(b, true);
+    if (b.s.winner === null) expect(b.coins).toBe(SLICE.coins - 1);
   });
   it('예고한 적이 쓰러지면 그 예고는 사라진다', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_COMMANDS, 7);

@@ -1966,7 +1966,8 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.shocked = b.noShock ? [] : [...new Set(events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.damage > 0 && !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 0).map((h) => h.targetId) : [])))];
   if (b.boss) b.staggered = b.staggered.filter((id) => findPiece(b.s, id)?.type !== 'K');
   burnFallen(b);
-  b.coins = Math.max(0, b.coins - 1);
+  // 속전 (D-520): 배치 턴(첫 coinGrace 턴)은 진공관을 태우지 않는다 — 10관 = 2턴부터 한 턴 한 관
+  if (b.turn > SLICE.coinGrace) b.coins = Math.max(0, b.coins - 1);
   // 피의 계약 (양날): 턴 끝마다 킹 HP −4 (쓰러지지는 않는다 — HP 1에서 멈춘다)
   if (b.s.winner === null && has(b, 'bloodPact')) {
     const k = kingOf(b.s, 0);

@@ -758,8 +758,7 @@ body.slice.lay-f #right > .rmid {
 #btn-help.btn.k-iron { position: relative; flex: none; width: max(48px, calc(var(--px) * 24)); min-width: 0; padding: 0; font: 700 24px/1 Galmuri11, sans-serif; }
 /* 새 용어가 들어왔다: 단추 오른쪽 위 붉은 점(2×2도트 · 계단 깜빡) — 단추 안에 붙어 판 위로 새지 않는다 */
 #btn-help.has-new::after { content: ''; position: absolute; top: calc(var(--px) * -2); right: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; animation: kblink 1.2s steps(2, jump-none) infinite; }
-/* 반장 규칙 칩: 진홍 단추(UI-02) — 누르면 규칙 S 창 */
-#boss.btn.k-crimson { width: 100%; min-width: 0; padding: 0 var(--s1); font: 700 12px/1.2 Galmuri11, sans-serif; white-space: nowrap; }
+/* 반장 규칙 칩: 머리 한 줄 안 얼굴 + 진홍 이름 (D-520 — hud-rarity.css) — 누르면 규칙 S 창 */
 #boss[hidden] { display: none; }
 /* 적 의도 목록 (UI-07 아이콘): 적 그림 · 의도 · 대상 · 값 — 줄 32 · 최대 5 */
 .intents { display: grid; gap: 0; min-width: 0; padding: 0; margin: 0; background: none; border: 0; text-align: left; color: var(--t-body); cursor: pointer; }
@@ -819,11 +818,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   #vials .keys { gap: 0; margin: 0 calc(var(--px) * -2); }
   #hand > .hc .hc-head { grid-template-columns: calc(var(--px) * 12) minmax(0, 1fr); }
   #hand > .hc .art, #hand > .hc .art img { width: calc(var(--px) * 12); height: calc(var(--px) * 12); }
-  .gtop .coins .lbl { display: none; }
-  .gtop .coins > b { grid-column: 2 / 4; justify-self: end; }
-  body.slice.lay-f #right > .gtop { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .gtop .coins .boiler { margin-inline: 0; }
-  body.slice.lay-f #right > .gtop { padding: 0; column-gap: 2px; }
+  body.slice.lay-f #right > .gtop { padding: 0; }
   .gtop .turn-label :is(.th-lamp, .th-cog, .th-dots) { display: none; }
 }
 

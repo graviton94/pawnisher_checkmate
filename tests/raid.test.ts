@@ -86,7 +86,7 @@ describe('패링 · 헛방 · 경직 창 (D-518)', () => {
     const r = endTurn(b, true);
     if (r === 'warn') throw new Error('warn');
     expect(mine(b, 'R').hp).toBe(hp0);
-    expect(r.events.some((e) => e.type === 'mark' && e.tag === '경직!')).toBe(true);
+    expect(r.events.some((e) => e.type === 'mark' && e.tag === '기절!')).toBe(true);
     expect(b.giantStun).toEqual([gid(b)]);
     expect(anchor(b)).toEqual(pos0); // 걷지 않았다
     expect(b.giantAim?.[gid(b)]).toBeUndefined(); // 겨누지 않는다

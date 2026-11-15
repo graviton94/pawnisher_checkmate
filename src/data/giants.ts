@@ -1,6 +1,7 @@
 import type { PieceType } from '../engine/types';
 import { PRELOAD } from './preload-list';
 import { josa } from './josa';
+import { TERM } from './terms';
 
 /**
  * 거대 주물 (D-484, GDD 21장 §3) — 거푸집을 잘못 부어 규격의 두 배로 굳은 기물. 판의 2×2를 차지한다.
@@ -88,7 +89,7 @@ export const RAID = {
   dmg: { slam: 1.5, sweep: 0.9, charge: 1.3, corner: 1.1 } as Record<RaidPattern, number>,
   /** 2×2 넓은 과녁만큼 반장 킹 HP (네 칸 어디든 킹 — 피격 면적이 넷) */
   hp: 1.5,
-  /** 패링 → 경직 창: 받는 피해 배율 */
+  /** 패링 → 기절 창: 받는 피해 배율 (D-520: 반장 「경직」 → 「기절」) */
   parryWeak: 1.6,
   /** 회피(헛방) → 약점 창: 받는 피해 배율 — D-518 측정: 1.25면 보통 봇이 거의 매 턴 피해 반장이 도로 쉬워졌다(77%) → 1(철갑 벗김만, 작은 보상) */
   whiffWeak: 1,
@@ -103,18 +104,18 @@ export const RAID = {
 /** 레이드 표지 · 안내 (docs/voice.md ⑨ 표지 · ① 시스템 투) */
 export const RAID_TEXT = {
   /** 띠 (⑨ 상태 — 명사구 + 덧말) */
-  parry: (name: string): string => `패링! ${name} 경직 — 받는 피해 ×${RAID.parryWeak}`,
+  parry: (name: string): string => `${TERM.parry}! ${name} ${TERM.stun} — 받는 피해 ×${RAID.parryWeak}`,
   parryImmune: (name: string): string => `막음 — ${josa(name, '이')} 버틴다`,
   whiff: (name: string): string => `헛방 — ${name} 철갑이 벗겨진다`,
   /** 몸 위 짧은 글 (⑨ 터짐) */
-  stunTag: '경직!',
+  stunTag: `${TERM.stun}!`,
   weakTag: '약점!',
   whiffTag: '헛방!',
   holdTag: '막음!',
-  /** 판 위 딱지 글자 (약점 창 — 경직은 별 딱지) */
+  /** 판 위 딱지 글자 (약점 창 — 기절은 별 딱지) */
   weakChip: '약',
   /** 토스트 (① 시스템 투) */
-  stunToast: (name: string): string => `${josa(name, '이')} 경직되었습니다. 이번 턴은 움직이지 않고, 받는 피해가 ×${RAID.parryWeak}입니다.`,
+  stunToast: (name: string): string => `${josa(name, '이')} ${TERM.stun}했습니다. 이번 턴은 움직이지 않고, 받는 피해가 ×${RAID.parryWeak}입니다.`,
   whiffToast: (name: string): string => `${name}의 철갑이 벗겨졌습니다.`,
 };
 

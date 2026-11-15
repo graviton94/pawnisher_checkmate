@@ -1,3 +1,6 @@
+import { RAID } from './giants';
+import { TERM } from './terms';
+
 /**
  * 대국 화면 문구 · 용어 사전 (D-198). 이름 규칙은 docs/world.md §6.
  * 트랙 이름 후보 (사용자 승인 4번): ① 증기 (D-208에서 「속전」으로 바꿈 — 뜻이 안 읽힌다는 사용자 지적 — 보일러 증기가 턴마다 빠지고 이기면 남은 만큼 나사) · ② 공정 시계 · ③ 출하 기한
@@ -55,8 +58,11 @@ export const HUD_TEXT = {
   /** 새 용어가 사전에 들어왔다 (D-233) */
   /** 경보 반장 (D-274) — ⑨ 표지 */
   alarm: '경보 — 이번 적 차례 공격 ×1.35',
-  /** 공정 열기 (D-454): 턴 표시 · 내 차례 띠 — 피해 배율을 숫자로 */
-  turnHeat: (turn: number, heat: number): string => (turn === 1 && heat < 1 ? '1턴 · 배치' : heat >= 1 ? `${turn}턴 · 최대` : `${turn}턴 · ${Math.round(heat * 100)}%`),
+  /**
+   * 공정 열기 (D-454): 턴 표시 · 내 차례 띠 — 피해 배율을 숫자로.
+   * D-520: 「2턴 · 50%」가 같은 줄의 속전 계기처럼 읽혀(사용자) 「열기」를 붙인다 — 띠(heatBand)와 같은 말.
+   */
+  turnHeat: (turn: number, heat: number): string => (turn === 1 && heat < 1 ? '1턴 · 배치' : heat >= 1 ? `${turn}턴 · 열기 최대` : `${turn}턴 · 열기 ${Math.round(heat * 100)}%`),
   /** 교착 압박 (2026-11-14): 압박이 켜지는 턴 알림 · 지금 턴을 끝내면 적 킹이 녹는다 (시스템 투) */
   // 띠는 한 줄(경보 띠 길이) — 규칙 풀이는 용어집 「교착 압박」
   stallWarn: (quiet: number) => `교착 감시 — 피해 없는 턴 ${quiet}번이면 압박`,
@@ -91,6 +97,8 @@ export const HUD_TEXT = {
   track: '속전',
   /** 오른쪽 레일 적 의도 목록 (패스 4 D-396 — ITB식: 적마다 아이콘 + 대상 + 값) */
   intentHead: '적의 수',
+  /** 머리 줄 반장 칩 (D-520) — 화면엔 얼굴 + 이름만, 읽어 주기 · 누름 뜻 */
+  bossChip: (name: string) => `${name} 규칙 보기`,
   logOpen: '적의 수 — 누르면 지난 기록',
   logTitle: '기록',
   logNone: '아직 기록이 없습니다.',
@@ -150,7 +158,7 @@ export const KEYWORDS: [string, string, TermGate][] = [
   ['연쇄', '이번 턴에 적을 칠 때마다 쌓입니다.\n같은 적을 다시 치면 둘, 하나마다 다음 공격 +4.', 'base'],
   ['승격', '끝 줄에 닿은 폰은 퀸이 됩니다.\n그 대국에서만 유지됩니다.', 'base'],
   ['막사의 호출', '보병 세트: 폰이 없는데 폰 카드를 쥐고 있으면\n턴 시작에 킹 곁에 임시 폰이 섭니다.', 'call'],
-  ['속전', '빨리 이길수록 나사가 많습니다.', 'base'],
+  ['속전', '첫 턴 뒤 턴이 끝날 때마다 진공관 하나가 꺼집니다.\n이기면 남은 관만큼 나사를 받습니다.', 'base'],
   ['나사', '출하 내내 쓰는 돈.\n고물상에서 씁니다.', 'base'],
   ['지휘', '아무 기물이나 움직이는 공용 카드.\n같은 기물을 한 턴에 여러 번 부릴 수 있습니다.', 'base'],
   ['교착 압박', '12턴부터 피해 없는 턴이 두 번 이어지면\n적 킹이 턴마다 최대 HP 10%씩 녹습니다.', 'stall'],
@@ -169,7 +177,8 @@ export const KEYWORDS: [string, string, TermGate][] = [
   ['탄 카드', '움직일 기물이 없는 카드.\n그 대국 동안만 탑니다.', 'burn'],
   ['유품', '쓰러진 분대원의 태엽.\n이기면 나사가 됩니다.', 'heir'],
   ['원수', '내 분대원을 쓰러뜨린 적.\n더 세져서 다시 나타납니다.', 'nemesis'],
-  ['기절', '헛친 적은 한 차례 쉬고,\n방열판이 0이 됩니다.', 'stun'],
+  ['기절', `헛친 적 · ${TERM.parry}에 막힌 반장은 한 차례 쉽니다.\n방열판을 잃고, 반장은 받는 피해 ×${RAID.parryWeak}.`, 'stun'],
+  [TERM.parry, `반장의 내리찍기를 방열판으로 다 받아내면\n반장이 ${TERM.stun}합니다.`, 'stun'],
   ['회피 반격', '붉은 칸에서 빠져나오며 치면\n피해 ×1.5.', 'graze'],
   ['철갑', '두 턴마다 다시 차는 반장 방열판.', 'plate'],
   ['줄 폭격', '두 턴마다 붉은 줄 하나를 칩니다.', 'plate'],
@@ -194,7 +203,7 @@ export const KEYWORDS: [string, string, TermGate][] = [
 export const TERM_ICON: Record<string, string> = {
   태엽: 'key', 버팀: 'life', '심장 톱니': 'heartCog', 부적: 'charm', 방열판: 'vent', 연쇄: 'chain', '연쇄 소모': 'chain',
   '청록 합 표지': 'signAdd', '주황 곱 표지': 'signMul', 보충병: 'reserve', 부품: 'partBelt', 기벽: 'quirk', '회피 반격': 'counter',
-  '기어 쇼크': 'gearShock', 기절: 'stun', 승격: 'promote', 속전: 'speed',
+  '기어 쇼크': 'gearShock', 기절: 'stun', [TERM.parry]: 'vent', 승격: 'promote', 속전: 'speed',
 };
 
 /** 반장 칭호 (D-249 등장 씬 — 이름 아래 한 줄, D-158 칭호 문체) */
@@ -263,7 +272,11 @@ export const SERVICE_CARDS = {
 } as const;
 
 /**
- * 속전 계기 (HB-02, 2026-11-14): 받은 하우징의 진공관 홈 수 · 관 하나가 맡는 남은 턴 몫에 따른 상태 문턱.
- * 관 i의 몫 = (남은 턴 − i × 턴/관) ÷ (턴/관). 0.75 이상 켜짐 · 0 초과 흐림 · 0 이하 꺼짐, 마지막 두 턴은 남은 관이 깜빡.
+ * 속전 계기 (D-520, 사용자 확정 — 시안 B 「한 턴 한 관」): 진공관 10개 = SLICE.coins, 관 하나 = 한 턴(10%).
+ * 화면은 관 줄 + 큰 나사 숫자만, 이번 턴 끝에 꺼질 관 하나만 깜빡인다. 자세한 규칙은 계기를 눌렀을 때(help) · 용어집 「속전」.
  */
-export const SPEED_METER = { tubes: 6, litAt: 0.75, urgentTurns: 2, label: '이기면 받는 나사' } as const;
+export const SPEED_METER = {
+  label: '이기면 받는 나사',
+  /** 계기를 누르면 (① 시스템 투) — 첫 턴(배치)은 관을 태우지 않는다 */
+  help: (left: number, per: number): string => `속전 — 첫 턴 뒤 턴이 끝날 때마다 진공관 하나가 꺼집니다. 이기면 남은 관 ${left}개 × 나사 ${per}.`,
+} as const;

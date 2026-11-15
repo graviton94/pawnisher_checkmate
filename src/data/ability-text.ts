@@ -3,6 +3,7 @@ import { BOSS, BOSS_NUM, FOE_MARKS, FOE_TRAITS, TRAIT, type BossRule, type FoeMa
 import { PART_NUM, SLICE_PARTS, type SlicePartId } from '../slice/parts';
 import type { FormId, PieceType } from '../engine';
 import { FORMS } from './forms';
+import { TERM } from './terms';
 
 /** 능력 표시 계약: 명칭·조건/행동·상세 효과 세 줄. 수치는 전투 데이터에서 읽는다. */
 export interface AbilityText { name: string; description: string; effect: string }
@@ -49,18 +50,18 @@ export const giantAbilityText = (t: GiantType): AbilityText[] => [
 ];
 
 /** 레이드 (D-518): 패링 · 헛방 장 — 2×2 반장 · 거대 주물이 함께 쓴다 */
-const RAID_PARRY: AbilityText = { name: '패링', description: '내리찍기를 방열판으로 다 받아내면', effect: `경직 — 한 턴 쉼 · 받는 피해 ×${RAID.parryWeak}` };
+const RAID_PARRY: AbilityText = { name: TERM.parry, description: '내리찍기를 방열판으로 다 받아내면', effect: `${TERM.stun} — 한 턴 쉼 · 받는 피해 ×${RAID.parryWeak}` };
 const RAID_WHIFF: AbilityText = { name: '헛방', description: '예고 칸에서 모두 빠지면', effect: RAID.whiffWeak > 1 ? `철갑 벗김 · 받는 피해 ×${RAID.whiffWeak}` : '철갑 벗김' };
 
 /** 2×2 특별 보스 (D-513): [2×2 몸] / 걷기 / : 내리찍기 — 반장 규칙 장 앞에 */
 /**
- * 레이드 반장 (D-518): rule이 있으면 [2×2 몸] 효과 줄 = 번갈아 쓰는 패턴, now = 이번 턴 패턴 장, stunned = 경직 중 장.
+ * 레이드 반장 (D-518): rule이 있으면 [2×2 몸] 효과 줄 = 번갈아 쓰는 패턴, now = 이번 턴 패턴 장, stunned = 기절 중 장.
  */
 export const bossBodyAbilityText = (rage = false, rule?: string, now?: RaidPattern, stunned = false): AbilityText[] => {
   const list = rule ? (rage ? RAID.rage : RAID.patterns)[rule] : undefined;
   return [
     { name: '2×2 몸', description: BOSS_BODY.move, effect: list ? `${list.map((q) => RAID.names[q]).join(' · ')} 번갈아` : rage ? BOSS_BODY.hitRage : BOSS_BODY.hit },
-    ...(stunned ? [{ name: '경직', description: '이번 턴 걷지도 치지도 못한다', effect: `받는 피해 ×${RAID.parryWeak}` }] : now ? [{ name: `이번 턴 · ${RAID.names[now]}`, description: '붉은 칸을 친다', effect: `${RAID.hits[now]} · 피해 ×${RAID.dmg[now]}` }] : []),
+    ...(stunned ? [{ name: TERM.stun, description: '이번 턴 걷지도 치지도 못한다', effect: `받는 피해 ×${RAID.parryWeak}` }] : now ? [{ name: `이번 턴 · ${RAID.names[now]}`, description: '붉은 칸을 친다', effect: `${RAID.hits[now]} · 피해 ×${RAID.dmg[now]}` }] : []),
     RAID_PARRY,
     RAID_WHIFF,
     { name: '한 몸', description: '네 칸 어디를 쳐도 킹 하나', effect: '피해는 한 공격에 한 번 · 밀리지 않는다' },
