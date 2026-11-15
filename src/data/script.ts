@@ -337,8 +337,18 @@ export const shadowCuts = (chapter: number, law?: string, retry = chapter === 0)
  * law = 이번에 새기는 규정 · mirror = 마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄
  * D-504 영화 문법: 장 제목 카드 → 왕관을 씀 → 왕의 눈(ED-02, 가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 뻗지 않은 손(ED-03) → 금빛 굳음 → 금칠이 덮이고 문을 잠금(ED-04) → 규정판(ED-05) → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
  */
-/** 왕관 끝 왕좌 컷 (D-516 · CN-04~06): 그 왕관의 새 도금왕 속마음(END-K-3-2-A*)을 그의 왕좌 그림에. 받은 왕관만 */
-const THRONE: Partial<Record<number, string>> = { 0: 'crown-1-throne' };
+/**
+ * 왕관 끝 왕좌 컷 (D-516 · D-519 · CN-04~06): 그 왕관의 새 도금왕 속마음(END-K-3-2-A*)을 그의 왕좌 그림에.
+ * img = 그림 · shot = 컷 카메라 · mono = 속마음 카메라 (그림 안 초점)
+ */
+const THRONE: Partial<Record<number, { img: string; shot: Shot; mono: Shot }>> = {
+  // CN-04 첫째: 왕좌에 앞으로 기운 금 킹(가운데 오른쪽) → 발치 찢어진 종이 왕관(왼쪽 아래)
+  0: { img: 'crown-1-throne', shot: at(0.62, 0.45, 1), mono: at(0.25, 0.85, 2) },
+  // CN-05 둘째: 왕좌에 곧게 앉은 금 킹(왼쪽) → 벽에 겹친 전대 왕과 그의 그림자(오른쪽) — 「전대의 왕이 비겁했던 게 아니야」
+  1: { img: 'crown-2-throne', shot: at(0.3, 0.42, 1), mono: at(0.68, 0.42, 2) },
+  // CN-06 셋째: 금빛을 사방으로 뿜는 금 킹(가운데) → 흘러내리는 금칠 · 십자관
+  2: { img: 'crown-3-throne', shot: at(0.5, 0.45, 1), mono: at(0.5, 0.28, 2) },
+};
 export const promotionCuts = (chapter: number, _crew: string, law: string, mirror: string, company?: StoryCompany): Cut[] => {
   const who = crier(company);
   const K3 = [
@@ -373,8 +383,8 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       n('동료들의 믿음과 배신감이 뒤섞인 마지막 비명이 붉은 용광로 속으로 쏟아졌다. 곧이어 파이프를 타고 솟구친 황금빛 쇳물이 그의 작은 폰의 몸을 빈틈없이 감싸며 킹의 거푸집으로 굳어갔다.', { shot: at(0.5, 0.6), sfx: 'land', fx: 'gold' }),
       ...(THRONE[chapter] ? [] : [m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.5, 0.3, 2), pause: 700, mood: 'gilt' })]),
     ]), alt: 'promote-gild', slug: '금빛 거푸집', shot: at(0.5, 0.15, 1), trans: 'white' },
-    // CN-04 새 도금왕의 왕좌 (D-516 — 첫째 왕관 끝 END-K-3-2-A1): 왕좌에 앞으로 기운 금 킹(가운데 오른쪽) → 발치 찢어진 종이 왕관(왼쪽 아래)
-    ...(THRONE[chapter] ? [{ ...sceneCut(THRONE[chapter]!, [m(K3[Math.max(0, Math.min(2, chapter))], { shot: at(0.25, 0.85, 2), pause: 700, mood: 'gilt' })]), alt: 'gold-cast', slug: '새 도금왕의 왕좌', shot: at(0.62, 0.45, 1), trans: 'cut' as const }] : []),
+    // CN-04 ~ 06 새 도금왕의 왕좌 (D-516 · D-519 — 첫째 ~ 셋째 왕관 끝 END-K-3-2-A1 ~ A3)
+    ...(THRONE[chapter] ? [{ ...sceneCut(THRONE[chapter]!.img, [m(K3[Math.max(0, Math.min(2, chapter))], { shot: THRONE[chapter]!.mono, pause: 700, mood: 'gilt' })]), alt: 'gold-cast', slug: '새 도금왕의 왕좌', shot: THRONE[chapter]!.shot, trans: 'cut' as const }] : []),
     // ED-04 새 도금왕이 되어 가는 과정 (D-510 사용자 결정 — 옛 「안에서 잠그는 문」 대신): 위 고리에서 쏟아지는 금물이 금왕관을 쓴 폰을 덮는다.
     // D-514 사용자 결정: 그는 종이 왕관을 버리고 금왕관을 골라 썼다(END-K-1-1) — 금은 그 금왕관 위로 굳는다
     // 문을 잠그는 일은 서술 끝에 남긴다(TESTIMONY · ENDING_A · 그림자 컷이 「안에서 잠근 왕」을 부른다)

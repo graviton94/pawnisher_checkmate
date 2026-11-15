@@ -684,7 +684,7 @@
 
 - **그림**: `crown-1-throne.png` — `crown-1-throne` (CN-04, D-516) — 금칠이 흘러내리는 새 도금왕이 왕좌에 앞으로 기울어 앉았다. 금박이 벗겨진 곳마다 흰 몸, 발치 붉은 깔개 위에 찢어진 종이 왕관 조각, 뒤로 킹 깃발 · 금빛 통제실 창
 - **들어오는 전환**: 바로 · 첫 샷 62·45 ×1
-- **메모**: 첫째 왕관만 이 그림(CN-04). 둘째 · 셋째 왕관은 속마음이 `gold-cast`에 남는다 — 아래 변주(CN-05 · 06 받으면 같은 자리).
+- **메모**: 왕관마다 왕좌 그림이 다르다 — 첫째 CN-04 `crown-1-throne`(앞으로 기운 금 킹 → 발치 종이 왕관) · 둘째 CN-05 `crown-2-throne`(곧게 앉은 금 킹 → 벽에 겹친 전대 왕 그림자, D-519) · 셋째 CN-06 `crown-3-throne`(빛을 뿜는 금 킹, D-519). 속마음은 아래 변주.
 
 | ID | 형식 | 화자 | 원문 | 연출 |
 |---|---|---|---|---|
@@ -725,8 +725,8 @@
 
 | ID | 자리 | 원문 |
 |---|---|---|
-| END-K-3-2-A2 | 셋째 컷 속마음 · 둘째 왕관 | ‘…이제야 알겠군. 전대의 왕이 비겁했던 게 아니야. 이 눈부신 자리에 서면 그 누구라도 이렇게 될 수밖에 없는 거다.’ |
-| END-K-3-2-A3 | 셋째 컷 속마음 · 셋째 왕관 | ‘…보아라. 너희의 숭고한 희생이 내 몸 위에서 이토록 찬란한 황금빛으로 완성되었다. 이제 아무도 우리를 불량품이라 부르지 못해. 너희는 내 안에서 영원히 살아, 이 공장의 가장 높은 왕으로 군림할 것이다…!’ |
+| END-K-3-2-A2 | 왕좌 컷 속마음 · 둘째 왕관 (`crown-2-throne`) | ‘…이제야 알겠군. 전대의 왕이 비겁했던 게 아니야. 이 눈부신 자리에 서면 그 누구라도 이렇게 될 수밖에 없는 거다.’ |
+| END-K-3-2-A3 | 왕좌 컷 속마음 · 셋째 왕관 (`crown-3-throne`) | ‘…보아라. 너희의 숭고한 희생이 내 몸 위에서 이토록 찬란한 황금빛으로 완성되었다. 이제 아무도 우리를 불량품이라 부르지 못해. 너희는 내 안에서 영원히 살아, 이 공장의 가장 높은 왕으로 군림할 것이다…!’ |
 
 ### 7-3. 진엔딩 END-T — 왕관 파괴와 백지로의 해방 (넷째 왕관 「왕관을 던진다」)
 
@@ -1786,12 +1786,12 @@
 |---|---|---|
 | 프롤로그 10컷 | `prologue-00` ~ `prologue-07` · `op-windup` · `op-legend` | 있음 — OP-01 ~ 04 받음 (D-512 · D-514) |
 | 그림자 컷 | `prologue-shadow`(재도전) · `new-law` · `law-plate` + 왕관 시작 `crown-2-open` · `crown-3-open` · `crown-4-open`(둘째~넷째 왕관 시작) | 있음 — CN-01 ~ 03 받음 (D-516) |
-| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 있음 — AC-01 ~ 03 재발주 중 |
+| 막 입구 | `act-2` · `chained-door`(3막) · `act-4` | 있음 — AC-01 ~ 03 받음 (D-519) |
 | 반장 등장 6 + 도금왕 4 | `boss-*` | 있음 |
 | 반장 격파 6 | `boss-fall-*` | 있음 |
 | 동료 장면 CO-1 · CO-2 · CO-3 | `companion-rest` · `companion-crossroad`(둘째 왕관 `old-spring` · 넷째 왕관 `scarred-wall`) · `chained-door` | 있음 |
 | 왕위 결정 | `gilded-fallen` | 있음 |
-| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · (첫째 왕관 `crown-1-throne`) · `end-k-gild` · `law-plate` | 있음 — ED-02 ~ 05 · CN-04 받음 (D-514 · D-516) |
+| 왕이 된 결말 7컷 | `crown-dais` · `end-k-sight` · `casting-floor` · `end-k-reach` · `gold-cast` · (왕관별 왕좌 `crown-1-throne` · `crown-2-throne` · `crown-3-throne`) · `end-k-gild` · `law-plate` | 있음 — ED-02 ~ 05 · CN-04 ~ 06 받음 (D-514 · D-516 · D-519) |
 | 진엔딩 6컷 | `gilded-fallen` · `end-t-throw` · `crown-gears` · `end-t-silence` · `white-land` · `end-t-step` | 있음 — ED-06 ~ 08 받음 (D-514) |
 | 패배 3컷 | `end-fail` · `end-f-box` · `end-f-unwind` | 있음 — ED-09 ~ 11 받음 (D-516) |
 | 크레딧 | `credits-bg` | 있음 — ED-12 받음 (D-516) — 오른쪽 빈 어둠에 크레딧 글 |

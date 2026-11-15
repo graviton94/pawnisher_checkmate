@@ -15,12 +15,12 @@
 | 장면 | 바이블 ID | 코드 |
 |---|---|---|
 | 프롤로그 · 그림자 컷 | PRO · SHD-A(같은 왕관 재도전) · SHD-B(둘째~넷째 왕관 시작) | `script.ts` `PROLOGUE`(10컷 — PRO-01의 2 · 3줄은 OP-01 `op-windup` 컷, D-509 · D-512 · PRO-04의 4 · 5줄은 OP-03 `op-legend` 컷, D-514) · `shadowCuts(ch, law, retry)`(SHD-B 2~3줄은 `law-plate`, D-510 · 4줄 속마음은 왕관 시작 그림 `crown-2-open` · `crown-3-open` · `crown-4-open`(CN-01~03), D-516 — 글 · 줄 ID는 `shadowCut`) — 재도전 판정은 `storyAttempts` |
-| 막 입구 카드 | ACT-2~4 (ACT-1은 화면에 안 나온다) | `ACT_CARD` |
+| 막 입구 카드 | ACT-2~4 (ACT-1은 화면에 안 나온다) | `ACT_CARD` · `main.ts actCard` — 그림 `act-2`(AC-02) · `chained-door` · `act-4`(AC-03), `act-1`(AC-01)은 대신 그림, D-519 |
 | 동료 장면 | CO-1~3 (CO-2는 왕관별) | `companion-scenes.ts` |
 | 반장 등장 · 격파 | BOS · STG-PROG | `BOSS_STORY` · `BOSS_CARD` · `stageProg` · `main.ts bossFallCut` |
 | 도금왕 | GLD | `GILDED_STORY` |
 | 왕위 결정 | THR | `TESTIMONY` · `THRONE_TEXT` · `promotion.ts` |
-| 결말 · 패배 | END-K · END-T · END-F · LAW | `promotionCuts`(END-K 7컷 — 바이블 컷을 ED-02~05 그림으로 나눔, D-510 · 첫째 왕관은 3-2 속마음을 CN-04 `crown-1-throne`에, D-516) · `trueEndingCuts`(END-T 6컷 — 바이블 컷을 ED-06~08 그림으로 나눔, D-514) · `DEFEAT_CUTS`(END-F 3컷 = ED-09 `end-fail` · ED-10 `end-f-box` · ED-11 `end-f-unwind` → 맺음 카드, D-516) · `STORY_LAW` · 그림자 컷 재생 `shadowCuts`(SHD-B 2~3줄 = `law-plate` · 4줄 = 왕관 시작 그림) |
+| 결말 · 패배 | END-K · END-T · END-F · LAW | `promotionCuts`(END-K 7컷 — 바이블 컷을 ED-02~05 그림으로 나눔, D-510 · 3-2 속마음은 왕관별 왕좌 그림 CN-04 `crown-1-throne` · CN-05 `crown-2-throne` · CN-06 `crown-3-throne`에, D-516 · D-519) · `trueEndingCuts`(END-T 6컷 — 바이블 컷을 ED-06~08 그림으로 나눔, D-514) · `DEFEAT_CUTS`(END-F 3컷 = ED-09 `end-fail` · ED-10 `end-f-box` · ED-11 `end-f-unwind` → 맺음 카드, D-516) · `STORY_LAW` · 그림자 컷 재생 `shadowCuts`(SHD-B 2~3줄 = `law-plate` · 4줄 = 왕관 시작 그림) |
 | 전투 · 튜토리얼 · 사건 | PART III · IV | `crew.ts DEATHS` · `hud.ts` · `tutorial.ts` · `events.ts` · `event-talk.ts` · `event-outcome.ts` |
 
 - 컷신은 글자 수 제한이 없다. 자막 띠(두 줄)는 그대로 두고 `uikit.cutPages`가 긴 줄을 문장 단위로 나눠 쪽을 넘긴다.

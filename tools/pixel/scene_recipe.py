@@ -35,7 +35,11 @@ MANUAL_PITCH = {'epilogue-hands': 1870 / 300,
     'end-fail': 941 / 180, 'end-f-box': 941 / 180, 'end-f-unwind': 941 / 180, 'credits-bg': 941 / 178, 'crown-2-open': 941 / 180,
     # D-516 CN-02 ~ 04 (1670~1671×941~942): CN-02만 164줄(5.74px)이 이웃(162 · 166줄)보다 오차가 뚜렷이 낮다(7.07 / 7.36 · 7.23) → 291×164.
     # CN-03(130 → 190줄 6.55 → 5.20) · CN-04(8.12 → 6.43)는 고르게 줄 뿐 → 장면 관례 941/180 (CN-04는 1670×942 → 319×180).
-    'crown-3-open': 941 / 164, 'crown-4-open': 941 / 180, 'crown-1-throne': 941 / 180}
+    'crown-3-open': 941 / 164, 'crown-4-open': 941 / 180, 'crown-1-throne': 941 / 180,
+    # D-519 CN-05 · 06 · AC-01 ~ 03 (1671~1672×941): 130 → 190줄 복원 오차가 고르게 줄 뿐(CN-05 8.53 → 6.54 · CN-06 5.84 → 4.59 ·
+    # AC-01 7.50 → 5.79 · AC-02 7.47 → 5.73 · AC-03 7.40 → 5.69), 한 줄 간격으로 훑어도 이웃보다 0.1~0.2 낮은 톱니만 고르게 흩어져
+    # (AC-01 156 · 168 · 179줄, CN-05 169 · 178 · 186줄) 뚜렷한 국소 최소가 없다 → 장면 관례 941/180 → 320×180.
+    'crown-2-throne': 941 / 180, 'crown-3-throne': 941 / 180, 'act-1': 941 / 180, 'act-2': 941 / 180, 'act-4': 941 / 180}
 
 
 def options(name):
@@ -50,7 +54,8 @@ def options(name):
                 'end-k-sight', 'end-k-reach', 'end-k-gild', 'law-plate',
                 'op-legend', 'end-t-throw', 'end-t-silence', 'end-t-step',
                 'end-fail', 'end-f-box', 'end-f-unwind', 'credits-bg', 'crown-2-open',
-                'crown-3-open', 'crown-4-open', 'crown-1-throne'):
+                'crown-3-open', 'crown-4-open', 'crown-1-throne', 'crown-2-throne', 'crown-3-throne',
+                'act-1', 'act-2', 'act-4'):
         opts['uniform'] = True
     return opts
 
@@ -225,4 +230,17 @@ CROWN_GRID = {
     'CN-02': {'name': 'crown-3-open', 'trim_max': 30, 'trim_dark': 0.25},
     'CN-03': {'name': 'crown-4-open', 'trim_max': 30, 'trim_dark': 0.25},
     'CN-04': {'name': 'crown-1-throne', 'trim_max': 30, 'trim_dark': 0.25},
+    # D-519 CN-05 둘째 왕좌(곧게 앉은 금 킹 · 벽에 겹친 왕 그림자 둘) · CN-06 셋째 왕좌(빛을 뿜는 금 킹) — 띠 없이 끝까지 채워 왔다
+    'CN-05': {'name': 'crown-2-throne', 'trim_max': 30, 'trim_dark': 0.25},
+    'CN-06': {'name': 'crown-3-throne', 'trim_max': 30, 'trim_dark': 0.25},
+}
+
+
+# D-519 막 입구 카드 재발주본 AC-01 ~ 03 (tools/pixel/ending_import.py가 같은 균일 격자 · 띠 걷기로 읽는다) → public/scenes/act-<막>.png (main.ts actCard).
+# 옛 그림 원본은 다른 이름으로 이미 보관돼 있다: act-1 = A-01-act-1-source.png · act-2 = A-02-act-2-source.png · act-4 = SC-02-act-4-source.png.
+# AC-02 사용자 결정: 쇳물에 녹은 체스 기물 표현을 일부러 덜 했다 — 발주서 장면 줄에서 「관 속 녹다 만 흰 기물 조각」을 뺐다.
+ACT_GRID = {
+    'AC-01': {'name': 'act-1', 'trim_max': 30, 'trim_dark': 0.25},
+    'AC-02': {'name': 'act-2', 'trim_max': 30, 'trim_dark': 0.25},
+    'AC-03': {'name': 'act-4', 'trim_max': 30, 'trim_dark': 0.25},
 }
