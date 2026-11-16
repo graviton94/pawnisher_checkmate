@@ -57,6 +57,7 @@
   border-style: solid; border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); image-rendering: pixelated;
   border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch;
   color: var(--t-brass-ink); font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap;
+  padding: 0 var(--d) 0 calc(var(--d) * 2); /* D-533: 왼쪽 장식(7도트)에 첫 글자가 붙었다 */
 }
 .cut-who.cw-foe .cw-name { border-width: 0 calc(var(--d) * 6) 0 calc(var(--d) * 8); border-image: url('../assets/ui/chrome/v2/name-foe.png') 0 6 0 8 fill / 0 calc(var(--d) * 6) 0 calc(var(--d) * 8) / 0 stretch; color: var(--t-loss); }
 .cut-who.cw-npc .cw-name { border-width: 0 calc(var(--d) * 5) 0 calc(var(--d) * 14); border-image: url('../assets/ui/chrome/v2/name-npc.png') 0 5 0 14 fill / 0 calc(var(--d) * 5) 0 calc(var(--d) * 14) / 0 stretch; color: var(--t-ink); }

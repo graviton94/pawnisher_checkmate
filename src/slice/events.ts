@@ -366,7 +366,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   safe: {
     title: '녹슨 금고',
-    text: '녹슨 금고 안에서 나사가 쏟아지는 소리가 난다. 손잡이에는 날이 서 있다.',
+    text: '녹슨 금고 안에서 나사 소리가 쏟아진다. 손잡이에는 날이 서 있다.',
     choices: [
       // D-459: 분대원 HP −70% → 심장 톱니 깨짐 (영구 위험)
       { label: '금고를 부순다', desc: '나사 +150 · 분대원 하나 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '가장 성한 분대원이 손을 벱니다. 톱니가 깨진 분대원이 다시 쓰러지면 폐기됩니다.', blocked: (s) => (nonKing(s).some((u) => !u.cracked) ? null : '손을 댈 분대원이 없음'), apply: (s) => { s.gold += 150; const who = crackOne(s); return { text: `손잡이가 ${who}의 가슴을 긋는다. 나사가 쏟아진다. (나사 +150 · 심장 톱니 깨짐)` }; } },

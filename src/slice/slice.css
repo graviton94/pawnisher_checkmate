@@ -1266,6 +1266,8 @@ body.slice .op-asc .btn.sq::after { content: ""; position: absolute; left: -10px
 body.slice .op-asc .btn.sq[data-asc="-1"]::after { top: -4px; bottom: -20px; }
 body.slice .op-asc b { font: 400 24px/24px Galmuri11, sans-serif; color: #f4d27a; text-shadow: 2px 2px 0 #000; padding: 0; }
 body.slice .op-daily b { font-size: 24px; color: #8ee8ea; }
+/* D-533 전수 점검: 56px 단추에 제목 24 + 날짜 12 두 줄이 아래 테를 밟았다 → 한 줄(제목 옆에 날짜) */
+body.slice .op-main.op-daily { display: flex; align-items: center; justify-content: center; gap: var(--s2); padding-bottom: 0; }
 body.slice .op-sub { display: flex; gap: 8px; margin-top: 4px; }
 body.slice .op-sub .btn { flex: 1 1 0; min-height: 44px; padding: 0 4px 4px; font: 400 15px Galmuri14, Galmuri11, sans-serif; }
 body.slice .op-sub.op-dev .btn { font: 400 12px Galmuri11, sans-serif; opacity: 0.8; }
@@ -1283,7 +1285,7 @@ body.slice .op-main.brass:active::after { background-image: url('../assets/ui/ch
 /* 메인 메뉴 줄 맞춤 (D-293, 사용자: 「세 층 간격 · 높이가 안 맞다 — 출하 시작이 삼각형 · 승급 조작과 높이가 안 맞는다」):
    1층 64px = [출하 시작 + 화살 32px][승급 다이얼 56px · 위 20 / 숫자 24 / 아래 20] · 2층 56px · 3층 48px, 층 간격 12px, 오른쪽 끝선 하나 */
 body.slice .op-menu { gap: 12px; padding-block: 24px; } /* 위아래 24px: ▲ 넓힌 터치 영역이 메뉴 상자 안에 들어오게 (상자 밖은 터치 탭이 안 잡힌다) — 위아래 같아서 가운데 맞춤은 그대로 */
-body.slice .op-run { display: grid; grid-template-columns: minmax(0, 1fr) 56px; column-gap: 40px; align-items: stretch; height: 64px; }
+body.slice .op-run { display: grid; grid-template-columns: minmax(0, 1fr) 72px; column-gap: 40px; align-items: stretch; height: 64px; }
 body.slice .op-run .op-main, body.slice .op-menu > .op-main.brass { height: 64px; min-height: 64px; margin: 0; }
 body.slice .op-menu > .op-main.brass { margin-right: 32px; }
 /* 터치 영역 (UI/UX 원칙 2 — 44px 이상): 그림은 20px 그대로, 누르는 자리만 바깥으로 넓힌다. ▲는 위로 · ▼는 아래로 20px, 옆으로 10px → 76×44 */
@@ -1785,3 +1787,5 @@ body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cmd > .cf-desc .ln
 body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 31%; top: 8%; z-index: 6; font: 700 12px/12px Galmuri11, sans-serif; font-style: normal; font-synthesis: none; padding: 2px 4px; background: #16141c; box-shadow: inset 0 0 0 1px currentColor, 0 0 0 2px #0b0b0e; }
 body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-up { color: #7fe08a; }
 body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-rust { color: #e0894a; }
+/* D-533 전수 점검: 명령 카드 성질 줄(「[수읽기] [곱]」)은 그림 창 아래 끝에 얹힌다 — 밝은 그림(흰 폰)이면 회색 글이 묻혔다 → 먹 테 1도트(사방, 번짐 없음) */
+body.slice .cf.cf.cf.cf.cmd > .cf-type .t3 i { text-shadow: var(--px) 0 0 #0b0b0e, calc(-1 * var(--px)) 0 0 #0b0b0e, 0 var(--px) 0 #0b0b0e, 0 calc(-1 * var(--px)) 0 #0b0b0e; }

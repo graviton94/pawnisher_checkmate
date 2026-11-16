@@ -33,7 +33,7 @@
   border-style: solid; image-rendering: pixelated; font: 700 12px/1 Galmuri11, sans-serif; white-space: nowrap;
 }
 .dl-name { border-width: 0 calc(var(--d) * 6) 0 calc(var(--d) * 8); border-image: url('../assets/ui/chrome/v2/name-foe.png') 0 6 0 8 fill / 0 calc(var(--d) * 6) 0 calc(var(--d) * 8) / 0 stretch; color: var(--t-body); }
-.dl-name.n-ally { border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); }
+.dl-name.n-ally { padding: 0 var(--d) 0 calc(var(--d) * 2); border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); }
 .dl-foe .dl-name { top: calc(var(--d) * -29); left: calc(var(--d) * 1); }
 .dl-ally .dl-name { top: calc(var(--d) * -17); left: calc(var(--d) * -9); }
 
@@ -65,7 +65,7 @@
 }
 .tut .talk.on-sub .talk-face { position: absolute; left: calc(var(--d) * -30); top: calc(var(--d) * -1); bottom: calc(var(--d) * -10); width: calc(var(--d) * 16); height: auto; border: 0; border-image: none; background: #0b0b0e; }
 .tut .talk.on-sub .talk-body { border: 0; border-image: none; background: none; padding: 0; min-height: 0; margin: calc(var(--d) * -2) calc(var(--d) * 1) calc(var(--d) * -7) calc(var(--d) * -9); gap: 0; }
-.tut .talk.on-sub .who { position: absolute; top: calc(var(--d) * -17); left: calc(var(--d) * -9); box-sizing: border-box; height: calc(var(--d) * 15); display: inline-flex; align-items: center; border-style: solid; border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); font: 700 12px/1 Galmuri11, sans-serif; image-rendering: pixelated; }
+.tut .talk.on-sub .who { position: absolute; top: calc(var(--d) * -17); left: calc(var(--d) * -9); box-sizing: border-box; height: calc(var(--d) * 15); display: inline-flex; align-items: center; padding: 0 var(--d) 0 calc(var(--d) * 2); border-style: solid; border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); font: 700 12px/1 Galmuri11, sans-serif; image-rendering: pixelated; }
 .tut .talk.on-sub .line { color: var(--t-ink); font: 400 15px/calc(var(--d) * 12) Galmuri14, Galmuri11, sans-serif; }
 .tut .talk.on-sub .talk-next { color: var(--t-brass-ink); }
 
@@ -73,13 +73,13 @@
 .state-band.k-toast {
   border-width: calc(var(--px) * 16) calc(var(--px) * 21) calc(var(--px) * 7) calc(var(--px) * 21);
   border-image: url('../assets/ui/chrome/v2/talk-sys.png') 16 21 7 21 fill / calc(var(--px) * 16) calc(var(--px) * 21) calc(var(--px) * 7) calc(var(--px) * 21) / 0 stretch;
-  min-height: 0; padding: 0; line-height: calc(var(--px) * 10);
+  min-height: 0; padding: 0 var(--s1); line-height: calc(var(--px) * 10);
 }
 .state-band.k-toast > * { margin-top: calc(var(--px) * -4); margin-bottom: calc(var(--px) * -3); }
 .state-band.k-crimson {
   border-width: calc(var(--px) * 13) calc(var(--px) * 21) calc(var(--px) * 3) calc(var(--px) * 21);
   border-image: url('../assets/ui/chrome/v2/talk-sys-warn.png') 13 21 3 21 fill / calc(var(--px) * 13) calc(var(--px) * 21) calc(var(--px) * 3) calc(var(--px) * 21) / 0 stretch;
-  min-height: 0; height: calc(var(--px) * 26); padding: 0; color: var(--t-body); font: 400 15px/calc(var(--px) * 10) Galmuri14, Galmuri11, sans-serif;
+  min-height: 0; height: calc(var(--px) * 26); padding: 0 var(--s1); color: var(--t-body); font: 400 15px/calc(var(--px) * 10) Galmuri14, Galmuri11, sans-serif;
 }
 .state-band.k-crimson > * { position: relative; top: calc(var(--px) * 1); }
 .state-band.k-toast > img, .state-band.k-crimson > img { width: auto; height: auto; max-height: 21px; }
@@ -122,7 +122,7 @@
 /* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */
 .bet-slot { display: flex; align-items: flex-end; justify-content: center; gap: var(--px); min-height: 56px; padding: var(--s1) var(--s2); }
 /* 판돈 무대 (WG-01 · D-507): 받은 장면을 비율 그대로 cover — 초점 = 내기판 가운데 위 · 동전 나이트(가로 55% · 세로 48%). 늘리지 않는다(D-386) */
-.win .bet-slot.bet-scene { min-height: clamp(56px, calc(100vh - 300px), 112px); border-image-slice: var(--k-inset); background: #0b0b0e 50% 62% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
+.win .bet-slot.bet-scene { min-height: clamp(40px, calc(100vh - 340px), 72px); /* D-533: 112px면 단추 줄이 창 아래 테 밖으로 밀렸다 (창 높이 364 상한) */ border-image-slice: var(--k-inset); background: #0b0b0e 50% 62% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
 .bet-slot > img { width: 32px; height: 32px; image-rendering: pixelated; }
 .bet-slot > img.drop { animation: betdrop 360ms steps(6, jump-none) both; }
 .bet-slot > img.drop:nth-child(2) { animation-delay: 80ms; }
@@ -189,3 +189,10 @@ body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset
 /* NPC 얼굴 (D-506): 액자 = DL-02 portrait-npc · 안 = 사건 그림을 비율 그대로 높이 250%로 덮고 초점 자리만 (늘이지 않는다, D-386) */
 .win-scene .ws-say .ws-face.ws-npc { display: block; background: url('../assets/ui/chrome/v2/portrait-npc.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; }
 .win-scene .ws-say .ws-face.ws-npc > i { display: block; width: 100%; height: 100%; background-repeat: no-repeat; background-size: auto 250%; image-rendering: pixelated; }
+/* D-533 전수 점검: 레일 폭(≈200px)에서 조건 글이 칩 오른쪽 좁은 칸에 네 줄로 접혀 레일이 넘쳤다(부품 줄이 가려짐)
+   → 위 줄 = 판돈 칩 + 진행(오른쪽), 아래 줄 = 조건 글 전체 폭 */
+.bet-chip > .tag { grid-row: 1; grid-column: 1; }
+.bet-chip .bc-prog { grid-row: 1; grid-column: 2; justify-self: end; }
+.bet-chip .bc-cond { grid-row: 2; grid-column: 1 / -1; }
+/* D-533: 작은 폰(높이 ≤ 400)에서는 판돈 창 단추 줄이 아래 테에 닿았다 → 다짐 한 줄(독백)을 접는다 — 조건 · 보상 · 실패는 그대로 */
+@media (max-height: 400px) { .win:has(.bet-scene) > .mono { display: none; } }

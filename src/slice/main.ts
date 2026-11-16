@@ -2935,17 +2935,19 @@ const pickCardScreen = (title: string, say: string, ids: CommandId[], onPick: (i
   }).querySelector('[data-back]')!.addEventListener('click', back);
 };
 
+/** 막 카드 그림의 세로 초점 (D-533): 분대 · 종이왕이 그림 아래쪽에 서 있는 막은 초점을 내려 머리만 걸리지 않게 — 그 밖은 0.42 */
+const ACT_CARD_FY: Record<string, number> = { 'act-2': 0.65, 'act-4': 0.74 };
 /**
  * 막 소개 타이틀 카드 (D-388 · D-389 · D-397, 보고서 2026-11-09f 2-1 · 3.10): 팝업이 아니라 영화식 —
  * 막 그림이 위를 채우고(비율 그대로 기기 픽셀 정수배로 덮기, coverArt) 아래 먹 바닥에 막 꼬리표 → 막 이름 36 → 자막 띠 두 줄(서술 + 독백) · ▼.
- * 철문 전환으로 열고 닫는다. 누르면 넘어가고, 다 찍힌 뒤 읽을 시간(글자당 60ms, 최소 2.4초)이 지나면 저절로 (D-263).
+ * 철문 전환으로 열고 닫는다. 누르면 넘어가고, 다 찍힌 뒤 읽을 시간(글자당 40ms, 최소 2.4초)이 지나면 저절로 (D-263 · D-533).
  */
 const actCard = (label: string, name: string, narr: string, art: string): Promise<void> =>
   new Promise((resolve) => {
     const el = document.createElement('div');
     el.className = 'actcard kit';
     // 받을 그림이 아직 없으면 그 막의 기본 그림 (D-451: 3막 「안쪽에서 잠긴 문」 발주 중)
-    el.innerHTML = `<div class="ac-art"><img src="scenes/${art}.png" alt="" data-cover data-fx="0.5" data-fy="0.42" onerror="this.onerror=null;this.src='scenes/act-${Math.min(4, actI + 1)}.png'"></div><div class="ac-floor"><span class="ribbon">${label}</span><h1 class="ac-name">${name}</h1></div>${cutChromeHtml()}`;
+    el.innerHTML = `<div class="ac-art"><img src="scenes/${art}.png" alt="" data-cover data-fx="0.5" data-fy="${ACT_CARD_FY[art] ?? 0.42}" onerror="this.onerror=null;this.src='scenes/act-${Math.min(4, actI + 1)}.png'"></div><div class="ac-floor"><span class="ribbon">${label}</span><h1 class="ac-name">${name}</h1></div>${cutChromeHtml()}`;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');
     const lines: CutLine[] = narr.split('\n').filter(Boolean).map((t) => (/^‘.*’$/.test(t) ? { k: 'm', t: t.slice(1, -1) } : { k: 'n', t }));
@@ -2963,6 +2965,8 @@ const actCard = (label: string, name: string, narr: string, art: string): Promis
         const box = el.querySelector<HTMLElement>('.cut-lines')!;
         await typeCutPages(box, lines, () => !done, (p, html) => typeIn(p, html, 24, undefined, () => !done));
         sub.classList.remove('typing');
+        // 읽을 시간은 다 찍힌 뒤부터 센다 (전수 점검 D-533: 느린 기기에서 글이 다 찍히기 전에 카드가 닫혔다)
+        if (!done) T.push(window.setTimeout(close, Math.max(2400, narr.length * 40)));
       }, 520));
     });
     let done = false;
@@ -2981,7 +2985,8 @@ const actCard = (label: string, name: string, narr: string, art: string): Promis
       });
     };
     window.setTimeout(() => el.addEventListener('click', close), 800);
-    window.setTimeout(close, 520 + narr.length * 24 + Math.max(2400, narr.length * 70));
+    // 찍기가 어떤 까닭으로 멈춰도 카드가 길을 막지 않게 (넉넉한 안전 상한)
+    window.setTimeout(close, 20000 + narr.length * 120);
   });
 /** 대국 들어가기: 반장 = 등장 컷(bossintro) · 그 밖 = 철문 전환 뒤 판 위 띠 한 번 (D-388) */
 const stageIntro = (def: BattleDef): Promise<void> => {
@@ -4903,7 +4908,7 @@ const opening = (): void => {
       const openChallenge = (meta.storyCleared ?? 0) >= STORY_COUNT;
       nav.innerHTML = `<div class="op-modes"><button type="button" class="btn k-${mode === 'story' ? 'brass' : 'iron'}" data-mode="story" aria-pressed="${mode === 'story'}">본편</button><button type="button" class="btn k-${mode === 'challenge' ? 'brass' : 'iron'}" data-mode="challenge" aria-pressed="${mode === 'challenge'}"${openChallenge ? '' : ' disabled aria-label="넷째 왕관을 완료하면 도전 모드가 열립니다"'}>도전${openChallenge ? '' : ' · 잠김'}</button></div>
         ${sv ? `<button class="btn op-main" type="button" data-cont><b>이어하기</b><small>${runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0)} · ${actLabel(sv.actI + 1)}</small></button>` : ''}
-        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? CHAPTERS[chapter].name : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 왕관 선택' : '도전 난이도 선택'}">${mode === 'story' ? CHAPTERS[chapter].label : `난이도 ${challenge - CHALLENGE_START + 1}`} ▾</button></div>
+        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? CHAPTERS[chapter].name : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 왕관 선택' : '도전 난이도 선택'}">${(mode === 'story' ? CHAPTERS[chapter].label : `난이도 ${challenge - CHALLENGE_START + 1}`).replace(' ', '<br>')} ▾</button></div>
         <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 도전</b><small>${meta.daily[today] ? '기록 완료 · 다시 도전' : today}</small></button>
         <div class="op-tools"><button class="btn op-minor" type="button" data-guide>안내서</button><button class="btn op-minor" type="button" data-ledger>도감</button><button class="btn op-minor" type="button" data-prologue>프롤로그</button><button class="btn op-minor" type="button" data-settings>${SETTINGS_TEXT.title}</button></div>
         ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-build-open>빌드 시험</button></div>` : ''}`;

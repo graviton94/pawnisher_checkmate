@@ -103,7 +103,7 @@ body.slice.lay-f .rmid .r-head .r-lbl { flex: none; white-space: nowrap; }
 /* 반장 2×2 몸 그림(GB, 144칸 캔버스)의 머리 · 관 쪽만 — 비율 그대로 확대해 자른다(D-386 · D-523 BF-01 대체) */
 #boss.boss-chip .bc-face .bc-gb { display: block; width: 24px; height: 24px; background: no-repeat 50% 12% / 54px 54px; image-rendering: pixelated; }
 #boss.boss-chip:active { transform: translateY(calc(var(--px) * 1)); }
-#boss.boss-chip:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
+body.kb-nav #boss.boss-chip:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
 body.slice #btn-help.btn.k-iron {
   flex: none; margin-left: auto; width: calc(var(--px) * 16); min-width: 0; height: calc(var(--px) * 15); min-height: 0; padding: 0;
   font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none;

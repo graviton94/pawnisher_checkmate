@@ -266,10 +266,13 @@ const GROUPS = [
     } },
     { name: 'resume', assets: [], run: async ({ pg, A, W, shot, tapAt }) => {
       // 새 출하 → 첫 대국에서 카드 한 장 → 앱 닫기(pagehide) → 첫 화면부터 「이어하기」 → 같은 판
-      await A(() => { void window.sliceApi.begin(777, 0, 'story', null, 'standard'); }); await W(2000);
-      for (let i = 0; i < 40 && !(await A(() => !!document.querySelector('#hand [data-card]') && !document.body.classList.contains('between') && !document.querySelector('.prologue, .actcard, .stagefx, .bossfx'))); i++) {
-        await A(() => { const b = [...document.querySelectorAll('.cut-skip')].find((x) => x.getClientRects().length); if (b) b.click(); }); await tapAt(VW / 2, VH * 0.3); await W(700);
+      // 타이틀 뒤에 서 있던 입문 판에도 손패가 있다 — 그림자 컷이 뜰 때까지 먼저 기다린 뒤, 컷 · 로딩 쪽지를 넘겨 새 대국이 설 때까지
+      await A(() => { void window.sliceApi.begin(777, 0, 'story', null, 'standard'); });
+      await pg.locator('.prologue').waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});
+      for (let i = 0; i < 40 && !(await A(() => !!document.querySelector('#hand [data-card]') && !document.body.classList.contains('between') && !document.querySelector('.prologue, .actcard, .stagefx, .bossfx, .ld-tip-wrap, .shutterfx'))); i++) {
+        await A(() => { const b = [...document.querySelectorAll('.cut-skip')].find((x) => x.getClientRects().length); if (b) b.click(); document.querySelector('.ld-tip-wrap')?.click(); }); await W(700);
       }
+      await W(1500);
       await Promise.race([A(() => window.sliceApi.botMove('greedy')), W(15000)]); await W(1500);
       await shot('resume-before');
       await A(() => window.dispatchEvent(new Event('pagehide'))); await W(300);
@@ -277,7 +280,9 @@ const GROUPS = [
       await pg.waitForSelector('#boot', { state: 'detached', timeout: 30000 }); await W(1500);
       for (let i = 0; i < 6 && !(await pg.locator('[data-cont]').count()); i++) { await tapAt(VW / 2, VH * 0.72); await W(900); }
       await shot('resume-menu');
-      await pg.locator('[data-cont]').tap(); await W(4500); await shot('resume-after');
+      await pg.locator('[data-cont]').tap();
+      for (let i = 0; i < 30 && (await A(() => !!document.querySelector('.ld-tip-wrap, .shutterfx'))); i++) { await A(() => document.querySelector('.ld-tip-wrap')?.click()); await W(500); }
+      await W(3000); await shot('resume-after');
     } },
   ]],
   ['glossary', '용어집', [
