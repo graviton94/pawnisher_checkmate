@@ -39,6 +39,131 @@ const META = { tut: ['battle', 'battle-a', 'map', 'recruit', 'kit', 'promote', '
 const api = (f) => async ({ A }) => A(f);
 /** 자리만 잡아 둔 장면이 아직 찍을 것이 없을 때 (실패가 아니다) */
 class Skip extends Error {}
+/**
+ * 부관 띠 자리 단언 (D-535): 입문 시험대 A · B · C의 걸음마다, 이어지는 첫 판 코치 단계마다 띠를 재어
+ * ① 띠(이름표 · 초상 홈 포함)가 안내 막의 구멍(짚은 곳 · 보이기만 하는 구멍) · 내 킹 칸과 겹치거나 ② 글이 두 줄을 넘으면 실패로 적는다.
+ * 코치(막 없음)는 지금 고를 곳 — 빛나는 기물 · 갈 칸 · 턴 끝 — 을 구멍 대신 쓴다.
+ */
+const BAND_PROBE = () => {
+  const box = (r) => ({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) });
+  const tut = document.querySelector('.tut');
+  const band = tut ? tut.querySelector('.tut-say') : document.querySelector('.coach-band:not(.pxout)');
+  if (!band) return { none: true, win: !!document.querySelector('.win [data-next]') };
+  // 띠 몸 · 이름표 · 초상 홈을 조각마다 (튀어나온 이름표의 빈 옆자리는 띠가 아니다)
+  const parts = [band, ...band.querySelectorAll('.who, .dl-name, .talk-face, .dl-face')].map((e) => e.getBoundingClientRect()).filter((r) => r.width && r.height).map(box);
+  const all = { x: Math.min(...parts.map((q) => q.x)), y: Math.min(...parts.map((q) => q.y)) };
+  all.w = Math.max(...parts.map((q) => q.x + q.w)) - all.x;
+  all.h = Math.max(...parts.map((q) => q.y + q.h)) - all.y;
+  const line = band.querySelector(tut ? '.line' : '.vs-line');
+  const lh = parseFloat(getComputedStyle(line).lineHeight) || 18;
+  const lines = Math.round(line.getBoundingClientRect().height / lh);
+  const b = window.slice?.();
+  const api = window.sliceApi;
+  const tile = (p) => { const a = api.screenOf(p), c = api.screenOf({ x: p.x + 1, y: p.y }); const t = Math.abs(c.x - a.x) || 48; return { x: Math.round(a.x - t / 2), y: Math.round(a.y - t / 2), w: Math.round(t), h: Math.round(t) }; };
+  const king = b?.s.pieces.find((p) => p.side === 0 && p.type === 'K' && p.hp > 0);
+  let holes = [];
+  if (tut) {
+    const fr = tut.querySelector('.tut-frame');
+    if (fr && !fr.hidden) holes.push(box(fr.getBoundingClientRect()));
+    tut.querySelectorAll('.tut-peeks i').forEach((i) => holes.push(box(i.getBoundingClientRect())));
+  } else if (b) {
+    const k = band.dataset.k;
+    const sel = api.sel();
+    if (k === 'piece' && sel.card !== null) holes = api.cardPieces(b, sel.card).map(tile);
+    else if (k === 'square' && sel.card !== null && sel.piece !== null) holes = api.cardMoves(b, sel.card, sel.piece).map(tile);
+    else if (k === 'end') holes = [box(document.getElementById('btn-end').getBoundingClientRect())];
+    else if (k === 'card' || k === 'cardAgain') { const fk = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.hp > 0); holes = [box(document.getElementById('hand').getBoundingClientRect()), ...(fk ? [tile(fk)] : [])]; }
+  }
+  return {
+    text: line.textContent.trim(), key: tut ? null : band.dataset.k, lines, band: all, parts, away: band.classList.contains('away'), holes, king: king ? tile(king) : null,
+    tut: !!tut, act: !!tut?.classList.contains('act'), paused: !!tut?.classList.contains('paused'),
+    nextShown: !!tut && !tut.querySelector('.talk-next')?.hidden, turn: b?.turn ?? 0, winner: b?.s.winner ?? null,
+  };
+};
+const hit = (a, q) => Math.max(0, Math.min(a.x + a.w, q.x + q.w) - Math.max(a.x, q.x)) * Math.max(0, Math.min(a.y + a.h, q.y + q.h) - Math.max(a.y, q.y)) > 0;
+const bandWalk = async ({ pg, A, W, shot }) => {
+  const probe = () => pg.evaluate(BAND_PROBE);
+  const bad = [];
+  const seen = new Set();
+  const judge = async (st, tag) => {
+    const why = [];
+    const on = (q) => !st.away && st.parts.some((p) => hit(p, q));
+    st.holes.forEach((q, i) => { if (on(q)) why.push(`구멍${i}(${q.x},${q.y},${q.w}×${q.h})`); });
+    if (st.king && on(st.king)) why.push('내 킹');
+    if (st.lines > 2) why.push(`${st.lines}줄`);
+    // 코치 띠는 빈자리가 없으면 그 단계에 접힌다(away) — 입문 안내 띠는 접히면 안 된다
+    if (st.away && st.tut) why.push('띠 접힘');
+    console.log(`  [${tag}] ${why.length ? '✗ ' + why.join(' · ') : '✓'} ${st.away ? '(접힘) ' : ''}띠 x${st.band.x}~${st.band.x + st.band.w} y${st.band.y}~${st.band.y + st.band.h} · ${st.lines}줄 · ${st.text.slice(0, 28)}`);
+    if (why.length) bad.push(`${tag} 「${st.text.slice(0, 20)}」: ${why.join(' · ')}`);
+    await shot(`band-${tag}`);
+  };
+  /** 같은 글 · 같은 자리가 두 번 연속(250ms 사이) 나오면 다 찍힌 것 */
+  const steady = async () => {
+    let a = await probe();
+    for (let k = 0; k < 40; k++) {
+      await W(250);
+      const c = await probe();
+      if (!c.none && !a.none && c.text && c.text === a.text && !c.paused && JSON.stringify(c.band) === JSON.stringify(a.band)) return c;
+      a = c;
+    }
+    return a;
+  };
+  await A(() => window.sliceApi.tutNow());
+  let n = 0;
+  const t1 = Date.now() + 360000;
+  // 시험대 A · B · C — 걸음마다 한 번 재고, 누르는 걸음은 띠를, 기다리는 걸음은 짚은 곳 가운데를 누른다
+  while (Date.now() < t1) {
+    const st = await probe();
+    if (st.none) {
+      if (seen.size > 25 && !(await pg.locator('.tut').count()) && (await pg.locator('.coach-band').count())) break;
+      if (st.win) { await pg.locator('.win [data-next]').last().tap().catch(() => {}); await W(900); } else await W(300);
+      continue;
+    }
+    if (!st.tut) break;
+    if (st.paused) {
+      // 되감기 실습: 되감기 확인 장면의 [되감는다]
+      const yes = pg.locator('.revfx .row:not([hidden]) [data-yes]');
+      if (await yes.count()) await yes.first().tap().catch(() => {});
+      await W(300);
+      continue;
+    }
+    const s = await steady();
+    if (s.none || !s.tut) continue;
+    const id = s.text;
+    if (!seen.has(id)) { seen.add(id); n += 1; await judge(s, `t${String(n).padStart(2, '0')}`); }
+    // 되감기 실습: 하네스는 출하(begin) 없이 입문만 열어 톱니가 0 — 실제 출하처럼 하나를 쥐여 준다
+    if (s.act && /되감기/.test(id)) await A(() => { const b = window.slice(); if (b.rewinds < 1) { b.rewinds = 1; window.sliceApi.redraw(); } });
+    if (!s.act) {
+      const r = s.band;
+      await pg.touchscreen.tap(r.x + r.w / 2, r.y + r.h - 12);
+      await W(500);
+    } else {
+      const q = s.holes[0];
+      if (q) await pg.touchscreen.tap(q.x + q.w / 2, q.y + q.h / 2);
+      await W(1200);
+      const again = await probe();
+      // 턴 끝 경고처럼 두 번 눌러야 하는 곳
+      if (again.tut && again.text === id && !again.paused && q) { await pg.touchscreen.tap(q.x + q.w / 2, q.y + q.h / 2); await W(1500); }
+    }
+  }
+  if (n < 30) bad.push(`입문 걸음을 ${n}개만 지났다 (시험대 A · B · C 끝까지 못 감)`);
+  // 첫 판 코치: 단계(카드 · 기물 · 칸 · 턴 끝 · 적 번호 …)마다 재고 그 단계의 조작을 한다 — 3턴까지
+  const keys = new Set();
+  for (let it = 0; it < 60; it++) {
+    await W(400);
+    const s = await steady();
+    if (s.none || s.tut) { if (s.winner !== null && s.winner !== undefined) break; continue; }
+    if (s.winner !== null || s.turn > 3) break;
+    const tag = `c${s.turn}-${s.key}`;
+    if (!keys.has(tag)) { keys.add(tag); await judge(s, tag); }
+    if (s.key === 'piece' || s.key === 'square') { const q = s.holes[0]; if (q) await pg.touchscreen.tap(q.x + q.w / 2, q.y + q.h / 2); await W(1500); }
+    else if (s.key === 'end') { await pg.locator('#btn-end').tap().catch(() => {}); await W(700); if (await pg.locator('#btn-end.warn').count()) await pg.locator('#btn-end').tap().catch(() => {}); await W(4000); }
+    else { const c = pg.locator('#hand .hc:not(.off)').first(); if (await c.count()) await c.tap(); await W(700); }
+  }
+  if (keys.size < 4) bad.push(`코치 단계를 ${keys.size}개만 쟀다`);
+  console.log(`  부관 띠: 입문 ${n}걸음 · 코치 ${keys.size}단계 · 어긋남 ${bad.length}`);
+  if (bad.length) throw new Error(`부관 띠 자리 ${bad.length}건 — ${bad.slice(0, 4).join(' / ')}`);
+};
 const GROUPS = [
   ['title', '타이틀 · 메뉴 · 안내서 · 로딩 쪽지', [
     { name: 'title-press', assets: ['LD-02'], url: '?debug&opening', run: async ({ W, shot }) => { await W(1600); await shot('title-press'); } },
@@ -58,6 +183,7 @@ const GROUPS = [
       await pg.locator('.win [data-next]').last().tap().catch(() => {}); await W(3500); await shot('adjutant');
     } },
     { name: 'coach', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.start(0)); await W(4500); await A(() => window.sliceApi.coachNow()); await W(900); await shot('coach'); } },
+    { name: 'band-walk', assets: [], limit: 540000, meta: { onboarded: false, tut: [] }, run: bandWalk },
   ]],
   ['map', '지도 1~4막 (분대 현황판 · 노드 아이콘 · 현재 위치 왕관 · 미리보기)', [
     { name: 'map-acts', assets: ['MP-01', 'MP-02', 'MP-03', 'MP-04', 'MP-05', 'MP-06', 'TI-01', 'TI-02'], run: async ({ A, W, shot }) => {
@@ -472,7 +598,7 @@ const writeReport = () => {
         const ctx = { pg, A, W: Wp, shot, film, tap, tapAt, open, skip, actCard };
         try {
           await open();
-          await Promise.race([sc.run(ctx), W(180000).then(() => { throw new Error('시간 초과 180초'); })]);
+          await Promise.race([sc.run(ctx), W(sc.limit ?? 180000).then(() => { throw new Error(`시간 초과 ${Math.round((sc.limit ?? 180000) / 1000)}초`); })]);
           if (!rec.shots.length) throw new Error('찍힌 장면 없음');
         } catch (e) {
           if (e instanceof Skip) rec.skip = e.message;

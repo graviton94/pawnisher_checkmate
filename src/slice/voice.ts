@@ -118,6 +118,79 @@ export const placeSub = (el: HTMLElement, top = false, minW = 0): void => {
   const y = top ? (r ? r.top : 8) : r ? r.bottom - h : innerHeight - h - 8;
   el.style.top = `${Math.round(Math.max(4, Math.min(innerHeight - h - 4, y)))}px`;
 };
+/** 부관 띠 최소 폭 (px) — 판 열이 좁은 화면(667)에서도 두 줄 안에 들게 레일 위로 넓힌다 (P-C D-502). 456 = 667 폭에서 띠를 오른쪽 끝에 붙이면 왼쪽 손패 카드(레일 ~185px)를 비켜 서는 폭 (D-535) */
+export const SUB_MIN_W = 456;
+/** 띠 몸 · 그 밖으로 튀어나온 이름표 · 초상 홈 — 띠 왼쪽 위 기준 상대 사각형들 (겹침은 조각마다 잰다) */
+const bandParts = (el: HTMLElement): DOMRect[] => {
+  const o = el.getBoundingClientRect();
+  return [el, ...el.querySelectorAll<HTMLElement>('.who, .dl-name, .talk-face, .dl-face')].map((e) => e.getBoundingClientRect()).filter((q) => q.width && q.height).map((q) => new DOMRect(q.left - o.left, q.top - o.top, q.width, q.height));
+};
+const overlap = (a: DOMRect, q: DOMRect): number => Math.max(0, Math.min(a.right, q.right) - Math.max(a.left, q.left)) * Math.max(0, Math.min(a.bottom, q.bottom) - Math.max(a.top, q.top));
+/**
+ * 띠 폭 맞춤 (D-535): 판 열 폭(좁으면 minW)에서 접힌 줄 수를 그대로 지키는 가장 좁은 폭 — 한 줄 말은 짧은 띠가 되어 비켜 설 자리가 넓어진다.
+ * 다 찍힌 글이 들어 있을 때 부른다. 돌려준 폭을 placeSubAway의 w로 넘긴다.
+ */
+export const fitSubWidth = (el: HTMLElement, minW = 0): number => {
+  placeSub(el, false, minW);
+  const w0 = parseFloat(el.style.width);
+  const h0 = el.offsetHeight;
+  let lo = Math.min(w0, 200), hi = w0;
+  while (hi - lo > 4) {
+    const m = Math.round((lo + hi) / 2);
+    el.style.width = `${m}px`;
+    if (el.offsetHeight === h0) hi = m; else lo = m;
+  }
+  el.style.width = `${hi}px`;
+  return hi;
+};
+/**
+ * 부관 띠 자리 (D-535 — 전수 점검 D-534의 코치 띠 NEEDS REVISION): 짚은 곳(focus)이 판 열 아래 절반이면 판 열 위 끝, 위 절반이면 아래 끝.
+ * 그 자리가 지킬 사각형(keep — 안내 막의 구멍 · 내 킹 칸 · 지금 고를 칸)과 겹치면 반대 끝, 그다음 두 끝 사이를 4px씩 훑어
+ * 가장 가까운 빈 자리(가로는 판 열 가운데 → 화면 왼쪽 · 오른쪽 끝)에 선다. 빈 자리가 없으면 가장 덜 가리는 자리. 겹치지 않았으면 true.
+ * w = fitSubWidth로 맞춘 폭 (없으면 placeSub 폭).
+ */
+export const placeSubAway = (el: HTMLElement, o: { focus: DOMRect | null; keep: DOMRect[]; minW?: number; w?: number }): boolean => {
+  const r = subAnchor();
+  const H = innerHeight;
+  const W = innerWidth;
+  if (o.w) {
+    el.style.width = `${o.w}px`;
+    const cx = r ? r.left + r.width / 2 : W / 2;
+    el.style.left = `${Math.round(Math.max(16, Math.min(W - o.w - 16, cx - o.w / 2)))}px`;
+    el.style.top = '0px';
+  } else placeSub(el, false, o.minW ?? 0);
+  const left0 = parseFloat(el.style.left);
+  const parts = bandParts(el);
+  const bh = el.offsetHeight;
+  // 이름표 · 초상 홈이 띠 몸 밖으로 튀어나온 만큼 — 화면 밖으로 잘리지 않게
+  const up = -Math.min(0, ...parts.map((q) => q.top));
+  const down = Math.max(bh, ...parts.map((q) => q.bottom)) - bh;
+  const lx = -Math.min(0, ...parts.map((q) => q.left));
+  const rx = Math.max(el.offsetWidth, ...parts.map((q) => q.right));
+  const yMin = Math.max(0, Math.round((r ? r.top : 0) + up));
+  const yMax = Math.max(yMin, Math.round(Math.min(H, r ? r.bottom : H) - down - bh));
+  const mid = r ? r.top + r.height / 2 : H / 2;
+  const f = o.focus;
+  const pref = f && f.top + f.height / 2 > mid ? yMin : yMax;
+  const xs = [...new Set([left0, 16 + lx, W - 16 - rx].map(Math.round))].filter((x) => x - lx >= 0 && x + rx <= W);
+  const cost = (x: number, y: number): number => parts.reduce((a, p) => a + o.keep.reduce((s, k) => s + overlap(new DOMRect(x + p.x, y + p.y, p.width, p.height), k), 0), 0);
+  const ys: number[] = [];
+  for (let y = yMin; y < yMax; y += 4) ys.push(y);
+  ys.push(yMax);
+  let best = { x: left0, y: pref, c: Infinity, d: Infinity };
+  for (const [xi, x] of xs.entries()) {
+    for (const y of ys) {
+      const c = cost(x, y);
+      // 같은 겹침이면: 바라는 끝에 가깝게 · 가로는 판 열 가운데 먼저
+      const d = Math.abs(y - pref) + xi * 40;
+      if (c < best.c || (c === best.c && d < best.d)) best = { x, y, c, d };
+    }
+  }
+  el.style.left = `${best.x}px`;
+  el.style.top = `${best.y}px`;
+  el.dataset.side = best.y + bh / 2 < mid ? 'top' : 'bottom';
+  return best.c === 0;
+};
 /** 대사 띠 속 (이름표 · 초상 홈 · 줄) — 바크 · 자막 띠가 같은 틀 */
 const bandHtml = (o: { face?: string; name: string; side: VoiceSide }): string =>
   `<b class="dl-name${o.side === 'foe' ? '' : ' n-ally'}">${o.name}</b><div class="dl-face">${o.face ?? ''}</div><p class="dl-line vs-line"></p>`;

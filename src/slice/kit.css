@@ -815,6 +815,11 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .tut .talk .talk-next[hidden] { display: inline; visibility: hidden; }
 .tut .talk .tut-skip { flex: 0 0 auto; min-width: calc(var(--px) * 56); }
 .tut.paused .talk { visibility: hidden; }
+/* D-535: 전투 중 건너뛰기 = 화면 왼쪽 아래 모서리 하나(덱 · 분대 자리 — 입문에서 짚지 않는 곳) (띠는 글 두 줄까지만 — 단추 줄을 띠 밖으로) · ▼는 띠 아래 테 오른쪽 */
+.vsub.coach-band.away { visibility: hidden; }
+.tut > .tut-skip { position: fixed; bottom: var(--Gy); left: var(--G); z-index: 2; pointer-events: auto; min-width: calc(var(--px) * 56); }
+.tut.paused > .tut-skip { visibility: hidden; }
+.tut .talk.on-sub .talk-foot { position: absolute; right: calc(var(--d) * 3); bottom: calc(var(--d) * -13); }
 @media (prefers-reduced-motion: reduce) { .tut .talk .talk-next { animation: none; } }
 
 /* 좁은 폰(레일 183): 태엽 다섯 구멍 · 속전 관 열이 테 안에 다 들도록 레일 안쪽 여백 3 · 손패 그림 12도트 · 속전 이름 줄임 */

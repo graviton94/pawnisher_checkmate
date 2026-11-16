@@ -6,10 +6,7 @@
  */
 import { typeIn } from './fx3';
 import { makeTalk } from './uikit';
-import { placeSub } from './voice';
-
-/** 부관 띠 최소 폭 (px) — 판 열이 좁아도 두 줄 안에 들게 (P-C D-502) */
-const SUB_MIN_W = 480;
+import { fitSubWidth, placeSubAway, SUB_MIN_W } from './voice';
 
 export interface TutStep {
   /** 부관의 말 (<em>낱말</em>은 한 번에 박힌다) */
@@ -41,6 +38,8 @@ export interface TutOpts {
   tick?: () => void;
   /** 참이면 막 · 꺾쇠 · 말풍선을 잠시 걷는다 (적 차례 · 연출 중 — 판이 흐려진 채 진행되지 않게, D-242) */
   pause?: () => boolean;
+  /** 띠가 늘 비켜 설 칸 — 내 킹 (D-535) */
+  keep?: () => (DOMRect | null)[];
 }
 
 const rectOf = (t: Element | DOMRect | null | undefined): DOMRect | null => {
@@ -68,6 +67,8 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
     const textEl = talk.querySelector<HTMLElement>('.line')!;
     const next = talk.querySelector<HTMLElement>('.talk-next')!;
     let i = -1;
+    /** 이 걸음의 띠 폭 (다 찍힌 글로 맞춘 폭 — 찍히는 동안 바뀌지 않게) */
+    let stepW = 0;
     let typing = false;
     let timer = 0;
     let alive = true;
@@ -81,6 +82,7 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
     // 건너뛰기는 두 번 눌러야 (P-C D-502): 「화면 아무 데나 눌러 다음」 걸음에서 손가락이 띠 속 단추에 닿아 입문 전체가 날아가던 것.
     // 첫 탭 = 단추가 「한 번 더」로 바뀌고(armed) 2초 안에 다시 누르면 건너뛴다
     const skipBtn = root.querySelector<HTMLButtonElement>('.tut-skip')!;
+    const foot = talk.querySelector<HTMLElement>('.talk-foot')!;
     let armed = 0;
     skipBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -115,22 +117,18 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       // 말풍선은 짚은 곳을 가리지 않게 (보고서 2-2): 전투 화면이면 짚은 곳 반대쪽 레일 위(판을 가리지 않는다),
       // 그 밖(지도 · 고르기)은 짚은 곳이 아래쪽이면 위에, 아니면 아래에
       const battle = document.body.classList.contains('lay-f') && !document.body.classList.contains('between') && !!document.getElementById('left')?.offsetWidth && document.getElementById('overlay')?.hidden !== false;
+      // 건너뛰기 자리: 전투 중이면 화면 왼쪽 아래 모서리 하나(띠 높이를 한 줄 덜고, 띠가 어디에 서든 같은 자리 — 원칙 8), 그 밖은 말풍선 속
+      if (battle && skipBtn.parentElement !== root) root.appendChild(skipBtn);
+      if (!battle && skipBtn.parentElement === root) foot.appendChild(skipBtn);
       if (battle) {
-        // #3 · P-B D-490: 전투 중 부관 안내 = 판 아래 가운데 자막 띠 하나 (레일 폭에 접히지 않는다). 짚은 곳이 판 아래쪽이면 판 위로
-        // P-C D-502: 작은 시험대 판은 열을 거의 채워 띠가 판에 걸친다 — 아래 · 위 두 자리 중 짚은 곳 · 보이는 구멍을 덜 가리는 쪽(같으면 아래)
+        // #3 · P-B D-490: 전투 중 부관 안내 = 판 열의 자막 띠 하나 (레일 폭에 접히지 않는다)
+        // D-535: 짚은 곳이 판 열 아래 절반이면 위 끝, 위 절반이면 아래 끝 — 구멍(짚은 곳 · 보이는 구멍) · 내 킹 · 건너뛰기와 겹치지 않는 가장 가까운 자리
         talk.classList.add('on-sub');
         talk.classList.remove('top', 'bottom', 'on-rail');
-        const keep = [...(r ? [r] : []), ...extra.map((q) => new DOMRect(q.x, q.y, q.w, q.h))];
-        const cover = (top: boolean): number => {
-          placeSub(talk, top, SUB_MIN_W);
-          const t = talk.getBoundingClientRect();
-          return keep.reduce((a, q) => a + Math.max(0, Math.min(t.right, q.right) - Math.max(t.left, q.left)) * Math.max(0, Math.min(t.bottom, q.bottom) - Math.max(t.top, q.top)), 0);
-        };
-        const low = !!r && r.top + r.height / 2 > H * 0.55;
-        const a = cover(low);
-        const flip = keep.length > 0 && cover(!low) < a;
-        if (!flip) placeSub(talk, low, SUB_MIN_W);
-        talk.dataset.side = low !== flip ? 'top' : 'bottom';
+        const grow = (q: DOMRect, p: number): DOMRect => new DOMRect(q.x - p, q.y - p, q.width + p * 2, q.height + p * 2);
+        const mine = (o.keep?.() ?? []).filter((q): q is DOMRect => !!q);
+        const keep = [...holes.map((q) => grow(new DOMRect(q.x, q.y, q.w, q.h), 4)), ...mine, skipBtn.getBoundingClientRect()];
+        placeSubAway(talk, { focus: r ?? mine[0] ?? null, keep, w: stepW });
       } else {
         delete talk.dataset.side;
         talk.classList.remove('on-rail', 'on-sub');
@@ -150,7 +148,16 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       root.classList.toggle('act', !!s.wait);
       s.enter?.();
       next.hidden = true;
+      // 띠 높이는 다 찍힌 글로 먼저 잡는다 — 찍히는 동안 띠가 자라며 자리를 옮기지 않게 (D-535)
+      textEl.style.minHeight = '';
+      textEl.innerHTML = s.text.replace(/\n/g, '<br>');
+      stepW = 0;
       place();
+      if (talk.classList.contains('on-sub')) {
+        stepW = fitSubWidth(talk, SUB_MIN_W);
+        place();
+      }
+      textEl.style.minHeight = `${Math.ceil(textEl.getBoundingClientRect().height)}px`;
       typing = true;
       o.tick?.();
       // 줄 바꿈(\n)은 줄마다 한 자씩 이어 찍는다 (D-242)
