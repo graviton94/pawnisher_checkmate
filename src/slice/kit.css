@@ -409,7 +409,13 @@ body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc
 .unit-peek .unit-hp-track .er-hp { height: 4px; }
 .unit-peek .er-hp { flex: 1; width: auto; }
 .unit-peek .er-fill { background: var(--t-loss); box-shadow: none; transition: none; }
+/* D-529 거대 주물 부위 표: 판 위 부위 바와 같은 순서 4칸(왼 반 = 왼쪽 부위 · 반마다 바깥 = 위 부위) — 가운데 넓은 틈이 왼 · 오 경계, 보는 부위는 황동 테, 부서진 부위는 빈 칸 */
+.unit-peek .giant-parts { gap: calc(2 * var(--px1)); }
+.unit-peek .giant-parts .er-hp:nth-child(2) { margin-right: calc(3 * var(--px1)); }
+.unit-peek .giant-parts .er-hp.on { box-shadow: 0 0 0 var(--px1) #000, 0 0 0 calc(2 * var(--px1)) var(--t-gold); }
+.unit-peek .giant-parts .er-hp.broken { background-color: #25242b; }
 .unit-peek .unit-shield strong { color: var(--t-ally); }
+.unit-peek strong small.weak { color: var(--t-gold); } /* D-529 약점 배율 — 치는 쪽에 좋은 소식이라 금색 */
 .unit-peek .unit-traits { border-top: 2px solid var(--t-dim); padding-top: var(--s1); }
 .unit-peek .unit-traits p { font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 /* D-422: 능력 하나는 이름 / 행동 / : 상세 효과, 정확히 세 줄. 말줄임·축소 없음. */

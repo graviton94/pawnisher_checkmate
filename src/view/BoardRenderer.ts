@@ -109,6 +109,29 @@ const PIECE_SIZE = 0.82 * (72 / 64);
  * 예전에는 그림 아래 끝을 칸의 84%(16.8도트)에 두어 흰 테 위쪽 0.2도트가 바 윗줄 위로 삐져나와 「흰 줄」로 보였다.
  */
 const GAUGE_ROW = 16;
+/**
+ * 거대 주물 부위 바 (D-529): 2×2 아래 기준선 밑 한 줄(2×2 반장 게이지와 같은 3~36도트 폭)을 반으로 — 왼쪽 반 = 왼쪽 부위 둘 · 오른쪽 반 = 오른쪽 부위 둘,
+ * 반마다 바깥 칸 = 위 부위 · 안쪽 칸 = 아래 부위(가운데 겹 먹 줄이 왼 · 오 경계). 칸 하나 = 채움 7도트. 길게 누르기 정보의 부위 표와 같은 순서.
+ */
+const GIANT_SLOT_N = 7;
+const GIANT_SLOTS: [0 | 1, 0 | 1][] = [[0, 1], [0, 0], [1, 0], [1, 1]];
+/** 부위 칸의 왼쪽 먹 테 열 (2×2 왼끝 기준 도트) */
+const giantSlotX = (dx: 0 | 1, dy: 0 | 1): number => (dx === 0 ? (dy === 1 ? 3 : 11) : dy === 0 ? 20 : 28);
+/** 기물 게이지 자리 (그 기물 칸 왼위 기준 도트) · 채움 칸 수 — 보통 14×4 · 2×2 반장 한 줄 · 거대 주물 부위 칸 */
+const gaugeSpot = (p: Piece): { x: number; y: number; n: number } => {
+  if (p.giant?.boss) return { x: 3, y: GAUGE_ROW, n: 2 * BOARD_DOTS - 8 };
+  if (p.giant) return { x: (p.giant.dx === 0 ? 0 : -BOARD_DOTS) + giantSlotX(p.giant.dx, p.giant.dy), y: (p.giant.dy === 1 ? BOARD_DOTS : 0) + GAUGE_ROW, n: GIANT_SLOT_N };
+  return { x: 3, y: GAUGE_ROW, n: 12 };
+};
+/** 거대 주물 바 먹 테 (반 둘, 바깥 모서리는 보통 게이지처럼 깎는다) — (x, y) = 2×2 왼끝 · 바 윗줄 */
+const drawGiantFrame = (pen: PixelPen, x: number, y: number): void => {
+  const d = pen.dot;
+  const px = (i: number, j: number) => pen.px(x + i * d + d / 2, y + j * d + d / 2, 0x0b0b0e, 1, 1);
+  for (const a of [3, 20]) {
+    for (let i = a + 1; i < a + 16; i++) { px(i, 0); px(i, 3); }
+    for (const c of [a, a + 8, a + 16]) { px(c, 1); px(c, 2); }
+  }
+};
 /** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
 let boardTopInset = 0;
 /** 판 아래 자리 (CSS px) — 부관 안내 띠 자리. 위아래를 같게 두면 판이 세로 가운데에 선다 (1.1.1 테스터: 판이 아래로 치우침) */
@@ -195,6 +218,8 @@ interface PieceSprite {
   glyph: Phaser.GameObjects.Image;
   hp: Phaser.GameObjects.Graphics;
   piece: Piece;
+  /** 마지막으로 그린 게이지 [지금, 잃은 뒤] — 거대 주물 형제 부위가 부서지면 이 값으로 다시 그린다 (D-529) */
+  hpDrawn?: [number, number];
 }
 
 /** 매 프레임 다시 찍는 판 표식 (흐르는 화살표 · 철컥 도는 과녁 · 위협 깜빡임 · 잃을 HP 반짝임) */
@@ -234,6 +259,8 @@ class BoardScene extends Phaser.Scene {
   private combo = 0;
   private dynamic: Phaser.GameObjects.GameObject[] = [];
   private sprites = new Map<number, PieceSprite>();
+  /** 판에 서 있는 거대 주물 부위 칸 (`거대id:dx dy`, D-529) — 부서진 칸은 바에서 빈 칸으로 */
+  private giantLive = new Set<string>();
   ready!: () => void;
   announce: (text: string) => void = () => {};
 
@@ -464,9 +491,8 @@ class BoardScene extends Phaser.Scene {
     const tp = new PixelPen(top, t / BOARD_DOTS);
     for (const r of this.anim.glints) {
       if (!r.s.root.active) continue;
-      const big = !!r.s.piece.giant?.boss; // 2×2 보스는 아래 끝 2칸 폭 게이지 (D-513 → D-525)
-      const gy = r.s.piece.giant?.dy === 1 && !big ? 1 : GAUGE_ROW;
-      drawGauge(tp, r.s.root.x + 3 * tp.dot, r.s.root.y + gy * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, big ? 2 * BOARD_DOTS - 8 : 12);
+      const g = gaugeSpot(r.s.piece);
+      drawGauge(tp, r.s.root.x + g.x * tp.dot, r.s.root.y + g.y * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, g.n);
     }
   }
 
@@ -661,6 +687,18 @@ class BoardScene extends Phaser.Scene {
     cam.centerOn(this.camCenter.x, this.camCenter.y);
   }
 
+  /** 판에서 기물 그림을 뗀다 — 거대 주물 부위면 바의 그 칸을 비우고 남은 형제 부위 바를 다시 그린다 (D-529) */
+  private dropSprite(id: number): void {
+    const sp = this.sprites.get(id);
+    this.sprites.delete(id);
+    const gi = sp?.piece.giant;
+    if (!gi || gi.boss) return;
+    this.giantLive.delete(`${gi.id}:${gi.dx}${gi.dy}`);
+    for (const o of this.sprites.values()) {
+      if (o.piece.giant?.id === gi.id && !o.piece.giant.boss && o.root.active) this.drawHp(o, o.hpDrawn?.[0] ?? o.piece.hp, o.hpDrawn?.[1] ?? o.piece.hp);
+    }
+  }
+
   // ---------- 기물 ----------
   private makePiece(p: Piece, pos: Pos, alpha = 1): PieceSprite {
     const t = this.tile;
@@ -800,14 +838,24 @@ class BoardScene extends Phaser.Scene {
       if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
       return;
     }
-    // 거대 주물 위쪽 부위 (D-484): 게이지를 칸 위 끝에 — 큰 그림 한가운데를 가로지르지 않고 네 게이지가 테두리처럼 둘러싼다
-    const gy = s.piece.giant?.dy === 1 ? 1 : GAUGE_ROW;
-    drawGauge(pen, 3 * d, gy * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp);
-    // 보호막: 게이지 바로 위(위쪽 부위는 바로 아래) 흰 도트 줄
+    s.hpDrawn = [hpNow, hpAfter];
+    const g = gaugeSpot(s.piece);
+    // 거대 주물 부위 (D-484 → D-529): 2×2 그림 아래 기준선 밑 한 줄 4칸 분할 바 — 부위마다 제 칸만 채우고, 부서진 부위 칸은 빈 칸으로 남는다.
+    // 테(먹)는 살아 있는 부위가 모두 같은 자리에 같은 색으로 그려 겹쳐도 같다
+    if (s.piece.giant) {
+      const gi = s.piece.giant;
+      const ox = gi.dx === 0 ? 0 : -BOARD_DOTS, oy = gi.dy === 1 ? BOARD_DOTS : 0;
+      drawGiantFrame(pen, ox * d, (oy + GAUGE_ROW) * d);
+      for (const [dx, dy] of GIANT_SLOTS) {
+        if ((dx !== gi.dx || dy !== gi.dy) && !this.giantLive.has(`${gi.id}:${dx}${dy}`))
+          drawGauge(pen, (ox + giantSlotX(dx, dy)) * d, (oy + GAUGE_ROW) * d, s.piece.side, 0, 0, 1, -1, GIANT_SLOT_N);
+      }
+    }
+    drawGauge(pen, g.x * d, g.y * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, g.n);
+    // 보호막: 게이지 바로 위 흰 도트 줄
     if (s.piece.shield > 0) {
-      const n = Math.max(1, Math.round(12 * Math.min(1, s.piece.shield / s.piece.maxHp)));
-      const sy = gy === 1 ? gy + 4 : gy - 1;
-      for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, sy * d + d / 2, 0xf4f1ea, 1, 1);
+      const n = Math.max(1, Math.round(g.n * Math.min(1, s.piece.shield / s.piece.maxHp)));
+      for (let i = 0; i < n; i++) pen.px((g.x + 1 + i) * d + d / 2, (g.y - 1) * d + d / 2, 0xf4f1ea, 1, 1);
     }
     if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
   }
@@ -966,6 +1014,7 @@ class BoardScene extends Phaser.Scene {
       }
     }
     const shown = [...m.virtual.pieces, ...m.removed];
+    this.giantLive = new Set(shown.filter((p) => p.giant && !p.giant.boss).map((p) => `${p.giant!.id}:${p.giant!.dx}${p.giant!.dy}`));
     for (const p of shown) if (hpAfter.has(p.id)) hitTiles.set(`${p.x},${p.y}`, p);
     // 아군이 선 칸은 공격 범위 표시에서 뺀다 (아군은 맞지 않는다)
     for (const p of m.virtual.pieces) if (p.side === m.state.turnSide) area.delete(`${p.x},${p.y}`);
@@ -1453,7 +1502,7 @@ class BoardScene extends Phaser.Scene {
     );
     const s0 = this.shatterPiece(s, F.shatterMs / IMPACT.shatter.ms, 1.3, { hot: true, cool: mine });
     s.root.destroy();
-    this.sprites.delete(s.piece.id);
+    this.dropSprite(s.piece.id);
     await Promise.all([s0, crown]);
     this.time.delayedCall(900 / this.speed, () => crownG.destroy());
     this.camRelease();
@@ -1725,7 +1774,7 @@ class BoardScene extends Phaser.Scene {
           await this.tween({ targets: k.root, alpha: { from: 1, to: 0.6 }, duration: 300, yoyo: true });
           const ash = this.playCrumble(k);
           k.root.destroy();
-          this.sprites.delete(e.pieceId);
+          this.dropSprite(e.pieceId);
           await ash;
         }
         continue;
@@ -1821,7 +1870,7 @@ class BoardScene extends Phaser.Scene {
           if (h.killed) {
             void this.playCrumble(sp);
             sp.root.destroy();
-            this.sprites.delete(sp.piece.id);
+            this.dropSprite(sp.piece.id);
           }
         }
         await this.wait(260);
@@ -1935,7 +1984,7 @@ class BoardScene extends Phaser.Scene {
         const ashes = rest.map((s) => this.shatterPiece(s));
         for (const s of rest) {
           s.root.destroy();
-          this.sprites.delete(s.piece.id);
+          this.dropSprite(s.piece.id);
         }
         if (king) await this.finisher(king, king.piece.side === 0);
         await Promise.race([Promise.all(ashes), this.after(420)]);

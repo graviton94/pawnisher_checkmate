@@ -108,6 +108,14 @@ export const RAID = {
   /** 길게 누르기 효과 줄 (D-422 · D-515 — 한 행) */
   hits: { slam: '한 변 네 칸', sweep: '앞 한 줄 끝까지', charge: '몸 폭 두 줄 · 첫 기물까지', corner: '꺾인 두 변 일곱 칸' } as Record<RaidPattern, string>,
 };
+/**
+ * 거대 주물 부위 이름 · 판 위 바 순서 (D-529): 판 위 부위 바는 2×2 아래 한 줄 4칸 — 왼쪽 반 = 왼쪽 부위, 반마다 바깥 = 위 부위.
+ * 길게 누르기 정보의 부위 표도 같은 순서로 그린다 (BoardRenderer `GIANT_SLOTS`와 같다). dx 0 = 왼쪽 · dy 1 = 위.
+ */
+export const GIANT_PART = {
+  order: [[0, 1], [0, 0], [1, 0], [1, 1]] as [0 | 1, 0 | 1][],
+  name: (dx: 0 | 1, dy: 0 | 1): string => `${dy === 1 ? '위' : '아래'} ${dx === 0 ? '왼쪽' : '오른쪽'} 부위`,
+};
 /** 레이드 표지 · 안내 (docs/voice.md ⑨ 표지 · ① 시스템 투) */
 export const RAID_TEXT = {
   /** 띠 (⑨ 상태 — 명사구 + 덧말) */
@@ -117,6 +125,8 @@ export const RAID_TEXT = {
   /** 몸 위 짧은 글 (⑨ 터짐) */
   stunTag: `${TERM.stun}!`,
   weakTag: '약점!',
+  /** 길게 누르기 수치판 방어력 칸 옆 (D-529 — D-518 남은 위험: 약점 배율이 숫자로 보이지 않았다). 패링 경직 ×1.6 · 이형 헛침 ×1.4 */
+  weakStat: (m: number): string => ` 약점 ×${m}`,
   whiffTag: '헛방!',
   holdTag: '막음!',
   /** 토스트 (① 시스템 투) */
