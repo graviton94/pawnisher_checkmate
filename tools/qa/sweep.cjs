@@ -7,7 +7,7 @@
 //   --only 묶음 이름(쉼표) — 시간 제한이 있으면 묶음별로 나눠 돌린다. 같은 날 · 같은 규격의 결과는 한 보고서로 합쳐진다.
 //   --build = 먼저 npm run build (dist가 없으면 자동). 미리보기 서버는 빈 포트에 직접 띄우고 끝나면 닫는다(OBSERVE_URL을 주면 그 서버를 쓴다).
 //   --list = 묶음 · 화면 목록만 찍는다.
-// 결과: production/qa/evidence/sweep-<날짜>[-667][-calm]/<묶음번호>-<순번>-<화면>.png + sweep-report.md
+// 결과: production/qa/evidence/sweep-<날짜>[-667][-calm]/<묶음번호>-<순번>-<화면>.png + sweep-report.md (SWEEP_OUT=폴더로 바꿀 수 있다 — 고친 뒤 다시 찍어 전/후를 나란히 둘 때)
 //   컷신은 쪽마다 재생기의 박자 표지(.prologue[data-beat=hold] — 전환 · 카메라 계단 · 글자 찍기가 다 끝남)를 기다렸다 찍고, 막 입구 카드는 글이 다 찍힌 뒤 찍는다.
 //   아직 없는 기능의 자리 장면(예: 2×2 특별 보스 D-513)은 skip()으로 「건너뜀」이 되고 실패로 세지 않는다.
 //   보고서의 「대기 에셋」 열은 docs/asset-order-master.md 머리의 상태(재발주 · 대기 · 새 발주)를 화면과 짝지은 것 — 아직 빌린/임시 그림을 쓰는 화면.
@@ -26,7 +26,7 @@ const onlyArg = args.find((a, i) => args[i - 1] === '--only') ?? (args.find((a) 
 const ONLY = onlyArg ? onlyArg.split(',').map((s) => s.trim()).filter(Boolean) : null;
 const [VW, VH, DPR] = small ? [667, 375, 2] : [915, 412, 2.625];
 const day = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
-const OUT = path.join(ROOT, 'production/qa/evidence', `sweep-${day}${small ? '-667' : ''}${calm ? '-calm' : ''}`);
+const OUT = process.env.SWEEP_OUT ? path.resolve(process.env.SWEEP_OUT) : path.join(ROOT, 'production/qa/evidence', `sweep-${day}${small ? '-667' : ''}${calm ? '-calm' : ''}`);
 const PARTS = path.join(OUT, '.parts');
 const W = (ms) => new Promise((r) => setTimeout(r, ms));
 /** 점검 대상 저장(meta): 입문 · 안내를 마친 사람 — 용어 사전이 다 열리고 모든 왕관을 고를 수 있다 */
@@ -95,6 +95,10 @@ const GROUPS = [
     } },
     { name: 'process', assets: ['PB-01'], run: async ({ A, W, shot }) => {
       for (const k of ['conveyor', 'press', 'magnet', 'furnace', 'crack']) { await A((p) => window.sliceApi.battleWith(2, 'battle', { process: p, giants: undefined, forms: undefined }), k); await W(1800); await shot(`process-${k}`); }
+      // 프레스는 2턴마다 예고 → 내리찍은 뒤 자국: 첫 화면엔 없으니 줄을 직접 세워 본다 (그림 · 위험 칸 표시만)
+      await A(() => window.sliceApi.battleWith(2, 'battle', { process: 'press', giants: undefined, forms: undefined })); await W(1800);
+      await A(() => { window.slice().proc.pressRow = 3; window.sliceApi.redraw(); }); await W(500); await shot('process-press-warn');
+      await A(() => { const pr = window.slice().proc; pr.pressRow = null; pr.dentRow = 3; window.sliceApi.redraw(); }); await W(500); await shot('process-press-dent');
     } },
     { name: 'unit-info', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800); await A(() => { const q = window.slice().s.pieces.find((x) => x.side === 1 && x.type === 'K'); window.sliceApi.peekAt({ x: q.x, y: q.y }); }); await W(600); await shot('peek-king'); } },
     { name: 'log', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800); await A(() => window.sliceApi.botMove()); await W(2600); await A(() => window.sliceApi.logPeek()); await W(500); await shot('log'); } },
@@ -155,7 +159,7 @@ const GROUPS = [
   ['event', '사건 (NPC · 종이왕 · 말 없는 사건 · 정보 쪽 · 결과 · 결과 코드 FX 8종)', [
     { name: 'event-npc', assets: [], run: async ({ pg, A, W, shot }) => {
       await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(4500); await shot('event-npc');
-      await pg.click("[data-info='1']").catch(() => {}); await W(500); await shot('event-info');
+      await pg.locator('[data-info]').first().click().catch(() => {}); await W(500); await shot('event-info');
     } },
     { name: 'event-result', assets: [], run: async ({ pg, A, W, shot }) => {
       await A(() => { window.sliceApi.gold(200); window.sliceApi.event('tinker'); }); await W(3000);
@@ -229,6 +233,52 @@ const GROUPS = [
     { name: 'crew', assets: ['TI-01', 'TI-02', 'PT-08'], run: async ({ A, W, shot }) => { await A(() => { const a = window.sliceApi; a.richRun(); const q = a.squad(); q[1].quirk = 'stubborn'; q[1].doorsSpent = 1; q[2].cracked = true; a.crew(); }); await W(1200); await shot('crew'); } },
     { name: 'deck', assets: ['RF-04', 'KC-01'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await shot('deck'); } },
     { name: 'nemesis', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.nemesisOf()); await W(1200); await shot('nemesis'); } },
+  ]],
+  ['system', '시작 세트 고르기 · 설정 창(소리 · 화면 · 제작 · 라이선스 전문 · 초기화 확인 · 대국 중 ? 탭) · 오류 복구 창 · 대국 중 이어하기 (D-529 · D-530)', [
+    { name: 'settings', assets: [], url: '?debug&opening', run: async ({ pg, W, shot, tapAt }) => {
+      await W(1200); await tapAt(VW / 2, VH * 0.72); await W(1400);
+      const t = async (sel, ms = 500) => { await pg.locator(sel).first().tap(); await W(ms); };
+      await t('[data-settings]', 800); await shot('set-sound');
+      await t('[data-set-tab="screen"]'); await shot('set-screen');
+      await t('[data-set-tab="credits"]'); await shot('set-credits');
+      await t('[data-lic]', 700); await shot('set-license-1');
+      const nx = pg.locator('[data-lic-next]'); if ((await nx.count()) && (await nx.isEnabled())) { await nx.tap(); await W(500); await shot('set-license-2'); }
+      await t('[data-lic-x]'); await t('[data-set-tab="screen"]');
+      await t('[data-reset]', 700); await shot('set-reset-1');
+      await t('[data-yes]', 700); await shot('set-reset-2');
+      await t('[data-no]');
+    } },
+    { name: 'settings-battle', assets: [], run: async ({ pg, A, W, shot }) => {
+      await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800);
+      await pg.locator('#btn-help').tap(); await W(800); await shot('help-tabs');
+      await pg.locator('[data-tab="set"]').tap(); await W(700); await shot('help-settings');
+    } },
+    { name: 'set-pick', assets: [], run: async ({ A, W, shot }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); } },
+    { name: 'crash', assets: [], run: async ({ A, W, shot }) => {
+      // 지도에 선 출하(저장 있음)에서 잡히지 않은 오류 — 진짜 예외 대신 같은 error 사건을 보내 창만 띄운다
+      await A(() => { const a = window.sliceApi; a.richRun(); a.map(2); }); await W(1400);
+      await A(() => window.dispatchEvent(new ErrorEvent('error', { error: new Error('sweep: 일부러 낸 오류'), message: 'sweep' }))); await W(900); await shot('crash-map');
+    } },
+    { name: 'crash-again', assets: [], run: async ({ A, W, shot }) => {
+      // 이어 간 직후 30초 안에 또 난 오류 — 「처음으로」만
+      await A(() => { sessionStorage.setItem('pawnisher.crashAt', String(Date.now())); window.sliceApi.startAt(1, 'battle'); }); await W(1800);
+      await A(() => window.dispatchEvent(new ErrorEvent('error', { error: new Error('sweep: 일부러 낸 오류'), message: 'sweep' }))); await W(900); await shot('crash-again');
+    } },
+    { name: 'resume', assets: [], run: async ({ pg, A, W, shot, tapAt }) => {
+      // 새 출하 → 첫 대국에서 카드 한 장 → 앱 닫기(pagehide) → 첫 화면부터 「이어하기」 → 같은 판
+      await A(() => { void window.sliceApi.begin(777, 0, 'story', null, 'standard'); }); await W(2000);
+      for (let i = 0; i < 40 && !(await A(() => !!document.querySelector('#hand [data-card]') && !document.body.classList.contains('between') && !document.querySelector('.prologue, .actcard, .stagefx, .bossfx'))); i++) {
+        await A(() => { const b = [...document.querySelectorAll('.cut-skip')].find((x) => x.getClientRects().length); if (b) b.click(); }); await tapAt(VW / 2, VH * 0.3); await W(700);
+      }
+      await Promise.race([A(() => window.sliceApi.botMove('greedy')), W(15000)]); await W(1500);
+      await shot('resume-before');
+      await A(() => window.dispatchEvent(new Event('pagehide'))); await W(300);
+      await pg.goto(pg.url().replace(/\?.*$/, '') + '?debug&opening');
+      await pg.waitForSelector('#boot', { state: 'detached', timeout: 30000 }); await W(1500);
+      for (let i = 0; i < 6 && !(await pg.locator('[data-cont]').count()); i++) { await tapAt(VW / 2, VH * 0.72); await W(900); }
+      await shot('resume-menu');
+      await pg.locator('[data-cont]').tap(); await W(4500); await shot('resume-after');
+    } },
   ]],
   ['glossary', '용어집', [
     { name: 'dict', assets: ['TI-01', 'TI-02'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.help('dict')); await W(1200); await shot('dict'); } },
