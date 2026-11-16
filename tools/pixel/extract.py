@@ -87,7 +87,7 @@ def clean(grid):
                 around = nb(j, i)
                 solid = sum(c != '.' for c in around)
                 if grid[j][i] == '.' and solid >= 3:
-                    grid[j][i] = max(set(c for c in around if c != '.'), key=[c for c in around if c != '.'].count)
+                    grid[j][i] = max(sorted(set(c for c in around if c != '.')), key=[c for c in around if c != '.'].count)
                 elif grid[j][i] != '.' and solid <= 1:
                     grid[j][i] = '.'
     for j in range(n):
@@ -97,7 +97,7 @@ def clean(grid):
                 continue
             around = [x for x in nb(j, i) if x != '.']
             if around and c not in around:
-                grid[j][i] = max(set(around), key=around.count)
+                grid[j][i] = max(sorted(set(around)), key=around.count)
 
 
 K_RING = 3  # 검정 외곽선 두께 (칸) — 원본의 검정 띠 평균

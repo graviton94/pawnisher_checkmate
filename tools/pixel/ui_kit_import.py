@@ -286,7 +286,7 @@ def frames_main(src, sid, cell=48):
                     cy0, cy1 = int(y0 + (gy + 0.25) * ph), int(y0 + (gy + 0.75) * ph) + 1
                     blk = a[cy0:cy1, cx0:cx1].reshape(-1, 3)
                     keys = [tuple(c) for c in blk]
-                    c = max(set(keys), key=keys.count)
+                    c = max(sorted(set(keys)), key=keys.count)
                     if is_key(c):
                         continue
                     n = near(c)

@@ -1513,7 +1513,7 @@ def render(rows):
                 # 안쪽 선: 순검정 대신 둘레 재질의 그늘을 더 어둡게 (셀아웃 — 바깥 테두리는 검정 그대로, D-216)
                 near = [grid[y + dy][x + dx] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if 0 <= x + dx < n and 0 <= y + dy < n and grid[y + dy][x + dx] in RAMP]
                 if near:
-                    m = max(set(near), key=near.count)
+                    m = max(sorted(set(near)), key=near.count)
                     px[x, y] = mix(hexc(RAMP[m][2]), (0, 0, 0, 255), 0.55)
                 else:
                     px[x, y] = hexc(FIX['K'])

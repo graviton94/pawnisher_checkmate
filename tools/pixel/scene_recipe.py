@@ -343,14 +343,14 @@ PB01_GRID = {
     # 무늬 자리 (a안 칸 안쪽 2도트부터 16×16) · 가운데 차분한 자리 12×12 (기물이 서는 곳 — 발주서 칸 문법)
     'inner': (2, 16), 'calm': (4, 12),
     # 칸: (줄, 칸) · 어느 판 무늬 · 무늬 돌림(90° 단위, 시계 반대) — 자석 레일은 판에서 세로 기둥이므로 돌린다
-    # iron = 갈색 없이 맞춤(b안 화살 홈이 프레임마다 갈색/쇠로 갈리던 것을 쇠로 고정) · calm=False = 가운데도 낮추지 않음(금 줄이 곧 정보)
+    # soft = 대비 한 단 낮춤(컨베이어, D-529) · boost = 금 줄 한 단 올림(금 1단계, D-529) · iron = 갈색 없이 맞춤(b안 화살 홈이 프레임마다 갈색/쇠로 갈리던 것을 쇠로 고정) · calm=False = 가운데도 낮추지 않음(금 줄이 곧 정보)
     # use 'a' = 16칸으로 줄이면 b안 무늬가 뭉개지는 칸: 프레스 머리(둥근 머리 · 볼트가 흙덩이로) · 꺼진 구멍(먹 구멍이 짙은 갈색으로 묻힘)
     'tiles': {
-        'conveyor0': {'rc': (0, 0), 'use': 'b', 'iron': True}, 'conveyor1': {'rc': (0, 1), 'use': 'b', 'iron': True},
-        'conveyor2': {'rc': (0, 2), 'use': 'b', 'iron': True}, 'conveyor3': {'rc': (0, 3), 'use': 'b', 'iron': True},
+        'conveyor0': {'rc': (0, 0), 'use': 'b', 'iron': True, 'soft': True}, 'conveyor1': {'rc': (0, 1), 'use': 'b', 'iron': True, 'soft': True},
+        'conveyor2': {'rc': (0, 2), 'use': 'b', 'iron': True, 'soft': True}, 'conveyor3': {'rc': (0, 3), 'use': 'b', 'iron': True, 'soft': True},
         'press-warn': {'rc': (1, 0), 'use': 'b'}, 'press-hit': {'rc': (1, 1), 'use': 'a'}, 'press-dent': {'rc': (1, 2), 'use': 'b'},
         'magnet-rail': {'rc': (2, 0), 'use': 'b', 'rot': 1}, 'magnet-post': {'rc': (2, 1), 'use': 'b'},
         'furnace': {'rc': (3, 0), 'use': 'b'}, 'furnace-hot': {'rc': (3, 1), 'use': 'b'},
-        'crack1': {'rc': (4, 0), 'use': 'b', 'calm': False}, 'crack2': {'rc': (4, 1), 'use': 'b', 'calm': False}, 'crack3': {'rc': (4, 2), 'use': 'a'},
+        'crack1': {'rc': (4, 0), 'use': 'b', 'calm': False, 'boost': True}, 'crack2': {'rc': (4, 1), 'use': 'b', 'calm': False}, 'crack3': {'rc': (4, 2), 'use': 'a'},
     },
 }

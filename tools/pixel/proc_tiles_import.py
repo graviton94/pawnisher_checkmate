@@ -50,6 +50,10 @@ BROWN = [hx(h) for h in ('#2A2420', '#3A2D26', '#5C4030', '#80553A')]
 # 가운데 차분하게: 밝은 단 → 한 단 아래 (같은 재질 계단 안)
 CALM = {hx(a): hx(b) for a, b in (('#F5C542', '#C89B3C'), ('#C89B3C', '#8A6416'), ('#FF7B7B', '#E5262F'), ('#E5262F', '#7A1218'),
                                   ('#5EEAD4', '#1F8A7A'), ('#F1EDE4', '#BFB9AD'), ('#BFB9AD', '#8E877A'), ('#8A8794', '#56545E'))}
+# D-529 다듬기 (사용자 지적 D-521/522 남은 것): soft = 칸 전체가 기계라 대비가 센 컨베이어 — 무늬 전체에서 밝은 단을 한 단 내리고(CALM) 황동 레일을 칸 바닥 갈색으로 한 단 내린다
+# boost = 금 간 바닥 1단계 — 금 줄(황동)을 한 단 올려 바닥에서 읽히게. 둘 다 팔레트 안 이웃 단으로만 바꾼다 (새로 그리지 않음 — D-386)
+SOFT = {hx('#8A6416'): hx('#5C4030')}
+BOOST = {hx(a): hx(b) for a, b in (('#C89B3C', '#F5C542'), ('#8A6416', '#C89B3C'))}
 # 다수결 가중 — 가는 먹 선 · 등불 색이 축소에서 사라지지 않게
 WEIGHT = {INK: 1.7, **{hx(h): 1.6 for h in ('#5EEAD4', '#1F8A7A', '#E5262F', '#FF7B7B', '#F5C542', '#C89B3C')}}
 # 바닥을 걷을 칸 (나머지는 칸 전체가 기계 — 컨베이어 벨트 · 용광로 창살)
@@ -140,10 +144,14 @@ def merge(a, b, name, spec, light):
             p = pat[y][x]
             if p == floor:
                 continue
+            if spec.get('soft'):
+                p = SOFT.get(CALM.get(p, p), CALM.get(p, p))
+            if spec.get('boost'):
+                p = BOOST.get(p, p)
             if not light and p in BROWN:
                 # 어두운 칸: 갈색 한 단 아래 — 가장 어두운 갈색(그림자)은 바닥에 묻히지 않게 먹으로
                 p = BROWN[BROWN.index(p) - 1] if BROWN.index(p) else INK
-            if spec.get('calm', True) and k0 <= x + o < k0 + kn and k0 <= y + o < k0 + kn:
+            if spec.get('calm', True) and not spec.get('soft') and k0 <= x + o < k0 + kn and k0 <= y + o < k0 + kn:
                 p = CALM.get(p, p)
             base.putpixel((x + o, y + o), p)
     return base
