@@ -22,7 +22,7 @@
 
 | 출하 | 메뉴 표기 | 그림자 컷 | 1막 | 2막 | 3막 | 종막 (도금왕) | 왕위 결정 | 결말 컷 | 크레딧 → 장부 | 기록 (고친 뒤) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 첫째 왕관 | 무지와 첫 배신 | SHD-A ✓ | 검수 반장 · 격파 컷 · CO-1 ✓ | 조립 · CO-2 ✓ | 출하/경보 · 쇠사슬 문 ✓ | ✓ | 「돌아본다」 컷 → 「왕관을 쓴다」 ✓ | END-K 8컷 (`crown-1-throne`) ✓ | ✓ | 본편 1 · 왕 1 · 해금 9 ✓ |
+| 첫째 왕관 | 무지와 첫 배신 | SHD-A ✓ | 반장 · 격파 컷 · CO-1 ✓ | 반장 · CO-2 ✓ | 반장 · 쇠사슬 문 ✓ | ✓ | 「돌아본다」 컷 → 「왕관을 쓴다」 ✓ | END-K 8컷 (`crown-1-throne`) ✓ | ✓ | 본편 1 · 왕 1 · 해금 9 ✓ |
 | 둘째 왕관 | 타인의 비극을 삼킨 오만 | SHD-B `new-law → law-plate → crown-2-open` ✓ | ✓ | CO-2 `old-spring` ✓ | ✓ | ✓ | 왕관을 쓴다 ✓ | END-K (`crown-2-throne`) ✓ | ✓ | 본편 2 · 왕 2 · 해금 17 ✓ |
 | 셋째 왕관 | 가장 거룩한 착취 | SHD-B (`crown-3-open`) ✓ | ✓ | ✓ | ✓ | ✓ | 왕관을 쓴다 ✓ | END-K (`crown-3-throne`) ✓ | ✓ | 본편 3 · 왕 3 · 해금 25 ✓ |
 | 넷째 왕관 · 던진다 | 직시와 해방 | SHD-B (`crown-4-open`) ✓ | ✓ | CO-2 `scarred-wall` ✓ | ✓ | ✓ | 「왕관을 던진다」 ✓ | **END-T** 6컷 (`end-t-throw … white-land → end-t-step`) ✓ | 「왕관 파괴」 장부 ✓ | 본편 4 · 진엔딩 · 왕 3 · 해금 전부(92) · 도전 버튼 열림 ✓ |
@@ -32,7 +32,7 @@
 | 오늘의 도전 | 오늘의 도전 | 없음 | ✓ | ✓ | ✓ | ✓ | 없음 | 크레딧 | ✓ | `daily[날짜]` 1건 · 본편 진행 없음 ✓ · **같은 날 = 같은 출하: 고침** |
 | 패배 (END-F) | 첫째 왕관 | ✓ | 입문 대국에서 짐 | — | — | — | — | 되감기 거절 → 하자 폐기 → `end-fail → end-f-box → end-f-unwind` ✓ | 결과 장면 ✓ | runs +1 · 본편 그대로 ✓ · **닫았다 이어 하면 패배가 물러짐: 고침** |
 
-장면 순서는 바이블 · 실행 정본(`docs/brief/scenario-runtime.md`)과 같다. 그림자 컷 → 막마다 반장 등장 → 격파 컷(STG-PROG) → 동료 장면 → 막 입구 카드(ACT-2~4, ACT-1은 화면에 없음) → 도금왕 → 왕위 결정 → END-K/T → 크레딧 → 결과 장부 → 메인 화면.
+반장은 출하마다 시드로 바뀐다(철갑 · 검수 / 조립 · 자석 / 경보 · 출하). 장면 순서는 바이블 · 실행 정본(`docs/brief/scenario-runtime.md`)과 같다. 그림자 컷 → 막마다 반장 등장 → 격파 컷(STG-PROG) → 동료 장면 → 막 입구 카드(ACT-2~4, ACT-1은 화면에 없음) → 도금왕 → 왕위 결정 → END-K/T → 크레딧 → 결과 장부 → 메인 화면.
 없는 그림 대신 쓴 대체 그림(404)은 한 건도 없었다.
 
 확인하지 못한 것 (NOT ASSESSED):
@@ -110,4 +110,4 @@ node tools/qa/resume.cjs production/qa/resume
 npm run climb -- --styles search --asc 0,1,2,3 --n 40
 ```
 
-증거 사진: `production/qa/evidence/2026-11-16-completion-*.png`. 결과 장부마다 한 장, 결말 컷(END-K 왕좌 · END-T 하얀 땅 · END-F), 이어하기 전후가 들어 있다. git에는 올리지 않는다(.gitignore). 기록 글은 `production/qa/evidence/2026-11-16-completion-log.txt`.
+증거 사진: `production/qa/evidence/2026-11-16-completion-*.png`. 결과 장부마다 한 장, 결말 컷(END-K 왕좌 · END-T 하얀 땅 · END-F), 이어하기 전후가 들어 있다. git에는 올리지 않는다(.gitignore). 기록 글(장면 순서 전체 · 이어하기 표 · 등반 표)은 `docs/reports/2026-11-16-completion-check-log.txt`.

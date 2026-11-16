@@ -1,0 +1,122 @@
+# 2026-11-16 출시 완주 점검 기록 (tools/qa/completion.cjs · resume.cjs — 고친 뒤, be8ce13 위)
+
+crown1 메뉴 표기: 무지와 첫 배신
+crown1: 메인 화면 단추까지 · 대국 20 · 저장 지움 · 기록 storyCleared=1 trueEnd=false challengeOpen=4 kings=1 unlocked=9 daily= · OK
+  장면: cut:prologue-shadow → boss:철갑 반장 → cut:boss-fall-plate → cut:companion-rest → act:조립 공정 → boss:조립 반장 → cut:boss-fall-spawn → cut:companion-crossroad → act:검수 공정 → boss:경보 반장 → cut:boss-fall-alarm → cut:chained-door → act:출하구 → boss:도금왕 → promotion → cut:promote-crew → promotion → cut:promote-crew → promotion → chose:look → cut:crown-dais → cut:end-k-sight → cut:casting-floor → cut:end-k-reach → cut:gold-cast → cut:crown-1-throne → cut:end-k-gild → cut:law-plate → credits → home-button
+crown2 메뉴 표기: 타인의 비극을 삼킨 오만
+crown2: 메인 화면 단추까지 · 대국 20 · 저장 지움 · 기록 storyCleared=2 trueEnd=false challengeOpen=4 kings=2 unlocked=17 daily= · OK
+  장면: cut:new-law → cut:law-plate → cut:crown-2-open → boss:철갑 반장 → cut:boss-fall-plate → cut:companion-rest → act:조립 공정 → boss:조립 반장 → cut:boss-fall-spawn → cut:old-spring → act:검수 공정 → boss:경보 반장 → cut:boss-fall-alarm → cut:chained-door → act:출하구 → boss:도금왕 → promotion → chose:crown → cut:crown-dais → cut:end-k-sight → cut:casting-floor → cut:end-k-reach → cut:gold-cast → cut:crown-2-throne → cut:end-k-gild → cut:law-plate → credits → home-button
+crown3 메뉴 표기: 가장 거룩한 착취
+crown3: 메인 화면 단추까지 · 대국 20 · 저장 지움 · 기록 storyCleared=3 trueEnd=false challengeOpen=4 kings=3 unlocked=25 daily= · OK
+  장면: cut:new-law → cut:law-plate → cut:crown-3-open → boss:검수 반장 → cut:boss-fall-inspect → cut:companion-rest → act:조립 공정 → boss:조립 반장 → cut:boss-fall-spawn → cut:companion-crossroad → act:검수 공정 → boss:경보 반장 → cut:boss-fall-alarm → cut:chained-door → act:출하구 → boss:도금왕 → promotion → chose:crown → cut:crown-dais → cut:end-k-sight → cut:casting-floor → cut:end-k-reach → cut:gold-cast → cut:crown-3-throne → cut:end-k-gild → cut:law-plate → credits → home-button
+crown4 메뉴 표기: 직시와 해방
+crown4: 메인 화면 단추까지 · 대국 17 · 저장 지움 · 기록 storyCleared=4 trueEnd=true challengeOpen=4 kings=3 unlocked=92 daily= · OK
+  장면: cut:new-law → cut:law-plate → cut:crown-4-open → boss:검수 반장 → cut:boss-fall-inspect → cut:companion-rest → act:조립 공정 → boss:자석 반장 → cut:boss-fall-magnet → cut:scarred-wall → act:검수 공정 → boss:경보 반장 → cut:boss-fall-alarm → cut:chained-door → act:출하구 → boss:도금왕 → promotion → chose:depart → cut:gilded-fallen → cut:end-t-throw → cut:crown-gears → cut:end-t-silence → cut:white-land → cut:end-t-step → credits → home-button
+도전 버튼 열림: true
+challenge1: 메인 화면 단추까지 · 대국 18 · 저장 지움 · 기록 storyCleared=4 trueEnd=true challengeOpen=5 kings=3 unlocked=92 daily= · OK
+  장면: boss:검수 반장 → act:조립 공정 → boss:조립 반장 → act:검수 공정 → boss:출하 반장 → act:출하구 → boss:도금왕 → credits → home-button
+(chain 1115초)
+crown4-throne: 메인 화면 단추까지 · 대국 17 · 저장 지움 · 기록 storyCleared=4 trueEnd=false challengeOpen=4 kings=4 unlocked=92 daily= · OK
+  장면: cut:new-law → cut:law-plate → cut:crown-4-open → boss:철갑 반장 → cut:boss-fall-plate → cut:companion-rest → act:조립 공정 → boss:조립 반장 → cut:boss-fall-spawn → cut:scarred-wall → act:검수 공정 → boss:출하 반장 → cut:boss-fall-thorns → cut:chained-door → act:출하구 → boss:도금왕 → promotion → chose:crown → cut:crown-dais → cut:end-k-sight → cut:casting-floor → cut:end-k-reach → cut:gold-cast → cut:end-k-gild → cut:law-plate → credits → home-button
+(crown4-throne 233초)
+challenge-top 메뉴 표기: 도전 난이도 10
+challenge-top: 메인 화면 단추까지 · 대국 19 · 저장 지움 · 기록 storyCleared=4 trueEnd=true challengeOpen=13 kings=0 unlocked=6 daily= · OK
+  장면: boss:철갑 반장 → act:조립 공정 → boss:자석 반장 → act:검수 공정 → boss:출하 반장 → act:출하구 → boss:도금왕 → credits → home-button
+(challenge-top 192초)
+daily 같은 날 두 기록: 같은 출하
+daily: 메인 화면 단추까지 · 대국 20 · 저장 지움 · 기록 storyCleared=0 trueEnd=false challengeOpen=4 kings=0 unlocked=0 daily=2026-11-16 · OK
+  장면: boss:철갑 반장 → act:조립 공정 → boss:조립 반장 → act:검수 공정 → boss:경보 반장 → act:출하구 → boss:도금왕 → credits → home-button
+(daily 217초)
+defeat: 메인 화면 단추까지 · 대국 1 · 저장 지움 · 기록 storyCleared=0 trueEnd=false challengeOpen=4 kings=0 unlocked=2 daily= · OK
+  장면: cut:prologue-shadow → rewind-declined → lost → quit → cut:end-fail → cut:end-f-box → cut:end-f-unwind → lost → home-button
+(defeat 17초)
+
+## 이어하기 (resume.cjs)
+| 닫은 자리 | 닫기 전 화면 | 이어하기 | 이어한 화면 | 판정 |
+|---|---|---|---|---|
+| battle-mid | battle:t2 | 있음 | battle:t2 | ✓ |
+    저장(닫기 직전) {"at":"battle","act":0,"row":0,"node":0,"gold":0,"won":0,"deck":8,"parts":"","squad":"K,P,N","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":2}
+    저장(이어한 뒤) {"at":"battle","act":0,"row":0,"node":0,"gold":0,"won":0,"deck":8,"parts":"","squad":"K,P,N","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":2} · runs 3→3
+| reward | overlay:영입나사 +40새는 기 | 있음 | overlay:영입나사 +40새는 기 | ✓ |
+    저장(닫기 직전) {"at":"reward","act":0,"row":0,"node":0,"gold":40,"won":0,"deck":8,"parts":"","squad":"K100,P43,N27","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"reward","act":0,"row":0,"node":0,"gold":40,"won":0,"deck":8,"parts":"","squad":"K100,P43,N27","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":null} · runs 3→3
+    선택지 전 0새는 기름통943작은 개척 | 1덜컹이는 바퀴1835성스러 | 2쇳소리 뭉치2136뛰어넘고
+    선택지 후 0새는 기름통943작은 개척 | 1덜컹이는 바퀴1835성스러 | 2쇳소리 뭉치2136뛰어넘고
+| map | map | 있음 | map | ✓ |
+    저장(닫기 직전) {"at":"map","act":0,"row":1,"gold":40,"won":1,"deck":8,"parts":"","squad":"K100,P43,N27","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"map","act":0,"row":1,"gold":40,"won":1,"deck":8,"parts":"","squad":"K100,P43,N27","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":null} · runs 3→3
+| event | event | 있음 | map | ✓ |
+    저장(닫기 직전) {"at":"map","act":0,"row":4,"gold":160,"won":4,"deck":8,"parts":"","squad":"K100,P43,N36","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[null,0,0,0],[],[],[]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"map","act":0,"row":4,"gold":160,"won":4,"deck":8,"parts":"","squad":"K100,P43,N36","charms":"{\"revive\":1,\"rewind\":2}","picked":"[[null,0,0,0],[],[],[]]","fightTurn":null} · runs 3→3
+    선택지 전 0압인기를 돌린다나사 −80
+    선택지 후 
+    다시 들어간 사건: 같음
+| boss-intro | boss-intro | 있음 | battle:t1 | ✓ |
+    저장(닫기 직전) {"at":"battle","act":0,"row":9,"node":0,"gold":188,"won":6,"deck":9,"parts":"","squad":"K100,P43,N36","charms":"{\"revive\":1,\"rewind\":3}","picked":"[[null,0,0,0,0,0,0,0,0,0],[],[],[]]","fightTurn":1}
+    저장(이어한 뒤) {"at":"battle","act":0,"row":9,"node":0,"gold":188,"won":6,"deck":9,"parts":"","squad":"K100,P43,N36","charms":"{\"revive\":1,\"rewind\":3}","picked":"[[null,0,0,0,0,0,0,0,0,0],[],[],[]]","fightTurn":1} · runs 3→3
+| shop | overlay:고물상2080박자공용연 | 있음 | map | ✓ |
+    저장(닫기 직전) {"at":"map","act":1,"row":2,"gold":208,"won":8,"deck":9,"parts":"","squad":"K100,P43,N36","charms":"{\"revive\":1,\"rewind\":4}","picked":"[[null,0,0,0,0,0,0,0,0,0],[0,0],[],[]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"map","act":1,"row":2,"gold":208,"won":8,"deck":9,"parts":"","squad":"K100,P43,N36","charms":"{\"revive\":1,\"rewind\":4}","picked":"[[null,0,0,0,0,0,0,0,0,0],[0,0],[],[]]","fightTurn":null} · runs 3→3
+    선택지 전 card:tempo0박자공용연쇄카드숨을 고르 | card:overload3과부하공용연쇄곱태엽을 끝 | card:knightRaid1기습나이트돌격곱어둠 속에 | card:phalanx1방진폰돌격합어깨를 맞대고 | part:banner찢긴 군기폰돌격곱장착 중: | heal정비손질삐걱이는 관절을하나 | remove카드 빼기손질낡은 명령서를
+    선택지 후 
+    다시 들어간 고물상: 같음
+    (만난 장소: {"event":true,"boss":true,"shop":true})
+| promotion | promotion | 있음 | promotion | ✓ |
+    저장(닫기 직전) {"at":"reward","act":3,"row":2,"node":0,"gold":656,"won":20,"deck":10,"parts":"","squad":"K100,P43,N36,P36,R56","charms":"{\"revive\":1,\"rewind\":7}","picked":"[[null,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"reward","act":3,"row":2,"node":0,"gold":656,"won":20,"deck":10,"parts":"","squad":"K100,P43,N36,P36,R56","charms":"{\"revive\":1,\"rewind\":7}","picked":"[[null,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0]]","fightTurn":null} · runs 3→3
+| ending-cut | cut:crown-dais | 있음 | promotion | ✓ |
+    저장(닫기 직전) {"at":"reward","act":3,"row":2,"node":0,"gold":656,"won":20,"deck":10,"parts":"","squad":"K100,P43,N36,P36,R56","charms":"{\"revive\":1,\"rewind\":7}","picked":"[[null,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"reward","act":3,"row":2,"node":0,"gold":656,"won":20,"deck":10,"parts":"","squad":"K100,P43,N36,P36,R56","charms":"{\"revive\":1,\"rewind\":7}","picked":"[[null,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0]]","fightTurn":null} · runs 3→3
+    결말 끝: 메인 화면 단추 · 저장 지움 · runs 3→4 (한 번) · 본편 0→1
+| loss-window-spare | overlay:하자 폐기여벌 심장 톱 | 있음 | battle:t1 | ✓ |
+    저장(닫기 직전) {"at":"battle","act":0,"row":0,"node":0,"gold":0,"won":0,"deck":8,"parts":"","squad":"K,P,N","charms":"{\"revive\":0,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":null}
+    저장(이어한 뒤) {"at":"battle","act":0,"row":0,"node":0,"gold":0,"won":0,"deck":8,"parts":"","squad":"K,P,N","charms":"{\"revive\":0,\"rewind\":2}","picked":"[[],[],[],[]]","fightTurn":null} · runs 5→5
+| loss-window | overlay:하자 폐기킹이 쓰러졌습 | 없음 | battle:t1 | ✓ |
+    저장(닫기 직전) null
+    저장(이어한 뒤) null · runs 6→6
+| defeat-cut | cut:end-fail | 없음 | battle:t1 | ✓ |
+    저장(닫기 직전) null
+    저장(이어한 뒤) null · runs 6→6
+오류 없음
+
+
+## 고치기 전: 오늘의 도전, 기록이 다른 두 사람
+daily 같은 날 두 기록: 다름!
+  A {"seed":1826348,"rng":2905219881,"deck":"advance,advance,advance,advance,leap,leap,kingStep,order","squad":"K종이왕,P삐걱거리는 경첩,N벗겨진 페인트","bag":"tinker,smith,gambler,apprentice,scout,napping,nightShift,pact,dipping,swapDealer,auction,brokenGacha,safe,counterweight,conveyor,oilMerchant,blueprint,scrapTrade,lostPawn,scrapHeap,rustBath,drillRook,cardSharp,castMold,crownAltar,duelKnight,bookCart,sleepingKing,echoWell,copyPress,fieldMedic,coldForge,tollGate,mirrorHall,overtime","gold":40}
+  B {"seed":1826348,"rng":2905219881,"deck":"advance,advance,advance,advance,leap,leap,kingStep,order","squad":"K종이왕,P삐걱거리는 경첩,N벗겨진 페인트","bag":"nightShift,pact,dipping,swapDealer,auction,brokenGacha,safe,counterweight,conveyor,oilMerchant,blueprint,scrapTrade,lostPawn,scrapHeap,rustBath,drillRook,cardSharp,castMold,crownAltar,duelKnight,bookCart,sleepingKing,echoWell,copyPress,fieldMedic,coldForge,tollGate,mirrorHall,overtime","gold":40}
+
+## 두뇌 봇 등반 (npm run climb)
+봇      전투단계 빌드    공급     판  완주% (95%)   도착 1/2/3/종막   부품 분대 덱 턴/대국 손놓음% 가족부품 교착대국 교착끝
+search    0 neutral all       40 100 (91~100) 0/0/0/40        8.0 6.0 29 5.6 4.0 0.0    0    0
+search    1 neutral all       40  95 (83~99 ) 0/0/1/39        8.0 5.5 28 5.5 4.4 0.0    0    0
+search    2 neutral all       40 100 (91~100) 0/0/0/40        8.0 5.2 28 5.7 4.4 0.0    0    0
+search    3 neutral all       40  88 (74~95 ) 0/0/4/36        7.9 4.7 27 5.9 4.1 0.0    0    0
+턴 분포  봇 단계 공급   대국  1-3 4-6 7-10 11-14 15-24 25+  평균 중앙 90%  반장평균 반장승%
+         search   0 all       800  153 432 164    36    15     0  5.6 5 9  4.5 99
+         search   1 all       793  138 446 164    39     6     0  5.5 5 9  4.7 97
+         search   2 all       803  112 466 179    44     2     0  5.7 5 9  5.0 98
+         search   3 all       793  117 428 193    42    13     0  5.9 5 10  5.0 96
+(160판 · 609초)
+봇      전투단계 빌드    공급     판  완주% (95%)   도착 1/2/3/종막   부품 분대 덱 턴/대국 손놓음% 가족부품 교착대국 교착끝
+search    4 neutral all       10  90 (60~98 ) 0/0/1/9         8.0 5.2 27 5.5 5.6 0.0    0    0
+search    5 neutral all       10 100 (72~100) 0/0/0/10        8.0 5.3 28 6.1 4.7 0.0    0    0
+search    6 neutral all       10  50 (24~76 ) 1/0/4/5         7.1 5.4 24 5.7 3.4 0.0    0    0
+search    7 neutral all       10  60 (31~83 ) 1/1/2/6         7.3 5.7 25 5.8 4.3 0.0    0    0
+search    8 neutral all       10  60 (31~83 ) 1/0/3/6         7.2 6.0 25 5.7 3.1 0.0    0    0
+search    9 neutral all       10  50 (24~76 ) 1/3/1/5         6.6 3.9 21 6.1 7.5 0.0    0    0
+search   10 neutral all       10  50 (24~76 ) 1/2/2/5         6.6 4.0 23 6.1 4.2 0.0    0    0
+search   11 neutral all       10  50 (24~76 ) 2/0/2/6         6.6 5.4 24 5.8 3.9 0.0    0    0
+search   12 neutral all       10  50 (24~76 ) 3/2/0/5         5.9 4.0 22 5.7 6.0 0.0    0    0
+search   13 neutral all       10  50 (24~76 ) 1/2/2/5         6.7 4.8 23 6.2 5.0 0.0    0    0
+턴 분포  봇 단계 공급   대국  1-3 4-6 7-10 11-14 15-24 25+  평균 중앙 90%  반장평균 반장승%
+         search   4 all       198   28 124  37     6     3     0  5.4 5 8  4.9 97
+         search   5 all       199   27 106  51    10     5     0  6.1 5 10  5.2 100
+         search   6 all       176   21 102  43     6     4     0  5.8 5 9  5.2 93
+         search   7 all       167   27  92  40     7     1     0  5.8 5 9  5.3 91
+         search   8 all       172   19 103  45     3     2     0  5.7 5 8  5.5 97
+         search   9 all       146   17  78  37    12     2     0  6.2 5 10  7.0 89
+         search  10 all       161   24  81  37    16     3     0  6.3 6 11  6.6 96
+         search  11 all       159   24  87  33    11     4     0  5.9 5 10  6.1 90
+         search  12 all       143   20  77  30    12     4     0  6.1 5 11  6.1 88
+         search  13 all       163   16  94  38     9     6     0  6.3 5 10  6.3 90
+(100판 · 387초)
