@@ -1,4 +1,4 @@
-# 출처 표기 — 스튜디오 페이지(https://graviton94.github.io/)에 적는다. 게임 크레딧에는 넣지 않는다 (사용자 결정 D-286)
+# 출처 표기 — 스튜디오 페이지(https://graviton94.github.io/)에 적고, 게임 안에서는 설정 → 제작 쪽에 라이선스 전문과 함께 둔다 (D-530 — 크레딧 장면은 D-286대로 두 줄). 목록은 `src/data/licenses.ts`와 같이 고친다
 
 ## 아이콘·픽토그램 (도트로 다시 그림 — `tools/pixelize-icons.cjs`)
 - **game-icons.net** — Lorc, Delapouite 외 기여자. [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).

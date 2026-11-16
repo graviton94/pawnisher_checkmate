@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 import { TEXT } from '../data/text';
 import { sfx } from '../audio/sfx';
 
@@ -8,7 +9,7 @@ import { sfx } from '../audio/sfx';
  */
 export type Tone = 'good' | 'rare' | 'bad' | 'blue' | 'epic';
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 
 const COLOR: Record<Tone, string> = { good: '#FACC15', rare: '#B06CFF', bad: '#F87171', blue: '#4DA3FF', epic: '#FF8A1F' };
 

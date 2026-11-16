@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 import { vignette } from '../ui/juice';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
@@ -1099,7 +1100,7 @@ class BoardScene extends Phaser.Scene {
 
   // ---------- 연출 ----------
   /** 동작 줄이기 설정이면 연출 시간을 30%로 줄이고 흔들림을 끈다 (CLAUDE.md UI/UX 원칙 6) */
-  private readonly calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  private get calm(): boolean { return calmMotion(); }
   private wait(ms: number): Promise<void> {
     return new Promise((r) => this.time.delayedCall(this.calm ? ms * 0.3 : ms, r));
   }

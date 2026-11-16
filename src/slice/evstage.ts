@@ -6,6 +6,7 @@
  *  ③ 기물 — 실제 기물 그림 + 아래 HP 바: 전투처럼 HP가 줄거나(흰 잔상 → 계단으로 줄어듦 · 붉은 번쩍) 차오름(초록) · 진화(흰 번쩍 → 새 기물) · 썰림(베기 선 → 두 쪽 → 잿빛 · 디더 퇴장)
  * 결과는 엔진(events.ts)이 이미 정했다 — 보여 주기만 한다 (UI 원칙 9).
  */
+import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import { coverArt } from './uikit';
 import { FxCanvas, hex, Lights, P, Particles, PAL, Rng, WHITE } from '../view/pxfx';
@@ -18,7 +19,7 @@ import { resultFx } from './resultfx';
 
 /** 장면 층 1도트 = 3 CSS px 안팎 — 기기 픽셀 정수로 맞춘다 (D-392 · D-395: 캔버스를 100%로 늘이지 않는다) */
 const dotPx = (): number => { const r = window.devicePixelRatio || 1; return Math.round(3 * r) / r; };
-const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = () => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, calm() ? Math.min(ms, 80) : ms));
 
 /** 카드 하나의 변화 — before/after는 카드 얼굴 HTML */

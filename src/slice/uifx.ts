@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
 import { arcFly } from './fx3';
@@ -7,7 +8,7 @@ import { arcFly } from './fx3';
  * 화면은 이 함수들을 부를 뿐 게임 상태를 바꾸지 않는다 (CLAUDE.md UI 원칙 9).
  */
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 
 /** 글자 격자 → 도트 그림 data URL (scale = 한 칸 px) */
 export const pixelSprite = (rows: string[], pal: Record<string, string>, scale = 2): string => {

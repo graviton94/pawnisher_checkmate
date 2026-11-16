@@ -1,4 +1,5 @@
 /** 출하 뒤 크레딧. 그림 · 이름 · 역할을 읽고 결과 장부로 간다. */
+import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import type { PieceType } from '../engine';
 import { CREDIT_TEXT, CREDITS, STUDIO_URL } from '../data/credits';
@@ -36,7 +37,7 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
     let closing = false;
     /** 엔드롤 (D-504 · #31): 장마다 이름이 계단으로 하나씩 서고, 읽을 만큼 머문 뒤 저절로 다음 장 — 누르면 바로. 마지막 장(만든 사람들)은 멈춰 기다린다 */
     let auto = 0;
-    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const calm = calmMotion();
     const hold = (): number => 2400 + page.querySelectorAll('.cr-person, .cr-name').length * 420 + (calm ? 1200 : 0);
     const show = (): void => {
       window.clearTimeout(auto);

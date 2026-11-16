@@ -8,10 +8,11 @@
  *   홈에 같은 2단계 초상을 얼굴 쪽으로 더 붙여 cover로 넣고(clip-path = 실측 홈), 액자가 그 위에 덮인다 — 띠(넓게) + 액자(얼굴) 두 겹 컷인.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9).
  */
+import { calmMotion } from '../prefs/motion';
 import { pxOut, shake } from './fx3';
 import { sparksAt } from './uifx';
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
 /** 2단계 예고: 판 칸 격자 위쪽을 경보 띠가 가로지른다 (글 = 시스템 투 한 줄) */

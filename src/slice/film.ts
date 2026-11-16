@@ -5,12 +5,13 @@
  * 움직임은 예비 → 터짐 → 출렁 계단(D-216 — 선형 이동 · 투명도 보간 없음), 사라짐 · 나타남은 도트 칸 단위.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9).
  */
+import { calmMotion } from '../prefs/motion';
 import { bayer } from '../view/pxfx';
 import { pieceImg } from '../ui/sprites';
 import type { Face, Shot, TitleCard, Trans } from '../data/script';
 import { portraitImg } from '../data/portraits';
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 const dpr = (): number => window.devicePixelRatio || 1;
 

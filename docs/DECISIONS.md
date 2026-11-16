@@ -4114,3 +4114,18 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **기록 모아 쓰기** (`src/slice/telemetry.ts`): 사건마다 전체를 다시 쓰던 것을 3초 모아 쓰기 + 내릴 때 · 닫을 때 · 오류 때 바로. 상한 4000 → 500. `track`은 던지지 않는다.
 - 시험: `tests/save-safety.test.ts`(깨진 본 키 → 사본 · 원본 보관 · 이관 · 가득 참 · 대국 중 저장 왕복 결정론). 실화면(915×412 DPR 2.625): `production/qa/evidence/2026-11-16-slice-resume-{before,title,after}.png` · `…-crash-window.png`.
 - 검증: `tsc` · `npm test`.
+
+### D-530 — 본편 설정 창 · 배경 음악 · 라이선스 전문 동봉 · 버전 하나 (출시 점검 1번, 2026-11-16)
+
+- **왜**: 출시 점검(`docs/reports/2026-11-16-release-audit.md` 1번 BLOCKER) — 본편에는 소리 끄기 · 크기, 움직임 줄이기, 진행 초기화, 만든 이 · 라이선스, 버전을 볼 곳이 하나도 없었다(2.0 HUD에만 켜고 끄기). 음악은 2.0에서만 울렸다. 버전은 package.json 1.2.0 · android 1.2.0-beta · version.ts 1.0.0으로 셋이 달랐다.
+- **결정**:
+  - **설정 창 하나** — L 창 · 높이 고정 · 스크롤 없이 탭 셋(소리 · 화면 · 제작). 타이틀 메뉴(안내서 · 도감 · 프롤로그 옆 넷째)와 대국 · 지도의 ? 도움말 넷째 탭에서 연다. 상세 GDD 9.12.
+  - **설정은 출하 저장과 다른 열쇠**(`pawnisher.settings`). 진행 초기화(두 단계 확인, 되돌릴 수 없음)는 `pawnisher.slice.*` · 플레이 기록 · 로딩 팁 기록만 지운다 — 다른 사람이 더하는 백업 사본(`pawnisher.slice.*.bak` 등)도 앞머리로 함께 지워진다.
+  - **움직임 줄이기 = 기기 설정 · 끔 · 켬** (기본 기기 설정). JS 연출 22곳의 `matchMedia('(prefers-reduced-motion: reduce)')`를 `calmMotion()` 하나로 바꾸고, CSS 미디어 규칙은 조건을 바꿔 끼워 같은 값을 따르게 했다.
+  - **음악**: 2.0 칩튠 여섯 곡을 본편 타이틀 · 지도 · 대국 · 반장 · 도금왕 · 출하 끝에 잇는다. 효과음 · 음악 모두 설정 크기를 따른다(기본 7칸 = 예전 고정 음량).
+  - **라이선스 전문을 실행 파일에 넣는다 — D-286을 넓힌다.** D-286은 출처를 스튜디오 페이지에만 두고 게임 크레딧은 두 줄로 했다. 그러나 SIL OFL 1.1(갈무리 글꼴을 웹 · APK · PC 실행 파일에 묶어 배포)과 MIT(Phaser · Tabler)는 「저작권 고지와 허락 문구를 사본과 함께」 배포하라고 요구하고, CC BY 3.0(game-icons)은 저작자 · 라이선스 주소 · 고친 점 표시를 요구한다 — 외부 사이트만으로는 배포물에 동봉한 것이 되지 않는다. 그래서 **크레딧 장면은 D-286대로 두 줄**을 지키고, 설정 → 제작 쪽에 라이선스 넷과 전문(node_modules 원문을 `?raw`로 그대로 묶음)을 둔다. `docs/CREDITS.md`의 머리말도 고쳤다.
+  - **버전 하나**: `src/data/version.ts` = 1.2.0이 정본, android 기본 versionName 1.2.0-beta → 1.2.0. 셋이 어긋나면 테스트가 실패한다. 설정 창 단추 줄 가운데에 보인다.
+- **PC 줄**: 전체 화면 · 게임 끝내기는 `openSettings({ desktop })` 갈고리로만 생긴다(지금 main.ts는 `desktop: null`). 병행 작업의 `src/slice/platform.ts`(isDesktop · toggleFullscreen · quitGame)가 들어오면 거기서 넘긴다.
+- **그림**: 새 그림 없음(D-386) — 철판 창 · 탭 · 움푹 칸 · 단추 · 속전 진공관(`ui/kit/tube.png`)을 빌려 썼다.
+- 확인(915×412 · 667×375, DPR 2.625, 탭): `production/qa/evidence/2026-11-16-slice-settings-*.png` — 타이틀 메뉴 · 소리 · 화면 · 제작 · 전문 1 · 2쪽 · 초기화 1 · 2단계 · 대국 중 ? 탭 · PC 줄. 창 높이 364(작은 폰 327), 본문 넘침 0. `node tools/slice-observe.cjs settings`.
+- 검증: `tsc` · `npm test`(`tests/settings.test.ts` — 기본값 · 저장 왕복 · 망가진 값 · 옛 열쇠 · 초기화 범위 · 미디어 조건 · 버전 일치 · 라이선스 원문).

@@ -5,6 +5,7 @@
  * 색은 발주 15색만(먹 · 철 · 황동 · 종이 · 진홍 · 청록) — 그라데이션 · 반투명 · 페이드 · 선형 미끄럼 없음(D-216).
  * 줄인 움직임이면 터짐 한 장만 잠깐 보이고 걷힌다. 결과는 엔진이 이미 정했다 — 보여 주기만 한다(UI 원칙 9).
  */
+import { calmMotion } from '../prefs/motion';
 import { bayer, Rng } from '../view/pxfx';
 
 export type ResultFxKind = 'quench' | 'molten' | 'rust' | 'weld' | 'upgrade' | 'shatter' | 'screws' | 'screwsUp' | 'crate' | 'betWin' | 'betLose';
@@ -255,7 +256,7 @@ const DRAW: Record<ResultFxKind, Draw> = {
   },
 };
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 /** 장면 층 도트(3·DPR 반올림) — evstage dotPx와 같다 */
 export const sceneDot = (): number => { const r = window.devicePixelRatio || 1; return Math.round(3 * r) / r; };
 /** 장치 층 도트(2·DPR 반올림) — 판돈 칩 같은 HUD 위 */

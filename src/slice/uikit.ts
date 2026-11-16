@@ -3,6 +3,7 @@
  * 창 · 고르기 화면 · 장소 화면 · 토스트 · 띠를 모두 이 함수들로 만든다 — 화면마다 틀을 새로 짓지 않는다.
  * 화면은 게임 상태를 바꾸지 않는다: 단추 동작은 부르는 쪽이 붙인다(돌려준 요소에서 data-* 로 찾는다).
  */
+import { calmMotion } from '../prefs/motion';
 import { pxOut } from './fx3';
 import { fitCover } from '../view/cover';
 import { textWidth } from './desc';
@@ -270,7 +271,7 @@ export const bindRail = (row: HTMLElement): void => {
     window.clearTimeout(anim);
     const from = row.scrollLeft, d = Math.max(0, Math.min(max(), to)) - from;
     if (Math.abs(d) < 1) return;
-    const k = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? [1] : [0.55, 1.08, 0.97, 1];
+    const k = calmMotion() ? [1] : [0.55, 1.08, 0.97, 1];
     let i = 0;
     const step = (): void => {
       row.scrollLeft = from + d * k[i];

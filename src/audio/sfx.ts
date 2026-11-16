@@ -8,14 +8,24 @@ export type SfxKind = 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 't
 const KEY = 'pawnisher.sfx';
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
+/** 본편 설정 창이 정한 배율 (0~2, 1 = 예전 고정 음량, D-530). null = 옛 켜고 끄기(2.0)만 따른다 */
+let level: number | null = null;
+/** 기준 음량 — 설정 크기 1.0일 때 */
+const BASE = 0.5;
 
 /** 소리 켜짐 여부 (기본 켜짐) */
 export const sfxOn = (): boolean => {
+  if (level !== null) return level > 0;
   try {
     return localStorage.getItem(KEY) !== 'off';
   } catch {
     return true;
   }
+};
+/** 본편 설정: 효과음 크기 (0 = 끔). 다음 소리부터가 아니라 바로 바뀐다 */
+export const setSfxLevel = (v: number): void => {
+  level = Math.max(0, Math.min(2, v));
+  if (master) master.gain.value = BASE * level;
 };
 export const setSfx = (on: boolean): void => {
   try {
@@ -23,7 +33,7 @@ export const setSfx = (on: boolean): void => {
   } catch {
     /* 저장 못 해도 이번 실행에는 반영 */
   }
-  if (master) master.gain.value = on ? 0.5 : 0;
+  if (master) master.gain.value = on ? BASE * (level ?? 1) : 0;
 };
 
 const audio = (): AudioContext | null => {
@@ -35,8 +45,10 @@ const audio = (): AudioContext | null => {
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = 0.5;
+    master.gain.value = BASE * (level ?? 1);
     master.connect(ctx.destination);
+    // 화면이 가려지면 소리 장치를 쉰다 (돌아오면 다음 소리에서 다시 깨운다)
+    document.addEventListener('visibilitychange', () => void (document.hidden ? ctx?.suspend() : ctx?.resume()));
   }
   if (ctx.state === 'suspended') void ctx.resume();
   return ctx;

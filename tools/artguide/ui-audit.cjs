@@ -13,6 +13,7 @@ const META = JSON.stringify({ tut: ['battle', 'map', 'recruit', 'kit', 'promote'
 const SCENES = [
   ['ability-info', async (p, A, W, S) => { await require('../qa/ability-info.cjs')(p, S); }],
   ['unit-info', async (p, A, W, S) => { await require('../qa/unit-info.cjs')(p, S); }],
+  ['settings', async (p, A, W, S) => { await require('../qa/settings.cjs')(p, S); }],
   ['builds', async (p, A, W, S) => { await require('../qa/build-prototype.cjs')(p, S); }],
   ['battle', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2600); await S('a'); await A(() => document.getElementById('btn-end').click()); await W(350); await S('enemy-a'); await W(600); await S('enemy-b'); await W(2600); await S('after'); }],
   // 패스 4 (D-396): 전투 HUD — 적 의도 · 엿보기 · 반장 규칙 · 턴 끝 경고 · 기록 · 튜토리얼 말풍선

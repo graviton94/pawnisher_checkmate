@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 /**
  * 타이틀·메뉴·출하 화면 뒤의 공장 배경 + 인트로 (D-085). 도트 목업 — 나중에 사용자 에셋으로 갈아 끼운다.
  * 낮은 해상도(320×144) 캔버스에 직접 찍고 화면에 최근접 확대한다. 시계 문자판·톱니·컨베이어·용광로 불빛·증기.
@@ -27,7 +28,7 @@ const COL = {
 
 type Mode = 'intro' | 'title' | 'dim';
 
-const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const reduced = () => calmMotion();
 
 export class Backdrop {
   private cv: HTMLCanvasElement;

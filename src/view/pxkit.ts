@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 /**
  * 도트 부품 정본 (D-259 「주물 공방 문법」, docs/design-system.md).
  * 화면의 모든 물건은 이 재질 · 이 빛 공식으로만 찍는다 — 장치(판정기 · 봉인판 · 소품)와 판결 명패가 같은 손에서 나오게.
@@ -85,7 +86,7 @@ export const pixelText = (x: X, text: string, cx: number, top: number, col: stri
 const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 export const bay = (a: number, b: number) => BAY[((b & 3) << 2) | (a & 3)] / 16;
 
-const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = () => calmMotion();
 let fontReady: Promise<unknown> | null = null;
 const fonts = () => (fontReady ??= document.fonts?.load('700 12px Galmuri11').catch(() => null) ?? Promise.resolve());
 

@@ -43,6 +43,7 @@ const day = new Date().toISOString().slice(0, 10);
     else if (sc === 'ability-info') await require('./qa/ability-info.cjs')(pg, shot);
     else if (sc === 'boss2x2') await require('./qa/boss2x2.cjs')(pg, shot);
     else if (sc === 'raid') await require('./qa/raid.cjs')(pg, shot);
+    else if (sc === 'settings') await require('./qa/settings.cjs')(pg, shot);
     else if (sc === 'anchor') await require('./qa/anchor.cjs')(pg, shot);
     else if (sc === 'gbharmony') await require('./qa/gbharmony.cjs')(pg, shot);
     else if (sc === 'gbfit') await require('./qa/gbfit.cjs')(pg, shot);

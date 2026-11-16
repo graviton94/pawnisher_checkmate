@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 /**
  * 도트 FX 엔진 (D-249, 사용자: 「pixelfx(patch-gg)의 FX 기법 · 디자인 룰을 참고해 봐」).
  * pixelfx · Sprite Fusion(Hugo Duprez, MIT)의 방법을 우리 코드로 다시 짰다 — 그 저장소의 코드를 들여오지 않았다 (docs/CREDITS.md).
@@ -333,7 +334,7 @@ export class FxCanvas {
   present(lightK = 1): void { composite(this.frame, this.img.data, lightK); this.ctx.putImageData(this.img, 0, 0); }
   /** ms 동안 돌린다. sim(dt)는 1/120초 단위로, draw(t)는 매 장. 캔버스가 문서에서 빠지면 멈춘다 */
   run(ms: number, sim: (dt: number, t: number) => void, draw: (t: number, p: Painter) => void): Promise<void> {
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const reduce = calmMotion();
     const total = reduce ? Math.min(ms, 500) / 1000 : ms / 1000;
     return new Promise((done) => {
       let t = 0;

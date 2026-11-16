@@ -2,6 +2,7 @@
  * 본편 오프닝 (D-192): 프롤로그 컷신 · 안내서. 화면만 그리고 게임 상태는 건드리지 않는다.
  * 컷마다 그림(public/scenes/prologue-0N.png)이 있으면 그것을, 없으면 기물 도트로 짠 자리 그림을 쓴다.
  */
+import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
 import { PROLOGUE, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
@@ -14,7 +15,7 @@ const PAPER_KING = '종이왕';
 import { titleFx } from './uifx';
 import { clearBand, clearPeeks, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, speakerSide, type CutLine, type WinBtn, type WinOpts } from './uikit';
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
 /** 그림 파일이 있는지 (없으면 자리 그림) */

@@ -1,0 +1,30 @@
+/* 설정 창 (D-530) — L 창 · 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음. 부품은 키트(.win · .btn · .inset · .tab)만 쓴다 */
+#overlay-panel.win.set-win { height: var(--win-hmax); }
+.set-win .set-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.set-win .set-row { display: grid; grid-template-columns: 136px auto; justify-content: start; align-items: center; column-gap: 8px; min-height: 48px; min-width: 0; }
+.set-win .set-row[data-vol] { grid-template-columns: 136px auto auto auto auto; }
+.set-win .set-row > .btn.set-mute { min-width: 64px; }
+.set-win .set-pairs { display: flex; flex-wrap: wrap; gap: 0 24px; }
+.set-win .set-pairs > .set-row:not(:first-child) { grid-template-columns: auto auto; }
+.set-win .set-name { min-width: 0; color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.set-win .set-row > .btn { min-width: 72px; }
+.set-win .set-row > .btn.set-step { min-width: 48px; width: 48px; padding-inline: 0; }
+/* 크기 = 진공관 줄 (속전 계기와 같은 tube.png — 켜짐 0번 칸 · 꺼짐 4번 칸, 6×14도트 × 2) */
+.set-win .set-tubes { display: flex; gap: 2px; align-items: center; padding: 4px 6px; }
+.set-win .set-tubes > i { display: block; width: 12px; height: 28px; background: url('../assets/ui/kit/tube.png') -48px 0 / 60px 28px no-repeat; image-rendering: pixelated; }
+.set-win .set-tubes > i.lit { background-position: 0 0; }
+.set-win .set-seg { display: flex; gap: 8px; }
+.set-win .set-seg > .btn { min-width: 96px; }
+.set-win .set-ver { color: var(--t-dim); }
+/* 만든 이 · 라이선스 */
+.set-win .set-who { flex: none; display: flex; flex-wrap: wrap; gap: 0 16px; }
+.set-win .set-who b { color: var(--t-gold); }
+.set-win .set-lics { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+.set-win .set-lic { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.set-win .set-lic-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.set-win .set-lic-name { color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; }
+.set-win .set-lic .note { overflow-wrap: anywhere; }
+.set-win .set-lic > .btn { flex: none; min-width: 64px; }
+/* 전문 읽기: 우물 하나가 남은 높이를 다 받고, 넘치는 글은 다음 쪽으로 (스크롤 없음) */
+.set-win.set-read .set-text { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.set-win.set-read .set-text p { margin: 0 0 6px; color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; white-space: pre-line; }

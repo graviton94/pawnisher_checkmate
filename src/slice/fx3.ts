@@ -3,10 +3,11 @@
  * 도장 · 결과 집계 · 쓰러짐 막 · 도발 타자 · 연쇄 팝 · 구매/회복 · 카드 크게 보기 도트 쓸기.
  * 움직임은 예비 → 충격 → 넘침 → 출렁 곡선, 효과는 레트로 FX(색 갈림 · 속도선 · 섬광 · 빛줄기 · 반짝 띠). 게임 상태는 건드리지 않는다.
  */
+import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import { sparksAt } from './uifx';
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 /** 클래스를 다시 걸어 CSS 애니메이션을 처음부터 */
 export const replay = (el: Element, cls: string): void => {

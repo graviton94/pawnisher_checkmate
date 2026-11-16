@@ -1,0 +1,67 @@
+/**
+ * 움직임 줄이기 (D-530): 기기 설정(prefers-reduced-motion)을 따르거나, 설정 창에서 끄고 켠다.
+ * 모든 연출 코드는 이 `calmMotion()` 하나를 묻는다. CSS의 `@media (prefers-reduced-motion: …)` 규칙도
+ * 같은 값을 따르도록 미디어 조건을 바꿔 끼운다 (규칙을 두 벌 쓰지 않는다).
+ */
+export type MotionPref = 'os' | 'off' | 'on';
+
+let pref: MotionPref = 'os';
+
+const osCalm = (): boolean => (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) || false;
+
+/** 지금 연출을 줄여야 하나 (설정 → 없으면 기기 설정) */
+export const calmMotion = (): boolean => (pref === 'on' ? true : pref === 'off' ? false : osCalm());
+
+/** 지금 고른 움직임 설정 */
+export const motionPref = (): MotionPref => pref;
+
+const REDUCE = /\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)/g;
+const NOPREF = /\(\s*prefers-reduced-motion\s*:\s*no-preference\s*\)/g;
+const TRUE = '(min-width: 0px)';
+const FALSE = '(max-width: -1px)';
+
+/** 미디어 조건 하나를 설정에 맞게 바꾼다 (os면 원래대로) */
+export const motionMedia = (orig: string, p: MotionPref): string => {
+  if (p === 'os') return orig;
+  const on = p === 'on';
+  return orig.replace(REDUCE, on ? TRUE : FALSE).replace(NOPREF, on ? FALSE : TRUE);
+};
+
+const original = new WeakMap<CSSMediaRule, string>();
+const walk = (rules: CSSRuleList): void => {
+  for (const r of Array.from(rules)) {
+    if (r instanceof CSSMediaRule) {
+      const o = original.get(r) ?? r.media.mediaText;
+      if (/prefers-reduced-motion/.test(o)) {
+        original.set(r, o);
+        const want = motionMedia(o, pref);
+        if (r.media.mediaText !== want) r.media.mediaText = want;
+      }
+      walk(r.cssRules);
+    } else if (r instanceof CSSGroupingRule) walk(r.cssRules);
+  }
+};
+/** 문서의 모든 스타일시트에 지금 설정을 입힌다 */
+const applyCss = (): void => {
+  if (typeof document === 'undefined' || typeof CSSMediaRule === 'undefined') return;
+  for (const s of Array.from(document.styleSheets)) {
+    try {
+      walk(s.cssRules);
+    } catch {
+      /* 다른 출처 스타일시트는 읽을 수 없다 — 움직임 규칙도 없다 */
+    }
+  }
+  document.documentElement.dataset.calm = calmMotion() ? '1' : '0';
+};
+
+let watching = false;
+/** 설정을 바꾼다 — CSS · JS 연출이 바로 따른다 */
+export const setMotionPref = (p: MotionPref): void => {
+  pref = p;
+  applyCss();
+  if (watching || typeof document === 'undefined' || typeof MutationObserver === 'undefined') return;
+  watching = true;
+  // 나중에 붙는 스타일시트(지연 로딩 · 개발 서버 주입)도 같은 설정을 받는다
+  new MutationObserver(() => applyCss()).observe(document.head, { childList: true });
+  document.addEventListener('load', (e) => (e.target instanceof HTMLLinkElement ? applyCss() : undefined), true);
+};

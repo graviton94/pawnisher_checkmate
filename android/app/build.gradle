@@ -9,7 +9,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // D-477: CI 실행 번호로 늘 올라간다 — 새 APK가 옛 APK 위에 설치된다(저장 유지)
         versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '5').toInteger())
-        versionName (System.getenv('PC_VERSION_NAME') ?: "1.2.0-beta")
+        versionName (System.getenv('PC_VERSION_NAME') ?: "1.2.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

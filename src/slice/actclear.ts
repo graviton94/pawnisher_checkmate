@@ -10,12 +10,13 @@
  * 줄 맞춤(D-403, 사용자: 「줄마다 그림 · 글이 한 가운데 줄에 서지 않는다」): 장부 줄 · 으뜸 줄은 모두 align-items center + 같은 줄 높이,
  * 기물 그림은 잉크 상자 가운데가 줄 가운데에 오도록 정수 px만 끌어올린다(inkCenter).
  */
+import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import { burstWord, Layer } from './evstage';
 import { replay, shakeEl, tally } from './fx3';
 import { btnRowHtml, clearPeeks, coverArt } from './uikit';
 
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, calm() ? Math.min(ms, 60) : ms));
 
 /** 분대원 한 명 (으뜸 줄) — pc = 기물 그림 마크업 */

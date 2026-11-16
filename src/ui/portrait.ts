@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 import { EYES, NPCS, type Mood, type NpcId } from '../data/npcs';
 
 /**
@@ -181,7 +182,7 @@ const draw = async (cv: HTMLCanvasElement, blink = false): Promise<void> => {
   if (def.props.includes('goldCrown')) drawProps(c, ['goldCrown'], ey);
 };
 
-const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = () => calmMotion();
 let blinker: number | undefined;
 
 /** root 안의 초상화를 모두 그린다 · 가끔 하나씩 깜빡인다 */

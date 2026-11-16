@@ -1278,7 +1278,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 /* D-425 본편과 선택 도전: 메뉴의 같은 시작 자리에서 모드를 명확히 고른다. */
 .opening .op-modes, .opening .op-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
 .opening .op-modes > .btn { min-height: 48px; min-width: 0; }
-.opening .op-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.opening .op-tools { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .opening .op-tools > .btn { min-width: 0; min-height: 48px; padding-inline: 0; font: 400 12px/18px Galmuri11, sans-serif; }
 .opening .op-menu { gap: var(--s2); }
 .opening .op-run > .op-level { flex: none; width: 80px; min-width: 80px; min-height: 60px; font: 400 12px/18px Galmuri11, sans-serif; }

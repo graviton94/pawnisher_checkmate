@@ -4,13 +4,14 @@
  * 바탕 = 받은 LD-02 작업대(scenes/loading-bench.png, cover), 사진 액자 · 요령 쪽지 · 돌아가는 톱니 = 받은 LD-01 (D-523). 창은 키트 철판 M.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9). 본 쪽 기록은 이 기기의 localStorage에만(없어도 돈다).
  */
+import { calmMotion } from '../prefs/motion';
 import { GUIDE_PAGES, OPENING_TEXT } from '../data/opening';
 import { LOAD_TIP } from '../data/tutorial';
 import { pxOut, replay } from './fx3';
 import { guideMedia } from './opening';
 
 const KEY = 'pc-loadtips';
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 
 interface TipLog {
   /** 본 쪽 (안내서 번호) */

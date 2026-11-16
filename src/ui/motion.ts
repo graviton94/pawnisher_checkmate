@@ -1,3 +1,4 @@
+import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import { MOTION } from '../data/motion';
 import { burst, vignette } from './juice';
@@ -7,7 +8,7 @@ import { burst, vignette } from './juice';
  * 원칙 (CLAUDE.md UI 5·6): 누르면 즉시 반응, 예비 동작 → 터짐 → 출렁임, 지수형 곡선.
  * prefers-reduced-motion이면 움직임 없이 바로 넘어간다. 게임 상태는 건드리지 않는다.
  */
-export const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+export const calm = (): boolean => calmMotion();
 
 /** 잠깐 입력을 막는다 (연출 중 두 번 눌림 방지) — 막힌 동안 body.busy */
 const lock = (ms: number): void => {

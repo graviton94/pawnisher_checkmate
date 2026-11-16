@@ -13,12 +13,13 @@
  * 줄인 움직임: 타자 · 계단 등장 · 디더 퇴장 없이 바로 보였다 바로 걷는다.
  * 그림 (D-386): 받기 전 빌린 부품 — 꼬리 = `chrome/tip-*`(90° 돌림), 이름표 = UI-24 강조 띠, 몸 = toast-iron. 「임시 — DL-01 · DL-02 대기」.
  */
+import { calmMotion } from '../prefs/motion';
 import { VOICE_TIMING } from '../data/battle-voice';
 import { pxOut, replay, typeIn, typeSkip } from './fx3';
 
 /** 이름표 달린 말에서 바깥 큰따옴표를 걷는다 */
 const unquote = (t: string): string => t.replace(/^“([\s\S]*)”$/, '$1');
-const calm = (): boolean => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const calm = (): boolean => calmMotion();
 /** 글 길이로 머무는 시간 (태그 · 따옴표 빼고 센다) */
 export const holdMs = (kind: 'bark' | 'sub' | 'mono', text: string): number => {
   const n = text.replace(/<[^>]+>/g, '').length;
