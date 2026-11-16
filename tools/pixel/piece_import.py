@@ -107,6 +107,34 @@ def largest(mask):
     return out
 
 
+def keep_parts(mask, n):
+    """4-이웃 덩어리 중 n칸 이상만 남긴다(가장 큰 덩어리는 늘)"""
+    h, w = mask.shape
+    seen = np.zeros_like(mask)
+    out = np.zeros_like(mask)
+    comps = []
+    for y0 in range(h):
+        for x0 in range(w):
+            if mask[y0, x0] and not seen[y0, x0]:
+                comp, stack = [], [(y0, x0)]
+                seen[y0, x0] = True
+                while stack:
+                    y, x = stack.pop()
+                    comp.append((y, x))
+                    for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        yy, xx = y + dy, x + dx
+                        if 0 <= yy < h and 0 <= xx < w and mask[yy, xx] and not seen[yy, xx]:
+                            seen[yy, xx] = True
+                            stack.append((yy, xx))
+                comps.append(comp)
+    big = max(len(c) for c in comps)
+    for c in comps:
+        if len(c) >= n or len(c) == big:
+            for y, x in c:
+                out[y, x] = True
+    return out
+
+
 def cheb(mask, r):
     """마스크를 체비쇼프 r칸 넓힌다"""
     out = mask.copy()
@@ -235,15 +263,18 @@ def build(src, name, giant=False):
     return out, info
 
 
-def is_key(rgb):
-    """마젠타 바탕(오려 내는 색)인가"""
+def is_key(rgb, strict=False):
+    """마젠타 바탕(오려 내는 색)인가 — strict(D-526 자석 반장): 보라 자기장 · 번개(G 60~120 · B > R)를 바탕으로 걷지 않게
+    초록이 거의 없고 빨강 ≈ 파랑인 칸만"""
+    if strict:
+        return (rgb[..., 0] > 140) & (rgb[..., 2] > 140) & (rgb[..., 1] < 48) & (np.abs(rgb[..., 0] - rgb[..., 2]) < 28)
     return (rgb[..., 0] > 150) & (rgb[..., 2] > 150) & (rgb[..., 1] < 120)
 
 
-def boss_box(src):
+def boss_box(src, strict=False):
     """원본 실루엣 · 상자 (y0, y1, x0, x1) · 꼭대기 장식 가운데 x"""
     rgb = np.array(Image.open(src).convert('RGB')).astype(float)
-    a = np.where(is_key(rgb), 0, 255).astype(float)
+    a = np.where(is_key(rgb, strict), 0, 255).astype(float)
     S = silhouette(a, np.zeros_like(a))
     ys, xs = np.nonzero(S)
     y0, y1 = ys.min(), ys.max()
@@ -277,9 +308,10 @@ def build_boss(src, name):
     import maker
     cfg = BOSS_GRID[name]
     N, C, rim = 144, 72, 3
-    rgb, S, (y0, y1, x0, x1), cx = boss_box(src)
+    strict = cfg.get('key') == 'strict'
+    rgb, S, (y0, y1, x0, x1), cx = boss_box(src, strict)
     if cfg.get('pitch_of'):  # 격노는 1단계 원본과 같은 간격
-        _, _, (py0, py1, _, _), _ = boss_box(os.path.join(os.path.dirname(src), cfg['pitch_of']))
+        _, _, (py0, py1, _, _), _ = boss_box(os.path.join(os.path.dirname(src), cfg['pitch_of']), strict)
         p = (py1 - py0 + 1) / BOSS_GRID[cfg['pitch_name']]['body']
     else:
         p = (y1 - y0 + 1) / cfg['body']
@@ -292,7 +324,10 @@ def build_boss(src, name):
     ox = cx - 36 * p
     cols = c1 - c0
     oy = y1 + 1 - rows * p
-    body = largest(sample(S.astype(float), ox + c0 * p, oy, p, cols, rows, 'mean') > 0.5)
+    raw = sample(S.astype(float), ox + c0 * p, oy, p, cols, rows, 'mean') > 0.5
+    body = largest(raw)
+    if cfg.get('float'):  # 떠다니는 조각(D-526 자석 격노): 몸에서 떨어진 덩어리도 float칸 이상이면 남긴다
+        body = keep_parts(raw, cfg['float'])
     # 팔레트: 검은 진영 다섯 단(D-221) + 반장 테마 강조색 2~3단(cfg theme) — 그 밖의 명암 · 황동은 가까운 단으로.
     # 원본 화소마다 먼저 글자로 가른다: 먹(밝기 < ink) / 강조(채도 ≥ sat → 가장 가까운 테마 색) / 그 밖 = 밝기로 가장 가까운 검은 단.
     #   테마 밖 채색은 cfg alias로 검은 단에 돌린다(예: 검수 ✕ 계기의 황동 테 → 쇠).
@@ -312,8 +347,11 @@ def build_boss(src, name):
     av = np.array([c for c, _ in cand], dtype=float)
     acc_i = np.array([i for _, i in cand])[((rgb[..., None, :] - av) ** 2).sum(-1).argmin(-1)]
     lab = np.where(sat >= cfg.get('sat', 48), acc_i, lab)
+    if cfg.get('bright'):  # 무채색 밝은 칸을 테마 색으로(D-526 출하 반장 은빛 가시 끝) — (밝기 하한, 글자)
+        thr, ch = cfg['bright']
+        lab = np.where((sat < cfg.get('sat', 48)) & (L >= thr), keys.index(ch), lab)
     lab = np.where(L < cfg.get('ink', 12), 0, lab)
-    lab = np.where(is_key(rgb), len(keys), lab)  # 마젠타 바탕은 세지 않는다
+    lab = np.where(is_key(rgb, strict), len(keys), lab)  # 마젠타 바탕은 세지 않는다
     wgt = np.array([1.0] + [1.0] * len(grey) + [cfg.get('accent', 1.6)] * len(accent))
     fill = np.empty((rows, cols), dtype=object)
     for j in range(rows):
@@ -323,6 +361,9 @@ def build_boss(src, name):
             cnt = np.bincount(lab[ya:yb, xa:xb].ravel(), minlength=len(keys) + 1)[:len(keys)] * wgt
             fill[j, i] = keys[int(cnt.argmax())]
     edge = inner_edge(body, cfg.get('outline', 2))
+    if cfg.get('accent_edge'):  # D-526: 가는 가시 · 조각 끝의 테마 색(진홍 가시 끝 · 보라 조각)은 먹선 안쪽 줄에서 살린다 — 바깥 1칸만 먹
+        keep = edge & ~inner_edge(body, 1) & np.isin(fill, list(accent))
+        edge = edge & ~keep
     fill[edge] = 'K'
     for _ in range(cfg.get('smooth', 3)):  # 3×3 다수결 여러 번 — 원본의 잔 명암을 넓은 면으로
         fill = majority(fill, body & ~edge, None)

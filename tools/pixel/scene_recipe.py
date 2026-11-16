@@ -93,6 +93,9 @@ PIECE_GRID = {
 #   GB-01 철갑 = 주황 셋(황동 빼고), GB-02 검수 = 렌즈 청록 빛 c · 하늘 C(반장 색 청강 몸 위에서도 렌즈가 갈리게) + 불합격 빨강 r(✕ 계기), GB-03 조립 = 초록 둘 + 황동(경고 줄무늬 기둥).
 # 검수 ✕ 계기: 황동 테 → 쇠(H · B), 짙은 빨강 바탕 → Z — 빨강은 ✕ 한 단만 남겨 「불합격 표시」로 읽히게
 INSPECT_ALIAS = {'#C89B3C': 'H', '#E0A030': 'H', '#8A6416': 'B', '#A06020': 'B', '#701010': 'Z', '#601010': 'Z'}
+# D-526: 자석 — 짙은 보라 번개 테(#300048 안팎) · 마젠타 번짐(#C000C0)은 쇠 단 / 출하 — 마젠타 번짐은 쇠 단(채도만 높은 경계 칸)
+MAGNET_ALIAS = {'#300048': 'D', '#C000C0': 'D', '#600060': 'D', '#C0A050': 'H', '#907040': 'B'}  # 황동 리벳 → 쇠
+THORN_ALIAS = {'#C000C0': 'D', '#600060': 'D', '#300030': 'D'}
 BOSS_GRID = {
     'K:boss-plate': {'body': 64, 'bottom': 3, 'theme': 'qop', 'ink': 12},
     'K:boss-plate-p2': {'body': 64, 'bottom': 3, 'theme': 'qop', 'ink': 12, 'pitch_of': 'GB-01-source.png', 'pitch_name': 'K:boss-plate'},
@@ -100,6 +103,16 @@ BOSS_GRID = {
     'K:boss-inspect-p2': {'body': 64, 'bottom': 3, 'theme': 'cCr', 'ink': 12, 'alias': INSPECT_ALIAS, 'pitch_of': 'GB-02-source.png', 'pitch_name': 'K:boss-inspect'},
     'K:boss-spawn': {'body': 64, 'bottom': 3, 'theme': 'gjU', 'ink': 12},
     'K:boss-spawn-p2': {'body': 64, 'bottom': 3, 'theme': 'gjU', 'ink': 12, 'pitch_of': 'GB-03-source.png', 'pitch_name': 'K:boss-spawn'},
+    # D-526 자석(GB-04 · 04b): 극 빨강 R · 파랑 b + 자기장 보라 x(판 위 반장 색이 보라라 가장 밝은 보라로 — 몸 빛 단과 갈리게).
+    #   key strict = 보라 번개를 마젠타 바탕으로 걷지 않는다. 짙은 보라 번개 테 · 마젠타 번짐은 쇠로(alias).
+    #   격노의 떠다니는 쇠 조각은 float칸 이상 덩어리면 남긴다.
+    'K:boss-magnet': {'body': 64, 'bottom': 3, 'theme': 'Rbx', 'ink': 12, 'key': 'strict', 'alias': MAGNET_ALIAS},
+    'K:boss-magnet-p2': {'body': 64, 'bottom': 3, 'theme': 'Rbx', 'ink': 12, 'key': 'strict', 'alias': MAGNET_ALIAS, 'float': 6, 'accent_edge': True,
+                         'pitch_of': 'GB-04-source.png', 'pitch_name': 'K:boss-magnet'},
+    # D-526 출하(GB-05 · 05b, 데이터 키 thorns — 발주서 「출하」): 1단계 가시 끝 은빛 e(무채색 밝기 200 이상) · 격노 진홍 X · R · f
+    'K:boss-thorns': {'body': 64, 'bottom': 3, 'theme': 'e', 'ink': 12, 'bright': (225, 'e'), 'alias': THORN_ALIAS, 'accent_edge': True},
+    'K:boss-thorns-p2': {'body': 64, 'bottom': 3, 'theme': 'XRf', 'ink': 12, 'alias': THORN_ALIAS, 'accent_edge': True,
+                         'pitch_of': 'GB-05-source.png', 'pitch_name': 'K:boss-thorns'},
 }
 
 
