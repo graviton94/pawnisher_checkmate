@@ -4101,3 +4101,16 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **실행 (D-423)**: `python3 -I tools/pixel/piece_import.py build-res/order/GB-0N[b]-source.png K:boss-<반장>[-p2] --boss --write` (14장) · `… G-0N-source.png P|R|Q:giant --giant --write` · `… P-0N-source.png <유형:이형> --write` → `python3 -I tools/pixel/maker.py export`. 대조판 `build-res/order/G*-check.png` 갱신. 비교용으로 안 M 없이 읽으려면 `--raw`(gb_fit.py는 이제 원본을 `plan=False`로 다시 읽어 안끼리 비교).
 - 확인(915×412 DPR 2.625, 같은 판의 보통 기물과 함께): `production/qa/evidence/2026-11-16-final-big-{plate,inspect,spawn,magnet,thorns,alarm,gilded}{,-rage}.png` · `-giant-{P,R,Q}.png` · `-forms.png`, 667×375: `-plate-667x375.png` · `-giant-P-667x375.png` · `-forms-667x375.png`. 판 묶음 시트는 scratchpad `final-big/`(게시 안 함).
 - 검증: `tsc` · `npm test`.
+
+### D-529 — 공개 준비 B: 저장 안전망 · 대국 중 이어하기 · 오류 복구 창 · 기록 모아 쓰기 (2026-11-16)
+
+- **저장 안전망** (`src/slice/save.ts`): 본 키 + 마지막 좋은 사본(`.bak` — 덮어쓰기 직전의 좋은 값). 본 키가 해석 · 검사에 실패하면 원본을 `.corrupt`에 남기고 사본으로 본 키를 되돌린다. 깨진 본 키는 `.corrupt`에 남기기 전에는 덮어쓰지 않는다(남기지 못하면 쓰지 않고 알린다). 예전에는 기록(진행)이 깨지면 빈 기록으로 읽고 다음 쓰기에 덮어써 진행이 모두 사라졌다.
+- **판 번호 + 이관 사슬**: 출하 저장 `SAVE_VERSION = 3`(`SAVE_STEPS`: 1 → 버림 · 2 → 3), 기록 `META_VERSION = 1`(`mv`, `META_STEPS`: 0 → 1). 더 새 판은 읽지 않는다(덮어쓰지 않게). 새 판을 만들면 사슬에 한 걸음 + 시험.
+- **쓰기 실패**: 가득 차면(QuotaExceeded) 플레이테스트 기록부터 비우고(최근 50건만 기억에) 한 번 더 — 그래도 안 되면 시스템 투 한 줄 「저장 공간이 부족해 진행을 저장하지 못했습니다.」(20초에 한 번).
+- **대국 중 이어하기**: 턴이 넘어갈 때 · 앱을 내릴 때(visibilitychange) · 닫을 때(pagehide) · 안드로이드 일시 정지(document `pause`) · 뒤로 가기 두 번으로 닫을 때 엔진 상태(`SliceBattle` — 순수 데이터 · 시드 난수, 되감기 사진 `snap` 포함)를 저장의 `fight`에 남긴다. 화면은 남기지 않는다. 이어 갈 때는 대국 앞 난수 자리에서 같은 대국을 조용히 다시 세우고(결정론) 판 상태 · 출하 난수 · 판돈 · 마지막 한 수 · 예고 지표만 갈아 끼운 뒤 판 세우기 연출을 한다.
+  - **선택**: 연출 중(카드 연출 · 적 차례)에 앱을 내리면 그 순간은 저장하지 않는다 — 직전 턴 끝 저장으로 **그 턴 처음부터**. 연출 도중 상태는 엔진은 끝났어도 화면 쪽 정산(하이라이트 등)이 덜 되어 어긋날 수 있어서다. 그 턴의 카드 한 장을 되돌릴 수 있는 작은 틈은 받아들인다. 내 차례에 가만히 있을 때 내리면 그 순간 그대로.
+  - 이어 간 대국에서는 진입 화면 · 판돈 묻기 · 반장 첫 만남 안내를 다시 하지 않는다. `fight`가 모자라면 그 칸만 버리고 예전처럼 대국 처음부터.
+- **오류 복구 창**: `window` `error` · `unhandledrejection`을 모두 받아 기록(`error` 사건)에 남기고 키트 창(S) 하나 — 「문제가 생겼습니다.」 + 「진행은 마지막으로 저장한 자리에 남아 있습니다.」, 단추 「처음으로」 · 「지도로」(지도에서 저장했으면, 대국 · 보상 중이면 「이어 간다」). 두 단추 다 새로 불러와 저장에서 시작한다(어긋난 화면 상태를 버린다). 오류 뒤로는 저장하지 않는다(좋은 저장을 지킨다) · 창은 한 번만 · 이어 간 뒤 30초 안에 또 나면 「처음으로」만(고리 방지). 무해한 브라우저 알림(ResizeObserver · 자동 재생 거부 · AbortError)은 기록만. 창은 컷신 위(z 200).
+- **기록 모아 쓰기** (`src/slice/telemetry.ts`): 사건마다 전체를 다시 쓰던 것을 3초 모아 쓰기 + 내릴 때 · 닫을 때 · 오류 때 바로. 상한 4000 → 500. `track`은 던지지 않는다.
+- 시험: `tests/save-safety.test.ts`(깨진 본 키 → 사본 · 원본 보관 · 이관 · 가득 참 · 대국 중 저장 왕복 결정론). 실화면(915×412 DPR 2.625): `production/qa/evidence/2026-11-16-slice-resume-{before,title,after}.png` · `…-crash-window.png`.
+- 검증: `tsc` · `npm test`.

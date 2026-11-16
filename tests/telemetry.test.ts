@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TELEMETRY_KEY, TELEMETRY_MAX, telemetryAll, telemetryClear, telemetryStore, track } from '../src/slice/telemetry';
+import { TELEMETRY_KEY, TELEMETRY_MAX, telemetryAll, telemetryClear, telemetryFlush, telemetryShed, telemetryStore, track } from '../src/slice/telemetry';
 import { KEYWORDS } from '../src/data/hud';
 import { SURVEY } from '../src/data/playtest';
 
@@ -18,6 +18,9 @@ describe('플레이테스트 기록', () => {
     const all = telemetryAll();
     expect(all.map((e) => e.e)).toEqual(['battle_result', 'draft_choice']);
     expect(all[0].sid).toBeTruthy();
+    // 모아 쓰기 (D-529): 사건마다 쓰지 않는다 — 내릴 때 · 닫을 때 한 번에
+    expect(st.m.get(TELEMETRY_KEY)).toBeUndefined();
+    telemetryFlush();
     expect(JSON.parse(st.m.get(TELEMETRY_KEY)!)).toHaveLength(2);
     telemetryClear();
     expect(telemetryAll()).toHaveLength(0);
@@ -38,6 +41,19 @@ describe('플레이테스트 기록', () => {
     expect(all[0].i).toBe(5);
     telemetryStore(null);
     expect(() => track('y')).not.toThrow();
+    expect(() => telemetryFlush()).not.toThrow();
+  });
+  it('쓰기가 실패해도 던지지 않고 · 가득 차면 비우고 최근 몇 건만 남긴다 (D-529)', () => {
+    const st = fake();
+    telemetryStore({ ...st, setItem: () => { throw new DOMException('full', 'QuotaExceededError'); } });
+    for (let i = 0; i < 80; i++) track('x', { i });
+    expect(() => telemetryFlush()).not.toThrow();
+    st.m.set(TELEMETRY_KEY, '[]');
+    telemetryShed(10);
+    expect(st.m.has(TELEMETRY_KEY)).toBe(false);
+    expect(telemetryAll()).toHaveLength(10);
+    expect(telemetryAll()[0].i).toBe(70);
+    telemetryStore(null);
   });
 });
 

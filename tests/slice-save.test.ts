@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildRun, ASC_MAX } from '../src/slice/run';
-import { clearSave, dailySeed, emptyMeta, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
+import { SAVE_VERSION, clearSave, dailySeed, emptyMeta, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
 
 const memStore = (): Store => {
   const m = new Map<string, string>();
@@ -13,7 +13,7 @@ describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
     const st = memStore();
     expect(readSave(st)).toBeNull();
     writeSave(st, sample());
-    expect(readSave(st)).toEqual(sample());
+    expect(readSave(st)).toEqual({ ...sample(), v: SAVE_VERSION });
     clearSave(st);
     expect(readSave(st)).toBeNull();
   });

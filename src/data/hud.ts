@@ -280,3 +280,17 @@ export const SPEED_METER = {
   /** 계기를 누르면 (① 시스템 투) — 첫 턴(배치)은 관을 태우지 않는다 */
   help: (left: number, per: number): string => `속전 — 첫 턴 뒤 턴이 끝날 때마다 진공관 하나가 꺼집니다. 이기면 남은 관 ${left}개 × 나사 ${per}.`,
 } as const;
+
+/**
+ * 안전망 문구 (D-529, 시스템 투 · docs/voice.md ①): 저장 실패 알림 한 줄 · 오류 복구 창.
+ * 단추: 「지도로」(지도에서 저장했을 때) · 「이어 간다」(대국 · 보상 중에 저장했을 때) · 「처음으로」.
+ */
+export const SAFETY_TEXT = {
+  saveFail: '저장 공간이 부족해 진행을 저장하지 못했습니다.',
+  crashTitle: '문제가 생겼습니다.',
+  crashBody: '진행은 마지막으로 저장한 자리에 남아 있습니다.',
+  crashAgain: '같은 자리에서 다시 문제가 생겼습니다. 처음 화면에서 다시 시도해 주세요.',
+  toMap: '지도로',
+  resume: '이어 간다',
+  home: '처음으로',
+} as const;

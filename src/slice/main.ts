@@ -11,7 +11,7 @@ import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from 
 import { createBuildAct, createBuildTrial } from './build-trial';
 import { josa } from '../data/josa';
 import { STALL_PRESS } from '../data/battle';
-import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SCREEN_TEXT, SERVICE_CARDS, TERM_ICON, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SAFETY_TEXT, SCREEN_TEXT, SERVICE_CARDS, TERM_ICON, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
@@ -87,8 +87,8 @@ import { IMPACT } from '../data/fx';
 import { warmup } from './warmup';
 import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
-import { telemetryAll, telemetryClear, telemetrySession, telemetryStore, track as trackEvent } from './telemetry';
-import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type ActSnap, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
+import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
+import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
 import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
@@ -197,7 +197,7 @@ let nemesisNow: Nemesis | null = null;
 let closeTier = 0;
 /** 원수 목록 (출하를 넘어 남는다 — 기록에 저장) */
 const nemeses = (): Nemesis[] => readMeta(store).nemeses ?? [];
-const setNemeses = (list: Nemesis[]): void => writeMeta(store, { ...readMeta(store), nemeses: list });
+const setNemeses = (list: Nemesis[]): void => void writeMeta(store, { ...readMeta(store), nemeses: list });
 
 /** 판 칸 격자의 화면 사각형 (바크 · 자막 띠 자리) */
 const gridRect = (): DOMRect | null => {
@@ -981,6 +981,32 @@ document.addEventListener('visibilitychange', () => {
     track('session_resume', { away_sec: Math.round((Date.now() - hiddenAt) / 1000) });
     hiddenAt = 0;
   }
+  if (document.visibilityState === 'hidden') persistNow();
+});
+/**
+ * 지금 남긴다 (D-529): 대국 중이면 판 상태를 저장하고 모아 둔 기록을 쓴다.
+ * 앱을 내릴 때 · 닫을 때(pagehide) · 안드로이드 일시 정지(Capacitor pause) · 뒤로 가기로 닫을 때.
+ */
+const persistNow = (): void => {
+  try {
+    saveFight();
+  } catch (err) {
+    console.error(err);
+  }
+  telemetryFlush();
+};
+window.addEventListener('pagehide', persistNow);
+// Capacitor는 앱이 뒤로 갈 때 document에 'pause'를 쏜다 (플러그인 없이도)
+document.addEventListener('pause', persistNow);
+/** 저장소가 가득 차 못 썼을 때 (D-529): 기록부터 비우고 다시 — 그래도 안 되면 한 줄 알림 (20초에 한 번) */
+let saveWarnAt = 0;
+setSaveGuard({
+  evict: telemetryShed,
+  warn: () => {
+    if (Date.now() - saveWarnAt < 20000) return;
+    saveWarnAt = Date.now();
+    stateBand(SAFETY_TEXT.saveFail, 'toast', { ms: 3600 });
+  },
 });
 /**
  * 안드로이드 뒤로 가기 키 (D-477, MainActivity가 부른다): 닫을 수 있는 창이 열려 있으면 닫고("handled"),
@@ -991,7 +1017,10 @@ const BACK_EXIT_MS = 2000;
 let backAt = 0;
 (window as unknown as { __hwBack: () => string }).__hwBack = (): string => {
   if (dismissWin()) return 'handled';
-  if (Date.now() - backAt < BACK_EXIT_MS) return 'exit';
+  if (Date.now() - backAt < BACK_EXIT_MS) {
+    persistNow(); // 닫기 전에 대국 판을 남긴다 (D-529 — 예전엔 두 번 눌러 닫으면 대국이 처음부터였다)
+    return 'exit';
+  }
   backAt = Date.now();
   stateBand(SCREEN_TEXT.backExit, 'toast', { ms: BACK_EXIT_MS });
   return 'handled';
@@ -1504,6 +1533,8 @@ const onEndInner = async (): Promise<void> => {
   }
   sfx('submit');
   await lastStand();
+  // 턴이 넘어갈 때마다 판을 남긴다 (D-529 — 앱이 죽어도 이 턴 처음부터 이어 간다)
+  saveFight();
 };
 
 /**
@@ -1722,6 +1753,7 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
     await fn();
   } catch (err) {
     console.error(err);
+    logError(err, 'guarded');
     $('hand').classList.remove('dealing');
     busy = false;
     enemyTurn = false;
@@ -1729,6 +1761,67 @@ const guarded = async (fn: () => Promise<void>): Promise<void> => {
     refresh();
     if (b.s.winner !== null) finish();
   }
+};
+
+// ---------- 마지막 안전망 (D-529) ----------
+/** 오류가 났다 — 이 뒤로는 저장하지 않는다 (어긋난 상태가 좋은 저장을 덮지 않게) · 복구 창은 한 번만 */
+let crashed = false;
+/** 이어 간 직후 또 나면 「이어 간다」를 내지 않는다 (같은 자리에서 도는 고리 방지) */
+const CRASH_KEY = 'pawnisher.crashAt';
+const RESUME_KEY = 'pawnisher.resumeRun';
+const CRASH_LOOP_MS = 30000;
+/** 무해한 브라우저 알림 (창 크기 감시 · 소리 자동 재생 거부 · 취소된 불러오기) — 기록만 하고 창은 열지 않는다 */
+const BENIGN_ERR = /ResizeObserver loop|NotAllowedError|AbortError|play\(\) request was interrupted/;
+const ss = { get: (k: string): string | null => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k: string, v: string): void => { try { sessionStorage.setItem(k, v); } catch { /* 무시 */ } }, del: (k: string): void => { try { sessionStorage.removeItem(k); } catch { /* 무시 */ } } };
+/** 오류 하나를 기록에 남긴다 (실패해도 던지지 않는다) */
+const logError = (err: unknown, kind: string): void => {
+  try {
+    const e = err as { message?: string; name?: string; stack?: string } | undefined;
+    let at: Record<string, unknown> = {};
+    try { at = where(); } catch { /* 상태가 어긋났으면 자리 없이 */ }
+    trackEvent('error', { kind, name: e?.name ?? '', msg: String(e?.message ?? err ?? '').slice(0, 300), stack: String(e?.stack ?? '').slice(0, 800), turn: b?.turn ?? 0, ...at });
+    telemetryFlush();
+  } catch {
+    /* 안전망이 오류를 다시 만들지 않는다 */
+  }
+};
+/**
+ * 잡히지 않은 오류 (D-529): 기록에 남기고 복구 창 하나 — 「문제가 생겼습니다.」 + 지도로(또는 이어 간다) · 처음으로.
+ * 두 단추 모두 새로 불러온다(어긋난 화면 상태를 버리고 저장에서). 저장은 건드리지 않는다.
+ */
+const onCrash = (err: unknown, kind: string): void => {
+  try {
+    const e = err as { message?: string; name?: string } | undefined;
+    const text = `${e?.name ?? ''} ${e?.message ?? err ?? ''}`;
+    logError(err, kind);
+    if (BENIGN_ERR.test(text) || crashed) return;
+    crashed = true;
+    crashWin();
+  } catch {
+    /* 무시 */
+  }
+};
+const crashWin = (): void => {
+  // 컷신 · 장면이 배경을 막아 두었으면 푼다 (창이 눌리게)
+  document.querySelectorAll<HTMLElement>('[inert]').forEach((x) => (x.inert = false));
+  let sv: RunSave | null = null;
+  try { sv = readSave(store); } catch { /* 없음 */ }
+  const again = Date.now() - Number(ss.get(CRASH_KEY) ?? 0) < CRASH_LOOP_MS;
+  const go = sv && !again ? { label: resumeAt(sv) === 'map' ? SAFETY_TEXT.toMap : SAFETY_TEXT.resume, attrs: 'data-go' } : undefined;
+  const el = openWin({ size: 's', cls: 'crash', title: SAFETY_TEXT.crashTitle, body: `<p>${again ? SAFETY_TEXT.crashAgain : SAFETY_TEXT.crashBody}</p>`, back: { label: SAFETY_TEXT.home, attrs: 'data-home' }, go });
+  el.querySelector('[data-home]')?.addEventListener('click', () => { ss.set('op-menu', '1'); location.reload(); });
+  el.querySelector('[data-go]')?.addEventListener('click', () => { ss.set(RESUME_KEY, '1'); ss.set(CRASH_KEY, String(Date.now())); location.reload(); });
+};
+window.addEventListener('error', (e) => onCrash(e.error ?? e.message, 'error'));
+window.addEventListener('unhandledrejection', (e) => onCrash(e.reason, 'rejection'));
+/** 복구 창의 「지도로 · 이어 간다」로 새로 불러왔으면 처음 화면 없이 저장한 자리로 (D-529) */
+const resumeAfterCrash = (): boolean => {
+  if (ss.get(RESUME_KEY) !== '1') return false;
+  ss.del(RESUME_KEY);
+  const sv = readSave(store);
+  if (!sv) return false;
+  continueRun(sv);
+  return true;
 };
 
 // ---------- 흐름 ----------
@@ -4243,9 +4336,64 @@ const applyStartSet = (seed: number): void => {
   }
 };
 
-/** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때) */
-const saveRun = (at: 'map' | 'battle' | 'reward', node?: number, pending?: PendingReward): void =>
-  writeSave(store, { v: 2, seed: runSeed, startSet, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, pending, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, actSnap });
+/** 지금 출하 기록 한 장 (판 번호는 writeSave가 붙인다) */
+const runRecord = (at: 'map' | 'battle' | 'reward', node?: number, pending?: PendingReward): RunSave =>
+  ({ v: 0, seed: runSeed, startSet, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, pending, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, actSnap });
+/**
+ * 대국 중 저장이 켜진 대국 (D-529): saveRun('battle')이 대국을 세우기 **전** 출하 난수 · 대국 번호를 적어 둔다 —
+ * 이어 갈 때 같은 자리에서 같은 대국을 다시 세운 뒤 판 상태만 갈아 끼운다. 지도 · 보상 · 출하 끝에서 꺼진다.
+ */
+let fightOn: { node: number; rng: number; stage: number } | null = null;
+/** 지금 출하를 저장한다 (지도에 설 때 · 대국을 시작할 때 · 이긴 직후) */
+const saveRun = (at: 'map' | 'battle' | 'reward', node?: number, pending?: PendingReward): void => {
+  if (crashed) return;
+  fightOn = at === 'battle' ? { node: node ?? 0, rng: R.state, stage } : null;
+  writeSave(store, runRecord(at, node, pending));
+};
+/**
+ * 대국 판을 저장한다 (D-529): 턴이 넘어갈 때 · 앱을 내리거나 닫을 때. 엔진 상태(b)만 — 화면은 남기지 않는다.
+ * 연출 중(busy · 적 차례)이면 건너뛴다 — 직전 턴 끝 저장이 남아 있어 그 턴 처음부터 이어 간다.
+ */
+const saveFight = (): void => {
+  if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || b.s.winner !== null || busy || enemyTurn) return;
+  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, bet: betNow, clutched: clutchedNow, phaseWarned, tg } });
+};
+/**
+ * 대국 중 저장에서 이어 간다 (D-529): 대국 앞 난수 자리에서 같은 대국을 조용히 다시 세우고(결정론 — 같은 적 · 같은 판 장식),
+ * 판 상태 · 출하 난수 · 판 밖 대국 상태만 저장한 것으로 갈아 끼운 뒤 판 세우기 연출만 다시 한다.
+ */
+const resumeFight = (def: BattleDef, f: FightSave): void => {
+  startBattle(def, true);
+  b = f.b;
+  R = new Rng(f.rng);
+  stage = f.stage;
+  betNow = f.bet ?? null;
+  clutchedNow = !!f.clutched;
+  phaseWarned = !!f.phaseWarned;
+  if (f.tg) tg = { ...f.tg };
+  renderer.setNemesis(b.nemesisId ?? null);
+  renderer.setCracked(b.squadIds.filter((_, i) => squad[i]?.cracked));
+  renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
+  renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
+  renderer.setup(b.s);
+  refresh();
+  track('battle_resume', { ...where(), turn: b.turn });
+  void battleIntro();
+};
+/** 저장한 출하를 이어 간다 (메뉴 「이어하기」 · 오류 창 「지도로 · 이어 간다」) */
+const continueRun = (sv: RunSave): void => {
+  loadRun(sv); closeOpening(); sfx('submit');
+  const at = resumeAt(sv);
+  const nd = at === 'map' ? undefined : acts[actI].rows[rowI]?.[sv.node ?? 0];
+  // 이긴 대국의 보상부터 (D-488): 정산은 끝났다 — 같은 난수 자리에서 같은 보상을 다시 연다
+  if (at === 'reward' && nd?.battle) return resumeReward(nd.battle, sv.pending!);
+  if (nd?.battle) {
+    fightOn = { node: sv.node ?? 0, rng: sv.rng, stage: sv.stage };
+    // 대국 중 저장이 있으면 그 판부터 (D-529), 없으면 예전처럼 그 대국 처음부터
+    return sv.fight ? resumeFight(nd.battle, sv.fight) : startBattle(nd.battle);
+  }
+  showMap();
+};
 
 /** 저장한 출하를 되살린다 */
 const loadRun = (sv: RunSave): void => {
@@ -4329,6 +4477,7 @@ const runEndNow = (cleared: boolean): void => {
   track('session_exit', { ...where(), run_time_min: Math.round((Date.now() - runAt) / 6000) / 10, turn_num: b?.turn ?? 0, exit_type: cleared ? 'clear' : 'gameover' });
   if (!cleared) track('gameover_inventory', { ...where(), rewinds_left: charms.rewind, revive_charm_left: charms.revive, total_rewinds_used: rewindsUsedRun, deck_size: deck.length, parts });
   if (!cleared) ftue('gameover', true);
+  fightOn = null;
   clearSave(store);
   document.body.classList.add('between');
   placeBg(cleared ? 'end-clear' : 'end-fail');
@@ -4717,15 +4866,8 @@ const opening = (): void => {
       });
       nav.querySelector('[data-go]')!.addEventListener('click', () => launch());
       nav.querySelector('[data-daily]')!.addEventListener('click', () => launch(true));
-      nav.querySelector('[data-cont]')?.addEventListener('click', () => {
-        loadRun(sv!); closeOpening(); sfx('submit');
-        const at = resumeAt(sv!);
-        const nd = at === 'map' ? undefined : acts[actI].rows[rowI]?.[sv!.node ?? 0];
-        // 이긴 대국의 보상부터 (D-488): 정산은 끝났다 — 같은 난수 자리에서 같은 보상을 다시 연다
-        if (at === 'reward' && nd?.battle) return resumeReward(nd.battle, sv!.pending!);
-        if (nd?.battle) return startBattle(nd.battle);
-        showMap();
-      });
+      // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
+      nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!));
       nav.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(closeWin));
       nav.querySelector('[data-guide]')!.addEventListener('click', () => void guide(openWin).then(closeWin));
       nav.querySelector('[data-prologue]')!.addEventListener('click', () => void prologue(true));
@@ -4759,6 +4901,7 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (boot) pxOut(boot, () => boot.remove(), 240);
   if (qs.has('builds')) buildPick();
   else if (qs.has('lab')) labPick();
+  else if (resumeAfterCrash()) { /* 오류 창에서 「지도로 · 이어 간다」 (D-529) */ }
   else if (!qs.has('debug') || qs.has('opening')) opening();
 });
 if (new URLSearchParams(location.search).has('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { setPick: () => setPick(), progress: () => readMeta(store), context: () => ({ mode: runMode, chapter: storyChapter, asc, runId, promise: storyPromise, beats: storyBeats }), campaign: (a: number, mode: RunMode = 'story') => { newRun(171 + a, a, null, mode); return 0; }, challengeEnd: (a = CHALLENGE_START) => { runMode = 'challenge'; asc = a; void endingFlow(); }, buildPick, buildTrial: startBuildTrial, movePeek, kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void onboarding(), drill: (i: number) => startBattle(i < DRILLS.length ? DRILLS[i] : INTRO[0], true), tipNow: (k: 'battle' | 'act' = 'battle') => showTip(k), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 2) => { runMode = 'story'; storyChapter = Math.min(STORY_COUNT - 1, Math.max(0, a)) as StoryChapter; asc = storyChapter; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1, level = 0, mode: RunMode = 'story', day: string | null = null, set?: StartSetId) => begin(s, level, day, mode, set), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { runMode = 'story'; storyChapter = Math.min(STORY_COUNT - 1, Math.max(0, a)) as StoryChapter; asc = storyChapter; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), credits: (count = 4, record = false) => { void creditsScene(Array.from({ length: count }, (_, i) => ({ t: (['P', 'N', 'B', 'R'] as PieceType[])[i % 4], name: `먼지투성이 ${i + 1}`, fallen: i % 2 === 1 })), '출하 14번째 · 2026-11-11', { record }); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces, defeat: () => runEnd(false), shadow: (a = 1) => playCuts(shadowCuts(a)), artScene: (img: string) => playCuts([{ img, bg: ['#0b0b0e', '#0b0b0e'], art: [], lines: [{ k: 'n', t: '장면 검수' }], cam: 'still' }]), meltNames: (n: string[]) => (meltedRun = n), replay: (code: string) => { const r = JSON.parse(decodeURIComponent(escape(atob(code)))) as { squad: Squad[]; deck: CommandId[]; parts: SlicePartId[]; refined: CommandId[]; asc: number; def: BattleDef; gold: number }; squad = r.squad; deck = r.deck; parts = r.parts; refined.splice(0, refined.length, ...r.refined); asc = r.asc; gold = r.gold; startBattle(r.def, true); return r.def.title; }, trueEnd: () => playCuts(trueEndingCuts(storyCompany().alive.map((u, k) => ({ t: u.t, side: 0 as const, x: 14 + k * 9, y: 56, h: 22 })), storyCompany()), { faces: crewFaces() }), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(storyChapter, storyCompany().alive[0]?.name ?? '', ASCENSION[STORY_LAW[storyChapter]].law, BOSS_STORY.plate.mirror, storyCompany()), { faces: crewFaces() }), defeatCut: () => playCuts(DEFEAT_CUTS), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: (ids?: SlicePartId[]) => { const all = Object.keys(SLICE_PARTS) as SlicePartId[]; parts = (ids ?? all).slice(0, partSlotsAt(actI)); gainPart(all.find((id) => !parts.includes(id))!, () => labMode ? closeOverlay() : showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), lab: (m: 'A' | 'B') => startLab(m), stand: () => { sacLeft = 1; clutchLeft = 1; return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; tauntCount = 0; taunt(c, true); }, monoNow: (t: string) => mono(t), betSet: (k: BetKind = 'unhit') => { betNow = { kind: k, stake: 30, need: DIRECTOR.betKills[Math.min(2, actI)] }; betReached = false; refresh(); }, betBreak: () => { b.kingHit = true; refresh(); }, betReach: () => { b.bestTurnKills = 3; refresh(); }, betEnd: (won: boolean) => betResolve(won), resultFx: (k: string) => void debugResultFx(k), fxOnly: (k: ResultFxKind) => void debugFxOnly(k), apFx: () => apSources(2, (() => { const s0 = JSON.parse(JSON.stringify(b.s)) as typeof b.s; s0.pieces.push({ ...b.s.pieces.find((p) => p.side === 1 && p.type !== 'K')!, id: 999 }); return s0; })(), [], (b.refunded = (b.refunded ?? 0) + 1) - 1, 1), p2Warn: () => p2Warn(BOSS_PHASE_TEXT.low, gridRect()), p2Rise: async (r = 'plate') => { await p2Rise({ art: p2Art(r), word: r === 'gilded' ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다' }); const p2 = (BOSS_STORY as Partial<Record<string, { phase2: string }>>)[r]?.phase2; if (p2) await foeStory(p2); }, allyBark: () => { const p = b.s.pieces.find((q) => q.side === 0 && q.type !== 'K'); if (p) bark({ at: () => barkAtPiece(p.id), side: 'ally', name: squad[b.squadIds.indexOf(p.id)]?.name ?? PIECE_NAMES_KO[p.type], face: pieceImg(p.type, 0, 'small', 40), text: CREW_BARK[p.type as CrewKind].kill[0], prio: 1, force: true }); }, foeBark: (cue: FoePieceCue = 'gloat', t?: PieceType) => { const p = b.s.pieces.find((q) => q.side === 1 && q.type !== 'K' && (!t || q.type === t)); if (p) bark({ at: () => barkAtPiece(p.id), side: 'foe', name: `적 ${PIECE_NAMES_KO[p.type]}`, face: foePieceFace(p), text: FOE_PIECE_BARK[p.type as CrewKind][cue][0], prio: 1, force: true }); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), /** 전수 점검(tools/qa/sweep.cjs): 같은 판 정의에 이형 · 거대 주물 · 공정 판만 덧대어 연다 — 판 정의를 고칠 뿐, 대국은 늘 startBattle이 세운다 */ battleWith: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', patch: Partial<BattleDef> = {}) => startBattle({ ...battleFor(act, kind, new Rng(act * 7)), ...patch }, true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), eventIds: SLICE_EVENT_IDS, event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), lastRow: () => (rowI = acts[actI].rows.length - 1), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), richRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); actSnap = { won: 9, kills: 20, gold: 140, deck: deck.length - 4, kb: Object.fromEntries(squad.map((u, i) => [u.serial ?? '', Math.max(0, (u.kills ?? 0) - [3, 6, 2, 4, 1][i % 5])])), db: {} }; return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

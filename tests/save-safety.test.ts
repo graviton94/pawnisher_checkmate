@@ -1,0 +1,137 @@
+import { describe, expect, it } from 'vitest';
+import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, emptyMeta, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
+import { TELEMETRY_KEY, telemetryAll, telemetryShed, telemetryStore, track } from '../src/slice/telemetry';
+import { endTurn, newSliceBattle, playCard, type SliceBattle } from '../src/slice/battle';
+import { bestAction } from '../src/slice/bot';
+
+const memStore = (): Store & { m: Map<string, string> } => {
+  const m = new Map<string, string>();
+  return { m, getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v), removeItem: (k) => void m.delete(k) };
+};
+const sample = (over: Partial<RunSave> = {}): RunSave => ({ v: SAVE_VERSION, seed: 7, asc: 2, daily: null, runId: 'r', actI: 1, rowI: 3, picked: [[0, 0, 1], [2], []], squad: [{ t: 'K' }], deck: ['advance'], parts: [], gold: 40, won: 6, stage: 9, refined: [], eventBag: [], rng: 12345, at: 'map', ...over });
+
+/** 저장 안전망 (D-529): 사본 · 깨진 원본 보관 · 판 번호 이관 · 쓰기 실패 */
+describe('저장 안전망 (D-529)', () => {
+  it('본 키가 깨지면 원본을 .corrupt에 남기고 마지막 좋은 사본으로 되돌린다', () => {
+    const st = memStore();
+    writeSave(st, sample({ gold: 10 }));
+    writeSave(st, sample({ gold: 20 })); // 앞 것이 사본이 된다
+    expect(JSON.parse(st.m.get(SAVE_KEY + BAK)!).gold).toBe(10);
+    st.m.set(SAVE_KEY, '{"v":3,"seed":'); // 쓰다 끊긴 저장
+    expect(readSave(st)?.gold).toBe(10);
+    expect(st.m.get(SAVE_KEY + CORRUPT)).toBe('{"v":3,"seed":');
+    expect(JSON.parse(st.m.get(SAVE_KEY)!).gold).toBe(10); // 본 키도 되돌려 둔다
+  });
+  it('기록(진행)이 깨져도 빈 기록으로 덮어쓰지 않는다 — 사본이 없으면 원본을 남기고 나서야 쓴다', () => {
+    const st = memStore();
+    const m = { ...emptyMeta(), runs: 9, storyCleared: 2 };
+    writeMeta(st, m);
+    writeMeta(st, { ...m, runs: 10 });
+    st.m.set(META_KEY, '{깨진');
+    expect(readMeta(st).runs).toBe(9);
+    expect(st.m.get(META_KEY + CORRUPT)).toBe('{깨진');
+    // 사본도 없는 경우: 읽기는 빈 기록이지만 덮어쓰기 전에 원본이 남는다
+    const st2 = memStore();
+    st2.m.set(META_KEY, '{"runs":44,');
+    expect(readMeta(st2).runs).toBe(0);
+    writeMeta(st2, emptyMeta());
+    expect(st2.m.get(META_KEY + CORRUPT)).toBe('{"runs":44,');
+  });
+  it('깨진 원본을 남기지 못하면 덮어쓰지 않고 알린다', () => {
+    const st = memStore();
+    st.m.set(SAVE_KEY, '{oops');
+    const warned: string[] = [];
+    setSaveGuard({ warn: () => warned.push('w') });
+    const full: Store = { ...st, setItem: (k, v) => { if (k.endsWith(CORRUPT)) throw new Error('full'); st.setItem(k, v); } };
+    expect(writeSave(full, sample())).toBe(false);
+    expect(st.m.get(SAVE_KEY)).toBe('{oops');
+    expect(warned).toEqual(['w']);
+    setSaveGuard({});
+  });
+  it('이관 사슬: 판 2 → 3, 판 1 · 판 번호 없음 · 더 새 판은 버린다 · 기록 판 0 → 1', () => {
+    const v2 = { ...sample(), v: 2 };
+    expect(migrateSave(v2)).toEqual({ ...v2, v: 3 });
+    expect(migrateSave({ ...sample(), v: 1 })).toBeNull();
+    expect(migrateSave({ ...sample(), v: undefined })).toBeNull();
+    expect(migrateSave({ ...sample(), v: SAVE_VERSION + 1 })).toBeNull();
+    const st = memStore();
+    st.m.set(SAVE_KEY, JSON.stringify(v2));
+    expect(readSave(st)?.v).toBe(SAVE_VERSION);
+    expect(migrateMeta({ runs: 3 })).toEqual({ runs: 3, mv: 1 });
+    expect(migrateMeta({ runs: 3, mv: 99 })).toBeNull();
+    const st2 = memStore();
+    st2.m.set(META_KEY, JSON.stringify({ ...emptyMeta(), mv: undefined, runs: 5 }));
+    expect(readMeta(st2).runs).toBe(5);
+  });
+  it('가득 차면 기록(텔레메트리)부터 비우고 한 번 더 — 그래도 안 되면 한 번 알린다', () => {
+    const st = memStore();
+    let room = true;
+    const quota: Store = { ...st, setItem: (k, v) => { if (!room && k === SAVE_KEY) throw new DOMException('full', 'QuotaExceededError'); st.setItem(k, v); } };
+    telemetryStore(st);
+    for (let i = 0; i < 60; i++) track('x', { i });
+    st.m.set(TELEMETRY_KEY, '[1]');
+    let warned = 0;
+    // 기록을 비우면 자리가 생긴다
+    setSaveGuard({ evict: () => { telemetryShed(); room = true; }, warn: () => warned++ });
+    room = false;
+    expect(writeSave(quota, sample())).toBe(true);
+    expect(st.m.has(TELEMETRY_KEY)).toBe(false);
+    expect(telemetryAll().length).toBeLessThan(60);
+    // 비워도 자리가 없으면 false + 알림 한 번, 앞 저장은 그대로
+    setSaveGuard({ evict: () => telemetryShed(), warn: () => warned++ });
+    room = false;
+    expect(writeSave(quota, sample({ gold: 99 }))).toBe(false);
+    expect(warned).toBe(1);
+    expect(readSave(st)?.gold).toBe(40);
+    setSaveGuard({});
+    telemetryStore(null);
+  });
+});
+
+/** 대국 중 저장 (D-529): 엔진 상태만 남기면 같은 수를 두었을 때 같은 판이 된다 */
+describe('대국 중 저장 · 이어하기 결정론 (D-529)', () => {
+  const squad = [{ t: 'K' }, { t: 'R' }, { t: 'N' }, { t: 'P' }, { t: 'P' }] as never;
+  const deck = ['advance', 'leap', 'kingStep', 'order', 'advance', 'leap', 'advance', 'order'] as never;
+  /** 보통 봇으로 n턴 (같은 판이면 같은 수) */
+  const turns = (b: SliceBattle, n: number): void => {
+    for (let t = 0; t < n && b.s.winner === null; t++) {
+      for (let g = 0; g < 20; g++) {
+        const a = bestAction(b, 'greedy');
+        if (!a || typeof playCard(b, a.i, a.pieceId, a.to) === 'string' || b.s.winner !== null) break;
+      }
+      if (b.s.winner === null) endTurn(b, true);
+    }
+  };
+  it('턴 끝 저장 → 읽기 → 이어 두면 저장하지 않은 판과 끝까지 같다', () => {
+    const live = newSliceBattle(squad, ['K', 'P', 'P', 'N', 'B'], deck, 4242, { depth: 3 });
+    turns(live, 2);
+    expect(live.s.winner).toBeNull();
+    const st = memStore();
+    writeSave(st, sample({ at: 'battle', node: 0, fight: { b: live, rng: 777, stage: 10, bet: null, clutched: false } }));
+    const back = readSave(st)!.fight!;
+    expect(back.rng).toBe(777);
+    expect(JSON.stringify(back.b)).toBe(JSON.stringify(live));
+    turns(live, 6);
+    turns(back.b, 6);
+    expect(back.b.turn).toBeGreaterThan(2);
+    expect(JSON.stringify(back.b)).toBe(JSON.stringify(live));
+  });
+  it('턴 중간(카드를 낸 뒤) 저장도 되감기 사진(snap)까지 같이 돌아온다', () => {
+    const live = newSliceBattle(squad, ['K', 'P', 'N'], deck, 99, {});
+    const a = bestAction(live, 'greedy');
+    if (a) playCard(live, a.i, a.pieceId, a.to);
+    const st = memStore();
+    writeSave(st, sample({ at: 'battle', node: 0, fight: { b: live, rng: 1, stage: 1 } }));
+    const back = readSave(st)!.fight!.b;
+    expect(back.snap).toBe(live.snap);
+    expect(back.ap).toBe(live.ap);
+    expect(back.hand).toEqual(live.hand);
+  });
+  it('대국 중 저장이 모자라면 그 칸만 버리고 대국 처음부터 (출하는 살린다)', () => {
+    const st = memStore();
+    st.m.set(SAVE_KEY, JSON.stringify(sample({ at: 'battle', node: 1, fight: { b: { s: {} }, rng: 1, stage: 1 } as never })));
+    const sv = readSave(st)!;
+    expect(sv.at).toBe('battle');
+    expect(sv.fight).toBeUndefined();
+  });
+});
