@@ -6,16 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "node tools/gen-preload.cjs && tsc --noEmit && vite build",
+    "build:release": "node tools/gen-preload.cjs && tsc --noEmit && vite build --mode release",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sim": "vitest run --config vitest.sim.config.ts",
     "climb": "node tools/climb.mjs",
     "review": "node tools/qa/fullrun.cjs",
-    "android:sync": "npm run build && cap sync android",
+    "android:sync": "npm run build:release && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
     "pc:dev": "npm run build && electron .",
-    "pc:dist": "npm run build && electron-builder"
+    "pc:dist": "npm run build:release && electron-builder"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

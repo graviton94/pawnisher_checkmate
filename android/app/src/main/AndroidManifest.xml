@@ -38,6 +38,6 @@
 
     <!-- Permissions -->
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- INTERNET 없음 (D-531): 출시판은 네트워크를 쓰지 않는다 (fetch · XHR · WebSocket 없음). 디버그 빌드만 src/debug 에서 더한다 (라이브 리로드) -->
     <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

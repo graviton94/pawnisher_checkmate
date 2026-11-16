@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 시작 화면 (D-531): 어두운 바탕 + 가운데 타이틀 로고 (밀도별 정수배 그림, 늘리지 않는다 — tools/android-res.py) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_bg" />
+    <item>
+        <bitmap android:src="@drawable/splash_logo" android:gravity="center" android:filter="false" android:antialias="false" />
+    </item>
+</layer-list>

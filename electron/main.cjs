@@ -1,5 +1,5 @@
 // PC(스팀) 빌드 진입점 (GDD 10장 M9). 웹 빌드(dist)를 창 하나로 띄운다.
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('node:path');
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) {
@@ -7,6 +7,14 @@ if (smoke) {
   app.disableHardwareAcceleration();
   setTimeout(() => { console.error('SMOKE timeout'); app.exit(1); }, 60000).unref();
 }
+
+// 한 번에 하나만 (D-531): 두 번째 실행은 이미 뜬 창을 앞으로 가져오고 끝난다 (저장 파일을 두 창이 같이 쓰지 않게)
+if (!smoke && !app.requestSingleInstanceLock()) {
+  app.quit();
+  process.exit(0);
+}
+// 출시판(패키지)에는 기본 메뉴가 없다 (D-531) — Ctrl+R 새로고침 · 개발자 도구 단축키가 메뉴에서 온다
+if (app.isPackaged) Menu.setApplicationMenu(null);
 
 // 스팀 연동은 steamworks.js가 설치되어 있고 STEAM_APP_ID가 있을 때만 켠다 (개발 중에는 없어도 실행된다)
 let steam = null;
@@ -26,6 +34,24 @@ ipcMain.handle('achievement', (_e, id) => {
   }
 });
 
+/** 지금 창 (두 번째 실행 · IPC가 찾는다) */
+let main = null;
+/** 전체 화면 켜고 끄기 → 바뀐 상태 */
+const toggleFull = (win) => {
+  if (!win) return false;
+  win.setFullScreen(!win.isFullScreen());
+  return win.isFullScreen();
+};
+// 웹 코드에서 부르는 창 기능 (D-531, src/slice/platform.ts): 게임 끝내기 · 전체 화면
+ipcMain.handle('quit', () => app.quit());
+ipcMain.handle('fullscreen', (e) => toggleFull(BrowserWindow.fromWebContents(e.sender)));
+ipcMain.handle('is-fullscreen', (e) => !!BrowserWindow.fromWebContents(e.sender)?.isFullScreen());
+app.on('second-instance', () => {
+  if (!main) return;
+  if (main.isMinimized()) main.restore();
+  main.focus();
+});
+
 const createWindow = () => {
   const win = new BrowserWindow({
     width: 1600,
@@ -36,7 +62,23 @@ const createWindow = () => {
     autoHideMenuBar: true,
     show: !smoke,
     title: 'Pawnisher : Checkmate',
-    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true },
+    // 출시판은 개발자 도구를 열 수 없다 (D-531)
+    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, devTools: !app.isPackaged },
+  });
+  main = win;
+  win.on('closed', () => { if (main === win) main = null; });
+  // F11 · Alt+Enter = 전체 화면 (메뉴가 없어도 동작). 출시판은 새로고침 · 개발자 도구 키를 먹는다
+  win.webContents.on('before-input-event', (e, input) => {
+    if (input.type !== 'keyDown') return;
+    const key = input.key;
+    if (key === 'F11' || (key === 'Enter' && input.alt)) {
+      e.preventDefault();
+      toggleFull(win);
+      return;
+    }
+    if (!app.isPackaged) return;
+    const mod = input.control || input.meta;
+    if (key === 'F5' || key === 'F12' || (mod && (key.toLowerCase() === 'r' || (input.shift && key.toLowerCase() === 'i')))) e.preventDefault();
   });
   // D-429: 기본 모바일 915×412의 읽기 크기를 기준으로 PC UI 전체를 확대한다.
   // 1280 폭에서 정수 내림으로 ×1에 머물던 문제를 제거한다.

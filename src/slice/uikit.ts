@@ -105,13 +105,10 @@ export const openWin = (o: WinOpts): HTMLElement => {
     const onOut = (e: MouseEvent): void => {
       if (e.target === over) (clearDismiss(), fn());
     };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') (clearDismiss(), fn());
-    };
-    window.addEventListener('keydown', onKey);
+    // Esc · Backspace · 패드 B는 keys.ts(D-531)가 dismissWin()으로 이 길을 부른다
     // 여는 탭이 그대로 바깥 탭으로 잡히지 않게 한 박자 뒤에
     const t = window.setTimeout(() => over.addEventListener('click', onOut), 0);
-    offDismiss = () => (window.clearTimeout(t), over.removeEventListener('click', onOut), window.removeEventListener('keydown', onKey));
+    offDismiss = () => (window.clearTimeout(t), over.removeEventListener('click', onOut));
   }
   requestAnimationFrame(() => {
     const h = panel.offsetHeight;
