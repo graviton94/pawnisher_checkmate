@@ -24,6 +24,8 @@ export interface ProcState {
   under?: Pos[];
   /** 프레스: 이번 적 차례에 내리찍을 줄 */
   pressRow?: number | null;
+  /** 프레스: 방금 내리찍은 줄 — 다음 예고까지 찍힌 자국 칸으로 남는다 (판 그림만, 규칙 없음 · D-533) */
+  dentRow?: number | null;
 }
 interface Holder { s: BattleState; turn: number; proc?: ProcState; atkK?: number }
 
@@ -93,6 +95,8 @@ export const processTurn = (b: Holder): void => {
   const mid = (b.s.height - 1) / 2;
   const best = [...rows.entries()].sort((x, y) => y[1] - x[1] || Math.abs(x[0] - mid) - Math.abs(y[0] - mid) || x[0] - y[0])[0];
   pr.pressRow = best ? best[0] : null;
+  // 새 예고가 서면 지난 자국은 걷는다 (판에 줄 표시가 둘 겹치지 않게)
+  if (pr.pressRow !== null) pr.dentRow = null;
 };
 
 /** 피해 · 떨어짐을 적용하고 사건 하나로 — 쓰러진 기물 정리 · 승패는 부르는 쪽 */
@@ -162,6 +166,7 @@ export const processAfter = (b: Holder): BattleEvent[] => {
     // 2×2 보스 (D-513): 몸 두 칸이 줄에 걸려도 피해는 한 번
     const e = strike(coresOf(b.s, b.s.pieces.filter((p) => p.y === row)), () => foe(PROC.pressDmg), PROCESS.press.name, cells);
     if (e) out.push(e);
+    pr.dentRow = row;
     pr.pressRow = null;
   }
   if (pr.kind === 'furnace') {
@@ -207,7 +212,7 @@ export const processDanger = (b: Holder): Pos[] => {
 /**
  * 칸 표시 (판 그리기, PB-01 D-521): 공정 칸 그림 이름(proc-*, 렌더러가 칸 짝에 따라 -dark를 붙인다) · 좌우 뒤집기 · 테 색 · 애니.
  * 컨베이어 = 4프레임 흐름(anim) · 자석 레일 = 양 끝 기둥 + 세로 레일 · 용광로 = 기물이 서 있으면 달아오름(적 차례 끝에 데인다) ·
- * 금 간 바닥 = 밟힌 수만큼 금이 번지고, 보스가 버티고 선 칸(곧 꺼짐)은 구멍 · 프레스 = 예고 줄 꺾쇠.
+ * 금 간 바닥 = 밟힌 수만큼 금이 번지고, 보스가 버티고 선 칸(곧 꺼짐)은 구멍 · 프레스 = 예고 줄 꺾쇠, 내리찍은 뒤 다음 예고까지 찍힌 자국.
  */
 export const processTiles = (b: Holder): { pos: Pos; icon: string; flipX?: boolean; frame: number; anim?: boolean }[] => {
   const pr = b.proc;
@@ -218,5 +223,7 @@ export const processTiles = (b: Holder): { pos: Pos; icon: string; flipX?: boole
   if (pr.kind === 'furnace') return (pr.cells ?? []).map((pos) => ({ pos, icon: at(s, pos) ? 'proc-furnace-hot' : 'proc-furnace', frame: 0xe8783c }));
   if (pr.kind === 'crack') return [...(pr.cells ?? []).map((pos) => ({ pos, icon: (pr.cracks?.[key(pos)] ?? 0) > 0 ? 'proc-crack2' : 'proc-crack1', frame: 0x8a8070 })), ...(pr.under ?? []).map((pos) => ({ pos, icon: 'proc-crack3', frame: 0x8a8070 }))];
   if (pr.kind === 'press' && pr.pressRow !== null && pr.pressRow !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.pressRow! }, icon: 'proc-press-warn', frame: 0xc89b3c }));
+  // 찍힌 자국 (PB-01 press-dent): 내리찍은 뒤 다음 예고까지 그 줄에 남는다
+  if (pr.kind === 'press' && pr.dentRow !== null && pr.dentRow !== undefined) return Array.from({ length: s.width }, (_, x) => ({ pos: { x, y: pr.dentRow! }, icon: 'proc-press-dent', frame: 0x8a8070 })).filter((t) => inBounds(s, t.pos.x, t.pos.y));
   return [];
 };

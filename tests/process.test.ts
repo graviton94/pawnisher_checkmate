@@ -35,6 +35,11 @@ describe('공정 판 (D-486)', () => {
       const now = b.s.pieces.find((p) => p.id === h.pieceId);
       if (now && !h.killed) expect((before.get(h.pieceId) ?? 0) - (now.hp + now.shield)).toBe(h.damage);
     }
+    // 찍힌 자국 (D-533): 내리찍은 줄은 다음 예고까지 자국 칸으로 남는다 (판 그림만)
+    if (b.s.winner === null) {
+      expect(b.proc!.dentRow).toBe(row);
+      expect(processTiles(b).every((t) => t.icon === 'proc-press-dent' && t.pos.y === row)).toBe(true);
+    }
   });
   it('자석 레일: 룩 · 킹이 기둥 쪽으로 한 칸', () => {
     const b = newSliceBattle(squad, ['K', 'P'], deck, 8, { process: 'magnet' });
