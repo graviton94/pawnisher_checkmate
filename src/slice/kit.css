@@ -132,7 +132,7 @@
 /* 떼면 한 번 튀어 오름: 계단 3프레임(1도트 위 → 제자리) — 비정수 확대 없음 */
 .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal).up { animation: kbtnup 180ms steps(3, jump-none) both; }
 @keyframes kbtnup { 0% { transform: translateY(calc(var(--px) * 1)); } 50% { transform: translateY(calc(var(--px) * -1)); } 100% { transform: none; } }
-body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D-533: 초점 테는 키 · 패드로 움직일 때만 (D-531) — 연출이 초점을 옮긴 뒤 손가락 화면에 금 테가 남았다 */  outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
+body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D-534: 초점 테는 키 · 패드로 움직일 때만 (D-531) — 연출이 초점을 옮긴 뒤 손가락 화면에 금 테가 남았다 */  outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
 .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal) small { color: inherit; font: 400 12px/1 Galmuri11, sans-serif; }
 
 /* 단추 줄: 창 맨 아래 · 왼쪽 = 뒤로(철) · 오른쪽 = 앞으로(황동) · 같은 폭 · 최대 2개 (+ 가운데 쪽 표시) */
@@ -1065,7 +1065,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   color: var(--t-brass-ink); font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; text-shadow: none; }
 .badge-n.b-crimson { border-image-source: url('../assets/ui/chrome/v2/badge-num-crimson.png'); color: #000; }
 /* UI-24 강조 띠: 높이 13 · 좌우 9 (제비꼬리 + 리벳) — 머리말 · 조건 · 보상 · 실패 시 · 새로 열림 · 막 이름 */
-.ribbon { display: inline-flex; align-items: center; gap: var(--s1); box-sizing: border-box; height: calc(var(--px) * 13); padding: 0 calc(var(--px) * 2); /* D-533: 리벳에 글이 붙었다 */ margin: 0;
+.ribbon { display: inline-flex; align-items: center; gap: var(--s1); box-sizing: border-box; height: calc(var(--px) * 13); padding: 0 calc(var(--px) * 2); /* D-534: 리벳에 글이 붙었다 */ margin: 0;
   border-style: solid; border-width: 0 calc(var(--px) * 9);
   border-image: url('../assets/ui/chrome/v2/ribbon-brass.png') var(--k-ribbon) fill / 0 calc(var(--px) * 9) / 0 stretch; image-rendering: pixelated;
   color: var(--t-brass-ink); font: 700 12px/18px Galmuri11, sans-serif; font-style: normal; white-space: nowrap; text-shadow: none; }
@@ -1287,7 +1287,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .opening .op-tools { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .opening .op-tools > .btn { min-width: 0; min-height: 48px; padding-inline: 0; font: 400 12px/18px Galmuri11, sans-serif; }
 .opening .op-menu { gap: var(--s2); }
-/* D-533: 「첫째 왕관 ▾」이 56px 단추 테를 밟았다 → 72px · 두 줄(「첫째」 / 「왕관 ▾」) — 본편 시작 단추 폭을 지킨다 */
+/* D-534: 「첫째 왕관 ▾」이 56px 단추 테를 밟았다 → 72px · 두 줄(「첫째」 / 「왕관 ▾」) — 본편 시작 단추 폭을 지킨다 */
 .opening .op-run > .op-level { flex: none; width: 72px; min-width: 72px; min-height: 60px; padding-inline: 0; white-space: nowrap; font: 400 12px/18px Galmuri11, sans-serif; }
 
 body.slice .opening .op-menu { padding-block: 0; gap: 8px; width: min(352px, 44vw); }
@@ -1349,5 +1349,5 @@ body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='
 /* 용어 아이콘 (TI-01 · 02 · D-507): 32도트를 정수 1배(16칸 줄이지 않고 32px) — 사전 · 사건 정보 쪽 머리 */
 .term-ico { flex: none; display: inline-block; width: 32px; height: 32px; margin: 0; background: center / 32px 32px no-repeat; image-rendering: pixelated; vertical-align: middle; }
 .win-scene .ws-detail-count .term-ico { width: 16px; height: 16px; margin: 0 4px 0 0; background-size: 16px 16px; vertical-align: -3px; }
-/* D-533 전수 점검: 고물상 · 보상의 받침 아래 줄이 장면 그림(고물상 바닥 무늬) 위에 바로 놓여 흐린 글이 묻혔다 → 먹 테 1도트(사방, 번짐 없음) */
+/* D-534 전수 점검: 고물상 · 보상의 받침 아래 줄이 장면 그림(고물상 바닥 무늬) 위에 바로 놓여 흐린 글이 묻혔다 → 먹 테 1도트(사방, 번짐 없음) */
 :is(.scr-pick, .scr-place) .slot-info { text-shadow: var(--px) 0 0 #0b0b0e, calc(-1 * var(--px)) 0 0 #0b0b0e, 0 var(--px) 0 #0b0b0e, 0 calc(-1 * var(--px)) 0 #0b0b0e; }

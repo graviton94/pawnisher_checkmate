@@ -24,7 +24,7 @@ export interface ProcState {
   under?: Pos[];
   /** 프레스: 이번 적 차례에 내리찍을 줄 */
   pressRow?: number | null;
-  /** 프레스: 방금 내리찍은 줄 — 다음 예고까지 찍힌 자국 칸으로 남는다 (판 그림만, 규칙 없음 · D-533) */
+  /** 프레스: 방금 내리찍은 줄 — 다음 예고까지 찍힌 자국 칸으로 남는다 (판 그림만, 규칙 없음 · D-534) */
   dentRow?: number | null;
 }
 interface Holder { s: BattleState; turn: number; proc?: ProcState; atkK?: number }

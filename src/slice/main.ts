@@ -2935,12 +2935,12 @@ const pickCardScreen = (title: string, say: string, ids: CommandId[], onPick: (i
   }).querySelector('[data-back]')!.addEventListener('click', back);
 };
 
-/** 막 카드 그림의 세로 초점 (D-533): 분대 · 종이왕이 그림 아래쪽에 서 있는 막은 초점을 내려 머리만 걸리지 않게 — 그 밖은 0.42 */
+/** 막 카드 그림의 세로 초점 (D-534): 분대 · 종이왕이 그림 아래쪽에 서 있는 막은 초점을 내려 머리만 걸리지 않게 — 그 밖은 0.42 */
 const ACT_CARD_FY: Record<string, number> = { 'act-2': 0.65, 'act-4': 0.74 };
 /**
  * 막 소개 타이틀 카드 (D-388 · D-389 · D-397, 보고서 2026-11-09f 2-1 · 3.10): 팝업이 아니라 영화식 —
  * 막 그림이 위를 채우고(비율 그대로 기기 픽셀 정수배로 덮기, coverArt) 아래 먹 바닥에 막 꼬리표 → 막 이름 36 → 자막 띠 두 줄(서술 + 독백) · ▼.
- * 철문 전환으로 열고 닫는다. 누르면 넘어가고, 다 찍힌 뒤 읽을 시간(글자당 40ms, 최소 2.4초)이 지나면 저절로 (D-263 · D-533).
+ * 철문 전환으로 열고 닫는다. 누르면 넘어가고, 다 찍힌 뒤 읽을 시간(글자당 40ms, 최소 2.4초)이 지나면 저절로 (D-263 · D-534).
  */
 const actCard = (label: string, name: string, narr: string, art: string): Promise<void> =>
   new Promise((resolve) => {
@@ -2965,7 +2965,7 @@ const actCard = (label: string, name: string, narr: string, art: string): Promis
         const box = el.querySelector<HTMLElement>('.cut-lines')!;
         await typeCutPages(box, lines, () => !done, (p, html) => typeIn(p, html, 24, undefined, () => !done));
         sub.classList.remove('typing');
-        // 읽을 시간은 다 찍힌 뒤부터 센다 (전수 점검 D-533: 느린 기기에서 글이 다 찍히기 전에 카드가 닫혔다)
+        // 읽을 시간은 다 찍힌 뒤부터 센다 (전수 점검 D-534: 느린 기기에서 글이 다 찍히기 전에 카드가 닫혔다)
         if (!done) T.push(window.setTimeout(close, Math.max(2400, narr.length * 40)));
       }, 520));
     });

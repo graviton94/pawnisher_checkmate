@@ -9,7 +9,7 @@ module.exports = async function textAudit(page) {
       if (!el.childNodes.length || ![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) continue;
-      // 화면 읽기 프로그램 전용 글(.sr-only · 컷 자막 속 화자 이름 cl-who — 1px 상자로 잘라 눈에 안 보인다)은 글자 점검 대상이 아니다 (D-533)
+      // 화면 읽기 프로그램 전용 글(.sr-only · 컷 자막 속 화자 이름 cl-who — 1px 상자로 잘라 눈에 안 보인다)은 글자 점검 대상이 아니다 (D-534)
       if (r.width <= 1 && r.height <= 1) continue;
       const cs = getComputedStyle(el);
       if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) continue;
