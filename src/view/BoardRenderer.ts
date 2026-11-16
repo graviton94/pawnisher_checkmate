@@ -46,6 +46,18 @@ const bossArtKey = (rule: string, rage: boolean) => `px-boss-${rule}${rage ? '-p
 const CURSOR_GOLD = 0xf4d27a;
 const CURSOR_BEAT_MS = 480;
 
+/**
+ * 위협 칸 깜빡임 (D-045 · D-533 보탬): 붉은 칸 투명도를 계단 네 단으로만 바꾼다 (D-216 — 투명도 보간 금지).
+ * 한 장 136ms × 12장 = 1.63초 한 바퀴 (옛 사인 주기 2π·260ms와 같다) — 사인을 12장으로 찍어 4단으로 반올림한 순서.
+ * 단이 바뀌는 장에서만 판을 다시 그린다 (D-533). 움직임 줄이기면 가운데 단에 멈춘다.
+ */
+const THREAT_STEP_MS = 136;
+const THREAT_SEQ = [2, 2, 3, 3, 3, 2, 2, 1, 0, 0, 0, 1] as const;
+const THREAT_ALPHA = [0.14, 0.19, 0.25, 0.3] as const;
+const THREAT_CALM_ALPHA = 0.22;
+/** 지금 위협 칸 단 (-1 = 움직임 줄이기 · 멈춤) */
+const threatLevel = (time: number, calm: boolean): number => (calm ? -1 : THREAT_SEQ[Math.floor(time / THREAT_STEP_MS) % THREAT_SEQ.length]);
+
 const C = {
   // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
   light: 0x56545e,
@@ -515,13 +527,13 @@ class BoardScene extends Phaser.Scene {
 
   /**
    * 움직이는 표식의 박자 열쇠: 이 값이 같으면 그림이 도트 하나까지 같다 — 화살표 흐름(70ms 계단, 5박 주기) · 과녁(320ms 박, 넘어가는 80ms만 매 프레임) ·
-   * 불길(120ms) · HP 반짝임(칸 단위). 위협 깜빡임은 매 프레임 바뀐다. 움직임 줄이기면 위협 말고는 멈춘 그림이다.
+   * 불길(120ms) · HP 반짝임(칸 단위) · 위협 깜빡임(136ms 계단 네 단, D-533). 움직임 줄이기면 모두 멈춘 그림이다.
    */
   private animKey(time: number): string {
     const A = this.anim;
-    if (A.threat.length) return `t${time}`;
     const ms = this.calm ? 0 : time;
     let k = '';
+    if (A.threat.length) k += `t${threatLevel(time, this.calm)}`;
     if (A.fire.length) k += `f${Math.floor(ms / 120)}`;
     if (A.arrows.length) k += `a${Math.floor(ms / FLOW_STEP_MS) % 5}`;
     if (A.gears.length) {
@@ -556,8 +568,9 @@ class BoardScene extends Phaser.Scene {
     const pen = this.pens.g;
     const ms = calm ? 0 : time;
     if (this.anim.threat.length) {
-      // 위협: 반투명 붉은 칸이 천천히 깜빡인다 (D-045)
-      const a = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(time / 260));
+      // 위협: 반투명 붉은 칸이 계단 네 단으로 깜빡인다 (D-045 · D-216 계단 — D-533)
+      const lv = threatLevel(time, calm);
+      const a = lv < 0 ? THREAT_CALM_ALPHA : THREAT_ALPHA[lv];
       for (const w of this.anim.threat) g.fillStyle(C.crimson, a).fillRect(w.x, w.y, t, t);
     }
     if (this.anim.fire.length) {

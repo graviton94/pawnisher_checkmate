@@ -275,7 +275,8 @@ export class Particles {
           break;
         }
         default: {
-          const tw = 0.6 + 0.4 * Math.sin(this.t * (8 + (q.seed % 5)) + q.seed);
+          // 반짝임 세기는 세 단 계단 (0.2 · 0.6 · 1 — D-216 투명도 보간 금지)
+          const tw = 0.6 + 0.4 * Math.round(Math.sin(this.t * (8 + (q.seed % 5)) + q.seed));
           if (q.size < 1.2) { if (tw * k > 0.25) p.px(x, y, tw > 0.8 ? WHITE : q.col); p.glow(x, y, 3, q.col, 0.4 * k * tw); }
           else p.sparkle(x, y, Math.max(1, Math.round(q.size * tw * Math.min(1, k * 3))), q.col, scale(q.col, 0.75), 0.5 * k * tw);
         }

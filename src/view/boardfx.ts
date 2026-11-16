@@ -122,8 +122,10 @@ export class BoardFx {
     const p = fx.painter;
     const B = this.bounds(this.boardSize.w, this.boardSize.h);
     if (this.rule === 'plate') {
-      // 아래 가장자리가 달아오른다 (빛만, 칸은 덮지 않는다)
-      for (let x = B.x0; x < B.x1; x += 6) p.glow(x, B.y1 + 2, 10, PAL.fire[4], 0.1 + 0.04 * Math.sin(this.t * 3 + x));
+      // 아래 가장자리가 달아오른다 (빛만, 칸은 덮지 않는다) — 세기는 세 단 계단 · 0.16초 한 장 (D-216 투명도 보간 금지, D-533 보탬).
+      // 움직임 줄이기면 가운데 단에 멈춘다
+      const f = calmMotion() ? -1 : Math.floor(this.t / 0.16);
+      for (let x = B.x0; x < B.x1; x += 6) p.glow(x, B.y1 + 2, 10, PAL.fire[4], 0.1 + 0.04 * (f < 0 ? 0 : Math.round(Math.sin(f * 0.48 + x))));
     } else if (this.rule === 'spawn') {
       // 3.6초마다 초록 줄이 판을 위에서 아래로 훑는다 (4도트 계단, D-347)
       const ph = (this.t % 3.6) / 1.2;

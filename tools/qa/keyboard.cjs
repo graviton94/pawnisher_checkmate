@@ -235,7 +235,14 @@ const day = new Date().toISOString().slice(0, 10);
   await pg.screenshot({ path: `production/qa/evidence/${day}-kb-pad-y-hold.png` });
   await pad(1);
   await pad(4);
+  // LB는 손패 ↔ 판 토글이다 — 앞 단계가 판 초점을 이미 풀었으면 한 번 더 눌러 손패로
+  if (!(await pg.evaluate(() => !!document.activeElement?.closest('#hand')))) await pad(4);
+  // 첫 카드가 못 내는 카드(.off)일 수 있다 — 십자키 아래로(손패는 왼쪽 세로 줄) 낼 수 있는 첫 카드까지 초점을 옮긴다
+  const onPlayable = () => pg.evaluate(() => !!document.activeElement?.matches('#hand .hc:not(.off)'));
+  const anyPlayable = await pg.evaluate(() => !!document.querySelector('#hand .hc:not(.off)'));
+  for (let i = 0; i < 10 && anyPlayable && !(await onPlayable()); i++) await pad(13);
   const handFocus = (await state()).focus;
+  if (!anyPlayable) console.log('pad: no playable card in hand — A check skipped');
   await pad(0);
   const padArmed = await pg.evaluate(() => !!document.querySelector('#hand .hc.armed'));
   await pg.screenshot({ path: `production/qa/evidence/${day}-kb-pad-a.png` });

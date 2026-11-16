@@ -1,0 +1,6 @@
+{
+ "method": "Playwright 915x412 DPR 2.625, ?debug sliceApi.startAt(1,'battle'), 3s settle then 10s idle; rafTicks = page rAF callbacks, boardFrames = rAF frames in which the board WebGL context called clear (a Phaser frame actually drawn); calm = reducedMotion 'reduce'",
+ "before": { "battle": { "rafTicks": 283, "boardFrames": 201 }, "battle-calm": { "rafTicks": 476, "boardFrames": 228 } },
+ "after":  { "battle": { "rafTicks": 381, "boardFrames": 155 }, "battle-calm": { "rafTicks": 600, "boardFrames": 0 } },
+ "note": "after battle still draws on the 70ms intent-arrow flow beat; the threat pulse alone now changes 6 times per 1.63s cycle"
+}
