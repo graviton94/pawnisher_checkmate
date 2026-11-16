@@ -407,7 +407,7 @@ const pieceInfo = (pos: Pos): void => {
   // 이형 (D-481): 행마 · 공격 규칙을 맨 앞 장으로 — 적으로 처음 만날 때 여기서 배운다
   const abilities = [...(p.giant?.boss ? bossBodyAbilityText(!!p.giant.rage, b.bossRule, b.giantAim?.[p.giant.id] ? b.bossPat : undefined, (b.giantStun ?? []).includes(p.giant.id)) : p.giant ? giantAbilityText(p.type as GiantType) : []), ...(p.form ? [formAbilityText(p.form), ...(p.side === 1 ? [formWhiffText] : [])] : []), ...(p.side !== 1 ? [] : p.type === 'K' && b.boss ? bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b)) : [...enemyAbilityText(p.type, b.traits ?? [], (n) => foeDmg(n, b)), ...(b.marks ?? []).map(markAbilityText)])];
   const hpPct = Math.max(0, Math.min(100, Math.round(p.hp / p.maxHp * 100)));
-  /** 거대 주물 부위 (D-529): 판 위 4칸 바와 같은 순서의 부위 표 — 이 부위 칸은 황동 테, 부서진 부위는 빈 칸 */
+  /** 거대 주물 부위 (D-532): 판 위 4칸 바와 같은 순서의 부위 표 — 이 부위 칸은 황동 테, 부서진 부위는 빈 칸 */
   const part = p.giant && !p.giant.boss ? p.giant : null;
   const el = infoPeek({
     cls: `unit-peek${expanded ? ' unit-peek-expanded' : ''}${p.side === 0 ? ' unit-ally' : ''}`,
@@ -419,7 +419,7 @@ const pieceInfo = (pos: Pos): void => {
   });
   bindAbilities(el, abilities);
 };
-/** 거대 주물 부위 표 (D-529): 판 위 부위 바와 같은 순서 · 같은 비율의 4칸 — `on` = 지금 보는 부위, 부서진 부위는 빈 칸 */
+/** 거대 주물 부위 표 (D-532): 판 위 부위 바와 같은 순서 · 같은 비율의 4칸 — `on` = 지금 보는 부위, 부서진 부위는 빈 칸 */
 const giantPartTrack = (pieces: readonly Piece[], g: NonNullable<Piece['giant']>): string =>
   `<div class="unit-hp-track giant-parts">${GIANT_PART.order.map(([dx, dy]) => {
     const q = pieces.find((x) => x.giant?.id === g.id && x.giant.dx === dx && x.giant.dy === dy);

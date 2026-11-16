@@ -1,4 +1,4 @@
-/* 남은 !important · `.cf.cf.cf` 사다리 (D-529 비주얼 일괄 정리): `node tools/qa/css-cascade.cjs`가 하나씩 떼어 23개 화면의 계산값을 비교해
+/* 남은 !important · `.cf.cf.cf` 사다리 (D-532 비주얼 일괄 정리): `node tools/qa/css-cascade.cjs`가 하나씩 떼어 23개 화면의 계산값을 비교해
    차이가 없는 것은 모두 뗐다(!important 41곳 · 사다리 90곳). 남은 것은 세 갈래 —
    ① 움직임 줄이기(@media prefers-reduced-motion) 안의 animation: none / 1ms: 요소마다 다른 특이성의 애니메이션을 한 줄로 끄려는 것(의도).
    ② 상태 유틸(.picked · .flyghost · .pxout · .nope · .chosen · .part-chip.mount · .cast3 · .btn.down): 어느 요소에 붙어도 그 요소 제 애니메이션 · 그림자를 이겨야 한다(의도).
@@ -45,7 +45,7 @@ body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow
 #board.jolt { animation: jolt 260ms ease-out; }
 @keyframes jolt { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
 /* 되감기: 테이프가 거꾸로 — 청록 번짐 + 주사선 + 화면이 옆으로 밀린다 */
-.tapefx { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='5' shape-rendering='crispEdges'%3E%3Crect y='3' width='1' height='2' fill='rgb(78,195,214)' fill-opacity='.16'/%3E%3C/svg%3E") left bottom / 1px 5px repeat, rgba(10, 30, 36, 0.45); /* 주사선 도트 무늬 (D-529: 끊긴 줄무늬 그라데이션 → 픽셀 무늬) */ mix-blend-mode: screen; animation: tape 800ms steps(10) forwards; }
+.tapefx { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='5' shape-rendering='crispEdges'%3E%3Crect y='3' width='1' height='2' fill='rgb(78,195,214)' fill-opacity='.16'/%3E%3C/svg%3E") left bottom / 1px 5px repeat, rgba(10, 30, 36, 0.45); /* 주사선 도트 무늬 (D-532: 끊긴 줄무늬 그라데이션 → 픽셀 무늬) */ mix-blend-mode: screen; animation: tape 800ms steps(10) forwards; }
 .tapefx span { font: 400 45px Galmuri14, Galmuri11, sans-serif; color: #bff4fb; text-shadow: 4px 0 0 rgba(255, 60, 90, 0.7), -4px 0 0 rgba(60, 200, 255, 0.7), 3px 3px 0 #000; animation: tapetxt 800ms steps(8) forwards; }
 @keyframes tape { 0% { transform: translateX(0); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 7.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 11.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 15% { transform: translateX(-14px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 50% { transform: translateX(10px) skewX(-4deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: translateX(-4px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 85.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 90.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: none; -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 @keyframes tapetxt { 0% { transform: scale(1.4); } 30% { transform: scale(1); } 100% { transform: translateX(-30px); } }
@@ -1781,7 +1781,7 @@ body.slice .cf.cf.cf.cf.cmd > .cf-desc > .db.two { grid-template-rows: 7fr 9fr; 
 body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln { line-height: 14px !important; }
 body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx * { line-height: 12px !important; }
 /* 다듬음(+) · 녹(−) 표: 명패에 「이름+」가 들지 않아 비용 원판 오른쪽 위에 — 기호 + 색 (D-515) */
-/* D-529 다듬음(+) · 녹(−) 표: 비용 원판에 붙지 않게 원판 오른쪽으로 2px 띄워 틀 위 빈자리에 — 기호 색 테 1px + 먹 테 2px 딱지 (글은 12px 그대로) */
+/* D-532 다듬음(+) · 녹(−) 표: 비용 원판에 붙지 않게 원판 오른쪽으로 2px 띄워 틀 위 빈자리에 — 기호 색 테 1px + 먹 테 2px 딱지 (글은 12px 그대로) */
 body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 31%; top: 8%; z-index: 6; font: 700 12px/12px Galmuri11, sans-serif; font-style: normal; font-synthesis: none; padding: 2px 4px; background: #16141c; box-shadow: inset 0 0 0 1px currentColor, 0 0 0 2px #0b0b0e; }
 body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-up { color: #7fe08a; }
 body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-rust { color: #e0894a; }

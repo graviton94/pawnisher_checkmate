@@ -175,7 +175,7 @@ def mini(grid, side, n=22):
             if len(inside) * 2 >= len(cells):
                 body[j][i] = True
                 fill = [c for c in inside if c != 'K'] or inside
-                # 동률이면 글자 순서가 앞선 색 (D-529: set 순서는 실행마다 바뀌는 해시 순서라 동률 칸이 매번 다르게 찍혔다)
+                # 동률이면 글자 순서가 앞선 색 (D-532: set 순서는 실행마다 바뀌는 해시 순서라 동률 칸이 매번 다르게 찍혔다)
                 col[j][i] = max(sorted(set(fill)), key=fill.count)
     out = [['.'] * n for _ in range(n)]
     o4 = ((1, 0), (-1, 0), (0, 1), (0, -1))

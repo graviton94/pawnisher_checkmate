@@ -110,7 +110,7 @@ const PIECE_SIZE = 0.82 * (72 / 64);
  */
 const GAUGE_ROW = 16;
 /**
- * 거대 주물 부위 바 (D-529): 2×2 아래 기준선 밑 한 줄(2×2 반장 게이지와 같은 3~36도트 폭)을 반으로 — 왼쪽 반 = 왼쪽 부위 둘 · 오른쪽 반 = 오른쪽 부위 둘,
+ * 거대 주물 부위 바 (D-532): 2×2 아래 기준선 밑 한 줄(2×2 반장 게이지와 같은 3~36도트 폭)을 반으로 — 왼쪽 반 = 왼쪽 부위 둘 · 오른쪽 반 = 오른쪽 부위 둘,
  * 반마다 바깥 칸 = 위 부위 · 안쪽 칸 = 아래 부위(가운데 겹 먹 줄이 왼 · 오 경계). 칸 하나 = 채움 7도트. 길게 누르기 정보의 부위 표와 같은 순서.
  */
 const GIANT_SLOT_N = 7;
@@ -218,7 +218,7 @@ interface PieceSprite {
   glyph: Phaser.GameObjects.Image;
   hp: Phaser.GameObjects.Graphics;
   piece: Piece;
-  /** 마지막으로 그린 게이지 [지금, 잃은 뒤] — 거대 주물 형제 부위가 부서지면 이 값으로 다시 그린다 (D-529) */
+  /** 마지막으로 그린 게이지 [지금, 잃은 뒤] — 거대 주물 형제 부위가 부서지면 이 값으로 다시 그린다 (D-532) */
   hpDrawn?: [number, number];
 }
 
@@ -259,7 +259,7 @@ class BoardScene extends Phaser.Scene {
   private combo = 0;
   private dynamic: Phaser.GameObjects.GameObject[] = [];
   private sprites = new Map<number, PieceSprite>();
-  /** 판에 서 있는 거대 주물 부위 칸 (`거대id:dx dy`, D-529) — 부서진 칸은 바에서 빈 칸으로 */
+  /** 판에 서 있는 거대 주물 부위 칸 (`거대id:dx dy`, D-532) — 부서진 칸은 바에서 빈 칸으로 */
   private giantLive = new Set<string>();
   ready!: () => void;
   announce: (text: string) => void = () => {};
@@ -687,7 +687,7 @@ class BoardScene extends Phaser.Scene {
     cam.centerOn(this.camCenter.x, this.camCenter.y);
   }
 
-  /** 판에서 기물 그림을 뗀다 — 거대 주물 부위면 바의 그 칸을 비우고 남은 형제 부위 바를 다시 그린다 (D-529) */
+  /** 판에서 기물 그림을 뗀다 — 거대 주물 부위면 바의 그 칸을 비우고 남은 형제 부위 바를 다시 그린다 (D-532) */
   private dropSprite(id: number): void {
     const sp = this.sprites.get(id);
     this.sprites.delete(id);
@@ -768,7 +768,10 @@ class BoardScene extends Phaser.Scene {
     // 2×2 보스는 2×2 왼쪽 위(별 딱지와 같은 높이)
     if (p.weak && p.weak > 1) {
       const size = Math.round(t * 0.36);
-      const x0 = Math.round(t * 0.04), y0 = Math.round(boss ? oy + t * 0.22 : t - size - t * 0.04);
+      // 거대 주물 부위 (D-532): 부위 바 4칸 중 제 칸 바로 위 — 바를 가리지 않고 어느 부위가 약점인지 바와 짝지어 읽힌다
+      const gs = p.giant && !boss ? gaugeSpot(p) : null;
+      const d = t / BOARD_DOTS;
+      const x0 = Math.round(gs ? (gs.x + 1 + GIANT_SLOT_N / 2) * d - size / 2 : t * 0.04), y0 = Math.round(gs ? gs.y * d - size - d : boss ? oy + t * 0.22 : t - size - t * 0.04);
       marks.push(this.add.image(x0 + size / 2, y0 + size / 2, boardKey('chip-weak')).setDisplaySize(size, size));
     }
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
@@ -840,7 +843,7 @@ class BoardScene extends Phaser.Scene {
     }
     s.hpDrawn = [hpNow, hpAfter];
     const g = gaugeSpot(s.piece);
-    // 거대 주물 부위 (D-484 → D-529): 2×2 그림 아래 기준선 밑 한 줄 4칸 분할 바 — 부위마다 제 칸만 채우고, 부서진 부위 칸은 빈 칸으로 남는다.
+    // 거대 주물 부위 (D-484 → D-532): 2×2 그림 아래 기준선 밑 한 줄 4칸 분할 바 — 부위마다 제 칸만 채우고, 부서진 부위 칸은 빈 칸으로 남는다.
     // 테(먹)는 살아 있는 부위가 모두 같은 자리에 같은 색으로 그려 겹쳐도 같다
     if (s.piece.giant) {
       const gi = s.piece.giant;

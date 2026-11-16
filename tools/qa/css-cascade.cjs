@@ -1,4 +1,4 @@
-// CSS 특이성 정리 검사 (D-529 비주얼 일괄 정리): 본편 CSS의 `!important`와 `.cf.cf.cf` 류 특이성 올리기를 하나씩 떼어 보고,
+// CSS 특이성 정리 검사 (D-532 비주얼 일괄 정리): 본편 CSS의 `!important`와 `.cf.cf.cf` 류 특이성 올리기를 하나씩 떼어 보고,
 // 실제 화면들의 계산된 스타일이 그대로인 것만 「뗄 수 있음」으로 낸다. 눈대중이 아니라 브라우저 캐스케이드가 판정한다.
 //
 // 사용: node tools/qa/css-cascade.cjs [--apply]   (OBSERVE_URL을 주면 그 vite 개발 서버, 없으면 빈 포트에 `vite` 를 띄운다)
