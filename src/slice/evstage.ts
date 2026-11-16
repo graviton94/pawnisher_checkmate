@@ -298,7 +298,8 @@ const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
     };
     L.host.addEventListener('pointerdown', on);
     hint.addEventListener('click', () => void open([0, 1, 2].find((k) => !items[k]) ?? 0));
-    if (calm()) { void open(0); void open(1); void open(2); }
+    // 연출 줄이기: 셋을 차례로 연다 (2026-11-16 완주 점검 — 한꺼번에 부르면 첫 칸이 busy를 잡아 나머지 둘이 열리지 않고, 판정기가 첫 칸에서 멈춰 있었다)
+    if (calm()) void (async () => { for (const i of [0, 1, 2]) await open(i); })();
   });
   await wait(450);
   const win = c.chance!.win;

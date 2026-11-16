@@ -159,3 +159,15 @@ export const betterHighlight = (a: Highlight | null, b: Highlight): boolean => !
 
 /** 폐기 이력을 유지하고 유품의 기존 나사 가치만 돌려준다 (D-425). */
 export const recoverHeirloom = (n: Nemesis, asc: number): number => n.heir && asc <= DIRECTOR.heirloomUpTo ? CREW.heirloomScrews : 0;
+
+/**
+ * 오늘의 도전은 누구에게나 같은 출하 (2026-11-16 완주 점검): 사람마다 다른 기록(원수 · 최근 사건)을 출하에 끼우지 않는다.
+ * 예전에는 원수가 있는 사람만 대국마다 출하 난수를 한 번 더 뽑아 보상 · 사건 순서가 갈렸고, 최근 사건이 가방에서 빠졌다.
+ */
+export const runNemeses = (list: Nemesis[], daily: string | null): Nemesis[] => (daily ? [] : list);
+/** 이번 출하의 사건 가방: 최근 출하에서 만난 사건은 뒤로 (D-247) — 오늘의 도전은 늘 전부. 너무 적게 남으면 전부 */
+export const eventBagFor = <T extends string>(all: readonly T[], recent: readonly string[], daily: string | null, min = 4): T[] => {
+  if (daily) return [...all];
+  const bag = all.filter((x) => !recent.includes(x));
+  return bag.length < min ? [...all] : bag;
+};

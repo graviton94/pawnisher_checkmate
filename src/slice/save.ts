@@ -68,6 +68,8 @@ export interface RunSave {
   shopsSeen?: number;
   /** 이번 출하에서 쓰러뜨린 반장 (각본 — 도금왕의 비꼼 · 거울, D-276) */
   bosses?: string[];
+  /** 쇳물 서약으로 녹여 바친 동료 이름 (D-465 — 결말까지 들고 간다; 예전에는 이어하기에서 사라졌다, 2026-11-16 완주 점검) */
+  melted?: string[];
   /** 이번 막 시작 때의 값 (D-402 막 장부 = 지금 − 이것) — kb · db = 분대원 일련번호 → 처치 · 피해 */
   actSnap?: ActSnap;
 }
@@ -141,6 +143,8 @@ export interface Meta {
   trueEnd?: boolean;
   /** 해금된 카드 · 부품 (D-284) — 처음 풀 밖의 것만 */
   unlocked?: string[];
+  /** 마지막으로 기록에 남긴 출하 ID (commitRunEnd — 같은 출하를 두 번 세지 않게) */
+  lastRun?: string;
 }
 
 export interface Store {
@@ -364,6 +368,22 @@ export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: numb
   }
   if (r.daily && !out.daily[r.daily]) out.daily[r.daily] = { cleared: r.cleared, act: r.act, won: r.won };
   return out;
+};
+/**
+ * 출하 끝을 기록에 한 번만 남긴다 (2026-11-16 완주 점검): 저장을 지우고, 기록 · 해금을 더해 쓴다.
+ * 패배는 하자 폐기 순간에 부른다 — 그 창 · 패배 컷에서 앱을 닫아도 대국 중 저장으로 되살아나 패배를 무르지 못하게.
+ * 같은 출하(runId)를 다시 부르면 기록을 건드리지 않고 null. unlocks = 기록을 더한 뒤 새로 열 것(해금, D-284).
+ */
+export const commitRunEnd = (st: Store, runId: string, rec: Parameters<typeof recordRun>[1], unlocks: (m: Meta) => string[] = () => []): { before: Meta; after: Meta } | null => {
+  clearSave(st);
+  const before = readMeta(st);
+  if (before.lastRun === runId) return null;
+  const after = recordRun(before, rec);
+  const add = unlocks(after);
+  if (add.length) after.unlocked = [...(after.unlocked ?? []), ...add];
+  after.lastRun = runId;
+  writeMeta(st, after);
+  return { before, after };
 };
 /** 기록을 쓴다 (마지막 좋은 사본을 남기고). 못 쓰면 false */
 export const writeMeta = (st: Store, m: Meta): boolean => writeSafe(st, META_KEY, JSON.stringify({ ...m, mv: META_VERSION }), (raw) => parseMeta(raw) !== null);

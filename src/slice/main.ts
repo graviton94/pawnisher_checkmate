@@ -89,7 +89,7 @@ import { deviceDot, resultFx, type ResultFxKind } from './resultfx';
 import { clearScreen, type ClearMember } from './actclear';
 import { EVENT_OUTCOME } from '../data/event-outcome';
 import { bossIntro, type BossKey } from './bossintro';
-import { recoverHeirloom, addNemesis, betterHighlight, betOffer, betProgress, betText, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type Bet, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
+import { recoverHeirloom, addNemesis, eventBagFor, runNemeses, betterHighlight, betOffer, betProgress, betText, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type Bet, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
 import { IMPACT } from '../data/fx';
@@ -97,7 +97,7 @@ import { warmup } from './warmup';
 import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
-import { clearSave, dailySeed, defaultStore, readMeta, readSave, recordRun, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
+import { commitRunEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
 import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
@@ -1920,7 +1920,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 원수 (D-178): 입문 · 연마가 아니면 이따금 그 유형의 적으로 다시 선다
   nemesisNow = null;
   let enemy = def.enemy;
-  const ns = nemeses();
+  // 오늘의 도전에는 원수를 끼우지 않는다 — 난수를 더 뽑지도 않는다 (2026-11-16 완주 점검)
+  const ns = runNemeses(nemeses(), daily);
   if (ns.length && def.seed === undefined && !INTRO.includes(def) && !def.drill && R.next() < DIRECTOR.nemesisShow) {
     const n = ns.find((x) => enemy.includes(x.t)) ?? ns.find((x) => x.t !== 'K');
     if (n) {
@@ -3299,11 +3300,20 @@ const finishNow = (): void => {
         back: spare ? { label: '끝낸다', attrs: 'data-quit' } : undefined,
         go: spare ? { label: '다시 둔다', attrs: 'data-again' } : { label: '끝낸다', attrs: 'data-quit' },
       });
+      // 이 순간을 남긴다 (2026-11-16 완주 점검): 예전에는 직전 턴 끝 저장이 남아, 여기서 앱을 닫고 이어 하면 진 대국의 앞 턴으로 돌아갔다.
+      // 여벌이 있으면 = 여벌 하나를 깨고 이 대국을 처음부터(「다시 둔다」와 같은 자리) · 없으면 = 출하 끝을 바로 기록
+      if (runLive && !labMode) {
+        if (!spare) commitEnd(false);
+        else if (fightOn) writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, charms: { ...charms, revive: charms.revive - 1 } });
+      }
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
+        // 다시 서는 대국도 저장한다 — 예전에는 여기서 앱을 닫으면 여벌을 깨기 전 저장으로 돌아갔다
+        if (runLive && fightOn) saveRun('battle', fightOn.node);
         startBattle(ftueRetry(cur)); // 첫 출하 1막 반장이면 이제야 안전망 (2026-11-14)
       });
-      el.querySelector('[data-quit]')!.addEventListener('click', () => runEnd(false));
+      // 창을 먼저 걷는다 — 패배 컷 아래에 열린 채 남아 그 단추(끝낸다)가 다시 눌릴 수 있었다 (2026-11-16 완주 점검)
+      el.querySelector('[data-quit]')!.addEventListener('click', () => { closeWin(); runEnd(false); });
       return;
     }
     // 판 사이 (페르소나 테스트 M7): 보상 · 지도 · 장소 화면 뒤로 끝난 대국의 손패 · 숫자가 비치지 않게 판을 내린다
@@ -4384,7 +4394,8 @@ const newRun = (seed: number, level: number, day: string | null, mode: RunMode =
   picked = [[], [], [], []];
   actSnap = { won: 0, kills: 0, gold: 0, deck: deck.length, kb: {}, db: {} };
   // 최근 출하에서 만난 사건은 이번 가방에서 뺀다 (D-247, 사용자: 「랜덤 인카운터가 너무 동일하게 반복」) — 가방이 비면 다시 전부
-  { const recent = readMeta(store).evRecent ?? []; eventBag = SLICE_EVENT_IDS.filter((x) => !recent.includes(x)); if (eventBag.length < 4) eventBag = [...SLICE_EVENT_IDS]; }
+  // 오늘의 도전은 기록과 상관없이 전부 (2026-11-16 완주 점검 — 모두가 같은 출하)
+  eventBag = eventBagFor(SLICE_EVENT_IDS, readMeta(store).evRecent ?? [], day);
   runId = runIdentity(runMode, level, seed);
   squad = [];
   metaCache = null;
@@ -4401,6 +4412,8 @@ const newRun = (seed: number, level: number, day: string | null, mode: RunMode =
   charms = { revive: level <= CHARM_NUM.startReviveUpTo ? 1 : 0, rewind: CHARM_NUM.startRewind + (START_SETS[startSet].rewind ?? 0) };
   lossesHere = 0;
   lossDef = null;
+  ended = null;
+  endCalled = false;
 };
 
 /**
@@ -4431,7 +4444,7 @@ const applyStartSet = (seed: number): void => {
 
 /** 지금 출하 기록 한 장 (판 번호는 writeSave가 붙인다) */
 const runRecord = (at: 'map' | 'battle' | 'reward', node?: number, pending?: PendingReward): RunSave =>
-  ({ v: 0, seed: runSeed, startSet, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, pending, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, actSnap });
+  ({ v: 0, seed: runSeed, startSet, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, pending, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, melted: meltedRun, actSnap });
 /**
  * 대국 중 저장이 켜진 대국 (D-529): saveRun('battle')이 대국을 세우기 **전** 출하 난수 · 대국 번호를 적어 둔다 —
  * 이어 갈 때 같은 자리에서 같은 대국을 다시 세운 뒤 판 상태만 갈아 끼운다. 지도 · 보상 · 출하 끝에서 꺼진다.
@@ -4503,6 +4516,9 @@ const loadRun = (sv: RunSave): void => {
   shopsSeen = sv.shopsSeen ?? 0;
   svcUsed = sv.svc ?? { refine: 0, remove: 0 };
   runBosses = (sv.bosses ?? []) as StoryBoss[];
+  meltedRun = Array.isArray(sv.melted) ? [...sv.melted] : [];
+  ended = null;
+  endCalled = false;
   runLive = true;
   acts = buildRun(sv.seed, sv.asc, firstShip);
   R = new Rng(sv.rng);
@@ -4557,9 +4573,30 @@ const endingFlow = async (): Promise<void> => {
   runEnd(true);
 };
 
+/**
+ * 출하 끝을 기록에 한 번만 (2026-11-16 완주 점검 — save.commitRunEnd): 처음 부른 결과를 이 출하 동안 쥐고 있다.
+ * 패배는 하자 폐기 순간 · 패배 컷 앞에서 먼저 남긴다 — 그 사이에 앱을 닫으면 예전에는 대국 중 저장으로 되살아나 패배가 물러졌다.
+ */
+let ended: { m0: Meta; m: Meta } | null = null;
+const commitEnd = (cleared: boolean): { m0: Meta; m: Meta } => {
+  if (ended) return ended;
+  fightOn = null;
+  const rec = { cleared, act: actI + 1, won, asc, daily, mode: runMode, chapter: storyChapter, ending: endKind, crown: { chapter: storyChapter, runId, law: ASCENSION[STORY_LAW[storyChapter]].law, companions: squad.filter((u) => u.t !== 'K').map(crewLabel) } };
+  // 해금 (D-284): 출하를 끝낼 때마다 몇 개씩 — 도달한 막 · 완주에 따라
+  const r = commitRunEnd(store, runId, rec, (m) => (daily ? [] : nextUnlocks(m.unlocked ?? [], unlockCount(Math.min(4, actI + 1), cleared))));
+  const now = readMeta(store);
+  return (ended = r ? { m0: r.before, m: r.after } : { m0: now, m: now });
+};
+/** 출하 끝 화면을 이미 열었나 (끝낸다를 두 번 눌러도 패배 컷 · 결과가 한 번만) */
+let endCalled = false;
 /** 출하 끝 — 졌으면 용광로 컷(각본 §12)을 먼저 */
 const runEnd = (cleared: boolean): void => {
-  if (!cleared && !labMode) return void playCuts(DEFEAT_CUTS).then(() => runEndNow(false));
+  if (endCalled) return;
+  endCalled = true;
+  if (!cleared && !labMode) {
+    if (runLive) commitEnd(false);
+    return void playCuts(DEFEAT_CUTS).then(() => runEndNow(false));
+  }
   runEndNow(cleared);
 };
 const runEndNow = (cleared: boolean): void => {
@@ -4571,17 +4608,10 @@ const runEndNow = (cleared: boolean): void => {
   track('session_exit', { ...where(), run_time_min: Math.round((Date.now() - runAt) / 6000) / 10, turn_num: b?.turn ?? 0, exit_type: cleared ? 'clear' : 'gameover' });
   if (!cleared) track('gameover_inventory', { ...where(), rewinds_left: charms.rewind, revive_charm_left: charms.revive, total_rewinds_used: rewindsUsedRun, deck_size: deck.length, parts });
   if (!cleared) ftue('gameover', true);
-  fightOn = null;
-  clearSave(store);
   document.body.classList.add('between');
   placeBg(cleared ? 'end-clear' : 'end-fail');
-  const m0 = readMeta(store);
-  const m = recordRun(m0, { cleared, act: actI + 1, won, asc, daily, mode: runMode, chapter: storyChapter, ending: endKind, crown: { chapter: storyChapter, runId, law: ASCENSION[STORY_LAW[storyChapter]].law, companions: squad.filter((u) => u.t !== 'K').map(crewLabel) } });
-  // 해금 (D-284): 출하를 끝낼 때마다 몇 개씩 — 도달한 막 · 완주에 따라
-  const earned = daily ? [] : nextUnlocks(m.unlocked ?? [], unlockCount(Math.min(4, actI + 1), cleared));
-  if (earned.length) m.unlocked = [...(m.unlocked ?? []), ...earned];
+  const { m0, m } = commitEnd(cleared);
   const fresh = (m.unlocked ?? []).filter((id) => !(m0.unlocked ?? []).includes(id));
-  writeMeta(store, m);
   const freshNames = fresh.map((id) => (id in SLICE_PARTS ? SLICE_PARTS[id as SlicePartId].name : COMMANDS[id as CommandId]?.name ?? id));
   const unlocked = (m.challengeOpen ?? CHALLENGE_START) > (m0.challengeOpen ?? CHALLENGE_START);
   const nextChapter = (m.storyCleared ?? 0) > (m0.storyCleared ?? 0);
