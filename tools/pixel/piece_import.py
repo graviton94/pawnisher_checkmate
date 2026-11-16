@@ -251,11 +251,32 @@ def boss_box(src):
     return rgb, S, (y0, y1, xs.min(), xs.max()), (top.min() + top.max() + 1) / 2
 
 
+def clean_dots(grid, body, keep, passes=2):
+    """1칸 잔무늬 정리 (D-524): 몸 칸 중 네 이웃(위아래좌우) 가운데 같은 색이 하나도 없는 칸(리벳 · 낱점)을
+    이웃 다수 색으로 — keep(외곽선) 칸은 건드리지 않는다. 두 칸 이상 이어진 덩어리(렌즈 · 집게 · 철판 선)는 남는다."""
+    h, w = grid.shape
+    for _ in range(passes):
+        out = grid.copy()
+        for y in range(h):
+            for x in range(w):
+                if not body[y, x] or keep[y, x]:
+                    continue
+                nb = [grid[y + dy, x + dx] for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                      if 0 <= y + dy < h and 0 <= x + dx < w and body[y + dy, x + dx]]
+                if nb and grid[y, x] not in nb:
+                    out[y, x] = max(set(nb), key=nb.count)
+        grid = out
+    return grid
+
+
 def build_boss(src, name):
-    """2×2 보스 원본 → {(이름, 1): 144줄}, 보고용 수치"""
+    """2×2 보스 원본 → {(이름, 1): 144줄}, 보고용 수치 (D-524 기물 문법 맞춤).
+    몸은 72칸 캔버스 격자(몸 키 cfg body ≈ 64칸)로 복원 → 칸마다 2×2로 펴서 144칸 캔버스에 — 판 2×2 위에서 보스 그림 한 장의
+    도트 수가 일반 기물 한 장(72칸 캔버스)과 같다. 먹선 = 72칸 격자 outline칸(기본 2 = 판 위 일반 흑 기물 먹 테 4~5칸과 같은 굵기),
+    흰 테 = 144칸 격자 3칸(일반 기물과 같은 두께 · 같은 흰색)."""
     import maker
     cfg = BOSS_GRID[name]
-    N, rim, t = 144, 4, cfg.get('outline', 2)
+    N, C, rim = 144, 72, 3
     rgb, S, (y0, y1, x0, x1), cx = boss_box(src)
     if cfg.get('pitch_of'):  # 격노는 1단계 원본과 같은 간격
         _, _, (py0, py1, _, _), _ = boss_box(os.path.join(os.path.dirname(src), cfg['pitch_of']))
@@ -263,37 +284,69 @@ def build_boss(src, name):
     else:
         p = (y1 - y0 + 1) / cfg['body']
     rows = int(round((y1 - y0 + 1) / p))
-    bottom = N - cfg.get('bottom', 6)  # 받침 바닥 줄 다음
+    bottom = C - cfg.get('bottom', 3)  # 받침 바닥 줄 다음 (72칸 격자)
     top = bottom - rows
-    # 가로: 십자 가운데가 캔버스 가운데(72칸)에 — 칸 c의 원본 x = cx + (c + 0.5 - 72) * p
-    c0 = int(np.floor(72 - (cx - x0) / p))
-    c1 = int(np.ceil(72 + (x1 + 1 - cx) / p))
-    ox = cx - 72 * p
+    # 가로: 십자 가운데가 캔버스 가운데(36칸)에 — 칸 c의 원본 x = cx + (c + 0.5 - 36) * p
+    c0 = int(np.floor(36 - (cx - x0) / p))
+    c1 = int(np.ceil(36 + (x1 + 1 - cx) / p))
+    ox = cx - 36 * p
     cols = c1 - c0
     oy = y1 + 1 - rows * p
     body = largest(sample(S.astype(float), ox + c0 * p, oy, p, cols, rows, 'mean') > 0.5)
-    med = sample(rgb, ox + c0 * p, oy, p, cols, rows, 'median')
-    ink = sample((lum(rgb) < cfg.get('ink', 12)).astype(float), ox + c0 * p, oy, p, cols, rows, 'mean') > 0.5
-    pal = dict(BOSS_BASE)
-    for k in cfg['theme']:
-        pal[k] = maker.PAL64[k]
-    fill = nearest(med, pal)
-    K = (inner_edge(body, t) | ink) & body
-    fill = majority(fill, body & ~K, None)
-    assert top >= rim and c0 >= rim and c1 + rim <= N, (name, top, c0, c1)
-    canvas = np.zeros((N, N), bool)
-    canvas[top:bottom, c0:c1] = body
-    ring = cheb(canvas, rim) & ~canvas
-    g = [['O' if ring[y, x] else '.' for x in range(N)] for y in range(N)]
+    # 팔레트: 검은 진영 다섯 단(D-221) + 반장 테마 강조색 2~3단(cfg theme) — 그 밖의 명암 · 황동은 가까운 단으로.
+    # 원본 화소마다 먼저 글자로 가른다: 먹(밝기 < ink) / 강조(채도 ≥ sat → 가장 가까운 테마 색) / 그 밖 = 밝기로 가장 가까운 검은 단.
+    #   테마 밖 채색은 cfg alias로 검은 단에 돌린다(예: 검수 ✕ 계기의 황동 테 → 쇠).
+    # 그다음 칸마다 칸 전체에서 가장 많은 글자(강조는 accent 배 가중 — 가는 금 · 렌즈 테가 살아남게)
+    grey = {k: BOSS_BASE[k] for k in 'HMBZD'}
+    accent = {k: maker.PAL64[k] for k in cfg['theme']}
+    keys = ['K'] + list(grey) + list(accent)
+    L = lum(rgb)
+    sat = rgb.max(-1) - rgb.min(-1)
+    gl = np.array([lum(np.array(v, dtype=float)) for v in grey.values()])
+    lab = 1 + np.abs(L[..., None] - gl).argmin(-1)
+    # 빛 단 H는 일반 흑 기물처럼 드물게(가장 밝은 모서리만) — 밝기 hi 미만은 M으로. 반장 색(FOE_TONE)에서 H가 가장 밝은 색이 되므로 남발하면 판 위가 시끄럽다
+    lab = np.where((lab == 1) & (L < cfg.get('hi', 150)), 2, lab)
+    # alias: 테마 밖 채색(황동 테 · 짙은 빨강 등)을 검은 단으로 돌린다 — {'#RRGGBB': 글자}
+    cand = [(v, keys.index(k)) for k, v in accent.items()]
+    cand += [(tuple(int(h[i:i + 2], 16) for i in (1, 3, 5)), keys.index(k)) for h, k in cfg.get('alias', {}).items()]
+    av = np.array([c for c, _ in cand], dtype=float)
+    acc_i = np.array([i for _, i in cand])[((rgb[..., None, :] - av) ** 2).sum(-1).argmin(-1)]
+    lab = np.where(sat >= cfg.get('sat', 48), acc_i, lab)
+    lab = np.where(L < cfg.get('ink', 12), 0, lab)
+    lab = np.where(is_key(rgb), len(keys), lab)  # 마젠타 바탕은 세지 않는다
+    wgt = np.array([1.0] + [1.0] * len(grey) + [cfg.get('accent', 1.6)] * len(accent))
+    fill = np.empty((rows, cols), dtype=object)
+    for j in range(rows):
+        for i in range(cols):
+            ya, yb = int(oy + j * p), int(oy + (j + 1) * p)
+            xa, xb = int(ox + (c0 + i) * p), int(ox + (c0 + i + 1) * p)
+            cnt = np.bincount(lab[ya:yb, xa:xb].ravel(), minlength=len(keys) + 1)[:len(keys)] * wgt
+            fill[j, i] = keys[int(cnt.argmax())]
+    edge = inner_edge(body, cfg.get('outline', 2))
+    fill[edge] = 'K'
+    for _ in range(cfg.get('smooth', 3)):  # 3×3 다수결 여러 번 — 원본의 잔 명암을 넓은 면으로
+        fill = majority(fill, body & ~edge, None)
+    fill = clean_dots(fill, body, edge)
+    assert top >= 2 and c0 >= 2 and c1 + 2 <= C, (name, top, c0, c1)
+    # 144칸으로 펴기 (칸마다 2×2) + 흰 테 3칸
+    big = np.zeros((N, N), bool)
+    g = [['.'] * N for _ in range(N)]
     for j in range(rows):
         for i in range(cols):
             if body[j, i]:
-                g[top + j][c0 + i] = 'K' if K[j, i] else fill[j, i]
+                for dy in (0, 1):
+                    for dx in (0, 1):
+                        y, x = 2 * (top + j) + dy, 2 * (c0 + i) + dx
+                        big[y, x] = True
+                        g[y][x] = fill[j, i]
+    ring = cheb(big, rim) & ~big
+    for y, x in zip(*np.nonzero(ring)):
+        g[y][x] = 'O'
     used = {}
     for j in range(rows):
         for i in range(cols):
             if body[j, i]:
-                used[g[top + j][c0 + i]] = used.get(g[top + j][c0 + i], 0) + 1
+                used[fill[j, i]] = used.get(fill[j, i], 0) + 1
     info = {'pitch': round(float(p), 2), 'rows': rows, 'cols': cols, 'top': top, 'left': c0, 'colors': used}
     return {(name, 1): [''.join(r) for r in g]}, info
 

@@ -83,15 +83,23 @@ PIECE_GRID = {
     'Q:giant': {'body': 108, 'outline': 2},
 }
 
-# 2×2 보스 GB-01~07 · b (D-513 → D-523 첫 반입, piece_import.py --boss). 144칸 캔버스 그대로, 흰 테 4 · 먹선 outline.
-# body = 원본 실루엣의 세로 칸 수(발주 키 128~132), bottom = 받침 바닥 아래 빈 줄(발주 6), theme = 테마 색 글자(maker.PAL64),
-# ink = 원본에서 외곽선으로 읽을 먹의 밝기 상한, pitch_of = 격노가 1단계와 같은 간격을 쓰도록 1단계 원본 · 이름.
-# GB-01 실측 (2026-11-16): 1254×1254 생성기 출력(발주 1152 ×8이 아님) — 격자 찾기 최고점 12.64px(반 간격 6.32px도 높다),
-#   실루엣 1211px → 12.64px 그대로면 96칸(발주 키의 3/4)이라 판 위 2×2에서 작다 → 발주 키 128칸으로 읽는다(9.46px, 원본 한 도트 ≈ 1.34칸).
-#   격노 GB-01b(실루엣 1210px · 왼쪽에 떨어진 철판)는 같은 9.46px · 같은 십자 축으로.
+# 2×2 보스 GB-01~07 · b (D-513 → D-523 첫 반입 → D-524 기물 문법 맞춤, piece_import.py --boss).
+# D-524: 몸은 72칸 캔버스 격자(일반 기물과 같은 캔버스)로 복원하고 칸마다 2×2로 펴 144칸 블록에 — 판 2×2에서 그림 한 장의 도트 수 = 일반 기물 한 장.
+#   먹선 = 72칸 1칸(144칸 2칸) · 흰 테 = 144칸 3칸(일반 기물과 같은 두께), 1칸 잔무늬(리벳 · 낱점)는 clean_dots가 정리.
+# body = 72칸 격자에서 몸 세로 칸 수(64 — 일반 기물 몸 47칸의 2배 넓이 판에 맞춘 키, 판 위 키는 D-523과 같다),
+# bottom = 받침 바닥 아래 빈 줄(72칸 격자 3 = 일반 기물 흰 테 자리), theme = 테마 강조색 글자(maker.PAL64, 2~3단),
+# ink = 원본에서 먹으로 읽을 밝기 상한, pitch_of = 격노가 1단계와 같은 간격을 쓰도록 1단계 원본 · 이름.
+# 실측 (2026-11-16): 원본 모두 1254×1254 생성기 출력(생성기 도트 ≈ 12.6px). 실루엣 ≈ 1210px / 64 = 간격 ≈ 18.9px(원본 한 도트 ≈ 0.67칸).
+#   GB-01 철갑 = 주황 셋(황동 빼고), GB-02 검수 = 렌즈 청록 빛 c · 하늘 C(반장 색 청강 몸 위에서도 렌즈가 갈리게) + 불합격 빨강 r(✕ 계기), GB-03 조립 = 초록 둘 + 황동(경고 줄무늬 기둥).
+# 검수 ✕ 계기: 황동 테 → 쇠(H · B), 짙은 빨강 바탕 → Z — 빨강은 ✕ 한 단만 남겨 「불합격 표시」로 읽히게
+INSPECT_ALIAS = {'#C89B3C': 'H', '#E0A030': 'H', '#8A6416': 'B', '#A06020': 'B', '#701010': 'Z', '#601010': 'Z'}
 BOSS_GRID = {
-    'K:boss-plate': {'body': 128, 'bottom': 6, 'theme': 'qop', 'ink': 12},
-    'K:boss-plate-p2': {'body': 128, 'bottom': 6, 'theme': 'qop', 'ink': 12, 'pitch_of': 'GB-01-source.png', 'pitch_name': 'K:boss-plate'},
+    'K:boss-plate': {'body': 64, 'bottom': 3, 'theme': 'qop', 'ink': 12},
+    'K:boss-plate-p2': {'body': 64, 'bottom': 3, 'theme': 'qop', 'ink': 12, 'pitch_of': 'GB-01-source.png', 'pitch_name': 'K:boss-plate'},
+    'K:boss-inspect': {'body': 64, 'bottom': 3, 'theme': 'cCr', 'ink': 12, 'alias': INSPECT_ALIAS},
+    'K:boss-inspect-p2': {'body': 64, 'bottom': 3, 'theme': 'cCr', 'ink': 12, 'alias': INSPECT_ALIAS, 'pitch_of': 'GB-02-source.png', 'pitch_name': 'K:boss-inspect'},
+    'K:boss-spawn': {'body': 64, 'bottom': 3, 'theme': 'gjU', 'ink': 12},
+    'K:boss-spawn-p2': {'body': 64, 'bottom': 3, 'theme': 'gjU', 'ink': 12, 'pitch_of': 'GB-03-source.png', 'pitch_name': 'K:boss-spawn'},
 }
 
 

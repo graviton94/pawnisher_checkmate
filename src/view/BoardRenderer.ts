@@ -337,7 +337,13 @@ class BoardScene extends Phaser.Scene {
       for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns', 'boss-gilded', 'boss-inspect', 'boss-magnet', 'boss-alarm']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
     }
     // 발주 이형 · 거대 그림: 같은 도트 · 같은 색 바꾸기 (깨짐 · 정예 · 반장 색)
-    for (const r of BOSS_ART_RULES) for (const rage of [false, true]) if (this.textures.exists(bossArtKey(r, rage))) this.textures.get(bossArtKey(r, rage)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    // 2×2 반장 몸(GB, D-524): 속 칠이 검은 진영 다섯 단 그대로라 졸개와 같은 반장 색(FOE_TONE boss-<반장>)으로 1:1 바꾼 그림도 만든다 — 테마 강조색 · 먹 · 흰 테는 그대로
+    for (const r of BOSS_ART_RULES)
+      for (const rage of [false, true])
+        if (this.textures.exists(bossArtKey(r, rage))) {
+          this.textures.get(bossArtKey(r, rage)).setFilter(Phaser.Textures.FilterMode.NEAREST);
+          if (FOE_TONE[`boss-${r}`]) this.makeToneFrom(bossArtKey(r, rage), `boss-${r}`, FOE_TONE[`boss-${r}`]);
+        }
     const arts = [...FORM_IDS.flatMap((f) => [formKey(f, 0), formKey(f, 1)]), ...GIANT_ART.map(giantKey)].filter((k) => this.textures.exists(k));
     for (const k of arts) {
       this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -693,7 +699,11 @@ class BoardScene extends Phaser.Scene {
       // 2×2 보스 (D-513): 본체 칸에서 2×2 한 장 — 전용 그림(GB, 144칸 캔버스)이 있으면 그것(격노면 b), 없으면 반장 킹 그림(72칸)을 같은 배율 두 배로 빌린다
       const key = bossArtKey(this.bossRule, !!p.giant!.rage);
       const real = this.textures.exists(key) || this.textures.exists(bossArtKey(this.bossRule, false));
-      if (real) glyph.setTexture(this.textures.exists(key) ? key : bossArtKey(this.bossRule, false));
+      if (real) {
+        const art = this.textures.exists(key) ? key : bossArtKey(this.bossRule, false);
+        // 졸개와 같은 반장 색 (D-524) — 판의 색 갈래(foeTone)가 있으면 그 색으로 바꾼 그림
+        glyph.setTexture(this.foeTone && this.textures.exists(`${art}-${this.foeTone}`) ? `${art}-${this.foeTone}` : art);
+      }
       glyph.setDisplaySize(t * 2 * PIECE_SIZE, t * 2 * PIECE_SIZE).setPosition(t, -t + 2 * t * PIECE_Y);
       if (!real) {
         // 「임시」 딱지 (D-386: 받기 전에는 빌린 그림이라고 판 위에 밝힌다 — 길게 누르면 「임시 — GB 대기」) — 2×2 왼아래 귀퉁이, 받침을 가리지 않게

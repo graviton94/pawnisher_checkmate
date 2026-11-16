@@ -28,6 +28,31 @@ CHROME = os.path.join(ROOT, 'src', 'assets', 'ui', 'chrome', 'v2')
 HUD = os.path.join(ROOT, 'public', 'ui', 'hud')
 
 
+def even_slip(im, left=24, right=9, top=5, bottom=5):
+    """요령 띠 가운데 고르기 (D-524): 9-slice 가운데 칸(round로 되풀이)에 원본 얼룩 · 진한 낱점이 남으면 이음매마다 옅은 세로 줄이 선다.
+    가운데 칸의 종이를 바탕 한 색으로, 위 · 아래 두 줄은 그늘 한 색으로 고르고, 위아래 찢긴 테 줄의 진한 낱점은 그늘 색으로 — 테 모양은 그대로."""
+    a = np.array(im.convert('RGBA'))
+    h, w = a.shape[:2]
+    x0, x1 = left, w - right
+    mid = a[top:h - bottom, x0:x1].reshape(-1, 4)
+    cols, cnt = np.unique(mid[mid[:, 3] > 0], axis=0, return_counts=True)
+    order = np.argsort(-cnt)
+    paper, shade = cols[order[0]], cols[order[1]]  # 가장 많은 색 = 종이, 둘째 = 그늘
+    lp = paper[:3].astype(int).sum()
+    for y in range(top - 2, h - bottom + 2):
+        for x in range(x0, x1):
+            px = a[y, x]
+            if px[3] == 0:
+                continue
+            if top + 2 <= y < h - bottom - 1:
+                a[y, x] = paper
+            elif top <= y < h - bottom:
+                a[y, x] = shade
+            elif px[:3].astype(int).sum() < lp - 200 and px[:3].astype(int).sum() > 120:  # 테 줄 속 진한 낱점(먹 외곽선은 그대로)
+                a[y, x] = shade
+    return Image.fromarray(a)
+
+
 def sheet():
     g = scene_recipe.LOADING_GRID['LD-01']
     img = Image.open(os.path.join(ORDER, 'LD-01-source.png')).convert('RGB')
@@ -51,6 +76,7 @@ def sheet():
     frame, slip, bar, fill = rest
     assert len(split) == 8, split
     parts = {'guide-frame': small.crop(frame), 'tip-slip': small.crop(slip), 'load-bar': small.crop(bar), 'load-bar-fill': small.crop(fill)}
+    parts['tip-slip'] = even_slip(parts['tip-slip'])
     # 프레임마다 실제 그림 상자로 다시 좁히고(가른 칸의 빈 열 걷기) 같은 칸 가운데에
     crops = [small.crop(b) for b in split]
     crops = [c.crop(c.getbbox()) for c in crops]
