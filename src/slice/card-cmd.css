@@ -1,6 +1,6 @@
 /* 자동 생성 — tools/pixel/cmd_frames.py (RF-04 명령 카드 앞면 · 재발주본 D-512). 손으로 고치지 않는다. */
 /* 56×84 캔버스 — 글 · 그림 자리는 받은 틀의 실제 칸을 잰 비율(%) */
-body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-name { color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cmd.g-rare > .cf-name, body.slice .cf.cmd.g-gold > .cf-name { color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cmd > .cf-cost { color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { content: none; }
 body.slice .cf.cf.cf.cf.cmd.g-common { background-image: url('../assets/ui/cards/cmd-common.png'); --ci-l: 5.357%; --ci-r: 5.357%; --ci-t: 10.714%; --ci-b: 2.381%; }

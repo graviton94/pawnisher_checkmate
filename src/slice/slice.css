@@ -1,3 +1,8 @@
+/* 남은 !important · `.cf.cf.cf` 사다리 (D-529 비주얼 일괄 정리): `node tools/qa/css-cascade.cjs`가 하나씩 떼어 23개 화면의 계산값을 비교해
+   차이가 없는 것은 모두 뗐다(!important 41곳 · 사다리 90곳). 남은 것은 세 갈래 —
+   ① 움직임 줄이기(@media prefers-reduced-motion) 안의 animation: none / 1ms: 요소마다 다른 특이성의 애니메이션을 한 줄로 끄려는 것(의도).
+   ② 상태 유틸(.picked · .flyghost · .pxout · .nope · .chosen · .part-chip.mount · .cast3 · .btn.down): 어느 요소에 붙어도 그 요소 제 애니메이션 · 그림자를 이겨야 한다(의도).
+   ③ 카드 얼굴(.cf) 규칙 사다리: 떼면 계산값이 바뀌는 것(보고서 production/qa/evidence/css-cascade-<날짜>.json의 needed) — card-layout.css 한 단으로 모으는 일은 design-system.md 고칠 목록에 남김. */
 /* 수직 조각 (D-142): 손패 · 나사 트랙 · 연쇄 계기판 */
 body.slice .rail { display: flex; flex-direction: column; gap: 6px; }
 .coins { display: flex; align-items: center; gap: 3px; font-size: 12px; font-family: Galmuri11, sans-serif; color: var(--text2); }
@@ -741,7 +746,7 @@ body.slice.lay-f .rail.left, body.slice.lay-f #right { display: flex; flex-direc
 body.slice.lay-f #right > .gtop { flex: none; height: var(--gTop); margin: 0; box-sizing: border-box; padding: 5px 8px 6px; background: #121016; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #3a3542; }
 body.slice.lay-f #right > .gtop { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: 16px 1fr; row-gap: 4px; column-gap: 6px; align-items: center; }
 body.slice.lay-f .gtop #coins { display: contents; }
-body.slice.lay-f .gtop .turn-label { height: 16px !important; min-height: 0 !important; padding: 0 !important; margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 16px; background: none; border: 0; border-image: none; box-shadow: none; color: #ece6da; justify-content: flex-start; }
+body.slice.lay-f .gtop .turn-label { height: 16px; min-height: 0; padding: 0; margin: 0; font-size: 12px; font-family: Galmuri11, sans-serif; line-height: 16px; background: none; border: 0; border-image: none; box-shadow: none; color: #ece6da; justify-content: flex-start; }
 body.slice.lay-f .gtop .turn-label.enemy { color: #ff8a8a; }
 body.slice.lay-f .gtop .coins .lbl { justify-self: end; font-size: 12px; font-family: Galmuri11, sans-serif; }
 body.slice.lay-f .gtop .coins > b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; line-height: 16px; }
@@ -819,10 +824,10 @@ body.slice.lay-f .gtop .turn-label { min-width: max-content; overflow: visible; 
 .ko3 .rays { width: 896px; height: 896px; margin: -448px 0 0 -448px; background: url('../assets/ui/kit/rays-gold.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; border-radius: 0; }
 
 /* ===================== D-217 3 카드 얼굴 — 등급 틀 · 머리띠 이름 · 그림 창 · 성질 줄 · 설명 · 보석 · 가격표 ===================== */
-body.slice .cf.cf { position: relative; isolation: isolate; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px;
+body.slice .cf { position: relative; isolation: isolate; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px;
   min-height: 0; padding: 28px 10px 16px; text-align: center; color: #ece6da; background: #1b1a20; border: 0; border-radius: 0; box-shadow: 0 3px 0 #000; filter: none; grid-template-columns: none; }
-body.slice .cf.cf::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-style: solid; border-width: 24px 8px 10px; border-image: url('../assets/ui/kit/card-common.png') 12 4 5 / 24px 8px 10px round; image-rendering: pixelated; }
-body.slice .cf.cf::after { content: none; }
+body.slice .cf::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-style: solid; border-width: 24px 8px 10px; border-image: url('../assets/ui/kit/card-common.png') 12 4 5 / 24px 8px 10px round; image-rendering: pixelated; }
+body.slice .cf::after { content: none; }
 body.slice .cf.g-rare::before { border-image-source: url('../assets/ui/kit/card-rare-0.png'); animation: cfRare 1400ms steps(1, end) infinite; }
 body.slice .cf.g-gold::before { border-image-source: url('../assets/ui/kit/card-gold-0.png'); animation: cfGold 560ms steps(1, end) infinite; }
 @keyframes cfRare { 0%, 70% { border-image-source: url('../assets/ui/kit/card-rare-0.png'); } 71%, 100% { border-image-source: url('../assets/ui/kit/card-rare-1.png'); } }
@@ -1518,30 +1523,30 @@ body.slice .er-crewcard .cf.crew-card { width: 100%; pointer-events: none; }
 /* ===================== D-367 · D-370 카드 틀 (tools/pixel/cardart.py) — 아치 그림 창 · 이름 리본 · 두루마리 · 톱니 비용 =====================
    템플릿 112×158 (틀 96×142 + 여백 8). 글 · 그림은 같은 비율(%) 자리에 얹는다. */
 body.slice .cf.cf.cf { width: 170px; height: auto; aspect-ratio: 112 / 158; padding: 0; gap: 0; display: block; background: url('../assets/ui/cards/cmd-common.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; box-shadow: none; filter: drop-shadow(3px 3px 0 #000); }
-body.slice .cf.cf.cf::before, body.slice .cf.cf.cf::after { content: none; border: 0; animation: none; }
-body.slice .cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); }
+body.slice .cf.cf.cf::before, body.slice .cf::after { content: none; border: 0; animation: none; }
+body.slice .cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); }
 body.slice .cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); }
 body.slice .cf.cf.cf.part-card { background-image: url('../assets/ui/cards/part-common.png'); }
 body.slice .cf.cf.cf.part-card.g-rare { background-image: url('../assets/ui/cards/part-rare.png'); }
 body.slice .cf.cf.cf.part-card.g-gold { background-image: url('../assets/ui/cards/part-gold.png'); }
-body.slice .cf.cf.cf > * { position: absolute; margin: 0; }
-body.slice .cf.cf.cf .cf-cost { left: 2%; top: 0; width: 15.6%; height: 12.6%; display: grid; place-items: center; z-index: 3; font: 700 24px/1 Galmuri11, sans-serif; color: #fff1c0; text-shadow: 2px 2px 0 #000; }
-body.slice .cf.cf.cf .cf-name { left: 10.7%; top: 37.3%; width: 79.5%; height: 7.6%; right: auto; display: grid; place-items: center; z-index: 3; font: 700 12px/1 Galmuri11, sans-serif; color: #f4f1ea; text-shadow: 1px 1px 0 #000; white-space: nowrap; overflow: visible; }
-body.slice .cf.cf.cf.g-rare .cf-name { color: #f4f1ea; } body.slice .cf.cf.cf.g-gold .cf-name { color: #fff1c0; }
-body.slice .cf.cf.cf .cf-win { left: 17.9%; top: 12.7%; width: 65.2%; height: 26.6%; z-index: 0; display: grid; place-items: end center; overflow: hidden; background: #24232b; box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.28), inset 0 0 0 8px rgba(0, 0, 0, 0.14); }
+body.slice .cf > * { position: absolute; margin: 0; }
+body.slice .cf .cf-cost { left: 2%; top: 0; width: 15.6%; height: 12.6%; display: grid; place-items: center; z-index: 3; font: 700 24px/1 Galmuri11, sans-serif; color: #fff1c0; text-shadow: 2px 2px 0 #000; }
+body.slice .cf .cf-name { left: 10.7%; top: 37.3%; width: 79.5%; height: 7.6%; right: auto; display: grid; place-items: center; z-index: 3; font: 700 12px/1 Galmuri11, sans-serif; color: #f4f1ea; text-shadow: 1px 1px 0 #000; white-space: nowrap; overflow: visible; }
+body.slice .cf.g-rare .cf-name { color: #f4f1ea; } body.slice .cf.g-gold .cf-name { color: #fff1c0; }
+body.slice .cf .cf-win { left: 17.9%; top: 12.7%; width: 65.2%; height: 26.6%; z-index: 0; display: grid; place-items: end center; overflow: hidden; background: #24232b; box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.28), inset 0 0 0 8px rgba(0, 0, 0, 0.14); }
 body.slice .cf.cf.cf.cmd .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b34'/%3E%3Crect width='2' height='2' fill='%2335343e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2335343e'/%3E%3C/svg%3E"); background-color: #2c2b34; background-image: var(--wpat); background-size: 4px 4px; background-position: 0 0; }
 body.slice .cf.cf.cf.ax-inf .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232f4a35'/%3E%3Crect width='2' height='2' fill='%233d5f44'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%233d5f44'/%3E%3C/svg%3E"); } body.slice .cf.cf.cf.ax-cav .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3324'/%3E%3Crect width='2' height='2' fill='%235e4230'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%235e4230'/%3E%3C/svg%3E"); }
 body.slice .cf.cf.cf.ax-chain .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%23352a4a'/%3E%3Crect width='2' height='2' fill='%2345375e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2345375e'/%3E%3C/svg%3E"); } body.slice .cf.cf.cf.ax-king .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3d1a'/%3E%3Crect width='2' height='2' fill='%235e4e22'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%235e4e22'/%3E%3C/svg%3E"); }
 body.slice .cf.cf.cf.ax-push .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%233a3a42'/%3E%3Crect width='2' height='2' fill='%234a4a54'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%234a4a54'/%3E%3C/svg%3E"); } body.slice .cf.cf.cf.ax-tactic .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%2322404a'/%3E%3Crect width='2' height='2' fill='%232c525e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%232c525e'/%3E%3C/svg%3E"); }
-body.slice .cf.cf.cf .cf-win .cf-face { width: 60%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
-body.slice .cf.cf.cf .cf-win .art { width: auto; height: auto; place-self: center; }
-body.slice .cf.cf.cf .cf-win .art img, body.slice .cf.cf.cf .cf-win .ico, body.slice .cf.cf.cf .cf-win .art.any .ico16 { width: 40px; height: 40px; }
+body.slice .cf .cf-win .cf-face { width: 60%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+body.slice .cf .cf-win .art { width: auto; height: auto; place-self: center; }
+body.slice .cf .cf-win .art img, body.slice .cf .cf-win .ico, body.slice .cf .cf-win .art.any .ico16 { width: 40px; height: 40px; }
 body.slice .cf.cf.cf.part-card .cf-win { place-items: center; background: #141319; }
-body.slice .cf.cf.cf .cf-type { left: 19.5%; top: 31.6%; width: auto; height: 12px; justify-content: flex-start; background: rgba(11, 11, 14, 0.78); padding: 1px 3px !important; display: flex; justify-content: center; align-items: center; gap: 0; padding: 0; border: 0; z-index: 3; }
-body.slice .cf.cf.cf .cf-type .t3 { display: flex; gap: 0; } body.slice .cf.cf.cf .cf-type .t3 i { font: 12px/1 Galmuri11, sans-serif; font-style: normal; color: #c9c1ad; background: none; box-shadow: none; padding: 0 2px; }
-body.slice .cf.cf.cf .cf-type .t3 i + i::before { content: '·'; margin-right: 3px; color: #6e6c78; }
-body.slice .cf.cf.cf .cf-type .t3-fx.fx-add { color: #46c4c8; } body.slice .cf.cf.cf .cf-type .t3-fx.fx-mul { color: #f08a3a; }
-body.slice .cf.cf.cf .cf-desc { left: 21%; top: 47.6%; width: 58%; height: 40.5%; padding: 0; border: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; z-index: 3; color: #2a2620; overflow: hidden; }
+body.slice .cf .cf-type { left: 19.5%; top: 31.6%; width: auto; height: 12px; justify-content: flex-start; background: rgba(11, 11, 14, 0.78); padding: 1px 3px !important; display: flex; justify-content: center; align-items: center; gap: 0; padding: 0; border: 0; z-index: 3; }
+body.slice .cf .cf-type .t3 { display: flex; gap: 0; } body.slice .cf .cf-type .t3 i { font: 12px/1 Galmuri11, sans-serif; font-style: normal; color: #c9c1ad; background: none; box-shadow: none; padding: 0 2px; }
+body.slice .cf .cf-type .t3 i + i::before { content: '·'; margin-right: 3px; color: #6e6c78; }
+body.slice .cf .cf-type .t3-fx.fx-add { color: #46c4c8; } body.slice .cf .cf-type .t3-fx.fx-mul { color: #f08a3a; }
+body.slice .cf .cf-desc { left: 21%; top: 47.6%; width: 58%; height: 40.5%; padding: 0; border: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; z-index: 3; color: #2a2620; overflow: hidden; }
 body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl { display: block; margin: 0; font: 400 12px/1.3 Galmuri11, sans-serif; word-break: keep-all; text-wrap: balance; }
 body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl.dl-say { color: #3a342a; }
 body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl.dl-fxb { align-self: stretch; border-top: 2px dotted #a8782a; padding-top: 3px; color: #4a4436; }
@@ -1549,24 +1554,24 @@ body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-if { color: #4a4436; }
 body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-fx { font: 700 12px/1.3 Galmuri11, sans-serif; color: #2a2620; background: none; box-shadow: none; padding: 0; }
 body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-fx em { font-style: normal; color: #a8222e; }
 body.slice .cf.cf.cf .cf-flv { display: none; }
-body.slice .cf.cf.cf .cf-gem { left: 50%; top: 91.1%; right: auto; width: 14px; height: 14px; transform: translate(-50%, -50%); z-index: 3; }
+body.slice .cf .cf-gem { left: 50%; top: 91.1%; right: auto; width: 14px; height: 14px; transform: translate(-50%, -50%); z-index: 3; }
 
 body.slice .cf.cf.cf .cf-desc.cf-desc .dl-if, body.slice .cf.cf.cf .cf-desc.cf-desc .dl-fx { white-space: normal; }
 
-body.slice .cf.cf.cf .cf-desc, body.slice .cf.cf.cf .cf-desc * { font-size: 12px !important; line-height: 15px !important; letter-spacing: 0; }
-body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-shadow: none !important; border: 0 !important; padding: 0 1px !important; min-width: 0; height: auto; }
-body.slice .cf.cf.cf .cf-type .t3 { background: none; box-shadow: none; border: 0; padding: 0; }
+body.slice .cf .cf-desc, body.slice .cf .cf-desc * { font-size: 12px; line-height: 15px; letter-spacing: 0; }
+body.slice .cf .cf-type .t3 i { font-size: 12px; line-height: 12px; background: none; box-shadow: none; border: 0; padding: 0 1px; min-width: 0; height: auto; }
+body.slice .cf .cf-type .t3 { background: none; box-shadow: none; border: 0; padding: 0; }
 
-body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; display: inline !important; }
-body.slice .cf.cf.cf .cf-type .t3-who { display: none !important; }
-body.slice .cf.cf.cf .cf-type .t3 i + i::before { content: none; }
-body.slice .cf.cf.cf .cf-type .t3 { gap: 4px; }
-body.slice .cf.cf.cf .cf-win .cf-face { width: 52%; }
-body.slice .cf.cf.cf > * { position: absolute !important; }
+body.slice .cf .cf-type .t3 i { position: static; transform: none; width: auto; display: inline; }
+body.slice .cf .cf-type .t3-who { display: none; }
+body.slice .cf .cf-type .t3 i + i::before { content: none; }
+body.slice .cf .cf-type .t3 { gap: 4px; }
+body.slice .cf .cf-win .cf-face { width: 52%; }
+body.slice .cf > * { position: absolute; }
 
-body.slice .cf.cf.cf .cf-type { left: auto; right: 18.5%; top: 32.6%; }
-body.slice .cf.cf.cf .cf-desc { left: 19.5%; width: 61%; }
-body.slice .cf.cf.cf .cf-type .t3 i.t3-who.t3-who { display: none !important; }
+body.slice .cf .cf-type { left: auto; right: 18.5%; top: 32.6%; }
+body.slice .cf .cf-desc { left: 19.5%; width: 61%; }
+body.slice .cf .cf-type .t3 i.t3-who.t3-who { display: none !important; }
 /* D-371 그림 창 = 템플릿의 창 모양 (아치 · 팔각) 마스크 */
 body.slice .cf.cf.cf .cf-win { left: 17.86%; width: 65.18%; top: 12.66%; height: 27.2%; -webkit-mask: url('../assets/ui/cards/mask-cmd.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-cmd.png') 0 0 / 100% 100% no-repeat; box-shadow: none; }
 body.slice .cf.cf.cf.part-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-part.png'); mask-image: url('../assets/ui/cards/mask-part.png'); }
@@ -1576,22 +1581,22 @@ body.slice .cf.cf.cf.crew-card { background-image: url('../assets/ui/cards/crew-
 body.slice .cf.cf.cf.crew-card.g-rare { background-image: url('../assets/ui/cards/crew-rare.png'); }
 body.slice .cf.cf.cf.crew-card.g-gold { background-image: url('../assets/ui/cards/crew-gold.png'); }
 body.slice .cf.cf.cf.crew-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('../assets/ui/cards/mask-crew.png'); background: #e8e0cc; place-items: end center; }
-body.slice .cf.cf.cf.crew-card .er-pc { position: static !important; width: 62%; height: auto; aspect-ratio: 1; background: none; box-shadow: none; overflow: visible; display: block; }
-body.slice .cf.cf.cf.crew-card .er-pc img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
-body.slice .cf.cf.cf.crew-card .cb { display: grid; place-items: center; z-index: 4; font: 700 15px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 2px 2px 0 #000; }
-body.slice .cf.cf.cf.crew-card .cb-atk { left: 0; top: 30.2%; width: 18.75%; height: 13.9%; }
-body.slice .cf.cf.cf.crew-card .cb-hp { left: 81.25%; top: 30.2%; width: 18.75%; height: 13.9%; }
-body.slice .cf.cf.cf.crew-card .cb-hp .er-hpn { font: inherit; color: inherit; }
-body.slice .cf.cf.cf.crew-card .cb-lives { right: 19%; top: 13.9%; display: flex; gap: 1px; z-index: 4; }
+body.slice .cf.crew-card .er-pc { position: static; width: 62%; height: auto; aspect-ratio: 1; background: none; box-shadow: none; overflow: visible; display: block; }
+body.slice .cf.crew-card .er-pc img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+body.slice .cf.crew-card .cb { display: grid; place-items: center; z-index: 4; font: 700 15px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 2px 2px 0 #000; }
+body.slice .cf.crew-card .cb-atk { left: 0; top: 30.2%; width: 18.75%; height: 13.9%; }
+body.slice .cf.crew-card .cb-hp { left: 81.25%; top: 30.2%; width: 18.75%; height: 13.9%; }
+body.slice .cf.crew-card .cb-hp .er-hpn { font: inherit; color: inherit; }
+body.slice .cf.crew-card .cb-lives { right: 19%; top: 13.9%; display: flex; gap: 1px; z-index: 4; }
 body.slice .cf.cf.cf.crew-card .cb-cog { width: 16px; height: 16px; margin-left: 3px; background: var(--cog-off) center / contain no-repeat; image-rendering: pixelated; }
 body.slice .cf.cf.cf.crew-card .cb-life { width: 16px; height: 16px; background: var(--life-on) center / contain no-repeat; image-rendering: pixelated; }
-body.slice .cf.cf.cf.crew-card .cb-bar { left: 22%; width: 56%; top: 46%; height: 6px; z-index: 4; }
-body.slice .cf.cf.cf.crew-card .cb-bar .er-hp { width: 100%; height: 6px; }
-body.slice .cf.cf.cf.crew-card .cf-desc { top: 49.5%; height: 38%; gap: 1px; }
-body.slice .cf.cf.cf.crew-card .cf-desc > * { display: block; text-align: center; color: #4a4436; font-size: 12px !important; line-height: 14px !important; }
+body.slice .cf.crew-card .cb-bar { left: 22%; width: 56%; top: 46%; height: 6px; z-index: 4; }
+body.slice .cf.crew-card .cb-bar .er-hp { width: 100%; height: 6px; }
+body.slice .cf.crew-card .cf-desc { top: 49.5%; height: 38%; gap: 1px; }
+body.slice .cf.crew-card .cf-desc > * { display: block; text-align: center; color: #4a4436; font-size: 12px; line-height: 14px; }
 body.slice .cf.cf.cf.crew-card .cs-serial { color: #6e6452 !important; }
-body.slice .cf.cf.cf.crew-card .cs-st { display: flex !important; gap: 6px; justify-content: center; color: #2a2620 !important; font-weight: 700; }
-body.slice .cf.cf.cf.crew-card .cs-st i { font-style: normal; font-weight: 400; color: #6e6452; margin-right: 2px; }
+body.slice .cf.crew-card .cs-st { display: flex; gap: 6px; justify-content: center; color: #2a2620; font-weight: 700; }
+body.slice .cf.crew-card .cs-st i { font-style: normal; font-weight: 400; color: #6e6452; margin-right: 2px; }
 body.slice .cf.cf.cf.crew-card .cs-qn { color: #1f6b70 !important; margin-top: 2px; }
 body.slice .cf.cf.cf.crew-card .cs-sc { color: #8c6239 !important; font-weight: 400; margin-top: 2px; }
 /* 사건 결과 오버레이 · 길게 누름 크기 */
@@ -1602,7 +1607,7 @@ body.slice .er-crewcard .cf.cf.cf.crew-card { width: 150px; }
    카드는 어디서나 한 크기(--card-w). 카드를 늘어놓는 화면(고물상 · 보상 · 부품 고르기 · 핵심 부품 · 다듬기 · 사건 결과)은
    가로 한 줄 레일 — 넘치면 옆으로 민다(기존 ◀ ▶). 비용 톱니 · 리본 꼬리 · 가격표가 잘리지 않게 위아래 여유. */
 :root { --card-w: 168px; }
-body.slice .cf.cf.cf, body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card { width: var(--card-w); flex: none; }
+body.slice .cf.cf.cf, body.slice .er-crewcard .cf.crew-card, body.slice .cf.cf.cf.crew-card { width: var(--card-w); flex: none; }
 
 body.slice .er-card.reward-cards.er-crewcard, body.slice .er-card.reward-cards { width: var(--card-w); height: auto; }
 body.slice .er-card.reward-cards .cf.cf.cf { width: var(--card-w); }
@@ -1610,8 +1615,8 @@ body.slice .er-card.reward-cards .cf.cf.cf { width: var(--card-w); }
 body.slice .cf.cf.cf.crew-card .cf-desc { left: 17.5%; width: 65%; top: 48.5%; height: 40%; gap: 2px; justify-content: center; }
 body.slice .cf.cf.cf.crew-card .cf-desc > * { line-height: 13px !important; }
 body.slice .cf.cf.cf.crew-card .cs-st { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; width: 100%; padding-bottom: 3px; border-bottom: 2px dotted #a8782a; }
-body.slice .cf.cf.cf.crew-card .cs-st > span { display: flex; flex-direction: column; align-items: center; min-width: 0; }
-body.slice .cf.cf.cf.crew-card .cs-st i { margin: 0; font-size: 12px !important; line-height: 13px !important; }
+body.slice .cf.crew-card .cs-st > span { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+body.slice .cf.cf.cf.crew-card .cs-st i { margin: 0; font-size: 12px; line-height: 13px !important; }
 /* ===================== D-373 글 맞춤 + 카드 받침 (사용자: 「카드 디자인은 정본, 가격 · 추가 정보는 화면에 걸맞게」 · 「글자는 영역에 맞춰, 안 되면 줄여」) =====================
    fitCardDesc: tight(줄 간격 13) → small(묘사 · 조건 · 풀이를 갈무리9 10px) → fold(묘사 · 흉터 풀이 접기) */
 body.slice .cf.cf.cf .cf-desc.tight, body.slice .cf.cf.cf .cf-desc.tight * { line-height: 13px !important; }
@@ -1630,18 +1635,18 @@ body.slice .cf.cf.cf.crew-card .cf-desc.fold .cs-sc + .cs-q { display: none; }
 /* 넘침은 아래로만 (가운데 정렬이 위로 넘친 글은 scrollHeight가 못 잰다) · 효과 항목은 덩어리로 줄바꿈 */
 body.slice .cf.cf.cf .cf-desc { justify-content: safe center; }
 body.slice .cf.cf.cf .cf-desc .fxi { display: inline-block; }
-body.slice .cf.cf.cf.crew-card .cf-desc > * { white-space: normal; word-break: keep-all; }
+body.slice .cf.crew-card .cf-desc > * { white-space: normal; word-break: keep-all; }
 body.slice .cf.cf.cf .cf-desc .dl.dl.dl { max-height: none; overflow: visible; flex: none; }
 
 /* ===================== D-374 틀 키우기 (사용자: 「리본이 그림에 가린다 · 배지 숫자가 도형 아래로 치우쳤다 · 카드를 정보량에 맞게 키워라」) =====================
    틀 112×168 (리본 아래 종류 띠 · 두루마리 +12). 글 자리는 src/slice/card-layout.css (cardart.py가 틀과 같은 숫자로 만든다). */
 body.slice .cf.cf.cf.cf > .cf-type { background: none; padding: 0; gap: 6px; color: #cfc6b0; overflow: hidden; white-space: nowrap; }
 body.slice .cf.cf.cf.cf > .cf-type .t3 { display: flex; gap: 6px; align-items: center; }
-body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0 !important; font: 400 12px/12px Galmuri11, sans-serif !important; }
-body.slice .cf.cf.cf.cf > .cf-name { font: 700 12px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000, 1px 0 0 #000, 0 1px 0 #000; white-space: nowrap; }
-body.slice .cf.cf.cf.cf > .cf-cost { font: 700 24px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 2px 2px 0 #000; }
-body.slice .cf.cf.cf.cf.crew-card > .cb { display: grid; place-items: center; }
-body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-hp { height: 100%; }
+body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0; font: 400 12px/12px Galmuri11, sans-serif; }
+body.slice .cf.cf.cf.cf > .cf-name { font: 700 12px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000, 1px 0 0 #000, 0 1px 0 #000; white-space: nowrap; }
+body.slice .cf > .cf-cost { font: 700 24px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 2px 2px 0 #000; }
+body.slice .cf.crew-card > .cb { display: grid; place-items: center; }
+body.slice .cf.crew-card > .cb-bar .er-hp { height: 100%; }
 /* 덱 보기 · 카드 빼기: 정본 카드 격자 (세로로 민다) */
 
 /* 높이 412 맞춤 (D-374): 레일 위아래 여백 · 받침 간격을 줄인다 — 비용 톱니는 틀 그림 안 여백에 있다 */
@@ -1650,11 +1655,11 @@ body.slice .overlay { z-index: 64; } /* D-375: 지도(mapfx 60) 위에서 여는
 /* D-375 고르기 확인창: 카드 왼쪽 · 제목 + 단추 오른쪽 (세로로 쌓으면 412px를 넘어 단추가 화면 밖) */
 
 /* D-375 분대원 카드 HP 줄 (리뷰: 종류 띠가 비어 보였다 — inline이라 크기 0) · 세 자리 숫자는 작게 */
-body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-hp { display: block; position: relative; width: 100%; height: 100%; background: #0b0b0e; box-shadow: none; }
-body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill, body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { position: absolute; left: 0; top: 0; bottom: 0; height: auto; }
-body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill { background: #4aa856; box-shadow: inset 0 2px 0 #7ad07e; }
-body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { background: #d23a3a; }
-body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { font-size: 12px; }
+body.slice .cf.crew-card > .cb-bar .er-hp { display: block; position: relative; width: 100%; height: 100%; background: #0b0b0e; box-shadow: none; }
+body.slice .cf.crew-card > .cb-bar .er-fill, body.slice .cf.crew-card > .cb-bar .er-ghost { position: absolute; left: 0; top: 0; bottom: 0; height: auto; }
+body.slice .cf.crew-card > .cb-bar .er-fill { background: #4aa856; box-shadow: inset 0 2px 0 #7ad07e; }
+body.slice .cf.crew-card > .cb-bar .er-ghost { background: #d23a3a; }
+body.slice .cf.crew-card > .cb.n3 { font-size: 12px; }
 body.slice .cf.cf.cf .cf-desc .fxi { vertical-align: top; } /* D-375: 줄 높이가 늘지 않게 */
 body.slice .cf.cf.cf.crew-card .cs-q .fxi { display: inline-block; vertical-align: top; }
 /* 분대 보기 (D-375 리뷰: 도감 · 닫기가 패널 아래로 잘림) — 레일 여백을 줄이고 단추 줄을 오른쪽 위로 */
@@ -1664,19 +1669,19 @@ body.slice .cf.cf.cf.crew-card .cs-q .fxi { display: inline-block; vertical-alig
 /* 보상 화면 분대 줄 (D-375 리뷰: 셋째 분대원이 단추에 가림) — 이름은 빼고 기물 · HP 막대 · 숫자만, 머리말은 두 줄로 좁게 */
 
 /* ===================== D-375 리뷰 2차 ===================== */
-body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background: none !important; text-decoration: none; box-shadow: none !important; }
+body.slice .cf > .cf-type i, body.slice .cf > .cf-type > i { font-style: normal; background: none; text-decoration: none; box-shadow: none; }
 body.slice .cf.cf.cf .cf-desc .sep { white-space: pre; }
 
 /* 영입: 안내 문단 대신 제목만 — 받침(함께 오는 카드)이 패널 안에 들게 */
 
 /* 비용 1 · HP 세 자리: 글자 잉크를 도형 가운데로 */
 body.slice .cf.cf.cf.cf > .cf-cost.c1 { padding-left: 3px; box-sizing: border-box; }
-body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: -1px; font-size: 12px; }
+body.slice .cf.crew-card > .cb.n3 { letter-spacing: -1px; font-size: 12px; }
 /* 고물상 레일: 네 장 폭에 딱 맞춰 가운데 — 다섯째 카드가 실오라기처럼 비치지 않게 (◀ ▶로 넘긴다) */
 /* 고물상 레일 (D-375 3차): 스크롤하는 줄 자체를 네 장 폭에 맞추고, 화살표와 함께 가운데 — 다섯째 카드는 줄 밖에 숨는다 */
 
 /* 분대원 카드 두루마리 위 여백 (길게 누름에서 기록 이름 윗줄이 잘렸다) */
-body.slice .cf.cf.cf.cf.crew-card > .cf-desc { padding-top: 3px; box-sizing: border-box; }
+body.slice .cf.crew-card > .cf-desc { padding-top: 3px; box-sizing: border-box; }
 /* 덱 보기 레일: 닫기 단추는 제목 줄 */
 
 /* D-375 3차 리뷰 */
@@ -1691,32 +1696,32 @@ body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: 0; }
    줄마다 한 줄 그대로 — 넘치면 fitLines가 그 줄 글자를 줄인다 (줄바꿈 없음). 모든 글은 가로 · 세로 가운데. */
 body.slice .cf.cf.cf.cf > .cf-desc { display: block; overflow: hidden; padding: 0 !important; gap: 0; }
 body.slice .cf.cf.cf.cf > .cf-desc > .db { position: absolute; inset: 0; display: grid; }
-body.slice .cf.cf.cf.cf > .cf-desc > .db.two { grid-template-rows: 2fr 3fr; }
+body.slice .cf > .cf-desc > .db.two { grid-template-rows: 2fr 3fr; }
 body.slice .cf.cf.cf.cf > .cf-desc > .db.one { grid-template-rows: 1fr; }
-body.slice .cf.cf.cf.cf > .cf-desc .db-top, body.slice .cf.cf.cf.cf > .cf-desc .db-bot { min-height: 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0; }
-body.slice .cf.cf.cf.cf > .cf-desc > .db.two > .db-bot { border-top: 2px dotted #a8782a; }
-body.slice .cf.cf.cf.cf > .cf-desc .ln { display: block; width: 100%; white-space: nowrap; overflow: visible; text-align: center; transform-origin: 50% 50%;
-  font: 400 12px/15px Galmuri11, sans-serif !important; color: #3a342a; word-break: keep-all; }
+body.slice .cf > .cf-desc .db-top, body.slice .cf > .cf-desc .db-bot { min-height: 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0; }
+body.slice .cf > .cf-desc > .db.two > .db-bot { border-top: 2px dotted #a8782a; }
+body.slice .cf > .cf-desc .ln { display: block; width: 100%; white-space: nowrap; overflow: visible; text-align: center; transform-origin: 50% 50%;
+  font: 400 12px/15px Galmuri11, sans-serif; color: #3a342a; word-break: keep-all; }
 body.slice .cf.cf.cf.cf > .cf-desc .ln-if { color: #4a4436; }
-body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx b { color: #1f1b16; }
-body.slice .cf.cf.cf.cf > .cf-desc .ln-fx em { font-style: normal; color: #a8222e; font: inherit !important; color: #a8222e; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf > .cf-desc .ln-fx b { color: #1f1b16; }
+body.slice .cf > .cf-desc .ln-fx em { font-style: normal; color: #a8222e; font: inherit; color: #a8222e; }
 body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color: #1f6b70; }
 /* D-511 (사용자 결정 — D-475 × D-422): 조건 · 효과 줄은 늘 갈무리9 10px(카드 글 맞춤 전용, D-213) — 효과는 한 행, 줄이거나 자르지 않는다. 행 높이 15px 그대로라 세 행 틀은 같다.
    갈무리9엔 굵게가 없다(가짜 굵게 금지) — 효과 줄은 짙은 색 · 붉은 수치 · 앞의 「: 」로 가른다. 글 폭 표는 desc.ts `pxWidth` · 전수 측정 tools/card-text-fit.ts */
-body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px !important; font-weight: 400 !important; }
+body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx * { font-family: Galmuri9, Galmuri11, sans-serif !important; font-size: 10px !important; line-height: 15px; font-weight: 400; }
 
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }
 /* D-399: 카드 150 ~ 166px에서 「쓰러짐」이 1fr 칸(≈ 32px)에 안 들어 「쓰러 / 짐」으로 꺾이고 두루마리 위가 잘렸다 — 칸 폭은 글 폭대로, 사이는 고르게 */
 body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { grid-auto-columns: auto; justify-content: space-evenly; }
-body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st i { white-space: nowrap; }
+body.slice .cf.crew-card > .cf-desc .cs-st i { white-space: nowrap; }
 /* D-399 글자 격자(D-213): 부품 · 손질 카드 두루마리가 창의 갈무리14를 물려받아 「12px 갈무리14 굵게」가 되던 것 → 카드 글은 갈무리11(맞춤 단계 s10은 갈무리9 그대로) ·
    분대원 카드 공격 · HP 숫자 15px 갈무리11(격자 밖) → 15px 갈무리14 보통, 세 자리는 12px 갈무리11 굵게 */
-body.slice .cf.cf.cf.cf > .cf-desc, body.slice .cf.cf.cf.cf > .cf-desc * { font-family: Galmuri11, sans-serif; }
-body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3), body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3) * { font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
-body.slice .cf.cf.cf.cf.crew-card > .cb.n3, body.slice .cf.cf.cf.cf.crew-card > .cb.n3 * { font: 700 12px/1 Galmuri11, sans-serif; }
+body.slice .cf > .cf-desc, body.slice .cf > .cf-desc * { font-family: Galmuri11, sans-serif; }
+body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3), body.slice .cf.crew-card > .cb:not(.n3) * { font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+body.slice .cf.crew-card > .cb.n3, body.slice .cf.crew-card > .cb.n3 * { font: 700 12px/1 Galmuri11, sans-serif; }
 /* 생명 빈 자리 = 깨진(검은) 태엽 하트 */
 body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }
-body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important; background: none !important; box-shadow: none !important; }
+body.slice .cf > .cf-desc .ln * { display: inline; white-space: nowrap; margin: 0; padding: 0; background: none; box-shadow: none; }
 
 /* ===== D-385 진입 창 (D-383을 고침 — 사용자: 「직접 찍지 말고 이미지 에셋을 쓰거나 발주를 내라」):
    철판 패널(크롬) + 걸친 황동 꼬리표 · 왼쪽 움푹 칸 = 받은 장면 그림(막 · 고물상 · 작업대 · 사건) 위에 실제 기물 · 소품 · 오른쪽 이름 · 서술 · 명단 칩 · 종이 테이프.
@@ -1737,11 +1742,11 @@ body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-spa
 /* ---------- 1.1.1 테스터 피드백: 부품 · 카드 고르기 ----------
    ① 꼬리표는 이름 아래 [방어] [방열]처럼 낱낱이 (한 덩어리 글로 읽혔다)
    ② 등급 오라 — 희귀 = 푸른 쇳빛, 황금 = 금빛. 흐림 없는 단단한 도트 고리 두 겹이 계단으로 숨 쉰다 (그라데이션 · 페이드 금지 D-216) */
-body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::before { content: '[' !important; margin: 0 !important; color: #8f8a7c; }
-body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::after { content: ']'; color: #8f8a7c; }
+body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::before { content: '['; margin: 0; color: #8f8a7c; }
+body.slice .cf > .cf-type .t3 i:not(.t3-who)::after { content: ']'; color: #8f8a7c; }
 body.slice .cf.cf.cf.cf > .cf-type .t3 i.t3-sty { color: #e8e0cc !important; }
 /* (2026-11-14 #9: 카드 바깥 푸른/금 도트 고리 kaura를 지웠다 — 등급은 받은 틀 RF-01 · RF-04 · 반짝임 RF-02로) */
-body.slice .cf.cf.cf.cf.g-pop:not(.taken) { animation: gpop 420ms both; }
+body.slice .cf.g-pop:not(.taken) { animation: gpop 420ms both; }
 /* 함께 오는 카드 줄 (부품 상자): 단추 사이 가운데 — 보조 12 · 이름 금 */
 .btn-row > .mid > .with-cards { margin: 0; max-width: 520px; font: 400 12px/1.4 Galmuri11, sans-serif; color: #cfc6b0; text-align: center; word-break: keep-all; }
 .btn-row > .mid > .with-cards b { color: var(--t-gold); font-weight: 700; }
@@ -1774,8 +1779,9 @@ body.slice .deathfx.dc3 .dr-stamp.st3 { opacity: 1; animation: st3 380ms both; }
    위 : 아래 = 7 : 9(점선 자리는 글 길이와 상관없이 고정, D-377), 묘사 행 14px · 조건/효과 행 12px → 2 × 14 + 3 × 12 = 64px. 글자 크기는 그대로. */
 body.slice .cf.cf.cf.cf.cmd > .cf-desc > .db.two { grid-template-rows: 7fr 9fr; }
 body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln { line-height: 14px !important; }
-body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx * { line-height: 12px !important; }
+body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx * { line-height: 12px !important; }
 /* 다듬음(+) · 녹(−) 표: 명패에 「이름+」가 들지 않아 비용 원판 오른쪽 위에 — 기호 + 색 (D-515) */
-body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 23.5%; top: 6.5%; z-index: 6; font: 700 12px/12px Galmuri11, sans-serif; font-style: normal; font-synthesis: none; padding: 1px 2px; background: #16141c; box-shadow: 0 0 0 1px #0b0b0e; }
+/* D-529 다듬음(+) · 녹(−) 표: 비용 원판에 붙지 않게 원판 오른쪽으로 2px 띄워 틀 위 빈자리에 — 기호 색 테 1px + 먹 테 2px 딱지 (글은 12px 그대로) */
+body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 31%; top: 8%; z-index: 6; font: 700 12px/12px Galmuri11, sans-serif; font-style: normal; font-synthesis: none; padding: 2px 4px; background: #16141c; box-shadow: inset 0 0 0 1px currentColor, 0 0 0 2px #0b0b0e; }
 body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-up { color: #7fe08a; }
 body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-rust { color: #e0894a; }

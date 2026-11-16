@@ -1,0 +1,5433 @@
+{
+ "ok": true,
+ "rep": [
+  {
+   "id": "src/style.css#0",
+   "kind": "imp",
+   "line": 49,
+   "snippet": "[hidden] { display: none !important; }",
+   "touched": 108,
+   "diff": 34,
+   "scenes": [
+    {
+     "scene": "battle",
+     "sample": {
+      "el": "bet-chip",
+      "before": "none",
+      "after": "grid"
+     }
+    },
+    {
+     "scene": "hand-pick",
+     "sample": {
+      "el": "bet-chip",
+      "before": "none",
+      "after": "grid"
+     }
+    },
+    {
+     "scene": "giant",
+     "sample": {
+      "el": "bet-chip",
+      "before": "none",
+      "after": "grid"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/style.css#1",
+   "kind": "imp",
+   "line": 593,
+   "snippet": ".ghost { pointer-events: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/style.css#2",
+   "kind": "imp",
+   "line": 621,
+   "snippet": ".picked { position: relative; z-index: 2; animation: picked 280ms var(--ease-out) both !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/style.css#3",
+   "kind": "imp",
+   "line": 627,
+   "snippet": ".node.picked { animation-name: pickedNode !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/style.css#4",
+   "kind": "imp",
+   "line": 629,
+   "snippet": ".dismissed { animation: dismissed 220ms var(--ease-out) var(--d, 0ms) both !important; pointer-events: none; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/style.css#5",
+   "kind": "imp",
+   "line": 632,
+   "snippet": ".nope { animation: nope 260ms var(--ease-out) !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/style.css#6",
+   "kind": "imp",
+   "line": 653,
+   "snippet": ".picked, .node.picked, .dismissed, .nope { animation: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#0",
+   "kind": "imp",
+   "line": 194,
+   "snippet": ".row .btn.chosen { transform: translateY(-6px) scale(1.04); box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #f4d27a !importa",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#1",
+   "kind": "imp",
+   "line": 273,
+   "snippet": ".flyghost { transition: none !important; animation: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#2",
+   "kind": "imp",
+   "line": 273,
+   "snippet": ".flyghost { transition: none !important; animation: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#3",
+   "kind": "imp",
+   "line": 277,
+   "snippet": ".btn.down:not(:is(.k-brass, .k-iron, .k-crimson, .k-teal)) { transform: translateY(3px) scale(0.97, 0.94) !important; fi",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#4",
+   "kind": "imp",
+   "line": 298,
+   "snippet": ".nope { animation: nope 360ms cubic-bezier(0.36, 0.07, 0.19, 0.97); box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #e5262f ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#5",
+   "kind": "imp",
+   "line": 302,
+   "snippet": ".part-chip.mount { animation: mount 420ms steps(4) both; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #facc15 !important;",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#6",
+   "kind": "imp",
+   "line": 305,
+   "snippet": ".row .btn.chosen { transform: translateY(-6px) !important; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#7",
+   "kind": "imp",
+   "line": 305,
+   "snippet": ".row .btn.chosen { transform: translateY(-6px) !important; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#8",
+   "kind": "imp",
+   "line": 308,
+   "snippet": ".picked { animation: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#9",
+   "kind": "imp",
+   "line": 317,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .btn.up, .shutterfx .shut, .nope, .part-chip.mount, .overlay .panel.pop { anim",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#10",
+   "kind": "imp",
+   "line": 363,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; -webkit-mask-image: none",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#11",
+   "kind": "imp",
+   "line": 457,
+   "snippet": ".overlay.m3on, .overlay.m3off, .overlay .panel.m3in, .overlay .panel.m3out, .turn-label.th-pop, .th-cog, .th-dots i, .th",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#12",
+   "kind": "imp",
+   "line": 457,
+   "snippet": ".overlay.m3on, .overlay.m3off, .overlay .panel.m3in, .overlay .panel.m3out, .turn-label.th-pop, .th-cog, .th-dots i, .th",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#13",
+   "kind": "imp",
+   "line": 559,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .op-bg .op-fog, .op-bg .op-glow, .op-press, .op-menu.in > *, .pl-stage.in, .pl",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#14",
+   "kind": "imp",
+   "line": 562,
+   "snippet": ".pxout { -webkit-mask-size: 8px 8px; mask-size: 8px 8px; -webkit-mask-repeat: repeat; mask-repeat: repeat; animation: px",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#15",
+   "kind": "imp",
+   "line": 562,
+   "snippet": ".pxout { -webkit-mask-size: 8px 8px; mask-size: 8px 8px; -webkit-mask-repeat: repeat; mask-repeat: repeat; animation: px",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#16",
+   "kind": "imp",
+   "line": 564,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .pxout { animation-duration: 1ms !important; } }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#17",
+   "kind": "imp",
+   "line": 572,
+   "snippet": ".row .btn.chosen { transform: translateY(-6px) !important; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#18",
+   "kind": "imp",
+   "line": 572,
+   "snippet": ".row .btn.chosen { transform: translateY(-6px) !important; box-shadow: 0 0 0 2px #000, inset 0 0 0 3px #facc15, 0 6px 0 ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#19",
+   "kind": "imp",
+   "line": 577,
+   "snippet": ".part-chip.mount { animation: mountsnap 400ms var(--snap) both !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#20",
+   "kind": "imp",
+   "line": 591,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .part-chip.mount { animation: none !important; } }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#21",
+   "kind": "imp",
+   "line": 742,
+   "snippet": "body.slice.lay-f .gtop .turn-label { height: 16px !important; min-height: 0 !important; padding: 0 !important; margin: 0",
+   "touched": 24,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#22",
+   "kind": "imp",
+   "line": 742,
+   "snippet": "body.slice.lay-f .gtop .turn-label { height: 16px !important; min-height: 0 !important; padding: 0 !important; margin: 0",
+   "touched": 24,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#23",
+   "kind": "imp",
+   "line": 742,
+   "snippet": "body.slice.lay-f .gtop .turn-label { height: 16px !important; min-height: 0 !important; padding: 0 !important; margin: 0",
+   "touched": 24,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#24",
+   "kind": "imp",
+   "line": 751,
+   "snippet": "body.slice.lay-f #btn-rewind .rw-t { display: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#25",
+   "kind": "imp",
+   "line": 1018,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .transfx *, .transfx::before, .transfx::after { animation-duration: 1ms !impor",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#26",
+   "kind": "imp",
+   "line": 1037,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .transfx .tf-cog, .transfx .tf-cog > i, .transfx .tf-beam, .transfx .tf-burst ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#27",
+   "kind": "imp",
+   "line": 1195,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .er-card, .er-pc, .ev-res, .er-tok, .er-tok img { animation-duration: 1ms !imp",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#28",
+   "kind": "imp",
+   "line": 1371,
+   "snippet": ".cast3 { animation: cast3 420ms both; box-shadow: 0 0 0 3px #f4d27a, 0 0 0 5px #0b0b0e !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#29",
+   "kind": "imp",
+   "line": 1439,
+   "snippet": ".cmd .chips .t3-who { display: none !important; } /* 손패는 기물 그림이 이미 「누가」 */",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#30",
+   "kind": "imp",
+   "line": 1538,
+   "snippet": "body.slice .cf.cf.cf .cf-type { left: 19.5%; top: 31.6%; width: auto; height: 12px; justify-content: flex-start; backgro",
+   "touched": 32,
+   "diff": 32,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-type",
+      "before": "29.8125px|119.281px|107.344px|11.9219px|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|flex|center|center|6px|6px|1px|3px|1px|3px|0px|0px",
+      "after": "29.8125px|119.281px|107.344px|11.9219px|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|flex|center|center|6px|6px|0px|0px|0px|0px|0px|0px"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-type",
+      "before": "37.2656px|110.328px|93.9375px|16.3906px|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|flex|center|center|6px|6px|1px|3px|1px|3px|0px|0px",
+      "after": "37.2656px|110.328px|93.9375px|16.3906px|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|flex|center|center|6px|6px|0px|0px|0px|0px|0px|0px"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf-type",
+      "before": "35.7031px|105.703px|90px|15.7031px|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|flex|center|center|6px|6px|1px|3px|1px|3px|0px|0px|0px|",
+      "after": "35.7031px|105.703px|90px|15.7031px|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|flex|center|center|6px|6px|0px|0px|0px|0px|0px|0px|0px|"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#31",
+   "kind": "imp",
+   "line": 1554,
+   "snippet": "body.slice .cf.cf.cf .cf-desc, body.slice .cf.cf.cf .cf-desc * { font-size: 12px !important; line-height: 15px !importan",
+   "touched": 417,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#32",
+   "kind": "imp",
+   "line": 1554,
+   "snippet": "body.slice .cf.cf.cf .cf-desc, body.slice .cf.cf.cf .cf-desc * { font-size: 12px !important; line-height: 15px !importan",
+   "touched": 417,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#33",
+   "kind": "imp",
+   "line": 1555,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-sh",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#34",
+   "kind": "imp",
+   "line": 1555,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-sh",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#35",
+   "kind": "imp",
+   "line": 1555,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-sh",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#36",
+   "kind": "imp",
+   "line": 1555,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-sh",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#37",
+   "kind": "imp",
+   "line": 1555,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-sh",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#38",
+   "kind": "imp",
+   "line": 1558,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; d",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#39",
+   "kind": "imp",
+   "line": 1558,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; d",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#40",
+   "kind": "imp",
+   "line": 1558,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; d",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#41",
+   "kind": "imp",
+   "line": 1558,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; d",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#42",
+   "kind": "imp",
+   "line": 1559,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3-who { display: none !important; }",
+   "touched": 26,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#43",
+   "kind": "imp",
+   "line": 1563,
+   "snippet": "body.slice .cf.cf.cf > * { position: absolute !important; }",
+   "touched": 253,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#44",
+   "kind": "imp",
+   "line": 1567,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i.t3-who.t3-who { display: none !important; }",
+   "touched": 26,
+   "diff": 26,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "t3-who",
+      "before": "none",
+      "after": "block"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "t3-who",
+      "before": "none",
+      "after": "block"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "t3-who",
+      "before": "none",
+      "after": "block"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#45",
+   "kind": "imp",
+   "line": 1577,
+   "snippet": "body.slice .cf.cf.cf.crew-card .er-pc { position: static !important; width: 62%; height: auto; aspect-ratio: 1; backgrou",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#46",
+   "kind": "imp",
+   "line": 1589,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc > * { display: block; text-align: center; color: #4a4436; font-size: 12px !impor",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#47",
+   "kind": "imp",
+   "line": 1589,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc > * { display: block; text-align: center; color: #4a4436; font-size: 12px !impor",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#48",
+   "kind": "imp",
+   "line": 1590,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-serial { color: #6e6452 !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#49",
+   "kind": "imp",
+   "line": 1591,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st { display: flex !important; gap: 6px; justify-content: center; color: #2a2620 !imp",
+   "touched": 6,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#50",
+   "kind": "imp",
+   "line": 1591,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st { display: flex !important; gap: 6px; justify-content: center; color: #2a2620 !imp",
+   "touched": 6,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#51",
+   "kind": "imp",
+   "line": 1593,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-qn { color: #1f6b70 !important; margin-top: 2px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#52",
+   "kind": "imp",
+   "line": 1594,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-sc { color: #8c6239 !important; font-weight: 400; margin-top: 2px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#53",
+   "kind": "imp",
+   "line": 1609,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc > * { line-height: 13px !important; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "db two",
+      "before": "13px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "db two",
+      "before": "13px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "db two",
+      "before": "13px",
+      "after": "14px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#54",
+   "kind": "imp",
+   "line": 1610,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0",
+   "touched": 6,
+   "diff": 6,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cs-st",
+      "before": "grid|column|auto|0px|0px|103.484px|0px|0px|none|rgb(42, 38, 32)",
+      "after": "flex|column|auto|0px|0px|103.484px|0px|0px|none|rgb(42, 38, 32)"
+     }
+    },
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cs-st",
+      "before": "grid|column|auto|0px|0px|103.484px|0px|0px|none|rgb(42, 38, 32)",
+      "after": "flex|column|auto|0px|0px|103.484px|0px|0px|none|rgb(42, 38, 32)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#55",
+   "kind": "imp",
+   "line": 1612,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st i { margin: 0; font-size: 12px !important; line-height: 13px !important; }",
+   "touched": 18,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#56",
+   "kind": "imp",
+   "line": 1612,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st i { margin: 0; font-size: 12px !important; line-height: 13px !important; }",
+   "touched": 18,
+   "diff": 18,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "",
+      "before": "0px|0px|0px|0px|12px|13px",
+      "after": "0px|0px|0px|0px|12px|15px"
+     }
+    },
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "",
+      "before": "0px|0px|0px|0px|12px|13px",
+      "after": "0px|0px|0px|0px|12px|15px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#57",
+   "kind": "imp",
+   "line": 1615,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.tight, body.slice .cf.cf.cf .cf-desc.tight * { line-height: 13px !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#58",
+   "kind": "imp",
+   "line": 1617,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl-say *, body.slice .cf.cf.cf .cf-desc.small .cs-st i { font-family: Galmuri9, Gal",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#59",
+   "kind": "imp",
+   "line": 1617,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl-say *, body.slice .cf.cf.cf .cf-desc.small .cs-st i { font-family: Galmuri9, Gal",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#60",
+   "kind": "imp",
+   "line": 1617,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl-say *, body.slice .cf.cf.cf .cf-desc.small .cs-st i { font-family: Galmuri9, Gal",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#61",
+   "kind": "imp",
+   "line": 1638,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0 !important; font: 400 12px/12px Galmuri11, sans-serif !importa",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#62",
+   "kind": "imp",
+   "line": 1638,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0 !important; font: 400 12px/12px Galmuri11, sans-serif !importa",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#63",
+   "kind": "imp",
+   "line": 1639,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-name { font: 700 12px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 1px 1p",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#64",
+   "kind": "imp",
+   "line": 1640,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-cost { font: 700 24px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 2px 2p",
+   "touched": 19,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#65",
+   "kind": "imp",
+   "line": 1665,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#66",
+   "kind": "imp",
+   "line": 1665,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#67",
+   "kind": "imp",
+   "line": 1665,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#68",
+   "kind": "imp",
+   "line": 1683,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type > i { font: 400 12px/12px Galmuri11, sans-serif !important; color: #cfc6b0 !important",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#69",
+   "kind": "imp",
+   "line": 1683,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type > i { font: 400 12px/12px Galmuri11, sans-serif !important; color: #cfc6b0 !important",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#70",
+   "kind": "imp",
+   "line": 1690,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc { display: block; overflow: hidden; padding: 0 !important; gap: 0; }",
+   "touched": 42,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-desc",
+      "before": "block|hidden|hidden|0px|0px|0px|0px|0px|0px",
+      "after": "block|hidden|hidden|3px|0px|0px|0px|0px|0px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-desc",
+      "before": "block|hidden|hidden|0px|0px|0px|0px|0px|0px",
+      "after": "block|hidden|hidden|3px|0px|0px|0px|0px|0px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cf-desc",
+      "before": "block|hidden|hidden|0px|0px|0px|0px|0px|0px",
+      "after": "block|hidden|hidden|3px|0px|0px|0px|0px|0px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#71",
+   "kind": "imp",
+   "line": 1697,
+   "snippet": "font: 400 12px/15px Galmuri11, sans-serif !important; color: #3a342a; word-break: keep-all; }",
+   "touched": 136,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#72",
+   "kind": "imp",
+   "line": 1700,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-fx em { font-style: normal; color: #a8222e; font: inherit !important; color: #a82",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#73",
+   "kind": "imp",
+   "line": 1701,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color: #1f6b70; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-name",
+      "before": "700|rgb(31, 107, 112)",
+      "after": "400|rgb(31, 107, 112)"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-name",
+      "before": "700|rgb(31, 107, 112)",
+      "after": "400|rgb(31, 107, 112)"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "ln ln-name",
+      "before": "700|rgb(31, 107, 112)",
+      "after": "400|rgb(31, 107, 112)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#74",
+   "kind": "imp",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 70,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|10px|15px|400"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|12px|400",
+      "after": "Galmuri11, sans-serif|10px|12px|400"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|10px|15px|400"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#75",
+   "kind": "imp",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 155,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri9, Galmuri11, sans-serif|12px|15px|400"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|12px|400",
+      "after": "Galmuri9, Galmuri11, sans-serif|12px|12px|400"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri9, Galmuri11, sans-serif|12px|15px|400"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#76",
+   "kind": "imp",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#77",
+   "kind": "imp",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#78",
+   "kind": "imp",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#79",
+   "kind": "imp",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#80",
+   "kind": "imp",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#81",
+   "kind": "imp",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#82",
+   "kind": "imp",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#83",
+   "kind": "imp",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#84",
+   "kind": "imp",
+   "line": 1738,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::before { content: '[' !important; margin: 0 !important; color: #8",
+   "touched": 58,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#85",
+   "kind": "imp",
+   "line": 1738,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::before { content: '[' !important; margin: 0 !important; color: #8",
+   "touched": 58,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#86",
+   "kind": "imp",
+   "line": 1740,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i.t3-sty { color: #e8e0cc !important; }",
+   "touched": 26,
+   "diff": 26,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "t3-sty sty-guard",
+      "before": "rgb(232, 224, 204)",
+      "after": "rgb(207, 198, 176)"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "t3-sty sty-strike",
+      "before": "rgb(232, 224, 204)",
+      "after": "rgb(207, 198, 176)"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "t3-sty sty-strike",
+      "before": "rgb(232, 224, 204)",
+      "after": "rgb(207, 198, 176)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#87",
+   "kind": "imp",
+   "line": 1761,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .dr-stamp.st3 { animation-duration: 1ms !important; } }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#88",
+   "kind": "imp",
+   "line": 1774,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln { line-height: 14px !important; }",
+   "touched": 54,
+   "diff": 29,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-say",
+      "before": "14px",
+      "after": "15px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "ln ln-say",
+      "before": "14px",
+      "after": "15px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "ln ln-say",
+      "before": "14px",
+      "after": "15px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#89",
+   "kind": "imp",
+   "line": 1775,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.",
+   "touched": 55,
+   "diff": 55,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "12px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "12px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "12px",
+      "after": "14px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#90",
+   "kind": "chain",
+   "line": 820,
+   "snippet": "body.slice .cf.cf { position: relative; isolation: isolate; overflow: visible; display: flex; flex-direction: column; al",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#91",
+   "kind": "chain",
+   "line": 822,
+   "snippet": "body.slice .cf.cf::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-style: ",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#92",
+   "kind": "chain",
+   "line": 823,
+   "snippet": "body.slice .cf.cf::after { content: none; }",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#93",
+   "kind": "chain",
+   "line": 1145,
+   "snippet": "body.slice .er-card .cf.cf { width: 100%; pointer-events: none; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#94",
+   "kind": "chain",
+   "line": 1452,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-say { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; color: ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#95",
+   "kind": "chain",
+   "line": 1453,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { font: 700 12px/15px Galmuri11, sans-serif; color: #f5c542; mar",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#96",
+   "kind": "chain",
+   "line": 1454,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { font: 400 12px/15px Galmuri11, sans-serif; color: #b9b4c2; mar",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#97",
+   "kind": "chain",
+   "line": 1456,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { margin-top: 4px; color: #f4efe2; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#98",
+   "kind": "chain",
+   "line": 1457,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if > i { display: inline-block; font-style: normal; padding: 0 5px;",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#99",
+   "kind": "chain",
+   "line": 1458,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { margin-top: 2px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#100",
+   "kind": "chain",
+   "line": 1459,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 4px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#101",
+   "kind": "chain",
+   "line": 1461,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { margin-top: 4px; color: #b9b4c2; font: 400 12px/15px Galmuri11",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#102",
+   "kind": "chain",
+   "line": 1462,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx { margin-top: 3px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#103",
+   "kind": "chain",
+   "line": 1463,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-fx > i { display: inline-block; font-style: normal; padding: 1px 6p",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#104",
+   "kind": "chain",
+   "line": 1464,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl-say + .dl.dl-fx { margin-top: 5px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#105",
+   "kind": "chain",
+   "line": 1466,
+   "snippet": "body.slice .cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl-if { white-space: normal; text-wrap: balance; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#106",
+   "kind": "chain",
+   "line": 1518,
+   "snippet": "body.slice .cf.cf.cf { width: 170px; height: auto; aspect-ratio: 112 / 158; padding: 0; gap: 0; display: block; backgrou",
+   "touched": 42,
+   "diff": 42,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf crew-card g-common crew-info",
+      "before": "168px|252px|112 / 168|0px|0px|0px|0px|0px|0px|block|url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")|0px|0px|100% 100%|no-repeat|scroll|padding-",
+      "after": "168px|252px|112 / 168|28px|10px|16px|10px|4px|4px|flex|url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")|0%|0%|auto|repeat|scroll|padding-box|bor"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf cmd big t-any g-common",
+      "before": "167px|250.5px|112 / 168|0px|0px|0px|0px|0px|0px|block|url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|0px|0px|100% 100%|no-repeat|scroll|padding",
+      "after": "167px|250.5px|112 / 168|28px|10px|16px|10px|4px|4px|flex|url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|0%|0%|auto|repeat|scroll|padding-box|bo"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-common ax-inf",
+      "before": "167px|250.5px|112 / 168|0px|0px|0px|0px|0px|0px|block|url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")|0px|0px|100% 100%|no-repeat|scroll|paddin",
+      "after": "167px|250.5px|112 / 168|28px|10px|16px|10px|4px|4px|flex|url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")|0%|0%|auto|repeat|scroll|padding-box|b"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#107",
+   "kind": "chain",
+   "line": 1519,
+   "snippet": "body.slice .cf.cf.cf::before, body.slice .cf.cf.cf::after { content: none; border: 0; animation: none; }",
+   "touched": 84,
+   "diff": 34,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf crew-card g-common crew-info::before",
+      "before": "none|0px|0px|0px|0px|none|none|none|none|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|none|100%|1|0|stretch|0s|ease|0s|1|normal|n",
+      "after": "\"\"|24px|8px|10px|8px|solid|solid|solid|solid|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|url(\"http://localhost:5291/src/assets/u"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf cmd big t-any g-common::before",
+      "before": "none|0px|0px|0px|0px|none|none|none|none|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|none|100%|1|0|stretch|0s|ease|0s|1|normal|n",
+      "after": "\"\"|24px|8px|10px|8px|solid|solid|solid|solid|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|url(\"http://localhost:5291/src/assets/u"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-common ax-inf::before",
+      "before": "none|0px|0px|0px|0px|none|none|none|none|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|none|100%|1|0|stretch|0s|ease|0s|1|normal|n",
+      "after": "\"\"|24px|8px|10px|8px|solid|solid|solid|solid|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|rgb(236, 230, 218)|url(\"http://localhost:5291/src/assets/u"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#108",
+   "kind": "chain",
+   "line": 1519,
+   "snippet": "body.slice .cf.cf.cf::before, body.slice .cf.cf.cf::after { content: none; border: 0; animation: none; }",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#109",
+   "kind": "chain",
+   "line": 1520,
+   "snippet": "body.slice .cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); }",
+   "touched": 2,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#110",
+   "kind": "chain",
+   "line": 1521,
+   "snippet": "body.slice .cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#111",
+   "kind": "chain",
+   "line": 1522,
+   "snippet": "body.slice .cf.cf.cf.part-card { background-image: url('../assets/ui/cards/part-common.png'); }",
+   "touched": 13,
+   "diff": 3,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-common ax-inf",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf part-card g-common ax-inf",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#112",
+   "kind": "chain",
+   "line": 1523,
+   "snippet": "body.slice .cf.cf.cf.part-card.g-rare { background-image: url('../assets/ui/cards/part-rare.png'); }",
+   "touched": 4,
+   "diff": 4,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-rare ax-push g-pop",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/part-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf part-card g-rare ax-king g-pop",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/part-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf part-card g-rare ax-inf",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/part-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#113",
+   "kind": "chain",
+   "line": 1524,
+   "snippet": "body.slice .cf.cf.cf.part-card.g-gold { background-image: url('../assets/ui/cards/part-gold.png'); }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#114",
+   "kind": "chain",
+   "line": 1525,
+   "snippet": "body.slice .cf.cf.cf > * { position: absolute; margin: 0; }",
+   "touched": 253,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#115",
+   "kind": "chain",
+   "line": 1526,
+   "snippet": "body.slice .cf.cf.cf .cf-cost { left: 2%; top: 0; width: 15.6%; height: 12.6%; display: grid; place-items: center; z-ind",
+   "touched": 19,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#116",
+   "kind": "chain",
+   "line": 1527,
+   "snippet": "body.slice .cf.cf.cf .cf-name { left: 10.7%; top: 37.3%; width: 79.5%; height: 7.6%; right: auto; display: grid; place-i",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#117",
+   "kind": "chain",
+   "line": 1528,
+   "snippet": "body.slice .cf.cf.cf.g-rare .cf-name { color: #f4f1ea; } body.slice .cf.cf.cf.g-gold .cf-name { color: #fff1c0; }",
+   "touched": 7,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#118",
+   "kind": "chain",
+   "line": 1528,
+   "snippet": "body.slice .cf.cf.cf.g-rare .cf-name { color: #f4f1ea; } body.slice .cf.cf.cf.g-gold .cf-name { color: #fff1c0; }",
+   "touched": 1,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#119",
+   "kind": "chain",
+   "line": 1529,
+   "snippet": "body.slice .cf.cf.cf .cf-win { left: 17.9%; top: 12.7%; width: 65.2%; height: 26.6%; z-index: 0; display: grid; place-it",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#120",
+   "kind": "chain",
+   "line": 1530,
+   "snippet": "body.slice .cf.cf.cf.cmd .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' h",
+   "touched": 19,
+   "diff": 19,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3d",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3d"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#121",
+   "kind": "chain",
+   "line": 1531,
+   "snippet": "body.slice .cf.cf.cf.ax-inf .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4",
+   "touched": 3,
+   "diff": 0,
+   "scenes": [],
+   "result": "needed(겹침)"
+  },
+  {
+   "id": "src/slice/slice.css#122",
+   "kind": "chain",
+   "line": 1531,
+   "snippet": "body.slice .cf.cf.cf.ax-inf .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#123",
+   "kind": "chain",
+   "line": 1532,
+   "snippet": "body.slice .cf.cf.cf.ax-chain .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width=",
+   "touched": 1,
+   "diff": 1,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%23352a",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#124",
+   "kind": "chain",
+   "line": 1532,
+   "snippet": "body.slice .cf.cf.cf.ax-chain .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width=",
+   "touched": 2,
+   "diff": 1,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3d",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#125",
+   "kind": "chain",
+   "line": 1533,
+   "snippet": "body.slice .cf.cf.cf.ax-push .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='",
+   "touched": 2,
+   "diff": 0,
+   "scenes": [],
+   "result": "needed(겹침)"
+  },
+  {
+   "id": "src/slice/slice.css#126",
+   "kind": "chain",
+   "line": 1533,
+   "snippet": "body.slice .cf.cf.cf.ax-push .cf-win { --wpat: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='",
+   "touched": 5,
+   "diff": 4,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232240",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232240",
+      "after": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#127",
+   "kind": "chain",
+   "line": 1534,
+   "snippet": "body.slice .cf.cf.cf .cf-win .cf-face { width: 60%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }",
+   "touched": 8,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#128",
+   "kind": "chain",
+   "line": 1535,
+   "snippet": "body.slice .cf.cf.cf .cf-win .art { width: auto; height: auto; place-self: center; }",
+   "touched": 11,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#129",
+   "kind": "chain",
+   "line": 1536,
+   "snippet": "body.slice .cf.cf.cf .cf-win .art img, body.slice .cf.cf.cf .cf-win .ico, body.slice .cf.cf.cf .cf-win .art.any .ico16 {",
+   "touched": 24,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#130",
+   "kind": "chain",
+   "line": 1536,
+   "snippet": "body.slice .cf.cf.cf .cf-win .art img, body.slice .cf.cf.cf .cf-win .ico, body.slice .cf.cf.cf .cf-win .art.any .ico16 {",
+   "touched": 24,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#131",
+   "kind": "chain",
+   "line": 1536,
+   "snippet": "body.slice .cf.cf.cf .cf-win .art img, body.slice .cf.cf.cf .cf-win .ico, body.slice .cf.cf.cf .cf-win .art.any .ico16 {",
+   "touched": 24,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#132",
+   "kind": "chain",
+   "line": 1537,
+   "snippet": "body.slice .cf.cf.cf.part-card .cf-win { place-items: center; background: #141319; }",
+   "touched": 13,
+   "diff": 13,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-win",
+      "before": "center|center|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(20, 19, 25)",
+      "after": "end|center|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(36, 35, 43)"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf-win",
+      "before": "center|center|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(20, 19, 25)",
+      "after": "end|center|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(36, 35, 43)"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "center|center|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(20, 19, 25)",
+      "after": "end|center|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(36, 35, 43)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#133",
+   "kind": "chain",
+   "line": 1538,
+   "snippet": "body.slice .cf.cf.cf .cf-type { left: 19.5%; top: 31.6%; width: auto; height: 12px; justify-content: flex-start; backgro",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#134",
+   "kind": "chain",
+   "line": 1539,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 { display: flex; gap: 0; } body.slice .cf.cf.cf .cf-type .t3 i { font: 12px/1 Galmuri1",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#135",
+   "kind": "chain",
+   "line": 1539,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 { display: flex; gap: 0; } body.slice .cf.cf.cf .cf-type .t3 i { font: 12px/1 Galmuri1",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#136",
+   "kind": "chain",
+   "line": 1540,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i + i::before { content: '·'; margin-right: 3px; color: #6e6c78; }",
+   "touched": 52,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#137",
+   "kind": "chain",
+   "line": 1541,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3-fx.fx-add { color: #46c4c8; } body.slice .cf.cf.cf .cf-type .t3-fx.fx-mul { color: #f0",
+   "touched": 3,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#138",
+   "kind": "chain",
+   "line": 1541,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3-fx.fx-add { color: #46c4c8; } body.slice .cf.cf.cf .cf-type .t3-fx.fx-mul { color: #f0",
+   "touched": 7,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#139",
+   "kind": "chain",
+   "line": 1542,
+   "snippet": "body.slice .cf.cf.cf .cf-desc { left: 21%; top: 47.6%; width: 58%; height: 40.5%; padding: 0; border: 0; display: flex; ",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#140",
+   "kind": "chain",
+   "line": 1543,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl { display: block; margin: 0; font: 400 12px/1.3 Galmuri11, sans-",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#141",
+   "kind": "chain",
+   "line": 1544,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl.dl-say { color: #3a342a; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#142",
+   "kind": "chain",
+   "line": 1545,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.cf-desc.cf-desc .dl.dl.dl.dl-fxb { align-self: stretch; border-top: 2px dotted #a8782a; pa",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#143",
+   "kind": "chain",
+   "line": 1546,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-if { color: #4a4436; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#144",
+   "kind": "chain",
+   "line": 1547,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-fx { font: 700 12px/1.3 Galmuri11, sans-serif; color: #2a2620; background: non",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#145",
+   "kind": "chain",
+   "line": 1548,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .dl-fxb .dl-fx em { font-style: normal; color: #a8222e; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#146",
+   "kind": "chain",
+   "line": 1549,
+   "snippet": "body.slice .cf.cf.cf .cf-flv { display: none; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#147",
+   "kind": "chain",
+   "line": 1550,
+   "snippet": "body.slice .cf.cf.cf .cf-gem { left: 50%; top: 91.1%; right: auto; width: 14px; height: 14px; transform: translate(-50%,",
+   "touched": 36,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#148",
+   "kind": "chain",
+   "line": 1552,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.cf-desc .dl-if, body.slice .cf.cf.cf .cf-desc.cf-desc .dl-fx { white-space: normal; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#149",
+   "kind": "chain",
+   "line": 1552,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.cf-desc .dl-if, body.slice .cf.cf.cf .cf-desc.cf-desc .dl-fx { white-space: normal; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#150",
+   "kind": "chain",
+   "line": 1554,
+   "snippet": "body.slice .cf.cf.cf .cf-desc, body.slice .cf.cf.cf .cf-desc * { font-size: 12px !important; line-height: 15px !importan",
+   "touched": 417,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#151",
+   "kind": "chain",
+   "line": 1554,
+   "snippet": "body.slice .cf.cf.cf .cf-desc, body.slice .cf.cf.cf .cf-desc * { font-size: 12px !important; line-height: 15px !importan",
+   "touched": 417,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#152",
+   "kind": "chain",
+   "line": 1555,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { font-size: 12px !important; line-height: 12px; background: none !important; box-sh",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#153",
+   "kind": "chain",
+   "line": 1556,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 { background: none; box-shadow: none; border: 0; padding: 0; }",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#154",
+   "kind": "chain",
+   "line": 1558,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i { position: static !important; transform: none !important; width: auto !important; d",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#155",
+   "kind": "chain",
+   "line": 1559,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3-who { display: none !important; }",
+   "touched": 26,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#156",
+   "kind": "chain",
+   "line": 1560,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i + i::before { content: none; }",
+   "touched": 52,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#157",
+   "kind": "chain",
+   "line": 1561,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 { gap: 4px; }",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#158",
+   "kind": "chain",
+   "line": 1562,
+   "snippet": "body.slice .cf.cf.cf .cf-win .cf-face { width: 52%; }",
+   "touched": 8,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#159",
+   "kind": "chain",
+   "line": 1563,
+   "snippet": "body.slice .cf.cf.cf > * { position: absolute !important; }",
+   "touched": 253,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#160",
+   "kind": "chain",
+   "line": 1565,
+   "snippet": "body.slice .cf.cf.cf .cf-type { left: auto; right: 18.5%; top: 32.6%; }",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#161",
+   "kind": "chain",
+   "line": 1566,
+   "snippet": "body.slice .cf.cf.cf .cf-desc { left: 19.5%; width: 61%; }",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#162",
+   "kind": "chain",
+   "line": 1567,
+   "snippet": "body.slice .cf.cf.cf .cf-type .t3 i.t3-who.t3-who { display: none !important; }",
+   "touched": 26,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#163",
+   "kind": "chain",
+   "line": 1569,
+   "snippet": "body.slice .cf.cf.cf .cf-win { left: 17.86%; width: 65.18%; top: 12.66%; height: 27.2%; -webkit-mask: url('../assets/ui/",
+   "touched": 42,
+   "diff": 42,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.9844px|109.5px|30px|60px|url(\"http://localhost:5291/src/assets/ui/cards/mask-crew.png\")|0px|0px|100% 100%|no-repeat|border-box|border-box|add|match-source|no",
+      "after": "29.9844px|109.5px|30px|60px|url(\"http://localhost:5291/src/assets/ui/cards/mask-crew.png\")|0px|0px|100% 100%|no-repeat|border-box|border-box|add|match-source|rg"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.8125px|107.344px|74.5469px|56.6562px|url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")|0px|0px|100% 100%|no-repeat|border-box|border-box|add|matc",
+      "after": "29.8125px|107.344px|74.5469px|56.6562px|url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")|0px|0px|100% 100%|no-repeat|border-box|border-box|add|matc"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.8125px|108.844px|29.8125px|59.6406px|url(\"http://localhost:5291/src/assets/ui/cards/mask-part.png\")|0px|0px|100% 100%|no-repeat|border-box|border-box|add|mat",
+      "after": "29.8125px|108.844px|29.8125px|59.6406px|url(\"http://localhost:5291/src/assets/ui/cards/mask-part.png\")|0px|0px|100% 100%|no-repeat|border-box|border-box|add|mat"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#164",
+   "kind": "chain",
+   "line": 1570,
+   "snippet": "body.slice .cf.cf.cf.part-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-part.png'); mask-image: url('.",
+   "touched": 13,
+   "diff": 13,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/mask-part.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/mask-part.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/mask-part.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#165",
+   "kind": "chain",
+   "line": 1571,
+   "snippet": "body.slice .cf.cf.cf .cf-win .cf-face { width: 50%; margin-bottom: 1px; }",
+   "touched": 8,
+   "diff": 8,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-face",
+      "before": "53.6719px|1px",
+      "after": "55.8125px|1px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-face",
+      "before": "48.2031px|1px",
+      "after": "50.125px|1px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-face",
+      "before": "48.2031px|1px",
+      "after": "50.125px|1px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#166",
+   "kind": "chain",
+   "line": 1573,
+   "snippet": "body.slice .cf.cf.cf.crew-card { background-image: url('../assets/ui/cards/crew-common.png'); width: 170px; }",
+   "touched": 10,
+   "diff": 8,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf crew-card g-common crew-info",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")|168px",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|168px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf crew-card g-common",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")|167px",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|167px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cf crew-card g-common",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")|160px",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|160px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#167",
+   "kind": "chain",
+   "line": 1574,
+   "snippet": "body.slice .cf.cf.cf.crew-card.g-rare { background-image: url('../assets/ui/cards/crew-rare.png'); }",
+   "touched": 1,
+   "diff": 1,
+   "scenes": [
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cf crew-card g-rare",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/crew-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#168",
+   "kind": "chain",
+   "line": 1575,
+   "snippet": "body.slice .cf.cf.cf.crew-card.g-gold { background-image: url('../assets/ui/cards/crew-gold.png'); }",
+   "touched": 1,
+   "diff": 1,
+   "scenes": [
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cf crew-card g-gold",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/crew-gold.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/crew-common.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#169",
+   "kind": "chain",
+   "line": 1576,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('.",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/mask-crew.png\")|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(232, 224, 204)|end|center",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(36, 35, 43)|end|center"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/mask-crew.png\")|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(232, 224, 204)|end|center",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(36, 35, 43)|end|center"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cf-win",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/mask-crew.png\")|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(232, 224, 204)|end|center",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/mask-cmd.png\")|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgb(36, 35, 43)|end|center"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#170",
+   "kind": "chain",
+   "line": 1577,
+   "snippet": "body.slice .cf.cf.cf.crew-card .er-pc { position: static !important; width: 62%; height: auto; aspect-ratio: 1; backgrou",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#171",
+   "kind": "chain",
+   "line": 1578,
+   "snippet": "body.slice .cf.cf.cf.crew-card .er-pc img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#172",
+   "kind": "chain",
+   "line": 1579,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb { display: grid; place-items: center; z-index: 4; font: 700 15px/1 Galmuri11, sans-se",
+   "touched": 20,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#173",
+   "kind": "chain",
+   "line": 1580,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-atk { left: 0; top: 30.2%; width: 18.75%; height: 13.9%; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#174",
+   "kind": "chain",
+   "line": 1581,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-hp { left: 81.25%; top: 30.2%; width: 18.75%; height: 13.9%; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#175",
+   "kind": "chain",
+   "line": 1582,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-hp .er-hpn { font: inherit; color: inherit; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#176",
+   "kind": "chain",
+   "line": 1583,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-lives { right: 19%; top: 13.9%; display: flex; gap: 1px; z-index: 4; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#177",
+   "kind": "chain",
+   "line": 1584,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-cog { width: 16px; height: 16px; margin-left: 3px; background: var(--cog-off) center ",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#178",
+   "kind": "chain",
+   "line": 1585,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-life { width: 16px; height: 16px; background: var(--life-on) center / contain no-repe",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#179",
+   "kind": "chain",
+   "line": 1586,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-bar { left: 22%; width: 56%; top: 46%; height: 6px; z-index: 4; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#180",
+   "kind": "chain",
+   "line": 1587,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-bar .er-hp { width: 100%; height: 6px; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#181",
+   "kind": "chain",
+   "line": 1588,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc { top: 49.5%; height: 38%; gap: 1px; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#182",
+   "kind": "chain",
+   "line": 1589,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc > * { display: block; text-align: center; color: #4a4436; font-size: 12px !impor",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#183",
+   "kind": "chain",
+   "line": 1590,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-serial { color: #6e6452 !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#184",
+   "kind": "chain",
+   "line": 1591,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st { display: flex !important; gap: 6px; justify-content: center; color: #2a2620 !imp",
+   "touched": 6,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#185",
+   "kind": "chain",
+   "line": 1592,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st i { font-style: normal; font-weight: 400; color: #6e6452; margin-right: 2px; }",
+   "touched": 18,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#186",
+   "kind": "chain",
+   "line": 1593,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-qn { color: #1f6b70 !important; margin-top: 2px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#187",
+   "kind": "chain",
+   "line": 1594,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-sc { color: #8c6239 !important; font-weight: 400; margin-top: 2px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#188",
+   "kind": "chain",
+   "line": 1597,
+   "snippet": "body.slice .er-crewcard .cf.cf.cf.crew-card { width: 150px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#189",
+   "kind": "chain",
+   "line": 1603,
+   "snippet": "body.slice .cf.cf.cf, body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card { width: var(--card-w)",
+   "touched": 52,
+   "diff": 32,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf cmd big t-any g-common",
+      "before": "167px|0|0|auto",
+      "after": "170px|0|0|auto"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-common ax-inf",
+      "before": "167px|0|0|auto",
+      "after": "170px|0|0|auto"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf part-card g-rare ax-king g-pop",
+      "before": "160px|0|0|auto",
+      "after": "170px|0|0|auto"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#190",
+   "kind": "chain",
+   "line": 1603,
+   "snippet": "body.slice .cf.cf.cf, body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card { width: var(--card-w)",
+   "touched": 52,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#191",
+   "kind": "chain",
+   "line": 1603,
+   "snippet": "body.slice .cf.cf.cf, body.slice .er-crewcard .cf.cf.cf.crew-card, body.slice .cf.cf.cf.crew-card { width: var(--card-w)",
+   "touched": 52,
+   "diff": 20,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf crew-card g-common crew-info",
+      "before": "168px|0|0|auto",
+      "after": "170px|0|0|auto"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf crew-card g-common",
+      "before": "167px|0|0|auto",
+      "after": "170px|0|0|auto"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cf crew-card g-common",
+      "before": "160px|0|0|auto",
+      "after": "170px|0|0|auto"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#192",
+   "kind": "chain",
+   "line": 1606,
+   "snippet": "body.slice .er-card.reward-cards .cf.cf.cf { width: var(--card-w); }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#193",
+   "kind": "chain",
+   "line": 1608,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc { left: 17.5%; width: 65%; top: 48.5%; height: 40%; gap: 2px; justify-content: c",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-desc",
+      "before": "33px|103.484px|134.984px|88.4844px|0px|0px|center",
+      "after": "33px|103.484px|134.984px|88.4844px|0px|0px|safe center"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-desc",
+      "before": "32.7969px|102.875px|134.188px|87.9688px|0px|0px|center",
+      "after": "32.7969px|102.875px|134.188px|87.9688px|0px|0px|safe center"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cf-desc",
+      "before": "31.4219px|98.5625px|128.562px|84.2812px|0px|0px|center",
+      "after": "31.4219px|98.5625px|128.562px|84.2812px|0px|0px|safe center"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#194",
+   "kind": "chain",
+   "line": 1609,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc > * { line-height: 13px !important; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "db two",
+      "before": "13px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "db two",
+      "before": "13px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "db two",
+      "before": "13px",
+      "after": "14px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#195",
+   "kind": "chain",
+   "line": 1610,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0",
+   "touched": 6,
+   "diff": 6,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cs-st",
+      "before": "grid|column|auto|0px|0px|103.484px|0px|0px|none|rgb(42, 38, 32)",
+      "after": "flex|column|auto|6px|6px|103.484px|0px|0px|none|rgb(42, 38, 32)"
+     }
+    },
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cs-st",
+      "before": "grid|column|auto|0px|0px|103.484px|0px|0px|none|rgb(42, 38, 32)",
+      "after": "flex|column|auto|6px|6px|103.484px|0px|0px|none|rgb(42, 38, 32)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#196",
+   "kind": "chain",
+   "line": 1611,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st > span { display: flex; flex-direction: column; align-items: center; min-width: 0;",
+   "touched": 18,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#197",
+   "kind": "chain",
+   "line": 1612,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-st i { margin: 0; font-size: 12px !important; line-height: 13px !important; }",
+   "touched": 18,
+   "diff": 18,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "",
+      "before": "0px|0px|0px|0px|12px|13px",
+      "after": "0px|2px|0px|0px|12px|15px"
+     }
+    },
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "",
+      "before": "0px|0px|0px|0px|12px|13px",
+      "after": "0px|2px|0px|0px|12px|15px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#198",
+   "kind": "chain",
+   "line": 1615,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.tight, body.slice .cf.cf.cf .cf-desc.tight * { line-height: 13px !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#199",
+   "kind": "chain",
+   "line": 1615,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.tight, body.slice .cf.cf.cf .cf-desc.tight * { line-height: 13px !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#200",
+   "kind": "chain",
+   "line": 1616,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl.dl.dl.dl-say, body.slice .cf.cf.cf .cf-desc.small .dl-if, body.slice .cf.cf.cf .",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#201",
+   "kind": "chain",
+   "line": 1616,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl.dl.dl.dl-say, body.slice .cf.cf.cf .cf-desc.small .dl-if, body.slice .cf.cf.cf .",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#202",
+   "kind": "chain",
+   "line": 1616,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl.dl.dl.dl-say, body.slice .cf.cf.cf .cf-desc.small .dl-if, body.slice .cf.cf.cf .",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#203",
+   "kind": "chain",
+   "line": 1617,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl-say *, body.slice .cf.cf.cf .cf-desc.small .cs-st i { font-family: Galmuri9, Gal",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#204",
+   "kind": "chain",
+   "line": 1617,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.small .dl-say *, body.slice .cf.cf.cf .cf-desc.small .cs-st i { font-family: Galmuri9, Gal",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#205",
+   "kind": "chain",
+   "line": 1618,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.fold .dl.dl.dl.dl-say { display: none; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#206",
+   "kind": "chain",
+   "line": 1619,
+   "snippet": "body.slice .cf.cf.cf .cf-desc.fold .dl.dl.dl.dl-fxb { border-top: 0; padding-top: 0; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#207",
+   "kind": "chain",
+   "line": 1620,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc.fold .cs-sc + .cs-q { display: none; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#208",
+   "kind": "chain",
+   "line": 1629,
+   "snippet": "body.slice .cf.cf.cf .cf-desc { justify-content: safe center; }",
+   "touched": 42,
+   "diff": 32,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-desc",
+      "before": "safe center",
+      "after": "center"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-desc",
+      "before": "safe center",
+      "after": "center"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf-desc",
+      "before": "safe center",
+      "after": "center"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#209",
+   "kind": "chain",
+   "line": 1630,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .fxi { display: inline-block; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#210",
+   "kind": "chain",
+   "line": 1631,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cf-desc > * { white-space: normal; word-break: keep-all; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#211",
+   "kind": "chain",
+   "line": 1632,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .dl.dl.dl { max-height: none; overflow: visible; flex: none; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#212",
+   "kind": "chain",
+   "line": 1636,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type { background: none; padding: 0; gap: 6px; color: #cfc6b0; overflow: hidden; white-spa",
+   "touched": 32,
+   "diff": 32,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-type",
+      "before": "none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|1px|3px|1px|3px|6px|6px|rgb(207, 198, 176)|hidden|hidden|collapse|nowrap",
+      "after": "none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(11, 11, 14, 0.78)|1px|3px|1px|3px|0px|0px|rgb(207, 198, 176)|hidden|hidden|collapse|nowrap"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-type",
+      "before": "none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|1px|3px|1px|3px|6px|6px|rgb(207, 198, 176)|hidden|hidden|collapse|nowrap",
+      "after": "none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(11, 11, 14, 0.78)|1px|3px|1px|3px|0px|0px|rgb(207, 198, 176)|hidden|hidden|collapse|nowrap"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf-type",
+      "before": "none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|1px|3px|1px|3px|6px|6px|rgb(207, 198, 176)|hidden|hidden|collapse|nowrap",
+      "after": "none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(11, 11, 14, 0.78)|1px|3px|1px|3px|0px|0px|rgb(207, 198, 176)|hidden|hidden|collapse|nowrap"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#213",
+   "kind": "chain",
+   "line": 1637,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 { display: flex; gap: 6px; align-items: center; }",
+   "touched": 32,
+   "diff": 32,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "t3",
+      "before": "flex|6px|6px|center",
+      "after": "flex|4px|4px|center"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "t3",
+      "before": "flex|6px|6px|center",
+      "after": "flex|4px|4px|center"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "t3",
+      "before": "flex|6px|6px|center",
+      "after": "flex|4px|4px|center"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#214",
+   "kind": "chain",
+   "line": 1638,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0 !important; font: 400 12px/12px Galmuri11, sans-serif !importa",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "needed(겹침)"
+  },
+  {
+   "id": "src/slice/slice.css#215",
+   "kind": "chain",
+   "line": 1639,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-name { font: 700 12px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 1px 1p",
+   "touched": 42,
+   "diff": 23,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-name",
+      "before": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|12px|12px|Galmuri11, sans-serif|rgb(255, 255, 255)|rgb(0, 0",
+      "after": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|12px|12px|Galmuri11, sans-serif|rgb(244, 241, 234)|rgb(0, 0"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-name",
+      "before": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|12px|12px|Galmuri11, sans-serif|rgb(255, 255, 255)|rgb(0, 0",
+      "after": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|12px|12px|Galmuri11, sans-serif|rgb(244, 241, 234)|rgb(0, 0"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-name",
+      "before": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|12px|12px|Galmuri11, sans-serif|rgb(255, 255, 255)|rgb(0, 0",
+      "after": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|12px|12px|Galmuri11, sans-serif|rgb(244, 241, 234)|rgb(0, 0"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#216",
+   "kind": "chain",
+   "line": 1640,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-cost { font: 700 24px/1 Galmuri11, sans-serif !important; color: #fff; text-shadow: 2px 2p",
+   "touched": 19,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#217",
+   "kind": "chain",
+   "line": 1641,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb { display: grid; place-items: center; }",
+   "touched": 20,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#218",
+   "kind": "chain",
+   "line": 1642,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-hp { height: 100%; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#219",
+   "kind": "chain",
+   "line": 1651,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-hp { display: block; position: relative; width: 100%; height: 100%; back",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#220",
+   "kind": "chain",
+   "line": 1652,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill, body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { position: ",
+   "touched": 20,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#221",
+   "kind": "chain",
+   "line": 1652,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill, body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { position: ",
+   "touched": 20,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#222",
+   "kind": "chain",
+   "line": 1653,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-fill { background: #4aa856; box-shadow: inset 0 2px 0 #7ad07e; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#223",
+   "kind": "chain",
+   "line": 1654,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb-bar .er-ghost { background: #d23a3a; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#224",
+   "kind": "chain",
+   "line": 1655,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { font-size: 12px; }",
+   "touched": 1,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#225",
+   "kind": "chain",
+   "line": 1656,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .fxi { vertical-align: top; } /* D-375: 줄 높이가 늘지 않게 */",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#226",
+   "kind": "chain",
+   "line": 1657,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cs-q .fxi { display: inline-block; vertical-align: top; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#227",
+   "kind": "chain",
+   "line": 1665,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#228",
+   "kind": "chain",
+   "line": 1665,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type i, body.slice .cf.cf.cf.cf > .cf-type > i { font-style: normal !important; background",
+   "touched": 84,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#229",
+   "kind": "chain",
+   "line": 1666,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .sep { white-space: pre; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#230",
+   "kind": "chain",
+   "line": 1671,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-cost.c1 { padding-left: 3px; box-sizing: border-box; }",
+   "touched": 13,
+   "diff": 13,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "3px|border-box",
+      "after": "0px|border-box"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "3px|border-box",
+      "after": "0px|border-box"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "3px|border-box",
+      "after": "0px|border-box"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#231",
+   "kind": "chain",
+   "line": 1672,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: -1px; font-size: 12px; }",
+   "touched": 1,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#232",
+   "kind": "chain",
+   "line": 1677,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cf-desc { padding-top: 3px; box-sizing: border-box; }",
+   "touched": 10,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#233",
+   "kind": "chain",
+   "line": 1681,
+   "snippet": "body.slice .cf.cf.cf .cf-desc .sep { white-space: normal; margin: 0 3px; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#234",
+   "kind": "chain",
+   "line": 1683,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type > i { font: 400 12px/12px Galmuri11, sans-serif !important; color: #cfc6b0 !important",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#235",
+   "kind": "chain",
+   "line": 1685,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb.n3 { letter-spacing: 0; }",
+   "touched": 1,
+   "diff": 1,
+   "scenes": [
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cb cb-hp n3",
+      "before": "normal",
+      "after": "-1px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#236",
+   "kind": "chain",
+   "line": 1690,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc { display: block; overflow: hidden; padding: 0 !important; gap: 0; }",
+   "touched": 42,
+   "diff": 42,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-desc",
+      "before": "block|hidden|hidden|0px|0px|0px|0px|0px|0px",
+      "after": "flex|hidden|hidden|0px|0px|0px|0px|2px|2px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-desc",
+      "before": "block|hidden|hidden|0px|0px|0px|0px|0px|0px",
+      "after": "flex|hidden|hidden|0px|0px|0px|0px|2px|2px"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-desc",
+      "before": "block|hidden|hidden|0px|0px|0px|0px|0px|0px",
+      "after": "flex|hidden|hidden|0px|0px|0px|0px|2px|2px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#237",
+   "kind": "chain",
+   "line": 1691,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc > .db { position: absolute; inset: 0; display: grid; }",
+   "touched": 35,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "db two",
+      "before": "absolute|0px|0px|0px|0px|grid",
+      "after": "absolute|0px|0px|0px|0px|block"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "db two",
+      "before": "absolute|0px|0px|0px|0px|grid",
+      "after": "absolute|0px|0px|0px|0px|block"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "db two",
+      "before": "absolute|0px|0px|0px|0px|grid",
+      "after": "absolute|0px|0px|0px|0px|block"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#238",
+   "kind": "chain",
+   "line": 1692,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc > .db.two { grid-template-rows: 2fr 3fr; }",
+   "touched": 35,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#239",
+   "kind": "chain",
+   "line": 1693,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc > .db.one { grid-template-rows: 1fr; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#240",
+   "kind": "chain",
+   "line": 1694,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .db-top, body.slice .cf.cf.cf.cf > .cf-desc .db-bot { min-height: 0; min-width: 0; di",
+   "touched": 70,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#241",
+   "kind": "chain",
+   "line": 1694,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .db-top, body.slice .cf.cf.cf.cf > .cf-desc .db-bot { min-height: 0; min-width: 0; di",
+   "touched": 70,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#242",
+   "kind": "chain",
+   "line": 1695,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc > .db.two > .db-bot { border-top: 2px dotted #a8782a; }",
+   "touched": 35,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#243",
+   "kind": "chain",
+   "line": 1696,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln { display: block; width: 100%; white-space: nowrap; overflow: visible; text-align",
+   "touched": 136,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#244",
+   "kind": "chain",
+   "line": 1698,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if { color: #4a4436; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "rgb(74, 68, 54)",
+      "after": "rgb(58, 52, 42)"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "rgb(74, 68, 54)",
+      "after": "rgb(58, 52, 42)"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "rgb(74, 68, 54)",
+      "after": "rgb(58, 52, 42)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#245",
+   "kind": "chain",
+   "line": 1699,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx b { color: #1f1b16; }",
+   "touched": 106,
+   "diff": 53,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "rgb(31, 27, 22)",
+      "after": "rgb(58, 52, 42)"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "rgb(31, 27, 22)",
+      "after": "rgb(58, 52, 42)"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "rgb(31, 27, 22)",
+      "after": "rgb(58, 52, 42)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#246",
+   "kind": "chain",
+   "line": 1699,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf > .cf-desc .ln-fx b { color: #1f1b16; }",
+   "touched": 106,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#247",
+   "kind": "chain",
+   "line": 1700,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-fx em { font-style: normal; color: #a8222e; font: inherit !important; color: #a82",
+   "touched": 32,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#248",
+   "kind": "chain",
+   "line": 1701,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-name { font-weight: 700 !important; color: #1f6b70; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-name",
+      "before": "700|rgb(31, 107, 112)",
+      "after": "400|rgb(58, 52, 42)"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-name",
+      "before": "700|rgb(31, 107, 112)",
+      "after": "400|rgb(58, 52, 42)"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "ln ln-name",
+      "before": "700|rgb(31, 107, 112)",
+      "after": "400|rgb(58, 52, 42)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#249",
+   "kind": "chain",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|12px|15px|400"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|12px|15px|400"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|12px|15px|400"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#250",
+   "kind": "chain",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#251",
+   "kind": "chain",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 53,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|12px|15px|400"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|12px|400",
+      "after": "Galmuri11, sans-serif|12px|12px|400"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri11, sans-serif|12px|15px|400"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#252",
+   "kind": "chain",
+   "line": 1704,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln-if, body.slice .cf.cf.cf.cf > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf > .cf-de",
+   "touched": 155,
+   "diff": 85,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri9, Galmuri11, sans-serif|12px|15px|400"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|12px|400",
+      "after": "Galmuri9, Galmuri11, sans-serif|12px|12px|400"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "",
+      "before": "Galmuri9, Galmuri11, sans-serif|10px|15px|400",
+      "after": "Galmuri9, Galmuri11, sans-serif|12px|15px|400"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#253",
+   "kind": "chain",
+   "line": 1706,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { width: 100%; padding: 0; border: 0; }",
+   "touched": 6,
+   "diff": 6,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cs-st",
+      "before": "103.484px|0px|0px|0px|0px|0px|0px|0px|0px|none|none|none|none|rgb(42, 38, 32)|rgb(42, 38, 32)|rgb(42, 38, 32)|rgb(42, 38, 32)|none|100%|1|0|stretch",
+      "after": "103.484px|0px|0px|3px|0px|0px|0px|2px|0px|none|none|dotted|none|rgb(42, 38, 32)|rgb(42, 38, 32)|rgb(168, 120, 42)|rgb(42, 38, 32)|none|100%|1|0|stretch"
+     }
+    },
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cs-st",
+      "before": "103.484px|0px|0px|0px|0px|0px|0px|0px|0px|none|none|none|none|rgb(42, 38, 32)|rgb(42, 38, 32)|rgb(42, 38, 32)|rgb(42, 38, 32)|none|100%|1|0|stretch",
+      "after": "103.484px|0px|0px|3px|0px|0px|0px|2px|0px|none|none|dotted|none|rgb(42, 38, 32)|rgb(42, 38, 32)|rgb(168, 120, 42)|rgb(42, 38, 32)|none|100%|1|0|stretch"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#254",
+   "kind": "chain",
+   "line": 1708,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st { grid-auto-columns: auto; justify-content: space-evenly; }",
+   "touched": 6,
+   "diff": 6,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cs-st",
+      "before": "auto|space-evenly",
+      "after": "1fr|center"
+     }
+    },
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cs-st",
+      "before": "auto|space-evenly",
+      "after": "1fr|center"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#255",
+   "kind": "chain",
+   "line": 1709,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st i { white-space: nowrap; }",
+   "touched": 18,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#256",
+   "kind": "chain",
+   "line": 1712,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc, body.slice .cf.cf.cf.cf > .cf-desc * { font-family: Galmuri11, sans-serif; }",
+   "touched": 417,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#257",
+   "kind": "chain",
+   "line": 1712,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc, body.slice .cf.cf.cf.cf > .cf-desc * { font-family: Galmuri11, sans-serif; }",
+   "touched": 417,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#258",
+   "kind": "chain",
+   "line": 1713,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3), body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3) * { font: 400 15px/1 ",
+   "touched": 28,
+   "diff": 19,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cb cb-atk",
+      "before": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|400|100%|15px|15px|Galmuri14, Galmuri11, sans-serif",
+      "after": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|15px|15px|Galmuri11, sans-serif"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cb cb-atk",
+      "before": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|400|100%|15px|15px|Galmuri14, Galmuri11, sans-serif",
+      "after": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|15px|15px|Galmuri11, sans-serif"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cb cb-atk",
+      "before": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|400|100%|15px|15px|Galmuri14, Galmuri11, sans-serif",
+      "after": "normal|normal|normal|normal|normal|normal|none|normal|auto|auto|normal|normal|normal|normal|700|100%|15px|15px|Galmuri11, sans-serif"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#259",
+   "kind": "chain",
+   "line": 1713,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3), body.slice .cf.cf.cf.cf.crew-card > .cb:not(.n3) * { font: 400 15px/1 ",
+   "touched": 28,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#260",
+   "kind": "chain",
+   "line": 1714,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb.n3, body.slice .cf.cf.cf.cf.crew-card > .cb.n3 * { font: 700 12px/1 Galmuri11, s",
+   "touched": 2,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#261",
+   "kind": "chain",
+   "line": 1714,
+   "snippet": "body.slice .cf.cf.cf.cf.crew-card > .cb.n3, body.slice .cf.cf.cf.cf.crew-card > .cb.n3 * { font: 700 12px/1 Galmuri11, s",
+   "touched": 2,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#262",
+   "kind": "chain",
+   "line": 1716,
+   "snippet": "body.slice .cf.cf.cf.crew-card .cb-life.off { background-image: var(--life-off); }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#263",
+   "kind": "chain",
+   "line": 1717,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc .ln * { display: inline !important; white-space: nowrap !important; margin: 0 !import",
+   "touched": 85,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#264",
+   "kind": "chain",
+   "line": 1738,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::before { content: '[' !important; margin: 0 !important; color: #8",
+   "touched": 58,
+   "diff": 52,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "t3-sty sty-guard::before",
+      "before": "\"[\"|0px|0px|0px|0px|rgb(143, 138, 124)",
+      "after": "\"[\"|0px|0px|0px|0px|rgb(110, 108, 120)"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "t3-sty sty-strike::before",
+      "before": "\"[\"|0px|0px|0px|0px|rgb(143, 138, 124)",
+      "after": "\"[\"|0px|0px|0px|0px|rgb(110, 108, 120)"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "t3-sty sty-strike::before",
+      "before": "\"[\"|0px|0px|0px|0px|rgb(143, 138, 124)",
+      "after": "\"[\"|0px|0px|0px|0px|rgb(110, 108, 120)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#265",
+   "kind": "chain",
+   "line": 1739,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i:not(.t3-who)::after { content: ']'; color: #8f8a7c; }",
+   "touched": 58,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#266",
+   "kind": "chain",
+   "line": 1740,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type .t3 i.t3-sty { color: #e8e0cc !important; }",
+   "touched": 26,
+   "diff": 26,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "t3-sty sty-guard",
+      "before": "rgb(232, 224, 204)",
+      "after": "rgb(207, 198, 176)"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "t3-sty sty-strike",
+      "before": "rgb(232, 224, 204)",
+      "after": "rgb(207, 198, 176)"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "t3-sty sty-strike",
+      "before": "rgb(232, 224, 204)",
+      "after": "rgb(207, 198, 176)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#267",
+   "kind": "chain",
+   "line": 1742,
+   "snippet": "body.slice .cf.cf.cf.cf.g-pop:not(.taken) { animation: gpop 420ms both; }",
+   "touched": 3,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#268",
+   "kind": "chain",
+   "line": 1773,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc > .db.two { grid-template-rows: 7fr 9fr; }",
+   "touched": 19,
+   "diff": 19,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "db two",
+      "before": "32.6094px 41.9375px",
+      "after": "29.8125px 44.7344px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "db two",
+      "before": "29.2812px 37.6719px",
+      "after": "26.7812px 40.1719px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "db two",
+      "before": "29.2812px 37.6719px",
+      "after": "26.7812px 40.1719px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#269",
+   "kind": "chain",
+   "line": 1774,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln { line-height: 14px !important; }",
+   "touched": 54,
+   "diff": 29,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-say",
+      "before": "14px",
+      "after": "15px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "ln ln-say",
+      "before": "14px",
+      "after": "15px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "ln ln-say",
+      "before": "14px",
+      "after": "15px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#270",
+   "kind": "chain",
+   "line": 1775,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.",
+   "touched": 55,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "ln ln-if",
+      "before": "12px",
+      "after": "14px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#271",
+   "kind": "chain",
+   "line": 1775,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.",
+   "touched": 55,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/slice.css#272",
+   "kind": "chain",
+   "line": 1775,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.",
+   "touched": 55,
+   "diff": 23,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "12px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "12px",
+      "after": "14px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "ln ln-fx",
+      "before": "12px",
+      "after": "14px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#273",
+   "kind": "chain",
+   "line": 1775,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.",
+   "touched": 55,
+   "diff": 30,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "",
+      "before": "12px",
+      "after": "15px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "",
+      "before": "12px",
+      "after": "15px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "",
+      "before": "12px",
+      "after": "15px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/slice.css#274",
+   "kind": "chain",
+   "line": 1777,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 23.5%; top: 6.5%; z-index: 6; font: 700 12px/12px Galmu",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#275",
+   "kind": "chain",
+   "line": 1778,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-up { color: #7fe08a; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/slice.css#276",
+   "kind": "chain",
+   "line": 1779,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-rust { color: #e0894a; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-layout.css#0",
+   "kind": "chain",
+   "line": 3,
+   "snippet": "body.slice .cf.cf.cf.cf { aspect-ratio: 112 / 168; height: auto; }",
+   "touched": 42,
+   "diff": 42,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf crew-card g-common crew-info",
+      "before": "112 / 168|252px",
+      "after": "112 / 158|237px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf cmd big t-any g-common",
+      "before": "112 / 168|250.5px",
+      "after": "112 / 158|235.578px"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-common ax-inf",
+      "before": "112 / 168|250.5px",
+      "after": "112 / 158|235.578px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#1",
+   "kind": "chain",
+   "line": 4,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-win { left: 17.857%; top: 11.905%; width: 65.179%; height: 23.810%; z-index: 1; }",
+   "touched": 42,
+   "diff": 42,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.9844px|30px|109.5px|60px|1",
+      "after": "30px|31.8906px|109.5px|68.5312px|0"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.8125px|74.5469px|107.344px|56.6562px|1",
+      "after": "29.8125px|74.5469px|107.344px|56.6562px|0"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.8125px|29.8125px|108.844px|59.6406px|1",
+      "after": "29.8125px|31.7031px|108.844px|68.125px|0"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#2",
+   "kind": "chain",
+   "line": 5,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-name { left: 16.071%; top: 35.714%; width: 68.750%; height: 7.143%; z-index: 5; display: g",
+   "touched": 42,
+   "diff": 42,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-name",
+      "before": "26.9844px|89.9844px|115.5px|18px|5|grid|center|center|12px|0px|0px|0px|0px|0px|0px|0px|0px",
+      "after": "17.9688px|93.9844px|133.547px|19.1406px|3|grid|center|center|12px|0px|0px|0px|0px|0px|0px|0px|0px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-name",
+      "before": "56.6562px|38.7656px|80.5156px|17.8906px|5|grid|center|center|12px|0px|0px|0px|0px|0px|0px|0px|0px",
+      "after": "56.6562px|38.7656px|80.5156px|17.8906px|3|grid|center|center|12px|0px|0px|0px|0px|0px|0px|0px|0px"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-name",
+      "before": "26.8281px|89.4531px|114.812px|17.8906px|5|grid|center|center|12px|0px|0px|0px|0px|0px|0px|0px|0px",
+      "after": "17.8594px|93.4219px|132.75px|19.0312px|3|grid|center|center|12px|0px|0px|0px|0px|0px|0px|0px|0px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#3",
+   "kind": "chain",
+   "line": 6,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-type { left: 22.321%; top: 44.048%; width: 56.250%; height: 6.548%; z-index: 4; display: f",
+   "touched": 32,
+   "diff": 32,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-type",
+      "before": "29.8125px|119.281px|107.344px|11.9219px|4|flex|center|center",
+      "after": "29.8125px|119.281px|107.344px|11.9219px|3|flex|center|center"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-type",
+      "before": "37.2656px|110.328px|93.9375px|16.3906px|4|flex|center|center",
+      "after": "68.1094px|81.6562px|68px|12px|3|flex|center|center"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf-type",
+      "before": "35.7031px|105.703px|90px|15.7031px|4|flex|center|center",
+      "after": "62.4062px|78.2344px|68px|12px|3|flex|center|center"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#4",
+   "kind": "chain",
+   "line": 7,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc { left: 19.643%; top: 53.571%; width: 61.607%; height: 35.119%; }",
+   "touched": 42,
+   "diff": 23,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-desc",
+      "before": "33px|134.984px|103.484px|88.4844px",
+      "after": "29.3906px|122.219px|109.188px|100.797px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-desc",
+      "before": "32.7969px|134.188px|102.875px|87.9688px",
+      "after": "29.2188px|121.484px|108.547px|100.188px"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-desc",
+      "before": "32.7969px|134.188px|102.875px|87.9688px",
+      "after": "32.5625px|119.234px|101.859px|101.438px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#5",
+   "kind": "chain",
+   "line": 8,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-gem { left: 50.000%; top: 95.238%; width: 7.143%; height: auto; aspect-ratio: 1; transform",
+   "touched": 36,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-gem",
+      "before": "84px|239.984px|22.8438px|22.8438px|auto|matrix(1, 0, 0, 1, -11.4219, -11.4219)|61.1562px|3",
+      "after": "84px|229.562px|22.8438px|22.8438px|auto|matrix(1, 0, 0, 1, -11.4219, -11.4219)|61.1562px|3"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-gem",
+      "before": "83.5px|238.562px|22.8438px|22.8438px|auto|matrix(1, 0, 0, 1, -11.4219, -11.4219)|60.6562px|3",
+      "after": "83.5px|228.203px|22.8438px|22.8438px|auto|matrix(1, 0, 0, 1, -11.4219, -11.4219)|60.6562px|3"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-gem",
+      "before": "83.5px|238.562px|22.8438px|22.8438px|auto|matrix(1, 0, 0, 1, -11.4219, -11.4219)|60.6562px|3",
+      "after": "83.5px|228.203px|22.8438px|22.8438px|auto|matrix(1, 0, 0, 1, -11.4219, -11.4219)|60.6562px|3"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#6",
+   "kind": "chain",
+   "line": 9,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-cost { left: 0.893%; top: 0.000%; width: 18.750%; height: 12.500%; display: grid; place-it",
+   "touched": 19,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/card-layout.css#7",
+   "kind": "chain",
+   "line": 10,
+   "snippet": "body.slice .cf.cf.cf.cf > .cb-atk { left: 0.893%; top: 26.190%; width: 16.964%; height: 11.310%; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cb cb-atk",
+      "before": "1.5px|65.9844px|28.4844px|28.5px",
+      "after": "0px|76.0938px|31.5px|35.0156px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cb cb-atk",
+      "before": "1.48438px|65.5938px|28.3281px|28.3281px",
+      "after": "0px|75.6406px|31.3125px|34.8125px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cb cb-atk",
+      "before": "1.42188px|62.8438px|27.1406px|27.1406px",
+      "after": "0px|72.4688px|30px|33.3594px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#8",
+   "kind": "chain",
+   "line": 11,
+   "snippet": "body.slice .cf.cf.cf.cf > .cb-hp { left: 82.143%; top: 26.190%; width: 16.964%; height: 11.310%; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cb cb-hp",
+      "before": "138px|65.9844px|28.4844px|28.5px",
+      "after": "136.5px|76.0938px|31.5px|35.0156px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cb cb-hp",
+      "before": "137.172px|65.5938px|28.3281px|28.3281px",
+      "after": "135.688px|75.6406px|31.3125px|34.8125px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cb cb-hp",
+      "before": "131.422px|62.8438px|27.1406px|27.1406px",
+      "after": "130px|72.4688px|30px|33.3594px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#9",
+   "kind": "chain",
+   "line": 12,
+   "snippet": "body.slice .cf.cf.cf.cf > .cb-bar { left: 23.214%; top: 45.833%; width: 54.464%; height: 2.976%; z-index: 4; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cb-bar",
+      "before": "38.9844px|115.484px|91.4844px|7.48438px|4",
+      "after": "36.9531px|115.906px|94.0781px|6px|4"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cb-bar",
+      "before": "38.7656px|114.797px|90.9531px|7.45312px|4",
+      "after": "36.7344px|115.219px|93.5156px|6px|4"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cb-bar",
+      "before": "37.1406px|109.984px|87.1406px|7.14062px|4",
+      "after": "35.1875px|110.391px|89.5938px|6px|4"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-layout.css#10",
+   "kind": "chain",
+   "line": 13,
+   "snippet": "body.slice .cf.cf.cf.cf > .cb-lives { right: 19.643%; top: 9.524%; left: auto; }",
+   "touched": 10,
+   "diff": 10,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cb-lives",
+      "before": "33px|24px|135px",
+      "after": "31.9062px|35.0156px|136.094px"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cb-lives",
+      "before": "32.7969px|23.8438px|134.203px",
+      "after": "31.7188px|34.8125px|135.281px"
+     }
+    },
+    {
+     "scene": "recruit",
+     "sample": {
+      "el": "cb-lives",
+      "before": "31.4219px|22.8438px|128.578px",
+      "after": "30.3906px|33.3594px|129.609px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#0",
+   "kind": "chain",
+   "line": 3,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-gol",
+   "touched": 21,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-name",
+      "before": "rgb(22, 20, 28)|none",
+      "after": "rgb(255, 255, 255)|rgb(0, 0, 0) 1px 1px 0px, rgb(0, 0, 0) -1px 0px 0px, rgb(0, 0, 0) 0px -1px 0px, rgb(0, 0, 0) 1px 0px 0px, rgb(0, 0, 0) 0px 1px 0px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-name",
+      "before": "rgb(22, 20, 28)|none",
+      "after": "rgb(255, 255, 255)|rgb(0, 0, 0) 1px 1px 0px, rgb(0, 0, 0) -1px 0px 0px, rgb(0, 0, 0) 0px -1px 0px, rgb(0, 0, 0) 1px 0px 0px, rgb(0, 0, 0) 0px 1px 0px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-name",
+      "before": "rgb(22, 20, 28)|none",
+      "after": "rgb(255, 255, 255)|rgb(0, 0, 0) 1px 1px 0px, rgb(0, 0, 0) -1px 0px 0px, rgb(0, 0, 0) 0px -1px 0px, rgb(0, 0, 0) 1px 0px 0px, rgb(0, 0, 0) 0px 1px 0px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#1",
+   "kind": "chain",
+   "line": 3,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-gol",
+   "touched": 21,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#2",
+   "kind": "chain",
+   "line": 3,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-gol",
+   "touched": 21,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#3",
+   "kind": "chain",
+   "line": 4,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd > .cf-cost { color: #16141c; text-shadow: none; }",
+   "touched": 19,
+   "diff": 19,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-cost",
+      "before": "rgb(22, 20, 28)|none",
+      "after": "rgb(255, 255, 255)|rgb(0, 0, 0) 2px 2px 0px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "rgb(22, 20, 28)|none",
+      "after": "rgb(255, 255, 255)|rgb(0, 0, 0) 2px 2px 0px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "rgb(22, 20, 28)|none",
+      "after": "rgb(255, 255, 255)|rgb(0, 0, 0) 2px 2px 0px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#4",
+   "kind": "chain",
+   "line": 5,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { content: none; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf cmd big t-any g-rare ax-king::before",
+      "before": "none",
+      "after": "\"\""
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#5",
+   "kind": "chain",
+   "line": 6,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common { background-image: url('../assets/ui/cards/cmd-common.png'); --ci-l: 5.357%; --ci-",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf cmd big t-any g-common",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|5.357%|5.357%|10.714%|2.381%",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|7.143%|7.143%|4.762%|1.190%"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf cmd big t-any g-common ax-tactic",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|5.357%|5.357%|10.714%|2.381%",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|7.143%|7.143%|4.762%|1.190%"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf cmd big t-P g-common",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|5.357%|5.357%|10.714%|2.381%",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-common.png\")|7.143%|7.143%|4.762%|1.190%"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#6",
+   "kind": "chain",
+   "line": 7,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-win",
+      "before": "29.8125px|74.5469px|107.344px|56.6562px",
+      "after": "29.8125px|29.8125px|108.844px|59.6406px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "26.7812px|66.9531px|96.4219px|50.8906px",
+      "after": "26.7812px|26.7812px|97.7656px|53.5625px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-win",
+      "before": "26.7812px|66.9531px|96.4219px|50.8906px",
+      "after": "26.7812px|26.7812px|97.7656px|53.5625px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#7",
+   "kind": "chain",
+   "line": 8,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-name",
+      "before": "56.6562px|38.7656px|80.5156px|17.8906px",
+      "after": "26.8281px|89.4531px|114.812px|17.8906px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-name",
+      "before": "50.8906px|34.8125px|72.3125px|16.0625px",
+      "after": "24.0938px|80.3438px|103.125px|16.0625px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-name",
+      "before": "50.8906px|34.8125px|72.3125px|16.0625px",
+      "after": "24.0938px|80.3438px|103.125px|16.0625px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#8",
+   "kind": "chain",
+   "line": 9,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common > .cf-cost { left: 10.714%; top: 9.524%; width: 17.857%; height: 11.905%; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-cost",
+      "before": "17.8906px|23.8438px|29.8125px|29.8125px",
+      "after": "1.48438px|0px|31.3125px|31.3125px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-cost",
+      "before": "16.0625px|21.4219px|26.7812px|26.7812px",
+      "after": "1.32812px|0px|28.125px|28.125px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "16.0625px|21.4219px|26.7812px|26.7812px",
+      "after": "1.32812px|0px|28.125px|28.125px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#9",
+   "kind": "chain",
+   "line": 10,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-desc",
+      "before": "26.8281px|146.109px|113.312px|74.5469px",
+      "after": "32.7969px|134.188px|102.875px|87.9688px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-desc",
+      "before": "24.0938px|131.234px|101.781px|66.9531px",
+      "after": "29.4531px|120.531px|92.4062px|79.0156px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-desc",
+      "before": "24.0938px|131.234px|101.781px|66.9531px",
+      "after": "29.4531px|120.531px|92.4062px|79.0156px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#10",
+   "kind": "chain",
+   "line": 11,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-type",
+      "before": "29.8125px|119.281px|107.344px|11.9219px",
+      "after": "37.2656px|110.328px|93.9375px|16.3906px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-type",
+      "before": "26.7812px|107.141px|96.4219px|10.7031px",
+      "after": "33.4688px|99.0938px|84.375px|14.7188px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-type",
+      "before": "26.7812px|107.141px|96.4219px|10.7031px",
+      "after": "33.4688px|99.0938px|84.375px|14.7188px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#11",
+   "kind": "chain",
+   "line": 12,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-common > .cf-gem { left: 50%; top: 92.857%; }",
+   "touched": 17,
+   "diff": 17,
+   "scenes": [
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-gem",
+      "before": "83.5px|232.594px",
+      "after": "83.5px|238.562px"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-gem",
+      "before": "75px|208.922px",
+      "after": "75px|214.281px"
+     }
+    },
+    {
+     "scene": "refine",
+     "sample": {
+      "el": "cf-gem",
+      "before": "75px|208.922px",
+      "after": "75px|214.281px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#12",
+   "kind": "chain",
+   "line": 13,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); --ci-l: 5.357%; --ci-r: 5",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf cmd big t-any g-rare ax-king",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-rare.png\")|5.357%|5.357%|10.714%|2.381%",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/cmd-rare.png\")|7.143%|7.143%|4.762%|1.190%"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#13",
+   "kind": "chain",
+   "line": 14,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-win",
+      "before": "26.7812px|66.9531px|96.4219px|50.8906px",
+      "after": "26.7812px|26.7812px|97.7656px|53.5625px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#14",
+   "kind": "chain",
+   "line": 15,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-name",
+      "before": "50.8906px|34.8125px|72.3125px|16.0625px",
+      "after": "24.0938px|80.3438px|103.125px|16.0625px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#15",
+   "kind": "chain",
+   "line": 16,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-cost { left: 8.929%; top: 9.524%; width: 19.643%; height: 11.905%; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-cost c1",
+      "before": "13.3906px|21.4219px|29.4531px|26.7812px",
+      "after": "1.32812px|0px|28.125px|28.125px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#16",
+   "kind": "chain",
+   "line": 17,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-desc",
+      "before": "24.0938px|131.234px|101.781px|66.9531px",
+      "after": "29.4531px|120.531px|92.4062px|79.0156px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#17",
+   "kind": "chain",
+   "line": 18,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-type",
+      "before": "26.7812px|107.141px|96.4219px|10.7031px",
+      "after": "33.4688px|99.0938px|84.375px|14.7188px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#18",
+   "kind": "chain",
+   "line": 19,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-gem { left: 50%; top: 92.857%; }",
+   "touched": 2,
+   "diff": 2,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf-gem",
+      "before": "75px|208.922px",
+      "after": "75px|214.281px"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/card-cmd.css#19",
+   "kind": "chain",
+   "line": 20,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); --ci-l: 5.357%; --ci-r: 5",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-cmd.css#20",
+   "kind": "chain",
+   "line": 21,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-cmd.css#21",
+   "kind": "chain",
+   "line": 22,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-cmd.css#22",
+   "kind": "chain",
+   "line": 23,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-cost { left: 10.714%; top: 9.524%; width: 17.857%; height: 11.905%; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-cmd.css#23",
+   "kind": "chain",
+   "line": 24,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-cmd.css#24",
+   "kind": "chain",
+   "line": 25,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/card-cmd.css#25",
+   "kind": "chain",
+   "line": 26,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-gem { left: 50%; top: 92.857%; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/kit.css#0",
+   "kind": "imp",
+   "line": 708,
+   "snippet": "#hand > .hc .art { position: relative; display: grid; place-items: center; width: calc(var(--px) * 16); height: calc(var",
+   "touched": 120,
+   "diff": 95,
+   "scenes": [
+    {
+     "scene": "battle",
+     "sample": {
+      "el": "art",
+      "before": "relative|grid|center|center|30.4688px|30.4688px|visible|visible|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|none|none",
+      "after": "relative|grid|center|center|30.4688px|30.4688px|visible|visible|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|none|matrix(1, 0, 0, 1, 0,"
+     }
+    },
+    {
+     "scene": "hand-pick",
+     "sample": {
+      "el": "art",
+      "before": "relative|grid|center|center|30.4688px|30.4688px|visible|visible|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|none|none",
+      "after": "relative|grid|center|center|30.4688px|30.4688px|visible|visible|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|none|matrix(1, 0, 0, 1, 0,"
+     }
+    },
+    {
+     "scene": "giant",
+     "sample": {
+      "el": "art",
+      "before": "relative|grid|center|center|30.4688px|30.4688px|visible|visible|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|none|none",
+      "after": "relative|grid|center|center|30.4688px|30.4688px|visible|visible|none|0%|0%|auto|repeat|scroll|padding-box|border-box|rgba(0, 0, 0, 0)|none|matrix(1, 0, 0, 1, 0,"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/kit.css#1",
+   "kind": "imp",
+   "line": 725,
+   "snippet": "#hand > .hc .hc-flv { color: #c9b48a !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/kit.css#2",
+   "kind": "imp",
+   "line": 726,
+   "snippet": "#hand > .hc .hc-use { color: var(--t-ally) !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/kit.css#3",
+   "kind": "imp",
+   "line": 727,
+   "snippet": "#hand > .hc.off .hc-use { color: #ffc4bc !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/kit.css#4",
+   "kind": "chain",
+   "line": 277,
+   "snippet": "body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc-ivory.png'); }",
+   "touched": 6,
+   "diff": 6,
+   "scenes": [
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf part-card svc svc-card",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/svc-ivory.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")"
+     }
+    },
+    {
+     "scene": "forge",
+     "sample": {
+      "el": "cf part-card svc svc-card",
+      "before": "url(\"http://localhost:5291/src/assets/ui/cards/svc-ivory.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/cards/part-common.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/kit.css#5",
+   "kind": "chain",
+   "line": 1297,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-desc > .part-rule-lines {",
+   "touched": 7,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/film.css#0",
+   "kind": "imp",
+   "line": 153,
+   "snippet": "@media (prefers-reduced-motion: reduce) { .ev-actor, .ev-actor > img { animation-duration: 1ms !important; } }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#0",
+   "kind": "imp",
+   "line": 35,
+   "snippet": "body.slice.lay-f .gtop .turn-label { grid-column: 1; grid-row: 1; height: 24px !important; line-height: 24px; color: #a8",
+   "touched": 24,
+   "diff": 24,
+   "scenes": [
+    {
+     "scene": "battle",
+     "sample": {
+      "el": "plate turn-label th-pop",
+      "before": "1|auto|1|auto|24px|24px|rgb(168, 159, 146)",
+      "after": "1|auto|1|auto|16px|24px|rgb(168, 159, 146)"
+     }
+    },
+    {
+     "scene": "hand-pick",
+     "sample": {
+      "el": "plate turn-label th-pop",
+      "before": "1|auto|1|auto|24px|24px|rgb(168, 159, 146)",
+      "after": "1|auto|1|auto|16px|24px|rgb(168, 159, 146)"
+     }
+    },
+    {
+     "scene": "giant",
+     "sample": {
+      "el": "plate turn-label th-pop",
+      "before": "1|auto|1|auto|24px|24px|rgb(168, 159, 146)",
+      "after": "1|auto|1|auto|16px|24px|rgb(168, 159, 146)"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#1",
+   "kind": "imp",
+   "line": 84,
+   "snippet": "body.slice.lay-f .gtop .coins :is(.sp-t, .sp-row, .sp-win), .sp-pop { animation: none !important; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#2",
+   "kind": "chain",
+   "line": 123,
+   "snippet": "body.slice .cf.cf.cf.cf > .cf-gem { width: calc(var(--px) * 12); height: calc(var(--px) * 12); aspect-ratio: auto; backg",
+   "touched": 36,
+   "diff": 36,
+   "scenes": [
+    {
+     "scene": "peek-ally",
+     "sample": {
+      "el": "cf-gem",
+      "before": "22.8438px|22.8438px|auto|100% 100%",
+      "after": "12px|12px|1 / 1|100% 100%"
+     }
+    },
+    {
+     "scene": "reward",
+     "sample": {
+      "el": "cf-gem",
+      "before": "22.8438px|22.8438px|auto|100% 100%",
+      "after": "11.9219px|11.9219px|1 / 1|100% 100%"
+     }
+    },
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf-gem",
+      "before": "22.8438px|22.8438px|auto|100% 100%",
+      "after": "11.9219px|11.9219px|1 / 1|100% 100%"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#3",
+   "kind": "chain",
+   "line": 129,
+   "snippet": "body.slice .cf.cf.cf.cf.part-card::after { content: ''; position: absolute; z-index: 2; pointer-events: none; left: calc",
+   "touched": 13,
+   "diff": 13,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-common ax-inf::after",
+      "before": "\"\"|absolute|2|none|24.0938px|24.0938px|120.266px|71.0625px|border-box|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, 0, 0)|solid|11px|rgba(0",
+      "after": "none|absolute|2|none|calc(17.857% - 5.71429px)|calc(11.905% - 5.71429px)|calc(65.179% + 11.4286px)|calc(23.81% + 11.4286px)|border-box|rgb(236, 230, 218)|none|0"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf part-card g-rare ax-king g-pop::after",
+      "before": "\"\"|absolute|2|none|22.8438px|22.8438px|115.703px|68.5625px|border-box|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, 0, 0)|solid|11px|rgba(0",
+      "after": "none|absolute|2|none|calc(17.857% - 5.71429px)|calc(11.905% - 5.71429px)|calc(65.179% + 11.4286px)|calc(23.81% + 11.4286px)|border-box|rgb(236, 230, 218)|none|0"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf part-card g-rare ax-inf::after",
+      "before": "\"\"|absolute|2|none|21.0625px|21.0625px|109.188px|65px|border-box|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, 0, 0)|solid|11px|rgba(0, 0, ",
+      "after": "none|absolute|2|none|calc(17.857% - 5.71429px)|calc(11.905% - 5.71429px)|calc(65.179% + 11.4286px)|calc(23.81% + 11.4286px)|border-box|rgb(236, 230, 218)|none|0"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#4",
+   "kind": "chain",
+   "line": 130,
+   "snippet": "body.slice .cf.cf.cf.cf.part-card.g-rare::after { border-image-source: url('../assets/ui/kit/frame-rare.png'); }",
+   "touched": 4,
+   "diff": 4,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-rare ax-push g-pop::after",
+      "before": "url(\"http://localhost:5291/src/assets/ui/kit/frame-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/kit/frame-common.png\")"
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf part-card g-rare ax-king g-pop::after",
+      "before": "url(\"http://localhost:5291/src/assets/ui/kit/frame-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/kit/frame-common.png\")"
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf part-card g-rare ax-inf::after",
+      "before": "url(\"http://localhost:5291/src/assets/ui/kit/frame-rare.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/kit/frame-common.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#5",
+   "kind": "chain",
+   "line": 131,
+   "snippet": "body.slice .cf.cf.cf.cf.part-card.g-gold::after { border-image-source: url('../assets/ui/kit/frame-gold.png'); }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#6",
+   "kind": "chain",
+   "line": 133,
+   "snippet": "body.slice .cf.cf.cf.cf { --ci-l: 7.143%; --ci-r: 7.143%; --ci-t: 4.762%; --ci-b: 1.190%; }",
+   "touched": 42,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#7",
+   "kind": "chain",
+   "line": 134,
+   "snippet": "body.slice .cf.cf.cf.cf:is(.g-rare, .g-gold)::before {",
+   "touched": 8,
+   "diff": 8,
+   "scenes": [
+    {
+     "scene": "parts",
+     "sample": {
+      "el": "cf part-card g-rare ax-push g-pop::before",
+      "before": "\"\"|absolute|6|none|0s|ease|0s|1|normal|none|running|none|auto|normal|normal|8.10938px|8.10938px|8.10938px|-0.828125px|rgba(0, 0, 0, 0)|solid|19px|rgba(0, 0, 0, ",
+      "after": "none|absolute|6|none|0s|ease|0s|1|normal|none|running|none|auto|normal|normal|calc(7.143% - 3.80952px)|calc(7.143% - 3.80952px)|calc(4.762% - 3.80952px)|calc(1."
+     }
+    },
+    {
+     "scene": "kit",
+     "sample": {
+      "el": "cf part-card g-rare ax-king g-pop::before",
+      "before": "\"\"|absolute|6|none|0s|ease|0s|1|normal|none|running|none|auto|normal|normal|7.60938px|7.60938px|7.60938px|-0.953125px|rgba(0, 0, 0, 0)|solid|19px|rgba(0, 0, 0, ",
+      "after": "none|absolute|6|none|0s|ease|0s|1|normal|none|running|none|auto|normal|normal|calc(7.143% - 3.80952px)|calc(7.143% - 3.80952px)|calc(4.762% - 3.80952px)|calc(1."
+     }
+    },
+    {
+     "scene": "shop",
+     "sample": {
+      "el": "cf cmd big t-any g-rare ax-king::before",
+      "before": "none|absolute|6|none|0s|ease|0s|1|normal|none|running|none|auto|normal|normal|calc(5.357% - 3.80952px)|calc(5.357% - 3.80952px)|calc(10.714% - 3.80952px)|calc(2",
+      "after": "none|absolute|6|none|0s|ease|0s|1|normal|none|running|none|auto|normal|normal|calc(5.357% - 3.80952px)|calc(5.357% - 3.80952px)|calc(10.714% - 3.80952px)|calc(2"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#8",
+   "kind": "chain",
+   "line": 139,
+   "snippet": "body.slice .cf.cf.cf.cf.g-gold::before { border-image-source: url('../assets/ui/kit/corners-gold.png'); }",
+   "touched": 1,
+   "diff": 1,
+   "scenes": [
+    {
+     "scene": "crew",
+     "sample": {
+      "el": "cf crew-card g-gold::before",
+      "before": "url(\"http://localhost:5291/src/assets/ui/kit/corners-gold.png\")",
+      "after": "url(\"http://localhost:5291/src/assets/ui/kit/corners-rare.png\")"
+     }
+    }
+   ],
+   "result": "needed"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#9",
+   "kind": "chain",
+   "line": 140,
+   "snippet": "body.slice .cf.cf.cf.cf.glinting::before { visibility: hidden; }",
+   "touched": 0,
+   "diff": 0,
+   "scenes": [],
+   "result": "unverified"
+  },
+  {
+   "id": "src/slice/hud-rarity.css#10",
+   "kind": "chain",
+   "line": 161,
+   "snippet": "body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { clip-path: polygon(calc(var(--px) * 12) 0, 100% 0, 100% 100%,",
+   "touched": 2,
+   "diff": 0,
+   "scenes": [],
+   "result": "removed"
+  }
+ ]
+}

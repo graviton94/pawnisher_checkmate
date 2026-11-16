@@ -130,7 +130,7 @@ body.slice .cf.cf.cf.cf.part-card::after { content: ''; position: absolute; z-in
 body.slice .cf.cf.cf.cf.part-card.g-rare::after { border-image-source: url('../assets/ui/kit/frame-rare.png'); }
 body.slice .cf.cf.cf.cf.part-card.g-gold::after { border-image-source: url('../assets/ui/kit/frame-gold.png'); }
 /* 카드 몸의 모서리(캔버스 여백을 뺀 자리): 부품 · 분대원 = cardart 112×168(틀 96×158, 여백 8 · 8 · 2). 명령 카드는 card-cmd.css가 덮는다 */
-body.slice .cf.cf.cf.cf { --ci-l: 7.143%; --ci-r: 7.143%; --ci-t: 4.762%; --ci-b: 1.190%; }
+body.slice .cf { --ci-l: 7.143%; --ci-r: 7.143%; --ci-t: 4.762%; --ci-b: 1.190%; }
 body.slice .cf.cf.cf.cf:is(.g-rare, .g-gold)::before {
   content: ''; position: absolute; z-index: 6; pointer-events: none; animation: none;
   left: calc(var(--ci-l) - var(--px) * 2); right: calc(var(--ci-r) - var(--px) * 2); top: calc(var(--ci-t) - var(--px) * 2); bottom: calc(var(--ci-b) - var(--px) * 2);
@@ -158,5 +158,5 @@ body.slice .cf.cf.cf.cf.glinting::before { visibility: hidden; }
   to { background-position: calc(var(--px) * (var(--qx) - 384)) calc(var(--px) * var(--qy)); }
 }
 /* 명령 카드는 왼쪽 위에 태엽 비용 톱니가 튀어나와 있다 — 그 귀퉁이 꺾쇠 · 반짝임 조각은 빼서 비용을 가리지 않는다 */
-body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { clip-path: polygon(calc(var(--px) * 12) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--px) * 12), calc(var(--px) * 12) calc(var(--px) * 12)); }
+body.slice .cf.cmd:is(.g-rare, .g-gold)::before { clip-path: polygon(calc(var(--px) * 12) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--px) * 12), calc(var(--px) * 12) calc(var(--px) * 12)); }
 .cf.cmd > .glint > i:nth-child(1) { display: none; }
