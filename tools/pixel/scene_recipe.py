@@ -96,6 +96,9 @@ INSPECT_ALIAS = {'#C89B3C': 'H', '#E0A030': 'H', '#8A6416': 'B', '#A06020': 'B',
 # D-526: 자석 — 짙은 보라 번개 테(#300048 안팎) · 마젠타 번짐(#C000C0)은 쇠 단 / 출하 — 마젠타 번짐은 쇠 단(채도만 높은 경계 칸)
 MAGNET_ALIAS = {'#300048': 'D', '#C000C0': 'D', '#600060': 'D', '#C0A050': 'H', '#907040': 'B'}  # 황동 리벳 → 쇠
 THORN_ALIAS = {'#C000C0': 'D', '#600060': 'D', '#300030': 'D'}
+# D-527: 경보 — 황동 관 이음(#A86B46 · #D9A46B) → 쇠, 마젠타 번짐(#540C49) → 먹 쪽 / 도금왕 — 마젠타 번짐 → 어두운 금
+ALARM_ALIAS = {'#A86B46': 'B', '#D9A46B': 'H', '#540C49': 'D', '#C000C0': 'D', '#600060': 'D'}
+GILDED_ALIAS = {'#C000C0': 'n', '#600060': 'I', '#540C49': 'I'}
 BOSS_GRID = {
     'K:boss-plate': {'body': 64, 'bottom': 3, 'theme': 'qop', 'ink': 12},
     'K:boss-plate-p2': {'body': 64, 'bottom': 3, 'theme': 'qop', 'ink': 12, 'pitch_of': 'GB-01-source.png', 'pitch_name': 'K:boss-plate'},
@@ -113,8 +116,32 @@ BOSS_GRID = {
     'K:boss-thorns': {'body': 64, 'bottom': 3, 'theme': 'e', 'ink': 12, 'bright': (225, 'e'), 'alias': THORN_ALIAS, 'accent_edge': True},
     'K:boss-thorns-p2': {'body': 64, 'bottom': 3, 'theme': 'XRf', 'ink': 12, 'alias': THORN_ALIAS, 'accent_edge': True,
                          'pitch_of': 'GB-05-source.png', 'pitch_name': 'K:boss-thorns'},
+    # D-527 경보(GB-06 · 06b): 경광등 · 계기 칸 빨강 R · 짙은 X · 밝은 f, 격노는 쇳물 주황 o 더함(금 간 줄 · 불티).
+    #   황동 관 이음 · 마젠타 번짐은 쇠 단(alias). 격노의 떠 있는 불티 · 경광등 조각은 float칸 이상이면 남긴다.
+    'K:boss-alarm': {'body': 64, 'bottom': 3, 'theme': 'RXf', 'ink': 12, 'alias': ALARM_ALIAS, 'accent': 2.5, 'accent_edge': True},
+    'K:boss-alarm-p2': {'body': 64, 'bottom': 3, 'theme': 'RXfo', 'ink': 12, 'alias': ALARM_ALIAS, 'accent': 2.5, 'float': 4, 'float_edge': True, 'accent_edge': True,
+                        'pitch_of': 'GB-06-source.png', 'pitch_name': 'K:boss-alarm'},
+    # D-527 도금왕(GB-07 · 07b): 몸 전체가 금 — 금 다섯 단 u U A n I(밝은 → 어두운)을 테마로(강조 가중 없이 1.0), 판 위 반장 색(boss-gilded)도 금.
+    #   격노: 금박이 깨지며 흰 폰 몸(무채색 밝은 칸 → 흰 진영 W · E · S, pale) · 녹슨 태엽 열쇠 · 톱니(녹 q · J)가 드러난다.
+    'K:boss-gilded': {'body': 64, 'bottom': 3, 'theme': 'uUAnI', 'ink': 12, 'accent': 1.0, 'alias': GILDED_ALIAS, 'accent_edge': True,
+                      'patch': [(36, 15, 7, 7)]},  # 왕관 띠 오른쪽 구멍 — 판 크기에서 한 눈처럼 읽혀 같은 금으로 메움(얼굴 금지, 받은 그림 다듬기)
+    'K:boss-gilded-p2': {'body': 64, 'bottom': 3, 'theme': 'uUAnIqJ', 'ink': 12, 'accent': 1.0, 'alias': GILDED_ALIAS, 'pale': (150, 'WES'),
+                         'float': 6, 'float_edge': True, 'accent_edge': True, 'pitch_of': 'GB-07-source.png', 'pitch_name': 'K:boss-gilded'},
 }
 
+
+# 거대 주물 재발주본 G-01~03 (D-527, piece_import.py --giant → build_boss 방식 — 마젠타 바탕 · 통짜 · 금 균열 쇳물 흐름).
+# 사용자 결정 2026-11-16: 피격 범위는 2×2 그대로, 그림은 반장 · 도금왕(2배)만큼 크지 않게 **1.5배** · 받침 바닥은 기준선(D-525).
+# → 캔버스 108칸(보통 기물 72칸 × 1.5)을 판에서 1.5칸 폭으로 — 도트 한 칸 = 보통 기물 도트 한 칸(펴지 않음).
+# body = 72칸 단위 몸 키(바탕 기물 몸 키 P 49 · R 46 · Q 53 — ×1.5 = 108칸에서 74 · 69 · 80), outline_px = 먹선 칸 3(보통 흑 기물 4칸으로 해 보니
+#   원본 테두리 그늘과 겹쳐 6~7칸 먹 띠가 되고 퀸 왕관이 먹 덩어리 — 3칸),
+# theme = 금 균열 · 쇳물 흐름 u · U · N · n(황동 넷 — 쇳물 빛 · 금 · 어두운 금 · 녹), 녹 얼룩(올리브)도 N · n으로(alias).
+GIANT_ALIAS = {'#5A5020': 'n', '#706030': 'N', '#C000C0': 'D', '#600060': 'D'}
+GIANT_GRID = {
+    'P:giant': {'body': 49, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 108, 'res': 108, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
+    'R:giant': {'body': 46, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 108, 'res': 108, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
+    'Q:giant': {'body': 53, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 108, 'res': 108, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
+}
 
 # 2026-11-14 §0-D UI 부품 시트 (ui_kit_import.py 셋째 인자 = 원본 가로 도트 수 → 칸 크기).
 # 정수배로 깨끗한 시트는 칸 가운데를 그대로 읽고(차이 0%), 생성기 번짐이 있는 시트만 격자 찾기 · 최빈색.

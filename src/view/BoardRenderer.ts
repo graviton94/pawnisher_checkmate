@@ -2,7 +2,7 @@ import { vignette } from '../ui/juice';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
-import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, RAID_TEXT } from '../data/giants';
+import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN } from '../data/giants';
 import { PRELOAD } from '../data/preload-list';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
@@ -29,7 +29,8 @@ const gpx = (px: number): number => Math.max(12, Math.round(px / 12) * 12);
 const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
 /**
  * 발주 이형 · 거대 주물 그림 (2026-11-14 P-01~05 · G-01~03, tools/pixel/piece_import.py → maker.py export).
- * 이형 = `pieces/s-<이형><진영>.png`(72칸 캔버스), 거대 = `pieces/s-giant<유형>1.png`(144칸 캔버스 · 한가운데가 네 부위 경계).
+ * 이형 = `pieces/s-<이형><진영>.png`(72칸 캔버스), 거대 = `pieces/s-giant<유형>1.png`(D-527 재발주본: 108칸 캔버스 = 보통 기물 72칸 × 1.5 —
+ * 판에서 GIANT_ART_SPAN(1.5)칸 폭 · 2×2 가로 가운데 · 받침 바닥은 기준선, 그림 한가운데가 네 부위 경계).
  */
 const formKey = (form: FormId, side: Side) => `px-${form}-${side}`;
 const giantKey = (type: PieceType) => `px-giant${type}-1`;
@@ -153,7 +154,7 @@ const procSheetKey = (suf: string) => `ui-proc-sheet${suf}`;
 const procFrame = (name: string, dark: boolean) => PROC_TILES.indexOf(name.replace(/^proc-/, '')) + (dark ? PROC_TILES.length : 0);
 /** 컨베이어 흐름 한 프레임 (ms) — 4프레임 계단 애니(D-216: 선형 이동 대신 steps) */
 const CONVEYOR_FRAME_MS = 180;
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'tile-light-binspect', 'tile-dark-binspect', 'tile-light-bmagnet', 'tile-dark-bmagnet', 'tile-light-balarm', 'tile-dark-balarm', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'tile-light-binspect', 'tile-dark-binspect', 'tile-light-bmagnet', 'tile-dark-bmagnet', 'tile-light-balarm', 'tile-dark-balarm', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'chip-weak', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -724,21 +725,12 @@ class BoardScene extends Phaser.Scene {
     else if (p.elite) chipAt('crown', false);
     else if (trait) chipAt(trait, false);
     if (p.id === this.nemesisId && p.side === 1) chipAt('skull', true);
-    // 약점 창 (D-518 레이드 — 패링 · 헛방 · 헛친 이형): 왼쪽 아래 검은 딱지 + 진홍 글자 「약」 (이형 대비 딱지와 같은 코드 도트 부품 — 전용 딱지는 발주 §0-D 대기)
+    // 약점 창 (D-518 레이드 — 패링 · 헛방 · 헛친 이형): 왼쪽 아래 금 간 방패 딱지 (받은 RD-01 → ui/board/chip-weak.png, D-527) — 다른 딱지와 같은 크기 · 정수 자리.
+    // 2×2 보스는 2×2 왼쪽 위(별 딱지와 같은 높이)
     if (p.weak && p.weak > 1) {
-      const size = Math.round(t * 0.34);
-      // 2×2 보스는 「임시」 딱지가 왼쪽 아래를 쓰므로 2×2 왼쪽 위(별 딱지와 같은 높이)
+      const size = Math.round(t * 0.36);
       const x0 = Math.round(t * 0.04), y0 = Math.round(boss ? oy + t * 0.22 : t - size - t * 0.04);
-      const tag = this.add.graphics();
-      tag.fillStyle(0x16141c, 1).fillRect(x0, y0, size, size);
-      tag.lineStyle(Math.max(1, Math.round(t * 0.03)), 0xd0453a, 1).strokeRect(x0, y0, size, size);
-      marks.push(
-        tag,
-        this.add
-          .text(x0 + size / 2, y0 + size / 2, RAID_TEXT.weakChip, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(size * 0.62)}px`, color: '#F87171' })
-          .setOrigin(0.5)
-          .setResolution(this.dpr),
-      );
+      marks.push(this.add.image(x0 + size / 2, y0 + size / 2, boardKey('chip-weak')).setDisplaySize(size, size));
     }
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
@@ -777,8 +769,8 @@ class BoardScene extends Phaser.Scene {
     } else if (p.giant) {
       const left = p.giant.dx === 0, top = p.giant.dy === 1;
       const fw = glyph.frame.width, fh = glyph.frame.height;
-      // 2×2 반장과 같은 자 (D-525): 보통 기물 배율 두 배 · 받침 바닥을 아래 칸 기준선에 — 위 부위는 한 칸 위 칸에서 같은 그림을 자른다
-      const box = this.pieceBox(glyph.texture.key, 2);
+      // 거대 주물 (D-525 → D-527): 보통 기물 배율 1.5배(GIANT_ART_SPAN) · 2×2 가로 가운데 · 받침 바닥을 아래 칸 기준선에 — 위 부위는 한 칸 위 칸에서 같은 그림을 자른다
+      const box = this.pieceBox(glyph.texture.key, GIANT_ART_SPAN);
       glyph.setDisplaySize(box.size, box.size).setPosition(left ? t : 0, top ? box.cy + t : box.cy);
       glyph.setCrop(left ? 0 : fw / 2, top ? 0 : fh / 2, fw / 2, fh / 2);
     }

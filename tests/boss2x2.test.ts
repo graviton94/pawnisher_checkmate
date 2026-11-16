@@ -3,6 +3,8 @@ import { dangerSquares, endTurn, intentHits, newSliceBattle, playCard, type Slic
 import { bossAim, bossSlamCells, giantGroups } from '../src/slice/giant';
 import { processBefore } from '../src/slice/process';
 import { bestAction } from '../src/slice/bot';
+import { BOSS_ART_RULES, bossArtFile, bossArtTemp } from '../src/data/giants';
+import { PRELOAD } from '../src/data/preload-list';
 import { battleFor, FINAL_BOSS } from '../src/slice/run';
 import { BOSS_PAIRS, SLICE, type BossRule } from '../src/slice/cards';
 import { GIANT_AT } from '../src/data/giants';
@@ -304,5 +306,15 @@ describe('2×2 특별 보스 — 결정론 (D-513)', () => {
       return JSON.stringify({ s: b.s, turn: b.turn, aim: b.giantAim, phase2: b.phase2 });
     };
     expect(play()).toBe(play());
+  });
+});
+
+describe('2×2 반장 전용 그림 (D-527)', () => {
+  it('일곱 반장 모두 1단계 · 격노 그림을 받아 「임시」 딱지가 없다', () => {
+    for (const r of BOSS_ART_RULES) {
+      expect(bossArtTemp(r)).toBe(false);
+      expect(bossArtTemp(r, true)).toBe(false);
+      expect(PRELOAD).toContain(bossArtFile(r, true));
+    }
   });
 });

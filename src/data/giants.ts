@@ -58,6 +58,11 @@ export const BOSS_BODY = {
  * 2×2 보스 전용 그림 파일 (발주 GB-01~07 · b 「넣을 곳」과 같은 이름): `pieces64.txt` `[K:boss-<반장> 1]` · `[K:boss-<반장>-p2 1]`
  * → `python3 -I tools/pixel/maker.py export` → `public/pieces/s-boss-<반장>1.png` · `s-boss-<반장>-p2-1.png` (144칸 캔버스).
  */
+/**
+ * 거대 주물 그림 크기 (D-527 사용자 결정): 피격 범위는 반장 · 도금왕과 같은 2×2, 그림은 그만큼 크지 않게 보통 기물의 1.5배.
+ * 그림 캔버스 108칸(72 × 1.5)을 이 배수로 그려 도트 한 칸 = 보통 기물 도트 한 칸, 받침 바닥은 아래 칸 줄 기준선(D-525), 체력바는 2×2 그대로.
+ */
+export const GIANT_ART_SPAN = 1.5;
 export const BOSS_ART_RULES = ['plate', 'inspect', 'spawn', 'magnet', 'thorns', 'alarm', 'gilded'] as const;
 export const bossArtFile = (rule: string, rage: boolean): string => `pieces/s-boss-${rule}${rage ? '-p2-' : ''}1.png`;
 /** 그 반장의 그림(격노면 b, 없으면 1단계)을 아직 받지 않아 반장 킹 그림을 빌리는 중인가 — 받은 파일은 preload 목록(tools/gen-preload.cjs)에 오른다 */
@@ -112,8 +117,6 @@ export const RAID_TEXT = {
   weakTag: '약점!',
   whiffTag: '헛방!',
   holdTag: '막음!',
-  /** 판 위 딱지 글자 (약점 창 — 기절은 별 딱지) */
-  weakChip: '약',
   /** 토스트 (① 시스템 투) */
   stunToast: (name: string): string => `${josa(name, '이')} ${TERM.stun}했습니다. 이번 턴은 움직이지 않고, 받는 피해가 ×${RAID.parryWeak}입니다.`,
   whiffToast: (name: string): string => `${name}의 철갑이 벗겨졌습니다.`,

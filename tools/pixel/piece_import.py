@@ -28,7 +28,7 @@ from PIL import Image, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from scene_recipe import BOSS_GRID, PIECE_GRID  # noqa: E402
+from scene_recipe import BOSS_GRID, GIANT_GRID, PIECE_GRID  # noqa: E402
 
 PIECES = os.path.join(HERE, 'pieces64.txt')
 
@@ -295,45 +295,52 @@ def clean_dots(grid, body, keep, passes=2):
                 nb = [grid[y + dy, x + dx] for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1))
                       if 0 <= y + dy < h and 0 <= x + dx < w and body[y + dy, x + dx]]
                 if nb and grid[y, x] not in nb:
-                    out[y, x] = max(set(nb), key=nb.count)
+                    out[y, x] = max(sorted(set(nb)), key=nb.count)
         grid = out
     return grid
 
 
-def build_boss(src, name):
+def build_boss(src, name, res=None):
     """2×2 보스 원본 → {(이름, 1): 144줄}, 보고용 수치 (D-524 기물 문법 맞춤).
     몸은 72칸 캔버스 격자(몸 키 cfg body ≈ 64칸)로 복원 → 칸마다 2×2로 펴서 144칸 캔버스에 — 판 2×2 위에서 보스 그림 한 장의
     도트 수가 일반 기물 한 장(72칸 캔버스)과 같다. 먹선 = 72칸 격자 outline칸(기본 2 = 판 위 일반 흑 기물 먹 테 4~5칸과 같은 굵기),
-    흰 테 = 144칸 격자 3칸(일반 기물과 같은 두께 · 같은 흰색)."""
+    흰 테 = 144칸 격자 3칸(일반 기물과 같은 두께 · 같은 흰색).
+    res=144(D-527 판 해상도 시안, tools/pixel/gb_fit.py `fine`): 펴지 않고 144칸 격자로 바로 읽는다 — 보스 도트 한 칸 = 보통 기물 도트 한 칸.
+    몸 키 · 받침 · 먹선 · 떠 있는 조각 하한 · patch는 같은 판 위 크기가 되게 배수로 늘린다(기본 res=72는 그대로).
+    거대 주물(D-527, scene_recipe.GIANT_GRID — 재발주본 G-01~03): canvas = res = 108칸(보통 기물 72칸의 1.5배, 판에서 1.5칸 폭 · 펴지 않음 —
+    도트 한 칸 = 보통 기물 도트 한 칸), 몸 키는 72칸 단위(바탕 기물 키)에 1.5배, 먹선 outline_px칸(보통 흑 기물 먹 테 4칸)."""
     import maker
-    cfg = BOSS_GRID[name]
-    N, C, rim = 144, 72, 3
+    cfg = BOSS_GRID[name] if name in BOSS_GRID else GIANT_GRID[name]
+    N, C, rim = cfg.get('canvas', 144), res or cfg.get('res', 72), 3
+    f = N // C  # 격자 한 칸 = 캔버스 f×f
     strict = cfg.get('key') == 'strict'
     rgb, S, (y0, y1, x0, x1), cx = boss_box(src, strict)
     if cfg.get('pitch_of'):  # 격노는 1단계 원본과 같은 간격
         _, _, (py0, py1, _, _), _ = boss_box(os.path.join(os.path.dirname(src), cfg['pitch_of']), strict)
-        p = (py1 - py0 + 1) / BOSS_GRID[cfg['pitch_name']]['body']
+        p = (py1 - py0 + 1) / (BOSS_GRID[cfg['pitch_name']]['body'] * C / 72)
     else:
-        p = (y1 - y0 + 1) / cfg['body']
+        p = (y1 - y0 + 1) / (cfg['body'] * C / 72)
     rows = int(round((y1 - y0 + 1) / p))
-    bottom = C - cfg.get('bottom', 3)  # 받침 바닥 줄 다음 (72칸 격자)
+    bottom = C - cfg.get('bottom', 3) * C // 72  # 받침 바닥 줄 다음 (72칸 격자)
     top = bottom - rows
     # 가로: 십자 가운데가 캔버스 가운데(36칸)에 — 칸 c의 원본 x = cx + (c + 0.5 - 36) * p
-    c0 = int(np.floor(36 - (cx - x0) / p))
-    c1 = int(np.ceil(36 + (x1 + 1 - cx) / p))
-    ox = cx - 36 * p
+    c0 = int(np.floor(C / 2 - (cx - x0) / p))
+    c1 = int(np.ceil(C / 2 + (x1 + 1 - cx) / p))
+    ox = cx - C / 2 * p
     cols = c1 - c0
     oy = y1 + 1 - rows * p
     raw = sample(S.astype(float), ox + c0 * p, oy, p, cols, rows, 'mean') > 0.5
     body = largest(raw)
     if cfg.get('float'):  # 떠다니는 조각(D-526 자석 격노): 몸에서 떨어진 덩어리도 float칸 이상이면 남긴다
-        body = keep_parts(raw, cfg['float'])
+        body = keep_parts(raw, cfg['float'] * (C // 72) ** 2)
     # 팔레트: 검은 진영 다섯 단(D-221) + 반장 테마 강조색 2~3단(cfg theme) — 그 밖의 명암 · 황동은 가까운 단으로.
     # 원본 화소마다 먼저 글자로 가른다: 먹(밝기 < ink) / 강조(채도 ≥ sat → 가장 가까운 테마 색) / 그 밖 = 밝기로 가장 가까운 검은 단.
     #   테마 밖 채색은 cfg alias로 검은 단에 돌린다(예: 검수 ✕ 계기의 황동 테 → 쇠).
     # 그다음 칸마다 칸 전체에서 가장 많은 글자(강조는 accent 배 가중 — 가는 금 · 렌즈 테가 살아남게)
     grey = {k: BOSS_BASE[k] for k in 'HMBZD'}
     accent = {k: maker.PAL64[k] for k in cfg['theme']}
+    pale = {k: maker.PAL64[k] for k in cfg.get('pale', (0, ''))[1]}
+    accent.update(pale)  # 흰 단도 강조 칸처럼 센다(가중은 강조와 같음)
     keys = ['K'] + list(grey) + list(accent)
     L = lum(rgb)
     sat = rgb.max(-1) - rgb.min(-1)
@@ -342,7 +349,7 @@ def build_boss(src, name):
     # 빛 단 H는 일반 흑 기물처럼 드물게(가장 밝은 모서리만) — 밝기 hi 미만은 M으로. 반장 색(FOE_TONE)에서 H가 가장 밝은 색이 되므로 남발하면 판 위가 시끄럽다
     lab = np.where((lab == 1) & (L < cfg.get('hi', 150)), 2, lab)
     # alias: 테마 밖 채색(황동 테 · 짙은 빨강 등)을 검은 단으로 돌린다 — {'#RRGGBB': 글자}
-    cand = [(v, keys.index(k)) for k, v in accent.items()]
+    cand = [(v, keys.index(k)) for k, v in accent.items() if k not in pale]
     cand += [(tuple(int(h[i:i + 2], 16) for i in (1, 3, 5)), keys.index(k)) for h, k in cfg.get('alias', {}).items()]
     av = np.array([c for c, _ in cand], dtype=float)
     acc_i = np.array([i for _, i in cand])[((rgb[..., None, :] - av) ** 2).sum(-1).argmin(-1)]
@@ -350,6 +357,11 @@ def build_boss(src, name):
     if cfg.get('bright'):  # 무채색 밝은 칸을 테마 색으로(D-526 출하 반장 은빛 가시 끝) — (밝기 하한, 글자)
         thr, ch = cfg['bright']
         lab = np.where((sat < cfg.get('sat', 48)) & (L >= thr), keys.index(ch), lab)
+    if cfg.get('pale'):  # 무채색 밝은 칸을 흰 진영 단으로(D-527 도금왕 격노 — 금박 밑 흰 폰 몸) — (밝기 하한, 흰 글자들)
+        thr, ws = cfg['pale']
+        wl = np.array([lum(np.array(maker.PAL64[k], dtype=float)) for k in ws])
+        wi = np.array([keys.index(k) for k in ws])[np.abs(L[..., None] - wl).argmin(-1)]
+        lab = np.where((sat < cfg.get('sat', 48)) & (L >= thr), wi, lab)
     lab = np.where(L < cfg.get('ink', 12), 0, lab)
     lab = np.where(is_key(rgb, strict), len(keys), lab)  # 마젠타 바탕은 세지 않는다
     wgt = np.array([1.0] + [1.0] * len(grey) + [cfg.get('accent', 1.6)] * len(accent))
@@ -360,24 +372,35 @@ def build_boss(src, name):
             xa, xb = int(ox + (c0 + i) * p), int(ox + (c0 + i + 1) * p)
             cnt = np.bincount(lab[ya:yb, xa:xb].ravel(), minlength=len(keys) + 1)[:len(keys)] * wgt
             fill[j, i] = keys[int(cnt.argmax())]
-    edge = inner_edge(body, cfg.get('outline', 2))
+    edge = inner_edge(body, cfg['outline_px'] if 'outline_px' in cfg else cfg.get('outline', 2) * C // 72)
+    if cfg.get('float_edge'):  # D-527: 떠 있는 작은 조각(불티 · 금박 파편)은 먹선 1칸 — 2칸이면 속이 다 먹으로 덮인다
+        main = largest(body)
+        edge = (edge & main) | (inner_edge(body, C // 72) & ~main)
     if cfg.get('accent_edge'):  # D-526: 가는 가시 · 조각 끝의 테마 색(진홍 가시 끝 · 보라 조각)은 먹선 안쪽 줄에서 살린다 — 바깥 1칸만 먹
-        keep = edge & ~inner_edge(body, 1) & np.isin(fill, list(accent))
+        keep = edge & ~inner_edge(body, C // 72) & np.isin(fill, list(accent))
         edge = edge & ~keep
     fill[edge] = 'K'
     for _ in range(cfg.get('smooth', 3)):  # 3×3 다수결 여러 번 — 원본의 잔 명암을 넓은 면으로
         fill = majority(fill, body & ~edge, None)
     fill = clean_dots(fill, body, edge)
-    assert top >= 2 and c0 >= 2 and c1 + 2 <= C, (name, top, c0, c1)
+    for (px, py, pw, ph) in [tuple(v * C // 72 for v in b) for b in cfg.get('patch', ())]:  # 받은 그림 다듬기(D-527): 72칸 격자 상자 안 먹 · 어두운 칸을 이웃 다수 색으로(얼굴처럼 읽히는 구멍 메우기)
+        for j in range(py - top, py - top + ph):
+            for i in range(px - c0, px - c0 + pw):
+                if 0 <= j < rows and 0 <= i < cols and body[j, i] and not edge[j, i]:
+                    nb = [fill[j + dy, i + dx] for dy in (-2, -1, 0, 1, 2) for dx in (-2, -1, 0, 1, 2)
+                          if 0 <= j + dy < rows and 0 <= i + dx < cols and body[j + dy, i + dx] and fill[j + dy, i + dx] not in 'KDZ']
+                    if nb and fill[j, i] in 'KDZ':
+                        fill[j, i] = max(sorted(set(nb)), key=nb.count)
+    assert top >= 2 * C // 72 and c0 >= 2 * C // 72 and c1 + 2 * C // 72 <= C, (name, top, c0, c1)
     # 144칸으로 펴기 (칸마다 2×2) + 흰 테 3칸
     big = np.zeros((N, N), bool)
     g = [['.'] * N for _ in range(N)]
     for j in range(rows):
         for i in range(cols):
             if body[j, i]:
-                for dy in (0, 1):
-                    for dx in (0, 1):
-                        y, x = 2 * (top + j) + dy, 2 * (c0 + i) + dx
+                for dy in range(f):
+                    for dx in range(f):
+                        y, x = f * (top + j) + dy, f * (c0 + i) + dx
                         big[y, x] = True
                         g[y][x] = fill[j, i]
     ring = cheb(big, rim) & ~big
@@ -418,7 +441,7 @@ if __name__ == '__main__':
     args = [x for x in argv if not x.startswith('--')]
     src, name = args[0], args[1]
     giant = '--giant' in sys.argv
-    blocks, info = build_boss(src, name) if '--boss' in sys.argv else build(src, name, giant)
+    blocks, info = build_boss(src, name) if '--boss' in sys.argv or (giant and name in GIANT_GRID) else build(src, name, giant)
     print(name, info)
     if '--preview' in sys.argv:  # 확인용 확대 (흰 테까지 · 배경 투명)
         import maker
@@ -426,7 +449,7 @@ if __name__ == '__main__':
         maker.render64(grid, side, 4).save(sys.argv[sys.argv.index('--preview') + 1])
     if '--write' in sys.argv:
         write(blocks)
-        if '--boss' in sys.argv and src.endswith('-source.png'):  # 대조판 <ID>-check.png: 원본(축소) | 결과(흰 테까지 계단 확대) — 같은 높이
+        if ('--boss' in sys.argv or giant) and src.endswith('-source.png'):  # 대조판 <ID>-check.png: 원본(축소) | 결과(흰 테까지 계단 확대) — 같은 높이
             import maker
             (key, side), grid = next(iter(blocks.items()))
             out = maker.render64(grid, side, 4)
