@@ -101,9 +101,12 @@ const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8
  * 몸 64칸이 예전처럼 칸의 82%를 차지하도록 그림 전체를 72/64배로 키우고, 바닥(칸의 84%)에 맞춘다.
  */
 const PIECE_SIZE = 0.82 * (72 / 64);
-/** 거대 주물 그림이 2×2를 채우는 비율 (D-484) — 칸 경계 너머로 조금 넘쳐도 자르기가 칸 안으로 묶는다 */
-const GIANT_FILL = 1;
-const PIECE_Y = 0.84 - PIECE_SIZE / 2;
+/**
+ * 기물 바닥 기준선 (D-525): 체력바 윗줄 = 칸 위에서 16도트. 모든 기물 그림(보통 72칸 · 2×2 반장 · 거대 주물 144칸)은
+ * 그림의 바닥(흰 테 바깥 끝 — 그림마다 아래 투명 줄을 잰다)을 이 줄에 맞대고, 체력바(4도트)가 바로 아래에 붙는다.
+ * 예전에는 그림 아래 끝을 칸의 84%(16.8도트)에 두어 흰 테 위쪽 0.2도트가 바 윗줄 위로 삐져나와 「흰 줄」로 보였다.
+ */
+const GAUGE_ROW = 16;
 /** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
 let boardTopInset = 0;
 /** 판 아래 자리 (CSS px) — 부관 안내 띠 자리. 위아래를 같게 두면 판이 세로 가운데에 선다 (1.1.1 테스터: 판이 아래로 치우침) */
@@ -112,6 +115,16 @@ let boardBottomInset = 0;
 export const setBoardTopInset = (px: number, bottom = 0): void => {
   boardTopInset = px;
   boardBottomInset = bottom;
+};
+/**
+ * 판을 그리는 배율 (D-240 상한 → D-525 정수 늘림): 캔버스 한 픽셀이 기기 픽셀 정수 개로 늘어나야 도트 · 바 · 테 줄이 고르다.
+ * 기기 배율이 상한(RENDER.dprCap)을 넘으면 기기 배율을 정수로 나눈 값 중 상한 이하 · 하한(RENDER.dprMin) 이상을 쓰고,
+ * 그런 값이 없으면(2.625 같은 소수 배율) 기기 배율 그대로 그린다 — 예전에는 2로 그려 1.3125배로 늘리느라 줄이 한 픽셀씩 들쭉날쭉했다.
+ */
+const renderScale = (dpr: number): number => {
+  if (dpr <= RENDER.dprCap) return dpr;
+  for (let m = 2; dpr / m >= RENDER.dprMin; m++) if (dpr / m <= RENDER.dprCap) return dpr / m;
+  return dpr;
 };
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // D-429: 네 대표 규격으로 크기를 정한다. PC/태블릿을 폰의 54px 상한으로 제한하지 않는다.
@@ -301,6 +314,38 @@ class BoardScene extends Phaser.Scene {
     tex.refresh();
     tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
+  /** 그림 아래 투명 줄 비율 (D-525) — 받침 바닥(흰 테 바깥 끝)을 기준선에 맞대려고 그림마다 한 번 잰다 */
+  private footPads = new Map<string, number>();
+  private footPad(key: string): number {
+    const hit = this.footPads.get(key);
+    if (hit !== undefined) return hit;
+    let pad = 0;
+    const src = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+    const w = src.width, h = src.height;
+    const ctx = w && h ? Object.assign(document.createElement('canvas'), { width: w, height: h }).getContext('2d', { willReadFrequently: true }) : null;
+    if (ctx) {
+      ctx.drawImage(src, 0, 0);
+      const a = ctx.getImageData(0, 0, w, h).data;
+      let y = h - 1;
+      const filled = (row: number) => { for (let x = 0; x < w; x++) if (a[(row * w + x) * 4 + 3] > 0) return true; return false; };
+      while (y > 0 && !filled(y)) y--;
+      pad = (h - 1 - y) / h;
+    }
+    this.footPads.set(key, pad);
+    return pad;
+  }
+  /**
+   * 기물 그림 자리 (D-525): 한 변 = 칸 span개 × PIECE_SIZE, 크기 · 위치를 캔버스 픽셀 정수로 맞추고
+   * 그림의 받침 바닥을 체력바 윗줄(칸 위에서 GAUGE_ROW도트)에 맞댄다(틈 없이 — 1픽셀 못 되게 바 밑으로 들어가는 쪽으로 올림).
+   * 반환: 한 변 · 그림 가운데 y (아래 칸 왼위 기준, 월드 단위)
+   */
+  private pieceBox(key: string, span = 1): { size: number; cy: number } {
+    const r = this.dpr;
+    const tc = Math.round(this.tile * r); // 칸 = 20 × 도트(정수 캔버스 픽셀)
+    const sc = 2 * Math.round((PIECE_SIZE * tc * span) / 2); // 짝수 — 칸 가운데에 서도 왼 끝이 정수
+    const bottom = Math.ceil((GAUGE_ROW * tc) / BOARD_DOTS + this.footPad(key) * sc);
+    return { size: sc / r, cy: (bottom - sc / 2) / r };
+  }
   /** 기물의 바탕 그림 키 — 발주 이형 · 거대 그림이 있으면 그것, 없으면 바탕 기물 (P-01~05 · G-01~03) */
   private artKey(type: PieceType, side: Side, art?: { form?: FormId; giant?: boolean }): string {
     if (art?.giant && side === 1 && this.textures.exists(giantKey(type))) return giantKey(type);
@@ -350,6 +395,8 @@ class BoardScene extends Phaser.Scene {
       if (k.endsWith('-0')) this.makeToneFrom(k, 'crack', CRACK_TONE);
       else for (const tone of Object.keys(FOE_TONE)) this.makeToneFrom(k, tone, FOE_TONE[tone]);
     }
+    // 카메라 스크롤을 월드 정수로 내리는 roundPixels(pixelArt 기본)는 소수 줌(2.625)에서 칸 모서리를 픽셀 사이로 민다 — 끄고 moveCamera가 캔버스 픽셀에 맞춘다 (D-525)
+    this.cameras.main.setRoundPixels(false);
     this.cameras.main.setZoom(this.dpr);
     this.camZoom = this.dpr;
     this.cameras.main.setBackgroundColor(C.bg);
@@ -415,8 +462,8 @@ class BoardScene extends Phaser.Scene {
     const tp = new PixelPen(top, t / BOARD_DOTS);
     for (const r of this.anim.glints) {
       if (!r.s.root.active) continue;
-      const big = !!r.s.piece.giant?.boss; // 2×2 보스는 위 끝 넓은 게이지 (D-513)
-      const gy = big ? 1 - BOARD_DOTS : r.s.piece.giant?.dy === 1 ? 1 : 16;
+      const big = !!r.s.piece.giant?.boss; // 2×2 보스는 아래 끝 2칸 폭 게이지 (D-513 → D-525)
+      const gy = r.s.piece.giant?.dy === 1 && !big ? 1 : GAUGE_ROW;
       drawGauge(tp, r.s.root.x + 3 * tp.dot, r.s.root.y + gy * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, big ? 2 * BOARD_DOTS - 8 : 12);
     }
   }
@@ -605,15 +652,19 @@ class BoardScene extends Phaser.Scene {
     // 판이 다 들어오면 칸 격자를 위(상태 띠) · 아래(부관 안내) 자리를 뺀 나머지의 가운데에 — 아래 끝이 화면 밖으로 나가지 않게
     const mid = bh / 2 - (boardTopInset - boardBottomInset) / 2;
     const y = bh + m - top <= viewH ? Math.max(Math.min(mid, viewH / 2 - boardTopInset), bh + m - viewH / 2) : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
-    this.camCenter = { x, y };
-    cam.centerOn(x, y);
+    // 캔버스 픽셀 정수에 맞춘다 (D-525): 칸 모서리가 픽셀 사이에 걸리면 바 · 테 줄이 한 픽셀씩 들쭉날쭉해진다.
+    // Phaser 카메라: 캔버스 x = floor(폭/2 + 0.5) + 줌 × (월드 x − 가운데 x) — 가운데 × 줌이 정수면 칸 모서리가 정수 픽셀 (카메라 roundPixels는 끈다 · create)
+    const z = this.dpr;
+    this.camCenter = { x: Math.round(x * z) / z, y: Math.round(y * z) / z };
+    cam.centerOn(this.camCenter.x, this.camCenter.y);
   }
 
   // ---------- 기물 ----------
   private makePiece(p: Piece, pos: Pos, alpha = 1): PieceSprite {
     const t = this.tile;
     const w = this.world(pos);
-    const root = this.add.container(w.x, w.y).setDepth(2 + pos.y * -0.001 + 0.5);
+    // 위 줄(판 y가 큰 쪽)이 아래 줄 위에 (D-525): 아래 칸 기물의 머리(종이 왕관 끝)가 윗칸 체력바 아랫줄을 덮어 바 밑에 흰 줄이 서던 것을 막는다
+    const root = this.add.container(w.x, w.y).setDepth(2 + pos.y * 0.001 + 0.5);
     // 2×2 보스 몸 칸 (D-513): 그림 · 게이지는 본체(왼아래 칸)가 2×2로 한 장 — 몸 칸은 빈 자리표(움직임 사건만 받는다)
     if (p.body !== undefined) {
       const glyph = this.add.image(t / 2, t / 2, pieceKey('K', 1)).setVisible(false);
@@ -692,7 +743,11 @@ class BoardScene extends Phaser.Scene {
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
-    const glyph = this.add.image(t / 2, t * PIECE_Y, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side, { form: p.asPawn ? undefined : p.form, giant: !!p.giant })).setDisplaySize(t * PIECE_SIZE, t * PIECE_SIZE);
+    const glyph = this.add.image(t / 2, 0, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side, { form: p.asPawn ? undefined : p.form, giant: !!p.giant }));
+    if (!p.giant) {
+      const box = this.pieceBox(glyph.texture.key);
+      glyph.setDisplaySize(box.size, box.size).setY(box.cy);
+    }
     // 거대 주물 (D-484): 그림 하나를 2×2 칸에 펴고 네 조각으로 — 부위마다 제 칸의 4분의 1만 보인다(부서지면 그 조각이 무너진다).
     // 화면 위쪽 = 판 y가 큰 쪽(dy 1). 전용 그림(G-01~03, 144칸 캔버스)은 한가운데가 부위 경계, 없으면 바탕 기물 그림을 두 배로
     if (boss) {
@@ -704,7 +759,9 @@ class BoardScene extends Phaser.Scene {
         // 졸개와 같은 반장 색 (D-524) — 판의 색 갈래(foeTone)가 있으면 그 색으로 바꾼 그림
         glyph.setTexture(this.foeTone && this.textures.exists(`${art}-${this.foeTone}`) ? `${art}-${this.foeTone}` : art);
       }
-      glyph.setDisplaySize(t * 2 * PIECE_SIZE, t * 2 * PIECE_SIZE).setPosition(t, -t + 2 * t * PIECE_Y);
+      // 바닥 기준선 (D-525): 2×2 몸의 받침 바닥이 아래 칸 줄 보통 기물 받침 바닥과 같은 높이 — 격노 그림도 같은 자로 잰다
+      const box = this.pieceBox(glyph.texture.key, 2);
+      glyph.setDisplaySize(box.size, box.size).setPosition(t, box.cy);
       if (!real) {
         // 「임시」 딱지 (D-386: 받기 전에는 빌린 그림이라고 판 위에 밝힌다 — 길게 누르면 「임시 — GB 대기」) — 2×2 왼아래 귀퉁이, 받침을 가리지 않게
         const lbl = this.add.text(0, 0, BOSS_BODY.tempChip, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: '#0B0B0E' }).setOrigin(0.5).setResolution(this.dpr);
@@ -720,7 +777,9 @@ class BoardScene extends Phaser.Scene {
     } else if (p.giant) {
       const left = p.giant.dx === 0, top = p.giant.dy === 1;
       const fw = glyph.frame.width, fh = glyph.frame.height;
-      glyph.setDisplaySize(t * 2 * GIANT_FILL, t * 2 * GIANT_FILL).setPosition(left ? t : 0, top ? t : 0);
+      // 2×2 반장과 같은 자 (D-525): 보통 기물 배율 두 배 · 받침 바닥을 아래 칸 기준선에 — 위 부위는 한 칸 위 칸에서 같은 그림을 자른다
+      const box = this.pieceBox(glyph.texture.key, 2);
+      glyph.setDisplaySize(box.size, box.size).setPosition(left ? t : 0, top ? box.cy + t : box.cy);
       glyph.setCrop(left ? 0 : fw / 2, top ? 0 : fh / 2, fw / 2, fh / 2);
     }
     const hp = this.add.graphics();
@@ -737,19 +796,19 @@ class BoardScene extends Phaser.Scene {
     const d = pen.dot;
     s.hp.clear();
     if (s.piece.body !== undefined) return; // 2×2 보스 몸 칸: 게이지는 본체 하나 (D-513)
-    // 2×2 보스 (D-513): 게이지 하나를 2×2 위 끝에 넓게 — 거대 주물(부위 게이지 넷)과 한눈에 갈린다
+    // 2×2 보스 (D-513 → D-525): 게이지 하나를 2×2 아래 끝(보통 기물과 같은 기준선 바로 아래)에 2칸 폭으로 — 거대 주물(부위 게이지 넷)과 한눈에 갈린다
     if (s.piece.giant?.boss) {
-      const gy = 1 - BOARD_DOTS;
+      const gy = GAUGE_ROW;
       drawGauge(pen, 3 * d, gy * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, 2 * BOARD_DOTS - 8);
       if (s.piece.shield > 0) {
         const n = Math.max(1, Math.round((2 * BOARD_DOTS - 8) * Math.min(1, s.piece.shield / s.piece.maxHp)));
-        for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, (gy + 4) * d + d / 2, 0xf4f1ea, 1, 1);
+        for (let i = 0; i < n; i++) pen.px((4 + i) * d + d / 2, (gy - 1) * d + d / 2, 0xf4f1ea, 1, 1);
       }
       if (hpAfter < hpNow) this.anim.glints.push({ s, hp: hpNow, after: hpAfter });
       return;
     }
     // 거대 주물 위쪽 부위 (D-484): 게이지를 칸 위 끝에 — 큰 그림 한가운데를 가로지르지 않고 네 게이지가 테두리처럼 둘러싼다
-    const gy = s.piece.giant?.dy === 1 ? 1 : 16;
+    const gy = s.piece.giant?.dy === 1 ? 1 : GAUGE_ROW;
     drawGauge(pen, 3 * d, gy * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp);
     // 보호막: 게이지 바로 위(위쪽 부위는 바로 아래) 흰 도트 줄
     if (s.piece.shield > 0) {
@@ -1279,9 +1338,10 @@ class BoardScene extends Phaser.Scene {
   private shatterPiece(s: PieceSprite, slow = 1, power = 1, o: { hot?: boolean; cool?: boolean } = {}): Promise<void> {
     const t = this.tile;
     const key = s.glyph.texture.key;
-    const size = t * PIECE_SIZE;
+    const box = this.pieceBox(key);
+    const size = box.size;
     const gx = s.root.x + t / 2;
-    const gy = s.root.y + t * PIECE_Y;
+    const gy = s.root.y + box.cy;
     const frags: { img: Phaser.GameObjects.Image; x: number; y: number; a: number; v: number; r: number }[] = [];
     this.shardsOf(key, IMPACT.shards).forEach((sh, id) => {
       const x = gx - size / 2 + sh.cx * size;
@@ -1572,8 +1632,9 @@ class BoardScene extends Phaser.Scene {
     cv.width = cv.height = N;
     const g = cv.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    const s = N * PIECE_SIZE;
-    g.drawImage(src, (N - s) / 2, N * PIECE_Y - s / 2, s, s);
+    const box = this.pieceBox(key);
+    const s = (N * box.size) / this.tile;
+    g.drawImage(src, (N - s) / 2, (N * box.cy) / this.tile - s / 2, s, s);
     const a = g.getImageData(0, 0, N, N).data;
     const out: { i: number; j: number; c: number }[] = [];
     for (let j = 0; j < BOARD_DOTS; j++)
@@ -1714,8 +1775,8 @@ class BoardScene extends Phaser.Scene {
               if (trail.length > 1)
                 IMPACT.ghosts.forEach((gh, i) => {
                   const p0 = trail[Math.floor(gh.at * (trail.length - 1))];
-                  const size = t * PIECE_SIZE * gh.scale;
-                  ghosts[i]?.setVisible(fade > 0).setPosition(p0.x + t / 2, p0.y + t * PIECE_Y).setDisplaySize(size * gh.stretch, size / gh.stretch).setAlpha(gh.alpha * fade);
+                  const size = s.glyph.displayHeight * gh.scale;
+                  ghosts[i]?.setVisible(fade > 0).setPosition(p0.x + t / 2, p0.y + s.glyph.y).setDisplaySize(size * gh.stretch, size / gh.stretch).setAlpha(gh.alpha * fade);
                 });
               if (m.landQ >= 0) {
                 if (!landed) {
@@ -1973,7 +2034,7 @@ export class BoardRenderer implements BoardView {
 
   constructor(private host: HTMLElement, input: BoardInput, announce: (text: string) => void = () => {}) {
     // 그리는 해상도 상한 (D-240): 폰 배율 2.6~3 그대로 그리면 판 하나가 프레임을 다 먹었다 (CPU 4배 느린 측정에서 19fps → 2배 상한으로 32fps, 아래 프레임 상한과 함께)
-    const dpr = Math.min(window.devicePixelRatio || 1, RENDER.dprCap);
+    const dpr = renderScale(window.devicePixelRatio || 1);
     this.scene = new BoardScene();
     this.boardFx = new BoardFx(host, (p) => this.screenOf(p));
     this.scene.fxHook = this.boardFx;
@@ -1983,7 +2044,7 @@ export class BoardRenderer implements BoardView {
     // 보드 위 글자(피해 숫자·순번)가 대체 글꼴로 먼저 그려지지 않게 갈무리를 먼저 불러 둔다
     const fonts = Promise.all([document.fonts.load('12px Galmuri11'), document.fonts.load('700 12px Galmuri11'), document.fonts.load('15px Galmuri14')]).catch(() => undefined);
     this.whenReady = Promise.all([new Promise<void>((r) => (this.scene.ready = r)), fonts]).then(() => undefined);
-    const { w, h } = this.size();
+    const { w, h } = this.size(dpr);
     this.game = new Phaser.Game({
       type: Phaser.AUTO,
       parent: host,
@@ -1997,6 +2058,7 @@ export class BoardRenderer implements BoardView {
       pixelArt: true,
     });
     this.game.canvas.style.imageRendering = 'pixelated';
+    this.center(w, h);
     window.addEventListener('resize', () => this.resize());
     // 판이 안 보이는 화면(지도 · 고물상 · 보상 · 사건)에서는 판 그리기를 멈춘다 (D-240)
     new MutationObserver(() => this.sleepIfHidden()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
@@ -2029,14 +2091,26 @@ export class BoardRenderer implements BoardView {
     else if (!hidden && !loop.running) loop.wake();
   }
 
-  private size() {
-    return { w: Math.max(1, this.host.clientWidth), h: Math.max(1, this.host.clientHeight) };
+  /** 판 캔버스 CSS 크기 — 그리는 배율을 곱해 캔버스 픽셀이 정수가 되는 가장 큰 정수 (D-525: 소수 픽셀 캔버스는 브라우저가 한 줄씩 늘려 이음매를 만든다) */
+  private size(dpr = this.scene.dpr) {
+    const fit = (v: number) => {
+      const top = Math.max(1, Math.floor(v));
+      for (let c = top; c > top - 64 && c > 0; c--) if (Math.abs(c * dpr - Math.round(c * dpr)) < 1e-6) return c;
+      return top;
+    };
+    return { w: fit(this.host.clientWidth), h: fit(this.host.clientHeight) };
   }
 
   private resize(): void {
     const { w, h } = this.size();
     const dpr = this.scene.dpr;
     this.game.scale.resize(w * dpr, h * dpr);
+    this.center(w, h);
+  }
+  /** 정수로 깎은 만큼(몇 px) 캔버스를 판 자리 가운데로 */
+  private center(w: number, h: number): void {
+    this.game.canvas.style.marginLeft = `${Math.floor((this.host.clientWidth - w) / 2)}px`;
+    this.game.canvas.style.marginTop = `${Math.floor((this.host.clientHeight - h) / 2)}px`;
   }
 
   /** 적 특성 표식 (자폭 폰 · 되받아침 반장, D-175) — setup 전에 */
