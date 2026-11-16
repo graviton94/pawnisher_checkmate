@@ -1,6 +1,7 @@
 import { installPressFeedback } from './ui/motion';
 import './fonts.css';
 import './style.css';
+import './legacy.css';
 import { BattleController } from './game/controller';
 import { Hud } from './ui/hud';
 import { RunUi } from './ui/runUi';

@@ -40,7 +40,7 @@ body.slice .rail.left { border-left: 0; border-right: 4px solid #000; box-shadow
 #board.jolt { animation: jolt 260ms ease-out; }
 @keyframes jolt { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
 /* 되감기: 테이프가 거꾸로 — 청록 번짐 + 주사선 + 화면이 옆으로 밀린다 */
-.tapefx { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(78, 195, 214, 0.16) 0 2px, transparent 2px 5px), rgba(10, 30, 36, 0.45); mix-blend-mode: screen; animation: tape 800ms steps(10) forwards; }
+.tapefx { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='5' shape-rendering='crispEdges'%3E%3Crect y='3' width='1' height='2' fill='rgb(78,195,214)' fill-opacity='.16'/%3E%3C/svg%3E") left bottom / 1px 5px repeat, rgba(10, 30, 36, 0.45); /* 주사선 도트 무늬 (D-529: 끊긴 줄무늬 그라데이션 → 픽셀 무늬) */ mix-blend-mode: screen; animation: tape 800ms steps(10) forwards; }
 .tapefx span { font: 400 45px Galmuri14, Galmuri11, sans-serif; color: #bff4fb; text-shadow: 4px 0 0 rgba(255, 60, 90, 0.7), -4px 0 0 rgba(60, 200, 255, 0.7), 3px 3px 0 #000; animation: tapetxt 800ms steps(8) forwards; }
 @keyframes tape { 0% { transform: translateX(0); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 7.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 11.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 15% { transform: translateX(-14px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 50% { transform: translateX(10px) skewX(-4deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: translateX(-4px); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 85.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 90.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 95.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: none; -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 @keyframes tapetxt { 0% { transform: scale(1.4); } 30% { transform: scale(1); } 100% { transform: translateX(-30px); } }
@@ -58,7 +58,7 @@ body.slice .parts { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; 
 .part-chip { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; color: #f4d27a; background: #24212b; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; }
 .part-chip .ico, .part-card .ico { display: block; width: 32px; height: 32px; background: currentColor; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; image-rendering: pixelated; }
 
-.part-card { display: grid; justify-items: center; gap: 8px; padding: 16px 12px 14px; min-height: 150px; text-align: center; color: #f2ede4; background: linear-gradient(#2c2833, #2c2833); border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1); }
+.part-card { display: grid; justify-items: center; gap: 8px; padding: 16px 12px 14px; min-height: 150px; text-align: center; color: #f2ede4; background: #2c2833; border: 0; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #c89b3c; transition: transform 140ms cubic-bezier(0.2, 1.4, 0.4, 1); }
 .part-card .ico { width: 64px; height: 64px; color: #f4d27a; } /* 32도트 아이콘 2배 (D-290) */
 .part-card b { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; }
 .part-card small { font-size: 15px; font-family: Galmuri14, Galmuri11, sans-serif; color: #d6d0c6; line-height: 1.4; }
@@ -341,7 +341,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .tfx-em.done .h1 { opacity: 1; transform: translate(-5px, -5px) rotate(-2deg); } .tfx-em.done .h2 { opacity: 1; transform: translate(5px, 5px) rotate(2deg); }
 .tfx-em.done .sl { opacity: 1; } /* 끝없이 도는 밝기 필터는 매 프레임 다시 그려서 뺐다 (테스터: 타이틀 버벅임) */
 .tfx-glint { position: absolute; width: 40px; height: 5px; margin: -2px 0 0 -20px; background: #fff3c4; pointer-events: none; z-index: 3; opacity: 0; }
-.tfx-rays { position: absolute; left: 50%; top: 34%; width: 560px; height: 560px; margin: -280px 0 0 -280px; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)); border-radius: 0; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; }
+.tfx-rays { position: absolute; left: 50%; top: 34%; width: 560px; height: 560px; margin: -280px 0 0 -280px; background: rgba(255, 255, 255, 0.45); border-radius: 0; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; }
 .tfx-rays.on { animation: tfxrays 420ms var(--decel) forwards; }
 @keyframes tfxrays { 0% { transform: scale(0.3) rotate(0); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 25.00% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 50.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 75.00% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.4) rotate(14deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 .tfx-vig { position: fixed; inset: 0; background: #0b0b0e; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; z-index: -1; }
@@ -392,7 +392,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 @keyframes streak { to { background-position: 70px 0; } }
 /* 7 승패 K.O. */
 .ko3 { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
-.ko3 .rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: linear-gradient(rgba(250, 204, 21, 0.32), rgba(250, 204, 21, 0.32)); -webkit-mask-image: var(--px4); mask-image: var(--px4); border-radius: 0; }
+.ko3 .rays { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: rgba(250, 204, 21, 0.32); -webkit-mask-image: var(--px4); mask-image: var(--px4); border-radius: 0; }
 .ko3.win.run .rays { animation: korays 1500ms var(--decel) both; }
 @keyframes korays { 0% { transform: scale(0.2) rotate(0); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 3.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 7.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 11.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 15% { transform: scale(1) rotate(20deg); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 80% { transform: scale(1.05) rotate(70deg); -webkit-mask-image: var(--px1); mask-image: var(--px1); } 86.67% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 93.33% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: scale(1.3) rotate(90deg); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 .ko3 .tint { position: absolute; inset: 0; background: #0b0b0e; -webkit-mask-image: var(--px4); mask-image: var(--px4); }
@@ -449,7 +449,7 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .fx3-badge { position: fixed; z-index: 71; font: 400 15px Galmuri14, Galmuri11, sans-serif; color: #16141c; background: #facc15; padding: 1px 6px; box-shadow: 0 0 0 2px #000; pointer-events: none; animation: badge3 900ms both; }
 .fx3-badge.g { background: #86efac; }
 @keyframes badge3 { 0% { transform: translate(-50%, 0) scale(0); animation-timing-function: var(--snap); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 25% { transform: translate(-50%, -16px) scale(1); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 75% { transform: translate(-50%, -20px); animation-timing-function: var(--accel); -webkit-mask-image: var(--px0); mask-image: var(--px0); } 81.25% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 87.50% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 93.75% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { transform: translate(-50%, -34px); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
-.fx3-plus { position: fixed; z-index: 71; width: 8px; height: 8px; margin: -4px 0 0 -4px; pointer-events: none; background: linear-gradient(#bbf7d0, #bbf7d0) center / 8px 2px no-repeat, linear-gradient(#bbf7d0, #bbf7d0) center / 2px 8px no-repeat; image-rendering: pixelated; }
+.fx3-plus { position: fixed; z-index: 71; width: 8px; height: 8px; margin: -4px 0 0 -4px; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect y='3' width='8' height='2' fill='%23bbf7d0'/%3E%3Crect x='3' width='2' height='8' fill='%23bbf7d0'/%3E%3C/svg%3E") 0 0 / 8px 8px no-repeat; image-rendering: pixelated; }
 .fx3-coin { position: fixed; z-index: 71; width: 18px; height: 18px; margin: -9px 0 0 -9px; background-size: 100% 100%; image-rendering: pixelated; pointer-events: none; }
 /* 16 카드 크게 보기: 도트 쓸기 (끼어드는 등장 애니메이션은 끈다) */
 .peek { animation: none; }
@@ -488,8 +488,8 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .opening.out { animation: opout 300ms var(--accel) forwards; pointer-events: none; }
 @keyframes opout { 100% { transform: scale(1.04); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 /* 배경: P-00 그림이 오면 그것, 없으면 증기 · 용광로 한 점으로 짠 자리 배경 */
-.op-bg { position: absolute; inset: 0; background: var(--img, none) center / cover no-repeat, linear-gradient(transparent, transparent), linear-gradient(#0e1220, #0e1220); image-rendering: pixelated; }
-.op-bg .op-fog { position: absolute; left: -10%; right: -10%; bottom: 18%; height: 30%; background: repeating-linear-gradient(90deg, rgba(138, 152, 168, 0.07) 0 40px, transparent 40px 90px); filter: none; animation: fogmove 40s linear infinite; }
+.op-bg { position: absolute; inset: 0; background: var(--img, none) center / cover no-repeat #0e1220; image-rendering: pixelated; }
+.op-bg .op-fog { position: absolute; left: -10%; right: -10%; bottom: 18%; height: 30%; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='1' preserveAspectRatio='none' shape-rendering='crispEdges'%3E%3Crect width='40' height='1' fill='rgb(138,152,168)' fill-opacity='.07'/%3E%3C/svg%3E") 0 0 / 90px 100% repeat-x; filter: none; animation: fogmove 40s linear infinite; }
 @keyframes fogmove { to { transform: translateX(90px); } }
 .op-bg .op-glow { position: absolute; right: 12%; bottom: 10%; width: 14px; height: 14px; background: #e8783c; box-shadow: 0 0 0 6px rgba(232, 120, 60, 0.35), 0 0 0 14px rgba(232, 120, 60, 0.12); animation: lamp 1.4s steps(2) infinite; }
 .op-bg[style*="--img"] .op-fog, .op-bg[style*="--img"] .op-glow { display: none; }
@@ -592,9 +592,9 @@ body.slice .cmd.armed, .cmd.armed { transform: translateX(8px); box-shadow: 0 0 
 
 /* 승패 글자 받침 띠 (D-194: 사용자 "적 킹 격파가 글자 배경 없이 어색") — 글자가 꽂히는 순간 가운데서 펼쳐지는 검은 판 + 위아래 금(패배는 진홍) 줄 */
 .ko3 .koband { position: absolute; left: 0; right: 0; top: 50%; height: 92px; margin-top: -46px; background: #16141c; box-shadow: 0 -4px 0 #facc15, 0 4px 0 #facc15, 0 -8px 0 #0b0b0e, 0 8px 0 #0b0b0e; transform: scaleX(0); }
-.ko3 .koband::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(250, 204, 21, 0.08) 0 14px, transparent 14px 64px); }
+.ko3 .koband::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='1' preserveAspectRatio='none' shape-rendering='crispEdges'%3E%3Crect width='14' height='1' fill='rgb(250,204,21)' fill-opacity='.08'/%3E%3C/svg%3E") 0 0 / 64px 100% repeat-x; }
 .ko3.lose .koband { background: #2a0a0e; box-shadow: 0 -4px 0 #e5262f, 0 4px 0 #e5262f, 0 -8px 0 #0b0b0e, 0 8px 0 #0b0b0e; }
-.ko3.lose .koband::before { background: repeating-linear-gradient(90deg, rgba(229, 38, 47, 0.1) 0 14px, transparent 14px 64px); }
+.ko3.lose .koband::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='1' preserveAspectRatio='none' shape-rendering='crispEdges'%3E%3Crect width='14' height='1' fill='rgb(229,38,47)' fill-opacity='.1'/%3E%3C/svg%3E") 0 0 / 64px 100% repeat-x; }
 .ko3.run .koband { animation: koband 1500ms both; }
 @keyframes koband { 0%, 8% { transform: scaleX(0) scaleY(0.4); animation-timing-function: var(--snap); } 18% { transform: scaleX(1.02) scaleY(1.1); } 26%, 100% { transform: none; } }
 .ko3:not(.run) .koband { transform: none; }
@@ -718,7 +718,7 @@ body.slice .coins .lbl { margin: 0; color: #f0c48a; font-size: 12px; font-family
 body.slice .coins > b { display: inline-flex; align-items: center; gap: 3px; margin: 0; color: #f4d27a; font: 400 15px Galmuri14, Galmuri11, sans-serif; }
 body.slice .coins > b .scr { width: 16px; height: 16px; }
 body.slice .coins .tubes { grid-column: 1 / -1; display: flex; gap: 2px; padding: 3px 4px 0; background: #0b0b0e; box-shadow: inset 0 -2px 0 #000; }
-body.slice .coins .tube { flex: 1; height: 20px; min-width: 0; border-radius: 0; background: linear-gradient(#26232b, #26232b); box-shadow: 0 0 0 1px #000, inset 0 -3px 0 #121016; position: relative; }
+body.slice .coins .tube { flex: 1; height: 20px; min-width: 0; border-radius: 0; background: #26232b; box-shadow: 0 0 0 1px #000, inset 0 -3px 0 #121016; position: relative; }
 body.slice .coins .tube::after { content: ''; position: absolute; left: 35%; right: 35%; top: 30%; bottom: 22%; background: #4a4450; }
 body.slice .coins .tube.lit { background: #0b0b0e; box-shadow: 0 0 0 1px #000, 0 0 0 2px rgba(255, 140, 50, 0.55), inset 0 -3px 0 #3a1a14; animation: tubeHum 2.4s ease-in-out infinite alternate; animation-delay: calc(var(--k) * -0.37s); }
 body.slice .coins .tube.lit::after { background: #fff4d6; box-shadow: 0 0 0 2px #ffd27a; }
@@ -731,7 +731,7 @@ body.slice .coins .tube.dying { animation: tubeDie 1100ms steps(1, end) both; }
   30% { background: #0b0b0e; }
   44% { background: #26232b; }
   54% { background: #0b0b0e; }
-  70%, 100% { background: linear-gradient(#26232b, #26232b); box-shadow: 0 0 0 1px #000; }
+  70%, 100% { background: #26232b; box-shadow: 0 0 0 1px #000; }
 }
 @media (prefers-reduced-motion: reduce) { body.slice .coins .tube.lit, body.slice .coins .tube.dying { animation: none; } }
 
@@ -1071,8 +1071,8 @@ body.slice .deathfx.dc3 small { font: 12px Galmuri11, sans-serif; color: #a8a4b2
 /* 짚은 곳: 황동 꺾쇠 넷이 한 칸씩 숨 쉰다 (steps) */
 .tut .tut-frame { position: absolute; pointer-events: none; animation: tutBreath 0.8s steps(2, jump-none) infinite; }
 .tut .tut-frame::before, .tut .tut-frame::after { content: ''; position: absolute; inset: -4px; border: 4px solid #f4d27a; filter: drop-shadow(2px 2px 0 #000);
-  -webkit-mask: linear-gradient(#000 0 0) top left / 14px 14px no-repeat, linear-gradient(#000 0 0) top right / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom left / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom right / 14px 14px no-repeat;
-  mask: linear-gradient(#000 0 0) top left / 14px 14px no-repeat, linear-gradient(#000 0 0) top right / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom left / 14px 14px no-repeat, linear-gradient(#000 0 0) bottom right / 14px 14px no-repeat; }
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") top left / 14px 14px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") top right / 14px 14px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") bottom left / 14px 14px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") bottom right / 14px 14px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") top left / 14px 14px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") top right / 14px 14px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") bottom left / 14px 14px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' shape-rendering='crispEdges'%3E%3Crect width='14' height='14'/%3E%3C/svg%3E") bottom right / 14px 14px no-repeat; }
 .tut .tut-frame::after { inset: 0; border: 2px solid #120c08; filter: none; }
 @keyframes tutBreath { 0% { transform: scale(1); } 100% { transform: scale(1.04); } }
 .tut .tut-frame[hidden] { display: none; }
@@ -1529,10 +1529,10 @@ body.slice .cf.cf.cf .cf-cost { left: 2%; top: 0; width: 15.6%; height: 12.6%; d
 body.slice .cf.cf.cf .cf-name { left: 10.7%; top: 37.3%; width: 79.5%; height: 7.6%; right: auto; display: grid; place-items: center; z-index: 3; font: 700 12px/1 Galmuri11, sans-serif; color: #f4f1ea; text-shadow: 1px 1px 0 #000; white-space: nowrap; overflow: visible; }
 body.slice .cf.cf.cf.g-rare .cf-name { color: #f4f1ea; } body.slice .cf.cf.cf.g-gold .cf-name { color: #fff1c0; }
 body.slice .cf.cf.cf .cf-win { left: 17.9%; top: 12.7%; width: 65.2%; height: 26.6%; z-index: 0; display: grid; place-items: end center; overflow: hidden; background: #24232b; box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.28), inset 0 0 0 8px rgba(0, 0, 0, 0.14); }
-body.slice .cf.cf.cf.cmd .cf-win { --wa: #2c2b34; --wb: #35343e; background-color: var(--wa); background-image: linear-gradient(45deg, var(--wb) 25%, transparent 25%, transparent 75%, var(--wb) 75%), linear-gradient(45deg, var(--wb) 25%, transparent 25%, transparent 75%, var(--wb) 75%); background-size: 4px 4px; background-position: 0 0, 2px 2px; }
-body.slice .cf.cf.cf.ax-inf .cf-win { --wa: #2f4a35; --wb: #3d5f44; } body.slice .cf.cf.cf.ax-cav .cf-win { --wa: #4a3324; --wb: #5e4230; }
-body.slice .cf.cf.cf.ax-chain .cf-win { --wa: #352a4a; --wb: #45375e; } body.slice .cf.cf.cf.ax-king .cf-win { --wa: #4a3d1a; --wb: #5e4e22; }
-body.slice .cf.cf.cf.ax-push .cf-win { --wa: #3a3a42; --wb: #4a4a54; } body.slice .cf.cf.cf.ax-tactic .cf-win { --wa: #22404a; --wb: #2c525e; }
+body.slice .cf.cf.cf.cmd .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232c2b34'/%3E%3Crect width='2' height='2' fill='%2335343e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2335343e'/%3E%3C/svg%3E"); background-color: #2c2b34; background-image: var(--wpat); background-size: 4px 4px; background-position: 0 0; }
+body.slice .cf.cf.cf.ax-inf .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%232f4a35'/%3E%3Crect width='2' height='2' fill='%233d5f44'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%233d5f44'/%3E%3C/svg%3E"); } body.slice .cf.cf.cf.ax-cav .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3324'/%3E%3Crect width='2' height='2' fill='%235e4230'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%235e4230'/%3E%3C/svg%3E"); }
+body.slice .cf.cf.cf.ax-chain .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%23352a4a'/%3E%3Crect width='2' height='2' fill='%2345375e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%2345375e'/%3E%3C/svg%3E"); } body.slice .cf.cf.cf.ax-king .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%234a3d1a'/%3E%3Crect width='2' height='2' fill='%235e4e22'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%235e4e22'/%3E%3C/svg%3E"); }
+body.slice .cf.cf.cf.ax-push .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%233a3a42'/%3E%3Crect width='2' height='2' fill='%234a4a54'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%234a4a54'/%3E%3C/svg%3E"); } body.slice .cf.cf.cf.ax-tactic .cf-win { --wpat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%2322404a'/%3E%3Crect width='2' height='2' fill='%232c525e'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%232c525e'/%3E%3C/svg%3E"); }
 body.slice .cf.cf.cf .cf-win .cf-face { width: 60%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
 body.slice .cf.cf.cf .cf-win .art { width: auto; height: auto; place-self: center; }
 body.slice .cf.cf.cf .cf-win .art img, body.slice .cf.cf.cf .cf-win .ico, body.slice .cf.cf.cf .cf-win .art.any .ico16 { width: 40px; height: 40px; }
