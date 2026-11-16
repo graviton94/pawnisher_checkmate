@@ -59,8 +59,12 @@ export class BoardFx {
       let dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (!between) {
+        // 판 경계는 한 틱에 한 번만 잰다 (D-533 — 하위 단계 · 그리기마다 getBoundingClientRect를 여러 번 읽었다)
+        this.tickB = null;
+        this.tickB = this.bounds(this.boardSize.w, this.boardSize.h);
         while (dt > 0) { const s = Math.min(1 / 60, dt); this.sim(s); dt -= s; }
         this.draw();
+        this.tickB = null;
       }
       // 반장 판이 아니고 입자도 없으면 쉰다 (다음 기믹이 깨운다)
       if (!this.rule && !this.ps.list.length && !this.lights.list.length && this.flash <= 0) { this.fx.frame.clear(); this.fx.present(); this.running = false; return; }
@@ -69,7 +73,9 @@ export class BoardFx {
     requestAnimationFrame(tick);
   }
   /** 판 경계 (도트) */
+  private tickB: { x0: number; y0: number; x1: number; y1: number } | null = null;
   private bounds(w: number, h: number): { x0: number; y0: number; x1: number; y1: number } {
+    if (this.tickB) return this.tickB;
     const a = this.dot({ x: 0, y: 0 }), b = this.dot({ x: w - 1, y: h - 1 }), half = this.tileDots() / 2;
     return { x0: Math.min(a.x, b.x) - half, x1: Math.max(a.x, b.x) + half, y0: Math.min(a.y, b.y) - half, y1: Math.max(a.y, b.y) + half };
   }

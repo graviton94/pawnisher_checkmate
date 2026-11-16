@@ -9,14 +9,14 @@ import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
 import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
-import { drawArrow, drawDropDot, drawGauge } from './marks';
-import { BOARD_DOTS, PixelPen } from './pixel';
+import { drawArrow, drawDropDot, drawGauge, gaugeSweep } from './marks';
+import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
 import { FX_CAMERA, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
-import { drawGearTarget } from './target';
+import { TARGET_TICK, drawGearTarget } from './target';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type FormId, type Side, type Plan, type PlanStep, type Pos } from '../engine';
@@ -41,6 +41,10 @@ const GIANT_ART: PieceType[] = ['P', 'R', 'Q'];
  * `pieces/s-boss-<반장>1.png` · `s-boss-<반장>-p2-1.png` (144칸 캔버스). 받은 파일만 부른다(preload 목록에 있는 것) — 없으면 반장 킹 그림을 2×2로 빌린다.
  */
 const bossArtKey = (rule: string, rage: boolean) => `px-boss-${rule}${rage ? '-p2' : ''}-1`;
+
+/** 판 커서 (D-533): 키보드 초점 테와 같은 금(--t-gold) · 계단 박자 */
+const CURSOR_GOLD = 0xf4d27a;
+const CURSOR_BEAT_MS = 480;
 
 const C = {
   // 앱 아이콘 톤: 검정·차콜 체스판 + 붉은 사선
@@ -395,13 +399,14 @@ class BoardScene extends Phaser.Scene {
     for (const suf of PROC_SHEETS) this.textures.get(procSheetKey(suf)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     // 컨베이어 벨트 흐름 (PB-01 D-521): 4프레임을 계단으로 넘긴다
     if (!this.calm)
-      this.time.addEvent({
+      this.conveyorEv = this.time.addEvent({
         delay: CONVEYOR_FRAME_MS,
         loop: true,
         callback: () => {
           if (!this.conveyorTiles.length) return;
           this.conveyorFrame = (this.conveyorFrame + 1) % 4;
           for (const c of this.conveyorTiles) if (c.im.active) c.im.setFrame(procFrame(`conveyor${this.conveyorFrame}`, c.dark));
+          this.poke();
         },
       });
     for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[]) {
@@ -437,23 +442,119 @@ class BoardScene extends Phaser.Scene {
     this.boardTopC = this.add.container(0, 0).setDepth(4.5);
     this.animTopG = this.add.graphics().setDepth(4.6);
     this.fxG = this.add.graphics().setDepth(6);
+    this.cursorG = this.add.graphics().setDepth(4.55); // 판 커서 (D-533): 기물 위 · 기물 위 표식(4.6) 아래
     this.bindInput();
     this.scale.on('resize', (size: Phaser.Structs.Size) => {
+      this.poke();
       this.cameras.resize(size.width, size.height);
       this.fitCamera();
     });
     this.ready();
   }
 
-  /** 매 프레임: 흐르는 화살표 · 철컥 도는 과녁 · 위협 깜빡임 · 잃을 HP 반짝임 */
+  // ---------- 프레임 비용 (D-533) ----------
+  /** 이 프레임 뒤로 몇 프레임은 꼭 그린다 (바깥에서 판을 바꿨다) */
+  dirtyFrames = 3;
+  /** 마지막으로 그린 움직이는 표식의 박자 열쇠 (같으면 같은 그림) */
+  private animDrawn = '';
+  private animSeen: unknown[] = [];
+  private pens: { tile: number; g: PixelPen; top: PixelPen } | null = null;
+  private conveyorEv: Phaser.Time.TimerEvent | null = null;
+  /** 판 커서 (D-533): 키보드 · 패드로 고르는 칸 묶음 (null = 숨김) */
+  private cursorG!: Phaser.GameObjects.Graphics;
+  private cursor: { x: number; y: number; w: number; h: number } | null = null;
+  private cursorDrawn = '';
+  /** 바깥에서 판을 바꿨다 — 다음 몇 프레임은 그린다 */
+  poke(): void {
+    this.dirtyFrames = 3;
+  }
+  setCursor(r: { x: number; y: number; w: number; h: number } | null): void {
+    this.cursor = r;
+    this.poke();
+  }
+  /** 커서 박자: 0.48초마다 테가 한 도트 안으로 들어갔다 나온다 (계단 두 장 — 투명도 깜빡임 없음). 움직임 줄이기면 멈춤 */
+  private cursorKey(now: number): string {
+    const c = this.cursor;
+    if (!c || !this.state) return '';
+    return `${c.x},${c.y},${c.w},${c.h},${this.tile},${this.state.height},${this.calm ? 0 : Math.floor(now / CURSOR_BEAT_MS) % 2}`;
+  }
+  /** 커서 테: 금 2도트 단색 + 그 안쪽 먹 1도트 (밝은 칸 위에서도 테가 칸과 갈린다) — 칸 묶음 전체를 두른다 */
+  private drawCursor(now: number): void {
+    const key = this.cursorKey(now);
+    if (key === this.cursorDrawn) return;
+    this.cursorDrawn = key;
+    const g = this.cursorG;
+    g.clear();
+    const c = this.cursor;
+    if (!c) return;
+    const d = this.tile / BOARD_DOTS;
+    const w = this.world({ x: c.x, y: c.y + c.h - 1 });
+    const inset = key.endsWith(',1') ? d : 0;
+    const x0 = w.x + inset, y0 = w.y + inset, W = c.w * this.tile - inset * 2, H = c.h * this.tile - inset * 2;
+    const ring = (x: number, y: number, ww: number, hh: number, k: number, color: number) => {
+      g.fillStyle(color, 1);
+      g.fillRect(x, y, ww, k).fillRect(x, y + hh - k, ww, k).fillRect(x, y + k, k, hh - 2 * k).fillRect(x + ww - k, y + k, k, hh - 2 * k);
+    };
+    ring(x0 + 2 * d, y0 + 2 * d, W - 4 * d, H - 4 * d, d, C.ink);
+    ring(x0, y0, W, H, 2 * d, CURSOR_GOLD);
+  }
+  /**
+   * 판이 가만히 있나 — 그렇다면 이번 프레임은 통째로 건너뛴다 (Phaser가 같은 그림을 다시 그리지 않게, 배터리).
+   * 움직이는 표식 · 트윈 · 타이머 · 카메라 효과 · 바깥 변경 직후 · 커서 박자가 바뀌는 순간에는 그린다.
+   */
+  quiet(now: number): boolean {
+    if (this.dirtyFrames > 0 || !this.state || this.animKey(now) !== this.animDrawn) return false;
+    if ((this.tweens as unknown as { tweens: unknown[] }).tweens.length) return false;
+    const clock = this.time as unknown as { _active: Phaser.Time.TimerEvent[]; _pendingInsertion: unknown[] };
+    // 컨베이어 판은 벨트 박자가 Phaser 시계로 가므로 건너뛰지 않는다 (시계가 멈추면 벨트도 멈춘다)
+    if (clock._pendingInsertion.length || clock._active.some((e) => e !== this.conveyorEv || this.conveyorTiles.length > 0)) return false;
+    const cam = this.cameras.main;
+    if (cam.panEffect.isRunning || cam.zoomEffect.isRunning || cam.shakeEffect.isRunning || cam.flashEffect.isRunning || cam.fadeEffect.isRunning || cam.rotateToEffect.isRunning) return false;
+    return this.cursorKey(now) === this.cursorDrawn;
+  }
+
+  /**
+   * 움직이는 표식의 박자 열쇠: 이 값이 같으면 그림이 도트 하나까지 같다 — 화살표 흐름(70ms 계단, 5박 주기) · 과녁(320ms 박, 넘어가는 80ms만 매 프레임) ·
+   * 불길(120ms) · HP 반짝임(칸 단위). 위협 깜빡임은 매 프레임 바뀐다. 움직임 줄이기면 위협 말고는 멈춘 그림이다.
+   */
+  private animKey(time: number): string {
+    const A = this.anim;
+    if (A.threat.length) return `t${time}`;
+    const ms = this.calm ? 0 : time;
+    let k = '';
+    if (A.fire.length) k += `f${Math.floor(ms / 120)}`;
+    if (A.arrows.length) k += `a${Math.floor(ms / FLOW_STEP_MS) % 5}`;
+    if (A.gears.length) {
+      const n = Math.floor(ms / TARGET_TICK.every);
+      k += ms - n * TARGET_TICK.every < TARGET_TICK.snap ? `g${ms}` : `g${n % 4}`;
+    }
+    for (const r of A.glints) k += `l${gaugeSweep(r.hp, r.after, r.s.piece.maxHp, ms, gaugeSpot(r.s.piece).n)}`;
+    return k;
+  }
+
+  /** 매 프레임: 흐르는 화살표 · 철컥 도는 과녁 · 위협 깜빡임 · 잃을 HP 반짝임 — 그림이 안 바뀌는 프레임은 다시 그리지 않는다 (D-533) */
   update(time: number): void {
+    if (this.dirtyFrames > 0) this.dirtyFrames -= 1;
+    this.drawCursor(time);
+    const A = this.anim;
+    const calm = this.calm;
+    // 목록이 바뀌었거나(바깥 변경) · HP 반짝임이 붙은 기물이 움직였거나 · 박자 열쇠가 바뀌었을 때만 다시 그린다
+    const seen: unknown[] = [A, A.threat, A.fire, A.gears, A.arrows, A.glints, A.threat.length, A.fire.length, A.gears.length, A.arrows.length, A.glints.length, this.tile, calm];
+    for (const r of A.glints) seen.push(r.s.root.active, r.s.root.x, r.s.root.y);
+    const key = this.animKey(time);
+    const same = key === this.animDrawn && seen.length === this.animSeen.length && seen.every((v, i) => v === this.animSeen[i]);
+    if (same) return;
+    this.animDrawn = key;
+    this.animSeen = seen;
     const g = this.animG;
     const top = this.animTopG;
     g.clear();
     top.clear();
     const t = this.tile;
-    const pen = new PixelPen(g, t / BOARD_DOTS);
-    const ms = this.calm ? 0 : time;
+    // 도트 펜은 칸 크기가 바뀔 때만 새로 (프레임마다 만들지 않는다)
+    if (!this.pens || this.pens.tile !== t) this.pens = { tile: t, g: new PixelPen(g, t / BOARD_DOTS), top: new PixelPen(top, t / BOARD_DOTS) };
+    const pen = this.pens.g;
+    const ms = calm ? 0 : time;
     if (this.anim.threat.length) {
       // 위협: 반투명 붉은 칸이 천천히 깜빡인다 (D-045)
       const a = 0.14 + 0.16 * (0.5 + 0.5 * Math.sin(time / 260));
@@ -488,7 +589,7 @@ class BoardScene extends Phaser.Scene {
     }
     for (const r of this.anim.gears) drawGearTarget(pen, r.x + t / 2 + pen.dot / 2, r.y + t / 2 + pen.dot / 2, r.kind, ms);
     for (const r of this.anim.arrows) drawArrow(pen, r.a, r.b, r.knight, r.color, ms, r.alpha);
-    const tp = new PixelPen(top, t / BOARD_DOTS);
+    const tp = this.pens.top;
     for (const r of this.anim.glints) {
       if (!r.s.root.active) continue;
       const g = gaugeSpot(r.s.piece);
@@ -2016,6 +2117,7 @@ class BoardScene extends Phaser.Scene {
     };
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.poke();
       down = { x: p.x, y: p.y, sx: this.camCenter.x, sy: this.camCenter.y, touch: touchOf(p) };
       dragging = false;
       pressed = false;
@@ -2041,13 +2143,14 @@ class BoardScene extends Phaser.Scene {
           dragging = true;
           window.clearTimeout(pressTimer);
         }
-        if (dragging) this.moveCamera(down.sx - dx, down.sy - dy);
+        if (dragging) (this.moveCamera(down.sx - dx, down.sy - dy), this.poke());
         return;
       }
       if (!touchOf(p)) this.input2.hover(worldTile(p));
     });
 
     const up = (p: Phaser.Input.Pointer) => {
+      this.poke();
       window.clearTimeout(pressTimer);
       if (!down) return;
       const wasTouch = down.touch;
@@ -2107,6 +2210,48 @@ export class BoardRenderer implements BoardView {
     window.addEventListener('resize', () => this.resize());
     // 판이 안 보이는 화면(지도 · 고물상 · 보상 · 사건)에서는 판 그리기를 멈춘다 (D-240)
     new MutationObserver(() => this.sleepIfHidden()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    this.game.canvas.addEventListener('webglcontextrestored', () => this.scene.poke());
+    this.installQuiet();
+  }
+
+  /** 끝나지 않은 판 연출 (공개 함수가 돌려준 Promise) — 이 동안은 프레임을 건너뛰지 않는다 */
+  private inflight = 0;
+  /**
+   * 가만히 있는 판은 다시 그리지 않는다 (D-533 — 배터리): 공개 함수를 부를 때마다 판을 「바뀜」으로 표시하고,
+   * 돌려준 Promise가 끝날 때까지는 매 프레임 그린다. 그 밖에 판이 조용하면(BoardScene.quiet) 그 프레임의 Phaser 한 걸음을 통째로 건너뛴다 —
+   * 캔버스는 마지막 그림을 그대로 보인다.
+   */
+  private installQuiet(): void {
+    const proto = BoardRenderer.prototype as unknown as Record<string, unknown>;
+    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet']);
+    const self = this as unknown as Record<string, unknown>;
+    for (const k of Object.getOwnPropertyNames(proto)) {
+      const f = Object.getOwnPropertyDescriptor(proto, k)?.value as ((...a: unknown[]) => unknown) | undefined;
+      if (skip.has(k) || typeof f !== 'function') continue;
+      self[k] = (...a: unknown[]): unknown => {
+        this.scene.poke();
+        const r = f.apply(this, a);
+        if (r instanceof Promise) {
+          this.inflight += 1;
+          const done = (): void => {
+            this.inflight -= 1;
+            this.scene.poke();
+          };
+          r.then(done, done);
+        }
+        // whenReady 뒤에 미뤄 그리는 함수(render · setup …)도 그린 다음 프레임을 놓치지 않게
+        void this.whenReady.then(() => this.scene.poke());
+        return r;
+      };
+    }
+    void this.whenReady.then(() => {
+      const loop = this.game.loop as unknown as { callback: (time: number, delta: number) => void };
+      const step = loop.callback;
+      loop.callback = (time, delta) => {
+        if (this.inflight === 0 && this.scene.quiet(time)) return;
+        step(time, delta);
+      };
+    });
   }
 
   private hot = 0;
@@ -2133,7 +2278,7 @@ export class BoardRenderer implements BoardView {
     const cl = document.body.classList;
     const hidden = cl.contains('between') || cl.contains('cover-op') || cl.contains('cover-pl');
     if (hidden && loop.running) loop.sleep();
-    else if (!hidden && !loop.running) loop.wake();
+    else if (!hidden && !loop.running) (loop.wake(), this.scene.poke());
   }
 
   /** 판 캔버스 CSS 크기 — 그리는 배율을 곱해 캔버스 픽셀이 정수가 되는 가장 큰 정수 (D-525: 소수 픽셀 캔버스는 브라우저가 한 줄씩 늘려 이음매를 만든다) */
@@ -2147,6 +2292,7 @@ export class BoardRenderer implements BoardView {
   }
 
   private resize(): void {
+    this.scene.poke();
     const { w, h } = this.size();
     const dpr = this.scene.dpr;
     this.game.scale.resize(w * dpr, h * dpr);
@@ -2224,6 +2370,10 @@ export class BoardRenderer implements BoardView {
       this.boardFx.boardSize = { w: state.width, h: state.height };
       requestAnimationFrame(() => this.boardFx.setup(this.scene.bossRule));
     });
+  }
+  /** 판 커서 테 (D-533, 키보드 · 패드) — 칸 묶음(엔진 좌표, 왼아래 칸 + 폭 · 높이) 또는 null = 숨김 */
+  setCursor(r: { x: number; y: number; w: number; h: number } | null): void {
+    void this.whenReady.then(() => this.scene.setCursor(r));
   }
   /** 디버그: 판 위 기믹 연출을 바로 터뜨린다 */
   debugFx(k: 'row' | 'thorns' | 'stamp'): void {

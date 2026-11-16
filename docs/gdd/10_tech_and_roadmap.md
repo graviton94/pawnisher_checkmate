@@ -62,6 +62,7 @@ tests/       엔진·AI 테스트
 - 각 단계의 플레이테스트 결과는 GDD와 `DECISIONS.md`에 반영한다.
 - M7·M9 🔧: 빌드 구성(Capacitor 안드로이드, Electron PC, CI 빌드, 스팀 업적 연결부)까지 완료. 실기기 터치 테스트·스팀웍스 등록·출시 서명은 사람이 할 일.
 - 출시 준비 C (D-531): 출시 빌드 `npm run build:release`(2.0 · ?debug 제외, 안드로이드 · PC 묶음이 사용) · PC 메뉴 제거 · 한 번에 하나 · F11/Alt+Enter 전체 화면 · 끝내기/전체 화면 IPC(`src/slice/platform.ts`) · 키보드/게임패드 같은 행동표(`src/slice/keymap.ts`) · 안드로이드 어두운 시작 화면 · INTERNET 권한은 디버그만 · 타이틀 전 워밍업은 첫 묶음만.
+- 출시 준비 D (D-533): 판 커서(방향키 · 십자키로 칸, 확인 = 탭 · I/Back/Y 길게 = 길게 누르기 · Tab/LB/RB 손패 ↔ 판, 2×2는 몸에 붙음 — `src/slice/boardcursor.ts`) · 가만히 있는 판은 Phaser 한 걸음을 건너뛰고 움직이는 표식은 박자가 바뀔 때만 다시 그린다 · `matchMedia`는 한 번 잡아 변경만 듣는다.
 - M6(그래픽)은 사용자 담당으로 보류.
 
 ## 10.5 결정 기록

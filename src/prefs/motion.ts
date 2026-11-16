@@ -7,7 +7,20 @@ export type MotionPref = 'os' | 'off' | 'on';
 
 let pref: MotionPref = 'os';
 
-const osCalm = (): boolean => (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) || false;
+/**
+ * 기기 설정은 MediaQueryList 하나를 잡아 두고 바뀔 때만 다시 읽는다 — 연출 코드가 프레임마다 묻는다
+ * (반장 판 FX는 한 프레임에 몇 번씩), matchMedia를 매번 새로 만들지 않는다 (D-533).
+ */
+let osMq: MediaQueryList | null | undefined;
+let osVal = false;
+const osCalm = (): boolean => {
+  if (osMq === undefined) {
+    osMq = (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')) || null;
+    osVal = osMq?.matches ?? false;
+    osMq?.addEventListener?.('change', (e) => (osVal = e.matches));
+  }
+  return osVal;
+};
 
 /** 지금 연출을 줄여야 하나 (설정 → 없으면 기기 설정) */
 export const calmMotion = (): boolean => (pref === 'on' ? true : pref === 'off' ? false : osCalm());

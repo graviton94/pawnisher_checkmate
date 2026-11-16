@@ -4,7 +4,10 @@
  * dismissWin)로만 흘린다 — 화면이 게임 상태를 직접 바꾸지 않는다 (UI/UX 원칙 9). 탭 흐름은 그대로.
  *
  * 키: 확인 Enter · Space / 뒤로 Esc · Backspace / 턴 끝 E / 선택 취소 Z · Ctrl+Z / 되감기 R / 카드 1~9 / 방향키 = 초점 이동
- * 패드(표준 배치): A 확인 · B 뒤로 · X 턴 끝 · Y 선택 취소 · Start 메뉴(도움말) · 십자키 · 왼쪽 스틱 = 초점 이동
+ *     / Tab = 손패 ↔ 판 초점 바꾸기 / I = 커서 칸 정보 (길게 누르기와 같은 창, D-533)
+ * 패드(표준 배치): A 확인 · B 뒤로 · X 턴 끝 · Y 선택 취소(길게 = 칸 정보) · Start 메뉴(도움말) · Back(Select) 칸 정보
+ *     · LB · RB 손패 ↔ 판 · 십자키 · 왼쪽 스틱 = 초점 이동
+ * 대국 판이 맨 위이고 초점이 판에 있으면 방향 · 확인은 판 커서로 간다 (boardcursor.ts) — 확인 = 그 칸을 한 번 탭한 것.
  */
 
 export type Dir = 'up' | 'down' | 'left' | 'right';
@@ -16,7 +19,9 @@ export type Action =
   | { t: 'reset' }
   | { t: 'menu' }
   | { t: 'card'; i: number }
-  | { t: 'focus'; dir: Dir };
+  | { t: 'focus'; dir: Dir }
+  | { t: 'toggle' }
+  | { t: 'info' };
 
 /** 키 이벤트에서 쓰는 부분만 */
 export interface KeyLike {
@@ -37,11 +42,13 @@ export const keyAction = (e: KeyLike): Action | null => {
   if (k === 'Enter' || k === ' ') return { t: 'confirm' };
   if (k === 'Escape' || k === 'Backspace') return { t: 'back' };
   if (ARROWS[k]) return { t: 'focus', dir: ARROWS[k] };
+  if (k === 'Tab') return { t: 'toggle' };
   if (/^[1-9]$/.test(k)) return { t: 'card', i: Number(k) - 1 };
   switch (k.toLowerCase()) {
     case 'e': return { t: 'endTurn' };
     case 'z': return { t: 'undo' };
     case 'r': return { t: 'reset' };
+    case 'i': return { t: 'info' };
     default: return null;
   }
 };
@@ -52,12 +59,20 @@ export const PAD_MAP: Record<number, Action> = {
   1: { t: 'back' },
   2: { t: 'endTurn' },
   3: { t: 'undo' },
+  4: { t: 'toggle' },
+  5: { t: 'toggle' },
+  8: { t: 'info' },
   9: { t: 'menu' },
   12: { t: 'focus', dir: 'up' },
   13: { t: 'focus', dir: 'down' },
   14: { t: 'focus', dir: 'left' },
   15: { t: 'focus', dir: 'right' },
 };
+
+/** Y를 이만큼 누르고 있으면 선택 취소 대신 칸 정보 (ms) — 터치 길게 누르기(450ms)와 같은 무게 */
+export const PAD_HOLD_MS = 450;
+/** 길게 눌러 다른 행동이 되는 패드 단추: 단추 번호 → 길게 눌렀을 때 행동 (짧게 = PAD_MAP, 뗄 때 흘린다) */
+export const PAD_HOLD: Record<number, Action> = { 3: { t: 'info' } };
 
 /** 왼쪽 스틱 기울기 → 방향 (0.6 넘게 기울였을 때만) */
 export const stickDir = (x: number, y: number, dead = 0.6): Dir | null => {
@@ -79,14 +94,33 @@ export interface InputEnv {
   move(dir: Dir): void;
   /** 대국 단추 누르기 (#btn-end · #btn-rewind · #btn-help · 손패 n번째) */
   click(target: 'end' | 'rewind' | 'help' | { card: number }): boolean;
+  /** 판 커서 (D-533) — 없으면 판 초점이 없는 화면 (옛 시험 · 대국 밖) */
+  board?: {
+    /** 지금 초점이 판에 있나 (아니면 손패 · 단추) */
+    focused(): boolean;
+    /** 판 ↔ 손패 초점 바꾸기 */
+    toggle(): void;
+    /** 커서를 한 칸 */
+    move(dir: Dir): void;
+    /** 커서 칸을 탭한 것과 같다 */
+    press(): boolean;
+    /** 커서 칸 정보 (길게 누르기와 같은 창) */
+    info(): boolean;
+  };
 }
 
 /** 행동 하나를 흘린다 → 처리했으면 true (키 기본 동작을 막는다) */
 export const dispatch = (a: Action, env: InputEnv): boolean => {
+  const onBoard = (): boolean => !!env.board && env.inBattle() && env.board.focused();
   switch (a.t) {
-    case 'confirm': return env.press();
+    case 'confirm': return onBoard() ? env.board!.press() : env.press();
     case 'back': return env.dismiss() || (env.inBattle() && env.cancel());
-    case 'focus': env.move(a.dir); return true;
+    case 'focus':
+      if (onBoard()) env.board!.move(a.dir);
+      else env.move(a.dir);
+      return true;
+    case 'toggle': return !!env.board && env.inBattle() && (env.board.toggle(), true);
+    case 'info': return onBoard() && env.board!.info();
     case 'menu': return env.inBattle() && env.click('help');
     case 'endTurn': return env.inBattle() && env.click('end');
     case 'reset': return env.inBattle() && env.click('rewind');

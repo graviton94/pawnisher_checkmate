@@ -37,6 +37,14 @@ const GAUGE: Record<'a' | 'e' | 'lose' | 'empty', [number, number]> = {
 /** 잃을 HP 위를 흰 반짝임 한 칸이 오른쪽→왼쪽으로 훑는 주기 (ms) */
 export const LOSE_SWEEP_MS = 1600;
 
+/** 잃을 HP 위 흰 반짝임이 지금 서 있는 속 칸 (-9 = 없음) — 같은 값이면 게이지 그림도 같다 (D-533 프레임 건너뛰기) */
+export const gaugeSweep = (hp: number, after: number, max: number, ms: number, n = 12): number => {
+  if (ms < 0) return -9;
+  const keep = Math.round((n * Math.max(0, after)) / max);
+  const cur = Math.round((n * Math.max(0, hp)) / max);
+  return Math.floor(cur - 1 - ((ms % LOSE_SWEEP_MS) / LOSE_SWEEP_MS) * (cur - keep + 2));
+};
+
 /**
  * HP 게이지 14×4 도트 (D-054·D-055): 검정 테두리(모서리 비움) + 12×2 채움(밝은 줄 + 그늘 줄).
  * (x, y) = 게이지 왼쪽 위. 잃을 HP는 금색, ms를 주면 흰 반짝임이 훑는다.
@@ -55,7 +63,7 @@ export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: n
   }
   const keep = Math.round((n * Math.max(0, after)) / max);
   const cur = Math.round((n * Math.max(0, hp)) / max);
-  const sweep = ms < 0 ? -9 : Math.floor(cur - 1 - ((ms % LOSE_SWEEP_MS) / LOSE_SWEEP_MS) * (cur - keep + 2));
+  const sweep = gaugeSweep(hp, after, max, ms, n);
   for (let i = 0; i < n; i++) {
     const lose = i >= keep && i < cur;
     const [top, low] = GAUGE[lose ? 'lose' : i < keep ? (side === 0 ? 'a' : 'e') : 'empty'];
