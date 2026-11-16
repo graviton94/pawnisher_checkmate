@@ -19,6 +19,12 @@
   ③ 받침 바닥 = 캔버스 맨 아래에서 bottom칸 위(발주 6칸), 흰 테 4칸 · 먹선 2칸(흑 기물 문법 D-221 — 흰 테는 도구가 붙인다)
   ④ 속 칠 = 검은 진영 다섯 색 + 반장 테마 색(cfg theme) + 황동 셋 중 가장 가까운 색 — 발주 팔레트 그대로, 원본 먹(밝기 < ink)은 외곽선
 격자값(간격 · 칸 수)은 tools/pixel/scene_recipe.py PIECE_GRID · BOSS_GRID에 보존한다.
+
+판 해상도 통일 + 안 M (D-528 확정, D-527 검토안): 반장 · 거대 · 이형 모두 **도트 한 칸 = 보통 기물 도트 한 칸**으로 읽고 마지막에 안 M을 더한다.
+  반장 = 144칸 격자로 바로 읽기(먹선 4칸) · 거대 = 122칸 캔버스(보통 기물 × 1.7, 먹선 3칸) · 이형 = 72칸 캔버스(먹선 3칸, 대포 50칸)
+  안 M(tools/pixel/gb_fit.py apply) = clean → accent → 약한 왼쪽 빛(soft2n — 원본 단에서 한 단만, 큰 몸 덩어리만) → tone.
+  이형은 clean · accent를 뺀다(메뚜기 용수철 2칸 줄무늬를 지운다) — 검은 격자를 처리하고 흰 격자는 같은 자리 같은 단(D-221).
+  --raw = 안 M 없이(비교용).
 """
 import os
 import sys
@@ -177,8 +183,23 @@ def nearest(rgb, pal):
     return np.array(keys, dtype=object)[d.argmin(-1)]
 
 
-def build(src, name, giant=False):
-    """원본 → {(이름, 진영): 줄 목록}, 보고용 수치"""
+PLAN_M = ('clean', 'accent', 'soft2n', 'tone')  # D-528 기본값 — gb_fit.BUNDLES['M']의 후처리
+
+
+def finish_m(rows, name, t, f, form=False):
+    """안 M (D-528): 검은 격자 줄 목록에 clean → accent → 약한 빛 → tone. t = 먹선 칸(속 먹선과 가르는 테두리), f = 덩어리 하한 배수.
+    몸 실루엣 · 흰 테 · 먹선 테두리는 그대로 — 속 칠 단만 바뀐다."""
+    import gb_fit
+    g = np.array([list(r) for r in rows], dtype=object)
+    body = ~np.isin(g, ['.', 'O'])
+    edge = inner_edge(body, t) & (g == 'K')
+    opts = set(PLAN_M) - ({'clean', 'accent'} if form else set())
+    g = gb_fit.apply(g, body, edge, name, opts, f)
+    return [''.join(r) for r in g]
+
+
+def build(src, name, giant=False, plan=True):
+    """원본 → {(이름, 진영): 줄 목록}, 보고용 수치. plan = 이형에 안 M(D-528)을 더한다"""
     cfg = PIECE_GRID[name]
     im = np.array(Image.open(src).convert('RGBA')).astype(float)
     h, w = im.shape[:2]
@@ -259,6 +280,11 @@ def build(src, name, giant=False):
                         ch = TO_BLACK[ch]
                 g[top + j][left + i] = ch
         out[(name, side)] = [''.join(r) for r in g]
+    if plan and not giant:  # 안 M (D-528): 검은 쪽을 처리하고 흰 쪽은 같은 자리 · 같은 단(D-221)
+        black = finish_m(out[(name, 1)], name, t, 1, form=True)
+        white = {v: k for k, v in TO_BLACK.items()}
+        out[(name, 1)] = black
+        out[(name, 0)] = [''.join(white.get(c, c) for c in r) for r in black]
     info = {'pitch': round(float(p), 2), 'cols': cols, 'rows': rows, 'top': top, 'left': left}
     return out, info
 
@@ -300,18 +326,19 @@ def clean_dots(grid, body, keep, passes=2):
     return grid
 
 
-def build_boss(src, name, res=None):
+def build_boss(src, name, res=None, plan=True):
     """2×2 보스 원본 → {(이름, 1): 144줄}, 보고용 수치 (D-524 기물 문법 맞춤).
     몸은 72칸 캔버스 격자(몸 키 cfg body ≈ 64칸)로 복원 → 칸마다 2×2로 펴서 144칸 캔버스에 — 판 2×2 위에서 보스 그림 한 장의
     도트 수가 일반 기물 한 장(72칸 캔버스)과 같다. 먹선 = 72칸 격자 outline칸(기본 2 = 판 위 일반 흑 기물 먹 테 4~5칸과 같은 굵기),
     흰 테 = 144칸 격자 3칸(일반 기물과 같은 두께 · 같은 흰색).
     res=144(D-527 판 해상도 시안, tools/pixel/gb_fit.py `fine`): 펴지 않고 144칸 격자로 바로 읽는다 — 보스 도트 한 칸 = 보통 기물 도트 한 칸.
     몸 키 · 받침 · 먹선 · 떠 있는 조각 하한 · patch는 같은 판 위 크기가 되게 배수로 늘린다(기본 res=72는 그대로).
-    거대 주물(D-527, scene_recipe.GIANT_GRID — 재발주본 G-01~03): canvas = res = 108칸(보통 기물 72칸의 1.5배, 판에서 1.5칸 폭 · 펴지 않음 —
-    도트 한 칸 = 보통 기물 도트 한 칸), 몸 키는 72칸 단위(바탕 기물 키)에 1.5배, 먹선 outline_px칸(보통 흑 기물 먹 테 4칸)."""
+    거대 주물(D-527 → D-528, scene_recipe.GIANT_GRID — 재발주본 G-01~03): canvas = res = 122칸(보통 기물 72칸의 1.7배, 판에서 122/72칸 폭 · 펴지 않음 —
+    도트 한 칸 = 보통 기물 도트 한 칸), 몸 키는 72칸 단위(바탕 기물 키)에 122/72배, 먹선 outline_px칸(3).
+    D-528 확정: 반장 기본 res = 144(위 fine이 정본 — 먹선 4칸 = 졸개와 같은 두께), plan = 마지막에 안 M(finish_m). res=72 · plan=False는 비교용."""
     import maker
     cfg = BOSS_GRID[name] if name in BOSS_GRID else GIANT_GRID[name]
-    N, C, rim = cfg.get('canvas', 144), res or cfg.get('res', 72), 3
+    N, C, rim = cfg.get('canvas', 144), res or cfg.get('res', 144), 3
     f = N // C  # 격자 한 칸 = 캔버스 f×f
     strict = cfg.get('key') == 'strict'
     rgb, S, (y0, y1, x0, x1), cx = boss_box(src, strict)
@@ -412,7 +439,10 @@ def build_boss(src, name, res=None):
             if body[j, i]:
                 used[fill[j, i]] = used.get(fill[j, i], 0) + 1
     info = {'pitch': round(float(p), 2), 'rows': rows, 'cols': cols, 'top': top, 'left': c0, 'colors': used}
-    return {(name, 1): [''.join(r) for r in g]}, info
+    out = [''.join(r) for r in g]
+    if plan:  # 안 M (D-528) — 먹선 테두리 칸 수는 위 edge와 같게, 덩어리 하한은 보통 도트 기준(f = 2: 72칸 격자 3칸 → 6칸)
+        out = finish_m(out, name, cfg['outline_px'] if 'outline_px' in cfg else cfg.get('outline', 2) * C // 72, 2)
+    return {(name, 1): out}, info
 
 
 def write(blocks):
@@ -441,7 +471,8 @@ if __name__ == '__main__':
     args = [x for x in argv if not x.startswith('--')]
     src, name = args[0], args[1]
     giant = '--giant' in sys.argv
-    blocks, info = build_boss(src, name) if '--boss' in sys.argv or (giant and name in GIANT_GRID) else build(src, name, giant)
+    plan = '--raw' not in sys.argv
+    blocks, info = build_boss(src, name, plan=plan) if '--boss' in sys.argv or (giant and name in GIANT_GRID) else build(src, name, giant, plan)
     print(name, info)
     if '--preview' in sys.argv:  # 확인용 확대 (흰 테까지 · 배경 투명)
         import maker

@@ -68,14 +68,16 @@ def options(name):
 # → 원래 격자 그대로 54칸으로 복원한다(바탕 기물 47칸보다 7칸 크지만 이형이 가늘어 판 위에서 읽히려면 필요). 간격(px) = 원본 실루엣 높이 / body.
 # outline = 실루엣 안쪽 먹선 두께, mirror = 좌우 대칭('shape' 실루엣만 · 'all' 먹선까지), dx = 가로 위치 보정.
 # 실측 간격(px, 2026-11-14 반입): 대포 14.69 · 낙타 14.32 · 메뚜기 14.85 · 대주교 15.39(1차) → 13.86(재발주) · 총독 15.5 · 거대 폰 11.16 · 룩 11.14 · 퀸 11.19
+# D-528 (안 M 확정): 이형 먹선 3칸(보통 흑 기물 4칸 — 4칸이면 메뚜기 용수철 · 낙타 머리가 먹에 묻힌다, 받은 2칸은 판 위에서 도트가 잘아 보였다),
+#   대포만 50칸(54칸이면 넓이가 룩의 111% → 96%) — 나머지는 이미 바탕 기물보다 작아 그대로. piece_import.build가 안 M 빛 · tone을 더한다.
 PIECE_GRID = {
-    'R:cannon': {'body': 54, 'outline': 2, 'mirror': 'all'},
-    'N:camel': {'body': 54, 'outline': 2},
-    'Q:hopper': {'body': 54, 'outline': 2, 'mirror': 'shape'},
+    'R:cannon': {'body': 50, 'outline': 3, 'mirror': 'all'},
+    'N:camel': {'body': 54, 'outline': 3},
+    'Q:hopper': {'body': 53, 'outline': 3, 'mirror': 'shape'},
     # 재발주본(D-507) build-res/order/P-04-source.png: 원본 간격 13.86px(1774/128 — 발주 8배가 아니라 생성기 격자) · 실루엣 727px → 52칸 그대로 복원.
     # 톱니 볏이 먹선으로 닫혀 와 판 크기에서도 비숍과 갈린다. (1차본 P-04-v1-source.png는 15.39px · 54칸이었다)
-    'B:archbishop': {'body': 52, 'outline': 2},
-    'R:chancellor': {'body': 54, 'outline': 2},
+    'B:archbishop': {'body': 52, 'outline': 3},
+    'R:chancellor': {'body': 54, 'outline': 3},
     # 거대 128칸: 높이 112~120(흰 테 포함) → 몸 108칸(원본 간격 11.2px ≈ 생성기 격자 그대로), 먹선 2 · 흰 테 4.
     # 대칭은 맞추지 않는다 — 찌그러진 폰 머리 · 녹아 붙은 퀸 뿔 · 부러진 룩 성가퀴가 발주한 「불량」이다
     'P:giant': {'body': 108, 'outline': 2},
@@ -131,16 +133,16 @@ BOSS_GRID = {
 
 
 # 거대 주물 재발주본 G-01~03 (D-527, piece_import.py --giant → build_boss 방식 — 마젠타 바탕 · 통짜 · 금 균열 쇳물 흐름).
-# 사용자 결정 2026-11-16: 피격 범위는 2×2 그대로, 그림은 반장 · 도금왕(2배)만큼 크지 않게 **1.5배** · 받침 바닥은 기준선(D-525).
-# → 캔버스 108칸(보통 기물 72칸 × 1.5)을 판에서 1.5칸 폭으로 — 도트 한 칸 = 보통 기물 도트 한 칸(펴지 않음).
-# body = 72칸 단위 몸 키(바탕 기물 몸 키 P 49 · R 46 · Q 53 — ×1.5 = 108칸에서 74 · 69 · 80), outline_px = 먹선 칸 3(보통 흑 기물 4칸으로 해 보니
+# 사용자 결정 2026-11-16: 피격 범위는 2×2 그대로, 그림은 반장 · 도금왕(2배)만큼 크지 않게 1.5배 → **1.7배**(D-528 — 1.5배는 너무 작다) · 받침 바닥은 기준선(D-525).
+# → 캔버스 122칸(보통 기물 72칸 × 1.7 ≈ 122)을 판에서 122/72칸 폭으로 — 도트 한 칸 = 보통 기물 도트 한 칸(펴지 않음).
+# body = 72칸 단위 몸 키(바탕 기물 몸 키 P 49 · R 46 · Q 53 — × 122/72 = 122칸에서 83 · 78 · 90), outline_px = 먹선 칸 3(보통 흑 기물 4칸으로 해 보니
 #   원본 테두리 그늘과 겹쳐 6~7칸 먹 띠가 되고 퀸 왕관이 먹 덩어리 — 3칸),
 # theme = 금 균열 · 쇳물 흐름 u · U · N · n(황동 넷 — 쇳물 빛 · 금 · 어두운 금 · 녹), 녹 얼룩(올리브)도 N · n으로(alias).
 GIANT_ALIAS = {'#5A5020': 'n', '#706030': 'N', '#C000C0': 'D', '#600060': 'D'}
 GIANT_GRID = {
-    'P:giant': {'body': 49, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 108, 'res': 108, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
-    'R:giant': {'body': 46, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 108, 'res': 108, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
-    'Q:giant': {'body': 53, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 108, 'res': 108, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
+    'P:giant': {'body': 49, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 122, 'res': 122, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
+    'R:giant': {'body': 46, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 122, 'res': 122, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
+    'Q:giant': {'body': 53, 'bottom': 2, 'theme': 'uUNn', 'ink': 12, 'canvas': 122, 'res': 122, 'outline_px': 3, 'alias': GIANT_ALIAS, 'accent_edge': True},
 }
 
 # 2026-11-14 §0-D UI 부품 시트 (ui_kit_import.py 셋째 인자 = 원본 가로 도트 수 → 칸 크기).

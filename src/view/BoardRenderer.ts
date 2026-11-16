@@ -29,8 +29,8 @@ const gpx = (px: number): number => Math.max(12, Math.round(px / 12) * 12);
 const pieceKey = (type: PieceType, side: Side) => `px-${type}-${side}`;
 /**
  * 발주 이형 · 거대 주물 그림 (2026-11-14 P-01~05 · G-01~03, tools/pixel/piece_import.py → maker.py export).
- * 이형 = `pieces/s-<이형><진영>.png`(72칸 캔버스), 거대 = `pieces/s-giant<유형>1.png`(D-527 재발주본: 108칸 캔버스 = 보통 기물 72칸 × 1.5 —
- * 판에서 GIANT_ART_SPAN(1.5)칸 폭 · 2×2 가로 가운데 · 받침 바닥은 기준선, 그림 한가운데가 네 부위 경계).
+ * 이형 = `pieces/s-<이형><진영>.png`(72칸 캔버스), 거대 = `pieces/s-giant<유형>1.png`(D-527 재발주본 · D-528: 122칸 캔버스 = 보통 기물 72칸 × 1.7 —
+ * 판에서 GIANT_ART_SPAN(122/72)칸 폭 · 2×2 가로 가운데 · 받침 바닥은 기준선, 그림 한가운데가 네 부위 경계).
  */
 const formKey = (form: FormId, side: Side) => `px-${form}-${side}`;
 const giantKey = (type: PieceType) => `px-giant${type}-1`;
@@ -769,7 +769,7 @@ class BoardScene extends Phaser.Scene {
     } else if (p.giant) {
       const left = p.giant.dx === 0, top = p.giant.dy === 1;
       const fw = glyph.frame.width, fh = glyph.frame.height;
-      // 거대 주물 (D-525 → D-527): 보통 기물 배율 1.5배(GIANT_ART_SPAN) · 2×2 가로 가운데 · 받침 바닥을 아래 칸 기준선에 — 위 부위는 한 칸 위 칸에서 같은 그림을 자른다
+      // 거대 주물 (D-525 → D-528): 보통 기물 배율 약 1.7배(GIANT_ART_SPAN = 122/72) · 2×2 가로 가운데 · 받침 바닥을 아래 칸 기준선에 — 위 부위는 한 칸 위 칸에서 같은 그림을 자른다
       const box = this.pieceBox(glyph.texture.key, GIANT_ART_SPAN);
       glyph.setDisplaySize(box.size, box.size).setPosition(left ? t : 0, top ? box.cy + t : box.cy);
       glyph.setCrop(left ? 0 : fw / 2, top ? 0 : fh / 2, fw / 2, fh / 2);

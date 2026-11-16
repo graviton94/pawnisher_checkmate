@@ -1,5 +1,6 @@
 """
-2×2 반장(GB) · 거대 주물(G) · 이형(P) 판 위 어울림 후보 (D-526 · D-527 검토 중 — 기본값은 바꾸지 않는다).
+2×2 반장(GB) · 거대 주물(G) · 이형(P) 판 위 어울림 후보 (D-526 · D-527). **D-528: 묶음 M이 기본값으로 확정** —
+piece_import.py가 반입 끝에 이 파일의 apply(clean → accent → soft2n → tone)를 부른다. 이 도구는 다른 안과 비교할 때만 쓴다(원본을 안 M 없이 다시 읽는다).
 
   python3 -I tools/pixel/gb_fit.py <출력 폴더> <안,안,...> [이름 ...]
   python3 -I tools/pixel/gb_fit.py <출력 폴더> A|B|M72|M     (D-527 묶음 이름 — 아래)
@@ -48,12 +49,13 @@ SOURCE_OF = {'K:boss-plate': 'GB-01', 'K:boss-plate-p2': 'GB-01b', 'K:boss-inspe
              'K:boss-spawn': 'GB-03', 'K:boss-spawn-p2': 'GB-03b', 'K:boss-magnet': 'GB-04', 'K:boss-magnet-p2': 'GB-04b',
              'K:boss-thorns': 'GB-05', 'K:boss-thorns-p2': 'GB-05b', 'K:boss-alarm': 'GB-06', 'K:boss-alarm-p2': 'GB-06b',
              'K:boss-gilded': 'GB-07', 'K:boss-gilded-p2': 'GB-07b',
+             'P:giant': 'G-01', 'R:giant': 'G-02', 'Q:giant': 'G-03',
              'R:cannon': 'P-01', 'N:camel': 'P-02', 'Q:hopper': 'P-03', 'B:archbishop': 'P-04', 'R:chancellor': 'P-05'}
 # 몸 재질 단(명암 계단, 밝은 → 어두운): 강조색 상한 · 잔무늬 · 빛은 이 계단 안에서만. 도금왕은 몸 전체가 금(GB-07), 격노는 흰 폰 몸까지.
 RAMPS = {'K:boss-gilded': ('HMBZD', 'uUAnI'), 'K:boss-gilded-p2': ('HMBZD', 'uUAnI', 'WES')}
 RAMP_BASE = {'HMBZD': 1, 'uUAnI': 0, 'WES': 0}  # relight 띠가 시작하는 단 (쇠는 M부터 — H는 드문 빛 단)
 TONE = {'HMBZD': {'H': 'M', 'D': 'Z'}, 'uUAnI': {'I': 'n'}, 'WES': {}}
-# 이형 다시 읽기 (D-527): 몸 키 실측 — 보통 흑 기물 몸 키 P 49 · R 46 · N 54 · B 54 · Q 53 · K 54, 넓이(칸) R 1574 · N 1863 · Q 1725 · B 1590.
+# 이형 다시 읽기 (D-527 → D-528 정본은 scene_recipe.PIECE_GRID): 몸 키 실측 — 보통 흑 기물 몸 키 P 49 · R 46 · N 54 · B 54 · Q 53 · K 54, 넓이(칸) R 1574 · N 1863 · Q 1725 · B 1590.
 # 이형이 바탕 기물보다 넓이가 큰 것은 대포(54칸에서 1742 = R의 111%)뿐 → 50칸(1514 = 96%). 나머지는 이미 바탕 기물보다 작다
 # (낙타 83% · 메뚜기 46% · 대주교 83% · 총독 76%) — 더 줄이면 가는 몸이 판 위에서 안 읽혀 몸 키 그대로.
 FORM_BODY = {'R:cannon': 50, 'N:camel': 54, 'Q:hopper': 53, 'B:archbishop': 52, 'R:chancellor': 54}
@@ -271,7 +273,7 @@ MUTE_TO = np.array([0x32, 0x34, 0x3D], dtype=float)
 
 def render(g, side, mute=False):
     """72칸 격자(칸마다 2×2로 폄) 또는 144칸 격자(fine, 그대로) → 144칸 캔버스 + 흰 테 3칸 → PNG"""
-    N = 144 if g.shape[0] in (72, 144) else g.shape[0]  # 거대 재발주본(D-527)은 108칸 캔버스 그대로
+    N = 144 if g.shape[0] in (72, 144) else g.shape[0]  # 거대 재발주본(D-527 · D-528)은 122칸 캔버스 그대로
     f = N // g.shape[0]
     big = np.zeros((N, N), bool)
     rows = [['.'] * N for _ in range(N)]
@@ -323,24 +325,19 @@ def apply(g, body, edge, name, opts, f=1):
 def process(name, side, opts):
     giant = name.endswith(':giant')
     if 'fine' in opts:
-        if giant:  # 거대 블록 그대로(D-527 재발주본 108칸 · 옛 128칸은 144칸 캔버스에) — 보통 도트, 흰 테는 render가 3칸으로 다시
-            g = grid_of(maker.pad72(maker.load64()[(name, side)]))
-            g[g == 'O'] = '.'
-            body = g != '.'
-            g, edge = outline(g, body, 3 if len(g) == 108 else 4)  # 108칸 거대(D-527)는 반입 먹선 3칸 그대로
-        else:
-            blocks, _ = pi.build_boss(os.path.join(SRC, SOURCE_OF[name] + '-source.png'), name, 144)
-            g = grid_of(blocks[(name, 1)])
-            g[g == 'O'] = '.'
-            body = g != '.'
-            edge = pi.inner_edge(body, 4) & (g == 'K')
+        # 원본을 안 M 없이 다시 읽는다(D-528: 반장 144칸 · 거대 GIANT_GRID 캔버스) — 보통 도트, 흰 테는 render가 3칸으로 다시
+        blocks, _ = pi.build_boss(os.path.join(SRC, SOURCE_OF[name] + '-source.png'), name, None if giant else 144, plan=False)
+        g = grid_of(blocks[(name, 1)])
+        g[g == 'O'] = '.'
+        body = g != '.'
+        edge = pi.inner_edge(body, 3 if giant else 4) & (g == 'K')
         return apply(g, body, edge, name, opts, 2)
     if 'coarse' in opts and not giant:
         cfg_backup = {k: dict(v) for k, v in BOSS_GRID.items()}
         for v in BOSS_GRID.values():
             v['body'] = 56
         try:
-            blocks, _ = pi.build_boss(os.path.join(SRC, SOURCE_OF[name] + '-source.png'), name)
+            blocks, _ = pi.build_boss(os.path.join(SRC, SOURCE_OF[name] + '-source.png'), name, 72, plan=False)
         finally:
             BOSS_GRID.clear()
             BOSS_GRID.update(cfg_backup)
@@ -350,7 +347,7 @@ def process(name, side, opts):
         if giant:
             g144 = maker.pad72(g144)
             if len(g144) != 144:
-                return None  # 108칸 거대(D-527, 1.5배)는 이미 보통 도트 — grid72(2배 도트) 후보는 쓰지 않는다
+                return None  # 108 · 122칸 거대(D-527 · D-528)는 이미 보통 도트 — grid72(2배 도트) 후보는 쓰지 않는다
     g = to72(g144, giant)
     if giant and 'grid72' not in opts:
         return None  # 거대 주물은 72칸 격자 안에서만 다른 후보를 쓴다 — grid72 없이는 원래 그림
@@ -372,7 +369,7 @@ def process_form(name, opts):
         keep = dict(cfg)
         cfg['body'], cfg['outline'] = FORM_BODY[name], FORM_OUTLINE
         try:
-            blocks, _ = pi.build(os.path.join(SRC, SOURCE_OF[name] + '-source.png'), name)
+            blocks, _ = pi.build(os.path.join(SRC, SOURCE_OF[name] + '-source.png'), name, plan=False)
         finally:
             cfg.clear()
             cfg.update(keep)

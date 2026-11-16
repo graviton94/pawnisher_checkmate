@@ -59,10 +59,12 @@ export const BOSS_BODY = {
  * → `python3 -I tools/pixel/maker.py export` → `public/pieces/s-boss-<반장>1.png` · `s-boss-<반장>-p2-1.png` (144칸 캔버스).
  */
 /**
- * 거대 주물 그림 크기 (D-527 사용자 결정): 피격 범위는 반장 · 도금왕과 같은 2×2, 그림은 그만큼 크지 않게 보통 기물의 1.5배.
- * 그림 캔버스 108칸(72 × 1.5)을 이 배수로 그려 도트 한 칸 = 보통 기물 도트 한 칸, 받침 바닥은 아래 칸 줄 기준선(D-525), 체력바는 2×2 그대로.
+ * 거대 주물 그림 크기 (D-527 → D-528 사용자 결정: 1.5배는 너무 작다 → 1.7배): 피격 범위는 반장 · 도금왕과 같은 2×2, 그림은 보통 기물의 약 1.7배.
+ * 그림 캔버스 122칸(72 × 1.7 ≈ 122)을 122/72칸 폭으로 그려 도트 한 칸 = 보통 기물 도트 한 칸, 받침 바닥은 아래 칸 줄 기준선(D-525), 체력바는 2×2 그대로.
+ * (판 위 폭 = 1.69 × 기물 그림 0.92칸 ≈ 1.56칸 — 2×2 폭 안)
  */
-export const GIANT_ART_SPAN = 1.5;
+export const GIANT_ART_CANVAS = 122;
+export const GIANT_ART_SPAN = GIANT_ART_CANVAS / 72;
 export const BOSS_ART_RULES = ['plate', 'inspect', 'spawn', 'magnet', 'thorns', 'alarm', 'gilded'] as const;
 export const bossArtFile = (rule: string, rage: boolean): string => `pieces/s-boss-${rule}${rage ? '-p2-' : ''}1.png`;
 /** 그 반장의 그림(격노면 b, 없으면 1단계)을 아직 받지 않아 반장 킹 그림을 빌리는 중인가 — 받은 파일은 preload 목록(tools/gen-preload.cjs)에 오른다 */
