@@ -131,3 +131,7 @@
 | `public/ui/props/trap.png` | 0.2 KB | 2.0 판 지형 소품 5종 (제미나이, D-056 · D-057). 지금 판은 공정 판 칸(`ui/board/proc-sheet*`)을 쓰고, 소품 경로는 `flip-*` · `coin-*` · `chest-*` · `ic32-*`만 짓는다 (2.0도 부르지 않는다). |
 | `src/assets/ui/ap-empty.png` | 87.2 KB | 옛 AP 게이지 그림. 지금 태엽은 `ui/icons16/hud.key.*`. 4 KB가 넘어 `preload-bundled`로 묶음에 실리고 있었다. |
 | `src/assets/ui/ap-full.png` | 162.3 KB | 옛 AP 게이지 그림. 지금 태엽은 `ui/icons16/hud.key.*`. 4 KB가 넘어 `preload-bundled`로 묶음에 실리고 있었다. |
+
+## 앱 아이콘 K0 판 (D-547 → D-549)
+
+`app-icon-k0/`: D-547 앱 아이콘(게임 정본 K0 종이왕 + 받은 R-02 리벳 쇠판) 결과물 — `icon-1024.png`(옛 `build-res/icon.png`) · `icon-512.png` · `icon-192.png` · `apple-touch-icon.png` · `xxxhdpi-ic_launcher*.png` 넷, 그때 도구 `app_icon_k0.py`(옛 `tools/app_icon.py` — 되살리려면 `tools/`로 옮긴다). D-549부터 앱 아이콘은 받은 R-02c B.
