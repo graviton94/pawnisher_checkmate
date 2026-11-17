@@ -48,7 +48,7 @@ describe('저장 안전망 (D-529)', () => {
     expect(warned).toEqual(['w']);
     setSaveGuard({});
   });
-  it('이관 사슬: 판 2 → 3, 판 1 · 판 번호 없음 · 더 새 판은 버린다 · 기록 판 0 → 1', () => {
+  it('이관 사슬: 판 2 → 3, 판 1 · 판 번호 없음 · 더 새 판은 버린다 · 기록 판 0 → 1 → 2', () => {
     const v2 = { ...sample(), v: 2 };
     expect(migrateSave(v2)).toEqual({ ...v2, v: 3 });
     expect(migrateSave({ ...sample(), v: 1 })).toBeNull();
@@ -57,7 +57,8 @@ describe('저장 안전망 (D-529)', () => {
     const st = memStore();
     st.m.set(SAVE_KEY, JSON.stringify(v2));
     expect(readSave(st)?.v).toBe(SAVE_VERSION);
-    expect(migrateMeta({ runs: 3 })).toEqual({ runs: 3, mv: 1 });
+    // 기록 판 0 → 1(번호) → 2(해금 계단 D-542): 깬 왕관이 없는 기록은 해금이 그대로
+    expect(migrateMeta({ runs: 3 })).toEqual({ runs: 3, mv: 2 });
     expect(migrateMeta({ runs: 3, mv: 99 })).toBeNull();
     const st2 = memStore();
     st2.m.set(META_KEY, JSON.stringify({ ...emptyMeta(), mv: undefined, runs: 5 }));

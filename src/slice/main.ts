@@ -4824,7 +4824,7 @@ const commitEnd = (cleared: boolean): { m0: Meta; m: Meta } => {
   fightOn = null;
   const rec = { cleared, act: actI + 1, won, asc, daily, mode: runMode, chapter: storyChapter, ending: endKind, crown: { chapter: storyChapter, runId, law: ASCENSION[STORY_LAW[storyChapter]].law, companions: squad.filter((u) => u.t !== 'K').map(crewLabel) } };
   // 해금 (D-284): 출하를 끝낼 때마다 몇 개씩 — 도달한 막 · 완주에 따라
-  const r = commitRunEnd(store, runId, rec, (m) => (daily ? [] : nextUnlocks(m.unlocked ?? [], unlockCount(Math.min(4, actI + 1), cleared))));
+  const r = commitRunEnd(store, runId, rec, (m) => (daily ? [] : nextUnlocks(m.unlocked ?? [], unlockCount(Math.min(4, actI + 1), cleared), m.storyCleared ?? 0)));
   const now = readMeta(store);
   return (ended = r ? { m0: r.before, m: r.after } : { m0: now, m: now });
 };

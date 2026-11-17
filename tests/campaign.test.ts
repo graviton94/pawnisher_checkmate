@@ -1,20 +1,62 @@
 import { describe, expect, it } from 'vitest';
-import { emptyMeta, readMeta, readSave, recordRun, type Meta, type Store } from '../src/slice/save';
-import { CHALLENGE_START, chapterLabel } from '../src/data/campaign';
-import { UNLOCK_ORDER } from '../src/data/unlocks';
+import { emptyMeta, migrateMeta, readMeta, readSave, recordRun, type Meta, type Store } from '../src/slice/save';
+import { CAMPAIGN_VERSION, CHALLENGE_START, chapterLabel } from '../src/data/campaign';
+import { CHALLENGE_GRANTS, CROWN_TIER, STORY_POOL, UNLOCK_ORDER, nextUnlocks } from '../src/data/unlocks';
 import { companionScene } from '../src/data/companion-scenes';
 import { trueEndingCuts, promotionCuts, DEFEAT, TESTIMONY } from '../src/data/script';
 const win = (m: Meta, chapter: 0 | 1 | 2 | 3, ending: 'throne' | 'depart' = 'throne') => recordRun(m, { cleared: true, act: 4, won: 17, asc: chapter, daily: null, mode: 'story', chapter, ending, crown: { chapter, runId: `pawn-${chapter}`, law: `law-${chapter}`, companions: ['alive'] } });
 const storage = (value: unknown): Store => ({ getItem: () => JSON.stringify(value), setItem: () => {}, removeItem: () => {} });
 const complete = () => win(win(win(win(emptyMeta(), 0), 1), 2), 3, 'depart');
 describe('본편 1~4승천과 선택 도전 (D-451)', () => {
-  it('새 폰 네 명의 완주로 진엔딩과 기본 콘텐츠가 열린다', () => {
+  it('새 폰 네 명의 완주로 진엔딩과 본편 콘텐츠가 열린다 (도전 몫은 도전에서, D-542)', () => {
     const first = win(emptyMeta(), 0), second = win(first, 1), third = win(second, 2), final = win(third, 3, 'depart');
     expect([first.storyCleared, second.storyCleared, third.storyCleared, final.storyCleared]).toEqual([1, 2, 3, 4]);
     expect(final.trueEnd).toBe(true);
     expect(final.challengeOpen).toBe(CHALLENGE_START);
-    expect(UNLOCK_ORDER.every((id) => final.unlocked?.includes(id))).toBe(true);
+    expect(STORY_POOL.every((id) => final.unlocked?.includes(id))).toBe(true);
+    expect(Object.values(CHALLENGE_GRANTS).flat().some((id) => final.unlocked?.includes(id))).toBe(false);
     expect(final.crownedKings?.map((k) => k.runId)).toEqual(['pawn-0', 'pawn-1', 'pawn-2']);
+  });
+  it('해금 계단 (D-542): 왕관마다 본편 풀을 나눠 열고, 한꺼번에 열지 않는다', () => {
+    const story = (m: Meta) => STORY_POOL.filter((id) => m.unlocked?.includes(id)).length;
+    const steps = [win(emptyMeta(), 0)];
+    for (const c of [1, 2] as const) steps.push(win(steps[steps.length - 1], c));
+    steps.push(win(steps[2], 3, 'depart'));
+    expect(steps.map(story)).toEqual(CROWN_TIER);
+    // 계단은 늘 오르고, 어느 한 왕관이 절반 넘게 열지 않는다
+    for (let k = 1; k < CROWN_TIER.length; k++) expect(CROWN_TIER[k] - CROWN_TIER[k - 1]).toBeLessThanOrEqual(STORY_POOL.length / 2);
+    // 출하로 열리는 몫은 다음 왕관의 몫까지만
+    expect(nextUnlocks([], 99, 0)).toHaveLength(CROWN_TIER[0]);
+    expect(nextUnlocks(STORY_POOL.slice(0, CROWN_TIER[0]), 99, 1)).toEqual(STORY_POOL.slice(CROWN_TIER[0], CROWN_TIER[1]));
+    expect(UNLOCK_ORDER.length).toBe(STORY_POOL.length + Object.values(CHALLENGE_GRANTS).flat().length);
+  });
+  it('해금 계단 (D-542): 도전 단계마다 무언가 열리고, 건너뛴 단계의 몫도 함께 받는다', () => {
+    let m = complete();
+    for (let a = CHALLENGE_START; a <= 13; a++) {
+      expect(CHALLENGE_GRANTS[a]?.length).toBeGreaterThan(0);
+      const before = m.unlocked?.length ?? 0;
+      m = recordRun(m, { cleared: true, act: 4, won: 17, asc: a, mode: 'challenge', daily: null });
+      expect(m.unlocked!.length).toBeGreaterThan(before);
+      expect(CHALLENGE_GRANTS[a].every((id) => m.unlocked!.includes(id))).toBe(true);
+    }
+    expect(UNLOCK_ORDER.every((id) => m.unlocked?.includes(id))).toBe(true);
+    // 잠긴 단계는 아무것도 주지 않는다
+    const locked = recordRun(complete(), { cleared: true, act: 4, won: 17, asc: 9, mode: 'challenge', daily: null });
+    expect(CHALLENGE_GRANTS[9].some((id) => locked.unlocked!.includes(id))).toBe(false);
+  });
+  it('해금 계단 이관 (기록 판 1 → 2): 가진 해금은 그대로, 이미 깬 왕관 · 도전의 몫을 채운다', () => {
+    // 옛 규칙으로 넷째 왕관까지 깨 전부 받은 기록 — 하나도 잃지 않는다
+    const old = { ...complete(), mv: 1, unlocked: [...UNLOCK_ORDER, 'form:cannon'] };
+    expect((migrateMeta(old)!.unlocked as string[]).slice().sort()).toEqual([...old.unlocked].sort());
+    // 둘째 왕관까지 깬 기록은 두 왕관 몫을 채운다
+    const mid = migrateMeta({ mv: 1, campaignVersion: CAMPAIGN_VERSION, storyCleared: 2, unlocked: ['castle', 'zzz'] })!;
+    expect(mid.unlocked).toEqual(expect.arrayContaining(['zzz', ...STORY_POOL.slice(0, CROWN_TIER[1])]));
+    // 도전 7까지 연 완주 기록 = 도전 1~3 몫
+    const ch = migrateMeta({ mv: 1, campaignVersion: CAMPAIGN_VERSION, storyCleared: 4, challengeOpen: 7, unlocked: [] })!;
+    expect(ch.unlocked).toEqual(expect.arrayContaining([...CHALLENGE_GRANTS[4], ...CHALLENGE_GRANTS[5], ...CHALLENGE_GRANTS[6]]));
+    expect((ch.unlocked as string[]).some((id) => CHALLENGE_GRANTS[7].includes(id))).toBe(false);
+    // 옛 13단 기록(다른 campaignVersion)은 본편을 깬 것으로 치지 않는다
+    expect(migrateMeta({ mv: 1, ascOpen: 13, unlocked: ['castle'] })!.unlocked).toEqual(['castle']);
   });
   it('앞 장 재관람과 미래 장 호출은 장 진행을 건너뛰지 않는다', () => {
     expect(win(emptyMeta(), 3, 'depart').storyCleared).toBe(0);

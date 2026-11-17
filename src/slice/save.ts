@@ -4,7 +4,7 @@ import type { SliceEventId } from './events';
 import type { SlicePartId } from './parts';
 import { ASC_MAX } from './run';
 import { CAMPAIGN_VERSION, CHALLENGE_START, STORY_COUNT, type RunMode, type StoryChapter, type EndingKind, type CrownRecord, type StoryPromise } from '../data/campaign';
-import { UNLOCK_ORDER } from '../data/unlocks';
+import { milestoneUnlocks } from '../data/unlocks';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { SET_UNLOCK_AT, type StartSetId } from '../data/start-sets';
 import type { Bet, Highlight, Nemesis } from './director';
@@ -346,10 +346,20 @@ export const clearSave = (st: Store): void => {
 };
 
 /** 기록 판 번호 (D-529) — 0 = 판 번호가 없던 옛 기록 */
-export const META_VERSION = 1;
-/** 기록 이관 사슬 (D-529): 판 n → n+1. 지금은 번호만 붙인다 — 다음 판부터 여기에 걸음을 더한다 */
+export const META_VERSION = 2;
+/** 기록 이관 사슬 (D-529): 판 n → n+1 */
 export const META_STEPS: Record<number, (m: Record<string, unknown>) => Record<string, unknown>> = {
   0: (m) => ({ ...m, mv: 1 }),
+  // 1 → 2 (D-542 해금 계단): 이미 깬 왕관 · 도전의 몫을 채운다 — 가진 해금은 하나도 빼지 않는다(옛 「넷째 왕관 = 전부」로 받은 것 그대로).
+  // 새 본편 기록(campaignVersion이 지금 것)만 센다 — 옛 13단 기록은 readMeta가 본편을 0으로 돌린다
+  1: (m) => {
+    const now = m.campaignVersion === CAMPAIGN_VERSION;
+    const cleared = now ? Math.max(0, Math.min(STORY_COUNT, Math.floor(Number(m.storyCleared) || 0))) : 0;
+    const best = now && cleared >= STORY_COUNT ? Math.floor(Number(m.challengeOpen) || CHALLENGE_START) - 1 : -1;
+    const had = Array.isArray(m.unlocked) ? (m.unlocked as string[]) : [];
+    const add = milestoneUnlocks(cleared, best).filter((id) => !had.includes(id));
+    return { ...m, mv: 2, ...(add.length ? { unlocked: [...had, ...add] } : {}) };
+  },
 };
 /** 기록 하나를 지금 판으로 옮긴다 (더 새 판이면 null — 읽지 못한 기록을 덮어쓰지 않게) */
 export const migrateMeta = (raw: unknown): Record<string, unknown> | null => {
@@ -411,12 +421,16 @@ export const recordRun = (m: Meta, r: { cleared: boolean; act: number; won: numb
         out.storyCleared = Math.min(STORY_COUNT, chapter + 1);
         // 이형 기물 해금 (D-481): 이 왕관에서 적으로 처음 나온 이형이 분대로 들어온다
         out.unlocked = [...new Set([...(out.unlocked ?? []), ...FORM_IDS.filter((f) => FORMS[f].chapter === chapter).map(formKey), ...(SET_UNLOCK_AT[chapter] ? [SET_UNLOCK_AT[chapter]] : [])])]; // 시작 세트 해금 (D-485)
+        // 왕관 계단 (D-542): 이 왕관까지의 본편 풀 몫을 보장한다 — 옛 「넷째 왕관을 깨면 전부」를 대신한다
+        out.unlocked = [...new Set([...out.unlocked, ...milestoneUnlocks(out.storyCleared)])];
         if (r.ending === 'throne' && r.crown) out.crownedKings = [...(out.crownedKings ?? []), r.crown];
       }
       if ((out.storyCleared ?? 0) >= STORY_COUNT && chapter === STORY_COUNT - 1 && r.ending === 'depart') out.trueEnd = true;
-      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...UNLOCK_ORDER, ...FORM_IDS.map(formKey), ...Object.values(SET_UNLOCK_AT)])];
+      if ((out.storyCleared ?? 0) >= STORY_COUNT) out.unlocked = [...new Set([...(out.unlocked ?? []), ...milestoneUnlocks(STORY_COUNT), ...FORM_IDS.map(formKey), ...Object.values(SET_UNLOCK_AT)])];
     } else if (r.mode === 'challenge') {
       if ((out.storyCleared ?? 0) >= STORY_COUNT && r.asc === (out.challengeOpen ?? CHALLENGE_START)) out.challengeOpen = Math.min(ASC_MAX, r.asc + 1);
+      // 도전 계단 (D-542): 깬 도전 단계 이하의 몫(부품 둘씩)을 연다 — 건너뛴 단계(옛 13단 기록)의 몫도 함께
+      if ((out.storyCleared ?? 0) >= STORY_COUNT && r.asc <= (out.challengeOpen ?? CHALLENGE_START)) out.unlocked = [...new Set([...(out.unlocked ?? []), ...milestoneUnlocks(STORY_COUNT, r.asc)])];
     } else if (!r.mode && r.asc >= out.ascOpen) out.ascOpen = Math.min(ASC_MAX, r.asc + 1); // 옛 호출 호환
   }
   if (r.daily && !out.daily[r.daily]) out.daily[r.daily] = { cleared: r.cleared, act: r.act, won: r.won };
