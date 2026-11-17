@@ -2486,6 +2486,20 @@ export class BoardRenderer implements BoardView {
   moveMs(): number {
     return this.scene.moveMsNow;
   }
+  /** 디버그 (글자 잉크 점검 tools/qa/text-audit.cjs, D-546): 판 위 보이는 글마다 Phaser가 잰 글 텍스처 여백 */
+  debugTexts(): { text: string; font: string; ascent: number; descent: number; padTop: number; padBottom: number; x: number; y: number }[] {
+    const out: ReturnType<BoardRenderer['debugTexts']> = [];
+    const walk = (list: Phaser.GameObjects.GameObject[]): void => {
+      for (const o of list) {
+        if (o instanceof Phaser.GameObjects.Container) { if (o.visible) walk(o.list); continue; }
+        if (!(o instanceof Phaser.GameObjects.Text) || !o.visible || !o.text.trim()) continue;
+        const m = o.style.getTextMetrics();
+        out.push({ text: o.text, font: (o.style as unknown as { _font: string })._font, ascent: m.ascent, descent: m.descent, padTop: o.padding.top ?? 0, padBottom: o.padding.bottom ?? 0, x: o.x, y: o.y });
+      }
+    };
+    walk(this.scene.children.list);
+    return out;
+  }
   /** 판 칸 하나의 화면 가운데 (CSS px) — 판 밖 DOM 연출(초월 등)이 그 칸을 겨눈다 */
   screenOf(pos: Pos): { x: number; y: number } {
     const sc = this.scene;

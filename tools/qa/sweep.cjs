@@ -437,7 +437,9 @@ const GROUPS = [
       await A(() => { const p = document.querySelector('#overlay-panel'); p.querySelector('p').insertAdjacentHTML('afterend', '<div class="btn-set" style="--cols:4">' + ['iron', 'brass', 'crimson', 'teal'].map((k) => `<button class="btn k-${k}" type="button">보통</button>`).join('') + ['iron', 'brass', 'crimson', 'teal'].map((k) => `<button class="btn k-${k}" type="button" disabled>꺼짐</button>`).join('') + '</div>'); }); await W(300);
       await shot('btn-states');
     } },
-    { name: 'set-pick', assets: [], run: async ({ A, W, shot }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); } },
+    { name: 'set-pick', assets: [], run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); await tap('[data-page]'); await W(900); await shot('set-pick-2-locked'); } },
+    // 시작 세트 위 그림 칸 (D-546): 해금 셋까지 연 사람 — 두 쪽 모두 켜진 받침
+    { name: 'set-pick-open', assets: [], meta: { unlocked: ['set:hybrid', 'set:scrap', 'set:scatter'] }, run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await tap('.card-slot .cf.start-set'); await W(500); await shot('set-pick-sel'); await tap('[data-page]'); await W(900); await shot('set-pick-2'); } },
     { name: 'crash', assets: [], run: async ({ A, W, shot }) => {
       // 지도에 선 출하(저장 있음)에서 잡히지 않은 오류 — 진짜 예외 대신 같은 error 사건을 보내 창만 띄운다
       await A(() => { const a = window.sliceApi; a.richRun(); a.map(2); }); await W(1400);
@@ -586,6 +588,8 @@ const writeReport = () => {
           if (buf) fs.writeFileSync(path.join(OUT, file), buf); else await pg.screenshot({ path: path.join(OUT, file) });
           rec.shots.push(file);
           for (const t of await textAudit(pg)) if (!rec.txt.includes(t)) rec.txt.push(t);
+          // 잉크 점검 자세히 (D-546): 어느 장면 · 어디서 잘렸는지 — 고친 전후 자르기에 쓴다
+          if (process.env.SWEEP_INK) for (const f of await textAudit.inkAudit(pg)) fs.appendFileSync(path.join(OUT, 'ink.jsonl'), JSON.stringify({ file, ...f }) + '\n');
         };
         const tapAt = (x, y) => pg.touchscreen.tap(Math.round(x), Math.round(y));
         const tap = async (sel) => { const e = pg.locator(sel).first(); if (!(await e.count())) return false; await e.tap(); return true; };
