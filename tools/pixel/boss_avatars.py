@@ -20,8 +20,9 @@ S = 60
 PAL_N = 32
 # 반장 규칙 → (초상화, 왕관 십자가 가운데 x(칸), 위 여백(칸)) — 상반신 (D-308, 사용자: 「대사창 얼굴은 각 초상의 상반신」)
 CROPS = {
-    'plate': ('boss-plate', 102, 0), 'spawn': ('boss-assembly', 83, 0), 'thorns': ('boss-thorns', 112, 0),
-    'inspect': ('boss-inspector', 109, 0), 'magnet': ('boss-magnet', 147, 0), 'alarm': ('boss-alarm', 172, 0),
+    # D-556: 조립 · 출하 · 경보 초상을 실측 격자로 다시 뽑아 폭이 바뀌었다(152 → 138 · 221 → 217 · 398 → 210칸) — 같은 자리 비율로 옮김
+    'plate': ('boss-plate', 102, 0), 'spawn': ('boss-assembly', 75, 0), 'thorns': ('boss-thorns', 110, 0),
+    'inspect': ('boss-inspector', 109, 0), 'magnet': ('boss-magnet', 147, 0), 'alarm': ('boss-alarm', 91, 0),
     'gilded': ('boss-gilded', 128, 0),
 }
 

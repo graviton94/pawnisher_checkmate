@@ -178,9 +178,9 @@ def main(src, sid, native_w=None):
         small = uniform_snap(img, px, ox, py, oy)
     elif native_w:  # 발주한 원본 캔버스 가로 도트 수를 알면 칸 크기를 그것으로 (자동 찾기가 반 칸 · 다른 배수를 잡을 때)
         lo = img.width / native_w * 0.9
-        px, ox, py, oy, score = snap.detect_pitch(img, lo=lo, hi=img.width / native_w * 1.1)
+        px, ox, py, oy, score = snap.detect_pitch(img, lo=lo, hi=img.width / native_w * 1.1, fine=True)
     else:
-        px, ox, py, oy, score = snap.detect_pitch(img, lo=float(os.environ.get('UIKIT_LO', '7.0')))  # 받은 시트의 도트는 ~10px — 그 절반(5px)을 잘못 잡지 않게
+        px, ox, py, oy, score = snap.detect_pitch(img, lo=float(os.environ.get('UIKIT_LO', '7.0')), fine=True)  # 받은 시트의 도트는 ~10px — 그 절반(5px)을 잘못 잡지 않게
     if not exact and not fixed_grid(sid):
         a = np.asarray(img, dtype=float)
         cuts = (snap.dp_cuts(snap._profile(a, 1), img.width, px), snap.dp_cuts(snap._profile(a, 0), img.height, py))

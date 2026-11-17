@@ -28,12 +28,21 @@ def pixel_hash(image):
 
 def audit(args):
     src, current, target = map(Path, args)
-    recipe = scene_recipe.options(current.stem)
+    if current.stem in scene_recipe.SCENE_GRID:  # D-556: 실측 격자 장면은 regrid로 다시 뽑아 대조한다
+        import regrid
+        recipe = {'scene_grid': scene_recipe.SCENE_GRID[current.stem]}
+    else:
+        recipe = scene_recipe.options(current.stem)
     record = {'source': str(src.relative_to(ROOT)), 'game': str(current.relative_to(ROOT)),
               'recipe': recipe, 'source_sha256': file_hash(src),
               'game_sha256': file_hash(current)}
     try:
-        result, pitch = snap.run(str(src), str(target), **recipe)
+        if 'scene_grid' in recipe:
+            g = recipe['scene_grid']
+            result = regrid.build_one(current.stem, g, out_dir=str(target.parent), verbose=False)
+            pitch = (g['grid'][0], g['grid'][2])
+        else:
+            result, pitch = snap.run(str(src), str(target), **recipe)
         with Image.open(src) as original, Image.open(current) as game:
             record.update(source_size=list(original.size), game_size=list(game.size),
                           reproduced_size=list(result.size), detected_pitch=list(pitch),

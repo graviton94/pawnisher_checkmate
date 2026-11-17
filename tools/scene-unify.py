@@ -9,12 +9,17 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pixel'))
 import snap  # noqa: E402
+import scene_recipe  # noqa: E402
+import regrid  # noqa: E402
 from PIL import Image  # noqa: E402
 
 W = int(sys.argv[1]) if len(sys.argv) > 1 else 256
 for f in sorted(glob.glob('build-res/order/V-*-source.png')):
     m = re.match(r'V-\d+-(.+)-source\.png', os.path.basename(f))
     if not m:
+        continue
+    if m.group(1) in scene_recipe.SCENE_GRID:  # D-556: 실측 격자가 기록된 장면 (regrid.py)
+        regrid.build_one(m.group(1), scene_recipe.SCENE_GRID[m.group(1)])
         continue
     w = Image.open(f).width
     snap.run(f, f'public/scenes/{m.group(1)}.png', colors=0, pitch=w / W)

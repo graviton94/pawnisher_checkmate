@@ -42,14 +42,16 @@ def _score(prof, n, p):
     return best
 
 
-def detect_pitch(img, lo=2.0, hi=None):
+def detect_pitch(img, lo=2.0, hi=None, fine=False):
     """숨은 격자의 칸 크기와 시작점 (x · y 따로, 소수점 칸 허용). 반환 (px, ox, py, oy, 점수)
-    진짜 칸의 2 · 3배도 높은 점수가 나오므로(색이 안 바뀌는 칸 경계가 많다), 가장 좋은 크기의 1/2 · 1/3이
-    점수의 keep 이상이면 더 작은 쪽을 고른다 — 세부(나사산 같은 한 칸짜리)가 살아남게."""
+    fine=True(옛 동작 — 이미 눈으로 확인해 기록한 UI 시트 반입만 쓴다): 가장 좋은 크기의 1/2 · 1/3이 점수의 0.45 이상이면
+    더 작은 쪽을 고른다. 이 점수는 진짜 칸의 절반에서도 거의 그대로 나와 늘 잘게 기울었다(감사 2026-11-17 —
+    장면이 10~28% 잘게 잘렸다). 기본(fine=False)은 가장 높은 점수의 크기를 그대로 쓴다.
+    장면 반입(run)은 이 함수 대신 regrid.measure(축마다 복원 오차 + 있음 점수)로 잰다 (D-556)."""
     a = np.asarray(img.convert('RGB'), dtype=float)
     H, W = a.shape[:2]
     hi = hi or min(40.0, max(4.0, min(W, H) / 12))
-    keep = 0.45
+    keep = 0.45 if fine else 1.0
     res = []
     for axis, n in ((1, W), (0, H)):
         prof = _profile(a, axis)
@@ -176,14 +178,28 @@ def snap(img, px, ox, py, oy, colors=24, core=0.6, cuts=None, opaque_colors=Fals
     return small
 
 
-def run(src, dst, colors=24, pitch=None, preview=None, scale=4, uniform=False):
+def run(src, dst, colors=24, pitch=None, preview=None, scale=4, uniform=False, lo=4.5, hi=9.0):
+    """pitch = 수동 간격(정사각) · 없으면 regrid.measure로 축마다 실측(D-556)하고 build-res/order/grid-measure.json(D-552 반입 기록과 같은 파일) 'snap.run' 칸에 기록한다.
+    실측이 없는 축(칠한 그림)은 다른 축 값을 쓰고, 두 축 다 없으면 멈춘다 — 장면이면 scene_recipe.SCENE_GRID에 정본 간격을 적어 regrid로 반입한다."""
     img = Image.open(src)
     if pitch:
         px = py = float(pitch)
         ox = oy = 0.0
         score = 0.0
     else:
-        px, ox, py, oy, score = detect_pitch(img)
+        import json
+        import regrid
+        m = regrid.measure(src, lo, hi)
+        mx, my = m['x']['pitch'], m['y']['pitch']
+        if mx is None and my is None:
+            raise SystemExit(f'{src}: 도트 격자 없음 (있음 점수 x {m["x"]["presence"]} · y {m["y"]["presence"]}) — scene_recipe.SCENE_GRID 정본 간격으로 regrid.py build')
+        px, py = mx or my, my or mx
+        ox, oy = m['x']['phase'] or 0.0, m['y']['phase'] or 0.0
+        score = min(v for v in (m['x']['presence'], m['y']['presence']))
+        log = os.path.join(HERE, '..', '..', 'build-res', 'order', 'grid-measure.json')
+        rec = json.load(open(log)) if os.path.exists(log) else {}
+        rec.setdefault('snap.run', {})[os.path.basename(src)] = {ax: {k: m[ax][k] for k in ('pitch', 'phase', 'err', 'presence', 'why')} for ax in 'xy'}
+        json.dump(rec, open(log, 'w'), ensure_ascii=False, indent=1, sort_keys=True)
     a = np.asarray(img.convert('RGB'), dtype=float)
     cuts = None if uniform else (dp_cuts(_profile(a, 1), img.width, px), dp_cuts(_profile(a, 0), img.height, py))
     small = snap(img, px, ox, py, oy, colors, cuts=cuts)

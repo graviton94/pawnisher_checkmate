@@ -16,7 +16,13 @@ import scene_recipe  # noqa: E402
 
 
 def one(src, name):
+    # D-556: 실측 격자가 기록된 장면은 regrid.py(축마다 실측 간격 · 최빈 표본 · ≤ 32색)로 — 기록 원본(SCENE_GRID src)에서 다시 뽑는다
+    if name in scene_recipe.SCENE_GRID:
+        import regrid
+        regrid.build_one(name, scene_recipe.SCENE_GRID[name])
+        return
     # 컷신 그림은 '그림' 역할 (사용자 결정): 격자만 맞추고 팔레트는 줄이지 않는다 (칸마다 대표색 그대로)
+    # 새 그림은 snap.run이 regrid.measure로 축마다 잰다 (build-res/order/grid-measure.json에 기록)
     snap.run(src, f'public/scenes/{name}.png', **scene_recipe.options(name))
 
 

@@ -115,6 +115,10 @@ def nodes():
 
 def bg():
     for sid, (name, _) in G['bg'].items():
+        if name in scene_recipe.SCENE_GRID:  # D-556: 축마다 실측한 격자 (regrid.py)
+            import regrid
+            regrid.build_one(name, scene_recipe.SCENE_GRID[name])
+            continue
         snap.run(os.path.join(ORDER, f'{sid}-source.png'), os.path.join(ROOT, 'public', 'scenes', f'{name}.png'), **scene_recipe.options(name))
 
 

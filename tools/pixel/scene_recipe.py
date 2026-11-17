@@ -45,8 +45,159 @@ MANUAL_PITCH = {'epilogue-hands': 1870 / 300,
     'loading-bench': 941 / 180}
 
 
+# D-556 장면 격자 실측 (2026-11-17 격자 감사): 위 「941/180 장면 관례」(5.23px)는 실측이 아니었다 — 「복원 오차가 칸이 잘수록 고르게 준다」는
+# 기준은 늘 더 잘게 기운다(칠한 그림은 칸이 작을수록 오차가 저절로 준다). 격자가 있는 그림의 실제 도트는 5.4 ~ 6.9px였고(10 ~ 28% 더 굵다),
+# 5.23px로 뽑으면 칸 1 · 2개가 섞인 고르지 않은 도트와 체크 무늬 맥놀이가 생겼다. snap.py 자동 격자(dp_cuts)도 같은 까닭으로 잘게 기울었다.
+# 이제 tools/pixel/regrid.py가 축마다 잰다: 경계 곡선 주기 후보 → 복원 오차 + 있음 점수(간격을 ±6 · 10% 비틀면 오차가 몇 배 커지나, ≥ 1.05 = 격자 있음)
+# → 두 축 짝 · 절반 · 삼분의 일 확인. 표본 = 칸 가운데 60% 최빈 묶음의 중앙값(평균 금지) → Lab 가중 k-평균 ≤ 32색(채도 높은 강조색 무게) → 잔티 정리.
+# grid = (가로 간격, 가로 시작, 세로 간격, 세로 시작) px · measured = 실측(None = 그 축 격자 없음) · presence = 있음 점수.
+# square = 그 축만 격자 없음 → 다른 축 실측 간격 · canon = 두 축 다 없음(칠한 그림) → CANON_PITCH(정본 이야기 컷 end-k-reach 941/156 = 6.03px,
+#   사건 그림 ~6px와 같은 세밀함)로 집안 도트화 — 눈으로 보아 도트 그림으로 읽혀 재발주하지 않았다. trim = 그려 넣은 레터박스 띠 걷기(옛 OPENING_GRID 규칙).
+# 검사: python3 -I tools/pixel/regrid.py check [--remeasure] · python3 -I tools/pixel/test_regrid.py (격자가 실측과 3% 넘게 다르면 실패)
+CANON_PITCH = 6.03
+SCENE_GRID = {
+    # ① 옛 「941/180 장면 관례」(5.23px — 실측 아님) 장면 · 지도 · 엔딩 · 오프닝 · 로딩
+    # 실측 x 5.82 (있음 1.145 · 두 축 짝 있음 최고) · y 5.93 (있음 1.17 · 두 축 짝 있음 최고)
+    'companion-rest': {'src': 'S-08-companion-rest-source.webp', 'grid': (5.82, 1.94, 5.93, 5.44), 'measured': (5.82, 5.93), 'presence': (1.145, 1.17)},
+    # 격자 없음(있음 x 1.034 · y 1.045) → 정본 간격 6.03
+    'companion-crossroad': {'src': 'S-09-companion-crossroad-source.webp', 'grid': (6.03, 3.39, 6.03, 1.13), 'measured': (None, None), 'presence': (1.034, 1.045), 'canon': True},
+    # 실측 x 5.76 (있음 1.065 · 두 축 짝 있음 최고) · y 5.95 (있음 1.292 · 두 축 짝 있음 최고)
+    'departure-dock': {'src': 'S-03-departure-dock-source.png', 'grid': (5.76, 2.88, 5.95, 3.47), 'measured': (5.76, 5.95), 'presence': (1.065, 1.292)},
+    # 실측 x 6.54 (있음 1.06 · 두 축 짝 있음 최고) · y 6.4 (있음 1.055 · 두 축 짝 있음 최고)
+    'departure-decision': {'src': 'S-05-departure-decision-source.png', 'grid': (6.54, 3.27, 6.4, 4.8), 'measured': (6.54, 6.4), 'presence': (1.06, 1.055)},
+    # 실측 x 5.42 (있음 1.038 · 두 축 약한 짝) · y 5.52 (있음 1.041 · 두 축 약한 짝)
+    'credits-bg': {'src': 'ED-12-source.png', 'grid': (5.42, 0.45, 5.52, 0.46), 'measured': (5.42, 5.52), 'presence': (1.038, 1.041), 'trim': (30, 0.25)},
+    # 실측 x 6.69 (있음 1.049 · 약한 있음 — 다른 축 6.69 ±5%) · y 6.69 (있음 1.067 · 있음 최고(짝 없음))
+    'crown-4-open': {'src': 'CN-03-source.png', 'grid': (6.69, 5.02, 6.69, 4.46), 'measured': (6.69, 6.69), 'presence': (1.049, 1.067), 'trim': (30, 0.25)},
+    # 실측 y 5.72 (있음 1.09) · x 격자 없음(있음 1.025) → 같은 간격
+    'end-k-sight': {'src': 'ED-02-source.png', 'grid': (5.72, 0.0, 5.72, 3.34), 'measured': (None, 5.72), 'presence': (1.025, 1.09), 'square': 'x', 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.03 · y 1.035) → 정본 간격 6.03
+    'end-t-silence': {'src': 'ED-07-source.png', 'grid': (6.03, 5.28, 6.03, 1.88), 'measured': (None, None), 'presence': (1.03, 1.035), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.01 · y 1.024) → 정본 간격 6.03
+    'op-legend': {'src': 'OP-03-source.png', 'grid': (6.03, 0.75, 6.03, 1.13), 'measured': (None, None), 'presence': (1.01, 1.024), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.042 · y 1.041) → 정본 간격 6.03
+    'gilded-fallen': {'src': 'S-12-gilded-fallen-source.webp', 'grid': (6.03, 3.39, 6.03, 3.02), 'measured': (None, None), 'presence': (1.042, 1.041), 'canon': True},
+    # 격자 없음(있음 x 1.046 · y 1.021) → 정본 간격 6.03
+    'white-land': {'src': 'S-20-white-land-source.webp', 'grid': (6.03, 3.77, 6.03, 2.26), 'measured': (None, None), 'presence': (1.046, 1.021), 'canon': True},
+    # 실측 x 6.36 (있음 1.067 · 두 축 짝 있음 최고) · y 6.376 (있음 1.119 · 두 축 짝 있음 최고)
+    'loading-bench': {'src': 'LD-02-source.png', 'grid': (6.36, 5.83, 6.376, 1.59), 'measured': (6.36, 6.376), 'presence': (1.067, 1.119)},
+    # 실측 y 5.75 (있음 1.068) · x 격자 없음(있음 1.036) → 같은 간격
+    'wager-table': {'src': 'WG-01-source.png', 'grid': (5.75, 2.16, 5.75, 4.79), 'measured': (None, 5.75), 'presence': (1.036, 1.068), 'square': 'x'},
+    # 실측 x 5.95 (있음 1.072) · y 격자 없음(있음 1.035) → 같은 간격
+    'map-a1': {'src': 'MP-03-source.png', 'grid': (5.95, 3.47, 5.95, 5.58), 'measured': (5.95, None), 'presence': (1.072, 1.035), 'square': 'y'},
+    # 실측 x 6.67 (있음 1.129 · 있음 최고(짝 없음)) · y 6.399 (있음 1.045 · 약한 있음 — 다른 축 6.67 ±5%)
+    'map-a2': {'src': 'MP-04-source.png', 'grid': (6.67, 4.45, 6.399, 1.6), 'measured': (6.67, 6.399), 'presence': (1.129, 1.045)},
+    # 격자 없음(있음 x 1.029 · y 1.036) → 정본 간격 6.03
+    'map-a3': {'src': 'MP-05-source.png', 'grid': (6.03, 1.13, 6.03, 0.0), 'measured': (None, None), 'presence': (1.029, 1.036), 'canon': True},
+    # 격자 없음(있음 x 1.035 · y 1.017) → 정본 간격 6.03
+    'map-a4': {'src': 'MP-06-source.png', 'grid': (6.03, 0.0, 6.03, 4.15), 'measured': (None, None), 'presence': (1.035, 1.017), 'canon': True},
+    # 격자 없음(있음 x 1.031 · y 1.023) → 정본 간격 6.03
+    'boss-fall-magnet': {'src': 'BF-04-boss-fall-magnet-source.png', 'grid': (6.03, 4.15, 6.03, 4.52), 'measured': (None, None), 'presence': (1.031, 1.023), 'canon': True},
+    # ② 옛 snap.py 자동 격자(dp_cuts — 칸이 잘게 기울었다) 장면
+    # 실측 x 6.52 (있음 1.09 · 두 축 짝 있음 최고) · y 6.32 (있음 1.209 · 두 축 짝 있음 최고)
+    'act-3': {'src': 'A-03-act-3-source.png', 'grid': (6.52, 5.98, 6.32, 3.69), 'measured': (6.52, 6.32), 'presence': (1.09, 1.209)},
+    # 실측 x 6.75 (있음 1.103 · 두 축 짝 있음 최고) · y 6.448 (있음 1.071 · 두 축 짝 있음 최고)
+    'bg-shop': {'src': 'BG-01-bg-shop-source.png', 'grid': (6.75, 5.06, 6.448, 0.54), 'measured': (6.75, 6.448), 'presence': (1.103, 1.071)},
+    # 실측 x 6.432 (있음 1.048 · 약한 있음 — 다른 축 6.39 ±5%) · y 6.39 (있음 1.071 · 있음 최고(짝 없음))
+    'blueprint': {'src': 'V-20-blueprint-source.png', 'grid': (6.432, 0.0, 6.39, 5.86), 'measured': (6.432, 6.39), 'presence': (1.048, 1.071)},
+    # 격자 없음(있음 x 1.032 · y 1.044) → 정본 간격 6.03
+    'brokenGacha': {'src': 'V-11-brokenGacha-source.png', 'grid': (6.03, 1.51, 6.03, 3.39), 'measured': (None, None), 'presence': (1.032, 1.044), 'canon': True},
+    # 실측 x 5.67 (있음 1.085 · 두 축 짝 있음 최고) · y 5.9 (있음 1.113 · 두 축 짝 있음 최고)
+    'conveyor': {'src': 'V-18-conveyor-source.png', 'grid': (5.67, 5.2, 5.9, 4.43), 'measured': (5.67, 5.9), 'presence': (1.085, 1.113)},
+    # 실측 x 5.546 (있음 1.032 · 약한 있음 — 다른 축 5.63 ±5%) · y 5.63 (있음 1.087 · 있음 최고(짝 없음))
+    'counterweight': {'src': 'V-17-counterweight-source.png', 'grid': (5.546, 1.39, 5.63, 0.94), 'measured': (5.546, 5.63), 'presence': (1.032, 1.087)},
+    # 실측 x 4.993 (있음 1.054 · 1/2: 있음 1.054 · 오차 3.51 < 0.88×5.61) · y 5.006 (있음 1.053 · 1/2: 있음 1.053 · 오차 3.55 < 0.88×5.87) · 격자 찾기 범위 4.5~12px — 바둑판 무늬 한 칸이 원본 도트 10px(있음 1.10)이고 그 절반 5.0px가 맞물린 채 있음(1.05)이라 5.0px로 뽑는다(10px 도트 하나 = 2×2칸 그대로, 다른 사건 그림과 같은 세밀함 D-312). 범위 4.5~9px로는 가로 8.04 · 세로 5.0으로 엇갈린다
+    'drillRook': {'src': 'V-25-drillRook-source.png', 'grid': (4.993, 0.42, 5.006, 1.67), 'measured': (4.993, 5.006), 'presence': (1.054, 1.053), 'range': (4.5, 12.0)},
+    # 실측 x 5.83 (있음 1.044 · 약한 있음 — 다른 축 5.66 ±5%) · y 5.664 (있음 1.05 · 있음 최고(짝 없음))
+    'lostPawn': {'src': 'V-22-lostPawn-source.png', 'grid': (5.83, 2.43, 5.664, 1.42), 'measured': (5.83, 5.664), 'presence': (1.044, 1.05)},
+    # 실측 x 5.97 (있음 1.047 · 약한 있음 — 다른 축 6.10 ±5%) · y 6.103 (있음 1.059 · 있음 최고(짝 없음))
+    'boss-alarm': {'src': 'B-07-boss-alarm-source.png', 'grid': (5.97, 5.47, 6.103, 4.07), 'measured': (5.97, 6.103), 'presence': (1.047, 1.059)},
+    # 실측 x 6.44 (있음 1.084 · 두 축 짝 있음 최고) · y 6.343 (있음 1.096 · 두 축 짝 있음 최고) · 정사각 초상 자르기(반장 · 집게 팔 · 폰 — 1ec236e) · 청록 → 기계 초록(D-347)
+    'boss-assembly': {'src': 'B-02-boss-assembly-source.png', 'grid': (6.44, 5.22, 6.343, 0.53), 'measured': (6.44, 6.343), 'presence': (1.084, 1.096), 'crop': (642, 0, 1529, 887), 'recolor': {'hue': (150, 210), 'sat': 0.2, 'to': 100}},
+    # 실측 x 5.767 (있음 1.082 · 두 축 짝 있음 최고) · y 5.842 (있음 1.114 · 두 축 짝 있음 최고)
+    'boss-thorns': {'src': 'B-03-boss-thorns-source.png', 'grid': (5.767, 1.92, 5.842, 4.87), 'measured': (5.767, 5.842), 'presence': (1.082, 1.114)},
+    # 실측 x 6.32 (있음 1.061 · 두 축 짝 있음 최고) · y 6.16 (있음 1.06 · 두 축 짝 있음 최고)
+    'boss-fall-alarm': {'src': 'BF-06-boss-fall-alarm-source.png', 'grid': (6.32, 2.11, 6.16, 0.51), 'measured': (6.32, 6.16), 'presence': (1.061, 1.06)},
+    # 실측 x 6.539 (있음 1.058 · 두 축 짝 있음 최고) · y 6.21 (있음 1.064 · 두 축 짝 있음 최고)
+    'boss-fall-inspect': {'src': 'BF-02-boss-fall-inspect-source.png', 'grid': (6.539, 0.54, 6.21, 2.07), 'measured': (6.539, 6.21), 'presence': (1.058, 1.064)},
+    # 실측 x 6.005 (있음 1.051 · 두 축 짝 있음 최고) · y 6.25 (있음 1.064 · 두 축 짝 있음 최고) · 청록 → 기계 초록(D-347)
+    'boss-fall-spawn': {'src': 'BF-03-boss-fall-spawn-source.png', 'grid': (6.005, 4.0, 6.25, 5.21), 'measured': (6.005, 6.25), 'presence': (1.051, 1.064), 'recolor': {'hue': (150, 210), 'sat': 0.2, 'to': 100}},
+    # 실측 x 6.31 (있음 1.098 · 두 축 짝 있음 최고) · y 6.25 (있음 1.254 · 두 축 짝 있음 최고)
+    'boss-fall-thorns': {'src': 'BF-05-boss-fall-thorns-source.png', 'grid': (6.31, 5.26, 6.25, 5.21), 'measured': (6.31, 6.25), 'presence': (1.098, 1.254)},
+    # 실측 x 5.1 (있음 1.072 · 두 축 짝 있음 최고) · y 5.023 (있음 1.077 · 두 축 짝 있음 최고)
+    'end-clear': {'src': 'UI-06a-end-clear-source.png', 'grid': (5.1, 2.97, 5.023, 4.6), 'measured': (5.1, 5.023), 'presence': (1.072, 1.077)},
+    # 실측 y 5.1 (있음 1.068) · x 격자 없음(있음 1.018) → 같은 간격
+    'ending-a': {'src': 'E-05-ending-a-source.png', 'grid': (5.1, 3.19, 5.1, 0.85), 'measured': (None, 5.1), 'presence': (1.018, 1.068), 'square': 'x'},
+    # 실측 x 6.3 (있음 1.045 · 약한 있음 — 다른 축 6.20 ±5%) · y 6.2 (있음 1.066 · 있음 최고(짝 없음))
+    'prologue-01': {'src': 'P-01-prologue-01-source.png', 'grid': (6.3, 2.1, 6.2, 0.52), 'measured': (6.3, 6.2), 'presence': (1.045, 1.066)},
+    # 실측 x 6.115 (있음 1.064 · 두 축 짝 있음 최고) · y 6.1 (있음 1.141 · 두 축 짝 있음 최고)
+    'prologue-02': {'src': 'P-02-prologue-02-source.png', 'grid': (6.115, 4.08, 6.1, 0.51), 'measured': (6.115, 6.1), 'presence': (1.064, 1.141)},
+    # 실측 x 6.7 (있음 1.089 · 두 축 짝 있음 최고) · y 6.62 (있음 1.123 · 두 축 짝 있음 최고)
+    'prologue-shadow': {'src': 'C-03-prologue-shadow-source.png', 'grid': (6.7, 4.47, 6.62, 5.52), 'measured': (6.7, 6.62), 'presence': (1.089, 1.123)},
+    # 실측 x 6.59 (있음 1.175 · 두 축 짝 있음 최고) · y 6.59 (있음 1.117 · 두 축 짝 있음 최고)
+    'promote': {'src': 'C-01-promote-source.png', 'grid': (6.59, 1.65, 6.59, 1.65), 'measured': (6.59, 6.59), 'presence': (1.175, 1.117)},
+    # 실측 x 6.46 (있음 1.074 · 있음 최고(짝 없음)) · y 6.284 (있음 1.032 · 약한 있음 — 다른 축 6.46 ±5%)
+    'promote-crew': {'src': 'C-05-promote-crew-source.png', 'grid': (6.46, 5.92, 6.284, 1.57), 'measured': (6.46, 6.284), 'presence': (1.074, 1.032)},
+    # ③ 격자 없음(칠한 그림 — 있음 점수 < 1.05) → 정본 간격 CANON_PITCH로 집안 도트화 (재발주 대신, D-556 판정)
+    # 격자 없음(있음 x 1.022 · y 1.031) → 정본 간격 6.03
+    'act-1': {'src': 'AC-01-source.png', 'grid': (6.03, 5.28, 6.03, 5.65), 'measured': (None, None), 'presence': (1.022, 1.031), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.034 · y 1.025) → 정본 간격 6.03
+    'act-2': {'src': 'AC-02-source.png', 'grid': (6.03, 1.51, 6.03, 1.51), 'measured': (None, None), 'presence': (1.034, 1.025), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.005 · y 0.999) → 정본 간격 6.03
+    'act-4': {'src': 'AC-03-source.png', 'grid': (6.03, 1.13, 6.03, 5.28), 'measured': (None, None), 'presence': (1.005, 0.999), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.01 · y 1.019) → 정본 간격 6.03
+    'casting-floor': {'src': 'S-17-casting-floor-source.webp', 'grid': (6.03, 2.26, 6.03, 0.38), 'measured': (None, None), 'presence': (1.01, 1.019), 'canon': True},
+    # 격자 없음(있음 x 1.029 · y 1.021) → 정본 간격 6.03
+    'chained-door': {'src': 'S-13-chained-door-source.webp', 'grid': (6.03, 3.77, 6.03, 0.75), 'measured': (None, None), 'presence': (1.029, 1.021), 'canon': True},
+    # 격자 없음(있음 x 1.022 · y 1.019) → 정본 간격 6.03
+    'crown-dais': {'src': 'S-16-crown-dais-source.webp', 'grid': (6.03, 3.02, 6.03, 1.51), 'measured': (None, None), 'presence': (1.022, 1.019), 'canon': True},
+    # 격자 없음(있음 x 1.012 · y 1.015) → 정본 간격 6.03
+    'crown-gears': {'src': 'S-19-crown-gears-source.webp', 'grid': (6.03, 2.64, 6.03, 0.75), 'measured': (None, None), 'presence': (1.012, 1.015), 'canon': True},
+    # 격자 없음(있음 x 1.009 · y 1.023) → 정본 간격 6.03
+    'gold-cast': {'src': 'S-18-gold-cast-source.webp', 'grid': (6.03, 2.64, 6.03, 0.75), 'measured': (None, None), 'presence': (1.009, 1.023), 'canon': True},
+    # 격자 없음(있음 x 1.028 · y 1.04) → 정본 간격 6.03
+    'new-law': {'src': 'S-11-new-law-source.webp', 'grid': (6.03, 3.02, 6.03, 0.0), 'measured': (None, None), 'presence': (1.028, 1.04), 'canon': True},
+    # 격자 없음(있음 x 1.026 · y 1.026) → 정본 간격 6.03
+    'old-spring': {'src': 'S-14-old-spring-source.webp', 'grid': (6.03, 0.0, 6.03, 2.26), 'measured': (None, None), 'presence': (1.026, 1.026), 'canon': True},
+    # 격자 없음(있음 x 1.007 · y 1.013) → 정본 간격 6.03
+    'scarred-wall': {'src': 'S-15-scarred-wall-source.webp', 'grid': (6.03, 2.64, 6.03, 1.51), 'measured': (None, None), 'presence': (1.007, 1.013), 'canon': True},
+    # 격자 없음(있음 x 1.018 · y 1.015) → 정본 간격 6.03
+    'crown-1-throne': {'src': 'CN-04-source.png', 'grid': (6.03, 1.51, 6.03, 0.0), 'measured': (None, None), 'presence': (1.018, 1.015), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.008 · y 1.007) → 정본 간격 6.03
+    'crown-2-open': {'src': 'CN-01-source.png', 'grid': (6.03, 1.51, 6.03, 0.38), 'measured': (None, None), 'presence': (1.008, 1.007), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.043 · y 1.018) → 정본 간격 6.03
+    'crown-2-throne': {'src': 'CN-05-source.png', 'grid': (6.03, 1.51, 6.03, 5.28), 'measured': (None, None), 'presence': (1.043, 1.018), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.029 · y 1.044) → 정본 간격 6.03
+    'crown-3-open': {'src': 'CN-02-source.png', 'grid': (6.03, 0.38, 6.03, 4.15), 'measured': (None, None), 'presence': (1.029, 1.044), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.014 · y 1.014) → 정본 간격 6.03
+    'crown-3-throne': {'src': 'CN-06-source.png', 'grid': (6.03, 3.39, 6.03, 4.9), 'measured': (None, None), 'presence': (1.014, 1.014), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.007 · y 1.013) → 정본 간격 6.03
+    'end-f-box': {'src': 'ED-10-source.png', 'grid': (6.03, 5.28, 6.03, 2.26), 'measured': (None, None), 'presence': (1.007, 1.013), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.006 · y 1.007) → 정본 간격 6.03 · 나이트 눈 칸을 새 격자에서 다시 짚었다(콧구멍 · 입 홈은 6px 칸에서 이미 얼굴 면에 묻힌다)
+    'end-f-unwind': {'src': 'ED-11-source.png', 'grid': (6.03, 1.88, 6.03, 1.13), 'measured': (None, None), 'presence': (1.006, 1.007), 'canon': True, 'trim': (30, 0.25), 'erase': [{'what': '나이트 눈 (사용자 지시 2026-11-15 — 재발주 대신 지운다)', 'box': (118, 102, 120, 104), 'from': (117, 102)}]},
+    # 격자 없음(있음 x 1.031 · y 1.032) → 정본 간격 6.03
+    'end-fail': {'src': 'ED-09-source.png', 'grid': (6.03, 4.52, 6.03, 2.26), 'measured': (None, None), 'presence': (1.031, 1.032), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.025 · y 1.034) → 정본 간격 6.03
+    'end-k-gild': {'src': 'ED-04-source.png', 'grid': (6.03, 1.13, 6.03, 0.38), 'measured': (None, None), 'presence': (1.025, 1.034), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.007 · y 1.014) → 정본 간격 6.03
+    'end-t-step': {'src': 'ED-08-source.png', 'grid': (6.03, 3.02, 6.03, 5.28), 'measured': (None, None), 'presence': (1.007, 1.014), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.01 · y 1.008) → 정본 간격 6.03
+    'end-t-throw': {'src': 'ED-06-source.png', 'grid': (6.03, 1.88, 6.03, 4.15), 'measured': (None, None), 'presence': (1.01, 1.008), 'canon': True, 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.018 · y 1.042) → 정본 간격 6.03
+    'law-plate': {'src': 'ED-05-source.png', 'grid': (6.03, 5.28, 6.03, 2.26), 'measured': (None, None), 'presence': (1.018, 1.042), 'canon': True, 'trim': (30, 0.25)},
+    # 실측 y 6.57 (있음 1.074) · x 격자 없음(있음 1.027) → 같은 간격
+    'prologue-04': {'src': 'OP-02-source.png', 'grid': (6.57, 2.46, 6.57, 3.83), 'measured': (None, 6.57), 'presence': (1.027, 1.074), 'square': 'x', 'trim': (30, 0.25)},
+    # 격자 없음(있음 x 1.021 · y 1.026) → 정본 간격 6.03
+    'prologue-07': {'src': 'OP-04-source.png', 'grid': (6.03, 3.02, 6.03, 4.15), 'measured': (None, None), 'presence': (1.021, 1.026), 'canon': True, 'trim': (30, 0.25)},
+}
+# 같은 이름의 옛 941/180 값은 축마다 잰 격자로 덮는다 (값 = (px, ox, py, oy) — snap.run이 아니라 regrid.build_one이 읽는다)
+MANUAL_PITCH.update({n: g['grid'] for n, g in SCENE_GRID.items()})
+
+
 def options(name):
     """그림의 색은 유지하고, 수동값이 없는 장면은 기존 자동 격자 복원을 쓴다."""
+    if name in SCENE_GRID:
+        raise ValueError(f'{name}: 실측 격자 장면 — regrid.build_one(name, SCENE_GRID[name])으로 뽑는다 (D-556)')
     opts = {'colors': 0, 'pitch': MANUAL_PITCH.get(name)}
     # S-01: 자동 검출 6.21px 확인. 균일한 300×135 격자로 원본 1870:841 비율을 보존한다.
     if name in ('epilogue-hands', 'throne-mold', 'departure-dock', 'shipping-interior',
@@ -288,12 +439,7 @@ ENDING_GRID = {
     # ED-11 사용자 지시(2026-11-15): 나이트의 눈은 재발주하지 않고 지운다 — 격자 복원 뒤 erase 칸을 같은 말머리 면의 이웃 칸 색(from)으로 메운다(새 색 없음).
     #   box = (왼, 위, 오른, 아래) 도트(오른 · 아래 미포함), from = 메울 색을 읽는 이웃 칸 (x, y). 대조판 아래 줄에 전 | 후(×12)
     #   말머리 면은 #51484B ~ #594E51 한 단(같은 명암) — 눈 · 콧구멍 · 입 홈의 먹(#181516 · #1D1A1B · #231D1D)만 그 면 색으로. 테 빛 · 턱 외곽선은 그대로.
-    'ED-11': {'name': 'end-f-unwind', 'trim_max': 30, 'trim_dark': 0.25, 'erase': [
-        {'what': '나이트 눈', 'box': (137, 118, 139, 120), 'from': (136, 119)},
-        {'what': '나이트 눈 아래 끝', 'box': (138, 120, 139, 121), 'from': (137, 120)},
-        {'what': '나이트 콧구멍', 'box': (142, 129, 143, 130), 'from': (142, 130)},
-        {'what': '나이트 입 홈', 'box': (140, 132, 141, 134), 'from': (141, 133)},
-    ]},
+    'ED-11': {'name': 'end-f-unwind', 'trim_max': 30, 'trim_dark': 0.25},  # 나이트 눈 지우기는 SCENE_GRID['end-f-unwind'] erase(새 격자 칸, D-556)
     # ED-12 재발주본(옛 credits-bg는 E-06-credits-bg-source.png): 오른쪽 넓은 빈 어둠 = 크레딧 글 자리
     'ED-12': {'name': 'credits-bg', 'trim_max': 30, 'trim_dark': 0.25},
 }

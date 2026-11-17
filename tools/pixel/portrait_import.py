@@ -189,7 +189,7 @@ def measure(sheet):
     a = np.asarray(Image.open(os.path.join(ROOT, 'build-res', 'order', f'{sheet}-source.png')).convert('RGB'))
     for box in blobs(a):
         c = Image.fromarray(a[box[2]:box[3], box[0]:box[1]])
-        print(box, [round(float(v), 2) for v in detect_pitch(c, lo=4.0, hi=13.0)])
+        print(box, [round(float(v), 2) for v in detect_pitch(c, lo=4.0, hi=13.0, fine=True)])
 
 
 if __name__ == '__main__':
