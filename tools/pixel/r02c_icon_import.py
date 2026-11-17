@@ -158,7 +158,7 @@ def main():
     rows = []
     for src, dots in ((src_b, b), (src_a, a)):
         k = max(1, 600 // dots.width)
-        rows.append((src.resize((600, 600), Image.LANCZOS), dots.resize((dots.width * k, dots.height * k), Image.NEAREST)))
+        rows.append((src.resize((600, 600), Image.NEAREST), dots.resize((dots.width * k, dots.height * k), Image.NEAREST)))
     k = 8
     split = Image.new('RGB', (b.width * k * 2 + 10, b.height * k), (60, 60, 70))
     chk_fg = Image.new('RGBA', (b.width * k, b.height * k), (255, 0, 255, 255))

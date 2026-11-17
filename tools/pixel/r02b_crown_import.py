@@ -383,7 +383,7 @@ def main():
     # 대조판: 원본 축소 | 복원(같은 크기, 최근접) | 복원 칸 경계를 원본 위에
     S = 600
     chk = Image.new('RGB', (S * 2 + 30, S + 20), (60, 60, 70))
-    chk.paste(src.resize((S, S), Image.LANCZOS), (10, 10))
+    chk.paste(src.resize((S, S), Image.NEAREST), (10, 10))
     rec = dots.copy()
     base = Image.new('RGBA', rec.size, (*BG, 255))
     base.alpha_composite(rec)
@@ -401,7 +401,7 @@ def sheet(outdir):
     px, ox, nx = G['x']
     py, oy, ny = G['y']
     rec = Image.open(os.path.join(OUT, 'crown-dark.png')).convert('RGBA')
-    a = src.resize((627, 627), Image.LANCZOS)
+    a = src.resize((627, 627), Image.NEAREST)
     b2 = full.resize((full.width * 2, full.height * 2), Image.NEAREST)
     b10 = rec.resize((rec.width * 10, rec.height * 10), Image.NEAREST)
     W = 627 + b10.width + b2.width + 80
