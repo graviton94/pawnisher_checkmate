@@ -36,7 +36,7 @@
 /* 화자 명패: 띠 위 가장자리 — 우리 편 왼쪽 · 적 · 도금왕 오른쪽(거울) · NPC 왼쪽 종이 꼬리표. 1도트 = --px-plate(기기 픽셀 round(1.5·DPR)) */
 .cut-who {
   --d: var(--px-plate, var(--px1));
-  position: absolute; z-index: 3; bottom: 100%; left: calc(var(--cap) * 8); margin-bottom: calc(var(--d) * -2);
+  position: absolute; z-index: 3; bottom: 100%; left: calc(var(--cap) * 8); margin-bottom: calc(var(--d) * 4); /* 검수 M10: 레터박스 점선 띠(z 5)에 명패 아래가 덮였다 → 띠 위로 올린다 */
   display: flex; align-items: flex-end; gap: calc(var(--d) * 2); pointer-events: none;
   filter: drop-shadow(var(--d) var(--d) 0 #0b0b0e);
 }

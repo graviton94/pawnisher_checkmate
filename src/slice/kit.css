@@ -110,7 +110,7 @@
 
 /* ---------- 3.3 단추 · 단추 줄 ---------- */
 .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal) {
-  --up: url('../assets/ui/chrome/v2/btn-iron-up.png'); --dn: url('../assets/ui/chrome/v2/btn-iron-down.png'); --off: url('../assets/ui/chrome/v2/btn-iron-off.png');
+  --up: url('../assets/ui/chrome/v2/btn-iron-up.png'); --dn: url('../assets/ui/chrome/v2/btn-iron-down.png'); --off: url('../assets/ui/chrome/v2/btn-iron-off0.png');
   --fg: var(--t-ink); --fg-dn: var(--t-body); --fg-off: var(--t-dim);
   position: relative; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
   height: var(--h-btn); min-height: var(--h-btn); min-width: calc(var(--px) * 56); width: auto; margin: 0;
@@ -121,9 +121,9 @@
   image-rendering: pixelated; background: none; box-shadow: none; filter: none; transform: none;
   color: var(--fg); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; text-shadow: none; white-space: nowrap; cursor: pointer;
 }
-.btn.k-brass { --up: url('../assets/ui/chrome/v2/btn-brass-up.png'); --dn: url('../assets/ui/chrome/v2/btn-brass-down.png'); --off: url('../assets/ui/chrome/v2/btn-brass-off.png'); --fg: var(--t-ink); --fg-dn: var(--t-ink); --fg-off: var(--t-body); }
-.btn.k-crimson { --up: url('../assets/ui/chrome/v2/btn-crimson-up.png'); --dn: url('../assets/ui/chrome/v2/btn-crimson-down.png'); --off: url('../assets/ui/chrome/v2/btn-crimson-off.png'); --fg: #000; --fg-dn: #000; --fg-off: var(--t-body); }
-.btn.k-teal { --up: url('../assets/ui/chrome/v2/btn-teal-up.png'); --dn: url('../assets/ui/chrome/v2/btn-teal-down.png'); --off: url('../assets/ui/chrome/v2/btn-teal-off.png'); --fg: #000; --fg-dn: #000; --fg-off: var(--t-body); }
+.btn.k-brass { --up: url('../assets/ui/chrome/v2/btn-brass-up.png'); --dn: url('../assets/ui/chrome/v2/btn-brass-down.png'); --off: url('../assets/ui/chrome/v2/btn-brass-off0.png'); --fg: var(--t-ink); --fg-dn: var(--t-ink); --fg-off: #c9c0b0; }
+.btn.k-crimson { --up: url('../assets/ui/chrome/v2/btn-crimson-up.png'); --dn: url('../assets/ui/chrome/v2/btn-crimson-down.png'); --off: url('../assets/ui/chrome/v2/btn-crimson-off0.png'); --fg: #000; --fg-dn: #000; --fg-off: #c9c0b0; }
+.btn.k-teal { --up: url('../assets/ui/chrome/v2/btn-teal-up.png'); --dn: url('../assets/ui/chrome/v2/btn-teal-down.png'); --off: url('../assets/ui/chrome/v2/btn-teal-off0.png'); --fg: #000; --fg-dn: #000; --fg-off: var(--t-body); }
 /* 누름 영역: 그림은 24도트, 손가락 영역은 위아래로 늘려 48px 이상 (DPR 2.625에서 24도트 ≈ 45.7px) */
 .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal)::before { content: ''; position: absolute; left: calc(var(--px) * -6); right: calc(var(--px) * -6); top: 50%; height: max(48px, 100%); transform: translateY(-50%); }
 /* 눌림(손가락 · 키보드) — 그림 바꿈 + 글자 1도트 아래. 크기 · 비율은 그대로 */
@@ -158,7 +158,7 @@ body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D
 }
 :is(.win, .scr-pick, .scr-place, .kit) .choice:is(:active, .down):not(:disabled) { border-image-source: url('../assets/ui/chrome/v2/choice-down.png'); padding-top: calc(var(--px) * 1); }
 :is(.win, .scr-pick, .scr-place, .kit) .choice:is(.is-sel, [aria-pressed='true']) { border-image-source: url('../assets/ui/chrome/v2/choice-sel.png'); }
-:is(.win, .scr-pick, .scr-place, .kit) .choice:disabled { border-image-source: url('../assets/ui/chrome/v2/choice-off.png'); color: var(--t-dim); filter: none; cursor: default; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice:is(:disabled, [aria-disabled='true']) { border-image-source: url('../assets/ui/chrome/v2/choice-off0.png'); color: var(--t-dim); filter: none; cursor: default; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice .choice-name { font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res { color: var(--t-dim); font: 400 12px/14px Galmuri11, sans-serif; white-space: nowrap; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice:has(> .btn-info) { padding-right: calc(var(--px) * 24); }
@@ -512,6 +512,7 @@ body.kb-nav .ability-block:focus-visible { outline: 2px solid var(--t-gold); out
 .scr-place.scr-backdrop > .scr-work > .scr-items { flex: 1 1 0; }
 .scr-place:is(.scr-shop, .scr-forge) > .scr-work > .win-head > :is(.wallet, .tag) { margin-left: auto; }
 .scr-place .btn-row > .mid > .shop-say { margin: 0; max-height: 36px; overflow: hidden; text-align: center; white-space: normal; color: var(--t-body); }
+.scr-place .btn-row > .mid > .shop-say.bad { color: var(--t-loss); }
 /* 덱 보기 · 카드 빼기 · 카드 견본: 움푹 칸 안 카드 격자 (칸 폭 = 카드 폭) */
 /* 카드 폭 = 우물 높이에 한 줄이 통째로 드는 크기(104 ~ 150) — 넘치는 줄만 스크롤 */
 .win .deck-grid { --dw: clamp(104px, calc((var(--win-h) - 172px) * 2 / 3), 150px); display: grid; grid-template-columns: repeat(auto-fit, var(--dw)); justify-content: center; gap: var(--s3) var(--s3); padding: var(--s2) var(--s1); }
@@ -699,7 +700,7 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
 }
 #hand > .hc:is(:active, .down):not(.off) { border-image-source: url('../assets/ui/chrome/v2/hand-choice-down.png'); padding-top: calc(var(--px) * 1); }
 #hand > .hc.armed { border-image-source: url('../assets/ui/chrome/v2/hand-choice-sel.png'); }
-#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/hand-choice-off.png'); }
+#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/hand-choice-off0.png'); }
 #hand > .hc .hc-head { position: relative; display: grid; grid-template-columns: calc(var(--px) * 16) minmax(0, 1fr); column-gap: var(--s1); align-items: center; min-height: calc(var(--px) * 16); }
 /* 비용 톱니 = 황동 탭 위. 탭 황동은 choice 24줄 중 4~17줄(아래 18~19줄은 먹 받침)이라 판 가운데보다 1도트 위 → 톱니(11도트)를 머리 줄 가운데에서 7도트 위에 놓아 도트 격자에 맞춘다(옛 자리보다 1.5도트 위, D-398) */
 #hand > .hc .costgear { position: absolute; left: calc(var(--px) * -14); top: calc(50% - var(--px) * 7 + 1px); display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
@@ -761,9 +762,6 @@ body.slice.lay-f #right > .rmid {
 .rmid > * { flex: none; }
 .rmid .r-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s1); min-height: 48px; }
 .rmid .r-head .r-lbl { color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; }
-#btn-help.btn.k-iron { position: relative; flex: none; width: max(48px, calc(var(--px) * 24)); min-width: 0; padding: 0; font: 700 24px/1 Galmuri11, sans-serif; }
-/* 새 용어가 들어왔다: 단추 오른쪽 위 붉은 점(2×2도트 · 계단 깜빡) — 단추 안에 붙어 판 위로 새지 않는다 */
-#btn-help.has-new::after { content: ''; position: absolute; top: calc(var(--px) * -2); right: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; animation: kblink 1.2s steps(2, jump-none) infinite; }
 /* 반장 규칙 칩: 머리 한 줄 안 얼굴 + 진홍 이름 (D-520 — hud-rarity.css) — 누르면 규칙 S 창 */
 #boss[hidden] { display: none; }
 /* 적 의도 목록 (UI-07 아이콘): 적 그림 · 의도 · 대상 · 값 — 줄 32 · 최대 5 */
@@ -801,7 +799,7 @@ body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0;
 @keyframes coachRing { 0% { outline-offset: calc(var(--px) * 1); outline-color: var(--t-gold); } 50% { outline-offset: calc(var(--px) * 3); outline-color: #b07a1c; } }
 body.between #right .rmid, body.between #right .actions, body.between #vials, body.between #hand > .hc, body.between #hand > .empty, body.between #turn-label, body.between #coins { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
-  #hand.hint > .hc:not(.off), #btn-end.coach-end, #btn-help.has-new::after, #vials .seg.spend .key, #vials .seg.wind .key { animation: none; }
+  #hand.hint > .hc:not(.off), #btn-end.coach-end, #vials .seg.spend .key, #vials .seg.wind .key { animation: none; }
 }
 
 /* 튜토리얼 말풍선 (부관 · 종이 판, 패스 4 D-396): 전투 = 짚은 곳 반대쪽 레일 위 · 그 밖 = 위 또는 아래 가운데. 누르면 다음 */
@@ -1349,7 +1347,7 @@ body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has
 /* 입문 시험대: 그 판의 생각에 필요한 HUD만 연다 — 나머지는 자리를 지킨 채 숨긴다(레이아웃이 흔들리지 않게).
    A 치는 칸 = 손패 · 판만 / B 예고와 막기 = + 태엽 · 턴 표시 · 적의 수 · 턴 끝 / C 킹 잡기 = 전부(되감기 포함) */
 body[data-drill='a'] #vials, body[data-drill='a'] #right > *, body[data-drill='a'] #deckrow { visibility: hidden; }
-body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='b'] #btn-help, body[data-drill='b'] #parts, body[data-drill='b'] #deckrow, body[data-drill='b'] #bet-chip { visibility: hidden; }
+body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='b'] #parts, body[data-drill='b'] #deckrow, body[data-drill='b'] #bet-chip { visibility: hidden; }
 
 /* 용어 아이콘 (TI-01 · 02 · D-507): 32도트를 정수 1배(16칸 줄이지 않고 32px) — 사전 · 사건 정보 쪽 머리 */
 .term-ico { flex: none; display: inline-block; width: 32px; height: 32px; margin: 0; background: center / 32px 32px no-repeat; image-rendering: pixelated; vertical-align: middle; }

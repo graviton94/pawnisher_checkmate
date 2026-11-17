@@ -5,7 +5,8 @@
  *
  * 키: 확인 Enter · Space / 뒤로 Esc · Backspace / 턴 끝 E / 선택 취소 Z · Ctrl+Z / 되감기 R / 카드 1~9 / 방향키 = 초점 이동
  *     / Tab = 손패 ↔ 판 초점 바꾸기 / I = 커서 칸 정보 (길게 누르기와 같은 창, D-533)
- * 패드(표준 배치): A 확인 · B 뒤로 · X 턴 끝 · Y 선택 취소(길게 = 칸 정보) · Start 메뉴(도움말) · Back(Select) 칸 정보
+ * 패드(표준 배치): A 확인 · B 뒤로 · X 턴 끝 · Y 선택 취소(길게 = 칸 정보) · Start 일시 정지 메뉴 · Back(Select) 칸 정보
+ * 뒤로(Esc · B · 안드로이드 뒤로)는 닫을 창 → 대국 선택 → 그래도 없으면 대국 · 지도의 일시 정지 메뉴 (D-538).
  *     · LB · RB 손패 ↔ 판 · 십자키 · 왼쪽 스틱 = 초점 이동
  * 대국 판이 맨 위이고 초점이 판에 있으면 방향 · 확인은 판 커서로 간다 (boardcursor.ts) — 확인 = 그 칸을 한 번 탭한 것.
  */
@@ -92,8 +93,10 @@ export interface InputEnv {
   press(): boolean;
   /** 맨 위 층에서 방향으로 초점을 옮긴다 */
   move(dir: Dir): void;
-  /** 대국 단추 누르기 (#btn-end · #btn-rewind · #btn-help · 손패 n번째) */
-  click(target: 'end' | 'rewind' | 'help' | { card: number }): boolean;
+  /** 대국 단추 누르기 (#btn-end · #btn-rewind · 손패 n번째) */
+  click(target: 'end' | 'rewind' | { card: number }): boolean;
+  /** 대국 · 지도면 일시 정지 메뉴를 연다 (열었으면 true — D-538) */
+  pause(): boolean;
   /** 판 커서 (D-533) — 없으면 판 초점이 없는 화면 (옛 시험 · 대국 밖) */
   board?: {
     /** 지금 초점이 판에 있나 (아니면 손패 · 단추) */
@@ -114,14 +117,15 @@ export const dispatch = (a: Action, env: InputEnv): boolean => {
   const onBoard = (): boolean => !!env.board && env.inBattle() && env.board.focused();
   switch (a.t) {
     case 'confirm': return onBoard() ? env.board!.press() : env.press();
-    case 'back': return env.dismiss() || (env.inBattle() && env.cancel());
+    case 'back': return env.dismiss() || (env.inBattle() && env.cancel()) || env.pause();
     case 'focus':
       if (onBoard()) env.board!.move(a.dir);
       else env.move(a.dir);
       return true;
     case 'toggle': return !!env.board && env.inBattle() && (env.board.toggle(), true);
     case 'info': return onBoard() && env.board!.info();
-    case 'menu': return env.inBattle() && env.click('help');
+    // Start: 메뉴를 연다 · 창이 열려 있으면 닫는다 (같은 단추로 들어가고 나온다)
+    case 'menu': return env.pause() || env.dismiss();
     case 'endTurn': return env.inBattle() && env.click('end');
     case 'reset': return env.inBattle() && env.click('rewind');
     case 'undo': return env.inBattle() && env.cancel();

@@ -106,6 +106,7 @@ describe('판 초점 키 · 패드 (D-533)', () => {
       press: () => (log.push('press'), true),
       move: (d) => void log.push(`move:${d}`),
       click: (t) => (log.push(typeof t === 'object' ? `card:${t.card}` : t), true),
+      pause: () => false,
       board: o.board
         ? {
             focused: () => !!o.focused,

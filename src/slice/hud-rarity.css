@@ -95,7 +95,7 @@ body.slice.lay-f .rmid .r-head .r-lbl { flex: none; white-space: nowrap; }
   color: #ff7b7b; font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; white-space: nowrap;
 }
 #boss.boss-chip::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 48px; transform: translateY(-50%); }
-/* 좁은 폭에서 [?] 누름 영역이 칩 끝에 겹치면 칩이 먼저 받는다 */
+/* 좁은 폭에서 메뉴 단추 누름 영역이 칩 끝에 겹치면 칩이 먼저 받는다 */
 #boss.boss-chip { z-index: 1; }
 #boss.boss-chip[hidden] { display: none; }
 #boss.boss-chip .bc-face { display: grid; place-items: center; flex: none; width: 24px; height: 24px; }
@@ -104,13 +104,6 @@ body.slice.lay-f .rmid .r-head .r-lbl { flex: none; white-space: nowrap; }
 #boss.boss-chip .bc-face .bc-gb { display: block; width: 24px; height: 24px; background: no-repeat 50% 12% / 54px 54px; image-rendering: pixelated; }
 #boss.boss-chip:active { transform: translateY(calc(var(--px) * 1)); }
 body.kb-nav #boss.boss-chip:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
-body.slice #btn-help.btn.k-iron {
-  flex: none; margin-left: auto; width: calc(var(--px) * 16); min-width: 0; height: calc(var(--px) * 15); min-height: 0; padding: 0;
-  font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none;
-}
-body.slice #btn-help.btn.k-iron:is(:active, .down) { padding: calc(var(--px) * 1) 0 0; }
-/* 누름 영역 26×48도트 이상(≈ 50 × 48px): 오른쪽은 테 끝까지만(목록 칸이 가로로 넘치지 않게), 왼쪽 · 위아래로 넓힌다 */
-body.slice #btn-help.btn.k-iron::before { left: calc(var(--px) * -16); right: calc(var(--px) * -6); top: 50%; height: 48px; transform: translateY(-50%); }
 @media (max-width: 760px) {
   #boss.boss-chip .bc-face { display: none; }
 }

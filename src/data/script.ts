@@ -319,7 +319,7 @@ export const TESTIMONY = [0, 1, 2, 3].map((ch) => testimony(ch));
 /** 왕위 결정 화면의 글 (바이블 THR-안내 · THR-돌아봄). 단추는 동사 하나 */
 export const THRONE_TEXT = {
   title: '금단의 승급대 앞에서',
-  prompt: '승급대 위에 금왕관이 빛나고 있다. 뒤편에서 동료들이 숨을 죽이고 기다린다.',
+  prompt: '승급대 위에 금왕관이 빛난다. 뒤편에서 동료들이 숨을 죽인다.',
   promptFinal: '왕관을 써서 왕이 되거나, 왕관을 던져 주조기를 부순다.',
   look: '돌아본다', looked: '돌아봤다', crown: '왕관을 쓴다', throw: '왕관을 던진다',
   lookAt: (nameWithJosa: string) => `${nameWithJosa} 지친 얼굴로 미소 지으며 고개를 끄덕인다. ‘조금만 기다려. 이제 곧 우리가 살아서 나간다.’`,

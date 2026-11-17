@@ -4,7 +4,21 @@
  * 그러면 9-slice 테 · 단추 · 명패의 도트가 어느 기기에서나 같은 두께의 기기 픽셀로 찍힌다(5 · 6px 섞임이 없다).
  * PC(일렉트론)는 기본 모바일 읽기 크기에 맞춰 확대(electron/main.cjs)하므로 바뀐 DPR에서 다시 계산한다.
  */
+/**
+ * 웹판을 PC 브라우저(마우스)로 열었을 때의 UI 확대 (D-538 · 검수 H5): 일렉트론 setZoomFactor와 같은 기준(915×412 읽기 크기)을
+ * 정수로 내려 루트에 CSS zoom — 1080p에서 ×2. 정수라 도트 = 기기 픽셀 정수가 그대로 지켜진다. 손가락 기기 · 일렉트론은 1.
+ */
+const webZoom = (): number => {
+  if ((globalThis as { pawnisherNative?: unknown }).pawnisherNative || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return 1;
+  return Math.max(1, Math.floor(Math.min(window.innerWidth / 915, window.innerHeight / 412)));
+};
 const apply = (): void => {
+  const z = webZoom();
+  const root = document.documentElement;
+  if (String(z) !== (root.dataset.zoom ?? '1')) {
+    root.dataset.zoom = String(z);
+    root.style.zoom = z > 1 ? String(z) : '';
+  }
   const dpr = window.devicePixelRatio || 1;
   const dev = Math.max(1, Math.round(2 * dpr));
   document.documentElement.style.setProperty('--px', `${dev / dpr}px`);

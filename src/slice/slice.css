@@ -746,7 +746,7 @@ body.slice.lay-f .gtop .coins .tubes { grid-column: 1 / -1; height: 100%; box-si
 body.slice.lay-f .gtop .coins .tube { height: 100%; }
 /* 아래: 단추 줄 — 같은 높이 */
 body.slice.lay-f #right > .actions { flex: none; height: var(--gBot); margin: 0; padding: 0; box-shadow: none; display: flex; align-items: stretch; gap: 6px; }
-body.slice.lay-f #right > .actions #btn-help, body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 48px; width: 48px; min-width: 0; height: 100%; min-height: 0; padding: 0; display: grid; place-content: center; line-height: 1; font-size: 12px; font-family: Galmuri11, sans-serif; }
+body.slice.lay-f #right > .actions #btn-rewind { flex: 0 0 48px; width: 48px; min-width: 0; height: 100%; min-height: 0; padding: 0; display: grid; place-content: center; line-height: 1; font-size: 12px; font-family: Galmuri11, sans-serif; }
 body.slice.lay-f #btn-rewind .rw-t { display: none !important; }
 body.slice.lay-f #btn-rewind small { margin-top: 2px; font-size: 12px; font-family: Galmuri11, sans-serif; }
 /* 계기 창(태엽 · 속전): 리벳 창 9-slice */

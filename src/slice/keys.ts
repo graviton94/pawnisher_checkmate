@@ -203,7 +203,7 @@ const domEnv = (cancel: () => boolean): InputEnv => {
     click: (target) => {
       const el = typeof target === 'object'
         ? document.querySelector<HTMLElement>(`#hand [data-card="${target.card}"]`)
-        : document.getElementById(target === 'end' ? 'btn-end' : target === 'rewind' ? 'btn-rewind' : 'btn-help');
+        : document.getElementById(target === 'end' ? 'btn-end' : 'btn-rewind');
       if (!el || (el as HTMLButtonElement).disabled || !visible(el)) return false;
       // 부관 안내 중에는 막 밖의 단추를 키로도 누를 수 없다 (구멍 안만 — 터치와 같게)
       if (document.querySelector('.tut')) {
@@ -216,8 +216,15 @@ const domEnv = (cancel: () => boolean): InputEnv => {
       syncBoardCursor();
       return true;
     },
+    pause: () => pauseHook(),
     board: port ? boardEnv() : undefined,
   };
+};
+
+/** 일시 정지 메뉴 열기 (main.ts가 준다 — 대국 · 지도가 맨 위일 때만 열고 true) */
+let pauseHook: () => boolean = () => false;
+export const setPauseHook = (fn: () => boolean): void => {
+  pauseHook = fn;
 };
 
 /** 글을 치는 칸에서는 키를 가로채지 않는다 */

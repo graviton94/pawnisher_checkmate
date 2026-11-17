@@ -4,7 +4,7 @@ import { splitPreload } from '../src/slice/warmup';
 import { PRELOAD } from '../src/data/preload-list';
 
 /** 부른 것을 적어 두는 가짜 화면 */
-const fakeEnv = (o: { open?: boolean; battle?: boolean; sel?: boolean; buttons?: boolean } = {}) => {
+const fakeEnv = (o: { open?: boolean; battle?: boolean; sel?: boolean; buttons?: boolean; pause?: boolean } = {}) => {
   const log: string[] = [];
   const env: InputEnv = {
     dismiss: () => (log.push('dismiss'), !!o.open),
@@ -13,6 +13,7 @@ const fakeEnv = (o: { open?: boolean; battle?: boolean; sel?: boolean; buttons?:
     press: () => (log.push('press'), o.buttons !== false),
     move: (d) => void log.push(`move:${d}`),
     click: (t) => (log.push(typeof t === 'object' ? `card:${t.card}` : t), true),
+    pause: () => (log.push('pause'), !!o.pause),
   };
   return { env, log };
 };
@@ -66,12 +67,19 @@ describe('행동 흘리기', () => {
   });
   it('뒤로: 창이 없으면 대국에서 선택 내려놓기', () => {
     expect(run({ t: 'back' }, { battle: true, sel: true })).toEqual({ done: true, log: ['dismiss', 'cancel'] });
-    expect(run({ t: 'back' }, { battle: false })).toEqual({ done: false, log: ['dismiss'] });
+    expect(run({ t: 'back' }, { battle: false })).toEqual({ done: false, log: ['dismiss', 'pause'] });
+  });
+  it('뒤로: 닫을 것 · 내려놓을 것이 없으면 대국 · 지도 일시 정지 메뉴 (D-538)', () => {
+    expect(run({ t: 'back' }, { battle: true, pause: true })).toEqual({ done: true, log: ['dismiss', 'cancel', 'pause'] });
+    expect(run({ t: 'back' }, { battle: false, pause: true })).toEqual({ done: true, log: ['dismiss', 'pause'] });
+  });
+  it('Start: 메뉴를 열고, 창이 열려 있으면 닫는다', () => {
+    expect(run({ t: 'menu' }, { battle: true, pause: true }).log).toEqual(['pause']);
+    expect(run({ t: 'menu' }, { open: true })).toEqual({ done: true, log: ['pause', 'dismiss'] });
   });
   it('대국 키는 대국이 맨 위일 때만 단추를 누른다', () => {
     expect(run({ t: 'endTurn' }, { battle: true }).log).toEqual(['end']);
     expect(run({ t: 'reset' }, { battle: true }).log).toEqual(['rewind']);
-    expect(run({ t: 'menu' }, { battle: true }).log).toEqual(['help']);
     expect(run({ t: 'card', i: 2 }, { battle: true }).log).toEqual(['card:2']);
     for (const a of [{ t: 'endTurn' }, { t: 'reset' }, { t: 'card', i: 0 }, { t: 'undo' }] as Action[]) expect(run(a, { battle: false })).toEqual({ done: false, log: [] });
   });

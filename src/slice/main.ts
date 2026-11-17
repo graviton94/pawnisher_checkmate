@@ -22,15 +22,17 @@ import './kit.css';
 import './voice.css';
 import './film.css';
 import './hud-rarity.css';
+import './menus.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
-import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn } from './uikit';
+import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
 import type { TrackId } from '../data/music';
 import { applySettings, readSettings, resetProgress } from '../prefs/settings';
 import { openSettings } from './settings';
 import { SETTINGS_TEXT } from '../data/settings';
+import { MAIN_TEXT, PAUSE_TEXT, RECORDS_TEXT, SETUP_TEXT } from '../data/menu';
 import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
 /** 동작 줄이기 */
@@ -53,7 +55,7 @@ import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, chapte
 import { promotionScene } from './promotion';
 import { effectHtml, effectNumbers } from './effect-text';
 import { devQuery, isDesktop, onBeforeQuit, quitGame, toggleFullscreen } from './platform';
-import { boardCursorAt, hardwareBack, installInput, resetBoardCursor, syncBoardCursor } from './keys';
+import { boardCursorAt, hardwareBack, installInput, resetBoardCursor, setPauseHook, syncBoardCursor } from './keys';
 import { bodyRect } from './boardcursor';
 import { pieceImg } from '../ui/sprites';
 import { setBoardTopInset } from '../view/boardInset';
@@ -127,7 +129,7 @@ installPixelAnimate();
   const head = document.createElement('div');
   head.className = 'r-head';
   head.innerHTML = `<span class="r-lbl">${HUD_TEXT.intentHead}</span>`;
-  head.append(document.getElementById('boss')!, document.getElementById('btn-help')!);
+  head.append(document.getElementById('boss')!, document.getElementById('btn-menu')!);
   const intents = document.createElement('button');
   intents.type = 'button';
   intents.id = 'intents';
@@ -798,13 +800,15 @@ const intentList = (): void => {
     const k = r.pieceId === null ? -1 : order.indexOf(r.pieceId);
     return k >= 0 ? `<img class="it-n" src="ui/board/badge-e${Math.min(9, k + 1)}.png" alt="${k + 1}번">` : '';
   };
+  // 판돈 칩이 칸을 차지하면 목록을 두 줄로 줄이고 「+N」으로 (검수 M11 — 부품 줄이 칸 아래 테에서 잘렸다)
+  const cap = betNow ? 2 : 5;
   const html = !live
     ? ''
     : rows.length
       ? rows
-          .slice(0, 5)
+          .slice(0, cap)
           .map((r) => `<span class="it-row k-${r.kind}"><span class="who">${r.t ? pieceImg(r.t, 1, 'small', 24) : ''}${num(r)}</span>${intentIco(r.kind)}<span class="it-res">${res(r)}</span></span>`)
-          .join('') + (rows.length > 5 ? `<span class="it-more">${HUD_TEXT.intentMore(rows.length - 5)}</span>` : '')
+          .join('') + (rows.length > cap ? `<span class="it-more">${HUD_TEXT.intentMore(rows.length - cap)}</span>` : '')
       : `<span class="it-none">${HUD_TEXT.intentNone}</span>`;
   if (html === intentKey) return;
   intentKey = html;
@@ -860,7 +864,7 @@ const gauges = (): void => {
       return `<i class="sp-t t-${st}${drop && i >= b.coins && i < was! ? ' out' : ''}"></i>`;
     }).join('');
     const from = drop ? speedReward(was!) : reward;
-    $('coins').innerHTML = `<span class="sp-win"><i class="coin-key" aria-hidden="true"></i><b class="sp-n">${from}</b></span><span class="sp-row${drop ? ' drop' : ''}">${tubes}</span>`;
+    $('coins').innerHTML = `<span class="sp-win"><small class="sp-lbl">${HUD_TEXT.track}</small><i class="coin-key" aria-hidden="true"></i><b class="sp-n">${from}</b></span><span class="sp-row${drop ? ' drop' : ''}">${tubes}</span>`;
     $('coins').setAttribute('aria-label', `${HUD_TEXT.track} — ${SPEED_METER.label} ${reward}`);
     if (drop) {
       // 예비 → 관 꺼짐 계단 → 출렁 (CSS) · 숫자는 계단으로 굴러 내려가고 잃은 나사 「−4」가 튀어 디더로 지워진다
@@ -944,7 +948,7 @@ const refresh = (): void => {
   // 태엽 게이지 (D-162): 손패 맨 위 한 줄 — 칸마다 열쇠, 쓴 칸은 빈 칸. 오른쪽 레일의 태엽은 없앴다
   gauges();
   ($('btn-rewind') as HTMLButtonElement).disabled = b.rewinds <= 0 || busy || b.s.winner !== null;
-  $('btn-rewind').innerHTML = `<i class="ico-rew" aria-hidden="true"></i><small>${b.rewinds}</small>`;
+  $('btn-rewind').innerHTML = `<i class="ico-rew" aria-hidden="true"></i><small>${b.rewinds}</small><span class="rw-lbl">${HUD_TEXT.rewindLbl}</span>`;
   ($('btn-end') as HTMLButtonElement).disabled = busy || b.s.winner !== null;
   coach();
   syncTerms();
@@ -1071,6 +1075,7 @@ const BACK_EXIT_MS = 2000;
 let backAt = 0;
 (window as unknown as { __hwBack: () => string }).__hwBack = (): string => {
   // 키보드 뒤로와 같은 길 (코드 리뷰 3): 창 · 엿보기 · 화면 닫기 단추 · 컷신 건너뛰기 · 고른 카드 · 기물 내려놓기
+  // → 그래도 닫을 것이 없고 대국 · 지도면 일시 정지 메뉴 (D-538, keymap 'back'의 마지막 단계). 게임 닫기는 처음 화면에서만
   if (hardwareBack()) return 'handled';
   if (Date.now() - backAt < BACK_EXIT_MS) {
     persistNow(); // 닫기 전에 대국 판을 남긴다 (D-529 — 예전엔 두 번 눌러 닫으면 대국이 처음부터였다)
@@ -1099,6 +1104,7 @@ installInput(() => {
   show: (r) => renderer.setCursor(r),
   screenOf: (c) => renderer.screenOf(c),
 });
+setPauseHook(() => pauseMenu());
 /** 첫 10분 단계 (①) — 처음 출하하는 사람만, 단계마다 한 번 */
 const ftueDone = new Set<string>();
 const ftue = (step: string, quit = false): void => {
@@ -1130,7 +1136,7 @@ const unlockTerms = (gate: TermGate, quiet = false): void => {
   const isNew = gate === 'base' ? [] : fresh;
   writeMeta(store, { ...m, terms: [...termsOn], termsNew: [...new Set([...(m.termsNew ?? []), ...isNew])] });
   if (isNew.length) {
-    $('btn-help').classList.add('has-new');
+    $('btn-menu').classList.add('has-new');
     track('term_unlock', { terms: isNew });
     void quiet; // 새 용어 알림은 ? 의 NEW 표시로만 (D-385 — 상단 알림은 상태만)
   }
@@ -1917,6 +1923,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
   if (silent) document.body.classList.remove('between');
   placeBg(null);
   cur = def;
+  // 판 아래 띠 자리(부관 안내)는 입문 판 · 시험대에서만 비운다 (검수 M2): 보통 대국은 그 48px를 판에 돌려 칸 45.7 → 53.3px (915×412 · 정수 도트 7)
+  setBoardTopInset(BAND_ZONE, INTRO.includes(def) || def.drill ? BAND_ZONE : 0);
   stage += 1;
   // 곡: 도금왕 = final · 반장 = boss · 그 밖 = 그 막의 곡 (D-530)
   playMusic(def.bossRule === 'gilded' ? 'final' : def.boss ? 'boss' : actTrack());
@@ -2279,13 +2287,15 @@ const showMap = (): void => {
     .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
     .join('')}</ul>`;
   // 수치는 긴 명판 하나 (D-398, 사용자: 「꼬리표마다 배경이 따로라 읽기 어렵다」) — 이름 12 · 값 15, 부적 둘은 아이콘 + 값. UI-22 수치 명판 · 칸 사이 홈 (D-399)
-  const stat = (k: keyof typeof MAP_TEXT.stat, v: string): string => `<span class="sp-i"><small>${MAP_TEXT.stat[k]}</small><b>${v}</b></span><i class="sp-sep"></i>`;
+  const stat = (k: keyof typeof MAP_TEXT.stat, v: string): string => `<span class="sp-i"><small>${MAP_TEXT.stat[k]}</small><b>${v}</b></span>`;
+  // 부적이 하나도 없으면 칸을 뺀다 (검수 L9 — 머리 줄 숫자를 줄인다)
   const charm = `<span class="sp-i" title="${CHARMS.revive.name} · ${CHARMS.rewind.name}"><small>${MAP_TEXT.stat.charm}</small>${(['revive', 'rewind'] as const).map((c) => `<i class="ico" style="${iconArtSmall(CHARMS[c].icon)}"></i><b>${charms[c]}</b>`).join('')}</span>`;
-  el.innerHTML = `<header class="map-head"><span class="ribbon">${runMode === 'story' ? CHAPTERS[storyChapter].label : runLabel(runMode, asc)} · ${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><div class="stat-plate">${stat('squad', `${squad.length}`)}${stat('deck', `${deck.length}`)}${stat('parts', `${parts.length}/${partSlotsAt(actI)}`)}${charm}</div></div></header>
+  el.innerHTML = `<header class="map-head"><span class="ribbon">${runMode === 'story' ? CHAPTERS[storyChapter].label : runLabel(runMode, asc)} · ${actLabel(a.act)}</span><h2>${a.name}</h2><div class="map-res"><span class="wallet">${gold}</span><div class="stat-plate">${[stat('squad', `${squad.length}`), stat('deck', `${deck.length}`), stat('parts', `${parts.length}/${partSlotsAt(actI)}`), ...(charms.revive + charms.rewind ? [charm] : [])].join('<i class="sp-sep"></i>')}</div></div><button type="button" class="btn k-iron btn-menu" data-map-menu aria-label="${PAUSE_TEXT.btn}" data-key-hint="Esc"><i class="menu-cog" aria-hidden="true"></i></button></header>
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <div class="map-foot">${rosterHtml()}<footer class="inset peek-bar">${legend}</footer></div>`;
   document.body.appendChild(el);
   sfx('lift');
+  el.querySelector('[data-map-menu]')!.addEventListener('click', () => (sfx('tap'), pauseMenu()));
   const info = el.querySelector<HTMLElement>('.peek-bar')!;
   // 분대 현황 (#24): 누르면 아래 띠에 그 분대원, 다시 누르면 분대 창 — 노드 고름은 푼다
   el.querySelectorAll<HTMLElement>('[data-crew]').forEach((btn) =>
@@ -2411,7 +2421,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     size: 'l',
     cls: 'win-scene',
     title: ev.title,
-    body: `<div class="ws-left"><div class="ws-art frame-scene"><div class="ws-pic"><img src="scenes/${id}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div><img class="fs-plate" src="${SCENE_PLATE}" alt=""><div class="ws-cap"><p class="ws-narr" aria-live="polite"></p></div><section class="ws-detail" aria-label="선택 효과 설명" hidden><header><b class="ws-detail-title"></b><button type="button" class="ws-detail-close" aria-label="효과 설명 닫기">닫기</button></header><p class="ws-detail-text"></p><footer><span class="ws-detail-count"></span><button type="button" class="ws-detail-next">다음 설명</button></footer></section></div></div>
+    body: `<div class="ws-left"><div class="ws-art frame-scene"><div class="ws-pic"><img src="scenes/${id}.png" alt="" data-cover data-fx="${fx}" data-fy="${fy}"></div><img class="fs-plate" src="${SCENE_PLATE}" alt=""><div class="ws-cap"><p class="ws-narr" aria-live="polite"></p></div><section class="ws-detail" aria-label="선택 효과 설명" hidden><header><b class="ws-detail-title"></b><button type="button" class="btn k-iron ws-detail-close" aria-label="효과 설명 닫기">닫는다</button></header><p class="ws-detail-text"></p><footer><span class="ws-detail-count"></span><button type="button" class="btn k-iron ws-detail-next" aria-label="다음 설명">다음</button></footer></section></div></div>
       <div class="ws-work"><div class="inset ws-say is-empty"><span class="who"></span><span class="ws-line"></span></div><div class="ws-choices">${choices}</div><div class="ws-sum slip" hidden><b class="ws-sum-h">결과</b><span class="ws-sum-n"></span><span class="ws-sum-i"></span></div>${btnRowHtml({ mid: EVENT_HINT.again, go: leaveK >= 0 ? { label: EVENT_HINT.leave, attrs: 'data-leave', kind: 'iron' } : undefined })}</div>
       <span class="tag ws-purse">나사 <b>${gold}</b></span>`,
   });
@@ -2794,7 +2804,10 @@ const shopScreen = (): void => {
     bindPick(el, {
       onSelect: (k) => {
         sfx('lift');
-        say.textContent = detail(k);
+        // 못 사는 까닭을 아래 줄에 (검수 M7 — 「오류 메시지는 원인과 해결」): 판 것 · 나사가 얼마 모자라는지
+        const short = costOf(k) - gold;
+        say.classList.toggle('bad', !sold.has(keyOf(k)) && short > 0);
+        say.textContent = sold.has(keyOf(k)) ? SCREEN_TEXT.soldWhy : short > 0 ? SCREEN_TEXT.shortWhy(short) : detail(k);
         go.disabled = sold.has(keyOf(k)) || gold < costOf(k);
       },
       onPick: (k, btn) => {
@@ -3670,15 +3683,16 @@ const crewView = (): void => {
 /** 도감 (옛 폐기 원부, D-288): 쓰러진 분대원의 영구 기록 */
 const ledgerView = (back: () => void = crewView): void => {
   const rows = readLedger();
-  // L 목록 창 (D-391): 명패 「도감」 · 머리 줄 = 안내 12 + 기록 수 꼬리표 · 움푹 칸 하나(안에서만 스크롤) · [돌아간다/닫는다]
+  // L 목록 창 (D-391): 명패 「원부」(옛 「도감」 — 검수 M12: 카드 · 적 도감처럼 들렸다) · 머리 줄 = 안내 12 + 기록 수 꼬리표 · 움푹 칸 하나 · [돌아간다/닫는다]
+  // 기록이 없으면 M 창 한 줄 (거대한 빈 L 창 대신)
   const el = openWin({
-    size: 'l',
-    title: '도감',
+    size: rows.length ? 'l' : 'm',
+    title: RECORDS_TEXT.ledger,
     head: `<p class="note">쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><span class="badge-n push">기록 ${rows.length}</span>`,
     body: rows.length
       ? `<div class="inset scroll">${rows.map((r) => `<div class="lg-row">${pieceImg(r.t, 0, 'small', 48)}<p class="lg-name">${r.name}${r.nick ? ` 「${r.nick}」` : ''} · ${r.serial} · 처치 ${r.kills} · 대국 ${r.battles}</p><p class="lg-cause">${r.cause} · ${r.run}</p></div>`).join('')}</div>`
       : `<p class="mono empty-line">‘아직 아무도 잃지 않았어.’</p>`,
-    back: { label: back === crewView ? '돌아간다' : '닫는다', attrs: 'data-back' },
+    back: { label: back === crewView || back === recordsWin ? '돌아간다' : '닫는다', attrs: 'data-back' },
     dismiss: () => back(),
   });
   el.querySelector('[data-back]')!.addEventListener('click', () => back());
@@ -4002,10 +4016,11 @@ const dictHtml = (): string => {
 const helpTabs = (on: 'guide' | 'dict'): string => {
   // 탭 (UI-05 · D-394): 고른 탭 = 황동 · 나머지 = 철, 아래 변이 열려 바로 아래 칸과 붙는다
   const tab = (k: string, label: string, cls = ''): string => `<button type="button" class="tab${cls}" data-tab="${k}" role="tab" aria-selected="${on === k}">${label}</button>`;
-  return `<div class="tabs" role="tablist">${tab('guide', HUD_TEXT.helpTitle)}${tab('dict', HUD_TEXT.dictTitle, (readMeta(store).termsNew ?? []).length ? ' has-new' : '')}${tab('bug', PT.bug)}${tab('set', SETTINGS_TEXT.title)}</div>`;
+  // 설정 탭은 뺐다 (D-538): 설정은 일시 정지 메뉴 · 메인 메뉴에서 연다
+  return `<div class="tabs" role="tablist">${tab('guide', HUD_TEXT.helpTitle)}${tab('dict', HUD_TEXT.dictTitle, (readMeta(store).termsNew ?? []).length ? ' has-new' : '')}${tab('bug', PT.bug)}</div>`;
 };
-/** 설정 창 (D-530) — 타이틀 메뉴 · 도움말 탭 둘 다 여기로 */
-const settings = (): void => openSettings({ store, desktop: isDesktop() ? { toggleFullscreen: () => void toggleFullscreen(), quitGame } : null, onReset: () => {
+/** 설정 창 (D-530 → D-538) — 메인 메뉴 · 일시 정지 메뉴 둘 다 여기로. 게임 탭의 안내서 · 용어집은 닫으면 설정으로 돌아온다 */
+const settings = (): void => openSettings({ store, desktop: isDesktop() ? { toggleFullscreen: () => void toggleFullscreen(), quitGame } : null, onGuide: (back) => void guide(openWin).then(back), onGlossary: (back) => glossary(back), onReset: () => {
   // 지운 뒤 다시 읽는다 — 닫힐 때 남기기(pagehide)와 모아 둔 플레이 기록이 지운 것을 되살리지 않게 막고 한 번 더 지운다
   wiped = true;
   telemetryClear();
@@ -4020,7 +4035,6 @@ const help = (tab: 'now' | 'dict' = 'now'): void => {
     helpSeen(tab, opened);
     if (t === 'dict') return help('dict');
     if (t === 'bug') return bugReport();
-    if (t === 'set') return settings();
     if (t === 'guide') return help('now');
   };
   if (tab === 'now') {
@@ -4032,6 +4046,122 @@ const help = (tab: 'now' | 'dict' = 'now'): void => {
   const el = openWin({ size: 'l', title: OPENING_TEXT.helpTitle, head: helpTabs('dict'), body: `<div class="inset scroll">${dictHtml()}</div>`, back: { label: OPENING_TEXT.close, attrs: 'data-x' }, dismiss: close });
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), close()));
   el.querySelectorAll<HTMLElement>('[data-tab]').forEach((t) => t.addEventListener('click', () => { if (t.dataset.tab === 'dict') return; sfx('tap'); onTab(t.dataset.tab!); }));
+  pageDict(el);
+};
+
+/**
+ * 용어 칸 쪽 넘김 (D-538 — 검수 M4): 칸 안에서 스크롤하며 아래 줄이 반쯤 잘리던 것을 쪽으로 나눈다.
+ * 실제 칸 높이에 용어를 하나씩 채워 넘치면 다음 쪽 — 단추 줄 가운데 「1 / 3」 + 이전 · 다음(안내서 · 라이선스와 같은 꼴).
+ */
+const pageDict = (win: HTMLElement): void => {
+  const box = win.querySelector<HTMLElement>('.inset.scroll');
+  const dict = box?.querySelector<HTMLElement>('.dict');
+  const row = win.querySelector<HTMLElement>('.btn-row');
+  if (!box || !dict || !row) return;
+  box.classList.remove('scroll');
+  box.classList.add('dict-box');
+  const terms = [...dict.children] as HTMLElement[];
+  const rest = [...box.children].filter((c) => c !== dict);
+  const pages: HTMLElement[][] = [];
+  let cur: HTMLElement[] = [];
+  const fits = (): boolean => box.scrollHeight <= box.clientHeight + 1;
+  dict.replaceChildren();
+  for (const t of terms) {
+    dict.append(t);
+    if (!fits() && cur.length) { t.remove(); pages.push(cur); cur = [t]; dict.replaceChildren(t); continue; }
+    cur.push(t);
+  }
+  if (cur.length) pages.push(cur);
+  // 「아직 만나지 않은 용어」 줄은 마지막 쪽에만
+  rest.forEach((r) => r.remove());
+  if (pages.length <= 1) { dict.replaceChildren(...(pages[0] ?? [])); rest.forEach((r) => box.append(r)); return; }
+  let at = 0;
+  row.insertAdjacentHTML('beforeend', `<div class="mid"><span class="note" data-dict-n></span></div><div class="pair">${btnHtml({ label: SETTINGS_TEXT.prev, attrs: 'data-dict-prev' })}${btnHtml({ label: SETTINGS_TEXT.next, attrs: 'data-dict-next' }, 'go')}</div>`);
+  const show = (): void => {
+    dict.replaceChildren(...pages[at]);
+    rest.forEach((r) => (at === pages.length - 1 ? box.append(r) : r.remove()));
+    win.querySelector('[data-dict-n]')!.textContent = SETTINGS_TEXT.page(at + 1, pages.length);
+    win.querySelector<HTMLButtonElement>('[data-dict-prev]')!.disabled = at <= 0;
+    win.querySelector<HTMLButtonElement>('[data-dict-next]')!.disabled = at >= pages.length - 1;
+  };
+  win.querySelector('[data-dict-prev]')!.addEventListener('click', () => { at = Math.max(0, at - 1); sfx('tap'); show(); });
+  win.querySelector('[data-dict-next]')!.addEventListener('click', () => { at = Math.min(pages.length - 1, at + 1); sfx('tap'); show(); });
+  show();
+};
+/** 용어집만 (설정 › 게임) — 닫으면 back */
+const glossary = (back: () => void): void => {
+  const opened = Date.now();
+  const done = (): void => (helpSeen('dict', opened), back());
+  const el = openWin({ size: 'l', title: HUD_TEXT.dictTitle, body: `<div class="inset scroll">${dictHtml()}</div>`, back: { label: RECORDS_TEXT.back, attrs: 'data-x' }, dismiss: done });
+  el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), done()));
+  pageDict(el);
+};
+
+/**
+ * 일시 정지 메뉴 (D-538 — 검수 B1): 대국 · 지도 머리의 톱니 단추 · Esc · 패드 Start · 안드로이드 뒤로(닫을 창이 없을 때).
+ * S 창: [이어 간다(황동)] / [안내서 · 용어 | 설정] / [처음으로 | 출하 포기(진홍)]. 뒤 막 · Esc = 이어 간다.
+ * 처음으로 = 지금 자리를 저장하고 처음 화면 메뉴로 (이어하기로 같은 자리). 출하 포기 = 두 단계 확인 뒤 패배 기록(commitRunEnd) — 기존 패배 흐름 그대로.
+ * 적 차례 · 연출 중에 누르면 그 박자가 끝난 뒤 연다 (판 상태를 저장할 수 있는 순간).
+ */
+let pauseWait = 0;
+const pauseWhere = (): 'battle' | 'map' | null => {
+  if (!$('overlay').hidden || document.body.classList.contains('cover-pl') || document.body.classList.contains('cover-op') || document.querySelector('.tut, .bossfx, .clr, .prologue, .ld-tip-wrap, .shutterfx, .credits, .promotion')) return null;
+  if (document.body.classList.contains('between')) return document.querySelector('.mapfx:not(.pxout)') ? 'map' : null;
+  return b ? 'battle' : null;
+};
+const pauseMenu = (): boolean => {
+  const at = pauseWhere();
+  if (!at) return false;
+  if (at === 'battle' && (busy || enemyTurn)) {
+    window.clearInterval(pauseWait);
+    const t0 = Date.now();
+    pauseWait = window.setInterval(() => {
+      if (busy || enemyTurn) { if (Date.now() - t0 > 12000) window.clearInterval(pauseWait); return; }
+      window.clearInterval(pauseWait);
+      pauseMenu();
+    }, 120);
+    return true;
+  }
+  const T = PAUSE_TEXT;
+  const canQuit = runLive && !labMode && !buildTrialId;
+  track('pause_open', { ...where(), at });
+  const el = openWin({
+    size: 's', cls: 'pause-win', title: T.title,
+    body: `<div class="pause-grid">${btnHtml({ label: T.resume, attrs: 'data-close data-pz-go', kind: 'brass', cls: 'pz-wide' })}${btnHtml({ label: T.help, attrs: 'data-pz-help' })}${btnHtml({ label: T.settings, attrs: 'data-pz-set' })}${btnHtml({ label: T.home, attrs: 'data-pz-home' })}${btnHtml({ label: T.abandon, attrs: `data-pz-quit${canQuit ? '' : ' aria-disabled="true"'}`, kind: 'crimson' })}</div><p class="note pz-note">${T.home} — ${T.homeNote}</p>`,
+    dismiss: closeWin,
+  });
+  el.querySelector('[data-pz-go]')!.addEventListener('click', () => (sfx('tap'), closeWin()));
+  el.querySelector('[data-pz-help]')!.addEventListener('click', () => (sfx('tap'), help()));
+  el.querySelector('[data-pz-set]')!.addEventListener('click', () => (sfx('tap'), settings()));
+  el.querySelector('[data-pz-home]')!.addEventListener('click', () => {
+    sfx('tap');
+    track('session_exit', { ...where(), run_time_min: Math.round((Date.now() - runAt) / 6000) / 10, turn_num: b?.turn ?? 0, exit_type: 'home' });
+    persistNow();
+    try {
+      sessionStorage.setItem('op-menu', '1');
+    } catch {
+      /* 무시 */
+    }
+    location.reload();
+  });
+  el.querySelector('[data-pz-quit]')!.addEventListener('click', () => {
+    if (!canQuit) return void (sfx('tap', 3), toast(T.abandonOff));
+    sfx('tap');
+    abandonStep(1);
+  });
+  return true;
+};
+/** 출하 포기 두 단계 — 둘 다 뒤 막으로 닫히지 않는다 (되돌릴 수 없는 결정 대기). 그만두면 멈춤 창으로 */
+const abandonStep = (n: 1 | 2): void => {
+  const t = n === 1 ? PAUSE_TEXT.ab1 : PAUSE_TEXT.ab2;
+  const el = openWin({ size: 's', title: t.title, body: `<p>${t.body}</p>${n === 1 ? `<p class="note">${PAUSE_TEXT.ab1.note}</p>` : ''}`, back: { label: t.back, attrs: 'data-no' }, go: { label: t.go, attrs: 'data-yes', kind: 'crimson' } });
+  el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), closeWin(), window.setTimeout(pauseMenu, 0)));
+  el.querySelector('[data-yes]')!.addEventListener('click', () => {
+    if (n === 1) return abandonStep(2);
+    track('session_exit', { ...where(), run_time_min: Math.round((Date.now() - runAt) / 6000) / 10, turn_num: b?.turn ?? 0, exit_type: 'abandon' });
+    closeWin();
+    runEnd(false);
+  });
 };
 
 /** 도움말을 닫았다: 사전을 봤으면 NEW를 지우고 얼마나 머물렀는지 기록 (용어 툴팁 지표 ⑦) */
@@ -4040,7 +4170,7 @@ const helpSeen = (tab: 'now' | 'dict', opened: number): void => {
   if (tab === 'dict') {
     track('tooltip_inspect', { term_id: 'dict', new_terms: m.termsNew ?? [], dwell_ms: Date.now() - opened });
     if ((m.termsNew ?? []).length) writeMeta(store, { ...m, termsNew: [] });
-    $('btn-help').classList.remove('has-new');
+    $('btn-menu').classList.remove('has-new');
   } else track('tooltip_inspect', { term_id: 'help', dwell_ms: Date.now() - opened });
 };
 
@@ -4235,7 +4365,7 @@ const transcend = async (back: SliceBattle, swap: () => void): Promise<void> => 
   await wait(900);
   await new Promise<void>((res) => pxOut(el, () => (el.remove(), res())));
 };
-$('btn-help').addEventListener('click', () => help());
+$('btn-menu').addEventListener('click', () => (sfx('tap'), pauseMenu()));
 
 // ---------- 근간 시험장 (D-177) ----------
 /** 시험장 모드: A = 지금 규칙 + 처치 환급, B = 진짜 잡기 + 잡기 환급. 같은 판 · 같은 적 · 같은 덱 */
@@ -4920,6 +5050,105 @@ const begin = async (seed: number, level: number, day: string | null, mode: RunM
  * 시작 세트 고르기 (D-485, GDD 21장 §4): 「하나 고르기」 화면 그대로 — 받침 = 세트(분대 기물 그림 · 세 줄), 받침 아래 = 한 줄 말.
  * 한 쪽에 셋: 기본 셋 → 해금 셋(잠긴 세트는 꺼진 받침 + 여는 조건). 같은 받침을 다시 누르면 확정.
  */
+/**
+ * 출하 준비 창 (D-538 — 검수 §2): 메인 메뉴 「출하」 → L 창. 탭 셋 = 본편(왕관 넷) · 도전(난이도 ◀ ▶ · 규정 · 기록) · 오늘의 도전(오늘의 규칙 · 기록).
+ * 잠긴 것은 눌러도 왜 잠겼는지 한 줄로 알린다. 왕관 부제(이야기 이름)는 쓰지 않는다 (스포일러 H1). 단추 줄: 돌아간다(철) · 출하한다(황동).
+ */
+type SetupTab = 'story' | 'challenge' | 'daily';
+const runSetup = (hasSave: boolean, tab0?: SetupTab): void => {
+  const T = SETUP_TEXT;
+  const meta = readMeta(store), today = todayKey();
+  const cleared = meta.storyCleared ?? 0;
+  const openChallenge = cleared >= STORY_COUNT;
+  let tab: SetupTab = tab0 ?? (openChallenge ? 'challenge' : 'story');
+  let chapter = Math.min(STORY_COUNT - 1, cleared);
+  const top = meta.challengeOpen ?? CHALLENGE_START;
+  let level = top;
+  const seed = (): number => (Date.now() ^ 0x2f17) & 0xffffff;
+  const tabsHtml = (): string => `<div class="tabs tabs9 su-tabs" role="tablist">${(['story', 'challenge', 'daily'] as const).map((k) => {
+    const locked = k === 'challenge' && !openChallenge;
+    return `<button type="button" class="tab${locked ? ' t-lock' : ''}" data-su-tab="${k}" role="tab" aria-selected="${tab === k}"${locked ? ` aria-label="${T.tabs[k]} · ${T.lock}"` : ''}><span class="tl">${T.tabs[k]}</span></button>`;
+  }).join('')}</div>`;
+  const bodyHtml = (): string => {
+    if (tab === 'story') {
+      const crowns = CHAPTERS.map((ch, i) => {
+        const locked = i > cleared;
+        // 열린 왕관 = 표지 · 별칭(끝낸 왕관만 부제, D-536 chapterTitle) / 잠긴 왕관 = 표지 · 여는 조건
+        const res = locked ? T.crownLock : `${chapterTitle(i, i < cleared)} · ${i < cleared ? T.crownAgain : T.crownNew}`;
+        return `<button type="button" class="choice su-crown" data-crown="${i}" aria-pressed="${chapter === i}"${locked ? ' aria-disabled="true"' : ''}><span class="choice-name">${ch.label}</span><span class="choice-res">${res}</span></button>`;
+      }).join('');
+      return `<div class="inset su-body"><p class="note">${T.storyLead}</p><div class="su-crowns">${crowns}</div></div>`;
+    }
+    if (tab === 'challenge') {
+      if (!openChallenge) return `<div class="inset su-body su-locked"><p>${T.challengeLock}</p></div>`;
+      const asc = ASCENSION[level - 1];
+      const rec = meta.challengeRecords?.[level];
+      return `<div class="inset su-body"><div class="su-level">${btnHtml({ label: T.prev, attrs: 'data-su-prev', disabled: level <= CHALLENGE_START })}<p class="lead">${T.challengeLead(level - CHALLENGE_START + 1)}</p>${btnHtml({ label: T.next, attrs: 'data-su-next', disabled: level >= top })}</div><p>${asc.name} · ${asc.desc}</p><p class="note">${rec ? T.challengeRec(rec.attempts, rec.clears) : T.challengeNone}</p></div>`;
+    }
+    const d = meta.daily[today];
+    return `<div class="inset su-body"><p class="lead">${T.dailyLead(today)}</p><p>${T.dailyRule}</p><p class="note">${T.dailyRuleNote}</p><p class="note">${d ? T.dailyDone(d.won, actLabel(d.act), d.cleared) : T.dailyFresh}</p></div>`;
+  };
+  const opts = () => ({ size: 'l' as const, cls: 'su-win', title: T.title, head: tabsHtml(), body: bodyHtml(), back: { label: T.back, attrs: 'data-su-x' }, go: { label: T.go, attrs: 'data-su-go', disabled: tab === 'challenge' && !openChallenge }, dismiss: closeWin });
+  const launch = (): void => {
+    const daily = tab === 'daily';
+    const go = (): void => void begin(daily ? dailySeed(today) : seed(), daily ? 0 : tab === 'story' ? chapter : level, daily ? today : null, daily ? 'daily' : tab);
+    if (!hasSave) return go();
+    const o = T.overwrite;
+    const ok = openWin({ size: 's', title: o.title, body: `<p>${o.body}</p>`, back: { label: o.back, attrs: 'data-no' }, go: { label: o.go, attrs: 'data-yes', kind: 'crimson' }, dismiss: () => runSetup(hasSave, tab) });
+    ok.querySelector('[data-no]')!.addEventListener('click', () => runSetup(hasSave, tab));
+    ok.querySelector('[data-yes]')!.addEventListener('click', go);
+  };
+  const panel = openWin(opts());
+  const draw = (): void => {
+    panel.innerHTML = winHtml(opts());
+    panel.querySelector('[data-su-x]')!.addEventListener('click', () => (sfx('tap'), closeWin()));
+    panel.querySelector('[data-su-go]')!.addEventListener('click', () => (sfx('submit'), launch()));
+    panel.querySelectorAll<HTMLElement>('[data-su-tab]').forEach((t) => t.addEventListener('click', () => {
+      const k = t.dataset.suTab as SetupTab;
+      // 잠긴 탭: 여는 조건을 한 줄로 (탭은 열어 같은 글을 보인다)
+      if (k === 'challenge' && !openChallenge) toast(T.challengeLock);
+      if (k === tab) return;
+      tab = k;
+      sfx('tap');
+      draw();
+    }));
+    panel.querySelectorAll<HTMLElement>('[data-crown]').forEach((c) => c.addEventListener('click', () => {
+      const i = Number(c.dataset.crown);
+      if (i > cleared) return void (sfx('tap', 3), toast(T.crownLock));
+      chapter = i;
+      sfx('tap');
+      draw();
+      panel.querySelector<HTMLElement>(`[data-crown="${i}"]`)?.focus({ preventScroll: true });
+    }));
+    panel.querySelector('[data-su-prev]')?.addEventListener('click', () => { level = Math.max(CHALLENGE_START, level - 1); sfx('tap'); draw(); });
+    panel.querySelector('[data-su-next]')?.addEventListener('click', () => { level = Math.min(top, level + 1); sfx('tap'); draw(); });
+  };
+  draw();
+};
+
+/**
+ * 기록 창 (D-538 — 검수 §2 · M12): 메인 메뉴 「기록」 → M 창 세로 선택 넷. 원부(쓰러진 분대원) · 장면 다시 보기(프롤로그) · 안내서 · 통계.
+ * 옛 「도감」 이름은 내용(원부)과 맞지 않아 뺐다.
+ */
+const recordsWin = (): void => {
+  const T = RECORDS_TEXT;
+  const item = (k: string, name: string, sub: string, ico: string): string => `<button type="button" class="choice has-ico" data-rec="${k}"><i class="ico" style="${iconArtSmall(ico)}" aria-hidden="true"></i><span class="choice-name">${name}</span><span class="choice-res">${sub}</span></button>`;
+  const el = openWin({ size: 'm', cls: 'rec-win', title: T.title, body: `<div class="stack rec-list">${item('ledger', T.ledger, T.ledgerSub, 'ledger')}${item('scenes', T.scenes, T.scenesSub, 'gameRecord')}${item('guide', T.guide, T.guideSub, 'loupe')}${item('stats', T.stats, T.statsSub, 'tally')}</div>`, back: { label: T.close, attrs: 'data-x' }, dismiss: closeWin });
+  el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), closeWin()));
+  const on = (k: string, fn: () => void): void => el.querySelector(`[data-rec="${k}"]`)!.addEventListener('click', () => (sfx('tap'), fn()));
+  on('ledger', () => ledgerView(recordsWin));
+  on('scenes', () => (closeWin(), void prologue(true)));
+  on('guide', () => void guide(openWin).then(recordsWin));
+  on('stats', () => statsWin(recordsWin));
+};
+/** 통계 (meta에 이미 있는 값만) — M 창 표 한 장 */
+const statsWin = (back: () => void): void => {
+  const m = readMeta(store);
+  const rows = RECORDS_TEXT.statRows({ runs: m.runs, clears: m.clears, bestAct: m.bestAct, storyCleared: Math.min(STORY_COUNT, m.storyCleared ?? 0), storyCount: STORY_COUNT, challenge: (m.storyCleared ?? 0) >= STORY_COUNT ? runLabel('challenge', m.challengeOpen ?? CHALLENGE_START) : SETUP_TEXT.lock, daily: Object.keys(m.daily ?? {}).length });
+  const el = openWin({ size: 'm', title: RECORDS_TEXT.stats, body: `<div class="inset rec-stats">${rows.map(([k, v]) => `<span class="note">${k}</span><b>${v}</b>`).join('')}</div>`, back: { label: RECORDS_TEXT.back, attrs: 'data-x' }, dismiss: back });
+  el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
+};
+
 const setPick = (): Promise<StartSetId> => new Promise((done) => {
   const unlocked = readMeta(store).unlocked ?? [];
   const pages = [START_SET_IDS.slice(0, 3), START_SET_IDS.slice(3)];
@@ -4991,64 +5220,38 @@ const opening = (): void => {
       return begin((Date.now() ^ 0x2f17) & 0xffffff, 0, null);
     }, tutDone('battle'));
   };
+  /**
+   * 메인 메뉴 (D-538 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 출하 · [기록 | 설정] · (PC) 끝내기.
+   * 황동은 늘 하나 — 저장이 있으면 이어하기, 없으면 출하. 모드 · 왕관 · 난이도 · 오늘의 도전은 「출하」 → 출하 준비 창으로.
+   * 왕관 부제(이야기 이름)는 보이지 않는다 (스포일러). 시험장 · 빌드 시험은 ?debug에서만 (D-286).
+   */
   const openMenu = (): void => {
     el.classList.add('menu');
     const nav = el.querySelector<HTMLElement>('.op-menu')!;
     nav.hidden = false;
+    nav.classList.add('op5');
     const sv = readSave(store), meta = readMeta(store), today = todayKey();
-    let mode: 'story' | 'challenge' = (meta.storyCleared ?? 0) >= STORY_COUNT ? 'challenge' : 'story';
-    let chapter = Math.min(STORY_COUNT - 1, meta.storyCleared ?? 0);
-    let challenge = meta.challengeOpen ?? CHALLENGE_START;
-    const seed = () => (Date.now() ^ 0x2f17) & 0xffffff;
-    const launch = (dailyRun = false): void => {
-      const go = () => begin(dailyRun ? dailySeed(today) : seed(), dailyRun ? 0 : mode === 'story' ? chapter : challenge, dailyRun ? today : null, dailyRun ? 'daily' : mode);
-      if (!sv) return void go();
-      const ok = openWin({ size: 's', title: '새 출하', body: '<p>저장한 출하를 버리고 새로 시작합니다.</p>', back: { label: '그만둔다', attrs: 'data-no' }, go: { label: '시작한다', attrs: 'data-yes', kind: 'crimson' }, dismiss: closeWin });
-      ok.querySelector('[data-no]')!.addEventListener('click', closeWin);
-      ok.querySelector('[data-yes]')!.addEventListener('click', () => void go());
-    };
     const draw = (): void => {
-      const level = mode === 'story' ? chapter : challenge;
       const dev = devQuery('debug');
-      const openChallenge = (meta.storyCleared ?? 0) >= STORY_COUNT;
-      nav.innerHTML = `<div class="op-modes"><button type="button" class="btn k-${mode === 'story' ? 'brass' : 'iron'}" data-mode="story" aria-pressed="${mode === 'story'}">본편</button><button type="button" class="btn k-${mode === 'challenge' ? 'brass' : 'iron'}" data-mode="challenge" aria-pressed="${mode === 'challenge'}"${openChallenge ? '' : ' disabled aria-label="넷째 왕관을 완료하면 도전 모드가 열립니다"'}>도전${openChallenge ? '' : ' · 잠김'}</button></div>
-        ${sv ? `<button class="btn op-main" type="button" data-cont><b>이어하기</b><small>${runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0)} · ${actLabel(sv.actI + 1)}</small></button>` : ''}
-        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? chapterTitle(chapter, chapter < (meta.storyCleared ?? 0)) : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 왕관 선택' : '도전 난이도 선택'}">${(mode === 'story' ? CHAPTERS[chapter].label : `난이도 ${challenge - CHALLENGE_START + 1}`).replace(' ', '<br>')}▾</button></div>
-        <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 도전</b><small>${meta.daily[today] ? '기록 완료 · 다시 도전' : today}</small></button>
-        <div class="op-tools"><button class="btn op-minor" type="button" data-guide>안내서</button><button class="btn op-minor" type="button" data-ledger>도감</button><button class="btn op-minor" type="button" data-prologue>프롤로그</button><button class="btn op-minor" type="button" data-settings>${SETTINGS_TEXT.title}</button></div>
-        ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
-      nav.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((button) => button.addEventListener('click', () => { mode = button.dataset.mode as typeof mode; draw(); nav.querySelector<HTMLButtonElement>(`[data-mode="${mode}"]`)?.focus(); }));
-      nav.querySelector('[data-level-pick]')!.addEventListener('click', () => {
-        if (mode === 'story') {
-          const panel = openWin({ size: 'm', title: '왕관 선택', body: `<div class="stack">${CHAPTERS.map((_ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${chapterLabel(i, i < (meta.storyCleared ?? 0))}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 도전' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '이전 왕관을 완료하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
-          panel.querySelector('[data-x]')!.addEventListener('click', closeWin);
-          panel.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b) => b.addEventListener('click', () => { chapter = Number(b.dataset.chapter); closeWin(); draw(); }));
-        } else {
-          let pick = challenge;
-          const panel = openWin({ size: 'm', title: '난이도 선택', body: `<p class="lead" data-difficulty></p><p data-difficulty-desc></p><p class="note" data-difficulty-record></p><div class="btn-set">${btnHtml({ label: '이전', attrs: 'data-prev' })}${btnHtml({ label: '다음', attrs: 'data-next' })}</div>`, back: { label: '돌아간다', attrs: 'data-x' }, go: { label: '고른다', attrs: 'data-set' }, dismiss: closeWin });
-          const paint = () => {
-            panel.querySelector('[data-difficulty]')!.textContent = runLabel('challenge', pick);
-            panel.querySelector('[data-difficulty-desc]')!.textContent = `${ASCENSION[pick - 1].name} · ${ASCENSION[pick - 1].desc} (이전 규정 유지)`;
-            const rec = meta.challengeRecords?.[pick];
-            panel.querySelector('[data-difficulty-record]')!.textContent = rec ? `${rec.attempts}회 도전 · ${rec.clears}회 완주` : '아직 도전하지 않았습니다.';
-            panel.querySelector<HTMLButtonElement>('[data-prev]')!.disabled = pick <= CHALLENGE_START;
-            panel.querySelector<HTMLButtonElement>('[data-next]')!.disabled = pick >= (meta.challengeOpen ?? CHALLENGE_START);
-          };
-          panel.querySelector('[data-prev]')!.addEventListener('click', () => { pick--; paint(); });
-          panel.querySelector('[data-next]')!.addEventListener('click', () => { pick++; paint(); });
-          panel.querySelector('[data-x]')!.addEventListener('click', closeWin);
-          panel.querySelector('[data-set]')!.addEventListener('click', () => { challenge = pick; closeWin(); draw(); });
-          paint();
-        }
-      });
-      nav.querySelector('[data-go]')!.addEventListener('click', () => launch());
-      nav.querySelector('[data-daily]')!.addEventListener('click', () => launch(true));
-      // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
-      nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!));
-      nav.querySelector('[data-ledger]')!.addEventListener('click', () => ledgerView(closeWin));
-      nav.querySelector('[data-guide]')!.addEventListener('click', () => void guide(openWin).then(closeWin));
-      nav.querySelector('[data-prologue]')!.addEventListener('click', () => void prologue(true));
+      const dailyNew = !meta.daily[today];
+      // 이어하기 부제: 왕관 표지 + 별칭(D-536 — 끝낸 왕관만 부제) · 막
+      const svCrown = sv ? runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0, (sv.chapter ?? 0) < (meta.storyCleared ?? 0)) : '';
+      nav.innerHTML = `${sv ? `<button class="btn k-brass op-main op-cont" type="button" data-cont><b>${MAIN_TEXT.cont}</b><small>${MAIN_TEXT.contSub(svCrown, actLabel(sv.actI + 1))}</small></button>` : ''}
+        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship><b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
+        <div class="op-half"><button class="btn k-iron" type="button" data-records>${MAIN_TEXT.records}</button><button class="btn k-iron" type="button" data-settings>${MAIN_TEXT.settings}</button></div>
+        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${MAIN_TEXT.quit}</button>` : ''}
+        ${dev ? `<div class="op-half op-dev"><button class="btn k-iron" type="button" data-lab-open>시험장</button><button class="btn k-iron" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
+      nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!)); // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
+      nav.querySelector('[data-ship]')!.addEventListener('click', () => (sfx('tap'), runSetup(!!sv)));
+      nav.querySelector('[data-records]')!.addEventListener('click', () => (sfx('tap'), recordsWin()));
       nav.querySelector('[data-settings]')!.addEventListener('click', () => (sfx('tap'), settings()));
+      nav.querySelector('[data-quit]')?.addEventListener('click', () => {
+        sfx('tap');
+        const q = MAIN_TEXT.quitAsk;
+        const w = openWin({ size: 's', title: q.title, body: `<p>${q.body}</p>`, back: { label: q.back, attrs: 'data-no' }, go: { label: q.go, attrs: 'data-yes', kind: 'crimson' }, dismiss: closeWin });
+        w.querySelector('[data-no]')!.addEventListener('click', closeWin);
+        w.querySelector('[data-yes]')!.addEventListener('click', quitGame);
+      });
       nav.querySelector('[data-lab-open]')?.addEventListener('click', labPick);
       nav.querySelector('[data-build-open]')?.addEventListener('click', buildPick);
     };
