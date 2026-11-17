@@ -1,0 +1,162 @@
+{
+ "scrapTrade": {
+  "size": [
+   265,
+   189
+  ],
+  "colorsBefore": 22657,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.908,
+  "lonelyAfter": 0.058
+ },
+ "mirrorHall": {
+  "size": [
+   237,
+   185
+  ],
+  "colorsBefore": 12251,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.939,
+  "lonelyAfter": 0.054
+ },
+ "coldForge": {
+  "size": [
+   254,
+   198
+  ],
+  "colorsBefore": 10470,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.862,
+  "lonelyAfter": 0.031
+ },
+ "fieldMedic": {
+  "size": [
+   262,
+   195
+  ],
+  "colorsBefore": 23958,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.914,
+  "lonelyAfter": 0.022
+ },
+ "bookCart": {
+  "size": [
+   258,
+   189
+  ],
+  "colorsBefore": 24822,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.928,
+  "lonelyAfter": 0.024
+ },
+ "crownAltar": {
+  "size": [
+   265,
+   193
+  ],
+  "colorsBefore": 21696,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.889,
+  "lonelyAfter": 0.026
+ },
+ "copyPress": {
+  "size": [
+   258,
+   192
+  ],
+  "colorsBefore": 13230,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.843,
+  "lonelyAfter": 0.023
+ },
+ "tollGate": {
+  "size": [
+   246,
+   185
+  ],
+  "colorsBefore": 5874,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.874,
+  "lonelyAfter": 0.022
+ },
+ "echoWell": {
+  "size": [
+   260,
+   197
+  ],
+  "colorsBefore": 5452,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.817,
+  "lonelyAfter": 0.023
+ },
+ "scrapHeap": {
+  "size": [
+   256,
+   194
+  ],
+  "colorsBefore": 22593,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.886,
+  "lonelyAfter": 0.025
+ },
+ "rustBath": {
+  "size": [
+   252,
+   191
+  ],
+  "colorsBefore": 24190,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.913,
+  "lonelyAfter": 0.014
+ },
+ "sleepingKing": {
+  "size": [
+   257,
+   185
+  ],
+  "colorsBefore": 15992,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.877,
+  "lonelyAfter": 0.013
+ },
+ "cardSharp": {
+  "size": [
+   258,
+   199
+  ],
+  "colorsBefore": 19818,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.876,
+  "lonelyAfter": 0.016
+ },
+ "overtime": {
+  "size": [
+   255,
+   196
+  ],
+  "colorsBefore": 19391,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.87,
+  "lonelyAfter": 0.016
+ },
+ "castMold": {
+  "size": [
+   261,
+   197
+  ],
+  "colorsBefore": 16495,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.87,
+  "lonelyAfter": 0.011
+ },
+ "duelKnight": {
+  "size": [
+   248,
+   188
+  ],
+  "colorsBefore": 21633,
+  "colorsAfter": 32,
+  "lonelyBefore": 0.899,
+  "lonelyAfter": 0.012
+ }
+}

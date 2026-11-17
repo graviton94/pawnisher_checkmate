@@ -354,3 +354,27 @@ PB01_GRID = {
         'crack1': {'rc': (4, 0), 'use': 'b', 'calm': False, 'boost': True}, 'crack2': {'rc': (4, 1), 'use': 'b', 'calm': False}, 'crack3': {'rc': (4, 2), 'use': 'a'},
     },
 }
+
+
+# D-536 (리뷰 #6): 사건 그림 16장 재양자화 — R-01 재발주를 받기 전 임시. tools/pixel/event_requant.py가 읽는다.
+# source = 받은 원본(build-res/order), size = 처음 반입의 복원 격자 칸 수(build-res/order/EV-grid/<이름>.png에 보존 — 초점 EVENT_FOCUS가 이 크기 기준),
+# colors = 팔레트 상한(≤ 32 — D-388 「도트 강제」 위반인 생성기 그레인 · 그라데이션을 걷는다), despeckle = 외톨이 칸 정리 횟수
+#   (밝기 차 40 이하 낱점만 — 조건 없이 걷어 보니 철망 · 사선 1도트 무늬가 끊겨 덩어리졌다. 남은 낱점은 R-01 재발주로 걷는다).
+EVENT_REQUANT = {
+    'scrapTrade': {'source': 'V-21-scrapTrade-source.png', 'size': (265, 189), 'colors': 32, 'despeckle': 3},
+    'mirrorHall': {'source': 'V-37-mirrorHall-source.png', 'size': (237, 185), 'colors': 32, 'despeckle': 3},
+    'coldForge': {'source': 'V-35-coldForge-source.png', 'size': (254, 198), 'colors': 32, 'despeckle': 3},
+    'fieldMedic': {'source': 'V-34-fieldMedic-source.png', 'size': (262, 195), 'colors': 32, 'despeckle': 3},
+    'bookCart': {'source': 'V-30-bookCart-source.png', 'size': (258, 189), 'colors': 32, 'despeckle': 3},
+    'crownAltar': {'source': 'V-28-crownAltar-source.png', 'size': (265, 193), 'colors': 32, 'despeckle': 3},
+    'copyPress': {'source': 'V-33-copyPress-source.png', 'size': (258, 192), 'colors': 32, 'despeckle': 3},
+    'tollGate': {'source': 'V-36-tollGate-source.png', 'size': (246, 185), 'colors': 32, 'despeckle': 3},
+    'echoWell': {'source': 'V-32-echoWell-source.png', 'size': (260, 197), 'colors': 32, 'despeckle': 3},
+    'scrapHeap': {'source': 'V-23-scrapHeap-source.png', 'size': (256, 194), 'colors': 32, 'despeckle': 3},
+    'rustBath': {'source': 'V-24-rustBath-source.png', 'size': (252, 191), 'colors': 32, 'despeckle': 3},
+    'sleepingKing': {'source': 'V-31-sleepingKing-source.png', 'size': (257, 185), 'colors': 32, 'despeckle': 3},
+    'cardSharp': {'source': 'V-26-cardSharp-source.png', 'size': (258, 199), 'colors': 32, 'despeckle': 3},
+    'overtime': {'source': 'V-38-overtime-source.png', 'size': (255, 196), 'colors': 32, 'despeckle': 3},
+    'castMold': {'source': 'V-27-castMold-source.png', 'size': (261, 197), 'colors': 32, 'despeckle': 3},
+    'duelKnight': {'source': 'V-29-duelKnight-source.png', 'size': (248, 188), 'colors': 32, 'despeckle': 3},
+}
