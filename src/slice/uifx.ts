@@ -145,7 +145,7 @@ export const installPressy = (): void => {
  * D-245 (사용자: 「하나 고르면 나머지 연기 효과가 다 개별로 돌아서 렉이 심하다」): 예전엔 요소마다 rAF + 매 프레임 canvas.toDataURL()이었다 →
  * 디더 문양 하나로 6단 마스크를 한 번만 굽고(모든 요소가 같이 쓴다), 시계 하나가 6단을 계단으로 넘긴다. 떠오르는 도트는 한 번에 최대 24개.
  */
-const DIS_STEPS = 16; // D-546: 6 → 16단, 프레임 시계(tween)로 곡선 따라 넘긴다
+const DIS_STEPS = 16; // D-549: 6 → 16단, 프레임 시계(tween)로 곡선 따라 넘긴다
 let disMasks: string[] | null = null;
 const disMaskSet = (): string[] => {
   if (disMasks) return disMasks;
@@ -261,7 +261,7 @@ export const screwBurst = (from: { x: number; y: number }, target: Element | nul
 };
 
 /**
- * 철문 전환 (연구소 「화면 전환」 → D-546): 위아래 도트 철문이 모았다가 가속하며 쾅 닫힘 → 3도트 튐 → 화면 흔들림 → mid() → 열림(감속).
+ * 철문 전환 (연구소 「화면 전환」 → D-549): 위아래 도트 철문이 모았다가 가속하며 쾅 닫힘 → 3도트 튐 → 화면 흔들림 → mid() → 열림(감속).
  * 페이드 대신 쓰는 화면 바꿈. 움직임은 화면 프레임마다, 위치는 기기 픽셀 정수(옛 CSS 보간은 소수 위치를 지났다). mid가 끝나야 열린다.
  */
 export const shutter = async (mid: () => void | Promise<void>): Promise<void> => {
@@ -271,7 +271,13 @@ export const shutter = async (mid: () => void | Promise<void>): Promise<void> =>
   wrap.innerHTML = '<div class="shut t"></div><div class="shut b"></div>';
   document.body.appendChild(wrap);
   const [top, bot] = [...wrap.querySelectorAll<HTMLElement>('.shut')];
-  const H = top.offsetHeight + 2;
+  // 문 높이 · 아래 문 자리를 기기 픽셀 정수로 (뷰포트 높이 412 × 2.625처럼 반 픽셀이 생기는 기기에서도 문 테가 번지지 않게)
+  const r = window.devicePixelRatio || 1;
+  const hh = Math.ceil((innerHeight * r) / 2) / r;
+  top.style.height = bot.style.height = `${hh}px`;
+  bot.style.top = `${snapDev(innerHeight - hh)}px`;
+  bot.style.bottom = 'auto';
+  const H = hh + 2;
   const bump = 3 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--px')) || 2);
   // 열림 정도 g (0 = 닫힘 · 1 = 다 열림) → 두 문의 위치 (정수 기기 픽셀)
   const put = (g: number): void => {

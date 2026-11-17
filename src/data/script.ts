@@ -9,12 +9,12 @@ import { PAPER_FACE, type PaperMood, type Portrait } from './portraits';
  */
 export type Cue = 'tap' | 'threat' | 'land' | 'hit' | 'stamp' | 'lose' | 'win' | 'rare' | 'awaken' | 'lift' | 'hurt' | 'loss' | 'submit' | 'kill' | 'check';
 /** mood (D-506): 종이왕 표정(PT-04) — 종이왕 대사면 명패 얼굴을 바꾸고, 속마음(m)이면 이름 없이 얼굴 명패만 세운다 */
-/** drift (D-546): 이 줄이 서 있는 동안 켄 번스 방향(초점 변화 부호) — 없으면 컷 분위기(data/vn.ts VN_SCENE) · 여유가 큰 쪽 */
+/** drift (D-549): 이 줄이 서 있는 동안 켄 번스 방향(초점 변화 부호) — 없으면 컷 분위기(data/vn.ts VN_SCENE) · 여유가 큰 쪽 */
 export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold'; mood?: PaperMood; drift?: { x: number; y: number } }
 /** 카메라 한 샷: 그림 안 초점(0~1) + 확대 칸 z(0 = 칸을 덮는 기본 배율, 한 칸 = 기기 픽셀 정수로 약 12%씩) */
 export interface Shot { x: number; y: number; z?: number }
 /**
- * 컷 사이 전환: 디더 · 조리개 · 쇳물 · 백지 · 암전 · 바로 + (D-546) 철문 날 · 사선 · 블라인드 · 종이 쪽.
+ * 컷 사이 전환: 디더 · 조리개 · 쇳물 · 백지 · 암전 · 바로 + (D-549) 철문 날 · 사선 · 블라인드 · 종이 쪽.
  * 박자 약속(data/vn.ts VN_BEAT): 충격 = cut · 시간이 흐름 = dither · 한 곳에 모임 = iris · 장소가 바뀜 = diag · 회상 · 기록 = page · 닫힌 공간 = shutter.
  */
 export type Trans = 'dither' | 'iris' | 'melt' | 'white' | 'black' | 'cut' | 'shutter' | 'diag' | 'blinds' | 'page';

@@ -115,7 +115,7 @@ import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
 
 installPixelAnimate();
-// CSS 키프레임 움직임을 정수 기기 픽셀 120Hz로 다시 굽는다 (D-546 — 계단 키프레임이 뚝뚝 끊겼다)
+// CSS 키프레임 움직임을 정수 기기 픽셀 120Hz로 다시 굽는다 (D-549 — 계단 키프레임이 뚝뚝 끊겼다)
 installSmoothMotion();
 
 // 전투 HUD 구역 (D-208 F안 → 패스 4 D-396, 총괄 리뷰 3.9): 왼쪽 = 태엽 · 손패 · 덱 줄 / 가운데 = 상태 띠 + 판 / 오른쪽 = 턴 · 속전 · 적 의도 목록 · 되감기 + 턴 끝.

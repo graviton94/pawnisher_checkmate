@@ -1,5 +1,5 @@
 /**
- * 비주얼 노벨 연출 층 (D-546): 컷신 재생기(opening.playCuts)의 장면 칸 위에 서 있는 배우 · 장면 입자 · 등잔 깜빡 · 대사 기록.
+ * 비주얼 노벨 연출 층 (D-549): 컷신 재생기(opening.playCuts)의 장면 칸 위에 서 있는 배우 · 장면 입자 · 등잔 깜빡 · 대사 기록.
  * 새 그림 없이(D-386) 기물 도트(public/pieces) · 장면 그림 · 키트 창만 쓴다. 데이터는 data/vn.ts.
  *  - 배우: 72칸 도트의 정수배(그림 1도트 = 기기 픽셀 정수), 들어옴 · 나감 = 감속 곡선 + 64단 디더, 위치는 기기 픽셀 정수.
  *    말하는 배우는 밝게 + 1도트 뜀, 나머지는 50% 디더 그늘(투명도 아님). 놀 때는 1도트 숨 고르기(일부러 정지 동작).
@@ -13,7 +13,7 @@ import { VN_ACTOR, VN_AIR, VN_DEFAULT, VN_SCENE, VN_TEXT, type CastSprite, type 
 
 const dpr = (): number => window.devicePixelRatio || 1;
 
-interface Actor { key: string; el: HTMLElement; shade: HTMLImageElement; side: 'l' | 'r'; slot: number; lit: boolean }
+interface Actor { key: string; el: HTMLElement; shade: HTMLImageElement; side: 'l' | 'r'; slot: number; lit: boolean; foe: boolean }
 interface Mote { x: number; y: number; vx: number; vy: number; life: number; max: number; col: number; big: boolean }
 
 const AIR_COLORS: Record<VnAir, string[]> = {
@@ -117,7 +117,7 @@ export class VnStage {
   private tick(dt: number, now: number): void {
     if (this.scene.lamp && now >= this.lampT) {
       this.lampT = now + this.lampGap();
-      // 일부러 정지 동작: 두 프레임 어두워짐 → 밝아짐 → 한 번 더 (D-546 hold 예외)
+      // 일부러 정지 동작: 두 프레임 어두워짐 → 밝아짐 → 한 번 더 (D-549 hold 예외)
       const L = this.lamp, ms = VN_AIR.lampMs;
       L.classList.add('on');
       window.setTimeout(() => L.classList.remove('on'), ms);
@@ -161,6 +161,11 @@ export class VnStage {
     return (72 * k) / dpr();
   }
   /** 자리 (CSS px, 칸 왼쪽 기준 배우 왼쪽) */
+  /** 배우 위 끝 (CSS px, 칸 기준): 발을 칸 바닥에 — 칸 높이가 반 픽셀이어도 배우는 기기 픽셀 정수 자리 */
+  private footY(w: number): number {
+    const r = dpr(), v = this.view.getBoundingClientRect();
+    return (Math.floor((v.top + v.height) * r) - Math.round(w * r)) / r - v.top;
+  }
   private slotX(side: 'l' | 'r', slot: number, w: number): number {
     const W = this.view.clientWidth;
     const c = side === 'l' ? W * (VN_ACTOR.center - slot * VN_ACTOR.step) : W * (1 - VN_ACTOR.center + slot * VN_ACTOR.step);
@@ -198,7 +203,10 @@ export class VnStage {
   private add(key: string, sp: CastSprite, side: 'l' | 'r'): Actor {
     // 무대가 차면 오래된 배우부터 나간다
     while (this.actors.length >= VN_ACTOR.max) this.exit(this.actors[0]);
-    const slot = this.actors.filter((x) => x.side === side).length;
+    // 우리 편끼리 마주 볼 때(상자 안 다툼처럼): 왼쪽이 더 붐비면 빈 오른쪽에 세워 마주 보게 한다 (적은 늘 오른쪽)
+    const count = (s: 'l' | 'r') => this.actors.filter((x) => x.side === s).length;
+    if (side === 'l' && count('l') > count('r') && !this.actors.some((x) => x.foe)) side = 'r';
+    const slot = count(side);
     const w = this.actorPx();
     const src = `pieces/l-${sp.t}${sp.side}.png`;
     const el = document.createElement('div');
@@ -207,10 +215,11 @@ export class VnStage {
     el.innerHTML = `<div class="vn-body"><img src="${src}" alt=""><img class="vn-shade" src="${src}" alt=""></div>`;
     const x = this.slotX(side, slot, w);
     el.style.left = `${x}px`;
+    el.style.top = `${this.footY(w)}px`;
     this.layer.appendChild(el);
     const shade = el.querySelector<HTMLImageElement>('.vn-shade')!;
     void ditherTo(shade, 0, 0, 0);
-    const a: Actor = { key, el, shade, side, slot, lit: false };
+    const a: Actor = { key, el, shade, side, slot, lit: false, foe: sp.side === 1 };
     this.actors.push(a);
     // 들어옴: 바깥쪽에서 감속 + 넘침(출렁) · 64단 디더로 나타남 — 위치는 기기 픽셀 정수
     const dir = side === 'l' ? -1 : 1;
@@ -242,6 +251,7 @@ export class VnStage {
     for (const a of this.actors) {
       a.el.style.width = a.el.style.height = `${w}px`;
       a.el.style.left = `${this.slotX(a.side, a.slot, w)}px`;
+      a.el.style.top = `${this.footY(w)}px`;
     }
   }
   destroy(): void {
@@ -251,8 +261,8 @@ export class VnStage {
   }
 }
 
-/** 대사 기록 창 (백로그 — game-ui-design 4.3 정보: M 592, 단추 하나, 뒤 막을 누르면 닫힘, 스크롤 없이 마지막 VN_TEXT.logLines 줄) */
+/** 대사 기록 창 (글은 자막 띠와 같은 표기 — 따옴표는 cutFill이 이미 단다) (백로그 — game-ui-design 4.3 정보: M 592, 단추 하나, 뒤 막을 누르면 닫힘, 스크롤 없이 마지막 VN_TEXT.logLines 줄) */
 export const logHtml = (log: VnStage['log']): string => {
-  const rows = log.slice(-VN_TEXT.logLines).map((l) => `<p class="vl-row vl-${l.k}">${l.who ? `<b>${l.who}</b>` : ''}<span>${l.k === 'm' ? `‘${l.t}’` : l.k === 's' ? `“${l.t}”` : l.t}</span></p>`).join('');
+  const rows = log.slice(-VN_TEXT.logLines).map((l) => `<p class="vl-row vl-${l.k}">${l.who ? `<b>${l.who}</b>` : ''}<span>${l.t}</span></p>`).join('');
   return `<div class="vn-log kit-sheet" role="dialog" aria-label="${VN_TEXT.logTitle}"><div class="win win-m"><div class="plate">${VN_TEXT.logTitle}</div><div class="inset vl-list">${rows}</div>${btnRowHtml({ back: { label: VN_TEXT.close, attrs: "data-x" } })}</div></div>`;
 };

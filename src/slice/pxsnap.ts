@@ -36,7 +36,7 @@ const apply = (): void => {
   const logo = Math.max(1, Math.floor(dpr * Math.min(1.5, (window.innerHeight * 0.8) / 194)));
   document.documentElement.style.setProperty('--logo-k', String(logo / dpr));
   document.documentElement.dataset.dpr = String(Math.round(dpr * 1000) / 1000);
-  // 디더 가면 16단(--dq0~16) · 먹 막(--dk0~16) — 칸 = 장치 층 도트 (D-546)
+  // 디더 가면 16단(--dq0~16) · 먹 막(--dk0~16) — 칸 = 장치 층 도트 (D-549)
   installDitherVars();
 };
 let mq: MediaQueryList | null = null;

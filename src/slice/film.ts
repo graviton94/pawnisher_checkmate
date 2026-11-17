@@ -1,8 +1,8 @@
 /**
- * 영화 문법 (D-504, 후기 #31 · #1 · #22 → D-546 매끈한 도트 움직임): 컷신 재생기(opening.playCuts)가 쓰는 부품 — 레터박스 · 카메라 이동 · 켄 번스 ·
+ * 영화 문법 (D-504, 후기 #31 · #1 · #22 → D-549 매끈한 도트 움직임): 컷신 재생기(opening.playCuts)가 쓰는 부품 — 레터박스 · 카메라 이동 · 켄 번스 ·
  * 장면 전환(디더 · 조리개 · 쇳물 · 백지 · 암전) · 장 제목 카드 · 화자 명패.
  * 새 그림 없이 받은 장면 그림만 쓴다: 확대는 기기 픽셀 정수 배율(늘리거나 찌그러뜨리지 않는다, D-386),
- * 움직임은 화면 프레임마다 예비 → 터짐 → 출렁 곡선 · 위치는 기기 픽셀 정수(D-546), 사라짐 · 나타남은 64단 베이어 디더(투명도 보간 없음, D-216).
+ * 움직임은 화면 프레임마다 예비 → 터짐 → 출렁 곡선 · 위치는 기기 픽셀 정수(D-549), 사라짐 · 나타남은 64단 베이어 디더(투명도 보간 없음, D-216).
  * 게임 상태는 건드리지 않는다 (UI 원칙 9).
  */
 import { calmMotion } from '../prefs/motion';
@@ -16,7 +16,7 @@ const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 const dpr = (): number => window.devicePixelRatio || 1;
 
-/** 컷신 박자 (D-504 → D-546: 카메라 · 전환 시간은 data/motion.FILM_MOTION — 옛 90ms 계단 카메라는 지웠다) */
+/** 컷신 박자 (D-504 → D-549: 카메라 · 전환 시간은 data/motion.FILM_MOTION — 옛 90ms 계단 카메라는 지웠다) */
 export const FILM = {
   /** 확대 한 칸 = 기본 배율의 10%를 기기 픽셀 정수로 반올림(최소 1) — z3이 1.3 ~ 1.6배 */
   zoomStep: 0.1,
@@ -79,7 +79,7 @@ export class Camera {
   /** 지금 초점 (켄 번스가 밀어 둔 자리 포함) */
   get shot(): Shot { return { ...this.cur }; }
   /**
-   * 샷 이동 (D-546): 화면 프레임마다 예비 → 터짐 → 출렁 곡선(ease.abs)으로 초점을 옮기고 위치는 기기 픽셀 정수.
+   * 샷 이동 (D-549): 화면 프레임마다 예비 → 터짐 → 출렁 곡선(ease.abs)으로 초점을 옮기고 위치는 기기 픽셀 정수.
    * 배율이 바뀌면(정수만) 옛 배율 그림을 겹쳐 두고 64단 디더로 걷는다 — 배율이 한 프레임에 튀지 않는다.
    */
   async move(s: Shot): Promise<void> {
@@ -111,7 +111,7 @@ export class Camera {
     else ghost?.remove();
   }
   /**
-   * 켄 번스 (D-546): 한 줄이 서 있는 동안 천천히 민다 — 정수 기기 픽셀, 느린 곡선. 다음 move · set이 오면 그 자리에서 멈춘다.
+   * 켄 번스 (D-549): 한 줄이 서 있는 동안 천천히 민다 — 정수 기기 픽셀, 느린 곡선. 다음 move · set이 오면 그 자리에서 멈춘다.
    * dir = 미는 방향(그림 안 초점 변화, 생략하면 여유가 가장 큰 쪽). 그림이 칸보다 크지 않은 축은 움직이지 않는다.
    */
   async drift(dir?: { x: number; y: number }): Promise<void> {
@@ -142,7 +142,7 @@ export class Camera {
   stop(): void { this.token++; }
 }
 
-/** 전환 모양 (D-546): 칸마다 「덮인 깊이」 v(칸 단위, 0보다 크면 덮임) — 앞날은 베이어로 EDGE칸에 걸쳐 녹인다 */
+/** 전환 모양 (D-549): 칸마다 「덮인 깊이」 v(칸 단위, 0보다 크면 덮임) — 앞날은 베이어로 EDGE칸에 걸쳐 녹인다 */
 type Shape = (x: number, y: number, t: number, cols: number, rows: number, fx: number, fy: number, R: number) => number;
 const EDGE = 3;
 const SHAPES: Partial<Record<Trans, Shape>> = {
@@ -159,7 +159,7 @@ const rgba = (hex: string): number => {
 };
 
 /**
- * 장면 전환 (D-504 → D-546): 장면 칸 위 도트 칸 캔버스. close = 덮기(끝나면 꽉 찬 채 남는다) → 부른 쪽이 그림을 바꾸고 → open = 걷기(지운다).
+ * 장면 전환 (D-504 → D-549): 장면 칸 위 도트 칸 캔버스. close = 덮기(끝나면 꽉 찬 채 남는다) → 부른 쪽이 그림을 바꾸고 → open = 걷기(지운다).
  * 프레임마다 그린다(옛 48ms 네 · 여섯 장 → 화면 주기 그대로), 덮인 정도는 곡선을 따른다. 칸 = 장면 도트 × 2, 앞날은 8×8 베이어로 녹인다.
  * dither = 8×8 베이어 먹 64단 · iris = 초점으로 닫히는 조리개 · melt = 아래에서 쇳물(진홍 앞날) · white = 종이 백지 디더 · black = 암전 ·
  * shutter = 위아래 철문 날 · diag = 사선 쓸기 · blinds = 블라인드 줄 · page = 오른쪽에서 넘기는 종이 쪽(접힘 앞날) · cut = 바로.
@@ -282,7 +282,7 @@ export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<u
   root?.classList.add('titling');
   el.classList.add('in');
   await Promise.race([wait(calm() ? 1400 : FILM.titleHold), skip]);
-  // 걷힘: 64단 디더 (D-546 — 옛 네 장 220ms)
+  // 걷힘: 64단 디더 (D-549 — 옛 네 장 220ms)
   if (!calm()) await ditherTo(el, 1, 0, FILM_MOTION.title.out, ease.in);
   el.remove();
   root?.classList.remove('titling');
