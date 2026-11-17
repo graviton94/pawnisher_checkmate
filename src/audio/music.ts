@@ -145,6 +145,8 @@ export const setMusicLevel = (v: number): void => {
 export const stopMusic = (): void => {
   track = null;
   window.clearInterval(timer);
+  // 곡이 없으면 소리 장치를 쉰다 (남은 음이 끝난 뒤 — 코드 리뷰 7). 다시 틀면 ensure가 깨운다
+  window.setTimeout(() => void (!track && ctx?.suspend()), 600);
 };
 
 export const setMusic = (on: boolean): void => {

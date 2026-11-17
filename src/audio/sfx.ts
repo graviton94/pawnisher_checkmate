@@ -36,6 +36,10 @@ export const setSfx = (on: boolean): void => {
   if (master) master.gain.value = on ? BASE * (level ?? 1) : 0;
 };
 
+/** 마지막 소리 뒤 이만큼 조용하면 소리 장치를 쉰다 (코드 리뷰 7 — 돌아가는 AudioContext는 폰 소리 장치를 깨워 둔다) */
+const IDLE_MS = 4000;
+let idleT: number | undefined;
+
 const audio = (): AudioContext | null => {
   if (!sfxOn()) return null;
   // 첫 탭 전에는 소리 장치를 만들지 않는다 (페르소나 테스트 c9 — 브라우저 경고)
@@ -48,9 +52,12 @@ const audio = (): AudioContext | null => {
     master.gain.value = BASE * (level ?? 1);
     master.connect(ctx.destination);
     // 화면이 가려지면 소리 장치를 쉰다 (돌아오면 다음 소리에서 다시 깨운다)
-    document.addEventListener('visibilitychange', () => void (document.hidden ? ctx?.suspend() : ctx?.resume()));
+    document.addEventListener('visibilitychange', () => void (document.hidden && ctx?.suspend()));
   }
   if (ctx.state === 'suspended') void ctx.resume();
+  // 조용해지면 쉰다 — 다음 소리에서 위 resume이 깨운다
+  window.clearTimeout(idleT);
+  idleT = window.setTimeout(() => void ctx?.suspend(), IDLE_MS);
   return ctx;
 };
 
