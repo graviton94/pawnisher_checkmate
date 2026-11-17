@@ -30,5 +30,241 @@
     "y": "ok"
    }
   }
+ },
+ "map_import": {
+  "MP-01": {
+   "box": null,
+   "measured": {
+    "x": {
+     "drift": 0.06,
+     "phase": 5.8,
+     "pitch": 7.73,
+     "presence": 1.133
+    },
+    "y": {
+     "drift": 0.03,
+     "phase": 2.18,
+     "pitch": 6.977,
+     "presence": 1.055
+    }
+   },
+   "used": [
+    8.87,
+    8.87
+   ],
+   "verdict": {
+    "x": "off 14.7%",
+    "y": "off 27.1%"
+   }
+  }
+ },
+ "ui_delivery_import": {
+  "ledger-slip": {
+   "box": [
+    41,
+    110,
+    1734,
+    759
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.051,
+     "phase": 6.5,
+     "pitch": 7.434,
+     "presence": 1.162
+    },
+    "y": {
+     "drift": 0.036,
+     "phase": 0.32,
+     "pitch": 5.139,
+     "presence": 1.244
+    }
+   },
+   "used": [
+    13.227,
+    13.227
+   ],
+   "verdict": {
+    "x": "off 11.0%",
+    "y": "off 14.2%"
+   }
+  },
+  "unit-inspect-panel": {
+   "box": [
+    68,
+    78,
+    1186,
+    1175
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.033,
+     "phase": 4.89,
+     "pitch": 4.995,
+     "presence": 1.078
+    },
+    "y": {
+     "drift": 0.03,
+     "phase": 1.43,
+     "pitch": 7.612,
+     "presence": 1.207
+    }
+   },
+   "used": [
+    17.469,
+    17.469
+   ],
+   "verdict": {
+    "x": "off 16.6%",
+    "y": "off 14.7%"
+   }
+  },
+  "unit-stat-attack": {
+   "box": [
+    1086,
+    80,
+    1629,
+    643
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.0178,
+     "phase": 0.27,
+     "pitch": 4.377,
+     "presence": 1.055
+    },
+    "y": {
+     "drift": 0.033,
+     "phase": 2.05,
+     "pitch": 6.545,
+     "presence": 1.109
+    }
+   },
+   "used": [
+    8.797,
+    8.797
+   ],
+   "verdict": {
+    "x": "ok",
+    "y": "off 34.4%"
+   }
+  },
+  "unit-stat-defense": {
+   "box": [
+    1629,
+    80,
+    2172,
+    643
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.03,
+     "phase": 6.63,
+     "pitch": 7.074,
+     "presence": 1.29
+    },
+    "y": {
+     "drift": 0.0449,
+     "phase": 2.18,
+     "pitch": 6.531,
+     "presence": 1.107
+    }
+   },
+   "used": [
+    8.797,
+    8.797
+   ],
+   "verdict": {
+    "x": "off 24.4%",
+    "y": "off 34.7%"
+   }
+  },
+  "unit-stat-hp": {
+   "box": [
+    0,
+    80,
+    543,
+    643
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.03,
+     "phase": 2.18,
+     "pitch": 5.806,
+     "presence": 1.07
+    },
+    "y": {
+     "drift": 0.033,
+     "phase": 2.05,
+     "pitch": 6.545,
+     "presence": 1.1
+    }
+   },
+   "used": [
+    8.797,
+    8.797
+   ],
+   "verdict": {
+    "x": "off 24.2%",
+    "y": "off 34.4%"
+   }
+  },
+  "unit-stat-shield": {
+   "box": [
+    543,
+    80,
+    1086,
+    643
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.036,
+     "phase": 0.54,
+     "pitch": 4.334,
+     "presence": 1.121
+    },
+    "y": {
+     "drift": 0.0241,
+     "phase": 2.58,
+     "pitch": 6.524,
+     "presence": 1.089
+    }
+   },
+   "used": [
+    8.797,
+    8.797
+   ],
+   "verdict": {
+    "x": "ok",
+    "y": "off 34.8%"
+   }
+  }
+ },
+ "ui_kit_import": {
+  "RF-04": {
+   "box": null,
+   "measured": {
+    "x": {
+     "drift": 0.003,
+     "phase": 10.15,
+     "pitch": 10.59,
+     "presence": 1.382
+    },
+    "y": {
+     "drift": 0.024,
+     "phase": 8.76,
+     "pitch": 11.678,
+     "presence": 1.292
+    }
+   },
+   "used": [
+    10.6,
+    10.74
+   ],
+   "verdict": {
+    "x": "ok",
+    "y": "off 8.0%"
+   }
+  }
  }
 }
