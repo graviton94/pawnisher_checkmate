@@ -1,0 +1,34 @@
+{
+ "adjutant": {
+  "adjutant": {
+   "box": [
+    53,
+    130,
+    1139,
+    1216
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.045,
+     "phase": 7.82,
+     "pitch": 17.876,
+     "presence": 1.091
+    },
+    "y": {
+     "drift": 0.0301,
+     "phase": 4.23,
+     "pitch": 6.553,
+     "presence": 1.286
+    }
+   },
+   "used": [
+    19.393,
+    19.393
+   ],
+   "verdict": {
+    "x": "off 8.5%",
+    "y": "ok"
+   }
+  }
+ }
+}

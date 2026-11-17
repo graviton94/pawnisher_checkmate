@@ -27,7 +27,7 @@
     #boot .boot-gear { width: 40px; height: 36px; background: url('ui/hud/load-gear.png') 0 0 / 320px 36px no-repeat; image-rendering: pixelated; animation: bootGears 0.8s steps(8) infinite; }
     @keyframes bootGears { from { background-position: 0 0; } to { background-position: -320px 0; } }
     /* 진행 막대: 12칸이 계단으로 찬다 (--k = 찬 칸 수) */
-    #boot .boot-bar { box-sizing: content-box; width: 192px; height: 16px; border-style: solid; border-width: 10px 16px 2px; border-image: url('ui/hud/load-bar.png') 5 8 1 fill / 10px 16px 2px stretch; image-rendering: pixelated; }
+    #boot .boot-bar { box-sizing: content-box; width: 192px; height: 16px; border-style: solid; border-width: 10px 18px 4px; border-image: url('ui/hud/load-bar.png') 5 9 2 fill / 10px 18px 4px stretch; image-rendering: pixelated; }
     #boot .boot-bar b { display: block; height: 100%; width: calc(var(--k, 0) * 16px); background: url('ui/hud/load-bar-fill.png') 0 0 / 16px 16px repeat-x; image-rendering: pixelated; }
     @media (max-height: 360px) { #boot .boot-em { transform: scale(0.8); } }
     @media (prefers-reduced-motion: reduce) { #boot .boot-gear, #boot .boot-em .sl { animation: none; } }

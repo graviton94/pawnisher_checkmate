@@ -369,6 +369,53 @@ def icon_from_recipe(src_img, g, n=32, margin=2, colors=24):
     return out, rec
 
 
+RECORD = os.path.join(os.path.dirname(os.path.dirname(HERE)), 'build-res', 'order', 'grid-measure.json')
+
+
+def check_fit(img, box, used, lo=3.0, hi=40.0, bg=None, tol=0.03):
+    """반입 도구가 쓰려는 칸(used = (가로 px, 세로 px))이 원본 실측 도트의 정수배인지 판정한다.
+    판정: 'ok'(정수배와 tol 안) · 'off N%'(정수배에서 어긋남 — 캔버스 ÷ 칸 수로 맞춘 칸) · 'no-grid'(존재 < 1.06 — 되돌릴 격자 없음, 재발주 감)"""
+    m = measure(img, box, lo, hi, bg=bg)
+    ver = {}
+    for k, u in zip(('x', 'y'), used):
+        r = m[k]
+        if not r['grid']:
+            ver[k] = 'no-grid'
+            continue
+        q = u / r['pitch']
+        n = max(1, round(q))
+        off = abs(q - n) / n
+        ver[k] = 'ok' if off <= tol else f'off {off * 100:.1f}%'
+    return {'box': list(box) if box else None, 'used': [round(float(u), 3) for u in used], 'measured': short(m), 'verdict': ver}
+
+
+def record(tool, key, rec, path=RECORD):
+    """실측 기록을 build-res/order/grid-measure.json에 남긴다 ({도구: {키: 기록}})"""
+    try:
+        data = json.load(open(path, encoding='utf-8'))
+    except (OSError, ValueError):
+        data = {}
+    data.setdefault(tool, {})[key] = rec
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
+        f.write('\n')
+
+
+def guard(tool, key, img, box, used, lo=3.0, hi=40.0, bg=None, enforce=True):
+    """반입 전 실측 → 기록 → 판정이 'ok'가 아니면 멈춘다(--accept-fit을 주면 기록만 하고 지나간다).
+    캔버스 크기에 칸을 맞추는(상자 ÷ N) 반입이 실측 없이 다시 돌지 않게 하는 문지기 (D-552).
+    enforce=False: 칸 크기가 설계 결정인 도구(piece_import — 기물 격자로 다시 그리기)는 기록만."""
+    rec = check_fit(img, box, used, lo, hi, bg)
+    record(tool, key, rec)
+    bad = {k: v for k, v in rec['verdict'].items() if v != 'ok'}
+    print(f'  [실측] {tool} {key}: 칸 {rec["used"]} · 실측 x {rec["measured"]["x"]["pitch"]}/{rec["measured"]["x"]["presence"]} '
+          f'y {rec["measured"]["y"]["pitch"]}/{rec["measured"]["y"]["presence"]} → {rec["verdict"]}')
+    if bad and enforce and '--accept-fit' not in sys.argv:
+        raise SystemExit(f'{tool} {key}: 칸이 실측 도트의 정수배가 아니다 {bad} — 레시피에 실측 격자를 넣거나(gridmeasure.measure), '
+                         f'되돌릴 격자가 없으면 재발주(D-388). 옛 판을 그대로 다시 뽑을 때만 --accept-fit.')
+    return rec
+
+
 def master_palette():
     """게임이 이미 쓰는 색 전부: UI 15색(ui_kit_import.PAL) · 반장 발주 24색(SPEC24) · 기물 PAL64"""
     import maker

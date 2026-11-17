@@ -35,6 +35,7 @@ from PIL import Image, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from scene_recipe import BOSS_GRID, GIANT_GRID, PIECE_GRID  # noqa: E402
+import gridmeasure as gm  # noqa: E402
 
 PIECES = os.path.join(HERE, 'pieces64.txt')
 
@@ -226,6 +227,10 @@ def build(src, name, giant=False, plan=True):
     p = (by1 - by0 + 1) / cfg['body']
     cols = int(round((bx1 - bx0 + 1) / p))
     body = largest(sample(S.astype(float), bx0, by0, p, cols, rows, 'mean') > 0.5)
+    # D-552: 실루엣 ÷ 발주 키로 정한 간격은 기물 격자로 다시 그리는 설계 결정(D-524 · D-528) — 실측과 대조해 기록만 한다
+    if '--measure' in sys.argv:
+        gm.guard('piece_import', name, Image.fromarray(im.astype(np.uint8)),
+                 (int(blo + bx0), int(by0), int(blo + bx1 + 1), int(by1 + 1)), (p, p), lo=3, hi=40, enforce=False)
     if giant:
         rgb = sample(im[:, blo:bhi, :3], bx0, by0, p, cols, rows, 'median')
         Kc = sample((L[:, blo:bhi] < 22).astype(float), bx0, by0, p, cols, rows, 'mean') > 0.5

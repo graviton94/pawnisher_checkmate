@@ -19,7 +19,9 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
+import gridmeasure as gm  # noqa: E402
 import opening_import  # noqa: E402
+import snap  # noqa: E402
 import scene_recipe  # noqa: E402
 import ui_kit_import as kit  # noqa: E402
 
@@ -53,6 +55,19 @@ def even_slip(im, left=24, right=9, top=5, bottom=5):
     return Image.fromarray(a)
 
 
+def part_regrid(img, o):
+    """원본의 한 부품 상자를 그 상자에서 실측한 축별 격자(간격, 상자 기준 시작)로 칸 가운데 최빈색 → 마젠타 = 투명 → 발주 15색"""
+    crop = img.crop(o['box'])
+    cuts = (gm.cuts_from(crop.width, *o['x']), gm.cuts_from(crop.height, *o['y']))
+    s = snap.snap(crop, 0, 0, 0, 0, colors=0, cuts=cuts).convert('RGBA')
+    p = s.load()
+    for y in range(s.height):
+        for x in range(s.width):
+            c = p[x, y]
+            p[x, y] = (0, 0, 0, 0) if kit.is_key(c) or gm.is_key_fringe(c) else (*kit.near(c), 255)
+    return s.crop(s.getbbox())
+
+
 def sheet():
     g = scene_recipe.LOADING_GRID['LD-01']
     img = Image.open(os.path.join(ORDER, 'LD-01-source.png')).convert('RGB')
@@ -77,6 +92,9 @@ def sheet():
     assert len(split) == 8, split
     parts = {'guide-frame': small.crop(frame), 'tip-slip': small.crop(slip), 'load-bar': small.crop(bar), 'load-bar-fill': small.crop(fill)}
     parts['tip-slip'] = even_slip(parts['tip-slip'])
+    # D-552: 부품마다 따로 잰 격자가 있으면(scene_recipe.LOADING_GRID parts) 그 상자를 그 격자로 다시 뽑는다
+    for nm, o in g.get('parts', {}).items():
+        parts[nm] = part_regrid(img, o)
     # 프레임마다 실제 그림 상자로 다시 좁히고(가른 칸의 빈 열 걷기) 같은 칸 가운데에
     crops = [small.crop(b) for b in split]
     crops = [c.crop(c.getbbox()) for c in crops]

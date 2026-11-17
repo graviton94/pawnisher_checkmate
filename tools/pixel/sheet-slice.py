@@ -14,6 +14,9 @@ from collections import deque
 
 from PIL import Image
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gridmeasure as gm  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, 'build-res', 'order', 'ICON-01-event-symbols-source.jpg')
 OUT = os.path.join(ROOT, 'public', 'ui', 'props')
@@ -129,6 +132,8 @@ def slice_cell(im, ci, n):
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     inner = n - 2  # 테 자리 1칸씩
     step = side / inner
+    # D-552: 덩어리 ÷ (n-2)로 맞춘 간격을 실측과 대조해 기록(정수배가 아니면 멈춘다 — --accept-fit은 옛 판 재현)
+    gm.guard('sheet-slice', f'{n}:{ci}', cell, (x0, y0, x1, y1), (step, step), lo=4, hi=40)
     out = Image.new('RGBA', (n, n), (0, 0, 0, 0))
     o = out.load()
     for j in range(inner):

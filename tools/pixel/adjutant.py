@@ -8,7 +8,12 @@
 import os
 from collections import Counter, deque
 
+import sys
+
 from PIL import Image
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gridmeasure as gm  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, 'build-res', 'order', 'N-01-adjutant-src-source.png')
@@ -24,6 +29,8 @@ N8 = N4 + [(1, 1), (1, -1), (-1, 1), (-1, -1)]
 def main():
     crop = Image.open(SRC).convert('RGB').crop(BOX)
     cs = crop.size[0] / N
+    # D-552: 상자 ÷ 56으로 맞춘 칸(19.39px)을 실측(가로 17.84 · 세로 6.56 — 도트 크기가 섞였다)과 대조해 기록, 정수배가 아니면 멈춘다
+    gm.guard('adjutant', 'adjutant', Image.open(SRC), BOX, (cs, cs), lo=4, hi=24)
     cp = crop.load()
     # 바탕 = 남빛 도는 짙은 색 (11,10,15) — 검은 선(0~4)과 색으로 가른다 (어둡다고 바탕으로 보면 흰 테가 빠진 자리의 검은 선까지 지워졌다)
     is_bg = lambda c: 8 <= c[0] <= 13 and 7 <= c[1] <= 12 and 12 <= c[2] <= 18

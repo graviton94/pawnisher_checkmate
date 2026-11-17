@@ -26,6 +26,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
+import gridmeasure as gm  # noqa: E402
 import icon_sheets  # noqa: E402
 from icon_sheet_import import small  # noqa: E402
 
@@ -167,6 +168,8 @@ def main(sid, dry):
         cx, cy = i % 4, i // 4
         box = icon_box(a, W * cx // 4, H * cy // 2, W * (cx + 1) // 4, H * (cy + 1) // 2)
         raw, p = sample(a, box)
+        # D-552: 상자 ÷ FIT으로 맞춘 간격 p를 실측과 대조해 기록(정수배가 아니면 멈춘다 — --accept-fit은 옛 판 재현)
+        gm.guard('term_icon_import', f'{sid}:{k}', Image.fromarray(a), box, (p, p), lo=4, hi=40, bg=(255, 0, 255))
         icn = ring(raw)
         made[k] = icn
         x = 8 + cx * (T * 3 + 24)

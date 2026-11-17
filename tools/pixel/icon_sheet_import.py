@@ -19,6 +19,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
+import gridmeasure as gm  # noqa: E402
 import icon_sheets  # noqa: E402
 
 INK = (11, 11, 14)
@@ -122,7 +123,10 @@ def main(src, sid, dry=False):
         # 칸은 늘 정사각 — 받은 시트 높이가 칸 수와 안 맞아도(한 줄 시트가 2000×667로 오는 등) 세로로 찌그러뜨리지 않는다 (D-306)
         cw = W / 5
         top = (H - cw * rows) / 2
-        cell = sheet.crop((round(cw * cx), round(top + cw * cy), round(cw * (cx + 1)), round(top + cw * (cy + 1))))
+        cbox = (round(cw * cx), round(top + cw * cy), round(cw * (cx + 1)), round(top + cw * (cy + 1)))
+        cell = sheet.crop(cbox)
+        # D-552: 칸 ÷ 32로 맞춘 간격을 실측과 대조해 기록(정수배가 아니면 멈춘다 — --accept-fit은 옛 판 재현)
+        gm.guard('icon_sheet_import', f'{sid}:{k}', sheet, cbox, (cell.width / N, cell.height / N), lo=4, hi=40, bg=(255, 0, 255))
         icn = cell16(cell)
         game = thicken(centered(icn))
         f = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')

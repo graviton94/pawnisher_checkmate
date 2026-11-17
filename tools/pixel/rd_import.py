@@ -12,6 +12,9 @@ import sys
 import numpy as np
 from PIL import Image
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gridmeasure as gm  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PAL = ['#0B0B0E', '#6E717E', '#484A55', '#26272E', '#7A1E1E', '#D0453A', '#F87171']
 N = 16
@@ -30,6 +33,8 @@ def main(src):
     ys, xs = np.nonzero(~key)
     y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
     py, px = (y1 - y0) / N, (x1 - x0) / N
+    # D-552: 상자 ÷ N으로 맞춘 간격을 실측과 대조해 기록(정수배가 아니면 멈춘다 — --accept-fit은 옛 판 재현)
+    gm.guard('rd_import', os.path.basename(src), Image.open(src), (int(x0), int(y0), int(x1), int(y1)), (px, py), lo=4, hi=40, bg=(255, 0, 255))
     pal = np.array([rgb(h) for h in PAL])
     out = Image.new('RGBA', (N, N), (0, 0, 0, 0))
     for j in range(N):

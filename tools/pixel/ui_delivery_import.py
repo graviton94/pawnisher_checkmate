@@ -1,6 +1,10 @@
 """수령 UI 원본 전체를 픽셀화한다. 상징·핀을 따로 떼거나 재조립하지 않는다.
 
-python3 -I tools/pixel/ui_delivery_import.py
+python3 -I tools/pixel/ui_delivery_import.py [--accept-fit]
+D-552: 칸 크기(본체 폭 ÷ 64 · 128)를 실측 도트와 대조해 build-res/order/grid-measure.json에 남기고, 정수배가 아니면 멈춘다.
+  실측(2026-11-17): UI-31 7.45/7.61 · UI-32 7.06/6.53 · UI-33 5.59/5.15(11.39/10.10) — 쓴 칸 17.47 · 8.80 · 13.23과 정수배가 아니다.
+  실측 격자로 다시 뽑아 보니(대조판 grid-fix-ui) UI-32 · 33은 가로 · 세로 간격이 8~12% 달라 둥근 핀이 세로로 늘고,
+  UI-31은 2배 묶음(74×72)에서 안쪽 왼 변에 얼룩 열이 생겨 옛 판보다 낫지 않았다 → 지금 그림을 두고 재발주 감으로 남긴다.
 UI-32 시트의 네 칸만 분리한다. 원본 색·윤곽·장식의 상대 위치를 유지한다.
 """
 from pathlib import Path
@@ -15,6 +19,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import snap  # noqa: E402
+import gridmeasure as gm  # noqa: E402
 
 OUT = ROOT / 'src/assets/ui/chrome/v2'
 ORDER = ROOT / 'build-res/order'
@@ -54,6 +59,8 @@ def main():
     records, previews = [], []
 
     def save(name, im, source, crop, pitch, edge):
+        # D-552: 캔버스 폭 ÷ 64 · 128로 맞춘 칸이 실측 도트의 정수배인지 먼저 잰다 — 아니면 멈춘다(--accept-fit만 옛 판 재현)
+        gm.guard('ui_delivery_import', name, Image.open(source), crop, (pitch, pitch), lo=4, hi=24)
         dst = OUT / f'{name}.png'
         im.save(dst, optimize=True)
         a = np.asarray(im)
