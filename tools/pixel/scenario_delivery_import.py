@@ -1,7 +1,13 @@
-"""I-15·UI-34 원본 전체를 게임 격자로 반입한다. 시트의 물건 칸만 분리하고 내부 형상은 재조립하지 않는다.
+"""I-15 부품 아이콘(마지막 숨 · 장부 · 고참 · 죽음 표식)을 게임 격자(32×32)로 반입한다 (D-434 · D-552).
 
 python3 -I tools/pixel/scenario_delivery_import.py
+D-552: 칸 = 받은 그림 도트를 축마다 실측한 간격의 정수배(scene_recipe.ICON_GRID cell), 칸 경계는 실측 격자선 위 —
+옛 판은 「투명 여백을 걷은 몸 ÷ 28」로 칸을 맞춰(23~40px, 실측과 무관) 칸 경계가 도트 가운데를 지나 얼룩이 생겼다.
+칸 가운데 최빈색(불투명만) → 받은 그림 대표 24색(게임 색과 같은 색상 집안이면 붙임) · 이진 알파 · 외곽선 추가 없음.
+UI-34 상태 딱지(part-state)는 원본이 약 53도트라 16칸 격자로 되돌릴 수 없다 → 재발주(UI-34R, asset-order-master 26위).
+받기 전에는 지금 public/ui/part-state/*.png를 그대로 둔다 — 이 도구는 더 이상 그것을 쓰지 않는다.
 장면 S-02~04는 tools/scene-import.py와 scene_recipe.py의 보존된 수동 격자를 사용한다.
+작은 칸 @16은 icons16.py export가 icons32에서 만든다.
 """
 from pathlib import Path
 import hashlib
@@ -13,77 +19,49 @@ from PIL import Image, ImageDraw
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
-import snap
-from icon_sheet_import import small
+import gridmeasure as gm  # noqa: E402
+from icon_sheet_import import small  # noqa: E402
+from scene_recipe import ICON_GRID  # noqa: E402
 
 ORDER = ROOT / 'build-res/order'
-ICON_TARGETS = [('lastBreath', 0), ('ledger', 1), ('veteran', 2)]
-
-
-def grid(im, n):
-    """전체 정사각 칸의 대표색을 한 번만 샘플링한다. 원본 색, 이진 알파, 외곽선 추가 없음."""
-    w, h = im.size
-    return snap.snap(im, w/n, 0, h/n, 0, colors=0,
-                     cuts=(np.linspace(0, w, n+1), np.linspace(0, h, n+1)), opaque_colors=True)
+ICONS = ['lastBreath', 'ledger', 'veteran', 'deathMark']
 
 
 def main():
     records, previews = [], []
-
-    def save(source, key, crop, n, outputs):
+    for key in ICONS:
+        g = ICON_GRID[key]
+        source = ORDER / f'{g["src"]}-source.png'
         original = Image.open(source).convert('RGBA')
-        cell = original.crop(crop)
-        # 빈 바깥 여백만 걷고 정사각 칸에 비율 그대로 놓는다. 상태 원판은 원본 칸의 2/3라 그대로 줄이면 내부가 깨진다.
-        visible = cell.getchannel('A').point(lambda v: 255 if v >= 128 else 0).getbbox()
-        if not visible:
-            raise ValueError(f'{key}: visible source body missing')
-        body = cell.crop(visible)
-        margin = 1 if n == 16 else 2
-        side = int(np.ceil(max(body.size) * n / (n - 2 * margin)))
-        padded = Image.new('RGBA', (side, side))
-        padded.alpha_composite(body, ((side-body.width)//2, (side-body.height)//2))
-        im = grid(padded, n)
-        a = np.array(im); a[a[:, :, 3] == 0] = 0; im = Image.fromarray(a)
+        im, rec = gm.icon_from_recipe(original, g, 32, margin=1)
+        outputs = [HERE / f'icons32_ext/{key}.png', HERE / f'icons32/{key}.png', ROOT / f'public/ui/icons16/{key}.png']
         for dst in outputs:
-            dst.parent.mkdir(parents=True, exist_ok=True); im.save(dst, optimize=True)
-        if n == 32:
-            small(im).save(ROOT / f'public/ui/icons16/{key}@16.png', optimize=True)
-        records.append({'id': key, 'source': source.name,
-            'sourceSha256': hashlib.sha256(source.read_bytes()).hexdigest(),
-            'sourceCrop': list(crop), 'transparentTrim': list(visible), 'paddedSide': side, 'samplePitch': [side/n, side/n],
-            'size': list(im.size), 'alpha': np.unique(a[:, :, 3]).tolist(),
-            'colors': len(np.unique(a[a[:, :, 3] == 255, :3], axis=0)),
-            'rgbaSha256': hashlib.sha256(im.tobytes()).hexdigest(),
-            'outputs': [str(p.relative_to(ROOT)) for p in outputs],
-            'method': 'whole cell; original colors; one pass; no added outline; no detached details'})
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            im.save(dst, optimize=True)
+        records.append({'id': key, 'source': source.name, 'sourceSha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+                        'sourceCrop': list(g['crop']) if g.get('crop') else None, **rec, 'size': list(im.size),
+                        'rgbaSha256': hashlib.sha256(im.tobytes()).hexdigest(),
+                        'outputs': [str(p.relative_to(ROOT)) for p in outputs],
+                        'method': 'measured dot pitch; cell = integer multiple; mode per cell; palette 24 keep-hue; no added outline'})
+        cell = original.crop(g['crop']) if g.get('crop') else original
         previews.append((key, cell, im))
-        print(key, im.size, 'alpha', records[-1]['alpha'])
-
-    source = ORDER / 'I-15ABC-source.png'
-    with Image.open(source) as sheet:
-        for key, i in ICON_TARGETS:
-            save(source, key, (i*sheet.width//3, 0, (i+1)*sheet.width//3, sheet.height), 32,
-                 [HERE/f'icons32_ext/{key}.png', HERE/f'icons32/{key}.png', ROOT/f'public/ui/icons16/{key}.png'])
-    source = ORDER / 'I-15D-source.png'
-    with Image.open(source) as im:
-        save(source, 'deathMark', (0, 0, *im.size), 32,
-             [HERE/'icons32_ext/deathMark.png', HERE/'icons32/deathMark.png', ROOT/'public/ui/icons16/deathMark.png'])
-    source = ORDER / 'UI-34-source.png'
-    with Image.open(source) as sheet:
-        for i, key in enumerate(('waiting', 'ready', 'spent')):
-            save(source, key, (i*sheet.width//3, 0, (i+1)*sheet.width//3, sheet.height), 16,
-                 [ROOT/f'public/ui/part-state/{key}.png'])
-    (ORDER/'I-15-UI-34-import.json').write_text(json.dumps(records, ensure_ascii=False, indent=2)+'\n')
-    check = Image.new('RGB', (1000, len(previews)*190), '#24232b'); draw = ImageDraw.Draw(check)
+        print(key, rec)
+    (ORDER / 'I-15-import.json').write_text(json.dumps(records, ensure_ascii=False, indent=2) + '\n')
+    check = Image.new('RGB', (700, len(previews) * 190), '#24232b')
+    draw = ImageDraw.Draw(check)
     for i, (key, original, im) in enumerate(previews):
-        y = i*190; draw.text((8, y+4), key+' | original / pixel grid / game 32 / small 16', fill='white')
-        original.thumbnail((160,160),Image.Resampling.NEAREST); check.paste(original, (10,y+24), original)
-        large=im.resize((im.width*5,im.height*5),Image.Resampling.NEAREST)
-        check.paste(large,(220,y+24),large);check.paste(im,(430,y+60),im)
-        if im.width==32:
-            tiny=small(im);check.paste(tiny,(490,y+60),tiny)
-    check.save(ORDER/'I-15-UI-34-check.png')
+        y = i * 190
+        draw.text((8, y + 4), key + ' | original / pixel grid x5 / game 32 / small 16', fill='white')
+        o = original.copy()
+        o.thumbnail((160, 160), Image.NEAREST)
+        check.paste(o, (10, y + 24), o)
+        large = im.resize((im.width * 5, im.height * 5), Image.NEAREST)
+        check.paste(large, (220, y + 24), large)
+        check.paste(im, (430, y + 60), im)
+        tiny = small(im)
+        check.paste(tiny, (490, y + 60), tiny)
+    check.save(ORDER / 'I-15-check.png')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

@@ -297,6 +297,78 @@ def compare_sheet(original, parts, window, out, zoom=4, gap=12):
     return sheet
 
 
+def merge_cell(m, body, n_max, k_max=16, tol=0.06):
+    """정수 묶음 칸: 원본 몸(body = (w, h) px)을 n_max칸 안에 넣는 가장 작은 정수 k로, 칸 = k × 가로 실측 간격.
+    세로도 같은 칸(비율 그대로 — 늘리지 않는다)이되, 칸 ÷ 세로 간격이 정수에서 tol 넘게 벗어나면 다음 k.
+    반환 (칸 px, k, 세로 몫)"""
+    px, py = m['x']['pitch'], m['y']['pitch']
+    best = None
+    for k in range(1, k_max + 1):
+        c = k * px
+        if body[0] / c > n_max or body[1] / c > n_max:
+            continue
+        ky = c / py
+        off = abs(ky - round(ky)) / max(1, round(ky))
+        if best is None:
+            best = (c, k, round(ky, 3))
+        if off <= tol:
+            return c, k, round(ky, 3)
+    return best
+
+
+def fit_icon(img, m, n=32, margin=2, core=0.6, cell=None):
+    """받은 아이콘 한 칸(RGBA, 투명 바탕) → n×n: 실측 도트의 정수 묶음 칸(merge_cell)으로, 칸 경계를 실측 격자선에 맞춰
+    몸 상자를 덮게 깔고 칸 가운데 최빈색(snap, 불투명만) — 캔버스 ÷ n으로 칸을 맞추지 않는다. 반환 (n×n 그림, 기록)"""
+    img = img.convert('RGBA')
+    box = img.getchannel('A').point(lambda v: 255 if v >= 128 else 0).getbbox()
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    if cell:
+        c, k, ky = cell, round(cell / m['x']['pitch'], 3), round(cell / m['y']['pitch'], 3)
+    else:
+        c, k, ky = merge_cell(m, (bw, bh), n - 2 * margin)
+    cuts = []
+    for key, lo_, hi_, nn in (('x', box[0], box[2], img.width), ('y', box[1], box[3], img.height)):
+        ph = m[key]['phase'] % m[key]['pitch']
+        span = hi_ - lo_
+        cells = int(np.ceil(span / c))
+        # 몸 가운데에 칸 묶음 가운데를 두되 시작은 실측 격자선(ph + i·간격) 위로
+        start = (lo_ + hi_) / 2 - cells * c / 2
+        start = ph + round((start - ph) / m[key]['pitch']) * m[key]['pitch']
+        while start > lo_:
+            start -= m[key]['pitch']
+        while start + cells * c < hi_:
+            cells += 1
+        cuts.append([float(start + i * c) for i in range(cells + 1)])
+    # 캔버스 밖 칸은 투명으로 읽히게 넉넉히 덧댄다
+    pad = int(np.ceil(c)) + 2
+    big = Image.new('RGBA', (img.width + 2 * pad, img.height + 2 * pad), (0, 0, 0, 0))
+    big.alpha_composite(img, (pad, pad))
+    small = snap.snap(big, c, 0, c, 0, colors=0, core=core,
+                      cuts=([v + pad for v in cuts[0]], [v + pad for v in cuts[1]]), opaque_colors=True)
+    a = np.asarray(small).copy()
+    a[a[:, :, 3] == 0] = 0
+    small = Image.fromarray(a, 'RGBA')
+    bb = small.getbbox()
+    small = small.crop(bb)
+    out = Image.new('RGBA', (n, n), (0, 0, 0, 0))
+    out.alpha_composite(small, ((n - small.width) // 2, (n - small.height) // 2))
+    assert small.width <= n and small.height <= n, ('칸에 안 들어간다', small.size)
+    return out, {'cell': round(c, 3), 'cell_over_x_pitch': k, 'cell_over_y_pitch': ky, 'body_cells': list(small.size)}
+
+
+def icon_from_recipe(src_img, g, n=32, margin=2, colors=24):
+    """scene_recipe.ICON_GRID 한 줄 → n×n 아이콘(원본 색 → 대표 colors색, 게임 색과 같은 집안이면 붙임). 반환 (그림, 기록)"""
+    crop = g.get('crop') or (0, 0, src_img.width, src_img.height)
+    cellimg = src_img.convert('RGBA').crop(crop)
+    m = {'x': {'pitch': g['x'][0], 'phase': g['x'][1] - crop[0]}, 'y': {'pitch': g['y'][0], 'phase': g['y'][1] - crop[1]}}
+    out, rec = fit_icon(cellimg, m, n, margin, cell=g['cell'])
+    a = np.asarray(out)
+    pal, _ = keep_hue_palette(a[a[:, :, 3] > 0][:, :3], n=colors)
+    out = map_palette(out, pal)
+    rec.update({'grid': {'x': g['x'], 'y': g['y']}, 'colors': len(pal), 'alpha': alpha_clean(out)})
+    return out, rec
+
+
 def master_palette():
     """게임이 이미 쓰는 색 전부: UI 15색(ui_kit_import.PAL) · 반장 발주 24색(SPEC24) · 기물 PAL64"""
     import maker

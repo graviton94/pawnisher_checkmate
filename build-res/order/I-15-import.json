@@ -1,0 +1,173 @@
+[
+  {
+    "id": "lastBreath",
+    "source": "I-15ABC-source.png",
+    "sourceSha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+    "sourceCrop": [
+      0,
+      0,
+      724,
+      724
+    ],
+    "cell": 22.974,
+    "cell_over_x_pitch": 3.0,
+    "cell_over_y_pitch": 1.444,
+    "body_cells": [
+      25,
+      29
+    ],
+    "grid": {
+      "x": [
+        7.658,
+        7.75
+      ],
+      "y": [
+        15.908,
+        1.99
+      ]
+    },
+    "colors": 23,
+    "alpha": {
+      "partial_alpha": 0,
+      "magenta": 0
+    },
+    "size": [
+      32,
+      32
+    ],
+    "rgbaSha256": "2f64d9d75659e74e25bc0008e91af3827b247a231c2dd765a88ee8b7603a99e8",
+    "outputs": [
+      "tools/pixel/icons32_ext/lastBreath.png",
+      "tools/pixel/icons32/lastBreath.png",
+      "public/ui/icons16/lastBreath.png"
+    ],
+    "method": "measured dot pitch; cell = integer multiple; mode per cell; palette 24 keep-hue; no added outline"
+  },
+  {
+    "id": "ledger",
+    "source": "I-15ABC-source.png",
+    "sourceSha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+    "sourceCrop": [
+      724,
+      0,
+      1448,
+      724
+    ],
+    "cell": 25.665,
+    "cell_over_x_pitch": 3.0,
+    "cell_over_y_pitch": 3.09,
+    "body_cells": [
+      23,
+      25
+    ],
+    "grid": {
+      "x": [
+        8.555,
+        729.88
+      ],
+      "y": [
+        8.305,
+        0.43
+      ]
+    },
+    "colors": 24,
+    "alpha": {
+      "partial_alpha": 0,
+      "magenta": 0
+    },
+    "size": [
+      32,
+      32
+    ],
+    "rgbaSha256": "8cbc84eb1a216604acf49d336bccd2fd4fb2517b360ee0577039f69991a2ad61",
+    "outputs": [
+      "tools/pixel/icons32_ext/ledger.png",
+      "tools/pixel/icons32/ledger.png",
+      "public/ui/icons16/ledger.png"
+    ],
+    "method": "measured dot pitch; cell = integer multiple; mode per cell; palette 24 keep-hue; no added outline"
+  },
+  {
+    "id": "veteran",
+    "source": "I-15ABC-source.png",
+    "sourceSha256": "36990190dc8828b687a31d20c922814c32a91e8327b28a94b226e8027baa65a8",
+    "sourceCrop": [
+      1448,
+      0,
+      2172,
+      724
+    ],
+    "cell": 25.028,
+    "cell_over_x_pitch": 1.654,
+    "cell_over_y_pitch": 2.0,
+    "body_cells": [
+      21,
+      26
+    ],
+    "grid": {
+      "x": [
+        15.135,
+        1457.46
+      ],
+      "y": [
+        12.514,
+        4.17
+      ]
+    },
+    "colors": 22,
+    "alpha": {
+      "partial_alpha": 0,
+      "magenta": 0
+    },
+    "size": [
+      32,
+      32
+    ],
+    "rgbaSha256": "8ecfe8bfc9780f9b1d4290f4e2d3e88f82b82daf5400e91a2401c176886df004",
+    "outputs": [
+      "tools/pixel/icons32_ext/veteran.png",
+      "tools/pixel/icons32/veteran.png",
+      "public/ui/icons16/veteran.png"
+    ],
+    "method": "measured dot pitch; cell = integer multiple; mode per cell; palette 24 keep-hue; no added outline"
+  },
+  {
+    "id": "deathMark",
+    "source": "I-15D-source.png",
+    "sourceSha256": "471f90bc21e189c4425e152890c7435df51952a146f7f8d6dd0cb54bbc7c9e88",
+    "sourceCrop": null,
+    "cell": 47.22,
+    "cell_over_x_pitch": 6.0,
+    "cell_over_y_pitch": 2.022,
+    "body_cells": [
+      17,
+      24
+    ],
+    "grid": {
+      "x": [
+        7.87,
+        288.48
+      ],
+      "y": [
+        23.348,
+        79.89
+      ]
+    },
+    "colors": 22,
+    "alpha": {
+      "partial_alpha": 0,
+      "magenta": 0
+    },
+    "size": [
+      32,
+      32
+    ],
+    "rgbaSha256": "d7597fd913b050c4132e7370f7b563983fff631804218d03342524dc1a628edc",
+    "outputs": [
+      "tools/pixel/icons32_ext/deathMark.png",
+      "tools/pixel/icons32/deathMark.png",
+      "public/ui/icons16/deathMark.png"
+    ],
+    "method": "measured dot pitch; cell = integer multiple; mode per cell; palette 24 keep-hue; no added outline"
+  }
+]
