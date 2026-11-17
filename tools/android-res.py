@@ -17,7 +17,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / 'android' / 'app' / 'src' / 'main' / 'res'
 BG = (0x16, 0x14, 0x1C)
-# 밀도 배율 (mdpi = 1) → 로고 정수배 = 내림 (hdpi 1.5 → 1)
+# 밀도 배율 (mdpi = 1) → 로고 정수배 = 반올림 (hdpi 1.5 → 2, D-538)
 DPI = {'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4}
 ICON_DP = 78  # 108dp 캔버스 안 아이콘 정사각형 한 변
 
@@ -25,7 +25,9 @@ ICON_DP = 78  # 108dp 캔버스 안 아이콘 정사각형 한 변
 def splash() -> None:
     logo = Image.open(ROOT / 'public' / 'ui' / 'title-logo.png').convert('RGBA')
     for name, k in DPI.items():
-        s = max(1, int(k))
+        # D-538 (리뷰 #18): hdpi 1.5는 예전 내림(×1 = 118dp)이라 다른 밀도(177dp)보다 작았다 — 정수배 1 · 2가 177dp에서 똑같이 멀어
+        # (118 · 236dp) 작아 보이지 않게 올림(×2). 다른 밀도는 그대로 정확히 177dp
+        s = max(1, int(k + 0.5))
         out = logo.resize((logo.width * s, logo.height * s), Image.NEAREST)
         d = RES / f'drawable-{name}'
         d.mkdir(exist_ok=True)
