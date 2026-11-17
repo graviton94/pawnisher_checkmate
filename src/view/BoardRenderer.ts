@@ -17,6 +17,7 @@ import { BoardFx } from './boardfx';
 import { FX_CAMERA, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
+import { boardInset } from './boardInset';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type FormId, type Side, type Plan, type PlanStep, type Pos } from '../engine';
@@ -148,15 +149,8 @@ const drawGiantFrame = (pen: PixelPen, x: number, y: number): void => {
     for (const c of [a, a + 8, a + 16]) { px(c, 1); px(c, 2); }
   }
 };
-/** 판 위 상태 띠 자리 (CSS px, 위에서) — 이만큼 비우고 판을 그 아래 가운데에 (총괄 리뷰 3.9 · D-396). 2.0 화면은 0 */
-let boardTopInset = 0;
-/** 판 아래 자리 (CSS px) — 부관 안내 띠 자리. 위아래를 같게 두면 판이 세로 가운데에 선다 (1.1.1 테스터: 판이 아래로 치우침) */
-let boardBottomInset = 0;
-/** 판 열 위(상태 띠) · 아래(부관 안내) 자리를 비운다 (본편 전투 HUD가 부른다) */
-export const setBoardTopInset = (px: number, bottom = 0): void => {
-  boardTopInset = px;
-  boardBottomInset = bottom;
-};
+/** 판 열 위 · 아래 자리 (boardInset.ts — Phaser 없이 본편 HUD가 먼저 정할 수 있게 따로 둔다) */
+export { setBoardTopInset } from './boardInset';
 /**
  * 판을 그리는 배율 (D-240 상한 → D-525 정수 늘림): 캔버스 한 픽셀이 기기 픽셀 정수 개로 늘어나야 도트 · 바 · 테 줄이 고르다.
  * 기기 배율이 상한(RENDER.dprCap)을 넘으면 기기 배율을 정수로 나눈 값 중 상한 이하 · 하한(RENDER.dprMin) 이상을 쓰고,
@@ -175,7 +169,7 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
   const vPad = document.body.matches('.lay-f') ? 0.45 : 0.9;
   // 양옆 여백: 본편은 판 옆이 레일(안쪽 여백이 있다)이라 0칸 (667 폭에서도 칸 50 — 터치 48 하한, D-396)
   const hPad = document.body.matches('.lay-f') ? 0 : 0.5;
-  const fit = Math.min(want, (viewH - boardTopInset - boardBottomInset) / (rows + vPad), viewW / (cols + hPad));
+  const fit = Math.min(want, (viewH - boardInset.top - boardInset.bottom) / (rows + vPad), viewW / (cols + hPad));
   // 한 도트 = 기기 픽셀 정수 (내림 — 넘치지 않게). 예전 하한 5도트는 DPR 2 아래 기기 · PC에서 판을 화면 밖으로 밀었다
   const dots = Math.max(1, Math.floor((fit * dpr) / BOARD_DOTS));
   return (dots * BOARD_DOTS) / dpr;
@@ -792,8 +786,8 @@ class BoardScene extends Phaser.Scene {
     const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
     const x = bw + 2 * m <= viewW ? bw / 2 : clamp(cx, -m + viewW / 2, bw + m - viewW / 2);
     // 판이 다 들어오면 칸 격자를 위(상태 띠) · 아래(부관 안내) 자리를 뺀 나머지의 가운데에 — 아래 끝이 화면 밖으로 나가지 않게
-    const mid = bh / 2 - (boardTopInset - boardBottomInset) / 2;
-    const y = bh + m - top <= viewH ? Math.max(Math.min(mid, viewH / 2 - boardTopInset), bh + m - viewH / 2) : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
+    const mid = bh / 2 - (boardInset.top - boardInset.bottom) / 2;
+    const y = bh + m - top <= viewH ? Math.max(Math.min(mid, viewH / 2 - boardInset.top), bh + m - viewH / 2) : clamp(cy, top + viewH / 2, bh + m - viewH / 2);
     // 캔버스 픽셀 정수에 맞춘다 (D-525): 칸 모서리가 픽셀 사이에 걸리면 바 · 테 줄이 한 픽셀씩 들쭉날쭉해진다.
     // Phaser 카메라: 캔버스 x = floor(폭/2 + 0.5) + 줌 × (월드 x − 가운데 x) — 가운데 × 줌이 정수면 칸 모서리가 정수 픽셀 (카메라 roundPixels는 끈다 · create)
     const z = this.dpr;
@@ -2217,6 +2211,8 @@ export class BoardRenderer implements BoardView {
       fps: { limit: RENDER.idleFps },
       // 줄여 그린 캔버스를 화면 크기로 늘릴 때 도트가 번지지 않게
       pixelArt: true,
+      // 판은 소리를 내지 않는다 (효과음 · 음악은 src/audio) — Phaser가 쓰지 않는 AudioContext를 깨워 두지 않게 (코드 리뷰 7)
+      audio: { noAudio: true },
     });
     this.game.canvas.style.imageRendering = 'pixelated';
     this.center(w, h);
@@ -2225,6 +2221,8 @@ export class BoardRenderer implements BoardView {
     new MutationObserver(() => this.sleepIfHidden()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     this.game.canvas.addEventListener('webglcontextrestored', () => this.scene.poke());
     this.installQuiet();
+    // 타이틀 · 컷신이 덮은 뒤에 만들어져도 처음부터 잠든다 (클래스가 다시 바뀔 때까지 기다리지 않게)
+    void this.whenReady.then(() => this.sleepIfHidden());
   }
 
   /** 끝나지 않은 판 연출 (공개 함수가 돌려준 Promise) — 이 동안은 프레임을 건너뛰지 않는다 */

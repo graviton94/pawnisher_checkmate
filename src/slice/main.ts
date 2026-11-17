@@ -56,7 +56,8 @@ import { devQuery, isDesktop, quitGame, toggleFullscreen } from './platform';
 import { boardCursorAt, installInput, resetBoardCursor, syncBoardCursor } from './keys';
 import { bodyRect } from './boardcursor';
 import { pieceImg } from '../ui/sprites';
-import { BoardRenderer, setBoardTopInset } from '../view/BoardRenderer';
+import { setBoardTopInset } from '../view/boardInset';
+import { lazyBoard } from '../view/lazyBoard';
 import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { coreOf, findPiece, samePos, type FormId, type Piece, type PieceType, type Pos } from '../engine';
@@ -352,7 +353,8 @@ let enemyTurn = false;
 /** 장면·팝업 뒤의 Phaser 입력이 전투 정보를 다시 열지 않게 한다. */
 const battleInputActive = (): boolean => !busy && !enemyTurn && $('overlay').hidden && !document.body.classList.contains('between') && !document.body.classList.contains('cover-pl') && !$('board').closest('[inert]') && !document.querySelector('.bossfx,.clr');
 
-const renderer = new BoardRenderer(
+// 판(Phaser)은 따로 묶어 타이틀이 뜬 뒤에 불러온다 (코드 리뷰 6 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
+const board = lazyBoard(
   $('board'),
   {
     tap: (pos) => void onTap(pos),
@@ -364,6 +366,7 @@ const renderer = new BoardRenderer(
   // 판 위 상황 알림 (붕락 · 과열 · 항복)은 상태 띠로 (D-193 알림 위계 ① 상황 · D-396 한 자리)
   (text) => band(text, 'crimson'),
 );
+const renderer = board.board;
 /** 판 칸 바깥 폭 (판 왼쪽 끝 · 오른쪽 끝에서 화면 끝까지) — 엿보기가 판 칸을 덮지 않게 */
 const offBoardW = (side: 'left' | 'right'): number => {
   const a = renderer.screenOf({ x: 0, y: 0 });
@@ -5039,6 +5042,8 @@ const qs = new URLSearchParams(location.search);
 // 워밍업 로딩 (D-239): 그림 · 글꼴을 미리 받는 동안 부팅 화면의 황동 막대가 찬다 → 다 되면 걷고 타이틀
 const bootBar = document.querySelector<HTMLElement>('#boot .boot-bar b');
 void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12)))).then(() => {
+  // 타이틀이 뜨면 판(Phaser)을 불러 판 그림을 받기 시작한다 — 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
+  void board.start();
   const boot = document.getElementById('boot');
   if (boot) pxOut(boot, () => boot.remove(), 240);
   if (devQuery('builds')) buildPick();

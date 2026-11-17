@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => ({
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/[name][extname]',
+        // Phaser는 따로 (코드 리뷰 6): 판을 처음 쓸 때 늦게 불러오고, 판올림마다 다시 받지 않게 이름도 그대로 둔다
+        manualChunks: (id: string) => (/\/node_modules\/phaser\/(src|dist)\//.test(id) ? 'phaser' : undefined),
       },
     },
   },
