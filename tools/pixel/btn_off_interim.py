@@ -9,7 +9,9 @@
   - 몸보다 어두운 색(아래 · 오른 변 그늘) → 몸 색 (볼록함이 사라져 판에 눌어붙은 느낌)
 필터 · 그라데이션 없음, 원본 캔버스 그대로(정수 도트). 받은 off 그림은 지우지 않는다(MM-01이 오면 교체).
 
-실행: python3 -I tools/pixel/btn_off_interim.py  → src/assets/ui/chrome/v2/btn-{iron,brass,crimson,teal}-off0.png · choice-off0.png · hand-choice-off0.png
+실행: python3 -I tools/pixel/btn_off_interim.py  → src/assets/ui/chrome/v2/choice-off0.png · hand-choice-off0.png
+(D-544: 단추 넷 btn-*-off는 받은 MM-01로 바뀌었다 — tools/pixel/mm01_import.py. 여기서는 MM-01에 없는 선택지 · 손패 판만 찍는다.
+ btn-*-off0을 다시 보려면 --buttons)
 """
 from __future__ import annotations
 
@@ -79,7 +81,7 @@ def despeck(name: str) -> Image.Image:
 
 
 def main() -> int:
-    jobs = [(f'btn-{k}-up.png', f'btn-{k}-off0.png', k) for k in OFF]
+    jobs = [(f'btn-{k}-up.png', f'btn-{k}-off0.png', k) for k in OFF] if '--buttons' in sys.argv else []
     # 선택지 판(choice-off)도 같은 얼룩 — 보통 판(choice-up)을 철 꺼짐 색으로 (황동 고리도 철로: 「쓸 수 없음」)
     jobs.append(('choice-up.png', 'choice-off0.png', 'iron'))
     jobs.append(('hand-choice-off.png', 'hand-choice-off0.png', ''))

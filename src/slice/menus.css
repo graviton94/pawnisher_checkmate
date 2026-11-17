@@ -1,14 +1,16 @@
 /* ===================== 출시 UX 메뉴 (D-539 — 검수 B1 · H3 · H4 · M1 · M3 · M12) =====================
-   부품은 키트(.btn · .win · .inset · .choice · .tab)만 쓴다 — 새 그림 없음. 받기 전 빌린 그림: 메뉴 톱니 = gears-mini.png 첫 칸(MM-01 대기). */
+   부품은 키트(.btn · .win · .inset · .choice · .tab)와 받은 MM-01(메뉴 단추 · 꺼짐 단추 · 메뉴 아이콘, D-544)만 쓴다. */
 
-/* ---------- 메뉴 단추 (대국 오른쪽 머리 · 지도 머리 오른끝): 철 단추 + 황동 톱니 16도트, 누르면 톱니가 두 칸 돈다 ---------- */
-.btn.k-iron.btn-menu { flex: none; width: max(48px, calc(var(--px) * 23)); min-width: 0; height: max(48px, calc(var(--px) * 23)); min-height: 0; padding: 0; }
-.btn.k-iron.btn-menu:is(:active, .down) { padding: calc(var(--px) * 1) 0 0; }
-.btn-menu > .menu-cog { display: block; width: calc(var(--px) * 16); height: calc(var(--px) * 16); background: url('../assets/ui/kit/gears-mini.png') 0 0 / calc(var(--px) * 256) calc(var(--px) * 16) no-repeat; image-rendering: pixelated; }
-.btn-menu:is(:active, .down) > .menu-cog { background-position: calc(var(--px) * -32) 0; }
+/* ---------- 메뉴 단추 (대국 오른쪽 머리 · 지도 머리 오른끝): 받은 MM-01 메뉴 단추 24×24도트 통그림 세 상태 (보통 · 눌림 · 꺼짐, D-544).
+   9-slice가 아니라 한 장 그대로(도트 = --px 정수 기기 픽셀) — 누름 영역은 48px 이상 ---------- */
+.btn.k-iron.btn-menu { flex: none; width: max(48px, calc(var(--px) * 24)); min-width: 0; height: max(48px, calc(var(--px) * 24)); min-height: 0; padding: 0;
+  border: 0; border-image: none; background: url('../assets/ui/chrome/v2/btn-menu-up.png') center / calc(var(--px) * 24) calc(var(--px) * 24) no-repeat; image-rendering: pixelated; }
+.btn.k-iron.btn-menu:is(:active, .down, [aria-pressed='true']):not(:disabled) { padding: 0; background-image: url('../assets/ui/chrome/v2/btn-menu-down.png'); }
+.btn.k-iron.btn-menu:is(:disabled, [aria-disabled='true']) { background-image: url('../assets/ui/chrome/v2/btn-menu-off.png'); }
+.btn-menu > .menu-cog { display: block; width: calc(var(--px) * 24); height: calc(var(--px) * 24); }
 body.slice .rmid .r-head > #btn-menu { margin-left: auto; }
 /* 새 용어가 들어왔다: 단추 오른쪽 위 붉은 점(2×2도트 · 계단 깜빡) — 옛 ? 단추의 표시를 옮겼다 */
-#btn-menu.has-new > .menu-cog::after { content: ''; position: absolute; top: calc(var(--px) * -2); left: calc(var(--px) * -2); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; animation: kblink 1.2s steps(2, jump-none) infinite; }
+#btn-menu.has-new > .menu-cog::after { content: ''; position: absolute; top: calc(var(--px) * -1); right: calc(var(--px) * -1); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; animation: kblink 1.2s steps(2, jump-none) infinite; }
 #btn-menu.has-new > .menu-cog { position: relative; }
 .mapfx .map-head > .btn-menu { margin-left: var(--s2); }
 body[data-drill='b'] #btn-menu { visibility: hidden; }
@@ -34,6 +36,15 @@ body.slice .opening .op-menu.op5 > .op-main::after { content: none; }
 body.slice .opening .op-menu.op5 > .op-main b { font: 700 24px/1 Galmuri11, sans-serif; font-synthesis: none; letter-spacing: 0; }
 body.slice .opening .op-menu.op5 > .op-main small { font: 400 12px/1.2 Galmuri11, sans-serif; color: inherit; }
 body.slice .opening .op-menu.op5 > .op-ship { height: 56px; min-height: 56px; }
+/* 메뉴 아이콘 (D-544 — 받은 MM-01 21×18도트, 장치 층 도트 --px 정수배 ≈ 40×34px): 출하 · 기록 · 설정 · 끝내기 단추 글 왼쪽 */
+.op-ico { flex: none; display: block; width: calc(var(--px) * 21); height: calc(var(--px) * 18); background: center / 100% 100% no-repeat; image-rendering: pixelated; }
+body.slice .opening .op-menu.op5 > .op-ship { grid-auto-flow: column; justify-content: start; align-items: center; column-gap: var(--s3); }
+/* 잠긴 것 표지 (받은 MM-01 자물쇠 17×18도트): 출하 준비 — 잠긴 왕관 칸 · 잠긴 「도전」 탭(아이콘 층 --px1) · 잠긴 도전 본문 */
+.lock-ico { flex: none; display: inline-block; width: calc(var(--px) * 17); height: calc(var(--px) * 18); background: center / 100% 100% no-repeat; image-rendering: pixelated; vertical-align: middle; }
+.su-win .tabs > .tab .lock-ico { width: calc(var(--px1) * 17); height: calc(var(--px1) * 18); margin-right: var(--s1); vertical-align: -4px; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice.su-crown.has-ico { grid-template-columns: calc(var(--px) * 17) minmax(0, 1fr); }
+:is(.win, .scr-pick, .scr-place, .kit) .choice.su-crown.has-ico > .lock-ico { width: calc(var(--px) * 17); height: calc(var(--px) * 18); }
+.su-win .su-locked > .lock-ico { margin-bottom: var(--s2); }
 /* 오늘의 도전을 아직 안 했다: 출하 단추 오른쪽 위 청록 점 (색 + 위치 — 글 없이 「새로 열림」) */
 .opening .op-ship > .op-dot { position: absolute; top: calc(var(--px) * 4); right: calc(var(--px) * 6); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #5eead4; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
 .opening .op-menu.op5 > .op-half { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
@@ -69,8 +80,8 @@ body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { margin-left: var(--s2); color:
 body.slice.lay-f #right > .actions { margin-top: 18px; }
 #btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + 4px); color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
 
-/* ---------- H3 「쓸 수 없음」 단추 · 선택지 (MM-01 대기 · 임시): kit.css의 --off · choice-off0 = 받은 보통 그림을 철 램프 한 단 어둡게 다시 칠한 그림
-   (tools/pixel/btn_off_interim.py — 모양 그대로 · 색만 바꿈 · 필터 없음). 진홍 녹 얼룩이 있던 받은 off 그림은 쓰지 않는다 ---------- */
+/* ---------- H3 「쓸 수 없음」 단추 · 선택지: 단추 넷(kit.css --off)은 받은 MM-01 꺼짐 단추(D-544, tools/pixel/mm01_import.py — 9-slice 32×20 · 변 · 가운데 단색).
+   선택지 · 손패 판(choice-off0 · hand-choice-off0)은 MM-01에 없어 보통 그림을 다시 칠한 임시본 그대로(tools/pixel/btn_off_interim.py) ---------- */
 
 /* ---------- H4 마우스 호버 (PC): 키 · 패드 초점 테와 같은 1도트 황동 테 — 즉시(계단), 손가락 기기에는 붙지 않는다 ---------- */
 @media (hover: hover) and (pointer: fine) {

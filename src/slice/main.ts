@@ -77,6 +77,10 @@ document.documentElement.style.setProperty('--cog-off', `url(${new URL('ui/icons
 const iconArt = (key: string): string => `background:url(ui/icons16/${key}.png) center/contain no-repeat;-webkit-mask:none;mask:none;image-rendering:pixelated`;
 /** 16px 칸용 (D-290: 아이콘이 32도트가 되면 반으로 줄인 그림을 따로 쓴다 — 브라우저 축소는 바깥선을 끊는다) */
 const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
+/** 메뉴 아이콘 (D-544 — 받은 MM-01): 21×18도트 통그림 · 장치 층 도트(--px) 정수배. 자물쇠(lock 17×18)는 lockIco */
+const menuIco = (key: string): string => `<i class="op-ico" style="background-image:url(ui/icons16/${key}.png)" aria-hidden="true"></i>`;
+/** 잠긴 것 표지 (D-544 — 받은 MM-01 자물쇠 17×18도트). 글 「잠김」 · 여는 조건은 그대로 두고 그림을 더한다 (색만으로 구분하지 않는다) */
+const lockIco = (): string => '<i class="lock-ico" style="background-image:url(ui/icons16/lock.png)" aria-hidden="true"></i>';
 import { CREW, DEATHS, QUIRKS, SCAR_DESC, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
 import { CHECK_KING_FACE, EVENT_PONDER_MOOD, FOE_KING_FACE, FOE_PIECE_FACE, PAPER_FACE, portraitImg } from '../data/portraits';
@@ -5132,7 +5136,7 @@ const runSetup = (hasSave: boolean, tab0?: SetupTab): void => {
   const seed = (): number => (Date.now() ^ 0x2f17) & 0xffffff;
   const tabsHtml = (): string => `<div class="tabs tabs9 su-tabs" role="tablist">${(['story', 'challenge', 'daily'] as const).map((k) => {
     const locked = k === 'challenge' && !openChallenge;
-    return `<button type="button" class="tab${locked ? ' t-lock' : ''}" data-su-tab="${k}" role="tab" aria-selected="${tab === k}"${locked ? ` aria-label="${T.tabs[k]} · ${T.lock}"` : ''}><span class="tl">${T.tabs[k]}</span></button>`;
+    return `<button type="button" class="tab${locked ? ' t-lock' : ''}" data-su-tab="${k}" role="tab" aria-selected="${tab === k}"${locked ? ` aria-label="${T.tabs[k]} · ${T.lock}"` : ''}><span class="tl">${locked ? lockIco() : ''}${T.tabs[k]}</span></button>`;
   }).join('')}</div>`;
   const bodyHtml = (): string => {
     if (tab === 'story') {
@@ -5140,12 +5144,12 @@ const runSetup = (hasSave: boolean, tab0?: SetupTab): void => {
         const locked = i > cleared;
         // 열린 왕관 = 표지 · 별칭(끝낸 왕관만 부제, D-536 chapterTitle) / 잠긴 왕관 = 표지 · 여는 조건
         const res = locked ? T.crownLock : `${chapterTitle(i, i < cleared)} · ${i < cleared ? T.crownAgain : T.crownNew}`;
-        return `<button type="button" class="choice su-crown" data-crown="${i}" aria-pressed="${chapter === i}"${locked ? ' aria-disabled="true"' : ''}><span class="choice-name">${ch.label}</span><span class="choice-res">${res}</span></button>`;
+        return `<button type="button" class="choice su-crown${locked ? ' has-ico' : ''}" data-crown="${i}" aria-pressed="${chapter === i}"${locked ? ' aria-disabled="true"' : ''}>${locked ? lockIco().replace('lock-ico', 'ico lock-ico') : ''}<span class="choice-name">${ch.label}</span><span class="choice-res">${res}</span></button>`;
       }).join('');
       return `<div class="inset su-body"><p class="note">${T.storyLead}</p><div class="su-crowns">${crowns}</div></div>`;
     }
     if (tab === 'challenge') {
-      if (!openChallenge) return `<div class="inset su-body su-locked"><p>${T.challengeLock}</p></div>`;
+      if (!openChallenge) return `<div class="inset su-body su-locked">${lockIco()}<p>${T.challengeLock}</p></div>`;
       const asc = ASCENSION[level - 1];
       const rec = meta.challengeRecords?.[level];
       return `<div class="inset su-body"><div class="su-level">${btnHtml({ label: T.prev, attrs: 'data-su-prev', disabled: level <= CHALLENGE_START })}<p class="lead">${T.challengeLead(level - CHALLENGE_START + 1)}</p>${btnHtml({ label: T.next, attrs: 'data-su-next', disabled: level >= top })}</div><p>${asc.name} · ${asc.desc}</p><p class="note">${rec ? T.challengeRec(rec.attempts, rec.clears) : T.challengeNone}</p></div>`;
@@ -5302,9 +5306,9 @@ const opening = (): void => {
       // 이어하기 부제: 왕관 표지 + 별칭(D-536 — 끝낸 왕관만 부제) · 막
       const svCrown = sv ? runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0, (sv.chapter ?? 0) < (meta.storyCleared ?? 0)) : '';
       nav.innerHTML = `${sv ? `<button class="btn k-brass op-main op-cont" type="button" data-cont><b>${MAIN_TEXT.cont}</b><small>${MAIN_TEXT.contSub(svCrown, actLabel(sv.actI + 1))}</small></button>` : ''}
-        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship><b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
-        <div class="op-half"><button class="btn k-iron" type="button" data-records>${MAIN_TEXT.records}</button><button class="btn k-iron" type="button" data-settings>${MAIN_TEXT.settings}</button></div>
-        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${MAIN_TEXT.quit}</button>` : ''}
+        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship>${menuIco('menu.run')}<b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
+        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}${MAIN_TEXT.records}</button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}${MAIN_TEXT.settings}</button></div>
+        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}${MAIN_TEXT.quit}</button>` : ''}
         ${dev ? `<div class="op-half op-dev"><button class="btn k-iron" type="button" data-lab-open>시험장</button><button class="btn k-iron" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
       nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!)); // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
       nav.querySelector('[data-ship]')!.addEventListener('click', () => (sfx('tap'), runSetup(!!sv)));
