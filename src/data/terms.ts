@@ -12,3 +12,11 @@ export const TERM = {
   /** 출하 반장 · 도금왕의 가시: 치고 못 쓰러뜨리면 친 기물이 다친다 (옛 「되받아침」, D-536) */
   thorns: '가시 반격',
 } as const;
+
+/**
+ * 바뀐 용어 이름 (옛 이름 → 지금 이름, D-548): 기록 판(meta.terms · termsNew)에 남은 옛 이름을 읽을 때 갈아 끼운다 —
+ * 그대로 두면 옛 이름은 사전에서 사라지고, 지금 이름이 「새 용어」로 다시 열려 term_unlock이 또 남는다.
+ */
+export const TERM_RENAMED: Record<string, string> = { 되받아침: TERM.thorns };
+/** 용어 목록의 옛 이름을 지금 이름으로 (겹치면 하나) */
+export const renameTerms = (list: string[]): string[] => [...new Set(list.map((t) => TERM_RENAMED[t] ?? t))];

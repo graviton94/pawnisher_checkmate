@@ -54,6 +54,7 @@ const day = new Date().toISOString().slice(0, 10);
     else if (sc === 'boss2x2') await require('./qa/boss2x2.cjs')(pg, shot);
     else if (sc === 'raid') await require('./qa/raid.cjs')(pg, shot);
     else if (sc === 'settings') await require('./qa/settings.cjs')(pg, shot);
+    else if (sc === 'last-stand') await require('./qa/last-stand.cjs')(pg, shot);
     else if (sc === 'sfx') await require('./qa/sfx-check.cjs')(pg, shot);
     else if (sc === 'music') await require('./qa/music-check.cjs')(pg, shot);
     else if (sc === 'anchor') await require('./qa/anchor.cjs')(pg, shot);

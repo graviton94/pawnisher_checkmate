@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildRun, ASC_MAX } from '../src/slice/run';
-import { SAVE_VERSION, clearSave, dailySeed, emptyMeta, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
+import { KEYWORDS } from '../src/data/hud';
+import { SAVE_VERSION, clearSave, dailySeed, emptyMeta, ftueMark, readMeta, readSave, recordRun, todayKey, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
 
 const memStore = (): Store => {
   const m = new Map<string, string>();
@@ -66,5 +67,30 @@ describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
     expect(pair![1].enemy.filter((t) => t === 'P').length).toBe(pair![0].enemy.filter((t) => t === 'P').length + 1);
     const chk = (r: typeof r0) => r[0].rows.at(-1)![0].battle!.kingHp;
     expect(chk(r5)).toBeGreaterThan(chk(r0));
+  });
+});
+
+describe('첫 10분 단계는 기록 판에 한 번 (D-548 — 출하 중 앱을 다시 켜자 first_pick이 또 남았다)', () => {
+  it('처음 밟은 단계만 새 기록 판을 돌려주고, 다시 읽은 뒤(앱 재시작)에도 같은 단계는 null', () => {
+    const st = memStore();
+    const a = ftueMark(readMeta(st), 'first_pick');
+    expect(a?.ftue).toEqual(['first_pick']);
+    writeMeta(st, a!);
+    // 앱을 다시 켠다 — 세션 상태 없이 기록 판만 읽는다
+    expect(ftueMark(readMeta(st), 'first_pick')).toBeNull();
+    const b = ftueMark(readMeta(st), 'kit_pick');
+    expect(b?.ftue).toEqual(['first_pick', 'kit_pick']);
+  });
+});
+
+describe('바뀐 용어 이름 (D-548 — D-536 「되받아침」 → 「가시 반격」)', () => {
+  it('옛 이름으로 연 용어는 지금 이름으로 읽혀 다시 열리지 않는다', () => {
+    const st = memStore();
+    writeMeta(st, { ...emptyMeta(), terms: ['태엽', '되받아침'], termsNew: ['되받아침'] });
+    const m = readMeta(st);
+    expect(m.terms).toEqual(['태엽', '가시 반격']);
+    expect(m.termsNew).toEqual(['가시 반격']);
+    expect(KEYWORDS.some(([k, , g]) => g === 'thorns' && k === '가시 반격')).toBe(true);
+    expect(KEYWORDS.some(([k]) => k === '되받아침')).toBe(false);
   });
 });

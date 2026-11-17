@@ -2039,6 +2039,21 @@ export const kingDoomed = (b: SliceBattle): boolean => {
   return !!k && b.s.winner === null && intentHits(b).some((h) => h.pieceId === k.id && h.killed);
 };
 
+/**
+ * 사선 제안 (D-548 — 실기 피드백 「맞은 뒤에 떴다」): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 **전**에만 낸다.
+ * 경고 단계(첫 누름 — 턴이 아직 끝나지 않음) · 내 차례 시작(방금 맞은 뒤) · 이어하기에서는 내지 않는다.
+ * 낼 때는 대신 맞을 분대원 id(바꿔 서면 킹이 사는 첫 분대원), 아니면 null.
+ */
+export const sacrificeOffer = (b: SliceBattle, left: number): number | null => {
+  if (left <= 0 || b.s.winner !== null || !kingDoomed(b)) return null;
+  if (!b.warned && kingInDanger(b)) return null;
+  // 바꿔 서도 킹이 쓰러지면 내지 않는다 (실화면 재현: 두 칸이 다 예고 안이라 받아들여도 졌다)
+  return sacrificeCandidates(b).find((id) => {
+    const t = JSON.parse(JSON.stringify({ ...b, snap: '' })) as SliceBattle;
+    return sacrificeSwap(t, id) && !kingDoomed(t);
+  }) ?? null;
+};
+
 /** 자원 희생 (D-178): 킹과 곁의 분대원이 자리를 바꾼다 — 그 분대원이 대신 맞는다. 바꿀 수 있는 분대원 id들 */
 export const sacrificeCandidates = (b: SliceBattle): number[] => {
   const k = kingOf(b.s, 0);

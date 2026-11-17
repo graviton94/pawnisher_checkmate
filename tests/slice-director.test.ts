@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addNemesis, betOffer, betProgress, betStake, betText, betterHighlight, dir, DIRECTOR, isCloseCall, settleBet } from '../src/slice/director';
-import { clutchBoost, newSliceBattle, planEnemy, sacrificeCandidates, sacrificeSwap } from '../src/slice/battle';
+import { clutchBoost, dangerSquares, endTurn, kingDoomed, newSliceBattle, planEnemy, sacrificeCandidates, sacrificeOffer, sacrificeSwap, type SliceBattle } from '../src/slice/battle';
 import { START_COMMANDS } from '../src/slice/cards';
 import { kingOf } from '../src/engine';
 
@@ -98,5 +98,65 @@ describe('심리 연출 감독 (D-178)', () => {
     expect(b.ap).toBe(ap + 2);
     expect(b.hand).toHaveLength(n + 1);
     expect(b.hand.at(-1)).toBe('plate');
+  });
+});
+
+describe('사선 제안 시점 (D-548 — 실기 「이미 다 맞은 뒤에 떴다」)', () => {
+  /** 킹을 예고 칸에 세우고 HP 1 — 곁에 분대원 하나를 붙인다 (디버그 doom과 같은 판) */
+  const doomed = (seed: number): SliceBattle | null => {
+    const b = newSliceBattle(squad, ['K', 'P', 'P', 'N', 'R'], START_COMMANDS, seed);
+    const k = kingOf(b.s, 0)!;
+    for (const sq of dangerSquares(b)) {
+      if (b.s.pieces.some((p) => p.x === sq.x && p.y === sq.y)) continue;
+      const mate = b.s.pieces.find((p) => p.side === 0 && p.id !== k.id)!;
+      const free = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].map(([dx, dy]) => ({ x: sq.x + dx, y: sq.y + dy }))
+        .find((c) => c.x >= 0 && c.y >= 0 && c.x < b.s.width && c.y < b.s.height && !b.s.pieces.some((p) => p.x === c.x && p.y === c.y));
+      if (!free) continue;
+      Object.assign(k, { x: sq.x, y: sq.y, hp: 1, shield: 0 });
+      Object.assign(mate, { x: free.x, y: free.y });
+      if (kingDoomed(b) && sacrificeCandidates(b).length) return b;
+    }
+    return null;
+  };
+  it('첫 누름(경고 단계)에는 묻지 않고, 턴을 정말 끝내는 누름에서 적 공격 전에 묻는다', () => {
+    let found = 0;
+    for (let seed = 1; seed <= 40 && found < 3; seed++) {
+      const b = doomed(seed);
+      if (!b) continue;
+      expect(sacrificeOffer(b, 1)).toBeNull();
+      expect(endTurn(b)).toBe('warn');
+      const pick = sacrificeOffer(b, 1);
+      if (pick === null) continue; // 바꿔 서도 살 길이 없는 판 — 묻지 않는다
+      found++;
+      expect(sacrificeOffer(b, 0)).toBeNull();
+      // 아직 아무도 맞지 않았다 — 제안은 피해 앞이다
+      expect(kingOf(b.s, 0)!.hp).toBe(1);
+      // 받아들이면 킹은 이번 적 차례를 넘긴다
+      expect(sacrificeSwap(b, pick)).toBe(true);
+      expect(kingDoomed(b)).toBe(false);
+      const r = endTurn(b);
+      expect(r).not.toBe('warn');
+      expect(kingOf(b.s, 0)!.hp).toBeGreaterThan(0);
+    }
+    expect(found).toBeGreaterThan(0);
+  });
+  it('적 차례가 풀린 뒤(내 차례 시작 · 이어하기 판)에는 같은 판정이어도 묻지 않는다', () => {
+    let found = 0;
+    for (let seed = 1; seed <= 12 && found < 3; seed++) {
+      const b = doomed(seed);
+      if (!b) continue;
+      expect(endTurn(b)).toBe('warn');
+      // 거절하고 턴을 끝낸다 — 킹이 맞는다
+      const r = endTurn(b);
+      expect(r).not.toBe('warn');
+      if (b.s.winner !== null) continue;
+      found++;
+      // 다음 내 차례 시작: 경고 전 상태 — 또 쓰러지게 생겼어도 지금은 묻지 않는다 (맞은 직후 창이 뜨던 버그)
+      expect(b.warned).toBe(false);
+      if (kingDoomed(b)) expect(sacrificeOffer(b, 1)).toBeNull();
+      // 저장 → 이어하기(JSON 왕복)도 같다
+      const back = JSON.parse(JSON.stringify(b)) as SliceBattle;
+      expect(sacrificeOffer(back, 1)).toBeNull();
+    }
   });
 });
