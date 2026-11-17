@@ -1786,5 +1786,5 @@ body.slice .cf.cf.cf.cf.cmd > .cf-type .t3 i { text-shadow: var(--px) 0 0 #0b0b0
 
 /* D-538 (리뷰 #13): 고르기 화면(보상 · 부품 · 분대원)은 통짜 먹 바탕 — 반투명 디더 막 너머로 지도 제목 · 계수기가 비쳐
    「HP +25%」 글 · 「나사 +40」 꼬리표와 겹쳤다. 장소 그림 화면(placebg)은 장소 그림이 바탕이고, 그 위 지도 머리 줄만 숨긴다 */
-body.slice:not(.placebg) .overlay:has(.scr-pick) { background: #0b0b0e; }
+body.slice:not(.placebg) .overlay:has(.scr-pick) { background: #0b0b0e !important; } /* !important: m3dith 막 애니메이션(반투명 0.8)을 이긴다 */
 body.slice:has(.overlay .scr-pick) .map-head { visibility: hidden; }
