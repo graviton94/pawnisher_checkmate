@@ -374,6 +374,11 @@ const GROUPS = [
         const nx = pg.locator('[data-set-next]'); if ((await nx.count()) && (await nx.isEnabled())) { await nx.tap(); await W(400); await shot(`set-${k}-2`); }
       }
       await t('[data-set-tab="input"]'); await t('[data-keymap]', 600); await shot('set-keymap'); await t('[data-x]');
+      // 키 바꾸기 (D-539): 턴 끝 → Q, 겹치는 키(R = 되감기)는 거절 토스트, 기본값으로
+      await t('[data-set-tab="input"]'); if (!(await pg.locator('[data-keybind]').count())) await t('[data-set-next]'); await t('[data-keybind]', 600); await t('[data-bind="endTurn"]'); await shot('set-keybind-wait');
+      await pg.keyboard.press('q'); await W(400); await shot('set-keybind-q');
+      await t('[data-bind="undo"]'); await pg.keyboard.press('r'); await W(400); await shot('set-keybind-taken');
+      await pg.keyboard.press('Escape'); await W(200); await t('[data-bind-reset]'); await t('[data-x]');
       await t('[data-set-tab="info"]'); await t('[data-privacy]', 700); await shot('set-privacy'); await t('[data-lic-x]');
       await t('[data-set-tab="info"]'); await t('[data-credits]', 700); await shot('set-credits');
       await t('[data-lic]', 700); await shot('set-license-1');
@@ -415,6 +420,16 @@ const GROUPS = [
       await pg.keyboard.press('Escape'); await W(700); await shot('pause-map-esc');
       await pg.keyboard.press('Escape'); await W(500);
       await pg.locator('[data-map-menu]').tap(); await W(700); await pg.locator('[data-pz-set]').tap(); await W(800); await shot('pause-settings');
+    } },
+    { name: 'cb-aid', assets: [], run: async ({ pg, A, W, shot }) => {
+      // 색 보조 무늬 (D-539): 설정 › 접근성에서 켜고 대국 — 적 위협 · 범위 칸 빗금 · 적 HP 체크
+      await A(() => window.sliceApi.settingsWin()); await W(600);
+      await pg.locator('[data-set-tab="access"]').tap(); await W(300);
+      const nx = pg.locator('[data-set-next]'); if (!(await pg.locator('[data-seg="cbAid"]').count()) && (await nx.count())) { await nx.tap(); await W(300); }
+      await pg.locator('[data-seg="cbAid"][data-v="1"]').tap(); await W(300); await shot('set-cb-on');
+      await pg.locator('[data-set-x]').tap(); await W(400);
+      await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800); await shot('cb-battle');
+      await A(() => { const q = window.slice().s.pieces.find((x) => x.side === 1 && x.type !== 'K'); window.sliceApi.tap({ x: q.x, y: q.y }); }); await W(700); await shot('cb-threat');
     } },
     { name: 'disabled', assets: ['MM-01'], run: async ({ A, W, shot }) => {
       // 「쓸 수 없음」 단추 (H3 임시 그림) 넷 + 보통 넷
