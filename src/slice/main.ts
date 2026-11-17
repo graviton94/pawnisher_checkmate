@@ -892,7 +892,7 @@ const magAnim = (oldBody: HTMLElement | null, same: boolean): void => {
   const prev = lastOpen;
   lastOpen = now;
   if (calmNow()) return;
-  const tick = (k: number) => window.setTimeout(() => sfx('tap', 6 + k), k * 55);
+  const tick = (k: number) => window.setTimeout(() => sfx('tick', k), k * 55);
   const el = now !== null ? $('hand').querySelector<HTMLElement>(`[data-card="${now}"] .hc-body`) : null;
   if (el) {
     const h = el.offsetHeight;
@@ -1258,6 +1258,8 @@ const apSources = (gain: number, before: typeof b.s, once0: string[], refunded0:
     el.style.top = `${Math.round(t.from.y - el.offsetHeight / 2)}px`;
     arcFly(el, t.from, toPt, { delay: i * 140, ms: 620, end: 0.8, target: $('vials') });
   });
+  // 태엽이 감긴다 (D-540): 첫 조각이 계기에 닿을 즈음 래칫 소리
+  if (out.length) window.setTimeout(() => sfx('wind'), 520);
   // 부품이 준 몫이면 그 부품 칸도 번쩍 (원천이 어디인지 — 기존 flashParts)
   flashParts(out.filter((t) => t.icon.includes('icons16/') && !t.icon.includes('hud.key')).map((t) => (t.icon.match(/icons16\/(\w+)@/)?.[1] ?? '') as SlicePartId).filter(Boolean));
 };
@@ -1325,7 +1327,7 @@ const pickCard = (i: number): void => {
     if (!canPlay(b, i) && costOf(b, i) > b.ap) nope(document.querySelector(`[data-card="${i}"]`), $('vials'));
     if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
     if (c.kind === 'draw' || c.kind === 'spark') {
-      sfx(c.kind === 'spark' ? 'coin' : 'tap', b.kills + 2);
+      sfx(c.kind === 'spark' ? 'coin' : 'cast', c.kind === 'spark' ? b.kills + 2 : 0);
       // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드가 움츠렸다 튀어 오르며 터지고 새로 뽑힌 카드는 덱에서 날아든다
       castFx(document.querySelector<HTMLElement>(`#hand [data-card="${i}"]`));
       const n0 = b.hand.length;
@@ -1338,7 +1340,7 @@ const pickCard = (i: number): void => {
       if (gained > 0) {
         const cards = [...document.querySelectorAll<HTMLElement>('#hand [data-card]')].slice(-gained);
         cards.forEach((el, k) => { el.style.setProperty('--k', String(k)); replay(el, 'drawn3'); });
-        window.setTimeout(() => sfx('tap', 4), 160);
+        window.setTimeout(() => sfx('card'), 160);
       }
       return;
     }
@@ -1395,7 +1397,7 @@ const burnNote = (n0: number): void => {
   for (const id of fresh) by.set(COMMANDS[id].who, (by.get(COMMANDS[id].who) ?? 0) + 1);
   const t = [...by.keys()][0] as PieceType;
   toast(`${PIECE_NAMES_KO[t]} 카드 ${fresh.length}장이 불탄다`, 2200);
-  sfx('threat');
+  sfx('burn');
 };
 
 const run = (i: number, pieceId?: number, to?: Pos): Promise<void> => guarded(() => runInner(i, pieceId, to));
@@ -1496,7 +1498,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   }
   // 반장 2단계 (D-243): 쓰러진 반장이 다시 일어선다
   if (r.events.some((e) => e.type === 'respawn' && e.label === BOSS_RISE_LABEL)) {
-    sfx('threat');
+    sfx('phase');
     const gilded = b.bossRule === 'gilded';
     // #21 · D-490: 패배 띠(koBanner lose) 대신 2단계 컷인 — 레터박스 · 진홍 번쩍 · 반장 그림 띠 + 사선 베기 · 「격노」 경보 띠
     await p2Rise({ art: p2Art(b.bossRule ?? 'plate'), word: gilded ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다' });
@@ -2294,7 +2296,7 @@ const showMap = (): void => {
     <div class="map-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>${nodes}</div>
     <div class="map-foot">${rosterHtml()}<footer class="inset peek-bar">${legend}</footer></div>`;
   document.body.appendChild(el);
-  sfx('lift');
+  sfx('open');
   el.querySelector('[data-map-menu]')!.addEventListener('click', () => (sfx('tap'), pauseMenu()));
   const info = el.querySelector<HTMLElement>('.peek-bar')!;
   // 분대 현황 (#24): 누르면 아래 띠에 그 분대원, 다시 누르면 분대 창 — 노드 고름은 푼다
@@ -2362,7 +2364,7 @@ const showMap = (): void => {
   }
   const go = (k: number): void => {
     picked[actI][rowI] = k;
-    sfx('rare');
+    sfx('step');
     pxOut(el, () => {
       el.remove();
       enterNode(row[k]);
@@ -2819,11 +2821,11 @@ const shopScreen = (): void => {
         // 나사로 다듬기 (D-218): 고르면 값을 치르고 고물상으로 돌아온다 · 빼기 · 부품 칸 가득은 그쪽 화면에서 정한 뒤 값을 치른다
         if (kind === 'refine') return refineScreen(render, () => { gold -= cost; svcUsed.refine += 1; sold.add(key); render(); }, 'shop');
         if (kind === 'remove') return deckView('remove', (removed) => { if (removed) { gold -= cost; svcUsed.remove += 1; sold.add(key); } render(); });
-        if (kind === 'part') return takeFx(btn, () => gainPart(id as SlicePartId, (took) => { if (took) { gold -= cost; sold.add(key); sfx('coin'); } render(); }), true);
+        if (kind === 'part') return takeFx(btn, () => gainPart(id as SlicePartId, (took) => { if (took) { gold -= cost; sold.add(key); sfx('buy'); } render(); }), true);
         takeFx(btn, () => {
           gold -= cost;
           sold.add(key);
-          sfx('coin');
+          sfx('buy');
           if (kind === 'card') deck.push(id as CommandId);
           if (kind === 'rewind' || kind === 'revive') charms[kind] += 1;
           if (kind === 'heal') squad = squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * SHOP.healPct)) }));
@@ -5244,7 +5246,7 @@ const opening = (): void => {
       nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!)); // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
       nav.querySelector('[data-ship]')!.addEventListener('click', () => (sfx('tap'), runSetup(!!sv)));
       nav.querySelector('[data-records]')!.addEventListener('click', () => (sfx('tap'), recordsWin()));
-      nav.querySelector('[data-settings]')!.addEventListener('click', () => (sfx('tap'), settings()));
+      nav.querySelector('[data-settings]')!.addEventListener('click', () => (sfx('open'), settings()));
       nav.querySelector('[data-quit]')?.addEventListener('click', () => {
         sfx('tap');
         const q = MAIN_TEXT.quitAsk;

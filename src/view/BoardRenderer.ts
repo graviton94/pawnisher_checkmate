@@ -4,7 +4,7 @@ import { shakeMul } from '../prefs/fx';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
-import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN } from '../data/giants';
+import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN, RAID_TEXT } from '../data/giants';
 import { PRELOAD } from '../data/preload-list';
 import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
@@ -636,7 +636,7 @@ class BoardScene extends Phaser.Scene {
     };
     if (kind === 'slam') {
       // 거대 주물 내리찍기 (D-484): 예고 칸이 앞에서부터 계단으로 쾅 — 쇳물 주황 판 + 노란 속 + 큰 흔들림
-      sfx('threat');
+      sfx('crit');
       cells.forEach((q, i) => {
         cell(q, 0xe8783c, 0.8, i * 40, 220);
         cell(q, 0xfacc15, 0.6, i * 40 + 40, 120, t * 0.28);
@@ -647,7 +647,7 @@ class BoardScene extends Phaser.Scene {
       sfx('threat');
       await this.fxHook.rowBomb(pos.y, this.state.width);
     } else if (kind === 'thorns' && from && this.fxHook) {
-      sfx('threat');
+      sfx('parry');
       await this.fxHook.thorns(from, pos);
       const sp = [...this.sprites.values()].find((v) => v.piece.x === pos.x && v.piece.y === pos.y);
       if (sp) this.tweens.add({ targets: sp.root, x: sp.root.x + t * 0.08, duration: 40, yoyo: true, repeat: 3 });
@@ -664,7 +664,7 @@ class BoardScene extends Phaser.Scene {
       for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) cell({ x: pos.x + dx, y: pos.y + dy }, 0xfacc15, 0.45, 200, 100, t * 0.2);
       await this.wait(320);
     } else if (kind === 'thorns' && from) {
-      sfx('threat');
+      sfx('parry');
       const a = this.center(from);
       const b = this.center(pos);
       const n = Math.max(3, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / (t * 0.35)));
@@ -1916,6 +1916,7 @@ class BoardScene extends Phaser.Scene {
         this.announce('바닥이 꺼진다 — 칸 한 쌍이 톱니 아래로');
         this.shakeLv(2);
         this.drawTiles(cur);
+        if (e.pushes.length) sfx('push');
         await Promise.all(
           e.pushes.map((p) => {
             const sp = this.sprites.get(p.pieceId);
@@ -2058,6 +2059,9 @@ class BoardScene extends Phaser.Scene {
       if (e.type === 'mark') {
         // 적 편성 특성 (D-483): 띠 안내 + 그 기물들 위에 짧은 글 (수리 · 방진은 뒤따르는 heal · shield가 숫자를 띄운다)
         this.announce(e.label);
+        // 받아치기 → 경직 · 헛방 (D-540 소리)
+        if (e.tag === RAID_TEXT.stunTag) (sfx('parry'), this.time.delayedCall(200, () => sfx('stun')));
+        else if (e.tag === RAID_TEXT.whiffTag) sfx('stun');
         for (const id of e.tag ? e.pieceIds : []) { const sp = this.sprites.get(id); if (sp) this.floatText(sp, e.tag, '#FCA5A5'); }
         await this.wait(e.tag ? 260 : 120);
         continue;
@@ -2125,7 +2129,9 @@ class BoardScene extends Phaser.Scene {
             this.shakeLv(shakeLvOf(fb.intensity));
             if (!this.calm && ts.piece.type === 'K') (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(fb.vibrate);
           }
-          sfx('hit', this.combo++);
+          // 타격 소리 (D-540): 내 킹이 맞으면 킹 피격 · 한 대에 HP 절반 넘게 깎이거나 배율이 붙으면 모루 일격 · 그 밖은 가벼운 쇠 소리
+          const heavy = h.damage >= ts.piece.maxHp * 0.5 || (e.mult ?? 1) > 1.05;
+          sfx(ts.piece.side === 0 && ts.piece.type === 'K' && h.damage > 0 ? 'kinghit' : heavy ? 'crit' : 'hit', this.combo++);
           this.applyHit(ts, h);
           // 쾌감 · 아픔 (D-104): 내 기물이 맞으면 화면 가장자리가 붉게 (피해 비율만큼), 쓰러지면 둔탁한 소리.
           // 처치는 아주 짧게 멈췄다 간다 (히트스톱)

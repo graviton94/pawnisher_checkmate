@@ -285,7 +285,7 @@ const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
       busy = true;
       items[i] = res[n++];
       if (n === 3 && res[0] === res[1] && !calm()) { blink = i; sfx('threat'); await wait(1300); blink = -1; }
-      drop(i); sfx('tap');
+      drop(i); sfx('slot');
       await wait(380);
       busy = false;
       if (n === 2 && res[0] === res[1]) blink = [0, 1, 2].find((k) => !items[k]) ?? -1;

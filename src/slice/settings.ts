@@ -144,7 +144,7 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
   };
   const reopen = (t: Tab): (() => void) => () => openSettings(o, t);
   const bind = (): void => {
-    panel.querySelector('[data-set-x]')!.addEventListener('click', () => (sfx('tap'), close()));
+    panel.querySelector('[data-set-x]')!.addEventListener('click', () => (sfx('close'), close()));
     panel.querySelectorAll<HTMLElement>('[data-set-tab]').forEach((t) => t.addEventListener('click', () => {
       if (t.dataset.setTab === tab) return;
       tab = t.dataset.setTab as Tab;

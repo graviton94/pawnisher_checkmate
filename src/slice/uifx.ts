@@ -289,6 +289,7 @@ export const shutter = async (mid: () => void | Promise<void>): Promise<void> =>
 /** 안 될 때 (연구소 「태엽 부족」): 카드가 좌우로 떨고 붉은 테, 빈 태엽 칸이 붉게 깜빡 */
 export const nope = (el: Element | null, vials?: Element | null): void => {
   if (!el) return;
+  sfx('deny');
   el.classList.remove('nope');
   void (el as HTMLElement).offsetWidth;
   el.classList.add('nope');

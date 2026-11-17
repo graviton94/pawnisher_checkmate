@@ -141,7 +141,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     };
     // 시간표
     at(0, () => el.classList.add('bars'));
-    at(260, () => o.sfx?.('boom'));
+    at(260, () => o.sfx?.('boss'));
     at(360, () => el.classList.add('port'));
     at(700, () => { el.classList.add('name'); o.sfx?.('stamp'); });
     at(1000, () => void typeIn(el.querySelector('.bf-title')!, o.title, 40, undefined, () => el.isConnected));

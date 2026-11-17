@@ -52,4 +52,5 @@ export const LICENSES: LicenseNotice[] = [
   { name: 'Phaser 3', by: '© 2024 Richard Davey, Phaser Studio Inc.', license: 'MIT', use: '판 그리기 엔진', text: phaserMit, url: 'https://github.com/phaserjs/phaser/blob/master/LICENSE.md' },
   { name: 'game-icons.net', by: 'Lorc, Delapouite 외 기여자', license: 'CC BY 3.0', use: '아이콘 (16칸 도트로 줄여 고침)', url: 'https://creativecommons.org/licenses/by/3.0/' },
   { name: 'Tabler Icons', by: '© 2020–2024 Paweł Kuna', license: 'MIT', use: '아이콘 (16칸 도트로 줄여 고침)', text: mit('2020-2024 Paweł Kuna'), url: 'https://github.com/tabler/tabler-icons/blob/main/LICENSE' },
+  { name: '효과음 (주물 공방 소리)', by: '당신의 하루 스튜디오 — 자체 합성 (tools/audio/sfx_synth.py)', license: 'CC0 1.0', use: '모든 효과음', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
 ];

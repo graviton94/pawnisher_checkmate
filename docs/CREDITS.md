@@ -7,6 +7,10 @@
 - **Tabler Icons** — Paweł Kuna. [MIT](https://github.com/tabler/tabler-icons/blob/main/LICENSE).
   쓴 아이콘: arrows-split-2, ripple, link, droplet-filled, spiral, arrows-exchange, hand-grab, key-filled, clock-filled, bell-filled, star-filled, eye-filled, target, cards-filled, question-mark.
 
+## 소리 (D-540)
+- **효과음 전부** (`public/audio/sfx/`, 36종 53파일) — 자체 합성. `tools/audio/sfx_synth.py`(numpy/scipy 모드 합성 · 래칫 · 증기 · 종이 잡음)로 찍었다. **CC0 1.0** (https://creativecommons.org/publicdomain/zero/1.0/)으로 공개한다. 외부 묶음(kenney.nl · OpenGameArt · Freesound)은 작업 환경 네트워크 정책(프록시 403)으로 받지 못해 쓰지 않았다.
+- **배경 음악 시안** (`build-res/audio/bgm-concepts/`, 게임에 넣지 않음) — 자체 작곡(`tools/audio/bgm_concepts.py`, 악보 `tools/audio/midi/`). A · B · D는 **FluidR3_GM** 사운드폰트(Frank Wen, MIT)로 렌더, C는 자체 칩 합성. 시안을 게임에 넣게 되면 렌더 소리만 들어가며 사운드폰트 고지를 여기와 `src/data/licenses.ts`에 함께 올린다.
+
 ## 글꼴
 - **갈무리 (Galmuri)** — Lee Minseo. SIL OFL 1.1.
 
