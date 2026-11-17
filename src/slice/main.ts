@@ -52,7 +52,7 @@ import { companionScene } from '../data/companion-scenes';
 import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, chapterTitle, runLabel, runIdentity, endingLabel, type RunMode, type StoryChapter, type EndingKind, type StoryPromise } from '../data/campaign';
 import { promotionScene } from './promotion';
 import { effectHtml, effectNumbers } from './effect-text';
-import { devQuery, isDesktop, quitGame, toggleFullscreen } from './platform';
+import { devQuery, isDesktop, onBeforeQuit, quitGame, toggleFullscreen } from './platform';
 import { boardCursorAt, hardwareBack, installInput, resetBoardCursor, syncBoardCursor } from './keys';
 import { bodyRect } from './boardcursor';
 import { pieceImg } from '../ui/sprites';
@@ -1049,6 +1049,7 @@ const persistNow = (): void => {
   telemetryFlush();
 };
 window.addEventListener('pagehide', persistNow);
+onBeforeQuit(persistNow);
 // Capacitor는 앱이 뒤로 갈 때 document에 'pause'를 쏜다 (플러그인 없이도)
 document.addEventListener('pause', persistNow);
 /** 저장소가 가득 차 못 썼을 때 (D-529): 기록부터 비우고 다시 — 그래도 안 되면 한 줄 알림 (20초에 한 번) */

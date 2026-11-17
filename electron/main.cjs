@@ -1,5 +1,6 @@
 // PC(스팀) 빌드 진입점 (GDD 10장 M9). 웹 빌드(dist)를 창 하나로 띄운다.
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) {
@@ -25,8 +26,17 @@ try {
   steam = null;
 }
 
-ipcMain.handle('achievement', (_e, id) => {
-  if (!steam) return false;
+/** 게임 페이지 (dist/index.html) — 창은 여기서 벗어나지 못한다 */
+const PAGE = pathToFileURL(path.join(__dirname, '..', 'dist', 'index.html')).href;
+const DIST = pathToFileURL(path.join(__dirname, '..', 'dist') + path.sep).href;
+/** IPC를 부른 쪽이 우리 창의 맨 위 문서(dist 안 file://)인가 (코드 리뷰 9 — 다른 프레임 · 다른 주소가 창 기능을 부르지 못하게) */
+const trusted = (e) => {
+  const f = e.senderFrame;
+  return !!f && f.parent === null && typeof f.url === 'string' && f.url.startsWith(DIST) && !!main && e.sender === main.webContents;
+};
+
+ipcMain.handle('achievement', (e, id) => {
+  if (!steam || !trusted(e)) return false;
   try {
     return steam.achievement.activate(String(id));
   } catch {
@@ -43,9 +53,17 @@ const toggleFull = (win) => {
   return win.isFullScreen();
 };
 // 웹 코드에서 부르는 창 기능 (D-531, src/slice/platform.ts): 게임 끝내기 · 전체 화면
-ipcMain.handle('quit', () => app.quit());
-ipcMain.handle('fullscreen', (e) => toggleFull(BrowserWindow.fromWebContents(e.sender)));
-ipcMain.handle('is-fullscreen', (e) => !!BrowserWindow.fromWebContents(e.sender)?.isFullScreen());
+// 끝내기 전 저장은 웹 쪽이 먼저 한다 (platform.ts quitGame → persistNow → quit)
+ipcMain.handle('quit', (e) => { if (trusted(e)) app.quit(); });
+ipcMain.handle('fullscreen', (e) => trusted(e) && toggleFull(BrowserWindow.fromWebContents(e.sender)));
+ipcMain.handle('is-fullscreen', (e) => trusted(e) && !!BrowserWindow.fromWebContents(e.sender)?.isFullScreen());
+// 창 단단히 (코드 리뷰 9): 게임 페이지 밖으로 가는 이동 · 새 창 · 웹뷰를 모두 막는다 (내용은 모두 로컬)
+app.on('web-contents-created', (_e, wc) => {
+  wc.on('will-navigate', (ev, url) => { if (url !== PAGE) ev.preventDefault(); });
+  wc.on('will-redirect', (ev, url) => { if (url !== PAGE) ev.preventDefault(); });
+  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+  wc.on('will-attach-webview', (ev) => ev.preventDefault());
+});
 app.on('second-instance', () => {
   if (!main) return;
   if (main.isMinimized()) main.restore();
@@ -63,7 +81,8 @@ const createWindow = () => {
     show: !smoke,
     title: 'Pawnisher : Checkmate',
     // 출시판은 개발자 도구를 열 수 없다 (D-531)
-    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, devTools: !app.isPackaged },
+    // 모래 상자 · 격리 (코드 리뷰 9): 웹 코드는 Node에 닿지 못하고, preload는 창 기능 넷만 내보인다
+    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, devTools: !app.isPackaged },
   });
   main = win;
   win.on('closed', () => { if (main === win) main = null; });
@@ -105,7 +124,7 @@ const createWindow = () => {
       } catch (e) { console.error('SMOKE failed', String(e)); app.exit(1); }
     });
   }
-  win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  win.loadURL(PAGE);
 };
 
 app.whenReady().then(createWindow);
