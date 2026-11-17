@@ -10,7 +10,7 @@ import { installDitherVars } from './view/motion';
 
 const hud = new Hud();
 installPressFeedback();
-// 디더 가면 16단 변수 (D-549 — style.css 키프레임이 쓴다)
+// 디더 가면 16단 변수 (D-554 — style.css 키프레임이 쓴다)
 installDitherVars();
 let controller: BattleController;
 

@@ -1,7 +1,7 @@
-/* ===================== 비주얼 노벨 층 (D-549) — src/slice/vn.ts · opening.playCuts =====================
+/* ===================== 비주얼 노벨 층 (D-554) — src/slice/vn.ts · opening.playCuts =====================
    장면 칸(.film-view) 안: 그림(.pl-stage) → 입자(.vn-air, 장면 도트 3 기기 픽셀 캔버스) → 서 있는 배우(.vn-cast) → 등잔 그늘(.vn-lamp) → 전환 막(.film-over).
    배우 = 72칸 기물 도트 정수배(vn.ts가 크기 · 위치를 기기 픽셀 정수로), 그늘 = 같은 그림의 먹 실루엣에 64단 디더(투명도 아님).
-   숨 고르기 = 1도트 위아래 정지 동작(일부러 계단 — D-549 hold). 그라데이션 · 투명도 보간 없음 (D-216). */
+   숨 고르기 = 1도트 위아래 정지 동작(일부러 계단 — D-554 hold). 그라데이션 · 투명도 보간 없음 (D-216). */
 .film .vn-air { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
 .film .vn-air canvas { display: block; image-rendering: pixelated; }
 .film .vn-cast { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }

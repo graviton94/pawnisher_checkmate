@@ -1,4 +1,4 @@
-// CSS 키프레임 디더를 16단으로 펼친다 (D-546 — D-538의 다섯 단 px0 · pxm1 · px2 · px3 · px4 → --dq0 ~ --dq16).
+// CSS 키프레임 디더를 16단으로 펼친다 (D-554 — D-538의 다섯 단 px0 · pxm1 · px2 · px3 · px4 → --dq0 ~ --dq16).
 // 키프레임 안의 mask-image: var(--pxN)을 --dqL로 바꾸고, 두 디더 칸 사이에 빠진 단을 고르게 끼운다.
 // 한쪽 끝만 있는 디더(0%만 · 100%만)는 반대쪽을 다 보임(--dq16)으로 본다. 일부러 깜빡이는 것(alarm · blink)은 그대로.
 // --dqN은 view/motion.ts installDitherVars가 기기 DPR의 게임 도트 크기로 <html>에 건다.

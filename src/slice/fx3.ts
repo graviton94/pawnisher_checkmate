@@ -32,7 +32,7 @@ export const flashScreen = (a = 0.85): void => {
   window.setTimeout(() => f.remove(), 260);
 };
 /**
- * 도트 퇴장 (D-193 → D-549): 사라지는 것은 모두 8×8 베이어 디더가 프레임마다 한 단씩(64단) 곡선으로 지워진다 — 투명 페이드 대신.
+ * 도트 퇴장 (D-193 → D-554): 사라지는 것은 모두 8×8 베이어 디더가 프레임마다 한 단씩(64단) 곡선으로 지워진다 — 투명 페이드 대신.
  * 옛 다섯 단(240ms) 계단은 뚝뚝 끊겼다 → 최소 SMOOTH.outMin(300ms). 끝나면 가면을 지우고 then (요소를 지우거나 숨기는 건 부른 쪽).
  */
 export const pxOut = (el: HTMLElement | null, then?: () => void, ms = 240): void => {
@@ -549,9 +549,9 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
   });
 };
 
-/** 보이는 정도(0~1) → 16단 디더 가면 변수 (D-549 — 8×8 베이어, 칸 = 게임 도트. 옛 px0~px4 다섯 단을 대신한다) */
+/** 보이는 정도(0~1) → 16단 디더 가면 변수 (D-554 — 8×8 베이어, 칸 = 게임 도트. 옛 px0~px4 다섯 단을 대신한다) */
 const pxLv = (v: number): string => `var(--dq${Math.max(0, Math.min(SMOOTH.cssLevels, Math.round(v * SMOOTH.cssLevels)))})`;
-/** 보이는 정도(0~1)를 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538 → D-549, 투명도 대신) */
+/** 보이는 정도(0~1)를 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538 → D-554, 투명도 대신) */
 export const pxMask = (v: number): Keyframe => ({ maskImage: pxLv(v), webkitMaskImage: pxLv(v) }) as Keyframe;
 
 /**
@@ -563,7 +563,7 @@ export const installPixelAnimate = (): void => {
   const orig = Element.prototype.animate;
   Element.prototype.animate = function (this: Element, kf: Keyframe[] | PropertyIndexedKeyframes | null, opts?: number | KeyframeAnimationOptions) {
     if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') kf = ditherKeyframes(kf);
-    // 움직임은 정수 기기 픽셀 120Hz로 굽는다 (D-549 — 소수 위치를 지나며 도트가 번지지 않게)
+    // 움직임은 정수 기기 픽셀 120Hz로 굽는다 (D-554 — 소수 위치를 지나며 도트가 번지지 않게)
     if (Array.isArray(kf) && opts && typeof opts === 'object') {
       const b = bakeWaapi(this, kf, opts, (k, o) => orig.call(this, k, o));
       if (b) return b;
@@ -590,7 +590,7 @@ export const ditherKeyframes = (kf: Keyframe[]): Keyframe[] => {
     out.push({ ...rest, offset: off[i], ...pxMask(vis[i]) } as Keyframe);
     const nv = vis[i + 1];
     if (i < n - 1 && nv !== vis[i]) {
-      // 사이 단계 — 16단 중 지나는 칸 수만큼 고르게 (D-549: 옛 세 칸 → 프레임 수에 가깝게)
+      // 사이 단계 — 16단 중 지나는 칸 수만큼 고르게 (D-554: 옛 세 칸 → 프레임 수에 가깝게)
       const k0 = Math.max(1, Math.round(Math.abs(nv - vis[i]) * SMOOTH.cssLevels));
       for (let k = 1; k < k0; k++) out.push({ offset: off[i] + ((off[i + 1] - off[i]) * k) / k0, ...pxMask(vis[i] + ((nv - vis[i]) * k) / k0) } as Keyframe);
     }

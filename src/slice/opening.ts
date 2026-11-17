@@ -70,7 +70,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     const wipe = new Wipe(over);
     const view = el.querySelector<HTMLElement>('.film-view')!;
-    // 비주얼 노벨 층 (D-549): 서 있는 배우 · 장면 입자 · 등잔 · 대사 기록
+    // 비주얼 노벨 층 (D-554): 서 있는 배우 · 장면 입자 · 등잔 · 대사 기록
     const vn = new VnStage(view, () => stage.querySelector<HTMLImageElement>('img[data-film]'));
     wipe.full();
     if (!calm()) replay(el, 'lb-in');
@@ -177,7 +177,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       else if (l.fx === 'red') { if (!calm()) { replay(el, 'red-once'); window.setTimeout(() => el.classList.remove('red-once'), 640); } shake(view, 1); }
       else if (l.fx === 'gold') stage.classList.add('fx-gold');
     };
-    /** 서 있는 배우 (D-549): 대사 = 그 화자를 세우고 밝힌다 · 서술 = 모두 그늘 · 독백 = 종이왕만 밝게 */
+    /** 서 있는 배우 (D-554): 대사 = 그 화자를 세우고 밝힌다 · 서술 = 모두 그늘 · 독백 = 종이왕만 밝게 */
     const cast = (l: CutLine & Partial<Line>): void => {
       if (l.k === 's' && l.who) {
         const f = faces[l.who];
