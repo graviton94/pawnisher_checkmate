@@ -122,7 +122,7 @@ export const IMPACT = {
 export const RENDER = { dprCap: 2, dprMin: 1.5, idleFps: 30 };
 
 /**
- * 카드 사용 연출 박자 (D-548, ms · 1배속). 손패의 카드 표(아이콘 패)가 예비 동작(lead) → 대상까지 날고(fly) → 대상에서 계열 FX.
+ * 카드 사용 연출 박자 (D-553, ms · 1배속). 손패의 카드 표(아이콘 패)가 예비 동작(lead) → 대상까지 날고(fly) → 대상에서 계열 FX.
  * 쓰는 쪽 `src/slice/cardfx.ts`. 예비 + 비행 + 계열 FX가 0.8초 안 (D-180 박자), 대상 기물을 가리는 것은 칸 모서리 · 머리 위만.
  * clamp: 죔쇠가 모서리로 박히는 때 · rivet: 리벳 도장 · hold: 머묾 끝 · out: 디더 네 계단 퇴장 ·
  * drop: 기름 방울 하나 떨어지는 데 · gap: 방울 사이 · tick: 톱니 한 칸 도는 간격 · deal: 덱에서 손패로 한 장 · stagger: 장 사이 ·

@@ -1297,7 +1297,7 @@ const blockPop = (pos: Pos): void => {
   void blockTold; // 길막기는 판 위 「막음!」으로만 (D-385)
 };
 /**
- * 카드 사용 연출 (D-548): 손패 카드의 아이콘 패가 대상으로 날아가 계열 FX (src/slice/cardfx.ts).
+ * 카드 사용 연출 (D-553): 손패 카드의 아이콘 패가 대상으로 날아가 계열 FX (src/slice/cardfx.ts).
  * 옛 castFx는 손패 카드(<button class="hc">)를 body에 복제해 띄웠는데, 카드 테 그림이 `#hand > .hc`에만 걸려 있어
  * 복제본이 기본 단추(흰 바탕 · 회색 테)로 떴다 — 사용자가 본 「흰 배경이 생겼다 사라짐」의 원인. 복제를 하지 않는다.
  */
@@ -1483,7 +1483,7 @@ const pickCard = (i: number): void => {
     if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'cast', c.kind === 'spark' ? b.kills + 2 : 0);
-      // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드 패가 연쇄 줄 · 태엽 계기 · 버림 더미로 날고 새 카드는 덱에서 날아든다 (D-548)
+      // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드 패가 연쇄 줄 · 태엽 계기 · 버림 더미로 날고 새 카드는 덱에서 날아든다 (D-553)
       const src = cardSrc(i);
       const id = b.hand[i];
       const n0 = b.hand.length;
@@ -1564,7 +1564,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const ev0 = (b.evaded ?? []).length;
   // 길막기 (테스터: 「적이 갈 칸을 먼저 차지해 공격을 막는 것도 이 게임의 요소로 느껴지게」): 적이 가려던 칸을 우리 기물이 차지하면 알린다
   const aimed = b.s.rules.capture ? [] : liveIntents(b).map((it) => `${it.to.x},${it.to.y}`);
-  // 카드 연출 출발점 · 손패 장수 (D-548) — 엔진이 손패를 바꾸기 전에
+  // 카드 연출 출발점 · 손패 장수 (D-553) — 엔진이 손패를 바꾸기 전에
   const src = cardSrc(i);
   const hand0 = b.hand.length;
   const r = playCard(b, i, pieceId, to);

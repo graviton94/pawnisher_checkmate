@@ -1393,7 +1393,7 @@ class BoardScene extends Phaser.Scene {
   private get speed(): number {
     return (this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : PACE.fx) * this.tempo;
   }
-  /** 이동 한 번(들기 → 착지)의 지금 길이 ms — 판 밖 카드 FX가 착지에 맞춘다 (D-548) */
+  /** 이동 한 번(들기 → 착지)의 지금 길이 ms — 판 밖 카드 FX가 착지에 맞춘다 (D-553) */
   get moveMsNow(): number {
     return MOVE_TOTAL / this.speed;
   }
@@ -2481,7 +2481,7 @@ export class BoardRenderer implements BoardView {
     else if (k === 'thorns') void this.boardFx.thorns({ x: 3, y: 5 }, { x: 1, y: 1 });
     else this.boardFx.stamp({ x: 3, y: 3 });
   }
-  /** 이동 한 번(들기 → 착지)의 지금 길이 ms (D-548 카드 FX 박자) */
+  /** 이동 한 번(들기 → 착지)의 지금 길이 ms (D-553 카드 FX 박자) */
   moveMs(): number {
     return this.scene.moveMsNow;
   }
