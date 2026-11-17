@@ -1933,8 +1933,8 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 판 아래 띠 자리(부관 안내)는 입문 판 · 시험대에서만 비운다 (검수 M2): 보통 대국은 그 48px를 판에 돌려 칸 45.7 → 53.3px (915×412 · 정수 도트 7)
   setBoardTopInset(BAND_ZONE, INTRO.includes(def) || def.drill ? BAND_ZONE : 0);
   stage += 1;
-  // 곡: 도금왕 = final · 반장 = boss · 그 밖 = 그 막의 곡 (D-530)
-  playMusic(def.bossRule === 'gilded' ? 'final' : def.boss ? 'boss' : actTrack());
+  // 곡: 도금왕 = final · 반장 = boss · 검문 = check(C1 반장 변주, D-548) · 그 밖 = 그 막의 곡 (D-530)
+  playMusic(def.bossRule === 'gilded' ? 'final' : def.boss ? 'boss' : def.check ? 'check' : actTrack());
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
   // 보이지 않는 손 (D-178): 같은 대국을 거듭 지면 적이 가끔 가장 아픈 수를 건너뛴다 — 낮은 승급일수록
   if (lossDef !== def) {
@@ -2233,7 +2233,7 @@ const rosterPeek = (i: number): string => {
 /** 지금 막의 곡 (D-530 — 4막 종막은 3막 곡을 잇는다) */
 const actTrack = (): TrackId => (['act1', 'act2', 'act3'] as const)[Math.min(2, Math.max(0, actI))];
 const showMap = (): void => {
-  // 지도 · 쉼터 · 사건 · 고물상: 타이틀 왈츠를 벽 너머로 (D-545)
+  // 지도: 타이틀 왈츠를 벽 너머로 (D-545). 고물상 · 작업대 · 사건은 각 화면이 C1 톱니 칩으로 바꾼다 (D-548)
   playMusic('map');
   const a = acts[actI];
   // 4막(종막 · 출하구)도 지나온 길 칸이 있어야 한다 — 예전 저장(세 칸)으로 이어해도 (4막 진입 시 지도가 안 뜨던 버그)
@@ -2408,6 +2408,7 @@ const evPay = choicePay;
  */
 const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   const ev = SLICE_EVENTS[id];
+  playMusic('workshop'); // 사건: C1 톱니 칩 (D-548)
   const talk: EventTalk = EVENT_TALK[id] ?? { npc: ev.title, react: [], idle: [], win: '', bye: '', exit: '떠난다' };
   const st = (): EventState => ({ squad, deck, refined, gold, parts, charms });
   document.body.classList.add('between');
@@ -2743,6 +2744,7 @@ const fitHint = (kind: 'card' | 'part', id: string): { text: string; tone: 'good
 const shopScreen = (): void => {
   // 장소 배경 (D-200): 녹슨 룩의 고물상 BG-01 — 그림은 화면 바탕, 앞에 진열대 (D-394 .scr-place 바탕형)
   document.body.classList.add('between');
+  playMusic('workshop'); // 고물상: C1 톱니 칩 (D-548)
   placeBg('bg-shop');
   const rng = sub();
   const pool = REWARD_COMMANDS.filter((id) => usable(id) && isOpen(id));
@@ -2897,6 +2899,7 @@ const repairScreen = (): void => {
 const forgeScreen = (): void => {
   // 장소 (D-200 · D-394): 외눈 정비공의 작업대 BG-02 — 왼쪽 그림(정비공 초점) · 오른쪽 선택지 판 넷
   document.body.classList.add('between');
+  playMusic('workshop'); // 작업대(정비): C1 톱니 칩 (D-548)
   placeBg('bg-forge');
   // 깨진 심장 톱니는 막 정비 때만 새로 끼운다 (D-542 — 옛 D-219: 작업대에 들르기만 해도 공짜로 다시 끼워 손실이 쌓이지 않았다)
   // 출하 씨앗을 한 번 굴린다 (예전 「셋 중 둘」 — 이어하기에서 같은 씨앗 흐름을 지킨다)

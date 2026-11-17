@@ -20,6 +20,11 @@ describe('배경 음악 묶음', () => {
     expect(TRACKS.final.file).toBe('crown-final');
     expect(TRACKS.ending.file).toBe('crown');
   });
+  it('사용자 배정 C1 (D-548): 고물상 · 작업대 · 사건 = 톱니 칩, 검문 = 톱니 칩 반장 변주, 지도는 왈츠 그대로', () => {
+    expect(TRACKS.workshop.file).toBe('gear');
+    expect(TRACKS.check.file).toBe('gear-boss');
+    expect(TRACKS.map.file).toBe('waltz');
+  });
   it('막이 오를수록 빠르게 · 속도는 온음(12%) 안', () => {
     expect(TRACKS.act1.rate).toBeLessThan(TRACKS.act2.rate);
     expect(TRACKS.act2.rate).toBeLessThan(TRACKS.act3.rate);

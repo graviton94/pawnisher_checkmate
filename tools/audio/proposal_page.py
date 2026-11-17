@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-사운드 시안 페이지 (D-540 → D-545): 게임에 들어간 곡(A · B · D) · C 재시안(C1 · C2) · 짧게 다듬은 효과음(전 · 후 비교)을
+사운드 시안 페이지 (D-540 → D-545 → D-548): 게임에 들어간 곡(A · B · D · C1) · 짧게 다듬은 효과음(전 · 후 비교)을
 한 장의 HTML(아티팩트)로 묶는다. 모든 소리는 base64로 안에 넣는다 (페이지 ≤ 15 MB).
 
-    python3 -I tools/audio/proposal_page.py <출력.html> <효과음 이전판 폴더> [곡 폴더=public/audio/music] [시안 폴더=build-res/audio/bgm-concepts] [효과음 폴더=public/audio/sfx]
+    python3 -I tools/audio/proposal_page.py <출력.html> <효과음 이전판 폴더> [곡 폴더=public/audio/music] [시안 폴더(안 씀)=build-res/audio/bgm-concepts] [효과음 폴더=public/audio/sfx]
 
 - 효과음 이전판 폴더: D-540 효과음 ogg/m4a (예: `git show <D-540 커밋>:public/audio/sfx/hit1.ogg`로 꺼낸 것).
 - 곡은 페이지 무게를 줄이려고 미리듣기판으로 다시 굽는다: OGG 64 kbps(이음매가 정확하다) + AAC 48 kbps(Safari 대비). 게임 파일은 OGG 96 kbps.
@@ -24,7 +24,7 @@ SFX = sys.argv[5] if len(sys.argv) > 5 else 'public/audio/sfx'
 GAME = [
     {'k': 'waltz', 'name': 'B 태엽 오르골 왈츠', 'len': '90 BPM 3/4 · 48마디 · 96초',
      'mood': '감기다 만 태엽이 혼자 도는 왈츠. 가운데 16마디는 나란한 장조로 잠깐 풀렸다가 처음 주제로 돌아옵니다.',
-     'plays': [('타이틀 · 메뉴', {}), ('지도 · 쉼터 · 사건 · 고물상 (같은 곡을 벽 너머로)', {'lp': 1600, 'gain': 0.8})],
+     'plays': [('타이틀 · 메뉴', {}), ('지도 (같은 곡을 벽 너머로)', {'lp': 1600, 'gain': 0.8})],
      'note': '타이틀에서 지도로 넘어갈 때는 곡을 다시 틀지 않고 거름만 바꿉니다.'},
     {'k': 'anvil', 'name': 'A 모루 행진', 'len': '100 BPM · 40마디 · 96초',
      'mood': '쇠를 두드리는 박자로 전진합니다. 도입 → 현 → 호른 주제 → 현이 노래하는 가운데 → 호른 · 트럼펫 주제 → 다리.',
@@ -39,12 +39,13 @@ GAME = [
     {'k': 'crown', 'name': 'D 녹슨 왕관', 'len': '64 BPM · 24마디 · 90초',
      'mood': '피아노 주제 → 현 합주 → 첼로 독주가 노래하는 가운데 → 피아노 주제가 높게 돌아옵니다.',
      'plays': [('왕관 장면 · 결말 컷 · 크레딧 · 출하 끝 (패배 포함)', {})], 'note': ''},
-]
-CHIPS = [
-    {'k': 'C1-gear', 'name': 'C1 톱니 칩', 'mood': 'F단조 96 BPM. 16분 펄스 아르페지오가 셋째 칸마다 강세를 받아 4박 위를 톱니처럼 돌고, 낮은 펄스 베이스가 무겁게 끕니다. 9마디부터 펄스 선율 + 메아리.',
-     'boss': '반장 112 BPM — 16분 베이스 · 반음(F–Gb) 진행 · 선율 한 옥타브 위', 'len': '본 45초 / 반장 25.7초'},
-    {'k': 'C2-clock', 'name': 'C2 시계탑 칩', 'mood': '7/8 박(2+2+3). 여덟 칸마다 시계가 똑 · 딱(높낮이 번갈아), 묶음 첫 칸에 낮은 쇠 쿵. 오르골 칩(사각 + 쇠 빗살 배음) 선율과 삼각 베이스.',
-     'boss': '반장 — 8분 240 · F–E 반음 · 작은북 · 선율 아래 펄스 겹침', 'len': '본 46.2초 / 반장 24.5초'},
+    {'k': 'gear', 'name': 'C1 톱니 칩', 'len': 'F단조 96 BPM · 42마디 · 105초',
+     'mood': '16분 펄스 아르페지오가 셋째 칸마다 강세를 받아 4박 위를 톱니처럼 돌고, 낮은 펄스 베이스가 끕니다. 도입 → 낮은 목소리 주제 → 시안 선율 → 나란한 장조(Ab)에서 오르골 칩이 노래하는 쉼 → Bb단조 · Gb으로 톱니가 갈리는 부분(북 두 배 · 삼각 맞선율) → 주제가 3도 겹으로 돌아옵니다.',
+     'plays': [('고물상 · 작업대(정비) · 사건', {})],
+     'note': '세 장소는 같은 곡을 이어 틉니다. 장소를 나와 지도로 가면 왈츠로 0.45초 겹쳐 넘어갑니다.'},
+    {'k': 'gear-boss', 'name': 'C1 반장 변주', 'len': '112 BPM · 45마디 · 96.4초',
+     'mood': '16분 펄스 베이스 · 반음(F–Gb) 진행 · 선율 한 옥타브 위. 가운데에 박이 반으로 느려지는 쉼(Bb단조 · 감화음 위 긴 음), 위로 도는 톱니와 철판 2 · 4박이 몰아치는 부분, 주제가 16분 하이햇과 겹으로 돌아옵니다.',
+     'plays': [('검문 대국', {})], 'note': ''},
 ]
 COMPARE = [('hit', '가벼운 타격'), ('crit', '무거운 일격'), ('kill', '처치'), ('check', '체크 종'), ('land', '쇠판에 놓기')]
 SFX_GROUPS = [
@@ -80,9 +81,6 @@ audio = {}
 with tempfile.TemporaryDirectory() as tmp:
     for g in GAME:
         audio[g['k']] = preview(os.path.join(MUSIC, g['k'] + '.ogg'), tmp)
-    for c in CHIPS:
-        for v in ('main', 'boss'):
-            audio[f'{c["k"]}-{v}'] = preview(os.path.join(CONCEPT, f'{c["k"]}-{v}.ogg'), tmp)
 sfx_files = {}
 for _, items in SFX_GROUPS:
     for k, _ in items:
@@ -111,12 +109,6 @@ def game_html(g):
     where = ' · '.join(E(label.split(' (')[0]) for label, _ in g['plays'])
     return f'''<article class="cc"><header><h3>{E(g['name'])}</h3><p class="where">{where}</p></header>
   <p class="mood">{E(g['mood'])}</p><p class="len">{E(g['len'])}</p>{note}{plays}</article>'''
-
-
-def chip_html(c):
-    return f'''<article class="cc"><header><h3>{E(c['name'])}</h3><p class="len">{E(c['len'])}</p></header>
-  <p class="mood">{E(c['mood'])}</p><p class="note">{E(c['boss'])}</p>
-  {player(c['k'] + '-main', '본 루프 듣기')}{player(c['k'] + '-boss', '반장 변주 듣기')}</article>'''
 
 
 def ms(k, src):
@@ -196,16 +188,12 @@ code {{ font-size: 13px; color: var(--steam); word-break: break-all; }}
 </style>
 <main>
   <h1>파우니셔 사운드 시안</h1>
-  <p class="lead">고르신 A · B · D를 게임에 넣었습니다. C는 새로 둘을 썼고, 효과음은 울림을 짧게 줄였습니다. 모든 소리는 이 페이지 안에 있고 누를 때만 납니다.</p>
+  <p class="lead">고르신 A · B · D에 이어 C1 톱니 칩을 게임에 넣었습니다 (고물상 · 작업대 · 사건, 검문은 반장 변주). C2는 뺐고, 효과음은 울림을 짧게 줄였습니다. 모든 소리는 이 페이지 안에 있고 누를 때만 납니다.</p>
   <p class="warn" id="fmt" hidden></p>
 
   <h2>게임에 들어간 곡</h2>
   <p class="lead">모두 90초가 넘는 이음매 없는 루프입니다. 장면 단추는 게임과 같은 거름 · 속도로 들려 줍니다. 「이음매 듣기」는 끝 4초 → 처음 4초입니다. 곡이 바뀔 때 게임에서는 0.45초 겹쳐 넘깁니다.</p>
   <div class="ccs">{''.join(game_html(g) for g in GAME)}</div>
-
-  <h2>C 재시안 (게임에 넣지 않음)</h2>
-  <p class="lead">처음 C(검은 칩) 대신 결이 다른 둘입니다. 둘 다 본 루프 약 45초 + 짧은 반장 변주입니다.</p>
-  <div class="ccs">{''.join(chip_html(c) for c in CHIPS)}</div>
 
   <h2>효과음 — 울림을 줄였습니다</h2>
   <p class="lead">홀 잔향을 걷고 쇠 배음이 빨리 꺼지게 했습니다. 손 · 창 · 카드 0.25초 안, 타격 · 처치 · 받아치기 0.35초 안, 큰 장면(반장 등장 · 2단계 · 승패)만 꼬리 0.6초 안. 숫자는 첨두에서 −60 dB까지 걸리는 시간입니다.</p>
@@ -216,7 +204,7 @@ code {{ font-size: 13px; color: var(--steam); word-break: break-all; }}
   <h2>출처 · 라이선스</h2>
   <div class="box src">
     <p><b>배경 음악 A · B · D</b> — 자체 작곡(MIDI, <code>tools/audio/bgm_game.py</code>), 음색은 FluidR3_GM 사운드폰트(© Frank Wen, MIT)로 렌더했습니다. 게임 파일은 OGG 96 kbps · −18 LUFS, 이 페이지는 무게를 줄인 미리듣기판(OGG 64 kbps)입니다.</p>
-    <p><b>C1 · C2</b> — 자체 작곡 · 자체 칩 합성 (<code>tools/audio/bgm_concepts.py</code>).</p>
+    <p><b>배경 음악 C1 톱니 칩</b> — 자체 작곡 · 자체 칩 합성(펄스 · 삼각 · 잡음 파형만, <code>tools/audio/bgm_game.py</code>), CC0 1.0. OGG 96 kbps · −18 LUFS.</p>
     <p><b>효과음 전부</b> — 자체 합성 (<code>tools/audio/sfx_synth.py</code>), CC0 1.0. −16 LUFS 근처 · 첨두 −1 dBFS.</p>
   </div>
 </main>

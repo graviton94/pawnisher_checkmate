@@ -54,4 +54,5 @@ export const LICENSES: LicenseNotice[] = [
   { name: 'Tabler Icons', by: '© 2020–2024 Paweł Kuna', license: 'MIT', use: '아이콘 (16칸 도트로 줄여 고침)', text: mit('2020-2024 Paweł Kuna'), url: 'https://github.com/tabler/tabler-icons/blob/main/LICENSE' },
   { name: 'FluidR3_GM 사운드폰트', by: '© 2000–2002, 2008 Frank Wen · © 2008 Toby Smithe', license: 'MIT', use: '배경 음악 음색 (자체 작곡 악보를 이 음색으로 렌더 — 사운드폰트 파일은 싣지 않는다)', text: mit('2000-2002, 2008 Frank Wen; 2008 Toby Smithe'), url: 'https://github.com/FluidSynth/fluidsynth/wiki/SoundFont' },
   { name: '효과음 (주물 공방 소리)', by: '당신의 하루 스튜디오 — 자체 합성 (tools/audio/sfx_synth.py)', license: 'CC0 1.0', use: '모든 효과음', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
+  { name: '배경 음악 「톱니 칩」 (C1)', by: '당신의 하루 스튜디오 — 자체 칩 합성 (tools/audio/bgm_game.py)', license: 'CC0 1.0', use: '고물상 · 작업대 · 사건 · 검문 배경 음악 (사운드폰트 없이 펄스 · 삼각 · 잡음 파형만)', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
 ];

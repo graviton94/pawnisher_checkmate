@@ -76,6 +76,24 @@ module.exports = async (pg, shot) => {
   out.mapBack = await stage('map(왈츠 캐시)', () => window.sliceApi.map(2));
   out.act2 = await stage('act2', () => { window.sliceApi.setAct(1); window.sliceApi.startAt(2, 'battle'); });
   out.act3 = await stage('act3', () => { window.sliceApi.setAct(2); window.sliceApi.startAt(3, 'battle'); });
+  // C1 톱니 칩 (D-548): 고물상 · 작업대 · 사건 = gear(105초), 검문 = gear-boss(96.4초), 지도는 왈츠로 돌아간다
+  out.shop = await stage('shop', () => { window.sliceApi.gold(120); window.sliceApi.shop(); });
+  await shot('music-3b-shop');
+  out.forge = await stage('forge', () => window.sliceApi.forge(), 1200);
+  await shot('music-3c-forge');
+  out.event = await stage('event', () => window.sliceApi.event(window.sliceApi.eventIds[0]), 1200);
+  await shot('music-3d-event');
+  out.mapW = await stage('map(왈츠)', () => window.sliceApi.map(2));
+  out.check = await stage('check', () => { window.sliceApi.setAct(0); window.sliceApi.startAt(1, 'check'); });
+  await shot('music-3e-check');
+  const dur = (o) => o.p.at(-1)?.dur;
+  const c1 = [
+    ['shop = gear', dur(out.shop) === 105 && (out.shop.r.includes('gear.ogg') || out.shop.r.includes('gear.m4a'))],
+    ['forge · event = 이어 틀기(새 재생 · 요청 0)', !out.forge.p.length && !out.forge.r.length && !out.event.p.length && !out.event.r.length],
+    ['map = 왈츠로', dur(out.mapW) === 96 && !out.mapW.r.some((f) => f.startsWith('gear'))],
+    ['check = gear-boss', dur(out.check) === 96.4 && out.check.r.some((f) => f.startsWith('gear-boss'))],
+  ];
+  console.log('C1', c1.map(([k, ok]) => `${ok ? 'OK' : 'FAIL'} ${k}`).join(' · '));
   out.boss = await stage('boss', () => window.sliceApi.bossOf('plate', 1));
   await shot('music-4-boss');
   out.final = await stage('final', () => window.sliceApi.finalAt(0), 3000);

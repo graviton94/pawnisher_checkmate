@@ -4,12 +4,14 @@
 
     python3 -I tools/audio/bgm_game.py [출력=public/audio/music] [--wav 미리듣기 폴더]
 
-곡 다섯 (장면 배정은 src/data/music.ts):
+곡 일곱 (장면 배정은 src/data/music.ts):
 - waltz       B 태엽 오르골 왈츠 · 90 BPM 3/4 · 48마디 96초 — 타이틀 · 메뉴 · 지도(지도는 낮은 통과 거름으로 멀리)
 - anvil       A 모루 행진 · 100 BPM · 40마디 96초 — 대국 1~3막 (2막 · 3막은 재생 속도로 반음 · 온음 위)
 - anvil-boss  A 반장 변주 · 132 BPM · 52마디 94.5초 — 반장전 · 레이드
 - crown-final D 긴장 변주 · 76 BPM · 32마디 101초 — 도금왕
 - crown       D 녹슨 왕관 · 64 BPM · 24마디 90초 — 왕관 장면 · 결말 · 크레딧 · 출하 끝
+- gear        C1 톱니 칩 · F단조 96 BPM · 42마디 105초 — 고물상 · 작업대(정비) · 사건 (D-548, 자체 칩 합성 · 사운드폰트 없음 · CC0)
+- gear-boss   C1 반장 변주 · 112 BPM · 45마디 96.4초 — 검문 대국
 
 음색은 FluidR3_GM(Frank Wen, MIT — docs/CREDITS.md · src/data/licenses.ts). 악보 .mid는 tools/audio/midi/game-*.mid.
 루프: 악보를 세 바퀴 렌더해 가운데 한 바퀴만 파형 맞춤으로 자른다 (앞 바퀴 잔향이 들어 있어 끝 → 처음이 이어진다).
@@ -346,6 +348,147 @@ def crown_final():
     return s
 
 
+# ================================================================ C1 톱니 칩 (D-548 — 고물상 · 작업대 · 사건, 검문)
+# 칩 합성 그대로 (bgm_concepts.Chip: 4비트 음량 계단 펄스 · 계단 삼각 · 노이즈 북). 꼬리는 버퍼 처음으로 감아 이음매가 없다.
+# 셋째 칸 강세는 곡 전체 16분 번호로 센다 — 마디 수 × 16이 3의 배수여야 끝 → 처음에서 강세가 끊기지 않는다 (42 · 45마디).
+# 선율 음은 F4 기준 반음 (Ab4 = 3 · C5 = 7 · F5 = 12 · E5 = 11 = 이끎음).
+GEAR_PROG = [('F', 'm'), ('F', 'm'), ('Db', 'M'), ('Db', 'M'), ('Bb', 'm'), ('Bb', 'm'), ('C', 'M'), ('C', 'M'),
+             ('F', 'm'), ('F', 'm'), ('Db', 'M'), ('Eb', 'M'), ('Bb', 'm'), ('C', 'M'), ('F', 'm'), ('C', 'M'),
+             ('Db', 'M'), ('C', 'M')]
+GEAR_LEAD = [[(0, 3), (3, 1)], [(7, 4)], [(8, 2), (7, 1), (5, 1)], [(5, 4)], [(5, 2), (8, 2)], [(10, 3), (8, 1)], [(7, 4)], [(4, 2), (7, 2)],
+             [(12, 3), (10, 1)], [(8, 2), (7, 2)], [(5, 2), (8, 1), (10, 1)], [(10, 3), (7, 1)], [(5, 2), (3, 1), (1, 1)], [(-1, 4)], [(0, 4)], [(4, 2), (7, 2)],
+             [(5, 2), (8, 2)], [(7, 4)]]
+# 본 루프 새 부분 B: 나란한 장조(Ab)로 비켜 서서 오르골 칩이 노래한다 (지도 왈츠와 이어지는 결)
+GEAR_B_PROG = [('Ab', 'M'), ('Eb', 'M'), ('F', 'm'), ('Db', 'M'), ('Ab', 'M'), ('Eb', 'M'), ('Db', 'M'), ('C', 'M')]
+GEAR_B_LEAD = [[(7, 2), (3, 2)], [(10, 3), (7, 1)], [(8, 2), (7, 1), (5, 1)], [(8, 4)],
+               [(12, 2), (10, 1), (7, 1)], [(10, 2), (14, 2)], [(12, 2), (8, 1), (5, 1)], [(7, 3), (4, 1)]]
+# 새 부분 C: 톱니가 갈린다 — Bb단조 · Gb으로 내려가 날카로운 펄스 선율 + 삼각 맞선율, 북이 두 배
+GEAR_C_PROG = [('Bb', 'm'), ('Gb', 'M'), ('Db', 'M'), ('C', 'M'), ('Bb', 'm'), ('Gb', 'M'), ('Eb', 'M'), ('C', 'M')]
+GEAR_C_LEAD = [[(5, 1), (8, 1), (12, 2)], [(13, 3), (12, 1)], [(8, 2), (12, 2)], [(11, 3), (7, 1)],
+               [(17, 2), (15, 1), (13, 1)], [(13, 2), (8, 2)], [(10, 2), (14, 1), (10, 1)], [(7, 4)]]
+# 반장(검문) 변주: 시안 진행 + 새 부분 둘
+GEAR_BOSS_PROG = [('F', 'm'), ('Gb', 'M'), ('F', 'm'), ('E', 'dim'), ('Db', 'M'), ('Gb', 'M'), ('C', 'M'), ('C', 'M'),
+                  ('F', 'm'), ('Gb', 'M'), ('Db', 'M'), ('C', 'M')]
+GEAR_BOSS_B_PROG = [('Bb', 'm'), ('Bb', 'm'), ('Gb', 'M'), ('Gb', 'M'), ('E', 'dim'), ('E', 'dim'), ('C', 'M'), ('C', 'M')]
+GEAR_BOSS_B_LEAD = [[(5, 4)], [(8, 2), (5, 2)], [(13, 4)], [(10, 2), (8, 2)], [(11, 4)], [(14, 2), (11, 2)], [(7, 4)], [(11, 2), (14, 2)]]
+GEAR_BOSS_C_PROG = [('F', 'm'), ('Db', 'M'), ('Gb', 'M'), ('C', 'M'), ('F', 'm'), ('Db', 'M'), ('Gb', 'M'), ('C', 'M')]
+GEAR_BOSS_C_LEAD = [[(12, 1), (15, 1), (19, 2)], [(20, 2), (19, 1), (15, 1)], [(17, 3), (13, 1)], [(11, 2), (14, 2)],
+                    [(12, 2), (15, 2)], [(15, 2), (12, 2)], [(13, 2), (17, 2)], [(19, 3), (11, 1)]]
+
+
+def gear_plan(boss):
+    """마디마다 (부분, 화음, 선율 또는 None)."""
+    P, L = GEAR_PROG, GEAR_LEAD
+    if not boss:
+        # 42마디 105초: 도입 4 · A 8(낮은 목소리) · A' 8(시안 선율) · B 8(Ab 오르골) · C 8(갈림) · 끝 6(시안 끝 → 처음 Fm으로)
+        plan = [('intro', c, None) for c in [('F', 'm'), ('F', 'm'), ('Db', 'M'), ('C', 'M')]]
+        plan += [('A', P[i], L[i]) for i in range(8)]
+        plan += [("A'", P[i], L[i]) for i in range(8, 16)]
+        plan += [('B', GEAR_B_PROG[i], GEAR_B_LEAD[i]) for i in range(8)]
+        plan += [('C', GEAR_C_PROG[i], GEAR_C_LEAD[i]) for i in range(8)]
+        plan += [('out', P[i], L[i]) for i in range(12, 18)]
+        return plan
+    # 반장 45마디 96.4초: 도입 4 · A 12(시안) · B 8(반박자 쉼) · C 8(몰아치기) · A2 12(겹 선율) · 돌림 1
+    BP = GEAR_BOSS_PROG
+    plan = [('intro', c, None) for c in [('F', 'm'), ('Gb', 'M'), ('F', 'm'), ('C', 'M')]]
+    plan += [('A', BP[i], L[i]) for i in range(12)]
+    plan += [('B', GEAR_BOSS_B_PROG[i], GEAR_BOSS_B_LEAD[i]) for i in range(8)]
+    plan += [('C', GEAR_BOSS_C_PROG[i], GEAR_BOSS_C_LEAD[i]) for i in range(8)]
+    plan += [('A2', BP[i], L[i]) for i in range(12)]
+    plan += [('turn', ('C', 'M'), [(7, 2), (11, 1), (14, 1)])]
+    return plan
+
+
+def gear(boss=False):
+    """C1 「톱니 칩」 게임 판: F단조 96 BPM(반장 112) · 셋째 칸 강세 16분 아르페지오 + 낮은 펄스 베이스."""
+    from bgm_concepts import Chip, hz
+    plan = gear_plan(boss)
+    bpm = 112 if boss else 96
+    beat = 60 / bpm
+    assert len(plan) * 16 % 3 == 0, '강세 고리가 이음매에서 끊긴다'
+    c = Chip(len(plan) * 4 * beat, 12 if boss else 11)
+    base = m('F4')
+    for bar, (sec, (root, q), lead) in enumerate(plan):
+        b0 = bar * 4 * beat
+        nxt = plan[(bar + 1) % len(plan)][0]
+        r = m(root + '2') if m(root + '2') <= m('B2') else m(root + '1')
+        tones = chord(r, q) if q != 'dim' else [r, r + 3, r + 6]
+        half = sec == 'B'  # 쉬는 부분: 베이스 길게 · 북 줄임
+        # 낮은 펄스 베이스: 본 8분(근음 · 근음 · 근음 · 옥타브), 반장 16분, B는 2분(근음 · 5도) · 반장 B는 4분
+        step = 2.0 if half and not boss else 1.0 if half else 0.25 if boss else 0.5
+        for k in range(int(4 / step)):
+            p = tones[0] - 12 + (12 if (k % 4 == 3) else 0)
+            if half and k % 2 == 1:
+                p = tones[0] - 12 + 7
+            c.put(c.pulse(hz(p + 12), beat * step * 0.8, 0.25, 0.16 if half else 0.22, rel=0.015), b0 + k * step * beat)
+            c.put(c.tri(hz(p), beat * step * 0.85, 0.35), b0 + k * step * beat)
+        # 톱니 아르페지오: 16분 · 셋째 칸 강세 (곡 전체 번호). B는 내려가는 톱니, 반장 C는 위로 도는 톱니
+        arp = [0, 3, 1, 2, 3, 1, 2, 3] if boss else [0, 2, 3, 2, 1, 2, 3, 2]
+        if sec == 'B':
+            arp = [3, 2, 1, 2, 0, 2, 1, 2]
+        elif boss and sec == 'C':
+            arp = [0, 1, 2, 3, 1, 2, 3, 0]
+        t4 = tones + [tones[0] + 12]
+        soft = 0.6 if sec == 'intro' and bar < 2 else 0.75 if sec == 'B' else 1.0
+        for k in range(16):
+            acc = 0.13 if (bar * 16 + k) % 3 == 0 else 0.07
+            c.put(c.pulse(hz(t4[arp[k % 8]] + 24), beat / 4 * 0.7, 0.125, acc * soft, rel=0.01), b0 + k * beat / 4, pan=-0.3)
+        # 선율
+        if lead:
+            at = b0
+            for deg, d in lead:
+                if sec == 'A' and not boss:  # 첫 A: 한 옥타브 아래 낮은 목소리 (시안 앞 8마디는 선율이 없었다)
+                    p = base + deg - 12
+                    c.put(c.pulse(hz(p), d * beat * 0.92, 0.25, 0.09, vib=0.006, rel=0.06), at, pan=0.2)
+                elif sec == 'B' and not boss:  # 오르골 칩 (지도 왈츠의 결)
+                    p = base + deg + 12
+                    c.put(c.chime(hz(p), d * beat * 0.95 + 0.25, 0.17), at, pan=0.15)
+                    c.put(c.chime(hz(p), d * beat * 0.6 + 0.2, 0.05), at + beat * 0.75, pan=-0.4)
+                elif sec == 'C' and not boss:  # 갈림: 날카로운 25% 펄스 + 6도 아래 삼각 맞선율
+                    p = base + deg
+                    c.put(c.pulse(hz(p), d * beat * 0.9, 0.25, 0.1, vib=0.01, rel=0.04), at, pan=0.2)
+                    c.put(c.tri(hz(p - 21), d * beat * 0.9, 0.22), at, pan=-0.1)
+                else:
+                    p = base + deg + (12 if boss and sec in ('A', 'A2', 'turn') else 0)
+                    c.put(c.pulse(hz(p), d * beat * 0.95, 0.5, 0.11, vib=0.008, rel=0.06), at, pan=0.2)
+                    c.put(c.pulse(hz(p), d * beat * 0.6, 0.25, 0.035), at + beat * 0.5, pan=-0.4)  # 메아리
+                    if sec in ('out', 'A2'):  # 돌아온 주제: 3도 아래 겹 (얕게)
+                        c.put(c.pulse(hz(p - (4 if deg % 12 in (7, 0) else 3)), d * beat * 0.9, 0.125, 0.045, rel=0.05), at, pan=-0.25)
+                at += d * beat
+        # 북
+        if sec == 'intro':
+            if bar >= 2:
+                c.put(c.kick(0.7), b0)
+                if boss:
+                    c.put(c.kick(0.55), b0 + 2 * beat)
+        elif half:
+            c.put(c.kick(0.75), b0)
+            if boss:
+                c.put(c.noise(0.22, 0.28, 0.07, 700), b0 + 2 * beat)  # 반박자 철판
+        else:
+            c.put(c.kick(0.85), b0)
+            c.put(c.kick(0.7), b0 + 2.5 * beat)
+            if boss:
+                c.put(c.kick(0.6), b0 + 1.5 * beat)
+            if sec == 'C':  # 갈림 · 몰아치기: 북 하나 더, 철판 2 · 4
+                c.put(c.kick(0.6), b0 + (3 if boss else 1) * beat)
+                c.put(c.noise(0.2, 0.3, 0.06, 700), b0 + 1 * beat)
+                c.put(c.noise(0.2, 0.3, 0.06, 700), b0 + 3 * beat)
+            else:
+                c.put(c.noise(0.22, 0.32, 0.07, 700), b0 + 2 * beat)
+        # 철사 하이햇: 8분 (반장 C · A2는 16분), B는 박마다
+        hat_n = 4 if half else 16 if boss and sec in ('C', 'A2') else 8
+        for k in range(hat_n):
+            if sec == 'intro' and bar < 1 and k % 2:
+                continue
+            c.put(c.noise(0.035, 0.1 if k % 2 else 0.15, 0.01, 7000, short=True), b0 + k * 4 / hat_n * beat, pan=0.35)
+        # 부분이 바뀌기 전 마지막 박: 철판 채움 (16분 넷, 커지며)
+        if nxt != sec and sec != 'intro':
+            for k in range(4):
+                c.put(c.noise(0.08, 0.14 + k * 0.05, 0.03, 900), b0 + (3 + k / 4) * beat, pan=-0.1 + k * 0.1)
+    return c.out
+
+
 # ================================================================ 렌더 · 마감
 def finish(x, base, keep):
     meter = pyln.Meter(SR)
@@ -364,7 +507,8 @@ def finish(x, base, keep):
     return meter.integrated_loudness(x), len(x) / SR
 
 
-GAME = {'waltz': waltz, 'anvil': anvil, 'anvil-boss': anvil_boss, 'crown': crown, 'crown-final': crown_final}
+GAME = {'waltz': waltz, 'anvil': anvil, 'anvil-boss': anvil_boss, 'crown': crown, 'crown-final': crown_final,
+        'gear': gear, 'gear-boss': lambda: gear(True)}
 
 
 def main():
@@ -377,8 +521,11 @@ def main():
         os.makedirs(keep, exist_ok=True)
     for name in only:
         s = GAME[name]()
-        s.midi(reps=1, path=os.path.join(MIDI_DIR, f'game-{name}.mid'))
-        x = render_fluid(s, None)
+        if isinstance(s, np.ndarray):  # 칩 합성 (C1): 악보 없이 바로 파형 — 이미 이음매 없는 한 바퀴
+            x = s
+        else:
+            s.midi(reps=1, path=os.path.join(MIDI_DIR, f'game-{name}.mid'))
+            x = render_fluid(s, None)
         print(name, '%.1f LUFS %.1fs' % finish(x, os.path.join(out, name), keep))
 
 
