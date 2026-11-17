@@ -800,8 +800,8 @@ const intentList = (): void => {
     const k = r.pieceId === null ? -1 : order.indexOf(r.pieceId);
     return k >= 0 ? `<img class="it-n" src="ui/board/badge-e${Math.min(9, k + 1)}.png" alt="${k + 1}번">` : '';
   };
-  // 판돈 칩이 칸을 차지하면 목록을 두 줄로 줄이고 「+N」으로 (검수 M11 — 부품 줄이 칸 아래 테에서 잘렸다)
-  const cap = betNow ? 2 : 5;
+  // 판돈 칩(조건 두 줄)이 칸을 차지하면 목록을 한 줄로 줄이고 「+N」으로 (검수 M11 — 부품 줄이 칸 아래 테에서 잘렸다)
+  const cap = betNow ? 1 : 5;
   const html = !live
     ? ''
     : rows.length

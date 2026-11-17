@@ -64,10 +64,10 @@ body.slice .opening.menu::after { right: auto; left: max(16px, env(safe-area-ins
 .win .inset.dict-box { flex: 1 1 auto; min-height: 0; overflow: hidden; }
 
 /* ---------- 대국 계기 이름 (검수 M3): 속전 계기 「속전」 · 되감기 단추 아래 「되감기」 — 12px ---------- */
-body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; }
+body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { margin-left: var(--s2); color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; }
 /* 꼬리표 자리: 단추 줄 위 14px를 비운다 (적의 수 칸 테를 밟지 않게) */
-body.slice.lay-f #right > .actions { margin-top: 14px; }
-#btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + 2px); color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
+body.slice.lay-f #right > .actions { margin-top: 18px; }
+#btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + 4px); color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
 
 /* ---------- H3 「쓸 수 없음」 단추 · 선택지 (MM-01 대기 · 임시): kit.css의 --off · choice-off0 = 받은 보통 그림을 철 램프 한 단 어둡게 다시 칠한 그림
    (tools/pixel/btn_off_interim.py — 모양 그대로 · 색만 바꿈 · 필터 없음). 진홍 녹 얼룩이 있던 받은 off 그림은 쓰지 않는다 ---------- */
@@ -86,8 +86,16 @@ body.slice.lay-f #right > .actions { margin-top: 14px; }
 
 /* ---------- 문법 밖 창 둘을 표준 부품으로 (검수 M6): 사건 효과 쪽지 · 쓰러짐 의식 = panel-iron 9-slice (모든 창의 몸) ---------- */
 .win-scene .ws-detail { padding: var(--s2) var(--s3); background: #33313b padding-box; box-shadow: none; border-style: solid; border-width: calc(var(--k-win) * var(--px)); border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round; image-rendering: pixelated; }
-.win-scene :is(.ws-detail-close, .ws-detail-next).btn.k-iron { min-width: calc(var(--px) * 40); min-height: 0; height: calc(var(--px) * 20); padding: 0 var(--s2); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.win-scene :is(.ws-detail-close, .ws-detail-next).btn.k-iron { min-width: calc(var(--px) * 40); min-height: 0; height: calc(var(--px) * 20); padding: 0 var(--s2); background: none; border-style: solid; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch; color: var(--fg); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.win-scene :is(.ws-detail-close, .ws-detail-next).btn.k-iron:active { border-image-source: var(--dn); }
 .crackfx > div, .deathfx > div { background: #33313b padding-box; box-shadow: none; border-style: solid; border-width: calc(var(--k-win) * var(--px)); border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round; image-rendering: pixelated; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e); }
 
 /* 첫 쪽의 「이전」은 자리만 남기고 숨긴다 (검수 L3 — 꺼진 단추가 고장처럼 보였다) */
 .btn.is-hidden { visibility: hidden; }
+
+/* 좁은 화면 (667×375): 턴 이름이 길어 「속전」 꼬리표는 뺀다(관 줄 · 숫자 · 읽는 이 이름은 그대로) · 출하 준비 안내 한 줄을 빼 왕관 두 줄이 칸 안에 · 장식 톱니는 로고 문장과 겹쳐 뺀다 */
+@media (max-width: 760px) { body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { display: none; } }
+@media (max-height: 400px) {
+  .su-win .su-body > p.note:first-child { display: none; }
+  body.slice .opening.menu::after { display: none; }
+}
