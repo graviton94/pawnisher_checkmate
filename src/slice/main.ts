@@ -1334,7 +1334,7 @@ const headOf = (pos: Pos): CardPt => { const c = renderer.screenOf(pos); return 
 const freshCards = (gained: number): HTMLElement[] => (gained > 0 ? [...document.querySelectorAll<HTMLElement>('#hand [data-card]')].slice(-gained) : []);
 const dealFresh = (gained: number): void => {
   const deckAt = centerOf(document.querySelector('[data-deck]'));
-  if (deckAt) cardFx.deal(deckAt, freshCards(gained));
+  if (deckAt) cardFx.deal(deckAt, freshCards(gained), $('hand').getBoundingClientRect());
   if (gained > 0) window.setTimeout(() => sfx('card'), 160);
 };
 /** 즉시 카드(뽑기 · 점화)의 연출 — 패가 버림 더미 · 연쇄 줄 · 태엽 계기로 가고, 새 카드는 덱에서 날아든다 */
@@ -1386,6 +1386,11 @@ const playFx = async (id: CommandId, src: CardSrc | null, before: BattleState, e
   const plateNow = (pid: number, delay = 0) => { const p = findPiece(b.s, pid) ?? was(pid); if (p) cardFx.plate(cellAt(p), delay); };
   if (c.kind === 'move') {
     const mover = was(pieceId);
+    // 칼날 세례: 곁 칸에 튄 피해가 가는 칸마다 쇳조각이 차례로 떨어진다 — 착지 순간에 맞춰 (판 연출과 함께)
+    if (baseOf(id) === 'bladeRain') {
+      const hit = events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.splash) : [])).map((h) => was(h.targetId)).filter((p): p is Piece => !!p);
+      cardFx.shards(hit.map((p) => cellAt(p)), Math.round(renderer.moveMs() * 0.8));
+    }
     if (c.who !== 'any' || !mover || !myKing || mover.id === myKing.id) return null;
     // 패는 날리지 않는다 — 깃발 하나가 「누가 누구를 부리나」를 말하고, 공격 1초 예산(D-538)을 지킨다
     await cardFx.flag(cellAt(myKing), cellAt(mover));

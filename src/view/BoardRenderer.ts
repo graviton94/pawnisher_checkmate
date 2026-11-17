@@ -1393,6 +1393,10 @@ class BoardScene extends Phaser.Scene {
   private get speed(): number {
     return (this.calm ? 1 / 0.3 : this.slowFx ? 0.25 : PACE.fx) * this.tempo;
   }
+  /** 이동 한 번(들기 → 착지)의 지금 길이 ms — 판 밖 카드 FX가 착지에 맞춘다 (D-548) */
+  get moveMsNow(): number {
+    return MOVE_TOTAL / this.speed;
+  }
   /** 템포 가속 (연쇄가 쌓일수록 연출이 빨라진다 — 레퍼런스 5권 원리 10, D-156). 1 = 기본 */
   tempo = 1;
   /** QA용: 주소에 ?fxslow를 붙이면 공격 이펙트를 4배 느리게 (스크린샷 증거용) */
@@ -2476,6 +2480,10 @@ export class BoardRenderer implements BoardView {
     if (k === 'row') void this.boardFx.rowBomb(2, this.scene.state.width);
     else if (k === 'thorns') void this.boardFx.thorns({ x: 3, y: 5 }, { x: 1, y: 1 });
     else this.boardFx.stamp({ x: 3, y: 3 });
+  }
+  /** 이동 한 번(들기 → 착지)의 지금 길이 ms (D-548 카드 FX 박자) */
+  moveMs(): number {
+    return this.scene.moveMsNow;
   }
   /** 판 칸 하나의 화면 가운데 (CSS px) — 판 밖 DOM 연출(초월 등)이 그 칸을 겨눈다 */
   screenOf(pos: Pos): { x: number; y: number } {

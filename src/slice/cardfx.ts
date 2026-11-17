@@ -359,6 +359,40 @@ export const oil = (cell: Cell, delay = 0): void => {
   });
 };
 
+/**
+ * 칼날 세례 (넓은 범위): 맞을 칸마다 쇳조각 셋이 위에서 떨어져(가속) 기물 어깨에 박히고 불똥 두 점 — 칸마다 차례로(stagger).
+ * landAt = 첫 칸에 닿는 때(ms, 판의 착지에 맞춘다).
+ */
+export const shards = (cells: Cell[], landAt: number, stagger = 60): void => {
+  if (calmMotion() || !cells.length) return;
+  const u = dotPx;
+  const fall = 180;
+  const SHARD: Spr = [' k ', 'kbk', 'khk', 'khk', 'kmk', 'kmk', 'kdk', ' k '];
+  cells.forEach((cell, n) => {
+    const hit = landAt + n * stagger;
+    layer.add({
+      name: n ? undefined : 'shards',
+      dur: hit + 200,
+      draw: (g, t) => {
+        const cx = dev(cell.c.x), cy = dev(cell.c.y);
+        for (let i = 0; i < 3; i++) {
+          const k = (t - (hit - fall) - i * 30) / fall;
+          if (k < 0) continue;
+          const x = cx - u + (i - 1) * 5 * u;
+          const land = cy - 7 * u + (i === 1 ? -2 * u : 0);
+          if (k < 1) spr(g, SHARD, x, Math.round(land - 18 * u * (1 - accel(k))) - 7 * u, u);
+          else {
+            const s = (k - 1) * fall;
+            const v = s < 80 ? 1 : stepOut((s - 80) / 100);
+            spr(g, SHARD.slice(0, 5), x, land - 5 * u, u, v);
+            if (s < 60) { g.fillStyle = COL.y; g.fillRect(x - 2 * u, land - u, u, u); g.fillRect(x + 4 * u, land - 2 * u, u, u); g.fillRect(x + u, land + u, u, u); }
+          }
+        }
+      },
+    });
+  });
+};
+
 /** 불씨 터짐: 대상 둘레로 쇳물 도트 여덟이 튀어 나가며 식는다 (연쇄 · 제물 · 쇳물) */
 export const embers = (at: Pt, hot: 'ember' | 'blood' = 'ember', delay = 0): void => {
   if (calmMotion()) return;
@@ -412,15 +446,16 @@ export const spring = (at: Pt): void => {
 
 /**
  * 덱 → 손패: 카드 뒷면(종이 · 황동 테)이 덱 칩에서 한 장씩 호를 그리며 새 카드 자리로 날아가고, 닿으면 그 카드가 보인다.
- * cards = 새로 들어온 손패 요소들 (도착 전까지 숨겨 둔다).
+ * cards = 새로 들어온 손패 요소들 (도착 전까지 숨겨 둔다), clip = 보이는 손패 칸.
  */
-export const deal = (deck: Pt, cards: HTMLElement[]): void => {
+export const deal = (deck: Pt, cards: HTMLElement[], clip?: DOMRect): void => {
   if (calmMotion() || !cards.length) return;
   const u = dotPx;
   cards.forEach((el, n) => {
     el.style.visibility = 'hidden';
     const r = el.getBoundingClientRect();
-    const to = { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2 };
+    // 손패가 넘쳐 아래로 밀린 카드는 보이는 손패 칸 아래 끝(「▼ N장 더」 띠 쪽)으로 들어간다
+    const to = { x: r.left + Math.min(40, r.width / 2), y: clip ? Math.min(r.top + r.height / 2, clip.bottom - 8) : r.top + r.height / 2 };
     const delay = n * CARD_FX.stagger;
     const ms = CARD_FX.deal;
     const show = () => {
