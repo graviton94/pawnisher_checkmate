@@ -23,7 +23,8 @@ export interface PopupArt {
 /** 숫자 글꼴: 이 크기에서 갈무리11 숫자가 도트 격자에 딱 맞는다 (높이 10도트) */
 export const POPUP_FONT = '700 12px Galmuri11';
 /** 팝업 박자 (ms): 전체 길이 · 지워지기 시작하는 때 · 지워지는 시간 */
-export const POPUP_MS = { life: 950, fadeAt: 640, fade: 260 };
+/** D-536: 머묾을 줄였다 (950 → 640ms) — 숫자가 다음 타격 · 기물을 오래 덮지 않게 */
+export const POPUP_MS = { life: 640, fadeAt: 400, fade: 200 };
 
 const INK = 0x0b0b0e;
 
@@ -86,14 +87,16 @@ export const buildPopupArt = (text: string, color: number): PopupArt => {
  * 튀어나옴(크게 → 제자리, 지수형) → 떠오름 → 아래에서 위로 잘리는 선이 올라가며 도트가 지워진다.
  * 선 바로 위 한 줄은 체크무늬로 듬성듬성, 선을 지난 도트는 한 도트 위로 튀며 바로 꺼진다.
  */
-export const drawPopup = (g: RectSink, art: PopupArt, cx: number, by: number, dot: number, ms: number, rise: number): void => {
+export const drawPopup = (g: RectSink, art: PopupArt, cx: number, by: number, dot: number, ms: number, rise: number, px = 1): void => {
   if (ms < 0 || ms >= POPUP_MS.life) return;
   const q = Math.min(1, ms / 330);
   const pop = 1 + 0.6 * 2 ** (-10 * q);
-  const d = Math.round(dot * pop); // 도트는 늘 반듯한 정사각형
+  // 도트는 늘 반듯한 정사각형 · 캔버스 정수 픽셀 (px = 월드 1단위의 캔버스 픽셀 수, D-536)
+  const snap = (v: number) => Math.round(v * px) / px;
+  const d = Math.max(1, Math.round(dot * pop * px)) / px;
   const lift = rise * (1 - (1 - q) ** 3);
-  const left = Math.round(cx - (art.w * d) / 2);
-  const top = Math.round(by - lift - art.h * d);
+  const left = snap(cx - (art.w * d) / 2);
+  const top = snap(by - lift - art.h * d);
   const f = Math.max(0, (ms - POPUP_MS.fadeAt) / POPUP_MS.fade);
   const cut = art.h * (1 - easeInCubic(Math.min(1, f))); // 이 줄보다 아래는 지워졌다
   for (const p of art.dots) {

@@ -1,7 +1,7 @@
 import { calmMotion } from '../prefs/motion';
 import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
-import { arcFly } from './fx3';
+import { arcFly, ditherKeyframes } from './fx3';
 
 /**
  * 비전투 UI 손맛 (D-184 — 타격감 연구소 2부를 본편으로). 모두 도트로만: 계단(steps) 움직임 · 도트 불똥 · 도트 스프라이트.
@@ -340,7 +340,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   // 칼자국 선 (문장 좌표): 오른위 A → 왼아래 B
   const A = { x: 152, y: 7.5 }, B = { x: 50, y: 114.7 };
   const ang = (Math.atan2(B.y - A.y, B.x - A.x) * 180) / Math.PI;
-  const glintRun = (ms: number) => { glint.style.left = `${A.x}px`; glint.style.top = `${A.y}px`; glint.animate([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }], { duration: ms, easing: 'cubic-bezier(.6,0,.4,1)' }); };
+  const glintRun = (ms: number) => { glint.style.left = `${A.x}px`; glint.style.top = `${A.y}px`; glint.animate(ditherKeyframes([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }]), { duration: ms, easing: 'steps(6, jump-end)' }); };
   const shake = (amp: number, ms: number) => panel.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.9}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.6}px,${amp * 0.4}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.2}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' });
   em.classList.add('run');
   sfx('lift');
@@ -353,7 +353,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   re(vig, 'on');
   glint.style.left = `${A.x}px`;
   glint.style.top = `${A.y}px`;
-  glint.animate([{ transform: `rotate(${ang}deg) scale(.2)`, opacity: 0 }, { transform: `rotate(${ang}deg) scale(1.6, 3)`, opacity: 1 }], { duration: 120, fill: 'forwards' });
+  glint.animate(ditherKeyframes([{ transform: `rotate(${ang}deg) scale(.2)`, opacity: 0 }, { transform: `rotate(${ang}deg) scale(1.6, 3)`, opacity: 1 }]), { duration: 120, easing: 'steps(3, jump-end)', fill: 'forwards' });
   await wait(120);
   // 베기
   em.classList.remove('tremble');
@@ -380,7 +380,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
     d.style.top = `${y}px`;
     if (i % 3 === 0) d.style.width = d.style.height = '3px';
     document.body.appendChild(d);
-    d.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${0.72 * side * v}px,${0.69 * side * v - 20}px)`, offset: 0.45 }, { transform: `translate(${0.72 * side * v * 1.3}px,${0.69 * side * v + 60}px)`, opacity: 0 }], { duration: 700 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.5,1)', fill: 'forwards' });
+    d.animate(ditherKeyframes([{ transform: 'translate(0,0)' }, { transform: `translate(${0.72 * side * v}px,${0.69 * side * v - 20}px)`, offset: 0.45 }, { transform: `translate(${0.72 * side * v * 1.3}px,${0.69 * side * v + 60}px)`, opacity: 0 }]), { duration: 700 + Math.random() * 300, easing: 'steps(10, jump-end)', fill: 'forwards' });
     window.setTimeout(() => d.remove(), 1050);
   }
   window.setTimeout(() => { em.classList.remove('cut'); em.classList.add('done'); }, 700);
@@ -401,7 +401,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
     m.style.left = `${r.left + 20 + Math.random() * (r.width - 40)}px`;
     m.style.top = `${r.bottom - 12}px`;
     document.body.appendChild(m);
-    m.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${(Math.random() - 0.5) * 30}px,-${120 + Math.random() * 80}px)`, opacity: 0 }], { duration: 2200, easing: 'cubic-bezier(.2,.6,.4,1)', fill: 'forwards' });
+    m.animate(ditherKeyframes([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${(Math.random() - 0.5) * 30}px,-${120 + Math.random() * 80}px)`, opacity: 0 }]), { duration: 2200, easing: 'steps(18, jump-end)', fill: 'forwards' });
     window.setTimeout(() => m.remove(), 2300);
   }, 520);
 };

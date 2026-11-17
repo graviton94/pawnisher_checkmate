@@ -61,25 +61,14 @@ export const FX_POWER = {
 /** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
 export const FX_SHAKE = { damage: 4, ratio: 0.35, ms: 160, intensity: 0.003, killIntensity: 0.005, vibrateHit: 25, vibrateKill: 45 };
 /**
- * 타격 카메라 (D-115): 공격이 닿은 거리만큼 — 붙어서 치면 그쪽으로 당겨 들어가고(줌 인), 멀리 닿으면 물러나 판을 보여 준다(줌 아웃).
- * 큰 피해(대상 최대 HP 대비)는 흔들림을 키우고 처치는 한 번 더 툭 당긴다. 배율은 기본 줌(DPR) 대비.
+ * 공격 박자 예산 (D-536, 실제 걸리는 ms — PACE.fx · 템포 배율을 친 뒤): 공격 1회 ≤ 1초 (CLAUDE.md UI 원칙 6).
+ * attack = 처치 없는 공격 연출 상한. 처치가 있으면 연출을 killFx로 줄이고, 무너짐(crumble)을 타격 순간부터 겹쳐
+ * 예비 시작 → 무너짐 끝이 kill 안에 든다(넘친 무너짐은 다음 행동과 겹친다). 킹 마무리(D-180)는 대국을 끝내는 연출이라 따로.
+ * 옛 타격 카메라(D-115 줌 · 당김 FX_CAMERA)는 소수 배율이라 뺐다.
  */
-export const FX_CAMERA = {
-  /** 닿은 거리(칸, 체비셰프) → 줌 배율: 1칸 · 2칸 · 3칸 이상 */
-  near: 1.1,
-  mid: 1.04,
-  far: 0.92,
-  /** 줌 인 때 공격 지점 쪽으로 끌려가는 비율 (0 = 그대로, 1 = 지점 한가운데) */
-  pull: 0.3,
-  inMs: 200,
-  outMs: 320,
-  /** 처치: 짧게 한 번 더 당긴다 */
-  killPunch: 0.035,
-  killPunchMs: 90,
-  /** 흔들림 세기 = 기본 × (1 + 피해/최대 HP × k), 최대 maxMult 배 */
-  shakeByRatio: 2.2,
-  shakeMaxMult: 2.6,
-};
+/** 흔들림 세기 = 기본 × (1 + 피해/최대 HP × k), 최대 maxMult 배 (옛 FX_CAMERA에서 남긴 몫) */
+export const FX_SHAKE_SCALE = { shakeByRatio: 2.2, shakeMaxMult: 2.6 };
+export const FX_BUDGET = { attack: 900, killFx: 640, crumble: 340, kill: 1000 };
 
 /** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
 export const TURN_SUMMARY = { bigDamage: 40 };
@@ -100,7 +89,8 @@ export const IMPACT = {
   /** 맞은 쪽 찌그러짐 → 출렁 복귀 */
   squash: { sx: 1.16, sy: 0.84, ms: 420 },
   /** 정지 프레임 (ms): 타격(피해 비율로 70~120) · 처치 · 킹 처치 */
-  stop: { min: 70, max: 120, kill: 200, king: 120 },
+  /** D-536: 처치 정지 200 → 110 (처치 1회 ≤ 1초 예산 안) */
+  stop: { min: 70, max: 120, kill: 110, king: 120 },
   /** 처치: 기물 그림 16조각 · 불씨 · 도트 고리 */
   shatter: { ms: 900, embers: 22, ringMs: 520 },
   /** 킹 마무리 (D-180): 멈춤 → 총알 시간(빛의 금) → 슬로 산산이 → 왕관. 반장이면 영화 띠 */
@@ -114,7 +104,7 @@ export const IMPACT = {
   /** 밀치기 충돌: 감속 미끄러짐 → 가로 납작 → 출렁 */
   push: { slide: 280, squash: 0.65, wobble: 550 },
   /** 연쇄 (같은 턴 처치마다): 정지가 길어진다 ×(1 + streak·k), 최대 max배 */
-  chain: { k: 0.55, max: 2.4 },
+  chain: { k: 0.3, max: 1.6 },
   /** 적 예고 과녁: 2배 크기 · −40°에서 떨어져 철컥 박힌다 */
   aim: { drop: 160, fromScale: 2, fromAngle: -40 },
   /** 원수 낙하: 그림자 · 낙하 · 판 물결 */

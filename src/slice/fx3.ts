@@ -183,7 +183,7 @@ export const discardHand = async (hand: HTMLElement): Promise<void> => {
     const r = c.getBoundingClientRect();
     const dx = to.right - 40 - (r.left + r.width / 2);
     const dy = to.top + to.height / 2 - (r.top + r.height / 2);
-    c.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx / 2 + 30}px,${dy / 2 - 20}px) rotate(14deg)`, offset: 0.5 }, { transform: `translate(${dx}px,${dy}px) rotate(24deg) scale(0.3)`, opacity: 0 }], { duration: 320, delay: i * 55, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' });
+    c.animate(ditherKeyframes([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx / 2 + 30}px,${dy / 2 - 20}px) rotate(14deg)`, offset: 0.5 }, { transform: `translate(${dx}px,${dy}px) rotate(24deg) scale(0.3)`, opacity: 0 }]), { duration: 320, delay: i * 55, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' });
   });
   await wait(320 + cards.length * 55);
   // 적 차례 동안 새 손패는 덮어 둔다 (내 차례에 한 장씩 들어온다)
@@ -199,7 +199,7 @@ export const dealHand = (hand: HTMLElement): void => {
     const r = c.getBoundingClientRect();
     const dx = from.left + from.width / 2 - (r.left + r.width / 2);
     const dy = from.top + from.height / 2 - (r.top + r.height / 2);
-    c.animate([{ transform: `translate(${dx}px,${dy}px) rotate(-12deg) scale(0.4,0.5)`, filter: 'sepia(1) brightness(0.55)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate(${dx / 2 + 40}px,${dy / 2}px) rotate(-5deg) scaleX(0.05)`, filter: 'sepia(1) brightness(0.55)', offset: 0.5 }, { transform: 'translateX(6px) scale(1.04,0.96)', filter: 'brightness(1.4)', offset: 0.82 }, { transform: 'none', filter: 'none' }], { duration: 400, delay: i * 90, easing: 'cubic-bezier(.2,.9,.3,1.15)', fill: 'backwards' });
+    c.animate(ditherKeyframes([{ transform: `translate(${dx}px,${dy}px) rotate(-12deg) scale(0.4,0.5)`, filter: 'sepia(1) brightness(0.55)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate(${dx / 2 + 40}px,${dy / 2}px) rotate(-5deg) scaleX(0.05)`, filter: 'sepia(1) brightness(0.55)', offset: 0.5 }, { transform: 'translateX(6px) scale(1.04,0.96)', filter: 'brightness(1.4)', offset: 0.82 }, { transform: 'none', filter: 'none' }]), { duration: 400, delay: i * 90, easing: 'cubic-bezier(.2,.9,.3,1.15)', fill: 'backwards' });
     window.setTimeout(() => {
       const p = centerOf(c);
       sparksAt(p.x - p.w / 2 + 8, p.y, 3, 14);
@@ -248,7 +248,7 @@ export const stampFx = (s: HTMLElement): void => {
       d.style.setProperty('--ix', `${-Math.cos(a) * 40}px`);
       d.style.setProperty('--iy', `${-Math.sin(a) * 20}px`);
       document.body.appendChild(d);
-      d.animate([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], { duration: 900, fill: 'forwards' });
+      d.animate(ditherKeyframes([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }]), { duration: 900, fill: 'forwards' });
       window.setTimeout(() => d.remove(), 900);
     }
   }, 150);
@@ -433,7 +433,7 @@ export const healFx = (el: HTMLElement | null, text: string): void => {
       pl.style.left = `${c.x - 24 + Math.random() * 48}px`;
       pl.style.top = `${c.y + 6}px`;
       document.body.appendChild(pl);
-      pl.animate([{ transform: 'translateY(0) scale(.4)', opacity: 1 }, { transform: 'translateY(-26px) scale(1.3)', opacity: 1, offset: 0.4 }, { transform: 'translateY(-44px) scale(.6)', opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.1,.9,.2,1)', fill: 'forwards' });
+      pl.animate(ditherKeyframes([{ transform: 'translateY(0) scale(.4)', opacity: 1 }, { transform: 'translateY(-26px) scale(1.3)', opacity: 1, offset: 0.4 }, { transform: 'translateY(-44px) scale(.6)', opacity: 0 }]), { duration: 700, easing: 'steps(10, jump-end)', fill: 'forwards' });
       window.setTimeout(() => pl.remove(), 700);
     }, i * 70);
   badge(c.x, c.y - c.h / 2 - 6, text, true);
@@ -543,23 +543,45 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
   });
 };
 
+/** 디더 단계 (0 = 다 보임 · 4 = 다 지움) → 마스크 키프레임 조각 */
+const pxLv = (v: number): string => `var(--px${v >= 0.9 ? 0 : v >= 0.65 ? 1 : v >= 0.4 ? 2 : v >= 0.12 ? 3 : 4})`;
+/** 보이는 정도(0~1)를 4×4 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-536, 투명도 대신) */
+export const pxMask = (v: number): Keyframe => ({ maskImage: pxLv(v), webkitMaskImage: pxLv(v) }) as Keyframe;
+
 /**
- * 도트 애니메이션 장치 (D-216 6): 코드로 거는 Web Animations의 투명도 보간을 디더 마스크 단계로 바꾼다 — 단순 페이드 금지.
+ * 도트 애니메이션 장치 (D-216 6 · D-536): 코드로 거는 Web Animations의 투명도 보간을 디더 마스크 계단으로 바꾼다 — 단순 페이드 금지.
+ * 투명도가 바뀌는 구간마다 사이 단계(px1~px3)를 고르게 끼워, 0 → 1이 한 번에 뒤집히지 않고 디더 네 계단으로 지나간다.
  * 이미 마스크로 모양을 내는 요소(아이콘 · 로고)는 그대로 둔다. main에서 한 번 부른다.
  */
 export const installPixelAnimate = (): void => {
-  const lv = (v: number) => `var(--px${v >= 0.9 ? 0 : v >= 0.65 ? 1 : v >= 0.4 ? 2 : v >= 0.12 ? 3 : 4})`;
   const orig = Element.prototype.animate;
   Element.prototype.animate = function (this: Element, kf: Keyframe[] | PropertyIndexedKeyframes | null, opts?: number | KeyframeAnimationOptions) {
-    if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') {
-      let last = 1;
-      kf = kf.map((f) => {
-        if (f.opacity === undefined) return { ...f, maskImage: lv(last), webkitMaskImage: lv(last) } as Keyframe;
-        last = Number(f.opacity);
-        const { opacity: _o, ...rest } = f;
-        return { ...rest, maskImage: lv(last), webkitMaskImage: lv(last) } as Keyframe;
-      });
-    }
+    if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') kf = ditherKeyframes(kf);
     return orig.call(this, kf, opts);
   } as typeof Element.prototype.animate;
+};
+
+/** 투명도 키프레임 → 디더 마스크 계단 키프레임 (빠진 offset은 Web Animations처럼 고르게 채운다) */
+export const ditherKeyframes = (kf: Keyframe[]): Keyframe[] => {
+  const n = kf.length;
+  const off = kf.map((f, i) => (typeof f.offset === 'number' ? f.offset : i === 0 ? 0 : i === n - 1 ? 1 : NaN));
+  for (let i = 1; i < n; i++)
+    if (Number.isNaN(off[i])) {
+      let j = i;
+      while (Number.isNaN(off[j])) j++;
+      for (let k = i; k < j; k++) off[k] = off[i - 1] + ((off[j] - off[i - 1]) * (k - i + 1)) / (j - i + 1);
+    }
+  let last = 1;
+  const vis = kf.map((f) => (f.opacity !== undefined ? (last = Number(f.opacity)) : last));
+  const out: Keyframe[] = [];
+  kf.forEach((f, i) => {
+    const { opacity: _o, ...rest } = f;
+    out.push({ ...rest, offset: off[i], ...pxMask(vis[i]) } as Keyframe);
+    const nv = vis[i + 1];
+    if (i < n - 1 && nv !== vis[i]) {
+      // 사이 단계 셋 — 마스크는 이산 보간이라 각 키프레임에서 바로 바뀐다(계단)
+      for (let k = 1; k <= 3; k++) out.push({ offset: off[i] + ((off[i + 1] - off[i]) * k) / 4, ...pxMask(vis[i] + ((nv - vis[i]) * k) / 4) } as Keyframe);
+    }
+  });
+  return out;
 };

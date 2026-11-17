@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { PieceType, Side } from '../engine/types';
-import { FX_CAMERA, FX_CHOICE, FX_POWER, FX_SHAKE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
+import { FX_SHAKE_SCALE, FX_CHOICE, FX_POWER, FX_SHAKE, FX_MS, MOVE_MS, type KingFx, type QueenFx } from '../data/fx';
 import { BOARD_DOTS, PixelPen, easeInCubic, easeInExpo, easeInOutCubic, easeInOutExpo, easeOutBack, easeOutCubic, easeOutExpo, span } from './pixel';
 
 /**
@@ -248,7 +248,7 @@ export const impactFeedback = (damage: number, killed: boolean, maxHp = 0): { ms
   // 흔들림은 처치 · 큰 피해(최대 HP의 FX_SHAKE.ratio 이상)에만 (D-214)
   if (!killed && (damage < FX_SHAKE.damage || damage < maxHp * FX_SHAKE.ratio)) return null;
   // 큰 피해일수록 세게 (D-115): 대상 최대 HP 대비 비율
-  const k = maxHp > 0 ? Math.min(FX_CAMERA.shakeMaxMult, 1 + (damage / maxHp) * FX_CAMERA.shakeByRatio) : 1;
+  const k = maxHp > 0 ? Math.min(FX_SHAKE_SCALE.shakeMaxMult, 1 + (damage / maxHp) * FX_SHAKE_SCALE.shakeByRatio) : 1;
   return { ms: Math.round(FX_SHAKE.ms * Math.min(1.6, k)), intensity: (killed ? FX_SHAKE.killIntensity : FX_SHAKE.intensity) * k, vibrate: killed ? FX_SHAKE.vibrateKill : FX_SHAKE.vibrateHit };
 };
 
@@ -322,8 +322,10 @@ const withPower = (fx: FxBuilt, req: FxRequest): FxBuilt => {
 const dirIndex = (c: Claimed) => DIRS.findIndex(([x, y]) => x === Math.sign(c.dx) && y === Math.sign(c.dy));
 
 /** 게임에서 재생 (Phaser). speed: 시간 배율. onPose로 공격자 자세를 받는다 */
-export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number, onPose: (p: Pose) => void): { duration: number; impact: Map<string, number> } => {
+export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number, onPose: (p: Pose) => void, budget = Infinity): { duration: number; impact: Map<string, number> } => {
   const fx = buildAttackFx(req);
+  // 박자 예산 (D-536): 실제 걸리는 시간(ms)이 budget을 넘으면 그만큼 빨리 돈다 — 예비 → 터짐 → 출렁 비율은 그대로
+  speed = Math.max(speed, fx.duration / budget);
   const g = scene.add.graphics().setDepth(6.5);
   const pen = new PixelPen(g, req.tile / BOARD_DOTS);
   scene.tweens.addCounter({
