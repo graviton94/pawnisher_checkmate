@@ -1,0 +1,673 @@
+{
+ "canon": {
+  "chained-door": {
+   "colors": 21191,
+   "lonely": 0.0269,
+   "region": 14.65
+  },
+  "old-spring": {
+   "colors": 26847,
+   "lonely": 0.0255,
+   "region": 16.79
+  },
+  "scarred-wall": {
+   "colors": 31043,
+   "lonely": 0.0452,
+   "region": 9.96
+  },
+  "casting-floor": {
+   "colors": 29602,
+   "lonely": 0.0383,
+   "region": 10.45
+  },
+  "companion-rest": {
+   "colors": 12003,
+   "lonely": 0.0093,
+   "region": 32.69
+  },
+  "crown-dais": {
+   "colors": 28803,
+   "lonely": 0.0267,
+   "region": 17.64
+  }
+ },
+ "scrapTrade": {
+  "px": 5.165,
+  "py": 6.16,
+  "pitch": 5.485,
+  "ox": 4.53,
+  "oy": 2.33,
+  "strength": 2.34,
+  "errUniform": 12.517,
+  "err": 11.667,
+  "grid": "dp±0.1",
+  "cells": [
+   264,
+   198
+  ],
+  "cellW": 5.485,
+  "cellH": 5.485,
+  "contrastK": 1.0,
+  "paletteK": 31,
+  "meanDE": 2.42,
+  "used": 30,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0412,
+   "region": 5.82
+  },
+  "raw": {
+   "colors": 26549,
+   "lonely": 0.0928,
+   "region": 4.04
+  },
+  "after": {
+   "colors": 30,
+   "lonely": 0.0259,
+   "region": 11.27
+  },
+  "lineKeep": 0.802,
+  "lineCells": 369,
+  "fx": 0.5,
+  "fy": 0.55
+ },
+ "mirrorHall": {
+  "px": 6.36,
+  "py": 6.075,
+  "pitch": 6.07,
+  "ox": 2.73,
+  "oy": 1.67,
+  "strength": 2.81,
+  "errUniform": 13.923,
+  "err": 12.018,
+  "grid": "dp±0.2",
+  "cells": [
+   238,
+   179
+  ],
+  "cellW": 6.084,
+  "cellH": 6.067,
+  "contrastK": 1.0,
+  "paletteK": 26,
+  "meanDE": 1.6,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0209,
+   "region": 8.78
+  },
+  "raw": {
+   "colors": 14599,
+   "lonely": 0.0236,
+   "region": 7.61
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.005,
+   "region": 28.31
+  },
+  "lineKeep": 0.606,
+  "lineCells": 99,
+  "fx": 0.5,
+  "fy": 0.6
+ },
+ "coldForge": {
+  "px": 5.45,
+  "py": 5.585,
+  "pitch": 5.58,
+  "ox": 3.35,
+  "oy": 5.16,
+  "strength": 3.79,
+  "errUniform": 10.252,
+  "err": 9.746,
+  "grid": "dp±0.1",
+  "cells": [
+   260,
+   195
+  ],
+  "cellW": 5.569,
+  "cellH": 5.569,
+  "contrastK": 1.0,
+  "paletteK": 27,
+  "meanDE": 1.65,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0107,
+   "region": 10.33
+  },
+  "raw": {
+   "colors": 12954,
+   "lonely": 0.0169,
+   "region": 7.75
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.003,
+   "region": 36.4
+  },
+  "lineKeep": 0.845,
+  "lineCells": 58,
+  "fx": 0.4,
+  "fy": 0.5
+ },
+ "fieldMedic": {
+  "px": 6.07,
+  "py": 6.17,
+  "pitch": 6.07,
+  "ox": 5.16,
+  "oy": 4.86,
+  "strength": 2.88,
+  "errUniform": 11.7,
+  "err": 11.129,
+  "grid": "dp±0.1",
+  "cells": [
+   239,
+   179
+  ],
+  "cellW": 6.059,
+  "cellH": 6.067,
+  "contrastK": 1.0,
+  "paletteK": 35,
+  "meanDE": 2.38,
+  "used": 34,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0144,
+   "region": 7.27
+  },
+  "raw": {
+   "colors": 22976,
+   "lonely": 0.0255,
+   "region": 6.98
+  },
+  "after": {
+   "colors": 34,
+   "lonely": 0.0059,
+   "region": 24.27
+  },
+  "lineKeep": 0.826,
+  "lineCells": 69,
+  "fx": 0.35,
+  "fy": 0.55
+ },
+ "bookCart": {
+  "px": 6.315,
+  "py": 6.975,
+  "pitch": 6.31,
+  "ox": 6.15,
+  "oy": 5.52,
+  "strength": 2.59,
+  "errUniform": 10.74,
+  "err": 10.28,
+  "grid": "dp±0.1",
+  "cells": [
+   230,
+   172
+  ],
+  "cellW": 6.296,
+  "cellH": 6.314,
+  "contrastK": 1.0,
+  "paletteK": 47,
+  "meanDE": 2.47,
+  "used": 46,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0208,
+   "region": 6.39
+  },
+  "raw": {
+   "colors": 22659,
+   "lonely": 0.0438,
+   "region": 5.03
+  },
+  "after": {
+   "colors": 46,
+   "lonely": 0.0116,
+   "region": 12.35
+  },
+  "lineKeep": 0.904,
+  "lineCells": 73,
+  "fx": 0.4,
+  "fy": 0.55
+ },
+ "crownAltar": {
+  "px": 6.455,
+  "py": 5.095,
+  "pitch": 5.615,
+  "ox": 3.93,
+  "oy": 0.42,
+  "strength": 2.25,
+  "errUniform": 9.625,
+  "err": 8.995,
+  "grid": "dp±0.2",
+  "cells": [
+   258,
+   193
+  ],
+  "cellW": 5.612,
+  "cellH": 5.627,
+  "contrastK": 1.0,
+  "paletteK": 39,
+  "meanDE": 2.45,
+  "used": 38,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0167,
+   "region": 7.63
+  },
+  "raw": {
+   "colors": 24489,
+   "lonely": 0.0333,
+   "region": 6.53
+  },
+  "after": {
+   "colors": 38,
+   "lonely": 0.0079,
+   "region": 20.4
+  },
+  "lineKeep": 0.8,
+  "lineCells": 60,
+  "fx": 0.5,
+  "fy": 0.4
+ },
+ "copyPress": {
+  "px": 6.295,
+  "py": 6.435,
+  "pitch": 6.425,
+  "ox": 3.85,
+  "oy": 4.02,
+  "strength": 3.45,
+  "errUniform": 9.467,
+  "err": 8.86,
+  "grid": "dp±0.3",
+  "cells": [
+   226,
+   169
+  ],
+  "cellW": 6.407,
+  "cellH": 6.426,
+  "paletteK": 27,
+  "meanDE": 1.86,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0178,
+   "region": 10.11
+  },
+  "raw": {
+   "colors": 13248,
+   "lonely": 0.0288,
+   "region": 7.6
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.0114,
+   "region": 13.74
+  },
+  "lineKeep": 0.943,
+  "lineCells": 141,
+  "fx": 0.45,
+  "fy": 0.45
+ },
+ "tollGate": {
+  "px": 5.98,
+  "py": 6.315,
+  "pitch": 5.98,
+  "ox": 4.63,
+  "oy": 0.45,
+  "strength": 2.88,
+  "pitchMeasured": 6.45,
+  "errUniform": 9.227,
+  "err": 8.23,
+  "grid": "dp±0.2",
+  "cells": [
+   242,
+   182
+  ],
+  "cellW": 5.983,
+  "cellH": 5.967,
+  "paletteK": 27,
+  "meanDE": 1.16,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0077,
+   "region": 20.66
+  },
+  "raw": {
+   "colors": 7540,
+   "lonely": 0.0144,
+   "region": 12.98
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.0042,
+   "region": 17.2
+  },
+  "lineKeep": 0.862,
+  "lineCells": 181,
+  "fx": 0.5,
+  "fy": 0.5
+ },
+ "echoWell": {
+  "px": 5.235,
+  "py": 5.355,
+  "pitch": 5.355,
+  "ox": 1.2,
+  "oy": 3.88,
+  "strength": 2.86,
+  "errUniform": 8.782,
+  "err": 8.484,
+  "grid": "dp±0.2",
+  "cells": [
+   270,
+   203
+  ],
+  "cellW": 5.363,
+  "cellH": 5.35,
+  "contrastK": 1.0,
+  "paletteK": 24,
+  "meanDE": 1.01,
+  "used": 24,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0044,
+   "region": 16.83
+  },
+  "raw": {
+   "colors": 7643,
+   "lonely": 0.0075,
+   "region": 12.34
+  },
+  "after": {
+   "colors": 24,
+   "lonely": 0.001,
+   "region": 48.08
+  },
+  "lineKeep": 0.64,
+  "lineCells": 50,
+  "fx": 0.4,
+  "fy": 0.5
+ },
+ "scrapHeap": {
+  "px": 6.185,
+  "py": 6.215,
+  "pitch": 6.2,
+  "ox": 6.04,
+  "oy": 2.01,
+  "strength": 5.83,
+  "errUniform": 9.372,
+  "err": 8.765,
+  "grid": "dp±0.1",
+  "cells": [
+   234,
+   175
+  ],
+  "cellW": 6.188,
+  "cellH": 6.206,
+  "contrastK": 1.0,
+  "paletteK": 39,
+  "meanDE": 2.43,
+  "used": 38,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0168,
+   "region": 6.77
+  },
+  "raw": {
+   "colors": 21700,
+   "lonely": 0.0405,
+   "region": 4.49
+  },
+  "after": {
+   "colors": 38,
+   "lonely": 0.0094,
+   "region": 12.75
+  },
+  "lineKeep": 0.939,
+  "lineCells": 132,
+  "fx": 0.5,
+  "fy": 0.6
+ },
+ "rustBath": {
+  "px": 5.995,
+  "py": 5.84,
+  "pitch": 5.915,
+  "ox": 3.84,
+  "oy": 5.77,
+  "strength": 2.5,
+  "errUniform": 7.886,
+  "err": 7.339,
+  "grid": "dp±0.1",
+  "cells": [
+   245,
+   184
+  ],
+  "cellW": 5.91,
+  "cellH": 5.902,
+  "contrastK": 1.0,
+  "paletteK": 48,
+  "meanDE": 2.6,
+  "used": 48,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0117,
+   "region": 6.76
+  },
+  "raw": {
+   "colors": 25241,
+   "lonely": 0.0327,
+   "region": 6.18
+  },
+  "after": {
+   "colors": 48,
+   "lonely": 0.0055,
+   "region": 33.67
+  },
+  "lineKeep": 0.95,
+  "lineCells": 120,
+  "fx": 0.3,
+  "fy": 0.55
+ },
+ "sleepingKing": {
+  "px": 6.095,
+  "py": 6.245,
+  "pitch": 6.24,
+  "ox": 0.31,
+  "oy": 0.47,
+  "strength": 2.57,
+  "errUniform": 8.58,
+  "err": 8.101,
+  "grid": "dp±0.1",
+  "cells": [
+   232,
+   174
+  ],
+  "cellW": 6.241,
+  "cellH": 6.241,
+  "contrastK": 1.0,
+  "paletteK": 27,
+  "meanDE": 2.39,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.009,
+   "region": 9.78
+  },
+  "raw": {
+   "colors": 16049,
+   "lonely": 0.0173,
+   "region": 7.14
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.0032,
+   "region": 25.93
+  },
+  "lineKeep": 0.881,
+  "lineCells": 101,
+  "fx": 0.45,
+  "fy": 0.4
+ },
+ "cardSharp": {
+  "px": 5.695,
+  "py": 5.67,
+  "pitch": 5.685,
+  "ox": 0.43,
+  "oy": 0.43,
+  "strength": 3.03,
+  "errUniform": 7.94,
+  "err": 7.235,
+  "grid": "dp±0.2",
+  "cells": [
+   255,
+   191
+  ],
+  "cellW": 5.678,
+  "cellH": 5.686,
+  "contrastK": 1.0,
+  "paletteK": 27,
+  "meanDE": 2.44,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0113,
+   "region": 7.31
+  },
+  "raw": {
+   "colors": 22156,
+   "lonely": 0.0362,
+   "region": 5.52
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.0089,
+   "region": 15.17
+  },
+  "lineKeep": 0.978,
+  "lineCells": 89,
+  "fx": 0.4,
+  "fy": 0.45
+ },
+ "overtime": {
+  "px": 5.88,
+  "py": 6.025,
+  "pitch": 6.025,
+  "ox": 2.26,
+  "oy": 1.96,
+  "strength": 9.76,
+  "errUniform": 8.918,
+  "err": 8.05,
+  "grid": "dp±0.1",
+  "cells": [
+   240,
+   180
+  ],
+  "cellW": 6.033,
+  "cellH": 6.033,
+  "contrastK": 1.0,
+  "paletteK": 43,
+  "meanDE": 2.39,
+  "used": 42,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0101,
+   "region": 11.89
+  },
+  "raw": {
+   "colors": 19920,
+   "lonely": 0.021,
+   "region": 11.21
+  },
+  "after": {
+   "colors": 42,
+   "lonely": 0.0053,
+   "region": 31.51
+  },
+  "lineKeep": 0.993,
+  "lineCells": 135,
+  "fx": 0.6,
+  "fy": 0.55
+ },
+ "castMold": {
+  "px": 5.78,
+  "py": 5.57,
+  "pitch": 5.575,
+  "ox": 4.6,
+  "oy": 3.07,
+  "strength": 5.02,
+  "errUniform": 7.542,
+  "err": 7.07,
+  "grid": "dp±0.2",
+  "cells": [
+   260,
+   195
+  ],
+  "cellW": 5.569,
+  "cellH": 5.569,
+  "contrastK": 1.0,
+  "paletteK": 27,
+  "meanDE": 2.35,
+  "used": 26,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0068,
+   "region": 12.11
+  },
+  "raw": {
+   "colors": 19398,
+   "lonely": 0.0285,
+   "region": 8.02
+  },
+  "after": {
+   "colors": 26,
+   "lonely": 0.0061,
+   "region": 33.01
+  },
+  "lineKeep": 0.794,
+  "lineCells": 209,
+  "fx": 0.35,
+  "fy": 0.5
+ },
+ "duelKnight": {
+  "px": 5.965,
+  "py": 5.935,
+  "pitch": 5.935,
+  "ox": 0.59,
+  "oy": 4.75,
+  "strength": 3.39,
+  "errUniform": 6.687,
+  "err": 6.259,
+  "grid": "dp±0.1",
+  "cells": [
+   244,
+   183
+  ],
+  "cellW": 5.934,
+  "cellH": 5.934,
+  "contrastK": 1.0,
+  "paletteK": 35,
+  "meanDE": 2.49,
+  "used": 34,
+  "before": {
+   "colors": 32,
+   "lonely": 0.0073,
+   "region": 8.76
+  },
+  "raw": {
+   "colors": 23757,
+   "lonely": 0.0217,
+   "region": 7.43
+  },
+  "after": {
+   "colors": 34,
+   "lonely": 0.0072,
+   "region": 21.93
+  },
+  "lineKeep": 0.911,
+  "lineCells": 79,
+  "fx": 0.55,
+  "fy": 0.4
+ }
+}

@@ -375,27 +375,39 @@ PB01_GRID = {
 }
 
 
-# D-538 (리뷰 #6): 사건 그림 16장 재양자화 — R-01 재발주를 받기 전 임시. tools/pixel/event_requant.py가 읽는다.
-# source = 받은 원본(build-res/order), size = 처음 반입의 복원 격자 칸 수(build-res/order/EV-grid/<이름>.png에 보존 — 초점 EVENT_FOCUS가 이 크기 기준),
-# colors = 팔레트 상한(≤ 32 — D-388 「도트 강제」 위반인 생성기 그레인 · 그라데이션을 걷는다), despeckle = 외톨이 칸 정리 횟수
-#   (밝기 차 40 이하 낱점만 — 조건 없이 걷어 보니 철망 · 사선 1도트 무늬가 끊겨 덩어리졌다. 남은 낱점은 R-01 재발주로 걷는다).
-EVENT_REQUANT = {
-    'scrapTrade': {'source': 'V-21-scrapTrade-source.png', 'size': (265, 189), 'colors': 32, 'despeckle': 3},
-    'mirrorHall': {'source': 'V-37-mirrorHall-source.png', 'size': (237, 185), 'colors': 32, 'despeckle': 3},
-    'coldForge': {'source': 'V-35-coldForge-source.png', 'size': (254, 198), 'colors': 32, 'despeckle': 3},
-    'fieldMedic': {'source': 'V-34-fieldMedic-source.png', 'size': (262, 195), 'colors': 32, 'despeckle': 3},
-    'bookCart': {'source': 'V-30-bookCart-source.png', 'size': (258, 189), 'colors': 32, 'despeckle': 3},
-    'crownAltar': {'source': 'V-28-crownAltar-source.png', 'size': (265, 193), 'colors': 32, 'despeckle': 3},
-    'copyPress': {'source': 'V-33-copyPress-source.png', 'size': (258, 192), 'colors': 32, 'despeckle': 3},
-    'tollGate': {'source': 'V-36-tollGate-source.png', 'size': (246, 185), 'colors': 32, 'despeckle': 3},
-    'echoWell': {'source': 'V-32-echoWell-source.png', 'size': (260, 197), 'colors': 32, 'despeckle': 3},
-    'scrapHeap': {'source': 'V-23-scrapHeap-source.png', 'size': (256, 194), 'colors': 32, 'despeckle': 3},
-    'rustBath': {'source': 'V-24-rustBath-source.png', 'size': (252, 191), 'colors': 32, 'despeckle': 3},
-    'sleepingKing': {'source': 'V-31-sleepingKing-source.png', 'size': (257, 185), 'colors': 32, 'despeckle': 3},
-    'cardSharp': {'source': 'V-26-cardSharp-source.png', 'size': (258, 199), 'colors': 32, 'despeckle': 3},
-    'overtime': {'source': 'V-38-overtime-source.png', 'size': (255, 196), 'colors': 32, 'despeckle': 3},
-    'castMold': {'source': 'V-27-castMold-source.png', 'size': (261, 197), 'colors': 32, 'despeckle': 3},
-    'duelKnight': {'source': 'V-29-duelKnight-source.png', 'size': (248, 188), 'colors': 32, 'despeckle': 3},
+# D-555: 사건 그림 16장 재반입 — 받은 원본에서 D-423 반입을 다시 실행. tools/pixel/event_import.py가 읽는다 (D-538 재양자화 · EV-grid를 대신한다).
+# 실측(원본 1448×1086): 센 경계(|ΔL| > 30)만 모은 가로 · 세로 경계 곡선의 주기 스펙트럼 봉우리(축마다) → 두 축이 함께 받치는 정사각 간격,
+#   위상 = snap._score 시작점, 격자 = 균일 · 같은 칸 수 dp(±10/20/30%) 가운데 복원 오차가 낮은 것. cells는 도구가 다시 재서 같은지 확인한다.
+#   생성기 격자는 뚜렷한 하나가 아니다(봉우리가 중앙값의 2~10배, 축마다 0.1~1px 갈리고 2도트 얼룩 주기 11~13px가 더 세다).
+# 처방(그레인 걷기 세기) — sigma = 시그마 필터 ΔE, mode_de = 낮은 대비 최빈 필터 ΔE, merge_de = 덩어리(< merge칸) 정리 ΔE, single_de = 외톨이 칸 ΔE:
+#   FINE = 어두운 돌 · 가는 선이 많은 그림(우물 안 벽돌 · 거울 기둥 선 · 대장간 뒷벽 벽돌이 지워지지 않게), MID = 보통,
+#   RUST = 녹 얼룩이 큰 그림(얼룩 대비가 ΔE 20을 넘어 MID로는 안 걷힌다 — 기보 수레는 RUST면 책등 띠가 지워져 MID),
+#   DARK · DARK2 = 아주 어두운 그림(통행 문 · 압인기) — 그레인과 주제 선(룩 테두리 · 팻말 톱니 · 초소 창살 · 압인기 문장)의 대비가 같은
+#     크기라 더 세게 걸면 주제가 지워진다 → 벽 그레인을 다 걷지 못해 이 둘만 R-01 재발주에 남긴다.
+#   통행 문 pitch 5.98 = 가로 봉우리(두 축이 받치는 6.45px는 초소 창 창살이 칸 하나에 뭉개졌다).
+_BASE = {'iters': 2, 'merge': 16, 'single_de': 30}
+_FINE = dict(_BASE, sigma=9, mode_de=16, merge_de=18)
+_MID = dict(_BASE, sigma=12, mode_de=20, merge_de=20)
+_RUST = dict(_BASE, sigma=16, mode_de=24, merge_de=22)
+_DARK = dict(_BASE, sigma=5, mode_de=8, merge_de=10)
+_DARK2 = dict(_BASE, sigma=7, mode_de=12, merge_de=12)
+EVENT_IMPORT = {
+    'scrapTrade': dict(_RUST, source='V-21-scrapTrade-source.png', cells=(264, 198)),  # 봉우리 x 5.165 · y 6.16 → 5.485px · 위상 4.53, 2.33 · dp±0.1
+    'mirrorHall': dict(_FINE, source='V-37-mirrorHall-source.png', cells=(238, 179)),  # 봉우리 x 6.36 · y 6.075 → 6.07px · 위상 2.73, 1.67 · dp±0.2
+    'coldForge': dict(_FINE, source='V-35-coldForge-source.png', cells=(260, 195)),  # 봉우리 x 5.45 · y 5.585 → 5.58px · 위상 3.35, 5.16 · dp±0.1
+    'fieldMedic': dict(_MID, source='V-34-fieldMedic-source.png', cells=(239, 179)),  # 봉우리 x 6.07 · y 6.17 → 6.07px · 위상 5.16, 4.86 · dp±0.1
+    'bookCart': dict(_MID, source='V-30-bookCart-source.png', cells=(230, 172)),  # 봉우리 x 6.315 · y 6.975 → 6.31px · 위상 6.15, 5.52 · dp±0.1
+    'crownAltar': dict(_MID, source='V-28-crownAltar-source.png', cells=(258, 193)),  # 봉우리 x 6.455 · y 5.095 → 5.615px · 위상 3.93, 0.42 · dp±0.2
+    'copyPress': dict(_DARK2, source='V-33-copyPress-source.png', cells=(226, 169)),  # 봉우리 x 6.295 · y 6.435 → 6.425px · 위상 3.85, 4.02 · dp±0.3
+    'tollGate': dict(_DARK, source='V-36-tollGate-source.png', pitch=5.98, cells=(242, 182)),  # 봉우리 x 5.98 · y 6.315 → 5.98px · 위상 4.63, 0.45 · dp±0.2
+    'echoWell': dict(_FINE, source='V-32-echoWell-source.png', cells=(270, 203)),  # 봉우리 x 5.235 · y 5.355 → 5.355px · 위상 1.2, 3.88 · dp±0.2
+    'scrapHeap': dict(_RUST, source='V-23-scrapHeap-source.png', cells=(234, 175)),  # 봉우리 x 6.185 · y 6.215 → 6.2px · 위상 6.04, 2.01 · dp±0.1
+    'rustBath': dict(_RUST, source='V-24-rustBath-source.png', cells=(245, 184)),  # 봉우리 x 5.995 · y 5.84 → 5.915px · 위상 3.84, 5.77 · dp±0.1
+    'sleepingKing': dict(_MID, source='V-31-sleepingKing-source.png', cells=(232, 174)),  # 봉우리 x 6.095 · y 6.245 → 6.24px · 위상 0.31, 0.47 · dp±0.1
+    'cardSharp': dict(_MID, source='V-26-cardSharp-source.png', cells=(255, 191)),  # 봉우리 x 5.695 · y 5.67 → 5.685px · 위상 0.43, 0.43 · dp±0.2
+    'overtime': dict(_MID, source='V-38-overtime-source.png', cells=(240, 180)),  # 봉우리 x 5.88 · y 6.025 → 6.025px · 위상 2.26, 1.96 · dp±0.1
+    'castMold': dict(_RUST, source='V-27-castMold-source.png', cells=(260, 195)),  # 봉우리 x 5.78 · y 5.57 → 5.575px · 위상 4.6, 3.07 · dp±0.2
+    'duelKnight': dict(_MID, source='V-29-duelKnight-source.png', cells=(244, 183)),  # 봉우리 x 5.965 · y 5.935 → 5.935px · 위상 0.59, 4.75 · dp±0.1
 }
 
 
