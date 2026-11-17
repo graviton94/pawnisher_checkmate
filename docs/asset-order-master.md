@@ -2993,7 +2993,7 @@
 | 상자 | 우선 | 낱장 | 받기 전 임시 (D-538) |
 |---|---|---|---|
 | R-01 사건 그림 16장 재발주 | P1 | 16 | 받은 V-21 ~ V-38 원본 격자를 그대로 두고 32색 · 그레인 낱점 정리(`tools/pixel/event_requant.py`, 외톨이 칸 비율 0.82 ~ 0.96 → 0.01 ~ 0.06, 대조 `build-res/order/EV-requant-sheet.png`) |
-| R-02 앱 아이콘 · 적응형 (전경 · 바탕) | P1 (출시 차단) | 2 | **받음 · 반입 (D-544)** — `tools/pixel/r02_icon_import.py` → `build-res/icon-src/` → `tools/app_icon.py` |
+| R-02 앱 아이콘 · 적응형 (전경 · 바탕) | P1 (출시 차단) | 2 | **받음 · 반입 (D-544)** — `tools/pixel/r02_icon_import.py` → `build-res/icon-src/` → `tools/app_icon.py`. 종이왕 전경은 게임 정본 K0으로 통일, 받은 전경은 보관만 (D-547) |
 | R-03 ~ R-09 스토어 그림 (스팀 캡슐 5 · 라이브러리 히어로 1 · 플레이 피처 1) | P1 (출시 차단) | 7 | 없음 — 스토어 등록 전에 받아야 한다(게임 안에서는 쓰지 않는다) |
 
 ## R-01 · 사건 그림 재발주 — 그레인 · 그라데이션 없는 도트 (16장, 상자 16개)
@@ -3047,6 +3047,7 @@
 ## R-02 · 앱 아이콘 · 적응형 아이콘 (전경 · 바탕 두 장) · 받음 (D-544)
 - 왜: 지금 아이콘(`public/icon-*.png` · `favicon.png` · `build-res/icon.png` · 안드로이드 `mipmap-*`)은 매끈한 벡터풍 로고 + 「PAWNISHER」 글자라 48dp에서 글자가 뭉개지고, 적응형 전경이 꽉 찬 사각이라 원형 마스크에 잘렸다. 왕관 폰도 게임의 종이왕(K0 정본, D-424)과 달랐다(리뷰 #7). D-538 임시본은 종이왕 기물 도트를 그대로 정수배로 올린 것이었다.
 - **받음 · 반입 (2026-11-17, D-544)**: 전경 · 바탕 둘 다 1254×1254(발주 32×32 ×32 = 1024가 아니다). 사용자가 붉은 사선 베기를 빼고 보냈다 — 그대로 받는다(아래 프롬프트도 베기 없음으로 고쳤다). 실측 격자 18.72px → **67×67도트**(발주 32칸 격자 39.19px로 자르면 복원 오차가 두 배 — 먹 외곽선 · 흰 테 1칸이 뭉개진다), 16색 팔레트로 맞춤, 전경 바깥 검은 바탕 = 투명, 바탕 쇠판은 테 · 리벳을 사방 같게 다듬음. `python3 -I tools/pixel/r02_icon_import.py` → `build-res/icon-src/fg.png` · `bg.png` → `python3 -I tools/app_icon.py` · `python3 -I tools/android-res.py`. 대조 `build-res/order/R-02-icon-check.png`. 64px 파비콘 · 48 · 72px 런처처럼 전경 61도트가 1배로도 안 드는 크기는 종이왕 기물 작은 판(m-K0 19×24도트)을 쓴다.
+- **종이왕 전경은 게임 정본 K0으로 통일, 받은 전경은 보관만 (D-547)**: 받은 전경(67도트 종이왕)과 작은 크기의 m-K0이 서로 다른 두 종이왕이었고 게임 그림과도 달랐다(사용자 피드백). 이제 모든 크기가 게임 흰 킹 그림(`pieces64.txt` [K 0], s-K0 = ×2)과 같은 K0을 받은 쇠판(`bg.png`, 격자 그대로) 위에 정수배로 — 1024 ×14 · 512 ×7 · 192 · 180 ×2 · 런처 xhdpi ~ xxxhdpi ×1 ~ ×2 · 적응형 ×1 ~ ×3. K0 69도트가 1배로도 안 드는 64 · 32 · 16px 파비콘 · 48 · 72px 런처 · mdpi 적응형만 `maker.mini()`(m-K0과 같은 길)로 그 크기에 드는 가장 큰 K0 작은 판. `build-res/icon-src/fg.png` · `R-02-icon-fg-source.png`는 기록으로만 남긴다 — 쓰지 않는다.
 - 크기 · 넣을 곳: 원본 **32×32 도트 → ×32 = 1024×1024** → `build-res/icon-src/fg.png` · `bg.png` → `python3 -I tools/app_icon.py`가 `build-res/icon.png`(일렉트론) · `public/icon-192/512.png` · `favicon.png` · `apple-touch-icon.png` · 안드로이드 `mipmap-*`(`tools/android-res.py`로 밀도별 정수배)를 찍는다. 적응형 전경은 108dp 캔버스 가운데 66dp 안전 원 안.
 - 받은 그림 이름: `R-02-icon-fg.png` · `R-02-icon-bg.png` (→ `build-res/order/R-02-icon-fg-source.png` · `R-02-icon-bg-source.png`)
 

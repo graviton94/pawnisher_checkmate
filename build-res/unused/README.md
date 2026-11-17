@@ -51,16 +51,17 @@
 | `public/pieces/l-giantQ1.png` | 2.9 KB | 거대 주물 큰 그림. 판 · 정보 창은 `s-giant*`만 부른다. maker.py export가 더는 찍지 않는다. |
 | `public/pieces/l-giantR1.png` | 3.0 KB | 거대 주물 큰 그림. 판 · 정보 창은 `s-giant*`만 부른다. maker.py export가 더는 찍지 않는다. |
 | `public/pieces/l-hopper1.png` | 1.4 KB | 검은(적) 이형 큰 그림. 분대 얼굴은 흰 이형 `l-<이형>0`만 부른다. maker.py export가 더는 찍지 않는다. |
-| `public/pieces/m-B0.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-B1.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-K1.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-N0.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-N1.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-P1.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-Q0.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-Q1.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-R0.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
-| `public/pieces/m-R1.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`, 앱 아이콘 도구(tools/app_icon.py)가 `m-K0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-B0.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-B1.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-K0.png` | 0.3 KB | 작은 도트판 (25px). D-547부터 앱 아이콘도 이 파일 대신 `tools/app_icon.py`가 `maker.mini()`로 크기마다 K0 작은 판을 찍는다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-K1.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-N0.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-N1.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-P1.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-Q0.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-Q1.png` | 0.4 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-R0.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
+| `public/pieces/m-R1.png` | 0.3 KB | 작은 도트판 (25px). 2.0(legacy) 배경이 `m-P0`만 쓴다. maker.py `MINI_FILES`에서 다시 켤 수 있다. |
 | `public/scenes/act-0.png` | 516.5 KB | 옛 0막 표지. 막 표지는 `act-${Math.min(4, 막+1)}`이라 act-1~4만 부른다. |
 | `public/scenes/boss-gilded-4.png` | 136.9 KB | 옛 도금왕 겹 단계 4번째. 게임(`main.ts gildedArt`)은 `boss-gilded`(첫째 왕관) · `-1`~`-3`(둘째~넷째 왕관 · 도전 승급별)만 부른다 — 왕관은 넷뿐이라 `-4`는 자리가 없다. |
 | `public/scenes/ending-1.png` | 81.8 KB | 옛 13단 엔딩 그림. 지금 결말은 `end-k-*` · `end-t-*` · `end-f-*` · `ending-a` (D-451 마스터 바이블). |

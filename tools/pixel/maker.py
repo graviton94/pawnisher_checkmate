@@ -1,7 +1,7 @@
 """
 도트 메이커 (D-086): tools/pixel/pieces.txt 격자 → 배경 없는 PNG. 기물 그림은 전부 여기서 다시 찍을 수 있다.
 
-  python3 -I tools/pixel/maker.py export              게임 그림 갱신 (public/pieces/s-*.png 128px · l-*.png 192px · m-P0 · m-K0 작은 도트판 — 쓰는 것만, MINI_FILES)
+  python3 -I tools/pixel/maker.py export              게임 그림 갱신 (public/pieces/s-*.png 128px · l-*.png 192px · m-P0 작은 도트판 — 쓰는 것만, MINI_FILES)
   python3 -I tools/pixel/maker.py one N 1 8 out.png   기물 하나 (유형 · 진영 0흰/1흑 · 배율 · 파일), 배경 투명
   python3 -I tools/pixel/maker.py sheet out.png 6     전체 시트 (흰/흑 × 6종, 배율)
   유형에 이형을 붙이면 그 그림: N:hammer (pieces.txt에 [N:hammer] 블록이 있을 때)
@@ -218,9 +218,9 @@ def piece(name, side, scale=1):
 # 게임 그림으로 내보내는 이형 블록 (src/data/forms.ts FormId + 거대 주물). K:classic 같은 보관 블록은 내보내지 않는다
 VARIANT_FILES = ('cannon', 'camel', 'hopper', 'archbishop', 'chancellor', 'giant')
 # 게임이 실제로 부르는 것만 찍는다 (D-541 — 안 쓰는 그림은 build-res/unused/로, 앱에 싣지 않는다):
-#   작은 도트판 m-*는 2.0(legacy) 배경의 m-P0 · 앱 아이콘 도구(tools/app_icon.py)의 m-K0뿐 · 큰 그림 l-<이형>은 분대 얼굴의 흰 진영(0)뿐 (l-<이형>1 · l-giant* · l-boss-*는 부르는 곳이 없다)
+#   작은 도트판 m-*는 2.0(legacy) 배경의 m-P0뿐 (앱 아이콘은 D-547부터 tools/app_icon.py가 mini()를 크기마다 직접 불러 m-K0 파일이 필요 없다) · 큰 그림 l-<이형>은 분대 얼굴의 흰 진영(0)뿐 (l-<이형>1 · l-giant* · l-boss-*는 부르는 곳이 없다)
 #   다시 쓰게 되면 여기서 풀고 build-res/unused/README.md의 줄을 지운다
-MINI_FILES = {('P', 0), ('K', 0)}
+MINI_FILES = {('P', 0)}
 
 
 def export():
@@ -248,7 +248,7 @@ def export():
         if not boss and form != 'giant' and side == 0:
             piece(name, side, 3).save(os.path.join(out, f'l-{stem}{sep}{side}.png'))
         names.append(f'{stem}{sep}{side}')
-    print('public/pieces/s-*.png (144px) 12종 + 이형 · l-*.png (216px) 12종 + 흰 이형 · m-P0 · m-K0 (25px 작은 도트판) — 72칸 캔버스(64칸 정본 + 위 8줄)')
+    print('public/pieces/s-*.png (144px) 12종 + 이형 · l-*.png (216px) 12종 + 흰 이형 · m-P0 (25px 작은 도트판) — 72칸 캔버스(64칸 정본 + 위 8줄)')
     print('이형 · 거대:', ' '.join(names))
 
 
