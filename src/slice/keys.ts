@@ -187,6 +187,8 @@ const domEnv = (cancel: () => boolean): InputEnv => {
         if (card && !boardMode) boardEnv().toggle();
         return true;
       }
+      // 컷신 (D-546 비주얼 노벨 넘김): Enter · Space · 패드 A = 화면 탭 — 「건너뛴다」에 초점만 주지 않는다(대사 기록 창이 열렸으면 그 단추)
+      if (layer?.classList.contains('prologue') && !layer.querySelector('.vn-log')) return layer.click(), true;
       if (list.length) return focusEl(list[0]), true;
       // 단추가 없는 장면(컷 · 타이틀 「누르세요」)은 한 번 탭과 같다 — 대국 판은 빼고
       if (layer && layer !== app()) return layer.click(), true;

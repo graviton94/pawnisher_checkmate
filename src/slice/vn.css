@@ -1,0 +1,37 @@
+/* ===================== 비주얼 노벨 층 (D-546) — src/slice/vn.ts · opening.playCuts =====================
+   장면 칸(.film-view) 안: 그림(.pl-stage) → 입자(.vn-air, 장면 도트 3 기기 픽셀 캔버스) → 서 있는 배우(.vn-cast) → 등잔 그늘(.vn-lamp) → 전환 막(.film-over).
+   배우 = 72칸 기물 도트 정수배(vn.ts가 크기 · 위치를 기기 픽셀 정수로), 그늘 = 같은 그림의 먹 실루엣에 64단 디더(투명도 아님).
+   숨 고르기 = 1도트 위아래 정지 동작(일부러 계단 — D-546 hold). 그라데이션 · 투명도 보간 없음 (D-216). */
+.film .vn-air { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.film .vn-air canvas { display: block; image-rendering: pixelated; }
+.film .vn-cast { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.film .vn-actor { position: absolute; bottom: 0; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
+.film .vn-body { position: relative; width: 100%; height: 100%; animation: vnbreath 1800ms steps(1, end) infinite; }
+.film .vn-l .vn-body { animation-delay: -900ms; }
+.film .vn-body > img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.film .vn-actor.flip .vn-body > img { transform: scaleX(-1); }
+.film .vn-body > .vn-shade { filter: brightness(0); }
+@keyframes vnbreath { 0%, 55% { translate: 0 0; } 56%, 100% { translate: 0 calc(var(--px) * -1); } }
+/* 등잔 깜빡: 장면 칸 전체 25% 먹 디더 두 프레임 (vn.ts가 몇 초에 한 번) */
+.film .vn-lamp { position: absolute; inset: 0; z-index: 2; pointer-events: none; visibility: hidden; background-image: var(--dk5); }
+.film .vn-lamp.on { visibility: visible; }
+
+/* 대사 기록 단추: 「건너뛴다」의 거울 자리 (띠 왼쪽 아래 구석, 좁은 화면은 띠 바로 위 왼쪽) */
+.kit .cut-log.btn { position: absolute; z-index: 7; left: var(--G); right: auto; top: auto; bottom: var(--Gy); width: calc(var(--px) * 56); }
+@media (max-width: 899px) { .kit .cut-log.btn { bottom: calc(var(--Gy) + var(--px) * 44 + var(--s2)); } }
+.prologue.logo .cut-log, .prologue.titling .cut-log, .prologue.coda .cut-log { visibility: hidden; }
+.prologue.caption-top .cut-log.btn { top: var(--Gy); bottom: auto; }
+@media (max-width: 899px) { .prologue.caption-top .cut-log.btn { top: calc(var(--Gy) + var(--px) * 44 + var(--s2)); bottom: auto; } }
+
+/* 대사 기록 창 (game-ui-design 4.3 정보 · M 592): 뒤 막 = 75% 먹 디더 위 철판 창, 마지막 몇 줄만(스크롤 없음) */
+.prologue .vn-log.kit-sheet { z-index: 20; display: grid; place-items: center; align-content: center; padding: var(--Gy) var(--G); background: var(--dk12); overflow: hidden; }
+.prologue .vn-log .vl-list { display: flex; flex-direction: column; gap: var(--s1); }
+.prologue .vn-log .vl-row { margin: 0; color: var(--t-body); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; word-break: keep-all; }
+.prologue .vn-log .vl-row > b { margin-right: var(--s2); color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; }
+.prologue .vn-log .vl-row.vl-m > span { color: var(--t-gold); }
+.prologue .vn-log .vl-row.vl-n > span { color: var(--t-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .film .vn-body { animation: none; }
+  .film .vn-lamp { display: none; }
+}

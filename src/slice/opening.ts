@@ -11,11 +11,15 @@ import { PROLOGUE, PROLOGUE_FIELD, SPEAKER_FACE, type Cut, type Face, type Line,
 import { pieceImg } from '../ui/sprites';
 import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
+import { logHtml, VnStage } from './vn';
+import { castOf, VN_TEXT } from '../data/vn';
+import { ditherTo, ease } from '../view/motion';
 import { PAPER_FACE } from '../data/portraits';
 
 const PAPER_KING = '종이왕';
 import { titleFx } from './uifx';
 import { clearBand, clearPeeks, cutChromeHtml, cutFill, cutLineHtml, cutPages, cutSay, speakerSide, type CutLine, type WinBtn, type WinOpts } from './uikit';
+import type { VnScene } from '../data/vn';
 
 const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -57,7 +61,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const el = document.createElement('div');
     el.className = 'prologue kit film';
     el.dataset.beat = 'move';
-    el.innerHTML = `<i class="film-lb lb-t" aria-hidden="true"></i><div class="film-view"><div class="pl-stage"></div><div class="film-over"></div></div><i class="pl-flash"></i><i class="film-lb lb-b" aria-hidden="true"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}`;
+    el.innerHTML = `<i class="film-lb lb-t" aria-hidden="true"></i><div class="film-view"><div class="pl-stage"></div><div class="film-over"></div></div><i class="pl-flash"></i><i class="film-lb lb-b" aria-hidden="true"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}<button type="button" class="btn k-iron cut-log" data-log>${VN_TEXT.log}</button>`;
     document.body.appendChild(el);
     document.body.classList.add('cover-pl');
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
@@ -65,6 +69,9 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const text = el.querySelector<HTMLElement>('.cut-lines')!;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     const wipe = new Wipe(over);
+    const view = el.querySelector<HTMLElement>('.film-view')!;
+    // 비주얼 노벨 층 (D-546): 서 있는 배우 · 장면 입자 · 등잔 · 대사 기록
+    const vn = new VnStage(view, () => stage.querySelector<HTMLImageElement>('img[data-film]'));
     wipe.full();
     if (!calm()) replay(el, 'lb-in');
     const faces: Record<string, Face> = { ...SPEAKER_FACE, ...(o.faces ?? {}) };
@@ -80,12 +87,13 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     let token = 0;
     let cam: Camera | null = null;
     let shot: Shot = { x: 0.5, y: 0.5, z: 0 };
+    let scene: VnScene = {};
     /** 숨 · 카메라 중에 눌렀을 때 바로 놓을 샷 */
     let pending: Shot | null = null;
     let waiter: (() => void) | null = null;
     /** 제목 카드 · 숨 동안: 탭 하나를 기다린다 */
     const tapped = (): Promise<void> => new Promise((r) => (waiter = () => { waiter = null; r(); }));
-    const refit = (): void => cam?.refit();
+    const refit = (): void => { cam?.refit(); vn.refit(); };
     window.addEventListener('resize', refit);
     const finish = async (): Promise<void> => {
       if (ended) return;
@@ -93,6 +101,9 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       token++;
       el.dataset.beat = 'move';
       window.removeEventListener('resize', refit);
+      cam?.stop();
+      closeLog();
+      vn.exitAll();
       const last = cuts[shown];
       // 맺음 카드가 남았으면(건너뛰지 않고 끝까지 본 경우) — 막을 닫고 카드
       if (last?.end && i >= pages.length) {
@@ -121,7 +132,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       // 다음 화면을 뒤에 먼저 세우고 걷는다 — 걷는 사이 메인 화면이 비치지 않게
       await o.before?.();
       document.body.classList.remove('cover-pl');
-      pxOut(el, () => { el.remove(); resolve(); }, 300);
+      pxOut(el, () => { vn.destroy(); el.remove(); resolve(); }, 420);
     };
     /** 화자 명패: 대사 첫 쪽이면 새로, 이어 말하는 쪽이면 그대로, 서술 · 독백이면 걷는다 */
     const plate = (l: CutLine & Partial<Line>): void => {
@@ -161,11 +172,42 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const lineFx = (l: CutLine & Partial<Line>): void => {
       if (l.sfx) sfx(l.sfx);
       if (!l.fx) return;
-      if (l.fx === 'shake') shake(stage, 2);
-      else if (l.fx === 'flash') { flashScreen(0.9); shake(stage, 3); }
-      else if (l.fx === 'red') { if (!calm()) { replay(el, 'red-once'); window.setTimeout(() => el.classList.remove('red-once'), 640); } shake(stage, 1); }
+      if (l.fx === 'shake') shake(view, 2);
+      else if (l.fx === 'flash') { flashScreen(0.9); shake(view, 3); }
+      else if (l.fx === 'red') { if (!calm()) { replay(el, 'red-once'); window.setTimeout(() => el.classList.remove('red-once'), 640); } shake(view, 1); }
       else if (l.fx === 'gold') stage.classList.add('fx-gold');
     };
+    /** 서 있는 배우 (D-546): 대사 = 그 화자를 세우고 밝힌다 · 서술 = 모두 그늘 · 독백 = 종이왕만 밝게 */
+    const cast = (l: CutLine & Partial<Line>): void => {
+      if (l.k === 's' && l.who) {
+        const f = faces[l.who];
+        const sprite = castOf(l.who) ?? (f && 't' in f ? { t: f.t, side: f.side } : undefined);
+        const side = speakerSide(l.who);
+        vn.speak(l.who, sprite, side === 'ally' || side === 'npc' ? 'l' : 'r');
+      } else vn.hush(l.k === 'm' ? PAPER_KING : undefined);
+    };
+    /** 대사 기록: 한 줄을 나눈 쪽은 앞 줄에 잇는다 */
+    const record = (ls: CutLine[]): void => {
+      for (const l of ls) {
+        const t = cutFill(l).replace(/<[^>]+>/g, '');
+        const prev = vn.log[vn.log.length - 1];
+        if (prev && l.part && l.part !== 'head') prev.t += ` ${t}`;
+        else vn.log.push({ who: l.k === 's' ? l.who : undefined, k: l.k, t });
+      }
+    };
+    /** 대사 기록 창 (game-ui-design 4.3 정보 — M, 닫는다 하나 · 뒤 막 누름 · Esc) */
+    const openLog = (): void => {
+      if (el.querySelector('.vn-log')) return;
+      sfx('tap');
+      el.insertAdjacentHTML('afterbegin', logHtml(vn.log));
+      void ditherTo(el.querySelector<HTMLElement>('.vn-log .win')!, 0, 1, 300, ease.out);
+      el.querySelector<HTMLElement>('.vn-log [data-x]')?.focus({ preventScroll: true });
+    };
+    function closeLog(): void {
+      const w = el.querySelector<HTMLElement>('.vn-log');
+      if (!w || w.classList.contains('pxout')) return;
+      pxOut(w, () => { w.remove(); armAuto(); }, 300);
+    }
     const show = async (k: number): Promise<void> => {
       const my = ++token;
       el.dataset.beat = 'move';
@@ -185,6 +227,8 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         shown = pg.c;
         await mount(c);
         if (my !== token) return;
+        // 무대 분위기 (막이 닫힌 사이): 그림이 없거나(자리 그림 · 끝 정적) 실제 배우를 겹친 컷은 배우를 세우지 않는다
+        scene = vn.enter(c.slug, { noCast: !!c.coda || !!c.showActors || !stage.querySelector('img[data-film]') });
         if (c.title) { wipe.full('#0b0b0e'); await showTitle(over, c.title, tapped()); if (my !== token) return; }
         if (c.coda) wipe.color = c.coda === 'white' ? '#f1ede4' : '#0b0b0e';
         // 3 · 막 걷기 — 컷의 효과 소리
@@ -207,7 +251,11 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         if (pending && cam) { shot = pending; await cam.move(shot); if (my !== token) return; }
         pending = null;
         lineFx(l);
+        // 켄 번스: 줄이 서 있는 동안 천천히 민다 (다음 줄의 카메라 · 컷 전환이 멈춘다)
+        if (cam) void cam.drift(l.drift ?? scene.drift);
       } else sfx('tap', 3);
+      cast(l);
+      record(pg.lines);
       for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
       if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; armAuto(); }
     };
@@ -215,7 +263,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const armAuto = (): void => {
       if (!autoAdvance()) return;
       const my = token, at = i;
-      window.setTimeout(() => { if (!ended && my === token && at === i && !typing && !busy && !waiter && el.dataset.beat === 'hold') next(); }, AUTO_ADVANCE_MS);
+      window.setTimeout(() => { if (!ended && my === token && at === i && !typing && !busy && !waiter && el.dataset.beat === 'hold' && !el.querySelector('.vn-log')) next(); }, AUTO_ADVANCE_MS);
     };
     const next = (): void => {
       if (ended) return;
@@ -238,7 +286,11 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     };
     el.addEventListener('click', (ev) => {
       if (ended) return;
-      if ((ev.target as HTMLElement).closest('.cut-skip')) { waiter = null; return void finish(); }
+      const tg = ev.target as HTMLElement;
+      // 대사 기록: 단추 = 열기 · 창 안 = 「닫는다」나 뒤 막만 닫기 (기록이 열린 동안은 넘기지 않는다)
+      if (tg.closest('.vn-log')) { if (tg.closest('[data-x]') || !tg.closest('.win')) closeLog(); return; }
+      if (tg.closest('.cut-log')) return openLog();
+      if (tg.closest('.cut-skip')) { waiter = null; return void finish(); }
       next();
     });
     next();
