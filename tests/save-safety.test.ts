@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, emptyMeta, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
+import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, emptyMeta, fightPending, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
 import { TELEMETRY_KEY, telemetryAll, telemetryShed, telemetryStore, track } from '../src/slice/telemetry';
 import { endTurn, newSliceBattle, playCard, type SliceBattle } from '../src/slice/battle';
 import { bestAction } from '../src/slice/bot';
@@ -126,6 +126,33 @@ describe('대국 중 저장 · 이어하기 결정론 (D-529)', () => {
     expect(back.snap).toBe(live.snap);
     expect(back.ap).toBe(live.ap);
     expect(back.hand).toEqual(live.hand);
+  });
+  it('턴 끝을 연출 전에 저장하면 이어 갈 때 그 턴을 다시 두지 못한다 (코드 리뷰 4 — 공짜 되감기 막기)', () => {
+    const live = newSliceBattle(squad, ['K', 'P', 'P', 'N', 'B', 'R'], deck, 5150, { depth: 3 });
+    turns(live, 1);
+    const a = bestAction(live, 'greedy');
+    if (a) playCard(live, a.i, a.pieceId, a.to);
+    const turn0 = live.turn;
+    const hand0 = JSON.stringify(live.hand);
+    const rites0 = live.falls.length; // 연출(폐기 의식)은 아직 — main.ts가 ritesDone을 담는다
+    const r = endTurn(live, true);
+    expect(r).not.toBe('warn');
+    expect(live.s.winner).toBeNull();
+    // main.ts onEndInner: endTurn 바로 뒤 · 연출 전 saveFight({ stand: true })
+    const st = memStore();
+    writeSave(st, sample({ at: 'battle', node: 0, fight: { b: live, rng: 3, stage: 4, rites: rites0, stand: true } }));
+    // 연출 중 앱이 죽었다 → 다시 켜서 이어 간다
+    const back = readSave(st)!.fight!;
+    expect(back.b.turn).toBe(turn0 + 1);
+    expect(JSON.stringify(back.b.hand)).not.toBe(hand0);
+    expect(JSON.stringify(back.b)).toBe(JSON.stringify(live));
+    expect(fightPending(back)).toEqual({ rites: rites0, stand: true });
+    // 이어 둔 판은 저장하지 않은 판과 끝까지 같다 (결정론)
+    turns(live, 4);
+    turns(back.b, 4);
+    expect(JSON.stringify(back.b)).toBe(JSON.stringify(live));
+    // 옛 저장(rites · stand 없음)은 의식을 다시 틀지 않는다
+    expect(fightPending({ b: live, rng: 1, stage: 1 })).toEqual({ rites: live.falls.length, stand: false });
   });
   it('대국 중 저장이 모자라면 그 칸만 버리고 대국 처음부터 (출하는 살린다)', () => {
     const st = memStore();

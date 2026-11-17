@@ -98,7 +98,7 @@ import { warmup } from './warmup';
 import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
-import { commitRunEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
+import { commitRunEnd, fightPending, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
 import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
@@ -1406,6 +1406,8 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const aimed = b.s.rules.capture ? [] : liveIntents(b).map((it) => `${it.to.x},${it.to.y}`);
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
+  // 낸 카드는 엔진이 이미 풀었다 — 연출 전에 남긴다 (코드 리뷰 4)
+  saveFight({ stand: false });
   const mover = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
   const blockedAt = mover && mover.side === 0 && aimed.includes(`${mover.x},${mover.y}`) ? { x: mover.x, y: mover.y } : null;
   playsMade += 1;
@@ -1529,6 +1531,8 @@ const onEndInner = async (): Promise<void> => {
   tg.telegraph += aimed0;
   tg.hit += new Set(r.events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.damage > 0 && r.before.pieces.find((q) => q.id === h.targetId)?.side === 0).map((h) => h.targetId) : []))).size;
   if (b.turn === 2 && cur.drill) ftue(`drill_${cur.drill}_turn2`); // 시험대 B: 적 차례를 한 번 지켜봤다 (옛 battle1_turn2)
+  // 적 차례는 엔진이 이미 다 풀었다 — 연출 전에 다음 내 차례 판을 남긴다 (코드 리뷰 4: 연출 중 앱을 죽여 이 턴을 다시 두지 못하게)
+  saveFight({ stand: true });
   holdView = r.before;
   // 버리는 연출은 지금 손패로 (테스터: 다음 턴 손패가 들어갔다 빠지는 연출이 나왔다가 내 차례에 다시 나타났다)
   handView = handBefore;
@@ -4466,11 +4470,13 @@ const saveRun = (at: 'map' | 'battle' | 'reward', node?: number, pending?: Pendi
 };
 /**
  * 대국 판을 저장한다 (D-529): 턴이 넘어갈 때 · 앱을 내리거나 닫을 때. 엔진 상태(b)만 — 화면은 남기지 않는다.
- * 연출 중(busy · 적 차례)이면 건너뛴다 — 직전 턴 끝 저장이 남아 있어 그 턴 처음부터 이어 간다.
+ * 연출 중(busy · 적 차례)이면 건너뛴다 — 연출 전에 settled로 남긴 판이 있다.
+ * settled (코드 리뷰 4): 턴 끝 · 카드를 엔진이 다 푼 직후(연출 전)에 부른다 — 엔진 판은 이미 결과라, 연출 중에 앱을 죽였다 켜도
+ * 그 턴 처음으로 돌아가지 않는다(공짜 되감기). 못 보인 폐기 의식 · 사선(stand)은 이어 갈 때 다시 보인다.
  */
-const saveFight = (): void => {
-  if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || b.s.winner !== null || busy || enemyTurn) return;
-  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, bet: betNow, clutched: clutchedNow, phaseWarned, tg } });
+const saveFight = (settled?: { stand: boolean }): void => {
+  if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || b.s.winner !== null || (!settled && (busy || enemyTurn))) return;
+  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, bet: betNow, clutched: clutchedNow, phaseWarned, tg, rites: ritesDone, ...(settled?.stand ? { stand: true } : {}) } });
 };
 /**
  * 대국 중 저장에서 이어 간다 (D-529): 대국 앞 난수 자리에서 같은 대국을 조용히 다시 세우고(결정론 — 같은 적 · 같은 판 장식),
@@ -4490,9 +4496,20 @@ const resumeFight = (def: BattleDef, f: FightSave): void => {
   renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
   renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
   renderer.setup(b.s);
+  // 연출 전에 남긴 판이면 못 본 폐기 의식 · 사선을 판이 선 뒤에 (옛 저장은 다 본 것으로 — 의식을 다시 틀지 않게)
+  const pend = fightPending(f);
+  ritesDone = pend.rites;
   refresh();
   track('battle_resume', { ...where(), turn: b.turn });
-  void battleIntro();
+  void battleIntro().then(async () => {
+    if (ritesDone >= b.falls.length && !pend.stand) return;
+    busy = true;
+    await deathRites();
+    busy = false;
+    refresh();
+    if (pend.stand) await lastStand();
+    saveFight();
+  });
 };
 /** 저장한 출하를 이어 간다 (메뉴 「이어하기」 · 오류 창 「지도로 · 이어 간다」) */
 const continueRun = (sv: RunSave): void => {

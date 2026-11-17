@@ -86,7 +86,20 @@ export interface FightSave {
   clutched?: boolean;
   phaseWarned?: boolean;
   tg?: { telegraph: number; hit: number; evade: number; counter: number };
+  /**
+   * 연출 전에 남긴 판 (코드 리뷰 4): 턴 끝 · 카드를 엔진이 다 푼 직후, 연출을 기다리지 않고 저장한다 —
+   * 연출 중에 앱을 죽였다 켜도 그 턴 처음으로 돌아가지 않는다(공짜 되감기 막기). rites = 이미 보인 폐기 의식 수(b.falls 앞에서부터),
+   * stand = 내 차례 시작 사선(lastStand)을 아직 묻지 않았다.
+   */
+  rites?: number;
+  stand?: boolean;
 }
+
+/** 이어 갈 때 못다 한 연출: 보이지 못한 폐기 의식 수(앞에서 몇 개는 이미 보였나) · 사선을 물을지. 옛 저장은 다 보인 것으로 */
+export const fightPending = (f: FightSave): { rites: number; stand: boolean } => ({
+  rites: Math.min(f.rites ?? f.b.falls.length, f.b.falls.length),
+  stand: f.stand === true,
+});
 
 /** 이긴 대국 뒤 아직 고르지 않은 보상 (D-488 — 보상 전에 앱이 닫혀도 대국을 다시 굴리지 않는다) */
 export interface PendingReward { earned: number; overGold: number; fallen: Crew[]; closeTier: number }
