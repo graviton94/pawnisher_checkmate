@@ -97,6 +97,7 @@ async function main() {
   let server = null;
   if (!url) {
     const port = await freePort();
+    require('child_process').execSync('node tools/subset-fonts.mjs', { cwd: ROOT, stdio: 'ignore' }); // 줄인 갈무리 (src/fonts-sub/)
     server = spawn('npx', ['vite', '--port', String(port), '--strictPort'], { cwd: ROOT, stdio: 'ignore' });
     url = `http://localhost:${port}/`;
     for (let i = 0; i < 60; i++) { try { const r = await fetch(url); if (r.ok) break; } catch {} await W(500); }
