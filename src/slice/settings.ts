@@ -1,17 +1,19 @@
 import './settings.css';
-import { closeWin, openWin, winHtml, btnHtml, type WinOpts } from './uikit';
+import { closeWin, openWin, winHtml, btnHtml, toast, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
-import { SETTINGS_TEXT as T, VOL_STEPS, type Settings } from '../data/settings';
+import { SETTINGS_TEXT as T, VOL_STEPS, KEY_GUIDE, type Settings, type ShakePref } from '../data/settings';
 import { LICENSES } from '../data/licenses';
 import { CREDITS } from '../data/credits';
 import { APP_VERSION } from '../data/version';
+import { DEV_PAGE, PRIVACY_KO, PRIVACY_URL } from '../data/legal';
 import { applySettings, readSettings, resetProgress, writeSettings, type KeyStore } from '../prefs/settings';
 import type { MotionPref } from '../prefs/motion';
 
 /**
- * 설정 창 (D-530, 출시 점검 1번) — 타이틀 메뉴 · 도움말(?) 탭에서 연다. L 창 하나, 높이 고정, 스크롤 없이 탭 둘:
- * 「소리 · 화면」(효과음 · 음악 크기와 끄기 · 움직임 줄이기 · 진행 초기화 · PC 전용 줄) / 「만든 사람」(제작 + 라이선스 고지 → 전문은 쪽 넘김).
+ * 설정 창 (D-530 → D-538 출시 표준 여섯 탭): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보.
+ * L 창 하나, 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음 — 한 탭 줄이 칸을 넘으면 쪽으로 나눈다(이전 · 다음).
  * 화면은 설정 값만 바꾼다 — 게임 상태는 건드리지 않는다 (UI 원칙 9). 진행 초기화만 저장소를 지우고 처음 화면으로 돌아간다.
+ * 안내서 · 용어집은 부른 쪽(main.ts)이 연다 — 닫으면 이 창의 「게임」 탭으로 돌아온다.
  */
 export interface DesktopHooks {
   /** 전체 화면 켜고 끄기 */
@@ -25,59 +27,99 @@ export interface SettingsOpts {
   onClose?: () => void;
   /** 진행 초기화 뒤 (기본: 처음 화면으로 다시 읽기) */
   onReset?: () => void;
-  /** PC(Electron)일 때만 — 전체 화면 · 게임 끝내기 줄이 생긴다 */
+  /** PC(Electron)일 때만 — 전체 화면 줄이 생긴다 */
   desktop?: DesktopHooks | null;
+  /** 안내서 다시 보기 — back = 다 보면 설정으로 돌아오기 (없으면 줄을 뺀다) */
+  onGuide?: (back: () => void) => void;
+  /** 용어집 — back = 닫으면 설정으로 (없으면 줄을 뺀다) */
+  onGlossary?: (back: () => void) => void;
 }
 
-type Tab = 'sound' | 'screen' | 'credits';
+export type Tab = 'sound' | 'screen' | 'access' | 'input' | 'game' | 'info';
+const TABS: readonly Tab[] = ['sound', 'screen', 'access', 'input', 'game', 'info'];
 const esc = (t: string): string => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
-const tabsHtml = (on: Tab): string => {
-  const tab = (k: Tab, label: string): string => `<button type="button" class="tab" data-set-tab="${k}" role="tab" aria-selected="${on === k}">${label}</button>`;
-  return `<div class="tabs" role="tablist">${tab('sound', T.tabSound)}${tab('screen', T.tabScreen)}${tab('credits', T.tabCredits)}</div>`;
-};
+const tabsHtml = (on: Tab): string =>
+  `<div class="tabs tabs9 set-tabs" role="tablist">${TABS.map((k) => `<button type="button" class="tab" data-set-tab="${k}" role="tab" aria-selected="${on === k}"><span class="tl">${T.tabs[k]}</span></button>`).join('')}</div>`;
 
 /** 크기 줄 하나: 이름 · 끄기 · − · 진공관 10칸 · + */
-const volHtml = (k: 'sfx' | 'music', s: Settings): string => {
-  const name = k === 'sfx' ? T.sfx : T.music;
-  const n = s[k], muted = k === 'sfx' ? s.sfxMute : s.musicMute;
+type VolKey = 'master' | 'sfx' | 'music';
+const MUTE: Record<VolKey, 'masterMute' | 'sfxMute' | 'musicMute'> = { master: 'masterMute', sfx: 'sfxMute', music: 'musicMute' };
+const volHtml = (k: VolKey, s: Settings): string => {
+  const name = T[k];
+  const n = s[k], muted = s[MUTE[k]];
   const tubes = Array.from({ length: VOL_STEPS }, (_, i) => `<i class="${!muted && i < n ? 'lit' : ''}"></i>`).join('');
-  return `<div class="set-row" data-vol="${k}"><span class="set-name">${name}</span>
+  return `<div class="set-row" data-vol="${k}"><span class="set-name">${name}</span><div class="set-ctl">
     ${btnHtml({ label: muted ? T.unmute : T.mute, attrs: `data-mute aria-pressed="${muted}" aria-label="${name} ${muted ? T.unmute : T.mute}"`, cls: 'set-mute' })}
     ${btnHtml({ label: T.down, attrs: `data-down aria-label="${T.downAria(name)}"`, cls: 'set-step', disabled: n <= 0 })}
     <span class="set-tubes inset${muted ? ' off' : ''}" role="img" aria-label="${T.levelAria(name, n, muted)}">${tubes}</span>
-    ${btnHtml({ label: T.up, attrs: `data-up aria-label="${T.upAria(name)}"`, cls: 'set-step', disabled: n >= VOL_STEPS })}</div>`;
+    ${btnHtml({ label: T.up, attrs: `data-up aria-label="${T.upAria(name)}"`, cls: 'set-step', disabled: n >= VOL_STEPS })}</div></div>`;
 };
 
-const row = (name: string, btn: string): string => `<div class="set-row"><span class="set-name">${name}</span>${btn}</div>`;
-/** 소리 쪽: 효과음 · 음악 — 크기 줄 둘 */
-const soundHtml = (s: Settings): string => `<div class="set-body inset">${volHtml('sfx', s)}${volHtml('music', s)}</div>`;
-/** 화면 쪽: 움직임 줄이기 · (PC) 전체 화면 · 게임 끝내기 · 진행 초기화(맨 아래, 진홍) */
-const screenHtml = (s: Settings, d: DesktopHooks | null | undefined): string => {
-  const seg = (['os', 'off', 'on'] as MotionPref[]).map((m) => btnHtml({ label: T.motionOpts[m], attrs: `data-motion="${m}" aria-pressed="${s.motion === m}"`, kind: s.motion === m ? 'brass' : 'iron' })).join('');
-  return `<div class="set-body inset">${row(T.motion, `<div class="set-seg" role="group" aria-label="${T.motion}">${seg}</div>`)}
-    ${d ? `<div class="set-pairs">${row(T.fullscreen, btnHtml({ label: T.fullscreenBtn, attrs: 'data-full' }))}${row(T.quit, btnHtml({ label: T.quitBtn, attrs: 'data-quit' }))}</div>` : ''}
-    ${row(T.reset, btnHtml({ label: T.resetBtn, attrs: 'data-reset', kind: 'crimson' }))}</div>`;
+/** 줄 하나: 왼쪽 이름(+ 아래 12px 설명) · 오른쪽 조작(같은 x에서 시작) */
+const row = (name: string, ctl: string, note = '', cls = ''): string =>
+  `<div class="set-row${cls ? ` ${cls}` : ''}"><span class="set-name">${name}${note ? `<small class="note">${note}</small>` : ''}</span><div class="set-ctl">${ctl}</div></div>`;
+/** 고르기 칸 (고른 칸 = 황동 눌림 · 나머지 = 철) */
+const seg = (key: string, name: string, opts: readonly (readonly [string, string])[], now: string): string =>
+  `<div class="set-seg" role="group" aria-label="${name}">${opts.map(([v, label]) => btnHtml({ label, attrs: `data-seg="${key}" data-v="${v}" aria-pressed="${now === v}"`, kind: now === v ? 'brass' : 'iron' })).join('')}</div>`;
+const onOff = (key: string, name: string, v: boolean): string => seg(key, name, [['0', T.off], ['1', T.on]], v ? '1' : '0');
+
+/** 탭의 줄들 (쪽 나누기 전) */
+const rowsOf = (tab: Tab, s: Settings, o: SettingsOpts): string[] => {
+  switch (tab) {
+    case 'sound': return [volHtml('master', s), volHtml('sfx', s), volHtml('music', s), row(T.bgMute, onOff('bgMute', T.bgMute, s.bgMute))];
+    case 'screen': return [
+      ...(o.desktop ? [row(T.fullscreen, btnHtml({ label: T.fullscreenBtn, attrs: 'data-full' }), T.fullscreenNote)] : []),
+      row(T.shake, seg('shake', T.shake, (['off', 'weak', 'normal'] as ShakePref[]).map((v) => [v, T.shakeOpts[v]] as const), s.shake)),
+    ];
+    case 'access': return [
+      row(T.motion, seg('motion', T.motion, (['os', 'off', 'on'] as MotionPref[]).map((v) => [v, T.motionOpts[v]] as const), s.motion)),
+      row(T.lessFlash, onOff('lessFlash', T.lessFlash, s.lessFlash)),
+      row(T.autoAdvance, onOff('autoAdvance', T.autoAdvance, s.autoAdvance)),
+    ];
+    case 'input': return [row(T.keyHints, onOff('keyHints', T.keyHints, s.keyHints)), row(T.keyMap, btnHtml({ label: T.keyMapBtn, attrs: 'data-keymap' }))];
+    case 'game': return [
+      ...(o.onGuide ? [row(T.guide, btnHtml({ label: T.openBtn, attrs: 'data-guide' }))] : []),
+      ...(o.onGlossary ? [row(T.glossary, btnHtml({ label: T.openBtn, attrs: 'data-glossary' }))] : []),
+      // 파괴 행동은 맨 아래 · 구분선 위로 띄운다 (M8)
+      `<hr class="divider set-gap">${row(T.reset, btnHtml({ label: T.resetBtn, attrs: 'data-reset', kind: 'crimson' }))}`,
+    ];
+    case 'info': return [
+      row(T.credits, btnHtml({ label: T.keyMapBtn, attrs: 'data-credits' })),
+      row(T.privacy, btnHtml({ label: T.readBtn, attrs: 'data-privacy' }), PRIVACY_URL ?? ''),
+      row(T.feedback, btnHtml({ label: T.copyBtn, attrs: 'data-copy-url' }), DEV_PAGE),
+    ];
+  }
 };
 
-const creditsHtml = (): string => {
-  const who = CREDITS.map((c) => `<span><b>${c.role}</b> ${c.names.join(' · ')}</span>`).join('');
-  // 칸마다 이름 + 라이선스 한 줄 + 전문 단추 — 저작권자 · 쓴 곳 · 고친 점 · 주소는 전문 쪽 머리에 (작은 폰에서도 한 화면)
-  const lic = LICENSES.map((l, i) => `<div class="set-lic"><div class="set-lic-t"><span class="set-lic-name">${esc(l.name)}</span><span class="note">${l.license}</span></div>${btnHtml({ label: T.licFull, attrs: `data-lic="${i}" aria-label="${esc(l.name)} ${T.licRead}"` })}</div>`).join('');
-  return `<div class="set-body inset"><p class="set-who note">${who}</p><div class="set-lics">${lic}</div></div>`;
-};
+/** 한 쪽에 넣는 줄 수 (창 높이 364 안 — 처음 그릴 때 재어 줄인다) */
+let perPage = 4;
 
 /** 설정 창을 연다 */
 export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => {
   let s = readSettings(o.store);
   let tab: Tab = startTab;
+  let page = 0;
   const close = (): void => (o.onClose ? o.onClose() : closeWin());
-  const opts = (): WinOpts => ({
-    size: 'l', cls: 'set-win', title: T.title, head: tabsHtml(tab),
-    body: tab === 'sound' ? soundHtml(s) : tab === 'screen' ? screenHtml(s, o.desktop) : creditsHtml(),
-    back: { label: T.close, attrs: 'data-set-x' }, mid: `<span class="note set-ver">${T.version(APP_VERSION)}</span>`,
-    dismiss: close,
-  });
+  const pages = (): string[][] => {
+    const rows = rowsOf(tab, s, o);
+    const out: string[][] = [];
+    for (let i = 0; i < rows.length; i += perPage) out.push(rows.slice(i, i + perPage));
+    return out.length ? out : [[]];
+  };
+  const opts = (): WinOpts => {
+    const ps = pages();
+    page = Math.min(page, ps.length - 1);
+    const many = ps.length > 1;
+    return {
+      size: 'l', cls: 'set-win', title: T.title, head: tabsHtml(tab),
+      body: `<div class="set-body inset">${ps[page].join('')}</div>`,
+      back: { label: T.close, attrs: 'data-set-x' },
+      mid: many ? `<span class="note">${T.page(page + 1, ps.length)}</span>` : tab === 'info' ? `<span class="note set-ver">${T.version(APP_VERSION)}</span>` : '',
+      ...(many ? { pair: [{ label: T.prev, attrs: 'data-set-prev', disabled: page <= 0 }, { label: T.next, attrs: 'data-set-next', disabled: page >= ps.length - 1 }] as WinOpts['pair'] } : {}),
+      dismiss: close,
+    };
+  };
   const panel = openWin(opts());
   const save = (next: Settings, tick = true): void => {
     s = next;
@@ -87,38 +129,60 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     draw();
   };
   const draw = (): void => {
-    const focus = (document.activeElement as HTMLElement | null)?.matches?.('[data-up],[data-down],[data-mute],[data-motion],[data-set-tab]') ? selectorOf(document.activeElement as HTMLElement) : null;
+    const focus = (document.activeElement as HTMLElement | null)?.matches?.('[data-up],[data-down],[data-mute],[data-seg],[data-set-tab],[data-set-prev],[data-set-next]') ? selectorOf(document.activeElement as HTMLElement) : null;
     panel.innerHTML = winHtml(opts());
+    // 쪽이 칸을 넘으면 한 쪽 줄 수를 줄여 다시 (스크롤 · 잘림 없이)
+    const body = panel.querySelector<HTMLElement>('.set-body');
+    if (body && perPage > 1 && body.scrollHeight > body.clientHeight + 1 && body.children.length > 1) {
+      perPage -= 1;
+      return draw();
+    }
     bind();
     if (focus) panel.querySelector<HTMLElement>(focus)?.focus({ preventScroll: true });
   };
+  const reopen = (t: Tab): (() => void) => () => openSettings(o, t);
   const bind = (): void => {
     panel.querySelector('[data-set-x]')!.addEventListener('click', () => (sfx('tap'), close()));
     panel.querySelectorAll<HTMLElement>('[data-set-tab]').forEach((t) => t.addEventListener('click', () => {
       if (t.dataset.setTab === tab) return;
       tab = t.dataset.setTab as Tab;
+      page = 0;
       sfx('tap');
       draw();
     }));
+    panel.querySelector('[data-set-prev]')?.addEventListener('click', () => { page = Math.max(0, page - 1); sfx('tap'); draw(); });
+    panel.querySelector('[data-set-next]')?.addEventListener('click', () => { page += 1; sfx('tap'); draw(); });
     panel.querySelectorAll<HTMLElement>('[data-vol]').forEach((r) => {
-      const k = r.dataset.vol as 'sfx' | 'music';
-      const mk = k === 'sfx' ? 'sfxMute' : 'musicMute';
+      const k = r.dataset.vol as VolKey;
+      const mk = MUTE[k];
       r.querySelector('[data-mute]')!.addEventListener('click', () => save({ ...s, [mk]: !s[mk] }));
       // 크기를 바꾸면 꺼 둔 소리도 다시 켠다 (들어 보며 맞추게)
       r.querySelector('[data-down]')!.addEventListener('click', () => save({ ...s, [k]: Math.max(0, s[k] - 1), [mk]: false }));
       r.querySelector('[data-up]')!.addEventListener('click', () => save({ ...s, [k]: Math.min(VOL_STEPS, s[k] + 1), [mk]: false }));
     });
-    panel.querySelectorAll<HTMLElement>('[data-motion]').forEach((b) => b.addEventListener('click', () => save({ ...s, motion: b.dataset.motion as MotionPref })));
+    panel.querySelectorAll<HTMLElement>('[data-seg]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.seg as keyof Settings, v = b.dataset.v!;
+      const val = k === 'motion' || k === 'shake' ? v : v === '1';
+      save({ ...s, [k]: val } as Settings);
+    }));
     panel.querySelector('[data-reset]')?.addEventListener('click', () => (sfx('tap'), resetStep(1)));
     panel.querySelector('[data-full]')?.addEventListener('click', () => (sfx('tap'), o.desktop?.toggleFullscreen()));
-    panel.querySelector('[data-quit]')?.addEventListener('click', () => o.desktop?.quitGame());
-    panel.querySelectorAll<HTMLElement>('[data-lic]').forEach((b) => b.addEventListener('click', () => (sfx('tap'), licenseReader(Number(b.dataset.lic), () => openSettingsAt('credits')))));
+    panel.querySelector('[data-keymap]')?.addEventListener('click', () => (sfx('tap'), keyMapPage(reopen('input'))));
+    panel.querySelector('[data-guide]')?.addEventListener('click', () => (sfx('tap'), o.onGuide?.(reopen('game'))));
+    panel.querySelector('[data-glossary]')?.addEventListener('click', () => (sfx('tap'), o.onGlossary?.(reopen('game'))));
+    panel.querySelector('[data-credits]')?.addEventListener('click', () => (sfx('tap'), creditsPage(reopen('info'))));
+    panel.querySelector('[data-privacy]')?.addEventListener('click', () => (sfx('tap'), textReader({ title: T.privacy, head: `<span class="note">${esc(PRIVACY_URL ?? DEV_PAGE)}</span>`, paras: [...PRIVACY_KO] }, reopen('info'))));
+    panel.querySelector('[data-copy-url]')?.addEventListener('click', () => {
+      sfx('tap');
+      if (!navigator.clipboard) return toast(T.copyFail);
+      void navigator.clipboard.writeText(DEV_PAGE).then(() => toast(T.copied), () => toast(T.copyFail));
+    });
   };
   /** 두 단계 확인 — 둘 다 뒤 막으로 닫히지 않는다 (되돌릴 수 없는 결정 대기) */
   const resetStep = (n: 1 | 2): void => {
     const t = n === 1 ? T.reset1 : T.reset2;
     const el = openWin({ size: 's', title: t.title, body: `<p>${t.body}</p>${n === 1 ? `<p class="note">${T.reset1.note}</p>` : ''}`, back: { label: t.back, attrs: 'data-no' }, go: { label: t.go, attrs: 'data-yes', kind: 'crimson' } });
-    el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), openSettingsAt('screen')));
+    el.querySelector('[data-no]')!.addEventListener('click', () => (sfx('tap'), openSettings(o, 'game')));
     el.querySelector('[data-yes]')!.addEventListener('click', () => {
       if (n === 1) return resetStep(2);
       resetProgress(o.store);
@@ -132,31 +196,51 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
       (o.onReset ?? (() => location.reload()))();
     });
   };
-  const openSettingsAt = (t: Tab): void => openSettings(o, t);
-  bind();
+  draw();
 };
 
 /** 누른 단추를 다시 그린 뒤에도 같은 자리에 초점을 둔다 (키보드 · 게임패드) */
 const selectorOf = (el: HTMLElement): string => {
   const row = el.closest<HTMLElement>('[data-vol]');
-  const own = ['data-up', 'data-down', 'data-mute', 'data-motion', 'data-set-tab'].find((a) => el.hasAttribute(a))!;
+  const own = ['data-up', 'data-down', 'data-mute', 'data-seg', 'data-set-tab', 'data-set-prev', 'data-set-next'].find((a) => el.hasAttribute(a))!;
   const val = el.getAttribute(own);
-  return `${row ? `[data-vol="${row.dataset.vol}"] ` : ''}[${own}${val ? `="${val}"` : ''}]`;
+  const extra = own === 'data-seg' ? `[data-v="${el.dataset.v}"]` : '';
+  return `${row ? `[data-vol="${row.dataset.vol}"] ` : ''}[${own}${val ? `="${val}"` : ''}]${extra}`;
 };
 
-/** 라이선스 전문 — 스크롤 없이 쪽 넘김. 쪽은 실제 칸 높이에 문단을 채워 나눈다 */
-const licenseReader = (i: number, back: () => void): void => {
-  const l = LICENSES[i];
-  // 원문 그대로 (마크다운 원본의 &copy; 만 기호로)
-  // 전문이 없는 고지(CC BY)는 저작자 · 라이선스 주소 · 고친 점을 그대로 보인다
-  const body = l.text ?? `${l.name} — ${l.by}\n${l.license}: ${l.url}\n${l.use}`;
-  const paras = body.replace(/\r/g, '').replace(/&copy;/g, '©').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) */
+const keyMapPage = (back: () => void): void => {
+  const cells = KEY_GUIDE.map(([act, key, pad]) => `<span class="km-act">${act}</span><span class="km-key">${key}</span><span class="km-pad">${pad}</span>`).join('');
+  const el = openWin({ size: 'l', cls: 'set-win set-keys', title: T.keyMapTitle, body: `<div class="inset set-keymap"><span class="note">행동</span><span class="note">키보드</span><span class="note">패드</span>${cells}</div>`, back: { label: T.licBack, attrs: 'data-x' }, dismiss: back });
+  el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
+};
+
+/** 만든 사람 + 라이선스 목록 (전문은 쪽 넘김) */
+const creditsPage = (back: () => void): void => {
+  const who = CREDITS.map((c) => `<span><b>${c.role}</b> ${c.names.join(' · ')}</span>`).join('');
+  // 칸마다 이름 + 라이선스 한 줄 + 전문 단추 — 저작권자 · 쓴 곳 · 고친 점 · 주소는 전문 쪽 머리에 (작은 폰에서도 한 화면)
+  const lic = LICENSES.map((l, i) => `<div class="set-lic"><div class="set-lic-t"><span class="set-lic-name">${esc(l.name)}</span><span class="note">${l.license}</span></div>${btnHtml({ label: T.licFull, attrs: `data-lic="${i}" aria-label="${esc(l.name)} ${T.licRead}"` })}</div>`).join('');
+  const el = openWin({ size: 'l', cls: 'set-win', title: T.credits.split(' · ')[0], body: `<div class="set-body inset"><p class="set-who note">${who}</p><div class="set-lics">${lic}</div></div>`, back: { label: T.licBack, attrs: 'data-x' }, mid: `<span class="note set-ver">${T.version(APP_VERSION)}</span>`, dismiss: back });
+  el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
+  el.querySelectorAll<HTMLElement>('[data-lic]').forEach((b) => b.addEventListener('click', () => {
+    sfx('tap');
+    const l = LICENSES[Number(b.dataset.lic)];
+    // 원문 그대로 (마크다운 원본의 &copy; 만 기호로) · 전문이 없는 고지(CC BY)는 저작자 · 라이선스 주소 · 고친 점을 그대로
+    const text = l.text ?? `${l.name} — ${l.by}\n${l.license}: ${l.url}\n${l.use}`;
+    const paras = text.replace(/\r/g, '').replace(/&copy;/g, '©').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+    textReader({ title: T.licRead, head: `<div class="set-lic-t"><span class="set-lic-name">${esc(l.name)} · ${l.license}</span><span class="note">${esc(l.by)} · ${esc(l.use)}</span></div>`, paras }, () => creditsPage(back));
+  }));
+};
+
+/** 긴 글 읽기 (라이선스 전문 · 개인정보 처리방침) — 스크롤 없이 쪽 넘김. 쪽은 실제 칸 높이에 문단을 채워 나눈다 */
+const textReader = (doc: { title: string; head: string; paras: string[] }, back: () => void): void => {
+  const { paras } = doc;
   let pages: string[][] = [paras];
   let at = 0;
   const html = (): WinOpts => ({
-    size: 'l', cls: 'set-win set-read', title: T.licRead, head: `<div class="set-lic-t"><span class="set-lic-name">${esc(l.name)} · ${l.license}</span><span class="note">${esc(l.by)} · ${esc(l.use)}</span></div>`,
+    size: 'l', cls: 'set-win set-read', title: doc.title, head: doc.head,
     body: `<div class="inset set-text">${pages[at].map((p) => `<p>${esc(p)}</p>`).join('')}</div>`,
-    back: { label: T.licBack, attrs: 'data-lic-x' }, mid: `<span class="note">${at + 1} / ${pages.length}</span>`,
+    back: { label: T.licBack, attrs: 'data-lic-x' }, mid: `<span class="note">${T.page(at + 1, pages.length)}</span>`,
     pair: [{ label: T.licPrev, attrs: 'data-lic-prev', disabled: at <= 0 }, { label: T.licNext, attrs: 'data-lic-next', disabled: at >= pages.length - 1 }],
     dismiss: back,
   });

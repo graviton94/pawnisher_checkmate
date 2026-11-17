@@ -5,6 +5,8 @@
 
 export type SfxKind = 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 'threat' | 'win' | 'lose' | 'coin' | 'spend' | 'rare' | 'jackpot' | 'hurt' | 'loss' | 'stamp' | 'awaken' | 'tap';
 
+import { bgMuted } from './bg';
+
 const KEY = 'pawnisher.sfx';
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -52,7 +54,7 @@ const audio = (): AudioContext | null => {
     master.gain.value = BASE * (level ?? 1);
     master.connect(ctx.destination);
     // 화면이 가려지면 소리 장치를 쉰다 (돌아오면 다음 소리에서 다시 깨운다)
-    document.addEventListener('visibilitychange', () => void (document.hidden && ctx?.suspend()));
+    document.addEventListener('visibilitychange', () => void (document.hidden && bgMuted() && ctx?.suspend()));
   }
   if (ctx.state === 'suspended') void ctx.resume();
   // 조용해지면 쉰다 — 다음 소리에서 위 resume이 깨운다

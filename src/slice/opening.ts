@@ -3,6 +3,8 @@
  * 컷마다 그림(public/scenes/prologue-0N.png)이 있으면 그것을, 없으면 기물 도트로 짠 자리 그림을 쓴다.
  */
 import { calmMotion } from '../prefs/motion';
+import { autoAdvance } from '../prefs/fx';
+import { AUTO_ADVANCE_MS } from '../data/settings';
 import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
 import { PROLOGUE, PROLOGUE_FIELD, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
@@ -207,7 +209,13 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         lineFx(l);
       } else sfx('tap', 3);
       for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
-      if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; }
+      if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; armAuto(); }
+    };
+    /** 설정 › 컷신 자동 넘김 (D-538): 한 쪽이 다 선 뒤 읽을 틈을 두고 다음 쪽 — 누르기를 대신할 뿐, 연출 속도는 그대로 (D-039) */
+    const armAuto = (): void => {
+      if (!autoAdvance()) return;
+      const my = token, at = i;
+      window.setTimeout(() => { if (!ended && my === token && at === i && !typing && !busy && !waiter && el.dataset.beat === 'hold') next(); }, AUTO_ADVANCE_MS);
     };
     const next = (): void => {
       if (ended) return;
@@ -221,6 +229,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
         pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = cutFill(l)));
         el.dataset.beat = 'hold';
+        armAuto();
         return;
       }
       i += 1;
@@ -288,7 +297,7 @@ export const guide = (open: (o: WinOpts) => HTMLElement, last: string = OPENING_
         back: (fin && last === OPENING_TEXT.close) || o.only ? undefined : { label: OPENING_TEXT.close, attrs: 'data-x' },
         mid: `<span class="note">${o.mid ?? `${p + 1} / ${list.length}`}</span>`,
         // 한 쪽만이면 [넘긴다]만 (돌아갈 쪽이 없다)
-        ...(list.length === 1 ? { go: { label: last, attrs: 'data-next' } } : { pair: [{ label: OPENING_TEXT.prev, attrs: 'data-prev', disabled: !p }, { label: fin ? last : OPENING_TEXT.next, attrs: 'data-next' }] as [WinBtn, WinBtn] }),
+        ...(list.length === 1 ? { go: { label: last, attrs: 'data-next' } } : { pair: [{ label: OPENING_TEXT.prev, attrs: 'data-prev', disabled: !p, cls: p ? undefined : 'is-hidden' }, { label: fin ? last : OPENING_TEXT.next, attrs: 'data-next' }] as [WinBtn, WinBtn] }),
         dismiss: end,
       });
       replay(el.querySelector('.gd-media')!, 'in');

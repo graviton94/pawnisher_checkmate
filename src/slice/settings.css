@@ -1,19 +1,23 @@
-/* 설정 창 (D-530) — L 창 · 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음. 부품은 키트(.win · .btn · .inset · .tab)만 쓴다 */
+/* 설정 창 (D-530 → D-538 여섯 탭) — L 창 · 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음(넘치면 쪽). 부품은 키트(.win · .btn · .inset · .tab)만 쓴다 */
 #overlay-panel.win.set-win { height: var(--win-hmax); }
-.set-win .set-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
-.set-win .set-row { display: grid; grid-template-columns: 136px auto; justify-content: start; align-items: center; column-gap: 8px; min-height: 48px; min-width: 0; }
-.set-win .set-row[data-vol] { grid-template-columns: 136px auto auto auto auto; }
-.set-win .set-row > .btn.set-mute { min-width: 64px; }
-.set-win .set-pairs { display: flex; flex-wrap: wrap; gap: 0 24px; }
-.set-win .set-pairs > .set-row:not(:first-child) { grid-template-columns: auto auto; }
-.set-win .set-name { min-width: 0; color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
-.set-win .set-row > .btn { min-width: 72px; }
-.set-win .set-row > .btn.set-step { min-width: 48px; width: 48px; padding-inline: 0; }
+.set-win .set-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--s2); overflow: hidden; }
+/* 줄 = 이름(왼쪽 200) · 조작(모두 같은 x에서 시작) — 이름 아래 12px 설명 */
+.set-win .set-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; column-gap: var(--s3); min-height: 44px; min-width: 0; }
+.set-win .set-ctl { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+.set-win .set-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.set-win .set-name > small.note { overflow-wrap: anywhere; white-space: normal; }
+.set-win .set-ctl > .btn { min-width: 96px; }
+/* 줄 안 단추는 그림 20도트(≈43px) · 누름 영역은 ::before가 48px로 넓힌다 — 줄 간격 4와 합쳐 48 피치 (한 쪽 세 줄이 364 안에) */
+.set-win .set-ctl .btn { height: calc(var(--px) * 20); min-height: 0; }
+.set-win .set-ctl > .btn.set-mute { min-width: 64px; }
+.set-win .set-ctl > .btn.set-step { min-width: 48px; width: 48px; padding-inline: 0; }
+/* 파괴 행동(진행 초기화) 앞: 구분선 + 위 16px */
+.set-win .set-gap { flex: none; margin-top: var(--s3); }
 /* 크기 = 진공관 줄 (속전 계기와 같은 tube.png — 켜짐 0번 칸 · 꺼짐 4번 칸, 6×14도트 × 2) */
-.set-win .set-tubes { display: flex; gap: 2px; align-items: center; padding: 4px 6px; }
+.set-win .set-tubes { display: flex; gap: 2px; align-items: center; padding: 2px 6px; border-width: calc(var(--px) * 3); border-image-width: calc(var(--px) * 3); } /* 우물 테 3도트 (속전 계기와 같은 꼴) — 줄 높이 44 안에 */
 .set-win .set-tubes > i { display: block; width: 12px; height: 28px; background: url('../assets/ui/kit/tube.png') -48px 0 / 60px 28px no-repeat; image-rendering: pixelated; }
 .set-win .set-tubes > i.lit { background-position: 0 0; }
-.set-win .set-seg { display: flex; gap: 8px; }
+.set-win .set-seg { display: flex; gap: var(--s2); }
 .set-win .set-seg > .btn { min-width: 96px; }
 .set-win .set-ver { color: var(--t-dim); }
 /* 만든 이 · 라이선스 */
@@ -25,6 +29,21 @@
 .set-win .set-lic-name { color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; }
 .set-win .set-lic .note { overflow-wrap: anywhere; }
 .set-win .set-lic > .btn { flex: none; min-width: 64px; }
+/* 키 · 패드 배치표: 셋 칸 표 (머리 12 흐림 · 행동 15 · 키 12 굵게 황동) */
+.set-win .set-keymap { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 2px var(--s3); align-content: start; overflow: hidden; }
+.set-win .set-keymap > .km-act { color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; }
+.set-win .set-keymap > :is(.km-key, .km-pad) { color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; font-synthesis: none; }
 /* 전문 읽기: 우물 하나가 남은 높이를 다 받고, 넘치는 글은 다음 쪽으로 (스크롤 없음) */
 .set-win.set-read .set-text { flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .set-win.set-read .set-text p { margin: 0 0 6px; color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; white-space: pre-line; }
+
+/* ---------- 설정이 연출에 닿는 곳 (D-538) ----------
+   번쩍임 줄이기: 흰 · 붉은 화면 섬광 층을 걷고, 기물 · 카드의 흰 번쩍(brightness)도 끈다 — 소리 · 흔들림 · 글은 그대로. */
+:root[data-noflash='1'] body :is(.tfx-flash, .fx3-flash, .pl-flash, .tf-flash, .p2-flash) { display: none; }
+:root[data-noflash='1'] body :is(.ev-actor.flash > img, .er-card.flash, .er-pc.flash) { filter: none; }
+/* 화면 흔들림: 끔 = 무대 흔들림 없음 · 약하게 = 진폭 절반 계단 */
+:root[data-shake='off'] body.stage-shake #app { animation: none; }
+:root[data-shake='weak'] body.stage-shake #app { animation: sshakeWeak 300ms steps(6); }
+@keyframes sshakeWeak { 0% { transform: translate(-4px, 2px); } 25% { transform: translate(3px, -2px); } 50% { transform: translate(-2px, 1px); } 75% { transform: translate(1px, -1px); } 100% { transform: none; } }
+/* PC 키 안내 (설정 › 조작): 대국 단추 오른쪽 위에 키 글자 꼬리표 — 12px 굵게, 먹 바탕 */
+body.key-hints [data-key-hint]::after { content: attr(data-key-hint); position: absolute; z-index: 2; top: calc(var(--px) * -3); right: calc(var(--px) * -3); padding: 0 3px; background: #0b0b0e; color: var(--t-gold); font: 700 12px/16px Galmuri11, sans-serif; font-synthesis: none; pointer-events: none; }

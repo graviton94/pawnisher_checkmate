@@ -1,3 +1,4 @@
+import { shakeMul } from '../prefs/fx';
 import { calmMotion } from '../prefs/motion';
 import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
@@ -341,7 +342,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   const A = { x: 152, y: 7.5 }, B = { x: 50, y: 114.7 };
   const ang = (Math.atan2(B.y - A.y, B.x - A.x) * 180) / Math.PI;
   const glintRun = (ms: number) => { glint.style.left = `${A.x}px`; glint.style.top = `${A.y}px`; glint.animate(ditherKeyframes([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }]), { duration: ms, easing: 'steps(6, jump-end)' }); };
-  const shake = (amp: number, ms: number) => panel.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.9}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.6}px,${amp * 0.4}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.2}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' });
+  const shake = (amp0: number, ms: number) => { const amp = Math.round(amp0 * shakeMul()); if (amp < 1) return; panel.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.9}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.6}px,${amp * 0.4}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.2}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' }); };
   em.classList.add('run');
   sfx('lift');
   await wait(200);

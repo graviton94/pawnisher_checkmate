@@ -1,4 +1,5 @@
 import { MUSIC_VOLUME, TRACKS, type TrackId } from '../data/music';
+import { bgMuted } from './bg';
 
 /**
  * 배경 음악 재생기 (D-123): 칩튠 루프를 미리 0.12초씩 예약한다 (끊김 없이). 곡을 바꾸면 다음 박에서 바뀐다.
@@ -31,7 +32,7 @@ const ensure = (): AudioContext | null => {
     out = ctx.createGain();
     out.gain.value = MUSIC_VOLUME * (level ?? 1);
     out.connect(ctx.destination);
-    document.addEventListener('visibilitychange', () => (document.hidden ? void ctx?.suspend() : track && musicOn() && void ctx?.resume()));
+    document.addEventListener('visibilitychange', () => (document.hidden ? bgMuted() && void ctx?.suspend() : track && musicOn() && void ctx?.resume()));
     // 첫 탭 전에 만든 소리 장치는 잠겨 있다 — 첫 누름에서 깨운다 (자동 재생 규칙)
     const wake = (): void => {
       if (ctx?.state === 'running') return void window.removeEventListener('pointerdown', wake, true);

@@ -1,4 +1,6 @@
-import { SETTINGS_DEFAULT, SETTINGS_KEY, VOL_STEPS, PROGRESS_KEYS, PROGRESS_PREFIX, type Settings } from '../data/settings';
+import { SETTINGS_DEFAULT, SETTINGS_KEY, VOL_STEPS, PROGRESS_KEYS, PROGRESS_PREFIX, SHAKE_MUL, type Settings, type ShakePref } from '../data/settings';
+import { setFxPrefs } from './fx';
+import { setBgMute } from '../audio/bg';
 import { setMotionPref, type MotionPref } from './motion';
 import { setSfxLevel } from '../audio/sfx';
 import { setMusicLevel } from '../audio/music';
@@ -14,6 +16,7 @@ export interface KeyStore {
 }
 
 const MOTIONS: readonly MotionPref[] = ['os', 'off', 'on'];
+const bool = (v: unknown, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
 const step = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(VOL_STEPS, Math.round(v))) : d);
 
 /** 저장된 값을 읽는다. 없거나 망가졌으면 기본값 (옛 2.0 켜고 끄기 열쇠가 있으면 그 뜻을 이어받는다) */
@@ -41,6 +44,13 @@ export const readSettings = (st: KeyStore): Settings => {
     music: step(raw.music, d.music),
     musicMute: typeof raw.musicMute === 'boolean' ? raw.musicMute : legacyMusic,
     motion: MOTIONS.includes(raw.motion as MotionPref) ? (raw.motion as MotionPref) : d.motion,
+    master: step(raw.master, d.master),
+    masterMute: bool(raw.masterMute, d.masterMute),
+    bgMute: bool(raw.bgMute, d.bgMute),
+    shake: raw.shake && raw.shake in SHAKE_MUL ? (raw.shake as ShakePref) : d.shake,
+    lessFlash: bool(raw.lessFlash, d.lessFlash),
+    autoAdvance: bool(raw.autoAdvance, d.autoAdvance),
+    keyHints: bool(raw.keyHints, d.keyHints),
   };
 };
 
@@ -53,15 +63,20 @@ export const writeSettings = (st: KeyStore, s: Settings): void => {
   }
 };
 
-/** 실제 소리 배율: 기본 칸 = 1(예전 고정 음량), 끔이면 0 */
-export const sfxLevel = (s: Settings): number => (s.sfxMute ? 0 : s.sfx / SETTINGS_DEFAULT.sfx);
-export const musicLevel = (s: Settings): number => (s.musicMute ? 0 : s.music / SETTINGS_DEFAULT.music);
+/** 전체 음량 배율 (10칸 = 1, 끔 0) */
+export const masterLevel = (s: Settings): number => (s.masterMute ? 0 : s.master / VOL_STEPS);
+/** 실제 소리 배율: 기본 칸 = 1(예전 고정 음량) × 전체 음량, 끔이면 0 */
+export const sfxLevel = (s: Settings): number => (s.sfxMute ? 0 : (s.sfx / SETTINGS_DEFAULT.sfx) * masterLevel(s));
+export const musicLevel = (s: Settings): number => (s.musicMute ? 0 : (s.music / SETTINGS_DEFAULT.music) * masterLevel(s));
 
-/** 설정을 소리 · 움직임에 입힌다 */
+/** 설정을 소리 · 움직임 · 흔들림 · 번쩍임 · 키 안내에 입힌다 */
 export const applySettings = (s: Settings): void => {
   setSfxLevel(sfxLevel(s));
   setMusicLevel(musicLevel(s));
   setMotionPref(s.motion);
+  setFxPrefs(s);
+  setBgMute(s.bgMute);
+  if (typeof document !== 'undefined') document.body?.classList.toggle('key-hints', s.keyHints);
 };
 
 /** 진행 초기화로 지울 열쇠 — 출하 저장 · 기록 · 도감 · 플레이 기록. 설정 열쇠는 남긴다 */

@@ -4,6 +4,7 @@
  * 움직임은 예비 → 충격 → 넘침 → 출렁 곡선, 효과는 레트로 FX(색 갈림 · 속도선 · 섬광 · 빛줄기 · 반짝 띠). 게임 상태는 건드리지 않는다.
  */
 import { calmMotion } from '../prefs/motion';
+import { lessFlash, shakeMul } from '../prefs/fx';
 import { sfx } from '../audio/sfx';
 import { sparksAt } from './uifx';
 
@@ -21,7 +22,7 @@ const centerOf = (el: Element) => {
 };
 /** 화면 전체 흰 섬광 한 번 */
 export const flashScreen = (a = 0.85): void => {
-  if (calm()) return;
+  if (calm() || lessFlash()) return;
   const f = document.createElement('div');
   f.className = 'fx3-flash';
   f.style.setProperty('--a', String(a));
@@ -72,8 +73,10 @@ export const arcFly = (el: HTMLElement, from: { x: number; y: number }, to: { x:
 };
 
 /** 감쇠 흔들림 (요소 하나) */
-export const shakeEl = (el: HTMLElement | null, amp = 7, ms = 360): void => {
-  if (!el || calm()) return;
+export const shakeEl = (el: HTMLElement | null, amp0 = 7, ms = 360): void => {
+  // 설정 › 화면 흔들림 (D-538): 끔 0 · 약하게 절반 — 1px 아래는 흔들지 않는다
+  const amp = Math.round(amp0 * shakeMul());
+  if (!el || calm() || amp < 1) return;
   el.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.85}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.55}px,${amp * 0.3}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.15}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' });
 };
 

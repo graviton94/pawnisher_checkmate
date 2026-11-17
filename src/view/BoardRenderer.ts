@@ -1,5 +1,6 @@
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { vignette } from '../ui/juice';
+import { shakeMul } from '../prefs/fx';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
@@ -1371,7 +1372,9 @@ class BoardScene extends Phaser.Scene {
   }
 
   private shake(ms: number, intensity: number): void {
-    if (!this.calm) this.cameras.main.shake(ms, intensity);
+    // 설정 › 화면 흔들림 (D-538)
+    const k = intensity * shakeMul();
+    if (!this.calm && k > 0) this.cameras.main.shake(ms, k);
   }
   /** 흔들림 세 단계 (D-193, 판 밖 shake(1|2|3)와 같은 박자): 약 260ms · 중 360ms · 강 480ms */
   private shakeLv(lv: 1 | 2 | 3): void {

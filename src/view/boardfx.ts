@@ -4,6 +4,7 @@
  *  - 기믹 순간: 줄 폭격 = 칸마다 불기둥이 솟고 연기 · 불씨 · 흰 장 / 가시 반격 = 붉은 쇳조각이 친 기물로 날아가 박힘 / 찍어 내기 = 쾅 먼지 · 불꽃
  * 판이 안 보이면(body.between) 쉰다.
  */
+import { lessFlash } from '../prefs/fx';
 import { calmMotion } from '../prefs/motion';
 import { FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE, bayer } from './pxfx';
 import type { Pos } from '../engine';
@@ -152,7 +153,7 @@ export class BoardFx {
     this.ps.draw(p, 'back');
     this.ps.draw(p, 'front');
     this.lights.draw(p);
-    if (this.flash > 0) p.rect(0, 0, fx.w, fx.h, WHITE, Math.min(0.8, this.flash * 10));
+    if (this.flash > 0 && !lessFlash()) p.rect(0, 0, fx.w, fx.h, WHITE, Math.min(0.8, this.flash * 10));
     fx.present();
   }
   private wake(): void { this.start(); }

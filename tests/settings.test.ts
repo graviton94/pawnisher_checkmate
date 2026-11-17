@@ -7,6 +7,8 @@ import { SETTINGS_DEFAULT, SETTINGS_KEY, VOL_STEPS } from '../src/data/settings'
 import { motionMedia } from '../src/prefs/motion';
 import { APP_VERSION } from '../src/data/version';
 import { LICENSES } from '../src/data/licenses';
+import { DEV_PAGE, PRIVACY_KO } from '../src/data/legal';
+import policyRaw from '../docs/legal/privacy-policy.md?raw';
 
 /** 메모리 저장소 (localStorage 흉내 — length · key 포함) */
 const mem = (init: Record<string, string> = {}): KeyStore & { length: number; key(i: number): string | null; dump(): Record<string, string> } => {
@@ -90,5 +92,26 @@ describe('라이선스 고지', () => {
     expect(t['갈무리 (Galmuri)'].text).toMatch(/Lee Minseo/);
     expect(t['Phaser 3'].text).toMatch(/Permission is hereby granted/);
     expect(LICENSES.some((l) => l.license === 'CC BY 3.0')).toBe(true);
+  });
+});
+
+describe('출시 표준 설정 (D-538)', () => {
+  it('새 칸은 기본값으로 — 전체 음량 10칸 · 백그라운드 음소거 켬 · 흔들림 보통 · 번쩍임 · 자동 넘김 · 키 안내 끔', () => {
+    const s = readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ sfx: 3 }) }));
+    expect(s).toMatchObject({ master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false });
+    expect(readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ shake: 'wild', bgMute: 'no', master: 40 }) }))).toMatchObject({ shake: 'normal', bgMute: true, master: VOL_STEPS });
+  });
+  it('전체 음량은 효과음 · 음악에 곱한다 — 끄면 둘 다 0', () => {
+    const half = { ...SETTINGS_DEFAULT, master: 5 };
+    expect(sfxLevel(half)).toBeCloseTo(0.5);
+    expect(musicLevel(half)).toBeCloseTo(0.5);
+    expect(sfxLevel({ ...SETTINGS_DEFAULT, masterMute: true })).toBe(0);
+  });
+  it('게임 안 개인정보 처리방침은 docs/legal 정본과 조항 · 문의 주소가 같다', () => {
+    const ko = policyRaw.split('## English')[0];
+    const items = ko.match(/^\d+\. \*\*/gm) ?? [];
+    expect(PRIVACY_KO.filter((l) => /^\d+\. /.test(l))).toHaveLength(items.length);
+    expect(ko).toContain(DEV_PAGE);
+    expect(PRIVACY_KO.join('\n')).toContain(DEV_PAGE);
   });
 });
