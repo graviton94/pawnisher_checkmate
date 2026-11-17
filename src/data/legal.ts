@@ -1,5 +1,5 @@
 /**
- * 개인정보 처리방침 · 문의 (D-538): 게임 안에서 그대로 보인다. 정본 = docs/legal/privacy-policy.md —
+ * 개인정보 처리방침 · 문의 (D-539): 게임 안에서 그대로 보인다. 정본 = docs/legal/privacy-policy.md —
  * 그 문서를 고치면 이 글도 같이 고친다 (tests/settings.test.ts가 두 글의 조항 수와 주소를 맞춰 본다).
  */
 /** 개발자 페이지 (의견 · 문의) */

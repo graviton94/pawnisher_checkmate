@@ -1,4 +1,4 @@
-/* 설정 창 (D-530 → D-538 여섯 탭) — L 창 · 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음(넘치면 쪽). 부품은 키트(.win · .btn · .inset · .tab)만 쓴다 */
+/* 설정 창 (D-530 → D-539 여섯 탭) — L 창 · 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음(넘치면 쪽). 부품은 키트(.win · .btn · .inset · .tab)만 쓴다 */
 #overlay-panel.win.set-win { height: var(--win-hmax); }
 .set-win .set-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--s2); overflow: hidden; }
 /* 줄 = 이름(왼쪽 200) · 조작(모두 같은 x에서 시작) — 이름 아래 12px 설명 */
@@ -37,7 +37,7 @@
 .set-win.set-read .set-text { flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .set-win.set-read .set-text p { margin: 0 0 6px; color: var(--t-body); font: 400 12px/18px Galmuri11, sans-serif; white-space: pre-line; }
 
-/* ---------- 설정이 연출에 닿는 곳 (D-538) ----------
+/* ---------- 설정이 연출에 닿는 곳 (D-539) ----------
    번쩍임 줄이기: 흰 · 붉은 화면 섬광 층을 걷고, 기물 · 카드의 흰 번쩍(brightness)도 끈다 — 소리 · 흔들림 · 글은 그대로. */
 :root[data-noflash='1'] body :is(.tfx-flash, .fx3-flash, .pl-flash, .tf-flash, .p2-flash) { display: none; }
 :root[data-noflash='1'] body :is(.ev-actor.flash > img, .er-card.flash, .er-pc.flash) { filter: none; }

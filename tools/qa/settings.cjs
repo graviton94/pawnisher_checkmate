@@ -1,4 +1,4 @@
-// 설정 창 (D-530 → D-538 여섯 탭) 실화면: 타이틀 메뉴 → 설정 → 크기 · 움직임 · 만든 이 · 전문 쪽 넘김 · 진행 초기화 두 단계 → 대국 중 메뉴 단추 → 멈춤 → 설정.
+// 설정 창 (D-530 → D-539 여섯 탭) 실화면: 타이틀 메뉴 → 설정 → 크기 · 움직임 · 만든 이 · 전문 쪽 넘김 · 진행 초기화 두 단계 → 대국 중 메뉴 단추 → 멈춤 → 설정.
 // 사용: node tools/slice-observe.cjs settings
 module.exports = async (pg, shot) => {
   const BASE = process.env.OBSERVE_URL || 'http://localhost:4173/';

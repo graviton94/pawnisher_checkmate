@@ -74,7 +74,7 @@ export const arcFly = (el: HTMLElement, from: { x: number; y: number }, to: { x:
 
 /** 감쇠 흔들림 (요소 하나) */
 export const shakeEl = (el: HTMLElement | null, amp0 = 7, ms = 360): void => {
-  // 설정 › 화면 흔들림 (D-538): 끔 0 · 약하게 절반 — 1px 아래는 흔들지 않는다
+  // 설정 › 화면 흔들림 (D-539): 끔 0 · 약하게 절반 — 1px 아래는 흔들지 않는다
   const amp = Math.round(amp0 * shakeMul());
   if (!el || calm() || amp < 1) return;
   el.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.85}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.55}px,${amp * 0.3}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.15}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' });

@@ -13,7 +13,7 @@ export interface Settings {
   musicMute: boolean;
   /** 움직임 줄이기: 기기 설정 따름 · 끔 · 켬 */
   motion: MotionPref;
-  /** 전체 음량 0~VOL_STEPS (효과음 · 음악에 곱한다, D-538) */
+  /** 전체 음량 0~VOL_STEPS (효과음 · 음악에 곱한다, D-539) */
   master: number;
   masterMute: boolean;
   /** 앱을 내리면(백그라운드) 소리를 끈다 — 기본 켬 */
@@ -50,7 +50,7 @@ export const PROGRESS_KEYS: readonly string[] = [
 
 export const SETTINGS_TEXT = {
   title: '설정',
-  /** 탭 여섯 (D-538) — 이름은 두~세 글자 */
+  /** 탭 여섯 (D-539) — 이름은 두~세 글자 */
   tabs: { sound: '소리', screen: '화면', access: '접근성', input: '조작', game: '게임', info: '정보' },
   master: '전체 음량',
   sfx: '효과음',

@@ -69,7 +69,7 @@ describe('행동 흘리기', () => {
     expect(run({ t: 'back' }, { battle: true, sel: true })).toEqual({ done: true, log: ['dismiss', 'cancel'] });
     expect(run({ t: 'back' }, { battle: false })).toEqual({ done: false, log: ['dismiss', 'pause'] });
   });
-  it('뒤로: 닫을 것 · 내려놓을 것이 없으면 대국 · 지도 일시 정지 메뉴 (D-538)', () => {
+  it('뒤로: 닫을 것 · 내려놓을 것이 없으면 대국 · 지도 일시 정지 메뉴 (D-539)', () => {
     expect(run({ t: 'back' }, { battle: true, pause: true })).toEqual({ done: true, log: ['dismiss', 'cancel', 'pause'] });
     expect(run({ t: 'back' }, { battle: false, pause: true })).toEqual({ done: true, log: ['dismiss', 'pause'] });
   });

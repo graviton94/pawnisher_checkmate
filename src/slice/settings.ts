@@ -10,7 +10,7 @@ import { applySettings, readSettings, resetProgress, writeSettings, type KeyStor
 import type { MotionPref } from '../prefs/motion';
 
 /**
- * 설정 창 (D-530 → D-538 출시 표준 여섯 탭): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보.
+ * 설정 창 (D-530 → D-539 출시 표준 여섯 탭): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보.
  * L 창 하나, 높이 고정(탭을 바꿔도 창이 튀지 않는다) · 스크롤 없음 — 한 탭 줄이 칸을 넘으면 쪽으로 나눈다(이전 · 다음).
  * 화면은 설정 값만 바꾼다 — 게임 상태는 건드리지 않는다 (UI 원칙 9). 진행 초기화만 저장소를 지우고 처음 화면으로 돌아간다.
  * 안내서 · 용어집은 부른 쪽(main.ts)이 연다 — 닫으면 이 창의 「게임」 탭으로 돌아온다.

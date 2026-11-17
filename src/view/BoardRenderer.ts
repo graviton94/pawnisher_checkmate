@@ -1372,7 +1372,7 @@ class BoardScene extends Phaser.Scene {
   }
 
   private shake(ms: number, intensity: number): void {
-    // 설정 › 화면 흔들림 (D-538)
+    // 설정 › 화면 흔들림 (D-539)
     const k = intensity * shakeMul();
     if (!this.calm && k > 0) this.cameras.main.shake(ms, k);
   }

@@ -363,9 +363,9 @@ const GROUPS = [
     { name: 'deck', assets: ['RF-04', 'KC-01'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await shot('deck'); } },
     { name: 'nemesis', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.nemesisOf()); await W(1200); await shot('nemesis'); } },
   ]],
-  ['system', '시작 세트 고르기 · 설정 창 여섯 탭(D-538) · 메인 메뉴 · 출하 준비 · 기록 · 일시 정지 메뉴 · 꺼짐 단추 · 오류 복구 창 · 대국 중 이어하기 (D-529 · D-530 · D-538)', [
+  ['system', '시작 세트 고르기 · 설정 창 여섯 탭(D-539) · 메인 메뉴 · 출하 준비 · 기록 · 일시 정지 메뉴 · 꺼짐 단추 · 오류 복구 창 · 대국 중 이어하기 (D-529 · D-530 · D-539)', [
     { name: 'settings', assets: [], url: '?debug&opening', run: async ({ pg, W, shot, tapAt }) => {
-      // 설정 여섯 탭 (D-538): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보 — 쪽이 있으면 다음 쪽도
+      // 설정 여섯 탭 (D-539): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보 — 쪽이 있으면 다음 쪽도
       await W(1200); await tapAt(VW / 2, VH * 0.72); await W(1400);
       const t = async (sel, ms = 500) => { await pg.locator(sel).first().tap(); await W(ms); };
       await t('[data-settings]', 800);
@@ -386,7 +386,7 @@ const GROUPS = [
       await t('[data-no]');
     } },
     { name: 'main-menu', assets: ['MM-01'], url: '?debug&opening', run: async ({ pg, A, W, shot, tapAt }) => {
-      // 메인 메뉴 (D-538): 단추 다섯 · 황동 하나 → 출하 준비(본편 · 도전(잠김) · 오늘) → 기록 · 통계 — 시험장 줄(?debug 전용)은 걷고 찍는다
+      // 메인 메뉴 (D-539): 단추 다섯 · 황동 하나 → 출하 준비(본편 · 도전(잠김) · 오늘) → 기록 · 통계 — 시험장 줄(?debug 전용)은 걷고 찍는다
       await W(1200); await tapAt(VW / 2, VH * 0.72); await W(1400); await A(() => document.querySelector('.op-dev')?.remove()); await W(500); await shot('main-menu');
       const t = async (sel, ms = 500) => { await pg.locator(sel).first().tap(); await W(ms); };
       await t('[data-ship]', 800); await shot('setup-story');
@@ -398,7 +398,7 @@ const GROUPS = [
       await t('[data-rec="stats"]', 700); await shot('records-stats');
     } },
     { name: 'pause', assets: ['MM-01'], run: async ({ pg, A, W, shot }) => {
-      // 일시 정지 메뉴 (D-538 · B1): 대국 머리 톱니 → 메뉴 → 출하 포기 두 단계 → 그만둔다 / 지도에서 Esc · 머리 톱니 → 설정
+      // 일시 정지 메뉴 (D-539 · B1): 대국 머리 톱니 → 메뉴 → 출하 포기 두 단계 → 그만둔다 / 지도에서 Esc · 머리 톱니 → 설정
       // 진짜 출하(기록에 남는 판)여야 「출하 포기」가 열린다 — 새 출하 → 컷 · 쪽지를 넘겨 첫 대국까지
       await A(() => { void window.sliceApi.begin(91, 0, 'story', null, 'standard'); });
       await pg.locator('.prologue').waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});

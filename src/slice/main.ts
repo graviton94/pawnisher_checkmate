@@ -1075,7 +1075,7 @@ const BACK_EXIT_MS = 2000;
 let backAt = 0;
 (window as unknown as { __hwBack: () => string }).__hwBack = (): string => {
   // 키보드 뒤로와 같은 길 (코드 리뷰 3): 창 · 엿보기 · 화면 닫기 단추 · 컷신 건너뛰기 · 고른 카드 · 기물 내려놓기
-  // → 그래도 닫을 것이 없고 대국 · 지도면 일시 정지 메뉴 (D-538, keymap 'back'의 마지막 단계). 게임 닫기는 처음 화면에서만
+  // → 그래도 닫을 것이 없고 대국 · 지도면 일시 정지 메뉴 (D-539, keymap 'back'의 마지막 단계). 게임 닫기는 처음 화면에서만
   if (hardwareBack()) return 'handled';
   if (Date.now() - backAt < BACK_EXIT_MS) {
     persistNow(); // 닫기 전에 대국 판을 남긴다 (D-529 — 예전엔 두 번 눌러 닫으면 대국이 처음부터였다)
@@ -4016,10 +4016,10 @@ const dictHtml = (): string => {
 const helpTabs = (on: 'guide' | 'dict'): string => {
   // 탭 (UI-05 · D-394): 고른 탭 = 황동 · 나머지 = 철, 아래 변이 열려 바로 아래 칸과 붙는다
   const tab = (k: string, label: string, cls = ''): string => `<button type="button" class="tab${cls}" data-tab="${k}" role="tab" aria-selected="${on === k}">${label}</button>`;
-  // 설정 탭은 뺐다 (D-538): 설정은 일시 정지 메뉴 · 메인 메뉴에서 연다
+  // 설정 탭은 뺐다 (D-539): 설정은 일시 정지 메뉴 · 메인 메뉴에서 연다
   return `<div class="tabs" role="tablist">${tab('guide', HUD_TEXT.helpTitle)}${tab('dict', HUD_TEXT.dictTitle, (readMeta(store).termsNew ?? []).length ? ' has-new' : '')}${tab('bug', PT.bug)}</div>`;
 };
-/** 설정 창 (D-530 → D-538) — 메인 메뉴 · 일시 정지 메뉴 둘 다 여기로. 게임 탭의 안내서 · 용어집은 닫으면 설정으로 돌아온다 */
+/** 설정 창 (D-530 → D-539) — 메인 메뉴 · 일시 정지 메뉴 둘 다 여기로. 게임 탭의 안내서 · 용어집은 닫으면 설정으로 돌아온다 */
 const settings = (): void => openSettings({ store, desktop: isDesktop() ? { toggleFullscreen: () => void toggleFullscreen(), quitGame } : null, onGuide: (back) => void guide(openWin).then(back), onGlossary: (back) => glossary(back), onReset: () => {
   // 지운 뒤 다시 읽는다 — 닫힐 때 남기기(pagehide)와 모아 둔 플레이 기록이 지운 것을 되살리지 않게 막고 한 번 더 지운다
   wiped = true;
@@ -4050,7 +4050,7 @@ const help = (tab: 'now' | 'dict' = 'now'): void => {
 };
 
 /**
- * 용어 칸 쪽 넘김 (D-538 — 검수 M4): 칸 안에서 스크롤하며 아래 줄이 반쯤 잘리던 것을 쪽으로 나눈다.
+ * 용어 칸 쪽 넘김 (D-539 — 검수 M4): 칸 안에서 스크롤하며 아래 줄이 반쯤 잘리던 것을 쪽으로 나눈다.
  * 실제 칸 높이에 용어를 하나씩 채워 넘치면 다음 쪽 — 단추 줄 가운데 「1 / 3」 + 이전 · 다음(안내서 · 라이선스와 같은 꼴).
  */
 const pageDict = (win: HTMLElement): void => {
@@ -4098,7 +4098,7 @@ const glossary = (back: () => void): void => {
 };
 
 /**
- * 일시 정지 메뉴 (D-538 — 검수 B1): 대국 · 지도 머리의 톱니 단추 · Esc · 패드 Start · 안드로이드 뒤로(닫을 창이 없을 때).
+ * 일시 정지 메뉴 (D-539 — 검수 B1): 대국 · 지도 머리의 톱니 단추 · Esc · 패드 Start · 안드로이드 뒤로(닫을 창이 없을 때).
  * S 창: [이어 간다(황동)] / [안내서 · 용어 | 설정] / [처음으로 | 출하 포기(진홍)]. 뒤 막 · Esc = 이어 간다.
  * 처음으로 = 지금 자리를 저장하고 처음 화면 메뉴로 (이어하기로 같은 자리). 출하 포기 = 두 단계 확인 뒤 패배 기록(commitRunEnd) — 기존 패배 흐름 그대로.
  * 적 차례 · 연출 중에 누르면 그 박자가 끝난 뒤 연다 (판 상태를 저장할 수 있는 순간).
@@ -5051,7 +5051,7 @@ const begin = async (seed: number, level: number, day: string | null, mode: RunM
  * 한 쪽에 셋: 기본 셋 → 해금 셋(잠긴 세트는 꺼진 받침 + 여는 조건). 같은 받침을 다시 누르면 확정.
  */
 /**
- * 출하 준비 창 (D-538 — 검수 §2): 메인 메뉴 「출하」 → L 창. 탭 셋 = 본편(왕관 넷) · 도전(난이도 ◀ ▶ · 규정 · 기록) · 오늘의 도전(오늘의 규칙 · 기록).
+ * 출하 준비 창 (D-539 — 검수 §2): 메인 메뉴 「출하」 → L 창. 탭 셋 = 본편(왕관 넷) · 도전(난이도 ◀ ▶ · 규정 · 기록) · 오늘의 도전(오늘의 규칙 · 기록).
  * 잠긴 것은 눌러도 왜 잠겼는지 한 줄로 알린다. 왕관 부제(이야기 이름)는 쓰지 않는다 (스포일러 H1). 단추 줄: 돌아간다(철) · 출하한다(황동).
  */
 type SetupTab = 'story' | 'challenge' | 'daily';
@@ -5127,7 +5127,7 @@ const runSetup = (hasSave: boolean, tab0?: SetupTab): void => {
 };
 
 /**
- * 기록 창 (D-538 — 검수 §2 · M12): 메인 메뉴 「기록」 → M 창 세로 선택 넷. 원부(쓰러진 분대원) · 장면 다시 보기(프롤로그) · 안내서 · 통계.
+ * 기록 창 (D-539 — 검수 §2 · M12): 메인 메뉴 「기록」 → M 창 세로 선택 넷. 원부(쓰러진 분대원) · 장면 다시 보기(프롤로그) · 안내서 · 통계.
  * 옛 「도감」 이름은 내용(원부)과 맞지 않아 뺐다.
  */
 const recordsWin = (): void => {
@@ -5221,7 +5221,7 @@ const opening = (): void => {
     }, tutDone('battle'));
   };
   /**
-   * 메인 메뉴 (D-538 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 출하 · [기록 | 설정] · (PC) 끝내기.
+   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 출하 · [기록 | 설정] · (PC) 끝내기.
    * 황동은 늘 하나 — 저장이 있으면 이어하기, 없으면 출하. 모드 · 왕관 · 난이도 · 오늘의 도전은 「출하」 → 출하 준비 창으로.
    * 왕관 부제(이야기 이름)는 보이지 않는다 (스포일러). 시험장 · 빌드 시험은 ?debug에서만 (D-286).
    */

@@ -95,7 +95,7 @@ describe('라이선스 고지', () => {
   });
 });
 
-describe('출시 표준 설정 (D-538)', () => {
+describe('출시 표준 설정 (D-539)', () => {
   it('새 칸은 기본값으로 — 전체 음량 10칸 · 백그라운드 음소거 켬 · 흔들림 보통 · 번쩍임 · 자동 넘김 · 키 안내 끔', () => {
     const s = readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ sfx: 3 }) }));
     expect(s).toMatchObject({ master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false });

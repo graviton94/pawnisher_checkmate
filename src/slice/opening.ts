@@ -211,7 +211,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
       if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; armAuto(); }
     };
-    /** 설정 › 컷신 자동 넘김 (D-538): 한 쪽이 다 선 뒤 읽을 틈을 두고 다음 쪽 — 누르기를 대신할 뿐, 연출 속도는 그대로 (D-039) */
+    /** 설정 › 컷신 자동 넘김 (D-539): 한 쪽이 다 선 뒤 읽을 틈을 두고 다음 쪽 — 누르기를 대신할 뿐, 연출 속도는 그대로 (D-039) */
     const armAuto = (): void => {
       if (!autoAdvance()) return;
       const my = token, at = i;

@@ -2,8 +2,8 @@ import { SHAKE_MUL, type ShakePref } from '../data/settings';
 import { reduceFlash, setFlashPref } from './motion';
 
 /**
- * 화면 흔들림 · 번쩍임 줄이기 · 컷신 자동 넘김 (D-538). 연출 코드는 이 값만 묻는다 — 움직임 줄이기(motion.ts)와 같은 방식.
- * 번쩍임 줄이기는 motion.ts의 setFlashPref · reduceFlash(같은 패스의 FX 정리, 움직임 줄이기면 함께 꺼짐) 하나로 모은다.
+ * 화면 흔들림 · 번쩍임 줄이기 · 컷신 자동 넘김 (D-539). 연출 코드는 이 값만 묻는다 — 움직임 줄이기(motion.ts)와 같은 방식.
+ * 번쩍임 줄이기는 motion.ts의 setFlashPref · reduceFlash(D-538 FX 정리 — 움직임 줄이기면 함께 꺼짐) 하나로 모은다.
  * CSS 쪽은 <html data-shake="off|weak|normal" data-noflash="1"> 로 같은 값을 따른다.
  */
 let shake: ShakePref = 'normal';
