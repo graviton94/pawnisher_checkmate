@@ -124,6 +124,8 @@ const CRACK_TONE: Record<number, number> = { 0xffffff: 0x9a97a0, 0xf1eeec: 0x8a8
  * 몸 64칸이 예전처럼 칸의 82%를 차지하도록 그림 전체를 72/64배로 키우고, 바닥(칸의 84%)에 맞춘다.
  */
 const PIECE_SIZE = 0.82 * (72 / 64);
+/** 정수배 기물 크기를 쓰는 하한 — 예전 크기의 이 비율 이상일 때만 (D-538) */
+const PIECE_SNAP_MIN = 0.85;
 /**
  * 기물 바닥 기준선 (D-525): 체력바 윗줄 = 칸 위에서 16도트. 모든 기물 그림(보통 72칸 · 2×2 반장 · 거대 주물 144칸)은
  * 그림의 바닥(흰 테 바깥 끝 — 그림마다 아래 투명 줄을 잰다)을 이 줄에 맞대고, 체력바(4도트)가 바로 아래에 붙는다.
@@ -386,13 +388,14 @@ class BoardScene extends Phaser.Scene {
   private pieceBox(key: string, span = 1): { size: number; cy: number } {
     const r = this.dpr;
     const tc = Math.round(this.tile * r); // 칸 = 20 × 도트(정수 캔버스 픽셀)
-    // D-538 도트 밀도: 그림 1도트 = 캔버스 정수 픽셀. 그림 도트 수(텍스처 2텍셀 = 1도트 — 72 · 거대 122 · 2×2 반장 144)로
-    // 예전 목표 크기(칸 × PIECE_SIZE × span)에 들어가는 가장 큰 정수배를 고른다. 도트 수가 모두 짝수라 칸 가운데에 서도 왼 끝이 정수
+    // D-538 도트 밀도 (리드 결정 2026-11-17): 그림 도트 수(텍스처 2텍셀 = 1도트 — 72 · 거대 122 · 2×2 반장 144)의 정수배 중
+    // 예전 크기(칸 × PIECE_SIZE × span, 짝수)에 드는 가장 큰 것이 예전 크기의 85% 이상이면 그것(1도트 = 캔버스 정수 픽셀),
+    // 아니면 예전 크기 그대로(최근접) — 사용자가 맞춘 기물 · 거대 · 반장 크기를 줄이지 않는다.
+    // 915×412 · DPR 2.625(칸 120)는 정수배 72가 예전 110의 65%라 예전 그대로, 칸 80(DPR 1 · 2)은 72가 74의 97%라 정수배.
     const dots = Math.max(1, Math.round((this.textures.exists(key) ? this.textures.get(key).getSourceImage().width : 144) / 2));
-    // 목표가 그림 도트 수보다 작으면(DPR 1 · 작은 칸) 정수비로 줄인다(2도트 = 1픽셀 …) — 도트가 고르게 빠진다
-    const want = PIECE_SIZE * tc * span;
-    const m = Math.floor(want / dots + 1e-6);
-    const sc = m >= 1 ? m * dots : 2 * Math.round(dots / Math.ceil(dots / want) / 2);
+    const prev = 2 * Math.round((PIECE_SIZE * tc * span) / 2); // 짝수 — 칸 가운데에 서도 왼 끝이 정수
+    const snapped = Math.floor(prev / dots + 1e-6) * dots; // 도트 수가 모두 짝수라 이것도 짝수
+    const sc = snapped >= PIECE_SNAP_MIN * prev ? snapped : prev;
     const bottom = Math.ceil((GAUGE_ROW * tc) / BOARD_DOTS + this.footPad(key) * sc);
     return { size: sc / r, cy: (bottom - sc / 2) / r };
   }
