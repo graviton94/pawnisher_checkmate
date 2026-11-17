@@ -412,10 +412,53 @@ export const coverArt = (img: HTMLImageElement): void => {
   img.style.top = `${r.y}px`;
   img.style.objectFit = 'cover';
 };
+/** 정수 배율로 덮는 CSS 배경 (D-556) — 요소 · 그림 크기 · 넣을 곳 */
+interface CoverBg { el: HTMLElement; w: number; h: number; vars?: [string, string]; fx: number; fy: number; box?: () => [number, number] }
+const coverBgs = new Set<CoverBg>();
+const coverLast = new WeakMap<HTMLElement, Record<string, string>>();
+const fitCoverBg = (c: CoverBg): boolean => {
+  const [bw, bh] = c.box ? c.box() : [c.el.clientWidth, c.el.clientHeight];
+  if (!bw || !bh) return false;
+  const r = fitCover(c.w, c.h, bw, bh, window.devicePixelRatio || 1, c.fx, c.fy);
+  const size = `${r.width}px ${r.height}px`, pos = `${r.x}px ${r.y}px`;
+  if (c.vars) {
+    c.el.style.setProperty(c.vars[0], size);
+    c.el.style.setProperty(c.vars[1], pos);
+  } else {
+    c.el.style.backgroundSize = size;
+    c.el.style.backgroundPosition = pos;
+  }
+  return true;
+};
+/**
+ * 장면 그림을 CSS 배경으로 깔 때 (D-556): `background-size: cover`(비정수 배율 — 도트 폭이 들쭉날쭉) 대신
+ * coverArt와 같은 정수 배율 덮기 · 초점(fx, fy)으로 자른다. 늘리지 않는다(D-386).
+ * vars = 의사 요소(::before)가 읽을 CSS 변수 이름 [크기, 위치] — 없으면 요소의 background-size · position에 바로.
+ * box = 덮을 칸 크기(기본: 요소 크기). 그림을 불러온 뒤 맞추고, 창 크기가 바뀌면 다시 맞춘다.
+ */
+export const coverBg = (el: HTMLElement, url: string, o: { vars?: [string, string]; fx?: number; fy?: number; box?: () => [number, number] } = {}): void => {
+  for (const c of coverBgs) if (c.el === el && c.vars?.[0] === o.vars?.[0]) coverBgs.delete(c);
+  const key = o.vars?.[0] ?? '';
+  const last = coverLast.get(el) ?? {};
+  last[key] = url;
+  coverLast.set(el, last);
+  const im = new Image();
+  im.onload = (): void => {
+    if (coverLast.get(el)?.[key] !== url) return; // 그사이 다른 그림으로 바뀌었다
+    const c: CoverBg = { el, w: im.naturalWidth, h: im.naturalHeight, vars: o.vars, fx: o.fx ?? 0.5, fy: o.fy ?? 0.5, box: o.box };
+    coverBgs.add(c);
+    // 아직 붙지 않은 요소면 다음 그림 틀에 다시
+    let tries = 0;
+    const go = (): void => { if (!fitCoverBg(c) && tries++ < 30) requestAnimationFrame(go); };
+    go();
+  };
+  im.src = url;
+};
 /** 화면이 바뀌면(회전 · 창 크기) 받침 · 장면 그림을 다시 맞춘다 */
 const refitAll = (): void => {
   document.querySelectorAll<HTMLElement>('.scr-items').forEach(fitSlots);
   document.querySelectorAll<HTMLImageElement>('img[data-cover]').forEach(coverArt);
+  for (const c of coverBgs) if (c.el.isConnected) fitCoverBg(c); else coverBgs.delete(c);
 };
 if (typeof window !== 'undefined') window.addEventListener('resize', () => requestAnimationFrame(refitAll));
 const settle = (el: HTMLElement): void => {

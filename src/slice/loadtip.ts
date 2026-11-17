@@ -9,6 +9,7 @@ import { GUIDE_PAGES, OPENING_TEXT } from '../data/opening';
 import { LOAD_TIP } from '../data/tutorial';
 import { pxOut, replay } from './fx3';
 import { guideMedia } from './opening';
+import { coverBg } from './uikit';
 
 const KEY = 'pc-loadtips';
 const calm = (): boolean => calmMotion();
@@ -76,6 +77,7 @@ export const showTip = (kind: 'battle' | 'act'): Promise<void> =>
     const wrap = document.createElement('div');
     wrap.className = 'ld-tip-wrap';
     wrap.style.backgroundImage = 'url(scenes/loading-bench.png)';
+    coverBg(wrap, 'scenes/loading-bench.png', { fx: 0.48, fy: 0.46 }); // D-556: 정수 배율 덮기 (CSS 48% 46% / cover를 대신)
     wrap.setAttribute('role', 'status');
     wrap.innerHTML = `<div class="win ld-tip">${tipHtml(i)}</div>`;
     document.body.appendChild(wrap);

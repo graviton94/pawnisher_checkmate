@@ -926,7 +926,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 /* ---------- 지도 (출하 지도 D-169 → D-397) ---------- */
 /* 불투명 바닥: 먹 → 막 그림 덮기 → 2×2 먹 디더 (뒤 전투가 비치지 않는다) */
 .mapfx { position: fixed; inset: 0; z-index: 60; isolation: isolate; overflow: hidden; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--s2); padding: var(--Gy) var(--G); background: #0b0b0e; animation: pxin 300ms steps(5) both; }
-.mapfx::before { content: ''; position: absolute; inset: 0; z-index: -3; background: var(--act) center / cover no-repeat; image-rendering: pixelated; }
+.mapfx::before { content: ''; position: absolute; inset: 0; z-index: -3; background: var(--act) var(--act-pos, center) / var(--act-size, cover) no-repeat; image-rendering: pixelated; } /* D-556: 정수 배율 덮기 (uikit coverBg) */
 .mapfx::after { content: ''; position: absolute; inset: 0; z-index: -2; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%230b0b0e'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%230b0b0e'/%3E%3C/svg%3E") 0 0 / calc(var(--px) * 2) calc(var(--px) * 2); image-rendering: pixelated; }
 .mapfx .map-head { display: flex; align-items: center; gap: var(--s2); min-height: 48px; }
 .mapfx .map-head h2 { margin: 0; color: #f4e6c4; font: 700 24px/30px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; white-space: nowrap; }

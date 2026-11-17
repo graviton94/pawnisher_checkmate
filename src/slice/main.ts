@@ -26,7 +26,7 @@ import './hud-rarity.css';
 import './menus.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
-import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
+import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, coverBg, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
 import type { TrackId } from '../data/music';
@@ -2445,7 +2445,9 @@ const showMap = (): void => {
   el.className = 'mapfx kit';
   // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로
   // 지도 바탕 = 막마다 내려다본 공장 층(MP-03~05) · 종막 = 통제실 계단과 왕좌(MP-06, D-509)
-  el.style.setProperty('--act', `url(${new URL(`scenes/map-a${Math.min(4, actI + 1)}.png`, location.href).href})`);
+  const actUrl = new URL(`scenes/map-a${Math.min(4, actI + 1)}.png`, location.href).href;
+  el.style.setProperty('--act', `url(${actUrl})`);
+  coverBg(el, actUrl, { vars: ['--act-size', '--act-pos'] }); // D-556: 정수 배율 덮기
   // 범례 한 줄 (D-400, 사용자: 「범례가 두 줄로 접힌다 · 『빛나는 곳을 고릅니다』는 필요 없다」)
   const legend = `<ul class="map-legend">${(['battle', 'check', 'event', 'chest', 'shop', 'forge', 'boss'] as const)
     .map((k) => `<li><i class="ico" style="${iconArtSmall(NODE_ICONS[k])}"></i>${NODE_NAMES[k]}</li>`)
@@ -3231,8 +3233,11 @@ const p2Art = (rule: string): string => BOSS_ART_P2[rule] ?? (rule === 'gilded' 
 const placeBg = (name: string | null): void => {
   document.body.classList.toggle('placebg', !!name);
   if (name) {
-    document.body.style.setProperty('--place', `url(${new URL(`scenes/${name}.png`, location.href).href})`);
+    const url = new URL(`scenes/${name}.png`, location.href).href;
+    document.body.style.setProperty('--place', `url(${url})`);
     document.body.dataset.place = name;
+    // D-556: CSS cover(비정수 배율 — 도트 폭이 들쭉날쭉)가 아니라 coverArt와 같은 정수 배율 덮기 · 가운데 초점으로 자른다
+    coverBg(document.body, url, { vars: ['--place-size', '--place-pos'], box: () => [document.documentElement.clientWidth, document.documentElement.clientHeight] });
   } else delete document.body.dataset.place;
 };
 

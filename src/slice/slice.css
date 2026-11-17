@@ -635,7 +635,7 @@ body.slice .coins b { margin-left: 4px; }
 
 /* ---------- 받은 그림 넣기 (D-200) ---------- */
 /* 장소 배경: 판 사이 화면 전체에 그림, 끝난 대국 화면은 통째로 내린다 */
-body.placebg::before { content: ''; position: fixed; inset: 0; z-index: 0; background: #0b0a0e var(--place) center / cover no-repeat; image-rendering: pixelated; }
+body.placebg::before { content: ''; position: fixed; inset: 0; z-index: 0; background: #0b0a0e var(--place) var(--place-pos, center) / var(--place-size, cover) no-repeat; image-rendering: pixelated; } /* D-556: 정수 배율 덮기 (main.ts fitPlace) */
 body.placebg #app { visibility: hidden; }
 body.placebg .overlay { background: var(--dith25); } /* D-538: rgba 0.35 막 → 25% 디더 */
 /* 보상(정비 라인 BG-04): 왼쪽 40%는 그림, 창은 오른쪽으로 — 장소 화면 틀 */
