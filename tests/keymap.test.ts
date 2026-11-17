@@ -97,12 +97,16 @@ describe('방향 초점', () => {
 });
 
 describe('워밍업 두 묶음 (D-531)', () => {
-  it('기물 · 칸 · UI는 모두 타이틀 전, 장면은 프롤로그 · 1막만', () => {
-    const { first, later } = splitPreload(PRELOAD);
-    expect(first.length + later.length).toBe(PRELOAD.length);
+  it('타이틀 전에는 타이틀 그림만, 기물 · 칸 · UI는 판 묶음, 장면은 프롤로그 · 1막만, 안 쓰는 장면은 빼고', () => {
+    const { title, first, later } = splitPreload(PRELOAD);
+    const unused = ['scenes/act-0.png', 'scenes/entry-check.png', 'scenes/entry-battle.png'];
+    expect(title.length + first.length + later.length).toBe(PRELOAD.length - unused.filter((u) => PRELOAD.includes(u)).length);
+    for (const u of unused) expect([...title, ...first, ...later]).not.toContain(u);
+    expect(title).toContain('scenes/prologue-00.png');
+    expect(title).toContain('ui/title-logo.png');
+    expect(title.length).toBeLessThan(12);
     const core = (p: string) => /^(pieces|ui)\//.test(p);
-    expect(first.filter(core).length).toBe(PRELOAD.filter(core).length);
-    expect(first).toContain('scenes/prologue-00.png');
+    expect([...title, ...first].filter(core).length).toBe(PRELOAD.filter(core).length);
     expect(first).toContain('scenes/act-1.png');
     expect(later).toContain('scenes/ending-a.png');
     expect(later.every((p) => /^(scenes|guide)\//.test(p))).toBe(true);

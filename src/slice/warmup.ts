@@ -3,31 +3,42 @@
  * 타이틀을 보이기 전에 그림(public · 묶음 안 HUD 부품)과 갈무리 글꼴을 미리 받아 풀어(decode) 둔다.
  * 그동안 부팅 화면의 황동 막대가 계단으로 찬다. 오래 걸리면(상한) 그냥 넘어간다 — 그림은 쓸 때 다시 받는다.
  *
- * 두 묶음 (D-531): 타이틀 전에는 「첫 묶음」(기물 · 판 칸 · UI 전부 + 프롤로그 · 1막 장면)만 기다린다 —
- * 판에서 그림이 늦게 튀어나오지 않게 기물 · 칸 · UI는 꼭 여기. 나머지 장면(사건 · 보스 · 엔딩 · 승급 …)은
- * 타이틀이 뜬 뒤 쉬는 틈(requestIdleCallback)에 두 장씩 천천히 받는다.
+ * 세 묶음 (D-531 → 코드 리뷰 1): 타이틀 전에는 「타이틀 묶음」(글꼴 + 로고 · 로딩 막대 · 타이틀 바탕)만 기다린다 (상한 3초).
+ * 「판 묶음」(기물 · 판 칸 · UI · 묶음 안 HUD 부품 + 프롤로그 · 1막 장면)은 타이틀이 뜬 직후부터 뒤에서 받는다 —
+ * 타이틀 · 프롤로그를 보는 동안 다 받아 판에서 그림이 늦게 튀어나오지 않게. 나머지 장면(사건 · 보스 · 엔딩 · 승급 …)은
+ * 그 뒤 쉬는 틈(requestIdleCallback)에 두 장씩 천천히 받는다.
  */
 import { PRELOAD } from '../data/preload-list';
+import { PRELOAD_BUNDLED } from '../data/preload-bundled';
 
-/** 묶음 안 그림 (CSS가 쓰는 HUD 부품 등) — 빌드가 주소를 붙인다 */
-const BUNDLED = Object.values(import.meta.glob('../assets/**/*.png', { eager: true, query: '?url', import: 'default' })) as string[];
+/** 묶음 안 큰 그림 (CSS가 쓰는 HUD 부품 등) — 작은 것은 CSS 안에 base64로 이미 들어 있다 (코드 리뷰 8: 예전 glob은 JS에도 한 벌 더 넣었다) */
+const BUNDLED = PRELOAD_BUNDLED;
 
 const FONTS = ['12px Galmuri11', '700 12px Galmuri11', '24px Galmuri11', '700 24px Galmuri11', '15px Galmuri14', '30px Galmuri14', '60px Galmuri14'];
 
-/** 타이틀 · 1막까지 쓰는 장면 그림 (프롤로그 · 1막 표지 · 첫 대국 들어가기 · 사건 · 상점 바탕) */
-const FIRST_SCENES = /^scenes\/(prologue-|act-[01]\.|entry-|bg-|departure-|shipping-|casting-floor)/;
+/** 타이틀 화면이 쓰는 그림 (로고 · 문장 조각 · 로딩 톱니 · 막대 · 타이틀 바탕) — 이것만 타이틀 전에 기다린다 */
+const TITLE = /^(ui\/title-|ui\/hud\/load-|scenes\/prologue-00\.)/;
+/** 타이틀 · 1막까지 쓰는 장면 그림 (프롤로그 · 1막 표지 · 사건 · 상점 바탕) */
+const FIRST_SCENES = /^scenes\/(prologue-|act-1\.|bg-|departure-|shipping-|casting-floor)/;
+/** 코드가 부르지 않는 장면 (act-0 · entry-check · entry-battle — 코드 리뷰 5) — 미리 받지 않는다 */
+const UNUSED = /^scenes\/(act-0|entry-check|entry-battle)\./;
 
 /**
- * public 그림 목록을 「타이틀 전」 · 「나중」으로 나눈다. 기물 · 칸 · UI · 아이콘은 모두 첫 묶음, 안내서 그림(guide/)은 나중.
+ * public 그림 목록을 「타이틀 전」 · 「판」 · 「나중」으로 나눈다. 기물 · 칸 · UI · 아이콘은 판 묶음, 안내서 그림(guide/)은 나중.
  * 나중 묶음은 막 순서대로 (act-2 → act-3 → 그 밖) — 쉬는 틈에 앞 막 것부터 받는다.
  */
-export const splitPreload = (list: readonly string[]): { first: string[]; later: string[] } => {
+export const splitPreload = (list: readonly string[]): { title: string[]; first: string[]; later: string[] } => {
+  const title: string[] = [];
   const first: string[] = [];
   const later: string[] = [];
-  for (const p of list) ((p.startsWith('scenes/') && !FIRST_SCENES.test(p)) || p.startsWith('guide/') ? later : first).push(p);
+  for (const p of list) {
+    if (UNUSED.test(p)) continue;
+    if (TITLE.test(p)) title.push(p);
+    else ((p.startsWith('scenes/') && !FIRST_SCENES.test(p)) || p.startsWith('guide/') ? later : first).push(p);
+  }
   const rank = (p: string): number => (p.startsWith('guide/') ? 10 : Number(/^scenes\/act-(\d)\./.exec(p)?.[1] ?? 9));
   later.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-  return { first, later };
+  return { title, first, later };
 };
 
 /** 그림 하나를 받아 풀어 둔다 (실패해도 넘어간다) */
@@ -57,27 +68,33 @@ const warmLater = async (urls: string[]): Promise<void> => {
   }
 };
 
-/** 미리 부르기: 첫 묶음 진행률(0~1)을 알린다. 상한 ms가 지나면 끝난 것으로. 나머지는 뒤에서 천천히 */
-export const warmup = async (onProgress: (k: number) => void, limit = 9000): Promise<void> => {
-  const { first, later } = splitPreload(PRELOAD);
-  const urls = [...BUNDLED, ...first.map(abs)];
+/** 그림 묶음을 n장씩 나란히 받는다 (폰 메모리 · 디코딩이 한꺼번에 몰리지 않게) */
+const pool = (urls: string[], n: number, tick: () => void = () => undefined): Promise<unknown> => {
+  let i = 0;
+  const worker = async (): Promise<void> => {
+    while (i < urls.length) {
+      await loadImg(urls[i++]);
+      tick();
+    }
+  };
+  return Promise.all(Array.from({ length: n }, worker));
+};
+
+/**
+ * 미리 부르기: 타이틀 묶음 진행률(0~1)을 알린다. 상한 ms가 지나면 끝난 것으로 (그림은 쓸 때 다시 받는다).
+ * 끝나면 판 묶음 → 나중 묶음을 뒤에서 받는다.
+ */
+export const warmup = async (onProgress: (k: number) => void, limit = 3000): Promise<void> => {
+  const { title, first, later } = splitPreload(PRELOAD);
+  const urls = title.map(abs);
   const total = urls.length + 1;
   let n = 0;
   const tick = () => onProgress(Math.min(1, ++n / total));
   const fonts = Promise.all(FONTS.map((f) => document.fonts?.load(f).catch(() => undefined))).then(tick);
-  // 동시에 여섯 장씩 (폰 메모리 · 디코딩이 한꺼번에 몰리지 않게)
-  let i = 0;
-  const worker = async (): Promise<void> => {
-    while (i < urls.length) {
-      const u = urls[i++];
-      await loadImg(u);
-      tick();
-    }
-  };
-  const all = Promise.all([fonts, ...Array.from({ length: 6 }, worker)]);
+  const all = Promise.all([fonts, pool(urls, 6, tick)]);
   await Promise.race([all, new Promise((r) => window.setTimeout(r, limit))]);
-  // 첫 묶음이 끝나면(상한에 걸렸어도 그 뒤에) 나머지를 쉬는 틈에
-  void all.then(() => warmLater(later.map(abs)));
-  // 두 화면 쉼 — 레이아웃 · 판 캔버스가 다 그려진 뒤에 타이틀을 연다
+  // 타이틀이 뜨면 판 묶음(기물 · 칸 · UI)을 넷씩, 그다음 나머지를 쉬는 틈에
+  void all.then(() => pool([...BUNDLED, ...first.map(abs)], 4)).then(() => warmLater(later.map(abs)));
+  // 두 화면 쉼 — 레이아웃이 다 그려진 뒤에 타이틀을 연다
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 };
