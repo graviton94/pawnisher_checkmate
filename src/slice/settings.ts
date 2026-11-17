@@ -242,12 +242,13 @@ const keyMapPage = (s: Settings, back: () => void, page = 0): void => {
  * 고정 키(확인 · 뒤로 · 방향 · 숫자)와 다른 행동의 키는 받지 않고 까닭을 한 줄로. [기본값으로]는 바꾼 키를 모두 지운다.
  * 기다리는 동안 Esc = 그만두기(키는 그대로).
  */
+// 안내 줄은 표의 빈 여섯째 칸에 (D-549: 표 아래 따로 두면 낮은 화면에서 칸 밖으로 잘렸다)
 const keyBindPage = (o: SettingsOpts, back: () => void): void => {
   let wait: BindId | null = null;
   const html = (): WinOpts => {
     const k = cleanBinds(readSettings(o.store).keys);
     const rows = BIND_IDS.map((id) => `<div class="set-row kb-row"><span class="set-name">${T.bindNames[id]}</span><div class="set-ctl">${btnHtml({ label: wait === id ? T.bindWait : keyLabel(k[id]), attrs: `data-bind="${id}" aria-pressed="${wait === id}" aria-label="${T.bindNames[id]} ${keyLabel(k[id])}"`, kind: wait === id ? 'brass' : 'iron', cls: 'kb-key' })}</div></div>`).join('');
-    return { size: 'l', cls: 'set-win set-bind', title: T.bindTitle, body: `<div class="set-body inset"><div class="kb-grid">${rows}</div><p class="note">${T.bindNote}</p></div>`, back: { label: T.licBack, attrs: 'data-x' }, go: { label: T.bindDefault, attrs: 'data-bind-reset', kind: 'iron' }, dismiss: () => (stop(), back()) };
+    return { size: 'l', cls: 'set-win set-bind', title: T.bindTitle, body: `<div class="set-body inset"><div class="kb-grid">${rows}<p class="note kb-note">${T.bindNote}</p></div></div>`, back: { label: T.licBack, attrs: 'data-x' }, go: { label: T.bindDefault, attrs: 'data-bind-reset', kind: 'iron' }, dismiss: () => (stop(), back()) };
   };
   const panel = openWin(html());
   const onKey = (e: KeyboardEvent): void => {

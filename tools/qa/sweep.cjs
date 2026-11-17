@@ -198,7 +198,7 @@ const GROUPS = [
     { name: 'map-peek', assets: ['MP-01', 'MP-02'], run: async ({ pg, A, W, shot }) => {
       await A(() => { const a = window.sliceApi; a.richRun(); a.setAct(0); a.map(2); }); await W(1000);
       const slot = pg.locator('.map-roster .mr-slot').nth(2);
-      if (VW > 760 && await slot.count()) { await slot.tap(); await W(600); await shot('map-roster-peek'); }
+      if (VW > 860 && await slot.count()) { await slot.tap(); await W(600); await shot('map-roster-peek'); }
       const node = pg.locator('.mnd.now').first(); if (await node.count()) { await node.tap(); await W(700); await shot('map-node-peek'); }
     } },
   ]],

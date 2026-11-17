@@ -55,5 +55,4 @@ body.key-hints [data-key-hint]::after { content: attr(data-key-hint); position: 
 .set-win.set-bind .kb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s4); }
 .set-win.set-bind .kb-row { grid-template-columns: minmax(0, 1fr) auto; }
 .set-win.set-bind .kb-key { min-width: 96px; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
-/* D-549: 낮은 화면(667×375)에서 아래 안내 줄이 1px 잘렸다 — 줄 사이를 8 → 4 */
-@media (max-height: 400px) { .set-win.set-bind .set-body { gap: var(--s1); } .set-win.set-bind .kb-grid { row-gap: var(--s1); } }
+.set-win.set-bind .kb-note { margin: 0; align-self: center; }

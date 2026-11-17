@@ -334,6 +334,8 @@ body.kb-nav :is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline:
   border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch;
   font: 700 24px/var(--lh-24) Galmuri11, sans-serif;
 }
+/* D-549: 판 열 위 띠는 판 폭(−8)에 묶인다(placeBand) — 24px 문구가 그보다 길면 띠 밖으로 나갔다 → 두 줄로 */
+.state-band.on-board { white-space: normal; text-wrap: balance; }
 .state-band.k-brass { --up: url('../assets/ui/chrome/v2/btn-brass-up.png'); color: var(--t-brass-ink); }
 .state-band.k-crimson { --up: url('../assets/ui/chrome/v2/btn-crimson-up.png'); color: #000; }
 /* 등장: 아래로 펼쳐지는 계단 3프레임 (투명도 보간 없음) · 퇴장은 pxOut 디더 */
