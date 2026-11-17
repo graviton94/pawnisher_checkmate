@@ -98,7 +98,7 @@ import { warmup } from './warmup';
 import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
-import { commitRunEnd, fightPending, newerSaveFound, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
+import { commitRunEnd, fightPending, newerSaveFound, settledEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
 import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
@@ -3315,10 +3315,7 @@ const finishNow = (): void => {
       });
       // 이 순간을 남긴다 (2026-11-16 완주 점검): 예전에는 직전 턴 끝 저장이 남아, 여기서 앱을 닫고 이어 하면 진 대국의 앞 턴으로 돌아갔다.
       // 여벌이 있으면 = 여벌 하나를 깨고 이 대국을 처음부터(「다시 둔다」와 같은 자리) · 없으면 = 출하 끝을 바로 기록
-      if (runLive && !labMode) {
-        if (!spare) commitEnd(false);
-        else if (fightOn) writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, charms: { ...charms, revive: charms.revive - 1 } });
-      }
+      settleLoss();
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
         // 다시 서는 대국도 저장한다 — 예전에는 여기서 앱을 닫으면 여벌을 깨기 전 저장으로 돌아갔다
@@ -4476,8 +4473,23 @@ const saveRun = (at: 'map' | 'battle' | 'reward', node?: number, pending?: Pendi
  * 그 턴 처음으로 돌아가지 않는다(공짜 되감기). 못 보인 폐기 의식 · 사선(stand)은 이어 갈 때 다시 보인다.
  */
 const saveFight = (settled?: { stand: boolean }): void => {
-  if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || b.s.winner !== null || (!settled && (busy || enemyTurn))) return;
-  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, bet: betNow, clutched: clutchedNow, phaseWarned, tg, rites: ritesDone, ...(settled?.stand ? { stand: true } : {}) } });
+  if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || (!settled && (b.s.winner !== null || busy || enemyTurn))) return;
+  // 엔진이 대국을 끝냈으면 (D-537): 연출 앞에서 바로 정산한다 — 연출 중 앱을 죽여 이긴 · 진 판을 물리지 못하게
+  if (b.s.winner !== null) {
+    const how = settledEnd({ winner: b.s.winner as 0 | 1, rewinds: b.rewinds, revive: charms.revive, inRun: !(cur.drill && !INTRO.includes(cur)) });
+    if (how === 'spare' || how === 'record') return settleLoss();
+    if (how === 'none') return;
+  }
+  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, bet: betNow, clutched: clutchedNow, phaseWarned, tg, rites: ritesDone, ...(settled?.stand && b.s.winner === null ? { stand: true } : {}) } });
+};
+/**
+ * 진 대국 정산 (2026-11-16 완주 점검 → D-537 연출 앞으로): 여벌이 있으면 여벌 하나를 깨고 이 대국을 처음부터(「다시 둔다」와 같은 자리) ·
+ * 없으면 출하 끝을 바로 기록(commitRunEnd — 저장도 지운다). 패배 창 · 패배 컷 · 대국 끝 연출 앞에서 남긴다.
+ */
+const settleLoss = (): void => {
+  if (!runLive || labMode) return;
+  if (charms.revive <= 0) commitEnd(false);
+  else if (fightOn) writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, charms: { ...charms, revive: charms.revive - 1 } });
 };
 /**
  * 대국 중 저장에서 이어 간다 (D-529): 대국 앞 난수 자리에서 같은 대국을 조용히 다시 세우고(결정론 — 같은 적 · 같은 판 장식),
@@ -4503,11 +4515,13 @@ const resumeFight = (def: BattleDef, f: FightSave): void => {
   refresh();
   track('battle_resume', { ...where(), turn: b.turn });
   void battleIntro().then(async () => {
-    if (ritesDone >= b.falls.length && !pend.stand) return;
+    if (ritesDone >= b.falls.length && !pend.stand && b.s.winner === null) return;
     busy = true;
     await deathRites();
     busy = false;
     refresh();
+    // 끝난 채 저장한 판 (D-537): 이긴 판은 보상 정산으로, 진 판(판 되감기가 남음)은 되감기 장면으로
+    if (b.s.winner !== null) return finish();
     if (pend.stand) await lastStand();
     saveFight();
   });

@@ -95,6 +95,19 @@ export interface FightSave {
   stand?: boolean;
 }
 
+/**
+ * 연출 전 대국 끝 정산 (코드 리뷰 4 · D-537): 엔진이 판을 끝냈을 때(이긴 · 진 판) 연출을 기다리지 않고 무엇을 남기나.
+ * - 'fight' : 끝난 판 그대로 저장 — 이어 가면 판이 선 뒤 바로 대국 끝 흐름(이긴 판 = 보상 정산, 진 판 + 판 되감기 = 되감기 장면)
+ * - 'spare' : 여벌 심장 톱니 하나를 깨고 그 대국 처음부터 (패배 창 「다시 둔다」와 같은 자리)
+ * - 'record': 출하 끝을 바로 기록하고 저장을 지운다 (commitRunEnd)
+ * - 'none'  : 남기지 않는다 (연습 시험대 · 출하 밖)
+ */
+export const settledEnd = (o: { winner: 0 | 1; rewinds: number; revive: number; inRun: boolean }): 'fight' | 'spare' | 'record' | 'none' => {
+  if (!o.inRun) return 'none';
+  if (o.winner === 0 || o.rewinds > 0) return 'fight';
+  return o.revive > 0 ? 'spare' : 'record';
+};
+
 /** 이어 갈 때 못다 한 연출: 보이지 못한 폐기 의식 수(앞에서 몇 개는 이미 보였나) · 사선을 물을지. 옛 저장은 다 보인 것으로 */
 export const fightPending = (f: FightSave): { rites: number; stand: boolean } => ({
   rites: Math.min(f.rites ?? f.b.falls.length, f.b.falls.length),

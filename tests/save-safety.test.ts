@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, clearSave, emptyMeta, fightPending, newerSaveFound, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
+import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, clearSave, commitRunEnd, emptyMeta, fightPending, newerSaveFound, settledEnd, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
 import { TELEMETRY_KEY, telemetryAll, telemetryShed, telemetryStore, track } from '../src/slice/telemetry';
 import { endTurn, newSliceBattle, playCard, type SliceBattle } from '../src/slice/battle';
 import { bestAction } from '../src/slice/bot';
@@ -179,6 +179,32 @@ describe('대국 중 저장 · 이어하기 결정론 (D-529)', () => {
     expect(JSON.stringify(back.b)).toBe(JSON.stringify(live));
     // 옛 저장(rites · stand 없음)은 의식을 다시 틀지 않는다
     expect(fightPending({ b: live, rng: 1, stage: 1 })).toEqual({ rites: live.falls.length, stand: false });
+  });
+  it('엔진이 대국을 끝낸 판은 연출 앞에서 바로 정산한다 (D-537 — 이긴 · 진 판을 연출 중 앱 죽이기로 물리지 못하게)', () => {
+    // 고르기 규칙: 이긴 판 = 끝난 판 그대로 · 진 판 + 판 되감기 = 끝난 판 그대로(이어 가면 되감기 장면) · 여벌 = 대국 처음부터 · 없으면 기록
+    expect(settledEnd({ winner: 0, rewinds: 0, revive: 0, inRun: true })).toBe('fight');
+    expect(settledEnd({ winner: 1, rewinds: 1, revive: 0, inRun: true })).toBe('fight');
+    expect(settledEnd({ winner: 1, rewinds: 0, revive: 2, inRun: true })).toBe('spare');
+    expect(settledEnd({ winner: 1, rewinds: 0, revive: 0, inRun: true })).toBe('record');
+    expect(settledEnd({ winner: 1, rewinds: 0, revive: 0, inRun: false })).toBe('none');
+    // 이긴 판: 끝난 판이 그대로 돌아온다 (이어 가면 판이 선 뒤 보상 정산)
+    const won = newSliceBattle(squad, ['K', 'P', 'N'], deck, 31, {});
+    won.s.winner = 0;
+    const st = memStore();
+    writeSave(st, sample({ at: 'battle', node: 0, fight: { b: won, rng: 1, stage: 1, rites: 0 } }));
+    expect(readSave(st)!.fight!.b.s.winner).toBe(0);
+    // 진 판 · 여벌 있음: 대국 처음부터 · 여벌 하나 적게 (판 저장 없음)
+    writeSave(st, sample({ at: 'battle', node: 0, charms: { revive: 0, rewind: 1 } }));
+    const spare = readSave(st)!;
+    expect(spare.fight).toBeUndefined();
+    expect(spare.charms?.revive).toBe(0);
+    // 진 판 · 여벌 없음: 출하 끝을 기록하고 저장을 지운다 — 다시 켜도 이어 갈 판이 없다
+    writeMeta(st, emptyMeta());
+    writeSave(st, sample({ at: 'battle', node: 0, fight: { b: won, rng: 1, stage: 1 } }));
+    const r = commitRunEnd(st, 'run-loss', { cleared: false, act: 1, won: 0, asc: 0, daily: null, mode: 'story', chapter: 0 });
+    expect(r?.after.runs).toBe(1);
+    expect(readSave(st)).toBeNull();
+    expect(commitRunEnd(st, 'run-loss', { cleared: false, act: 1, won: 0, asc: 0, daily: null, mode: 'story', chapter: 0 })).toBeNull();
   });
   it('대국 중 저장이 모자라면 그 칸만 버리고 대국 처음부터 (출하는 살린다)', () => {
     const st = memStore();
