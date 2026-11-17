@@ -13,6 +13,13 @@ let auto = false;
 export const shakeMul = (): number => SHAKE_MUL[shake];
 /** 흰 · 붉은 화면 섬광을 걷어야 하나 */
 export const lessFlash = (): boolean => reduceFlash();
+let cb = false;
+/** 색 보조 무늬 (D-539): 적 위협 · 적 범위 칸 빗금, 적 HP 게이지 체크 무늬 — 판 그리기가 묻는다 */
+export const cbAid = (): boolean => cb;
+export const setCbAid = (v: boolean): void => {
+  cb = v;
+  if (typeof document !== 'undefined') document.documentElement.dataset.cb = v ? '1' : '0';
+};
 /** 컷신 글을 다 찍은 뒤 저절로 다음 쪽으로 가나 */
 export const autoAdvance = (): boolean => auto;
 

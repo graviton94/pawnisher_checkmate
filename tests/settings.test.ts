@@ -99,7 +99,9 @@ describe('출시 표준 설정 (D-539)', () => {
   it('새 칸은 기본값으로 — 전체 음량 10칸 · 백그라운드 음소거 켬 · 흔들림 보통 · 번쩍임 · 자동 넘김 · 키 안내 끔', () => {
     const s = readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ sfx: 3 }) }));
     expect(s).toMatchObject({ master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false });
-    expect(readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ shake: 'wild', bgMute: 'no', master: 40 }) }))).toMatchObject({ shake: 'normal', bgMute: true, master: VOL_STEPS });
+    expect(readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ shake: 'wild', bgMute: 'no', master: 40 }) }))).toMatchObject({ shake: 'normal', bgMute: true, master: VOL_STEPS, keys: {}, cbAid: false });
+    // 바꾼 키는 검사한 것 중 기본과 다른 것만 남는다
+    expect(readSettings(mem({ [SETTINGS_KEY]: JSON.stringify({ keys: { endTurn: 'Q', undo: 'z', reset: 'Enter' } }) })).keys).toEqual({ endTurn: 'q' });
   });
   it('전체 음량은 효과음 · 음악에 곱한다 — 끄면 둘 다 0', () => {
     const half = { ...SETTINGS_DEFAULT, master: 5 };

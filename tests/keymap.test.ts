@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAD_MAP, dispatch, keyAction, nearest, stickDir, type Action, type InputEnv } from '../src/slice/keymap';
+import { PAD_MAP, bindConflict, cleanBinds, DEFAULT_BINDS, dispatch, keyAction, nearest, setKeyBinds, stickDir, type Action, type InputEnv } from '../src/slice/keymap';
 import { splitPreload } from '../src/slice/warmup';
 import { PRELOAD } from '../src/data/preload-list';
 
@@ -120,5 +120,32 @@ describe('워밍업 두 묶음 (D-531)', () => {
     expect(later).toContain('scenes/ending-a.png');
     expect(later.every((p) => /^(scenes|guide)\//.test(p))).toBe(true);
     expect(later[0]).toBe('scenes/act-2.png');
+  });
+});
+
+describe('키 바꾸기 (D-539)', () => {
+  it('바꾼 키가 행동을 대신하고, 옛 키는 풀린다 — 기본으로 되돌릴 수 있다', () => {
+    setKeyBinds({ endTurn: 'Q' });
+    expect(keyAction({ key: 'q' })).toEqual({ t: 'endTurn' });
+    expect(keyAction({ key: 'Q' })).toEqual({ t: 'endTurn' });
+    expect(keyAction({ key: 'e' })).toBeNull();
+    setKeyBinds({});
+    expect(keyAction({ key: 'e' })).toEqual({ t: 'endTurn' });
+  });
+  it('고정 키 · 다른 행동의 키는 받지 않는다', () => {
+    expect(bindConflict(DEFAULT_BINDS, 'endTurn', 'Enter')).toBe('reserved');
+    expect(bindConflict(DEFAULT_BINDS, 'endTurn', 'Escape')).toBe('reserved');
+    expect(bindConflict(DEFAULT_BINDS, 'endTurn', '3')).toBe('reserved');
+    expect(bindConflict(DEFAULT_BINDS, 'endTurn', 'R')).toBe('reset');
+    expect(bindConflict(DEFAULT_BINDS, 'endTurn', 'q')).toBeNull();
+  });
+  it('망가진 저장(겹침 · 고정 키 · 모르는 행동)은 버리고 기본을 쓴다 — 확인 · 뒤로 · 방향은 늘 그대로', () => {
+    expect(cleanBinds({ endTurn: 'r' })).toEqual(DEFAULT_BINDS);
+    expect(cleanBinds({ endTurn: 'Enter', wild: 'x' } as Record<string, string>)).toEqual(DEFAULT_BINDS);
+    expect(cleanBinds({ endTurn: 'r', reset: 'e' })).toEqual({ ...DEFAULT_BINDS, endTurn: 'r', reset: 'e' });
+    setKeyBinds({ endTurn: 'Enter' });
+    expect(keyAction({ key: 'Enter' })).toEqual({ t: 'confirm' });
+    expect(keyAction({ key: 'Escape' })).toEqual({ t: 'back' });
+    setKeyBinds({});
   });
 });

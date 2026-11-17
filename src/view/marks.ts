@@ -1,5 +1,6 @@
 import type { Side } from '../engine';
 import type { PixelPen } from './pixel';
+import { cbAid } from '../prefs/fx';
 
 /**
  * 판 위 표식 중 코드가 그때그때 찍는 것 (FX 랩에서 고른 그림, D-046·D-047·D-052·D-054·D-055).
@@ -66,9 +67,12 @@ export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: n
   const sweep = gaugeSweep(hp, after, max, ms, n);
   for (let i = 0; i < n; i++) {
     const lose = i >= keep && i < cur;
-    const [top, low] = GAUGE[lose ? 'lose' : i < keep ? (side === 0 ? 'a' : 'e') : 'empty'];
-    cell(1 + i, 1, lose && i === sweep ? 0xf4f1ea : top);
-    cell(1 + i, 2, low);
+    const kind = lose ? 'lose' : i < keep ? (side === 0 ? 'a' : 'e') : 'empty';
+    const [top, low] = GAUGE[kind];
+    // 색 보조 (D-539): 적 게이지는 밝은 줄 · 그늘 줄을 한 칸씩 엇갈려 체크 무늬 — 우리 편(줄무늬 없음)과 색 없이도 갈린다
+    const chk = kind === 'e' && cbAid() && i % 2 === 1;
+    cell(1 + i, 1, lose && i === sweep ? 0xf4f1ea : chk ? low : top);
+    cell(1 + i, 2, chk ? top : low);
   }
 };
 
@@ -81,4 +85,13 @@ export const drawDropDot = (pen: PixelPen, cx: number, cy: number, color: number
       if (ch !== '.') pen.px(cx + (i - 2) * d + d / 2, cy + (j - 2) * d + d / 2, ch === 'w' ? hi : color, 1, 1);
     }),
   );
+};
+
+/**
+ * 색 보조 빗금 (D-539): 칸(t = 20도트) 위에 오른쪽 아래로 내려가는 1도트 사선을 4도트마다 — 적 위협 · 적 공격 범위 칸을
+ * 붉은색 없이도 알아보게(색약). 새 그림 없이 판 표식 문법(코드로 찍는 도트, D-044)으로만. (x, y) = 칸 왼쪽 위
+ */
+export const drawHatch = (pen: PixelPen, x: number, y: number, color = 0x0b0b0e, alpha = 0.55): void => {
+  const d = pen.dot;
+  for (let j = 0; j < 20; j++) for (let i = 0; i < 20; i++) if ((i - j + 40) % 4 === 0) pen.px(x + i * d + d / 2, y + j * d + d / 2, color, alpha, 1);
 };

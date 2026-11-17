@@ -8,6 +8,7 @@ import { APP_VERSION } from '../data/version';
 import { DEV_PAGE, PRIVACY_KO, PRIVACY_URL } from '../data/legal';
 import { applySettings, readSettings, resetProgress, writeSettings, type KeyStore } from '../prefs/settings';
 import type { MotionPref } from '../prefs/motion';
+import { BIND_IDS, bindConflict, cleanBinds, DEFAULT_BINDS, keyLabel, normKey, type BindId } from './keymap';
 
 /**
  * 설정 창 (D-530 → D-539 출시 표준 여섯 탭): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보.
@@ -76,8 +77,9 @@ const rowsOf = (tab: Tab, s: Settings, o: SettingsOpts): string[] => {
       row(T.motion, seg('motion', T.motion, (['os', 'off', 'on'] as MotionPref[]).map((v) => [v, T.motionOpts[v]] as const), s.motion)),
       row(T.lessFlash, onOff('lessFlash', T.lessFlash, s.lessFlash)),
       row(T.autoAdvance, onOff('autoAdvance', T.autoAdvance, s.autoAdvance)),
+      row(T.cbAid, onOff('cbAid', T.cbAid, s.cbAid), T.cbAidNote),
     ];
-    case 'input': return [row(T.keyHints, onOff('keyHints', T.keyHints, s.keyHints)), row(T.keyMap, btnHtml({ label: T.keyMapBtn, attrs: 'data-keymap' }))];
+    case 'input': return [row(T.keyHints, onOff('keyHints', T.keyHints, s.keyHints)), row(T.keyMap, btnHtml({ label: T.keyMapBtn, attrs: 'data-keymap' })), row(T.keyBind, btnHtml({ label: T.keyBindBtn, attrs: 'data-keybind' }))];
     case 'game': return [
       ...(o.onGuide ? [row(T.guide, btnHtml({ label: T.openBtn, attrs: 'data-guide' }))] : []),
       ...(o.onGlossary ? [row(T.glossary, btnHtml({ label: T.openBtn, attrs: 'data-glossary' }))] : []),
@@ -169,7 +171,8 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     }));
     panel.querySelector('[data-reset]')?.addEventListener('click', () => (sfx('tap'), resetStep(1)));
     panel.querySelector('[data-full]')?.addEventListener('click', () => (sfx('tap'), o.desktop?.toggleFullscreen()));
-    panel.querySelector('[data-keymap]')?.addEventListener('click', () => (sfx('tap'), keyMapPage(reopen('input'))));
+    panel.querySelector('[data-keymap]')?.addEventListener('click', () => (sfx('tap'), keyMapPage(s, reopen('input'))));
+    panel.querySelector('[data-keybind]')?.addEventListener('click', () => (sfx('tap'), keyBindPage(o, reopen('input'))));
     panel.querySelector('[data-guide]')?.addEventListener('click', () => (sfx('tap'), o.onGuide?.(reopen('game'))));
     panel.querySelector('[data-glossary]')?.addEventListener('click', () => (sfx('tap'), o.onGlossary?.(reopen('game'))));
     panel.querySelector('[data-credits]')?.addEventListener('click', () => (sfx('tap'), creditsPage(reopen('info'))));
@@ -210,11 +213,75 @@ const selectorOf = (el: HTMLElement): string => {
   return `${row ? `[data-vol="${row.dataset.vol}"] ` : ''}[${own}${val ? `="${val}"` : ''}]${extra}`;
 };
 
-/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) */
-const keyMapPage = (back: () => void): void => {
-  const cells = KEY_GUIDE.map(([act, key, pad]) => `<span class="km-act">${act}</span><span class="km-key">${key}</span><span class="km-pad">${pad}</span>`).join('');
+/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) — 바꿀 수 있는 행동은 지금 배치로 */
+const keyMapPage = (s: Settings, back: () => void): void => {
+  const k = cleanBinds(s.keys);
+  const cells = KEY_GUIDE.map(([act, key, pad, id]) => {
+    const kb = id ? `${keyLabel(k[id as BindId])}${id === 'undo' ? ' · Ctrl+Z' : ''}` : key;
+    return `<span class="km-act">${act}</span><span class="km-key">${kb}</span><span class="km-pad">${pad}</span>`;
+  }).join('');
   const el = openWin({ size: 'l', cls: 'set-win set-keys', title: T.keyMapTitle, body: `<div class="inset set-keymap"><span class="note">행동</span><span class="note">키보드</span><span class="note">패드</span>${cells}</div>`, back: { label: T.licBack, attrs: 'data-x' }, dismiss: back });
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
+};
+
+/**
+ * 키 바꾸기 (D-539): 행동 다섯(턴 끝 · 선택 취소 · 되감기 · 칸 정보 · 손패↔판) — 키 단추를 누르고 새 키를 누른다.
+ * 고정 키(확인 · 뒤로 · 방향 · 숫자)와 다른 행동의 키는 받지 않고 까닭을 한 줄로. [기본값으로]는 바꾼 키를 모두 지운다.
+ * 기다리는 동안 Esc = 그만두기(키는 그대로).
+ */
+const keyBindPage = (o: SettingsOpts, back: () => void): void => {
+  let wait: BindId | null = null;
+  const html = (): WinOpts => {
+    const k = cleanBinds(readSettings(o.store).keys);
+    const rows = BIND_IDS.map((id) => `<div class="set-row kb-row"><span class="set-name">${T.bindNames[id]}</span><div class="set-ctl">${btnHtml({ label: wait === id ? T.bindWait : keyLabel(k[id]), attrs: `data-bind="${id}" aria-pressed="${wait === id}" aria-label="${T.bindNames[id]} ${keyLabel(k[id])}"`, kind: wait === id ? 'brass' : 'iron', cls: 'kb-key' })}</div></div>`).join('');
+    return { size: 'l', cls: 'set-win set-bind', title: T.bindTitle, body: `<div class="set-body inset"><div class="kb-grid">${rows}</div><p class="note">${T.bindNote}</p></div>`, back: { label: T.licBack, attrs: 'data-x' }, go: { label: T.bindDefault, attrs: 'data-bind-reset', kind: 'iron' }, dismiss: () => (stop(), back()) };
+  };
+  const panel = openWin(html());
+  const onKey = (e: KeyboardEvent): void => {
+    if (!wait) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (e.key === 'Escape') return void ((wait = null), draw());
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const s = readSettings(o.store);
+    const cur = cleanBinds(s.keys);
+    const c = bindConflict(cur, wait, e.key);
+    const label = keyLabel(normKey(e.key));
+    if (c === 'reserved') return void (sfx('tap', 3), toast(T.bindReserved(label)));
+    if (c) return void (sfx('tap', 3), toast(T.bindTaken(label, T.bindNames[c])));
+    const keys = { ...s.keys, [wait]: normKey(e.key) };
+    if (keys[wait] === DEFAULT_BINDS[wait]) delete keys[wait];
+    const next = { ...s, keys };
+    writeSettings(o.store, next);
+    applySettings(next);
+    sfx('tap');
+    toast(T.bindSaved(T.bindNames[wait], label));
+    wait = null;
+    draw();
+  };
+  const stop = (): void => window.removeEventListener('keydown', onKey, true);
+  // 창 키(keys.ts)보다 먼저 받는다 — 같은 window의 캡처 단계
+  window.addEventListener('keydown', onKey, true);
+  const draw = (): void => {
+    panel.innerHTML = winHtml(html());
+    panel.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), stop(), back()));
+    panel.querySelector('[data-bind-reset]')!.addEventListener('click', () => {
+      const s = readSettings(o.store);
+      const next = { ...s, keys: {} };
+      writeSettings(o.store, next);
+      applySettings(next);
+      sfx('tap');
+      wait = null;
+      draw();
+    });
+    panel.querySelectorAll<HTMLElement>('[data-bind]').forEach((b) => b.addEventListener('click', () => {
+      const id = b.dataset.bind as BindId;
+      wait = wait === id ? null : id;
+      sfx('tap');
+      draw();
+    }));
+  };
+  draw();
 };
 
 /** 만든 사람 + 라이선스 목록 (전문은 쪽 넘김) */

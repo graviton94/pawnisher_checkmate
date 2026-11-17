@@ -1,6 +1,6 @@
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { vignette } from '../ui/juice';
-import { shakeMul } from '../prefs/fx';
+import { cbAid, shakeMul } from '../prefs/fx';
 import { PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
@@ -10,7 +10,7 @@ import { sfx } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
 import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
-import { drawArrow, drawDropDot, drawGauge, gaugeSweep } from './marks';
+import { drawArrow, drawDropDot, drawGauge, drawHatch, gaugeSweep } from './marks';
 import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
@@ -541,7 +541,7 @@ class BoardScene extends Phaser.Scene {
     const A = this.anim;
     const ms = this.calm ? 0 : time;
     let k = '';
-    if (A.threat.length) k += `t${threatLevel(time, this.calm)}`;
+    if (A.threat.length) k += `t${threatLevel(time, this.calm)}${cbAid() ? "c" : ""}`;
     if (A.fire.length) k += `f${Math.floor(ms / 120)}`;
     if (A.arrows.length) k += `a${Math.floor(ms / FLOW_STEP_MS) % 5}`;
     if (A.gears.length) {
@@ -580,6 +580,8 @@ class BoardScene extends Phaser.Scene {
       const lv = threatLevel(time, calm);
       const a = lv < 0 ? THREAT_CALM_ALPHA : THREAT_ALPHA[lv];
       for (const w of this.anim.threat) g.fillStyle(C.crimson, a).fillRect(w.x, w.y, t, t);
+      // 색 보조 (D-539): 깜빡이는 붉은 칸에 먹 빗금 — 깜빡임과 상관없이 늘 같은 무늬
+      if (cbAid()) for (const w of this.anim.threat) drawHatch(pen, w.x, w.y);
     }
     if (this.anim.fire.length) {
       // 줄 폭격 예고: 칸 아래에서 도트 불꽃 혀가 일렁인다 — 일반 위협(붉은 깜빡임)과 다른 모양
@@ -1233,6 +1235,8 @@ class BoardScene extends Phaser.Scene {
       const strong = hitTiles.has(`${a.x},${a.y}`);
       this.marksG.fillStyle(mine ? C.cyan : C.crimson, strong ? 0.22 : 0.12).fillRect(w.x, w.y, t, t);
       img(mine ? 'range' : 'range-enemy', w.x, w.y);
+      // 색 보조 (D-539): 적 범위만 빗금 — 내 범위(청록)는 맨 칸이라 무늬로 갈린다
+      if (!mine && cbAid()) drawHatch(new PixelPen(this.marksG, d), w.x, w.y, 0x0b0b0e, strong ? 0.6 : 0.45);
     }
 
     // 누른 적 기물의 다음 턴 위협: 칠 수 있는 칸(반투명 붉은 깜빡임)과 갈 수 있는 칸(붉은 방울)

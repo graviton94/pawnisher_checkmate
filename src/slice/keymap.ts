@@ -3,7 +3,7 @@
  * 키와 패드 단추를 같은 「행동」으로 바꾸고, 행동은 탭과 같은 길(단추 click ·
  * dismissWin)로만 흘린다 — 화면이 게임 상태를 직접 바꾸지 않는다 (UI/UX 원칙 9). 탭 흐름은 그대로.
  *
- * 키: 확인 Enter · Space / 뒤로 Esc · Backspace / 턴 끝 E / 선택 취소 Z · Ctrl+Z / 되감기 R / 카드 1~9 / 방향키 = 초점 이동
+ * 키(기본 — 턴 끝 · 선택 취소 · 되감기 · 칸 정보 · 손패↔판은 설정에서 바꿀 수 있다, D-539): 확인 Enter · Space / 뒤로 Esc · Backspace / 턴 끝 E / 선택 취소 Z · Ctrl+Z / 되감기 R / 카드 1~9 / 방향키 = 초점 이동
  *     / Tab = 손패 ↔ 판 초점 바꾸기 / I = 커서 칸 정보 (길게 누르기와 같은 창, D-533)
  * 패드(표준 배치): A 확인 · B 뒤로 · X 턴 끝 · Y 선택 취소(길게 = 칸 정보) · Start 일시 정지 메뉴 · Back(Select) 칸 정보
  * 뒤로(Esc · B · 안드로이드 뒤로)는 닫을 창 → 대국 선택 → 그래도 없으면 대국 · 지도의 일시 정지 메뉴 (D-539).
@@ -34,6 +34,54 @@ export interface KeyLike {
 
 const ARROWS: Record<string, Dir> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
 
+/**
+ * 바꿀 수 있는 키 (D-539 · 설정 › 조작 › 키 바꾸기): 대국 행동 다섯. 확인(Enter · Space) · 뒤로(Esc · Backspace) · 방향키 · 숫자(카드) ·
+ * Ctrl+Z는 고정 — 메뉴 · 창을 늘 같은 키로 빠져나올 수 있게(잘못 바꿔도 갇히지 않는다).
+ */
+export type BindId = 'endTurn' | 'undo' | 'reset' | 'info' | 'toggle';
+export const BIND_IDS: readonly BindId[] = ['endTurn', 'undo', 'reset', 'info', 'toggle'];
+/** 기본 키 (e.key를 normKey로 맞춘 값) */
+export const DEFAULT_BINDS: Readonly<Record<BindId, string>> = { endTurn: 'e', undo: 'z', reset: 'r', info: 'i', toggle: 'Tab' };
+/** 바꿀 수 없는 키 */
+export const RESERVED_KEYS: ReadonlySet<string> = new Set(['Enter', ' ', 'Escape', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Alt', 'Control', 'Meta', 'Shift', 'F11', 'F12', 'CapsLock', 'Dead', 'Process', 'Unidentified']);
+/** e.key → 저장하는 이름 (글자는 소문자 — Shift가 눌려도 같은 키) */
+export const normKey = (k: string): string => (k.length === 1 ? k.toLowerCase() : k);
+/** 화면에 보이는 키 이름 (글자는 대문자) */
+export const keyLabel = (k: string): string => (k.length === 1 ? k.toUpperCase() : k === 'Tab' ? 'Tab' : k);
+
+let binds: Record<BindId, string> = { ...DEFAULT_BINDS };
+/** 지금 키 배치 (기본 + 바꾼 것) */
+export const keyBinds = (): Readonly<Record<BindId, string>> => binds;
+/** 바꾼 키를 입힌다 — 망가진 값(고정 키 · 겹침)은 버리고 기본을 쓴다 */
+export const setKeyBinds = (over: Partial<Record<string, string>> | undefined): void => {
+  binds = cleanBinds(over);
+};
+/** 저장된 바꾼 키를 검사해 쓸 수 있는 것만 (모르는 행동 · 고정 키 · 다른 행동과 겹침은 뺀다) */
+export const cleanBinds = (over: Partial<Record<string, string>> | undefined): Record<BindId, string> => {
+  const out: Record<BindId, string> = { ...DEFAULT_BINDS };
+  if (!over || typeof over !== 'object') return out;
+  for (const id of BIND_IDS) {
+    const k = over[id];
+    if (typeof k !== 'string' || !k || RESERVED_KEYS.has(k)) continue;
+    const n = normKey(k);
+    if (BIND_IDS.some((o) => o !== id && out[o] === n && (over[o] === undefined || normKey(over[o]!) === n))) continue;
+    out[id] = n;
+  }
+  // 겹침이 남았으면(서로 바꾼 저장) 기본으로
+  const seen = new Set<string>();
+  for (const id of BIND_IDS) {
+    if (seen.has(out[id])) return { ...DEFAULT_BINDS };
+    seen.add(out[id]);
+  }
+  return out;
+};
+/** 키 하나를 행동에 바꿔 달 수 있나 — 'reserved' 고정 키 · 다른 행동 이름(겹침) · null 됨 */
+export const bindConflict = (cur: Readonly<Record<BindId, string>>, id: BindId, key: string): 'reserved' | BindId | null => {
+  if (RESERVED_KEYS.has(key)) return 'reserved';
+  const n = normKey(key);
+  return BIND_IDS.find((o) => o !== id && cur[o] === n) ?? null;
+};
+
 /** 키 하나 → 행동 (없으면 null). Alt 조합은 창 기능(Alt+Enter 전체 화면)이라 넘긴다 */
 export const keyAction = (e: KeyLike): Action | null => {
   if (e.altKey) return null;
@@ -43,15 +91,10 @@ export const keyAction = (e: KeyLike): Action | null => {
   if (k === 'Enter' || k === ' ') return { t: 'confirm' };
   if (k === 'Escape' || k === 'Backspace') return { t: 'back' };
   if (ARROWS[k]) return { t: 'focus', dir: ARROWS[k] };
-  if (k === 'Tab') return { t: 'toggle' };
   if (/^[1-9]$/.test(k)) return { t: 'card', i: Number(k) - 1 };
-  switch (k.toLowerCase()) {
-    case 'e': return { t: 'endTurn' };
-    case 'z': return { t: 'undo' };
-    case 'r': return { t: 'reset' };
-    case 'i': return { t: 'info' };
-    default: return null;
-  }
+  const n = normKey(k);
+  const id = BIND_IDS.find((b) => binds[b] === n);
+  return id ? ({ t: id } as Action) : null;
 };
 
 /** 표준 게임패드 단추 번호 → 행동 */

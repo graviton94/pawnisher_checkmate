@@ -26,6 +26,10 @@ export interface Settings {
   autoAdvance: boolean;
   /** PC 키 안내: 대국 단추 옆에 키 글자(E · R · Esc)를 보인다 */
   keyHints: boolean;
+  /** 바꾼 키 (행동 → 키, 기본과 다른 것만 — keymap.cleanBinds가 검사) */
+  keys: Record<string, string>;
+  /** 색 보조: 적 위협 칸 · 적 공격 범위에 빗금 도트, 적 HP 게이지에 체크 무늬 — 색만으로 가르지 않게 (D-539) */
+  cbAid: boolean;
 }
 
 /** 화면 흔들림 단계 */
@@ -40,7 +44,7 @@ export const SETTINGS_KEY = 'pawnisher.settings';
 /** 크기 칸 수 (칸 하나 = 10%) */
 export const VOL_STEPS = 10;
 /** 기본값: 크기 7칸 = 예전 고정 음량(효과음 0.5 · 음악 0.11)과 같은 소리. 위로 3칸 여유 */
-export const SETTINGS_DEFAULT: Settings = { v: 1, sfx: 7, sfxMute: false, music: 7, musicMute: false, motion: 'os', master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false };
+export const SETTINGS_DEFAULT: Settings = { v: 1, sfx: 7, sfxMute: false, music: 7, musicMute: false, motion: 'os', master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false, keys: {}, cbAid: false };
 /** 진행 초기화가 지우는 열쇠: 이 앞머리로 시작하는 것 전부 + 아래 목록 (출하 저장 · 기록 · 도감 · 백업 사본 포함) */
 export const PROGRESS_PREFIX = 'pawnisher.slice.';
 export const PROGRESS_KEYS: readonly string[] = [
@@ -66,6 +70,18 @@ export const SETTINGS_TEXT = {
   on: '켬',
   off: '끔',
   keyHints: 'PC 키 안내',
+  keyBind: '키 바꾸기',
+  keyBindBtn: '바꾼다',
+  bindTitle: '키 바꾸기',
+  bindNames: { endTurn: '턴 끝', undo: '선택 취소', reset: '되감기', info: '칸 정보', toggle: '손패 ↔ 판' } as Record<string, string>,
+  bindWait: '누를 키…',
+  bindNote: 'Enter · Space · Esc · 방향키 · 숫자는 바꿀 수 없습니다.',
+  bindDefault: '기본값으로',
+  bindTaken: (k: string, who: string) => `「${k}」는 이미 「${who}」에 씁니다.`,
+  bindReserved: (k: string) => `「${k}」는 바꿀 수 없는 키입니다.`,
+  bindSaved: (who: string, k: string) => `${who} = ${k}`,
+  cbAid: '색 보조 무늬',
+  cbAidNote: '적 위협 칸 빗금 · 적 HP 체크 무늬',
   keyMap: '키 · 패드 배치',
   keyMapBtn: '본다',
   keyMapTitle: '키 · 패드 배치',
@@ -112,15 +128,16 @@ export const SETTINGS_TEXT = {
 } as const;
 
 /** 키 · 패드 배치표 (설정 › 조작 › 「본다」) — 행동표 정본은 src/slice/keymap.ts. 줄 = [행동, 키보드, 패드] */
-export const KEY_GUIDE: readonly (readonly [string, string, string])[] = [
+/** 넷째 칸 = 바꿀 수 있는 행동이면 그 이름 (키보드 칸은 지금 배치로 바뀐다 — D-539) */
+export const KEY_GUIDE: readonly (readonly [string, string, string, string?])[] = [
   ['고른다 · 누른다', 'Enter · Space', 'A'],
   ['돌아간다 · 메뉴', 'Esc · Backspace', 'B · Start'],
-  ['턴 끝', 'E', 'X'],
-  ['선택 취소', 'Z · Ctrl+Z', 'Y'],
-  ['되감기', 'R', '—'],
+  ['턴 끝', 'E', 'X', 'endTurn'],
+  ['선택 취소', 'Z', 'Y', 'undo'],
+  ['되감기', 'R', '—', 'reset'],
   ['카드 고르기', '1 ~ 9', '—'],
   ['초점 옮기기', '방향키', '십자키 · 왼쪽 스틱'],
-  ['손패 ↔ 판', 'Tab', 'LB · RB'],
-  ['칸 정보', 'I', 'Y 길게 · Back'],
+  ['손패 ↔ 판', 'Tab', 'LB · RB', 'toggle'],
+  ['칸 정보', 'I', 'Y 길게 · Back', 'info'],
   ['전체 화면 (PC)', 'F11 · Alt+Enter', '—'],
 ];

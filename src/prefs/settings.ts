@@ -1,6 +1,7 @@
 import { SETTINGS_DEFAULT, SETTINGS_KEY, VOL_STEPS, PROGRESS_KEYS, PROGRESS_PREFIX, SHAKE_MUL, type Settings, type ShakePref } from '../data/settings';
-import { setFxPrefs } from './fx';
+import { setCbAid, setFxPrefs } from './fx';
 import { setBgMute } from '../audio/bg';
+import { BIND_IDS, DEFAULT_BINDS, cleanBinds, keyLabel, setKeyBinds } from '../slice/keymap';
 import { setMotionPref, type MotionPref } from './motion';
 import { setSfxLevel } from '../audio/sfx';
 import { setMusicLevel } from '../audio/music';
@@ -17,6 +18,11 @@ export interface KeyStore {
 
 const MOTIONS: readonly MotionPref[] = ['os', 'off', 'on'];
 const bool = (v: unknown, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
+/** 바꾼 키: 검사를 통과한 것 중 기본과 다른 것만 남긴다 */
+const keysOf = (v: unknown): Record<string, string> => {
+  const c = cleanBinds(v && typeof v === 'object' ? (v as Record<string, string>) : undefined);
+  return Object.fromEntries(BIND_IDS.filter((id) => c[id] !== DEFAULT_BINDS[id]).map((id) => [id, c[id]]));
+};
 const step = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(VOL_STEPS, Math.round(v))) : d);
 
 /** 저장된 값을 읽는다. 없거나 망가졌으면 기본값 (옛 2.0 켜고 끄기 열쇠가 있으면 그 뜻을 이어받는다) */
@@ -51,6 +57,8 @@ export const readSettings = (st: KeyStore): Settings => {
     lessFlash: bool(raw.lessFlash, d.lessFlash),
     autoAdvance: bool(raw.autoAdvance, d.autoAdvance),
     keyHints: bool(raw.keyHints, d.keyHints),
+    keys: keysOf(raw.keys),
+    cbAid: bool(raw.cbAid, d.cbAid),
   };
 };
 
@@ -76,7 +84,14 @@ export const applySettings = (s: Settings): void => {
   setMotionPref(s.motion);
   setFxPrefs(s);
   setBgMute(s.bgMute);
-  if (typeof document !== 'undefined') document.body?.classList.toggle('key-hints', s.keyHints);
+  setKeyBinds(s.keys);
+  setCbAid(s.cbAid);
+  if (typeof document === 'undefined') return;
+  document.body?.classList.toggle('key-hints', s.keyHints);
+  // 키 안내 글자도 지금 배치로 (턴 끝 · 되감기)
+  const k = cleanBinds(s.keys);
+  document.getElementById('btn-end')?.setAttribute('data-key-hint', keyLabel(k.endTurn));
+  document.getElementById('btn-rewind')?.setAttribute('data-key-hint', keyLabel(k.reset));
 };
 
 /** 진행 초기화로 지울 열쇠 — 출하 저장 · 기록 · 도감 · 플레이 기록. 설정 열쇠는 남긴다 */
