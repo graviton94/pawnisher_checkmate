@@ -18,7 +18,8 @@ const dpr = (): number => window.devicePixelRatio || 1;
 /** 카메라 계단 박자 (D-504): 프레임 무게 — 예비(반대로 조금) → 터짐(빠르게 대부분) → 넘침 → 출렁 → 멈춤. 프레임마다 FILM.camStep ms */
 export const FILM = {
   camKeys: [-0.08, 0.42, 0.84, 1.06, 0.98, 1] as const,
-  camStep: 70,
+  /** D-536: 계단 카메라 약 11fps (8~12fps 띠) — 한 장 = 기기 픽셀 정수 위치 · 정수 배율 */
+  camStep: 90,
   /** 확대 한 칸 = 기본 배율의 10%를 기기 픽셀 정수로 반올림(최소 1) — z3이 1.3 ~ 1.6배 */
   zoomStep: 0.1,
   /** 전환 프레임 간격 (ms) · 칸 크기(장면 도트 배수) */

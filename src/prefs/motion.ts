@@ -25,6 +25,19 @@ const osCalm = (): boolean => {
 /** 지금 연출을 줄여야 하나 (설정 → 없으면 기기 설정) */
 export const calmMotion = (): boolean => (pref === 'on' ? true : pref === 'off' ? false : osCalm());
 
+/**
+ * 번쩍임 줄이기 (D-536, WCAG 2.3.1): 화면을 밝게 번쩍이는 연출(반장 등장 흰 장 · 2단계 진홍 번쩍)을 끈다.
+ * 움직임 줄이기가 켜져 있으면 함께 꺼진다. 설정 창 토글은 `setFlashPref`를 부른다.
+ */
+let flashPref = false;
+/** 번쩍임을 빼야 하나 (번쩍임 줄이기 설정 또는 움직임 줄이기) */
+export const reduceFlash = (): boolean => flashPref || calmMotion();
+/** 번쩍임 줄이기 설정을 바꾼다 — CSS는 `:root[data-noflash="1"]`로 따른다 */
+export const setFlashPref = (v: boolean): void => {
+  flashPref = v;
+  if (typeof document !== 'undefined') document.documentElement.dataset.noflash = reduceFlash() ? '1' : '0';
+};
+
 /** 지금 고른 움직임 설정 */
 export const motionPref = (): MotionPref => pref;
 
@@ -65,6 +78,7 @@ const applyCss = (): void => {
     }
   }
   document.documentElement.dataset.calm = calmMotion() ? '1' : '0';
+  document.documentElement.dataset.noflash = reduceFlash() ? '1' : '0';
 };
 
 let watching = false;

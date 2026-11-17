@@ -126,12 +126,19 @@ export class Painter {
     const n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
     for (let i = 0; i <= n; i++) this.put(x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n, c, a);
   }
-  /** 둥근 빛 웅덩이 (더하기, 가운데가 뜨겁다) */
+  /**
+   * 둥근 빛 웅덩이 (더하기, 가운데가 뜨겁다). D-536: 연속 알파(사실상 방사형 그라데이션) 대신
+   * 3단 단색 링 + 4×4 베이어 디더로 양자화한다 — 빛 공식 3단계와 같은 계단, 팔레트 밖 중간색이 생기지 않는다.
+   */
   glow(x: number, y: number, r: number, c: Col, k = 0.5): void {
     if (r < 1 || k <= 0.004) return;
     for (let sy = Math.floor(y - r); sy <= y + r; sy++) for (let sx = Math.floor(x - r); sx <= x + r; sx++) {
       const dx = (sx + 0.5 - x) / r, dy = (sy + 0.5 - y) / r, d = dx * dx + dy * dy;
-      if (d < 1) { const f = 1 - Math.sqrt(d); this.add(sx, sy, c, f * f * k); }
+      if (d < 1) {
+        const f = 1 - Math.sqrt(d), v = Math.min(1, f * f * k * this.fade) * 3;
+        const ring = Math.floor(v + bayer(sx, sy)) / 3;
+        if (ring > 0) this.add(sx, sy, c, ring / this.fade);
+      }
     }
   }
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: Col, k = 0.5): void {

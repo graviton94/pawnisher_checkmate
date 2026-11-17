@@ -8,6 +8,7 @@
  */
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
+import { calmMotion, reduceFlash } from '../prefs/motion';
 import { fitCover } from '../view/cover';
 import { cutChromeHtml, typeCutPages, type CutLine } from './uikit';
 
@@ -60,7 +61,9 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
   new Promise((resolve) => {
     const look = LOOK[o.rule];
     const el = document.createElement('div');
-    el.className = `bossfx kit b-${o.rule}`;
+    // 움직임 줄이기 (D-536): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 디더 장을 뺀다
+    const calm = calmMotion(), noFlash = reduceFlash();
+    el.className = `bossfx kit b-${o.rule}${calm ? ' calm' : ''}`;
     el.style.setProperty('--accent', look.accent);
     el.innerHTML = `<div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i>
       <div class="bf-text"><span class="ribbon r-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><div class="boss-plate bf-board${o.phase2 ? ' p2' : ''}"><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul>${o.stats ? `<div class="bf-stats"><span class="bstat" aria-label="HP ${o.stats.hp}" style="--ic:url(${new URL('ui/icons16/heart@16.png', location.href).href})"><i></i>${o.stats.hp}</span><span class="bstat" aria-label="공격 ${o.stats.atk}" style="--ic:url(${new URL('ui/icons16/c.smash@16.png', location.href).href})"><i></i>${o.stats.atk}</span></div>` : ''}</div></div>
@@ -138,7 +141,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     };
     // 시간표
     at(0, () => el.classList.add('bars'));
-    at(260, () => { el.classList.add('flash'); o.sfx?.('boom'); });
+    at(260, () => o.sfx?.('boom'));
     at(360, () => el.classList.add('port'));
     at(700, () => { el.classList.add('name'); o.sfx?.('stamp'); });
     at(1000, () => void typeIn(el.querySelector('.bf-title')!, o.title, 40, undefined, () => el.isConnected));
@@ -161,7 +164,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       (dt, t) => {
         ps.update(dt);
         lights.update(dt);
-        if (t < 0.36) return;
+        if (t < 0.36 || calm) return;
         const sx = seamX / 3;
         // 꽂히는 순간: 경계선을 따라 터짐 + 큰 빛
         if (t >= 0.62 && t - dt < 0.62) {
@@ -187,8 +190,9 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         }
       },
       (t, p) => {
-        // 흰 장 두 장 (hero frame)
-        if (t >= 0.26 && t < 0.34) p.rect(0, 0, fx.w, fx.h, WHITE, t < 0.3 ? 1 : 0.5);
+        // 흰 장 한 장 (hero frame, D-536): 화면 전체 흰 면 대신 2×2 체커 디더 한 장(약 60ms), 번쩍임 줄이기면 없다
+        if (!noFlash && t >= 0.26 && t < 0.32) for (let y = 0; y < fx.h; y++) for (let x = (y & 1); x < fx.w; x += 2) p.px(x, y, WHITE);
+        if (calm) return;
         const sx = seamX / 3;
         // 경계선 빛: 큰 옅은 웅덩이 + 줄 빛 (반장 색)
         if (t > 0.36 && portW) {

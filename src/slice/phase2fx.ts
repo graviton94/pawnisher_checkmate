@@ -1,14 +1,14 @@
 /**
  * 반장 2단계 예고 · 돌입 (후기 #21 · P-B D-490) — 받은 CI-01 크롬 (경보 띠 3프레임 · 사선 베기 · 레터박스).
  * 예고 = 판 위를 경보 띠가 가로지른다(줄무늬가 3프레임으로 흐름) + 시스템 한 줄.
- * 돌입 = 판 정지 → 레터박스가 계단으로 닫힘 → 진홍 번쩍(계단) → 반장 그림 띠 + 사선 베기가 예비 → 터짐 → 출렁으로 내리꽂힘 + 화면 흔들림
+ * 돌입 = 판 정지 → 레터박스가 계단으로 닫힘 → 진홍 디더 번쩍 한 번(D-536) → 반장 그림 띠 + 사선 베기가 예비 → 터짐 → 출렁으로 내리꽂힘 + 화면 흔들림
  *        → 경보 띠 「격노」 → 열림(디더 퇴장). 1.4초 안. 줄인 움직임이면 정지 컷 0.9초.
  * 그림 (D-386 · D-505): 받은 2단계 초상(CI-02~08, `boss-<이름>-p2`)을 cover로 자른다. 경보(CI-07)도 D-507에 받아 일곱 모두 받은 그림.
  * 사선 액자(cutin-frame)는 재발주본 CI-01b(D-512) — 173×44도트, 안쪽 평행사변형 홈 137×29도트(위 변 x 24~160 · 아래 변 x 12~148, y 8~36).
  *   홈에 같은 2단계 초상을 얼굴 쪽으로 더 붙여 cover로 넣고(clip-path = 실측 홈), 액자가 그 위에 덮인다 — 띠(넓게) + 액자(얼굴) 두 겹 컷인.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9).
  */
-import { calmMotion } from '../prefs/motion';
+import { calmMotion, reduceFlash } from '../prefs/motion';
 import { pxOut, shake } from './fx3';
 import { sparksAt } from './uifx';
 
@@ -50,10 +50,13 @@ export const p2Rise = async (o: { art: string; word: string; focus?: string; fac
   }
   // 1 · 레터박스 닫힘 (3계단) → 2 · 진홍 번쩍 → 3 · 그림 띠 · 베기 내리꽂힘 + 흔들림 + 불똥 → 4 · 「격노」 띠
   await wait(200);
-  const flash = document.createElement('div');
-  flash.className = 'p2-flash';
-  document.body.appendChild(flash);
-  window.setTimeout(() => flash.remove(), 440);
+  // 번쩍임은 한 번 (D-536): 그림 띠 자리만 진홍 50% 디더 한 장. 번쩍임 줄이기면 없다
+  if (!reduceFlash()) {
+    const flash = document.createElement('div');
+    flash.className = 'p2-flash';
+    document.body.appendChild(flash);
+    window.setTimeout(() => flash.remove(), 380);
+  }
   root.classList.add('go');
   await wait(260);
   shake(document.getElementById('app'), 3);
