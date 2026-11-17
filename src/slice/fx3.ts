@@ -547,7 +547,9 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
 };
 
 /** 디더 단계 (0 = 다 보임 · 4 = 다 지움) → 마스크 키프레임 조각 */
-const pxLv = (v: number): string => `var(--px${v >= 0.9 ? 0 : v >= 0.65 ? 1 : v >= 0.4 ? 2 : v >= 0.12 ? 3 : 4})`;
+// 첫 단계 마스크는 --pxm1 (D-538 리뷰 #16): --px1은 pxsnap.ts가 <html>에 길이(아이콘 도트 1개)로 덮어써 마스크가 none이 됐다 —
+// 디더 퇴장 둘째 장마다 요소가 통째로 다시 보였다(2단계 컷인 퇴장 깜빡임의 원인)
+const pxLv = (v: number): string => `var(--${v >= 0.9 ? 'px0' : v >= 0.65 ? 'pxm1' : v >= 0.4 ? 'px2' : v >= 0.12 ? 'px3' : 'px4'})`;
 /** 보이는 정도(0~1)를 4×4 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538, 투명도 대신) */
 export const pxMask = (v: number): Keyframe => ({ maskImage: pxLv(v), webkitMaskImage: pxLv(v) }) as Keyframe;
 

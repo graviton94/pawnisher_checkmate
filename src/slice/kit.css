@@ -1168,7 +1168,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   100% { transform: translateY(10%); }
 }
 .clr .clr-slam.clr-lift { animation: clrLift 240ms steps(3) forwards; }
-@keyframes clrLift { 0% { transform: none; -webkit-mask-image: var(--px1); mask-image: var(--px1); } 100% { transform: translateY(-60%); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
+@keyframes clrLift { 0% { transform: none; -webkit-mask-image: var(--pxm1); mask-image: var(--pxm1); } 100% { transform: translateY(-60%); -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
 .clr .clr-hit { animation: erLand 360ms steps(1) both; }
 .clr .clr-tab.clr-drop { animation: clrDrop 300ms both; }
 @keyframes clrDrop {
