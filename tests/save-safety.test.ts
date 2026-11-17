@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, emptyMeta, fightPending, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
+import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, clearSave, emptyMeta, fightPending, newerSaveFound, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
 import { TELEMETRY_KEY, telemetryAll, telemetryShed, telemetryStore, track } from '../src/slice/telemetry';
 import { endTurn, newSliceBattle, playCard, type SliceBattle } from '../src/slice/battle';
 import { bestAction } from '../src/slice/bot';
@@ -62,6 +62,32 @@ describe('저장 안전망 (D-529)', () => {
     const st2 = memStore();
     st2.m.set(META_KEY, JSON.stringify({ ...emptyMeta(), mv: undefined, runs: 5 }));
     expect(readMeta(st2).runs).toBe(5);
+  });
+  it('더 새 판의 저장 · 기록은 고치지도 덮어쓰지도 지우지도 않는다 (코드 리뷰 10)', () => {
+    const st = memStore();
+    writeSave(st, sample({ gold: 10 }));
+    writeSave(st, sample({ gold: 20 })); // 사본 = 10
+    const newer = JSON.stringify({ ...sample({ gold: 99 }), v: SAVE_VERSION + 1 });
+    st.m.set(SAVE_KEY, newer);
+    expect(readSave(st)).toBeNull();
+    expect(newerSaveFound()).toBe(true);
+    expect(st.m.get(SAVE_KEY)).toBe(newer); // 사본으로 되돌리지 않는다
+    expect(st.m.has(SAVE_KEY + CORRUPT)).toBe(false);
+    expect(writeSave(st, sample({ gold: 30 }))).toBe(false);
+    expect(st.m.get(SAVE_KEY)).toBe(newer);
+    expect(JSON.parse(st.m.get(SAVE_KEY + BAK)!).gold).toBe(10); // 사본도 그대로
+    clearSave(st);
+    expect(st.m.get(SAVE_KEY)).toBe(newer);
+    // 기록도 같다
+    const m = JSON.stringify({ ...emptyMeta(), runs: 77, mv: 99 });
+    writeMeta(st, { ...emptyMeta(), runs: 3 });
+    writeMeta(st, { ...emptyMeta(), runs: 4 });
+    st.m.set(META_KEY, m);
+    expect(readMeta(st).runs).toBe(0);
+    writeMeta(st, { ...emptyMeta(), runs: 5 });
+    expect(st.m.get(META_KEY)).toBe(m);
+    expect(JSON.parse(st.m.get(META_KEY + BAK)!).runs).toBe(3);
+    expect(st.m.has(META_KEY + CORRUPT)).toBe(false);
   });
   it('가득 차면 기록(텔레메트리)부터 비우고 한 번 더 — 그래도 안 되면 한 번 알린다', () => {
     const st = memStore();

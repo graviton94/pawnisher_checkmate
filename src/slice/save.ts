@@ -226,14 +226,34 @@ const put = (st: Store, k: string, v: string): boolean => {
 const get = (st: Store, k: string): string | null => safe(() => st.getItem(k), null);
 
 /**
+ * 더 새 판에서 만든 값인가 (코드 리뷰 10: 옛 판을 덮어 깐 · 스팀 베타 되돌리기). 저장은 v, 기록은 mv가 지금 판보다 크다.
+ * 깨진 값과 달리 고칠 것이 아니라 읽지 못할 뿐이다 — 본 키 · 사본을 그대로 둔다.
+ */
+const newerKeys = new Set<string>();
+const isNewer = (key: string, raw: string): boolean => {
+  const o = safe(() => JSON.parse(raw) as Record<string, unknown> | null, null);
+  if (!o || typeof o !== 'object') return false;
+  if (key === SAVE_KEY) return typeof o.v === 'number' && o.v > SAVE_VERSION;
+  if (key === META_KEY) return typeof o.mv === 'number' && o.mv > META_VERSION;
+  return false;
+};
+/** 더 새 판의 저장 · 기록을 만났는가 (화면이 시스템 알림을 한 번 띄운다) */
+export const newerSaveFound = (): boolean => newerKeys.size > 0;
+
+/**
  * 안전하게 읽는다 (D-529): 본 키가 해석 · 검사를 통과하면 그것. 깨졌으면 원본을 `.corrupt`에 남기고
  * 마지막 좋은 사본(`.bak`)이 있으면 그것으로 본 키를 되돌린다. 둘 다 없으면 null.
+ * 더 새 판의 값이면 아무것도 고치지 않고 null (본 키 · `.bak` · `.corrupt` 그대로).
  */
 const readSafe = <T>(st: Store, key: string, parse: (raw: string) => T | null): T | null => {
   const raw = get(st, key);
   if (raw === null) return null;
   const ok = safe(() => parse(raw), null);
   if (ok !== null) return ok;
+  if (isNewer(key, raw)) {
+    newerKeys.add(key);
+    return null;
+  }
   if (get(st, key + CORRUPT) !== raw) put(st, key + CORRUPT, raw);
   const bak = get(st, key + BAK);
   const back = bak === null ? null : safe(() => parse(bak), null);
@@ -248,6 +268,11 @@ const readSafe = <T>(st: Store, key: string, parse: (raw: string) => T | null): 
  */
 const writeSafe = (st: Store, key: string, value: string, valid: (raw: string) => boolean): boolean => {
   const cur = get(st, key);
+  // 더 새 판의 값은 덮어쓰지 않는다 (코드 리뷰 10) — 이 판의 진행은 남지 않는다 (화면이 알린다)
+  if (cur !== null && isNewer(key, cur)) {
+    newerKeys.add(key);
+    return false;
+  }
   if (cur !== null && cur !== value) {
     if (safe(() => valid(cur), false)) put(st, key + BAK, cur);
     else if (get(st, key + CORRUPT) !== cur && !put(st, key + CORRUPT, cur)) {
@@ -301,6 +326,8 @@ export const writeSave = (st: Store, s: RunSave): boolean => writeSafe(st, SAVE_
 export const readSave = (st: Store): RunSave | null => readSafe(st, SAVE_KEY, parseSave);
 /** 출하 저장을 지운다 (사본까지 — 끝난 출하가 사본에서 되살아나지 않게) */
 export const clearSave = (st: Store): void => {
+  const cur = get(st, SAVE_KEY);
+  if (cur !== null && isNewer(SAVE_KEY, cur)) return void newerKeys.add(SAVE_KEY); // 더 새 판의 저장은 지우지 않는다
   safe(() => st.removeItem(SAVE_KEY), undefined);
   safe(() => st.removeItem(SAVE_KEY + BAK), undefined);
 };
