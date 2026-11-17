@@ -1392,8 +1392,9 @@ const playFx = async (id: CommandId, src: CardSrc | null, before: BattleState, e
       cardFx.shards(hit.map((p) => cellAt(p)), Math.round(renderer.moveMs() * 0.8));
     }
     if (c.who !== 'any' || !mover || !myKing || mover.id === myKing.id) return null;
-    // 패는 날리지 않는다 — 깃발 하나가 「누가 누구를 부리나」를 말하고, 공격 1초 예산(D-538)을 지킨다
-    await cardFx.flag(cellAt(myKing), cellAt(mover));
+    // 패는 날리지 않는다 — 깃발 하나가 「누가 누구를 부리나」를 말하고, 공격 1초 예산(D-538)을 지킨다:
+    // 깃발이 날아가는 동안(들기 170ms와 겹쳐) 기물이 움직이기 시작한다
+    await Promise.race([cardFx.flag(cellAt(myKing), cellAt(mover)), new Promise((res) => window.setTimeout(res, calmNow() ? 0 : 200))]);
     return null;
   }
   if (!src) return null;
