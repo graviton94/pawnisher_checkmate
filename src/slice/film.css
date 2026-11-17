@@ -92,6 +92,8 @@
   color: var(--t-body); font: 700 36px/calc(var(--d) * 22) Galmuri11, sans-serif; white-space: nowrap;
 }
 .film-title .ft-sub { color: var(--t-dim); font: 400 15px/24px Galmuri14, Galmuri11, sans-serif; word-break: keep-all; }
+/* D-549: 낮은 화면(≤ 440)에서 왕관 · 이름판 · 부제가 장면 칸(띠 사이)보다 높아 부제 아래가 잘렸다 — 왕관 문장은 1배 도트 · 사이 4도트 → 2도트 */
+@media (max-height: 440px) { .film-title { gap: var(--s1); } .film-title .ft-crown { width: calc(var(--px) * 26); height: calc(var(--px) * 23); } }
 .film-title.tone-crimson .ft-kick { color: var(--t-loss); }
 .film-title.tone-paper { background: #f1ede4; }
 .film-title.tone-paper .ft-kick { color: #6b4a10; }

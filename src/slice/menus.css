@@ -27,7 +27,7 @@ body[data-drill='b'] #btn-menu { visibility: hidden; }
 :is(.win, .scr-pick, .scr-place, .kit) .tabs.tabs9 > .tab { height: max(48px, calc(var(--px) * 23)); background: none; padding: 0; border-style: solid; border-width: calc(var(--px) * 4) calc(var(--px) * 14) calc(var(--px) * 4) calc(var(--px) * 20); border-image: url('../assets/ui/chrome/v2/tab-iron-up.png') 4 14 4 20 fill / calc(var(--px) * 4) calc(var(--px) * 14) calc(var(--px) * 4) calc(var(--px) * 20) stretch; image-rendering: pixelated; }
 :is(.win, .scr-pick, .scr-place, .kit) .tabs.tabs9 > .tab > .tl { margin: 0 calc(var(--px) * -14) 0 calc(var(--px) * -20); flex: 1 1 auto; text-align: center; }
 :is(.win, .scr-pick, .scr-place, .kit) .tabs.tabs9 > .tab:is(.sel, [aria-selected='true']) { background: none; border-image-source: url('../assets/ui/chrome/v2/tab-brass-sel.png'); }
-.su-win .tabs.tabs9 > .tab { width: calc(var(--px) * 48); }
+.su-win .tabs.tabs9 > .tab { width: calc(var(--px) * 52); } /* D-549: 48 → 52 — 「오늘의 도전」이 탭 테에 붙었다 */
 
 /* ---------- 메인 메뉴 (op5): 단추 다섯 · 황동 하나 — 폭 S 352(40vw까지) 하나, 층 간격 8 ---------- */
 body.slice .opening .op-menu.op5 { width: min(352px, 40vw); gap: var(--s2); padding-block: 0; }

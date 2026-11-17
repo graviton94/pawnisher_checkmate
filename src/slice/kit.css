@@ -317,7 +317,7 @@ body.kb-nav :is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline:
 .state-band {
   position: fixed; z-index: 90; left: 50%; top: var(--Gy); transform: translateX(-50%);
   box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
-  min-height: calc(var(--px) * 24); max-width: min(480px, calc(100vw - 2 * var(--G))); padding: 0 var(--s2); margin: 0;
+  min-height: calc(var(--px) * 24); width: max-content; max-width: min(480px, calc(100vw - 2 * var(--G))); /* D-549: left 50% 고정 띠는 남은 반폭(333)에 갇혀 24px 문구가 띠 밖으로 나갔다 — 글 폭만큼(상한 480) */ padding: 0 var(--s2); margin: 0;
   border-style: solid; image-rendering: pixelated; cursor: pointer; pointer-events: auto;
   text-align: center; white-space: nowrap; word-break: keep-all;
 }
@@ -408,7 +408,7 @@ body.kb-nav :is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline:
 .unit-peek .unit-stats > .inset { position: relative; display: block; min-height: calc(36px + 36 * var(--px-detail)); padding: 0 calc(4 * var(--px1)); }
 .unit-peek .unit-life-line { display: flex; flex-direction: column; gap: 0; }
 .unit-peek .unit-life-line strong { white-space: nowrap; }
-.unit-peek .unit-stats span { position: absolute; top: calc(-18 * var(--px-detail)); left: calc(4 * var(--px-detail)); padding: 0 2px; background: #25242b; white-space: nowrap; font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-body); }
+.unit-peek .unit-stats span { position: absolute; top: calc(-18 * var(--px-detail)); left: calc(4 * var(--px-detail)); padding: 0 4px; background: #25242b; /* D-549: 옆 2 → 4 */ white-space: nowrap; font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-body); }
 .unit-peek .unit-stats strong { display: block; text-align: left; }
 .unit-peek strong { font: 700 24px/30px Galmuri11, sans-serif; color: var(--t-body); }
 .unit-peek strong small { font: 400 12px/18px Galmuri11, sans-serif; color: var(--t-dim); white-space: nowrap; }

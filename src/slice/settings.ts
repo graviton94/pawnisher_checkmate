@@ -213,15 +213,28 @@ const selectorOf = (el: HTMLElement): string => {
   return `${row ? `[data-vol="${row.dataset.vol}"] ` : ''}[${own}${val ? `="${val}"` : ''}]${extra}`;
 };
 
-/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) — 바꿀 수 있는 행동은 지금 배치로 */
-const keyMapPage = (s: Settings, back: () => void): void => {
+/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) — 바꿀 수 있는 행동은 지금 배치로. 칸이 낮으면 쪽으로 나눈다 (D-549: 아래 줄이 칸 밖에서 잘렸다) */
+let keyMapPer = 0;
+const keyMapPage = (s: Settings, back: () => void, page = 0): void => {
   const k = cleanBinds(s.keys);
-  const cells = KEY_GUIDE.map(([act, key, pad, id]) => {
+  const all = KEY_GUIDE.map(([act, key, pad, id]) => {
     const kb = id ? `${keyLabel(k[id as BindId])}${id === 'undo' ? ' · Ctrl+Z' : ''}` : key;
     return `<span class="km-act">${act}</span><span class="km-key">${kb}</span><span class="km-pad">${pad}</span>`;
-  }).join('');
-  const el = openWin({ size: 'l', cls: 'set-win set-keys', title: T.keyMapTitle, body: `<div class="inset set-keymap"><span class="note">행동</span><span class="note">키보드</span><span class="note">패드</span>${cells}</div>`, back: { label: T.licBack, attrs: 'data-x' }, dismiss: back });
+  });
+  const per = keyMapPer || all.length;
+  const count = Math.ceil(all.length / per);
+  page = Math.max(0, Math.min(page, count - 1));
+  const cells = all.slice(page * per, page * per + per).join('');
+  const many = count > 1;
+  const el = openWin({ size: 'l', cls: 'set-win set-keys', title: T.keyMapTitle, body: `<div class="inset set-keymap"><span class="note">행동</span><span class="note">키보드</span><span class="note">패드</span>${cells}</div>`, back: { label: T.licBack, attrs: 'data-x' }, ...(many ? { mid: `<span class="note">${T.page(page + 1, count)}</span>`, pair: [{ label: T.prev, attrs: 'data-set-prev', disabled: page <= 0 }, { label: T.next, attrs: 'data-set-next', disabled: page >= count - 1 }] as WinOpts['pair'] } : {}), dismiss: back });
+  const body = el.querySelector<HTMLElement>('.set-keymap');
+  if (body && per > 1 && body.scrollHeight > body.clientHeight + 1) {
+    keyMapPer = per - 1;
+    return keyMapPage(s, back, Math.floor((page * per) / (per - 1)));
+  }
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
+  el.querySelector('[data-set-prev]')?.addEventListener('click', () => (sfx('tap'), keyMapPage(s, back, page - 1)));
+  el.querySelector('[data-set-next]')?.addEventListener('click', () => (sfx('tap'), keyMapPage(s, back, page + 1)));
 };
 
 /**
@@ -284,20 +297,34 @@ const keyBindPage = (o: SettingsOpts, back: () => void): void => {
   draw();
 };
 
-/** 만든 사람 + 라이선스 목록 (전문은 쪽 넘김) */
-const creditsPage = (back: () => void): void => {
+/** 만든 사람 + 라이선스 목록 (전문은 쪽 넘김) — 칸이 낮으면(772×360 등) 라이선스를 쪽으로 나눈다 (D-549: 셋째 줄이 반만 보였다) */
+let creditsPer = 0;
+const creditsPage = (back: () => void, page = 0): void => {
   const who = CREDITS.map((c) => `<span><b>${c.role}</b> ${c.names.join(' · ')}</span>`).join('');
   // 칸마다 이름 + 라이선스 한 줄 + 전문 단추 — 저작권자 · 쓴 곳 · 고친 점 · 주소는 전문 쪽 머리에 (작은 폰에서도 한 화면)
-  const lic = LICENSES.map((l, i) => `<div class="set-lic"><div class="set-lic-t"><span class="set-lic-name">${esc(l.name)}</span><span class="note">${l.license}</span></div>${btnHtml({ label: T.licFull, attrs: `data-lic="${i}" aria-label="${esc(l.name)} ${T.licRead}"` })}</div>`).join('');
-  const el = openWin({ size: 'l', cls: 'set-win', title: T.credits.split(' · ')[0], body: `<div class="set-body inset"><p class="set-who note">${who}</p><div class="set-lics">${lic}</div></div>`, back: { label: T.licBack, attrs: 'data-x' }, mid: `<span class="note set-ver"><img class="set-emblem" src="ui/crown-emblem.png" alt="">${T.version(APP_VERSION)}</span>`, dismiss: back });
+  const licOf = (l: (typeof LICENSES)[number], i: number): string => `<div class="set-lic"><div class="set-lic-t"><span class="set-lic-name">${esc(l.name)}</span><span class="note">${l.license}</span></div>${btnHtml({ label: T.licFull, attrs: `data-lic="${i}" aria-label="${esc(l.name)} ${T.licRead}"` })}</div>`;
+  const per = creditsPer || LICENSES.length;
+  const count = Math.ceil(LICENSES.length / per);
+  page = Math.max(0, Math.min(page, count - 1));
+  const lic = LICENSES.map(licOf).slice(page * per, page * per + per).join('');
+  const many = count > 1;
+  const el = openWin({ size: 'l', cls: 'set-win', title: T.credits.split(' · ')[0], body: `<div class="set-body inset"><p class="set-who note">${who}</p><div class="set-lics">${lic}</div></div>`, back: { label: T.licBack, attrs: 'data-x' }, mid: many ? `<span class="note">${T.page(page + 1, count)}</span>` : `<span class="note set-ver"><img class="set-emblem" src="ui/crown-emblem.png" alt="">${T.version(APP_VERSION)}</span>`, ...(many ? { pair: [{ label: T.prev, attrs: 'data-set-prev', disabled: page <= 0 }, { label: T.next, attrs: 'data-set-next', disabled: page >= count - 1 }] as WinOpts['pair'] } : {}), dismiss: back });
+  // 넘치면 한 쪽 라이선스 수를 둘씩(한 줄씩) 줄여 다시 — 스크롤 · 잘림 없이
+  const body = el.querySelector<HTMLElement>('.set-body');
+  if (body && per > 2 && body.scrollHeight > body.clientHeight + 1) {
+    creditsPer = per - 2;
+    return creditsPage(back, Math.floor((page * per) / (per - 2)));
+  }
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
+  el.querySelector('[data-set-prev]')?.addEventListener('click', () => (sfx('tap'), creditsPage(back, page - 1)));
+  el.querySelector('[data-set-next]')?.addEventListener('click', () => (sfx('tap'), creditsPage(back, page + 1)));
   el.querySelectorAll<HTMLElement>('[data-lic]').forEach((b) => b.addEventListener('click', () => {
     sfx('tap');
     const l = LICENSES[Number(b.dataset.lic)];
     // 원문 그대로 (마크다운 원본의 &copy; 만 기호로) · 전문이 없는 고지(CC BY)는 저작자 · 라이선스 주소 · 고친 점을 그대로
     const text = l.text ?? `${l.name} — ${l.by}\n${l.license}: ${l.url}\n${l.use}`;
     const paras = text.replace(/\r/g, '').replace(/&copy;/g, '©').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-    textReader({ title: T.licRead, head: `<div class="set-lic-t"><span class="set-lic-name">${esc(l.name)} · ${l.license}</span><span class="note">${esc(l.by)} · ${esc(l.use)}</span></div>`, paras }, () => creditsPage(back));
+    textReader({ title: T.licRead, head: `<div class="set-lic-t"><span class="set-lic-name">${esc(l.name)} · ${l.license}</span><span class="note">${esc(l.by)} · ${esc(l.use)}</span></div>`, paras }, () => creditsPage(back, page));
   }));
 };
 
