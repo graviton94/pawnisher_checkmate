@@ -72,11 +72,10 @@ body.slice.lay-f .gtop .coins .sp-n.tick { animation: tick3 120ms var(--snap); }
   16% { transform: scale(1) translateY(0); }
   40% { transform: translateY(-4px); }
   60% { transform: translateY(-8px); -webkit-mask-image: none; mask-image: none; }
-  70% { transform: translateY(-10px); -webkit-mask-image: var(--pxm1); mask-image: var(--pxm1); }
-  80% { transform: translateY(-12px); -webkit-mask-image: var(--px2); mask-image: var(--px2); }
-  90% { transform: translateY(-14px); -webkit-mask-image: var(--px3); mask-image: var(--px3); }
-  100% { transform: translateY(-14px); -webkit-mask-image: var(--px4); mask-image: var(--px4); }
-}
+  70% { transform: translateY(-10px); -webkit-mask-image: var(--dq12); mask-image: var(--dq12); }
+  80% { transform: translateY(-12px); -webkit-mask-image: var(--dq8); mask-image: var(--dq8); }
+  90% { transform: translateY(-14px); -webkit-mask-image: var(--dq4); mask-image: var(--dq4); }
+  100% { transform: translateY(-14px); -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 72.5% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 75% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 77.5% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 82.5% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 85% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 87.5% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 92.5% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 95% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 97.5% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
 @media (max-width: 760px) {
   body.slice.lay-f #right > .gtop { grid-template-columns: minmax(0, 1fr) auto; column-gap: 2px; }
 }

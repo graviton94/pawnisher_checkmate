@@ -6,9 +6,12 @@ import { BattleController } from './game/controller';
 import { Hud } from './ui/hud';
 import { RunUi } from './ui/runUi';
 import { BoardRenderer } from './view/BoardRenderer';
+import { installDitherVars } from './view/motion';
 
 const hud = new Hud();
 installPressFeedback();
+// 디더 가면 16단 변수 (D-546 — style.css 키프레임이 쓴다)
+installDitherVars();
 let controller: BattleController;
 
 const renderer = new BoardRenderer(document.getElementById('board')!, {

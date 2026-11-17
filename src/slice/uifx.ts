@@ -3,6 +3,8 @@ import { calmMotion } from '../prefs/motion';
 import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
 import { arcFly, ditherKeyframes } from './fx3';
+import { ease, snapDev, tween } from '../view/motion';
+import { SMOOTH } from '../data/motion';
 
 /**
  * 비전투 UI 손맛 (D-184 — 타격감 연구소 2부를 본편으로). 모두 도트로만: 계단(steps) 움직임 · 도트 불똥 · 도트 스프라이트.
@@ -143,7 +145,7 @@ export const installPressy = (): void => {
  * D-245 (사용자: 「하나 고르면 나머지 연기 효과가 다 개별로 돌아서 렉이 심하다」): 예전엔 요소마다 rAF + 매 프레임 canvas.toDataURL()이었다 →
  * 디더 문양 하나로 6단 마스크를 한 번만 굽고(모든 요소가 같이 쓴다), 시계 하나가 6단을 계단으로 넘긴다. 떠오르는 도트는 한 번에 최대 24개.
  */
-const DIS_STEPS = 6;
+const DIS_STEPS = 16; // D-546: 6 → 16단, 프레임 시계(tween)로 곡선 따라 넘긴다
 let disMasks: string[] | null = null;
 const disMaskSet = (): string[] => {
   if (disMasks) return disMasks;
@@ -194,17 +196,16 @@ export const dissolveAll = (els: HTMLElement[], ms = 520): void => {
       window.setTimeout(() => b.remove(), ms + 520);
     }
   });
-  let s = 0;
-  const tick = (): void => {
-    if (s >= DIS_STEPS) return void els.forEach((el) => (el.style.visibility = 'hidden'));
-    const url = masks[s++];
+  let last = -1;
+  void tween(Math.max(ms, SMOOTH.outMin), (e) => {
+    const s = Math.min(DIS_STEPS - 1, Math.floor(e * DIS_STEPS));
+    if (s === last) return;
+    last = s;
     els.forEach((el) => {
-      el.style.setProperty('-webkit-mask-image', url);
-      el.style.maskImage = url;
+      el.style.setProperty('-webkit-mask-image', masks[s]);
+      el.style.maskImage = masks[s];
     });
-    window.setTimeout(tick, ms / DIS_STEPS);
-  };
-  tick();
+  }, ease.in).then(() => els.forEach((el) => (el.style.visibility = 'hidden')));
 };
 
 /** 요소 복제가 기울며 들렸다가 목표 쪽으로 빨려 들어간다 (고른 카드 → 덱, 부품 → 부품 칸) */
@@ -260,28 +261,41 @@ export const screwBurst = (from: { x: number; y: number }, target: Element | nul
 };
 
 /**
- * 철문 전환 (연구소 「화면 전환」): 위아래 도트 철문이 가속하며 쾅 닫힘(0.3초) → 화면 흔들림 → mid() → 열림(0.42초).
- * 페이드 대신 쓰는 화면 바꿈. mid가 끝나야 열린다.
+ * 철문 전환 (연구소 「화면 전환」 → D-546): 위아래 도트 철문이 모았다가 가속하며 쾅 닫힘 → 3도트 튐 → 화면 흔들림 → mid() → 열림(감속).
+ * 페이드 대신 쓰는 화면 바꿈. 움직임은 화면 프레임마다, 위치는 기기 픽셀 정수(옛 CSS 보간은 소수 위치를 지났다). mid가 끝나야 열린다.
  */
 export const shutter = async (mid: () => void | Promise<void>): Promise<void> => {
   if (calm()) return void (await mid());
   const wrap = document.createElement('div');
   wrap.className = 'shutterfx';
-  wrap.innerHTML = '<div class="shut t close"></div><div class="shut b close"></div>';
+  wrap.innerHTML = '<div class="shut t"></div><div class="shut b"></div>';
   document.body.appendChild(wrap);
+  const [top, bot] = [...wrap.querySelectorAll<HTMLElement>('.shut')];
+  const H = top.offsetHeight + 2;
+  const bump = 3 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--px')) || 2);
+  // 열림 정도 g (0 = 닫힘 · 1 = 다 열림) → 두 문의 위치 (정수 기기 픽셀)
+  const put = (g: number): void => {
+    const y = snapDev(g * H);
+    top.style.transform = `translate3d(0,${-y}px,0)`;
+    bot.style.transform = `translate3d(0,${y}px,0)`;
+  };
+  put(1);
+  const T = SMOOTH.shutter;
   sfx('lift');
-  await new Promise((r) => window.setTimeout(r, 300));
+  // 닫힘: 1 → 0 가속(쾅) — 마지막 18%는 3도트 튀었다 내려앉음
+  await tween(T.close, (_e, t) => {
+    if (t < 0.82) put(1 - ease.in(t / 0.82));
+    else { const u = (t - 0.82) / 0.18; put((Math.sin(Math.PI * u) * bump) / H); }
+  }, (t) => t);
+  put(0);
   sfx('land');
   document.body.classList.remove('stage-shake');
   void document.body.offsetWidth;
   document.body.classList.add('stage-shake');
   await mid();
-  await new Promise((r) => window.setTimeout(r, 120));
-  wrap.querySelectorAll('.shut').forEach((d) => {
-    d.classList.remove('close');
-    d.classList.add('open');
-  });
-  await new Promise((r) => window.setTimeout(r, 420));
+  await new Promise((r) => window.setTimeout(r, T.hold));
+  // 열림: 0 → 1 감속 (지수)
+  await tween(T.open, (e) => put(e), ease.outExpo);
   wrap.remove();
   document.body.classList.remove('stage-shake');
 };

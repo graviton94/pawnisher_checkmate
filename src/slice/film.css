@@ -102,7 +102,7 @@
 .film-title.in > :nth-child(4) { animation-delay: 520ms; }
 .film-title.in > :nth-child(5) { animation-delay: 660ms; }
 .film-title.out { animation: ftout 220ms steps(1, jump-end) forwards; }
-@keyframes ftout { 0% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 33% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 66% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 100% { -webkit-mask-image: var(--px4); mask-image: var(--px4); } }
+@keyframes ftout { 0% { -webkit-mask-image: var(--dq16); mask-image: var(--dq16); } 33% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 66% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 4.13% { -webkit-mask-image: var(--dq15); mask-image: var(--dq15); } 8.25% { -webkit-mask-image: var(--dq14); mask-image: var(--dq14); } 12.38% { -webkit-mask-image: var(--dq13); mask-image: var(--dq13); } 16.5% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); } 20.63% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 24.75% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 28.88% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 41.25% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 49.5% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 57.75% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 74.5% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 83% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 91.5% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
 @media (max-height: 420px) { .film-title .ft-name { font: 700 24px/calc(var(--d) * 22) Galmuri11, sans-serif; } }
 
 /* 제목 카드 동안 빈 자막 띠 · ▼는 걷는다 */

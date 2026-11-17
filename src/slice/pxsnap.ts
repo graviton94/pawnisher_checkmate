@@ -10,6 +10,8 @@ import './facesnap';
  * 웹판을 PC 브라우저(마우스)로 열었을 때의 UI 확대 (D-539 · 검수 H5): 일렉트론 setZoomFactor와 같은 기준(915×412 읽기 크기)을
  * 정수로 내려 루트에 CSS zoom — 1080p에서 ×2. 정수라 도트 = 기기 픽셀 정수가 그대로 지켜진다. 손가락 기기 · 일렉트론은 1.
  */
+import { installDitherVars } from '../view/motion';
+
 const webZoom = (): number => {
   if ((globalThis as { pawnisherNative?: unknown }).pawnisherNative || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return 1;
   return Math.max(1, Math.floor(Math.min(window.innerWidth / 915, window.innerHeight / 412)));
@@ -34,6 +36,8 @@ const apply = (): void => {
   const logo = Math.max(1, Math.floor(dpr * Math.min(1.5, (window.innerHeight * 0.8) / 194)));
   document.documentElement.style.setProperty('--logo-k', String(logo / dpr));
   document.documentElement.dataset.dpr = String(Math.round(dpr * 1000) / 1000);
+  // 디더 가면 16단(--dq0~16) · 먹 막(--dk0~16) — 칸 = 장치 층 도트 (D-546)
+  installDitherVars();
 };
 let mq: MediaQueryList | null = null;
 const watch = (): void => {

@@ -9,11 +9,15 @@ import { PAPER_FACE, type PaperMood, type Portrait } from './portraits';
  */
 export type Cue = 'tap' | 'threat' | 'land' | 'hit' | 'stamp' | 'lose' | 'win' | 'rare' | 'awaken' | 'lift' | 'hurt' | 'loss' | 'submit' | 'kill' | 'check';
 /** mood (D-506): 종이왕 표정(PT-04) — 종이왕 대사면 명패 얼굴을 바꾸고, 속마음(m)이면 이름 없이 얼굴 명패만 세운다 */
-export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold'; mood?: PaperMood }
+/** drift (D-546): 이 줄이 서 있는 동안 켄 번스 방향(초점 변화 부호) — 없으면 컷 분위기(data/vn.ts VN_SCENE) · 여유가 큰 쪽 */
+export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold'; mood?: PaperMood; drift?: { x: number; y: number } }
 /** 카메라 한 샷: 그림 안 초점(0~1) + 확대 칸 z(0 = 칸을 덮는 기본 배율, 한 칸 = 기기 픽셀 정수로 약 12%씩) */
 export interface Shot { x: number; y: number; z?: number }
-/** 컷 사이 전환: 디더 · 조리개 · 쇳물 · 백지 · 암전 · 바로 */
-export type Trans = 'dither' | 'iris' | 'melt' | 'white' | 'black' | 'cut';
+/**
+ * 컷 사이 전환: 디더 · 조리개 · 쇳물 · 백지 · 암전 · 바로 + (D-546) 철문 날 · 사선 · 블라인드 · 종이 쪽.
+ * 박자 약속(data/vn.ts VN_BEAT): 충격 = cut · 시간이 흐름 = dither · 한 곳에 모임 = iris · 장소가 바뀜 = diag · 회상 · 기록 = page · 닫힌 공간 = shutter.
+ */
+export type Trans = 'dither' | 'iris' | 'melt' | 'white' | 'black' | 'cut' | 'shutter' | 'diag' | 'blinds' | 'page';
 /** 장 제목 카드 (먹 바탕 · 꼬리표 · 제목 · 부제) */
 /** crown = 몇째 왕관 장인지 — 꼬리표 위 왕관 문장(ED-01 crown-emblem-1~4: 종이 → 금띠 → 반금 → 금 깨짐, D-510) */
 export interface TitleCard { kicker: string; title: string; sub?: string; tone?: 'brass' | 'crimson' | 'paper'; crown?: number }
@@ -86,7 +90,7 @@ export const oneLine = (t: string): string => t.replace(/\n/g, ' ');
 export const PROLOGUE: Cut[] = [
   // PRO-01 — 장 제목 카드로 연다. 먼 공장(넓게) — 태엽 · 법칙 두 줄은 다음 컷(OP-01)으로
   { ...cut('prologue-00', [
-    n('하늘을 가린 검은 매연과 멈추지 않는 증기 소리. 여기는 체스 기물을 찍어 내는 거대한 주물 공장이다.', { shot: at(0.5, 0.4) }),
+    n('하늘을 가린 검은 매연과 멈추지 않는 증기 소리. 여기는 체스 기물을 찍어 내는 거대한 주물 공장이다.', { shot: at(0.5, 0.4), drift: { x: 0, y: 1 } }),
   ]), key: true, slug: '쇳내 나는 요람', shot: at(0.5, 0.3), title: { kicker: '프롤로그', title: '쇳내 나는 요람', sub: '체스 기물을 찍어 내는 주물 공장' } },
   // PRO-01-2·3 — OP-01 태엽이 감기는 순간(D-509 → 재발주본 D-512 맨머리 폰): 맨머리 폰과 등 쪽 태엽 열쇠(머리까지 한 화면) → 뒤 컨베이어의 검은 폰 줄(법칙)
   { ...cut('op-windup', [
@@ -96,7 +100,7 @@ export const PROLOGUE: Cut[] = [
   // PRO-02 — 쇳물 전환. 붓는 거푸집으로 다가가 「녹아내려」
   { ...cut('prologue-01', [
     n('대국에서 킹이 쓰러진 세트는 패자 부활도, 변명할 틈도 없이 상자째 붉은 용광로로 쏟아진다.', { shot: at(0.5, 0.55), sfx: 'threat' }),
-    n('어제의 동료는 오늘 녹아내려 다음 세트의 이름 모를 폰이 된다.', { shot: at(0.4, 0.3, 2) }),
+    n('어제의 동료는 오늘 녹아내려 다음 세트의 이름 모를 폰이 된다.', { shot: at(0.4, 0.3, 2), drift: { x: 0, y: 1 } }),
   ]), key: true, slug: '용광로의 침묵', trans: 'melt' },
   // PRO-03 — 상자 전체 → 집게 → 빈 킹 자리 → 집힌 폰 얼굴(숨 뒤 독백)
   { ...cut('prologue-02', [
@@ -104,12 +108,12 @@ export const PROLOGUE: Cut[] = [
     n('컨베이어 위의 집게는 무심하게 굴러다니던 하얀 폰 하나를 집어 올려, 비어 있던 킹의 자리에 꾹 눌러 담았다.', { shot: at(0.5, 0.3, 2), sfx: 'lift' }),
     n('여덟 개의 폰 곁에 하나가 더 얹혔다. 킹의 왕관도, 킹의 무게도 없는 ‘아홉 번째 폰’이었다.', { shot: at(0.5, 0.62, 1), sfx: 'land' }),
     m('발밑이 너무 넓어. 여긴 내가 태어나야 할 자리가 아니었어.', { shot: at(0.5, 0.42, 3), pause: 500 }),
-  ]), slug: '잘못 놓인 아홉 번째 폰' },
+  ]), slug: '잘못 놓인 아홉 번째 폰', trans: 'shutter' },
   // PRO-04 — 경보: X표가 내리찍히고(흔들림 · 도장 소리) → 판정문. 소문 두 줄은 다음 컷(OP-03)으로
   { ...cut('prologue-03', [
     n('출하구로 향하는 벨트 대신, 차가운 붉은 경고등이 켜진 검수기가 상자 뚜껑 위에 커다란 X표를 내려찍었다.', { shot: at(0.5, 0.2, 1), sfx: 'stamp', fx: 'shake' }),
     n('「킹 누락. 규격 미달 — 공정 실패 시 상자째 폐기 대기」', { shot: at(0.5, 0.2, 2), sfx: 'threat' }),
-  ]), key: true, slug: '불량 딱지', fx: 'alarm' },
+  ]), key: true, slug: '불량 딱지', fx: 'alarm', trans: 'cut' },
   // PRO-04-3·4 — OP-03 금단의 승급대 소문(D-514): 불량 X 상자 틈에서 위를 올려다보는 흰 기물 셋(아래) → 수직 갱도 꼭대기 금빛 통제실의 왕 그림자
   { ...sceneCut('op-legend', [
     n('하지만 밑바닥 불량품들 사이에는 소문이 돌았다. 꼭대기 통제실의 ‘금단의 승급대’는 폰도 킹으로 만든다고.', { shot: at(0.5, 0.9, 1), pause: 300 }),
@@ -136,7 +140,7 @@ export const PROLOGUE: Cut[] = [
     s('박차', '네가 킹이 된다 해도 내 흠집은 안 지워진다. 그래도 괜찮나?', { shot: at(0.62, 0.55, 3) }),
     s('종이왕', '흠집 따위 지울 필요 없어. 이 몸 그대로 같이 나가자.', { shot: at(0.3, 0.4, 2), mood: 'resolve' }),
     s('박차', '…우스운 소리군. 좋다, 이 말발굽이 부서질 때까지 넌 내 대장이다.', { shot: at(0.45, 0.5), pause: 400 }),
-  ]), slug: '부관 박차' },
+  ]), slug: '부관 박차', trans: 'diag' },
 ];
 /**
  * PRO-08 검은 세트와 먼 왕좌 (D-536 — 서사 리뷰 §3-4): 처음 출하에서는 시험대가 끝난 뒤 첫 실전 대국 직전에 튼다(첫 줄 「첫 번째 검수 판이 열리고」).

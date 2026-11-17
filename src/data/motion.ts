@@ -25,3 +25,40 @@ export const TOAST = { base: 1100, perChar: 45, max: 3200, queueMax: 3 };
  */
 /** enemyTempo (D-216 5): 적 차례 박자 ×1.25 — 적은 늘 한 명씩 차례대로 (D-217) */
 export const PACE = { fx: 0.8, hitGap: 320, enemyLead: 260, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 520, turnHold: 320, afterMine: 120, enemyTempo: 1.25 } as const;
+
+/**
+ * 부드러움은 프레임 수와 곡선에서 (D-546 — D-216 · D-538을 고친다, 소유자 피드백 「전환이 뚝뚝 끊긴다」).
+ * 움직임은 화면 프레임마다(60fps) 돌리되 위치를 기기 픽셀 정수로 맞추고(도트가 번지지 않는다), 나타남 · 사라짐은
+ * 8×8 베이어 디더를 프레임마다 한 단씩(코드 64단 · CSS 키프레임 16단) 곡선으로 넘긴다. 투명도 보간 · 그라데이션은 여전히 금지.
+ * 정지 동작(도장 · 톱니 똑딱 · 흔들림 · 깜빡임)만 일부러 프레임을 붙든다.
+ */
+export const SMOOTH = {
+  /** 코드로 돌리는 디더 단계 수 (8×8 베이어 = 64 + 빈 칸 0) */
+  levels: 64,
+  /** CSS 키프레임 디더 단계 수 (--dq0 ~ --dq16, 8×8 베이어 4칸씩) */
+  cssLevels: 16,
+  /** 디더 퇴장 · 등장의 최소 시간 (ms) — 「다섯 계단 이하」 퇴장을 없앤다 */
+  outMin: 300,
+  inMin: 300,
+  /** 미리 굽는 움직임 표본 간격 (ms) — 120Hz로 구워 어느 화면 주기에서도 프레임마다 새 정수 위치 */
+  bakeStep: 1000 / 120,
+  /** 일부러 정지 동작인 CSS 애니메이션 이름 (굽지 않는다 — 도장 · 톱니 · 흔들림 · 깜빡임 · 불똥 · 경보) */
+  hold: /stamp|tick|shake|blink|alarm|nudge|^spk|snap|cog|flick|jit|glitch|sshake|erShake|plred|tape|bob|breath|idle|pulse|beat|throb|wiggle|hum|flash|fl$|ko|tfx|rays|dith|deny|nope|apb/i,
+  /** 화면 전환 철문: 닫힘 · 머묾 · 열림 (ms) */
+  shutter: { close: 340, hold: 110, open: 460 },
+} as const;
+
+/**
+ * 컷신 카메라 · 전환 (D-546): 영화 판(film.ts)의 시간. 카메라는 프레임마다 정수 기기 픽셀, 배율은 정수만(바뀔 때는 디더 겹침).
+ * drift = 한 줄이 서 있는 동안 천천히 미는 켄 번스(기기 픽셀/초 · 최대 시간) — 줄이 바뀌면 멈춘다(놀 때 다시 그리지 않는다, D-533).
+ */
+export const FILM_MOTION = {
+  /** 카메라 이동 시간 = base + 거리(칸 폭 비율) × perSpan, 상한 max */
+  cam: { base: 520, perSpan: 520, max: 980 },
+  /** 전환 닫힘 · 열림 (ms) */
+  wipe: { close: 380, open: 460 },
+  /** 켄 번스: 기기 픽셀/초 · 최대 지속 (ms) */
+  drift: { speed: 24, max: 7000 },
+  /** 장 제목 카드 등장 · 퇴장 (ms) */
+  title: { in: 420, out: 360 },
+} as const;

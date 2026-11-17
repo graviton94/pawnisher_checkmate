@@ -7,6 +7,8 @@ import { calmMotion } from '../prefs/motion';
 import { lessFlash, shakeMul } from '../prefs/fx';
 import { sfx } from '../audio/sfx';
 import { sparksAt } from './uifx';
+import { bakeWaapi, clearDither, ditherTo, ease } from '../view/motion';
+import { SMOOTH } from '../data/motion';
 
 const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -30,21 +32,22 @@ export const flashScreen = (a = 0.85): void => {
   window.setTimeout(() => f.remove(), 260);
 };
 /**
- * 도트 퇴장 (D-193): 사라지는 것은 모두 4×4 체크무늬가 다섯 단계로 지워진다 — 투명 페이드 대신.
- * 끝나면 then (요소를 지우거나 숨기는 건 부른 쪽).
+ * 도트 퇴장 (D-193 → D-546): 사라지는 것은 모두 8×8 베이어 디더가 프레임마다 한 단씩(64단) 곡선으로 지워진다 — 투명 페이드 대신.
+ * 옛 다섯 단(240ms) 계단은 뚝뚝 끊겼다 → 최소 SMOOTH.outMin(300ms). 끝나면 가면을 지우고 then (요소를 지우거나 숨기는 건 부른 쪽).
  */
 export const pxOut = (el: HTMLElement | null, then?: () => void, ms = 240): void => {
   if (!el) return then?.();
   if (calm()) return then?.();
-  el.style.setProperty('--pxms', `${ms}ms`);
-  el.classList.remove('pxout');
-  void el.offsetWidth;
   el.classList.add('pxout');
-  window.setTimeout(() => {
+  void ditherTo(el, 1, 0, Math.max(ms, SMOOTH.outMin), ease.in).then(() => {
+    if (!el.classList.contains('pxout')) return;
     el.classList.remove('pxout');
+    clearDither(el);
     then?.();
-  }, ms);
+  });
 };
+/** 디더로 나타나기 (64단, 감속 곡선) — 계단 등장 대신 */
+export const pxIn = (el: HTMLElement | null, ms: number = SMOOTH.inMin): Promise<void> => (el && !calm() ? ditherTo(el, 0, 1, ms, ease.out) : Promise.resolve());
 /** 흔들림 세 단계 (D-193): 약 4px/260ms · 중 7px/360ms · 강 12px/480ms — 판 밖은 모두 이것만 */
 /** 판 밖 흔들림 (D-214: 절반으로) — 픽셀 진폭 · ms */
 /** 화면 요소 흔들림 [px, ms] (2026-11-06: 세기를 줄였다 — 글 · 도장 · 전환이 다 떨려서 정신없었다) */
@@ -546,11 +549,9 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
   });
 };
 
-/** 디더 단계 (0 = 다 보임 · 4 = 다 지움) → 마스크 키프레임 조각 */
-// 첫 단계 마스크는 --pxm1 (D-538 리뷰 #16): --px1은 pxsnap.ts가 <html>에 길이(아이콘 도트 1개)로 덮어써 마스크가 none이 됐다 —
-// 디더 퇴장 둘째 장마다 요소가 통째로 다시 보였다(2단계 컷인 퇴장 깜빡임의 원인)
-const pxLv = (v: number): string => `var(--${v >= 0.9 ? 'px0' : v >= 0.65 ? 'pxm1' : v >= 0.4 ? 'px2' : v >= 0.12 ? 'px3' : 'px4'})`;
-/** 보이는 정도(0~1)를 4×4 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538, 투명도 대신) */
+/** 보이는 정도(0~1) → 16단 디더 가면 변수 (D-546 — 8×8 베이어, 칸 = 게임 도트. 옛 px0~px4 다섯 단을 대신한다) */
+const pxLv = (v: number): string => `var(--dq${Math.max(0, Math.min(SMOOTH.cssLevels, Math.round(v * SMOOTH.cssLevels)))})`;
+/** 보이는 정도(0~1)를 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538 → D-546, 투명도 대신) */
 export const pxMask = (v: number): Keyframe => ({ maskImage: pxLv(v), webkitMaskImage: pxLv(v) }) as Keyframe;
 
 /**
@@ -562,6 +563,11 @@ export const installPixelAnimate = (): void => {
   const orig = Element.prototype.animate;
   Element.prototype.animate = function (this: Element, kf: Keyframe[] | PropertyIndexedKeyframes | null, opts?: number | KeyframeAnimationOptions) {
     if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') kf = ditherKeyframes(kf);
+    // 움직임은 정수 기기 픽셀 120Hz로 굽는다 (D-546 — 소수 위치를 지나며 도트가 번지지 않게)
+    if (Array.isArray(kf) && opts && typeof opts === 'object') {
+      const b = bakeWaapi(this, kf, opts, (k, o) => orig.call(this, k, o));
+      if (b) return b;
+    }
     return orig.call(this, kf, opts);
   } as typeof Element.prototype.animate;
 };
@@ -584,8 +590,9 @@ export const ditherKeyframes = (kf: Keyframe[]): Keyframe[] => {
     out.push({ ...rest, offset: off[i], ...pxMask(vis[i]) } as Keyframe);
     const nv = vis[i + 1];
     if (i < n - 1 && nv !== vis[i]) {
-      // 사이 단계 셋 — 마스크는 이산 보간이라 각 키프레임에서 바로 바뀐다(계단)
-      for (let k = 1; k <= 3; k++) out.push({ offset: off[i] + ((off[i + 1] - off[i]) * k) / 4, ...pxMask(vis[i] + ((nv - vis[i]) * k) / 4) } as Keyframe);
+      // 사이 단계 — 16단 중 지나는 칸 수만큼 고르게 (D-546: 옛 세 칸 → 프레임 수에 가깝게)
+      const k0 = Math.max(1, Math.round(Math.abs(nv - vis[i]) * SMOOTH.cssLevels));
+      for (let k = 1; k < k0; k++) out.push({ offset: off[i] + ((off[i + 1] - off[i]) * k) / k0, ...pxMask(vis[i] + ((nv - vis[i]) * k) / k0) } as Keyframe);
     }
   });
   return out;
