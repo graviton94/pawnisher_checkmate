@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 디버그 빌드 전용 (D-531): 캡커시터 라이브 리로드(cap run --live-reload)가 개발 서버에 붙을 때만 쓴다. 출시(release) 빌드에는 들어가지 않는다 -->
+<!-- 디버그 빌드 전용 (D-531): 캡커시터 라이브 리로드(cap run 의 live-reload 옵션)가 개발 서버에 붙을 때만 쓴다. 출시(release) 빌드에는 들어가지 않는다 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
