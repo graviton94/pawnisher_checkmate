@@ -527,9 +527,9 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .pl-stage { position: absolute; inset: 0; }
 .pl-stage.in { animation: plin 380ms var(--decel) both; }
 @keyframes plin { 0% { filter: brightness(2.2); -webkit-mask-image: var(--px4); mask-image: var(--px4); } 7.50% { -webkit-mask-image: var(--px3); mask-image: var(--px3); } 15.00% { -webkit-mask-image: var(--px2); mask-image: var(--px2); } 22.50% { -webkit-mask-image: var(--px1); mask-image: var(--px1); } 30% { -webkit-mask-image: var(--px0); mask-image: var(--px0); } 100% { filter: none; -webkit-mask-image: var(--px0); mask-image: var(--px0); } }
-.pl-stage > .pl-img, .pl-stage > .pl-standin { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; } /* D-536: 옛 켄 번스 여백(-4% · 108%)은 비정수 배율이라 뺐다 */
+.pl-stage > .pl-img, .pl-stage > .pl-standin { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; } /* D-538: 옛 켄 번스 여백(-4% · 108%)은 비정수 배율이라 뺐다 */
 .pl-stage > .pl-img.pl-pixel { inset: auto; max-width: none; }
-/* 카메라 (D-504 · D-536): 옛 14초 켄 번스(소수 배율 scale · % translate) 키프레임은 지웠다 — 카메라는 film.Camera가
+/* 카메라 (D-504 · D-538): 옛 14초 켄 번스(소수 배율 scale · % translate) 키프레임은 지웠다 — 카메라는 film.Camera가
    기기 픽셀 정수 배율 · 정수 위치로 계단(약 11fps) 이동한다. cam-still은 클래스 이름만 남는다 */
 .prologue.dip .pl-stage { opacity: 0; transition: none; }
 .pl-standin { background: #0b0b0e; }
@@ -1110,7 +1110,7 @@ body.slice.lay-f .gtop .turn-label .th-cog { animation: gearsMini16 1.2s steps(1
 .bossfx .bf-port { position: absolute; right: 0; top: 6vh; visibility: hidden; }
 .bossfx .bf-port canvas { display: block; image-rendering: pixelated; }
 .bossfx.port .bf-port { visibility: visible; animation: bfPort 360ms steps(1) both; }
-/* D-536: 움직임 줄이기 = 정지 컷 (초상 출렁 · 이름 흔들림 없음) */
+/* D-538: 움직임 줄이기 = 정지 컷 (초상 출렁 · 이름 흔들림 없음) */
 .bossfx.calm.port .bf-port, .bossfx.calm.name :is(.bf-name, .bf-board), .bossfx.calm .bf-rules li.in { animation: none; }
 @keyframes bfPort { 0% { transform: translate(72px, 0); } 30% { transform: translate(88px, 0); } 55% { transform: translate(32px, 0); } 70% { transform: translate(-8px, 0); } 85% { transform: translate(8px, 0); } 100% { transform: none; } }
 .bossfx .bf-fx { position: absolute; inset: 0; pointer-events: none; }
@@ -1784,7 +1784,7 @@ body.slice .cf.cf.cf.cf.cmd > .cf-mk.mk-rust { color: #e0894a; }
 /* D-534 전수 점검: 명령 카드 성질 줄(「[수읽기] [곱]」)은 그림 창 아래 끝에 얹힌다 — 밝은 그림(흰 폰)이면 회색 글이 묻혔다 → 먹 테 1도트(사방, 번짐 없음) */
 body.slice .cf.cf.cf.cf.cmd > .cf-type .t3 i { text-shadow: var(--px) 0 0 #0b0b0e, calc(-1 * var(--px)) 0 0 #0b0b0e, 0 var(--px) 0 #0b0b0e, 0 calc(-1 * var(--px)) 0 #0b0b0e; }
 
-/* D-536 (리뷰 #13): 고르기 화면(보상 · 부품 · 분대원)은 통짜 먹 바탕 — 반투명 디더 막 너머로 지도 제목 · 계수기가 비쳐
+/* D-538 (리뷰 #13): 고르기 화면(보상 · 부품 · 분대원)은 통짜 먹 바탕 — 반투명 디더 막 너머로 지도 제목 · 계수기가 비쳐
    「HP +25%」 글 · 「나사 +40」 꼬리표와 겹쳤다. 장소 그림 화면(placebg)은 장소 그림이 바탕이고, 그 위 지도 머리 줄만 숨긴다 */
 body.slice:not(.placebg) .overlay:has(.scr-pick) { background: #0b0b0e; }
 body.slice:has(.overlay .scr-pick) .map-head { visibility: hidden; }

@@ -545,11 +545,11 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
 
 /** 디더 단계 (0 = 다 보임 · 4 = 다 지움) → 마스크 키프레임 조각 */
 const pxLv = (v: number): string => `var(--px${v >= 0.9 ? 0 : v >= 0.65 ? 1 : v >= 0.4 ? 2 : v >= 0.12 ? 3 : 4})`;
-/** 보이는 정도(0~1)를 4×4 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-536, 투명도 대신) */
+/** 보이는 정도(0~1)를 4×4 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538, 투명도 대신) */
 export const pxMask = (v: number): Keyframe => ({ maskImage: pxLv(v), webkitMaskImage: pxLv(v) }) as Keyframe;
 
 /**
- * 도트 애니메이션 장치 (D-216 6 · D-536): 코드로 거는 Web Animations의 투명도 보간을 디더 마스크 계단으로 바꾼다 — 단순 페이드 금지.
+ * 도트 애니메이션 장치 (D-216 6 · D-538): 코드로 거는 Web Animations의 투명도 보간을 디더 마스크 계단으로 바꾼다 — 단순 페이드 금지.
  * 투명도가 바뀌는 구간마다 사이 단계(px1~px3)를 고르게 끼워, 0 → 1이 한 번에 뒤집히지 않고 디더 네 계단으로 지나간다.
  * 이미 마스크로 모양을 내는 요소(아이콘 · 로고)는 그대로 둔다. main에서 한 번 부른다.
  */

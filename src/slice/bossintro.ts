@@ -61,7 +61,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
   new Promise((resolve) => {
     const look = LOOK[o.rule];
     const el = document.createElement('div');
-    // 움직임 줄이기 (D-536): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 디더 장을 뺀다
+    // 움직임 줄이기 (D-538): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 디더 장을 뺀다
     const calm = calmMotion(), noFlash = reduceFlash();
     el.className = `bossfx kit b-${o.rule}${calm ? ' calm' : ''}`;
     el.style.setProperty('--accent', look.accent);
@@ -190,7 +190,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         }
       },
       (t, p) => {
-        // 흰 장 한 장 (hero frame, D-536): 화면 전체 흰 면 대신 2×2 체커 디더 한 장(약 60ms), 번쩍임 줄이기면 없다
+        // 흰 장 한 장 (hero frame, D-538): 화면 전체 흰 면 대신 2×2 체커 디더 한 장(약 60ms), 번쩍임 줄이기면 없다
         if (!noFlash && t >= 0.26 && t < 0.32) for (let y = 0; y < fx.h; y++) for (let x = (y & 1); x < fx.w; x += 2) p.px(x, y, WHITE);
         if (calm) return;
         const sx = seamX / 3;

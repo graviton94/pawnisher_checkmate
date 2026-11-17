@@ -324,7 +324,7 @@ const dirIndex = (c: Claimed) => DIRS.findIndex(([x, y]) => x === Math.sign(c.dx
 /** 게임에서 재생 (Phaser). speed: 시간 배율. onPose로 공격자 자세를 받는다 */
 export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number, onPose: (p: Pose) => void, budget = Infinity): { duration: number; impact: Map<string, number> } => {
   const fx = buildAttackFx(req);
-  // 박자 예산 (D-536): 실제 걸리는 시간(ms)이 budget을 넘으면 그만큼 빨리 돈다 — 예비 → 터짐 → 출렁 비율은 그대로
+  // 박자 예산 (D-538): 실제 걸리는 시간(ms)이 budget을 넘으면 그만큼 빨리 돈다 — 예비 → 터짐 → 출렁 비율은 그대로
   speed = Math.max(speed, fx.duration / budget);
   const g = scene.add.graphics().setDepth(6.5);
   const pen = new PixelPen(g, req.tile / BOARD_DOTS);

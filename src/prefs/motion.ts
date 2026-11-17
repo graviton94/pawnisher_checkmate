@@ -26,7 +26,7 @@ const osCalm = (): boolean => {
 export const calmMotion = (): boolean => (pref === 'on' ? true : pref === 'off' ? false : osCalm());
 
 /**
- * 번쩍임 줄이기 (D-536, WCAG 2.3.1): 화면을 밝게 번쩍이는 연출(반장 등장 흰 장 · 2단계 진홍 번쩍)을 끈다.
+ * 번쩍임 줄이기 (D-538, WCAG 2.3.1): 화면을 밝게 번쩍이는 연출(반장 등장 흰 장 · 2단계 진홍 번쩍)을 끈다.
  * 움직임 줄이기가 켜져 있으면 함께 꺼진다. 설정 창 토글은 `setFlashPref`를 부른다.
  */
 let flashPref = false;

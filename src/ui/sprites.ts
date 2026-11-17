@@ -10,7 +10,7 @@ export const pieceImg = (type: PieceType, side: Side = 0, size: 'small' | 'large
   return `<img class="piece-img" src="pieces/${size === 'large' ? 'l' : 's'}-${name}.png" alt="" width="${w}" height="${w}">`;
 };
 /**
- * 기물 그림 표시 크기 (D-536 도트 밀도): 그림 1도트 = 기기 정수 픽셀. 원하는 크기(CSS px)에 가장 가까운 정수배(최소 1 — 도트가 빠지지 않게).
+ * 기물 그림 표시 크기 (D-538 도트 밀도): 그림 1도트 = 기기 정수 픽셀. 원하는 크기(CSS px)에 가장 가까운 정수배(최소 1 — 도트가 빠지지 않게).
  * DPR 2.625에서 72도트 그림: 20~40px → 27.43px(×1) · 44~64px → 54.86px(×2) · 80px → 82.29px(×3) · 108px → 109.71px(×4) · 220px → 219.43px(×8)
  */
 export const pieceThumbPx = (px: number, dots = 72, dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1): number =>

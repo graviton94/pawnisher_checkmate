@@ -61,7 +61,7 @@ export const FX_POWER = {
 /** 화면 흔들림·진동 (D-064): 한 번에 damage 이상 맞히거나 처치하면. intensity는 화면 크기 대비 비율 (Phaser 카메라와 같은 뜻) */
 export const FX_SHAKE = { damage: 4, ratio: 0.35, ms: 160, intensity: 0.003, killIntensity: 0.005, vibrateHit: 25, vibrateKill: 45 };
 /**
- * 공격 박자 예산 (D-536, 실제 걸리는 ms — PACE.fx · 템포 배율을 친 뒤): 공격 1회 ≤ 1초 (CLAUDE.md UI 원칙 6).
+ * 공격 박자 예산 (D-538, 실제 걸리는 ms — PACE.fx · 템포 배율을 친 뒤): 공격 1회 ≤ 1초 (CLAUDE.md UI 원칙 6).
  * attack = 처치 없는 공격 연출 상한. 처치가 있으면 연출을 killFx로 줄이고, 무너짐(crumble)을 타격 순간부터 겹쳐
  * 예비 시작 → 무너짐 끝이 kill 안에 든다(넘친 무너짐은 다음 행동과 겹친다). 킹 마무리(D-180)는 대국을 끝내는 연출이라 따로.
  * 옛 타격 카메라(D-115 줌 · 당김 FX_CAMERA)는 소수 배율이라 뺐다.
@@ -89,7 +89,7 @@ export const IMPACT = {
   /** 맞은 쪽 찌그러짐 → 출렁 복귀 */
   squash: { sx: 1.16, sy: 0.84, ms: 420 },
   /** 정지 프레임 (ms): 타격(피해 비율로 70~120) · 처치 · 킹 처치 */
-  /** D-536: 처치 정지 200 → 110 (처치 1회 ≤ 1초 예산 안) */
+  /** D-538: 처치 정지 200 → 110 (처치 1회 ≤ 1초 예산 안) */
   stop: { min: 70, max: 120, kill: 110, king: 120 },
   /** 처치: 기물 그림 16조각 · 불씨 · 도트 고리 */
   shatter: { ms: 900, embers: 22, ringMs: 520 },

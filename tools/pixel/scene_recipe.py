@@ -356,7 +356,7 @@ PB01_GRID = {
 }
 
 
-# D-536 (리뷰 #6): 사건 그림 16장 재양자화 — R-01 재발주를 받기 전 임시. tools/pixel/event_requant.py가 읽는다.
+# D-538 (리뷰 #6): 사건 그림 16장 재양자화 — R-01 재발주를 받기 전 임시. tools/pixel/event_requant.py가 읽는다.
 # source = 받은 원본(build-res/order), size = 처음 반입의 복원 격자 칸 수(build-res/order/EV-grid/<이름>.png에 보존 — 초점 EVENT_FOCUS가 이 크기 기준),
 # colors = 팔레트 상한(≤ 32 — D-388 「도트 강제」 위반인 생성기 그레인 · 그라데이션을 걷는다), despeckle = 외톨이 칸 정리 횟수
 #   (밝기 차 40 이하 낱점만 — 조건 없이 걷어 보니 철망 · 사선 1도트 무늬가 끊겨 덩어리졌다. 남은 낱점은 R-01 재발주로 걷는다).

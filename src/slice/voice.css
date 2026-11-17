@@ -167,7 +167,7 @@
 .p2cut.calm .p2-strip { clip-path: none; }
 .p2cut.calm :is(.p2-slash, .p2-word) { visibility: visible; animation: none; clip-path: none; }
 .p2-flash { position: fixed; left: 0; right: 0; top: 30vh; bottom: 30vh; z-index: 90; pointer-events: none; background: #b3121c; -webkit-mask-image: var(--px2); mask-image: var(--px2); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; visibility: hidden; animation: p2flash 360ms steps(1, jump-end) both; }
-/* D-536: 번쩍임은 한 번 — 그림 띠 자리만, 진홍 50% 디더 한 장(약 110ms), 흰 장 · 겹 번쩍 없음 (WCAG 2.3.1 「1초 3회」 아래) */
+/* D-538: 번쩍임은 한 번 — 그림 띠 자리만, 진홍 50% 디더 한 장(약 110ms), 흰 장 · 겹 번쩍 없음 (WCAG 2.3.1 「1초 3회」 아래) */
 @keyframes p2flash { 0% { visibility: visible; } 30%, 100% { visibility: hidden; } }
 :root[data-noflash="1"] .p2-flash { display: none; }
 body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }

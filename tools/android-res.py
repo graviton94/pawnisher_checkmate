@@ -4,7 +4,7 @@
 - 시작 화면: 어두운 바탕(#16141C, 웹 · 캡커시터 배경과 같은 색) 가운데에 `public/ui/title-logo.png`를
   밀도마다 정수배 최근접 확대로 놓는다 → `drawable-<dpi>/splash_logo.png`. 바탕 · 가운데 맞춤은
   `drawable/splash.xml`(layer-list, filter=false)이 한다 — 그림을 창 크기로 늘리지 않는다 (D-386).
-- 런처 아이콘 · 적응형 전경 (D-536): 매끈한 워드마크 로고(build-res/icon.png 옛 판)를 LANCZOS로 줄이던 것을 버리고,
+- 런처 아이콘 · 적응형 전경 (D-538): 매끈한 워드마크 로고(build-res/icon.png 옛 판)를 LANCZOS로 줄이던 것을 버리고,
   종이왕 기물 도트를 밀도마다 정수배로 놓는다(tools/app_icon.py) — 전경은 바탕 투명 · 지름 60dp 안(66dp 안전 원 안),
   적응형 바탕 색은 #16141C.
 
@@ -34,7 +34,7 @@ def splash() -> None:
 
 
 def icon() -> None:
-    """런처 아이콘 · 적응형 전경 (D-536): 종이왕 기물 도트를 밀도마다 정수배로 — tools/app_icon.py가 조합한다"""
+    """런처 아이콘 · 적응형 전경 (D-538): 종이왕 기물 도트를 밀도마다 정수배로 — tools/app_icon.py가 조합한다"""
     import sys
     sys.path.insert(0, str(ROOT / 'tools'))
     from app_icon import icon_android

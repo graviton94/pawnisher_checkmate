@@ -95,7 +95,7 @@ export interface BoardInput {
   };
 }
 
-/** QA 박자 기록 (D-536): 창에 `__fxlog` 배열이 있을 때만 [이름, ms] — 녹화 도구가 공격 · 처치 길이를 잰다 */
+/** QA 박자 기록 (D-538): 창에 `__fxlog` 배열이 있을 때만 [이름, ms] — 녹화 도구가 공격 · 처치 길이를 잰다 */
 const fxTrace = (k: string, ms: number, note = ''): void => void (window as { __fxlog?: unknown[] }).__fxlog?.push([k, Math.round(ms), note]);
 
 /** 터치 기기 칸 최대 크기 (CSS px) */
@@ -385,7 +385,7 @@ class BoardScene extends Phaser.Scene {
   private pieceBox(key: string, span = 1): { size: number; cy: number } {
     const r = this.dpr;
     const tc = Math.round(this.tile * r); // 칸 = 20 × 도트(정수 캔버스 픽셀)
-    // D-536 도트 밀도: 그림 1도트 = 캔버스 정수 픽셀. 그림 도트 수(텍스처 2텍셀 = 1도트 — 72 · 거대 122 · 2×2 반장 144)로
+    // D-538 도트 밀도: 그림 1도트 = 캔버스 정수 픽셀. 그림 도트 수(텍스처 2텍셀 = 1도트 — 72 · 거대 122 · 2×2 반장 144)로
     // 예전 목표 크기(칸 × PIECE_SIZE × span)에 들어가는 가장 큰 정수배를 고른다. 도트 수가 모두 짝수라 칸 가운데에 서도 왼 끝이 정수
     const dots = Math.max(1, Math.round((this.textures.exists(key) ? this.textures.get(key).getSourceImage().width : 144) / 2));
     // 목표가 그림 도트 수보다 작으면(DPR 1 · 작은 칸) 정수비로 줄인다(2도트 = 1픽셀 …) — 도트가 고르게 빠진다
@@ -712,7 +712,7 @@ class BoardScene extends Phaser.Scene {
   // ---------- 보드 ----------
   setupBoard(state: BattleState): void {
     this.state = state;
-    // 새 판의 첫 그리기에 붙어 있는 딱지는 튀어나오지 않는다 (D-536)
+    // 새 판의 첫 그리기에 붙어 있는 딱지는 튀어나오지 않는다 (D-538)
     this.chipSeen.clear();
     this.chipArm = this.renderSeq + 2;
     this.tile = tileSize(this.dpr, state.width, state.height, this.scale.width / this.dpr, this.scale.height / this.dpr);
@@ -720,12 +720,12 @@ class BoardScene extends Phaser.Scene {
     this.fitCamera(true);
   }
 
-  /** 그리기 차례 번호 · 딱지별 마지막으로 보인 차례 (D-536 상태 딱지 도장) */
+  /** 그리기 차례 번호 · 딱지별 마지막으로 보인 차례 (D-538 상태 딱지 도장) */
   private renderSeq = 0;
   private chipSeen = new Map<string, number>();
   private chipArm = 0;
   /**
-   * 상태 딱지가 새로 붙는 순간 (D-536, D-193 「도장」 박자): 계단 3장으로 크게 찍혔다 제자리 + 도장 소리.
+   * 상태 딱지가 새로 붙는 순간 (D-538, D-193 「도장」 박자): 계단 3장으로 크게 찍혔다 제자리 + 도장 소리.
    * 이미 붙어 있던 딱지(직전 그리기에도 있던 것)는 그대로 둔다. 움직임 줄이기면 소리만.
    */
   private chipPop(im: Phaser.GameObjects.Image, name: string, id: number): void {
@@ -896,7 +896,7 @@ class BoardScene extends Phaser.Scene {
     // 정예 (검문!): 오른쪽 위 진홍 왕관 딱지 — HP 두 배
     // 딱지 (2026-11-05 도트 명패, tools/pixel/board_chips.py): 정예 = 왕관 · 자폭 폰 = 불꽃 · 되받아치는 반장 킹 = 발톱 — 오른쪽 위,
     // 원수 = 해골 — 왼쪽 위. 치기 전에 "이 기물은 물어뜯는다"가 보인다 (D-175 · D-178)
-    // 딱지 크기 (D-536): 16도트 딱지 1도트 = 캔버스 정수 픽셀(칸의 약 36%에 가까운 정수배) · 자리도 캔버스 픽셀에 맞춘다
+    // 딱지 크기 (D-538): 16도트 딱지 1도트 = 캔버스 정수 픽셀(칸의 약 36%에 가까운 정수배) · 자리도 캔버스 픽셀에 맞춘다
     const snap = (v: number) => Math.round(v * this.dpr) / this.dpr;
     const chipSize = (Math.max(1, Math.round((t * 0.36 * this.dpr) / 16)) * 16) / this.dpr;
     const chipAt = (name: string, left: boolean) => {
@@ -1014,7 +1014,7 @@ class BoardScene extends Phaser.Scene {
   }
 
   /**
-   * 판 위 글 표지(배수 「×N」 · 합 「+N」)의 등장 · 퇴장 (D-536, D-216): 튀어나옴(계단 셋: 작게 → 크게 → 제자리, 떠오름) → 머묾
+   * 판 위 글 표지(배수 「×N」 · 합 「+N」)의 등장 · 퇴장 (D-538, D-216): 튀어나옴(계단 셋: 작게 → 크게 → 제자리, 떠오름) → 머묾
    * → 아래부터 네 계단으로 잘려 사라진다. 투명도 보간 · 선형 이동 없음. 모두 600ms 안.
    */
   private popText(o: Phaser.GameObjects.Text, rise: number, hold = 330): void {
@@ -1029,7 +1029,7 @@ class BoardScene extends Phaser.Scene {
   }
 
   /**
-   * 떠오르는 숫자 자리 (D-536): 기물 얼굴을 덮지 않게 칸 위 끝(2×2 반장은 2×2 위 끝)에 바닥을 대고 조금만 떠오른다.
+   * 떠오르는 숫자 자리 (D-538): 기물 얼굴을 덮지 않게 칸 위 끝(2×2 반장은 2×2 위 끝)에 바닥을 대고 조금만 떠오른다.
    * 반환 = 가운데 아래 기준점 (월드)
    */
   private popAt(sp: PieceSprite): { x: number; y: number } {
@@ -1105,7 +1105,7 @@ class BoardScene extends Phaser.Scene {
       const x = Math.round(im.x / t);
       const yTop = Math.round(im.y / t);
       const y0 = im.y;
-      // D-536: 투명도 보간 없이 — 차례가 되면 계단으로 나타나(위에서) 떨어져 박힌다
+      // D-538: 투명도 보간 없이 — 차례가 되면 계단으로 나타나(위에서) 떨어져 박힌다
       im.setVisible(false).setY(y0 - t * 0.4);
       this.time.delayedCall((x + yTop) * 32, () => im.active && im.setVisible(true));
       this.tweens.add({ targets: im, y: y0, delay: (x + yTop) * 32, duration: 300, ease: 'Back.easeOut' });
@@ -1177,7 +1177,7 @@ class BoardScene extends Phaser.Scene {
     const h = img.displayHeight;
     const x = img.x;
     const y = img.y;
-    // D-536: 0 → 1 투명도 보간 대신 차례가 되면 바로 보인다(크게 · 기울어) → 떨어져 박힌다
+    // D-538: 0 → 1 투명도 보간 대신 차례가 되면 바로 보인다(크게 · 기울어) → 떨어져 박힌다
     img.setOrigin(0.5).setPosition(x + w / 2, y + h / 2).setAngle(A.fromAngle).setDisplaySize(w * A.fromScale, h * A.fromScale).setVisible(false);
     this.time.delayedCall(i * 90, () => img.active && img.setVisible(true));
     this.tweens.add({ targets: img, angle: 0, displayWidth: w, displayHeight: h, delay: i * 90, duration: A.drop, ease: 'Back.easeOut', onComplete: () => sfx('land') });
@@ -1356,7 +1356,7 @@ class BoardScene extends Phaser.Scene {
   /** 타격 카메라의 지금 목표 줌 */
 
   /*
-   * 타격 카메라 (D-115) 줌 · 당김은 D-536에서 뺐다: 소수 배율 줌(1.1 · 1.18 · 1.25, Sine 보간)이 판 도트 크기를 매 프레임 바꿨다.
+   * 타격 카메라 (D-115) 줌 · 당김은 D-538에서 뺐다: 소수 배율 줌(1.1 · 1.18 · 1.25, Sine 보간)이 판 도트 크기를 매 프레임 바꿨다.
    * 정수 배율로 맞추면 판(20도트)과 기물(72도트)이 함께 정수가 되는 배율이 2배뿐이라, 예비 → 터짐 → 출렁은 기물 몸짓 · 정지 · 흔들림이 맡는다.
    */
 
@@ -1430,7 +1430,7 @@ class BoardScene extends Phaser.Scene {
     if (h.killed) this.killStreak++;
     // 강타 (D-184): 붉은 컷 한 프레임 · 가장자리 붉은 맥 두 번
     if (!this.calm && !h.killed && dealt / ts.piece.maxHp >= IMPACT.heavy.heavyAt) {
-      // D-536: 화면 전체 카메라 번쩍(투명도 보간) 대신 판 가장자리 진홍 테 한 장(계단) — 번쩍임 줄이기면 없다
+      // D-538: 화면 전체 카메라 번쩍(투명도 보간) 대신 판 가장자리 진홍 테 한 장(계단) — 번쩍임 줄이기면 없다
       if (!reduceFlash()) this.edgeCut(IMPACT.heavy.cut);
       if (mine) window.setTimeout(() => vignette('bad', 0.8), 360);
     }
@@ -1443,7 +1443,7 @@ class BoardScene extends Phaser.Scene {
     const was = Math.round((12 * Math.max(0, before)) / ts.piece.maxHp);
     const now = Math.round((12 * Math.max(0, h.hpAfter)) / ts.piece.maxHp);
     // 피해 숫자 (D-051·D-053): 도트 그림 숫자, 튀어나와 떠올랐다가 아래부터 지워진다. 처치 = 금, 내 기물 = 붉음
-    // 막힘(피해 0, D-536): 「-0」 숫자 대신 받은 방패 아이콘(intent-shield) — 원칙 4 (숫자만으로 구분하지 않는다)
+    // 막힘(피해 0, D-538): 「-0」 숫자 대신 받은 방패 아이콘(intent-shield) — 원칙 4 (숫자만으로 구분하지 않는다)
     const at = this.popAt(ts);
     if (dealt <= 0 && !h.killed) this.blockedMark(at.x, at.y);
     const art = buildPopupArt(dealt <= 0 && !h.killed ? '' : `-${dealt}`, h.killed ? 0xfacc15 : ts.piece.side === 0 ? 0xff6b6b : 0xf4f1ea);
@@ -1578,7 +1578,7 @@ class BoardScene extends Phaser.Scene {
           const e = 1 - (1 - k) ** 2.2;
           for (const f of frags) {
             f.img.setPosition(f.x + Math.cos(f.a) * f.v * e, f.y + Math.sin(f.a) * f.v * e * 0.8 + t * 1.4 * k * k * power);
-            // 조각은 투명해지지 않고 제 차례(조각마다 다른 때)에 하나씩 꺼진다 — 도트 디더 퇴장의 조각판 (D-536)
+            // 조각은 투명해지지 않고 제 차례(조각마다 다른 때)에 하나씩 꺼진다 — 도트 디더 퇴장의 조각판 (D-538)
             f.img.setRotation(f.r * e).setVisible(k < 0.6 + 0.4 * hashN(f.v * 13 + f.r * 7));
             if (o.hot && k > 0.22) f.img.clearTint();
           }
@@ -1630,7 +1630,7 @@ class BoardScene extends Phaser.Scene {
         onUpdate: (tw) => {
           const k = tw.getValue() ?? 0;
           const on = ((k * k * 7) % 1) < 0.45;
-          // 점멸 세기는 4계단 (D-536 — 연속 투명도 대신)
+          // 점멸 세기는 4계단 (D-538 — 연속 투명도 대신)
           glow.setAlpha(Math.round((k > 0.88 ? (k - 0.88) / 0.12 : on ? 0.18 + 0.5 * k : 0) * 4) / 4);
           g.clear();
           drawCharge(pen, s.root.x + t / 2, cy, t * 0.9, k, s.piece.id * 7 + 3, pal, on);
@@ -1941,7 +1941,7 @@ class BoardScene extends Phaser.Scene {
         this.announce(`${e.side === 1 ? '적' : '내'} 킹이 왕관을 내려놓는다 — 명예로운 항복`);
         const k = this.sprites.get(e.pieceId);
         if (k) {
-          // D-536: 투명도 왕복 대신 두 번 계단 끄덕임(1도트 내려앉음)
+          // D-538: 투명도 왕복 대신 두 번 계단 끄덕임(1도트 내려앉음)
           const ky = k.root.y, dd = t / BOARD_DOTS;
           for (const dy of [dd, 0, dd, 0]) { k.root.setY(ky + dy); await this.wait(150); }
           const ash = this.playCrumble(k);
@@ -1985,7 +1985,7 @@ class BoardScene extends Phaser.Scene {
               if (dk > 0) drawTakeoffDust(pen, from.x + t / 2, from.y + t * 0.85, dk);
               if (ms >= MOVE_MS.lift && m.landQ < 0) trail.push({ x: s.root.x, y: s.root.y });
               if (m.landQ >= 0 && landAt < 0) landAt = ms;
-              // D-536: 잔상은 불투명 단색(흰 실루엣) — 착지 뒤 오래된 것부터 하나씩 계단으로 꺼진다(투명도 보간 없음)
+              // D-538: 잔상은 불투명 단색(흰 실루엣) — 착지 뒤 오래된 것부터 하나씩 계단으로 꺼진다(투명도 보간 없음)
               const gone = landAt < 0 ? 0 : Math.floor((ms - landAt) / 60) + 1;
               if (trail.length > 1)
                 IMPACT.ghosts.forEach((gh, i) => {
@@ -2099,7 +2099,7 @@ class BoardScene extends Phaser.Scene {
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
       const base = { x: atk.root.x, y: atk.root.y };
       // 세기(피해·처치)가 클수록 뛰어올라 모았다가 터뜨린다 (D-064)
-      // 박자 예산 (D-536): 공격 1회 ≤ FX_BUDGET.attack, 처치가 있으면 공격 연출을 FX_BUDGET.killFx로 줄이고 무너짐을 타격 순간부터 겹쳐 흘린다
+      // 박자 예산 (D-538): 공격 1회 ≤ FX_BUDGET.attack, 처치가 있으면 공격 연출을 FX_BUDGET.killFx로 줄이고 무너짐을 타격 순간부터 겹쳐 흘린다
       const killing = e.hits.some((h) => h.killed && this.sprites.get(h.targetId)?.piece.type !== 'K');
       const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
@@ -2127,7 +2127,7 @@ class BoardScene extends Phaser.Scene {
             vignette('bad', Math.min(1, (h.damage / Math.max(1, ts.piece.maxHp)) * 2.2 + (h.killed ? 0.4 : 0)));
             if (h.killed) sfx('hurt');
           }
-          // 처치 (D-536): 무너짐을 타격 순간부터 — 다음 공격 · 입력과 겹쳐 흘러도 된다. 킹은 마무리 연출이 따로 맡는다
+          // 처치 (D-538): 무너짐을 타격 순간부터 — 다음 공격 · 입력과 겹쳐 흘러도 된다. 킹은 마무리 연출이 따로 맡는다
           if (h.killed && ts.piece.type !== 'K' && ts.root.active) {
             early.push(this.shatterPiece(ts, 1, 1, {}, FX_BUDGET.crumble));
             ts.root.destroy();
