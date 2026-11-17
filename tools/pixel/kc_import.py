@@ -38,7 +38,7 @@ def main(dry=False, measure=False):
     p = small.load()
     for y in range(small.height):
         for x in range(small.width):
-            if kit.is_key(p[x, y]):
+            if kit.is_key(p[x, y]) or gm.is_key_fringe(p[x, y]):  # 바탕 마젠타 + 번진 분홍 칸
                 p[x, y] = (0, 0, 0, 0)
     op = np.asarray(small)
     pal, rep = gm.keep_hue_palette(op[op[:, :, 3] > 0][:, :3], n=g.get('colors', 20))

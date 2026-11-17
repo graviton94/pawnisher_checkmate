@@ -332,24 +332,45 @@ def _same_hue(a, b, tol=24.0, grey=0.18):
     return min(d, 360 - d) <= tol
 
 
+def reduce_colors(pixels, n):
+    """대표 n색: 5비트 묶음(묶음마다 평균)에서 시작해 가장 가까운 두 색을 칸 수 가중으로 합치기를 n색이 될 때까지.
+    중앙값 자르기는 칸 수가 많은 쪽(흰 몸 · 먹)을 잘게 나누느라 면적이 작은 색상(금 목걸이 · 청록 고리)을 회색에 묻었다 —
+    거리로만 합치면 면적이 작아도 색상이 다른 덩어리가 끝까지 남는다. 반환 [(색, 칸 수)]"""
+    a = np.asarray(pixels, np.int64).reshape(-1, 3)
+    key = ((a[:, 0] >> 3) << 10) | ((a[:, 1] >> 3) << 5) | (a[:, 2] >> 3)
+    vals, inv, cnt = np.unique(key, return_inverse=True, return_counts=True)
+    cols = np.zeros((len(vals), 3))
+    np.add.at(cols, inv, a)
+    cols /= cnt[:, None]
+    w = cnt.astype(float)
+    cols = list(cols)
+    w = list(w)
+    wt = np.array([3.0, 4.0, 2.0])
+    while len(cols) > n:
+        C = np.array(cols)
+        d = (((C[:, None, :] - C[None, :, :]) ** 2) * wt).sum(-1)
+        np.fill_diagonal(d, np.inf)
+        i, j = np.unravel_index(int(d.argmin()), d.shape)
+        if i > j:
+            i, j = j, i
+        tot = w[i] + w[j]
+        cols[i] = (cols[i] * w[i] + cols[j] * w[j]) / tot
+        w[i] = tot
+        del cols[j], w[j]
+    return [(tuple(int(round(v)) for v in c), int(k)) for c, k in zip(cols, w)]
+
+
 def keep_hue_palette(pixels, n=20, snap_dist=22.0, master=None):
-    """받은 그림 자신의 대표 n색(중앙값 자르기, 디더 없음)을 만들고, 게임 마스터 색과 snap_dist 안이고 색상 집안이 같으면(_same_hue) 그 색으로 붙인다.
+    """받은 그림 자신의 대표 n색(reduce_colors — 거리 합치기)을 만들고, 게임 마스터 색과 snap_dist 안이고 색상 집안이 같으면(_same_hue) 그 색으로 붙인다.
     먼 색(크림 · 보라 갈색 바닥처럼 마스터에 없는 색상)은 그대로 둔다 — 가장 가까운 회색 · 빨강으로 바뀌어 색상이 뒤집히지 않게.
     pixels: (N, 3) 불투명 칸 색. 반환 (팔레트, [(대표색, 붙은 색, 거리, 칸 수)])"""
     master = master or master_palette()
-    a = np.asarray(pixels, np.uint8).reshape(1, -1, 3)
-    q = Image.fromarray(a, 'RGB').quantize(colors=n, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-    pal = q.getpalette()[:n * 3]
-    cnt = np.bincount(np.asarray(q).ravel(), minlength=n)
     res, rep = [], []
-    for i in range(n):
-        if not cnt[i]:
-            continue
-        c = tuple(pal[i * 3:i * 3 + 3])
+    for c, k in reduce_colors(pixels, n):
         m = min(master, key=lambda v: _dist(c, v))
         d = _dist(c, m)
         t = m if d <= snap_dist and _same_hue(c, m) else c
-        rep.append(('#%02X%02X%02X' % c, '#%02X%02X%02X' % t, round(d, 1), int(cnt[i])))
+        rep.append(('#%02X%02X%02X' % c, '#%02X%02X%02X' % t, round(d, 1), k))
         if t not in res:
             res.append(t)
     return res, rep
@@ -364,6 +385,13 @@ def map_palette(img, pal):
     d = (((rgb[:, :, None, :] - p[None, None, :, :]) ** 2) * w).sum(-1)
     a[:, :, :3] = p[d.argmin(-1)].astype(np.uint8)
     return Image.fromarray(a, 'RGBA')
+
+
+def is_key_fringe(c):
+    """마젠타 바탕과 그 번짐(분홍 · 자주 끼, 색상 280~325도 · 채도 ≥ 0.35 · 명도 ≥ 0.45) — 투명으로 칠 칸"""
+    import colorsys
+    h, s, v = colorsys.rgb_to_hsv(*[x / 255 for x in c[:3]])
+    return 280 <= h * 360 <= 325 and s >= 0.35 and v >= 0.45
 
 
 def alpha_clean(img):
