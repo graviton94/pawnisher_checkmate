@@ -4323,3 +4323,11 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **라이선스**: FluidR3_GM MIT 전문을 설정 → 만든 사람(`src/data/licenses.ts`)과 `docs/CREDITS.md`에 올렸다. 사운드폰트 파일은 싣지 않는다.
 - **크기**: 출시 빌드 dist 16.93 → 26.35 MB (+9.42 MB: 음악 +10.07 · 효과음 −0.65). 음악의 반(4.9 MB)은 iOS Safari 옛판용 M4A — 안드로이드 · PC(크로미엄)는 OGG만 쓰므로 APK · PC 묶음에서 M4A를 빼면 −4.9 MB(다음 결정거리).
 - **검증**: `node tools/slice-observe.cjs music`(915×412) — 첫 누름 전 곡 요청 0, 타이틀 = waltz, 지도 = 같은 왈츠 이어짐(재요청 없음), 대국 1~3막 = anvil 1.0 · 1.059 · 1.122, 반장 = anvil-boss, 도금왕 = crown-final, 출하 끝 = crown, 4xx/5xx · 오류 0, 음악 크기 0.28 → 0.24 → 끔 0(끈 뒤 새 재생 0, 다시 켜면 지금 장면 곡), 화면 가림 → suspended → 돌아옴 running. 부팅 중앙값 1250(이전 빌드) / 1018 ms(새 빌드), 효과음 점검 53파일 · 오류 0. 헤드리스라 귀로 듣는 확인은 사용자 몫(시안 페이지).
+
+### D-546 — 안드로이드 · PC 묶음에서 M4A 소리 사본을 뺀다 (2026-11-17, 리드 결정)
+
+- **왜**: D-545로 dist가 +9.4 MB 늘었고 그 중 M4A(iOS Safari 옛판용)가 4.79 MB. 캐패시터 웹뷰 · 일렉트론은 크로미엄이라 늘 OGG를 푼다.
+- **어떻게**: 새 `npm run build:native`(`tools/build-native.cjs`) = `build:release`를 `VITE_AUDIO_OGG_ONLY=1`로 빌드 → `dist/audio/**/*.m4a` 삭제(짝 ogg가 없으면 멈춤). `android:sync` · `pc:dist`가 이것을 부른다(CI의 APK · AAB · PC 작업 모두 이 둘을 거친다). 웹 빌드(`build` · `build:release`)는 M4A를 그대로 싣는다.
+- **방어** (`src/audio/file.ts`, 효과음 · 음악 공용 받기): 웹은 canPlayType으로 고른 형식 → 없거나 못 풀면 다른 형식 한 번 더. 네이티브 묶음은 OGG만 찾는다(m4a 404 기록이 남지 않게) — OGG를 못 풀면 그 소리만 조용히 빠진다(오류 없음).
+- **크기**: 출시 dist 26.35 MB(웹, M4A 58개 포함) → 21.33 MB(네이티브, −5.03 MB). D-545 전 16.93 MB 대비 네이티브 증가는 +4.40 MB.
+- **확인** (915×412 터치, 출시 빌드 메뉴 → 출하 → 첫 장면): 네이티브 — 효과음 53 · 음악 waltz · anvil OGG 받음, m4a 요청 0 · 4xx 0 · JS 오류 0, 음악 재생 2. canPlayType을 빈 값으로 속여도 같은 결과(OGG만 찾고 오류 없음). 웹 출시 빌드에서 속이면 M4A 55개를 받아 재생 · 4xx 0.

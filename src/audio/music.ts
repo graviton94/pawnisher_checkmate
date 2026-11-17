@@ -1,5 +1,6 @@
 import { MUSIC_CACHE, MUSIC_VOLUME, MUSIC_XFADE_MS, TRACKS, type MusicFile, type TrackId } from '../data/music';
 import { bgMuted } from './bg';
+import { loadAudio } from './file';
 
 /**
  * 배경 음악 재생기 (D-545 — D-123의 칩튠 생성기를 대신한다): 곡 파일(`public/audio/music/`)을 WebAudio 루프로 튼다.
@@ -55,14 +56,6 @@ const ensure = (): AudioContext | null => {
   return ctx;
 };
 
-/** 이 브라우저가 OGG Vorbis를 풀면 ogg, 아니면 m4a (iOS Safari 옛판) — 효과음과 같은 규칙 */
-const ext = (): 'ogg' | 'm4a' => {
-  try {
-    return new Audio().canPlayType('audio/ogg; codecs="vorbis"') ? 'ogg' : 'm4a';
-  } catch {
-    return 'ogg';
-  }
-};
 /** 풀어 둔 곡 (최근 쓴 순 — 맨 뒤가 가장 최근) */
 const cache = new Map<MusicFile, Promise<AudioBuffer>>();
 const load = (a: AudioContext, file: MusicFile): Promise<AudioBuffer> => {
@@ -72,9 +65,7 @@ const load = (a: AudioContext, file: MusicFile): Promise<AudioBuffer> => {
     cache.set(file, hit);
     return hit;
   }
-  const p = fetch(`audio/music/${file}.${ext()}`)
-    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${file} ${r.status}`))))
-    .then((ab) => new Promise<AudioBuffer>((ok, no) => a.decodeAudioData(ab, ok, no)));
+  const p = loadAudio(a, 'music', file);
   p.catch(() => cache.delete(file));
   cache.set(file, p);
   while (cache.size > MUSIC_CACHE) cache.delete(cache.keys().next().value as MusicFile);

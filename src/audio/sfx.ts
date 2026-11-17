@@ -8,6 +8,7 @@ import { SFX_BANK, SFX_COMBO_MAX, SFX_DEDUPE_MS, SFX_VOICES, SFX_VOICES_PER_KIND
 export type { SfxKind } from '../data/sfx';
 
 import { bgMuted } from './bg';
+import { loadAudio } from './file';
 
 const KEY = 'pawnisher.sfx';
 let ctx: AudioContext | null = null;
@@ -65,27 +66,16 @@ const audio = (): AudioContext | null => {
   return ctx;
 };
 
-/** 이 브라우저가 OGG Vorbis를 풀면 ogg, 아니면 m4a (iOS Safari 옛판) */
-const ext = (): 'ogg' | 'm4a' => {
-  try {
-    return new Audio().canPlayType('audio/ogg; codecs="vorbis"') ? 'ogg' : 'm4a';
-  } catch {
-    return 'ogg';
-  }
-};
 const bufs = new Map<string, AudioBuffer>();
 let loading = false;
 /** 모든 소리 파일을 받아 풀어 둔다 (한 번만). 실패한 파일은 조용히 빠진다 */
 const loadAll = (a: AudioContext): void => {
   if (loading) return;
   loading = true;
-  const e = ext();
   for (const [kind, d] of Object.entries(SFX_BANK)) {
     for (let v = 1; v <= d.n; v++) {
       const name = d.n > 1 ? `${kind}${v}` : kind;
-      void fetch(`audio/sfx/${name}.${e}`)
-        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
-        .then((ab) => new Promise<AudioBuffer>((ok, no) => a.decodeAudioData(ab, ok, no)))
+      void loadAudio(a, 'sfx', name)
         .then((b) => void bufs.set(name, b))
         .catch(() => undefined);
     }
