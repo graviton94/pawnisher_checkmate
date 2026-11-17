@@ -4201,3 +4201,17 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **조사**: 「내린 자리 둘레**을** 친다」(메뚜기) · `${done.join}을` · `${CHARMS.revive.name}를` · `${NAMES[t]}이다` 등 바뀌는 글 뒤에 박은 조사를 `josa()` · 새 `copula()`로, 숫자 뒤는 단위(칸)로 고정. `tests/josa.test.ts`가 `src/data` · `src/slice` 소스를 훑어 `${…}` 바로 뒤에 손으로 박은 을/를 · 이/가 · 은/는 · 과/와 · (으)로를 막는다.
 - 새 그림 없음(D-386) — ACT-3은 이미 있는 `act-3`을 쓴다.
 - 검증: `tsc` · `npm test`(카드 규격 `tests/card-spec.test.ts` 포함) · `npx jiti tools/storyboard.ts` · 915×412 전수 점검(`tools/qa/sweep.cjs`) title · prologue · act · ending 12화면 120장 TXT 0 · 오류 0, drill 묶음 band-walk(시험대 B 뒤 PRO-08 컷을 지나 C까지) 39걸음 · 코치 10단계 어긋남 0 · TXT 0. 하네스는 band-walk에서 PRO-08 컷을 [건너뛴다]로 넘긴다.
+
+### D-537 — 출시 전 코드 리뷰 반영: 타이틀 3초 상한 · 갈무리 줄이기 · Phaser 늦게 · 뒤로 키 · 공짜 되감기 · PC 창 단단히 · 새 판 저장 (2026-11-17)
+
+- **왜**: 출시 전 코드 리뷰(버그 · 최적화)의 1 · 2 · 3 · 4 · 6 · 7 · 8 · 9 · 10 · 12번. 화면은 바뀌지 않는다(915×412 타이틀 · 대국 · 지도 전후 대조 — 글리프 · 판 같음, 차이는 움직이는 글자 물결 프레임과 지도 무작위 배치뿐).
+- **타이틀 (1 · 5 · 8)**: 타이틀 전에는 글꼴 + 타이틀 그림(로고 · 문장 조각 · 로딩 막대 · `prologue-00`)만 기다리고 상한 9초 → 3초. 기물 · 판 칸 · UI · 첫 장면은 타이틀이 뜬 직후 뒤에서(넷씩), 나머지는 쉬는 틈에(`warmup.ts` 세 묶음). 타이틀이 보이는 시각(헤드리스 크롬, 리뷰 측정 방식): DPR 2.625 10.1초 → 1.0초, DPR 1 5.5초 → 0.7초, CPU ×4 · 10 Mbps 13.6초 → 2.3초. 코드가 부르지 않는 장면 23장(2.9 MB)은 그대로 두되 act-0 · entry-check · entry-battle은 미리 받지 않는다. 묶음 안 그림 미리 받기는 4 KB 이상 7장만(`tools/gen-preload.cjs` → `src/data/preload-bundled.ts`) — 예전 glob이 작은 그림을 JS에 base64로 한 벌 더 넣었다.
+- **갈무리 줄이기 (2)**: 빌드 전 `tools/subset-fonts.mjs`(npm `subset-font`, 오프라인 wasm)가 src/에서 쓰는 글자 + ASCII만 남긴 woff2를 `src/fonts-sub/`에 만든다(저장소 밖). 4종 1.66 MB → 104 KB. 원본은 줄인 글꼴과 겹치지 않는 unicode-range로 남아 예상 못 한 글자가 나올 때만 받는다(겹치면 `document.fonts.load`가 둘 다 받았다). Phaser 글자 높이 재기 문자열(`|MÃ‰qgy`)도 넣었다. 쓰는 글자가 빠지면 도구와 `tests/font-subset.test.ts`가 실패한다. 대가: main.css +70 KB(gzip +10 KB, unicode-range 목록).
+- **Phaser (6 · 7)**: Phaser를 `phaser.js`로 따로 묶고(1.19 MB), 판(`BoardRenderer`)은 `src/view/lazyBoard.ts`가 타이틀이 뜬 뒤 불러온다 — 그 전에 부른 판 함수는 차례대로 쌓아 둔다. main.js 2.10 MB → 0.64 MB. Phaser `audio.noAudio`(쓰지 않는 세 번째 AudioContext 제거). 효과음 소리 장치는 4초 조용하면, 음악은 곡이 멈추면 쉰다.
+- **안드로이드 뒤로 (3)**: `keys.ts hardwareBack()` = 키보드 Esc · 패드 B와 같은 길(창 · 엿보기 → 화면 닫기 단추 → 고른 카드 · 기물 내려놓기). 컷신 「건너뛴다」도 이 길에. 아무것도 안 했을 때만 두 번 눌러 닫기.
+- **공짜 되감기 (4)**: `endTurn` · `playCard`를 엔진이 푼 직후(연출 전)에 판을 저장한다(`FightSave.rites` · `stand` — 못 본 폐기 의식 · 사선은 이어 갈 때 판이 선 뒤에). 남은 것: 적 차례에 킹이 쓰러진 판(winner 정해짐)은 저장하지 않아, 패배 창 앞에서 닫으면 여전히 앞 턴으로 이어진다.
+- **PC (9)**: 게임 페이지 밖 이동 · 새 창 · 웹뷰 막기, sandbox 명시, IPC는 우리 창 맨 위 문서만, 출시 빌드 CSP(바깥 주소 없음 — 스크립트 'unsafe-inline'은 안드로이드 Capacitor 다리 때문), 끝내기 전 저장(`platform.onBeforeQuit`).
+- **새 판 저장 (10)**: 저장 v · 기록 mv가 지금보다 크면 읽지도 고치지도 덮어쓰지도 지우지도 않고(.bak 그대로), 타이틀에서 시스템 투 알림 한 번(`SAFETY_TEXT.newerSave`).
+- **게임패드 (12)**: 패드가 꽂혀 있고 화면이 보일 때만 읽는다.
+- 하지 않은 것: 11(PNG 재압축, 5%뿐). 리뷰 5의 안 쓰는 장면 23장은 지우지 않는다(사용자 확인 필요).
+- 검증: `npm test` · `tsc` · `npm run build:release` · 915×412 실제 화면(타이틀 → 프롤로그 → 첫 대국 CSP 오류 0, 뒤로 키 엿보기 · 선택 · 패배 컷, 적 연출 중 닫았다 이어하기 → 다음 턴, 새 판 기록 알림) · xvfb Electron `--smoke-test` 통과와 IPC · 이동 막기 점검.
