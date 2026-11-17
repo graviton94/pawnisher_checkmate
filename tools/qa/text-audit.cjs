@@ -1,6 +1,6 @@
 // 글자 점검 한 벌 (D-263) — tools/artguide/ui-audit.cjs · tools/qa/sweep.cjs가 같이 쓴다.
 // 지금 보이는 글 요소마다 갈무리 격자 크기(11: 12·24·36 / 14: 15·30·45·60) · 서체 · 갈무리14 굵게 · 넘침 · 말줄임을 본다.
-// 글자 잉크 점검 (D-546): 글자마다 실제 잉크 높이(canvas measureText의 actualBoundingBox — 계산된 서체 그대로)를
+// 글자 잉크 점검 (D-549): 글자마다 실제 잉크 높이(canvas measureText의 actualBoundingBox — 계산된 서체 그대로)를
 // 글자 자리(Range 사각)에 얹어, ① 자르는 조상(overflow ≠ visible)의 안쪽 밖으로 잉크가 나가면 「잘림 위/아래 N」,
 // ② 가장 가까운 꾸민 상자(바탕 · 테 · 9-slice · 그림자 — 칩 · 명판 · 단추 · 띠)의 안쪽 가장자리에서 잉크까지 2px가 안 되면
 // 「빠듯 위/아래 N」(음수 = 잉크가 상자 테를 넘어선다)으로 적는다. 판 위(Phaser) 글은 sliceApi.boardTexts()가 주는
@@ -8,7 +8,9 @@
 
 /** 브라우저 안에서 도는 잉크 점검 — 자세한 상자 목록을 돌려준다 (자르기 · 전후 대조에도 쓴다) */
 function inkProbe(opt) {
-  const ROOM = opt?.room ?? 2;
+  // 여유 기준 (D-549 소유자 실기 피드백 「배경이 글자에 너무 딱 맞는다」): 면 안쪽(9-slice는 외곽선 · 빛 줄 2도트 안)에서
+  // 위아래 잉크 3px · 옆 글자 자리 4px 이상 — 보이는 테 가장자리로는 위아래 ≈ 5–7px · 옆 ≈ 6–8px
+  const ROOM = opt?.room ?? 3, ROOMX = opt?.roomX ?? 4;
   const cv = document.createElement('canvas').getContext('2d');
   const cache = new Map();
   const ink = (font, ch) => {
@@ -18,14 +20,15 @@ function inkProbe(opt) {
     return m;
   };
   const vis = (el) => { for (let a = el; a; a = a.parentElement) { const c = getComputedStyle(a); if (c.display === 'none' || c.visibility === 'hidden' || a.hidden || +c.opacity === 0) return false; } return true; };
-  const decorated = (c) => {
-    const bg = c.backgroundColor;
-    if (bg && bg !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(bg)) return true;
-    if (c.backgroundImage && c.backgroundImage !== 'none') return true;
-    if (c.borderImageSource && c.borderImageSource !== 'none') return true;
-    if (['Top', 'Bottom'].some((s) => parseFloat(c[`border${s}Width`]) > 0 && c[`border${s}Style`] !== 'none' && !/rgba\([^)]*,\s*0\)$/.test(c[`border${s}Color`]))) return true;
-    return false;
+  const shown = (col) => !/rgba\([^)]*,\s*0\)$/.test(col) && col !== 'transparent';
+  /** 꾸민 상자인가 — 바탕(색 · 그림 · 9-slice)이면 네 변 모두, 테두리만이면 테가 있는 변만 (가로줄 하나는 위아래 · 옆 여유를 따지지 않는다) */
+  const sides = (c) => {
+    if (shown(c.backgroundColor) || (c.backgroundImage && c.backgroundImage !== 'none') || (c.borderImageSource && c.borderImageSource !== 'none')) return { t: 1, b: 1, l: 1, r: 1 };
+    const o = {};
+    for (const [k, S] of [['t', 'Top'], ['b', 'Bottom'], ['l', 'Left'], ['r', 'Right']]) if (parseFloat(c[`border${S}Width`]) > 0 && c[`border${S}Style`] !== 'none' && shown(c[`border${S}Color`])) o[k] = 1;
+    return o;
   };
+  const decorated = (c) => { const o = sides(c); return !!(o.t || o.b || o.l || o.r); };
   /** 다른 층(창 · 막 · 컷)이 위를 덮은 글은 지금 보이지 않는다 — 첫 글자 가운데에서 이 요소보다 위에 남이 있으면 덮인 것 */
   const covered = (el, nodes) => {
     const rg = document.createRange();
@@ -65,18 +68,18 @@ function inkProbe(opt) {
         if (needPos) needPos = false;
         const ar = a.getBoundingClientRect();
         const s = a.offsetHeight ? ar.height / a.offsetHeight : 1;
-        const inner = { t: ar.top + parseFloat(c.borderTopWidth) * s, b: ar.bottom - parseFloat(c.borderBottomWidth) * s, el: a };
+        const inner = { t: ar.top + parseFloat(c.borderTopWidth) * s, b: ar.bottom - parseFloat(c.borderBottomWidth) * s, l: ar.left + parseFloat(c.borderLeftWidth) * s, r: ar.right - parseFloat(c.borderRightWidth) * s, el: a };
         if (c.overflowY !== 'visible') clips.push({ ...inner, scroll: c.overflowY === 'auto' || c.overflowY === 'scroll' });
         if (!frame && decorated(c) && ar.height < VH * 0.6) {
           // 9-slice 틀(border-image)은 테 칸에도 면이 그려진다 — 보이는 면 = 바깥 테두리에서 2도트(외곽선 + 빛 줄) 안
-          if (c.borderImageSource && c.borderImageSource !== 'none') { const px = (parseFloat(c.getPropertyValue('--px')) || 2) * s; frame = { t: ar.top + 2 * px, b: ar.bottom - 2 * px, el: a }; }
-          else frame = inner;
+          if (c.borderImageSource && c.borderImageSource !== 'none') { const px = (parseFloat(c.getPropertyValue('--px')) || 2) * s; frame = { t: ar.top + 2 * px, b: ar.bottom - 2 * px, l: ar.left + 2 * px, r: ar.right - 2 * px, el: a, sides: { t: 1, b: 1, l: 1, r: 1 } }; }
+          else frame = { ...inner, sides: sides(c) };
         }
       }
       if (c.position === 'absolute') needPos = true;
       if (c.position === 'fixed') break;
     }
-    let top = Infinity, bot = -Infinity, rt = Infinity, rb = -Infinity, clipT = 0, clipB = 0, n = 0;
+    let top = Infinity, bot = -Infinity, rt = Infinity, rb = -Infinity, lft = Infinity, rgt = -Infinity, clipT = 0, clipB = 0, n = 0;
     const rg = document.createRange();
     for (const tn of nodes) {
       const s = tn.textContent;
@@ -99,7 +102,7 @@ function inkProbe(opt) {
           if (c.scroll && (q.top < c.t - 0.5 || q.bottom > c.b + 0.5)) continue; // 스크롤 중간에 걸친 줄
           clipT = Math.max(clipT, c.t - it); clipB = Math.max(clipB, ib - c.b);
         }
-        top = Math.min(top, it); bot = Math.max(bot, ib); rt = Math.min(rt, q.top); rb = Math.max(rb, q.bottom); n++;
+        top = Math.min(top, it); bot = Math.max(bot, ib); rt = Math.min(rt, q.top); rb = Math.max(rb, q.bottom); lft = Math.min(lft, q.left); rgt = Math.max(rgt, q.right); n++;
       }
     }
     if (!n) continue;
@@ -111,8 +114,14 @@ function inkProbe(opt) {
     if (frame && bot > frame.t && top < frame.b) {
       roomT = top - frame.t; roomB = frame.b - bot;
       if (!why.length) {
-        if (roomT < ROOM - 0.25) why.push(`빠듯 위 ${roomT.toFixed(1)}`);
-        if (roomB < ROOM - 0.25) why.push(`빠듯 아래 ${roomB.toFixed(1)}`);
+        const sd = frame.sides;
+        if (sd.t && roomT < ROOM - 0.25) why.push(`빠듯 위 ${roomT.toFixed(1)}`);
+        if (sd.b && roomB < ROOM - 0.25) why.push(`빠듯 아래 ${roomB.toFixed(1)}`);
+        // 옆: 글자 자리(옆 베어링 포함)가 상자 안쪽에서 ROOMX 미만 — 글자가 테에 붙어 보인다
+        if (rgt > frame.l && lft < frame.r) {
+          if (sd.l && lft - frame.l < ROOMX - 0.25) why.push(`빠듯 왼쪽 ${(lft - frame.l).toFixed(1)}`);
+          if (sd.r && frame.r - rgt < ROOMX - 0.25) why.push(`빠듯 오른쪽 ${(frame.r - rgt).toFixed(1)}`);
+        }
       }
     }
     if (!why.length) continue;

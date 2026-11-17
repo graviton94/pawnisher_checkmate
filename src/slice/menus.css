@@ -19,7 +19,7 @@ body[data-drill='b'] #btn-menu { visibility: hidden; }
 /* ---------- 일시 정지 메뉴 (S 352): 세 줄 격자 — [이어 간다] / [안내서 · 용어 | 설정] / [처음으로 | 출하 포기] ---------- */
 .pause-win .pause-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
 .pause-win .pause-grid > .btn { width: 100%; min-width: 0; }
-.pause-win .pause-grid > .pz-wide { grid-column: 1 / -1; font: 700 24px/1 Galmuri11, sans-serif; font-synthesis: none; }
+.pause-win .pause-grid > .pz-wide { grid-column: 1 / -1; font: 700 24px/var(--lh-24) Galmuri11, sans-serif; font-synthesis: none; }
 .pause-win .pz-note { margin: var(--s2) 0 0; text-align: center; }
 
 /* ---------- 9-slice 탭 (검수 M9 — 설정 · 출하 준비): 받은 탭 그림(35×19)은 위 4줄 · 아래 4줄 · 왼 20칸(청록 눈금 포함) · 오른 14칸만 모양이 있고
@@ -33,8 +33,8 @@ body[data-drill='b'] #btn-menu { visibility: hidden; }
 body.slice .opening .op-menu.op5 { width: min(352px, 40vw); gap: var(--s2); padding-block: 0; }
 body.slice .opening .op-menu.op5 > .op-main { position: relative; width: 100%; height: 64px; min-height: 64px; margin: 0; padding: 0 var(--s4); display: grid; justify-items: start; align-content: center; gap: 2px; border-right-width: calc(var(--k-btn-x) * var(--px)); border-image-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); }
 body.slice .opening .op-menu.op5 > .op-main::after { content: none; }
-body.slice .opening .op-menu.op5 > .op-main b { font: 700 24px/1 Galmuri11, sans-serif; font-synthesis: none; letter-spacing: 0; }
-body.slice .opening .op-menu.op5 > .op-main small { font: 400 12px/1.2 Galmuri11, sans-serif; color: inherit; }
+body.slice .opening .op-menu.op5 > .op-main b { font: 700 24px/var(--lh-24) Galmuri11, sans-serif; font-synthesis: none; letter-spacing: 0; }
+body.slice .opening .op-menu.op5 > .op-main small { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; color: inherit; }
 body.slice .opening .op-menu.op5 > .op-ship { height: 56px; min-height: 56px; }
 /* 메뉴 아이콘 (D-544 — 받은 MM-01 21×18도트, 장치 층 도트 --px 정수배 ≈ 40×34px): 출하 · 기록 · 설정 · 끝내기 단추 글 왼쪽 */
 .op-ico { flex: none; display: block; width: calc(var(--px) * 21); height: calc(var(--px) * 18); background: center / 100% 100% no-repeat; image-rendering: pixelated; }
@@ -48,8 +48,8 @@ body.slice .opening .op-menu.op5 > .op-ship { grid-auto-flow: column; justify-co
 /* 오늘의 도전을 아직 안 했다: 출하 단추 오른쪽 위 청록 점 (색 + 위치 — 글 없이 「새로 열림」) */
 .opening .op-ship > .op-dot { position: absolute; top: calc(var(--px) * 4); right: calc(var(--px) * 6); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #5eead4; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
 .opening .op-menu.op5 > .op-half { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
-.opening .op-menu.op5 > .op-half > .btn, .opening .op-menu.op5 > .op-quit { width: 100%; min-width: 0; height: 48px; min-height: 48px; font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
-.opening .op-menu.op5 > .op-dev > .btn { font: 400 12px/1 Galmuri11, sans-serif; }
+.opening .op-menu.op5 > .op-half > .btn, .opening .op-menu.op5 > .op-quit { width: 100%; min-width: 0; height: 48px; min-height: 48px; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
+.opening .op-menu.op5 > .op-dev > .btn { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; }
 /* 타이틀 문장 자간 (검수 L1): 0.2em은 한글에서 단어 사이처럼 보였다 */
 .op-tag { letter-spacing: 0.04em; }
 /* 장식 톱니는 메뉴 기둥에서 떨어진 왼쪽 아래 바닥으로 (검수 M1 — 누를 수 있는 물건처럼 보이면 안 된다) */
@@ -69,16 +69,16 @@ body.slice .opening.menu::after { right: auto; left: max(16px, env(safe-area-ins
 /* ---------- 기록 (M) · 통계 ---------- */
 .rec-win .rec-list > .choice { min-height: 48px; }
 .win .rec-stats { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s2) var(--s4); align-content: start; align-items: baseline; }
-.win .rec-stats > b { color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; }
+.win .rec-stats > b { color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
 
 /* ---------- 용어 칸 쪽 넘김 (검수 M4) ---------- */
 .win .inset.dict-box { flex: 1 1 auto; min-height: 0; overflow: hidden; }
 
 /* ---------- 대국 계기 이름 (검수 M3): 속전 계기 「속전」 · 되감기 단추 아래 「되감기」 — 12px ---------- */
-body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { margin-left: var(--s2); color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; }
+body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { margin-left: var(--s2); color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; }
 /* 꼬리표 자리: 단추 줄 위 14px를 비운다 (적의 수 칸 테를 밟지 않게) */
-body.slice.lay-f #right > .actions { margin-top: 18px; }
-#btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + 4px); color: var(--t-dim); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
+body.slice.lay-f #right > .actions { margin-top: 24px; } /* D-549: 「되감기」 이름표(줄 16) + 틈 4 + 위 칸과 여유 4 — 18이면 위 움푹 칸에 글자 위가 잘렸다 */
+#btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--k-btn-y) * var(--px) + 2px); /* 기준 = 안쪽 상자 — 9-slice 테 높이만큼 더 올린다 (D-549) */ color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
 
 /* ---------- H3 「쓸 수 없음」 단추 · 선택지: 단추 넷(kit.css --off)은 받은 MM-01 꺼짐 단추(D-544, tools/pixel/mm01_import.py — 9-slice 32×20 · 변 · 가운데 단색).
    선택지 · 손패 판(choice-off0 · hand-choice-off0)은 MM-01에 없어 보통 그림을 다시 칠한 임시본 그대로(tools/pixel/btn_off_interim.py) ---------- */
@@ -97,7 +97,7 @@ body.slice.lay-f #right > .actions { margin-top: 18px; }
 
 /* ---------- 문법 밖 창 둘을 표준 부품으로 (검수 M6): 사건 효과 쪽지 · 쓰러짐 의식 = panel-iron 9-slice (모든 창의 몸) ---------- */
 .win-scene .ws-detail { padding: var(--s2) var(--s3); background: #33313b padding-box; box-shadow: none; border-style: solid; border-width: calc(var(--k-win) * var(--px)); border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round; image-rendering: pixelated; }
-.win-scene :is(.ws-detail-close, .ws-detail-next).btn.k-iron { min-width: calc(var(--px) * 40); min-height: 0; height: calc(var(--px) * 20); padding: 0 var(--s2); background: none; border-style: solid; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch; color: var(--fg); font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.win-scene :is(.ws-detail-close, .ws-detail-next).btn.k-iron { min-width: calc(var(--px) * 40); min-height: 0; height: calc(var(--px) * 20); padding: 0 var(--s2); background: none; border-style: solid; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); border-image: var(--up) var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch; color: var(--fg); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
 .win-scene :is(.ws-detail-close, .ws-detail-next).btn.k-iron:active { border-image-source: var(--dn); }
 .crackfx > div, .deathfx > div { background: #33313b padding-box; box-shadow: none; border-style: solid; border-width: calc(var(--k-win) * var(--px)); border-image: url('../assets/ui/chrome/v2/panel-iron.png') var(--k-win) fill / calc(var(--k-win) * var(--px)) / 0 round; image-rendering: pixelated; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e); }
 
@@ -105,7 +105,7 @@ body.slice.lay-f #right > .actions { margin-top: 18px; }
 .btn.is-hidden { visibility: hidden; }
 
 /* 좁은 화면 (667×375): 턴 이름이 길어 「속전」 꼬리표는 뺀다(관 줄 · 숫자 · 읽는 이 이름은 그대로) · 출하 준비 안내 한 줄을 빼 왕관 두 줄이 칸 안에 · 장식 톱니는 로고 문장과 겹쳐 뺀다 */
-@media (max-width: 760px) { body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { display: none; } }
+@media (max-width: 860px) { body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { display: none; } }
 @media (max-height: 400px) {
   .su-win .su-body > p.note:first-child { display: none; }
   body.slice .opening.menu::after { display: none; }
@@ -113,14 +113,14 @@ body.slice.lay-f #right > .actions { margin-top: 18px; }
 
 /* ---------- 손패 넘침 (검수 M4): 접힌 판(효과 줄 숨김) → 그래도 넘치면 칸 아래 「▼ N장 더」 띠 (철 판 · 1도트 테 · 12px 황동, 누름 48) ---------- */
 #hand.tight > .hc:not(.open):not(.armed) .hc-fx { display: none; }
-#hand > .hand-more { position: sticky; bottom: 0; z-index: 3; flex: none; display: flex; align-items: center; justify-content: center; height: 28px; margin: 0; padding: 0; border: 0; background: #1c1b22; box-shadow: inset 0 calc(var(--px) * 1) 0 #56545e, 0 calc(var(--px) * -1) 0 #0b0b0e; color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; cursor: pointer; }
+#hand > .hand-more { position: sticky; bottom: 0; z-index: 3; flex: none; display: flex; align-items: center; justify-content: center; height: 28px; margin: 0; padding: 0; border: 0; background: #1c1b22; box-shadow: inset 0 calc(var(--px) * 1) 0 #56545e, 0 calc(var(--px) * -1) 0 #0b0b0e; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; cursor: pointer; }
 #hand > .hand-more::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 48px; }
 #hand > .hand-more:active { background: #0b0b0e; }
 body.kb-nav #hand > .hand-more:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * -1); }
 
 /* ---------- 카드 레일 화살 (검수 M4): 줄 양 끝 철 단추 48 ◀ ▶ — 그쪽에 카드가 더 있을 때만 ---------- */
 .rail-nav { position: absolute; z-index: 4; height: 0; pointer-events: none; }
-.rail-nav > .rail-arrow.btn.k-iron { position: absolute; top: 0; width: 48px; min-width: 48px; height: max(48px, calc(var(--px) * 24)); padding: 0; transform: translateY(-50%); pointer-events: auto; font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.rail-nav > .rail-arrow.btn.k-iron { position: absolute; top: 0; width: 48px; min-width: 48px; height: max(48px, calc(var(--px) * 24)); padding: 0; transform: translateY(-50%); pointer-events: auto; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
 .rail-nav > .rail-arrow.ra-prev { left: 0; }
 .rail-nav > .rail-arrow.ra-next { right: 0; }
 .rail-nav > .rail-arrow[hidden] { display: none; }
@@ -133,4 +133,4 @@ body.kb-nav #hand > .hand-more:focus-visible { outline: calc(var(--px) * 1) soli
 .scr-pick .btn-row .ovh > .ovh-tag { order: 2; min-width: 0; color: var(--t-ally); word-break: keep-all; }
 
 /* 좁은 레일(667): 덱 · 분대 · 버림 칩 글은 12px (세 칩이 한 줄에) */
-@media (max-width: 760px) { #deckrow .btn.k-iron { font: 400 12px/1 Galmuri11, sans-serif; } }
+@media (max-width: 860px) { #deckrow .btn.k-iron { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; } body.slice.lay-f #deckrow { gap: 2px; } }

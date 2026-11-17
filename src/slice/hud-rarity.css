@@ -39,7 +39,7 @@ body.slice.lay-f .gtop .coins .sp-win {
   height: 24px; color: #f4d27a; transform-origin: 100% 100%; cursor: pointer;
 }
 body.slice.lay-f .gtop .coins .coin-key { display: block; flex: none; width: calc(var(--px) * 12); height: calc(var(--px) * 12); background: url('../assets/ui/chrome/v2/coin-key.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
-body.slice.lay-f .gtop .coins .sp-n { display: inline-block; min-width: 2ch; margin: 0; text-align: right; font: 700 24px/24px Galmuri11, sans-serif; font-synthesis: none; color: #f4d27a; }
+body.slice.lay-f .gtop .coins .sp-n { display: inline-block; min-width: 2ch; margin: 0; text-align: right; font: 700 24px/var(--lh-24) Galmuri11, sans-serif; font-synthesis: none; color: #f4d27a; }
 body.slice.lay-f .gtop .coins .sp-row {
   grid-column: 1 / -1; grid-row: 2; justify-self: center; display: flex; gap: 0; cursor: pointer; transform-origin: 50% 100%;
   border-style: solid; border-width: calc(var(--px) * 3); border-image: url('../assets/ui/chrome/v2/inset-well.png') 6 fill / calc(var(--px) * 3) / 0 stretch; image-rendering: pixelated;
@@ -62,7 +62,7 @@ body.slice.lay-f .gtop .coins .sp-n.tick { animation: tick3 120ms var(--snap); }
 /* 잃은 나사 「−4」: 2배 → 1배 계단으로 튀어나와 떠오르고 아래부터 디더로 지워진다 (전투 피해 숫자와 같은 박자 · 페이드 없음) */
 .sp-pop {
   position: absolute; right: calc(100% + var(--s2)); top: 0; z-index: 3; pointer-events: none; transform-origin: 100% 50%; white-space: nowrap;
-  font: 700 24px/1 Galmuri11, sans-serif; font-style: normal; font-synthesis: none; color: #ff7b7b;
+  font: 700 24px/var(--lh-24) Galmuri11, sans-serif; font-style: normal; font-synthesis: none; color: #ff7b7b;
   text-shadow: 2px 0 0 #0b0b0e, -2px 0 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 -2px 0 #0b0b0e;
   animation: spPop 1300ms steps(1, end) both;
 }
@@ -76,7 +76,7 @@ body.slice.lay-f .gtop .coins .sp-n.tick { animation: tick3 120ms var(--snap); }
   80% { transform: translateY(-12px); -webkit-mask-image: var(--dq8); mask-image: var(--dq8); }
   90% { transform: translateY(-14px); -webkit-mask-image: var(--dq4); mask-image: var(--dq4); }
   100% { transform: translateY(-14px); -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 72.5% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 75% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 77.5% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 82.5% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 85% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 87.5% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 92.5% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 95% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 97.5% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   body.slice.lay-f #right > .gtop { grid-template-columns: minmax(0, 1fr) auto; column-gap: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -91,7 +91,7 @@ body.slice.lay-f .rmid .r-head .r-lbl { flex: none; white-space: nowrap; }
 #boss.boss-chip {
   position: relative; flex: 0 1 auto; min-width: 0; height: 32px; display: inline-flex; align-items: center; gap: var(--s1);
   margin: 0; padding: 0; border: 0; background: none; box-shadow: none; cursor: pointer;
-  color: #ff7b7b; font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; white-space: nowrap;
+  color: #ff7b7b; font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; white-space: nowrap;
 }
 #boss.boss-chip::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 48px; transform: translateY(-50%); }
 /* 좁은 폭에서 메뉴 단추 누름 영역이 칩 끝에 겹치면 칩이 먼저 받는다 */
@@ -103,7 +103,7 @@ body.slice.lay-f .rmid .r-head .r-lbl { flex: none; white-space: nowrap; }
 #boss.boss-chip .bc-face .bc-gb { display: block; width: 24px; height: 24px; background: no-repeat 50% 12% / 54px 54px; image-rendering: pixelated; }
 #boss.boss-chip:active { transform: translateY(calc(var(--px) * 1)); }
 body.kb-nav #boss.boss-chip:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
-@media (max-width: 760px) {
+@media (max-width: 860px) {
   #boss.boss-chip .bc-face { display: none; }
 }
 

@@ -2,7 +2,7 @@
 // 찍을 때마다 글자 점검(text-audit) 줄 · 콘솔/페이지 오류 · 실패한 그림 요청을 모아 sweep-report.md 한 장으로 낸다.
 // 옛 배치 점검(hud-rarity · imp-assets · mp-fx · op-map)과 ui-audit · pb-scenes · film-observe의 장면을 한데 모았다.
 //
-// 사용: node tools/qa/sweep.cjs [915|667] [--calm] [--only map,battle,...] [--build] [--list]
+// 사용: node tools/qa/sweep.cjs [915|667|WxHxDPR] [--calm] [--only map,battle,...] [--build] [--list]
 //   915 = 915×412 DPR 2.625(기본) · 667 = 667×375 DPR 2 · --calm = 줄인 움직임(prefers-reduced-motion)
 //   --only 묶음 이름(쉼표) — 시간 제한이 있으면 묶음별로 나눠 돌린다. 같은 날 · 같은 규격의 결과는 한 보고서로 합쳐진다.
 //   --build = 먼저 npm run build (dist가 없으면 자동). 미리보기 서버는 빈 포트에 직접 띄우고 끝나면 닫는다(OBSERVE_URL을 주면 그 서버를 쓴다).
@@ -24,9 +24,11 @@ const small = args.includes('667');
 const calm = args.includes('--calm');
 const onlyArg = args.find((a, i) => args[i - 1] === '--only') ?? (args.find((a) => a.startsWith('--only='))?.slice(7));
 const ONLY = onlyArg ? onlyArg.split(',').map((s) => s.trim()).filter(Boolean) : null;
-const [VW, VH, DPR] = small ? [667, 375, 2] : [915, 412, 2.625];
+// 그 밖의 규격: 폭x높이x배율 (예: 772x360x3 — 안드로이드 가로 실기, D-549)
+const custom = args.map((a) => a.match(/^(\d+)x(\d+)x([\d.]+)$/)).find(Boolean);
+const [VW, VH, DPR] = custom ? [+custom[1], +custom[2], +custom[3]] : small ? [667, 375, 2] : [915, 412, 2.625];
 const day = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
-const OUT = process.env.SWEEP_OUT ? path.resolve(process.env.SWEEP_OUT) : path.join(ROOT, 'production/qa/evidence', `sweep-${day}${small ? '-667' : ''}${calm ? '-calm' : ''}`);
+const OUT = process.env.SWEEP_OUT ? path.resolve(process.env.SWEEP_OUT) : path.join(ROOT, 'production/qa/evidence', `sweep-${day}${custom ? `-${VW}` : small ? '-667' : ''}${calm ? '-calm' : ''}`);
 const PARTS = path.join(OUT, '.parts');
 const W = (ms) => new Promise((r) => setTimeout(r, ms));
 /** 점검 대상 저장(meta): 입문 · 안내를 마친 사람 — 용어 사전이 다 열리고 모든 왕관을 고를 수 있다 */
@@ -438,7 +440,7 @@ const GROUPS = [
       await shot('btn-states');
     } },
     { name: 'set-pick', assets: [], run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); await tap('[data-page]'); await W(900); await shot('set-pick-2-locked'); } },
-    // 시작 세트 위 그림 칸 (D-546): 해금 셋까지 연 사람 — 두 쪽 모두 켜진 받침
+    // 시작 세트 위 그림 칸 (D-549): 해금 셋까지 연 사람 — 두 쪽 모두 켜진 받침
     { name: 'set-pick-open', assets: [], meta: { unlocked: ['set:hybrid', 'set:scrap', 'set:scatter'] }, run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await tap('.card-slot .cf.start-set'); await W(500); await shot('set-pick-sel'); await tap('[data-page]'); await W(900); await shot('set-pick-2'); } },
     { name: 'crash', assets: [], run: async ({ A, W, shot }) => {
       // 지도에 선 출하(저장 있음)에서 잡히지 않은 오류 — 진짜 예외 대신 같은 error 사건을 보내 창만 띄운다
@@ -588,7 +590,7 @@ const writeReport = () => {
           if (buf) fs.writeFileSync(path.join(OUT, file), buf); else await pg.screenshot({ path: path.join(OUT, file) });
           rec.shots.push(file);
           for (const t of await textAudit(pg)) if (!rec.txt.includes(t)) rec.txt.push(t);
-          // 잉크 점검 자세히 (D-546): 어느 장면 · 어디서 잘렸는지 — 고친 전후 자르기에 쓴다
+          // 잉크 점검 자세히 (D-549): 어느 장면 · 어디서 잘렸는지 — 고친 전후 자르기에 쓴다
           if (process.env.SWEEP_INK) for (const f of await textAudit.inkAudit(pg)) fs.appendFileSync(path.join(OUT, 'ink.jsonl'), JSON.stringify({ file, ...f }) + '\n');
         };
         const tapAt = (x, y) => pg.touchscreen.tap(Math.round(x), Math.round(y));

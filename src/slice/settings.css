@@ -4,7 +4,7 @@
 /* 줄 = 이름(왼쪽 200) · 조작(모두 같은 x에서 시작) — 이름 아래 12px 설명 */
 .set-win .set-row { display: grid; grid-template-columns: clamp(120px, 22vw, 200px) minmax(0, 1fr); align-items: center; column-gap: var(--s3); min-height: 44px; min-width: 0; }
 .set-win .set-ctl { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
-.set-win .set-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.set-win .set-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
 .set-win .set-name > small.note { overflow-wrap: anywhere; white-space: normal; }
 .set-win .set-ctl > .btn { min-width: 96px; }
 /* 줄 안 단추는 그림 20도트(≈43px) · 누름 영역은 ::before가 48px로 넓힌다 — 줄 간격 4와 합쳐 48 피치 (한 쪽 세 줄이 364 안에) */
@@ -29,7 +29,7 @@
 .set-win .set-lics { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
 .set-win .set-lic { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .set-win .set-lic-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.set-win .set-lic-name { color: var(--t-body); font: 400 15px/18px Galmuri14, Galmuri11, sans-serif; }
+.set-win .set-lic-name { color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
 .set-win .set-lic .note { overflow-wrap: anywhere; }
 .set-win .set-lic > .btn { flex: none; min-width: 64px; }
 /* 키 · 패드 배치표: 셋 칸 표 (머리 12 흐림 · 행동 15 · 키 12 굵게 황동) */
@@ -54,4 +54,4 @@ body.key-hints [data-key-hint]::after { content: attr(data-key-hint); position: 
 /* 키 바꾸기: 행동 다섯을 두 칸 격자로 (L 창 한 쪽) — 키 단추는 철, 기다리는 칸은 황동 「누를 키…」 */
 .set-win.set-bind .kb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s4); }
 .set-win.set-bind .kb-row { grid-template-columns: minmax(0, 1fr) auto; }
-.set-win.set-bind .kb-key { min-width: 96px; font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.set-win.set-bind .kb-key { min-width: 96px; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
