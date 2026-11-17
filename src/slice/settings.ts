@@ -92,8 +92,8 @@ const rowsOf = (tab: Tab, s: Settings, o: SettingsOpts): string[] => {
   }
 };
 
-/** 한 쪽에 넣는 줄 수 (창 높이 364 안 — 처음 그릴 때 재어 줄인다) */
-let perPage = 4;
+/** 한 쪽에 넣는 줄 수 — 탭마다 (줄 높이가 탭마다 달라 처음 그릴 때 재어 줄인다, 창 높이 364 안) */
+const perTab: Partial<Record<Tab, number>> = {};
 
 /** 설정 창을 연다 */
 export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => {
@@ -104,6 +104,7 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
   const pages = (): string[][] => {
     const rows = rowsOf(tab, s, o);
     const out: string[][] = [];
+    const perPage = perTab[tab] ?? 4;
     for (let i = 0; i < rows.length; i += perPage) out.push(rows.slice(i, i + perPage));
     return out.length ? out : [[]];
   };
@@ -133,8 +134,9 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     panel.innerHTML = winHtml(opts());
     // 쪽이 칸을 넘으면 한 쪽 줄 수를 줄여 다시 (스크롤 · 잘림 없이)
     const body = panel.querySelector<HTMLElement>('.set-body');
+    const perPage = perTab[tab] ?? 4;
     if (body && perPage > 1 && body.scrollHeight > body.clientHeight + 1 && body.children.length > 1) {
-      perPage -= 1;
+      perTab[tab] = perPage - 1;
       return draw();
     }
     bind();
