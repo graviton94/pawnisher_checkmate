@@ -11,5 +11,7 @@ export const hasBatchim = (word: string): boolean => {
   return code >= 0 && code <= 11171 && code % 28 !== 0;
 };
 
+/** 낱말 + 서술격 조사: copula('폰') → '폰이다' · copula('나이트') → '나이트다' */
+export const copula = (word: string): string => word + (hasBatchim(word) ? '이다' : '다');
 /** 낱말 + 알맞은 조사. josa('나사', '을') → '나사를' */
 export const josa = (word: string | undefined, k: keyof typeof PAIRS): string => (word ?? '') + PAIRS[k][hasBatchim(word ?? '') ? 0 : 1];

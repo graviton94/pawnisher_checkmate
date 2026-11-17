@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { CREW_BARK, EVENT_PONDER, FOE_KING_LINES, FOE_PIECE_BARK, VOICE_TIMING } from '../src/data/battle-voice';
 import { holdMs } from '../src/slice/voice';
+import { CREW_VOICE } from '../src/data/crew-voice';
 
 // P-B (D-490): 판 위 목소리 데이터 — 바크는 한 줄(띠 한 줄 폭), 상황마다 되풀이되지 않을 만큼, 말투 규칙(느낌표 · 「 」 없음)
 const bare = (t: string) => t.replace(/^[“‘]|[”’]$/g, '');
 const all = [...Object.values(FOE_KING_LINES).flat(), ...Object.values(FOE_PIECE_BARK).flatMap((c) => Object.values(c).flat()), ...Object.values(CREW_BARK).flatMap((c) => Object.values(c).flat())];
 
 describe('battle voice lines', () => {
-  it('보통 적 킹은 주요 상황마다 셋 이상', () => {
-    for (const cue of ['start', 'firstHit', 'lost', 'cheese', 'danger', 'beg', 'gloat'] as const) expect(FOE_KING_LINES[cue].length).toBeGreaterThanOrEqual(3);
+  it('보통 적 킹은 상황마다 여섯 이상 · 분대원 합류 · 쓰러짐도 여섯 이상 (D-536 — 한 출하에 같은 줄이 되풀이되지 않게)', () => {
+    for (const cue of Object.keys(FOE_KING_LINES) as (keyof typeof FOE_KING_LINES)[]) expect(FOE_KING_LINES[cue].length).toBeGreaterThanOrEqual(6);
+    for (const v of Object.values(CREW_VOICE)) { expect(v.join.length).toBeGreaterThanOrEqual(6); expect(v.fall.length).toBeGreaterThanOrEqual(6); }
+    for (const l of Object.values(CREW_VOICE).flatMap((v) => [...v.join, ...v.fall])) expect(l.startsWith('“') && l.endsWith('”')).toBe(true);
   });
   it('바크는 큰따옴표 대사 · 한 줄 22자 이하 · 느낌표 · 「 」 없음', () => {
     for (const l of all) {

@@ -42,7 +42,7 @@ describe('사건의 새 화폐 (D-459)', () => {
     const b = choose('echoWell', 1).s;
     expect(b.deck.includes('advance')).toBe(false);
   });
-  it('D-464 고유한 판돈: 기름 장수 = 역회전 톱니 · 수리 비숍 = 여벌 심장 · 교환소 = 부품 맞바꾸기', () => {
+  it('D-464 고유한 판돈: 기름 장수 = 되감기 톱니 · 수리 비숍 = 여벌 심장 · 교환소 = 부품 맞바꾸기', () => {
     expect(choose('oilMerchant', 0).s.charms!.rewind).toBe(1);
     const med = choose('fieldMedic', 1).s;
     expect(med.charms!.revive).toBe(1);

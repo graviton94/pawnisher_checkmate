@@ -164,12 +164,12 @@ export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { notches: '+',
  * 부적 (D-228, 사용자: "1패는 즉시 사망, 희귀한 1회 부활 아이템을 풀에 · 저승급은 기본으로 · 슬롯을 차지하지 않는 부적 · 되감기도 아이템화").
  * 부품 칸을 차지하지 않고 출하 내내 개수로 쌓인다. 쓰면 하나 깨진다.
  *   revive: 여벌 심장 톱니 — 킹이 쓰러져도 출하가 끝나지 않고 그 대국을 처음부터 (하나 깨진다)
- *   rewind: 역회전 톱니 — 되감기 1회 (이번 턴 처음으로)
+ *   rewind: 되감기 톱니 — 되감기 1회 (이번 턴 처음으로)
  */
 export type CharmId = 'revive' | 'rewind';
 export const CHARMS: Record<CharmId, { name: string; icon: string; desc: string }> = {
   revive: { name: '여벌 심장 톱니', icon: 'heartCog', desc: '킹 대신 깨진다. (그 대국을 처음부터)' },
-  rewind: { name: '역회전 톱니', icon: 'rewind', desc: '턴 처음으로 되감는다. (되감기 1회)' },
+  rewind: { name: '되감기 톱니', icon: 'rewind', desc: '턴 처음으로 되감는다. (되감기 1회)' },
 };
 export const CHARM_NUM = {
   /** 출하 시작: 되감기 2 · 승급 0~4는 여벌 심장 1 (D-382: 조항 2에서 조항 5로 옮겨 승급 곡선을 고르게) */
@@ -178,9 +178,9 @@ export const CHARM_NUM = {
   /** 부품 상자에서 부적이 나올 확률 (여벌 심장은 드물게) */
   chestRewind: 0.3,
   chestRevive: 0.08,
-  /** 반장을 쓰러뜨리면 역회전 톱니 +1 */
+  /** 반장을 쓰러뜨리면 되감기 톱니 +1 */
   bossRewind: 1,
-  /** 고물상: 카드처럼 진열대 한 칸에 가끔 (역회전 25% · 여벌 심장 10%) */
+  /** 고물상: 카드처럼 진열대 한 칸에 가끔 (되감기 25% · 여벌 심장 10%) */
   shopRewindPrice: 45,
   shopRevivePrice: 140,
   shopRewindChance: 0.25,

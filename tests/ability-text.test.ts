@@ -24,7 +24,7 @@ describe('능력 설명 세 줄 계약', () => {
       }
     }
     expect(bossAbilityText('inspect')[0].effect).toContain(`×${BOSS_NUM.stampMult}`);
-    expect(bossAbilityText('gilded').map((a) => a.name)).toEqual(['조립', '줄 폭격', '되받아침', '철갑']);
+    expect(bossAbilityText('gilded').map((a) => a.name)).toEqual(['조립', '줄 폭격', '가시 반격', '철갑']);
     expect(bossAbilityText('thorns', 0, (n) => n * 2)[0].effect).toContain(String(BOSS_NUM.thorns * 2));
   });
   it('복합 적 특성을 뭉개거나 생략하지 않는다', () => {

@@ -58,7 +58,7 @@ export interface RunSave {
   sacLeft?: number;
   closeActs?: number[];
   highlight?: Highlight | null;
-  /** 부적 (D-228): 여벌 심장 톱니 · 역회전 톱니 개수 */
+  /** 부적 (D-228): 여벌 심장 톱니 · 되감기 톱니 개수 */
   charms?: { revive: number; rewind: number };
   /** 처음 출하 (D-232): 1막 반장 HP −35% · 첫 고물상 맞물림 부품 */
   first?: boolean;

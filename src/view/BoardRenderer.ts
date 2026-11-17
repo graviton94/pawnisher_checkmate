@@ -285,7 +285,7 @@ class BoardScene extends Phaser.Scene {
   }
 
   /** 사용자 제공 도트 기물 12종 (public/pieces/s-{유형}{진영}.png) */
-  /** 적 특성 표식 (자폭 폰 · 되받아침 반장) — 대국마다 setFoeTraits로 */
+  /** 적 특성 표식 (자폭 폰 · 가시 반격 반장) — 대국마다 setFoeTraits로 */
   private foeTraits: ('blast' | 'thorns')[] = [];
   setFoeTraits(list: ('blast' | 'thorns')[]): void {
     this.foeTraits = list;
@@ -1974,7 +1974,7 @@ class BoardScene extends Phaser.Scene {
         continue;
       }
       if (e.type === 'blast') {
-        // 특수 기믹은 일반 공격과 다른 모양으로 먼저 (D-203): 줄 폭격 = 불길이 줄을 훑는다 · 되받아침 = 가시가 친 기물로 · 자폭 = 둘레 3×3 고리 · 증기 폭발 = 적마다 김
+        // 특수 기믹은 일반 공격과 다른 모양으로 먼저 (D-203): 줄 폭격 = 불길이 줄을 훑는다 · 가시 반격 = 가시가 친 기물로 · 자폭 = 둘레 3×3 고리 · 증기 폭발 = 적마다 김
         if (e.fx) await this.gimmickFx(e.fx, e.pos, e.from, e.hits.map((h) => h.targetId), e.cells);
         // 터짐 (D-106 보일러 폰): 그 칸에서 둘레로 — 맞은 기물마다 피격, 쓰러지면 재
         this.shakeLv(e.fx === 'row' || e.fx === 'burst' ? 2 : 1);
@@ -2317,7 +2317,7 @@ export class BoardRenderer implements BoardView {
     this.game.canvas.style.marginTop = `${Math.floor((this.host.clientHeight - h) / 2)}px`;
   }
 
-  /** 적 특성 표식 (자폭 폰 · 되받아침 반장, D-175) — setup 전에 */
+  /** 적 특성 표식 (자폭 폰 · 가시 반격 반장, D-175) — setup 전에 */
   setFoeTraits(list: ('blast' | 'thorns')[]): void {
     this.scene.setFoeTraits(list);
   }

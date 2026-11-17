@@ -44,12 +44,12 @@ import { bodyHtml, bottomLogical, descHtml, lineHtml, splitDesc, splitTwo } from
 import { CARD_SPEC, CREW_KING } from './card-spec';
 import { GUIDE_PAGES } from '../data/opening';
 import { COACH_LINES, OPENING_TEXT } from '../data/opening';
-import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, DEFEAT_CUTS, ENDING_A, GILDED_STORY, bossFallCut as bossFallData, gildedPhase2Cut, oneLine, promotionCuts, shadowCuts, trueEndingCuts, type Face, type StoryBoss } from '../data/script';
+import { ACT_CARD, BOSS_CARD, BOSS_STORY, BOSS_TAUNTS, DEFEAT_CUTS, ENDING_A, PROLOGUE_FIELD, bareName, gildedCard, GILDED_STORY, bossFallCut as bossFallData, gildedPhase2Cut, oneLine, promotionCuts, shadowCuts, trueEndingCuts, type Face, type StoryBoss } from '../data/script';
 import { STARTER_CARDS, STARTER_PARTS, nextUnlocks, unlockCount } from '../data/unlocks';
 import { START_SET_IDS, START_SETS, setOpen, type StartSetId } from '../data/start-sets';
 import { creditsScene } from './credits';
 import { companionScene } from '../data/companion-scenes';
-import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, runLabel, runIdentity, endingLabel, type RunMode, type StoryChapter, type EndingKind, type StoryPromise } from '../data/campaign';
+import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, chapterTitle, runLabel, runIdentity, endingLabel, type RunMode, type StoryChapter, type EndingKind, type StoryPromise } from '../data/campaign';
 import { promotionScene } from './promotion';
 import { effectHtml, effectNumbers } from './effect-text';
 import { devQuery, isDesktop, quitGame, toggleFullscreen } from './platform';
@@ -243,7 +243,7 @@ let cuesSaid = new Set<TauntCue>();
 const crewSay = (t: PieceType, name: string, form?: FormId): void => {
   const lines = CREW_VOICE[t as CrewKind]?.join;
   if (!lines) return void toast(`${josa(name, '이')} 분대에 합류했습니다.`);
-  const line = lines[R.int(lines.length)];
+  const line = pickLine(lines);
   sfx('rare');
   // 이형은 발주 기물 그림 확대가 얼굴 (D-523 — PT-08 이형 초상 취소)
   void subtitle({ face: `<img src="${form ? `pieces/l-${form}0.png` : `ui/hud/crew-${t}.png`}" alt="" onerror="this.outerHTML=this.dataset.fb" data-fb='${pieceImg(t, 0, 'small', 40).replace(/'/g, '&#39;')}'>`, who: `${name} — 합류`, side: 'ally', text: line });
@@ -272,7 +272,9 @@ const taunt = (cue: TauntCue, force = false): void => {
     if (battlesFought - lastCheese < DIRECTOR.cheeseGap) return;
     lastCheese = battlesFought;
   }
-  const lines = b.boss ? (BOSS_TAUNTS as Partial<Record<string, Partial<Record<TauntCue, string[]>>>>)[b.bossRule ?? 'plate']?.[cue] ?? (b.bossRule ? undefined : TAUNTS[cue]) : TAUNTS[cue]; // 반장마다 제 말 (D-310)
+  // 둘째 왕관부터 도금왕의 첫 마디는 「또 그대인가. 아니면… 또 짐인가.」 (D-536 서사 리뷰 A1 — 전 주인공이 새 주인공을 알아본다)
+  const said = cue === 'start' && b.bossRule === 'gilded' && runMode === 'story' && storyChapter > 0 ? 'meet' : cue;
+  const lines = b.boss ? (BOSS_TAUNTS as Partial<Record<string, Partial<Record<TauntCue, string[]>>>>)[b.bossRule ?? 'plate']?.[said] ?? (b.bossRule ? undefined : TAUNTS[said]) : TAUNTS[said]; // 반장마다 제 말 (D-310)
   if (!lines?.length) return;
   const king = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
   const v = foeVoice();
@@ -326,13 +328,13 @@ let deck: CommandId[] = [...START_DECK];
 /** 부품 (규칙을 깨는 유물, D-144) */
 let parts: SlicePartId[] = [];
 let gold = 0;
-/** 부적 (D-228): 부품 칸을 안 쓰는 개수 — 여벌 심장 톱니(1패 대신) · 역회전 톱니(되감기) */
+/** 부적 (D-228): 부품 칸을 안 쓰는 개수 — 여벌 심장 톱니(1패 대신) · 되감기 톱니(되감기) */
 let charms = { revive: 0, rewind: 0 };
 /** 이번 출하에서 쇳물 서약으로 녹인 동료 (D-465 — 결말이 부른다) */
 let meltedRun: string[] = [];
 /** 손패 화면을 잠시 붙잡는다 (턴 끝 버리기 연출 · 적 차례 동안) — null이면 지금 손패 */
 let handView: CommandId[] | null = null;
-/** 이번 대국 시작 때 되감기 수 (끝나면 쓴 만큼 역회전 톱니를 깬다) */
+/** 이번 대국 시작 때 되감기 수 (끝나면 쓴 만큼 되감기 톱니를 깬다) */
 let rewindsAtStart = 0;
 let stage = 0;
 let b: SliceBattle;
@@ -2064,7 +2066,7 @@ const advance = (): void => {
     squad = refillBrace(restSquad(squad, REST.actHeal));
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
     closeOverlay();
-    void actCard(actLabel(a.act), a.name, ACT_NARR[actI], actI === 2 ? 'chained-door' : `act-${Math.min(4, actI + 1)}`).then(() => {
+    void actCard(actLabel(a.act), a.name, ACT_NARR[actI], `act-${Math.min(4, actI + 1)}`).then(() => {
       showMap();
       // 막을 넘으면 부품 칸 +1 (D-384)
       if (actI > 0 && partSlotsAt(actI) > partSlotsAt(actI - 1)) toast(`부품 칸이 하나 늘었습니다. (부품 칸 ${partSlotsAt(actI)})`, 2600);
@@ -2120,7 +2122,7 @@ const actClear = async (): Promise<void> => {
     go: SCREEN_TEXT.onward,
   });
   if (runMode === 'story' && !storyBeats.includes(actI)) {
-    const beat = companionScene(actI, storyCompany().alive, storyPromise, storyChapter);
+    const beat = companionScene(actI, storyCompany().alive, storyPromise, storyChapter, pastCompanions().at(-1));
     storyPromise = beat.promise;
     storyBeats.push(actI);
     await playCuts(beat.cuts);
@@ -3022,7 +3024,7 @@ const stageIntro = (def: BattleDef): Promise<void> => {
     // 수배판 (D-400 UI-21): HP · 공격 수치 칸, 2단계가 있으면(승급 ≤ upTo) 진홍 빛 줄 상태
     const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
     const two = asc <= BOSS_PHASE_TEXT.upTo;
-    return bossIntro({ stats: ek ? { hp: ek.maxHp, atk: ek.atk } : undefined, phase2: two, rule, art: real === 'gilded' ? gildedArt() : BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], lines: BOSS_CARD[real === 'gilded' ? (runMode === 'story' && storyChapter > 0 ? 'gilded+' : 'gilded') : (real as StoryBoss)], rules: two ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
+    return bossIntro({ stats: ek ? { hp: ek.maxHp, atk: ek.atk } : undefined, phase2: two, rule, art: real === 'gilded' ? gildedArt() : BOSS_ART[real], act: label, name: BOSS_RULES[real].name, title: BOSS_EPITHET[real], lines: real === 'gilded' ? gildedCard(runMode === 'story' ? storyChapter : 0) : BOSS_CARD[real as StoryBoss], rules: two ? [...BOSS_RULES[real].lines, BOSS_PHASE_TEXT.rule] : BOSS_RULES[real].lines, sfx: (k) => sfx(k as never) });
   }
   // 대국 · 검문은 진입 창(모달)을 띄우지 않는다 (D-388, 사용자: 「배경에 기물 얹는 진입 창 자체가 최악」 · /game-ui-design 0장: 행동이 없는 정보 = 모달 금지).
   // 정보(적 명단 · 규칙 · 보상)는 지도에서 노드를 고를 때 미리 보여 주고, 들어갈 때는 철문 전환 뒤 판 위 띠 한 번만 (⑨ 표지).
@@ -3230,7 +3232,7 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
       }
       return typeIn(el.querySelector<HTMLElement>('.rev-narr')!, T.narr, loss ? 38 : 26, () => (shake(el.querySelector<HTMLElement>('.rev-narr')!, loss ? 2 : 1), sfx('stamp')));
     })
-    // 각주 대사 · 시스템 줄도 한 자씩 (사용자 2026-11-05). 「역회전 톱니 N」은 <em>으로 한 번에 박히며 떨린다
+    // 각주 대사 · 시스템 줄도 한 자씩 (사용자 2026-11-05). 「되감기 톱니 N」은 <em>으로 한 번에 박히며 떨린다
     .then(() => new Promise((res) => window.setTimeout(res, 220)))
     .then(() => (T.line ? typeIn(el.querySelector<HTMLElement>('.rev-line')!, T.line, 34, () => shake(el.querySelector<HTMLElement>('.rev-line')!, 1)) : undefined))
     .then(() => new Promise((res) => window.setTimeout(res, 200)))
@@ -3248,7 +3250,9 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
 const bossFallCut = async (rule: StoryBoss): Promise<void> => {
   const fallImg = await new Promise<string>((res) => { const im = new Image(); im.onload = () => res(`boss-fall-${rule}`); im.onerror = () => res(BOSS_ART[rule]); im.src = `scenes/boss-fall-${rule}.png`; });
   if (runMode !== 'story') return;
-  await playCuts([bossFallData(rule, fallImg, runBosses.length, storyChapter)], { faces: crewFaces() });
+  // 쓰러진 동료 수 (D-536 STG-PROG-2-A3): 폐기 장부 + 심장 톱니가 금 간 채 돌아온 분대원
+  const fallen = readLedger().filter((r) => r.run === runId).length + squad.filter((u) => u.cracked).length;
+  await playCuts([bossFallData(rule, fallImg, runBosses.length, storyChapter, fallen)], { faces: crewFaces() });
 };
 const finishNow = (): void => {
   // 연습 시험대 A · B는 출하 밖 — 정산 · 보상 · 기록 없이 (대본이 다음 판으로 넘긴다)
@@ -3261,7 +3265,7 @@ const finishNow = (): void => {
     if (isWin && INTRO.includes(cur)) ftue('battle1_win');
     if (isWin && cur.boss && actI === 0) ftue('act1_clear');
   }
-  // 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 역회전 톱니가 깨진다
+  // 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 되감기 톱니가 깨진다
   if (!labMode) charms.rewind = Math.max(0, charms.rewind - rewindCost(rewindsAtStart, b.rewinds, b.rewindFree ?? 0));
   if (isWin && coachOn) {
     coachOn = false;
@@ -3296,7 +3300,7 @@ const finishNow = (): void => {
         size: 'm',
         title: '하자 폐기',
         head: spare ? `<span class="tag tag-crimson">${CHARMS.revive.name} ${charms.revive}</span>` : undefined,
-        body: `<p>${spare ? `킹이 쓰러졌습니다. ${CHARMS.revive.name}를 깨면 ${cur.title}부터 다시 둡니다.` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}`,
+        body: `<p>${spare ? `킹이 쓰러졌습니다. ${josa(CHARMS.revive.name, '을')} 깨면 ${cur.title}부터 다시 둡니다.` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}`,
         back: spare ? { label: '끝낸다', attrs: 'data-quit' } : undefined,
         go: spare ? { label: '다시 둔다', attrs: 'data-again' } : { label: '끝낸다', attrs: 'data-quit' },
       });
@@ -3337,7 +3341,7 @@ const finishNow = (): void => {
         notes.push(`${n.heir!.name}의 유품 회수 — 나사 +${relic}`);
       }
     }
-    // 반장을 쓰러뜨리면 역회전 톱니 (D-228)
+    // 반장을 쓰러뜨리면 되감기 톱니 (D-228)
     if (cur.boss) {
       charms.rewind += CHARM_NUM.bossRewind;
       notes.push(`${CHARMS.rewind.name} +${CHARM_NUM.bossRewind}`);
@@ -4131,7 +4135,7 @@ $('parts').addEventListener('click', (e) => {
 });
 $('btn-rewind').addEventListener('click', () => {
   if (busy || b.s.winner !== null) return;
-  if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${CHARMS.rewind.name}는 상자 · 고물상 · 반장에게서)`);
+  if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${josa(CHARMS.rewind.name, '은')} 상자 · 고물상 · 반장에게서)`);
   // 확인 (D-209): 되돌릴 수 없는 결정은 한 번 묻는다
   rewindScene({ ...HUD_TEXT.rewindScene, line: HUD_TEXT.rewindLine }, () => undefined, () => doRewind(false), false);
 });
@@ -4541,10 +4545,16 @@ const loadRun = (sv: RunSave): void => {
 /** 도금왕 2단계: 비꼼 — 이번 출하에 쓰러뜨린 반장 하나(마지막 것)에게 한 말을 되돌려 준다 */
 /** 컷신 명패 얼굴 (D-504): 이번 출하의 분대원 이름 → 그 기물 도트 */
 const crewFaces = (): Record<string, Face> => Object.fromEntries(squad.filter((u) => u.t !== 'K').map((u) => [crewLabel(u), { t: u.t, side: 0 as const }]));
+/** 앞선 왕관들의 결말에서 녹은 동료 이름 (D-536 — 출하 기록 crown.companions, 왕관마다 가장 최근 기록 · 별명은 뗀다) */
+const pastCompanions = (upTo = storyChapter): string[][] => {
+  const kings = readMeta(store).crownedKings ?? [];
+  return Array.from({ length: Math.max(0, upTo) }, (_, ch) => (kings.filter((k) => k.chapter === ch).at(-1)?.companions ?? []).map(bareName));
+};
 const storyCompany = () => ({
   alive: squad.filter((u) => u.t !== 'K').map((u) => ({ name: crewLabel(u), serial: u.serial, t: u.t })),
   promised: storyPromise ? { name: storyPromise.name, alive: squad.some((u) => u.serial === storyPromise!.serial) } : undefined,
   melted: meltedRun,
+  past: pastCompanions().flat(),
 });
 const gildedPhase2 = async (): Promise<void> => {
   if (runMode !== 'story') return;
@@ -4555,7 +4565,7 @@ const gildedArt = (): string => `boss-gilded${runMode === 'story' ? storyChapter
 const promoteScreen = (): Promise<'throne' | 'depart'> => {
   closeWin();
   const company = storyCompany();
-  return promotionScene({ chapter: storyChapter, art: 'gilded-fallen', companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined, faces: crewFaces() });
+  return promotionScene({ chapter: storyChapter, prev: pastCompanions().at(-1), art: 'gilded-fallen', companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined, faces: crewFaces() });
 };
 let endKind: EndingKind = 'throne';
 const endingFlow = async (): Promise<void> => {
@@ -4635,7 +4645,7 @@ const runEndNow = (cleared: boolean): void => {
       mode: 'run',
       inCredits: true,
       title: endingLabel(kind),
-      tag: `<span class="ribbon${kind === 'throne' ? ' r-crimson' : ''}">${daily ?? runLabel(runMode, asc, storyChapter)}</span>`,
+      tag: `<span class="ribbon${kind === 'throne' ? ' r-crimson' : ''}">${daily ?? runLabel(runMode, asc, storyChapter, true)}</span>`,
       tabs: clearTabs(3, true),
       rows: [
         { k: SCREEN_TEXT.tally[0], v: won },
@@ -4838,6 +4848,8 @@ const onboarding = async (): Promise<void> => {
     ok = await drill(1, drillB);
   }
   if (ok) await guideOne('적의 예고', 3);
+  // PRO-08 「검은 세트와 먼 왕좌」 (D-536 — 서사 리뷰 §3-4): 첫 줄 「첫 번째 검수 판이 열리고」 — 시험대가 끝나고 첫 실전 대국 바로 앞
+  await playCuts([PROLOGUE_FIELD]);
   startBattle(INTRO[0], true);
   const intro = battleIntro();
   if (!ok) return;
@@ -4937,10 +4949,11 @@ const opening = (): void => {
   });
   /** 처음 온 사람: 프롤로그 → 첫 대국 (도움말 켜짐). 안내서는 건너뛴다 — 판이 직접 가르친다 (D-232, 보고서 3: 60초 안에 첫 조작). 안내서는 메뉴 · ? 에 남는다 */
   const firstRun = async (): Promise<void> => {
+    // 입문이 남은 사람은 PRO-08을 시험대 뒤 첫 실전 대국 직전에 본다 (D-536)
     await prologue(false, () => {
       writeMeta(store, { ...readMeta(store), prologue: true });
       return begin((Date.now() ^ 0x2f17) & 0xffffff, 0, null);
-    });
+    }, tutDone('battle'));
   };
   const openMenu = (): void => {
     el.classList.add('menu');
@@ -4964,14 +4977,14 @@ const opening = (): void => {
       const openChallenge = (meta.storyCleared ?? 0) >= STORY_COUNT;
       nav.innerHTML = `<div class="op-modes"><button type="button" class="btn k-${mode === 'story' ? 'brass' : 'iron'}" data-mode="story" aria-pressed="${mode === 'story'}">본편</button><button type="button" class="btn k-${mode === 'challenge' ? 'brass' : 'iron'}" data-mode="challenge" aria-pressed="${mode === 'challenge'}"${openChallenge ? '' : ' disabled aria-label="넷째 왕관을 완료하면 도전 모드가 열립니다"'}>도전${openChallenge ? '' : ' · 잠김'}</button></div>
         ${sv ? `<button class="btn op-main" type="button" data-cont><b>이어하기</b><small>${runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0)} · ${actLabel(sv.actI + 1)}</small></button>` : ''}
-        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? CHAPTERS[chapter].name : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 왕관 선택' : '도전 난이도 선택'}">${(mode === 'story' ? CHAPTERS[chapter].label : `난이도 ${challenge - CHALLENGE_START + 1}`).replace(' ', '<br>')}▾</button></div>
+        <div class="op-run"><button class="btn brass op-main" type="button" data-go><b>${mode === 'story' ? '본편 시작' : '도전 시작'}</b><small>${mode === 'story' ? chapterTitle(chapter, chapter < (meta.storyCleared ?? 0)) : runLabel(mode, level)}</small></button><button type="button" class="btn k-iron op-level" data-level-pick aria-label="${mode === 'story' ? '본편 왕관 선택' : '도전 난이도 선택'}">${(mode === 'story' ? CHAPTERS[chapter].label : `난이도 ${challenge - CHALLENGE_START + 1}`).replace(' ', '<br>')}▾</button></div>
         <button class="btn op-main op-daily" type="button" data-daily><b>오늘의 도전</b><small>${meta.daily[today] ? '기록 완료 · 다시 도전' : today}</small></button>
         <div class="op-tools"><button class="btn op-minor" type="button" data-guide>안내서</button><button class="btn op-minor" type="button" data-ledger>도감</button><button class="btn op-minor" type="button" data-prologue>프롤로그</button><button class="btn op-minor" type="button" data-settings>${SETTINGS_TEXT.title}</button></div>
         ${dev ? `<div class="op-sub op-dev"><button class="btn" type="button" data-lab-open>시험장</button><button class="btn" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
       nav.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((button) => button.addEventListener('click', () => { mode = button.dataset.mode as typeof mode; draw(); nav.querySelector<HTMLButtonElement>(`[data-mode="${mode}"]`)?.focus(); }));
       nav.querySelector('[data-level-pick]')!.addEventListener('click', () => {
         if (mode === 'story') {
-          const panel = openWin({ size: 'm', title: '왕관 선택', body: `<div class="stack">${CHAPTERS.map((ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${ch.label} · ${ch.name}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 도전' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '이전 왕관을 완료하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
+          const panel = openWin({ size: 'm', title: '왕관 선택', body: `<div class="stack">${CHAPTERS.map((_ch, i) => `<button type="button" class="choice" data-chapter="${i}"${i > (meta.storyCleared ?? 0) ? ' disabled' : ''}><span class="choice-name">${chapterLabel(i, i < (meta.storyCleared ?? 0))}</span><span class="choice-res">${i < (meta.storyCleared ?? 0) ? '다시 도전' : i === (meta.storyCleared ?? 0) ? '새 폰과 새 분대의 이야기' : '이전 왕관을 완료하면 열립니다'}</span></button>`).join('')}</div>`, back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin });
           panel.querySelector('[data-x]')!.addEventListener('click', closeWin);
           panel.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b) => b.addEventListener('click', () => { chapter = Number(b.dataset.chapter); closeWin(); draw(); }));
         } else {

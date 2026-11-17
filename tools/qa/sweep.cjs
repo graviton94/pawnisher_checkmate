@@ -115,6 +115,9 @@ const bandWalk = async ({ pg, A, W, shot }) => {
   while (Date.now() < t1) {
     const st = await probe();
     if (st.none) {
+      // 시험대 B 뒤 PRO-08 컷(D-536 — 첫 실전 대국 직전): 띠 재기 대상이 아니라 [건너뛴다]로 넘긴다
+      const film = pg.locator('.prologue.film .cut-skip');
+      if (await film.count()) { await film.first().tap().catch(() => {}); await W(900); continue; }
       if (seen.size > 25 && !(await pg.locator('.tut').count()) && (await pg.locator('.coach-band').count())) break;
       if (st.win) { await pg.locator('.win [data-next]').last().tap().catch(() => {}); await W(900); } else await W(300);
       continue;

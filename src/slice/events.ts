@@ -1,5 +1,5 @@
 import type { PieceType } from '../engine';
-import { josa } from '../data/josa';
+import { copula, josa } from '../data/josa';
 import { Rng } from '../engine/rng';
 import { cardFits, COMMANDS, gradeOf, isRefined, isRusted, REWARD_COMMANDS, refineOnce, rustOnce, SLICE, START_DECK, type CommandId } from './cards';
 import type { Crew, QuirkId } from './crew';
@@ -24,7 +24,7 @@ export interface EventState {
   gold: number;
   /** 쥔 부품 (D-459 — 같은 부품을 두 번 주지 않게 · D-464 부품 맞바꾸기는 여기서 뺀다) */
   parts?: SlicePartId[];
-  /** 부적 (D-464): 역회전 톱니 · 여벌 심장 톱니 — 사건이 직접 더하고 뺀다 */
+  /** 부적 (D-464): 되감기 톱니 · 여벌 심장 톱니 — 사건이 직접 더하고 뺀다 */
   charms?: { revive: number; rewind: number };
 }
 
@@ -170,7 +170,7 @@ const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', appl
 export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   tinker: {
     title: '떠돌이 땜장이',
-    text: '외눈 렌즈를 낀 땜장이가 분대를 훑는다. “가장 오래 버틴 놈 하나. 그 축만 두껍게 해 주지.”',
+    text: '외눈 렌즈를 낀 땜장이가 분대를 훑는다. “가장 많이 쓰러뜨린 놈 하나. 그 축만 두껍게 해 주지.”',
     choices: [
       {
         label: '땜질을 맡긴다',
@@ -277,7 +277,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '밤새 단련한다', desc: '분대 전원 공격 +2 · 분대 전원 HP −30%', tones: ['gain', 'loss'], info: '단련은 분대원마다 영구히 남습니다.', apply: (s) => {
         s.squad = s.squad.map((x) => ({ ...x, temper: (x.temper ?? 0) + 2 }));
         hpRatio(s, -0.3);
-        return { text: '모루 소리가 밤새 멎지 않는다. 동이 트자 분대의 주먹이 단단해져 있다. (공격 +2 · HP −30%)' };
+        return { text: '모루 소리가 밤새 멎지 않는다. 동이 트자 분대의 쇠가 단단해져 있다. (공격 +2 · HP −30%)' };
       } },
       leave('지나가기'),
     ],
@@ -305,7 +305,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         if (rng.int(2) === 0) {
           const t = UP[u.t]!;
           s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-          return { slot: 0, text: `${josa(u.name, '이')} 붉게 달아올라 다시 선다. 이제 ${NAMES[t]}이다.` };
+          return { slot: 0, text: `${josa(u.name, '이')} 붉게 달아올라 다시 선다. 이제 ${copula(NAMES[t])}.` };
         }
         s.squad = s.squad.filter((x) => x !== u);
         return { slot: 1, text: `집게가 비어 올라온다. ${josa(u.name, '은')} 돌아오지 않았다.` };
@@ -355,7 +355,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           if (u) {
             const t = UP[u.t]!;
             s.squad = s.squad.map((x) => (x === u ? { ...x, t, hp: undefined } : x));
-            return { slot: 1, text: `왕관 셋. 판정기가 ${josa(u.name, '을')} 끌어당겨 다시 찍어 낸다. 이제 ${NAMES[t]}이다.` };
+            return { slot: 1, text: `왕관 셋. 판정기가 ${josa(u.name, '을')} 끌어당겨 다시 찍어 낸다. 이제 ${copula(NAMES[t])}.` };
           }
         }
         oneHurt(s, 0.3);
@@ -407,8 +407,8 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     title: '기름 장수',
     text: '기름통을 실은 수레 위에서 룩이 국자를 흔든다. “관절에 기름 한 국자. 값은 정해져 있다.”',
     choices: [
-      // D-464: 사건마다 고유한 판돈 — 기름 장수는 「역회전 톱니」(되감기)를 판다. 치료는 비싸게 한 번에
-      { label: '톱니에 기름을 먹인다', desc: '나사 −70 · 역회전 톱니 +1', tones: ['loss', 'gain'], info: '역회전 톱니는 이번 턴을 처음으로 되감습니다(되감기 1회).', blocked: poor(70), apply: (s) => { s.gold -= 70; if (s.charms) s.charms.rewind += 1; return { text: '국자가 톱니 홈마다 기름을 붓는다. 거꾸로 돌려도 이제 걸리지 않는다. (역회전 톱니 +1)' }; } },
+      // D-464: 사건마다 고유한 판돈 — 기름 장수는 「되감기 톱니」(되감기)를 판다. 치료는 비싸게 한 번에
+      { label: '톱니에 기름을 먹인다', desc: '나사 −70 · 되감기 톱니 +1', tones: ['loss', 'gain'], info: '되감기 톱니는 이번 턴을 처음으로 되감습니다(되감기 1회).', blocked: poor(70), apply: (s) => { s.gold -= 70; if (s.charms) s.charms.rewind += 1; return { text: '국자가 톱니 홈마다 기름을 붓는다. 거꾸로 돌려도 이제 걸리지 않는다. (되감기 톱니 +1)' }; } },
       { label: '통째로 붓는다', desc: '나사 −90 · 분대 전원 HP 가득', tones: ['loss', 'gain'], blocked: poor(90), apply: (s) => { s.gold -= 90; hpRatio(s, 1); return { text: '룩이 통을 기울인다. 관절마다 기름이 흘러넘친다. (HP 가득)' }; } },
       leave('지나가기'),
     ],
@@ -428,7 +428,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
           s.refined.push(id);
           done.push(COMMANDS[id].name);
         }
-        return { text: `설계도의 선이 ${done.join(' · ')}을 고친다. (태엽 −1)` };
+        return { text: `설계도의 선이 ${josa(done.join(' · '), '을')} 고친다. (태엽 −1)` };
       } },
       leave('지나가기'),
     ],
@@ -444,7 +444,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         ps.splice(ps.indexOf(low), 1);
         return { text: `${josa(SLICE_PARTS[low].name, '이')} 저울 위에서 녹아내린다. 저울이 기운다.`, partPick: true, elite: true };
       } },
-      { label: '상자를 산다', desc: '나사 −100 · 부품 하나를 고른다', tones: ['loss', 'gain'], blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고, 잊혀진 상자 하나가 밀려 나온다.', partPick: true }; } },
+      { label: '상자를 산다', desc: '나사 −100 · 부품 하나를 고른다', tones: ['loss', 'gain'], blocked: poor(100), apply: (s) => { s.gold -= 100; return { text: '철망 문이 열리고, 잊힌 상자 하나가 밀려 나온다.', partPick: true }; } },
       leave('지나가기'),
     ],
   },
@@ -510,7 +510,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
         const u = greenOf(s);
         const max = crewMaxHp(u);
         s.squad = s.squad.map((x) => (x === u ? { ...x, temper: (x.temper ?? 0) + 5, hp: Math.max(1, Math.round((x.hp ?? max) - max * 0.4)) } : x));
-        return { text: `${josa(nameOf(u), '이')} 주먹을 쥔 채 돌아온다. (공격 +5 · HP −40%)` };
+        return { text: `${josa(nameOf(u), '이')} 단단해진 몸으로 돌아온다. (공격 +5 · HP −40%)` };
       } },
       leave('거절하기'),
     ],
@@ -565,14 +565,14 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   duelKnight: {
     title: '결투하는 나이트',
-    text: '길 한가운데 나이트 하나가 창을 세운다. “너희 중 가장 센 놈. 이기면 내 솜씨를 주지.”',
+    text: '길 한가운데 나이트 하나가 발굽을 구른다. “너희 중 가장 센 놈. 이기면 내 솜씨를 주지.”',
     choices: [
       // D-464: 고유한 판돈 — 단련을 건 결투 (이기면 영구 공격 +5 · 지면 영구 −3)
       { label: '결투를 받는다', desc: '60% 에이스 공격 +5 · 40% 공격 −3', tones: ['gain', 'loss'], info: '가장 센 분대원이 나갑니다. 오르든 내리든 영구히 남습니다.', blocked: (s) => (nonKing(s).length ? null : '내보낼 분대원 없음'), apply: (s, rng) => {
         const u = [...nonKing(s)].sort((a, b) => SELL[b.t] - SELL[a.t] || (b.kills ?? 0) - (a.kills ?? 0))[0];
-        if (rng.int(10) < 6) { temper(s, u, 5); return { slot: 0, text: `${josa(nameOf(u), '이')} 창을 쳐낸다. 나이트가 말에서 떨어지며 창술을 남긴다. (공격 +5)` }; }
+        if (rng.int(10) < 6) { temper(s, u, 5); return { slot: 0, text: `${josa(nameOf(u), '이')} 세 번째 합을 이긴다. 받침이 미끄러진 나이트가 제 솜씨를 남긴다. (공격 +5)` }; }
         temper(s, u, -3);
-        return { slot: 1, text: `창끝이 ${nameOf(u)}의 손목을 꿰뚫는다. 쥐는 힘이 예전 같지 않다. (공격 −3)` };
+        return { slot: 1, text: `나이트의 발굽이 ${nameOf(u)}의 옆구리를 찍는다. 치는 힘이 예전 같지 않다. (공격 −3)` };
       } },
       leave('비켜 간다'),
     ],
@@ -644,7 +644,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   fieldMedic: {
     title: '순회 수리 비숍',
-    text: '구급 가방을 멘 비숍이 깨진 톱니를 찾는다. “고쳐 주지. 대신 명령서가 녹슨다.”',
+    text: '구급 가방을 멘 비숍이 깨진 톱니를 찾는다. “톱니는 고쳐 드리리다. 값은… 명령서의 녹이오.”',
     choices: [
       { label: '수리를 맡긴다', desc: '심장 톱니 수리 · 카드 1장 녹슮', tones: ['gain', 'loss'], info: '녹슨 카드는 태엽이 1 더 듭니다.', blocked: (s) => (s.squad.some((u) => u.cracked) ? null : '깨진 심장 톱니 없음'), apply: (s, rng) => {
         const u = s.squad.find((x) => x.cracked)!;
@@ -685,7 +685,7 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
       { label: '문지기를 매수한다', desc: '나사 −120 · 룩 합류', tones: ['loss', 'gain'], info: '룩과 함께 룩 카드 한 장이 덱에 들어옵니다.', blocked: (s) => (s.gold < 120 ? '나사 120 필요' : full(s)), apply: (s) => {
         s.gold -= 120;
         s.deck.push('rookLine');
-        return { text: '룩 하나가 창을 내려놓는다. 초소를 떠나 당신의 줄 끝에 선다.', recruit: 'R' };
+        return { text: '룩 하나가 초소 빗장을 내려놓는다. 초소를 떠나 당신의 줄 끝에 선다.', recruit: 'R' };
       } },
       leave('돌아간다'),
     ],

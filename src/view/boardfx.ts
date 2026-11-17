@@ -1,7 +1,7 @@
 /**
  * 판 위 도트 FX 층 (D-249, 사용자: 「반장 연출 · fx가 허접하다」): Phaser 판 위에 pxfx 캔버스 하나를 덮는다 (누르기는 아래로 통과).
  *  - 반장 판 공기: 철갑 = 판 아래에서 불씨가 오르고 가장자리가 달아오름 / 조립 = 청록 훑는 줄 · 리벳 불꽃 / 출하 = 흰 역광 먼지 · 붉은 반짝
- *  - 기믹 순간: 줄 폭격 = 칸마다 불기둥이 솟고 연기 · 불씨 · 흰 장 / 되받아침 = 붉은 쇳조각이 친 기물로 날아가 박힘 / 찍어 내기 = 쾅 먼지 · 불꽃
+ *  - 기믹 순간: 줄 폭격 = 칸마다 불기둥이 솟고 연기 · 불씨 · 흰 장 / 가시 반격 = 붉은 쇳조각이 친 기물로 날아가 박힘 / 찍어 내기 = 쾅 먼지 · 불꽃
  * 판이 안 보이면(body.between) 쉰다.
  */
 import { calmMotion } from '../prefs/motion';
@@ -172,7 +172,7 @@ export class BoardFx {
     window.setTimeout(() => (this.flash = 0.06), width * 55);
     await new Promise((r) => window.setTimeout(r, width * 55 + 200));
   }
-  /** 되받아침: 반장에게서 붉은 쇳조각이 친 기물로 날아가 박힌다 */
+  /** 가시 반격: 반장에게서 붉은 쇳조각이 친 기물로 날아가 박힌다 */
   async thorns(from: Pos, to: Pos): Promise<void> {
     this.wake();
     const a = this.dot(from), b = this.dot(to);

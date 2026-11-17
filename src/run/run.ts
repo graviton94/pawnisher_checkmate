@@ -3,6 +3,7 @@ import { CARVES, CARVE_IDS, type CarveId } from '../data/carves';
 import { GRADE_ORDER, PITY, type Grade } from '../data/grades';
 import { PARTS, PART_FX, PART_IDS, PART_SLOTS, type PartId } from '../data/parts';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
+import { josa } from '../data/josa';
 import {
   BOSSES,
   DECK_MAX,
@@ -550,7 +551,7 @@ export const eventChoose = (run: RunState, i: number): string | void => {
       run.deck.splice(k, 1);
       const g = sellPrice(u.t) * 2;
       run.gold += g;
-      result = `당신의 ${PIECE_NAMES_KO[u.t]}이 낯선 상자에 실려 간다. (나사 +${g})`;
+      result = `당신의 ${josa(PIECE_NAMES_KO[u.t], '이')} 낯선 상자에 실려 간다. (나사 +${g})`;
       break;
     }
     case 'napping':
@@ -577,7 +578,7 @@ export const eventChoose = (run: RunState, i: number): string | void => {
     case 'pact': {
       const k = pickIdx(idx((u) => PACT_VICTIMS.includes(u.t)));
       const u = run.deck.splice(k, 1)[0];
-      return partReward(run, title, [`당신의 ${PIECE_NAMES_KO[u.t]}이 쇳물 속으로 가라앉는다.`], 'event', 'rare');
+      return partReward(run, title, [`당신의 ${josa(PIECE_NAMES_KO[u.t], '이')} 쇳물 속으로 가라앉는다.`], 'event', 'rare');
     }
     case 'dipping': {
       const k = pickIdx(idx((u) => u.t !== 'K'));

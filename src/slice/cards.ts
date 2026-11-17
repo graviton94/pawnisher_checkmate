@@ -388,28 +388,28 @@ export const FOE = {
 
 /**
  * 막별 반장 규칙 (R5-4, D-171): 반장마다 빌드에 던지는 질문 하나 + 레일 표시 문구.
- * plate = 철갑 · 줄 폭격(1막) · spawn = 2턴마다 킹 곁에 폰(2막 — 빨리 끝낼 수 있나) · thorns = 철갑 + 맞으면 되받아침(3막 — 한 방에 몰아칠 수 있나)
+ * plate = 철갑 · 줄 폭격(1막) · spawn = 2턴마다 킹 곁에 폰(2막 — 빨리 끝낼 수 있나) · thorns = 철갑 + 맞으면 가시 반격(3막 — 한 방에 몰아칠 수 있나)
  */
 export type BossRule = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
 /** 막마다 반장 둘 중 하나 (D-274): 1막 철갑 · 검수 · 2막 조립 · 자석 · 3막 출하 · 경보 */
 export const BOSS_PAIRS: [BossRule, BossRule][] = [['plate', 'inspect'], ['spawn', 'magnet'], ['thorns', 'alarm']];
 /** 새 반장의 판 · 기물 색 · 등장 FX는 같은 막 반장의 것을 빌린다 (전용 그림이 오기 전까지) */
 export const bossSkin = (r: BossRule): 'plate' | 'spawn' | 'thorns' | 'gilded' => (r === 'inspect' ? 'plate' : r === 'magnet' ? 'spawn' : r === 'alarm' ? 'thorns' : r);
-/** 반장 규칙 수치 — 되받아침 6 → 4 (D-298) */
+/** 반장 규칙 수치 — 가시 반격 6 → 4 (D-298) */
 /** alarmFull (D-454 경보 개편): 우리가 적을 친 횟수로 눈금이 찬다 — 이만큼 차면 그 적 차례 공격 ×alarmMult */
 export const BOSS_NUM = { spawnEvery: 2, spawnMax: 3, thorns: 4, stampEvery: 2, stampMult: 0.5, magnetEvery: 2, alarmFull: 8, alarmMult: 1.35 };
 export const BOSS_RULES: Record<BossRule, { name: string; lines: string[]; tell: string }> = {
   plate: { name: '철갑 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `줄 폭격 −${Math.round(BOSS.bombDamage * FOE.atk)} · 2턴마다`], tell: '2턴부터, 두 턴마다 한 줄이 불길에 잠깁니다. 바닥에 불꽃이 이는 줄에서 벗어나십시오.' },
   spawn: { name: '조립 반장', lines: ['2턴마다 킹 곁에 폰 하나', '폰이 셋 넘으면 멈춘다'], tell: '배치 턴부터, 두 턴마다 반장 곁에 폰이 찍혀 나옵니다. 찍힌 폰도 치면 연쇄가 쌓입니다.' },
-  gilded: { name: '도금왕', lines: ['금칠 방열판 · 2턴마다 다시', '폰 찍어 내기 · 줄 폭격 · 되받아침'], tell: '앞의 세 반장이 쓰던 것을 모두 씁니다 — 홀수 턴엔 곁에 폰을 찍어 내고 짝수 턴엔 한 줄을 불태우고 못 쓰러뜨린 공격은 가시로 돌려줍니다.' },
+  gilded: { name: '도금왕', lines: ['금칠 방열판 · 2턴마다 다시', '폰 찍어 내기 · 줄 폭격 · 가시 반격'], tell: '앞의 세 반장이 쓰던 것을 모두 씁니다 — 홀수 턴엔 곁에 폰을 찍어 내고 짝수 턴엔 한 줄을 불태우고 못 쓰러뜨린 공격은 가시로 돌려줍니다.' },
   inspect: { name: '검수 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, '2턴마다 불량 도장 — 찍힌 기물의 공격 ×0.5'], tell: '두 턴마다 당신의 가장 센 기물에 불량 도장을 찍습니다. 도장 찍힌 기물은 공격이 절반이 됩니다 — 다른 기물로 치십시오.' },
   magnet: { name: '자석 반장', lines: ['2턴마다 가장 가까운 기물을 끌어당긴다', '끌려가는 기물에 자석 표시'], tell: '두 턴마다 반장에게 가장 가까운 기물 하나가 한 칸 끌려갑니다. 자석 표시가 붙은 기물을 미리 빼내십시오.' },
-  alarm: { name: '경보 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `적을 칠 때마다 경보 +1 · ${BOSS_NUM.alarmFull}이 차면 적 공격 ×${BOSS_NUM.alarmMult}`], tell: `적을 칠 때마다 경보 눈금이 오릅니다. ${BOSS_NUM.alarmFull}이 차면 그 적 차례의 공격이 ${BOSS_NUM.alarmMult}배 — 몰아칠지, 나눠 칠지 고르십시오.` },
+  alarm: { name: '경보 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `적을 칠 때마다 경보 +1 · ${BOSS_NUM.alarmFull}칸 차면 적 공격 ×${BOSS_NUM.alarmMult}`], tell: `적을 칠 때마다 경보 눈금이 오릅니다. ${BOSS_NUM.alarmFull}칸이 차면 그 적 차례의 공격이 ${BOSS_NUM.alarmMult}배 — 몰아칠지, 나눠 칠지 고르십시오.` },
   thorns: { name: '출하 반장', lines: [`철갑 ${BOSS.plate} · 2턴마다 다시`, `못 쓰러뜨리면 친 기물이 ${Math.round(BOSS_NUM.thorns * FOE.atk)} 되받는다`], tell: '가시 갑옷 — 반장을 치고 못 쓰러뜨리면 가시가 친 기물에게 되돌아갑니다. 한 번에 몰아치십시오.' },
 };
 /** 반장 규칙별 보정 (D-298): king = 킹 HP 배율 · atk = 그 판 적 공격 배율 — 기믹은 그대로 두고 벽이 된 반장만 덜어 낸다 */
 export const BOSS_TUNE: Partial<Record<BossRule, { king?: number; atk?: number }>> = {
-  // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 되받아침은 그대로
+  // 2막 조립 반장 · 3막 출하 반장이 보통 봇 29% · 14%의 벽이었다 (측정 2026-11-07) — 폰 찍기 · 가시 반격은 그대로
   spawn: { king: 1, atk: 0.7 }, // D-518: 킹 0.8 → 1 — 레이드(2×2 · 패턴 · 패링) 뒤 보통 봇 85%로 띠 위
   thorns: { king: 0.8, atk: 0.6 }, // D-518: 킹 0.6 → 0.8 (레이드 뒤 보통 봇 88%) · D-358: 킹 0.7 → 0.6 · 공격 0.7 → 0.6 (확정 측정 58%)
   alarm: { king: 0.9, atk: 0.75 }, // D-518: 킹 0.7 → 0.9 (레이드 뒤 보통 봇 88%) · D-457: 0.85 · 0.85 → 0.7 · 0.75 — 실험실에서 보통 봇 3막 반장 승률 45% (경보를 꺼도 50%: 철갑 재생 + 3막 구성이 무겁다). D-358: 확정 측정에서 보통 봇 50% — 반장 중 가장 낮았다

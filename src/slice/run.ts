@@ -1,5 +1,6 @@
 import type { FormId, PieceType } from '../engine';
 import { FORMS, formsUpTo } from '../data/forms';
+import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
 import { GIANT_AT, GIANTS, type GiantType } from '../data/giants';
@@ -398,7 +399,7 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
     if (picks.length) {
       d.enemy = enemy;
       d.forms = picks;
-      d.tell = `${d.tell}${d.tell ? ' ' : ''}${[...new Set(picks)].map((f) => `이형 「${FORMS[f].name}」 — ${FORMS[f].move}, ${FORMS[f].hit}을 칩니다.`).join(' ')}`;
+      d.tell = `${d.tell}${d.tell ? ' ' : ''}${[...new Set(picks)].map((f) => `이형 「${FORMS[f].name}」 — ${FORMS[f].move}, ${josa(FORMS[f].hit, '을')} 칩니다.`).join(' ')}`;
     }
   }
   // 거대 주물 (D-484, GDD 21장 §3): 검문 · 반장 일부, 높은 왕관일수록 자주 — 같은 바탕 기물 하나(없으면 폰 둘)를 빼고 세운다

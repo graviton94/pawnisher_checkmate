@@ -7,16 +7,21 @@ export type RunMode = 'story' | 'challenge' | 'daily';
 export type StoryChapter = 0 | 1 | 2 | 3;
 export type EndingKind = 'throne' | 'depart' | 'challenge' | 'daily';
 export const CHAPTERS = [
-  { name: '무지와 첫 배신', label: '첫째 왕관', theme: '세트를 구하겠다며 오른 첫 폰이, 왕관을 쓴 뒤 다시 약한 폰으로 돌아가기 싫어 동료를 녹인다.' },
-  { name: '타인의 비극을 삼킨 오만', label: '둘째 왕관', theme: '전대 왕을 비겁하다 비웃던 폰이, 같은 자리에서 같은 괴물이 된다.' },
-  { name: '가장 거룩한 착취', label: '셋째 왕관', theme: '누구보다 동료를 아끼던 폰이, 그 죄를 짊어지겠다며 동료의 쇳물로 금빛이 된다.' },
-  { name: '직시와 해방', label: '넷째 왕관', theme: '자기 안의 욕망을 인정한 폰이, 왕관을 주조기에 던져 넣고 불량품 그대로 문밖으로 걸어 나간다.' },
+  { name: '무지와 첫 배신', alias: '종이 왕관', label: '첫째 왕관', theme: '세트를 구하겠다며 오른 첫 폰이, 왕관을 쓴 뒤 다시 약한 폰으로 돌아가기 싫어 동료를 녹인다.' },
+  { name: '타인의 비극을 삼킨 오만', alias: '녹슨 태엽', label: '둘째 왕관', theme: '전대 왕을 비겁하다 비웃던 폰이, 같은 자리에서 같은 괴물이 된다.' },
+  { name: '가장 거룩한 착취', alias: '금빛 자비', label: '셋째 왕관', theme: '누구보다 동료를 아끼던 폰이, 그 죄를 짊어지겠다며 동료의 쇳물로 금빛이 된다.' },
+  { name: '직시와 해방', alias: '거울 복도', label: '넷째 왕관', theme: '자기 안의 욕망을 인정한 폰이, 왕관을 주조기에 던져 넣고 불량품 그대로 문밖으로 걸어 나간다.' },
 ] as const;
 /** 왕관마다 새긴 규정 (바이블 LAW-1~4) — ASCENSION 표의 몇 번째 조항인가. 넷째 왕관에서 왕관을 쓰면 「최종 경비」 */
 export const STORY_LAW = [0, 1, 2, 12] as const;
 const chapterOf = (chapter: number) => CHAPTERS[Math.max(0, Math.min(STORY_COUNT - 1, chapter))];
-export const chapterLabel = (chapter: number): string => `${chapterOf(chapter).label} · ${chapterOf(chapter).name}`;
-export const runLabel = (mode: RunMode, asc: number, chapter = 0): string => mode === 'story' ? chapterLabel(chapter) : mode === 'daily' ? '오늘의 도전' : `도전 난이도 ${Math.max(1, asc - CHALLENGE_START + 1)}`;
+/**
+ * 왕관 부제 (D-536 — 출시 전 서사 리뷰 #1): name(「무지와 첫 배신」 …)은 그 왕관의 결말을 미리 말해 버린다.
+ * 끝낸 왕관(reveal)만 name을 보이고, 아직 안 끝낸 왕관은 결말을 말하지 않는 별칭(alias)으로 부른다 — 메뉴 · 이어하기 · 지도 리본 · 결과 · 그림자 컷.
+ */
+export const chapterTitle = (chapter: number, reveal = false): string => (reveal ? chapterOf(chapter).name : chapterOf(chapter).alias);
+export const chapterLabel = (chapter: number, reveal = false): string => `${chapterOf(chapter).label} · ${chapterTitle(chapter, reveal)}`;
+export const runLabel = (mode: RunMode, asc: number, chapter = 0, reveal = false): string => mode === 'story' ? chapterLabel(chapter, reveal) : mode === 'daily' ? '오늘의 도전' : `도전 난이도 ${Math.max(1, asc - CHALLENGE_START + 1)}`;
 export const endingLabel = (ending: EndingKind): string => ({ throne: '왕위 계승', depart: '왕관 파괴', challenge: '도전 완료', daily: '오늘의 도전 완료' })[ending];
 export interface CrownRecord { chapter: number; runId: string; law: string; companions: string[] }
 export interface StoryPromise { serial: string; name: string; wish: string }

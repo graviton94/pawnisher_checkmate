@@ -1,13 +1,13 @@
 /** 왕위 결정 화면 「금단의 승급대 앞에서」(바이블 THR, D-451). 첫째~셋째 왕관은 [돌아본다] [왕관을 쓴다], 넷째 왕관만 [왕관을 쓴다] [왕관을 던진다]. 진행·저장은 호출자가. */
 import { sfx } from '../audio/sfx';
-import { THRONE_TEXT, TESTIMONY, lookBackCut, type Face } from '../data/script';
+import { THRONE_TEXT, lookBackCut, testimony, type Face } from '../data/script';
 import { playCuts } from './opening';
 import { josa } from '../data/josa';
 import { STORY_COUNT, chapterLabel } from '../data/campaign';
 import { pxOut, replay, typeIn, typeSkip } from './fx3';
 import { btnHtml, coverArt, sceneFocus } from './uikit';
-export const promotionScene = (o: { chapter: number; art: string; companion?: string; promisedLost?: string; faces?: Record<string, Face> }): Promise<'throne' | 'depart'> => new Promise((resolve) => {
-  const tm = TESTIMONY[Math.min(STORY_COUNT - 1, o.chapter)];
+export const promotionScene = (o: { chapter: number; prev?: string[]; art: string; companion?: string; promisedLost?: string; faces?: Record<string, Face> }): Promise<'throne' | 'depart'> => new Promise((resolve) => {
+  const tm = testimony(Math.min(STORY_COUNT - 1, o.chapter), o.prev);
   const final = o.chapter === STORY_COUNT - 1;
   const T = THRONE_TEXT;
   const el = document.createElement('section');

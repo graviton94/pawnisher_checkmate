@@ -5,7 +5,7 @@
 import { calmMotion } from '../prefs/motion';
 import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
-import { PROLOGUE, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
+import { PROLOGUE, PROLOGUE_FIELD, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
@@ -234,8 +234,14 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     });
     next();
   });
-/** 프롤로그 (S1): 처음 출하 앞 · 메뉴 「프롤로그 다시 보기」(short = ★컷만). before = 걷기 전에 뒤에 세울 다음 화면 */
-export const prologue = (short = false, before?: () => unknown): Promise<void> => playCuts(short ? PROLOGUE.filter((c) => c.key) : PROLOGUE, { logo: true, before });
+/**
+ * 프롤로그 (S1): 처음 출하 앞 · 메뉴 「프롤로그 다시 보기」(short = ★컷만). before = 걷기 전에 뒤에 세울 다음 화면.
+ * field = PRO-08(검은 세트와 먼 왕좌)을 끝에 붙이나 — 처음 출하는 false: 시험대 뒤 첫 실전 대국 직전에 따로 튼다(D-536 · main.onboarding).
+ */
+export const prologue = (short = false, before?: () => unknown, field = true): Promise<void> => {
+  const cuts = [...PROLOGUE, ...(field ? [PROLOGUE_FIELD] : [])];
+  return playCuts(short ? cuts.filter((c) => c.key) : cuts, { logo: true, before });
+};
 
 /** 「화면을 눌러 …」 — 글자마다 한 칸씩 차례로 튀어 오르는 물결 (테스터: 깜빡임이 뚝뚝 끊겼다) */
 export const pressHtml = (t: string): string => [...t].map((ch, k) => (ch === ' ' ? ' ' : `<span style="--k:${k}">${ch}</span>`)).join('');

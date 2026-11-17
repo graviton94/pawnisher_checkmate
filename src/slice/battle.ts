@@ -93,7 +93,7 @@ export interface SliceBattle {
   rewinds: number;
   /** 방금 회피 반격한 기물 (화면 알림용) */
   grazedNow?: number;
-  /** 이 대국의 공짜 되감기 (되감는 테이프) — 이것부터 쓰고 넘으면 역회전 톱니가 깨진다 */
+  /** 이 대국의 공짜 되감기 (되감는 테이프) — 이것부터 쓰고 넘으면 되감기 톱니가 깨진다 */
   rewindFree?: number;
   /** 부품 (규칙을 깨는 유물, D-144) */
   parts: SlicePartId[];
@@ -338,7 +338,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 역회전 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId; /** 막사의 호출 (보병 세트 전용, 2026-11-14) */ pawnCall?: boolean; /** 입문 시험대 (P-C D-502): 공정 열기 없이 늘 100% */ flatHeat?: boolean; /** 입문 시험대 A: 적이 예고하지 않는다(움직이지 않는 과녁) */ calm?: boolean; /** 입문 시험대 B: 첫 턴 적의 수를 짜 둔다 (그 칸에 선 적 → 갈 칸) — 막히면 평소처럼 다른 수를 찾는다 */ script?: { from: Pos; to: Pos }[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 되감기 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId; /** 막사의 호출 (보병 세트 전용, 2026-11-14) */ pawnCall?: boolean; /** 입문 시험대 (P-C D-502): 공정 열기 없이 늘 100% */ flatHeat?: boolean; /** 입문 시험대 A: 적이 예고하지 않는다(움직이지 않는 과녁) */ calm?: boolean; /** 입문 시험대 B: 첫 턴 적의 수를 짜 둔다 (그 칸에 선 적 → 갈 칸) — 막히면 평소처럼 다른 수를 찾는다 */ script?: { from: Pos; to: Pos }[] } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -844,7 +844,7 @@ const liveSteps = (b: SliceBattle): { it: Intent; s: BattleState }[] => {
 /** 예고대로 두면 맞을 내 기물 (화면 HP 깜빡임용) */
 /**
  * 적 계획 목록 (D-207 — 화면 오른쪽 「적의 수」): 지금 턴을 끝내면 적이 둘 수를 순서대로 — 누가 · 누구를 · 얼마나.
- * 반장 규칙 · 특성(줄 폭격 · 자폭 · 되받아침)도 한 줄로. 실행과 같은 enemyPhase를 미리 돌려 본다.
+ * 반장 규칙 · 특성(줄 폭격 · 자폭 · 가시 반격)도 한 줄로. 실행과 같은 enemyPhase를 미리 돌려 본다.
  */
 export const intentPlan = (b: SliceBattle): { by: PieceType | null; label?: string; hits: { t: PieceType; damage: number; killed: boolean }[] }[] => {
   const c = cloneBattle(b);
@@ -1571,7 +1571,7 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
     if (e.type !== 'attack') continue;
     if (b.boss && hasThorns(b) && ek && e.hits.some((h) => h.targetId === ek.id && !h.killed)) {
       const me = findPiece(b.s, e.attackerId);
-      if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '되받아침!', hits: [hurt(me, foeDmg(BOSS_NUM.thorns, b))], fx: 'thorns', from: { x: ek.x, y: ek.y } });
+      if (me && me.side === 0) out.push({ type: 'blast', pos: { x: me.x, y: me.y }, label: '가시 반격!', hits: [hurt(me, foeDmg(BOSS_NUM.thorns, b))], fx: 'thorns', from: { x: ek.x, y: ek.y } });
     }
     if (b.blastPawns)
       for (const h of e.hits) {
@@ -1591,7 +1591,7 @@ const afterMyHits = (b: SliceBattle, before: BattleState, events: BattleEvent[])
 };
 
 /**
- * 내가 치면 돌아오는 피해 미리보기 (D-173): 출하 반장 되받아침 · 자폭 폰. previewPlay 결과로 계산만 한다 (상태는 안 바꾼다).
+ * 내가 치면 돌아오는 피해 미리보기 (D-173): 출하 반장 가시 반격 · 자폭 폰. previewPlay 결과로 계산만 한다 (상태는 안 바꾼다).
  * 화면은 과녁 칸에 붉은 숫자로 보여 준다 — 결과를 누르기 전에 (UI 원칙 1).
  */
 export const backlashOf = (b: SliceBattle, sim: { state: BattleState; events: BattleEvent[] }): number => {
@@ -1677,7 +1677,7 @@ const afterEnemyHits = (b: SliceBattle, before: BattleState, events: BattleEvent
 
 const PIECE_LABEL: Record<PieceType, string> = { K: '킹', Q: '퀸', R: '룩', B: '비숍', N: '나이트', P: '폰' };
 
-/** 되받아침이 켜진 반장 (출하 반장 · 도금왕) */
+/** 가시 반격이 켜진 반장 (출하 반장 · 도금왕) */
 export const hasThorns = (b: SliceBattle): boolean => b.bossRule === 'thorns' || b.bossRule === 'gilded';
 
 /** 반장 턴 시작: 철갑을 다시 두르고 폭격 줄을 예고한다 (내 기물 값이 가장 많이 모인 줄) */
@@ -1688,7 +1688,7 @@ const bossTurnStart = (b: SliceBattle): void => {
   b.bombRow = null;
   if (b.bossRule === 'inspect' || b.bossRule === 'magnet' || b.bossRule === 'alarm') return newBossTurn(b, k);
   // 조립 반장: 2턴마다 킹 곁에 폰 (셋까지)
-  // 도금왕 (D-252): 세 반장을 다 쓴다 — 방열판(위) · 홀수 턴 폰 찍기 · 짝수 턴 줄 폭격 · 되받아침(아래 hasThorns)
+  // 도금왕 (D-252): 세 반장을 다 쓴다 — 방열판(위) · 홀수 턴 폰 찍기 · 짝수 턴 줄 폭격 · 가시 반격(아래 hasThorns)
   if (b.bossRule === 'spawn' || b.bossRule === 'gilded') {
     if (k && (b.turn - 1) % BOSS_NUM.spawnEvery === 0 && b.s.pieces.filter((p) => p.side === 1 && p.type === 'P').length < BOSS_NUM.spawnMax) {
       // 2×2 보스 (D-513): 「반장 곁」 = 몸 둘레 열두 칸 (앞줄부터)
@@ -2071,12 +2071,12 @@ export const livesMax = (u: Squad, parts: readonly string[], type: PieceType = u
 export const refillBrace = (squad: Squad[]): Squad[] => squad.map((u) => (u.doorsSpent ? { ...u, doorsSpent: 0 } : u));
 
 /**
- * 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 역회전 톱니가 깨진다. 입문 실습처럼 b.rewinds를 돌려준 것은 쓴 것이 아니다.
+ * 되감기 정산 (D-228): 테이프의 공짜 몫을 넘어 쓴 만큼 되감기 톱니가 깨진다. 입문 실습처럼 b.rewinds를 돌려준 것은 쓴 것이 아니다.
  * atStart = 대국 시작 때 되감기 수, left = 지금 남은 수, free = 테이프 공짜 몫.
  */
 export const rewindCost = (atStart: number, left: number, free = 0): number => Math.max(0, atStart - left - free);
 
-/** 되감기: 이번 턴 처음으로 (테이프의 공짜 1회 → 그다음 역회전 톱니 부적, D-228) */
+/** 되감기: 이번 턴 처음으로 (테이프의 공짜 1회 → 그다음 되감기 톱니 부적, D-228) */
 export const rewind = (b: SliceBattle): SliceBattle | string => {
   if (b.rewinds <= 0) return '되감기를 모두 사용했습니다.';
   const back = JSON.parse(b.snap) as SliceBattle;
@@ -2186,7 +2186,7 @@ export const crackOrScrap = (fallen: Squad[]): { back: Squad[]; scrapped: Squad[
   const back: Squad[] = [];
   const scrapped: Squad[] = [];
   for (const u of fallen) {
-    // 킹이 이기는 수와 함께 쓰러졌으면(되받아침 · 자폭 · 피의 계약) HP 1로 버틴다 — 킹 없는 분대로 다음 대국이 깨지던 버그 (2026-11-05)
+    // 킹이 이기는 수와 함께 쓰러졌으면(가시 반격 · 자폭 · 피의 계약) HP 1로 버틴다 — 킹 없는 분대로 다음 대국이 깨지던 버그 (2026-11-05)
     if (u.t === 'K') back.push({ ...u, hp: 1 });
     else if (u.cracked) scrapped.push(u);
     else back.push({ ...u, cracked: true, hp: Math.round(crewMaxHp(u) * REST.reviveHp) });
