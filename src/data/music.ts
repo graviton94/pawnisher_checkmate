@@ -1,36 +1,48 @@
 /**
- * 배경 음악 (D-123, 제안서 P1 2.9): 파일 없이 WebAudio 칩튠 루프. 곡 = 코드 진행 4마디 × 반복.
- * 사용자 에셋이 오면 같은 이름표(트랙 id)로 바꿔 끼운다. 볼륨은 효과음보다 작게.
+ * 배경 음악 표 (D-545 — D-123의 칩튠 생성기를 대신한다): 사용자가 고른 시안 A · B · D를 장면마다 건다.
+ * 파일은 `public/audio/music/<file>.ogg|m4a` (`tools/audio/bgm_game.py`가 찍는다 — 자체 작곡 · FluidR3_GM 렌더, 90초 넘는 이음매 없는 루프).
+ * 같은 파일을 쓰는 장면끼리(타이틀 → 지도)는 곡을 다시 틀지 않고 거름 · 속도 · 크기만 바꾼다.
  */
-export type TrackId = 'menu' | 'act1' | 'act2' | 'act3' | 'boss' | 'final';
+export type TrackId = 'menu' | 'map' | 'act1' | 'act2' | 'act3' | 'boss' | 'final' | 'ending';
+
+/** 곡 파일 이름 (확장자 없이) */
+export type MusicFile = 'waltz' | 'anvil' | 'anvil-boss' | 'crown' | 'crown-final';
 
 export interface TrackDef {
-  bpm: number;
-  /** 근음 (Hz) */
-  root: number;
-  /** 마디마다 코드: [근음 반음, 단조면 3 · 장조면 4] */
-  prog: [number, 3 | 4][];
-  /** 8분음표 8칸 아르페지오 (코드음 순번: 0 근음 · 1 3도 · 2 5도 · 3 옥타브, -1 쉼) */
-  arp: number[];
-  lead: OscillatorType;
-  /** 북 (킥 · 하이햇) */
-  drums: 'none' | 'soft' | 'march' | 'drive';
+  file: MusicFile;
+  /** 재생 속도 = 음높이 · 빠르기 함께 (1 = 원곡). 막이 오를수록 조금씩 높고 빠르게 */
+  rate: number;
+  /** 낮은 통과 거름 (Hz, 0 = 끔) — 지도는 오르골을 멀리서 듣는다 */
+  lowpass: number;
+  /** 곡 안 크기 (1 = 파일 그대로 · −18 LUFS) */
+  gain: number;
 }
 
+const SEMI = 2 ** (1 / 12);
+
 export const TRACKS: Record<TrackId, TrackDef> = {
-  // 메인 메뉴: 느리고 비어 있는 공장 — i · VI · III · VII
-  menu: { bpm: 78, root: 110, prog: [[0, 3], [-4, 4], [3, 4], [-2, 4]], arp: [0, -1, 2, -1, 3, -1, 2, -1], lead: 'triangle', drums: 'none' },
-  // 주조 공정: 일정한 컨베이어 박자
-  act1: { bpm: 100, root: 110, prog: [[0, 3], [0, 3], [-4, 4], [-2, 4]], arp: [0, 2, 3, 2, 1, 2, 3, 2], lead: 'square', drums: 'soft' },
-  // 조립 공정: 조금 빠르게, 5도 위로
-  act2: { bpm: 112, root: 123.47, prog: [[0, 3], [5, 3], [-2, 4], [3, 4]], arp: [0, 1, 2, 3, 2, 1, 2, 3], lead: 'square', drums: 'march' },
-  // 검수 공정: 반음 내림이 들어간 긴장
-  act3: { bpm: 124, root: 103.83, prog: [[0, 3], [1, 4], [0, 3], [-2, 4]], arp: [0, 2, 3, 1, 0, 2, 3, 2], lead: 'sawtooth', drums: 'march' },
-  // 반장전: 빠르고 북이 앞에
-  boss: { bpm: 140, root: 110, prog: [[0, 3], [1, 4], [-4, 4], [-5, 4]], arp: [0, 0, 2, 0, 3, 0, 2, 1], lead: 'square', drums: 'drive' },
-  // 도금왕: 가장 빠르게
-  final: { bpm: 152, root: 98, prog: [[0, 3], [3, 4], [1, 4], [-2, 4]], arp: [0, 3, 2, 3, 1, 3, 2, 3], lead: 'sawtooth', drums: 'drive' },
+  // 타이틀 · 메뉴: B 태엽 오르골 왈츠
+  menu: { file: 'waltz', rate: 1, lowpass: 0, gain: 1 },
+  // 지도: 같은 왈츠를 벽 너머로 (거름 + 조금 작게) — 타이틀에서 넘어오면 곡이 이어진다
+  map: { file: 'waltz', rate: 1, lowpass: 1600, gain: 0.8 },
+  // 대국: A 모루 행진 — 1막 원곡 · 2막 반음 위 · 3막 온음 위 (빠르기도 6% · 12% 오른다)
+  act1: { file: 'anvil', rate: 1, lowpass: 0, gain: 1 },
+  act2: { file: 'anvil', rate: SEMI, lowpass: 0, gain: 1 },
+  act3: { file: 'anvil', rate: SEMI * SEMI, lowpass: 0, gain: 1 },
+  // 반장전 · 레이드: A 반장 변주
+  boss: { file: 'anvil-boss', rate: 1, lowpass: 0, gain: 1 },
+  // 도금왕: D 긴장 변주
+  final: { file: 'crown-final', rate: 1, lowpass: 0, gain: 1 },
+  // 왕관 장면 · 결말 · 크레딧 · 출하 끝: D 녹슨 왕관
+  ending: { file: 'crown', rate: 1, lowpass: 0, gain: 1 },
 };
 
-/** 음량 (효과음 기준 0.5보다 작게) */
-export const MUSIC_VOLUME = 0.11;
+/**
+ * 음량 (설정 크기 1.0일 때): 파일 −18 LUFS × 0.28 ≈ −29 LUFS. 효과음은 −16 LUFS × 기준 0.5 × 소리별 0.35~0.9 ≈ −23~−31이라
+ * 음악이 타격 · 처치보다 3~6 dB 아래에 깔린다.
+ */
+export const MUSIC_VOLUME = 0.28;
+/** 곡이 바뀔 때 겹쳐 넘기는 시간 (ms) — 소리만 (D-216은 화면 규칙) */
+export const MUSIC_XFADE_MS = 450;
+/** 풀어 둔 곡을 몇 개까지 들고 있나 (곡 하나 ≈ 25 MB 메모리 — 지도 ↔ 대국 왕복만 덮는다) */
+export const MUSIC_CACHE = 2;

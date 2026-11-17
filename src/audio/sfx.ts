@@ -1,4 +1,4 @@
-import { SFX_BANK, SFX_COMBO_MAX, SFX_DEDUPE_MS, type SfxKind } from '../data/sfx';
+import { SFX_BANK, SFX_COMBO_MAX, SFX_DEDUPE_MS, SFX_VOICES, SFX_VOICES_PER_KIND, type SfxKind } from '../data/sfx';
 
 /**
  * 효과음 (D-540 — D-073의 칩튠 생성기를 대신한다): 주물 공방 소리 파일(`public/audio/sfx/`)을 WebAudio로 튼다.
@@ -95,6 +95,21 @@ const loadAll = (a: AudioContext): void => {
 export const sfxLoaded = (): number => bufs.size;
 
 const last = new Map<string, number>();
+/** 지금 울리는 소리 (오래된 것부터) — 연쇄 타격이 뭉개지지 않게 갯수를 묶는다 (D-545) */
+const live: { kind: SfxKind; src: AudioBufferSourceNode; g: GainNode; end: number }[] = [];
+/** 오래된 소리를 20 ms에 걸쳐 닫는다 */
+const choke = (a: AudioContext, i: number): void => {
+  const v = live.splice(i, 1)[0];
+  const t = a.currentTime;
+  v.g.gain.cancelScheduledValues(t);
+  v.g.gain.setValueAtTime(v.g.gain.value, t);
+  v.g.gain.linearRampToValueAtTime(0, t + 0.02);
+  try {
+    v.src.stop(t + 0.03);
+  } catch {
+    /* 이미 멈춤 */
+  }
+};
 
 /**
  * 효과음 하나. combo = 이번 턴 몇 번째 타격인지 (0부터) — 순번마다 음이 반음씩 올라간다 (발라트로·페글의 연쇄 쾌감).
@@ -120,7 +135,14 @@ export const sfx = (kind: SfxKind, combo = 0): void => {
   const g = a.createGain();
   g.gain.value = d.gain;
   src.connect(g).connect(master);
-  src.start(a.currentTime);
+  // 같은 소리는 SFX_VOICES_PER_KIND개, 모두 합쳐 SFX_VOICES개까지 — 넘으면 가장 오래된 것을 닫는다
+  const t0 = a.currentTime;
+  for (let i = live.length - 1; i >= 0; i--) if (live[i].end <= t0) live.splice(i, 1);
+  const same = live.filter((x) => x.kind === kind);
+  if (same.length >= SFX_VOICES_PER_KIND) choke(a, live.indexOf(same[0]));
+  if (live.length >= SFX_VOICES) choke(a, 0);
+  src.start(t0);
+  live.push({ kind, src, g, end: t0 + b.duration / src.playbackRate.value });
   // 긴 소리(승리 · 패배 · 반장)가 끝나기 전에 쉬지 않게
   window.clearTimeout(idleT);
   idleT = window.setTimeout(() => void ctx?.suspend(), Math.max(IDLE_MS, (b.duration / src.playbackRate.value) * 1000 + 500));

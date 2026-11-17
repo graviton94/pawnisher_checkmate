@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-배경 음악 시안 넷 (D-540 — 사용자가 방향을 고르기 전용, 게임에는 아직 넣지 않는다).
+배경 음악 시안 (D-540 · D-545 — 방향 고르기 전용. 사용자가 고른 A · B · D의 게임 판은 bgm_game.py).
 
     python3 -I tools/audio/bgm_concepts.py [출력=build-res/audio/bgm-concepts] [--m4a 폴더]
 
@@ -8,7 +8,8 @@
 --m4a를 주면 AAC 판도 그 폴더에 (사운드 시안 페이지의 Safari 대비 — 저장소에는 넣지 않는다).
 - A 모루 행진: 저음 금관 오스티나토 + 모루 · 망치 타악 (FluidR3_GM, MIT)
 - B 태엽 오르골 왈츠: 오르골 · 첼레스타 · 피치카토 · 시계 소리 (FluidR3_GM)
-- C 검은 칩: 어두운 칩튠 (numpy 펄스 · 삼각 · 잡음 — src/audio/music.ts 결의 확장)
+- C 재시안 (D-545 — 첫 C 「검은 칩」은 사용자가 뺐다, 시안 페이지 전용 · 게임에 넣지 않는다):
+  C1 톱니 칩(F단조 96 BPM · 3 대 4로 맞물리는 16분 아르페지오 + 낮은 펄스 베이스) · C2 시계탑 칩(7/8 · 시계 똑딱 + 오르골 칩 선율)
 - D 녹슨 왕관: 실내악 현 + 피아노 (FluidR3_GM)
 
 이음매 없는 루프: 악보를 세 번 이어 렌더하고 가운데 한 바퀴만 정확히 자른다 (앞 바퀴의 잔향이 들어 있어 끝 → 처음이 매끄럽다).
@@ -273,101 +274,173 @@ def concept_d(boss=False):
     return s
 
 
-# ---------------------------------------------------------------- C 검은 칩 (numpy)
-def chip_concept(boss=False):
-    bpm = 160 if boss else 140
-    bars = 16 if boss else 24
-    beat = 60 / bpm
-    L = int(round(bars * 4 * beat * SR))
-    out = np.zeros((L, 2))
-    rng = np.random.default_rng(3)
+# ---------------------------------------------------------------- C 재시안 (D-545 — 첫 C 「검은 칩」은 사용자가 뺐다)
+class Chip:
+    """칩 소리 버퍼: 꼬리는 처음으로 감는다 (이음매 없는 루프). 시간은 초."""
 
-    def put(sig, at, pan=0.0):
-        i = int(round(at * SR)) % L
-        n = len(sig)
-        idx = (np.arange(n) + i) % L  # 꼬리는 처음으로 감는다 (이음매 없는 루프)
-        np.add.at(out[:, 0], idx, sig * (1 - pan) * 0.5)
-        np.add.at(out[:, 1], idx, sig * (1 + pan) * 0.5)
+    def __init__(self, seconds, seed):
+        self.L = int(round(seconds * SR))
+        self.out = np.zeros((self.L, 2))
+        self.rng = np.random.default_rng(seed)
 
-    def pulse(f, dur, duty, vol, vib=0.0, rel=0.04):
+    def put(self, sig, at, pan=0.0):
+        i = int(round(at * SR)) % self.L
+        idx = (np.arange(len(sig)) + i) % self.L
+        np.add.at(self.out[:, 0], idx, sig * (1 - pan) * 0.5)
+        np.add.at(self.out[:, 1], idx, sig * (1 + pan) * 0.5)
+
+    @staticmethod
+    def pulse(f, dur, duty, vol, vib=0.0, rel=0.03, decay=None):
         n = int(dur * SR)
         t = np.arange(n) / SR
         ph = np.cumsum(f * (1 + vib * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.15) / 0.2, 0, 1))) / SR
         w = np.where((ph % 1) < duty, 1.0, -1.0)
-        e = np.minimum(1, t / 0.004) * np.clip((dur - t) / rel, 0, 1) * (0.75 + 0.25 * np.exp(-t / 0.1))
+        e = np.minimum(1, t / 0.003) * np.clip((dur - t) / rel, 0, 1)
+        e = e * (np.exp(-t / decay) if decay else 0.8 + 0.2 * np.exp(-t / 0.08))
+        e = np.round(e * 15) / 15  # 4비트 음량 계단
         return w * e * vol
 
-    def tri(f, dur, vol):
+    @staticmethod
+    def tri(f, dur, vol, rel=0.02):
         n = int(dur * SR)
         t = np.arange(n) / SR
-        ph = (f * t + 0.25) % 1  # 0에서 시작 (딸깍 없이)
-        w = 4 * np.abs(ph - 0.5) - 1
-        w = np.round(w * 8) / 8  # 4비트 계단 (NES 삼각)
-        e = np.clip((dur - t) / 0.02, 0, 1)
-        return w * e * vol
+        ph = (f * t + 0.25) % 1
+        w = np.round((4 * np.abs(ph - 0.5) - 1) * 8) / 8
+        return w * np.clip((dur - t) / rel, 0, 1) * vol
 
-    def nz(dur, vol, tau, hp=1000, short=False):
+    def noise(self, dur, vol, tau, hp=1000, short=False):
         n = int(dur * SR)
-        lfsr = rng.integers(0, 2, n // 8 + 1).repeat(8)[:n] * 2 - 1.0
         if short:
-            lfsr = np.resize(rng.integers(0, 2, 93) * 2 - 1.0, n)
-        sos = signal.butter(1, hp, 'high', fs=SR, output='sos')
+            src = np.resize(self.rng.integers(0, 2, 93) * 2 - 1.0, n)
+        else:
+            src = self.rng.integers(0, 2, n // 8 + 1).repeat(8)[:n] * 2 - 1.0
         e = np.exp(-np.arange(n) / SR / tau) * np.minimum(1, np.arange(n) / (0.001 * SR))
-        return signal.sosfilt(sos, lfsr) * e * vol
+        return signal.sosfilt(signal.butter(1, hp, 'high', fs=SR, output='sos'), src) * e * vol
 
-    def kick(vol):
-        n = int(0.18 * SR)
+    @staticmethod
+    def kick(vol, low=48, tau=0.09):
+        n = int(0.22 * SR)
         t = np.arange(n) / SR
-        f = 50 + 110 * np.exp(-t / 0.025)
-        return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.07) * vol
+        f = low + 120 * np.exp(-t / 0.02)
+        return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / tau) * vol
 
-    hz = lambda p: 440 * 2 ** ((p - 69) / 12)
+    @staticmethod
+    def chime(f, dur, vol):
+        """오르골 칩: 사각 12.5%(밝은 몸) + 한 옥타브 위 사인(쇠 빗살), 빠르게 꺼진다."""
+        n = int(dur * SR)
+        t = np.arange(n) / SR
+        ph = f * t
+        w = np.where((ph % 1) < 0.125, 1.0, -1.0) * 0.55 + np.sin(2 * np.pi * 2 * ph) * 0.45 + np.sin(2 * np.pi * 3.01 * ph) * 0.12
+        e = np.minimum(1, t / 0.002) * np.exp(-t / 0.22) * np.clip((dur - t) / 0.02, 0, 1)
+        return w * np.round(e * 15) / 15 * vol
+
+
+hz = lambda p: 440 * 2 ** ((p - 69) / 12)  # noqa: E731
+
+
+def c1_concept(boss=False):
+    """C1 「톱니 칩」: 단조 칩튠 — 톱니처럼 맞물리는 16분 아르페지오(3박 강세가 4박 위를 돈다) + 낮은 펄스 베이스, 느리고 무겁게."""
+    bpm = 112 if boss else 96
+    bars = 12 if boss else 18
+    beat = 60 / bpm
+    c = Chip(bars * 4 * beat, 11)
     if boss:
-        prog = [('F', 'M'), ('E', 'm'), ('F', 'M'), ('E', 'm'), ('C', 'M'), ('B', 'dim'), ('C', 'M'), ('B', 'M')]
+        prog = [('F', 'm'), ('Gb', 'M'), ('F', 'm'), ('E', 'dim'), ('Db', 'M'), ('Gb', 'M'), ('C', 'M'), ('C', 'M')] + \
+               [('F', 'm'), ('Gb', 'M'), ('Db', 'M'), ('C', 'M')]
     else:
-        prog = [('E', 'm'), ('C', 'M'), ('A', 'm'), ('B', 'M'), ('E', 'm'), ('G', 'M'), ('C', 'M'), ('B', 'M')]
-    lead = [
-        [(7, 1), (6, 0.5), (4, 0.5), (3, 1), (4, 1)], [(4, 1.5), (7, 0.5), (12, 1), (11, 1)], [(9, 2), (12, 1), (11, 1)], [(11, 3), (6, 1)],
-        [(7, 1), (6, 0.5), (4, 0.5), (3, 1), (-1, 1)], [(2, 1), (7, 1), (11, 1), (14, 1)], [(12, 1.5), (11, 0.5), (9, 1), (7, 1)], [(6, 2), (3, 2)],
-    ]
-    base = m('E4')
-    for bar in range(bars):
+        prog = [('F', 'm'), ('F', 'm'), ('Db', 'M'), ('Db', 'M'), ('Bb', 'm'), ('Bb', 'm'), ('C', 'M'), ('C', 'M'),
+                ('F', 'm'), ('F', 'm'), ('Db', 'M'), ('Eb', 'M'), ('Bb', 'm'), ('C', 'M'), ('F', 'm'), ('C', 'M'),
+                ('Db', 'M'), ('C', 'M')]
+    # 선율 (마디마다 [(F단조 기준 반음, 박)]) — 9마디부터 · 반장은 처음부터 한 옥타브 위
+    lead = [[(0, 3), (3, 1)], [(7, 4)], [(8, 2), (7, 1), (5, 1)], [(5, 4)], [(5, 2), (8, 2)], [(10, 3), (8, 1)], [(7, 4)], [(4, 2), (7, 2)],
+            [(12, 3), (10, 1)], [(8, 2), (7, 2)], [(5, 2), (8, 1), (10, 1)], [(10, 3), (7, 1)], [(5, 2), (3, 1), (1, 1)], [(-1, 4)], [(0, 4)], [(4, 2), (7, 2)],
+            [(5, 2), (8, 2)], [(7, 4)]]
+    base = m('F4')
+    for bar, (root, q) in enumerate(prog):
         b0 = bar * 4 * beat
-        root, q = prog[bar % 8]
-        r = m(root + '2')
-        tones = chord(r, q)
-        sec = bar // 8
-        # 삼각 베이스: 8분 근음-옥타브
-        for k in range(8):
-            p = tones[0] + (12 if k % 2 else 0)
-            put(tri(hz(p), beat * 0.48, 0.55), b0 + k * beat / 2)
-        # 펄스 12.5% 아르페지오 16분
-        arpn = [0, 1, 2, 1, 0, 2, 1, 2] if not boss else [0, 1, 2, 3, 2, 1, 2, 3]
+        r = m(root + '2') if m(root + '2') <= m('B2') else m(root + '1')
+        tones = chord(r, q) if q != 'dim' else [r, r + 3, r + 6]
+        # 낮은 펄스 베이스: 8분 쿵쿵 (근음 · 근음 · 근음 · 옥타브), 반장은 16분
+        step = 0.25 if boss else 0.5
+        for k in range(int(4 / step)):
+            p = tones[0] - 12 + (12 if (k % 4 == 3) else 0)
+            c.put(c.pulse(hz(p + 12), beat * step * 0.8, 0.25, 0.22, rel=0.015), b0 + k * step * beat)
+            c.put(c.tri(hz(p), beat * step * 0.85, 0.35), b0 + k * step * beat)
+        # 톱니 아르페지오: 16분, 셋째 칸마다 강세 (3 대 4로 맞물린다)
+        arp = [0, 2, 3, 2, 1, 2, 3, 2] if not boss else [0, 3, 1, 2, 3, 1, 2, 3]
+        t4 = tones + [tones[0] + 12]
         for k in range(16):
-            t3 = tones + [tones[0] + 12]
-            p = t3[arpn[k % 8] % len(t3)] + 24
-            put(pulse(hz(p), beat / 4 * 0.9, 0.125, 0.09), b0 + k * beat / 4, pan=-0.3)
-        # 리드 (두 번째 마디 묶음부터)
-        if sec >= 1 or boss:
+            gidx = bar * 16 + k
+            acc = 0.13 if gidx % 3 == 0 else 0.07
+            c.put(c.pulse(hz(t4[arp[k % 8]] + 24), beat / 4 * 0.7, 0.125, acc, rel=0.01), b0 + k * beat / 4, pan=-0.3)
+        # 선율
+        if bar >= 8 or boss:
             at = b0
-            for deg, d in lead[bar % 8]:
-                if deg >= 0:
-                    off = (1 if boss else 0)
-                    put(pulse(hz(base + deg + off + (12 if sec == 2 else 0)), d * beat * 0.92, 0.25, 0.16, vib=0.006), at, pan=0.2)
-                    # 반향(에코) — 8분 뒤 작게
-                    put(pulse(hz(base + deg + off + (12 if sec == 2 else 0)), d * beat * 0.6, 0.5, 0.05), at + beat * 0.75, pan=-0.4)
+            for deg, d in lead[bar % len(lead)]:
+                p = base + deg + (12 if boss else 0) - (12 if not boss and bar < 8 else 0)
+                c.put(c.pulse(hz(p), d * beat * 0.95, 0.5, 0.11, vib=0.008, rel=0.06), at, pan=0.2)
+                c.put(c.pulse(hz(p), d * beat * 0.6, 0.25, 0.035), at + beat * 0.5, pan=-0.4)  # 메아리
                 at += d * beat
-        # 북
-        for k in range(4):
-            if k in (0, 2) or (boss and k == 3):
-                put(kick(0.8), b0 + k * beat)
-            if k in (1, 3):
-                put(nz(0.15, 0.35, 0.05, 800), b0 + k * beat)
-            for h in (0, 0.5):
-                put(nz(0.04, 0.12 if h else 0.18, 0.012, 6000, short=True), b0 + (k + h) * beat, pan=0.35)
-    # 저역 정리 · 크기
-    return out, bpm, bars, 4
+        # 북: 무거운 반박자 (1 · 3& 쿵, 3 철판 치기)
+        c.put(c.kick(0.85), b0)
+        c.put(c.kick(0.7), b0 + 2.5 * beat)
+        if boss:
+            c.put(c.kick(0.6), b0 + 1.5 * beat)
+        c.put(c.noise(0.22, 0.32, 0.07, 700), b0 + 2 * beat)
+        for k in range(8):
+            c.put(c.noise(0.035, 0.1 if k % 2 else 0.15, 0.01, 7000, short=True), b0 + k * beat / 2, pan=0.35)
+    return c.out
 
+
+def c2_concept(boss=False):
+    """C2 「시계탑 칩」: 7/8(2+2+3) 칩 — 똑딱이는 시계 타악 + 오르골 칩 선율 + 삼각 베이스."""
+    eighth = 60 / (240 if boss else 200)
+    bars = 14 if boss else 22
+    bar_len = 7 * eighth
+    c = Chip(bars * bar_len, 23)
+    groups = [0, 2, 4]  # 2+2+3
+    if boss:
+        prog = [('E', 'm'), ('F', 'M'), ('E', 'm'), ('D#', 'dim'), ('C', 'M'), ('F', 'M'), ('B', 'M')] * 2
+    else:
+        prog = [('E', 'm'), ('C', 'M'), ('A', 'm'), ('B', 'M'), ('E', 'm'), ('G', 'M'), ('C', 'M'), ('B', 'M'),
+                ('A', 'm'), ('E', 'm'), ('F#', 'dim'), ('B', 'M'), ('C', 'M'), ('G', 'M'), ('A', 'm'), ('B', 'M'),
+                ('E', 'm'), ('C', 'M'), ('A', 'm'), ('B', 'M'), ('C', 'M'), ('B', 'M')]
+    # 선율: 마디마다 8분 칸(0~6)에 놓는 음 [(칸, E단조 기준 반음, 길이 칸)]
+    tune = [[(0, 7, 2), (2, 12, 2), (4, 11, 1), (5, 7, 2)], [(0, 4, 2), (2, 7, 2), (4, 12, 3)], [(0, 9, 2), (2, 12, 1), (3, 9, 1), (4, 5, 3)],
+            [(0, 6, 2), (2, 3, 2), (4, -1, 3)], [(0, 7, 2), (2, 12, 2), (4, 14, 1), (5, 15, 2)], [(0, 14, 2), (2, 11, 2), (4, 7, 3)],
+            [(0, 12, 2), (2, 11, 1), (3, 9, 1), (4, 7, 3)], [(0, 6, 4), (4, 3, 3)]]
+    base = m('E5')
+    for bar, (root, q) in enumerate(prog):
+        b0 = bar * bar_len
+        r = m(root + '2') if m(root + '2') <= m('B2') else m(root + '1')
+        tones = chord(r, q) if q != 'dim' else [r, r + 3, r + 6]
+        # 시계: 여덟 칸 모두 똑 · 딱 (높낮이 번갈아), 묶음 첫 칸은 낮은 쇠 쿵
+        for k in range(7):
+            tick_pitch = 9000 if k % 2 == 0 else 5200
+            c.put(c.noise(0.02, 0.16 if k in groups else 0.09, 0.004, tick_pitch, short=True), b0 + k * eighth, pan=0.4 if k % 2 else -0.2)
+        for g in groups:
+            c.put(c.kick(0.75 if g == 0 else 0.5, low=55, tau=0.06), b0 + g * eighth)
+        if boss:
+            c.put(c.noise(0.15, 0.3, 0.05, 900), b0 + 4 * eighth)
+            c.put(c.noise(0.1, 0.2, 0.04, 900), b0 + 6 * eighth)
+        # 삼각 베이스: 근음 · 5도 · 근음(셋 칸)
+        for g, iv, ln in ((0, 0, 2), (2, 7, 2), (4, 12 if boss else 0, 3)):
+            c.put(c.tri(hz(tones[0] + iv), ln * eighth * 0.9, 0.5), b0 + g * eighth)
+        # 펄스 화음 깔개: 8분마다 화음 음 하나씩 (작게)
+        t3 = tones + [tones[0] + 12]
+        for k in range(7):
+            c.put(c.pulse(hz(t3[(k + bar) % 4] + 24), eighth * 0.8, 0.25, 0.04, rel=0.02), b0 + k * eighth, pan=-0.35)
+        # 오르골 칩 선율 (둘째 묶음부터 · 반장은 처음부터)
+        if bar >= 4 or boss:
+            for slot, deg, ln in tune[bar % 8]:
+                p = base + deg - (12 if boss else 0) + (12 if (not boss and 12 <= bar < 16) else 0)
+                c.put(c.chime(hz(p), ln * eighth + 0.25, 0.2), b0 + slot * eighth, pan=0.15)
+                if boss:
+                    c.put(c.pulse(hz(p - 12), ln * eighth * 0.9, 0.5, 0.06, rel=0.03), b0 + slot * eighth, pan=-0.1)
+    return c.out
+
+
+CHIPS = {'C1-gear': c1_concept, 'C2-clock': c2_concept}
 
 # ---------------------------------------------------------------- 렌더 · 마감
 def render_fluid(song, wav):
@@ -423,7 +496,8 @@ def main():
     out = args[0] if args else 'build-res/audio/bgm-concepts'
     os.makedirs(out, exist_ok=True)
     os.makedirs(MIDI_DIR, exist_ok=True)
-    jobs = [('A-anvil', concept_a), ('B-waltz', concept_b), ('D-crown', concept_d)]
+    # --chips: C 재시안만 다시 찍는다 (A · B · D 시안은 그대로 — 게임 판은 bgm_game.py)
+    jobs = [] if '--chips' in sys.argv else [('A-anvil', concept_a), ('B-waltz', concept_b), ('D-crown', concept_d)]
     for name, fn in jobs:
         for boss in (False, True):
             s = fn(boss)
@@ -431,9 +505,9 @@ def main():
             s.midi(reps=1, path=os.path.join(MIDI_DIR, tag + '.mid'))
             x = render_fluid(s, None)
             print(tag, '%.1f LUFS %.1fs' % finish(x, os.path.join(out, tag)))
-    for boss in (False, True):
-        x, bpm, bars, beats = chip_concept(boss)
-        tag = f'C-chip-{"boss" if boss else "main"}'
+    for (name, fn), boss in [(j, b) for j in CHIPS.items() for b in (False, True)]:
+        x = fn(boss)
+        tag = f'{name}-{"boss" if boss else "main"}'
         # 저역 정리: 두 바퀴를 이어 거르고 뒤 바퀴만 (필터 시작 상태가 이음매에 남지 않게)
         x = signal.sosfilt(signal.butter(2, 25, 'high', fs=SR, output='sos'), np.concatenate([x, x]), axis=0)[len(x):]
         print(tag, '%.1f LUFS %.1fs' % finish(x, os.path.join(out, tag)))

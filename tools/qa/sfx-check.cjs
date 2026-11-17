@@ -71,7 +71,7 @@ module.exports = async (pg, shot) => {
   const v2 = await vol();
   const nMute = await pg.evaluate(() => window.__sfx.plays.length);
   await pg.evaluate(() => window.sliceApi.map(2)); await wait(600);
-  const nAfter = await pg.evaluate((k) => window.__sfx.plays.slice(k).filter((p) => p.dur > 40).length, nMute); // 30 ms 버퍼는 배경 음악 하이햇
+  const nAfter = await pg.evaluate((k) => window.__sfx.plays.slice(k).filter((p) => p.dur > 40 && p.dur < 60000).length, nMute); // 60초 넘는 버퍼는 배경 음악 (D-545)
   await click('[data-vol="sfx"] [data-mute]');
   console.log('VOLUME master gains (기본 → 한 칸 내림 → 끔)', JSON.stringify(v0), JSON.stringify(v1), JSON.stringify(v2), '끈 뒤 효과음 재생', nAfter);
   const state = await pg.evaluate(() => window.__sfx.ctx?.state);

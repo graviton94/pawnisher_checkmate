@@ -1,5 +1,5 @@
 /**
- * 효과음 표 (D-540): 주물 공방 소리 — 쇠 · 황동 · 종이 · 증기. 파일은 `public/audio/sfx/<이름>[번호].ogg|m4a`,
+ * 효과음 표 (D-540 · D-545 꼬리 단축): 주물 공방 소리 — 쇠 · 황동 · 종이 · 증기. 손 · 창 · 카드 ≤ 0.25초 · 타격 ≤ 0.35초 · 큰 장면만 꼬리 ≤ 0.6초. 파일은 `public/audio/sfx/<이름>[번호].ogg|m4a`,
  * `tools/audio/sfx_synth.py`가 찍는다 (자체 합성, CC0). 이름 · 변형 수는 그 스크립트의 BANK와 같아야 한다.
  *
  * - n: 변형 수 (자주 나는 소리는 2~3 — 같은 소리 반복의 기계음을 깬다)
@@ -66,3 +66,7 @@ export const SFX_BANK: Record<SfxKind, SfxDef> = {
 export const SFX_COMBO_MAX = 9;
 /** 같은 소리가 이 시간(ms) 안에 또 오면 한 번만 (여러 칸 동시 피격이 겹쳐 울리지 않게) */
 export const SFX_DEDUPE_MS = 25;
+/** 같은 소리가 동시에 이만큼까지만 울린다 — 연쇄 타격에서 앞 소리 꼬리를 닫는다 (D-545) */
+export const SFX_VOICES_PER_KIND = 2;
+/** 효과음 전체 동시 소리 상한 */
+export const SFX_VOICES = 8;

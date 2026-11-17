@@ -1,19 +1,29 @@
-import { MUSIC_VOLUME, TRACKS, type TrackId } from '../data/music';
+import { MUSIC_CACHE, MUSIC_VOLUME, MUSIC_XFADE_MS, TRACKS, type MusicFile, type TrackId } from '../data/music';
 import { bgMuted } from './bg';
 
 /**
- * 배경 음악 재생기 (D-123): 칩튠 루프를 미리 0.12초씩 예약한다 (끊김 없이). 곡을 바꾸면 다음 박에서 바뀐다.
- * 켜고 끄기는 설정 (효과음과 따로), 화면이 가려지면 멈춘다.
+ * 배경 음악 재생기 (D-545 — D-123의 칩튠 생성기를 대신한다): 곡 파일(`public/audio/music/`)을 WebAudio 루프로 튼다.
+ * - 곡은 장면에 처음 들어갈 때 받는다 (시작 화면을 늦추지 않게 — 첫 누름 전에는 받지도 않는다, D-537).
+ * - 곡이 바뀌면 짧게(0.45초) 겹쳐 넘긴다. 같은 파일 장면끼리(타이틀 → 지도)는 이어 틀며 거름 · 속도 · 크기만 바꾼다.
+ * - 켜고 끄기 · 크기는 설정(효과음과 따로, D-530), 화면이 가려지면 멈춘다(D-539 설정).
  */
 const KEY = 'pawnisher.music';
 let ctx: AudioContext | null = null;
 let out: GainNode | null = null;
+/** 지금 장면이 원하는 곡 (소리가 꺼져 있어도 기억한다 — 켜면 이 곡부터) */
 let track: TrackId | null = null;
-let step = 0;
-let next = 0;
-let timer: number | undefined;
-/** 본편 설정 창이 정한 배율 (0~2, 1 = 예전 고정 음량, D-530). null = 옛 켜고 끄기(2.0)만 따른다 */
+/** 본편 설정 창이 정한 배율 (0~2, 1 = 기준 음량, D-530). null = 옛 켜고 끄기(2.0)만 따른다 */
 let level: number | null = null;
+
+interface Voice {
+  file: MusicFile;
+  src: AudioBufferSourceNode;
+  filter: BiquadFilterNode;
+  gain: GainNode;
+}
+let voice: Voice | null = null;
+/** 곡 요청 순번 — 받는 사이 장면이 또 바뀌면 늦게 온 곡은 버린다 */
+let want = 0;
 
 export const musicOn = (): boolean => {
   if (level !== null) return level > 0;
@@ -24,130 +34,148 @@ export const musicOn = (): boolean => {
   }
 };
 
+const activated = (): boolean => (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false;
+
 const ensure = (): AudioContext | null => {
   if (!ctx) {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
-    ctx = new AC();
+    // 32 kHz로 풀어 메모리를 줄인다 (96 kbps 곡은 16 kHz 위가 원래 비어 있다). 못 하는 브라우저는 기본값
+    try {
+      ctx = new AC({ sampleRate: 32000, latencyHint: 'playback' });
+    } catch {
+      ctx = new AC();
+    }
     out = ctx.createGain();
     out.gain.value = MUSIC_VOLUME * (level ?? 1);
     out.connect(ctx.destination);
     document.addEventListener('visibilitychange', () => (document.hidden ? bgMuted() && void ctx?.suspend() : track && musicOn() && void ctx?.resume()));
-    // 첫 탭 전에 만든 소리 장치는 잠겨 있다 — 첫 누름에서 깨운다 (자동 재생 규칙)
-    const wake = (): void => {
-      if (ctx?.state === 'running') return void window.removeEventListener('pointerdown', wake, true);
-      if (!document.hidden && track && musicOn()) void ctx?.resume();
-    };
-    window.addEventListener('pointerdown', wake, true);
   }
-  if (ctx.state === 'suspended') void ctx.resume();
+  if (ctx.state === 'suspended' && !document.hidden) void ctx.resume();
   return ctx;
 };
 
-const note = (a: AudioContext, at: number, f: number, dur: number, type: OscillatorType, vol: number): void => {
-  const o = a.createOscillator();
-  const g = a.createGain();
-  o.type = type;
-  o.frequency.setValueAtTime(f, at);
-  g.gain.setValueAtTime(0.0001, at);
-  g.gain.exponentialRampToValueAtTime(vol, at + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-  o.connect(g).connect(out!);
-  o.start(at);
-  o.stop(at + dur + 0.02);
-};
-
-const hit = (a: AudioContext, at: number, kind: 'kick' | 'hat'): void => {
-  if (kind === 'kick') {
-    const o = a.createOscillator();
-    const g = a.createGain();
-    o.frequency.setValueAtTime(140, at);
-    o.frequency.exponentialRampToValueAtTime(40, at + 0.12);
-    g.gain.setValueAtTime(0.7, at);
-    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.14);
-    o.connect(g).connect(out!);
-    o.start(at);
-    o.stop(at + 0.16);
-    return;
+/** 이 브라우저가 OGG Vorbis를 풀면 ogg, 아니면 m4a (iOS Safari 옛판) — 효과음과 같은 규칙 */
+const ext = (): 'ogg' | 'm4a' => {
+  try {
+    return new Audio().canPlayType('audio/ogg; codecs="vorbis"') ? 'ogg' : 'm4a';
+  } catch {
+    return 'ogg';
   }
-  const len = Math.ceil(a.sampleRate * 0.03);
-  const buf = a.createBuffer(1, len, a.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-  const s = a.createBufferSource();
-  s.buffer = buf;
-  const f = a.createBiquadFilter();
-  f.type = 'highpass';
-  f.frequency.value = 6000;
-  const g = a.createGain();
-  g.gain.value = 0.18;
-  s.connect(f).connect(g).connect(out!);
-  s.start(at);
 };
-
-/** 8분음표 하나를 예약한다 */
-const schedule = (a: AudioContext, at: number): void => {
-  const T = TRACKS[track!];
-  const eighth = 30 / T.bpm;
-  const bar = Math.floor(step / 8) % T.prog.length;
-  const i = step % 8;
-  const [r, third] = T.prog[bar];
-  const tones = [r, r + third, r + 7, r + 12];
-  const f = (semi: number, oct = 0) => T.root * 2 ** ((semi + oct * 12) / 12);
-  // 베이스: 1 · 5박 (근음), 마디 끝에 5도
-  if (i === 0 || i === 4) note(a, at, f(r, -1), eighth * 1.8, 'triangle', 0.5);
-  if (i === 7) note(a, at, f(r + 7, -1), eighth * 0.8, 'triangle', 0.35);
-  // 아르페지오 (한 옥타브 위)
-  const k = T.arp[i];
-  if (k >= 0) note(a, at, f(tones[k], 1), eighth * 0.9, T.lead, 0.16);
-  // 북
-  if (T.drums !== 'none') {
-    const kick = T.drums === 'soft' ? i === 0 : T.drums === 'march' ? i % 4 === 0 : i % 2 === 0;
-    if (kick) hit(a, at, 'kick');
-    if (T.drums !== 'soft' && i % 2 === 1) hit(a, at, 'hat');
+/** 풀어 둔 곡 (최근 쓴 순 — 맨 뒤가 가장 최근) */
+const cache = new Map<MusicFile, Promise<AudioBuffer>>();
+const load = (a: AudioContext, file: MusicFile): Promise<AudioBuffer> => {
+  const hit = cache.get(file);
+  if (hit) {
+    cache.delete(file);
+    cache.set(file, hit);
+    return hit;
   }
-  step += 1;
-  next = at + eighth;
+  const p = fetch(`audio/music/${file}.${ext()}`)
+    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${file} ${r.status}`))))
+    .then((ab) => new Promise<AudioBuffer>((ok, no) => a.decodeAudioData(ab, ok, no)));
+  p.catch(() => cache.delete(file));
+  cache.set(file, p);
+  while (cache.size > MUSIC_CACHE) cache.delete(cache.keys().next().value as MusicFile);
+  return p;
+};
+/** 받아 둔 곡 이름 (점검용) */
+export const musicNow = (): { track: TrackId | null; file: MusicFile | null; state: string; cached: MusicFile[] } => ({
+  track,
+  file: voice?.file ?? null,
+  state: ctx?.state ?? 'none',
+  cached: [...cache.keys()],
+});
+
+const XF = MUSIC_XFADE_MS / 1000;
+
+/** 지금 목소리를 이 장면 모양(거름 · 속도 · 크기)으로 짧게 옮긴다 */
+const shape = (a: AudioContext, v: Voice, id: TrackId, ramp: number): void => {
+  const T = TRACKS[id];
+  const t = a.currentTime;
+  v.src.playbackRate.setTargetAtTime(T.rate, t, ramp / 3);
+  v.filter.frequency.setTargetAtTime(T.lowpass > 0 ? T.lowpass : a.sampleRate / 2 - 100, t, ramp / 3);
+  v.gain.gain.cancelScheduledValues(t);
+  v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+  v.gain.gain.linearRampToValueAtTime(T.gain, t + ramp);
 };
 
-const tick = (): void => {
-  if (!ctx || !track) return;
-  while (next < ctx.currentTime + 0.12) schedule(ctx, Math.max(next, ctx.currentTime + 0.01));
+/** 목소리를 짧게 줄여 멈춘다 */
+const drop = (a: AudioContext, v: Voice, ramp = XF): void => {
+  const t = a.currentTime;
+  v.gain.gain.cancelScheduledValues(t);
+  v.gain.gain.setValueAtTime(v.gain.gain.value, t);
+  v.gain.gain.linearRampToValueAtTime(0, t + ramp);
+  try {
+    v.src.stop(t + ramp + 0.05);
+  } catch {
+    /* 이미 멈춤 */
+  }
 };
 
-/** 곡을 튼다 (같은 곡이면 그대로) */
-export const playMusic = (id: TrackId): void => {
-  if (track === id) return;
-  track = id;
-  if (!musicOn()) return;
+/** 지금 track을 실제로 튼다 (첫 누름 뒤 · 소리 켜짐일 때만) */
+const start = (): void => {
+  if (!track || !musicOn() || !activated()) return;
   const a = ensure();
-  if (!a) return;
-  step = 0;
-  next = a.currentTime + 0.05;
-  window.clearInterval(timer);
-  timer = window.setInterval(tick, 25);
+  if (!a || !out) return;
+  const id = track;
+  const T = TRACKS[id];
+  // 같은 파일이면 이어 튼다 — 거름 · 속도 · 크기만
+  if (voice && voice.file === T.file) return void shape(a, voice, id, XF);
+  const my = ++want;
+  void load(a, T.file)
+    .then((b) => {
+      if (my !== want || track !== id || !musicOn() || !out) return;
+      const src = a.createBufferSource();
+      src.buffer = b;
+      src.loop = true;
+      src.playbackRate.value = T.rate;
+      const filter = a.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.Q.value = 0.5;
+      filter.frequency.value = T.lowpass > 0 ? T.lowpass : a.sampleRate / 2 - 100;
+      const gain = a.createGain();
+      gain.gain.value = 0;
+      src.connect(filter).connect(gain).connect(out);
+      const t = a.currentTime + 0.02;
+      src.start(t);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(T.gain, t + XF);
+      if (voice) drop(a, voice);
+      voice = { file: T.file, src, filter, gain };
+    })
+    .catch(() => undefined);
 };
 
-/** 본편 설정: 음악 크기 (0 = 끔). 0으로 가면 멈추고, 다시 올리면 지금 곡을 처음부터 튼다 */
+/** 곡을 튼다 (같은 장면이면 그대로). 첫 누름 전이면 기억만 하고 첫 누름에서 튼다 */
+export const playMusic = (id: TrackId): void => {
+  if (track === id && (voice || !musicOn())) return;
+  track = id;
+  start();
+};
+
+/** 본편 설정: 음악 크기 (0 = 끔). 0으로 가면 멈추고, 다시 올리면 지금 장면 곡을 튼다 */
 export const setMusicLevel = (v: number): void => {
   const was = musicOn();
   level = Math.max(0, Math.min(2, v));
-  if (out) out.gain.value = MUSIC_VOLUME * level;
-  const id = track;
-  if (was && level === 0) {
-    stopMusic();
-    track = id;
-  } else if (!was && level > 0 && id) {
-    track = null;
-    playMusic(id);
-  }
+  if (out && ctx) out.gain.setTargetAtTime(MUSIC_VOLUME * level, ctx.currentTime, 0.03);
+  if (was && level === 0) halt();
+  else if (!was && level > 0) start();
+};
+
+/** 소리만 멈춘다 (장면 곡은 기억) */
+const halt = (): void => {
+  want++;
+  if (ctx && voice) drop(ctx, voice, 0.3);
+  voice = null;
+  // 곡이 없으면 소리 장치를 쉰다 (남은 꼬리가 끝난 뒤 — 코드 리뷰 7). 다시 틀면 ensure가 깨운다
+  window.setTimeout(() => void (!voice && ctx?.suspend()), 600);
 };
 
 export const stopMusic = (): void => {
   track = null;
-  window.clearInterval(timer);
-  // 곡이 없으면 소리 장치를 쉰다 (남은 음이 끝난 뒤 — 코드 리뷰 7). 다시 틀면 ensure가 깨운다
-  window.setTimeout(() => void (!track && ctx?.suspend()), 600);
+  halt();
 };
 
 export const setMusic = (on: boolean): void => {
@@ -156,12 +184,17 @@ export const setMusic = (on: boolean): void => {
   } catch {
     /* 무시 */
   }
-  const id = track;
-  if (!on) {
-    stopMusic();
-    track = id;
-  } else if (id) {
-    track = null;
-    playMusic(id);
-  }
+  if (!on) halt();
+  else start();
 };
+
+/** 첫 누름: 자동 재생 규칙으로 미뤄 둔 장면 곡을 이제 튼다 (터치는 손을 뗄 때 사용자 활성이 생긴다) */
+if (typeof window !== 'undefined') {
+  const evs = ['pointerup', 'click', 'keydown'] as const;
+  const wake = (): void => {
+    if (!activated()) return;
+    evs.forEach((e) => window.removeEventListener(e, wake, true));
+    if (!document.hidden) start();
+  };
+  evs.forEach((e) => window.addEventListener(e, wake, true));
+}

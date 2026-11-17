@@ -2233,7 +2233,8 @@ const rosterPeek = (i: number): string => {
 /** 지금 막의 곡 (D-530 — 4막 종막은 3막 곡을 잇는다) */
 const actTrack = (): TrackId => (['act1', 'act2', 'act3'] as const)[Math.min(2, Math.max(0, actI))];
 const showMap = (): void => {
-  playMusic(actTrack());
+  // 지도 · 쉼터 · 사건 · 고물상: 타이틀 왈츠를 벽 너머로 (D-545)
+  playMusic('map');
   const a = acts[actI];
   // 4막(종막 · 출하구)도 지나온 길 칸이 있어야 한다 — 예전 저장(세 칸)으로 이어해도 (4막 진입 시 지도가 안 뜨던 버그)
   while (picked.length < acts.length) picked.push([]);
@@ -4808,6 +4809,8 @@ const endingFlow = async (): Promise<void> => {
     endKind = runMode;
     return runEnd(true);
   }
+  // 왕관 장면 · 결말 컷: D 녹슨 왕관 (D-545)
+  playMusic('ending');
   endKind = await promoteScreen();
   const company = storyCompany();
   if (endKind === 'depart') {
@@ -4840,12 +4843,14 @@ const runEnd = (cleared: boolean): void => {
   endCalled = true;
   if (!cleared && !labMode) {
     if (runLive) commitEnd(false);
+    playMusic('ending');
     return void playCuts(DEFEAT_CUTS).then(() => runEndNow(false));
   }
   runEndNow(cleared);
 };
 const runEndNow = (cleared: boolean): void => {
-  playMusic('menu');
+  // 출하 끝 · 크레딧: D 녹슨 왕관 (D-545 — 타이틀로 돌아가면 왈츠)
+  playMusic('ending');
   // D-477 (베타 점검): 도전 · 오늘의 도전은 마지막 보상 화면(사선 부품 · 칸 가득)이 열린 채 크레딧이 그 아래로 깔렸다 — 먼저 닫는다
   closeWin();
   closeOverlay();
