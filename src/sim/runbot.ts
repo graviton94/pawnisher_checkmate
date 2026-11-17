@@ -8,11 +8,11 @@ import { Rng } from '../engine/rng';
 import { START_SETS, type StartSetId } from '../data/start-sets';
 import { FORMS } from '../data/forms';
 import { cardFits, COMMANDS, ECON, GRADE, partSlotsAt, gradeOf, isRefined, refinedOf, baseOf, rustOnce, RECRUITS, REWARD_COMMANDS, rollGrade, rollRecruit, SHOP, FORGE, SLICE, START_DECK, KITS, type Axis, type BossRule, type CommandId, type Grade } from '../slice/cards';
-import { CHARM_NUM, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
+import { startRevive, PART_GRADE, PART_NUM, SLICE_PARTS, partFits, type SlicePartId } from '../slice/parts';
 import { makeCrew } from '../slice/crew';
 import { ASC_NUM, buildRun, ftueRetry, type MapNode } from '../slice/run';
 import { SLICE_EVENTS, SLICE_EVENT_IDS, type EventState } from '../slice/events';
-import { crackOrScrap, refillBrace, mendSquad, mostHurt, repairOne, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
+import { crackOrScrap, spareSquad, refillBrace, mendSquad, mostHurt, repairOne, crewMaxHp, depthAt, fallenAfter, newSliceBattle, overhaulSquad, REST, restSquad, squadAfter, type Squad } from '../slice/battle';
 import { STARTER_CARDS, STARTER_PARTS } from '../data/unlocks';
 import { BUILD_FAMILIES, SUPPORT_CARDS } from '../data/build-supply';
 import { cardOffers as offerCards, chooseBuildPart, firstShopParts, kitOffers } from '../slice/build-offers';
@@ -77,6 +77,8 @@ export interface RunResult {
 export interface BattleLog { act: number; kind: 'battle' | 'check' | 'boss'; title: string; turns: number; won: boolean; /** 턴 상한에 닿은 교착 */ stale: boolean; fell: number; maxFellInTurn: number; kingHpLost: number; /** 이겼을 때 살아 있던 적 수 (킹만 잡고 끝냈나) · 처음 적 수 */ enemiesLeft: number; enemies: number; /** 분대원을 쓰러뜨린 적 유형 */ killers: string; /** 실험실 (D-456): 이긴 뒤 분대 체력 비율 · 우리 피해 중 가장 센 한 턴의 몫 · 가장 큰 한 방 · 턴당 준 피해 */ hpAfter: number; swing: number; peak: number; dpt: number; /** 판돈 조건 재료 (#12 · D-503) */ kingHit: boolean; bestTurnKills: number }
 
 const GRADE_RANK: Record<string, number> = { gold: 30, rare: 20, common: 10 };
+/** 땜질 카드 가산 (D-542): 분대 HP 비율이 mendBelow 아래이고 덱의 땜질 · 방열판 카드가 mendKeep장 아래면 +mendBonus */
+const RUNBOT = { mendBelow: 0.75, mendBonus: 15, mendKeep: 3 };
 
 /** 출하 한 판을 봇으로 돌린다 — 같은 seed · opts = 같은 결과 */
 export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
@@ -92,8 +94,11 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const open = new Set([...STARTER_CARDS, ...STARTER_PARTS]);
   const isOpen = (id: string) => o.pool !== 'starter' || open.has(id);
   const val = o.value ?? ((id: CommandId) => (GRADE_RANK[gradeOf(id)] ?? 10) + (SUPPORT_CARDS[build]?.includes(id) || (ax && (COMMANDS[id].axis === ax || COMMANDS[id].axis2 === ax)) ? 18 : 0) + (build === 'knight' && COMMANDS[id].who === 'N' || build === 'rook' && COMMANDS[id].who === 'R' ? 10 : 0));
+  // 땜질 카드 (D-542): 다친 채로 다음 대국에 가면 사람은 땜질 · 방열판 카드를 집는다 — 등급만 보는 가치표는 이걸 늘 거렀다(제시 300번 중 0번)
+  const pickVal = (id: CommandId): number => val(id) + (!o.value && (COMMANDS[id].kind === 'repair' || COMMANDS[id].kind === 'shield') && hpRatio() < RUNBOT.mendBelow && deck.filter((d) => COMMANDS[d].kind === 'repair' || COMMANDS[d].kind === 'shield').length < RUNBOT.mendKeep ? RUNBOT.mendBonus : 0);
   const rng = new Rng(seed);
-  const acts = buildRun(seed, asc, o.first ?? (o.pool === 'starter' && asc === 0));
+  const first = o.first ?? (o.pool === 'starter' && asc === 0);
+  const acts = buildRun(seed, asc, first);
   let squad: Squad[] = [];
   const set = START_SETS[o.set ?? 'standard'];
   for (const t of set.squad) squad.push(makeCrew(t, rng, squad.map((u) => u.name ?? '')));
@@ -104,7 +109,8 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   const parts: SlicePartId[] = [...(set.part ? [set.part] : []), ...(set.randomParts ? (['spare', 'tape'] as SlicePartId[]).slice(0, set.randomParts) : []), ...(o.forceParts ?? [])];
   const refined: CommandId[] = [];
   let gold = 0;
-  let revive = o.revive ?? (asc > CHARM_NUM.startReviveUpTo ? 0 : 1);
+  // 여벌 심장 (D-542): 화면 newRun의 startRevive와 같은 규칙 — 첫 출하(처음 풀 · 첫째 왕관)만 1. 첫째 왕관 목표(70~80%)는 이 첫 출하 기준으로 잰다(--pools starter)
+  let revive = o.revive ?? startRevive(asc, first);
   const bosses: BossLog[] = [];
   let battles = 0;
   let turnsAll = 0;
@@ -123,7 +129,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
   };
   let shopsSeen = 0;
   const svcUsed = { refine: 0, remove: 0 };
-  const shopMul = () => (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
+  const shopMul = () => (asc >= 5 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1);
   // 부품 칸 (D-384 · 실제 게임과 같게, 2026-11-09d): 막마다 partSlotsAt 칸. 넘치면 가장 낮은 등급(같으면 오래된 것)을 녹여 나사 meltBack —
   // 새 부품이 가진 것 모두보다 낮으면 새 것을 녹인다. 억지로 넣은 부품(forceParts — 힘 값 측정)은 녹이지 않는다.
   let actNow = 0;
@@ -160,8 +166,8 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
     offerCards(REWARD_COMMANDS.filter((id) => usable(id) && isOpen(id)), 3 - (asc >= 11 ? 3 - ASC_NUM.rewardChoices : 0), { elite, ownAxes: parts.map((id) => SLICE_PARTS[id].axis).filter((a): a is Axis => !!a), parts, rng });
   const takeCard = (offers: CommandId[], recruitOffer: boolean) => {
     if (recruitOffer && squad.length < SLICE.squadMax && (squad.length < 6 || rng.next() < 0.5)) return recruit(true);
-    const best = offers.sort((a, b) => val(b) - val(a))[0];
-    const take = best && (val(best) > 0 || persona === 'hoarder');
+    const best = offers.sort((a, b) => pickVal(b) - pickVal(a))[0];
+    const take = best && (pickVal(best) > 0 || persona === 'hoarder');
     for (const id of offers) offersLog.push({ id, part: false, taken: !!take && id === best });
     if (take) deck.push(best);
   };
@@ -209,7 +215,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             fell = cs.scrapped;
             gold += Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10)) + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
             squad = [...restSquad(squadAfter(b, squad), REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1)), ...cs.back]; // 화면 restHeal()과 같게
-          }
+          } else if (revive > 0) squad = spareSquad(b, squad); // 여벌 심장 (D-542): 상처는 그대로 다시 선다 — 화면 「다시 둔다」와 같게
         }
         if (!ok) return out(false, ai + 1, `${log[log.length - 1]?.stale ? '교착 ' : ''}${ai + 1}막 ${def0.title}`);
         if (def0.reward === 'end') return out(true, 4, '');
@@ -238,7 +244,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         while (svc.size < ECON.shopSvc) svc.add((['heal', 'refine', 'remove'] as const)[rng.int(3)]);
         if (svc.has('heal') && persona !== 'risky' && hpRatio() < 0.55 && gold >= SHOP.healPrice * shopMul()) { gold -= Math.round(SHOP.healPrice * shopMul()); squad = restSquad(squad, SHOP.healPct); }
         let bought = 0;
-        for (const id of offers.sort((x, y) => val(y) - val(x))) {
+        for (const id of offers.sort((x, y) => pickVal(y) - pickVal(x))) {
           const p = Math.round(SHOP.gradePrice[gradeOf(id) as Grade] * shopMul());
           if (bought < 2 && val(id) >= 15 && gold >= p) { gold -= p; deck.push(id); bought++; }
         }
@@ -254,7 +260,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           if (cand[0]) { deck[deck.indexOf(cand[0])] = refinedOf(baseOf(cand[0])); refined.push(cand[0]); gold -= refineCost; svcUsed.refine++; }
         }
       } else if (n.kind === 'forge') {
-        squad = mendSquad(squad).squad;
+        // 작업대는 심장 톱니를 공짜로 다시 끼우지 않는다 (D-542 — 화면 forgeScreen과 같게, 막 정비 때만)
         if (persona !== 'risky' && hpRatio() < 0.6) squad = repairOne(squad, mostHurt(squad), FORGE.repairOne * (asc >= 3 ? ASC_NUM.restMul : 1)); // #17 · D-503: 화면과 같게 가장 다친 하나
         // 작업대 카드 빼기 (D-457 — 실제 작업대엔 있는데 봇이 쓰지 않았다): 시작 카드가 셋 이상 남으면 하나 뺀다
         else if (persona !== 'hoarder' && deck.length > 10 && deck.filter((id) => (START_DECK as string[]).includes(id)).length >= 3) { const w = [...deck].sort((x, y) => val(x) - val(y))[0]; deck.splice(deck.indexOf(w), 1); }
@@ -276,7 +282,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
         }
       }
     }
-    squad = refillBrace(mendSquad(restSquad(squad, REST.actHeal)).squad); // D-469: 화면과 같은 막 정비 (전엔 봇만 다 채웠다) · 버팀도 이때만 (2026-11-14)
+    squad = refillBrace(mendSquad(restSquad(squad, REST.actHeal * (asc >= 3 ? ASC_NUM.restMul : 1))).squad); // D-469: 화면과 같은 막 정비 (전엔 봇만 다 채웠다) · 버팀도 이때만 (2026-11-14)
   }
   return out(true, 4, '');
 };

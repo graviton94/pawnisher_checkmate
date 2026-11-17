@@ -76,11 +76,11 @@ describe('수직 조각: 분대 + 명령 덱 (D-142)', () => {
 });
 
 describe('판 사이 회복', () => {
-  it('남은 분대는 30% 회복 · 정비는 쓰러진 기물 하나를 되살린다', async () => {
+  it('남은 분대는 12% 회복 (D-542) · 정비는 쓰러진 기물 하나를 되살린다', async () => {
     const { restSquad, overhaulSquad } = await import('../src/slice/battle');
     const { PIECE_STATS } = await import('../src/data/pieces');
     const r = restSquad([{ t: 'N', hp: 10 }]);
-    expect(r[0].hp).toBe(10 + Math.round(PIECE_STATS.N.hp * 0.3));
+    expect(r[0].hp).toBe(10 + Math.round(PIECE_STATS.N.hp * 0.12));
     const o = overhaulSquad([{ t: 'K', hp: 50 }], [{ t: 'P', name: '못난이' }, { t: 'N', name: '고철이' }]);
     expect(o.revived?.name).toBe('고철이');
     expect(o.squad).toHaveLength(2);

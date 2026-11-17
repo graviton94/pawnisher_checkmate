@@ -16,11 +16,12 @@ describe('심리 연출 감독 (D-178)', () => {
     expect(dir.closeCall(5)).toBe(0);
     expect(dir.mercy(5, 99)).toBe(0);
   });
-  it('보이지 않는 손: 같은 대국을 지기 전에는 꺼져 있다', () => {
+  it('보이지 않는 손: 첫째 왕관에서 같은 대국을 두 번 진 뒤에만 켜진다 (D-542)', () => {
     expect(dir.mercy(0, 0)).toBe(0);
-    expect(dir.mercy(0, 1)).toBeGreaterThan(0);
-    expect(dir.mercy(3, 1)).toBe(0);
-    expect(dir.mercy(3, 2)).toBeGreaterThan(0);
+    expect(dir.mercy(0, 1)).toBe(0);
+    expect(dir.mercy(0, 2)).toBeGreaterThan(0);
+    expect(dir.mercy(1, 5)).toBe(0);
+    expect(dir.mercy(3, 5)).toBe(0);
   });
   it('사선: 킹 HP 15% 이하 · 분대원 폐기(두 번째 쓰러짐) · 마지막 한 수 중 하나', () => {
     expect(isCloseCall({ kingHp: 50, kingMax: 100, fell: 0, clutched: false })).toBe(false);

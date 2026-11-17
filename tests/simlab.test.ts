@@ -20,8 +20,11 @@ describe('실험실 지표 (D-456)', () => {
     expect(r.starterLeft).toBeGreaterThanOrEqual(0);
   }, 30000);
   it('hoarder는 카드 보상을 거르지 않는다 · 같은 시드는 같은 결과', () => {
-    const a = simulateRun(70011, { style: 'greedy', persona: 'hoarder' });
-    const b = simulateRun(70011, { style: 'greedy', persona: 'hoarder' });
+    // 카드 보상을 한 번이라도 받은 출하에서 본다 (D-542 난이도 패스 뒤 보통 봇은 1막에서 끝나는 출하가 많아 보상이 다 영입일 수 있다)
+    let seed = 70011;
+    let a = simulateRun(seed, { style: 'greedy', persona: 'hoarder' });
+    while (!a.offers.some((o) => !o.part) && seed < 70030) a = simulateRun(++seed, { style: 'greedy', persona: 'hoarder' });
+    const b = simulateRun(seed, { style: 'greedy', persona: 'hoarder' });
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     const cardOffers = a.offers.filter((o) => !o.part);
     expect(cardOffers.filter((o) => o.taken).length).toBeGreaterThan(0);

@@ -628,15 +628,24 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
     }
     return best && best.score > 0 ? best : null;
   }
+  // 내 킹이 빠질 빈 칸 (협공 D-542): 킹 걸음 여덟 칸 중 판 안 · 꺼지지 않은 · 빈 칸
+  const escapes: number[] = [];
+  if (myKing && FOE_AI.boxKing) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const x = myKing.x + dx, y = myKing.y + dy;
+    if ((dx || dy) && inBounds(s, x, y) && !isFallen(s, x, y) && !grid[y * s.width + x]) escapes.push(y * s.width + x);
+  }
   for (const to of legalMoves(s, p, grid)) {
     if (taken.has(`${to.x},${to.y}`)) continue;
     const ghost = { ...p, x: to.x, y: to.y };
     let score = 0;
-    for (const t of attackScan(s, ghost, grid).targets) {
+    const scan = attackScan(s, ghost, grid);
+    for (const t of scan.targets) {
       const dmg = damageOf(s, ghost, t);
       // 약한 기물을 노린다 (D-201): 남은 HP 대비 비율 — 거의 쓰러진 기물을 먼저 마무리한다
       const kill = dmg >= t.hp + t.shield;
       score += (kill ? valueOf(t) + dmg : (dmg / Math.max(1, t.hp + t.shield)) * valueOf(t) * SLICE.aiFinishWeight) * (o.losing && kill && t.type !== 'K' ? FOE_AI.losingKill : 1);
+      // 협공 (D-542): 이미 다친 기물을 이어서 친다
+      if (!kill && t.side === 0 && t.maxHp > 0) score += FOE_AI.focus * valueOf(t) * Math.max(0, 1 - t.hp / t.maxHp) * Math.min(1, dmg / Math.max(1, t.hp + t.shield));
     }
     // 칠 게 없으면 내 킹에게 다가간다 (킹은 뒤에 남는다 — 단, 혼자 남았거나 판이 길어지면 킹도 나선다: 교착 압박 D-196 · 반장은 1턴부터 D-201)
     // 발악 (D-243, 사용자: 「지고 있으면 킹으로 발악해야지 — 동귀어진」): 호위가 거의 없거나 킹 HP가 절반 아래면 킹도 나선다
@@ -653,6 +662,8 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
       score = gain * 2 + (to.y < p.y ? SLICE.aiAdvance : 0);
     }
     if (approach && p.type === 'K' && !kingMarch) continue;
+    // 도망길 막기 (D-542): 공격 범위가 덮는 내 킹의 빈 이웃 칸 하나마다
+    if (escapes.length && FOE_AI.boxKing) { let n = 0; for (const a of scan.area) if (escapes.includes(a.y * s.width + a.x)) n++; score += FOE_AI.boxKing * n; }
     // 옆걸음 · 뒷걸음(다가가지도 나아가지도 않는 수)은 남는 태엽으로도 두지 않는다 (2026-11-14 — 예고 줄만 어지럽힌다)
     if (approach && score <= 0 && to.y >= p.y) continue;
     // 맞을 칸을 꺼린다 (D-201): 내 기물이 다음 차례에 칠 수 있는 칸이면 감점 — 공격이면 값의 일부, 다가가기면 같은 거리 중 안전한 칸을 고르게
@@ -945,7 +956,9 @@ export const intentHits = (b: SliceBattle): { pieceId: number; pos: Pos; damage:
   }
   return [...dmg.entries()].flatMap(([id, d]) => {
     const p = findPiece(b.s, id);
-    return p && p.side === 0 ? [{ pieceId: id, pos: { x: p.x, y: p.y }, ...d }] : [];
+    // 버티는 한 방 (D-542 측정 중 발견): 쓰러지지 않는데 피해가 남은 HP를 넘으면 체크 버팀(HP 1)이다 — 실제로 깎이는 만큼만 보인다
+    const damage = !d.killed && p ? Math.min(d.damage, Math.max(0, p.hp + p.shield - 1)) : d.damage;
+    return p && p.side === 0 ? [{ pieceId: id, pos: { x: p.x, y: p.y }, damage, killed: d.killed }] : [];
   });
 };
 
@@ -2173,7 +2186,8 @@ export const mostHurt = (squad: Squad[]): number => {
   return best;
 };
 
-export const REST = { heal: 0.3, actHeal: 0.5, reviveHp: 0.5, overhaul: 0.25 };
+/** 대국 사이 회복 (D-542: heal 0.3 → 0.12 · actHeal 0.5 → 0.35 — 상처가 출하에 쌓여 땜질 카드 · 작업대 수리 · 길 선택이 결정이 되게) */
+export const REST = { heal: 0.12, actHeal: 0.35, reviveHp: 0.5, overhaul: 0.25 };
 
 /** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */
 export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * heal)) }));
@@ -2182,6 +2196,15 @@ export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => 
  * 목숨 둘 · 심장 톱니 (D-219, 다키스트 던전 2 · 와일드프로스트 · 인투 더 브리치 벤치마크): 분대원이 처음 쓰러지면 톱니 하나가 깨진 채
  * HP 50%로 돌아오고 깨진 채로 또 쓰러지면 폐기된다. 킹은 쓰러지면 대국이 끝나므로 해당 없음.
  */
+/**
+ * 여벌 심장 톱니로 다시 서는 분대 (D-542): 진 대국도 치른 것으로 친다 — 살아남은 분대원의 상처 · 쓰러진 분대원의 심장 톱니(두 번째면 폐기)는 그대로,
+ * 킹만 톱니 대신 HP reviveHp로 일어선다. 예전엔 대국 전 분대 그대로 처음부터 다시 둬 여벌 하나가 첫째 왕관을 20%p 올렸다(목표 계단을 넘음).
+ */
+export const spareSquad = (b: SliceBattle, squad: Squad[]): Squad[] => {
+  const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
+  return [...squadAfter(b, squad), ...cs.back].map((u) => (u.t === 'K' ? { ...u, hp: Math.max(u.hp ?? 0, Math.round(crewMaxHp(u) * REST.reviveHp)) } : u));
+};
+
 export const crackOrScrap = (fallen: Squad[]): { back: Squad[]; scrapped: Squad[] } => {
   const back: Squad[] = [];
   const scrapped: Squad[] = [];

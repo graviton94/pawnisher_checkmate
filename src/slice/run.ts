@@ -5,7 +5,7 @@ import { Rng } from '../engine/rng';
 import { BOSS_STORY, GILDED_STORY } from '../data/script';
 import { GIANT_AT, GIANTS, type GiantType } from '../data/giants';
 import { PROCESS, PROCESS_AT, PROCESS_BOSS, type ProcessId } from '../data/process';
-import { BOSS_TUNE, BOSS_PAIRS, BOSS_RULES, CHECK_MARK, FOE_MARKS, FOE_TRAITS, MARK_EXTRA_FROM, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
+import { BOSS_TUNE, BOSS_PAIRS, FOE, BOSS_RULES, CHECK_MARK, FOE_MARKS, FOE_TRAITS, MARK_EXTRA_FROM, SLICE, TRAIT_POOL, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
  * 출하 지도 (R5-1, D-168): 3막 × (갈림길 4 + 검문 + 반장). 갈림길마다 다음 갈 곳 2~3개 중 하나를 고른다.
@@ -113,7 +113,8 @@ export const NODE_DESC: Record<NodeKind, string> = {
 export const MAP = {
   lanes: 4,
   paths: 5,
-  floors: [8, 10, 10],
+  // D-542 (판 길이): [8,10,10] → [6,6,6] — 난이도 패스로 대국이 길어져(5.5 → 6.9턴) 출하가 약 100분이 됐다. 목표 55~70분
+  floors: [6, 6, 6],
   weights: { battle: 42, event: 21, check: 13, shop: 14, forge: 10 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
   from: { battle: 0, event: 1, check: 3, shop: 2, forge: 3 } as Record<'battle' | 'event' | 'check' | 'shop' | 'forge', number>,
   /** 막마다 상점 · 작업대 · 검문 최대 수 (고정 층 제외) */
@@ -130,30 +131,33 @@ const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'] as const;
 export const ASCENSION: { name: string; law: string; desc: string }[] = [
   { name: '날 선 쇠', law: '흑 기물의 쇠는 더 두껍게 붓는다', desc: '적 기물 HP +20%' },
   { name: '굳은 검수', law: '검수대 앞에 저울을 하나 더 둔다', desc: '검문 · 반장의 킹 HP +20% · 예고 공격을 맞으면 기어 쇼크' },
-  { name: '짧은 휴식', law: '정비 라인의 회복을 줄인다', desc: '대국 사이 회복이 30%로' },
+  { name: '짧은 휴식', law: '정비 라인의 회복을 줄인다', desc: '대국 사이 · 막 정비 회복이 30%로' },
+  // D-542: 조항 4 ↔ 5 자리 바꿈 — 도전 1(승급 4)이 넷째 왕관과 고물상 값만 달라 더 쉽게 재였다(60 vs 47%). 도전의 첫 계단은 적 수로
+  { name: '불어난 무리', law: '흑 세트마다 폰을 하나 더 넣는다', desc: '대국마다 적 폰 하나 더' },
   { name: '비싼 고물', law: '고물상은 값을 올려 받는다', desc: '고물상 값 +25%' },
-  { name: '불어난 무리', law: '흑 세트마다 폰을 하나 더 넣는다', desc: '대국마다 적 폰 하나 더 · 여벌 심장 톱니 없이 시작' },
   { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +20%' },
   { name: '녹슨 명령서', law: '하자 세트의 명령서에는 녹을 섞는다', desc: '시작 덱의 카드 한 장이 녹슨 카드 (태엽 +1)' },
   { name: '마른 나사', law: '하자 세트에는 나사를 덜 내준다', desc: '속전 보상 −25%' },
-  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +45%' },
+  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +60%' },
   { name: '금 간 심장', law: '하자 세트의 심장 톱니는 금 간 것으로 끼운다', desc: '분대원 하나가 깨진 심장 톱니로 시작' },
   { name: '얇은 보상', law: '하자 세트에는 명령서를 둘만 내준다', desc: '대국 보상 카드 선택지 3 → 2' },
   { name: '정예 검문', law: '검문마다 정예를 세운다', desc: '검문 적 하나가 정예 (왕관 · HP ×2)' },
-  { name: '최종 경비', law: '왕좌의 경비를 최대로 강화한다', desc: '도금왕 HP +80%' },
+  { name: '최종 경비', law: '왕좌의 경비를 최대로 강화한다', desc: '도금왕 HP +120%' },
 ];
 // D-316: enemyAtk 1.1 → 1.05 · finalHp 1.2 → 1.1 — 두뇌 봇 승급 13 완주 17.5%(120판)를 목표 20~35%로
 // D-457: enemyHp 1.3 → 1.2 · 기어 쇼크 ×0.75 · 손패 감소 없음 — 보통 봇 계단 38 → 35 → 20%가 38 → 30 → 25%로
 // D-454: finalHp 2.8 → 3.4 — 공정 열기 · 적 공격 1.2 뒤 두뇌 봇 승급 13 완주 45% → 40% (60판)
 // D-461: 3.4 → 1.3 — 도금왕 공격을 0.85로 되돌리고(D-460) 적 공격 1.25로 올린 뒤 13단 두뇌 봇 5%(도착 26 중 2) → 23%
-export const ASC_NUM = { enemyHp: 1.2, eliteKing: 0.2, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.45, rewardChoices: 2, finalHp: 1.8 };
+// D-542: enemyHp 1.2 → 1.3 · eliteKing 0.2 → 0.35 — 왕관 계단이 평평했다(두뇌 98 → 95 → 95). restMul 0.3은 그대로지만 이제 막 정비 회복에도 걸린다(넷째 왕관 계단 — 0.5로는 셋째 54 → 넷째 48%)
+// D-542 (도전): enemyAtk 1.45 → 1.6 · finalHp 1.8 → 2.2 — 도전 10이 두뇌 봇에게 27%(목표 10~20)
+export const ASC_NUM = { enemyHp: 1.3, eliteKing: 0.35, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.6, rewardChoices: 2, finalHp: 2.2 };
 /** 이 승급에서 그 조항이 켜졌나 — 조항 번호(1 ~ 13)는 ASCENSION 순서 */
 export const ascOn = (asc: number, law: number): boolean => asc >= law;
 export const ASC_MAX = ASCENSION.length;
 /** 막마다 적 HP 배율 · 적 킹 HP (구조용 — 난이도 조정은 R7, D-080) */
 const ACT_SCALE = [
   // 적 HP의 막별 계단은 층별 성장 곡선(FOE.hpGrow^깊이, D-203)으로 옮겼다 — 여기는 킹 HP만
-  { hp: 1, king: 0.6 },
+  { hp: 1, king: 0.7 }, // D-542: 0.6 → 0.7 — 1막 반장 승 100%였다 (첫 출하 안전망 FTUE.firstBossHp는 그대로)
   { hp: 1, king: 0.75 },
   { hp: 1, king: 0.9 },
 ];
@@ -167,9 +171,9 @@ const pctUp = (k: number): string => `+${Math.round((k - 1) * 100)}%`;
 export const ASC_OMEN: [string, string][] = [
   ['다음 출하의 흑 기물들은 쇠를 한 겹 더 두르고 기다린다.', `적 기물 HP ${pctUp(ASC_NUM.enemyHp)}`],
   ['검문과 반장 앞에 저울이 하나 더 놓인다.', `검문 · 반장 킹 HP +${Math.round(ASC_NUM.eliteKing * 100)}% · 예고 공격에 맞으면 기어 쇼크`],
-  ['정비 라인이 느려져 상처가 덜 아문다.', `대국 사이 회복 ${Math.round(ASC_NUM.restMul * 100)}%`],
+  ['정비 라인이 느려져 상처가 덜 아문다.', `대국 사이 · 막 정비 회복 ${Math.round(ASC_NUM.restMul * 100)}%`],
+  ['흑 세트마다 폰이 하나씩 더 줄을 선다.', '대국마다 적 폰 +1'],
   ['고물상이 값을 올려 부른다.', `고물상 값 ${pctUp(ASC_NUM.shopMul)}`],
-  ['흑 세트마다 폰이 하나씩 더 줄을 선다.', '대국마다 적 폰 +1 · 여벌 심장 톱니 없이 시작'],
   ['반장들이 철판을 한 겹 더 덧대고 기다린다.', `반장 · 도금왕 HP ${pctUp(ASC_NUM.bossHp)}`],
   ['손에 쥔 명령서 한 장에 녹이 번져 있다.', '시작 덱 카드 1장 녹슮 · 태엽 +1'],
   ['나사 상자가 눈에 띄게 가벼워진다.', `속전 보상 나사 −${Math.round((1 - ASC_NUM.coinMul) * 100)}%`],
@@ -354,7 +358,9 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   if (kind !== 'boss') d.guard = SLICE.guardByAct[act - 1];
   if (asc >= 1) d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.enemyHp;
   if (asc >= 2 && kind !== 'battle') d.kingHp += ASC_NUM.eliteKing;
-  if (asc >= 5) d.enemy = [...d.enemy, 'P'];
+  // 적 수 +1 (D-542): 반장 · 도금왕이 아닌 대국에 늘 폰 하나 더 — 1막 편성이 우리 분대와 같은 수가 되어 「피할 수보다 겨누는 수가 많다」
+  if (kind !== 'boss') d.enemy = [...d.enemy, ...Array<PieceType>(FOE.extraPawns).fill('P')];
+  if (asc >= 4) d.enemy = [...d.enemy, 'P']; // 조항 4 「불어난 무리」 (D-542: 5 → 4)
   if (asc >= 6 && kind === 'boss') { d.kingHp *= ASC_NUM.bossHp; d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.bossHp; }
   if (asc >= 12 && kind === 'check') d.eliteOne = true;
   // 적 특성 하나 더 (D-275): 이 판에 그 기물이 있을 때만 — 지도 rng를 건드리지 않게 판의 모양으로 정한다
@@ -442,7 +448,7 @@ const battleBase = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng,
  * 앞 세 반장의 규칙을 모두 쓰고 넓은 판(8×7)에 흑 세트가 거의 다 선다. 쓰러지면 2단계로 다시 일어선다(모든 반장 공통).
  */
 export const FINAL_BOSS = (asc = 0): BattleDef => ({
-  enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 5 ? (['P'] as PieceType[]) : [])],
+  enemy: ['K', 'Q', 'R', 'R', 'B', 'B', 'N', 'N', ...(asc >= 4 ? (['P'] as PieceType[]) : [])],
   // D-358: 1.25 → 1.1 — 적 대체 행동(D-318) 뒤 보통 봇 56%로 가장 많이 죽는 곳이었다
   // D-518: 1.1 → 0.8 — 레이드 HP(×RAID.hp 1.5)와 도금왕 세 패턴(8폭 쓸기)이 겹쳐 보통 봇 54% (실효 1.2)
   kingHp: 0.8 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),

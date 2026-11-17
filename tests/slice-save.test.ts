@@ -53,7 +53,17 @@ describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
     const b0 = r0[1].rows[0].find((n) => n.battle)!.battle!;
     const b5 = r5[1].rows[0].find((n) => n.battle)!.battle!;
     expect(b5.enemyHp!).toBeGreaterThan(b0.enemyHp!);
-    expect(b5.enemy.length).toBe(b0.enemy.length + 1);
+    // 폰 하나 더: 이형 · 거대 주물이 편성을 바꾸지 않은 판끼리 견준다 (이형은 왕관마다 풀이 달라 폰 둘을 빼기도 한다)
+    const plain = (d: typeof b0) => !d.forms?.length && !d.giants?.length;
+    let pair: [typeof b0, typeof b0] | null = null;
+    for (let seed = 1; seed <= 60 && !pair; seed++) {
+      const first = (asc: number) => buildRun(seed, asc)[0].rows[1].find((n) => n.battle)!.battle!; // 1막 첫 층 (입문 다음)
+      const a = first(0), z = first(5);
+      if (plain(a) && plain(z) && a.title === z.title) pair = [a, z];
+    }
+    expect(pair).not.toBeNull();
+    expect(pair![1].enemy.length).toBe(pair![0].enemy.length + 1);
+    expect(pair![1].enemy.filter((t) => t === 'P').length).toBe(pair![0].enemy.filter((t) => t === 'P').length + 1);
     const chk = (r: typeof r0) => r[0].rows.at(-1)![0].battle!.kingHp;
     expect(chk(r5)).toBeGreaterThan(chk(r0));
   });

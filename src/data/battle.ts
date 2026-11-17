@@ -50,4 +50,13 @@ export const STALL_PRESS = { from: 12, quiet: 2, rustPct: 0.1 };
  * again = 같은 기물의 두 번째 행동 점수 배율(다른 기물이 먼저) · secondMin = 두 번째 행동이 넘어야 하는 점수(공격만 — 다가가기는 10을 넘지 않는다) · repeats = 한 차례에 두 번 움직이는 기물 수 · repeatFoes = 두 번째 행동은 킹 말고 적이 이만큼 이하로 남았을 때만(몰린 적이 악착같아진다 — 넉넉한 편성까지 두 번 움직이면 셋째 왕관 보통 봇 9%) · unspent = 태엽 1을 남길 때의 감점(이만큼 손해인 수까지는 둔다) ·
  * losingKill = 패색(호위가 desperate 이하 또는 킹 HP 절반 아래)일 때 킹이 아닌 분대원을 쓰러뜨리는 수의 점수 배율(「하나는 데려간다」)
  */
-export const FOE_AI = { actMax: 4, perPiece: 2, again: 0.8, unspent: 1.5, losingKill: 1.5, secondMin: 10, repeats: 1, repeatFoes: 2 };
+export const FOE_AI = {
+  actMax: 4, perPiece: 2, again: 0.8, unspent: 1.5, losingKill: 1.5, secondMin: 10, repeats: 1, repeatFoes: 2,
+  /**
+   * 협공 (D-542, 난이도 패스): 1수 탐욕 적은 예고를 다 읽는 사람을 이길 수단이 없었다.
+   * focus = 이미 다친 기물을 치면 (잃은 HP 몫 × 값 × 이것) 더 — 같은 차례 앞 수가 친 기물을 이어서 친다(이어 짜기가 앞 수를 둔 판에서 고른다).
+   * boxKing = 이 수의 공격 범위가 내 킹이 빠질 빈 칸을 하나 덮을 때마다 더 — 킹의 도망길을 지운다. 결정론 그대로(난수 없음).
+   */
+  focus: 0.35,
+  boxKing: 4,
+};

@@ -64,7 +64,7 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { coreOf, findPiece, samePos, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refineOnce, ECON, OWN_ICON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
-import { CHARM_NUM, CHARMS, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
+import { CHARM_NUM, CHARMS, startRevive, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
 // 심장 톱니 그림은 public 경로라 문서 기준으로 푼다 (base './' — CSS 파일 안 상대 경로는 Vite가 묶으려 든다)
@@ -101,7 +101,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
 import { commitRunEnd, fightPending, newerSaveFound, settledEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeSwap, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -2083,7 +2083,7 @@ const advance = (): void => {
     }
     const a = acts[actI];
     // 막이 바뀌면 분대가 쉰다 (반장 뒤 정비) — 쓴 버팀도 이때만 다시 찬다 (2026-11-14)
-    squad = refillBrace(restSquad(squad, REST.actHeal));
+    squad = refillBrace(restSquad(squad, actHeal()));
     { const m = mendSquad(squad); squad = m.squad; if (m.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(m.mended.map((u) => u.name ?? '').join(' · ')), 3200), 1200); }
     closeOverlay();
     void actCard(actLabel(a.act), a.name, ACT_NARR[actI], `act-${Math.min(4, actI + 1)}`).then(() => {
@@ -2130,7 +2130,7 @@ const actClear = async (): Promise<void> => {
       { k: SCREEN_TEXT.tally[2], v: Math.max(0, gold - s0.gold), unit: `(지갑 ${gold})` },
       { k: SCREEN_TEXT.tally[3], v: deck.length, unit: deck.length - s0.deck > 0 ? `(+${deck.length - s0.deck})` : '' },
       { k: '부품', v: `${parts.length}/${partSlotsAt(actI)}` },
-      { k: SCREEN_TEXT.actHeal, v: `HP +${Math.round(REST.actHeal * 100)}%`, unit: '(분대 전원)' },
+      { k: SCREEN_TEXT.actHeal, v: `HP +${Math.round(actHeal() * 100)}%`, unit: '(분대 전원)' },
     ],
     mvp,
     opens: [],
@@ -2893,10 +2893,7 @@ const forgeScreen = (): void => {
   // 장소 (D-200 · D-394): 외눈 정비공의 작업대 BG-02 — 왼쪽 그림(정비공 초점) · 오른쪽 선택지 판 넷
   document.body.classList.add('between');
   placeBg('bg-forge');
-  // 작업대에 들르면 깨진 심장 톱니를 모두 새로 끼운다 (D-219 — 고르지 않아도 된다)
-  const mend = mendSquad(squad);
-  squad = mend.squad;
-  if (mend.mended.length) window.setTimeout(() => toast(LIFE_TEXT.mended(mend.mended.map((u) => u.name ?? '').join(' · ')), 2600), 500);
+  // 깨진 심장 톱니는 막 정비 때만 새로 끼운다 (D-542 — 옛 D-219: 작업대에 들르기만 해도 공짜로 다시 끼워 손실이 쌓이지 않았다)
   // 출하 씨앗을 한 번 굴린다 (예전 「셋 중 둘」 — 이어하기에서 같은 씨앗 흐름을 지킨다)
   sub().int(3);
   if (forgeFinal) squad = squad.map((u) => ({ ...u, hp: crewMaxHp(u) }));
@@ -3325,7 +3322,7 @@ const finishNow = (): void => {
         size: 'm',
         title: '하자 폐기',
         head: spare ? `<span class="tag tag-crimson">${CHARMS.revive.name} ${charms.revive}</span>` : undefined,
-        body: `<p>${spare ? `킹이 쓰러졌습니다. ${josa(CHARMS.revive.name, '을')} 깨면 ${cur.title}부터 다시 둡니다.` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}`,
+        body: `<p>${spare ? `킹이 쓰러졌습니다. ${josa(CHARMS.revive.name, '을')} 깨면 ${cur.title}부터 다시 둡니다. 분대의 상처는 그대로입니다.` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}`,
         back: spare ? { label: '끝낸다', attrs: 'data-quit' } : undefined,
         go: spare ? { label: '다시 둔다', attrs: 'data-again' } : { label: '끝낸다', attrs: 'data-quit' },
       });
@@ -3334,6 +3331,7 @@ const finishNow = (): void => {
       settleLoss();
       el.querySelector('[data-again]')?.addEventListener('click', () => {
         charms.revive -= 1;
+        if (runLive) squad = spareSquad(b, squad); // 여벌 심장 (D-542): 상처는 그대로 다시 선다
         // 다시 서는 대국도 저장한다 — 예전에는 여기서 앱을 닫으면 여벌을 깨기 전 저장으로 돌아갔다
         if (runLive && fightOn) saveRun('battle', fightOn.node);
         startBattle(ftueRetry(cur)); // 첫 출하 1막 반장이면 이제야 안전망 (2026-11-14)
@@ -3364,7 +3362,7 @@ const finishNow = (): void => {
       }
     }
     // 반장을 쓰러뜨리면 되감기 톱니 (D-228)
-    if (cur.boss) {
+    if (cur.boss && CHARM_NUM.bossRewind > 0) {
       charms.rewind += CHARM_NUM.bossRewind;
       notes.push(`${CHARMS.rewind.name} +${CHARM_NUM.bossRewind}`);
     }
@@ -4560,9 +4558,10 @@ const labEnd = (isWin: boolean): void => {
 // ---------- 저장 · 승급 · 오늘의 출하 (R6, D-174) ----------
 /** 대국 사이 회복 (난이도 3부터 기본 회복의 30%) */
 const restHeal = (): number => REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1);
-/** 고물상 값 (승급 4부터 비싸다) */
-/** 고물상 값: 승급 4 이상 · 탐욕의 저울(대가 +25%)이면 오른다 */
-const ascPrice = (n: number): number => Math.round(n * (asc >= 4 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1));
+/** 막 정비 회복 (D-542: 조항 3 「짧은 휴식」이 막 정비에도 — 넷째 왕관 계단) */
+const actHeal = (): number => REST.actHeal * (asc >= 3 ? ASC_NUM.restMul : 1);
+/** 고물상 값: 승급 5(조항 「비싼 고물」, D-542) 이상 · 탐욕의 저울(대가 +25%)이면 오른다 */
+const ascPrice = (n: number): number => Math.round(n * (asc >= 5 ? ASC_NUM.shopMul : 1) * (parts.includes('greed') ? PART_NUM.greedShop : 1));
 
 /** 새 출하: 시드 · 승급 · 오늘의 출하. 분대 · 덱 · 부품 · 나사 · 지도를 처음으로 */
 const newRun = (seed: number, level: number, day: string | null, mode: RunMode = day ? 'daily' : 'story', set: StartSetId = 'standard'): void => {
@@ -4614,7 +4613,7 @@ const newRun = (seed: number, level: number, day: string | null, mode: RunMode =
   sacLeft = dir.sacrifice(level);
   closeActs = [];
   highlight = null;
-  charms = { revive: level <= CHARM_NUM.startReviveUpTo ? 1 : 0, rewind: CHARM_NUM.startRewind + (START_SETS[startSet].rewind ?? 0) };
+  charms = { revive: startRevive(level, firstShip), rewind: CHARM_NUM.startRewind + (START_SETS[startSet].rewind ?? 0) };
   lossesHere = 0;
   lossDef = null;
   ended = null;
@@ -4684,7 +4683,8 @@ const saveFight = (settled?: { stand: boolean }): void => {
 const settleLoss = (): void => {
   if (!runLive || labMode) return;
   if (charms.revive <= 0) commitEnd(false);
-  else if (fightOn) writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, charms: { ...charms, revive: charms.revive - 1 } });
+  // 여벌로 다시 설 분대 (D-542): 진 대국의 상처 · 쓰러짐은 그대로 — 저장에만 먼저 씌우고, 화면 분대는 「다시 둔다」에서 바꾼다(패배 기록은 대국 전 분대로)
+  else if (fightOn) writeSave(store, { ...runRecord('battle', fightOn.node), squad: spareSquad(b, squad), rng: fightOn.rng, stage: fightOn.stage, charms: { ...charms, revive: charms.revive - 1 } });
 };
 /**
  * 대국 중 저장에서 이어 간다 (D-529): 대국 앞 난수 자리에서 같은 대국을 조용히 다시 세우고(결정론 — 같은 적 · 같은 판 장식),
@@ -4766,7 +4766,7 @@ const loadRun = (sv: RunSave): void => {
   closeActs = sv.closeActs ?? [];
   highlight = sv.highlight ?? null;
   // 부적 (D-228) 전 저장: 그때는 다시 하기가 무제한이었다 — 시작 몫을 그대로 준다
-  charms = sv.charms ?? { revive: sv.asc <= CHARM_NUM.startReviveUpTo ? 1 : 0, rewind: CHARM_NUM.startRewind };
+  charms = sv.charms ?? { revive: startRevive(sv.asc, !!sv.first), rewind: CHARM_NUM.startRewind };
   // 막 장부 (D-402) 전 저장: 이번 막 시작 값을 모르니 지금 값에서 센다
   actSnap = sv.actSnap ?? snapNow();
 };

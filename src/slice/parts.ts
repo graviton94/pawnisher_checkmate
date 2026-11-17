@@ -70,7 +70,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   drum: { name: '진군의 북', axis: 'inf', icon: 'drum', flavor: '북소리에 맞춰 발을 맞춘다.', desc: '폰 카드 태엽 −1' },
   crown: { name: '짓누르는 왕관', axis: 'king', icon: 'crown', flavor: '무게가 곧 힘이다.', desc: '킹의 공격 ×1.7' },
   throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', flavor: '왕이 걸으면 옥좌도 걷는다.', desc: '킹 방열판 +2 — 킹 이동 명령마다' },
-  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '연쇄 ×1.3 · 최대 ×6 — 연쇄마다' },
+  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '연쇄 ×1.2 · 최대 ×4 — 연쇄마다' },
   echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', flavor: '맞는 소리가 두 번 울린다.', desc: '쌓이는 연쇄 ×2 — 적중마다' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'hammer', flavor: '부딪히는 소리가 곧 피해다.', desc: '충돌 피해 ×2 — 밀어 부딪칠 시' },
   // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
@@ -78,7 +78,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   spurs: { name: '녹슨 등자', axis: 'cav', icon: 'spurs', flavor: '녹슬어도 박차는 박차다.', desc: '나이트 태엽 −1 — 턴의 첫 장일 시' },
   barracks: { name: '막사의 종', axis: 'inf', icon: 'barracks', flavor: '종이 울리면 막사가 빈다.', desc: '킹 곁에 폰 하나 — 대국 시작 시' },
   banner: { name: '찢긴 군기', axis: 'inf', icon: 'banner', flavor: '찢겨도 깃발은 앞을 가리킨다.', desc: '폰의 공격 ×1.6' },
-  scepter: { name: '녹슨 홀', axis: 'king', icon: 'scepter', flavor: '녹슬었어도 왕의 홀이다.', desc: '킹 방열판 +25 — 대국 시작 시' },
+  scepter: { name: '녹슨 홀', axis: 'king', icon: 'scepter', flavor: '녹슬었어도 왕의 홀이다.', desc: '킹 방열판 +15 — 대국 시작 시' },
   gilded: { name: '도금 방패', axis: 'king', icon: 'gilded', flavor: '맞을수록 금칠이 번쩍인다.', desc: '태엽 +1 — 턴에 한 번, 킹 피격 시' },
   fuse: { name: '도화선', axis: 'chain', icon: 'fuse', flavor: '불이 붙으면 끝까지 탄다.', desc: '카드·태엽 +1 — 턴에 한 번, 연쇄 5 달성 시' },
   conductor: { name: '전도 코일', axis: 'chain', icon: 'conductor', flavor: '열기가 줄을 타고 번진다.', desc: '연쇄 피해 +8 — 연쇄마다' },
@@ -136,8 +136,8 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   calipers: { name: '측량 컴퍼스', axis: null, icon: 'calipers', flavor: '왕까지의 거리를 잰다.', desc: '피해 +4 — 적 킹 공격 시' },
 };
 
-/** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 피의 계약 ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 */
-export const PART_NUM = { relayGear: 1, relaySeal: 1.8, sharedPlate: 6, sharedWins: 3, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.35, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 6, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 10, oathAdd: 6, lanceMult: 1.5, bannerMult: 1.6, scepterShield: 25, conductorPerKill: 0.35, conductorAdd: 8, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 5, hammerMult: 2, coilPerKill: 1.3, coilCap: 6, afterheatKeep: 0.25, crownMult: 1.7, throneShield: 2, assemblyBelow: 2, whetAdd: 3 };
+/** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 피의 계약 ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 · D-542 (난이도 패스 — 등급표 자기 실현): 녹슨 홀 25→15 · 폭주 코일 ×1.3/상한 6 → ×1.2/상한 4 */
+export const PART_NUM = { relayGear: 1, relaySeal: 1.8, sharedPlate: 6, sharedWins: 3, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.35, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 6, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 10, oathAdd: 6, lanceMult: 1.5, bannerMult: 1.6, scepterShield: 15, conductorPerKill: 0.35, conductorAdd: 8, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 5, hammerMult: 2, coilPerKill: 1.2, coilCap: 4, afterheatKeep: 0.25, crownMult: 1.7, throneShield: 2, assemblyBelow: 2, whetAdd: 3 };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).
@@ -168,21 +168,26 @@ export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { notches: '+',
  */
 export type CharmId = 'revive' | 'rewind';
 export const CHARMS: Record<CharmId, { name: string; icon: string; desc: string }> = {
-  revive: { name: '여벌 심장 톱니', icon: 'heartCog', desc: '킹 대신 깨진다. (그 대국을 처음부터)' },
+  revive: { name: '여벌 심장 톱니', icon: 'heartCog', desc: '킹 대신 깨진다. (그 대국을 다시 · 상처는 그대로)' },
   rewind: { name: '되감기 톱니', icon: 'rewind', desc: '턴 처음으로 되감는다. (되감기 1회)' },
 };
 export const CHARM_NUM = {
-  /** 출하 시작: 되감기 2 · 승급 0~4는 여벌 심장 1 (D-382: 조항 2에서 조항 5로 옮겨 승급 곡선을 고르게) */
-  startRewind: 2,
-  startReviveUpTo: 4,
-  /** 부품 상자에서 부적이 나올 확률 (여벌 심장은 드물게) */
-  chestRewind: 0.3,
+  /**
+   * 출하 시작: 되감기 1 · 여벌 심장은 첫째 왕관의 첫 출하에만 1 (D-542 — 옛 D-382: 되감기 2 · 승급 0~4 여벌 1).
+   * 여벌이 둘째~넷째 왕관 · 도전 1에서 12~19%p를 살려 왕관 계단이 평평했고 도전 1이 넷째 왕관보다 쉬웠다. 되감기는 사람만 쓰는 보험이라 봇 곡선에 안 보인다.
+   */
+  startRewind: 1,
+  startReviveUpTo: 0,
+  /** 부품 상자에서 부적이 나올 확률 (여벌 심장은 드물게 · D-542: 되감기 0.3 → 0.15) */
+  chestRewind: 0.15,
   chestRevive: 0.08,
-  /** 반장을 쓰러뜨리면 되감기 톱니 +1 */
-  bossRewind: 1,
+  /** 반장을 쓰러뜨리면 되감기 톱니 +이만큼 (D-542: 1 → 0 — 「지면 되감는다」가 「드물게 되감는다」로) */
+  bossRewind: 0,
   /** 고물상: 카드처럼 진열대 한 칸에 가끔 (되감기 25% · 여벌 심장 10%) */
   shopRewindPrice: 45,
   shopRevivePrice: 140,
   shopRewindChance: 0.25,
   shopReviveChance: 0.1,
 };
+/** 출하 시작 여벌 심장 (D-542): 첫째 왕관(승급 0)이면서 처음 하는 출하일 때만 1 — 다시 하는 첫째 왕관 · 둘째 왕관부터는 0 */
+export const startRevive = (asc: number, firstShip: boolean): number => (firstShip && asc <= CHARM_NUM.startReviveUpTo ? 1 : 0);

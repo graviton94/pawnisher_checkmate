@@ -97,7 +97,7 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   bishopChain: { axis: 'chain', name: '축복의 고리', cost: 1, who: 'B', kind: 'move', chainPerKill: 2, desc: '심판받은 자는 둘로 센다. (연쇄 +2 — 처치하면)' },
   kingCharge: { axis: 'king', axis2: 'push', name: '왕의 돌진', cost: 1, who: 'K', kind: 'move', push: true, add: 6, desc: '왕이 몸소 밀고 들어간다. (피해 +6 · 맞은 적 뒤로 1칸)' },
   plate: { name: '철벽', cost: 1, who: 'any', kind: 'shield', amount: 15, desc: '굳게 걸어 잠근다. (방열판 +15)' },
-  repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 12, desc: '기물 하나를 땜질한다. (HP +12)' },
+  repair: { name: '응급 용접', cost: 1, who: 'any', kind: 'repair', amount: 20, desc: '기물 하나를 땜질한다. (HP +20)' }, // D-542: 12 → 20 — 대국 사이 회복이 줄어 상처가 남는다
   reload: { name: '태엽 감기', cost: 0, who: 'any', kind: 'draw', amount: 1, ap: 1, desc: '태엽을 감고 탄창을 채운다. (태엽 +1 · 카드 1장 뽑기)' },
   kingBlow: { axis: 'king', name: '왕의 철퇴', cost: 2, who: 'K', kind: 'move', mult: 2, desc: '왕이 직접 내려친다. (피해 ×2)' },
   splashDiag: { axis: 'chain', name: '파편 세례', cost: 1, who: 'B', kind: 'move', carve: 'diag', desc: '내려앉는 곳마다 유리가 깨진다. (대각선 적 · 절반 피해 — 내려앉으면)' },
@@ -175,9 +175,9 @@ const BASE_COMMANDS: Record<BaseCommandId, CommandDef> = {
   queenSweep: { axis: 'chain', name: '휩쓰는 여왕', cost: 2, who: 'Q', kind: 'move', carve: 'cross', mult: 1.3, desc: '내려앉으며 둘레를 쓴다. (피해 ×1.3 · 사방 절반 피해)' },
   stepAside: { axis: 'tactic', name: '비켜서기', cost: 1, who: 'any', kind: 'move', nextMult: 1.3, desc: '길을 내어 준다. (다음 공격 피해 ×1.3)' },
   checkCall: { axis: 'tactic', name: '체크!', cost: 2, who: 'any', kind: 'move', stun: true, desc: '외침과 함께 묶는다. (다음 턴 행동 불가 · 방열판 0 — 맞은 적)', flavor: '“체크!”' },
-  oilCan: { name: '기름칠', cost: 1, who: 'any', kind: 'repair', amount: 16, desc: '삐걱이는 관절에 기름을 먹인다. (HP +16)' },
+  oilCan: { name: '기름칠', cost: 1, who: 'any', kind: 'repair', amount: 25, desc: '삐걱이는 관절에 기름을 먹인다. (HP +25)' }, // D-542: 16 → 25
   forkAny: { axis: 'tactic', name: '양수겸장', cost: 2, who: 'any', kind: 'move', fork: 1.5, desc: '둘을 한꺼번에 겨눈다. (피해 ×1.5 — 두 적을 칠 때)' },
-  fieldPlate: { name: '덧댄 판', cost: 0, who: 'any', kind: 'shield', amount: 10, desc: '쇳조각을 덧댄다. (방열판 +10)' },
+  fieldPlate: { name: '덧댄 판', cost: 0, who: 'any', kind: 'shield', amount: 14, desc: '쇳조각을 덧댄다. (방열판 +14)' }, // D-542: 10 → 14
   rookRally: { axis: 'push', axis2: 'inf', name: '성벽 뒤 행렬', cost: 2, who: 'R', kind: 'move', rally: true, desc: '요새가 나아가면 폰들이 뒤따른다. (곁의 폰도 공격)' },
   bishopChase: { axis: 'chain', axis2: 'cav', name: '빛의 추격', cost: 1, who: 'B', kind: 'move', freeIfKiller: true, desc: '쓰러뜨린 빛이 다시 내리꽂힌다. (태엽 0 — 처치한 턴이면)' },
   queenGuard: { axis: 'king', axis2: 'inf', name: '여왕 근위대', cost: 2, who: 'Q', kind: 'move', rally: true, desc: '여왕이 나서자 폰들이 따른다. (곁의 폰도 공격)' },
@@ -323,7 +323,7 @@ export const REWARD_COMMANDS: CommandId[] = ['pierceDiag', 'crossLeap', 'charge'
 /** 고물상 · 작업대 (R5-2, D-168) — 값은 구조용, 조정은 R7 */
 /** gradePrice · partGradePrice (D-217 3): 고물상 값은 등급으로 — 일반 · 희귀 · 황금 */
 /** refinePrice (D-218): 고물상 다듬기 — 남는 나사를 강화로 */
-export const SHOP = { refinePrice: 60, gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 }; // 진열대 = 카드 4 + 부품 1 (부적이 나오면 카드 한 자리) + 서비스 둘 — 한 화면에 4 + 3, 넘김 없음 (D-394, 총괄 리뷰 2-3)
+export const SHOP = { refinePrice: 75, /* D-542: 60 → 75 */ gradePrice: { common: 30, rare: 45, gold: 70 }, partGradePrice: { common: 70, rare: 95, gold: 130 }, cardPrice: [25, 35, 50] as const, partPrice: 90, healPrice: 40, healPct: 0.35, removePrice: 50, cards: 4, parts: 1 }; // 진열대 = 카드 4 + 부품 1 (부적이 나오면 카드 한 자리) + 서비스 둘 — 한 화면에 4 + 3, 넘김 없음 (D-394, 총괄 리뷰 2-3)
 /**
  * braceDoors = 작업대 「보강」 버팀 수 (D-319).
  * repairOne = 작업대 「수리」: 고른 분대원 하나의 HP를 최대 HP × 이 몫만큼 (1 = 가득) — 피드백 #17 · D-503.
@@ -343,7 +343,7 @@ export const ECON = {
   partSlotsPerAct: 1,
   meltBack: 20,
   /** 고물상 다듬기 · 빼기는 출하 내내 쓸 때마다 값이 오른다 */
-  svcStep: 25,
+  svcStep: 30, // D-542: 25 → 30
   /** 고물상 아래 줄 서비스(정비 · 다듬기 · 빼기) 중 진열되는 수 */
   shopSvc: 2,
   /** 작업대 선택지 (다듬기 · 빼기 · 수리) 중 나오는 수 */
@@ -371,7 +371,10 @@ export const FOE = {
   // 두뇌 봇 36% → 15% (전체 19% → 10%), 이긴 대국 길이 2막 3.9 · 3막 5.1턴 (pace 24출하). HP를 올리면 판이 길어져 열기 최대 턴이 늘고 손실이 도로 는다
   // 2026-11-14 (D-501): 1.3 → 1.55 · hpStart 0.9 → 0.95 — 등급 재측정(D-500)으로 보통 봇이 센 카드를 고르게 되자 첫 출하 38 → 69%로 뛰었다.
   // 같은 시드 비교: 1.5 → 49% · 1.6 + 1.0 → 26% · 이 값 → 목표 띠(35~40%) 안팎
-  atk: 1.55,
+  // D-542 (난이도 패스 2026-11-17, 눈금 = 두뇌 봇): 1.55 → 2.15 — 단독으로는 천장(대국 승 99.7%)에 막혀 안 보이고, 회복 축소 · 적 폰 +1 ·
+  // 1막 깊이와 묶여서 대국 패배율을 0.5 → 2%대로 올린다. HP(hpStart 1.05 · 1.0 시험)를 올리면 대국이 길어져(3막 11턴) 출하가 100분을 넘었다 —
+  // 위험은 공격으로, 길이는 HP로 (docs/reports/2026-11-17-difficulty-pass.md)
+  atk: 2.15,
   /**
    * 층별 성장 곡선 (D-203, 사용자: "유저가 강해지는 만큼 적도 — 합연산은 지금 강하고 곱연산은 나중에 강하게"):
    * 적 HP는 대국마다 곱으로 (hpGrow^깊이 — 지수), 공격은 더하기로 (1 + atkGrow × 깊이 — 직선).
@@ -382,8 +385,10 @@ export const FOE = {
   // D-463: 0.85 · 1.05 → 0.9 · 1.035 — 실험실 「막별 성장」에서 3막 대국이 8턴을 넘었다(우리 턴당 피해가 2막 → 3막에 15~25%만 오르는데 적 HP는 대국마다 ×1.05)
   hpStart: 0.95,
   // D-298 (확장 뒤 밸런스 패치): 1.075 → 1.06 — D-243 판 구조 · D-252 종막 · 3막 깊이 20에서 HP가 4.25배로 불어 두뇌 봇도 50%였다
-  hpGrow: 1.035,
+  hpGrow: 1.03, // D-542: 1.035 → 1.03 — 3막 일반 대국이 11턴까지 늘었다(적 폰 +1 · 깊이 +1). 위험은 공격(atk)으로
   atkGrow: 0.04,
+  /** 반장이 아닌 대국마다 더하는 적 폰 (D-542 — 조항 4 「불어난 무리」의 +1과 별개) */
+  extraPawns: 1,
 };
 
 /**
@@ -494,7 +499,7 @@ export const SLICE = {
    */
   coins: 10,
   coinGrace: 1,
-  coinValue: 4, // D-218: 5 → 4 — 한 판에 나사 약 1000을 벌고 550만 써서 400이 남았다
+  coinValue: 3, // D-218: 5 → 4 — 한 판에 나사 약 1000을 벌고 550만 써서 400이 남았다 · D-542: 4 → 3 — 끝에 남는 나사 270(목표 150 안팎)
   /** 교착 압박 (D-196): 적 킹은 원래 뒤에 남지만 혼자 남았거나 이 턴부터는 내 킹에게 다가온다 — 판이 끝나지 않는 교착을 막는다 */
   kingMarchTurn: 12,
   /**
@@ -503,12 +508,12 @@ export const SLICE = {
    * bossPhase2Hp · bossPhase2Guards = 반장이 처음 쓰러지면 이 HP로 다시 일어서고 호위 폰이 선다
    * desperate = 적 킹 발악: 킹 아닌 적이 이만큼 이하로 남거나 킹 HP가 절반 아래면 킹도 앞장서 치고 맞을 칸을 겁내지 않는다
    */
-  guardByAct: [0, 0.2, 0.35],
+  guardByAct: [0, 0.2, 0.25], // D-542: 3막 0.35 → 0.25 — 호위가 하나 늘어(적 폰 +1) 방열판이 더 오래 남았다
   boardByAct: [[6, 6], [6, 6], [6, 7]] as [number, number][],
   bossPhase2Hp: 0.3,
   bossPhase2Guards: 1,
   /** 격노 (D-467): 다시 선 반장의 공격 배율 */
-  bossPhase2Atk: 1.5,
+  bossPhase2Atk: 1.85, // D-542: 1.5 → 1.85 — 출하가 짧아진 만큼(대국 20 → 14) 실패를 반장 끝에 모은다
   desperate: 1,
   /** 보충병 (D-198): 이긴 뒤 킹 말고 분대원이 이만큼 안 되면 폰이 보충된다 — 다 잃고 겨우 이긴 다음 판이 원천 봉쇄되지 않게 */
   reinforceMin: 2,
@@ -531,7 +536,8 @@ export const SLICE = {
   /** 적 성장 깊이: 막 하나에 이만큼 (D-215 — 지도가 길어져도 성장 곡선은 그대로) */
   depthPerAct: 5,
   /** 막별 성장 [시작 깊이, 그 막에서 늘어나는 깊이] (D-216 3: 「1막 여유 → 3막 빡빡」 — 뒤 막일수록 가파르게) */
-  depthActs: [[0, 5], [6, 9], [15, 5]] as [number, number][],
+  // D-542: [[0,5],[6,9],[15,5]] → 1막 +2 · 2/3막 +1 — 1막 10판이 연습(킹이 한 번도 맞지 않음)이던 것을 「이빨 있는 1막」으로
+  depthActs: [[2, 5], [7, 9], [16, 5]] as [number, number][],
   /** 부품 상자 나사 [최소, 최대] (D-215) */
   chestGold: [20, 35] as [number, number],
   /** 제물 (D-217 4: 측정 가치 −24 → 올림) — 연쇄 · 카드 */
