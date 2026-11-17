@@ -402,7 +402,7 @@ def back():
     src = Image.open(os.path.join(os.path.dirname(__file__), '..', '..', 'public', 'icon-512.png')).convert('RGB').crop((198, 100, 314, 304))
     th = 112
     tw = round(src.width * th / src.height)
-    src = src.resize((tw, th), Image.LANCZOS)
+    src = src.resize((tw, th), Image.NEAREST)
     x0, y0 = (W - tw) // 2, (H - th) // 2
     for y in range(th):
         for x in range(tw):

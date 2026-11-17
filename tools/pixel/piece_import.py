@@ -484,7 +484,7 @@ if __name__ == '__main__':
             import maker
             (key, side), grid = next(iter(blocks.items()))
             out = maker.render64(grid, side, 4)
-            o = Image.open(src).convert('RGB').resize((out.height, out.height), Image.LANCZOS)
+            o = Image.open(src).convert('RGB').resize((out.height, out.height), Image.NEAREST)
             chk = Image.new('RGB', (o.width + out.width + 8, out.height), (24, 23, 30))
             chk.paste(o, (0, 0))
             chk.paste(out, (o.width + 8, 0), out)

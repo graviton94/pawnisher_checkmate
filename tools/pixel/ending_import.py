@@ -81,7 +81,7 @@ def chrome():
         print(f'  {name}: 9-slice {f["slice"]} · 변 가운데 = 열 {c}' + (f' · 옆 변 = 줄 {f["row"]}' if f['row'] is not None else ''))
     # 대조판: 원본 시트(축소) 위 | 아래 다듬은 부품 ×4 (ui_kit_import가 쓴 부품만 판을 덮어쓴다)
     src = Image.open(os.path.join(ORDER, 'ED-01-source.png')).convert('RGB')
-    top = src.resize((src.width // 2, src.height // 2), Image.LANCZOS)
+    top = src.resize((src.width // 2, src.height // 2), Image.NEAREST)
     parts = [Image.open(os.path.join(CHROME, f'{n}.png')).convert('RGBA') for n in g['names']]
     k = 4
     pw = sum(pt.width * k + 12 for pt in parts) + 12

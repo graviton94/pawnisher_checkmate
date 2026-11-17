@@ -93,7 +93,7 @@ def sheet():
         print(f'  {nm}: {im.width}×{im.height} → {os.path.relpath(dst, ROOT)}')
     print(f'LD-01: 칸 {g["grid"][0]}px · 시트 {small.width}×{small.height}도트 · 톱니 프레임 {fw}×{fh}')
     # 대조판: 원본(축소) 위 | 부품 ×4 아래 (줄: 액자 · 쪽지 / 막대 · 채움 칸 / 톱니 띠)
-    top = img.resize((img.width // 2, img.height // 2), Image.LANCZOS)
+    top = img.resize((img.width // 2, img.height // 2), Image.NEAREST)
     k = 4
     rows = [[parts['guide-frame'], parts['tip-slip']], [parts['load-bar'], parts['load-bar-fill']], [parts['load-gear']]]
     w = max([top.width] + [sum(im.width * k + 12 for im in r) + 12 for r in rows])

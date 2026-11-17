@@ -46,7 +46,7 @@ def one(sid, table=None):
     # 대조판: 원본(띠 걷은 부분) | 결과 확대 — 같은 높이
     s0 = src.crop((0, round(top * p), W, round((rows - bot) * p)))
     h = 480
-    left = s0.resize((round(s0.width * h / s0.height), h), Image.LANCZOS)
+    left = s0.resize((round(s0.width * h / s0.height), h), Image.NEAREST)
     k = max(1, h // out.height)
     right = out.resize((out.width * k, out.height * k), Image.NEAREST)
     chk = Image.new('RGB', (left.width + right.width + 8, max(h, right.height)), (11, 11, 14))

@@ -144,7 +144,7 @@ def compare(sheet, srcs, outs, names, dst):
     for k, (src, o, nm) in enumerate(zip(srcs, outs, names)):
         x = 16 + k * (S + 16)
         s = src.copy()
-        s.thumbnail((S, S), Image.LANCZOS)
+        s.thumbnail((S, S), Image.NEAREST)
         board.paste(s, (x + (S - s.width) // 2, pad))
         im = Image.fromarray(o, 'RGBA').resize((S, S), Image.NEAREST)
         chk = Image.new('RGB', (S, S), (60, 56, 70))

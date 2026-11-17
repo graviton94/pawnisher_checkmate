@@ -62,7 +62,7 @@ def main():
     check = Image.new('RGB', (700, len(previews) * 190), '#24232b'); draw = ImageDraw.Draw(check)
     for i, (key, original, im) in enumerate(previews):
         y = i * 190; draw.text((8, y + 4), key + ' | original / pixel grid x5 / game 32 / small 16', fill='white')
-        o = original.copy(); o.thumbnail((160, 160), Image.Resampling.LANCZOS); check.paste(o, (10, y + 24), o)
+        o = original.copy(); o.thumbnail((160, 160), Image.NEAREST); check.paste(o, (10, y + 24), o)
         large = im.resize((im.width * 5, im.height * 5), Image.Resampling.NEAREST)
         check.paste(large, (200, y + 24), large); check.paste(im, (380, y + 60), im)
         tiny = small(im); check.paste(tiny, (430, y + 60), tiny)

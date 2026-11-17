@@ -173,19 +173,29 @@ SPEC24 = ['#0B0B0E', '#17171E', '#24232B', '#33313B', '#56545E', '#8A8794', '#F1
           '#7A1218', '#B63735', '#1F3544', '#3F5968', '#7E929B', '#38BFC7']
 # pitch = 원본 도트 간격(px). 받은 원본은 모두 1254×1254 생성기 출력(발주 1320×1296 ×6이 아님).
 # 실측 detect_pitch: 02 5.95 · 04 5.97 · 05 6.11 · 06 5.97 · 08 6.13 · 03은 반 간격 3.07을 잡아 6.14로 고정.
+# D-552: grid = 축마다 실측(gridmeasure.measure 4~16px · `boss_p2_import.py --measure`) (간격, 시작[, 'dp']).
+# 옛 값은 정사각 한 간격(CI-02 5.95 · 04 5.97 · 05 6.11 · 06 5.97 · 07 6.24)이라 1.5~3% 어긋나 한 줄 안에서 3~6칸씩 밀렸다.
+# 'dp' = 세 토막 간격이 흔들려 반 칸 넘게 쌓이는 축 → 간격 고정 · 창마다 시작점 추적(gridmeasure.tracked_cuts). 존재 점수(어긋난 간격 오차 ÷ 제 간격 오차) 괄호.
+# CI-05 y는 격자가 약하다(1.046) — x 실측 ±4% 안에서 다시 잰 값(from-other). CI-03 · CI-08은 재반입하지 않았다(옛 균일 격자를 같은 꼴로 적음).
 BOSS_P2 = {
-    'CI-02': {'dst': 'boss-plate-p2', 'phase1': 'boss-plate', 'pitch': 5.95},
-    'CI-03': {'dst': 'boss-inspector-p2', 'phase1': 'boss-inspector', 'pitch': 6.14},
+    'CI-02': {'dst': 'boss-plate-p2', 'phase1': 'boss-plate',
+              'grid': {'x': (5.99, 2.62, 'dp'), 'y': (6.104, 3.05, 'dp')}},  # 존재 x 1.102 · y 1.157
+    'CI-03': {'dst': 'boss-inspector-p2', 'phase1': 'boss-inspector', 'grid': {'x': (1254 / 204, 0), 'y': (1254 / 204, 0)}},
     # 조립은 1단계 · 판 · 대사 색이 초록(slice.css --boss-a #7fd45a, 1단계 초상 색상 90~100도)인데 청록(180~200도)으로 왔다
     # → 검수(청록)와 겹친다. 청록 빛만 95도로 돌린다(쇠 · 먹은 채도가 낮아 그대로).
-    'CI-04': {'dst': 'boss-assembly-p2', 'phase1': 'boss-assembly', 'pitch': 5.97,
+    'CI-04': {'dst': 'boss-assembly-p2', 'phase1': 'boss-assembly',
+              'grid': {'x': (6.14, 0.0, 'dp'), 'y': (5.991, 5.12, 'dp')},  # 존재 x 1.118 · y 1.067
               'recolor': {'from': (160, 225), 'to': 95, 'smin': 0.25}},
     # 자석의 파란 극은 그림에서 면적이 작아 대표 24색에 못 들고 청록으로 붙었다 → 1단계 초상의 파란 극 계단 셋을 더한다.
-    'CI-05': {'dst': 'boss-magnet-p2', 'phase1': 'boss-magnet', 'pitch': 6.11, 'extra': ['#2F6FE0', '#7FB2FF', '#1F3C9E']},
-    'CI-06': {'dst': 'boss-thorns-p2', 'phase1': 'boss-thorns', 'pitch': 5.97},
-    'CI-08': {'dst': 'boss-gilded-p2', 'phase1': 'boss-gilded', 'pitch': 6.13},
-    # 경보(D-507): 진홍 테마로 옴 · 1단계와 같은 룩형 탑 · 경광등 · 사슬 · 등불 — 두 축 점수 최고 6.24px(6.0은 경계 점수 최저) → 201칸 정사각
-    'CI-07': {'dst': 'boss-alarm-p2', 'phase1': 'boss-alarm', 'pitch': 6.24},
+    'CI-05': {'dst': 'boss-magnet-p2', 'phase1': 'boss-magnet',
+              'grid': {'x': (6.25, 4.43, 'dp'), 'y': (6.106, 1.14, 'dp')},  # 존재 x 1.080 · y 1.046(from-other)
+              'extra': ['#2F6FE0', '#7FB2FF', '#1F3C9E']},
+    'CI-06': {'dst': 'boss-thorns-p2', 'phase1': 'boss-thorns',
+              'grid': {'x': (6.208, 5.95, 'dp'), 'y': (6.109, 5.73, 'dp')}},  # 존재 x 1.087 · y 1.058 (12.31의 절반)
+    'CI-08': {'dst': 'boss-gilded-p2', 'phase1': 'boss-gilded', 'grid': {'x': (1254 / 205, 0), 'y': (1254 / 205, 0)}},
+    # 경보(D-507): 진홍 테마로 옴 · 1단계와 같은 룩형 탑 · 경광등 · 사슬 · 등불
+    'CI-07': {'dst': 'boss-alarm-p2', 'phase1': 'boss-alarm',
+              'grid': {'x': (6.291, 5.11, 'dp'), 'y': (6.166, 0.26, 'dp')}},  # 존재 x 1.078 · y 1.076
 }
 
 
@@ -319,7 +329,9 @@ LOADING_GRID = {
 #   옥좌 반격 = 왕의 분노(상처 입은 만큼 되갚는다) · 왕의 숨 = 근위대 진군(둘레에 퍼지는 고리 — 곁의 폰) · 종이 왕관 = 왕의 돌진(D-498, 왕이 몸소) ·
 #   체크 선언 = 왕의 시선(과녁 위 흑 킹 — 노려본 적의 발을 묶는다. 「체크 선언」 카드 checkCall은 이미 제 아이콘이 있다)
 KC_GRID = {
-    'KC-01': {'grid': (13.2, 6.93, 13.2, 5.28),
+    # D-552: 축마다 실측(gridmeasure, 마젠타 배경을 눌러 잼 · `kc_import.py --measure`) — x 13.203(존재 1.144) / y 12.47(1.121).
+    # 옛 값 (13.2, 6.93, 13.2, 5.28)은 x는 맞았지만 y가 6% 굵어 68줄 동안 약 4칸 밀렸다(73줄이 맞다).
+    'KC-01': {'grid': {'x': (13.203, 6.88, 'dp'), 'y': (12.47, 0.26, 'dp')}, 'colors': 28,
               'names': ['c.kingStep', 'c.kingDecree', 'c.royalGuard', 'c.crownSlam', 'c.wrath', 'c.kingGuard', 'c.kingCharge', 'c.regalGaze']},
 }
 

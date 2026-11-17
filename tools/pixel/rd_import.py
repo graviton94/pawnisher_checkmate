@@ -47,7 +47,7 @@ def main(src):
     dst = os.path.join(ROOT, 'public/ui/board/chip-weak.png')
     out.save(dst)
     big = out.resize((N * 16, N * 16), Image.NEAREST)
-    o = Image.open(src).convert('RGB').resize((N * 16, N * 16), Image.LANCZOS)
+    o = Image.open(src).convert('RGB').resize((N * 16, N * 16), Image.NEAREST)
     chk = Image.new('RGB', (N * 32 + 8, N * 16), (24, 23, 30))
     chk.paste(o, (0, 0))
     chk.paste(big, (N * 16 + 8, 0), big)

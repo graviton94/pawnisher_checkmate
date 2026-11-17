@@ -173,7 +173,7 @@ def main(sid, dry):
         y = 8 + cy * (T + 8)
         crop = Image.fromarray(a[box[1]:box[3], box[0]:box[2]])
         s = T / max(crop.size)
-        chk.paste(crop.resize((max(1, round(crop.width * s)), max(1, round(crop.height * s))), Image.LANCZOS), (x, y))
+        chk.paste(crop.resize((max(1, round(crop.width * s)), max(1, round(crop.height * s))), Image.NEAREST), (x, y))
         now = os.path.join(ROOT, 'public', 'ui', 'icons16', f'{k}.png')
         big = icn.resize((T, T), Image.NEAREST)
         chk.paste(big, (x + T + 8, y), big)

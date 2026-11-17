@@ -106,7 +106,7 @@ def nodes():
     for i, (_, cell, im) in enumerate(outs):
         x = 16 + i * (32 * sc + 16)
         t = cell.convert("RGBA")
-        t.thumbnail((32 * sc, 32 * sc))
+        t.thumbnail((32 * sc, 32 * sc), Image.NEAREST)
         chk.paste(t, (x, 16), t)
         big = im.resize((32 * sc, 32 * sc), Image.NEAREST)
         chk.paste(big, (x, 32 + 32 * sc), big)

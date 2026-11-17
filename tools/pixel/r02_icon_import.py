@@ -101,8 +101,8 @@ def main():
     k = 8
     S = fg.width * k
     chk = Image.new('RGB', (S * 3 + 40, S * 2 + 30), (60, 60, 70))
-    chk.paste(src_fg.resize((S, S), Image.LANCZOS), (10, 10))
-    chk.paste(src_bg.resize((S, S), Image.LANCZOS), (S + 20, 10))
+    chk.paste(src_fg.resize((S, S), Image.NEAREST), (10, 10))
+    chk.paste(src_bg.resize((S, S), Image.NEAREST), (S + 20, 10))
     chk.paste(fg.resize((S, S), Image.NEAREST), (10, S + 20), fg.resize((S, S), Image.NEAREST))
     chk.paste(bg.resize((S, S), Image.NEAREST), (S + 20, S + 20))
     comp = bg.copy()
