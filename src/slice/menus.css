@@ -99,3 +99,27 @@ body.slice.lay-f #right > .actions { margin-top: 18px; }
   .su-win .su-body > p.note:first-child { display: none; }
   body.slice .opening.menu::after { display: none; }
 }
+
+/* ---------- 손패 넘침 (검수 M4): 접힌 판(효과 줄 숨김) → 그래도 넘치면 칸 아래 「▼ N장 더」 띠 (철 판 · 1도트 테 · 12px 황동, 누름 48) ---------- */
+#hand.tight > .hc:not(.open):not(.armed) .hc-fx { display: none; }
+#hand > .hand-more { position: sticky; bottom: 0; z-index: 3; flex: none; display: flex; align-items: center; justify-content: center; height: 28px; margin: 0; padding: 0; border: 0; background: #1c1b22; box-shadow: inset 0 calc(var(--px) * 1) 0 #56545e, 0 calc(var(--px) * -1) 0 #0b0b0e; color: var(--t-gold); font: 700 12px/1 Galmuri11, sans-serif; font-synthesis: none; cursor: pointer; }
+#hand > .hand-more::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 48px; }
+#hand > .hand-more:active { background: #0b0b0e; }
+body.kb-nav #hand > .hand-more:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * -1); }
+
+/* ---------- 카드 레일 화살 (검수 M4): 줄 양 끝 철 단추 48 ◀ ▶ — 그쪽에 카드가 더 있을 때만 ---------- */
+.rail-nav { position: absolute; z-index: 4; height: 0; pointer-events: none; }
+.rail-nav > .rail-arrow.btn.k-iron { position: absolute; top: 0; width: 48px; min-width: 48px; height: max(48px, calc(var(--px) * 24)); padding: 0; transform: translateY(-50%); pointer-events: auto; font: 400 15px/1 Galmuri14, Galmuri11, sans-serif; }
+.rail-nav > .rail-arrow.ra-prev { left: 0; }
+.rail-nav > .rail-arrow.ra-next { right: 0; }
+.rail-nav > .rail-arrow[hidden] { display: none; }
+
+/* ---------- 보상 「정비한다」 (검수 M5): 단추 줄 가운데 칸의 왼쪽 끝(건너뛴다 옆) · 효과 꼬리표는 단추 오른쪽 ---------- */
+.scr-pick .btn-row > .mid:has(> .ovh) { justify-content: flex-start; }
+.scr-pick .btn-row .ovh { display: inline-flex; align-items: center; gap: var(--s2); min-width: 0; }
+.scr-pick .btn-row .ovh > .btn.k-teal { flex: none; min-width: calc(var(--px) * 64); }
+/* 꼬리표는 단추 오른쪽 (위에 두면 667에서 카드 아래 줄과 겹쳤다) */
+.scr-pick .btn-row .ovh > .ovh-tag { order: 2; min-width: 0; color: var(--t-ally); word-break: keep-all; }
+
+/* 좁은 레일(667): 덱 · 분대 · 버림 칩 글은 12px (세 칩이 한 줄에) */
+@media (max-width: 760px) { #deckrow .btn.k-iron { font: 400 12px/1 Galmuri11, sans-serif; } }

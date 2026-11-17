@@ -250,6 +250,53 @@ export const fitSlots = (row: HTMLElement): void => {
   }
   row.style.setProperty('--slot-gap', `${g}px`);
   if (!row.dataset.rail) bindRail(row);
+  railArrows(row);
+};
+
+/**
+ * 레일 화살 (D-539 · 검수 M4 — 고물상 여섯째 · 분대 다섯째 카드가 잘렸는데 「더 있음」 표시가 걸친 카드뿐이었다):
+ * 레일일 때 줄 양 끝에 철 단추 ◀ ▶(48px) — 그쪽에 카드가 더 있을 때만 보이고, 누르면 한 장씩 계단으로 붙는다(bindRail의 붙기).
+ * 페이드 그라데이션은 쓰지 않는다(D-216).
+ */
+const railArrows = (row: HTMLElement): void => {
+  const host = row.parentElement;
+  if (!host) return;
+  let nav = host.querySelector<HTMLElement>(':scope > .rail-nav');
+  if (!row.classList.contains('is-rail')) return void nav?.remove();
+  if (!nav) {
+    // 화살은 줄의 부모를 기준으로 선다 (부모가 static이면 기준 상자로)
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    nav = document.createElement('div');
+    nav.className = 'rail-nav';
+    nav.innerHTML = `<button type="button" class="btn k-iron rail-arrow ra-prev" data-rail-step="-1" aria-label="앞 카드">◀</button><button type="button" class="btn k-iron rail-arrow ra-next" data-rail-step="1" aria-label="다음 카드">▶</button>`;
+    host.appendChild(nav);
+    nav.querySelectorAll<HTMLElement>('[data-rail-step]').forEach((b) => {
+      const step = (e: Event): void => {
+        e.stopPropagation();
+        (row as HTMLElement & { railStep?: (d: number) => void }).railStep?.(Number(b.dataset.railStep));
+      };
+      b.addEventListener('click', step);
+      // 손가락: 브라우저의 터치 보정이 뒤따르는 click을 아래 카드로 옮겨 카드가 골라졌다 — 손을 뗄 때 직접 넘기고 뒤따르는 click을 막는다
+      b.addEventListener('touchend', (e) => (e.preventDefault(), step(e)));
+    });
+    row.addEventListener('scroll', () => paintRailNav(row), { passive: true });
+  }
+  paintRailNav(row);
+};
+/** 화살 자리 · 보이기: 줄의 세로 가운데, 왼쪽 · 오른쪽 끝 — 그쪽에 더 있을 때만 */
+const paintRailNav = (row: HTMLElement): void => {
+  const nav = row.parentElement?.querySelector<HTMLElement>(':scope > .rail-nav');
+  if (!nav || !row.isConnected) return;
+  const hr = row.parentElement!.getBoundingClientRect(), r = row.getBoundingClientRect();
+  nav.style.top = `${Math.round(r.top - hr.top + r.height / 2)}px`;
+  // 줄이 화면 밖까지 넓으면(음수 여백) 보이는 부분 안쪽 끝에 — 안전 여백 G
+  const G = Math.max(16, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--G')) || 16);
+  const l = Math.max(r.left, G), rr = Math.min(r.right, window.innerWidth - G);
+  nav.style.left = `${Math.round(l - hr.left)}px`;
+  nav.style.width = `${Math.round(Math.max(0, rr - l))}px`;
+  const max = row.scrollWidth - row.clientWidth;
+  nav.querySelector<HTMLElement>('.ra-prev')!.hidden = row.scrollLeft <= 2;
+  nav.querySelector<HTMLElement>('.ra-next')!.hidden = row.scrollLeft >= max - 2;
 };
 
 /**
@@ -297,6 +344,13 @@ export const bindRail = (row: HTMLElement): void => {
     }, 140);
   };
   row.addEventListener('scroll', () => !row.dataset.gliding && settle(), { passive: true });
+  // 레일 화살(◀ ▶)이 부른다: 한 장 앞 · 뒤 카드 왼쪽 끝으로 계단 붙기
+  (row as HTMLElement & { railStep?: (d: number) => void }).railStep = (d: number): void => {
+    const lefts = items().map((it) => it.offsetLeft - pad());
+    const now = row.scrollLeft;
+    const to = d > 0 ? lefts.find((x) => x > now + 2) ?? max() : [...lefts].reverse().find((x) => x < now - 2) ?? 0;
+    glide(to);
+  };
   row.addEventListener('wheel', (e) => {
     if (!row.classList.contains('is-rail')) return;
     e.preventDefault();

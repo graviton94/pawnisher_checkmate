@@ -95,6 +95,12 @@ export const HUD_TEXT = {
     wake: '태엽이 다시 감겼다. 그는, 눈을 떴다.',
   },
   track: '속전',
+  /** 버린 카드 칩 · 창 (M3) */
+  discardTitle: '버린 카드',
+  discardNone: '아직 버린 카드가 없습니다.',
+  /** 손패가 넘칠 때 아래 띠 (M4) */
+  handMore: (n: number) => `▼ ${n}장 더`,
+  handTop: (n: number) => `▲ 위로 ${n}장`,
   /** 되감기 단추 아래 꼬리표 (M3) */
   rewindLbl: '되감기',
   /** 오른쪽 레일 적 의도 목록 (패스 4 D-396 — ITB식: 적마다 아이콘 + 대상 + 값) */

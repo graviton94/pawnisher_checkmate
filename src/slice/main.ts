@@ -25,7 +25,7 @@ import './hud-rarity.css';
 import './menus.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
-import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn } from './uikit';
+import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
 import type { TrackId } from '../data/music';
@@ -920,11 +920,12 @@ const refresh = (): void => {
   else renderer.render(model());
   turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : HUD_TEXT.turnHeat(b.turn, b.s.heat ?? 1), enemyTurn);
   const alive = b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length;
-  $('deckrow').innerHTML = `<button type="button" class="btn k-iron" data-deck>덱 ${deck.length}</button><button type="button" class="btn k-iron" data-crew>분대 ${alive}</button><span class="pile">버림 ${b.discard.length + (b.played?.length ?? 0)}</span>`;
+  $('deckrow').innerHTML = `<button type="button" class="btn k-iron" data-deck>덱 ${deck.length}</button><button type="button" class="btn k-iron" data-crew>분대 ${alive}</button><button type="button" class="btn k-iron" data-discard aria-label="버린 카드 ${b.discard.length + (b.played?.length ?? 0)}장 보기">버림 ${b.discard.length + (b.played?.length ?? 0)}</button>`;
   if (openCard !== null && openCard >= b.hand.length) openCard = null;
   const oldBody = $('hand').querySelector<HTMLElement>('.hc.open .hc-body');
   const handLen0 = $('hand').querySelectorAll('[data-card]').length;
   $('hand').innerHTML = (handView ?? b.hand).map(cardHtml).join('') || (handView ? '' : '<p class="empty">‘손패가 없어.’</p>');
+  fitHand();
   magAnim(oldBody, handLen0 === b.hand.length);
   const statuses = !busy && !enemyTurn && !document.body.classList.contains('between') ? partStatuses(b) : {};
   $('parts').innerHTML = parts.map((id) => partHtml(id, false, statuses[id])).join('');
@@ -3470,7 +3471,7 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
     const recruitCrew = recruitOffer ? crewOf(recruitOffer.t) : null;
     /** 보상 화면 (카드 빼기를 그만두면 다시 연다) */
     const showReward = (): void => {
-      // 고르기 화면 (D-394 .scr-pick): 명패 「전리품」 + 나사 꼬리표 · 카드 받침 줄 · [건너뛴다 | 고른다]. 정비는 머리 줄 왼쪽 청록 단추(카드 대신 고르는 것)
+      // 고르기 화면 (D-394 .scr-pick): 명패 「전리품」 + 나사 꼬리표 · 카드 받침 줄 · [건너뛴다 · 정비한다 | 고른다]. 정비는 카드 대신 고르는 청록 단추 (D-539: 머리 줄 → 단추 줄)
       const pct = Math.round(REST.overhaul * 100);
       const back1 = fallen.length ? [...fallen].sort((a, c) => (COST_ORDER[c.t] ?? 0) - (COST_ORDER[a.t] ?? 0))[0] : null;
       const items: PickItem[] = offers.map((id) => ({ key: `card:${id}`, html: cardFace(id, ''), info: fitInfo('card', id) }));
@@ -3478,7 +3479,8 @@ const rewardFlow = (earned: number, overGold: number, fallen: Crew[], partDone =
       const el = pickScreen({
         title: SCREEN_TEXT.reward,
         tag: goldTag,
-        lead: `<button type="button" class="btn k-teal" data-slot="overhaul">${SCREEN_TEXT.overhaul}</button><span class="note">${back1 ? `${back1.name} 복귀 · ` : ''}HP +${pct}%</span>`,
+        // 정비는 단추 줄 왼쪽(건너뛴다 옆) · 효과 꼬리표는 그 오른쪽 (검수 M5 — 머리 줄 왼쪽 청록 단추가 카드와 축이 어긋났다)
+        mid: `<span class="ovh"><span class="note ovh-tag">${back1 ? `${back1.name} 복귀 · ` : ''}분대 전원 HP +${pct}%</span><button type="button" class="btn k-teal" data-slot="overhaul">${SCREEN_TEXT.overhaul}</button></span>`,
         items,
         skip: { label: SCREEN_TEXT.skip, attrs: 'data-skip' },
         onSelect: () => sfx('lift'),
@@ -3550,6 +3552,57 @@ const deckView = (mode: 'view' | 'remove', then?: (removed: boolean) => void): v
     },
   });
   el.querySelector('[data-back]')!.addEventListener('click', () => then?.(false));
+};
+
+/** 버린 카드 보기 (검수 M3 — 「버림」이 덱 · 분대 옆 맨 글이었다): 이번 대국에 쓴 · 버린 카드, 덱 보기와 같은 레일 */
+const discardView = (): void => {
+  const pile = [...(b.played ?? []), ...b.discard];
+  if (!pile.length) return void (sfx('tap', 3), toast(HUD_TEXT.discardNone));
+  const counts = new Map<CommandId, number>();
+  for (const id of pile) counts.set(id, (counts.get(id) ?? 0) + 1);
+  const items: PickItem[] = [...counts.keys()].map((id) => ({ key: id, html: `${cardFace(id, 'tabindex="-1"')}${(counts.get(id) ?? 1) > 1 ? `<span class="badge-n">×${counts.get(id)}</span>` : ''}` }));
+  const el = pickScreen({ title: HUD_TEXT.discardTitle, tag: `<span class="badge-n">${pile.length}장</span>`, items: [], body: slotsHtml(items, true), cls: 'scr-deck', skip: { label: SCREEN_TEXT.close, attrs: 'data-x' }, go: null, onPick: () => {} });
+  el.querySelector('[data-x]')!.addEventListener('click', closeWin);
+};
+
+/**
+ * 손패 맞춤 (검수 M4 — 다섯째 카드가 아래에서 잘렸는데 「더 있음」 표시가 없었다):
+ * ① 넘치면 펼치지 않은 카드의 효과 줄을 접어 이름 한 줄 판으로(효과는 누르면 펼침 · 길게 누르면 크게 보기 그대로)
+ * ② 그래도 넘치면 손패 칸 아래에 「▼ N장 더」 띠 — 누르면 다음 카드가 보이게 한 장씩 내린다(계단 이동 없이 바로).
+ */
+const fitHand = (): void => {
+  const h = $('hand');
+  h.classList.remove('tight');
+  h.querySelector('.hand-more')?.remove();
+  h.onscroll = null;
+  if (h.scrollHeight <= h.clientHeight + 1) return;
+  h.classList.add('tight');
+  if (h.scrollHeight <= h.clientHeight + 1) return;
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'hand-more';
+  h.appendChild(more);
+  const cards = (): HTMLElement[] => [...h.querySelectorAll<HTMLElement>(':scope > .hc')];
+  const below = (): HTMLElement[] => cards().filter((c) => c.offsetTop + c.offsetHeight > h.scrollTop + h.clientHeight - more.offsetHeight + 1);
+  const above = (): HTMLElement[] => cards().filter((c) => c.offsetTop < h.scrollTop - 1);
+  const paint = (): void => {
+    const n = below().length;
+    more.dataset.dir = n ? 'down' : 'up';
+    more.textContent = n ? HUD_TEXT.handMore(n) : HUD_TEXT.handTop(above().length);
+    more.setAttribute('aria-label', more.textContent);
+  };
+  const step = (e: Event): void => {
+    e.stopPropagation();
+    sfx('tap', 3);
+    const next = below()[0];
+    h.scrollTop = next ? next.offsetTop + next.offsetHeight - h.clientHeight + more.offsetHeight : 0;
+    paint();
+  };
+  more.addEventListener('click', step);
+  // 손가락: 터치 보정이 click을 옆 카드로 옮기지 않게 손을 뗄 때 직접 (레일 화살과 같은 길)
+  more.addEventListener('touchend', (e) => (e.preventDefault(), step(e)));
+  h.onscroll = paint; // 다시 그릴 때마다 붙이지 않게 하나로
+  paint();
 };
 
 // ---------- 애착 (D-153) ----------
@@ -4239,6 +4292,7 @@ $('btn-end').addEventListener('click', () => void onEnd());
 // 적의 수 목록을 누르면 지난 기록 엿보기 (보고서 3.9 — 로그는 레일에서 빼고 여기로)
 $('intents').addEventListener('click', () => logPeek());
 document.getElementById('deckrow')?.addEventListener('click', (e) => {
+  if ((e.target as HTMLElement).closest('[data-discard]')) return discardView();
   if ((e.target as HTMLElement).closest('[data-deck]')) return deckView('view');
   if ((e.target as HTMLElement).closest('[data-crew]')) return crewView();
 });
@@ -4254,12 +4308,21 @@ $('boss').addEventListener('click', () => {
   if (!b.boss) return;
   const r = BOSS_RULES[b.bossRule];
   const abilities = bossAbilityText(b.bossRule, b.alarm, (n) => foeDmg(n, b));
-  const el = openWin({
-    size: 's', title: r.name, body: abilityHtml(abilities),
+  // 규칙이 여럿이면 창 단추 줄로 쪽을 넘긴다 (검수 L10 — 「1/2 · 다음 ›」가 12px 맨 글이었다): 가운데 「1 / 2」 · [이전 | 다음] 48
+  let at = 0;
+  const many = abilities.length > 1;
+  const opts = (): WinOpts => ({
+    size: many ? 'm' : 's', title: r.name, body: abilityHtml(abilities, at, true),
     back: { label: '닫는다', attrs: 'data-x' }, dismiss: closeWin,
+    ...(many ? { mid: `<span class="note">${at + 1} / ${abilities.length}</span>`, pair: [{ label: SETTINGS_TEXT.prev, attrs: 'data-ab-prev', disabled: at <= 0 }, { label: SETTINGS_TEXT.next, attrs: 'data-ab-next', disabled: at >= abilities.length - 1 }] as [WinBtn, WinBtn] } : {}),
   });
-  el.querySelector('[data-x]')!.addEventListener('click', closeWin);
-  bindAbilities(el, abilities);
+  const el = openWin(opts());
+  const bind = (): void => {
+    el.querySelector('[data-x]')!.addEventListener('click', closeWin);
+    el.querySelector('[data-ab-prev]')?.addEventListener('click', () => { at = Math.max(0, at - 1); sfx('tap'); el.innerHTML = winHtml(opts()); bind(); });
+    el.querySelector('[data-ab-next]')?.addEventListener('click', () => { at = Math.min(abilities.length - 1, at + 1); sfx('tap'); el.innerHTML = winHtml(opts()); bind(); });
+  };
+  bind();
 });
 $('parts').addEventListener('click', (e) => {
   const el = (e.target as HTMLElement).closest<HTMLElement>('[data-part-info]');

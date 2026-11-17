@@ -6,9 +6,10 @@ import type { AbilityText } from '../data/ability-text';
 const escape = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
 /** 명칭·설명·상세 효과. 복합 능력은 다음 장으로 넘겨도 항상 세 줄만 보인다. */
-export const abilityHtml = (abilities: AbilityText[], index = 0): string => {
+export const abilityHtml = (abilities: AbilityText[], index = 0, paged = false): string => {
   if (!abilities.length) return '';
-  const a = abilities[index], many = abilities.length > 1;
+  // paged = 창 단추 줄이 쪽을 넘긴다(반장 규칙 창 — 검수 L10): 블록은 글만, 「1/2 · 다음 ›」 맨 글 없음
+  const a = abilities[index], many = abilities.length > 1 && !paged;
   const tag = many ? 'button' : 'div';
   return `<${tag} class="ability-block"${many ? ` type="button" data-peek-action data-ability-next data-ability-index="${index}" aria-label="다음 능력. ${escape(a.name)}, ${index + 1}/${abilities.length}"` : ''}><span class="ability-heading"><span class="ability-name">[${escape(a.name)}]</span>${many ? `<span class="ability-next">${index + 1}/${abilities.length} · 다음 ›</span>` : ''}</span><span class="ability-description">${escape(a.description)}</span><span class="ability-effect">: ${escape(a.effect)}</span></${tag}>`;
 };
