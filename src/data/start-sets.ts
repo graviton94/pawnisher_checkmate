@@ -30,14 +30,22 @@ export interface StartSet {
   lockText?: string;
   rows: [string, string, string];
   line: string;
+  /**
+   * 받침 위 그림 칸 (D-546 — 사용자: 「덱 개념만 보이는 그림」): 덱이 무슨 기물로 싸우는지만 흰 기물 그림으로.
+   * 한 기물 덱 = 하나 가운데 · 두 기물 = 둘 나란히(겹쳐) · 섞인 덱 = 셋. 값 = public/pieces 그림 이름(P · N · K = 종이왕 K0 · 이형 이름).
+   * 분대 · 수량은 아래 글(rows)이 이미 말한다.
+   */
+  art: string[];
+  /** 그림 칸의 기물을 높낮이 다르게 (무작위 배치 세트 — 자리가 섞인다) */
+  artStagger?: boolean;
 }
 export const START_SETS: Record<StartSetId, StartSet> = {
-  standard: { name: '표준 세트', squad: ['K', 'P', 'N'], deck: ['advance', 'advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order'], rows: ['킹 · 폰 · 나이트', '전진 넷 · 도약 둘', ': 찍어 낸 그대로'], line: '규격대로.' },
-  cavalry: { name: '기마 세트', squad: ['K', 'N', 'N'], deck: ['leap', 'leap', 'leap', 'leap', 'rebound', 'kingStep', 'order'], rows: ['킹 · 나이트 둘', '나이트 카드 다섯', ': 폰 없이 7장'], line: '발굽 소리가 먼저 닿는다.' },
-  infantry: { name: '보병 세트', squad: ['K', 'P', 'P', 'P'], deck: ['advance', 'advance', 'advance', 'advance', 'advance', 'march', 'kingStep', 'order'], part: 'barracks', pawnCall: true, rows: ['킹 · 폰 셋', '전진 다섯 · 총진격', ': 막사의 종 부품'], line: '줄을 맞춰, 앞으로.' },
-  hybrid: { name: '잡종 세트', squad: ['K', 'P'], deck: ['advance', 'advance', 'kingStep', 'order'], form: true, unlock: 'set:hybrid', lockText: '첫째 왕관을 깨면 열립니다', rows: ['킹 · 폰 · 이형', '덱이 얇다 (6장)', ': 해금한 이형 하나'], line: '규격 밖도 분대다.' },
-  scrap: { name: '고철 세트', squad: ['K', 'P', 'N'], deck: ['advance', 'advance', 'advance', 'leap', 'kingStep', 'order'], randomParts: 2, unlock: 'set:scrap', lockText: '둘째 왕관을 깨면 열립니다', rows: ['킹 · 폰 · 나이트', '덱 6장', ': 부품 둘을 쥐고'], line: '주워 온 것으로 싸운다.' },
-  scatter: { name: '무작위 배치 세트', squad: ['K', 'P', 'N'], deck: ['advance', 'advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order'], scatter: true, rewind: 1, unlock: 'set:scatter', lockText: '셋째 왕관을 깨면 열립니다', rows: ['킹 · 폰 · 나이트', '되감기 부적 +1', ': 자리가 섞인다'], line: '컨베이어가 아무렇게나 내려놓았다.' },
+  standard: { name: '표준 세트', squad: ['K', 'P', 'N'], deck: ['advance', 'advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order'], rows: ['킹 · 폰 · 나이트', '전진 넷 · 도약 둘', ': 찍어 낸 그대로'], line: '규격대로.', art: ['P', 'N'] },
+  cavalry: { name: '기마 세트', squad: ['K', 'N', 'N'], deck: ['leap', 'leap', 'leap', 'leap', 'rebound', 'kingStep', 'order'], rows: ['킹 · 나이트 둘', '나이트 카드 다섯', ': 폰 없이 7장'], line: '발굽 소리가 먼저 닿는다.', art: ['N'] },
+  infantry: { name: '보병 세트', squad: ['K', 'P', 'P', 'P'], deck: ['advance', 'advance', 'advance', 'advance', 'advance', 'march', 'kingStep', 'order'], part: 'barracks', pawnCall: true, rows: ['킹 · 폰 셋', '전진 다섯 · 총진격', ': 막사의 종 부품'], line: '줄을 맞춰, 앞으로.', art: ['P'] },
+  hybrid: { name: '잡종 세트', squad: ['K', 'P'], deck: ['advance', 'advance', 'kingStep', 'order'], form: true, unlock: 'set:hybrid', lockText: '첫째 왕관을 깨면 열립니다', rows: ['킹 · 폰 · 이형', '덱이 얇다 (6장)', ': 해금한 이형 하나'], line: '규격 밖도 분대다.', art: ['cannon', 'P', 'camel'] },
+  scrap: { name: '고철 세트', squad: ['K', 'P', 'N'], deck: ['advance', 'advance', 'advance', 'leap', 'kingStep', 'order'], randomParts: 2, unlock: 'set:scrap', lockText: '둘째 왕관을 깨면 열립니다', rows: ['킹 · 폰 · 나이트', '덱 6장', ': 부품 둘을 쥐고'], line: '주워 온 것으로 싸운다.', art: ['P', 'N'] },
+  scatter: { name: '무작위 배치 세트', squad: ['K', 'P', 'N'], deck: ['advance', 'advance', 'advance', 'advance', 'leap', 'leap', 'kingStep', 'order'], scatter: true, rewind: 1, unlock: 'set:scatter', lockText: '셋째 왕관을 깨면 열립니다', rows: ['킹 · 폰 · 나이트', '되감기 부적 +1', ': 자리가 섞인다'], line: '컨베이어가 아무렇게나 내려놓았다.', art: ['N', 'P'], artStagger: true },
 };
 export const START_SET_IDS = Object.keys(START_SETS) as StartSetId[];
 /** 왕관(본편 장 0~2)을 깨면 열리는 세트 */

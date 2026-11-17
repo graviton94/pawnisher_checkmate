@@ -1585,6 +1585,17 @@ body.slice .cf.cf.cf.crew-card { background-image: url('../assets/ui/cards/crew-
 body.slice .cf.cf.cf.crew-card.g-rare { background-image: url('../assets/ui/cards/crew-rare.png'); }
 body.slice .cf.cf.cf.crew-card.g-gold { background-image: url('../assets/ui/cards/crew-gold.png'); }
 body.slice .cf.cf.cf.crew-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('../assets/ui/cards/mask-crew.png'); background: #e8e0cc; place-items: end center; }
+/* 시작 세트 위 그림 칸 (D-546 — 사용자: 기물이 칸 안에 제대로 안 보인다 → 기물 카드처럼): 분대원 카드와 같은 종이 바탕 띠(mask-crew · #e8e0cc)에
+ * 덱 개념 기물을 정수배(--ssw = pieceThumbPx)로 바닥에 세운다 — 하나 = 가운데 · 둘 = 30% 겹쳐 나란히 · 셋 = 가운데가 앞. 새 그림 없음 (D-386) */
+body.slice .cf.cf.cf.cf.start-set > .cf-win { display: flex; align-items: flex-end; justify-content: center; -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('../assets/ui/cards/mask-crew.png'); background: #e8e0cc; }
+body.slice .cf.start-set .ss-a { position: relative; flex: none; display: block; line-height: 0; }
+body.slice .cf.cf.cf.start-set .cf-win .ss-a img { display: block; width: var(--ssw); height: var(--ssw); image-rendering: pixelated; }
+body.slice .cf.start-set .ss-art.n2 .ss-a + .ss-a { margin-left: calc(var(--ssw) * -0.3); }
+body.slice .cf.start-set .ss-art.n3 .ss-a + .ss-a { margin-left: calc(var(--ssw) * -0.62); }
+body.slice .cf.start-set .ss-art.n3 .ss-a:nth-child(2) { z-index: 1; }
+/* 무작위 배치: 앞 기물을 3도트 높이 — 자리가 어긋나 보이게 (위 빈 줄 8도트 안이라 잉크는 잘리지 않는다) */
+body.slice .cf.start-set .ss-art.stg .ss-a:first-child { margin-bottom: calc(var(--ssw) / 24); }
+body.slice .card-slot.is-off .cf.start-set { filter: grayscale(1) brightness(0.6); }
 body.slice .cf.crew-card .er-pc { position: static; width: 62%; height: auto; aspect-ratio: 1; background: none; box-shadow: none; overflow: visible; display: block; }
 body.slice .cf.crew-card .er-pc img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
 body.slice .cf.crew-card .cb { display: grid; place-items: center; z-index: 4; font: 700 15px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 2px 2px 0 #000; }

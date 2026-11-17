@@ -61,7 +61,7 @@ import { effectHtml, effectNumbers } from './effect-text';
 import { devQuery, isDesktop, onBeforeQuit, quitGame, toggleFullscreen } from './platform';
 import { boardCursorAt, hardwareBack, installInput, resetBoardCursor, setPauseHook, syncBoardCursor } from './keys';
 import { bodyRect } from './boardcursor';
-import { pieceImg } from '../ui/sprites';
+import { pieceImg, pieceThumbPx } from '../ui/sprites';
 import { setBoardTopInset } from '../view/boardInset';
 import { lazyBoard } from '../view/lazyBoard';
 import type { BoardModel } from '../game/controller';
@@ -5397,6 +5397,8 @@ const statsWin = (back: () => void): void => {
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
 };
 
+/** 시작 세트 그림 칸의 기물 크기(CSS px, D-546) — pieceImg가 기기 정수배로 맞춘다(915 · DPR 2.625 → 54.86 = 2도트/칸) */
+const SET_ART_PX = 56;
 const setPick = (): Promise<StartSetId> => new Promise((done) => {
   const unlocked = readMeta(store).unlocked ?? [];
   const pages = [START_SET_IDS.slice(0, 3), START_SET_IDS.slice(3)];
@@ -5404,11 +5406,9 @@ const setPick = (): Promise<StartSetId> => new Promise((done) => {
   const face = (id: StartSetId): string => {
     const st = START_SETS[id];
     const open = setOpen(id, unlocked);
-    // 같은 기물은 한 번 + ×수 (지도 미리보기 적 명단과 같은 꼴) — 창이 좁아 넷을 나란히 두면 잘린다
-    const cnt = new Map<PieceType, number>();
-    for (const t of st.squad) cnt.set(t, (cnt.get(t) ?? 0) + 1);
-    const pcs = [...cnt].map(([t, n]) => `<span class="ss-pc">${pieceImg(t, 0, 'small', 24)}${n > 1 ? `<i>×${n}</i>` : ''}</span>`).join('') + (st.form ? `<i class="ss-form">${SET_TEXT.formMark}</i>` : '');
-    return `<button type="button" class="cf part-card start-set g-${open ? (st.unlock ? 'rare' : 'common') : 'common'}" data-grade="${st.unlock ? 'rare' : 'common'}" aria-label="${st.name}"${open ? '' : ' disabled'}><b class="cf-name">${st.name}</b><span class="cf-win ss-pcs">${pcs}</span><small class="cf-desc"><span class="part-rule-lines">${st.rows.map((t, k) => lineHtml(t, k === 2 ? 'fx' : k === 0 ? 'name' : 'if')).join('')}</span></small><i class="cf-gem"></i></button>`;
+    // 위 그림 칸 (D-546): 덱 개념만 — 흰 기물 그림(종이왕 K0 정본 · 이형 전용 그림)을 정수배로, 하나 · 둘 · 셋. 분대 · 수량은 아래 글이 말한다
+    const pcs = st.art.map((a) => `<span class="ss-a">${a.length === 1 ? pieceImg(a as PieceType, 0, 'small', SET_ART_PX) : pieceImg('P', 0, 'small', SET_ART_PX, a)}</span>`).join('');
+    return `<button type="button" class="cf part-card start-set g-${open ? (st.unlock ? 'rare' : 'common') : 'common'}" data-grade="${st.unlock ? 'rare' : 'common'}" aria-label="${st.name}"${open ? '' : ' disabled'}><b class="cf-name">${st.name}</b><span class="cf-win ss-art n${st.art.length}${st.artStagger ? ' stg' : ''}" style="--ssw:${pieceThumbPx(SET_ART_PX)}px" aria-hidden="true">${pcs}</span><small class="cf-desc"><span class="part-rule-lines">${st.rows.map((t, k) => lineHtml(t, k === 2 ? 'fx' : k === 0 ? 'name' : 'if')).join('')}</span></small><i class="cf-gem"></i></button>`;
   };
   const draw = (): void => {
     const ids = pages[page];

@@ -242,8 +242,6 @@ export const SET_TEXT = {
   page: (n: number, of: number) => `${n} / ${of}`,
   next: '다른 세트',
   prev: '기본 세트',
-  /** 잡종 세트 받침에서 이형 자리 */
-  formMark: '?',
 };
 
 export const SCREEN_TEXT = {
