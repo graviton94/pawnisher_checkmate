@@ -38,10 +38,10 @@ const VIEWS = [['915', { width: 915, height: 412 }, 2.625], ['667', { width: 667
     // 머리 줄 누름 영역 · 넘침 측정
     const m = await pg.evaluate(() => {
       const r = (id) => { const e = document.getElementById(id); const x = e.getBoundingClientRect(); return { x: Math.round(x.left), w: Math.round(x.width), h: Math.round(x.height) }; };
-      const help = document.getElementById('btn-help');
+      const help = document.getElementById('btn-menu');
       const hb = getComputedStyle(help, '::before');
       const mid = document.querySelector('.rmid');
-      return { help: r('btn-help'), helpHit: { w: hb.width, h: hb.height }, boss: r('boss'), midScrollX: mid.scrollWidth - mid.clientWidth, row: r('coins').w, tubes: document.querySelector('.sp-row').getBoundingClientRect().width };
+      return { help: r('btn-menu'), helpHit: { w: hb.width, h: hb.height }, boss: r('boss'), midScrollX: mid.scrollWidth - mid.clientWidth, row: r('coins').w, tubes: document.querySelector('.sp-row').getBoundingClientRect().width };
     });
     console.log(tag, JSON.stringify(m));
     await pg.close();

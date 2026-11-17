@@ -36,7 +36,7 @@ const SCENES = [
   ['p5-map-preview', async (p, A, W, S) => { await A(() => window.sliceApi.map(2)); await W(1500); await p.click('.mnd.now').catch(() => {}); await W(600); await S(''); }],
   ['p5-fall', async (p, A, W, S) => { await A(() => window.sliceApi.fallCut('plate')); await W(3500); await S(''); }],
   ['p5-credits', async (p, A, W, S) => { await A(() => window.sliceApi.credits()); await W(4000); await S(''); }],
-  ['help', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => document.getElementById('btn-help').click()); await W(900); await S(''); }],
+  ['help', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.help('now')); await W(900); await S(''); }],
   ['crew', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.crew()); await W(900); await S(''); }],
   ['taunt', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.taunt('gloat')); await W(900); await S(''); }],
   ['stand', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => { window.sliceApi.stand(); }); await W(1500); await S(''); }],

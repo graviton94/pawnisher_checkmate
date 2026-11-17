@@ -20,14 +20,14 @@ const { spawnSync } = require('node:child_process');
   await win.waitForTimeout(800);
   const afterAltEnter = await full();
   const menu = await app.evaluate(({ Menu, app: a }) => ({ packaged: a.isPackaged, menu: !!Menu.getApplicationMenu() }));
-  // 설정 창(도움말 → 설정 탭)에 PC 줄(전체 화면 · 게임 끝내기)이 보이고, 전체 화면 단추가 실제로 켜고 끈다
-  await win.evaluate(() => document.getElementById('btn-help').click());
+  // 설정 창(대국 메뉴 단추 → 멈춤 → 설정, D-538)에 PC 줄(전체 화면)이 보이고, 전체 화면 단추가 실제로 켜고 끈다 — 게임 끝내기는 메인 메뉴로 옮겼다
+  await win.evaluate(() => document.getElementById('btn-menu').click());
   await win.waitForTimeout(600);
-  await win.evaluate(() => document.querySelector('[data-tab="set"]').click());
+  await win.evaluate(() => document.querySelector('[data-pz-set]').click());
   await win.waitForTimeout(600);
   await win.evaluate(() => document.querySelector('[data-set-tab="screen"]')?.click());
   await win.waitForTimeout(600);
-  const rows = await win.evaluate(() => ({ full: !!document.querySelector('[data-full]'), quit: !!document.querySelector('[data-quit]') }));
+  const rows = await win.evaluate(() => ({ full: !!document.querySelector('[data-full]') }));
   const before = await full();
   await win.evaluate(() => document.querySelector('[data-full]')?.click());
   await win.waitForTimeout(800);

@@ -1,4 +1,4 @@
-// 설정 창 (D-530) 실화면: 타이틀 메뉴 → 설정 → 크기 · 움직임 · 만든 이 · 전문 쪽 넘김 · 진행 초기화 두 단계 → 대국 중 ? → 설정 탭.
+// 설정 창 (D-530 → D-538 여섯 탭) 실화면: 타이틀 메뉴 → 설정 → 크기 · 움직임 · 만든 이 · 전문 쪽 넘김 · 진행 초기화 두 단계 → 대국 중 메뉴 단추 → 멈춤 → 설정.
 // 사용: node tools/slice-observe.cjs settings
 module.exports = async (pg, shot) => {
   const BASE = process.env.OBSERVE_URL || 'http://localhost:4173/';
@@ -16,12 +16,13 @@ module.exports = async (pg, shot) => {
   await tap('[data-vol="sfx"] [data-up]'); await tap('[data-vol="sfx"] [data-up]');
   await tap('[data-vol="music"] [data-mute]');
   await shot('settings-2-sound');
-  await tap('[data-set-tab="screen"]');
-  await tap('[data-motion="on"]');
+  await tap('[data-set-tab="access"]');
+  await tap('[data-seg="motion"][data-v="on"]');
   const st = await pg.evaluate(() => ({ saved: localStorage.getItem('pawnisher.settings'), calm: document.documentElement.dataset.calm, rules: [...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch { return []; } }).filter((r) => r instanceof CSSMediaRule && /min-width: 0px/.test(r.media.mediaText)).length }));
   console.log('STATE', JSON.stringify(st));
   await shot('settings-2-screen');
-  await tap('[data-set-tab="credits"]');
+  await tap('[data-set-tab="info"]');
+  await tap('[data-credits]');
   await shot('settings-3-credits');
   console.log('CREDITS_OVERFLOW', await pg.evaluate(() => { const b = document.querySelector('.set-body'); return b ? [b.scrollHeight - b.clientHeight, b.scrollWidth - b.clientWidth] : null; }));
   await tap('[data-lic="0"]');
@@ -31,22 +32,25 @@ module.exports = async (pg, shot) => {
   const pages = await pg.evaluate(() => document.querySelector('#overlay-panel .btn-row .mid')?.textContent);
   console.log('PAGES', pages, 'overflow', await pg.evaluate(() => { const b = document.querySelector('.set-text'); return b ? b.scrollHeight - b.clientHeight : null; }));
   await tap('[data-lic-x]');
-  await tap('[data-set-tab="screen"]');
+  await tap('[data-x]');
+  await tap('[data-set-tab="game"]');
+  if (!(await pg.$('[data-reset]'))) await tap('[data-set-next]');
   await tap('[data-reset]');
   await shot('settings-6-reset1');
   await tap('[data-yes]');
   await shot('settings-7-reset2');
   await tap('[data-no]');
-  await tap('[data-motion="os"]');
+  await tap('[data-set-tab="access"]');
+  await tap('[data-seg="motion"][data-v="os"]');
   console.log('SCREEN_OVERFLOW', await pg.evaluate(() => { const b = document.querySelector('.set-body'); return b ? [b.scrollHeight - b.clientHeight, b.scrollWidth - b.clientWidth] : null; }));
   await tap('[data-set-x]');
-  // 대국 중: ? → 설정 탭
+  // 대국 중: 메뉴 단추 → 멈춤 → 설정
   await pg.goto(BASE + '?debug'); await pg.waitForSelector('#boot', { state: 'detached' }); await wait(800);
   const s = await pg.$('.stagefx'); if (s) { await s.click(); await wait(600); }
-  await tap('#btn-help');
+  await tap('#btn-menu');
   await wait(400);
-  await shot('settings-8-help-tabs');
-  await tap('[data-tab="set"]');
+  await shot('settings-8-pause');
+  await tap('[data-pz-set]');
   await shot('settings-9-from-battle');
   // PC 줄(전체 화면 · 게임 끝내기)이 들어가도 넘치지 않는지
   await pg.evaluate(() => window.sliceApi.settingsWin(true)); await wait(600);
@@ -54,8 +58,9 @@ module.exports = async (pg, shot) => {
   await shot('settings-10-desktop');
   const h = await pg.evaluate(() => { const p = document.querySelector('#overlay-panel'); return p ? Math.round(p.getBoundingClientRect().height) : null; });
   // 진행 초기화 끝까지: 대국 중에 지우고 다시 읽은 뒤 저장 · 기록이 남지 않았는지 (설정은 남는다)
-  await pg.tap('[data-set-tab="screen"]').catch(() => {});
+  await pg.tap('[data-set-tab="game"]').catch(() => {});
   await wait(300);
+  if (!(await pg.$('[data-reset]'))) await tap('[data-set-next]');
   await tap('[data-reset]'); await tap('[data-yes]');
   await Promise.all([pg.waitForNavigation({ timeout: 10000 }).catch(() => {}), pg.tap('[data-yes]')]);
   await wait(1500);

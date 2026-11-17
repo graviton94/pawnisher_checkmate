@@ -78,10 +78,10 @@ const day = new Date().toISOString().slice(0, 10);
     const s = await pg.$('.stagefx'); if (s) { await s.click(); await pg.waitForTimeout(900); }
     out.board4 = await A(pg, () => { const b = window.slice(); return { w: b.s.width, h: b.s.height }; });
     await shot(pg, 'board4');
-    await pg.click('#btn-help'); await pg.waitForTimeout(600); await shot(pg, 'help');
+    await A(pg, () => window.sliceApi.help('now')); await pg.waitForTimeout(600); await shot(pg, 'help');
     await pg.click('#overlay .gd-x'); await pg.waitForTimeout(600);
     out.helpClosedX = await A(pg, () => document.getElementById('overlay').hidden);
-    await pg.click('#btn-help'); await pg.waitForTimeout(600);
+    await A(pg, () => window.sliceApi.help('now')); await pg.waitForTimeout(600);
     await pg.mouse.click(30, 30); await pg.waitForTimeout(600);
     out.helpClosedOutside = await A(pg, () => document.getElementById('overlay').hidden);
     await A(pg, () => window.sliceApi.startAt(1, 'boss')); await pg.waitForTimeout(800);

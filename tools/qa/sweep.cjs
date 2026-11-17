@@ -363,24 +363,64 @@ const GROUPS = [
     { name: 'deck', assets: ['RF-04', 'KC-01'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.deckView('view')); await W(1400); await shot('deck'); } },
     { name: 'nemesis', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.nemesisOf()); await W(1200); await shot('nemesis'); } },
   ]],
-  ['system', '시작 세트 고르기 · 설정 창(소리 · 화면 · 제작 · 라이선스 전문 · 초기화 확인 · 대국 중 ? 탭) · 오류 복구 창 · 대국 중 이어하기 (D-529 · D-530)', [
+  ['system', '시작 세트 고르기 · 설정 창 여섯 탭(D-538) · 메인 메뉴 · 출하 준비 · 기록 · 일시 정지 메뉴 · 꺼짐 단추 · 오류 복구 창 · 대국 중 이어하기 (D-529 · D-530 · D-538)', [
     { name: 'settings', assets: [], url: '?debug&opening', run: async ({ pg, W, shot, tapAt }) => {
+      // 설정 여섯 탭 (D-538): 소리 · 화면 · 접근성 · 조작 · 게임 · 정보 — 쪽이 있으면 다음 쪽도
       await W(1200); await tapAt(VW / 2, VH * 0.72); await W(1400);
       const t = async (sel, ms = 500) => { await pg.locator(sel).first().tap(); await W(ms); };
-      await t('[data-settings]', 800); await shot('set-sound');
-      await t('[data-set-tab="screen"]'); await shot('set-screen');
-      await t('[data-set-tab="credits"]'); await shot('set-credits');
+      await t('[data-settings]', 800);
+      for (const k of ['sound', 'screen', 'access', 'input', 'game', 'info']) {
+        await t(`[data-set-tab="${k}"]`); await shot(`set-${k}`);
+        const nx = pg.locator('[data-set-next]'); if ((await nx.count()) && (await nx.isEnabled())) { await nx.tap(); await W(400); await shot(`set-${k}-2`); }
+      }
+      await t('[data-set-tab="input"]'); await t('[data-keymap]', 600); await shot('set-keymap'); await t('[data-x]');
+      await t('[data-set-tab="info"]'); await t('[data-privacy]', 700); await shot('set-privacy'); await t('[data-lic-x]');
+      await t('[data-set-tab="info"]'); await t('[data-credits]', 700); await shot('set-credits');
       await t('[data-lic]', 700); await shot('set-license-1');
       const nx = pg.locator('[data-lic-next]'); if ((await nx.count()) && (await nx.isEnabled())) { await nx.tap(); await W(500); await shot('set-license-2'); }
-      await t('[data-lic-x]'); await t('[data-set-tab="screen"]');
+      await t('[data-lic-x]'); await t('[data-x]');
+      await t('[data-set-tab="game"]');
+      const gn = pg.locator('[data-set-next]'); if ((await gn.count()) && !(await pg.locator('[data-reset]').count())) { await gn.tap(); await W(400); }
       await t('[data-reset]', 700); await shot('set-reset-1');
       await t('[data-yes]', 700); await shot('set-reset-2');
       await t('[data-no]');
     } },
-    { name: 'settings-battle', assets: [], run: async ({ pg, A, W, shot }) => {
-      await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800);
-      await pg.locator('#btn-help').tap(); await W(800); await shot('help-tabs');
-      await pg.locator('[data-tab="set"]').tap(); await W(700); await shot('help-settings');
+    { name: 'main-menu', assets: ['MM-01'], url: '?debug&opening', run: async ({ pg, A, W, shot, tapAt }) => {
+      // 메인 메뉴 (D-538): 단추 다섯 · 황동 하나 → 출하 준비(본편 · 도전(잠김) · 오늘) → 기록 · 통계 — 시험장 줄(?debug 전용)은 걷고 찍는다
+      await W(1200); await tapAt(VW / 2, VH * 0.72); await W(1400); await A(() => document.querySelector('.op-dev')?.remove()); await W(500); await shot('main-menu');
+      const t = async (sel, ms = 500) => { await pg.locator(sel).first().tap(); await W(ms); };
+      await t('[data-ship]', 800); await shot('setup-story');
+      // 잠긴 왕관은 aria-disabled(눌러야 까닭을 듣는다) — Playwright 탭은 기다리므로 click을 직접
+      await A(() => document.querySelector('[data-crown="3"]').click()); await W(600); await shot('setup-crown-locked');
+      await t('[data-su-tab="challenge"]', 600); await shot('setup-challenge-locked');
+      await t('[data-su-tab="daily"]'); await shot('setup-daily');
+      await t('[data-su-x]'); await t('[data-records]', 800); await shot('records');
+      await t('[data-rec="stats"]', 700); await shot('records-stats');
+    } },
+    { name: 'pause', assets: ['MM-01'], run: async ({ pg, A, W, shot }) => {
+      // 일시 정지 메뉴 (D-538 · B1): 대국 머리 톱니 → 메뉴 → 출하 포기 두 단계 → 그만둔다 / 지도에서 Esc · 머리 톱니 → 설정
+      // 진짜 출하(기록에 남는 판)여야 「출하 포기」가 열린다 — 새 출하 → 컷 · 쪽지를 넘겨 첫 대국까지
+      await A(() => { void window.sliceApi.begin(91, 0, 'story', null, 'standard'); });
+      await pg.locator('.prologue').waitFor({ state: 'attached', timeout: 8000 }).catch(() => {});
+      for (let i = 0; i < 40 && !(await A(() => !!document.querySelector('#hand [data-card]') && !document.body.classList.contains('between') && !document.querySelector('.prologue, .actcard, .stagefx, .bossfx, .ld-tip-wrap, .shutterfx'))); i++) {
+        await A(() => { const b = [...document.querySelectorAll('.cut-skip')].find((x) => x.getClientRects().length); if (b) b.click(); document.querySelector('.ld-tip-wrap')?.click(); }); await W(700);
+      }
+      await W(1800); await shot('pause-hud');
+      await pg.locator('#btn-menu').tap(); await W(700); await shot('pause-battle');
+      await pg.locator('[data-pz-quit]').tap(); await W(600); await shot('pause-abandon-1');
+      await pg.locator('[data-yes]').tap(); await W(600); await shot('pause-abandon-2');
+      await pg.locator('[data-no]').tap(); await W(700); await shot('pause-back');
+      await pg.keyboard.press('Escape'); await W(500);
+      await A(() => { const a = window.sliceApi; a.richRun(); a.map(2); }); await W(1200);
+      await pg.keyboard.press('Escape'); await W(700); await shot('pause-map-esc');
+      await pg.keyboard.press('Escape'); await W(500);
+      await pg.locator('[data-map-menu]').tap(); await W(700); await pg.locator('[data-pz-set]').tap(); await W(800); await shot('pause-settings');
+    } },
+    { name: 'disabled', assets: ['MM-01'], run: async ({ A, W, shot }) => {
+      // 「쓸 수 없음」 단추 (H3 임시 그림) 넷 + 보통 넷
+      await A(() => window.sliceApi.win('m')); await W(500);
+      await A(() => { const p = document.querySelector('#overlay-panel'); p.querySelector('p').insertAdjacentHTML('afterend', '<div class="btn-set" style="--cols:4">' + ['iron', 'brass', 'crimson', 'teal'].map((k) => `<button class="btn k-${k}" type="button">보통</button>`).join('') + ['iron', 'brass', 'crimson', 'teal'].map((k) => `<button class="btn k-${k}" type="button" disabled>꺼짐</button>`).join('') + '</div>'); }); await W(300);
+      await shot('btn-states');
     } },
     { name: 'set-pick', assets: [], run: async ({ A, W, shot }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); } },
     { name: 'crash', assets: [], run: async ({ A, W, shot }) => {
