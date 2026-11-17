@@ -3573,6 +3573,7 @@ I-14 당시 제작 명세는 [보관본](asset-order-history.md#build-prototype-
 - 원본 이름·SHA256·출력 크기/알파: `build-res/order/2026-11-12-delivery.json`. 아이콘의 칸 분리·바깥 투명 여백·단일 샘플링 값: `I-15-UI-34-import.json`.
 - 아이템·상태표식 재현: `python3 -I tools/pixel/scenario_delivery_import.py`. 시트의 완성 물건 칸만 분리한다. 내부 상징·핀·철사를 따로 떼거나 재조립하지 않는다. 원본 색을 유지하고 외곽선을 추가하지 않는다.
 - 장면 재현: `tools/scene-import.py`, 수동 격자 정본 `tools/pixel/scene_recipe.py`. 받은 1672×941 전체를 320×180 격자로 한 번 샘플링한다. CSS `pixelated`만으로 반입했다고 하지 않는다.
+- **D-556 (2026-11-17)**: 위 「320×180 균일 격자(941/180)」는 실측이 아니었다 — 받은 장면은 `tools/pixel/regrid.py`가 축마다 잰 간격(대개 5.4 ~ 6.9px, 격자 없는 칠한 그림은 정본 6.03px)으로 다시 뽑았다(≤ 32색). 장면마다 값은 `scene_recipe.SCENE_GRID`. 이 묶음에서 재발주로 넘긴 그림은 없다.
 - 부품 문법·6→7→8→8칸·96px 교체판은 기존 카드/선택지/철 단추를 유지한다. 새 프레임 발주가 필요 없다.
 
 검수: 667×375 / 915×412 / 1024×768 / 1280×720. 이번 원본의 구체적인 반입·연결 기록은 [D-434 보고](reports/2026-11-12-art-delivery.md)를 따른다.
