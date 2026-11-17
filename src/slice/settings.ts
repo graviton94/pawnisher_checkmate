@@ -289,7 +289,7 @@ const creditsPage = (back: () => void): void => {
   const who = CREDITS.map((c) => `<span><b>${c.role}</b> ${c.names.join(' · ')}</span>`).join('');
   // 칸마다 이름 + 라이선스 한 줄 + 전문 단추 — 저작권자 · 쓴 곳 · 고친 점 · 주소는 전문 쪽 머리에 (작은 폰에서도 한 화면)
   const lic = LICENSES.map((l, i) => `<div class="set-lic"><div class="set-lic-t"><span class="set-lic-name">${esc(l.name)}</span><span class="note">${l.license}</span></div>${btnHtml({ label: T.licFull, attrs: `data-lic="${i}" aria-label="${esc(l.name)} ${T.licRead}"` })}</div>`).join('');
-  const el = openWin({ size: 'l', cls: 'set-win', title: T.credits.split(' · ')[0], body: `<div class="set-body inset"><p class="set-who note">${who}</p><div class="set-lics">${lic}</div></div>`, back: { label: T.licBack, attrs: 'data-x' }, mid: `<span class="note set-ver">${T.version(APP_VERSION)}</span>`, dismiss: back });
+  const el = openWin({ size: 'l', cls: 'set-win', title: T.credits.split(' · ')[0], body: `<div class="set-body inset"><p class="set-who note">${who}</p><div class="set-lics">${lic}</div></div>`, back: { label: T.licBack, attrs: 'data-x' }, mid: `<span class="note set-ver"><img class="set-emblem" src="ui/crown-emblem.png" alt="">${T.version(APP_VERSION)}</span>`, dismiss: back });
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
   el.querySelectorAll<HTMLElement>('[data-lic]').forEach((b) => b.addEventListener('click', () => {
     sfx('tap');

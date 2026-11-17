@@ -10,7 +10,7 @@
 - 둥근 런처(API 25 이하): 계단 원 마스크(안티앨리어싱 없음), 전경의 모든 칸이 원 안(여백 크기/64 — 원 테두리에 닿지만 않게).
 - 안드로이드 적응형: 전경 = 바탕 투명, 108dp 캔버스 가운데 지름 66dp 안전 원 안에 전경의 모든 칸이 든다(원 · 스쿼클 · 둥근 사각 마스크에 잘리지 않게).
   바탕 = 같은 배율 · 같은 자리의 바탕 층(진홍 계단 후광 + 어두운 바탕, 108dp 꽉 참) — ic_launcher_background.png.
-- 파비콘(favicon*.png)은 이 도구가 찍지 않는다 (종이 왕관 문양 파비콘은 따로 — D-549).
+- 파비콘(favicon*.png)은 이 도구가 찍지 않는다 (종이 왕관 문장 파비콘은 tools/pixel/r02b_crown_import.py — D-550).
 
 실행: python3 -I tools/app_icon.py   (안드로이드 밀도별 파일은 tools/android-res.py가 이 모듈의 icon_android()를 부른다)
       python3 -I tools/app_icon.py sheet <out.png>   모든 크기 + 적응형 마스크(192 · 96 · 48 · 32) 미리보기 한 장

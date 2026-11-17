@@ -20,6 +20,9 @@
 .set-win .set-seg { display: flex; gap: var(--s2); }
 .set-win .set-seg > .btn { min-width: 96px; }
 .set-win .set-ver { color: var(--t-dim); }
+/* 게임 문장 = 받은 종이 왕관 R-02b (49×32도트, 1도트 = 1px — D-550). 만든 사람 쪽 판 번호 왼쪽 */
+.set-win .set-ver:has(.set-emblem) { display: inline-flex; align-items: center; gap: 8px; }
+.set-win .set-emblem { display: block; width: 49px; height: 32px; image-rendering: pixelated; }
 /* 만든 이 · 라이선스 */
 .set-win .set-who { flex: none; display: flex; flex-wrap: wrap; gap: 0 16px; }
 .set-win .set-who b { color: var(--t-gold); }

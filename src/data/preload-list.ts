@@ -278,6 +278,7 @@ export const PRELOAD: string[] = [
   "ui/board/variant-scope.png",
   "ui/board/variant-spring.png",
   "ui/board/variant-turret.png",
+  "ui/crown-emblem.png",
   "ui/hud/adjutant.png",
   "ui/hud/avatar-alarm.png",
   "ui/hud/avatar-gilded.png",
