@@ -11,8 +11,8 @@ module.exports = async (pg, shot) => {
     await pg.locator('.prologue .pl-img').waitFor({ state:'visible' });
     await pg.waitForFunction(() => { const i=document.querySelector('.prologue .pl-img');return i?.complete && i.naturalWidth; });
     await bounds(pg,'.prologue');
-    assert.equal(await pg.locator('.prologue img[data-cover]').count(),1);
-    if (['departure-decision.png','shipping-company.png','gilded-solitude.png','boss-inspector.png','smith.png','epilogue-hands.png'].includes(file)) await shot(`cover-${file.slice(0,-4)}`);
+    assert.equal(await pg.locator('.prologue .pl-img').count(),1); // 컷 그림 한 장 (지금 재생기는 data-film · pl-pixel — 옛 data-cover 대신)
+    if (['prologue-00.png','departure-decision.png','boss-inspector.png','smith.png','end-k-gild.png','end-t-throw.png'].includes(file)) await shot(`cover-${file.slice(0,-4)}`);
     await pg.locator('.cut-skip').tap();
     await pg.locator('.prologue').waitFor({ state:'detached' });
   }

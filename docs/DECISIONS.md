@@ -4293,3 +4293,10 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **남김**: 보험 축소(되감기 · 마지막 한 수 · 보이지 않는 손)와 경제는 봇 곡선에 거의 안 보인다 — 사람 시험(텔레메트리 `rewinds_used` · `battle_result.hp_lost`)으로 본다. 위험 지표는 킹 < 50% 대국 22~31%로 셋째 · 넷째 왕관에서 띠(15~25) 위 — 출하를 짧게 하고 같은 완주율을 맞추느라 대국 하나가 더 위험해졌다.
 - **발견 · 고침**: 체크 버팀(HP 1)이 걸리는 한 방에서 예고 피해(`intentHits`)가 남은 HP를 넘어 보였다(예고 61 · 실제 50) — 실제로 깎이는 만큼만.
 - 검증: `npx tsc --noEmit` · `npm test` (해금 계단 · 여벌 심장 규칙 · 상처 남는 여벌 · 협공 AI · 적 수 시험 추가).
+
+### D-543 — QA 도구를 D-539 메뉴에 맞춤 · 옛 도구 셋 지움 (2026-11-17)
+
+- **왜**: 메인 메뉴 단추 다섯 · 출하 준비 창 · 멈춤 메뉴(D-539) 뒤로 완주 점검(`completion.cjs`) · 이어하기 점검(`resume.cjs`)이 메뉴에서 멈췄다(옛 `[data-go]` · `[data-mode]` · `[data-daily]`).
+- **고침**: `tools/qa/drive.cjs` — 메뉴 = `[data-ship]`, `startFromMenu`는 출하 준비 창의 탭(`data-su-tab`) · 왕관(`data-crown`) · 난이도(◀)를 맞춰 「출하한다」(`data-su-go`), 새 `pauseToTitle`(멈춤 메뉴 「처음으로」). `completion.cjs`(표기 = 출하 준비 창의 고른 것, 도전 탭 열림 확인), `resume.cjs`(멈춤 메뉴 「처음으로」 → 이어하기 두 줄 추가: 지도 · 대국 중간 · D-542에 맞춰 여벌 심장 줄은 첫째 왕관 첫 출하로, 봇 한 수에 끝나는 쉬운 대국은 다음 대국에서 다시), `keyboard.cjs`(방향키로 「출하」 → Enter = 출하 준비 창 → Esc, 대국 Esc = 멈춤 창 → Esc), `slice-observe.cjs`(`menu` 장면 추가 · `continue` 새 길), `electron-check.cjs`(메인 메뉴 「설정」 · PC 「끝내기」 확인), `release-check.cjs`(메뉴에 시험장 줄 없음), `electron.cjs`(메뉴 → 출하 준비), `illustrations.cjs`(지금 컷 재생기 표지 · 지금 있는 장면).
+- **지움**: `cinematics.cjs` · `campaign-flow.cjs` · `asset-delivery.cjs` — 옛 메뉴 · 옛 장면 이름(S06 · S07 · throne-mold)을 단언하던 것. 컷 · 결말 · 승급 화면은 전수 점검(`sweep.cjs` 02 · 12 · 13 · 15 묶음), 본편 넷 → 도전 해금 · 이어하기 흐름은 `completion.cjs` · `resume.cjs`가 대신한다.
+- **결과**: `completion.cjs` 9건 모두 OK(첫째~넷째 왕관 · 도전 1 · 넷째 왕관 왕좌 · 도전 최고 · 오늘의 도전(같은 날 두 기록 = 같은 출하) · 패배), `resume.cjs` 13줄 모두 ✓ (D-542 난이도 패스 뒤 가지에서 다시 돌림), `keyboard.cjs` · `illustrations.cjs`(120장) · `electron-check.cjs` · `release-check.cjs` 통과. 게임 버그는 찾지 못했다.

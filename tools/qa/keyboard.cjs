@@ -1,4 +1,4 @@
-// 키보드로만 부팅 → 타이틀 → 대국 (D-531) · 판 커서로 연습 대국을 키만으로 몇 턴 (D-533). 915×412 · DPR 2.625에서 Playwright 키 누름만 쓴다.
+// 키보드로만 부팅 → 타이틀 → 대국 (D-531) · 메인 메뉴 → 출하 준비 창 · 대국 멈춤 메뉴 (D-539) · 판 커서로 연습 대국을 키만으로 몇 턴 (D-533). 915×412 · DPR 2.625에서 Playwright 키 누름만 쓴다.
 // 사용: OBSERVE_URL=http://localhost:4173/ node tools/qa/keyboard.cjs → production/qa/evidence/<날짜>-kb-*.png
 const { chromium } = require('playwright');
 const BASE = process.env.OBSERVE_URL || 'http://localhost:4173/';
@@ -164,16 +164,23 @@ const day = new Date().toISOString().slice(0, 10);
   await step('battle', []);
   const played = await playTurns(4);
   console.log('practice by keys:', JSON.stringify(played));
-  // 두 번째 실행: 타이틀 → 메뉴 → 방향키 초점 → 안내서 창 → Esc로 닫기
+  // 두 번째 실행: 타이틀 → 메인 메뉴(D-539 단추 다섯) → 방향키로 「출하」 → Enter = 출하 준비 창 → 방향키로 탭 → Esc로 닫기
   await pg.reload();
   await pg.waitForSelector('#boot', { state: 'detached', timeout: 30000 });
   await pg.waitForTimeout(1000);
   await step('title2', ['Enter'], 900);
+  for (let i = 0; i < 4 && !(await pg.$('.op-menu:not([hidden]) [data-ship]')); i++) { await pg.keyboard.press('Enter'); await pg.waitForTimeout(900); }
   await step('menu', ['ArrowDown']);
-  await step('menu-move', ['ArrowDown', 'ArrowDown']);
-  await step('menu-right', ['ArrowRight']);
+  const onShip = () => pg.evaluate(() => !!document.activeElement?.matches('[data-ship]'));
+  for (let i = 0; i < 6 && !(await onShip()); i++) { await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(250); }
+  await step('menu-ship', []);
+  const shipFocused = await onShip();
   await step('menu-enter', ['Enter'], 900);
-  await step('menu-esc', ['Escape'], 900);
+  const winUp = (cls) => pg.evaluate((c) => !document.getElementById('overlay').hidden && !!document.querySelector(`#overlay-panel.${c}`), cls);
+  const setupOpen = await winUp('su-win');
+  await step('setup-move', ['ArrowRight', 'ArrowDown']);
+  await step('setup-esc', ['Escape'], 900);
+  console.log('menu: 출하 focus by keys', shipFocused, '· Enter opens run setup', setupOpen, '· Esc closes', !(await winUp('su-win')));
   // 세 번째: 연습이 아닌 1막 대국 (?debug로 바로) — 카드 1 장전(탭 한 번과 같다) → Esc 내려놓기 → E 턴 끝
   await pg.goto(BASE + '?debug');
   await pg.waitForSelector('#boot', { state: 'detached', timeout: 30000 });
@@ -200,6 +207,11 @@ const day = new Date().toISOString().slice(0, 10);
   const peek = await pg.evaluate(() => !!document.querySelector('.k-peek:not(.pxout)'));
   await step('b2-info-esc', ['Escape'], 500);
   console.log('info opened by I', peek, '· closed by Esc', await pg.evaluate(() => !document.querySelector('.k-peek:not(.pxout)')));
+  // 멈춤 메뉴 (D-539): 고른 것이 없을 때 Esc = 멈춤 창 → Esc로 닫기
+  await step('b2-pause', ['Escape'], 900);
+  const paused = await winUp('pause-win');
+  await step('b2-pause-esc', ['Escape'], 900);
+  console.log('pause by Esc', paused, '· closed by Esc', !(await winUp('pause-win')));
   const t0 = await pg.evaluate(() => window.slice().turn);
   await step('b2-end', ['e'], 1200);
   await step('b2-end2', ['e'], 3500);

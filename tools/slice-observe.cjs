@@ -1,6 +1,6 @@
 // 본편(리뉴얼판, index.html) 실화면 확인 — 모바일 가로 915×412 · DPR 2.625 · 터치.
 // 미리 `npm run build`와 `npx vite preview --port 4173`. 결과: production/qa/evidence/<날짜>-slice-<장면>.png
-// 사용: node tools/slice-observe.cjs <title|continue|event:<사건 id>|backlash|map|shop|forge>
+// 사용: node tools/slice-observe.cjs <title|menu|continue|event:<사건 id>|backlash|map|shop|forge> (menu = 메인 메뉴 · 출하 준비 창, D-539)
 const { chromium } = require('playwright');
 const BASE = process.env.OBSERVE_URL || 'http://localhost:4173/';
 const day = new Date().toISOString().slice(0, 10);
@@ -17,26 +17,36 @@ const day = new Date().toISOString().slice(0, 10);
   pg.on('pageerror', (e) => console.log('ERR', e.message));
   const shot = (n) => pg.screenshot({ path: `production/qa/evidence/${day}-slice-${n}${suffix}.png` });
   const skip = async () => { const s = await pg.$('.stagefx'); if (s) { await s.click(); await pg.waitForTimeout(500); } };
-  if (sc === 'title' || sc === 'continue') {
-    await pg.goto(BASE); await pg.evaluate(() => localStorage.clear()); await pg.reload(); await pg.waitForTimeout(1200);
+  if (sc === 'title' || sc === 'continue' || sc === 'menu') {
+    await pg.goto(BASE); await pg.evaluate(() => { localStorage.clear(); sessionStorage.clear(); }); await pg.reload();
+    await pg.waitForSelector('#boot', { state: 'detached', timeout: 30000 }); await pg.waitForTimeout(1200);
     await shot('title');
-    if (sc === 'continue') {
-      await pg.click('#overlay [data-go]'); await pg.waitForTimeout(700); await skip();
-      await pg.reload(); await pg.waitForTimeout(1200); await shot('title-continue');
-      await pg.click('#overlay [data-cont]'); await pg.waitForTimeout(1200); await shot('continued');
+    if (sc !== 'title') {
+      // 메인 메뉴 (D-539 단추 다섯): 프롤로그를 본 사람 + 처음 화면 메뉴 표시를 심고 다시 연다
+      const toMenu = async () => {
+        await pg.evaluate(() => { const m = JSON.parse(localStorage.getItem('pawnisher.slice.meta') || '{}'); localStorage.setItem('pawnisher.slice.meta', JSON.stringify({ ...m, prologue: true, onboarded: true, tut: ['battle', 'battle-a', 'map', 'recruit', 'kit', 'promote', 'first_shop'] })); sessionStorage.setItem('op-menu', '1'); });
+        await pg.reload(); await pg.waitForSelector('.op-menu:not([hidden]) [data-ship]', { timeout: 30000 }); await pg.waitForTimeout(900);
+      };
+      await toMenu(); await shot('menu');
+      // 「출하」 → 출하 준비 창 → 「출하한다」 (시작 세트 화면은 첫 받침을 두 번)
+      await pg.tap('.op-menu [data-ship]'); await pg.waitForSelector('.su-win [data-su-go]'); await pg.waitForTimeout(600); await shot('menu-setup');
+      if (sc === 'continue') {
+        await pg.tap('.su-win [data-su-go]'); await pg.waitForTimeout(1500);
+        for (let i = 0; i < 2; i++) { const set = await pg.$('#overlay-panel [data-slot]:not([disabled]), #overlay-panel .start-set:not([disabled])'); if (set) { await set.tap(); await pg.waitForTimeout(600); } }
+        await pg.waitForFunction(() => !!localStorage.getItem('pawnisher.slice.save'), null, { timeout: 30000 }); await pg.waitForTimeout(1500); await skip();
+        await toMenu(); await shot('title-continue');
+        await pg.tap('.op-menu [data-cont]'); await pg.waitForTimeout(2500); await shot('continued');
+      }
     }
   } else {
     await pg.goto(BASE + '?debug'); await pg.waitForSelector('#boot', { state: 'detached' }); await pg.waitForTimeout(200); await skip();
     const A = (fn, arg) => pg.evaluate(fn, arg);
     if (sc === 'scene-input') await require('./qa/scene-input.cjs')(pg, shot);
     else if (sc === 'illustrations') await require('./qa/illustrations.cjs')(pg, shot);
-    else if (sc === 'cinematics') await require('./qa/cinematics.cjs')(pg, shot);
-    else if (sc === 'asset-delivery') await require('./qa/asset-delivery.cjs')(pg, shot);
     else if (sc === 'part-rules') await require('./qa/part-rules.cjs')(pg, shot);
     else if (sc === 'content-states') await require('./qa/content-states.cjs')(pg, shot);
     else if (sc === 'builds-complete') await require('./qa/build-completion.cjs')(pg, shot);
     else if (sc === 'builds') await require('./qa/build-prototype.cjs')(pg, shot);
-    else if (sc === 'campaign') await require('./qa/campaign-flow.cjs')(pg, shot);
     else if (sc === 'event-layout') await require('./qa/event-layout.cjs')(pg, shot);
     else if (sc === 'end-scenes') await require('./qa/end-scenes.cjs')(pg, shot);
     else if (sc === 'unit-info') await require('./qa/unit-info.cjs')(pg, shot);

@@ -1,5 +1,5 @@
 // PC 창 기능 확인 (D-531): `npm run build:release` 뒤 xvfb-run node tools/qa/electron-check.cjs
-// preload가 끝내기 · 전체 화면을 내놓는가, F11 · Alt+Enter가 전체 화면을 켜고 끄는가, 두 번째 실행이 바로 끝나는가.
+// preload가 끝내기 · 전체 화면을 내놓는가, 메인 메뉴에 PC 「끝내기」가 있는가(D-539), F11 · Alt+Enter가 전체 화면을 켜고 끄는가, 두 번째 실행이 바로 끝나는가.
 const { _electron: electron } = require('playwright');
 const { spawnSync } = require('node:child_process');
 (async () => {
@@ -20,10 +20,14 @@ const { spawnSync } = require('node:child_process');
   await win.waitForTimeout(800);
   const afterAltEnter = await full();
   const menu = await app.evaluate(({ Menu, app: a }) => ({ packaged: a.isPackaged, menu: !!Menu.getApplicationMenu() }));
-  // 설정 창(대국 메뉴 단추 → 멈춤 → 설정, D-539)에 PC 줄(전체 화면)이 보이고, 전체 화면 단추가 실제로 켜고 끈다 — 게임 끝내기는 메인 메뉴로 옮겼다
-  await win.evaluate(() => document.getElementById('btn-menu').click());
-  await win.waitForTimeout(600);
-  await win.evaluate(() => document.querySelector('[data-pz-set]').click());
+  // 메인 메뉴(D-539 단추 다섯)로: 프롤로그를 본 기록 + 처음 화면 메뉴 표시를 심고 다시 연다 → PC에만 있는 「끝내기」 단추 확인
+  await win.evaluate(() => { localStorage.setItem('pawnisher.slice.meta', JSON.stringify({ prologue: true, onboarded: true })); sessionStorage.setItem('op-menu', '1'); location.reload(); });
+  await win.waitForSelector('.op-menu:not([hidden]) [data-ship]', { timeout: 30000 });
+  await win.waitForTimeout(800);
+  const mainMenu = await win.evaluate(() => [...document.querySelectorAll('.op-menu button')].filter((b) => b.getClientRects().length).map((b) => b.textContent.trim().replace(/\s+/g, ' ')));
+  const quitBtn = await win.evaluate(() => !!document.querySelector('.op-menu [data-quit]')?.getClientRects().length);
+  // 설정 창(메인 메뉴 「설정」)에 PC 줄(전체 화면)이 보이고, 전체 화면 단추가 실제로 켜고 끈다
+  await win.evaluate(() => document.querySelector('.op-menu [data-settings]').click());
   await win.waitForTimeout(600);
   await win.evaluate(() => document.querySelector('[data-set-tab="screen"]')?.click());
   await win.waitForTimeout(600);
@@ -33,7 +37,7 @@ const { spawnSync } = require('node:child_process');
   await win.waitForTimeout(800);
   const settingsToggled = (await full()) !== before;
   await win.screenshot({ path: `production/qa/evidence/${new Date().toISOString().slice(0, 10)}-electron-settings.png` });
-  Object.assign(menu, { settingsRows: rows, settingsToggled });
+  Object.assign(menu, { mainMenu, quitBtn, settingsRows: rows, settingsToggled });
   // 두 번째 실행: 잠금을 못 얻고 곧 끝나야 한다
   const t0 = Date.now();
   const second = spawnSync(require('electron'), ['.', '--no-sandbox'], { timeout: 20000 });

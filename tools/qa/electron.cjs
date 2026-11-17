@@ -23,11 +23,14 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
   }
   // 첫 화면 → 프롤로그(처음이면) → 메뉴 → 본편 시작
   for (let i = 0; i < 60; i++) {
-    const st = await win.evaluate(() => ({ go: !!document.querySelector('[data-go]')?.getClientRects().length, skip: [...document.querySelectorAll('.cut-skip')].some((b) => b.getClientRects().length), battle: !!document.getElementById('btn-end')?.getClientRects().length && !document.body.classList.contains('between') && !document.querySelector('.opening, .prologue') }));
+    const st = await win.evaluate(() => ({ ship: !!document.querySelector('.op-menu:not([hidden]) [data-ship]')?.getClientRects().length, setup: !!document.querySelector('.su-win [data-su-go]'), go: !!document.querySelector('[data-go]')?.getClientRects().length, skip: [...document.querySelectorAll('.cut-skip')].some((b) => b.getClientRects().length), battle: !!document.getElementById('btn-end')?.getClientRects().length && !document.body.classList.contains('between') && !document.querySelector('.opening, .prologue') }));
     if (i % 5 === 0) console.log('step', i, JSON.stringify(st), await win.evaluate(() => [...document.querySelectorAll('button, .op-press')].filter((b) => b.getClientRects().length).map((b) => (b.className + ':' + b.textContent.trim()).slice(0, 30)).slice(0, 6).join(' | ')));
     if (st.battle) break;
     if (await win.evaluate(() => { const b = [...document.querySelectorAll('[data-yes]')].find((x) => x.getClientRects().length); if (b) { b.click(); return true; } return false; })) { await W(3000); continue; }
     if (st.skip) { await win.evaluate(() => [...document.querySelectorAll('.cut-skip')].find((b) => b.getClientRects().length).click()); await W(1200); continue; }
+    // 메인 메뉴(D-539): 「출하」 → 출하 준비 창 「출하한다」
+    if (st.setup) { await win.evaluate(() => document.querySelector('.su-win [data-su-go]').click()); await W(3000); continue; }
+    if (st.ship) { await win.evaluate(() => document.querySelector('.op-menu [data-ship]').click()); await W(1200); continue; }
     if (st.go) { await win.evaluate(() => [...document.querySelectorAll('[data-go]')].find((b) => b.getClientRects().length).click()); await W(3000); continue; }
     await win.mouse.click(640, 400); await W(800);
   }

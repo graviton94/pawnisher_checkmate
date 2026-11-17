@@ -1,8 +1,9 @@
 // 출시 완주 점검 (2026-11-16): 앱을 닫고(pagehide → 새로고침) 메뉴 「이어하기」로 돌아왔을 때 잃거나 겹치는 것이 없는지 —
 // 지도 · 대국 중간 · 보상 · 사건 · 고물상 · 반장 등장 · 결말 컷(END-K) · 하자 폐기 창 · 패배 컷(END-F).
+// 멈춤 메뉴 「처음으로」(D-539 — 대국 · 지도에서 저장하고 메인 메뉴)도 같은 표로 본다.
 // 사용: 프리뷰 서버를 띄운 뒤 node tools/qa/resume.cjs <출력 폴더>
 const fs = require('fs');
-const { chromium, URL, W, setOut, open, seedMeta, toMenu, click, clickText, startFromMenu, drive } = require('./drive.cjs');
+const { chromium, URL, W, MENU, setOut, open, seedMeta, toMenu, click, clickText, startFromMenu, pauseToTitle, drive } = require('./drive.cjs');
 const OUT = (process.argv[2] ?? 'production/qa/resume') + '/';
 fs.mkdirSync(OUT, { recursive: true });
 setOut(OUT);
@@ -31,14 +32,24 @@ const screen = (p) => p.evaluate(() => {
 /** 화면에 걸린 선택지 (보상 카드 · 사건 · 고물상 진열) — 같아야 한다 */
 const offers = (p) => p.evaluate(() => [...document.querySelectorAll('#overlay-panel [data-slot], #overlay-panel [data-buy], .ws-choices .choice, .ws-title, .ev-title')].filter((e) => e.getClientRects().length).map((e) => (e.getAttribute('data-slot') ?? '') + (e.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 14)).join(' | '));
 
-const quitAndResume = async (p, label) => {
+/** 닫고(pagehide → 새로고침) 메뉴 「이어하기」. viaPause = 앱을 닫는 대신 멈춤 메뉴 「처음으로」(D-539) */
+const quitAndResume = async (p, label, viaPause = false) => {
   const k0 = await key(p), s0 = await screen(p), o0 = await offers(p);
   await p.screenshot({ path: `${OUT}${label}-before.png` });
-  await p.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false })); });
-  const k1 = await key(p);
-  await p.goto(URL + '&opening'); await p.waitForFunction(() => window.sliceApi);
+  let k1;
+  if (viaPause) {
+    k1 = await key(p);
+    const ok = await pauseToTitle(p);
+    if (!ok) say(`    ${label}: 멈춤 메뉴 「처음으로」를 못 눌렀다!`);
+    await p.waitForFunction(() => window.sliceApi).catch(() => {});
+    k1 = (await key(p)).save ? await key(p) : k1;
+  } else {
+    await p.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false })); });
+    k1 = await key(p);
+    await p.goto(URL + '&opening'); await p.waitForFunction(() => window.sliceApi);
+  }
   await p.waitForSelector('#boot', { state: 'detached', timeout: 20000 }).catch(() => {});
-  for (let i = 0; i < 12 && !(await p.$('.op-menu:not([hidden]) [data-go]')); i++) { await p.mouse.click(457, 300); await W(700); }
+  for (let i = 0; i < 12 && !(await p.$(MENU)); i++) { await p.mouse.click(457, 300); await W(700); }
   const hasCont = await click(p, '[data-cont]');
   await W(3500);
   const s2 = await screen(p), k2 = await key(p), o2 = await offers(p);
@@ -65,15 +76,20 @@ const until = async (p, f, n = 30) => { for (let i = 0; i < n; i++) { if (await 
   say('| 닫은 자리 | 닫기 전 화면 | 이어하기 | 이어한 화면 | 판정 |\n|---|---|---|---|---|');
   await seedMeta(p, {});
   await toMenu(p); await startFromMenu(p, 'story');
-  // 1) 첫 대국 중간: 카드 한 장 내고 턴을 넘긴 뒤 (대국 중 저장 D-529)
-  await drive(p, { tag: 'r-battle', stop: (st) => st.battle });
-  await W(1500);
-  await Promise.race([p.evaluate(() => window.sliceApi.botMove('greedy')), W(8000)]);
-  await W(800);
-  const t0 = await p.evaluate(() => window.slice().turn);
-  await click(p, '#btn-end'); await W(500); await click(p, '#btn-end.warn');
-  await until(p, () => p.evaluate((t0) => window.slice().turn > t0 && !document.body.classList.contains('busy'), t0));
-  await W(2500);
+  // 1) 대국 중간: 카드 한 장 내고 턴을 넘긴 뒤 (대국 중 저장 D-529). 봇 한 수로 대국이 끝나 버리면(쉬운 첫 대국) 다음 대국에서 다시
+  const midBattle = () => p.evaluate(() => !!document.querySelector('#hand [data-card]') && !document.body.classList.contains('between') && document.getElementById('overlay').hidden && window.slice().s.winner === null);
+  for (let k = 0; k < 4; k++) {
+    await drive(p, { tag: 'r-battle', stop: (st) => st.battle });
+    await W(1500);
+    await Promise.race([p.evaluate(() => window.sliceApi.botMove('greedy')), W(8000)]);
+    await W(800);
+    if (!(await midBattle())) continue;
+    const t0 = await p.evaluate(() => window.slice().turn);
+    await click(p, '#btn-end'); await W(500); await click(p, '#btn-end.warn');
+    await until(p, () => p.evaluate((t0) => window.slice().turn > t0 && !document.body.classList.contains('busy'), t0));
+    await W(2500);
+    if (await midBattle()) break;
+  }
   let r = await quitAndResume(p, 'battle-mid');
   verdict(r, (r) => r.hasCont && /^battle/.test(r.s2) && r.s0 === r.s2 && r.k1.save.fightTurn !== null && same(r.k1.save, r.k2.save, [...CORE, 'fightTurn']));
   // 2) 보상 화면 (이긴 뒤 고르기 전, D-488)
@@ -88,6 +104,15 @@ const until = async (p, f, n = 30) => { for (let i = 0; i < n; i++) { if (await 
   await W(1200);
   r = await quitAndResume(p, 'map');
   verdict(r, (r) => r.hasCont && r.s2 === 'map' && same(r.k1.save, r.k2.save, CORE));
+  // 3b) 멈춤 메뉴 「처음으로」 — 지도 · 대국 중간 (D-539)
+  r = await quitAndResume(p, 'pause-home-map', true);
+  verdict(r, (r) => r.hasCont && r.s2 === 'map' && same(r.k1.save, r.k2.save, CORE));
+  await drive(p, { tag: 'r-battle3', stop: (st) => st.battle });
+  await W(1500);
+  await Promise.race([p.evaluate(() => window.sliceApi.botMove('greedy')), W(8000)]);
+  await W(1500);
+  r = await quitAndResume(p, 'pause-home-battle', true);
+  verdict(r, (r) => r.hasCont && /^battle/.test(r.s2) && r.k2.save.fightTurn !== null && same(r.k1.save, r.k2.save, CORE));
   // 4) 사건 · 5) 고물상 · 6) 반장 등장 — 지도를 나아가며 처음 만나는 곳에서 닫는다 (사건 · 고물상 안에서는 저장하지 않는다 → 들어가기 전 지도, 다시 들어가면 같은 것)
   const seen = {};
   for (let k = 0; k < 3; k++) {
@@ -124,8 +149,8 @@ const until = async (p, f, n = 30) => { for (let i = 0; i < n; i++) { if (await 
   say(`    결말 끝: ${end.end ? '메인 화면 단추' : '멈춤!'} · 저장 ${kEnd.save ? '남음!' : '지움'} · runs ${r.k1.runs}→${kEnd.runs} (한 번) · 본편 ${r.k1.story}→${kEnd.story}`);
   await p.screenshot({ path: `${OUT}ending-done.png` });
   // 9) 크레딧 도중 (기록은 이미 남았다)
-  // 10) 하자 폐기 창 — 여벌 심장이 있을 때(넷째 왕관) · 없을 때(도전 10) · 11) 패배 컷 (END-F)
-  for (const [where, m, kind] of [['loss-window-spare', { storyCleared: 3, runs: 5 }, 'story'], ['loss-window', { storyCleared: 4, challengeOpen: 13, trueEnd: true, runs: 5 }, 'challenge'], ['defeat-cut', { storyCleared: 4, challengeOpen: 13, trueEnd: true, runs: 5 }, 'challenge']]) {
+  // 10) 하자 폐기 창 — 여벌 심장이 있을 때(첫째 왕관 첫 출하, D-542) · 없을 때(도전 10) · 11) 패배 컷 (END-F)
+  for (const [where, m, kind] of [['loss-window-spare', { storyCleared: 0, runs: 0 }, 'story'], ['loss-window', { storyCleared: 4, challengeOpen: 13, trueEnd: true, runs: 5 }, 'challenge'], ['defeat-cut', { storyCleared: 4, challengeOpen: 13, trueEnd: true, runs: 5 }, 'challenge']]) {
     await seedMeta(p, m);
     await toMenu(p); await startFromMenu(p, kind);
     await drive(p, { tag: `r-${where}`, stop: (st) => st.battle });

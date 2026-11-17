@@ -22,23 +22,52 @@ const seedMeta = async (p, m) => {
   await p.goto(URL); await p.waitForFunction(() => window.sliceApi);
   await p.evaluate((m) => { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('pawnisher.slice.meta', JSON.stringify(m)); }, { mv: 1, campaignVersion: 1, runs: 3, clears: 0, ascOpen: 0, bestAct: 1, daily: {}, nemeses: [], tut: TUT, prologue: true, onboarded: true, storyCleared: 0, ...m });
 };
+/** 메인 메뉴가 떴는지 (D-539 단추 다섯: [이어하기] · 출하 · 기록 | 설정) */
+const MENU = '.op-menu:not([hidden]) [data-ship]';
 /** 실제 첫 화면 → 메뉴 */
 const toMenu = async (p) => {
   await p.goto(URL + '&opening'); await p.waitForFunction(() => window.sliceApi);
   await p.waitForSelector('#boot', { state: 'detached', timeout: 20000 }).catch(() => {});
-  for (let i = 0; i < 12 && !(await p.$('.op-menu:not([hidden]) [data-go]')); i++) { await p.mouse.click(457, 300); await W(700); }
-  return !!(await p.$('.op-menu:not([hidden]) [data-go]'));
+  for (let i = 0; i < 12 && !(await p.$(MENU)); i++) { await p.mouse.click(457, 300); await W(700); }
+  return !!(await p.$(MENU));
 };
 const click = (p, sel) => p.evaluate((s) => { const e = [...document.querySelectorAll(s)].find((x) => x.getClientRects().length && !x.disabled); if (!e) return false; e.click(); return true; }, sel);
 const clickText = (p, re) => p.evaluate((src) => { const re = new RegExp(src); const b = [...document.querySelectorAll('button')].find((x) => x.getClientRects().length && !x.disabled && re.test(x.textContent)); if (!b) return false; b.click(); return true; }, re.source);
-/** 메뉴에서 출하 시작 (본편 · 도전 · 오늘의 도전) — 시작 세트 화면은 첫 받침을 두 번 */
-const startFromMenu = async (p, kind) => {
-  const label = await p.evaluate(() => document.querySelector('.op-menu [data-go] small')?.textContent ?? '');
-  if (kind === 'challenge') { await click(p, '[data-mode="challenge"]'); await W(300); }
-  await click(p, kind === 'daily' ? '[data-daily]' : '[data-go]'); await W(700);
+/** 출하 준비 창(D-539)에서 지금 고른 것 한 줄: 본편 = 왕관 표지 · 별칭, 도전 = 난이도 줄, 오늘의 도전 = 날짜 줄 */
+const setupLabel = (p) => p.evaluate(() => {
+  const w = document.querySelector('.su-win') ?? document;
+  const c = w.querySelector('.su-crown[aria-pressed="true"]');
+  if (c) return `${c.querySelector('.choice-name')?.textContent ?? ''} · ${c.querySelector('.choice-res')?.textContent ?? ''}`;
+  return (w.querySelector('.su-body .lead') ?? w.querySelector('.su-body'))?.textContent?.trim().slice(0, 60) ?? '';
+});
+/** 메뉴 「출하」 → 출하 준비 창을 연다 */
+const openSetup = async (p) => {
+  if (!(await click(p, '.op-menu [data-ship]'))) return false;
+  await p.waitForSelector('.su-win [data-su-go]', { timeout: 5000 }).catch(() => {});
+  return !!(await p.$('.su-win [data-su-go]'));
+};
+/**
+ * 메뉴 「출하」 → 출하 준비 창(D-539): 탭(story · challenge · daily)을 고르고, 왕관(o.crown) · 도전 난이도(o.down = ◀ 몇 번)를 맞춘 뒤 「출하한다」.
+ * 저장이 있으면 덮어쓰기 확인, 시작 세트 화면은 첫 받침을 두 번. 돌려주는 것 = 출하 준비 창에 보인 고른 것 한 줄.
+ */
+const startFromMenu = async (p, kind, o = {}) => {
+  if (!(await openSetup(p))) return '';
+  await click(p, `[data-su-tab="${kind}"]`); await W(300);
+  if (o.crown !== undefined) { await click(p, `.su-crown[data-crown="${o.crown}"]`); await W(300); }
+  for (let i = 0; i < (o.down ?? 0); i++) { await click(p, '[data-su-prev]'); await W(150); }
+  const label = await setupLabel(p);
+  await click(p, '[data-su-go]'); await W(700);
   await click(p, '[data-yes]'); await W(700);
   for (let i = 0; i < 3; i++) { if (await click(p, '#overlay-panel [data-slot]:not([disabled]), #overlay-panel .start-set:not([disabled])')) await W(500); }
   return label;
+};
+/** 멈춤 메뉴(D-539 — 대국 · 지도 머리 톱니 · Esc)를 열어 「처음으로」(저장한 뒤 메인 메뉴) */
+const pauseToTitle = async (p) => {
+  if (!(await click(p, '[data-map-menu]'))) await p.keyboard.press('Escape');
+  await p.waitForSelector('.pause-win [data-pz-home]', { timeout: 15000 }).catch(() => {});
+  const ok = await click(p, '.pause-win [data-pz-home]');
+  await W(1500);
+  return ok;
 };
 
 /**
@@ -119,4 +148,4 @@ const drive = async (p, { tag, choice = 'crown', lose = false, stop = null, maxI
   }
   return { end: false, stuck: 'max iterations', tl, battles };
 };
-module.exports = { chromium, URL, W, TUT, setOut, open, meta, save, seedMeta, toMenu, click, clickText, startFromMenu, drive };
+module.exports = { chromium, URL, W, TUT, MENU, setOut, open, meta, save, seedMeta, toMenu, click, clickText, setupLabel, openSetup, startFromMenu, pauseToTitle, drive };

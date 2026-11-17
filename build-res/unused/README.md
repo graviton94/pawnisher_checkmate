@@ -72,14 +72,14 @@
 | `public/scenes/ending-peel.png` | 118.8 KB | 옛 13단 엔딩 그림. 지금 결말은 `end-k-*` · `end-t-*` · `end-f-*` · `ending-a` (D-451 마스터 바이블). |
 | `public/scenes/entry-battle.png` | 234.5 KB | 옛 출하 입구 장면. 코드가 부르지 않는다 (코드 리뷰 5 — 워밍업에서도 빼 두었던 것). |
 | `public/scenes/entry-check.png` | 269.7 KB | 옛 출하 입구 장면. 코드가 부르지 않는다 (코드 리뷰 5 — 워밍업에서도 빼 두었던 것). |
-| `public/scenes/epilogue-hands.png` | 54.2 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (옛 QA 도구 cinematics · campaign-flow · illustrations만 이름을 적는다). |
-| `public/scenes/gilded-solitude.png` | 91.0 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (옛 QA 도구 cinematics · campaign-flow · illustrations만 이름을 적는다). |
+| `public/scenes/epilogue-hands.png` | 54.2 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (이름을 적던 옛 QA 도구 cinematics · campaign-flow는 지웠다 — D-543). |
+| `public/scenes/gilded-solitude.png` | 91.0 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (이름을 적던 옛 QA 도구 cinematics · campaign-flow는 지웠다 — D-543). |
 | `public/scenes/promote-alarm.png` | 96.8 KB | 옛 승급 컷 시안. 지금 승급 컷은 `promote-crew` · `promote-gild` · `promote-rule`. |
 | `public/scenes/promote-betray.png` | 79.2 KB | 옛 승급 컷 시안. 지금 승급 컷은 `promote-crew` · `promote-gild` · `promote-rule`. |
 | `public/scenes/promote-dark.png` | 51.3 KB | 옛 승급 컷 시안. 지금 승급 컷은 `promote-crew` · `promote-gild` · `promote-rule`. |
-| `public/scenes/returned-box.png` | 104.5 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (옛 QA 도구 cinematics · campaign-flow · illustrations만 이름을 적는다). |
-| `public/scenes/shipping-company.png` | 72.3 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (옛 QA 도구 cinematics · campaign-flow · illustrations만 이름을 적는다). |
-| `public/scenes/shipping-interior.png` | 73.0 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (옛 QA 도구 cinematics · campaign-flow · illustrations만 이름을 적는다). |
+| `public/scenes/returned-box.png` | 104.5 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (이름을 적던 옛 QA 도구 cinematics · campaign-flow는 지웠다 — D-543). |
+| `public/scenes/shipping-company.png` | 72.3 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (이름을 적던 옛 QA 도구 cinematics · campaign-flow는 지웠다 — D-543). |
+| `public/scenes/shipping-interior.png` | 73.0 KB | 옛 컷신 그림 (S06 출하 · S07 도금왕 · 에필로그). 지금 프롤로그 · 결말 필름이 부르지 않는다 (이름을 적던 옛 QA 도구 cinematics · campaign-flow는 지웠다 — D-543). |
 | `public/scenes/throne-mold.png` | 95.0 KB | 옛 승급 화면 그림. 지금 승급은 `promote*.png`. |
 | `public/ui/board/target-kill.png` | 0.2 KB | 옛 과녁 표식. 판은 `target-enemy` · `kill`을 쓴다. draw-board.py는 이 폴더로 찍는다. |
 | `public/ui/board/target.png` | 0.2 KB | 옛 과녁 표식. 판은 `target-enemy` · `kill`을 쓴다. draw-board.py는 이 폴더로 찍는다. |

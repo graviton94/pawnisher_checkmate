@@ -4,7 +4,7 @@
 // 사용: 프리뷰 서버(npx vite preview --port 4173)를 띄운 뒤 node tools/qa/completion.cjs <출력 폴더> [사례,...]
 //   사례: chain(첫째→넷째 던진다 → 도전 1) · crown4-throne · daily · defeat · challenge-top
 const fs = require('fs');
-const { chromium, W, setOut, open, meta, save, seedMeta, toMenu, click, clickText, startFromMenu, drive } = require('./drive.cjs');
+const { chromium, W, setOut, open, meta, save, seedMeta, toMenu, click, clickText, openSetup, setupLabel, startFromMenu, drive } = require('./drive.cjs');
 const OUT = (process.argv[2] ?? 'production/qa/completion') + '/';
 const ONLY = (process.argv[3] ?? '').split(',').filter(Boolean);
 fs.mkdirSync(OUT, { recursive: true });
@@ -35,13 +35,15 @@ const CASES = {
       const label = await startFromMenu(p, 'story');
       await p.screenshot({ path: `${OUT}crown${ch + 1}-start.png` });
       const r = await drive(p, { tag: `crown${ch + 1}`, choice: ch < 3 ? (ch === 0 ? 'look' : 'crown') : 'depart' });
-      say(`crown${ch + 1} 메뉴 표기: ${label}`);
+      say(`crown${ch + 1} 출하 준비 표기: ${label}`);
       await finishCheck(p, `crown${ch + 1}`, r, (m) => m.storyCleared === ch + 1 && (ch < 3 ? m.crownedKings.length === ch + 1 : m.trueEnd === true && m.challengeOpen === 4));
       await clickText(p, /메인 화면으로/); await W(2500);
     }
-    await toMenu(p);
-    const ch = await p.evaluate(() => ({ chal: !document.querySelector('[data-mode="challenge"]')?.disabled }));
-    say(`도전 버튼 열림: ${ch.chal}`);
+    // 넷째 왕관을 끝내면 출하 준비 창의 도전 탭이 열린다 (D-539 — 잠긴 탭은 t-lock)
+    await toMenu(p); await openSetup(p);
+    const chal = await p.evaluate(() => { const t = document.querySelector('[data-su-tab="challenge"]'); return !!t && !t.classList.contains('t-lock'); });
+    say(`도전 탭 열림: ${chal}`);
+    await click(p, '[data-su-x]'); await W(400);
     await startFromMenu(p, 'challenge');
     const r = await drive(p, { tag: 'challenge1' });
     await finishCheck(p, 'challenge1', r, (m) => m.challengeOpen === 5 && m.challengeRecords?.[4]?.clears === 1);
@@ -58,11 +60,11 @@ const CASES = {
   'challenge-top': async (br) => {
     const p = await open(br);
     await seedMeta(p, { storyCleared: 4, trueEnd: true, challengeOpen: 13 });
-    await toMenu(p); await click(p, '[data-mode="challenge"]'); await W(300);
-    const r0 = await p.evaluate(() => document.querySelector('.op-menu [data-go] small')?.textContent);
-    await startFromMenu(p, 'challenge');
+    // 출하 준비 창의 도전 탭은 열린 가장 높은 난이도에서 시작한다
+    await toMenu(p);
+    const r0 = await startFromMenu(p, 'challenge');
     const r = await drive(p, { tag: 'challenge-top' });
-    say(`challenge-top 메뉴 표기: ${r0}`);
+    say(`challenge-top 출하 준비 표기: ${r0}`);
     await finishCheck(p, 'challenge-top', r, (m) => m.challengeOpen === 13 && m.challengeRecords?.[13]?.clears === 1);
     await p.context().close();
   },
