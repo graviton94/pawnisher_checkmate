@@ -163,7 +163,8 @@ const domEnv = (cancel: () => boolean): InputEnv => {
       // 고르기 · 배치 화면(.scr-*)처럼 .win 밖의 「닫는다 · 그만둔다」 단추도 맨 위 층이면 누른다 (대국 판은 빼고)
       const layer = topLayer();
       if (!layer || layer === app()) return false;
-      const back = buttons(layer).find((b) => b.matches('[data-x], [data-back], [data-no], [data-close]'));
+      // 컷신은 「건너뛴다」(.cut-skip) — 안드로이드 뒤로 키도 이 길을 쓴다 (hardwareBack)
+      const back = buttons(layer).find((b) => b.matches('[data-x], [data-back], [data-no], [data-close], .cut-skip'));
       return back ? (back.click(), true) : false;
     },
     inBattle: () => {
@@ -230,6 +231,7 @@ const typing = (t: EventTarget | null): boolean =>
 export const installInput = (cancel: () => boolean, board?: BoardPort): void => {
   port = board ?? null;
   const env = domEnv(cancel);
+  envNow = env;
   inBattleNow = env.inBattle;
   window.addEventListener('keydown', (e) => {
     if (e.defaultPrevented || typing(e.target)) return;
@@ -258,7 +260,8 @@ export const installInput = (cancel: () => boolean, board?: BoardPort): void => 
   let polling = false;
   let stickAt = 0;
   const poll = (): void => {
-    const pads = [...navigator.getGamepads()].filter((p): p is Gamepad => !!p && p.connected);
+    // 패드가 다 빠졌거나 화면이 가려졌으면 멈춘다 (코드 리뷰 12 — 다시 꽂거나 돌아오면 start)
+    const pads = document.hidden ? [] : [...navigator.getGamepads()].filter((p): p is Gamepad => !!p && p.connected);
     if (!pads.length) return void (polling = false);
     const now = new Set<string>();
     for (const p of pads) {
@@ -303,9 +306,19 @@ export const installInput = (cancel: () => boolean, board?: BoardPort): void => 
     polling = true;
     requestAnimationFrame(poll);
   };
+  const anyPad = (): boolean => [...navigator.getGamepads()].some((p) => p?.connected);
   window.addEventListener('gamepadconnected', start);
-  if ([...navigator.getGamepads()].some((p) => p?.connected)) start();
+  document.addEventListener('visibilitychange', () => !document.hidden && anyPad() && start());
+  if (anyPad()) start();
 };
+
+/** 설치된 입력 길 (hardwareBack이 키보드 뒤로와 같은 길을 쓰게) */
+let envNow: InputEnv | null = null;
+/**
+ * 안드로이드 뒤로 키 (main.ts __hwBack): 키보드 Esc · 패드 B와 같은 길 — 창 · 엿보기 닫기 → 화면의 닫기 · 건너뛰기 단추 → 대국 선택 내려놓기.
+ * 아무것도 안 했으면 false (그때만 「한 번 더 누르면 닫습니다」).
+ */
+export const hardwareBack = (): boolean => !!envNow && dispatch({ t: 'back' }, envNow);
 
 /** 새 대국: 커서를 고른 기물 · 내 킹 자리로 되돌린다 (판이 바뀌었다) */
 export const resetBoardCursor = (): void => {

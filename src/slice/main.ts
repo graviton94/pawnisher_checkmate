@@ -24,7 +24,7 @@ import './film.css';
 import './hud-rarity.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
-import { BAND_ZONE, band, dismissWin, bindPick, bindWinHost, btnHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn } from './uikit';
+import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, btnRowHtml, clearPeeks, closeWin, coverArt, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
 import type { TrackId } from '../data/music';
@@ -53,7 +53,7 @@ import { CHAPTERS, CHALLENGE_START, STORY_COUNT, STORY_LAW, chapterLabel, chapte
 import { promotionScene } from './promotion';
 import { effectHtml, effectNumbers } from './effect-text';
 import { devQuery, isDesktop, quitGame, toggleFullscreen } from './platform';
-import { boardCursorAt, installInput, resetBoardCursor, syncBoardCursor } from './keys';
+import { boardCursorAt, hardwareBack, installInput, resetBoardCursor, syncBoardCursor } from './keys';
 import { bodyRect } from './boardcursor';
 import { pieceImg } from '../ui/sprites';
 import { setBoardTopInset } from '../view/boardInset';
@@ -1069,7 +1069,8 @@ setSaveGuard({
 const BACK_EXIT_MS = 2000;
 let backAt = 0;
 (window as unknown as { __hwBack: () => string }).__hwBack = (): string => {
-  if (dismissWin()) return 'handled';
+  // 키보드 뒤로와 같은 길 (코드 리뷰 3): 창 · 엿보기 · 화면 닫기 단추 · 컷신 건너뛰기 · 고른 카드 · 기물 내려놓기
+  if (hardwareBack()) return 'handled';
   if (Date.now() - backAt < BACK_EXIT_MS) {
     persistNow(); // 닫기 전에 대국 판을 남긴다 (D-529 — 예전엔 두 번 눌러 닫으면 대국이 처음부터였다)
     return 'exit';
