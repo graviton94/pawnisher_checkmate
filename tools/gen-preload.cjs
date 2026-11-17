@@ -8,19 +8,11 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const PUB = path.join(ROOT, 'public');
 /**
- * 안 쓰는 그림 (D-538 · 리뷰 #14 — 코드 · CSS · HTML에서 정적 · 템플릿 참조가 없다고 다시 확인한 것). 파일은 지우지 않고
- * 워밍업 목록에서만 뺀다 — 미리 내려받지 않는다. 다시 쓰게 되면 여기서 지운다.
+ * 미리 받지 않는 그림: 앱(본편)은 부르지 않지만 public/에 남겨 둔 것 — 2.0(legacy) 아이콘 · 작은 기물 m-*(2.0 배경 · 앱 아이콘 도구).
+ * 아예 안 쓰는 그림은 public/ 밖 build-res/unused/로 옮겼다 (D-541 — 그 폴더의 README.md 목록). 다시 쓰게 되면 여기서 지운다.
  */
-const SKIP = new Set([
-  ...['entry-check', 'entry-battle', 'ending-peel', 'returned-box', 'ending-5', 'promote-alarm', 'ending-crew', 'throne-mold', 'gilded-solitude',
-    'ending-1', 'promote-betray', 'shipping-interior', 'shipping-company', 'ending-6', 'ending-3', 'epilogue-hands', 'promote-dark', 'ending-7'].map((n) => `scenes/${n}.png`),
-  ...['badge-enemy', 'badge', 'base-ally', 'base-enemy', 'move-dot', 'select', 'target-kill', 'target'].map((n) => `ui/marks/${n}.png`),
-  ...['button-pressed', 'button', 'card-iron', 'card-paper', 'panel', 'slot'].map((n) => `ui/frames/${n}.png`),
-  ...['lift', 'scrap', 'screwbox', 'shield', 'trap'].map((n) => `ui/props/${n}.png`),
-  ...['bricks', 'oil', 'portal'].map((n) => `ui/icons/${n}.png`),
-]);
-/** 이름 규칙으로 빼는 것: 16px 소품 아이콘 ic-*(코드는 ic32-*만 부른다) · 작은 기물 m-*(옛 2.0 화면 · 앱 아이콘 도구만 쓴다) */
-const skip = (rel) => SKIP.has(rel) || /^ui\/props\/ic-/.test(rel) || /^pieces\/m-/.test(rel);
+const SKIP = new Set(['bricks', 'oil', 'portal'].map((n) => `ui/icons/${n}.png`));
+const skip = (rel) => SKIP.has(rel) || /^pieces\/m-/.test(rel);
 const out = [];
 const walk = (dir) => {
   for (const f of fs.readdirSync(dir)) {
@@ -45,10 +37,9 @@ const walkA = (dir) => {
   for (const f of fs.readdirSync(dir)) {
     const p = path.join(dir, f);
     if (fs.statSync(p).isDirectory()) walkA(p);
-    else if (f.endsWith('.png') && fs.statSync(p).size >= 4096 && !/^ap-(full|empty)\.png$/.test(f)) big.push(path.relative(ASSETS, p).split(path.sep).join('/'));
+    else if (f.endsWith('.png') && fs.statSync(p).size >= 4096) big.push(path.relative(ASSETS, p).split(path.sep).join('/'));
   }
 };
-// ap-full · ap-empty (431×532 옛 태엽 그림, 255KB)는 코드가 부르지 않는다 (D-538) — 미리 받지 않는다
 walkA(ASSETS);
 big.sort();
 fs.writeFileSync(

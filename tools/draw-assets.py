@@ -5,7 +5,7 @@
 출력:
   public/ui/props/  지형 소품 5종 (기물처럼 검정 + 흰 테두리 자동)
   public/ui/hud/    종이 왕관 · 태엽 3종 · 점령 눈금 (D-050: 단순한 덩어리 + 납작한 색 + 강조 1개)
-  public/ui/frames/ UI 9-slice 프레임 6종 (회색 4단계 — 색은 코드가)
+  build-res/unused/public/ui/frames/ UI 9-slice 프레임 6종 (회색 4단계 — 색은 코드가) · 점령 눈금 pip — 게임이 안 써서 앱 밖 (D-541)
 
 사용: python3 -I tools/draw-assets.py
 """
@@ -220,7 +220,8 @@ full = recolor(KEY, {'o': 'c'})  # 가득 찬 태엽: 축이 청록 (내 것 = �
 # (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(full)), 'public/ui/hud/key-full.png')
 # (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(recolor(KEY, {'y': 'l', 'b': 'd', 'o': 'd'}))), 'public/ui/hud/key-spent.png')
 # (태엽 열쇠는 tools/pixel/hud_icons.py가 찍는다 — 2026-11-05 리뉴얼) save(outline(art(full), 'k', 'o'), 'public/ui/hud/key-bonus.png')
-save(PIP, 'public/ui/hud/pip.png')
+# 점령 눈금 · 9-slice 프레임은 게임이 부르지 않는다 (D-541) — 앱에 싣지 않게 build-res/unused/로 찍는다
+save(PIP, 'build-res/unused/public/ui/hud/pip.png')
 for kind in ('panel', 'button', 'button-pressed', 'card-iron', 'card-paper', 'slot'):
-    save(frame(kind), f'public/ui/frames/{kind}.png')
+    save(frame(kind), f'build-res/unused/public/ui/frames/{kind}.png')
 print('ok')

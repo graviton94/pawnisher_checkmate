@@ -4258,3 +4258,12 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **시안 페이지**: `tools/audio/proposal_page.py`가 소리를 모두 품은 HTML 한 장을 만든다(본 루프 · 변주 · 이음매 듣기 · 효과음 묶음별 · 출처 · 결정할 것). 사용자가 방향(하나 또는 장면별 섞기)을 고르면 그 곡을 `src/data/music.ts` 트랙 이름(menu · act1~3 · boss · final)에 끼운다.
 - **검증**: `tools/qa/sfx-check.cjs`(`node tools/slice-observe.cjs sfx`) 915×412 — 53파일 받음 · 404 없음, 지도 · 대국(봇 6수) · 태엽 환급 · 반장 등장에서 소리 재생 기록, 설정 효과음 한 칸 내림 0.5 → 0.429, 끔 0 · 끈 뒤 재생 0. 헤드리스라 귀로 듣는 확인은 사용자 몫.
 
+
+### D-541 — 안 쓰는 그림은 앱에 싣지 않는다: `build-res/unused/`로 옮김 (2026-11-17 사용자 결정)
+
+- **왜**: 게임이 부르지 않는 그림도 `public/`에 있으면 웹 빌드 · APK · PC 묶음에 그대로 실린다. 사용자: 저장소에는 남기되 앱에는 싣지 않는다 — 되살릴 수 있게 목록을 남긴다.
+- **무엇**: 101개(2.92 MB)를 `git mv`로 `build-res/unused/<원래 경로>`에 옮겼다 (기록 유지). 장면 20장(act-0 · entry-check · entry-battle · 옛 13단 엔딩 ending-1/3/5/6/7 · ending-peel · ending-crew · 옛 컷신 · 옛 승급 시안 · boss-gilded-4), `src/assets/ui/ap-full · ap-empty`(255 KB), `ui/marks` 8 · `ui/frames` 6 · `ui/props/ic-*` 24도트 24 · 2.0 지형 소품 5, `pieces/m-*` 10 · `l-boss-*` 14 · `l-giant*` 3 · 적 이형 큰 그림 `l-<이형>1` 5, `ui/board/target · target-kill`, `ui/hud/pip · gears-spin`(옛 사본). 파일마다 크기 · 까닭 · 되살리는 법 = `build-res/unused/README.md`.
+- **다시 찍어도 돌아오지 않게**: 그림을 찍는 도구가 안 쓰는 것을 `public/`에 내지 않는다 — `maker.py export`(m-*는 2.0 배경 m-P0 · 앱 아이콘 도구 m-K0만, 큰 그림 `l-`은 바탕 12종 + 흰 이형만), `sheet-slice.py`(32도트만 public, 다른 크기는 unused), `draw-board.py`(target · target-kill) · `draw-assets.py`(frames · pip)는 `build-res/unused/`로 찍는다. 다시 돌려 `public/`이 바이트까지 같은 것을 확인.
+- **남긴 것**: `boss-gilded-1~3`은 `main.ts gildedArt()`가 왕관 · 도전 승급에 따라 이름을 쪼개 지어 부른다(정적 검색에 안 걸리고 실제 완주 점검에서 잡힘 — 그대로 둔다). 2.0만 쓰는 `logo.png` · `ui/icons` 일부 · 도구 원본(`ui/hud/key-*`) · 앱 아이콘 파일은 그대로. 미리 받기 목록(`gen-preload.cjs` SKIP)은 남은 것만 남겼다(D-538의 「파일은 그대로 두고 목록에서만 뺌」을 대신한다). `warmup.ts`의 옛 UNUSED 거르기는 지웠다.
+- **확인 방법**: 미리 받기를 끈 빌드로 전수 점검 · 완주 점검을 돌려 요청된 그림을 모으고(옮긴 것 요청 0), 출시 · 검수 빌드 묶음에서 이름 · 이름 짓는 템플릿을 대조했다. `tools/` · `docs/`에서만 이름을 적는 것(옛 QA 도구 cinematics · campaign-flow · illustrations · asset-delivery)은 쓰는 것으로 치지 않았다.
+- **크기** (출시 빌드 `npm run build:release`): dist 19.58 MB → 16.91 MB (946 → 847 파일), APK에 들어가는 `public/` 15.25 MB → 12.58 MB.

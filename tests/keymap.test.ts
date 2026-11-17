@@ -105,11 +105,12 @@ describe('방향 초점', () => {
 });
 
 describe('워밍업 두 묶음 (D-531)', () => {
-  it('타이틀 전에는 타이틀 그림만, 기물 · 칸 · UI는 판 묶음, 장면은 프롤로그 · 1막만, 안 쓰는 장면은 빼고', () => {
+  it('타이틀 전에는 타이틀 그림만, 기물 · 칸 · UI는 판 묶음, 장면은 프롤로그 · 1막만, 안 쓰는 그림은 목록에 없다', () => {
     const { title, first, later } = splitPreload(PRELOAD);
-    const unused = ['scenes/act-0.png', 'scenes/entry-check.png', 'scenes/entry-battle.png'];
-    expect(title.length + first.length + later.length).toBe(PRELOAD.length - unused.filter((u) => PRELOAD.includes(u)).length);
-    for (const u of unused) expect([...title, ...first, ...later]).not.toContain(u);
+    // 안 쓰는 그림은 public 밖(build-res/unused/)으로 옮겼다 (D-541) — 목록에 없어야 앱에도 실리지 않는다
+    const unused = ['scenes/act-0.png', 'scenes/entry-check.png', 'scenes/entry-battle.png', 'scenes/ending-peel.png', 'pieces/m-K0.png', 'ui/marks/select.png'];
+    for (const u of unused) expect(PRELOAD).not.toContain(u);
+    expect(title.length + first.length + later.length).toBe(PRELOAD.length);
     expect(title).toContain('scenes/prologue-00.png');
     expect(title).toContain('ui/title-logo.png');
     expect(title.length).toBeLessThan(12);

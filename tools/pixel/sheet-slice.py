@@ -5,7 +5,7 @@
   ② N×N 격자로 다시 도트화 — 칸마다 바탕이 아닌 픽셀의 중앙값 색 (안티에일리어싱 · 압축 얼룩 제거)
   ③ 우리 팔레트로 맞추기 — 두 이웃 색 사이 중간 톤은 4×4 베이어 디더 (부드러운 음영 → 도트 디더)
   ④ 1칸 어두운 테 (#16141C) — 기물 · 아이콘과 같은 문법
-출력: public/ui/props/ic-<이름>.png (N도트) + build-res/ICON-01-preview.png (확인용, 4배)
+출력: public/ui/props/ic32-<이름>.png (N=32 — 게임이 부르는 것) · 그 밖의 N은 build-res/unused/public/ui/props/ic[N]-<이름>.png (D-541) + build-res/ICON-01-preview.png (확인용, 4배)
 사용: python3 -I tools/pixel/sheet-slice.py [N=24]
 """
 import os
@@ -177,7 +177,10 @@ def main():
     tiles = []
     for ci, name in enumerate(NAMES):
         t = slice_cell(im, ci, n)
-        t.save(os.path.join(OUT, f'ic{"" if n == 24 else n}-{name}.png'))
+        # 게임(사건 무대 evstage)은 32도트 ic32-*만 부른다 — 다른 크기는 앱에 싣지 않게 build-res/unused/로 (D-541)
+        out = OUT if n == 32 else os.path.join(ROOT, 'build-res', 'unused', 'public', 'ui', 'props')
+        os.makedirs(out, exist_ok=True)
+        t.save(os.path.join(out, f'ic{"" if n == 24 else n}-{name}.png'))
         tiles.append(t)
     k = 4
     sheet = Image.new('RGBA', (COLS * (n * k + 16) + 16, ROWS * (n * k + 16) + 16), (20, 18, 26, 255))

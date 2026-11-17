@@ -20,8 +20,6 @@ const FONTS = ['12px Galmuri11', '700 12px Galmuri11', '24px Galmuri11', '700 24
 const TITLE = /^(ui\/title-|ui\/hud\/load-|scenes\/prologue-00\.)/;
 /** 타이틀 · 1막까지 쓰는 장면 그림 (프롤로그 · 1막 표지 · 사건 · 상점 바탕) */
 const FIRST_SCENES = /^scenes\/(prologue-|act-1\.|bg-|departure-|shipping-|casting-floor)/;
-/** 코드가 부르지 않는 장면 (act-0 · entry-check · entry-battle — 코드 리뷰 5) — 미리 받지 않는다 */
-const UNUSED = /^scenes\/(act-0|entry-check|entry-battle)\./;
 
 /**
  * public 그림 목록을 「타이틀 전」 · 「판」 · 「나중」으로 나눈다. 기물 · 칸 · UI · 아이콘은 판 묶음, 안내서 그림(guide/)은 나중.
@@ -32,7 +30,6 @@ export const splitPreload = (list: readonly string[]): { title: string[]; first:
   const first: string[] = [];
   const later: string[] = [];
   for (const p of list) {
-    if (UNUSED.test(p)) continue;
     if (TITLE.test(p)) title.push(p);
     else ((p.startsWith('scenes/') && !FIRST_SCENES.test(p)) || p.startsWith('guide/') ? later : first).push(p);
   }

@@ -4,6 +4,8 @@
 
 사용: python3 -I tools/draw-board.py
 """
+import os
+
 from PIL import Image
 
 OUT = 'public/ui/board'
@@ -399,8 +401,10 @@ range_frame(True).save(f'{OUT}/range.png')
 range_frame(False).save(f'{OUT}/range-enemy.png')
 select().save(f'{OUT}/select.png')
 move_dot().save(f'{OUT}/move-dot.png')
-target(False).save(f'{OUT}/target.png')
-target(True).save(f'{OUT}/target-kill.png')
+# target · target-kill은 판이 부르지 않는다 (D-541) — 앱에 싣지 않게 build-res/unused/로 찍는다
+os.makedirs(f'build-res/unused/{OUT}', exist_ok=True)
+target(False).save(f'build-res/unused/{OUT}/target.png')
+target(True).save(f'build-res/unused/{OUT}/target-kill.png')
 target(False, False).save(f'{OUT}/target-enemy.png')
 for n in range(0, 10):
     badge(True, n, cost=True).save(f'{OUT}/badge-c{n}.png')
