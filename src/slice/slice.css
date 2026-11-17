@@ -1374,11 +1374,17 @@ body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px
 .btn.brass:disabled, .btn.brass[aria-disabled="true"] { color: #3a2a08; }
 
 /* D-319 즉시 카드(박자 · 불씨) 연출: 움츠림 → 튀어 오름 + 금빛 테 → 도트 흩어짐 · 새로 뽑힌 카드는 왼쪽(덱)에서 날아든다 */
-.cast3 { animation: cast3 420ms both; box-shadow: 0 0 0 3px #f4d27a, 0 0 0 5px #0b0b0e !important; }
-@keyframes cast3 { 0% { transform: none; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 30% { transform: translateY(4px) scale(1.04, 0.92); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 70% { transform: translateY(-26px) scale(1.12); } 100% { transform: translateY(-22px) scale(1.08); } }
-#hand .drawn3 { animation: drawn3 380ms calc(180ms + var(--k, 0) * 90ms) both; }
-@keyframes drawn3 { 0% { transform: translateX(-120px) rotate(-10deg) scale(0.6); visibility: hidden; animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 1% { visibility: visible; } 60% { transform: translateX(6px) rotate(2deg) scale(1.06); animation-timing-function: cubic-bezier(0.1, 0.9, 0.2, 1); } 100% { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .cast3, #hand .drawn3 { animation: none; } }
+/* 카드 사용 연출 층 (D-548, src/slice/cardfx.ts): 화면 전체 투명 캔버스 · 기기 px 1:1 · 누르기 통과 · 연출이 없으면 숨김.
+   옛 .cast3(손패 카드 복제를 body에 띄움)는 #hand > .hc 테두리 그림을 잃고 기본 단추(흰 바탕)로 떠서 지웠다. */
+.cardfx { position: fixed; left: 0; top: 0; z-index: 58; pointer-events: none; image-rendering: pixelated; }
+.cardfx[hidden] { display: none; }
+/* 덱에서 날아온 카드가 자리에 닿음: 1도트 눌림 → 제자리 (계단) */
+#hand .land3 { animation: land3 160ms steps(1, end) both; }
+@keyframes land3 { 0% { transform: translateY(calc(var(--px, 2px) * 1)) scaleY(0.94); } 50% { transform: translateY(calc(var(--px, 2px) * -1)); } 100% { transform: none; } }
+/* 연쇄 줄에 불씨가 닿음: 1도트 내려앉음 → 2도트 튐 → 제자리 (계단) */
+.chain-now.pop3 { animation: pop3 240ms steps(1, end) both; }
+@keyframes pop3 { 0% { transform: translateY(calc(var(--px, 2px) * 1)); } 33% { transform: translateY(calc(var(--px, 2px) * -2)); } 66% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { #hand .land3, .chain-now.pop3 { animation: none; } }
 
 /* D-319 부품 팝업: 실제 부품 카드 모양 (누른 칩 아래) */
 .part-pop { position: fixed; z-index: 70; pointer-events: none; }

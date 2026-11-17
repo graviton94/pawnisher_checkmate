@@ -37,6 +37,8 @@ import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
 /** 동작 줄이기 */
 const calmNow = (): boolean => calmMotion();
+import * as cardFx from './cardfx';
+import type { Cell as CardCell, Pt as CardPt } from './cardfx';
 import { installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
 import { arcFly, flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
@@ -1294,17 +1296,159 @@ const blockPop = (pos: Pos): void => {
   window.setTimeout(() => pxOut(el, () => el.remove(), 220), 900);
   void blockTold; // 길막기는 판 위 「막음!」으로만 (D-385)
 };
-/** 즉시 카드 연출: 손패의 그 카드 복제가 움츠렸다(예비) 튀어 오르며 금빛 테로 터지고 도트로 흩어진다 */
-const castFx = (src: HTMLElement | null): void => {
-  if (!src || calmNow()) return;
-  const r = src.getBoundingClientRect();
-  const el = src.cloneNode(true) as HTMLElement;
-  el.className = `${src.className} cast3`;
-  el.removeAttribute('data-card');
-  Object.assign(el.style, { position: 'fixed', left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, margin: '0', zIndex: '60', pointerEvents: 'none' });
-  document.body.appendChild(el);
-  window.setTimeout(() => sparksAt(r.left + r.width / 2, r.top - 10, 12, 50), 220);
-  window.setTimeout(() => pxOut(el, () => el.remove(), 220), 420);
+/**
+ * 카드 사용 연출 (D-548): 손패 카드의 아이콘 패가 대상으로 날아가 계열 FX (src/slice/cardfx.ts).
+ * 옛 castFx는 손패 카드(<button class="hc">)를 body에 복제해 띄웠는데, 카드 테 그림이 `#hand > .hc`에만 걸려 있어
+ * 복제본이 기본 단추(흰 바탕 · 회색 테)로 떴다 — 사용자가 본 「흰 배경이 생겼다 사라짐」의 원인. 복제를 하지 않는다.
+ */
+interface CardSrc { at: CardPt; icon: string }
+/** 카드 아이콘 열쇠: 기물 없는 카드 · 제 아이콘이 있는 카드는 c.<id>, 기물 카드는 계열 아이콘 (없으면 카드 뒷면) */
+const cardIconKey = (id: CommandId): string => {
+  const c = COMMANDS[id];
+  const base = baseOf(id);
+  if (c.who === 'any' || OWN_ICON.has(base)) return `c.${base}`;
+  return c.kind === 'shield' || c.kind === 'swap' ? 'c.plate' : c.kind === 'repair' ? 'c.repair' : c.kind === 'gambit' ? 'c.spark' : 'c.order';
+};
+/** 손패 i번 카드의 그림 칸 가운데 — 엔진이 손패를 바꾸기 전에 잰다 */
+const cardSrc = (i: number): CardSrc | null => {
+  const el = document.querySelector<HTMLElement>(`#hand [data-card="${i}"]`);
+  const id = b.hand[i];
+  if (!el || !id) return null;
+  const a = (el.querySelector('.art') ?? el).getBoundingClientRect();
+  return { at: { x: a.left + a.width / 2, y: a.top + a.height / 2 }, icon: `ui/icons16/${cardIconKey(id)}@16.png` };
+};
+const centerOf = (el: Element | null): CardPt | null => {
+  if (!el || !el.getClientRects().length) return null;
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+};
+/** 판 칸 한 변(CSS px) — 카드 FX 도트 크기를 판 도트에 맞춘다 */
+const cellPx = (): number => {
+  const a = renderer.screenOf({ x: 0, y: 0 }), c = renderer.screenOf({ x: 1, y: 0 });
+  return Math.abs(c.x - a.x) || 40;
+};
+const cellAt = (pos: Pos): CardCell => ({ c: renderer.screenOf(pos), size: cellPx() });
+/** 칸 머리 위 (카드 패가 내려앉는 곳 — 기물을 덮지 않는다) */
+const headOf = (pos: Pos): CardPt => { const c = renderer.screenOf(pos); return { x: c.x, y: c.y - cellPx() * 0.85 }; };
+/** 덱에서 새로 들어온 손패 카드들 (refresh 뒤) */
+const freshCards = (gained: number): HTMLElement[] => (gained > 0 ? [...document.querySelectorAll<HTMLElement>('#hand [data-card]')].slice(-gained) : []);
+const dealFresh = (gained: number): void => {
+  const deckAt = centerOf(document.querySelector('[data-deck]'));
+  if (deckAt) cardFx.deal(deckAt, freshCards(gained));
+  if (gained > 0) window.setTimeout(() => sfx('card'), 160);
+};
+/** 즉시 카드(뽑기 · 점화)의 연출 — 패가 버림 더미 · 연쇄 줄 · 태엽 계기로 가고, 새 카드는 덱에서 날아든다 */
+const instantFx = (id: CommandId, src: CardSrc | null, gained: number, ap: number): void => {
+  const c = COMMANDS[id];
+  cardFx.setCell(cellPx());
+  dealFresh(gained);
+  if (!src) return;
+  if (c.kind === 'spark') {
+    const chain = document.getElementById('chain-now');
+    const to = centerOf(chain) ?? src.at;
+    void cardFx.fly(src.at, to, src.icon, 'ember').then(() => {
+      cardFx.embers(to);
+      cardFx.number({ x: to.x, y: to.y - 6 }, '+1', 'ember');
+      if (chain) replay(chain, 'pop3');
+    });
+    return;
+  }
+  if (ap > 0) {
+    const vials = $('vials');
+    const r = vials.getBoundingClientRect();
+    const to = { x: r.right - 18, y: r.top + r.height / 2 };
+    void cardFx.fly(src.at, to, src.icon).then(() => {
+      cardFx.spring({ x: to.x, y: r.bottom - 4 });
+      cardFx.number(to, `+${ap}`, 'gold');
+      vials.classList.remove('regain');
+      void vials.offsetWidth;
+      vials.classList.add('regain');
+      sfx('coin', 6);
+    });
+    return;
+  }
+  const pile = centerOf(document.querySelector('[data-discard]'));
+  const deckAt = centerOf(document.querySelector('[data-deck]'));
+  void cardFx.fly(src.at, pile ?? src.at, src.icon);
+  if (deckAt && gained > 0) cardFx.number({ x: deckAt.x, y: deckAt.y - 14 }, `+${gained}`, 'gold');
+};
+/**
+ * 판 위 카드의 연출 (run): 엔진이 푼 뒤 · 판 연출 전에 패를 대상까지 날린다. 돌려주는 함수는 판 연출이 끝난 뒤 부른다(캐슬링 죔쇠처럼 자리를 옮긴 뒤 붙는 것).
+ * 지휘(아무 기물로) 카드: 킹 머리 위 깃발이 그 기물로 날아가 꽂힌 뒤 기물이 움직인다.
+ */
+const playFx = async (id: CommandId, src: CardSrc | null, before: BattleState, events: BattleEvent[], pieceId?: number): Promise<(() => void) | null> => {
+  const c = COMMANDS[id];
+  if (calmNow() && c.kind !== 'shield' && c.kind !== 'repair' && c.kind !== 'swap' && !(c.kind === 'spend' && c.spend === 'shield')) return null;
+  cardFx.setCell(cellPx());
+  const was = (pid: number | undefined) => (pid === undefined ? undefined : before.pieces.find((p) => p.id === pid));
+  const myKing = before.pieces.find((p) => p.side === 0 && p.type === 'K' && p.body === undefined);
+  const shields = (skip?: number) => events.filter((e): e is Extract<BattleEvent, { type: 'shield' }> => e.type === 'shield' && e.pieceId !== skip);
+  const plateNow = (pid: number, delay = 0) => { const p = findPiece(b.s, pid) ?? was(pid); if (p) cardFx.plate(cellAt(p), delay); };
+  if (c.kind === 'move') {
+    const mover = was(pieceId);
+    if (c.who !== 'any' || !mover || !myKing || mover.id === myKing.id) return null;
+    // 패는 날리지 않는다 — 깃발 하나가 「누가 누구를 부리나」를 말하고, 공격 1초 예산(D-538)을 지킨다
+    await cardFx.flag(cellAt(myKing), cellAt(mover));
+    return null;
+  }
+  if (!src) return null;
+  if (c.kind === 'shield' || c.kind === 'repair') {
+    const p = was(pieceId);
+    if (!p) return null;
+    await cardFx.fly(src.at, headOf(p), src.icon);
+    if (c.kind === 'shield') { cardFx.plate(cellAt(p)); shields(p.id).forEach((e, k) => plateNow(e.pieceId, 90 * (k + 1))); }
+    else cardFx.oil(cellAt(p));
+    return null;
+  }
+  if (c.kind === 'swap') {
+    if (myKing) await cardFx.fly(src.at, headOf(myKing), src.icon);
+    return () => shields().forEach((e, k) => plateNow(e.pieceId, 90 * k));
+  }
+  if (c.kind === 'spend') {
+    if (c.spend === 'shield' && myKing) {
+      await cardFx.fly(src.at, headOf(myKing), src.icon, 'ember');
+      cardFx.plate(cellAt(myKing));
+    } else if (c.spend === 'blast') {
+      const g = gridRect();
+      await cardFx.fly(src.at, g ? { x: g.left + g.width / 2, y: g.top + g.height / 2 } : src.at, src.icon, 'ember');
+    } else {
+      const vials = $('vials');
+      const r = vials.getBoundingClientRect();
+      const to = { x: r.right - 18, y: r.top + r.height / 2 };
+      await cardFx.fly(src.at, to, src.icon, 'ember');
+      cardFx.spring({ x: to.x, y: r.bottom - 4 });
+    }
+    return null;
+  }
+  if (c.kind === 'draft') {
+    const e = events.find((x) => x.type === 'respawn');
+    if (e && e.type === 'respawn' && e.pos) await cardFx.fly(src.at, headOf(e.pos), src.icon);
+    return null;
+  }
+  if (c.kind === 'gambit') {
+    const e = events[0];
+    const v = e && e.type === 'attack' ? was(e.hits[0]?.targetId) : undefined;
+    if (v) {
+      await cardFx.fly(src.at, headOf(v), src.icon, 'ember');
+      cardFx.embers(renderer.screenOf(v), 'blood');
+    }
+    return null;
+  }
+  if (c.kind === 'melt') {
+    const p = was(pieceId);
+    const k = before.pieces.find((q) => q.side === 1 && q.type === 'K' && q.body === undefined);
+    if (p && k) {
+      await cardFx.fly(src.at, headOf(p), src.icon, 'ember');
+      await cardFx.molten(renderer.screenOf(p), renderer.screenOf(k));
+      cardFx.embers(renderer.screenOf(k));
+    }
+    return null;
+  }
+  if (c.kind === 'march') {
+    const g = gridRect();
+    if (g) await cardFx.fly(src.at, { x: g.left + g.width / 2, y: g.top + g.height - cellPx() / 2 }, src.icon);
+  }
+  return null;
 };
 const chainPop = (kills: number): void => {
   const el = document.createElement('div');
@@ -1333,20 +1477,16 @@ const pickCard = (i: number): void => {
     if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'cast', c.kind === 'spark' ? b.kills + 2 : 0);
-      // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드가 움츠렸다 튀어 오르며 터지고 새로 뽑힌 카드는 덱에서 날아든다
-      castFx(document.querySelector<HTMLElement>(`#hand [data-card="${i}"]`));
+      // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드 패가 연쇄 줄 · 태엽 계기 · 버림 더미로 날고 새 카드는 덱에서 날아든다 (D-548)
+      const src = cardSrc(i);
+      const id = b.hand[i];
       const n0 = b.hand.length;
+      const ap0 = b.ap - costOf(b, i);
       playCard(b, i);
       selCard = selPiece = openCard = null;
-      if (c.kind === 'spark') chainPop(b.kills);
       prevKills = b.kills;
       refresh();
-      const gained = b.hand.length - (n0 - 1);
-      if (gained > 0) {
-        const cards = [...document.querySelectorAll<HTMLElement>('#hand [data-card]')].slice(-gained);
-        cards.forEach((el, k) => { el.style.setProperty('--k', String(k)); replay(el, 'drawn3'); });
-        window.setTimeout(() => sfx('card'), 160);
-      }
+      instantFx(id, src, b.hand.length - (n0 - 1), Math.max(0, b.ap - ap0));
       return;
     }
     return void run(i);
@@ -1418,6 +1558,9 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const ev0 = (b.evaded ?? []).length;
   // 길막기 (테스터: 「적이 갈 칸을 먼저 차지해 공격을 막는 것도 이 게임의 요소로 느껴지게」): 적이 가려던 칸을 우리 기물이 차지하면 알린다
   const aimed = b.s.rules.capture ? [] : liveIntents(b).map((it) => `${it.to.x},${it.to.y}`);
+  // 카드 연출 출발점 · 손패 장수 (D-548) — 엔진이 손패를 바꾸기 전에
+  const src = cardSrc(i);
+  const hand0 = b.hand.length;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
   // 낸 카드는 엔진이 이미 풀었다 — 연출 전에 남긴다 (코드 리뷰 4)
@@ -1440,7 +1583,10 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   apHold = gain ? b.ap - gain : null;
   refresh();
   showBefore(r.before);
+  dealFresh(b.hand.length - (hand0 - 1));
+  const after = await playFx(cardId, src, r.before, r.events, pieceId);
   await renderer.play(r.before, r.events);
+  after?.();
   if (b.boss && r.events.some((e) => e.type === 'blast' && e.fx === 'thorns')) taunt('sig');
   // 판 위 목소리 (P-B D-490): 적 킹이 3할 아래 → beg · 킹이 맞음 → danger · 처음 맞음 → firstHit · 하나 잃음 → lost(적 킹 또는 곁의 적 기물) · 우리 처치 → 분대원 한마디
   {
