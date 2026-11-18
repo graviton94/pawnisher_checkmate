@@ -1,7 +1,9 @@
 /**
  * 비주얼 노벨 연출 층 (D-554, 소유자: 「장면 · 대사를 비주얼 노벨처럼 — 그림이 너무 정적이다」). 새 그림 없이(D-386)
- * 이미 있는 장면 그림 · 기물 도트(public/pieces) · 화면 부품만 쓴다. 이 파일은 데이터만 — 재생은 slice/vn.ts · opening.playCuts.
- *  - 서 있는 배우: 말하는 기물의 72칸 도트가 정수배로 서고(감속 곡선 · 정수 기기 픽셀), 1도트 숨 고르기, 말하지 않는 배우는 50% 디더 그늘.
+ * 이미 있는 장면 그림 · 화면 부품만 쓴다. 이 파일은 데이터만 — 재생은 slice/vn.ts · opening.playCuts.
+ *  - 서 있는 배우 (D-580 — D-572 「일러스트에 판 도트 말을 붙이지 않는다」): 그림이 있는 컷에는 절대 세우지 않는다 — 인물은 그림이 그림 화풍대로
+ *    이미 그려 왔다. 화자는 명패(이름 · 그림에서 오린 얼굴)로 드러난다. 배우 길(72칸 도트 정수배 · 디더 그늘)은 그림 없는 컷이 VN_SCENE에서
+ *    noCast: false로 따로 열 때만 남는다 — 지금 연 컷은 없다(먹 무대 D-579도 도트 말 없이 추상으로).
  *  - 장면 분위기: 컷(slug)마다 입자(증기 · 불똥 · 먼지 · 재) · 등잔 깜빡 · 켄 번스 방향 · 원근(입자 층이 카메라보다 빨리 흐름).
  *  - 줄 단위: script.ts의 Line.shot(카메라) · fx(흔들림 · 번쩍 · 경보)는 그대로, 여기서 더하는 것은 줄 번호별 덧연출(stage).
  * 종이왕은 K0 정본 도트만 (D-424 — 폰 + 옛 왕관 합성 금지).
@@ -12,7 +14,7 @@ import type { PieceType } from '../engine';
 export interface CastSprite { t: PieceType; side: 0 | 1 }
 
 /**
- * 화자 → 서 있는 도트. 여기 없는 이름은 컷신 faces(출하 분대원 { t, side })에서 찾고, 그래도 없으면 배우를 세우지 않는다(명패만).
+ * 화자 → 서 있는 도트 (그림 없는 컷이 배우를 열 때만 — castOn). 여기 없는 이름은 컷신 faces(출하 분대원 { t, side })에서 찾고, 그래도 없으면 배우를 세우지 않는다(명패만).
  * 아홉째 폰은 종이 왕관을 접기 전이라 맨 폰(P0), 그 뒤는 종이왕(K0 정본). 반장 · 도금왕은 검은 세트의 킹 도트.
  */
 export const VN_CAST: Record<string, CastSprite> = {
@@ -36,7 +38,7 @@ export interface VnScene {
   lamp?: boolean;
   /** 켄 번스 방향 (초점 변화 부호, 생략하면 여유가 큰 쪽) */
   drift?: { x: number; y: number };
-  /** 배우를 세우지 않는 컷 (인물이 그림 안에 크게 그려진 컷 — 겹쳐 보이지 않게) */
+  /** 배우를 세우지 않는다 — 기본(VN_DEFAULT)이 true (D-580). false = 그림 없는 컷에서만 배우를 연다 (그림이 있으면 무시 — castOn) */
   noCast?: boolean;
 }
 
@@ -51,13 +53,11 @@ export const VN_SCENE: Record<string, VnScene> = {
   '잘못 놓인 아홉 번째 폰': { air: 'dust' },
   '불량 딱지': { air: 'sparks', lamp: true },
   '금단의 소문': { air: 'dust', drift: { x: 0, y: -1 } },
-  '상자 안의 다툼': { air: 'dust', lamp: true, noCast: false },
-  // D-578: VA-04 · VA-05 재발주본은 종이왕 · 박차를 그림 안에 크게 그려 왔다 — 판 도트 배우를 겹쳐 세우지 않는다(D-572)
-  '종이 왕관': { air: 'dust', noCast: true },
-  '부관 박차': { air: 'steam', noCast: true },
+  '상자 안의 다툼': { air: 'dust', lamp: true },
+  '종이 왕관': { air: 'dust' },
+  '부관 박차': { air: 'steam' },
   '검은 세트와 먼 왕좌': { air: 'steam', drift: { x: 0, y: -1 } },
-  // D-581: VA-06 재발주본은 금왕관 폰 · 잠기는 동료를 그림 안에 그려 왔다 — 주조기 · 분대원 대사에 판 도트 배우를 세우지 않는다(D-572)
-  '용해 주조': { air: 'embers', noCast: true },
+  '용해 주조': { air: 'embers' },
   '금빛 거푸집': { air: 'embers', lamp: true },
   '새 도금왕의 왕좌': { air: 'sparks' },
   '상자째 용광로로': { air: 'embers' },
@@ -68,7 +68,12 @@ export const VN_SCENE: Record<string, VnScene> = {
   '하얀 땅': { air: 'ash' },
   '첫걸음': { air: 'dust', drift: { x: 1, y: 0 } },
 };
-export const VN_DEFAULT: VnScene = { air: 'dust' };
+export const VN_DEFAULT: VnScene = { air: 'dust', noCast: true };
+/**
+ * 이 컷에 배우를 세우는가 (D-580 · D-572): 그림이 있으면 절대 아니다 — 판 도트 말을 일러스트 위에 겹치지 않는다.
+ * 그림이 없어도 VN_SCENE이 noCast: false로 연 컷만 (끝 정적 · 먹 무대 · 자리 그림은 부르는 쪽이 따로 막는다).
+ */
+export const castOn = (slug: string | undefined, art: boolean): boolean => !art && (slug ? VN_SCENE[slug]?.noCast === false : false);
 
 /** 서 있는 배우 수치 (기기 픽셀 · ms) */
 export const VN_ACTOR = {
