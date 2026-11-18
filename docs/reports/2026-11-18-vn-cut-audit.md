@@ -153,14 +153,25 @@ ART-ISSUE 중 새 발주는 VA-01 ~ 09. companion-rest · companion-crossroad ·
 | C-8 | 왕위 결정 → END-K / END-T | gilded-fallen → crown-dais / end-t-throw | **금왕관**: 바닥의 열린 관(청록 보석 · 십자가 없음) → 단상 위 닫힌 십자가 관. 승급대도 gilded-fallen에 없다 | VA-08 (또는 글 T-4) |
 | C-9 | 왕위 결정 → 돌아봄 | gilded-fallen → promote-crew | 장소: 붉은 융단 홀 → 쇠 계단 · 황동 난간 / promote-crew의 박차가 둘째 ~ 넷째 왕관에도 서 있다 | §5 (다음 발주 후보) |
 | C-10 | END-K | crown-dais → casting-floor → gold-cast | 머리의 관: 금왕관 → **종이 왕관** → 금왕관 | VA-06 |
-| C-11 | END-K | crown-N-throne → end-k-gild | 다 굳은 금 킹(왕좌) 다음에 금을 붓는 컷 — 시간이 거꾸로 | 순서 토의 S-1 |
+| C-11 | END-K | crown-N-throne → end-k-gild | 다 굳은 금 킹(왕좌) 다음에 금을 붓는 컷 — 시간이 거꾸로 | S-1 **적용 (D-567)** — end-k-gild 뒤로 |
 | C-12 | END-T | crown-gears → end-t-silence | 톱니에 박힌 관 → 바닥에 버려진 관 | 그대로(멈춘 톱니가 뱉어 냈다고 읽힌다) |
 | C-13 | END-F | end-fail → end-f-unwind | 굴러떨어진 종이 왕관이 다시 머리에 | §5 |
 | C-14 | 프롤로그 ↔ END-F | prologue-02 ↔ end-f-box | 같은 세트의 상자가 쇠 칸막이 → 나무 상자 | VA-09 |
 | C-15 | CO-2 · END-T | companion-crossroad · end-t-throw | 동료가 **검은 실루엣**으로 — 흑백 진영 문법(흰 = 우리)과 어긋남 | 사내(crossroad) · end-t-throw는 작아서 그대로 |
 | C-16 | 도금왕 등장 | boss-gilded → boss-gilded-1 ~ 3 | 한 벌로 잘 이어진다(흰 몸이 점점 드러남) · 첫째 END-K crown-1-throne의 금 킹과도 결이 같다 | 문제 없음 |
 
-## 4. 글 토의 목록 (고치지 않았다 — 사장님과 의논)
+## 4. 글 토의 목록 (D-567 — 사장님 승인 · 적용)
+
+> **적용 결과 (D-567)**: 바이블 → 게임 글 → 스토리보드 순으로 고쳤다.
+> - **T-1 적용** — 「한쪽 다리에」 → 「목덜미에」 (바이블 PRO-07-1 · `PROLOGUE` 박차 컷)
+> - **T-2 적용** — 「작고 볼품없는 폰」 → 「작고 볼품없는 킹」 (BOS-1-격파-1 · `BOSS_STORY.plate.fall`). GLD-2단계-4 「그 작고 볼품없는 폰의 몸」은 종이왕을 가리켜 그대로 둔다.
+> - **T-3 적용** — 「통제실 가장 높은 곳, 황금빛 그림자 속에 도금왕이 우뚝 서 있었다.」 / 「통제실 꼭대기엔 지난 왕관을 쓰고 솟구쳤던 종이왕이 차가운 금빛 갑옷을 두른 채 버티고 서서 내려다보고 있었다.」
+> - **T-4 글 그대로** — VA-08(승급대 위 십자가 금관)을 발주했다.
+> - **T-5 적용** — 「또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.」 (VA-07에 K0 정본을 얹는다)
+> - **T-6 적용** — 「녹슨 왕관」 → 「빛바랜 금왕관」: 사건 이름 「빛바랜 금왕관 제단」(`events.ts` title · `event-talk.ts` npc · 바이블 EVT-25), 첫 서술, 결과 글 둘(`events.ts` · `event-outcome.ts`), 대사의 「왕관의 녹 아래」 → 「빛바랜 금박 아래」, 떠날 때 「(왕관은 빛바랜 채 남는다.)」. 음악 곡명 「D 녹슨 왕관」은 사건과 상관없어 두었다.
+> - **S-1 적용** — 안 ①: gold-cast → end-k-gild → crown-N-throne(독백) → law-plate. 넷째 왕관(왕좌 그림 없음)은 여전히 gold-cast에 독백. 바이블 END-K 표도 3-3을 3-2 앞으로 옮기고 재생 순서 줄을 달았다.
+> - PRO-03 글 그대로 — 떨어지는 순간은 VA-01이 오면 그림으로 보인다.
+
 
 | # | 줄 ID · 자리 | 지금 글 | 문제 | 바꿀 안 |
 |---|---|---|---|---|

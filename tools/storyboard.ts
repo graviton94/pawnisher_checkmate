@@ -70,7 +70,7 @@ const table = (prefix: string, lines: Line[], from = 0, ids: Record<number, stri
   lines.forEach((l, i) => p(`| ${ids[i] ?? `${prefix}-${from + i + 1}`} | ${KIND[l.k]} | ${l.k === 's' ? l.who ?? '' : l.k === 'm' ? '주인공(속마음)' : '—'} | ${l.k === 's' ? `“${clean(l.t)}”` : l.k === 'm' ? `‘${clean(l.t)}’` : clean(l.t)} | ${beat(l)} |`));
   p('');
 };
-const TRANS_KO = { dither: '디더', iris: '조리개', melt: '쇳물', white: '백지', black: '암전', cut: '바로' } as const;
+const TRANS_KO = { dither: '디더', iris: '조리개', melt: '쇳물', white: '백지', black: '암전', cut: '바로', shutter: '셔터(위아래로 닫힘)', diag: '대각 쓸기', blinds: '블라인드', page: '책장 넘김' } as const;
 /** 컷 머리 연출 (D-504): 장 제목 카드 · 전환 · 첫 샷 · 끝 정적 · 맺음 카드 */
 const cutHead = (c: Cut): string[] => [
   ...(c.title ? [`- **장 제목 카드**: ${c.title.kicker} / 「${c.title.title}」${c.title.sub ? ` / ${c.title.sub}` : ''}`] : []),
@@ -296,8 +296,8 @@ const PR: { t: string; id: string; from: number; ids?: Record<number, string>; p
   { t: '용해 주조', id: 'END-K-2', from: 0, pic: '`casting-floor` — 통제실 바닥이 갈라져 쇳물과 쇠사슬이 동료들을 끌어내리고, 단상 위 금왕관의 폰이 내려다본다 (그동안 `gilded-fallen`)' },
   { t: '뻗지 않은 손', id: 'END-K-2', from: 4, pic: '`end-k-reach` (ED-03 재발주본, D-514) — 쇠사슬 목걸이에 끌려 쇳물로 잠기며 다문 말머리를 위로 뻗은 흰 나이트(몸에 시커먼 주조 흠 — 박차), 오른쪽 위 갈라진 단상 위에 금띠 두른 흰 폰 받침만 움직이지 않는다' },
   { t: '금빛으로 굳다', id: 'END-K-3', from: 0, pic: '`gold-cast` — 황금 쇳물이 아래에서부터 폰을 감싸 킹으로 굳는다 (그동안 `promote-gild`)' },
-  { t: '새 도금왕의 왕좌', id: 'END-K-3', from: 1, ids: { 0: 'END-K-3-2-A1' }, pic: '`crown-1-throne` (CN-04, D-516) — 금칠이 흘러내리는 새 도금왕이 왕좌에 앞으로 기울어 앉았다. 금박이 벗겨진 곳마다 흰 몸, 발치 붉은 깔개 위에 찢어진 종이 왕관 조각, 뒤로 킹 깃발 · 금빛 통제실 창' },
   { t: '금칠이 덮이다', id: 'END-K-3', from: 2, pic: '`end-k-gild` (ED-04 — D-510 사용자 결정으로 「안에서 잠그는 문」 대신) — 위 고리에서 금물이 쏟아져 금왕관(십자)을 쓴 폰을 덮는다. 종이 왕관은 이미 버렸다(END-K-1-1, D-514). 왕관 · 몸 위로 금이 흘러내리고 군데군데 흰 몸이 남았다. 양옆 주조기 쇠팔도 금물을 흘린다' },
+  { t: '새 도금왕의 왕좌', id: 'END-K-3', from: 1, ids: { 0: 'END-K-3-2-A1' }, pic: '`crown-1-throne` (CN-04, D-516) — 금칠이 흘러내리는 새 도금왕이 왕좌에 앞으로 기울어 앉았다. 금박이 벗겨진 곳마다 흰 몸, 발치 붉은 깔개 위에 찢어진 종이 왕관 조각, 뒤로 킹 깃발 · 금빛 통제실 창' },
   { t: '규정을 새기다', id: 'END-K-3', from: 3, ids: { 1: 'END-K-3-4-닮음' }, pic: '`law-plate` (ED-05) — 검수대 기둥에 못 박힌 쇠판, 날카롭게 새긴 홈 줄 넷 · 끝의 번쩍임, 아래 금박 부스러기, 왼쪽 붉은 등' },
   { t: '다음 폰', id: 'END-K-끝', from: 0, ids: { 0: 'END-K-끝' }, pic: '끝 정적' },
 ];

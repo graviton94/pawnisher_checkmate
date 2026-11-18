@@ -549,16 +549,16 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
     ],
   },
   crownAltar: {
-    title: '녹슨 왕관 제단',
-    text: '부서진 제단 위에 녹슨 왕관이 놓여 있다. 그 앞 접시에 나사가 수북하다.',
+    title: '빛바랜 금왕관 제단',
+    text: '부서진 제단 위에 빛바랜 금왕관이 놓여 있다. 그 앞 접시에 나사가 수북하다.',
     choices: [
-      { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', tones: ['loss', 'gain'], pay: (s) => s.gold, blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '왕관의 녹 아래에서 무언가 빛난다.', partPick: true, elite: true }; } },
+      { label: '나사를 전부 바친다', desc: '나사 전부 → 희귀 이상 부품', tones: ['loss', 'gain'], pay: (s) => s.gold, blocked: (s) => (s.gold < 80 ? '나사 80 이상 필요' : null), apply: (s) => { s.gold = 0; return { text: '빛바랜 금박 아래에서 무언가 빛난다.', partPick: true, elite: true }; } },
       // D-459: 50% 나사 · 50% 둘 HP → 왕관을 써 본다 (킹 버팀 +1 · 분대원 하나 심장 톱니 깨짐 — 바이블의 「왕관은 동료를 깎는다」)
       { label: '왕관을 써 본다', desc: '킹 버팀 +1 · 분대원 하나 심장 톱니 깨짐', tones: ['gain', 'loss'], info: '왕관은 킹을 지키려 동료를 깎습니다. 톱니가 깨진 분대원은 다시 쓰러지면 폐기됩니다.', blocked: (s) => (!s.squad.some((u) => u.t === 'K') ? '킹이 없음' : nonKing(s).some((u) => !u.cracked) ? null : '깎일 분대원이 없음'), apply: (s) => {
         const k = s.squad.find((u) => u.t === 'K')!;
         s.squad = s.squad.map((x) => (x === k ? { ...x, doors: (x.doors ?? 0) + 1 } : x));
         const who = crackOne(s);
-        return { text: `녹슨 왕관이 킹의 머리에 꼭 맞는다. 등 뒤에서 ${who}의 톱니가 깨진다. (킹 버팀 +1)` };
+        return { text: `빛바랜 금왕관이 킹의 머리에 꼭 맞는다. 등 뒤에서 ${who}의 톱니가 깨진다. (킹 버팀 +1)` };
       } },
       leave('지나가기'),
     ],

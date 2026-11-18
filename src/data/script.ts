@@ -70,7 +70,7 @@ export const SPEAKER_FACE: Record<string, Face> = {
   // OP-02 상자 칸막이 — 기운 흰 퀸(초점 45% 64%) · 끝 칸 흰 룩(초점 12% 64%) — 둘이 말하는 그 장면(PRO-05)
   '흰 퀸': { art: 'prologue-04', at: '44% 73%', zoom: 250 },
   '흰 룩': { art: 'prologue-04', at: '4% 73%', zoom: 250 },
-  // PRO-07 흠집 난 흰 나이트 — 말머리 · 다리 흠 자국(초점 56% 50%)
+  // PRO-07 흠집 난 흰 나이트 — 말머리 · 목덜미 흠 자국(초점 56% 50%)
   박차: { art: 'prologue-06', at: '58% 50%', zoom: 200 },
   // ED-03 오른쪽 주조기 앞면 — 리벳 몸 · 쇳물이 이글대는 아가리(초점 86% 72%)
   '용해 주조기': { art: 'end-k-reach', at: '100% 94%', zoom: 200 },
@@ -133,9 +133,9 @@ export const PROLOGUE: Cut[] = [
     s('아홉째 폰', '내가 꼭대기 승급대까지 걸어 올라가서, 너희 모두를 살려서 밖으로 데리고 나갈게.', { shot: at(0.5, 0.5, 2) }),
     n('그날부터 공장 밑바닥에서는 그를 ‘종이왕’이라 불렀다.', { shot: at(0.5, 0.55), sfx: 'rare', pause: 300 }),
   ]), key: true, slug: '종이 왕관' },
-  // PRO-07 — 박차: 흠집 난 다리 → 종이왕 → 둘을 한 화면에
+  // PRO-07 — 박차: 흠집 난 목덜미(D-567) → 종이왕 → 둘을 한 화면에
   { ...cut('prologue-06', [
-    n('무리 끝에서, 한쪽 다리에 시커먼 주조 흠집이 팬 흰 나이트 하나가 묵묵히 걸어 나와 그의 곁에 섰다.', { shot: at(0.58, 0.55, 1), sfx: 'land' }),
+    n('무리 끝에서, 목덜미에 시커먼 주조 흠집이 팬 흰 나이트 하나가 묵묵히 걸어 나와 그의 곁에 섰다.', { shot: at(0.58, 0.55, 1), sfx: 'land' }),
     s('박차', '박차다. 덜 식은 채 틀에서 뜯겨, 정품 상자엔 못 들었지.', { shot: at(0.6, 0.45, 2) }),
     s('박차', '네가 킹이 된다 해도 내 흠집은 안 지워진다. 그래도 괜찮나?', { shot: at(0.62, 0.55, 3) }),
     s('종이왕', '흠집 따위 지울 필요 없어. 이 몸 그대로 같이 나가자.', { shot: at(0.3, 0.4, 2), mood: 'resolve' }),
@@ -164,7 +164,7 @@ export const shadowCut = (chapter: number, law?: string, retry = chapter === 0):
     m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { shot: at(0.75, 0.2, 1), pause: 400, mood: 'fear' }),
   ]), slug: '같은 왕관 재도전', title: { kicker: chapterKick(chapter), title: '또 하나의 아홉째 폰', sub: chapterTitle(chapter), crown: crownNo(chapter) } }
   : { ...sceneCut('new-law', [
-    n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 검수대 앞에 섰다.', { shot: at(0.18, 0.8, 2) }),
+    n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.', { shot: at(0.18, 0.8, 2) }),
     n('그런데 전에는 없던 차가운 쇠판 하나가 검수대 기둥에 새로 못 박혀 있었다. 갓 새겨진 듯 글자 끝이 날카로웠다.', { shot: at(0.6, 0.5), sfx: 'stamp' }),
     n(`「${law ?? '선대 왕이 새긴 규정'}」`, { shot: at(0.62, 0.55, 2), pause: 300 }),
     m([
@@ -191,7 +191,7 @@ export const BOSS_SINS = { plate: '허영', inspect: '나태', spawn: '폭식', 
 export const BOSS_STORY: Record<StoryBoss, { name: string; intro: string; say: string; phase2: string; fall: string; reply: string; mock: string; mirror: string; temptation: string }> = {
   plate: {
     name: '철갑 반장', intro: '온몸의 흠집마다 두꺼운 철판을 덧댄 반장이 앞을 막아섰다.', say: '그 얇은 껍질로 어디까지 버틸 셈이지? 세상은 언제나 부서지기 쉬운 것부터 밟아 부수는 법이다.', phase2: '한 겹만 더 두르면 완벽해진다네.',
-    fall: '육중하던 철판이 굉음과 함께 갈라져 떨어지자, 그 안에서 흠집투성이의 작고 볼품없는 폰 하나가 웅크린 채 드러났다.\n하지만 종이왕은 떨고 있는 그를 용광로로 밀어 넣지 않고, 다시 치지 않고 조용히 돌아섰다.',
+    fall: '육중하던 철판이 굉음과 함께 갈라져 떨어지자, 그 안에서 흠집투성이의 작고 볼품없는 킹 하나가 웅크린 채 드러났다.\n하지만 종이왕은 떨고 있는 그를 용광로로 밀어 넣지 않고, 다시 치지 않고 조용히 돌아섰다.',
     temptation: '나를 살려 두고 지나가겠다고? 그 역겨운 동정심 집어치워! 너도 저 꼭대기에 닿으면 깨닫게 될 거다. 남을 믿고 등을 내주는 것보다, 혼자 숨어 버틸 수 있는 두꺼운 갑옷이 얼마나 달콤한지를!',
     reply: '동료의 숨을 가려가며 얻는 안전 따윈 내 자리가 아니야.',
     mock: '철갑 반장의 그 두꺼운 껍질이 부럽지 않더냐? 누구의 쇠도 닿지 않는 고독한 성채가.',
@@ -273,8 +273,8 @@ export const stageProg = (nth: number, chapter: number, fallen = 1): string => {
 export const GILDED_STORY = {
   // GLD-공방-1 (D-536 A7): 안에서 잠긴 문은 CO-3에서 처음 보여 준다 — 정비공은 「원래 밖으로 열리는 문」만
   forge: [s('외눈 정비공', '출하구 문은 원래 밖으로 열리는 문이었어.'), s('외눈 정비공', '금단의 승급대로 가면 진짜 킹이 된다는 소문? 글쎄, 거기서 살아서 내려온 놈이 하나도 없으니 무슨 대가를 치르는진 아무도 모르지.')],
-  intro: '통제실 가장 높은 곳, 황금빛으로 번쩍이는 왕좌에 도금왕이 앉아 있었다.',
-  introLater: '왕좌 위엔 지난 왕관을 쓰고 솟구쳤던 종이왕이 차가운 금빛 갑옷을 두른 채 내려다보고 있었다.',
+  intro: '통제실 가장 높은 곳, 황금빛 그림자 속에 도금왕이 우뚝 서 있었다.',
+  introLater: '통제실 꼭대기엔 지난 왕관을 쓰고 솟구쳤던 종이왕이 차가운 금빛 갑옷을 두른 채 버티고 서서 내려다보고 있었다.',
   /**
    * GLD-등장-2 · 4 (D-536 A1): 둘째~넷째 왕관의 도금왕은 플레이어가 지난번에 한 그 폰이다 — 그가 왕좌에서 한 마지막 속마음(END-K-3-2-A1~A3)을 되받는다.
    * 도전(chapter 4 이상)은 옛 공용 줄.
@@ -425,7 +425,7 @@ export const shadowCuts = (chapter: number, law?: string, retry = chapter === 0)
 /**
  * 일반 엔딩 (바이블 END-K — 첫째~셋째 왕관은 늘, 넷째 왕관은 「왕관을 쓴다」를 골랐을 때): 왕관을 쓴 직후 용해 주조가 켜지고, 그는 왕관을 벗지 못한다.
  * law = 이번에 새기는 규정 · mirror = 마지막으로 쓰러뜨린 반장을 닮아 가는 한 줄
- * D-504 영화 문법: 장 제목 카드 → 왕관을 씀 → 왕의 눈(ED-02, 가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 뻗지 않은 손(ED-03) → 금빛 굳음 → 금칠이 덮이고 문을 잠금(ED-04) → 규정판(ED-05) → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
+ * D-504 영화 문법: 장 제목 카드 → 왕관을 씀 → 왕의 눈(ED-02, 가까이 → 넓게 열림) → 쇳물 전환 · 주조기 목소리 → 뻗지 않은 손(ED-03) → 금빛 굳음 → 금칠이 덮이고 문을 잠금(ED-04) → 새 도금왕의 왕좌(CN-04~06, D-567) → 규정판(ED-05) → 끝 정적(먹) → 맺음 카드 「왕위 계승」.
  */
 /**
  * 왕관 끝 왕좌 컷 (D-516 · D-519 · CN-04~06): 그 왕관의 새 도금왕 속마음(END-K-3-2-A*)을 그의 왕좌 그림에.
@@ -475,14 +475,15 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       n('동료들의 믿음과 배신감이 뒤섞인 마지막 비명이 붉은 용광로 속으로 쏟아졌다. 곧이어 파이프를 타고 솟구친 황금빛 쇳물이 그의 작은 폰의 몸을 빈틈없이 감싸며 킹의 거푸집으로 굳어 갔다.', { shot: at(0.5, 0.6), sfx: 'land', fx: 'gold' }),
       ...(THRONE[chapter] ? [] : [m(K3[Math.max(0, Math.min(3, chapter))], { shot: at(0.5, 0.3, 2), pause: 700, mood: 'gilt' })]),
     ]), alt: 'promote-gild', slug: '금빛 거푸집', shot: at(0.5, 0.15, 1), trans: 'white' },
-    // CN-04 ~ 06 새 도금왕의 왕좌 (D-516 · D-519 — 첫째 ~ 셋째 왕관 끝 END-K-3-2-A1 ~ A3)
-    ...(THRONE[chapter] ? [{ ...sceneCut(THRONE[chapter]!.img, [m(K3[Math.max(0, Math.min(3, chapter))], { shot: THRONE[chapter]!.mono, pause: 700, mood: 'gilt' })]), alt: 'gold-cast', slug: '새 도금왕의 왕좌', shot: THRONE[chapter]!.shot, trans: 'cut' as const }] : []),
     // ED-04 새 도금왕이 되어 가는 과정 (D-510 사용자 결정 — 옛 「안에서 잠그는 문」 대신): 위 고리에서 쏟아지는 금물이 금왕관을 쓴 폰을 덮는다.
     // D-514 사용자 결정: 그는 종이 왕관을 버리고 금왕관을 골라 썼다(END-K-1-1) — 금은 그 금왕관 위로 굳는다
     // 문을 잠그는 일은 서술 끝에 남긴다(TESTIMONY · ENDING_A · 그림자 컷이 「안에서 잠근 왕」을 부른다)
     { ...sceneCut('end-k-gild', [
       n('주조기의 쇠팔들이 마지막 금물을 쏟아부었다. 스스로 고른 금왕관 위로, 흰 몸의 흠집 위로 금이 흘러내려 굳어 갔다. 발치에 버려진 종이 왕관은 튀어 오른 쇳물에 소리 없이 타들어 갔다. 이제 그 속에 폰이 있다는 것을 알아볼 자는 아무도 없었다. 새 도금왕은 아래층에서 올라오는 태엽 타는 냄새를 등지고 통제실의 경고등을 껐다. 그리고 출하문을 안쪽에서 걸어 잠그고, 다음 등반자를 막을 새 규정을 새겼다.', { shot: at(0.5, 0.45, 1), sfx: 'land', fx: 'gold' }),
     ]), alt: 'promote-rule', slug: '금칠이 덮이다', trans: 'black', shot: at(0.5, 0.25, 2) },
+    // CN-04 ~ 06 새 도금왕의 왕좌 (D-516 · D-519 — 첫째 ~ 셋째 왕관 끝 END-K-3-2-A1 ~ A3)
+    // D-567 (VN 컷 감사 S-1): 금을 다 붓는 end-k-gild 뒤에 — 다 굳은 금 킹을 먼저 보이면 시간이 거꾸로 간다
+    ...(THRONE[chapter] ? [{ ...sceneCut(THRONE[chapter]!.img, [m(K3[Math.max(0, Math.min(3, chapter))], { shot: THRONE[chapter]!.mono, pause: 700, mood: 'gilt' })]), alt: 'gold-cast', slug: '새 도금왕의 왕좌', shot: THRONE[chapter]!.shot, trans: 'cut' as const }] : []),
     // ED-05 새긴 규정 (D-510): 검수대 기둥 쇠판의 홈 줄 — 규정이 찍히고(가운데) 닮음 한 줄은 아래 금박 부스러기로
     { ...sceneCut('law-plate', [
       n(`「${law}」`, { shot: at(0.5, 0.45, 1), sfx: 'stamp', fx: 'shake' }),
