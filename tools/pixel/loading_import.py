@@ -22,6 +22,7 @@ sys.path.insert(0, HERE)
 import gridmeasure as gm  # noqa: E402
 import opening_import  # noqa: E402
 import snap  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 import scene_recipe  # noqa: E402
 import ui_kit_import as kit  # noqa: E402
 
@@ -108,6 +109,7 @@ def sheet():
     for nm, im in parts.items():
         dst = os.path.join(CHROME if nm in ('guide-frame', 'tip-slip') else HUD, f'{nm}.png')
         im.save(dst)
+        crown_unify.after_save(dst)
         print(f'  {nm}: {im.width}×{im.height} → {os.path.relpath(dst, ROOT)}')
     print(f'LD-01: 칸 {g["grid"][0]}px · 시트 {small.width}×{small.height}도트 · 톱니 프레임 {fw}×{fh}')
     # 대조판: 원본(축소) 위 | 부품 ×4 아래 (줄: 액자 · 쪽지 / 막대 · 채움 칸 / 톱니 띠)

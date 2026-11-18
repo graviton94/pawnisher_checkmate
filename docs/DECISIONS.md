@@ -4690,3 +4690,11 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - 규칙: 일러스트(사건 · VN 컷 · 엔딩 · 스토어 컨셉아트)의 기물 · 인물은 그림 화풍대로 그림 안에 그려 받는다. 게임 도트 말은 판 · UI에만. 「정본 · 배경 전용」은 게임 층 바탕에만. 정본 그림 첨부는 모양 약속 참고용, 새 정본 문단 「정본 · 일러스트 기물」.
 - 되돌림: D-570의 KV-01 폰 교체 · KV-02h 히어로 폰 · 통행 문 룩 합성을 걷어 받은 그림 그대로(압인기 화살표 지우기만 남김).
 - 발주 고침: VA-01 · 07 · 08 · 10은 기물을 그림 안에 그리도록(PRO-05 화풍), VA-02 · 09는 「기물 안 보임」으로, VA-04 ~ 06은 「정본 · 외곽선」(스프라이트 흰 테)을 빼고 「정본 · 일러스트 기물」로. CLAUDE.md 발주 규칙 줄도 같이 고쳤다.
+
+### D-573 — 종이 왕관 색 하나로 — 판 그림 K0의 마분지 세 단 + 청록 보석 (2026-11-18, 사장님 결정)
+- 정본 색 = 판 그림 K0(`tools/pixel/paperking.py` · `maker.py` PAL64 F · Q · J · C): 밝음 #E0A862 · 가운데 #B57C3C · 그늘 #7A4C22 · 보석 #38BDF8. 「정본 · 종이 왕관」 문단과 이미 같아 문단 · 발주 상자는 바꾸지 않았다. 외곽선은 그림마다 제 먹 그대로.
+- 새 도구 `tools/pixel/crown_unify.py`: 그림마다 왕관 상자 · 씨앗 표(TABLE)로 왕관 칸을 골라 밝기 세 띠 → 정본 세 단, 청록 보석 → #38BDF8(빛 점 · 어두운 테는 둔다). 다시 칠하기만(D-561 ④) — 모양은 손대지 않는다. 여러 번 돌려도 같다.
+- 다시 칠한 그림 37장: 막 카드 act-1 · 2 · 4, 프롤로그 prologue-05 · 06 · 07, companion-crossroad · rest, scarred-wall, credits-bg, loading-bench, promote · promote-rule, crown-1-throne · crown-dais · casting-floor · gilded-fallen, end-fail · end-t-throw · end-t-step · end-clear, departure-decision, PT-04 종이왕 초상 다섯(gilt는 금칠 쪽 그대로), crew-K, ic32-crown-paper, 장 제목 문장 crown-emblem-1 ~ 3(종이 쪽만), 문장 crown-emblem · icon-src crown · crown-dark · B-full · B-fg. 여기서 다시 찍음: 파비콘 넷(r02b) · 앱 아이콘(웹 · 일렉트론 · 안드로이드 런처, app_icon · android-res). 스토어 R-03 · 04 · 06 · 07은 D-570 fix_crown 그대로.
+- 일부러 둔 것: crown-3-open(푸른 역광 실루엣) · end-f-unwind(장면 전체가 잿빛). 금왕관(도금왕 · 금관)은 종이 왕관이 아니다.
+- 재반입이 되돌리지 않게: regrid · opening · ending(ED-01 문장 포함) · event · loading · portrait · crew_faces · r02c 반입 도구가 저장 뒤 `crown_unify.after_save()`, r02b는 문장을 칠한 뒤 파비콘을 찍는다.
+- 모양 어긋남(재발주 목록, `crown_unify.py list`): PRO-06 prologue-05 끝 다섯 · 보석 없음(VA-04) · PRO-07 prologue-06 보석 없음(VA-05) · crew-K 끝 다섯 · 보석 없음 · ic32-crown-paper · 장 제목 문장 1 ~ 3 보석 없음 · 끝 다섯 · promote · promote-rule · end-clear 작은 관 보석 없음.

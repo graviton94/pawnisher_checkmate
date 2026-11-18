@@ -18,6 +18,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gridmeasure as gm  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 import scene_recipe  # noqa: E402
 import snap  # noqa: E402
 
@@ -114,6 +115,7 @@ def one(t, measure=False):
         out.putpixel(p, (*col[p], 255))
     dst = os.path.join(ROOT, 'public', 'ui', 'hud', f'crew-{t}.png')
     out.save(dst)
+    crown_unify.after_save(dst)
     print(dst, '칸', [round(g['x'][0] * MERGE, 3), round(g['y'][0] * MERGE, 3)], '창', (wx, wy), '색', len(out.getcolors(1 << 16)) - 1,
           '위쪽 몫 폭', int(xr - xl + 1), '칸')
 

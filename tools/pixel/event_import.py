@@ -38,6 +38,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import snap  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 from scene_recipe import EVENT_IMPORT  # noqa: E402
 
 ORDER = ROOT / 'build-res/order'
@@ -566,6 +567,7 @@ def main():
         sheet_for(n, src, cur, o, rep, cuts).save(sheets / f'{n}.png', optimize=True)
         if not dry:
             o.save(dst, optimize=True)
+            crown_unify.after_save(dst)
     if not dry:
         rpath.write_text(json.dumps(report, ensure_ascii=False, indent=1) + '\n')
 

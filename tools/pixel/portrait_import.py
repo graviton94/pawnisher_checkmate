@@ -20,6 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from scene_recipe import PORTRAIT_GRID  # noqa: E402
 from snap import _profile, detect_pitch, dp_cuts  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 
 N = 64
 # §0-D 「도트 강제」 고정 팔레트 24색 (발주서 PT-04~07 그대로)
@@ -178,6 +179,7 @@ def run(sheet):
         srcs.append(im.crop((box[0], box[2], box[1], box[3])))
         dst = os.path.join(ROOT, 'public', 'ui', 'portraits', f'{name}.png')
         Image.fromarray(o, 'RGBA').save(dst)
+        crown_unify.after_save(dst)
         cols = len({tuple(p) for p in o.reshape(-1, 4) if p[3]})
         print(f'{dst}  격자 {g.shape[1]}×{g.shape[0]} (간격 {pitch}px) → 64×64 · {cols}색')
     ev = os.path.join(ROOT, 'production', 'qa', 'evidence', f'2026-11-14-pt-{sheet[3:]}.png')

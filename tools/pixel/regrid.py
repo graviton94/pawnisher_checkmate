@@ -312,6 +312,9 @@ def build_one(name, g, out_dir=None, verbose=True):
         out = Image.fromarray(a)
     dst = os.path.join(out_dir or os.path.join(ROOT, 'public', 'scenes'), f'{name}.png')
     out.save(dst, optimize=True)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import crown_unify  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
+    crown_unify.after_save(dst)
     if verbose:
         print(f'{name}: {g["src"]} {im.size} 칸 {px:.3f}×{py:.3f} (시작 {ox:.2f},{oy:.2f}) → {out.size} · {len(pal)}색 · 띠 걷음 위 {top} · 아래 {bot}줄 · 잔티 정리 {n}칸 → {dst}')
     return out

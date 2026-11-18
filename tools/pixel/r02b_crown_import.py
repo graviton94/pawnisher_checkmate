@@ -26,6 +26,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import scene_recipe  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일
 
 ORDER = os.path.join(ROOT, 'build-res', 'order')
 OUT = os.path.join(ROOT, 'build-res', 'icon-src')
@@ -224,8 +225,9 @@ def down(im, k):
         for i in range(w):
             cols = [q[x, y][:3] for y in range(j * k, min(H, j * k + k)) for x in range(i * k, min(W, i * k + k))
                     if q[x, y][3] and q[x, y][:3] != INK]
-            if JEWEL in cols:
-                pick = JEWEL
+            jw = [c for c in cols if c in (JEWEL, tuple(crown_unify.JEWEL))]  # D-573: 통일 뒤 보석은 #38BDF8
+            if jw:
+                pick = jw[0]
             elif (i, j) in tp:
                 pick = tp[(i, j)]
             elif len(cols) * 2 >= k * k:
@@ -374,6 +376,8 @@ def main():
         print('   #%02X%02X%02X %d' % (*c, n))
     if breaks:
         raise SystemExit(f'외곽선 끊김: {breaks[:10]}')
+    # D-573: 받은 문장의 마분지 네 색 · 청록(#33B7C9)을 판 그림 K0 정본 세 단 + #38BDF8로 — 문장 · 파비콘이 모두 이 판에서 나온다
+    full = crown_unify.unify_image('public/ui/crown-emblem.png', full)
     full.save(os.path.join(OUT, 'crown.png'))
     dark = Image.new('RGBA', (full.width + 4, full.height + 4), (*BG, 255))
     dark.alpha_composite(full, (2, 2))

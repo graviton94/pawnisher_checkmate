@@ -25,6 +25,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import scene_recipe  # noqa: E402
 import snap  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 
 ORDER = os.path.join(ROOT, 'build-res', 'order')
 ICON = os.path.join(ROOT, 'build-res', 'icon-src')
@@ -149,6 +150,8 @@ def main():
     fg, back, co, ci, filled, specks = split_b(b)
     b.save(os.path.join(ICON, 'B-full.png'))
     fg.save(os.path.join(ICON, 'B-fg.png'))
+    crown_unify.after_save(os.path.join(ICON, 'B-full.png'))
+    crown_unify.after_save(os.path.join(ICON, 'B-fg.png'))
     back.save(os.path.join(ICON, 'B-bg.png'))
     a.save(os.path.join(STORE, 'keyart-A.png'))
     print(f'R-02c B: {b.size[0]}×{b.size[1]}도트 · 색 {len(b.getcolors())} · 가장자리 바탕색 맞춤 {edge}칸 · 전경 상자 {fg.getbbox()}')
