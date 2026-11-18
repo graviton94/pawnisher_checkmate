@@ -265,7 +265,7 @@ def render_blocks(blocks, start_id):
 
 def status_of(head, pid, src):
     """프롬프트 하나의 상태 (D-510): 취소 · 재발주(열림) · 받음 · 새로(열림). 번호는 R-01-07처럼 두 마디도 된다 (D-564)."""
-    sid = re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?)', head).group(1)
+    sid = re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?[a-z]?)(?= )', head).group(1)  # R-01-08b 머리는 그 자체가 상자 번호 (D-572)
     if '취소' in head:
         return 'cancel'
     if '토의 후 발주' in head:  # 사장님 확인 전 (D-571): 프롬프트는 보이되 「토의 후 발주」 딱지 · 붙여 넣을 수에 들지 않는다
