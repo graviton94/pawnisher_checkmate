@@ -13,7 +13,7 @@ import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
 import { logHtml, VnStage, type PlateBox } from './vn';
 import { DarkStage } from './darkcut';
-import { castOf, VN_TEXT, VN_VOID } from '../data/vn';
+import { castOf, castOn, VN_TEXT, VN_VOID } from '../data/vn';
 import { clearDither, ditherTo, ease } from '../view/motion';
 import { PAPER_FACE } from '../data/portraits';
 
@@ -257,7 +257,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       else if (l.fx === 'red') { if (!calm()) { replay(el, 'red-once'); window.setTimeout(() => el.classList.remove('red-once'), 640); } shake(view, 1); }
       else if (l.fx === 'gold') stage.classList.add('fx-gold');
     };
-    /** 서 있는 배우 (D-554): 대사 = 그 화자를 세우고 밝힌다 · 서술 = 모두 그늘 · 독백 = 종이왕만 밝게 */
+    /** 서 있는 배우 (D-554 · 배우를 연 그림 없는 컷만 — D-580): 대사 = 그 화자를 세우고 밝힌다 · 서술 = 모두 그늘 · 독백 = 종이왕만 밝게 */
     const cast = (l: CutLine & Partial<Line>): void => {
       if (l.k === 's' && l.who) {
         const f = faces[l.who];
@@ -309,9 +309,10 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         shown = pg.c;
         await mount(c);
         if (my !== token) return;
-        // 무대 분위기 (막이 닫힌 사이): 그림이 없거나(자리 그림 · 끝 정적) 실제 배우를 겹친 컷은 배우를 세우지 않는다
+        // 무대 분위기 (막이 닫힌 사이): 그림이 있는 컷은 배우를 세우지 않는다(D-580 · D-572 — 인물은 그림 안에 이미 있다).
+        // 그림 없는 컷도 끝 정적 · 먹 무대(D-579) · 자리 그림 · 실제 배우를 겹친 컷은 아니고, VN_SCENE이 따로 연 컷만(castOn)
         cutLines = c.lines as (CutLine & Partial<Line>)[];
-        scene = vn.enter(c.slug, { noCast: !!c.coda || !!c.showActors || !stage.querySelector('img[data-film]'), still: !!c.void });
+        scene = vn.enter(c.slug, { noCast: !!c.coda || !!c.dark || !!c.showActors || !castOn(c.slug, !!stage.querySelector('img[data-film]')), still: !!c.void });
         if (c.title) { wipe.full('#0b0b0e'); await showTitle(over, c.title, tapped()); if (my !== token) return; }
         if (c.coda) wipe.color = c.coda === 'white' ? '#f1ede4' : '#0b0b0e';
         // 3 · 막 걷기 — 컷의 효과 소리

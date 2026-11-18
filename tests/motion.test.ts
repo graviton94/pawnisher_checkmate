@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { bayer8, ditherLevel, ditherSvg, ease, snapDev } from '../src/view/motion';
 import { SMOOTH } from '../src/data/motion';
-import { castOf, VN_SCENE } from '../src/data/vn';
-import { PROLOGUE } from '../src/data/script';
+import { castOf, castOn, VN_DEFAULT, VN_SCENE } from '../src/data/vn';
+import { BOSS_STORY, DEFEAT_CUTS, ENDING_A, PROLOGUE, PROLOGUE_FIELD, bossFallCut, gildedPhase2Cut, promotionCuts, shadowCuts, trueEndingCuts, type Cut, type StoryBoss } from '../src/data/script';
+import { companionScene } from '../src/data/companion-scenes';
 
 /**
  * 매끈한 도트 움직임 (D-554): 디더는 8×8 베이어 64단 · 곡선은 예비 → 터짐 → 출렁 · 위치는 기기 픽셀 정수 ·
@@ -70,6 +71,22 @@ describe('비주얼 노벨 층 데이터 (D-554)', () => {
     expect(castOf('종이왕')).toEqual({ t: 'K', side: 0 });
     expect(castOf('철갑 반장')).toEqual({ t: 'K', side: 1 });
     expect(castOf('없는 이름')).toBeUndefined();
+  });
+  it('그림이 있는 컷에는 배우(판 도트 말)를 세우지 않는다 (D-580 · D-572)', () => {
+    expect(VN_DEFAULT.noCast).toBe(true);
+    const company = { alive: [{ name: '먼지투성이', t: 'N' as const }, { name: '구부러진 못', t: 'B' as const }], promised: { name: '먼지투성이', alive: true } };
+    const all: Cut[] = [
+      ...PROLOGUE, PROLOGUE_FIELD, ...DEFEAT_CUTS, ENDING_A, ...trueEndingCuts([], company),
+      ...[0, 1, 2, 3].flatMap((ch) => [...shadowCuts(ch, '법'), ...shadowCuts(ch, '법', true), ...promotionCuts(ch, '먼지투성이', '법', '거울', company)]),
+      ...(Object.keys(BOSS_STORY) as StoryBoss[]).map((r) => bossFallCut(r, `boss-fall-${r}`, 1, 0)), gildedPhase2Cut('boss-gilded', 0, 'plate'),
+      ...[0, 1, 2].flatMap((a) => companionScene(a, [{ name: '먼지투성이', t: 'P', serial: 'A1' }] as never).cuts),
+    ];
+    // 이전에 배우가 섰던 컷(상자 안의 다툼 · 반장 격파 · 도금왕 2단계 · 용해 주조 · 진엔딩 · 동료 장면)을 모두 덮는다
+    expect(all.filter((c) => c.lines.some((l) => l.k === 's' && castOf(l.who)) && c.img).length).toBeGreaterThan(8);
+    for (const c of all) if (c.img) expect.soft(castOn(c.slug, true), c.slug ?? c.img).toBe(false);
+    // 그림 없는 컷도 연 곳이 없다 — 먹 무대(D-579)는 추상으로
+    for (const [slug, sc] of Object.entries(VN_SCENE)) expect.soft(sc.noCast, slug).not.toBe(false);
+    for (const c of PROLOGUE) expect.soft(castOn(c.slug, false), c.slug).toBe(false);
   });
   it('분위기 표의 컷 이름은 실제 컷에 있다 (프롤로그 컷은 모두 짝이 있다)', () => {
     for (const c of PROLOGUE) if (c.slug) expect.soft(VN_SCENE[c.slug], c.slug).toBeDefined();
