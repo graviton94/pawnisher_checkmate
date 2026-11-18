@@ -40,7 +40,7 @@ def data_uri(path, width):
     return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
-ATTACH_RE = re.compile(r'^(?:-\s*)?첨부(?:\s+([A-Z]{1,3}-\d+[a-z]?))?\s*:\s*`?([^`\s]+)`?\s*(.*)$')
+ATTACH_RE = re.compile(r'^(?:-\s*)?첨부(?:\s+([A-Z]{1,3}-\d+(?:-\d+)?[a-z]?))?\s*:\s*`?([^`\s]+)`?\s*(.*)$')
 
 
 class Images:
@@ -195,7 +195,7 @@ def files_of(head):
     if mu:  # UI 키트 시트 (D-390 · D-391): 받은 시트 원본이 build-res/order에 있으면 받음
         return ['recv:' + mu.group(1)]
     fs = re.findall(r'`(?:public/scenes/|public/ui/hud/)?([A-Za-z0-9-]+)\.png`', head)
-    mx = re.match(r'([A-Z]{1,3}-\d+) ·', head)
+    mx = re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?) ·', head)
     if not fs and mx:  # §0-D (2026-11-14): 머리에 파일이 없는 상자는 받은 원본 build-res/order/<번호>-source.*로 받음 판정
         return ['recv:' + mx.group(1)]
     m = re.search(r'`([A-Za-z-]+)-(\d+)\.png` ~ `\1-(\d+)\.png`', head)  # boss-gilded-1 ~ 4 같은 범위
@@ -264,12 +264,14 @@ def render_blocks(blocks, start_id):
 
 
 def status_of(head, pid, src):
-    """프롬프트 하나의 상태 (D-510): 취소 · 재발주(열림) · 받음 · 새로(열림)"""
-    sid = re.match(r'([A-Z]{1,3}-\d+)', head).group(1)
+    """프롬프트 하나의 상태 (D-510): 취소 · 재발주(열림) · 받음 · 새로(열림). 번호는 R-01-07처럼 두 마디도 된다 (D-564)."""
+    sid = re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?)', head).group(1)
     if '취소' in head:
         return 'cancel'
     if pid != sid and f'{pid} 받음' in head:  # 상자 안 부분 재발주(CI-01b 등)를 받으면 상자 머리에 「<ID> 받음」 (D-512)
         return 'done'
+    if pid != sid and f'{pid} 새로' in head:  # 받은 상자 안의 새 짝 그림(KV-02 키아트 받음 · KV-02h 히어로 새로, D-564)
+        return 'new'
     if head.rstrip().endswith('재발주'):
         return 'redo'
     if pid != sid:  # 상자 안 두 번째 그림: 받은 상자의 부분 재발주(CI-01b)면 재발주, 새 상자의 짝 그림(GB-01b 격노, D-513)이면 새로
@@ -286,7 +288,7 @@ def main(out_path, md=None):
     canon = canon_blocks(secs)
     bad = []
     od = os.path.join(ROOT, 'build-res', 'order')
-    src = {m.group(1) for f in os.listdir(od) for m in [re.match(r'([A-Z]{1,3}-\d+[a-z]?)-(?:source|received)\.(?:png|webp)$', f)] if m}
+    src = {m.group(1) for f in os.listdir(od) for m in [re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?[a-z]?)-(?:source|received)\.(?:png|webp)$', f)] if m}
     cards, n_done, n_cancel = [], 0, 0
     talk = []  # 디자인 토의 (D-560): 확정 전 · 발주 아님 — 맨 위 토의 칸, 프롬프트 수에 들지 않는다
     top = []  # 발주 규칙 · 정본 참고 · 정본 문단 (D-561): 맨 위, 토의 칸 앞
@@ -312,7 +314,7 @@ def main(out_path, md=None):
             talk.append(f'<section class="talk"><header><span class="tag">토의</span><h2>{inline(h)}</h2></header>'
                         f'<div class="tb">{render_text(body)}</div></section>')
             continue
-        if not re.match(r'[A-Z]{1,3}-\d+ ', h):
+        if not re.match(r'[A-Z]{1,3}-\d+(?:-\d+)? ', h):
             continue
         txt = [b for k, b in s['blocks'] if k == 'text']
         atts = attachments(txt)
@@ -321,8 +323,8 @@ def main(out_path, md=None):
             if k != 'code':
                 continue
             first = body.split('\n')[0]
-            m = re.search(r'/ ([A-Z]{1,3}-\d+[a-z]?) / ([^/\]]+)', first)
-            pid = m.group(1) if m else re.match(r'([A-Z]{1,3}-\d+)', h).group(1)
+            m = re.search(r'/ ([A-Z]{1,3}-\d+(?:-\d+)?[a-z]?) / ([^/\]]+)', first)
+            pid = m.group(1) if m else re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?)', h).group(1)
             title = (m.group(2).strip() if m else h.split('·', 1)[-1].strip())
             st = status_of(h, pid, src)
             if st == 'done':
