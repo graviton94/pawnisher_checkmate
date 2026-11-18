@@ -272,63 +272,68 @@
   "fy": 0.4
  },
  "copyPress": {
-  "px": 6.295,
-  "py": 6.435,
-  "pitch": 6.425,
-  "ox": 3.85,
-  "oy": 4.02,
-  "strength": 3.45,
-  "errUniform": 9.467,
-  "err": 8.86,
+  "px": 5.045,
+  "py": 5.41,
+  "pitch": 5.345,
+  "ox": 1.32,
+  "oy": 2.03,
+  "strength": 3.42,
+  "pitchMeasured": 5.24,
+  "pitchX": 5.286,
+  "pitchY": 5.405,
+  "errUniform": 4.324,
+  "err": 2.716,
   "grid": "dp±0.3",
   "cells": [
-   226,
-   169
+   274,
+   200
   ],
-  "cellW": 6.407,
-  "cellH": 6.426,
+  "cellW": 5.292,
+  "cellH": 5.425,
   "paletteK": 27,
-  "meanDE": 1.86,
-  "used": 26,
+  "meanDE": 0.61,
+  "used": 25,
   "before": {
    "colors": 32,
    "lonely": 0.0178,
    "region": 10.11
   },
   "raw": {
-   "colors": 13248,
-   "lonely": 0.0288,
-   "region": 7.6
+   "colors": 3547,
+   "lonely": 0.0037,
+   "region": 50.05
   },
   "after": {
-   "colors": 26,
-   "lonely": 0.0114,
-   "region": 13.74
+   "colors": 25,
+   "lonely": 0.0014,
+   "region": 61.57
   },
-  "lineKeep": 0.943,
-  "lineCells": 141,
+  "lineKeep": 0.997,
+  "lineCells": 682,
   "fx": 0.45,
   "fy": 0.45
  },
  "tollGate": {
-  "px": 5.98,
-  "py": 6.315,
-  "pitch": 5.98,
-  "ox": 4.63,
-  "oy": 0.45,
-  "strength": 2.88,
-  "pitchMeasured": 6.45,
-  "errUniform": 9.227,
-  "err": 8.23,
-  "grid": "dp±0.2",
+  "px": 6.495,
+  "py": 6.475,
+  "pitch": 6.487,
+  "ox": 4.33,
+  "oy": 2.16,
+  "strength": 3.84,
+  "pitchMeasured": 6.465,
+  "pitchX": 6.5,
+  "pitchY": 6.474,
+  "errUniform": 5.74,
+  "err": 3.378,
+  "grid": "dp±0.3",
   "cells": [
-   242,
-   182
+   223,
+   167
   ],
-  "cellW": 5.983,
-  "cellH": 5.967,
+  "cellW": 6.493,
+  "cellH": 6.503,
   "paletteK": 27,
-  "meanDE": 1.16,
+  "meanDE": 0.97,
   "used": 26,
   "before": {
    "colors": 32,
@@ -336,19 +341,19 @@
    "region": 20.66
   },
   "raw": {
-   "colors": 7540,
-   "lonely": 0.0144,
-   "region": 12.98
+   "colors": 5428,
+   "lonely": 0.0092,
+   "region": 26.77
   },
   "after": {
-   "colors": 26,
+   "colors": 33,
    "lonely": 0.0042,
-   "region": 17.2
+   "region": 33.95
   },
-  "lineKeep": 0.862,
-  "lineCells": 181,
-  "fx": 0.5,
-  "fy": 0.5
+  "lineKeep": 0.997,
+  "lineCells": 715,
+  "fx": 0.4,
+  "fy": 0.55
  },
  "echoWell": {
   "px": 5.235,

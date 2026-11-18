@@ -1,5 +1,7 @@
 """받은 스토어 그림 R-03 · R-04 · R-06 · R-07 반입 (D-423 · D-559) → 스팀 캡슐 정확한 크기 + 타이틀 로고.
 
+  D-570: 컨셉아트 KV-01 · KV-02h · KV-03도 같은 복원(STORE_GRID) — 손질 · 스팀 조립은 tools/pixel/kv_store.py.
+
   python3 -I tools/pixel/store_import.py [measure] [R-03 …]
     measure: gridmeasure.measure로 축마다 도트 간격 · 위상을 다시 재서 보여 준다(레시피와 견준다).
     없으면: 레시피(scene_recipe.STORE_GRID)대로

@@ -308,5 +308,41 @@
    984,
    116
   ]
+ },
+ "KV-01": {
+  "grid": "dp±0.3",
+  "errUniform": 2.51,
+  "err": 1.653,
+  "cells": [
+   334,
+   193
+  ],
+  "colors": 26,
+  "meanDE": 1.11,
+  "fixes": []
+ },
+ "KV-02h": {
+  "grid": "dp±0.3",
+  "errUniform": 4.355,
+  "err": 3.066,
+  "cells": [
+   348,
+   116
+  ],
+  "colors": 32,
+  "meanDE": 1.8,
+  "fixes": []
+ },
+ "KV-03": {
+  "grid": "dp±0.2",
+  "errUniform": 3.546,
+  "err": 2.2,
+  "cells": [
+   186,
+   231
+  ],
+  "colors": 26,
+  "meanDE": 1.45,
+  "fixes": []
  }
 }
