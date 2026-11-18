@@ -8,9 +8,10 @@
       ② 칸 가운데 50%의 최빈 묶음 중앙값(평균 없음) → CIELAB 시그마 필터(면 그레인만) → k-평균 팔레트(발주 상한 32색) → 덩어리 · 외톨이 정리
       ③ 사내 손질(D-386 — 다시 칠하기 · 지우기만, 새 부품을 그리지 않는다): 종이 왕관 → K0 마분지 세 단(#E0A862 · #B57C3C · #7A4C22)으로
          밝기 순 다시 칠하기(청록 보석 · 먹선은 그대로), 기물 눈 · 입 낱점 → 둘레 몸 색으로 지우기
-      ④ 정수배 계단 확대(×k) → 초점 자리로 정확한 스팀 크기 자르기(늘이지 않는다) → 로고 자리(빈 쇠판)에 타이틀 로고를 정수배로 얹기
+      ③' R-06 흰 나이트 → 정본 실루엣(톱니 갈기 · 눈 · 입 · 콧구멍 메움, D-560 사장님 지시 — fix_knight)
+      ④ (--d559만 — D-560 사장님 반려, 합성 방식 폐기 → build-res/unused/store-d559/) 정수배 계단 확대(×k) → 초점 자리로 정확한 스팀 크기 자르기(늘이지 않는다) → 로고 자리(빈 쇠판)에 타이틀 로고를 정수배로 얹기
          (로고 꼴: full = 문장 + 글자 / word = 글자 두 줄만 / lockup = 문장 왼쪽 + 글자 오른쪽 — 모두 title-logo.png 자르기 · 배치만)
-    → build-res/store/<out>.png · build-res/store/dots/<ID>.png(도트 1칸 = 1px, 손질 뒤) · 대조 build-res/order/<ID>-check.png
+    → build-res/store/dots/<ID>.png(도트 1칸 = 1px, 손질 뒤) · 대조 build-res/order/<ID>-check.png
 """
 import json
 import os
@@ -133,6 +134,84 @@ def erase(img, pts):
     return Image.fromarray(a, 'RGB')
 
 
+def fix_knight(img, fx):
+    """흰 나이트를 게임 정본 실루엣처럼 (D-560, 사장님 지시 사내 수정 — 다시 칠하기 · 메우기만, 새 부품을 그리지 않는다).
+
+    fx = {box: 나이트 머리 · 목 상자(도트), seed: 몸 안 한 칸, outline · ivory · shade · dark: 받은 그림 자신의 색,
+          mane_rows: 갈기 결(dark)을 그늘로 펼 줄 범위, face: 눈 · 콧구멍 · 입 상자들(상아로 메움), lw: 외곽선 두께(도트)}
+    ① 몸 마스크 = seed부터 기물 색(먹 · 상아 · 그늘 · 결)으로 4-연결 → 줄마다 왼쪽 끝 ~ 오른쪽 끝을 메운다(톱니 갈기 틈 · 벌린 입 · 콧구멍이 닫힌다)
+    ② 외곽선을 새 실루엣에서 다시 두른다(바깥에서 lw칸 — 받은 판 기물이 배경의 절반 도트라 2칸 = 배경 1도트)
+    ③ 안쪽: 받은 상아 · 밝은 상아 · 그늘은 그대로, 갈기 결(dark) → 그늘, 얼굴 상자 안 → 상아, 남은 틈은 이웃 다수 색
+    """
+    a = np.asarray(img).copy()
+    H, W = a.shape[:2]
+    x0, y0, x1, y1 = fx['box']
+    col = {k: np.array(hexrgb(fx[k])) for k in ('outline', 'ivory', 'shade', 'dark', 'light')}
+    body = [col[k] for k in ('outline', 'ivory', 'shade', 'dark', 'light')]
+
+    def is_body(c):
+        return any((c == b).all() for b in body)
+
+    m0 = _flood(a, tuple(fx['seed']), fx['box'], is_body)
+    m = np.zeros_like(m0)
+    for y in range(y0, y1):
+        xs = np.nonzero(m0[y])[0]
+        if len(xs):
+            m[y, xs[0]:xs[-1] + 1] = True
+    # 바깥에서 lw칸 = 외곽선 (상자 아래 끝은 몸이 이어지므로 안쪽으로 친다)
+    lw = fx.get('lw', 2)
+    pad = np.pad(m, lw, constant_values=False)
+    pad[y1 + lw:, :] = pad[y1 + lw - 1:y1 + lw, :]  # 아래로 몸이 이어진다
+    inner = np.ones_like(m)
+    for dy in range(-lw, lw + 1):
+        for dx in range(-lw, lw + 1):
+            inner &= pad[lw + dy:lw + dy + H, lw + dx:lw + dx + W]
+    outline = m & ~inner
+    keep = [col['ivory'], col['shade'], col['light']]
+    face = np.zeros_like(m)
+    for fx0, fy0, fx1, fy1 in fx.get('face', []):
+        face[fy0:fy1, fx0:fx1] = True
+    out = a.copy()
+    todo = []
+    for y, x in zip(*np.nonzero(m)):
+        c = a[y, x]
+        if outline[y, x]:
+            out[y, x] = col['outline']
+        elif face[y, x]:
+            out[y, x] = col['ivory'] if not (c == col['light']).all() else c
+        elif any((c == k).all() for k in keep):
+            out[y, x] = c
+        elif (c == col['dark']).all() and fx['mane_rows'][0] <= y < fx['mane_rows'][1]:
+            out[y, x] = col['shade']
+        elif (c == col['dark']).all():
+            out[y, x] = c
+        else:
+            todo.append((x, y))
+    # 남은 틈(옛 톱니 먹 · 배경 구멍): 이미 정한 이웃(외곽선 제외) 다수 색으로, 안쪽으로 번져 가며
+    done = m.copy()
+    for x, y in todo:
+        done[y, x] = False
+    while todo:
+        rest = []
+        for x, y in todo:
+            nb = [tuple(out[y + dy, x + dx]) for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+                  if (dx or dy) and done[y + dy, x + dx] and not outline[y + dy, x + dx]]
+            if nb:
+                out[y, x] = max(set(nb), key=nb.count)
+            else:
+                rest.append((x, y))
+        for x, y in todo:
+            if (x, y) not in rest:
+                done[y, x] = True
+        if len(rest) == len(todo):
+            for x, y in rest:
+                out[y, x] = col['ivory']
+            break
+        todo = rest
+    changed = int((out != a).any(2).sum())
+    return Image.fromarray(out, 'RGB'), changed
+
+
 def logo_parts():
     """title-logo.png를 문장 · 글자 두 덩이로 (줄 점유로 나눈다 — 그리지 않는다)"""
     lg = Image.open(LOGO).convert('RGBA')
@@ -244,6 +323,9 @@ def main():
             pts = dark_in(dots, g['erase'])
             dots = erase(dots, pts)
             notes.append(f'erased {len(pts)} dots {pts}')
+        if g.get('knight'):
+            dots, cnt = fix_knight(dots, g['knight'])
+            notes.append(f'knight→canon silhouette {cnt} dots')
         dots.save(os.path.join(STORE, 'dots', f'{n}.png'))
         raw_dots.save(os.path.join(STORE, 'dots', f'{n}-raw.png'))
         rec['fixes'] = notes
@@ -254,13 +336,15 @@ def main():
         report[n] = rec
         print(n, json.dumps(rec, ensure_ascii=False), flush=True)
     # 최종 스토어 크기: 받은 그림(손질 뒤 도트)에서 정수배 확대 + 자르기 — R-05 · R-08 · R-09는 받은 그림에서 잘라 쓴다(발주 취소)
-    for name, o in STORE_OUT.items():
+    # D-560: 사장님 반려 — 합성 방식 폐기. 옛 합성 판은 --d559일 때만 build-res/unused/store-d559/로 다시 찍는다.
+    outs = STORE_OUT.items() if '--d559' in sys.argv else []
+    for name, o in outs:
         if only and name not in only and o['src'] not in only:
             continue
         if o['src'] not in dots_of:
             dots_of[o['src']] = Image.open(os.path.join(STORE, 'dots', f'{o["src"]}.png')).convert('RGB')
         fin, info = final(dots_of[o['src']], o)
-        fin.save(os.path.join(STORE, name), optimize=True)
+        fin.save(os.path.join(ROOT, 'build-res', 'unused', 'store-d559', name), optimize=True)
         report[name] = info
         print(name, json.dumps(info, ensure_ascii=False), flush=True)
     path = os.path.join(ORDER, 'store-import-report.json')

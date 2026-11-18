@@ -3,6 +3,7 @@
 python3 -I tools/order/order_page.py <out.html>
 
 md가 정본이다 — 상자를 고치면 md를 고치고 이 스크립트로 다시 만든다.
+「## 디자인 토의」로 시작하는 절(D-560)은 발주가 아니다 — 프롬프트로 세지 않고 맨 위 토의 칸으로 그린다.
 받은 그림(public/scenes/<이름>.png가 있는 것)은 「받음」으로 표시한다. 12위 아이콘 시트는 D-301로 다시 발주 — 시트의 10장이 모두 tools/pixel/icons32_ext에 있으면 「받음」.
 """
 import base64
@@ -190,8 +191,14 @@ def main(out_path):
     od = os.path.join(ROOT, 'build-res', 'order')
     src = {m.group(1) for f in os.listdir(od) for m in [re.match(r'([A-Z]{1,3}-\d+[a-z]?)-(?:source|received)\.(?:png|webp)$', f)] if m}
     cards, n_done, n_cancel = [], 0, 0
+    talk = []  # 디자인 토의 (D-560): 확정 전 · 발주 아님 — 맨 위 토의 칸, 프롬프트 수에 들지 않는다
     for s in secs:
         h = s['head']
+        if h.startswith('디자인 토의'):
+            body = [b for k, b in s['blocks'] if k == 'text']
+            talk.append(f'<section class="talk"><header><span class="tag">토의</span><h2>{inline(h)}</h2></header>'
+                        f'<div class="tb">{render_text(body)}</div></section>')
+            continue
         if not re.match(r'[A-Z]{1,3}-\d+ ', h):
             continue
         txt = [b for k, b in s['blocks'] if k == 'text']
@@ -227,9 +234,9 @@ def main(out_path):
                    f'<pre id="p{i}">{html.escape(body)}</pre></section>')
     toc = ' '.join(f'<a href="#{c[0]}" class="{"r" if c[2] == "redo" else ""}">{c[0]}</a>' for c in cards)
     n_redo = sum(1 for c in cards if c[2] == 'redo')
-    page = TEMPLATE.replace('%N%', str(len(cards))).replace('%REDO%', str(n_redo)).replace('%DONE%', str(n_done)).replace('%CANCEL%', str(n_cancel)).replace('%TOC%', toc).replace('%BODY%', '\n'.join(out))
+    page = TEMPLATE.replace('%N%', str(len(cards))).replace('%REDO%', str(n_redo)).replace('%DONE%', str(n_done)).replace('%CANCEL%', str(n_cancel)).replace('%TOC%', toc).replace('%TALK%', '\n'.join(talk)).replace('%BODY%', '\n'.join(out))
     open(out_path, 'w', encoding='utf-8').write(page)
-    print(out_path, f'남은 프롬프트 {len(cards)}개 (재발주 {n_redo}) · 받음 {n_done} · 취소 {n_cancel} · {os.path.getsize(out_path) // 1024}KB')
+    print(out_path, f'토의 {len(talk)} · 남은 프롬프트 {len(cards)}개 (재발주 {n_redo}) · 받음 {n_done} · 취소 {n_cancel} · {os.path.getsize(out_path) // 1024}KB')
 
 
 TEMPLATE = r'''<title>Pawnisher 그림 발주서</title>
@@ -260,11 +267,19 @@ button.copy:active { transform:translateY(2px); box-shadow:0 1px 0 var(--brass-d
 button.copy.ok { background:var(--ok); box-shadow:0 3px 0 #2c6b43; }
 details { margin:0 14px 12px; } summary { cursor:pointer; color:var(--dim); font-size:13px; }
 pre { margin:0 14px 14px; padding:10px 12px; background:var(--iron); border:2px solid var(--line); font:12.5px/1.55 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; max-height:180px; overflow:auto; }
+.talk { background:var(--plate); border:2px solid var(--brass); box-shadow:4px 4px 0 #0b0b0e; margin:0 0 24px; }
+.talk header { display:flex; gap:12px; align-items:center; padding:10px 14px; border-bottom:2px solid var(--line); }
+.talk h2 { font:700 16px/1.4 var(--body); margin:0; text-wrap:balance; }
+.talk .tag { font:500 12px/1 var(--mono); padding:5px 7px; border:2px solid var(--brass); color:var(--brass); white-space:nowrap; }
+.tb { padding:4px 14px 12px; } .tb h4 { font:700 15px/1.4 var(--body); color:var(--brass); margin:14px 0 4px; }
+.tb p { margin:6px 0; } .tb p.li { padding-left:14px; text-indent:-14px; } .tb p.li::before { content:"· "; color:var(--brass); }
+.tw { overflow-x:auto; } table { border-collapse:collapse; width:100%; font-size:14px; } th, td { border:2px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; } th { color:var(--brass); }
 @media (prefers-reduced-motion: reduce) { button.copy:active { transform:none; } }
 </style>
 <div class="wrap">
 <h1>그림 발주서</h1>
 <p class="lede">붙여 넣을 프롬프트 %N%개만 남겼습니다 (빨강 = 재발주 %REDO%개). 칸마다 「프롬프트 복사」 → 새 생성 작업에 통째로 붙여 넣기 → 결과를 「보낼 이름」으로 보내 주세요. 받은 %DONE%개 · 취소 %CANCEL%개는 뺐습니다.</p>
+%TALK%
 <nav class="toc">%TOC%</nav>
 %BODY%
 </div>

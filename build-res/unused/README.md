@@ -135,3 +135,7 @@
 ## 앱 아이콘 K0 판 (D-547 → D-549)
 
 `app-icon-k0/`: D-547 앱 아이콘(게임 정본 K0 종이왕 + 받은 R-02 리벳 쇠판) 결과물 — `icon-1024.png`(옛 `build-res/icon.png`) · `icon-512.png` · `icon-192.png` · `apple-touch-icon.png` · `xxxhdpi-ic_launcher*.png` 넷, 그때 도구 `app_icon_k0.py`(옛 `tools/app_icon.py` — 되살리려면 `tools/`로 옮긴다). D-549부터 앱 아이콘은 받은 R-02c B.
+
+## 스토어 합성 판 (D-559 → D-560)
+
+`store-d559/`: 사장님 반려 — 합성 방식 폐기. D-559에서 받은 R-03 · R-04 · R-06 · R-07을 정수배로 잘라 타이틀 로고를 얹어 찍은 스팀 6장(`steam-header` · `steam-small` · `steam-main` · `steam-hero` · `steam-vertical` · `steam-library`)과 `play-feature.png`. 원재료(`build-res/order/R-0N-source.png` · `build-res/store/dots/R-0N.png`)는 그대로 남긴다. 스토어 그림 방향은 `docs/asset-order-master.md` 「디자인 토의 — 로고 · 컨셉아트 · 스토어」에서 정한 뒤 다시 만든다.
