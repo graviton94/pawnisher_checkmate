@@ -101,7 +101,7 @@ describe('심리 연출 감독 (D-178)', () => {
   });
 });
 
-describe('사선 제안 시점 (D-548 — 실기 「이미 다 맞은 뒤에 떴다」)', () => {
+describe('사선 제안 시점 (D-557 — 실기 「이미 다 맞은 뒤에 떴다」)', () => {
   /** 킹을 예고 칸에 세우고 HP 1 — 곁에 분대원 하나를 붙인다 (디버그 doom과 같은 판) */
   const doomed = (seed: number): SliceBattle | null => {
     const b = newSliceBattle(squad, ['K', 'P', 'P', 'N', 'R'], START_COMMANDS, seed);

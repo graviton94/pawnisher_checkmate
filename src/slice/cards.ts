@@ -389,6 +389,12 @@ export const FOE = {
   atkGrow: 0.04,
   /** 반장이 아닌 대국마다 더하는 적 폰 (D-542 — 조항 4 「불어난 무리」의 +1과 별개) */
   extraPawns: 1,
+  /**
+   * 적 킹(반장 아님) 공격만 따로 곱하는 배율 (D-557, 사용자 실기 「적 킹 공격력 너무 강하지 않나?」).
+   * 적 킹은 모든 대국에 서고 HP가 커서 끝까지 남고 태엽 1로 여덟 칸을 친다 — D-542 공격 2.15에서 한 방이 폰의 1.5배 · 대상 최대 HP의 90% 안팎,
+   * 2 · 3막에서 가장 자주 치는 적이었다. 위험은 호위(폰 · 나이트 · 비숍 · 룩 · 퀸)로 옮긴다 (sim/kinghit.sim.ts로 잰다)
+   */
+  kingAtk: 0.75,
 };
 
 /**
@@ -574,6 +580,7 @@ export const SLICE = {
   foeHpStart: FOE.hpStart,
   foeHpGrow: FOE.hpGrow,
   foeAtkGrow: FOE.atkGrow,
+  foeKingAtk: FOE.kingAtk,
 };
 
 /**

@@ -70,7 +70,7 @@ describe('저장 · 승급 · 오늘의 출하 (D-174)', () => {
   });
 });
 
-describe('첫 10분 단계는 기록 판에 한 번 (D-548 — 출하 중 앱을 다시 켜자 first_pick이 또 남았다)', () => {
+describe('첫 10분 단계는 기록 판에 한 번 (D-557 — 출하 중 앱을 다시 켜자 first_pick이 또 남았다)', () => {
   it('처음 밟은 단계만 새 기록 판을 돌려주고, 다시 읽은 뒤(앱 재시작)에도 같은 단계는 null', () => {
     const st = memStore();
     const a = ftueMark(readMeta(st), 'first_pick');
@@ -83,7 +83,7 @@ describe('첫 10분 단계는 기록 판에 한 번 (D-548 — 출하 중 앱을
   });
 });
 
-describe('바뀐 용어 이름 (D-548 — D-536 「되받아침」 → 「가시 반격」)', () => {
+describe('바뀐 용어 이름 (D-557 — D-536 「되받아침」 → 「가시 반격」)', () => {
   it('옛 이름으로 연 용어는 지금 이름으로 읽혀 다시 열리지 않는다', () => {
     const st = memStore();
     writeMeta(st, { ...emptyMeta(), terms: ['태엽', '되받아침'], termsNew: ['되받아침'] });

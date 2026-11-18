@@ -127,3 +127,18 @@ describe('협공 AI (D-542)', () => {
     expect(times[Math.floor(times.length / 2)]).toBeLessThan(50);
   });
 });
+
+describe('적 킹 공격 따로 (D-557 — 실기 「적 킹 공격력 너무 강하지 않나?」)', () => {
+  const squad: Squad[] = [{ t: 'K' }, { t: 'P' }, { t: 'N' }];
+  it('반장이 아닌 적 킹만 kingAtk를 한 번 더 곱한다 — 호위 공격 · 반장 킹은 그대로', () => {
+    expect(FOE.kingAtk).toBeLessThan(1);
+    for (const depth of [0, 4, 12]) {
+      const b = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_DECK, 5, { depth });
+      const atkK = FOE.atk * (1 + FOE.atkGrow * depth);
+      expect(kingOf(b.s, 1)!.atk).toBe(Math.max(1, Math.round(15 * atkK * FOE.kingAtk)));
+      expect(b.s.pieces.find((p) => p.side === 1 && p.type === 'P')!.atk).toBe(Math.round(10 * atkK));
+    }
+    const boss = newSliceBattle(squad, ['K', 'P', 'P', 'N'], START_DECK, 5, { boss: true, bossRule: 'plate' });
+    expect(kingOf(boss.s, 1)!.atk).toBe(Math.max(1, Math.round(15 * FOE.atk)));
+  });
+});

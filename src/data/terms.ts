@@ -14,7 +14,7 @@ export const TERM = {
 } as const;
 
 /**
- * 바뀐 용어 이름 (옛 이름 → 지금 이름, D-548): 기록 판(meta.terms · termsNew)에 남은 옛 이름을 읽을 때 갈아 끼운다 —
+ * 바뀐 용어 이름 (옛 이름 → 지금 이름, D-557): 기록 판(meta.terms · termsNew)에 남은 옛 이름을 읽을 때 갈아 끼운다 —
  * 그대로 두면 옛 이름은 사전에서 사라지고, 지금 이름이 「새 용어」로 다시 열려 term_unlock이 또 남는다.
  */
 export const TERM_RENAMED: Record<string, string> = { 되받아침: TERM.thorns };

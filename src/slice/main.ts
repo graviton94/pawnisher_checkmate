@@ -1117,7 +1117,7 @@ installInput(() => {
 });
 setPauseHook(() => pauseMenu());
 /** 첫 10분 단계 (①) — 처음 출하하는 사람만, 단계마다 한 번 */
-/** 단계마다 한 번은 기록 판(meta.ftue)으로 — 세션 집합만 쓰면 출하 중 앱을 다시 켤 때 first_pick이 또 남았다 (D-548) */
+/** 단계마다 한 번은 기록 판(meta.ftue)으로 — 세션 집합만 쓰면 출하 중 앱을 다시 켤 때 first_pick이 또 남았다 (D-557) */
 const ftue = (step: string, quit = false): void => {
   if (!firstShip) return;
   const next = ftueMark(readMeta(store), step);
@@ -1691,7 +1691,7 @@ const onEndInner = async (): Promise<void> => {
   const aimed0 = (b.aimed ?? []).length;
   const alarm0 = !!b.alarmAtk; // 경보가 이번에 막 찼는지 알아보려고 (D-311)
   const handBefore = [...b.hand];
-  // 사선 (D-548): 턴을 정말 끝내는 순간, 적 공격이 풀리기 전에만 묻는다 (경고 단계 · 맞은 뒤에는 묻지 않는다)
+  // 사선 (D-557): 턴을 정말 끝내는 순간, 적 공격이 풀리기 전에만 묻는다 (경고 단계 · 맞은 뒤에는 묻지 않는다)
   await sacrificeAsk();
   const r = endTurn(b);
   if (r === 'warn') {
@@ -1790,7 +1790,7 @@ const onEndInner = async (): Promise<void> => {
 };
 
 /**
- * 사선 · 자원 희생 (D-178 → D-548): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 전에 — 이번 적 차례에 내 킹이 쓰러지게 생겼으면
+ * 사선 · 자원 희생 (D-178 → D-557): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 전에 — 이번 적 차례에 내 킹이 쓰러지게 생겼으면
  * 곁의 분대원이 대신 맞겠다고 나선다(고른다). 맞은 뒤(내 차례 시작 · 이어하기)에는 묻지 않는다 — 실기 피드백 「이미 다 맞은 뒤에 떴다」.
  * force: 디버그 견본(판정 없이 창만).
  */
@@ -1833,7 +1833,7 @@ const sacrificeAsk = async (force = false): Promise<void> => {
 
 /**
  * 마지막 한 수 (D-178): 내 차례가 시작될 때 이번 적 차례에 킹이 쓰러지게 생겼으면 시간이 멈추고 태엽 + 철벽이 들어온다.
- * 출하마다 몇 번뿐, 승급이 오를수록 줄어든다. 자원 희생은 턴 끝으로 옮겼다 (sacrificeAsk, D-548).
+ * 출하마다 몇 번뿐, 승급이 오를수록 줄어든다. 자원 희생은 턴 끝으로 옮겼다 (sacrificeAsk, D-557).
  */
 const lastStand = async (force = false): Promise<void> => {
   if (labMode || (!force && !kingDoomed(b))) return;
@@ -4843,7 +4843,7 @@ const saveRun = (at: 'map' | 'battle' | 'reward', node?: number, pending?: Pendi
  * 대국 판을 저장한다 (D-529): 턴이 넘어갈 때 · 앱을 내리거나 닫을 때. 엔진 상태(b)만 — 화면은 남기지 않는다.
  * 연출 중(busy · 적 차례)이면 건너뛴다 — 연출 전에 settled로 남긴 판이 있다.
  * settled (코드 리뷰 4): 턴 끝 · 카드를 엔진이 다 푼 직후(연출 전)에 부른다 — 엔진 판은 이미 결과라, 연출 중에 앱을 죽였다 켜도
- * 그 턴 처음으로 돌아가지 않는다(공짜 되감기). 못 보인 폐기 의식 · 마지막 한 수(stand)는 이어 갈 때 다시 보인다 — 사선(자원 희생)은 턴 끝에만 묻는다(D-548).
+ * 그 턴 처음으로 돌아가지 않는다(공짜 되감기). 못 보인 폐기 의식 · 마지막 한 수(stand)는 이어 갈 때 다시 보인다 — 사선(자원 희생)은 턴 끝에만 묻는다(D-557).
  */
 const saveFight = (settled?: { stand: boolean }): void => {
   if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || (!settled && (b.s.winner !== null || busy || enemyTurn))) return;
@@ -4883,7 +4883,7 @@ const resumeFight = (def: BattleDef, f: FightSave): void => {
   renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
   renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
   renderer.setup(b.s);
-  // 연출 전에 남긴 판이면 못 본 폐기 의식 · 마지막 한 수를 판이 선 뒤에 (사선은 묻지 않는다 — 이미 맞은 뒤, D-548) (옛 저장은 다 본 것으로 — 의식을 다시 틀지 않게)
+  // 연출 전에 남긴 판이면 못 본 폐기 의식 · 마지막 한 수를 판이 선 뒤에 (사선은 묻지 않는다 — 이미 맞은 뒤, D-557) (옛 저장은 다 본 것으로 — 의식을 다시 틀지 않게)
   const pend = fightPending(f);
   ritesDone = pend.rites;
   refresh();

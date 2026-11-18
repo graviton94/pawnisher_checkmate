@@ -416,7 +416,9 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
   const atkK = SLICE.foeAtk * (1 + SLICE.foeAtkGrow * depth) * (opts.atkMul ?? 1);
   if (!opts.lab) for (const p of s.pieces) if (p.side === 1) {
     if (hpK !== 1) p.maxHp = p.hp = Math.max(1, Math.round(p.maxHp * hpK));
-    if (atkK !== 1) p.atk = Math.max(1, Math.round(p.atk * atkK));
+    // 적 킹 공격 따로 (D-557): 반장 판이 아닌 적 킹만 — 반장은 막별 배율(ACT_SCALE atk)이 따로 있다
+    const kk = p.type === 'K' && !opts.boss && !p.giant ? SLICE.foeKingAtk : 1;
+    if (atkK * kk !== 1) p.atk = Math.max(1, Math.round(p.atk * atkK * kk));
   }
   if (opts.eliteOne) {
     const e = s.pieces.filter((p) => p.side === 1 && p.type !== 'K').sort((x, y) => valueOf(y) - valueOf(x))[0];
@@ -2040,7 +2042,7 @@ export const kingDoomed = (b: SliceBattle): boolean => {
 };
 
 /**
- * 사선 제안 (D-548 — 실기 피드백 「맞은 뒤에 떴다」): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 **전**에만 낸다.
+ * 사선 제안 (D-557 — 실기 피드백 「맞은 뒤에 떴다」): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 **전**에만 낸다.
  * 경고 단계(첫 누름 — 턴이 아직 끝나지 않음) · 내 차례 시작(방금 맞은 뒤) · 이어하기에서는 내지 않는다.
  * 낼 때는 대신 맞을 분대원 id(바꿔 서면 킹이 사는 첫 분대원), 아니면 null.
  */

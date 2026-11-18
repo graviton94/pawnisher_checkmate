@@ -172,11 +172,11 @@ export interface Meta {
   unlocked?: string[];
   /** 마지막으로 기록에 남긴 출하 ID (commitRunEnd — 같은 출하를 두 번 세지 않게) */
   lastRun?: string;
-  /** 이미 남긴 첫 10분 단계 (ftue_step, D-548 — 앱을 다시 켜도 같은 단계를 두 번 남기지 않게) */
+  /** 이미 남긴 첫 10분 단계 (ftue_step, D-557 — 앱을 다시 켜도 같은 단계를 두 번 남기지 않게) */
   ftue?: string[];
 }
 
-/** 첫 10분 단계를 처음 밟았나 (D-548): 처음이면 그 단계를 더한 기록 판, 이미 남긴 단계면 null — 세션이 아니라 기록 판에 남는다 */
+/** 첫 10분 단계를 처음 밟았나 (D-557): 처음이면 그 단계를 더한 기록 판, 이미 남긴 단계면 null — 세션이 아니라 기록 판에 남는다 */
 export const ftueMark = (m: Meta, step: string): Meta | null => ((m.ftue ?? []).includes(step) ? null : { ...m, ftue: [...(m.ftue ?? []), step] });
 
 export interface Store {
@@ -400,7 +400,7 @@ export const readMeta = (st: Store): Meta => safe(() => {
   }
   m.storyCleared = Math.max(0, Math.min(STORY_COUNT, Math.floor(Number(m.storyCleared) || 0)));
   m.challengeOpen = Math.max(CHALLENGE_START, Math.min(ASC_MAX, Math.floor(Number(m.challengeOpen) || CHALLENGE_START)));
-  // 바뀐 용어 이름 (D-536 「되받아침」 → 「가시 반격」): 옛 이름으로 연 용어를 지금 이름으로 — 다시 열려 term_unlock이 또 남지 않게 (D-548)
+  // 바뀐 용어 이름 (D-536 「되받아침」 → 「가시 반격」): 옛 이름으로 연 용어를 지금 이름으로 — 다시 열려 term_unlock이 또 남지 않게 (D-557)
   if (Array.isArray(m.terms)) m.terms = renameTerms(m.terms);
   if (Array.isArray(m.termsNew)) m.termsNew = renameTerms(m.termsNew);
   return m;
