@@ -1,6 +1,6 @@
 // 글자 점검 한 벌 (D-263) — tools/artguide/ui-audit.cjs · tools/qa/sweep.cjs가 같이 쓴다.
 // 지금 보이는 글 요소마다 갈무리 격자 크기(11: 12·24·36 / 14: 15·30·45·60) · 서체 · 갈무리14 굵게 · 넘침 · 말줄임을 본다.
-// 글자 잉크 점검 (D-557): 글자마다 실제 잉크 높이(canvas measureText의 actualBoundingBox — 계산된 서체 그대로)를
+// 글자 잉크 점검 (D-558): 글자마다 실제 잉크 높이(canvas measureText의 actualBoundingBox — 계산된 서체 그대로)를
 // 글자 자리(Range 사각)에 얹어, ① 자르는 조상(overflow ≠ visible)의 안쪽 밖으로 잉크가 나가면 「잘림 위/아래 N」,
 // ② 가장 가까운 꾸민 상자(바탕 · 테 · 9-slice · 그림자 — 칩 · 명판 · 단추 · 띠)의 안쪽 가장자리에서 잉크까지 2px가 안 되면
 // 「빠듯 위/아래 N」(음수 = 잉크가 상자 테를 넘어선다)으로 적는다. 판 위(Phaser) 글은 sliceApi.boardTexts()가 주는
@@ -8,7 +8,7 @@
 
 /** 브라우저 안에서 도는 잉크 점검 — 자세한 상자 목록을 돌려준다 (자르기 · 전후 대조에도 쓴다) */
 function inkProbe(opt) {
-  // 여유 기준 (D-557 소유자 실기 피드백 「배경이 글자에 너무 딱 맞는다」): 면 안쪽(9-slice는 외곽선 · 빛 줄 2도트 안)에서
+  // 여유 기준 (D-558 소유자 실기 피드백 「배경이 글자에 너무 딱 맞는다」): 면 안쪽(9-slice는 외곽선 · 빛 줄 2도트 안)에서
   // 위아래 잉크 3px · 옆 글자 자리 4px 이상 — 보이는 테 가장자리로는 위아래 ≈ 5–7px · 옆 ≈ 6–8px
   const ROOM = opt?.room ?? 3, ROOMX = opt?.roomX ?? 4;
   const cv = document.createElement('canvas').getContext('2d');

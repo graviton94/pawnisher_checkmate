@@ -24,7 +24,7 @@ const small = args.includes('667');
 const calm = args.includes('--calm');
 const onlyArg = args.find((a, i) => args[i - 1] === '--only') ?? (args.find((a) => a.startsWith('--only='))?.slice(7));
 const ONLY = onlyArg ? onlyArg.split(',').map((s) => s.trim()).filter(Boolean) : null;
-// 그 밖의 규격: 폭x높이x배율 (예: 772x360x3 — 안드로이드 가로 실기, D-557)
+// 그 밖의 규격: 폭x높이x배율 (예: 772x360x3 — 안드로이드 가로 실기, D-558)
 const custom = args.map((a) => a.match(/^(\d+)x(\d+)x([\d.]+)$/)).find(Boolean);
 const [VW, VH, DPR] = custom ? [+custom[1], +custom[2], +custom[3]] : small ? [667, 375, 2] : [915, 412, 2.625];
 const day = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
@@ -440,7 +440,7 @@ const GROUPS = [
       await shot('btn-states');
     } },
     { name: 'set-pick', assets: [], run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); await tap('[data-page]'); await W(900); await shot('set-pick-2-locked'); } },
-    // 시작 세트 위 그림 칸 (D-557): 해금 셋까지 연 사람 — 두 쪽 모두 켜진 받침
+    // 시작 세트 위 그림 칸 (D-558): 해금 셋까지 연 사람 — 두 쪽 모두 켜진 받침
     { name: 'set-pick-open', assets: [], meta: { unlocked: ['set:hybrid', 'set:scrap', 'set:scatter'] }, run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await tap('.card-slot .cf.start-set'); await W(500); await shot('set-pick-sel'); await tap('[data-page]'); await W(900); await shot('set-pick-2'); } },
     { name: 'crash', assets: [], run: async ({ A, W, shot }) => {
       // 지도에 선 출하(저장 있음)에서 잡히지 않은 오류 — 진짜 예외 대신 같은 error 사건을 보내 창만 띄운다
@@ -590,7 +590,7 @@ const writeReport = () => {
           if (buf) fs.writeFileSync(path.join(OUT, file), buf); else await pg.screenshot({ path: path.join(OUT, file) });
           rec.shots.push(file);
           for (const t of await textAudit(pg)) if (!rec.txt.includes(t)) rec.txt.push(t);
-          // 잉크 점검 자세히 (D-557): 어느 장면 · 어디서 잘렸는지 — 고친 전후 자르기에 쓴다
+          // 잉크 점검 자세히 (D-558): 어느 장면 · 어디서 잘렸는지 — 고친 전후 자르기에 쓴다
           if (process.env.SWEEP_INK) for (const f of await textAudit.inkAudit(pg)) fs.appendFileSync(path.join(OUT, 'ink.jsonl'), JSON.stringify({ file, ...f }) + '\n');
         };
         const tapAt = (x, y) => pg.touchscreen.tap(Math.round(x), Math.round(y));

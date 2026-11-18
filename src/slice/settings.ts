@@ -213,7 +213,7 @@ const selectorOf = (el: HTMLElement): string => {
   return `${row ? `[data-vol="${row.dataset.vol}"] ` : ''}[${own}${val ? `="${val}"` : ''}]${extra}`;
 };
 
-/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) — 바꿀 수 있는 행동은 지금 배치로. 칸이 낮으면 쪽으로 나눈다 (D-557: 아래 줄이 칸 밖에서 잘렸다) */
+/** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) — 바꿀 수 있는 행동은 지금 배치로. 칸이 낮으면 쪽으로 나눈다 (D-558: 아래 줄이 칸 밖에서 잘렸다) */
 let keyMapPer = 0;
 const keyMapPage = (s: Settings, back: () => void, page = 0): void => {
   const k = cleanBinds(s.keys);
@@ -242,7 +242,7 @@ const keyMapPage = (s: Settings, back: () => void, page = 0): void => {
  * 고정 키(확인 · 뒤로 · 방향 · 숫자)와 다른 행동의 키는 받지 않고 까닭을 한 줄로. [기본값으로]는 바꾼 키를 모두 지운다.
  * 기다리는 동안 Esc = 그만두기(키는 그대로).
  */
-// 안내 줄은 표의 빈 여섯째 칸에 (D-557: 표 아래 따로 두면 낮은 화면에서 칸 밖으로 잘렸다)
+// 안내 줄은 표의 빈 여섯째 칸에 (D-558: 표 아래 따로 두면 낮은 화면에서 칸 밖으로 잘렸다)
 const keyBindPage = (o: SettingsOpts, back: () => void): void => {
   let wait: BindId | null = null;
   const html = (): WinOpts => {
@@ -298,7 +298,7 @@ const keyBindPage = (o: SettingsOpts, back: () => void): void => {
   draw();
 };
 
-/** 만든 사람 + 라이선스 목록 (전문은 쪽 넘김) — 칸이 낮으면(772×360 등) 라이선스를 쪽으로 나눈다 (D-557: 셋째 줄이 반만 보였다) */
+/** 만든 사람 + 라이선스 목록 (전문은 쪽 넘김) — 칸이 낮으면(772×360 등) 라이선스를 쪽으로 나눈다 (D-558: 셋째 줄이 반만 보였다) */
 let creditsPer = 0;
 const creditsPage = (back: () => void, page = 0): void => {
   const who = CREDITS.map((c) => `<span><b>${c.role}</b> ${c.names.join(' · ')}</span>`).join('');
