@@ -619,6 +619,192 @@
   "reliable": false,
   "why": "한 축 격자 없음, 정사각 훑기 다름 4.143"
  },
+ "CD-08c/crew-common": {
+  "exp": 5.885,
+  "gm_x": {
+   "pitch": 4.975,
+   "phase": 0.93,
+   "err": 5.63,
+   "presence": 1.138,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.8,
+   "phase": 2.9,
+   "err": 6.82,
+   "presence": 1.078,
+   "how": "from-other"
+  },
+  "square": {
+   "pitch": 5.033,
+   "presence": 1.07
+  },
+  "run_x": {
+   "pitch": 4.413,
+   "resid": 0.1209
+  },
+  "run_y": {
+   "pitch": 4.413,
+   "resid": 0.1084
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 두 축 다름 4.975 / 4.8"
+ },
+ "CD-08c/crew-rare": {
+  "exp": 5.908,
+  "gm_x": {
+   "pitch": 4.614,
+   "phase": 0.67,
+   "err": 6.0,
+   "presence": 1.135,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.669,
+   "phase": 1.75,
+   "err": 7.57,
+   "presence": 1.092,
+   "how": "from-other"
+  },
+  "square": {
+   "pitch": 4.671,
+   "presence": 1.095
+  },
+  "run_x": {
+   "pitch": 4.431,
+   "resid": 0.1142
+  },
+  "run_y": {
+   "pitch": 4.431,
+   "resid": 0.1083
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음"
+ },
+ "CD-08c/crew-gold": {
+  "exp": 5.891,
+  "gm_x": {
+   "pitch": 5.646,
+   "phase": 4.23,
+   "err": 7.26,
+   "presence": 1.083,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.815,
+   "phase": 4.0,
+   "err": 8.95,
+   "presence": 1.062,
+   "how": "from-other"
+  },
+  "square": {
+   "pitch": 6.058,
+   "presence": 1.048
+  },
+  "run_x": {
+   "pitch": 4.418,
+   "resid": 0.1125
+  },
+  "run_y": {
+   "pitch": 4.438,
+   "resid": 0.1146
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 정사각 훑기 다름 6.058"
+ },
+ "CD-08c/win-crew-common": {
+  "exp": 6.375,
+  "gm_x": {
+   "pitch": 6.748,
+   "phase": 0.0,
+   "err": 3.71,
+   "presence": 1.107,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.021,
+   "phase": 1.26,
+   "err": 5.58,
+   "presence": 1.16,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.001,
+   "presence": 1.149
+  },
+  "run_x": {
+   "pitch": 5.991,
+   "resid": 0.1159
+  },
+  "run_y": {
+   "pitch": 5.001,
+   "resid": 0.1173
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.748 / 5.021, 정사각 훑기 다름 5.001"
+ },
+ "CD-08c/win-crew-rare": {
+  "exp": 6.425,
+  "gm_x": {
+   "pitch": 6.756,
+   "phase": 6.33,
+   "err": 3.9,
+   "presence": 1.228,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 6.349,
+   "phase": 5.95,
+   "err": 8.01,
+   "presence": 1.244,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.999,
+   "presence": 1.108
+  },
+  "run_x": {
+   "pitch": 5.999,
+   "resid": 0.1131
+  },
+  "run_y": {
+   "pitch": 4.999,
+   "resid": 0.1024
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.756 / 6.349, 정사각 훑기 다름 4.999"
+ },
+ "CD-08c/win-crew-gold": {
+  "exp": 6.458,
+  "gm_x": {
+   "pitch": 6.256,
+   "phase": 0.39,
+   "err": 4.14,
+   "presence": 1.161,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.907,
+   "phase": 1.53,
+   "err": 6.72,
+   "presence": 1.166,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.964,
+   "presence": 1.128
+  },
+  "run_x": {
+   "pitch": 5.994,
+   "resid": 0.1067
+  },
+  "run_y": {
+   "pitch": 4.994,
+   "resid": 0.1176
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.256 / 4.907, 정사각 훑기 다름 5.964"
+ },
  "CD-09/set-common": {
   "exp": 6.201,
   "gm_x": {
@@ -647,8 +833,8 @@
    "pitch": 4.651,
    "resid": 0.1179
   },
-  "reliable": true,
-  "why": "ok"
+  "reliable": false,
+  "why": "자매 부품 격자 없음/다름: set-rare"
  },
  "CD-09/set-rare": {
   "exp": 6.122,

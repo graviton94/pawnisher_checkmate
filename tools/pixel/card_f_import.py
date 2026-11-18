@@ -202,7 +202,7 @@ def measure():
         img = src(sheet)
         for p in parts:
             name, kind, box = p[0], p[1], p[2]
-            d = _dst(p)
+            d = _dst(p, sheet)
             if d is None:
                 card = next(q for q in parts if q[1] == 'card')
                 cb = card[2]
@@ -229,10 +229,12 @@ def measure():
     return rep
 
 
-def _dst(p):
+def _dst(p, sheet=None):
     kind = p[1]
     if kind == 'card':
-        return R.BODY
+        return R.BODY_OF.get(sheet, R.BODY)
+    if kind == 'scene' and len(p) > 4 and p[4] == 'own':
+        return (0, 0) + p[3]
     if kind == 'slot':
         return R.SLOT_BODY
     if kind == 'strip':
@@ -245,12 +247,12 @@ def _dst(p):
 def card_geom(sheet):
     """시트 첫 카드의 균일 배율 — 격자 없는 창 장면 겹을 같은 배율로 뽑는다"""
     p = next(q for q in R.SHEETS[sheet] if q[1] == 'card')
-    return geom(p[2], R.BODY, R.CARD)['s']
+    return geom(p[2], R.BODY_OF.get(sheet, R.BODY), R.CARD)['s']
 
 
 # ---------------------------------------------------------------- 카드 앞면
 
-FAMILY = {'cmd': 'CD-01f', 'part': 'CD-06', 'svc': 'CD-07', 'crew': 'CD-08', 'set': 'CD-09'}
+FAMILY = {'cmd': 'CD-01f', 'part': 'CD-06', 'svc': 'CD-07', 'crew': 'CD-08c', 'set': 'CD-09'}
 
 
 def _pal_index(a):
@@ -320,10 +322,20 @@ def paper_boxes(a, hole_box):
 def card(sheet, entry, fixes):
     """카드 한 장: 복원 → 키 · 팔레트 → 사내 손질. 반환 (RGBA, 기록)"""
     name, _, box = entry[:3]
-    img, rec = restore_fit(src(sheet), box, R.BODY, R.CARD, name)
+    img, rec = restore_fit(src(sheet), box, R.BODY_OF.get(sheet, R.BODY), R.CARD, name)
     a = np.asarray(img).copy()
     rec['fix'] = []
     f = fixes.get(name, {})
+    # ⓪ 옮겨 찍기(D-588 — 받은 그림 제 칸을 다른 자리에 그대로 찍는다: 지우기 = 옆 빈 판 칸으로 덮기 · 더하기 = 같은 등불 칸을 다음 자리에)
+    for (x0, y0, x1, y1), (dx, dy), why in f.get('copy', []):
+        patch = a[y0:y1, x0:x1].copy()
+        a[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = patch
+        rec['fix'].append(f'{why} ({x0},{y0})–({x1},{y1}) → ({x0 + dx},{y0 + dy})')
+    # ⓪' 지우기(D-588): 몸 밖 번짐 줄 → 투명
+    for (x0, y0, x1, y1), why in f.get('clear', []):
+        n = int((a[y0:y1, x0:x1, 3] > 0).sum())
+        a[y0:y1, x0:x1] = 0
+        rec['fix'].append(f'{why} ({x0},{y0})–({x1},{y1}) {n}칸')
     # ① 명령 카드: 창 구멍 속 등급 빛 · 불티 지우기(창 장면 겹이 같은 빛을 갖는다) — 등불 상자(keep)는 남기고, 구멍 둘레 한 칸의 빈 칸은 먹으로
     if 'window' in f:
         wx0, wy0, wx1, wy1 = f['window']
@@ -418,6 +430,10 @@ def scene(sheet, entry, win):
         ox = box[0] + gr['phase'][0] - s * np.ceil(gr['phase'][0] / s)
         oy = box[1] + gr['phase'][1] - s * np.ceil(gr['phase'][1] / s)
         how = 'grid'
+    elif len(entry) > 4 and entry[4] == 'own':
+        # 제 균일 배율(D-588): 장면 테 상자가 발주 도트 상자(entry[3])에 맞게 — 두 축 표지 간격 가운데 작은 값, 남는 칸은 아래 자르기가 덜어 낸다
+        s = min((box[2] - box[0]) / entry[3][0], (box[3] - box[1]) / entry[3][1])
+        ox, oy, how = box[0], box[1], 'uniform/own'
     else:
         s = card_geom(sheet)
         ox, oy, how = box[0], box[1], 'uniform'
@@ -569,7 +585,8 @@ ORDERED = {
     'cmd': {'win': (6, 32, 76, 68), 'name': (28, 19, 70, 30), 'desc': (13, 73, 71, 112)},
     'part': {'win': (16, 11, 72, 44), 'name': (14, 46, 70, 55), 'desc': (16, 67, 69, 113)},
     'svc': {'win': (9, 11, 75, 44), 'name': (14, 46, 70, 55), 'desc': (16, 67, 69, 113)},
-    'crew': {'win': (22, 10, 62, 44), 'name': (14, 46, 70, 55), 'desc': (16, 67, 69, 113), 'atk': (3, 27, 20, 44), 'hp': (62, 27, 79, 44)},
+    # 분대원 = 배치 기준 CD-08b(받은 그림, ×6 정확)를 잰 칸 (D-588 — CD-08c 발주 「배치는 첫 첨부와 도트 하나까지 같게」)
+    'crew': {'win': (22, 11, 62, 40), 'name': (14, 43, 70, 49), 'desc': (14, 59, 70, 111), 'atk': (5, 30, 19, 43), 'hp': (64, 30, 78, 43)},
     'set': {'win': (7, 14, 77, 44), 'name': (14, 46, 70, 55), 'desc': (16, 67, 69, 113)},
 }
 
