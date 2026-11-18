@@ -4985,7 +4985,8 @@ const gildedArt = (): string => `boss-gilded${runMode === 'story' ? storyChapter
 const promoteScreen = (): Promise<'throne' | 'depart'> => {
   closeWin();
   const company = storyCompany();
-  return promotionScene({ chapter: storyChapter, prev: pastCompanions().at(-1), art: 'gilded-fallen', companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined, faces: crewFaces() });
+  // D-582: VA-08 취소 — 그림 없이 검은 화면 가운데 글 (쓰러진 도금왕 그림은 금관 자리가 틀렸다)
+  return promotionScene({ chapter: storyChapter, prev: pastCompanions().at(-1), companion: company.alive[0]?.name, promisedLost: company.promised && !company.promised.alive ? company.promised.name : undefined, faces: crewFaces() });
 };
 let endKind: EndingKind = 'throne';
 const endingFlow = async (): Promise<void> => {

@@ -76,6 +76,50 @@
 .prologue.coda .cut-lines p::before { display: none; }
 .prologue.coda-white .cut-lines p, .prologue.coda-white .cut-next { color: var(--t-ink); }
 
+/* 검은 화면 가운데 글 (D-582 — Cut.void, 수치 data/vn.VN_VOID): 그림 · 레터박스 · 자막 판 · 화자 명패 · 화자 표지 없이 먹 위 한가운데 글만.
+   글 단 = 화면 폭 60%(좁은 화면 72%) · 가운데 맞춤 · 한 문장 한 줄(15px 갈무리14, 줄높이 --lh-15w 30 — 넉넉히) · 문장 사이 12.
+   갈래 색: 서술 상아(--t-body) · 속마음 ‘ ’ 차가운 철빛(--t-cool) · 새긴 규정 「 」 황동(--t-gold) · 대사는 이름(12 굵게) 한 줄 위 + “ ”.
+   ▼는 다 찍힌 뒤 손을 대지 않을 때만(.idle) 같은 글 색으로 · 「건너뛴다」 · 「기록」은 길게 누르기 · 마우스 · 뒤로에만(.void-ui). 움직임은 계단 · 디더만 (D-216). */
+.prologue.void .film-lb { visibility: hidden; }
+.prologue.void .film-view { top: 0; bottom: 0; }
+.prologue.void .cut-sub {
+  left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3);
+  padding: var(--Gy) var(--G); box-sizing: border-box;
+}
+.prologue.void .cut-sub::before, .prologue.void .cut-sub::after { display: none; }
+.prologue.void .cut-lines {
+  position: static; flex: none; box-sizing: border-box; padding: 0; gap: 12px; background: none; box-shadow: none;
+  width: calc(var(--void-w, 0.6) * 100 * var(--vw, 1vw)); max-width: 100%;
+}
+@media (max-width: 759px) { .prologue.void .cut-lines { width: calc(var(--void-ws, 0.72) * 100 * var(--vw, 1vw)); } }
+.prologue.void .cut-lines p { overflow: visible; color: var(--t-body); font: 400 15px/var(--lh-15w, 30px) Galmuri14, Galmuri11, sans-serif; }
+.prologue.void .cut-lines p::before { display: none; }
+.prologue.void .cut-lines p > span { color: var(--t-body); }
+.prologue.void .cut-lines p.cl-m > span { color: var(--t-cool); }
+.prologue.void .cut-lines p.cl-law > span { color: var(--t-gold); }
+.prologue.void .cut-lines p.cl-s.side-foe > span, .prologue.void .cut-lines p.cl-s.side-gilded > span { color: #ffd8cf; }
+/* 대사 이름: 명패 대신 글 위 작은 한 줄 (화면 읽기 전용이던 이름표를 보인다) */
+.prologue.void .cut-lines .cl-who { position: static; display: block; width: auto; height: auto; overflow: visible; clip-path: none; white-space: nowrap; margin: 0 0 var(--s1); box-shadow: none; color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
+.prologue.void .cut-lines .side-gilded .cl-who { color: var(--t-gold); }
+.prologue.void .cut-lines .side-foe .cl-who { color: var(--t-loss); }
+/* 붉은 경보(줄 fx red): 그 줄 글만 진홍으로 두 번 깜빡 — 화면 번쩍 없음 */
+.prologue.void .cut-lines p.void-red > span { animation: voidred 640ms steps(1, end) both; }
+@keyframes voidred { 0% { color: var(--t-loss); } 25% { color: var(--t-body); } 50% { color: var(--t-loss); } 75%, 100% { color: var(--t-body); } }
+/* ▼: 한참 손을 대지 않을 때만 · 마지막 줄 갈래 색 */
+.prologue.void .cut-next { position: static; margin: 0; visibility: hidden; color: var(--t-body); }
+.prologue.void.idle .cut-sub:not(.typing) .cut-next { visibility: visible; }
+.prologue.void[data-voice='m'] .cut-next { color: var(--t-cool); }
+.prologue.void[data-voice='law'] .cut-next { color: var(--t-gold); }
+/* 숨은 단추: 길게 누르기 · 마우스 움직임 · 뒤로 키에 잠깐 드러난다 */
+.prologue.void:not(.void-ui) :is(.cut-skip, .cut-log) { visibility: hidden; }
+.prologue.film.void .cut-skip.btn, .prologue.film.void .cut-log.btn { top: auto; bottom: var(--Gy); }
+.prologue.void :is(.cut-skip, .cut-log).in { animation: kstepin 240ms steps(3, jump-none) both; }
+.prologue.void .vn-air, .prologue.void .vn-cast, .prologue.void .vn-lamp { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .prologue.void .cut-next, .prologue.void .cut-lines p.void-red > span, .prologue.void :is(.cut-skip, .cut-log).in { animation: none; }
+}
+
 /* 장 제목 · 맺음 카드: 먹 바탕(진엔딩은 종이) — 왕관 문장(ED-01 crown-emblem-N, 몇째 왕관 장) → 꼬리표 12 굵게 → 제목 명판(ED-01 title-card 9-slice — 옛 구분 줄 자리) 안 제목 36(낮은 화면 24) → 부제 15.
    1도트 = --d(2·--px, 장치 층). 명판 9-slice = 위 9 · 오른 17 · 아래 9 · 왼 18도트(철 기둥 + 황동 모서리 실측, scene_recipe.ENDING_GRID) — 가운데는 받은 판의 한 열로 고른 면(D-510) */
 .film-title {

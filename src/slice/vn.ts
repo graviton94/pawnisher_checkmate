@@ -82,15 +82,18 @@ export class VnStage {
     this.lamp = view.querySelector<HTMLElement>('.vn-lamp')!;
   }
   /** 컷이 바뀔 때 (막이 닫힌 뒤): 배우를 걷고 그 컷의 분위기를 건다 */
-  enter(slug: string | undefined, o: { noCast?: boolean } = {}): VnScene {
+  /** still = 검은 화면 가운데 글 컷 (D-582 Cut.void): 배우 · 입자 · 등잔 없이 먹만 */
+  enter(slug: string | undefined, o: { noCast?: boolean; still?: boolean } = {}): VnScene {
     this.clearCast();
     // 배우는 기본으로 없다 (VN_DEFAULT.noCast · D-580) — 부르는 쪽이 noCast: false를 넘길 때만(그림 없는 컷 · castOn)
-    this.scene = { ...VN_DEFAULT, ...(slug ? VN_SCENE[slug] : {}), noCast: o.noCast ?? true };
+    this.scene = o.still ? { air: 'none', noCast: true } : { ...VN_DEFAULT, ...(slug ? VN_SCENE[slug] : {}), noCast: o.noCast ?? true };
     this.air = this.scene.air ?? 'none';
     this.motes = [];
     this.pan0 = null;
     this.lampT = performance.now() + this.lampGap();
     this.size();
+    // 앞 컷의 입자 한 장이 남지 않게 (입자 없는 컷은 tick이 그리지 않는다)
+    this.g.clearRect(0, 0, this.cols, this.rows);
     // 처음 입자는 화면에 고루 뿌려 둔다 (빈 하늘에서 하나씩 생기지 않게)
     for (let i = 0; i < VN_AIR.count[this.air]; i++) this.spawn(true);
     this.start();

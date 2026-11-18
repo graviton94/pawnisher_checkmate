@@ -13,8 +13,8 @@ import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
 import { logHtml, VnStage, type PlateBox } from './vn';
 import { DarkStage } from './darkcut';
-import { castOf, castOn, VN_TEXT } from '../data/vn';
-import { ditherTo, ease } from '../view/motion';
+import { castOf, castOn, VN_TEXT, VN_VOID } from '../data/vn';
+import { clearDither, ditherTo, ease } from '../view/motion';
 import { PAPER_FACE } from '../data/portraits';
 
 const PAPER_KING = '종이왕';
@@ -63,6 +63,10 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     el.className = 'prologue kit film';
     el.dataset.beat = 'move';
     el.innerHTML = `<i class="film-lb lb-t" aria-hidden="true"></i><div class="film-view"><div class="pl-stage"></div><div class="film-over"></div></div><i class="pl-flash"></i><i class="film-lb lb-b" aria-hidden="true"></i>${cutChromeHtml({ skip: OPENING_TEXT.skip })}<button type="button" class="btn k-iron cut-log" data-log>${VN_TEXT.log}</button>`;
+    // 검은 화면 가운데 글 (D-582 — Cut.void): 글 단 폭(화면 폭 비율)은 data/vn.VN_VOID
+    el.style.setProperty('--void-w', String(VN_VOID.width));
+    el.style.setProperty('--void-ws', String(VN_VOID.widthSmall));
+    if (cuts[0]?.void) el.classList.add('void');
     document.body.appendChild(el);
     document.body.classList.add('cover-pl');
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
@@ -93,7 +97,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     };
     const vn = new VnStage(view, () => stage.querySelector<HTMLImageElement>('img[data-film]'), plateBoxes);
     wipe.full();
-    if (!calm()) replay(el, 'lb-in');
+    if (!calm() && !cuts[0]?.void) replay(el, 'lb-in');
     const faces: Record<string, Face> = { ...SPEAKER_FACE, ...(o.faces ?? {}) };
     /** 줄의 화자 명패 (없으면 null): 대사 = 이름 + 얼굴 · 종이왕 표정 (D-506): 대사는 줄의 mood로 명패 얼굴을, 속마음(m)은 mood가 있으면 이름표 없이 얼굴만 */
     const plateOf = (l: CutLine & Partial<Line>): { who: string; side: ReturnType<typeof speakerSide>; face?: Face; key: string } | null => {
@@ -122,6 +126,40 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     /** 제목 카드 · 숨 동안: 탭 하나를 기다린다 */
     const tapped = (): Promise<void> => new Promise((r) => (waiter = () => { waiter = null; r(); }));
     const refit = (): void => { cam?.refit(); vn.refit(); dark?.refit(); };
+    /** 검은 화면 가운데 글 (D-582): ▼ 쉼 · 숨은 단추(건너뛴다 · 기록) 드러내기 · 길게 누르기 */
+    let idleT = 0, uiT = 0, holdT = 0, held = false;
+    const isVoid = (): boolean => el.classList.contains('void');
+    const unIdle = (): void => { window.clearTimeout(idleT); el.classList.remove('idle'); };
+    /** 한 쪽이 다 선 뒤 한참 손을 대지 않으면 같은 글 색 ▼ (먹 화면은 처음부터 단추를 내밀지 않는다) */
+    const armIdle = (): void => {
+      unIdle();
+      if (!isVoid()) return;
+      const my = token;
+      idleT = window.setTimeout(() => { if (my === token && el.dataset.beat === 'hold') el.classList.add('idle'); }, VN_VOID.hintMs);
+    };
+    /** 숨은 「건너뛴다」 · 「기록」을 잠깐 드러낸다 (길게 누르기 · 마우스 움직임 · 뒤로 키) */
+    const reveal = (): void => {
+      if (!isVoid()) return;
+      if (!el.classList.contains('void-ui') && !calm()) for (const b of el.querySelectorAll<HTMLElement>('.cut-skip, .cut-log')) replay(b, 'in');
+      el.classList.add('void-ui');
+      window.clearTimeout(uiT);
+      uiT = window.setTimeout(() => el.classList.remove('void-ui'), VN_VOID.uiMs);
+    };
+    el.addEventListener('ui-reveal', reveal);
+    el.addEventListener('pointerdown', (ev) => {
+      held = false;
+      if (!isVoid() || (ev.target as HTMLElement).closest('button, .vn-log')) return;
+      holdT = window.setTimeout(() => { held = true; reveal(); }, VN_VOID.holdMs);
+    });
+    for (const k of ['pointerup', 'pointercancel', 'pointerleave'] as const) el.addEventListener(k, () => window.clearTimeout(holdT));
+    el.addEventListener('pointermove', (ev) => { if (ev.pointerType === 'mouse' && Math.abs(ev.movementX) + Math.abs(ev.movementY) > 2) reveal(); });
+    /** 이야기 줄이 바뀔 때: 앞 글을 64단 디더로 걷는다 (움직임 줄이기면 바로) */
+    const voidOut = async (): Promise<void> => {
+      if (!text.childElementCount) return;
+      if (!calm()) { await ditherTo(text, 1, 0, VN_VOID.outMs, ease.in); }
+      text.innerHTML = '';
+      clearDither(text);
+    };
     window.addEventListener('resize', refit);
     const finish = async (): Promise<void> => {
       if (ended) return;
@@ -129,6 +167,8 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       token++;
       el.dataset.beat = 'move';
       window.removeEventListener('resize', refit);
+      unIdle();
+      window.clearTimeout(uiT);
       cam?.stop();
       closeLog();
       vn.exitAll();
@@ -184,6 +224,12 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       dark?.destroy();
       dark = null;
       el.classList.toggle('dark-stage', !!c.dark);
+      // 검은 화면 가운데 글 (D-582): 띠 · 그림 없이 먹만 — 먹 컷에서 그림 컷으로 돌아오면 레터박스가 계단으로 다시 닫힌다
+      const wasVoid = isVoid();
+      el.classList.toggle('void', !!c.void);
+      if (!c.void) el.classList.remove('void-ui', 'idle');
+      if (wasVoid && !c.void && !calm()) replay(el, 'lb-in');
+      if (c.void) { shot = { x: 0.5, y: 0.5, z: 0 }; stage.className = 'pl-stage'; stage.innerHTML = ''; return; }
       // 먹 무대 (D-579): 그림 · 자리 그림 없이 도트 효과 칸만 — 줄의 beat가 효과를 건다
       if (c.dark) { shot = { x: 0.5, y: 0.5, z: 0 }; stage.className = 'pl-stage pl-dark'; stage.innerHTML = ''; dark = new DarkStage(stage, view); return; }
       if (c.coda) { stage.className = 'pl-stage'; stage.innerHTML = ''; return; }
@@ -201,9 +247,11 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       }
     };
     /** 줄의 효과 (첫 쪽에서): 흔들림 · 흰 번쩍 · 붉은 경보 한 번 · 금빛 */
-    const lineFx = (l: CutLine & Partial<Line>): void => {
+    const lineFx = (l: CutLine & Partial<Line>, voidP?: HTMLElement): void => {
       if (l.sfx) sfx(l.sfx);
       if (!l.fx) return;
+      // 검은 화면 가운데 글 (D-582): 그림 효과(흔들림 · 번쩍 · 금빛) 없이 — 붉은 경보만 그 줄 글이 진홍으로 두 번 깜빡
+      if (voidP) { if (l.fx === 'red' && !calm()) replay(voidP, 'void-red'); return; }
       if (l.fx === 'shake') shake(view, 2);
       else if (l.fx === 'flash') { flashScreen(0.9); shake(view, 3); }
       else if (l.fx === 'red') { if (!calm()) { replay(el, 'red-once'); window.setTimeout(() => el.classList.remove('red-once'), 640); } shake(view, 1); }
@@ -245,11 +293,13 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       el.dataset.beat = 'move';
       const pg = pages[k];
       const c = cuts[pg.c];
+      unIdle();
       if (pg.c !== shown) {
         busy = true;
         const prev = cuts[shown];
         const trans = c.trans ?? 'dither';
         sub.querySelector('.cut-who')?.remove();
+        if (prev?.void) { await voidOut(); if (my !== token) return; }
         text.innerHTML = '';
         // 1 · 막 닫기 (첫 컷은 이미 먹)
         if (shown >= 0) await wipe.close(trans, shot);
@@ -262,7 +312,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         // 무대 분위기 (막이 닫힌 사이): 그림이 있는 컷은 배우를 세우지 않는다(D-580 · D-572 — 인물은 그림 안에 이미 있다).
         // 그림 없는 컷도 끝 정적 · 먹 무대(D-579) · 자리 그림 · 실제 배우를 겹친 컷은 아니고, VN_SCENE이 따로 연 컷만(castOn)
         cutLines = c.lines as (CutLine & Partial<Line>)[];
-        scene = vn.enter(c.slug, { noCast: !!c.coda || !!c.dark || !!c.showActors || !castOn(c.slug, !!stage.querySelector('img[data-film]')) });
+        scene = vn.enter(c.slug, { noCast: !!c.coda || !!c.dark || !!c.showActors || !castOn(c.slug, !!stage.querySelector('img[data-film]')), still: !!c.void });
         if (c.title) { wipe.full('#0b0b0e'); await showTitle(over, c.title, tapped()); if (my !== token) return; }
         if (c.coda) wipe.color = c.coda === 'white' ? '#f1ede4' : '#0b0b0e';
         // 3 · 막 걷기 — 컷의 효과 소리
@@ -272,19 +322,26 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         busy = false;
       }
       const l = pg.lines[0] as CutLine & Partial<Line>;
-      // 명패 · 빈 줄을 먼저 세운다 — 숨 · 카메라 중에 누르면 글이 바로 다 찍힌다(건너뛰지 않는다)
-      plate(l);
-      text.innerHTML = pg.lines.map(cutLineHtml).join('');
+      if (c.void) {
+        // 검은 화면 가운데 글 (D-582): 한 문장 = 한 줄로 쌓는다 — 이야기 줄이 바뀌면 앞 글을 디더로 걷고 새로. 명패 대신 대사 이름은 글 위 작은 줄(첫 쪽마다)
+        if (pg.head && text.childElementCount) { busy = true; await voidOut(); busy = false; if (my !== token) return; }
+        text.insertAdjacentHTML('beforeend', pg.lines.map((x, a) => cutLineHtml(a === 0 && pg.head ? { ...x, cont: false } : x)).join(''));
+        el.dataset.voice = /^「/.test(l.t) ? 'law' : l.k;
+      } else {
+        // 명패 · 빈 줄을 먼저 세운다 — 숨 · 카메라 중에 누르면 글이 바로 다 찍힌다(건너뛰지 않는다)
+        plate(l);
+        text.innerHTML = pg.lines.map(cutLineHtml).join('');
+      }
       typing = true;
       sub.classList.add('typing');
-      const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
+      const ps = [...text.querySelectorAll<HTMLElement>('p > span')].slice(-pg.lines.length);
       // 줄의 첫 쪽: 숨 → 카메라 → 효과 · 소리 (줄을 나눈 다음 쪽은 같은 그림 · 초점에서 글만)
       if (pg.head) {
         pending = l.shot ? { ...l.shot, z: l.shot.z ?? 0 } : null;
         if (l.pause && !calm()) { await wait(l.pause); if (my !== token) return; }
         if (pending && cam) { shot = pending; await cam.move(shot); if (my !== token) return; }
         pending = null;
-        lineFx(l);
+        lineFx(l, c.void ? ps[0]?.parentElement ?? undefined : undefined);
         if (l.beat) dark?.beat(l.beat);
         // 켄 번스: 줄이 서 있는 동안 천천히 민다 (다음 줄의 카메라 · 컷 전환이 멈춘다)
         if (cam) void cam.drift(l.drift ?? scene.drift);
@@ -292,7 +349,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       cast(l);
       record(pg.lines);
       for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
-      if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; armAuto(); }
+      if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; armAuto(); armIdle(); }
     };
     /** 설정 › 컷신 자동 넘김 (D-539): 한 쪽이 다 선 뒤 읽을 틈을 두고 다음 쪽 — 누르기를 대신할 뿐, 연출 속도는 그대로 (D-039) */
     const armAuto = (): void => {
@@ -309,10 +366,11 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         typing = false;
         sub.classList.remove('typing');
         if (pending) { shot = pending; cam?.set(shot); pending = null; }
-        const ps = [...text.querySelectorAll<HTMLElement>('p > span')];
+        const ps = [...text.querySelectorAll<HTMLElement>('p > span')].slice(-pages[i].lines.length);
         pages[i].lines.forEach((l, a) => ps[a] && (ps[a].innerHTML = cutFill(l)));
         el.dataset.beat = 'hold';
         armAuto();
+        armIdle();
         return;
       }
       i += 1;
@@ -322,6 +380,8 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     el.addEventListener('click', (ev) => {
       if (ended) return;
       const tg = ev.target as HTMLElement;
+      // 길게 눌러 숨은 단추를 드러낸 누름은 넘기지 않는다 (D-582)
+      if (held) { held = false; return; }
       // 대사 기록: 단추 = 열기 · 창 안 = 「닫는다」나 뒤 막만 닫기 (기록이 열린 동안은 넘기지 않는다)
       if (tg.closest('.vn-log')) { if (tg.closest('[data-x]') || !tg.closest('.win')) closeLog(); return; }
       if (tg.closest('.cut-log')) return openLog();

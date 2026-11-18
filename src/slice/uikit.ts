@@ -802,7 +802,8 @@ const NPC_SPEAKERS = new Set(['외눈 정비공']);
 /** 줄 빈 틀 (글은 <span>에 찍는다). 대사는 화자 편 색 · 이어 말하는 쪽은 이름표 없이 */
 export const cutLineHtml = (l: CutLine): string => {
   const side = l.k === 's' && l.who ? ` side-${speakerSide(l.who)}` : '';
-  return `<p class="cl-${l.k}${side}${l.cont ? ' cont' : ''}">${l.k === 's' && l.who && !l.cont ? `<b class="cl-who">${l.who}</b>` : ''}<span></span></p>`;
+  // cl-law = 「 」 새긴 글(규정)로 시작하는 줄 — 검은 화면 가운데 글(D-582)에서 황동
+  return `<p class="cl-${l.k}${side}${l.cont ? ' cont' : ''}${/^「/.test(l.t) ? ' cl-law' : ''}">${l.k === 's' && l.who && !l.cont ? `<b class="cl-who">${l.who}</b>` : ''}<span></span></p>`;
 };
 /** 띠에 줄을 바로 채운다 (찍기 없이) */
 export const cutSay = (root: HTMLElement, lines: CutLine[]): void => {
