@@ -13,6 +13,19 @@ export interface LazyBoard {
   start: () => Promise<BoardRenderer>;
 }
 
+/** 판 자리 가운데 (CSS px) — 판 장면이 아직 서지 않아 칸 위치를 모를 때 연출 · 엿보기가 겨눌 곳 */
+export const hostCenter = (host: { getBoundingClientRect: () => { left: number; top: number; width: number; height: number } }): { x: number; y: number } => {
+  const r = host.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+};
+
+/**
+ * 판 장면이 칸 → 화면 계산을 할 수 있나: Phaser가 장면을 부팅했고(카메라) 첫 render가 판 상태 · 칸 크기를 넣은 뒤.
+ * lazyBoard는 BoardRenderer를 만들자마자 넘기므로, 그 사이(부하가 걸린 기기에선 수백 ms)에 부른 screenOf는 이것으로 막는다.
+ */
+export const sceneLive = (sc: { state?: { height?: number } | null; tile?: number; cameras?: { main?: unknown } | null }): boolean =>
+  !!(sc.state && typeof sc.state.height === 'number' && sc.tile && sc.cameras?.main);
+
 /** 판을 늦게 만든다 — host · 입력 · 알림은 BoardRenderer 생성자와 같다 */
 export const lazyBoard = (host: HTMLElement, input: BoardInput, announce: (text: string) => void): LazyBoard => {
   let real: BoardRenderer | null = null;
@@ -34,10 +47,7 @@ export const lazyBoard = (host: HTMLElement, input: BoardInput, announce: (text:
       if (key === 'then') return undefined;
       if (key === 'screenOf') {
         // 판이 아직 없으면 판 자리 가운데 (연출 · 엿보기가 겨눌 곳)
-        return () => {
-          const r = host.getBoundingClientRect();
-          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        };
+        return () => hostCenter(host);
       }
       // 판이 서면 부른 순서대로 부른다 (같은 Promise에 단 then은 단 순서대로 돈다)
       return (...a: unknown[]) => ready.then((r) => (r as unknown as Record<PropertyKey, (...b: unknown[]) => unknown>)[key as string](...a));

@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { HEAVY_MS } from './heavy';
+
+// 대국 · 시뮬레이션을 많이 돌린다 — 부하가 걸린 기기에서도 기본 5초에 걸리지 않게 (tests/heavy.ts)
+vi.setConfig({ testTimeout: HEAVY_MS });
 import { ACTS, FLOORS_PER_ACT, TOTAL_FLOORS, eliteFrom, inAct, actOf, type NodeKind } from '../src/data/run';
 import { PART_SLOTS } from '../src/data/parts';
 import { MAX_ASCENSION } from '../src/data/ascension';

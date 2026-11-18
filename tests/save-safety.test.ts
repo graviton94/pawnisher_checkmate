@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { HEAVY_MS } from './heavy';
+
+// 대국 · 시뮬레이션을 많이 돌린다 — 부하가 걸린 기기에서도 기본 5초에 걸리지 않게 (tests/heavy.ts)
+vi.setConfig({ testTimeout: HEAVY_MS });
 import { BAK, CORRUPT, META_KEY, SAVE_KEY, SAVE_VERSION, clearSave, commitRunEnd, emptyMeta, fightPending, newerSaveFound, settledEnd, migrateMeta, migrateSave, readMeta, readSave, setSaveGuard, writeMeta, writeSave, type RunSave, type Store } from '../src/slice/save';
 import { TELEMETRY_KEY, telemetryAll, telemetryShed, telemetryStore, track } from '../src/slice/telemetry';
 import { endTurn, newSliceBattle, playCard, type SliceBattle } from '../src/slice/battle';

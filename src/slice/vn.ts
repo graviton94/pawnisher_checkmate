@@ -13,7 +13,9 @@ import { VN_ACTOR, VN_AIR, VN_DEFAULT, VN_SCENE, VN_TEXT, type CastSprite, type 
 
 const dpr = (): number => window.devicePixelRatio || 1;
 
-interface Actor { key: string; el: HTMLElement; shade: HTMLImageElement; side: 'l' | 'r'; slot: number; lit: boolean; foe: boolean }
+interface Actor { key: string; el: HTMLElement; shade: HTMLImageElement; side: 'l' | 'r'; born: number; lit: boolean; foe: boolean; x: number }
+/** 화자 명패 상자 (장면 칸 기준 CSS px) — 배우가 비켜 설 자리 */
+export interface PlateBox { x: number; r: number; y: number; b: number }
 interface Mote { x: number; y: number; vx: number; vy: number; life: number; max: number; col: number; big: boolean }
 
 const AIR_COLORS: Record<VnAir, string[]> = {
@@ -27,6 +29,25 @@ const AIR_COLORS: Record<VnAir, string[]> = {
 const abgr = (hex: string): number => {
   const v = parseInt(hex.replace('#', ''), 16);
   return ((0xff << 24) | ((v & 0xff) << 16) | (v & 0xff00) | ((v >> 16) & 0xff)) >>> 0;
+};
+
+/**
+ * 배우 몸 가운데 자리 (CSS px, 칸 기준)를 정한다 — 순수 계산 (tests/vn-layout.test.ts).
+ * ideal = 편마다 바라는 가운데(우리 편 0.38 · 적 0.62에서 바깥으로 step씩), [lo, hi] = 명패를 비킨 몸 가운데의 허용 범위, d = 몸끼리 띄울 거리.
+ * 바라는 자리에서 가장 덜 움직이게 왼쪽부터 밀고 오른쪽부터 당긴다. 범위가 좁으면 몸 사이를 줄여서라도(서로는 조금 겹쳐도) 명패와는 겹치지 않는다.
+ */
+export const fitSlots = (ideal: number[], lo: number, hi: number, d: number): number[] => {
+  const n = ideal.length;
+  if (!n) return [];
+  if (hi < lo) return ideal.map(() => (lo + hi) / 2);
+  const gap = n > 1 ? Math.min(d, (hi - lo) / (n - 1)) : d;
+  const order = ideal.map((_v, i) => i).sort((a, b) => ideal[a] - ideal[b] || a - b);
+  const x = order.map((i) => ideal[i]);
+  for (let i = 0; i < n; i++) x[i] = Math.max(x[i], lo, i ? x[i - 1] + gap : -Infinity);
+  for (let i = n - 1; i >= 0; i--) x[i] = Math.min(x[i], hi, i < n - 1 ? x[i + 1] - gap : Infinity);
+  const out = new Array<number>(n);
+  order.forEach((i, k) => (out[i] = x[k]));
+  return out;
 };
 
 /** 장면 칸 하나의 비주얼 노벨 무대 */
@@ -48,7 +69,11 @@ export class VnStage {
   private last = 0;
   /** 대사 기록 (백로그) */
   readonly log: { who?: string; k: string; t: string }[] = [];
-  constructor(private view: HTMLElement, private stageImg: () => HTMLImageElement | null) {
+  private born = 0;
+  /**
+   * plates = 이 컷에 나올 수 있는 화자 명패 상자들(칸 기준) — 배우는 그 가로 자리를 비켜 선다 (명패는 띠 위 칸 아래쪽에 겹쳐 선다).
+   */
+  constructor(private view: HTMLElement, private stageImg: () => HTMLImageElement | null, private plates: () => PlateBox[] = () => []) {
     view.insertAdjacentHTML('beforeend', '<div class="vn-air" aria-hidden="true"><canvas></canvas></div><div class="vn-cast" aria-hidden="true"></div><i class="vn-lamp" aria-hidden="true"></i>');
     this.layer = view.querySelector<HTMLElement>('.vn-cast')!;
     this.cv = view.querySelector<HTMLCanvasElement>('.vn-air canvas')!;
@@ -166,10 +191,35 @@ export class VnStage {
     const r = dpr(), v = this.view.getBoundingClientRect();
     return (Math.floor((v.top + v.height) * r) - Math.round(w * r)) / r - v.top;
   }
-  private slotX(side: 'l' | 'r', slot: number, w: number): number {
-    const W = this.view.clientWidth;
-    const c = side === 'l' ? W * (VN_ACTOR.center - slot * VN_ACTOR.step) : W * (1 - VN_ACTOR.center + slot * VN_ACTOR.step);
-    return snapDev(c - w / 2);
+  /**
+   * 서 있는 배우 모두의 자리를 다시 잡는다: 편마다 먼저 온 배우가 안쪽, 나중 온 배우가 바깥쪽.
+   * 화자 명패(띠 위 왼쪽 · 오른쪽 가장자리)와 몸이 겹치지 않게 그 사이 빈 폭 안으로 모은다 — 셋이 서도 바깥 배우가 명패 뒤에 숨지 않게.
+   * 움직이는 배우는 감속 + 출렁(정수 기기 픽셀), 새 배우는 x만 정하고 들어옴 연출이 맡는다.
+   */
+  private layout(fresh?: Actor): void {
+    const W = this.view.clientWidth, w = this.actorPx(), k = w / 72;
+    const [b0, b1] = VN_ACTOR.body;
+    const bw = (b1 - b0) * k, gap = VN_ACTOR.gap * k;
+    // 명패 자리: 배우 키 높이 안으로 내려온 명패만 (띠가 위에 붙는 컷은 명패도 위라 비킬 것이 없다)
+    const top = this.view.clientHeight - w;
+    let lo = 0, hi = W;
+    for (const p of this.plates()) {
+      if (p.b <= top || p.r <= p.x) continue;
+      if ((p.x + p.r) / 2 < W / 2) lo = Math.max(lo, p.r + gap);
+      else hi = Math.min(hi, p.x - gap);
+    }
+    const rank = (a: Actor): number => this.actors.filter((x) => x.side === a.side && x.born < a.born).length;
+    const ideal = this.actors.map((a) => W * (a.side === 'l' ? VN_ACTOR.center - rank(a) * VN_ACTOR.step : 1 - VN_ACTOR.center + rank(a) * VN_ACTOR.step));
+    const cx = fitSlots(ideal, lo + bw / 2, hi - bw / 2, bw + gap);
+    this.actors.forEach((a, i) => {
+      // 몸 가운데 → 상자 왼쪽 (뒤집힌 배우는 몸도 거울)
+      const mid = ((a.side === 'r' ? 72 - (b0 + b1) / 2 : (b0 + b1) / 2)) * k;
+      const x = snapDev(cx[i] - mid);
+      const from = a.x;
+      a.x = x;
+      if (a === fresh || from === x || Number.isNaN(from) || calmMotion()) return void (a.el.style.left = `${x}px`);
+      void tween(VN_ACTOR.enter, (e) => (a.el.style.left = `${snapDev(from + (x - from) * e)}px`), (t) => ease.outBack(t, 1.2));
+    });
   }
   /**
    * 말하는 배우를 세운다 · 밝힌다. sprite가 없으면(명패만인 화자) 모두 그늘로. side = 명패 편(우리 편 왼쪽 · 적 오른쪽).
@@ -202,25 +252,23 @@ export class VnStage {
   }
   private add(key: string, sp: CastSprite, side: 'l' | 'r'): Actor {
     // 무대가 차면 오래된 배우부터 나간다
-    while (this.actors.length >= VN_ACTOR.max) this.exit(this.actors[0]);
+    while (this.actors.length >= VN_ACTOR.max) this.exit(this.actors[0], false);
     // 우리 편끼리 마주 볼 때(상자 안 다툼처럼): 왼쪽이 더 붐비면 빈 오른쪽에 세워 마주 보게 한다 (적은 늘 오른쪽)
     const count = (s: 'l' | 'r') => this.actors.filter((x) => x.side === s).length;
     if (side === 'l' && count('l') > count('r') && !this.actors.some((x) => x.foe)) side = 'r';
-    const slot = count(side);
     const w = this.actorPx();
     const src = `pieces/l-${sp.t}${sp.side}.png`;
     const el = document.createElement('div');
     el.className = `vn-actor vn-${side}${side === 'r' ? ' flip' : ''}`;
     el.style.width = el.style.height = `${w}px`;
     el.innerHTML = `<div class="vn-body"><img src="${src}" alt=""><img class="vn-shade" src="${src}" alt=""></div>`;
-    const x = this.slotX(side, slot, w);
-    el.style.left = `${x}px`;
     el.style.top = `${this.footY(w)}px`;
     this.layer.appendChild(el);
     const shade = el.querySelector<HTMLImageElement>('.vn-shade')!;
     void ditherTo(shade, 0, 0, 0);
-    const a: Actor = { key, el, shade, side, slot, lit: false, foe: sp.side === 1 };
+    const a: Actor = { key, el, shade, side, born: this.born++, lit: false, foe: sp.side === 1, x: NaN };
     this.actors.push(a);
+    this.layout(a);
     // 들어옴: 바깥쪽에서 감속 + 넘침(출렁) · 64단 디더로 나타남 — 위치는 기기 픽셀 정수
     const dir = side === 'l' ? -1 : 1;
     if (!calmMotion()) {
@@ -230,8 +278,9 @@ export class VnStage {
     }
     return a;
   }
-  private exit(a: Actor): void {
+  private exit(a: Actor, relayout = true): void {
     this.actors = this.actors.filter((x) => x !== a);
+    if (relayout) this.layout();
     if (calmMotion()) return void a.el.remove();
     const dir = a.side === 'l' ? -1 : 1;
     void tween(VN_ACTOR.exit, (e) => (a.el.style.transform = `translate3d(${snapDev(dir * VN_ACTOR.slide * e)}px,0,0)`), ease.in);
@@ -243,16 +292,17 @@ export class VnStage {
     this.actors = [];
   }
   /** 배우를 모두 내보낸다 (컷이 끝날 때 — 보이는 퇴장) */
-  exitAll(): void { [...this.actors].forEach((a) => this.exit(a)); }
+  exitAll(): void { [...this.actors].forEach((a) => this.exit(a, false)); }
   /** 창 크기가 바뀌면 */
   refit(): void {
     this.size();
     const w = this.actorPx();
     for (const a of this.actors) {
       a.el.style.width = a.el.style.height = `${w}px`;
-      a.el.style.left = `${this.slotX(a.side, a.slot, w)}px`;
       a.el.style.top = `${this.footY(w)}px`;
+      a.x = NaN;
     }
+    this.layout();
   }
   destroy(): void {
     cancelAnimationFrame(this.raf);

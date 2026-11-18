@@ -11,7 +11,7 @@ import { PROLOGUE, PROLOGUE_FIELD, SPEAKER_FACE, type Cut, type Face, type Line,
 import { pieceImg } from '../ui/sprites';
 import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
-import { logHtml, VnStage } from './vn';
+import { logHtml, VnStage, type PlateBox } from './vn';
 import { castOf, VN_TEXT } from '../data/vn';
 import { ditherTo, ease } from '../view/motion';
 import { PAPER_FACE } from '../data/portraits';
@@ -71,10 +71,35 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     const wipe = new Wipe(over);
     const view = el.querySelector<HTMLElement>('.film-view')!;
     // 비주얼 노벨 층 (D-554): 서 있는 배우 · 장면 입자 · 등잔 · 대사 기록
-    const vn = new VnStage(view, () => stage.querySelector<HTMLImageElement>('img[data-film]'));
+    // 이 컷에 나올 화자 명패를 몰래 세워 재어 둔다 — 배우는 그 자리를 비켜 선다 (셋이 서도 바깥 배우가 명패 뒤에 숨지 않게)
+    let cutLines: (CutLine & Partial<Line>)[] = [];
+    const plateBoxes = (): PlateBox[] => {
+      const v = view.getBoundingClientRect();
+      const seen = new Set<string>();
+      const out: PlateBox[] = [];
+      for (const l of cutLines) {
+        const p = plateOf(l);
+        if (!p || seen.has(p.key)) continue;
+        seen.add(p.key);
+        sub.insertAdjacentHTML('beforeend', plateHtml(p.who, p.side, p.face));
+        const probe = sub.lastElementChild as HTMLElement;
+        probe.style.visibility = 'hidden';
+        const r = probe.getBoundingClientRect();
+        probe.remove();
+        out.push({ x: r.left - v.left, r: r.right - v.left, y: r.top - v.top, b: r.bottom - v.top });
+      }
+      return out;
+    };
+    const vn = new VnStage(view, () => stage.querySelector<HTMLImageElement>('img[data-film]'), plateBoxes);
     wipe.full();
     if (!calm()) replay(el, 'lb-in');
     const faces: Record<string, Face> = { ...SPEAKER_FACE, ...(o.faces ?? {}) };
+    /** 줄의 화자 명패 (없으면 null): 대사 = 이름 + 얼굴 · 종이왕 표정 (D-506): 대사는 줄의 mood로 명패 얼굴을, 속마음(m)은 mood가 있으면 이름표 없이 얼굴만 */
+    const plateOf = (l: CutLine & Partial<Line>): { who: string; side: ReturnType<typeof speakerSide>; face?: Face; key: string } | null => {
+      if (l.k === 'm' ? !l.mood : l.k !== 's' || !l.who) return null;
+      const face = l.mood && (l.k === 'm' || l.who === PAPER_KING) ? { portrait: PAPER_FACE[l.mood] } : l.who ? faces[l.who] : undefined;
+      return { who: l.k === 'm' ? '' : l.who!, side: l.k === 'm' ? 'ally' : speakerSide(l.who!), face, key: `${l.k === 'm' ? '' : l.who}|${l.mood ?? ''}` };
+    };
     // 쪽 = (컷 번호, 그 쪽의 한 문장, 줄의 첫 쪽인가 — 줄의 연출은 첫 쪽에서만)
     const pages: { c: number; lines: CutLine[]; head: boolean }[] = [];
     // 한 화면 = 한 문장 (D-451 → D-488 — cutPages): 문장은 쪽을 넘기지 않고, 같은 화자가 이어 말하면 이름표는 첫 쪽에만
@@ -137,13 +162,12 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     /** 화자 명패: 대사 첫 쪽이면 새로, 이어 말하는 쪽이면 그대로, 서술 · 독백이면 걷는다 */
     const plate = (l: CutLine & Partial<Line>): void => {
       const now = sub.querySelector<HTMLElement>('.cut-who');
-      // 종이왕 표정 (D-506): 대사는 줄의 mood로 명패 얼굴을, 속마음(m)은 mood가 있으면 이름표 없이 얼굴만
-      const face = l.mood && (l.k === 'm' || l.who === PAPER_KING) ? { portrait: PAPER_FACE[l.mood] } : l.who ? faces[l.who] : undefined;
       const key = `${l.k === 'm' ? '' : l.who}|${l.mood ?? ''}`;
       if (now && now.dataset.key === key && ((l.k === 's' && l.cont) || (l.k === 'm' && l.part && l.part !== 'head'))) return;
       now?.remove();
-      if (l.k === 'm' ? !l.mood : l.k !== 's' || !l.who) return;
-      sub.insertAdjacentHTML('afterbegin', plateHtml(l.k === 'm' ? '' : l.who!, l.k === 'm' ? 'ally' : speakerSide(l.who!), face));
+      const p = plateOf(l);
+      if (!p) return;
+      sub.insertAdjacentHTML('afterbegin', plateHtml(p.who, p.side, p.face));
       sub.querySelector<HTMLElement>('.cut-who')!.dataset.key = key;
       if (!calm()) replay(sub.querySelector('.cut-who')!, 'in');
     };
@@ -228,6 +252,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         await mount(c);
         if (my !== token) return;
         // 무대 분위기 (막이 닫힌 사이): 그림이 없거나(자리 그림 · 끝 정적) 실제 배우를 겹친 컷은 배우를 세우지 않는다
+        cutLines = c.lines as (CutLine & Partial<Line>)[];
         scene = vn.enter(c.slug, { noCast: !!c.coda || !!c.showActors || !stage.querySelector('img[data-film]') });
         if (c.title) { wipe.full('#0b0b0e'); await showTitle(over, c.title, tapped()); if (my !== token) return; }
         if (c.coda) wipe.color = c.coda === 'white' ? '#f1ede4' : '#0b0b0e';

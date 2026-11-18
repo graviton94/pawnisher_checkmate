@@ -19,6 +19,7 @@ import { FX_BUDGET, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
 import { boardInset } from './boardInset';
+import { hostCenter, sceneLive } from './lazyBoard';
 
 const REST_POSE: Pose = { dx: 0, dy: 0, sx: 1, sy: 1 };
 import { findPiece, isFallen, upcomingCollapse, type BattleEvent, type BattleState, type Piece, type PieceType, type FormId, type Side, type Plan, type PlanStep, type Pos } from '../engine';
@@ -2488,6 +2489,8 @@ export class BoardRenderer implements BoardView {
   /** 판 칸 하나의 화면 가운데 (CSS px) — 판 밖 DOM 연출(초월 등)이 그 칸을 겨눈다 */
   screenOf(pos: Pos): { x: number; y: number } {
     const sc = this.scene;
+    // 장면이 아직 서지 않았으면 (Phaser 부팅 · 첫 render 전 — 판을 막 불러온 직후의 바크 · 엿보기) 판 자리 가운데로 어림한다
+    if (!sceneLive(sc as unknown as Parameters<typeof sceneLive>[0])) return hostCenter(this.host);
     const cam = sc.cameras.main;
     const t = sc.tile;
     const wx = pos.x * t + t / 2;

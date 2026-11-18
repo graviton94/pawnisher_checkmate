@@ -1,5 +1,9 @@
 // 갈무리 줄이기 점검: src/에서 쓰는 글자 중 원본 글꼴에 있는 것은 줄인 글꼴에도 모두 있어야 한다 (tools/subset-fonts.mjs)
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { HEAVY_MS } from './heavy';
+
+// 대국 · 시뮬레이션을 많이 돌린다 — 부하가 걸린 기기에서도 기본 5초에 걸리지 않게 (tests/heavy.ts)
+vi.setConfig({ testTimeout: HEAVY_MS });
 // @ts-expect-error — 빌드 도구(.mjs)를 그대로 불러 같은 함수로 점검한다
 import { FACES, usedCodepoints, subsetFace, coarseRange } from '../tools/subset-fonts.mjs';
 
