@@ -1413,3 +1413,11 @@ body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='
 .win-scene .ws-detail-count .term-ico { width: 16px; height: 16px; margin: 0 4px 0 0; background-size: 16px 16px; vertical-align: -3px; }
 /* D-534 전수 점검: 고물상 · 보상의 받침 아래 줄이 장면 그림(고물상 바닥 무늬) 위에 바로 놓여 흐린 글이 묻혔다 → 먹 테 1도트(사방, 번짐 없음) */
 :is(.scr-pick, .scr-place) .slot-info { text-shadow: var(--px) 0 0 #0b0b0e, calc(-1 * var(--px)) 0 0 #0b0b0e, 0 var(--px) 0 #0b0b0e, 0 calc(-1 * var(--px)) 0 #0b0b0e; }
+
+/* ===== D-589 큰 카드 줄 (고물상 · 전리품 1.25배 — 915×412에서 184 ~ 190px = 큰 글 단, PC 192) =====
+   카드 상자 위쪽은 틀 그림의 빈 자리(볏 · 가격표 자리)라 머리 줄 아래 틈으로 16px 올린다 · 위 여백은 가격표가 걸칠 2도트만, 레일 아래 여백 없음.
+   받침 아래 줄(소유 · 맞물림 수, 12px)은 카드 폭 + 사이 폭까지 쓰고 줄 높이 14px · 카드와 틈 2px — 줄 높이를 아껴 카드를 키운다(uikit.fitSlots가 같은 틈으로 잰다). */
+:is(.scr-pick, .scr-place) .scr-items.big { margin-top: -16px; padding-top: calc(var(--px) * 2); }
+:is(.scr-pick, .scr-place) .scr-items.big.is-rail { padding-bottom: 0; }
+:is(.scr-pick, .scr-place) .scr-items.big > .pick-item { gap: 2px; }
+:is(.scr-pick, .scr-place) .scr-items.big .slot-info { max-width: calc(var(--card-w) + var(--slot-gap, 16px)); margin: 0 calc(var(--slot-gap, 16px) / -2); line-height: 14px; min-height: var(--info-h, 14px); gap: 0; }

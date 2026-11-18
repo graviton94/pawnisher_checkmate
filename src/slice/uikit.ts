@@ -193,12 +193,15 @@ export const bindPick = (root: HTMLElement, o: { onSelect?: (key: string, el: HT
   return { select, selected: () => sel };
 };
 
-/** 받침 줄 마크업 (고르기 · 고물상 공용) */
-export const slotsHtml = (items: PickItem[], bare = false): string =>
-  `<div class="scr-items${bare ? ' bare' : ''}">${items.map((it) => `<div class="pick-item"><div class="${bare ? 'card-bare' : 'card-slot'}${it.off ? ' is-off' : ''}" data-slot="${it.key}">${it.html}</div>${it.info !== undefined ? `<div class="slot-info">${it.info}</div>` : ''}</div>`).join('')}</div>`;
+/** 받침 줄 마크업 (고르기 · 고물상 공용) — big = 큰 카드 줄(고물상 · 전리품 1.25배, D-589) */
+export const slotsHtml = (items: PickItem[], bare = false, big = false): string =>
+  `<div class="scr-items${bare ? ' bare' : ''}${big ? ' big' : ''}">${items.map((it) => `<div class="pick-item"><div class="${bare ? 'card-bare' : 'card-slot'}${it.off ? ' is-off' : ''}" data-slot="${it.key}">${it.html}</div>${it.info !== undefined ? `<div class="slot-info">${it.info}</div>` : ''}</div>`).join('')}</div>`;
 
-/** 카드 폭 (D-372 정본 168 · D-399 하한 150 — 이보다 작으면 두루마리 글이 10px 아래로 내려가 겹친다) */
-export const CARD_W = { max: 168, min: 150 } as const;
+/**
+ * 카드 폭 (D-372 정본 168 · D-399 하한 150 — 이보다 작으면 두루마리 글이 10px 아래로 내려가 겹친다).
+ * 큰 카드 줄(`.scr-items.big` — 고물상 · 전리품, D-589): 1.25배 — 184(큰 글 단 하한, `CARD_TIERS.l`) ~ 192, 받침이 있으면 받침 정수배가 184 이상일 때만(최대 210).
+ */
+export const CARD_W = { max: 168, min: 150, big: 192, bigMin: 184, bigSlot: 210 } as const;
 
 /**
  * 받침 크기 맞춤 (D-394 → D-399): 카드는 줄이지 않는다 — 정본 폭(168, 높이가 모자라면 150까지)을 지키고,
@@ -218,18 +221,19 @@ export const fitSlots = (row: HTMLElement): void => {
   const cs = getComputedStyle(row);
   const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
   const W = row.clientWidth - 2 * parseFloat(cs.paddingRight); // 왼쪽 여백은 레일이 바꾼다 — 오른쪽(G)으로 잰다
-  const H = row.clientHeight - padY - infoH - (infoH ? 4 : 0);
+  const H = row.clientHeight - padY - infoH - (infoH ? (row.classList.contains('big') ? 2 : 4) : 0);
   let w: number, g = 16;
-  // 받침 줄: 받침 높이가 드는 가장 큰 정수배 — 그 안 카드(42도트)가 하한 이상이면 받침을 쓴다
-  const N = Math.min(Math.floor((CARD_W.max * dpr) / 42), Math.floor((H * dpr) / 69));
-  const slotted = !row.classList.contains('bare') && (42 * N) / dpr >= CARD_W.min;
+  // 받침 줄: 받침 높이가 드는 가장 큰 정수배 — 그 안 카드(42도트)가 하한 이상이면 받침을 쓴다 (큰 카드 줄은 큰 글 단 하한 이상)
+  const big = row.classList.contains('big');
+  const N = Math.min(Math.floor(((big ? CARD_W.bigSlot : CARD_W.max) * dpr) / 42), Math.floor((H * dpr) / 69));
+  const slotted = !row.classList.contains('bare') && (42 * N) / dpr >= (big ? CARD_W.bigMin : CARD_W.min);
   row.classList.toggle('no-slot', !row.classList.contains('bare') && !slotted);
   if (slotted) {
     row.style.setProperty('--ss', `${N / dpr}px`);
     w = (51 * N) / dpr;
   } else {
     // 카드만: 높이에 드는 만큼(2:3) — 정본 168, 하한 150
-    w = Math.max(CARD_W.min, Math.min(CARD_W.max, Math.floor((H * 2) / 3)));
+    w = Math.max(CARD_W.min, Math.min(big ? CARD_W.big : CARD_W.max, Math.floor((H * 2) / 3)));
     row.style.setProperty('--card-w', `${w}px`);
   }
   // 다 들면 가운데 한 줄, 아니면 레일 — 오른쪽 끝에 다음 카드가 30 ~ 60% 걸쳐 보이게 사이(12 ~ 32)와 왼쪽 여백(G ~ G+80)을 고른다
@@ -483,6 +487,8 @@ export interface PickOpts {
   /** 명패 아래 한 줄 (대사 · 안내 — 없으면 비움) */
   say?: string;
   items: PickItem[];
+  /** 큰 카드 줄 (전리품 1.25배, D-589) */
+  big?: boolean;
   /** 아래 단추 사이 페이지 이동 등 보조 조작 */
   mid?: string;
   /** 받침 줄 대신 쓸 몸 (선택지 판 격자 등 — [data-slot]이면 같은 고르기 규칙) */
@@ -505,7 +511,7 @@ export const pickScreen = (o: PickOpts): HTMLElement => {
   const go: WinBtn | undefined = o.go === null ? undefined : { label: '고른다', attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
   if (go) go.attrs = `${go.attrs ?? ''}${go.attrs?.includes('data-pick') ? '' : ' data-pick'}`;
   const el = host.open(
-    `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items)}${btnRowHtml({ back: o.skip, go, mid: o.mid })}`,
+    `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items, false, o.big)}${btnRowHtml({ back: o.skip, go, mid: o.mid })}`,
     `scr-pick${o.cls ? ` ${o.cls}` : ''}`,
   );
   bindPick(el, o);

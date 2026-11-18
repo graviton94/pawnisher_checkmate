@@ -1,5 +1,5 @@
 import type { SlicePartId } from './parts';
-import { lineHtml, wrapRows } from './desc';
+import { wrapRows } from './desc';
 import { CARD_SPEC, partRows } from './card-spec';
 import type { AbilityText } from '../data/ability-text';
 
@@ -27,13 +27,8 @@ export const bindAbilities = (host: HTMLElement, abilities: AbilityText[]): void
 };
 
 /**
- * 좁은 그림 카드의 부품 줄 (D-470 → D-475 → D-488 → D-511): 세 행 틀 — 언제(길면 쉼표 뒤에서 두 행) · : 효과는 늘 한 행.
+ * 부품 규칙 행 (D-470 → D-475 → D-488 → D-511 — 카드 설명지는 D-589 `card-text.ts`가 그린다, 이것은 검사 · 길게 누름용): 세 행 틀 — 언제(길면 쉼표 뒤에서 두 행) · : 효과는 늘 한 행.
  * 조건 · 효과 줄은 갈무리9 10px(카드 글 맞춤), 그래도 길면 데이터 문구를 다듬는다(테스트 · `tools/card-text-fit.ts`). wrapRows는 안전망 — 글자를 줄이거나 자르지 않는다(D-422).
  */
 export const partRuleRows = (id: SlicePartId): { t: string; k: 'if' | 'fx' }[] =>
   partRows(id).flatMap((l) => wrapRows(l.t, undefined, CARD_SPEC.part.px.row).map((t) => ({ t, k: l.k })));
-export const partCardRuleHtml = (id: SlicePartId): string => {
-  const lines = partRuleRows(id).map((l) => lineHtml(l.t, l.k));
-  while (lines.length < 3) lines.push('<span class="ln" aria-hidden="true"></span>');
-  return `<span class="part-rule-lines">${lines.join('')}</span>`;
-};
