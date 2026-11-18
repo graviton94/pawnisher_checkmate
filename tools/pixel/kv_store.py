@@ -1,14 +1,14 @@
-"""받은 컨셉아트 KV-01 · KV-02h · KV-03 → 스팀 스토어 그림 (D-570 · D-564 27위 · D-423 · D-386 · D-561 ④).
+"""받은 컨셉아트 KV-01 · KV-02h · KV-03 → 스팀 스토어 그림 · KV-04 → 플레이 피처 그래픽(D-578) (D-570 · D-564 27위 · D-423 · D-386 · D-561 ④).
 
   python3 -I tools/pixel/kv_store.py [--sheets <대조판 폴더>]
 
-앞 단계: python3 -I tools/pixel/store_import.py KV-01 KV-02h KV-03
+앞 단계: python3 -I tools/pixel/store_import.py KV-01 KV-02h KV-03 KV-04
   (scene_recipe.STORE_GRID 축마다 실측 격자 → 칸 가운데 최빈 묶음 중앙값 → 팔레트 → build-res/store/dots/KV-0N.png, 도트 1칸 = 1px)
 이 도구 (scene_recipe.KV_OUT):
   ① 사내 손질 없음 (D-572): 컨셉아트는 그림 그대로의 기물 · 인물을 쓴다 — 게임 판 정본 스프라이트(public/pieces · maker.piece)를
      그림에 얹지 않는다. D-570의 KV-01 폰 지우기 · 정본 폰 얹기 · 쇳물 다시 칠하기와 KV-02h 정본 폰 얹기는 되돌렸다.
   ② ×k 계단 확대(NEAREST) → 스토어 크기로 자르기(늘이지 않는다) → 로고 LG-01a(build-res/logo, 도트 1칸 = 1px)를 정수배로 얹기.
-→ build-res/store/K1-dots.png · K2-hero-dots.png · K3-dots.png (복원 도트 그대로) · build-res/store/<스토어 파일>.png
+→ build-res/store/K1-dots.png · K2-hero-dots.png · K3-dots.png · K4-dots.png (복원 도트 그대로) · build-res/store/<스토어 파일>.png
 """
 import os
 import sys
@@ -23,7 +23,7 @@ from scene_recipe import KV_OUT, STORE_GRID  # noqa: E402
 STORE = os.path.join(ROOT, 'build-res', 'store')
 ORDER = os.path.join(ROOT, 'build-res', 'order')
 LOGO = os.path.join(ROOT, 'build-res', 'logo')
-DOTS_OUT = {'KV-01': 'K1-dots.png', 'KV-02h': 'K2-hero-dots.png', 'KV-03': 'K3-dots.png'}
+DOTS_OUT = {'KV-01': 'K1-dots.png', 'KV-02h': 'K2-hero-dots.png', 'KV-03': 'K3-dots.png', 'KV-04': 'K4-dots.png'}
 
 
 def hexrgb(h):

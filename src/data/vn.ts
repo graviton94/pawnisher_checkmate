@@ -52,8 +52,9 @@ export const VN_SCENE: Record<string, VnScene> = {
   '불량 딱지': { air: 'sparks', lamp: true },
   '금단의 소문': { air: 'dust', drift: { x: 0, y: -1 } },
   '상자 안의 다툼': { air: 'dust', lamp: true, noCast: false },
-  '종이 왕관': { air: 'dust' },
-  '부관 박차': { air: 'steam' },
+  // D-578: VA-04 · VA-05 재발주본은 종이왕 · 박차를 그림 안에 크게 그려 왔다 — 판 도트 배우를 겹쳐 세우지 않는다(D-572)
+  '종이 왕관': { air: 'dust', noCast: true },
+  '부관 박차': { air: 'steam', noCast: true },
   '검은 세트와 먼 왕좌': { air: 'steam', drift: { x: 0, y: -1 } },
   '용해 주조': { air: 'embers' },
   '금빛 거푸집': { air: 'embers', lamp: true },

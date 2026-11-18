@@ -314,26 +314,26 @@
   "fy": 0.45
  },
  "tollGate": {
-  "px": 6.495,
-  "py": 6.475,
-  "pitch": 6.487,
-  "ox": 4.33,
-  "oy": 2.16,
-  "strength": 3.84,
-  "pitchMeasured": 6.465,
-  "pitchX": 6.5,
-  "pitchY": 6.474,
-  "errUniform": 5.74,
-  "err": 3.378,
+  "px": 5.47,
+  "py": 6.48,
+  "pitch": 6.482,
+  "ox": 4.59,
+  "oy": 1.62,
+  "strength": 3.67,
+  "pitchMeasured": 6.485,
+  "pitchX": 6.484,
+  "pitchY": 6.48,
+  "errUniform": 5.58,
+  "err": 3.414,
   "grid": "dp±0.3",
   "cells": [
    223,
    167
   ],
-  "cellW": 6.493,
-  "cellH": 6.503,
+  "cellW": 6.484,
+  "cellH": 6.509,
   "paletteK": 27,
-  "meanDE": 0.97,
+  "meanDE": 1.05,
   "used": 26,
   "before": {
    "colors": 32,
@@ -341,18 +341,18 @@
    "region": 20.66
   },
   "raw": {
-   "colors": 5428,
-   "lonely": 0.0092,
-   "region": 26.77
+   "colors": 5546,
+   "lonely": 0.0083,
+   "region": 28.82
   },
   "after": {
    "colors": 26,
-   "lonely": 0.005,
-   "region": 29.98
+   "lonely": 0.0036,
+   "region": 31.61
   },
-  "lineKeep": 0.997,
-  "lineCells": 715,
-  "fx": 0.4,
+  "lineKeep": 1.0,
+  "lineCells": 545,
+  "fx": 0.53,
   "fy": 0.55
  },
  "echoWell": {

@@ -344,5 +344,17 @@
   "colors": 26,
   "meanDE": 1.45,
   "fixes": []
+ },
+ "KV-04": {
+  "grid": "dp±0.3",
+  "errUniform": 2.677,
+  "err": 2.042,
+  "cells": [
+   317,
+   154
+  ],
+  "colors": 32,
+  "meanDE": 2.21,
+  "fixes": []
  }
 }

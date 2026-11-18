@@ -189,6 +189,15 @@ SCENE_GRID = {
     'prologue-04': {'src': 'OP-02-source.png', 'grid': (6.57, 2.46, 6.57, 3.83), 'measured': (None, 6.57), 'presence': (1.027, 1.074), 'square': 'x', 'trim': (30, 0.25)},
     # 격자 없음(있음 x 1.021 · y 1.026) → 정본 간격 6.03
     'prologue-07': {'src': 'OP-04-source.png', 'grid': (6.03, 3.02, 6.03, 4.15), 'measured': (None, None), 'presence': (1.021, 1.026), 'canon': True, 'trim': (30, 0.25)},
+    # D-578 재발주 VA-02 · VA-04 · VA-05 (regrid.measure 4.5 ~ 9px — 프롤로그 PRO-04 · 06 · 07 컷을 갈아 끼운다, 옛 P-03 · P-05 · P-06 원본은 보관):
+    #   VA-04 · VA-05는 gridmeasure 3 ~ 16px가 절반(3.30 · 3.00) · 두 배(12.32 · 11.39)를 잡지만 굵은 칸(배경)과 그 절반(기물) 사이 — 기물 상자
+    #   (VA-05 400,180 ~ 1200,760) 실측 6.18 · 5.73과 그림 전체 실측이 3% 안이라 전체 실측을 쓴다. 생성기 도트가 정사각이 아니다(가로 · 세로 따로).
+    # 실측 x 6.73 (있음 1.108 · 두 축 짝 있음 최고) · y 6.41 (있음 1.231 · 두 축 짝 있음 최고)
+    'prologue-03': {'src': 'VA-02-source.png', 'grid': (6.73, 4.49, 6.41, 5.88), 'measured': (6.73, 6.41), 'presence': (1.108, 1.231)},
+    # 실측 x 6.62 (있음 1.159 · 두 축 짝 있음 최고) · y 6.1 (있음 1.361 · 두 축 짝 있음 최고)
+    'prologue-05': {'src': 'VA-04-source.png', 'grid': (6.62, 4.41, 6.1, 2.03), 'measured': (6.62, 6.1), 'presence': (1.159, 1.361)},
+    # 실측 x 6.34 (있음 1.056 · 두 축 짝 있음 최고) · y 5.845 (있음 1.07 · 두 축 짝 있음 최고)
+    'prologue-06': {'src': 'VA-05-source.png', 'grid': (6.34, 1.06, 5.845, 4.87), 'measured': (6.34, 5.845), 'presence': (1.056, 1.07)},
 }
 # 같은 이름의 옛 941/180 값은 축마다 잰 격자로 덮는다 (값 = (px, ox, py, oy) — snap.run이 아니라 regrid.build_one이 읽는다)
 MANUAL_PITCH.update({n: g['grid'] for n, g in SCENE_GRID.items()})
@@ -409,6 +418,10 @@ OPENING_GRID = {
     'OP-04': {'name': 'prologue-07', 'trim_max': 30, 'trim_dark': 0.25},
     # D-514 OP-03 금단의 승급대 소문: 띠 없이 끝까지 채워 왔다(같은 걷기 규칙 — 걷힌 줄 0)
     'OP-03': {'name': 'op-legend', 'trim_max': 30, 'trim_dark': 0.25},
+    # D-578 프롤로그 재발주 VA-02 · 04 · 05 — 띠 없이 끝까지 채워 왔다(SCENE_GRID 실측 격자로 regrid.build_one)
+    'VA-02': {'name': 'prologue-03', 'trim_max': 30, 'trim_dark': 0.25},
+    'VA-04': {'name': 'prologue-05', 'trim_max': 30, 'trim_dark': 0.25},
+    'VA-05': {'name': 'prologue-06', 'trim_max': 30, 'trim_dark': 0.25},
 }
 
 
@@ -549,7 +562,9 @@ EVENT_IMPORT = {
     #   지움, 줄마다 양옆 벽 색). 통행 문은 받은 그대로(D-572 — 그림에 게임 판 정본 스프라이트를 얹지 않는다; D-570의 검은 룩 둘 얹기는 되돌렸다).
     'copyPress': dict(_DARK2, source='R-01-07-source.png', x=(5.286, 1.32), y=(5.405, 2.03), cells=(274, 200),
                       erase=[(224, 29, 262, 49)]),
-    'tollGate': dict(_DARK, source='R-01-08-source.png', x=(6.5, 4.33), y=(6.474, 2.16), cells=(223, 167)),
+    # D-578: R-01-08b 재발주본(검은 룩 둘을 그림 안에 그려 왔다 — D-572) 1446×1087. gridmeasure.measure 4.5 ~ 9px: x 6.484(존재 1.125 · 시작 4.59)
+    #   · y 6.48(1.246 · 1.62) — 3 ~ 16px로 재면 절반 3.289 · 3.253(존재 1.061 · 1.081)을 잡지만 룩 · 창살은 굵은 칸으로 그렸다. 옛 R-01-08은 R-01-08-source.png로 보관.
+    'tollGate': dict(_DARK, source='R-01-08b-source.png', x=(6.484, 4.59), y=(6.48, 1.62), cells=(223, 167)),
     'echoWell': dict(_FINE, source='V-32-echoWell-source.png', cells=(270, 203)),  # 봉우리 x 5.235 · y 5.355 → 5.355px · 위상 1.2, 3.88 · dp±0.2
     'scrapHeap': dict(_RUST, source='V-23-scrapHeap-source.png', cells=(234, 175)),  # 봉우리 x 6.185 · y 6.215 → 6.2px · 위상 6.04, 2.01 · dp±0.1
     'rustBath': dict(_RUST, source='V-24-rustBath-source.png', cells=(245, 184)),  # 봉우리 x 5.995 · y 5.84 → 5.915px · 위상 3.84, 5.77 · dp±0.1
@@ -699,6 +714,9 @@ STORE_GRID = {
     'KV-01': {'source': 'KV-01-source.png', 'x': (4.953, 1.75), 'y': (4.926, 0.51), 'focus': (0.68, 0.6)},
     'KV-02h': {'source': 'KV-02h-source.png', 'x': (6.336, 0.4), 'y': (6.159, 1.41), 'focus': (0.5, 0.4)},
     'KV-03': {'source': 'KV-03-source.png', 'x': (6.14, 0.13), 'y': (5.964, 5.59), 'focus': (0.5, 0.35)},
+    # D-578 KV-04 「금 간 금왕관」 1794×876 (발주 256×125 ×4 = 1024×500이 아니게 왔다): gridmeasure.measure 3 ~ 16px — x 5.654(존재 1.238 · 흔들림 0.6%)
+    #   · y 5.676(1.464 · 0.3%) → 317×154도트. 왕관 가로 161 ~ 292 · 세로 18 ~ 113도트, 왼쪽 0 ~ 159도트는 어두운 벽 · 판(로고 자리).
+    'KV-04': {'source': 'KV-04-source.png', 'x': (5.654, 0.24), 'y': (5.676, 0.47), 'focus': (0.72, 0.45)},
 }
 # 최종 스토어 크기 (D-559 — D-560 사장님 반려, 합성 방식 폐기: 결과는 build-res/unused/store-d559/, `--d559`로만 다시 찍는다): src = 손질 뒤 도트(build-res/store/dots/<src>.png), k = 덮는 가장 작은 정수배, crop = 자를 왼쪽 위(도트),
 #   plate = 로고 자리 빈 쇠판(도트 상자), logo = full(문장 + 글자) · word(글자 두 줄). 히어로는 로고 없음(스팀이 따로 얹는다).
@@ -741,4 +759,7 @@ KV_OUT = {
     'steam-vertical.png': {'src': 'KV-03', 'k': 5, 'size': (748, 896), 'crop': (91, 0), 'logo': ('LG-01a', 2, (69, 10))},
     'steam-library.png': {'src': 'KV-03', 'k': 4, 'size': (600, 900), 'crop': (72, 0), 'logo': ('LG-01a', 1, (148, 40))},
     'library-hero.png': {'src': 'KV-02h', 'k': 12, 'size': (3840, 1240), 'crop': (168, 12), 'logo': None},
+    # D-578 플레이 스토어 피처 그래픽 = KV-04 ×4(1268×616)에서 1024×500 자르기(×3 = 951×462는 못 덮는다). 왼쪽 61도트를 버려 왕관(161 ~ 292도트)이
+    #   피처 가로 100 ~ 231도트 · 오른쪽 끝에서 25도트 안쪽, 위 10도트를 버려 금 · 쇳물 금이 아래 가장자리 안. 로고 LG-01a ×1은 왼쪽 어두운 벽 띠.
+    'play-feature.png': {'src': 'KV-04', 'k': 4, 'size': (1024, 500), 'crop': (244, 40), 'logo': ('LG-01a', 1, (36, 40))},
 }
