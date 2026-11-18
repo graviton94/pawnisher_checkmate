@@ -204,11 +204,70 @@ def pad72(grid):
     return ['.' * CANVAS72] * top + ['.' * pad + r + '.' * pad for r in grid]
 
 
+OUTLINE_RIM = 3
+OUTLINE_INK = 4
+
+
+def norm_outline(grid, rim=OUTLINE_RIM, ink=OUTLINE_INK):
+    """외곽 정규화 (D-562): 발주 이형 · 거대 주물 · 2×2 반장 그림의 바깥 먹 테 · 흰 테를 보통 기물 정본(D-221)과 같은 도트 굵기로 다시 두른다.
+    몸 = 흰 테('O') · 빈칸('.')이 아닌 칸. 바깥 = 캔버스 가장자리에서 '.' · 'O'로 이어지는 칸 (속 구멍은 건드리지 않는다).
+    ① 바깥에서 체비쇼프 거리 ink 이하인 몸 칸은 먹('K') — 보통 기물 바깥 먹 띠 최빈 4도트보다 얇은 곳만 채운다(더 두꺼운 먹은 그림 그대로, 가는 부위는 그대로)
+    ② 흰 테 = 몸에서 체비쇼프 rim칸 안의 바깥 칸 전부, 그보다 먼 바깥 흰 칸은 비운다 (unify.py RIM과 같은 3칸).
+    몸 속 칠 · 무늬는 바꾸지 않는다(D-386) — 바뀌는 것은 가장자리 띠의 색뿐이고, 원본 격자(pieces64.txt)는 그대로 둔다."""
+    g = [list(r) for r in grid]
+    h, w = len(g), len(g[0])
+    body = [[c not in '.O' for c in row] for row in g]
+    out = [[False] * w for _ in range(h)]
+    stack = [(y, x) for y in range(h) for x in (0, w - 1)] + [(y, x) for y in (0, h - 1) for x in range(w)]
+    while stack:
+        y, x = stack.pop()
+        if not (0 <= y < h and 0 <= x < w) or out[y][x] or body[y][x]:
+            continue
+        out[y][x] = True
+        stack += [(y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)]
+
+    def near(mask, y, x, r):
+        for yy in range(max(0, y - r), min(h, y + r + 1)):
+            row = mask[yy]
+            for xx in range(max(0, x - r), min(w, x + r + 1)):
+                if row[xx]:
+                    return True
+        return False
+
+    # 바깥에서의 체비쇼프 거리 (8방향 너비 우선) — 가는 부위(폭이 먹 띠 두 겹 + 속 둘보다 좁은 곳: 메뚜기 몸 · 낙타 다리)는 채우지 않는다(속 칠이 사라지지 않게)
+    far = 10 ** 6
+    d = [[0 if out[y][x] else far for x in range(w)] for y in range(h)]
+    q = [(y, x) for y in range(h) for x in range(w) if out[y][x]]
+    for y, x in q:
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                yy, xx = y + dy, x + dx
+                if 0 <= yy < h and 0 <= xx < w and d[yy][xx] > d[y][x] + 1:
+                    d[yy][xx] = d[y][x] + 1
+                    q.append((yy, xx))
+
+    def thick(y, x):
+        return max(d[yy][xx] for yy in range(max(0, y - ink), min(h, y + ink + 1)) for xx in range(max(0, x - ink), min(w, x + ink + 1)) if d[yy][xx] < far) >= ink + 2
+
+    res = [row[:] for row in g]
+    for y in range(h):
+        for x in range(w):
+            if body[y][x]:
+                if g[y][x] != 'K' and d[y][x] <= ink and thick(y, x):
+                    res[y][x] = 'K'
+            elif out[y][x]:
+                res[y][x] = 'O' if near(body, y, x, rim) else '.'
+    return [''.join(r) for r in res]
+
+
 def piece(name, side, scale=1):
-    """유형(또는 유형:이형) · 진영 → 그림 (72칸 캔버스)"""
+    """유형(또는 유형:이형) · 진영 → 그림 (72칸 캔버스). 이형 · 거대 · 2×2 반장(이름에 ':')은 외곽을 정본 굵기로 (D-562)"""
     hi = load64()
     if (name, side) in hi:
-        return render64(pad72(hi[(name, side)]), side, scale)
+        grid = pad72(hi[(name, side)])
+        if ':' in name and name != 'K:classic':
+            grid = norm_outline(grid)
+        return render64(grid, side, scale)
     data = load()
     if name not in data:
         raise SystemExit(f'pieces64.txt · pieces.txt에 [{name}] 블록이 없습니다')

@@ -393,10 +393,13 @@ class BoardScene extends Phaser.Scene {
     // 예전 크기(칸 × PIECE_SIZE × span, 짝수)에 드는 가장 큰 것이 예전 크기의 85% 이상이면 그것(1도트 = 캔버스 정수 픽셀),
     // 아니면 예전 크기 그대로(최근접) — 사용자가 맞춘 기물 · 거대 · 반장 크기를 줄이지 않는다.
     // 915×412 · DPR 2.625(칸 120)는 정수배 72가 예전 110의 65%라 예전 그대로, 칸 80(DPR 1 · 2)은 72가 74의 97%라 정수배.
-    const dots = Math.max(1, Math.round((this.textures.exists(key) ? this.textures.get(key).getSourceImage().width : 144) / 2));
-    const prev = 2 * Math.round((PIECE_SIZE * tc * span) / 2); // 짝수 — 칸 가운데에 서도 왼 끝이 정수
-    const snapped = Math.floor(prev / dots + 1e-6) * dots; // 도트 수가 모두 짝수라 이것도 짝수
-    const sc = snapped >= PIECE_SNAP_MIN * prev ? snapped : prev;
+    const prev = 2 * Math.round((PIECE_SIZE * tc) / 2); // 짝수 — 칸 가운데에 서도 왼 끝이 정수
+    const snapped = Math.floor(prev / 72 + 1e-6) * 72;
+    const one = snapped >= PIECE_SNAP_MIN * prev ? snapped : prev;
+    // D-562 외곽 굵기 통일: 2×2 반장(144칸 · span 2) · 거대 주물(122칸 · span 122/72)은 보통 기물 크기(one)에 span을 곱한 짝수 —
+    // 도트 한 칸의 화면 px가 보통 기물과 같아(±0.5px/그림) 먹 테 4도트 · 흰 테 3도트가 같은 장치 px 굵기로 찍힌다.
+    // (예전에는 span마다 따로 반올림 · 따로 정수배를 골라 915에서 보통 110px/72 · 반장 222px/144 · 거대 188px/122 — 도트 크기가 1% 어긋났다)
+    const sc = span === 1 ? one : 2 * Math.round((one * span) / 2);
     const bottom = Math.ceil((GAUGE_ROW * tc) / BOARD_DOTS + this.footPad(key) * sc);
     return { size: sc / r, cy: (bottom - sc / 2) / r };
   }
