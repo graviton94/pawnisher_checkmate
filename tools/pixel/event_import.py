@@ -166,7 +166,8 @@ def cuts_for(src, m):
     a = np.asarray(src, float)
     H, W = a.shape[:2]
     P = m['pitch']
-    ux, uy = phased(W, P, m['ox']), phased(H, P, m['oy'])
+    # D-570: 처방에 축마다 실측(gridmeasure) 간격이 있으면 그 간격 · 시작점 — 없으면 정사각 P
+    ux, uy = phased(W, m.get('pitchX', P), m['ox']), phased(H, m.get('pitchY', P), m['oy'])
     best = (rec_error(a, ux, uy), ux, uy, 'uniform')
     m['errUniform'] = round(best[0], 3)
     px_, py_ = snap._profile(a, 1), snap._profile(a, 0)
@@ -422,7 +423,10 @@ def metrics(a):
 def build(name, r):
     src = Image.open(ORDER / r['source']).convert('RGB')
     m = measure(src)
-    if r.get('pitch'):  # 실측 봉우리가 둘 이상일 때 대조판을 보고 고른 간격 (scene_recipe 주석에 까닭)
+    if r.get('x'):  # D-570: 축마다 실측(gridmeasure.measure) 간격 · 시작점 — 정사각 하나로 묶지 않는다
+        m.update({'pitchMeasured': m['pitch'], 'pitch': round((r['x'][0] * r['y'][0]) ** 0.5, 3), 'pitchX': r['x'][0], 'pitchY': r['y'][0],
+                  'ox': r['x'][1], 'oy': r['y'][1]})
+    elif r.get('pitch'):  # 실측 봉우리가 둘 이상일 때 대조판을 보고 고른 간격 (scene_recipe 주석에 까닭)
         a = np.asarray(src, float)
         m['pitchMeasured'] = m['pitch']
         m['pitch'] = r['pitch']
@@ -514,6 +518,33 @@ def focus_of(name):
     return (float(m.group(1)), float(m.group(2))) if m else (0.5, 0.5)
 
 
+# ⑦ 사내 손질 (D-570 — D-561 ④: 지우기 · 다시 칠하기 · 자르기 + 정본 기물 얹기만) ---------------------------------------
+def erase_boxes(out, boxes):
+    """상자 [x0, y0, x1, y1](도트) 안을 지운다: 줄마다 상자 왼쪽 · 오른쪽 바깥 두 칸 가운데 상자에 가까운 쪽 색으로 —
+    벽 띠 · 리벳 줄처럼 가로로 이어진 면이 그대로 이어진다(새 모양을 그리지 않는다)"""
+    a = np.asarray(out).copy()
+    for x0, y0, x1, y1 in boxes:
+        for y in range(y0, y1):
+            left, right = a[y, x0 - 1].copy(), a[y, x1].copy()
+            mid = (x0 + x1) / 2
+            for x in range(x0, x1):
+                a[y, x] = left if x < mid else right
+    return a
+
+
+def place_pieces(out, pieces):
+    """정본 기물(tools/pixel/maker.py 72칸 · ×1 = 장면 1도트)을 장면 바닥 자리에 얹는다. at = (가운데 x, 그림 아래 끝 y) 도트"""
+    import maker
+    img = Image.fromarray(np.asarray(out), 'RGB').convert('RGBA')
+    for p in pieces:
+        spr = maker.piece(p['piece'], p['side'], 1)
+        bb = spr.getbbox()
+        spr = spr.crop(bb)
+        cx, by = p['at']
+        img.alpha_composite(spr, (int(cx - spr.width // 2), int(by - spr.height)))
+    return np.asarray(img.convert('RGB'))
+
+
 def main():
     args = sys.argv[1:]
     dry = '--dry' in args
@@ -537,8 +568,12 @@ def main():
             Image.open(dst).convert('RGB').save(old_p)
         cur = Image.open(old_p).convert('RGB')
         src, raw, out, m, cuts = build(n, r)
-        o = Image.fromarray(out, 'RGB')
         lk, nl = line_keep(raw, out)
+        if r.get('erase'):
+            out = erase_boxes(out, r['erase'])
+        if r.get('pieces'):
+            out = place_pieces(out, r['pieces'])
+        o = Image.fromarray(out, 'RGB')
         fx, fy = focus_of(n)
         rep = dict(m, before=metrics(np.asarray(cur)), raw=metrics(raw), after=metrics(out), lineKeep=round(lk, 3), lineCells=nl, fx=fx, fy=fy)
         report[n] = rep

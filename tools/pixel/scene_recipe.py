@@ -544,8 +544,13 @@ EVENT_IMPORT = {
     'fieldMedic': dict(_MID, source='V-34-fieldMedic-source.png', cells=(239, 179)),  # 봉우리 x 6.07 · y 6.17 → 6.07px · 위상 5.16, 4.86 · dp±0.1
     'bookCart': dict(_MID, source='V-30-bookCart-source.png', cells=(230, 172)),  # 봉우리 x 6.315 · y 6.975 → 6.31px · 위상 6.15, 5.52 · dp±0.1
     'crownAltar': dict(_MID, source='V-28-crownAltar-source.png', cells=(258, 193)),  # 봉우리 x 6.455 · y 5.095 → 5.615px · 위상 3.93, 0.42 · dp±0.2
-    'copyPress': dict(_DARK2, source='V-33-copyPress-source.png', cells=(226, 169)),  # 봉우리 x 6.295 · y 6.435 → 6.425px · 위상 3.85, 4.02 · dp±0.3
-    'tollGate': dict(_DARK, source='V-36-tollGate-source.png', pitch=5.98, cells=(242, 182)),  # 봉우리 x 5.98 · y 6.315 → 5.98px · 위상 4.63, 0.45 · dp±0.2
+    # D-570: R-01-07 · R-01-08 받음 — 축마다 gridmeasure.measure 실측(간격, 시작점 px). 압인기 x는 그림 전체 존재 1.03(약함 — 상자마다 4.5 ~ 5.3px로
+    #   흔들림)이라 gridmeasure의 from-other 값(세로 5.405 ±4% 안 다시 잼) + dp±0.3로 흔들림을 따라간다. erase = 오른쪽 벽 두 줄 화살표(UI 「다음」 단추로 읽혀
+    #   지움, 줄마다 양옆 벽 색) · pieces = 문지기 검은 룩 둘(정본 maker.piece('R', 1, 1), 44×52도트, 가로 80 · 143(자물쇠 양옆 — 사건 창이 ×4로 덮어 가로 155도트쯤만 보인다), 아래 끝 127 = 문턱 — 사건 창은 아래 4분의 1을 서술 띠가 덮어 바닥 앞쪽에 세우면 가려진다).
+    'copyPress': dict(_DARK2, source='R-01-07-source.png', x=(5.286, 1.32), y=(5.405, 2.03), cells=(274, 200),
+                      erase=[(224, 29, 262, 49)]),
+    'tollGate': dict(_DARK, source='R-01-08-source.png', x=(6.5, 4.33), y=(6.474, 2.16), cells=(223, 167),
+                     pieces=[{'piece': 'R', 'side': 1, 'at': (80, 127)}, {'piece': 'R', 'side': 1, 'at': (143, 127)}]),
     'echoWell': dict(_FINE, source='V-32-echoWell-source.png', cells=(270, 203)),  # 봉우리 x 5.235 · y 5.355 → 5.355px · 위상 1.2, 3.88 · dp±0.2
     'scrapHeap': dict(_RUST, source='V-23-scrapHeap-source.png', cells=(234, 175)),  # 봉우리 x 6.185 · y 6.215 → 6.2px · 위상 6.04, 2.01 · dp±0.1
     'rustBath': dict(_RUST, source='V-24-rustBath-source.png', cells=(245, 184)),  # 봉우리 x 5.995 · y 5.84 → 5.915px · 위상 3.84, 5.77 · dp±0.1
@@ -689,6 +694,12 @@ STORE_GRID = {
     'R-07': {'source': 'R-07-source.png', 'x': (9.399 / 2, 1.76), 'y': (9.74 / 2, 6.7), 'focus': (0.5, 0.68),
              'crown': [{'box': (73, 176, 134, 224)}],
              'erase': [(98, 134, 104, 139, 35)]},  # 검은 나이트 눈
+    # D-570 컨셉아트 KV-01 · KV-02h · KV-03 (축마다 gridmeasure.measure 실측 — 발주 캔버스 308×177 · 480×155 · 187×225와 다르게 왔다):
+    #   KV-01 굵은 봉우리 9.95 · 9.71의 절반(존재 1.095 · 1.055 — 배경 철골 · 사슬이 절반 칸, 폰 · 국자는 굵은 칸으로 그렸다) → 334×193.
+    #   KV-02h 세로 3.08(존재 1.214)과 6.17(1.231)이 겨뤄 square-guard로 굵은 칸 → 348×116. KV-03 → 186×231(발주 187×225에 가깝다).
+    'KV-01': {'source': 'KV-01-source.png', 'x': (4.953, 1.75), 'y': (4.926, 0.51), 'focus': (0.68, 0.6)},
+    'KV-02h': {'source': 'KV-02h-source.png', 'x': (6.336, 0.4), 'y': (6.159, 1.41), 'focus': (0.5, 0.4)},
+    'KV-03': {'source': 'KV-03-source.png', 'x': (6.14, 0.13), 'y': (5.964, 5.59), 'focus': (0.5, 0.35)},
 }
 # 최종 스토어 크기 (D-559 — D-560 사장님 반려, 합성 방식 폐기: 결과는 build-res/unused/store-d559/, `--d559`로만 다시 찍는다): src = 손질 뒤 도트(build-res/store/dots/<src>.png), k = 덮는 가장 작은 정수배, crop = 자를 왼쪽 위(도트),
 #   plate = 로고 자리 빈 쇠판(도트 상자), logo = full(문장 + 글자) · word(글자 두 줄). 히어로는 로고 없음(스팀이 따로 얹는다).
@@ -715,4 +726,26 @@ LOGO_GRID = {
     'LG-01a': {'x': (6.35, 2.48), 'y': (6.4055, 3.15), 'box': (30, 60, 1960, 740), 'lo': 11, 'hi': 14.5, 'bg': 'white', 'pal': 15, 'sub': 2},
     'LG-01b': {'x': (7.808, 3.73), 'y': (7.555, 4.29), 'box': (20, 60, 2150, 640), 'lo': 13.5, 'hi': 17.5, 'bg': 'alpha', 'pal': 9, 'sub': 2},
     'LG-01c': {'x': (5.94, 5.5), 'y': (5.56, 8.41), 'box': (120, 320, 1380, 720), 'lo': 10, 'hi': 13.5, 'bg': 'white', 'pal': 15, 'sub': 2},
+}
+
+# D-570 컨셉아트 조립 (tools/pixel/kv_store.py가 읽는다) — 받은 도트(build-res/store/dots/KV-0N.png, STORE_GRID 실측) → 사내 손질 → 정수배 확대 → 스토어 크기 자르기
+#   (늘이지 않는다, D-386) → 로고 LG-01a를 정수배로 얹기. 좌표는 모두 받은 그림의 도트(1도트 = 1px).
+# KV-01 폰: 받은 폰은 층층 원뿔 몸(머리 · 목 · 깃 · 받침 구분 없음)이라 정본과 달라 지우고 정본 흰 폰(maker.piece('P', 0, 1), 45×55)을 얹는다.
+#   box = 받은 폰(흰 테 포함) 자리, stream = 쇳물 줄기 열(지운 자리를 위에서 이어 내린다), head_rows = 정본 폰 머리 줄(0 ~ 21, 목 22부터) → 쇳물 4단 다시 칠하기.
+KV_FIX = {
+    'KV-01': {'box': (170, 85, 237, 156), 'pawn_at': (203, 156), 'head_rows': 22,
+              'molten': {'#F1EEEC': '#F4D27A', '#FFFFFF': '#F4D27A', '#E2DED6': '#E07A2A', '#C5C3C3': '#B63735', '#858488': '#7A1218'}},
+    'KV-02h': {'pawn_at': (174, 102)},  # 정본 흰 폰을 쇳물 도랑 사이 빈 길 위에 — 아래 끝 102(히어로 자르기 아래 끝 104.3도트보다 2도트 위)
+}
+# k = 정수배, size = 스토어 크기, crop = ×k 그림에서 자를 왼쪽 위(px), logo = (파일, 배율, 왼쪽 위 px — 최종 그림 기준) · None = 로고 없음.
+#   발주 표(27위)의 배율은 발주 캔버스 기준이었다 — 받은 도트 수가 달라 여기서 다시 골랐다(KV-01 334×193 · KV-02h 348×116 · KV-03 186×231).
+#   메인 ×4 · 헤더 ×3: 왼쪽 빈 쇠벽이 0 ~ 112도트(그 뒤 철골 탑)라 LG-01a ×2(610px)는 탑 · 관 · 폰을 덮는다 → ×1(305×107).
+#   세로 ×5: ×4는 744px로 748을 못 덮는다. 라이브러리 ×4. 히어로 ×12(×11 = 3828 < 3840) — 위아래 152px를 잘라 십자가(3도트) ~ 폰 받침(101도트)을 남긴다.
+KV_OUT = {
+    'steam-main.png': {'src': 'KV-01', 'k': 4, 'size': (1232, 706), 'crop': (104, 40), 'logo': ('LG-01a', 1, (40, 176))},
+    'steam-header.png': {'src': 'KV-01', 'k': 3, 'size': (920, 430), 'crop': (12, 54), 'logo': ('LG-01a', 1, (16, 120))},
+    'steam-small.png': {'src': None, 'fill': '#17171E', 'size': (462, 174), 'logo': ('LG-01a', 1, (78, 33))},
+    'steam-vertical.png': {'src': 'KV-03', 'k': 5, 'size': (748, 896), 'crop': (91, 0), 'logo': ('LG-01a', 2, (69, 10))},
+    'steam-library.png': {'src': 'KV-03', 'k': 4, 'size': (600, 900), 'crop': (72, 0), 'logo': ('LG-01a', 1, (148, 40))},
+    'library-hero.png': {'src': 'KV-02h', 'k': 12, 'size': (3840, 1240), 'crop': (168, 12), 'logo': None},
 }
