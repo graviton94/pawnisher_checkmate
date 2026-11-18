@@ -11,13 +11,13 @@
   ② 왕관 칸의 밝기를 그 왕관 안에서 정규화(아래 3% ~ 위 97%)해 `cut`(밝음, 가운데)으로 세 단에 나눠 F · Q · J로 칠한다.
      이미 정본 세 색인 칸은 그대로 — 여러 번 돌려도 같다(반입 도구가 저장 뒤 다시 불러도 안전).
   ③ 상자 안 청록 칸(보석)은 #38BDF8로. 빛 점과 어두운 테(그 보석 밝기 중앙값에서 크게 벗어난 칸)는 그대로 둔다.
-  모양이 정본(끝 넷 · 앞 가운데 보석 하나)과 다른 그림은 `shape`에 적는다 — 손으로 그리지 않고 재발주 목록으로 간다.
+  모양이 정본(끝 넷 · 앞 가운데 보석 하나)과 다른 그림은 `shape`에 적는다 — 참고 기록일 뿐 재발주하지 않는다(D-577: 색 · 앞 보석만 같으면 끝 개수 · 모양 차이는 종이 왕관의 구겨짐).
 
 실행:
   python3 -I tools/pixel/crown_unify.py apply [이름 …]     TABLE의 그림을 제자리에서 다시 칠한다(이름 없으면 전부)
   python3 -I tools/pixel/crown_unify.py sheet <out.png>    왕관마다 잘라 ×배율로 붙인 대조판(지금 파일 기준 — 칠하기 전에 뽑으면 before)
   python3 -I tools/pixel/crown_unify.py mask <out.png> [이름 …]  고른 칸을 마젠타로 덮은 점검판(상자 맞출 때)
-  python3 -I tools/pixel/crown_unify.py list               모양 어긋남(재발주) 목록
+  python3 -I tools/pixel/crown_unify.py list               모양 차이 (참고 — 재발주 안 함, D-577) 목록
   python3 -I tools/pixel/crown_unify.py check              정본 문단의 색이 PAL64와 같은지
 반입 도구는 저장 뒤 `crown_unify.after_save(경로)`를 부른다 — TABLE에 있는 그림이면 그 자리에서 다시 칠한다(재반입이 통일을 되돌리지 않게).
 """
@@ -41,7 +41,7 @@ DOC = os.path.join(ROOT, 'docs', 'asset-order-master.md')
 #   seeds: 번지기 시작 칸(왕관 앞면 · 뿔) — 없으면 상자 안 마분지 칸 전부
 #   not: 뺄 상자 목록 · cut: (밝음 하한, 가운데 하한) 정규화 밝기 · ink: 먹 밝기 상한 · sat: 마분지 채도 하한
 #   any: True면 채도와 상관없이(흰 · 회색 종이 왕관 아이콘) 먹 아닌 칸 전부 · paper: 채도 낮은 종이 칸만(금 부분은 둔다)
-#   shape: 정본과 다른 모양(재발주 목록)
+#   shape: 정본과 다른 모양 — 모양 차이 (참고 — 재발주 안 함, D-577)
 S = 'public/scenes/'
 P = 'public/ui/portraits/'
 C2 = 'src/assets/ui/chrome/v2/'
@@ -313,6 +313,7 @@ def main():
     elif cmd == 'mask':
         sheet(args[1], args[2:], mask=True, big=True)
     elif cmd == 'list':
+        print('모양 차이 (참고 — 재발주 안 함, D-577)')
         for rel, v in TABLE.items():
             if v.get('shape'):
                 print(f'{rel}: {v["shape"]}')

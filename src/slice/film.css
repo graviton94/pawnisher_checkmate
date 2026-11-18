@@ -63,6 +63,10 @@
 .cut-who.cw-npc .cw-name { border-width: 0 calc(var(--d) * 5) 0 calc(var(--d) * 14); border-image: url('../assets/ui/chrome/v2/name-npc.png') 0 5 0 14 fill / 0 calc(var(--d) * 5) 0 calc(var(--d) * 14) / 0 stretch; color: var(--t-ink); }
 .cut-who.no-face .cw-name { margin-bottom: calc(var(--d) * 2); }
 
+/* 먹 무대 (D-579 — Cut.dark): 그림 없이 slice/darkcut.ts 도트 칸 캔버스만 (칸 = 기기 픽셀 정수, 빛은 계단 + 베이어) */
+.film .pl-stage.pl-dark { background: #0b0b0e; }
+.film .pl-stage.pl-dark > .pl-dark-cv { position: absolute; left: 0; top: 0; display: block; image-rendering: pixelated; }
+
 /* 끝 정적 (coda): 그림 없이 먹(또는 백지) 위 한가운데 한 줄 — 띠 장식 없이 */
 .prologue.coda .film-view { background: #0b0b0e; }
 .prologue.coda-white .film-view { background: #f1ede4; }

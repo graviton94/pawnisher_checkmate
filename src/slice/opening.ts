@@ -12,6 +12,7 @@ import { pieceImg } from '../ui/sprites';
 import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
 import { logHtml, VnStage, type PlateBox } from './vn';
+import { DarkStage } from './darkcut';
 import { castOf, VN_TEXT } from '../data/vn';
 import { ditherTo, ease } from '../view/motion';
 import { PAPER_FACE } from '../data/portraits';
@@ -111,6 +112,8 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     let ended = false;
     let token = 0;
     let cam: Camera | null = null;
+    /** 그림 없는 먹 무대 (D-579 — Cut.dark) */
+    let dark: DarkStage | null = null;
     let shot: Shot = { x: 0.5, y: 0.5, z: 0 };
     let scene: VnScene = {};
     /** 숨 · 카메라 중에 눌렀을 때 바로 놓을 샷 */
@@ -118,7 +121,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     let waiter: (() => void) | null = null;
     /** 제목 카드 · 숨 동안: 탭 하나를 기다린다 */
     const tapped = (): Promise<void> => new Promise((r) => (waiter = () => { waiter = null; r(); }));
-    const refit = (): void => { cam?.refit(); vn.refit(); };
+    const refit = (): void => { cam?.refit(); vn.refit(); dark?.refit(); };
     window.addEventListener('resize', refit);
     const finish = async (): Promise<void> => {
       if (ended) return;
@@ -157,7 +160,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       // 다음 화면을 뒤에 먼저 세우고 걷는다 — 걷는 사이 메인 화면이 비치지 않게
       await o.before?.();
       document.body.classList.remove('cover-pl');
-      pxOut(el, () => { vn.destroy(); el.remove(); resolve(); }, 420);
+      pxOut(el, () => { vn.destroy(); dark?.destroy(); el.remove(); resolve(); }, 420);
     };
     /** 화자 명패: 대사 첫 쪽이면 새로, 이어 말하는 쪽이면 그대로, 서술 · 독백이면 걷는다 */
     const plate = (l: CutLine & Partial<Line>): void => {
@@ -178,6 +181,11 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       el.classList.toggle('alarm', c.fx === 'red');
       el.style.setProperty('--em', c.glow && c.glow !== '#f4f1ea' ? c.glow : '#f4d27a');
       cam = null;
+      dark?.destroy();
+      dark = null;
+      el.classList.toggle('dark-stage', !!c.dark);
+      // 먹 무대 (D-579): 그림 · 자리 그림 없이 도트 효과 칸만 — 줄의 beat가 효과를 건다
+      if (c.dark) { shot = { x: 0.5, y: 0.5, z: 0 }; stage.className = 'pl-stage pl-dark'; stage.innerHTML = ''; dark = new DarkStage(stage, view); return; }
       if (c.coda) { stage.className = 'pl-stage'; stage.innerHTML = ''; return; }
       const pick = !c.standIn && c.img && (await hasImg(`scenes/${c.img}.png`)) ? c.img : !c.standIn && c.alt && (await hasImg(`scenes/${c.alt}.png`)) ? c.alt : null; // 받을 그림이 없으면 대체 그림 (D-346)
       const focus = c.at?.match(/([\d.]+)%\s+([\d.]+)%/);
@@ -276,6 +284,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
         if (pending && cam) { shot = pending; await cam.move(shot); if (my !== token) return; }
         pending = null;
         lineFx(l);
+        if (l.beat) dark?.beat(l.beat);
         // 켄 번스: 줄이 서 있는 동안 천천히 민다 (다음 줄의 카메라 · 컷 전환이 멈춘다)
         if (cam) void cam.drift(l.drift ?? scene.drift);
       } else sfx('tap', 3);

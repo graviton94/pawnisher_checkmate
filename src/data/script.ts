@@ -3,14 +3,16 @@ import type { StandIn } from './opening';
 import type { PieceType } from '../engine';
 import { CHAPTERS, chapterTitle, endingLabel } from './campaign';
 import { PAPER_FACE, type PaperMood, type Portrait } from './portraits';
+import type { DarkBeat } from './vn';
 /**
  * 비트 (D-504, 후기 #31): 한 줄 = 한 비트. 글에 더해 그 순간의 연출을 함께 적는다 — 카메라(shot) · 소리 큐(sfx) · 숨(pause, 글 앞 ms) · 효과(fx).
  * 연출이 없는 줄은 앞 비트의 그림 · 초점을 그대로 이어 받는다.
  */
 export type Cue = 'tap' | 'threat' | 'land' | 'hit' | 'stamp' | 'lose' | 'win' | 'rare' | 'awaken' | 'lift' | 'hurt' | 'loss' | 'submit' | 'kill' | 'check';
 /** mood (D-506): 종이왕 표정(PT-04) — 종이왕 대사면 명패 얼굴을 바꾸고, 속마음(m)이면 이름 없이 얼굴 명패만 세운다 */
+/** beat (D-579): 그림 없는 먹 무대 컷(Cut.dark)에서 이 줄이 거는 도트 효과 비트 — data/vn.VN_DARK · slice/darkcut */
 /** drift (D-554): 이 줄이 서 있는 동안 켄 번스 방향(초점 변화 부호) — 없으면 컷 분위기(data/vn.ts VN_SCENE) · 여유가 큰 쪽 */
-export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold'; mood?: PaperMood; drift?: { x: number; y: number } }
+export interface Line { k: 'n' | 's' | 'm'; t: string; who?: string; shot?: Shot; sfx?: Cue; pause?: number; fx?: 'shake' | 'flash' | 'red' | 'gold'; mood?: PaperMood; drift?: { x: number; y: number }; beat?: DarkBeat }
 /** 카메라 한 샷: 그림 안 초점(0~1) + 확대 칸 z(0 = 칸을 덮는 기본 배율, 한 칸 = 기기 픽셀 정수로 약 12%씩) */
 export interface Shot { x: number; y: number; z?: number }
 /**
@@ -33,6 +35,8 @@ export interface Cut {
   standIn?: boolean;
   /** 빈 배경에서만 실제 생존 기물을 겹친다. 인물이 있는 완성 원화에는 쓰지 않는다. */
   showActors?: boolean;
+  /** 그림 없는 먹 무대 (D-579 — VA-01 취소, 사장님 「비주얼 일러스트 없이, 묘사 및 텍스트와 효과로만」): 장면 칸에 그림 · 기물 도트 없이 빛 · 띠 · 표시 효과만, 줄마다 beat */
+  dark?: boolean;
   /** 정지 장면 그림을 비율·기기 픽셀 정수배로 덮는다. */
   pixelCover?: boolean;
   /** 하단의 핵심 행동을 가리지 않도록 해당 컷만 대사창을 상단에 둔다. (영화 판에서는 띠가 레터박스 안에 있어 쓰지 않는다) */
@@ -102,13 +106,13 @@ export const PROLOGUE: Cut[] = [
     n('대국에서 킹이 쓰러진 세트는 패자 부활도, 변명할 틈도 없이 상자째 붉은 용광로로 쏟아진다.', { shot: at(0.5, 0.55), sfx: 'threat' }),
     n('어제의 동료는 오늘 녹아내려 다음 세트의 이름 모를 폰이 된다.', { shot: at(0.4, 0.3, 2), drift: { x: 0, y: 1 } }),
   ]), key: true, slug: '용광로의 침묵', trans: 'melt' },
-  // PRO-03 — 상자 전체 → 집게 → 빈 킹 자리 → 집힌 폰 얼굴(숨 뒤 독백)
-  { ...cut('prologue-02', [
-    n('그날, 갓 조립된 하얀 세트 상자 하나에 킹이 빠져 있었다.', { shot: at(0.5, 0.6) }),
-    n('컨베이어 위의 집게는 무심하게 굴러다니던 하얀 폰 하나를 집어 올려, 비어 있던 킹의 자리에 꾹 눌러 담았다.', { shot: at(0.5, 0.3, 2), sfx: 'lift' }),
-    n('여덟 개의 폰 곁에 하나가 더 얹혔다. 킹의 왕관도, 킹의 무게도 없는 ‘아홉 번째 폰’이었다.', { shot: at(0.5, 0.62, 1), sfx: 'land' }),
-    m('발밑이 너무 넓어. 여긴 내가 태어나야 할 자리가 아니었어.', { shot: at(0.5, 0.42, 3), pause: 500 }),
-  ]), slug: '잘못 놓인 아홉 번째 폰', trans: 'shutter' },
+  // PRO-03 — 그림 없는 먹 무대 (D-579, VA-01 취소): 컨베이어가 상자를 등 아래로 → 집혀 오른 흰 빛 조각이 빈 킹 칸에 눌림 → 여덟 칸이 차례로 켜짐 → 빛이 좁아져 아홉째만
+  { ...cut('', [
+    n('그날, 갓 조립된 하얀 세트 상자 하나에 킹이 빠져 있었다.', { beat: 'rumble' }),
+    n('컨베이어 위의 집게는 무심하게 굴러다니던 하얀 폰 하나를 집어 올려, 비어 있던 킹의 자리에 꾹 눌러 담았다.', { sfx: 'lift', beat: 'drop' }),
+    n('여덟 개의 폰 곁에 하나가 더 얹혔다. 킹의 왕관도, 킹의 무게도 없는 ‘아홉 번째 폰’이었다.', { sfx: 'land', beat: 'count' }),
+    m('발밑이 너무 넓어. 여긴 내가 태어나야 할 자리가 아니었어.', { pause: 500, beat: 'hush' }),
+  ], []), dark: true, slug: '잘못 놓인 아홉 번째 폰', trans: 'shutter' },
   // PRO-04 — 경보(VA-02, D-578): 들려 올라가는 X 도장 머리와 닫힌 뚜껑(흔들림 · 도장 소리) → 뚜껑 위 붉은 X에 다가가 판정문. 소문 두 줄은 다음 컷(OP-03)으로
   { ...cut('prologue-03', [
     n('출하구로 향하는 벨트 대신, 차가운 붉은 경고등이 켜진 검수기가 상자 뚜껑 위에 커다란 X표를 내려찍었다.', { shot: at(0.5, 0.4, 1), sfx: 'stamp', fx: 'shake' }),
