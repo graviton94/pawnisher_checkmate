@@ -20,8 +20,8 @@
     #boot .boot-em img { position: absolute; inset: 0; width: 205px; height: 124px; image-rendering: pixelated; }
     #boot .boot-em .sl { animation: bootGlow 1.2s steps(2, jump-none) infinite; }
     @keyframes bootGlow { 0% { filter: brightness(1); } 100% { filter: brightness(1.15); } }
-    #boot .boot-logo { width: 354px; height: 298px; image-rendering: pixelated; animation: bootGlow 1.2s steps(2, jump-none) infinite; }
-    @media (max-height: 420px) { #boot .boot-logo { width: 266px; height: 224px; } }
+    /* 로딩 로고 = 타이틀과 같은 문장(왕관 폰 + 붉은 사선) + 받은 글자 LG-01b(275×77 도트) — 1배 정수 (D-568, 옛 title-logo 1.5배 비정수 대체) */
+    #boot .boot-word { display: block; width: 275px; height: 77px; margin-top: -12px; image-rendering: pixelated; }
     /* 로딩 톱니 · 진행 막대 = 받은 LD-01 (D-523): 황동 톱니 8프레임(20×18도트) · 철 홈 막대 9-slice + 황동 채움 칸 8×8 — 1도트 = 2px */
     #boot .boot-row { display: flex; align-items: center; gap: 12px; margin-left: -52px; }
     #boot .boot-gear { width: 40px; height: 36px; background: url('ui/hud/load-gear.png') 0 0 / 320px 36px no-repeat; image-rendering: pixelated; animation: bootGears 0.8s steps(8) infinite; }
@@ -34,7 +34,7 @@
   </style>
 </head>
 <body class="slice">
-  <div id="boot" aria-hidden="true"><div><img class="boot-logo" src="ui/title-logo.png" alt=""><div class="boot-row"><i class="boot-gear"></i><div class="boot-bar"><b></b></div></div></div></div>
+  <div id="boot" aria-hidden="true"><div><div class="boot-em"><img src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""></div><img class="boot-word" src="ui/title-word.png" alt=""><div class="boot-row"><i class="boot-gear"></i><div class="boot-bar"><b></b></div></div></div></div>
   <div id="app">
     <aside id="left" class="rail left"><div id="vials" class="apbar" aria-label="남은 태엽"></div><div id="hand" class="hand"></div></aside>
     <main id="board"></main>

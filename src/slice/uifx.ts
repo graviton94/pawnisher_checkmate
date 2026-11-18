@@ -357,7 +357,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   for (const el of [vig, flash, inv]) document.body.appendChild(el);
   const cleanup = () => [vig, flash, inv].forEach((el) => el.remove());
   const watch = window.setInterval(() => { if (!root.isConnected) { cleanup(); window.clearInterval(watch); } }, 300);
-  word.style.setProperty('--tlogo', `url(${new URL('ui/title-logo.png', document.baseURI).href})`);
+  word.style.setProperty('--tlogo', `url(${new URL('ui/title-word.png', document.baseURI).href})`);
   const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
   const re = (el: Element, cls: string) => { el.classList.remove(cls); void (el as HTMLElement).offsetWidth; el.classList.add(cls); };
   if (calm()) { em.className = 'tfx-em done'; word.classList.add('shown'); cleanup(); window.clearInterval(watch); return; }

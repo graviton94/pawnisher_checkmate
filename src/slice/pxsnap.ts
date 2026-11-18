@@ -43,10 +43,10 @@ const apply = (): void => {
   document.documentElement.style.setProperty('--px-plate', `${Math.max(1, Math.round(1.5 * dpr)) / dpr}px`);
   // 수령 원화의 세부 격자. 원본 안 상징을 떼지 않고도 정수 기기 픽셀로 표시한다.
   document.documentElement.style.setProperty('--px-detail', `${Math.max(1, Math.round(dpr * 0.75)) / dpr}px`);
-  // 타이틀 문장(205×194 원본 1배) 확대 = 기기 픽셀 정수배 (D-399 — 예전 zoom 1.3 · 1.15 · 1.4 비정수): 높이 80% · 1.5배 상한
+  // 타이틀 문장(문장 205×124 + 글자 LG-01b 275×77 = 높이 약 217, 원본 1배 — D-568) 확대 = 기기 픽셀 정수배 (D-399 — 예전 zoom 1.3 · 1.15 · 1.4 비정수): 높이 80% · 1.5배 상한
   // 웹 PC 확대면 기기 픽셀 = 배치 px × DPR × 확대 — 1080p에서 문장 도트 하나 = 기기 3px (D-563)
   const devK = dpr * z;
-  const logo = Math.max(1, Math.floor(devK * Math.min(1.5, (rawInnerH() / z * 0.8) / 194)));
+  const logo = Math.max(1, Math.floor(devK * Math.min(1.5, (rawInnerH() / z * 0.8) / 217)));
   document.documentElement.style.setProperty('--logo-k', String(logo / devK));
   document.documentElement.dataset.dpr = String(Math.round(dpr * 1000) / 1000);
   // 디더 가면 16단(--dq0~16) · 먹 막(--dk0~16) — 칸 = 장치 층 도트 (D-554)

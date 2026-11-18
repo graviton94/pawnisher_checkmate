@@ -717,4 +717,5 @@ export const PRELOAD: string[] = [
   "ui/title-logo.png",
   "ui/title-pawn.png",
   "ui/title-slash.png",
+  "ui/title-word.png",
 ];

@@ -31,6 +31,74 @@
    }
   }
  },
+ "logo_import": {
+  "LG-01a": {
+   "box": [
+    30,
+    60,
+    1960,
+    740
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.024,
+     "phase": 10.58,
+     "pitch": 12.7,
+     "presence": 1.296
+    },
+    "y": {
+     "drift": 0.039,
+     "phase": 7.21,
+     "pitch": 12.811,
+     "presence": 1.21
+    }
+   }
+  },
+  "LG-01b": {
+   "box": [
+    20,
+    60,
+    2150,
+    640
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.018,
+     "phase": 7.16,
+     "pitch": 15.616,
+     "presence": 1.167
+    },
+    "y": {
+     "drift": 0.006,
+     "phase": 12.28,
+     "pitch": 15.11,
+     "presence": 1.135
+    }
+   }
+  },
+  "LG-01c": {
+   "box": [
+    120,
+    320,
+    1380,
+    720
+   ],
+   "measured": {
+    "x": {
+     "drift": 0.006,
+     "phase": 2.72,
+     "pitch": 11.89,
+     "presence": 1.217
+    },
+    "y": {
+     "drift": 0.015,
+     "phase": 10.89,
+     "pitch": 11.12,
+     "presence": 1.112
+    }
+   }
+  }
+ },
  "map_import": {
   "MP-01": {
    "box": null,

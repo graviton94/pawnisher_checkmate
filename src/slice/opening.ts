@@ -43,7 +43,7 @@ const standIn = (c: Cut, overlay = false): string =>
 
 /** 베인 타이틀 문장 마크업 (메인 화면 · 프롤로그 끝 공통) */
 export const crestHtml = (): string =>
-  `<div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-logo.png" alt=""></div><div class="tfx-flash"></div></div>`;
+  `<div class="tfx"><div class="tfx-vig"></div><div class="tfx-rays"></div><div class="tfx-em"><img class="h1" src="ui/title-pawn.png" alt=""><img class="h2" src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""><span class="tfx-glint"></span></div><div class="tfx-word"><img src="ui/title-word.png" alt=""></div><div class="tfx-flash"></div></div>`;
 
 /**
  * 컷신 재생기 (D-192 프롤로그 → D-276 각본 전체 → D-504 영화 문법): 모든 이야기 장면(프롤로그 · 그림자 · 동료 · 반장 격파 · 도금왕 · 돌아봄 · 결말 · 패배)이 이 하나를 쓴다.

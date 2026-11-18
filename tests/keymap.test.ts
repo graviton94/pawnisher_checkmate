@@ -112,7 +112,7 @@ describe('워밍업 두 묶음 (D-531)', () => {
     for (const u of unused) expect(PRELOAD).not.toContain(u);
     expect(title.length + first.length + later.length).toBe(PRELOAD.length);
     expect(title).toContain('scenes/prologue-00.png');
-    expect(title).toContain('ui/title-logo.png');
+    expect(title).toContain('ui/title-word.png'); // 타이틀 글자 = 받은 로고 L1 LG-01b (D-568)
     expect(title.length).toBeLessThan(12);
     const core = (p: string) => /^(pieces|ui)\//.test(p);
     expect([...title, ...first].filter(core).length).toBe(PRELOAD.filter(core).length);

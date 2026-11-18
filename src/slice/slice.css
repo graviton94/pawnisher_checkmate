@@ -355,15 +355,16 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 .tfx-flash { position: fixed; inset: 0; background: #fff; -webkit-mask-image: var(--px4); mask-image: var(--px4); pointer-events: none; z-index: 120; }
 .tfx-flash.on { animation: tfxfl 220ms var(--decel) forwards; }
 @keyframes tfxfl { 0% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); } 33.33% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 66.67% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 8.33% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 16.66% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 25% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 41.66% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 50% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 58.34% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 75% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 83.34% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 91.67% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
-.tfx-word { position: relative; width: 177px; height: 54px; overflow: hidden; visibility: hidden; -webkit-mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; mask: var(--tlogo) 0 -95px / 177px 149px no-repeat; }
-.tfx-word img { position: absolute; left: 0; top: -95px; width: 177px; height: 149px; image-rendering: pixelated; }
-/* 문장 가면(--tlogo, 177×149)을 끝까지 둔다 — 키프레임에서 디더 가면(정사각 SVG)으로 바꾸면 가면 크기 177×149 안에 149×149만 남아 P · R 끝이 잘렸다 (D-563). 나타남 = 계단(보임 전환 + 펀치) */
+/* 글자 = 받은 로고 L1 글자만(LG-01b, title-word.png 275×77 도트, 1도트 = 1px — D-568). .tfx(205px)보다 넓어 가운데로 양옆에 넘친다 */
+.tfx-word { position: relative; flex: none; width: 275px; height: 77px; margin-top: 2px; overflow: hidden; visibility: hidden; -webkit-mask: var(--tlogo) 0 0 / 275px 77px no-repeat; mask: var(--tlogo) 0 0 / 275px 77px no-repeat; }
+.tfx-word img { position: absolute; left: 0; top: 0; width: 275px; height: 77px; image-rendering: pixelated; }
+/* 글자 가면(--tlogo = 글자 그림 자체)을 끝까지 둔다 — 키프레임에서 디더 가면(정사각 SVG)으로 바꾸면 가면 크기 안에 정사각만 남아 P · R 끝이 잘렸다 (D-563). 나타남 = 계단(보임 전환 + 펀치) */
 .tfx-word.in, .tfx-word.shown { visibility: visible; }
 .tfx-word.in { animation: tfxword 300ms both; }
 @keyframes tfxword { 0% { transform: scale(2.2) translateY(-10px); filter: drop-shadow(-8px 0 #ff2a6d) drop-shadow(8px 0 #2de2e6) brightness(2); animation-timing-function: var(--accel); } 55% { transform: scale(0.94); filter: drop-shadow(-2px 0 #ff2a6d) drop-shadow(2px 0 #2de2e6); animation-timing-function: var(--decel); } 100% { transform: none; filter: none; } }
 .tfx-word::after { content: ''; position: absolute; top: 0; bottom: 0; width: 12px; left: 0; background: #fff3c4; transform: translateX(-40px) skewX(-22deg); visibility: hidden; }
 .tfx-word.shine::after { visibility: visible; animation: tfxshine 480ms steps(12) both; }
-@keyframes tfxshine { 0% { transform: translateX(-40px) skewX(-22deg); } 100% { transform: translateX(200px) skewX(-22deg); } }
+@keyframes tfxshine { 0% { transform: translateX(-40px) skewX(-22deg); } 100% { transform: translateX(300px) skewX(-22deg); } }
 .tfx-blood { position: fixed; z-index: 121; width: 5px; height: 5px; background: #e5262f; box-shadow: 0 0 0 1px #0b0b0e; pointer-events: none; }
 .tfx-ember { position: fixed; z-index: 41; width: 3px; height: 3px; background: #ff6b5a; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; -webkit-mask-image: none; mask-image: none; } .tfx-em.done .sl { animation: none; } }
