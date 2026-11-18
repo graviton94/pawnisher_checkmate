@@ -4,9 +4,10 @@
  * 갈무리11 숫자는 잉크가 글자 상자 위쪽에 붙어 있고(D-558) 숫자마다 폭이 달라(1이 좁다) `place-items: center`로는
  * 위로 뜨고 옆으로 밀렸다. 숫자마다 canvas 잉크 상자를 재서 「잉크 가운데 = 구멍 가운데」가 되게 안쪽 여백을 주고,
  * 화면의 정수 픽셀 자리에 맞춘다 — 카드 크기 · 화면 크기 · 0~9 모두 같은 규칙.
+ * 카드 이름(.cf-name)도 같은 규칙 (D-584): 명판 · 띠 글 칸 가운데에 이름 잉크 가운데 — `place-items: center`는 갈무리 잉크가 위로 떠 1.5 ~ 2.3 기기 픽셀 높았다.
  * UI는 게임 상태를 바꾸지 않는다(글자 자리만).
  */
-const SEL = '.cf > .cf-cost';
+const SEL = '.cf > .cf-cost, .cf > .cf-name';
 
 let ctx: CanvasRenderingContext2D | null = null;
 /** 잉크 상자: l · r = 글자 원점에서 잉크 왼쪽 · 오른쪽, up · dn = 기준선 위 · 아래 잉크, asc · desc = 줄 배치용 글꼴 올림 · 내림(블링크는 정수 px로 반올림) */
@@ -84,6 +85,7 @@ if (typeof document !== 'undefined' && typeof MutationObserver === 'function') {
       for (const m of ms) {
         m.addedNodes.forEach((n) => {
           if (n instanceof HTMLElement && n.matches(SEL)) scan(n.parentElement ?? document);
+          else if (n instanceof Text && n.parentElement?.matches(SEL)) fit(n.parentElement);
           else if (n instanceof Element) scan(n);
         });
       }
