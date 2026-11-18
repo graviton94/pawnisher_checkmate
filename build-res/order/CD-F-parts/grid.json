@@ -1,0 +1,1025 @@
+{
+ "CD-01f/cmd-common": {
+  "exp": 5.628,
+  "gm_x": {
+   "pitch": 5.082,
+   "phase": 0.74,
+   "err": 3.67,
+   "presence": 1.266,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.671,
+   "phase": 0.83,
+   "err": 5.68,
+   "presence": 1.145,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.961,
+   "presence": 1.117
+  },
+  "run_x": {
+   "pitch": 5.001,
+   "resid": 0.0703
+  },
+  "run_y": {
+   "pitch": 5.001,
+   "resid": 0.1005
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.082 / 5.671, 정사각 훑기 다름 4.961"
+ },
+ "CD-01f/cmd-rare": {
+  "exp": 5.605,
+  "gm_x": {
+   "pitch": 4.591,
+   "phase": 1.53,
+   "err": 5.11,
+   "presence": 1.255,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.524,
+   "phase": 2.76,
+   "err": 7.88,
+   "presence": 1.117,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.584,
+   "presence": 1.082
+  },
+  "run_x": {
+   "pitch": 5.004,
+   "resid": 0.1104
+  },
+  "run_y": {
+   "pitch": 5.004,
+   "resid": 0.1179
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.591 / 5.524, 정사각 훑기 다름 4.584"
+ },
+ "CD-01f/cmd-gold": {
+  "exp": 5.658,
+  "gm_x": {
+   "pitch": 5.504,
+   "phase": 0.92,
+   "err": 7.25,
+   "presence": 1.072,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.908,
+   "phase": 1.11,
+   "err": 7.81,
+   "presence": 1.126,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.503,
+   "presence": 1.088
+  },
+  "run_x": {
+   "pitch": 5.003,
+   "resid": 0.1166
+  },
+  "run_y": {
+   "pitch": 5.993,
+   "resid": 0.1271
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.504 / 5.908, 정사각 훑기 다름 5.503"
+ },
+ "CD-01f/win-cmd-common": {
+  "exp": 5.628,
+  "gm_x": {
+   "pitch": 5.842,
+   "phase": 0.73,
+   "err": 5.0,
+   "presence": 1.158,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.83,
+   "phase": 4.01,
+   "err": 6.31,
+   "presence": 1.139,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.841,
+   "presence": 1.133
+  },
+  "run_x": {
+   "pitch": 5.001,
+   "resid": 0.1019
+  },
+  "run_y": {
+   "pitch": 5.001,
+   "resid": 0.0915
+  },
+  "reliable": true,
+  "why": "ok"
+ },
+ "CD-01f/win-cmd-rare": {
+  "exp": 5.628,
+  "gm_x": {
+   "pitch": 5.842,
+   "phase": 0.73,
+   "err": 5.32,
+   "presence": 1.162,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.861,
+   "phase": 5.01,
+   "err": 6.49,
+   "presence": 1.142,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.841,
+   "presence": 1.15
+  },
+  "run_x": {
+   "pitch": 5.001,
+   "resid": 0.1075
+  },
+  "run_y": {
+   "pitch": 5.001,
+   "resid": 0.0961
+  },
+  "reliable": true,
+  "why": "ok"
+ },
+ "CD-01f/win-cmd-gold": {
+  "exp": 5.628,
+  "gm_x": {
+   "pitch": 5.842,
+   "phase": 0.73,
+   "err": 5.02,
+   "presence": 1.229,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.857,
+   "phase": 5.12,
+   "err": 5.85,
+   "presence": 1.242,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.841,
+   "presence": 1.247
+  },
+  "run_x": {
+   "pitch": 4.221,
+   "resid": 0.1067
+  },
+  "run_y": {
+   "pitch": 5.001,
+   "resid": 0.0977
+  },
+  "reliable": true,
+  "why": "ok"
+ },
+ "CD-06/part-common": {
+  "exp": 5.698,
+  "gm_x": {
+   "pitch": 5.596,
+   "phase": 0.23,
+   "err": 6.42,
+   "presence": 1.057,
+   "how": "from-other"
+  },
+  "gm_y": {
+   "pitch": 5.687,
+   "phase": 5.21,
+   "err": 7.25,
+   "presence": 1.085,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.694,
+   "presence": 1.096
+  },
+  "run_x": {
+   "pitch": 4.334,
+   "resid": 0.1258
+  },
+  "run_y": {
+   "pitch": 4.274,
+   "resid": 0.1157
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음"
+ },
+ "CD-06/part-rare": {
+  "exp": 5.715,
+  "gm_x": {
+   "pitch": 4.531,
+   "phase": 2.27,
+   "err": 6.43,
+   "presence": 1.112,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.658,
+   "phase": 1.06,
+   "err": 8.88,
+   "presence": 1.064,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.546,
+   "presence": 1.062
+  },
+  "run_x": {
+   "pitch": 4.336,
+   "resid": 0.1166
+  },
+  "run_y": {
+   "pitch": 4.286,
+   "resid": 0.1097
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.531 / 5.658, 정사각 훑기 다름 4.546"
+ },
+ "CD-06/part-gold": {
+  "exp": 5.717,
+  "gm_x": {
+   "pitch": 6.428,
+   "phase": 1.47,
+   "err": 9.28,
+   "presence": 1.109,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 6.345,
+   "phase": 0.66,
+   "err": 10.57,
+   "presence": 1.065,
+   "how": "from-other"
+  },
+  "square": {
+   "pitch": 4.328,
+   "presence": 1.045
+  },
+  "run_x": {
+   "pitch": 4.288,
+   "resid": 0.1213
+  },
+  "run_y": {
+   "pitch": 4.288,
+   "resid": 0.1197
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 정사각 훑기 다름 4.328"
+ },
+ "CD-06/win-part-common": {
+  "exp": 5.698,
+  "gm_x": {
+   "pitch": 4.936,
+   "phase": 0.93,
+   "err": 4.55,
+   "presence": 1.099,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.182,
+   "phase": 4.86,
+   "err": 6.25,
+   "presence": 1.141,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.014,
+   "presence": 1.083
+  },
+  "run_x": {
+   "pitch": 4.274,
+   "resid": 0.0949
+  },
+  "run_y": {
+   "pitch": 5.994,
+   "resid": 0.1282
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.936 / 5.182"
+ },
+ "CD-06/win-part-rare": {
+  "exp": 5.698,
+  "gm_x": {
+   "pitch": 6.882,
+   "phase": 0.43,
+   "err": 8.26,
+   "presence": 1.016,
+   "how": "from-other"
+  },
+  "gm_y": {
+   "pitch": 7.111,
+   "phase": 5.78,
+   "err": 8.94,
+   "presence": 1.111,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 7.134,
+   "presence": 1.088
+  },
+  "run_x": {
+   "pitch": 4.274,
+   "resid": 0.0978
+  },
+  "run_y": {
+   "pitch": 4.274,
+   "resid": 0.1241
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 두 축 다름 6.882 / 7.111"
+ },
+ "CD-06/win-part-gold": {
+  "exp": 5.698,
+  "gm_x": {
+   "pitch": 5.246,
+   "phase": 0.55,
+   "err": 6.23,
+   "presence": 1.083,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.39,
+   "phase": 0.55,
+   "err": 6.42,
+   "presence": 1.109,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.194,
+   "presence": 1.073
+  },
+  "run_x": {
+   "pitch": 4.274,
+   "resid": 0.0971
+  },
+  "run_y": {
+   "pitch": 4.274,
+   "resid": 0.1194
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.246 / 4.39, 정사각 훑기 다름 5.194"
+ },
+ "CD-07/svc": {
+  "exp": 8.157,
+  "gm_x": {
+   "pitch": 6.767,
+   "phase": 1.27,
+   "err": 3.16,
+   "presence": 1.126,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 7.098,
+   "phase": 0.44,
+   "err": 4.41,
+   "presence": 1.345,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 6.978,
+   "presence": 1.134
+  },
+  "run_x": {
+   "pitch": 6.998,
+   "resid": 0.0885
+  },
+  "run_y": {
+   "pitch": 6.998,
+   "resid": 0.0981
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.767 / 7.098"
+ },
+ "CD-07/win-svc": {
+  "exp": 8.157,
+  "gm_x": {
+   "pitch": 6.254,
+   "phase": 5.86,
+   "err": 3.44,
+   "presence": 1.313,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 9.31,
+   "phase": 0.78,
+   "err": 5.84,
+   "presence": 1.212,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 6.158,
+   "presence": 1.147
+  },
+  "run_x": {
+   "pitch": 6.118,
+   "resid": 0.0885
+  },
+  "run_y": {
+   "pitch": 6.998,
+   "resid": 0.1008
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.254 / 9.31, 정사각 훑기 다름 6.158"
+ },
+ "CD-08/crew-common": {
+  "exp": 5.498,
+  "gm_x": {
+   "pitch": 5.725,
+   "phase": 1.07,
+   "err": 6.72,
+   "presence": 1.063,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.573,
+   "phase": 1.43,
+   "err": 6.78,
+   "presence": 1.117,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.623,
+   "presence": 1.098
+  },
+  "run_x": {
+   "pitch": 4.123,
+   "resid": 0.1053
+  },
+  "run_y": {
+   "pitch": 4.123,
+   "resid": 0.1215
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.725 / 4.573, 정사각 훑기 다름 4.623"
+ },
+ "CD-08/crew-rare": {
+  "exp": 5.468,
+  "gm_x": {
+   "pitch": 5.621,
+   "phase": 5.27,
+   "err": 7.7,
+   "presence": 1.069,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.601,
+   "phase": 0.29,
+   "err": 7.92,
+   "presence": 1.084,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.601,
+   "presence": 1.07
+  },
+  "run_x": {
+   "pitch": 4.101,
+   "resid": 0.1101
+  },
+  "run_y": {
+   "pitch": 4.101,
+   "resid": 0.1104
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.621 / 4.601, 정사각 훑기 다름 4.601"
+ },
+ "CD-08/crew-gold": {
+  "exp": 5.462,
+  "gm_x": {
+   "pitch": 5.001,
+   "phase": 0.52,
+   "err": 7.45,
+   "presence": 1.108,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.782,
+   "phase": 4.08,
+   "err": 9.07,
+   "presence": 1.044,
+   "how": "from-other"
+  },
+  "square": {
+   "pitch": 6.357,
+   "presence": 1.068
+  },
+  "run_x": {
+   "pitch": 4.997,
+   "resid": 0.112
+  },
+  "run_y": {
+   "pitch": 4.097,
+   "resid": 0.1051
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 두 축 다름 5.001 / 4.782, 정사각 훑기 다름 6.357"
+ },
+ "CD-08/win-crew-common": {
+  "exp": 5.498,
+  "gm_x": {
+   "pitch": 5.557,
+   "phase": 0.58,
+   "err": 4.62,
+   "presence": 1.249,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.063,
+   "phase": 0.53,
+   "err": 6.87,
+   "presence": 1.312,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.063,
+   "presence": 1.143
+  },
+  "run_x": {
+   "pitch": 5.993,
+   "resid": 0.1096
+  },
+  "run_y": {
+   "pitch": 5.003,
+   "resid": 0.0968
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.557 / 5.063, 정사각 훑기 다름 5.063"
+ },
+ "CD-08/win-crew-rare": {
+  "exp": 5.498,
+  "gm_x": {
+   "pitch": 5.735,
+   "phase": 0.36,
+   "err": 6.12,
+   "presence": 1.072,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.911,
+   "phase": 0.0,
+   "err": 8.26,
+   "presence": 1.138,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.763,
+   "presence": 1.072
+  },
+  "run_x": {
+   "pitch": 5.003,
+   "resid": 0.1076
+  },
+  "run_y": {
+   "pitch": 4.993,
+   "resid": 0.0919
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.735 / 4.911, 정사각 훑기 다름 4.763"
+ },
+ "CD-08/win-crew-gold": {
+  "exp": 5.498,
+  "gm_x": {
+   "pitch": 4.78,
+   "phase": 0.6,
+   "err": 6.53,
+   "presence": 1.06,
+   "how": "from-other"
+  },
+  "gm_y": {
+   "pitch": 4.858,
+   "phase": 4.15,
+   "err": 9.17,
+   "presence": 1.114,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.143,
+   "presence": 1.05
+  },
+  "run_x": {
+   "pitch": 5.003,
+   "resid": 0.1071
+  },
+  "run_y": {
+   "pitch": 5.003,
+   "resid": 0.0987
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 정사각 훑기 다름 4.143"
+ },
+ "CD-09/set-common": {
+  "exp": 6.201,
+  "gm_x": {
+   "pitch": 5.961,
+   "phase": 1.12,
+   "err": 4.8,
+   "presence": 1.09,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 6.125,
+   "phase": 0.38,
+   "err": 7.06,
+   "presence": 1.12,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 6.131,
+   "presence": 1.071
+  },
+  "run_x": {
+   "pitch": 4.651,
+   "resid": 0.1204
+  },
+  "run_y": {
+   "pitch": 4.651,
+   "resid": 0.1179
+  },
+  "reliable": true,
+  "why": "ok"
+ },
+ "CD-09/set-rare": {
+  "exp": 6.122,
+  "gm_x": {
+   "pitch": 6.491,
+   "phase": 6.09,
+   "err": 6.01,
+   "presence": 1.098,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.737,
+   "phase": 0.48,
+   "err": 7.84,
+   "presence": 1.077,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 6.391,
+   "presence": 1.071
+  },
+  "run_x": {
+   "pitch": 4.591,
+   "resid": 0.113
+  },
+  "run_y": {
+   "pitch": 4.591,
+   "resid": 0.1248
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.491 / 5.737, 정사각 훑기 다름 6.391"
+ },
+ "CD-09/win-set-common": {
+  "exp": 6.201,
+  "gm_x": {
+   "pitch": 4.703,
+   "phase": 4.41,
+   "err": 1.53,
+   "presence": 1.128,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 6.045,
+   "phase": 5.67,
+   "err": 5.59,
+   "presence": 1.178,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 7.151,
+   "presence": 1.164
+  },
+  "run_x": {
+   "pitch": 7.001,
+   "resid": 0.1254
+  },
+  "run_y": {
+   "pitch": 5.001,
+   "resid": 0.1023
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.703 / 6.045, 정사각 훑기 다름 7.151"
+ },
+ "CD-09/win-set-rare": {
+  "exp": 6.201,
+  "gm_x": {
+   "pitch": 7.299,
+   "phase": 6.99,
+   "err": 3.57,
+   "presence": 1.196,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 6.954,
+   "phase": 0.43,
+   "err": 6.84,
+   "presence": 1.271,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.671,
+   "presence": 1.162
+  },
+  "run_x": {
+   "pitch": 7.001,
+   "resid": 0.1155
+  },
+  "run_y": {
+   "pitch": 5.501,
+   "resid": 0.0973
+  },
+  "reliable": false,
+  "why": "두 축 다름 7.299 / 6.954, 정사각 훑기 다름 5.671"
+ },
+ "CD-10/card-slot": {
+  "exp": 5.074,
+  "gm_x": {
+   "pitch": 6.358,
+   "phase": 0.4,
+   "err": 2.83,
+   "presence": 1.185,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.971,
+   "phase": 5.35,
+   "err": 2.23,
+   "presence": 1.195,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 5.865,
+   "presence": 1.161
+  },
+  "run_x": {
+   "pitch": 5.995,
+   "resid": 0.1237
+  },
+  "run_y": {
+   "pitch": 3.995,
+   "resid": 0.114
+  },
+  "reliable": false,
+  "why": "두 축 다름 6.358 / 5.971, 정사각 훑기 다름 5.865"
+ },
+ "CD-10/card-slot-sel": {
+  "exp": 5.079,
+  "gm_x": {
+   "pitch": 4.345,
+   "phase": 0.81,
+   "err": 2.48,
+   "presence": 1.226,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.21,
+   "phase": 0.43,
+   "err": 2.41,
+   "presence": 1.215,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.349,
+   "presence": 1.124
+  },
+  "run_x": {
+   "pitch": 3.999,
+   "resid": 0.1053
+  },
+  "run_y": {
+   "pitch": 4.999,
+   "resid": 0.1147
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.345 / 5.21, 정사각 훑기 다름 4.349"
+ },
+ "CD-10/hand-choice-up": {
+  "exp": 5.146,
+  "gm_x": {
+   "pitch": 5.248,
+   "phase": 1.97,
+   "err": 2.44,
+   "presence": 1.239,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.416,
+   "phase": 0.34,
+   "err": 6.55,
+   "presence": 1.15,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.419,
+   "presence": 1.225
+  },
+  "run_x": {
+   "pitch": 4.499,
+   "resid": 0.1175
+  },
+  "run_y": {
+   "pitch": 3.859,
+   "resid": 0.0903
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.248 / 5.416, 정사각 훑기 다름 4.419"
+ },
+ "CD-10/hand-choice-up-rare": {
+  "exp": 5.146,
+  "gm_x": {
+   "pitch": 4.769,
+   "phase": 2.68,
+   "err": 2.45,
+   "presence": 1.103,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.423,
+   "phase": 0.34,
+   "err": 5.91,
+   "presence": 1.184,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.419,
+   "presence": 1.21
+  },
+  "run_x": {
+   "pitch": 4.999,
+   "resid": 0.1122
+  },
+  "run_y": {
+   "pitch": 4.999,
+   "resid": 0.123
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.769 / 5.423, 정사각 훑기 다름 4.419"
+ },
+ "CD-10/hand-choice-up-gold": {
+  "exp": 5.188,
+  "gm_x": {
+   "pitch": 5.328,
+   "phase": 2.0,
+   "err": 3.18,
+   "presence": 1.19,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 5.283,
+   "phase": 0.99,
+   "err": 6.29,
+   "presence": 1.23,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.351,
+   "presence": 1.262
+  },
+  "run_x": {
+   "pitch": 5.001,
+   "resid": 0.1079
+  },
+  "run_y": {
+   "pitch": 6.001,
+   "resid": 0.144
+  },
+  "reliable": false,
+  "why": "정사각 훑기 다름 4.351"
+ },
+ "CD-10/hand-choice-sel": {
+  "exp": 4.951,
+  "gm_x": {
+   "pitch": 5.326,
+   "phase": 1.89,
+   "err": 2.81,
+   "presence": 1.221,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.046,
+   "phase": 1.26,
+   "err": 5.91,
+   "presence": 1.296,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.034,
+   "presence": 1.305
+  },
+  "run_x": {
+   "pitch": 3.714,
+   "resid": 0.1476
+  },
+  "run_y": {
+   "pitch": 3.714,
+   "resid": 0.1705
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.326 / 4.046, 정사각 훑기 다름 4.034"
+ },
+ "CD-10/hand-choice-down": {
+  "exp": 5.083,
+  "gm_x": {
+   "pitch": 4.78,
+   "phase": 2.69,
+   "err": 2.06,
+   "presence": 1.143,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 6.223,
+   "phase": 5.83,
+   "err": 6.46,
+   "presence": 1.16,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 6.233,
+   "presence": 1.169
+  },
+  "run_x": {
+   "pitch": 5.002,
+   "resid": 0.0944
+  },
+  "run_y": {
+   "pitch": 5.992,
+   "resid": 0.1226
+  },
+  "reliable": false,
+  "why": "두 축 다름 4.78 / 6.223, 정사각 훑기 다름 6.233"
+ },
+ "CD-10/hand-choice-off": {
+  "exp": 5.306,
+  "gm_x": {
+   "pitch": 5.413,
+   "phase": 2.82,
+   "err": 1.97,
+   "presence": 1.199,
+   "how": "presence-max"
+  },
+  "gm_y": {
+   "pitch": 4.734,
+   "phase": 0.59,
+   "err": 3.63,
+   "presence": 1.336,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 4.759,
+   "presence": 1.228
+  },
+  "run_x": {
+   "pitch": 4.499,
+   "resid": 0.0976
+  },
+  "run_y": {
+   "pitch": 4.999,
+   "resid": 0.0653
+  },
+  "reliable": false,
+  "why": "두 축 다름 5.413 / 4.734, 정사각 훑기 다름 4.759"
+ },
+ "CD-11/fx": {
+  "exp": 2.57,
+  "gm_x": {
+   "pitch": 3.284,
+   "phase": 0.62,
+   "err": 0.92,
+   "presence": 1.051,
+   "how": "from-other"
+  },
+  "gm_y": {
+   "pitch": 3.421,
+   "phase": 0.0,
+   "err": 0.86,
+   "presence": 1.068,
+   "how": "presence-max"
+  },
+  "square": {
+   "pitch": 3.247,
+   "presence": 1.047
+  },
+  "run_x": {
+   "pitch": 2.997,
+   "resid": 0.0598
+  },
+  "run_y": {
+   "pitch": 2.997,
+   "resid": 0.036
+  },
+  "reliable": false,
+  "why": "한 축 격자 없음, 두 축 다름 3.284 / 3.421, 정사각 훑기 다름 3.247"
+ }
+}

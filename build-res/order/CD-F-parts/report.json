@@ -1,15 +1,26 @@
 {
  "cards": {
   "cmd-common": {
-   "pitch": [
+   "pitch": 5.6125,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.612,
     5.644
    ],
-   "aspect": 0.994,
+   "landmark_aspect": 0.994,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    0
+   ],
+   "rest": [
+    0.0,
+    0.66
+   ],
+   "cut": {},
    "fix": [
-    "창 속 빛 · 불티 지움 273칸 · 창 둘레 빈 칸 먹 6칸",
-    "명판 글 칸 넓힘(볼트 → 종이) (26,20)–(67,28) → #E8E0CC",
-    "설명지 얼룩 다시 칠함 7칸"
+    "창 속 빛 · 불티 지움 281칸 · 창 둘레 빈 칸 먹 2칸",
+    "명판 글 칸 넓힘(볼트 → 종이) (26,20)–(67,28) → #E8E0CC"
    ],
    "layout": {
     "win": {
@@ -63,15 +74,31 @@
    }
   },
   "cmd-rare": {
-   "pitch": [
+   "pitch": 5.575,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.575,
     5.636
    ],
-   "aspect": 0.989,
+   "landmark_aspect": 0.989,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    1
+   ],
+   "rest": [
+    0.0,
+    0.28
+   ],
+   "cut": {
+    "y": [
+     49
+    ]
+   },
    "fix": [
-    "창 속 빛 · 불티 지움 264칸 · 창 둘레 빈 칸 먹 0칸",
+    "창 속 빛 · 불티 지움 394칸 · 창 둘레 빈 칸 먹 0칸",
     "명판 글 칸 넓힘(볼트 → 종이) (27,20)–(67,28) → #E8E0CC",
-    "설명지 얼룩 다시 칠함 5칸"
+    "설명지 얼룩 다시 칠함 4칸"
    ],
    "layout": {
     "win": {
@@ -85,7 +112,7 @@
       10,
       33,
       73,
-      67
+      68
      ],
      "max_off": 4,
      "ok": false
@@ -125,13 +152,25 @@
    }
   },
   "cmd-gold": {
-   "pitch": [
+   "pitch": 5.6525,
+   "how": "uniform/fit-height",
+   "landmark": [
     5.662,
     5.653
    ],
-   "aspect": 1.002,
+   "landmark_aspect": 1.002,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    0
+   ],
+   "rest": [
+    0.14,
+    0.0
+   ],
+   "cut": {},
    "fix": [
-    "창 속 빛 · 불티 지움 263칸 · 창 둘레 빈 칸 먹 4칸",
+    "창 속 빛 · 불티 지움 252칸 · 창 둘레 빈 칸 먹 4칸",
     "명판 글 칸 넓힘(볼트 → 종이) (27,20)–(67,28) → #E8E0CC",
     "설명지 얼룩 다시 칠함 4칸"
    ],
@@ -187,14 +226,33 @@
    }
   },
   "part-common": {
-   "pitch": [
+   "pitch": 5.6,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.6,
     5.797
    ],
-   "aspect": 0.966,
+   "landmark_aspect": 0.966,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    4
+   ],
+   "rest": [
+    0.0,
+    0.14
+   ],
+   "cut": {
+    "y": [
+     27,
+     36,
+     85,
+     92
+    ]
+   },
    "fix": [
     "명판 글 칸 한 색 (17,51)–(70,59) → #F4F1EA",
-    "설명지 얼룩 다시 칠함 11칸"
+    "설명지 얼룩 다시 칠함 7칸"
    ],
    "layout": {
     "win": {
@@ -248,14 +306,30 @@
    }
   },
   "part-rare": {
-   "pitch": [
+   "pitch": 5.675,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.675,
     5.754
    ],
-   "aspect": 0.986,
+   "landmark_aspect": 0.986,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    1
+   ],
+   "rest": [
+    0.0,
+    0.65
+   ],
+   "cut": {
+    "y": [
+     97
+    ]
+   },
    "fix": [
-    "명판 글 칸 한 색 (17,51)–(70,59) → #F4F1EA",
-    "설명지 얼룩 다시 칠함 15칸"
+    "명판 글 칸 한 색 (17,52)–(70,60) → #F4F1EA",
+    "설명지 얼룩 다시 칠함 21칸"
    ],
    "layout": {
     "win": {
@@ -269,7 +343,7 @@
       27,
       16,
       64,
-      43
+      44
      ],
      "max_off": 11,
      "ok": false
@@ -283,11 +357,11 @@
      ],
      "got": [
       17,
-      51,
+      52,
       70,
-      59
+      60
      ],
-     "max_off": 5,
+     "max_off": 6,
      "ok": false
     },
     "desc": {
@@ -299,25 +373,43 @@
      ],
      "got": [
       18,
-      71,
+      72,
       70,
       111
      ],
-     "max_off": 4,
+     "max_off": 5,
      "ok": false
     }
    }
   },
   "part-gold": {
-   "pitch": [
+   "pitch": 5.6375,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.638,
     5.797
    ],
-   "aspect": 0.973,
+   "landmark_aspect": 0.973,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    3
+   ],
+   "rest": [
+    0.0,
+    0.33
+   ],
+   "cut": {
+    "y": [
+     27,
+     108,
+     110
+    ]
+   },
    "fix": [
     "명판 글 칸 한 색 (17,51)–(70,59) → #F4F1EA",
-    "금 인장 2줄 내림(설명지 밖으로) · 비운 칸 종이/먹 167칸",
-    "설명지 얼룩 다시 칠함 10칸"
+    "금 인장 2줄 내림(설명지 밖으로) · 비운 칸 종이/먹 169칸",
+    "설명지 얼룩 다시 칠함 11칸"
    ],
    "layout": {
     "win": {
@@ -361,24 +453,41 @@
      ],
      "got": [
       18,
-      71,
+      72,
       70,
       111
      ],
-     "max_off": 4,
+     "max_off": 5,
      "ok": false
     }
    }
   },
   "svc": {
-   "pitch": [
+   "pitch": 8.0763,
+   "how": "uniform/fit-height",
+   "landmark": [
     8.238,
     8.076
    ],
-   "aspect": 1.02,
+   "landmark_aspect": 1.02,
+   "aspect": 1.0,
+   "extra": [
+    1,
+    0
+   ],
+   "rest": [
+    0.6,
+    0.0
+   ],
+   "cut": {
+    "x": [
+     51
+    ]
+   },
    "fix": [
     "꼬리표 글 칸 한 색 (20,49)–(70,56) → #E8E0CC",
-    "설명지 얼룩 다시 칠함 1칸"
+    "설명지 얼룩 다시 칠함 8칸",
+    "쇠 칸 다시 칠함 → ivory 2884칸 (D-586)"
    ],
    "layout": {
     "win": {
@@ -432,13 +541,40 @@
    }
   },
   "crew-common": {
-   "pitch": [
+   "pitch": 5.25,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.25,
     5.746
    ],
-   "aspect": 0.914,
+   "landmark_aspect": 0.914,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    11
+   ],
+   "rest": [
+    0.0,
+    0.14
+   ],
+   "cut": {
+    "y": [
+     27,
+     28,
+     30,
+     31,
+     32,
+     33,
+     34,
+     35,
+     36,
+     122,
+     125
+    ]
+   },
    "fix": [
-    "사슬 명찰 글 칸 넓힘(볼트 → 종이) (12,56)–(72,63) → #F4F1EA"
+    "사슬 명찰 글 칸 넓힘(볼트 → 종이) (12,52)–(72,59) → #F4F1EA",
+    "설명지 얼룩 다시 칠함 2칸"
    ],
    "layout": {
     "win": {
@@ -450,9 +586,9 @@
      ],
      "got": [
       13,
-      16,
+      17,
       71,
-      46
+      41
      ],
      "max_off": 9,
      "ok": false
@@ -466,11 +602,11 @@
      ],
      "got": [
       12,
-      56,
+      52,
       72,
-      63
+      59
      ],
-     "max_off": 10,
+     "max_off": 6,
      "ok": false
     },
     "desc": {
@@ -498,11 +634,11 @@
      ],
      "got": [
       5,
-      35,
+      30,
       18,
-      48
+      43
      ],
-     "max_off": 8,
+     "max_off": 3,
      "ok": false
     },
     "hp": {
@@ -514,23 +650,50 @@
      ],
      "got": [
       66,
-      35,
+      30,
       79,
-      48
+      43
      ],
-     "max_off": 8,
+     "max_off": 4,
      "ok": false
     }
    }
   },
   "crew-rare": {
-   "pitch": [
+   "pitch": 5.225,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.225,
     5.712
    ],
-   "aspect": 0.915,
+   "landmark_aspect": 0.915,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    11
+   ],
+   "rest": [
+    0.0,
+    -0.0
+   ],
+   "cut": {
+    "y": [
+     21,
+     22,
+     27,
+     28,
+     29,
+     30,
+     31,
+     32,
+     45,
+     124,
+     125
+    ]
+   },
    "fix": [
-    "사슬 명찰 글 칸 넓힘(볼트 → 종이) (12,56)–(72,63) → #F4F1EA"
+    "사슬 명찰 글 칸 넓힘(볼트 → 종이) (12,52)–(72,59) → #F4F1EA",
+    "설명지 얼룩 다시 칠함 3칸"
    ],
    "layout": {
     "win": {
@@ -544,7 +707,7 @@
       12,
       16,
       71,
-      46
+      41
      ],
      "max_off": 10,
      "ok": false
@@ -558,11 +721,11 @@
      ],
      "got": [
       12,
-      56,
+      52,
       72,
-      63
+      59
      ],
-     "max_off": 10,
+     "max_off": 6,
      "ok": false
     },
     "desc": {
@@ -590,11 +753,11 @@
      ],
      "got": [
       5,
-      35,
+      30,
       18,
-      48
+      43
      ],
-     "max_off": 8,
+     "max_off": 3,
      "ok": false
     },
     "hp": {
@@ -606,25 +769,51 @@
      ],
      "got": [
       66,
-      35,
+      30,
       79,
-      48
+      43
      ],
-     "max_off": 8,
+     "max_off": 4,
      "ok": false
     }
    }
   },
   "crew-gold": {
-   "pitch": [
+   "pitch": 5.2125,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.213,
     5.712
    ],
-   "aspect": 0.913,
+   "landmark_aspect": 0.913,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    11
+   ],
+   "rest": [
+    0.0,
+    0.3
+   ],
+   "cut": {
+    "y": [
+     21,
+     24,
+     27,
+     28,
+     30,
+     31,
+     32,
+     33,
+     35,
+     122,
+     125
+    ]
+   },
    "fix": [
-    "사슬 명찰 글 칸 넓힘(볼트 → 종이) (12,56)–(72,63) → #F4F1EA",
-    "금 인장 5줄 내림(설명지 밖으로) · 비운 칸 종이/먹 152칸",
-    "설명지 얼룩 다시 칠함 4칸"
+    "사슬 명찰 글 칸 넓힘(볼트 → 종이) (12,51)–(72,58) → #F4F1EA",
+    "금 인장 5줄 내림(설명지 밖으로) · 비운 칸 종이/먹 155칸",
+    "설명지 얼룩 다시 칠함 5칸"
    ],
    "layout": {
     "win": {
@@ -638,7 +827,7 @@
       12,
       16,
       71,
-      46
+      41
      ],
      "max_off": 10,
      "ok": false
@@ -652,11 +841,11 @@
      ],
      "got": [
       12,
-      56,
+      51,
       72,
-      63
+      58
      ],
-     "max_off": 10,
+     "max_off": 5,
      "ok": false
     },
     "desc": {
@@ -684,11 +873,11 @@
      ],
      "got": [
       5,
-      35,
+      30,
       18,
-      48
+      43
      ],
-     "max_off": 8,
+     "max_off": 3,
      "ok": false
     },
     "hp": {
@@ -700,24 +889,40 @@
      ],
      "got": [
       66,
-      35,
+      30,
       79,
-      48
+      43
      ],
-     "max_off": 8,
+     "max_off": 4,
      "ok": false
     }
    }
   },
   "set-common": {
-   "pitch": [
+   "pitch": 6.1525,
+   "how": "uniform/fit-height",
+   "landmark": [
     6.25,
     6.153
    ],
-   "aspect": 1.016,
+   "landmark_aspect": 1.016,
+   "aspect": 1.0,
+   "extra": [
+    1,
+    0
+   ],
+   "rest": [
+    0.27,
+    0.0
+   ],
+   "cut": {
+    "x": [
+     30
+    ]
+   },
    "fix": [
     "출하 딱지 글 칸 넓힘(접힌 끝 → 종이) (15,50)–(69,57) → #F4F1EA",
-    "설명지 얼룩 다시 칠함 21칸"
+    "설명지 얼룩 다시 칠함 28칸"
    ],
    "layout": {
     "win": {
@@ -771,14 +976,26 @@
    }
   },
   "set-rare": {
-   "pitch": [
+   "pitch": 6.1186,
+   "how": "uniform/fit-height",
+   "landmark": [
     6.125,
     6.119
    ],
-   "aspect": 1.001,
+   "landmark_aspect": 1.001,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    0
+   ],
+   "rest": [
+    0.08,
+    0.0
+   ],
+   "cut": {},
    "fix": [
     "출하 딱지 글 칸 넓힘(접힌 끝 → 종이) (15,50)–(69,57) → #F4F1EA",
-    "설명지 얼룩 다시 칠함 15칸"
+    "설명지 얼룩 다시 칠함 14칸"
    ],
    "layout": {
     "win": {
@@ -834,8 +1051,10 @@
  },
  "scenes": {
   "win-cmd-common": {
+   "pitch": 5.836,
+   "how": "grid",
    "restored": [
-    70,
+    69,
     37
    ],
    "window": [
@@ -848,22 +1067,26 @@
    ]
   },
   "win-cmd-rare": {
+   "pitch": 5.852,
+   "how": "grid",
    "restored": [
-    70,
-    38
+    69,
+    37
    ],
    "window": [
     63,
-    34
+    35
    ],
    "crop": [
     3,
-    4
+    2
    ]
   },
   "win-cmd-gold": {
+   "pitch": 5.85,
+   "how": "grid",
    "restored": [
-    70,
+    69,
     37
    ],
    "window": [
@@ -876,9 +1099,11 @@
    ]
   },
   "win-part-common": {
+   "pitch": 5.6,
+   "how": "uniform",
    "restored": [
     57,
-    32
+    34
    ],
    "window": [
     39,
@@ -886,27 +1111,31 @@
    ],
    "crop": [
     9,
-    5
+    7
    ]
   },
   "win-part-rare": {
+   "pitch": 5.6,
+   "how": "uniform",
    "restored": [
     57,
-    33
+    35
    ],
    "window": [
     37,
-    27
+    28
    ],
    "crop": [
     10,
-    6
+    7
    ]
   },
   "win-part-gold": {
+   "pitch": 5.6,
+   "how": "uniform",
    "restored": [
     57,
-    33
+    35
    ],
    "window": [
     38,
@@ -914,12 +1143,14 @@
    ],
    "crop": [
     9,
-    6
+    8
    ]
   },
   "win-svc": {
+   "pitch": 8.0763,
+   "how": "uniform",
    "restored": [
-    67,
+    69,
     35
    ],
    "window": [
@@ -927,55 +1158,63 @@
     29
    ],
    "crop": [
-    3,
+    4,
     6
    ]
   },
   "win-crew-common": {
+   "pitch": 5.25,
+   "how": "uniform",
    "restored": [
-    66,
-    33
+    67,
+    37
    ],
    "window": [
     58,
-    30
+    24
    ],
    "crop": [
     4,
-    3
+    13
    ]
   },
   "win-crew-rare": {
+   "pitch": 5.25,
+   "how": "uniform",
    "restored": [
     66,
-    33
+    37
    ],
    "window": [
     59,
-    30
+    25
    ],
    "crop": [
     3,
-    3
+    12
    ]
   },
   "win-crew-gold": {
+   "pitch": 5.25,
+   "how": "uniform",
    "restored": [
     66,
-    34
+    38
    ],
    "window": [
     59,
-    30
+    25
    ],
    "crop": [
     3,
-    4
+    13
    ]
   },
   "win-set-common": {
+   "pitch": 6.1525,
+   "how": "uniform",
    "restored": [
-    78,
+    79,
     33
    ],
    "window": [
@@ -988,9 +1227,11 @@
    ]
   },
   "win-set-rare": {
+   "pitch": 6.1525,
+   "how": "uniform",
    "restored": [
-    78,
-    33
+    79,
+    34
    ],
    "window": [
     66,
@@ -998,7 +1239,7 @@
    ],
    "crop": [
     6,
-    6
+    7
    ]
   }
  },
@@ -1012,10 +1253,23 @@
   ]
  },
  "fx": {
-  "pitch": [
+  "pitch": 2.5672,
+  "how": "uniform/fit-width",
+  "landmark": [
    2.567,
    2.572
   ],
+  "landmark_aspect": 0.998,
+  "aspect": 1.0,
+  "extra": [
+   0,
+   0
+  ],
+  "rest": [
+   0.0,
+   0.58
+  ],
+  "cut": {},
   "rare": {
    "pieces": 10,
    "frames": [
@@ -1069,60 +1323,218 @@
  },
  "chrome": {
   "card-slot": {
-   "pitch": [
+   "pitch": 4.7822,
+   "how": "uniform/fit-width",
+   "landmark": [
     4.782,
     5.366
    ],
-   "aspect": 0.891
+   "landmark_aspect": 0.891,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    16
+   ],
+   "rest": [
+    0.0,
+    0.35
+   ],
+   "cut": {
+    "y": [
+     20,
+     31,
+     38,
+     50,
+     61,
+     69,
+     70,
+     78,
+     84,
+     85,
+     93,
+     99,
+     111,
+     115,
+     118,
+     125
+    ]
+   }
   },
   "card-slot-sel": {
-   "pitch": [
+   "pitch": 4.7921,
+   "how": "uniform/fit-width",
+   "landmark": [
     4.792,
     5.366
    ],
-   "aspect": 0.893
+   "landmark_aspect": 0.893,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    16
+   ],
+   "rest": [
+    0.0,
+    0.04
+   ],
+   "cut": {
+    "y": [
+     21,
+     26,
+     38,
+     50,
+     60,
+     62,
+     74,
+     86,
+     100,
+     101,
+     102,
+     115,
+     122,
+     125,
+     126,
+     127
+    ]
+   }
   },
   "hand-choice-up": {
-   "pitch": [
+   "pitch": 5.0833,
+   "how": "uniform/fit-height",
+   "landmark": [
     5.208,
     5.083
    ],
-   "aspect": 1.025
+   "landmark_aspect": 1.025,
+   "aspect": 1.0,
+   "extra": [
+    1,
+    0
+   ],
+   "rest": [
+    0.77,
+    0.0
+   ],
+   "cut": {
+    "x": [
+     21
+    ]
+   }
   },
   "hand-choice-up-rare": {
-   "pitch": [
+   "pitch": 5.0833,
+   "how": "uniform/fit-height",
+   "landmark": [
     5.208,
     5.083
    ],
-   "aspect": 1.025
+   "landmark_aspect": 1.025,
+   "aspect": 1.0,
+   "extra": [
+    1,
+    0
+   ],
+   "rest": [
+    0.77,
+    0.0
+   ],
+   "cut": {
+    "x": [
+     20
+    ]
+   }
   },
   "hand-choice-up-gold": {
-   "pitch": [
+   "pitch": 5.1667,
+   "how": "uniform/fit-height",
+   "landmark": [
     5.208,
     5.167
    ],
-   "aspect": 1.008
+   "landmark_aspect": 1.008,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    0
+   ],
+   "rest": [
+    0.58,
+    0.0
+   ],
+   "cut": {}
   },
   "hand-choice-sel": {
-   "pitch": [
+   "pitch": 4.7083,
+   "how": "uniform/fit-height",
+   "landmark": [
     5.194,
     4.708
    ],
-   "aspect": 1.103
+   "landmark_aspect": 1.103,
+   "aspect": 1.0,
+   "extra": [
+    7,
+    0
+   ],
+   "rest": [
+    0.43,
+    0.0
+   ],
+   "cut": {
+    "x": [
+     21,
+     24,
+     28,
+     32,
+     43,
+     47,
+     49
+    ]
+   }
   },
   "hand-choice-down": {
-   "pitch": [
+   "pitch": 4.9583,
+   "how": "uniform/fit-height",
+   "landmark": [
     5.208,
     4.958
    ],
-   "aspect": 1.05
+   "landmark_aspect": 1.05,
+   "aspect": 1.0,
+   "extra": [
+    3,
+    0
+   ],
+   "rest": [
+    0.63,
+    0.0
+   ],
+   "cut": {
+    "x": [
+     21,
+     22,
+     33
+    ]
+   }
   },
   "hand-choice-off": {
-   "pitch": [
+   "pitch": 5.2361,
+   "how": "uniform/fit-width",
+   "landmark": [
     5.236,
     5.375
    ],
-   "aspect": 0.974
+   "landmark_aspect": 0.974,
+   "aspect": 1.0,
+   "extra": [
+    0,
+    0
+   ],
+   "rest": [
+    0.0,
+    0.64
+   ],
+   "cut": {}
   }
  }
 }

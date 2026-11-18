@@ -1,11 +1,12 @@
 """
-카드 F 가족 반입 (D-585 · 발주 29위 CD-01f · CD-06 ~ CD-11, D-583 · D-584).
+카드 F 가족 반입 (D-585 → D-586 정사각 칸 · 발주 29위 CD-01f · CD-06 ~ CD-11, D-583 · D-584).
 
-  python3 -I tools/pixel/card_f_import.py measure   → 시트마다 부품 상자 · 몸 상자 · 복원 오차 곡선(레시피 확인용)
+  python3 -I tools/pixel/card_f_import.py measure   → 부품마다 격자 실측 셋(gridmeasure · 정사각 훑기 · 경계 빗 맞춤) + 판정 → CD-F-parts/grid.json
   python3 -I tools/pixel/card_f_import.py build     → src/assets/ui/cards/* · chrome/v2/* 를 찍고 src/slice/card-f.css를 쓴다
   python3 -I tools/pixel/card_f_import.py sheet <out.png>  → 원본 · 결과 · 시안 대조판
 
-원본 → 도트(D-423): 레시피(card_f_recipe.py)의 px 상자를 발주 도트 상자에 맞춘 칸 간격으로 나눠 칸마다 가운데 최빈색(snap.snap).
+원본 → 도트(D-423 · D-586): 믿을 만한 단일 격자(R.GRID)가 있으면 그 간격 · 시작점, 없으면 균일 배율 하나로 정사각 칸을 만들어
+칸마다 가운데 최빈색(snap.snap) — 두 축 같은 간격이라 가로세로 비가 원본 그대로다. 발주 상자보다 남는 줄 · 열은 R.SPLICE 띠에서 잘라 낸다.
 평균 · 리샘플 없음. 마젠타 키(번짐 포함)는 투명, 나머지는 발주 33색으로 붙인다(map_palette).
 사내 손질(art-assets §7 — 지우기 · 다시 칠하기 · 자르기만): 그림 창 구멍 속에 그려 온 등급 빛 디더는 지운다(창 장면 겹이 같은 빛을 갖는다).
 """
@@ -36,20 +37,82 @@ def src(sheet):
     return Image.open(os.path.join(ORDER, f'{sheet}-source.png')).convert('RGB')
 
 
-def restore(img, box, dst, canvas):
-    """px 상자 box를 도트 상자 dst(캔버스 기준, 끝 제외)에 맞춘 칸 간격으로 나눠 칸마다 최빈색. 캔버스 밖 원본은 마젠타로 채워 읽는다."""
+def geom(box, dst, canvas, grid=None):
+    """원본 px 상자 box → 도트 상자 dst(캔버스 기준, 끝 제외). 칸 간격은 두 축 하나(정사각 도트 — 가로세로 비를 바꾸지 않는다, D-386 · D-586).
+    grid = 실측 격자(R.GRID — 믿을 만한 단일 간격이 있을 때)면 그 간격 · 시작점, 아니면 균일 배율 s = 두 축 표지 간격 가운데 작은 값
+    (= 더 길게 그려 온 축이 남는다 → 남는 칸은 splice로 균일한 줄 · 열을 잘라 낸다 — 늘리거나 줄이지 않는다).
+    반환: s · 원점(ox, oy: 캔버스 도트 0의 원본 px) · 키운 캔버스(W, H) · 남는 칸(ex, ey) · 표지 간격(px, py) · 남는 끝(rx, ry < 1도트, 캔버스 끝에서 잘림)"""
     x0, y0, x1, y1 = box
     dx0, dy0, dx1, dy1 = dst
     px, py = (x1 - x0) / (dx1 - dx0), (y1 - y0) / (dy1 - dy0)
-    ox, oy = x0 - dx0 * px, y0 - dy0 * py
+    if grid:
+        s, how = grid['pitch'], 'grid'
+    else:
+        s, how = min(px, py), ('uniform/fit-width' if px <= py else 'uniform/fit-height')
+    nx, ny = (x1 - x0) / s - (dx1 - dx0), (y1 - y0) / s - (dy1 - dy0)
+    ex, ey = max(0, int(np.floor(nx + 0.05))), max(0, int(np.floor(ny + 0.05)))
     W, H = canvas
-    pad = int(max(px, py) * 12) + 2
+    return {'s': round(s, 4), 'how': how, 'ox': x0 - dx0 * s, 'oy': y0 - dy0 * s, 'W': W + ex, 'H': H + ey, 'extra': (ex, ey),
+            'landmark': (round(px, 3), round(py, 3)), 'rest': (round(nx - ex, 2), round(ny - ey, 2)), 'dst': dst}
+
+
+def restore(img, g):
+    """정사각 칸(간격 g['s'])으로 나눠 칸마다 가운데 60% 최빈색(snap.snap — 평균 · 리샘플 없음). 캔버스 밖 원본은 마젠타로 채워 읽는다."""
+    s = g['s']
+    pad = int(s * 40) + 2
     big = Image.new('RGB', (img.width + 2 * pad, img.height + 2 * pad), KEY)
     big.paste(img, (pad, pad))
-    xs = [ox + pad + i * px for i in range(W + 1)]
-    ys = [oy + pad + j * py for j in range(H + 1)]
-    small = snap.snap(big.convert('RGBA'), px, 0, py, 0, colors=0, core=0.6, cuts=(xs, ys))
-    return small, (round(px, 3), round(py, 3))
+    xs = [g['ox'] + pad + i * s for i in range(g['W'] + 1)]
+    ys = [g['oy'] + pad + j * s for j in range(g['H'] + 1)]
+    return snap.snap(big.convert('RGBA'), s, 0, s, 0, colors=0, core=0.6, cuts=(xs, ys))
+
+
+def splice(img, axis, n, bands):
+    """자르기(D-586): 남는 n줄(axis 0) · n열(axis 1)을 bands [(시작, 끝, 최대 개수)] 안에서 앞 줄과 가장 같은 줄부터 하나씩 잘라 낸다
+    (균일한 테 · 종이 · 창 줄 — 그림을 늘리거나 줄이지 않고 같은 줄을 덜어 낸다). 반환 (그림, 잘라 낸 자리(키운 캔버스 기준))"""
+    a = np.asarray(img.convert('RGBA')).astype(int)
+    if axis == 1:
+        a = a.transpose(1, 0, 2)
+    keep = list(range(a.shape[0]))
+    used = [0] * len(bands)
+    removed = []
+    for _ in range(n):
+        best = None
+        for p in range(1, len(keep)):
+            k = keep[p]
+            bi = next((i for i, (lo, hi, cap) in enumerate(bands) if lo <= k < hi and used[i] < cap), None)
+            if bi is None:
+                continue
+            c = float(np.abs(a[k] - a[keep[p - 1]]).sum())
+            if best is None or c < best[0]:
+                best = (c, p, bi)
+        if best is None:
+            raise ValueError(f'splice: 자를 줄이 모자란다 ({n}개 중 {len(removed)}개)')
+        removed.append(keep.pop(best[1]))
+        used[best[2]] += 1
+    out = a[keep].astype(np.uint8)
+    if axis == 1:
+        out = out.transpose(1, 0, 2)
+    return Image.fromarray(np.ascontiguousarray(out), 'RGBA'), sorted(removed)
+
+
+def restore_fit(img, box, dst, canvas, name, grid=None):
+    """복원 → 남는 줄 · 열 자르기(레시피 R.SPLICE[name] 띠 — 없으면 남는 칸이 0이어야 한다). 반환 (그림, 기록)"""
+    g = geom(box, dst, canvas, grid)
+    small = key_and_palette(restore(img, g))
+    rec = {'pitch': g['s'], 'how': g['how'], 'landmark': g['landmark'], 'landmark_aspect': round(g['landmark'][0] / g['landmark'][1], 3),
+           'aspect': 1.0, 'extra': g['extra'], 'rest': g['rest'], 'cut': {}}
+    for axis, k in ((1, 0), (0, 1)):
+        n = g['extra'][k]
+        if not n:
+            continue
+        bands = R.SPLICE.get(name, {}).get('xy'[k])
+        if not bands:
+            raise ValueError(f'{name}: {"xy"[k]}축 {n}칸이 남는데 R.SPLICE 띠가 없다')
+        small, cut = splice(small, axis, n, bands)
+        rec['cut']['xy'[k]] = cut
+    assert small.size == tuple(canvas), (name, small.size, canvas)
+    return small, rec
 
 
 def key_and_palette(small):
@@ -69,26 +132,100 @@ def key_and_palette(small):
     return Image.fromarray(b, 'RGBA')
 
 
+# ---------------------------------------------------------------- 격자 실측 (D-586)
+
+def _runlen(a, axis, lo, hi, thr=60):
+    """경계 간격 빗 맞춤: 센 경계(1 ~ 2px 번짐은 하나로) 사이 간격들이 P의 정수배에 가장 가까운 P와 그 잔차(0 = 완전한 격자, 무작위 ≈ 0.12)"""
+    d = np.abs(np.diff(a, axis=axis)).sum(2)
+    lines = d if axis == 1 else d.T
+    gaps = []
+    for row in lines[::2]:
+        e = np.nonzero(row > thr)[0]
+        if len(e) < 2:
+            continue
+        grp = [e[0]]
+        for v in e[1:]:
+            if v - grp[-1] > 2:
+                grp.append(v)
+        gaps += [x for x in np.diff(grp) if lo * 0.8 <= x <= hi * 6]
+    g = np.array(gaps, float)
+    if len(g) < 20:
+        return None
+    best = None
+    for P in np.arange(lo, hi, 0.01):
+        k = np.maximum(1, np.round(g / P))
+        r = float(np.mean(np.minimum(np.abs(g / k - P) / P, 0.25)))
+        if best is None or r < best[0]:
+            best = (r, P)
+    return {'pitch': round(float(best[1]), 3), 'resid': round(best[0], 4)}
+
+
+def _square_scan(gray, lo, hi):
+    """정사각 격자 훑기: 간격 P마다 두 축 1차원 복원 오차의 합, 존재 = 이웃(±3 · ±6%) 오차 ÷ 제 오차 — 존재가 가장 높은 P"""
+    sx, sy = gray[::3], gray[:, ::3]
+    Ps = np.arange(lo, hi, 0.02)
+    S = np.array([gm._best_phase(sx, 1, P, 12)[0] + gm._best_phase(sy, 0, P, 12)[0] for P in Ps])
+    pres = np.array([np.mean([np.interp(P * f, Ps, S) for f in (0.94, 0.97, 1.03, 1.06)]) / S[i] for i, P in enumerate(Ps)])
+    i = int(pres.argmax())
+    return {'pitch': round(float(Ps[i]), 3), 'presence': round(float(pres[i]), 3)}
+
+
+def grid_of(img, box, exp):
+    """한 부품 상자의 격자 실측 셋: ① gridmeasure(간격 창 exp × 0.75 ~ 1.35, 마젠타 제외 · 다른 축 대체 포함)
+    ② 정사각 격자 훑기 ③ 경계 간격 빗 맞춤. 믿을 만한 단일 간격 = ① 두 축 모두 격자(존재 ≥ 1.06, 다른 축 대체 아님) · 3% 안에서 같음
+    + ② 같은 간격(3% 안) — 그때만 그 간격을 쓴다."""
+    lo, hi = exp * 0.75, exp * 1.35
+    m = gm.measure(img, box, lo=lo, hi=hi, prefer=exp, bg=KEY)
+    a = np.asarray(img.crop(box), float).copy()
+    a[np.abs(a - np.array(KEY, float)).sum(2) < 120] = 0
+    sq = _square_scan(a.mean(2), lo, hi)
+    r = {'exp': round(exp, 3)}
+    for k in 'xy':
+        r['gm_' + k] = {q: m[k][q] for q in ('pitch', 'phase', 'err', 'presence', 'how')}
+    r['square'] = sq
+    r['run_x'], r['run_y'] = _runlen(a, 1, lo, hi), _runlen(a, 0, lo, hi)
+    gx, gy = r['gm_x'], r['gm_y']
+    both = all(q['presence'] >= gm.PRESENCE_MIN and q['how'] != 'from-other' for q in (gx, gy))
+    P = (gx['pitch'] + gy['pitch']) / 2
+    agree = abs(gx['pitch'] - gy['pitch']) / P <= 0.03
+    sq_ok = abs(sq['pitch'] - P) / P <= 0.03
+    r['reliable'] = bool(both and agree and sq_ok)
+    r['why'] = 'ok' if r['reliable'] else ', '.join(w for w, bad in (
+        ('한 축 격자 없음', not both), (f"두 축 다름 {gx['pitch']} / {gy['pitch']}", not agree), (f"정사각 훑기 다름 {sq['pitch']}", not sq_ok)) if bad)
+    return r
+
+
 def measure():
-    """레시피 상자마다 칸 간격 · 가로세로 비 · 그 간격의 복원 오차와 이웃 간격 오차(격자가 있는지)"""
+    """레시피 부품마다 격자 실측(grid_of) → build-res/order/CD-F-parts/grid.json · 표. 같은 시트 자매 부품끼리도 같아야 믿는다(R.GRID에 옮긴다)."""
     rep = {}
     for sheet, parts in R.SHEETS.items():
         img = src(sheet)
         for p in parts:
             name, kind, box = p[0], p[1], p[2]
-            dst = _dst(p)
-            px, py = (box[2] - box[0]) / (dst[2] - dst[0]), (box[3] - box[1]) / (dst[3] - dst[1])
-            a = np.asarray(img.crop(box), float)
-            a[(np.abs(a - np.array(KEY, float)).sum(2) < 120)] = 0
-            g = a.mean(2)
-            row = {}
-            for k, axis, P in (('x', 1, px), ('y', 0, py)):
-                sub = g[::3] if axis == 1 else g[:, ::3]
-                errs = {round(f, 2): round(gm._best_phase(sub, axis, P * f, 16)[0], 2) for f in (0.9, 0.95, 1.0, 1.05, 1.1)}
-                row[k] = {'pitch': round(P, 3), 'err': errs}
-            row['aspect'] = round(px / py, 3)
-            rep[f'{sheet}/{name}'] = row
-            print(sheet, name, json.dumps(row, ensure_ascii=False))
+            d = _dst(p)
+            if d is None:
+                card = next(q for q in parts if q[1] == 'card')
+                cb = card[2]
+                exp = ((cb[2] - cb[0]) / 80 + (cb[3] - cb[1]) / 118) / 2
+            else:
+                exp = ((box[2] - box[0]) / (d[2] - d[0]) + (box[3] - box[1]) / (d[3] - d[1])) / 2
+            r = grid_of(img, box, exp)
+            rep[f'{sheet}/{name}'] = r
+            print(f"{sheet:7s} {name:22s} exp {r['exp']:6.3f} | gm x {r['gm_x']['pitch']:6.3f} ({r['gm_x']['presence']:.3f}{'*' if r['gm_x']['how'] == 'from-other' else ''})"
+                  f" y {r['gm_y']['pitch']:6.3f} ({r['gm_y']['presence']:.3f}{'*' if r['gm_y']['how'] == 'from-other' else ''}) | sq {r['square']['pitch']:6.3f} ({r['square']['presence']:.3f})"
+                  f" | run {r['run_x'] and r['run_x']['pitch']} / {r['run_y'] and r['run_y']['pitch']} | {'GRID' if r['reliable'] else 'none: ' + r['why']}", flush=True)
+    # 자매 점검: 같은 시트 · 같은 갈래(등급만 다른 부품 — 같은 생성기 배율)가 모두 격자이고 간격이 3% 안이어야 믿는다
+    fam = lambda k: k.rsplit('-', 1)[0] if k.split('-')[-1] in ('common', 'rare', 'gold', 'sel') else k
+    for k, r in rep.items():
+        sib = [q for q, v in rep.items() if q != k and fam(q) == fam(k)]
+        if r['reliable'] and sib:
+            P = (r['gm_x']['pitch'] + r['gm_y']['pitch']) / 2
+            bad = [q for q in sib if not rep[q]['reliable'] or abs((rep[q]['gm_x']['pitch'] + rep[q]['gm_y']['pitch']) / 2 - P) / P > 0.03]
+            if bad:
+                r['reliable'], r['why'] = False, '자매 부품 격자 없음/다름: ' + ', '.join(q.split('/')[1] for q in bad)
+    print('믿을 만한 단일 격자:', {k: (round((r['gm_x']['pitch'] + r['gm_y']['pitch']) / 2, 3), r['gm_x']['phase'], r['gm_y']['phase']) for k, r in rep.items() if r['reliable']})
+    os.makedirs(PARTS, exist_ok=True)
+    json.dump(rep, open(os.path.join(PARTS, 'grid.json'), 'w'), ensure_ascii=False, indent=1)
     return rep
 
 
@@ -102,19 +239,13 @@ def _dst(p):
         return R.STRIP_BODY
     if kind == 'fx':
         return (0, 0) + p[3]
-    # 창 장면: 카드와 같은 시트 간격(같은 시트 일반 카드)으로 — 크기는 상자에서
     return None
 
 
-def sheet_pitch(sheet):
-    """시트의 카드 칸 간격(첫 카드 몸) — 창 장면 겹을 같은 간격으로 뽑는다"""
-    for p in R.SHEETS[sheet]:
-        if p[1] == 'card':
-            b = p[2]
-            return (b[2] - b[0]) / (R.BODY[2] - R.BODY[0]), (b[3] - b[1]) / (R.BODY[3] - R.BODY[1])
-    raise KeyError(sheet)
-
-
+def card_geom(sheet):
+    """시트 첫 카드의 균일 배율 — 격자 없는 창 장면 겹을 같은 배율로 뽑는다"""
+    p = next(q for q in R.SHEETS[sheet] if q[1] == 'card')
+    return geom(p[2], R.BODY, R.CARD)['s']
 
 
 # ---------------------------------------------------------------- 카드 앞면
@@ -189,10 +320,9 @@ def paper_boxes(a, hole_box):
 def card(sheet, entry, fixes):
     """카드 한 장: 복원 → 키 · 팔레트 → 사내 손질. 반환 (RGBA, 기록)"""
     name, _, box = entry[:3]
-    small, pitch = restore(src(sheet), box, R.BODY, R.CARD)
-    img = key_and_palette(small)
+    img, rec = restore_fit(src(sheet), box, R.BODY, R.CARD, name)
     a = np.asarray(img).copy()
-    rec = {'pitch': pitch, 'aspect': round(pitch[0] / pitch[1], 3), 'fix': []}
+    rec['fix'] = []
     f = fixes.get(name, {})
     # ① 명령 카드: 창 구멍 속 등급 빛 · 불티 지우기(창 장면 겹이 같은 빛을 갖는다) — 등불 상자(keep)는 남기고, 구멍 둘레 한 칸의 빈 칸은 먹으로
     if 'window' in f:
@@ -245,24 +375,60 @@ def card(sheet, entry, fixes):
     return Image.fromarray(a, 'RGBA'), rec
 
 
+def recolor_svc(img, opt):
+    """손질 카드 다시 칠하기(D-586): 쇠 7단 칸 → 레시피 재질(몸 · 테). 먹 · 종이 · 황동 · 창 구멍은 그대로, SVC_KEEP 상자도 그대로"""
+    from scipy import ndimage as nd
+    o = R.SVC_RECOLOR[opt]
+    a = np.asarray(img).copy()
+    idx = _pal_index(a)
+    iron = [R.PAL33.index(h) for h in R.IRON7]
+    clear = a[:, :, 3] == 0
+    lab, _ = nd.label(clear)
+    edge = set(np.unique(np.r_[lab[0], lab[-1], lab[:, 0], lab[:, -1]])) - {0}
+    outside = np.isin(lab, list(edge))
+    dist = nd.distance_transform_cdt(~outside, metric='chessboard')
+    keep = np.zeros(a.shape[:2], bool)
+    for x0, y0, x1, y1 in R.SVC_KEEP:
+        keep[y0:y1, x0:x1] = True
+    n = 0
+    for k, pi in enumerate(iron):
+        m = (idx == pi) & ~keep
+        for ramp, sel in ((o['trim'], m & (dist <= o['rim'])), (o['body'], m & (dist > o['rim']) if o['trim'] else m)):
+            if ramp is None:
+                continue
+            c = tuple(int(ramp[k][i:i + 2], 16) for i in (1, 3, 5))
+            a[sel, :3] = c
+            n += int(sel.sum())
+    return Image.fromarray(a, 'RGBA'), n
+
+
 def _save(img, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path, optimize=True)
 
 
 def scene(sheet, entry, win):
-    """창 장면 겹: 같은 시트 카드 간격으로 복원 → 창 상자(w × h)에 맞게 자른다(가로 가운데 · 세로 아래 맞춤, 늘리지 않는다 — D-386)"""
-    px, py = sheet_pitch(sheet)
+    """창 장면 겹: 실측 격자(R.GRID)가 있으면 그 간격 · 시작점, 없으면 같은 시트 카드의 균일 배율로 정사각 칸 복원
+    → 창 상자(w × h)에 맞게 자른다(가로 가운데 · 세로 아래 맞춤, 늘리지 않는다 — D-386)"""
     box = entry[2]
-    W, H = round((box[2] - box[0]) / px), round((box[3] - box[1]) / py)
-    small, _ = restore(src(sheet), box, (0, 0, W, H), (W, H))
-    img = key_and_palette(small)
+    gr = R.GRID.get(entry[0])
+    if gr:
+        s = gr['pitch']
+        # 시작점: 상자 왼쪽 위에서 잰 칸 경계(phase)를 상자 앞 첫 경계로
+        ox = box[0] + gr['phase'][0] - s * np.ceil(gr['phase'][0] / s)
+        oy = box[1] + gr['phase'][1] - s * np.ceil(gr['phase'][1] / s)
+        how = 'grid'
+    else:
+        s = card_geom(sheet)
+        ox, oy, how = box[0], box[1], 'uniform'
+    W, H = int(np.ceil((box[2] - ox) / s)), int(np.ceil((box[3] - oy) / s))
+    img = key_and_palette(restore(src(sheet), {'s': s, 'ox': ox, 'oy': oy, 'W': W, 'H': H}))
     ww, wh = win[2] - win[0], win[3] - win[1]
     cx = max(0, (W - ww) // 2)
     cy = max(0, H - wh)
     out = Image.new('RGBA', (ww, wh), (0, 0, 0, 0))
     out.paste(img.crop((cx, cy, cx + min(ww, W), cy + min(wh, H))), ((ww - min(ww, W)) // 2, 0))
-    return out, {'restored': (W, H), 'window': (ww, wh), 'crop': (cx, cy)}
+    return out, {'pitch': round(float(s), 4), 'how': how, 'restored': (W, H), 'window': (ww, wh), 'crop': (cx, cy)}
 
 
 def masks(a, win):
@@ -323,10 +489,9 @@ def cost_gear():
 def fx_sheet():
     """CD-11 → 희귀 · 금 띠 8장 줄(84×126 × 8) · 볏 불꽃 6장(13×13) · 창 불티 6장(70×36). 띠는 조각마다 겹이 가장 많은 칸(장)에 붙인다
     (받은 시트는 칸 왼끝이 0 ~ 6도트 어긋나 있다 — 칸 밖으로 나간 조각은 그 장의 칸 기준 자리 그대로, 카드 밖은 잘린다)."""
-    small, pitch = restore(src('CD-11'), (0, 0, 1910, 823), (0, 0, 744, 320), (744, 320))
-    sh = key_and_palette(small)
+    sh, rec = restore_fit(src('CD-11'), (0, 0, 1910, 823), (0, 0, 744, 320), (744, 320), 'fx')
     a = np.asarray(sh)
-    out, rec = {}, {'pitch': pitch}
+    out = {}
     for key, y0 in (('rare', 8), ('gold', 142)):
         strip = np.zeros((126, 84 * 8, 4), np.uint8)
         band = np.zeros(a.shape[:2], bool)
@@ -393,11 +558,9 @@ def chrome():
     for e in R.SHEETS['CD-10']:
         name, kind, box = e[:3]
         if kind == 'slot':
-            s, pit = restore(img, box, R.SLOT_BODY, R.SLOT)
+            out[name], rec[name] = restore_fit(img, box, R.SLOT_BODY, R.SLOT, name)
         else:
-            s, pit = restore(img, box, R.STRIP_BODY, R.STRIP)
-        out[name] = key_and_palette(s)
-        rec[name] = {'pitch': pit, 'aspect': round(pit[0] / pit[1], 3)}
+            out[name], rec[name] = restore_fit(img, box, R.STRIP_BODY, R.STRIP, name)
     return out, rec
 
 
@@ -456,12 +619,18 @@ def build():
     frac = {}
     url = lambda f: f"url('../assets/ui/cards/{f}.png')"
     for fam, sheet in FAMILY.items():
-        L = R.LAYOUT[fam]
         entries = {e[0]: e for e in R.SHEETS[sheet]}
         fr = {'name': 1, 'tag': 1, 'row': 1, 'descH': 1}
         for t in TIERS[fam]:
             key = fname(fam, t)
+            L = {**R.LAYOUT[fam], **R.LAYOUT_TIER.get(key, {})}
             img, rec = card(sheet, entries[key], R.FIXES)
+            if fam == 'svc':
+                for opt in R.SVC_RECOLOR:
+                    alt, _ = recolor_svc(img, opt)
+                    _save(alt, os.path.join(PARTS, f'svc-{opt}.png'))
+                img, nrc = recolor_svc(img, R.SVC_PICK)
+                rec['fix'].append(f'쇠 칸 다시 칠함 → {R.SVC_PICK} {nrc}칸 (D-586)')
             a = np.asarray(img)
             _, win = hole_of(a)
             wmask, metal = masks(a, win)

@@ -5,20 +5,20 @@ body.slice .cf.cf.cf.cf.cf.cmd.g-common > .cf-win { left: 10.714%; top: 26.190%;
 body.slice .cf.cf.cf.cf.cf.cmd.g-common > .cf-name { left: 30.952%; top: 15.873%; width: 48.810%; height: 6.349%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-common > .cf-desc { left: 15.476%; top: 59.524%; width: 69.048%; height: 29.365%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-common > .cf-type { left: 10.714%; top: 47.619%; width: 77.381%; height: 5.556%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.cmd.g-common > .cf-gem { left: 49.405%; top: 92.857%; }
+body.slice .cf.cf.cf.cf.cf.cmd.g-common > .cf-gem { left: 49.405%; top: 93.254%; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
-body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-win { left: 11.905%; top: 26.190%; width: 75.000%; height: 26.984%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-cmd-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-cmd-rare.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-cmd-rare.png') 0 0 / 100% 100% no-repeat, var(--wpat) 0 0 / 4px 4px repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
+body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-win { left: 11.905%; top: 26.190%; width: 75.000%; height: 27.778%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-cmd-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-cmd-rare.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-cmd-rare.png') 0 0 / 100% 100% no-repeat, var(--wpat) 0 0 / 4px 4px repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-name { left: 30.952%; top: 15.873%; width: 48.810%; height: 6.349%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-desc { left: 15.476%; top: 59.524%; width: 69.048%; height: 29.365%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-type { left: 11.905%; top: 47.619%; width: 75.000%; height: 5.556%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-gem { left: 49.405%; top: 92.857%; }
+body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-type { left: 11.905%; top: 48.413%; width: 75.000%; height: 5.556%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.cmd.g-rare > .cf-gem { left: 49.405%; top: 93.254%; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-rare::before { -webkit-mask: url('../assets/ui/cards/metal-cmd-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/metal-cmd-rare.png') 0 0 / 100% 100% no-repeat; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold { background-image: url('../assets/ui/cards/cmd-gold.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-win { left: 11.905%; top: 26.984%; width: 75.000%; height: 26.190%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-cmd-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-cmd-gold.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-cmd-gold.png') 0 0 / 100% 100% no-repeat, var(--wpat) 0 0 / 4px 4px repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-name { left: 30.952%; top: 15.873%; width: 48.810%; height: 6.349%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-desc { left: 15.476%; top: 59.524%; width: 69.048%; height: 29.365%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-type { left: 11.905%; top: 47.619%; width: 75.000%; height: 5.556%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-gem { left: 49.405%; top: 92.857%; }
+body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-gem { left: 49.405%; top: 93.254%; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold > .cf-win::after { left: -5.556%; width: 111.111%; bottom: 0; top: auto; height: 109.091%; }
 body.slice .cf.cf.cf.cf.cf.cmd.g-gold::before { -webkit-mask: url('../assets/ui/cards/metal-cmd-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/metal-cmd-gold.png') 0 0 / 100% 100% no-repeat; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-common:not(.start-set) { background-image: url('../assets/ui/cards/part-common.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
@@ -28,17 +28,17 @@ body.slice .cf.cf.cf.cf.cf.part-card.g-common:not(.start-set) > .cf-desc { left:
 body.slice .cf.cf.cf.cf.cf.part-card.g-common:not(.start-set) > .cf-type { left: 23.810%; top: 48.413%; width: 50.000%; height: 5.556%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-common:not(.start-set) > .cf-gem { left: 50.595%; top: 92.460%; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) { background-image: url('../assets/ui/cards/part-rare.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-win { left: 32.143%; top: 12.698%; width: 44.048%; height: 21.429%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-part-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-part-rare.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-part-rare.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-name { left: 20.238%; top: 40.476%; width: 63.095%; height: 6.349%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-desc { left: 21.429%; top: 56.349%; width: 61.905%; height: 31.746%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-type { left: 23.810%; top: 48.413%; width: 50.000%; height: 5.556%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-gem { left: 50.595%; top: 92.460%; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-win { left: 32.143%; top: 12.698%; width: 44.048%; height: 22.222%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-part-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-part-rare.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-part-rare.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-name { left: 20.238%; top: 41.270%; width: 63.095%; height: 6.349%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-desc { left: 21.429%; top: 57.143%; width: 61.905%; height: 30.952%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-type { left: 23.810%; top: 49.206%; width: 50.000%; height: 5.556%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set) > .cf-gem { left: 50.595%; top: 92.857%; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-rare:not(.start-set)::before { -webkit-mask: url('../assets/ui/cards/metal-part-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/metal-part-rare.png') 0 0 / 100% 100% no-repeat; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) { background-image: url('../assets/ui/cards/part-gold.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-win { left: 30.952%; top: 13.492%; width: 45.238%; height: 21.429%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-part-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-part-gold.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-part-gold.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-name { left: 20.238%; top: 40.476%; width: 63.095%; height: 6.349%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-desc { left: 21.429%; top: 56.349%; width: 61.905%; height: 31.746%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-type { left: 23.810%; top: 48.413%; width: 50.000%; height: 5.556%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-desc { left: 21.429%; top: 57.143%; width: 61.905%; height: 30.952%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-type { left: 23.810%; top: 49.206%; width: 50.000%; height: 5.556%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-gem { left: 50.595%; top: 92.460%; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set) > .cf-win::after { left: -42.105%; width: 184.211%; bottom: 0; top: auto; height: 133.333%; }
 body.slice .cf.cf.cf.cf.cf.part-card.g-gold:not(.start-set)::before { -webkit-mask: url('../assets/ui/cards/metal-part-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/metal-part-gold.png') 0 0 / 100% 100% no-repeat; }
@@ -47,36 +47,36 @@ body.slice .cf.cf.cf.cf.cf.svc-card > .cf-win { left: 14.286%; top: 11.111%; wid
 body.slice .cf.cf.cf.cf.cf.svc-card > .cf-name { left: 23.810%; top: 38.889%; width: 59.524%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.svc-card > .cf-desc { left: 19.048%; top: 56.349%; width: 64.286%; height: 31.746%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.svc-card > .cf-type { left: 21.429%; top: 49.206%; width: 58.333%; height: 3.968%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.svc-card > .cf-gem { left: 50.000%; top: 93.254%; }
+body.slice .cf.cf.cf.cf.cf.svc-card > .cf-gem { left: 50.595%; top: 93.254%; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-common { background-image: url('../assets/ui/cards/crew-common.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-win { left: 15.476%; top: 12.698%; width: 69.048%; height: 23.810%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-crew-common.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-crew-common.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-crew-common.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-name { left: 14.286%; top: 44.444%; width: 71.429%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-win { left: 15.476%; top: 13.492%; width: 69.048%; height: 19.048%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-crew-common.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-crew-common.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-crew-common.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-name { left: 14.286%; top: 41.270%; width: 71.429%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-desc { left: 21.429%; top: 60.317%; width: 63.095%; height: 27.778%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-gem { left: 50.595%; top: 92.063%; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-atk { left: 5.952%; top: 27.778%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-hp { left: 78.571%; top: 27.778%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-bar { left: 22.619%; top: 54.762%; width: 55.952%; height: 2.381%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-lives { right: 19.048%; top: 14.286%; left: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cf-gem { left: 50.595%; top: 91.667%; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-atk { left: 5.952%; top: 23.810%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-hp { left: 78.571%; top: 23.810%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-bar { left: 22.619%; top: 52.381%; width: 55.952%; height: 2.381%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-common > .cb-lives { right: 19.048%; top: 15.079%; left: auto; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-rare { background-image: url('../assets/ui/cards/crew-rare.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-win { left: 14.286%; top: 12.698%; width: 70.238%; height: 23.810%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-crew-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-crew-rare.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-crew-rare.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-name { left: 14.286%; top: 44.444%; width: 71.429%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-win { left: 14.286%; top: 12.698%; width: 70.238%; height: 19.841%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-crew-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-crew-rare.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-crew-rare.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-name { left: 14.286%; top: 41.270%; width: 71.429%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-desc { left: 21.429%; top: 60.317%; width: 63.095%; height: 27.778%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-gem { left: 50.595%; top: 92.063%; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-atk { left: 5.952%; top: 27.778%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-hp { left: 78.571%; top: 27.778%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-bar { left: 22.619%; top: 54.762%; width: 55.952%; height: 2.381%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cf-gem { left: 50.595%; top: 91.667%; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-atk { left: 5.952%; top: 23.810%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-hp { left: 78.571%; top: 23.810%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-bar { left: 22.619%; top: 52.381%; width: 55.952%; height: 2.381%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-rare > .cb-lives { right: 19.048%; top: 14.286%; left: auto; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-rare::before { -webkit-mask: url('../assets/ui/cards/metal-crew-rare.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/metal-crew-rare.png') 0 0 / 100% 100% no-repeat; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-gold { background-image: url('../assets/ui/cards/crew-gold.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-win { left: 14.286%; top: 12.698%; width: 70.238%; height: 23.810%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-crew-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-crew-gold.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-crew-gold.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-name { left: 14.286%; top: 44.444%; width: 71.429%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-win { left: 14.286%; top: 12.698%; width: 70.238%; height: 19.841%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-crew-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-crew-gold.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-crew-gold.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-name { left: 14.286%; top: 40.476%; width: 71.429%; height: 5.556%; right: auto; bottom: auto; color: #16141c; text-shadow: none; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-desc { left: 21.429%; top: 60.317%; width: 63.095%; height: 27.778%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-gem { left: 50.595%; top: 92.063%; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-atk { left: 5.952%; top: 27.778%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-hp { left: 78.571%; top: 27.778%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-bar { left: 22.619%; top: 54.762%; width: 55.952%; height: 2.381%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-gem { left: 50.595%; top: 91.667%; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-atk { left: 5.952%; top: 23.810%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-hp { left: 78.571%; top: 23.810%; width: 15.476%; height: 10.317%; right: auto; bottom: auto; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-bar { left: 22.619%; top: 52.381%; width: 55.952%; height: 2.381%; right: auto; bottom: auto; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cb-lives { right: 19.048%; top: 14.286%; left: auto; }
-body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-win::after { left: -9.322%; width: 118.644%; bottom: 0; top: auto; height: 120.000%; }
+body.slice .cf.cf.cf.cf.cf.crew-card.g-gold > .cf-win::after { left: -9.322%; width: 118.644%; bottom: 0; top: auto; height: 144.000%; }
 body.slice .cf.cf.cf.cf.cf.crew-card.g-gold::before { -webkit-mask: url('../assets/ui/cards/metal-crew-gold.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/metal-crew-gold.png') 0 0 / 100% 100% no-repeat; }
 body.slice .cf.cf.cf.cf.cf.start-set.g-common { background-image: url('../assets/ui/cards/set-common.png'); background-size: 100% 100%; aspect-ratio: 84 / 126; --ci-l: 2.381%; --ci-r: 4.762%; --ci-t: 4.762%; --ci-b: 3.175%; }
 body.slice .cf.cf.cf.cf.cf.start-set.g-common > .cf-win { left: 9.524%; top: 14.286%; width: 80.952%; height: 20.635%; right: auto; bottom: auto; -webkit-mask: url('../assets/ui/cards/mask-set-common.png') 0 0 / 100% 100% no-repeat; mask: url('../assets/ui/cards/mask-set-common.png') 0 0 / 100% 100% no-repeat; background: url('../assets/ui/cards/win-set-common.png') 0 0 / 100% 100% no-repeat; background-color: transparent; box-shadow: none; image-rendering: pixelated; }

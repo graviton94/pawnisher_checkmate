@@ -4,7 +4,7 @@
  */
 export const CARD_FRAME_FRAC = {
   cmd: { name: 0.48810, tag: 0.75000, row: 0.69048, descH: 0.29365 },
-  part: { name: 0.63095, tag: 0.50000, row: 0.61905, descH: 0.31746 },
+  part: { name: 0.63095, tag: 0.50000, row: 0.61905, descH: 0.30952 },
   svc: { name: 0.59524, tag: 0.58333, row: 0.64286, descH: 0.31746 },
   crew: { name: 0.71429, tag: 1.00000, row: 0.63095, descH: 0.27778 },
   set: { name: 0.64286, tag: 0.58333, row: 0.63095, descH: 0.28571 },
