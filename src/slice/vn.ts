@@ -1,7 +1,8 @@
 /**
  * 비주얼 노벨 연출 층 (D-554): 컷신 재생기(opening.playCuts)의 장면 칸 위에 서 있는 배우 · 장면 입자 · 등잔 깜빡 · 대사 기록.
  * 새 그림 없이(D-386) 기물 도트(public/pieces) · 장면 그림 · 키트 창만 쓴다. 데이터는 data/vn.ts.
- *  - 배우: 72칸 도트의 정수배(그림 1도트 = 기기 픽셀 정수), 들어옴 · 나감 = 감속 곡선 + 64단 디더, 위치는 기기 픽셀 정수.
+ *  - 배우는 그림이 있는 컷에 서지 않는다 (D-580 · D-572 — 일러스트에 판 도트 말을 겹치지 않는다, data/vn.castOn). 그림 위 무대는 입자 · 등잔 · 켄 번스 · 명패만.
+ *  - 배우 (그림 없는 컷이 연 때만): 72칸 도트의 정수배(그림 1도트 = 기기 픽셀 정수), 들어옴 · 나감 = 감속 곡선 + 64단 디더, 위치는 기기 픽셀 정수.
  *    말하는 배우는 밝게 + 1도트 뜀, 나머지는 50% 디더 그늘(투명도 아님). 놀 때는 1도트 숨 고르기(일부러 정지 동작).
  *  - 입자: 장면 도트(3 기기 픽셀) 낮은 해상도 캔버스 — 컷이 서 있는 동안만 프레임마다, 켄 번스보다 1.6배 흘러 원근이 생긴다.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9). 움직임 줄이기면 배우는 바로 서고 입자 · 깜빡은 없다.
@@ -81,14 +82,18 @@ export class VnStage {
     this.lamp = view.querySelector<HTMLElement>('.vn-lamp')!;
   }
   /** 컷이 바뀔 때 (막이 닫힌 뒤): 배우를 걷고 그 컷의 분위기를 건다 */
-  enter(slug: string | undefined, o: { noCast?: boolean } = {}): VnScene {
+  /** still = 검은 화면 가운데 글 컷 (D-582 Cut.void): 배우 · 입자 · 등잔 없이 먹만 */
+  enter(slug: string | undefined, o: { noCast?: boolean; still?: boolean } = {}): VnScene {
     this.clearCast();
-    this.scene = { ...VN_DEFAULT, ...(slug ? VN_SCENE[slug] : {}), ...(o.noCast ? { noCast: true } : {}) };
+    // 배우는 기본으로 없다 (VN_DEFAULT.noCast · D-580) — 부르는 쪽이 noCast: false를 넘길 때만(그림 없는 컷 · castOn)
+    this.scene = o.still ? { air: 'none', noCast: true } : { ...VN_DEFAULT, ...(slug ? VN_SCENE[slug] : {}), noCast: o.noCast ?? true };
     this.air = this.scene.air ?? 'none';
     this.motes = [];
     this.pan0 = null;
     this.lampT = performance.now() + this.lampGap();
     this.size();
+    // 앞 컷의 입자 한 장이 남지 않게 (입자 없는 컷은 tick이 그리지 않는다)
+    this.g.clearRect(0, 0, this.cols, this.rows);
     // 처음 입자는 화면에 고루 뿌려 둔다 (빈 하늘에서 하나씩 생기지 않게)
     for (let i = 0; i < VN_AIR.count[this.air]; i++) this.spawn(true);
     this.start();

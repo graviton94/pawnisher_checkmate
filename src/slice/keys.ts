@@ -163,6 +163,8 @@ const domEnv = (cancel: () => boolean): InputEnv => {
       // 고르기 · 배치 화면(.scr-*)처럼 .win 밖의 「닫는다 · 그만둔다」 단추도 맨 위 층이면 누른다 (대국 판은 빼고)
       const layer = topLayer();
       if (!layer || layer === app()) return false;
+      // 검은 화면 가운데 글 컷 (D-582): 숨겨 둔 「건너뛴다」를 먼저 드러낸다 — 다음 뒤로가 건너뛴다 (실수로 핵심 줄을 넘기지 않게)
+      if (layer.matches('.prologue.void:not(.void-ui)')) return layer.dispatchEvent(new Event('ui-reveal')), true;
       // 컷신은 「건너뛴다」(.cut-skip) — 안드로이드 뒤로 키도 이 길을 쓴다 (hardwareBack)
       const back = buttons(layer).find((b) => b.matches('[data-x], [data-back], [data-no], [data-close], .cut-skip'));
       return back ? (back.click(), true) : false;

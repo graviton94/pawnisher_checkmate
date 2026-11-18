@@ -14,6 +14,9 @@ const PUB = path.join(ROOT, 'public');
 const SKIP = new Set(['bricks', 'oil', 'portal'].map((n) => `ui/icons/${n}.png`));
 // D-579: PRO-03은 그림 없는 먹 무대가 됐다 — scenes/prologue-02.png는 발주서 첨부 · 격자 점검(test_regrid)이 읽어 public/에 두되 앱은 부르지 않는다
 SKIP.add('scenes/prologue-02.png');
+// D-582: SHD-A · END-T-1 · 왕위 결정은 검은 화면 가운데 글이 됐다(VA-08 · VA-10 취소) — 두 그림은 발주서 첨부 · 격자 기록(scene_recipe)이 읽어 public/에 두되 앱은 부르지 않는다
+SKIP.add('scenes/prologue-shadow.png');
+SKIP.add('scenes/gilded-fallen.png');
 const skip = (rel) => SKIP.has(rel) || /^pieces\/m-/.test(rel);
 const out = [];
 const walk = (dir) => {

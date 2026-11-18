@@ -37,6 +37,11 @@ export interface Cut {
   showActors?: boolean;
   /** 그림 없는 먹 무대 (D-579 — VA-01 취소, 사장님 「비주얼 일러스트 없이, 묘사 및 텍스트와 효과로만」): 장면 칸에 그림 · 기물 도트 없이 빛 · 띠 · 표시 효과만, 줄마다 beat */
   dark?: boolean;
+  /**
+   * 검은 화면 가운데 글 (D-582 — VA-08 · VA-10 취소, 사장님 「좋은 그림이 안 나오는 컷은 글만」): 그림 · 띠 · 명패 · 자막 판 · 코드 도트 효과 없이
+   * 먹 위 한가운데 글만 — 주인공 속마음 · 전지적 서술의 핵심 줄. 한 문장 = 한 줄로 쌓이고, 줄(Line)이 바뀌면 디더로 걷힌다. 수치 data/vn.VN_VOID · 재생 opening.playCuts
+   */
+  void?: boolean;
   /** 정지 장면 그림을 비율·기기 픽셀 정수배로 덮는다. */
   pixelCover?: boolean;
   /** 하단의 핵심 행동을 가리지 않도록 해당 컷만 대사창을 상단에 둔다. (영화 판에서는 띠가 레터박스 안에 있어 쓰지 않는다) */
@@ -59,6 +64,8 @@ const pawn = (x = 48, y = 56, h = 30): StandIn => ({ t: 'K', side: 0, x, y, h })
 const cut = (img: string, lines: Line[], art: StandIn[] = [pawn()], standIn = false): Cut => ({ img, bg: ['#16141c', '#0b0b0e'], art, lines, standIn });
 const sceneCut = (img: string, lines: Line[], art: StandIn[] = []): Cut => ({ ...cut(img, lines, art), pixelCover: true, showActors: art.length > 0, cam: 'still' });
 /** 끝 정적 컷: 그림 없이 먹(또는 백지) 위 한가운데 한 줄 */
+/** 검은 화면 가운데 글 컷 (D-582 — Cut.void): 그림 없이 줄만. 줄의 샷은 쓰지 않는다(비출 그림이 없다) */
+const voidCut = (lines: Line[]): Cut => ({ ...cut('', lines, []), void: true });
 const coda = (lines: Line[], tone: 'black' | 'white' = 'black'): Cut => ({ ...cut('', lines, []), coda: tone, trans: tone === 'white' ? 'white' : 'black' });
 /**
  * 화자 얼굴 (D-504 · #22): 컷신 대사 명패에 세울 얼굴. 분대원 이름은 출하마다 달라 부르는 쪽(playCuts faces)이 더한다.
@@ -161,21 +168,23 @@ export const PROLOGUE_FIELD: Cut = { ...cut('prologue-07', [
  * 아니면 둘째~넷째 왕관의 시작(SHD-B — 전대 도금왕이 새긴 규정 + 왕관별 속마음).
  */
 export const shadowCut = (chapter: number, law?: string, retry = chapter === 0): Cut => retry || chapter === 0
-  ? { ...cut('prologue-shadow', [
-    n('조금 전, 또 하나의 불량 세트가 비명을 남긴 채 붉은 용광로 속으로 가라앉았다.', { shot: at(0.5, 0.5), sfx: 'threat' }),
-    n('컨베이어의 집게는 아무 일도 없었다는 듯 차가운 쇳소리를 내며, 다른 상자의 비어 있는 킹 자리에 새로운 폰 하나를 집어 넣었다.', { shot: at(0.33, 0.7, 2), sfx: 'lift' }),
-    n('상자 뚜껑에 찍힌 붉은 X표가 눈을 뜬 그의 시야를 붉게 물들였다.', { shot: at(0.33, 0.78, 3), fx: 'red' }),
-    m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { shot: at(0.75, 0.2, 1), pause: 400, mood: 'fear' }),
+  // SHD-A (D-582): VA-10 취소 — 그림 없이 검은 화면 가운데 글. 소리 큐 · 붉은 X(글이 진홍으로 두 번 깜빡)만 남긴다
+  ? { ...voidCut([
+    n('조금 전, 또 하나의 불량 세트가 비명을 남긴 채 붉은 용광로 속으로 가라앉았다.', { sfx: 'threat' }),
+    n('컨베이어의 집게는 아무 일도 없었다는 듯 차가운 쇳소리를 내며, 다른 상자의 비어 있는 킹 자리에 새로운 폰 하나를 집어 넣었다.', { sfx: 'lift' }),
+    n('상자 뚜껑에 찍힌 붉은 X표가 눈을 뜬 그의 시야를 붉게 물들였다.', { fx: 'red' }),
+    m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { pause: 400, mood: 'fear' }),
   ]), slug: '같은 왕관 재도전', title: { kicker: chapterKick(chapter), title: '또 하나의 아홉째 폰', sub: chapterTitle(chapter), crown: crownNo(chapter) } }
+  // SHD-B-1 (VA-07, D-581): 왼쪽 앞 맨머리 흰 폰(머리 · 목깃) — 둥근 기둥의 리벳 강철판 · 위 먼 금빛 왕좌. 실제 재생은 첫 줄만 이 그림(shadowCuts)
   : { ...sceneCut('new-law', [
-    n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.', { shot: at(0.18, 0.8, 2) }),
-    n('그런데 전에는 없던 차가운 쇠판 하나가 검수대 기둥에 새로 못 박혀 있었다. 갓 새겨진 듯 글자 끝이 날카로웠다.', { shot: at(0.6, 0.5), sfx: 'stamp' }),
-    n(`「${law ?? '선대 왕이 새긴 규정'}」`, { shot: at(0.62, 0.55, 2), pause: 300 }),
+    n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.', { shot: at(0.3, 0.68) }),
+    n('그런데 전에는 없던 차가운 쇠판 하나가 검수대 기둥에 새로 못 박혀 있었다. 갓 새겨진 듯 글자 끝이 날카로웠다.', { shot: at(0.57, 0.5), sfx: 'stamp' }),
+    n(`「${law ?? '선대 왕이 새긴 규정'}」`, { shot: at(0.57, 0.52, 2), pause: 300 }),
     m([
       '소문대로 지난번에 올라간 폰이 왕이 된 건가? 그런데 왜 공장을 더 가혹하게 만들었지? 동료를 구하러 올라간 게 아니었나…',
       '두 번이나 킹이 바뀌었는데도 아래층은 여전히 지옥이군. 좋아, 그 썩은 왕좌에 내가 올라가서 이 공장의 규칙을 끝내버리겠어.',
       '앞선 세 명의 종이왕이 모두 저 위에 닿고도 공장을 더 옥죄었다. 그 높은 자리에는 대체 무엇이 도사리고 있는 걸까.',
-    ][Math.max(0, Math.min(2, chapter - 1))], { shot: at(0.6, 0.12, 1), pause: 300 }),
+    ][Math.max(0, Math.min(2, chapter - 1))], { shot: at(0.7, 0.1, 1), pause: 300 }),
   ]), slug: '새긴 규정', title: { kicker: chapterKick(chapter), title: chapterTitle(chapter), sub: '새로운 아홉째 폰', crown: crownNo(chapter) } };
 /** 막 입구 카드 (바이블 ACT-1~4): 서술 한 줄 + 속마음 한 줄. [0]은 프롤로그가 대신한다 */
 export const ACT_CARD = [
@@ -461,15 +470,16 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       n('왕관이 닿는 찰나, 평생 눈앞의 한 칸만 바라보며 떨던 폰의 시야가 폭발하듯 열렸다. 공장의 모든 층과 모든 기물의 움직임이 손바닥 안처럼 한눈에 내려다보였다.', { shot: at(0.5, 0.5), sfx: 'awaken', fx: 'gold' }),
       m('아… 이것이 왕의 눈인가. 이토록 높고, 완전하며, 무엇 하나 두려울 것이 없는 눈부신 권능이라니…!', { shot: at(0.5, 0.78, 2), pause: 500, mood: 'gilt' }),
     ]), slug: '왕의 눈', shot: at(0.5, 0.42, 3), trans: 'cut' },
+    // END-K-2 (VA-06, D-581): 오른쪽 위 황동 단상에 금왕관을 쓴 폰(초점 78% 25%) · 발치에 구겨진 종이 왕관(87% 42%) · 아래 쇳물에 잠기는 흰 폰 셋 · 쇠사슬
     { ...sceneCut('casting-floor', [
       // END-K-2-1 시스템: 기계음은 이름표 「용해 주조기」(적 쇠 명패)로 — 서술과 갈라 보인다 (#22)
-      s('용해 주조기', '금단의 승급 개시. 하급 기물(폰)을 정품 킹으로. 부족한 규격 중량 및 황금빛 도금을 위해, 동행 기물 전원의 용해 주조 공정을 시작합니다.', { shot: at(0.72, 0.12, 1), sfx: 'threat', fx: 'red' }),
+      s('용해 주조기', '금단의 승급 개시. 하급 기물(폰)을 정품 킹으로. 부족한 규격 중량 및 황금빛 도금을 위해, 동행 기물 전원의 용해 주조 공정을 시작합니다.', { shot: at(0.78, 0.22, 1), sfx: 'threat', fx: 'red' }),
       n('그 냉혹한 기계음과 동시에 통제실 바닥이 거대하게 갈라지고, 뒤에서 기다리던 동료들의 발밑으로 시뻘건 쇳물과 쇠사슬이 솟구쳐 올라왔다.', { shot: at(0.45, 0.7), sfx: 'hit', fx: 'shake' }),
       // D-465: 결전에서 녹여 바친 동료가 있으면 — 쇳물은 처음이 아니었다
-      ...(company?.melted?.length ? [n(`쇳물은 처음이 아니었다. 결전에서 그가 녹여 바친 ${meltedNames(company)}의 쇳물이, 이미 왕관 안쪽을 금빛으로 덮고 있었다.`, { shot: at(0.72, 0.1, 3) })] : []),
-      ...(who ? [s(who.name, CRY.floor[who.v], { shot: at(0.35, 0.78, 2), fx: 'shake' })] : []),
-      n('아직 주조가 완료되지 않았다. 지금 당장 머리의 왕관만 벗어 던지면, 아직은 공정을 멈추고 동료들을 끌어올릴 수 있는 찰나의 시간이었다. 하지만 그는 단상 위에서 한 발짝도 움직이지 못했다.', { shot: at(0.72, 0.1, 2), pause: 600 }),
-    ]), alt: 'gilded-fallen', fx: 'red', at: '72% 8%', slug: '용해 주조', shot: at(0.5, 0.5), trans: 'melt' }, // S-17: 단상 위 종이왕(오른쪽 위)이 잘리지 않게
+      ...(company?.melted?.length ? [n(`쇳물은 처음이 아니었다. 결전에서 그가 녹여 바친 ${meltedNames(company)}의 쇳물이, 이미 왕관 안쪽을 금빛으로 덮고 있었다.`, { shot: at(0.78, 0.14, 3) })] : []),
+      ...(who ? [s(who.name, CRY.floor[who.v], { shot: at(0.37, 0.8, 2), fx: 'shake' })] : []),
+      n('아직 주조가 완료되지 않았다. 지금 당장 머리의 왕관만 벗어 던지면, 아직은 공정을 멈추고 동료들을 끌어올릴 수 있는 찰나의 시간이었다. 하지만 그는 단상 위에서 한 발짝도 움직이지 못했다.', { shot: at(0.8, 0.22, 1), pause: 600 }),
+    ]), fx: 'red', at: '78% 25%', slug: '용해 주조', shot: at(0.5, 0.5), trans: 'melt' }, // VA-06: 단상 위 금왕관 폰(오른쪽 위)이 잘리지 않게
     // ED-03 뻗지 않은 손 (D-510 · 재발주본 D-514 — 다문 말머리): END-K-2-5 · 2-6 — 위 단상의 움직이지 않는 받침(속마음) → 쇠사슬에 끌려 내려가며 위로 뻗은 나이트(외침)
     { ...sceneCut('end-k-reach', [
       m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 검은 세트에게 부서지라고?', { shot: at(0.7, 0.12, 2), pause: 300, mood: 'gilt' }),
@@ -512,7 +522,8 @@ export const DEFEAT: Cut = cut('end-fail', [
  */
 export const DEFEAT_CUTS: Cut[] = [
   { ...sceneCut('end-fail', [{ ...DEFEAT.lines[0], shot: at(0.6, 0.42, 1), sfx: 'lose', fx: 'red' }]), fx: 'alarm', slug: '출하 실패', shot: at(0.72, 0.72, 3), trans: 'dither' },
-  { ...sceneCut('end-f-box', [{ ...DEFEAT.lines[1], shot: at(0.55, 0.6), sfx: 'threat' }]), alt: 'prologue-01', slug: '상자째 용광로로', shot: at(0.62, 0.45, 2), trans: 'melt' },
+  // END-F-2 (VA-09, D-581): 집게에 물린 닫힌 나무 함 · 뚜껑의 붉은 X(가까이) → 아래 용광로 불길 · 왼쪽 난간의 검은 실루엣까지 넓게
+  { ...sceneCut('end-f-box', [{ ...DEFEAT.lines[1], shot: at(0.55, 0.5), sfx: 'threat' }]), alt: 'prologue-01', slug: '상자째 용광로로', shot: at(0.58, 0.45, 2), trans: 'melt' },
   { ...sceneCut('end-f-unwind', [{ ...DEFEAT.lines[2], shot: at(0.45, 0.62, 1), pause: 900 }]), slug: '풀리는 태엽', shot: at(0.76, 0.62, 3), trans: 'black', end: { kicker: '출하 실패', title: '킹이 쓰러졌습니다', sub: '출하는 여기서 끝납니다.', tone: 'crimson' } },
 ];
 /**
@@ -522,19 +533,20 @@ export const DEFEAT_CUTS: Cut[] = [
 export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] => {
   const who = crier(company);
   return [
-    { ...sceneCut('gilded-fallen', [
-      s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.', { shot: at(0.2, 0.78, 1), mood: 'gilt' }),
+    // END-T-1 (D-582): VA-08 취소 — 쓰러진 도금왕 그림(금관 자리가 틀렸다) 대신 검은 화면 가운데 글. 결정 화면(왕위 결정)도 같은 먹이라 끊김 없이 이어진다
+    { ...voidCut([
+      s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.', { mood: 'gilt' }),
       // D-465: 녹여 바친 동료를 스스로 부른다 — 왕관 탓이 아니라 내 손이었다
-      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { shot: at(0.2, 0.8, 2), pause: 400, mood: 'pain' })] : []),
-      s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { shot: at(0.2, 0.82, 2), pause: 300, mood: 'resolve' }),
-    ]), caption: 'top', slug: '원했다, 그러니 끝낸다', shot: at(0.45, 0.5), title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper', crown: 4 }, trans: 'dither' },
+      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { pause: 400, mood: 'pain' })] : []),
+      s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { pause: 300, mood: 'resolve' }),
+    ]), slug: '원했다, 그러니 끝낸다', title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper', crown: 4 }, trans: 'dither' },
     // ED-06 왕관을 던지는 순간 (D-514): END-T-1-3 — 종이 왕관 폰(왼쪽) → 잔상 궤적을 끌며 주조기 아가리로 날아가는 금왕관(오른쪽)
     { ...sceneCut('end-t-throw', [
       n('종이왕은 금왕관을 자신의 머리에 얹지 않았다. 대신 옆에서 맹렬히 돌아가던 용해 주조기의 거대한 톱니바퀴 틈새를 향해, 온 힘을 다해 던져 넣었다.', { shot: at(0.78, 0.45, 1), sfx: 'lift', fx: 'shake' }),
     ]), caption: 'top', slug: '왕관을 던지다', shot: at(0.3, 0.5, 1), trans: 'cut' },
     { ...sceneCut('crown-gears', [
       n('세 번의 죄악이 겹겹이 도금되어 있던 단단한 금왕관이 톱니 사이에 쐐기처럼 박히며 찌그러졌다. 쇠가 부러지는 비명 같은 굉음과 함께 공장의 주조 라인 전체가 멈춰 섰다.', { shot: at(0.62, 0.35, 2), sfx: 'hit', fx: 'flash' }),
-    ]), alt: 'gilded-fallen', slug: '톱니에 박힌 왕관', shot: at(0.6, 0.3, 3), trans: 'iris' },
+    ]), slug: '톱니에 박힌 왕관', shot: at(0.6, 0.3, 3), trans: 'iris' },
     // ED-07 멈춘 공장 (D-514): END-T-2-1 뒤 정적 — 넓은 청회색 공장에서 한 박자 숨 → 집게에 걸린 금박 조각 → 바닥에 버려진 금왕관
     { ...sceneCut('end-t-silence', [
       ...(who ? [s(who.name, CRY.broke[who.v], { shot: at(0.62, 0.42, 1), pause: 1200 })] : []),
