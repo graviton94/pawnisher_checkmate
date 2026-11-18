@@ -5416,7 +5416,7 @@ const setPick = (): Promise<StartSetId> => new Promise((done) => {
     const el = pickScreen({
       title: SET_TEXT.title,
       tag: `<span class="ribbon">${SET_TEXT.page(page + 1, pages.length)}</span>`,
-      items: ids.map((id) => ({ key: id, html: face(id), off: !setOpen(id, unlocked), info: setOpen(id, unlocked) ? `<span>${START_SETS[id].line}</span>` : `<span class="bad">${START_SETS[id].lockText}</span>` })),
+      items: ids.map((id) => ({ key: id, html: face(id), off: !setOpen(id, unlocked), info: setOpen(id, unlocked) ? '' : `<span class="bad">${START_SETS[id].lockText}</span>` })),
       skip: { label: page ? SET_TEXT.prev : SET_TEXT.next, attrs: 'data-page' },
       onSelect: () => sfx('lift'),
       onPick: (key, slot) => {

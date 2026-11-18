@@ -111,7 +111,7 @@ export const cardTextHtml = (s: CardTextSlots, n: CardNature, topHtml?: string):
 // ---------- 성격마다 읽기 (글자는 정본 데이터 그대로) ----------
 /** 명령 카드: desc 「묘사. (효과 — 조건)」 */
 export const cmdText = (id: CommandId): CardTextSlots => parseCardText(COMMANDS[id].desc || '');
-/** 부품 카드: flavor(승인 전엔 비움, FLAVOR_ON_CARD) + 요약(언제 · 효과) — 조건 「장착 중」도 조건 행 */
+/** 부품 카드: flavor(D-590 승인 — FLAVOR_ON_CARD) + 요약(언제 · 효과) — 조건 「장착 중」도 조건 행 */
 export const partText = (id: SlicePartId): CardTextSlots => {
   const a = partSummaryText(id);
   return { flavor: FLAVOR_ON_CARD.part ? SLICE_PARTS[id].flavor ?? '' : '', title: '', cond: [a.description], effect: a.effect.split(' · ') };
@@ -135,7 +135,7 @@ export const crewText = (u: { t: string; form?: string; quirk?: QuirkId; scars?:
   if (u.scars?.length) return { flavor: say, title: `흉터 · ${u.scars[0]}`, cond: [SCAR_DESC[u.scars[0]] ?? ''], effect: [] };
   return { flavor: say, title: '', cond: [], effect: [] };
 };
-/** 시작 세트 카드: 묘사 = 한 줄 소개(line — 승인 전엔 카드 밖 받침 줄, FLAVOR_ON_CARD) · [구성] · 조건 · : 효과 */
+/** 시작 세트 카드: 묘사 = 한 줄 소개(line — D-590부터 카드 묘사 칸, 받침 줄에서는 뺐다 · FLAVOR_ON_CARD) · [구성] · 조건 · : 효과 */
 export const setText = (id: StartSetId): CardTextSlots => {
   const st = START_SETS[id];
   return { flavor: FLAVOR_ON_CARD.set ? st.line : '', title: st.rows[0], cond: [st.rows[1]], effect: [st.rows[2].replace(/^: /, '')] };

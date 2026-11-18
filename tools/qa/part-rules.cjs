@@ -12,11 +12,11 @@ module.exports = async (pg, shot) => {
   const ids = await pg.locator('[data-part-id]').evaluateAll((els) => els.map((e) => e.dataset.partId));
   assert.equal(ids.length, 84);
   const artwork = await pg.locator('[data-part-id]').evaluateAll((els) => els.map((e) => ({
-    // D-589: 한 설명지 격자 — 아래 칸 행(조건 · 효과)은 1 ~ 3, 묘사 칸은 승인 전이라 비어 있다(FLAVOR_ON_CARD)
+    // D-589: 한 설명지 격자 — 아래 칸 행(조건 · 효과)은 1 ~ 3, 묘사 칸은 부품 flavor(D-590 FLAVOR_ON_CARD)
     h: e.getBoundingClientRect().height, lines: e.querySelectorAll('.ct-s .ct-bot > .ln').length,
     flavor: (e.querySelector('.ct-s .ct-top')?.textContent ?? '').trim() !== '',
   })));
-  assert(artwork.every((c) => c.lines >= 1 && c.lines <= 3 && !c.flavor));
+  assert(artwork.every((c) => c.lines >= 1 && c.lines <= 3 && c.flavor));
   assert(Math.max(...artwork.map((c) => c.h)) - Math.min(...artwork.map((c) => c.h)) < 1);
   await pg.locator('[data-part-id="relaySeal"]').evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'start' }));
   await pg.waitForTimeout(350); await shot('part-rule-cards');

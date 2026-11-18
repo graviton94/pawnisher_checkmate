@@ -35,20 +35,16 @@ export const CARD_TIERS = {
 export type CardTier = keyof typeof CARD_TIERS;
 
 /**
- * 아직 카드에 올리지 않는 묘사 (사용자 승인 대기, D-589): 부품 flavor · 시작 세트 line은 데이터에 있지만 카드 설명지에 오른 적이 없다.
- * 올리면 작은 카드에서 부품 18장 · 세트 1장이 두 행을 넘는다(재고 보고서 「다듬을 문구」) — 문구가 승인되면 true로 바꾼다. 그때까지 묘사 칸은 비워 자리만 지킨다.
+ * 부품 · 시작 세트 묘사를 카드 설명지 ① 칸에 올린다 (D-589 → 사용자 승인 D-590): 부품 flavor · 세트 line을 우리 세계 투(짧고 무겁게)로 다시 쓰고 켰다.
+ * 세트 line은 카드 묘사로 옮겨 세트 고르기 받침 줄에서는 뺐다(같은 글이 두 번 나오지 않게 — `main.ts` setPick).
  */
-export const FLAVOR_ON_CARD = { part: false, set: false } as const;
+export const FLAVOR_ON_CARD = { part: true, set: true } as const;
 
 /**
  * 예산을 넘어 문구 승인을 기다리는 카드 (D-589 — `docs/reports/2026-11-18-card-text-grammar.md` 「다듬을 문구」).
- * 지금은 모두 「묘사를 카드에 올리면」 작은 카드(150px) 두 행을 넘는 부품 flavor · 세트 line이다(FLAVOR_ON_CARD가 꺼져 있어 화면은 넘치지 않는다).
- * 승인된 문구로 바꾸면 여기서 지운다 — 테스트가 목록이 낡았는지(이미 들어가는데 남아 있음 · 새로 넘치는데 빠짐) 알린다.
+ * D-590으로 19장 문구를 바꿔 비었다. 새로 넘치는 카드가 생기면 여기에 올리고 문구를 다듬는다 — 테스트가 목록이 낡았는지(이미 들어가는데 남아 있음 · 새로 넘치는데 빠짐) 알린다.
  */
-export const CARD_TEXT_PENDING: readonly string[] = [
-  'part:relaySeal', 'part:sharedPlate', 'part:lastBreath', 'part:ledger', 'part:heavyHand', 'part:scarPlate', 'part:oath', 'part:assembly', 'part:bloodPact',
-  'part:greed', 'part:thickWall', 'part:rosary', 'part:firstSpring', 'part:lastAxle', 'part:afterheat', 'part:royalSeal', 'part:flywheel', 'part:redLine', 'set:scatter',
-];
+export const CARD_TEXT_PENDING: readonly string[] = [];
 
 /** 글 폭 어림(한글 1칸 — `desc.ts` textWidth와 같은 셈): 짧은 「…하면 효과」는 한 행 그대로 둔다(D-377) */
 const hanWidth = (s: string): number =>
