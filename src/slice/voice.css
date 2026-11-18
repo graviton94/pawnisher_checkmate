@@ -38,7 +38,7 @@
 .dl-ally .dl-name { top: calc(var(--d) * -17); left: calc(var(--d) * -9); }
 
 /* 바크: 한 줄 · 1도트 = --px1 (기물 칸을 덮지 않게 작게) */
-.vbark { --d: var(--px1); --lh: 17; z-index: 70; max-width: min(400px, calc(100vw - 16px)); cursor: pointer; pointer-events: auto; }
+.vbark { --d: var(--px1); --lh: 17; z-index: 70; max-width: min(400px, calc(calc(100 * var(--vw, 1vw)) - 16px)); cursor: pointer; pointer-events: auto; }
 .vbark .dl-line { white-space: nowrap; }
 .vbark .vb-tail { position: absolute; width: calc(var(--d) * 12); height: calc(var(--d) * 24); background: url('../assets/ui/chrome/tip-cyan.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; pointer-events: none; transform: rotate(90deg); }
 .vbark.dl-foe .vb-tail { background-image: url('../assets/ui/chrome/tip-crimson.png'); left: calc(var(--tail-x, 50%) - var(--d) * 27); bottom: calc(var(--d) * -30); }
@@ -131,7 +131,7 @@
 /* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */
 .bet-slot { display: flex; align-items: flex-end; justify-content: center; gap: var(--px); min-height: 56px; padding: var(--s1) var(--s2); }
 /* 판돈 무대 (WG-01 · D-507): 받은 장면을 비율 그대로 cover — 초점 = 내기판 가운데 위 · 동전 나이트(가로 55% · 세로 48%). 늘리지 않는다(D-386) */
-.win .bet-slot.bet-scene { min-height: clamp(40px, calc(100vh - 340px), 72px); /* D-534: 112px면 단추 줄이 창 아래 테 밖으로 밀렸다 (창 높이 364 상한) */ border-image-slice: var(--k-inset); background: #0b0b0e 50% 62% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
+.win .bet-slot.bet-scene { min-height: clamp(40px, calc(calc(100 * var(--vh, 1vh)) - 340px), 72px); /* D-534: 112px면 단추 줄이 창 아래 테 밖으로 밀렸다 (창 높이 364 상한) */ border-image-slice: var(--k-inset); background: #0b0b0e 50% 62% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
 .bet-slot > img { width: 32px; height: 32px; image-rendering: pixelated; }
 .bet-slot > img.drop { animation: betdrop 360ms steps(6, jump-none) both; }
 .bet-slot > img.drop:nth-child(2) { animation-delay: 80ms; }
@@ -152,8 +152,8 @@
 .p2cut .p2-lb { position: absolute; left: 0; right: 0; height: 0; background: url('../assets/ui/chrome/v2/letterbox-tile.png') 0 0 / calc(var(--px) * 56) calc(var(--px) * 28) repeat-x, #0b0b0e; image-rendering: pixelated; animation: p2lb 200ms steps(3, jump-end) forwards; }
 .p2cut .p2-lb.top { top: 0; background-position: 0 100%, 0 0; }
 .p2cut .p2-lb.bot { bottom: 0; }
-@keyframes p2lb { to { height: 22vh; } }
-.p2cut .p2-strip { position: absolute; left: 0; right: 0; top: 30vh; height: 40vh; overflow: hidden; background: #0b0b0e; clip-path: inset(50% 0 50% 0); box-shadow: inset 0 calc(var(--px) * 2) 0 #7a1218, inset 0 calc(var(--px) * -2) 0 #7a1218; }
+@keyframes p2lb { to { height: calc(22 * var(--vh, 1vh)); } }
+.p2cut .p2-strip { position: absolute; left: 0; right: 0; top: calc(30 * var(--vh, 1vh)); height: calc(40 * var(--vh, 1vh)); overflow: hidden; background: #0b0b0e; clip-path: inset(50% 0 50% 0); box-shadow: inset 0 calc(var(--px) * 2) 0 #7a1218, inset 0 calc(var(--px) * -2) 0 #7a1218; }
 .p2cut .p2-strip > img { display: block; height: 100%; width: auto; max-width: 100%; margin: 0 auto; object-fit: cover; image-rendering: pixelated; }
 .p2cut.go .p2-strip { animation: p2open 160ms steps(3, jump-end) forwards; }
 @keyframes p2open { to { clip-path: inset(0 0 0 0); } }
@@ -169,13 +169,13 @@
   75% { transform: scale(1.06, 0.95); }
   100% { transform: none; }
 }
-.p2cut .p2-word { position: absolute; left: 0; right: 0; top: calc(70vh - var(--px) * 8); visibility: hidden; }
+.p2cut .p2-word { position: absolute; left: 0; right: 0; top: calc(calc(70 * var(--vh, 1vh)) - var(--px) * 8); visibility: hidden; }
 .p2cut .p2-word > span { font: 700 24px/var(--lh-24) Galmuri11, sans-serif; }
 .p2cut.word .p2-word { visibility: visible; animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 200ms steps(4, jump-end) forwards; clip-path: inset(0 100% 0 0); }
-.p2cut.calm .p2-lb { height: 22vh; animation: none; }
+.p2cut.calm .p2-lb { height: calc(22 * var(--vh, 1vh)); animation: none; }
 .p2cut.calm .p2-strip { clip-path: none; }
 .p2cut.calm :is(.p2-slash, .p2-word) { visibility: visible; animation: none; clip-path: none; }
-.p2-flash { position: fixed; left: 0; right: 0; top: 30vh; bottom: 30vh; z-index: 90; pointer-events: none; background: #b3121c; -webkit-mask-image: var(--px2); mask-image: var(--px2); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; visibility: hidden; animation: p2flash 360ms steps(1, jump-end) both; }
+.p2-flash { position: fixed; left: 0; right: 0; top: calc(30 * var(--vh, 1vh)); bottom: calc(30 * var(--vh, 1vh)); z-index: 90; pointer-events: none; background: #b3121c; -webkit-mask-image: var(--px2); mask-image: var(--px2); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; visibility: hidden; animation: p2flash 360ms steps(1, jump-end) both; }
 /* D-538: 번쩍임은 한 번 — 그림 띠 자리만, 진홍 50% 디더 한 장(약 110ms), 흰 장 · 겹 번쩍 없음 (WCAG 2.3.1 「1초 3회」 아래) */
 @keyframes p2flash { 0% { visibility: visible; } 30%, 100% { visibility: hidden; } }
 :root[data-noflash="1"] .p2-flash { display: none; }

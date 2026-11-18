@@ -3,6 +3,7 @@
  * 창 · 고르기 화면 · 장소 화면 · 토스트 · 띠를 모두 이 함수들로 만든다 — 화면마다 틀을 새로 짓지 않는다.
  * 화면은 게임 상태를 바꾸지 않는다: 단추 동작은 부르는 쪽이 붙인다(돌려준 요소에서 data-* 로 찾는다).
  */
+import { layRect, viewH, viewW } from '../view/vz';
 import { calmMotion } from '../prefs/motion';
 import { pxOut } from './fx3';
 import { fitCover } from '../view/cover';
@@ -287,11 +288,11 @@ const railArrows = (row: HTMLElement): void => {
 const paintRailNav = (row: HTMLElement): void => {
   const nav = row.parentElement?.querySelector<HTMLElement>(':scope > .rail-nav');
   if (!nav || !row.isConnected) return;
-  const hr = row.parentElement!.getBoundingClientRect(), r = row.getBoundingClientRect();
+  const hr = layRect(row.parentElement!.getBoundingClientRect()), r = layRect(row.getBoundingClientRect());
   nav.style.top = `${Math.round(r.top - hr.top + r.height / 2)}px`;
   // 줄이 화면 밖까지 넓으면(음수 여백) 보이는 부분 안쪽 끝에 — 안전 여백 G
   const G = Math.max(16, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--G')) || 16);
-  const l = Math.max(r.left, G), rr = Math.min(r.right, window.innerWidth - G);
+  const l = Math.max(r.left, G), rr = Math.min(r.right, viewW() - G);
   nav.style.left = `${Math.round(l - hr.left)}px`;
   nav.style.width = `${Math.round(Math.max(0, rr - l))}px`;
   const max = row.scrollWidth - row.clientWidth;
@@ -680,7 +681,8 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
   document.body.appendChild(el);
   const rail = document.getElementById(o.side === 'left' ? 'left' : 'right');
   const board = document.getElementById('board');
-  const r = rail && rail.offsetParent !== null ? rail.getBoundingClientRect() : null;
+  const r = rail && rail.offsetParent !== null ? layRect(rail.getBoundingClientRect()) : null;
+  const innerWidth = viewW(), innerHeight = viewH();
   if (r && board) {
     // 레일 + 판 옆 빈칸까지만 (판 칸을 덮지 않게) — 창 폭 S 352를 넘지 않는다
     const w = el.offsetWidth;
@@ -688,7 +690,7 @@ export const infoPeek = (o: { key: string; head: string; body: string; side: 'le
     const x = o.side === 'left' ? r.left + 4 : Math.max(r.right - w - 4, 4);
     el.style.left = `${Math.round(x)}px`;
     const end = document.getElementById('btn-end');
-    const bottom = o.cls?.includes('unit-peek') && end && end.offsetParent !== null ? Math.min(innerHeight - 8, end.getBoundingClientRect().top - 8) : innerHeight - 8;
+    const bottom = o.cls?.includes('unit-peek') && end && end.offsetParent !== null ? Math.min(innerHeight - 8, layRect(end.getBoundingClientRect()).top - 8) : innerHeight - 8;
     el.style.top = `${Math.round(Math.max(8, Math.min(bottom - h, r.top + 76)))}px`;
   } else {
     el.style.left = `${Math.round((innerWidth - el.offsetWidth) / 2)}px`;

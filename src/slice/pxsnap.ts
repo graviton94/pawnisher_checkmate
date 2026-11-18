@@ -11,10 +11,11 @@ import './facesnap';
  * 정수로 내려 루트에 CSS zoom — 1080p에서 ×2. 정수라 도트 = 기기 픽셀 정수가 그대로 지켜진다. 손가락 기기 · 일렉트론은 1.
  */
 import { installDitherVars } from '../view/motion';
+import { installZoomGeometry, rawInnerH, rawInnerW } from '../view/vz';
 
 const webZoom = (): number => {
   if ((globalThis as { pawnisherNative?: unknown }).pawnisherNative || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return 1;
-  return Math.max(1, Math.floor(Math.min(window.innerWidth / 915, window.innerHeight / 412)));
+  return Math.max(1, Math.floor(Math.min(rawInnerW() / 915, rawInnerH() / 412)));
 };
 const apply = (): void => {
   const z = webZoom();
@@ -22,6 +23,16 @@ const apply = (): void => {
   if (String(z) !== (root.dataset.zoom ?? '1')) {
     root.dataset.zoom = String(z);
     root.style.zoom = z > 1 ? String(z) : '';
+  }
+  // 확대가 걸린 동안 JS 화면 좌표(창 크기 · 상자 · 포인터)를 배치 px로 (D-563, view/vz.ts)
+  installZoomGeometry();
+  // CSS vh · vw는 루트 zoom에 한 번 더 곱해진다(16vh → 화면 32%) — 확대일 때만 배치 px 길이로 덮는다 (D-563, CSS는 var(--vh, 1vh))
+  if (z > 1) {
+    root.style.setProperty('--vh', `${rawInnerH() / z / 100}px`);
+    root.style.setProperty('--vw', `${rawInnerW() / z / 100}px`);
+  } else {
+    root.style.removeProperty('--vh');
+    root.style.removeProperty('--vw');
   }
   const dpr = window.devicePixelRatio || 1;
   const dev = Math.max(1, Math.round(2 * dpr));
@@ -33,8 +44,10 @@ const apply = (): void => {
   // 수령 원화의 세부 격자. 원본 안 상징을 떼지 않고도 정수 기기 픽셀로 표시한다.
   document.documentElement.style.setProperty('--px-detail', `${Math.max(1, Math.round(dpr * 0.75)) / dpr}px`);
   // 타이틀 문장(205×194 원본 1배) 확대 = 기기 픽셀 정수배 (D-399 — 예전 zoom 1.3 · 1.15 · 1.4 비정수): 높이 80% · 1.5배 상한
-  const logo = Math.max(1, Math.floor(dpr * Math.min(1.5, (window.innerHeight * 0.8) / 194)));
-  document.documentElement.style.setProperty('--logo-k', String(logo / dpr));
+  // 웹 PC 확대면 기기 픽셀 = 배치 px × DPR × 확대 — 1080p에서 문장 도트 하나 = 기기 3px (D-563)
+  const devK = dpr * z;
+  const logo = Math.max(1, Math.floor(devK * Math.min(1.5, (rawInnerH() / z * 0.8) / 194)));
+  document.documentElement.style.setProperty('--logo-k', String(logo / devK));
   document.documentElement.dataset.dpr = String(Math.round(dpr * 1000) / 1000);
   // 디더 가면 16단(--dq0~16) · 먹 막(--dk0~16) — 칸 = 장치 층 도트 (D-554)
   installDitherVars();

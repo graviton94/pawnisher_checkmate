@@ -1,4 +1,5 @@
 import { calmMotion } from '../prefs/motion';
+import { layRect, viewH } from '../view/vz';
 import '../fonts.css';
 import { BOSS_BODY, bossArtFile, bossArtTemp, GIANT_PART, GIANTS, RAID_TEXT, type GiantType } from '../data/giants';
 import { PROCESS } from '../data/process';
@@ -557,7 +558,7 @@ const showPeek = (cardEl: HTMLElement): void => {
   if (!id) return;
   hidePeek();
   peekAt = { id, t: Date.now() };
-  const r = cardEl.getBoundingClientRect();
+  const r = layRect(cardEl.getBoundingClientRect());
   peekEl = document.createElement('div');
   peekEl.className = 'peek';
   peekEl.dataset.for = cardEl.dataset.card ?? '';
@@ -567,7 +568,7 @@ const showPeek = (cardEl: HTMLElement): void => {
   const h = peekEl.offsetHeight;
   // 손패 레일 오른쪽 옆, 세로는 그 카드 가운데 (판 왼쪽 빈칸 위 — 보고서 2-2 카드 크게 보기 A−)
   peekEl.style.left = `${Math.round(r.right + 8)}px`;
-  peekEl.style.top = `${Math.round(Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2)))}px`;
+  peekEl.style.top = `${Math.round(Math.max(8, Math.min(viewH() - h - 8, r.top + r.height / 2 - h / 2)))}px`;
   // D-189: 도트가 아래에서 쓸어 올리며 드러내고 닫을 땐 위에서 쓸어 내린다
   sweep(peekEl, true);
 };
@@ -5442,7 +5443,7 @@ const opening = (): void => {
   const el = document.createElement('div');
   el.className = 'opening';
   el.innerHTML = `<div class="op-bg"><i class="op-fog"></i><i class="op-glow"></i></div><h1 class="sr-only">Pawnisher : Checkmate</h1>
-    <div class="op-logo">${crestHtml()}<p class="op-tag">${OPENING_TEXT.tagline}</p></div>
+    <div class="op-logo">${crestHtml()}</div>
     <p class="op-press">${pressHtml(OPENING_TEXT.press)}</p><nav class="op-menu" hidden></nav>`;
   document.body.appendChild(el);
   document.body.classList.add('cover-op');

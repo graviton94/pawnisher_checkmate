@@ -22,9 +22,9 @@
    * 한 줄 꼬리표 · 칩 · 명판 · 단추 글은 이 값보다 작게 두지 않는다 (카드 속 줄은 card-spec이 따로 정한다) */
   --lh-10: 13px; --lh-12: 16px; --lh-15: 20px; --lh-24: 28px; --lh-30: 36px; --lh-36: 42px; --lh-45: 54px; --lh-60: 72px;
   /* 창 세 단계 (폭 · 높이 상한) — 이 셋만 */
-  --win-s: 352px; --win-m: 592px; --win-l: min(883px, calc(100vw - 2 * var(--G)));
+  --win-s: 352px; --win-m: 592px; --win-l: min(883px, calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G)));
   /* 높이 상한 = min(364, 화면 − 48) — 가장 작은 폰 667×375에서도 잘리지 않게 (D-391 기기 표: 폰 667×375 ~ 932×430 · PC 683×384 ~ 960×540) */
-  --win-h-s: min(240px, calc(100vh - 48px)); --win-h: min(364px, calc(100vh - 48px));
+  --win-h-s: min(240px, calc(calc(100 * var(--vh, 1vh)) - 48px)); --win-h: min(364px, calc(calc(100 * var(--vh, 1vh)) - 48px));
   /* 글 색 — 한 줄에 본문 + 강조 1 */
   --t-body: #ece6da; --t-dim: #a89f92; --t-gold: #f4d27a; --t-loss: #ff7b7b; --t-ally: #5eead4; --t-ink: #0b0b0e; --t-brass-ink: #2a1a06;
   /* 9-slice 테 (원본 도트) — 화면 폭 = 도트 × --px */
@@ -49,7 +49,7 @@
 /* ---------- 3.1 창 — .win (S 352 · M 592 · L 883) ---------- */
 #overlay-panel.win, .kit-sheet .win, .k-peek.win, .ld-tip.win {
   position: relative; box-sizing: border-box;
-  width: var(--win-w); max-width: calc(100vw - 2 * var(--G)); max-height: var(--win-hmax); min-height: 0;
+  width: var(--win-w); max-width: calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G)); max-height: var(--win-hmax); min-height: 0;
   overflow: visible;
   display: flex; flex-direction: column; gap: var(--s3);
   /* 테 24 + 안쪽 12 → 글 단 폭 = 창 폭 − 72 (S 280 · M 520 · L 811), 안쪽 높이 = 364 − 72 = 292 */
@@ -317,7 +317,7 @@ body.kb-nav :is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline:
 .state-band {
   position: fixed; z-index: 90; left: 50%; top: var(--Gy); transform: translateX(-50%);
   box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
-  min-height: calc(var(--px) * 24); width: max-content; max-width: min(480px, calc(100vw - 2 * var(--G))); /* D-558: left 50% 고정 띠는 남은 반폭(333)에 갇혀 24px 문구가 띠 밖으로 나갔다 — 글 폭만큼(상한 480) */ padding: 0 var(--s2); margin: 0;
+  min-height: calc(var(--px) * 24); width: max-content; max-width: min(480px, calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G))); /* D-558: left 50% 고정 띠는 남은 반폭(333)에 갇혀 24px 문구가 띠 밖으로 나갔다 — 글 폭만큼(상한 480) */ padding: 0 var(--s2); margin: 0;
   border-style: solid; image-rendering: pixelated; cursor: pointer; pointer-events: auto;
   text-align: center; white-space: nowrap; word-break: keep-all;
 }
@@ -351,7 +351,7 @@ body.kb-nav :is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline:
 /* ---------- 말풍선 .talk — 초상 액자 + 움푹 칸 (튜토리얼 · 부관 · 적 킹 · 반장 · 분대원, 패스 4 D-396) ---------- */
 .talk {
   position: fixed; z-index: 62; box-sizing: border-box; display: flex; align-items: flex-start; gap: var(--s2);
-  left: 50%; top: var(--Gy); transform: translateX(-50%); width: max-content; max-width: min(592px, calc(100vw - 2 * var(--G)));
+  left: 50%; top: var(--Gy); transform: translateX(-50%); width: max-content; max-width: min(592px, calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G)));
   pointer-events: none; filter: drop-shadow(calc(var(--px) * 2) calc(var(--px) * 2) 0 #0b0b0e);
 }
 .talk .talk-face { flex: none; display: grid; place-items: end center; overflow: hidden; }
@@ -375,7 +375,7 @@ body.kb-nav :is(.win, .scr-pick, .scr-place, .kit) .tab:focus-visible { outline:
 
 /* ---------- 정보 엿보기 .k-peek — 비모달 S 창 (길게 누름 · 반장 규칙 · 기록, 패스 4 D-396) ---------- */
 .k-peek { position: fixed; z-index: 64; pointer-events: none; }
-.k-peek.win.win-s { --win-w: var(--win-s); --win-hmax: var(--win-h-s); gap: var(--s2); max-width: min(var(--win-s), calc(100vw - 2 * var(--G))); }
+.k-peek.win.win-s { --win-w: var(--win-s); --win-hmax: var(--win-h-s); gap: var(--s2); max-width: min(var(--win-s), calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G))); }
 .k-peek.k-in { animation: ktoastin 200ms steps(3, jump-none) both; }
 .k-peek .win-head .lead { font: 700 24px/30px Galmuri11, sans-serif; }
 .k-peek .win-head > .piece-img, .k-peek .win-head > img { width: calc(var(--px) * 24); height: calc(var(--px) * 24); }
@@ -679,7 +679,7 @@ body.kb-nav .ability-block:focus-visible { outline: 2px solid var(--t-gold); out
 /* ===================== 패스 4 — 전투 HUD 구역 (3.9, D-396) =====================
    왼쪽 레일 = 태엽(64) · 손패(선택지 판) · 덱 줄(52) / 가운데 = 상태 띠 48 + 판 / 오른쪽 = 턴 · 속전(64) · 적 의도 목록(움푹 칸) · 되감기 + 턴 끝(52).
    레일 폭 180 ~ 214: 667 폭에서도 가운데 열 ≥ 305 → 판 칸 50 (터치 48 하한). */
-body.slice.lay-f { --railL: clamp(183px, 23vw, 214px); --railR: clamp(183px, 23vw, 214px); --gTop: 64px; --gBot: 52px; }
+body.slice.lay-f { --railL: clamp(183px, calc(23 * var(--vw, 1vw)), 214px); --railR: clamp(183px, calc(23 * var(--vw, 1vw)), 214px); --gTop: 64px; --gBot: 52px; }
 body.slice.lay-f #left.rail, body.slice.lay-f #right.rail { display: flex; flex-direction: column; gap: 6px; padding: 6px; min-height: 0; overflow: hidden; }
 
 /* 태엽 계기 (지금 그대로 — 받침 · 열쇠 그림은 D-211 도트) */
@@ -787,7 +787,7 @@ body.slice.lay-f #right > .rmid {
 .intents .it-row > .who > img.it-n { position: absolute; left: calc(var(--px) * -4); top: calc(var(--px) * -4); width: calc(var(--px) * 11); height: calc(var(--px) * 11); image-rendering: pixelated; }
 .intents .it-row > .who img, .intents .it-res img { width: 24px; height: 24px; image-rendering: pixelated; }
 .intents .it-ico { justify-self: center; display: block; image-rendering: pixelated; }
-.intents .it-res { display: flex; align-items: center; gap: 2px; min-width: 0; white-space: nowrap; }
+.intents .it-res { display: flex; flex-wrap: wrap; align-items: center; gap: 0 2px; min-width: 0; white-space: nowrap; } /* 좁은 레일(667)에서 두 기물 피해가 넘치면 둘째를 다음 줄로 (D-563) */
 .intents .it-res em { font-style: normal; color: var(--t-loss); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
 .intents .it-res em.kill { color: var(--t-gold); }
 .intents .it-res .it-w { color: var(--t-dim); }
@@ -821,7 +821,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .tut .talk { pointer-events: auto; cursor: pointer; z-index: 1; }
 .tut .talk.top { top: var(--Gy); bottom: auto; }
 .tut .talk.bottom { top: auto; bottom: var(--Gy); }
-.tut .talk:not(.on-rail) { width: min(592px, calc(100vw - 2 * var(--G))); }
+.tut .talk:not(.on-rail) { width: min(592px, calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G))); }
 .tut .talk .talk-body { min-width: 0; }
 .tut .talk .talk-foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--s2); }
 .tut .talk .talk-next { margin-right: auto; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
@@ -864,9 +864,9 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
    모든 컷(프롤로그 · 막 카드 · 반장 등장 · 격파 · 승급 · 엔딩 · 크레딧 · 최종장)이 이 자리 하나를 쓴다. */
 .cut-sub {
   --cap: calc(var(--px) * 2);
-  --cut-w: min(640px, calc(100vw - 2 * var(--G) - 2 * (var(--px) * 56 + 16px)));
+  --cut-w: min(640px, calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G) - 2 * (var(--px) * 56 + 16px)));
   position: absolute; z-index: 6; box-sizing: border-box; pointer-events: none;
-  left: calc((100vw - var(--cut-w)) / 2); left: round(calc((100vw - var(--cut-w)) / 2), var(--px));
+  left: calc((calc(100 * var(--vw, 1vw)) - var(--cut-w)) / 2); left: round(calc((calc(100 * var(--vw, 1vw)) - var(--cut-w)) / 2), var(--px));
   bottom: var(--Gy); width: var(--cut-w); height: calc(var(--cap) * 22);
 }
 .cut-sub::before { content: ''; position: absolute; z-index: 0; inset: 0; box-sizing: border-box; image-rendering: pixelated;
@@ -899,7 +899,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .kit .cut-skip.btn { position: absolute; z-index: 7; left: auto; top: auto; right: var(--G); bottom: var(--Gy); width: calc(var(--px) * 56); }
 /* 좁은 화면(< 900): 띠가 화면 폭을 쓰고 「건너뛴다」는 띠 바로 위 오른쪽 */
 @media (max-width: 899px) {
-  .cut-sub { --cut-w: calc(100vw - 2 * var(--G)); }
+  .cut-sub { --cut-w: calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G)); }
   .kit .cut-skip.btn { bottom: calc(var(--Gy) + var(--px) * 44 + var(--s2)); }
 }
 /* 프롤로그: 로고 동안 띠 · 건너뛴다를 걷고, 「눌러 출하」가 같은 띠에 */
@@ -922,7 +922,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .actcard.named .ac-name { visibility: visible; animation: bfName 240ms steps(1) both; }
 
 /* 반장 등장 (D-249 연출 그대로): 왼쪽 글 단 = 막 꼬리표(진홍) · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙(움푹 칸, 12 굵게) — 서술 · 대사는 아래 자막 띠 */
-.bossfx .bf-text { position: absolute; z-index: 4; left: var(--G); top: calc(16vh + var(--s2)); width: min(54vw, 460px); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+.bossfx .bf-text { position: absolute; z-index: 4; left: var(--G); top: calc(calc(16 * var(--vh, 1vh)) + var(--s2)); width: min(calc(54 * var(--vw, 1vw)), 460px); display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); }
 .bossfx .bf-name { margin: 0; color: #f4f1ea; font: 700 36px/44px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; visibility: hidden; }
 .bossfx.name .bf-name { visibility: visible; animation: bfName 240ms steps(1) both; }
 .bossfx .bf-title { margin: 0; min-height: 30px; color: #f4d27a; font: 700 24px/30px Galmuri11, sans-serif; text-shadow: var(--px) var(--px) 0 #000; }
@@ -935,7 +935,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .bossfx .bf-rules li { position: relative; padding-left: calc(var(--px) * 6); visibility: hidden; color: var(--t-body); font: 700 12px/18px Galmuri11, sans-serif; }
 .bossfx .bf-rules li::before { content: ''; position: absolute; left: 0; top: 6px; width: calc(var(--px) * 3); height: calc(var(--px) * 3); background: var(--accent); box-shadow: 0 0 0 var(--px) #000; }
 .bossfx .bf-rules li.in { visibility: visible; animation: bfName 200ms steps(1) both; }
-@media (max-height: 411px) { .bossfx .bf-text { top: calc(16vh - var(--s2)); gap: var(--s1); } }
+@media (max-height: 411px) { .bossfx .bf-text { top: calc(calc(16 * var(--vh, 1vh)) - var(--s2)); gap: var(--s1); } }
 
 
 /* ---------- 지도 (출하 지도 D-169 → D-397) ---------- */
@@ -1307,7 +1307,7 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 /* D-534: 「첫째 왕관 ▾」이 56px 단추 테를 밟았다 → 72px · 두 줄(「첫째」 / 「왕관 ▾」) — 본편 시작 단추 폭을 지킨다 */
 .opening .op-run > .op-level { flex: none; width: 72px; min-width: 72px; min-height: 60px; padding-inline: 0; white-space: nowrap; font: 400 12px/18px Galmuri11, sans-serif; }
 
-body.slice .opening .op-menu { padding-block: 0; gap: 8px; width: min(352px, 44vw); }
+body.slice .opening .op-menu { padding-block: 0; gap: 8px; width: min(352px, calc(44 * var(--vw, 1vw))); }
 
 .opening .op-menu { z-index: 3; } /* 장식 톱니보다 조작·문구가 앞선다. */
 

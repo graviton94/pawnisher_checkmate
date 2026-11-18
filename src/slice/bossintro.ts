@@ -9,7 +9,7 @@
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
 import { calmMotion, reduceFlash } from '../prefs/motion';
-import { fitCover } from '../view/cover';
+import { devPerCss, viewH, viewW } from '../view/vz';
 import { cutChromeHtml, typeCutPages, type CutLine } from './uikit';
 
 export type BossKey = 'plate' | 'spawn' | 'thorns' | 'gilded' | 'inspect' | 'magnet' | 'alarm';
@@ -39,8 +39,11 @@ const LOOK: Record<BossKey, { accent: string; seam: number }> = {
   alarm: { accent: '#ff6b6b', seam: 0 },
 };
 
-/** 초상 왼쪽 band칸을 베이어 디더로 깎는다 (그림 도트 단위) */
-const ditherEdge = (img: HTMLImageElement, band: number, src: CanvasImageSource = img): HTMLCanvasElement => {
+/**
+ * 초상 가장자리를 베이어 디더로 깎는다 (그림 도트 단위): 왼쪽 band칸(배경과 만나는 경계) + 위 · 아래 vband칸(검은 막과 만나는 곳).
+ * 오른쪽은 화면 끝에 붙으므로 깎지 않는다 (D-563).
+ */
+const ditherEdge = (img: HTMLImageElement, band: number, src: CanvasImageSource = img, vband = 0): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
@@ -48,10 +51,12 @@ const ditherEdge = (img: HTMLImageElement, band: number, src: CanvasImageSource 
   x.drawImage(src, 0, 0, c.width, c.height);
   const d = x.getImageData(0, 0, c.width, c.height);
   for (let yy = 0; yy < c.height; yy++)
-    for (let xx = 0; xx < Math.min(band, c.width); xx++) {
-      // 왼쪽 끝일수록 많이 빠진다 (x/band가 베이어 생명보다 작으면 지운다), 가장자리 몇 칸은 거의 다 빠짐
-      const keep = xx / band;
-      if (keep * keep <= bayer(xx, yy)) d.data[(yy * c.width + xx) * 4 + 3] = 0;
+    for (let xx = 0; xx < c.width; xx++) {
+      // 끝일수록 많이 빠진다 (가장자리까지 거리/띠 폭이 베이어 생명보다 작으면 지운다), 가장자리 몇 칸은 거의 다 빠짐
+      const kx = xx < band ? xx / band : 1;
+      const ky = vband > 0 ? Math.min(1, yy / vband, (c.height - 1 - yy) / vband) : 1;
+      const keep = Math.min(kx, ky);
+      if (keep < 1 && keep * keep <= bayer(xx, yy)) d.data[(yy * c.width + xx) * 4 + 3] = 0;
     }
   x.putImageData(d, 0, 0);
   return c;
@@ -71,33 +76,44 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');
     document.body.appendChild(el);
-    const W = innerWidth, H = innerHeight;
-    // 도트 FX 판 (1도트 = 3px, 화면 전체)
-    const fx = new FxCanvas(Math.ceil(W / 3), Math.ceil(H / 3), 3);
+    // 화면 크기 · 기기 배율은 배치 px로 (웹 PC 정수 확대에서 innerWidth는 확대 뒤 값 — D-563)
+    const W = viewW(), H = viewH(), dev = devPerCss();
+    // 도트 FX 판 (1도트 = 기기 픽셀 정수, 약 3 CSS px, 화면 전체)
+    const DOT = Math.max(1, Math.round(3 * dev)) / dev;
+    const fx = new FxCanvas(Math.ceil(W / DOT), Math.ceil(H / DOT), DOT);
     el.querySelector('.bf-fx')!.appendChild(fx.canvas);
     const R = new Rng(o.rule.length * 31 + 7);
     const ps = new Particles(R, () => Infinity, o.rule === 'spawn' ? [hex('#efffdc'), hex('#7fd45a'), hex('#3e8c3a')] : o.rule === 'inspect' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'magnet' ? [hex('#f2d4ff'), hex('#d08af0'), hex('#7e34a0')] : o.rule === 'thorns' ? [hex('#ffffff'), hex('#e8e4ec'), hex('#8a8794')] : o.rule === 'alarm' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
     const lights = new Lights();
     const barH = Math.round(H * 0.16);
-    // 초상도 공통 cover 규칙으로 오른쪽 그림 영역 전체를 채운다.
     const port = el.querySelector<HTMLElement>('.bf-port')!;
     let seamX = W * 0.45; // 경계선 (화면 px)
     let portW = 0;
+    // 경계선 FX 세로 범위 (화면 px) — 초상이 서면 초상 위아래로 맞춘다
+    let seamTop = barH, seamBot = H - barH;
     const img = new Image();
     let fallbackSrc: HTMLImageElement | null = null;
+    // 초상 = 통째로 보이게 (D-563 사장님: 「너무 당겨 찍었다 — 몸이 보이게」): 위 띠 아래 남은 높이 안에 드는 가장 큰 기기 픽셀 정수배,
+    // 폭은 화면 62%까지(왼쪽 이름 · 수배판 자리). 오른쪽 끝에 붙이고 남은 높이 가운데. 자르지 않는다.
     img.onload = () => {
-      const targetW = W * 0.7;
-      const r = fitCover(img.naturalWidth, img.naturalHeight, targetW, H, devicePixelRatio || 1, .5, .15);
-      const k = r.scale;
-      Object.assign(port.style, { top: '0px', width: `${targetW}px`, height: `${H}px`, overflow: 'hidden' });
-      const band = Math.round(img.naturalWidth * 0.32);
-      const cv = ditherEdge(img, band, fallbackSrc ?? img);
-      cv.style.width = `${img.naturalWidth * k}px`;
-      cv.style.height = `${img.naturalHeight * k}px`;
-      Object.assign(cv.style, { position: 'absolute', left: `${r.x}px`, top: `${r.y}px` });
+      const nw = img.naturalWidth, nh = img.naturalHeight;
+      // 폭 상한: 화면 62% · 그리고 왼쪽 이름 · 수배판 글 상자 오른쪽 끝까지(디더로 깎이는 왼쪽 띠 절반은 글 밑으로 겹쳐도 된다)
+      const tb = el.querySelector<HTMLElement>('.bf-text');
+      const textR = tb ? tb.offsetLeft + tb.offsetWidth : 0;
+      const maxW = Math.min(W * 0.62, (W - textR - 8) / (1 - 0.22 * 0.5));
+      const kd = Math.max(1, Math.min(Math.floor(((H - barH) * dev) / nh), Math.floor((maxW * dev) / nw)));
+      const k = kd / dev;
+      const pw = nw * k, ph = nh * k;
+      const top = Math.round((barH + (H - barH - ph) / 2) * dev) / dev;
+      Object.assign(port.style, { top: `${top}px`, width: `${pw}px`, height: `${ph}px`, overflow: 'hidden' });
+      const band = Math.round(nw * 0.22);
+      const cv = ditherEdge(img, band, fallbackSrc ?? img, Math.round(nh * 0.1));
+      Object.assign(cv.style, { position: 'absolute', left: '0px', top: '0px', width: `${pw}px`, height: `${ph}px` });
       port.appendChild(cv);
-      portW = img.naturalWidth * k;
-      seamX = W - targetW + r.x + band * k * 0.45;
+      portW = pw;
+      seamX = W - pw + band * k * 0.45;
+      seamTop = Math.max(barH, top + ph * 0.08);
+      seamBot = Math.min(H, top + ph * 0.92);
     };
     // 초상 그림이 아직 없으면 (도금왕 B-04 발주 전): 검은 킹 기물을 금칠해 크게 (72칸 그림 → 정수배)
     img.onerror = () => {
@@ -158,22 +174,22 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     at(Math.max(5600, 1500 + o.lines.reduce((a, l) => a + l.t.length * 64, 0) + 2000), close);
     // 경계선 FX (반장마다)
     let spawnAcc = 0;
-    const seamY0 = barH / 3, seamY1 = (H - barH) / 3;
+    const seamY0 = (): number => seamTop / DOT, seamY1 = (): number => seamBot / DOT;
     void fx.run(
       6000,
       (dt, t) => {
         ps.update(dt);
         lights.update(dt);
         if (t < 0.36 || calm) return;
-        const sx = seamX / 3;
+        const sx = seamX / DOT;
         // 꽂히는 순간: 경계선을 따라 터짐 + 큰 빛
         if (t >= 0.62 && t - dt < 0.62) {
-          lights.add(sx, (seamY0 + seamY1) / 2, 60, accent, 0.9, 0.6);
-          for (let i = 0; i < 26; i++) { const y = R.range(seamY0, seamY1); ps.spawn(o.rule === 'thorns' ? P.SHARD : P.SPARK, sx + R.range(-2, 2), y, R.range(-120, -20), R.range(-60, 40), R.range(0.4, 0.9), o.rule === 'thorns' ? hex('#c42430') : accent, R.range(1, 2)); }
+          lights.add(sx, (seamY0() + seamY1()) / 2, 60, accent, 0.9, 0.6);
+          for (let i = 0; i < 26; i++) { const y = R.range(seamY0(), seamY1()); ps.spawn(o.rule === 'thorns' ? P.SHARD : P.SPARK, sx + R.range(-2, 2), y, R.range(-120, -20), R.range(-60, 40), R.range(0.4, 0.9), o.rule === 'thorns' ? hex('#c42430') : accent, R.range(1, 2)); }
         }
         spawnAcc += dt * (o.rule === 'plate' ? 70 : o.rule === 'spawn' ? 40 : 30);
         for (; spawnAcc > 1; spawnAcc--) {
-          const y = R.range(seamY0, seamY1), x = sx + R.range(-6, 4);
+          const y = R.range(seamY0(), seamY1()), x = sx + R.range(-6, 4);
           if (o.rule === 'plate') {
             // 경계선이 타오른다: 불 덩어리가 오르며 식고 연기가 되며 불씨가 흩날린다
             if (R.chance(0.55)) ps.spawn(P.FIRE, x, y, R.range(-8, 6), R.range(-30, -10), R.range(0.3, 0.6), 0, R.range(1.2, 2.6), 0, R.chance(0.25));
@@ -193,18 +209,28 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         // 흰 장 한 장 (hero frame, D-538): 화면 전체 흰 면 대신 2×2 체커 디더 한 장(약 60ms), 번쩍임 줄이기면 없다
         if (!noFlash && t >= 0.26 && t < 0.32) for (let y = 0; y < fx.h; y++) for (let x = (y & 1); x < fx.w; x += 2) p.px(x, y, WHITE);
         if (calm) return;
-        const sx = seamX / 3;
+        const sx = seamX / DOT;
         // 경계선 빛: 큰 옅은 웅덩이 + 줄 빛 (반장 색)
         if (t > 0.36 && portW) {
           const k = Math.min(1, (t - 0.36) * 3);
-          for (let y = seamY0; y < seamY1; y += 8) p.glow(sx, y, o.rule === 'plate' ? 14 : 10, accent, 0.12 * k);
+          for (let y = seamY0(); y < seamY1(); y += 8) p.glow(sx, y, o.rule === 'plate' ? 14 : 10, accent, 0.12 * k);
+          // 녹은 띠 (D-563): 경계선 왼쪽 몇 칸을 반장 색 도트로 — 베이어 계단 세 단(가까울수록 촘촘), 80ms마다 열이 일렁인다. 투명도 보간 없음
+          const fr = Math.floor(t * 12), y0 = Math.floor(seamY0()), y1 = Math.ceil(seamY1());
+          for (let y = y0; y < y1; y++) {
+            const wob = ((y * 7 + fr * 3) % 5) - 2;
+            for (let dx = -5; dx <= 1; dx++) {
+              const lv = Math.ceil((3 * (6 - Math.abs(dx - wob * 0.5))) / 7) / 3 * 0.55 * k;
+              const x = Math.round(sx) + dx;
+              if (lv > 0 && bayer(x, y + fr) < lv) p.px(x, y, accent);
+            }
+          }
           if (o.rule === 'spawn') {
             // 경계선을 타고 오르내리는 전기 줄기 (지그재그 1칸 선, 80ms마다 모양이 바뀐다)
             const f = Math.floor(t * 12);
-            let y = seamY0, x = sx;
+            let y = seamY0(), x = sx;
             const r2 = new Rng(f + 3);
             p.fade = 1;
-            while (y < seamY1) { const ny = y + r2.range(3, 7), nx = sx + r2.range(-4, 4); p.line(x, y, nx, ny, r2.chance(0.3) ? WHITE : PAL.toxic[6]); p.glow(nx, ny, 4, PAL.toxic[5], 0.25); x = nx; y = ny; }
+            while (y < seamY1()) { const ny = y + r2.range(3, 7), nx = sx + r2.range(-4, 4); p.line(x, y, nx, ny, r2.chance(0.3) ? WHITE : PAL.toxic[6]); p.glow(nx, ny, 4, PAL.toxic[5], 0.25); x = nx; y = ny; }
           }
         }
         ps.draw(p, 'back');

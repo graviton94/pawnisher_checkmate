@@ -4,6 +4,7 @@
  *  - 기믹 순간: 줄 폭격 = 칸마다 불기둥이 솟고 연기 · 불씨 · 흰 장 / 가시 반격 = 붉은 쇳조각이 친 기물로 날아가 박힘 / 찍어 내기 = 쾅 먼지 · 불꽃
  * 판이 안 보이면(body.between) 쉰다.
  */
+import { lay, layRect } from './vz';
 import { lessFlash } from '../prefs/fx';
 import { calmMotion } from '../prefs/motion';
 import { FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE, bayer } from './pxfx';
@@ -26,18 +27,19 @@ export class BoardFx {
   }
   /** 칸 → 이 층의 도트 좌표 (칸 가운데) */
   private dot(p: Pos): { x: number; y: number } {
+    // 판 좌표 · 상자는 보이는 px — 층 캔버스는 배치 px (웹 PC 확대, D-563)
     const s = this.screenOf(p);
-    const r = this.host.getBoundingClientRect();
-    return { x: (s.x - r.left) / D, y: (s.y - r.top) / D };
+    const r = layRect(this.host.getBoundingClientRect());
+    return { x: (lay(s.x) - r.left) / D, y: (lay(s.y) - r.top) / D };
   }
   private tileDots(): number {
     const a = this.screenOf({ x: 0, y: 0 }), b = this.screenOf({ x: 1, y: 0 });
-    return Math.abs(b.x - a.x) / D || 10;
+    return Math.abs(lay(b.x - a.x)) / D || 10;
   }
   /** 층을 세운다 (판이 세워질 때마다) — rule: '' = 반장 아님 */
   setup(rule: string): void {
     this.rule = rule;
-    const r = this.host.getBoundingClientRect();
+    const r = layRect(this.host.getBoundingClientRect());
     const w = Math.ceil(r.width / D), h = Math.ceil(r.height / D);
     if (!this.fx || this.fx.w !== w || this.fx.h !== h) {
       this.fx?.canvas.remove();

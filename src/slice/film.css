@@ -66,7 +66,7 @@
 /* 끝 정적 (coda): 그림 없이 먹(또는 백지) 위 한가운데 한 줄 — 띠 장식 없이 */
 .prologue.coda .film-view { background: #0b0b0e; }
 .prologue.coda-white .film-view { background: #f1ede4; }
-.prologue.coda .cut-sub { bottom: calc(var(--lbb) + (100vh - var(--lbt) - var(--lbb) - var(--px) * 44) / 2); bottom: calc(var(--lbb) + (100dvh - var(--lbt) - var(--lbb) - var(--px) * 44) / 2); }
+.prologue.coda .cut-sub { bottom: calc(var(--lbb) + (calc(100 * var(--vh, 1vh)) - var(--lbt) - var(--lbb) - var(--px) * 44) / 2); bottom: calc(var(--lbb) + (calc(100 * var(--vh, 1dvh)) - var(--lbt) - var(--lbb) - var(--px) * 44) / 2); }
 .prologue.coda .cut-sub::before, .prologue.coda .cut-sub::after { display: none; }
 .prologue.coda .cut-lines { background: none; box-shadow: none; }
 .prologue.coda .cut-lines p::before { display: none; }

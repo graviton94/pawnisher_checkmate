@@ -9,6 +9,7 @@
  * 계열: 카드 표 비행(손패 → 대상) · 죔쇠(방열판) · 기름 방울 + 톱니(수리) · 불씨(연쇄) · 태엽 용수철(태엽) · 덱 → 손패 카드 ·
  * 지휘 깃발(킹 → 그 기물) · 쇳물 덩이(쇳물 서약) · 깨짐(제물). 게임 상태는 읽지도 바꾸지도 않는다 — 화면 좌표만 받는다.
  */
+import { devPerCss } from '../view/vz';
 import { calmMotion } from '../prefs/motion';
 import { CARD_FX } from '../data/fx';
 
@@ -102,7 +103,8 @@ class Layer {
   running = false;
   private ensure(): Ctx | null {
     if (typeof document === 'undefined') return null;
-    const dpr = window.devicePixelRatio || 1;
+    // 캔버스 1px = 기기 1px — 웹 PC 확대면 배치 px 하나 = 기기 px (DPR × 확대) (D-563)
+    const dpr = devPerCss();
     const w = Math.round(window.innerWidth * dpr), h = Math.round(window.innerHeight * dpr);
     if (!this.cv) {
       this.cv = document.createElement('canvas');
@@ -159,7 +161,7 @@ const layer = new Layer();
 let dotPx = 4;
 /** 판 칸 크기(CSS px)를 알려 준다 — 판이 세워지거나 크기가 바뀔 때 */
 export const setCell = (cellCss: number): void => {
-  dotPx = Math.max(2, Math.round((cellCss * (window.devicePixelRatio || 1)) / 20));
+  dotPx = Math.max(2, Math.round((cellCss * devPerCss()) / 20));
 };
 const dev = (v: number): number => Math.round(v * layer.dpr);
 

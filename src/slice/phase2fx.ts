@@ -11,6 +11,7 @@
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { pxOut, shake } from './fx3';
 import { sparksAt } from './uifx';
+import { layRect, viewH, viewW } from '../view/vz';
 
 const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -23,7 +24,8 @@ export const p2Warn = (text: string, grid: DOMRect | null): void => {
   el.setAttribute('role', 'status');
   el.innerHTML = `<span>${text}</span>`;
   document.body.appendChild(el);
-  const r = grid ?? new DOMRect(0, innerHeight / 3, innerWidth, 1);
+  // 판 격자 상자는 보이는 px — 배치 px로 (웹 PC 확대, D-563)
+  const r = grid ? layRect(grid) : new DOMRect(0, viewH() / 3, viewW(), 1);
   el.style.left = `${Math.round(r.left)}px`;
   el.style.width = `${Math.round(r.width)}px`;
   el.style.top = `${Math.round(r.top + r.height * 0.25 - el.offsetHeight / 2)}px`;

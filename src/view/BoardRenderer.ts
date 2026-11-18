@@ -181,6 +181,21 @@ const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH:
   const dots = Math.max(1, Math.floor((fit * dpr) / BOARD_DOTS));
   return (dots * BOARD_DOTS) / dpr;
 };
+/** PC(마우스 · 호버) 본편 배치인가 — 웹 PC(CSS 정수 확대)와 일렉트론(배율 확대) 모두 */
+const pcBoard = (): boolean => document.body.matches('.lay-f') && !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+/** PC 판 위아래 여유 (칸) — 위 · 아래 각 0.05칸 (D-563) */
+const PC_VPAD = 0.1;
+/**
+ * PC 정수 기물 칸 (D-563): 칸 = 그림 픽셀 80j(= 20도트 × 4j)일 때 기물 72칸 그림이 정확히 j배(72j, 칸의 90%)가 된다.
+ * PC는 판 위아래 여유를 칸 0.1로 줄여 이런 칸 중 가장 큰 것을 찾는다 — 1920×1080에서 6줄 판이 기기 120 → 160px(기물 ×2)로 한 단 커진다.
+ * 들어가는 j가 없으면 0. 호출하는 쪽은 보통 칸(tileSize)과 큰 쪽을 쓴다 — 넓은 판이 예전보다 작아지지 않는다.
+ */
+const pcIntTile = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
+  if (!pcBoard()) return 0;
+  const fit = Math.min((viewH - boardInset.top - boardInset.bottom) / (rows + PC_VPAD), viewW / cols);
+  const j = Math.floor((fit * dpr) / (BOARD_DOTS * 4));
+  return j >= 1 ? (j * BOARD_DOTS * 4) / dpr : 0;
+};
 
 /** 판 그림 (tools/draw-board.py · FX 랩에서 고른 것) — public/ui/board/ */
 /**
@@ -259,6 +274,8 @@ const shakeLvOf = (k: number): 1 | 2 | 3 => (k < 0.007 ? 1 : k < 0.011 ? 2 : 3);
 class BoardScene extends Phaser.Scene {
   input2!: BoardInput;
   tile = 48;
+  /** PC 정수 기물 칸으로 판을 키웠다 — 카메라 여유를 줄인다 (D-563) */
+  private tightPad = false;
   dpr = 1;
   state!: BattleState;
   private tilesG!: Phaser.GameObjects.Graphics;
@@ -725,7 +742,12 @@ class BoardScene extends Phaser.Scene {
     // 새 판의 첫 그리기에 붙어 있는 딱지는 튀어나오지 않는다 (D-538)
     this.chipSeen.clear();
     this.chipArm = this.renderSeq + 2;
-    this.tile = tileSize(this.dpr, state.width, state.height, this.scale.width / this.dpr, this.scale.height / this.dpr);
+    const vw = this.scale.width / this.dpr, vh = this.scale.height / this.dpr;
+    const base = tileSize(this.dpr, state.width, state.height, vw, vh);
+    const pc = pcIntTile(this.dpr, state.width, state.height, vw, vh);
+    // PC 정수 기물 칸이 더 크면 그것 — 판 둘레 여유도 PC 몫으로 줄인다 (D-563)
+    this.tightPad = pc > base;
+    this.tile = Math.max(base, pc);
     this.drawTiles(state);
     this.fitCamera(true);
   }
@@ -824,8 +846,9 @@ class BoardScene extends Phaser.Scene {
     const t = this.tile;
     const bw = this.state.width * t;
     const bh = this.state.height * t;
-    const m = t * 0.25;
-    const top = -m - t * 0.4;
+    // 판 둘레 여유 (아래 · 양옆 m, 위 m + 배지 자리) — PC 정수 칸이면 위 · 아래 칸 0.05씩 (D-563, pcIntTile과 같은 셈)
+    const m = t * (this.tightPad ? PC_VPAD / 2 : 0.25);
+    const top = -m - (this.tightPad ? 0 : t * 0.4);
     const viewW = cam.width / cam.zoom;
     const viewH = cam.height / cam.zoom;
     const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));

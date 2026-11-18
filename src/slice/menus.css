@@ -30,7 +30,7 @@ body[data-drill='b'] #btn-menu { visibility: hidden; }
 .su-win .tabs.tabs9 > .tab { width: calc(var(--px) * 52); } /* D-558: 48 → 52 — 「오늘의 도전」이 탭 테에 붙었다 */
 
 /* ---------- 메인 메뉴 (op5): 단추 다섯 · 황동 하나 — 폭 S 352(40vw까지) 하나, 층 간격 8 ---------- */
-body.slice .opening .op-menu.op5 { width: min(352px, 40vw); gap: var(--s2); padding-block: 0; }
+body.slice .opening .op-menu.op5 { width: min(352px, calc(40 * var(--vw, 1vw))); gap: var(--s2); padding-block: 0; }
 body.slice .opening .op-menu.op5 > .op-main { position: relative; width: 100%; height: 64px; min-height: 64px; margin: 0; padding: 0 var(--s4); display: grid; justify-items: start; align-content: center; gap: 2px; border-right-width: calc(var(--k-btn-x) * var(--px)); border-image-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); }
 body.slice .opening .op-menu.op5 > .op-main::after { content: none; }
 body.slice .opening .op-menu.op5 > .op-main b { font: 700 24px/var(--lh-24) Galmuri11, sans-serif; font-synthesis: none; letter-spacing: 0; }
@@ -51,7 +51,6 @@ body.slice .opening .op-menu.op5 > .op-ship { grid-auto-flow: column; justify-co
 .opening .op-menu.op5 > .op-half > .btn, .opening .op-menu.op5 > .op-quit { width: 100%; min-width: 0; height: 48px; min-height: 48px; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
 .opening .op-menu.op5 > .op-dev > .btn { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; }
 /* 타이틀 문장 자간 (검수 L1): 0.2em은 한글에서 단어 사이처럼 보였다 */
-.op-tag { letter-spacing: 0.04em; }
 /* 장식 톱니는 메뉴 기둥에서 떨어진 왼쪽 아래 바닥으로 (검수 M1 — 누를 수 있는 물건처럼 보이면 안 된다) */
 body.slice .opening.menu::after { right: auto; left: max(16px, env(safe-area-inset-left, 0px)); }
 

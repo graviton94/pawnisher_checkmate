@@ -2,7 +2,7 @@
 #overlay-panel.win.set-win { height: var(--win-hmax); }
 .set-win .set-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--s2); overflow: hidden; }
 /* 줄 = 이름(왼쪽 200) · 조작(모두 같은 x에서 시작) — 이름 아래 12px 설명 */
-.set-win .set-row { display: grid; grid-template-columns: clamp(120px, 22vw, 200px) minmax(0, 1fr); align-items: center; column-gap: var(--s3); min-height: 44px; min-width: 0; }
+.set-win .set-row { display: grid; grid-template-columns: clamp(120px, calc(22 * var(--vw, 1vw)), 200px) minmax(0, 1fr); align-items: center; column-gap: var(--s3); min-height: 44px; min-width: 0; }
 .set-win .set-ctl { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
 .set-win .set-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
 .set-win .set-name > small.note { overflow-wrap: anywhere; white-space: normal; }

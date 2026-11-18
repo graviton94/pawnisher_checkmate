@@ -14,6 +14,7 @@
  * 그림 (D-386): 받기 전 빌린 부품 — 꼬리 = `chrome/tip-*`(90° 돌림), 이름표 = UI-24 강조 띠, 몸 = toast-iron. 「임시 — DL-01 · DL-02 대기」.
  */
 import { calmMotion } from '../prefs/motion';
+import { lay, layRect, viewH, viewW } from '../view/vz';
 import { VOICE_TIMING } from '../data/battle-voice';
 import { pxOut, replay, typeIn, typeSkip } from './fx3';
 
@@ -42,7 +43,10 @@ export const clearBark = (): void => {
 };
 /** 띠 1도트 (CSS --px1) — 이름표 · 꼬리가 띠 밖으로 나온 만큼 자리를 잰다 */
 const dot1 = (): number => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--px1')) || 1;
-const placeBark = (el: HTMLElement, at: BarkAt): void => {
+const placeBark = (el: HTMLElement, at0: BarkAt): void => {
+  // 자리 계산은 배치 px로 (웹 PC 확대에서 판 좌표는 확대 뒤 값 — D-563)
+  const at = { x: lay(at0.x), y: lay(at0.y), half: lay(at0.half) };
+  const innerWidth = viewW();
   const w = el.offsetWidth;
   const h = el.offsetHeight;
   const d = dot1();
@@ -107,7 +111,8 @@ const subQ: { line: SubLine; done: () => void }[] = [];
 let subEl: HTMLElement | null = null;
 /** 자막 띠 자리: 판 격자 아래 빈 자리 가운데, top이면 판 위 (짚은 곳을 가리지 않게) */
 export const placeSub = (el: HTMLElement, top = false, minW = 0): void => {
-  const r = subAnchor();
+  const r0 = subAnchor(), r = r0 && layRect(r0);
+  const innerWidth = viewW(), innerHeight = viewH();
   // 판 열 안 (레일을 덮지 않는다) · 창 M 단계 592를 넘지 않는다.
   // minW (P-C D-502 부관 안내): 판 열이 좁은 화면(667)에서 띠가 네 줄로 접혀 판 절반을 덮었다 — 이 폭까지는 레일 위로 넓힌다(화면 안 16 여백)
   const w = Math.max(r ? Math.min(592, Math.round(r.width) - 8) : Math.min(592, innerWidth - 32), Math.min(minW, innerWidth - 32));
@@ -122,8 +127,8 @@ export const placeSub = (el: HTMLElement, top = false, minW = 0): void => {
 export const SUB_MIN_W = 456;
 /** 띠 몸 · 그 밖으로 튀어나온 이름표 · 초상 홈 — 띠 왼쪽 위 기준 상대 사각형들 (겹침은 조각마다 잰다) */
 const bandParts = (el: HTMLElement): DOMRect[] => {
-  const o = el.getBoundingClientRect();
-  return [el, ...el.querySelectorAll<HTMLElement>('.who, .dl-name, .talk-face, .dl-face')].map((e) => e.getBoundingClientRect()).filter((q) => q.width && q.height).map((q) => new DOMRect(q.left - o.left, q.top - o.top, q.width, q.height));
+  const o = layRect(el.getBoundingClientRect());
+  return [el, ...el.querySelectorAll<HTMLElement>('.who, .dl-name, .talk-face, .dl-face')].map((e) => layRect(e.getBoundingClientRect())).filter((q) => q.width && q.height).map((q) => new DOMRect(q.left - o.left, q.top - o.top, q.width, q.height));
 };
 const overlap = (a: DOMRect, q: DOMRect): number => Math.max(0, Math.min(a.right, q.right) - Math.max(a.left, q.left)) * Math.max(0, Math.min(a.bottom, q.bottom) - Math.max(a.top, q.top));
 /**
@@ -150,9 +155,10 @@ export const fitSubWidth = (el: HTMLElement, minW = 0): number => {
  * w = fitSubWidth로 맞춘 폭 (없으면 placeSub 폭).
  */
 export const placeSubAway = (el: HTMLElement, o: { focus: DOMRect | null; keep: DOMRect[]; minW?: number; w?: number }): boolean => {
-  const r = subAnchor();
-  const H = innerHeight;
-  const W = innerWidth;
+  const r0 = subAnchor(), r = r0 && layRect(r0);
+  const H = viewH();
+  const W = viewW();
+  o = { ...o, focus: o.focus && layRect(o.focus), keep: o.keep.map(layRect) };
   if (o.w) {
     el.style.width = `${o.w}px`;
     const cx = r ? r.left + r.width / 2 : W / 2;
@@ -270,7 +276,8 @@ export const mono = (text: string, near?: Element | null): void => {
     monoNow = null;
   }
   const r = near?.getBoundingClientRect();
-  const pt = r && r.width ? { x: r.left + r.width / 2, y: r.top } : lastPt ?? { x: innerWidth / 2, y: innerHeight / 2 };
+  const innerWidth = viewW(), innerHeight = viewH();
+  const pt = r && r.width ? { x: lay(r.left + r.width / 2), y: lay(r.top) } : lastPt ? { x: lay(lastPt.x), y: lay(lastPt.y) } : { x: innerWidth / 2, y: innerHeight / 2 };
   const el = document.createElement('div');
   el.className = 'vmono kit';
   el.setAttribute('role', 'status');

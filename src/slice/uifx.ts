@@ -5,6 +5,7 @@ import { sfx } from '../audio/sfx';
 import { arcFly, ditherKeyframes } from './fx3';
 import { ease, snapDev, tween } from '../view/motion';
 import { SMOOTH } from '../data/motion';
+import { devPerCss, lay, layRect, viewH } from '../view/vz';
 
 /**
  * 비전투 UI 손맛 (D-184 — 타격감 연구소 2부를 본편으로). 모두 도트로만: 계단(steps) 움직임 · 도트 불똥 · 도트 스프라이트.
@@ -96,8 +97,9 @@ export const sparksAt = (x: number, y: number, n = 6, dist = 30, colors = SPK): 
     const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
     const s = document.createElement('i');
     s.className = 'spk';
-    s.style.left = `${x - 2}px`;
-    s.style.top = `${y - 2}px`;
+    // 부르는 쪽은 보이는 px(getBoundingClientRect · 판 좌표)를 준다 — 배치 px로 (웹 PC 확대, D-563)
+    s.style.left = `${lay(x) - 2}px`;
+    s.style.top = `${lay(y) - 2}px`;
     s.style.background = colors[i % colors.length];
     s.style.setProperty('--x', `${Math.cos(a) * dist * (0.6 + Math.random() * 0.6)}px`);
     s.style.setProperty('--y', `${Math.sin(a) * dist * 0.7 * (0.6 + Math.random() * 0.6) + 10}px`);
@@ -180,8 +182,8 @@ export const dissolveAll = (els: HTMLElement[], ms = 520): void => {
   els.forEach((el) => {
     el.style.setProperty('-webkit-mask-size', '100% 100%');
     el.style.maskSize = '100% 100%';
-    const r = el.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > innerHeight) return;
+    const r = layRect(el.getBoundingClientRect());
+    if (r.bottom < 0 || r.top > viewH()) return;
     for (let n = 0; n < Math.min(per, 4); n++) {
       const b = document.createElement('i');
       b.className = 'spk';
@@ -272,10 +274,10 @@ export const shutter = async (mid: () => void | Promise<void>): Promise<void> =>
   document.body.appendChild(wrap);
   const [top, bot] = [...wrap.querySelectorAll<HTMLElement>('.shut')];
   // 문 높이 · 아래 문 자리를 기기 픽셀 정수로 (뷰포트 높이 412 × 2.625처럼 반 픽셀이 생기는 기기에서도 문 테가 번지지 않게)
-  const r = window.devicePixelRatio || 1;
-  const hh = Math.ceil((innerHeight * r) / 2) / r;
+  const r = devPerCss();
+  const hh = Math.ceil((viewH() * r) / 2) / r;
   top.style.height = bot.style.height = `${hh}px`;
-  bot.style.top = `${snapDev(innerHeight - hh)}px`;
+  bot.style.top = `${snapDev(viewH() - hh)}px`;
   bot.style.bottom = 'auto';
   const H = hh + 2;
   const bump = 3 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--px')) || 2);
@@ -389,7 +391,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   re(root, 'punch');
   re(rays, 'on');
   (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(40);
-  const er = em.getBoundingClientRect();
+  const er = layRect(em.getBoundingClientRect());
   for (let i = 0; i < 22; i++) {
     const t = 0.2 + Math.random() * 0.6;
     const x = er.left + A.x + (B.x - A.x) * t;
@@ -417,7 +419,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); re(word, 'shine'); }, 3200);
   const emb = window.setInterval(() => {
     if (!root.isConnected) return void window.clearInterval(emb);
-    const r = panel.getBoundingClientRect();
+    const r = layRect(panel.getBoundingClientRect());
     const m = document.createElement('i');
     m.className = 'tfx-ember';
     m.style.left = `${r.left + 20 + Math.random() * (r.width - 40)}px`;

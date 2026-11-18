@@ -170,7 +170,7 @@ PRO_ALL.forEach((c, i) => {
   if (c.img === 'op-windup' || c.img === 'op-legend') proFrom += PRO_ALL[i - 1].lines.length; else { proN++; proFrom = 0; }
   cutBlock(`PRO-${String(proN).padStart(2, '0')}`, `${PRO_TITLE[i]}${c.key ? ' ★' : ''}`, c, PRO_PIC[i], '', proFrom);
 });
-p(`- 끝 화면 글: 「${OPENING_TEXT.tagline}」(표어) · 「${OPENING_TEXT.pressGo}」`, '');
+p(`- 끝 화면 글: 「${OPENING_TEXT.pressGo}」 (표어 줄은 D-563에서 뺐다)`, '');
 
 p('### 3-1. 그림자 컷 — 둘째 출하부터 프롤로그 대신', '',
   '- **트리거**: 한 번이라도 출하를 끝낸 뒤 새 출하를 시작할 때. 주인공은 **새 폰**이다(앞 출하의 기억 없음). 같은 왕관을 다시 하면 SHD-A, 둘째~넷째 왕관을 처음 시작하면 SHD-B.', '');
