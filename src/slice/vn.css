@@ -16,9 +16,14 @@
 .film .vn-lamp { position: absolute; inset: 0; z-index: 2; pointer-events: none; visibility: hidden; background-image: var(--dk5); }
 .film .vn-lamp.on { visibility: visible; }
 
-/* 대사 기록 단추: 「건너뛴다」의 거울 자리 (띠 왼쪽 아래 구석, 좁은 화면은 띠 바로 위 왼쪽) */
+/* 대사 기록 단추: 「건너뛴다」의 거울 자리 (띠 왼쪽 아래 구석).
+   좁은 화면(< 900)은 띠가 화면 폭을 다 써서 띠 바로 위가 화자 명패 자리(왼쪽 우리 편 · 오른쪽 적)다 —
+   거기 두면 단추가 명패 초상을 덮었다(667×375). 그래서 「기록」 · 「건너뛴다」 둘 다 장면 칸 위 구석으로 올린다 (배우 · 명패는 칸 아래쪽). */
 .kit .cut-log.btn { position: absolute; z-index: 7; left: var(--G); right: auto; top: auto; bottom: var(--Gy); width: calc(var(--px) * 56); }
-@media (max-width: 899px) { .kit .cut-log.btn { bottom: calc(var(--Gy) + var(--px) * 44 + var(--s2)); } }
+@media (max-width: 899px) {
+  .kit .cut-log.btn { top: var(--Gy); bottom: auto; }
+  .prologue.film .cut-skip.btn { top: var(--Gy); bottom: auto; }
+}
 .prologue.logo .cut-log, .prologue.titling .cut-log, .prologue.coda .cut-log { visibility: hidden; }
 .prologue.caption-top .cut-log.btn { top: var(--Gy); bottom: auto; }
 @media (max-width: 899px) { .prologue.caption-top .cut-log.btn { top: calc(var(--Gy) + var(--px) * 44 + var(--s2)); bottom: auto; } }
