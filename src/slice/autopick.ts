@@ -1,10 +1,10 @@
 import { findPiece } from '../engine';
-import { AUTO_PICK } from '../data/bot';
-import { COMMANDS } from './cards';
+import { AUTO_PICK, AUTO_PICK_ORDER, type AutoPickKey } from '../data/bot';
+import { COMMANDS, type CommandDef, type CommandId } from './cards';
 import { cardMoves, cardPieces, costOf, previewPlay, type SliceBattle } from './battle';
 
 /** 자동 고르기 결과: 손패 번호 · 점수 · 태엽 · 전용 카드인가 · 전용 카드를 쥐었는데 못 써서 공용으로 넘어갔나 */
-export interface AutoPick { i: number; score: number; cost: number; own: boolean; ownBlocked: boolean }
+export interface AutoPick { i: number; cost: number; own: boolean; ownBlocked: boolean }
 
 /** 이 카드로 이 기물이 둘 수 있는 가장 좋은 수의 값 (적에게 준 HP 피해 + 처치 가산) — 화면 미리보기와 같은 previewPlay */
 export const bestMoveValue = (b: SliceBattle, i: number, pieceId: number): number => {
@@ -25,24 +25,43 @@ export const bestMoveValue = (b: SliceBattle, i: number, pieceId: number): numbe
   return best;
 };
 
+/** 덧붙는 효과가 없는 기본 이동 카드인가 (전진 · 도약 · 지휘 같은 — 효과 카드는 자동으로 쓰지 않고 아낀다) */
+export const isPlainMove = (c: CommandDef): boolean =>
+  c.kind === 'move' && !c.mult && !c.add && !c.carve && !c.push && !c.rally && !c.stun && !c.fork && !c.nextMult
+  && !c.chainPerKill && !c.multPerKill && !c.rage && !c.drawOnKill && !c.freeIfKiller;
+
+interface Cand { i: number; cost: number; own: boolean; value: number; plain: boolean; last: boolean }
+/** AUTO_PICK_ORDER 기준 하나로 견준다 (음수 = x가 앞) */
+const CMP: Record<AutoPickKey, (x: Cand, y: Cand) => number> = {
+  own: (x, y) => Number(y.own) - Number(x.own),
+  cheap: (x, y) => x.cost - y.cost,
+  value: (x, y) => y.value - x.value,
+  plain: (x, y) => Number(y.plain) - Number(x.plain),
+  last: (x, y) => Number(y.last) - Number(x.last),
+  hand: (x, y) => x.i - y.i,
+};
+
 /**
- * 카드 없이 기물을 눌렀을 때 잡을 이동 카드 (피드백 #11, D-503).
- * 점수 = 전용 가산 + 가장 좋은 수의 값 ÷ max(1, 태엽) — 싸고 · 세고 · 그 기물 전용인 카드를 비싼 공용 카드보다 먼저.
+ * 카드 없이 기물을 눌렀을 때 잡을 이동 카드 (피드백 #11 D-503 → D-591).
+ * 지금 낼 수 있는 이동 카드만 후보로, AUTO_PICK_ORDER(전용 · 싼 태엽 · 값 · 기본 카드 · 마지막에 낸 카드 · 손패 순)로 고른다.
+ * last = 이 기물 유형으로 마지막에 낸 카드 id (화면이 기억해 넘긴다).
  */
-export const autoPick = (b: SliceBattle, pieceId: number): AutoPick | null => {
+export const autoPick = (b: SliceBattle, pieceId: number, last?: CommandId): AutoPick | null => {
   const p = findPiece(b.s, pieceId);
   if (!p) return null;
-  const cand = b.hand
-    .map((id, i) => ({ c: COMMANDS[id], i }))
+  const cand: Cand[] = b.hand
+    .map((id, i) => ({ id, c: COMMANDS[id], i }))
     .filter(({ c, i }) => c?.kind === 'move' && cardPieces(b, i).some((q) => q.id === pieceId))
-    .map(({ c, i }) => {
-      const own = c.who === p.type;
-      const cost = costOf(b, i, pieceId);
-      return { i, cost, own, score: (own ? AUTO_PICK.ownBonus : 0) + bestMoveValue(b, i, pieceId) / Math.max(1, cost) };
-    })
-    .sort((x, y) => y.score - x.score || x.cost - y.cost || Number(y.own) - Number(x.own) || x.i - y.i);
+    .map(({ id, c, i }) => ({ i, cost: costOf(b, i, pieceId), own: c.who === p.type, plain: isPlainMove(c), last: id === last, value: bestMoveValue(b, i, pieceId) }));
+  cand.sort((x, y) => {
+    for (const k of AUTO_PICK_ORDER) {
+      const d = CMP[k](x, y);
+      if (d) return d;
+    }
+    return 0;
+  });
   const top = cand[0];
   if (!top) return null;
   const holdsOwn = b.hand.some((id) => COMMANDS[id]?.kind === 'move' && COMMANDS[id].who === p.type);
-  return { ...top, ownBlocked: !top.own && holdsOwn && !cand.some((x) => x.own) };
+  return { i: top.i, cost: top.cost, own: top.own, ownBlocked: !top.own && holdsOwn && !cand.some((x) => x.own) };
 };
