@@ -145,8 +145,6 @@ SCENE_GRID = {
     'act-2': {'src': 'AC-02-source.png', 'grid': (6.03, 1.51, 6.03, 1.51), 'measured': (None, None), 'presence': (1.034, 1.025), 'canon': True, 'trim': (30, 0.25)},
     # 격자 없음(있음 x 1.005 · y 0.999) → 정본 간격 6.03
     'act-4': {'src': 'AC-03-source.png', 'grid': (6.03, 1.13, 6.03, 5.28), 'measured': (None, None), 'presence': (1.005, 0.999), 'canon': True, 'trim': (30, 0.25)},
-    # 격자 없음(있음 x 1.01 · y 1.019) → 정본 간격 6.03
-    'casting-floor': {'src': 'S-17-casting-floor-source.webp', 'grid': (6.03, 2.26, 6.03, 0.38), 'measured': (None, None), 'presence': (1.01, 1.019), 'canon': True},
     # 격자 없음(있음 x 1.029 · y 1.021) → 정본 간격 6.03
     'chained-door': {'src': 'S-13-chained-door-source.webp', 'grid': (6.03, 3.77, 6.03, 0.75), 'measured': (None, None), 'presence': (1.029, 1.021), 'canon': True},
     # 격자 없음(있음 x 1.022 · y 1.019) → 정본 간격 6.03
@@ -155,8 +153,6 @@ SCENE_GRID = {
     'crown-gears': {'src': 'S-19-crown-gears-source.webp', 'grid': (6.03, 2.64, 6.03, 0.75), 'measured': (None, None), 'presence': (1.012, 1.015), 'canon': True},
     # 격자 없음(있음 x 1.009 · y 1.023) → 정본 간격 6.03
     'gold-cast': {'src': 'S-18-gold-cast-source.webp', 'grid': (6.03, 2.64, 6.03, 0.75), 'measured': (None, None), 'presence': (1.009, 1.023), 'canon': True},
-    # 격자 없음(있음 x 1.028 · y 1.04) → 정본 간격 6.03
-    'new-law': {'src': 'S-11-new-law-source.webp', 'grid': (6.03, 3.02, 6.03, 0.0), 'measured': (None, None), 'presence': (1.028, 1.04), 'canon': True},
     # 격자 없음(있음 x 1.026 · y 1.026) → 정본 간격 6.03
     'old-spring': {'src': 'S-14-old-spring-source.webp', 'grid': (6.03, 0.0, 6.03, 2.26), 'measured': (None, None), 'presence': (1.026, 1.026), 'canon': True},
     # 격자 없음(있음 x 1.007 · y 1.013) → 정본 간격 6.03
@@ -171,8 +167,6 @@ SCENE_GRID = {
     'crown-3-open': {'src': 'CN-02-source.png', 'grid': (6.03, 0.38, 6.03, 4.15), 'measured': (None, None), 'presence': (1.029, 1.044), 'canon': True, 'trim': (30, 0.25)},
     # 격자 없음(있음 x 1.014 · y 1.014) → 정본 간격 6.03
     'crown-3-throne': {'src': 'CN-06-source.png', 'grid': (6.03, 3.39, 6.03, 4.9), 'measured': (None, None), 'presence': (1.014, 1.014), 'canon': True, 'trim': (30, 0.25)},
-    # 격자 없음(있음 x 1.007 · y 1.013) → 정본 간격 6.03
-    'end-f-box': {'src': 'ED-10-source.png', 'grid': (6.03, 5.28, 6.03, 2.26), 'measured': (None, None), 'presence': (1.007, 1.013), 'canon': True, 'trim': (30, 0.25)},
     # 격자 없음(있음 x 1.006 · y 1.007) → 정본 간격 6.03 · 나이트 눈 칸을 새 격자에서 다시 짚었다(콧구멍 · 입 홈은 6px 칸에서 이미 얼굴 면에 묻힌다)
     'end-f-unwind': {'src': 'ED-11-source.png', 'grid': (6.03, 1.88, 6.03, 1.13), 'measured': (None, None), 'presence': (1.006, 1.007), 'canon': True, 'trim': (30, 0.25), 'erase': [{'what': '나이트 눈 (사용자 지시 2026-11-15 — 재발주 대신 지운다)', 'box': (118, 102, 120, 104), 'from': (117, 102)}]},
     # 격자 없음(있음 x 1.031 · y 1.032) → 정본 간격 6.03
@@ -198,6 +192,15 @@ SCENE_GRID = {
     'prologue-05': {'src': 'VA-04-source.png', 'grid': (6.62, 4.41, 6.1, 2.03), 'measured': (6.62, 6.1), 'presence': (1.159, 1.361)},
     # 실측 x 6.34 (있음 1.056 · 두 축 짝 있음 최고) · y 5.845 (있음 1.07 · 두 축 짝 있음 최고)
     'prologue-06': {'src': 'VA-05-source.png', 'grid': (6.34, 1.06, 5.845, 4.87), 'measured': (6.34, 5.845), 'presence': (1.056, 1.07)},
+    # D-581 재발주 VA-06 · VA-07 · VA-09 (regrid.measure 4.5 ~ 9px — END-K-2 · SHD-B-1 · END-F-2 컷을 갈아 끼운다. 옛 S-17 · S-11 · ED-10 원본은
+    #   build-res/order에 보관 — 옛 값: 셋 다 격자 없음 → 정본 간격 6.03, end-f-box만 trim). 셋 다 띠 없이 끝까지 채워 왔다(trim 없음).
+    #   VA-06은 발주 277×156 ×6이 아니라 생성기 ~5px 도트(gridmeasure 3 ~ 16px도 9.9px 봉우리의 절반 4.92 · 5.04로 같은 값) → 336×186.
+    # 실측 x 4.977 (있음 1.124 · 두 축 짝 있음 최고) · y 5.042 (있음 1.085 · 두 축 짝 있음 최고)
+    'casting-floor': {'src': 'VA-06-source.png', 'grid': (4.977, 4.56, 5.042, 2.1), 'measured': (4.977, 5.042), 'presence': (1.124, 1.085)},
+    # 실측 x 6.527 (있음 1.101 · 두 축 짝 있음 최고) · y 6.18 (있음 1.101 · 두 축 짝 있음 최고)
+    'new-law': {'src': 'VA-07-source.png', 'grid': (6.527, 4.9, 6.18, 0.52), 'measured': (6.527, 6.18), 'presence': (1.101, 1.101)},
+    # 실측 x 6.32 (있음 1.09 · 두 축 짝 있음 최고) · y 6.065 (있음 1.15 · 두 축 짝 있음 최고)
+    'end-f-box': {'src': 'VA-09-source.png', 'grid': (6.32, 1.05, 6.065, 3.03), 'measured': (6.32, 6.065), 'presence': (1.09, 1.15)},
 }
 # 같은 이름의 옛 941/180 값은 축마다 잰 격자로 덮는다 (값 = (px, ox, py, oy) — snap.run이 아니라 regrid.build_one이 읽는다)
 MANUAL_PITCH.update({n: g['grid'] for n, g in SCENE_GRID.items()})
@@ -422,6 +425,10 @@ OPENING_GRID = {
     'VA-02': {'name': 'prologue-03', 'trim_max': 30, 'trim_dark': 0.25},
     'VA-04': {'name': 'prologue-05', 'trim_max': 30, 'trim_dark': 0.25},
     'VA-05': {'name': 'prologue-06', 'trim_max': 30, 'trim_dark': 0.25},
+    # D-581 재발주 VA-06(END-K-2 용해 주조) · VA-07(SHD-B-1 새 폰이 검수대 앞에) · VA-09(END-F-2 상자째 용광로로) — SCENE_GRID 실측 격자로 regrid.build_one
+    'VA-06': {'name': 'casting-floor', 'trim_max': 30, 'trim_dark': 0.25},
+    'VA-07': {'name': 'new-law', 'trim_max': 30, 'trim_dark': 0.25},
+    'VA-09': {'name': 'end-f-box', 'trim_max': 30, 'trim_dark': 0.25},
 }
 
 
@@ -448,7 +455,7 @@ ENDING_GRID = {
     'ED-08': {'name': 'end-t-step', 'trim_max': 30, 'trim_dark': 0.25},
     # D-516 패배 END-F 세 컷 · 크레딧 바탕 — 넷 다 띠 없이 끝까지 채워 왔다. ED-09 재발주본(옛 end-fail은 E-02-end-fail-source.png)
     'ED-09': {'name': 'end-fail', 'trim_max': 30, 'trim_dark': 0.25},
-    'ED-10': {'name': 'end-f-box', 'trim_max': 30, 'trim_dark': 0.25},
+    'ED-10': {'name': 'end-f-box', 'trim_max': 30, 'trim_dark': 0.25},  # D-581: end-f-box는 VA-09 재발주본(SCENE_GRID) — ED-10 원본은 보관
     # ED-11 사용자 지시(2026-11-15): 나이트의 눈은 재발주하지 않고 지운다 — 격자 복원 뒤 erase 칸을 같은 말머리 면의 이웃 칸 색(from)으로 메운다(새 색 없음).
     #   box = (왼, 위, 오른, 아래) 도트(오른 · 아래 미포함), from = 메울 색을 읽는 이웃 칸 (x, y). 대조판 아래 줄에 전 | 후(×12)
     #   말머리 면은 #51484B ~ #594E51 한 단(같은 명암) — 눈 · 콧구멍 · 입 홈의 먹(#181516 · #1D1A1B · #231D1D)만 그 면 색으로. 테 빛 · 턱 외곽선은 그대로.

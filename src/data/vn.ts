@@ -56,7 +56,8 @@ export const VN_SCENE: Record<string, VnScene> = {
   '종이 왕관': { air: 'dust', noCast: true },
   '부관 박차': { air: 'steam', noCast: true },
   '검은 세트와 먼 왕좌': { air: 'steam', drift: { x: 0, y: -1 } },
-  '용해 주조': { air: 'embers' },
+  // D-581: VA-06 재발주본은 금왕관 폰 · 잠기는 동료를 그림 안에 그려 왔다 — 주조기 · 분대원 대사에 판 도트 배우를 세우지 않는다(D-572)
+  '용해 주조': { air: 'embers', noCast: true },
   '금빛 거푸집': { air: 'embers', lamp: true },
   '새 도금왕의 왕좌': { air: 'sparks' },
   '상자째 용광로로': { air: 'embers' },
