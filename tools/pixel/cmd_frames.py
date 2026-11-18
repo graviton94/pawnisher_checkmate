@@ -106,7 +106,7 @@ def run():
     css = ['/* 자동 생성 — tools/pixel/cmd_frames.py (RF-04 명령 카드 앞면 · 재발주본 D-512). 손으로 고치지 않는다. */',
            '/* 56×84 캔버스 — 글 · 그림 자리는 받은 틀의 실제 칸을 잰 비율(%) */',
            # 이름판(#BFB9AD) · 비용 원판(#F1EDE4)이 밝은 종이 칸이다 — 옛 cardart 틀(어두운 리본 · 톱니)의 밝은 글 + 먹 그림자를 먹 글로
-           'body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name, body.slice .cf.cf.cf.cf.cmd.g-gold > .cf-name { color: #16141c; text-shadow: none; }',
+           'body.slice .cf.cf.cf.cf.cmd > .cf-name, body.slice .cf.cmd.g-rare > .cf-name, body.slice .cf.cmd.g-gold > .cf-name { color: #16141c; text-shadow: none; }',
            'body.slice .cf.cf.cf.cf.cmd > .cf-cost { color: #16141c; text-shadow: none; }',
            # 등급 꺾쇠는 틀에 그려져 왔다(희귀 청록 · 금 황동) — RF-01 쉬는 꺾쇠를 겹쳐 달지 않는다. 반짝임(RF-02)은 그대로 한 번 돈다
            'body.slice .cf.cf.cf.cf.cmd:is(.g-rare, .g-gold)::before { content: none; }']
@@ -132,7 +132,10 @@ def run():
         title = _dense(is_c(PAPER_T) & (np.arange(CH)[:, None] < hy0) & (np.arange(CW)[None, :] >= 12))
         paper = is_c(PAPER_D)
         # 비용 원판 = 이름판 아랫줄 위의 종이 칸만 (틀 귀퉁이 꺾쇠의 밝은 점이 원판에 섞이지 않게)
-        cost = _bbox(paper & (np.arange(CH)[:, None] < title[3]) & (np.arange(CW)[None, :] < 18))
+        # 잡점 한 칸(희귀 틀 14줄 x=5)이 구멍을 반 도트 넓혀 숫자가 왼쪽으로 쏠렸다 — 두 칸 넘게 찬 줄 · 칸만 구멍으로 (D-571)
+        cm = paper & (np.arange(CH)[:, None] < title[3]) & (np.arange(CW)[None, :] < 18)
+        cm = cm & (cm.sum(0) >= 2)[None, :] & (cm.sum(1) >= 2)[:, None]
+        cost = _bbox(cm)
         text = _dense(paper & (np.arange(CH)[:, None] > hy1))
         pc = lambda v, n: f'{v / n * 100:.3f}%'
         sel = f'body.slice .cf.cf.cf.cf.cmd.g-{tier}'

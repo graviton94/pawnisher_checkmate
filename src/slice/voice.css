@@ -186,20 +186,14 @@ body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset
   .p2-flash { display: none; }
 }
 
-/* 사건 대사 칸 (#16 · D-490 · D-506): 이름 = DL-02 이름표 — NPC = 종이 꼬리표, 종이왕 = 황동 + 청록 보석 · DL-02 우리 액자 안 PT-04 표정.
-   말하는 NPC가 없는 사건도 칸이 비지 않는다. NPC 얼굴 = DL-02 NPC 액자 안에 그 사건 그림의 초점 자리(EVENT_FOCUS)를 2.5배로 잘라 — PT-01~03은 취소(사용자 결정) */
-.win-scene .ws-say .who:not(:empty) { --d: calc(var(--px1) * 2); /* D-558: 1배 꼬리표(15px)는 12px 글에 딱 맞았다 */ display: inline-flex; align-items: center; box-sizing: border-box; height: calc(var(--d) * 15); width: max-content; max-width: 100%;
-  border-style: solid; border-width: 0 calc(var(--d) * 5) 0 calc(var(--d) * 14); border-image: url('../assets/ui/chrome/v2/name-npc.png') 0 5 0 14 fill / 0 calc(var(--d) * 5) 0 calc(var(--d) * 14) / 0 stretch;
-  image-rendering: pixelated; color: var(--t-ink); line-height: 1; margin-bottom: var(--s1); }
-.win-scene .ws-say:is(.is-king, .is-npc) { display: grid; grid-template-columns: auto 1fr; column-gap: var(--s2); align-items: center; }
-.win-scene .ws-say.is-king .who { grid-column: 2; border-width: 0 calc(var(--d) * 10) 0 calc(var(--d) * 7); border-image: url('../assets/ui/chrome/v2/name-ally.png') 0 10 0 7 fill / 0 calc(var(--d) * 10) 0 calc(var(--d) * 7) / 0 stretch; color: var(--t-brass-ink); }
-.win-scene .ws-say.is-king .ws-line { grid-column: 2; color: var(--t-gold); }
-.win-scene .ws-say.is-npc :is(.who, .ws-line) { grid-column: 2; }
-.win-scene .ws-say .ws-face { grid-row: 1 / span 2; grid-column: 1; box-sizing: border-box; width: calc(var(--px1) * 43); height: calc(var(--px1) * 43); padding: calc(var(--px1) * 8) calc(var(--px1) * 7) calc(var(--px1) * 8) calc(var(--px1) * 7);
-  background: url('../assets/ui/chrome/v2/portrait-ally.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; image-rendering: pixelated; object-fit: cover; object-position: 50% 30%; }
-/* NPC 얼굴 (D-506): 액자 = DL-02 portrait-npc · 안 = 사건 그림을 비율 그대로 높이 250%로 덮고 초점 자리만 (늘이지 않는다, D-386) */
-.win-scene .ws-say .ws-face.ws-npc { display: block; background: url('../assets/ui/chrome/v2/portrait-npc.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; }
-.win-scene .ws-say .ws-face.ws-npc > i { display: block; width: 100%; height: 100%; background-repeat: no-repeat; background-size: auto 250%; image-rendering: pixelated; }
+/* 사건 대사 칸 (#16 · D-490 · D-506 → D-571 세 칸 격자, 배치는 kit.css): 이름 = 초상 아래 맨 글 — NPC = 금빛, 종이왕 = 청록(우리 편) · 종이왕 줄은 금빛 글.
+   얼굴 = DL-02 액자 43칸(--px1) — 종이왕은 PT-04 표정, NPC는 그 사건 그림을 비율 그대로 기기 픽셀 정수배로 두고 초점 자리만(facesnap, D-552) — PT-01~03은 취소(사용자 결정) */
+.win-scene .ws-say.is-king .who { color: var(--t-ally); }
+.win-scene .ws-say.is-king .ws-line { color: var(--t-gold); }
+.win-scene .ws-say .ws-face { display: block; box-sizing: border-box; width: calc(var(--px1) * 43); height: calc(var(--px1) * 43); padding: calc(var(--px1) * 8) calc(var(--px1) * 7) calc(var(--px1) * 8) calc(var(--px1) * 7);
+  background: url('../assets/ui/chrome/v2/portrait-ally.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; image-rendering: pixelated; }
+.win-scene .ws-say .ws-face.ws-npc { background: url('../assets/ui/chrome/v2/portrait-npc.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; }
+.win-scene .ws-say .ws-face > img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
 /* D-534 전수 점검: 레일 폭(≈200px)에서 조건 글이 칩 오른쪽 좁은 칸에 네 줄로 접혀 레일이 넘쳤다(부품 줄이 가려짐)
    → 위 줄 = 판돈 칩 + 진행(오른쪽), 아래 줄 = 조건 글 전체 폭 */
 .bet-chip > .tag { grid-row: 1; grid-column: 1; }

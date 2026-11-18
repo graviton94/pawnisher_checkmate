@@ -1,12 +1,12 @@
 /**
- * 얼굴 도트 = 기기 픽셀 정수 (D-552, 격자 감사 2026-11-17).
+ * 얼굴 도트 = 기기 픽셀 정수 (D-552, 격자 감사 2026-11-17 · 사건 대사 칸 얼굴 D-571).
  * 대사 띠 · 말풍선 · 컷신 명패 · 분대 현황판의 얼굴(56 · 60 · 64칸)은 초상 홈(장치 도트 15 · 16 · 43칸 …)에 `object-fit: cover`로 들어가
  * 얼굴 도트 하나가 기기 픽셀 1.3~5.3개로 고르지 않게 찍혔다. 홈 크기는 액자 그림의 홈이라 바꿀 수 없으므로,
  * 얼굴을 「홈을 덮는 가장 작은 정수 k」(기기 픽셀 k개 = 얼굴 도트 하나)로 키우고 CSS가 정한 초점(object-position)에 맞춰
  * 기기 픽셀 정수 자리에서 잘라 보인다 — 늘이지 않는다(D-386). 그림은 img의 배경으로 그리고 img 내용은 비킨다.
  * UI는 게임 상태를 바꾸지 않는다(그림 크기만).
  */
-const SEL = '.dl-face > img, .talk-face > img, .cw-face > img:not(.piece-img), img.mr-face, .frame-portrait > img:not(.fs-plate):not(.piece-img)';
+const SEL = '.dl-face > img, .talk-face > img, .ws-face > img, .cw-face > img:not(.piece-img), img.mr-face, .frame-portrait > img:not(.fs-plate):not(.piece-img)';
 
 const seen = new WeakSet<HTMLImageElement>();
 const ro = typeof ResizeObserver === 'function' ? new ResizeObserver((es) => es.forEach((e) => fit(e.target as HTMLImageElement))) : null;

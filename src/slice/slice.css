@@ -1691,7 +1691,8 @@ body.slice .cf.cf.cf .cf-desc .sep { white-space: pre; }
 /* 영입: 안내 문단 대신 제목만 — 받침(함께 오는 카드)이 패널 안에 들게 */
 
 /* 비용 1 · HP 세 자리: 글자 잉크를 도형 가운데로 */
-body.slice .cf.cf.cf.cf > .cf-cost.c1 { padding-left: 3px; box-sizing: border-box; }
+/* 비용 숫자 (D-571): 숫자마다 잉크 가운데 = 톱니 구멍 가운데 — 안쪽 여백은 costsnap.ts가 잰다(옛 .c1 3px 손 보정을 대신) */
+body.slice .cf.cf.cf.cf > .cf-cost[data-ink] { display: block; box-sizing: border-box; text-align: left; white-space: nowrap; overflow: visible; }
 body.slice .cf.crew-card > .cb.n3 { letter-spacing: -1px; font-size: 12px; }
 /* 고물상 레일: 네 장 폭에 딱 맞춰 가운데 — 다섯째 카드가 실오라기처럼 비치지 않게 (◀ ▶로 넘긴다) */
 /* 고물상 레일 (D-375 3차): 스크롤하는 줄 자체를 네 장 폭에 맞추고, 화살표와 함께 가운데 — 다섯째 카드는 줄 밖에 숨는다 */

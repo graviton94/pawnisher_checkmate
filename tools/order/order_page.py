@@ -268,6 +268,8 @@ def status_of(head, pid, src):
     sid = re.match(r'([A-Z]{1,3}-\d+(?:-\d+)?)', head).group(1)
     if '취소' in head:
         return 'cancel'
+    if '토의 후 발주' in head:  # 사장님 확인 전 (D-571): 프롬프트는 보이되 「토의 후 발주」 딱지 · 붙여 넣을 수에 들지 않는다
+        return 'hold'
     if pid != sid and f'{pid} 받음' in head:  # 상자 안 부분 재발주(CI-01b 등)를 받으면 상자 머리에 「<ID> 받음」 (D-512)
         return 'done'
     if pid != sid and f'{pid} 새로' in head:  # 받은 상자 안의 새 짝 그림(KV-02 키아트 받음 · KV-02h 히어로 새로, D-564)
@@ -349,7 +351,7 @@ def main(out_path, md=None):
         sys.exit('정본 문단이 어긋났습니다 (docs/asset-order-master.md 「정본 문단」 글을 그대로 붙이세요):\n  ' + '\n  '.join(bad))
     out = []
     for i, (pid, title, st, send, scene, body, mine) in enumerate(cards, 1):
-        tag = '<em class="redo">재발주</em>' if st == 'redo' else '<em>새로</em>'
+        tag = '<em class="redo">재발주</em>' if st == 'redo' else '<em class="hold">토의 후 발주</em>' if st == 'hold' else '<em>새로</em>'
         sc = f'<p class="scene">{html.escape(scene)}</p>' if scene else ''
         att = ''
         if mine:
@@ -358,11 +360,12 @@ def main(out_path, md=None):
         out.append(f'<section class="card" id="{pid}"><header><span class="no">{i}</span><h2><b>{pid}</b> {html.escape(title)}</h2>{tag}</header>{sc}'
                    f'<div class="bar"><span>보낼 이름 <code>{html.escape(send)}</code></span><button type="button" class="copy" data-for="p{i}">프롬프트 복사</button></div>'
                    f'<pre id="p{i}">{html.escape(body)}</pre>{att}</section>')
-    toc = ' '.join(f'<a href="#{c[0]}" class="{"r" if c[2] == "redo" else ""}">{c[0]}</a>' for c in cards)
+    toc = ' '.join(f'<a href="#{c[0]}" class="{"r" if c[2] == "redo" else "h" if c[2] == "hold" else ""}">{c[0]}</a>' for c in cards)
     n_redo = sum(1 for c in cards if c[2] == 'redo')
-    page = TEMPLATE.replace('%N%', str(len(cards))).replace('%REDO%', str(n_redo)).replace('%DONE%', str(n_done)).replace('%CANCEL%', str(n_cancel)).replace('%TOC%', toc).replace('%TALK%', '\n'.join(top + talk)).replace('%IMGJS%', imgs.script()).replace('%BODY%', '\n'.join(out))
+    n_hold = sum(1 for c in cards if c[2] == 'hold')
+    page = TEMPLATE.replace('%N%', str(len(cards) - n_hold)).replace('%HOLD%', str(n_hold)).replace('%REDO%', str(n_redo)).replace('%DONE%', str(n_done)).replace('%CANCEL%', str(n_cancel)).replace('%TOC%', toc).replace('%TALK%', '\n'.join(top + talk)).replace('%IMGJS%', imgs.script()).replace('%BODY%', '\n'.join(out))
     open(out_path, 'w', encoding='utf-8').write(page)
-    print(out_path, f'토의 {len(talk)} · 남은 프롬프트 {len(cards)}개 (재발주 {n_redo}) · 받음 {n_done} · 취소 {n_cancel} · 첨부 그림 {len(imgs.uris)}장 · {os.path.getsize(out_path) // 1024}KB')
+    print(out_path, f'토의 {len(talk)} · 남은 프롬프트 {len(cards) - n_hold}개 (재발주 {n_redo}) · 토의 후 발주 {n_hold} · 받음 {n_done} · 취소 {n_cancel} · 첨부 그림 {len(imgs.uris)}장 · {os.path.getsize(out_path) // 1024}KB')
     if os.path.getsize(out_path) > 15 * 1024 * 1024:
         sys.exit('쪽이 15MB를 넘습니다 (D-561 상한)')
 
@@ -387,6 +390,7 @@ h1 { font:400 32px/1.15 var(--display); margin:0 0 6px; }
 .card h2 { font:700 16px/1.4 var(--body); margin:0; text-wrap:balance; } .card h2 b { font-family:var(--mono); color:var(--brass); margin-right:4px; }
 em { font:500 12px/1 var(--mono); font-style:normal; padding:5px 7px; border:2px solid var(--line); color:var(--dim); white-space:nowrap; }
 em.redo { border-color:var(--red); color:var(--red); }
+em.hold, .toc a.h { border-color:var(--brass); color:var(--brass); border-style:dashed; }
 .scene { margin:10px 14px 0; color:var(--dim); font-size:14px; }
 .bar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; padding:10px 14px; }
 code { font:13px var(--mono); background:var(--iron); padding:2px 6px; color:#d9c79a; }
@@ -418,7 +422,7 @@ button.imgcopy.ok { border-color:var(--ok); color:var(--ok); }
 </style>
 <div class="wrap">
 <h1>그림 발주서</h1>
-<p class="lede">붙여 넣을 프롬프트 %N%개만 남겼습니다 (빨강 = 재발주 %REDO%개). 칸마다 「프롬프트 복사」 → 새 생성 작업에 통째로 붙여 넣기(첨부 그림이 있으면 그림마다 「이미지 복사」로 함께) → 결과를 「보낼 이름」으로 보내 주세요. 받은 %DONE%개 · 취소 %CANCEL%개는 뺐습니다.</p>
+<p class="lede">붙여 넣을 프롬프트 %N%개만 남겼습니다 (빨강 = 재발주 %REDO%개). 칸마다 「프롬프트 복사」 → 새 생성 작업에 통째로 붙여 넣기(첨부 그림이 있으면 그림마다 「이미지 복사」로 함께) → 결과를 「보낼 이름」으로 보내 주세요. 받은 %DONE%개 · 취소 %CANCEL%개는 뺐습니다. 점선 황동 「토의 후 발주」 %HOLD%개는 맨 위 토의에서 사장님이 정한 뒤에만 복사합니다.</p>
 %TALK%
 <nav class="toc">%TOC%</nav>
 %BODY%

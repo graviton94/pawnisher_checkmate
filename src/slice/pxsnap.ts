@@ -1,4 +1,5 @@
 import './facesnap';
+import './costsnap';
 
 /**
  * 도트 1개 = 기기 픽셀 정수 (D-392, 사용자: 「범용 기기 환경 — PC · 모바일에 맞춰 설계」).

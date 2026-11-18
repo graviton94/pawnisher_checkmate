@@ -584,13 +584,15 @@ body.kb-nav .ability-block:focus-visible { outline: 2px solid var(--t-gold); out
 .win-scene .ws-narr { min-height: 22px; margin: 0; padding-top: calc(var(--px) * 1); color: var(--t-body); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
 .win-scene > .ws-work { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; min-height: 0; }
 .win-scene > .ws-work > * { flex: none; min-width: 0; }
-/* 대사 칸: 움푹 칸 맨 위 — 이름 한 줄(12 굵게 황동) + 두 줄 15px. 정보 단추의 풀이도 여기에 */
-.win-scene .ws-say.inset { min-height: calc(var(--k-inset) * var(--px) * 2 + 18px + 44px); padding: 0 var(--s2); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
-.win-scene .ws-say .who { display: block; margin: 0; color: var(--t-gold); font: 700 12px/18px Galmuri11, sans-serif; white-space: nowrap; }
-/* 이름 없는 줄(독백)도 이름 자리 18을 비워 둔다 — 찍는 동안 · 단계가 바뀌어도 칸이 뛰지 않게 (D-403) */
-.win-scene .ws-say .who:empty { visibility: hidden; }
-.win-scene .ws-say .ws-line { min-height: 44px; }
-.win-scene .ws-say .ws-line { display: block; }
+/* 대사 칸 (D-571, 사장님 결정 — 세 칸 격자): A1:B2 = 초상(대사 두 줄 높이) · A3:B3 = 말하는 이 이름(맨 글, 이름표 없음) ·
+   C1:C3 = 대사(가장 넓은 단 · 세로 가운데 · 왼쪽 맞춤 · 세 줄 = 66px). 이름 없는 줄(독백 · 서술 묘사)은 C 자리가 A부터 끝까지 넓어진다. */
+.win-scene .ws-say.inset { display: grid; grid-template-columns: max-content minmax(0, 1fr); grid-template-rows: auto auto; column-gap: var(--s3); row-gap: var(--s1); align-content: center; align-items: center;
+  min-height: calc(var(--k-inset) * var(--px) * 2 + 66px); padding: 0 var(--s2); font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; white-space: pre-line; }
+.win-scene .ws-say .ws-face { grid-column: 1; grid-row: 1; justify-self: center; align-self: end; }
+.win-scene .ws-say .who { grid-column: 1; grid-row: 2; justify-self: center; align-self: start; display: block; margin: 0; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; white-space: nowrap; }
+.win-scene .ws-say .ws-line { grid-column: 2; grid-row: 1 / span 2; align-self: center; display: block; margin: 0; text-align: left; word-break: keep-all; overflow-wrap: break-word; }
+.win-scene .ws-say:not(.is-king, .is-npc) .who { display: none; }
+.win-scene .ws-say:not(.is-king, .is-npc) .ws-line { grid-column: 1 / -1; }
 .win-scene .ws-say.is-empty > * { visibility: hidden; }
 .win-scene .ws-say.is-info .ws-line { color: var(--t-dim); }
 .win-scene .ws-choices { display: flex; flex-direction: column; gap: var(--s2); margin-top: auto; }
@@ -637,6 +639,17 @@ body.kb-nav .ability-block:focus-visible { outline: 2px solid var(--t-gold); out
   .win-scene.ws-done .ws-sum.slip { padding: 0 var(--s3); }
   .win-scene .ws-sum-i { margin-top: var(--px); padding-top: var(--px); }
   .win-scene > .ws-work { gap: var(--s1); }
+}
+@media (max-height: 365px) and (min-width: 720px) {
+  /* D-571: 세 줄 대사 칸 + 선택지 둘 + 단추 줄이 오른쪽 단(772×360 안쪽 240)을 넘어 단추가 아래 테에 걸쳤다 (D-402부터 넘침 46 → 대사 칸 줄여 34)
+     → 아주 낮은 화면(≤ 365)은 단추 줄을 장면 그림 아래(왼쪽 단 오른쪽 끝 — 오른쪽 단과 붙은 자리)로 옮긴다. 그림이 그만큼 낮아진다(cover로 잘림, 늘이지 않음).
+     왼쪽 단이 좁은 화면(< 720, 667×375 왼쪽 단 ≈ 190)은 효과 쪽지가 낮아진 그림 밖으로 넘쳐 옮기지 않는다 — 667은 단추가 창 안쪽 여백 안에 든다 */
+  #overlay-panel.win.win-scene { grid-template-rows: auto minmax(0, 1fr) auto; row-gap: var(--s1); }
+  .win-scene > .ws-left { grid-column: 1; grid-row: 1 / span 2; }
+  .win-scene > .ws-work { display: contents; }
+  .win-scene > .ws-work > .ws-say { grid-column: 2; grid-row: 1; }
+  .win-scene > .ws-work > :is(.ws-choices, .ws-sum) { grid-column: 2; grid-row: 2 / span 2; align-self: end; margin-top: 0; }
+  .win-scene > .ws-work > .btn-row { grid-column: 1; grid-row: 3; }
 }
 /* 등장: 위에서 아래로 3계단 드러남 (투명도 보간 없음) */
 .win-scene :is(.ws-narr, .ws-say, .ws-sum).in, .win-scene .ev-ov { animation: kstepin 210ms steps(3, jump-none) both; }

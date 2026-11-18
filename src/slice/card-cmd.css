@@ -13,7 +13,7 @@ body.slice .cf.cf.cf.cf.cmd.g-common > .cf-gem { left: 50%; top: 92.857%; }
 body.slice .cf.cf.cf.cf.cmd.g-rare { background-image: url('../assets/ui/cards/cmd-rare.png'); --ci-l: 5.357%; --ci-r: 5.357%; --ci-t: 10.714%; --ci-b: 2.381%; }
 body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-win { left: 17.857%; top: 29.762%; width: 64.286%; height: 22.619%; }
 body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-name { left: 33.929%; top: 15.476%; width: 48.214%; height: 7.143%; }
-body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-cost { left: 8.929%; top: 9.524%; width: 19.643%; height: 11.905%; }
+body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-cost { left: 10.714%; top: 9.524%; width: 17.857%; height: 11.905%; }
 body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-desc { left: 16.071%; top: 58.333%; width: 67.857%; height: 29.762%; }
 body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-type { left: 17.857%; top: 47.619%; width: 64.286%; height: 4.762%; }
 body.slice .cf.cf.cf.cf.cmd.g-rare > .cf-gem { left: 50%; top: 92.857%; }

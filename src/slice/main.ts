@@ -2641,12 +2641,18 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     sayEl.classList.toggle('is-npc', npcFace);
     sayEl.querySelector('.who')!.textContent = name;
     sayEl.querySelector('.ws-face')?.remove();
-    if (king) sayEl.insertAdjacentHTML('afterbegin', portraitImg(PAPER_FACE[EVENT_PONDER_MOOD[id] ?? 'calm'], '<img class="ws-face" src="ui/hud/crew-K.png" alt="">', 'ws-face'));
-    else if (npcFace) sayEl.insertAdjacentHTML('afterbegin', `<span class="ws-face ws-npc" aria-hidden="true"><i style="background-image:url('${art.getAttribute('src')}');background-position:${Math.round(fx * 100)}% ${Math.round(fy * 100)}%"></i></span>`);
+    // 얼굴은 액자(.ws-face) 안 img — 기기 픽셀 정수배로 초점 자리만 보인다 (facesnap D-552 · 늘이지 않는다 D-386)
+    if (king) sayEl.insertAdjacentHTML('afterbegin', `<span class="ws-face" aria-hidden="true">${((f) => portraitImg(f, '<img src="ui/hud/crew-K.png" alt="">').replace('<img ', `<img data-fs-focus="${f.at}" `))(PAPER_FACE[EVENT_PONDER_MOOD[id] ?? 'calm'])}</span>`);
+    else if (npcFace) sayEl.insertAdjacentHTML('afterbegin', `<span class="ws-face ws-npc" aria-hidden="true"><img src="${art.getAttribute('src')}" alt="" data-fs-focus="${Math.round(fx * 100)}% ${Math.round(fy * 100)}%"></span>`);
     replay(sayEl, 'in');
     sfx('tap', 4);
     // 타자기 (D-403): 한 자 30ms · 문장 부호에서 쉼 · 누르면 바로 끝까지 (줄인 움직임이면 한 번에)
-    await typeIn(sayEl.querySelector<HTMLElement>('.ws-line')!, text, 30, undefined, alive);
+    // 대사는 C단 세로 가운데 (D-571): 찍는 동안 줄이 늘어 글이 위아래로 뛰지 않게 다 찍힌 높이를 먼저 잡아 둔다
+    const lineEl = sayEl.querySelector<HTMLElement>('.ws-line')!;
+    lineEl.style.minHeight = '';
+    lineEl.innerHTML = text;
+    lineEl.style.minHeight = `${lineEl.offsetHeight}px`;
+    await typeIn(lineEl, text, 30, undefined, alive);
   };
   // 찍는 중인 줄을 누르면 바로 끝까지 — 대사 칸 · 서술 띠 · 결과 쪽지 글
   sayEl.addEventListener('click', () => typeSkip(sayEl.querySelector<HTMLElement>('.ws-line')!));
