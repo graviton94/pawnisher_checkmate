@@ -274,3 +274,13 @@ describe('캐슬링은 룩이 있을 때만 (D-316)', () => {
     expect(cardFits('advance', ['K', 'N'])).toBe(false);
   });
 });
+
+// 조항 설명 수치가 ASC_NUM과 어긋나지 않는다 (도전 화면 desc — 2026-11-18 +20% 표기가 실제 1.3 · 0.35와 달랐다)
+import { ASCENSION as ASC_LIST, ASC_NUM as NUM } from '../src/slice/run';
+import { it as itDesc, expect as expectDesc } from 'vitest';
+itDesc('조항 1 · 2 설명 수치 = ASC_NUM', () => {
+  expectDesc(ASC_LIST[0].desc).toContain(`+${Math.round((NUM.enemyHp - 1) * 100)}%`);
+  expectDesc(ASC_LIST[1].desc).toContain(`+${Math.round(NUM.eliteKing * 100)}%`);
+  expectDesc(ASC_LIST[5].desc).toContain(`+${Math.round((NUM.checkHp - 1) * 100)}%`);
+  expectDesc(ASC_LIST[12].desc).toContain(`+${Math.round((NUM.finalHp - 1) * 100)}%`);
+});
