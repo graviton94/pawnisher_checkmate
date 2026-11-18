@@ -349,7 +349,7 @@ export const EVENT_FOCUS: Record<string, [number, number]> = {
   dipping: [0.5, 0.35], swapDealer: [0.5, 0.6], auction: [0.55, 0.5], brokenGacha: [0.55, 0.5], safe: [0.65, 0.5], counterweight: [0.55, 0.5],
   conveyor: [0.3, 0.6], oilMerchant: [0.4, 0.5], scrapTrade: [0.5, 0.55], lostPawn: [0.45, 0.6], scrapHeap: [0.5, 0.6], rustBath: [0.3, 0.55],
   drillRook: [0.2, 0.6], cardSharp: [0.4, 0.45], castMold: [0.35, 0.5], crownAltar: [0.5, 0.4], duelKnight: [0.55, 0.4], bookCart: [0.4, 0.55],
-  sleepingKing: [0.45, 0.4], echoWell: [0.4, 0.5], copyPress: [0.6, 0.9], tollGate: [0.4, 0.55], fieldMedic: [0.35, 0.55], coldForge: [0.4, 0.5], mirrorHall: [0.5, 0.6], overtime: [0.6, 0.55],
+  sleepingKing: [0.45, 0.4], echoWell: [0.4, 0.5], copyPress: [0.6, 0.9], tollGate: [0.53, 0.55], fieldMedic: [0.35, 0.55], coldForge: [0.4, 0.5], mirrorHall: [0.5, 0.6], overtime: [0.6, 0.55],
 };
 
 /**

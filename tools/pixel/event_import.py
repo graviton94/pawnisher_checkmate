@@ -518,7 +518,7 @@ def focus_of(name):
     return (float(m.group(1)), float(m.group(2))) if m else (0.5, 0.5)
 
 
-# ⑦ 사내 손질 (D-570 — D-561 ④: 지우기 · 다시 칠하기 · 자르기 + 정본 기물 얹기만) ---------------------------------------
+# ⑦ 사내 손질 (D-570 · D-572: 지우기 · 다시 칠하기 · 자르기만 — 그림에 게임 판 정본 스프라이트를 얹지 않는다) ---------------------------------------
 def erase_boxes(out, boxes):
     """상자 [x0, y0, x1, y1](도트) 안을 지운다: 줄마다 상자 왼쪽 · 오른쪽 바깥 두 칸 가운데 상자에 가까운 쪽 색으로 —
     벽 띠 · 리벳 줄처럼 가로로 이어진 면이 그대로 이어진다(새 모양을 그리지 않는다)"""
@@ -530,19 +530,6 @@ def erase_boxes(out, boxes):
             for x in range(x0, x1):
                 a[y, x] = left if x < mid else right
     return a
-
-
-def place_pieces(out, pieces):
-    """정본 기물(tools/pixel/maker.py 72칸 · ×1 = 장면 1도트)을 장면 바닥 자리에 얹는다. at = (가운데 x, 그림 아래 끝 y) 도트"""
-    import maker
-    img = Image.fromarray(np.asarray(out), 'RGB').convert('RGBA')
-    for p in pieces:
-        spr = maker.piece(p['piece'], p['side'], 1)
-        bb = spr.getbbox()
-        spr = spr.crop(bb)
-        cx, by = p['at']
-        img.alpha_composite(spr, (int(cx - spr.width // 2), int(by - spr.height)))
-    return np.asarray(img.convert('RGB'))
 
 
 def main():
@@ -571,8 +558,6 @@ def main():
         lk, nl = line_keep(raw, out)
         if r.get('erase'):
             out = erase_boxes(out, r['erase'])
-        if r.get('pieces'):
-            out = place_pieces(out, r['pieces'])
         o = Image.fromarray(out, 'RGB')
         fx, fy = focus_of(n)
         rep = dict(m, before=metrics(np.asarray(cur)), raw=metrics(raw), after=metrics(out), lineKeep=round(lk, 3), lineCells=nl, fx=fx, fy=fy)

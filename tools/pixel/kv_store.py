@@ -4,26 +4,21 @@
 
 앞 단계: python3 -I tools/pixel/store_import.py KV-01 KV-02h KV-03
   (scene_recipe.STORE_GRID 축마다 실측 격자 → 칸 가운데 최빈 묶음 중앙값 → 팔레트 → build-res/store/dots/KV-0N.png, 도트 1칸 = 1px)
-이 도구 (scene_recipe.KV_FIX · KV_OUT):
-  ① 사내 손질 — 지우기 · 다시 칠하기 · 정본 기물 얹기만(새 모양을 그리지 않는다):
-     KV-01: 받은 폰(층층 원뿔 몸 — 정본과 다름)을 지우고(열마다 폰 위 칸 색을 아래로 이어 — 벽 · 쇳물 줄기가 그대로 이어진다)
-            정본 흰 폰 maker.piece('P', 0, 1)을 같은 자리 · 같은 바닥에 얹고, 머리 줄(목 위)만 상아 → 쇳물 단으로 다시 칠한다.
-            쇳물 줄기는 정본 폰 먹선 · 흰 테를 지나 머리까지 이어 칠한다(받은 그림처럼 줄기가 머리에 닿는다).
-     KV-02h: 빈 길 위에 정본 흰 폰을 ×1로 얹는다(D-561 ①).
+이 도구 (scene_recipe.KV_OUT):
+  ① 사내 손질 없음 (D-572): 컨셉아트는 그림 그대로의 기물 · 인물을 쓴다 — 게임 판 정본 스프라이트(public/pieces · maker.piece)를
+     그림에 얹지 않는다. D-570의 KV-01 폰 지우기 · 정본 폰 얹기 · 쇳물 다시 칠하기와 KV-02h 정본 폰 얹기는 되돌렸다.
   ② ×k 계단 확대(NEAREST) → 스토어 크기로 자르기(늘이지 않는다) → 로고 LG-01a(build-res/logo, 도트 1칸 = 1px)를 정수배로 얹기.
-→ build-res/store/K1-dots.png · K2-hero-dots.png · K3-dots.png (손질 뒤 도트) · build-res/store/<스토어 파일>.png
+→ build-res/store/K1-dots.png · K2-hero-dots.png · K3-dots.png (복원 도트 그대로) · build-res/store/<스토어 파일>.png
 """
 import os
 import sys
 
-import numpy as np
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
-import maker  # noqa: E402
-from scene_recipe import KV_FIX, KV_OUT, STORE_GRID  # noqa: E402
+from scene_recipe import KV_OUT, STORE_GRID  # noqa: E402
 
 STORE = os.path.join(ROOT, 'build-res', 'store')
 ORDER = os.path.join(ROOT, 'build-res', 'order')
@@ -33,87 +28,6 @@ DOTS_OUT = {'KV-01': 'K1-dots.png', 'KV-02h': 'K2-hero-dots.png', 'KV-03': 'K3-d
 
 def hexrgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
-
-
-def canon_pawn():
-    """정본 흰 폰 72칸 ×1, 빈 둘레를 잘라 낸 RGBA"""
-    p = maker.piece('P', 0, 1)
-    return p.crop(p.getbbox())
-
-
-def fix_kv01(img, fx):
-    """받은 폰 지우기 → 정본 폰 얹기 → 머리 쇳물 다시 칠하기 → 쇳물 줄기를 머리까지. 반환 (그림, 기록)"""
-    a = np.asarray(img.convert('RGB')).copy()
-    x0, y0, x1, y1 = fx['box']
-    lum = a @ [0.299, 0.587, 0.114]
-    ivory = (lum > 200) & (np.abs(a[..., 0].astype(int) - a[..., 2]) < 30)
-    # 폰 자리 = 상자 안 줄마다 흰 테 왼쪽 끝 ~ 오른쪽 끝(열쇠 구멍 꼴은 줄마다 볼록하다)
-    mask = np.zeros(a.shape[:2], bool)
-    for y in range(y0, y1):
-        xs = np.nonzero(ivory[y, x0:x1])[0]
-        if len(xs):
-            mask[y, x0 + xs[0]:x0 + xs[-1] + 1] = True
-    # 받은 테 바깥의 흐린 둘레 칸(회색 · 먹 낱점)까지 지우도록 2칸 넓힌다
-    from scipy import ndimage as ndi
-    mask = ndi.binary_dilation(mask, iterations=2)
-    # 지우기: 쇳물 줄기 열(폰 위 칸이 쇳물 주황 · 노랑)은 그 색을 아래로 잇고, 나머지는 줄마다 폰 자리 왼쪽 · 오른쪽 바깥 칸 가운데
-    #   가까운 쪽 색으로(벽 · 주물틀 뒤 테가 가로로 이어진다)
-    stream = {}
-    for x in range(x0, x1):
-        ys = np.nonzero(mask[:, x])[0]
-        if len(ys):
-            c = a[ys[0] - 1, x]
-            r, g, b = (int(v) for v in c)
-            if r > 150 and r - b > 80:
-                stream[x] = c.copy()
-    for y in range(y0, y1):
-        xs = np.nonzero(mask[y])[0]
-        if not len(xs):
-            continue
-        l, r_ = xs[0], xs[-1]
-        def mode(px):
-            t = [tuple(v) for v in px]
-            return np.array(max(set(t), key=t.count), np.uint8)
-        left, right = mode(a[y, l - 8:l]), mode(a[y, r_ + 1:r_ + 9])
-        for x in xs:
-            a[y, x] = stream[x] if x in stream else (left if x - l <= r_ - x else right)
-    out = Image.fromarray(a, 'RGB').convert('RGBA')
-    pawn = canon_pawn()
-    pa = np.asarray(pawn).copy()
-    lut = {hexrgb(k): hexrgb(v) for k, v in fx['molten'].items()}
-    recol = 0
-    for y in range(min(fx['head_rows'], pa.shape[0])):
-        for x in range(pa.shape[1]):
-            c = tuple(int(v) for v in pa[y, x, :3])
-            if pa[y, x, 3] and c in lut:
-                pa[y, x, :3] = lut[c]
-                recol += 1
-    pawn = Image.fromarray(pa, 'RGBA')
-    cx, by = fx['pawn_at']
-    px, py = cx - pawn.width // 2, by - pawn.height
-    out.alpha_composite(pawn, (px, py))
-    o = np.asarray(out.convert('RGB')).copy()
-    # 줄기 열: 정본 폰 위 끝부터 머리 속(쇳물 단)에 닿을 때까지 먹선 · 흰 테를 줄기 색으로 다시 칠한다
-    molten = {hexrgb(v) for v in fx['molten'].values()}
-    painted = 0
-    for x, c in stream.items():
-        if not (px <= x < px + pawn.width):
-            continue
-        for y in range(py, by):
-            if tuple(int(v) for v in o[y, x]) in molten:
-                break
-            o[y, x] = c
-            painted += 1
-    return Image.fromarray(o, 'RGB'), {'erased': int(mask.sum()), 'pawn': [int(px), int(py), pawn.width, pawn.height],
-                                       'headRecolor': recol, 'streamPaint': painted}
-
-
-def put_pawn(img, at):
-    out = img.convert('RGBA')
-    pawn = canon_pawn()
-    cx, by = at
-    out.alpha_composite(pawn, (cx - pawn.width // 2, by - pawn.height))
-    return out.convert('RGB'), {'pawn': [cx - pawn.width // 2, by - pawn.height, pawn.width, pawn.height]}
 
 
 def assemble(dots, o):
@@ -197,15 +111,7 @@ def store_sheet(finals, out):
 def main():
     sheets = sys.argv[sys.argv.index('--sheets') + 1] if '--sheets' in sys.argv else None
     raw = {n: Image.open(os.path.join(STORE, 'dots', f'{n}.png')).convert('RGB') for n in DOTS_OUT}
-    dots, fixed = dict(raw), {}
-    if 'KV-01' in KV_FIX:
-        dots['KV-01'], info = fix_kv01(raw['KV-01'], KV_FIX['KV-01'])
-        fixed['KV-01'] = dots['KV-01']
-        print('KV-01 fix', info)
-    if 'KV-02h' in KV_FIX:
-        dots['KV-02h'], info = put_pawn(raw['KV-02h'], KV_FIX['KV-02h']['pawn_at'])
-        fixed['KV-02h'] = dots['KV-02h']
-        print('KV-02h pawn', info)
+    dots = dict(raw)  # D-572: 사내 손질 없음 — 복원 도트 그대로
     for n, f in DOTS_OUT.items():
         dots[n].save(os.path.join(STORE, f), optimize=True)
     finals = {}
@@ -217,7 +123,7 @@ def main():
     if sheets:
         os.makedirs(sheets, exist_ok=True)
         for n in DOTS_OUT:
-            source_sheet(n, raw[n], fixed.get(n), os.path.join(sheets, f'{n}-compare.png'))
+            source_sheet(n, raw[n], None, os.path.join(sheets, f'{n}-compare.png'))
         store_sheet(finals, os.path.join(sheets, 'KV-store-crops.png'))
 
 

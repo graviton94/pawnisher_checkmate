@@ -346,9 +346,9 @@
    "region": 26.77
   },
   "after": {
-   "colors": 33,
-   "lonely": 0.0042,
-   "region": 33.95
+   "colors": 26,
+   "lonely": 0.005,
+   "region": 29.98
   },
   "lineKeep": 0.997,
   "lineCells": 715,
