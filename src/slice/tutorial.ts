@@ -128,7 +128,8 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
         const grow = (q: DOMRect, p: number): DOMRect => new DOMRect(q.x - p, q.y - p, q.width + p * 2, q.height + p * 2);
         const mine = (o.keep?.() ?? []).filter((q): q is DOMRect => !!q);
         const keep = [...holes.map((q) => grow(new DOMRect(q.x, q.y, q.w, q.h), 4)), ...mine, skipBtn.getBoundingClientRect()];
-        placeSubAway(talk, { focus: r ?? mine[0] ?? null, keep, w: stepW });
+        // 첫 걸음처럼 띠 폭을 맞추기 전에 판 열 띠로 바뀐 때(stepW 0)도 SUB_MIN_W까지는 넓힌다 — 좁은 판 열(667)에서 세 줄로 접혔다 (D-535 덧붙임)
+        placeSubAway(talk, { focus: r ?? mine[0] ?? null, keep, w: stepW || undefined, minW: SUB_MIN_W });
       } else {
         delete talk.dataset.side;
         talk.classList.remove('on-rail', 'on-sub');
