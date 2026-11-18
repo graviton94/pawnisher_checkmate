@@ -67,7 +67,15 @@ const SCENES = [
   { name: 'raid', run: async ({ pg, A, shot }) => {
     await A(() => { window.sliceApi.richRun(); window.sliceApi.bossOf('plate', 1); }); await settle(pg, 2600);
     await shot('raid');
-    await A(() => window.sliceApi.botMove('greedy')); await pg.waitForTimeout(2600); await shot('raid-2');
+    // 첫 수의 연쇄 쪽지(.chainpop 0.9초): 자리 잡은 모습(키프레임 46~78% = 제자리 · 배율 1 · 가림 없음)을 찍는다.
+    // DPR 2.1 스크린샷은 0.3~0.5초 걸려 고정 시각으로는 들어오는 확대 · 색 갈림 프레임이나 사라진 뒤를 찍었다 —
+    // 뜬 쪽지를 애니메이션 없이 복제해 그 자리에 잠깐 붙들고 찍은 뒤 뗀다 (찍기 전용, 게임 상태는 건드리지 않는다)
+    await A(() => { void window.sliceApi.botMove('greedy'); });
+    const held = await pg.waitForSelector('.chainpop', { timeout: 6000 }).then(() => true).catch(() => false);
+    if (held) await A(() => { const el = document.querySelector('.chainpop'); const c = el.cloneNode(true); c.style.animation = 'none'; c.classList.add('store-hold'); document.body.appendChild(c); });
+    await pg.waitForTimeout(700);
+    await shot('raid-2');
+    await A(() => document.querySelectorAll('.store-hold').forEach((e) => e.remove()));
   } },
   { name: 'giant', run: async ({ pg, A, shot }) => {
     for (const g of ['R', 'Q']) { await A((t) => { window.sliceApi.richRun(); window.sliceApi.battleWith(2, 'check', { giants: [t], forms: undefined, process: undefined }); }, g); await settle(pg); await shot(`giant-${g}`); }
@@ -97,7 +105,13 @@ const SCENES = [
     await pg.click(".choice[data-slot='0']").catch(() => {}); await pg.waitForTimeout(500); await pg.click(".choice[data-slot='0']").catch(() => {});
     await burst(pg, shot, 'event-result', [1500, 2500, 3500, 4500]);
   } },
-  { name: 'shop', run: async ({ pg, A, shot }) => { await A(() => { const a = window.sliceApi; a.richRun(); a.gold(400); a.shop(); }); await pg.waitForTimeout(2000); await shot('shop'); } },
+  // 고물상: 진열(카드 · 부품 · 부적)이 시드마다 달라 몇 개를 찍고, 물건 하나를 골라 풀이 · 「산다」가 켜진 장도 찍는다
+  { name: 'shop', run: async ({ pg, A, shot }) => {
+    for (const sd of [1, 4, 9]) {
+      await A((k) => { const a = window.sliceApi; a.seed(k); a.richRun(); a.gold(400); a.shop(); }, sd); await pg.waitForTimeout(2000); await shot(`shop-s${sd}`);
+      await pg.locator('[data-slot]').nth(1).click({ force: true }).catch(() => {}); await pg.waitForTimeout(900); await shot(`shop-s${sd}-pick`);
+    }
+  } },
   { name: 'reward', run: async ({ pg, A, shot }) => {
     for (let seed = 1; seed < 60; seed++) { await A((k) => { window.sliceApi.seed(k); window.sliceApi.reward(); }, seed); await pg.waitForTimeout(250); const g = await A(() => [...document.querySelectorAll('[data-grade]')].map((e) => e.dataset.grade).join(',')); if (/rare/.test(g) && /gold/.test(g)) break; }
     await pg.waitForTimeout(500); await shot('reward-pop'); await pg.waitForTimeout(1800); await shot('reward');
@@ -119,16 +133,18 @@ const SCENES = [
     await A(() => { void window.sliceApi.defeatCut(); });
     for (let k = 1; k <= 4; k++) { await pg.waitForFunction(() => { const el = document.querySelector('.prologue'); return !el || el.dataset.beat === 'hold'; }, null, { timeout: 15000 }).catch(() => {}); await shot(`defeat-${k}`); await pg.mouse.click(VW / 2, VH * 0.35); await pg.waitForTimeout(400); }
   } },
-  // 턴 피해 합계(「이번 턴 피해 N · 처치 K」)가 판에 뜬 순간을 잡는다 — 판 글(sliceApi.boardTexts)로 뜬 것을 확인하고 찍는다 (봇 수는 손패에 따라 달라 고정 시각으로는 놓친다)
+  // 턴 피해 합계(「이번 턴 피해 N · 처치 K」)가 판에 뜬 순간을 잡는다 — 판 글(sliceApi.boardTexts)로 뜬 것을 확인하고 찍는다 (봇 수는 손패에 따라 달라 고정 시각으로는 놓친다).
+  // 합계는 자리 잡은 뒤 0.45초 만에 계단으로 접힌다(scaleY 0.75 → 0.5 …) — 그 사이를 찍으면 글이 납작하게 찍힌다. tallyHold로 자리 잡은 채 4초 머물게 하고,
+  // 세어 오름 · 숫자 출렁임 · 막음/처치 쪽지가 다 끝난 뒤(1.4초~)에 찍는다.
   { name: 'tally', run: async ({ pg, A, shot }) => {
     for (let tryN = 0; tryN < 3; tryN++) {
-      await A((n) => { const a = window.sliceApi; a.seed(11 + n); a.richRun(); a.setAct(1); a.startAt(2, 'battle'); }, tryN); await settle(pg);
+      await A((n) => { const a = window.sliceApi; a.seed(11 + n); a.tallyHold(4000); a.richRun(); a.setAct(1); a.startAt(2, 'battle'); }, tryN); await settle(pg);
       for (let k = 0; k < 12; k++) {
         await A(() => { void window.sliceApi.botMove('greedy'); });
         for (let t = 0; t < 40; t++) {
           await pg.waitForTimeout(60);
           if (await A(() => window.sliceApi.boardTexts().some((x) => x.text.includes('이번 턴 피해')))) {
-            await burst(pg, shot, 'tally', [500, 800, 1100]);
+            await burst(pg, shot, 'tally', [1400, 2200, 3000]);
             return;
           }
         }

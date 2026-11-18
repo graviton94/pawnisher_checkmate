@@ -1819,21 +1819,20 @@ class BoardScene extends Phaser.Scene {
   async summary(side: Side, damage: number, kills: number): Promise<void> {
     const t = this.tile;
     const { x, y } = this.camCenter;
-    const font = (px: number) => ({ fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(px)}px`, stroke: '#0B0B0E', strokeThickness: Math.max(4, px / 6) });
     if (side === 1 || (kills === 0 && damage < TURN_SUMMARY.bigDamage)) {
       // 적 턴, 또는 작은 내 턴: 위쪽에 작게 (판을 가리지 않고 기다림도 짧게)
       const text = side === 1 ? `잃음 −${damage}` : `피해 ${damage}`;
-      const lost = this.add.text(x, y - t * 2.2, text, { ...font(t * 0.42), color: side === 1 ? '#FF6B6B' : '#7DD3FC' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
+      const lost = this.crispText(x, y - t * 2.2, text, t * 0.42, side === 1 ? '#FF6B6B' : '#7DD3FC');
       // 결과 = 내리꽂힘 → 머묾 → 계단으로 접힘 (D-193)
-      lost.setScale(2);
-      await this.tween({ targets: lost, scale: 1, duration: 260, ease: 'Back.easeOut' });
-      await this.tween({ targets: lost, scaleY: 0, delay: 380, duration: 200, ease: 'Stepped', easeParams: [4] });
-      lost.destroy();
+      lost.setScale(lost.base * 2);
+      await this.tween({ targets: lost.obj, scale: lost.base, duration: 260, ease: 'Back.easeOut' });
+      await this.tween({ targets: lost.obj, scaleY: 0, delay: 380, duration: 200, ease: 'Stepped', easeParams: [4] });
+      lost.obj.destroy();
       return;
     }
-    const label = this.add.text(x, y - t * 0.75, '이번 턴 피해', { ...font(t * 0.3), color: '#F4F1EA' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
-    const num = this.add.text(x, y, '0', { ...font(t * 0.9), color: '#FACC15' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr);
-    const parts: Phaser.GameObjects.Text[] = [label, num];
+    const label = this.crispText(x, y - t * 0.75, '이번 턴 피해', t * 0.3, '#F4F1EA');
+    const num = this.crispText(x, y, '0', t * 0.9, '#FACC15');
+    const parts: Phaser.GameObjects.Text[] = [label.obj, num.obj];
     await new Promise<void>((done) =>
       this.tweens.addCounter({
         from: 0,
@@ -1842,17 +1841,55 @@ class BoardScene extends Phaser.Scene {
         ease: 'Expo.easeOut',
         onUpdate: (tw) => {
           num.setText(String(Math.round(tw.getValue() ?? 0)));
-          num.setScale(1 + 0.25 * (1 - tw.progress));
+          num.setScale(num.base * (1 + 0.25 * (1 - tw.progress)));
         },
         onComplete: () => done(),
       }),
     );
-    num.setScale(1.35);
-    this.tweens.add({ targets: num, scale: 1, duration: 220, ease: 'Back.easeOut' });
-    if (kills > 0) parts.push(this.add.text(x, y + t * 0.75, `처치 ${kills}`, { ...font(t * 0.36), color: '#FACC15' }).setOrigin(0.5).setDepth(10).setResolution(this.dpr));
-    await this.wait(450);
+    num.setScale(num.base * 1.35);
+    // 출렁임이 끝나면 정확히 기본 배율(글 텍스처 1픽셀 = 캔버스 1픽셀)로 돌려 놓는다 — Back 보간이 1 언저리 소수에서 멈추지 않게
+    this.tweens.add({ targets: num.obj, scale: num.base, duration: 220, ease: 'Back.easeOut', onComplete: () => num.setScale(num.base) });
+    // 처치 줄은 큰 숫자(0.9칸) 먹 테와 닿지 않게 0.85칸 아래 (예전 0.75칸은 숫자 아래 테에 붙었다)
+    if (kills > 0) parts.push(this.crispText(x, y + t * 0.85, `처치 ${kills}`, t * 0.36, '#FACC15').obj);
+    await this.wait(450 + this.summaryHold);
     await this.tween({ targets: parts, scaleY: 0, duration: 200, ease: 'Stepped', easeParams: [4] });
     for (const o of parts) o.destroy();
+  }
+  /** 디버그 (스토어 스크린샷 tools/qa/store-shots.cjs): 턴 합계가 자리 잡은 뒤 접히기 전에 더 머무는 ms */
+  summaryHold = 0;
+
+  /**
+   * 판 위 큰 글 (턴 합계, D-073) — 갈무리 도트 한 칸이 캔버스 픽셀 정수 개가 되게 찍는다.
+   * 예전에는 글자 크기를 월드 px(12 배수)로 두고 해상도를 판 배율(this.dpr)로 줬다: 일렉트론 2.0984 · 1.3989 같은 소수 배율에서는
+   * 도트 한 칸이 2.1 · 1.4 캔버스 픽셀이 되어 획 굵기가 들쭉날쭉하고, 글 텍스처 폭이 올림되어 가장 가까운 픽셀로 늘려 그리며(pixelArt) 줄이 빠졌다.
+   * 이제 캔버스 픽셀 단위 글 크기 = 12 × k (k = 월드 크기 × 배율 ÷ 12 반올림, 판 위 글 규칙 D-213의 12 배수)로 해상도 1에 찍고 1/배율로 줄여 놓는다 —
+   * 정수 배율(웹 폰 2 · 3/2)에서는 예전과 같은 크기, 소수 배율에서는 가장 가까운 정수 도트 크기. 왼쪽 위 모서리도 캔버스 픽셀 정수에 맞춘다.
+   * 돌려주는 base = 기본 배율(1/배율) — 키우고 줄이는 연출은 이 값에 곱한다.
+   */
+  private crispText(x: number, y: number, text: string, worldPx: number, color: string): { obj: Phaser.GameObjects.Text; base: number; setText: (s: string) => void; setScale: (s: number) => void } {
+    const r = this.dpr;
+    // 판 위 글 하한 12px(D-213)보다 작아지지 않게: 1.4배에서 12px → 도트 1칸이면 8.6px로 줄었다
+    const k = Math.max(1, Math.ceil(r - 1e-6), Math.round((gpx(worldPx) * r) / 12));
+    // 먹 테: 예전 굵기(월드 max(4, 크기/6))를 캔버스 픽셀로 옮겨 도트 2칸 단위로 — 캔버스 테는 획 가운데에 걸려 바깥으로 절반(도트 정수)이 나온다
+    const stroke = Math.max(2 * k, Math.round((Math.max(4, worldPx / 6) * r) / (2 * k)) * 2 * k);
+    const base = 1 / r;
+    const obj = this.add
+      .text(x, y, text, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${12 * k}px`, color, stroke: '#0B0B0E', strokeThickness: stroke })
+      .setOrigin(0.5)
+      .setDepth(10)
+      .setResolution(1)
+      .setScale(base);
+    // 가운데 맞춤 글의 왼쪽 위가 캔버스 픽셀 사이에 걸리지 않게 (카메라 가운데 × 줌은 정수 — moveCamera)
+    const snap = (): void => {
+      obj.setPosition((Math.round(x * r - obj.width / 2) + obj.width / 2) / r, (Math.round(y * r - obj.height / 2) + obj.height / 2) / r);
+    };
+    snap();
+    return {
+      obj,
+      base,
+      setText: (s: string) => { if (obj.text !== s) { obj.setText(s); snap(); } },
+      setScale: (s: number) => { obj.setScale(s); },
+    };
   }
 
   /** 기록 줄 한 칸을 판 위에 1.4초 다시 보여 준다: 공격자 선택 모서리 + 대상으로 흐르는 화살표 + 대상 과녁 */
@@ -2511,6 +2548,10 @@ export class BoardRenderer implements BoardView {
   /** 이동 한 번(들기 → 착지)의 지금 길이 ms (D-553 카드 FX 박자) */
   moveMs(): number {
     return this.scene.moveMsNow;
+  }
+  /** 디버그 (스토어 스크린샷): 턴 합계가 자리 잡은 채 접히기 전에 더 머물 ms (0 = 보통) */
+  debugSummaryHold(ms: number): void {
+    this.scene.summaryHold = ms;
   }
   /** 디버그 (글자 잉크 점검 tools/qa/text-audit.cjs, D-558): 판 위 보이는 글마다 Phaser가 잰 글 텍스처 여백 */
   debugTexts(): { text: string; font: string; ascent: number; descent: number; padTop: number; padBottom: number; x: number; y: number }[] {
