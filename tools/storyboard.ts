@@ -62,7 +62,9 @@ const clean = (t: string): string => t.replace(/<\/?em>/g, '').replace(/\|/g, '�
 const KIND = { n: '서술', s: '대사', m: '독백' } as const;
 /** 비트 연출 한 칸 (D-504): 숨(ms) · 카메라(초점 x·y, 확대 z) · 소리 큐 · 효과 */
 const FX_KO = { shake: '흔들림', flash: '흰 번쩍', red: '붉은 경보', gold: '금빛' } as const;
-const beat = (l: Line): string => [l.pause ? `숨 ${l.pause}` : '', l.shot ? `샷 ${Math.round(l.shot.x * 100)}·${Math.round(l.shot.y * 100)}${l.shot.z ? ` ×${l.shot.z}` : ''}` : '', l.sfx ? `소리 ${l.sfx}` : '', l.fx ? FX_KO[l.fx] : ''].filter(Boolean).join(' · ') || '—';
+/** 먹 무대 비트 (D-579 — 그림 없는 컷의 도트 효과) */
+const BEAT_KO = { rumble: '먹 무대: 컨베이어가 덜컹이며 상자 자리를 청록 작업등 아래로 · 등이 깜빡 켜짐', drop: '먹 무대: 왼쪽에 굴러다니던 흰 빛 조각이 집혀 오름 → 매달려 옮겨짐 → 빈 킹 칸으로 떨어져 눌림(쇳가루 · 먼지 · 차가운 빛 · 도장 흔들림)', count: '먹 무대: 양옆 여덟 칸이 하나씩 켜지고 아홉째가 두 번 깜빡', hush: '먹 무대: 빛줄기가 좁아져 아홉째 칸만 남음 · 경고등이 느려짐' } as const;
+const beat = (l: Line): string => [l.pause ? `숨 ${l.pause}` : '', l.shot ? `샷 ${Math.round(l.shot.x * 100)}·${Math.round(l.shot.y * 100)}${l.shot.z ? ` ×${l.shot.z}` : ''}` : '', l.sfx ? `소리 ${l.sfx}` : '', l.fx ? FX_KO[l.fx] : '', l.beat ? BEAT_KO[l.beat] : ''].filter(Boolean).join(' · ') || '—';
 /** 줄 표: ID · 형식 · 화자 · 원문 · 연출(비트) */
 /** ids: 바이블 줄 ID가 「컷-번호」 꼴이 아닌 줄(SHD-B-4-A2 · END-F-1 · END-T-크레딧 …)은 순번 대신 이 이름을 쓴다 */
 const table = (prefix: string, lines: Line[], from = 0, ids: Record<number, string> = {}): void => {
@@ -84,7 +86,7 @@ const rows = (head: [string, string], items: [string, string, string][]): void =
   p('');
 };
 const cutBlock = (id: string, title: string, c: Cut, picture: string, note = '', from = 0, ids: Record<number, string> = {}): void => {
-  p(`#### ${id} · ${title}`, '', c.coda ? '- **그림**: 없음 — 끝 정적' : `- **그림**: \`${c.img}.png\` — ${picture}`, ...cutHead(c), ...(note ? [`- **메모**: ${note}`] : []), '');
+  p(`#### ${id} · ${title}`, '', c.coda ? '- **그림**: 없음 — 끝 정적' : c.dark ? `- **그림**: 없음 — ${picture}` : `- **그림**: \`${c.img}.png\` — ${picture}`, ...cutHead(c), ...(note ? [`- **메모**: ${note}`] : []), '');
   table(id, c.lines, from, ids);
 };
 
@@ -151,7 +153,7 @@ const PRO_PIC = [
   '연기에 덮인 공장 전경. 기물 문장이 걸린 건물들, 다리 위에 작은 흰 폰 하나',
   '(OP-01 재발주본, D-512) 맨머리 흰 폰의 등 쪽 태엽 열쇠를 황동 집게 팔이 돌린다. 왕관은 없다(PRO-06에서 처음 접는다). 뒤로 컨베이어 위 검은 폰 줄',
   '쇳물이 쏟아지는 주조 라인. 거푸집에서 검은 기물들이 줄줄이 굳어 나온다',
-  '공장 집게가 흰 폰 하나를 집어 흰 세트 상자의 킹 자리에 내려놓는다. 붉은 경고등',
+  '먹 무대(D-579 — VA-01 취소, 그림 없이 글 · 효과 · 연출만): 먹 바탕에 청록 작업등 빛줄기 · 오른쪽 위 붉은 경고등 · 아래 컨베이어 띠. 기물 그림은 없고 작은 네모 표시(여덟 칸 + 빈 킹 꺾쇠 + 아홉째)만 — 줄마다 아래 「연출」의 비트',
   '상자 위에 커다란 붉은 X. 붉은 조명 아래 줄지어 선 흰 세트',
   '(OP-03, D-514) 공장 밑바닥에서 올려다본 끝없는 수직 갱도. 층층 철골 · 배관 · 컨베이어가 위로 좁아지고, 꼭대기 통제실 창의 금빛 아래 둥근 승급대 위에 왕의 작은 그림자. 양옆에 불량 X 딱지 상자, 그 틈에서 흰 폰 · 나이트 · 비숍의 뒷모습이 위를 올려다본다',
   '(OP-02) 열린 상자 칸막이에 흰 폰 여덟과 룩 · 나이트 · 비숍 · 퀸. 십자 홈이 파인 킹 자리에 맨머리 폰 하나, 그쪽으로 기운 퀸. 귀퉁이에 포장지',
@@ -412,7 +414,7 @@ p('- 거절 공통 결과: 「당신은 말없이 발걸음을 돌린다.」', '
 // ───────────────────────── 11. 그림 목록 ─────────────────────────
 p('## 11. 장면 그림 목록', '',
   '| 장면 | 파일 | 상태 |', '|---|---|---|',
-  `| 프롤로그 10컷 | \`prologue-00\` ~ \`prologue-07\` · \`op-windup\` · \`op-legend\` | ${picState([...Array.from({ length: 8 }, (_, i): [string] => [`prologue-0${i}`]), ['op-windup'], ['op-legend']], ['OP-01', 'OP-02', 'OP-03', 'OP-04'])} |`,
+  `| 프롤로그 10컷 | \`prologue-00\` ~ \`prologue-07\` · \`op-windup\` · \`op-legend\` | ${picState([...Array.from({ length: 8 }, (_, i): [string] => [`prologue-0${i}`]).filter(([f]) => f !== 'prologue-02'), ['op-windup'], ['op-legend']], ['OP-01', 'OP-02', 'OP-03', 'OP-04'])} — PRO-03은 그림 없음(먹 무대, D-579 · VA-01 취소) |`,
   `| 그림자 컷 | \`prologue-shadow\`(재도전) · \`new-law\` · \`law-plate\` + 왕관 시작 \`crown-2-open\` · \`crown-3-open\` · \`crown-4-open\`(둘째~넷째 왕관 시작) | ${picState([['prologue-shadow'], ['new-law'], ['law-plate'], ['crown-2-open', 'new-law'], ['crown-3-open', 'new-law'], ['crown-4-open', 'new-law']], ['CN-01', 'CN-02', 'CN-03'])} |`,
   `| 막 입구 | \`act-2\` · \`act-3\`(3막, D-536) · \`act-4\` | ${picState([['act-2'], ['act-3'], ['act-4']], ['AC-01', 'AC-02', 'AC-03'])} |`,
   '| 반장 등장 6 + 도금왕 4 | `boss-*` | 있음 |',

@@ -159,7 +159,6 @@ export const PRELOAD: string[] = [
   "scenes/pact.png",
   "scenes/prologue-00.png",
   "scenes/prologue-01.png",
-  "scenes/prologue-02.png",
   "scenes/prologue-03.png",
   "scenes/prologue-04.png",
   "scenes/prologue-05.png",

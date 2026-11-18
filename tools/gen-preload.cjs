@@ -12,6 +12,8 @@ const PUB = path.join(ROOT, 'public');
  * 아예 안 쓰는 그림은 public/ 밖 build-res/unused/로 옮겼다 (D-541 — 그 폴더의 README.md 목록). 다시 쓰게 되면 여기서 지운다.
  */
 const SKIP = new Set(['bricks', 'oil', 'portal'].map((n) => `ui/icons/${n}.png`));
+// D-579: PRO-03은 그림 없는 먹 무대가 됐다 — scenes/prologue-02.png는 발주서 첨부 · 격자 점검(test_regrid)이 읽어 public/에 두되 앱은 부르지 않는다
+SKIP.add('scenes/prologue-02.png');
 const skip = (rel) => SKIP.has(rel) || /^pieces\/m-/.test(rel);
 const out = [];
 const walk = (dir) => {

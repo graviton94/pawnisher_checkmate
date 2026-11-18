@@ -110,3 +110,30 @@ export const VN_TEXT = {
   /** 창에 보이는 마지막 줄 수 (스크롤 없이 M 창 세로 364 안 — game-ui-design 4.3) */
   logLines: 6,
 } as const;
+
+/**
+ * 먹 무대 (D-579, 사장님 결정 「비주얼 일러스트 없이, 묘사 및 텍스트와 효과로만」): 그림 없는 컷(Cut.dark)의 도트 효과 수치.
+ * 그림 · 기물 도트를 그리지 않는다 — 청록 작업등 빛줄기 · 붉은 경고등 · 컨베이어 띠 · 떨어지는 흰 빛 조각 · 부딪힘 먼지 · 칸 표시(작은 네모)만.
+ * 칸 = 전환 막 칸과 같은 크기(기기 픽셀 round(6·DPR)), 빛은 3단 계단 + 4×4 베이어(그라데이션 없음). 재생은 slice/darkcut.ts.
+ * 비트(Line.beat): rumble = 띠가 돌고 등이 켜짐 · drop = 집혀 오름 → 매달림 → 떨어짐 → 부딪힘 · count = 여덟 칸이 차례로 켜지고 아홉째가 깜빡 · hush = 빛이 좁아져 아홉째만 남음.
+ */
+export type DarkBeat = 'rumble' | 'drop' | 'count' | 'hush';
+export const VN_DARK = {
+  /** 한 칸 = 기기 픽셀 round(dot × DPR) — 전환 막(film.Wipe) 칸과 같은 굵기(장면 도트 × 2): 그림 없는 칸에서 표시가 작아 보이지 않게 */
+  dot: 6,
+  /** 등이 켜지는 시간 (ms) · 켜지다 한 번 꺼지는 깜빡(시작 ms, 길이 ms) */
+  lightOn: 520,
+  flicker: [180, 70] as const,
+  /** 작업등 빛줄기: 위 끝 반폭 · 바닥 반폭(칸) · 좌우 흔들림(칸, 주기 ms) — 정수 칸씩만 옮겨 계단으로 쓸린다 */
+  cone: { top: 3, bottom: 30, sway: 5, swayMs: 5200, hush: 0.22, hushMs: 900 },
+  /** 붉은 경고등: 켜짐 · 꺼짐 (ms, 계단 깜빡) · 조용해지면(hush) 느리게 */
+  lamp: { on: 620, off: 620, hushMul: 1.8 },
+  /** 컨베이어 띠: 홈 간격(칸) · 한 칸 밀리는 간격(ms) · 덜컹(1칸 위아래, ms 간격) · 처음 화면 흔들림 두 번(ms) */
+  belt: { groove: 6, stepMs: 90, jolt: 380, shakeAt: [0, 300] as const },
+  /** drop: 집혀 오름(예비) → 매달려 흔들림 → 떨어짐(가속) → 부딪힘 hero 프레임 → 눌림 · 출렁 (ms) */
+  drop: { lift: 380, carry: 1150, fall: 260, hero: 70, settle: 360, swayMs: 170 },
+  /** 부딪힘: 쇳가루 · 먼지 수 · 빛 반지름(칸) */
+  impact: { grit: 16, dust: 9, light: 16 },
+  /** count: 여덟 칸이 하나씩 켜지는 간격 (ms) · 아홉째 깜빡 횟수 */
+  count: { stepMs: 110, blinks: 2, blinkMs: 140 },
+} as const;
