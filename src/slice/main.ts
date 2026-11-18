@@ -1507,8 +1507,10 @@ const pickCard = (i: number): void => {
   refresh();
 };
 
-/** 기물을 먼저 누르면 그 기물에 맞는 카드를 고른다 — 싸고 · 세고 · 전용인 카드부터 (피드백 #11 · D-503, autopick.ts) */
-const autoCard = (pieceId: number) => autoPick(b, pieceId);
+/** 기물 유형마다 마지막에 낸 이동 카드 — 자동 고르기의 끝 무렵 동점 가르기 (D-591) */
+const lastMove: Partial<Record<PieceType, CommandId>> = {};
+/** 기물을 먼저 누르면 그 기물에 맞는 카드를 고른다 — 전용 · 싼 태엽 · 값 · 기본 카드 순 (피드백 #11 · D-503 → D-591, autopick.ts) */
+const autoCard = (pieceId: number) => autoPick(b, pieceId, lastMove[findPiece(b.s, pieceId)?.type ?? 'P']);
 
 const onTap = async (pos: Pos): Promise<void> => {
   if (!battleInputActive() || b.s.winner !== null) return;
@@ -1566,6 +1568,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const hand0 = b.hand.length;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
+  if (moverType && COMMANDS[cardId]?.kind === 'move') lastMove[moverType] = cardId;
   // 낸 카드는 엔진이 이미 풀었다 — 연출 전에 남긴다 (코드 리뷰 4)
   saveFight({ stand: false });
   const mover = pieceId !== undefined ? findPiece(b.s, pieceId) : undefined;
