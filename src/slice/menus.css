@@ -27,7 +27,7 @@ body[data-drill='b'] #btn-menu { visibility: hidden; }
 :is(.win, .scr-pick, .scr-place, .kit) .tabs.tabs9 > .tab { height: max(48px, calc(var(--px) * 23)); background: none; padding: 0; border-style: solid; border-width: calc(var(--px) * 4) calc(var(--px) * 14) calc(var(--px) * 4) calc(var(--px) * 20); border-image: url('../assets/ui/chrome/v2/tab-iron-up.png') 4 14 4 20 fill / calc(var(--px) * 4) calc(var(--px) * 14) calc(var(--px) * 4) calc(var(--px) * 20) stretch; image-rendering: pixelated; }
 :is(.win, .scr-pick, .scr-place, .kit) .tabs.tabs9 > .tab > .tl { margin: 0 calc(var(--px) * -14) 0 calc(var(--px) * -20); flex: 1 1 auto; text-align: center; }
 :is(.win, .scr-pick, .scr-place, .kit) .tabs.tabs9 > .tab:is(.sel, [aria-selected='true']) { background: none; border-image-source: url('../assets/ui/chrome/v2/tab-brass-sel.png'); }
-.su-win .tabs.tabs9 > .tab { width: calc(var(--px) * 52); } /* D-556: 48 → 52 — 「오늘의 도전」이 탭 테에 붙었다 */
+.su-win .tabs.tabs9 > .tab { width: calc(var(--px) * 52); } /* D-557: 48 → 52 — 「오늘의 도전」이 탭 테에 붙었다 */
 
 /* ---------- 메인 메뉴 (op5): 단추 다섯 · 황동 하나 — 폭 S 352(40vw까지) 하나, 층 간격 8 ---------- */
 body.slice .opening .op-menu.op5 { width: min(352px, 40vw); gap: var(--s2); padding-block: 0; }
@@ -77,8 +77,8 @@ body.slice .opening.menu::after { right: auto; left: max(16px, env(safe-area-ins
 /* ---------- 대국 계기 이름 (검수 M3): 속전 계기 「속전」 · 되감기 단추 아래 「되감기」 — 12px ---------- */
 body.slice.lay-f .gtop .coins .sp-win > .sp-lbl { margin-left: var(--s2); color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; }
 /* 꼬리표 자리: 단추 줄 위 14px를 비운다 (적의 수 칸 테를 밟지 않게) */
-body.slice.lay-f #right > .actions { margin-top: 24px; } /* D-556: 「되감기」 이름표(줄 16) + 틈 4 + 위 칸과 여유 4 — 18이면 위 움푹 칸에 글자 위가 잘렸다 */
-#btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--k-btn-y) * var(--px) + 2px); /* 기준 = 안쪽 상자 — 9-slice 테 높이만큼 더 올린다 (D-556) */ color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
+body.slice.lay-f #right > .actions { margin-top: 24px; } /* D-557: 「되감기」 이름표(줄 16) + 틈 4 + 위 칸과 여유 4 — 18이면 위 움푹 칸에 글자 위가 잘렸다 */
+#btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--k-btn-y) * var(--px) + 2px); /* 기준 = 안쪽 상자 — 9-slice 테 높이만큼 더 올린다 (D-557) */ color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
 
 /* ---------- H3 「쓸 수 없음」 단추 · 선택지: 단추 넷(kit.css --off)은 받은 MM-01 꺼짐 단추(D-544, tools/pixel/mm01_import.py — 9-slice 32×20 · 변 · 가운데 단색).
    선택지 · 손패 판(choice-off0 · hand-choice-off0)은 MM-01에 없어 보통 그림을 다시 칠한 임시본 그대로(tools/pixel/btn_off_interim.py) ---------- */

@@ -2986,7 +2986,7 @@ const shopScreen = (): void => {
         const short = costOf(k) - gold;
         say.classList.toggle('bad', !sold.has(keyOf(k)) && short > 0);
         say.textContent = sold.has(keyOf(k)) ? SCREEN_TEXT.soldWhy : short > 0 ? SCREEN_TEXT.shortWhy(short) : detail(k);
-        // 낮은 화면(≤ 400 — 772×360 · 667×375)은 카드 아래 덱 맞물림 줄을 접는다 (D-556: 카드 하한 150 + 맞물림 줄이 진열대 높이를 넘어 가격표 · 줄이 잘렸다) — 고르면 풀이 아래 줄로
+        // 낮은 화면(≤ 400 — 772×360 · 667×375)은 카드 아래 덱 맞물림 줄을 접는다 (D-557: 카드 하한 150 + 맞물림 줄이 진열대 높이를 넘어 가격표 · 줄이 잘렸다) — 고르면 풀이 아래 줄로
         const fit = el.querySelector(`[data-slot="${k}"]`)?.parentElement?.querySelector('.slot-info')?.textContent?.trim();
         if (fit && !sold.has(keyOf(k)) && short <= 0 && window.matchMedia?.('(max-height: 400px)').matches) say.append(document.createElement('br'), fit);
         go.disabled = sold.has(keyOf(k)) || gold < costOf(k);
@@ -5400,7 +5400,7 @@ const statsWin = (back: () => void): void => {
   el.querySelector('[data-x]')!.addEventListener('click', () => (sfx('tap'), back()));
 };
 
-/** 시작 세트 그림 칸의 기물 크기(CSS px, D-556) — pieceImg가 기기 정수배로 맞춘다(915 · DPR 2.625 → 54.86 = 2도트/칸) */
+/** 시작 세트 그림 칸의 기물 크기(CSS px, D-557) — pieceImg가 기기 정수배로 맞춘다(915 · DPR 2.625 → 54.86 = 2도트/칸) */
 const SET_ART_PX = 56;
 const setPick = (): Promise<StartSetId> => new Promise((done) => {
   const unlocked = readMeta(store).unlocked ?? [];
@@ -5409,7 +5409,7 @@ const setPick = (): Promise<StartSetId> => new Promise((done) => {
   const face = (id: StartSetId): string => {
     const st = START_SETS[id];
     const open = setOpen(id, unlocked);
-    // 위 그림 칸 (D-556): 덱 개념만 — 흰 기물 그림(종이왕 K0 정본 · 이형 전용 그림)을 정수배로, 하나 · 둘 · 셋. 분대 · 수량은 아래 글이 말한다
+    // 위 그림 칸 (D-557): 덱 개념만 — 흰 기물 그림(종이왕 K0 정본 · 이형 전용 그림)을 정수배로, 하나 · 둘 · 셋. 분대 · 수량은 아래 글이 말한다
     const pcs = st.art.map((a) => `<span class="ss-a">${a.length === 1 ? pieceImg(a as PieceType, 0, 'small', SET_ART_PX) : pieceImg('P', 0, 'small', SET_ART_PX, a)}</span>`).join('');
     return `<button type="button" class="cf part-card start-set g-${open ? (st.unlock ? 'rare' : 'common') : 'common'}" data-grade="${st.unlock ? 'rare' : 'common'}" aria-label="${st.name}"${open ? '' : ' disabled'}><b class="cf-name">${st.name}</b><span class="cf-win ss-art n${st.art.length}${st.artStagger ? ' stg' : ''}" style="--ssw:${pieceThumbPx(SET_ART_PX)}px" aria-hidden="true">${pcs}</span><small class="cf-desc"><span class="part-rule-lines">${st.rows.map((t, k) => lineHtml(t, k === 2 ? 'fx' : k === 0 ? 'name' : 'if')).join('')}</span></small><i class="cf-gem"></i></button>`;
   };
