@@ -135,14 +135,16 @@ export const ASCENSION: { name: string; law: string; desc: string }[] = [
   // D-542: 조항 4 ↔ 5 자리 바꿈 — 도전 1(승급 4)이 넷째 왕관과 고물상 값만 달라 더 쉽게 재였다(60 vs 47%). 도전의 첫 계단은 적 수로
   { name: '불어난 무리', law: '흑 세트마다 폰을 하나 더 넣는다', desc: '대국마다 적 폰 하나 더' },
   { name: '비싼 고물', law: '고물상은 값을 올려 받는다', desc: '고물상 값 +25%' },
-  { name: '두꺼운 반장', law: '반장에게 철판을 한 겹 더', desc: '반장 · 도금왕 HP +20%' },
+  // D-575: 반장 HP +20% → 검문 HP +50% — 도전 실패가 반장(특히 1막 반장)에 몰렸다. 반장 대신 길 위의 검문을 두껍게
+  { name: '두꺼운 검문', law: '검문대에 철판을 한 겹 더', desc: '검문 적 HP +50%' },
   { name: '녹슨 명령서', law: '하자 세트의 명령서에는 녹을 섞는다', desc: '시작 덱의 카드 한 장이 녹슨 카드 (태엽 +1)' },
+  // D-575: 조항 8 ↔ 9 자리 바꿈 — 마른 나사는 두뇌 봇 완주를 거의 바꾸지 않아 도전 3 → 5가 평평했다(30 → 35%). 도전 5의 계단은 적 공격으로
+  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '반장 · 도금왕이 아닌 적 공격 +85%' },
   { name: '마른 나사', law: '하자 세트에는 나사를 덜 내준다', desc: '속전 보상 −25%' },
-  { name: '세운 날', law: '흑 기물의 공격 날을 세운다', desc: '적 공격 +60%' },
   { name: '금 간 심장', law: '하자 세트의 심장 톱니는 금 간 것으로 끼운다', desc: '분대원 하나가 깨진 심장 톱니로 시작' },
   { name: '얇은 보상', law: '하자 세트에는 명령서를 둘만 내준다', desc: '대국 보상 카드 선택지 3 → 2' },
   { name: '정예 검문', law: '검문마다 정예를 세운다', desc: '검문 적 하나가 정예 (왕관 · HP ×2)' },
-  { name: '최종 경비', law: '왕좌의 경비를 최대로 강화한다', desc: '도금왕 HP +120%' },
+  { name: '최종 경비', law: '왕좌의 경비를 최대로 강화한다', desc: '도금왕 HP +60%' },
 ];
 // D-316: enemyAtk 1.1 → 1.05 · finalHp 1.2 → 1.1 — 두뇌 봇 승급 13 완주 17.5%(120판)를 목표 20~35%로
 // D-457: enemyHp 1.3 → 1.2 · 기어 쇼크 ×0.75 · 손패 감소 없음 — 보통 봇 계단 38 → 35 → 20%가 38 → 30 → 25%로
@@ -150,7 +152,17 @@ export const ASCENSION: { name: string; law: string; desc: string }[] = [
 // D-461: 3.4 → 1.3 — 도금왕 공격을 0.85로 되돌리고(D-460) 적 공격 1.25로 올린 뒤 13단 두뇌 봇 5%(도착 26 중 2) → 23%
 // D-542: enemyHp 1.2 → 1.3 · eliteKing 0.2 → 0.35 — 왕관 계단이 평평했다(두뇌 98 → 95 → 95). restMul 0.3은 그대로지만 이제 막 정비 회복에도 걸린다(넷째 왕관 계단 — 0.5로는 셋째 54 → 넷째 48%)
 // D-542 (도전): enemyAtk 1.45 → 1.6 · finalHp 1.8 → 2.2 — 도전 10이 두뇌 봇에게 27%(목표 10~20)
-export const ASC_NUM = { enemyHp: 1.3, eliteKing: 0.35, restMul: 0.3, shopMul: 1.25, bossHp: 1.2, coinMul: 0.75, enemyAtk: 1.6, rewardChoices: 2, finalHp: 2.2 };
+// D-575 (도전): 반장에 몰린 실패를 길 위로 — bossHp 1.2 → 1(조항 6은 검문 checkHp 1.5) · 조항 8(세운 날, 옛 9) enemyAtk 1.6 → 1.85이되 반장 · 도금왕은 bossAtk 1(빼기) · finalHp 2.2 → 1.6.
+//   두뇌 봇 도전 1/3/5/7/10 = 40/32/35/18/13(반장 승 67%) → 40/35/27/27/17(반장 승 83%)
+export const ASC_NUM = {
+  enemyHp: 1.3, eliteKing: 0.35, restMul: 0.3, shopMul: 1.25,
+  /** 조항 6: 반장 · 도금왕 HP (D-575: 1.2 → 1 — 검문으로 옮김) · 검문 적 HP */
+  bossHp: 1, checkHp: 1.5,
+  coinMul: 0.75,
+  /** 조항 8: 적 공격 · 그중 반장 · 도금왕이 받는 배율 (1 = 빼기) */
+  enemyAtk: 1.85, bossAtk: 1,
+  rewardChoices: 2, finalHp: 1.6,
+};
 /** 이 승급에서 그 조항이 켜졌나 — 조항 번호(1 ~ 13)는 ASCENSION 순서 */
 export const ascOn = (asc: number, law: number): boolean => asc >= law;
 export const ASC_MAX = ASCENSION.length;
@@ -174,10 +186,10 @@ export const ASC_OMEN: [string, string][] = [
   ['정비 라인이 느려져 상처가 덜 아문다.', `대국 사이 · 막 정비 회복 ${Math.round(ASC_NUM.restMul * 100)}%`],
   ['흑 세트마다 폰이 하나씩 더 줄을 선다.', '대국마다 적 폰 +1'],
   ['고물상이 값을 올려 부른다.', `고물상 값 ${pctUp(ASC_NUM.shopMul)}`],
-  ['반장들이 철판을 한 겹 더 덧대고 기다린다.', `반장 · 도금왕 HP ${pctUp(ASC_NUM.bossHp)}`],
+  ['검문대의 흑 기물들이 철판을 한 겹 더 덧대고 기다린다.', `검문 적 HP ${pctUp(ASC_NUM.checkHp)}${ASC_NUM.bossHp > 1 ? ` · 반장 · 도금왕 HP ${pctUp(ASC_NUM.bossHp)}` : ''}`],
   ['손에 쥔 명령서 한 장에 녹이 번져 있다.', '시작 덱 카드 1장 녹슮 · 태엽 +1'],
+  ['흑 기물들이 공격 날을 세워 둔다.', `적 공격 ${pctUp(ASC_NUM.enemyAtk)}${ASC_NUM.bossAtk > 1 ? ` · 반장 · 도금왕 ${pctUp(ASC_NUM.bossAtk)}` : ' · 반장 · 도금왕 제외'}`],
   ['나사 상자가 눈에 띄게 가벼워진다.', `속전 보상 나사 −${Math.round((1 - ASC_NUM.coinMul) * 100)}%`],
-  ['흑 기물들이 공격 날을 세워 둔다.', `적 공격 ${pctUp(ASC_NUM.enemyAtk)}`],
   ['분대원 하나가 심장 톱니 하나를 깨뜨린 채 출발한다.', '분대원 1명 심장 톱니 깨짐 — 다시 쓰러지면 폐기'],
   ['전리품 상자에 명령서가 둘만 든다.', `대국 보상 카드 3장 → ${ASC_NUM.rewardChoices}장`],
   ['검문마다 왕관 쓴 정예가 선다.', '검문 적 1기 정예 · 왕관 · HP ×2'],
@@ -361,7 +373,9 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   // 적 수 +1 (D-542): 반장 · 도금왕이 아닌 대국에 늘 폰 하나 더 — 1막 편성이 우리 분대와 같은 수가 되어 「피할 수보다 겨누는 수가 많다」
   if (kind !== 'boss') d.enemy = [...d.enemy, ...Array<PieceType>(FOE.extraPawns).fill('P')];
   if (asc >= 4) d.enemy = [...d.enemy, 'P']; // 조항 4 「불어난 무리」 (D-542: 5 → 4)
-  if (asc >= 6 && kind === 'boss') { d.kingHp *= ASC_NUM.bossHp; d.enemyHp = (d.enemyHp ?? 1) * ASC_NUM.bossHp; }
+  if (asc >= 6 && kind !== 'battle') { const k = kind === 'boss' ? ASC_NUM.bossHp : ASC_NUM.checkHp; d.kingHp *= k; d.enemyHp = (d.enemyHp ?? 1) * k; }
+  // 조항 8 「세운 날」(D-575): 화면 · 봇은 asc 8부터 모든 대국에 enemyAtk를 곱한다 — 반장은 그 곱을 bossAtk로 되돌린다
+  if (asc >= 8 && kind === 'boss') d.atk = (d.atk ?? 1) * (ASC_NUM.bossAtk / ASC_NUM.enemyAtk);
   if (asc >= 12 && kind === 'check') d.eliteOne = true;
   // 적 특성 하나 더 (D-275): 이 판에 그 기물이 있을 때만 — 지도 rng를 건드리지 않게 판의 모양으로 정한다
   const pool = TRAIT_POOL[act - 1].filter((t) => d.enemy.includes(t === 'knightShoe' ? 'N' : t === 'bishopLens' ? 'B' : t === 'pawnDrill' ? 'P' : 'Q'));
@@ -454,7 +468,7 @@ export const FINAL_BOSS = (asc = 0): BattleDef => ({
   kingHp: 0.8 * (asc >= 6 ? ASC_NUM.bossHp : 1) * (asc >= 13 ? ASC_NUM.finalHp : 1),
   enemyHp: (asc >= 1 ? ASC_NUM.enemyHp * 1.05 : 1.05) * (asc >= 6 ? ASC_NUM.bossHp : 1),
   // D-460: 0.7 → 0.85 되돌림 (사용자: 「도금왕은 이기면 끝 — 기물을 다 걸어도 이기기만 하면 된다」). 종막의 손실은 대가가 아니라 수단이다 — 종막은 승률로만 맞춘다(보통 봇 75% 안팎).
-  atk: 0.85, // D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)
+  atk: 0.85 * (asc >= 8 ? ASC_NUM.bossAtk / ASC_NUM.enemyAtk : 1), // D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)
   w: 8,
   h: 7,
   title: '종막 — 도금왕',

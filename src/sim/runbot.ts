@@ -193,7 +193,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
           const def = tryN ? ftueRetry(def0) : def0;
           const bSeed = seed * 7 + ri * 131 + tryN;
           const setup = JSON.stringify({ squad, deck: deck.filter(usable), parts, refined, asc, gold, def: { ...def, seed: bSeed, depth: depthAt(ai, frac) } });
-          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, scatter: set.scatter ? bSeed : undefined, pawnCall: !!set.pawnCall });
+          const b = newSliceBattle(squad, def.enemy, deck.filter(usable), bSeed, { enemyKingHp: def.kingHp, enemyHp: def.enemyHp, depth: depthAt(ai, frac), parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: def.place, gold, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 8 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, scatter: set.scatter ? bSeed : undefined, pawnCall: !!set.pawnCall });
           const r = style === 'search' ? playOutSearch(b, CLIMB.maxTurns, 3, 4, o.temp ?? 0) : playOut(b, CLIMB.maxTurns, undefined, style);
           battles += 1;
           turnsAll += r.turns;
@@ -213,7 +213,7 @@ export const simulateRun = (seed: number, o: RunOpts = {}): RunResult => {
             ok = true;
             const cs = crackOrScrap(fallenAfter(b, squad).map((f) => f.crew));
             fell = cs.scrapped;
-            gold += Math.round(b.coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1)) + Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10)) + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
+            gold += Math.round(b.coins * SLICE.coinValue * (asc >= 9 ? ASC_NUM.coinMul : 1)) + Math.floor(b.overkill / (parts.includes('scrapMagnet') ? PART_NUM.scrapPer : 10)) + (parts.includes('piggyGear') ? PART_NUM.piggy : 0);
             squad = [...restSquad(squadAfter(b, squad), REST.heal * (asc >= 3 ? ASC_NUM.restMul : 1)), ...cs.back]; // 화면 restHeal()과 같게
           } else if (revive > 0) squad = spareSquad(b, squad); // 여벌 심장 (D-542): 상처는 그대로 다시 선다 — 화면 「다시 둔다」와 같게
         }

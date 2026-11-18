@@ -889,8 +889,8 @@ const gauges = (): void => {
     }
   }
 };
-/** 속전 나사 (D-520): 남은 관 × 관 하나 값 — 도전 난도 8부터 ×coinMul. 정산(finish) · 계기가 같은 식을 쓴다 */
-const speedReward = (coins: number): number => Math.round(coins * SLICE.coinValue * (asc >= 8 ? ASC_NUM.coinMul : 1));
+/** 속전 나사 (D-520): 남은 관 × 관 하나 값 — 승급 9(조항 「마른 나사」, D-575)부터 ×coinMul. 정산(finish) · 계기가 같은 식을 쓴다 */
+const speedReward = (coins: number): number => Math.round(coins * SLICE.coinValue * (asc >= 9 ? ASC_NUM.coinMul : 1));
 
 /**
  * 탄 펼치기 · 접기 (D-209): 톱니가 걸리듯 드르륵 — 높이가 네 칸으로 끊겨 열리고 닫히며 칸마다 딸깍.
@@ -2136,7 +2136,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 시작 세트 (D-485): 표준이 아니면 입문 판의 짜 둔 손패 · 자리를 쓰지 않는다(그 손패는 폰 · 나이트 분대 몫) — 적 자리 · 킹 자리만
   const dd: BattleDef = INTRO.includes(def) && startSet !== 'standard' ? { ...def, order: undefined, deck: undefined, place: def.place?.filter((q) => q.side === 1 || q.t === 'K') } : def;
   const bSeed = def.seed ?? 100 + stage * 17 + R.int(1000);
-  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { pawnCall: !!START_SETS[startSet].pawnCall, scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) || def.drill ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 9 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, flatHeat: def.flat, calm: def.calm, script: def.script });
+  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { pawnCall: !!START_SETS[startSet].pawnCall, scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) || def.drill ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 8 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, flatHeat: def.flat, calm: def.calm, script: def.script });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);

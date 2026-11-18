@@ -11,11 +11,29 @@ describe('승급 13단 — 규격판 조항 (D-273)', () => {
     expect(ASCENSION).toHaveLength(13);
     for (const a of ASCENSION) expect(a.name && a.law && a.desc).toBeTruthy();
   });
-  it('조항 6: 반장 · 도금왕이 두꺼워지고, 조항 13: 도금왕이 한 겹 더', () => {
+  it('조항 6: 검문이 두꺼워지고(반장은 bossHp), 조항 13: 도금왕이 한 겹 더 (D-575)', () => {
+    const c5 = battleFor(2, 'check', new Rng(3), 5);
+    const c6 = battleFor(2, 'check', new Rng(3), 6);
+    expect(c6.kingHp).toBeCloseTo(c5.kingHp * ASC_NUM.checkHp);
+    expect(c6.enemyHp!).toBeCloseTo(c5.enemyHp! * ASC_NUM.checkHp);
+    expect(ASC_NUM.checkHp).toBeGreaterThan(1);
     const b5 = battleFor(1, 'boss', new Rng(3), 5);
     const b6 = battleFor(1, 'boss', new Rng(3), 6);
     expect(b6.kingHp).toBeCloseTo(b5.kingHp * ASC_NUM.bossHp);
+    const n5 = battleFor(1, 'battle', new Rng(3), 5);
+    const n6 = battleFor(1, 'battle', new Rng(3), 6);
+    expect(n6.kingHp).toBeCloseTo(n5.kingHp);
     expect(FINAL_BOSS(13).kingHp).toBeGreaterThan(FINAL_BOSS(12).kingHp);
+  });
+  it('조항 8 「세운 날」: 반장 · 도금왕은 화면의 enemyAtk 곱을 bossAtk로 되돌린다 (D-575)', () => {
+    expect(ASCENSION[7].name).toBe('세운 날');
+    expect(ASCENSION[8].name).toBe('마른 나사');
+    const eff = (asc: number, d: { atk?: number }) => (asc >= 8 ? ASC_NUM.enemyAtk : 1) * (d.atk ?? 1);
+    const b7 = battleFor(2, 'boss', new Rng(5), 7), b8 = battleFor(2, 'boss', new Rng(5), 8);
+    expect(eff(8, b8)).toBeCloseTo(eff(7, b7) * ASC_NUM.bossAtk);
+    expect(eff(8, FINAL_BOSS(8))).toBeCloseTo(eff(7, FINAL_BOSS(7)) * ASC_NUM.bossAtk);
+    const n8 = battleFor(2, 'battle', new Rng(5), 8);
+    expect(eff(8, n8)).toBeCloseTo(ASC_NUM.enemyAtk * (n8.atk ?? 1));
   });
   it('조항 12: 검문 적 하나가 정예 (HP ×2)', () => {
     const d = battleFor(2, 'check', new Rng(4), 12);
