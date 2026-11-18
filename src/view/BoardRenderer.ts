@@ -2486,7 +2486,7 @@ export class BoardRenderer implements BoardView {
   moveMs(): number {
     return this.scene.moveMsNow;
   }
-  /** 디버그 (글자 잉크 점검 tools/qa/text-audit.cjs, D-546): 판 위 보이는 글마다 Phaser가 잰 글 텍스처 여백 */
+  /** 디버그 (글자 잉크 점검 tools/qa/text-audit.cjs, D-556): 판 위 보이는 글마다 Phaser가 잰 글 텍스처 여백 */
   debugTexts(): { text: string; font: string; ascent: number; descent: number; padTop: number; padBottom: number; x: number; y: number }[] {
     const out: ReturnType<BoardRenderer['debugTexts']> = [];
     const walk = (list: Phaser.GameObjects.GameObject[]): void => {

@@ -1332,7 +1332,7 @@ body[data-boss="gilded"] { --boss-a: #f4c84a; --boss-d: #8a5a14; --boss-t: #ffe6
 
 /* D-318 테스터 피드백 B — 되감기 남은 수는 단추 모서리 배지로 (아이콘 아래 숫자가 칸을 넘쳤다) */
 body.slice.lay-f #btn-rewind { position: relative; }
-body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px; margin: 0; min-width: 18px; padding: 1px 3px; /* D-549: 숫자 위아래 3 · 옆 4 */ text-align: center; background: #0b0b0e; color: #f4d27a; box-shadow: 0 0 0 1px #5a4a2a; font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
+body.slice.lay-f #btn-rewind small { position: absolute; right: 2px; bottom: 2px; margin: 0; min-width: 18px; padding: 1px 3px; /* D-556: 숫자 위아래 3 · 옆 4 */ text-align: center; background: #0b0b0e; color: #f4d27a; box-shadow: 0 0 0 1px #5a4a2a; font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
 /* 대국 끝 띠 (테스터: 「적 킹 격파」만 다른 화면과 디자인이 달랐다) — 차례 띠(tb4)와 같은 황동 · 진홍 9칸 띠, 글자는 한 줄 */
 .ko3 .koband { height: 96px; margin-top: -48px; background: none; border-style: solid; border-width: calc(var(--px) * 6) 0; border-width: calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)); border-image: url('../assets/ui/chrome/v2/btn-brass-up.png') var(--k-btn-y) var(--k-btn-x) fill / calc(var(--k-btn-y) * var(--px)) calc(var(--k-btn-x) * var(--px)) / 0 round stretch; /* 단추 한 장을 9칸으로 — 예전(옆 조각 0)은 단추가 통째로 되풀이돼 건전지 줄처럼 보였다 (1.1.1 테스터) */ image-rendering: pixelated; box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
 .ko3.lose .koband { background: none; border-image-source: url('../assets/ui/chrome/v2/btn-crimson-up.png'); box-shadow: 0 -2px 0 #0b0b0e, 0 2px 0 #0b0b0e, 0 6px 0 #000; }
@@ -1585,7 +1585,7 @@ body.slice .cf.cf.cf.crew-card { background-image: url('../assets/ui/cards/crew-
 body.slice .cf.cf.cf.crew-card.g-rare { background-image: url('../assets/ui/cards/crew-rare.png'); }
 body.slice .cf.cf.cf.crew-card.g-gold { background-image: url('../assets/ui/cards/crew-gold.png'); }
 body.slice .cf.cf.cf.crew-card .cf-win { -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('../assets/ui/cards/mask-crew.png'); background: #e8e0cc; place-items: end center; }
-/* 시작 세트 위 그림 칸 (D-549 — 사용자: 기물이 칸 안에 제대로 안 보인다 → 기물 카드처럼): 분대원 카드와 같은 종이 바탕 띠(mask-crew · #e8e0cc)에
+/* 시작 세트 위 그림 칸 (D-556 — 사용자: 기물이 칸 안에 제대로 안 보인다 → 기물 카드처럼): 분대원 카드와 같은 종이 바탕 띠(mask-crew · #e8e0cc)에
  * 덱 개념 기물을 정수배(--ssw = pieceThumbPx)로 바닥에 세운다 — 하나 = 가운데 · 둘 = 30% 겹쳐 나란히 · 셋 = 가운데가 앞. 새 그림 없음 (D-386) */
 body.slice .cf.cf.cf.cf.start-set > .cf-win { display: flex; align-items: flex-end; justify-content: center; -webkit-mask-image: url('../assets/ui/cards/mask-crew.png'); mask-image: url('../assets/ui/cards/mask-crew.png'); background: #e8e0cc; }
 body.slice .cf.start-set .ss-a { position: relative; flex: none; display: block; line-height: 0; }
@@ -1655,7 +1655,7 @@ body.slice .cf.cf.cf .cf-desc .dl.dl.dl { max-height: none; overflow: visible; f
 
 /* ===================== D-374 틀 키우기 (사용자: 「리본이 그림에 가린다 · 배지 숫자가 도형 아래로 치우쳤다 · 카드를 정보량에 맞게 키워라」) =====================
    틀 112×168 (리본 아래 종류 띠 · 두루마리 +12). 글 자리는 src/slice/card-layout.css (cardart.py가 틀과 같은 숫자로 만든다). */
-body.slice .cf.cf.cf.cf > .cf-type { background: none; padding: 0; gap: 6px; color: #cfc6b0; overflow: clip visible; white-space: nowrap; } /* D-549: 옆만 자른다 — 띠 높이(카드 4.8%)가 글자보다 낮아 받침 아래가 잘렸다 */
+body.slice .cf.cf.cf.cf > .cf-type { background: none; padding: 0; gap: 6px; color: #cfc6b0; overflow: clip visible; white-space: nowrap; } /* D-556: 옆만 자른다 — 띠 높이(카드 4.8%)가 글자보다 낮아 받침 아래가 잘렸다 */
 body.slice .cf.cf.cf.cf > .cf-type .t3 { display: flex; gap: 6px; align-items: center; }
 body.slice .cf.cf.cf.cf > .cf-type .t3 i { color: #cfc6b0; font: 400 12px/12px Galmuri11, sans-serif; }
 body.slice .cf.cf.cf.cf > .cf-name { font: 700 12px/1 Galmuri11, sans-serif; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000, 1px 0 0 #000, 0 1px 0 #000; white-space: nowrap; }
