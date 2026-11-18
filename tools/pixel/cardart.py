@@ -460,11 +460,8 @@ if __name__ == '__main__':
     for kind in ('cmd', 'part', 'crew'):
         for g in ('common', 'rare', 'gold'):
             im = card(kind, g)
-            if kind != 'cmd':  # 명령 카드 앞면은 받은 RF-04 틀(D-512, ui_kit_import.py RF-04 → cmd_frames.py)이 쓴다 — 덮어쓰지 않는다
-                im.save(os.path.join(OUT, f'{kind}-{g}.png'))
+            # D-585: 명령 · 부품 · 분대원 앞면 틀과 창 가리개는 받은 F 가족(card_f_import.py)이 쓴다 — 덮어쓰지 않는다(시트 미리보기만)
             ims.append(im)
-    for k, mk in MASKS.items():
-        Image.merge('RGBA', (mk, mk, mk, mk)).save(os.path.join(OUT, f'mask-{k}.png'))
     b = back()
     b.save(os.path.join(OUT, 'back.png'))
     ims.append(b)

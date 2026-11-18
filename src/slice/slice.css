@@ -1799,6 +1799,11 @@ body.slice .deathfx.dc3 .dr-stamp.st3 { opacity: 1; animation: st3 380ms both; }
 body.slice .cf.cf.cf.cf.cmd > .cf-desc > .db.two { grid-template-rows: 7fr 9fr; }
 body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln { line-height: 14px !important; }
 body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-if, body.slice .cf.cmd > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.cmd > .cf-desc .ln-fx * { line-height: 12px !important; }
+/* D-585 F 가족 틀: 손질 · 부적 카드 종이 71px → 묘사 · 조건/효과 행 13px, 분대원 카드 종이 62px(받은 CD-08 설명지가 발주보다 11도트 낮다) → 12px. 글자 크기는 그대로 (card-spec.ts CARD_SPEC lh와 같은 값) */
+body.slice .cf.cf.cf.cf.svc > .cf-desc .ln, body.slice .cf.cf.cf.cf.svc > .cf-desc .ln-if, body.slice .cf.svc > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.svc > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.svc > .cf-desc .ln-fx * { line-height: 13px !important; }
+body.slice .cf.cf.cf.cf.crew-card > .cf-desc .ln, body.slice .cf.cf.cf.cf.crew-card > .cf-desc .ln-if, body.slice .cf.crew-card > .cf-desc .ln-if *, body.slice .cf.cf.cf.cf.crew-card > .cf-desc .ln-fx, body.slice .cf.cf.cf.cf.crew-card > .cf-desc .ln-fx *, body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st, body.slice .cf.cf.cf.cf.crew-card > .cf-desc .cs-st * { line-height: 12px !important; }
+/* 분대원 종이는 150px 카드에서 62px — 12px 행 다섯이 꽉 차 갈무리 잉크가 칸 위아래로 1px 나온다: 두루마리 상자가 자르지 않게(종이 테 위로 1px까지만) */
+body.slice .cf.cf.cf.cf.cf.crew-card > .cf-desc { overflow: visible; }
 /* 다듬음(+) · 녹(−) 표: 명패에 「이름+」가 들지 않아 비용 원판 오른쪽 위에 — 기호 + 색 (D-515) */
 /* D-532 다듬음(+) · 녹(−) 표: 비용 원판에 붙지 않게 원판 오른쪽으로 2px 띄워 틀 위 빈자리에 — 기호 색 테 1px + 먹 테 2px 딱지 (글은 12px 그대로) */
 body.slice .cf.cf.cf.cf.cmd > .cf-mk { position: absolute; left: 31%; top: 8%; z-index: 6; font: 700 12px/12px Galmuri11, sans-serif; font-style: normal; font-synthesis: none; padding: 2px 4px; background: #16141c; box-shadow: inset 0 0 0 1px currentColor, 0 0 0 2px #0b0b0e; }

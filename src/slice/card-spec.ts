@@ -17,6 +17,7 @@ import { partSummaryText } from '../data/ability-text';
 import { cardTags, partTags, STYLE_NAMES } from './tags';
 import { bottomLogical, pxWidth, splitDesc, splitTwo, stackRows, type CardFont } from './desc';
 import { FORGE, SHOP } from './cards';
+import { CARD_FRAME_FRAC } from '../data/card-frames';
 
 /** 카드 성격 (화면의 카드 틀 여섯) */
 export type CardNature = 'cmd' | 'part' | 'svc' | 'charm' | 'crew' | 'set';
@@ -51,14 +52,12 @@ const IF1: LineSpec = { max: 1, font: 'g9' };
 const FX: LineSpec = { max: 1, font: 'g9' };
 
 /**
- * 카드 틀 칸 비율 (틀 그림이 정한다 — 명령 = RF-04 `card-cmd.css`, 그 밖 = cardart `card-layout.css`) · 가장 작은 카드 폭.
+ * 카드 틀 칸 비율 (틀 그림이 정한다 — D-585 카드 F 가족: `tools/pixel/card_f_import.py`가 받은 틀을 재어 `src/data/card-frames.ts`를 쓴다) · 가장 작은 카드 폭.
  * 가장 작은 카드 = 고물상 667×375의 150px(실측 2026-11-16, 카드 일곱 장 한 줄). 칸 폭 = 비율 × 150 (내림).
+ * 부적 카드는 부품 틀(part-card)을 쓴다.
  */
 export const CARD_MIN_W = 150;
-export const CARD_FRAC = {
-  cmd: { name: 0.48214, tag: 0.64286, row: 0.67857, descH: 0.29762 },
-  card: { name: 0.6875, tag: 0.5625, row: 0.61607, descH: 0.35119 },
-} as const;
+export const CARD_FRAC = CARD_FRAME_FRAC;
 const slot = (f: { name: number; tag: number; row: number; descH: number }) => ({
   name: Math.floor(f.name * CARD_MIN_W), tag: Math.floor(f.tag * CARD_MIN_W), row: Math.floor(f.row * CARD_MIN_W),
   /** 두루마리 높이 (카드 2 : 3, 위 칸 · 아래 칸은 점선 2px를 뺀다) */
@@ -67,15 +66,16 @@ const slot = (f: { name: number; tag: number; row: number; descH: number }) => (
 
 /**
  * 성격별 줄 규격표 (D-515). 행 높이 lh: 묘사(say) · 조건/효과(row) — 명령 카드는 두루마리가 낮아(67px) 묘사 14 · 조건/효과 12, 그 밖 15.
+ * D-585 F 가족 틀: 손질 · 부적 종이가 71px라 13 · 13, 분대원 종이가 62px(발주 46도트 → 받은 35도트)라 12 · 12.
  * 효과(fx)는 「항목 하나 = 한 행」, 조건 아래 첫 효과는 「: 」로 시작한다(D-422).
  */
 export const CARD_SPEC: Record<CardNature, NatureSpec> = {
   cmd: { label: '명령 카드', px: slot(CARD_FRAC.cmd), lines: { name: NAME, tag: TAG, say: SAY, if: IF2, fx: { max: 3, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 14, row: 12 }, split: [7, 9] },
-  part: { label: '부품 카드', px: slot(CARD_FRAC.card), lines: { name: NAME, tag: TAG, if: IF2, fx: { max: 2, font: 'g9' } }, top: 0, bottom: 3, lh: { say: 15, row: 15 }, split: [0, 1] },
-  svc: { label: '손질 카드', px: slot(CARD_FRAC.card), lines: { name: NAME, tag: TAG, say: SAY, if: IF2, fx: { max: 3, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 15, row: 15 }, split: [2, 3] },
-  charm: { label: '부적 카드', px: slot(CARD_FRAC.card), lines: { name: NAME, tag: TAG, say: SAY, if: IF2, fx: { max: 3, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 15, row: 15 }, split: [2, 3] },
-  crew: { label: '분대원 카드', px: slot(CARD_FRAC.card), lines: { name: NAME, say: SAY, trait: TRAIT, if: IF1, fx: { max: 2, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 15, row: 15 }, split: [2, 3] },
-  set: { label: '시작 세트', px: slot(CARD_FRAC.card), lines: { name: NAME, trait: TRAIT, if: IF1, fx: FX }, top: 0, bottom: 3, lh: { say: 15, row: 15 }, split: [0, 1] },
+  part: { label: '부품 카드', px: slot(CARD_FRAC.part), lines: { name: NAME, tag: TAG, if: IF2, fx: { max: 2, font: 'g9' } }, top: 0, bottom: 3, lh: { say: 15, row: 15 }, split: [0, 1] },
+  svc: { label: '손질 카드', px: slot(CARD_FRAC.svc), lines: { name: NAME, tag: TAG, say: SAY, if: IF2, fx: { max: 3, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 13, row: 13 }, split: [2, 3] },
+  charm: { label: '부적 카드', px: slot(CARD_FRAC.part), lines: { name: NAME, tag: TAG, say: SAY, if: IF2, fx: { max: 3, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 13, row: 13 }, split: [2, 3] },
+  crew: { label: '분대원 카드', px: slot(CARD_FRAC.crew), lines: { name: NAME, say: SAY, trait: TRAIT, if: IF1, fx: { max: 2, font: 'g9' } }, top: 2, bottom: 3, lh: { say: 12, row: 12 }, split: [2, 3] },
+  set: { label: '시작 세트', px: slot(CARD_FRAC.set), lines: { name: NAME, trait: TRAIT, if: IF1, fx: FX }, top: 0, bottom: 3, lh: { say: 15, row: 15 }, split: [0, 1] },
 };
 
 /** 카드 한 장의 줄 (화면이 그리는 그대로 — 줄 하나 = 행 여럿일 수 있음) */

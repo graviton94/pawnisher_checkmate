@@ -103,6 +103,9 @@ def _plate(a, hy0):
 
 
 def run():
+    # D-585: 명령 카드 앞면은 받은 F 가족 CD-01f(card_f_import.py · card-f.css)로 바뀌었다 — 옛 RF-04 56×84 후처리는 은퇴
+    print('cmd_frames: 은퇴 (D-585 — tools/pixel/card_f_import.py)')
+    return
     css = ['/* 자동 생성 — tools/pixel/cmd_frames.py (RF-04 명령 카드 앞면 · 재발주본 D-512). 손으로 고치지 않는다. */',
            '/* 56×84 캔버스 — 글 · 그림 자리는 받은 틀의 실제 칸을 잰 비율(%) */',
            # 이름판(#BFB9AD) · 비용 원판(#F1EDE4)이 밝은 종이 칸이다 — 옛 cardart 틀(어두운 리본 · 톱니)의 밝은 글 + 먹 그림자를 먹 글로

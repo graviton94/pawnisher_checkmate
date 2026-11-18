@@ -1,5 +1,17 @@
 /** 워밍업 로딩이 미리 부르는 묶음 안 큰 그림 (4 KB 이상 — tools/gen-preload.cjs가 만든다, 손으로 고치지 않는다) */
 export const PRELOAD_BUNDLED: string[] = [
+  new URL('../assets/ui/cards/cmd-gold.png', import.meta.url).href,
+  new URL('../assets/ui/cards/cmd-rare.png', import.meta.url).href,
+  new URL('../assets/ui/cards/crew-common.png', import.meta.url).href,
+  new URL('../assets/ui/cards/crew-gold.png', import.meta.url).href,
+  new URL('../assets/ui/cards/crew-rare.png', import.meta.url).href,
+  new URL('../assets/ui/cards/fx-gold-band.png', import.meta.url).href,
+  new URL('../assets/ui/cards/fx-rare-band.png', import.meta.url).href,
+  new URL('../assets/ui/cards/part-common.png', import.meta.url).href,
+  new URL('../assets/ui/cards/part-gold.png', import.meta.url).href,
+  new URL('../assets/ui/cards/part-rare.png', import.meta.url).href,
+  new URL('../assets/ui/cards/set-rare.png', import.meta.url).href,
+  new URL('../assets/ui/chrome/v2/card-slot-sel.png', import.meta.url).href,
   new URL('../assets/ui/chrome/v2/ledger-slip.png', import.meta.url).href,
   new URL('../assets/ui/chrome/v2/unit-stat-attack.png', import.meta.url).href,
   new URL('../assets/ui/chrome/v2/unit-stat-defense.png', import.meta.url).href,

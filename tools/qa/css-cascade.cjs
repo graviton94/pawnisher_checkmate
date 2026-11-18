@@ -17,7 +17,7 @@ const { spawn } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '../..');
 const APPLY = process.argv.includes('--apply');
-const FILES = ['src/style.css', 'src/slice/slice.css', 'src/slice/card-layout.css', 'src/slice/card-cmd.css', 'src/slice/kit.css', 'src/slice/voice.css', 'src/slice/film.css', 'src/slice/hud-rarity.css'];
+const FILES = ['src/style.css', 'src/slice/slice.css', 'src/slice/card-layout.css', 'src/slice/card-f.css', 'src/slice/kit.css', 'src/slice/voice.css', 'src/slice/film.css', 'src/slice/hud-rarity.css'];
 const W = (ms) => new Promise((r) => setTimeout(r, ms));
 const META = { tut: ['battle', 'battle-a', 'map', 'recruit', 'kit', 'promote', 'first_shop', 'heat', 'event'], runs: 3, prologue: true, ascOpen: 5, storyCleared: 1, daily: {}, onboarded: true, terms: [], termsNew: [] };
 

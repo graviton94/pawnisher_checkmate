@@ -221,7 +221,7 @@ body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D
 :is(.win, .scr-pick, .scr-place, .kit) .frame-scene { border-image-source: url('../assets/ui/chrome/v2/scene-frame.png'); }
 :is(.win, .scr-pick, .scr-place, .kit) :is(.frame-portrait, .frame-scene) > img:not(.fs-plate) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--focus, 50% 40%); image-rendering: pixelated; }
 :is(.win, .scr-pick, .scr-place, .kit) .frame-scene > .fs-plate { position: absolute; left: 50%; top: calc(-1 * var(--k-frame) * var(--px)); width: calc(var(--px) * 20); height: calc(var(--px) * 8); transform: translateX(-50%); image-rendering: pixelated; }
-:is(.win, .scr-pick, .scr-place, .kit) .card-slot { position: relative; display: grid; justify-items: center; align-content: start; width: calc(var(--px) * 102); height: calc(var(--px) * 138); padding-top: calc(var(--px) * 6); background: url('../assets/ui/chrome/v2/card-slot.png') 0 0 / calc(var(--px) * 102) calc(var(--px) * 138) no-repeat; image-rendering: pixelated; }
+:is(.win, .scr-pick, .scr-place, .kit) .card-slot { position: relative; display: grid; justify-items: center; align-content: start; width: calc(var(--px) * 102); height: calc(var(--px) * 138); padding-top: calc(var(--px) * 4); background: url('../assets/ui/chrome/v2/card-slot.png') 0 0 / calc(var(--px) * 102) calc(var(--px) * 138) no-repeat; image-rendering: pixelated; }
 :is(.win, .scr-pick, .scr-place, .kit) .card-slot.is-sel { background-image: url('../assets/ui/chrome/v2/card-slot-sel.png'); }
 
 /* ---------- 3.7 화면 레이아웃 두 가지 (창이 아님 — 패스 2 D-394) ----------
@@ -244,11 +244,12 @@ body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D
 .scr-pick > .scr-top > .scr-lead { left: 0; }
 .scr-pick > .scr-top > .scr-tag { right: 0; }
 :is(.scr-pick, .scr-place) .btn-row { width: 100%; }
-/* 받침 줄: 받침 51×69 도트를 기기 픽셀 정수배(--ss = uikit.fitSlots)로 — 받침 안 카드는 42 도트 폭 */
+/* 받침 줄: 받침 51×69 도트를 기기 픽셀 정수배(--ss = uikit.fitSlots)로 — 받침 안 카드는 42 도트 폭.
+   D-585 받침 F(CD-10 102×138 = --ss 반 칸 도트): 카드 상자 위 4도트(= --ss 2) 아래로 — 카드 몸(y 6 ~ 123)이 받침 구멍(y 13 ~ 125)에 선다 */
 :is(.scr-pick, .scr-place) .scr-items { --ss: 4px; display: flex; justify-content: center; align-items: center; gap: var(--slot-gap, 16px); min-height: 0; min-width: 0; }
 :is(.scr-pick, .scr-place) .pick-item { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 :is(.scr-pick, .scr-place) .scr-items .card-slot {
-  --card-w: calc(var(--ss) * 42); box-sizing: border-box; width: calc(var(--ss) * 51); height: calc(var(--ss) * 69); padding-top: calc(var(--ss) * 3);
+  --card-w: calc(var(--ss) * 42); box-sizing: border-box; width: calc(var(--ss) * 51); height: calc(var(--ss) * 69); padding-top: calc(var(--ss) * 2);
   background-size: 100% 100%; cursor: pointer;
 }
 :is(.scr-pick, .scr-place) .card-slot > .cf { margin: 0; cursor: pointer; }
@@ -284,8 +285,7 @@ body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D
 :is(.scr-pick, .scr-place) .scr-items.no-slot .card-slot { --card-w: inherit; width: auto; height: auto; padding: 0; background: none; }
 :is(.scr-pick, .scr-place) .scr-items.no-slot .card-slot.is-sel > .cf { transform: translateY(calc(var(--px) * -2)); outline: calc(var(--px) * 1) solid var(--t-ally); outline-offset: calc(var(--px) * 1); animation: none; }
 :is(.scr-pick, .scr-place) .scr-items.no-slot .slot-info { max-width: var(--card-w); }
-/* 상아 손질 카드 (D-399): 부품 틀을 팔레트로 색만 바꾼 svc-ivory.png (tools/pixel/card_ivory.py) — 명령 카드와 다른 갈래 */
-body.slice .cf.cf.cf.cf.svc-card { background-image: url('../assets/ui/cards/svc-ivory.png'); }
+/* 손질 카드 (D-399 → D-585): 받은 F 가족 CD-07 작업대 구멍판 틀 — 틀 · 칸은 card-f.css */
 
 /* 장소: 왼쪽 장면 그림 40%(액자 · 비율 그대로 정수배로 덮기 · 초점) · 오른쪽 일 */
 #overlay-panel.scr-place { display: grid; grid-template-columns: 40% minmax(0, 1fr); gap: var(--s3); background: #16141c; }
@@ -730,6 +730,11 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
   border-image: url('../assets/ui/chrome/v2/hand-choice-up.png') var(--k-choice) fill / calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 6) calc(var(--px) * 16) / 0 stretch;
   image-rendering: pixelated; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
 }
+/* D-585 손패 줄 F 가족(CD-10): 등급 징(일반 · 희귀 2 · 금 3)이 오른쪽 끝 x 65 ~ 68 · 위아래 5 ~ 17줄에 있다 — 징이 늘어나지 않게
+   그림 조각만 위 10 · 오른 8 · 아래 10 · 왼 16으로 자른다(테 굵기 = 칸 배치는 그대로 6 6 6 16, 그림 테가 안쪽 여백까지 덮는다). 금 줄 가운데 징만 세로로 늘어난다 */
+#hand > .hc { border-image: url('../assets/ui/chrome/v2/hand-choice-up.png') 10 8 10 16 fill / calc(var(--px) * 10) calc(var(--px) * 8) calc(var(--px) * 10) calc(var(--px) * 16) / 0 stretch; }
+#hand > .hc.g-rare { border-image-source: url('../assets/ui/chrome/v2/hand-choice-up-rare.png'); }
+#hand > .hc.g-gold { border-image-source: url('../assets/ui/chrome/v2/hand-choice-up-gold.png'); }
 #hand > .hc:is(:active, .down):not(.off) { border-image-source: url('../assets/ui/chrome/v2/hand-choice-down.png'); padding-top: calc(var(--px) * 1); }
 #hand > .hc.armed { border-image-source: url('../assets/ui/chrome/v2/hand-choice-sel.png'); }
 #hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/hand-choice-off.png'); }

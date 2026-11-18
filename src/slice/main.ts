@@ -17,7 +17,6 @@ import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT,
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
-import './card-cmd.css';
 // 키트(하나의 체계)는 마지막 — 옛 선택자보다 뒤 (D-391)
 import './kit.css';
 import './voice.css';
@@ -25,6 +24,8 @@ import './film.css';
 import './vn.css';
 import './hud-rarity.css';
 import './menus.css';
+// 카드 F 가족 틀 · 칸 · 움직임 (D-585 — tools/pixel/card_f_import.py가 쓴다) — 옛 카드 선택자보다 뒤
+import './card-f.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
 import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, coverBg, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
@@ -540,7 +541,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const hint = off ? `<p class="hc-use">${why || '지금은 쓸 수 없음'}</p>` : isInstant(id) && selCard !== i ? '<p class="hc-use">한 번 더 누르면 사용</p>' : '';
   // 효과 한 줄 (보고서 2-2 「손패에 효과 글」): 성능 문장의 첫 마디만 — 전체는 펼침 · 크게 보기에
   const fx = why || (c.desc ? handFx(c.desc) : '');
-  return `<button type="button" class="hc t-${c.who}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
+  return `<button type="button" class="hc t-${c.who} g-${gradeOf(id)}${selCard === i ? ' armed' : ''}${open ? ' open' : ''}${off ? ' off' : ''}${cost < c.cost ? ' cheap' : ''}" data-card="${i}" ${off ? 'aria-disabled="true"' : ''} aria-expanded="${open}">
     <span class="hc-head">${keysHtml(cost, b.ap)}${cardArt(id)}<span class="hc-t"><b>${titled ? c.title : c.name}</b>${fx ? `<small class="hc-fx">${fx}</small>` : ''}</span></span>${open ? `<span class="hc-body">${shape}<span class="hc-txt">${desc}${flv}${hint}</span></span>` : ''}</button>`;
 };
 
@@ -708,7 +709,7 @@ const fitInfo = (kind: 'card' | 'part', id: string): string => {
 /** 손질 카드 갈래 (D-399) */
 type SvcKey = 'heal' | 'repair' | 'refine' | 'remove' | 'brace';
 /**
- * 손질 카드 얼굴 (D-399): 고물상 · 작업대의 서비스도 카드와 같은 크기 · 같은 틀 — 상아 틀(svc-ivory) · 이름 리본 · 아이콘 창 ·
+ * 손질 카드 얼굴 (D-399): 고물상 · 작업대의 서비스도 카드와 같은 크기 · 같은 틀 — 작업대 구멍판 틀(svc · CD-07, D-585) · 이름 리본 · 아이콘 창 ·
  * 「손질」 띠 · 두루마리(묘사 / 대상 / 효과). n = 수치(정비 · 수리 %, 보강 버팀). 명령 카드와 색 갈래로 구별한다.
  */
 const svcFace = (k: SvcKey, n = 0): string => {
