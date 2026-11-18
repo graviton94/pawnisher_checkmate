@@ -20,6 +20,7 @@ sys.path.insert(0, HERE)
 import scene_recipe  # noqa: E402
 import opening_import  # noqa: E402
 import ui_kit_import as kit  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 
 ORDER = os.path.join(ROOT, 'build-res', 'order')
 CHROME = os.path.join(ROOT, 'src', 'assets', 'ui', 'chrome', 'v2')
@@ -46,6 +47,7 @@ def erase(sid, g):
     after = Image.fromarray(a)
     after.save(p)
     assert set(map(tuple, a.reshape(-1, 3))) <= set(map(tuple, np.asarray(before).reshape(-1, 3))), '새 색이 생겼다'
+    crown_unify.after_save(p)
     # 대조판: 지운 자리 둘레(여백 10칸) 전 | 후를 ×12로 원래 대조판 아래에
     pad = 10
     box = (max(0, min(xs) - pad), max(0, min(ys) - pad), min(a.shape[1], max(xs) + pad), min(a.shape[0], max(ys) + pad))
@@ -79,6 +81,8 @@ def chrome():
             a[t:H - b, W - r:] = a[y:y + 1, W - r:]
         Image.fromarray(a).save(p)
         print(f'  {name}: 9-slice {f["slice"]} · 변 가운데 = 열 {c}' + (f' · 옆 변 = 줄 {f["row"]}' if f['row'] is not None else ''))
+    for n in g['names']:  # D-573: 장 제목 문장의 종이 부분 → 정본 마분지
+        crown_unify.after_save(os.path.join(CHROME, f'{n}.png'))
     # 대조판: 원본 시트(축소) 위 | 아래 다듬은 부품 ×4 (ui_kit_import가 쓴 부품만 판을 덮어쓴다)
     src = Image.open(os.path.join(ORDER, 'ED-01-source.png')).convert('RGB')
     top = src.resize((src.width // 2, src.height // 2), Image.NEAREST)

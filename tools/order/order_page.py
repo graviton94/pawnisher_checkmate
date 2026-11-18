@@ -316,7 +316,7 @@ def main(out_path, md=None):
             talk.append(f'<section class="talk"><header><span class="tag">토의</span><h2>{inline(h)}</h2></header>'
                         f'<div class="tb">{render_text(body)}</div></section>')
             continue
-        if not re.match(r'[A-Z]{1,3}-\d+(?:-\d+)? ', h):
+        if not re.match(r'[A-Z]{1,3}-\d+(?:-\d+)?[a-z]? ', h):  # R-01-08b 같은 재발주 짝 (D-572)
             continue
         txt = [b for k, b in s['blocks'] if k == 'text']
         atts = attachments(txt)

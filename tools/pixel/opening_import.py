@@ -17,6 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 import scene_recipe  # noqa: E402
 import snap  # noqa: E402
+import crown_unify  # noqa: E402  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
 
 ORDER = os.path.join(ROOT, 'build-res', 'order')
 
@@ -46,6 +47,7 @@ def one(sid, table=None):
     out = small.crop((0, top, cols, rows - bot))
     dst = os.path.join(ROOT, 'public', 'scenes', f'{name}.png')
     out.save(dst)
+    crown_unify.after_save(dst)
     print(f'{sid}: {W}×{H} 칸 {p:.2f}px → {cols}×{rows} · 띠 걷음 위 {top} / 아래 {bot}줄 → {out.size} → {dst}')
     # 대조판: 원본(띠 걷은 부분) | 결과 확대 — 같은 높이
     s0 = src.crop((0, round(top * p), W, round((rows - bot) * p)))
