@@ -81,7 +81,7 @@ body.slice.lay-f #right > .actions { margin-top: 24px; } /* D-558: 「되감기�
 #btn-rewind .rw-lbl { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--k-btn-y) * var(--px) + 2px); /* 기준 = 안쪽 상자 — 9-slice 테 높이만큼 더 올린다 (D-558) */ color: var(--t-dim); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; text-align: center; pointer-events: none; }
 
 /* ---------- H3 「쓸 수 없음」 단추 · 선택지: 단추 넷(kit.css --off)은 받은 MM-01 꺼짐 단추(D-544, tools/pixel/mm01_import.py — 9-slice 32×20 · 변 · 가운데 단색).
-   선택지 · 손패 판(choice-off0 · hand-choice-off0)은 MM-01에 없어 보통 그림을 다시 칠한 임시본 그대로(tools/pixel/btn_off_interim.py) ---------- */
+   선택지 · 손패 판(choice-off · hand-choice-off)은 받은 MM-02(D-559, tools/pixel/mm02_import.py — 9-slice 72×24 · 변 · 가운데 단색, 손패 판 열쇠는 탭 톱니에 가려 뺌) ---------- */
 
 /* ---------- H4 마우스 호버 (PC): 키 · 패드 초점 테와 같은 1도트 황동 테 — 즉시(계단), 손가락 기기에는 붙지 않는다 ---------- */
 @media (hover: hover) and (pointer: fine) {

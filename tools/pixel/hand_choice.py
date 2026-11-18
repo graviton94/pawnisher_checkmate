@@ -5,7 +5,8 @@ from PIL import Image
 ART = Path(__file__).resolve().parents[2] / 'src/assets/ui/chrome/v2'
 COLORS = {(245, 197, 66): (86, 84, 94), (200, 155, 60): (51, 49, 59),
           (138, 100, 22): (36, 35, 43)}
-for state in ('up', 'down', 'sel', 'off'):
+# 'off'는 받은 MM-02(tools/pixel/mm02_import.py, D-559)가 찍는다 — 여기서 덮어쓰지 않는다
+for state in ('up', 'down', 'sel'):
     im = Image.open(ART / f'choice-{state}.png').convert('RGBA')
     im.putdata([(*COLORS.get(c[:3], c[:3]), c[3]) for c in im.getdata()])
     im.save(ART / f'hand-choice-{state}.png', optimize=True)

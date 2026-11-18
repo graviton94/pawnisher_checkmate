@@ -438,6 +438,12 @@ const GROUPS = [
       await A(() => window.sliceApi.win('m')); await W(500);
       await A(() => { const p = document.querySelector('#overlay-panel'); p.querySelector('p').insertAdjacentHTML('afterend', '<div class="btn-set" style="--cols:4">' + ['iron', 'brass', 'crimson', 'teal'].map((k) => `<button class="btn k-${k}" type="button">보통</button>`).join('') + ['iron', 'brass', 'crimson', 'teal'].map((k) => `<button class="btn k-${k}" type="button" disabled>꺼짐</button>`).join('') + '</div>'); }); await W(300);
       await shot('btn-states');
+      // 꺼진 선택지 판 · 손패 판 (MM-02, D-559): 보통 · 꺼짐 선택지 한 쌍 + 대국 손패 한 장을 꺼짐으로
+      await A(() => { const p = document.querySelector('#overlay-panel'); p.querySelector('.btn-set').insertAdjacentHTML('afterend', '<button class="choice" type="button"><span class="choice-name">보통 선택지</span></button><button class="choice" type="button" disabled><span class="choice-name">꺼진 선택지</span></button>'); }); await W(300);
+      await shot('choice-states');
+      await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800);
+      await A(() => { const h = document.querySelectorAll('#hand > .hc'); if (h[1]) h[1].classList.add('off'); }); await W(300);
+      await shot('hand-off');
     } },
     { name: 'set-pick', assets: [], run: async ({ A, W, shot, tap }) => { await A(() => { void window.sliceApi.setPick(); }); await W(1600); await shot('set-pick'); await tap('[data-page]'); await W(900); await shot('set-pick-2-locked'); } },
     // 시작 세트 위 그림 칸 (D-558): 해금 셋까지 연 사람 — 두 쪽 모두 켜진 받침

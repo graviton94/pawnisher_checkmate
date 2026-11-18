@@ -162,7 +162,7 @@ body.kb-nav .btn:is(.k-brass, .k-iron, .k-crimson, .k-teal):focus-visible { /* D
 }
 :is(.win, .scr-pick, .scr-place, .kit) .choice:is(:active, .down):not(:disabled) { border-image-source: url('../assets/ui/chrome/v2/choice-down.png'); padding-top: calc(var(--px) * 1); }
 :is(.win, .scr-pick, .scr-place, .kit) .choice:is(.is-sel, [aria-pressed='true']) { border-image-source: url('../assets/ui/chrome/v2/choice-sel.png'); }
-:is(.win, .scr-pick, .scr-place, .kit) .choice:is(:disabled, [aria-disabled='true']) { border-image-source: url('../assets/ui/chrome/v2/choice-off0.png'); color: var(--t-dim); filter: none; cursor: default; }
+:is(.win, .scr-pick, .scr-place, .kit) .choice:is(:disabled, [aria-disabled='true']) { border-image-source: url('../assets/ui/chrome/v2/choice-off.png'); color: var(--t-dim); filter: none; cursor: default; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice .choice-name { font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice .choice-res { color: var(--t-dim); font: 400 12px/var(--lh-12) Galmuri11, sans-serif; white-space: nowrap; }
 :is(.win, .scr-pick, .scr-place, .kit) .choice:has(> .btn-info) { padding-right: calc(var(--px) * 24); }
@@ -715,7 +715,7 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
 }
 #hand > .hc:is(:active, .down):not(.off) { border-image-source: url('../assets/ui/chrome/v2/hand-choice-down.png'); padding-top: calc(var(--px) * 1); }
 #hand > .hc.armed { border-image-source: url('../assets/ui/chrome/v2/hand-choice-sel.png'); }
-#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/hand-choice-off0.png'); }
+#hand > .hc.off { border-image-source: url('../assets/ui/chrome/v2/hand-choice-off.png'); }
 #hand > .hc .hc-head { position: relative; display: grid; grid-template-columns: calc(var(--px) * 16) minmax(0, 1fr); column-gap: var(--s1); align-items: center; min-height: calc(var(--px) * 16); }
 /* 비용 톱니 = 황동 탭 위. 탭 황동은 choice 24줄 중 4~17줄(아래 18~19줄은 먹 받침)이라 판 가운데보다 1도트 위 → 톱니(11도트)를 머리 줄 가운데에서 7도트 위에 놓아 도트 격자에 맞춘다(옛 자리보다 1.5도트 위, D-398) */
 #hand > .hc .costgear { position: absolute; left: calc(var(--px) * -14); top: calc(50% - var(--px) * 7 + 1px); display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
