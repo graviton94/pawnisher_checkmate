@@ -95,6 +95,18 @@ describe('컷 비트 · 화자 (D-504 · #22)', () => {
     expect(DEFEAT_CUTS.at(-1)?.end?.title).toBe('킹이 쓰러졌습니다');
     expect(PROLOGUE[0].title?.kicker).toBe('프롤로그');
   });
+  it('검은 화면 가운데 글 (D-582): SHD-A · END-T-1은 그림 없이 Cut.void · 취소된 그림(VA-08 · VA-10)을 어디서도 부르지 않는다', () => {
+    for (let a = 0; a < 4; a++) expect(shadowCut(a, undefined, true).void).toBe(true);
+    expect(shadowCut(1, '규정').void).toBeFalsy();
+    const t = trueEndingCuts([], crew);
+    expect(t[0].void).toBe(true);
+    expect(t[0].img).toBe('');
+    for (const [w, c] of allCuts()) {
+      expect.soft([c.img, c.alt], w).not.toContain('gilded-fallen');
+      expect.soft([c.img, c.alt], w).not.toContain('prologue-shadow');
+      if (c.void) expect.soft(c.dark || c.coda || c.showActors || c.caption, w).toBeFalsy();
+    }
+  });
   it('사건 결과 대사는 따옴표 · 서술은 두 문장 안 (D-360 유지)', () => {
     for (const [id, outs] of Object.entries(EVENT_OUTCOME))
       for (const [key, o] of Object.entries(outs)) if (o.line) expect.soft(/^[“‘[]/.test(o.line), `${id} ${key}`).toBe(true);

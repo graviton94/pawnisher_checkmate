@@ -21,12 +21,16 @@
    * 크기마다 「잉크 위아래 ≥ 2px(배율만큼)」인 가장 작은 정수 px — 11: 12 → 16 · 24 → 28 · 36 → 42 / 14: 15 → 20 · 30 → 36 · 45 → 54 · 60 → 72 / 9: 10 → 13.
    * 한 줄 꼬리표 · 칩 · 명판 · 단추 글은 이 값보다 작게 두지 않는다 (카드 속 줄은 card-spec이 따로 정한다) */
   --lh-10: 13px; --lh-12: 16px; --lh-15: 20px; --lh-24: 28px; --lh-30: 36px; --lh-36: 42px; --lh-45: 54px; --lh-60: 72px;
+  /* D-582 검은 화면 가운데 글: 15px 본문의 넓은 줄높이(2배) — 띠 없이 먹 위 한가운데 글 단만 쓴다 */
+  --lh-15w: 30px;
   /* 창 세 단계 (폭 · 높이 상한) — 이 셋만 */
   --win-s: 352px; --win-m: 592px; --win-l: min(883px, calc(calc(100 * var(--vw, 1vw)) - 2 * var(--G)));
   /* 높이 상한 = min(364, 화면 − 48) — 가장 작은 폰 667×375에서도 잘리지 않게 (D-391 기기 표: 폰 667×375 ~ 932×430 · PC 683×384 ~ 960×540) */
   --win-h-s: min(240px, calc(calc(100 * var(--vh, 1vh)) - 48px)); --win-h: min(364px, calc(calc(100 * var(--vh, 1vh)) - 48px));
   /* 글 색 — 한 줄에 본문 + 강조 1 */
   --t-body: #ece6da; --t-dim: #a89f92; --t-gold: #f4d27a; --t-loss: #ff7b7b; --t-ally: #5eead4; --t-ink: #0b0b0e; --t-brass-ink: #2a1a06;
+  /* D-582 검은 화면 가운데 글: 속마음 ‘ ’ = 차가운 철빛 (서술 상아보다 어둡고 푸름, 먹 위 대비 9:1) */
+  --t-cool: #a9b8c9;
   /* 9-slice 테 (원본 도트) — 화면 폭 = 도트 × --px */
   --k-win: 12;            /* panel-iron 44×44 · 변 가운데 리벳 → round */
   --k-paper-y: 14; --k-paper-x: 10; /* panel-paper 40×44 */
@@ -1281,6 +1285,29 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
   .promotion .pm-dialogue { padding-top: var(--s1); }
   .promotion :is(.pm-dialogue, .pm-inner) { min-height: 0; overflow-y: auto; }
 }
+/* 왕위 결정 · 검은 화면 가운데 글 (D-582 — VA-08 취소): 그림 없이 먹 위 한가운데 — 꼬리표 · 제목 → 도금왕 대사(이름 + “ ”) → 속마음 ‘ ’(철빛, 이름 없이) → 안내 줄 → 글 단추 둘.
+   단추는 철판 없이 글만(48 높이 · 사이 32): 아래 1도트 밑줄 = 누를 수 있음, 앞 ▶ = 초점 · 누름. 왕관 쪽(주 선택)은 황동. 글 단 폭 = data/vn.VN_VOID */
+.promotion.void .pm-content { inset: 0; left: 0; align-items: center; justify-content: center; gap: var(--s3); padding: var(--Gy) var(--G); background: none; text-align: center; }
+.promotion.void .pm-content > * { width: calc(var(--void-w, 0.6) * 100 * var(--vw, 1vw)); max-width: 100%; }
+@media (max-width: 759px) { .promotion.void .pm-content > * { width: calc(var(--void-ws, 0.72) * 100 * var(--vw, 1vw)); } }
+.promotion.void h2 { font: 700 24px/var(--lh-24) Galmuri11, sans-serif; }
+.promotion.void .pm-content > header { justify-items: center; }
+.promotion.void .pm-dialogue { margin-top: 0; padding-top: 0; border-top: 0; }
+.promotion.void .pm-inner { min-height: 0; padding: 0; }
+.promotion.void .pm-inner > .pm-who { display: none; }
+.promotion.void :is(.pm-say, .pm-inner p) { font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; text-wrap: balance; }
+.promotion.void .pm-inner p { color: var(--t-cool); }
+.promotion.void .pm-content > footer { margin-top: 0; justify-items: center; }
+.promotion.void .pm-actions { display: flex; justify-content: center; gap: 32px; }
+.promotion .pm-choice { position: relative; min-height: 48px; min-width: 96px; margin: 0; padding: 0 var(--s3); border: 0; background: none; cursor: pointer; color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+.promotion .pm-choice > span { box-shadow: inset 0 calc(var(--px) * -1) 0 currentColor; padding-bottom: calc(var(--px) * 2); }
+.promotion .pm-choice.is-key { color: var(--t-gold); }
+.promotion .pm-choice::before { content: '▶'; position: absolute; left: calc(var(--s3) - 16px); top: 50%; margin-top: -9px; font: 700 12px/18px Galmuri11, sans-serif; visibility: hidden; }
+.promotion .pm-choice:active::before, body.kb-nav .promotion .pm-choice:focus::before { visibility: visible; }
+.promotion .pm-choice:focus-visible { outline: none; }
+.promotion .pm-choice:disabled { cursor: default; color: var(--t-dim); }
+.promotion .pm-choice:disabled::before { visibility: hidden; }
+@media (max-height: 380px) { .promotion.void .pm-content { gap: var(--s2); } .promotion.void :is(.pm-say, .pm-inner p) { font: 400 15px/22px Galmuri14, Galmuri11, sans-serif; } .promotion.void :is(.pm-dialogue, .pm-inner) { overflow: visible; } }
 @media (prefers-reduced-motion: reduce) {
   .credits .cr-page.in, .promotion .pm-content.in, .promotion .pm-inner.in, .promotion .pm-actions .tremble, .win-scene .ws-detail.in { animation: none; }
 }

@@ -37,6 +37,11 @@ export interface Cut {
   showActors?: boolean;
   /** 그림 없는 먹 무대 (D-579 — VA-01 취소, 사장님 「비주얼 일러스트 없이, 묘사 및 텍스트와 효과로만」): 장면 칸에 그림 · 기물 도트 없이 빛 · 띠 · 표시 효과만, 줄마다 beat */
   dark?: boolean;
+  /**
+   * 검은 화면 가운데 글 (D-582 — VA-08 · VA-10 취소, 사장님 「좋은 그림이 안 나오는 컷은 글만」): 그림 · 띠 · 명패 · 자막 판 · 코드 도트 효과 없이
+   * 먹 위 한가운데 글만 — 주인공 속마음 · 전지적 서술의 핵심 줄. 한 문장 = 한 줄로 쌓이고, 줄(Line)이 바뀌면 디더로 걷힌다. 수치 data/vn.VN_VOID · 재생 opening.playCuts
+   */
+  void?: boolean;
   /** 정지 장면 그림을 비율·기기 픽셀 정수배로 덮는다. */
   pixelCover?: boolean;
   /** 하단의 핵심 행동을 가리지 않도록 해당 컷만 대사창을 상단에 둔다. (영화 판에서는 띠가 레터박스 안에 있어 쓰지 않는다) */
@@ -59,6 +64,8 @@ const pawn = (x = 48, y = 56, h = 30): StandIn => ({ t: 'K', side: 0, x, y, h })
 const cut = (img: string, lines: Line[], art: StandIn[] = [pawn()], standIn = false): Cut => ({ img, bg: ['#16141c', '#0b0b0e'], art, lines, standIn });
 const sceneCut = (img: string, lines: Line[], art: StandIn[] = []): Cut => ({ ...cut(img, lines, art), pixelCover: true, showActors: art.length > 0, cam: 'still' });
 /** 끝 정적 컷: 그림 없이 먹(또는 백지) 위 한가운데 한 줄 */
+/** 검은 화면 가운데 글 컷 (D-582 — Cut.void): 그림 없이 줄만. 줄의 샷은 쓰지 않는다(비출 그림이 없다) */
+const voidCut = (lines: Line[]): Cut => ({ ...cut('', lines, []), void: true });
 const coda = (lines: Line[], tone: 'black' | 'white' = 'black'): Cut => ({ ...cut('', lines, []), coda: tone, trans: tone === 'white' ? 'white' : 'black' });
 /**
  * 화자 얼굴 (D-504 · #22): 컷신 대사 명패에 세울 얼굴. 분대원 이름은 출하마다 달라 부르는 쪽(playCuts faces)이 더한다.
@@ -161,11 +168,12 @@ export const PROLOGUE_FIELD: Cut = { ...cut('prologue-07', [
  * 아니면 둘째~넷째 왕관의 시작(SHD-B — 전대 도금왕이 새긴 규정 + 왕관별 속마음).
  */
 export const shadowCut = (chapter: number, law?: string, retry = chapter === 0): Cut => retry || chapter === 0
-  ? { ...cut('prologue-shadow', [
-    n('조금 전, 또 하나의 불량 세트가 비명을 남긴 채 붉은 용광로 속으로 가라앉았다.', { shot: at(0.5, 0.5), sfx: 'threat' }),
-    n('컨베이어의 집게는 아무 일도 없었다는 듯 차가운 쇳소리를 내며, 다른 상자의 비어 있는 킹 자리에 새로운 폰 하나를 집어 넣었다.', { shot: at(0.33, 0.7, 2), sfx: 'lift' }),
-    n('상자 뚜껑에 찍힌 붉은 X표가 눈을 뜬 그의 시야를 붉게 물들였다.', { shot: at(0.33, 0.78, 3), fx: 'red' }),
-    m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { shot: at(0.75, 0.2, 1), pause: 400, mood: 'fear' }),
+  // SHD-A (D-582): VA-10 취소 — 그림 없이 검은 화면 가운데 글. 소리 큐 · 붉은 X(글이 진홍으로 두 번 깜빡)만 남긴다
+  ? { ...voidCut([
+    n('조금 전, 또 하나의 불량 세트가 비명을 남긴 채 붉은 용광로 속으로 가라앉았다.', { sfx: 'threat' }),
+    n('컨베이어의 집게는 아무 일도 없었다는 듯 차가운 쇳소리를 내며, 다른 상자의 비어 있는 킹 자리에 새로운 폰 하나를 집어 넣었다.', { sfx: 'lift' }),
+    n('상자 뚜껑에 찍힌 붉은 X표가 눈을 뜬 그의 시야를 붉게 물들였다.', { fx: 'red' }),
+    m('조금 전까지 숨 쉬던 쇳덩이들이 흔적도 없이 녹아내렸다. 머지않아 내 차례가 올지도 모른다. 하지만 태엽이 감긴 이상, 나는 저 꼭대기 승급대까지 걸어 올라가야만 한다.', { pause: 400, mood: 'fear' }),
   ]), slug: '같은 왕관 재도전', title: { kicker: chapterKick(chapter), title: '또 하나의 아홉째 폰', sub: chapterTitle(chapter), crown: crownNo(chapter) } }
   : { ...sceneCut('new-law', [
     n('새로운 상자, 새로운 불량품. 또 다른 아홉 번째 폰이 종이 왕관을 접어 쓰고 검수대 앞에 섰다.', { shot: at(0.18, 0.8, 2) }),
@@ -469,7 +477,7 @@ export const promotionCuts = (chapter: number, _crew: string, law: string, mirro
       ...(company?.melted?.length ? [n(`쇳물은 처음이 아니었다. 결전에서 그가 녹여 바친 ${meltedNames(company)}의 쇳물이, 이미 왕관 안쪽을 금빛으로 덮고 있었다.`, { shot: at(0.72, 0.1, 3) })] : []),
       ...(who ? [s(who.name, CRY.floor[who.v], { shot: at(0.35, 0.78, 2), fx: 'shake' })] : []),
       n('아직 주조가 완료되지 않았다. 지금 당장 머리의 왕관만 벗어 던지면, 아직은 공정을 멈추고 동료들을 끌어올릴 수 있는 찰나의 시간이었다. 하지만 그는 단상 위에서 한 발짝도 움직이지 못했다.', { shot: at(0.72, 0.1, 2), pause: 600 }),
-    ]), alt: 'gilded-fallen', fx: 'red', at: '72% 8%', slug: '용해 주조', shot: at(0.5, 0.5), trans: 'melt' }, // S-17: 단상 위 종이왕(오른쪽 위)이 잘리지 않게
+    ]), fx: 'red', at: '72% 8%', slug: '용해 주조', shot: at(0.5, 0.5), trans: 'melt' }, // S-17: 단상 위 종이왕(오른쪽 위)이 잘리지 않게
     // ED-03 뻗지 않은 손 (D-510 · 재발주본 D-514 — 다문 말머리): END-K-2-5 · 2-6 — 위 단상의 움직이지 않는 받침(속마음) → 쇠사슬에 끌려 내려가며 위로 뻗은 나이트(외침)
     { ...sceneCut('end-k-reach', [
       m('왕관을 벗으라고…? 방금 손에 넣은 이 완벽한 시야와 영원한 안전을 버리고, 다시 그 좁고 어두운 한 칸짜리 폰으로 내려가서 검은 세트에게 부서지라고?', { shot: at(0.7, 0.12, 2), pause: 300, mood: 'gilt' }),
@@ -522,19 +530,20 @@ export const DEFEAT_CUTS: Cut[] = [
 export const trueEndingCuts = (_crew: StandIn[], company?: StoryCompany): Cut[] => {
   const who = crier(company);
   return [
-    { ...sceneCut('gilded-fallen', [
-      s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.', { shot: at(0.2, 0.78, 1), mood: 'gilt' }),
+    // END-T-1 (D-582): VA-08 취소 — 쓰러진 도금왕 그림(금관 자리가 틀렸다) 대신 검은 화면 가운데 글. 결정 화면(왕위 결정)도 같은 먹이라 끊김 없이 이어진다
+    { ...voidCut([
+      s('종이왕', '그래, 앞선 세 명의 선배들이 왜 그 왕관을 끝내 놓지 못했는지, 지금 내 손끝에 닿는 온기만으로도 똑똑히 느껴진다.', { mood: 'gilt' }),
       // D-465: 녹여 바친 동료를 스스로 부른다 — 왕관 탓이 아니라 내 손이었다
-      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { shot: at(0.2, 0.8, 2), pause: 400, mood: 'pain' })] : []),
-      s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { shot: at(0.2, 0.82, 2), pause: 300, mood: 'resolve' }),
-    ]), caption: 'top', slug: '원했다, 그러니 끝낸다', shot: at(0.45, 0.5), title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper', crown: 4 }, trans: 'dither' },
+      ...(company?.melted?.length ? [m(`${meltedNames(company)}… 너희를 녹인 건 왕관이 아니었어. 이기려고, 내가 녹였다.`, { pause: 400, mood: 'pain' })] : []),
+      s('종이왕', '나 역시 저 권능이 미치도록 탐나고, 다시 한 칸 앞밖에 보지 못하는 약한 폰으로 돌아가는 게 두렵다. — 원했다. 그러니 이제, 내 손으로 끝낸다.', { pause: 300, mood: 'resolve' }),
+    ]), slug: '원했다, 그러니 끝낸다', title: { kicker: `${chapterKick(3)} · 결말`, title: CHAPTERS[3].name, tone: 'paper', crown: 4 }, trans: 'dither' },
     // ED-06 왕관을 던지는 순간 (D-514): END-T-1-3 — 종이 왕관 폰(왼쪽) → 잔상 궤적을 끌며 주조기 아가리로 날아가는 금왕관(오른쪽)
     { ...sceneCut('end-t-throw', [
       n('종이왕은 금왕관을 자신의 머리에 얹지 않았다. 대신 옆에서 맹렬히 돌아가던 용해 주조기의 거대한 톱니바퀴 틈새를 향해, 온 힘을 다해 던져 넣었다.', { shot: at(0.78, 0.45, 1), sfx: 'lift', fx: 'shake' }),
     ]), caption: 'top', slug: '왕관을 던지다', shot: at(0.3, 0.5, 1), trans: 'cut' },
     { ...sceneCut('crown-gears', [
       n('세 번의 죄악이 겹겹이 도금되어 있던 단단한 금왕관이 톱니 사이에 쐐기처럼 박히며 찌그러졌다. 쇠가 부러지는 비명 같은 굉음과 함께 공장의 주조 라인 전체가 멈춰 섰다.', { shot: at(0.62, 0.35, 2), sfx: 'hit', fx: 'flash' }),
-    ]), alt: 'gilded-fallen', slug: '톱니에 박힌 왕관', shot: at(0.6, 0.3, 3), trans: 'iris' },
+    ]), slug: '톱니에 박힌 왕관', shot: at(0.6, 0.3, 3), trans: 'iris' },
     // ED-07 멈춘 공장 (D-514): END-T-2-1 뒤 정적 — 넓은 청회색 공장에서 한 박자 숨 → 집게에 걸린 금박 조각 → 바닥에 버려진 금왕관
     { ...sceneCut('end-t-silence', [
       ...(who ? [s(who.name, CRY.broke[who.v], { shot: at(0.62, 0.42, 1), pause: 1200 })] : []),
