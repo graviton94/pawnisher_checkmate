@@ -19,7 +19,7 @@ npm run sim -- sim/run.sim.ts   # 자동 등반 시뮬레이션 (SIM_GAMES=100)
 ## 빌드
 
 - **웹**: `npm run build` → `dist/`
-- **안드로이드 (M7)**: `npm run android:apk` (안드로이드 SDK·JDK 21 필요) → `android/app/build/outputs/apk/debug/`
+- **안드로이드 (M7)**: `npm run android:apk` (출시 APK, 안드로이드 SDK·JDK 21 필요) → `android/app/build/outputs/apk/release/` · `npm run android:aab` (Play용 AAB) · `npm run android:debug` (디버그 — 라이브 리로드 · 원격 디버깅). 서명 · 키 → `docs/android-release.md`
   - SDK가 없으면 GitHub Actions의 **Build** 워크플로를 수동 실행(Actions → Build → Run workflow)하면 APK가 아티팩트로 나온다.
   - 출시용 서명(AAB)은 키스토어를 만든 뒤 `android/app/build.gradle`에 signingConfig를 추가한다.
 - **PC (M9)**: `npm run pc:dist` → `release/` (Windows NSIS · macOS DMG · Linux AppImage). CI에서도 같이 만든다.
