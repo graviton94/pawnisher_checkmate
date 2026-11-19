@@ -2279,6 +2279,15 @@ export const REST = { heal: 0.12, actHeal: 0.35, reviveHp: 0.5, overhaul: 0.25 }
 
 /** 대국 사이 기본 회복 — 남은 기물 모두 최대 HP의 30% */
 export const restSquad = (squad: Squad[], heal: number = REST.heal): Squad[] => squad.map((u) => ({ ...u, hp: Math.min(crewMaxHp(u), (u.hp ?? crewMaxHp(u)) + Math.round(crewMaxHp(u) * heal)) }));
+/**
+ * 입문 시험대 뒤 분대 (D-597): 시험대 피해는 출하로 이어지지 않는다 — 대국 전 분대 그대로, HP 가득 · 심장 톱니도 대국 전 상태.
+ * 쌓은 기록(처치 · 출전)은 대국 뒤 분대(after)에서 가져온다. 쓰러졌다 돌아온 분대원도 대국 전 모습으로.
+ */
+export const tutorialMend = (before: Squad[], after: Squad[]): Squad[] =>
+  before.map((u) => {
+    const a = after.find((v) => v.serial !== undefined && v.serial === u.serial) ?? u;
+    return { ...a, t: u.t, cracked: u.cracked, hp: crewMaxHp(u) };
+  });
 
 /**
  * 목숨 둘 · 심장 톱니 (D-219, 다키스트 던전 2 · 와일드프로스트 · 인투 더 브리치 벤치마크): 분대원이 처음 쓰러지면 톱니 하나가 깨진 채

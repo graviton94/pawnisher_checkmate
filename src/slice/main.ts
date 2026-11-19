@@ -29,6 +29,7 @@ import './card-f.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
 import { cardState, condCell, condPieces } from './card-state';
+import { freshPanel, lockPanel, panelLocked, unlockPanel } from './panel-lock';
 import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, coverBg, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
@@ -94,6 +95,7 @@ import { CHECK_KING_FACE, EVENT_PONDER_MOOD, FOE_KING_FACE, FOE_PIECE_FACE, PAPE
 import { AUTO_PICK_TEXT, CREW_BARK, WAGER_TEXT, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
 import { p2Clear, p2Rise, p2Warn } from './phase2fx';
 import { autoPick } from './autopick';
+import { revealScroll } from './handfit';
 import { bark, clearVoices, fitSubWidth, installTouchMemory, isMono, mono, placeSubAway, setSubAnchor, SUB_MIN_W, subClass, subHtml, subtitle, type BarkAt, type VoiceSide } from './voice';
 import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, DRILLS, ftueRetry, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { choicePay, counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
@@ -112,7 +114,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
 import { commitRunEnd, fightPending, ftueMark, newerSaveFound, settledEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeOffer, sacrificeSwap, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, tutorialMend, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeOffer, sacrificeSwap, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -368,7 +370,7 @@ let enemyTurn = false;
 /** 장면·팝업 뒤의 Phaser 입력이 전투 정보를 다시 열지 않게 한다. */
 const battleInputActive = (): boolean => !busy && !enemyTurn && $('overlay').hidden && !document.body.classList.contains('between') && !document.body.classList.contains('cover-pl') && !$('board').closest('[inert]') && !document.querySelector('.bossfx,.clr');
 
-// 판(Phaser)은 따로 묶어 타이틀이 뜬 뒤에 불러온다 (코드 리뷰 6 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
+// 판(Phaser)은 따로 묶어 main 묶음을 읽은 뒤 부팅 화면 뒤에서 불러온다 (코드 리뷰 6 → D-593 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
 const board = lazyBoard(
   $('board'),
   {
@@ -940,6 +942,7 @@ const refresh = (): void => {
   $('hand').innerHTML = (handView ?? b.hand).map(cardHtml).join('') || (handView ? '' : '<p class="empty">‘손패가 없어.’</p>');
   litPrev = litNow;
   fitHand();
+  revealPick();
   magAnim(oldBody, handLen0 === b.hand.length);
   const statuses = !busy && !enemyTurn && !document.body.classList.contains('between') ? partStatuses(b) : {};
   $('parts').innerHTML = parts.map((id) => partHtml(id, false, statuses[id])).join('');
@@ -998,8 +1001,6 @@ const coach = (): void => {
   }
   if (el.dataset.k !== key) {
     el.dataset.k = key;
-    el.querySelector('.vs-line')!.innerHTML = COACH_LINES[key].replace(/\n/g, '<br>');
-    el.dataset.w = String(fitSubWidth(el, SUB_MIN_W));
     replay(el, 'k-in');
   }
   placeCoach(el, key);
@@ -1020,10 +1021,43 @@ const placeCoach = (el: HTMLElement, key: keyof typeof COACH_LINES): void => {
   const end = key === 'end' ? $('btn-end').getBoundingClientRect() : null;
   // 카드를 고를 때: 손패와 목표(적 킹)를 가리지 않는다 — 「왼쪽 카드」 · 「목표는 적 킹」을 말하는 줄
   const foeK = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.hp > 0);
-  const pick = key === 'card' || key === 'cardAgain' ? [$('hand').getBoundingClientRect(), ...(foeK ? [tileRect(foeK)] : [])] : [];
-  const keep = [...cells.map(tileRect), ...(kr ? [kr] : []), ...(end ? [end] : []), ...pick];
+  const pick = key === 'card' || key === 'cardAgain' ? [$('hand').getBoundingClientRect()] : [];
+  // 목표(적 킹)는 어느 단계에서도 덮지 않는다 (D-597, 플레이 리뷰 P1-1 — 칸을 고를 때 띠가 적 킹 줄을 덮었다)
+  // 고른 기물도 지킨다 — 칸을 고르는 동안 띠가 움직일 기물을 덮었다
+  const moving = selPiece !== null ? b.s.pieces.find((p) => p.id === selPiece) : undefined;
+  const keep = [...cells.map(tileRect), ...(kr ? [kr] : []), ...(foeK ? [tileRect(foeK)] : []), ...(moving ? [tileRect(moving)] : []), ...(end ? [end] : []), ...pick];
   // 비켜 설 빈자리가 없으면(667 폭에서 고를 칸이 판 위아래에 흩어진 때) 그 단계에는 띠를 접는다 — 판이 먼저 (원칙 7). 칸을 고르면 다음 단계 띠가 선다
-  el.classList.toggle('away', !placeSubAway(el, { focus: tilesRect(cells) ?? kr, keep, w: Number(el.dataset.w) || undefined, minW: SUB_MIN_W }));
+  const soft = battleSoft();
+  const line = el.querySelector<HTMLElement>('.vs-line')!;
+  const full = COACH_LINES[key];
+  const put = (text: string): { ok: boolean; sc: number } => {
+    if (el.dataset.t !== text) {
+      el.dataset.t = text;
+      line.innerHTML = text.replace(/\n/g, '<br>');
+      el.dataset.w = String(fitSubWidth(el, SUB_MIN_W));
+    }
+    const ok = placeSubAway(el, { focus: tilesRect(cells) ?? kr, keep, soft, w: Number(el.dataset.w) || undefined, minW: SUB_MIN_W });
+    return { ok, sc: Number(el.dataset.soft) || 0 };
+  };
+  let at = put(full);
+  // D-597 (플레이 리뷰 P1-1, 667에서 더 심함): 두 줄 띠가 설 빈자리가 없으면(지킬 칸에 걸리거나 기물 · 계기를 덮으면) 첫 줄만 — 더 낫게 설 때만 줄인다
+  const short = full.split('\n')[0];
+  if ((!at.ok || at.sc > 0) && short !== full) {
+    const one = put(short);
+    if (one.ok && (!at.ok || one.sc < at.sc)) at = one;
+    else at = put(full);
+  }
+  el.classList.toggle('away', !at.ok);
+};
+/**
+ * 부관 띠가 되도록 덮지 않을 곳 (D-597, 플레이 리뷰 P1-1 — 띠가 적 킹 · 태엽 · 속전 칸을 덮었다):
+ * 판 위 살아 있는 기물 전부(적 킹은 두 번 — 목표라 더 무겁게) · 태엽 계기 · 턴 · 속전 · 반장 · 적의 수 · 손패 · 되감기 · 턴 끝.
+ */
+const battleSoft = (): DOMRect[] => {
+  const live = b.s.pieces.filter((p) => p.hp > 0 && p.body === undefined);
+  const foeK = live.filter((p) => p.side === 1 && p.type === 'K');
+  const hud = [...['vials', 'turn-label', 'coins', 'boss', 'intents', 'hand', 'btn-rewind', 'btn-end'].map((id) => document.getElementById(id)), document.querySelector<HTMLElement>('#right .gtop')].filter((e): e is HTMLElement => !!e && !e.hidden && !!e.offsetWidth).map((e) => e.getBoundingClientRect());
+  return [...live.map(tileRect), ...foeK.map(tileRect), ...hud];
 };
 const canPlay2 = (i: number): boolean => canPlay(b, i);
 
@@ -2035,6 +2069,7 @@ const CRASH_KEY = 'pawnisher.crashAt';
 const RESUME_KEY = 'pawnisher.resumeRun';
 const CRASH_LOOP_MS = 30000;
 /** 무해한 브라우저 알림 (창 크기 감시 · 소리 자동 재생 거부 · 취소된 불러오기) — 기록만 하고 창은 열지 않는다 */
+const RO_LOOP = /ResizeObserver loop/;
 const BENIGN_ERR = /ResizeObserver loop|NotAllowedError|AbortError|play\(\) request was interrupted/;
 const ss = { get: (k: string): string | null => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k: string, v: string): void => { try { sessionStorage.setItem(k, v); } catch { /* 무시 */ } }, del: (k: string): void => { try { sessionStorage.removeItem(k); } catch { /* 무시 */ } } };
 /** 오류 하나를 기록에 남긴다 (실패해도 던지지 않는다) */
@@ -2057,7 +2092,8 @@ const onCrash = (err: unknown, kind: string): void => {
   try {
     const e = err as { message?: string; name?: string } | undefined;
     const text = `${e?.name ?? ''} ${e?.message ?? err ?? ''}`;
-    logError(err, kind);
+    // 창 크기 감시 고리 알림은 오류가 아니다(브라우저가 다음 프레임에 넘긴 알림) — 원격 기록의 오류로 세지 않는다 (D-596)
+    if (!RO_LOOP.test(text)) logError(err, kind);
     if (BENIGN_ERR.test(text) || crashed) return;
     crashed = true;
     crashWin();
@@ -2188,9 +2224,9 @@ const startBattle = (def: BattleDef, silent = false): void => {
         const rule = def.bossRule ?? 'plate';
         const R0 = BOSS_RULES[rule];
         void ready.then(() => tutorial(`boss-${rule}`, [
-          { text: TUT.boss.meet(R0.name), target: () => $('board').querySelector('canvas') ?? $('board') },
+          { text: (rule === 'gilded' ? TUT.boss.meetFinal : TUT.boss.meet)(R0.name), target: () => $('board').querySelector('canvas') ?? $('board') },
           { text: R0.tell.replace(/([.!?])\s+/g, '$1\n'), target: () => $('board').querySelector('canvas') ?? $('board') },
-          { text: TUT.boss.badge, target: () => $('boss') },
+          { text: rule === 'gilded' ? TUT.boss.badgeFinal : TUT.boss.badge, target: () => $('boss') },
           // 2단계 예고 (D-383): 낮은 승급에서는 처음 만날 때 부관이 짚는다
           ...(asc <= BOSS_PHASE_TEXT.upTo ? [{ text: BOSS_PHASE_TEXT.start.replace(/([.!?])\s+/g, '$1\n'), target: () => $('boss') }] : []),
         ]));
@@ -2610,7 +2646,8 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       <span class="tag ws-purse">나사 <b>${gold}</b></span>`,
   });
   // 같은 패널을 재사용해도 앞 사건의 결과/연출 상태를 다음 사건에 물려주지 않는다.
-  el.classList.remove('ws-done', 'ws-beat', 'locked');
+  el.classList.remove('ws-done', 'ws-beat');
+  unlockPanel(el);
   const art = el.querySelector<HTMLImageElement>('.ws-pic > img[data-cover]')!;
   // 장면 그림이 없는 사건은 공용 사건 배경 (D-260)
   art.addEventListener('error', () => (art.src = 'scenes/bg-event.png'), { once: true });
@@ -2679,14 +2716,15 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     void say('npc', line, who);
   }, 1000);
   const narr = m ? (m[1] + (m[3] ? ` ${m[3].trim()}` : '')).trim() : ev.text;
-  el.classList.add('locked');
+  lockPanel(el);
   void (async () => {
     await say('narr', narr);
     // 소개 대사: 사건 글 속 “ ” — 없으면 NPC의 첫 마디(hi)
     if (m) await say('npc', m[2]);
     else if (talk.hi) await say('npc', talk.hi);
     else if (ponder[0]) await say('npc', ponder[0], PAPER_KING_NAME);
-    el.classList.remove('locked');
+    // 화면이 이미 바뀌었으면 새 화면의 잠금을 건드리지 않는다 (새 화면은 freshPanel로 열린다)
+    if (alive()) unlockPanel(el);
     busy = false;
     lastAct = performance.now();
   })();
@@ -2732,13 +2770,15 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   leaveBtn?.addEventListener('click', () => {
     if (busy) return;
     busy = true;
-    el.classList.add('locked');
+    // 작별 대사 동안만 잠근다 — 떠날 때(대사가 실패해도) 반드시 풀고 다음 화면으로 (D-597 소프트락: 잠금이 다음 창에 남았다)
+    lockPanel(el);
     window.clearInterval(idle);
     sfx('tap');
     choicesEl.hidden = true;
     hint.hidden = true;
     leaveBtn.disabled = true;
-    void say('npc', talk.bye).then(() => alive() && window.setTimeout(advance, calmMs(700)));
+    const go = (): void => { unlockPanel(el); window.setTimeout(advance, calmMs(700)); };
+    void say('npc', talk.bye).then(go, go);
   });
   const purseHtml = (v: number, to?: number): string => `나사 <b>${v}</b>${to === undefined || to === v ? '' : ` → <b class="${to < v ? 'loss' : ''}">${to}</b>`}`;
   bindPick(el, {
@@ -2863,7 +2903,7 @@ const evCardPick = (panel: HTMLElement, ids: CommandId[], line: string): Promise
     const fitNow = (): void => fitSlots(row);
     fitNow();
     requestAnimationFrame(fitNow);
-    bindPick(ov, { onSelect: () => sfx('lift'), onPick: (k) => { ov.classList.add('locked'); sfx('stamp'); pxOut(ov, () => ov.remove(), 240); done(k as CommandId); } });
+    bindPick(ov, { onSelect: () => sfx('lift'), onPick: (k) => { lockPanel(ov); sfx('stamp'); pxOut(ov, () => ov.remove(), 240); done(k as CommandId); } });
   });
 
 /** 사건 결과 요약 한 줄 (D-263): 앞뒤 상태를 비교해 바뀐 것만 — 카드 · 분대원 · 나사 · 부품 */
@@ -3171,7 +3211,7 @@ const pickCardScreen = (title: string, say: string, ids: CommandId[], onPick: (i
     go: { label: verb },
     onSelect: () => sfx('lift'),
     // 다듬기는 화면 하나에 한 장 (#20): 잠금이 풀린 뒤 다음 화면이 뜨기 전 다시 누르면 같은 종류 두 장이 다 다듬어졌다
-    onPick: (id, slot) => { if (!$('overlay-panel').classList.contains('locked') && claimScreen(screenKey())) takeFx(slot, () => onPick(id as CommandId), true); },
+    onPick: (id, slot) => { if (!panelLocked($('overlay-panel')) && claimScreen(screenKey())) takeFx(slot, () => onPick(id as CommandId), true); },
   }).querySelector('[data-back]')!.addEventListener('click', back);
 };
 
@@ -3296,10 +3336,10 @@ const banner = (text: string, good: boolean): Promise<void> => koBanner(text, go
  */
 const takeFx = (slot: HTMLElement, then: () => void, keep = false): void => {
   const panel = $('overlay-panel');
-  if (panel.classList.contains('locked')) return;
+  if (panelLocked(panel)) return;
   // 확정은 화면 하나에 한 번 (기록-1): 잠금이 풀린 뒤 남은 창을 다시 눌러도 두 번 들어가지 않는다. keep(고물상 · 다듬기)은 여러 번 산다
   if (!keep && !claimScreen(screenKey())) return;
-  panel.classList.add('locked');
+  lockPanel(panel);
   sfx('rare');
   const face = slot.matches('.cf') ? slot : slot.querySelector<HTMLElement>(':scope > .cf');
   // 1.1.1 테스터: 고른 카드가 창에 가려진 레일로 작게 날아가고, 나머지는 검은 덩어리로 무너지며 받침 아래 줄만 남아 어색했다 →
@@ -3317,7 +3357,7 @@ const takeFx = (slot: HTMLElement, then: () => void, keep = false): void => {
     window.setTimeout(() => sparksAt(r.left + r.width / 2, r.top + r.height / 2, 14, 60), 160);
   }
   window.setTimeout(() => {
-    panel.classList.remove('locked');
+    unlockPanel(panel);
     then();
   }, 620);
 };
@@ -3341,6 +3381,8 @@ const openOverlay = (html: string, cls = ''): HTMLElement => {
   // 키트 창(openWin)이 아니면 막 · Esc 닫기와 틀 클래스를 걷는다 (D-391)
   if (!cls) dropWinDismiss();
   panel.classList.remove(...panelCls);
+  // 새 창은 앞 화면의 잠금을 물려받지 않는다 (D-597)
+  freshPanel(panel);
   panelCls = cls.split(' ').filter(Boolean);
   panel.classList.add(...panelCls);
   panel.innerHTML = html;
@@ -3390,6 +3432,7 @@ let debugRecruit = false;
 const closeOverlay = (): void => {
   clearPeeks();
   dropWinDismiss();
+  freshPanel($('overlay-panel'));
   if ($('overlay').hidden) return;
   modalOut($('overlay'), $('overlay-panel'), () => ($('overlay').hidden = true));
 };
@@ -3597,6 +3640,8 @@ const finishNow = (): void => {
       const rested = restSquad(survived, restHeal());
       // 원래 줄 순서대로 (돌아온 분대원은 HP 50%, 회복은 받지 않는다)
       squad = before.flatMap((u) => [...rested, ...back].filter((v) => v.serial === u.serial));
+      // 입문 시험대(drill) 피해는 출하로 이어지지 않는다 (D-597, 플레이 리뷰 P1-2: 시험대 C에서 마무리를 놓치면 첫 실전을 나이트 8/45로 시작했다)
+      if (cur.drill) squad = tutorialMend(before, squad);
     }
     // 유품 태엽: 고르게 하지 않는다 — 자동으로 나사가 되고 한 줄만 (D-155, 관리 피로 제로)
     const heirs = fallen.filter((c) => c.t !== 'K');
@@ -3766,6 +3811,13 @@ const discardView = (): void => {
  * ① 넘치면 펼치지 않은 카드의 효과 줄을 접어 이름 한 줄 판으로(효과는 누르면 펼침 · 길게 누르면 크게 보기 그대로)
  * ② 그래도 넘치면 손패 칸 아래에 「▼ N장 더」 띠 — 누르면 다음 카드가 보이게 한 장씩 내린다(계단 이동 없이 바로).
  */
+/** 「N장 더」 띠가 덮은 레일 아래 높이 = 띠 위 끝부터 보이는 칸 아래 끝까지 (띠 48 + 레일 아래 여백 — sticky는 여백 안쪽에 붙는다, D-596) */
+const handCover = (h: HTMLElement): number => {
+  const more = h.querySelector<HTMLElement>(':scope > .hand-more');
+  return more ? Math.max(0, h.getBoundingClientRect().top + h.clientTop + h.clientHeight - more.getBoundingClientRect().top) : 0;
+};
+/** 손패 카드의 레일 안 위치 (스크롤 원점 기준) */
+const handTop = (h: HTMLElement, c: HTMLElement): number => c.getBoundingClientRect().top - h.getBoundingClientRect().top - h.clientTop + h.scrollTop;
 const fitHand = (): void => {
   const h = $('hand');
   h.classList.remove('tight');
@@ -3779,8 +3831,11 @@ const fitHand = (): void => {
   more.className = 'hand-more';
   h.appendChild(more);
   const cards = (): HTMLElement[] => [...h.querySelectorAll<HTMLElement>(':scope > .hc')];
-  const below = (): HTMLElement[] => cards().filter((c) => c.offsetTop + c.offsetHeight > h.scrollTop + h.clientHeight - more.offsetHeight + 1);
-  const above = (): HTMLElement[] => cards().filter((c) => c.offsetTop < h.scrollTop - 1);
+  // 카드 자리는 레일 기준으로 잰다 — offsetTop은 #app 기준이라 레일 위 여백(약 84px)만큼 「더」 장수를 부풀렸다 (D-596)
+  // 장수 = 보이는 띠(28) 뒤로 넘어간 카드 · 내리기 = 그 카드를 누름 칸(48) 위로 통째로 꺼낸다
+  const band = (): number => handCover(h) - (parseFloat(getComputedStyle(more).paddingTop) || 0);
+  const below = (): HTMLElement[] => cards().filter((c) => handTop(h, c) + c.offsetHeight > h.scrollTop + h.clientHeight - band() + 1);
+  const above = (): HTMLElement[] => cards().filter((c) => handTop(h, c) < h.scrollTop - 1);
   const paint = (): void => {
     const n = below().length;
     more.dataset.dir = n ? 'down' : 'up';
@@ -3791,7 +3846,7 @@ const fitHand = (): void => {
     e.stopPropagation();
     sfx('tap', 3);
     const next = below()[0];
-    h.scrollTop = next ? next.offsetTop + next.offsetHeight - h.clientHeight + more.offsetHeight : 0;
+    h.scrollTop = next ? handTop(h, next) + next.offsetHeight - h.clientHeight + handCover(h) : 0;
     paint();
   };
   more.addEventListener('click', step);
@@ -3799,6 +3854,28 @@ const fitHand = (): void => {
   more.addEventListener('touchend', (e) => (e.preventDefault(), step(e)));
   h.onscroll = paint; // 다시 그릴 때마다 붙이지 않게 하나로
   paint();
+};
+
+/**
+ * 고른 카드 보이기 (D-596 — 실기기: 기물을 먼저 눌러 자동 고르기가 「▼ N장 더」 아래 카드를 쥐면 무엇을 쥐었는지 안 보였다):
+ * 고른 카드가 바뀌었는데 레일 밖이면 손패 순서는 그대로 두고 레일만 내려 통째로 보인다 + 한 번 출렁(계단 · 투명도 없음).
+ * 다 보이는 카드(PC · 위쪽 카드)는 아무것도 하지 않는다. 연출 줄이기면 출렁 없이 바로.
+ */
+let revealedPick: number | null = null;
+const revealPick = (): void => {
+  const now = selCard ?? openCard;
+  if (now === revealedPick) return;
+  revealedPick = now;
+  if (now === null) return;
+  const h = $('hand');
+  const el = h.querySelector<HTMLElement>(`:scope > [data-card="${now}"]`);
+  if (!el) return;
+  const to = revealScroll({ top: handTop(h, el), height: el.getBoundingClientRect().height }, h.scrollTop, h.clientHeight, handCover(h), h.scrollHeight - h.clientHeight);
+  if (to === h.scrollTop) return;
+  h.scrollTop = to;
+  if (calmNow()) return;
+  // 예비(왼쪽으로 살짝) → 터짐(오른쪽) → 출렁 — 레일이 내려온 자리를 눈이 따라가게
+  el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2px)', offset: 0.2 }, { transform: 'translateX(6px)', offset: 0.5 }, { transform: 'translateX(-2px)', offset: 0.8 }, { transform: 'translateX(0)' }], { duration: 300, easing: 'steps(6, end)' });
 };
 
 // ---------- 애착 (D-153) ----------
@@ -5139,7 +5216,7 @@ const tutMark = (part: string): void => {
 const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
   tutActive = true;
   document.querySelector('.coach-band')?.remove();
-  const done = await runTutorial(steps, { keep: () => { const k = myPiece('K'); return k ? [tileRect(k)] : []; }, pause: () => enemyTurn || document.body.classList.contains('rev-freeze') || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, skipAgain: TUT.skipAgain, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
+  const done = await runTutorial(steps, { keep: () => b.s.pieces.filter((p) => ((p.type === 'K' && p.body === undefined) || p.id === selPiece) && p.hp > 0).map(tileRect), soft: battleSoft, pause: () => enemyTurn || document.body.classList.contains('rev-freeze') || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, skipAgain: TUT.skipAgain, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
   tutActive = false;
   tutMark(part);
   track('tutorial', { part, completed: done });
@@ -5489,7 +5566,7 @@ const opening = (): void => {
     }, tutDone('battle'));
   };
   /**
-   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 출하 · [기록 | 설정] · (PC) 끝내기.
+   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 게임 시작(D-593, 옛 「출하」) · [기록 | 설정] · (PC) 끝내기.
    * 황동은 늘 하나 — 저장이 있으면 이어하기, 없으면 출하. 모드 · 왕관 · 난이도 · 오늘의 도전은 「출하」 → 출하 준비 창으로.
    * 왕관 부제(이야기 이름)는 보이지 않는다 (스포일러). 시험장 · 빌드 시험은 ?debug에서만 (D-286).
    */
@@ -5505,9 +5582,9 @@ const opening = (): void => {
       // 이어하기 부제: 왕관 표지 + 별칭(D-536 — 끝낸 왕관만 부제) · 막
       const svCrown = sv ? runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0, (sv.chapter ?? 0) < (meta.storyCleared ?? 0)) : '';
       nav.innerHTML = `${sv ? `<button class="btn k-brass op-main op-cont" type="button" data-cont><b>${MAIN_TEXT.cont}</b><small>${MAIN_TEXT.contSub(svCrown, actLabel(sv.actI + 1))}</small></button>` : ''}
-        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship>${menuIco('menu.run')}<b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
-        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}${MAIN_TEXT.records}</button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}${MAIN_TEXT.settings}</button></div>
-        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}${MAIN_TEXT.quit}</button>` : ''}
+        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship><i class="op-ico op-crown" aria-hidden="true"></i><b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
+        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}<span class="op-lbl">${MAIN_TEXT.records}</span></button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}<span class="op-lbl">${MAIN_TEXT.settings}</span></button></div>
+        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}<span class="op-lbl">${MAIN_TEXT.quit}</span></button>` : ''}
         ${dev ? `<div class="op-half op-dev"><button class="btn k-iron" type="button" data-lab-open>시험장</button><button class="btn k-iron" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
       nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!)); // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
       nav.querySelector('[data-ship]')!.addEventListener('click', () => (sfx('tap'), runSetup(!!sv)));
@@ -5544,10 +5621,11 @@ const closeOpening = (): void => {
 startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 // 워밍업 로딩 (D-239): 그림 · 글꼴을 미리 받는 동안 부팅 화면의 황동 막대가 찬다 → 다 되면 걷고 타이틀
+// 판(Phaser 읽기 · 부팅 · 판 그림)도 부팅 화면 뒤에서 세운다 (D-593 — 예전엔 타이틀이 뜬 직후 불러 베기 연출 · 메뉴 펼침과 겹쳐 ×4 감속에서 3초 넘게 끊겼다).
+// 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
 const bootBar = document.querySelector<HTMLElement>('#boot .boot-bar b');
-void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12)))).then(() => {
-  // 타이틀이 뜨면 판(Phaser)을 불러 판 그림을 받기 시작한다 — 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
-  void board.start();
+const boardUp = board.start();
+void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12))), 3000, [boardUp, boardUp.then((r) => r.settled())]).then(() => {
   const boot = document.getElementById('boot');
   if (boot) pxOut(boot, () => boot.remove(), 240);
   if (devQuery('builds')) buildPick();

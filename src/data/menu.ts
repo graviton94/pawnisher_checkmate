@@ -20,13 +20,14 @@ export const PAUSE_TEXT = {
 
 export const MAIN_TEXT = {
   cont: '이어하기',
-  ship: '출하',
+  /** 타이틀 시작 단추 (D-593 사용자: 「출하」 → 「게임 시작」 — 한 판 · 출하 준비 창 이름은 그대로 「출하」) */
+  ship: '게임 시작',
   records: '기록',
   settings: '설정',
   quit: '끝내기',
   /** 이어하기 부제 — 왕관 표지 · 막만 (부제 없음) */
   contSub: (crown: string, act: string) => `${crown} · ${act}`,
-  /** 오늘의 도전을 아직 안 했다 (출하 단추 위 청록 점 · 읽는 이용) */
+  /** 오늘의 도전을 아직 안 했다 (게임 시작 단추 위 청록 점 · 읽는 이용) */
   dailyNew: '오늘의 도전 새로 열림',
   quitAsk: { title: '끝내기', body: '게임을 끝냅니다.', back: '그만둔다', go: '끝낸다' },
 } as const;

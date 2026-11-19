@@ -855,6 +855,8 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .vsub.coach-band.away { visibility: hidden; }
 .tut > .tut-skip { position: fixed; bottom: var(--Gy); left: var(--G); z-index: 2; pointer-events: auto; min-width: calc(var(--px) * 56); }
 .tut.paused > .tut-skip { visibility: hidden; }
+/* 전투 밖(영입 · 핵심 부품 · 지도) 건너뛰기 = 오른쪽 위 모서리 (D-597) — 화면의 왼쪽 아래 「건너뛴다」와 다른 자리 */
+.tut > .tut-skip.corner { top: var(--Gy); right: var(--G); bottom: auto; left: auto; }
 .tut .talk.on-sub .talk-foot { position: absolute; right: calc(var(--d) * 3); bottom: calc(var(--d) * -13); }
 @media (prefers-reduced-motion: reduce) { .tut .talk .talk-next { animation: none; } }
 
