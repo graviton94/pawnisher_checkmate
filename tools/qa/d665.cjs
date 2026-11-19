@@ -158,7 +158,18 @@ const which = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWit
       if (row) {
         const b = await row.boundingBox();
         await shot('piles', { x: Math.max(0, b.x - 6), y: Math.max(0, b.y - 6), width: b.width + 12, height: b.height + 12 });
-        log('PILES', await A(() => [...document.querySelectorAll('#deckrow .pile-btn')].map((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, label: e.getAttribute('aria-label') }; })));
+        // D-676: 단추 폭 · 사이 틈 · 누름 칸(::before) · 문양 오른 끝 ↔ 소켓 왼 끝 여유
+        log('PILES', await A(() => {
+          const bs = [...document.querySelectorAll('#deckrow .pile-btn')];
+          const row = document.querySelector('#deckrow').getBoundingClientRect();
+          return { row: { x: row.x, w: row.width }, btns: bs.map((e, i) => {
+            const r = e.getBoundingClientRect(); const hit = getComputedStyle(e, '::before');
+            const ico = e.querySelector('.pile-ico').getBoundingClientRect(); const n = e.querySelector('.pile-n').getBoundingClientRect();
+            const u = parseFloat(getComputedStyle(e).getPropertyValue('--u')) || ico.width / 30;
+            return { w: +r.width.toFixed(2), hitH: parseFloat(hit.height), gapNext: bs[i + 1] ? +(bs[i + 1].getBoundingClientRect().left - r.right).toFixed(2) : null,
+              wDots: +(r.width / (ico.width / 30)).toFixed(1), icoToSocket: +(n.left - (ico.right)).toFixed(2), inRow: r.left >= row.left - 0.5 && r.right <= row.right + 0.5 };
+          }) };
+        }));
       }
       await shot('battle');
     },
