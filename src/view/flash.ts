@@ -1,13 +1,14 @@
 /**
  * 맞은 곳 번쩍임 (D-595 — 화면 전체 흰 · 금 디더 막을 대신). 사용자 실기기: 「화면 번쩍임이 그래픽 수준이 떨어진다」.
  * 옛 번쩍임은 화면 전체를 75% 흰 체커로 덮고 220 ~ 400ms 동안 SVG 가면을 16번 바꿨다 — 눈부시고, 바꿀 때마다 화면 전체를 다시
- * 칠해 느린 폰에서 프레임이 빠졌다. 이제 맞은 곳 둘레만 원형 디더(8×8 베이어, 칸 = 게임 도트)로 켜고 **화면 프레임 수**로
- * 꺼진다(기본 3장: 50% → 약 22% → 약 6%). 캔버스는 칸 해상도(작다)로 그리고 CSS로 정수배 늘린다 — 칠할 곳이 작고 일정하다.
+ * 칠해 느린 폰에서 프레임이 빠졌다. D-675(사용자: 격자 디더 연출 전면 금지)부터는 체크 · 베이어 무늬 없이 **단색 도형 터짐**:
+ * 첫 장 = 꽉 찬 원판(맞은 곳 둘레), 다음 장부터 = 바깥으로 퍼지며 얇아지는 고리 한 줄 — 화면 프레임마다 반지름 · 두께가 바뀐다.
+ * 캔버스는 칸 해상도(칸 = 게임 도트, 작다)로 그리고 CSS로 정수배 늘린다 — 가장자리가 단단한 도트 원.
  * 그라데이션 · 투명도 보간 없음(D-216): 칸은 켜지거나 꺼질 뿐. 번쩍임 줄이기 · 움직임 줄이기면 그리지 않는다.
  */
 import { reduceFlash } from '../prefs/motion';
 import { FLASH } from '../data/motion';
-import { bayer8, dotCss, snapDev } from './motion';
+import { dotCss, snapDev } from './motion';
 
 export interface FlashOpts {
   /** 가운데 (화면 CSS px) */
@@ -31,7 +32,7 @@ const rgba = (hex: string): number => {
   return ((255 << 24) | ((v & 0xff) << 16) | (v & 0xff00) | ((v >> 16) & 0xff)) >>> 0;
 };
 
-/** 원형 디더 번쩍임 한 번 — 다 꺼지면 Promise가 풀린다 */
+/** 단색 원판 → 퍼지는 고리 번쩍임 한 번 (D-675) — 다 꺼지면 Promise가 풀린다 */
 export const impactFlash = (o: FlashOpts): Promise<void> =>
   new Promise((done) => {
     if (reduceFlash() || typeof document === 'undefined') return done();
@@ -40,7 +41,7 @@ export const impactFlash = (o: FlashOpts): Promise<void> =>
     const r = o.r ?? Math.min(vw, vh) * FLASH.radius;
     const R = Math.max(2, Math.ceil(r / dot));
     const n = 2 * R + 1;
-    // 칸 격자를 화면 격자에 맞춘다 (번쩍임마다 베이어 무늬가 같은 자리 — 다른 디더 막과 어긋나지 않게)
+    // 칸 격자를 화면 격자에 맞춘다 (원 가장자리 도트가 다른 도트와 어긋나지 않게)
     const gx = Math.round(o.x / dot) - R, gy = Math.round(o.y / dot) - R;
     const c = document.createElement('canvas');
     c.width = n;
@@ -58,22 +59,24 @@ export const impactFlash = (o: FlashOpts): Promise<void> =>
     const col = rgba(o.color ?? '#ffffff');
     const peak = Math.min(FLASH.peak, o.peak ?? FLASH.peak);
     const frames = Math.max(1, o.frames ?? FLASH.frames);
-    // 칸마다 거리 감쇠 (1 - d²) 를 한 번만
-    const fall = new Float32Array(n * n);
+    // 칸마다 가운데로부터 거리 (반지름 1 = R칸) — 한 번만
+    const dist = new Float32Array(n * n);
     for (let y = 0; y < n; y++)
-      for (let x = 0; x < n; x++) {
-        const dx = (x - R) / R, dy = (y - R) / R;
-        fall[y * n + x] = Math.max(0, 1 - (dx * dx + dy * dy));
-      }
+      for (let x = 0; x < n; x++) dist[y * n + x] = Math.hypot((x - R) / R, (y - R) / R);
+    // 세기(peak)는 원판 크기로: 0.5 = 반지름 R의 35%
+    const core = 0.05 + 0.3 * Math.min(1, peak / 0.5);
     const draw = (k: number): void => {
-      // 꺼짐 곡선: 1 → 0 (감속 — 첫 장이 가장 밝고 빨리 줄어든다)
-      const lv = peak * Math.pow(1 - k / frames, 2) * 64;
       px.fill(0);
-      for (let y = 0; y < n; y++)
-        for (let x = 0; x < n; x++) {
-          const i = y * n + x;
-          if (bayer8(gx + x, gy + y) < lv * fall[i]) px[i] = col;
-        }
+      if (k === 0) {
+        // 첫 장: 꽉 찬 원판
+        for (let i = 0; i < n * n; i++) if (dist[i] <= core) px[i] = col;
+      } else {
+        // 다음 장: 바깥으로 퍼지며(감속) 얇아지는 고리 — 무늬 없음, 단단한 도트 가장자리
+        const t = k / frames;
+        const outer = core + (1 - core) * (1 - Math.pow(1 - t, 2));
+        const w = Math.max(1.5 / R, (1 - t) * core * 0.6);
+        for (let i = 0; i < n * n; i++) if (dist[i] <= outer && dist[i] > outer - w) px[i] = col;
+      }
       g.putImageData(img, 0, 0);
     };
     draw(0);

@@ -185,15 +185,9 @@
 .credits .cr-page.in .cr-makers > div:nth-child(4) { --k: 3; }
 @media (prefers-reduced-motion: reduce) { .credits .cr-page.in .cr-person, .credits .cr-page.in .cr-makers > div { animation: none; } }
 
-/* 사건 결과 — 장면 위 배우 (evstage.actorBeat, D-504 · #23): 덮던 2×2 먹 디더를 걷고(가장자리 디더만) 그림 초점 자리에 실제 기물 도트.
+/* 사건 결과 — 장면 위 배우 (evstage.actorBeat, D-504 · #23): 덮던 먹 막을 걷고(먹 테만, D-675) 그림 초점 자리에 실제 기물 도트.
    솟음 · 가라앉음 = 아래부터 잘리며 계단 이동(수면에서 나오고 들어감) · 떨어짐 = 예비 없이 낙하 → 눌림 출렁. 모두 steps(1) 프레임 */
-.win-scene .ev-ov.bare .ev-ov-bg::after {
-  background:
-    url('../assets/ui/fx/dither-edge-t.png') 0 0 / calc(var(--px) * 4) calc(var(--px) * 24) repeat-x,
-    url('../assets/ui/fx/dither-edge-b.png') 0 100% / calc(var(--px) * 4) calc(var(--px) * 24) repeat-x,
-    url('../assets/ui/fx/dither-edge-l.png') 0 0 / calc(var(--px) * 24) calc(var(--px) * 4) repeat-y,
-    url('../assets/ui/fx/dither-edge-r.png') 100% 0 / calc(var(--px) * 24) calc(var(--px) * 4) repeat-y;
-}
+.win-scene .ev-ov.bare .ev-ov-bg::after { background: none; } /* D-675: 덮던 막을 걷고 2도트 먹 테만 (옛 가장자리 디더) */
 .ev-actor { position: absolute; z-index: 3; pointer-events: none; transform-origin: 50% 100%; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
 .ev-actor > img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 .ev-actor.rise { animation: actRise 420ms steps(1) both; }
@@ -205,5 +199,5 @@
 @keyframes actSink { 0% { translate: 0 -4%; clip-path: inset(-20% 0 0 0); } 16% { translate: 0 10%; clip-path: inset(0 0 10% 0); } 33% { translate: 0 26%; clip-path: inset(0 0 26% 0); } 50% { translate: 0 44%; clip-path: inset(0 0 44% 0); } 66% { translate: 0 62%; clip-path: inset(0 0 62% 0); } 83% { translate: 0 80%; clip-path: inset(0 0 80% 0); } 100% { translate: 0 100%; clip-path: inset(0 0 100% 0); } }
 .ev-actor.drop { animation: actDrop 380ms steps(1) both; }
 @keyframes actDrop { 0% { translate: 0 -140%; } 25% { translate: 0 -80%; } 45% { translate: 0 -24%; } 60% { translate: 0 0; scale: 1.14 0.84; } 80% { translate: 0 -3%; scale: 0.95 1.05; } 100% { translate: 0 0; scale: 1 1; } }
-.ev-actor.gone { animation: bfOut 300ms steps(1) forwards; }
+.ev-actor.gone { animation: bfOut 300ms var(--accel) forwards; }
 @media (prefers-reduced-motion: reduce) { .ev-actor, .ev-actor > img { animation-duration: 1ms !important; } }
