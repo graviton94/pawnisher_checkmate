@@ -157,6 +157,8 @@ export interface Meta {
   nemeses: Nemesis[];
   /** 프롤로그를 끝까지 봤다 (D-192 — 다음부터 화면을 누르면 메뉴) */
   prologue?: boolean;
+  /** 프롤로그 뒷장 (D-610): false = 첫 대국 앞 9쪽만 보고 뒷장이 남았다(첫 반장 뒤에 튼다) · true = 봤다 · 없음 = 전체를 봤거나 옛 저장 */
+  prologueLate?: boolean;
   /** 첫 대국 도움말을 마쳤다 (D-192) */
   onboarded?: boolean;
   /** 부관 안내를 마친 부분 (D-238): battle · recruit · map · kit */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { baseScale, frameAt, zoomScale } from '../src/slice/film';
-import { BOSS_STORY, DEFEAT_CUTS, PROLOGUE, SPEAKER_FACE, bossFallCut, gildedPhase2Cut, lookBackCut, promotionCuts, shadowCut, trueEndingCuts, type Cut, type Line, type StoryBoss } from '../src/data/script';
+import { BOSS_STORY, DEFEAT_CUTS, PROLOGUE, SPEAKER_FACE, bossFallCut, gildedPhase2Cut, lookBackCut, promotionCuts, runIntro, shadowCut, trueEndingCuts, type Cut, type Line, type StoryBoss } from '../src/data/script';
 import { companionScene } from '../src/data/companion-scenes';
 import { EVENT_OUTCOME } from '../src/data/event-outcome';
 import { ASCENSION } from '../src/slice/run';
@@ -14,7 +14,8 @@ const crew = { alive: [{ name: '삐걱거리는 경첩', t: 'P' as const }, { na
 const allCuts = (): [string, Cut][] => {
   const out: [string, Cut][] = PROLOGUE.map((c) => [`프롤로그 ${c.img}`, c]);
   for (let a = 0; a < 4; a++) {
-    out.push([`그림자 ${a}`, shadowCut(a, ASCENSION[a].law)], [`재도전 ${a}`, shadowCut(a, undefined, true)]);
+    out.push([`그림자 ${a}`, shadowCut(a, ASCENSION[a].law)]);
+    for (const t of [0, 1, 2, 3]) runIntro(a, t, ASCENSION[a].law).forEach((c) => out.push([`인트로 ${a}-${t} ${c.slug}`, c]));
     promotionCuts(a, '', ASCENSION[a].law, BOSS_STORY.plate.mirror, crew).forEach((c) => out.push([`왕 ${a} ${c.img || c.coda}`, c]));
     out.push([`도금왕 2단계 ${a}`, gildedPhase2Cut('boss-gilded', a, 'plate')]);
     for (let act = 0; act < 3; act++) companionScene(act, crew.alive, undefined, a).cuts.forEach((c) => out.push([`동료 ${a}-${act}`, c]));
@@ -95,8 +96,8 @@ describe('컷 비트 · 화자 (D-504 · #22)', () => {
     expect(DEFEAT_CUTS.at(-1)?.end?.title).toBe('킹이 쓰러졌습니다');
     expect(PROLOGUE[0].title?.kicker).toBe('프롤로그');
   });
-  it('검은 화면 가운데 글 (D-582): SHD-A · END-T-1은 그림 없이 Cut.void · 취소된 그림(VA-08 · VA-10)을 어디서도 부르지 않는다', () => {
-    for (let a = 0; a < 4; a++) expect(shadowCut(a, undefined, true).void).toBe(true);
+  it('검은 화면 가운데 글 (D-582): 인트로 먹 비트 · END-T-1은 그림 없이 Cut.void · 취소된 그림(VA-08 · VA-10)을 어디서도 부르지 않는다', () => {
+    for (let a = 0; a < 4; a++) for (const t of [0, 1, 2]) if (a > 0 || t > 0) expect(runIntro(a, t, '법')[0].void).toBe(true);
     expect(shadowCut(1, '규정').void).toBeFalsy();
     const t = trueEndingCuts([], crew);
     expect(t[0].void).toBe(true);
