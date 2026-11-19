@@ -1,0 +1,5140 @@
+{
+ "rows": {
+  "after x4 probe": [
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 9391,
+    "frames": 57,
+    "avgFps": 35,
+    "longestMs": 167,
+    "over17": 11,
+    "over34": 9,
+    "over50": 5,
+    "longTasks": 6,
+    "logoMotion": {
+     "changes": 10,
+     "ms": 583,
+     "perSec": 17.1,
+     "maxHoldMs": 167
+    },
+    "btnMotion": {
+     "changes": 6,
+     "ms": 517,
+     "perSec": 11.6,
+     "maxHoldMs": 167
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1116
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      712
+     ],
+     [
+      "v8.callFunction",
+      460
+     ],
+     [
+      "AsyncTask Run",
+      410
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      402
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      400
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      400
+     ],
+     [
+      "FunctionCall",
+      388
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      374
+     ],
+     [
+      "FireAnimationFrame",
+      374
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      139
+     ],
+     [
+      "UpdateLayoutTree",
+      138
+     ],
+     [
+      "Commit",
+      136
+     ],
+     [
+      "Document::UpdateStyleAndLayout",
+      126
+     ],
+     [
+      "Blink.ForcedStyleAndLayout.UpdateTime",
+      121
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      115
+     ],
+     [
+      "EventDispatch",
+      111
+     ],
+     [
+      "Document::updateStyle",
+      109
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 175,
+      "top": [
+       [
+        "v8.callFunction",
+        2
+       ],
+       [
+        "v8.newInstance",
+        0
+       ],
+       [
+        "FunctionCall",
+        0
+       ]
+      ],
+      "fn": [
+       ":"
+      ]
+     },
+     {
+      "ms": 140,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        140
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        138
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        138
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        138
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        138
+       ],
+       [
+        "FireAnimationFrame",
+        138
+       ],
+       [
+        "AsyncTask Run",
+        138
+       ],
+       [
+        "v8.callFunction",
+        137
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     },
+     {
+      "ms": 119,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        119
+       ],
+       [
+        "v8.callFunction",
+        70
+       ],
+       [
+        "EventDispatch",
+        66
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        35
+       ],
+       [
+        "UpdateLayoutTree",
+        35
+       ],
+       [
+        "Document::updateStyle",
+        33
+       ],
+       [
+        "Document::recalcStyle",
+        31
+       ],
+       [
+        "FunctionCall",
+        21
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 5,
+    "paintedLongestMs": 909,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x4-probe-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8435,
+    "frames": 83,
+    "avgFps": 50.7,
+    "longestMs": 150,
+    "over17": 5,
+    "over34": 3,
+    "over50": 2,
+    "longTasks": 2,
+    "logoMotion": {
+     "changes": 22,
+     "ms": 550,
+     "perSec": 40,
+     "maxHoldMs": 150
+    },
+    "btnMotion": {
+     "changes": 19,
+     "ms": 433,
+     "perSec": 43.9,
+     "maxHoldMs": 117
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      817
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      570
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      305
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      299
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      246
+     ],
+     [
+      "v8.callFunction",
+      232
+     ],
+     [
+      "AsyncTask Run",
+      201
+     ],
+     [
+      "FunctionCall",
+      181
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      165
+     ],
+     [
+      "FireAnimationFrame",
+      164
+     ],
+     [
+      "Commit",
+      147
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      111
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      105
+     ],
+     [
+      "Document::UpdateStyleAndLayout",
+      105
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      105
+     ],
+     [
+      "UpdateLayoutTree",
+      105
+     ],
+     [
+      "Document::updateStyle",
+      100
+     ],
+     [
+      "Blink.ForcedStyleAndLayout.UpdateTime",
+      98
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 151,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        151
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        110
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        110
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        58
+       ],
+       [
+        "Commit",
+        34
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        7
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        4
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        3
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     },
+     {
+      "ms": 53,
+      "top": [
+       [
+        "v8.callFunction",
+        32
+       ],
+       [
+        "EventDispatch",
+        27
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        15
+       ],
+       [
+        "UpdateLayoutTree",
+        15
+       ],
+       [
+        "Document::updateStyle",
+        15
+       ],
+       [
+        "Document::recalcStyle",
+        14
+       ],
+       [
+        "PrePaint",
+        6
+       ],
+       [
+        "FunctionCall",
+        5
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 32,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        32
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        14
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        14
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        14
+       ],
+       [
+        "AnimationTimeline::serviceAnimations",
+        13
+       ],
+       [
+        "AsyncTask Scheduled",
+        13
+       ],
+       [
+        "Commit",
+        13
+       ],
+       [
+        "LayerTreeHost::DoUpdateLayers",
+        11
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 10,
+    "paintedLongestMs": 478,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x4-probe-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8394,
+    "frames": 39,
+    "avgFps": 23.5,
+    "longestMs": 283,
+    "over17": 15,
+    "over34": 10,
+    "over50": 8,
+    "longTasks": 4,
+    "logoMotion": {
+     "changes": 19,
+     "ms": 600,
+     "perSec": 31.7,
+     "maxHoldMs": 167
+    },
+    "btnMotion": {
+     "changes": 18,
+     "ms": 417,
+     "perSec": 43.2,
+     "maxHoldMs": 67
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1180
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      991
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      451
+     ],
+     [
+      "Paint",
+      326
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      311
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      267
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      263
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      262
+     ],
+     [
+      "v8.callFunction",
+      248
+     ],
+     [
+      "AsyncTask Run",
+      223
+     ],
+     [
+      "FunctionCall",
+      219
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      216
+     ],
+     [
+      "FireAnimationFrame",
+      207
+     ],
+     [
+      "Commit",
+      193
+     ],
+     [
+      "Blink.Paint.UpdateTime",
+      189
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      131
+     ],
+     [
+      "Document::UpdateStyleAndLayout",
+      131
+     ],
+     [
+      "Blink.ForcedStyleAndLayout.UpdateTime",
+      128
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 238,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        238
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        132
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        128
+       ],
+       [
+        "Commit",
+        105
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        3
+       ],
+       [
+        "LocalFrameView::pushPaintArtifactToCompositor",
+        3
+       ],
+       [
+        "Blink.CompositingCommit.UpdateTime",
+        3
+       ],
+       [
+        "Layerize",
+        3
+       ]
+      ],
+      "fn": [
+       "main.js:oe",
+       ":step"
+      ]
+     },
+     {
+      "ms": 201,
+      "top": [
+       [
+        "Paint",
+        290
+       ],
+       [
+        "ProxyMain::BeginMainFrame",
+        201
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        145
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        145
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        145
+       ],
+       [
+        "PaintImage",
+        65
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        1
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        1
+       ]
+      ],
+      "fn": [
+       "main.js:oe",
+       ":step"
+      ]
+     },
+     {
+      "ms": 159,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        121
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        72
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        72
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        72
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        70
+       ],
+       [
+        "FireAnimationFrame",
+        70
+       ],
+       [
+        "AsyncTask Run",
+        70
+       ],
+       [
+        "v8.callFunction",
+        70
+       ]
+      ],
+      "fn": [
+       "main.js:oe",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 2,
+    "paintedLongestMs": 3219,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x4-probe-r3"
+   }
+  ],
+  "after x4": [
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8263,
+    "frames": 64,
+    "avgFps": 38.6,
+    "longestMs": 233,
+    "over17": 6,
+    "over34": 6,
+    "over50": 5,
+    "longTasks": 6,
+    "mainTop": [
+     [
+      "RunTask",
+      1255
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      624
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      303
+     ],
+     [
+      "v8.callFunction",
+      256
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      178
+     ],
+     [
+      "AsyncTask Run",
+      175
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      155
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      150
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      146
+     ],
+     [
+      "EventDispatch",
+      131
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      122
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      120
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      115
+     ],
+     [
+      "Commit",
+      111
+     ],
+     [
+      "FireAnimationFrame",
+      105
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      104
+     ],
+     [
+      "UpdateLayoutTree",
+      103
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      100
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 187,
+      "top": [
+       [
+        "ResponseBodyLoader::OnStateChange",
+        1
+       ],
+       [
+        "ResponseBodyLoader::DidFinishLoadingBody",
+        0
+       ],
+       [
+        "ImageResourceContent::updateImage",
+        0
+       ],
+       [
+        "Resource::appendData",
+        0
+       ],
+       [
+        "BitmapImage::dataChanged",
+        0
+       ]
+      ],
+      "fn": []
+     },
+     {
+      "ms": 122,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        122
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        111
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        110
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        10
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        10
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        10
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        10
+       ],
+       [
+        "Commit",
+        1
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     },
+     {
+      "ms": 104,
+      "top": [
+       [
+        "v8.callFunction",
+        106
+       ],
+       [
+        "EventDispatch",
+        73
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        27
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        26
+       ],
+       [
+        "Blink.ForcedStyleAndLayout.UpdateTime",
+        26
+       ],
+       [
+        "Blink.Layout.UpdateTime",
+        21
+       ],
+       [
+        "LocalFrameView::layout",
+        21
+       ],
+       [
+        "Layout",
+        21
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 1,
+    "paintedLongestMs": null,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x4-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 6977,
+    "frames": 76,
+    "avgFps": 46.4,
+    "longestMs": 217,
+    "over17": 4,
+    "over34": 2,
+    "over50": 2,
+    "longTasks": 2,
+    "mainTop": [
+     [
+      "RunTask",
+      946
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      708
+     ],
+     [
+      "v8.callFunction",
+      315
+     ],
+     [
+      "EventDispatch",
+      231
+     ],
+     [
+      "FunctionCall",
+      222
+     ],
+     [
+      "Commit",
+      197
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      196
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      131
+     ],
+     [
+      "UpdateLayoutTree",
+      128
+     ],
+     [
+      "Document::updateStyle",
+      119
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      116
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      113
+     ],
+     [
+      "Document::recalcStyle",
+      112
+     ],
+     [
+      "AsyncTask Run",
+      111
+     ],
+     [
+      "MainFrameAborted",
+      94
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      73
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      69
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      68
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 218,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        218
+       ],
+       [
+        "EventDispatch",
+        214
+       ],
+       [
+        "v8.callFunction",
+        212
+       ],
+       [
+        "FunctionCall",
+        184
+       ],
+       [
+        "EventHandler::HitTestResultAtLocation",
+        1
+       ],
+       [
+        "LayoutView::HitTest",
+        0
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        0
+       ],
+       [
+        "HitTest",
+        0
+       ]
+      ],
+      "fn": [
+       "popup.js:e",
+       "main.js:window.addEventListener.capture",
+       "BoardRenderer.js:MutationObserver.observe.attributes",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 121,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        38
+       ],
+       [
+        "Paint",
+        33
+       ],
+       [
+        "Commit",
+        19
+       ],
+       [
+        "ProxyMain::BeginMainFrame::commit",
+        19
+       ],
+       [
+        "LayerTreeHost::WaitForCommitCompletion",
+        19
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        17
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        15
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        12
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       "popup.js:"
+      ]
+     },
+     {
+      "ms": 47,
+      "top": [
+       [
+        "Blink.Style.UpdateTime",
+        34
+       ],
+       [
+        "UpdateLayoutTree",
+        33
+       ],
+       [
+        "Document::updateStyle",
+        33
+       ],
+       [
+        "Document::recalcStyle",
+        33
+       ],
+       [
+        "v8.callFunction",
+        12
+       ],
+       [
+        "EventDispatch",
+        12
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        5
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        4
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 5,
+    "paintedLongestMs": 172,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x4-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 9697,
+    "frames": 91,
+    "avgFps": 55.7,
+    "longestMs": 50,
+    "over17": 5,
+    "over34": 2,
+    "over50": 1,
+    "longTasks": 0,
+    "mainTop": [
+     [
+      "RunTask",
+      855
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      542
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      216
+     ],
+     [
+      "Commit",
+      201
+     ],
+     [
+      "v8.callFunction",
+      158
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      131
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      131
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      131
+     ],
+     [
+      "AsyncTask Run",
+      131
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      130
+     ],
+     [
+      "UpdateLayoutTree",
+      129
+     ],
+     [
+      "Document::updateStyle",
+      124
+     ],
+     [
+      "Document::recalcStyle",
+      107
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      91
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      91
+     ],
+     [
+      "ProxyMain::BeginMainFrame::commit",
+      79
+     ],
+     [
+      "FunctionCall",
+      78
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      71
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 44,
+      "top": [
+       [
+        "v8.callFunction",
+        28
+       ],
+       [
+        "EventDispatch",
+        22
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        14
+       ],
+       [
+        "UpdateLayoutTree",
+        14
+       ],
+       [
+        "Document::updateStyle",
+        13
+       ],
+       [
+        "Document::recalcStyle",
+        12
+       ],
+       [
+        "PrePaint",
+        7
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        6
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 42,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        42
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        36
+       ],
+       [
+        "EventHandler::handleMouseMoveEvent",
+        36
+       ],
+       [
+        "LayoutView::HitTest",
+        33
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        18
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        18
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        18
+       ],
+       [
+        "UpdateLayoutTree",
+        18
+       ]
+      ],
+      "fn": []
+     }
+    ],
+    "painted": 6,
+    "paintedLongestMs": 29,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x4-r3"
+   }
+  ],
+  "after x6 probe": [
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 12269,
+    "frames": 83,
+    "avgFps": 50.2,
+    "longestMs": 117,
+    "over17": 6,
+    "over34": 3,
+    "over50": 2,
+    "longTasks": 2,
+    "logoMotion": {
+     "changes": 25,
+     "ms": 550,
+     "perSec": 45.5,
+     "maxHoldMs": 117
+    },
+    "btnMotion": {
+     "changes": 16,
+     "ms": 467,
+     "perSec": 34.3,
+     "maxHoldMs": 117
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      903
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      557
+     ],
+     [
+      "v8.callFunction",
+      267
+     ],
+     [
+      "AsyncTask Run",
+      243
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      207
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      201
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      197
+     ],
+     [
+      "FunctionCall",
+      189
+     ],
+     [
+      "Commit",
+      167
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      166
+     ],
+     [
+      "FireAnimationFrame",
+      165
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      108
+     ],
+     [
+      "MainFrameAborted",
+      94
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      94
+     ],
+     [
+      "UpdateLayoutTree",
+      91
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      89
+     ],
+     [
+      "Document::updateStyle",
+      85
+     ],
+     [
+      "Document::UpdateStyleAndLayout",
+      83
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 130,
+      "top": [
+       [
+        "v8.callFunction",
+        3
+       ],
+       [
+        "FunctionCall",
+        0
+       ],
+       [
+        "v8.newInstance",
+        0
+       ]
+      ],
+      "fn": [
+       ":"
+      ]
+     },
+     {
+      "ms": 85,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        83
+       ],
+       [
+        "v8.callFunction",
+        47
+       ],
+       [
+        "EventDispatch",
+        39
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        21
+       ],
+       [
+        "UpdateLayoutTree",
+        21
+       ],
+       [
+        "Document::updateStyle",
+        21
+       ],
+       [
+        "Document::recalcStyle",
+        19
+       ],
+       [
+        "FunctionCall",
+        12
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 9,
+    "paintedLongestMs": 526,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x6-probe-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 10329,
+    "frames": 68,
+    "avgFps": 41,
+    "longestMs": 167,
+    "over17": 13,
+    "over34": 7,
+    "over50": 4,
+    "longTasks": 5,
+    "logoMotion": {
+     "changes": 20,
+     "ms": 550,
+     "perSec": 36.4,
+     "maxHoldMs": 83
+    },
+    "btnMotion": {
+     "changes": 17,
+     "ms": 600,
+     "perSec": 28.3,
+     "maxHoldMs": 200
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1195
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      766
+     ],
+     [
+      "v8.callFunction",
+      395
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      317
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      296
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      293
+     ],
+     [
+      "AsyncTask Run",
+      277
+     ],
+     [
+      "FunctionCall",
+      276
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      238
+     ],
+     [
+      "FireAnimationFrame",
+      237
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      223
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      217
+     ],
+     [
+      "UpdateLayoutTree",
+      217
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      205
+     ],
+     [
+      "Commit",
+      186
+     ],
+     [
+      "Document::updateStyle",
+      176
+     ],
+     [
+      "Document::UpdateStyleAndLayout",
+      160
+     ],
+     [
+      "Blink.ForcedStyleAndLayout.UpdateTime",
+      154
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 136,
+      "top": [
+       [
+        "v8.callFunction",
+        4
+       ],
+       [
+        "FunctionCall",
+        0
+       ],
+       [
+        "v8.newInstance",
+        0
+       ]
+      ],
+      "fn": [
+       ":"
+      ]
+     },
+     {
+      "ms": 131,
+      "top": [
+       [
+        "v8.callFunction",
+        86
+       ],
+       [
+        "EventDispatch",
+        74
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        46
+       ],
+       [
+        "UpdateLayoutTree",
+        46
+       ],
+       [
+        "Document::updateStyle",
+        44
+       ],
+       [
+        "Document::recalcStyle",
+        42
+       ],
+       [
+        "FunctionCall",
+        18
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        12
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 87,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        86
+       ],
+       [
+        "Commit",
+        43
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        15
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        15
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        14
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        14
+       ],
+       [
+        "FireAnimationFrame",
+        14
+       ],
+       [
+        "AsyncTask Run",
+        14
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     }
+    ],
+    "painted": 1,
+    "paintedLongestMs": null,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x6-probe-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 11635,
+    "frames": 69,
+    "avgFps": 40.4,
+    "longestMs": 200,
+    "over17": 14,
+    "over34": 5,
+    "over50": 3,
+    "longTasks": 2,
+    "logoMotion": {
+     "changes": 25,
+     "ms": 550,
+     "perSec": 45.5,
+     "maxHoldMs": 33
+    },
+    "btnMotion": {
+     "changes": 15,
+     "ms": 517,
+     "perSec": 29,
+     "maxHoldMs": 133
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1416
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      1127
+     ],
+     [
+      "v8.callFunction",
+      676
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      604
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      596
+     ],
+     [
+      "AsyncTask Run",
+      587
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      583
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      538
+     ],
+     [
+      "FireAnimationFrame",
+      536
+     ],
+     [
+      "FunctionCall",
+      368
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      255
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      255
+     ],
+     [
+      "Document::UpdateStyleAndLayout",
+      241
+     ],
+     [
+      "UpdateLayoutTree",
+      233
+     ],
+     [
+      "Commit",
+      232
+     ],
+     [
+      "Document::updateStyle",
+      217
+     ],
+     [
+      "Blink.ForcedStyleAndLayout.UpdateTime",
+      215
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      209
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 210,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        210
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        209
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        209
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        208
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        208
+       ],
+       [
+        "FireAnimationFrame",
+        208
+       ],
+       [
+        "AsyncTask Run",
+        208
+       ],
+       [
+        "v8.callFunction",
+        208
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:oe",
+       "main.js:"
+      ]
+     },
+     {
+      "ms": 102,
+      "top": [
+       [
+        "v8.callFunction",
+        72
+       ],
+       [
+        "EventDispatch",
+        63
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        32
+       ],
+       [
+        "UpdateLayoutTree",
+        32
+       ],
+       [
+        "Document::updateStyle",
+        32
+       ],
+       [
+        "Document::recalcStyle",
+        30
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        14
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        12
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 41,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        41
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        28
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        28
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        28
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        28
+       ],
+       [
+        "FireAnimationFrame",
+        28
+       ],
+       [
+        "AsyncTask Run",
+        28
+       ],
+       [
+        "v8.callFunction",
+        24
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     }
+    ],
+    "painted": 9,
+    "paintedLongestMs": 187,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x6-probe-r3"
+   }
+  ],
+  "after x6": [
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 8683,
+    "frames": 83,
+    "avgFps": 50.7,
+    "longestMs": 100,
+    "over17": 7,
+    "over34": 4,
+    "over50": 3,
+    "longTasks": 1,
+    "mainTop": [
+     [
+      "RunTask",
+      736
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      415
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      201
+     ],
+     [
+      "v8.callFunction",
+      157
+     ],
+     [
+      "AsyncTask Run",
+      123
+     ],
+     [
+      "Commit",
+      115
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      106
+     ],
+     [
+      "UpdateLayoutTree",
+      103
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      99
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      98
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      96
+     ],
+     [
+      "Document::updateStyle",
+      96
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      92
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      92
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      91
+     ],
+     [
+      "Document::recalcStyle",
+      87
+     ],
+     [
+      "FunctionCall",
+      86
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      71
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 64,
+      "top": [
+       [
+        "v8.callFunction",
+        44
+       ],
+       [
+        "EventDispatch",
+        36
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        21
+       ],
+       [
+        "UpdateLayoutTree",
+        21
+       ],
+       [
+        "Document::updateStyle",
+        20
+       ],
+       [
+        "Document::recalcStyle",
+        18
+       ],
+       [
+        "FunctionCall",
+        8
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        7
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 8,
+    "paintedLongestMs": 808,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x6-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 9770,
+    "frames": 90,
+    "avgFps": 55.1,
+    "longestMs": 100,
+    "over17": 4,
+    "over34": 1,
+    "over50": 1,
+    "longTasks": 1,
+    "mainTop": [
+     [
+      "RunTask",
+      1003
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      750
+     ],
+     [
+      "Commit",
+      294
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      265
+     ],
+     [
+      "v8.callFunction",
+      178
+     ],
+     [
+      "AsyncTask Run",
+      166
+     ],
+     [
+      "MainFrameAborted",
+      163
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      147
+     ],
+     [
+      "UpdateLayoutTree",
+      147
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      143
+     ],
+     [
+      "Document::updateStyle",
+      141
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      140
+     ],
+     [
+      "Document::recalcStyle",
+      128
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      104
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      99
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      95
+     ],
+     [
+      "ProxyMain::BeginMainFrame::commit",
+      86
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      85
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 100,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        93
+       ],
+       [
+        "v8.callFunction",
+        46
+       ],
+       [
+        "EventDispatch",
+        37
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        28
+       ],
+       [
+        "UpdateLayoutTree",
+        28
+       ],
+       [
+        "Document::updateStyle",
+        25
+       ],
+       [
+        "Document::recalcStyle",
+        23
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        15
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 34,
+      "top": [
+       [
+        "EventDispatch",
+        24
+       ],
+       [
+        "v8.callFunction",
+        21
+       ],
+       [
+        "FunctionCall",
+        19
+       ],
+       [
+        "AsyncTask Run",
+        1
+       ],
+       [
+        "v8.newInstance",
+        0
+       ],
+       [
+        "EventHandler::HitTestResultAtLocation",
+        0
+       ],
+       [
+        "LayoutView::HitTest",
+        0
+       ],
+       [
+        "HitTest",
+        0
+       ]
+      ],
+      "fn": [
+       "popup.js:e",
+       "main.js:window.addEventListener.capture",
+       "BoardRenderer.js:MutationObserver.observe.attributes",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 34,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        34
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        20
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        13
+       ],
+       [
+        "Paint",
+        12
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        10
+       ],
+       [
+        "Commit",
+        9
+       ],
+       [
+        "ProxyMain::BeginMainFrame::commit",
+        8
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        7
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     }
+    ],
+    "painted": 3,
+    "paintedLongestMs": 818,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x6-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 10861,
+    "frames": 55,
+    "avgFps": 32.7,
+    "longestMs": 300,
+    "over17": 10,
+    "over34": 5,
+    "over50": 4,
+    "longTasks": 4,
+    "mainTop": [
+     [
+      "RunTask",
+      1173
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      673
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      286
+     ],
+     [
+      "v8.callFunction",
+      252
+     ],
+     [
+      "EventDispatch",
+      228
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      173
+     ],
+     [
+      "UpdateLayoutTree",
+      172
+     ],
+     [
+      "Commit",
+      170
+     ],
+     [
+      "FunctionCall",
+      153
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      141
+     ],
+     [
+      "Document::updateStyle",
+      140
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      132
+     ],
+     [
+      "Document::recalcStyle",
+      109
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      108
+     ],
+     [
+      "AsyncTask Run",
+      81
+     ],
+     [
+      "ProxyMain::BeginMainFrame::commit",
+      74
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      73
+     ],
+     [
+      "Paint",
+      66
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 177,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        158
+       ],
+       [
+        "v8.callFunction",
+        81
+       ],
+       [
+        "EventDispatch",
+        80
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        49
+       ],
+       [
+        "UpdateLayoutTree",
+        49
+       ],
+       [
+        "Document::updateStyle",
+        47
+       ],
+       [
+        "Document::recalcStyle",
+        45
+       ],
+       [
+        "FunctionCall",
+        24
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 137,
+      "top": [
+       [
+        "v8.callFunction",
+        4
+       ],
+       [
+        "v8.newInstance",
+        1
+       ],
+       [
+        "FunctionCall",
+        0
+       ]
+      ],
+      "fn": [
+       ":"
+      ]
+     },
+     {
+      "ms": 137,
+      "top": [
+       [
+        "EventDispatch",
+        123
+       ],
+       [
+        "v8.callFunction",
+        112
+       ],
+       [
+        "FunctionCall",
+        109
+       ],
+       [
+        "EventHandler::HitTestResultAtLocation",
+        10
+       ],
+       [
+        "LayoutView::HitTest",
+        10
+       ],
+       [
+        "HitTest",
+        10
+       ],
+       [
+        "AsyncTask Run",
+        0
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        0
+       ]
+      ],
+      "fn": [
+       "popup.js:e",
+       "main.js:window.addEventListener.capture",
+       "BoardRenderer.js:MutationObserver.observe.attributes",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 1,
+    "paintedLongestMs": null,
+    "stripDir": "/dev/shm/d675/mp/strip-title-after-x6-r3"
+   }
+  ],
+  "before x4 probe": [
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 10290,
+    "frames": 77,
+    "avgFps": 46.1,
+    "longestMs": 67,
+    "over17": 16,
+    "over34": 6,
+    "over50": 3,
+    "longTasks": 1,
+    "logoMotion": {
+     "changes": 6,
+     "ms": 550,
+     "perSec": 10.9,
+     "maxHoldMs": 117
+    },
+    "btnMotion": {
+     "changes": 15,
+     "ms": 367,
+     "perSec": 40.9,
+     "maxHoldMs": 50
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1546
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      882
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      446
+     ],
+     [
+      "v8.callFunction",
+      322
+     ],
+     [
+      "AsyncTask Run",
+      321
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      290
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      261
+     ],
+     [
+      "FunctionCall",
+      256
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      249
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      249
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      223
+     ],
+     [
+      "Paint",
+      220
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      207
+     ],
+     [
+      "UpdateLayoutTree",
+      206
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      199
+     ],
+     [
+      "FireAnimationFrame",
+      197
+     ],
+     [
+      "Document::updateStyle",
+      193
+     ],
+     [
+      "Document::recalcStyle",
+      181
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 52,
+      "top": [
+       [
+        "Paint",
+        52
+       ],
+       [
+        "ProxyMain::BeginMainFrame",
+        52
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        34
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        29
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        26
+       ],
+       [
+        "PaintImage",
+        15
+       ],
+       [
+        "Commit",
+        10
+       ],
+       [
+        "ProxyMain::BeginMainFrame::commit",
+        10
+       ]
+      ],
+      "fn": [
+       "main.js:e",
+       ":step",
+       "main.js:ie"
+      ]
+     },
+     {
+      "ms": 47,
+      "top": [
+       [
+        "v8.callFunction",
+        36
+       ],
+       [
+        "EventDispatch",
+        35
+       ],
+       [
+        "FunctionCall",
+        35
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        30
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        28
+       ],
+       [
+        "Blink.ForcedStyleAndLayout.UpdateTime",
+        28
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        28
+       ],
+       [
+        "UpdateLayoutTree",
+        28
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 36,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        36
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        27
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        27
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        27
+       ],
+       [
+        "AsyncTask Run",
+        27
+       ],
+       [
+        "v8.callFunction",
+        26
+       ],
+       [
+        "FunctionCall",
+        25
+       ],
+       [
+        "EventDispatch",
+        24
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 8,
+    "paintedLongestMs": 1768,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x4-probe-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8214,
+    "frames": 80,
+    "avgFps": 49.4,
+    "longestMs": 83,
+    "over17": 8,
+    "over34": 5,
+    "over50": 4,
+    "longTasks": 2,
+    "logoMotion": {
+     "changes": 6,
+     "ms": 567,
+     "perSec": 10.6,
+     "maxHoldMs": 133
+    },
+    "btnMotion": {
+     "changes": 13,
+     "ms": 367,
+     "perSec": 35.5,
+     "maxHoldMs": 83
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1370
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      557
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      312
+     ],
+     [
+      "AsyncTask Run",
+      291
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      281
+     ],
+     [
+      "v8.callFunction",
+      277
+     ],
+     [
+      "FunctionCall",
+      229
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      198
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      192
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      191
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      191
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      155
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      148
+     ],
+     [
+      "UpdateLayoutTree",
+      145
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      143
+     ],
+     [
+      "FireAnimationFrame",
+      143
+     ],
+     [
+      "EventDispatch",
+      143
+     ],
+     [
+      "Document::updateStyle",
+      141
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 65,
+      "top": [
+       [
+        "ResponseBodyLoader::OnStateChange",
+        64
+       ],
+       [
+        "ResponseBodyLoader::DidFinishLoadingBody",
+        0
+       ],
+       [
+        "ImageResourceContent::updateImage",
+        0
+       ],
+       [
+        "Resource::appendData",
+        0
+       ],
+       [
+        "BitmapImage::dataChanged",
+        0
+       ]
+      ],
+      "fn": []
+     },
+     {
+      "ms": 61,
+      "top": [
+       [
+        "v8.callFunction",
+        49
+       ],
+       [
+        "EventDispatch",
+        49
+       ],
+       [
+        "FunctionCall",
+        48
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        32
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        32
+       ],
+       [
+        "UpdateLayoutTree",
+        32
+       ],
+       [
+        "Document::updateStyle",
+        32
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        32
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 47,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        47
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        31
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        31
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        31
+       ],
+       [
+        "AsyncTask Run",
+        31
+       ],
+       [
+        "v8.callFunction",
+        30
+       ],
+       [
+        "FunctionCall",
+        30
+       ],
+       [
+        "EventDispatch",
+        29
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 4,
+    "paintedLongestMs": 2365,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x4-probe-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8284,
+    "frames": 47,
+    "avgFps": 28.2,
+    "longestMs": 283,
+    "over17": 20,
+    "over34": 10,
+    "over50": 5,
+    "longTasks": 4,
+    "logoMotion": {
+     "changes": 5,
+     "ms": 683,
+     "perSec": 7.3,
+     "maxHoldMs": 283
+    },
+    "btnMotion": {
+     "changes": 8,
+     "ms": 683,
+     "perSec": 11.7,
+     "maxHoldMs": 283
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1671
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      1150
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      562
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      421
+     ],
+     [
+      "Commit",
+      356
+     ],
+     [
+      "LocalFrameView::pushPaintArtifactToCompositor",
+      312
+     ],
+     [
+      "Blink.CompositingCommit.UpdateTime",
+      311
+     ],
+     [
+      "Layerize",
+      311
+     ],
+     [
+      "PaintArtifactCompositor::Update",
+      290
+     ],
+     [
+      "v8.callFunction",
+      278
+     ],
+     [
+      "ProxyMain::BeginMainFrame::commit",
+      262
+     ],
+     [
+      "ScrollTree::SetScrollOffset",
+      242
+     ],
+     [
+      "AsyncTask Run",
+      230
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      218
+     ],
+     [
+      "FunctionCall",
+      209
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      208
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      193
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      192
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 283,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        283
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        250
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        249
+       ],
+       [
+        "LocalFrameView::pushPaintArtifactToCompositor",
+        248
+       ],
+       [
+        "Blink.CompositingCommit.UpdateTime",
+        248
+       ],
+       [
+        "Layerize",
+        248
+       ],
+       [
+        "PaintArtifactCompositor::Update",
+        248
+       ],
+       [
+        "ScrollTree::SetScrollOffset",
+        242
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     },
+     {
+      "ms": 108,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        108
+       ],
+       [
+        "Commit",
+        101
+       ],
+       [
+        "ProxyMain::BeginMainFrame::commit",
+        100
+       ],
+       [
+        "Paint",
+        4
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        4
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        4
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        3
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        3
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     },
+     {
+      "ms": 54,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        54
+       ],
+       [
+        "EventDispatch",
+        44
+       ],
+       [
+        "v8.callFunction",
+        33
+       ],
+       [
+        "FunctionCall",
+        20
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        5
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        5
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        5
+       ],
+       [
+        "AsyncTask Run",
+        5
+       ]
+      ],
+      "fn": [
+       "popup.js:e",
+       "main.js:Z_.window.addEventListener.capture",
+       "BoardRenderer.js:MutationObserver.observe.attributes",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 10,
+    "paintedLongestMs": 610,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x4-probe-r3"
+   }
+  ],
+  "before x4": [
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8749,
+    "frames": 51,
+    "avgFps": 30.6,
+    "longestMs": 150,
+    "over17": 22,
+    "over34": 10,
+    "over50": 8,
+    "longTasks": 3,
+    "mainTop": [
+     [
+      "RunTask",
+      1469
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      889
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      514
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      282
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      268
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      247
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      245
+     ],
+     [
+      "UpdateLayoutTree",
+      245
+     ],
+     [
+      "Document::updateStyle",
+      233
+     ],
+     [
+      "Document::recalcStyle",
+      214
+     ],
+     [
+      "Commit",
+      196
+     ],
+     [
+      "AsyncTask Run",
+      187
+     ],
+     [
+      "v8.callFunction",
+      184
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      174
+     ],
+     [
+      "Paint",
+      170
+     ],
+     [
+      "FunctionCall",
+      157
+     ],
+     [
+      "ProxyMain::BeginMainFrame::commit",
+      139
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      134
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 86,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        80
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        52
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        52
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        43
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        42
+       ],
+       [
+        "UpdateLayoutTree",
+        42
+       ],
+       [
+        "Document::updateStyle",
+        42
+       ],
+       [
+        "Document::recalcStyle",
+        42
+       ]
+      ],
+      "fn": [
+       "main.js:ie",
+       ":step"
+      ]
+     },
+     {
+      "ms": 70,
+      "top": [
+       [
+        "EventDispatch",
+        40
+       ],
+       [
+        "v8.callFunction",
+        37
+       ],
+       [
+        "FunctionCall",
+        37
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        31
+       ],
+       [
+        "UpdateLayoutTree",
+        31
+       ],
+       [
+        "Document::updateStyle",
+        31
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        30
+       ],
+       [
+        "Document::recalcStyle",
+        30
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 55,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        55
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        39
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        29
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        17
+       ],
+       [
+        "LocalFrameView::pushPaintArtifactToCompositor",
+        16
+       ],
+       [
+        "Blink.CompositingCommit.UpdateTime",
+        16
+       ],
+       [
+        "Layerize",
+        16
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        13
+       ]
+      ],
+      "fn": [
+       "main.js:ie",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 7,
+    "paintedLongestMs": 695,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x4-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 11910,
+    "frames": 79,
+    "avgFps": 48.2,
+    "longestMs": 83,
+    "over17": 14,
+    "over34": 3,
+    "over50": 1,
+    "longTasks": 1,
+    "mainTop": [
+     [
+      "RunTask",
+      1624
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      755
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      459
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      273
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      231
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      231
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      216
+     ],
+     [
+      "v8.callFunction",
+      213
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      213
+     ],
+     [
+      "UpdateLayoutTree",
+      211
+     ],
+     [
+      "Document::updateStyle",
+      205
+     ],
+     [
+      "AsyncTask Run",
+      194
+     ],
+     [
+      "Document::recalcStyle",
+      191
+     ],
+     [
+      "Paint",
+      171
+     ],
+     [
+      "EventDispatch",
+      169
+     ],
+     [
+      "FunctionCall",
+      149
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      125
+     ],
+     [
+      "Commit",
+      120
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 70,
+      "top": [
+       [
+        "v8.callFunction",
+        49
+       ],
+       [
+        "EventDispatch",
+        49
+       ],
+       [
+        "FunctionCall",
+        47
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        42
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        38
+       ],
+       [
+        "Blink.ForcedStyleAndLayout.UpdateTime",
+        38
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        36
+       ],
+       [
+        "UpdateLayoutTree",
+        36
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 44,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        44
+       ],
+       [
+        "EventDispatch",
+        31
+       ],
+       [
+        "v8.callFunction",
+        26
+       ],
+       [
+        "FunctionCall",
+        25
+       ],
+       [
+        "Commit",
+        3
+       ],
+       [
+        "ProxyMain::BeginMainFrame::commit",
+        3
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        2
+       ],
+       [
+        "EventHandler::HitTestResultAtLocation",
+        2
+       ]
+      ],
+      "fn": [
+       "popup.js:e",
+       "main.js:Z_.window.addEventListener.capture",
+       "BoardRenderer.js:MutationObserver.observe.attributes",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 8,
+    "paintedLongestMs": 1763,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x4-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 4,
+    "tTap": 8344,
+    "frames": 42,
+    "avgFps": 24.6,
+    "longestMs": 167,
+    "over17": 13,
+    "over34": 11,
+    "over50": 9,
+    "longTasks": 3,
+    "mainTop": [
+     [
+      "RunTask",
+      1335
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      599
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      404
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      230
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      208
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      201
+     ],
+     [
+      "AsyncTask Run",
+      194
+     ],
+     [
+      "v8.callFunction",
+      188
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      184
+     ],
+     [
+      "Paint",
+      177
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      176
+     ],
+     [
+      "UpdateLayoutTree",
+      173
+     ],
+     [
+      "Document::updateStyle",
+      161
+     ],
+     [
+      "Document::recalcStyle",
+      155
+     ],
+     [
+      "EventDispatch",
+      153
+     ],
+     [
+      "FunctionCall",
+      136
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      118
+     ],
+     [
+      "Blink.Paint.UpdateTime",
+      112
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 76,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        76
+       ],
+       [
+        "v8.callFunction",
+        67
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        64
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        62
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        62
+       ],
+       [
+        "AsyncTask Run",
+        62
+       ],
+       [
+        "EventDispatch",
+        62
+       ],
+       [
+        "FunctionCall",
+        62
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       ":step"
+      ]
+     },
+     {
+      "ms": 71,
+      "top": [
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        73
+       ],
+       [
+        "ProxyMain::BeginMainFrame",
+        71
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        69
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        66
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        65
+       ],
+       [
+        "UpdateLayoutTree",
+        65
+       ],
+       [
+        "Document::updateStyle",
+        65
+       ],
+       [
+        "Document::recalcStyle",
+        65
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     },
+     {
+      "ms": 51,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        50
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        47
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        27
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        20
+       ],
+       [
+        "Paint",
+        17
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        14
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        14
+       ],
+       [
+        "UpdateLayoutTree",
+        14
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     }
+    ],
+    "painted": 7,
+    "paintedLongestMs": 418,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x4-r3"
+   }
+  ],
+  "before x6 probe": [
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 10591,
+    "frames": 53,
+    "avgFps": 31.8,
+    "longestMs": 283,
+    "over17": 13,
+    "over34": 8,
+    "over50": 6,
+    "longTasks": 4,
+    "logoMotion": {
+     "changes": 4,
+     "ms": 567,
+     "perSec": 7.1,
+     "maxHoldMs": 283
+    },
+    "btnMotion": {
+     "changes": 3,
+     "ms": 450,
+     "perSec": 6.7,
+     "maxHoldMs": 283
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1684
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      1127
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      624
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      425
+     ],
+     [
+      "v8.callFunction",
+      398
+     ],
+     [
+      "Paint",
+      385
+     ],
+     [
+      "AsyncTask Run",
+      350
+     ],
+     [
+      "UpdateLayoutTree",
+      318
+     ],
+     [
+      "Document::updateStyle",
+      306
+     ],
+     [
+      "Document::recalcStyle",
+      298
+     ],
+     [
+      "FunctionCall",
+      297
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      295
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      289
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      273
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      257
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      242
+     ],
+     [
+      "ResourceFetcher::requestResource",
+      232
+     ],
+     [
+      "Blink.Paint.UpdateTime",
+      226
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 271,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        240
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        148
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        148
+       ],
+       [
+        "LocalFrameView::pushPaintArtifactToCompositor",
+        115
+       ],
+       [
+        "Blink.CompositingCommit.UpdateTime",
+        115
+       ],
+       [
+        "Layerize",
+        115
+       ],
+       [
+        "PaintArtifactCompositor::Update",
+        115
+       ],
+       [
+        "Paint",
+        89
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 247,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        245
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        222
+       ],
+       [
+        "Paint",
+        149
+       ],
+       [
+        "UpdateLayoutTree",
+        135
+       ],
+       [
+        "Document::updateStyle",
+        135
+       ],
+       [
+        "Document::recalcStyle",
+        134
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        125
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        104
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "main.js:x"
+      ]
+     },
+     {
+      "ms": 75,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        75
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        51
+       ],
+       [
+        "Paint",
+        50
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        47
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        35
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        34
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        34
+       ],
+       [
+        "UpdateLayoutTree",
+        34
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     }
+    ],
+    "painted": 13,
+    "paintedLongestMs": 1942,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x6-probe-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 11480,
+    "frames": 42,
+    "avgFps": 25.4,
+    "longestMs": 117,
+    "over17": 25,
+    "over34": 14,
+    "over50": 8,
+    "longTasks": 4,
+    "logoMotion": {
+     "changes": 6,
+     "ms": 567,
+     "perSec": 10.6,
+     "maxHoldMs": 167
+    },
+    "btnMotion": {
+     "changes": 5,
+     "ms": 433,
+     "perSec": 11.5,
+     "maxHoldMs": 117
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1635
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      767
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      378
+     ],
+     [
+      "v8.callFunction",
+      368
+     ],
+     [
+      "AsyncTask Run",
+      352
+     ],
+     [
+      "FunctionCall",
+      300
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      273
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      259
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      259
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      249
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      248
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      207
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      200
+     ],
+     [
+      "UpdateLayoutTree",
+      199
+     ],
+     [
+      "Document::updateStyle",
+      194
+     ],
+     [
+      "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+      189
+     ],
+     [
+      "Paint",
+      188
+     ],
+     [
+      "FireAnimationFrame",
+      186
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 73,
+      "top": [
+       [
+        "v8.callFunction",
+        43
+       ],
+       [
+        "EventDispatch",
+        43
+       ],
+       [
+        "FunctionCall",
+        42
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        31
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        29
+       ],
+       [
+        "UpdateLayoutTree",
+        29
+       ],
+       [
+        "Document::updateStyle",
+        29
+       ],
+       [
+        "Document::UpdateStyleAndLayout",
+        29
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 65,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        65
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        31
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        28
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        28
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        28
+       ],
+       [
+        "FireAnimationFrame",
+        28
+       ],
+       [
+        "AsyncTask Run",
+        28
+       ],
+       [
+        "v8.callFunction",
+        28
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     },
+     {
+      "ms": 61,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        61
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        43
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        43
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        43
+       ],
+       [
+        "v8.callFunction",
+        42
+       ],
+       [
+        "AsyncTask Run",
+        41
+       ],
+       [
+        "FunctionCall",
+        41
+       ],
+       [
+        "EventDispatch",
+        40
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 4,
+    "paintedLongestMs": 502,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x6-probe-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 11693,
+    "frames": 33,
+    "avgFps": 19.2,
+    "longestMs": 200,
+    "over17": 21,
+    "over34": 13,
+    "over50": 10,
+    "longTasks": 6,
+    "logoMotion": {
+     "changes": 6,
+     "ms": 567,
+     "perSec": 10.6,
+     "maxHoldMs": 133
+    },
+    "btnMotion": {
+     "changes": 8,
+     "ms": 383,
+     "perSec": 20.9,
+     "maxHoldMs": 100
+    },
+    "mainTop": [
+     [
+      "RunTask",
+      1794
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      1266
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      591
+     ],
+     [
+      "Commit",
+      311
+     ],
+     [
+      "AsyncTask Run",
+      311
+     ],
+     [
+      "Paint",
+      311
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      304
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      297
+     ],
+     [
+      "v8.callFunction",
+      288
+     ],
+     [
+      "ProxyMain::BeginMainFrame::commit",
+      281
+     ],
+     [
+      "Blink.Animate.UpdateTime",
+      255
+     ],
+     [
+      "PageAnimator::serviceScriptedAnimations",
+      255
+     ],
+     [
+      "Blink.Paint.UpdateTime",
+      221
+     ],
+     [
+      "FunctionCall",
+      218
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      204
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      180
+     ],
+     [
+      "UpdateLayoutTree",
+      177
+     ],
+     [
+      "Document::updateStyle",
+      161
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 207,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        207
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        111
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        36
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        36
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        36
+       ],
+       [
+        "Paint",
+        28
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        23
+       ],
+       [
+        "FrameRequestCallbackCollection::ExecuteFrameCallbacks",
+        22
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie",
+       "main.js:"
+      ]
+     },
+     {
+      "ms": 135,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        134
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        80
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        70
+       ],
+       [
+        "Paint",
+        70
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        65
+       ],
+       [
+        "Commit",
+        51
+       ],
+       [
+        "ProxyMain::BeginMainFrame::commit",
+        51
+       ],
+       [
+        "PrePaint",
+        16
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     },
+     {
+      "ms": 110,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        109
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        83
+       ],
+       [
+        "Paint",
+        75
+       ],
+       [
+        "PrePaint",
+        41
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        41
+       ],
+       [
+        "LocalFrameView::RunPrePaintLifecyclePhase",
+        41
+       ],
+       [
+        "Blink.PrePaint.UpdateTime",
+        41
+       ],
+       [
+        "Blink.Paint.UpdateTime",
+        40
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     }
+    ],
+    "painted": 10,
+    "paintedLongestMs": 325,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x6-probe-r3"
+   }
+  ],
+  "before x6": [
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 10408,
+    "frames": 68,
+    "avgFps": 41.4,
+    "longestMs": 100,
+    "over17": 19,
+    "over34": 6,
+    "over50": 4,
+    "longTasks": 1,
+    "mainTop": [
+     [
+      "RunTask",
+      1573
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      897
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      596
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      306
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      273
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      269
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      266
+     ],
+     [
+      "UpdateLayoutTree",
+      246
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      243
+     ],
+     [
+      "Document::updateStyle",
+      233
+     ],
+     [
+      "Document::recalcStyle",
+      227
+     ],
+     [
+      "Paint",
+      224
+     ],
+     [
+      "AsyncTask Run",
+      204
+     ],
+     [
+      "v8.callFunction",
+      203
+     ],
+     [
+      "FunctionCall",
+      168
+     ],
+     [
+      "WebFrameWidgetImpl::BeginMainFrame",
+      162
+     ],
+     [
+      "Blink.Paint.UpdateTime",
+      150
+     ],
+     [
+      "LocalFrameView::pushPaintArtifactToCompositor",
+      138
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 78,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        75
+       ],
+       [
+        "v8.callFunction",
+        41
+       ],
+       [
+        "EventDispatch",
+        41
+       ],
+       [
+        "FunctionCall",
+        38
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        32
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        31
+       ],
+       [
+        "UpdateLayoutTree",
+        31
+       ],
+       [
+        "Document::updateStyle",
+        31
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 47,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        45
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        43
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        28
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        28
+       ],
+       [
+        "UpdateLayoutTree",
+        27
+       ],
+       [
+        "Document::updateStyle",
+        25
+       ],
+       [
+        "Document::recalcStyle",
+        23
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        23
+       ]
+      ],
+      "fn": [
+       ":step"
+      ]
+     },
+     {
+      "ms": 39,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        39
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        29
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        29
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        29
+       ],
+       [
+        "v8.callFunction",
+        29
+       ],
+       [
+        "AsyncTask Run",
+        29
+       ],
+       [
+        "EventDispatch",
+        29
+       ],
+       [
+        "FunctionCall",
+        29
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 10,
+    "paintedLongestMs": 472,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x6-r1"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 9833,
+    "frames": 33,
+    "avgFps": 19.4,
+    "longestMs": 100,
+    "over17": 23,
+    "over34": 17,
+    "over50": 13,
+    "longTasks": 4,
+    "mainTop": [
+     [
+      "RunTask",
+      1707
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      734
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      379
+     ],
+     [
+      "v8.callFunction",
+      324
+     ],
+     [
+      "AsyncTask Run",
+      303
+     ],
+     [
+      "EventDispatch",
+      272
+     ],
+     [
+      "ResourceFetcher::requestResource",
+      203
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      196
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      194
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      184
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      182
+     ],
+     [
+      "Paint",
+      181
+     ],
+     [
+      "FunctionCall",
+      178
+     ],
+     [
+      "Commit",
+      176
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      170
+     ],
+     [
+      "UpdateLayoutTree",
+      168
+     ],
+     [
+      "Document::updateStyle",
+      164
+     ],
+     [
+      "Document::recalcStyle",
+      155
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 82,
+      "top": [
+       [
+        "v8.callFunction",
+        56
+       ],
+       [
+        "EventDispatch",
+        56
+       ],
+       [
+        "FunctionCall",
+        48
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        45
+       ],
+       [
+        "UpdateLayoutTree",
+        45
+       ],
+       [
+        "Document::updateStyle",
+        45
+       ],
+       [
+        "Document::recalcStyle",
+        44
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        43
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     },
+     {
+      "ms": 60,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        54
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        44
+       ],
+       [
+        "LocalFrameView::RunPaintLifecyclePhase",
+        29
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        26
+       ],
+       [
+        "LocalFrameView::pushPaintArtifactToCompositor",
+        20
+       ],
+       [
+        "Paint",
+        16
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        14
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        14
+       ]
+      ],
+      "fn": [
+       ":step",
+       "main.js:ie"
+      ]
+     },
+     {
+      "ms": 57,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        57
+       ],
+       [
+        "WebFrameWidgetImpl::BeginMainFrame",
+        36
+       ],
+       [
+        "Blink.Animate.UpdateTime",
+        36
+       ],
+       [
+        "PageAnimator::serviceScriptedAnimations",
+        35
+       ],
+       [
+        "v8.callFunction",
+        35
+       ],
+       [
+        "AsyncTask Run",
+        34
+       ],
+       [
+        "EventDispatch",
+        34
+       ],
+       [
+        "FunctionCall",
+        34
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       ":step"
+      ]
+     }
+    ],
+    "painted": 15,
+    "paintedLongestMs": 958,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x6-r2"
+   },
+   {
+    "tapAt": 1200,
+    "cpu": 6,
+    "tTap": 13246,
+    "frames": 64,
+    "avgFps": 38.2,
+    "longestMs": 150,
+    "over17": 15,
+    "over34": 7,
+    "over50": 7,
+    "longTasks": 4,
+    "mainTop": [
+     [
+      "RunTask",
+      1967
+     ],
+     [
+      "ProxyMain::BeginMainFrame",
+      1012
+     ],
+     [
+      "WebFrameWidgetImpl::UpdateLifecycle",
+      588
+     ],
+     [
+      "AsyncTask Run",
+      354
+     ],
+     [
+      "v8.callFunction",
+      326
+     ],
+     [
+      "LocalFrameView::UpdateStyleAndLayout",
+      312
+     ],
+     [
+      "UpdateLayoutTree",
+      298
+     ],
+     [
+      "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+      292
+     ],
+     [
+      "Document::updateStyle",
+      291
+     ],
+     [
+      "Blink.Style.UpdateTime",
+      290
+     ],
+     [
+      "Document::recalcStyle",
+      285
+     ],
+     [
+      "LocalFrameView::RunPaintLifecyclePhase",
+      283
+     ],
+     [
+      "ResponseBodyLoader::OnStateChange",
+      265
+     ],
+     [
+      "ResourceFetcher::requestResource",
+      231
+     ],
+     [
+      "FunctionCall",
+      222
+     ],
+     [
+      "Paint",
+      211
+     ],
+     [
+      "Commit",
+      198
+     ],
+     [
+      "EventDispatch",
+      172
+     ]
+    ],
+    "longInside": [
+     {
+      "ms": 128,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        114
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        86
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        63
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        60
+       ],
+       [
+        "UpdateLayoutTree",
+        57
+       ],
+       [
+        "Document::updateStyle",
+        56
+       ],
+       [
+        "Document::recalcStyle",
+        56
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        55
+       ]
+      ],
+      "fn": [
+       "main.js:e",
+       "main.js:e",
+       "main.js:e",
+       "main.js:e"
+      ]
+     },
+     {
+      "ms": 96,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        95
+       ],
+       [
+        "WebFrameWidgetImpl::UpdateLifecycle",
+        72
+       ],
+       [
+        "LocalFrameView::RunStyleAndLayoutLifecyclePhases",
+        59
+       ],
+       [
+        "UpdateLayoutTree",
+        58
+       ],
+       [
+        "Document::updateStyle",
+        58
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        56
+       ],
+       [
+        "Document::recalcStyle",
+        55
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        53
+       ]
+      ],
+      "fn": [
+       "popup.js:",
+       "popup.js:",
+       "popup.js:",
+       "main.js:x"
+      ]
+     },
+     {
+      "ms": 88,
+      "top": [
+       [
+        "ProxyMain::BeginMainFrame",
+        82
+       ],
+       [
+        "EventDispatch",
+        41
+       ],
+       [
+        "v8.callFunction",
+        37
+       ],
+       [
+        "FunctionCall",
+        33
+       ],
+       [
+        "LocalFrameView::UpdateStyleAndLayout",
+        30
+       ],
+       [
+        "Blink.Style.UpdateTime",
+        29
+       ],
+       [
+        "UpdateLayoutTree",
+        28
+       ],
+       [
+        "Document::updateStyle",
+        28
+       ]
+      ],
+      "fn": [
+       ":listener",
+       ":listener",
+       ":listener",
+       ":listener"
+      ]
+     }
+    ],
+    "painted": 9,
+    "paintedLongestMs": 270,
+    "stripDir": "/dev/shm/d675/mp/strip-title-before-x6-r3"
+   }
+  ]
+ },
+ "med": {
+  "after x4 probe": {
+   "n": 3,
+   "avgFps": 35,
+   "longestMs": 167,
+   "over17": 11,
+   "over34": 9,
+   "over50": 5,
+   "longTasks": 4,
+   "all": "35/167/5 50.7/150/2 23.5/283/8",
+   "logoPerSec": 31.7,
+   "logoMaxHold": 167,
+   "btnPerSec": 43.2,
+   "btnMaxHold": 117
+  },
+  "after x4": {
+   "n": 3,
+   "avgFps": 46.4,
+   "longestMs": 217,
+   "over17": 5,
+   "over34": 2,
+   "over50": 2,
+   "longTasks": 2,
+   "all": "38.6/233/5 46.4/217/2 55.7/50/1"
+  },
+  "after x6 probe": {
+   "n": 3,
+   "avgFps": 41,
+   "longestMs": 167,
+   "over17": 13,
+   "over34": 5,
+   "over50": 3,
+   "longTasks": 2,
+   "all": "50.2/117/2 41/167/4 40.4/200/3",
+   "logoPerSec": 45.5,
+   "logoMaxHold": 83,
+   "btnPerSec": 29,
+   "btnMaxHold": 133
+  },
+  "after x6": {
+   "n": 3,
+   "avgFps": 50.7,
+   "longestMs": 100,
+   "over17": 7,
+   "over34": 4,
+   "over50": 3,
+   "longTasks": 1,
+   "all": "50.7/100/3 55.1/100/1 32.7/300/4"
+  },
+  "before x4 probe": {
+   "n": 3,
+   "avgFps": 46.1,
+   "longestMs": 83,
+   "over17": 16,
+   "over34": 6,
+   "over50": 4,
+   "longTasks": 2,
+   "all": "46.1/67/3 49.4/83/4 28.2/283/5",
+   "logoPerSec": 10.6,
+   "logoMaxHold": 133,
+   "btnPerSec": 35.5,
+   "btnMaxHold": 83
+  },
+  "before x4": {
+   "n": 3,
+   "avgFps": 30.6,
+   "longestMs": 150,
+   "over17": 14,
+   "over34": 10,
+   "over50": 8,
+   "longTasks": 3,
+   "all": "30.6/150/8 48.2/83/1 24.6/167/9"
+  },
+  "before x6 probe": {
+   "n": 3,
+   "avgFps": 25.4,
+   "longestMs": 200,
+   "over17": 21,
+   "over34": 13,
+   "over50": 8,
+   "longTasks": 4,
+   "all": "31.8/283/6 25.4/117/8 19.2/200/10",
+   "logoPerSec": 10.6,
+   "logoMaxHold": 167,
+   "btnPerSec": 11.5,
+   "btnMaxHold": 117
+  },
+  "before x6": {
+   "n": 3,
+   "avgFps": 38.2,
+   "longestMs": 100,
+   "over17": 19,
+   "over34": 7,
+   "over50": 7,
+   "longTasks": 4,
+   "all": "41.4/100/4 19.4/100/13 38.2/150/7"
+  }
+ }
+}
