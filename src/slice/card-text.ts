@@ -121,8 +121,8 @@ export type SvcKey = 'heal' | 'repair' | 'refine' | 'remove' | 'brace';
 export const svcText = (k: SvcKey, n = 0): CardTextSlots => parseCardText(SERVICE_CARDS[k].desc(n));
 /** 부적 카드 */
 export const charmText = (id: keyof typeof CHARMS): CardTextSlots => parseCardText(CHARMS[id].desc);
-/** 분대원 카드 킹 칸 (분대의 심장 / 쓰러지면 끝) */
-export const CREW_KING = { name: '분대의 심장', say: '쓰러지면 끝' };
+/** 분대원 카드 킹 칸 (분대의 심장 / 쓰러질 시 / : 출하 끝 — D-592 사건 문법) */
+export const CREW_KING = { name: '분대의 심장', cond: '쓰러질 시', effect: '출하 끝' };
 /**
  * 분대원 카드: 위 칸 = 영입 첫마디(say) — 없으면 기록 줄(화면이 topHtml로) · 아래 칸 = [특성 이름] + 이형(움직임 / : 공격) · 기벽(효과) · 킹 · 흉터(조건 행 — 서술).
  */
@@ -131,7 +131,7 @@ export const crewText = (u: { t: string; form?: string; quirk?: QuirkId; scars?:
   if (f) return { flavor: say, title: `이형 · ${f.name}`, cond: [f.move], effect: [f.hit] };
   const q = u.quirk ? QUIRKS[u.quirk] : null;
   if (q) { const p = parseCardText(`(${q.desc})`); return { flavor: say, title: q.name, cond: p.cond, effect: p.effect }; }
-  if (u.t === 'K') return { flavor: say, title: CREW_KING.name, cond: [CREW_KING.say], effect: [] };
+  if (u.t === 'K') return { flavor: say, title: CREW_KING.name, cond: [CREW_KING.cond], effect: [CREW_KING.effect] };
   if (u.scars?.length) return { flavor: say, title: `흉터 · ${u.scars[0]}`, cond: [SCAR_DESC[u.scars[0]] ?? ''], effect: [] };
   return { flavor: say, title: '', cond: [], effect: [] };
 };

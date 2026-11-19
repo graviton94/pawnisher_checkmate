@@ -87,7 +87,7 @@ const iconArtSmall = (key: string): string => iconArt(`${key}@16`);
 const menuIco = (key: string): string => `<i class="op-ico" style="background-image:url(ui/icons16/${key}.png)" aria-hidden="true"></i>`;
 /** 잠긴 것 표지 (D-544 — 받은 MM-01 자물쇠 17×18도트). 글 「잠김」 · 여는 조건은 그대로 두고 그림을 더한다 (색만으로 구분하지 않는다) */
 const lockIco = (): string => '<i class="lock-ico" style="background-image:url(ui/icons16/lock.png)" aria-hidden="true"></i>';
-import { CREW, DEATHS, QUIRKS, crewLabel, makeCrew, type Crew, type LedgerEntry } from './crew';
+import { CREW, DEATHS, QUIRKS, crewLabel, quirkLine, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
 import { CHECK_KING_FACE, EVENT_PONDER_MOOD, FOE_KING_FACE, FOE_PIECE_FACE, PAPER_FACE, portraitImg } from '../data/portraits';
 import { AUTO_PICK_TEXT, CREW_BARK, WAGER_TEXT, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
@@ -2386,7 +2386,7 @@ const rosterPeek = (i: number): string => {
   const hp = Math.max(0, Math.round(u.hp ?? crewMaxHp(u))), max = crewMaxHp(u);
   const q = u.quirk ? QUIRKS[u.quirk] : null;
   const tags = [`<span class="ribbon${hp < max * 0.35 ? ' r-crimson' : ''}">${T.hp(hp, max)}</span>`, `<span class="ribbon">${T.brace(livesOf(u, parts), livesMax(u, parts))}</span>`, `<span class="ribbon${u.cracked ? ' r-crimson' : ''}">${u.cracked ? T.gearCracked : T.gear}</span>`].join('');
-  const sub = q ? `${q.name} — ${q.desc}` : u.t === 'K' ? T.king : T.noQuirk;
+  const sub = q ? `${q.name} — ${quirkLine(u.quirk!)}` : u.t === 'K' ? T.king : T.noQuirk;
   return `<span class="pb-crew">${pieceImg(u.t, 0, 'small', 48)}</span><div class="pb-txt"><span class="pb-row"><b class="pb-name">${u.name ?? PIECE_NAMES_KO[u.t]}</b><small class="pb-quirk">${sub}</small></span><span class="pb-tags">${tags}</span></div><button class="btn k-iron pb-go" type="button" data-look>${T.look}</button>`;
 };
 /** 지금 막의 곡 (D-530 — 4막 종막은 3막 곡을 잇는다) */
@@ -2868,7 +2868,7 @@ const evSummary = (before: { crew: Crew[]; deck: CommandId[]; gold: number; char
     if (u1.t !== u0.t) sum.push(`${name} ${PIECE_NAMES_KO[u0.t]} → ${PIECE_NAMES_KO[u1.t]}`);
     if ((u1.doors ?? 0) > (u0.doors ?? 0)) sum.push(EVENT_SUM.life(name, (u1.doors ?? 0) - (u0.doors ?? 0)));
     if (u1.cracked && !u0.cracked) sum.push(EVENT_SUM.crack(name));
-    if (u1.quirk !== u0.quirk && u1.quirk) sum.push(`${name} 기벽 → ${QUIRKS[u1.quirk].name} (${QUIRKS[u1.quirk].desc})`);
+    if (u1.quirk !== u0.quirk && u1.quirk) sum.push(`${name} 기벽 → ${QUIRKS[u1.quirk].name} (${quirkLine(u1.quirk)})`);
     if ((u1.temper ?? 0) !== (u0.temper ?? 0)) sum.push(`${name} 단련 · 공격 ${(u1.temper ?? 0) > (u0.temper ?? 0) ? '+' : '−'}${Math.abs((u1.temper ?? 0) - (u0.temper ?? 0))}`);
     // 기벽이 바뀐 HP 변화는 기벽 줄이 이미 말한다 (D-459)
     if (u1.t === u0.t && u1.quirk === u0.quirk) {

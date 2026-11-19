@@ -16,7 +16,7 @@ import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, LIFE_TEXT } from '../src/data/
 import { CREDIT_TEXT } from '../src/data/credits';
 import { SLICE_EVENTS } from '../src/slice/events';
 import { TAUNTS } from '../src/slice/director';
-import { DEATHS, NAMES, QUIRKS } from '../src/slice/crew';
+import { DEATHS, NAMES, QUIRKS, quirkLine, type QuirkId } from '../src/slice/crew';
 import { ASCENSION } from '../src/slice/run';
 import { BOSS_RULES } from '../src/slice/cards';
 
@@ -367,7 +367,7 @@ rows(['자리', '원문'], [
 ]);
 p('### 8-5. 분대원 이름 · 기벽 (참고 — 이름이 곧 인물 묘사)', '',
   `- **이름 풀**: ${NAMES.join(' · ')}`,
-  `- **기벽**: ${Object.values(QUIRKS).map((q) => `${q.name}(${q.desc})`).join(' · ')}`, '');
+  `- **기벽**: ${(Object.keys(QUIRKS) as QuirkId[]).map((id) => `${QUIRKS[id].name}(${quirkLine(id)})`).join(' · ')}`, '');
 
 // ───────────────────────── 9. 부관 안내 ─────────────────────────
 p('## 9. 부관 박차의 안내 (튜토리얼)', '', '- 화자 = 부관 박차. 대장(종이왕)에게 군대식 존댓말. 이름표가 붙은 말풍선이라 따옴표 없이 나온다.', '', '### 9-1. 첫 대국 — 판 아래 안내 띠 (따라 하기가 끝났거나 건너뛴 뒤, 첫 대국을 이길 때까지 상황에 따라 한 줄씩)', '');

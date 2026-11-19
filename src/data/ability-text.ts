@@ -94,7 +94,18 @@ export const partSummaryText = (id: SlicePartId): AbilityText => {
   return { name: d.name, description: when || PART_ALWAYS, effect };
 };
 
+/** 기록 부품 (D-384 · D-592): 전투 중 사건이 아니라 대국 시작 때 한 번, 그 분대원의 제 출하 기록으로 힘을 정한다 */
+export const RECORD_PARTS: readonly SlicePartId[] = ['ledger', 'veteran', 'deathMark', 'notches', 'aceBadge', 'heavyHand', 'scarPlate', 'cleanSheet', 'sergeant'];
+/** 기록 부품 길게 누름 둘째 장 — 언제 셈하나 */
+export const RECORD_PAGE: AbilityText = { name: '기록', description: '대국 시작 때 한 번 정한다', effect: '그 분대원의 출하 기록 · 전투 중엔 그대로' };
+/** 발동 유형 둘째 장 (D-592): 끝말이 말하지 못하는 「언제 따지나」를 길게 누름에서 — 도금 방패 · 무사고 명판 */
+const PART_PAGE2: Partial<Record<SlicePartId, AbilityText>> = {
+  gilded: { name: '태엽 드는 때', description: '킹이 맞은 다음 내 턴 시작', effect: `태엽 +1 · 턴에 한 번` },
+  cleanSheet: { name: '무사고', description: '버팀을 한 번도 안 쓰고', effect: `대국 ${PART_NUM.cleanAt}번 이상 싸운 분대원` },
+};
+
 /** 모든 부품 상세를 세 줄씩 읽는다. 복합 판정은 다음 장에 보존한다. */
 export const partAbilityText = (id: SlicePartId): AbilityText[] =>
   id in BUILD_PART_ABILITIES ? BUILD_PART_ABILITIES[id as keyof typeof BUILD_PART_ABILITIES]
-    : id === 'conductor' ? [{ ...partSummaryText(id), effect: `${partSummaryText(id).effect} · 기본 +4` }] : [partSummaryText(id)];
+    : id === 'conductor' ? [{ ...partSummaryText(id), effect: `${partSummaryText(id).effect} · 기본 +4` }]
+      : [partSummaryText(id), ...(PART_PAGE2[id] ? [PART_PAGE2[id]!] : []), ...(RECORD_PARTS.includes(id) ? [RECORD_PAGE] : [])];

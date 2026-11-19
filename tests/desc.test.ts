@@ -9,7 +9,8 @@ describe('설명 문단', () => {
   const over = (d: { say: string; fx: string; cond: string }) =>
     textWidth(d.say) > DESC_LIMIT.say || textWidth(d.cond) + textWidth(d.fx) > DESC_LIMIT.tail;
   it('카드: 묘사가 있고 줄 한도 안', () => {
-    const bad = Object.entries(COMMANDS).filter(([id]) => !/[+~]$/.test(id)).map(([id, c]) => [id, splitDesc(c.desc)] as const).filter(([, d]) => !d.say || over(d));
+    // D-592: 조건 + 효과 덩어리의 넘침은 D-589 설명지 예산(`budgetOver`, card-spec 테스트)이 정본 — 여기서는 묘사 칸만 어림으로 본다
+    const bad = Object.entries(COMMANDS).filter(([id]) => !/[+~]$/.test(id)).map(([id, c]) => [id, splitDesc(c.desc)] as const).filter(([, d]) => !d.say || textWidth(d.say) > DESC_LIMIT.say);
     expect(bad).toEqual([]);
   });
   it('부품: 묘사 · 기능이 있고 줄 한도 안', () => {

@@ -58,9 +58,9 @@ describe('부품 조합의 보유·표시 계약', () => {
   });
   it('대가와 처치 조건을 구별하고 복합 판정의 제외 대상을 보존한다', () => {
     expect(partSummaryText('spare')).toMatchObject({ description: '장착 중', effect: '태엽 +1 · 손패 −1' });
-    expect(partSummaryText('echo')).toMatchObject({ description: '적중마다', effect: '쌓이는 연쇄 ×2' }); // D-454: 연쇄 = 적중
+    expect(partSummaryText('echo')).toMatchObject({ description: '장착 중', effect: '쌓이는 연쇄 ×2' }); // D-454: 연쇄 = 적중 · D-592: 「적중마다」는 상시 규칙의 풀이 — 조건 아님
     expect(partSummaryText('chainShot')).toMatchObject({ description: '충돌로 처치 시', effect: '연쇄 +2' });
-    expect(partSummaryText('fuse')).toMatchObject({ description: '턴에 한 번, 연쇄 5 달성 시', effect: '카드·태엽 +1' }); // D-470 사용자 예시 → D-488 한 행에 들게
+    expect(partSummaryText('fuse')).toMatchObject({ description: '턴에 한 번, 연쇄 5 달성 시', effect: '카드 +1 · 태엽 +1' }); // D-470 사용자 예시 → D-592 이득에 부호
     expect(partAbilityText('conductor')[0].effect).toContain('기본 +4');
     expect(partAbilityText('sharedPlate')[1].effect).toContain('임시 폰 제외');
   });
@@ -69,8 +69,9 @@ describe('부품 조합의 보유·표시 계약', () => {
 /** 부품 문법 (D-470, 사용자 결정): [이름] / 언제 한 문장 / : 효과(득실 많아야 둘) — 제한(턴에 한 번)이 앞, 조건이 뒤 */
 describe('부품 문법 — 언제 · 효과', () => {
   const ids = Object.keys(SLICE_PARTS) as SlicePartId[];
-  it('언제 줄은 「…시 · …마다 · …동안」으로 끝나거나 「장착 중」, 제한은 맨 앞', () => {
-    const bad = ids.map((id) => partSummaryText(id)).filter((a) => !(a.description === '장착 중' || /(시|마다|동안)$/.test(a.description)) || (a.description.includes('한 번') && !a.description.startsWith('턴에 한 번, ')));
+  // D-592 발동 유형 문법: 끝말이 유형을 말한다 — 사건 「~ 시」 · 상태 「~면」 · 지속 「~인 동안」 · 비례/기록 「~당」 · 되풀이 「턴/대국마다」 · 상시 「장착 중」 · 제한 「턴에 한 번」
+  it('언제 줄은 끝말이 유형 — 「…시 · …면 · …동안 · …당 · 턴/대국마다」 또는 「장착 중」 · 「턴에 한 번」, 제한은 맨 앞', () => {
+    const bad = ids.map((id) => partSummaryText(id)).filter((a) => !(a.description === '장착 중' || a.description === '턴에 한 번' || /(시|면|동안|당|^(턴|대국)마다)$/.test(a.description)) || (a.description.includes('한 번') && a.description !== '턴에 한 번' && !a.description.startsWith('턴에 한 번, ')));
     expect(bad).toEqual([]);
   });
   it('효과는 득실 많아야 둘, 언제 줄에 「 · 」가 섞이지 않는다', () => {
@@ -79,35 +80,31 @@ describe('부품 문법 — 언제 · 효과', () => {
   it('그림 카드는 세 행 틀 — 효과 항목 하나 = 한 행(D-515, 명령 카드와 같은 쌓기), 넷째 행이 없고, 어느 행도 글자를 줄이지 않고 한 행 폭 안 (D-475 · D-488 · D-511)', () => {
     const bad = ids.flatMap((id) => { const r = partRuleRows(id); const fx = r.filter((x) => x.k === 'fx'); return r.length > 3 || fx.length < 1 || fx.length > partSummaryText(id).effect.split(' · ').length || !fx[0].t.startsWith(': ') || r.some((x) => pxWidth(x.t) > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : []; });
     expect(bad).toEqual([]);
-    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드·태엽 +1']);
+    expect(partRuleRows('fuse').map((x) => x.t)).toEqual(['턴에 한 번,', '연쇄 5 달성 시', ': 카드 +1 · 태엽 +1']);
   });
 });
 
 /** 카드 본문 (D-422 · D-488): 아래 칸은 세 행 안, 어느 행도 한 행 폭(ROW_PX)을 넘지 않는다 — 화면이 글자를 줄이지 않는다 */
 describe('명령 카드 줄 — 글자 축소 없음', () => {
   it('모든 카드의 조건 · 효과 행이 세 행 안 · 한 행 폭 안 (#18)', async () => {
+    // D-592: 화면이 짓는 행은 D-589 설명지 하나(`layoutCard`)가 정본 — 옛 어림(bottomLines)이 아니라 같은 줄 짓기 · 같은 예산으로 잰다
     const { COMMANDS } = await import('../src/slice/cards');
-    const { bottomLines, bottomLogical, splitDesc } = await import('../src/slice/desc');
-    const bad = Object.entries(COMMANDS).flatMap(([id, c]) => {
-      const d = splitDesc(c.desc || '');
-      const r = bottomLines(d.cond, d.fx);
-      // D-511: 조건 · 효과 줄은 접히지 않는다 (줄 하나 = 한 행)
-      return r.length > 3 || r.length !== bottomLogical(d.cond, d.fx).length || r.some((x) => pxWidth(x.t) > ROW_PX) ? [`${id}: ${r.map((x) => x.t).join(' / ')}`] : [];
-    });
+    const { budgetOver, cmdText } = await import('../src/slice/card-text');
+    const bad = Object.keys(COMMANDS).flatMap((id) => (['s', 'l'] as const).flatMap((t) => budgetOver(cmdText(id as never), 'cmd', t).map((x) => `${id} ${t}: ${x}`)));
     expect(bad).toEqual([]);
   });
   it('개척자의 맹세 · 피의 계약 · 탐욕의 저울: 효과 항목마다 한 행, 따로 걸린 조건은 그 항목 앞에 (D-515)', () => {
     expect(partRuleRows('oath').map((x) => x.t)).toEqual(['장착 중', ': 폰 공격 +6', '폰 버팀 +1']);
     expect(partRuleRows('bloodPact').map((x) => x.t)).toEqual(['장착 중', ': 공격 ×1.4', '턴마다 킹 −4']);
-    expect(partRuleRows('greed').map((x) => x.t)).toEqual(['쥔 나사 150마다', ': 공격 +2', '늘 고물상 값 +25%']);
+    expect(partRuleRows('greed').map((x) => x.t)).toEqual(['쥔 나사 150당', ': 공격 +2', '늘 고물상 값 +25%']);
   });
   it('분대원 카드(기벽 · 이형)와 시작 세트의 조건 · 효과 줄도 한 행씩(가장 좁은 분대원 카드 폭), 이름 아래 두 행 안 (D-511)', async () => {
-    const { bottomLogical } = await import('../src/slice/desc');
+    const { parseCardText } = await import('../src/data/card-text');
     const { QUIRKS } = await import('../src/slice/crew');
     const { FORMS } = await import('../src/data/forms');
     const { START_SETS } = await import('../src/data/start-sets');
     const rows = [
-      ...Object.values(QUIRKS).map((q) => bottomLogical('', q.desc).map((l) => l.t)),
+      ...Object.values(QUIRKS).map((q) => { const p = parseCardText(`(${q.desc})`); return [...p.cond, ...p.effect]; }),
       ...Object.values(FORMS).map((f) => [f.move, f.hit]),
       ...Object.values(START_SETS).map((st) => st.rows.slice(1)),
     ];
