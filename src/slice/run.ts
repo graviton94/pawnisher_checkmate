@@ -397,6 +397,8 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   if (asc >= 2 && kind !== 'battle') d.kingHp += ASC_NUM.eliteKing;
   // 적 수 +1 (D-542): 반장 · 도금왕이 아닌 대국에 늘 폰 하나 더 — 1막 편성이 우리 분대와 같은 수가 되어 「피할 수보다 겨누는 수가 많다」
   if (kind !== 'boss') d.enemy = [...d.enemy, ...Array<PieceType>(FOE.extraPawns).fill('P')];
+  // 2막 일반 대국 덜어 내기 (D-660): 첫째 · 둘째 왕관은 2막 일반 대국에서 적 폰 act2Pawns기를 뺀다 — 보통 실력의 2막 상처가 반장 앞에서 터졌다
+  if (kind === 'battle' && act === 2 && asc <= EASE.act2LightUpTo) for (let k = 0; k < EASE.act2Pawns && d.enemy.includes('P'); k++) d.enemy.splice(d.enemy.lastIndexOf('P'), 1);
   if (asc >= 4) d.enemy = [...d.enemy, 'P']; // 조항 4 「불어난 무리」 (D-542: 5 → 4)
   // 1막 반장 HP (D-600): 첫째 · 둘째 왕관에서 반장 킹 · 호위 ×0.85 — 보통 봇의 벽이 1막 반장이었다(출하의 36~56%가 여기서 끝)
   if (kind === 'boss' && act === 1 && asc <= EASE.act1BossUpTo) { d.kingHp *= EASE.act1BossHp; d.enemyHp = (d.enemyHp ?? 1) * EASE.act1BossHp; }

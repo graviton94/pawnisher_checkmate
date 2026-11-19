@@ -16,5 +16,7 @@ export const BUILD_TEXT = {
   relay: (n: number) => n ? `맞물린 톱니 · 태엽 +${n}` : '맞물린 톱니 · 태엽 상한',
   seal: '분대 인장 · 첫 타격 ×1.8',
   latch: (n: number) => `공성 걸쇠 · 방열판 −${n}`,
+  /** 방패 모서리 (D-662): 킹이 방열판을 피해로 */
+  edge: (n: number) => `방패 모서리 · 방열판 −${n}`,
 
 };

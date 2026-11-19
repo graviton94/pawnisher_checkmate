@@ -52,6 +52,8 @@ export const STALL_PRESS = { from: 12, quiet: 2, rustPct: 0.1 };
  */
 export const FOE_AI = {
   actMax: 4, perPiece: 2, again: 0.8, unspent: 1.5, losingKill: 1.5, secondMin: 10, repeats: 1, repeatFoes: 2,
+  /** 홀로 남은 적 킹의 한 차례 행동 수 (D-663 — 반장 · 거대 주물 제외). 옛값 = perPiece 2 */
+  loneActs: 1,
   /**
    * 협공 (D-542, 난이도 패스): 1수 탐욕 적은 예고를 다 읽는 사람을 이길 수단이 없었다.
    * focus = 이미 다친 기물을 치면 (잃은 HP 몫 × 값 × 이것) 더 — 같은 차례 앞 수가 친 기물을 이어서 친다(이어 짜기가 앞 수를 둔 판에서 고른다).

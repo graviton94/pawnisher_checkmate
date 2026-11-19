@@ -9,7 +9,9 @@ export type SlicePartId = 'relaySeal' | 'sharedPlate' | 'relayGear' | 'siegeLatc
   // 부품 확장 (D-282)
   | 'vise' | 'forkGear' | 'openGate' | 'chainReel' | 'gameRecord' | 'gateHinge' | 'queenCrown' | 'lightCloak' | 'goldRank' | 'thickWall' | 'rosary' | 'stirrup' | 'thickCast' | 'scrapMagnet' | 'firstSpring' | 'lastAxle' | 'toolbox' | 'ventHole' | 'afterheat' | 'bossBane' | 'lightMag'
   // 부품 확장 2차 (D-287)
-  | 'mirror' | 'pinNeedle' | 'whistle' | 'shieldWall' | 'jumpSpring' | 'saddle' | 'royalSeal' | 'queenFan' | 'rampart' | 'recoilSpring' | 'mortar' | 'tally' | 'stainedGlass' | 'flywheel' | 'redLine' | 'coolant' | 'piggyGear' | 'loupe' | 'stopwatch' | 'calipers';
+  | 'mirror' | 'pinNeedle' | 'whistle' | 'shieldWall' | 'jumpSpring' | 'saddle' | 'royalSeal' | 'queenFan' | 'rampart' | 'recoilSpring' | 'mortar' | 'tally' | 'stainedGlass' | 'flywheel' | 'redLine' | 'coolant' | 'piggyGear' | 'loupe' | 'stopwatch' | 'calipers'
+  // 축 규칙 부품 (D-662, 결정 12가 — 지배 전략 완화): 축마다 희귀 하나, 그 축의 규칙을 바꿔 연쇄 · 황금 말고 다른 길에 값을 준다
+  | 'leadSpur' | 'pikeRow' | 'shieldEdge' | 'quench' | 'ramRod' | 'snareFork';
 
 export interface SlicePartDef {
   name: string;
@@ -41,7 +43,11 @@ export const PART_GRADE: Partial<Record<SlicePartId, 'common' | 'rare' | 'gold'>
   // 재측정 (2026-11-14 D-500, tools/simlab-items.mjs 보통 봇 · 승급 2 · 짝 25출하): 시작 분대(킹 · 폰 · 나이트)로 쓸 수 있는 것만 순위 →
   // 같은 등급 수로 순위를 다시 나눈 등급과 다르고 그 경계에서 표준오차 절반 넘게 벗어난 것만 옮겼다(나머지는 표본이 작아 그대로). 올라간 것 ↓ · 내려간 것은 DECISIONS D-500
   scepter: 'rare', spurs: 'rare', fuse: 'rare', sergeant: 'rare', recoilSpring: 'rare', chainReel: 'rare', whistle: 'rare', jumpSpring: 'rare',
+  // 축 규칙 부품 (D-662) — 설계 등급 희귀
+  leadSpur: 'rare', pikeRow: 'rare', shieldEdge: 'rare', quench: 'rare', ramRod: 'rare', snareFork: 'rare',
 };
+/** 축 규칙 부품 수치 (D-662) — SLICE_PARTS 글보다 먼저 정해 desc가 같은 값을 읽는다. PART_NUM에도 그대로 들어간다 */
+const PART_NUM_SEED = { leadSpur: 2, pikeRow: 5, shieldEdge: 20, quench: 3, quenchCap: 12, ramRod: 0.5 };
 export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   relaySeal: { name: '분대 인장', axis: null, icon: 'relaySeal', flavor: '셋째 손이 맹세를 찍는다.', desc: '첫 피해 ×1.8 — 턴에 한 번, 셋째 유형 공격 시' },
   sharedPlate: { name: '맞댄 철판', axis: null, icon: 'sharedPlate', flavor: '등을 내주면, 등이 산다.', desc: '이웃 방열판 +6 — 턴에 한 번, 고참 방열판 시' },
@@ -70,7 +76,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   drum: { name: '진군의 북', axis: 'inf', icon: 'drum', flavor: '북소리에 맞춰 발을 맞춘다.', desc: '폰 카드 태엽 −1' },
   crown: { name: '짓누르는 왕관', axis: 'king', icon: 'crown', flavor: '무게가 곧 힘이다.', desc: '킹의 공격 ×1.7' },
   throne: { name: '걷는 옥좌', axis: 'king', icon: 'throne', flavor: '왕이 걸으면 옥좌도 걷는다.', desc: '킹 방열판 +2 — 킹이 움직일 시' },
-  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '피해 ×1.2 · 최대 ×4 — 연쇄 1당' },
+  coil: { name: '폭주 코일', axis: 'chain', icon: 'coil', flavor: '멈출 줄 모르고 감겨 오른다.', desc: '피해 ×1.2 · 최대 ×3 — 연쇄 1당' },
   echo: { name: '메아리 톱니', axis: 'chain', icon: 'echo', flavor: '맞는 소리가 두 번 울린다.', desc: '쌓이는 연쇄 ×2' },
   hammer: { name: '공성 망치', axis: 'push', icon: 'hammer', flavor: '부딪히는 소리가 곧 피해다.', desc: '충돌 피해 ×2 — 밀어 부딪칠 시' },
   // ---- 볼륨 (R5-5, D-172) · 양날(대가가 붙은 강한 것)은 desc에 대가 ----
@@ -110,7 +116,7 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   lastAxle: { name: '마지막 축', axis: 'king', icon: 'lastAxle', flavor: '꺾이기 직전이 가장 질기다.', desc: '킹의 공격 ×1.6 — 킹 HP 30% 미만인 동안' },
   toolbox: { name: '땜질 도구함', axis: null, icon: 'toolbox', flavor: '킹 말고, 가장 패인 둘부터.', desc: '다친 둘 HP +6 — 턴 시작 시' },
   ventHole: { name: '바람 구멍', axis: null, icon: 'ventHole', flavor: '숨을 고르고 되받아친다.', desc: '회피 반격 ×1.8' },
-  afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', flavor: '불은 꺼져도 쇠는 기억한다.', desc: '연쇄 1/4 유지 — 턴 끝 시' },
+  afterheat: { name: '잔열', axis: 'chain', icon: 'afterheat', flavor: '불은 꺼져도 쇠는 기억한다.', desc: '연쇄 1/4 유지 · 최대 2 — 턴 끝 시' },
   bossBane: { name: '반장 사냥꾼', axis: null, icon: 'bossBane', flavor: '반장의 냄새를 안다.', desc: '모든 공격 ×1.2 — 반장 대국인 동안' },
   lightMag: { name: '가벼운 탄창', axis: null, icon: 'lightMag', flavor: '가벼운 탄창은 빨리 갈린다.', desc: '손패 +1 — 덱 12장 이하인 동안' },
   // ---- 부품 확장 2차 (D-287): 축마다 둘 · 공용 일곱 — 아이콘은 전용 도트 (icons16_v2/batch_E~H) ----
@@ -134,16 +140,23 @@ export const SLICE_PARTS: Record<SlicePartId, SlicePartDef> = {
   loupe: { name: '확대경', axis: null, icon: 'loupe', flavor: '한 장 더 들여다본다.', desc: '보상 선택지 +1' },
   stopwatch: { name: '초시계', axis: null, icon: 'stopwatch', flavor: '먼저 누른 자가 먼저 움직인다.', desc: '첫 손패 +1장 — 대국 시작 시' },
   calipers: { name: '측량 컴퍼스', axis: null, icon: 'calipers', flavor: '왕까지의 거리를 잰다.', desc: '피해 +4 — 적 킹을 치면' },
+  // ---- 축 규칙 부품 (D-662, 결정 12가): 축마다 희귀 하나 — 연쇄 쌓기 · 황금 부품 말고 한 방 · 대열 · 방패 · 방어 · 빈 칸 밀기 · 묶기에 값을 준다. 그림은 있는 아이콘을 빌린다(D-386) ----
+  leadSpur: { name: '선두 박차', axis: 'cav', icon: 'spurs', flavor: '첫 말굽이 가장 깊다.', desc: `나이트 공격 ×${PART_NUM_SEED.leadSpur} — 턴의 첫 공격이면` },
+  pikeRow: { name: '창끝 대열', axis: 'inf', icon: 'pawnPike', flavor: '어깨를 맞대면 창이 숲이 된다.', desc: `폰 공격 +${PART_NUM_SEED.pikeRow} — 곁의 폰 1당` },
+  shieldEdge: { name: '방패 모서리', axis: 'king', icon: 'gilded', flavor: '막던 쇠로 내리친다.', desc: `방열판→피해 ${PART_NUM_SEED.shieldEdge} — 턴에 한 번, 킹 공격 시` },
+  quench: { name: '담금질 통', axis: 'chain', icon: 'coolant', flavor: '달아오른 쇠를 찬물에 묻는다.', desc: `킹 방열판 +${PART_NUM_SEED.quench} · 최대 +${PART_NUM_SEED.quenchCap} — 턴 끝 연쇄 1당` },
+  ramRod: { name: '쇠 밀대', axis: 'push', icon: 'anvilPlate', flavor: '밀리는 쪽이 다친다.', desc: `충돌 피해 ×${PART_NUM_SEED.ramRod} — 빈 칸으로 밀어낼 시` },
+  snareFork: { name: '갈래 올가미', axis: 'tactic', icon: 'chainReel', flavor: '두 목에 한 번에 올가미를 건다.', desc: '친 적 모두 묶음 — 턴에 한 번, 포크 칸이면' },
 };
 
-/** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 녹물 서약(옛 피의 계약) ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 · D-542 (난이도 패스 — 등급표 자기 실현): 녹슨 홀 25→15 · 폭주 코일 ×1.3/상한 6 → ×1.2/상한 4 */
-export const PART_NUM = { relayGear: 1, relaySeal: 1.8, sharedPlate: 6, sharedWins: 3, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.35, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 6, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 10, oathAdd: 6, lanceMult: 1.5, bannerMult: 1.6, scepterShield: 15, conductorPerKill: 0.35, conductorAdd: 8, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 5, hammerMult: 2, coilPerKill: 1.2, coilCap: 4, afterheatKeep: 0.25, crownMult: 1.7, throneShield: 2, assemblyBelow: 2, whetAdd: 3 };
+/** 부품 수치 — D-298 밸런스 패치: 초시계 2→1 · 측량 컴퍼스 10→4 · 땜질 도구함 4→3 · 녹물 서약(옛 피의 계약) ×1.4→×1.3 · 탐욕의 저울 나사 100마다 +3 → 150마다 +2 · 도화선 연쇄 2→3 · 걷는 옥좌 10→4 · D-542 (난이도 패스 — 등급표 자기 실현): 녹슨 홀 25→15 · 폭주 코일 ×1.3/상한 6 → ×1.2/상한 4 · D-664 (결정 12가 — 지배 조합 연쇄 이월 × 코일): 폭주 코일 상한 4 → 3 · 잔열이 넘기는 연쇄 최대 2 */
+export const PART_NUM = { relayGear: 1, relaySeal: 1.8, sharedPlate: 6, sharedWins: 3, siegeLatch: 12, notchHp: 2, notchCap: 20, aceMult: 1.3, heavyAdd: 4, scarShield: 6, scarCap: 18, cleanAt: 3, cleanHp: 1.35, sergeantPer: 2, sergeantCap: 6, lastBreath: 1.4, ledgerPer: 60, ledgerCap: 8, veteranAt: 8, veteranHp: 1.25, veteranAtk: 3, deathMarkAdd: 2, deathMarkCap: 10, mirror: 0.5, whistle: 1, shieldWall: 6, jumpSpring: 6, saddle: 6, royalSeal: 2, queenFan: 1, rampart: 8, mortar: 1.25, tallyAt: 6, tallyDraw: 2, stainedGlass: 6, flywheel: 2, redLine: 6, redLineCost: 0.15, piggy: 12, stopwatch: 1, calipers: 4, vise: 1.5, forkGearAp: 1, openGate: 0.5, chainReel: 8, queenCrown: 1.4, thickWall: 15, stirrup: 10, thickCast: 1.25, scrapPer: 5, firstSpring: 2, lastAxleAt: 0.3, lastAxle: 1.6, toolbox: 6, toolboxN: 2, ventGraze: 1.8, bossBane: 1.2, lightMagAt: 12, rookBoltMult: 1.3, lensMult: 1.3, pikeAdd: 10, oathAdd: 6, lanceMult: 1.5, bannerMult: 1.6, scepterShield: 15, conductorPerKill: 0.35, conductorAdd: 8, anvilPlate: 10, bloodMult: 1.4, bloodCost: 4, brittleHp: 0.8, greedPer: 150, greedAdd: 2, greedShop: 1.25, chainShotGain: 2, fuseAt: 5, hammerMult: 2, coilPerKill: 1.2, coilCap: 3, afterheatKeep: 0.25, afterheatCap: 2, crownMult: 1.7, throneShield: 2, assemblyBelow: 2, whetAdd: 3, ...PART_NUM_SEED };
 
 /**
  * 그 기물이 분대에 있어야 쓸모 있는 부품 (페르소나 테스트 m10: 나이트 없는 분대에 「피 묻은 편자」가 나왔다).
  * 폰 부품은 폰을 만들어 내는 부품(생산선 · 막사)이 있으면 괜찮다.
  */
-export const PART_NEEDS: Partial<Record<SlicePartId, 'N' | 'P' | 'R' | 'B' | 'Q'>> = { siegeLatch: 'R', whistle: 'P', shieldWall: 'P', jumpSpring: 'N', saddle: 'N', queenFan: 'Q', rampart: 'R', mortar: 'R', stainedGlass: 'B', queenCrown: 'Q', lightCloak: 'Q', thickWall: 'R', rosary: 'B', stirrup: 'N', thickCast: 'P', goldRank: 'P', gateHinge: 'R', rookBolt: 'R', bishopLens: 'B', pawnPike: 'P', oath: 'P', horseshoe: 'N', lance: 'N', spurs: 'N', drum: 'P', banner: 'P' };
+export const PART_NEEDS: Partial<Record<SlicePartId, 'N' | 'P' | 'R' | 'B' | 'Q'>> = { siegeLatch: 'R', leadSpur: 'N', pikeRow: 'P', whistle: 'P', shieldWall: 'P', jumpSpring: 'N', saddle: 'N', queenFan: 'Q', rampart: 'R', mortar: 'R', stainedGlass: 'B', queenCrown: 'Q', lightCloak: 'Q', thickWall: 'R', rosary: 'B', stirrup: 'N', thickCast: 'P', goldRank: 'P', gateHinge: 'R', rookBolt: 'R', bishopLens: 'B', pawnPike: 'P', oath: 'P', horseshoe: 'N', lance: 'N', spurs: 'N', drum: 'P', banner: 'P' };
 
 /** 지금 분대 · 부품으로 이 부품이 쓸모 있는가 */
 export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePartId[], crew?: { t: string; wins?: number }[]): boolean => {
@@ -158,7 +171,7 @@ export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePart
  * 합(+) · 곱(×) 표지 (D-205, 사용자: "+, × 연산을 정본 시스템으로"): 최종 피해 = (공격 + 합) × 곱.
  * 합은 지금 세고(작은 수에 크게 붙는다), 곱은 나중에 세다(큰 수에 곱해진다 — 층별 성장 D-203이 지수로 커지는 HP를 받친다).
  */
-export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { notches: '+', aceBadge: '×', heavyHand: '+', scarPlate: '+', cleanSheet: '×', sergeant: '+', lastBreath: '×', ledger: '+', veteran: '+', deathMark: '+', mirror: '×', jumpSpring: '+', stainedGlass: '+', redLine: '+', calipers: '+', vise: '×', openGate: '×', queenCrown: '×', lastAxle: '×', toolbox: '+', ventHole: '×', bossBane: '×', rookBolt: '×', bishopLens: '×', pawnPike: '+', conductor: '+', anvilPlate: '+', coil: '×', lance: '×', banner: '×', crown: '×', hammer: '×', bloodPact: '×', echo: '+', whetstone: '+' };
+export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { notches: '+', aceBadge: '×', heavyHand: '+', scarPlate: '+', cleanSheet: '×', sergeant: '+', lastBreath: '×', ledger: '+', veteran: '+', deathMark: '+', mirror: '×', jumpSpring: '+', stainedGlass: '+', redLine: '+', calipers: '+', vise: '×', openGate: '×', queenCrown: '×', lastAxle: '×', toolbox: '+', ventHole: '×', bossBane: '×', rookBolt: '×', bishopLens: '×', pawnPike: '+', conductor: '+', anvilPlate: '+', coil: '×', lance: '×', banner: '×', crown: '×', hammer: '×', bloodPact: '×', echo: '+', whetstone: '+', leadSpur: '×', pikeRow: '+', quench: '+', ramRod: '×' };
 
 /**
  * 톱니 (옛 「부적」 — D-601에서 말을 없앴다: 목숨 장치는 버팀 · 심장 톱니 · 되감기 셋뿐, 여벌 심장 톱니는 킹의 심장 톱니) (D-228, 사용자: "1패는 즉시 사망, 희귀한 1회 부활 아이템을 풀에 · 저승급은 기본으로 · 슬롯을 차지하지 않는 부적 · 되감기도 아이템화").

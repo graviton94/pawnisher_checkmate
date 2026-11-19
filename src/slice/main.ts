@@ -124,7 +124,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
 import { commitRunEnd, fightPending, ftueMark, newerSaveFound, settledEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, tutorialMend, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, loneFoeKing, tutorialMend, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { giantStrikes } from './giant';
 import { shapeHtml } from './shape';
@@ -1784,7 +1784,9 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const relayEvent = r.events.find((e) => e.type === 'apGain' && e.source === 'relayGear');
   const latchEvent = r.events.find((e) => e.type === 'attack' && e.shieldSpent);
   // 맞물린 톱니 — 토스트 대신 부품 칸에서 열쇠가 계기로 날아든다 (#29)
-  if (latchEvent?.type === 'attack') toast(BUILD_TEXT.latch(latchEvent.shieldSpent!));
+  if (latchEvent?.type === 'attack') toast(r.before.pieces.find((q) => q.id === latchEvent.attackerId)?.type === 'K' ? BUILD_TEXT.edge(latchEvent.shieldSpent!) : BUILD_TEXT.latch(latchEvent.shieldSpent!));
+  // 홀로 남은 적 킹 (D-663): 호위가 다 쓰러진 순간 한 번 — 적의 수 칸(예고)도 같은 계획에서 한 수로 줄어 있다
+  if (b.s.winner === null && !b.loneTold && loneFoeKing(b.s, b.boss)) { b.loneTold = true; window.setTimeout(() => toast(HUD_TEXT.loneKing, 2800), 700); }
   if (!seal0 && b.once.includes('relaySeal')) toast(BUILD_TEXT.seal);
   if (gain) apSources(gain, r.before, once0, refunded0, relayEvent?.type === 'apGain' ? relayEvent.amount : 0);
   if (gain) {
