@@ -38,24 +38,24 @@
 <body class="slice">
   <div id="boot" aria-hidden="true"><div><div class="boot-em"><img src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""></div><img class="boot-word" src="ui/title-word.png" alt=""><div class="boot-row"><i class="boot-gear"><i></i></i><div class="boot-bar"><b></b></div></div></div></div>
   <div id="app">
-    <aside id="left" class="rail left"><div id="vials" class="apbar" aria-label="남은 태엽"></div><div id="hand" class="hand"></div></aside>
+    <aside id="left" class="rail left"><div id="vials" class="apbar" aria-label="남은 태엽" data-t-aria="hud.apAria"></div><div id="hand" class="hand"></div></aside>
     <main id="board" data-clear></main>
     <aside id="right" class="rail">
       <div class="rail-head">
-        <span id="turn-label" class="plate turn-label">1턴</span>
-        <button id="btn-menu" class="btn k-iron btn-menu" type="button" aria-label="메뉴" data-key-hint="Esc"><i class="menu-cog" aria-hidden="true"></i></button>
+        <span id="turn-label" class="plate turn-label" data-t="hud.turn1">1턴</span>
+        <button id="btn-menu" class="btn k-iron btn-menu" type="button" aria-label="메뉴" data-t-aria="hud.menu" data-key-hint="Esc"><i class="menu-cog" aria-hidden="true"></i></button>
       </div>
-      <div id="coins" class="coins" aria-label="속전 보상"></div>
+      <div id="coins" class="coins" aria-label="속전 보상" data-t-aria="hud.speedAria"></div>
       <button id="boss" class="boss-chip" type="button" hidden></button>
-      <div id="parts" class="parts" aria-label="부품"></div>
+      <div id="parts" class="parts" aria-label="부품" data-t-aria="hud.partsAria"></div>
       <div class="actions">
-        <button id="btn-rewind" class="btn k-iron" type="button" aria-label="되감기 — 이번 턴 처음으로" data-key-hint="R">되감기</button>
-        <button id="btn-end" class="btn k-brass" type="button" data-key-hint="E">턴 끝</button>
+        <button id="btn-rewind" class="btn k-iron" type="button" aria-label="되감기 — 이번 턴 처음으로" data-t-aria="hud.rewindAria" data-t="hud.rewind" data-key-hint="R">되감기</button>
+        <button id="btn-end" class="btn k-brass" type="button" data-t="hud.endTurn" data-key-hint="E">턴 끝</button>
       </div>
     </aside>
   </div>
   <div id="overlay" class="overlay" hidden><div class="panel" id="overlay-panel"></div></div>
-  <div id="rotate" class="rotate"><p>화면을 가로로 돌려 주십시오</p></div>
+  <div id="rotate" class="rotate"><p data-t="app.rotate">화면을 가로로 돌려 주십시오</p></div>
   <script type="module" src="/src/slice/pxsnap.ts"></script>
   <script type="module" src="/src/slice/main.ts"></script>
 </body>

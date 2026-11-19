@@ -5052,3 +5052,30 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **옛 저장**: `clutchLeft` · `sacLeft` · `fight.bet` · `fight.clutched`는 그대로 읽히고 무시된다(타입은 남김). 보충병 흉터가 붙은 분대원은 그대로.
 - **증거**: `production/qa/evidence/2026-11-19-d601/` (915×412 · DPR 2.625 — 안내서 「분대와 목숨」 · 지도 머리 줄 톱니 칸 · 용어 사전 일곱 쪽 · 전투 HUD · 고물상, 콘솔 오류 0). 전수 점검에 장면 셋(guide-life · map-cogs · dict-life)을 더했다.
 - 측정은 D-600과 함께(GDD 22장 §6-3) — 봇은 이 장치들을 쓰지 않아 봇 곡선에는 영향이 없다(사람만 덜 받는다).
+
+### D-650 — 현지화 재고: 본편 화면 글 ≈ 4,360 문자열 · 19,700 어절 → 영어 약 2.7~3만 단어 (2026-11-19, 결정 11가 — 영어 출시 준비)
+- 도구 `tools/loc/audit.mjs [--write]`(TypeScript 스캐너, 주석 · `console` · `Error` 제외) → `docs/loc/inventory.md`(자동 생성 + 손으로 쓴 §5). 한 파일 훑기 `tools/loc/list.mjs`.
+- 하드코딩(src/data 밖) 1,635 → 1,575 문자열(이번에 60 옮김). 그중 1,300개는 `src/slice/events.ts` · `cards.ts` · `parts.ts` · `run.ts`의 **콘텐츠 정의** — UI 옮기기가 아니라 번역 착수 때 영역별로 `src/data/`로 내린다.
+- 데이터 영역별 어절: 이야기 6.1k · 사건 2.5k(+하드코딩 1.9k) · UI 3.1k(+1.5k) · 카드 0.7k(+1.3k) · 부품 0.4k(+0.9k) · 안내 1.2k. 처음 어림 60~90k는 `docs/` 정본까지 센 값 — 게임 안 글만 세면 위 수치.
+
+### D-651 — 언어 층: 한국어 원문 · 영어는 빈 칸이면 한국어 · 부팅 때 한 번 정함 (2026-11-19, 결정 11가)
+- `src/data/locale.ts`: `LANG`(주소 `?lang=en|ko` → 저장 `pawnisher.lang` → 'ko'), `localize(KO, EN)`(구조 있는 글 표 — 함수 · 중첩 포함, 영어 표는 같은 모양의 일부만), `t(열쇠, {자리})`(평평한 열쇠 표 — 지금 언어 → 한국어 → 열쇠), `missingKeys`.
+- 한국어일 때 `localize`는 원문 객체를 그대로 돌려준다 — 동작이 예전과 같다(`tests/locale.test.ts`가 같은 객체인지 본다).
+- 바꾸면 다시 읽는다(화면마다 다시 그릴 일 없음). 설정 「게임」 탭 맨 위 「언어」 줄은 `?lang` · `?debug` · 이미 고른 사람에게만 보인다 — 영어가 다 차면 늘 보이게 한다. 진행 초기화는 언어를 지우지 않는다.
+- 영어 표는 `src/data/lang/en-*.ts`(지금 `en-ui.ts` 하나). 원문 표에서 타입만 가져온다(값 순환 금지 — 그래서 `VOL_STEPS`를 `src/data/volume.ts`로 뺐다).
+- 조사(`josa()`)가 끼는 글은 영어 쪽이 자기 함수로 문장을 짓는다 — 조사를 영어에 넘기지 않는다.
+
+### D-652 — UI 크롬 첫 묶음을 src/data로 · 영어 첫 묶음 (2026-11-19, 결정 11가 · UI 원칙 10)
+- 옮김: `index.html` 고정 글 8곳(`data-t` · `data-t-aria` → `ui-strings.ts`, 부팅 때 `applyStaticText()` · `<html lang>`), `uikit.ts` 공용 단추 3, `main.ts` 대국 크롬 58(→ `src/data/chrome.ts` `CHROME_TEXT` — 턴 명패 · 태엽 계기 · 이동 미리보기 · 기물 정보 · 손패 꺼짐 까닭 · 독백 토스트 · 기록 · 킹 쓰러짐 창 · 원부). 두 벌이던 「카드가 꺼진 까닭」 식은 `cardOffWhy` 하나로.
+- 영어를 씌운 표: 메인 메뉴 · 멈춤 · 출하 준비 · 기록 · 설정 전부 · 오프닝 단추 · HUD(늘 보이는 것) · 대국 크롬. 나머지(카드 · 부품 · 사건 · 이야기 · 지도 · 상점)는 한국어로 떨어진다 — 데모 전 번역 범위.
+- 한국어 화면은 한 글자도 바뀌지 않았다: `production/qa/evidence/2026-11-19-d650-loc/ko-*.png`(915×412 · DPR 2.625).
+
+### D-653 — 영어 글도 D-213 격자 그대로 · 넘치면 낱말을 줄인다 (2026-11-19, 결정 11가)
+- 갈무리 11 · 14 · 9는 라틴 글자를 담고, 글꼴 줄이기(`tools/subset-fonts.mjs`)가 ASCII 전부를 늘 싣는다 — 영어 때문에 글꼴 · 크기를 더하지 않는다. 영어도 같은 CSS 칸(12 · 15 · 24 · 30 · 36 · 45 · 60px)을 쓴다.
+- 실화면(`?lang=en`, 915×412)에서 넘친 곳: 설정 탭(Display · Access · Controls 잘림) → **Sound · View · Aids · Input · Game · Info**(다섯 자 안), 턴 끝 단추(End Turn 넘침) → **End**. 글자를 줄이거나 칸을 늘리지 않고 낱말을 줄였다.
+- 남은 한글(미번역 자리)은 장면마다 `production/qa/evidence/2026-11-19-d650-loc/en-hangul-left.md`. 도구 `tools/qa/lang-observe.cjs [en|ko] [폴더]`(타이틀 · 메뉴 · 설정 두 탭 · 설정에서 언어 바꾸기 → 다시 읽기 · 대국 HUD · 멈춤).
+
+### D-654 — 영어 용어집 제안안 · 스팀 「곧 출시」 문안 · AI 생성 콘텐츠 공개 초안 (2026-11-19, 결정 11가)
+- `docs/loc/glossary.md`: 세계 낱말 · 기물 칭호 · 분대원 별칭 20 · 반장 · 시스템 낱말 영어 제안 + 뜻 + 결(다키스트 던전 · 디아블로 레지스터, 갈래 ①~⑨의 영어 짝). ★ 열두 개는 사용자 결정: 태엽(Wind) · 출하(Shipment) · 반장(Foreman) · 하자품/불량품(reject/the defective) · 버팀(Grit) · 방열판(Heatshield) · 공정(Line / machine floor) · 손질(Upkeep) · 승급(Coronation) · 원수(Nemesis) · 종이왕/도금왕(Paper King/Gilded King) · 철자(미국식). 지금 코드의 영어는 제안안 — 고르면 `en-ui.ts`와 같이 고친다.
+- `docs/store/steam-coming-soon.md`: 짧은 설명 KO · EN(300자 안), 소개 KO · EN, 특징 8, 태그 20(Steampunk ★), AI 공개 초안 — 그림 = 사내 프롬프트로 AI 생성 후 손질, 코드 = AI 보조, 글 = AI 보조 초안(확인 필요), 소리 = 코드로 작곡 · 합성(AI 모델 없음), 실시간 생성 없음. **사용자 확인 전에는 스팀에 올리지 않는다.**
+- 앞세우는 것은 Play 문안(D-638)과 같다: 어두운 이야기 · 영구 죽음 분대 · 죽이지 않는 반장 · 배신의 결말. 「체스 덱빌더」는 뒤.

@@ -4,6 +4,8 @@
  * 그림은 `docs/asset-order-prologue.md` P-00 ~ P-07 — 오기 전까지는 기물 도트로 짠 자리 그림(art)으로 돈다.
  */
 import type { PieceType } from '../engine';
+import { localize } from './locale';
+import { OPENING_EN } from './lang/en-ui';
 
 /** 자리 그림 한 조각: 기물 도트를 화면 비율 자리에 놓는다 (x · y = 0~100, h = 화면 높이 대비 %) */
 export interface StandIn {
@@ -87,7 +89,7 @@ export const COACH_LINES = {
 } as const;
 
 /** 오프닝 화면 글 */
-export const OPENING_TEXT = {
+export const OPENING_KO = {
   press: '화면을 눌러 시작',
   /** 프롤로그 끝 로고 아래 — 누르면 첫 대국 (테스터: 끝나자마자 메인 → 온보딩으로 저절로 넘어가 숨 돌릴 틈이 없었다) */
   pressGo: '화면을 눌러 출하',
@@ -102,3 +104,5 @@ export const OPENING_TEXT = {
   /** 도움말 창 명패 (탭 셋이 같은 창을 쓴다) */
   helpTitle: '도움말',
 } as const;
+/** 지금 언어로 (D-651) */
+export const OPENING_TEXT = localize(OPENING_KO, OPENING_EN);

@@ -8,6 +8,7 @@ import { calmMotion } from '../prefs/motion';
 import { pxOut, typeReserve } from './fx3';
 import { fitCover } from '../view/cover';
 import { textWidth } from './desc';
+import { ui } from '../data/ui-strings';
 
 /** 창 크기 세 단계 — S 352 · M 592 · L 883 (game-ui-design 3.1) */
 export type WinSize = 's' | 'm' | 'l';
@@ -320,7 +321,7 @@ const railArrows = (row: HTMLElement): void => {
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     nav = document.createElement('div');
     nav.className = 'rail-nav';
-    nav.innerHTML = `<button type="button" class="btn k-iron rail-arrow ra-prev" data-rail-step="-1" aria-label="앞 카드">◀</button><button type="button" class="btn k-iron rail-arrow ra-next" data-rail-step="1" aria-label="다음 카드">▶</button>`;
+    nav.innerHTML = `<button type="button" class="btn k-iron rail-arrow ra-prev" data-rail-step="-1" aria-label="${ui('ui.prevCard')}">◀</button><button type="button" class="btn k-iron rail-arrow ra-next" data-rail-step="1" aria-label="${ui('ui.nextCard')}">▶</button>`;
     host.appendChild(nav);
     nav.querySelectorAll<HTMLElement>('[data-rail-step]').forEach((b) => {
       const step = (e: Event): void => {
@@ -555,7 +556,7 @@ export interface PickOpts {
 export const pickScreen = (o: PickOpts): HTMLElement => {
   if (!host) throw new Error('uikit: bindWinHost 먼저');
   clearDismiss();
-  const go: WinBtn | undefined = o.go === null ? undefined : { label: '고른다', attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
+  const go: WinBtn | undefined = o.go === null ? undefined : { label: ui('ui.pick'), attrs: 'data-pick', ...o.go, kind: o.go?.kind ?? 'brass' };
   if (go) go.attrs = `${go.attrs ?? ''}${go.attrs?.includes('data-pick') ? '' : ' data-pick'}`;
   const el = host.open(
     `<div class="scr-top">${o.lead ? `<div class="scr-lead">${o.lead}</div>` : ''}<div class="plate">${o.title}</div>${o.tag ? `<div class="scr-tag">${o.tag}</div>` : ''}</div>${o.say ? `<p class="scr-say">${o.say}</p>` : ''}${o.body ?? slotsHtml(o.items, false, o.big)}${btnRowHtml({ back: o.skip, go, mid: o.mid })}`,

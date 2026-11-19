@@ -38,6 +38,9 @@ import type { TrackId } from '../data/music';
 import { applySettings, readSettings, resetProgress } from '../prefs/settings';
 import { openSettings } from './settings';
 import { SETTINGS_TEXT } from '../data/settings';
+import { CHROME_TEXT, cardOffWhy } from '../data/chrome';
+import { applyStaticText } from '../data/ui-strings';
+import { LANG } from '../data/locale';
 import { MAIN_TEXT, PAUSE_TEXT, RECORDS_TEXT, SETUP_TEXT } from '../data/menu';
 import { installPressFeedback } from '../ui/motion';
 import { PACE } from '../data/motion';
@@ -397,8 +400,8 @@ const movePeek = (pos: Pos): boolean => {
   const hits = result.events.flatMap((e) => e.type === 'attack' && e.attackerId === selPiece ? e.hits : []).filter((h) => b.s.pieces.some((p) => p.id === h.targetId && p.side === 1));
   const side = offBoardW('right') >= offBoardW('left') ? 'right' : 'left';
   const shown = hits.length > 2 ? 1 : 2;
-  const damage = hits.slice(0, shown).map((h) => `<p>적 ${PIECE_NAMES_KO[findPiece(b.s, h.targetId)!.type]} · 피해 ${h.damage} · HP ${findPiece(back.s, h.targetId)?.hp ?? 0}</p>`).join('');
-  infoPeek({ cls: 'move-preview', key: `move:${selCard}:${selPiece}:${pos.x}:${pos.y}`, side, maxW: Math.max(148, Math.floor(offBoardW(side))), head: `<p class="lead">${BUILD_TEXT.preview}</p>`, body: `<p>태엽 ${b.ap} → ${back.ap}</p><p>방열판 ${me.shield} → ${after?.shield ?? 0}</p>${damage || '<p>공격 대상 없음</p>'}${hits.length > 2 ? `<p>그 밖에 ${hits.length - shown}기 피격</p>` : ''}` });
+  const damage = hits.slice(0, shown).map((h) => `<p>${CHROME_TEXT.peek.hit(PIECE_NAMES_KO[findPiece(b.s, h.targetId)!.type], h.damage, findPiece(back.s, h.targetId)?.hp ?? 0)}</p>`).join('');
+  infoPeek({ cls: 'move-preview', key: `move:${selCard}:${selPiece}:${pos.x}:${pos.y}`, side, maxW: Math.max(148, Math.floor(offBoardW(side))), head: `<p class="lead">${BUILD_TEXT.preview}</p>`, body: `<p>${CHROME_TEXT.peek.ap(b.ap, back.ap)}</p><p>${CHROME_TEXT.peek.shield(me.shield, after?.shield ?? 0)}</p>${damage || `<p>${CHROME_TEXT.peek.noTarget}</p>`}${hits.length > 2 ? `<p>${CHROME_TEXT.peek.more(hits.length - shown)}</p>` : ''}` });
   return true;
 };
 /**
@@ -432,8 +435,8 @@ const pieceInfo = (pos: Pos): void => {
     key,
     side,
     maxW: expanded ? 352 : Math.min(352, maxW),
-    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48, p.giant && !p.giant.boss ? 'giant' : p.form)}</div><div class="unit-ident"><span>${p.side === 1 ? '적 기물' : '지원 기물'}${p.form ? ` · 이형(${PIECE_NAMES_KO[p.type]} 카드)` : ''}${p.elite ? ' · 정예' : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? `${k + 1}번째로 움직임` : '대기'))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.giant?.boss ? b.bossName ?? PIECE_NAMES_KO[p.type] : p.giant ? GIANTS[p.type as GiantType].name : p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
-    body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>${part ? `체력 · ${GIANT_PART.name(part.dx, part.dy)}` : '체력'}</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div>${part ? giantPartTrack(b.s.pieces, part) : `<div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div>`}</div><div class="unit-shield inset"><span>방열판</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>공격력</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>방어력</span><strong>${p.def}${p.weak && p.weak > 1 ? `<small class="weak">${RAID_TEXT.weakStat(p.weak)}</small>` : ''}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}${p.giant?.boss && bossArtTemp(b.bossRule, !!p.giant.rage) ? `<p class="note">${BOSS_BODY.tempArt}</p>` : ''}`,
+    head: `<div class="${expanded ? 'unit-portrait' : 'frame-portrait'}">${pieceImg(p.type, p.side, 'small', 48, p.giant && !p.giant.boss ? 'giant' : p.form)}</div><div class="unit-ident"><span>${p.side === 1 ? CHROME_TEXT.unit.foe : CHROME_TEXT.unit.ally}${p.form ? CHROME_TEXT.unit.form(PIECE_NAMES_KO[p.type]) : ''}${p.elite ? CHROME_TEXT.unit.elite : ''}${p.side === 1 ? ` · ${((k) => (k >= 0 ? CHROME_TEXT.unit.order(k + 1) : CHROME_TEXT.unit.wait))(liveIntents(b).findIndex((it) => it.pieceId === p.id))}` : ''}</span><p class="lead">${p.giant?.boss ? b.bossName ?? PIECE_NAMES_KO[p.type] : p.giant ? GIANTS[p.type as GiantType].name : p.form ? FORMS[p.form].name : PIECE_NAMES_KO[p.type]}</p></div>`,
+    body: `<div class="unit-stats"><div class="unit-life inset"><div class="unit-life-line"><span>${part ? CHROME_TEXT.unit.hpPart(GIANT_PART.name(part.dx, part.dy)) : CHROME_TEXT.unit.hp}</span><strong>${p.hp}<small> / ${p.maxHp}</small></strong></div>${part ? giantPartTrack(b.s.pieces, part) : `<div class="unit-hp-track"><div class="er-hp"><i class="er-fill" style="width:${hpPct}%"></i></div></div>`}</div><div class="unit-shield inset"><span>${CHROME_TEXT.unit.shield}</span><strong>${p.shield}</strong></div><div class="unit-attack inset"><span>${CHROME_TEXT.unit.atk}</span><strong>${p.atk}</strong></div><div class="unit-defense inset"><span>${CHROME_TEXT.unit.def}</span><strong>${p.def}${p.weak && p.weak > 1 ? `<small class="weak">${RAID_TEXT.weakStat(p.weak)}</small>` : ''}</strong></div></div>${abilities.length ? `<div class="unit-traits">${abilityHtml(abilities)}</div>` : ''}${p.giant?.boss && bossArtTemp(b.bossRule, !!p.giant.rage) ? `<p class="note">${BOSS_BODY.tempArt}</p>` : ''}`,
   });
   bindAbilities(el, abilities);
 };
@@ -538,7 +541,7 @@ const cardHtml = (id: CommandId, i: number): string => {
   const ok = canPlay(b, i);
   const poor = !ok && cost > b.ap;
   const off = !ok || busy;
-  const why = busy ? '' : poor ? `태엽 ${cost} 필요` : !ok ? (c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : c.kind === 'draft' ? '킹 곁에 빈 칸 없음' : c.kind === 'gambit' ? '바칠 폰 없음' : c.kind === 'swap' ? '캐슬링할 룩 없음' : '움직일 기물 없음') : '';
+  const why = busy ? '' : cardOffWhy(c.kind, cost, poor, ok);
   const open = openCard === i || selCard === i;
   // 기본 행마 카드: 머리 = 칭호(작은 개척자), 몸 = 실제로 하는 일 — 사용자 지적 D-211. 전체 문장 · 행마 그림은 펼친 카드 창(cardWinHtml, D-621)
   const titled = !!c.title;
@@ -567,12 +570,12 @@ const cardWinHtml = (i: number): string => {
   const cost = costs.length ? Math.min(...costs) : c.cost;
   const ok = canPlay(b, i);
   const poor = !ok && cost > b.ap;
-  const why = poor ? `태엽 ${cost} 필요` : !ok ? (c.kind === 'march' ? '앞으로 갈 폰 없음' : c.kind === 'spend' ? '쌓인 연쇄 없음' : c.kind === 'draft' ? '킹 곁에 빈 칸 없음' : c.kind === 'gambit' ? '바칠 폰 없음' : c.kind === 'swap' ? '캐슬링할 룩 없음' : '움직일 기물 없음') : '';
+  const why = cardOffWhy(c.kind, cost, poor, ok);
   const titled = !!c.title;
   const shape = c.who !== 'any' && c.kind === 'move' ? `<span class="hc-shape">${shapeHtml(c.who, 7)}</span>` : '';
   const desc = c.desc ? `<p class="hc-desc">${descHtml(c.desc)}</p>` : '';
   const flv = c.flavor && !titled ? `<p class="hc-flv">${c.flavor}</p>` : '';
-  const hint = !ok ? `<p class="hc-use off">${why || '지금은 쓸 수 없음'}</p>` : isInstant(id) && selCard !== i ? '<p class="hc-use">한 번 더 누르면 사용</p>' : '';
+  const hint = !ok ? `<p class="hc-use off">${why || CHROME_TEXT.cardOff.cantNow}</p>` : isInstant(id) && selCard !== i ? `<p class="hc-use">${CHROME_TEXT.cardOff.tapAgain}</p>` : '';
   // 조건 까닭 (D-592): 접힌 줄에서는 램프 · 황동 테만, 까닭 한 줄은 창에
   const cs = ok ? cardState(b, i) : null;
   const cond = cs?.lit ? `<p class="cw-cond"><img src="ui/part-state/ready.png" alt="" aria-hidden="true">${cs.line}</p>` : '';
@@ -850,7 +853,7 @@ const logPeek = (): void => {
   let rows = '';
   let head = '';
   for (const r of [...blog].reverse().slice(0, 7)) {
-    const h = `${r.turn}턴 · ${r.side ? '적' : '나'}`;
+    const h = CHROME_TEXT.logTurn(r.turn, !!r.side);
     if (h !== head) rows += `<p class="log-turn">${(head = h)}</p>`;
     rows += `<div class="log-row${r.side ? ' foe' : ''}">${r.by ? pieceImg(r.by, r.side, 'small', 20) : `<span>${r.label ?? ''}</span>`}<span>→</span>${r.hits.map((h) => `${pieceImg(h.t, h.side, 'small', 20)}<em>${h.killed ? '×' : `−${h.dmg}`}</em>`).join('')}</div>`;
   }
@@ -934,7 +937,7 @@ const gauges = (): void => {
     const was = apPrev;
     apKey = k;
     apPrev = ap;
-    $('vials').innerHTML = `<span class="lbl">태엽</span><span class="keys">${Array.from({ length: n }, (_, i) => {
+    $('vials').innerHTML = `<span class="lbl">${CHROME_TEXT.apLabel}</span><span class="keys">${Array.from({ length: n }, (_, i) => {
       const on = i < ap;
       const fx = was === null || calmNow() ? '' : !on && i < was ? ' spend' : on && i >= was ? ' wind' : '';
       return `<i class="seg${on ? ' on' : ''}${i >= b.apMax ? ' bonus' : ''}${fx}" style="--k:${i}"><i class="key"></i></i>`;
@@ -980,12 +983,12 @@ const refresh = (): void => {
   syncBoardCursor();
   if (holdView) showBefore(holdView);
   else renderer.render(model());
-  turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : HUD_TEXT.turnHeat(b.turn, b.s.heat ?? 1), enemyTurn);
+  turnLabel($('turn-label'), b.s.winner !== null ? CHROME_TEXT.battleOver : enemyTurn ? CHROME_TEXT.enemyTurn : busy ? CHROME_TEXT.moving : HUD_TEXT.turnHeat(b.turn, b.s.heat ?? 1), enemyTurn);
   const alive = b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length;
   $('deckrow').innerHTML = pileRowHtml({ deck: deck.length, crew: alive, discard: b.discard.length + (b.played?.length ?? 0) }); // D-640 BT-01 쇠 단추
   if (openCard !== null && openCard >= b.hand.length) openCard = null;
   litNow = new Set();
-  $('hand').innerHTML = (handView ?? b.hand).map(cardHtml).join('') || (handView ? '' : '<p class="empty">‘손패가 없어.’</p>');
+  $('hand').innerHTML = (handView ?? b.hand).map(cardHtml).join('') || (handView ? '' : `<p class="empty">${CHROME_TEXT.handEmpty}</p>`);
   litPrev = litNow;
   fitHand();
   revealPick();
@@ -1578,7 +1581,7 @@ const pickCard = (i: number): void => {
   if (!c) return;
   if (isInstant(b.hand[i])) {
     if (!canPlay(b, i) && costOf(b, i) > b.ap) nope(document.querySelector(`[data-card="${i}"]`), $('vials'));
-    if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? '‘태엽이 모자라.’' : c.kind === 'march' ? '‘앞으로 갈 폰이 없어.’' : '‘지금은 쓸 수 없어.’');
+    if (!canPlay(b, i)) return toast(costOf(b, i) > b.ap ? CHROME_TEXT.mono.noAp : c.kind === 'march' ? CHROME_TEXT.mono.noMarch : CHROME_TEXT.mono.cantNow);
     if (c.kind === 'draw' || c.kind === 'spark') {
       sfx(c.kind === 'spark' ? 'coin' : 'cast', c.kind === 'spark' ? b.kills + 2 : 0);
       // 얻는 카드도 손맛 (테스터: 박자처럼 무언가를 얻는 카드에 아무 연출이 없었다): 카드 패가 연쇄 줄 · 태엽 계기 · 버림 더미로 날고 새 카드는 덱에서 날아든다 (D-553)
@@ -1595,9 +1598,9 @@ const pickCard = (i: number): void => {
     }
     return void run(i);
   }
-  if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return nope(document.querySelector(`[data-card="${i}"]`), $('vials')), toast('‘태엽이 모자라.’');
+  if (!canPlay(b, i) && b.s.pieces.every((p) => p.side !== 0 || costOf(b, i, p.id) > b.ap)) return nope(document.querySelector(`[data-card="${i}"]`), $('vials')), toast(CHROME_TEXT.mono.noAp);
   const pieces = cardPieces(b, i);
-  if (!pieces.length) return toast(c.who === 'any' ? '‘움직일 기물이 없어.’' : `‘${josa(PIECE_NAMES_KO[c.who], '이')} 없거나, 갈 칸이 없어.’`);
+  if (!pieces.length) return toast(c.who === 'any' ? CHROME_TEXT.mono.noPiece : CHROME_TEXT.mono.noPieceOf(PIECE_NAMES_KO[c.who]));
   sfx('lift');
   if (selCard === i) {
     selCard = selPiece = openCard = null;
@@ -1626,7 +1629,7 @@ const onTap = async (pos: Pos): Promise<void> => {
     if (selCard !== null && cardPieces(b, selCard).some((q) => q.id === p.id)) selPiece = p.id;
     else {
       const pick = autoCard(p.id);
-      if (!pick) return toast(`‘${josa(PIECE_NAMES_KO[p.type], '을')} 움직일 카드가 없어.’`);
+      if (!pick) return toast(CHROME_TEXT.mono.noCardFor(PIECE_NAMES_KO[p.type]));
       selCard = pick.i;
       openCard = pick.i;
       selPiece = p.id;
@@ -3460,11 +3463,11 @@ const finishNow = (): void => {
       // M 창 (D-391): 명패 「하자 폐기」 · 남은 여벌 심장 꼬리표 · 규칙 한 줄 · 독백 · [끝낸다 | 다시 둔다] — 결정 대기라 막을 눌러도 안 닫힘
       const el = openWin({
         size: 'm',
-        title: '하자 폐기',
+        title: CHROME_TEXT.kingDown.title,
         head: spare ? `<span class="tag tag-crimson">${CHARMS.revive.name} ${charms.revive}</span>` : undefined,
-        body: `<p>${spare ? `킹이 쓰러졌습니다. ${josa(CHARMS.revive.name, '을')} 깨면 ${cur.title}부터 다시 둡니다. 분대의 상처는 그대로입니다.` : '킹이 쓰러졌습니다. 출하는 여기서 끝납니다.'}</p>${near}`,
-        back: spare ? { label: '끝낸다', attrs: 'data-quit' } : undefined,
-        go: spare ? { label: '다시 둔다', attrs: 'data-again' } : { label: '끝낸다', attrs: 'data-quit' },
+        body: `<p>${spare ? CHROME_TEXT.kingDown.spare(CHARMS.revive.name, cur.title) : CHROME_TEXT.kingDown.over}</p>${near}`,
+        back: spare ? { label: CHROME_TEXT.kingDown.quit, attrs: 'data-quit' } : undefined,
+        go: spare ? { label: CHROME_TEXT.kingDown.again, attrs: 'data-again' } : { label: CHROME_TEXT.kingDown.quit, attrs: 'data-quit' },
       });
       // 이 순간을 남긴다 (2026-11-16 완주 점검): 예전에는 직전 턴 끝 저장이 남아, 여기서 앱을 닫고 이어 하면 진 대국의 앞 턴으로 돌아갔다.
       // 여벌이 있으면 = 여벌 하나를 깨고 이 대국을 처음부터(「다시 둔다」와 같은 자리) · 없으면 = 출하 끝을 바로 기록
@@ -3902,11 +3905,11 @@ const ledgerView = (back: () => void = crewView): void => {
   const el = openWin({
     size: rows.length ? 'l' : 'm',
     title: RECORDS_TEXT.ledger,
-    head: `<p class="note">쓰러진 분대원의 기록입니다. 지워지지 않습니다.</p><span class="badge-n push">기록 ${rows.length}</span>`,
+    head: `<p class="note">${CHROME_TEXT.ledger.lead}</p><span class="badge-n push">${CHROME_TEXT.ledger.count(rows.length)}</span>`,
     body: rows.length
-      ? `<div class="inset scroll">${rows.map((r) => `<div class="lg-row">${pieceImg(r.t, 0, 'small', 48)}<p class="lg-name">${r.name}${r.nick ? ` 「${r.nick}」` : ''} · ${r.serial} · 처치 ${r.kills} · 대국 ${r.battles}</p><p class="lg-cause">${r.cause} · ${r.run}</p></div>`).join('')}</div>`
-      : `<p class="mono empty-line">‘아직 아무도 잃지 않았어.’</p>`,
-    back: { label: back === crewView || back === recordsWin ? '돌아간다' : '닫는다', attrs: 'data-back' },
+      ? `<div class="inset scroll">${rows.map((r) => `<div class="lg-row">${pieceImg(r.t, 0, 'small', 48)}<p class="lg-name">${CHROME_TEXT.ledger.row(`${r.name}${r.nick ? ` 「${r.nick}」` : ''}`, r.serial, r.kills, r.battles)}</p><p class="lg-cause">${r.cause} · ${r.run}</p></div>`).join('')}</div>`
+      : `<p class="mono empty-line">${CHROME_TEXT.ledger.none}</p>`,
+    back: { label: back === crewView || back === recordsWin ? CHROME_TEXT.ledger.back : CHROME_TEXT.ledger.close, attrs: 'data-back' },
     dismiss: () => back(),
   });
   el.querySelector('[data-back]')!.addEventListener('click', () => back());
@@ -5536,6 +5539,9 @@ const closeOpening = (): void => {
   pxOut(el, () => el.remove(), 300);
 };
 
+// 언어 (D-651): 정적 HTML 글을 지금 언어로 채운다 — 한국어면 그대로
+document.documentElement.lang = LANG;
+applyStaticText();
 startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 // 워밍업 로딩 (D-239): 그림 · 글꼴을 미리 받는 동안 부팅 화면의 황동 막대가 찬다 → 다 되면 걷고 타이틀

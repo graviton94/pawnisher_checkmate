@@ -1,8 +1,11 @@
+import { localize } from './locale';
+import { MAIN_EN, PAUSE_EN, RECORDS_EN, SETUP_EN } from './lang/en-ui';
+
 /**
  * 메뉴 글 (D-539 출시 UX): 대국 · 지도 일시 정지 메뉴 · 메인 메뉴(단추 다섯 · 황동 하나) · 출하 준비 창 · 기록 창.
  * 말투 docs/voice.md — 시스템 합니다체 · 단추 동사 하나. 왕관 부제(이야기 이름)는 끝낸 왕관에만 — 그 밖은 별칭 (D-536 campaign.chapterTitle · 스포일러 H1).
  */
-export const PAUSE_TEXT = {
+export const PAUSE_KO = {
   /** 대국 · 지도 머리의 메뉴 단추 (톱니 그림 — 읽는 이용 이름) */
   btn: '메뉴',
   title: '멈춤',
@@ -18,7 +21,7 @@ export const PAUSE_TEXT = {
   ab2: { title: '마지막 확인', body: '되돌릴 수 없습니다. 정말 포기합니까?', back: '그만둔다', go: '포기한다' },
 } as const;
 
-export const MAIN_TEXT = {
+export const MAIN_KO = {
   cont: '이어하기',
   /** 타이틀 시작 단추 (D-593 사용자: 「출하」 → 「게임 시작」 — 한 판 · 출하 준비 창 이름은 그대로 「출하」) */
   ship: '게임 시작',
@@ -32,7 +35,7 @@ export const MAIN_TEXT = {
   quitAsk: { title: '끝내기', body: '게임을 끝냅니다.', back: '그만둔다', go: '끝낸다' },
 } as const;
 
-export const SETUP_TEXT = {
+export const SETUP_KO = {
   title: '출하 준비',
   tabs: { story: '본편', challenge: '도전', daily: '오늘의 도전' },
   back: '돌아간다',
@@ -57,7 +60,7 @@ export const SETUP_TEXT = {
   overwrite: { title: '새 출하', body: '저장한 출하를 버리고 새로 시작합니다.', back: '그만둔다', go: '시작한다' },
 } as const;
 
-export const RECORDS_TEXT = {
+export const RECORDS_KO = {
   title: '기록',
   ledger: '원부',
   ledgerSub: '쓰러진 분대원',
@@ -79,3 +82,9 @@ export const RECORDS_TEXT = {
     ['오늘의 도전', `${m.daily}일`],
   ] as [string, string][],
 } as const;
+
+/** 지금 언어로 (D-651 — 한국어면 원문 객체 그대로) */
+export const PAUSE_TEXT = localize(PAUSE_KO, PAUSE_EN);
+export const MAIN_TEXT = localize(MAIN_KO, MAIN_EN);
+export const SETUP_TEXT = localize(SETUP_KO, SETUP_EN);
+export const RECORDS_TEXT = localize(RECORDS_KO, RECORDS_EN);

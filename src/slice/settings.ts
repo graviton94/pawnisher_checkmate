@@ -8,6 +8,7 @@ import { APP_VERSION } from '../data/version';
 import { DEV_PAGE, PRIVACY_KO, PRIVACY_URL } from '../data/legal';
 import { applySettings, readSettings, resetProgress, writeSettings, type KeyStore } from '../prefs/settings';
 import type { MotionPref } from '../prefs/motion';
+import { LANG, LANGS, LANG_NAME, langSwitchShown, saveLang, type Lang } from '../data/locale';
 import { BIND_IDS, bindConflict, cleanBinds, DEFAULT_BINDS, keyLabel, normKey, type BindId } from './keymap';
 
 /**
@@ -81,6 +82,8 @@ const rowsOf = (tab: Tab, s: Settings, o: SettingsOpts): string[] => {
     ];
     case 'input': return [row(T.keyHints, onOff('keyHints', T.keyHints, s.keyHints)), row(T.keyMap, btnHtml({ label: T.keyMapBtn, attrs: 'data-keymap' })), row(T.keyBind, btnHtml({ label: T.keyBindBtn, attrs: 'data-keybind' }))];
     case 'game': return [
+      // 언어 (D-651): 영어가 준비되기 전엔 ?lang · ?debug · 이미 고른 사람에게만 보인다
+      ...(langSwitchShown() ? [row(T.lang, `<div class="set-seg" role="group" aria-label="${T.lang}">${LANGS.map((l) => btnHtml({ label: LANG_NAME[l], attrs: `data-lang="${l}" lang="${l}" aria-pressed="${LANG === l}"`, kind: LANG === l ? 'brass' : 'iron' })).join('')}</div>`, T.langNote)] : []),
       ...(o.onGuide ? [row(T.guide, btnHtml({ label: T.openBtn, attrs: 'data-guide' }))] : []),
       ...(o.onGlossary ? [row(T.glossary, btnHtml({ label: T.openBtn, attrs: 'data-glossary' }))] : []),
       // 파괴 행동은 맨 아래 · 구분선 위로 띄운다 (M8)
@@ -104,6 +107,15 @@ const openWeb = (url: string): void => {
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
   a.click();
+};
+
+/** 언어를 바꾸고 다시 읽는다 (D-651 — 글 표는 부팅 때 한 번 정해진다). 주소에 ?lang이 있으면 그것도 맞춘다 */
+const switchLang = (l: Lang): void => {
+  if (l === LANG) return;
+  saveLang(l);
+  const u = new URL(location.href);
+  if (u.searchParams.has('lang')) u.searchParams.set('lang', l);
+  location.replace(u.href);
 };
 
 /** 한 쪽에 넣는 줄 수 — 탭마다 (줄 높이가 탭마다 달라 처음 그릴 때 재어 줄인다, 창 높이 364 안) */
@@ -185,6 +197,7 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
       const val = k === 'motion' || k === 'shake' ? v : v === '1';
       return save({ ...s, [k]: val } as Settings);
     }
+    if (hit.matches('[data-lang]')) return void (sfx('tap'), switchLang(hit.dataset.lang as Lang));
     if (hit.matches('[data-reset]')) return void (sfx('tap'), resetStep(1));
     if (hit.matches('[data-full]')) return void (sfx('tap'), o.desktop?.toggleFullscreen());
     if (hit.matches('[data-keymap]')) return void (sfx('tap'), keyMapPage(s, reopen('input')));

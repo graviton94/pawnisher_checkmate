@@ -1,5 +1,7 @@
 import { RAID } from './giants';
 import { TERM } from './terms';
+import { localize } from './locale';
+import { HUD_EN } from './lang/en-ui';
 
 /**
  * 대국 화면 문구 · 용어 사전 (D-198). 이름 규칙은 docs/world.md §6.
@@ -47,7 +49,7 @@ export const MAP_TEXT = {
   },
 };
 
-export const HUD_TEXT = {
+export const HUD_KO = {
   /** 길막기 (D-319) */
   blockPop: '막음!',
   blockTip: '적이 갈 칸을 먼저 차지하면 그 공격은 막힙니다.',
@@ -125,6 +127,8 @@ export const HUD_TEXT = {
   dictTitle: '용어',
   fullGuide: '안내서 전체',
 };
+/** 지금 언어로 (D-651) */
+export const HUD_TEXT = localize(HUD_KO, HUD_EN);
 
 /** 목숨 둘 · 심장 톱니 (D-219) — 규칙은 시스템 투, 쓰러지는 순간은 2인칭 서술 (D-158) */
 /** 덱 줄 단추 (D-640): 화면엔 문양 + 수만 — 낱말은 읽기 도구 · 길게 보기 이름으로 */

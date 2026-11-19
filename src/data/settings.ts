@@ -1,4 +1,7 @@
 import type { MotionPref } from '../prefs/motion';
+import { localize } from './locale';
+import { VOL_STEPS } from './volume';
+import { SETTINGS_EN } from './lang/en-ui';
 
 /**
  * 본편 설정 창 (D-530, 출시 점검 1번): 수치 · 열쇠 · 글. 말투는 docs/voice.md (① 시스템 합니다체 · ⑧ 단추 동사 하나).
@@ -41,8 +44,8 @@ export const AUTO_ADVANCE_MS = 2600;
 
 /** 출하 저장(pawnisher.slice.*)과 다른 열쇠 — 진행 초기화가 설정을 지우지 않는다 */
 export const SETTINGS_KEY = 'pawnisher.settings';
-/** 크기 칸 수 (칸 하나 = 10%) */
-export const VOL_STEPS = 10;
+/** 크기 칸 수 (칸 하나 = 10%) — volume.ts */
+export { VOL_STEPS };
 /** 기본값: 크기 7칸 = 예전 고정 음량(효과음 0.5 · 음악 0.11)과 같은 소리. 위로 3칸 여유 */
 export const SETTINGS_DEFAULT: Settings = { v: 1, sfx: 7, sfxMute: false, music: 7, musicMute: false, motion: 'os', master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false, keys: {}, cbAid: false };
 /** 진행 초기화가 지우는 열쇠: 이 앞머리로 시작하는 것 전부 + 아래 목록 (출하 저장 · 기록 · 도감 · 백업 사본 포함) */
@@ -52,7 +55,7 @@ export const PROGRESS_KEYS: readonly string[] = [
   'pawnisher.slice.ledger', 'pawnisher.telemetry', 'pc-loadtips',
 ];
 
-export const SETTINGS_TEXT = {
+export const SETTINGS_KO = {
   title: '설정',
   /** 탭 여섯 (D-539) — 이름은 두~세 글자 */
   tabs: { sound: '소리', screen: '화면', access: '접근성', input: '조작', game: '게임', info: '정보' },
@@ -127,7 +130,13 @@ export const SETTINGS_TEXT = {
   licPrev: '이전',
   licNext: '다음',
   licBack: '돌아간다',
+  /** 언어 (D-651 — 영어가 준비되기 전엔 ?lang · ?debug에서만 보인다) */
+  lang: '언어',
+  langNote: '고르면 다시 읽습니다.',
 } as const;
+
+/** 지금 언어로 (D-651) */
+export const SETTINGS_TEXT = localize(SETTINGS_KO, SETTINGS_EN);
 
 /** 키 · 패드 배치표 (설정 › 조작 › 「본다」) — 행동표 정본은 src/slice/keymap.ts. 줄 = [행동, 키보드, 패드] */
 /** 넷째 칸 = 바꿀 수 있는 행동이면 그 이름 (키보드 칸은 지금 배치로 바뀐다 — D-539) */
