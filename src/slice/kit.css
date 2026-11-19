@@ -1064,7 +1064,23 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .mapfx .peek-bar .pb-foe { display: inline-flex; align-items: flex-end; }
 .mapfx .peek-bar .pb-foe i { color: var(--t-body); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-style: normal; }
 .mapfx .peek-bar .pb-go.btn { flex: none; width: calc(var(--px) * 56); }
-@media (max-width: 860px) { .mapfx .peek-bar .pb-foes { display: none; } }
+/* 노드 미리보기 격자 (D-685, 사용자 실기기: 「반장 · 작업대 영역이 우하단에서 넘친다」 — 이름이 적 명단에, 명단이 꼬리표에 겹쳤다):
+   칸 넷이 저마다 자리를 가진다 — 위 줄 = 아이콘 · 이름(1fr) · 적 명단(제 폭) · 「진입」 / 아래 줄 = 아이콘 · 꼬리표(이름 + 명단 칸 폭) · 「진입」.
+   명단은 접지 않는다(옛 860 이하 숨김 삭제) — 대신 노드를 고르면 띠가 아래 줄 전체를 쓴다(분대 현황은 접힘, 1279 이하 · D-686).
+   높이는 옛 높은 띠 그대로(이름 30 + 꼬리표 13도트 ≤ 62) — 지도 노드가 움직이지 않는다. 겹침 · 넘침은 tools/qa/map-peek.cjs가 잰다 (D-688) */
+.mapfx .peek-bar .pb-node { flex: 1 1 auto; min-width: 0; align-self: stretch; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto auto; grid-template-areas: "ico name foes go" "ico tags tags go"; align-content: center; column-gap: var(--s3); row-gap: var(--s1); }
+.mapfx .peek-bar .pb-node .pb-ico { grid-area: ico; align-self: center; }
+.mapfx .peek-bar .pb-node .pb-name { grid-area: name; align-self: end; min-width: 0; }
+.mapfx .peek-bar .pb-node .pb-tags, .mapfx .peek-bar .pb-node .pb-desc { grid-area: tags; min-width: 0; }
+.mapfx .peek-bar .pb-node .pb-foes { grid-area: foes; align-self: end; justify-self: end; }
+.mapfx .peek-bar .pb-node .pb-go { grid-area: go; align-self: center; min-height: 48px; }
+.mapfx .peek-bar .pb-node.pb-place { grid-template-areas: "ico name name go" "ico tags tags go"; }
+/* 좁은 화면(667): 이름 첫 낱말이 노드 종류를 말한다 — 아이콘 칸을 비워 이름 · 명단에 폭을 준다 */
+@media (max-width: 760px) {
+  .mapfx .peek-bar .pb-node { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name foes go" "tags tags go"; }
+  .mapfx .peek-bar .pb-node.pb-place { grid-template-areas: "name name go" "tags tags go"; }
+  .mapfx .peek-bar .pb-node .pb-ico { display: none; }
+}
 /* 지도 분대 현황 (피드백 #24 · D-503 → MP-01 받음, D-508): 철판(roster-body 9-slice · 테 13/11) + 황동 명패 위에 분대 칸(41×65칸 틀 셋).
    도트 하나 = --rp(기기 픽셀 round(0.75 × DPR)개 = --px-detail) — 받은 틀이 발주(28×36)보다 커서 장치 층(--px)이면 띠를 넘친다.
    칸 = 초상 창(얼굴 22×23) · HP 홈(25×3 — 청록 · 황동 · 진홍) · 버팀(소켓 자리에 덧댄 철판 life 16칸) · 금 간 심장 톱니 = 금 간 틀(진홍 등) + 금 간 심장 톱니 표지(D-507 heartCog.crack).
@@ -1107,8 +1123,9 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 @media (max-width: 860px) {
   .mapfx .map-foot > .peek-bar.inset:not(.open) { height: var(--peek-hi); }
   .mapfx .map-foot .map-legend { flex-wrap: wrap; justify-content: center; row-gap: 0; }
-  .mapfx .map-foot.node-open .map-roster { display: none; }
 }
+/* 노드를 고르면 띠가 아래 줄 전체 (D-686): 분대 현황이 길면(분대 최대 10) 띠가 400px 아래로 줄어 이름 · 꼬리표 · 명단이 겹쳤다. 빈 지도를 누르면 고름이 풀리고 분대 현황이 돌아온다 */
+@media (max-width: 1279px) { .mapfx .map-foot.node-open .map-roster { display: none; } }
 
 @media (prefers-reduced-motion: reduce) { .mapfx, .mapfx .mnd .mnd-here, .mapfx .mnd.now.chosen::before, .mapfx .map-body line, .mapfx .peek-bar.inset.open { animation: none; } }
 
