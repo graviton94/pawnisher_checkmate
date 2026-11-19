@@ -12,7 +12,7 @@ PB-01 공정 판 칸 — 두 판본 합치기 (D-521 · 공정 판 D-486). 격�
   ④ 가운데 12×12(기물이 서는 자리)는 밝은 색을 한 단 낮춰 차분하게 — 팔레트 안의 이웃 단으로만 바꾼다.
   ⑤ 팔레트 검사: 결과에 a안 · 발주서 밖의 색이 하나라도 있으면 멈춘다.
   ⑥ 판 색 맞춤 (2026-11-16 사용자 결정 · D-522): a안 테의 갈색 계단을 판 칸 색의 같은 명암 단으로 바꿔 끼운다 — 새로 그리지 않고 색만.
-     판 색 = tools/draw-board.py의 기본 판 · 막별 판(ACT_TILES) · 반장 판(BOSS_TILES)을 그대로 읽는다(11벌).
+     판 색 = tools/draw-board.py의 기본 판 · 막별 판(ACT_TILES) · 반장 판(src/data/boss-board.json)을 그대로 읽는다(11벌).
      바깥 1도트는 판 칸(plate)처럼 위 · 왼쪽 빛 / 아래 · 오른쪽 그늘, 그 안은 판 칸 바닥색 → 테 바깥 2도트가 옆 판 칸과 같은 색.
        밝은 칸: 갈색 4단(짙음→밝음) → 그림자 i · 그늘 l · 바닥 b · 빛 h    어두운 칸: 3단 → 바닥 d · 빛 b · 밝은 무늬 h
      가운데 무늬(b안 · 쇠 · 등불 색)는 그대로. 팔레트 검사 = 발주서 색(갈색 4단 뺌) ∪ 그 판 색 밖 0.
@@ -22,6 +22,7 @@ PB-01 공정 판 칸 — 두 판본 합치기 (D-521 · 공정 판 D-486). 격�
         build-res/order/PB-01-tint-check.png (판 색마다: 판 칸 · 공정 칸을 번갈아 붙인 줄 — 이음매 확인, 6배)
 """
 import ast
+import json
 import os
 import sys
 from collections import Counter
@@ -162,15 +163,19 @@ def board_palettes():
     src = open(os.path.join(ROOT, 'tools', 'draw-board.py'), encoding='utf-8').read()
     consts = {}
     for node in ast.parse(src).body:
-        if isinstance(node, ast.Assign) and len(node.targets) == 1 and getattr(node.targets[0], 'id', None) in ('P', 'ACT_TILES', 'BOSS_TILES'):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and getattr(node.targets[0], 'id', None) in ('P', 'ACT_TILES'):
             consts[node.targets[0].id] = ast.literal_eval(node.value)
     P = consts['P']
     # 기본 판: plate('L','G','D') / plate('D','L','INK') — draw-board.py 맨 아래와 같은 짝
     out = {'': {'b': P['L'], 'h': P['G'], 'l': P['D'], 'd': P['D'], 'i': P['INK']}}
     for a, c in consts['ACT_TILES'].items():
         out[f'-a{a}'] = {k: c[k] for k in 'bhldi'}
-    for k, c in consts['BOSS_TILES'].items():
-        out[f'-b{k}'] = {kk: c[kk] for kk in 'bhldi'}
+    # 반장 판 색은 src/data/boss-board.json (D-645)
+    with open(os.path.join(ROOT, 'src', 'data', 'boss-board.json'), encoding='utf-8') as f:
+        boss = json.load(f)
+    for k, c in boss.items():
+        if k != '_':
+            out[f'-b{k}'] = {kk: tuple(int(c[kk][i:i + 2], 16) for i in (1, 3, 5)) for kk in 'bhldi'}
     return out
 
 
