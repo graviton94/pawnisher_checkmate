@@ -303,6 +303,21 @@ def build_one(name, g, out_dir=None, verbose=True):
             h, s, v = colorsys.rgb_to_hsv(*(c / 255))
             if rc['hue'][0] <= h * 360 <= rc['hue'][1] and s >= rc['sat']:
                 pal[i] = np.round(np.array(colorsys.hsv_to_rgb(rc['to'] / 360, s, v)) * 255).astype(np.uint8)
+    nclamp = 0
+    if g.get('clamp'):  # D-640: 발주 팔레트에 붙이기 — 지각 차이 dist 안의 대표색만 발주 색으로(멀리 떨어진 색 집안은 그대로 둔다)
+        import card_f_recipe
+        name_, dist = g['clamp']
+        P = np.array([[int(c[i:i + 2], 16) for i in (1, 3, 5)] for c in getattr(card_f_recipe, name_)], np.uint8)
+        d = np.sqrt(((to_lab(pal)[:, None] - to_lab(P)[None]) ** 2).sum(2))
+        j = d.argmin(1)
+        dd = d[np.arange(len(pal)), j]
+        hit = dd < dist
+        for t in np.unique(j[hit]):  # 두 대표색이 같은 발주 색으로 몰리면 가장 가까운 하나만 붙인다 — 이음매 · 리벳 단이 합쳐져 사라지지 않게
+            s_ = np.flatnonzero(hit & (j == t))
+            hit[s_[s_ != s_[dd[s_].argmin()]]] = False
+        pal = pal.copy()
+        pal[hit] = P[j[hit]]
+        nclamp = int(hit.sum())
     out = Image.fromarray(pal[idx].astype(np.uint8), 'RGB')
     for e in g.get('erase', []):  # 지정 칸을 이웃 칸 색으로 (새 색 없음)
         a = np.asarray(out).copy()
@@ -316,7 +331,7 @@ def build_one(name, g, out_dir=None, verbose=True):
     import crown_unify  # D-573: 종이 왕관 색 통일 — 재반입이 되돌리지 않게
     crown_unify.after_save(dst)
     if verbose:
-        print(f'{name}: {g["src"]} {im.size} 칸 {px:.3f}×{py:.3f} (시작 {ox:.2f},{oy:.2f}) → {out.size} · {len(pal)}색 · 띠 걷음 위 {top} · 아래 {bot}줄 · 잔티 정리 {n}칸 → {dst}')
+        print(f'{name}: {g["src"]} {im.size} 칸 {px:.3f}×{py:.3f} (시작 {ox:.2f},{oy:.2f}) → {out.size} · {len(pal)}색 · 띠 걷음 위 {top} · 아래 {bot}줄 · 잔티 정리 {n}칸' + (f' · 발주 색 붙임 {nclamp}/{len(pal)}' if g.get('clamp') else '') + f' → {dst}')
     return out
 
 

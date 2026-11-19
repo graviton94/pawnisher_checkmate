@@ -96,7 +96,8 @@ export interface BoardModel {
   selectedId: number | null;
   destinations: Pos[];
   /** 갈 수 있는 칸 중 도착하면 적을 치는 칸 (kill = 처치까지) — 누르기 전에 결과가 보이게 */
-  hitDests: { pos: Pos; kill: boolean; cond?: boolean }[];
+  /** 갈 칸 중 치는 칸 — dmg = 적에게 줄 피해 합 · hits = 맞을 적과 맞은 뒤 HP (D-623, 같은 simulate 결과) */
+  hitDests: { pos: Pos; kill: boolean; cond?: boolean; dmg?: number; hits?: { id: number; after: number }[] }[];
   /** 조건이 켜진 내 기물 (D-592 — 처치 기물 태엽 0 · 마지막 숨 · 마지막 축): 발치에 황동 램프 */
   condIds?: number[];
   /** 미리보기 결과 */

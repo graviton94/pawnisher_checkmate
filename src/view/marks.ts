@@ -50,15 +50,15 @@ export const gaugeSweep = (hp: number, after: number, max: number, ms: number, n
  * HP 게이지 14×4 도트 (D-054·D-055): 검정 테두리(모서리 비움) + 12×2 채움(밝은 줄 + 그늘 줄).
  * (x, y) = 게이지 왼쪽 위. 잃을 HP는 금색, ms를 주면 흰 반짝임이 훑는다.
  */
-/** n = 속 칸 수 (기본 12 — 2×2 보스는 넓게, D-513) */
-export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: number, after: number, max: number, ms = -1, n = 12): void => {
+/** n = 속 칸 수 (기본 12 — 2×2 보스는 넓게, D-513) · rows = 채움 줄 수 (기본 2 — 적 기물은 4, D-624: 위 절반 밝은 줄 · 아래 절반 그늘 줄) */
+export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: number, after: number, max: number, ms = -1, n = 12, rows = 2): void => {
   const d = pen.dot;
   const cell = (i: number, j: number, c: number) => pen.px(x + i * d + d / 2, y + j * d + d / 2, c, 1, 1);
   for (let i = 1; i < n + 1; i++) {
     cell(i, 0, 0x0b0b0e);
-    cell(i, 3, 0x0b0b0e);
+    cell(i, rows + 1, 0x0b0b0e);
   }
-  for (const j of [1, 2]) {
+  for (let j = 1; j <= rows; j++) {
     cell(0, j, 0x0b0b0e);
     cell(n + 1, j, 0x0b0b0e);
   }
@@ -71,8 +71,10 @@ export const drawGauge = (pen: PixelPen, x: number, y: number, side: Side, hp: n
     const [top, low] = GAUGE[kind];
     // 색 보조 (D-539): 적 게이지는 밝은 줄 · 그늘 줄을 한 칸씩 엇갈려 체크 무늬 — 우리 편(줄무늬 없음)과 색 없이도 갈린다
     const chk = kind === 'e' && cbAid() && i % 2 === 1;
-    cell(1 + i, 1, lose && i === sweep ? 0xf4f1ea : chk ? low : top);
-    cell(1 + i, 2, chk ? top : low);
+    for (let j = 1; j <= rows; j++) {
+      const upper = j <= rows / 2;
+      cell(1 + i, j, upper && lose && i === sweep ? 0xf4f1ea : upper !== chk ? top : low);
+    }
   }
 };
 

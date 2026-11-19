@@ -127,6 +127,16 @@ export const HUD_TEXT = {
 };
 
 /** 목숨 둘 · 심장 톱니 (D-219) — 규칙은 시스템 투, 쓰러지는 순간은 2인칭 서술 (D-158) */
+/** 덱 줄 단추 (D-640): 화면엔 문양 + 수만 — 낱말은 읽기 도구 · 길게 보기 이름으로 */
+export const PILE_TEXT = {
+  name: { deck: '덱', crew: '분대', discard: '버림' },
+  aria: {
+    deck: (n: number) => `덱 ${n}장 보기`,
+    crew: (n: number) => `분대 ${n}명 보기`,
+    discard: (n: number) => `버린 카드 ${n}장 보기`,
+  },
+} as const;
+
 export const LIFE_TEXT = {
   name: '심장 톱니',
   cracked: (names: string) => `${names} — 심장 톱니 하나가 깨졌습니다. HP 50%로 돌아옵니다.`,
@@ -247,6 +257,12 @@ export const FIT_TEXT = {
   squad: (piece: string, n: number) => `분대 ${piece} <b>${n}</b>`,
   cards: (name: string, n: number) => `${name} 카드 <b>${n}</b>`,
 } as const;
+
+/**
+ * 펼친 카드 창 (D-621, 사용자 결정 5가 ①): 판 열 위 비모달 S 창 — w = S 폭 상한(px, 게임 UI 지식 3.1) · gap = 판 열 가장자리와의 틈(px).
+ * 판 열이 좁으면(667 폭 ≈ 300) 판 열 − 2 × gap.
+ */
+export const CARD_WIN = { w: 352, gap: 8 } as const;
 
 /**
  * 조건 표시 글 (D-592 발동 유형 · 판 위 표시): 손패 카드 효과 줄 자리에 들어가는 짧은 까닭 — 카드 효과 줄 한 줄(≤ 12자 남짓).

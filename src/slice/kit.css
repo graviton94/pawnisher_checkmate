@@ -771,6 +771,26 @@ body.slice.lay-f #hand { flex: 1 1 auto; min-height: 0; display: flex; flex-dire
 #hand .hc-desc .ln { display: block; word-break: keep-all; overflow-wrap: anywhere; }
 #hand .hc-desc .ln-if { color: #b9b4c2; }
 #hand .hc-desc .ln-fx > b { color: #ffd64a; font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
+/* 펼친 카드 창 (D-621 — 레일 안 펼침 몸 .hc-body를 대신): 정보 엿보기 .k-peek 철판 S 창을 빌린다(새 그림 없음). 판 열 위 · 누름 통과.
+   머리 줄 = 비용 톱니 11도트 + 이름(12 굵게 금) · 조건 까닭 한 줄(램프 + 12) · 행마 그림 + 문장(12) · 각주. 판을 덜 덮게 낮게 */
+.k-peek.win.card-win { --win-hmax: var(--win-h); gap: var(--s1); padding: 0 calc(var(--px) * 2); }
+.card-win .cw-head { display: flex; align-items: center; gap: var(--s1); min-height: calc(var(--px) * 12); }
+.card-win .cw-head .costgear { flex: none; display: block; width: calc(var(--px) * 11); height: calc(var(--px) * 11); }
+.card-win .cw-head .costgear img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.card-win .cw-head .costgear.short img { filter: grayscale(1) brightness(0.6); }
+.card-win .cw-head b { color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
+.k-peek.card-win p.cw-cond { display: flex; align-items: center; gap: var(--s1); color: #f0c860; font: 400 12px/var(--lh-12) Galmuri11, sans-serif; }
+.card-win .cw-cond img { flex: none; width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); image-rendering: pixelated; }
+.card-win .cw-body { display: flex; gap: var(--s2); align-items: flex-start; } /* 움푹 칸 없이 — 창이 낮아야 판을 덜 덮는다 */
+.card-win .hc-shape svg { display: block; width: 30px; height: 30px; }
+.card-win .hc-txt { display: grid; gap: 3px; min-width: 0; }
+.k-peek.card-win .hc-txt p { margin: 0; color: var(--t-body); font: 400 12px/1.4 Galmuri11, sans-serif; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.k-peek.card-win .hc-txt p.hc-flv { color: #c9b48a; }
+.k-peek.card-win .hc-txt p.hc-use { color: var(--t-ally); }
+.k-peek.card-win .hc-txt p.hc-use.off { color: #ffc4bc; }
+.card-win .hc-desc .ln { display: block; word-break: keep-all; overflow-wrap: anywhere; }
+.card-win .hc-desc .ln-if { color: #b9b4c2; }
+.card-win .hc-desc .ln-fx > b { color: #ffd64a; font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
 #hand > .empty { margin: var(--s2); color: var(--t-dim); font: 400 15px/1.5 Galmuri14, Galmuri11, sans-serif; }
 /* 첫 대국 코치: 카드를 고를 차례면 쓸 수 있는 판에 황동 1도트 테가 계단으로 깜빡 */
 #hand.hint > .hc:not(.off) { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); animation: handHint 1s steps(2, jump-none) infinite; }

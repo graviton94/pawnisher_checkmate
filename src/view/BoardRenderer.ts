@@ -1,7 +1,7 @@
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { vignette } from '../ui/juice';
 import { cbAid, shakeMul } from '../prefs/fx';
-import { PACE } from '../data/motion';
+import { BEAT, PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
 import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN, RAID_TEXT } from '../data/giants';
@@ -13,9 +13,9 @@ import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower,
 import { drawArrow, drawDropDot, drawGauge, drawHatch, gaugeSweep } from './marks';
 import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
-import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
+import { POPUP_MS, buildPopupArt, dmgFont, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
-import { FX_BUDGET, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
+import { HP_BAR, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
 import { boardInset } from './boardInset';
@@ -99,6 +99,8 @@ export interface BoardInput {
 
 /** QA 박자 기록 (D-538): 창에 `__fxlog` 배열이 있을 때만 [이름, ms] — 녹화 도구가 공격 · 처치 길이를 잰다 */
 const fxTrace = (k: string, ms: number, note = ''): void => void (window as { __fxlog?: unknown[] }).__fxlog?.push([k, Math.round(ms), note]);
+/** QA 전투 박자 기록 (D-620): 창에 `__pace` 배열이 있을 때만 [벽시계 ms, 사건, 진영, 기물] — tools/qa/battle-pace.cjs가 수 하나 · 적 수 하나의 길이를 잰다 */
+const paceTrace = (k: string, side = -1, id = -1): void => void (window as { __pace?: unknown[] }).__pace?.push([Math.round(performance.now()), k, side, id]);
 
 /** 터치 기기 칸 최대 크기 (CSS px) */
 /** 깨진 심장 톱니 속 칠 (D-219): 흰 기물 팔레트 → 한 단계 어두운 쇠 색. 외곽선 #0b0b0e · 바깥 흰 테 #f4f1ea는 그대로 */
@@ -141,11 +143,15 @@ const GIANT_SLOT_N = 7;
 const GIANT_SLOTS: [0 | 1, 0 | 1][] = [[0, 1], [0, 0], [1, 0], [1, 1]];
 /** 부위 칸의 왼쪽 먹 테 열 (2×2 왼끝 기준 도트) */
 const giantSlotX = (dx: 0 | 1, dy: 0 | 1): number => (dx === 0 ? (dy === 1 ? 3 : 11) : dy === 0 ? 20 : 28);
-/** 기물 게이지 자리 (그 기물 칸 왼위 기준 도트) · 채움 칸 수 — 보통 14×4 · 2×2 반장 한 줄 · 거대 주물 부위 칸 */
-const gaugeSpot = (p: Piece): { x: number; y: number; n: number } => {
-  if (p.giant?.boss) return { x: 3, y: GAUGE_ROW, n: 2 * BOARD_DOTS - 8 };
-  if (p.giant) return { x: (p.giant.dx === 0 ? 0 : -BOARD_DOTS) + giantSlotX(p.giant.dx, p.giant.dy), y: (p.giant.dy === 1 ? BOARD_DOTS : 0) + GAUGE_ROW, n: GIANT_SLOT_N };
-  return { x: 3, y: GAUGE_ROW, n: 12 };
+/**
+ * 기물 게이지 자리 (그 기물 칸 왼위 기준 도트) · 채움 칸 수 · 채움 줄 수 — 보통 14×4 · 2×2 반장 한 줄 · 거대 주물 부위 칸.
+ * 적 보통 기물 (D-624, 사용자 결정 5가 ④): 채움 4줄(테 포함 14×6) — 폰 화면에서 적 HP가 한눈에. 윗줄은 기준선(GAUGE_ROW) 그대로라
+ * 기물 그림은 덮지 않고, 바 아래 2도트는 아래 칸 위 끝(왕관 자리 · 비어 있는 줄)에 걸친다.
+ */
+const gaugeSpot = (p: Piece): { x: number; y: number; n: number; rows: number } => {
+  if (p.giant?.boss) return { x: 3, y: GAUGE_ROW, n: 2 * BOARD_DOTS - 8, rows: 2 };
+  if (p.giant) return { x: (p.giant.dx === 0 ? 0 : -BOARD_DOTS) + giantSlotX(p.giant.dx, p.giant.dy), y: (p.giant.dy === 1 ? BOARD_DOTS : 0) + GAUGE_ROW, n: GIANT_SLOT_N, rows: 2 };
+  return { x: 3, y: GAUGE_ROW, n: 12, rows: p.side === 1 ? HP_BAR.foeRows : HP_BAR.allyRows };
 };
 /** 거대 주물 바 먹 테 (반 둘, 바깥 모서리는 보통 게이지처럼 깎는다) — (x, y) = 2×2 왼끝 · 바 윗줄 */
 const drawGiantFrame = (pen: PixelPen, x: number, y: number): void => {
@@ -282,6 +288,8 @@ class BoardScene extends Phaser.Scene {
   /** PC 정수 기물 칸으로 판을 키웠다 — 카메라 여유를 줄인다 (D-563) */
   private tightPad = false;
   dpr = 1;
+  /** 판 밖을 투명하게 (D-640 — 본편 전투 바탕) */
+  clearBg = false;
   state!: BattleState;
   private tilesG!: Phaser.GameObjects.Graphics;
   private marksG!: Phaser.GameObjects.Graphics;
@@ -471,7 +479,8 @@ class BoardScene extends Phaser.Scene {
     // 카메라 스크롤을 월드 정수로 내리는 roundPixels(pixelArt 기본)는 소수 줌(2.625)에서 칸 모서리를 픽셀 사이로 민다 — 끄고 moveCamera가 캔버스 픽셀에 맞춘다 (D-525)
     this.cameras.main.setRoundPixels(false);
     this.cameras.main.setZoom(this.dpr);
-    this.cameras.main.setBackgroundColor(C.bg);
+    // D-640: 본편(#board data-clear)은 판 밖을 비워 #app 뒤 막별 전투 바탕이 보이게 한다. 2.0은 그대로 먹색
+    this.cameras.main.setBackgroundColor(this.clearBg ? 'rgba(0,0,0,0)' : C.bg);
     this.tilesG = this.add.graphics().setDepth(0.1);
     this.tilesC = this.add.container(0, 0).setDepth(0);
     this.marksG = this.add.graphics().setDepth(1);
@@ -634,7 +643,7 @@ class BoardScene extends Phaser.Scene {
     for (const r of this.anim.glints) {
       if (!r.s.root.active) continue;
       const g = gaugeSpot(r.s.piece);
-      drawGauge(tp, r.s.root.x + g.x * tp.dot, r.s.root.y + g.y * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, g.n);
+      drawGauge(tp, r.s.root.x + g.x * tp.dot, r.s.root.y + g.y * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, g.n, g.rows);
     }
   }
 
@@ -1075,7 +1084,7 @@ class BoardScene extends Phaser.Scene {
           drawGauge(pen, (ox + giantSlotX(dx, dy)) * d, (oy + GAUGE_ROW) * d, s.piece.side, 0, 0, 1, -1, GIANT_SLOT_N);
       }
     }
-    drawGauge(pen, g.x * d, g.y * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, g.n);
+    drawGauge(pen, g.x * d, g.y * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, g.n, g.rows);
     // 보호막: 게이지 바로 위 흰 도트 줄
     if (s.piece.shield > 0) {
       const n = Math.max(1, Math.round(g.n * Math.min(1, s.piece.shield / s.piece.maxHp)));
@@ -1330,6 +1339,8 @@ class BoardScene extends Phaser.Scene {
         if (hit) {
           this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
           if (hit.kill) img('kill', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTintFill(0xfacc15);
+          // 예상 피해 꼬리표 (D-623, 사용자 결정 5가 ②): 과녁 칸 위 테에 「−12」 — 실행과 같은 previewPlay → simulate 결과. 처치면 금
+          if (hit.dmg) this.aimTag(p, hit.dmg, hit.kill, !!hit.cond);
           // 조건 칸 (D-592): 황동 L자 모서리(select 재칠 cond.png) + 오른쪽 위 램프 — 과녁 · 금색 처치를 가리지 않는 모서리 자리
           if (hit.cond) {
             const key = `cell:${p.x},${p.y}`;
@@ -1369,6 +1380,9 @@ class BoardScene extends Phaser.Scene {
       }
     });
 
+    // 과녁이 칠 적의 잃을 HP (D-623): 갈 칸 여럿이 같은 적을 치면 가장 많이 깎는 칸 기준 — 게이지 금색 몫 + 반짝임
+    if (m.selectedId !== null)
+      for (const h of m.hitDests) for (const x of h.hits ?? []) hpAfter.set(x.id, Math.min(hpAfter.get(x.id) ?? Infinity, x.after));
     // 기물 (가상 보드 위치) + 이번 계획으로 처치될 기물 — 처치 X는 기물 위 레이어 (D-049)
     for (const p of shown) {
       const sprite = this.makePiece(p, p);
@@ -1394,6 +1408,35 @@ class BoardScene extends Phaser.Scene {
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
     this.condFlush();
+  }
+
+  /**
+   * 과녁 옆 예상 피해 꼬리표 (D-623, 사용자 결정 5가 ② · UI 원칙 1 「누르기 전에 결과」): 갈 칸 위 테에 걸친 「−12」(12px 굵게).
+   * 내 공격 = 뼈빛 판 + 먹 글, 처치 = 금 판 + 해골 표식(색만으로 가르지 않는다, 원칙 4). 조건 램프(오른쪽 위)가 있으면 그 왼쪽으로 비킨다.
+   */
+  private aimTag(pos: Pos, damage: number, kill: boolean, lamp: boolean): void {
+    const t = this.tile;
+    const d = t / BOARD_DOTS;
+    const w = this.world(pos);
+    const txt = this.add
+      .text(0, 0, `−${damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: '#0B0B0E' })
+      .setOrigin(0.5)
+      .setResolution(this.dpr);
+    const iconSize = kill ? 5 * d : 0;
+    const iconGap = kill ? d : 0;
+    const bw = Math.ceil((txt.width + iconSize + iconGap + 4 * d) / d) * d;
+    const bh = Math.ceil((txt.height + 1 * d) / d) * d;
+    const right = lamp ? w.x + 12 * d - d : w.x + t - d;
+    const x = Math.round(right - bw);
+    const y = Math.round(w.y - bh / 2);
+    const g = this.add.graphics();
+    g.fillStyle(0x0b0b0e, 1).fillRect(x - d, y - d, bw + 2 * d, bh + 2 * d);
+    g.fillStyle(kill ? 0xfacc15 : 0xf1ede4, 1).fillRect(x, y, bw, bh);
+    g.fillStyle(kill ? 0xfde68a : 0xffffff, 1).fillRect(x, y, bw, d);
+    txt.setPosition(x + (bw + iconSize + iconGap) / 2, y + bh / 2 + d / 2);
+    const icon = kill ? this.add.image(x + 2 * d + iconSize / 2, y + bh / 2, boardKey('kill')).setDisplaySize(iconSize, iconSize).setTintFill(0x0b0b0e) : null;
+    const c = this.add.container(0, 0, icon ? [g, icon, txt] : [g, txt]).setDepth(7.2);
+    this.dynamic.push(c);
   }
 
   /**
@@ -1529,11 +1572,13 @@ class BoardScene extends Phaser.Scene {
     // 잃은 HP 칸: 그 자리에서 하얗게 → 오른쪽 끝부터 파도처럼 솟아 도트로 흩어진다 (D-047·D-049)
     const was = Math.round((12 * Math.max(0, before)) / ts.piece.maxHp);
     const now = Math.round((12 * Math.max(0, h.hpAfter)) / ts.piece.maxHp);
+    const gRows = ts.piece.giant ? 2 : gaugeSpot(ts.piece).rows;
     // 피해 숫자 (D-051·D-053): 도트 그림 숫자, 튀어나와 떠올랐다가 아래부터 지워진다. 처치 = 금, 내 기물 = 붉음
     // 막힘(피해 0, D-538): 「-0」 숫자 대신 받은 방패 아이콘(intent-shield) — 원칙 4 (숫자만으로 구분하지 않는다)
     const at = this.popAt(ts);
     if (dealt <= 0 && !h.killed) this.blockedMark(at.x, at.y);
-    const art = buildPopupArt(dealt <= 0 && !h.killed ? '' : `-${dealt}`, h.killed ? 0xfacc15 : ts.piece.side === 0 ? 0xff6b6b : 0xf4f1ea);
+    // 숫자 크기 = 피해 크기 (D-624, 사용자 결정 5가 ④): 갈무리9 · 11 굵게 · 14 세 단계 — 도트 한 칸은 늘 판 도트 그대로. 처치는 금
+    const art = buildPopupArt(dealt <= 0 && !h.killed ? '' : `-${dealt}`, h.killed ? 0xfacc15 : ts.piece.side === 0 ? 0xff6b6b : 0xf4f1ea, dmgFont(dealt, !!h.killed));
     const g = this.add.graphics().setDepth(8);
     this.tweens.addCounter({
       from: 0,
@@ -1548,14 +1593,14 @@ class BoardScene extends Phaser.Scene {
           const cx = x0 + (4 + i) * d;
           const cy = y0 + 17 * d;
           if (u < 0) {
-            g.fillRect(cx, cy, d, d * 2);
+            g.fillRect(cx, cy, d, d * gRows);
             continue;
           }
           const q = u / 420;
           if (q >= 1 || (q > 0.45 && Math.floor(u / 40) % 2)) continue;
           const rise = 1 - (1 - q) ** 3;
           const size = q > 0.75 ? d / 2 : d;
-          g.fillRect(Math.round(cx + (i % 2 ? 1 : -1) * d * 0.6 * q), Math.round(cy - 9 * d * rise), size, size * 2);
+          g.fillRect(Math.round(cx + (i % 2 ? 1 : -1) * d * 0.6 * q), Math.round(cy - 9 * d * rise), size, size * gRows);
         }
         drawPopup(g, art, at.x, at.y, d, ms, t * 0.2, this.dpr);
       },
@@ -1998,7 +2043,12 @@ class BoardScene extends Phaser.Scene {
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
     this.killStreak = 0;
     // 우리 게임은 무조건 한 명씩 차례대로 (D-217, 사용자 결정 — D-216 5의 겹쳐 움직이기는 되돌림)
+    paceTrace('play');
     for (const e of events) {
+      if (e.type === 'move' || e.type === 'attack') {
+        const id = e.type === 'move' ? e.pieceId : e.attackerId;
+        paceTrace(e.type, this.sprites.get(id)?.piece.side ?? -1, id);
+      } else paceTrace(e.type);
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         this.announce('바닥이 꺼진다 — 칸 한 쌍이 톱니 아래로');
@@ -2069,7 +2119,8 @@ class BoardScene extends Phaser.Scene {
           this.tweens.addCounter({
             from: 0,
             to: MOVE_TOTAL,
-            duration: MOVE_TOTAL / this.speed,
+            // 박자 예산 (D-620): 이동 한 번 ≤ BEAT.move — 웅크림 → 가속 → 착지 출렁 비율은 그대로
+            duration: Math.min(MOVE_TOTAL / this.speed, BEAT[s.piece.side === 1 ? 'foe' : 'mine'].move),
             onUpdate: (tw) => {
               const ms = tw.getValue() ?? 0;
               const m = moveMotion(ms, jump);
@@ -2168,6 +2219,7 @@ class BoardScene extends Phaser.Scene {
       if (!atk) continue;
       // 적 공격 직전 한 박자 — 누가 칠지 눈이 따라갈 틈 (D-204)
       if (atk.piece.side === 1) await this.wait(PACE.enemyLead);
+      const beat = BEAT[atk.piece.side === 1 ? 'foe' : 'mine'];
       const order = this.add
         .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(t * 0.4)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 4 })
         .setOrigin(0.5)
@@ -2198,11 +2250,11 @@ class BoardScene extends Phaser.Scene {
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
       const base = { x: atk.root.x, y: atk.root.y };
       // 세기(피해·처치)가 클수록 뛰어올라 모았다가 터뜨린다 (D-064)
-      // 박자 예산 (D-538): 공격 1회 ≤ FX_BUDGET.attack, 처치가 있으면 공격 연출을 FX_BUDGET.killFx로 줄이고 무너짐을 타격 순간부터 겹쳐 흘린다
+      // 박자 예산 (D-538 → D-620): 공격 1회 ≤ BEAT.attack, 처치가 있으면 공격 연출을 BEAT.killFx로 줄이고 무너짐을 타격 순간부터 겹쳐 흘린다
       const killing = e.hits.some((h) => h.killed && this.sprites.get(h.targetId)?.piece.type !== 'K');
       const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
-      killing ? FX_BUDGET.killFx : FX_BUDGET.attack);
+      killing ? beat.killFx : beat.attack);
       const t0 = this.time.now;
       const early: Promise<void>[] = [];
       fxTrace('attack', 0, killing ? 'kill' : 'hit');
@@ -2236,7 +2288,7 @@ class BoardScene extends Phaser.Scene {
           }
           // 처치 (D-538): 무너짐을 타격 순간부터 — 다음 공격 · 입력과 겹쳐 흘러도 된다. 킹은 마무리 연출이 따로 맡는다
           if (h.killed && ts.piece.type !== 'K' && ts.root.active) {
-            early.push(this.shatterPiece(ts, 1, 1, {}, FX_BUDGET.crumble));
+            early.push(this.shatterPiece(ts, 1, 1, {}, beat.crumble));
             ts.root.destroy();
             this.dropSprite(ts.piece.id);
           }
@@ -2264,15 +2316,15 @@ class BoardScene extends Phaser.Scene {
         // 킹 마무리 (D-180 → D-184): 적 킹은 금빛, 내 킹은 은빛으로 같은 문법 — 응축 → 폭발 → 왕관
         const king = deaths.find((s) => s.piece.type === 'K');
         const rest = deaths.filter((s) => s !== king);
-        const ashes = [...early, ...rest.filter((s) => s.root.active).map((s) => this.shatterPiece(s, 1, 1, {}, FX_BUDGET.crumble))];
+        const ashes = [...early, ...rest.filter((s) => s.root.active).map((s) => this.shatterPiece(s, 1, 1, {}, beat.crumble))];
         for (const s of rest) {
           if (!s.root.active) continue;
           s.root.destroy();
           this.dropSprite(s.piece.id);
         }
         if (king) await this.finisher(king, king.piece.side === 0);
-        // 처치 1회 ≤ FX_BUDGET.kill (예비 시작부터): 남은 무너짐은 다음 행동과 겹친다
-        else await Promise.race([Promise.all(ashes), this.after(Math.max(0, FX_BUDGET.kill - (this.time.now - t0)))]);
+        // 처치 1회 ≤ BEAT.kill (예비 시작부터, D-620): 남은 무너짐은 다음 행동과 겹친다
+        else await Promise.race([Promise.all(ashes), this.after(Math.max(0, beat.kill - (this.time.now - t0)))]);
         void Promise.all(ashes).then(() => fxTrace('crumbleEnd', this.time.now - t0));
       }
       fxTrace('attackEnd', this.time.now - t0);
@@ -2281,6 +2333,7 @@ class BoardScene extends Phaser.Scene {
       await this.wait(PACE.hitGap / this.tempo);
     }
     if (events.some((e) => e.type === 'gameOver')) await this.wait(400);
+    paceTrace('playEnd');
   }
 
   // ---------- 입력 ----------
@@ -2371,6 +2424,7 @@ export class BoardRenderer implements BoardView {
     this.scene.fxHook = this.boardFx;
     this.scene.announce = announce;
     this.scene.dpr = dpr;
+    this.scene.clearBg = 'clear' in host.dataset;
     this.scene.input2 = input;
     // 보드 위 글자(피해 숫자·순번)가 대체 글꼴로 먼저 그려지지 않게 갈무리를 먼저 불러 둔다
     const fonts = Promise.all([document.fonts.load('12px Galmuri11'), document.fonts.load('700 12px Galmuri11'), document.fonts.load('15px Galmuri14')]).catch(() => undefined);
@@ -2380,6 +2434,7 @@ export class BoardRenderer implements BoardView {
       type: Phaser.AUTO,
       parent: host,
       backgroundColor: '#110F15',
+      transparent: this.scene.clearBg,
       scale: { mode: Phaser.Scale.NONE, width: w * dpr, height: h * dpr, zoom: 1 / dpr },
       scene: this.scene,
       banner: false,
