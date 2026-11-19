@@ -1,11 +1,12 @@
-import { SFX_BANK, SFX_COMBO_MAX, SFX_DEDUPE_MS, SFX_VOICES, SFX_VOICES_PER_KIND, type SfxKind } from '../data/sfx';
+import { SFX_BANK, SFX_COMBO_MAX, SFX_DEDUPE_MS, SFX_EVENTS, SFX_VOICES, SFX_VOICES_PER_KIND, type SfxEvent, type SfxKind } from '../data/sfx';
+import { calmMotion } from '../prefs/motion';
 
 /**
  * 효과음 (D-540 — D-073의 칩튠 생성기를 대신한다): 주물 공방 소리 파일(`public/audio/sfx/`)을 WebAudio로 튼다.
  * 첫 소리 때 소리 장치를 만들고 모든 파일을 한꺼번에 받아 둔다 (아직 안 받은 소리는 건너뛴다).
  * 크기 · 끄기는 설정 창(D-530), 쉬기는 아래 IDLE_MS(D-537)를 그대로 따른다. 표는 `src/data/sfx.ts`.
  */
-export type { SfxKind } from '../data/sfx';
+export type { SfxEvent, SfxKind } from '../data/sfx';
 
 import { bgMuted } from './bg';
 import { loadAudio } from './file';
@@ -108,6 +109,8 @@ export const sfx = (kind: SfxKind, combo = 0): void => {
   if (typeof window === 'undefined') return;
   const d = SFX_BANK[kind];
   if (!d) return;
+  // 움직임에 붙은 소리는 움직임 줄이기면 뺀다 (D-630)
+  if (d.motion && calmMotion()) return;
   const a = audio();
   if (!a || !master) return;
   loadAll(a);
@@ -115,6 +118,11 @@ export const sfx = (kind: SfxKind, combo = 0): void => {
   const key = `${kind}:${combo}`;
   if (now - (last.get(key) ?? -1e9) < SFX_DEDUPE_MS) return;
   last.set(key, now);
+  // 같은 소리 간격 (D-630): 연달아 오면 건너뛴다 — 순번(combo)과 상관없이 이름 하나로 센다
+  if (d.gap) {
+    if (now - (last.get(kind) ?? -1e9) < d.gap) return;
+    last.set(kind, now);
+  }
   const v = d.n > 1 ? 1 + Math.floor(Math.random() * d.n) : 0;
   const b = bufs.get(v ? `${kind}${v}` : kind);
   if (!b) return;
@@ -137,6 +145,9 @@ export const sfx = (kind: SfxKind, combo = 0): void => {
   window.clearTimeout(idleT);
   idleT = window.setTimeout(() => void ctx?.suspend(), Math.max(IDLE_MS, (b.duration / src.playbackRate.value) * 1000 + 500));
 };
+
+/** 화면 사건 이름으로 효과음 (D-630 — 표는 `src/data/sfx.ts` SFX_EVENTS) */
+export const sfxFor = (ev: SfxEvent): void => sfx(SFX_EVENTS[ev]);
 
 /** 첫 누름에서 소리 장치를 깨우고 파일을 미리 받는다 — 첫 효과음이 빠지지 않게 */
 if (typeof window !== 'undefined') {
