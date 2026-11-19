@@ -1766,12 +1766,13 @@ const onEndInner = async (): Promise<void> => {
   if (turnDmg > 0 && betterHighlight(highlight, hl)) highlight = hl;
   if (prevKills >= 2) taunt('cheese');
   // 턴 합계 (Balatro식): 이번 턴 준 피해가 세어 올라간다
-  if (turnDmg > 0) await renderer.summary(0, turnDmg, prevKills);
+  // D-620: 합계(판 가운데)와 손패 버리기(왼쪽 레일)는 자리가 달라 함께 — 적 차례 앞 숨이 2.6초 → 합계 길이만큼
+  const tally = turnDmg > 0 ? renderer.summary(0, turnDmg, prevKills) : Promise.resolve();
   turnDmg = 0;
   prevKills = 0;
   renderer.setTempo(1);
   busy = true;
-  await discardHand($('hand'));
+  await Promise.all([tally, discardHand($('hand'))]);
   handView = [];
   enemyTurn = true;
   refresh();

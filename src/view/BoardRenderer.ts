@@ -1,7 +1,7 @@
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { vignette } from '../ui/juice';
 import { cbAid, shakeMul } from '../prefs/fx';
-import { PACE } from '../data/motion';
+import { BEAT, PACE } from '../data/motion';
 import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
 import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN, RAID_TEXT } from '../data/giants';
@@ -15,7 +15,7 @@ import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
-import { FX_BUDGET, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
+import { IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
 import { boardInset } from './boardInset';
@@ -99,6 +99,8 @@ export interface BoardInput {
 
 /** QA 박자 기록 (D-538): 창에 `__fxlog` 배열이 있을 때만 [이름, ms] — 녹화 도구가 공격 · 처치 길이를 잰다 */
 const fxTrace = (k: string, ms: number, note = ''): void => void (window as { __fxlog?: unknown[] }).__fxlog?.push([k, Math.round(ms), note]);
+/** QA 전투 박자 기록 (D-620): 창에 `__pace` 배열이 있을 때만 [벽시계 ms, 사건, 진영, 기물] — tools/qa/battle-pace.cjs가 수 하나 · 적 수 하나의 길이를 잰다 */
+const paceTrace = (k: string, side = -1, id = -1): void => void (window as { __pace?: unknown[] }).__pace?.push([Math.round(performance.now()), k, side, id]);
 
 /** 터치 기기 칸 최대 크기 (CSS px) */
 /** 깨진 심장 톱니 속 칠 (D-219): 흰 기물 팔레트 → 한 단계 어두운 쇠 색. 외곽선 #0b0b0e · 바깥 흰 테 #f4f1ea는 그대로 */
@@ -2028,7 +2030,12 @@ class BoardScene extends Phaser.Scene {
     // 예약 순서대로 이동 → 공격 (GDD 1장 §1.5), 이어서 다음 턴 시작 이벤트
     this.killStreak = 0;
     // 우리 게임은 무조건 한 명씩 차례대로 (D-217, 사용자 결정 — D-216 5의 겹쳐 움직이기는 되돌림)
+    paceTrace('play');
     for (const e of events) {
+      if (e.type === 'move' || e.type === 'attack') {
+        const id = e.type === 'move' ? e.pieceId : e.attackerId;
+        paceTrace(e.type, this.sprites.get(id)?.piece.side ?? -1, id);
+      } else paceTrace(e.type);
       if (e.type === 'collapse') {
         cur.fallen = [...(cur.fallen ?? []), ...e.tiles.map((p) => p.y * cur.width + p.x)];
         this.announce('바닥이 꺼진다 — 칸 한 쌍이 톱니 아래로');
@@ -2099,7 +2106,8 @@ class BoardScene extends Phaser.Scene {
           this.tweens.addCounter({
             from: 0,
             to: MOVE_TOTAL,
-            duration: MOVE_TOTAL / this.speed,
+            // 박자 예산 (D-620): 이동 한 번 ≤ BEAT.move — 웅크림 → 가속 → 착지 출렁 비율은 그대로
+            duration: Math.min(MOVE_TOTAL / this.speed, BEAT[s.piece.side === 1 ? 'foe' : 'mine'].move),
             onUpdate: (tw) => {
               const ms = tw.getValue() ?? 0;
               const m = moveMotion(ms, jump);
@@ -2197,6 +2205,7 @@ class BoardScene extends Phaser.Scene {
       if (!atk) continue;
       // 적 공격 직전 한 박자 — 누가 칠지 눈이 따라갈 틈 (D-204)
       if (atk.piece.side === 1) await this.wait(PACE.enemyLead);
+      const beat = BEAT[atk.piece.side === 1 ? 'foe' : 'mine'];
       const order = this.add
         .text(atk.root.x + t * 0.5, atk.root.y - t * 0.12, `#${e.order + 1}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: `${gpx(t * 0.4)}px`, color: '#C89B3C', stroke: '#16141C', strokeThickness: 4 })
         .setOrigin(0.5)
@@ -2227,11 +2236,11 @@ class BoardScene extends Phaser.Scene {
       const tiles = e.area.map((a) => ({ key: `${a.x},${a.y}`, ...this.center(a) }));
       const base = { x: atk.root.x, y: atk.root.y };
       // 세기(피해·처치)가 클수록 뛰어올라 모았다가 터뜨린다 (D-064)
-      // 박자 예산 (D-538): 공격 1회 ≤ FX_BUDGET.attack, 처치가 있으면 공격 연출을 FX_BUDGET.killFx로 줄이고 무너짐을 타격 순간부터 겹쳐 흘린다
+      // 박자 예산 (D-538 → D-620): 공격 1회 ≤ BEAT.attack, 처치가 있으면 공격 연출을 BEAT.killFx로 줄이고 무너짐을 타격 순간부터 겹쳐 흘린다
       const killing = e.hits.some((h) => h.killed && this.sprites.get(h.targetId)?.piece.type !== 'K');
       const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
-      killing ? FX_BUDGET.killFx : FX_BUDGET.attack);
+      killing ? beat.killFx : beat.attack);
       const t0 = this.time.now;
       const early: Promise<void>[] = [];
       fxTrace('attack', 0, killing ? 'kill' : 'hit');
@@ -2259,7 +2268,7 @@ class BoardScene extends Phaser.Scene {
           }
           // 처치 (D-538): 무너짐을 타격 순간부터 — 다음 공격 · 입력과 겹쳐 흘러도 된다. 킹은 마무리 연출이 따로 맡는다
           if (h.killed && ts.piece.type !== 'K' && ts.root.active) {
-            early.push(this.shatterPiece(ts, 1, 1, {}, FX_BUDGET.crumble));
+            early.push(this.shatterPiece(ts, 1, 1, {}, beat.crumble));
             ts.root.destroy();
             this.dropSprite(ts.piece.id);
           }
@@ -2287,15 +2296,15 @@ class BoardScene extends Phaser.Scene {
         // 킹 마무리 (D-180 → D-184): 적 킹은 금빛, 내 킹은 은빛으로 같은 문법 — 응축 → 폭발 → 왕관
         const king = deaths.find((s) => s.piece.type === 'K');
         const rest = deaths.filter((s) => s !== king);
-        const ashes = [...early, ...rest.filter((s) => s.root.active).map((s) => this.shatterPiece(s, 1, 1, {}, FX_BUDGET.crumble))];
+        const ashes = [...early, ...rest.filter((s) => s.root.active).map((s) => this.shatterPiece(s, 1, 1, {}, beat.crumble))];
         for (const s of rest) {
           if (!s.root.active) continue;
           s.root.destroy();
           this.dropSprite(s.piece.id);
         }
         if (king) await this.finisher(king, king.piece.side === 0);
-        // 처치 1회 ≤ FX_BUDGET.kill (예비 시작부터): 남은 무너짐은 다음 행동과 겹친다
-        else await Promise.race([Promise.all(ashes), this.after(Math.max(0, FX_BUDGET.kill - (this.time.now - t0)))]);
+        // 처치 1회 ≤ BEAT.kill (예비 시작부터, D-620): 남은 무너짐은 다음 행동과 겹친다
+        else await Promise.race([Promise.all(ashes), this.after(Math.max(0, beat.kill - (this.time.now - t0)))]);
         void Promise.all(ashes).then(() => fxTrace('crumbleEnd', this.time.now - t0));
       }
       fxTrace('attackEnd', this.time.now - t0);
@@ -2304,6 +2313,7 @@ class BoardScene extends Phaser.Scene {
       await this.wait(PACE.hitGap / this.tempo);
     }
     if (events.some((e) => e.type === 'gameOver')) await this.wait(400);
+    paceTrace('playEnd');
   }
 
   // ---------- 입력 ----------
