@@ -25,21 +25,30 @@ export const TOAST = { base: 1100, perChar: 45, max: 3200, queueMax: 3 };
  */
 /** enemyTempo (D-216 5): 적 차례 박자 ×1.25 — 적은 늘 한 명씩 차례대로 (D-217) */
 /** D-620 (사용자 결정 4나 — 넘기기 없이 빠르게): hitGap 320 → 50 · enemyLead 260 → 40 · enemyBannerHold 520 → 240 · turnHold 320 → 160 · afterMine 120 → 40 */
-export const PACE = { fx: 0.8, hitGap: 50, enemyLead: 40, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 240, turnHold: 160, afterMine: 40, enemyTempo: 1.25 } as const;
+/** D-680 (실기기: 「효과 보거나 타격감 누리기도 전에 끝난다」): 숨을 조금 되돌린다 — hitGap 50 → 100 · enemyLead 40 → 70 · afterMine 40 → 50 (띠 · 차례 숨은 그대로) */
+export const PACE = { fx: 0.8, hitGap: 100, enemyLead: 70, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 240, turnHold: 160, afterMine: 50, enemyTempo: 1.25 } as const;
 
 /**
- * 수 하나의 박자 예산 (D-620, 사용자 결정 4나: 「적 연출 넘기기는 넣지 않는다 — 대신 내 수 ≤ 1.2초 · 적 수 ≤ 0.8초」).
- * 측정 (tools/qa/battle-pace.cjs, 915×412 DPR 2.625): 내 수 중앙 2.53초 · 적 수 2.39초 · 적 차례 8.4초(최대 14초).
- * 이동 · 공격 연출은 지금 길이(MOVE_MS · FX_MS)를 이 상한 안으로 **비율 그대로** 줄인다 — 예비 → 터짐 → 출렁(D-180) 모양과
- * 프레임마다 정수 도트 위치(D-595)는 그대로, 시간만 짧아진다. 처치 무너짐은 다음 행동과 겹쳐 흐른다(D-538).
- * move = 이동 한 번 · attack = 처치 없는 공격 · killFx = 처치가 있는 공격 연출 · kill = 공격 시작 → 다음 행동까지 처치 상한 · crumble = 무너짐
- * target = 지킬 목표(시험 tests/pace.test.ts가 이 예산 합과 대조한다)
+ * 수 하나의 박자 예산 (D-620 → D-680). D-620은 모든 박자를 **비율 그대로** 줄여(내 수 2.05 → 0.93초) 타격 순간까지 같이 짧아졌다 —
+ * 실기기 피드백 「효과 보거나 타격감 누리기도 전에 걍 후다닥 끝나고 렉걸림」(D-680).
+ * 이제는 **이동(길)은 빠르게, 보상(웅크림 · 정지 · 터짐 · 숫자 · 흔들림 · 출렁)은 제 길이로** 나눈다:
+ *  · move = 이동 한 번의 구간별 벽시계 ms — crouch 웅크림(예비) · travel 날아감(길) · land 착지 출렁. 길만 크게 줄이고 웅크림 · 출렁은 D-180에 가깝게.
+ *  · attack · killFx = 공격 연출 상한. 넘치면 **첫 타격 앞(모으기 · 날아감)만** 줄이고 첫 타격 뒤(터짐 · 출렁)는 D-180 길이(1배속) 그대로 돈다
+ *    (src/view/attackFx.ts warpPlan). 모으기는 preMin 아래로 줄지 않는다.
+ *  · kill = 공격 시작 → 다음 행동까지 처치 상한(D-538 옛 1초 그대로 — 처치는 제 박자) · crumble = 무너짐(남으면 다음 행동과 겹친다)
+ *  · 타격 정지(히트스톱)는 이제 판 시계도 함께 멈춰 정지 시간만큼 박자에 **더해진다**(D-680 — 전에는 시계가 흘러 정지 중에 다음 행동이 겹쳤다).
+ * target = 지킬 목표 범위 [아래, 위] (시험 tests/pace.test.ts가 예산 합과 대조한다). 킹 마무리(D-180)는 예산 밖.
  */
 export const BEAT = {
-  mine: { move: 300, attack: 480, killFx: 420, kill: 620, crumble: 300 },
-  foe: { move: 200, attack: 300, killFx: 280, kill: 420, crumble: 240 },
-  target: { mine: 1200, foeMove: 800 },
+  mine: { move: { crouch: 140, travel: 80, land: 180 }, attack: 620, killFx: 640, kill: 1000, crumble: 600 },
+  foe: { move: { crouch: 90, travel: 60, land: 120 }, attack: 380, killFx: 400, kill: 680, crumble: 420 },
+  /** 공격 모으기(첫 타격 앞)의 최소 벽시계 ms — 60fps에서 10장 남짓 */
+  preMin: 170,
+  target: { mine: [1200, 1400], foeMove: [800, 900] },
 } as const;
+
+/** 이동 구간 예산 합 (ms) */
+export const moveBeat = (side: 'mine' | 'foe'): number => BEAT[side].move.crouch + BEAT[side].move.travel + BEAT[side].move.land;
 
 /**
  * 부드러움은 프레임 수와 곡선에서 (D-554 — D-216 · D-538을 고친다, 소유자 피드백 「전환이 뚝뚝 끊긴다」).

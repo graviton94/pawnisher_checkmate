@@ -9,7 +9,7 @@ import { PRELOAD } from '../data/preload-list';
 import { sfx, sfxFor } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
-import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
+import { CRUMBLE_MS, drawCrumble, drawLandPuff, moveMotion, moveWarp, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
 import { drawArrow, drawDropDot, drawGauge, drawHatch, gaugeSweep } from './marks';
 import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
@@ -756,6 +756,30 @@ class BoardScene extends Phaser.Scene {
     this.tile = Math.max(base, pc);
     this.drawTiles(state);
     this.fitCamera(true);
+    this.prewarmShards();
+  }
+
+  /**
+   * 처치 조각 미리 굽기 (D-680): 판에 선 기물 그림마다 보로노이 조각 텍스처를 쉬는 틈에 하나씩 만들어 둔다.
+   * 전에는 처치 순간에 그림 읽기(getImageData) · 조각 캔버스 14장 · 텍스처 올리기를 한꺼번에 해 그 프레임이 1 ~ 2초 멈췄다(CPU ×4).
+   */
+  private warmQueued = false;
+  private prewarmShards(): void {
+    if (this.warmQueued) return;
+    this.warmQueued = true;
+    const idle = (fn: () => void): void => {
+      const w = window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      if (w.requestIdleCallback) w.requestIdleCallback(fn, { timeout: 600 });
+      else window.setTimeout(fn, 60);
+    };
+    const step = (): void => {
+      if (!this.sys?.isActive()) return void (this.warmQueued = false);
+      const key = [...this.sprites.values()].map((sp) => sp.glyph.texture.key).find((k) => k && k !== '__MISSING' && !this.shardCache.has(k) && this.textures.exists(k));
+      if (!key) return void (this.warmQueued = false);
+      this.shardsOf(key, IMPACT.shards);
+      idle(step);
+    };
+    idle(step);
   }
 
   /** 그리기 차례 번호 · 딱지별 마지막으로 보인 차례 (D-538 상태 딱지 도장) */
@@ -1511,7 +1535,7 @@ class BoardScene extends Phaser.Scene {
   }
   /** 이동 한 번(들기 → 착지)의 지금 길이 ms — 판 밖 카드 FX가 착지에 맞춘다 (D-553) */
   get moveMsNow(): number {
-    return MOVE_TOTAL / this.speed;
+    return moveWarp(BEAT.mine.move, this.speed).wall;
   }
   /** 템포 가속 (연쇄가 쌓일수록 연출이 빨라진다 — 레퍼런스 5권 원리 10, D-156). 1 = 기본 */
   tempo = 1;
@@ -1554,8 +1578,7 @@ class BoardScene extends Phaser.Scene {
       const chainMul = Math.min(IMPACT.chain.max, 1 + IMPACT.chain.k * this.killStreak);
       const heavyHit = !h.killed && dealt / ts.piece.maxHp >= IMPACT.heavy.heavyAt;
       const stop = h.killed ? (ts.piece.type === 'K' ? S.king : S.kill * chainMul) : Math.min(S.max, S.min + (dealt / ts.piece.maxHp) * (S.max - S.min) * 2) * (heavyHit ? 2 : 1);
-      this.tweens.timeScale = 0.05;
-      window.setTimeout(() => (this.tweens.timeScale = 1), stop);
+      this.hitStop(stop);
     }
     if (h.killed) this.killStreak++;
     // 강타 (D-184): 붉은 컷 한 프레임 · 가장자리 붉은 맥 두 번
@@ -1643,7 +1666,8 @@ class BoardScene extends Phaser.Scene {
     const cv = document.createElement('canvas');
     cv.width = W;
     cv.height = H;
-    const cx0 = cv.getContext('2d')!;
+    // 읽기 전용 CPU 캔버스 (D-680): 가속 캔버스의 getImageData는 GPU를 기다려 처치 순간 한 프레임이 1초 넘게 멈췄다
+    const cx0 = cv.getContext('2d', { willReadFrequently: true })!;
     cx0.drawImage(src, 0, 0);
     const data = cx0.getImageData(0, 0, W, H).data;
     let x0 = W, x1 = 0, y0 = H, y1 = 0;
@@ -1730,6 +1754,25 @@ class BoardScene extends Phaser.Scene {
 
   /** 같은 턴 처치 수 (연쇄 정지가 길어진다, D-184) */
   private killStreak = 0;
+
+  /**
+   * 타격 정지 (D-142 → D-680): 연출(트윈)과 판 시계(delayedCall · after)를 **함께** 멈춘다 — 정지 시간만큼 박자가 길어진다.
+   * 전에는 트윈만 멈추고 시계는 흘러, 정지 중에 다음 행동이 시작되거나 공격 연출이 다음 이동과 겹쳤다.
+   * 겹친 정지는 가장 늦은 끝까지 한 번에 (먼저 끝난 정지가 남의 정지를 풀지 않게).
+   */
+  private stopUntil = 0;
+  private hitStop(ms: number): void {
+    const end = performance.now() + ms;
+    if (end <= this.stopUntil) return;
+    this.stopUntil = end;
+    this.tweens.timeScale = 0.05;
+    this.time.timeScale = 0.05;
+    window.setTimeout(() => {
+      if (performance.now() + 1 < this.stopUntil) return;
+      this.tweens.timeScale = 1;
+      this.time.timeScale = 1;
+    }, ms);
+  }
 
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
   bossFinish = false;
@@ -1981,7 +2024,7 @@ class BoardScene extends Phaser.Scene {
     const N = 200; // 도트당 10px로 그려서 가운데를 읽는다
     const cv = document.createElement('canvas');
     cv.width = cv.height = N;
-    const g = cv.getContext('2d')!;
+    const g = cv.getContext('2d', { willReadFrequently: true })!;
     g.imageSmoothingEnabled = false;
     const box = this.pieceBox(key);
     const s = (N * box.size) / this.tile;
@@ -2115,14 +2158,15 @@ class BoardScene extends Phaser.Scene {
         const ghosts = this.calm ? [] : IMPACT.ghosts.map(() => this.add.image(0, 0, this.artKey(s.piece.type, s.piece.side, { form: s.piece.form })).setTintFill(0xffffff).setDepth(2.4).setVisible(false));
         const trail: { x: number; y: number }[] = [];
         let landAt = -1;
+        // 박자 (D-620 → D-680): 날아가는 길만 빠르게, 웅크림(예비) · 착지 출렁은 제 길이에 가깝게 — 구간마다 따로 편다
+        const mw = moveWarp(BEAT[s.piece.side === 1 ? 'foe' : 'mine'].move, this.speed);
         await new Promise<void>((done) =>
           this.tweens.addCounter({
             from: 0,
-            to: MOVE_TOTAL,
-            // 박자 예산 (D-620): 이동 한 번 ≤ BEAT.move — 웅크림 → 가속 → 착지 출렁 비율은 그대로
-            duration: Math.min(MOVE_TOTAL / this.speed, BEAT[s.piece.side === 1 ? 'foe' : 'mine'].move),
+            to: mw.wall,
+            duration: mw.wall,
             onUpdate: (tw) => {
-              const ms = tw.getValue() ?? 0;
+              const ms = mw.at(tw.getValue() ?? 0);
               const m = moveMotion(ms, jump);
               this.applyPose(s, from.x + (w.x - from.x) * m.p, from.y + (w.y - from.y) * m.p, m.pose);
               g.clear();
@@ -2254,7 +2298,7 @@ class BoardScene extends Phaser.Scene {
       const killing = e.hits.some((h) => h.killed && this.sprites.get(h.targetId)?.piece.type !== 'K');
       const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
-      killing ? beat.killFx : beat.attack);
+      killing ? beat.killFx : beat.attack, BEAT.preMin);
       const t0 = this.time.now;
       const early: Promise<void>[] = [];
       fxTrace('attack', 0, killing ? 'kill' : 'hit');
