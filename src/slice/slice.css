@@ -1119,8 +1119,24 @@ body.slice.lay-f .gtop .turn-label .th-cog { animation: gearsMini16 1.2s steps(1
   100% { transform: none; text-shadow: 3px 3px 0 #000; }
 }
 
-.bossfx.out { animation: bfOut 400ms steps(1) forwards; }
-@keyframes bfOut { 0% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); } 25% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 50% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 75%, 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 6.25% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 12.5% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 18.75% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 31.25% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 37.5% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 43.75% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 56.25% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 62.5% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 68.75% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
+.bossfx.out { animation: bfOut 320ms steps(4, jump-end) forwards; }
+/* D-690 (D-675 디더 금지): 걷힘 = 위아래에서 가운데로 4계단 접힌다 (옛 디더 마스크 대신) */
+@keyframes bfOut { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(50% 0 50% 0); } }
+/* D-690 반장 등장 다시 짜기 (/game-ui-design: 분류 = 전면 표지 컷(모달 아님 · 누르면 넘어감)):
+   ① 뒤 판 = 반장 색 어두운 단색 사선 판(초상 뒤) — 오른쪽에서 4계단 와이프 ② 위 띠 아래 경보 띠(받은 CI-01 p2-tile 3프레임)에 막 꼬리표
+   ③ 초상 = 사선으로 잘린 왼쪽 가장자리 + 반장 색 테(bossintro.slantEdge) ④ 이름 · 칭호 · 수배판은 왼쪽 단 그대로 */
+.bossfx .bf-slab { position: absolute; right: 0; top: calc(16 * var(--vh, 1vh)); bottom: 0; width: var(--slab-w, 52%); background: var(--slab, #2a1410); clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%); visibility: hidden; }
+.bossfx .bf-slab::before { content: ''; position: absolute; inset: 0; background: var(--accent); clip-path: polygon(22% 0, calc(22% + 6px) 0, 6px 100%, 0 100%); }
+.bossfx.bars .bf-slab { visibility: visible; animation: bfSlab 240ms steps(4, jump-end) both; }
+@keyframes bfSlab { from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); } to { clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%); } }
+.bossfx .bf-haz { position: absolute; z-index: 3; left: 0; right: 0; top: calc(16 * var(--vh, 1vh)); visibility: hidden; clip-path: inset(0 100% 0 0); }
+.bossfx .bf-haz > span { color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
+.bossfx.port .bf-haz { visibility: visible; animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 200ms steps(5, jump-end) forwards; }
+.bossfx.calm .bf-haz, .bossfx.calm.bars .bf-slab { animation: none; clip-path: none; }
+.bossfx.calm .bf-slab { clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%); }
+.bossfx.kit .bf-text { top: calc(16 * var(--vh, 1vh) + var(--px) * 16 + var(--s2)); }
+.bossfx .bf-haz { --d: var(--px); }
+@media (max-height: 411px) { .bossfx.kit .bf-text { top: calc(16 * var(--vh, 1vh) + var(--px) * 16); } }
 
 /* 보상 바퀴 (D-251): 장면 위 황동 창, 한 칸 72px, 결과에 서면 창이 번쩍 */
 

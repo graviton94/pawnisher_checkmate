@@ -15,6 +15,8 @@ import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, dmgFont, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
+import { BOSS_RAGE, BOSS_STRIKE } from '../data/boss-look';
+import { risenIds } from './bossphase';
 import { HP_BAR, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
@@ -341,6 +343,8 @@ class BoardScene extends Phaser.Scene {
   foeTone: string = '';
   /** 반장 판 (D-249): plate · spawn · thorns — 전용 칸 · 기물 색 */
   bossRule = '';
+  /** 반장 2단계 (D-690): 판 칸을 진홍 쪽으로 곱한다 */
+  rage = false;
   /** 판 위 도트 FX 층 (D-249) */
   fxHook?: BoardFx;
   /** 막 번호 (1~3) — 막마다 판 색조가 다르다 (0이면 기본 철판) */
@@ -663,7 +667,17 @@ class BoardScene extends Phaser.Scene {
       this.tweens.add({ targets: r, alpha: { from: 0, to: alpha }, delay, duration: 60, ease: 'Stepped', easeParams: [2] });
       this.tweens.add({ targets: r, alpha: 0, delay: delay + life, duration: 160, ease: 'Stepped', easeParams: [3] });
     };
-    if (kind === 'slam') {
+    const bossBody = kind === 'slam' && this.bossRule && this.fxHook ? this.state.pieces.filter((q) => q.giant?.boss && q.side === 1) : [];
+    if (bossBody.length && this.fxHook) {
+      // 반장 내리찍기 (D-690): 반장마다 다른 모양 — 예비 소리 → 터짐(흔들림 · 터짐 소리) · 2단계면 진홍 + 큰 흔들림
+      const rule = this.bossRule as keyof typeof BOSS_STRIKE.sound;
+      const snd = BOSS_STRIKE.sound[rule] ?? BOSS_STRIKE.sound.plate;
+      const rage = bossBody.some((q) => q.giant?.rage);
+      sfx(snd.wind);
+      await this.fxHook.bossStrike(rule, bossBody.map((q) => ({ x: q.x, y: q.y })), cells, rage, BOSS_STRIKE.ms() / this.speed);
+      sfx(snd.hit);
+      this.shakeLv(rage ? 3 : 2);
+    } else if (kind === 'slam') {
       // 거대 주물 내리찍기 (D-484): 예고 칸이 앞에서부터 계단으로 쾅 — 쇳물 주황 판 + 노란 속 + 큰 흔들림
       sfx('crit');
       cells.forEach((q, i) => {
@@ -827,6 +841,8 @@ class BoardScene extends Phaser.Scene {
         const suf = this.bossRule ? `-b${this.bossRule}` : this.act ? `-a${this.act}` : '';
         put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? `tile-dark${suf}` : `tile-light${suf}`, w.x, w.y);
       }
+    // 2단계 판 색 (D-690): 칸 그림에 단색 곱하기 — 그라데이션 · 디더 없이 팔레트만 진홍 쪽으로
+    if (this.rage) for (const im of this.tilesC.list as Phaser.GameObjects.Image[]) im.setTint(BOSS_RAGE.tileTint);
     for (const p of this.lastMoves) {
       const w = this.world(p);
       put(this.tilesC, 'last-move', w.x, w.y);
@@ -1739,6 +1755,30 @@ class BoardScene extends Phaser.Scene {
    * 심이 커지고, 끝에 하얗게 달아오른다 → 하얀 조각으로 터진다(보로노이) → 왕관이 솟았다 떨어져 두 번 튄다. 반장이면 영화 띠.
    * mine = 내 킹 (같은 문법, 은빛 · 흔들림 2/3 — 덜 아프게)
    */
+  /**
+   * 반장 1단계 쓰러짐 = 무릎 꿇음 (D-690): 격파(finisher — 레터박스 · 응축 · 왕관)가 아니다. 히트스톱 → 흰 실루엣 2프레임 →
+   * 몸이 2도트씩 계단으로 주저앉고(예비 없이 푹) 진홍으로 식은 채 남는다. 곧 2단계 컷인이 판을 덮고, 판은 다시 선 반장으로 새로 그려진다.
+   */
+  private async kneel(s: PieceSprite): Promise<void> {
+    const t = this.tile, d = t / BOARD_DOTS;
+    sfx('crit');
+    // 히트스톱: 맞은 자리에서 90ms 멈춘다
+    await this.after(90 / this.speed);
+    s.glyph.setTintFill(0xffffff);
+    await this.after(70 / this.speed);
+    s.glyph.clearTint().setTint(0xc42430);
+    this.shakeLv(3);
+    if (!this.calm) {
+      const y0 = s.root.y;
+      for (let i = 1; i <= 3; i++) {
+        s.root.y = y0 + Math.round(i * 2) * d;
+        await this.after(50 / this.speed);
+      }
+      s.root.y = y0 + 5 * d;
+    }
+    await this.after(Math.max(0, BEAT.foe.killFx - 220) / this.speed);
+  }
+
   private async finisher(s: PieceSprite, mine = false): Promise<void> {
     const t = this.tile;
     const F = IMPACT.finisher;
@@ -2035,8 +2075,9 @@ class BoardScene extends Phaser.Scene {
     for (const o of this.dynamic) o.destroy();
     this.dynamic = [];
     this.combo = 0;
-    const over = events.find((e) => e.type === 'gameOver') as Extract<BattleEvent, { type: 'gameOver' }> | undefined;
-    if (over) this.time.delayedCall(200, () => sfx(over.winner === 0 ? 'win' : 'lose'));
+    // 승패 소리는 승패 띠(koBanner)가 한 번만 낸다 (D-690 — 판이 200ms 뒤 한 번, 띠가 또 한 번: 끝 소리가 두 번 겹쳤다)
+    // 반장 1단계 쓰러짐(같은 id로 다시 선다)은 킹 마무리 대신 무릎 꿇음 (bossphase.ts)
+    const risen = risenIds(events);
     const t = this.tile;
     // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
     const cur: BattleState = { ...this.state };
@@ -2322,7 +2363,8 @@ class BoardScene extends Phaser.Scene {
           s.root.destroy();
           this.dropSprite(s.piece.id);
         }
-        if (king) await this.finisher(king, king.piece.side === 0);
+        if (king && risen.has(king.piece.id)) await this.kneel(king);
+        else if (king) await this.finisher(king, king.piece.side === 0);
         // 처치 1회 ≤ BEAT.kill (예비 시작부터, D-620): 남은 무너짐은 다음 행동과 겹친다
         else await Promise.race([Promise.all(ashes), this.after(Math.max(0, beat.kill - (this.time.now - t0)))]);
         void Promise.all(ashes).then(() => fxTrace('crumbleEnd', this.time.now - t0));
@@ -2569,6 +2611,16 @@ export class BoardRenderer implements BoardView {
   setStaggered(ids: number[], shocked: number[] = []): void {
     this.scene.staggeredIds = ids;
     this.scene.shockedIds = shocked;
+  }
+  /**
+   * 반장 2단계 판 (D-690 — 지속): 판 칸 색을 진홍 쪽으로 곱해(단색 곱하기 — 밝기 차는 그대로) 다시 깔고,
+   * 판 위 도트 층에 경고 띠 · 반장 꺾쇠 · 2단계 예고 꺾쇠. null = 끔
+   */
+  setRage(r: { boss: Pos[]; aim: Pos[] } | null): void {
+    const was = this.scene.rage;
+    this.scene.rage = !!r;
+    this.boardFx.setRage(r);
+    if (was !== !!r && this.scene.state) this.scene.drawTiles(this.scene.state);
   }
   /** 새 반장 표식 (D-274): 불량 도장 찍힌 기물 · 자석에 끌려갈 기물 — setup 전에 */
   setBossMarks(stampId: number | null, pullId: number | null): void {

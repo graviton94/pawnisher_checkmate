@@ -3,7 +3,7 @@
  * 파일은 `public/audio/music/<file>.ogg|m4a` (`tools/audio/bgm_game.py`가 찍는다 — 자체 작곡 · A · B · D는 FluidR3_GM 렌더, C1은 자체 칩 합성, 90초 넘는 이음매 없는 루프).
  * 같은 파일을 쓰는 장면끼리(타이틀 → 지도)는 곡을 다시 틀지 않고 거름 · 속도 · 크기만 바꾼다.
  */
-export type TrackId = 'menu' | 'map' | 'workshop' | 'act1' | 'act2' | 'act3' | 'check' | 'boss' | 'final' | 'ending';
+export type TrackId = 'menu' | 'map' | 'workshop' | 'act1' | 'act2' | 'act3' | 'check' | 'boss' | 'boss2' | 'final' | 'final2' | 'ending';
 
 /** 곡 파일 이름 (확장자 없이) */
 export type MusicFile = 'waltz' | 'anvil' | 'anvil-boss' | 'crown' | 'crown-final' | 'gear' | 'gear-boss';
@@ -35,8 +35,11 @@ export const TRACKS: Record<TrackId, TrackDef> = {
   check: { file: 'gear-boss', rate: 1, lowpass: 0, gain: 1 },
   // 반장전 · 레이드: A 반장 변주
   boss: { file: 'anvil-boss', rate: 1, lowpass: 0, gain: 1 },
+  // 반장 2단계 (D-690): 같은 곡을 반음 위 · 6% 빠르게 — 파일이 같아 다시 틀지 않고 속도만 바뀐다
+  boss2: { file: 'anvil-boss', rate: SEMI, lowpass: 0, gain: 1 },
   // 도금왕: D 긴장 변주
   final: { file: 'crown-final', rate: 1, lowpass: 0, gain: 1 },
+  final2: { file: 'crown-final', rate: SEMI, lowpass: 0, gain: 1 },
   // 왕관 장면 · 결말 · 크레딧 · 출하 끝: D 녹슨 왕관
   ending: { file: 'crown', rate: 1, lowpass: 0, gain: 1 },
 };
