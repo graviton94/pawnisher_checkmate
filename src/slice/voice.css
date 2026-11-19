@@ -109,13 +109,9 @@
 }
 .ap-fly > img { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
 
-@keyframes p2flash { 0% { visibility: visible; } 30%, 100% { visibility: hidden; } }
-:root[data-noflash="1"] .p2-flash { display: none; }
-body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }
+/* 반장 2단계 예고 · 컷인 · 판 테는 phase2.css (D-690) */
 @media (prefers-reduced-motion: reduce) {
   .vbark.k-in, .vsub.k-in, .vmono.k-in { animation: none; }
-  .p2-band { animation: none; clip-path: none; }
-  .p2-flash { display: none; }
 }
 
 /* 사건 대사 칸 (#16 · D-490 · D-506 → D-571 세 칸 격자, 배치는 kit.css): 이름 = 초상 아래 맨 글 — NPC = 금빛, 종이왕 = 청록(우리 편) · 종이왕 줄은 금빛 글.
@@ -126,3 +122,5 @@ body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset
   background: url('../assets/ui/chrome/v2/portrait-ally.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; image-rendering: pixelated; }
 .win-scene .ws-say .ws-face.ws-npc { background: url('../assets/ui/chrome/v2/portrait-npc.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; }
 .win-scene .ws-say .ws-face > img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+/* 분대원 기물 얼굴 (D-700): 기물 그림은 자르지 않고 액자 안에 비율 그대로 */
+.win-scene .ws-say .ws-face.ws-crew > img { object-fit: contain; }

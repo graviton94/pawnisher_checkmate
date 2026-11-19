@@ -1,6 +1,6 @@
 // UI 통일성 전수 점검 (D-262): 본편의 화면 · 팝업 · 안내창 · 띠 · 토스트를 장면마다 새 페이지로 찍는다 (915×412, 1배).
 // 사용: (빌드 · 미리보기 후) node tools/artguide/ui-audit.cjs <출력 폴더> [장면 이름 걸러내기]   — 미리보기 포트는 PORT=4180 처럼 (기본 4173)
-const BASE = `http://localhost:${process.env.PORT || 4173}/?debug`;
+const BASE = `http://localhost:${process.env.PORT || 4173}/?debug${process.env.OBSERVE_LANG ? `&lang=${process.env.OBSERVE_LANG}` : ''}`; // OBSERVE_LANG=en|ko (D-670)
 const { chromium } = require('playwright');
 const textAudit = require('../qa/text-audit.cjs');
 const out = process.argv[2] || 'ui-audit';

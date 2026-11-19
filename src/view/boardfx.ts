@@ -7,8 +7,9 @@
 import { lay, layRect } from './vz';
 import { lessFlash } from '../prefs/fx';
 import { calmMotion } from '../prefs/motion';
-import { FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE, bayer } from './pxfx';
+import { FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from './pxfx';
 import type { Pos } from '../engine';
+import { drawRage, drawStrike, HIT, strikeSpark, type StrikeRule, type StrikeShape } from './bossstrike';
 
 const D = 3;
 
@@ -70,7 +71,7 @@ export class BoardFx {
         this.tickB = null;
       }
       // 반장 판이 아니고 입자도 없으면 쉰다 (다음 기믹이 깨운다)
-      if (!this.rule && !this.ps.list.length && !this.lights.list.length && this.flash <= 0) { this.fx.frame.clear(); this.fx.present(); this.running = false; return; }
+      if (!this.rule && !this.rage && !this.strikes.length && !this.ps.list.length && !this.lights.list.length && this.flash <= 0) { this.fx.frame.clear(); this.fx.present(); this.running = false; return; }
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -135,7 +136,7 @@ export class BoardFx {
       if (ph < 1) {
         const y = B.y0 + Math.floor((ph * (B.y1 - B.y0)) / 2) * 2;
         p.line(B.x0, y, B.x1, y, PAL.toxic[6], 0.8);
-        for (let x = B.x0; x < B.x1; x++) if (bayer(Math.floor(x), Math.floor(y) + 1) < 0.35) p.px(x, y + 1, PAL.toxic[4]);
+        p.line(B.x0, y + 1, B.x1, y + 1, PAL.toxic[4]); // 아래 꼬리 한 줄 (D-675: 베이어 점 무늬 대신 단색)
         p.glowLine(B.x0, y, B.x1, y, 4, PAL.toxic[5], 0.35);
       }
     } else if (this.rule === 'alarm') {
@@ -152,11 +153,52 @@ export class BoardFx {
       const i = Math.floor(this.t * 0.8) % 4, k = (this.t * 0.8) % 1;
       if (k < 0.3) p.sparkle(corners[i][0], corners[i][1], 2 + (k < 0.15 ? 1 : 0), PAL.blood[5], PAL.blood[3], 0.4);
     }
+    // 2단계 판 표지 (D-690 — 지속, 칸 속은 덮지 않는다)
+    if (this.rage) {
+      const td = this.tileDots();
+      const box = this.rage.boss.length ? this.rage.boss.map((q) => this.dot(q)) : null;
+      const bb = box ? { x0: Math.min(...box.map((c) => c.x)) - td / 2, y0: Math.min(...box.map((c) => c.y)) - td / 2, x1: Math.max(...box.map((c) => c.x)) + td / 2, y1: Math.max(...box.map((c) => c.y)) + td / 2 } : null;
+      drawRage(p, this.t, B, bb, this.rage.aim.map((q) => { const c = this.dot(q); return { cx: c.x, cy: c.y }; }), td, calmMotion());
+    }
     this.ps.draw(p, 'back');
+    // 반장 내리찍기 (D-690): 박자 k를 벽시계로 — 프레임마다 정수 도트 자리
+    const now = performance.now();
+    for (let i = this.strikes.length - 1; i >= 0; i--) {
+      const st = this.strikes[i], k = (now - st.t0) / st.ms;
+      if (k >= 1) { this.strikes.splice(i, 1); continue; }
+      if (k >= HIT && !st.hit) {
+        st.hit = true;
+        const col = strikeSpark(st.shape.rule, st.shape.rage);
+        for (const c of st.shape.cells) this.ps.burst(c.cx, c.cy, 10, [60, 160], P.SPARK, [0.2, 0.45], col, 30);
+      }
+      if (k > 0) drawStrike(p, st.shape, k);
+    }
     this.ps.draw(p, 'front');
     this.lights.draw(p);
     if (this.flash > 0 && !lessFlash()) p.rect(0, 0, fx.w, fx.h, WHITE, Math.min(0.8, this.flash * 10));
     fx.present();
+  }
+  /** 2단계 표지 (반장 몸 칸 · 2단계 예고 칸). null = 끔 */
+  private rage: { boss: Pos[]; aim: Pos[] } | null = null;
+  setRage(r: { boss: Pos[]; aim: Pos[] } | null): void {
+    this.rage = r;
+    if (r) this.wake();
+  }
+  private strikes: { t0: number; ms: number; shape: StrikeShape; hit: boolean }[] = [];
+  /**
+   * 반장 내리찍기 (D-690): 반장마다 다른 모양 — 박자 ms(BOSS_STRIKE) 안에 예비 → 터짐 → 출렁. 터지는 순간까지 기다렸다 풀린다
+   * (판이 그때 흔들림 · 맞음을 낸다). 움직임 줄이기면 터짐 장면만 짧게.
+   */
+  async bossStrike(rule: StrikeRule, body: Pos[], cells: Pos[], rage: boolean, ms: number): Promise<void> {
+    this.wake();
+    const td = this.tileDots();
+    const pts = body.map((q) => this.dot(q));
+    const from = pts.length ? { x: pts.reduce((a, c) => a + c.x, 0) / pts.length, y: pts.reduce((a, c) => a + c.y, 0) / pts.length } : this.dot(cells[0]);
+    const shape: StrikeShape = { rule, from, cells: cells.map((q) => { const c = this.dot(q); return { cx: c.x, cy: c.y }; }), td, rage };
+    const calm = calmMotion();
+    const st = { t0: performance.now() - (calm ? ms * HIT : 0), ms, shape, hit: false };
+    this.strikes.push(st);
+    await new Promise((r) => window.setTimeout(r, calm ? ms * (1 - HIT) * 0.5 : ms * HIT));
   }
   private wake(): void { this.start(); }
 

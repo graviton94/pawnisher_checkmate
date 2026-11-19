@@ -9,13 +9,17 @@ import { PRELOAD } from '../data/preload-list';
 import { sfx, sfxFor } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
-import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
+import { CRUMBLE_MS, drawCrumble, drawLandPuff, moveMotion, moveWarp, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
 import { drawArrow, drawDropDot, drawGauge, drawHatch, gaugeSweep } from './marks';
 import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, dmgFont, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
+import { BOSS_RAGE, BOSS_STRIKE } from '../data/boss-look';
+import { risenIds } from './bossphase';
 import { HP_BAR, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
+import { renderScale } from './renderscale';
+import { boardFast, boardResPref, markAutoSlow, onBoardRes } from '../prefs/boardres';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
 import { boardInset } from './boardInset';
@@ -165,19 +169,15 @@ const drawGiantFrame = (pen: PixelPen, x: number, y: number): void => {
 /** 판 열 위 · 아래 자리 (boardInset.ts — Phaser 없이 본편 HUD가 먼저 정할 수 있게 따로 둔다) */
 export { setBoardTopInset } from './boardInset';
 /**
- * 판을 그리는 배율 (D-240 상한 → D-525 정수 늘림): 캔버스 한 픽셀이 기기 픽셀 정수 개로 늘어나야 도트 · 바 · 테 줄이 고르다.
- * 기기 배율이 상한(RENDER.dprCap)을 넘으면 기기 배율을 정수로 나눈 값 중 상한 이하 · 하한(RENDER.dprMin) 이상을 쓰고,
- * 그런 값이 없으면(2.625 같은 소수 배율) 기기 배율 그대로 그린다 — 예전에는 2로 그려 1.3125배로 늘리느라 줄이 한 픽셀씩 들쭉날쭉했다.
+ * 판을 그리는 배율 (src/view/renderscale.ts — D-240 · D-525 · D-665 판 선명도). 측정 손잡이 (D-595, 개발 빌드만):
+ * ?boardscale=<나눌 정수> — 판 채우기 비용 비교용(2 = 기기 배율 절반 · ×2 정수 늘림) · ?boardres=auto|sharp|fast — 설정 대신. 출시 빌드에는 없다
  */
-const renderScale = (dpr: number): number => {
-  // 측정 손잡이 (D-595, 개발 빌드만): ?boardscale=<나눌 정수> — 판 채우기 비용 비교용(2 = 기기 배율 절반 · ×2 정수 늘림). 출시 빌드에는 없다
-  if (import.meta.env.MODE !== 'release' && typeof location !== 'undefined') {
-    const m = Number(new URLSearchParams(location.search).get('boardscale'));
-    if (m >= 1 && m <= 4) return dpr / Math.round(m);
-  }
-  if (dpr <= RENDER.dprCap) return dpr;
-  for (let m = 2; dpr / m >= RENDER.dprMin; m++) if (dpr / m <= RENDER.dprCap) return dpr / m;
-  return dpr;
+const devQ = (k: string): string | null => (import.meta.env.MODE !== 'release' && typeof location !== 'undefined' ? new URLSearchParams(location.search).get(k) : null);
+const boardScaleNow = (dpr: number): number => {
+  const m = Number(devQ('boardscale'));
+  if (m >= 1 && m <= 4) return dpr / Math.round(m);
+  const q = devQ('boardres');
+  return renderScale(dpr, q === 'fast' || (q !== 'sharp' && boardFast()));
 };
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // D-429: 네 대표 규격으로 크기를 정한다. PC/태블릿을 폰의 54px 상한으로 제한하지 않는다.
@@ -341,6 +341,8 @@ class BoardScene extends Phaser.Scene {
   foeTone: string = '';
   /** 반장 판 (D-249): plate · spawn · thorns — 전용 칸 · 기물 색 */
   bossRule = '';
+  /** 반장 2단계 (D-690): 판 칸을 진홍 쪽으로 곱한다 */
+  rage = false;
   /** 판 위 도트 FX 층 (D-249) */
   fxHook?: BoardFx;
   /** 막 번호 (1~3) — 막마다 판 색조가 다르다 (0이면 기본 철판) */
@@ -663,7 +665,17 @@ class BoardScene extends Phaser.Scene {
       this.tweens.add({ targets: r, alpha: { from: 0, to: alpha }, delay, duration: 60, ease: 'Stepped', easeParams: [2] });
       this.tweens.add({ targets: r, alpha: 0, delay: delay + life, duration: 160, ease: 'Stepped', easeParams: [3] });
     };
-    if (kind === 'slam') {
+    const bossBody = kind === 'slam' && this.bossRule && this.fxHook ? this.state.pieces.filter((q) => q.giant?.boss && q.side === 1) : [];
+    if (bossBody.length && this.fxHook) {
+      // 반장 내리찍기 (D-690): 반장마다 다른 모양 — 예비 소리 → 터짐(흔들림 · 터짐 소리) · 2단계면 진홍 + 큰 흔들림
+      const rule = this.bossRule as keyof typeof BOSS_STRIKE.sound;
+      const snd = BOSS_STRIKE.sound[rule] ?? BOSS_STRIKE.sound.plate;
+      const rage = bossBody.some((q) => q.giant?.rage);
+      sfx(snd.wind);
+      await this.fxHook.bossStrike(rule, bossBody.map((q) => ({ x: q.x, y: q.y })), cells, rage, BOSS_STRIKE.ms() / this.speed);
+      sfx(snd.hit);
+      this.shakeLv(rage ? 3 : 2);
+    } else if (kind === 'slam') {
       // 거대 주물 내리찍기 (D-484): 예고 칸이 앞에서부터 계단으로 쾅 — 쇳물 주황 판 + 노란 속 + 큰 흔들림
       sfx('crit');
       cells.forEach((q, i) => {
@@ -756,6 +768,30 @@ class BoardScene extends Phaser.Scene {
     this.tile = Math.max(base, pc);
     this.drawTiles(state);
     this.fitCamera(true);
+    this.prewarmShards();
+  }
+
+  /**
+   * 처치 조각 미리 굽기 (D-680): 판에 선 기물 그림마다 보로노이 조각 텍스처를 쉬는 틈에 하나씩 만들어 둔다.
+   * 전에는 처치 순간에 그림 읽기(getImageData) · 조각 캔버스 14장 · 텍스처 올리기를 한꺼번에 해 그 프레임이 1 ~ 2초 멈췄다(CPU ×4).
+   */
+  private warmQueued = false;
+  private prewarmShards(): void {
+    if (this.warmQueued) return;
+    this.warmQueued = true;
+    const idle = (fn: () => void): void => {
+      const w = window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      if (w.requestIdleCallback) w.requestIdleCallback(fn, { timeout: 600 });
+      else window.setTimeout(fn, 60);
+    };
+    const step = (): void => {
+      if (!this.sys?.isActive()) return void (this.warmQueued = false);
+      const key = [...this.sprites.values()].map((sp) => sp.glyph.texture.key).find((k) => k && k !== '__MISSING' && !this.shardCache.has(k) && this.textures.exists(k));
+      if (!key) return void (this.warmQueued = false);
+      this.shardsOf(key, IMPACT.shards);
+      idle(step);
+    };
+    idle(step);
   }
 
   /** 그리기 차례 번호 · 딱지별 마지막으로 보인 차례 (D-538 상태 딱지 도장) */
@@ -795,22 +831,10 @@ class BoardScene extends Phaser.Scene {
     this.time.delayedCall(50, () => im.active && im.setScale(sx, sy).setPosition(x0, y0 + d).clearTint());
     this.time.delayedCall(100, () => im.active && im.setPosition(x0, y0));
   }
-  /** 그리기 끝: 꺼진 조건 표시는 2단 도트 디더로 퇴장 (반 칸 체크 무늬로 비운 뒤 사라짐 — 단순 페이드 없음, D-216) */
+  /** 그리기 끝: 꺼진 조건 표시는 바로 꺼진다 (D-675 — 옛 반 칸 체크 무늬 2단 퇴장을 뺐다. 켜짐은 계단 팝 그대로) */
   private condFlush(): void {
-    const gone = [...this.condSeen.entries()].filter(([k]) => !this.condNow.has(k));
     this.condSeen = this.condNow;
     this.condNow = new Map();
-    if (this.calm) return;
-    const d = this.tile / BOARD_DOTS;
-    for (const [, list] of gone)
-      for (const m of list) {
-        const im = this.add.image(m.x, m.y, m.key).setOrigin(0, 0).setDisplaySize(m.size, m.size).setDepth(1.75);
-        const g = this.make.graphics({}, false);
-        g.fillStyle(0xffffff);
-        for (let y = 0; y < m.size; y += d) for (let x = 0; x < m.size; x += d) if (((x + y) / d) % 2 < 1) g.fillRect(m.x + x, m.y + y, d, d);
-        this.time.delayedCall(50, () => im.active && im.setMask(g.createGeometryMask()));
-        this.time.delayedCall(100, () => { im.destroy(); g.destroy(); });
-      }
   }
 
   /** 판 칸 · 무너진 칸 · 붕락 균열 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
@@ -827,6 +851,8 @@ class BoardScene extends Phaser.Scene {
         const suf = this.bossRule ? `-b${this.bossRule}` : this.act ? `-a${this.act}` : '';
         put(this.tilesC, isFallen(state, x, y) ? 'fallen' : (x + y) % 2 === 0 ? `tile-dark${suf}` : `tile-light${suf}`, w.x, w.y);
       }
+    // 2단계 판 색 (D-690): 칸 그림에 단색 곱하기 — 그라데이션 · 디더 없이 팔레트만 진홍 쪽으로
+    if (this.rage) for (const im of this.tilesC.list as Phaser.GameObjects.Image[]) im.setTint(BOSS_RAGE.tileTint);
     for (const p of this.lastMoves) {
       const w = this.world(p);
       put(this.tilesC, 'last-move', w.x, w.y);
@@ -1268,7 +1294,10 @@ class BoardScene extends Phaser.Scene {
     this.anim.arrows.push({ a: this.center(from), b: this.center(to), knight, color, alpha });
   }
 
+  /** 마지막으로 그린 모델 — 판 선명도가 바뀌면 같은 모델로 다시 그린다 (D-665) */
+  lastModel: BoardModel | null = null;
   render(m: BoardModel): void {
+    this.lastModel = m;
     this.renderSeq++;
     this.clearDynamic();
     this.condIds = m.condIds ?? [];
@@ -1511,7 +1540,7 @@ class BoardScene extends Phaser.Scene {
   }
   /** 이동 한 번(들기 → 착지)의 지금 길이 ms — 판 밖 카드 FX가 착지에 맞춘다 (D-553) */
   get moveMsNow(): number {
-    return MOVE_TOTAL / this.speed;
+    return moveWarp(BEAT.mine.move, this.speed).wall;
   }
   /** 템포 가속 (연쇄가 쌓일수록 연출이 빨라진다 — 레퍼런스 5권 원리 10, D-156). 1 = 기본 */
   tempo = 1;
@@ -1554,8 +1583,7 @@ class BoardScene extends Phaser.Scene {
       const chainMul = Math.min(IMPACT.chain.max, 1 + IMPACT.chain.k * this.killStreak);
       const heavyHit = !h.killed && dealt / ts.piece.maxHp >= IMPACT.heavy.heavyAt;
       const stop = h.killed ? (ts.piece.type === 'K' ? S.king : S.kill * chainMul) : Math.min(S.max, S.min + (dealt / ts.piece.maxHp) * (S.max - S.min) * 2) * (heavyHit ? 2 : 1);
-      this.tweens.timeScale = 0.05;
-      window.setTimeout(() => (this.tweens.timeScale = 1), stop);
+      this.hitStop(stop);
     }
     if (h.killed) this.killStreak++;
     // 강타 (D-184): 붉은 컷 한 프레임 · 가장자리 붉은 맥 두 번
@@ -1643,7 +1671,8 @@ class BoardScene extends Phaser.Scene {
     const cv = document.createElement('canvas');
     cv.width = W;
     cv.height = H;
-    const cx0 = cv.getContext('2d')!;
+    // 읽기 전용 CPU 캔버스 (D-680): 가속 캔버스의 getImageData는 GPU를 기다려 처치 순간 한 프레임이 1초 넘게 멈췄다
+    const cx0 = cv.getContext('2d', { willReadFrequently: true })!;
     cx0.drawImage(src, 0, 0);
     const data = cx0.getImageData(0, 0, W, H).data;
     let x0 = W, x1 = 0, y0 = H, y1 = 0;
@@ -1731,6 +1760,25 @@ class BoardScene extends Phaser.Scene {
   /** 같은 턴 처치 수 (연쇄 정지가 길어진다, D-184) */
   private killStreak = 0;
 
+  /**
+   * 타격 정지 (D-142 → D-680): 연출(트윈)과 판 시계(delayedCall · after)를 **함께** 멈춘다 — 정지 시간만큼 박자가 길어진다.
+   * 전에는 트윈만 멈추고 시계는 흘러, 정지 중에 다음 행동이 시작되거나 공격 연출이 다음 이동과 겹쳤다.
+   * 겹친 정지는 가장 늦은 끝까지 한 번에 (먼저 끝난 정지가 남의 정지를 풀지 않게).
+   */
+  private stopUntil = 0;
+  private hitStop(ms: number): void {
+    const end = performance.now() + ms;
+    if (end <= this.stopUntil) return;
+    this.stopUntil = end;
+    this.tweens.timeScale = 0.05;
+    this.time.timeScale = 0.05;
+    window.setTimeout(() => {
+      if (performance.now() + 1 < this.stopUntil) return;
+      this.tweens.timeScale = 1;
+      this.time.timeScale = 1;
+    }, ms);
+  }
+
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
   bossFinish = false;
 
@@ -1739,6 +1787,30 @@ class BoardScene extends Phaser.Scene {
    * 심이 커지고, 끝에 하얗게 달아오른다 → 하얀 조각으로 터진다(보로노이) → 왕관이 솟았다 떨어져 두 번 튄다. 반장이면 영화 띠.
    * mine = 내 킹 (같은 문법, 은빛 · 흔들림 2/3 — 덜 아프게)
    */
+  /**
+   * 반장 1단계 쓰러짐 = 무릎 꿇음 (D-690): 격파(finisher — 레터박스 · 응축 · 왕관)가 아니다. 히트스톱 → 흰 실루엣 2프레임 →
+   * 몸이 2도트씩 계단으로 주저앉고(예비 없이 푹) 진홍으로 식은 채 남는다. 곧 2단계 컷인이 판을 덮고, 판은 다시 선 반장으로 새로 그려진다.
+   */
+  private async kneel(s: PieceSprite): Promise<void> {
+    const t = this.tile, d = t / BOARD_DOTS;
+    sfx('crit');
+    // 히트스톱: 맞은 자리에서 90ms 멈춘다
+    await this.after(90 / this.speed);
+    s.glyph.setTintFill(0xffffff);
+    await this.after(70 / this.speed);
+    s.glyph.clearTint().setTint(0xc42430);
+    this.shakeLv(3);
+    if (!this.calm) {
+      const y0 = s.root.y;
+      for (let i = 1; i <= 3; i++) {
+        s.root.y = y0 + Math.round(i * 2) * d;
+        await this.after(50 / this.speed);
+      }
+      s.root.y = y0 + 5 * d;
+    }
+    await this.after(Math.max(0, BEAT.foe.killFx - 220) / this.speed);
+  }
+
   private async finisher(s: PieceSprite, mine = false): Promise<void> {
     const t = this.tile;
     const F = IMPACT.finisher;
@@ -1981,7 +2053,7 @@ class BoardScene extends Phaser.Scene {
     const N = 200; // 도트당 10px로 그려서 가운데를 읽는다
     const cv = document.createElement('canvas');
     cv.width = cv.height = N;
-    const g = cv.getContext('2d')!;
+    const g = cv.getContext('2d', { willReadFrequently: true })!;
     g.imageSmoothingEnabled = false;
     const box = this.pieceBox(key);
     const s = (N * box.size) / this.tile;
@@ -2035,8 +2107,9 @@ class BoardScene extends Phaser.Scene {
     for (const o of this.dynamic) o.destroy();
     this.dynamic = [];
     this.combo = 0;
-    const over = events.find((e) => e.type === 'gameOver') as Extract<BattleEvent, { type: 'gameOver' }> | undefined;
-    if (over) this.time.delayedCall(200, () => sfx(over.winner === 0 ? 'win' : 'lose'));
+    // 승패 소리는 승패 띠(koBanner)가 한 번만 낸다 (D-690 — 판이 200ms 뒤 한 번, 띠가 또 한 번: 끝 소리가 두 번 겹쳤다)
+    // 반장 1단계 쓰러짐(같은 id로 다시 선다)은 킹 마무리 대신 무릎 꿇음 (bossphase.ts)
+    const risen = risenIds(events);
     const t = this.tile;
     // 연출 중 보드 상태 (붕괴·요충지 변화 반영용)
     const cur: BattleState = { ...this.state };
@@ -2115,14 +2188,15 @@ class BoardScene extends Phaser.Scene {
         const ghosts = this.calm ? [] : IMPACT.ghosts.map(() => this.add.image(0, 0, this.artKey(s.piece.type, s.piece.side, { form: s.piece.form })).setTintFill(0xffffff).setDepth(2.4).setVisible(false));
         const trail: { x: number; y: number }[] = [];
         let landAt = -1;
+        // 박자 (D-620 → D-680): 날아가는 길만 빠르게, 웅크림(예비) · 착지 출렁은 제 길이에 가깝게 — 구간마다 따로 편다
+        const mw = moveWarp(BEAT[s.piece.side === 1 ? 'foe' : 'mine'].move, this.speed);
         await new Promise<void>((done) =>
           this.tweens.addCounter({
             from: 0,
-            to: MOVE_TOTAL,
-            // 박자 예산 (D-620): 이동 한 번 ≤ BEAT.move — 웅크림 → 가속 → 착지 출렁 비율은 그대로
-            duration: Math.min(MOVE_TOTAL / this.speed, BEAT[s.piece.side === 1 ? 'foe' : 'mine'].move),
+            to: mw.wall,
+            duration: mw.wall,
             onUpdate: (tw) => {
-              const ms = tw.getValue() ?? 0;
+              const ms = mw.at(tw.getValue() ?? 0);
               const m = moveMotion(ms, jump);
               this.applyPose(s, from.x + (w.x - from.x) * m.p, from.y + (w.y - from.y) * m.p, m.pose);
               g.clear();
@@ -2254,7 +2328,7 @@ class BoardScene extends Phaser.Scene {
       const killing = e.hits.some((h) => h.killed && this.sprites.get(h.targetId)?.piece.type !== 'K');
       const fx = playAttackFx(this, { kinds, side: atk.piece.side, origin: { x: base.x + t / 2, y: base.y + t / 2 }, tiles, tile: t, power: fxPower(e.hits) }, this.speed, (pose) =>
         this.applyPose(atk, base.x, base.y, pose),
-      killing ? beat.killFx : beat.attack);
+      killing ? beat.killFx : beat.attack, BEAT.preMin);
       const t0 = this.time.now;
       const early: Promise<void>[] = [];
       fxTrace('attack', 0, killing ? 'kill' : 'hit');
@@ -2322,7 +2396,8 @@ class BoardScene extends Phaser.Scene {
           s.root.destroy();
           this.dropSprite(s.piece.id);
         }
-        if (king) await this.finisher(king, king.piece.side === 0);
+        if (king && risen.has(king.piece.id)) await this.kneel(king);
+        else if (king) await this.finisher(king, king.piece.side === 0);
         // 처치 1회 ≤ BEAT.kill (예비 시작부터, D-620): 남은 무너짐은 다음 행동과 겹친다
         else await Promise.race([Promise.all(ashes), this.after(Math.max(0, beat.kill - (this.time.now - t0)))]);
         void Promise.all(ashes).then(() => fxTrace('crumbleEnd', this.time.now - t0));
@@ -2418,7 +2493,7 @@ export class BoardRenderer implements BoardView {
 
   constructor(private host: HTMLElement, input: BoardInput, announce: (text: string) => void = () => {}) {
     // 그리는 해상도 상한 (D-240): 폰 배율 2.6~3 그대로 그리면 판 하나가 프레임을 다 먹었다 (CPU 4배 느린 측정에서 19fps → 2배 상한으로 32fps, 아래 프레임 상한과 함께)
-    const dpr = renderScale(window.devicePixelRatio || 1);
+    const dpr = boardScaleNow(window.devicePixelRatio || 1);
     this.scene = new BoardScene();
     this.boardFx = new BoardFx(host, (p) => this.screenOf(p));
     this.scene.fxHook = this.boardFx;
@@ -2454,6 +2529,8 @@ export class BoardRenderer implements BoardView {
     if (ov) new MutationObserver(() => this.sleepIfHidden()).observe(ov, { attributes: true, attributeFilter: ['hidden'] });
     this.game.canvas.addEventListener('webglcontextrestored', () => this.scene.poke());
     this.installQuiet();
+    // 판 선명도 (D-665): 설정이 바뀌거나 자동 판정이 나면 판이 조용할 때 배율을 바꿔 다시 그린다
+    onBoardRes(() => this.applyRes());
     // 타이틀 · 컷신이 덮은 뒤에 만들어져도 처음부터 잠든다 (클래스가 다시 바뀔 때까지 기다리지 않게)
     void this.whenReady.then(() => this.sleepIfHidden());
   }
@@ -2467,7 +2544,7 @@ export class BoardRenderer implements BoardView {
    */
   private installQuiet(): void {
     const proto = BoardRenderer.prototype as unknown as Record<string, unknown>;
-    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet', 'settled']);
+    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet', 'settled', 'applyRes', 'autoMeasure', 'resInfo']);
     const self = this as unknown as Record<string, unknown>;
     for (const k of Object.getOwnPropertyNames(proto)) {
       const f = Object.getOwnPropertyDescriptor(proto, k)?.value as ((...a: unknown[]) => unknown) | undefined;
@@ -2483,6 +2560,7 @@ export class BoardRenderer implements BoardView {
             this.inflight -= 1;
             this.scene.poke();
             this.sleepIfHidden();
+            if (this.resPending) this.applyRes();
           };
           r.then(done, done);
         }
@@ -2511,7 +2589,77 @@ export class BoardRenderer implements BoardView {
       this.hot = Math.max(0, this.hot - 1);
       if (!this.hot) this.fpsLimit(RENDER.idleFps);
       this.sleepIfHidden();
+      if (this.resPending) this.applyRes();
     });
+  }
+
+  /** 판 선명도를 바꿔야 하는데 판 연출 중이라 미뤄 둠 (D-665) */
+  private resPending = false;
+  /**
+   * 판 선명도 (D-665): 지금 설정 · 자동 판정에 맞는 배율로 캔버스를 다시 잡고 판을 같은 모델로 다시 그린다.
+   * 판 연출(이동 · 공격 · 판 세우기) 중이면 끝난 뒤로 미룬다 — 연출 도중 칸 크기가 바뀌지 않게.
+   */
+  applyRes(): void {
+    const dpr = boardScaleNow(window.devicePixelRatio || 1);
+    if (Math.abs(dpr - this.scene.dpr) < 1e-6) return void (this.resPending = false);
+    if (this.inflight > 0 || this.hot > 0) return void (this.resPending = true);
+    this.resPending = false;
+    const sc = this.scene;
+    sc.dpr = dpr;
+    const { w, h } = this.size(dpr);
+    this.game.scale.setZoom(1 / dpr);
+    this.game.scale.resize(w * dpr, h * dpr);
+    this.center(w, h);
+    if (!sceneLive(sc as unknown as Parameters<typeof sceneLive>[0])) return;
+    sc.cameras.main.setZoom(dpr);
+    if (sc.state) {
+      sc.setupBoard(sc.state);
+      if (sc.lastModel) sc.render(sc.lastModel);
+    }
+    sc.poke();
+  }
+
+  /** 판 선명도 실측 정보 (설정 확인 · 측정 도구) */
+  resInfo(): { pref: string; fast: boolean; dpr: number; device: number; canvas: [number, number]; css: [number, number] } {
+    const cv = this.game.canvas;
+    return { pref: boardResPref(), fast: boardFast(), dpr: this.scene.dpr, device: window.devicePixelRatio || 1, canvas: [cv.width, cv.height], css: [cv.clientWidth, cv.clientHeight] };
+  }
+
+  /** 이 실행에서 자동 판정을 이미 마쳤나 · 재는 중인가 */
+  private autoDone = false;
+  private autoOn = false;
+  /**
+   * 자동 판정 (D-665 · 결정 2가): 대국을 세운 뒤 RENDER.autoMs 동안 판이 움직이는(연출 중) 프레임 간격을 rAF로 잰다.
+   * 평균 fps가 RENDER.autoSlowFps보다 낮으면 느린 기기로 적고(markAutoSlow) 판을 절반 해상도로 바꾼다.
+   * 자동이 아니거나, 이미 빠름이거나, 빠름이 선명과 같은 기기(PC 배율 1)면 재지 않는다. 프레임이 모자라면 다음 대국에서 다시.
+   */
+  autoMeasure(): void {
+    if (this.autoOn || this.autoDone || boardResPref() !== 'auto' || boardFast() || devQ('boardres') || devQ('boardscale')) return;
+    const dev = window.devicePixelRatio || 1;
+    if (Math.abs(renderScale(dev, true) - renderScale(dev, false)) < 1e-6) return void (this.autoDone = true);
+    const t0 = performance.now();
+    this.autoOn = true;
+    let last = 0, sum = 0, n = 0;
+    const step = (now: number): void => {
+      const busy = this.inflight > 0 || this.hot > 0;
+      const loop = this.game?.loop;
+      if (last && busy && loop?.running && !document.hidden) {
+        const dt = now - last;
+        if (dt < RENDER.autoSkipMs) { sum += dt; n += 1; }
+      }
+      last = now;
+      if (n >= RENDER.autoFrames || now - t0 > RENDER.autoMs) {
+        this.autoOn = false;
+        if (n < RENDER.autoFrames / 2) return; // 잴 만큼 움직이지 않았다 — 다음 대국에서
+        this.autoDone = true;
+        const fps = (n * 1000) / sum;
+        (window as unknown as { __boardAuto?: unknown }).__boardAuto = { fps: Math.round(fps * 10) / 10, frames: n, slow: fps < RENDER.autoSlowFps };
+        if (fps < RENDER.autoSlowFps) markAutoSlow();
+        return;
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
   private fpsLimit(n: number): void {
     const loop = this.game?.loop as unknown as { fpsLimit: number; hasFpsLimit: boolean; _limitRate: number } | undefined;
@@ -2570,6 +2718,16 @@ export class BoardRenderer implements BoardView {
     this.scene.staggeredIds = ids;
     this.scene.shockedIds = shocked;
   }
+  /**
+   * 반장 2단계 판 (D-690 — 지속): 판 칸 색을 진홍 쪽으로 곱해(단색 곱하기 — 밝기 차는 그대로) 다시 깔고,
+   * 판 위 도트 층에 경고 띠 · 반장 꺾쇠 · 2단계 예고 꺾쇠. null = 끔
+   */
+  setRage(r: { boss: Pos[]; aim: Pos[] } | null): void {
+    const was = this.scene.rage;
+    this.scene.rage = !!r;
+    this.boardFx.setRage(r);
+    if (was !== !!r && this.scene.state) this.scene.drawTiles(this.scene.state);
+  }
   /** 새 반장 표식 (D-274): 불량 도장 찍힌 기물 · 자석에 끌려갈 기물 — setup 전에 */
   setBossMarks(stampId: number | null, pullId: number | null): void {
     this.scene.stampId = stampId;
@@ -2617,6 +2775,7 @@ export class BoardRenderer implements BoardView {
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => {
+      this.autoMeasure();
       this.scene.setupBoard(state);
       // 판 위 도트 FX 층 (D-249): 반장 판이면 공기 FX, 기믹 순간 연출은 언제나
       this.boardFx.boardSize = { w: state.width, h: state.height };

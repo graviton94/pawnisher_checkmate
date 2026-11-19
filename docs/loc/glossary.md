@@ -1,7 +1,8 @@
-# 영어 용어집 — 제안안 (D-654)
+# 영어 용어집 — 확정 (D-654 → D-670)
 
 > 결정 11가(영어 출시 · 스팀 「곧 출시」 · 2027년 6월 넥스트 페스트 영어 데모)의 첫 단추. 한국어 정본은 `docs/world.md` §5 · `docs/voice.md` · 마스터 바이블.
-> 이 표가 영어의 정본이 된다 — 코드의 영어 글(`src/data/lang/en-*.ts`)은 여기 낱말만 쓴다. **★ = 사용자가 고를 창작 결정** (지금 코드에는 제안안이 들어가 있다).
+> 이 표가 영어의 정본이다 — 코드의 영어 글(`src/data/lang/en-*.ts`)은 여기 낱말만 쓴다. **✓ = 사용자가 확정한 낱말 (D-656 7가 → D-670)**: §6의 열두 개는 제안안 그대로 확정됐다. 금지 대안(Clockwork · Overseer · Ascension · 영국식 철자 …)은 `tests/loc-glossary.test.ts`가 영어 표에서 막는다.
+> 스팀 문안(`docs/store/steam-coming-soon.md`)은 **미결 — 스팀 가입 전**(D-656 8).
 
 ## 0. 결 (톤) — 영어로 옮길 때의 규칙
 
@@ -10,20 +11,20 @@
   ① 시스템 — 평서문 현재형, 한 줄 한 사실(“Your king will be hit.”) · ② 팁 — 명령형 권유(“Find the yellow targets first.”) · ③ 독백 — ‘ ’ 짧은 구어, 1인칭 생략(‘Not enough wind.’) · ④ 대사 — “ ” 화자별 말버릇 · ⑤ 묘사 — 판 위는 2인칭 현재(“The belt does not stop.”), 컷신은 3인칭 과거 · ⑥ 카드 — 비장한 한 문장 + (수치) · ⑦ 결과 — 명사구 · ⑧ 단추 — 동사 하나 명령형(Choose · Leave · Erase) · ⑨ 표지 — 대문자 없이 명사 + !(Blocked!).
 - **화자 말버릇의 영어 짝**: 도금왕 = 왕의 고어(“We”, “thee/thou” 없이 “you shall”, “Kneel.”) · 철갑 반장 하게체 = 늙은 장인의 훈계조(“Thin things melt, lad.”) · 부관 박차 = 군대식(“Sir.”, “Select a piece.”) · 적 킹 = 냉소 귀족 · 분대원 = 짧고 거친 병사 말.
 - **체스 낱말은 체스 그대로**: pawn · knight · bishop · rook · queen · king · check · checkmate · castling · fork · skewer · pin · promotion.
-- **세계 낱말은 공장 · 주물 어휘**: foundry · furnace · cast · mould · line · stamp · ship · reject · scrap. 판타지 · SF 어휘(magic, mana, portal, laser)는 쓰지 않는다 — 한국어 규칙 그대로.
-- **철자**: 영국식(colour, mould)으로 할지 미국식으로 할지 ★ 한 번 정한다. 제안: 미국식(스팀 주 시장) — 단, 지금 코드의 `Colour-aid`는 정하면 맞춘다.
+- **세계 낱말은 공장 · 주물 어휘**: foundry · furnace · cast · mold · line · stamp · ship · reject · scrap. 판타지 · SF 어휘(magic, mana, portal, laser)는 쓰지 않는다 — 한국어 규칙 그대로.
+- **철자 ✓ 미국식** (D-670): color · mold · armor · defense · gray · center. 코드의 `Colour-aid`는 `Color-aid`로 고쳤다.
 - **크기**: 영어 글도 D-213 격자(12 · 15 · 24 · 30 · 36 · 45 · 60px)만 쓴다 — 넘치면 글자를 줄이지 않고 낱말을 줄인다(D-653).
 
 ## 1. 고정 이름 (작품 · 인물 · 장소)
 
-| 한국어 | 영어 (제안) | 뜻 한 줄 | 결 · 메모 |
+| 한국어 | 영어 | 뜻 한 줄 | 결 · 메모 |
 |---|---|---|---|
 | Pawnisher : Checkmate | Pawnisher: Checkmate | 제목 | 그대로. 영어는 콜론 앞 띄어쓰기 없이 |
 | 체크메이트 공장 | the Checkmate Foundry | 체스 기물을 찍는 주물 공장, 무대 | factory보다 foundry — 쇳물 · 주물 결 |
-| 종이왕 ★ | the Paper King | 킹 자리에 잘못 들어간 아홉째 폰, 주인공 | 대안: Paper-Crown. “King”이 붙어 반어가 산다 |
+| 종이왕 ✓ | the Paper King | 킹 자리에 잘못 들어간 아홉째 폰, 주인공 | 대안: Paper-Crown. “King”이 붙어 반어가 산다 |
 | 아홉째 폰 | the Ninth Pawn | 주인공의 정체 | |
 | 종이 왕관 | paper crown | 주인공이 접어 쓴 왕관 | |
-| 도금왕 ★ | the Gilded King | 모든 킹을 찍어 낸 첫 킹, 최종 보스 | 대안: the Gilt King(가짜 금칠 뉘앙스가 더 세다) |
+| 도금왕 ✓ | the Gilded King | 모든 킹을 찍어 낸 첫 킹, 최종 보스 | 대안: the Gilt King(가짜 금칠 뉘앙스가 더 세다) |
 | 부관 박차 | Spur, the Adjutant | 주인공 곁 나이트 부관 | 이름은 뜻 번역(박차 = spur) |
 | 용해 주조기 | the Melting Caster | 왕관을 쓰면 켜지는 주조기 | |
 | 금단의 승급대 | the Forbidden Dais | 꼭대기 통제실의 승급 자리 | 스토어 문구는 “forbidden promotion dais” |
@@ -36,11 +37,11 @@
 | 동전 나이트 | the Coin Knight | 사건 NPC(도박) | |
 | 견습 폰 | the Apprentice | 사건 NPC | |
 | 다른 공장의 흑 비숍 | the Black Bishop of Another Foundry | 사건 NPC | |
-| 외눈 정비공 | the One-Eyed Mechanic | 컷신 NPC | |
+| 외눈 정비공 | the One-Eyed Mechanic | 작업대 · 사건(땜질) · 마지막 공방 NPC — 옛 「떠돌이 땜장이」와 같은 인물(D-668) | |
 
 ## 2. 기물 칭호 (`PIECE_LORE`)
 
-| 기물 | 한국어 | 영어 (제안) | 메모 |
+| 기물 | 한국어 | 영어 | 메모 |
 |---|---|---|---|
 | 폰 | 작은 개척자. | The little pioneer. | |
 | 나이트 | 뛰어넘고, 짓밟는 자. | He who leaps, and tramples. | 쉼표를 살린다 |
@@ -68,39 +69,39 @@
 
 ## 4. 시스템 · 규칙 낱말 (화면에 가장 자주 나오는 것)
 
-| 한국어 | 영어 (제안) | 뜻 한 줄 | 결 · 메모 |
+| 한국어 | 영어 | 뜻 한 줄 | 결 · 메모 |
 |---|---|---|---|
-| 태엽 ★ | **Wind** | 행동력(AP). 카드를 쓸 때 든다 | 대안: Spring · Clockwork(길다) · Tension. “Needs 2 wind” · “Wind 3/3”. 짧아서 HUD에 맞는다 — 지금 코드에 들어간 안 |
+| 태엽 ✓ | **Wind** | 행동력(AP). 카드를 쓸 때 든다 | 대안: Spring · Clockwork(길다) · Tension. “Needs 2 wind” · “Wind 3/3”. 짧아서 HUD에 맞는다 — 지금 코드에 들어간 안 |
 | 나사 | Screws | 화폐 | “Screws +40”. 대안 Bolts |
-| 출하 ★ | **Shipment** | 한 판(런) — 세 공정을 지나 출하구까지 | 동사 “ship”. 대안: Run(게임 용어 그대로, 세계 결 약함) · Batch. 메인 메뉴 시작 단추는 “Start” |
+| 출하 ✓ | **Shipment** | 한 판(런) — 세 공정을 지나 출하구까지 | 동사 “ship”. 대안: Run(게임 용어 그대로, 세계 결 약함) · Batch. 메인 메뉴 시작 단추는 “Start” |
 | 정품 / 정품 출하 | genuine / shipped genuine | 출하 합격(완주) | |
-| 하자품 ★ | **reject(s)** | 남이 우리를 깔보는 말(진 세트) | “Crawled up from the rejects, have you?” 대안: scrap, defectives |
-| 불량품 ★ | **the defective** | 우리가 스스로를 부르는 되찾은 이름 | 진엔딩 “I’ll live as a scratched defective.” 하자품과 영어도 다른 낱말이어야 한다 |
+| 하자품 ✓ | **reject(s)** | 남이 우리를 깔보는 말(진 세트) | “Crawled up from the rejects, have you?” 대안: scrap, defectives |
+| 불량품 ✓ | **the defective** | 우리가 스스로를 부르는 되찾은 이름 | 진엔딩 “I’ll live as a scratched defective.” 하자품과 영어도 다른 낱말이어야 한다 |
 | 폐기 처분 | scrapping / scrapped | 진 세트 · 분대원의 처리 | 킹 쓰러짐 창 명패 “Scrapped” |
 | 대국 | match | 전투 한 판 | battle보다 체스 결 |
 | 검문! | Checkpoint! | 정예 대국 노드 | |
-| 반장 ★ | **Foreman** | 층의 보스(한때 정품 킹) | 대안: Overseer(더 위압적). “Ironplate Foreman” |
+| 반장 ✓ | **Foreman** | 층의 보스(한때 정품 킹) | 대안: Overseer(더 위압적). “Ironplate Foreman” |
 | 반장 대국 | foreman match | 보스전 | |
 | 왕관 (첫째~넷째) | the First … Fourth Crown | 본편 이야기 단위(장) | 메뉴 “Choose a crown.” |
 | 왕관 별칭 | Paper Crown · Rusted Spring · Golden Mercy · Hall of Mirrors | 끝내기 전의 왕관 이름 | 부제(결말)는 끝낸 뒤에만 |
 | 왕관 부제 | Ignorance and the First Betrayal · The Pride That Swallowed Another’s Tragedy · The Holiest Exploitation · Seeing, and Release | 끝낸 왕관의 이름 | 스포일러 |
 | 분대 | squad | 내 기물들 | 분대원 = squad member |
 | 원부 | the Ledger | 쓰러진 분대원 기록 | “scrap ledger” |
-| 원수 ★ | **Nemesis** | 내 분대원을 쓰러뜨린 적, 더 세져 돌아온다 | 섀도 오브 모르도르 연상 — 장르 사용자에게 바로 읽힌다. 대안: Grudge |
+| 원수 ✓ | **Nemesis** | 내 분대원을 쓰러뜨린 적, 더 세져 돌아온다 | 섀도 오브 모르도르 연상 — 장르 사용자에게 바로 읽힌다. 대안: Grudge |
 | 유품 | keepsake | 원수 처치 때 회수하는 나사 가치 | |
-| 공정 ★ | **Line** (막) · **machine floor** (공정 판) | ① 막 = 주조 · 조립 · 검수 공정 ② 공정 판 = 판이 기계인 대국(컨베이어 · 프레스 · 자석 레일 · 용광로 · 금 간 바닥) | 막: Casting Line · Assembly Line · Inspection Line. 한국어는 한 낱말이 두 뜻 — 영어는 나눈다 |
+| 공정 ✓ | **Line** (막) · **machine floor** (공정 판) | ① 막 = 주조 · 조립 · 검수 공정 ② 공정 판 = 판이 기계인 대국(컨베이어 · 프레스 · 자석 레일 · 용광로 · 금 간 바닥) | 막: Casting Line · Assembly Line · Inspection Line. 한국어는 한 낱말이 두 뜻 — 영어는 나눈다 |
 | 막 / 종막 | Act / Final Act | 공정 셋 + 출하구 | |
 | 부품 | Parts | 지속 효과 장비(렐릭) | 카드 성격 “Part” |
 | 명령 카드 | command card | 기물을 움직이는 카드 | |
-| 손질 ★ | **Upkeep** | 작업대에서 받는 정비 카드 묶음 | 하위: 정비 Tune-up · 수리 Repair · 다듬기 Hone · 카드 빼기 Scrap a card · 보강 Brace. 대안: Service · Maintenance |
+| 손질 ✓ | **Upkeep** | 작업대에서 받는 정비 카드 묶음 | 하위: 정비 Tune-up · 수리 Repair · 다듬기 Hone · 카드 빼기 Scrap a card · 보강 Brace. 대안: Service · Maintenance |
 | 작업대 | the Workbench | 손질 · 부품을 받는 노드 | |
 | 고물상 | the Scrap Dealer | 상점 | |
 | 공방 | the Workshop | 카드 강화 노드 | |
 | 돌발 / 사건 | Incident | 이벤트 노드 | |
-| 버팀 ★ | **Grit** | 쓰러질 피해를 HP 1로 넘기는 횟수(출하 자원) | “Grit +1”. 대안: Hold(길게 누르기와 겹침) · Last Stand(길다) · Endure |
+| 버팀 ✓ | **Grit** | 쓰러질 피해를 HP 1로 넘기는 횟수(출하 자원) | “Grit +1”. 대안: Hold(길게 누르기와 겹침) · Last Stand(길다) · Endure |
 | 심장 톱니 | Heart Cog | 분대원의 목숨 둘. 둘 다 깨지면 폐기 | 깨진 톱니 = cracked cog |
 | 되감기 / 되감기 톱니 | Rewind / Rewind Cog | 이번 턴 처음으로 | 단추 “Rewind” |
-| 방열판 ★ | **Heatshield** | 피해를 먼저 받는 보호막 | HUD는 “Shield”로 줄여도 된다. 대안: Plating · Ward |
+| 방열판 ✓ | **Heatshield** | 피해를 먼저 받는 보호막 | HUD는 “Shield”로 줄여도 된다. 대안: Plating · Ward |
 | 속전 | Blitz | 빨리 이기면 받는 나사 계기 | |
 | 열기 | Heat | 턴이 갈수록 오르는 피해 배율 | “Turn 3 · Heat 50%” |
 | 연쇄 | Chain | 처치가 이어지면 쌓이는 보너스 | |
@@ -111,7 +112,7 @@
 | 회피 / 회피 반격 | Dodge / Dodge Strike | 예고 칸에서 빠지며 치기 | |
 | 제자리치기 | Standing Strike | 폰이 움직이지 않고 대각선을 침 | |
 | 승격 | Promotion | 판 위 폰 → 퀸 | 체스 그대로 |
-| 승급 ★ | **Coronation** | 꼭대기 승급대에서 킹이 되는 것 | 승격과 영어도 갈라야 한다. 대안: Ascension(옛 「승천」과 겹침) |
+| 승급 ✓ | **Coronation** | 꼭대기 승급대에서 킹이 되는 것 | 승격과 영어도 갈라야 한다. 대안: Ascension(옛 「승천」과 겹침) |
 | 이형 | Variant | 모양이 다른 기물 · 카드 | |
 | 정예 | Elite | 접사 붙은 적 | |
 | 거대 주물 | Colossus | 2×2 거대 기물 | “Colossal Rook” |
@@ -128,7 +129,7 @@
 
 ## 5. 반장 (보스)
 
-| 한국어 | 영어 (제안) | 별명(`BOSS_EPITHET`) 영어 |
+| 한국어 | 영어 | 별명(`BOSS_EPITHET`) 영어 |
 |---|---|---|
 | 철갑 반장 | the Ironplate Foreman | He who believed thickness was strength |
 | 검수 반장 | the Inspector Foreman | An eye that measures itself by others’ flaws |
@@ -139,9 +140,9 @@
 | 도금왕 | the Gilded King | Original sin, covered in gold |
 | 나이트 · 비숍 · 룩 · 폰 반장 | Knight · Bishop · Rook · Pawn Foreman | |
 
-## 6. 사용자가 고를 것 (★ 모음)
+## 6. 확정한 열두 낱말 (D-656 7가 → D-670, 2026-11-19)
 
-| # | 낱말 | 제안 | 대안 | 왜 결정이 필요한가 |
+| # | 낱말 | 확정 | 쓰지 않는 대안 (시험이 막는다) | 왜 이 낱말인가 |
 |---|---|---|---|---|
 | 1 | 태엽 | Wind | Spring · Tension · Clockwork | 가장 자주 보는 낱말. HUD 폭 때문에 짧아야 한다 |
 | 2 | 출하 | Shipment | Run · Batch | 게임의 한 판 이름 · 스토어 문구의 축 |

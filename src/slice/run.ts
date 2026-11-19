@@ -1,5 +1,6 @@
 import type { FormId, PieceType } from '../engine';
 import { EASE } from '../data/ease';
+import { MAP_TEXT } from '../data/hud';
 import { FORMS, formsUpTo } from '../data/forms';
 import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
@@ -93,19 +94,12 @@ export interface Act {
   rows: MapNode[][];
 }
 
-export const NODE_NAMES: Record<NodeKind, string> = { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장', chest: '부품 상자' };
+/** 지도 노드 이름 — 글은 src/data/hud.ts MAP_TEXT (지금 언어, D-671) */
+export const NODE_NAMES: Record<NodeKind, string> = MAP_TEXT.node;
 /** 지도 노드 도트 아이콘 키 (public/ui/icons16, D-182) */
 export const NODE_ICONS: Record<NodeKind, string> = { battle: 'n.battle', shop: 'n.shop', forge: 'n.forge', event: 'n.event', check: 'n.check', boss: 'n.boss', chest: 'n.chest' };
-/** 갈림길 카드의 짧은 설명 (시스템 투) */
-export const NODE_DESC: Record<NodeKind, string> = {
-  battle: '대국을 치르고 카드를 얻습니다.',
-  shop: '나사로 카드 · 부품 · 정비를 삽니다.',
-  forge: '카드 하나를 다듬거나, 빼거나, 분대를 수리합니다.',
-  event: '무엇이 기다리는지 알 수 없습니다.',
-  check: '정예와의 대국. 이기면 부품을 얻습니다.',
-  boss: '막의 끝. 반장이 기다린다.',
-  chest: '잠긴 상자. 부품 하나와 나사가 들어 있습니다.',
-};
+/** 갈림길 카드의 짧은 설명 (시스템 투) — MAP_TEXT.nodeDesc */
+export const NODE_DESC: Record<NodeKind, string> = MAP_TEXT.nodeDesc;
 
 /**
  * 지도 (D-215, 사용자: "뭘 골라도 다음 선택지가 다 열린다 — 슬더스식으로, 길이도 늘려라"):
@@ -125,7 +119,8 @@ export const MAP = {
 };
 
 // 막 이름 = 공정 (D-320: 프롤로그 「주조, 조립, 검수 — 공정마다 반장이 지키는 대국」과 같은 말)
-const ACT_NAMES = ['주조 공정', '조립 공정', '검수 공정'] as const;
+// 글은 MAP_TEXT.acts (D-671) — 저장된 이름 대신 화면은 막 번호로 다시 부른다(언어를 바꿔도 맞게)
+const ACT_NAMES = MAP_TEXT.acts;
 
 /**
  * 누적 전투 규정 (D-451). 인덱스 0~3은 본편 첫째~넷째 왕관, 4~13은 선택 도전이다. 왕관 n에는 앞 왕관들의 조항 1~(n-1)이 켜진다(ascOn).
@@ -532,7 +527,7 @@ export const buildRun = (seed: number, asc = 0, first = false): Act[] => {
     if (act === 1 && first) boss.ftue = true;
     rows.push([{ kind: 'boss', battle: boss }]);
     return { act, name: ACT_NAMES[act - 1], rows } as Act;
-  }).concat([{ act: 4, name: '출하구', rows: [[{ kind: 'forge', final: true }], [{ kind: 'shop' }], [{ kind: 'boss', battle: FINAL_BOSS(asc) }]] }]);
+  }).concat([{ act: 4, name: MAP_TEXT.acts[3], rows: [[{ kind: 'forge', final: true }], [{ kind: 'shop' }], [{ kind: 'boss', battle: FINAL_BOSS(asc) }]] }]);
 };
 
 /** 막 하나의 길 그래프 (D-215) — 층마다 노드 줄. 마지막 층은 반장으로 이어진다(to 없음 = 다음 줄 전부) */

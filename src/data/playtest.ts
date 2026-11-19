@@ -1,3 +1,5 @@
+import { localize } from './locale';
+import { PLAYTEST_EN } from './lang/en-screens';
 /**
  * APK 플레이테스트 설문 (D-234, 보고서 3 템플릿 3-A — 정량 8 + 서술 2, 2~3분).
  * 출하가 끝난 화면에서 「설문」으로 열고 답은 기록(telemetry 'survey')에 함께 남아 「기록 보내기」 한 번으로 넘어온다.
@@ -21,7 +23,7 @@ export const SURVEY: SurveyQ[] = [
   { id: 'Q10', kind: 'text', q: '가장 답답했거나 끄고 싶었던 순간과 그 이유 한 줄' },
 ];
 
-export const PLAYTEST_TEXT = {
+export const PLAYTEST_TEXT_KO = {
   survey: '설문 (2분)',
   surveyTitle: '설문',
   surveyNote: '답은 이 기기의 기록에만 남습니다. 「기록 보내기」로 함께 전해 주십시오.',
@@ -48,3 +50,5 @@ export const PLAYTEST_TEXT = {
   next: '넘긴다',
   done: '마친다',
 };
+/** 지금 언어로 (D-671) — 영어는 안내서 「제보」 탭 글만 */
+export const PLAYTEST_TEXT = localize(PLAYTEST_TEXT_KO, PLAYTEST_EN);

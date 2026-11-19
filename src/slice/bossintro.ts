@@ -2,11 +2,11 @@
  * 반장 등장 (D-249, 사용자: 「컷씬용을 따로 그릴 필요 없이 — 초상을 오른쪽 끝까지 붙이고 이미지가 끝나 배경과 만나는 경계선은
  * 2막 보스 오른쪽 이펙트처럼 뭔가 이펙트를 넣거나, 도트를 서서히 제거하는 도트 그라데이션처럼」 · 「FX는 pixelfx 룰을 참고」).
  *  ① 위아래 검은 띠가 4계단으로 닫힌다 ② 흰 장 두 장(hero frame) ③ 초상이 오른쪽에서 물러섰다(예비) 꽂히고 흔들린다
- *  ④ 초상 왼쪽 가장자리는 그림 도트 단위 베이어 디더로 깎여 배경에 녹는다 ⑤ 그 경계선을 따라 반장마다 다른 FX
+ *  ④ 초상 왼쪽 가장자리는 단단하게 잘린다 (D-675 — 옛 베이어 디더 녹임) ⑤ 그 경계선을 따라 반장마다 다른 FX
  *  ⑥ 이름이 내리꽂히고 칭호 · 규칙(UI-21 수배판, D-400) · 아래 자막 띠 두 줄이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
  * 글 크기 (D-397): 막 꼬리표 12 · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙 12 굵게 · 자막 15. 자막 띠 · ▼는 모든 컷과 같은 자리(uikit.cutChromeHtml).
  */
-import { bayer, FxCanvas, hex, Lights, OUTLINE, P, PAL, Particles, Rng, WHITE, type Col, type Painter } from '../view/pxfx';
+import { FxCanvas, hex, Lights, OUTLINE, P, PAL, Particles, Rng, WHITE, type Col, type Painter } from '../view/pxfx';
 import { BOSS_ENTRANCE, BOSS_LOOK } from '../data/boss-look';
 import { typeIn } from './fx3';
 import { impactFlash } from '../view/flash';
@@ -32,9 +32,14 @@ export interface BossIntroOpts {
 }
 
 const LOOK = BOSS_LOOK;
+const rgbOf = (h: string): [number, number, number] => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+/** 반장 색의 어두운 단색 (뒤 판) — 그라데이션 없이 한 색 */
+const darkOf = (h: string, k = 0.28): string => `rgb(${rgbOf(h).map((v) => Math.round(v * k)).join(',')})`;
 /** 출렁 없는 지수형 곡선 (D-216): 터짐 = 빠르게→느리게, 모으기 = 느리게→빠르게 */
 const easeOut = (x: number): number => 1 - (1 - Math.min(1, Math.max(0, x))) ** 3;
 const easeIn = (x: number): number => Math.min(1, Math.max(0, x)) ** 3;
+/** 단색 점 (D-675): 세기가 문턱을 넘으면 칠하고 아니면 비운다 — 투명도 디더 대신 길이로 줄어든다 */
+const solid = (p: Painter, x: number, y: number, c: Col, a: number, th = 0.25): void => { if (a >= th) p.px(x, y, c); };
 /** 1도트 고리 (렌즈 테) — 둘레를 정수 도트로 */
 const ring = (p: Painter, cx: number, cy: number, r: number, c: Col, a = 1): void => {
   const n = Math.max(12, Math.round(r * 7));
@@ -44,24 +49,26 @@ const ring = (p: Painter, cx: number, cy: number, r: number, c: Col, a = 1): voi
 interface Filing { ux: number; uy: number; d0: number; df: number; t0: number; c: Col }
 
 /**
- * 초상 가장자리를 베이어 디더로 깎는다 (그림 도트 단위): 왼쪽 band칸(배경과 만나는 경계) + 위 · 아래 vband칸(검은 막과 만나는 곳).
+ * 초상 왼쪽을 사선으로 자른다 (D-690 — D-675 디더 금지: 옛 베이어 디더 경계를 대신한다). 그림 도트 단위로:
+ * 위쪽은 band칸 안쪽, 아래쪽은 0칸에서 잘리는 사선 — 그 선을 따라 먹 1도트 · 반장 색 2도트 테. 위 · 아래는 그대로(검은 막과 맞닿음).
  * 오른쪽은 화면 끝에 붙으므로 깎지 않는다 (D-563).
  */
-const ditherEdge = (img: HTMLImageElement, band: number, src: CanvasImageSource = img, vband = 0): HTMLCanvasElement => {
+const slantEdge = (img: HTMLImageElement, band: number, accent: [number, number, number], src: CanvasImageSource = img): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
   c.height = img.naturalHeight;
   const x = c.getContext('2d')!;
   x.drawImage(src, 0, 0, c.width, c.height);
   const d = x.getImageData(0, 0, c.width, c.height);
-  for (let yy = 0; yy < c.height; yy++)
-    for (let xx = 0; xx < c.width; xx++) {
-      // 끝일수록 많이 빠진다 (가장자리까지 거리/띠 폭이 베이어 생명보다 작으면 지운다), 가장자리 몇 칸은 거의 다 빠짐
-      const kx = xx < band ? xx / band : 1;
-      const ky = vband > 0 ? Math.min(1, yy / vband, (c.height - 1 - yy) / vband) : 1;
-      const keep = Math.min(kx, ky);
-      if (keep < 1 && keep * keep <= bayer(xx, yy)) d.data[(yy * c.width + xx) * 4 + 3] = 0;
+  for (let yy = 0; yy < c.height; yy++) {
+    const edge = Math.round(band * (1 - yy / Math.max(1, c.height - 1)));
+    for (let xx = 0; xx < Math.min(c.width, edge + 3); xx++) {
+      const i = (yy * c.width + xx) * 4;
+      if (xx < edge) d.data[i + 3] = 0;
+      else if (xx === edge) { d.data[i] = 11; d.data[i + 1] = 11; d.data[i + 2] = 14; d.data[i + 3] = 255; }
+      else { d.data[i] = accent[0]; d.data[i + 1] = accent[1]; d.data[i + 2] = accent[2]; d.data[i + 3] = 255; }
     }
+  }
   x.putImageData(d, 0, 0);
   return c;
 };
@@ -70,12 +77,13 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
   new Promise((resolve) => {
     const look = LOOK[o.rule];
     const el = document.createElement('div');
-    // 움직임 줄이기 (D-538): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 디더 장을 뺀다
+    // 움직임 줄이기 (D-538): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 번쩍 장을 뺀다
     const calm = calmMotion(), noFlash = reduceFlash();
     el.className = `bossfx kit b-${o.rule}${calm ? ' calm' : ''}`;
     el.style.setProperty('--accent', look.accent);
-    el.innerHTML = `<div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i>
-      <div class="bf-text"><span class="ribbon r-crimson bf-act">${o.act}</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><div class="boss-plate bf-board${o.phase2 ? ' p2' : ''}"><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul>${o.stats ? `<div class="bf-stats"><span class="bstat" aria-label="HP ${o.stats.hp}" style="--ic:url(${new URL('ui/icons16/heart@16.png', location.href).href})"><i></i>${o.stats.hp}</span><span class="bstat" aria-label="공격 ${o.stats.atk}" style="--ic:url(${new URL('ui/icons16/c.smash@16.png', location.href).href})"><i></i>${o.stats.atk}</span></div>` : ''}</div></div>
+    el.style.setProperty('--slab', darkOf(look.accent));
+    el.innerHTML = `<i class="bf-slab" aria-hidden="true"></i><div class="bf-port"></div><div class="bf-fx"></div><i class="bf-bar top"></i><div class="bf-haz p2-band" aria-hidden="true"><span>${o.act}</span></div>
+      <div class="bf-text"><span class="ribbon r-crimson bf-act">반장</span><h1 class="bf-name">${o.name}</h1><p class="bf-title"></p><div class="boss-plate bf-board${o.phase2 ? ' p2' : ''}"><ul class="bf-rules">${o.rules.map(() => '<li></li>').join('')}</ul>${o.stats ? `<div class="bf-stats"><span class="bstat" aria-label="HP ${o.stats.hp}" style="--ic:url(${new URL('ui/icons16/heart@16.png', location.href).href})"><i></i>${o.stats.hp}</span><span class="bstat" aria-label="공격 ${o.stats.atk}" style="--ic:url(${new URL('ui/icons16/c.smash@16.png', location.href).href})"><i></i>${o.stats.atk}</span></div>` : ''}</div></div>
       ${cutChromeHtml()}`;
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');
@@ -105,21 +113,26 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     // 폭은 화면 62%까지(왼쪽 이름 · 수배판 자리). 오른쪽 끝에 붙이고 남은 높이 가운데. 자르지 않는다.
     img.onload = () => {
       const nw = img.naturalWidth, nh = img.naturalHeight;
-      // 폭 상한: 화면 62% · 그리고 왼쪽 이름 · 수배판 글 상자 오른쪽 끝까지(디더로 깎이는 왼쪽 띠 절반은 글 밑으로 겹쳐도 된다)
+      // 폭 상한: 화면 62% · 그리고 왼쪽 이름 · 수배판 글 상자 오른쪽 끝까지(잘리는 왼쪽 띠 절반은 글 밑으로 겹쳐도 된다)
       const tb = el.querySelector<HTMLElement>('.bf-text');
       const textR = tb ? tb.offsetLeft + tb.offsetWidth : 0;
       const maxW = Math.min(W * 0.62, (W - textR - 8) / (1 - 0.22 * 0.5));
-      const kd = Math.max(1, Math.min(Math.floor(((H - barH) * dev) / nh), Math.floor((maxW * dev) / nw)));
+      // 경보 띠(D-690) 아래부터 — 띠가 초상 머리를 가리지 않게
+      const hazH = el.querySelector<HTMLElement>('.bf-haz')?.offsetHeight ?? 0;
+      const top0 = barH + hazH;
+      const kd = Math.max(1, Math.min(Math.floor(((H - top0) * dev) / nh), Math.floor((maxW * dev) / nw)));
       const k = kd / dev;
       const pw = nw * k, ph = nh * k;
-      const top = Math.round((barH + (H - barH - ph) / 2) * dev) / dev;
+      const top = Math.round((top0 + (H - top0 - ph) / 2) * dev) / dev;
       Object.assign(port.style, { top: `${top}px`, width: `${pw}px`, height: `${ph}px`, overflow: 'hidden' });
       const band = Math.round(nw * 0.22);
-      const cv = ditherEdge(img, band, fallbackSrc ?? img, Math.round(nh * 0.1));
+      const cv = slantEdge(img, band, rgbOf(look.accent), fallbackSrc ?? img);
       Object.assign(cv.style, { position: 'absolute', left: '0px', top: '0px', width: `${pw}px`, height: `${ph}px` });
       port.appendChild(cv);
       portW = pw;
-      seamX = W - pw + band * k * 0.45;
+      seamX = W - pw + band * k * 0.5;
+      // 뒤 판(반장 색 어두운 단색 사선 판)을 초상 사선에 맞춘다
+      el.style.setProperty('--slab-w', `${Math.round(Math.min(W - textR + 24, pw + band * k * 0.6 + 120))}px`);
       seamTop = Math.max(barH, top + ph * 0.08);
       seamBot = Math.min(H, top + ph * 0.92);
     };
@@ -203,15 +216,15 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         filings.push({ ux: Math.cos(a), uy: Math.sin(a), d0: FR.range(PU.from[0], PU.from[1]), df: FR.range(PU.ring[0], PU.ring[1]), t0: w + FR.range(0, 0.22), c: FR.chance(0.3) ? cols[0] : cols[1] });
       }
     }
-    /** 검수: 렌즈 고리 + 오른쪽으로 뻗는 주사선(멀수록 디더로 성기게) + 지나온 잔상 두 줄 + 멈출 때 불량 도장 ✕ */
+    /** 검수: 렌즈 고리 + 오른쪽으로 뻗는 주사선(먼 반은 꺼짐) + 지나온 잔상 두 줄 + 멈출 때 불량 도장 ✕ */
     const drawScan = (p: Painter, t: number): void => {
       const l = lensAt(t);
       if (!l || !ramp) return;
       const down = Math.floor((t - SC.start) / SC.period) % 2 === 0, back = down ? -1 : 1, moving = l.ph < 0.7;
       for (let x = l.x + l.r + 1; x < l.x + l.r + SC.beam; x++) {
         const far = (x - l.x - l.r) / SC.beam;
-        p.put(x, l.y, ramp[0], 0.85 - far * 0.75);
-        if (moving) { p.put(x, l.y + back, ramp[1], 0.5 - far * 0.45); p.put(x, l.y + back * 2, ramp[2], 0.3 - far * 0.28); }
+        solid(p, x, l.y, ramp[0], 0.85 - far * 0.75);
+        if (moving) { solid(p, x, l.y + back, ramp[1], 0.5 - far * 0.45); solid(p, x, l.y + back * 2, ramp[2], 0.3 - far * 0.28); }
       }
       p.glow(l.x, l.y, l.r + 4, ramp[1], 0.35);
       ring(p, l.x, l.y, l.r + 1, OUTLINE);
@@ -219,19 +232,19 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       ring(p, l.x, l.y, l.r - 1, ramp[2]);
       p.px(l.x - 2, l.y - 2, WHITE); p.px(l.x - 1, l.y - 2, ramp[0]); p.px(l.x - 2, l.y - 1, ramp[0]);
       for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { p.px(l.x + dx * (l.r - 3), l.y + dy * (l.r - 3), ramp[2]); p.px(l.x + dx * (l.r - 4), l.y + dy * (l.r - 4), ramp[2]); }
-      // 불량 도장: 멈추는 순간 찍히고(크게 한 장 → 제 크기) 머문 뒤 디더로 빠진다
+      // 불량 도장: 멈추는 순간 찍히고(크게 한 장 → 제 크기) 머문 뒤 한 번에 꺼진다 (D-675)
       const st = l.ph - 0.7;
       if (st >= 0 && st < SC.stampHold + SC.stampOut) {
         const a = st < SC.stampHold ? 1 : 1 - (st - SC.stampHold) / SC.stampOut, big = st < 0.04 ? 1 : 0, n = 2 + big;
         const cx = l.x + l.r + 5, cy = l.y - l.r + 1;
-        for (let i = -n; i <= n; i++) for (const [x, y] of [[cx + i, cy + i], [cx + i, cy - i]]) { p.put(x + 1, y, OUTLINE, a); p.put(x, y + 1, OUTLINE, a); }
-        for (let i = -n; i <= n; i++) { p.put(cx + i, cy + i, PAL.blood[5], a); p.put(cx + i, cy - i, PAL.blood[5], a); }
+        for (let i = -n; i <= n; i++) for (const [x, y] of [[cx + i, cy + i], [cx + i, cy - i]]) { solid(p, x + 1, y, OUTLINE, a); solid(p, x, y + 1, OUTLINE, a); }
+        for (let i = -n; i <= n; i++) { solid(p, cx + i, cy + i, PAL.blood[5], a); solid(p, cx + i, cy - i, PAL.blood[5], a); }
       }
     };
     /** 자석: 쇳가루가 물러섰다(예비) 가운데로 빨려 들고(점점 빠르게) 붙어 1도트 튄다. 붙은 뭉치 위아래에 붉은 N · 푸른 S 극 빛 */
     const drawPull = (p: Painter, t: number, sx: number): void => {
       if (!ramp || !portW) return;
-      // 뭉치 자리: 경계선 녹은 띠 왼쪽(어두운 바탕) — 띠 디더 위에서는 쇳가루가 묻힌다
+      // 뭉치 자리: 경계선 녹은 띠 왼쪽(어두운 바탕) — 띠 위에서는 쇳가루가 묻힌다
       const cx = Math.round(sx) - PU.left, cy = Math.round((seamY0() + seamY1()) / 2);
       let landed = 0;
       for (const f of filings) {
@@ -253,7 +266,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         p.px(cx, cy - PU.ring[1] - 2, PAL.blood[6]); p.px(cx, cy + PU.ring[1] + 2, hex('#bfefff'));
       }
     };
-    /** 경보: 경계선 위 경광등이 돌며 마주 보는 빛살 두 줄기를 쓴다 — 반 바퀴마다 붉은 ↔ 호박 (광과민: 화면 전체 번쩍임 없음, 빛살은 디더 반투명) */
+    /** 경보: 경계선 위 경광등이 돌며 마주 보는 빛살 두 줄기를 쓴다 — 반 바퀴마다 붉은 ↔ 호박 (광과민: 화면 전체 번쩍임 없음, 빛살은 가까운 쪽만 단색 — D-675) */
     const drawSiren = (p: Painter, t: number, sx: number): void => {
       if (!ramp || !portW || t < SI.start) return;
       const lx = Math.round(sx), ly = Math.round(seamY0() + SI.lampY);
@@ -264,7 +277,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         const face = Math.max(0, Math.sin(base)) * 0.6 + 0.4;
         for (let a = -SI.half; a <= SI.half; a += 0.02) {
           const ux = Math.cos(base + a), uy = Math.sin(base + a) * 0.55, edge = 1 - Math.abs(a) / SI.half;
-          for (let r = 3; r < SI.len; r += 1) p.put(lx + ux * r, ly + uy * r, c, (0.55 - (r / SI.len) * 0.5) * edge * face);
+          for (let r = 3; r < SI.len; r += 1) solid(p, lx + ux * r, ly + uy * r, c, (0.55 - (r / SI.len) * 0.5) * edge * face);
         }
       }
       // 등: 먹 테 · 갓(색) · 흰 심 · 아래 쇠 받침
@@ -312,23 +325,12 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       },
       (t, p) => {
         // (D-595: 옛 「흰 장」은 t 0.26 ~ 0.32 = 6초 중 360ms 동안 화면 전체 50% 흰 체커였다 — 「약 60ms」라던 주석과 달리 눈부셨다.
-        //  이제 초상이 꽂히는 순간 초상 둘레 원형 디더 번쩍 · 화면 3장 꺼짐(view/flash) — 아래 시간표 'port')
+        //  이제 초상이 꽂히는 순간 초상 둘레 단색 고리 번쩍 · 화면 3장 꺼짐(view/flash) — 아래 시간표 'port')
         if (calm) return;
         const sx = seamX / DOT;
         // 경계선 빛: 큰 옅은 웅덩이 + 줄 빛 (반장 색)
         if (t > 0.36 && portW) {
-          const k = Math.min(1, (t - 0.36) * 3);
-          for (let y = seamY0(); y < seamY1(); y += 8) p.glow(sx, y, o.rule === 'plate' ? 14 : 10, accent, 0.12 * k);
-          // 녹은 띠 (D-563): 경계선 왼쪽 몇 칸을 반장 색 도트로 — 베이어 계단 세 단(가까울수록 촘촘), 80ms마다 열이 일렁인다. 투명도 보간 없음
-          const fr = Math.floor(t * 12), y0 = Math.floor(seamY0()), y1 = Math.ceil(seamY1());
-          for (let y = y0; y < y1; y++) {
-            const wob = ((y * 7 + fr * 3) % 5) - 2;
-            for (let dx = -5; dx <= 1; dx++) {
-              const lv = Math.ceil((3 * (6 - Math.abs(dx - wob * 0.5))) / 7) / 3 * 0.55 * k;
-              const x = Math.round(sx) + dx;
-              if (lv > 0 && bayer(x, y + fr) < lv) p.px(x, y, accent);
-            }
-          }
+          // (D-690: 옛 「녹은 띠」 베이어 디더는 D-675로 걷었다 — 초상 사선 테가 경계를 맡는다)
           if (o.rule === 'spawn') {
             // 경계선을 타고 오르내리는 전기 줄기 (지그재그 1칸 선, 80ms마다 모양이 바뀐다)
             const f = Math.floor(t * 12);

@@ -1,3 +1,5 @@
+import { localize } from './locale';
+import { EVENT_FX_EN, EVENT_HINT_EN, EVENT_SUM_EN, EVENT_UI_EN } from './lang/en-screens';
 /**
  * 사건 무대의 대사 (D-248, 사용자: 「슬더스처럼 — 일러스트 + 대사 + 선택지 → 고민할 때 NPC의 재치 있는 한마디 → 고르면 연출 · 확률이면 룰렛 →
  * 이펙트 + NPC 대사로 마무리 → 「문을 닫는다」 같은 나가기 버튼. 사건마다 틀은 같되 연출 · 미니게임 · NPC 상호작용은 제각각」).
@@ -20,12 +22,12 @@ export interface EventTalk {
 
 export const EVENT_TALK: Record<string, EventTalk> = {
   tinker: {
-    npc: '떠돌이 땜장이',
+    npc: '외눈 정비공',
     react: ['“그래, 이 녀석이 제일 많이 쓰러뜨렸군. 손때가 반질반질해.”', '“렌즈를 바꾸면 세상이 달라 보이지. 쇠는 얇아지고.”', '“가라. 휜 축은 언젠가 부러진다.”'],
     idle: ['“화로 불이 식고 있어. 쇠가 굳기 전에 정해.”', '“땜질은 한 번이다. 두 번은 없다.”'],
     win: '“이젠 웬만한 충격엔 쉽게 부러지지 않을 거다.”',
     bye: '“휜 축을 끌고 어디까지 가나 보자.”',
-    exit: '땜장이를 떠난다',
+    exit: '정비공을 떠난다',
     tap: '눌러서 땜질한다',
   },
   smith: {
@@ -360,7 +362,7 @@ export const EVENT_FOCUS: Record<string, [number, number]> = {
  * 사건에서 분대원을 잃는 것은 전투의 「쓰러짐」(다음 대국에 돌아온다)과 다르니 「폐기」, 분대원 카드 위 숫자는 「HP ±N」.
  */
 export type EvFxKind = 'goldUp' | 'goldDown' | 'heal' | 'hurt' | 'life' | 'crack' | 'evolve' | 'recruit' | 'die' | 'up' | 'rust' | 'break' | 'new' | 'part';
-export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string> } = {
+export const EVENT_FX_KO: { pop: Record<EvFxKind, (n?: number) => string> } = {
   pop: {
     goldUp: (n = 0) => `나사 +${n}`,
     goldDown: (n = 0) => `나사 -${n}`,
@@ -379,17 +381,40 @@ export const EVENT_FX: { pop: Record<EvFxKind, (n?: number) => string> } = {
   },
 
 };
+export const EVENT_FX = localize(EVENT_FX_KO, EVENT_FX_EN);
 
 /**
  * 사건 결과 쪽지의 바뀐 것 (⑦, D-402 — 사용자: 「『심장 톱니 금』은 처음 보면 무슨 말인지 모른다」):
  * 처음 보는 사람도 무엇이 바뀌었고 그래서 어떻게 되는지 알게 괄호로 뜻을 붙인다(안내서 · 분대 보기 KEYWORDS와 같은 말).
  */
-export const EVENT_SUM = {
+export const EVENT_SUM_KO = {
   life: (name: string, n: number) => `${name} 버팀 +${n} (쓰러질 피해를 한 번 넘김 · 출하 내내)`,
   crack: (name: string) => `${name} 심장 톱니 깨짐 (다시 쓰러지면 폐기)`,
 };
+export const EVENT_SUM = localize(EVENT_SUM_KO, EVENT_SUM_EN);
 /** 사건 창 단추 줄 (D-402): 판을 한 번 누르면 고름 — 같은 판을 다시 누르면 정함(예비 「고른다」 단추 없음) · 오른쪽 아래 끝 단추 하나 = 떠나기 */
-export const EVENT_HINT = { again: '한 번 더 누르면 고릅니다', leave: '무시하고 떠난다' };
+export const EVENT_HINT_KO = { again: '한 번 더 누르면 고릅니다', leave: '무시하고 떠난다' };
+export const EVENT_HINT = localize(EVENT_HINT_KO, EVENT_HINT_EN);
+/** 사건 창 크롬 (D-671): 효과 쪽지 · 결과 쪽지 머리 · 나사 꼬리표 · 단추 — 사건 글(대사 · 서술 · 선택지)은 콘텐츠라 따로 */
+export const EVENT_UI_KO = {
+  result: '결과',
+  purse: '나사',
+  /** 효과 쪽지 첫 쪽 이름 (선택지 풀이) */
+  info: '효과',
+  close: '닫는다',
+  next: '다음',
+  detailAria: '선택 효과 설명',
+  closeAria: '효과 설명 닫기',
+  nextAria: '다음 설명',
+  infoAria: (label: string) => `${label} 효과 설명`,
+  /** 저울추 카드 고르기 */
+  raise: '올린다',
+  pick: '고른다',
+  leave: '떠난다',
+  ap: (a: number, b: number) => `태엽 ${a} → <b>${b}</b>`,
+  cost: (n: number) => `나사 −${n}`,
+};
+export const EVENT_UI = localize(EVENT_UI_KO, EVENT_UI_EN);
 /**
  * 결과 1박 머묾 (D-402, 사용자: 「1박이 너무 빨리 넘어가 읽을 수 없다」): 바뀐 것 하나면 2.2초, 하나 늘 때마다 0.6초 더. 누르면 바로 넘어간다.
  * 1박은 창 전체를 덮는다(바뀐 것을 강조 — 사용자 승인).

@@ -2,12 +2,12 @@
  * 영화 문법 (D-504, 후기 #31 · #1 · #22 → D-554 매끈한 도트 움직임): 컷신 재생기(opening.playCuts)가 쓰는 부품 — 레터박스 · 카메라 이동 · 켄 번스 ·
  * 장면 전환(디더 · 조리개 · 쇳물 · 백지 · 암전) · 장 제목 카드 · 화자 명패.
  * 새 그림 없이 받은 장면 그림만 쓴다: 확대는 기기 픽셀 정수 배율(늘리거나 찌그러뜨리지 않는다, D-386),
- * 움직임은 화면 프레임마다 예비 → 터짐 → 출렁 곡선 · 위치는 기기 픽셀 정수(D-554), 사라짐 · 나타남은 64단 베이어 디더(투명도 보간 없음, D-216).
+ * 움직임은 화면 프레임마다 예비 → 터짐 → 출렁 곡선 · 위치는 기기 픽셀 정수(D-554), 사라짐 · 나타남은 클립 와이프 · 바로 끊기(D-675 — 격자 디더 금지, 투명도 보간 없음).
  * 게임 상태는 건드리지 않는다 (UI 원칙 9).
  */
 import { calmMotion } from '../prefs/motion';
 import { sfxFor } from '../audio/sfx';
-import { bayer8, ditherTo, ease, tween } from '../view/motion';
+import { ease, tween, wipeTo } from '../view/motion';
 import { FILM_MOTION } from '../data/motion';
 import { pieceImg } from '../ui/sprites';
 import type { Face, Shot, TitleCard, Trans } from '../data/script';
@@ -81,27 +81,16 @@ export class Camera {
   get shot(): Shot { return { ...this.cur }; }
   /**
    * 샷 이동 (D-554): 화면 프레임마다 예비 → 터짐 → 출렁 곡선(ease.abs)으로 초점을 옮기고 위치는 기기 픽셀 정수.
-   * 배율이 바뀌면(정수만) 옛 배율 그림을 겹쳐 두고 64단 디더로 걷는다 — 배율이 한 프레임에 튀지 않는다.
+   * 배율이 바뀌면(정수만) 첫 프레임에 바로 바뀐다 (D-675 — 옛 배율 겹침 디더를 뺐다).
    */
   async move(s: Shot): Promise<void> {
     const to = { ...s, z: s.z ?? 0 };
     const from = { ...this.cur };
     if (calm() || (Math.abs(from.x - to.x) < 0.005 && Math.abs(from.y - to.y) < 0.005 && from.z === to.z)) return this.set(to);
     const my = ++this.token;
-    const box = this.img.parentElement!;
     const span = Math.hypot(to.x - from.x, to.y - from.y) + Math.abs((to.z ?? 0) - (from.z ?? 0)) * 0.25;
     const M = FILM_MOTION.cam;
     const ms = Math.min(M.max, M.base + span * M.perSpan);
-    let ghost: HTMLImageElement | null = null;
-    if (from.z !== to.z) {
-      // 옛 배율 그대로 겹친 그림 — 새 배율 그림 위에서 디더로 걷힌다
-      ghost = this.img.cloneNode() as HTMLImageElement;
-      ghost.removeAttribute('data-film');
-      ghost.classList.add('cam-ghost');
-      box.appendChild(ghost);
-      const g = ghost;
-      void ditherTo(g, 1, 0, ms * 0.8, ease.inOut).then(() => g.remove());
-    }
     const z = to.z;
     await tween(ms, (e) => {
       const f = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, z };
@@ -109,7 +98,6 @@ export class Camera {
       this.put(this.frame(f));
     }, (t) => ease.abs(t, 0.06, 0.04), () => my === this.token);
     if (my === this.token) this.set(to);
-    else ghost?.remove();
   }
   /**
    * 켄 번스 (D-554): 한 줄이 서 있는 동안 천천히 민다 — 정수 기기 픽셀, 느린 곡선. 다음 move · set이 오면 그 자리에서 멈춘다.
@@ -143,7 +131,7 @@ export class Camera {
   stop(): void { this.token++; }
 }
 
-/** 전환 모양 (D-554): 칸마다 「덮인 깊이」 v(칸 단위, 0보다 크면 덮임) — 앞날은 베이어로 EDGE칸에 걸쳐 녹인다 */
+/** 전환 모양 (D-554): 칸마다 「덮인 깊이」 v(칸 단위, 0보다 크면 덮임) — 앞날은 단단한 선 (D-675) */
 type Shape = (x: number, y: number, t: number, cols: number, rows: number, fx: number, fy: number, R: number) => number;
 const EDGE = 3;
 const SHAPES: Partial<Record<Trans, Shape>> = {
@@ -161,8 +149,8 @@ const rgba = (hex: string): number => {
 
 /**
  * 장면 전환 (D-504 → D-554): 장면 칸 위 도트 칸 캔버스. close = 덮기(끝나면 꽉 찬 채 남는다) → 부른 쪽이 그림을 바꾸고 → open = 걷기(지운다).
- * 프레임마다 그린다(옛 48ms 네 · 여섯 장 → 화면 주기 그대로), 덮인 정도는 곡선을 따른다. 칸 = 장면 도트 × 2, 앞날은 8×8 베이어로 녹인다.
- * dither = 8×8 베이어 먹 64단 · iris = 초점으로 닫히는 조리개 · melt = 아래에서 쇳물(진홍 앞날) · white = 종이 백지 디더 · black = 암전 ·
+ * 프레임마다 그린다(옛 48ms 네 · 여섯 장 → 화면 주기 그대로), 덮인 정도는 곡선을 따른다. 칸 = 장면 도트 × 2, 앞날은 단단한 선(D-675 — 베이어 녹임 없음).
+ * dither = (이름만 옛것) 위에서 내려오는 먹 쓸기 · iris = 초점으로 닫히는 조리개 · melt = 아래에서 쇳물(진홍 앞날) · white = 종이 백지 쓸기 · black = 암전 ·
  * shutter = 위아래 철문 날 · diag = 사선 쓸기 · blinds = 블라인드 줄 · page = 오른쪽에서 넘기는 종이 쪽(접힘 앞날) · cut = 바로.
  */
 export class Wipe {
@@ -221,15 +209,16 @@ export class Wipe {
       const red = rgba('#e5262f'), dark = rgba('#7a1218');
       const front = t * (rows + 6);
       return this.paint((x, y) => {
-        const d = front - (rows - y) + (bayer8(x, y) / 64 - 0.5) * 4;
+        // 앞날: 무늬 없는 단단한 물결 (D-675 — 베이어 녹임을 뺐다)
+        const d = front - (rows - y) + Math.round(Math.sin(x * 0.55) * 1.5);
         return d < 0 ? 0 : d < 2 ? red : d < 4 ? dark : ink;
       });
     }
     const shape = SHAPES[kind];
     if (!shape) {
-      // 디더 (white · black 포함): 8×8 베이어 64단
-      const lv = t * 64;
-      return this.paint((x, y) => (bayer8(x, y) < lv ? ink : 0));
+      // 쓸기 (white · black 포함, D-675 — 옛 8×8 베이어 64단): 위에서 내려오는 단단한 앞날 한 줄
+      const front = t * rows;
+      return this.paint((_x, y) => (y < front ? ink : 0));
     }
     const fx = at.x * cols, fy = at.y * rows;
     const R = Math.hypot(Math.max(fx, cols - fx), Math.max(fy, rows - fy)) + EDGE;
@@ -237,7 +226,7 @@ export class Wipe {
     this.paint((x, y) => {
       const v = shape(x, y, t, cols, rows, fx, fy, R);
       if (kind === 'page' && v > -1 && v < 1.5) return v < 0.5 ? fold : paper;
-      return v > (bayer8(x, y) / 64 - 0.5) * EDGE ? ink : 0;
+      return v > 0 ? ink : 0;
     });
   }
   /** 한 방향: 덮인 정도를 a → b로 ms 동안 곡선 따라 (화면 프레임마다, 그림이 바뀔 때만 그린다) */
@@ -246,7 +235,7 @@ export class Wipe {
     const plain = !SHAPES[kind] && kind !== 'melt';
     await tween(ms, (e) => {
       const t = a + (b - a) * e;
-      const key = plain ? Math.round(t * 64) : Math.round(t * 1000);
+      const key = plain ? Math.round(t * this.rows) : Math.round(t * 1000);
       if (key === last) return;
       last = key;
       this.draw(kind, t, at);
@@ -289,8 +278,8 @@ export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<u
   const cue = window.setTimeout(() => el.isConnected && el.insertAdjacentHTML('beforeend', '<i class="tap-cue" aria-hidden="true">▼</i>'), calm() ? 0 : 800);
   await Promise.race([wait(calm() ? 1400 : FILM.titleHold), skip]);
   window.clearTimeout(cue);
-  // 걷힘: 64단 디더 (D-554 — 옛 네 장 220ms)
-  if (!calm()) await ditherTo(el, 1, 0, FILM_MOTION.title.out, ease.in);
+  // 걷힘: 가운데 줄로 닫히는 클립 와이프 (D-675 — 옛 64단 디더)
+  if (!calm()) await wipeTo(el, 1, 0, FILM_MOTION.title.out, ease.in);
   el.remove();
   root?.classList.remove('titling');
 };

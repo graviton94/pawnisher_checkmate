@@ -1492,6 +1492,9 @@ const bossRise = (b: SliceBattle, before: BattleState, events: BattleEvent[]): v
   const old = before.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
   if (!old) return;
   b.phase2 = true;
+  // 1단계 쓰러짐은 승리가 아니다 (D-690): 엔진이 이미 넣은 승패 사건을 걷는다 — 판이 이것을 보고 승리 소리 · 킹 마무리(레터박스 · 왕관)를
+  // 1단계에 한 번, 진짜 격파에 또 한 번 터뜨렸다(사용자: 「반장 죽으면 엔딩 이펙트 중복으로 터지고」)
+  for (let i = events.length - 1; i >= 0; i--) if (events[i].type === 'gameOver') events.splice(i, 1);
   const k = makePiece(old.id, 'K', 1, old.x, old.y);
   k.maxHp = old.maxHp;
   k.hp = Math.max(1, Math.round(old.maxHp * SLICE.bossPhase2Hp));

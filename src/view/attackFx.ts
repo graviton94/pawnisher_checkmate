@@ -321,19 +321,67 @@ const withPower = (fx: FxBuilt, req: FxRequest): FxBuilt => {
 
 const dirIndex = (c: Claimed) => DIRS.findIndex(([x, y]) => x === Math.sign(c.dx) && y === Math.sign(c.dy));
 
-/** 게임에서 재생 (Phaser). speed: 시간 배율. onPose로 공격자 자세를 받는다 */
-export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number, onPose: (p: Pose) => void, budget = Infinity): { duration: number; impact: Map<string, number> } => {
+/**
+ * 박자 나눔 (D-680): 연출 시간(ms, 1배속)을 벽시계에 어떻게 펼칠지. 길이 D, 첫 타격 I, 배율 speed, 상한 budget.
+ * 넘치지 않으면 그대로(D / speed). 넘치면 **첫 타격 뒤(터짐 · 출렁 · 여운)는 D-180 길이(1배속 — speed가 더 빠르면 speed)** 로 두고 첫 타격 앞(모으기 · 날아감)만 줄인다 —
+ * 단 모으기는 preMin(벽시계 ms) 아래로 줄지 않고, 그래도 넘치면 뒤쪽도 함께 줄인다. 구간마다 곡선은 그대로, 시간 축만 늘이고 줄인다.
+ * wall = 벽시계 길이 · at(w) = 벽시계 w ms에 보일 연출 ms · wallOf(ms) = 연출 ms가 벽시계로 언제인가.
+ */
+export const warpPlan = (D: number, I: number, speed: number, budget = Infinity, preMin = 0): { wall: number; at: (w: number) => number; wallOf: (ms: number) => number } => {
+  const natural = D / speed;
+  if (natural <= budget) return { wall: natural, at: (w) => Math.min(D, w * speed), wallOf: (ms) => ms / speed };
+  const i = Math.max(0, Math.min(D, I));
+  let post = (D - i) / Math.max(speed, 1);
+  let pre = budget - post;
+  const floor = Math.min(i / speed, preMin);
+  if (pre < floor) {
+    pre = floor;
+    post = Math.max(0, budget - pre);
+  }
+  const wall = pre + post;
+  const at = (w: number): number => (w <= pre ? (pre > 0 ? (w / pre) * i : i) : post > 0 ? i + Math.min(1, (w - pre) / post) * (D - i) : D);
+  const wallOf = (ms: number): number => (ms <= i ? (i > 0 ? (ms / i) * pre : 0) : pre + (D - i > 0 ? ((ms - i) / (D - i)) * post : 0));
+  return { wall, at, wallOf };
+};
+
+/**
+ * 이동 박자 (D-680): 웅크림 · 날아감 · 착지를 구간마다 따로 벽시계에 편다 — 길(travel)만 크게 줄이고 예비 · 출렁은 남긴다.
+ * beat = 구간별 벽시계 ms 상한, speed = 지금 배율(동작 줄이기면 커서 상한보다 짧다 — 그때는 비율 그대로 짧게).
+ * 돌려주는 at(w) = 벽시계 w ms에 moveMotion에 넣을 ms.
+ */
+export const moveWarp = (beat: { crouch: number; travel: number; land: number }, speed: number): { wall: number; at: (w: number) => number } => {
+  const M = MOVE_MS;
+  const seg = [
+    [M.lift, Math.min(M.lift / speed, beat.crouch)],
+    [M.travel, Math.min(M.travel / speed, beat.travel)],
+    [M.land, Math.min(M.land / speed, beat.land)],
+  ] as const;
+  const wall = seg[0][1] + seg[1][1] + seg[2][1];
+  const at = (w: number): number => {
+    let base = 0;
+    for (const [ms, ws] of seg) {
+      if (w <= ws) return base + (ws > 0 ? (w / ws) * ms : ms);
+      w -= ws;
+      base += ms;
+    }
+    return MOVE_TOTAL;
+  };
+  return { wall, at };
+};
+
+/** 게임에서 재생 (Phaser). speed: 시간 배율. onPose로 공격자 자세를 받는다. budget을 넘으면 warpPlan으로 모으기만 줄인다 (D-680) */
+export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number, onPose: (p: Pose) => void, budget = Infinity, preMin = 0): { duration: number; impact: Map<string, number> } => {
   const fx = buildAttackFx(req);
-  // 박자 예산 (D-538): 실제 걸리는 시간(ms)이 budget을 넘으면 그만큼 빨리 돈다 — 예비 → 터짐 → 출렁 비율은 그대로
-  speed = Math.max(speed, fx.duration / budget);
+  const first = fx.impact.size ? Math.min(...fx.impact.values()) : fx.duration * 0.6;
+  const plan = warpPlan(fx.duration, first, speed, budget, preMin);
   const g = scene.add.graphics().setDepth(6.5);
   const pen = new PixelPen(g, req.tile / BOARD_DOTS);
   scene.tweens.addCounter({
     from: 0,
-    to: fx.duration,
-    duration: fx.duration / speed,
+    to: plan.wall,
+    duration: plan.wall,
     onUpdate: (tw) => {
-      const ms = tw.getValue() ?? 0;
+      const ms = plan.at(tw.getValue() ?? 0);
       g.clear();
       fx.draw(pen, ms);
       onPose(fx.actor(ms));
@@ -343,7 +391,7 @@ export const playAttackFx = (scene: Phaser.Scene, req: FxRequest, speed: number,
       onPose(REST);
     },
   });
-  return { duration: fx.duration / speed, impact: new Map([...fx.impact].map(([k, v]) => [k, v / speed])) };
+  return { duration: plan.wall, impact: new Map([...fx.impact].map(([k, v]) => [k, plan.wallOf(v)])) };
 };
 
 // ---------------- 공격자 자세 ----------------

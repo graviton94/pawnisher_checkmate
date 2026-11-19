@@ -1,0 +1,75 @@
+/* 반장 2단계 예고 · 돌입 컷인 (#21 · D-490 → D-690). 받은 CI-01: 경보 띠 3프레임 타일(p2-tile) · 레터박스 타일 · 사선 액자 CI-01b(D-512).
+   D-690: D-601 정리에서 voice.css의 이 칸이 판돈 칸과 함께 지워져(1483459) 컷인 · 예고 띠가 화면에 보이지 않았다 — phase2fx.ts가 직접 불러 쓴다.
+   디더 · 투명도 보간 없음 (D-675): 나타남 · 사라짐은 clip-path 계단, 번쩍임은 단색 진홍 한 장. */
+.p2-band {
+  --d: calc(var(--px) * 2); position: fixed; z-index: 89; box-sizing: border-box; height: calc(var(--d) * 16); display: flex; align-items: center; justify-content: center; pointer-events: none;
+  background: url('../assets/ui/chrome/v2/p2-tile-1.png') 0 0 / calc(var(--d) * 56) calc(var(--d) * 16) repeat-x; image-rendering: pixelated;
+  box-shadow: 0 var(--px) 0 #0b0b0e; animation: p2scroll 240ms steps(1, jump-end) infinite;
+}
+.p2-band > span { padding: 0 var(--s1); background: #0b0b0e; color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; }
+@keyframes p2scroll { 0% { background-image: url('../assets/ui/chrome/v2/p2-tile-1.png'); } 33% { background-image: url('../assets/ui/chrome/v2/p2-tile-2.png'); } 66% { background-image: url('../assets/ui/chrome/v2/p2-tile-3.png'); } }
+.p2-warn { clip-path: inset(0 100% 0 0); animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 300ms steps(5, jump-end) forwards; }
+@keyframes p2sweep { to { clip-path: inset(0 0 0 0); } }
+@keyframes p2sweepR { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+
+.p2cut { position: fixed; inset: 0; z-index: 88; pointer-events: auto; }
+/* ① 경고: 띠 둘이 위 · 아래에서 서로 반대로 5계단에 가로지른다 */
+.p2cut .p2-alert { --d: var(--px); position: absolute; left: 0; right: 0; visibility: hidden; }
+.p2cut .p2-alert.top { top: calc(30 * var(--vh, 1vh) - var(--px) * 16); }
+.p2cut .p2-alert.bot { bottom: calc(30 * var(--vh, 1vh) - var(--px) * 16); }
+.p2cut .p2-alert > span { color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; }
+.p2cut.warn .p2-alert { visibility: visible; }
+.p2cut.warn .p2-alert.top { clip-path: inset(0 100% 0 0); animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 200ms steps(5, jump-end) forwards; }
+.p2cut.warn .p2-alert.bot { clip-path: inset(0 0 0 100%); animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweepR 200ms steps(5, jump-end) forwards; }
+/* ② 레터박스 · 그림 띠 */
+.p2cut .p2-lb { position: absolute; left: 0; right: 0; height: 0; background: url('../assets/ui/chrome/v2/letterbox-tile.png') 0 0 / calc(var(--px) * 56) calc(var(--px) * 28) repeat-x, #0b0b0e; image-rendering: pixelated; }
+.p2cut .p2-lb.top { top: 0; background-position: 0 100%, 0 0; }
+.p2cut .p2-lb.bot { bottom: 0; }
+.p2cut.go .p2-lb { animation: p2lb 200ms steps(3, jump-end) forwards; }
+@keyframes p2lb { to { height: calc(22 * var(--vh, 1vh)); } }
+.p2cut .p2-strip { position: absolute; left: 0; right: 0; top: calc(30 * var(--vh, 1vh)); height: calc(40 * var(--vh, 1vh)); overflow: hidden; background: #0b0b0e; clip-path: inset(50% 0 50% 0); box-shadow: inset 0 calc(var(--px) * 2) 0 #c42430, inset 0 calc(var(--px) * -2) 0 #c42430; }
+/* 2단계 초상은 통째로 — 띠 높이에 드는 기기 픽셀 정수배(phase2fx가 잰다), 띠 오른쪽 · 뒤는 진홍 먹 단색 */
+.p2cut .p2-strip { background: #2a0a10; }
+.p2cut .p2-strip > img { position: absolute; display: block; max-width: none; image-rendering: pixelated; }
+.p2cut.go .p2-strip { animation: p2open 160ms steps(3, jump-end) forwards; }
+@keyframes p2open { to { clip-path: inset(0 0 0 0); } }
+/* 사선 액자: 오른쪽 위에서 예비(크게 들림) → 터짐(꽂힘 · 눌림) → 출렁 */
+.p2cut .p2-slash { position: absolute; right: calc(var(--px) * 4); top: calc(30 * var(--vh, 1vh) + var(--px) * 46); width: calc(var(--px) * 173); height: calc(var(--px) * 44); visibility: hidden; z-index: 2; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
+.p2cut .p2-slash > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; background: #0b0b0e; clip-path: polygon(13.873% 18.182%, 93.064% 18.182%, 86.127% 84.091%, 6.936% 84.091%); }
+.p2cut .p2-slash::after { content: ''; position: absolute; inset: 0; background: url('../assets/ui/chrome/v2/cutin-frame.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
+.p2cut.go .p2-slash { visibility: visible; animation: p2slash 520ms 100ms both; }
+@keyframes p2slash {
+  0% { transform: translate(18%, -40%) scale(1.25); animation-timing-function: steps(2, jump-end); }
+  30% { transform: translate(14%, -34%) scale(1.3); animation-timing-function: cubic-bezier(.6, 0, .9, .4); }
+  55% { transform: translate(0, 0) scale(0.92, 1.1); animation-timing-function: cubic-bezier(.1, .9, .2, 1); }
+  75% { transform: scale(1.06, 0.95); }
+  100% { transform: none; }
+}
+/* 명패: 띠 왼쪽 — 먹 판 + 진홍 테 2도트, 「2단계」 꼬리표 · 이름 24 · 표지 15 */
+.p2cut .p2-name {
+  position: absolute; left: calc(var(--px) * 8); top: calc(30 * var(--vh, 1vh) + var(--px) * 6); display: grid; justify-items: start; gap: var(--px); padding: calc(var(--px) * 3) calc(var(--px) * 4);
+  background: #0b0b0e; box-shadow: inset 0 0 0 calc(var(--px) * 2) #c42430, var(--px) var(--px) 0 #0b0b0e; visibility: hidden; clip-path: inset(0 100% 0 0);
+}
+.p2cut .p2-name > b { color: var(--t-body); font: 700 24px/var(--lh-24) Galmuri11, sans-serif; }
+.p2cut .p2-name > p { margin: 0; color: #ff8a8a; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
+.p2cut.word .p2-name { visibility: visible; animation: p2sweep 160ms steps(4, jump-end) forwards; }
+/* ③ 판 바뀜: 띠 · 명패 · 액자가 가운데로 4계단 접히고 레터박스가 걷힌다 */
+.p2cut.out :is(.p2-strip, .p2-name, .p2-slash, .p2-alert) { animation: p2fold 160ms steps(4, jump-end) forwards; }
+.p2cut.out .p2-lb { height: calc(22 * var(--vh, 1vh)); animation: p2lbout 200ms 100ms steps(3, jump-end) forwards; }
+@keyframes p2fold { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(50% 0 50% 0); } }
+@keyframes p2lbout { to { height: 0; } }
+/* 번쩍: 띠 자리만 단색 진홍 한 장 (약 2프레임, 한 번 — WCAG 2.3.1) */
+.p2-flash { position: fixed; left: 0; right: 0; top: calc(30 * var(--vh, 1vh)); bottom: calc(30 * var(--vh, 1vh)); z-index: 90; pointer-events: none; background: #c42430; }
+.p2cut.calm .p2-lb { height: calc(22 * var(--vh, 1vh)); animation: none; }
+.p2cut.calm .p2-strip { clip-path: none; animation: none; }
+.p2cut.calm :is(.p2-slash, .p2-name, .p2-alert) { visibility: visible; animation: none; clip-path: none; }
+:root[data-noflash='1'] .p2-flash { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .p2-band { animation: none; clip-path: none; }
+  .p2-flash { display: none; }
+}
+
+/* 2단계 지속 표지 (D-690): 판 테 진홍 + 머리 줄 반장 칩에 「2단계」 꼬리표 */
+body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #c42430, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }
+#boss.boss-chip .bc-p2 { flex: none; margin-left: var(--px); }
+#boss.boss-chip.p2 { color: #ff8a8a; }
