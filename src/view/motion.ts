@@ -9,6 +9,7 @@
  */
 import { calmMotion } from '../prefs/motion';
 import { SMOOTH } from '../data/motion';
+import { sampleMotion, type MotionFrame } from './bakefast';
 
 const dprNow = (): number => (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
 
@@ -237,6 +238,24 @@ export const bakeMotion = (el: HTMLElement, kf: Keyframe[], dur: number, directi
     return o;
   }).filter((f) => Object.keys(f).some(isMotion));
   if (motion.length < 1) return null;
+  // 계산으로 굽기 (D-593): transform만 움직이고 요소에 따로 걸린 translate · rotate · scale이 없으면 표본마다 스타일을 읽지 않는다
+  const n0 = Math.max(2, Math.ceil(dur / SMOOTH.bakeStep));
+  if (motion.every((f) => Object.keys(f).every((k) => k === 'offset' || k === 'easing' || k === 'transform'))) {
+    const cs = getComputedStyle(el);
+    if ((cs.translate || 'none') === 'none' && (cs.rotate || 'none') === 'none' && (cs.scale || 'none') === 'none') {
+      // 퍼센트 이동이 있을 때만 상자 크기를 잰다 (레이아웃 강제를 줄인다)
+      const pct = motion.some((f) => String((f as MotionFrame).transform ?? '').includes('%'));
+      const mats = sampleMotion(motion as MotionFrame[], n0, pct ? el.offsetWidth : 0, pct ? el.offsetHeight : 0, direction, unstep(easing));
+      if (mats) {
+        const out = mats.map((m, i) => ({ offset: i / n0, transform: snapMatrix(new DOMMatrix(m), r), translate: 'none', rotate: 'none', scale: 'none', easing: 'steps(1, end)' }) as Keyframe);
+        if (ck) {
+          if (bakeCache.size > 300) bakeCache.clear();
+          bakeCache.set(ck, out);
+        }
+        return out;
+      }
+    }
+  }
   let tmp: Animation;
   baking = true;
   try {
@@ -248,7 +267,7 @@ export const bakeMotion = (el: HTMLElement, kf: Keyframe[], dur: number, directi
   }
   tmp.pause();
   const out: Keyframe[] = [];
-  const n = Math.max(2, Math.ceil(dur / SMOOTH.bakeStep));
+  const n = n0;
   for (let i = 0; i <= n; i++) {
     tmp.currentTime = (dur * i) / n;
     out.push({ offset: i / n, transform: snapMatrix(composed(el), r), translate: 'none', rotate: 'none', scale: 'none', easing: 'steps(1, end)' } as Keyframe);

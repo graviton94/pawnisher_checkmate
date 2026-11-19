@@ -40,6 +40,8 @@ const apply = (): void => {
   document.documentElement.style.setProperty('--px', `${dev / dpr}px`);
   // 아이콘 층 도트 하나 = 기기 픽셀 round(DPR)개 (16칸 아이콘 · 적 의도 아이콘을 레일 한 줄 32px 안에 — D-396)
   document.documentElement.style.setProperty('--px1', `${Math.max(1, Math.round(dpr)) / dpr}px`);
+  // 메인 메뉴 아이콘 도트 하나 = 기기 픽셀 round(1.5 × DPR × 확대)개 (D-593 — 장치 층 --px의 3/4: 단추 면 위아래에 숨 쉴 틈 · PC 확대에서도 정수)
+  { const k = dpr * webZoom(); document.documentElement.style.setProperty('--px-ico', `${Math.max(1, Math.round(1.5 * k)) / k}px`); }
   // 컷신 화자 명패 도트 하나 = 기기 픽셀 round(1.5 × DPR)개 (D-504 — 초상 43칸이 장면 칸 위에서 읽히는 64px 안팎)
   document.documentElement.style.setProperty('--px-plate', `${Math.max(1, Math.round(1.5 * dpr)) / dpr}px`);
   // 수령 원화의 세부 격자. 원본 안 상징을 떼지 않고도 정수 기기 픽셀로 표시한다.

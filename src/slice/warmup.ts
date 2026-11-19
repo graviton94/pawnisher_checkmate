@@ -79,17 +79,22 @@ const pool = (urls: string[], n: number, tick: () => void = () => undefined): Pr
 
 /**
  * 미리 부르기: 타이틀 묶음 진행률(0~1)을 알린다. 상한 ms가 지나면 끝난 것으로 (그림은 쓸 때 다시 받는다).
+ * `heavy`(판 Phaser 읽기 · 부팅 · 판 그림 — D-593)도 막대 칸으로 세고 함께 기다린다: 메인 스레드를 오래 막는 일은
+ * 부팅 화면(톱니 = 합성기 애니메이션이라 막혀도 돈다) 뒤에서 끝내고, 타이틀 베기 연출 · 메뉴 펼침 동안에는 하지 않는다.
+ * 무거운 일의 상한은 heavyLimit — 느린 기기에서 그보다 길면 타이틀을 먼저 연다(판은 뒤에서 마저 선다).
  * 끝나면 판 묶음 → 나중 묶음을 뒤에서 받는다.
  */
-export const warmup = async (onProgress: (k: number) => void, limit = 3000): Promise<void> => {
+export const warmup = async (onProgress: (k: number) => void, limit = 3000, heavy: Promise<unknown>[] = [], heavyLimit = 9000): Promise<void> => {
   const { title, first, later } = splitPreload(PRELOAD);
   const urls = title.map(abs);
-  const total = urls.length + 1;
+  const total = urls.length + 1 + heavy.length;
   let n = 0;
   const tick = () => onProgress(Math.min(1, ++n / total));
   const fonts = Promise.all(FONTS.map((f) => document.fonts?.load(f).catch(() => undefined))).then(tick);
   const all = Promise.all([fonts, pool(urls, 6, tick)]);
-  await Promise.race([all, new Promise((r) => window.setTimeout(r, limit))]);
+  const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+  await Promise.race([all, wait(limit)]);
+  if (heavy.length) await Promise.race([Promise.all(heavy.map((h) => h.catch(() => undefined).then(tick))), wait(heavyLimit)]);
   // 타이틀이 뜨면 판 묶음(기물 · 칸 · UI)을 넷씩, 그다음 나머지를 쉬는 틈에
   void all.then(() => pool([...BUNDLED, ...first.map(abs)], 4)).then(() => warmLater(later.map(abs)));
   // 두 화면 쉼 — 레이아웃이 다 그려진 뒤에 타이틀을 연다

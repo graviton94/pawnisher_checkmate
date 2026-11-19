@@ -2,7 +2,7 @@
  * 판(BoardRenderer · Phaser)을 처음 쓸 때 늦게 불러온다 (코드 리뷰 6): Phaser(약 1.1 MB)를 타이틀 전에 읽지 않게.
  * 돌려주는 물건은 BoardRenderer와 같은 모양이다 — 불러오기 전에 부른 함수는 차례대로 쌓았다가 판이 서면 그대로 부르고,
  * Promise를 돌려주는 함수(연출)는 그 Promise를 기다린다. 값을 바로 돌려줘야 하는 screenOf만 판 자리 가운데로 어림한다.
- * 불러오기는 start()가 열어 준 뒤에 시작한다 (본편: 타이틀이 뜬 직후 — 타이틀을 보는 동안 판 그림을 받는다).
+ * 불러오기는 start()가 열어 준 뒤에 시작한다 (본편: 부팅 화면 뒤에서 — D-593, 타이틀 연출과 겹치지 않게).
  */
 import type { BoardInput, BoardRenderer } from './BoardRenderer';
 

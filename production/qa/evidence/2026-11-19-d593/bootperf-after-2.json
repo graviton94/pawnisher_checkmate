@@ -1,0 +1,31 @@
+{
+ "tag": "after-2",
+ "cpu": 4,
+ "viewport": "915x412@2.625",
+ "runs": 3,
+ "titleAt": 4159,
+ "menuAt": 279,
+ "totalTbt": 2165,
+ "totalLong": 19,
+ "boot": {
+  "dropped": 222,
+  "worstMs": 750,
+  "longTasks": 13,
+  "tbt": 1977,
+  "maxTask": 714
+ },
+ "burst": {
+  "dropped": 102,
+  "worstMs": 217,
+  "longTasks": 5,
+  "tbt": 268,
+  "maxTask": 165
+ },
+ "menu": {
+  "dropped": 13,
+  "worstMs": 83,
+  "longTasks": 1,
+  "tbt": 12,
+  "maxTask": 62
+ }
+}

@@ -35,7 +35,6 @@ body.slice .opening .op-menu.op5 > .op-main { position: relative; width: 100%; h
 body.slice .opening .op-menu.op5 > .op-main::after { content: none; }
 body.slice .opening .op-menu.op5 > .op-main b { font: 700 24px/var(--lh-24) Galmuri11, sans-serif; font-synthesis: none; letter-spacing: 0; }
 body.slice .opening .op-menu.op5 > .op-main small { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; color: inherit; }
-body.slice .opening .op-menu.op5 > .op-ship { height: 56px; min-height: 56px; }
 /* 메뉴 아이콘 (D-544 — 받은 MM-01 21×18도트, 장치 층 도트 --px 정수배 ≈ 40×34px): 출하 · 기록 · 설정 · 끝내기 단추 글 왼쪽 */
 .op-ico { flex: none; display: block; width: calc(var(--px) * 21); height: calc(var(--px) * 18); background: center / 100% 100% no-repeat; image-rendering: pixelated; }
 body.slice .opening .op-menu.op5 > .op-ship { grid-auto-flow: column; justify-content: start; align-items: center; column-gap: var(--s3); }
@@ -46,9 +45,27 @@ body.slice .opening .op-menu.op5 > .op-ship { grid-auto-flow: column; justify-co
 :is(.win, .scr-pick, .scr-place, .kit) .choice.su-crown.has-ico > .lock-ico { width: calc(var(--px) * 17); height: calc(var(--px) * 18); }
 .su-win .su-locked > .lock-ico { margin-bottom: var(--s2); }
 /* 오늘의 도전을 아직 안 했다: 출하 단추 오른쪽 위 청록 점 (색 + 위치 — 글 없이 「새로 열림」) */
-.opening .op-ship > .op-dot { position: absolute; top: calc(var(--px) * 4); right: calc(var(--px) * 6); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #5eead4; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
+.opening .op-ship > .op-dot { position: absolute; top: calc(50% - var(--px) * 4.5); right: calc(var(--px) * 6); /* D-593: 면 가운데(칸 가운데 − 2.5도트)에 점 가운데 */ width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #5eead4; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; }
+.opening .op-ship.k-iron > .op-dot { top: calc(50% - var(--px) * 4); }
+.opening .op-ship.k-brass:is(:active, .down) > .op-dot { top: calc(50% - var(--px) * 1.5); }
+.opening .op-ship.k-iron:is(:active, .down) > .op-dot { top: calc(50% - var(--px) * 1); }
 .opening .op-menu.op5 > .op-half { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
-.opening .op-menu.op5 > .op-half > .btn, .opening .op-menu.op5 > .op-quit { width: 100%; min-width: 0; height: 48px; min-height: 48px; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
+.opening .op-menu.op5 > .op-half > .btn, .opening .op-menu.op5 > .op-quit { width: 100%; min-width: 0; height: 56px; min-height: 56px; font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; }
+/* D-593 (사용자: 「아이콘이 단추 높이를 꽉 채운다 · 시작 단추 아이콘 · 글 · 청록 점이 가운데가 아니다」):
+   ① 단추 높이 — 큰 단추(이어하기 · 게임 시작) 64 · 작은 단추(기록 · 설정 · 끝내기) 56, 아이콘 도트 = --px-ico(장치 층의 3/4, 기기 픽셀 정수) → 면 위아래 틈 7px 이상.
+   ② 광학 가운데 — 단추 그림의 윗면(눌리는 면)은 아래 입술(어두운 옆면) 위에 있다: 황동 올림 면 = 1~13줄 → 칸 가운데보다 2.5도트 위,
+      철 올림 = 1~14줄 → 2도트 위, 눌림은 면이 3도트 내려앉는다(황동 +0.5 · 철 +1). 아이콘 · 글 · 청록 점을 모두 이 면 가운데에 둔다. */
+body.slice .opening .op-menu.op5 > .op-main.k-brass { padding: 0 var(--s4) calc(var(--px) * 5); }
+body.slice .opening .op-menu.op5 > .op-main.k-iron, .opening .op-menu.op5 > .op-half > .btn, .opening .op-menu.op5 > .op-quit { padding: 0 calc(var(--px) * 2) calc(var(--px) * 4); }
+body.slice .opening .op-menu.op5 > .op-main.k-iron { padding-inline: var(--s4); }
+body.slice .opening .op-menu.op5 > .op-main.k-brass:is(:active, .down):not(:disabled) { padding: calc(var(--px) * 1) var(--s4) 0; }
+body.slice .opening .op-menu.op5 > .op-main.k-iron:is(:active, .down):not(:disabled), .opening .op-menu.op5 > .op-half > .btn:is(:active, .down):not(:disabled), .opening .op-menu.op5 > .op-quit:is(:active, .down):not(:disabled) { padding-top: calc(var(--px) * 2); padding-bottom: 0; }
+body.slice .opening .op-menu.op5 > .op-main.k-iron:is(:active, .down):not(:disabled) { padding-inline: var(--s4); }
+/* 글 잉크는 줄 상자 가운데보다 1px 위에 앉는다(갈무리 글꼴) — 기기 픽셀 정수 한 칸(--px1)만큼 내려 면 가운데에 (잼: tools/qa/title-menu.cjs) */
+.opening .op-menu.op5 :is(.op-main > b, .op-lbl) { position: relative; top: var(--px1, 1px); }
+.opening .op-menu.op5 .op-ico { width: calc(var(--px-ico, var(--px)) * 21); height: calc(var(--px-ico, var(--px)) * 18); }
+/* 게임 시작 = 종이 왕관 문장(ED-01 crown-emblem-1, 26×23도트 — 주인공 종이왕의 왕관 · 첫째 왕관) */
+.opening .op-menu.op5 .op-ico.op-crown { width: calc(var(--px-ico, var(--px)) * 26); height: calc(var(--px-ico, var(--px)) * 23); background-image: url('../assets/ui/chrome/v2/crown-emblem-1.png'); }
 .opening .op-menu.op5 > .op-dev > .btn { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; }
 /* 타이틀 문장 자간 (검수 L1): 0.2em은 한글에서 단어 사이처럼 보였다 */
 /* 장식 톱니는 메뉴 기둥에서 떨어진 왼쪽 아래 바닥으로 (검수 M1 — 누를 수 있는 물건처럼 보이면 안 된다) */
