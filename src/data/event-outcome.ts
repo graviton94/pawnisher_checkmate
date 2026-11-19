@@ -9,8 +9,8 @@ export interface Outcome { scene: string; line?: string; who?: string }
 
 export const EVENT_OUTCOME: Record<string, Record<string, Outcome>> = {
   tinker: {
-    '0:0': { scene: '늙은 땜장이가 인두를 축에 댄다. 녹은 쇠가 갈라진 틈을 메운다.', line: '“버텨라. 용광로는 한 번쯤 비켜 갈 거다.”' },
-    '1:0': { scene: '땜장이가 렌즈를 빼고 얇은 유리알을 박는다. 세상이 한 칸 더 또렷해진다.', line: '“잘 보일 거다. 대신 잘 깨진다.”' },
+    '0:0': { scene: '외눈 정비공이 인두를 축에 댄다. 녹은 쇠가 갈라진 틈을 메운다.', line: '“버텨라. 용광로는 한 번쯤 비켜 갈 거다.”' },
+    '1:0': { scene: '정비공이 렌즈를 빼고 얇은 유리알을 박는다. 세상이 한 칸 더 또렷해진다.', line: '“잘 보일 거다. 대신 잘 깨진다.”' },
   },
   smith: {
     '0:0': { scene: '렌치가 관절을 하나씩 다시 조인다. 축이 한결 단단하게 물린다.', line: '“오래 싸운 놈일수록 손이 기억하지.”' },
