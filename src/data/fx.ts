@@ -70,6 +70,21 @@ export const FX_SHAKE = { damage: 4, ratio: 0.35, ms: 160, intensity: 0.003, kil
 export const FX_SHAKE_SCALE = { shakeByRatio: 2.2, shakeMaxMult: 2.6 };
 /* 옛 FX_BUDGET { attack 900 · killFx 640 · crumble 340 · kill 1000 }은 진영별 BEAT(src/data/motion.ts, D-620)가 대신한다 */
 
+/**
+ * 피해 숫자 크기 (D-624, 사용자 결정 5가 ④): 피해가 클수록 큰 글꼴 — 숫자 높이 9 · 11 · 14도트(갈무리9 10px · 갈무리11 굵게 12px · 갈무리14 15px를
+ * 도트로 찍는다, popup.ts). 도트 한 칸은 늘 판 도트 그대로(소수배 확대 없음). min = 이 단계가 시작되는 피해. 처치는 금색 · 가운데 단계 이상.
+ */
+export const DMG_NUM = {
+  tiers: [
+    { min: 0, font: '400 10px Galmuri9' },
+    { min: 10, font: '700 12px Galmuri11' },
+    { min: 25, font: '400 15px Galmuri14' },
+  ],
+} as const;
+
+/** HP 게이지 채움 줄 수 (D-624, 사용자 결정 5가 ④): 적 보통 기물 4도트 · 우리 편 2도트(예전 그대로) */
+export const HP_BAR = { foeRows: 4, allyRows: 2 } as const;
+
 /** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
 export const TURN_SUMMARY = { bigDamage: 40 };
 

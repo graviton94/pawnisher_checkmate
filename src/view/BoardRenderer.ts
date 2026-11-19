@@ -13,9 +13,9 @@ import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower,
 import { drawArrow, drawDropDot, drawGauge, drawHatch, gaugeSweep } from './marks';
 import { BOARD_DOTS, FLOW_STEP_MS, PixelPen } from './pixel';
 import { displayPreset } from '../data/display';
-import { POPUP_MS, buildPopupArt, drawPopup } from './popup';
+import { POPUP_MS, buildPopupArt, dmgFont, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
-import { IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
+import { HP_BAR, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
 import { boardInset } from './boardInset';
@@ -143,11 +143,15 @@ const GIANT_SLOT_N = 7;
 const GIANT_SLOTS: [0 | 1, 0 | 1][] = [[0, 1], [0, 0], [1, 0], [1, 1]];
 /** 부위 칸의 왼쪽 먹 테 열 (2×2 왼끝 기준 도트) */
 const giantSlotX = (dx: 0 | 1, dy: 0 | 1): number => (dx === 0 ? (dy === 1 ? 3 : 11) : dy === 0 ? 20 : 28);
-/** 기물 게이지 자리 (그 기물 칸 왼위 기준 도트) · 채움 칸 수 — 보통 14×4 · 2×2 반장 한 줄 · 거대 주물 부위 칸 */
-const gaugeSpot = (p: Piece): { x: number; y: number; n: number } => {
-  if (p.giant?.boss) return { x: 3, y: GAUGE_ROW, n: 2 * BOARD_DOTS - 8 };
-  if (p.giant) return { x: (p.giant.dx === 0 ? 0 : -BOARD_DOTS) + giantSlotX(p.giant.dx, p.giant.dy), y: (p.giant.dy === 1 ? BOARD_DOTS : 0) + GAUGE_ROW, n: GIANT_SLOT_N };
-  return { x: 3, y: GAUGE_ROW, n: 12 };
+/**
+ * 기물 게이지 자리 (그 기물 칸 왼위 기준 도트) · 채움 칸 수 · 채움 줄 수 — 보통 14×4 · 2×2 반장 한 줄 · 거대 주물 부위 칸.
+ * 적 보통 기물 (D-624, 사용자 결정 5가 ④): 채움 4줄(테 포함 14×6) — 폰 화면에서 적 HP가 한눈에. 윗줄은 기준선(GAUGE_ROW) 그대로라
+ * 기물 그림은 덮지 않고, 바 아래 2도트는 아래 칸 위 끝(왕관 자리 · 비어 있는 줄)에 걸친다.
+ */
+const gaugeSpot = (p: Piece): { x: number; y: number; n: number; rows: number } => {
+  if (p.giant?.boss) return { x: 3, y: GAUGE_ROW, n: 2 * BOARD_DOTS - 8, rows: 2 };
+  if (p.giant) return { x: (p.giant.dx === 0 ? 0 : -BOARD_DOTS) + giantSlotX(p.giant.dx, p.giant.dy), y: (p.giant.dy === 1 ? BOARD_DOTS : 0) + GAUGE_ROW, n: GIANT_SLOT_N, rows: 2 };
+  return { x: 3, y: GAUGE_ROW, n: 12, rows: p.side === 1 ? HP_BAR.foeRows : HP_BAR.allyRows };
 };
 /** 거대 주물 바 먹 테 (반 둘, 바깥 모서리는 보통 게이지처럼 깎는다) — (x, y) = 2×2 왼끝 · 바 윗줄 */
 const drawGiantFrame = (pen: PixelPen, x: number, y: number): void => {
@@ -636,7 +640,7 @@ class BoardScene extends Phaser.Scene {
     for (const r of this.anim.glints) {
       if (!r.s.root.active) continue;
       const g = gaugeSpot(r.s.piece);
-      drawGauge(tp, r.s.root.x + g.x * tp.dot, r.s.root.y + g.y * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, g.n);
+      drawGauge(tp, r.s.root.x + g.x * tp.dot, r.s.root.y + g.y * tp.dot, r.s.piece.side, r.hp, r.after, r.s.piece.maxHp, ms, g.n, g.rows);
     }
   }
 
@@ -1077,7 +1081,7 @@ class BoardScene extends Phaser.Scene {
           drawGauge(pen, (ox + giantSlotX(dx, dy)) * d, (oy + GAUGE_ROW) * d, s.piece.side, 0, 0, 1, -1, GIANT_SLOT_N);
       }
     }
-    drawGauge(pen, g.x * d, g.y * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, g.n);
+    drawGauge(pen, g.x * d, g.y * d, s.piece.side, hpNow, hpAfter, s.piece.maxHp, -1, g.n, g.rows);
     // 보호막: 게이지 바로 위 흰 도트 줄
     if (s.piece.shield > 0) {
       const n = Math.max(1, Math.round(g.n * Math.min(1, s.piece.shield / s.piece.maxHp)));
@@ -1332,6 +1336,8 @@ class BoardScene extends Phaser.Scene {
         if (hit) {
           this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
           if (hit.kill) img('kill', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTintFill(0xfacc15);
+          // 예상 피해 꼬리표 (D-623, 사용자 결정 5가 ②): 과녁 칸 위 테에 「−12」 — 실행과 같은 previewPlay → simulate 결과. 처치면 금
+          if (hit.dmg) this.aimTag(p, hit.dmg, hit.kill, !!hit.cond);
           // 조건 칸 (D-592): 황동 L자 모서리(select 재칠 cond.png) + 오른쪽 위 램프 — 과녁 · 금색 처치를 가리지 않는 모서리 자리
           if (hit.cond) {
             const key = `cell:${p.x},${p.y}`;
@@ -1371,6 +1377,9 @@ class BoardScene extends Phaser.Scene {
       }
     });
 
+    // 과녁이 칠 적의 잃을 HP (D-623): 갈 칸 여럿이 같은 적을 치면 가장 많이 깎는 칸 기준 — 게이지 금색 몫 + 반짝임
+    if (m.selectedId !== null)
+      for (const h of m.hitDests) for (const x of h.hits ?? []) hpAfter.set(x.id, Math.min(hpAfter.get(x.id) ?? Infinity, x.after));
     // 기물 (가상 보드 위치) + 이번 계획으로 처치될 기물 — 처치 X는 기물 위 레이어 (D-049)
     for (const p of shown) {
       const sprite = this.makePiece(p, p);
@@ -1396,6 +1405,35 @@ class BoardScene extends Phaser.Scene {
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
     this.condFlush();
+  }
+
+  /**
+   * 과녁 옆 예상 피해 꼬리표 (D-623, 사용자 결정 5가 ② · UI 원칙 1 「누르기 전에 결과」): 갈 칸 위 테에 걸친 「−12」(12px 굵게).
+   * 내 공격 = 뼈빛 판 + 먹 글, 처치 = 금 판 + 해골 표식(색만으로 가르지 않는다, 원칙 4). 조건 램프(오른쪽 위)가 있으면 그 왼쪽으로 비킨다.
+   */
+  private aimTag(pos: Pos, damage: number, kill: boolean, lamp: boolean): void {
+    const t = this.tile;
+    const d = t / BOARD_DOTS;
+    const w = this.world(pos);
+    const txt = this.add
+      .text(0, 0, `−${damage}`, { fontFamily: 'Galmuri11, sans-serif', fontStyle: '700', fontSize: '12px', color: '#0B0B0E' })
+      .setOrigin(0.5)
+      .setResolution(this.dpr);
+    const iconSize = kill ? 5 * d : 0;
+    const iconGap = kill ? d : 0;
+    const bw = Math.ceil((txt.width + iconSize + iconGap + 4 * d) / d) * d;
+    const bh = Math.ceil((txt.height + 1 * d) / d) * d;
+    const right = lamp ? w.x + 12 * d - d : w.x + t - d;
+    const x = Math.round(right - bw);
+    const y = Math.round(w.y - bh / 2);
+    const g = this.add.graphics();
+    g.fillStyle(0x0b0b0e, 1).fillRect(x - d, y - d, bw + 2 * d, bh + 2 * d);
+    g.fillStyle(kill ? 0xfacc15 : 0xf1ede4, 1).fillRect(x, y, bw, bh);
+    g.fillStyle(kill ? 0xfde68a : 0xffffff, 1).fillRect(x, y, bw, d);
+    txt.setPosition(x + (bw + iconSize + iconGap) / 2, y + bh / 2 + d / 2);
+    const icon = kill ? this.add.image(x + 2 * d + iconSize / 2, y + bh / 2, boardKey('kill')).setDisplaySize(iconSize, iconSize).setTintFill(0x0b0b0e) : null;
+    const c = this.add.container(0, 0, icon ? [g, icon, txt] : [g, txt]).setDepth(7.2);
+    this.dynamic.push(c);
   }
 
   /**
@@ -1531,11 +1569,13 @@ class BoardScene extends Phaser.Scene {
     // 잃은 HP 칸: 그 자리에서 하얗게 → 오른쪽 끝부터 파도처럼 솟아 도트로 흩어진다 (D-047·D-049)
     const was = Math.round((12 * Math.max(0, before)) / ts.piece.maxHp);
     const now = Math.round((12 * Math.max(0, h.hpAfter)) / ts.piece.maxHp);
+    const gRows = ts.piece.giant ? 2 : gaugeSpot(ts.piece).rows;
     // 피해 숫자 (D-051·D-053): 도트 그림 숫자, 튀어나와 떠올랐다가 아래부터 지워진다. 처치 = 금, 내 기물 = 붉음
     // 막힘(피해 0, D-538): 「-0」 숫자 대신 받은 방패 아이콘(intent-shield) — 원칙 4 (숫자만으로 구분하지 않는다)
     const at = this.popAt(ts);
     if (dealt <= 0 && !h.killed) this.blockedMark(at.x, at.y);
-    const art = buildPopupArt(dealt <= 0 && !h.killed ? '' : `-${dealt}`, h.killed ? 0xfacc15 : ts.piece.side === 0 ? 0xff6b6b : 0xf4f1ea);
+    // 숫자 크기 = 피해 크기 (D-624, 사용자 결정 5가 ④): 갈무리9 · 11 굵게 · 14 세 단계 — 도트 한 칸은 늘 판 도트 그대로. 처치는 금
+    const art = buildPopupArt(dealt <= 0 && !h.killed ? '' : `-${dealt}`, h.killed ? 0xfacc15 : ts.piece.side === 0 ? 0xff6b6b : 0xf4f1ea, dmgFont(dealt, !!h.killed));
     const g = this.add.graphics().setDepth(8);
     this.tweens.addCounter({
       from: 0,
@@ -1550,14 +1590,14 @@ class BoardScene extends Phaser.Scene {
           const cx = x0 + (4 + i) * d;
           const cy = y0 + 17 * d;
           if (u < 0) {
-            g.fillRect(cx, cy, d, d * 2);
+            g.fillRect(cx, cy, d, d * gRows);
             continue;
           }
           const q = u / 420;
           if (q >= 1 || (q > 0.45 && Math.floor(u / 40) % 2)) continue;
           const rise = 1 - (1 - q) ** 3;
           const size = q > 0.75 ? d / 2 : d;
-          g.fillRect(Math.round(cx + (i % 2 ? 1 : -1) * d * 0.6 * q), Math.round(cy - 9 * d * rise), size, size * 2);
+          g.fillRect(Math.round(cx + (i % 2 ? 1 : -1) * d * 0.6 * q), Math.round(cy - 9 * d * rise), size, size * gRows);
         }
         drawPopup(g, art, at.x, at.y, d, ms, t * 0.2, this.dpr);
       },

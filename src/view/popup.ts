@@ -1,3 +1,4 @@
+import { DMG_NUM } from '../data/fx';
 import { easeInCubic, type RectSink } from './pixel';
 
 /**
@@ -28,20 +29,27 @@ export const POPUP_MS = { life: 640, fadeAt: 400, fade: 200 };
 
 const INK = 0x0b0b0e;
 
+/** 피해 숫자 글꼴 (D-624): 피해가 클수록 큰 갈무리(9 → 11 굵게 → 14). 처치는 가운데 단계 이상 */
+export const dmgFont = (damage: number, killed = false): string => {
+  let f: string = DMG_NUM.tiers[0].font;
+  for (const t of DMG_NUM.tiers) if (damage >= t.min) f = t.font;
+  return killed && damage < DMG_NUM.tiers[1].min ? DMG_NUM.tiers[1].font : f;
+};
+
 /**
  * 글자를 도트 그림으로. 캔버스에 1px = 1도트로 그린 뒤 문턱값으로 자르고, 바깥에 8방향 1도트 검정 테두리를 두른다.
  */
-export const buildPopupArt = (text: string, color: number): PopupArt => {
-  const H = 14;
+export const buildPopupArt = (text: string, color: number, font = POPUP_FONT): PopupArt => {
+  const H = 20;
   const cv = document.createElement('canvas');
   // 폭은 실제 글자 폭으로 (한글 낱말 「생명 +1」도 잘리지 않게 — D-398)
   const m = cv.getContext('2d')!;
-  m.font = POPUP_FONT;
+  m.font = font;
   const W = Math.max(text.length * 9, Math.ceil(m.measureText(text).width)) + 16;
   cv.width = W;
   cv.height = H;
   const g = cv.getContext('2d')!;
-  g.font = POPUP_FONT;
+  g.font = font;
   g.textBaseline = 'top';
   g.fillStyle = '#fff';
   g.fillText(text, 1, 1);

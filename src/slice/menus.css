@@ -128,7 +128,8 @@ body.slice.lay-f #right > .actions { margin-top: 24px; } /* D-558: 「되감기�
 }
 
 /* ---------- 손패 넘침 (검수 M4): 접힌 판(효과 줄 숨김) → 그래도 넘치면 칸 아래 「▼ N장 더」 띠 (철 판 · 1도트 테 · 12px 황동, 누름 48) ---------- */
-#hand.tight > .hc:not(.open):not(.armed):not(.lit) .hc-fx { display: none; } /* D-592: 조건 맞은 카드는 접혀도 까닭 한 줄을 남긴다 */
+/* D-621 (사용자 결정 5가 ①): 손패 줄은 늘 이름 한 줄 — 효과 · 못 쓰는 까닭 · 조건 까닭(D-592)은 펼친 카드 창(.card-win)이 말한다. 줄은 램프 · 황동 테 · 꺼진 톱니만 */
+#hand > .hc .hc-fx { display: none; }
 /* D-596: 띠는 보이는 28px 그대로, 누름 칸은 상자 자체가 48px — 위 20px은 비친 다음 카드 위(그 카드를 누르면 레일이 내려와 보인다). 레일 계산(fitHand · revealPick)도 48을 덮인 높이로 센다 */
 #hand > .hand-more { position: sticky; bottom: 0; z-index: 3; flex: none; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 48px; margin: 0; padding: 20px 0 0; border: 0; background: none; box-shadow: none; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; cursor: pointer; }
 #hand > .hand-more::before { content: ''; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 28px; background: #1c1b22; box-shadow: inset 0 calc(var(--px) * 1) 0 #56545e, 0 calc(var(--px) * -1) 0 #0b0b0e; }
