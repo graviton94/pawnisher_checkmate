@@ -26,7 +26,7 @@ const BASE = process.env.OBSERVE_URL || 'http://localhost:4173/';
 const DIR = path.join(OUT, String(SW));
 /** 입문 · 안내를 마친 사람 (sweep.cjs META와 같다) — 안내 띠 · 코치가 끼어들지 않는다 */
 const META = { tut: ['battle', 'battle-a', 'map', 'recruit', 'kit', 'promote', 'first_shop', 'heat', 'event'], runs: 3, prologue: true, ascOpen: 5, storyCleared: 1, daily: {}, onboarded: true,
-  terms: ['버팀', '심장 톱니', '부적', '보충병', '기벽', '회피 반격', '기어 쇼크', '기절', '방열판', '부품', '청록 합 표지', '주황 곱 표지'], termsNew: [] };
+  terms: ['버팀', '심장 톱니', '되감기', '기벽', '회피 반격', '기어 쇼크', '기절', '방열판', '부품', '표지'], termsNew: [] };
 
 /** 검수 UI 걷기: 타이틀 시험장 줄 */
 const CLEAN = () => { document.querySelectorAll('.op-dev').forEach((e) => e.remove()); };

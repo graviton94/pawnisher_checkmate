@@ -85,30 +85,6 @@ export const VOICE_TIMING = {
   gap: 2600,
 } as const;
 
-/**
- * 판돈 표시 글 (#12 · D-490): 창 · 대국 중 판돈 칩 · 정산 표지. 수치(판돈 · 턴 · 확률)는 director.ts DIRECTOR가 정본 — 여기는 글만.
- */
-export const WAGER_TEXT = {
-  title: '판돈',
-  /** 창 독백 — 거는 손짓 */
-  mono: '‘나 자신에게 건다.’',
-  chip: '판돈',
-  /** 칩 진행 줄 */
-  turnsLeft: (n: number) => `남은 턴 ${n}`,
-  crewAlive: (alive: number, all: number) => `분대 ${alive}/${all}`,
-  /** #12 · D-503 새 조건의 칩 진행 줄 */
-  kingSafe: '킹 무사',
-  killProg: (n: number, need: number) => `최다 ${n}/${need}`,
-  done: '달성',
-  /** 「한 턴에 n기」를 이룬 순간의 상태 띠 */
-  reached: '판돈 조건 달성 — 이기면 적중',
-  broken: '깨짐',
-  /** 판 표지 (⑨) */
-  fail: '판돈 실패',
-  hit: (n: number) => `판돈 적중 — 나사 +${n}`,
-  lost: (n: number) => `판돈을 잃었다 — 나사 −${n}`,
-} as const;
-
 /** 카드 자동 고르기 (#11 · D-503): 전용 카드를 쥐었는데 지금 못 써서(갈 칸 · 태엽) 공용 카드로 넘어갔을 때의 독백 */
 export const AUTO_PICK_TEXT = {
   ownBlocked: (piece: string) => `‘${piece} 카드는 지금 못 써.’`,

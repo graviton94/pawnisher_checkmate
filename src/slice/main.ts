@@ -13,7 +13,7 @@ import { BUILD_TRIAL, BUILD_TEXT, type BuildTrialId, type BuildTrialCase } from 
 import { createBuildAct, createBuildTrial } from './build-trial';
 import { josa } from '../data/josa';
 import { STALL_PRESS } from '../data/battle';
-import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SAFETY_TEXT, SCREEN_TEXT, SERVICE_CARDS, TERM_ICON, type TermGate } from '../data/hud';
+import { BOSS_EPITHET, BOSS_PHASE_TEXT, HUD_TEXT, MAP_TEXT, KEYWORDS, LIFE_TEXT, SAFETY_TEXT, SCREEN_TEXT, SERVICE_CARDS, TERM_CAP, TERM_ICON, termCapOk, type TermGate } from '../data/hud';
 import '../style.css';
 import './slice.css';
 import './card-layout.css';
@@ -74,6 +74,7 @@ import type { BoardModel } from '../game/controller';
 import { PIECE_NAMES_KO, PIECE_STATS } from '../data/pieces';
 import { coreOf, findPiece, samePos, type FormId, type Piece, type PieceType, type Pos } from '../engine';
 import { cardFits, gradeOf, rollGrade, GRADE, baseOf, isRefined, isRusted, rustOnce, refineOnce, ECON, OWN_ICON, partSlotsAt, AXIS_NAMES, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, FOE_TRAITS, LAB, FORGE, KITS, SHOP, RECRUITS, RECRUIT_ODDS, rollRecruit, REWARD_COMMANDS, SLICE, START_DECK, START_SQUAD, type Axis, type BossRule, type CommandId } from './cards';
+import { startRewind } from '../data/ease';
 import { CHARM_NUM, CHARMS, startRevive, PART_GRADE, PART_NUM, partFits, SLICE_PARTS, type SlicePartId } from './parts';
 
 /** 색이 든 16칸 도트 아이콘 (D-182): 단색 마스크 대신 그림 그대로, 계단 확대 */
@@ -94,7 +95,7 @@ const lockIco = (): string => '<i class="lock-ico" style="background-image:url(u
 import { CREW, DEATHS, QUIRKS, crewLabel, quirkLine, makeCrew, type Crew, type LedgerEntry } from './crew';
 import { CREW_VOICE, type CrewKind } from '../data/crew-voice';
 import { CHECK_KING_FACE, EVENT_PONDER_MOOD, FOE_KING_FACE, FOE_PIECE_FACE, PAPER_FACE, portraitImg } from '../data/portraits';
-import { AUTO_PICK_TEXT, CREW_BARK, WAGER_TEXT, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
+import { AUTO_PICK_TEXT, CREW_BARK, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
 import { p2Clear, p2Rise, p2Warn } from './phase2fx';
 import { autoPick } from './autopick';
 import { revealScroll } from './handfit';
@@ -103,11 +104,11 @@ import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, DRILLS, ftu
 import { choicePay, counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
 import { EVENT_BEAT, EVENT_FOCUS, EVENT_HINT, EVENT_SUM, EVENT_TALK, REFINE_TALK, type EventTalk } from '../data/event-talk';
 import { runEventFx, type CardFx, type CrewFx } from './evstage';
-import { deviceDot, resultFx, type ResultFxKind } from './resultfx';
+import { resultFx, type ResultFxKind } from './resultfx';
 import { clearScreen, type ClearMember } from './actclear';
 import { EVENT_OUTCOME } from '../data/event-outcome';
 import { bossIntro, type BossKey } from './bossintro';
-import { recoverHeirloom, addNemesis, eventBagFor, runNemeses, betterHighlight, betOffer, betProgress, betText, dir, DIRECTOR, isCloseCall, settleBet, TAUNTS, type Bet, type BetKind, type Highlight, type Nemesis, type TauntCue } from './director';
+import { recoverHeirloom, addNemesis, eventBagFor, runNemeses, betterHighlight, dir, DIRECTOR, isCloseCall, pickNemesis, TAUNTS, type Highlight, type Nemesis, type TauntCue } from './director';
 import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
 import { IMPACT } from '../data/fx';
@@ -116,7 +117,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
 import { commitRunEnd, fightPending, ftueMark, newerSaveFound, settledEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, tutorialMend, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeOffer, sacrificeSwap, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, tutorialMend, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -158,12 +159,7 @@ installSheen();
   chain.id = 'chain-now';
   chain.className = 'chain-now';
   chain.hidden = true;
-  // 판돈 칩 (#12 · D-490): 걸었으면 반장 칩 자리 곁에 — 조건 · 진행이 대국 내내 보인다
-  const betChip = document.createElement('div');
-  betChip.id = 'bet-chip';
-  betChip.className = 'bet-chip';
-  betChip.hidden = true;
-  mid.append(head, betChip, intents, chain, document.getElementById('parts')!);
+  mid.append(head, intents, chain, document.getElementById('parts')!);
   right.prepend(top);
   top.after(mid);
   right.querySelector('.rail-head')?.remove();
@@ -211,22 +207,14 @@ let wiped = false;
 applySettings(readSettings(store));
 
 // ---------- 심리 연출 상태 (D-178) ----------
-/** 남은 마지막 한 수 · 자원 희생 (출하마다) */
-let clutchLeft = 0;
-let sacLeft = 0;
 /** 사선 보상을 받은 막 (막마다 한 번) */
 let closeActs: number[] = [];
 /** 이번 출하 최고의 턴 */
 let highlight: Highlight | null = null;
-/** 같은 대국에서 진 횟수 (보이지 않는 손) · 그 대국 */
-let lossesHere = 0;
-let lossDef: BattleDef | null = null;
-/** 이번 대국: 마지막 한 수를 썼나 · 도발을 했나 · 판돈 · 원수 */
-let clutchedNow = false;
+/** 이번 대국: 도발을 했나 · 원수 */
 let tauntedNow = false;
 let tauntCount = 0;
 let begSaid = false;
-let betNow: Bet | null = null;
 let nemesisNow: Nemesis | null = null;
 /** 사선 보상 등급 (보상 흐름에서 쓴다) */
 let closeTier = 0;
@@ -818,8 +806,7 @@ const intentList = (): void => {
     const k = r.pieceId === null ? -1 : order.indexOf(r.pieceId);
     return k >= 0 ? `<img class="it-n" src="ui/board/badge-e${Math.min(9, k + 1)}.png" alt="${k + 1}번">` : '';
   };
-  // 판돈 칩(조건 두 줄)이 칸을 차지하면 목록을 한 줄로 줄이고 「+N」으로 (검수 M11 — 부품 줄이 칸 아래 테에서 잘렸다)
-  const cap = betNow ? 1 : 5;
+  const cap = 5;
   const html = !live
     ? ''
     : rows.length
@@ -951,7 +938,6 @@ const refresh = (): void => {
   const statuses = !busy && !enemyTurn && !document.body.classList.contains('between') ? partStatuses(b) : {};
   $('parts').innerHTML = parts.map((id) => partHtml(id, false, statuses[id])).join('');
   intentList();
-  betChip();
   chainLine();
   // 새로 단 부품은 처음 보이는 순간 비틀려 들어와 철컥 잠긴다 (D-184)
   for (const id of newParts) mountPart($('parts').querySelector(`[data-part-info="${id}"]`));
@@ -1180,14 +1166,23 @@ const where = (): Record<string, unknown> => ({ act: actI + 1, node_idx: rowI, a
  */
 let termsOn: Set<string> | null = null;
 const gatesOn = new Set<TermGate>();
-/** 이 때의 용어를 연다 (이미 열렸으면 아무것도 안 한다) */
+/** 막마다 새 용어 상한 (D-601): 이 출하 · 막 · 그 막에 연 용어 수 */
+let termAct = '';
+let termActN = 0;
+/** 이 때의 용어를 연다 (이미 열렸으면 아무것도 안 한다). 이 막의 새 용어가 상한(TERM_CAP)에 닿았으면 다음 막으로 미룬다 */
 const unlockTerms = (gate: TermGate, quiet = false): void => {
   if (labMode || gatesOn.has(gate)) return;
-  const m = readMeta(store);
-  termsOn ??= new Set(m.terms ?? []);
+  termsOn ??= new Set(readMeta(store).terms ?? []);
   const fresh = KEYWORDS.filter(([k, , g]) => g === gate && !termsOn!.has(k)).map(([k]) => k);
+  if (fresh.length && gate !== 'base') {
+    const key = `${runId}:${actI}`;
+    if (key !== termAct) [termAct, termActN] = [key, 0];
+    if (!termCapOk(gate, termActN)) return; // 묶음을 열지 않는다 — 다음 막에 다시 만나면 연다
+    if (!TERM_CAP.exempt.includes(gate)) termActN += fresh.length;
+  }
   gatesOn.add(gate);
   if (!fresh.length) return;
+  const m = readMeta(store);
   fresh.forEach((k) => termsOn!.add(k));
   const isNew = gate === 'base' ? [] : fresh;
   writeMeta(store, { ...m, terms: [...termsOn], termsNew: [...new Set([...(m.termsNew ?? []), ...isNew])] });
@@ -1208,7 +1203,6 @@ const syncTerms = (): void => {
   on('shield', b.s.pieces.some((p) => p.shield > 0));
   on('door', (b.s.doorIds ?? []).length > 0);
   on('crack', squad.some((u) => u.cracked));
-  on('reinforce', squad.some((u) => u.scars?.includes('보충병')));
   on('burn', (b.burned ?? []).length > 0);
   on('nemesis', b.nemesisId !== undefined);
   on('plate', b.boss && b.bossRule === 'plate');
@@ -1736,8 +1730,6 @@ const onEndInner = async (): Promise<void> => {
   const aimed0 = (b.aimed ?? []).length;
   const alarm0 = !!b.alarmAtk; // 경보가 이번에 막 찼는지 알아보려고 (D-311)
   const handBefore = [...b.hand];
-  // 사선 (D-557): 턴을 정말 끝내는 순간, 적 공격이 풀리기 전에만 묻는다 (경고 단계 · 맞은 뒤에는 묻지 않는다)
-  await sacrificeAsk();
   const r = endTurn(b);
   if (r === 'warn') {
     // 확인 창 없음 (보고서 2-2 · ITB): 상태 띠 한 줄 + 턴 끝이 진홍으로 — 한 번 더 누르면 그대로 끝
@@ -1829,68 +1821,8 @@ const onEndInner = async (): Promise<void> => {
     if (who !== undefined) crewBark('hurt', who);
   }
   sfx('submit');
-  await lastStand();
   // 턴이 넘어갈 때마다 판을 남긴다 (D-529 — 앱이 죽어도 이 턴 처음부터 이어 간다)
   saveFight();
-};
-
-/**
- * 사선 · 자원 희생 (D-178 → D-557): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 전에 — 이번 적 차례에 내 킹이 쓰러지게 생겼으면
- * 곁의 분대원이 대신 맞겠다고 나선다(고른다). 맞은 뒤(내 차례 시작 · 이어하기)에는 묻지 않는다 — 실기 피드백 「이미 다 맞은 뒤에 떴다」.
- * force: 디버그 견본(판정 없이 창만).
- */
-const sacrificeAsk = async (force = false): Promise<void> => {
-  if (labMode) return;
-  const pick = force ? (sacrificeCandidates(b)[0] ?? null) : sacrificeOffer(b, sacLeft);
-  if (pick === null) return;
-  const ci = b.squadIds.indexOf(pick);
-  const who = ci >= 0 ? squad[ci] : null;
-  if (!who) return;
-  busy = true;
-  refresh();
-  const ok = await new Promise<boolean>((res) => {
-    // M 창 (D-391): 명패 「사선」 · 머리 줄 = 분대원 · 대사 · 규칙 한 줄 · [거절한다 | 받아들인다]
-    const el = openWin({
-      size: 'm',
-      title: '사선',
-      head: `${pieceImg(who.t, 0, 'small', 48, who.form)}<p class="lead">${crewLabel(who)}</p>`,
-      body: `<p class="say"><span class="who">${who.name ?? PIECE_NAMES_KO[who.t]}</span>“제가 맞겠습니다, 대장.”</p><p>받아들이면 킹과 자리를 바꿉니다. 이 분대원이 대신 맞습니다.</p>`,
-      back: { label: '거절한다', attrs: 'data-no' },
-      go: { label: '받아들인다', attrs: 'data-yes' },
-    });
-    el.querySelector('[data-yes]')!.addEventListener('click', () => res(true));
-    el.querySelector('[data-no]')!.addEventListener('click', () => res(false));
-  });
-  closeOverlay();
-  if (ok) {
-    sacLeft -= 1;
-    // 몸을 던진다 (D-180): 웅크림 → 높은 호 → 킹 자리에 박힘, 킹은 뒤로
-    const kingId = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')?.id;
-    if (kingId !== undefined) await renderer.swapLeap(pick, kingId);
-    sacrificeSwap(b, pick);
-    sfx('stamp');
-    renderer.setup(b.s);
-    toast(`${josa(who.name, '이')} 킹 앞을 막아선다.`, 2600);
-  }
-  busy = false;
-  refresh();
-};
-
-/**
- * 마지막 한 수 (D-178): 내 차례가 시작될 때 이번 적 차례에 킹이 쓰러지게 생겼으면 시간이 멈추고 태엽 + 철벽이 들어온다.
- * 출하마다 몇 번뿐, 승급이 오를수록 줄어든다. 자원 희생은 턴 끝으로 옮겼다 (sacrificeAsk, D-557).
- */
-const lastStand = async (force = false): Promise<void> => {
-  if (labMode || (!force && !kingDoomed(b))) return;
-  if (clutchLeft <= 0) return;
-  clutchLeft -= 1;
-  clutchedNow = true;
-  // 마지막 한 수 = 상황이 바뀐다 → 띠 (D-193). 회색 막 + 서서히 대신
-  band(`마지막 한 수 · 태엽 +${dir.clutchAp(asc)}`, 'brass');
-  sfx('awaken');
-  await new Promise((r) => window.setTimeout(r, 1000));
-  clutchBoost(b, dir.clutchAp(asc));
-  refresh();
 };
 
 /** 원수와 다시 만났다 (전환 화면 뒤): 이름 · 쓰러뜨린 분대원 · 단계 */
@@ -1916,113 +1848,6 @@ const nemesisMeet = (n: Nemesis): void => {
       refresh();
     }
   });
-};
-
-/** 판돈 (D-178): 이따금, 대국 앞에서 나 자신에게 건다 — 걸지 않아도 된다 */
-/** 이 막에서 지금 대국이 몇 번째 싸움인가 (입문 빼고, 1부터) — 판돈은 1막 둘째 싸움부터 (#12 · D-503) */
-const fightInAct = (): number => {
-  let n = 1;
-  for (let r = 0; r < rowI; r++) {
-    const nd = acts[actI].rows[r]?.[picked[actI]?.[r] ?? -1];
-    if (nd?.battle && !INTRO.includes(nd.battle)) n += 1;
-  }
-  return n;
-};
-const maybeBet = (def: BattleDef, force = false): void => {
-  if (!force && (labMode || INTRO.includes(def) || def.drill)) return;
-  const offer = betOffer({ act: Math.min(3, actI + 1), fight: force ? 99 : fightInAct(), boss: !!def.boss && !force, gold, roll: force ? 0 : R.next(), pick: R.next() });
-  if (!offer) return;
-  const { stake } = offer;
-  const txt = betText(offer);
-  // M 창 (D-391 → #12 · D-490): 명패 「판돈」 · 판돈 칸(움푹 칸)에 나사 동전 셋 — D-260 「확률 = 동전 · 사각 칸」 문법 ·
-  // 조건 · 보상 · 실패 시 줄 · 독백 · [걸지 않는다 | 건다]. 걸면 동전이 칸에 떨어져 박히고(계단) 창이 닫힌다.
-  // 판돈 칸 바탕 = 받은 WG-01 내기판 장면(scenes/wager-table.png, D-512 재발주본 — 기물 없이 벽의 말머리 그림자만) — cover로 자르고 초점은 두 홈의 동전 · 가운데 나사(50% 62%). 동전 · 표지는 「임시 — WG-02 대기」(나사 아이콘)
-  const coin = '<img src="ui/icons16/hud.screw.png" alt="">';
-  const el = openWin({
-    size: 'm',
-    title: WAGER_TEXT.title,
-    head: `<p class="lead">${txt.label}</p><span class="tag push">판돈 나사 ${stake}</span>`,
-    body: `<div class="inset bet-slot bet-scene" style="background-image:url(scenes/wager-table.png)" aria-hidden="true">${coin}${coin}${coin}</div><div class="terms"><span class="ribbon">조건</span><p>${txt.cond}</p><span class="ribbon">보상</span><p>건 나사의 두 배 <span class="up">(+${stake * 2})</span></p><span class="ribbon r-crimson">실패 시</span><p>건 나사를 잃는다 <span class="down">(−${stake})</span></p></div><p class="mono">${WAGER_TEXT.mono}</p>`,
-    back: { label: '걸지 않는다', attrs: 'data-no' },
-    go: { label: '건다', attrs: 'data-yes' },
-    dismiss: closeWin,
-  });
-  el.querySelector('[data-no]')!.addEventListener('click', closeWin);
-  el.querySelector<HTMLButtonElement>('[data-yes]')!.addEventListener('click', (e) => {
-    (e.currentTarget as HTMLButtonElement).disabled = true;
-    betNow = offer;
-    betReached = false;
-    sfx('coin');
-    el.querySelectorAll('.bet-slot > img').forEach((c) => replay(c, 'drop'));
-    window.setTimeout(() => {
-      sfx('rare');
-      closeOverlay();
-      refresh();
-      const chip = $('bet-chip');
-      if (!chip.hidden) replay(chip, 'k-in');
-    }, calmMotion() ? 0 : 520);
-  });
-};
-/** 판돈 칩 상태: 조건이 아직 살아 있나 (대국 중 표시용 — 정산은 settleBet) */
-const betState = (): { ok: boolean; done: boolean; prog: string } | null => {
-  if (!betNow) return null;
-  const r = { kingHit: !!b.kingHit, bestTurnKills: b.bestTurnKills ?? 0 };
-  const st = betProgress(betNow, r);
-  const prog = st.broken ? WAGER_TEXT.broken : st.done ? WAGER_TEXT.done : betNow.kind === 'unhit' ? WAGER_TEXT.kingSafe : WAGER_TEXT.killProg(r.bestTurnKills, betNow.need);
-  return { ok: !st.broken, done: st.done, prog };
-};
-let betBroke = false;
-/** 「한 턴에 n기」를 이룬 순간 한 번 — 황동 띠 (조건은 이겨야 적중) */
-let betReached = false;
-/** 판돈 칩 그리기 (refresh마다) — 조건이 깨지는 순간 칩이 금 가며 흔들리고 시스템 띠 「판돈 실패」 */
-const betChip = (): void => {
-  const chip = $('bet-chip');
-  const st = betState();
-  chip.hidden = !st || document.body.classList.contains('between');
-  if (!st || !betNow) return void (betBroke = false);
-  // 칩 표지 (D-508 코드 연출 — WG-02 취소): 걸린 동안 나사 동전이 계단 8프레임으로 돈다(받은 coin-0~7) · 조건 표지 = 킹 무사(종이 왕관) / 한 턴 처치(터짐)
-  const mark = betNow.kind === 'unhit' ? 'n.here@16' : 'c.burst@16';
-  // CSS 변수 안 url()은 스타일시트 기준으로 풀리므로 절대 주소로 (지도 --act와 같은 방식)
-  if (!chip.style.getPropertyValue('--coin0')) for (let i = 0; i < 8; i++) chip.style.setProperty(`--coin${i}`, `url(${new URL(`ui/props/coin-${i}.png`, location.href).href})`);
-  chip.innerHTML = `<span class="tag"><i class="bc-coin" aria-hidden="true"></i>${WAGER_TEXT.chip} ${betNow.stake}</span><span class="bc-cond"><img class="bc-kind" src="ui/icons16/${mark}.png" alt="">${betText(betNow).cond}</span><span class="bc-prog">${st.prog}</span>`;
-  chip.classList.toggle('broken', !st.ok);
-  chip.classList.toggle('done', st.done);
-  chip.classList.remove('hit');
-  if (st.done && !betReached) {
-    betReached = true;
-    replay(chip, 'k-in');
-    sfx('coin');
-    stateBand(WAGER_TEXT.reached, 'brass', { ms: 1600 });
-  }
-  if (!st.ok && !betBroke) {
-    betBroke = true;
-    replay(chip, 'k-crack');
-    sfx('threat');
-    stateBand(WAGER_TEXT.fail, 'crimson', { urgent: true, ms: 1800 });
-  }
-};
-/** 판돈 정산 순간 (대국 끝, 격파 띠 뒤): 적중 = 칩에서 나사가 쏟아짐 + 황동 표지 · 실패 = 칩 금 + 진홍 표지. 계산은 그대로 settleBet */
-const betResolve = async (won: boolean): Promise<void> => {
-  if (!betNow) return;
-  const chip = $('bet-chip');
-  const d = settleBet(betNow, { won, kingHit: !!b.kingHit, bestTurnKills: b.bestTurnKills ?? 0 });
-  const r = chip.getBoundingClientRect();
-  chip.hidden = false;
-  chip.classList.toggle('hit', d > 0);
-  chip.classList.toggle('broken', d <= 0);
-  chip.querySelector('.bc-prog')!.textContent = d > 0 ? `+${d}` : `−${betNow.stake}`;
-  // 결과 도트 연출 (D-508): 적중 = 동전 탑이 덜컹 → 튀어 두 배로 → 두 탑 출렁 · 실패 = 탑에 금 → 진홍 쇳물로 녹아 흐름 → 녹빛 얼룩 디더 퇴장
-  void resultFx(chip.querySelector('.bc-coin') ?? chip, d > 0 ? 'betWin' : 'betLose', deviceDot());
-  if (d > 0) {
-    sfx('coin', 9);
-    screwBurst({ x: r.left + r.width / 2, y: r.top + r.height / 2 }, chip, Math.round(d / 5));
-    stateBand(WAGER_TEXT.hit(d), 'brass', { urgent: true, ms: 1800 });
-  } else {
-    replay(chip, 'k-crack');
-    sfx('threat');
-    stateBand(WAGER_TEXT.lost(betNow.stake), 'crimson', { urgent: true, ms: 1800 });
-  }
-  if (!calmMotion()) await new Promise((res) => window.setTimeout(res, 1400));
 };
 
 /** 디버그: 사건 결과 코드 연출 하나를 실제 사건 창 위에서 (tools/qa/sweep.cjs event 묶음 — D-508) */
@@ -2149,46 +1974,32 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 곡: 도금왕 = final · 반장 = boss · 검문 = check(C1 반장 변주, D-548) · 그 밖 = 그 막의 곡 (D-530)
   playMusic(def.bossRule === 'gilded' ? 'final' : def.boss ? 'boss' : def.check ? 'check' : actTrack());
   // 분대에 없는 기물의 카드는 이번 대국에 섞지 않는다 (덱에는 남는다 — 그 기물이 돌아오면 다시 나온다)
-  // 보이지 않는 손 (D-178): 같은 대국을 거듭 지면 적이 가끔 가장 아픈 수를 건너뛴다 — 낮은 승급일수록
-  if (lossDef !== def) {
-    lossDef = def;
-    lossesHere = 0;
-  }
-  // 다시 볼 판(D-468, 시드가 박힌 판)은 실험실 판과 똑같아야 한다 — 보이지 않는 손 · 원수를 끼우지 않는다
-  const mercy = def.seed === undefined ? dir.mercy(asc, lossesHere) : 0;
-  // 원수 (D-178): 입문 · 연마가 아니면 이따금 그 유형의 적으로 다시 선다
+  // 원수 (D-178 → D-600): 입문 · 연마가 아니면 이따금 그 유형의 적이 원수로 선다. 다시 볼 판(D-468, 시드가 박힌 판)에는 끼우지 않는다.
+  // 첫째 · 둘째 왕관은 2막부터(사람 2회차가 1막에서 2 · 3막 원수에게 무너졌다), 편성에 있는 유형만 세게 한다 — 기물을 더하지 않는다
   nemesisNow = null;
-  let enemy = def.enemy;
+  const enemy = def.enemy;
   // 오늘의 도전에는 원수를 끼우지 않는다 — 난수를 더 뽑지도 않는다 (2026-11-16 완주 점검)
   const ns = runNemeses(nemeses(), daily);
-  if (ns.length && def.seed === undefined && !INTRO.includes(def) && !def.drill && R.next() < DIRECTOR.nemesisShow) {
-    const n = ns.find((x) => enemy.includes(x.t)) ?? ns.find((x) => x.t !== 'K');
-    if (n) {
-      nemesisNow = n;
-      if (!enemy.includes(n.t)) enemy = [...enemy, n.t];
-    }
-  }
-  clutchedNow = false;
+  if (ns.length && def.seed === undefined && !INTRO.includes(def) && !def.drill && R.next() < DIRECTOR.nemesisShow) nemesisNow = pickNemesis(ns, enemy, asc, actI + 1);
   tauntedNow = false;
   tauntCount = 0;
   cuesSaid = new Set();
   begSaid = false;
   clearVoices();
   p2Clear();
-  betNow = null;
   blog = [];
   apKey = '';
   apPrev = coinPrev = null;
   // 시작 세트 (D-485): 표준이 아니면 입문 판의 짜 둔 손패 · 자리를 쓰지 않는다(그 손패는 폰 · 나이트 분대 몫) — 적 자리 · 킹 자리만
   const dd: BattleDef = INTRO.includes(def) && startSet !== 'standard' ? { ...def, order: undefined, deck: undefined, place: def.place?.filter((q) => q.side === 1 || q.t === 'K') } : def;
   const bSeed = def.seed ?? 100 + stage * 17 + R.int(1000);
-  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { pawnCall: !!START_SETS[startSet].pawnCall, scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, mercy, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) || def.drill ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 8 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, flatHeat: def.flat, calm: def.calm, script: def.script });
+  b = newSliceBattle(squad, enemy, dd.order ? arrange(dd.order, dd.deck ?? deck.filter(usable)) : deck.filter(usable), bSeed, { pawnCall: !!START_SETS[startSet].pawnCall, scatter: START_SETS[startSet].scatter && def.seed === undefined ? bSeed : undefined, ordered: !!dd.order, enemyKingHp: def.kingHp, enemyHp: def.enemyHp, parts, refined, boss: def.boss, bossRule: def.bossRule, traits: def.traits, width: def.w, height: def.h, place: dd.place, nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : undefined, depth: def.depth ?? (INTRO.includes(def) || def.drill ? 0 : depthNow()), gold, rewindCharms: charms.rewind, shock: asc >= 2, guard: def.guard, atkMul: (asc >= 8 ? ASC_NUM.enemyAtk : 1) * (def.atk ?? 1), eliteOne: def.eliteOne, forms: def.forms, marks: def.marks, giants: def.giants, process: def.process, flatHeat: def.flat, calm: def.calm, script: def.script });
   rewindsAtStart = b.rewinds;
   tg = { telegraph: 0, hit: 0, evade: 0, counter: 0 };
   hpAtStart = b.s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
   lossAsked = false;
   if (!labMode && runLive) {
-    track('battle_start', { ...where(), enemy_id: def.title, enemy: def.enemy });
+    track('battle_start', { ...where(), enemy_id: def.title, enemy: b.s.pieces.filter((p) => p.side === 1 && p.body === undefined).map((p) => p.type), nemesis: nemesisNow ? { t: nemesisNow.t, rank: nemesisNow.rank } : null }); // D-600: 실제 편성(이형 · 거대 · 판 위 수) · 원수
     // 첫 10분 (P-C D-502): battle1_start = 처음 판에 손대는 순간(시험대 A) · 시험대마다 drill_x_start · 출하 지도의 첫 대국 = first_real_battle
     if (def.drill) ftue('battle1_start');
     ftue(def.drill ? `drill_${def.drill}_start` : 'first_real_battle');
@@ -2245,8 +2056,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
       const cracked = squad.filter((u) => u.cracked);
       // 상단 알림은 상태만 (D-385, 사용자: 「위에서 내려오는 설명은 읽히지도 않는다 — 태엽 부족 같은 상태만」): 판 규칙 · 적 특성은 진입 창과 길게 누르기에서
       if (cracked.length) toast(LIFE_TEXT.warn(cracked.map((u) => u.name ?? PIECE_NAMES_KO[u.t]).join(' · ')), 2600);
-      maybeBet(def);
-      // 대국 시작 한마디 (P-B D-490): 판돈 창이 없을 때만 — 적 킹이 먼저, 아니면 적 기물 하나
+      // 대국 시작 한마디 (P-B D-490): 창이 없을 때만 — 적 킹이 먼저, 아니면 적 기물 하나
       void ready.then(() => window.setTimeout(() => { if ($('overlay').hidden && !busy) { taunt('start'); if (!tauntedNow) foePieceSay('start'); } }, 500));
     });
   // 입문 첫 턴: 손패가 빛난다 (글 대신 빛나는 곳)
@@ -3007,7 +2817,7 @@ const shopScreen = (): void => {
     const [kind, id] = k.split(':');
     if (kind === 'card') return `${COMMANDS[id as CommandId].name} — 덱에 한 장`;
     if (kind === 'part') return `${SLICE_PARTS[id as SlicePartId].name} — ${SLICE_PARTS[id as SlicePartId].desc}`;
-    if (kind === 'rewind' || kind === 'revive') return `${CHARMS[kind].name} — 부적`;
+    if (kind === 'rewind' || kind === 'revive') return CHARMS[kind].name;
     return svcLine(kind as SvcKey, healPct);
   };
   /**
@@ -3542,7 +3352,6 @@ const finishNow = (): void => {
   if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
     await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
-    await betResolve(isWin);
     // 반장 격파 (각본 §8, D-276): 쓰러지는 모습 + 종이왕이 건네는 말 — 도금왕은 엔딩 흐름에서
     if (isWin && cur.boss && cur.bossRule && cur.bossRule !== 'gilded' && BOSS_STORY[cur.bossRule as StoryBoss]) {
       runBosses = [...runBosses, cur.bossRule as StoryBoss];
@@ -3551,8 +3360,6 @@ const finishNow = (): void => {
     // 처치 장면이 다 끝난 뒤에 보상창 (페르소나 테스트 M4: 킹 분해 연출을 창이 1~2초 만에 덮었다)
     if (isWin && !calmMotion()) await new Promise((r) => window.setTimeout(r, cur.boss ? 900 : 600));
     if (!isWin) {
-      lossesHere += 1;
-      if (betNow) gold = Math.max(0, gold - betNow.stake);
       // 아까운 패배 (D-178): 적 킹이 거의 다 깎였으면 「한 수였습니다」 — 가까웠던 만큼 다시 누르게
       const ek = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.body === undefined);
       const near = ek && ek.hp <= ek.maxHp * DIRECTOR.nearMiss ? `<p class="mono">‘적 킹 HP ${ek.hp}. 한 수였어.’</p>` : '';
@@ -3561,7 +3368,7 @@ const finishNow = (): void => {
       // 하자 폐기 화면도 출하 중단 배경(E-02) 위에 (D-263 — 판 위에 뜨던 구식 창)
       document.body.classList.add('between');
       placeBg('end-fail');
-      // M 창 (D-391): 명패 「하자 폐기」 · 남은 부적 꼬리표 · 규칙 한 줄 · 독백 · [끝낸다 | 다시 둔다] — 결정 대기라 막을 눌러도 안 닫힘
+      // M 창 (D-391): 명패 「하자 폐기」 · 남은 여벌 심장 꼬리표 · 규칙 한 줄 · 독백 · [끝낸다 | 다시 둔다] — 결정 대기라 막을 눌러도 안 닫힘
       const el = openWin({
         size: 'm',
         title: '하자 폐기',
@@ -3587,13 +3394,8 @@ const finishNow = (): void => {
     // 판 사이 (페르소나 테스트 M7): 보상 · 지도 · 장소 화면 뒤로 끝난 대국의 손패 · 숫자가 비치지 않게 판을 내린다
     document.body.classList.add('between');
     placeBg('bg-reward');
-    // 판돈 정산 · 원수 처치 · 새 원수 · 사선 보상 (D-178)
+    // 원수 처치 · 새 원수 · 사선 보상 (D-178)
     const notes: string[] = [];
-    if (betNow) {
-      const d = settleBet(betNow, { won: true, kingHit: !!b.kingHit, bestTurnKills: b.bestTurnKills ?? 0 });
-      gold = Math.max(0, gold + d);
-      notes.push(d > 0 ? WAGER_TEXT.hit(d) : WAGER_TEXT.lost(-d));
-    }
     if (nemesisNow && b.nemesisId !== undefined && !b.s.pieces.some((p) => p.id === b.nemesisId)) {
       const n = nemesisNow;
       gold += dir.bounty(asc);
@@ -3613,7 +3415,7 @@ const finishNow = (): void => {
     const kingNow = b.s.pieces.find((p) => p.side === 0 && p.type === 'K');
     const kingMax = kingNow?.maxHp ?? 1;
     closeTier = 0;
-    if (isCloseCall({ kingHp: kingNow?.hp ?? 0, kingMax, fell: crackOrScrap(fallenAfter(b, squad).map((f) => f.crew)).scrapped.length, clutched: clutchedNow }) && !closeActs.includes(actI) && dir.closeCall(asc) > 0) {
+    if (isCloseCall({ kingHp: kingNow?.hp ?? 0, kingMax, fell: crackOrScrap(fallenAfter(b, squad).map((f) => f.crew)).scrapped.length }) && !closeActs.includes(actI) && dir.closeCall(asc) > 0) {
       closeActs.push(actI);
       closeTier = dir.closeCall(asc);
       if (closeTier === 1) gold += DIRECTOR.closeCallGold;
@@ -3660,15 +3462,6 @@ const finishNow = (): void => {
     if (promo) {
       gold += promo * SLICE.promoteBonus;
       after.push(`승격 도장 — 나사 +${promo * SLICE.promoteBonus} (승격은 이 대국에서만)`);
-    }
-    // 보충병 (D-198): 다 잃고 겨우 이겼어도 다음 판을 설 수 있게
-    const men = squad.filter((u) => u.t !== 'K').length;
-    if (!labMode && men < SLICE.reinforceMin) {
-      const n = SLICE.reinforceMin - men;
-      for (let k = 0; k < n; k++) squad.push({ ...crewOf('P'), scars: ['보충병'] });
-      const pawnCards = deck.filter((id) => COMMANDS[id].who === 'P').length;
-      if (pawnCards < SLICE.reinforceCards) for (let k = pawnCards; k < SLICE.reinforceCards; k++) deck.push('advance');
-      after.push(`보충병 폰 ${n}기가 분대에 들어옵니다.`);
     }
     if (after.length) window.setTimeout(() => toast(after.join(' · '), 3600), notes.length ? 3900 : 400);
     // 이긴 대국을 저장한다 (D-488, 밸런스 점검 P0-2): 보상 전에 앱이 닫혀도 이어하기는 이 보상 화면부터 — 대국을 다시 굴리지 않는다
@@ -4613,7 +4406,7 @@ $('parts').addEventListener('click', (e) => {
 });
 $('btn-rewind').addEventListener('click', () => {
   if (busy || b.s.winner !== null) return;
-  if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${josa(CHARMS.rewind.name, '은')} 상자 · 고물상 · 반장에게서)`);
+  if (b.rewinds <= 0) return toast(`‘되감을 톱니가 없어.’ (${josa(CHARMS.rewind.name, '은')} 상자 · 고물상에서)`);
   // 확인 (D-209): 되돌릴 수 없는 결정은 한 번 묻는다
   rewindScene({ ...HUD_TEXT.rewindScene, line: HUD_TEXT.rewindLine }, () => undefined, () => doRewind(false), false);
 });
@@ -4859,7 +4652,11 @@ const newRun = (seed: number, level: number, day: string | null, mode: RunMode =
   runAt = Date.now();
   runLive = true;
   rewindsUsedRun = 0;
-  track('run_start', { seed, asc: level, daily: day, first: firstShip, run: readMeta(store).runs + 1 });
+  {
+    // D-600: 몇째 왕관 · 장 · 깬 왕관 · 완주 수 — 「2회차가 asc 0 / chapter 0」(첫째 왕관 다시 골랐나 · 완주 기록 유실인가)을 기록만으로 가른다
+    const m0 = readMeta(store);
+    track('run_start', { seed, asc: level, daily: day, first: firstShip, run: m0.runs + 1, mode: runMode, crown: runMode === 'story' ? storyChapter + 1 : null, chapter: storyChapter, story_cleared: m0.storyCleared ?? 0, clears: m0.clears, set: startSet });
+  }
   acts = buildRun(seed, level, firstShip);
   shopsSeen = 0;
   svcUsed = { refine: 0, remove: 0 };
@@ -4889,19 +4686,15 @@ const newRun = (seed: number, level: number, day: string | null, mode: RunMode =
   const deputy = squad.find((u) => u.t === 'N'); if (deputy && runMode === 'story' && storyChapter === 0) { deputy.name = '박차'; deputy.scars = [...(deputy.scars ?? []), '주조 흠집']; }
   // 승급 10 (조항 「심장 톱니는 금 간 것으로」): 킹이 아닌 분대원 하나가 깨진 심장 톱니로 시작
   if (level >= 10) { const i = squad.findIndex((u) => u.t !== 'K'); if (i >= 0) squad[i] = { ...squad[i], cracked: true }; }
-  clutchLeft = dir.clutch(level);
-  sacLeft = dir.sacrifice(level);
   closeActs = [];
   highlight = null;
-  charms = { revive: startRevive(level, firstShip), rewind: CHARM_NUM.startRewind + (START_SETS[startSet].rewind ?? 0) };
-  lossesHere = 0;
-  lossDef = null;
+  charms = { revive: startRevive(level, firstShip), rewind: startRewind(level) + (START_SETS[startSet].rewind ?? 0) }; // D-600: 왕관별 2 · 2 · 1 · 1
   ended = null;
   endCalled = false;
 };
 
 /**
- * 시작 세트 (D-485): 세트의 분대 · 덱은 newRun이 깔고, 여기서는 덧붙는 것 — 이형 분대원(잡종) · 시작 부품(보병 · 고철) · 되감기 부적(무작위 배치).
+ * 시작 세트 (D-485): 세트의 분대 · 덱은 newRun이 깔고, 여기서는 덧붙는 것 — 이형 분대원(잡종) · 시작 부품(보병 · 고철) · 시작 되감기 더(무작위 배치).
  * 지도 rng(R)를 건드리지 않게 시드에서 따로 뽑는다.
  */
 const applyStartSet = (seed: number): void => {
@@ -4928,7 +4721,7 @@ const applyStartSet = (seed: number): void => {
 
 /** 지금 출하 기록 한 장 (판 번호는 writeSave가 붙인다) */
 const runRecord = (at: 'map' | 'battle' | 'reward', node?: number, pending?: PendingReward): RunSave =>
-  ({ v: 0, seed: runSeed, startSet, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, pending, clutchLeft, sacLeft, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, melted: meltedRun, actSnap });
+  ({ v: 0, seed: runSeed, startSet, asc, mode: runMode, chapter: storyChapter, promise: storyPromise, storyBeats, daily, runId, actI, rowI, picked, squad, deck, parts, gold, won, stage, refined, eventBag, rng: R.state, at, node, pending, closeActs, highlight, charms, first: firstShip, shopsSeen, svc: svcUsed, bosses: runBosses, melted: meltedRun, actSnap });
 /**
  * 대국 중 저장이 켜진 대국 (D-529): saveRun('battle')이 대국을 세우기 **전** 출하 난수 · 대국 번호를 적어 둔다 —
  * 이어 갈 때 같은 자리에서 같은 대국을 다시 세운 뒤 판 상태만 갈아 끼운다. 지도 · 보상 · 출하 끝에서 꺼진다.
@@ -4944,7 +4737,7 @@ const saveRun = (at: 'map' | 'battle' | 'reward', node?: number, pending?: Pendi
  * 대국 판을 저장한다 (D-529): 턴이 넘어갈 때 · 앱을 내리거나 닫을 때. 엔진 상태(b)만 — 화면은 남기지 않는다.
  * 연출 중(busy · 적 차례)이면 건너뛴다 — 연출 전에 settled로 남긴 판이 있다.
  * settled (코드 리뷰 4): 턴 끝 · 카드를 엔진이 다 푼 직후(연출 전)에 부른다 — 엔진 판은 이미 결과라, 연출 중에 앱을 죽였다 켜도
- * 그 턴 처음으로 돌아가지 않는다(공짜 되감기). 못 보인 폐기 의식 · 마지막 한 수(stand)는 이어 갈 때 다시 보인다 — 사선(자원 희생)은 턴 끝에만 묻는다(D-557).
+ * 그 턴 처음으로 돌아가지 않는다(공짜 되감기). 못 보인 폐기 의식(stand = 적 차례 뒤 판)은 이어 갈 때 다시 보인다.
  */
 const saveFight = (settled?: { stand: boolean }): void => {
   if (!fightOn || crashed || !runLive || labMode || buildTrialId || !b || (!settled && (b.s.winner !== null || busy || enemyTurn))) return;
@@ -4954,7 +4747,7 @@ const saveFight = (settled?: { stand: boolean }): void => {
     if (how === 'spare' || how === 'record') return settleLoss();
     if (how === 'none') return;
   }
-  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, bet: betNow, clutched: clutchedNow, phaseWarned, tg, rites: ritesDone, ...(settled?.stand && b.s.winner === null ? { stand: true } : {}) } });
+  writeSave(store, { ...runRecord('battle', fightOn.node), rng: fightOn.rng, stage: fightOn.stage, fight: { b, rng: R.state, stage, phaseWarned, tg, rites: ritesDone, ...(settled?.stand && b.s.winner === null ? { stand: true } : {}) } });
 };
 /**
  * 진 대국 정산 (2026-11-16 완주 점검 → D-537 연출 앞으로): 여벌이 있으면 여벌 하나를 깨고 이 대국을 처음부터(「다시 둔다」와 같은 자리) ·
@@ -4975,8 +4768,6 @@ const resumeFight = (def: BattleDef, f: FightSave): void => {
   b = f.b;
   R = new Rng(f.rng);
   stage = f.stage;
-  betNow = f.bet ?? null;
-  clutchedNow = !!f.clutched;
   phaseWarned = !!f.phaseWarned;
   if (f.tg) tg = { ...f.tg };
   renderer.setNemesis(b.nemesisId ?? null);
@@ -4984,7 +4775,7 @@ const resumeFight = (def: BattleDef, f: FightSave): void => {
   renderer.setStaggered(b.staggered ?? [], b.shocked ?? []);
   renderer.setBossMarks(b.stampId ?? null, b.pull?.id ?? null);
   renderer.setup(b.s);
-  // 연출 전에 남긴 판이면 못 본 폐기 의식 · 마지막 한 수를 판이 선 뒤에 (사선은 묻지 않는다 — 이미 맞은 뒤, D-557) (옛 저장은 다 본 것으로 — 의식을 다시 틀지 않게)
+  // 연출 전에 남긴 판이면 못 본 폐기 의식을 판이 선 뒤에 (옛 저장은 다 본 것으로 — 의식을 다시 틀지 않게)
   const pend = fightPending(f);
   ritesDone = pend.rites;
   refresh();
@@ -4997,7 +4788,6 @@ const resumeFight = (def: BattleDef, f: FightSave): void => {
     refresh();
     // 끝난 채 저장한 판 (D-537): 이긴 판은 보상 정산으로, 진 판(판 되감기가 남음)은 되감기 장면으로
     if (b.s.winner !== null) return finish();
-    if (pend.stand) await lastStand();
     saveFight();
   });
 };
@@ -5041,12 +4831,11 @@ const loadRun = (sv: RunSave): void => {
   while (picked.length < 4) picked.push([]); // 예전 저장은 세 막 몫만 — 종막 몫을 채운다
   // 덱은 저장 그대로 (#20 · D-488 — 옛 「+」 이관이 다듬은 카드가 사라진 뒤 남은 같은 카드를 모두 「+」로 바꿨다)
   deck = restoreDeck(sv);
-  clutchLeft = sv.clutchLeft ?? dir.clutch(sv.asc);
-  sacLeft = sv.sacLeft ?? dir.sacrifice(sv.asc);
+  // 옛 저장의 clutchLeft · sacLeft · fight.bet · fight.clutched(D-601에서 뺀 장치)는 읽지 않고 버린다
   closeActs = sv.closeActs ?? [];
   highlight = sv.highlight ?? null;
-  // 부적 (D-228) 전 저장: 그때는 다시 하기가 무제한이었다 — 시작 몫을 그대로 준다
-  charms = sv.charms ?? { revive: startRevive(sv.asc, !!sv.first), rewind: CHARM_NUM.startRewind };
+  // 톱니 (D-228) 전 저장: 그때는 다시 하기가 무제한이었다 — 시작 몫을 그대로 준다
+  charms = sv.charms ?? { revive: startRevive(sv.asc, !!sv.first), rewind: startRewind(sv.asc) };
   // 막 장부 (D-402) 전 저장: 이번 막 시작 값을 모르니 지금 값에서 센다
   actSnap = sv.actSnap ?? snapNow();
 };
@@ -5643,4 +5432,4 @@ void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor
   if (newerSaveFound()) stateBand(SAFETY_TEXT.newerSave, 'toast', { ms: 6000 });
 });
 // 검수 손잡이 (?debug) — 출시 빌드에는 없다 (D-531)
-if (import.meta.env.MODE !== 'release' && devQuery('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cursor: () => boardCursorAt(), sel: () => ({ card: selCard, piece: selPiece }), setPick: () => setPick(), progress: () => readMeta(store), context: () => ({ mode: runMode, chapter: storyChapter, asc, runId, promise: storyPromise, beats: storyBeats }), campaign: (a: number, mode: RunMode = 'story') => { newRun(171 + a, a, null, mode); return 0; }, challengeEnd: (a = CHALLENGE_START) => { runMode = 'challenge'; asc = a; void endingFlow(); }, buildPick, buildTrial: startBuildTrial, movePeek, kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void onboarding(), drill: (i: number) => startBattle(i < DRILLS.length ? DRILLS[i] : INTRO[0], true), tipNow: (k: 'battle' | 'act' = 'battle') => showTip(k), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), settingsWin: (desk = false) => openSettings({ store, desktop: desk ? { toggleFullscreen: () => undefined, quitGame: () => undefined } : null }), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 2) => { runMode = 'story'; storyChapter = Math.min(STORY_COUNT - 1, Math.max(0, a)) as StoryChapter; asc = storyChapter; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1, level = 0, mode: RunMode = 'story', day: string | null = null, set?: StartSetId) => begin(s, level, day, mode, set), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { runMode = 'story'; storyChapter = Math.min(STORY_COUNT - 1, Math.max(0, a)) as StoryChapter; asc = storyChapter; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), vnCut: (slug: string) => playCuts(PROLOGUE.filter((c) => c.slug === slug)), companionCut: (act = 0) => playCuts(companionScene(act, storyCompany().alive, undefined, storyChapter).cuts), credits: (count = 4, record = false) => { void creditsScene(Array.from({ length: count }, (_, i) => ({ t: (['P', 'N', 'B', 'R'] as PieceType[])[i % 4], name: `먼지투성이 ${i + 1}`, fallen: i % 2 === 1 })), '출하 14번째 · 2026-11-11', { record }); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces, defeat: () => runEnd(false), shadow: (a = 1) => playCuts(shadowCuts(a)), artScene: (img: string) => playCuts([{ img, bg: ['#0b0b0e', '#0b0b0e'], art: [], lines: [{ k: 'n', t: '장면 검수' }], cam: 'still' }]), meltNames: (n: string[]) => (meltedRun = n), replay: (code: string) => { const r = JSON.parse(decodeURIComponent(escape(atob(code)))) as { squad: Squad[]; deck: CommandId[]; parts: SlicePartId[]; refined: CommandId[]; asc: number; def: BattleDef; gold: number }; squad = r.squad; deck = r.deck; parts = r.parts; refined.splice(0, refined.length, ...r.refined); asc = r.asc; gold = r.gold; startBattle(r.def, true); return r.def.title; }, trueEnd: () => playCuts(trueEndingCuts(storyCompany().alive.map((u, k) => ({ t: u.t, side: 0 as const, x: 14 + k * 9, y: 56, h: 22 })), storyCompany()), { faces: crewFaces() }), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(storyChapter, storyCompany().alive[0]?.name ?? '', ASCENSION[STORY_LAW[storyChapter]].law, BOSS_STORY.plate.mirror, storyCompany()), { faces: crewFaces() }), defeatCut: () => playCuts(DEFEAT_CUTS), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, cardCond, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), deckAdd: (ids: CommandId[]) => deck.push(...ids), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: (ids?: SlicePartId[]) => { const all = Object.keys(SLICE_PARTS) as SlicePartId[]; parts = (ids ?? all).slice(0, partSlotsAt(actI)); gainPart(all.find((id) => !parts.includes(id))!, () => labMode ? closeOverlay() : showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), boardTexts: () => renderer.debugTexts(), tallyHold: (ms = 4000) => renderer.debugSummaryHold(ms), lab: (m: 'A' | 'B') => startLab(m), sacSet: (n = 1) => (sacLeft = n), offerPeek: () => sacrificeOffer({ ...b, warned: true }, 1), stand: async () => { sacLeft = 1; clutchLeft = 1; await sacrificeAsk(true); return lastStand(true); }, taunt: (c: TauntCue) => { tauntedNow = false; tauntCount = 0; taunt(c, true); }, monoNow: (t: string) => mono(t), betSet: (k: BetKind = 'unhit') => { betNow = { kind: k, stake: 30, need: DIRECTOR.betKills[Math.min(2, actI)] }; betReached = false; refresh(); }, betBreak: () => { b.kingHit = true; refresh(); }, betReach: () => { b.bestTurnKills = 3; refresh(); }, betEnd: (won: boolean) => betResolve(won), resultFx: (k: string) => void debugResultFx(k), fxOnly: (k: ResultFxKind) => void debugFxOnly(k), apFx: () => apSources(2, (() => { const s0 = JSON.parse(JSON.stringify(b.s)) as typeof b.s; s0.pieces.push({ ...b.s.pieces.find((p) => p.side === 1 && p.type !== 'K')!, id: 999 }); return s0; })(), [], (b.refunded = (b.refunded ?? 0) + 1) - 1, 1), p2Warn: () => p2Warn(BOSS_PHASE_TEXT.low, gridRect()), p2Rise: async (r = 'plate') => { await p2Rise({ art: p2Art(r), word: r === 'gilded' ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다' }); const p2 = (BOSS_STORY as Partial<Record<string, { phase2: string }>>)[r]?.phase2; if (p2) await foeStory(p2); }, allyBark: () => { const p = b.s.pieces.find((q) => q.side === 0 && q.type !== 'K'); if (p) bark({ at: () => barkAtPiece(p.id), side: 'ally', name: squad[b.squadIds.indexOf(p.id)]?.name ?? PIECE_NAMES_KO[p.type], face: pieceImg(p.type, 0, 'small', 40), text: CREW_BARK[p.type as CrewKind].kill[0], prio: 1, force: true }); }, foeBark: (cue: FoePieceCue = 'gloat', t?: PieceType) => { const p = b.s.pieces.find((q) => q.side === 1 && q.type !== 'K' && (!t || q.type === t)); if (p) bark({ at: () => barkAtPiece(p.id), side: 'foe', name: `적 ${PIECE_NAMES_KO[p.type]}`, face: foePieceFace(p), text: FOE_PIECE_BARK[p.type as CrewKind][cue][0], prio: 1, force: true }); }, bet: () => { gold = 60; maybeBet(cur, true); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), /** 전수 점검(tools/qa/sweep.cjs): 같은 판 정의에 이형 · 거대 주물 · 공정 판만 덧대어 연다 — 판 정의를 고칠 뿐, 대국은 늘 startBattle이 세운다 */ battleWith: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', patch: Partial<BattleDef> = {}) => startBattle({ ...battleFor(act, kind, new Rng(act * 7)), ...patch }, true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), eventIds: SLICE_EVENT_IDS, event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), lastRow: () => (rowI = acts[actI].rows.length - 1), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), richRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); actSnap = { won: 9, kills: 20, gold: 140, deck: deck.length - 4, kb: Object.fromEntries(squad.map((u, i) => [u.serial ?? '', Math.max(0, (u.kills ?? 0) - [3, 6, 2, 4, 1][i % 5])])), db: {} }; return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });
+if (import.meta.env.MODE !== 'release' && devQuery('debug')) Object.assign(window as object, { slice: () => b, sliceApi: { cursor: () => boardCursorAt(), sel: () => ({ card: selCard, piece: selPiece }), setPick: () => setPick(), progress: () => readMeta(store), context: () => ({ mode: runMode, chapter: storyChapter, asc, runId, promise: storyPromise, beats: storyBeats }), campaign: (a: number, mode: RunMode = 'story') => { newRun(171 + a, a, null, mode); return 0; }, challengeEnd: (a = CHALLENGE_START) => { runMode = 'challenge'; asc = a; void endingFlow(); }, buildPick, buildTrial: startBuildTrial, movePeek, kitSheet, peekAt: (pos: Pos) => pieceInfo(pos), logPeek: () => logPeek(), stateBand: (t: string, k: 'toast' | 'brass' | 'crimson' = 'toast') => stateBand(t, k), coachNow: () => { coachOn = true; cur = INTRO[0]; refresh(); }, tutNow: () => void onboarding(), drill: (i: number) => startBattle(i < DRILLS.length ? DRILLS[i] : INTRO[0], true), tipNow: (k: 'battle' | 'act' = 'battle') => showTip(k), warnNow: async () => { endWarn(false); return onEnd(); }, revive: (n = 1) => (charms.revive = n), nemesisOf: () => nemesisMeet({ t: 'R', name: '녹슨 집행자', rank: 2, victims: ['먼지투성이', '구부러진 못'], heir: { t: 'N', name: '구부러진 못' } }), win: (size: 's' | 'm' | 'l' = 'm') => openWin({ size, title: '창 견본', head: '<span class="tag">꼬리표</span>', body: '<p>본문 15px 한 줄.</p><p class="note">보조 12px.</p>', back: { label: '닫는다', attrs: 'data-x' }, go: { label: '고른다' }, dismiss: closeWin }), ledger: () => ledgerView(closeWin), help: (t: 'now' | 'dict' = 'now') => help(t), settingsWin: (desk = false) => openSettings({ store, desktop: desk ? { toggleFullscreen: () => undefined, quitGame: () => undefined } : null }), bug: () => bugReport(), exportScr: () => exportScreen(closeWin), survey: (i = 0) => surveyScreen(i, {}, closeWin), promote: (a = 2) => { runMode = 'story'; storyChapter = Math.min(STORY_COUNT - 1, Math.max(0, a)) as StoryChapter; asc = storyChapter; runBosses = ['plate']; void promoteScreen(); }, guideMenu: () => void guide(openWin).then(closeWin), labPick: () => labPick(), begin: (s = 1, level = 0, mode: RunMode = 'story', day: string | null = null, set?: StartSetId) => begin(s, level, day, mode, set), endFlow: (a = 0, bosses: StoryBoss[] = ['plate', 'magnet', 'alarm']) => { runMode = 'story'; storyChapter = Math.min(STORY_COUNT - 1, Math.max(0, a)) as StoryChapter; asc = storyChapter; runBosses = bosses; void endingFlow(); }, pro: () => prologue(), vnCut: (slug: string) => playCuts(PROLOGUE.filter((c) => c.slug === slug)), companionCut: (act = 0) => playCuts(companionScene(act, storyCompany().alive, undefined, storyChapter).cuts), credits: (count = 4, record = false) => { void creditsScene(Array.from({ length: count }, (_, i) => ({ t: (['P', 'N', 'B', 'R'] as PieceType[])[i % 4], name: `먼지투성이 ${i + 1}`, fallen: i % 2 === 1 })), '출하 14번째 · 2026-11-11', { record }); return 0; }, finalAt: (a = 13) => { asc = a; runBosses = ['inspect', 'magnet', 'thorns']; startBattle(FINAL_BOSS(a), true); }, phase2: (r?: StoryBoss) => { if (r) runBosses = [r]; void gildedPhase2(); return 0; }, fallCut: (r: StoryBoss) => { void bossFallCut(r); return 0; }, allFaces, defeat: () => runEnd(false), shadow: (a = 1) => playCuts(shadowCuts(a)), artScene: (img: string) => playCuts([{ img, bg: ['#0b0b0e', '#0b0b0e'], art: [], lines: [{ k: 'n', t: '장면 검수' }], cam: 'still' }]), meltNames: (n: string[]) => (meltedRun = n), replay: (code: string) => { const r = JSON.parse(decodeURIComponent(escape(atob(code)))) as { squad: Squad[]; deck: CommandId[]; parts: SlicePartId[]; refined: CommandId[]; asc: number; def: BattleDef; gold: number }; squad = r.squad; deck = r.deck; parts = r.parts; refined.splice(0, refined.length, ...r.refined); asc = r.asc; gold = r.gold; startBattle(r.def, true); return r.def.title; }, trueEnd: () => playCuts(trueEndingCuts(storyCompany().alive.map((u, k) => ({ t: u.t, side: 0 as const, x: 14 + k * 9, y: 56, h: 22 })), storyCompany()), { faces: crewFaces() }), endA: () => playCuts([ENDING_A]), promoCut: () => playCuts(promotionCuts(storyChapter, storyCompany().alive[0]?.name ?? '', ASCENSION[STORY_LAW[storyChapter]].law, BOSS_STORY.plate.mirror, storyCompany()), { faces: crewFaces() }), defeatCut: () => playCuts(DEFEAT_CUTS), bossOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule), true), bossIntroOf: (rule: BossRule, act: 1 | 2 | 3 = 1) => startBattle(battleFor(act, 'boss', new Rng(7), 0, rule)), final: () => startBattle(FINAL_BOSS(0)), finalForge: () => { forgeFinal = true; forgeScreen(); }, boardFx: (k: 'row' | 'thorns' | 'stamp') => renderer.debugFx(k), cardPieces, cardMoves, previewPlay, cardCond, parts: (ids?: SlicePartId[]) => (ids ? (parts = ids) : parts), partPick: () => partPick(SCREEN_TEXT.part, () => showMap()), deckView: (m: 'view' | 'remove' = 'view') => deckView(m, () => showMap()), deckAdd: (ids: CommandId[]) => deck.push(...ids), refine: () => refineScreen(forgeScreen, () => showMap()), brace: () => braceScreen(), full: (ids?: SlicePartId[]) => { const all = Object.keys(SLICE_PARTS) as SlicePartId[]; parts = (ids ?? all).slice(0, partSlotsAt(actI)); gainPart(all.find((id) => !parts.includes(id))!, () => labMode ? closeOverlay() : showMap()); }, reward: () => { cur = { ...cur, reward: 'card' } as BattleDef; rewardFlow(40, 0, []); }, recruitAt: () => recruitPick(SCREEN_TEXT.newCrew, () => showMap(), '<span class="tag">나사 +40</span>'), screenOf: (pos: Pos) => renderer.screenOf(pos), boardTexts: () => renderer.debugTexts(), tallyHold: (ms = 4000) => renderer.debugSummaryHold(ms), lab: (m: 'A' | 'B') => startLab(m), taunt: (c: TauntCue) => { tauntedNow = false; tauntCount = 0; taunt(c, true); }, monoNow: (t: string) => mono(t), resultFx: (k: string) => void debugResultFx(k), fxOnly: (k: ResultFxKind) => void debugFxOnly(k), apFx: () => apSources(2, (() => { const s0 = JSON.parse(JSON.stringify(b.s)) as typeof b.s; s0.pieces.push({ ...b.s.pieces.find((p) => p.side === 1 && p.type !== 'K')!, id: 999 }); return s0; })(), [], (b.refunded = (b.refunded ?? 0) + 1) - 1, 1), p2Warn: () => p2Warn(BOSS_PHASE_TEXT.low, gridRect()), p2Rise: async (r = 'plate') => { await p2Rise({ art: p2Art(r), word: r === 'gilded' ? '도금왕이 격노해 일어선다' : '반장이 격노해 일어선다' }); const p2 = (BOSS_STORY as Partial<Record<string, { phase2: string }>>)[r]?.phase2; if (p2) await foeStory(p2); }, allyBark: () => { const p = b.s.pieces.find((q) => q.side === 0 && q.type !== 'K'); if (p) bark({ at: () => barkAtPiece(p.id), side: 'ally', name: squad[b.squadIds.indexOf(p.id)]?.name ?? PIECE_NAMES_KO[p.type], face: pieceImg(p.type, 0, 'small', 40), text: CREW_BARK[p.type as CrewKind].kill[0], prio: 1, force: true }); }, foeBark: (cue: FoePieceCue = 'gloat', t?: PieceType) => { const p = b.s.pieces.find((q) => q.side === 1 && q.type !== 'K' && (!t || q.type === t)); if (p) bark({ at: () => barkAtPiece(p.id), side: 'foe', name: `적 ${PIECE_NAMES_KO[p.type]}`, face: foePieceFace(p), text: FOE_PIECE_BARK[p.type as CrewKind][cue][0], prio: 1, force: true }); }, finish: () => finish(), meet: () => { const n = nemeses()[0]; if (n) nemesisMeet(n); }, startLive: (act: 1 | 2 | 3) => startBattle(battleFor(act, 'battle', new Rng(act * 7))), intro: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7))), redraw: () => { renderer.setup(b.s); refresh(); }, startAt: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss') => startBattle(battleFor(act, kind, new Rng(act * 7)), true), /** 전수 점검(tools/qa/sweep.cjs): 같은 판 정의에 이형 · 거대 주물 · 공정 판만 덧대어 연다 — 판 정의를 고칠 뿐, 대국은 늘 startBattle이 세운다 */ battleWith: (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', patch: Partial<BattleDef> = {}) => startBattle({ ...battleFor(act, kind, new Rng(act * 7)), ...patch }, true), tap: (pos: Pos) => onTap(pos), start: (i: number) => startBattle(i < 1 ? INTRO[i] : battleFor(1, i >= 4 ? 'boss' : i === 3 ? 'check' : 'battle', new Rng(i))), map: (r = 2) => { rowI = r; showMap(); }, shop: () => shopScreen(), eventIds: SLICE_EVENT_IDS, event: (id: string) => eventScreen(id as never), seed: (n: number) => (R = new Rng(n)), hurt: (k = 0.6) => squad.forEach((u) => (u.hp = Math.round(crewMaxHp(u) * k))), forge: () => forgeScreen(), say: (t: PieceType) => crewSay(t, '먼지투성이'), kit: () => kitPick(SCREEN_TEXT.kit, () => showMap()), recruit: () => recruitPick(SCREEN_TEXT.recruit, () => showMap()), forceRecruit: () => (debugRecruit = true), enter: (k: string) => enterNode({ kind: k } as MapNode), crack: (i: number) => { squad[i] = { ...squad[i], cracked: true }; }, crew: () => crewView(), squad: () => squad, nextAct: () => { rowI = acts[actI].rows.length - 1; advance(); }, act: (i: number) => { actI = i; rowI = 1; showMap(); }, setAct: (i: number) => (actI = i), lastRow: () => (rowI = acts[actI].rows.length - 1), botMove: async (style: 'naive' | 'greedy' = 'greedy') => { if (busy || b.s.winner !== null) return 'busy'; const m = bestAction(b, style); if (!m) { await onEnd(); if ($('btn-end').classList.contains('warn')) await onEnd(); return 'end'; } const c = COMMANDS[b.hand[m.i]]; if (m.pieceId === undefined) { pickCard(m.i); return c.name; } await run(m.i, m.pieceId, m.to); return c.name; }, gold: (n: number) => (gold = n), doom: () => { const k = b.s.pieces.find((p) => p.side === 0 && p.type === 'K')!; const sq = dangerSquares(b).find((d) => !b.s.pieces.some((p) => p.x === d.x && p.y === d.y)); if (sq) Object.assign(k, { x: sq.x, y: sq.y }); k.hp = 1; k.shield = 0; b.rewinds = Math.max(1, b.rewinds); b.snap = JSON.stringify({ ...b, snap: '' }); renderer.setup(b.s); refresh(); return !!sq; }, end: (c: boolean) => runEnd(c), endNow: (c: boolean) => runEndNow(c), richRun: () => { if (squad.length < 5) squad.push(crewOf('B'), crewOf('R')); won = 14; gold = 212; deck.push(...(Object.keys(COMMANDS) as CommandId[]).filter((id) => !/[+~]$/.test(id)).slice(0, 10)); runBosses = ['plate', 'magnet', 'alarm']; parts = (Object.keys(SLICE_PARTS) as SlicePartId[]).slice(0, 3); const ks = [12, 7, 5, 9, 3], ds = [340, 188, 152, 260, 71]; squad.filter((u) => u.t !== 'K').forEach((u, i) => { u.kills = ks[i % 5]; u.dmg = ds[i % 5]; u.battles = 14; }); actSnap = { won: 9, kills: 20, gold: 140, deck: deck.length - 4, kb: Object.fromEntries(squad.map((u, i) => [u.serial ?? '', Math.max(0, (u.kills ?? 0) - [3, 6, 2, 4, 1][i % 5])])), db: {} }; return squad.length; }, die: () => { b.falls.push({ ...(b.falls[0] ?? {}), pieceId: b.squadIds[1], turn: b.turn, by: '적 룩' } as never); return deathRites(); } } });

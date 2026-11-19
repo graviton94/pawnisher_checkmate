@@ -101,32 +101,6 @@ module.exports = {
       await wait(1800);
     }
   },
-  /** 판돈 (#12): 창 → 거는 순간 → 대국 중 칩 → 깨짐 → 적중 / 실패 */
-  async wager({ pg, A, wait, shot }) {
-    await A(() => window.sliceApi.startAt(1, 'battle'));
-    await wait(1500);
-    await A(() => window.sliceApi.bet());
-    await wait(900);
-    await shot('wager-win');
-    const yes = await pg.$('[data-yes]');
-    const r = await yes.boundingBox();
-    await pg.touchscreen.tap(r.x + r.width / 2, r.y + r.height / 2);
-    await wait(200);
-    await shot('wager-drop');
-    await wait(1200);
-    await shot('wager-chip');
-    await A(() => window.sliceApi.betEnd(true));
-    await wait(250);
-    await shot('wager-hit');
-    await wait(1600);
-    await A(() => { window.sliceApi.betSet('unhit'); window.sliceApi.betBreak(); });
-    await wait(300);
-    await shot('wager-broken');
-    await wait(2000);
-    await A(() => window.sliceApi.betEnd(false));
-    await wait(400);
-    await shot('wager-lose');
-  },
   /** 태엽 원천 (#29): 처치 칸 · 부품 칸에서 「+1」이 계기로 */
   async apfx({ A, wait, shot }) {
     await A(() => window.sliceApi.parts(['relayGear', 'horseshoe']));

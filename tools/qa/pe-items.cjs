@@ -84,25 +84,6 @@ const W = (ms) => new Promise((r) => setTimeout(r, ms));
     log.auto2 = await pg.evaluate(() => document.querySelector('#hand .armed')?.textContent?.replace(/\s+/g, ' ').trim() ?? '');
   }
 
-  // #12 판돈 — 창 · 칩 · 깨짐 · 달성
-  await open();
-  await pg.evaluate(() => { window.sliceApi.startAt(2, 'battle'); });
-  await W(1500);
-  await pg.evaluate(() => { window.sliceApi.gold(160); window.sliceApi.bet(); });
-  await W(900);
-  await shot('wager-win');
-  log.wager = await pg.evaluate(() => document.getElementById('overlay-panel')?.innerText?.replace(/\s+/g, ' ') ?? '');
-  await pg.locator('[data-yes]').tap(); await W(1200);
-  await shot('wager-chip');
-  log.chip = await pg.evaluate(() => document.getElementById('bet-chip')?.innerText?.replace(/\s+/g, ' ') ?? '');
-  await pg.evaluate(() => { window.sliceApi.betSet('kills'); window.sliceApi.betReach(); });
-  await W(700);
-  await shot('wager-reached');
-  log.reached = await pg.evaluate(() => document.getElementById('bet-chip')?.innerText?.replace(/\s+/g, ' ') ?? '');
-  await pg.evaluate(() => { window.sliceApi.betSet('unhit'); window.sliceApi.betBreak(); });
-  await W(700);
-  await shot('wager-broken');
-
   console.log(JSON.stringify({ size: size.width, errs, ...log }, null, 1));
   await br.close();
 })();

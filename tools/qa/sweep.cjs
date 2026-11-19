@@ -33,7 +33,7 @@ const PARTS = path.join(OUT, '.parts');
 const W = (ms) => new Promise((r) => setTimeout(r, ms));
 /** 점검 대상 저장(meta): 입문 · 안내를 마친 사람 — 용어 사전이 다 열리고 모든 왕관을 고를 수 있다 */
 const META = { tut: ['battle', 'battle-a', 'map', 'recruit', 'kit', 'promote', 'first_shop', 'heat', 'event'], runs: 3, prologue: true, ascOpen: 5, storyCleared: 1, daily: {}, onboarded: true,
-  terms: ['버팀', '심장 톱니', '부적', '보충병', '기벽', '회피 반격', '기어 쇼크', '기절', '방열판', '부품', '청록 합 표지', '주황 곱 표지'], termsNew: [] };
+  terms: ['버팀', '심장 톱니', '되감기', '기벽', '회피 반격', '기어 쇼크', '기절', '방열판', '부품', '표지'], termsNew: [] };
 
 // ── 장면 ─────────────────────────────────────────────────────────────
 // 묶음 = [이름, 설명, 장면들]. 장면 = { name, assets: 이 화면이 쓰는 발주 번호, url?: 쿼리, meta?: 저장 덮기, run(ctx) }
@@ -235,7 +235,6 @@ const GROUPS = [
     { name: 'log', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(1800); await A(() => window.sliceApi.botMove()); await W(2600); await A(() => window.sliceApi.logPeek()); await W(500); await shot('log'); } },
     { name: 'ap-fx', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.parts(['relayGear', 'horseshoe'])); await A(() => window.sliceApi.startAt(1, 'battle')); await W(1600); await A(() => window.sliceApi.apFx()); await W(300); await shot('ap-fx'); } },
     { name: 'death', assets: ['TI-02'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(1500); await A(() => { void window.sliceApi.die(); }); await W(420); await shot('death-rite'); await W(2400); await shot('death-after'); } },
-    { name: 'stand', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(1800); await A(() => { void window.sliceApi.stand(); }); await W(1500); await shot('last-stand'); } },
     { name: 'help', assets: [], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(1800); await A(() => window.sliceApi.help('now')); await W(900); await shot('help-now'); } },
   ]],
   ['boss', '반장 등장 · 규칙 · 2단계 예고 · 2단계 컷인 7종 · 2×2 특별 보스(자리) · 격파 컷', [
@@ -305,22 +304,6 @@ const GROUPS = [
         await pg.waitForSelector('canvas.rfx', { timeout: 12000, state: 'attached' }).catch(() => null);
         await W(1350); await shot(`fx-${k}`);
       }
-    } },
-  ]],
-  ['wager', '판돈 (창 · 칩 · 달성 · 깨짐 · 이김/짐)', [
-    { name: 'wager', assets: ['WG-01'], run: async ({ pg, A, W, shot }) => {
-      await A(() => window.sliceApi.startAt(1, 'battle')); await W(1500); await A(() => window.sliceApi.bet()); await W(1000); await shot('wager-window');
-      const yes = pg.locator('[data-yes]').first(); if (await yes.count()) { await yes.tap(); await W(1300); await shot('wager-chip'); }
-    } },
-    { name: 'wager-win', assets: [], run: async ({ pg, A, W, shot }) => {
-      await A(() => { const a = window.sliceApi; a.richRun(); a.startAt(1, 'battle'); }); await W(1600); await A(() => window.sliceApi.betSet('kills')); await W(400);
-      await A(() => window.sliceApi.betReach()); await W(300); await shot('chip-reach');
-      await A(() => { window.__fxSlow = 6; void window.sliceApi.betEnd(true); }); await pg.waitForSelector('canvas.rfx', { timeout: 5000, state: 'attached' }).catch(() => null); await W(1350); await shot('wager-win');
-    } },
-    { name: 'wager-lose', assets: [], run: async ({ pg, A, W, shot }) => {
-      await A(() => { const a = window.sliceApi; a.richRun(); a.startAt(1, 'battle'); }); await W(1600); await A(() => window.sliceApi.betSet('unhit')); await W(300);
-      await A(() => window.sliceApi.betBreak()); await W(250); await shot('chip-break');
-      await A(() => { window.__fxSlow = 6; void window.sliceApi.betEnd(false); }); await pg.waitForSelector('canvas.rfx', { timeout: 5000, state: 'attached' }).catch(() => null); await W(1350); await shot('wager-lose');
     } },
   ]],
   ['act', '막 쉼터 (막 장부 · 막 입구 카드 · 그림자 컷)', [

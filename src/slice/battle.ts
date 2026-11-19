@@ -193,8 +193,6 @@ export interface SliceBattle {
   /** 턴에 한 번 효과 (풀린 브레이크) */
   once: string[];
   rng: number;
-  /** 보이지 않는 손 (D-178): 적이 가장 아픈 수를 한 번 건너뛸 확률 — 화면에 드러내지 않는다 */
-  mercy?: number;
   /** 원수가 선 적 기물 id (D-178) */
   nemesisId?: number;
   /** 근간 시험장 (D-177): 'A' 지금 규칙 + 환급 · 'B' 진짜 잡기 + 환급 */
@@ -409,7 +407,7 @@ const spawnPawn = (b: SliceBattle, label: string): BattleEvent | null => {
   return { type: 'respawn', pieceId: id, pos: spot, label };
 };
 
-export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 보이지 않는 손 (D-178) */ mercy?: number; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 되감기 톱니 (부적, D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId; /** 막사의 호출 (보병 세트 전용, 2026-11-14) */ pawnCall?: boolean; /** 입문 시험대 (P-C D-502): 공정 열기 없이 늘 100% */ flatHeat?: boolean; /** 입문 시험대 A: 적이 예고하지 않는다(움직이지 않는 과녁) */ calm?: boolean; /** 입문 시험대 B: 첫 턴 적의 수를 짜 둔다 (그 칸에 선 적 → 갈 칸) — 막히면 평소처럼 다른 수를 찾는다 */ script?: { from: Pos; to: Pos }[] } = {}): SliceBattle => {
+export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: CommandId[], seed: number, opts: { width?: number; height?: number; enemyKingHp?: number; parts?: SlicePartId[]; boss?: boolean; bossRule?: BossRule; /** 막별 적 특성 */ traits?: FoeTrait[]; /** 적 기물(킹 제외) HP 배율 — 막마다 */ enemyHp?: number; /** 다듬은 카드(작업대): 이 카드는 태엽 −1 */ refined?: CommandId[]; /** 손으로 만든 판: 기물을 이 칸으로 옮긴다 (유형 · 진영의 첫 기물) */ place?: { side: 0 | 1; t: PieceType; x: number; y: number }[]; /** 근간 시험장 (D-177) */ lab?: 'A' | 'B'; /** 원수 (D-178): 이 유형의 적 하나가 원수로 선다 */ nemesis?: { t: PieceType; rank: number }; /** 출하에서 몇 번째 대국인가 (층별 성장, D-203) */ depth?: number; /** 쥔 나사 (탐욕의 저울) */ gold?: number; /** 쓸 수 있는 되감기 톱니 (D-228) */ rewindCharms?: number; /** 덱을 섞지 않고 적힌 순서대로 뽑는다 (입문 판 — 손패를 짜 둔다, D-232) */ ordered?: boolean; /** 기어 쇼크 (D-233: 승급 2부터 — false면 끈다) */ shock?: boolean; /** 킹 호위 방열판 비율 (D-243) */ guard?: number; /** 승급 9: 적 공격 배율 */ atkMul?: number; /** 승급 12: 가장 값진 적 하나가 정예 */ eliteOne?: boolean; /** 이형 적 (D-481) */ forms?: FormId[]; /** 편성의 행동 특성 (D-483) */ marks?: FoeMark[]; /** 거대 주물 (D-484) */ giants?: GiantType[]; /** 무작위 배치 세트 (D-485): 이 시드로 내 기물 자리를 내 앞 두 줄 안에서 섞는다 */ scatter?: number; /** 공정 판 (D-486) */ process?: ProcessId; /** 막사의 호출 (보병 세트 전용, 2026-11-14) */ pawnCall?: boolean; /** 입문 시험대 (P-C D-502): 공정 열기 없이 늘 100% */ flatHeat?: boolean; /** 입문 시험대 A: 적이 예고하지 않는다(움직이지 않는 과녁) */ calm?: boolean; /** 입문 시험대 B: 첫 턴 적의 수를 짜 둔다 (그 칸에 선 적 → 갈 칸) — 막히면 평소처럼 다른 수를 찾는다 */ script?: { from: Pos; to: Pos }[] } = {}): SliceBattle => {
   const s = createBattle({ width: opts.width ?? 6, height: opts.height ?? 6, decks: [squad.map((u) => u.t), enemy], seed, rules: { collapseStart: null, collapseInterval: 1, checkmate: true, foresight: 1 } });
   // 분대 HP 이어 붙이기: 같은 유형 안에서 순서대로
   const used = new Set<number>();
@@ -562,7 +560,6 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
       s.doorIds = [];
     }
   }
-  if (opts.mercy) b.mercy = opts.mercy;
   if (opts.shock === false || has(b, 'coolant')) b.noShock = true;
   b.foeHpK = hpK;
   if (opts.guard) b.guard = opts.guard;
@@ -595,18 +592,11 @@ export const newSliceBattle = (squad: Squad[], enemy: PieceType[], deck: Command
 /** 출하 진행도 → 적 성장 깊이 (D-216 3): 막 ai(0~2)에서 frac(0~1)만큼 왔을 때 */
 export const depthAt = (ai: number, frac: number): number => { const [d0, dl] = SLICE.depthActs[Math.min(ai, SLICE.depthActs.length - 1)]; return Math.round(d0 + dl * frac); };
 
-/** 이 대국의 적 예고: 보이지 않는 손이 켜져 있으면 가끔 가장 아픈 수 하나를 건너뛴다 (예고 = 실행은 그대로) */
 /** 반장 규칙 · 적 특성 피해에도 난이도 공격 배율을 곱한다 (D-202) */
 export const foeDmg = (n: number, b?: { atkK?: number }): number => Math.max(1, Math.round(n * (b?.atkK ?? SLICE.foeAtk)));
 
-const planFor = (b: SliceBattle): Intent[] => {
-  if (b.calm) return [];
-  if (!b.mercy) return planEnemy(b.s, false, b.turn, b.boss);
-  const rng = new Rng(b.rng ^ 0x5eed);
-  const skip = rng.next() < b.mercy;
-  b.rng = (b.rng + 0x9e37) >>> 0;
-  return planEnemy(b.s, skip, b.turn, b.boss);
-};
+/** 이 대국의 적 예고 (예고 = 실행 그대로). 옛 「보이지 않는 손」(가장 아픈 수 건너뛰기)은 D-601에서 뺐다 */
+const planFor = (b: SliceBattle): Intent[] => (b.calm ? [] : planEnemy(b.s, b.turn, b.boss));
 
 // ---------- 적 예고 (단순한 AI — Into the Breach식: 수는 단순해도 다 보인다) ----------
 const valueOf = (p: Piece) => (p.type === 'K' ? 300 : PIECE_STATS[p.type].value);
@@ -749,16 +739,9 @@ const bestFor = (s0: BattleState, p: Piece, taken: Set<string> = new Set(), turn
 };
 
 /** 적의 이번 수: 태엽 3 안에서, 내 기물을 가장 아프게 치는 칸부터. 칠 게 없으면 내 킹 쪽으로 */
-export const planEnemy = (s0: BattleState, skipTop = false, turn = 0, boss = false): Intent[] => {
+export const planEnemy = (s0: BattleState, turn = 0, boss = false): Intent[] => {
   const s = { ...s0, turnSide: 1 as const };
-  // 보이지 않는 손 (D-178): 가장 아픈 수를 둘 기물 하나를 이번 차례에서 뺀다
-  const skip = new Set<number>();
-  if (skipTop) {
-    const o: FoeOpts = { reach: s.rules.capture ? undefined : playerReach(s), boss, losing: foeLosing(s) };
-    const top = s.pieces.filter((q) => q.side === 1).map((p) => ({ p, best: bestFor(s, p, undefined, turn, o) })).filter((x) => x.best).sort((x, y) => y.best!.score - x.best!.score || x.p.id - y.p.id);
-    if (top.length > 1) skip.add(top[0].p.id);
-  }
-  const out = extendPlan(s, SLICE.enemyAp, turn, boss, skip);
+  const out = extendPlan(s, SLICE.enemyAp, turn, boss, new Set<number>());
   // 한 턴을 통째로 쉬지 않는다 (D-214): 겁나서 고른 게 없으면 위험을 무릅쓰고 가장 좋은 수 하나
   if (!out.length && !s.rules.capture) {
     const bold = s.pieces.filter((q) => q.side === 1).map((p) => ({ p, best: bestFor(s, p, undefined, turn, { boss }) })).filter((x) => x.best && SLICE.moveCost[x.p.type] <= SLICE.enemyAp).sort((x, y) => y.best!.score - x.best!.score)[0];
@@ -876,7 +859,7 @@ export const liveIntents = (b: SliceBattle): Intent[] => liveSteps(b).map((x) =>
  */
 const liveSteps = (b: SliceBattle): { it: Intent; s: BattleState }[] => {
   // 잡기 규칙: 적은 늘 지금 보드를 보고 둔다 — 내 수마다 예고 화살표가 바로 바뀐다 (보이는 대로 일어난다)
-  if (b.s.rules.capture) return planEnemy(b.s, false, b.turn).map((it) => ({ it, s: b.s }));
+  if (b.s.rules.capture) return planEnemy(b.s, b.turn).map((it) => ({ it, s: b.s }));
   let s: BattleState = { ...b.s, turnSide: 1 };
   const out: { it: Intent; s: BattleState }[] = [];
   const pinned = new Set(b.pinned ?? []);
@@ -2104,51 +2087,6 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     b.snap = JSON.stringify({ ...b, snap: '' });
   }
   return { events, before };
-};
-
-/** 이번 적 차례에 내 킹이 쓰러지나 (마지막 한 수 · 자원 희생 판정, D-178) */
-export const kingDoomed = (b: SliceBattle): boolean => {
-  const k = kingOf(b.s, 0);
-  return !!k && b.s.winner === null && intentHits(b).some((h) => h.pieceId === k.id && h.killed);
-};
-
-/**
- * 사선 제안 (D-557 — 실기 피드백 「맞은 뒤에 떴다」): 「턴 끝」을 확정하는 순간, 적 공격이 풀리기 **전**에만 낸다.
- * 경고 단계(첫 누름 — 턴이 아직 끝나지 않음) · 내 차례 시작(방금 맞은 뒤) · 이어하기에서는 내지 않는다.
- * 낼 때는 대신 맞을 분대원 id(바꿔 서면 킹이 사는 첫 분대원), 아니면 null.
- */
-export const sacrificeOffer = (b: SliceBattle, left: number): number | null => {
-  if (left <= 0 || b.s.winner !== null || !kingDoomed(b)) return null;
-  if (!b.warned && kingInDanger(b)) return null;
-  // 바꿔 서도 킹이 쓰러지면 내지 않는다 (실화면 재현: 두 칸이 다 예고 안이라 받아들여도 졌다)
-  return sacrificeCandidates(b).find((id) => {
-    const t = JSON.parse(JSON.stringify({ ...b, snap: '' })) as SliceBattle;
-    return sacrificeSwap(t, id) && !kingDoomed(t);
-  }) ?? null;
-};
-
-/** 자원 희생 (D-178): 킹과 곁의 분대원이 자리를 바꾼다 — 그 분대원이 대신 맞는다. 바꿀 수 있는 분대원 id들 */
-export const sacrificeCandidates = (b: SliceBattle): number[] => {
-  const k = kingOf(b.s, 0);
-  if (!k) return [];
-  return b.s.pieces.filter((p) => p.side === 0 && p.id !== k.id && chebyshev(p, k) === 1).map((p) => p.id);
-};
-export const sacrificeSwap = (b: SliceBattle, crewId: number): boolean => {
-  const k = kingOf(b.s, 0);
-  const c = findPiece(b.s, crewId);
-  if (!k || !c || chebyshev(k, c) !== 1) return false;
-  const kx = k.x, ky = k.y;
-  Object.assign(k, { x: c.x, y: c.y });
-  Object.assign(c, { x: kx, y: ky });
-  b.snap = JSON.stringify({ ...b, snap: '' });
-  return true;
-};
-
-/** 마지막 한 수 (D-178): 태엽 +ap, 손패에 철벽 한 장 (이 대국 동안만 — 출하 덱에는 남지 않는다) */
-export const clutchBoost = (b: SliceBattle, ap: number): void => {
-  b.ap = Math.min(SLICE.apCap, b.ap + ap);
-  b.hand.push('plate');
-  b.snap = JSON.stringify({ ...b, snap: '' });
 };
 
 /**

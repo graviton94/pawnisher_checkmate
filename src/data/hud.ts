@@ -27,7 +27,7 @@ export const BOSS_PHASE_TEXT = {
 export const MAP_TEXT = {
   go: '진입',
   /** 머리 줄 수치 명판 하나 (D-398): 이름 12 · 값 15 */
-  stat: { squad: '분대', deck: '덱', parts: '부품', charm: '부적' },
+  stat: { squad: '분대', deck: '덱', parts: '부품', charm: '톱니' },
   foes: (n: number) => `적 ×${n}`,
   reward: { card: '보상 카드', part: '보상 부품', kit: '보상 부품', recruit: '보상 영입' } as Record<string, string>,
   trait: { blastPawn: '불꽃 폰', rookPlate: '방패 룩', guard: '호위' } as Record<string, string>,
@@ -158,7 +158,7 @@ export const BATTLE_HELP: string[] = [
  * base = 처음부터 · 그 밖은 그것을 처음 만난 순간 사전에 들어오고 ? 에 NEW가 붙는다.
  * graze = 둘째 출하 또는 2막부터 (첫 출하에서는 「빠지며 치기 ×1.5」 연출로만) · quirk = 기벽이 붙는 셋째 출하부터 · shock = 승급 2부터.
  */
-export type TermGate = 'base' | 'part' | 'charm' | 'shield' | 'door' | 'crack' | 'reinforce' | 'burn' | 'heir' | 'nemesis' | 'plate' | 'thorns' | 'blast' | 'stun' | 'graze' | 'shock' | 'quirk' | 'overkill' | 'spend' | 'tactic' | 'call' | 'stall';
+export type TermGate = 'base' | 'part' | 'charm' | 'shield' | 'door' | 'crack' | 'burn' | 'heir' | 'nemesis' | 'plate' | 'thorns' | 'blast' | 'stun' | 'graze' | 'shock' | 'quirk' | 'overkill' | 'spend' | 'tactic' | 'call' | 'stall';
 
 /** 용어 사전: [이름, 설명, 열리는 때] — 사전에는 열린 것만 (D-233). 설명은 최대 두 줄, \n이 줄바꿈 자리 (D-264) */
 export const KEYWORDS: [string, string, TermGate][] = [
@@ -170,17 +170,13 @@ export const KEYWORDS: [string, string, TermGate][] = [
   ['나사', '출하 내내 쓰는 돈.\n고물상에서 씁니다.', 'base'],
   ['지휘', '아무 기물이나 움직이는 공용 카드.\n같은 기물을 한 턴에 여러 번 부릴 수 있습니다.', 'base'],
   ['교착 압박', '12턴부터 피해 없는 턴이 두 번 이어지면\n적 킹이 턴마다 최대 HP 10%씩 녹습니다.', 'stall'],
-  ['부품', '규칙을 바꾸는 장치.\n같은 색 띠 카드와 맞물립니다.', 'part'],
-  ['청록 합 표지', '공격에 먼저 더하는 피해.', 'part'],
-  ['주황 곱 표지', '더한 값에 곱하는 배율.', 'part'],
-  ['카드 표지 세 칸', '누가(폰 · 나이트 … · 공용) · 어떤 수(연쇄 · 밀치기 · 수읽기 · 방어 · 돌격 · 운영) · 효과(합 · 곱 · 규칙).', 'part'],
-  ['규칙 표지', '합 · 곱이 아닌 효과.\n태엽 · 카드 · 이동처럼 수치 밖을 바꿉니다.', 'part'],
+  ['부품', '규칙을 바꾸는 장치.\n같은 색 카드와 맞물립니다.', 'part'],
+  ['표지', '카드 · 부품의 값 표지. 청록 합은 먼저 더하고, 주황 곱은 그 값에 곱합니다.\n규칙 표지는 태엽 · 카드 · 이동처럼 수치 밖을 바꿉니다.', 'part'],
   ['방열판', 'HP보다 먼저 깎이는 판.', 'shield'],
-  ['부적', '부품 칸을 쓰지 않는 톱니.\n킹 대신 깨지거나, 되감기 1번.', 'charm'],
-  ['보충병', '분대가 너무 줄면 들어오는 폰.', 'reinforce'],
+  ['되감기', '이번 턴을 처음으로 돌립니다.\n되감기 톱니 하나를 씁니다.', 'charm'],
   ['넘친 피해', '적 HP를 넘어선 피해.\n10마다 나사 1개가 됩니다.', 'overkill'],
   ['연쇄 소모', '쌓인 연쇄를 한 번에 쓰는 카드.', 'spend'],
-  ['심장 톱니', '분대원의 목숨 2개.\n깨진 채 쓰러지면 폐기됩니다.', 'crack'],
+  ['심장 톱니', '목숨 톱니. 분대원은 둘 — 깨진 채 쓰러지면 폐기됩니다.\n킹의 여벌 심장 톱니는 대신 깨지고 그 대국을 다시 둡니다.', 'crack'],
   ['버팀', '쓰러질 피해를 한 번 HP 1로 넘깁니다.\n쓰면 줄고, 막을 넘길 때만 다시 찹니다.', 'door'],
   ['탄 카드', '움직일 기물이 없는 카드.\n그 대국 동안만 탑니다.', 'burn'],
   ['유품', '쓰러진 분대원의 태엽.\n이기면 나사가 됩니다.', 'heir'],
@@ -205,12 +201,27 @@ export const KEYWORDS: [string, string, TermGate][] = [
 ];
 
 /**
+ * 막마다 새 용어 상한 (D-601, 출시 전 결정 보고 2가 — 설문 Q6: 생명 · 심장 톱니 · 부적 · 보충병 · 부품 띠 · 기벽 · 회피 반격 · 기어 쇼크가 헷갈렸다).
+ * 한 막에 사전에 새로 들이는 용어는 perAct개까지 — 넘치는 묶음(gate)은 다음 막으로 미룬다(그 묶음을 다시 만날 때 열린다).
+ * 빼는 것: base(처음부터) · tactic(체스 수 이름 = 카드 이름 — 카드가 스스로 말한다) · 반장 규칙(plate · thorns · stun — 반장 첫 만남 안내가 짚는다).
+ */
+export const TERM_CAP = { perAct: 4, exempt: ['base', 'tactic', 'plate', 'thorns', 'stun'] as TermGate[] };
+/** 이 묶음의 용어 수 */
+export const gateSize = (gate: TermGate): number => KEYWORDS.filter(([, , g]) => g === gate).length;
+/**
+ * 이 막에 이 묶음을 열어도 되나 — opened = 이 막에 이미 연 (상한에 드는) 용어 수.
+ * 빈 막이면 큰 묶음도 연다(영영 막히지 않게).
+ */
+export const termCapOk = (gate: TermGate, opened: number): boolean =>
+  TERM_CAP.exempt.includes(gate) || opened === 0 || opened + gateSize(gate) <= TERM_CAP.perAct;
+
+/**
  * 용어 아이콘 (TI-01 · TI-02 · D-507 — 설문 Q6 헷갈린 말): 용어 사전 · 사건 정보 쪽에서 이름 앞에 32도트 아이콘(public/ui/icons16/<키>.png).
  * 버팀 = 덧댄 철판(life) · 심장 톱니 = 진홍 톱니(heartCog) — 하트를 쓰지 않아 둘이 겹치지 않는다. HP 표지는 옛 하트(heart).
  */
 export const TERM_ICON: Record<string, string> = {
-  태엽: 'key', 버팀: 'life', '심장 톱니': 'heartCog', 부적: 'charm', 방열판: 'vent', 연쇄: 'chain', '연쇄 소모': 'chain',
-  '청록 합 표지': 'signAdd', '주황 곱 표지': 'signMul', 보충병: 'reserve', 부품: 'partBelt', 기벽: 'quirk', '회피 반격': 'counter',
+  태엽: 'key', 버팀: 'life', '심장 톱니': 'heartCog', 되감기: 'rewind', 방열판: 'vent', 연쇄: 'chain', '연쇄 소모': 'chain',
+  표지: 'signAdd', 부품: 'partBelt', 기벽: 'quirk', '회피 반격': 'counter',
   '기어 쇼크': 'gearShock', 기절: 'stun', [TERM.parry]: 'vent', 승격: 'promote', 속전: 'speed',
 };
 

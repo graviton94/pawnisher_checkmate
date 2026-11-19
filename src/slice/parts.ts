@@ -161,7 +161,7 @@ export const partFits = (id: SlicePartId, squadTypes: string[], owned: SlicePart
 export const PART_OP: Partial<Record<SlicePartId, '+' | '×'>> = { notches: '+', aceBadge: '×', heavyHand: '+', scarPlate: '+', cleanSheet: '×', sergeant: '+', lastBreath: '×', ledger: '+', veteran: '+', deathMark: '+', mirror: '×', jumpSpring: '+', stainedGlass: '+', redLine: '+', calipers: '+', vise: '×', openGate: '×', queenCrown: '×', lastAxle: '×', toolbox: '+', ventHole: '×', bossBane: '×', rookBolt: '×', bishopLens: '×', pawnPike: '+', conductor: '+', anvilPlate: '+', coil: '×', lance: '×', banner: '×', crown: '×', hammer: '×', bloodPact: '×', echo: '+', whetstone: '+' };
 
 /**
- * 부적 (D-228, 사용자: "1패는 즉시 사망, 희귀한 1회 부활 아이템을 풀에 · 저승급은 기본으로 · 슬롯을 차지하지 않는 부적 · 되감기도 아이템화").
+ * 톱니 (옛 「부적」 — D-601에서 말을 없앴다: 목숨 장치는 버팀 · 심장 톱니 · 되감기 셋뿐, 여벌 심장 톱니는 킹의 심장 톱니) (D-228, 사용자: "1패는 즉시 사망, 희귀한 1회 부활 아이템을 풀에 · 저승급은 기본으로 · 슬롯을 차지하지 않는 부적 · 되감기도 아이템화").
  * 부품 칸을 차지하지 않고 출하 내내 개수로 쌓인다. 쓰면 하나 깨진다.
  *   revive: 여벌 심장 톱니 — 킹이 쓰러져도 출하가 끝나지 않고 그 대국을 처음부터 (하나 깨진다)
  *   rewind: 되감기 톱니 — 되감기 1회 (이번 턴 처음으로)
@@ -173,10 +173,10 @@ export const CHARMS: Record<CharmId, { name: string; icon: string; desc: string 
 };
 export const CHARM_NUM = {
   /**
-   * 출하 시작: 되감기 1 · 여벌 심장은 첫째 왕관의 첫 출하에만 1 (D-542 — 옛 D-382: 되감기 2 · 승급 0~4 여벌 1).
-   * 여벌이 둘째~넷째 왕관 · 도전 1에서 12~19%p를 살려 왕관 계단이 평평했고 도전 1이 넷째 왕관보다 쉬웠다. 되감기는 사람만 쓰는 보험이라 봇 곡선에 안 보인다.
+   * 출하 시작: 여벌 심장은 첫째 왕관의 첫 출하에만 1 (D-542 — 옛 D-382: 되감기 2 · 승급 0~4 여벌 1).
+   * 여벌이 둘째~넷째 왕관 · 도전 1에서 12~19%p를 살려 왕관 계단이 평평했고 도전 1이 넷째 왕관보다 쉬웠다.
+   * 시작 되감기는 왕관별 `startRewind(asc)` (data/ease.ts, D-600: 2 · 2 · 1 · 1) — 사람만 쓰는 보험이라 봇 곡선에 안 보인다.
    */
-  startRewind: 1,
   startReviveUpTo: 0,
   /** 부품 상자에서 부적이 나올 확률 (여벌 심장은 드물게 · D-542: 되감기 0.3 → 0.15) */
   chestRewind: 0.15,

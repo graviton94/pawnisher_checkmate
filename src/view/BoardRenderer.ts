@@ -1828,36 +1828,6 @@ class BoardScene extends Phaser.Scene {
     );
   }
 
-  /** 자원 희생 (D-180): 분대원이 웅크렸다 높은 호로 킹 자리에 박히고, 킹은 뒤로 미끄러진다 */
-  async swapLeap(crewId: number, kingId: number): Promise<void> {
-    const c = this.sprites.get(crewId);
-    const k = this.sprites.get(kingId);
-    if (!c || !k) return;
-    const S = IMPACT.sacrifice;
-    const t = this.tile;
-    const cx = c.root.x;
-    const cy = c.root.y;
-    const kx = k.root.x;
-    const ky = k.root.y;
-    await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: S.crouch / this.speed, onUpdate: (tw) => { const e = tw.getValue() ?? 0; this.applyPose(c, cx, cy, { dx: 0, dy: 0, sx: 1 + 0.16 * e, sy: 1 - 0.26 * e }); }, onComplete: () => done() }));
-    this.tweens.add({ targets: k.root, x: cx, y: cy, duration: (S.leap * 1.4) / this.speed, ease: 'Cubic.easeOut' });
-    await new Promise<void>((done) =>
-      this.tweens.addCounter({
-        from: 0,
-        to: 1,
-        duration: S.leap / this.speed,
-        onUpdate: (tw) => {
-          const q = (tw.getValue() ?? 0) ** 2;
-          this.applyPose(c, cx + (kx - cx) * q, cy + (ky - cy) * q - Math.sin(Math.PI * q) * t, { dx: 0, dy: 0, sx: 0.9, sy: 1.12 });
-        },
-        onComplete: () => done(),
-      }),
-    );
-    this.shakeLv(1);
-    sfx('land');
-    await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: 330 / this.speed, onUpdate: (tw) => { const a = 1 - easeOutElastic(tw.getValue() ?? 0); this.applyPose(c, kx, ky, { dx: 0, dy: 0, sx: 1 + 0.28 * a, sy: 1 - 0.28 * a }); }, onComplete: () => done() }));
-  }
-
   /**
    * 턴 합계 (D-073, 발라트로식): 내 턴이면 판 가운데에 준 피해가 0부터 세어 올라가며 커졌다가 자리 잡고, 처치 수가 붙는다.
    * 적 턴이거나 작은 턴(처치 없음 · 피해 TURN_SUMMARY.bigDamage 미만)이면 위쪽에 작게.
@@ -2582,11 +2552,6 @@ export class BoardRenderer implements BoardView {
   async dropIn(pieceId: number): Promise<void> {
     await this.whenReady;
     await this.heat(this.scene.dropIn(pieceId));
-  }
-  /** 자원 희생 도약 (D-180) */
-  async swapLeap(crewId: number, kingId: number): Promise<void> {
-    await this.whenReady;
-    await this.heat(this.scene.swapLeap(crewId, kingId));
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => {

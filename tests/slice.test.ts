@@ -90,12 +90,12 @@ describe('판 사이 회복', () => {
 describe('교착 압박 (D-196)', () => {
   it('적 킹이 혼자 남으면 내 킹에게 다가온다', () => {
     const b = newSliceBattle(squad, ['K'], START_COMMANDS, 7);
-    const plan = planEnemy(b.s, false, 1);
+    const plan = planEnemy(b.s, 1);
     expect(plan.some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K')).toBe(true);
   });
   it('다른 적이 있으면 킹은 뒤에 남는다 — 단 정해진 턴부터는 나선다', () => {
     const b = newSliceBattle(squad, ['K', 'P', 'P'], START_COMMANDS, 7);
-    const kingMoves = (turn: number) => planEnemy(b.s, false, turn).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K');
+    const kingMoves = (turn: number) => planEnemy(b.s, turn).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K');
     expect(kingMoves(1)).toBe(false);
     expect(kingMoves(SLICE.kingMarchTurn)).toBe(true);
   });
@@ -111,7 +111,7 @@ describe('교착 압박 (D-196)', () => {
     let s = b.s;
     let hit = false;
     for (let turn = 20; turn < 26 && !hit; turn++) {
-      const plan = planEnemy(s, false, turn, true);
+      const plan = planEnemy(s, turn, true);
       expect(plan.length).toBeGreaterThanOrEqual(1);
       const before = s.pieces.filter((p) => p.side === 0).reduce((a, p) => a + p.hp, 0);
       // 한 기물의 두 번째 행동(2026-11-14)은 앞 수를 둔 판에서 — 실행(enemyPhase)처럼 한 수씩
@@ -126,7 +126,7 @@ describe('교착 압박 (D-196)', () => {
   });
   it('발악 (D-243): 호위가 하나 이하로 남으면 킹도 1턴부터 나선다', () => {
     const b = newSliceBattle(squad, ['K', 'P'], START_COMMANDS, 7);
-    expect(planEnemy(b.s, false, 1).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K')).toBe(true);
+    expect(planEnemy(b.s, 1).some((it) => b.s.pieces.find((p) => p.id === it.pieceId)?.type === 'K')).toBe(true);
   });
 });
 

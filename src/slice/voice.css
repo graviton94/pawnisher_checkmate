@@ -109,79 +109,11 @@
 }
 .ap-fly > img { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(var(--px) var(--px) 0 #0b0b0e); }
 
-/* 판돈 칩 (#12): 레일 가운데 칸 위 — 동전(나사) + 조건 + 진행. 깨지면 진홍 띠 · 금, 적중하면 황동 띠 · 나사 쏟아짐. 임시 — WG-01 · WG-02 대기 */
-.bet-chip { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: var(--s1); row-gap: 0; margin: 0; padding: var(--px) 0; }
-.bet-chip > .tag { grid-row: span 2; }
-.bet-chip .tag > img { width: 16px; height: 16px; image-rendering: pixelated; }
-.bet-chip .bc-coin { display: inline-block; flex: none; width: calc(var(--px1) * 18); height: calc(var(--px1) * 18); margin-right: 2px; background: var(--coin0) 0 0 / 100% 100% no-repeat; image-rendering: pixelated; animation: betspin 960ms steps(1, end) infinite; }
-.bet-chip.done .bc-coin, .bet-chip.hit .bc-coin { animation: none; }
-.bet-chip.broken .bc-coin { animation: none; background-image: var(--coin3); filter: grayscale(1) brightness(0.7); }
-.bet-chip .bc-kind { width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); margin-right: 4px; vertical-align: -3px; image-rendering: pixelated; }
-.bet-chip.broken .bc-kind { filter: grayscale(1) brightness(0.6); }
-/* 걸린 동안 나사 동전이 돈다 — 받은 coin-0~7 여덟 장을 계단으로(보간 없음) */
-@keyframes betspin { 0% { background-image: var(--coin0); } 12.5% { background-image: var(--coin1); } 25% { background-image: var(--coin2); } 37.5% { background-image: var(--coin3); } 50% { background-image: var(--coin4); } 62.5% { background-image: var(--coin5); } 75% { background-image: var(--coin6); } 87.5% { background-image: var(--coin7); } }
-.bet-chip.k-in { animation: ktoastin 240ms steps(3, jump-none) both; }
-.bet-chip .bc-cond { color: var(--t-body); font: 700 12px/1.4 Galmuri11, sans-serif; word-break: keep-all; }
-.bet-chip .bc-prog { color: var(--t-gold); font: 700 12px/1.4 Galmuri11, sans-serif; }
-.bet-chip.broken .bc-prog { color: var(--t-loss); }
-.bet-chip.broken .bc-cond { color: var(--t-dim); text-decoration: line-through; text-decoration-thickness: 2px; }
-.bet-chip.hit .bc-prog, .bet-chip.done .bc-prog { color: #b6edc0; }
-.bet-chip.k-crack { animation: betcrack 360ms steps(4, jump-none) both; }
-@keyframes betcrack { 0% { transform: translateX(-3px); } 25% { transform: translateX(3px); } 50% { transform: translateX(-2px); } 75% { transform: translateX(1px); } 100% { transform: none; } }
-/* 판돈 창: 동전을 판돈 칸에 올려놓는다 — 움푹 칸 하나 + 나사 동전 탑 (D-260 확률 = 동전 · 사각 칸) */
-.bet-slot { display: flex; align-items: flex-end; justify-content: center; gap: var(--px); min-height: 56px; padding: var(--s1) var(--s2); }
-/* 판돈 무대 (WG-01 · D-507): 받은 장면을 비율 그대로 cover — 초점 = 내기판 가운데 위 · 동전 나이트(가로 55% · 세로 48%). 늘리지 않는다(D-386) */
-.win .bet-slot.bet-scene { min-height: clamp(40px, calc(calc(100 * var(--vh, 1vh)) - 340px), 72px); /* D-534: 112px면 단추 줄이 창 아래 테 밖으로 밀렸다 (창 높이 364 상한) */ border-image-slice: var(--k-inset); background: #0b0b0e 50% 62% / cover no-repeat; background-clip: padding-box; background-origin: padding-box; image-rendering: pixelated; }
-.bet-slot > img { width: 32px; height: 32px; image-rendering: pixelated; }
-.bet-slot > img.drop { animation: betdrop 360ms steps(6, jump-none) both; }
-.bet-slot > img.drop:nth-child(2) { animation-delay: 80ms; }
-.bet-slot > img.drop:nth-child(3) { animation-delay: 160ms; }
-@keyframes betdrop { 0% { transform: translateY(-48px); } 55% { transform: translateY(4px) scale(1.15, 0.8); } 80% { transform: translateY(-3px); } 100% { transform: none; } }
-
-/* 반장 2단계 (#21 · D-490): 받은 CI-01 — 경보 띠(3프레임 타일, 1도트 = --px × 2) · 레터박스 타일 · 사선 베기. 2단계 초상은 「임시 — CI-02 ~ CI-08 대기」 */
-.p2-band {
-  --d: calc(var(--px) * 2); position: fixed; z-index: 89; box-sizing: border-box; height: calc(var(--d) * 16); display: flex; align-items: center; justify-content: center; pointer-events: none;
-  background: url('../assets/ui/chrome/v2/p2-tile-1.png') 0 0 / calc(var(--d) * 56) calc(var(--d) * 16) repeat-x; image-rendering: pixelated;
-  box-shadow: 0 var(--px) 0 #0b0b0e; animation: p2scroll 240ms steps(1, jump-end) infinite;
-}
-.p2-band > span { color: var(--t-body); font: 400 15px/var(--lh-15) Galmuri14, Galmuri11, sans-serif; white-space: nowrap; text-shadow: var(--px) var(--px) 0 #0b0b0e; }
-@keyframes p2scroll { 0% { background-image: url('../assets/ui/chrome/v2/p2-tile-1.png'); } 33% { background-image: url('../assets/ui/chrome/v2/p2-tile-2.png'); } 66% { background-image: url('../assets/ui/chrome/v2/p2-tile-3.png'); } }
-.p2-warn { clip-path: inset(0 100% 0 0); animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 300ms steps(5, jump-end) forwards; }
-@keyframes p2sweep { to { clip-path: inset(0 0 0 0); } }
-.p2cut { position: fixed; inset: 0; z-index: 88; pointer-events: auto; }
-.p2cut .p2-lb { position: absolute; left: 0; right: 0; height: 0; background: url('../assets/ui/chrome/v2/letterbox-tile.png') 0 0 / calc(var(--px) * 56) calc(var(--px) * 28) repeat-x, #0b0b0e; image-rendering: pixelated; animation: p2lb 200ms steps(3, jump-end) forwards; }
-.p2cut .p2-lb.top { top: 0; background-position: 0 100%, 0 0; }
-.p2cut .p2-lb.bot { bottom: 0; }
-@keyframes p2lb { to { height: calc(22 * var(--vh, 1vh)); } }
-.p2cut .p2-strip { position: absolute; left: 0; right: 0; top: calc(30 * var(--vh, 1vh)); height: calc(40 * var(--vh, 1vh)); overflow: hidden; background: #0b0b0e; clip-path: inset(50% 0 50% 0); box-shadow: inset 0 calc(var(--px) * 2) 0 #7a1218, inset 0 calc(var(--px) * -2) 0 #7a1218; }
-.p2cut .p2-strip > img { display: block; height: 100%; width: auto; max-width: 100%; margin: 0 auto; object-fit: cover; image-rendering: pixelated; }
-.p2cut.go .p2-strip { animation: p2open 160ms steps(3, jump-end) forwards; }
-@keyframes p2open { to { clip-path: inset(0 0 0 0); } }
-.p2cut .p2-slash { position: absolute; left: 50%; top: 50%; width: calc(var(--px) * 346); height: calc(var(--px) * 88); margin: calc(var(--px) * -44) 0 0 calc(var(--px) * -173); visibility: hidden; }
-/* CI-01b 사선 액자(173×44도트 ×2, D-512): 홈(실측 평행사변형) 안에 초상 → 위에 액자 */
-.p2cut .p2-slash > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; background: #0b0b0e; clip-path: polygon(13.873% 18.182%, 93.064% 18.182%, 86.127% 84.091%, 6.936% 84.091%); }
-.p2cut .p2-slash::after { content: ''; position: absolute; inset: 0; background: url('../assets/ui/chrome/v2/cutin-frame.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; }
-.p2cut.go .p2-slash { visibility: visible; animation: p2slash 520ms both; }
-@keyframes p2slash {
-  0% { transform: translate(18%, -40%) scale(1.25); animation-timing-function: steps(2, jump-end); }
-  30% { transform: translate(14%, -34%) scale(1.3); animation-timing-function: cubic-bezier(.6, 0, .9, .4); }
-  55% { transform: translate(0, 0) scale(0.92, 1.1); animation-timing-function: cubic-bezier(.1, .9, .2, 1); }
-  75% { transform: scale(1.06, 0.95); }
-  100% { transform: none; }
-}
-.p2cut .p2-word { position: absolute; left: 0; right: 0; top: calc(calc(70 * var(--vh, 1vh)) - var(--px) * 8); visibility: hidden; }
-.p2cut .p2-word > span { font: 700 24px/var(--lh-24) Galmuri11, sans-serif; }
-.p2cut.word .p2-word { visibility: visible; animation: p2scroll 240ms steps(1, jump-end) infinite, p2sweep 200ms steps(4, jump-end) forwards; clip-path: inset(0 100% 0 0); }
-.p2cut.calm .p2-lb { height: calc(22 * var(--vh, 1vh)); animation: none; }
-.p2cut.calm .p2-strip { clip-path: none; }
-.p2cut.calm :is(.p2-slash, .p2-word) { visibility: visible; animation: none; clip-path: none; }
-.p2-flash { position: fixed; left: 0; right: 0; top: calc(30 * var(--vh, 1vh)); bottom: calc(30 * var(--vh, 1vh)); z-index: 90; pointer-events: none; background: #b3121c; -webkit-mask-image: var(--px2); mask-image: var(--px2); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; visibility: hidden; animation: p2flash 360ms steps(1, jump-end) both; }
-/* D-538: 번쩍임은 한 번 — 그림 띠 자리만, 진홍 50% 디더 한 장(약 110ms), 흰 장 · 겹 번쩍 없음 (WCAG 2.3.1 「1초 3회」 아래) */
 @keyframes p2flash { 0% { visibility: visible; } 30%, 100% { visibility: hidden; } }
 :root[data-noflash="1"] .p2-flash { display: none; }
 body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset 0 0 0 calc(var(--px) * 4) #0b0b0e; }
 @media (prefers-reduced-motion: reduce) {
-  .vbark.k-in, .vsub.k-in, .vmono.k-in, .bet-chip.k-crack, .bet-chip .bc-coin, .bet-slot > img.drop { animation: none; }
+  .vbark.k-in, .vsub.k-in, .vmono.k-in { animation: none; }
   .p2-band { animation: none; clip-path: none; }
   .p2-flash { display: none; }
 }
@@ -194,10 +126,3 @@ body.p2-rage #board { box-shadow: inset 0 0 0 calc(var(--px) * 2) #7a1218, inset
   background: url('../assets/ui/chrome/v2/portrait-ally.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; image-rendering: pixelated; }
 .win-scene .ws-say .ws-face.ws-npc { background: url('../assets/ui/chrome/v2/portrait-npc.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; }
 .win-scene .ws-say .ws-face > img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
-/* D-534 전수 점검: 레일 폭(≈200px)에서 조건 글이 칩 오른쪽 좁은 칸에 네 줄로 접혀 레일이 넘쳤다(부품 줄이 가려짐)
-   → 위 줄 = 판돈 칩 + 진행(오른쪽), 아래 줄 = 조건 글 전체 폭 */
-.bet-chip > .tag { grid-row: 1; grid-column: 1; }
-.bet-chip .bc-prog { grid-row: 1; grid-column: 2; justify-self: end; }
-.bet-chip .bc-cond { grid-row: 2; grid-column: 1 / -1; }
-/* D-534: 작은 폰(높이 ≤ 400)에서는 판돈 창 단추 줄이 아래 테에 닿았다 → 다짐 한 줄(독백)을 접는다 — 조건 · 보상 · 실패는 그대로 */
-@media (max-height: 400px) { .win:has(.bet-scene) > .mono { display: none; } }

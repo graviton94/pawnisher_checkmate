@@ -1,4 +1,5 @@
 import type { FormId, PieceType } from '../engine';
+import { EASE } from '../data/ease';
 import { FORMS, formsUpTo } from '../data/forms';
 import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
@@ -373,6 +374,8 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   // 적 수 +1 (D-542): 반장 · 도금왕이 아닌 대국에 늘 폰 하나 더 — 1막 편성이 우리 분대와 같은 수가 되어 「피할 수보다 겨누는 수가 많다」
   if (kind !== 'boss') d.enemy = [...d.enemy, ...Array<PieceType>(FOE.extraPawns).fill('P')];
   if (asc >= 4) d.enemy = [...d.enemy, 'P']; // 조항 4 「불어난 무리」 (D-542: 5 → 4)
+  // 1막 반장 HP (D-600): 첫째 · 둘째 왕관에서 반장 킹 · 호위 ×0.85 — 보통 봇의 벽이 1막 반장이었다(출하의 36~56%가 여기서 끝)
+  if (kind === 'boss' && act === 1 && asc <= EASE.act1BossUpTo) { d.kingHp *= EASE.act1BossHp; d.enemyHp = (d.enemyHp ?? 1) * EASE.act1BossHp; }
   if (asc >= 6 && kind !== 'battle') { const k = kind === 'boss' ? ASC_NUM.bossHp : ASC_NUM.checkHp; d.kingHp *= k; d.enemyHp = (d.enemyHp ?? 1) * k; }
   // 조항 8 「세운 날」(D-575): 화면 · 봇은 asc 8부터 모든 대국에 enemyAtk를 곱한다 — 반장은 그 곱을 bossAtk로 되돌린다
   if (asc >= 8 && kind === 'boss') d.atk = (d.atk ?? 1) * (ASC_NUM.bossAtk / ASC_NUM.enemyAtk);

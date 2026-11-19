@@ -8,7 +8,7 @@ import { milestoneUnlocks } from '../data/unlocks';
 import { FORM_IDS, FORMS, formKey } from '../data/forms';
 import { SET_UNLOCK_AT, type StartSetId } from '../data/start-sets';
 import { renameTerms } from '../data/terms';
-import type { Bet, Highlight, Nemesis } from './director';
+import type { Highlight, Nemesis } from './director';
 import type { SliceBattle } from './battle';
 
 /**
@@ -54,12 +54,12 @@ export interface RunSave {
    * 이 칸이 없거나 깨졌으면 예전처럼 그 대국 처음부터 다시 세운다.
    */
   fight?: FightSave;
-  /** 심리 연출 (D-178): 남은 마지막 한 수 · 자원 희생, 사선 보상을 받은 막, 이번 출하 최고의 턴 */
+  /** 심리 연출 (D-178): 사선 보상을 받은 막, 이번 출하 최고의 턴. clutchLeft · sacLeft = 옛 저장의 마지막 한 수 · 자원 희생(D-601에서 뺐다 — 읽지 않는다) */
   clutchLeft?: number;
   sacLeft?: number;
   closeActs?: number[];
   highlight?: Highlight | null;
-  /** 부적 (D-228): 여벌 심장 톱니 · 되감기 톱니 개수 */
+  /** 톱니 (D-228 · D-601): 여벌 심장 톱니 · 되감기 톱니 개수 */
   charms?: { revive: number; rewind: number };
   /** 처음 출하 (D-232): 1막 반장 HP −35% · 첫 고물상 맞물림 부품 */
   first?: boolean;
@@ -77,20 +77,20 @@ export interface RunSave {
 
 /**
  * 대국 중 저장 (D-529): 엔진 상태(SliceBattle — 순수 데이터 · 시드 난수)만 남기고 화면은 남기지 않는다.
- * rng · stage = 저장 순간의 출하 난수 · 대국 번호. 판 밖에서 이 대국에 걸린 것(판돈 · 마지막 한 수 · 예고 지표)도 같이.
+ * rng · stage = 저장 순간의 출하 난수 · 대국 번호. 판 밖에서 이 대국에 걸린 것(예고 지표)도 같이. bet · clutched = 옛 저장의 판돈 · 마지막 한 수(D-601에서 뺐다 — 읽지 않는다).
  */
 export interface FightSave {
   b: SliceBattle;
   rng: number;
   stage: number;
-  bet?: Bet | null;
+  bet?: unknown;
   clutched?: boolean;
   phaseWarned?: boolean;
   tg?: { telegraph: number; hit: number; evade: number; counter: number };
   /**
    * 연출 전에 남긴 판 (코드 리뷰 4): 턴 끝 · 카드를 엔진이 다 푼 직후, 연출을 기다리지 않고 저장한다 —
    * 연출 중에 앱을 죽였다 켜도 그 턴 처음으로 돌아가지 않는다(공짜 되감기 막기). rites = 이미 보인 폐기 의식 수(b.falls 앞에서부터),
-   * stand = 내 차례 시작 사선(lastStand)을 아직 묻지 않았다.
+   * stand = 적 차례가 막 끝난 판(못 본 폐기 의식을 판이 선 뒤에 보인다).
    */
   rites?: number;
   stand?: boolean;
