@@ -1,4 +1,6 @@
 import type { PieceType } from '../engine/types';
+import { localize } from './locale';
+import { PIECE_NAMES_EN } from './lang/en-screens';
 
 /** 기물 기본 스탯 (GDD 2장 §2.5, 초기값). */
 export interface PieceStats {
@@ -31,3 +33,5 @@ export const PIECE_NAMES_KO: Record<PieceType, string> = {
   Q: '퀸',
   K: '킹',
 };
+/** 지금 언어의 기물 이름 (D-671) — UI 크롬용. 조사(josa)가 붙는 한국어 문장은 PIECE_NAMES_KO를 그대로 쓴다 */
+export const PIECE_NAMES = localize(PIECE_NAMES_KO, PIECE_NAMES_EN);

@@ -98,6 +98,8 @@
   image-rendering: pixelated; background: none; box-shadow: none;
   color: var(--t-brass-ink); font: 700 24px/var(--lh-24) Galmuri11, sans-serif; text-shadow: none;
 }
+/* 영어 (D-672): 라틴 글자는 아래 꼬리(p · g · y)가 있어 한글용 위 2px가 잉크를 명패 아래 테로 민다 — 영어만 위 여백을 1px로 (0이면 위가 빠듯해진다) (글자 크기 그대로, D-653) */
+html[lang='en'] :is(.win, .scr-pick, .scr-place, .kit) .plate { padding-top: 1px; }
 .win > .plate { position: absolute; z-index: 2; left: 50%; top: calc(-1 * var(--k-win) * var(--px) - var(--h-plate) / 2); transform: translateX(-50%); }
 
 /* ---------- 창 머리 줄 · 본문 글 ---------- */
