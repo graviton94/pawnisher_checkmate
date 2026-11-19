@@ -14,7 +14,7 @@ import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
 import { logHtml, VnStage, type PlateBox } from './vn';
 import { DarkStage } from './darkcut';
 import { castOf, castOn, VN_TEXT, VN_VOID } from '../data/vn';
-import { clearDither, ditherTo, ease } from '../view/motion';
+import { clearWipe, ease, wipeTo } from '../view/motion';
 import { PAPER_FACE } from '../data/portraits';
 
 const PAPER_KING = '종이왕';
@@ -154,12 +154,12 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     });
     for (const k of ['pointerup', 'pointercancel', 'pointerleave'] as const) el.addEventListener(k, () => window.clearTimeout(holdT));
     el.addEventListener('pointermove', (ev) => { if (ev.pointerType === 'mouse' && Math.abs(ev.movementX) + Math.abs(ev.movementY) > 2) reveal(); });
-    /** 이야기 줄이 바뀔 때: 앞 글을 64단 디더로 걷는다 (움직임 줄이기면 바로) */
+    /** 이야기 줄이 바뀔 때: 앞 글을 클립 와이프로 걷는다 (D-675) (움직임 줄이기면 바로) */
     const voidOut = async (): Promise<void> => {
       if (!text.childElementCount) return;
-      if (!calm()) { await ditherTo(text, 1, 0, VN_VOID.outMs, ease.in); }
+      if (!calm()) { await wipeTo(text, 1, 0, VN_VOID.outMs, ease.in); }
       text.innerHTML = '';
-      clearDither(text);
+      clearWipe(text);
     };
     window.addEventListener('resize', refit);
     const finish = async (): Promise<void> => {
@@ -281,7 +281,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       if (el.querySelector('.vn-log')) return;
       sfx('tap');
       el.insertAdjacentHTML('afterbegin', logHtml(vn.log));
-      void ditherTo(el.querySelector<HTMLElement>('.vn-log .win')!, 0, 1, 300, ease.out);
+      void wipeTo(el.querySelector<HTMLElement>('.vn-log .win')!, 0, 1, 300, ease.out);
       el.querySelector<HTMLElement>('.vn-log [data-x]')?.focus({ preventScroll: true });
     };
     function closeLog(): void {

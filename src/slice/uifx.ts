@@ -2,9 +2,11 @@ import { shakeMul } from '../prefs/fx';
 import { calmMotion } from '../prefs/motion';
 import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
-import { arcFly, ditherKeyframes } from './fx3';
+import { arcFly, cutKeyframes } from './fx3';
 import { compTween, ease, snapDev, tween } from '../view/motion';
 import { SMOOTH } from '../data/motion';
+import { flashAt } from '../view/flash';
+import { isQuiet } from './quiet';
 import { devPerCss, lay, layRect, viewH } from '../view/vz';
 
 /**
@@ -143,45 +145,18 @@ export const installPressy = (): void => {
 };
 
 /**
- * 도트로 사라지기 (연구소 「보상 카드」): 아래 칸부터 떨어져 나가 작은 도트로 떠오른다.
- * D-245 (사용자: 「하나 고르면 나머지 연기 효과가 다 개별로 돌아서 렉이 심하다」): 예전엔 요소마다 rAF + 매 프레임 canvas.toDataURL()이었다 →
- * 디더 문양 하나로 6단 마스크를 한 번만 굽고(모든 요소가 같이 쓴다), 시계 하나가 6단을 계단으로 넘긴다. 떠오르는 도트는 한 번에 최대 24개.
+ * 무너져 사라지기 (연구소 「보상 카드」 → D-675): 아래 변이 프레임마다 위로 말려 올라가며(클립 와이프, 정수 기기 픽셀 · 가속 곡선) 작은 도트가 떠오른다.
+ * D-245 (렉): 시계 하나가 모든 요소를 함께 넘긴다 · 떠오르는 도트는 한 번에 최대 24개. D-675: 옛 8×11 디더 가면(큰 체크 칸)을 뺐다.
  */
-const DIS_STEPS = 16; // D-554: 6 → 16단, 프레임 시계(tween)로 곡선 따라 넘긴다
-let disMasks: string[] | null = null;
-const disMaskSet = (): string[] => {
-  if (disMasks) return disMasks;
-  const cols = 8;
-  const rows = 11;
-  const th: number[] = [];
-  // 같은 문양이라도 아래부터 무너지는 디더 (고정 순서표 — 매번 무작위를 다시 굽지 않는다)
-  const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) th.push(((rows - 1 - j) / rows) * 0.8 + (bayer[(j % 4) * 4 + (i % 4)] / 16) * 0.2);
-  const c = document.createElement('canvas');
-  c.width = cols;
-  c.height = rows;
-  const m = c.getContext('2d')!;
-  disMasks = [];
-  for (let s = 1; s <= DIS_STEPS; s++) {
-    const k = s / (DIS_STEPS + 1);
-    m.clearRect(0, 0, cols, rows);
-    m.fillStyle = '#000';
-    th.forEach((v, idx) => k < v && m.fillRect(idx % cols, Math.floor(idx / cols), 1, 1));
-    disMasks.push(`url(${c.toDataURL()})`);
-  }
-  return disMasks;
-};
 export const dissolveUp = (el: HTMLElement, ms = 520): void => dissolveAll([el], ms);
-/** 여럿을 한꺼번에 도트로 흩어지게 (시계 하나 · 마스크 공유) */
+/** 여럿을 한꺼번에 무너지게 (시계 하나) */
 export const dissolveAll = (els: HTMLElement[], ms = 520): void => {
   if (!els.length) return;
   if (calm()) return void els.forEach((el) => (el.style.visibility = 'hidden'));
-  const masks = disMaskSet();
   // 도트는 요소마다 몇 알씩, 전체 24알까지
   const per = Math.max(1, Math.floor(24 / els.length));
+  const hs = els.map((el) => el.offsetHeight || 1);
   els.forEach((el) => {
-    el.style.setProperty('-webkit-mask-size', '100% 100%');
-    el.style.maskSize = '100% 100%';
     const r = layRect(el.getBoundingClientRect());
     if (r.bottom < 0 || r.top > viewH()) return;
     for (let n = 0; n < Math.min(per, 4); n++) {
@@ -198,16 +173,9 @@ export const dissolveAll = (els: HTMLElement[], ms = 520): void => {
       window.setTimeout(() => b.remove(), ms + 520);
     }
   });
-  let last = -1;
   void tween(Math.max(ms, SMOOTH.outMin), (e) => {
-    const s = Math.min(DIS_STEPS - 1, Math.floor(e * DIS_STEPS));
-    if (s === last) return;
-    last = s;
-    els.forEach((el) => {
-      el.style.setProperty('-webkit-mask-image', masks[s]);
-      el.style.maskImage = masks[s];
-    });
-  }, ease.in).then(() => els.forEach((el) => (el.style.visibility = 'hidden')));
+    els.forEach((el, i) => (el.style.clipPath = `inset(0 0 ${snapDev(hs[i] * Math.min(1, e))}px 0)`));
+  }, ease.in).then(() => els.forEach((el) => { el.style.visibility = 'hidden'; el.style.removeProperty('clip-path'); }));
 };
 
 /** 요소 복제가 기울며 들렸다가 목표 쪽으로 빨려 들어간다 (고른 카드 → 덱, 부품 → 부품 칸) */
@@ -372,7 +340,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   // 칼자국 선 (문장 좌표): 오른위 A → 왼아래 B
   const A = { x: 152, y: 7.5 }, B = { x: 50, y: 114.7 };
   const ang = (Math.atan2(B.y - A.y, B.x - A.x) * 180) / Math.PI;
-  const glintRun = (ms: number) => { glint.style.left = `${A.x}px`; glint.style.top = `${A.y}px`; glint.animate(ditherKeyframes([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }]), { duration: ms, easing: 'steps(6, jump-end)' }); };
+  const glintRun = (ms: number) => { glint.style.left = `${A.x}px`; glint.style.top = `${A.y}px`; glint.animate(cutKeyframes([{ transform: `translate(0,0) rotate(${ang}deg) scaleX(.3)`, opacity: 0 }, { opacity: 1, offset: 0.15 }, { transform: `translate(${B.x - A.x}px,${B.y - A.y}px) rotate(${ang}deg) scaleX(1.4)`, opacity: 0 }]), { duration: ms, easing: 'steps(6, jump-end)' }); };
   const shake = (amp0: number, ms: number) => { const amp = Math.round(amp0 * shakeMul()); if (amp < 1) return; panel.animate([{ transform: `translate(${-amp}px,${amp * 0.6}px)` }, { transform: `translate(${amp * 0.9}px,${-amp * 0.6}px)` }, { transform: `translate(${-amp * 0.6}px,${amp * 0.4}px)` }, { transform: `translate(${amp * 0.4}px,${-amp * 0.2}px)` }, { transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.1,.9,.2,1)' }); };
   em.classList.add('run');
   sfx('lift');
@@ -385,7 +353,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   re(vig, 'on');
   glint.style.left = `${A.x}px`;
   glint.style.top = `${A.y}px`;
-  glint.animate(ditherKeyframes([{ transform: `rotate(${ang}deg) scale(.2)`, opacity: 0 }, { transform: `rotate(${ang}deg) scale(1.6, 3)`, opacity: 1 }]), { duration: 120, easing: 'steps(3, jump-end)', fill: 'forwards' });
+  glint.animate(cutKeyframes([{ transform: `rotate(${ang}deg) scale(.2)`, opacity: 0 }, { transform: `rotate(${ang}deg) scale(1.6, 3)`, opacity: 1 }]), { duration: 120, easing: 'steps(3, jump-end)', fill: 'forwards' });
   await wait(120);
   // 베기
   em.classList.remove('tremble');
@@ -394,13 +362,14 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   glintRun(90);
   sfx('kill');
   inv.classList.add('on');
-  window.setTimeout(() => { inv.classList.remove('on'); re(flash, 'on'); }, 60);
+  // 흰 섬광 (D-675): 화면 전체 흰 디더 막 대신 문장 둘레 단색 원판 → 퍼지는 고리
+  window.setTimeout(() => { inv.classList.remove('on'); void flashAt(em, { peak: 0.5, z: 120 }); }, 60);
   shake(6, 320);
   re(root, 'punch');
   re(rays, 'on');
   (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(40);
   const er = layRect(em.getBoundingClientRect());
-  // 핏방울 22개 (D-593): 한 rAF 고리가 미리 정한 길을 프레임마다 옮긴다 — 위치는 기기 픽셀 정수, 사라짐은 디더 가면 16단.
+  // 핏방울 22개 (D-593): 한 rAF 고리가 미리 정한 길을 프레임마다 옮긴다 — 위치는 기기 픽셀 정수, 끝까지 날아간 뒤 지운다(D-675 — 디더 가면 없음).
   // 예전엔 방울마다 Web Animations를 걸어 120Hz 행렬 키프레임 백여 개씩을 굽고 · 읽혀 베는 순간 ×4 감속에서 0.2~0.6초를 막았다.
   const drops: { d: HTMLElement; mid: [number, number]; end: [number, number]; ms: number }[] = [];
   const frag = document.createDocumentFragment();
@@ -430,9 +399,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
       const [x0, y0] = p < MID ? [0, 0] : o.mid;
       const [x1, y1] = p < MID ? o.mid : o.end;
       o.d.style.transform = `translate(${snapDev(x0 + (x1 - x0) * k)}px,${snapDev(y0 + (y1 - y0) * k)}px)`;
-      const lv = `var(--dq${p < MID ? SMOOTH.cssLevels : Math.round((1 - k) * SMOOTH.cssLevels)})`;
-      o.d.style.maskImage = lv;
-      o.d.style.setProperty('-webkit-mask-image', lv);
+      // D-675: 디더로 옅어지지 않는다 — 끝까지 날아간 뒤 지운다 (프레임마다 가면을 바꾸지 않아 칠하기도 줄었다)
     }
     if (live && root.isConnected) requestAnimationFrame(fly);
     else drops.forEach((o) => o.d.remove());
@@ -447,7 +414,8 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   await wait(700);
   // 대기: 칼빛 · 반짝 띠 · 불씨 (타이틀이 닫히면 멈춘다)
   // 대기 중에는 글자 반짝 띠만 (칼빛 · 혼합 모드 반복은 모바일에서 프레임을 먹었다 — 테스터: 타이틀 버벅임)
-  const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); re(word, 'shine'); }, 3200);
+  // 조용한 구간(메뉴 펼침 · D-676)에는 건너뛴다 — re()의 강제 배치 · 불씨 자리 재기가 펼침 프레임을 먹지 않게
+  const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); if (!isQuiet()) re(word, 'shine'); }, 3200);
   // 불씨 (D-593): 한 rAF 고리가 떠 있는 불씨를 모두 옮긴다 (예전엔 0.5초마다 하나씩 2.2초짜리 Web Animations를 구워 대기 화면 · 메뉴 펼침 내내 메인 스레드를 먹었다)
   const embers: { m: HTMLElement; dx: number; dy: number; t0: number }[] = [];
   let emberLoop = false;
@@ -457,9 +425,6 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
       const e = embers[i];
       const p = Math.min(1, (now - e.t0) / EMBER_MS);
       e.m.style.transform = `translate(${snapDev(e.dx * p)}px,${snapDev(e.dy * p)}px)`;
-      const lv = `var(--dq${Math.round((1 - p) * SMOOTH.cssLevels)})`;
-      e.m.style.maskImage = lv;
-      e.m.style.setProperty('-webkit-mask-image', lv);
       if (p >= 1 || !root.isConnected) (e.m.remove(), embers.splice(i, 1));
     }
     emberLoop = embers.length > 0;
@@ -467,6 +432,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   };
   const emb = window.setInterval(() => {
     if (!root.isConnected) return void window.clearInterval(emb);
+    if (isQuiet()) return;
     const r = layRect(panel.getBoundingClientRect());
     const m = document.createElement('i');
     m.className = 'tfx-ember';

@@ -1,6 +1,8 @@
+/// <reference types="node" />
 import { describe, expect, it } from 'vitest';
-import { bayer8, ditherLevel, ditherSvg, ease, snapDev } from '../src/view/motion';
-import { SMOOTH } from '../src/data/motion';
+import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { ease, scrimUrl, snapDev } from '../src/view/motion';
 import { easingFn, parseTransform, sampleMotion } from '../src/view/bakefast';
 import { castOf, castOn, VN_DEFAULT, VN_SCENE } from '../src/data/vn';
 import { BOSS_STORY, DEFEAT_CUTS, ENDING_A, PROLOGUE, PROLOGUE_FIELD, bossFallCut, gildedPhase2Cut, promotionCuts, runIntro, shadowCuts, trueEndingCuts, type Cut, type StoryBoss } from '../src/data/script';
@@ -10,23 +12,34 @@ import { companionScene } from '../src/data/companion-scenes';
  * 매끈한 도트 움직임 (D-554): 디더는 8×8 베이어 64단 · 곡선은 예비 → 터짐 → 출렁 · 위치는 기기 픽셀 정수 ·
  * CSS 키프레임 디더는 모두 16단으로 펼쳐져 있다(다섯 단 이하 계단 퇴장 없음).
  */
-describe('8×8 베이어 디더 (D-554)', () => {
-  it('문턱 0~63이 한 번씩', () => {
-    const seen = new Set<number>();
-    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) seen.add(bayer8(x, y));
-    expect(seen.size).toBe(64);
-    expect(Math.min(...seen)).toBe(0);
-    expect(Math.max(...seen)).toBe(63);
+describe('격자 디더 연출 전면 금지 (D-675)', () => {
+  const dir = fileURLToPath(new URL('../src/slice/', import.meta.url));
+  const css = Object.fromEntries(readdirSync(dir).filter((f: string) => f.endsWith('.css')).map((f: string) => [f, readFileSync(dir + f, 'utf8')]));
+  it('먹 막은 무늬 없는 단색 고정 알파 (크기 없는 SVG — 타일 이음매 없음)', () => {
+    const u = decodeURIComponent(scrimUrl(0.72));
+    expect(u).toContain("fill-opacity='0.72'");
+    expect(u).not.toMatch(/<svg[^>]* width=/);
+    expect((u.match(/<rect /g) ?? []).length).toBe(1);
   });
-  it('단계 = 보이는 칸 수 (0 · 64 끝 포함, 64단)', () => {
-    expect(SMOOTH.levels).toBe(64);
-    expect(ditherLevel(0)).toBe(0);
-    expect(ditherLevel(1)).toBe(64);
-    expect(ditherLevel(0.5)).toBe(32);
-    for (const k of [0, 1, 17, 32, 63, 64]) {
-      const n = (ditherSvg(k, 1.905).match(/<rect /g) ?? []).length;
-      expect(n).toBe(k >= 64 ? 1 : k);
-    }
+  it('화면 막 · 가장자리에 체크 · 베이어 타일이 남지 않았다 (카드 창 속 무늬 --wpat만 예외)', () => {
+    const left: string[] = [];
+    for (const [file, src] of Object.entries(css))
+      src.split('\n').forEach((ln: string, i: number) => {
+        if (/--wpat|^\.tapefx/.test(ln)) return; // 카드 창 속 무늬 · 테이프 주사선(줄무늬)은 그림 결
+        if (/dither-edge-[tblr]\.png/.test(ln)) left.push(`${file}:${i + 1} dither-edge`);
+        for (const m of ln.matchAll(/url\("data:image\/svg\+xml,([^"]+)"\)/g)) {
+          const svg = decodeURIComponent(m[1]);
+          const wh = /width='(\d+)' height='(\d+)'/.exec(svg);
+          // 작은 타일(2 ~ 8칸)에 같은 색 사각형이 둘 이상 = 격자 무늬 (단, 십자 아이콘처럼 무늬가 아닌 그림은 제외)
+          if (wh && +wh[1] <= 8 && (svg.match(/<rect /g) ?? []).length >= 2 && !/#bbf7d0/.test(svg)) left.push(`${file}:${i + 1}`);
+        }
+      });
+    expect(left).toEqual([]);
+  });
+  it('창 뒤 막은 애니메이션 없이 한 번에 선다', () => {
+    const all = Object.values(css).join('\n');
+    expect(all).toMatch(/\.overlay\.m3on, \.overlay\.m3off \{ animation: none; \}/);
+    expect(all).not.toMatch(/@keyframes m3dith/);
   });
 });
 

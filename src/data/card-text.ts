@@ -43,8 +43,23 @@ export const CARD_TEXT_GRID = [
   { from: 166, line: 12, flavorGap: 2, ruleAbove: 2, ruleBelow: 2, name: 12, row: 12 },
   { from: 184, line: 12, flavorGap: 3, ruleAbove: 3, ruleBelow: 3, name: 13, row: 13 },
 ] as const;
+/**
+ * 덧 격자 (D-669, slice.css 같은 값): ① 150px 아래 카드(사건 결과 1박 작은 분대원 · 명령 카드 — 772×360에서 138px)는 묘사 틈 1 · [능력명] 11,
+ * 칸은 종이 끝까지(분대원 71 ~ 110 · 명령 74 ~ 111도트) ② 시작 세트는 압정(71 ~ 75도트) 아래로 칸을 76 ~ 110도트로 내리고 166px 아래에서 조건/효과 행 10 · 168px 아래 11
+ * (160 아래는 틈 1 · 점선 틈 1 · [능력명] 11). `box` = 칸 높이(카드 도트 — 카드 84도트 폭 기준).
+ */
+export const CARD_TEXT_GRID_EXTRA = {
+  small: { below: 150, line: 12, flavorGap: 1, ruleAbove: 1, ruleBelow: 1, name: 11, row: 10, box: { crew: 39, cmd: 37 } },
+  set: { box: 34, grids: [
+    { from: 150, line: 12, flavorGap: 1, ruleAbove: 1, ruleBelow: 1, name: 11, row: 10 },
+    { from: 160, line: 12, flavorGap: 2, ruleAbove: 2, ruleBelow: 2, name: 12, row: 10 },
+    { from: 166, line: 12, flavorGap: 2, ruleAbove: 2, ruleBelow: 2, name: 12, row: 11 },
+    { from: 168, line: 12, flavorGap: 2, ruleAbove: 2, ruleBelow: 2, name: 12, row: 12 },
+    { from: 184, line: 12, flavorGap: 3, ruleAbove: 3, ruleBelow: 3, name: 13, row: 13 },
+  ] },
+} as const;
 /** 세로 격자 한 벌의 높이 (px) */
-export const cardGridH = (g: (typeof CARD_TEXT_GRID)[number]): number => 2 * g.line + g.flavorGap + g.ruleAbove + 2 + g.ruleBelow + g.name + 2 * g.row;
+export const cardGridH = (g: { line: number; flavorGap: number; ruleAbove: number; ruleBelow: number; name: number; row: number }): number => 2 * g.line + g.flavorGap + g.ruleAbove + 2 + g.ruleBelow + g.name + 2 * g.row;
 export type CardTier = keyof typeof CARD_TIERS;
 
 /**

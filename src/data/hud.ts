@@ -292,6 +292,13 @@ export const FIT_TEXT = localize(FIT_TEXT_KO, FIT_TEXT_EN);
  * 판 열이 좁으면(667 폭 ≈ 300) 판 열 − 2 × gap.
  */
 export const CARD_WIN = { w: 352, gap: 8 } as const;
+/**
+ * 펼친 카드 창 자리 고르기 (D-667): 덮는 칸 하나의 무게 — 고른 기물 · 갈 칸 · 맞을 적(hard)은 다른 무엇보다 무겁고(대신 덮을 자리가 있으면 덮지 않는다),
+ * 내 기물(mine)은 적 기물(other)보다 무겁다. step = 세로 후보 간격(px) · rightPenalty = 같은 무게면 왼끝을 고르는 덤(px로 친 거리).
+ * 판 밖이 먼저 (사용자 실기기 지적): 오른 레일 「적의 수」 칸 → 왼 손패 레일(고른 카드 줄 위 · 아래) → 판 열. railGap = 레일 칸 안 여백 ·
+ * minW = 레일에 놓을 때 창 폭 하한(px — 이보다 좁으면 그 레일은 건너뛴다).
+ */
+export const CARD_WIN_PLACE = { gap: CARD_WIN.gap, step: 4, hard: 1000, mine: 30, other: 1, rightPenalty: 40, railGap: 4, minW: 150 } as const;
 
 /**
  * 조건 표시 글 (D-592 발동 유형 · 판 위 표시): 손패 카드 효과 줄 자리에 들어가는 짧은 까닭 — 카드 효과 줄 한 줄(≤ 12자 남짓).

@@ -1,7 +1,7 @@
 import './settings.css';
 import { closeWin, openWin, winHtml, btnHtml, morphHtml, toast, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
-import { SETTINGS_TEXT as T, VOL_STEPS, KEY_GUIDE, type Settings, type ShakePref } from '../data/settings';
+import { SETTINGS_TEXT as T, VOL_STEPS, KEY_GUIDE, BOARD_RES_PREFS, type Settings, type ShakePref } from '../data/settings';
 import { LICENSES } from '../data/licenses';
 import { CREDITS } from '../data/credits';
 import { APP_VERSION } from '../data/version';
@@ -73,6 +73,7 @@ const rowsOf = (tab: Tab, s: Settings, o: SettingsOpts): string[] => {
     case 'screen': return [
       ...(o.desktop ? [row(T.fullscreen, btnHtml({ label: T.fullscreenBtn, attrs: 'data-full' }), T.fullscreenNote)] : []),
       row(T.shake, seg('shake', T.shake, (['off', 'weak', 'normal'] as ShakePref[]).map((v) => [v, T.shakeOpts[v]] as const), s.shake)),
+      row(T.boardRes, seg('boardRes', T.boardRes, BOARD_RES_PREFS.map((v) => [v, T.boardResOpts[v]] as const), s.boardRes), T.boardResNote),
     ];
     case 'access': return [
       row(T.motion, seg('motion', T.motion, (['os', 'off', 'on'] as MotionPref[]).map((v) => [v, T.motionOpts[v]] as const), s.motion)),
@@ -194,7 +195,7 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     }
     if (hit.matches('[data-seg]')) {
       const k = hit.dataset.seg as keyof Settings, v = hit.dataset.v!;
-      const val = k === 'motion' || k === 'shake' ? v : v === '1';
+      const val = k === 'motion' || k === 'shake' || k === 'boardRes' ? v : v === '1';
       return save({ ...s, [k]: val } as Settings);
     }
     if (hit.matches('[data-lang]')) return void (sfx('tap'), switchLang(hit.dataset.lang as Lang));

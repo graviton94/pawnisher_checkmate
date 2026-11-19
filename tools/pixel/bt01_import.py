@@ -119,6 +119,30 @@ def nine(img):
     return Image.fromarray(out, 'RGBA'), {'left': SL_L, 'right': SL_R, 'socket_from_right': [SL_R - sock[0], sock[1], sock[2], sock[3]]}
 
 
+def trim_corner(img, name=''):
+    """사내 손질 — 지우기만 (D-669 · art-assets §7): 위 오른 모서리 계단이 왼 모서리보다 바깥으로 1도트씩 튀어나왔다
+    (평상 3 · 4줄 · 새 카드 0 · 1 · 3줄 — 테 밖에 걸린 낱점). 왼 모서리 계단을 거울로 비춰 그 밖의 도트만 투명하게 한다.
+    몸이 가운데 줄 왼 끝에 닿는 줄까지(위 모서리만) — 아래 모서리 · 몸통은 건드리지 않는다. 반환 (그림, 지운 도트 목록)"""
+    a = np.asarray(img).copy()
+    W = a.shape[1]
+    mid = np.nonzero(a[a.shape[0] // 2, :, 3])[0]
+    axis = int(mid[0] + mid[-1])  # 몸 가운데 줄의 왼 끝 + 오른 끝 — 거울 축(누름 단추는 캔버스 가운데와 1도트 어긋난다)
+    gone = []
+    for y in range(a.shape[0]):
+        xs = np.nonzero(a[y, :, 3])[0]
+        if not len(xs):
+            continue
+        if xs[0] <= mid[0]:
+            break
+        for x in range(axis - int(xs[0]) + 1, W):
+            if a[y, x, 3]:
+                a[y, x, 3] = 0
+                gone.append((x, y))
+    if gone:
+        print(name, 'trim_corner 지움', gone)
+    return Image.fromarray(a, 'RGBA'), gone
+
+
 SL_L, SL_R = 14, 35
 MID_REP = 120  # 왼 조각 가운데 열 반복 — 단추 폭 169도트까지 덮는다
 
@@ -156,7 +180,9 @@ def build():
         c = Image.new('RGBA', (W, H))
         dy = round((BOX[k][1] - BOX['pile-btn-idle'][1]) / PITCH) if k == 'pile-btn-down' else 0
         c.paste(res[k], ((W - res[k].width) // 2, dy))
-        res[k] = c
+        # 누름 단추는 원본이 고른 사선 모서리(눌린 원근)라 손대지 않는다 — 평상 · 새 카드만
+        res[k], gone = trim_corner(c, k) if k != 'pile-btn-down' else (c, [])
+        log[k]['trim_corner'] = gone
     full = dict(res)
     for k in btn:
         full[k].save(os.path.join(PARTS, k + '-full.png'))

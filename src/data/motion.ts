@@ -110,8 +110,8 @@ export const MOTION_CLOCK = {
 export const CARD_SHEEN = { periodMs: 3600, passMs: 340, sparkFrameMs: 40, sparkFrames: 6, staggerMs: 1200, bakeHz: 120 } as const;
 
 /**
- * 번쩍임 (D-595 — 화면 전체 흰/금 디더 막을 대신): 맞은 곳 둘레만 원형 디더(8×8 베이어, 칸 = 게임 도트)로 켰다가 frames 장(화면 프레임)에 걸쳐 꺼진다.
- * peak = 가운데 덮는 비율(0~1, 0.5 = 체커 — 눈부신 흰 장 없음) · radius = 화면 짧은 변 대비 반지름.
+ * 번쩍임 (D-595 → D-675 격자 디더 금지): 맞은 곳 둘레 단색 원판 한 장 → 바깥으로 퍼지며 얇아지는 고리가 frames 장(화면 프레임)에 걸쳐 꺼진다.
+ * peak = 세기(0~1, 원판 크기 — 0.5 = 반지름의 35%) · radius = 화면 짧은 변 대비 고리 끝 반지름. 체크 무늬 없음.
  * 번쩍임 줄이기 · 움직임 줄이기면 그리지 않는다.
  */
-export const FLASH = { frames: 3, peak: 0.5, radius: 0.42, cardRadius: 0.75 } as const;
+export const FLASH = { frames: 6, peak: 0.5, radius: 0.42, cardRadius: 0.75 } as const;

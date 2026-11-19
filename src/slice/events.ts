@@ -169,8 +169,8 @@ const leave = (text: string): SliceEventChoice => ({ label: text, desc: '', appl
  */
 export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   tinker: {
-    title: '떠돌이 땜장이',
-    text: '외눈 렌즈를 낀 땜장이가 분대를 훑는다. “가장 많이 쓰러뜨린 놈 하나. 그 축만 두껍게 해 주지.”',
+    title: '외눈 정비공',
+    text: '외눈 정비공이 렌즈 너머로 분대를 훑는다. “가장 많이 쓰러뜨린 놈 하나. 그 축만 두껍게 해 주지.”',
     choices: [
       {
         label: '땜질을 맡긴다',

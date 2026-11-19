@@ -4,7 +4,7 @@ import { calmMotion } from '../prefs/motion';
  * pixelfx · Sprite Fusion(Hugo Duprez, MIT)의 방법을 우리 코드로 다시 짰다 — 그 저장소의 코드를 들여오지 않았다 (docs/CREDITS.md).
  *
  * 규칙 (그 사람의 룰을 우리 말로):
- *  - 버퍼 둘: 색(불투명 칸 · 4×4 베이어 디더로만 옅어짐 · 진짜 반투명은 연기 · 김 · 먼지에만)과 빛(더하기, 맨 위).
+ *  - 버퍼 둘: 색(불투명 칸 — 옅어짐은 켜짐/꺼짐뿐, D-675 격자 디더 금지 · 진짜 반투명은 연기 · 김 · 먼지에만)과 빛(더하기, 맨 위).
  *  - 색은 램프의 단단한 단계(어두움 → 밝음, 그림자는 차갑고 밝은 쪽은 따뜻하게). 부드러움은 빛과 반투명 덩어리에만.
  *  - 면이 아니라 선과 빛: 1칸 테 · 고리 · 꼬리 · 불꽃, 흰 핵은 가장 뜨거운 곳에만.
  *  - 빛은 어디에나: 큰 옅은 웅덩이 + 작은 뜨거운 핵 + 불꽃마다 빛 + 충돌 순간 번쩍했다 꺼지는 Lights.
@@ -65,7 +65,7 @@ export class Rng {
 }
 
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
-/** 베이어 생명 (x, y 칸) — 디더 퇴장 · 디더 경계에 쓴다 */
+/** 베이어 문턱 (x, y 칸) — D-675부터 연출(퇴장 · 경계)에는 쓰지 않는다. 판 칸 그림 안의 고정 무늬(독 웅덩이 결)만 */
 export const bayer = (x: number, y: number): number => BAYER[((y & 3) << 2) | (x & 3)];
 
 /** 한 장: 색 버퍼 + 빛 버퍼 */
@@ -87,7 +87,8 @@ export class Painter {
     x = Math.floor(x); y = Math.floor(y);
     if (!c || x < 0 || y < 0 || x >= this.f.w || y >= this.f.h) return;
     a *= this.fade;
-    if (a < 1 && a <= bayer(x, y)) return;
+    // D-675: 격자 디더로 옅어지지 않는다 — 절반 아래는 꺼지고, 위는 꽉 찬 칸
+    if (a < 0.5) return;
     this.f.color[y * this.f.w + x] = c;
   }
   /** 진짜 반투명 (연기 · 김 · 먼지) */
@@ -128,7 +129,7 @@ export class Painter {
   }
   /**
    * 둥근 빛 웅덩이 (더하기, 가운데가 뜨겁다). D-538: 연속 알파(사실상 방사형 그라데이션) 대신
-   * 3단 단색 링 + 4×4 베이어 디더로 양자화한다 — 빛 공식 3단계와 같은 계단, 팔레트 밖 중간색이 생기지 않는다.
+   * 3단 단색 링으로 양자화한다 — 빛 공식 3단계와 같은 계단. D-675: 링 경계는 단단한 선(베이어 디더 녹임 없음).
    */
   glow(x: number, y: number, r: number, c: Col, k = 0.5): void {
     if (r < 1 || k <= 0.004) return;
@@ -136,7 +137,7 @@ export class Painter {
       const dx = (sx + 0.5 - x) / r, dy = (sy + 0.5 - y) / r, d = dx * dx + dy * dy;
       if (d < 1) {
         const f = 1 - Math.sqrt(d), v = Math.min(1, f * f * k * this.fade) * 3;
-        const ring = Math.floor(v + bayer(sx, sy)) / 3;
+        const ring = Math.floor(v + 0.5) / 3;
         if (ring > 0) this.add(sx, sy, c, ring / this.fade);
       }
     }
