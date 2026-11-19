@@ -152,4 +152,4 @@ body.kb-nav #hand > .hand-more:focus-visible::before { outline: calc(var(--px) *
 .scr-pick .btn-row .ovh > .ovh-tag { order: 2; min-width: 0; color: var(--t-ally); word-break: keep-all; }
 
 /* 좁은 레일(667): 덱 · 분대 · 버림 칩 글은 12px (세 칩이 한 줄에) */
-@media (max-width: 860px) { #deckrow .btn.k-iron { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; } body.slice.lay-f #deckrow { gap: 2px; } }
+@media (max-width: 860px) { #deckrow .btn.k-iron { font: 400 12px/var(--lh-12) Galmuri11, sans-serif; } body.slice.lay-f #deckrow { gap: 8px; } }

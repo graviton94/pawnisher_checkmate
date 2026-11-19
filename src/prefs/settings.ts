@@ -1,4 +1,5 @@
-import { SETTINGS_DEFAULT, SETTINGS_KEY, VOL_STEPS, PROGRESS_KEYS, PROGRESS_PREFIX, SHAKE_MUL, type Settings, type ShakePref } from '../data/settings';
+import { SETTINGS_DEFAULT, SETTINGS_KEY, VOL_STEPS, PROGRESS_KEYS, PROGRESS_PREFIX, SHAKE_MUL, BOARD_RES_PREFS, type BoardResPref, type Settings, type ShakePref } from '../data/settings';
+import { setBoardResPref } from './boardres';
 import { setCbAid, setFxPrefs } from './fx';
 import { setBgMute } from '../audio/bg';
 import { BIND_IDS, DEFAULT_BINDS, cleanBinds, keyLabel, setKeyBinds } from '../slice/keymap';
@@ -59,6 +60,7 @@ export const readSettings = (st: KeyStore): Settings => {
     keyHints: bool(raw.keyHints, d.keyHints),
     keys: keysOf(raw.keys),
     cbAid: bool(raw.cbAid, d.cbAid),
+    boardRes: BOARD_RES_PREFS.includes(raw.boardRes as BoardResPref) ? (raw.boardRes as BoardResPref) : d.boardRes,
   };
 };
 
@@ -86,6 +88,7 @@ export const applySettings = (s: Settings): void => {
   setBgMute(s.bgMute);
   setKeyBinds(s.keys);
   setCbAid(s.cbAid);
+  setBoardResPref(s.boardRes);
   if (typeof document === 'undefined') return;
   document.body?.classList.toggle('key-hints', s.keyHints);
   // 키 안내 글자도 지금 배치로 (턴 끝 · 되감기)

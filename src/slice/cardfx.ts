@@ -3,7 +3,7 @@
  *
  * 화면 전체를 덮는 투명 캔버스 하나(기기 px 1:1)에 도트를 찍는다. 연출이 없으면 숨기고 그리기를 멈춘다(유휴 비용 0, D-533).
  * 도트 하나 = 판 칸의 1/20(판 그림과 같은 도트), 위치는 기기 정수 px로 — 60fps로 한 px씩 움직여 매끈하되 도트는 깨지지 않는다.
- * 투명도 보간 · 그라데이션 없이: 나타남은 계단, 사라짐은 4×4 베이어 디더 네 계단 (D-216 · D-538). 화면 전체 번쩍임 없음.
+ * 투명도 보간 · 그라데이션 없이: 나타남은 계단, 사라짐은 오그라듦 · 한 번에 끊김 (D-675 — 옛 4×4 베이어 디더). 화면 전체 번쩍임 없음.
  * 재질은 D-259 다섯 가지 — 철(죔쇠) · 황동(리벳 · 톱니 · 깃대) · 쇳물(불씨) · 종이(카드 뒷면) · 녹(먼지).
  *
  * 계열: 카드 표 비행(손패 → 대상) · 죔쇠(방열판) · 기름 방울 + 톱니(수리) · 불씨(연쇄) · 태엽 용수철(태엽) · 덱 → 손패 카드 ·
@@ -22,9 +22,8 @@ interface Fx { t0: number; dur: number; draw: (g: Ctx, t: number) => void; done?
 /** QA 박자 기록 (D-538과 같은 길): 창에 `__fxlog` 배열이 있을 때만 [이름, ms] */
 const trace = (k: string, ms: number): void => void (window as { __fxlog?: unknown[] }).__fxlog?.push([k, Math.round(ms), '']);
 
-const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-/** 디더 남김: 보이는 정도 v(0~1)에서 이 도트가 남나 */
-const keep = (ix: number, iy: number, v: number): boolean => v >= 1 || BAYER[((iy & 3) << 2) | (ix & 3)] < v * 16;
+/** 남김 (D-675 — 격자 디더 금지): 보이는 정도 v(0~1)가 절반 이상이면 도트가 남는다 — 무늬 없이 한 번에 끊긴다 */
+const keep = (_ix: number, _iy: number, v: number): boolean => v >= 0.5;
 /** 퇴장 계단: 0~1 → 1 · 0.75 · 0.5 · 0.25 (네 계단) */
 const stepOut = (k: number): number => (k <= 0 ? 1 : k >= 1 ? 0 : 1 - (Math.floor(k * 4) + 1) / 4);
 /** 느리게 → 빠르게 (예비 · 날아듦) */
@@ -257,10 +256,11 @@ export const fly = (from: Pt, to: Pt, iconSrc: string | null, trail: 'brass' | '
           past.push({ x, y });
         } else {
           x = to.x; y = to.y;
-          v = stepOut((t - lead - ms) / CARD_FX.out);
+          // 퇴장 (D-675): 도착한 패가 프레임마다 가운데로 오그라든다 (옛 4×4 디더 걷기)
+          v = 1 - accel(Math.min(1, Math.max(0, (t - lead - ms) / CARD_FX.out)));
           if (!arrived) { arrived = true; done(); }
         }
-        // 꼬리: 지난 자리 다섯 곳에 2×2 도트 — 오래될수록 디더로 성기게
+        // 꼬리: 지난 자리 다섯 곳에 2×2 도트 — 오래된 반은 꺼진다
         const tail = past.slice(-6, -1);
         tail.forEach((p, i) => {
           const age = (tail.length - i) / (tail.length + 1);
@@ -269,13 +269,12 @@ export const fly = (from: Pt, to: Pt, iconSrc: string | null, trail: 'brass' | '
         });
         // 패: 아이콘(16도트) — 없으면 카드 뒷면
         const im = iconOf(iconSrc);
-        const x0 = dev(x) - (S * u) / 2, y0 = dev(y) - (S * u) / 2;
-        if (im && v >= 1) g.drawImage(im, x0, y0, S * u, S * u);
-        else if (im) {
-          // 디더 퇴장: 4×4 체크 칸을 걷어 낸다(그림을 도트 단위로 덮어 지움)
-          g.drawImage(im, x0, y0, S * u, S * u);
-          for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) if (!keep(i, j, v)) g.clearRect(x0 + i * u, y0 + j * u, u, u);
-        } else spr(g, BACK, dev(x) - 4 * u, dev(y) - 5 * u, u, v);
+        // 오그라듦: 도트 크기를 기기 픽셀 정수로 줄인다 (가운데 고정)
+        const uu = v >= 1 ? u : Math.round(u * v);
+        if (uu <= 0) return;
+        const x0 = dev(x) - (S * uu) / 2, y0 = dev(y) - (S * uu) / 2;
+        if (im) g.drawImage(im, Math.round(x0), Math.round(y0), S * uu, S * uu);
+        else spr(g, BACK, dev(x) - 4 * uu, dev(y) - 5 * uu, uu);
       },
       done: () => { if (!arrived) done(); },
     });

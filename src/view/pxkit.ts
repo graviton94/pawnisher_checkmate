@@ -150,8 +150,8 @@ export const verdict = async (host: HTMLElement, text: string, kind: VerdictKind
     for (const d of dust) {
       if (d.life <= 0) continue;
       d.x += d.vx; d.y += d.vy; d.vy += 0.25; d.life--;
-      // 꺼질 때는 디더 (살아 있는 만큼만 찍힌다)
-      if (bay(Math.round(d.x), Math.round(d.y)) < Math.min(1, d.life / 4)) f(x, kind === 'bad' ? M.rust[4] : M.paper[3], d.x, d.y, d.life > 3 ? 2 : 1, d.life > 3 ? 2 : 1);
+      // 꺼질 때는 2칸 → 1칸으로 줄었다가 꺼진다 (D-675 — 격자 디더 퇴장 없음)
+      f(x, kind === 'bad' ? M.rust[4] : M.paper[3], d.x, d.y, d.life > 3 ? 2 : 1, d.life > 3 ? 2 : 1);
     }
     plateAt(st.dy, st.flash);
     await new Promise((r) => setTimeout(r, 50));

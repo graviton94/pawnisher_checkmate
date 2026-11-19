@@ -122,3 +122,5 @@
   background: url('../assets/ui/chrome/v2/portrait-ally.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; image-rendering: pixelated; }
 .win-scene .ws-say .ws-face.ws-npc { background: url('../assets/ui/chrome/v2/portrait-npc.png') 0 0 / 100% 100% no-repeat, #0b0b0e content-box; }
 .win-scene .ws-say .ws-face > img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+/* 분대원 기물 얼굴 (D-700): 기물 그림은 자르지 않고 액자 안에 비율 그대로 */
+.win-scene .ws-say .ws-face.ws-crew > img { object-fit: contain; }

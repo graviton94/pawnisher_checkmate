@@ -39,16 +39,36 @@ export const dmgFont = (damage: number, killed = false): string => {
 /**
  * 글자를 도트 그림으로. 캔버스에 1px = 1도트로 그린 뒤 문턱값으로 자르고, 바깥에 8방향 1도트 검정 테두리를 두른다.
  */
+/** 만든 그림 보관 (D-680): 같은 글 · 색 · 글꼴은 다시 찍지 않는다 — 타격마다 캔버스를 새로 만들고 읽던 것이 끊김의 주범이었다 */
+const artCache = new Map<string, PopupArt>();
+/** 글자 찍는 캔버스 하나 (읽기 전용 CPU 캔버스 — 가속 캔버스의 getImageData는 GPU를 기다려 한 프레임이 수백 ms 멈춘다) */
+let inkCv: HTMLCanvasElement | null = null;
+let inkG: CanvasRenderingContext2D | null = null;
+
 export const buildPopupArt = (text: string, color: number, font = POPUP_FONT): PopupArt => {
+  const ck = `${font}|${color}|${text}`;
+  const hit = artCache.get(ck);
+  if (hit) return hit;
+  const art = inkPopupArt(text, color, font);
+  // 글꼴이 아직 안 받혔으면 대신 글꼴로 찍힌 것 — 보관하지 않는다
+  if (document.fonts?.check?.(font, text) === false) return art;
+  if (artCache.size > 160) artCache.delete(artCache.keys().next().value as string);
+  artCache.set(ck, art);
+  return art;
+};
+
+const inkPopupArt = (text: string, color: number, font: string): PopupArt => {
   const H = 20;
-  const cv = document.createElement('canvas');
+  inkCv ??= document.createElement('canvas');
+  inkG ??= inkCv.getContext('2d', { willReadFrequently: true })!;
+  const cv = inkCv;
   // 폭은 실제 글자 폭으로 (한글 낱말 「생명 +1」도 잘리지 않게 — D-398)
-  const m = cv.getContext('2d')!;
-  m.font = font;
-  const W = Math.max(text.length * 9, Math.ceil(m.measureText(text).width)) + 16;
-  cv.width = W;
-  cv.height = H;
-  const g = cv.getContext('2d')!;
+  inkG.font = font;
+  const W = Math.max(text.length * 9, Math.ceil(inkG.measureText(text).width)) + 16;
+  if (cv.width < W) cv.width = W;
+  cv.height = H; // 높이를 다시 정하면 캔버스가 비워지고 상태가 처음으로 돌아간다
+  const g = inkG;
+  g.clearRect(0, 0, cv.width, H);
   g.font = font;
   g.textBaseline = 'top';
   g.fillStyle = '#fff';
@@ -93,7 +113,7 @@ export const buildPopupArt = (text: string, color: number, font = POPUP_FONT): P
 /**
  * 팝업 한 장면: (cx, by) = 가운데 아래 기준점(월드 px), dot = 도트 한 칸 크기, ms = 뜬 뒤 지난 시간.
  * 튀어나옴(크게 → 제자리, 지수형) → 떠오름 → 아래에서 위로 잘리는 선이 올라가며 도트가 지워진다.
- * 선 바로 위 한 줄은 체크무늬로 듬성듬성, 선을 지난 도트는 한 도트 위로 튀며 바로 꺼진다.
+ * 선을 지난 줄은 한 도트 위로 튀며 바로 꺼진다 (D-675: 옛 선 위 체크무늬 줄을 뺐다).
  */
 export const drawPopup = (g: RectSink, art: PopupArt, cx: number, by: number, dot: number, ms: number, rise: number, px = 1): void => {
   if (ms < 0 || ms >= POPUP_MS.life) return;
@@ -112,9 +132,9 @@ export const drawPopup = (g: RectSink, art: PopupArt, cx: number, by: number, do
     if (f > 0) {
       if (p.y >= cut) {
         // 방금 지나간 줄만 한 도트 튀었다 꺼진다
-        if (p.y >= cut + 1 || (p.x + p.y) % 2) continue;
+        if (p.y >= cut + 1) continue;
         y -= 1;
-      } else if (p.y >= cut - 1 && (p.x + p.y) % 2 === 0) continue; // 선 바로 위: 체크무늬로 듬성듬성
+      }
     }
     g.fillStyle(p.c, 1);
     g.fillRect(left + p.x * d, top + y * d, d, d);

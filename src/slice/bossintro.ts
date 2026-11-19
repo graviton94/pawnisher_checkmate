@@ -2,7 +2,7 @@
  * 반장 등장 (D-249, 사용자: 「컷씬용을 따로 그릴 필요 없이 — 초상을 오른쪽 끝까지 붙이고 이미지가 끝나 배경과 만나는 경계선은
  * 2막 보스 오른쪽 이펙트처럼 뭔가 이펙트를 넣거나, 도트를 서서히 제거하는 도트 그라데이션처럼」 · 「FX는 pixelfx 룰을 참고」).
  *  ① 위아래 검은 띠가 4계단으로 닫힌다 ② 흰 장 두 장(hero frame) ③ 초상이 오른쪽에서 물러섰다(예비) 꽂히고 흔들린다
- *  ④ 초상 왼쪽 가장자리는 그림 도트 단위 베이어 디더로 깎여 배경에 녹는다 ⑤ 그 경계선을 따라 반장마다 다른 FX
+ *  ④ 초상 왼쪽 가장자리는 단단하게 잘린다 (D-675 — 옛 베이어 디더 녹임) ⑤ 그 경계선을 따라 반장마다 다른 FX
  *  ⑥ 이름이 내리꽂히고 칭호 · 규칙(UI-21 수배판, D-400) · 아래 자막 띠 두 줄이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
  * 글 크기 (D-397): 막 꼬리표 12 · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙 12 굵게 · 자막 15. 자막 띠 · ▼는 모든 컷과 같은 자리(uikit.cutChromeHtml).
  */
@@ -77,7 +77,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
   new Promise((resolve) => {
     const look = LOOK[o.rule];
     const el = document.createElement('div');
-    // 움직임 줄이기 (D-538): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 디더 장을 뺀다
+    // 움직임 줄이기 (D-538): 초상 출렁 · 경계선 입자 · 꽂힘 빛을 끄고 정지 컷으로. 번쩍임 줄이기면 흰 번쩍 장을 뺀다
     const calm = calmMotion(), noFlash = reduceFlash();
     el.className = `bossfx kit b-${o.rule}${calm ? ' calm' : ''}`;
     el.style.setProperty('--accent', look.accent);
@@ -113,7 +113,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     // 폭은 화면 62%까지(왼쪽 이름 · 수배판 자리). 오른쪽 끝에 붙이고 남은 높이 가운데. 자르지 않는다.
     img.onload = () => {
       const nw = img.naturalWidth, nh = img.naturalHeight;
-      // 폭 상한: 화면 62% · 그리고 왼쪽 이름 · 수배판 글 상자 오른쪽 끝까지(디더로 깎이는 왼쪽 띠 절반은 글 밑으로 겹쳐도 된다)
+      // 폭 상한: 화면 62% · 그리고 왼쪽 이름 · 수배판 글 상자 오른쪽 끝까지(잘리는 왼쪽 띠 절반은 글 밑으로 겹쳐도 된다)
       const tb = el.querySelector<HTMLElement>('.bf-text');
       const textR = tb ? tb.offsetLeft + tb.offsetWidth : 0;
       const maxW = Math.min(W * 0.62, (W - textR - 8) / (1 - 0.22 * 0.5));
@@ -216,7 +216,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         filings.push({ ux: Math.cos(a), uy: Math.sin(a), d0: FR.range(PU.from[0], PU.from[1]), df: FR.range(PU.ring[0], PU.ring[1]), t0: w + FR.range(0, 0.22), c: FR.chance(0.3) ? cols[0] : cols[1] });
       }
     }
-    /** 검수: 렌즈 고리 + 오른쪽으로 뻗는 주사선(멀수록 디더로 성기게) + 지나온 잔상 두 줄 + 멈출 때 불량 도장 ✕ */
+    /** 검수: 렌즈 고리 + 오른쪽으로 뻗는 주사선(먼 반은 꺼짐) + 지나온 잔상 두 줄 + 멈출 때 불량 도장 ✕ */
     const drawScan = (p: Painter, t: number): void => {
       const l = lensAt(t);
       if (!l || !ramp) return;
@@ -232,7 +232,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       ring(p, l.x, l.y, l.r - 1, ramp[2]);
       p.px(l.x - 2, l.y - 2, WHITE); p.px(l.x - 1, l.y - 2, ramp[0]); p.px(l.x - 2, l.y - 1, ramp[0]);
       for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { p.px(l.x + dx * (l.r - 3), l.y + dy * (l.r - 3), ramp[2]); p.px(l.x + dx * (l.r - 4), l.y + dy * (l.r - 4), ramp[2]); }
-      // 불량 도장: 멈추는 순간 찍히고(크게 한 장 → 제 크기) 머문 뒤 디더로 빠진다
+      // 불량 도장: 멈추는 순간 찍히고(크게 한 장 → 제 크기) 머문 뒤 한 번에 꺼진다 (D-675)
       const st = l.ph - 0.7;
       if (st >= 0 && st < SC.stampHold + SC.stampOut) {
         const a = st < SC.stampHold ? 1 : 1 - (st - SC.stampHold) / SC.stampOut, big = st < 0.04 ? 1 : 0, n = 2 + big;
@@ -244,7 +244,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     /** 자석: 쇳가루가 물러섰다(예비) 가운데로 빨려 들고(점점 빠르게) 붙어 1도트 튄다. 붙은 뭉치 위아래에 붉은 N · 푸른 S 극 빛 */
     const drawPull = (p: Painter, t: number, sx: number): void => {
       if (!ramp || !portW) return;
-      // 뭉치 자리: 경계선 녹은 띠 왼쪽(어두운 바탕) — 띠 디더 위에서는 쇳가루가 묻힌다
+      // 뭉치 자리: 경계선 녹은 띠 왼쪽(어두운 바탕) — 띠 위에서는 쇳가루가 묻힌다
       const cx = Math.round(sx) - PU.left, cy = Math.round((seamY0() + seamY1()) / 2);
       let landed = 0;
       for (const f of filings) {
@@ -266,7 +266,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         p.px(cx, cy - PU.ring[1] - 2, PAL.blood[6]); p.px(cx, cy + PU.ring[1] + 2, hex('#bfefff'));
       }
     };
-    /** 경보: 경계선 위 경광등이 돌며 마주 보는 빛살 두 줄기를 쓴다 — 반 바퀴마다 붉은 ↔ 호박 (광과민: 화면 전체 번쩍임 없음, 빛살은 디더 반투명) */
+    /** 경보: 경계선 위 경광등이 돌며 마주 보는 빛살 두 줄기를 쓴다 — 반 바퀴마다 붉은 ↔ 호박 (광과민: 화면 전체 번쩍임 없음, 빛살은 가까운 쪽만 단색 — D-675) */
     const drawSiren = (p: Painter, t: number, sx: number): void => {
       if (!ramp || !portW || t < SI.start) return;
       const lx = Math.round(sx), ly = Math.round(seamY0() + SI.lampY);
@@ -325,7 +325,7 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       },
       (t, p) => {
         // (D-595: 옛 「흰 장」은 t 0.26 ~ 0.32 = 6초 중 360ms 동안 화면 전체 50% 흰 체커였다 — 「약 60ms」라던 주석과 달리 눈부셨다.
-        //  이제 초상이 꽂히는 순간 초상 둘레 원형 디더 번쩍 · 화면 3장 꺼짐(view/flash) — 아래 시간표 'port')
+        //  이제 초상이 꽂히는 순간 초상 둘레 단색 고리 번쩍 · 화면 3장 꺼짐(view/flash) — 아래 시간표 'port')
         if (calm) return;
         const sx = seamX / DOT;
         // 경계선 빛: 큰 옅은 웅덩이 + 줄 빛 (반장 색)

@@ -37,7 +37,7 @@
 | 동전 나이트 | the Coin Knight | 사건 NPC(도박) | |
 | 견습 폰 | the Apprentice | 사건 NPC | |
 | 다른 공장의 흑 비숍 | the Black Bishop of Another Foundry | 사건 NPC | |
-| 외눈 정비공 | the One-Eyed Mechanic | 컷신 NPC | |
+| 외눈 정비공 | the One-Eyed Mechanic | 작업대 · 사건(땜질) · 마지막 공방 NPC — 옛 「떠돌이 땜장이」와 같은 인물(D-668) | |
 
 ## 2. 기물 칭호 (`PIECE_LORE`)
 

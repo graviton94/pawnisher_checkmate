@@ -18,13 +18,16 @@ body.slice[data-battle-bg] .rail { background: #0b0b0e; }
    border-image는 소수 px 자리에서 조각 경계마다 1기기픽셀 밝은 선이 생겼다 — 겹쳐 그리면 틈이 없다.
    1도트 = --px-detail(기기 픽셀 round(0.75·DPR)개, 915×412에서 0.76px · PC 1px) — 장치 층 --px(≈ 1.9px)이면 단추 하나가 레일 폭을 넘는다.
    높이 44도트 고정(세로로 늘이지 않는다), 가로는 가운데 열(줄마다 한 색)만 길어진다. 최소 폭 64도트(문양 4 ~ 34 · 소켓 오른 끝에서 32). */
-body.slice.lay-f #deckrow { gap: 2px; }
+body.slice.lay-f #deckrow { gap: 8px; } /* D-677: 단추 사이 8px 이상 (UI 원칙 2) */
 #deckrow .pile-btn {
   --u: var(--px-detail, 1px);
   --pl: url('../assets/ui/chrome/v2/pile-btn-idle-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-idle-r.png');
-  position: relative; flex: 1 1 0; min-width: 0; box-sizing: border-box; margin: 0; padding: 0; border: 0;
+  position: relative; flex: 1 1 0; min-width: 0; box-sizing: border-box; margin: 0; padding: 0 calc(var(--u) * 34) 0 0; border: 0;
   height: calc(var(--u) * 44);
-  background: var(--pr) right top / calc(var(--u) * 35) 100% no-repeat, var(--pl) left top / calc(var(--u) * 134) 100% no-repeat;
+  /* D-669: 아래 겹(-l)은 오른 조각 왼 1열까지만(content-box — 오른 안쪽 여백 34도트를 뺀 칸) — 오른 조각의 투명한 둥근 모서리 밑으로
+     가운데 열 윗줄(밝은 테)이 비쳐 단추 오른 위 끝에 낱점이 튀어나왔다. 문양 · 수는 절대 자리라 여백과 상관없다 */
+  background: var(--pr) right top / calc(var(--u) * 35) 100% no-repeat border-box, var(--pl) left top / calc(var(--u) * 134) 100% no-repeat content-box;
+  background-origin: border-box, border-box;
   image-rendering: pixelated; color: var(--t-gold); cursor: pointer; font: 700 12px/12px Galmuri11, sans-serif;
 }
 #deckrow .pile-btn.is-new { --pl: url('../assets/ui/chrome/v2/pile-btn-new-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-new-r.png'); }

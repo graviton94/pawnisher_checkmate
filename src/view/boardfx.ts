@@ -7,7 +7,7 @@
 import { lay, layRect } from './vz';
 import { lessFlash } from '../prefs/fx';
 import { calmMotion } from '../prefs/motion';
-import { FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE, bayer } from './pxfx';
+import { FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from './pxfx';
 import type { Pos } from '../engine';
 import { drawRage, drawStrike, HIT, strikeSpark, type StrikeRule, type StrikeShape } from './bossstrike';
 
@@ -136,7 +136,7 @@ export class BoardFx {
       if (ph < 1) {
         const y = B.y0 + Math.floor((ph * (B.y1 - B.y0)) / 2) * 2;
         p.line(B.x0, y, B.x1, y, PAL.toxic[6], 0.8);
-        for (let x = B.x0; x < B.x1; x++) if (bayer(Math.floor(x), Math.floor(y) + 1) < 0.35) p.px(x, y + 1, PAL.toxic[4]);
+        p.line(B.x0, y + 1, B.x1, y + 1, PAL.toxic[4]); // 아래 꼬리 한 줄 (D-675: 베이어 점 무늬 대신 단색)
         p.glowLine(B.x0, y, B.x1, y, 4, PAL.toxic[5], 0.35);
       }
     } else if (this.rule === 'alarm') {

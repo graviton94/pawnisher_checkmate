@@ -2,7 +2,8 @@
  * 매끈한 도트 움직임 (D-554 — D-216 · D-538을 고친다). 소유자: 「인트로 · 그림 바뀜 · 모든 전환이 뚝뚝 끊긴다」.
  * 부드러움은 섞기(투명도 · 그라데이션)가 아니라 **프레임 수와 곡선**에서 온다:
  *  - 움직임: 화면 프레임마다 돌리고 위치는 기기 픽셀 정수로 맞춘다(`snapDev`) — 도트가 번지지 않으면서 60fps.
- *  - 나타남 · 사라짐: 8×8 베이어 디더를 프레임마다 한 단씩(64단) 곡선으로 넘긴다(`ditherTo`) — 칸 = 게임 도트(--px).
+ *  - 나타남 · 사라짐 (D-675 — 격자 디더 연출 전면 금지): 프레임마다 정수 기기 픽셀 클립 와이프(`wipeTo`, 가운데 줄로 닫힘 ·
+ *    가운데서 열림) 또는 바로 끊기. 체크 · 베이어 무늬 가면은 더 쓰지 않는다 — CSS 가면 변수(--dqN)는 보임/숨김 두 값뿐.
  *  - CSS 키프레임 움직임은 시작할 때 120Hz로 구워 기기 픽셀 정수 행렬로 다시 돌린다(`installSmoothMotion`) —
  *    계단(steps)으로 짠 옛 키프레임도 매끈해진다. 일부러 정지 동작(도장 · 톱니 · 흔들림)은 이름으로 빼 둔다(SMOOTH.hold).
  * 게임 상태는 건드리지 않는다 (UI 원칙 9). 움직임 줄이기면 모두 바로 끝 상태로.
@@ -77,9 +78,9 @@ export const tween = (ms: number, frame: (e: number, t: number) => void, curve: 
 /**
  * 합성기에서 도는 곡선 움직임 (D-595): frame(t)가 돌려준 transform을 120Hz로 표본 내(steps(1)로 붙들어 소수 위치를 지나지 않게)
  * Web Animations 한 개로 건다 — 주 스레드가 새 화면을 짓느라 바빠도(전투 시작 · 판 캔버스 준비) 화면 프레임마다 움직인다.
- * frame은 정수 기기 픽셀 위치(snapDev)로 transform 글을 돌려준다. 움직임 줄이기면 끝 모습만. fill forwards — 끝나면 부른 쪽이 정리.
+ * frame은 정수 기기 픽셀 위치(snapDev)로 transform 글을 돌려준다. 움직임 줄이기면 끝 모습만. delay 동안은 첫 모습(fill backwards).
  */
-export const compTween = (el: HTMLElement, ms: number, frame: (t: number) => string): Promise<void> => {
+export const compTween = (el: HTMLElement, ms: number, frame: (t: number) => string, delay = 0): Promise<void> => {
   if (calmMotion() || ms <= 0 || typeof el.animate !== 'function') {
     el.style.transform = frame(1);
     return Promise.resolve();
@@ -91,117 +92,71 @@ export const compTween = (el: HTMLElement, ms: number, frame: (t: number) => str
   baking = true;
   let a: Animation;
   try {
-    a = el.animate(kf, { duration: ms, fill: 'backwards' });
+    a = el.animate(kf, { duration: ms, delay, fill: 'backwards' });
   } finally {
     baking = false;
   }
   return a.finished.then(() => undefined, () => undefined);
 };
 
-// ---------- 8×8 베이어 디더 ----------
-/** 8×8 베이어 순서 (0 ~ 63) */
-const B8: number[] = (() => {
-  const m: number[] = new Array(64);
-  for (let y = 0; y < 8; y++)
-    for (let x = 0; x < 8; x++) {
-      // 비트 뒤섞기 (표준 재귀 베이어)
-      let v = 0;
-      for (let bit = 2, xs = x, ys = y; bit >= 0; bit--) {
-        const xb = (xs >> bit) & 1, yb = (ys >> bit) & 1;
-        v = (v << 2) | ((xb ^ yb) << 1) | yb;
-      }
-      m[y * 8 + x] = v;
-    }
-  return m;
-})();
-/** 8×8 베이어 문턱 (0 ~ 63) */
-export const bayer8 = (x: number, y: number): number => B8[(y & 7) * 8 + (x & 7)];
-/** 보이는 정도 v(0~1) → 64단 중 몇 칸 (반올림) */
-export const ditherLevel = (v: number, levels: number = SMOOTH.levels): number => Math.max(0, Math.min(levels, Math.round(v * levels)));
-
-/** 디더 가면 SVG (보이는 칸 = 불투명). level = 0 ~ 64 보이는 칸 수, dot = 칸 하나의 CSS px */
-export const ditherSvg = (level: number, dot: number): string => {
-  const w = +(dot * 8).toFixed(4);
-  let rects = '';
-  if (level >= 64) rects = `<rect width='8' height='8'/>`;
-  else for (let i = 0; i < 64; i++) if (B8[i] < level) rects += `<rect x='${i % 8}' y='${i >> 3}' width='1' height='1'/>`;
-  return `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${w}' viewBox='0 0 8 8' shape-rendering='crispEdges'>${rects}</svg>`;
-};
+// ---------- 가면 · 막 (D-675: 무늬 없음) ----------
 const svgUrl = (svg: string): string => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 /** 디더 칸 하나 = 장치 층 도트 (pxsnap.ts의 --px와 같은 셈: round(2·DPR) 기기 픽셀) */
 export const dotCss = (r = dprNow()): number => Math.max(1, Math.round(2 * r)) / r;
 
-let maskDot = 0;
-let masks: string[] = [];
-/** 64단 디더 가면 url 목록 (DPR이 바뀌면 다시 굽는다) */
-export const ditherMasks = (): string[] => {
-  const d = dotCss();
-  if (d !== maskDot) {
-    maskDot = d;
-    masks = Array.from({ length: SMOOTH.levels + 1 }, (_, k) => svgUrl(ditherSvg(k, d)));
-  }
-  return masks;
-};
+const EMPTY_MASK = svgUrl("<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'/>");
+/** 먹 막 (D-675): 단색 #0B0B0E · 고정 알파 a — 크기 없는 SVG라 칸을 통째로 덮는다(타일 이음매 없음). 무늬 없음 */
+export const scrimUrl = (a: number): string =>
+  svgUrl(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><rect width='1' height='1' fill='#0b0b0e' fill-opacity='${+a.toFixed(3)}'/></svg>`);
 /**
- * CSS 변수 --dq0 ~ --dq16 (16단 디더 가면, 칸 = 게임 도트) · --dk0 ~ --dk16 (먹 막 디더 배경) 을 <html>에 건다.
- * CSS 키프레임 디더(tools/dither-css.cjs가 펼친 것)와 ditherKeyframes가 이 변수를 쓴다. pxsnap.ts가 DPR이 바뀔 때마다 부른다.
+ * CSS 변수 --dq0 ~ --dq16 · --dk0 ~ --dk16 을 <html>에 건다 (D-675 — 격자 디더 연출 전면 금지, D-554의 16단 무늬를 대신).
+ *  - --dqN (옛 디더 가면 단계): 절반(8) 이상이면 `none`(통째로 보임), 아래면 빈 가면(숨김) — 옛 키프레임은 무늬 없이 한 번에 끊긴다.
+ *  - --dkN (옛 먹 막 무늬): 단색 먹 · 고정 알파 N/16 (무늬 없음). 0이면 없음.
+ * pxsnap.ts가 DPR이 바뀔 때마다 부른다 (값은 DPR과 무관하지만 부르는 자리를 그대로 둔다).
  */
 export const installDitherVars = (): void => {
   if (typeof document === 'undefined') return;
-  const d = dotCss();
   const root = document.documentElement.style;
   const n = SMOOTH.cssLevels;
   for (let k = 0; k <= n; k++) {
-    root.setProperty(`--dq${k}`, svgUrl(ditherSvg(Math.round((k * 64) / n), d)));
-    // 먹 막: 보이는 칸에 먹 (#060509) — 모달 뒤 막 · 장면 막
-    const svg = ditherSvg(Math.round((k * 64) / n), d).replace('<svg ', "<svg fill='%23060509' ").replace(/%23/g, '#');
-    root.setProperty(`--dk${k}`, svgUrl(svg));
+    root.setProperty(`--dq${k}`, k * 2 >= n ? 'none' : EMPTY_MASK);
+    root.setProperty(`--dk${k}`, k === 0 ? 'none' : scrimUrl(k / n));
   }
 };
 
-const setMask = (el: HTMLElement, url: string | null): void => {
-  if (url === null) {
-    el.style.removeProperty('-webkit-mask-image');
-    el.style.removeProperty('mask-image');
-    el.style.removeProperty('-webkit-mask-size');
-    el.style.removeProperty('mask-size');
-    el.style.removeProperty('-webkit-mask-repeat');
-    el.style.removeProperty('mask-repeat');
-    return;
-  }
-  el.style.setProperty('-webkit-mask-image', url);
-  el.style.setProperty('mask-image', url);
-  el.style.setProperty('-webkit-mask-size', 'auto');
-  el.style.setProperty('mask-size', 'auto');
-  el.style.setProperty('-webkit-mask-repeat', 'repeat');
-  el.style.setProperty('mask-repeat', 'repeat');
+const wipes = new WeakMap<HTMLElement, number>();
+/** 클립 한 장: v = 보이는 정도(0~1) — 가운데 가로줄을 축으로 위아래가 정수 기기 픽셀씩 닫힌다 */
+const setClip = (el: HTMLElement, v: number, h: number): void => {
+  if (v >= 1) { el.style.removeProperty('clip-path'); return; }
+  const a = v <= 0 ? h / 2 + 1 : snapDev(((1 - v) * h) / 2);
+  el.style.clipPath = `inset(${a}px 0 ${a}px 0)`;
 };
-
-const fades = new WeakMap<HTMLElement, number>();
 /**
- * 디더로 나타나기 · 사라지기 (64단, 프레임마다 한 단씩 곡선으로). from · to = 보이는 정도 0~1.
- * 끝나면 to가 1이면 가면을 지우고, 0이면 다 지운 가면을 남긴다(부른 쪽이 지우거나 숨긴다 — keep=false면 가면도 지움).
- * 같은 요소에 다시 걸면 앞의 것은 멈춘다.
+ * 나타나기 · 사라지기 (D-675 — 옛 64단 디더 ditherTo를 대신): 화면 프레임마다 클립 와이프 — 가운데 가로줄로 닫히고(사라짐) 가운데서 열린다(나타남).
+ * from · to = 보이는 정도 0~1. 중간값(옛 반쯤 덮은 그늘)은 움직임 없이 바로 끊는다(0.5 이상 = 보임).
+ * 끝나면 to가 1이면 클립을 지우고, 0이면 닫힌 클립을 남긴다(keep=false면 지움 — 부른 쪽이 요소를 지우거나 숨긴다).
+ * 같은 요소에 다시 걸면 앞의 것은 멈춘다. 움직임 줄이기면 바로 끝 모습.
  */
-export const ditherTo = (el: HTMLElement, from: number, to: number, ms: number, curve: Ease = ease.inOut, keep = true): Promise<void> => {
-  const my = (fades.get(el) ?? 0) + 1;
-  fades.set(el, my);
-  const list = ditherMasks();
-  let last = -1;
-  return tween(ms, (e) => {
-    const lv = ditherLevel(from + (to - from) * e);
-    if (lv === last) return;
-    last = lv;
-    setMask(el, lv >= SMOOTH.levels ? null : list[lv]);
-  }, curve, () => fades.get(el) === my && el.isConnected).then(() => {
-    if (fades.get(el) !== my) return;
-    if (to >= 1 || !keep) setMask(el, null);
+export const wipeTo = (el: HTMLElement, from: number, to: number, ms: number, curve: Ease = ease.inOut, keep = true): Promise<void> => {
+  const my = (wipes.get(el) ?? 0) + 1;
+  wipes.set(el, my);
+  const cut = (v: number): number => (v >= 0.5 ? 1 : 0);
+  const a = cut(from), b = cut(to);
+  const h = el.offsetHeight || 1;
+  if (a === b || ms <= 0) {
+    setClip(el, b, h);
+    if (b === 0 && !keep) el.style.removeProperty('clip-path');
+    return Promise.resolve();
+  }
+  return tween(ms, (e) => setClip(el, a + (b - a) * e, h), curve, () => wipes.get(el) === my && el.isConnected).then(() => {
+    if (wipes.get(el) !== my) return;
+    if (b >= 1 || !keep) el.style.removeProperty('clip-path');
   });
 };
-/** 디더 가면을 지운다 (멈춘 퇴장을 되돌릴 때) */
-export const clearDither = (el: HTMLElement): void => {
-  fades.set(el, (fades.get(el) ?? 0) + 1);
-  setMask(el, null);
+/** 와이프를 멈추고 클립을 지운다 (멈춘 퇴장을 되돌릴 때) */
+export const clearWipe = (el: HTMLElement): void => {
+  wipes.set(el, (wipes.get(el) ?? 0) + 1);
+  el.style.removeProperty('clip-path');
 };
 
 // ---------- 정수 위치로 굽기 ----------

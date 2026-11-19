@@ -1,0 +1,584 @@
+{
+ "tag": "d680-after-dpr1",
+ "viewport": "915x412@1",
+ "mine": {
+  "n": 64,
+  "median": 1369,
+  "p90": 1765,
+  "max": 2651
+ },
+ "enemyTurn": {
+  "n": 29,
+  "median": 3942,
+  "p90": 7043,
+  "max": 9920
+ },
+ "enemyMove": {
+  "n": 59,
+  "median": 868,
+  "p90": 1687,
+  "max": 3443
+ },
+ "raw": {
+  "mine": [
+   1265,
+   1369,
+   1083,
+   1338,
+   1724,
+   1576,
+   1663,
+   1674,
+   2081,
+   1120,
+   1316,
+   1433,
+   1364,
+   1350,
+   1574,
+   1235,
+   1511,
+   1457,
+   1765,
+   1348,
+   1099,
+   1576,
+   1745,
+   1697,
+   1518,
+   1608,
+   1682,
+   1403,
+   1331,
+   1190,
+   1247,
+   1275,
+   1887,
+   1118,
+   1767,
+   1426,
+   1391,
+   1628,
+   2651,
+   1518,
+   1369,
+   1308,
+   1610,
+   1202,
+   1281,
+   1344,
+   1227,
+   1292,
+   1262,
+   1315,
+   1278,
+   1404,
+   1395,
+   2580,
+   1281,
+   1930,
+   1053,
+   1278,
+   1276,
+   1312,
+   1293,
+   1161,
+   1539,
+   1577
+  ],
+  "enemyTurns": [
+   3373,
+   2610,
+   4242,
+   3639,
+   5940,
+   4455,
+   2983,
+   3633,
+   3942,
+   3158,
+   4052,
+   2776,
+   3906,
+   3913,
+   4881,
+   7043,
+   5851,
+   2734,
+   2770,
+   2510,
+   5467,
+   5558,
+   3713,
+   2297,
+   6056,
+   6052,
+   4198,
+   9920,
+   9003
+  ],
+  "enemyMoves": [
+   837,
+   913,
+   787,
+   833,
+   1355,
+   867,
+   1644,
+   1904,
+   868,
+   1687,
+   971,
+   1063,
+   831,
+   791,
+   935,
+   898,
+   856,
+   821,
+   836,
+   867,
+   772,
+   873,
+   872,
+   989,
+   857,
+   848,
+   898,
+   776,
+   884,
+   2301,
+   839,
+   2205,
+   1844,
+   856,
+   860,
+   1141,
+   990,
+   1151,
+   1007,
+   822,
+   856,
+   673,
+   1340,
+   1136,
+   310,
+   395,
+   290,
+   298,
+   766,
+   1449,
+   927,
+   334,
+   362,
+   299,
+   301,
+   1074,
+   1215,
+   922,
+   3443
+  ]
+ },
+ "slow": [
+  {
+   "fight": "1battle",
+   "card": "전진",
+   "ms": 1265,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@449 playEnd@1143"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1369,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@419 playEnd@1200"
+  },
+  {
+   "fight": "1battle",
+   "card": "지휘",
+   "ms": 1338,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@536 playEnd@1264"
+  },
+  {
+   "fight": "1battle",
+   "card": "왕의 걸음",
+   "ms": 1724,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@409 playEnd@1592"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1576,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@414 apGain@1408 playEnd@1408"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1663,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@415 playEnd@1581"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1674,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@436 apGain@1487 playEnd@1487"
+  },
+  {
+   "fight": "1battle",
+   "card": "지휘",
+   "ms": 2081,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@517 playEnd@1641"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1316,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@408 playEnd@1219"
+  },
+  {
+   "fight": "1battle",
+   "card": "지휘",
+   "ms": 1433,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@406 playEnd@1124"
+  },
+  {
+   "fight": "1battle",
+   "card": "왕의 걸음",
+   "ms": 1364,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@526 playEnd@1247"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1350,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@404 playEnd@1263"
+  },
+  {
+   "fight": "1battle",
+   "card": "도약",
+   "ms": 1574,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@425 playEnd@1496"
+  },
+  {
+   "fight": "1check",
+   "card": "왕의 걸음",
+   "ms": 1235,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@411 playEnd@1141"
+  },
+  {
+   "fight": "1check",
+   "card": "지휘",
+   "ms": 1511,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@454 playEnd@1317"
+  },
+  {
+   "fight": "1check",
+   "card": "도약",
+   "ms": 1457,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@592 playEnd@1360"
+  },
+  {
+   "fight": "1check",
+   "card": "지휘",
+   "ms": 1765,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@447 playEnd@1451"
+  },
+  {
+   "fight": "1check",
+   "card": "도약",
+   "ms": 1348,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@403 playEnd@1233"
+  },
+  {
+   "fight": "1check",
+   "card": "도약",
+   "ms": 1576,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@420 playEnd@1447"
+  },
+  {
+   "fight": "1check",
+   "card": "지휘",
+   "ms": 1745,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@440 playEnd@1464"
+  },
+  {
+   "fight": "1check",
+   "card": "도약",
+   "ms": 1697,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@512 apGain@1591 playEnd@1591"
+  },
+  {
+   "fight": "1check",
+   "card": "도약",
+   "ms": 1518,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@414 playEnd@1439"
+  },
+  {
+   "fight": "1check",
+   "card": "왕의 걸음",
+   "ms": 1608,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@431 playEnd@1517"
+  },
+  {
+   "fight": "1check",
+   "card": "전진",
+   "ms": 1682,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@406 playEnd@1488"
+  },
+  {
+   "fight": "1check",
+   "card": "전진",
+   "ms": 1403,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@409 playEnd@1326"
+  },
+  {
+   "fight": "1check",
+   "card": "전진",
+   "ms": 1331,
+   "over": null,
+   "log": "play@0 move:0@0 promote@407 attack:0@407 playEnd@1241"
+  },
+  {
+   "fight": "2battle",
+   "card": "전진",
+   "ms": 1247,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@412 playEnd@1148"
+  },
+  {
+   "fight": "2battle",
+   "card": "도약",
+   "ms": 1275,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@415 playEnd@1204"
+  },
+  {
+   "fight": "2battle",
+   "card": "지휘",
+   "ms": 1887,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@466 playEnd@1405"
+  },
+  {
+   "fight": "2battle",
+   "card": "도약",
+   "ms": 1767,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@415 playEnd@1541"
+  },
+  {
+   "fight": "2battle",
+   "card": "도약",
+   "ms": 1426,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@417 playEnd@1348"
+  },
+  {
+   "fight": "2battle",
+   "card": "왕의 걸음",
+   "ms": 1391,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@505 playEnd@1263"
+  },
+  {
+   "fight": "2battle",
+   "card": "지휘",
+   "ms": 1628,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@422 apGain@1541 playEnd@1541"
+  },
+  {
+   "fight": "2battle",
+   "card": "지휘",
+   "ms": 2651,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@411 blast@1545 apGain@2511 playEnd@2511"
+  },
+  {
+   "fight": "2battle",
+   "card": "왕의 걸음",
+   "ms": 1518,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@416 playEnd@1427"
+  },
+  {
+   "fight": "2battle",
+   "card": "전진",
+   "ms": 1369,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@418 playEnd@1287"
+  },
+  {
+   "fight": "3battle",
+   "card": "왕의 걸음",
+   "ms": 1308,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@453 playEnd@1127"
+  },
+  {
+   "fight": "3battle",
+   "card": "도약",
+   "ms": 1610,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@409 playEnd@1478"
+  },
+  {
+   "fight": "3battle",
+   "card": "전진",
+   "ms": 1202,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@427 playEnd@1127"
+  },
+  {
+   "fight": "3battle",
+   "card": "도약",
+   "ms": 1281,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@413 playEnd@1197"
+  },
+  {
+   "fight": "3battle",
+   "card": "도약",
+   "ms": 1344,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@412 playEnd@1261"
+  },
+  {
+   "fight": "3battle",
+   "card": "전진",
+   "ms": 1227,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@409 playEnd@1153"
+  },
+  {
+   "fight": "3battle",
+   "card": "왕의 걸음",
+   "ms": 1292,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@417 playEnd@1150"
+  },
+  {
+   "fight": "3battle",
+   "card": "지휘",
+   "ms": 1262,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@415 playEnd@1182"
+  },
+  {
+   "fight": "3battle",
+   "card": "왕의 걸음",
+   "ms": 1315,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@413 playEnd@1178"
+  },
+  {
+   "fight": "3battle",
+   "card": "지휘",
+   "ms": 1278,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@401 playEnd@1193"
+  },
+  {
+   "fight": "3battle",
+   "card": "왕의 걸음",
+   "ms": 1404,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@403 playEnd@1267"
+  },
+  {
+   "fight": "3battle",
+   "card": "지휘",
+   "ms": 1395,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@415 playEnd@1313"
+  },
+  {
+   "fight": "3battle",
+   "card": "왕의 걸음",
+   "ms": 2580,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@839 blast@1839 apGain@2500 playEnd@2500"
+  },
+  {
+   "fight": "3battle",
+   "card": "지휘",
+   "ms": 1281,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@404 playEnd@1174"
+  },
+  {
+   "fight": "1boss",
+   "card": "도약",
+   "ms": 1930,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@409 playEnd@1358"
+  },
+  {
+   "fight": "1boss",
+   "card": "전진",
+   "ms": 1278,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@408 playEnd@1173"
+  },
+  {
+   "fight": "1boss",
+   "card": "왕의 걸음",
+   "ms": 1276,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@495 playEnd@1114"
+  },
+  {
+   "fight": "1boss",
+   "card": "도약",
+   "ms": 1312,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@408 playEnd@1224"
+  },
+  {
+   "fight": "1boss",
+   "card": "도약",
+   "ms": 1293,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@407 playEnd@1220"
+  },
+  {
+   "fight": "1boss",
+   "card": "왕의 걸음",
+   "ms": 1539,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@416 playEnd@1376"
+  },
+  {
+   "fight": "1boss",
+   "card": "지휘",
+   "ms": 1577,
+   "over": null,
+   "log": "play@0 move:0@0 attack:0@411 playEnd@1469"
+  }
+ ],
+ "errors": []
+}
