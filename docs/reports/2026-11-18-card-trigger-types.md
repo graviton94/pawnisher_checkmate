@@ -1,9 +1,11 @@
-# 카드가 켜지는 때 — 발동 유형 분석 · 조건 칸 문법 제안 (2026-11-18)
+# 카드가 켜지는 때 — 발동 유형 분석 · 조건 칸 문법 제안 (2026-11-18 · 적용 D-592)
 
 사용자 지적: 「연쇄를 쓴다는 건 '쓸 때'가 아니라 그 카드를 사용해서 연쇄를 소모한다는 건데 유형이 여기서도 갈리는 거 아닌가? if랑 when이 섞여 있는 것 같은데.. 카드가 켜지는 때를 제대로 분석해야 할 듯. 그리고 트리거형 카드(if)면 배틀필드에서도 조건 충족 시 표시해 줘야겠네.」
 앞서 받아들인 규칙: 효과 안의 한 항목에만 붙는 부분 조건은 「~ 시」, 턴 · 대국 되풀이는 「~마다」, 수량 비례는 「~당」, 이득 · 손실에는 부호.
 
-**이 보고서는 분석 · 제안이다 — 카드 글은 하나도 바꾸지 않았다.** 승인되면 데이터(`cards.ts` desc · `parts.ts` desc · `crew.ts` QUIRKS · `parts.ts` CHARMS)를 고치고 D-번호를 남긴다.
+> **적용됨 (2026-11-19, 사용자 승인 — D-592)**: 아래 제안 표 84장(명령 44종 · 부품 33 · 분대원 6 · 부적 1)을 그대로 데이터에 넣었다(`cards.ts` · `parts.ts` · `crew.ts` · `card-text.ts` CREW_KING). 3장의 어긋남 일곱은 글을 엔진대로 고쳤고(처치 연쇄는 「처치당 연쇄 +1」을 골랐다), 기록 부품 · 도금 방패 · 무사고 명판은 길게 누름 둘째 장을 더했다. 4장 판 위 표시는 설계대로 구현했다 — 엔진 `cardCond` · `partCond`(`battle.ts`), 화면 `card-state.ts` · `part-state.ts`, 판 모서리 `ui/board/cond.png`(select 재칠). 덧붙인 것: 접힌 손패(좁은 화면)에서도 조건 맞은 카드는 까닭 줄을 남긴다 · 바뀐 꼬리표 셋(방출 · 증기 폭발 「연쇄 곱」 → 「연쇄 방출」, 도화선 「연쇄 태엽」 → 「연쇄 카드」 — 글에서 읽는 꼬리표). 앞/뒤 대조표: `/tmp/claude-0/-home-user/7e78e822-20e0-5bc7-abf0-69e38eca9fc5/scratchpad/trig/sheet.png`(그래픽 정본 샷 `tools/artguide/shots/card-trigger-sheet.png`).
+
+~~이 보고서는 분석 · 제안이다 — 카드 글은 하나도 바꾸지 않았다.~~ (적용 전 상태)
 
 - 근거 코드: 명령 카드 정의 `src/slice/cards.ts` `BASE_COMMANDS`, 실행 `src/slice/battle.ts` `costOf` · `previewPlay` · `playCard` · `canPlay` · `endTurn` · `newSliceBattle`(대국 시작), 튐 `src/engine/plan.ts`(직접 적중이 있어야 튐), 부품 정의 `src/slice/parts.ts`, 부품 글 `src/data/ability-text.ts` `partSummaryText`(D-470 「제한, 조건 시」), 부품 상태 표지 `src/slice/part-state.ts`(UI-34 · D-443).
 - 예산: 제안 글 모두 D-589 두 단(작은 150px · 큰 184px)에서 넘침 0 — 같은 `budgetOver`로 쟀다(검사 스크립트 `<scratchpad>/cond/propose.ts`, `npx jiti … --check`).
