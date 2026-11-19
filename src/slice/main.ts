@@ -30,6 +30,7 @@ import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
 import { cardState, condCell, condPieces } from './card-state';
 import { freshPanel, lockPanel, panelLocked, unlockPanel } from './panel-lock';
+import { battleBg, pileRowHtml } from './pilebtn';
 import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, coverBg, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
@@ -981,7 +982,7 @@ const refresh = (): void => {
   else renderer.render(model());
   turnLabel($('turn-label'), b.s.winner !== null ? '대국 끝' : enemyTurn ? '적 차례' : busy ? '움직이는 중' : HUD_TEXT.turnHeat(b.turn, b.s.heat ?? 1), enemyTurn);
   const alive = b.s.winner === null && !document.body.classList.contains('between') ? b.squadIds.filter((id) => b.s.pieces.some((p) => p.id === id)).length : squad.length;
-  $('deckrow').innerHTML = `<button type="button" class="btn k-iron" data-deck>덱 ${deck.length}</button><button type="button" class="btn k-iron" data-crew>분대 ${alive}</button><button type="button" class="btn k-iron" data-discard aria-label="버린 카드 ${b.discard.length + (b.played?.length ?? 0)}장 보기">버림 ${b.discard.length + (b.played?.length ?? 0)}</button>`;
+  $('deckrow').innerHTML = pileRowHtml({ deck: deck.length, crew: alive, discard: b.discard.length + (b.played?.length ?? 0) }); // D-640 BT-01 쇠 단추
   if (openCard !== null && openCard >= b.hand.length) openCard = null;
   litNow = new Set();
   $('hand').innerHTML = (handView ?? b.hand).map(cardHtml).join('') || (handView ? '' : '<p class="empty">‘손패가 없어.’</p>');
@@ -2022,6 +2023,7 @@ const startBattle = (def: BattleDef, silent = false): void => {
   // 진입 화면이 끝날 때까지 판을 가린다 (테스터: 대국을 누르면 판이 잠깐 보였다가 다시 로딩됐다)
   if (silent) document.body.classList.remove('between');
   placeBg(null);
+  battleBg(def.act ?? 1); // D-640: 막별 전투 바탕 (입문 판 = 1막)
   cur = def;
   // 판 아래 띠 자리(부관 안내)는 입문 판 · 시험대에서만 비운다 (검수 M2): 보통 대국은 그 48px를 판에 돌려 칸 45.7 → 53.3px (915×412 · 정수 도트 7)
   setBoardTopInset(BAND_ZONE, INTRO.includes(def) || def.drill ? BAND_ZONE : 0);

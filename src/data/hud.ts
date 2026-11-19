@@ -127,6 +127,16 @@ export const HUD_TEXT = {
 };
 
 /** 목숨 둘 · 심장 톱니 (D-219) — 규칙은 시스템 투, 쓰러지는 순간은 2인칭 서술 (D-158) */
+/** 덱 줄 단추 (D-640): 화면엔 문양 + 수만 — 낱말은 읽기 도구 · 길게 보기 이름으로 */
+export const PILE_TEXT = {
+  name: { deck: '덱', crew: '분대', discard: '버림' },
+  aria: {
+    deck: (n: number) => `덱 ${n}장 보기`,
+    crew: (n: number) => `분대 ${n}명 보기`,
+    discard: (n: number) => `버린 카드 ${n}장 보기`,
+  },
+} as const;
+
 export const LIFE_TEXT = {
   name: '심장 톱니',
   cracked: (names: string) => `${names} — 심장 톱니 하나가 깨졌습니다. HP 50%로 돌아옵니다.`,

@@ -1,0 +1,122 @@
+{
+ "pile-btn-idle": {
+  "x": {
+   "pitch": 15.213,
+   "phase": 7.61,
+   "presence": 1.621,
+   "err": 2.5,
+   "drift": 0.048,
+   "grid": true,
+   "how": "presence-max"
+  },
+  "y": {
+   "pitch": 15.544,
+   "phase": 7.77,
+   "presence": 1.41,
+   "err": 5.33,
+   "drift": 0.042,
+   "grid": true,
+   "how": "presence-max"
+  }
+ },
+ "pile-btn-down": {
+  "x": {
+   "pitch": 13.58,
+   "phase": 7.92,
+   "presence": 1.584,
+   "err": 2.46,
+   "drift": 0.045,
+   "grid": true,
+   "how": "presence-max"
+  },
+  "y": {
+   "pitch": 17.206,
+   "phase": 6.45,
+   "presence": 1.302,
+   "err": 4.86,
+   "drift": 0.024,
+   "grid": true,
+   "how": "presence-max"
+  }
+ },
+ "pile-btn-new": {
+  "x": {
+   "pitch": 14.805,
+   "phase": 7.4,
+   "presence": 1.705,
+   "err": 3.12,
+   "drift": 0.009,
+   "grid": true,
+   "how": "presence-max"
+  },
+  "y": {
+   "pitch": 15.513,
+   "phase": 7.76,
+   "presence": 1.439,
+   "err": 6.3,
+   "drift": 0.042,
+   "grid": true,
+   "how": "presence-max"
+  }
+ },
+ "pile-deck": {
+  "x": {
+   "pitch": 15.231,
+   "phase": 7.62,
+   "presence": 1.449,
+   "err": 5.62,
+   "drift": 0.024,
+   "grid": true,
+   "how": "presence-max"
+  },
+  "y": {
+   "pitch": 17.242,
+   "phase": 6.47,
+   "presence": 1.312,
+   "err": 9.71,
+   "drift": 0.027,
+   "grid": true,
+   "how": "presence-max"
+  }
+ },
+ "pile-crew": {
+  "x": {
+   "pitch": 15.574,
+   "phase": 8.76,
+   "presence": 1.447,
+   "err": 6.39,
+   "drift": 0.054,
+   "grid": true,
+   "how": "presence-max"
+  },
+  "y": {
+   "pitch": 17.372,
+   "phase": 6.51,
+   "presence": 1.454,
+   "err": 7.74,
+   "drift": 0.018,
+   "grid": true,
+   "how": "presence-max"
+  }
+ },
+ "pile-discard": {
+  "x": {
+   "pitch": 15.05,
+   "phase": 7.53,
+   "presence": 1.21,
+   "err": 5.8,
+   "drift": 0.039,
+   "grid": true,
+   "how": "presence-max"
+  },
+  "y": {
+   "pitch": 17.467,
+   "phase": 4.37,
+   "presence": 1.221,
+   "err": 6.96,
+   "drift": 0.009,
+   "grid": true,
+   "how": "presence-max"
+  }
+ }
+}

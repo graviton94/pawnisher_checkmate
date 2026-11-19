@@ -1,0 +1,46 @@
+/* D-640 · 발주 30위 — 막별 전투 바탕(BG-01 ~ 03) + 덱 · 분대 · 버림 쇠 단추(BT-01). pilebtn.ts가 불러온다. */
+
+/* ── 전투 바탕: #app 뒤 한 장. 정수 배율 덮기 · 가운데 초점(uikit.coverBg가 --battle-bg-size · pos를 기기 픽셀 정수로 맞춘다, D-386 · D-556) */
+body.slice[data-battle-bg] #app::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: #0b0b0e var(--battle-bg) var(--battle-bg-pos, center) / var(--battle-bg-size, cover) no-repeat;
+  image-rendering: pixelated;
+}
+body.slice[data-battle-bg] #app { background: #0b0b0e; }
+/* 판 열: Phaser 캔버스가 판 밖을 비우므로(BoardRenderer clearBg) 열 바탕도 비운다 */
+body.slice[data-battle-bg] #board { background: none; }
+/* 레일: 바탕 그림 위에 단색 먹 판(#0b0b0e) — 글 · 카드가 공장 소품과 겹쳐 읽히지 않게. 반투명 · 그라데이션 없음.
+   레일 안쪽 모서리 4px 먹 선은 그대로 두고, 판 열 쪽 가장자리 너머로 바탕 그림이 보인다 */
+body.slice[data-battle-bg] .rail { background: #0b0b0e; }
+
+/* ── 덱 줄 단추 (BT-01): 받은 쇠 단추 88×44도트를 9-slice 판(pile-btn-{상태}.png — 왼 14 · 가운데 1 · 오른 35도트, tools/pixel/bt01_import.py nine)으로 잘랐다.
+   화면은 그 판의 두 조각을 겹 배경으로 깐다: 아래 = 왼 조각 + 가운데 열 120번(-l), 위 = 오른 조각(-r, 오른 끝 맞춤).
+   border-image는 소수 px 자리에서 조각 경계마다 1기기픽셀 밝은 선이 생겼다 — 겹쳐 그리면 틈이 없다.
+   1도트 = --px-detail(기기 픽셀 round(0.75·DPR)개, 915×412에서 0.76px · PC 1px) — 장치 층 --px(≈ 1.9px)이면 단추 하나가 레일 폭을 넘는다.
+   높이 44도트 고정(세로로 늘이지 않는다), 가로는 가운데 열(줄마다 한 색)만 길어진다. 최소 폭 64도트(문양 4 ~ 34 · 소켓 오른 끝에서 32). */
+body.slice.lay-f #deckrow { gap: 2px; }
+#deckrow .pile-btn {
+  --u: var(--px-detail, 1px);
+  --pl: url('../assets/ui/chrome/v2/pile-btn-idle-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-idle-r.png');
+  position: relative; flex: 1 1 0; min-width: 0; box-sizing: border-box; margin: 0; padding: 0; border: 0;
+  height: calc(var(--u) * 44);
+  background: var(--pr) right top / calc(var(--u) * 35) 100% no-repeat, var(--pl) left top / calc(var(--u) * 134) 100% no-repeat;
+  image-rendering: pixelated; color: var(--t-gold); cursor: pointer; font: 700 12px/12px Galmuri11, sans-serif;
+}
+#deckrow .pile-btn.is-new { --pl: url('../assets/ui/chrome/v2/pile-btn-new-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-new-r.png'); }
+#deckrow .pile-btn:active { --pl: url('../assets/ui/chrome/v2/pile-btn-down-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-down-r.png'); }
+/* 손가락 영역: 그림은 44도트(915에서 34px), 누름 칸은 48px 이상 (UI 원칙 2) */
+#deckrow .pile-btn::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(48px, 100%); transform: translateY(-50%); }
+/* 문양: 왼쪽 테 안(리벳 자리 위), 세로 가운데(정수 도트). 받은 문양 30×27 · 29×29도트 그대로 */
+#deckrow .pile-ico { position: absolute; left: calc(var(--u) * 4); top: calc(var(--u) * 8); width: calc(var(--u) * 30); height: calc(var(--u) * 27); image-rendering: pixelated; pointer-events: none; }
+#deckrow [data-discard] .pile-ico { top: calc(var(--u) * 7); width: calc(var(--u) * 29); height: calc(var(--u) * 29); }
+#deckrow .pile-btn:active .pile-ico { top: calc(var(--u) * 10); }
+#deckrow .pile-btn[data-discard]:active .pile-ico { top: calc(var(--u) * 9); }
+/* 수: 황동 소켓 안 (오른 끝에서 12 ~ 32도트 · 위 12 ~ 31도트, 누름은 2도트 아래) — 갈무리11 굵게 12px */
+#deckrow .pile-n {
+  position: absolute; right: calc(var(--u) * 12); top: calc(var(--u) * 12); width: calc(var(--u) * 20); height: calc(var(--u) * 19);
+  display: grid; place-items: center; font: inherit; color: inherit; pointer-events: none;
+}
+#deckrow .pile-btn:active .pile-n { top: calc(var(--u) * 14); }
+#deckrow .pile-btn.is-new .pile-n { color: #fff1c0; }
+body.kb-nav #deckrow .pile-btn:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * 1); }
