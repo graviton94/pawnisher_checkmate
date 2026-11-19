@@ -1,7 +1,9 @@
 import { RAID } from './giants';
 import { TERM } from './terms';
+import { josa } from './josa';
 import { localize } from './locale';
 import { HUD_EN } from './lang/en-ui';
+import { FIT_TEXT_EN, MAP_TEXT_EN, PILE_TEXT_EN, SAFETY_TEXT_EN, SCREEN_TEXT_EN, SERVICE_CARDS_EN, SET_TEXT_EN, SPEED_METER_EN } from './lang/en-screens';
 
 /**
  * 대국 화면 문구 · 용어 사전 (D-198). 이름 규칙은 docs/world.md §6.
@@ -26,8 +28,26 @@ export const BOSS_PHASE_TEXT = {
  * 지도 (D-397, 보고서 2026-11-09f 2-1): 머리 줄 꼬리표 · 아래 미리보기 띠(.peek-bar) 꼬리표 ≤ 3 · 단추.
  * 미리보기 꼬리표는 짧은 이름만(≤ 6자) — 긴 규칙 문장은 전투 안 반장 규칙 · 엿보기가 말한다.
  */
-export const MAP_TEXT = {
+export const MAP_TEXT_KO = {
   go: '진입',
+  /** 지도 노드 이름 · 갈림길 한 줄 설명(시스템 투) — slice/run.ts NODE_NAMES · NODE_DESC가 읽는다 (D-671) */
+  node: { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장', chest: '부품 상자' },
+  /** 지도 아래 범례 한 줄 — 분대 현황판이 넓어도 한 줄에 (영어는 짧은 이름, D-672) */
+  legend: { battle: '대국', shop: '고물상', forge: '작업대', event: '사건', check: '검문', boss: '반장', chest: '부품 상자' },
+  nodeDesc: {
+    battle: '대국을 치르고 카드를 얻습니다.',
+    shop: '나사로 카드 · 부품 · 정비를 삽니다.',
+    forge: '카드 하나를 다듬거나, 빼거나, 분대를 수리합니다.',
+    event: '무엇이 기다리는지 알 수 없습니다.',
+    check: '정예와의 대국. 이기면 부품을 얻습니다.',
+    boss: '막의 끝. 반장이 기다린다.',
+    chest: '잠긴 상자. 부품 하나와 나사가 들어 있습니다.',
+  },
+  /** 막 이름 = 공정 (D-320) · 종막 = 출하구 — 저장에는 막 번호만 믿고 화면은 이 표로 부른다 (D-671) */
+  acts: ['주조 공정', '조립 공정', '검수 공정', '출하구'],
+  actLabel: (n: number): string => (n === 4 ? '종막' : `${n}막`),
+  /** 노드 미리보기 꼬리표: 이형 기물 (이름은 forms.ts) */
+  form: (name: string) => `이형 ${name}`,
   /** 머리 줄 수치 명판 하나 (D-398): 이름 12 · 값 15 */
   stat: { squad: '분대', deck: '덱', parts: '부품', charm: '톱니' },
   foes: (n: number) => `적 ×${n}`,
@@ -48,6 +68,7 @@ export const MAP_TEXT = {
     look: '살핀다',
   },
 };
+export const MAP_TEXT = localize(MAP_TEXT_KO, MAP_TEXT_EN);
 
 export const HUD_KO = {
   /** 길막기 (D-319) */
@@ -126,13 +147,15 @@ export const HUD_KO = {
   helpTitle: '안내서',
   dictTitle: '용어',
   fullGuide: '안내서 전체',
+  /** 용어 사전 맨 아래 줄 (D-671) */
+  dictLeft: (n: number) => `아직 만나지 않은 용어 ${n}개 — 나아가면 열립니다.`,
 };
 /** 지금 언어로 (D-651) */
 export const HUD_TEXT = localize(HUD_KO, HUD_EN);
 
 /** 목숨 둘 · 심장 톱니 (D-219) — 규칙은 시스템 투, 쓰러지는 순간은 2인칭 서술 (D-158) */
 /** 덱 줄 단추 (D-640): 화면엔 문양 + 수만 — 낱말은 읽기 도구 · 길게 보기 이름으로 */
-export const PILE_TEXT = {
+export const PILE_TEXT_KO = {
   name: { deck: '덱', crew: '분대', discard: '버림' },
   aria: {
     deck: (n: number) => `덱 ${n}장 보기`,
@@ -140,6 +163,7 @@ export const PILE_TEXT = {
     discard: (n: number) => `버린 카드 ${n}장 보기`,
   },
 } as const;
+export const PILE_TEXT = localize(PILE_TEXT_KO, PILE_TEXT_EN);
 
 export const LIFE_TEXT = {
   name: '심장 톱니',
@@ -256,11 +280,12 @@ export const BOSS_EPITHET: Record<'plate' | 'spawn' | 'thorns' | 'gilded' | 'ins
  */
 /** 시작 세트 고르기 (D-485) */
 /** 받침 아래 맞물림 줄 (#13 · D-503): 분대 기물 수 · 덱 카드 수를 따로 — 가운뎃점에서만 줄을 바꾼다 */
-export const FIT_TEXT = {
+export const FIT_TEXT_KO = {
   none: (piece: string) => `분대에 ${piece} 없음`,
   squad: (piece: string, n: number) => `분대 ${piece} <b>${n}</b>`,
   cards: (name: string, n: number) => `${name} 카드 <b>${n}</b>`,
 } as const;
+export const FIT_TEXT = localize(FIT_TEXT_KO, FIT_TEXT_EN);
 
 /**
  * 펼친 카드 창 (D-621, 사용자 결정 5가 ①): 판 열 위 비모달 S 창 — w = S 폭 상한(px, 게임 UI 지식 3.1) · gap = 판 열 가장자리와의 틈(px).
@@ -299,14 +324,15 @@ export const COND_TEXT = {
   },
 } as const;
 
-export const SET_TEXT = {
+export const SET_TEXT_KO = {
   title: '시작 세트',
   page: (n: number, of: number) => `${n} / ${of}`,
   next: '다른 세트',
   prev: '기본 세트',
 };
+export const SET_TEXT = localize(SET_TEXT_KO, SET_TEXT_EN);
 
-export const SCREEN_TEXT = {
+export const SCREEN_TEXT_KO = {
   partPages: '보유 부품 페이지', partPrev: '이전 부품', partNext: '다음 부품',
   reward: '전리품', kit: '핵심 부품', recruit: '영입', newCrew: '새 분대원', part: '부품', partBox: '부품 상자', partClose: '사선',
   full: '칸 가득', shop: '고물상', forge: '작업대', forgeFinal: '최종 정비', refine: '다듬기', brace: '보강', remove: '카드 빼기', deck: '덱', crew: '분대',
@@ -323,13 +349,20 @@ export const SCREEN_TEXT = {
   melt: (n: number) => `녹이면 나사 +${n}`, slots: (n: number) => `부품 칸 ${n}`, newPart: (name: string) => `새 「${name}」`,
   clearLine: '출하구를 지났습니다.', failLine: (act: string) => `${act}에서 멈췄습니다.`, opened: '새로 열림', daily: '오늘의 도전',
   tally: ['이긴 대국', '처치', '나사', '덱'] as const,
+  // 고물상 · 작업대 · 보상 · 막 마침 화면에 박혀 있던 글 (D-671 — main.ts에서 옮김)
+  price: (n: number) => `나사 ${n}`, charm: '부적', shortMono: (n: number) => `‘나사가 모자라.’ (${n} 필요)`,
+  cardLine: (name: string) => `${name} — 덱에 한 장`, refined: (name: string) => `${name} 한 장 — 태엽 −1`, copies: (n: number) => `덱 <b>${n}</b>장`, apStep: (a: number, b: number) => `태엽 ${a} → <b>${b}</b>`,
+  gain: (n: number) => `나사 +${n}`, back: (name: string) => `${name} 복귀 · `, healAll: (pct: number) => `분대 전원 HP +${pct}%`, revived: (name: string) => `${josa(name, '이')} 복귀했습니다.`,
+  removed: (name: string) => `${name} 한 장을 뺐습니다.`, cardsN: (n: number) => `${n}장`, crewN: (n: number) => `${n}명`, meltDone: (name: string, n: number) => `${name} — 녹였습니다. (나사 +${n})`,
+  crewInfo: (w: number, p: number) => `생존 승리 <b>${w}</b> · 보호 <b>${p}</b>`, wallet: (n: number) => `(지갑 ${n})`, allSquad: '(분대 전원)', parts: '부품', nextAct: (label: string, name: string) => `다음 · ${label} ${name}`, bossWord: '격파!',
 } as const;
+export const SCREEN_TEXT = localize(SCREEN_TEXT_KO, SCREEN_TEXT_EN);
 
 /**
  * 손질 카드 (D-399, 사용자: 「정비 · 카드 빼기도 같은 크기 카드로, 색 컨셉은 상아색」): 고물상 · 작업대의 서비스.
  * 카드 말투(voice ⑥) — 「비장한 한 문장. (효과 — 대상)」. 띠 글 = kind. 수치는 부르는 쪽이 넣는다(src/data/run.ts SHOP · FORGE).
  */
-export const SERVICE_CARDS = {
+export const SERVICE_CARDS_KO = {
   kind: '손질',
   heal: { name: '정비', icon: 's.heal', desc: (pct: number) => `삐걱이는 관절을 하나씩 조인다. (HP +${pct}% — 분대 전원)` },
   repair: { name: '수리', icon: 's.repair', desc: (pct: number) => `찌그러진 장갑을 두드려 편다. (${pct >= 100 ? 'HP 가득' : `HP +${pct}%`} — 분대원 하나)` },
@@ -338,22 +371,24 @@ export const SERVICE_CARDS = {
   // #19 · D-503: 버팀이 무엇인지 카드가 말한다 — 쓰러질 피해를 HP 1로 넘기는 횟수. 출하 자원(D-496): 늘어난 칸은 출하 내내, 쓴 칸은 막 정비에서 다시 찬다
   brace: { name: '보강', icon: 'shieldWall', desc: (n: number) => `쓰러질 피해를 한 번 더 넘긴다. (버팀 +${n} · 출하 내내 — 분대원 하나)` },
 } as const;
+export const SERVICE_CARDS = localize(SERVICE_CARDS_KO, SERVICE_CARDS_EN);
 
 /**
  * 속전 계기 (D-520, 사용자 확정 — 시안 B 「한 턴 한 관」): 진공관 10개 = SLICE.coins, 관 하나 = 한 턴(10%).
  * 화면은 관 줄 + 큰 나사 숫자만, 이번 턴 끝에 꺼질 관 하나만 깜빡인다. 자세한 규칙은 계기를 눌렀을 때(help) · 용어집 「속전」.
  */
-export const SPEED_METER = {
+export const SPEED_METER_KO = {
   label: '이기면 받는 나사',
   /** 계기를 누르면 (① 시스템 투) — 첫 턴(배치)은 관을 태우지 않는다 */
   help: (left: number, per: number): string => `속전 — 첫 턴 뒤 턴이 끝날 때마다 진공관 하나가 꺼집니다. 이기면 남은 관 ${left}개 × 나사 ${per}.`,
 } as const;
+export const SPEED_METER = localize(SPEED_METER_KO, SPEED_METER_EN);
 
 /**
  * 안전망 문구 (D-529, 시스템 투 · docs/voice.md ①): 저장 실패 알림 한 줄 · 오류 복구 창.
  * 단추: 「지도로」(지도에서 저장했을 때) · 「이어 간다」(대국 · 보상 중에 저장했을 때) · 「처음으로」.
  */
-export const SAFETY_TEXT = {
+export const SAFETY_TEXT_KO = {
   saveFail: '저장 공간이 부족해 진행을 저장하지 못했습니다.',
   /** 더 새 판에서 만든 저장 · 기록을 찾았을 때 (코드 리뷰 10) — 덮어쓰지 않고 그대로 둔다 */
   newerSave: '더 새 판에서 만든 저장이 있습니다. 그 저장은 건드리지 않으며, 이 판의 진행은 남지 않습니다.',
@@ -364,3 +399,4 @@ export const SAFETY_TEXT = {
   resume: '이어 간다',
   home: '처음으로',
 } as const;
+export const SAFETY_TEXT = localize(SAFETY_TEXT_KO, SAFETY_TEXT_EN);

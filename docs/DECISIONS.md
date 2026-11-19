@@ -5141,3 +5141,32 @@ GitHub 알림: Actions 저장 0.46GB / 무료 0.5GB. 원인: APK 빌드(수동 �
 - **시작 세트 압정**: 설명지 위 압정이 틀 71 ~ 75도트인데 공통 칸(59.5% = 75도트)에 두 줄 묘사 첫 줄이 붙어 1도트 겹쳤다. 시작 세트끼리만 한 줄에 서므로 설명지 칸을 1도트 내렸다(76 ~ 110도트, 찢긴 끝 위) — 덜어 낸 1도트는 166px 아래 카드의 조건/효과 행에서(10 · 11px, 160 아래는 틈 1). 첫 줄 위 끝 75.17 → 76.19도트(915). 부품 카드(압정 69 ~ 73도트)는 이미 2도트 떨어져 그대로.
 - **작은 분대원 카드 잘림**: 사건 결과 1박의 분대원 카드(772×360에서 138px)는 공통 칸 57.5px < 격자 62px라 위아래 2.25px 잘렸다. 150px 아래 카드만 칸을 종이 끝까지(분대원 71 ~ 110 · 명령 74 ~ 111도트) 넓히고 묘사 틈 1 · [능력명] 행 11 → 칸 64px · 격자 60px, 잘림 0. 915(168px) · 667(150px)은 그대로. 수치 `CARD_TEXT_GRID_EXTRA` · 시험 `tests/card-spec.test.ts`.
 - **덱 줄 단추 오른 위 낱점**: 원인 둘. ① 받은 그림의 오른 위 계단이 왼 계단보다 1도트씩 바깥(평상 3 · 4줄 · 새 카드 0 · 1 · 3줄) — 반입 도구 `tools/pixel/bt01_import.py trim_corner`가 왼 계단을 거울로 비춰 그 밖의 도트만 지운다(지우기만, art-assets §7 — 누름 단추는 고른 사선이라 그대로). ② 화면은 아래 겹(-l, 가운데 열 120번)이 단추 끝까지 깔리고 오른 조각(-r)이 위에 얹히는데, 오른 조각의 투명한 둥근 모서리 밑으로 가운데 열 윗줄(밝은 테)이 비쳐 모서리 밖에 낱점이 섰다 — 아래 겹을 오른 조각 왼 1열까지만 그린다(`battlebg.css` 오른 여백 34도트 + `content-box`). 다시 뽑기: `python3 -I tools/pixel/bt01_import.py build`.
+
+### D-670 — 영어 용어 열두 낱말 확정 · 미국식 철자 · 금지 대안 시험 (2026-11-19, 사장님 D-656 7가)
+- `docs/loc/glossary.md` §6 제안안을 그대로 확정: **Wind**(태엽) · **Shipment**(출하) · **Foreman**(반장) · **reject / the defective**(하자품 / 불량품) · **Grit**(버팀) · **Heatshield**(방열판) · **Line / machine floor**(공정) · **Upkeep**(손질) · **Coronation**(승급) · **Nemesis**(원수) · **Paper King / Gilded King**(종이왕 / 도금왕) · **미국식 철자**. 용어집의 ★ 표시를 ✓로 바꾸고 제목을 「확정」으로.
+- 코드 맞춤: `Colour-aid` → `Color-aid`, 기록 메뉴 부제 `Runs · Clears · Crowns` → `Shipments · Crowns`(Run 금지), 수리 카드의 `plating`(방열판 대안 Plating과 겹침) → `armor`/`dents`.
+- 시험 `tests/loc-glossary.test.ts`: `src/data/lang/en-*.ts`의 모든 문자열 · 템플릿 조각(TypeScript 파서, 열쇠 · import 제외)을 훑어 고르지 않은 대안(Clockwork · Tension · AP · Run · Batch · Overseer · Warden · Forman · flawed · Last Stand · Endure · Heat shield · Plating · Ward · Stage · Process · Maintenance · Service · Ascension · Crowning · Grudge · Gilt King · Golden King · Paper-Crown)과 영국식 철자(colour · armour · mould · defence · grey · centre · -ise …)를 막는다. 검사 자체가 잡는지(나쁜 예 · 좋은 예)와 열두 낱말이 화면 자리에 들어갔는지도 본다.
+- 스팀 문안(`docs/store/steam-coming-soon.md`)은 **미결 — 스팀 가입 전**: 초안으로 두고 올리지 않는다(D-656 8).
+
+### D-671 — UI 크롬 둘째 묶음: 지도 · 보상 · 고물상 · 작업대 · 사건 창 크롬 · 안내서/용어집 라벨 (2026-11-19, 결정 11가)
+- 옮김(한국어 글은 그대로, 자리만 `src/data/`로): `slice/run.ts` 노드 이름 · 갈림길 설명 · 막 이름 → `MAP_TEXT.node · nodeDesc · acts · actLabel · legend · form`. `main.ts` 고물상 가격표 · 부적 · 「나사가 모자라」 · 덱 맞물림 · 다듬기 · 보상 나사 꼬리표 · 정비 줄 · 복귀 · 카드 뺌 · 녹임 · 분대 창 · 막 마침 표 줄 → `SCREEN_TEXT`(새 열쇠 20여 개), 사건 창 크롬(결과 · 나사 꼬리표 · 효과 쪽지 단추 · aria · 저울추 「올린다」 · 마무리 단추) → 새 `EVENT_UI`, 용어 사전 맨 아래 줄 → `HUD_TEXT.dictLeft`. `campaign.ts` 왕관 꼬리표 · 별칭 · 부제(`CHAPTERS`, 배열은 칸마다 겹쳐 theme는 한국어로 남게) · 출하 이름표 · 결말 이름(`CAMPAIGN_TEXT`).
+- 막 이름은 저장(`Act.name`)에 만든 때 언어로 남으므로 화면은 막 번호로 지금 언어 표를 다시 부른다(`actName`) — 출하 도중 언어를 바꿔도 맞다.
+- 영어 표 `src/data/lang/en-screens.ts`(새 파일, 242 문자열 · 619 단어): MAP · SCREEN · SERVICE_CARDS(Upkeep: Tune-up · Repair · Hone · Scrap a card · Brace) · FIT · PILE · SET · SPEED_METER · SAFETY · CHAPTERS · CAMPAIGN · EVENT_HINT/UI/FX/SUM · PIECE_NAMES(크롬용 — 조사가 붙는 한국어 문장은 PIECE_NAMES_KO 그대로) · PLAYTEST(제보 탭만).
+- 말투: 단추는 동사 하나(Enter · Buy · Leave · Choose · Hone · Brace · Melt · Offer), 시스템 글은 평서문, 느낌표는 ⑨ 표지(Passed! · Felled!)에만.
+- 영어 글 합계 ≈ 1,200 단어(첫 묶음 585 + 둘째 619) / 본편 어림 27,600. 남은 크롬: 카드 꼬리 낱말 `STYLE_NAMES`(「연쇄 cards 0」처럼 섞임) · 사건 결과 요약 줄 · 대국 HUD 나머지 · 출하 끝 화면 · 반장 규칙. 이야기 · 사건 · 카드 · 부품 내용은 손대지 않았다.
+
+### D-672 — 영어 넘침 고침: 낱말을 줄이고, 라틴 아래 꼬리만 명패 여백으로 (2026-11-19, D-653 후속)
+- 지도 범례: 분대 현황판이 넓으면(분대 5) 한 줄 범례의 「Foreman」이 26.9px 넘쳤다 → 범례 전용 짧은 이름 `MAP_TEXT.legend`(Match · Checkpoint · Incident · Crate · Dealer · Bench · Foreman). 노드 미리보기 · 명패는 용어집 이름 그대로(Scrap Dealer · Workbench · Part Crate).
+- 손질 카드 글: 「Survive one more killing blow.」가 카드 묘사 칸 오른쪽을 넘었다 → 「Shrug off one more blow.」, 다른 넷도 짧게(Oil the creaking joints · Hammer out the dents · Grind the edge smooth).
+- 명패(.plate 24px): 한글용 위 2px 여백이 라틴 아래 꼬리(p · g · y)를 아래 테 안쪽으로 0.7px 밀었다 → `html[lang='en']`에서만 위 여백 1px(아래 −0.2px까지 줄었다 · 0이면 위가 2.3px로 빠듯). 한국어 CSS는 그대로. 글자 크기 · 서체는 D-213 격자 그대로.
+- 도움말 탭 「Report」가 탭 칸을 꽉 채웠다 → 「Bug」(창 제목은 Report).
+- 남은 「빠듯」은 아래 꼬리가 있는 영어 낱말의 잉크가 테 안쪽 2px 안에 드는 것뿐(넘침 · 잘림 아님) — 명패 · 띠 높이가 한글 기준이라 생긴다.
+
+### D-673 — 영어 실화면 도구: lang-observe 장면 늘림 · ui-audit 언어 인자 (2026-11-19)
+- `tools/qa/lang-observe.cjs`: 지도(노드 미리보기) · 지도 분대 현황 · 고물상(못 사는 물건 고름) · 작업대 · 수리 고르기 · 보상 · 사건(선택지 고름) · 용어 사전 · 덱을 더 찍는다. 장면마다 새 탭(한 탭에서 열 번 넘게 다시 읽으면 DPR 2.625 렌더러가 죽었다).
+- `tools/artguide/ui-audit.cjs`: `OBSERVE_LANG=en|ko`로 `&lang=` 을 붙인다 — 같은 글자 점검(격자 · 넘침 · 잉크 여유)을 영어 화면에 그대로.
+- 증거: `production/qa/evidence/2026-11-19-d670-loc/`(en-*.png · en-hangul-left.md · audit-en/).
+
+### D-674 — 한국어 화면은 그대로 (2026-11-19, D-671 검증)
+- 한국어일 때 새 표는 원문 객체 그대로(`localize`가 같은 객체를 돌려준다 — 시험이 `toBe`로 본다). 바뀐 CSS는 `html[lang='en']`에만 걸린다.
+- 같은 장면(지도 · 미리보기 · 분대 현황 · 고물상 · 작업대 · 수리 · 보상 · 사건 · 도움말)을 고치기 전 · 뒤 빌드로 915×412 DPR 2.625에서 찍어(ui-audit) 두 번 다 글자 점검 0건. 사건 · 작업대 수리 고르기는 픽셀까지 같고, 나머지는 장면마다 시드 없이 뽑는 지도 · 진열 · 보상 카드만 달랐다(크롬 글 · 자리는 같음).

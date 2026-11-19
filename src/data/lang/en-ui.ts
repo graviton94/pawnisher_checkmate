@@ -7,7 +7,7 @@ import type { HUD_KO } from '../hud';
 import { VOL_STEPS } from '../volume';
 
 /**
- * 영어 — UI 크롬 첫 묶음 (D-652). 용어는 docs/loc/glossary.md 제안안이다 — 사용자가 고르면 여기와 용어집을 같이 고친다.
+ * 영어 — UI 크롬 첫 묶음 (D-652). 용어는 docs/loc/glossary.md 확정안(D-670)만 쓴다 — 금지 대안은 tests/loc-glossary.test.ts가 막는다.
  * 빠진 칸은 한국어로 나온다(locale.overlay). 단추는 동사 하나(voice ⑧ → 영어도 명령형 한 낱말), 시스템 글은 평서문.
  * 글자 크기는 한국어와 같은 칸(D-213 격자)을 그대로 쓴다 — 영어 전용 크기를 만들지 않는다.
  */
@@ -147,7 +147,7 @@ export const RECORDS_EN: Loc<typeof RECORDS_KO> = {
   guide: 'Guide',
   guideSub: 'Rules · Controls',
   stats: 'Stats',
-  statsSub: 'Runs · Clears · Crowns',
+  statsSub: 'Shipments · Crowns',
   close: 'Close',
   back: 'Back',
   statRows: (m) => [
@@ -188,7 +188,7 @@ export const SETTINGS_EN: Loc<typeof SETTINGS_KO> = {
   bindDefault: 'Defaults',
   bindTaken: (k, who) => `“${k}” is already used by “${who}”.`,
   bindReserved: (k) => `“${k}” cannot be changed.`,
-  cbAid: 'Colour-aid patterns',
+  cbAid: 'Color-aid patterns',
   cbAidNote: 'Hatched threat tiles · checked enemy HP',
   keyMap: 'Keys · Pad layout',
   keyMapBtn: 'View',
@@ -269,4 +269,5 @@ export const HUD_EN: Loc<typeof HUD_KO> = {
   helpTitle: 'Guide',
   dictTitle: 'Terms',
   fullGuide: 'Full guide',
+  dictLeft: (n) => `${n} terms not met yet — they open as you go.`,
 };
