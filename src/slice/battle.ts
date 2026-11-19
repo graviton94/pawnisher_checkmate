@@ -10,7 +10,7 @@ import { bossAim, bossCells, bossRing, giantDanger, giantGroups, giantStrike, gi
 import { processAfter, processBefore, processDanger, processTurn, setupProcess, type ProcState } from './process';
 import { PROCESS, type ProcessId } from '../data/process';
 import { RAID, RAID_TEXT, type GiantType, type RaidPattern } from '../data/giants';
-import { baseOf, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandId, type FoeMark, type FoeTrait } from './cards';
+import { baseOf, BOSS, BOSS_NUM, BOSS_RULES, COMMANDS, FOE_MARKS, LAB, MARK, MELT, PACE, PUSH, SLICE, TRAIT, type BossRule, type CommandDef, type CommandId, type FoeMark, type FoeTrait } from './cards';
 
 /**
  * 수직 조각 대국 (분대 + 명령 덱, D-142). 화면과 무관한 순수 로직.
@@ -291,6 +291,77 @@ export const overkillOf = (before: BattleState, events: BattleEvent[]): number =
 };
 
 const has = (b: SliceBattle, id: SlicePartId) => b.parts.includes(id);
+
+// ---------- 조건 판정 (D-592) — 미리보기 · 실행 · 비용 · 봇 · 판 표시가 같은 판정 하나를 쓴다 ----------
+/** 처치 기물 태엽 0 (피의 질주 계열): 이번 턴 처치한 그 기물로 낼 때 */
+const killerFree = (b: SliceBattle, c: CommandDef, pieceId?: number): boolean => !!c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId);
+/** 포크: 이 기물이 to에 내려앉으면 두 적 이상을 친다 */
+const forkOn = (s: BattleState, p: Piece, to: Pos): boolean => forkTargets(s, p, to) >= 2;
+/** 죔쇠: to에서 묶인 적을 친다 */
+const viseOn = (b: SliceBattle, p: Piece, to: Pos): boolean => has(b, 'vise') && (b.pinned ?? []).length > 0 && targetsFrom(b.s, p, to).some((id) => (b.pinned ?? []).includes(id));
+/** 측량 컴퍼스: to에서 적 킹을 친다 */
+const calipersOn = (b: SliceBattle, p: Piece, to: Pos): boolean => has(b, 'calipers') && targetsFrom(b.s, p, to).includes(kingOf(b.s, 1)?.id ?? -1);
+/** 마지막 축: 킹 HP 30% 미만인 동안 */
+const lastAxleOn = (b: SliceBattle, p: Piece): boolean => p.type === 'K' && has(b, 'lastAxle') && p.hp < p.maxHp * PART_NUM.lastAxleAt;
+/** 마지막 숨: 그 기물의 버팀이 하나 남은 동안 */
+const lastBreathOn = (b: SliceBattle, p: Piece): boolean => has(b, 'lastBreath') && p.side === 0 && (b.s.doorIds ?? []).filter((x) => x === p.id).length === 1;
+/** 반장 사냥꾼: 반장 대국인 동안 */
+const bossBaneOn = (b: SliceBattle): boolean => b.boss && has(b, 'bossBane');
+/** 왕의 분노 배율 (잃은 HP만큼, 최대 ×3) */
+const rageMult = (p: Piece): number => Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp);
+
+/** 조건이 맞은 까닭 — 상태(면) 포크 · 처치 기물 / 비례(당) 연쇄 · 분노 / 대가 연쇄 소모 */
+export type CondWhy = 'fork' | 'killer' | 'chain' | 'rage' | 'spend';
+/** 카드 조건 판정 결과: on = 지금 맞음 · n = 포크 칸 수 · 연쇄 수 · mult = 지금 배율(비례) */
+export interface CardCond { on: boolean; why: CondWhy | null; n?: number; mult?: number }
+const OFF: CardCond = { on: false, why: null };
+
+/**
+ * 카드 조건 판정 (D-592): 손패 i번 카드의 조건(상태 「~면」 · 비례 「~당」 · 대가)이 지금 맞나.
+ * pieceId · to를 주면 그 기물 · 그 칸에서, 안 주면 낼 수 있는 기물 · 갈 칸 어디서든 하나라도 맞으면 on.
+ * `previewPlay`(배율) · `costOf`(태엽 0) · 자동 고르기 · 손패 램프 · 판 모서리가 모두 이 판정을 쓴다(UI는 규칙을 다시 짜지 않는다 — 원칙 9).
+ */
+export const cardCond = (b: SliceBattle, i: number, pieceId?: number, to?: Pos): CardCond => {
+  const c = COMMANDS[b.hand[i]];
+  if (!c || b.s.winner !== null) return OFF;
+  if (c.fork) {
+    const pieces = pieceId !== undefined ? b.s.pieces.filter((p) => p.id === pieceId) : cardPieces(b, i);
+    let n = 0;
+    for (const p of pieces) for (const q of to ? [to] : cardMoves(b, i, p.id)) if (forkOn(b.s, p, q)) n += 1;
+    return n ? { on: true, why: 'fork', n, mult: c.fork + (has(b, 'mirror') ? PART_NUM.mirror : 0) } : OFF;
+  }
+  if (c.freeIfKiller) {
+    const on = pieceId !== undefined ? killerFree(b, c, pieceId) : b.s.pieces.some((p) => p.side === 0 && (c.who === 'any' || c.who === p.type) && killerFree(b, c, p.id));
+    return on ? { on, why: 'killer' } : OFF;
+  }
+  if (c.multPerKill) return b.kills > 0 ? { on: true, why: 'chain', n: b.kills, mult: 1 + b.kills * c.multPerKill } : OFF;
+  if (c.rage) {
+    const p = pieceId !== undefined ? findPiece(b.s, pieceId) : b.s.pieces.find((q) => q.side === 0 && q.type === c.who);
+    return p && p.hp < p.maxHp ? { on: true, why: 'rage', mult: Math.round(rageMult(p) * 10) / 10 } : OFF;
+  }
+  if (c.kind === 'spend') return b.kills > 0 ? { on: true, why: 'spend', n: b.kills } : OFF;
+  return OFF;
+};
+
+/** 판정이 기물 · 칸에 따라 갈리는 카드인가 (상태 「~면」 — 판 모서리 · 기물 발치 램프 대상) */
+export const condIsState = (id: CommandId): boolean => !!(COMMANDS[id]?.fork || COMMANDS[id]?.freeIfKiller);
+
+/**
+ * 부품 조건 판정 (D-592): 이 기물이(to에 내려앉아) 칠 때 켜지는 상태 · 지속 부품. 판 모서리(죔쇠 · 컴퍼스 · 갈래 톱니)와 부품 칸 표지가 쓴다.
+ * card = 고른 카드 손패 번호(갈래 톱니는 포크 카드일 때만).
+ */
+export const partCond = (b: SliceBattle, pieceId: number, to?: Pos, card?: number): SlicePartId[] => {
+  const p = findPiece(b.s, pieceId);
+  if (!p || p.side !== 0) return [];
+  const out: SlicePartId[] = [];
+  if (to && viseOn(b, p, to)) out.push('vise');
+  if (to && calipersOn(b, p, to)) out.push('calipers');
+  if (to && card !== undefined && COMMANDS[b.hand[card]]?.fork && has(b, 'forkGear') && forkOn(b.s, p, to)) out.push('forkGear');
+  if (lastAxleOn(b, p)) out.push('lastAxle');
+  if (lastBreathOn(b, p)) out.push('lastBreath');
+  if (bossBaneOn(b)) out.push('bossBane');
+  return out;
+};
 /** 공정 열기 (D-454): 이 턴의 피해 배율 — 양쪽 같다 */
 export const heatAt = (turn: number): number => SLICE.heat[Math.max(0, Math.min(SLICE.heat.length - 1, turn - 1))];
 
@@ -298,7 +369,7 @@ export const heatAt = (turn: number): number => SLICE.heat[Math.max(0, Math.min(
 export const costOf = (b: SliceBattle, i: number, pieceId?: number): number => {
   const c = COMMANDS[b.hand[i]];
   if (!c) return 99;
-  if (c.freeIfKiller && pieceId !== undefined && b.killers.includes(pieceId)) return 0;
+  if (killerFree(b, c, pieceId)) return 0;
   const pawnCard = c.who === 'P' || c.kind === 'march';
   const knightCard = c.who === 'N';
   if (c.kind === 'swap' && has(b, 'gateHinge')) return 0;
@@ -1102,21 +1173,21 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
   if (!c || !p) return null;
   if (c.kind === 'move' && to) {
     if (c.carve) p.carve = c.carve;
-    const rage = c.rage ? Math.min(3, 1 + (2 * (p.maxHp - p.hp)) / p.maxHp) : 1;
-    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1) * (has(b, 'lastBreath') && p.side === 0 && (b.s.doorIds ?? []).filter((x) => x === p.id).length === 1 ? PART_NUM.lastBreath : 1);
-    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork && forkTargets(b.s, p, to) >= 2 ? c.fork + (has(b, 'mirror') ? PART_NUM.mirror : 0) : 1) * (b.nextMult ?? 1)
+    const rage = c.rage ? rageMult(p) : 1;
+    const crown = (p.type === 'K' && has(b, 'crown') ? PART_NUM.crownMult : 1) * (p.type === 'N' && has(b, 'lance') ? PART_NUM.lanceMult : 1) * (p.type === 'P' && has(b, 'banner') ? PART_NUM.bannerMult : 1) * (p.type === 'R' && has(b, 'rookBolt') ? PART_NUM.rookBoltMult : 1) * (p.type === 'B' && has(b, 'bishopLens') ? PART_NUM.lensMult : 1) * (has(b, 'bloodPact') ? PART_NUM.bloodMult : 1) * (lastBreathOn(b, p) ? PART_NUM.lastBreath : 1);
+    const perKill = (c.multPerKill ? 1 + b.kills * c.multPerKill : 1) * (c.fork ? cardCond(b, i, pieceId, to).mult ?? 1 : 1) * (b.nextMult ?? 1)
       // 부품 확장 (D-282)
-      * (has(b, 'vise') && (b.pinned ?? []).length && targetsFrom(b.s, p, to).some((id) => (b.pinned ?? []).includes(id)) ? PART_NUM.vise : 1)
+      * (viseOn(b, p, to) ? PART_NUM.vise : 1)
       * (p.type === 'Q' && has(b, 'queenCrown') ? PART_NUM.queenCrown : 1)
-      * (p.type === 'K' && has(b, 'lastAxle') && p.hp < p.maxHp * PART_NUM.lastAxleAt ? PART_NUM.lastAxle : 1)
+      * (lastAxleOn(b, p) ? PART_NUM.lastAxle : 1)
       * (grazeOn(b, pieceId, to) && has(b, 'ventHole') ? PART_NUM.ventGraze / SLICE.grazeMult : 1)
-      * (b.boss && has(b, 'bossBane') ? PART_NUM.bossBane : 1);
+      * (bossBaneOn(b) ? PART_NUM.bossBane : 1);
     const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
     const shieldStrike = p.type === 'R' && c.who === 'R' && COMMANDS[baseOf(b.hand[i])].cost >= 2 && has(b, 'siegeLatch') && !b.once.includes(`siegeLatch:${pieceId}`) ? PART_NUM.siegeLatch : 0;
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, shieldStrike, firstMult: sealReady(b, pieceId) ? PART_NUM.relaySeal : 1, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0)
       // 부품 확장 2차 (D-287)
       + (p.type === 'N' && has(b, 'jumpSpring') ? PART_NUM.jumpSpring : 0) + (p.type === 'B' && has(b, 'stainedGlass') ? PART_NUM.stainedGlass : 0) + (has(b, 'redLine') ? PART_NUM.redLine : 0)
-      + (has(b, 'calipers') && targetsFrom(b.s, p, to).includes(kingOf(b.s, 1)?.id ?? -1) ? PART_NUM.calipers : 0) });
+      + (calipersOn(b, p, to) ? PART_NUM.calipers : 0) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -1160,7 +1231,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (sealReady(b, pieceId) && sim.events.some((e) => e.type === 'attack' && e.attackerId === pieceId && e.hits.some((h) => !h.splash && h.damage > 0))) b.once.push('relaySeal');
     if (struck) b.nextMult = undefined;
     if (c.nextMult) b.nextMult = c.nextMult + (has(b, 'openGate') ? PART_NUM.openGate : 0);
-    if (c.fork && has(b, 'forkGear') && forkTargets(before, p, to) >= 2) { gained += PART_NUM.forkGearAp; events.push({ type: 'apGain', side: 0, amount: PART_NUM.forkGearAp }); }
+    if (c.fork && has(b, 'forkGear') && forkOn(before, p, to)) { gained += PART_NUM.forkGearAp; events.push({ type: 'apGain', side: 0, amount: PART_NUM.forkGearAp }); }
     if ((c.axis === 'tactic' || c.axis2 === 'tactic') && has(b, 'gameRecord') && !b.once.includes('gameRecord')) { b.once.push('gameRecord'); drawCards(b, 1); }
     if (c.stun) {
       const ids = sim.events.flatMap((e) => (e.type === 'attack' || e.type === 'blast' ? e.hits.filter((h) => !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1 && before.pieces.find((q) => q.id === h.targetId)?.type !== 'K').map((h) => h.targetId) : []));
