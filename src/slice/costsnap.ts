@@ -63,7 +63,12 @@ export function fit(el: HTMLElement): void {
   // 세로: 기준선 = CSS px 정수(확대면 1/z) 가운데 잉크 가운데가 구멍 가운데에 가장 가까운 것
   const base = Math.round((top + h / 2 + (m.up - m.dn) / 2) * z) / z;
   const y = base - m.asc - lineTop - top;
-  el.style.padding = `${y}px 0 0 ${x}px`;
+  // 같은 값이면 쓰지 않는다 — 다시 그리기만 늘린다 (D-596)
+  const pad = `${y}px 0 0 ${x}px`;
+  if (el.dataset.pad !== pad) {
+    el.dataset.pad = pad;
+    el.style.padding = pad;
+  }
   el.dataset.ink = `${Math.round(m.r - m.l)}x${Math.round(m.up + m.dn)}`;
 }
 
@@ -73,7 +78,9 @@ const scan = (root: ParentNode): void => {
   root.querySelectorAll<HTMLElement>(SEL).forEach((el) => {
     if (seen.has(el)) return fit(el);
     seen.add(el);
-    if (ro) ro.observe(el);
+    // 겉 상자(border-box)를 본다 (D-596): fit이 바꾸는 안쪽 여백은 내용 상자를 줄여, 내용 상자를 보면 같은 프레임에 또 알림이 와
+    // 「ResizeObserver loop completed with undelivered notifications」가 카드마다 쌓였다(실기기 원격 기록: 대국 시작 · 보상마다 ~15건)
+    if (ro) ro.observe(el, { box: 'border-box' });
     else fit(el);
   });
 };
