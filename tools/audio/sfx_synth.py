@@ -595,6 +595,189 @@ def s_burn(rng, v):
     return hall(x, 0.08, 0.2)
 
 
+# ---------------------------------------------------------------- D-630: 무음이던 사건 (컷 전환 · 크레딧 · 승급 · 컷인 · 카드 날림 · 방열판 깨짐 · 승패 맺음)
+def sweep_noise(dur, rng, f0, f1, q=0.5, attack=0.3):
+    """띠 잡음이 f0 → f1로 쓸려 간다 (바람 · 휙). attack = 길이 중 차오르는 몫."""
+    t = t_axis(dur)
+    x = noise(dur, rng)
+    out = np.zeros_like(x)
+    seg = int(0.01 * SR)
+    for i in range(0, len(x), seg):
+        k = i / max(1, len(x) - 1)
+        fc = f0 * (f1 / f0) ** k
+        lo, hi = fc * (1 - q / 2), fc * (1 + q / 2)
+        out[i:i + seg] = np.asarray(bp(x[max(0, i - 400):i + seg], lo, hi))[-len(x[i:i + seg]):]
+    e = np.clip(t / (dur * attack), 0, 1) ** 2 * np.clip((dur - t) / (dur * (1 - attack)), 0, 1) ** 1.5
+    return S(out) * e
+
+
+def bells(f, dur, rng, k=0.2, gain=1.0):
+    """공장 종 하나 (짧게 쥐어 막은)."""
+    amps = [0.4, 1, 0.5, 0.35, 0.5, 0.25, 0.2, 0.15, 0.1, 0.08]
+    taus = [k * s for s in (1.2, 1.0, 0.75, 0.6, 0.6, 0.4, 0.3, 0.25, 0.2, 0.15)]
+    return modal([f * r for r in BELL], amps, taus, dur, rng, 0.002) * gain
+
+
+def whistle(f, dur, rng, attack=0.05, release=0.2):
+    """증기 기적 (배음 셋 + 김)."""
+    t = t_axis(dur)
+    ph = 2 * np.pi * np.cumsum(f * (1 + 0.004 * np.sin(2 * np.pi * 5.5 * t))) / SR
+    x = (np.sin(ph) + 0.45 * np.sin(2 * ph + 0.4) + 0.2 * np.sin(3 * ph + 1.1)) * 0.3
+    x = x + hiss(dur, rng, 2500, 8000, attack) * 0.25
+    return x * np.clip(t / attack, 0, 1) * np.clip((dur - t) / release, 0, 1)
+
+
+def s_wipe(rng, v):
+    # 컷 전환 (디더 · 조리개 · 사선 · 암전): 무거운 먹 천이 쓸려 덮인다 — 낮은 바람 + 끝에 철 걸쇠 똑
+    x = buf(0.3)
+    place(x, sweep_noise(0.24, rng, [500, 620][v], [2200, 2600][v], 0.6, 0.55) * 0.9, 0)
+    place(x, tick(rng, 1900, 0.04, 0.007) * 0.35 + thud(260, 150, 0.06, 0.012, rng) * 0.35, 0.22)
+    return hall(x, 0.06, 0.15)
+
+
+def s_melt(rng, v):
+    # 쇳물 전환: 국자에서 쇳물이 쏟아진다 — 꿀렁이는 낮은 흐름 + 김 + 타닥
+    d = 0.5
+    t = t_axis(d)
+    pour = lp(noise(d, rng), 420) * (1 + 0.55 * np.sin(2 * np.pi * 11 * t)) * np.clip(t / 0.06, 0, 1) * np.exp(-np.clip(t - 0.2, 0, None) / 0.12) * 2.2
+    x = pour + hiss(d, rng, 2200, 8000, 0.08, 0.14) * 0.45 + crackle(d, rng, 25, 1800, 7000) * 0.5 * np.exp(-t / 0.2)
+    return hall(x, 0.08, 0.2)
+
+
+def s_page(rng, v):
+    # 종이 쪽이 넘어간다: 바스락 휙 → 끝에 종이가 내려앉는 탁
+    d = 0.2
+    t = t_axis(d)
+    x = paper(d, rng, [1600, 1900][v], 7500, 30, 0.07) * (np.sin(np.pi * np.clip(t / (d * 0.85), 0, 1)) ** 0.8) * 0.9
+    x = place(x, paper(0.03, rng, 900, 4000, 6, 0.006) * 0.8 + thud(420, 260, 0.03, 0.007, rng) * 0.25, 0.16)
+    return hall(x, 0.04, 0.1)
+
+
+def s_title(rng, v):
+    # 장 제목 카드: 황동 명판이 걸이에 걸린다 — 쿵 + 쥐어 막은 낮은 징
+    x = buf(0.55)
+    place(x, thud(170, 70, 0.22, 0.04, rng) * 0.9 + strike(0.03, rng, 600, 5000, 0.005) * 0.6, 0)
+    place(x, bells(220, 0.5, rng, 0.14) * 0.55, 0.005)
+    place(x, iron(880, 0.15, rng, 0.03, 1.2, BAR) * 0.2, 0.0)
+    return hall(x, 0.12, 0.3)
+
+
+def s_reel(rng, v):
+    # 크레딧: 영사기 릴이 돌기 시작한다 — 걸쇠 철컥 → 고르게 도는 톱니 + 낮은 모터 웅웅
+    d = 0.7
+    t = t_axis(d)
+    x = buf(d)
+    place(x, thud(220, 110, 0.08, 0.015, rng) * 0.6 + tick(rng, 1700, 0.04, 0.008) * 0.6, 0)
+    place(x, ratchet(rng, 12, 0.55, 2400, 0.85, 0.04, lambda p: 0.5 + 0.5 * np.sin(np.pi * min(1, p * 1.2))) * 0.55, 0.08)
+    ph = 2 * np.pi * np.cumsum(55 + 25 * np.clip(t / 0.3, 0, 1)) / SR
+    hum = (np.sin(ph) + 0.4 * np.sin(2 * ph) + 0.2 * np.sin(3 * ph)) * np.clip((t - 0.05) / 0.2, 0, 1) * np.clip((d - t) / 0.2, 0, 1) * 0.25
+    x = x + hum
+    return hall(x, 0.06, 0.15)
+
+
+def s_promo(rng, v):
+    # 판 위 승급: 황동 고리가 탁 채워지고 종 막대 셋이 오른다 (5도 · 옥타브)
+    x = buf(0.42)
+    place(x, iron(1500, 0.08, rng, 0.02, 1.6, BAR) * 0.5 + strike(0.015, rng, 2500, 11000) * 0.6, 0)
+    for i, n in enumerate((0, 7, 12)):
+        f = 1046.5 * 2 ** (n / 12)
+        place(x, modal([f, f * 2.76, f * 5.4], [1, 0.22, 0.07], [0.07, 0.03, 0.015], 0.25, rng) * 0.5, 0.04 + i * 0.05)
+    return hall(x, 0.1, 0.2)
+
+
+def s_forge(rng, v):
+    # 승급대 앞: 용광로가 낮게 울컥이고 사슬이 멀리 끌린다
+    d = 0.8
+    t = t_axis(d)
+    roar = lp(noise(d, rng), 180) * np.clip(t / 0.25, 0, 1) * np.clip((d - t) / 0.3, 0, 1) * (1 + 0.3 * np.sin(2 * np.pi * 3 * t)) * 2.4
+    x = roar + iron(98, d, rng, 0.25, 0.5) * 0.35 * np.clip(t / 0.1, 0, 1)
+    ch = buf(d)
+    for i in range(7):
+        f = rng.uniform(1500, 3200)
+        place(ch, modal([f, f * 1.6], [1, 0.5], [0.02, 0.012], 0.07, rng) * rng.uniform(0.3, 0.8), 0.2 + i * 0.06 + rng.uniform(0, 0.02))
+    return hall(x + lp(ch, 3000) * 0.3, 0.12, 0.3, 2500)
+
+
+def s_crown(rng, v):
+    # 왕관을 쓴다: 무거운 금 왕관이 내려앉아 죄인다 — 쿵 + 걸쇠 + 낮은 종 + 쇳물 김
+    x = buf(0.9)
+    place(x, thud(130, 45, 0.35, 0.07, rng) * 1.1 + strike(0.03, rng, 800, 6000, 0.006) * 0.8, 0)
+    place(x, iron(330, 0.4, rng, 0.08, 1.0, PLATE) * 0.45, 0)
+    place(x, ratchet(rng, 3, 0.07, 2000) * 0.5, 0.1)
+    place(x, bells(261.6, 0.7, rng, 0.2) * 0.6 + bells(392, 0.7, rng, 0.16) * 0.3, 0.16)
+    place(x, hiss(0.4, rng, 1500, 7000, 0.05) * 0.25, 0.2)
+    return hall(x, 0.14, 0.35)
+
+
+def s_throw(rng, v):
+    # 왕관을 던진다: 쇠 바닥에 튀며 구른다 — 튈 때마다 짧아지는 황동 핑 + 마지막 덜그럭
+    x = buf(0.75)
+    at, gap, g = 0.0, 0.17, 1.0
+    for i in range(5):
+        f = 880 * rng.uniform(0.95, 1.08)
+        place(x, (iron(f, 0.2, rng, 0.05 * g + 0.01, 1.4, BAR) * 0.6 + thud(260, 140, 0.05, 0.01, rng) * 0.5 + strike(0.012, rng, 2000, 9000) * 0.5) * g, at)
+        at += gap
+        gap *= 0.62
+        g *= 0.68
+    place(x, ratchet(rng, 6, 0.12, 2600, 1.0, 0.2, lambda p: 0.4 * (1 - p)) * 0.6, at)
+    return hall(x, 0.1, 0.25)
+
+
+def s_slash(rng, v):
+    # 컷인 내리꽂힘: 칼날이 공기를 가르고(위 → 아래로 쓸리는 김) 쇠판에 박힌다
+    x = buf(0.4)
+    place(x, sweep_noise(0.1, rng, 7000, 1800, 0.7, 0.7) * 1.0, 0)
+    place(x, iron(560, 0.28, rng, 0.06, 1.8, PLATE) * 0.6 + iron(1520, 0.2, rng, 0.04, 2.0, BAR) * 0.25, 0.09)
+    place(x, thud(160, 50, 0.25, 0.05, rng) * 1.0 + strike(0.03, rng, 1200, 12000, 0.004) * 1.0, 0.09)
+    return hall(drive(x, 2.0), 0.12, 0.3)
+
+
+def s_fling(rng, v):
+    # 명령서를 날린다: 종이가 휙 — 짧은 띠 잡음 쓸림 + 종이 결
+    d = 0.16
+    x = sweep_noise(d, rng, [1400, 1700][v], [5200, 6000][v], 0.7, 0.35) * 0.8
+    x += paper(d, rng, 2500, 8000, 10, 0.05) * 0.35
+    return hall(x, 0.04, 0.1)
+
+
+def s_vent(rng, v):
+    # 방열판이 깨진다: 쇠 날개가 우두둑 꺾이고 갇혀 있던 김이 확 빠진다
+    x = buf(0.42)
+    place(x, thud(240, 90, 0.18, 0.03, rng) * 0.8 + strike(0.03, rng, 1000, 9000, 0.006) * 0.9, 0)
+    place(x, iron(720, 0.2, rng, 0.04, 1.0, PLATE) * 0.35, 0)
+    place(x, shards(rng, 12, 0.12, 1400, 4200, (0.01, 0.03), 0.8), 0.01)
+    place(x, hiss(0.32, rng, 1800, 9000, 0.01, 0.09) * 0.7, 0.03)
+    return hall(x, 0.08, 0.2)
+
+
+def s_fanfare(rng, v):
+    # 승리 맺음 (음악이 아니라 효과음): 황동 종 막대 넷이 오르고(솔 도 미 솔) 증기 기적 두 줄이 화음을 받친다
+    x = buf(2.1)
+    notes = (392.0, 523.25, 659.25, 783.99)
+    for i, f in enumerate(notes):
+        last = i == len(notes) - 1
+        place(x, modal([f, f * 2.76, f * 5.4], [1, 0.25, 0.08], [0.5 if last else 0.12, 0.12, 0.04], 1.2 if last else 0.4, rng) * 0.55, i * 0.12)
+        place(x, strike(0.01, rng, 3000, 12000) * 0.25, i * 0.12)
+    place(x, bells(523.25, 1.2, rng, 0.35) * 0.4, 0.36)
+    place(x, (whistle(523.25, 1.1, rng, 0.06, 0.4) + whistle(783.99, 1.1, rng, 0.06, 0.4) * 0.7) * 0.5, 0.4)
+    place(x, thud(150, 60, 0.3, 0.06, rng) * 0.6, 0.36)
+    return hall(x, 0.16, 0.4)
+
+
+def s_dirge(rng, v):
+    # 패배 맺음: 낮은 종이 셋 내려가고(미 도 라) 시계 톱니가 느려져 멎은 뒤 김이 한숨처럼 빠진다
+    x = buf(2.1)
+    for i, f in enumerate((164.8, 130.8, 110.0)):
+        last = i == 2
+        place(x, bells(f, 1.2 if last else 0.6, rng, 0.38 if last else 0.18) * (0.6 if last else 0.5), i * 0.32)
+        place(x, thud(110, 40, 0.25, 0.05, rng) * 0.4, i * 0.32)
+    place(x, ratchet(rng, 6, 0.7, 1800, 0.5, 0.05, lambda p: 0.6 * (1 - 0.7 * p)) * 0.4, 0.1)
+    t = t_axis(0.9)
+    sigh = bp(noise(0.9, rng), 700, 3500) * np.clip(t / 0.1, 0, 1) * np.exp(-t / 0.3) * 0.35
+    place(x, sigh, 0.95)
+    return hall(x, 0.16, 0.4, 2500)
+
+
 # 이름: (함수, 변형 수) — src/data/sfx.ts SFX_BANK와 같은 이름 · 같은 수
 BANK = {
     'tap': (s_tap, 3), 'tick': (s_tick, 2), 'lift': (s_lift, 2), 'land': (s_land, 3),
@@ -605,6 +788,10 @@ BANK = {
     'wind': (s_wind, 2), 'coin': (s_coin, 3), 'spend': (s_spend, 1), 'buy': (s_buy, 1), 'loss': (s_loss, 1),
     'rare': (s_rare, 1), 'jackpot': (s_jackpot, 1), 'stamp': (s_stamp, 2), 'awaken': (s_awaken, 1),
     'step': (s_step, 1), 'slot': (s_slot, 1), 'boss': (s_boss, 1), 'phase': (s_phase, 1), 'win': (s_win, 1), 'lose': (s_lose, 1),
+    # D-630
+    'wipe': (s_wipe, 2), 'melt': (s_melt, 1), 'page': (s_page, 2), 'title': (s_title, 1), 'reel': (s_reel, 1),
+    'promo': (s_promo, 1), 'forge': (s_forge, 1), 'crown': (s_crown, 1), 'throw': (s_throw, 1), 'slash': (s_slash, 1),
+    'fling': (s_fling, 2), 'vent': (s_vent, 1), 'fanfare': (s_fanfare, 1), 'dirge': (s_dirge, 1),
 }
 
 # 파일 전체 길이 상한(초): 이 안에서 −60 dB까지 내려가도록 끝을 닫는다 (D-545).
@@ -615,6 +802,9 @@ LIMIT = {
     'hit': 0.28, 'crit': 0.35, 'kinghit': 0.35, 'hurt': 0.32, 'kill': 0.35, 'check': 0.35, 'parry': 0.32, 'stun': 0.35,
     'push': 0.32, 'threat': 0.35, 'wind': 0.3, 'buy': 0.4, 'loss': 0.4, 'stamp': 0.3,
     'rare': 0.55, 'jackpot': 0.85, 'awaken': 0.7, 'boss': 0.6, 'phase': 0.7, 'win': 0.95, 'lose': 1.0,
+    # D-630: 전환 · 창 · 카드 ≤ 0.3 · 장면(크레딧 · 승급대 · 왕관) ≤ 0.9 · 승패 맺음(효과음 — 음악 트랙이 아니다) ≤ 2.2
+    'wipe': 0.3, 'melt': 0.5, 'page': 0.22, 'title': 0.55, 'reel': 0.7, 'promo': 0.42, 'forge': 0.8, 'crown': 0.9,
+    'throw': 0.75, 'slash': 0.4, 'fling': 0.18, 'vent': 0.42, 'fanfare': 2.1, 'dirge': 2.1,
 }
 # ---------------------------------------------------------------- 크기 맞춤
 def k_weight(x):
@@ -686,7 +876,10 @@ def main():
         os.makedirs(keep, exist_ok=True)
     report = []
     with tempfile.TemporaryDirectory() as tmp:
+        only = os.environ.get('SFX_ONLY', '').split(',') if os.environ.get('SFX_ONLY') else None
         for name, (fn, n) in BANK.items():
+            if only and name not in only:
+                continue
             for v in range(n):
                 rng = np.random.default_rng(sum(map(ord, name)) * 131 + v)
                 x = finish(fn(rng, v), LIMIT[name])
