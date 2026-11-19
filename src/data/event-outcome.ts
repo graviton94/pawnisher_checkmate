@@ -16,7 +16,7 @@ export const EVENT_OUTCOME: Record<string, Record<string, Outcome>> = {
     '0:0': { scene: '렌치가 관절을 하나씩 다시 조인다. 축이 한결 단단하게 물린다.', line: '“오래 싸운 놈일수록 손이 기억하지.”' },
   },
   gambler: {
-    '0:0': { scene: '동전이 발굽 위에 선다. 앞면이다.', line: '“칫, 운명이 네 편이군. 가져가라.”' },
+    '0:0': { scene: '동전이 발굽 위에 선다. 앞면이다.', line: '“쳇, 운명이 네 편이군. 가져가라.”' },
     '0:1': { scene: '동전이 발굽 위에 선다. 뒷면이다.', line: '“운명은 공평하지. 발굽도 공평하고.”' },
   },
   apprentice: {

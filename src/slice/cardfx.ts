@@ -12,6 +12,7 @@
 import { devPerCss } from '../view/vz';
 import { calmMotion } from '../prefs/motion';
 import { CARD_FX } from '../data/fx';
+import { sfxFor } from '../audio/sfx';
 
 /** 화면(CSS px) 위 점 */
 export interface Pt { x: number; y: number }
@@ -231,6 +232,8 @@ export const fly = (from: Pt, to: Pt, iconSrc: string | null, trail: 'brass' | '
   if (calmMotion()) return Promise.resolve();
   return new Promise((done) => {
     const { lead, fly: ms } = CARD_FX;
+    // 날아오르는 순간 종이 휙 (D-630) — 예비 동작 뒤
+    window.setTimeout(() => sfxFor('cardFling'), lead);
     const u = dotPx;
     const S = 16;
     const dist = Math.hypot(to.x - from.x, to.y - from.y);

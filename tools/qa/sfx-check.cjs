@@ -5,6 +5,9 @@ module.exports = async (pg, shot) => {
   const BASE = process.env.OBSERVE_URL || 'http://localhost:4173/';
   const wait = (ms = 500) => pg.waitForTimeout(ms);
   const bad = [];
+  const errs = [];
+  pg.on('console', (m) => { if (m.type() === 'error' && /audio|sfx|decode|AudioContext/i.test(m.text())) errs.push(m.text()); });
+  pg.on('pageerror', (e) => errs.push(e.message));
   const got = new Set();
   pg.on('response', (r) => {
     const u = r.url();
@@ -59,6 +62,22 @@ module.exports = async (pg, shot) => {
   counts.apFx = await stage('apFx', () => { window.sliceApi.startAt(1, 'battle'); setTimeout(() => window.sliceApi.apFx(), 1500); }, 3000);
   counts.boss = await stage('bossIntro', () => window.sliceApi.bossIntroOf('plate', 1), 2500);
   await shot('sfx-3-boss');
+  // D-630: 무음이던 사건 — 창 열고 닫기 · 크레딧 · 승급대 · 2단계 컷인 · 컷 전환 · 승패 맺음 (버퍼 길이로 새 소리를 알아본다)
+  counts.winOpen = await stage('winOpen', () => window.sliceApi.win('s'), 900);
+  counts.winClose = await stage('winClose', () => window.sliceApi.closeWinNow?.() ?? document.getElementById('overlay')?.click(), 900);
+  counts.credits = await stage('credits', () => window.sliceApi.credits(8), 1500);
+  counts.creditsPage = await stage('creditsPg', () => document.querySelector('[data-cr-next]')?.click(), 900);
+  await pg.evaluate(() => document.querySelector('.credits')?.remove());
+  counts.p2 = await stage('p2Rise', () => window.sliceApi.p2Rise('plate'), 2600);
+  counts.promote = await stage('promote', () => window.sliceApi.promote(1), 1500);
+  counts.crown = await stage('crown', () => document.querySelector('.promotion [data-promote]')?.click(), 1200);
+  // 컷 전환: 프롤로그 첫 컷(제목 카드) → 쇳물 전환 컷 — 누름으로 넘긴다
+  counts.cut = await stage('cut', () => { void window.sliceApi.pro(); }, 1500);
+  const c0 = await pg.evaluate(() => window.__sfx.plays.length);
+  for (let k = 0; k < 8; k++) { await pg.touchscreen.tap(450, 200); await wait(700); }
+  const cp = await pg.evaluate((k) => window.__sfx.plays.slice(k), c0);
+  console.log(`SFX cutTaps   ${cp.length}회`, cp.map((x) => `${x.dur}ms@${x.rate}`).join(' '));
+  await pg.evaluate(() => document.querySelectorAll('.prologue, .promotion').forEach((e) => e.remove()));
   // 설정: 효과음 크기를 내리면 주 음량이 따라 내려가고, 끄면 0 (D-530)
   await pg.evaluate(() => window.sliceApi.settingsWin());
   await wait(500);
@@ -75,6 +94,7 @@ module.exports = async (pg, shot) => {
   await click('[data-vol="sfx"] [data-mute]');
   console.log('VOLUME master gains (기본 → 한 칸 내림 → 끔)', JSON.stringify(v0), JSON.stringify(v1), JSON.stringify(v2), '끈 뒤 효과음 재생', nAfter);
   const state = await pg.evaluate(() => window.__sfx.ctx?.state);
+  console.log('AUDIO ERRORS', errs.length ? errs.join(' | ') : '없음');
   console.log('CTX state', state, '받은 파일', got.size, '오류', bad.length ? bad.join(', ') : '없음');
   await shot('sfx-4-settings');
 };

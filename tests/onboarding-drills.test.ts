@@ -56,6 +56,25 @@ describe('입문 시험대 (P-C D-502)', () => {
     expect(b.s.pieces.filter((p) => p.side === 0).map((p) => p.hp)).toEqual(hp0);
   });
 
+  it('B2 태엽과 연쇄 (D-610): 적은 예고하지 않고, 같은 폰을 두 번 쳐 연쇄 1 → 3 · 쓰러뜨리지 않아 태엽 1 남음(지휘 불가) → 턴 끝에 태엽 셋 · 연쇄 0', () => {
+    const b = make(DRILLS[2]);
+    expect(DRILLS[2].drill).toBe('t');
+    expect(b.intents).toEqual([]);
+    expect(typeof playCard(b, 0, id(b, 'P'), { x: 1, y: 2 })).toBe('object');
+    expect(b.kills).toBe(1);
+    const li = b.hand.indexOf('leap');
+    expect(cardMoves(b, li, id(b, 'N'))).toContainEqual({ x: 4, y: 2 });
+    expect(typeof playCard(b, li, id(b, 'N'), { x: 4, y: 2 })).toBe('object');
+    expect(b.kills).toBe(3);
+    expect(at(b, 2, 3)!.hp).toBeGreaterThan(0);
+    expect(b.ap).toBe(1);
+    expect(costOf(b, b.hand.indexOf('order'))).toBe(2);
+    endTurn(b, true);
+    expect(b.turn).toBe(2);
+    expect(b.ap).toBe(3);
+    expect(b.kills).toBe(0);
+  });
+
   it('C 킹 잡기: 체크 → 한 대 더 · 되감기 실습 환급은 정산에서 톱니를 깎지 않는다', () => {
     const b = make(INTRO[0]);
     expect(typeof playCard(b, 0, id(b, 'N'), { x: 4, y: 2 })).toBe('object');

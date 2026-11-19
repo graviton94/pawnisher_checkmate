@@ -1420,9 +1420,10 @@ body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has
 .ld-tip.win.ld-in { animation: m3in 400ms both; transform-origin: 50% 100%; }
 .ld-tip.win .ld-more { margin: 0; text-align: center; }
 /* 입문 시험대: 그 판의 생각에 필요한 HUD만 연다 — 나머지는 자리를 지킨 채 숨긴다(레이아웃이 흔들리지 않게).
-   A 치는 칸 = 손패 · 판만 / B 예고와 막기 = + 태엽 · 턴 표시 · 적의 수 · 턴 끝 / C 킹 잡기 = 전부(되감기 포함) */
+   A 치는 칸 = 손패 · 판만 / B 예고와 막기 = + 턴 표시 · 적의 수 · 턴 끝 / B2 태엽과 연쇄(D-610) = + 태엽 · 연쇄 줄 · 속전 칸 / C 킹 잡기 = 전부(되감기 포함) */
 body[data-drill='a'] #vials, body[data-drill='a'] #right > *, body[data-drill='a'] #deckrow { visibility: hidden; }
-body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='b'] #parts, body[data-drill='b'] #deckrow { visibility: hidden; }
+body[data-drill='b'] #vials, body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='b'] #parts, body[data-drill='b'] #deckrow { visibility: hidden; }
+body[data-drill='t'] #intents, body[data-drill='t'] #btn-rewind, body[data-drill='t'] #parts, body[data-drill='t'] #deckrow { visibility: hidden; }
 
 /* 용어 아이콘 (TI-01 · 02 · D-507): 32도트를 정수 1배(16칸 줄이지 않고 32px) — 사전 · 사건 정보 쪽 머리 */
 .term-ico { flex: none; display: inline-block; width: 32px; height: 32px; margin: 0; background: center / 32px 32px no-repeat; image-rendering: pixelated; vertical-align: middle; }
