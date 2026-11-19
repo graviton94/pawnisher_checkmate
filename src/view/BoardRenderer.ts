@@ -210,7 +210,7 @@ const procSheetKey = (suf: string) => `ui-proc-sheet${suf}`;
 const procFrame = (name: string, dark: boolean) => PROC_TILES.indexOf(name.replace(/^proc-/, '')) + (dark ? PROC_TILES.length : 0);
 /** 컨베이어 흐름 한 프레임 (ms) — 4프레임 계단 애니(D-216: 선형 이동 대신 steps) */
 const CONVEYOR_FRAME_MS = 180;
-const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'tile-light-binspect', 'tile-dark-binspect', 'tile-light-bmagnet', 'tile-dark-bmagnet', 'tile-light-balarm', 'tile-dark-balarm', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'chip-weak', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
+const BOARD_IMAGES = ['tile-light', 'tile-dark', 'tile-light-a1', 'tile-dark-a1', 'tile-light-a2', 'tile-dark-a2', 'tile-light-a3', 'tile-dark-a3', 'tile-light-bplate', 'tile-dark-bplate', 'tile-light-bspawn', 'tile-dark-bspawn', 'tile-light-bthorns', 'tile-dark-bthorns', 'tile-light-bgilded', 'tile-dark-bgilded', 'tile-light-binspect', 'tile-dark-binspect', 'tile-light-bmagnet', 'tile-dark-bmagnet', 'tile-light-balarm', 'tile-dark-balarm', 'last-move', 'chip-flame', 'chip-claw', 'chip-crown', 'chip-skull', 'chip-stun', 'chip-shock', 'chip-stamp', 'chip-magnet', 'chip-weak', 'crack', 'fallen', 'range', 'range-enemy', 'select', 'cond', 'move-dot', 'target-enemy', 'kill', 'check', 'stronghold', 'stronghold-ally', 'stronghold-enemy', 'stronghold-flag', 'stronghold-ally-flag', 'stronghold-enemy-flag', 'variant-conveyor', 'variant-hammer', 'variant-mirror', 'variant-radiator', 'variant-boiler', 'variant-spring', 'variant-scope', 'variant-turret', 'variant-command', ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [`badge-a${n}`, `badge-e${n}`])];
 const boardKey = (name: string) => `ui-${name}`;
 /** 주인공 킹 그림 (86×106 — 폰 86px 위에 왕관 20px) */
 
@@ -316,6 +316,11 @@ class BoardScene extends Phaser.Scene {
   staggeredIds: number[] = [];
   /** 기어 쇼크를 먹은 내 기물 (D-229) — 오른쪽 위 번개 딱지 */
   shockedIds: number[] = [];
+  /** 조건이 켜진 내 기물 (D-592) — 발치 램프 · render가 모델에서 받는다 */
+  condIds: number[] = [];
+  /** 지난 그리기의 조건 표시 (D-592) — 새로 켜진 것만 계단 팝, 꺼진 것은 2단 디더 퇴장 */
+  private condSeen = new Map<string, { x: number; y: number; size: number; key: string }[]>();
+  private condNow = new Map<string, { x: number; y: number; size: number; key: string }[]>();
   /** 새 반장 표식 (D-274): 불량 도장 · 끌려갈 기물 — 내 기물 왼쪽 위 */
   stampId: number | null = null;
   pullId: number | null = null;
@@ -339,6 +344,8 @@ class BoardScene extends Phaser.Scene {
     for (const n of BOARD_IMAGES) this.load.image(boardKey(n), `ui/board/${n}.png`);
     for (const suf of PROC_SHEETS) this.load.spritesheet(procSheetKey(suf), `ui/board/proc-sheet${suf}.png`, { frameWidth: 20, frameHeight: 20 });
     this.load.image(boardKey('skull'), 'ui/hud/skull-small.png');
+    // 조건 램프 (D-592): 부품 상태 표지 ready.png를 그대로 빌린다 — 새 그림 없음
+    this.load.image(boardKey('lamp'), 'ui/part-state/ready.png');
     if (!this.textures.exists('icon-shield16')) this.load.image('icon-shield16', 'ui/icons16/intent-shield.png');
     for (const name of ['reticle', 'star', 'crown', 'flame', 'claw', 'skull']) if (!this.textures.exists(`icon-${name}`)) this.load.image(`icon-${name}`, `ui/icons/${name}.png`);
   }
@@ -774,6 +781,39 @@ class BoardScene extends Phaser.Scene {
     this.time.delayedCall(150, () => im.active && im.setY(y0));
   }
 
+  /**
+   * 조건 표시 하나 (D-592 — 황동 모서리 · 램프): 이번 그리기에 적어 두고, 지난 그리기에 없던 것이면 계단 3프레임 팝 + 황동 번쩍 한 번(D-216 · D-180).
+   * 움직임 줄이기면 바로 켠다. 배율은 정수배만 지난다(×2 → ×1).
+   */
+  private condMark(key: string, im: Phaser.GameObjects.Image, ox = 0, oy = 0): void {
+    const list = this.condNow.get(key) ?? [];
+    list.push({ x: im.x + ox, y: im.y + oy, size: im.displayWidth, key: im.texture.key });
+    this.condNow.set(key, list);
+    if (this.condSeen.has(key) || this.calm) return;
+    const sx = im.scaleX, sy = im.scaleY, x0 = im.x, y0 = im.y, d = this.tile / BOARD_DOTS, w = im.displayWidth;
+    // 1프레임: 두 배로 들림 + 밝은 황동 번쩍 (원점 0,0 — 가운데 기준으로 들리게 자리도 옮긴다)
+    im.setScale(sx * 2, sy * 2).setPosition(x0 - w / 2, y0 - w / 2).setTintFill(0xffe9a8);
+    this.time.delayedCall(50, () => im.active && im.setScale(sx, sy).setPosition(x0, y0 + d).clearTint());
+    this.time.delayedCall(100, () => im.active && im.setPosition(x0, y0));
+  }
+  /** 그리기 끝: 꺼진 조건 표시는 2단 도트 디더로 퇴장 (반 칸 체크 무늬로 비운 뒤 사라짐 — 단순 페이드 없음, D-216) */
+  private condFlush(): void {
+    const gone = [...this.condSeen.entries()].filter(([k]) => !this.condNow.has(k));
+    this.condSeen = this.condNow;
+    this.condNow = new Map();
+    if (this.calm) return;
+    const d = this.tile / BOARD_DOTS;
+    for (const [, list] of gone)
+      for (const m of list) {
+        const im = this.add.image(m.x, m.y, m.key).setOrigin(0, 0).setDisplaySize(m.size, m.size).setDepth(1.75);
+        const g = this.make.graphics({}, false);
+        g.fillStyle(0xffffff);
+        for (let y = 0; y < m.size; y += d) for (let x = 0; x < m.size; x += d) if (((x + y) / d) % 2 < 1) g.fillRect(m.x + x, m.y + y, d, d);
+        this.time.delayedCall(50, () => im.active && im.setMask(g.createGeometryMask()));
+        this.time.delayedCall(100, () => { im.destroy(); g.destroy(); });
+      }
+  }
+
   /** 판 칸 · 무너진 칸 · 붕락 균열 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
   drawTiles(state: BattleState): void {
     const t = this.tile;
@@ -959,6 +999,13 @@ class BoardScene extends Phaser.Scene {
     }
     if (p.side === 0 && p.id === this.stampId) chipAt('stamp', true);
     else if (p.side === 0 && p.id === this.pullId) chipAt('magnet', true);
+    // 조건 램프 (D-592): 처치 기물 태엽 0 · 마지막 숨 · 마지막 축이 켜진 내 기물 — 왼쪽 아래(HP 줄 위), 딱지와 같은 정수 크기
+    else if (p.side === 0 && this.condIds.includes(p.id) && !(p.weak && p.weak > 1)) {
+      const size = chipSize;
+      const lamp = this.add.image(snap(t * 0.02), snap(t - size - t * 0.16), boardKey('lamp')).setOrigin(0, 0).setDisplaySize(size, size);
+      marks.push(lamp);
+      this.condMark(`piece:${p.id}`, lamp, w.x, w.y);
+    }
     // 도트 기물 (머리 강조형 16×16) — 받침 위에 살짝 올려 그린다
     const glyph = this.add.image(t / 2, 0, this.glyphKey(p.id, p.asPawn ? 'P' : p.type, p.side, { form: p.asPawn ? undefined : p.form, giant: !!p.giant }));
     if (!p.giant) {
@@ -1224,6 +1271,7 @@ class BoardScene extends Phaser.Scene {
   render(m: BoardModel): void {
     this.renderSeq++;
     this.clearDynamic();
+    this.condIds = m.condIds ?? [];
     this.procTiles = m.proc ?? [];
     this.drawTiles(m.state);
     const t = this.tile;
@@ -1291,6 +1339,12 @@ class BoardScene extends Phaser.Scene {
         if (hit) {
           this.anim.gears.push({ x: w.x, y: w.y, kind: hit.kill ? 'kill' : 'ally' });
           if (hit.kill) img('kill', w.x + 7 * d, w.y + 7 * d, 7 * d, 1.7).setTintFill(0xfacc15);
+          // 조건 칸 (D-592): 황동 L자 모서리(select 재칠 cond.png) + 오른쪽 위 램프 — 과녁 · 금색 처치를 가리지 않는 모서리 자리
+          if (hit.cond) {
+            const key = `cell:${p.x},${p.y}`;
+            this.condMark(key, img('cond', w.x, w.y, t, 1.72));
+            this.condMark(key, img('lamp', w.x + 12 * d, w.y, 8 * d, 1.74));
+          }
         } else if (isPending) img('select', w.x, w.y, t, 1.7, 0.6);
         else img('move-dot', w.x + 8 * d, w.y + 8 * d, 4 * d);
       }
@@ -1348,6 +1402,7 @@ class BoardScene extends Phaser.Scene {
       }
 
     full.forEach((mv, i) => this.badge(stepBadge(m.state, m.virtual, mv), i + 1, m.pending !== null && i === full.length - 1 ? 0.55 : 1, !mine));
+    this.condFlush();
   }
 
   /**

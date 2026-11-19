@@ -218,6 +218,7 @@ export const PRELOAD: string[] = [
   "ui/board/chip-stamp.png",
   "ui/board/chip-stun.png",
   "ui/board/chip-weak.png",
+  "ui/board/cond.png",
   "ui/board/crack.png",
   "ui/board/fallen.png",
   "ui/board/kill.png",

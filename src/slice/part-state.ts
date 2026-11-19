@@ -1,11 +1,15 @@
-import { canPlay, cardPieces, cardMoves, isInstant, playCard, type SliceBattle } from './battle';
+import { canPlay, cardPieces, cardMoves, isInstant, partCond, playCard, type SliceBattle } from './battle';
 import { COMMANDS } from './cards';
 import { PART_NUM, type SlicePartId } from './parts';
+import { partCondAnywhere } from './card-state';
+import { COND_TEXT } from '../data/hud';
 
 export type PartState = 'waiting' | 'ready' | 'spent';
 export interface PartStatus { state: PartState; detail: string }
 export const PART_STATE_LABEL: Record<PartState, string> = { waiting: '조건 대기', ready: '발동 가능', spent: '이번 턴 소진' };
 const TRACKED_PARTS = ['horseshoe','relayGear','relaySeal','sharedPlate','siegeLatch','gameRecord','pinNeedle','recoilSpring','whistle','queenFan','fuse','tally'] as const;
+/** 상태(면) · 지속(동안) 부품 (D-592): 엔진 partCond로 지금 켜졌는지 본다 */
+export const STATE_PARTS = ['lastAxle', 'lastBreath', 'bossBane', 'vise', 'calipers', 'forkGear'] as const;
 
 /** 실제 턴별 소모 기록이 있는 부품만 표시한다. 상시 효과에는 임의의 소진을 붙이지 않는다. */
 export const partStatuses = (b: SliceBattle): Partial<Record<SlicePartId, PartStatus>> => {
@@ -21,8 +25,15 @@ export const partStatuses = (b: SliceBattle): Partial<Record<SlicePartId, PartSt
           : id === 'fuse' || id === 'tally' ? `연쇄 ${b.kills}/${id === 'fuse' ? PART_NUM.fuseAt : PART_NUM.tallyAt}` : '실제 낼 수 있는 명령으로 판정';
     out[id] = { state: spent ? 'spent' : 'waiting', detail: progress };
   }
+  // 상태 · 지속 부품 (D-592): 지금 켜졌으면 ready, 아니면 waiting — 「턴에 한 번」이 없으니 소진은 없다(D-443)
+  for (const id of STATE_PARTS) {
+    if (!b.parts.includes(id)) continue;
+    const on = id === 'vise' || id === 'calipers' || id === 'forkGear' ? partCondAnywhere(b, id)
+      : b.s.pieces.some((p) => p.side === 0 && partCond(b, p.id).includes(id));
+    out[id] = { state: on ? 'ready' : 'waiting', detail: on ? COND_TEXT.part[id] : COND_TEXT.part.off };
+  }
   if (b.s.winner !== null || !Object.keys(out).length) return {};
-  const waiting = () => Object.values(out).some(s => s?.state === 'waiting');
+  const waiting = () => TRACKED_PARTS.some(id => out[id]?.state === 'waiting');
   // 표시 전용 복제에서 실제 실행을 시험한다. 효과 조건을 UI에 다시 구현하지 않는다.
   const probe = (i: number, pieceId?: number, to?: {x: number; y: number}) => {
     const copy: SliceBattle = JSON.parse(JSON.stringify(b));

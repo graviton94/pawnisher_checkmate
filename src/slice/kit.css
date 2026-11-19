@@ -1421,3 +1421,24 @@ body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='
 :is(.scr-pick, .scr-place) .scr-items.big.is-rail { padding-bottom: 0; }
 :is(.scr-pick, .scr-place) .scr-items.big > .pick-item { gap: 2px; }
 :is(.scr-pick, .scr-place) .scr-items.big .slot-info { max-width: calc(var(--card-w) + var(--slot-gap, 16px)); margin: 0 calc(var(--slot-gap, 16px) / -2); line-height: 14px; min-height: var(--info-h, 14px); gap: 0; }
+
+/* ---- 조건 표시 (D-592 발동 유형 — 보고서 2026-11-18-card-trigger-types 4장) ----
+   상태(면) · 비례(당) 카드가 판 어디서든 맞으면: 황동 테 2px(장치 층) + 머리 줄 오른쪽 램프(ui/part-state/ready.png 빌림) + 효과 줄 자리에 까닭.
+   색 · 모양 · 글 셋이 함께 말한다(원칙 4). 켜짐 = 계단 3프레임(디더 가면 4 → 11 → 16) + 램프 ×2 → ×1 팝 · 황동 번쩍 한 번, 꺼짐 = 2단 디더(8 → 0). 움직임 줄이기면 바로. */
+#hand > .hc.lit::after, #hand > .hc.lit-out::after {
+  content: ''; position: absolute; pointer-events: none;
+  inset: calc(var(--px) * -6) calc(var(--px) * -6) calc(var(--px) * -6) calc(var(--px) * -16);
+  box-shadow: inset 0 0 0 2px #c89b3c, inset 0 0 0 3px #000;
+}
+#hand > .hc .hc-head > .hc-lamp { position: absolute; right: 0; top: calc(50% - var(--px1) * 8); width: calc(var(--px1) * 16); height: calc(var(--px1) * 16); image-rendering: pixelated; pointer-events: none; }
+#hand > .hc.lit .hc-t { padding-right: calc(var(--px1) * 18); }
+#hand > .hc .hc-fx.hc-cond { color: #f0c860; }
+#hand > .hc.lit-new::after { animation: condEdgeOn 150ms steps(1, jump-end) both; }
+#hand > .hc.lit-new .hc-lamp { animation: condLampOn 150ms steps(1, jump-end) both; }
+#hand > .hc.lit-out::after { animation: condEdgeOff 120ms steps(1, jump-end) both; }
+@keyframes condEdgeOn { 0% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 33.3% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 66.6%, 100% { -webkit-mask-image: var(--dq16); mask-image: var(--dq16); } }
+@keyframes condLampOn { 0% { transform: scale(2); filter: brightness(1.8); } 33.3% { transform: translateY(calc(var(--px1) * 1)); filter: none; } 66.6%, 100% { transform: none; } }
+@keyframes condEdgeOff { 0% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 50%, 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { #hand > .hc.lit-new::after, #hand > .hc.lit-new .hc-lamp { animation: none; } #hand > .hc.lit-out::after { display: none; } }
+html[data-calm='1'] #hand > .hc.lit-new::after, html[data-calm='1'] #hand > .hc.lit-new .hc-lamp { animation: none; }
+html[data-calm='1'] #hand > .hc.lit-out::after { display: none; }

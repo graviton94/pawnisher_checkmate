@@ -96,7 +96,9 @@ export interface BoardModel {
   selectedId: number | null;
   destinations: Pos[];
   /** 갈 수 있는 칸 중 도착하면 적을 치는 칸 (kill = 처치까지) — 누르기 전에 결과가 보이게 */
-  hitDests: { pos: Pos; kill: boolean }[];
+  hitDests: { pos: Pos; kill: boolean; cond?: boolean }[];
+  /** 조건이 켜진 내 기물 (D-592 — 처치 기물 태엽 0 · 마지막 숨 · 마지막 축): 발치에 황동 램프 */
+  condIds?: number[];
   /** 미리보기 결과 */
   preview: BattleEvent[];
   /** 미리보기에서 파괴되는 기물 (파괴 시점 위치) — 보드에서 사라지기 전 모습으로 X 표시와 함께 그린다 */

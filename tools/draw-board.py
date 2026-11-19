@@ -125,15 +125,16 @@ def from_ascii(rows, colors):
     return im
 
 
-def select():
-    """선택: 칸 네 모서리의 청록 ㄱ자 (내 조작 = 청록, D-047) (2도트 굵기, 안쪽은 어두운 황동) — 기물을 가리지 않게 4×4"""
+def select(hi='CY', lo='CY2'):
+    """선택: 칸 네 모서리의 청록 ㄱ자 (내 조작 = 청록, D-047) (2도트 굵기, 안쪽은 어두운 황동) — 기물을 가리지 않게 4×4.
+    hi · lo = 'BR' · 'BR2'면 조건 칸 모서리 cond.png (D-592: 같은 모양을 황동으로 다시 칠함 — 새 그림 없음)"""
     im = sprite(N, N)
     for cx, cy, sx, sy in ((0, 0, 1, 1), (N - 1, 0, -1, 1), (0, N - 1, 1, -1), (N - 1, N - 1, -1, -1)):
         for i in range(5):
-            dot(im, cx + sx * i, cy, 'CY' if i < 4 else 'CY2')
-            dot(im, cx, cy + sy * i, 'CY' if i < 4 else 'CY2')
-            dot(im, cx + sx * i, cy + sy, 'CY2' if i else 'CY')
-            dot(im, cx + sx, cy + sy * i, 'CY2' if i else 'CY')
+            dot(im, cx + sx * i, cy, hi if i < 4 else lo)
+            dot(im, cx, cy + sy * i, hi if i < 4 else lo)
+            dot(im, cx + sx * i, cy + sy, lo if i else hi)
+            dot(im, cx + sx, cy + sy * i, lo if i else hi)
     return im
 
 
@@ -400,6 +401,7 @@ crack().save(f'{OUT}/crack.png')
 range_frame(True).save(f'{OUT}/range.png')
 range_frame(False).save(f'{OUT}/range-enemy.png')
 select().save(f'{OUT}/select.png')
+select('BR', 'BR2').save(f'{OUT}/cond.png')  # D-592 조건 칸 모서리
 move_dot().save(f'{OUT}/move-dot.png')
 # target · target-kill은 판이 부르지 않는다 (D-541) — 앱에 싣지 않게 build-res/unused/로 찍는다
 os.makedirs(f'build-res/unused/{OUT}', exist_ok=True)

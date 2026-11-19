@@ -159,3 +159,25 @@ describe('cardCond — 미리보기 · 비용 · 자동 고르기 · 표시가 �
     expect(typeof playCard).toBe('function');
   });
 });
+
+describe('손패 · 부품 칸 조건 표시 (D-592 card-state · part-state)', () => {
+  it('손패: 상태 · 비례는 lit + 까닭 한 줄, 대가는 줄만, 사건 · 즉발은 없음', async () => {
+    const { cardState } = await import('../src/slice/card-state');
+    const { b, me } = setup(['rebound', 'finisher', 'vent', 'hoofKick']);
+    expect([0, 1, 2, 3].map((i) => cardState(b, i))).toEqual([null, null, null, null]);
+    b.killers = [me]; b.kills = 3;
+    expect(cardState(b, 0)).toEqual({ lit: true, why: 'killer', line: '태엽 0 · 나이트' });
+    expect(cardState(b, 1)).toEqual({ lit: true, why: 'chain', line: '연쇄 3 → ×2.5' });
+    expect(cardState(b, 2)).toEqual({ lit: false, why: 'spend', line: '연쇄 3 소모' });
+    expect(cardState(b, 3)).toBeNull();
+  });
+  it('부품 칸: 상태형 부품은 켜졌으면 ready, 아니면 waiting — 소진 없음', async () => {
+    const { partStatuses } = await import('../src/slice/part-state');
+    const { b } = setup(['leap']);
+    b.parts = ['lastAxle', 'bossBane'];
+    expect(partStatuses(b)).toMatchObject({ lastAxle: { state: 'waiting' }, bossBane: { state: 'waiting' } });
+    const k = findPiece(b.s, b.squadIds[0])!;
+    k.hp = 1; b.boss = true;
+    expect(partStatuses(b)).toMatchObject({ lastAxle: { state: 'ready' }, bossBane: { state: 'ready' } });
+  });
+});

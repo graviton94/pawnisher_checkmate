@@ -237,6 +237,30 @@ export const FIT_TEXT = {
   cards: (name: string, n: number) => `${name} 카드 <b>${n}</b>`,
 } as const;
 
+/**
+ * 조건 표시 글 (D-592 발동 유형 · 판 위 표시): 손패 카드 효과 줄 자리에 들어가는 짧은 까닭 — 카드 효과 줄 한 줄(≤ 12자 남짓).
+ * 램프 모양 · 황동 테 · 글 셋이 함께 말한다(색만으로 가르지 않는다, 원칙 4). 대가는 램프 없이 줄만.
+ */
+export const COND_TEXT = {
+  fork: (n: number) => `포크 칸 ${n}`,
+  killer: (piece: string) => `태엽 0 · ${piece}`,
+  chain: (n: number, mult: number) => `연쇄 ${n} → ×${mult}`,
+  rage: (mult: number) => `지금 ×${mult}`,
+  spend: (n: number) => `연쇄 ${n} 소모`,
+  /** 손패 aria — 「조건 맞음 · 포크 칸 2」 */
+  aria: '조건 맞음',
+  /** 부품 칸 상태형 표지 (UI-34 확장): 켜진 동안 ready · 아니면 waiting(소진 없음) */
+  part: {
+    lastAxle: '킹 HP 30% 미만',
+    lastBreath: '버팀 하나 남은 기물',
+    bossBane: '반장 대국',
+    vise: '묶인 적을 칠 수 있음',
+    calipers: '적 킹을 칠 수 있음',
+    forkGear: '포크 칸 있음',
+    off: '조건 기다림',
+  },
+} as const;
+
 export const SET_TEXT = {
   title: '시작 세트',
   page: (n: number, of: number) => `${n} / ${of}`,
