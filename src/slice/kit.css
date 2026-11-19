@@ -1480,3 +1480,6 @@ body[data-drill='t'] #intents, body[data-drill='t'] #btn-rewind, body[data-drill
 @media (prefers-reduced-motion: reduce) { #hand > .hc.lit-new::after, #hand > .hc.lit-new .hc-lamp { animation: none; } #hand > .hc.lit-out::after { display: none; } }
 html[data-calm='1'] #hand > .hc.lit-new::after, html[data-calm='1'] #hand > .hc.lit-new .hc-lamp { animation: none; }
 html[data-calm='1'] #hand > .hc.lit-out::after { display: none; }
+/* D-667: 펼친 카드 창이 오른 레일 「적의 수」 칸 위에 서면 적 의도 목록 · 연쇄 줄은 잠시 숨긴다(창 아래로 비치지 않게 — 즉시, 디더 없음) */
+body.cw-rail #intents, body.cw-rail #chain-now { visibility: hidden; }
+body.cw-rail #right .rmid .r-head .r-lbl { visibility: hidden; }
