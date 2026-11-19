@@ -359,6 +359,24 @@ def card(sheet, entry, fixes):
         m = reg[:, :, 3] > 0
         reg[m, :3] = c
         rec['fix'].append(f'{why} ({x0},{y0})–({x1},{y1}) → {col}')
+    # ②' 줄마다 고르기 (D-594 — 실기기: 시작 세트 출하 딱지의 위아래 종이 띠가 얼룩덜룩했다): 상자 안 줄마다 종이 갈래 색(종이 · 그늘 · 낱점 회색)을
+    #     그 줄에서 가장 많은 종이 갈래 색 하나로 다시 칠한다 — 먹 테 · 쇠는 그대로, 줄 단 명암(위 테 · 종이 · 아래 그늘)만 남는다
+    fam = [R.PAL33.index(h) for h in ('#1F1E27', '#2C2D38', '#41434F', '#868A98', '#B9BDC8', '#6E6452', '#A39A84', '#CFC6AE', '#E8E0CC', '#F4F1EA', '#FFFFFF', '#FFF1C0', '#FFF6D8')]
+    for (x0, y0, x1, y1), why in f.get('even', []):
+        idx = _pal_index(a)
+        n = 0
+        for y in range(y0, y1):
+            row = idx[y, x0:x1]
+            m = np.isin(row, fam) & (a[y, x0:x1, 3] > 0)
+            if not m.any():
+                continue
+            vals, cnt = np.unique(row[m], return_counts=True)
+            top = int(vals[np.argmax(cnt)])
+            for k in np.nonzero(m)[0]:
+                if row[k] != top:
+                    a[y, x0 + k, :3] = PAL[top]
+                    n += 1
+        rec['fix'].append(f'{why} ({x0},{y0})–({x1},{y1}) {n}칸')
     # ③ 금 인장 내리기(자르기 · 배치): 받은 그림은 인장이 설명지 오른쪽 아래를 덮어 마지막 효과 행이 인장 위로 지나간다 —
     #    발주 자리(종이 아래 끝 밖)로 dy줄 내리고, 비운 종이 칸은 종이색 · 종이 밖 칸은 먹으로 다시 칠한다
     if 'move' in f:

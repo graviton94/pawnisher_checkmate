@@ -1820,37 +1820,43 @@ body.slice:has(.overlay .scr-pick) .map-head { visibility: hidden; }
 /* ===================== D-589 카드 글 문법 통일 (사용자 결정) =====================
    모든 카드 성격의 설명지는 한 격자: 위 칸(묘사 2행 자리) · 점선 · 아래 칸([능력명] · 조건 · 효과 3행 자리). 빈 칸도 자리를 지켜 옆 카드와 줄이 맞는다.
    설명지는 모든 틀이 담는 공통 칸(카드 높이 59.524 ~ 87.302%, 가로는 틀마다) — 섞인 줄(고물상: 명령 · 부품 · 손질 · 부적)에서도 점선 · 조건 행이 같은 높이.
-   두 단: 카드 폭 184px 미만 = 작은 단(행 12px · 점선 칸 2px — 166px 이상은 13px · 4px · 조건/효과 갈무리9 10px, D-511), 184px 이상 = 큰 단(행 14px · 점선 칸 4px · 모든 줄 갈무리11 12px).
+   두 단: 카드 폭 184px 미만 = 작은 단(조건/효과 갈무리9 10px, D-511), 184px 이상 = 큰 단(모든 줄 갈무리11 12px). 세로 격자는 아래 D-594 블록.
    글 · 줄 짓기 = src/slice/card-text.ts(cardTextHtml), 예산 = tests/card-spec.test.ts. */
 body.slice .cf { container: cf / inline-size; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc { top: 59.524% !important; height: 27.778% !important; bottom: auto !important; display: grid !important; grid-template-columns: 100%; align-content: center; justify-content: stretch; justify-items: stretch; padding: 0 !important; gap: 0; overflow: hidden; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct { display: none; }
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s { display: grid; --p: 12px; --r: 2px; }
-@container cf (min-width: 166px) { body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s { --p: 13px; --r: 4px; } }
+/* 세로 격자 (D-594 — 수치 data/card-text.CARD_TEXT_GRID, 예산 tests/card-spec.test.ts): 묘사 행 12 두 줄 사이 틈 --fg · 점선 2px 위 --ra · 아래 --rb · [능력명] 행 --pn · 조건/효과 행 --pb.
+   카드 폭 150 ~ 159(정수 도트가 높이에 안 드는 줄만) = 2 · 1 · 1 · 12 · 10(62px) / 160 ~ 165 = 2 · 2 · 2 · 12 · 11(66px) / 166 ~ 183 = 2 · 2 · 2 · 12 · 12(68px) / 184 이상(큰 단) = 3 · 3 · 3 · 13 · 13(74px) */
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s { display: grid; --fh: 12px; --fg: 2px; --ra: 1px; --rb: 1px; --pn: 12px; --pb: 10px; }
+@container cf (min-width: 160px) { body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s { --ra: 2px; --rb: 2px; --pb: 11px; } }
+@container cf (min-width: 166px) { body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s { --pb: 12px; } }
 @container cf (min-width: 184px) {
   body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s:not(.ct-all) { display: none; }
-  body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-l { display: grid; --p: 14px; --r: 4px; }
+  body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-l { display: grid; --fh: 12px; --fg: 3px; --ra: 3px; --rb: 3px; --pn: 13px; --pb: 13px; }
 }
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct { position: static; width: 100%; grid-template-columns: 100%; grid-template-rows: calc(var(--p) * 2) var(--r) calc(var(--p) * 3); }
+@container cf (min-width: 184px) { body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s.ct-all { --fg: 3px; --ra: 3px; --rb: 3px; --pn: 13px; --pb: 13px; } }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct { position: static; width: 100%; grid-template-columns: 100%; grid-template-rows: calc(var(--fh) * 2 + var(--fg)) calc(var(--ra) + 2px + var(--rb)) calc(var(--pn) + var(--pb) * 2); }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-top, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-bot { display: flex; flex-direction: column; align-items: stretch; min-width: 0; min-height: 0; gap: 0; }
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-top { justify-content: center; }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-top { justify-content: center; gap: var(--fg); }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-bot { justify-content: flex-start; }
-/* 점선 하나 (모든 성격 같은 것): 2px 황동 점선 */
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-rule { display: block; height: 0; margin: calc(var(--r) / 2 - 1px) 2px 0; border-top: 2px dotted #a8782a; }
+/* 점선 하나 (모든 성격 같은 것): 2px 황동 점선 — 위아래 틈 --ra · --rb (D-594: 아래 줄이 점선에 닿았다) */
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct > .ct-rule { display: block; height: 0; margin: var(--ra) 2px 0; border-top: 2px dotted #a8782a; }
 /* 줄 역할 하나에 모양 하나 */
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln { display: block; width: 100%; height: var(--p); margin: 0; padding: 0; white-space: nowrap; overflow: visible; text-align: center; transform: none;
-  font: 400 12px/var(--p) Galmuri11, sans-serif !important; color: #3a342a; }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln { display: block; width: 100%; height: var(--pb); margin: 0; padding: 0; white-space: nowrap; overflow: visible; text-align: center; transform: none;
+  font: 400 12px/var(--pb) Galmuri11, sans-serif !important; color: #3a342a; }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-say { height: var(--fh); line-height: var(--fh) !important; }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-name { height: var(--pn); line-height: var(--pn) !important; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-say { color: #5e5444; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-name { font-weight: 700 !important; color: #1f6b70; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-if { color: #3a342a; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx { color: #1f1b16; }
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-l .ln-fx .n { display: inline; font: 700 12px/var(--p) Galmuri11, sans-serif !important; }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-l .ln-fx .n { display: inline; font: 700 12px/var(--pb) Galmuri11, sans-serif !important; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx .n-hit { color: #a8222e; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx .n-gain { color: #2a6a2e; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx .n-etc { color: #7a5214; }
 /* 작은 단 조건 · 효과 = 갈무리9 10px(D-511 카드 맞춤 — 굵게 없음, 숫자는 색 + 부호) */
-body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-if, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-fx, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-fx .n { font: 400 10px/var(--p) Galmuri9, Galmuri11, sans-serif !important; }
+body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-if, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-fx, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-fx .n { font: 400 10px/var(--pb) Galmuri9, Galmuri11, sans-serif !important; }
 /* 분대원 기록 줄(처치 · 피해 · 넘김)은 위 칸 묘사 자리 */
 body.slice .cf.cf.cf.cf.cf.cf.cf.crew-card > .cf-desc > .ct > .ct-top > .cs-st { display: grid !important; grid-auto-flow: column; grid-template-columns: repeat(3, auto); justify-content: space-evenly; width: 100%; padding: 0; border: 0; }
-body.slice .cf.cf.cf.cf.cf.cf.cf.crew-card > .cf-desc > .ct > .ct-top > .cs-st > span { display: flex; flex-direction: column; align-items: center; font: 700 12px/var(--p) Galmuri11, sans-serif !important; color: #2a2620; }
-body.slice .cf.cf.cf.cf.cf.cf.cf.crew-card > .cf-desc > .ct > .ct-top > .cs-st i { margin: 0; font: 400 12px/var(--p) Galmuri11, sans-serif !important; color: #5e5444; white-space: nowrap; }
+body.slice .cf.cf.cf.cf.cf.cf.cf.crew-card > .cf-desc > .ct > .ct-top > .cs-st > span { display: flex; flex-direction: column; align-items: center; font: 700 12px/var(--fh) Galmuri11, sans-serif !important; color: #2a2620; }
+body.slice .cf.cf.cf.cf.cf.cf.cf.crew-card > .cf-desc > .ct > .ct-top > .cs-st i { margin: 0; font: 400 12px/var(--fh) Galmuri11, sans-serif !important; color: #5e5444; white-space: nowrap; }

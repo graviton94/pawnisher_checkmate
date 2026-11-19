@@ -9,7 +9,7 @@ import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
 import { PROLOGUE, PROLOGUE_FIELD, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
 import { pieceImg } from '../ui/sprites';
-import { flashScreen, pxOut, replay, shake, typeIn } from './fx3';
+import { flashScreen, pxOut, replay, shake, typeIn, typeReserve } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
 import { logHtml, VnStage, type PlateBox } from './vn';
 import { DarkStage } from './darkcut';
@@ -348,6 +348,8 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       } else sfx('tap', 3);
       cast(l);
       record(pg.lines);
+      // 쪽의 모든 줄 자리를 먼저 잡는다 (D-594): 둘째 줄이 들어올 때 글 단이 다시 가운데로 밀리지 않게
+      ps.forEach((p, a) => typeReserve(p, cutFill(pg.lines[a])));
       for (let a = 0; a < pg.lines.length && my === token; a++) await typeIn(ps[a], cutFill(pg.lines[a]), FILM.type[pg.lines[a].k], undefined, () => my === token);
       if (my === token) { typing = false; sub.classList.remove('typing'); el.dataset.beat = 'hold'; armAuto(); armIdle(); }
     };

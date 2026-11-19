@@ -45,7 +45,7 @@ const calmNow = (): boolean => calmMotion();
 import * as cardFx from './cardfx';
 import type { Cell as CardCell, Pt as CardPt } from './cardfx';
 import { installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
-import { arcFly, flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
+import { arcFly, flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeReserve, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { markTip, showTip, tipDue } from './loadtip';
 import { cardTags, fitCount, partTags, STYLE_NAMES, tags3Html } from './tags';
@@ -3432,6 +3432,8 @@ const rewindScene = (T: { narr: string; line?: string; sys: (n: number) => strin
   const pre = loss ? kingFallNarr || DEATHS[0].narr : '';
   el.innerHTML = `${pre ? '<p class="rev-pre"></p>' : ''}<i class="rev-gear${pre ? ' still' : ''}" aria-hidden="true"></i><p class="rev-narr"></p>${T.line ? '<p class="rev-line"></p>' : ''}<p class="rev-sys"></p><div class="row" hidden><button class="btn" type="button" data-no>${T.no}</button><button class="btn brass rev-yes" type="button" data-yes>${T.yes}</button></div>`;
   document.body.appendChild(el);
+  // 글 자리를 먼저 잡는다 (D-594): 뒤 줄이 찍힐 때 가운데 단이 밀리지 않게
+  for (const [sel, t] of [['.rev-pre', pre], ['.rev-narr', T.narr], ['.rev-line', T.line ?? ''], ['.rev-sys', T.sys(b.rewinds)]] as const) { const x = el.querySelector<HTMLElement>(sel); if (x && t) typeReserve(x, t); }
   const show = (sel: string) => {
     const x = el.querySelector<HTMLElement>(sel)!;
     x.hidden = false;

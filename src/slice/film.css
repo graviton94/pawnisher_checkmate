@@ -79,7 +79,7 @@
 /* 검은 화면 가운데 글 (D-582 — Cut.void, 수치 data/vn.VN_VOID): 그림 · 레터박스 · 자막 판 · 화자 명패 · 화자 표지 없이 먹 위 한가운데 글만.
    글 단 = 화면 폭 60%(좁은 화면 72%) · 가운데 맞춤 · 한 문장 한 줄(15px 갈무리14, 줄높이 --lh-15w 30 — 넉넉히) · 문장 사이 12.
    갈래 색: 서술 상아(--t-body) · 속마음 ‘ ’ 차가운 철빛(--t-cool) · 새긴 규정 「 」 황동(--t-gold) · 대사는 이름(12 굵게) 한 줄 위 + “ ”.
-   ▼는 다 찍힌 뒤 손을 대지 않을 때만(.idle) 같은 글 색으로 · 「건너뛴다」 · 「기록」은 길게 누르기 · 마우스 · 뒤로에만(.void-ui). 움직임은 계단 · 디더만 (D-216). */
+   ▼는 다 찍히면 곧바로(.idle, D-594) 글 단 아래 같은 글 색으로 · 「건너뛴다」 · 「기록」은 길게 누르기 · 마우스 · 뒤로에만(.void-ui). 움직임은 계단 · 디더만 (D-216). */
 .prologue.void .film-lb { visibility: hidden; }
 .prologue.void .film-view { top: 0; bottom: 0; }
 .prologue.void .cut-sub {
@@ -106,7 +106,7 @@
 /* 붉은 경보(줄 fx red): 그 줄 글만 진홍으로 두 번 깜빡 — 화면 번쩍 없음 */
 .prologue.void .cut-lines p.void-red > span { animation: voidred 640ms steps(1, end) both; }
 @keyframes voidred { 0% { color: var(--t-loss); } 25% { color: var(--t-body); } 50% { color: var(--t-loss); } 75%, 100% { color: var(--t-body); } }
-/* ▼: 한참 손을 대지 않을 때만 · 마지막 줄 갈래 색 */
+/* ▼: 다 찍히면 곧바로 (D-594) · 글 단 아래 가운데 · 마지막 줄 갈래 색 · 계단 깜빡(kblink) */
 .prologue.void .cut-next { position: static; margin: 0; visibility: hidden; color: var(--t-body); }
 .prologue.void.idle .cut-sub:not(.typing) .cut-next { visibility: visible; }
 .prologue.void[data-voice='m'] .cut-next { color: var(--t-cool); }
@@ -153,6 +153,11 @@
 .film-title.in > :nth-child(5) { animation-delay: 660ms; }
 .film-title.out { animation: ftout 220ms steps(1, jump-end) forwards; }
 @keyframes ftout { 0% { -webkit-mask-image: var(--dq16); mask-image: var(--dq16); } 33% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 66% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 4.13% { -webkit-mask-image: var(--dq15); mask-image: var(--dq15); } 8.25% { -webkit-mask-image: var(--dq14); mask-image: var(--dq14); } 12.38% { -webkit-mask-image: var(--dq13); mask-image: var(--dq13); } 16.5% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); } 20.63% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 24.75% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 28.88% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 41.25% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 49.5% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 57.75% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 74.5% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 83% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 91.5% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
+/* 넘김 표지 (D-594, kit.css .tap-cue): 제목 카드 아래 가운데 · 꼬리표 색 — 계단 등장 대신 깜빡만 */
+.film-title > .tap-cue { animation: kblink 1s steps(2, jump-none) infinite; }
+.film-title.tone-crimson > .tap-cue { color: var(--t-loss); }
+.film-title.tone-paper > .tap-cue { color: #6b4a10; }
+@media (prefers-reduced-motion: reduce) { .film-title > .tap-cue { animation: none; } }
 @media (max-height: 420px) { .film-title .ft-name { font: 700 24px/calc(var(--d) * 22) Galmuri11, sans-serif; } }
 
 /* 제목 카드 동안 빈 자막 띠 · ▼는 걷는다 */

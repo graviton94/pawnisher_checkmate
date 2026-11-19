@@ -5,7 +5,7 @@
  */
 import { layRect, viewH, viewW } from '../view/vz';
 import { calmMotion } from '../prefs/motion';
-import { pxOut } from './fx3';
+import { pxOut, typeReserve } from './fx3';
 import { fitCover } from '../view/cover';
 import { textWidth } from './desc';
 
@@ -198,10 +198,11 @@ export const slotsHtml = (items: PickItem[], bare = false, big = false): string 
   `<div class="scr-items${bare ? ' bare' : ''}${big ? ' big' : ''}">${items.map((it) => `<div class="pick-item"><div class="${bare ? 'card-bare' : 'card-slot'}${it.off ? ' is-off' : ''}" data-slot="${it.key}">${it.html}</div>${it.info !== undefined ? `<div class="slot-info">${it.info}</div>` : ''}</div>`).join('')}</div>`;
 
 /**
- * 카드 폭 (D-372 정본 168 · D-399 하한 150 — 이보다 작으면 두루마리 글이 10px 아래로 내려가 겹친다).
+ * 카드 폭 (D-372 정본 168 · D-399 하한 150). crisp = 카드 도트를 기기 픽셀 정수로 맞출 때의 하한 (D-594 — 915(×2.625)에서 160 · 667 · 772에서 168,
+ * 설명지 세로 격자 data/card-text.CARD_TEXT_GRID가 150 · 160 · 166 · 184에서 갈린다).
  * 큰 카드 줄(`.scr-items.big` — 고물상 · 전리품, D-589): 1.25배 — 184(큰 글 단 하한, `CARD_TIERS.l`) ~ 192, 받침이 있으면 받침 정수배가 184 이상일 때만(최대 210).
  */
-export const CARD_W = { max: 168, min: 150, big: 192, bigMin: 184, bigSlot: 210 } as const;
+export const CARD_W = { max: 168, min: 150, crisp: 160, big: 192, bigMin: 184, bigSlot: 210 } as const;
 
 /**
  * 받침 크기 맞춤 (D-394 → D-399): 카드는 줄이지 않는다 — 정본 폭(168, 높이가 모자라면 150까지)을 지키고,
@@ -225,8 +226,12 @@ export const fitSlots = (row: HTMLElement): void => {
   let w: number, g = 16;
   // 받침 줄: 받침 높이가 드는 가장 큰 정수배 — 그 안 카드(42도트)가 하한 이상이면 받침을 쓴다 (큰 카드 줄은 큰 글 단 하한 이상)
   const big = row.classList.contains('big');
-  const N = Math.min(Math.floor(((big ? CARD_W.bigSlot : CARD_W.max) * dpr) / 42), Math.floor((H * dpr) / 69));
-  const slotted = !row.classList.contains('bare') && (42 * N) / dpr >= (big ? CARD_W.bigMin : CARD_W.min);
+  let N = Math.min(Math.floor(((big ? CARD_W.bigSlot : CARD_W.max) * dpr) / 42), Math.floor((H * dpr) / 69));
+  // 카드 틀 그림(84도트)은 받침 도트의 절반 크기 — N이 홀수면 카드 도트 하나가 기기 픽셀 반 칸(4.5 등)이라 도트가 5 · 4px로 섞여 얼룩진다 (D-594 실기기: 시작 세트 출하 딱지).
+  // 짝수 N만 쓴다 → 카드 도트 = 기기 픽셀 N/2 정수
+  N -= N % 2;
+  const minW = big ? CARD_W.bigMin : CARD_W.min;
+  const slotted = !row.classList.contains('bare') && (42 * N) / dpr >= minW;
   row.classList.toggle('no-slot', !row.classList.contains('bare') && !slotted);
   if (slotted) {
     row.style.setProperty('--ss', `${N / dpr}px`);
@@ -234,6 +239,16 @@ export const fitSlots = (row: HTMLElement): void => {
   } else {
     // 카드만: 높이에 드는 만큼(2:3) — 정본 168, 하한 150
     w = Math.max(CARD_W.min, Math.min(big ? CARD_W.big : CARD_W.max, Math.floor((H * 2) / 3)));
+    // 카드 도트 = 기기 픽셀 정수 (D-594 — 772×360 ×3에서 150px 카드는 도트 5.36px라 5 · 6px가 섞여 얼룩졌다): 폭을 84도트 × 정수 기기 픽셀로 내리고,
+    // 내린 폭이 맑은 하한(CARD_W.crisp) 아래면 한 단 올린다 — 올린 카드가 줄 높이에 들 때만(받침 아래 줄이 비었으면 그 자리 + 줄 여백 넘침 20px까지 — 772×360 시작 세트 · 덱에서 실측해 머리 · 단추와 겹치지 않음, 글이 있으면 그 줄을 비켜서). 안 들면 예전 폭(도트 비정수 — 넘침보다 낫다)
+    const k = Math.max(1, Math.floor((w * dpr) / 84));
+    const down = (k * 84) / dpr, up = ((k + 1) * 84) / dpr;
+    const emptyInfo = [...row.querySelectorAll<HTMLElement>(':scope > .pick-item > .slot-info')].every((i) => !i.textContent?.trim());
+    const room = emptyInfo ? row.clientHeight - padY + 20 : H;
+    // 큰 카드 줄(고물상 · 전리품)이 큰 글 단 폭이면 그 하한(bigMin)을 지킨다 — 내린 폭이 그 아래면 올린 폭, 그것도 안 들면 예전 폭
+    const floorW = big && w >= CARD_W.bigMin - 0.5 ? CARD_W.bigMin : CARD_W.crisp;
+    if (down >= floorW - 0.5) w = down;
+    else if (up * 1.5 <= room && up <= (big ? CARD_W.bigSlot : CARD_W.max) + 0.5) w = up;
     row.style.setProperty('--card-w', `${w}px`);
   }
   // 다 들면 가운데 한 줄, 아니면 레일 — 오른쪽 끝에 다음 카드가 30 ~ 60% 걸쳐 보이게 사이(12 ~ 32)와 왼쪽 여백(G ~ G+80)을 고른다
@@ -794,6 +809,8 @@ export const typeCutPages = async (box: HTMLElement, lines: CutLine[], alive: ()
   for (let k = 0; k < pages.length && alive(); k++) {
     box.innerHTML = pages[k].map(cutLineHtml).join('');
     const ps = [...box.querySelectorAll<HTMLElement>('p > span')];
+    // 쪽의 모든 줄 자리를 먼저 잡는다 (D-594)
+    ps.forEach((p, i) => typeReserve(p, cutFill(pages[k][i])));
     for (let i = 0; i < pages[k].length && alive(); i++) await type(ps[i], cutFill(pages[k][i]));
     if (k < pages.length - 1) await new Promise((r) => window.setTimeout(r, hold(pages[k].reduce((a, l) => a + l.t.length, 0))));
   }

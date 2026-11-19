@@ -812,6 +812,8 @@ export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> =
   if (c.chance && (c.cards.length || c.crew.length || c.gold || c.part)) L.x.clearRect(0, 0, L.w, L.h);
   await actorBeat(L, c, ov);
   await showResults(L, c);
+  // 넘김 표지 ▼ (D-594): 결과가 다 서면 아래 가운데
+  ov.insertAdjacentHTML('beforeend', '<i class="tap-cue" aria-hidden="true">▼</i>');
   // 읽을 시간 — 누르면 바로 넘어간다 (줄인 움직임이면 짧게)
   await Promise.race([new Promise((r) => window.setTimeout(r, calm() ? 400 : c.hold)), new Promise((r) => ov.addEventListener('pointerdown', r, { once: true }))]);
   ov.classList.add('out');

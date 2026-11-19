@@ -56,6 +56,53 @@ def even_slip(im, left=24, right=9, top=5, bottom=5):
     return Image.fromarray(a)
 
 
+# D-594: 요령 띠의 렌치 · 테이프는 9-slice 왼 · 오른 기둥 가운데에 있어 띠가 두 줄로 높아지면 세로로 늘었다(실기기 사진).
+# 띠 몸은 가운데 줄(SLIP_TOP ~ 아래에서 SLIP_BOTTOM)을 모든 열에서 한 줄 무늬로 고르고(늘어도 도트가 그대로),
+# 렌치 · 테이프는 따로 잘라 띠 위에 정수배로 얹는다 (kit.css .gd-text3 > p.up::before · ::after — 늘리지 않음, D-386).
+SLIP_TOP, SLIP_BOTTOM = 7, 6
+
+
+def split_slip(im):
+    """팁 쪽지 → (몸, 렌치, 테이프). 사내 손질은 지우기 · 다시 칠하기 · 자르기만 (D-388 ④)"""
+    a = np.array(im.convert('RGBA'))
+    h, w = a.shape[:2]
+    src = a.copy()
+    y0, y1 = SLIP_TOP, h - SLIP_BOTTOM  # 가운데 줄 [y0, y1)
+    ink, dk = src[11, 10].copy(), src[8, 11].copy()   # 렌치 먹 회색 · 진한 회색
+    patch, shade, paper = src[8, 5].copy(), src[8, 2].copy(), src[8, 30].copy()  # 쇠 홈 바탕(E) · 홈 그늘(F) · 종이(G)
+    # 렌치 = 가운데 줄 안 홈 쪽(x ≤ 16)의 H · I 낱점 (사선 테 줄은 뺀다)
+    wr = np.zeros((y1 - y0, 12, 4), np.uint8)
+    for y in range(y0, y1):
+        for x in range(5, 17):
+            c = src[y, x]
+            if (tuple(c) == tuple(ink) or tuple(c) == tuple(dk)) and not (y == y1 - 1 and x >= 16):
+                wr[y - y0, x - 5] = c
+    wrench = Image.fromarray(wr)
+    wrench = wrench.crop(wrench.getbbox())
+    # 테이프 = 오른 기둥 10 ~ 17줄 (그림자 줄까지)
+    tape = Image.fromarray(src[10:18, w - 9:w].copy())
+    # 몸: 가운데 줄은 열마다 한 무늬 — 왼 기둥 = 먹 테 · 홈 바탕 · 그늘 두 칸 · 곧은 홈 테(x 20) · 종이, 오른 기둥 = 종이 · 테 그늘 · 먹 테
+    left = [src[8, 0], patch, shade, shade] + [patch] * 16 + [ink, patch, paper, paper]
+    right = [paper, paper, paper, src[8, w - 6], src[8, w - 5], src[8, w - 4], src[8, w - 3], src[8, w - 2], src[8, w - 1]]
+    for y in range(y0, y1):
+        for x in range(24):
+            a[y, x] = left[x]
+        for x in range(w - 9, w):
+            a[y, x] = right[x - (w - 9)]
+        for x in range(24, w - 9):
+            a[y, x] = paper
+    # 위 · 아래 마개의 사선 홈 테를 곧은 테(x 20)로 잇는다 (아래 17 ~ 19줄) · 테이프 그림자 줄(17)은 종이로
+    for y in range(y1, min(h, y1 + 3)):
+        for x in (17, 18):
+            if tuple(a[y, x]) in (tuple(ink), tuple(dk), tuple(shade)):
+                a[y, x] = patch
+        a[y, 20] = ink
+    for x, c in zip(range(w - 9, w - 3), [paper, paper, paper, patch, shade, shade]):
+        if tuple(a[y1, x]) in (tuple(ink), tuple(dk)):
+            a[y1, x] = c
+    return Image.fromarray(a), wrench, tape
+
+
 def part_regrid(img, o):
     """원본의 한 부품 상자를 그 상자에서 실측한 축별 격자(간격, 상자 기준 시작)로 칸 가운데 최빈색 → 마젠타 = 투명 → 발주 15색"""
     crop = img.crop(o['box'])
@@ -93,6 +140,7 @@ def sheet():
     assert len(split) == 8, split
     parts = {'guide-frame': small.crop(frame), 'tip-slip': small.crop(slip), 'load-bar': small.crop(bar), 'load-bar-fill': small.crop(fill)}
     parts['tip-slip'] = even_slip(parts['tip-slip'])
+    parts['tip-slip'], parts['tip-wrench'], parts['tip-tape'] = split_slip(parts['tip-slip'])
     # D-552: 부품마다 따로 잰 격자가 있으면(scene_recipe.LOADING_GRID parts) 그 상자를 그 격자로 다시 뽑는다
     for nm, o in g.get('parts', {}).items():
         parts[nm] = part_regrid(img, o)
@@ -107,7 +155,7 @@ def sheet():
     parts['load-gear'] = strip
     os.makedirs(HUD, exist_ok=True)
     for nm, im in parts.items():
-        dst = os.path.join(CHROME if nm in ('guide-frame', 'tip-slip') else HUD, f'{nm}.png')
+        dst = os.path.join(CHROME if nm in ('guide-frame', 'tip-slip', 'tip-wrench', 'tip-tape') else HUD, f'{nm}.png')
         im.save(dst)
         crown_unify.after_save(dst)
         print(f'  {nm}: {im.width}×{im.height} → {os.path.relpath(dst, ROOT)}')
@@ -115,7 +163,7 @@ def sheet():
     # 대조판: 원본(축소) 위 | 부품 ×4 아래 (줄: 액자 · 쪽지 / 막대 · 채움 칸 / 톱니 띠)
     top = img.resize((img.width // 2, img.height // 2), Image.NEAREST)
     k = 4
-    rows = [[parts['guide-frame'], parts['tip-slip']], [parts['load-bar'], parts['load-bar-fill']], [parts['load-gear']]]
+    rows = [[parts['guide-frame'], parts['tip-slip'], parts['tip-wrench'], parts['tip-tape']], [parts['load-bar'], parts['load-bar-fill']], [parts['load-gear']]]
     w = max([top.width] + [sum(im.width * k + 12 for im in r) + 12 for r in rows])
     h = top.height + sum(max(im.height for im in r) * k + 12 for r in rows) + 12
     chk = Image.new('RGBA', (w, h), (24, 23, 30, 255))

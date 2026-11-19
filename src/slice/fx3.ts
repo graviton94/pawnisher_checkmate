@@ -326,7 +326,18 @@ export const typeSkip = (el: HTMLElement): boolean => {
   f();
   return true;
 };
-/** 한 자씩 찍는다 (문장 부호에서 쉰다). <em>낱말</em>은 한 번에 찍히며 떨린다. 같은 자리에 다시 부르면 앞 줄은 그 자리에서 끝난다 */
+/**
+ * 찍기 자리 잡기 (D-594): 아직 찍지 않은 글을 보이지 않게 미리 깐다 — 줄바꿈 · 가운데 맞춤이 다 찍힌 글로 정해져
+ * 찍는 동안 앞 줄이 밀리지 않는다. 여러 줄을 차례로 찍는 화면은 찍기 전에 모든 줄에 부른다 (뒤 줄이 들어올 때 단이 다시 가운데로 가지 않게)
+ */
+export const typeReserve = (el: HTMLElement, html: string): void => {
+  if (calm()) { el.innerHTML = html; return; }
+  el.innerHTML = `<x-ty style="visibility:hidden">${html}</x-ty>`;
+};
+/**
+ * 한 자씩 찍는다 (문장 부호에서 쉰다). <em>낱말</em>은 한 번에 찍히며 떨린다. 같은 자리에 다시 부르면 앞 줄은 그 자리에서 끝난다.
+ * 다 찍힌 글을 처음부터 보이지 않게 깔고 제자리에서 드러낸다 (D-594 — 찍는 중 줄바꿈 · 가운데 맞춤으로 앞 글이 밀리지 않게)
+ */
 export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () => void, alive?: () => boolean): Promise<void> =>
   new Promise((done) => {
     typing.get(el)?.();
@@ -334,8 +345,24 @@ export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () =>
       el.innerHTML = html;
       return done();
     }
-    const parts = html.split(/(<em>.*?<\/em>)/);
+    const parts = html.split(/(<em>.*?<\/em>)/).filter(Boolean);
     el.innerHTML = '';
+    // 조각마다: 글 = 드러난 글자(text) + 남은 글자(보이지 않는 x-ty) · 강조 = 보이지 않는 em
+    const units = parts.map((p) => {
+      if (p.startsWith('<em>')) {
+        const em = document.createElement('em');
+        em.textContent = p.slice(4, -5);
+        em.style.visibility = 'hidden';
+        el.appendChild(em);
+        return { em, text: '' };
+      }
+      const shown = document.createTextNode('');
+      const rest = document.createElement('x-ty');
+      rest.style.visibility = 'hidden';
+      rest.textContent = p;
+      el.append(shown, rest);
+      return { shown, rest, text: p };
+    });
     let i = 0;
     let j = 0;
     let t = 0;
@@ -354,25 +381,25 @@ export const typeIn = (el: HTMLElement, html: string, speed = 32, onWord?: () =>
     const tick = (): void => {
       if (over) return;
       // 찍던 화면이 바뀌면(탭으로 건너뜀 등) 거기서 멈춘다
-      if (i >= parts.length || (alive && !alive())) return end(false);
-      const p = parts[i];
-      if (p.startsWith('<em>')) {
-        const em = document.createElement('em');
-        em.textContent = p.slice(4, -5);
-        el.appendChild(em);
-        replay(em, 'wshake');
+      if (i >= units.length || (alive && !alive())) return end(false);
+      const u = units[i];
+      if (u.em) {
+        u.em.style.visibility = '';
+        replay(u.em, 'wshake');
         onWord?.();
         i++;
         j = 0;
         t = window.setTimeout(tick, speed * 3);
         return;
       }
-      if (j < p.length) {
-        const ch = p[j++];
-        el.appendChild(document.createTextNode(ch));
-        t = window.setTimeout(tick, speed * (j < p.length || i < parts.length - 1 ? typePause(ch) : 1));
+      if (j < u.text.length) {
+        const ch = u.text[j++];
+        u.shown!.data = u.text.slice(0, j);
+        u.rest!.textContent = u.text.slice(j);
+        t = window.setTimeout(tick, speed * (j < u.text.length || i < units.length - 1 ? typePause(ch) : 1));
         return;
       }
+      u.rest!.remove();
       i++;
       j = 0;
       tick();

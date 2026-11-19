@@ -61,7 +61,7 @@ export const tipDue = (kind: 'battle' | 'act'): boolean => {
 /** 쪽지 한 장 마크업 — 안내서 그림 + 제목 + 개념 한 줄 + 요령 한 줄 (안내서 쪽의 위 · 아래 끝만) */
 export const tipHtml = (i: number): string => {
   const g = GUIDE_PAGES[i];
-  return `<div class="plate">${OPENING_TEXT.guideTitle}</div><div class="gd3"><div class="inset">${guideMedia(g.media)}</div><div class="stack gd-text3"><p class="lead">${g.title}</p><p>${g.lines[0]}</p>${g.tip ? `<p class="up">“${g.tip}”</p>` : ''}</div></div><div class="ld-foot"><i class="ld-gear" style="background-image:url(ui/hud/load-gear.png)" aria-hidden="true"></i><p class="note ld-more">${LOAD_TIP.more}</p></div>`;
+  return `<div class="plate">${OPENING_TEXT.guideTitle}</div><div class="gd3"><div class="inset">${guideMedia(g.media)}</div><div class="stack gd-text3"><p class="lead">${g.title}</p><p>${g.lines[0]}</p>${g.tip ? `<p class="up">“${g.tip}”</p>` : ''}</div></div><div class="ld-foot"><i class="ld-gear" style="background-image:url(ui/hud/load-gear.png)" aria-hidden="true"></i><p class="note ld-more">${LOAD_TIP.more}</p><i class="tap-cue wait" aria-hidden="true">▼</i></div>`;
 };
 
 /**
@@ -94,5 +94,6 @@ export const showTip = (kind: 'battle' | 'act'): Promise<void> =>
     };
     const t = window.setTimeout(leave, Math.max(LOAD_TIP.min, chars * LOAD_TIP.perChar));
     // 띄운 탭이 그대로 넘김으로 잡히지 않게 한 박자 뒤부터 받는다
-    window.setTimeout(() => wrap.addEventListener('click', leave), LOAD_TIP.guard);
+    // 넘김 표지 ▼ (D-594)는 누름을 받기 시작할 때 함께 선다
+    window.setTimeout(() => { wrap.addEventListener('click', leave); wrap.querySelector('.tap-cue')?.classList.remove('wait'); }, LOAD_TIP.guard);
   });

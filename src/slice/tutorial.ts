@@ -4,7 +4,7 @@
  *   tap 걸음 = 화면 아무 데나 누르면 다음 · wait 걸음 = 구멍 안에서 그 행동을 하면 다음.
  * 게임 상태는 건드리지 않는다 — 짚고 기다리기만 한다 (UI 원칙 9).
  */
-import { typeIn } from './fx3';
+import { typeIn, typeReserve } from './fx3';
 import { makeTalk } from './uikit';
 import { fitSubWidth, placeSubAway, SUB_MIN_W } from './voice';
 
@@ -166,6 +166,8 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       textEl.innerHTML = lines.map(() => '<span class="ln"></span>').join('<br>');
       const spans = [...textEl.querySelectorAll<HTMLElement>('.ln')];
       const live = () => alive && steps[i] === s;
+      // 모든 줄 자리를 먼저 잡는다 (D-594): 찍는 동안 앞 줄이 밀리지 않게
+      spans.forEach((sp, k) => typeReserve(sp, lines[k]));
       void lines.reduce((p, ln, k) => p.then(() => (live() ? typeIn(spans[k], ln, 18, undefined, live) : undefined)), Promise.resolve() as Promise<void>).then(() => {
         typing = false;
         if (alive && steps[i] === s && !s.wait) next.hidden = false;
