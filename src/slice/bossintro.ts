@@ -8,6 +8,7 @@
  */
 import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { typeIn } from './fx3';
+import { impactFlash } from '../view/flash';
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { devPerCss, viewH, viewW } from '../view/vz';
 import { cutChromeHtml, typeCutPages, type CutLine } from './uikit';
@@ -76,6 +77,8 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     const sub = el.querySelector<HTMLElement>('.cut-sub')!;
     sub.classList.add('typing');
     document.body.appendChild(el);
+    // 판을 다 덮는 동안 판 그리기를 쉰다 (D-595 — 판 캔버스가 등장 연출과 GPU를 나눠 썼다)
+    document.body.classList.add('cover-fx');
     // 화면 크기 · 기기 배율은 배치 px로 (웹 PC 정수 확대에서 innerWidth는 확대 뒤 값 — D-563)
     const W = viewW(), H = viewH(), dev = devPerCss();
     // 도트 FX 판 (1도트 = 기기 픽셀 정수, 약 3 CSS px, 화면 전체)
@@ -153,12 +156,14 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
       done = true;
       T.forEach(clearTimeout);
       el.classList.add('out');
+      // 걷히기 시작할 때 판을 깨운다 (걷히는 동안 판이 보인다)
+      document.body.classList.remove('cover-fx');
       window.setTimeout(() => { el.remove(); resolve(); }, 420);
     };
     // 시간표
     at(0, () => el.classList.add('bars'));
     at(260, () => o.sfx?.('boss'));
-    at(360, () => el.classList.add('port'));
+    at(360, () => { el.classList.add('port'); if (!noFlash && !calm) { const b = port.getBoundingClientRect(); void impactFlash({ x: b.width ? b.left + b.width / 2 : W * 0.72, y: b.height ? b.top + b.height / 2 : H * 0.55, r: H * 0.55, z: 1000 }); } });
     at(700, () => { el.classList.add('name'); o.sfx?.('stamp'); });
     at(1000, () => void typeIn(el.querySelector('.bf-title')!, o.title, 40, undefined, () => el.isConnected));
     // 자막 띠 두 줄 (D-397): 서술 한 줄 → 대사 한 줄, 다 찍히면 ▼
@@ -206,8 +211,8 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
         }
       },
       (t, p) => {
-        // 흰 장 한 장 (hero frame, D-538): 화면 전체 흰 면 대신 2×2 체커 디더 한 장(약 60ms), 번쩍임 줄이기면 없다
-        if (!noFlash && t >= 0.26 && t < 0.32) for (let y = 0; y < fx.h; y++) for (let x = (y & 1); x < fx.w; x += 2) p.px(x, y, WHITE);
+        // (D-595: 옛 「흰 장」은 t 0.26 ~ 0.32 = 6초 중 360ms 동안 화면 전체 50% 흰 체커였다 — 「약 60ms」라던 주석과 달리 눈부셨다.
+        //  이제 초상이 꽂히는 순간 초상 둘레 원형 디더 번쩍 · 화면 3장 꺼짐(view/flash) — 아래 시간표 'port')
         if (calm) return;
         const sx = seamX / DOT;
         // 경계선 빛: 큰 옅은 웅덩이 + 줄 빛 (반장 색)

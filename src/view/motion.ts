@@ -73,6 +73,30 @@ export const tween = (ms: number, frame: (e: number, t: number) => void, curve: 
     requestAnimationFrame(step);
   });
 
+/**
+ * 합성기에서 도는 곡선 움직임 (D-595): frame(t)가 돌려준 transform을 120Hz로 표본 내(steps(1)로 붙들어 소수 위치를 지나지 않게)
+ * Web Animations 한 개로 건다 — 주 스레드가 새 화면을 짓느라 바빠도(전투 시작 · 판 캔버스 준비) 화면 프레임마다 움직인다.
+ * frame은 정수 기기 픽셀 위치(snapDev)로 transform 글을 돌려준다. 움직임 줄이기면 끝 모습만. fill forwards — 끝나면 부른 쪽이 정리.
+ */
+export const compTween = (el: HTMLElement, ms: number, frame: (t: number) => string): Promise<void> => {
+  if (calmMotion() || ms <= 0 || typeof el.animate !== 'function') {
+    el.style.transform = frame(1);
+    return Promise.resolve();
+  }
+  const n = Math.max(2, Math.ceil(ms / SMOOTH.bakeStep));
+  const kf: Keyframe[] = [];
+  for (let i = 0; i <= n; i++) kf.push({ offset: i / n, transform: frame(i / n), easing: 'steps(1, end)' });
+  el.style.transform = frame(1);
+  baking = true;
+  let a: Animation;
+  try {
+    a = el.animate(kf, { duration: ms, fill: 'backwards' });
+  } finally {
+    baking = false;
+  }
+  return a.finished.then(() => undefined, () => undefined);
+};
+
 // ---------- 8×8 베이어 디더 ----------
 /** 8×8 베이어 순서 (0 ~ 63) */
 const B8: number[] = (() => {

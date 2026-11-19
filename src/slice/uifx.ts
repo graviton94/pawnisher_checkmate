@@ -3,7 +3,7 @@ import { calmMotion } from '../prefs/motion';
 import screwPng from '../assets/ui/kit/screw16.png';
 import { sfx } from '../audio/sfx';
 import { arcFly, ditherKeyframes } from './fx3';
-import { ease, snapDev, tween } from '../view/motion';
+import { compTween, ease, snapDev, tween } from '../view/motion';
 import { SMOOTH } from '../data/motion';
 import { devPerCss, lay, layRect, viewH } from '../view/vz';
 
@@ -262,6 +262,8 @@ export const screwBurst = (from: { x: number; y: number }, target: Element | nul
   }
 };
 
+/** 화면에 붙은 그림 중 아직 풀리지 않은 것을 푼다 (전환 머묾 동안) */
+const settleImages = (): Promise<unknown> => Promise.all([...document.querySelectorAll<HTMLImageElement>('#app img, .overlay img')].filter((i) => i.complete && i.naturalWidth > 0).slice(0, 40).map((i) => i.decode?.().catch(() => undefined)));
 /**
  * 철문 전환 (연구소 「화면 전환」 → D-554): 위아래 도트 철문이 모았다가 가속하며 쾅 닫힘 → 3도트 튐 → 화면 흔들림 → mid() → 열림(감속).
  * 페이드 대신 쓰는 화면 바꿈. 움직임은 화면 프레임마다, 위치는 기기 픽셀 정수(옛 CSS 보간은 소수 위치를 지났다). mid가 끝나야 열린다.
@@ -290,20 +292,26 @@ export const shutter = async (mid: () => void | Promise<void>): Promise<void> =>
   put(1);
   const T = SMOOTH.shutter;
   sfx('lift');
-  // 닫힘: 1 → 0 가속(쾅) — 마지막 18%는 3도트 튀었다 내려앉음
-  await tween(T.close, (_e, t) => {
-    if (t < 0.82) put(1 - ease.in(t / 0.82));
-    else { const u = (t - 0.82) / 0.18; put((Math.sin(Math.PI * u) * bump) / H); }
-  }, (t) => t);
+  // 닫힘: 1 → 0 가속(쾅) — 마지막 18%는 3도트 튀었다 내려앉음. D-595: 합성기에서 도는 120Hz 구움(compTween) —
+  // 옛 rAF 걸음은 CPU가 느린 폰에서 주 스레드와 함께 끊겼다(×4 느리게 20fps)
+  const gAt = (t: number): number => (t < 0.82 ? 1 - ease.in(t / 0.82) : (Math.sin(Math.PI * ((t - 0.82) / 0.18)) * bump) / H);
+  const doors = (ms: number, g: (t: number) => number): Promise<unknown> => Promise.all([
+    compTween(top, ms, (t) => `translate3d(0,${-snapDev(g(t) * H)}px,0)`),
+    compTween(bot, ms, (t) => `translate3d(0,${snapDev(g(t) * H)}px,0)`),
+  ]);
+  await doors(T.close, gAt);
   put(0);
   sfx('land');
   document.body.classList.remove('stage-shake');
   void document.body.offsetWidth;
   document.body.classList.add('stage-shake');
   await mid();
-  await new Promise((r) => window.setTimeout(r, T.hold));
+  // 새 화면 그림을 열기 전에 풀어 둔다 (D-595: 열리는 첫 프레임에 그림 풀기 · 첫 칠하기가 겹쳐 문이 멈칫했다) — 기다림은 머묾 시간 안
+  const sleep = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+  await Promise.all([sleep(T.hold), Promise.race([settleImages(), sleep(300)])]);
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   // 열림: 0 → 1 감속 (지수)
-  await tween(T.open, (e) => put(e), ease.outExpo);
+  await doors(T.open, ease.outExpo);
   wrap.remove();
   document.body.classList.remove('stage-shake');
 };

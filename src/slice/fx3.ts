@@ -8,7 +8,9 @@ import { lessFlash, shakeMul } from '../prefs/fx';
 import { sfx } from '../audio/sfx';
 import { sparksAt } from './uifx';
 import { bakeWaapi, clearDither, ditherTo, ease } from '../view/motion';
-import { SMOOTH } from '../data/motion';
+import { FLASH, SMOOTH } from '../data/motion';
+import { flashAt, impactFlash } from '../view/flash';
+import { viewH, viewW } from '../view/vz';
 
 const calm = (): boolean => calmMotion();
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -22,14 +24,15 @@ const centerOf = (el: Element) => {
   const r = el.getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
 };
-/** 화면 전체 흰 섬광 한 번 */
-export const flashScreen = (a = 0.85): void => {
+/**
+ * 번쩍 한 번 (D-595): 옛 「화면 전체 흰 섬광」(75% 흰 체커 막 · 220ms)을 맞은 곳 둘레 원형 디더 · 화면 3장 꺼짐으로 바꿨다(view/flash).
+ * a = 세기(0~1, 덮는 비율 상한 FLASH.peak) · at = 가운데 요소(없으면 화면 가운데). 번쩍임 줄이기 · 움직임 줄이기면 없다.
+ */
+export const flashScreen = (a = 0.85, at?: Element | null): void => {
   if (calm() || lessFlash()) return;
-  const f = document.createElement('div');
-  f.className = 'fx3-flash';
-  f.style.setProperty('--a', String(a));
-  document.body.appendChild(f);
-  window.setTimeout(() => f.remove(), 260);
+  const peak = FLASH.peak * Math.min(1, a / 0.85);
+  if (at) void flashAt(at, { peak });
+  else void impactFlash({ x: viewW() / 2, y: viewH() / 2, peak });
 };
 /**
  * 도트 퇴장 (D-193 → D-554): 사라지는 것은 모두 8×8 베이어 디더가 프레임마다 한 단씩(64단) 곡선으로 지워진다 — 투명 페이드 대신.
@@ -240,7 +243,7 @@ export const stampFx = (s: HTMLElement): void => {
   if (calm()) return;
   s.classList.add('st3');
   window.setTimeout(() => {
-    flashScreen(0.5);
+    flashScreen(0.5, s);
     shake(s.closest<HTMLElement>('.panel'), 2);
     sfx('stamp');
     const p = centerOf(s);
@@ -535,10 +538,8 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
       replay(c, 'g-pop');
       glint(c, g);
       if (g === 'gold') {
-        const f = document.createElement('div');
-        f.className = 'fx3-gold';
-        document.body.appendChild(f);
-        window.setTimeout(() => f.remove(), 420);
+        // 금빛 번쩍 (D-595): 화면 전체 금 디더 막(400ms · 가면 16번 갈이) 대신 카드 둘레만 원형 디더 · 화면 3장 꺼짐
+        void flashAt(c, { color: '#f4d27a', r: r.h * FLASH.cardRadius, z: 117 });
         sparksAt(r.x, r.y, 16, 80, ['#fff4d6', '#f4d27a', '#c89b3c', '#ffffff']);
         sfx('rare');
       } else {

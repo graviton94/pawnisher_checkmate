@@ -688,7 +688,7 @@ def build():
                 ww, wh = win[2] - win[0], win[3] - win[1]
                 css.append(f"{S} > .cf-win::after {{ left: {(ww - 70) / 2 / ww * 100:.3f}%; width: {70 / ww * 100:.3f}%; bottom: 0; top: auto; height: {36 / wh * 100:.3f}%; }}")
             if t != 'common':
-                css.append(f"{S}::before {{ -webkit-mask: {url('metal-' + key)} 0 0 / 100% 100% no-repeat; mask: {url('metal-' + key)} 0 0 / 100% 100% no-repeat; }}")
+                css.append(f"{S} > .cf-sheen {{ -webkit-mask: {url('metal-' + key)} 0 0 / 100% 100% no-repeat; mask: {url('metal-' + key)} 0 0 / 100% 100% no-repeat; }}")
             hh = (L['desc'][3] - L['desc'][1]) / 126
             fr = {'name': min(fr['name'], (L['name'][2] - L['name'][0]) / 84),
                   'tag': min(fr['tag'], ((tag[2] - tag[0]) / 84) if tag else 1),
@@ -726,38 +726,24 @@ def build():
 
 
 def motion_css():
-    """CD-11 움직임 (D-585): 희귀 = 청록 띠 · 금 = 황동 띠 → 볏 · 귀 불꽃 · 창 불티. 모두 프레임 줄 + steps — 투명도 보간 없음(D-216 · D-554).
-    움직임 줄이기면 멈춘다(띠 0장 = 빈 장 · 불꽃 숨김 · 불티 첫 장)."""
+    """CD-11 움직임 (D-585 → D-595): 희귀 = 청록 띠 · 금 = 황동 띠 → 볏 · 귀 불꽃 · 창 불티. 투명도 보간 없음(D-216).
+    D-595: 띠는 8장 계단(약 6fps) 대신 이어 붙인 띠 하나(tools/pixel/card_sweep.py)를 쇠 테 가면(.cf-sheen) 안에서
+    화면 프레임마다 정수 기기 픽셀로 옮긴다 — 움직임 · 불꽃 시간은 src/slice/sheen.ts(수치 data/motion.ts CARD_SHEEN)가 건다.
+    여기는 자리 · 그림만. 불티는 6장 줄을 24fps 이상으로(ember_ms). 움직임 줄이기면 멈춘다(띠는 카드 밖 · 불꽃 숨김 · 불티 첫 장)."""
     M = R.MOTION
-    P = M['period_ms']
-    band_ms = M['band_frames'] * M['band_ticks'] * M['tick_ms']
-    spark_ms = M['spark_frames'] * M['spark_ticks'] * M['tick_ms']
     cards = 'body.slice .cf.cf.cf.cf.cf:is(.cmd, .part-card, .crew-card)'
     out = []
-    out.append(f"{cards}:is(.g-rare, .g-gold)::before {{ content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border: 0; border-image: none; clip-path: none; visibility: visible;"
-               f" background: url('../assets/ui/cards/fx-rare-band.png') 0 0 / 800% 100% no-repeat; image-rendering: pixelated; animation: cfband {P}ms steps(1, end) infinite; animation-delay: var(--cf-fx-delay, 0ms); }}")
-    out.append(f"{cards}.g-gold::before {{ background-image: url('../assets/ui/cards/fx-gold-band.png'); }}")
+    out.append(f"{cards}:is(.g-rare, .g-gold) > .cf-sheen {{ position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; contain: strict; }}")
+    for g in ('rare', 'gold'):
+        w = Image.open(os.path.join(CARDS, f'fx-{g}-sweep.png')).width
+        out.append(f"{cards}.g-{g} > .cf-sheen > i {{ position: absolute; left: 0; top: 0; height: 100%; width: {w / 84 * 100:.4f}%;"
+                   f" background: url('../assets/ui/cards/fx-{g}-sweep.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; transform: translate3d(-200%, 0, 0); will-change: transform; }}")
     out.append(f"{cards}.g-gold::after {{ content: ''; position: absolute; inset: 0; z-index: 7; pointer-events: none; visibility: hidden;"
-               f" background: url('../assets/ui/cards/fx-gold-spark.png') 0 0 / 600% 100% no-repeat; image-rendering: pixelated; animation: cfspark {P}ms steps(1, end) infinite; animation-delay: var(--cf-fx-delay, 0ms); }}")
+               f" background: url('../assets/ui/cards/fx-gold-spark.png') 0 0 / 600% 100% no-repeat; image-rendering: pixelated; }}")
     out.append(f"body.slice .cf.cf.cf.cf.cf:is(.cmd, .part-card, .crew-card).g-gold > .cf-win::after {{ content: ''; position: absolute; z-index: 2; pointer-events: none;"
                f" background: url('../assets/ui/cards/fx-ember.png') 0 0 / 600% 100% no-repeat; image-rendering: pixelated; animation: cfember {M['ember_ms']}ms steps(6, end) infinite; }}")
-    # 띠 8장 × 2틱 → 쉼(빈 첫 장)
-    kf = []
-    for k in range(M['band_frames']):
-        kf.append(f"{k * M['band_ticks'] * M['tick_ms'] / P * 100:.3f}% {{ background-position: {k * 100 / 7:.4f}% 0; }}")
-    kf.append(f"{band_ms / P * 100:.3f}% {{ background-position: 0 0; }}")
-    out.append('@keyframes cfband { ' + ' '.join(kf) + ' }')
-    kf = [f"0% {{ visibility: hidden; background-position: 0 0; }}"]
-    for k in range(M['spark_frames']):
-        kf.append(f"{(band_ms + k * M['spark_ticks'] * M['tick_ms']) / P * 100:.3f}% {{ visibility: visible; background-position: {k * 100 / 5:.4f}% 0; }}")
-    kf.append(f"{(band_ms + spark_ms) / P * 100:.3f}% {{ visibility: hidden; }}")
-    out.append('@keyframes cfspark { ' + ' '.join(kf) + ' }')
     out.append('@keyframes cfember { from { background-position: 0 0; } to { background-position: 120% 0; } }')
-    # 줄 안에서 어긋나게
-    st = M['stagger_ms']
-    out.append(f"body.slice :is(.pick-item, .card-bare, .card-slot, .deck-grid > *):nth-child(3n + 2) .cf, body.slice .cf:nth-child(3n + 2) {{ --cf-fx-delay: -{st}ms; }}")
-    out.append(f"body.slice :is(.pick-item, .card-bare, .card-slot, .deck-grid > *):nth-child(3n) .cf, body.slice .cf:nth-child(3n) {{ --cf-fx-delay: -{2 * st}ms; }}")
-    out.append(f"@media (prefers-reduced-motion: reduce) {{ {cards}:is(.g-rare, .g-gold)::before, {cards}.g-gold::after, body.slice .cf.cf.cf.cf.cf.g-gold > .cf-win::after {{ animation: none; }} }}")
+    out.append(f"@media (prefers-reduced-motion: reduce) {{ body.slice .cf.cf.cf.cf.cf.g-gold > .cf-win::after {{ animation: none; }} }}")
     return out
 
 

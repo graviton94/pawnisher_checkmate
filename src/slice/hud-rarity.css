@@ -132,13 +132,13 @@ body.slice .cf.cf.cf.cf.g-gold::before { border-image-source: url('../assets/ui/
 body.slice .cf.cf.cf.cf.glinting::before { visibility: hidden; }
 
 /* ---------- RF-02 등급 반짝임 (희귀 = 청록 파편 → 대각 섬광 · 금 = 꺾쇠 → 별 터짐 → 반짝) ----------
-   48×48 프레임 8장 띠를 네 귀퉁이 24×24 조각으로 나눠 카드 모서리에 앉히고 steps(8)로 한 번 — 페이드 없음.
+   48×48 프레임 8장 띠를 네 귀퉁이 24×24 조각으로 나눠 카드 모서리에 앉히고 steps(8)로 한 번(장당 40ms, D-595) — 페이드 없음.
    움직임 줄이기면 붙이지 않는다(쉬는 꺾쇠 한 프레임만, fx3.ts gradeReveal) */
 .cf > .glint { position: absolute; z-index: 7; pointer-events: none; left: calc(var(--ci-l) - var(--px) * 3); right: calc(var(--ci-r) - var(--px) * 3); top: calc(var(--ci-t) - var(--px) * 3); bottom: calc(var(--ci-b) - var(--px) * 3); }
 .cf > .glint > i {
   position: absolute; width: calc(var(--px) * 24); height: calc(var(--px) * 24);
   background: url('../assets/ui/fx/glint-rare.png') 0 0 / calc(var(--px) * 384) calc(var(--px) * 48) no-repeat; image-rendering: pixelated;
-  animation: glint8 640ms steps(8, end) both;
+  animation: glint8 320ms steps(8, end) both; /* D-595: 장당 40ms (25fps) — 옛 80ms(12.5fps) */
 }
 .cf > .glint.glint-gold > i { background-image: url('../assets/ui/fx/glint-gold.png'); }
 .cf > .glint > i:nth-child(1) { left: 0; top: 0; --qx: 0; --qy: 0; }

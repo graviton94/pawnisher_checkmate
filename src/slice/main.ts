@@ -45,6 +45,8 @@ const calmNow = (): boolean => calmMotion();
 import * as cardFx from './cardfx';
 import type { Cell as CardCell, Pt as CardPt } from './cardfx';
 import { installPressy, installUiSprites, mountPart, nope, screwBurst, shutter, sparksAt, titleFx } from './uifx';
+import { installSheen } from './sheen';
+import { impactFlash } from '../view/flash';
 import { arcFly, flashScreen, shakeEl, installPixelAnimate, gradeReveal, buyFx, curtainRows, dealHand, discardHand, healFx, koBanner, modalIn, modalOut, pxOut, replay, rollNumber, shake, stampFx, sweep, tally, turnLabel, typeIn, typeSkip } from './fx3';
 import { crestHtml, guide, playCuts, pressHtml, prologue } from './opening';
 import { markTip, showTip, tipDue } from './loadtip';
@@ -120,6 +122,8 @@ import { Rng } from '../engine/rng';
 installPixelAnimate();
 // CSS 키프레임 움직임을 정수 기기 픽셀 120Hz로 다시 굽는다 (D-554 — 계단 키프레임이 뚝뚝 끊겼다)
 installSmoothMotion();
+// 등급 빛 띠: 희귀 · 금 카드가 화면에 붙으면 프레임마다 쓸리는 띠를 단다 (D-595)
+installSheen();
 
 // 전투 HUD 구역 (D-208 F안 → 패스 4 D-396, 총괄 리뷰 3.9): 왼쪽 = 태엽 · 손패 · 덱 줄 / 가운데 = 상태 띠 + 판 / 오른쪽 = 턴 · 속전 · 적 의도 목록 · 되감기 + 턴 끝.
 // 예전 비교 배치(?layout=a ~ e)는 지웠다 — 하나만 남긴다.
@@ -4580,11 +4584,12 @@ const transcend = async (back: SliceBattle, swap: () => void): Promise<void> => 
   document.body.classList.add('rev-freeze');
   const el = document.createElement('div');
   el.className = 'transfx';
-  el.innerHTML = `<i class="tf-flash"></i><i class="rev-gear fast"></i><b class="tf-word">${HUD_TEXT.lossRewind.fx}</b>`;
+  el.innerHTML = `<i class="rev-gear fast"></i><b class="tf-word">${HUD_TEXT.lossRewind.fx}</b>`;
   el.style.setProperty('--tx', `${Math.round(at.x)}px`);
   el.style.setProperty('--ty', `${Math.round(at.y)}px`);
   document.body.appendChild(el);
-  // ① 흰 정지 프레임 · 톱니 폭주 · 「초월」 도장
+  // ① 킹 자리 흰 번쩍(원형 디더 · 화면 4장 꺼짐 — D-595: 옛 화면 전체 흰 정지 장 360ms + 투명도 꺼짐을 대신) · 톱니 폭주 · 「초월」 도장
+  void impactFlash({ x: at.x, y: at.y, r: Math.min(innerWidth, innerHeight) * 0.6, frames: 4, z: 121 });
   sfx('stamp');
   await wait(420);
   // ② 작은 황동 톱니 파편이 소용돌이치며 킹 자리로 감겨 든다 (한 번 바깥으로 물러섰다가 — 예비 동작 → 돌진)

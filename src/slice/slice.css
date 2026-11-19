@@ -370,8 +370,6 @@ body.stage-shake #app { animation: sshake 300ms steps(6); }
 @media (prefers-reduced-motion: reduce) { .tfx-em img { opacity: 1; animation: none !important; -webkit-mask-image: none; mask-image: none; } .tfx-em.done .sl { animation: none; } }
 /* ---------- 화면 연출 3부 (D-189, 연구소 21~24판 승인) ---------- */
 :root { --snap: cubic-bezier(0.2, 1.6, 0.35, 1); --accel: cubic-bezier(0.6, 0, 0.9, 0.4); --decel: cubic-bezier(0.1, 0.9, 0.2, 1); }
-.fx3-flash { position: fixed; inset: 0; z-index: 118; background: #fff; pointer-events: none; animation: fx3fl 220ms var(--decel) forwards; }
-@keyframes fx3fl { 0% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); } 33.33% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 66.67% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 8.33% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 16.66% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 25% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 41.66% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 50% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 58.34% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 75% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 83.34% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 91.67% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
 /* 1 창: 체크무늬 그늘 세 단계 · 떨어져 박혀 출렁 · 리벳 · 닫으면 가로로 접힘 */
 .overlay.m3on { animation: m3dith 300ms cubic-bezier(.2,.9,.3,1) both; }
 .overlay.m3off { animation: m3dith 300ms cubic-bezier(.7,0,.9,.4) reverse both; }
@@ -798,15 +796,7 @@ body.slice.lay-f .gtop .turn-label { min-width: max-content; overflow: visible; 
   78% { transform: scale(0.98, 1.02); }
   100% { transform: none; }
 }
-/* 화면 전체 금빛 번쩍: 금색 판을 체크무늬 마스크 다섯 단계로 들였다 뺀다 (페이드 없음) */
-.fx3-gold { position: fixed; inset: 0; z-index: 117; pointer-events: none; background: #f4d27a; -webkit-mask-size: auto; mask-size: auto; -webkit-mask-repeat: repeat; mask-repeat: repeat; animation: goldDith 400ms steps(1, end) forwards; }
-@keyframes goldDith {
-  0% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); }
-  15% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); }
-  30% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); }
-  45% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); }
-  65% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); }
-  85%, 100% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 3.75% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 7.5% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 11.25% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 18.75% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 22.5% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 26.25% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 33.75% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 37.5% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 41.25% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 50% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 55% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 60% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 70% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 75% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 80% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
+/* (D-595: 화면 전체 금빛 번쩍 .fx3-gold는 카드 둘레 원형 디더 번쩍 view/flash.ts로 바뀌었다) */
 @media (prefers-reduced-motion: reduce) { .g-pop { animation: none; } }
 /* 일반 부품은 철 테두리 · 단색 바탕 (황금 테두리와 헷갈리지 않게, 그라데이션 없이 — D-216) */
 .part-card { background: #24212b; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #56545e, inset 0 4px 0 #2f2b36; }
@@ -1010,8 +1000,6 @@ body.rev-freeze #board, body.rev-freeze #left, body.rev-freeze #right { filter: 
    흰 정지 프레임(steps 3) → 거꾸로 폭주하는 톱니 + 금빛 「초월」 도장 → 도트 조각이 물러섰다 킹 자리로 빨려 듦 → 빛기둥 · 사각 고리 → 서술. 페이드 없음 */
 .transfx { position: fixed; inset: 0; z-index: 70; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23050607' fill-opacity='.7'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23050607' fill-opacity='.7'/%3E%3C/svg%3E") 0 0 / 4px 4px; image-rendering: pixelated; }
-.transfx .tf-flash { position: absolute; inset: 0; background: #f4f1ea; animation: tfFlash 360ms steps(1) both; }
-@keyframes tfFlash { 0% { opacity: 1; } 34% { opacity: 1; -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 67% { -webkit-mask-image: var(--dq0); mask-image: var(--dq0); } 100% { opacity: 0; } 38.13% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 42.25% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 46.38% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 50.5% { -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 54.63% { -webkit-mask-image: var(--dq3); mask-image: var(--dq3); } 58.75% { -webkit-mask-image: var(--dq2); mask-image: var(--dq2); } 62.88% { -webkit-mask-image: var(--dq1); mask-image: var(--dq1); } }
 .transfx .rev-gear { position: relative; z-index: 1; }
 .transfx .tf-word { position: relative; z-index: 1; font: 400 60px/var(--lh-60) Galmuri14, Galmuri11, sans-serif; color: #f4d27a; letter-spacing: 0.2em; text-shadow: 4px 0 0 rgba(255, 60, 90, 0.7), -4px 0 0 rgba(60, 200, 255, 0.7), 4px 4px 0 #000; animation: tfWord 520ms steps(6) both; }
 @keyframes tfWord { 0% { transform: scale(1.8); -webkit-mask-image: var(--dq4); mask-image: var(--dq4); } 40% { transform: scale(0.9); -webkit-mask-image: none; mask-image: none; } 70% { transform: scale(1.06); } 100% { transform: scale(1); } 8.33% { -webkit-mask-image: var(--dq5); mask-image: var(--dq5); } 16.67% { -webkit-mask-image: var(--dq6); mask-image: var(--dq6); } 25% { -webkit-mask-image: var(--dq7); mask-image: var(--dq7); } 33.33% { -webkit-mask-image: var(--dq8); mask-image: var(--dq8); } 41.67% { -webkit-mask-image: var(--dq9); mask-image: var(--dq9); } 50% { -webkit-mask-image: var(--dq10); mask-image: var(--dq10); } 58.33% { -webkit-mask-image: var(--dq11); mask-image: var(--dq11); } 66.67% { -webkit-mask-image: var(--dq12); mask-image: var(--dq12); } 75% { -webkit-mask-image: var(--dq13); mask-image: var(--dq13); } 83.33% { -webkit-mask-image: var(--dq14); mask-image: var(--dq14); } 91.67% { -webkit-mask-image: var(--dq15); mask-image: var(--dq15); } }
@@ -1031,7 +1019,7 @@ body.rev-freeze #board, body.rev-freeze #left, body.rev-freeze #right { filter: 
 .transfx.land .tf-cog { display: none; }
 .transfx .tf-beam { position: fixed; left: calc(var(--tx) - 24px); top: 0; width: 48px; height: var(--ty); background: url('../assets/ui/kit/revive-beam.png') 0 0 / 384px 4px repeat-y; image-rendering: pixelated; animation: tfBeam 1100ms steps(8) forwards; }
 @keyframes tfBeam { 0% { background-position-x: 0; } 100% { background-position-x: -384px; visibility: hidden; } }
-.transfx .tf-burst { position: fixed; left: calc(var(--tx) - 72px); top: calc(var(--ty) - 72px); width: 144px; height: 144px; background: url('../assets/ui/kit/revive-burst.png') 0 0 / 1152px 144px no-repeat; image-rendering: pixelated; animation: tfBurst 620ms steps(8) forwards; }
+.transfx .tf-burst { position: fixed; left: calc(var(--tx) - 72px); top: calc(var(--ty) - 72px); width: 144px; height: 144px; background: url('../assets/ui/kit/revive-burst.png') 0 0 / 1152px 144px no-repeat; image-rendering: pixelated; animation: tfBurst 336ms steps(8) forwards; /* D-595: 장당 42ms (24fps — 옛 78ms) */ }
 @keyframes tfBurst { 0% { background-position-x: 0; } 100% { background-position-x: -1152px; visibility: hidden; } }
 /* 패배 되감기 장면 첫 줄: 쓰러진 킹의 서술 (잿빛) — 톱니는 멈춰 있다가 다음 줄에서 박히며 돈다 */
 .revfx .rev-pre { margin: 0; max-width: 640px; font: 15px/1.4 Galmuri14, Galmuri11, sans-serif; color: #a8a4b2; text-shadow: 2px 2px 0 #000; min-height: 1.4em; }

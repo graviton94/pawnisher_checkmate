@@ -62,3 +62,32 @@ export const FILM_MOTION = {
   /** 장 제목 카드 등장 · 퇴장 (ms) */
   title: { in: 420, out: 360 },
 } as const;
+
+/**
+ * 한 움직임 시계 · 곡선 이름표 (D-595 — 사용자 실기기 피드백: 「화면 번쩍임 · 희귀 카드 빛 지나감의 프레임이 너무 구림. 더 빠르게, 부드럽게」).
+ * 규칙: **움직임(위치 · 크기)은 화면 프레임마다**(rAF 또는 합성기에서 도는 120Hz 정수 구움 Web Animations) · 위치는 기기 픽셀 정수.
+ * 계단(steps)은 **디더 무늬와 그림 줄(스프라이트)의 장 넘김에만** — 디더는 12단 이상, 장 넘김은 24fps 이상(장당 ≤ 42ms).
+ * 작은 N의 steps로 위치를 옮기는 것은 금지(SMOOTH.hold의 일부러 정지 동작 — 도장 · 톱니 · 흔들림 — 만 예외).
+ */
+export const MOTION_CLOCK = {
+  /** 장 넘김(스프라이트 줄) 한 장의 최대 길이 (ms) — 24fps */
+  spriteFrameMax: 42,
+  /** 디더 전환 · 퇴장의 최소 단계 수 */
+  ditherMinLevels: 12,
+  /** 곡선 이름표 (CSS cubic-bezier — 코드는 view/motion.ts ease와 같은 모양) */
+  ease: { out: 'cubic-bezier(.22,1,.36,1)', in: 'cubic-bezier(.55,0,1,.45)', inOut: 'cubic-bezier(.65,0,.35,1)' },
+} as const;
+
+/**
+ * 등급 빛 띠 (D-595 — D-585 CD-11의 8장 띠를 대신): 이어 붙인 띠 하나(tools/pixel/card_sweep.py)가 카드 쇠 테 가면 안을
+ * passMs 동안 곡선(inOut)으로 한 번 쓸고, period마다 되풀이. 금은 띠가 지나간 뒤 볏 불꽃 6장을 sparkFrameMs씩.
+ * 줄 안의 카드는 stagger만큼 어긋난다(셋마다 한 바퀴). 움직임은 120Hz로 구운 정수 기기 픽셀 Web Animations(합성기에서 돈다).
+ */
+export const CARD_SHEEN = { periodMs: 3600, passMs: 340, sparkFrameMs: 40, sparkFrames: 6, staggerMs: 1200, bakeHz: 120 } as const;
+
+/**
+ * 번쩍임 (D-595 — 화면 전체 흰/금 디더 막을 대신): 맞은 곳 둘레만 원형 디더(8×8 베이어, 칸 = 게임 도트)로 켰다가 frames 장(화면 프레임)에 걸쳐 꺼진다.
+ * peak = 가운데 덮는 비율(0~1, 0.5 = 체커 — 눈부신 흰 장 없음) · radius = 화면 짧은 변 대비 반지름.
+ * 번쩍임 줄이기 · 움직임 줄이기면 그리지 않는다.
+ */
+export const FLASH = { frames: 3, peak: 0.5, radius: 0.42, cardRadius: 1.15 } as const;

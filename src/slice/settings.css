@@ -42,7 +42,7 @@
 
 /* ---------- 설정이 연출에 닿는 곳 (D-539) ----------
    번쩍임 줄이기: 흰 · 붉은 화면 섬광 층을 걷고, 기물 · 카드의 흰 번쩍(brightness)도 끈다 — 소리 · 흔들림 · 글은 그대로. */
-:root[data-noflash='1'] body :is(.tfx-flash, .fx3-flash, .pl-flash, .tf-flash, .p2-flash) { display: none; }
+:root[data-noflash='1'] body :is(.tfx-flash, .fx-flash, .pl-flash, .p2-flash) { display: none; }
 :root[data-noflash='1'] body :is(.ev-actor.flash > img, .er-card.flash, .er-pc.flash) { filter: none; }
 /* 화면 흔들림: 끔 = 무대 흔들림 없음 · 약하게 = 진폭 절반 계단 */
 :root[data-shake='off'] body.stage-shake #app { animation: none; }

@@ -153,7 +153,8 @@ SPARK_AT = [(41, 3), (4, 8), (79, 8), (4, 119), (79, 119)]
 
 # 움직임 박자 (CD-11 발주: 희귀 3.6초 주기 = 띠 8장 × 2틱 + 쉼 · 금 = 띠 8장 → 불꽃 6장 → 쉼 · 불티 0.6초 6장 늘).
 # 틱 = 1/12초(83ms). 카드마다 시작을 어긋나게(줄의 n번째 카드 −1.2초 · −2.4초) — 한 줄이 한꺼번에 번쩍이지 않게.
-MOTION = {'tick_ms': 83, 'period_ms': 3600, 'band_frames': 8, 'band_ticks': 2, 'spark_frames': 6, 'spark_ticks': 1, 'ember_ms': 600, 'stagger_ms': 1200}
+# D-595: 띠 · 불꽃 시간은 src/data/motion.ts CARD_SHEEN으로 옮겼다(프레임마다 · src/slice/sheen.ts). 불티 6장 줄 = 240ms(25fps — 옛 600ms는 10fps)
+MOTION = {'ember_ms': 240}
 
 # ---------------------------------------------------------------- 정사각 칸 · 자르기 (D-586)
 # 실측 격자(card_f_import.py measure → build-res/order/CD-F-parts/grid.json): 믿을 만한 단일 간격이 있는 부품만 — 그 간격 · 시작점(상자 기준 px)으로 두 축 같이 복원.
