@@ -1,5 +1,5 @@
 // PC(스팀) 빌드 진입점 (GDD 10장 M9). 웹 빌드(dist)를 창 하나로 띄운다.
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const smoke = process.argv.includes('--smoke-test');
@@ -61,7 +61,11 @@ ipcMain.handle('is-fullscreen', (e) => trusted(e) && !!BrowserWindow.fromWebCont
 app.on('web-contents-created', (_e, wc) => {
   wc.on('will-navigate', (ev, url) => { if (url !== PAGE) ev.preventDefault(); });
   wc.on('will-redirect', (ev, url) => { if (url !== PAGE) ev.preventDefault(); });
-  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+  // 새 창은 늘 막고, 스튜디오 사이트(처리방침 등 — D-636)의 https 주소만 기본 브라우저로 넘긴다
+  wc.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\/graviton94\.github\.io\//.test(url)) void shell.openExternal(url);
+    return { action: 'deny' };
+  });
   wc.on('will-attach-webview', (ev) => ev.preventDefault());
 });
 app.on('second-instance', () => {

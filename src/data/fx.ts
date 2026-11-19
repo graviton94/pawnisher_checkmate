@@ -109,8 +109,6 @@ export const IMPACT = {
   aim: { drop: 160, fromScale: 2, fromAngle: -40 },
   /** 원수 낙하: 그림자 · 낙하 · 판 물결 */
   drop: { shadow: 600, fall: 120, ripple: 900 },
-  /** 자원 희생: 웅크림 · 도약 · 킹 미끄러짐 */
-  sacrifice: { crouch: 250, leap: 220 },
 } as const;
 
 /**

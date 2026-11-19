@@ -48,10 +48,15 @@ android {
         debug {
             signingConfig signingConfigs.findByName('sideload') ?: signingConfigs.debug
         }
+        // 출시 빌드 (D-635): CI의 APK · AAB는 모두 release — 디버그 불가(debuggable false) · 웹뷰 원격 디버깅 꺼짐(Capacitor 기본값이 debuggable을 따른다).
+        //   APK 단계는 PC_SIDELOAD_* 만, AAB 단계는 PC_UPLOAD_* 만 넘기므로 같은 줄이 단계마다 맞는 키를 고른다. 키가 없으면 시험용 디버그 키(CI가 이름에 TESTKEY를 붙인다).
+        //   코드 줄이기(R8)만 켠다 — Capacitor 플러그인 보존 규칙은 capacitor-android가 consumer 규칙으로 함께 싣는다. 리소스 줄이기는 끈 채로 둔다(getIdentifier로 찾는 그림이 빠질 위험).
         release {
             signingConfig signingConfigs.findByName('upload') ?: signingConfigs.findByName('sideload') ?: signingConfigs.debug
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            debuggable false
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

@@ -3,7 +3,7 @@ import { bayer8, ditherLevel, ditherSvg, ease, snapDev } from '../src/view/motio
 import { SMOOTH } from '../src/data/motion';
 import { easingFn, parseTransform, sampleMotion } from '../src/view/bakefast';
 import { castOf, castOn, VN_DEFAULT, VN_SCENE } from '../src/data/vn';
-import { BOSS_STORY, DEFEAT_CUTS, ENDING_A, PROLOGUE, PROLOGUE_FIELD, bossFallCut, gildedPhase2Cut, promotionCuts, shadowCuts, trueEndingCuts, type Cut, type StoryBoss } from '../src/data/script';
+import { BOSS_STORY, DEFEAT_CUTS, ENDING_A, PROLOGUE, PROLOGUE_FIELD, bossFallCut, gildedPhase2Cut, promotionCuts, runIntro, shadowCuts, trueEndingCuts, type Cut, type StoryBoss } from '../src/data/script';
 import { companionScene } from '../src/data/companion-scenes';
 
 /**
@@ -78,7 +78,7 @@ describe('비주얼 노벨 층 데이터 (D-554)', () => {
     const company = { alive: [{ name: '먼지투성이', t: 'N' as const }, { name: '구부러진 못', t: 'B' as const }], promised: { name: '먼지투성이', alive: true } };
     const all: Cut[] = [
       ...PROLOGUE, PROLOGUE_FIELD, ...DEFEAT_CUTS, ENDING_A, ...trueEndingCuts([], company),
-      ...[0, 1, 2, 3].flatMap((ch) => [...shadowCuts(ch, '법'), ...shadowCuts(ch, '법', true), ...promotionCuts(ch, '먼지투성이', '법', '거울', company)]),
+      ...[0, 1, 2, 3].flatMap((ch) => [...shadowCuts(ch, '법'), ...[0, 1, 2].flatMap((t) => runIntro(ch, t, '법')), ...promotionCuts(ch, '먼지투성이', '법', '거울', company)]),
       ...(Object.keys(BOSS_STORY) as StoryBoss[]).map((r) => bossFallCut(r, `boss-fall-${r}`, 1, 0)), gildedPhase2Cut('boss-gilded', 0, 'plate'),
       ...[0, 1, 2].flatMap((a) => companionScene(a, [{ name: '먼지투성이', t: 'P', serial: 'A1' }] as never).cuts),
     ];

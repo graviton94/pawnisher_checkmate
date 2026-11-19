@@ -1,4 +1,5 @@
 import type { FormId, PieceType } from '../engine';
+import { EASE } from '../data/ease';
 import { FORMS, formsUpTo } from '../data/forms';
 import { josa } from '../data/josa';
 import { Rng } from '../engine/rng';
@@ -56,7 +57,7 @@ export interface BattleDef {
   /** 짜 둔 손패 (입문 판, D-232): 덱을 이 순서로 놓고 섞지 않는다 */
   order?: CommandId[];
   /** 입문 시험대 (P-C D-502): a 치는 칸 · b 예고와 막기 · c 킹 잡기(= 출하 첫 대국). 화면은 이 판에 필요한 HUD만 연다 */
-  drill?: 'a' | 'b' | 'c';
+  drill?: 'a' | 'b' | 't' | 'c';
   /** 공정 열기 없이 늘 피해 100% (입문 시험대 — 「쳤는데 안 아프다」를 없앤다) */
   flat?: boolean;
   /** 적이 예고하지 않는다 (시험대 A — 서 있는 과녁) */
@@ -257,7 +258,7 @@ const TRAIT_TELL = ['', ' 불꽃 표시가 붙은 폰은 쓰러지면 둘레 한
 
 /**
  * 입문 시험대 셋 (P-C D-502, 후기 #4 — D-232의 「90초 한 판」을 다시 나눴다): 판 하나 = 생각 하나, 수마다 이유가 있다.
- * 처음 출하하는 사람만 A → (안내서 한 쪽) → B → (안내서 한 쪽) → C. A · B는 출하 밖 연습판(보상 · 기록 없음), C가 출하의 첫 대국(영입 보상).
+ * 처음 출하하는 사람만 A → B → B2 → C (D-610: 사이 안내서 대신 부관 한 줄 · B를 「예고와 막기」 / 「태엽과 연쇄」 둘로). A · B · B2는 출하 밖 연습판(보상 · 기록 없음), C가 출하의 첫 대국(영입 보상).
  * 세 판 모두 공정 열기 없이 피해 100% — 실전의 배치 턴은 첫 실전 대국에서 부관이 한 줄로 짚는다.
  * 분대는 표준 세트(킹 · 폰 · 나이트)라 자리를 짜 둔다. 판은 5×5 — 한 화면에 칸이 크게 든다.
  */
@@ -318,6 +319,32 @@ export const DRILLS: BattleDef[] = [
     tell: '',
     reward: 'card',
   },
+  {
+    // B2 「태엽과 연쇄」 (D-610 — 사용자 결정 3가: 시험대 B에 개념 9개 → 둘로. 연쇄 · 속전은 가르치지 않았다):
+    // 적은 움직이지 않는다(calm). 폰이 (1,2)에 내려앉아 대각선 앞 (2,3)의 단단한 폰을 치고(연쇄 1) · 나이트가 (4,2)에 내려앉아 L자로 같은 폰을 친다(같은 적 = 연쇄 +2).
+    // 둘 다 쓰러뜨리지 않는다(처치 환급이 없어야 「태엽 1 — 지휘(2)는 못 낸다」가 선다). 턴 끝 → 태엽이 셋 다시 차고 연쇄는 비고, 속전 칸이 하나 준다.
+    drill: 't',
+    flat: true,
+    calm: true,
+    enemy: ['K', 'P'],
+    kingHp: 0.35,
+    enemyHp: 2,
+    w: 5,
+    h: 5,
+    place: [
+      { side: 0, t: 'K', x: 2, y: 0 },
+      { side: 0, t: 'P', x: 1, y: 1 },
+      { side: 0, t: 'N', x: 3, y: 0 },
+      { side: 1, t: 'K', x: 4, y: 4 },
+      { side: 1, t: 'P', x: 2, y: 3 },
+    ],
+    order: ['advance', 'leap', 'order', 'kingStep', 'leap', 'advance', 'leap', 'kingStep'],
+    deck: ['advance', 'leap', 'order', 'kingStep', 'leap', 'advance', 'leap', 'kingStep'],
+    title: '시험대 3 — 태엽과 연쇄',
+    narr: '',
+    tell: '',
+    reward: 'card',
+  },
 ];
 
 /**
@@ -373,6 +400,8 @@ export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng
   // 적 수 +1 (D-542): 반장 · 도금왕이 아닌 대국에 늘 폰 하나 더 — 1막 편성이 우리 분대와 같은 수가 되어 「피할 수보다 겨누는 수가 많다」
   if (kind !== 'boss') d.enemy = [...d.enemy, ...Array<PieceType>(FOE.extraPawns).fill('P')];
   if (asc >= 4) d.enemy = [...d.enemy, 'P']; // 조항 4 「불어난 무리」 (D-542: 5 → 4)
+  // 1막 반장 HP (D-600): 첫째 · 둘째 왕관에서 반장 킹 · 호위 ×0.85 — 보통 봇의 벽이 1막 반장이었다(출하의 36~56%가 여기서 끝)
+  if (kind === 'boss' && act === 1 && asc <= EASE.act1BossUpTo) { d.kingHp *= EASE.act1BossHp; d.enemyHp = (d.enemyHp ?? 1) * EASE.act1BossHp; }
   if (asc >= 6 && kind !== 'battle') { const k = kind === 'boss' ? ASC_NUM.bossHp : ASC_NUM.checkHp; d.kingHp *= k; d.enemyHp = (d.enemyHp ?? 1) * k; }
   // 조항 8 「세운 날」(D-575): 화면 · 봇은 asc 8부터 모든 대국에 enemyAtk를 곱한다 — 반장은 그 곱을 bossAtk로 되돌린다
   if (asc >= 8 && kind === 'boss') d.atk = (d.atk ?? 1) * (ASC_NUM.bossAtk / ASC_NUM.enemyAtk);

@@ -6,7 +6,7 @@ import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
 import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN, RAID_TEXT } from '../data/giants';
 import { PRELOAD } from '../data/preload-list';
-import { sfx } from '../audio/sfx';
+import { sfx, sfxFor } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
 import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
@@ -1830,36 +1830,6 @@ class BoardScene extends Phaser.Scene {
     );
   }
 
-  /** 자원 희생 (D-180): 분대원이 웅크렸다 높은 호로 킹 자리에 박히고, 킹은 뒤로 미끄러진다 */
-  async swapLeap(crewId: number, kingId: number): Promise<void> {
-    const c = this.sprites.get(crewId);
-    const k = this.sprites.get(kingId);
-    if (!c || !k) return;
-    const S = IMPACT.sacrifice;
-    const t = this.tile;
-    const cx = c.root.x;
-    const cy = c.root.y;
-    const kx = k.root.x;
-    const ky = k.root.y;
-    await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: S.crouch / this.speed, onUpdate: (tw) => { const e = tw.getValue() ?? 0; this.applyPose(c, cx, cy, { dx: 0, dy: 0, sx: 1 + 0.16 * e, sy: 1 - 0.26 * e }); }, onComplete: () => done() }));
-    this.tweens.add({ targets: k.root, x: cx, y: cy, duration: (S.leap * 1.4) / this.speed, ease: 'Cubic.easeOut' });
-    await new Promise<void>((done) =>
-      this.tweens.addCounter({
-        from: 0,
-        to: 1,
-        duration: S.leap / this.speed,
-        onUpdate: (tw) => {
-          const q = (tw.getValue() ?? 0) ** 2;
-          this.applyPose(c, cx + (kx - cx) * q, cy + (ky - cy) * q - Math.sin(Math.PI * q) * t, { dx: 0, dy: 0, sx: 0.9, sy: 1.12 });
-        },
-        onComplete: () => done(),
-      }),
-    );
-    this.shakeLv(1);
-    sfx('land');
-    await new Promise<void>((done) => this.tweens.addCounter({ from: 0, to: 1, duration: 330 / this.speed, onUpdate: (tw) => { const a = 1 - easeOutElastic(tw.getValue() ?? 0); this.applyPose(c, kx, ky, { dx: 0, dy: 0, sx: 1 + 0.28 * a, sy: 1 - 0.28 * a }); }, onComplete: () => done() }));
-  }
-
   /**
    * 턴 합계 (D-073, 발라트로식): 내 턴이면 판 가운데에 준 피해가 0부터 세어 올라가며 커졌다가 자리 잡고, 처치 수가 붙는다.
    * 적 턴이거나 작은 턴(처치 없음 · 피해 TURN_SUMMARY.bigDamage 미만)이면 위쪽에 작게.
@@ -2159,6 +2129,7 @@ class BoardScene extends Phaser.Scene {
         if (s) {
           s.glyph.setTexture(this.glyphKey(s.piece.id, e.to, s.piece.side));
           s.piece = { ...s.piece, type: e.to };
+          sfxFor('boardPromote');
         }
         continue;
       }
@@ -2259,6 +2230,12 @@ class BoardScene extends Phaser.Scene {
           // 타격 소리 (D-540): 내 킹이 맞으면 킹 피격 · 한 대에 HP 절반 넘게 깎이거나 배율이 붙으면 모루 일격 · 그 밖은 가벼운 쇠 소리
           const heavy = h.damage >= ts.piece.maxHp * 0.5 || (e.mult ?? 1) > 1.05;
           sfx(ts.piece.side === 0 && ts.piece.type === 'K' && h.damage > 0 ? 'kinghit' : heavy ? 'crit' : 'hit', this.combo++);
+          // 방열판이 다 깨지는 순간 (D-630): 판이 피해를 받아 0이 되면 쇠 날개 꺾임 + 김
+          if (h.shieldAbsorbed > 0 && ts.piece.shield > 0) {
+            const left = Math.max(0, ts.piece.shield - h.shieldAbsorbed);
+            ts.piece = { ...ts.piece, shield: left };
+            if (left === 0) sfxFor('ventBreak');
+          }
           this.applyHit(ts, h);
           // 쾌감 · 아픔 (D-104): 내 기물이 맞으면 화면 가장자리가 붉게 (피해 비율만큼), 쓰러지면 둔탁한 소리.
           // 처치는 아주 짧게 멈췄다 간다 (히트스톱)
@@ -2592,11 +2569,6 @@ export class BoardRenderer implements BoardView {
   async dropIn(pieceId: number): Promise<void> {
     await this.whenReady;
     await this.heat(this.scene.dropIn(pieceId));
-  }
-  /** 자원 희생 도약 (D-180) */
-  async swapLeap(crewId: number, kingId: number): Promise<void> {
-    await this.whenReady;
-    await this.heat(this.scene.swapLeap(crewId, kingId));
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => {

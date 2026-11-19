@@ -3,7 +3,7 @@ import { HEAVY_MS } from './heavy';
 
 // 대국 · 시뮬레이션을 많이 돌린다 — 부하가 걸린 기기에서도 기본 5초에 걸리지 않게 (tests/heavy.ts)
 vi.setConfig({ testTimeout: HEAVY_MS });
-import { ACT_CARD, BOSS_CARD, BOSS_STORY, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROLOGUE, promotionCuts, shadowCut, stageProg, trueEndingCuts, type Line, type StoryBoss } from '../src/data/script';
+import { ACT_CARD, BOSS_CARD, BOSS_STORY, CROWN_OFF, DEFEAT, ENDING_A, GILDED_STORY, PROLOGUE, promotionCuts, runIntro, shadowCut, stageProg, trueEndingCuts, type Line, type StoryBoss } from '../src/data/script';
 import { companionScene } from '../src/data/companion-scenes';
 import { ASCENSION } from '../src/slice/run';
 import { textWidth } from '../src/slice/desc';
@@ -65,7 +65,7 @@ describe('컷신 자막 띠 쪽 나누기 (D-451 → D-488)', () => {
     PROLOGUE.forEach((c) => check(`프롤로그 ${c.img}`, c.lines));
     for (let a = 0; a <= 3; a++) {
       check(`그림자 ${a}`, shadowCut(a, ASCENSION[a].law).lines);
-      check(`그림자 재도전 ${a}`, shadowCut(a, undefined, true).lines);
+      for (const t of [0, 1, 2, 3]) runIntro(a, t, ASCENSION[a].law).forEach((c) => check(`인트로 ${a}-${t} ${c.slug}`, c.lines));
       for (let act = 0; act < 3; act++) companionScene(act, crew.alive, undefined, a).cuts.forEach((c) => check(`동료 ${a}-${act}`, c.lines));
     }
     check('엔딩 A', ENDING_A.lines);

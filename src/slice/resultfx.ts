@@ -1,6 +1,6 @@
 /**
  * 결과 도트 연출 (D-508 — EF-01 · EF-02 · WG-02 발주 취소, 사용자 결정 「받은 시트를 못 쓴다 → 코드로」).
- * 48×48칸 도트 캔버스 하나를 대상(실제 카드 · 기물 · 지갑 · 상자 · 판돈 칩) 위에 겹쳐 8프레임을 계단으로 찍는다.
+ * 48×48칸 도트 캔버스 하나를 대상(실제 카드 · 기물 · 지갑 · 상자) 위에 겹쳐 8프레임을 계단으로 찍는다.
  * 박자 = D-180: 0~1 예비(모임 · 떨림, 느리게) → 2~3 터짐(가장 크고 밝게, 빠르게) → 4~7 출렁 · 흩어짐 · 디더 퇴장(베이어 구멍이 늘어남).
  * 색은 발주 15색만(먹 · 철 · 황동 · 종이 · 진홍 · 청록) — 그라데이션 · 반투명 · 페이드 · 선형 미끄럼 없음(D-216).
  * 줄인 움직임이면 터짐 한 장만 잠깐 보이고 걷힌다. 결과는 엔진이 이미 정했다 — 보여 주기만 한다(UI 원칙 9).
@@ -8,7 +8,7 @@
 import { calmMotion } from '../prefs/motion';
 import { bayer, Rng } from '../view/pxfx';
 
-export type ResultFxKind = 'quench' | 'molten' | 'rust' | 'weld' | 'upgrade' | 'shatter' | 'screws' | 'screwsUp' | 'crate' | 'betWin' | 'betLose';
+export type ResultFxKind = 'quench' | 'molten' | 'rust' | 'weld' | 'upgrade' | 'shatter' | 'screws' | 'screwsUp' | 'crate';
 
 /** 발주 15색 (docs/asset-order-master.md §0-D 공용 팔레트) */
 const C = {
@@ -222,44 +222,12 @@ const DRAW: Record<ResultFxKind, Draw> = {
     const R = new Rng(9);
     if (f >= 3) for (let k = 0; k < 6; k++) blob(c, cx + R.range(-12, 12), cy - (f - 2) * R.range(3, 6), C.b3, 1);
   },
-  /** 판돈 적중: 동전 탑이 덜컹 → 튀어 오르며 두 배로(금빛 십자) → 출렁이며 두 탑으로 쌓임 */
-  betWin: (c) => {
-    const { f, cx, cy } = c;
-    const base = cy + 12;
-    if (f <= 1) { for (let k = 0; k < 4; k++) coin(c, cx + (f ? (k % 2 ? 1 : -1) : 0), base - k * 3, 0); return; }
-    if (f <= 3) {
-      const R = new Rng(13);
-      for (let k = 0; k < 8; k++) coin(c, cx + R.range(-15, 15) * (f - 1) / 2, base - 6 - R.range(4, 18) * (f - 1) / 2, k % 2);
-      cross(c, cx - 10, cy - 10, f === 2 ? 3 : 5);
-      cross(c, cx + 11, cy - 6, f === 2 ? 2 : 4);
-      return;
-    }
-    const wob = f === 4 ? -2 : f === 5 ? 1 : 0;
-    for (let k = 0; k < 4; k++) { coin(c, cx - 7, base - k * 3 + (k === 3 ? wob : 0), 0); coin(c, cx + 7, base - k * 3 + (k === 3 ? -wob : 0), 0); }
-  },
-  /** 판돈 실패: 동전 탑에 금이 감 → 녹아 진홍 쇳물 방울로 흘러내림 → 녹빛 얼룩만 남고 디더 퇴장 */
-  betLose: (c) => {
-    const { f, cx, cy } = c;
-    const base = cy + 12;
-    if (f <= 1) {
-      for (let k = 0; k < 4; k++) coin(c, cx, base - k * 3, 0);
-      if (f) for (let k = 0; k < 4; k++) dot(c.g, cx - 1 + (k % 2), base - 10 + k * 3, C.ink, 1, 2);
-      return;
-    }
-    const melt = Math.min(4, f - 1);
-    for (let k = 0; k < 4 - Math.min(3, melt); k++) coin(c, cx, base - k * 3 + melt, 0);
-    for (let k = 0; k < 6; k++) {
-      const x = cx - 6 + k * 2.4, y = base - 8 + (f - 1) * (2 + (k % 3)) ;
-      blob(c, x, Math.min(base + 2, y), f < 4 ? C.r2 : f < 6 ? C.r1 : C.p1, 2);
-    }
-    for (let x = -4 - melt * 2; x <= 4 + melt * 2; x++) if (keep(cx + x, base + 2, f, 5)) dot(c.g, cx + x, base + 2, f < 5 ? C.r1 : C.p1, 1, 2);
-  },
 };
 
 const calm = (): boolean => calmMotion();
 /** 장면 층 도트(3·DPR 반올림) — evstage dotPx와 같다 */
 export const sceneDot = (): number => { const r = window.devicePixelRatio || 1; return Math.round(3 * r) / r; };
-/** 장치 층 도트(2·DPR 반올림) — 판돈 칩 같은 HUD 위 */
+/** 장치 층 도트(2·DPR 반올림) — HUD 위 */
 export const deviceDot = (): number => { const r = window.devicePixelRatio || 1; return Math.max(1, Math.round(2 * r)) / r; };
 
 /**

@@ -28,7 +28,6 @@ const SCENES = [
   ['pb-bark', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.taunt('start')); await W(1500); await S('foe'); await A(() => window.sliceApi.allyBark()); await W(1500); await S('ally'); }],
   ['pb-sub', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.say('B')); await W(2200); await S(''); }],
   ['pb-notice', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => { window.sliceApi.stateBand('이대로 끝내면 킹이 맞습니다', 'crimson'); window.sliceApi.monoNow('‘태엽이 모자라.’'); }); await W(500); await S(''); }],
-  ['pb-wager', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2600); await A(() => window.sliceApi.bet()); await W(900); await S('win'); await A(() => { window.sliceApi.betSet('clean'); document.querySelector('#overlay [data-no]')?.click(); }); await W(900); await S('chip'); }],
   ['pb-p2', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'boss')); await W(2600); await A(() => window.sliceApi.p2Warn()); await W(600); await S('warn'); }],
   // 패스 5 (D-397): 컷신 크롬 하나(자막 띠 · ▼ · 건너뛴다) · 막 카드 · 지도 미리보기
   ['p5-prologue', async (p, A, W, S) => { await A(() => void window.sliceApi.pro()); await W(2600); await p.click('.prologue').catch(() => {}); await W(2600); await S(''); }],
@@ -39,8 +38,6 @@ const SCENES = [
   ['help', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.help('now')); await W(900); await S(''); }],
   ['crew', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.crew()); await W(900); await S(''); }],
   ['taunt', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.taunt('gloat')); await W(900); await S(''); }],
-  ['stand', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => { window.sliceApi.stand(); }); await W(1500); await S(''); }],
-  ['bet', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.bet()); await W(1500); await S(''); }],
   ['death', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => { window.sliceApi.die(); }); await W(1500); await S('a'); await W(2000); await S('b'); }],
   ['doom', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(2, 'battle')); await W(2400); await A(() => window.sliceApi.doom()); await A(() => document.getElementById('btn-end').click()); await W(3000); await S('a'); await W(2000); await S('b'); }],
   ['reward', async (p, A, W, S) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(2400); await A(() => { window.slice().s.winner = 0; window.sliceApi.finish(); }); await W(2600); await S('a'); await W(2500); await S('b'); }],

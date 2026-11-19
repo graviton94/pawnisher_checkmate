@@ -5,7 +5,8 @@
  */
 import { calmMotion } from '../prefs/motion';
 import { lessFlash, shakeMul } from '../prefs/fx';
-import { sfx } from '../audio/sfx';
+import { sfx, sfxFor } from '../audio/sfx';
+import { SFX_STING_DELAY } from '../data/sfx';
 import { sparksAt } from './uifx';
 import { bakeWaapi, clearDither, ditherTo, ease } from '../view/motion';
 import { FLASH, SMOOTH } from '../data/motion';
@@ -92,6 +93,7 @@ export const modalIn = (overlay: HTMLElement, panel: HTMLElement): void => {
   overlay.querySelectorAll('.fx3-rv').forEach((x) => x.remove());
   overlay.classList.remove('m3off');
   panel.classList.remove('m3out', 'pop');
+  sfxFor('winOpen');
   if (calm()) return;
   replay(overlay, 'm3on');
   replay(panel, 'm3in');
@@ -114,6 +116,7 @@ export const modalIn = (overlay: HTMLElement, panel: HTMLElement): void => {
 /** 창 닫기: 가로로 접혀 사라지고 그늘이 걷힘. 끝나면 done (다시 열리면 취소 — 열 때 m3out이 지워진다) */
 export const modalOut = (overlay: HTMLElement, panel: HTMLElement, done: () => void): void => {
   overlay.querySelectorAll('.fx3-rv').forEach((x) => x.remove());
+  sfxFor('winClose');
   if (calm()) return done();
   panel.classList.remove('m3in', 'pop');
   // 도트 퇴장 (D-193): 창은 체크무늬로 지워지고 그늘은 세 단계로 걷힌다. 사이에 다시 열리면 m3out이 지워져 취소된다
@@ -225,6 +228,8 @@ export const koBanner = (text: string, good: boolean): Promise<void> =>
     el.innerHTML = `<div class="rays"></div><div class="tint"></div><div class="koband"></div><div class="word">${text}</div>`;
     document.body.appendChild(el);
     sfx(good ? 'win' : 'lose');
+    // 맺음 (D-630): 첫 소리의 종이 잦아든 뒤 짧은 맺음 소리 — 음악 트랙은 그대로 두고 효과음으로만
+    window.setTimeout(() => el.isConnected && sfxFor(good ? 'winSting' : 'loseSting'), SFX_STING_DELAY);
     if (!calm()) replay(el, 'run');
     window.setTimeout(() => {
       if (good) flashScreen(0.85);

@@ -28,7 +28,7 @@ export { CREW_KING, type CardNature } from './card-text';
  */
 export const CARD_MIN_W = 150;
 export const CARD_FRAC = CARD_FRAME_FRAC;
-const LABEL: Record<CardNature, string> = { cmd: '명령 카드', part: '부품 카드', svc: '손질 카드', charm: '부적 카드', crew: '분대원 카드', set: '시작 세트' };
+const LABEL: Record<CardNature, string> = { cmd: '명령 카드', part: '부품 카드', svc: '손질 카드', charm: '톱니 카드', crew: '분대원 카드', set: '시작 세트' };
 const FRAME: Record<CardNature, keyof typeof CARD_FRAME_FRAC> = { cmd: 'cmd', part: 'part', svc: 'svc', charm: 'part', crew: 'crew', set: 'set' };
 
 /** 성격별 규격: 이름 · 명판 · 꼬리표 폭(작은 카드) · 설명지 행 폭(작은 단 s · 큰 단 l) */
@@ -54,7 +54,7 @@ export const allCardTexts = (): CardText[] => {
   for (const id of Object.keys(SLICE_PARTS) as SlicePartId[]) out.push({ nature: 'part', id, name: SLICE_PARTS[id].shortName ?? SLICE_PARTS[id].name, tag: tagText(partTags(id)), slots: partText(id) });
   const svcN: Record<SvcKey, number[]> = { heal: [Math.round(SHOP.healPct * 100)], repair: [Math.round(SHOP.healPct * 100), Math.round(FORGE.repairOne * 100)], refine: [0], remove: [0], brace: [FORGE.braceDoors] };
   for (const k of Object.keys(svcN) as SvcKey[]) for (const n of svcN[k]) out.push({ nature: 'svc', id: `${k}:${n}`, name: SERVICE_CARDS[k].name, tag: SERVICE_CARDS.kind, slots: svcText(k, n) });
-  for (const id of Object.keys(CHARMS) as (keyof typeof CHARMS)[]) out.push({ nature: 'charm', id, name: CHARMS[id].name, tag: '부적', slots: charmText(id) });
+  for (const id of Object.keys(CHARMS) as (keyof typeof CHARMS)[]) out.push({ nature: 'charm', id, name: CHARMS[id].name, tag: '톱니', slots: charmText(id) });
   // 분대원: 명판 = 이름 풀 전부 · 위 칸 = 영입 첫마디 · 아래 칸 = 기벽 / 이형 / 킹 / 흉터
   for (const n of [...NAMES, '이름 없음']) out.push({ nature: 'crew', id: `이름:${n}`, name: n, tag: '', slots: none });
   for (const r of [...RECRUITS.map((x) => ({ id: x.t, line: x.line })), ...Object.entries(FORMS).map(([id, f]) => ({ id, line: f.line }))]) out.push({ nature: 'crew', id: `영입:${r.id}`, name: '', tag: '', slots: { ...none, flavor: r.line.replace(/\.?$/, '.') } });

@@ -7,7 +7,7 @@ import { autoAdvance } from '../prefs/fx';
 import { AUTO_ADVANCE_MS } from '../data/settings';
 import { sfx } from '../audio/sfx';
 import { GUIDE_PAGES, OPENING_TEXT, type GuideMedia, type StandIn } from '../data/opening';
-import { PROLOGUE, PROLOGUE_FIELD, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
+import { PROLOGUE, PROLOGUE_FIELD, PROLOGUE_OPEN, SPEAKER_FACE, type Cut, type Face, type Line, type Shot } from '../data/script';
 import { pieceImg } from '../ui/sprites';
 import { flashScreen, pxOut, replay, shake, typeIn, typeReserve } from './fx3';
 import { Camera, FILM, plateHtml, showTitle, Wipe } from './film';
@@ -55,7 +55,7 @@ export const crestHtml = (): string =>
  * 탭 = 찍는 중이면 그 쪽을 한 번에 · 아니면 다음 쪽(제목 카드는 탭으로 넘김) · 「건너뛴다」 = 바로 끝. logo면 마지막에 베인 타이틀 문장.
  * 박자 표지 `data-beat` (전수 점검 tools/qa/sweep.cjs가 읽는다): move = 전환 · 카메라 · 숨 · 글자 찍는 중, hold = 한 쪽이 다 서서 탭을 기다림.
  */
-export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown; faces?: Record<string, Face> } = {}): Promise<void> =>
+export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknown; faces?: Record<string, Face>; /** 먹 화면에서도 「건너뛴다」를 처음부터 보인다 (D-611 — 둘째 재도전부터의 인트로 B) */ skipShown?: boolean } = {}): Promise<void> =>
   new Promise((resolve) => {
     clearBand();
     clearPeeks();
@@ -67,6 +67,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
     el.style.setProperty('--void-w', String(VN_VOID.width));
     el.style.setProperty('--void-ws', String(VN_VOID.widthSmall));
     if (cuts[0]?.void) el.classList.add('void');
+    if (o.skipShown) el.classList.add('void-ui');
     document.body.appendChild(el);
     document.body.classList.add('cover-pl');
     const stage = el.querySelector<HTMLElement>('.pl-stage')!;
@@ -143,7 +144,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       if (!el.classList.contains('void-ui') && !calm()) for (const b of el.querySelectorAll<HTMLElement>('.cut-skip, .cut-log')) replay(b, 'in');
       el.classList.add('void-ui');
       window.clearTimeout(uiT);
-      uiT = window.setTimeout(() => el.classList.remove('void-ui'), VN_VOID.uiMs);
+      if (!o.skipShown) uiT = window.setTimeout(() => el.classList.remove('void-ui'), VN_VOID.uiMs);
     };
     el.addEventListener('ui-reveal', reveal);
     el.addEventListener('pointerdown', (ev) => {
@@ -227,7 +228,7 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
       // 검은 화면 가운데 글 (D-582): 띠 · 그림 없이 먹만 — 먹 컷에서 그림 컷으로 돌아오면 레터박스가 계단으로 다시 닫힌다
       const wasVoid = isVoid();
       el.classList.toggle('void', !!c.void);
-      if (!c.void) el.classList.remove('void-ui', 'idle');
+      if (!c.void) el.classList.remove(...(o.skipShown ? ['idle'] : ['void-ui', 'idle']));
       if (wasVoid && !c.void && !calm()) replay(el, 'lb-in');
       if (c.void) { shot = { x: 0.5, y: 0.5, z: 0 }; stage.className = 'pl-stage'; stage.innerHTML = ''; return; }
       // 먹 무대 (D-579): 그림 · 자리 그림 없이 도트 효과 칸만 — 줄의 beat가 효과를 건다
@@ -399,6 +400,10 @@ export const playCuts = (cuts: Cut[], o: { logo?: boolean; before?: () => unknow
 export const prologue = (short = false, before?: () => unknown, field = true): Promise<void> => {
   const cuts = [...PROLOGUE, ...(field ? [PROLOGUE_FIELD] : [])];
   return playCuts(short ? cuts.filter((c) => c.key) : cuts, { logo: true, before });
+};
+/** 처음 출하의 첫 대국 앞 프롤로그 (D-610 — 사용자 결정 3가): 9쪽만. 나머지(PROLOGUE_LATE)는 첫 반장 뒤 main.actClear가 튼다 */
+export const prologueOpen = (before?: () => unknown): Promise<void> => {
+  return playCuts(PROLOGUE_OPEN, { logo: true, before });
 };
 
 /** 「화면을 눌러 …」 — 글자마다 한 칸씩 차례로 튀어 오르는 물결 (테스터: 깜빡임이 뚝뚝 끊겼다) */

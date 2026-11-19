@@ -6,6 +6,7 @@
  * 게임 상태는 건드리지 않는다 (UI 원칙 9).
  */
 import { calmMotion } from '../prefs/motion';
+import { sfxFor } from '../audio/sfx';
 import { bayer8, ditherTo, ease, tween } from '../view/motion';
 import { FILM_MOTION } from '../data/motion';
 import { pieceImg } from '../ui/sprites';
@@ -256,6 +257,8 @@ export class Wipe {
     this.color = kind === 'white' ? '#f1ede4' : color;
     this.c.hidden = false;
     if (calm() || kind === 'cut') return this.full(this.color);
+    // 전환 소리 (D-630): 쇳물 · 종이 쪽은 제 재질, 나머지(디더 · 조리개 · 철문 · 암전 …)는 먹 천 쓸림
+    sfxFor(kind === 'melt' ? 'cutMelt' : kind === 'page' ? 'cutPage' : 'cutWipe');
     await this.run(kind, 0, 1, kind === 'black' ? FILM_MOTION.wipe.close * 1.4 : FILM_MOTION.wipe.close, ease.in, at);
     this.full(this.color);
   }
@@ -281,6 +284,7 @@ export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<u
   const root = host.closest<HTMLElement>('.prologue');
   root?.classList.add('titling');
   el.classList.add('in');
+  sfxFor('cutTitle');
   // 넘김 표지 (D-594): 차례로 다 선 뒤 아래 가운데 ▼ — 누르면 바로 넘어간다
   const cue = window.setTimeout(() => el.isConnected && el.insertAdjacentHTML('beforeend', '<i class="tap-cue" aria-hidden="true">▼</i>'), calm() ? 0 : 800);
   await Promise.race([wait(calm() ? 1400 : FILM.titleHold), skip]);

@@ -91,6 +91,8 @@ export const SETTINGS_TEXT = {
   credits: '만든 사람 · 라이선스',
   privacy: '개인정보 처리방침',
   readBtn: '읽는다',
+  /** 처리방침 웹 페이지를 기기 브라우저로 (D-636) */
+  webBtn: '웹에서 연다',
   feedback: '의견 보내기',
   copyBtn: '복사한다',
   copied: '주소를 복사했습니다.',

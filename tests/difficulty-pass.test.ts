@@ -115,10 +115,10 @@ describe('협공 AI (D-542)', () => {
   it('적 한 차례 생각이 8×7 판에서 50ms 안', () => {
     const times: number[] = [];
     const all = battles(8, 7);
-    planEnemy(all[0].s, false, 1); // 데우기 (JIT)
+    planEnemy(all[0].s, 1); // 데우기 (JIT)
     for (const b of all.slice(0, 12)) {
       const t0 = performance.now();
-      planEnemy(b.s, false, 1);
+      planEnemy(b.s, 1);
       liveIntents(b);
       times.push(performance.now() - t0);
     }

@@ -88,10 +88,22 @@ const rowsOf = (tab: Tab, s: Settings, o: SettingsOpts): string[] => {
     ];
     case 'info': return [
       row(T.credits, btnHtml({ label: T.keyMapBtn, attrs: 'data-credits' })),
-      row(T.privacy, btnHtml({ label: T.readBtn, attrs: 'data-privacy' }), PRIVACY_URL ?? ''),
+      row(T.privacy, btnHtml({ label: T.readBtn, attrs: 'data-privacy' }) + (PRIVACY_URL ? btnHtml({ label: T.webBtn, attrs: 'data-privacy-web' }) : ''), (PRIVACY_URL ?? '').replace('.io/', '.io/<wbr>')),
       row(T.feedback, btnHtml({ label: T.copyBtn, attrs: 'data-copy-url' }), DEV_PAGE),
     ];
   }
+};
+
+/**
+ * 웹 주소를 기기 브라우저로 연다 (D-636). 새 창 링크를 눌린 것처럼 — 안드로이드(Capacitor)는 앱 밖 주소를 시스템 브라우저로 넘기고,
+ * 웹은 새 탭, PC(Electron)는 main.cjs가 스튜디오 사이트 주소만 기본 브라우저로 넘긴다. 게임 상태는 건드리지 않는다.
+ */
+const openWeb = (url: string): void => {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.click();
 };
 
 /** 한 쪽에 넣는 줄 수 — 탭마다 (줄 높이가 탭마다 달라 처음 그릴 때 재어 줄인다, 창 높이 364 안) */
@@ -181,6 +193,7 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     if (hit.matches('[data-glossary]')) return void (sfx('tap'), o.onGlossary?.(reopen('game')));
     if (hit.matches('[data-credits]')) return void (sfx('tap'), creditsPage(reopen('info')));
     if (hit.matches('[data-privacy]')) return void (sfx('tap'), textReader({ title: T.privacy, head: `<span class="note">${esc(PRIVACY_URL ?? DEV_PAGE)}</span>`, paras: [...PRIVACY_KO] }, reopen('info')));
+    if (hit.matches('[data-privacy-web]') && PRIVACY_URL) return void (sfx('tap'), openWeb(PRIVACY_URL));
     if (hit.matches('[data-copy-url]')) {
       sfx('tap');
       if (!navigator.clipboard) return toast(T.copyFail);

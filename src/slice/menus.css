@@ -13,7 +13,7 @@ body.slice .rmid .r-head > #btn-menu { margin-left: auto; }
 #btn-menu.has-new > .menu-cog::after { content: ''; position: absolute; top: calc(var(--px) * -1); right: calc(var(--px) * -1); width: calc(var(--px) * 4); height: calc(var(--px) * 4); background: #e5262f; box-shadow: 0 0 0 calc(var(--px) * 1) #0b0b0e; animation: kblink 1.2s steps(2, jump-none) infinite; }
 #btn-menu.has-new > .menu-cog { position: relative; }
 .mapfx .map-head > .btn-menu { margin-left: var(--s2); }
-body[data-drill='b'] #btn-menu { visibility: hidden; }
+body[data-drill='b'] #btn-menu, body[data-drill='t'] #btn-menu { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { #btn-menu.has-new > .menu-cog::after { animation: none; } }
 
 /* ---------- 일시 정지 메뉴 (S 352): 세 줄 격자 — [이어 간다] / [안내서 · 용어 | 설정] / [처음으로 | 출하 포기] ---------- */
