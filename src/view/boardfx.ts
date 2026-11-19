@@ -198,6 +198,8 @@ export class BoardFx {
     const calm = calmMotion();
     const st = { t0: performance.now() - (calm ? ms * HIT : 0), ms, shape, hit: false };
     this.strikes.push(st);
+    // 검수 도구가 내리찍기 순간을 잡는다 (tools/qa/bossflow.cjs) — 화면에는 아무 일 없음
+    window.dispatchEvent(new CustomEvent('bossstrike', { detail: rule }));
     await new Promise((r) => window.setTimeout(r, calm ? ms * (1 - HIT) * 0.5 : ms * HIT));
   }
   private wake(): void { this.start(); }

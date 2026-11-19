@@ -130,6 +130,8 @@ import { giantStrikes } from './giant';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
 
+/** 반장 2단계 돌입 컷인을 아직 안 보였다 (D-690) — 그동안 판 · 머리 줄은 1단계 모습 (엔진은 이미 2단계라도 컷인이 바꾼다) */
+let p2Pending = false;
 installPixelAnimate();
 // CSS 키프레임 움직임을 정수 기기 픽셀 120Hz로 다시 굽는다 (D-554 — 계단 키프레임이 뚝뚝 끊겼다)
 installSmoothMotion();
@@ -1072,7 +1074,7 @@ const refresh = (): void => {
     $('boss').setAttribute('aria-label', HUD_TEXT.bossChip(name));
   }
   // 2단계 (D-690 — 지속 표지): 머리 줄 칩에 「2단계」 꼬리표 · 판 칸 색 · 테 · 반장 꺾쇠 · 2단계 예고 꺾쇠
-  const rage = !!(b.boss && b.phase2 && b.s.winner === null);
+  const rage = !!(b.boss && b.phase2 && !p2Pending && b.s.winner === null);
   if (b.boss && $('boss').classList.contains('p2') !== rage) {
     $('boss').classList.toggle('p2', rage);
     $('boss').querySelector('.bc-p2')?.remove();
@@ -1741,6 +1743,7 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
   const hand0 = b.hand.length;
   const r = playCard(b, i, pieceId, to);
   if (typeof r === 'string') return toast(r);
+  p2Pending = isRise(r.events);
   if (moverType && COMMANDS[cardId]?.kind === 'move') lastMove[moverType] = cardId;
   // 낸 카드는 엔진이 이미 풀었다 — 연출 전에 남긴다 (코드 리뷰 4)
   saveFight({ stand: false });
@@ -1833,13 +1836,15 @@ const runInner = async (i: number, pieceId?: number, to?: Pos): Promise<void> =>
  * 반장 2단계 돌입 (D-243 → D-690): 쓰러진 반장이 다시 일어선다. 내 수(runInner)든 적 차례(공정 · 녹 — onEndInner)든 같은 길로.
  * 경고 → 사선 컷인(2단계 초상) → 판 바뀜(칸 색 · 테 · 반장 꺾쇠 · 예고 꺾쇠 · 머리 줄 「2단계」 · 곡 반음 위) → 시스템 한 줄 → 반장 한마디.
  */
+const isRise = (events: readonly BattleEvent[]): boolean => events.some((e) => e.type === 'respawn' && e.label === BOSS_RISE_LABEL);
 const bossPhase2 = async (events: readonly BattleEvent[]): Promise<void> => {
-  if (!events.some((e) => e.type === 'respawn' && e.label === BOSS_RISE_LABEL)) return;
+  if (!isRise(events)) return;
   sfx('phase');
   const gilded = b.bossRule === 'gilded';
   // #21 · D-490: 패배 띠(koBanner lose) 대신 2단계 컷인
   await p2Rise({ art: p2Art(b.bossRule ?? 'plate'), name: BOSS_RULES[b.bossRule ?? 'plate'].name, word: gilded ? BOSS_PHASE_TEXT.riseGilded : BOSS_PHASE_TEXT.rise });
   // 판이 바뀐다 — 다시 선 반장(격노 몸) · 2단계 색 · 곡
+  p2Pending = false;
   renderer.setup(b.s);
   refresh();
   playMusic(gilded ? 'final2' : 'boss2');
@@ -1873,6 +1878,7 @@ const onEndInner = async (): Promise<void> => {
     return;
   }
   endWarn(false);
+  p2Pending = isRise(r.events);
   // 예고 지표 (⑥): 내 기물을 겨눈 예고 수 · 실제로 맞은 내 기물 수
   tg.telegraph += aimed0;
   tg.hit += new Set(r.events.flatMap((e) => (e.type === 'attack' ? e.hits.filter((h) => h.damage > 0 && r.before.pieces.find((q) => q.id === h.targetId)?.side === 0).map((h) => h.targetId) : []))).size;
@@ -3589,7 +3595,7 @@ const finishNow = (): void => {
   if (buildTrialId) return buildTrialEnd(isWin);
   if (labMode) return labEnd(isWin);
   window.setTimeout(async () => {
-    await banner(isWin ? (cur.boss ? '반장 격파' : '적 킹 격파') : '킹 파괴', isWin);
+    await banner(isWin ? (cur.boss ? (cur.bossRule === 'gilded' ? '도금왕 격파' : '반장 격파') : '적 킹 격파') : '킹 파괴', isWin);
     // 반장 격파 (각본 §8, D-276): 쓰러지는 모습 + 종이왕이 건네는 말 — 도금왕은 엔딩 흐름에서
     if (isWin && cur.boss && cur.bossRule && cur.bossRule !== 'gilded' && BOSS_STORY[cur.bossRule as StoryBoss]) {
       runBosses = [...runBosses, cur.bossRule as StoryBoss];

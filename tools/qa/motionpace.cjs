@@ -176,6 +176,15 @@ const summarize = (frames, sels) => {
       await throttle();
       return measure(['.bossfx .bf-port', '.bossfx .bf-bar', '.bossfx .bf-name', '.bossfx .bf-fx canvas', '.fx-flash'], 2600);
     },
+    /** 반장 2단계 돌입 컷인 (D-690): 경고 띠 → 레터박스 · 초상 띠 · 사선 액자 · 명패 → 접힘 */
+    p2: async () => {
+      await boot();
+      await pg.evaluate((r) => window.sliceApi.bossOf(r, r === 'plate' || r === 'inspect' ? 1 : r === 'spawn' || r === 'magnet' ? 2 : 3), BOSS);
+      await pg.waitForTimeout(2500);
+      await throttle();
+      await pg.evaluate((r) => { void window.sliceApi.p2Rise(r); }, BOSS);
+      return measure(['.p2cut .p2-alert', '.p2cut .p2-lb', '.p2cut .p2-strip', '.p2cut .p2-slash', '.p2cut .p2-name', '.p2-flash'], 2000);
+    },
     /** 전투 판: 봇이 카드 한 장(이동 · 공격 연출)을 쓰는 동안 — 판 캔버스 채우기 비용 (--q boardscale=2 와 비교) */
     board: async () => {
       await boot();
