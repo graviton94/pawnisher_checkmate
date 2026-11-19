@@ -70,6 +70,38 @@ export const btnRowHtml = (o: { back?: WinBtn; go?: WinBtn; mid?: string; pair?:
 export const winHtml = (o: WinOpts): string =>
   `${o.title ? `<div class="plate">${o.title}</div>` : ''}${o.head ? `<div class="win-head">${o.head}</div>` : ''}${o.body}${btnRowHtml(o)}`;
 
+/**
+ * 창 속을 새 HTML에 맞춘다 (D-593): 같은 자리 · 같은 태그 노드는 그대로 두고 바뀐 속성 · 글만 고친다.
+ * innerHTML로 통째 갈면 명패(창 제목) · 탭 · 단추가 매번 새로 붙어 한 프레임 깜빡이고(명패 글 맞춤 · 등장 연출이 다시 돈다) 초점도 잃는다.
+ * 노드가 남으므로 이벤트는 창에 한 번만 위임해 단다 (노드마다 다시 달면 겹친다).
+ */
+export const morphHtml = (root: Element, html: string): void => {
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  morphKids(root, t.content);
+};
+const morphKids = (dst: Node, src: Node): void => {
+  const a = [...dst.childNodes];
+  const b = [...src.childNodes];
+  b.forEach((n, i) => {
+    const o = a[i];
+    if (!o) dst.appendChild(n);
+    else morphNode(o, n);
+  });
+  for (let i = b.length; i < a.length; i++) a[i].remove();
+};
+const morphNode = (o: Node, n: Node): void => {
+  if (o.nodeType !== n.nodeType || (o instanceof Element && n instanceof Element && o.tagName !== n.tagName)) return void (o as ChildNode).replaceWith(n);
+  if (!(o instanceof Element) || !(n instanceof Element)) {
+    if (o.nodeValue !== n.nodeValue) o.nodeValue = n.nodeValue;
+    return;
+  }
+  for (const at of [...o.attributes]) if (!n.hasAttribute(at.name)) o.removeAttribute(at.name);
+  for (const at of [...n.attributes]) if (o.getAttribute(at.name) !== at.value) o.setAttribute(at.name, at.value);
+  if (o instanceof HTMLButtonElement || o instanceof HTMLInputElement) o.disabled = n.hasAttribute('disabled');
+  morphKids(o, n);
+};
+
 /** 창 높이 상한 (명패 걸침 · 위아래 여백을 뺀 값, game-ui-design 3.1) */
 export const WIN_MAX_H: Record<WinSize, number> = { s: 240, m: 364, l: 364 };
 

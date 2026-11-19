@@ -24,17 +24,19 @@
     #boot .boot-word { display: block; width: 275px; height: 77px; margin-top: -12px; image-rendering: pixelated; }
     /* 로딩 톱니 · 진행 막대 = 받은 LD-01 (D-523): 황동 톱니 8프레임(20×18도트) · 철 홈 막대 9-slice + 황동 채움 칸 8×8 — 1도트 = 2px */
     #boot .boot-row { display: flex; align-items: center; gap: 12px; margin-left: -52px; }
-    #boot .boot-gear { width: 40px; height: 36px; background: url('ui/hud/load-gear.png') 0 0 / 320px 36px no-repeat; image-rendering: pixelated; animation: bootGears 0.8s steps(8) infinite; }
-    @keyframes bootGears { from { background-position: 0 0; } to { background-position: -320px 0; } }
+    /* 톱니 8프레임 띠를 transform 계단으로 넘긴다 (D-593): 합성기 애니메이션이라 묶음 읽기 · 판 부팅이 메인 스레드를 막아도 돈다 (옛 background-position은 함께 멈췄다) */
+    #boot .boot-gear { display: block; width: 40px; height: 36px; overflow: hidden; contain: strict; }
+    #boot .boot-gear i { display: block; width: 320px; height: 36px; background: url('ui/hud/load-gear.png') 0 0 / 320px 36px no-repeat; image-rendering: pixelated; will-change: transform; animation: bootGears 0.8s steps(8) infinite; }
+    @keyframes bootGears { from { transform: translateX(0); } to { transform: translateX(-320px); } }
     /* 진행 막대: 12칸이 계단으로 찬다 (--k = 찬 칸 수) */
     #boot .boot-bar { box-sizing: content-box; width: 192px; height: 16px; border-style: solid; border-width: 10px 18px 4px; border-image: url('ui/hud/load-bar.png') 5 9 2 fill / 10px 18px 4px stretch; image-rendering: pixelated; }
     #boot .boot-bar b { display: block; height: 100%; width: calc(var(--k, 0) * 16px); background: url('ui/hud/load-bar-fill.png') 0 0 / 16px 16px repeat-x; image-rendering: pixelated; }
     @media (max-height: 360px) { #boot .boot-em { transform: scale(0.8); } }
-    @media (prefers-reduced-motion: reduce) { #boot .boot-gear, #boot .boot-em .sl { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { #boot .boot-gear i, #boot .boot-em .sl { animation: none; } }
   </style>
 </head>
 <body class="slice">
-  <div id="boot" aria-hidden="true"><div><div class="boot-em"><img src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""></div><img class="boot-word" src="ui/title-word.png" alt=""><div class="boot-row"><i class="boot-gear"></i><div class="boot-bar"><b></b></div></div></div></div>
+  <div id="boot" aria-hidden="true"><div><div class="boot-em"><img src="ui/title-pawn.png" alt=""><img class="sl" src="ui/title-slash.png" alt=""></div><img class="boot-word" src="ui/title-word.png" alt=""><div class="boot-row"><i class="boot-gear"><i></i></i><div class="boot-bar"><b></b></div></div></div></div>
   <div id="app">
     <aside id="left" class="rail left"><div id="vials" class="apbar" aria-label="남은 태엽"></div><div id="hand" class="hand"></div></aside>
     <main id="board"></main>

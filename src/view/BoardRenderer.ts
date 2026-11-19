@@ -351,15 +351,14 @@ class BoardScene extends Phaser.Scene {
   }
 
   /**
-   * 깨진 심장 톱니 기물 (D-219): 내 기물 그림에서 검은 외곽선 · 바깥 흰 테는 두고 속 칠 색만 팔레트로 한 단계씩 어둡게 바꾼 텍스처.
-   * 색을 1:1로 바꿀 뿐이라 도트가 그대로 남는다 (그라데이션 · 반투명 없음). 명도 차이라 색약에도 보인다.
+   * 색 바꾼 그림 키 — 없으면 지금 만든다 (D-593: 처음 쓸 때 한 장씩). 바탕 그림이 없으면 바탕 키 그대로.
+   * 깨진 심장 톱니 기물 (D-219): 내 기물 그림에서 검은 외곽선 · 바깥 흰 테는 두고 속 칠 색만 팔레트로 한 단계씩 어둡게.
+   * 정예 · 반장 색도 같은 방식 — 색을 1:1로 바꿀 뿐이라 도트가 그대로 남는다 (그라데이션 · 반투명 없음). 명도 차이라 색약에도 보인다.
    */
-  private makeCrackedTexture(type: PieceType): void {
-    this.makeToneTexture(type, 0, 'crack', CRACK_TONE);
-  }
-  /** 기물 그림의 색을 표에 따라 1:1로 바꾼 새 그림 `<기물키>-<suffix>` */
-  private makeToneTexture(type: PieceType, side: Side, suffix: string, tone: Record<number, number>): void {
-    this.makeToneFrom(pieceKey(type, side), suffix, tone);
+  private toned(base: string, suffix: string, tone: Record<number, number>): string {
+    this.makeToneFrom(base, suffix, tone);
+    const key = `${base}-${suffix}`;
+    return this.textures.exists(key) ? key : base;
   }
   /** 텍스처 `base`의 색을 표에 따라 1:1로 바꾼 새 그림 `<base>-<suffix>` (이형 · 거대 그림도 같은 규칙) */
   private makeToneFrom(base: string, suffix: string, tone: Record<number, number>): void {
@@ -436,8 +435,8 @@ class BoardScene extends Phaser.Scene {
   /** 이 기물이 쓸 그림 (깨진 내 기물이면 어두운 속 칠 · 적 계급이면 그 색) */
   private glyphKey(id: number, type: PieceType, side: Side, art?: { form?: FormId; giant?: boolean }): string {
     const base = this.artKey(type, side, art);
-    if (side === 1 && this.foeTone && this.textures.exists(`${base}-${this.foeTone}`)) return `${base}-${this.foeTone}`;
-    return side === 0 && this.crackedIds.includes(id) && this.textures.exists(`${base}-crack`) ? `${base}-crack` : base;
+    if (side === 1 && this.foeTone && FOE_TONE[this.foeTone]) return this.toned(base, this.foeTone, FOE_TONE[this.foeTone]);
+    return side === 0 && this.crackedIds.includes(id) ? this.toned(base, 'crack', CRACK_TONE) : base;
   }
 
   create(): void {
@@ -458,26 +457,12 @@ class BoardScene extends Phaser.Scene {
           this.poke();
         },
       });
-    for (const type of ['P', 'N', 'B', 'R', 'Q', 'K'] as PieceType[]) {
-      this.makeCrackedTexture(type);
-      this.makeToneTexture(type, 1, 'elite', FOE_TONE.elite);
-      this.makeToneTexture(type, 1, 'boss', FOE_TONE.boss);
-      for (const k of ['boss-plate', 'boss-spawn', 'boss-thorns', 'boss-gilded', 'boss-inspect', 'boss-magnet', 'boss-alarm']) this.makeToneTexture(type, 1, k, FOE_TONE[k]);
-    }
-    // 발주 이형 · 거대 그림: 같은 도트 · 같은 색 바꾸기 (깨짐 · 정예 · 반장 색)
-    // 2×2 반장 몸(GB, D-524): 속 칠이 검은 진영 다섯 단 그대로라 졸개와 같은 반장 색(FOE_TONE boss-<반장>)으로 1:1 바꾼 그림도 만든다 — 테마 강조색 · 먹 · 흰 테는 그대로
+    // 색 바꾼 그림(깨짐 · 정예 · 반장 색)은 처음 쓸 때 만든다 (D-593 — 예전엔 여기서 백 장 남짓을 한꺼번에 만들어 ×4 감속 기준 1.2초를 막았다)
     for (const r of BOSS_ART_RULES)
       for (const rage of [false, true])
-        if (this.textures.exists(bossArtKey(r, rage))) {
-          this.textures.get(bossArtKey(r, rage)).setFilter(Phaser.Textures.FilterMode.NEAREST);
-          if (FOE_TONE[`boss-${r}`]) this.makeToneFrom(bossArtKey(r, rage), `boss-${r}`, FOE_TONE[`boss-${r}`]);
-        }
+        if (this.textures.exists(bossArtKey(r, rage))) this.textures.get(bossArtKey(r, rage)).setFilter(Phaser.Textures.FilterMode.NEAREST);
     const arts = [...FORM_IDS.flatMap((f) => [formKey(f, 0), formKey(f, 1)]), ...GIANT_ART.map(giantKey)].filter((k) => this.textures.exists(k));
-    for (const k of arts) {
-      this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
-      if (k.endsWith('-0')) this.makeToneFrom(k, 'crack', CRACK_TONE);
-      else for (const tone of Object.keys(FOE_TONE)) this.makeToneFrom(k, tone, FOE_TONE[tone]);
-    }
+    for (const k of arts) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
     // 카메라 스크롤을 월드 정수로 내리는 roundPixels(pixelArt 기본)는 소수 줌(2.625)에서 칸 모서리를 픽셀 사이로 민다 — 끄고 moveCamera가 캔버스 픽셀에 맞춘다 (D-525)
     this.cameras.main.setRoundPixels(false);
     this.cameras.main.setZoom(this.dpr);
@@ -1021,7 +1006,8 @@ class BoardScene extends Phaser.Scene {
       if (real) {
         const art = this.textures.exists(key) ? key : bossArtKey(this.bossRule, false);
         // 졸개와 같은 반장 색 (D-524) — 판의 색 갈래(foeTone)가 있으면 그 색으로 바꾼 그림
-        glyph.setTexture(this.foeTone && this.textures.exists(`${art}-${this.foeTone}`) ? `${art}-${this.foeTone}` : art);
+        const tone = `boss-${this.bossRule}`;
+        glyph.setTexture(this.foeTone === tone && FOE_TONE[tone] ? this.toned(art, tone, FOE_TONE[tone]) : art);
       }
       // 바닥 기준선 (D-525): 2×2 몸의 받침 바닥이 아래 칸 줄 보통 기물 받침 바닥과 같은 높이 — 격노 그림도 같은 자로 잰다
       const box = this.pieceBox(glyph.texture.key, 2);
@@ -2442,7 +2428,7 @@ export class BoardRenderer implements BoardView {
    */
   private installQuiet(): void {
     const proto = BoardRenderer.prototype as unknown as Record<string, unknown>;
-    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet']);
+    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet', 'settled']);
     const self = this as unknown as Record<string, unknown>;
     for (const k of Object.getOwnPropertyNames(proto)) {
       const f = Object.getOwnPropertyDescriptor(proto, k)?.value as ((...a: unknown[]) => unknown) | undefined;
@@ -2566,6 +2552,10 @@ export class BoardRenderer implements BoardView {
   /** 반장 판이면 킹 마무리에 영화 띠 (D-180) */
   setBossFinish(on: boolean): void {
     this.scene.bossFinish = on;
+  }
+  /** 판이 다 섰나 (장면 부팅 · 그림 · 글꼴) — 부팅 화면이 이것을 기다린 뒤 걷힌다 (D-593) */
+  settled(): Promise<void> {
+    return this.whenReady;
   }
   /** 판 세우기 (D-189) */
   async boardIntro(): Promise<void> {

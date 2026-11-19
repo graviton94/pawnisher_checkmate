@@ -369,7 +369,7 @@ let enemyTurn = false;
 /** 장면·팝업 뒤의 Phaser 입력이 전투 정보를 다시 열지 않게 한다. */
 const battleInputActive = (): boolean => !busy && !enemyTurn && $('overlay').hidden && !document.body.classList.contains('between') && !document.body.classList.contains('cover-pl') && !$('board').closest('[inert]') && !document.querySelector('.bossfx,.clr');
 
-// 판(Phaser)은 따로 묶어 타이틀이 뜬 뒤에 불러온다 (코드 리뷰 6 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
+// 판(Phaser)은 따로 묶어 main 묶음을 읽은 뒤 부팅 화면 뒤에서 불러온다 (코드 리뷰 6 → D-593 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
 const board = lazyBoard(
   $('board'),
   {
@@ -5523,7 +5523,7 @@ const opening = (): void => {
     }, tutDone('battle'));
   };
   /**
-   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 출하 · [기록 | 설정] · (PC) 끝내기.
+   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 게임 시작(D-593, 옛 「출하」) · [기록 | 설정] · (PC) 끝내기.
    * 황동은 늘 하나 — 저장이 있으면 이어하기, 없으면 출하. 모드 · 왕관 · 난이도 · 오늘의 도전은 「출하」 → 출하 준비 창으로.
    * 왕관 부제(이야기 이름)는 보이지 않는다 (스포일러). 시험장 · 빌드 시험은 ?debug에서만 (D-286).
    */
@@ -5539,9 +5539,9 @@ const opening = (): void => {
       // 이어하기 부제: 왕관 표지 + 별칭(D-536 — 끝낸 왕관만 부제) · 막
       const svCrown = sv ? runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0, (sv.chapter ?? 0) < (meta.storyCleared ?? 0)) : '';
       nav.innerHTML = `${sv ? `<button class="btn k-brass op-main op-cont" type="button" data-cont><b>${MAIN_TEXT.cont}</b><small>${MAIN_TEXT.contSub(svCrown, actLabel(sv.actI + 1))}</small></button>` : ''}
-        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship>${menuIco('menu.run')}<b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
-        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}${MAIN_TEXT.records}</button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}${MAIN_TEXT.settings}</button></div>
-        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}${MAIN_TEXT.quit}</button>` : ''}
+        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship><i class="op-ico op-crown" aria-hidden="true"></i><b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
+        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}<span class="op-lbl">${MAIN_TEXT.records}</span></button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}<span class="op-lbl">${MAIN_TEXT.settings}</span></button></div>
+        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}<span class="op-lbl">${MAIN_TEXT.quit}</span></button>` : ''}
         ${dev ? `<div class="op-half op-dev"><button class="btn k-iron" type="button" data-lab-open>시험장</button><button class="btn k-iron" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
       nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!)); // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
       nav.querySelector('[data-ship]')!.addEventListener('click', () => (sfx('tap'), runSetup(!!sv)));
@@ -5578,10 +5578,11 @@ const closeOpening = (): void => {
 startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 // 워밍업 로딩 (D-239): 그림 · 글꼴을 미리 받는 동안 부팅 화면의 황동 막대가 찬다 → 다 되면 걷고 타이틀
+// 판(Phaser 읽기 · 부팅 · 판 그림)도 부팅 화면 뒤에서 세운다 (D-593 — 예전엔 타이틀이 뜬 직후 불러 베기 연출 · 메뉴 펼침과 겹쳐 ×4 감속에서 3초 넘게 끊겼다).
+// 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
 const bootBar = document.querySelector<HTMLElement>('#boot .boot-bar b');
-void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12)))).then(() => {
-  // 타이틀이 뜨면 판(Phaser)을 불러 판 그림을 받기 시작한다 — 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
-  void board.start();
+const boardUp = board.start();
+void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12))), 3000, [boardUp, boardUp.then((r) => r.settled())]).then(() => {
   const boot = document.getElementById('boot');
   if (boot) pxOut(boot, () => boot.remove(), 240);
   if (devQuery('builds')) buildPick();

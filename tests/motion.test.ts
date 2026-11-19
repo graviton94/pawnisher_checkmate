@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bayer8, ditherLevel, ditherSvg, ease, snapDev } from '../src/view/motion';
 import { SMOOTH } from '../src/data/motion';
+import { easingFn, parseTransform, sampleMotion } from '../src/view/bakefast';
 import { castOf, castOn, VN_DEFAULT, VN_SCENE } from '../src/data/vn';
 import { BOSS_STORY, DEFEAT_CUTS, ENDING_A, PROLOGUE, PROLOGUE_FIELD, bossFallCut, gildedPhase2Cut, promotionCuts, shadowCuts, trueEndingCuts, type Cut, type StoryBoss } from '../src/data/script';
 import { companionScene } from '../src/data/companion-scenes';
@@ -90,5 +91,45 @@ describe('비주얼 노벨 층 데이터 (D-554)', () => {
   });
   it('분위기 표의 컷 이름은 실제 컷에 있다 (프롤로그 컷은 모두 짝이 있다)', () => {
     for (const c of PROLOGUE) if (c.slug) expect.soft(VN_SCENE[c.slug], c.slug).toBeDefined();
+  });
+});
+
+describe('계산으로 굽기 (D-593)', () => {
+  it('transform 글을 읽고, 모르는 꼴은 null', () => {
+    expect(parseTransform('none')).toEqual([]);
+    expect(parseTransform('translate(10px, -50%) rotate(0.5turn) scale(2)')).toEqual([
+      { k: 't', x: 10, xp: false, y: -50, yp: true },
+      { k: 'r', deg: 180 },
+      { k: 's', x: 2, y: 2 },
+    ]);
+    expect(parseTransform('translateX(3px) scaleY(.5)')).toEqual([{ k: 't', x: 3, xp: false, y: 0, yp: false }, { k: 's', x: 1, y: 0.5 }]);
+    expect(parseTransform('matrix(1,0,0,1,0,0)')).toBeNull();
+    expect(parseTransform('translate(calc(1px + 2px))')).toBeNull();
+    expect(parseTransform('translate(var(--x))')).toBeNull();
+  });
+  it('곡선: 끝점 고정 · 계단은 잇는다 · 모르는 꼴은 null', () => {
+    const e = easingFn('ease-out')!;
+    expect(e(0)).toBeCloseTo(0, 6);
+    expect(e(1)).toBeCloseTo(1, 6);
+    expect(e(0.5)).toBeGreaterThan(0.5);
+    expect(easingFn('steps(4, jump-end)')!(0.3)).toBe(0.3);
+    expect(easingFn('linear(0, 1)')).toBeNull();
+    // 넘치는 곡선 (y > 1)
+    const over = easingFn('cubic-bezier(.3,1.6,.6,1)')!;
+    expect(Math.max(...Array.from({ length: 50 }, (_, i) => over(i / 49)))).toBeGreaterThan(1);
+  });
+  it('표본: 처음 · 끝 · 퍼센트 · 반대 방향', () => {
+    const m = sampleMotion([{ transform: 'translate(-50%, 0)' }, { transform: 'translate(50%, 10px)' }], 4, 40, 10)!;
+    expect(m).toHaveLength(5);
+    expect(m[0][4]).toBeCloseTo(-20);
+    expect(m[4][4]).toBeCloseTo(20);
+    expect(m[4][5]).toBeCloseTo(10);
+    const r = sampleMotion([{ transform: 'none' }, { transform: 'translateY(8px)' }], 2, 1, 1, 'reverse')!;
+    expect(r[0][5]).toBeCloseTo(8);
+    expect(r[2][5]).toBeCloseTo(0);
+  });
+  it('꼴이 다른 목록 · 빠진 끝 키프레임은 표본으로 넘긴다 (null)', () => {
+    expect(sampleMotion([{ transform: 'rotate(10deg)' }, { transform: 'translate(1px,0)' }], 4, 1, 1)).toBeNull();
+    expect(sampleMotion([{ transform: 'none', offset: 0.2 }, { transform: 'translate(1px,0)' }], 4, 1, 1)).toBeNull();
   });
 });
