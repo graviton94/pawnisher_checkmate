@@ -10,7 +10,7 @@ import { calmMotion } from '../prefs/motion';
 import { lessFlash } from '../prefs/fx';
 import { sfx } from '../audio/sfx';
 import { ease } from '../view/motion';
-import { bayer, FxCanvas, Lights, OUTLINE, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
+import { FxCanvas, Lights, OUTLINE, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
 import { VN_DARK, type DarkBeat } from '../data/vn';
 import { shake } from './fx3';
 
@@ -108,7 +108,7 @@ export class DarkStage {
     const t = (now - this.born) / 1000;
     f.clear();
 
-    // 1 · 등 켜짐 (rumble): 0 → 1, 켜지다 한 번 꺼짐 — 디더 단계는 빛줄기 계단이 받는다
+    // 1 · 등 켜짐 (rumble): 0 → 1, 켜지다 한 번 꺼짐 — 밝기 단계는 빛줄기 세 단 계단이 받는다
     let on = tR < 0 ? 0 : clamp01(tR / VN_DARK.lightOn);
     const [fa, fb] = VN_DARK.flicker;
     if (tR >= fa && tR < fa + fb) on = 0;
@@ -122,7 +122,8 @@ export class DarkStage {
     const ring = (x: number, y: number): number => {
       if (on <= 0) return 0;
       const v = on * (1 - Math.abs(x + 0.5 - ax) / Math.max(0.5, half(y)));
-      return v <= 0 ? 0 : Math.min(3, Math.floor(v * 3 + bayer(x, y)));
+      // 세 단 단색 띠 (D-675: 경계는 단단한 선 — 베이어 녹임 없음)
+      return v <= 0 ? 0 : Math.min(3, Math.floor(v * 3 + 0.5));
     };
     const lit = (x: number, y: number): boolean => ring(x, y) >= 2;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) f.color[y * W + x] = CONE[y <= fl + 2 ? ring(x, y) : 0];
@@ -207,7 +208,7 @@ export class DarkStage {
       p.px(mx - 1, my - 1, S[5]);
       p.px(mx + 3, my - 1, S[5]);
     }
-    // 떨어지는 꼬리: 위로 갈수록 성긴 디더 (투명도 아님 — 칸을 고른다)
+    // 떨어지는 꼬리: 가까운 반만 단색 (D-675 — 성긴 디더 대신, 투명도 아님)
     for (let i = 1; i <= trail; i++) p.rect(mx, my - i, 3, 1, W8[3], 1 - i / (trail + 1));
     const blink = tC >= VN_DARK.count.stepMs * 8 && tC < VN_DARK.count.stepMs * 8 + VN_DARK.count.blinkMs * VN_DARK.count.blinks * 2;
     const blinkOn = blink && Math.floor((tC - VN_DARK.count.stepMs * 8) / VN_DARK.count.blinkMs) % 2 === 0;

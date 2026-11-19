@@ -1,12 +1,12 @@
 /**
  * 결과 도트 연출 (D-508 — EF-01 · EF-02 · WG-02 발주 취소, 사용자 결정 「받은 시트를 못 쓴다 → 코드로」).
  * 48×48칸 도트 캔버스 하나를 대상(실제 카드 · 기물 · 지갑 · 상자) 위에 겹쳐 8프레임을 계단으로 찍는다.
- * 박자 = D-180: 0~1 예비(모임 · 떨림, 느리게) → 2~3 터짐(가장 크고 밝게, 빠르게) → 4~7 출렁 · 흩어짐 · 디더 퇴장(베이어 구멍이 늘어남).
+ * 박자 = D-180: 0~1 예비(모임 · 떨림, 느리게) → 2~3 터짐(가장 크고 밝게, 빠르게) → 4~7 출렁 · 흩어짐 → 끝 장에 꺼짐 (D-675: 베이어 구멍 퇴장 없음).
  * 색은 발주 15색만(먹 · 철 · 황동 · 종이 · 진홍 · 청록) — 그라데이션 · 반투명 · 페이드 · 선형 미끄럼 없음(D-216).
  * 줄인 움직임이면 터짐 한 장만 잠깐 보이고 걷힌다. 결과는 엔진이 이미 정했다 — 보여 주기만 한다(UI 원칙 9).
  */
 import { calmMotion } from '../prefs/motion';
-import { bayer, Rng } from '../view/pxfx';
+import { Rng } from '../view/pxfx';
 
 export type ResultFxKind = 'quench' | 'molten' | 'rust' | 'weld' | 'upgrade' | 'shatter' | 'screws' | 'screwsUp' | 'crate';
 
@@ -30,18 +30,18 @@ const dot = (g: CanvasRenderingContext2D, x: number, y: number, col: string, w =
   g.fillStyle = col;
   g.fillRect(Math.round(x), Math.round(y), w, h);
 };
-/** 디더 퇴장: 프레임 f(4~7)에 베이어 문턱을 올려 그 칸을 비운다 — 투명도 보간이 아니다 */
-const keep = (x: number, y: number, f: number, from = 4): boolean => f < from || bayer(Math.round(x), Math.round(y)) > (f - from + 1) / (8 - from + 1);
+/** 퇴장 (D-675 — 격자 디더 금지, 옛 베이어 구멍 늘리기): 마지막 장(7)에서 한 번에 꺼진다. 그 전 장들은 흩어짐 움직임이 퇴장을 맡는다 */
+const keep = (_x: number, _y: number, f: number, _from = 4): boolean => f < 7;
 /** 단색 덩어리(1~3칸) */
 const blob = (c: Ctx, x: number, y: number, col: string, s = 2): void => { for (let j = 0; j < s; j++) for (let i = 0; i < s; i++) if (keep(x + i, y + j, c.f)) dot(c.g, x + i, y + j, col); };
-/** 계단 원(채움) — 반지름 r, 가장자리 한 겹은 2×2 체크 디더 */
+/** 계단 원(채움) — 반지름 r, 가장자리 한 겹은 단색 테 (D-675: 옛 2×2 체크) */
 const disc = (c: Ctx, x0: number, y0: number, r: number, col: string, edge?: string): void => {
   for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
     const d = x * x + y * y;
     if (d > r * r) continue;
     const X = x0 + x, Y = y0 + y;
     if (!keep(X, Y, c.f)) continue;
-    if (edge && d > (r - 1) * (r - 1)) { if (((X >> 0) + (Y >> 0)) & 1) dot(c.g, X, Y, edge); } else dot(c.g, X, Y, col);
+    dot(c.g, X, Y, edge && d > (r - 1) * (r - 1) ? edge : col);
   }
 };
 /** 계단 고리(타원 둘레) */
@@ -105,7 +105,6 @@ const DRAW: Record<ResultFxKind, Draw> = {
         const X = cx + x;
         if (!keep(X, Y, f)) continue;
         const edge = Math.abs(x) >= ww - 1;
-        if (edge && ((X + Y) & 1)) continue;
         dot(c.g, X, Y, edge ? C.p2 : y > h * 0.7 ? C.p2 : C.p3);
       }
     }
@@ -216,7 +215,6 @@ const DRAW: Record<ResultFxKind, Draw> = {
       const X = cx + x, Y = y;
       if (!keep(X, Y, f, 5)) continue;
       const edge = Math.abs(x) >= w - 1;
-      if (edge && ((X + Y) & 1)) continue;
       dot(c.g, X, Y, Math.abs(x) < w * 0.4 ? C.p3 : edge ? C.b2 : C.b3);
     }
     const R = new Rng(9);

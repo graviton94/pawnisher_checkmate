@@ -34,7 +34,7 @@ export interface EvFxCtx {
   cards: CardFx[];
   crew: CrewFx[];
   tap?: string;
-  /** 결과 장면 바탕 = 사건 그림 (비율 그대로 덮고 초점, 2×2 먹 디더) — D-395 */
+  /** 결과 장면 바탕 = 사건 그림 (비율 그대로 덮고 초점, 단색 먹 막 — D-395 · D-675) */
   scene?: string;
   focus?: [number, number];
   /** 나사 변화량 (D-398): 지갑 그림에 나사가 날아들거나 쏟아진다 */
@@ -132,11 +132,11 @@ export class Layer {
     return { x: (b.left - a.left - this.host.clientLeft) / k, y: (b.top - a.top - this.host.clientTop) / k, w: b.width / k, h: b.height / k };
   }
   stop() { this.on = false; }
-  /** 도트 낱말: 튀어나옴(2배 → 1배 계단) → 떠오름 → 아래부터 디더로 지워짐 — 전투 피해 숫자 drawPopup 그대로 */
+  /** 도트 낱말: 튀어나옴(2배 → 1배 계단) → 떠오름 → 아래부터 잘려 지워짐 — 전투 피해 숫자 drawPopup 그대로 */
   addPop(text: string, color: number, cx: number, by: number): void {
     this.pops.push({ art: buildPopupArt(text, color), cx: Math.round(cx * this.wk), by: Math.round(by * this.wk), t0: performance.now() + (calm() ? -POPUP_MS.fadeAt * 0.5 : 0) });
   }
-  /** 계단 고리: 반지름 3계단(45% → 80% → 100%, 마지막은 디더 반쪽) — 투명도 없이 */
+  /** 계단 고리: 반지름 3계단(45% → 80% → 100%, 마지막은 점선) — 투명도 없이 */
   addRing(x: number, y: number, r: number, c: string): void {
     if (!calm()) this.rings.push({ x, y, r, c, t0: performance.now() });
   }
@@ -190,8 +190,10 @@ const coinToss = async (L: Layer, c: EvFxCtx): Promise<void> => {
   const draw = (f: number, y: number, xo = 0) => {
     x.clearRect(0, 0, L.w, L.h);
     const sh = Math.max(4, 12 - Math.round((rest - y) / 6));
-    x.fillStyle = '#0b0b0e'; // 그림자 (반투명 대신 디더 점)
-    for (let a = -sh; a <= sh; a++) for (let b = -1; b <= 1; b++) if ((a + b) % 2 === 0) x.fillRect(cx + 20 + a + xo, rest + 33 + b, 1, 1);
+    x.fillStyle = '#0b0b0e'; // 그림자: 단색 납작 타원 세 줄 (D-675 — 옛 체크 점)
+    x.fillRect(cx + 20 - sh + 2 + xo, rest + 32, 2 * sh - 3, 1);
+    x.fillRect(cx + 20 - sh + xo, rest + 33, 2 * sh + 1, 1);
+    x.fillRect(cx + 20 - sh + 2 + xo, rest + 34, 2 * sh - 3, 1);
     const im = img(`ui/props/flip-${f}.png`);
     if (im.complete) x.drawImage(im, cx + xo, Math.round(y));
   };
@@ -311,7 +313,7 @@ const slotsDrop = async (L: Layer, c: EvFxCtx): Promise<void> => {
   await run;
 };
 
-/** 칸 셋 — 녹이 덮고 있다, 손가락으로 긁는다. 반 넘게 긁히면 남은 녹이 계단 디더로 떨어진다 */
+/** 칸 셋 — 녹이 덮고 있다, 손가락으로 긁는다. 반 넘게 긁히면 남은 녹이 아래 줄부터 떨어진다 (D-675) */
 const scratch = async (L: Layer, c: EvFxCtx): Promise<void> => {
   const items = c.chance!.items!;
   const RUST = ['#24110b', '#4a2112', '#74361a', '#9a4c22', '#c06a30', '#e0904a', '#f4b47a'];
@@ -336,7 +338,6 @@ const scratch = async (L: Layer, c: EvFxCtx): Promise<void> => {
     }
   };
   draw();
-  const BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   return new Promise<void>((resolve) => {
     const hint = tape(L.host, c.tap ?? '녹을 긁어낸다');
     const finish = async () => {
@@ -354,7 +355,8 @@ const scratch = async (L: Layer, c: EvFxCtx): Promise<void> => {
     const reveal = (i: number) => {
       if (open[i]) return;
       open[i] = true;
-      [0.75, 0.5, 0.25, 0].forEach((k, n) => window.setTimeout(() => { for (let q = 0; q < SL * SL; q++) if (BAY[((Math.floor(q / SL) & 3) << 2) | ((q % SL) & 3)] / 16 >= k) rust[i][q] = 0; draw(); }, n * 60));
+      // 남은 녹이 아래 줄부터 떨어진다 (D-675 — 옛 4×4 베이어 계단): 화면 프레임 간격으로 여덟 번, 한 번에 SL/8줄씩
+      for (let n = 0; n < 8; n++) window.setTimeout(() => { const y0 = Math.floor((SL * (7 - n)) / 8); for (let q = y0 * SL; q < SL * SL; q++) rust[i][q] = 0; draw(); }, n * 30);
       if (open.every(Boolean)) window.setTimeout(finish, 450);
     };
     let down = false, lastP: [number, number] | null = null;
@@ -431,7 +433,7 @@ export const burstWord = (L: Layer, el: HTMLElement, text: string, col: number):
   replay(el, 'wob');
 };
 
-/** 결과 줄: 장면 위 디더 띠 안에 실제 카드 · 기물 · 지갑 · 부품 상자를 세우고 하나씩 FX */
+/** 결과 줄: 장면 위 먹 띠 안에 실제 카드 · 기물 · 지갑 · 부품 상자를 세우고 하나씩 FX */
 const showResults = async (L: Layer, c: EvFxCtx): Promise<void> => {
   const cards = c.cards.slice(0, 3), crew = c.crew.slice(0, 4);
   const gold = c.gold ?? 0;
@@ -534,7 +536,7 @@ const cardFx = async (L: Layer, el: HTMLElement, cd: CardFx): Promise<void> => {
     sfx('hurt');
     burst(L, el, 'break');
     await wait(240);
-    await cls(el, 'gone', 340); // 디더 퇴장
+    await cls(el, 'gone', 340); // 가운데 줄로 닫힘 (D-675)
   }
 };
 
@@ -711,7 +713,7 @@ const ACTOR_FX: ReadonlySet<CrewFx['fx']> = new Set(['evolve', 'die', 'new']);
 const MOLTEN = /dipping|pact|castMold|coldForge/;
 /**
  * 장면 위 배우 (D-504, 사용자 #23 「쇳물 담금질 결과가 허접」): 결과 줄(카드)보다 먼저, 사건 그림 위 초점 자리에 그 분대원의 실제 기물 도트를 세운다.
- * 덮던 2×2 먹 디더를 걷어 그림을 온전히 보이고(가장자리 디더만), 결과마다 예비 → 터짐 → 출렁:
+ * 덮던 먹 막을 걷어 그림을 온전히 보이고(먹 테만, D-675), 결과마다 예비 → 터짐 → 출렁:
  *  진화 = 아래에서 계단으로 솟음 + 쇳물 불씨 → 떨림 · 달아오름(빛) → 흰 번쩍 → 새 기물 · 금 고리 · 별 → 착지 출렁
  *  폐기 = 솟음 → 떨림 → 계단으로 가라앉음(아래부터 잘림) + 진홍 불씨 → 수면 고리 · 거품
  *  합류 = 위에서 계단으로 떨어져 착지 출렁 + 먼지
@@ -791,7 +793,7 @@ const actorBeat = async (L: Layer, c: EvFxCtx, ov: HTMLElement): Promise<void> =
 /**
  * 사건 결과 1박 (D-260 → D-402): 고른 선택지를 정하면 사건 창 전체를 결과 장면이 덮는다(바뀐 것을 강조 — 사용자 승인) →
  * 확률 장치(동전은 저절로, 칸 셋은 하나씩 눌러 · 긁어 연다) → 실제 카드 · 기물 · 지갑 · 부품 상자 위 FX만(글 · 쪽지 없음) →
- * 내용만큼 머물고(c.hold, 누르면 바로) 디더로 걷힌다. 무슨 일이었나 · 바뀐 것 요약은 2박(사건 창의 결과 쪽지)이 말한다.
+ * 내용만큼 머물고(c.hold, 누르면 바로) 가운데 줄로 닫히며 걷힌다. 무슨 일이었나 · 바뀐 것 요약은 2박(사건 창의 결과 쪽지)이 말한다.
  */
 export const runEventFx = async (wrap: HTMLElement, c: EvFxCtx): Promise<void> => {
   wrap.querySelectorAll('.ev-ov').forEach((x) => x.remove());

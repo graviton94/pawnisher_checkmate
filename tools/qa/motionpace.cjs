@@ -3,7 +3,7 @@
 // rAF마다 ① 프레임 간격(평균 fps · 가장 긴 프레임 · 34ms/50ms 넘는 프레임 수) ② 지켜볼 요소(그리고 ::before · ::after)의 모습이
 // 바뀐 프레임 비율(= 프레임마다 움직이나, 계단이나)을 적고, CDP 화면 중계로 그려진 프레임을 받아 띠 그림을 남긴다.
 // 미리 `npm run build` · `npx vite preview --port 4355`. 사용:
-//   node tools/qa/motionpace.cjs <reveal|sweep|screen|boss|board|hit|all> [--url http://localhost:4355/] [--tag after] [--out <폴더>] [--cpu 4] [--light] [--q boardscale=2] [--boss plate|inspect|magnet|alarm…]
+//   node tools/qa/motionpace.cjs <reveal|sweep|screen|boss|board|hit|title|all> [--tapAt 1200] [--url http://localhost:4355/] [--tag after] [--out <폴더>] [--cpu 4] [--light] [--q boardscale=2] [--boss plate|inspect|magnet|alarm…]
 // 결과: <폴더>/motion-<tag>.json · <폴더>/strip-<장면>-<tag>/NNN.jpg
 const { chromium } = require(process.env.PW_PATH || 'playwright');
 const fs = require('fs');
@@ -195,7 +195,88 @@ const summarize = (frames, sels) => {
       return measure(['.fx3-flash', '.fx-flash', '.crackfx', '#board', '.crackfx .dr-face'], 1400);
     },
   };
-  const list = which === 'all' ? Object.keys(S) : which.split(',');
+  /**
+   * 타이틀 → 메뉴 펼침 (D-676 — 사용자 실기기: 「로딩 완료 후 로고가 왼쪽으로 가면서 버튼 등장할 때 프레임 구림」).
+   * 콜드 스타트부터 CPU 감속을 걸고(실기기처럼 부팅 · 판 세우기 · 미리 받기가 다 느리다), 타이틀이 뜨고 --tapAt ms 뒤에 누른다 →
+   * 누른 뒤 1600ms 동안 rAF 간격만 잰다(--light와 같이 모습 서명 없음 — 서명 자체가 프레임을 먹는다).
+   * CDP 추적으로 그 구간의 주 스레드 일을 이름별로 나눠 적는다(무엇이 프레임을 먹나).
+   */
+  S.title = async () => {
+    const tapAt = Number(opt('--tapAt', 1200));
+    await ctx.addInitScript(() => { try { localStorage.setItem('pawnisher.slice.meta', JSON.stringify({ prologue: true, runs: 1 })); } catch { /* */ } });
+    await cdp.send('Network.enable');
+    await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+    await throttle();
+    await pg.goto(BASE);
+    await pg.waitForSelector('.opening', { timeout: 60000 });
+    await pg.waitForTimeout(tapAt);
+    // 추적 시작 → 누름 → 잰다
+    const chunks = [];
+    const onData = (e) => chunks.push(...e.value);
+    cdp.on('Tracing.dataCollected', onData);
+    await cdp.send('Tracing.start', { categories: 'devtools.timeline,disabled-by-default-devtools.timeline,v8,blink,cc,gpu,disabled-by-default-devtools.timeline.frame', transferMode: 'ReportEvents' });
+    const tTap = await pg.evaluate(() => performance.now());
+    // --probe: 프레임마다 로고 · 첫 단추 자리도 적는다(배치 읽기 한 번 — fps 판과 따로 돌린다) → 눈에 보이는 움직임 횟수
+    const PROBE_POS = args.includes('--probe');
+    const meas = pg.evaluate(([ms, probe]) => new Promise((done) => {
+      const f = [], pos = [], btn = [];
+      const t0 = performance.now();
+      const step = (now) => {
+        f.push(now - t0);
+        if (probe) {
+          const l = document.querySelector('.op-logo');
+          const b = document.querySelector('.op-menu > *');
+          pos.push(l ? (() => { const r = l.getBoundingClientRect(); return Math.round((r.left + r.width / 2) * 10) + ':' + Math.round((r.top + r.height / 2) * 10); })() : null);
+          btn.push(b ? Math.round(b.getBoundingClientRect().left * 10) + ':' + Math.round(b.getBoundingClientRect().height) : null);
+        }
+        if (now - t0 < ms) requestAnimationFrame(step); else done({ f, pos, btn });
+      };
+      requestAnimationFrame(step);
+    }), [1600, PROBE_POS]);
+    mark = Date.now() / 1000;
+    await pg.touchscreen.tap(Math.round(W / 2), Math.round(H * 0.8));
+    const got = await meas;
+    const ts = got.f;
+    // 보이는 움직임: 자리가 바뀐 프레임 수 · 첫 바뀜 ~ 마지막 바뀜 사이 초당 바뀜 · 가장 오래 멈춘 시간
+    const moves = (arr) => {
+      const ch = [];
+      for (let i = 1; i < arr.length; i++) if (arr[i] !== arr[i - 1]) ch.push(i);
+      if (ch.length < 2) return { changes: ch.length };
+      const ms = ts[ch[ch.length - 1]] - ts[ch[0] - 1];
+      const gaps = ch.slice(1).map((c, k) => ts[c] - ts[ch[k]]);
+      return { changes: ch.length, ms: Math.round(ms), perSec: +(ch.length / (ms / 1000)).toFixed(1), maxHoldMs: Math.round(Math.max(...gaps)) };
+    };
+    const logoMotion = PROBE_POS ? moves(got.pos) : undefined;
+    const btnMotion = PROBE_POS ? moves(got.btn) : undefined;
+    const done = new Promise((r) => cdp.once('Tracing.tracingComplete', r));
+    await cdp.send('Tracing.end');
+    await done;
+    cdp.off('Tracing.dataCollected', onData);
+    const dts = ts.slice(1).map((t, i) => t - ts[i]);
+    const span = ts[ts.length - 1] - ts[0];
+    // 주 스레드 일 나누기 (CrRendererMain의 X 사건 — 겹친 사건은 바깥 것만 더하지 않도록 이름별 합만 적는다)
+    const meta = chunks.filter((e) => e.name === 'thread_name' && e.args?.name === 'CrRendererMain');
+    const mains = new Set(meta.map((e) => `${e.pid}:${e.tid}`));
+    const main = chunks.filter((e) => e.ph === 'X' && mains.has(`${e.pid}:${e.tid}`) && e.dur);
+    const by = {};
+    for (const e of main) by[e.name] = (by[e.name] || 0) + e.dur / 1000;
+    const top = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 18).map(([k, v]) => [k, Math.round(v)]);
+    const tasks = main.filter((e) => e.name === 'RunTask' || e.name === 'ThreadControllerImpl::RunTask').map((e) => e.dur / 1000);
+    // 긴 작업 속: 가장 긴 작업 셋 안에서 이름별 합
+    const longT = main.filter((e) => (e.name === 'RunTask' || e.name === 'ThreadControllerImpl::RunTask') && e.dur > 30000).sort((a, b) => b.dur - a.dur).slice(0, 3);
+    const inside = longT.map((t) => {
+      const sub = {};
+      for (const e of main) if (e !== t && e.ts >= t.ts && e.ts + e.dur <= t.ts + t.dur) sub[e.name] = (sub[e.name] || 0) + e.dur / 1000;
+      const fn = main.filter((e) => e.ts >= t.ts && e.ts + e.dur <= t.ts + t.dur && e.name === 'FunctionCall').map((e) => e.args?.data?.url?.split('/').pop() + ':' + e.args?.data?.functionName).slice(0, 4);
+      return { ms: Math.round(t.dur / 1000), top: Object.entries(sub).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => [k, Math.round(v)]), fn };
+    });
+    return {
+      tapAt, cpu: CPU, tTap: Math.round(tTap), frames: ts.length, avgFps: +((ts.length - 1) / (span / 1000)).toFixed(1),
+      longestMs: Math.round(Math.max(0, ...dts)), over17: dts.filter((d) => d > 17.5).length, over34: dts.filter((d) => d > 34).length, over50: dts.filter((d) => d > 50).length,
+      longTasks: tasks.filter((d) => d > 50).length, logoMotion, btnMotion, mainTop: top, longInside: inside,
+    };
+  };
+  const list = which === 'all' ? Object.keys(S).filter((k) => k !== 'title') : which.split(',');
   const res = {};
   for (const k of list) {
     try { res[k] = await strip(k, S[k]); } catch (e) { res[k] = { error: String(e) }; }

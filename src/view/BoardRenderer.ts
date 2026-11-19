@@ -795,22 +795,10 @@ class BoardScene extends Phaser.Scene {
     this.time.delayedCall(50, () => im.active && im.setScale(sx, sy).setPosition(x0, y0 + d).clearTint());
     this.time.delayedCall(100, () => im.active && im.setPosition(x0, y0));
   }
-  /** 그리기 끝: 꺼진 조건 표시는 2단 도트 디더로 퇴장 (반 칸 체크 무늬로 비운 뒤 사라짐 — 단순 페이드 없음, D-216) */
+  /** 그리기 끝: 꺼진 조건 표시는 바로 꺼진다 (D-675 — 옛 반 칸 체크 무늬 2단 퇴장을 뺐다. 켜짐은 계단 팝 그대로) */
   private condFlush(): void {
-    const gone = [...this.condSeen.entries()].filter(([k]) => !this.condNow.has(k));
     this.condSeen = this.condNow;
     this.condNow = new Map();
-    if (this.calm) return;
-    const d = this.tile / BOARD_DOTS;
-    for (const [, list] of gone)
-      for (const m of list) {
-        const im = this.add.image(m.x, m.y, m.key).setOrigin(0, 0).setDisplaySize(m.size, m.size).setDepth(1.75);
-        const g = this.make.graphics({}, false);
-        g.fillStyle(0xffffff);
-        for (let y = 0; y < m.size; y += d) for (let x = 0; x < m.size; x += d) if (((x + y) / d) % 2 < 1) g.fillRect(m.x + x, m.y + y, d, d);
-        this.time.delayedCall(50, () => im.active && im.setMask(g.createGeometryMask()));
-        this.time.delayedCall(100, () => { im.destroy(); g.destroy(); });
-      }
   }
 
   /** 판 칸 · 무너진 칸 · 붕락 균열 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
