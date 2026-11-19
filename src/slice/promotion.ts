@@ -2,7 +2,7 @@
  * 왕위 결정 화면 「금단의 승급대 앞에서」(바이블 THR, D-451). 첫째~셋째 왕관은 [돌아본다] [왕관을 쓴다], 넷째 왕관만 [왕관을 쓴다] [왕관을 던진다]. 진행·저장은 호출자가.
  * art가 없으면 검은 화면 가운데 글 (D-582 — VA-08 취소): 그림 없이 먹 위 한가운데 글 단, 단추는 철판 없는 글 단추. 진엔딩 첫 컷(같은 먹)으로 끊김 없이 이어진다.
  */
-import { sfx } from '../audio/sfx';
+import { sfx, sfxFor } from '../audio/sfx';
 import { THRONE_TEXT, lookBackCut, testimony, type Face } from '../data/script';
 import { playCuts } from './opening';
 import { josa } from '../data/josa';
@@ -37,7 +37,8 @@ export const promotionScene = (o: { chapter: number; prev?: string[]; art?: stri
   const finish = (choice: 'throne' | 'depart'): void => {
     if (chosen) return; chosen = true;
     el.querySelectorAll<HTMLButtonElement>('button').forEach((b) => { b.disabled = true; });
-    sfx('submit'); pxOut(el, () => { release(); el.remove(); resolve(choice); }, 240);
+    // 결정 소리 (D-630): 왕관을 쓰면 무거운 금이 죄이고, 던지면 쇠 바닥에 튀며 구른다
+    sfxFor(choice === 'throne' ? 'throneCrown' : 'throneThrow'); pxOut(el, () => { release(); el.remove(); resolve(choice); }, 240);
   };
   el.querySelector('[data-promote]')!.addEventListener('click', () => finish('throne'));
   let looking = false;
@@ -62,4 +63,5 @@ export const promotionScene = (o: { chapter: number; prev?: string[]; art?: stri
     });
   });
   replay(el.querySelector<HTMLElement>('.pm-content')!, 'in');
+  sfxFor('throneOpen');
 });
