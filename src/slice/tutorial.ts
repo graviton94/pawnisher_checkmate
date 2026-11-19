@@ -128,6 +128,12 @@ export const runTutorial = (steps: TutStep[], o: TutOpts): Promise<boolean> =>
       // D-597: 전투 밖에서도 띠 밖으로 — 띠 속 단추가 한 줄 띠의 글을 덮었다(667). 고르기 화면의 왼쪽 아래 「건너뛴다」와 겹치지 않게 오른쪽 위 모서리
       if (skipBtn.parentElement !== root) root.appendChild(skipBtn);
       skipBtn.classList.toggle('corner', !battle);
+      // D-666: 전투 중 왼쪽 아래 「건너뛴다」가 짚은 곳(덱 줄 단추 등)을 덮으면 그 걸음만 오른쪽 위 모서리로
+      if (battle && holes.length) {
+        const k = skipBtn.getBoundingClientRect();
+        const hit = holes.some((q) => k.right > q.x && k.left < q.x + q.w && k.bottom > q.y && k.top < q.y + q.h);
+        if (hit) skipBtn.classList.add('corner');
+      }
       // D-597 (플레이 리뷰 P1-1): 전투 밖(영입 · 핵심 부품 · 지도)에서도 큰 종이 말풍선 대신 같은 자막 띠 —
       // 짚은 곳(구멍)은 지키고, 고를 카드 · 단추 · 지도 칸은 되도록 덜 덮는 자리에 선다. 카드 설명을 가린 채 고르게 하지 않는다
       talk.classList.add('on-sub');

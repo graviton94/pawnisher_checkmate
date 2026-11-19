@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { allCardTexts, cardKey, cardRows, CARD_SPEC, specOver, type CardNature, type CardText } from '../src/slice/card-spec';
 import { budgetOver, cardTextHtml, fxHtml, numRole, ROW_FONT, rowPx } from '../src/slice/card-text';
-import { CARD_TEXT_GRID, CARD_TEXT_PENDING, CARD_TIERS, FLAVOR_ON_CARD, cardGridH, parseCardText } from '../src/data/card-text';
+import { CARD_TEXT_GRID, CARD_TEXT_GRID_EXTRA, CARD_TEXT_PENDING, CARD_TIERS, FLAVOR_ON_CARD, cardGridH, parseCardText } from '../src/data/card-text';
 import { CARD_W } from '../src/slice/uikit';
 import { COMMANDS } from '../src/slice/cards';
 import { SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
@@ -48,6 +48,12 @@ describe('카드 글 예산 (D-589)', () => {
     expect(CARD_W.min).toBe(CARD_TEXT_GRID[0].from);
     expect(CARD_TEXT_GRID.some((g) => g.from === CARD_W.crisp)).toBe(true);
     expect(CARD_TEXT_GRID.at(-1)!.from).toBe(CARD_TIERS.l.minW);
+  });
+  it('덧 격자 (D-669): 150px 아래 작은 카드(138px 이상) · 시작 세트(압정 아래로 내린 칸)도 칸 안', () => {
+    const sm = CARD_TEXT_GRID_EXTRA.small;
+    for (const k of ['crew', 'cmd'] as const) expect(cardGridH(sm), k).toBeLessThanOrEqual((138 / 84) * sm.box[k]);
+    const st = CARD_TEXT_GRID_EXTRA.set;
+    for (const g of st.grids) expect(cardGridH(g), `set from ${g.from}`).toBeLessThanOrEqual((g.from / 84) * st.box);
   });
   it('묘사 두 줄 · 점선 위아래에 틈이 있다 — 줄이 붙거나 점선에 닿지 않는다 (D-594)', () => {
     for (const g of CARD_TEXT_GRID) {

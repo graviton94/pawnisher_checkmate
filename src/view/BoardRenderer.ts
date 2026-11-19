@@ -16,6 +16,8 @@ import { displayPreset } from '../data/display';
 import { POPUP_MS, buildPopupArt, dmgFont, drawPopup } from './popup';
 import { BoardFx } from './boardfx';
 import { HP_BAR, IMPACT, MOVE_MS, RENDER, TURN_SUMMARY } from '../data/fx';
+import { renderScale } from './renderscale';
+import { boardFast, boardResPref, markAutoSlow, onBoardRes } from '../prefs/boardres';
 import { coolRamp, drawCharge, drawCrown, drawEmbers, drawRing, drawSlamDust, drawSpark, drawTakeoffDust, rippleOffset } from './impact';
 import { TARGET_TICK, drawGearTarget } from './target';
 import { boardInset } from './boardInset';
@@ -165,19 +167,15 @@ const drawGiantFrame = (pen: PixelPen, x: number, y: number): void => {
 /** 판 열 위 · 아래 자리 (boardInset.ts — Phaser 없이 본편 HUD가 먼저 정할 수 있게 따로 둔다) */
 export { setBoardTopInset } from './boardInset';
 /**
- * 판을 그리는 배율 (D-240 상한 → D-525 정수 늘림): 캔버스 한 픽셀이 기기 픽셀 정수 개로 늘어나야 도트 · 바 · 테 줄이 고르다.
- * 기기 배율이 상한(RENDER.dprCap)을 넘으면 기기 배율을 정수로 나눈 값 중 상한 이하 · 하한(RENDER.dprMin) 이상을 쓰고,
- * 그런 값이 없으면(2.625 같은 소수 배율) 기기 배율 그대로 그린다 — 예전에는 2로 그려 1.3125배로 늘리느라 줄이 한 픽셀씩 들쭉날쭉했다.
+ * 판을 그리는 배율 (src/view/renderscale.ts — D-240 · D-525 · D-665 판 선명도). 측정 손잡이 (D-595, 개발 빌드만):
+ * ?boardscale=<나눌 정수> — 판 채우기 비용 비교용(2 = 기기 배율 절반 · ×2 정수 늘림) · ?boardres=auto|sharp|fast — 설정 대신. 출시 빌드에는 없다
  */
-const renderScale = (dpr: number): number => {
-  // 측정 손잡이 (D-595, 개발 빌드만): ?boardscale=<나눌 정수> — 판 채우기 비용 비교용(2 = 기기 배율 절반 · ×2 정수 늘림). 출시 빌드에는 없다
-  if (import.meta.env.MODE !== 'release' && typeof location !== 'undefined') {
-    const m = Number(new URLSearchParams(location.search).get('boardscale'));
-    if (m >= 1 && m <= 4) return dpr / Math.round(m);
-  }
-  if (dpr <= RENDER.dprCap) return dpr;
-  for (let m = 2; dpr / m >= RENDER.dprMin; m++) if (dpr / m <= RENDER.dprCap) return dpr / m;
-  return dpr;
+const devQ = (k: string): string | null => (import.meta.env.MODE !== 'release' && typeof location !== 'undefined' ? new URLSearchParams(location.search).get(k) : null);
+const boardScaleNow = (dpr: number): number => {
+  const m = Number(devQ('boardscale'));
+  if (m >= 1 && m <= 4) return dpr / Math.round(m);
+  const q = devQ('boardres');
+  return renderScale(dpr, q === 'fast' || (q !== 'sharp' && boardFast()));
 };
 const tileSize = (dpr: number, cols: number, rows: number, viewW: number, viewH: number): number => {
   // D-429: 네 대표 규격으로 크기를 정한다. PC/태블릿을 폰의 54px 상한으로 제한하지 않는다.
@@ -795,22 +793,10 @@ class BoardScene extends Phaser.Scene {
     this.time.delayedCall(50, () => im.active && im.setScale(sx, sy).setPosition(x0, y0 + d).clearTint());
     this.time.delayedCall(100, () => im.active && im.setPosition(x0, y0));
   }
-  /** 그리기 끝: 꺼진 조건 표시는 2단 도트 디더로 퇴장 (반 칸 체크 무늬로 비운 뒤 사라짐 — 단순 페이드 없음, D-216) */
+  /** 그리기 끝: 꺼진 조건 표시는 바로 꺼진다 (D-675 — 옛 반 칸 체크 무늬 2단 퇴장을 뺐다. 켜짐은 계단 팝 그대로) */
   private condFlush(): void {
-    const gone = [...this.condSeen.entries()].filter(([k]) => !this.condNow.has(k));
     this.condSeen = this.condNow;
     this.condNow = new Map();
-    if (this.calm) return;
-    const d = this.tile / BOARD_DOTS;
-    for (const [, list] of gone)
-      for (const m of list) {
-        const im = this.add.image(m.x, m.y, m.key).setOrigin(0, 0).setDisplaySize(m.size, m.size).setDepth(1.75);
-        const g = this.make.graphics({}, false);
-        g.fillStyle(0xffffff);
-        for (let y = 0; y < m.size; y += d) for (let x = 0; x < m.size; x += d) if (((x + y) / d) % 2 < 1) g.fillRect(m.x + x, m.y + y, d, d);
-        this.time.delayedCall(50, () => im.active && im.setMask(g.createGeometryMask()));
-        this.time.delayedCall(100, () => { im.destroy(); g.destroy(); });
-      }
   }
 
   /** 판 칸 · 무너진 칸 · 붕락 균열 — 코드 도트 그림 (D-071, FX 랩에서 고른 것) */
@@ -1268,7 +1254,10 @@ class BoardScene extends Phaser.Scene {
     this.anim.arrows.push({ a: this.center(from), b: this.center(to), knight, color, alpha });
   }
 
+  /** 마지막으로 그린 모델 — 판 선명도가 바뀌면 같은 모델로 다시 그린다 (D-665) */
+  lastModel: BoardModel | null = null;
   render(m: BoardModel): void {
+    this.lastModel = m;
     this.renderSeq++;
     this.clearDynamic();
     this.condIds = m.condIds ?? [];
@@ -2418,7 +2407,7 @@ export class BoardRenderer implements BoardView {
 
   constructor(private host: HTMLElement, input: BoardInput, announce: (text: string) => void = () => {}) {
     // 그리는 해상도 상한 (D-240): 폰 배율 2.6~3 그대로 그리면 판 하나가 프레임을 다 먹었다 (CPU 4배 느린 측정에서 19fps → 2배 상한으로 32fps, 아래 프레임 상한과 함께)
-    const dpr = renderScale(window.devicePixelRatio || 1);
+    const dpr = boardScaleNow(window.devicePixelRatio || 1);
     this.scene = new BoardScene();
     this.boardFx = new BoardFx(host, (p) => this.screenOf(p));
     this.scene.fxHook = this.boardFx;
@@ -2454,6 +2443,8 @@ export class BoardRenderer implements BoardView {
     if (ov) new MutationObserver(() => this.sleepIfHidden()).observe(ov, { attributes: true, attributeFilter: ['hidden'] });
     this.game.canvas.addEventListener('webglcontextrestored', () => this.scene.poke());
     this.installQuiet();
+    // 판 선명도 (D-665): 설정이 바뀌거나 자동 판정이 나면 판이 조용할 때 배율을 바꿔 다시 그린다
+    onBoardRes(() => this.applyRes());
     // 타이틀 · 컷신이 덮은 뒤에 만들어져도 처음부터 잠든다 (클래스가 다시 바뀔 때까지 기다리지 않게)
     void this.whenReady.then(() => this.sleepIfHidden());
   }
@@ -2467,7 +2458,7 @@ export class BoardRenderer implements BoardView {
    */
   private installQuiet(): void {
     const proto = BoardRenderer.prototype as unknown as Record<string, unknown>;
-    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet', 'settled']);
+    const skip = new Set(['constructor', 'size', 'resize', 'center', 'fpsLimit', 'sleepIfHidden', 'heat', 'screenOf', 'installQuiet', 'settled', 'applyRes', 'autoMeasure', 'resInfo']);
     const self = this as unknown as Record<string, unknown>;
     for (const k of Object.getOwnPropertyNames(proto)) {
       const f = Object.getOwnPropertyDescriptor(proto, k)?.value as ((...a: unknown[]) => unknown) | undefined;
@@ -2483,6 +2474,7 @@ export class BoardRenderer implements BoardView {
             this.inflight -= 1;
             this.scene.poke();
             this.sleepIfHidden();
+            if (this.resPending) this.applyRes();
           };
           r.then(done, done);
         }
@@ -2511,7 +2503,77 @@ export class BoardRenderer implements BoardView {
       this.hot = Math.max(0, this.hot - 1);
       if (!this.hot) this.fpsLimit(RENDER.idleFps);
       this.sleepIfHidden();
+      if (this.resPending) this.applyRes();
     });
+  }
+
+  /** 판 선명도를 바꿔야 하는데 판 연출 중이라 미뤄 둠 (D-665) */
+  private resPending = false;
+  /**
+   * 판 선명도 (D-665): 지금 설정 · 자동 판정에 맞는 배율로 캔버스를 다시 잡고 판을 같은 모델로 다시 그린다.
+   * 판 연출(이동 · 공격 · 판 세우기) 중이면 끝난 뒤로 미룬다 — 연출 도중 칸 크기가 바뀌지 않게.
+   */
+  applyRes(): void {
+    const dpr = boardScaleNow(window.devicePixelRatio || 1);
+    if (Math.abs(dpr - this.scene.dpr) < 1e-6) return void (this.resPending = false);
+    if (this.inflight > 0 || this.hot > 0) return void (this.resPending = true);
+    this.resPending = false;
+    const sc = this.scene;
+    sc.dpr = dpr;
+    const { w, h } = this.size(dpr);
+    this.game.scale.setZoom(1 / dpr);
+    this.game.scale.resize(w * dpr, h * dpr);
+    this.center(w, h);
+    if (!sceneLive(sc as unknown as Parameters<typeof sceneLive>[0])) return;
+    sc.cameras.main.setZoom(dpr);
+    if (sc.state) {
+      sc.setupBoard(sc.state);
+      if (sc.lastModel) sc.render(sc.lastModel);
+    }
+    sc.poke();
+  }
+
+  /** 판 선명도 실측 정보 (설정 확인 · 측정 도구) */
+  resInfo(): { pref: string; fast: boolean; dpr: number; device: number; canvas: [number, number]; css: [number, number] } {
+    const cv = this.game.canvas;
+    return { pref: boardResPref(), fast: boardFast(), dpr: this.scene.dpr, device: window.devicePixelRatio || 1, canvas: [cv.width, cv.height], css: [cv.clientWidth, cv.clientHeight] };
+  }
+
+  /** 이 실행에서 자동 판정을 이미 마쳤나 · 재는 중인가 */
+  private autoDone = false;
+  private autoOn = false;
+  /**
+   * 자동 판정 (D-665 · 결정 2가): 대국을 세운 뒤 RENDER.autoMs 동안 판이 움직이는(연출 중) 프레임 간격을 rAF로 잰다.
+   * 평균 fps가 RENDER.autoSlowFps보다 낮으면 느린 기기로 적고(markAutoSlow) 판을 절반 해상도로 바꾼다.
+   * 자동이 아니거나, 이미 빠름이거나, 빠름이 선명과 같은 기기(PC 배율 1)면 재지 않는다. 프레임이 모자라면 다음 대국에서 다시.
+   */
+  autoMeasure(): void {
+    if (this.autoOn || this.autoDone || boardResPref() !== 'auto' || boardFast() || devQ('boardres') || devQ('boardscale')) return;
+    const dev = window.devicePixelRatio || 1;
+    if (Math.abs(renderScale(dev, true) - renderScale(dev, false)) < 1e-6) return void (this.autoDone = true);
+    const t0 = performance.now();
+    this.autoOn = true;
+    let last = 0, sum = 0, n = 0;
+    const step = (now: number): void => {
+      const busy = this.inflight > 0 || this.hot > 0;
+      const loop = this.game?.loop;
+      if (last && busy && loop?.running && !document.hidden) {
+        const dt = now - last;
+        if (dt < RENDER.autoSkipMs) { sum += dt; n += 1; }
+      }
+      last = now;
+      if (n >= RENDER.autoFrames || now - t0 > RENDER.autoMs) {
+        this.autoOn = false;
+        if (n < RENDER.autoFrames / 2) return; // 잴 만큼 움직이지 않았다 — 다음 대국에서
+        this.autoDone = true;
+        const fps = (n * 1000) / sum;
+        (window as unknown as { __boardAuto?: unknown }).__boardAuto = { fps: Math.round(fps * 10) / 10, frames: n, slow: fps < RENDER.autoSlowFps };
+        if (fps < RENDER.autoSlowFps) markAutoSlow();
+        return;
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
   private fpsLimit(n: number): void {
     const loop = this.game?.loop as unknown as { fpsLimit: number; hasFpsLimit: boolean; _limitRate: number } | undefined;
@@ -2617,6 +2679,7 @@ export class BoardRenderer implements BoardView {
   }
   setup(state: BattleState): void {
     void this.whenReady.then(() => {
+      this.autoMeasure();
       this.scene.setupBoard(state);
       // 판 위 도트 FX 층 (D-249): 반장 판이면 공기 FX, 기믹 순간 연출은 언제나
       this.boardFx.boardSize = { w: state.width, h: state.height };

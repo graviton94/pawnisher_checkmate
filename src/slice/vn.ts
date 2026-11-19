@@ -2,13 +2,13 @@
  * 비주얼 노벨 연출 층 (D-554): 컷신 재생기(opening.playCuts)의 장면 칸 위에 서 있는 배우 · 장면 입자 · 등잔 깜빡 · 대사 기록.
  * 새 그림 없이(D-386) 기물 도트(public/pieces) · 장면 그림 · 키트 창만 쓴다. 데이터는 data/vn.ts.
  *  - 배우는 그림이 있는 컷에 서지 않는다 (D-580 · D-572 — 일러스트에 판 도트 말을 겹치지 않는다, data/vn.castOn). 그림 위 무대는 입자 · 등잔 · 켄 번스 · 명패만.
- *  - 배우 (그림 없는 컷이 연 때만): 72칸 도트의 정수배(그림 1도트 = 기기 픽셀 정수), 들어옴 · 나감 = 감속 곡선 + 64단 디더, 위치는 기기 픽셀 정수.
- *    말하는 배우는 밝게 + 1도트 뜀, 나머지는 50% 디더 그늘(투명도 아님). 놀 때는 1도트 숨 고르기(일부러 정지 동작).
+ *  - 배우 (그림 없는 컷이 연 때만): 72칸 도트의 정수배(그림 1도트 = 기기 픽셀 정수), 들어옴 · 나감 = 감속 곡선 + 클립 와이프(D-675), 위치는 기기 픽셀 정수.
+ *    말하는 배우는 밝게 + 1도트 뜀, 나머지는 명도를 낮춘 그늘(한 번에 켜고 끔, D-675). 놀 때는 1도트 숨 고르기(일부러 정지 동작).
  *  - 입자: 장면 도트(3 기기 픽셀) 낮은 해상도 캔버스 — 컷이 서 있는 동안만 프레임마다, 켄 번스보다 1.6배 흘러 원근이 생긴다.
  * 게임 상태는 건드리지 않는다 (UI 원칙 9). 움직임 줄이기면 배우는 바로 서고 입자 · 깜빡은 없다.
  */
 import { calmMotion } from '../prefs/motion';
-import { ditherTo, ease, snapDev, tween } from '../view/motion';
+import { ease, snapDev, tween, wipeTo } from '../view/motion';
 import { btnRowHtml } from './uikit';
 import { VN_ACTOR, VN_AIR, VN_DEFAULT, VN_SCENE, VN_TEXT, type CastSprite, type VnAir, type VnScene } from '../data/vn';
 
@@ -172,14 +172,15 @@ export class VnStage {
     buf.fill(0);
     const W = this.cols, H = this.rows;
     for (const m of this.motes) {
-      // 수명 끝 30%는 칸을 띄엄띄엄 (디더로 사라짐 — 투명도 아님)
+      // 수명 끝: 큰 티끌은 한 칸으로 줄고(70%), 끝 10%에 꺼진다 (D-675 — 격자 디더 퇴장 대신 크기로)
       const fade = m.life / m.max;
-      if (fade > 0.7 && ((Math.floor(m.x) + Math.floor(m.y)) & 1) && fade > 0.85) continue;
+      if (fade > 0.9) continue;
+      const big = m.big && fade <= 0.7;
       const x = ((Math.floor(m.x) + ox) % W + W) % W, y = Math.floor(m.y) + oy;
       if (y < 0 || y >= H) continue;
       buf[y * W + x] = m.col;
-      if (m.big && x + 1 < W) buf[y * W + x + 1] = m.col;
-      if (m.big && y + 1 < H) buf[(y + 1) * W + x] = m.col;
+      if (big && x + 1 < W) buf[y * W + x + 1] = m.col;
+      if (big && y + 1 < H) buf[(y + 1) * W + x] = m.col;
     }
     this.g.putImageData(this.img, 0, 0);
   }
@@ -252,8 +253,8 @@ export class VnStage {
   private light(a: Actor, on: boolean): void {
     if (a.lit === on) return;
     a.lit = on;
-    const dim = VN_ACTOR.dim / 64;
-    void ditherTo(a.shade, on ? dim : 0, on ? 0 : dim, VN_ACTOR.dimMs, ease.out);
+    // 그늘은 한 번에 켜고 끈다 (D-675 — 옛 64단 디더 덮기)
+    a.shade.style.visibility = on || VN_ACTOR.dim <= 0 ? 'hidden' : 'visible';
   }
   private add(key: string, sp: CastSprite, side: 'l' | 'r'): Actor {
     // 무대가 차면 오래된 배우부터 나간다
@@ -270,15 +271,14 @@ export class VnStage {
     el.style.top = `${this.footY(w)}px`;
     this.layer.appendChild(el);
     const shade = el.querySelector<HTMLImageElement>('.vn-shade')!;
-    void ditherTo(shade, 0, 0, 0);
+    shade.style.visibility = 'hidden';
     const a: Actor = { key, el, shade, side, born: this.born++, lit: false, foe: sp.side === 1, x: NaN };
     this.actors.push(a);
     this.layout(a);
-    // 들어옴: 바깥쪽에서 감속 + 넘침(출렁) · 64단 디더로 나타남 — 위치는 기기 픽셀 정수
+    // 들어옴: 바깥쪽에서 감속 + 넘침(출렁) — 위치는 기기 픽셀 정수 (D-675: 디더 등장 없이 첫 프레임부터 보인다)
     const dir = side === 'l' ? -1 : 1;
     if (!calmMotion()) {
       el.style.transform = `translate3d(${dir * VN_ACTOR.slide}px,0,0)`;
-      void ditherTo(el, 0, 1, VN_ACTOR.enter * 0.7, ease.out);
       void tween(VN_ACTOR.enter, (e) => (el.style.transform = `translate3d(${snapDev(dir * VN_ACTOR.slide * (1 - e))}px,0,0)`), (t) => ease.outBack(t, 1.2));
     }
     return a;
@@ -288,8 +288,9 @@ export class VnStage {
     if (relayout) this.layout();
     if (calmMotion()) return void a.el.remove();
     const dir = a.side === 'l' ? -1 : 1;
+    // 나감: 바깥쪽으로 가속해 빠지며 가운데 줄로 닫힌다 (D-675 — 옛 디더 퇴장)
     void tween(VN_ACTOR.exit, (e) => (a.el.style.transform = `translate3d(${snapDev(dir * VN_ACTOR.slide * e)}px,0,0)`), ease.in);
-    void ditherTo(a.el, 1, 0, VN_ACTOR.exit, ease.in).then(() => a.el.remove());
+    void wipeTo(a.el, 1, 0, VN_ACTOR.exit, ease.in).then(() => a.el.remove());
   }
   /** 배우를 모두 걷는다 (막이 닫힌 뒤라 바로) */
   clearCast(): void {

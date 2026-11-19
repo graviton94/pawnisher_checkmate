@@ -93,7 +93,7 @@ export const buildPopupArt = (text: string, color: number, font = POPUP_FONT): P
 /**
  * 팝업 한 장면: (cx, by) = 가운데 아래 기준점(월드 px), dot = 도트 한 칸 크기, ms = 뜬 뒤 지난 시간.
  * 튀어나옴(크게 → 제자리, 지수형) → 떠오름 → 아래에서 위로 잘리는 선이 올라가며 도트가 지워진다.
- * 선 바로 위 한 줄은 체크무늬로 듬성듬성, 선을 지난 도트는 한 도트 위로 튀며 바로 꺼진다.
+ * 선을 지난 줄은 한 도트 위로 튀며 바로 꺼진다 (D-675: 옛 선 위 체크무늬 줄을 뺐다).
  */
 export const drawPopup = (g: RectSink, art: PopupArt, cx: number, by: number, dot: number, ms: number, rise: number, px = 1): void => {
   if (ms < 0 || ms >= POPUP_MS.life) return;
@@ -112,9 +112,9 @@ export const drawPopup = (g: RectSink, art: PopupArt, cx: number, by: number, do
     if (f > 0) {
       if (p.y >= cut) {
         // 방금 지나간 줄만 한 도트 튀었다 꺼진다
-        if (p.y >= cut + 1 || (p.x + p.y) % 2) continue;
+        if (p.y >= cut + 1) continue;
         y -= 1;
-      } else if (p.y >= cut - 1 && (p.x + p.y) % 2 === 0) continue; // 선 바로 위: 체크무늬로 듬성듬성
+      }
     }
     g.fillStyle(p.c, 1);
     g.fillRect(left + p.x * d, top + y * d, d, d);
