@@ -400,6 +400,10 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   re(rays, 'on');
   (navigator as { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive !== false && navigator.vibrate?.(40);
   const er = layRect(em.getBoundingClientRect());
+  // 핏방울 22개 (D-593): 한 rAF 고리가 미리 정한 길을 프레임마다 옮긴다 — 위치는 기기 픽셀 정수, 사라짐은 디더 가면 16단.
+  // 예전엔 방울마다 Web Animations를 걸어 120Hz 행렬 키프레임 백여 개씩을 굽고 · 읽혀 베는 순간 ×4 감속에서 0.2~0.6초를 막았다.
+  const drops: { d: HTMLElement; mid: [number, number]; end: [number, number]; ms: number }[] = [];
+  const frag = document.createDocumentFragment();
   for (let i = 0; i < 22; i++) {
     const t = 0.2 + Math.random() * 0.6;
     const x = er.left + A.x + (B.x - A.x) * t;
@@ -411,10 +415,29 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
     d.style.left = `${x}px`;
     d.style.top = `${y}px`;
     if (i % 3 === 0) d.style.width = d.style.height = '3px';
-    document.body.appendChild(d);
-    d.animate(ditherKeyframes([{ transform: 'translate(0,0)' }, { transform: `translate(${0.72 * side * v}px,${0.69 * side * v - 20}px)`, offset: 0.45 }, { transform: `translate(${0.72 * side * v * 1.3}px,${0.69 * side * v + 60}px)`, opacity: 0 }]), { duration: 700 + Math.random() * 300, easing: 'steps(10, jump-end)', fill: 'forwards' });
-    window.setTimeout(() => d.remove(), 1050);
+    frag.appendChild(d);
+    drops.push({ d, mid: [0.72 * side * v, 0.69 * side * v - 20], end: [0.72 * side * v * 1.3, 0.69 * side * v + 60], ms: 700 + Math.random() * 300 });
   }
+  document.body.appendChild(frag);
+  const t0 = performance.now();
+  const MID = 0.45;
+  const fly = (now: number): void => {
+    let live = false;
+    for (const o of drops) {
+      const p = Math.min(1, (now - t0) / o.ms);
+      if (p < 1) live = true;
+      const k = p < MID ? p / MID : (p - MID) / (1 - MID);
+      const [x0, y0] = p < MID ? [0, 0] : o.mid;
+      const [x1, y1] = p < MID ? o.mid : o.end;
+      o.d.style.transform = `translate(${snapDev(x0 + (x1 - x0) * k)}px,${snapDev(y0 + (y1 - y0) * k)}px)`;
+      const lv = `var(--dq${p < MID ? SMOOTH.cssLevels : Math.round((1 - k) * SMOOTH.cssLevels)})`;
+      o.d.style.maskImage = lv;
+      o.d.style.setProperty('-webkit-mask-image', lv);
+    }
+    if (live && root.isConnected) requestAnimationFrame(fly);
+    else drops.forEach((o) => o.d.remove());
+  };
+  requestAnimationFrame(fly);
   window.setTimeout(() => { em.classList.remove('cut'); em.classList.add('done'); }, 700);
   await wait(200);
   re(word, 'in');
@@ -425,6 +448,23 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
   // 대기: 칼빛 · 반짝 띠 · 불씨 (타이틀이 닫히면 멈춘다)
   // 대기 중에는 글자 반짝 띠만 (칼빛 · 혼합 모드 반복은 모바일에서 프레임을 먹었다 — 테스터: 타이틀 버벅임)
   const idle = window.setInterval(() => { if (!root.isConnected) return void window.clearInterval(idle); re(word, 'shine'); }, 3200);
+  // 불씨 (D-593): 한 rAF 고리가 떠 있는 불씨를 모두 옮긴다 (예전엔 0.5초마다 하나씩 2.2초짜리 Web Animations를 구워 대기 화면 · 메뉴 펼침 내내 메인 스레드를 먹었다)
+  const embers: { m: HTMLElement; dx: number; dy: number; t0: number }[] = [];
+  let emberLoop = false;
+  const EMBER_MS = 2200;
+  const drift = (now: number): void => {
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const e = embers[i];
+      const p = Math.min(1, (now - e.t0) / EMBER_MS);
+      e.m.style.transform = `translate(${snapDev(e.dx * p)}px,${snapDev(e.dy * p)}px)`;
+      const lv = `var(--dq${Math.round((1 - p) * SMOOTH.cssLevels)})`;
+      e.m.style.maskImage = lv;
+      e.m.style.setProperty('-webkit-mask-image', lv);
+      if (p >= 1 || !root.isConnected) (e.m.remove(), embers.splice(i, 1));
+    }
+    emberLoop = embers.length > 0;
+    if (emberLoop) requestAnimationFrame(drift);
+  };
   const emb = window.setInterval(() => {
     if (!root.isConnected) return void window.clearInterval(emb);
     const r = layRect(panel.getBoundingClientRect());
@@ -433,7 +473,7 @@ export const titleFx = async (root: HTMLElement | null): Promise<void> => {
     m.style.left = `${r.left + 20 + Math.random() * (r.width - 40)}px`;
     m.style.top = `${r.bottom - 12}px`;
     document.body.appendChild(m);
-    m.animate(ditherKeyframes([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${(Math.random() - 0.5) * 30}px,-${120 + Math.random() * 80}px)`, opacity: 0 }]), { duration: 2200, easing: 'steps(18, jump-end)', fill: 'forwards' });
-    window.setTimeout(() => m.remove(), 2300);
+    embers.push({ m, dx: (Math.random() - 0.5) * 30, dy: -(120 + Math.random() * 80), t0: performance.now() });
+    if (!emberLoop) (emberLoop = true), requestAnimationFrame(drift);
   }, 520);
 };

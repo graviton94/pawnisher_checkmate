@@ -96,6 +96,7 @@ import { CHECK_KING_FACE, EVENT_PONDER_MOOD, FOE_KING_FACE, FOE_PIECE_FACE, PAPE
 import { AUTO_PICK_TEXT, CREW_BARK, WAGER_TEXT, EVENT_PONDER, FOE_PIECE_BARK, PAPER_KING_NAME, VOICE_TIMING, type FoePieceCue } from '../data/battle-voice';
 import { p2Clear, p2Rise, p2Warn } from './phase2fx';
 import { autoPick } from './autopick';
+import { revealScroll } from './handfit';
 import { bark, clearVoices, fitSubWidth, installTouchMemory, isMono, mono, placeSubAway, setSubAnchor, SUB_MIN_W, subClass, subHtml, subtitle, type BarkAt, type VoiceSide } from './voice';
 import { ASC_NUM, ASC_OMEN, ASCENSION, actOmen, battleFor, buildRun, DRILLS, ftueRetry, FINAL_BOSS, INTRO, MAP, NODE_DESC, NODE_ICONS, NODE_NAMES, type Act, type BattleDef, type MapNode } from './run';
 import { choicePay, counterweight, SLICE_EVENTS, SLICE_EVENT_IDS, weighable, type EventState, type SliceEventChoice, type SliceEventId } from './events';
@@ -372,7 +373,7 @@ let enemyTurn = false;
 /** 장면·팝업 뒤의 Phaser 입력이 전투 정보를 다시 열지 않게 한다. */
 const battleInputActive = (): boolean => !busy && !enemyTurn && $('overlay').hidden && !document.body.classList.contains('between') && !document.body.classList.contains('cover-pl') && !$('board').closest('[inert]') && !document.querySelector('.bossfx,.clr');
 
-// 판(Phaser)은 따로 묶어 타이틀이 뜬 뒤에 불러온다 (코드 리뷰 6 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
+// 판(Phaser)은 따로 묶어 main 묶음을 읽은 뒤 부팅 화면 뒤에서 불러온다 (코드 리뷰 6 → D-593 — lazyBoard: 그 전에 부른 것은 쌓아 두었다가 차례대로)
 const board = lazyBoard(
   $('board'),
   {
@@ -944,6 +945,7 @@ const refresh = (): void => {
   $('hand').innerHTML = (handView ?? b.hand).map(cardHtml).join('') || (handView ? '' : '<p class="empty">‘손패가 없어.’</p>');
   litPrev = litNow;
   fitHand();
+  revealPick();
   magAnim(oldBody, handLen0 === b.hand.length);
   const statuses = !busy && !enemyTurn && !document.body.classList.contains('between') ? partStatuses(b) : {};
   $('parts').innerHTML = parts.map((id) => partHtml(id, false, statuses[id])).join('');
@@ -2039,6 +2041,7 @@ const CRASH_KEY = 'pawnisher.crashAt';
 const RESUME_KEY = 'pawnisher.resumeRun';
 const CRASH_LOOP_MS = 30000;
 /** 무해한 브라우저 알림 (창 크기 감시 · 소리 자동 재생 거부 · 취소된 불러오기) — 기록만 하고 창은 열지 않는다 */
+const RO_LOOP = /ResizeObserver loop/;
 const BENIGN_ERR = /ResizeObserver loop|NotAllowedError|AbortError|play\(\) request was interrupted/;
 const ss = { get: (k: string): string | null => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k: string, v: string): void => { try { sessionStorage.setItem(k, v); } catch { /* 무시 */ } }, del: (k: string): void => { try { sessionStorage.removeItem(k); } catch { /* 무시 */ } } };
 /** 오류 하나를 기록에 남긴다 (실패해도 던지지 않는다) */
@@ -2061,7 +2064,8 @@ const onCrash = (err: unknown, kind: string): void => {
   try {
     const e = err as { message?: string; name?: string } | undefined;
     const text = `${e?.name ?? ''} ${e?.message ?? err ?? ''}`;
-    logError(err, kind);
+    // 창 크기 감시 고리 알림은 오류가 아니다(브라우저가 다음 프레임에 넘긴 알림) — 원격 기록의 오류로 세지 않는다 (D-596)
+    if (!RO_LOOP.test(text)) logError(err, kind);
     if (BENIGN_ERR.test(text) || crashed) return;
     crashed = true;
     crashWin();
@@ -3768,6 +3772,13 @@ const discardView = (): void => {
  * ① 넘치면 펼치지 않은 카드의 효과 줄을 접어 이름 한 줄 판으로(효과는 누르면 펼침 · 길게 누르면 크게 보기 그대로)
  * ② 그래도 넘치면 손패 칸 아래에 「▼ N장 더」 띠 — 누르면 다음 카드가 보이게 한 장씩 내린다(계단 이동 없이 바로).
  */
+/** 「N장 더」 띠가 덮은 레일 아래 높이 = 띠 위 끝부터 보이는 칸 아래 끝까지 (띠 48 + 레일 아래 여백 — sticky는 여백 안쪽에 붙는다, D-596) */
+const handCover = (h: HTMLElement): number => {
+  const more = h.querySelector<HTMLElement>(':scope > .hand-more');
+  return more ? Math.max(0, h.getBoundingClientRect().top + h.clientTop + h.clientHeight - more.getBoundingClientRect().top) : 0;
+};
+/** 손패 카드의 레일 안 위치 (스크롤 원점 기준) */
+const handTop = (h: HTMLElement, c: HTMLElement): number => c.getBoundingClientRect().top - h.getBoundingClientRect().top - h.clientTop + h.scrollTop;
 const fitHand = (): void => {
   const h = $('hand');
   h.classList.remove('tight');
@@ -3781,8 +3792,11 @@ const fitHand = (): void => {
   more.className = 'hand-more';
   h.appendChild(more);
   const cards = (): HTMLElement[] => [...h.querySelectorAll<HTMLElement>(':scope > .hc')];
-  const below = (): HTMLElement[] => cards().filter((c) => c.offsetTop + c.offsetHeight > h.scrollTop + h.clientHeight - more.offsetHeight + 1);
-  const above = (): HTMLElement[] => cards().filter((c) => c.offsetTop < h.scrollTop - 1);
+  // 카드 자리는 레일 기준으로 잰다 — offsetTop은 #app 기준이라 레일 위 여백(약 84px)만큼 「더」 장수를 부풀렸다 (D-596)
+  // 장수 = 보이는 띠(28) 뒤로 넘어간 카드 · 내리기 = 그 카드를 누름 칸(48) 위로 통째로 꺼낸다
+  const band = (): number => handCover(h) - (parseFloat(getComputedStyle(more).paddingTop) || 0);
+  const below = (): HTMLElement[] => cards().filter((c) => handTop(h, c) + c.offsetHeight > h.scrollTop + h.clientHeight - band() + 1);
+  const above = (): HTMLElement[] => cards().filter((c) => handTop(h, c) < h.scrollTop - 1);
   const paint = (): void => {
     const n = below().length;
     more.dataset.dir = n ? 'down' : 'up';
@@ -3793,7 +3807,7 @@ const fitHand = (): void => {
     e.stopPropagation();
     sfx('tap', 3);
     const next = below()[0];
-    h.scrollTop = next ? next.offsetTop + next.offsetHeight - h.clientHeight + more.offsetHeight : 0;
+    h.scrollTop = next ? handTop(h, next) + next.offsetHeight - h.clientHeight + handCover(h) : 0;
     paint();
   };
   more.addEventListener('click', step);
@@ -3801,6 +3815,28 @@ const fitHand = (): void => {
   more.addEventListener('touchend', (e) => (e.preventDefault(), step(e)));
   h.onscroll = paint; // 다시 그릴 때마다 붙이지 않게 하나로
   paint();
+};
+
+/**
+ * 고른 카드 보이기 (D-596 — 실기기: 기물을 먼저 눌러 자동 고르기가 「▼ N장 더」 아래 카드를 쥐면 무엇을 쥐었는지 안 보였다):
+ * 고른 카드가 바뀌었는데 레일 밖이면 손패 순서는 그대로 두고 레일만 내려 통째로 보인다 + 한 번 출렁(계단 · 투명도 없음).
+ * 다 보이는 카드(PC · 위쪽 카드)는 아무것도 하지 않는다. 연출 줄이기면 출렁 없이 바로.
+ */
+let revealedPick: number | null = null;
+const revealPick = (): void => {
+  const now = selCard ?? openCard;
+  if (now === revealedPick) return;
+  revealedPick = now;
+  if (now === null) return;
+  const h = $('hand');
+  const el = h.querySelector<HTMLElement>(`:scope > [data-card="${now}"]`);
+  if (!el) return;
+  const to = revealScroll({ top: handTop(h, el), height: el.getBoundingClientRect().height }, h.scrollTop, h.clientHeight, handCover(h), h.scrollHeight - h.clientHeight);
+  if (to === h.scrollTop) return;
+  h.scrollTop = to;
+  if (calmNow()) return;
+  // 예비(왼쪽으로 살짝) → 터짐(오른쪽) → 출렁 — 레일이 내려온 자리를 눈이 따라가게
+  el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-2px)', offset: 0.2 }, { transform: 'translateX(6px)', offset: 0.5 }, { transform: 'translateX(-2px)', offset: 0.8 }, { transform: 'translateX(0)' }], { duration: 300, easing: 'steps(6, end)' });
 };
 
 // ---------- 애착 (D-153) ----------
@@ -5492,7 +5528,7 @@ const opening = (): void => {
     }, tutDone('battle'));
   };
   /**
-   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 출하 · [기록 | 설정] · (PC) 끝내기.
+   * 메인 메뉴 (D-539 — 검수 §2 「단추 다섯, 강조 하나」): [이어하기] · 게임 시작(D-593, 옛 「출하」) · [기록 | 설정] · (PC) 끝내기.
    * 황동은 늘 하나 — 저장이 있으면 이어하기, 없으면 출하. 모드 · 왕관 · 난이도 · 오늘의 도전은 「출하」 → 출하 준비 창으로.
    * 왕관 부제(이야기 이름)는 보이지 않는다 (스포일러). 시험장 · 빌드 시험은 ?debug에서만 (D-286).
    */
@@ -5508,9 +5544,9 @@ const opening = (): void => {
       // 이어하기 부제: 왕관 표지 + 별칭(D-536 — 끝낸 왕관만 부제) · 막
       const svCrown = sv ? runLabel(sv.mode ?? (sv.daily ? 'daily' : 'challenge'), sv.asc, sv.chapter ?? 0, (sv.chapter ?? 0) < (meta.storyCleared ?? 0)) : '';
       nav.innerHTML = `${sv ? `<button class="btn k-brass op-main op-cont" type="button" data-cont><b>${MAIN_TEXT.cont}</b><small>${MAIN_TEXT.contSub(svCrown, actLabel(sv.actI + 1))}</small></button>` : ''}
-        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship>${menuIco('menu.run')}<b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
-        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}${MAIN_TEXT.records}</button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}${MAIN_TEXT.settings}</button></div>
-        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}${MAIN_TEXT.quit}</button>` : ''}
+        <button class="btn ${sv ? 'k-iron' : 'k-brass'} op-main op-ship" type="button" data-ship><i class="op-ico op-crown" aria-hidden="true"></i><b>${MAIN_TEXT.ship}</b>${dailyNew ? `<i class="op-dot" role="img" aria-label="${MAIN_TEXT.dailyNew}"></i>` : ''}</button>
+        <div class="op-half"><button class="btn k-iron" type="button" data-records>${menuIco('menu.ledger')}<span class="op-lbl">${MAIN_TEXT.records}</span></button><button class="btn k-iron" type="button" data-settings>${menuIco('menu.settings')}<span class="op-lbl">${MAIN_TEXT.settings}</span></button></div>
+        ${isDesktop() ? `<button class="btn k-iron op-quit" type="button" data-quit>${menuIco('menu.quit')}<span class="op-lbl">${MAIN_TEXT.quit}</span></button>` : ''}
         ${dev ? `<div class="op-half op-dev"><button class="btn k-iron" type="button" data-lab-open>시험장</button><button class="btn k-iron" type="button" data-build-open>빌드 시험</button></div>` : ''}`;
       nav.querySelector('[data-cont]')?.addEventListener('click', () => continueRun(sv!)); // 이어하기 (D-488 보상 · D-529 대국 중 판): continueRun 하나로
       nav.querySelector('[data-ship]')!.addEventListener('click', () => (sfx('tap'), runSetup(!!sv)));
@@ -5547,10 +5583,11 @@ const closeOpening = (): void => {
 startBattle(INTRO[0], true);
 const qs = new URLSearchParams(location.search);
 // 워밍업 로딩 (D-239): 그림 · 글꼴을 미리 받는 동안 부팅 화면의 황동 막대가 찬다 → 다 되면 걷고 타이틀
+// 판(Phaser 읽기 · 부팅 · 판 그림)도 부팅 화면 뒤에서 세운다 (D-593 — 예전엔 타이틀이 뜬 직후 불러 베기 연출 · 메뉴 펼침과 겹쳐 ×4 감속에서 3초 넘게 끊겼다).
+// 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
 const bootBar = document.querySelector<HTMLElement>('#boot .boot-bar b');
-void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12)))).then(() => {
-  // 타이틀이 뜨면 판(Phaser)을 불러 판 그림을 받기 시작한다 — 그 전에 세운 첫 판은 쌓아 둔 차례대로 그린다
-  void board.start();
+const boardUp = board.start();
+void warmup((k) => bootBar && bootBar.style.setProperty('--k', String(Math.floor(k * 12))), 3000, [boardUp, boardUp.then((r) => r.settled())]).then(() => {
   const boot = document.getElementById('boot');
   if (boot) pxOut(boot, () => boot.remove(), 240);
   if (devQuery('builds')) buildPick();

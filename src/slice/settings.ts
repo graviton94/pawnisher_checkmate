@@ -1,5 +1,5 @@
 import './settings.css';
-import { closeWin, openWin, winHtml, btnHtml, toast, type WinOpts } from './uikit';
+import { closeWin, openWin, winHtml, btnHtml, morphHtml, toast, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
 import { SETTINGS_TEXT as T, VOL_STEPS, KEY_GUIDE, type Settings, type ShakePref } from '../data/settings';
 import { LICENSES } from '../data/licenses';
@@ -131,9 +131,10 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     if (tick) sfx('tap', 3);
     draw();
   };
+  // 다시 그리기 (D-593 — 사용자: 「설정을 누를 때마다 위 「설정」 명패가 깜빡인다」): 예전엔 창 속 전체를 innerHTML로 갈아
+  // 명패 · 탭 · 단추가 매번 새로 붙었다. 이제 바뀐 칸만 고치고(morphHtml) 명패는 그대로 둔다. 노드가 남아 초점도 남는다.
   const draw = (): void => {
-    const focus = (document.activeElement as HTMLElement | null)?.matches?.('[data-up],[data-down],[data-mute],[data-seg],[data-set-tab],[data-set-prev],[data-set-next]') ? selectorOf(document.activeElement as HTMLElement) : null;
-    panel.innerHTML = winHtml(opts());
+    morphHtml(panel, winHtml(opts()));
     // 쪽이 칸을 넘으면 한 쪽 줄 수를 줄여 다시 (스크롤 · 잘림 없이)
     const body = panel.querySelector<HTMLElement>('.set-body');
     const perPage = perTab[tab] ?? 4;
@@ -141,48 +142,51 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
       perTab[tab] = perPage - 1;
       return draw();
     }
-    bind();
-    if (focus) panel.querySelector<HTMLElement>(focus)?.focus({ preventScroll: true });
   };
   const reopen = (t: Tab): (() => void) => () => openSettings(o, t);
-  const bind = (): void => {
-    panel.querySelector('[data-set-x]')!.addEventListener('click', () => (sfx('close'), close()));
-    panel.querySelectorAll<HTMLElement>('[data-set-tab]').forEach((t) => t.addEventListener('click', () => {
-      if (t.dataset.setTab === tab) return;
-      tab = t.dataset.setTab as Tab;
+  /** 누름은 창에 한 번만 위임해 받는다 (노드가 다시 그려도 남으므로) */
+  panel.addEventListener('click', (e) => {
+    const at = (sel: string): HTMLElement | null => (e.target instanceof Element ? e.target.closest<HTMLElement>(sel) : null);
+    const hit = at('button');
+    if (!hit || !panel.contains(hit) || (hit as HTMLButtonElement).disabled) return;
+    if (hit.matches('[data-set-x]')) return void (sfx('close'), close());
+    if (hit.matches('[data-set-tab]')) {
+      if (hit.dataset.setTab === tab) return;
+      tab = hit.dataset.setTab as Tab;
       page = 0;
       sfx('tap');
-      draw();
-    }));
-    panel.querySelector('[data-set-prev]')?.addEventListener('click', () => { page = Math.max(0, page - 1); sfx('tap'); draw(); });
-    panel.querySelector('[data-set-next]')?.addEventListener('click', () => { page += 1; sfx('tap'); draw(); });
-    panel.querySelectorAll<HTMLElement>('[data-vol]').forEach((r) => {
-      const k = r.dataset.vol as VolKey;
+      return draw();
+    }
+    if (hit.matches('[data-set-prev]')) return void ((page = Math.max(0, page - 1)), sfx('tap'), draw());
+    if (hit.matches('[data-set-next]')) return void ((page += 1), sfx('tap'), draw());
+    const vol = hit.closest<HTMLElement>('[data-vol]');
+    if (vol) {
+      const k = vol.dataset.vol as VolKey;
       const mk = MUTE[k];
-      r.querySelector('[data-mute]')!.addEventListener('click', () => save({ ...s, [mk]: !s[mk] }));
+      if (hit.matches('[data-mute]')) return save({ ...s, [mk]: !s[mk] });
       // 크기를 바꾸면 꺼 둔 소리도 다시 켠다 (들어 보며 맞추게)
-      r.querySelector('[data-down]')!.addEventListener('click', () => save({ ...s, [k]: Math.max(0, s[k] - 1), [mk]: false }));
-      r.querySelector('[data-up]')!.addEventListener('click', () => save({ ...s, [k]: Math.min(VOL_STEPS, s[k] + 1), [mk]: false }));
-    });
-    panel.querySelectorAll<HTMLElement>('[data-seg]').forEach((b) => b.addEventListener('click', () => {
-      const k = b.dataset.seg as keyof Settings, v = b.dataset.v!;
+      if (hit.matches('[data-down]')) return save({ ...s, [k]: Math.max(0, s[k] - 1), [mk]: false });
+      if (hit.matches('[data-up]')) return save({ ...s, [k]: Math.min(VOL_STEPS, s[k] + 1), [mk]: false });
+    }
+    if (hit.matches('[data-seg]')) {
+      const k = hit.dataset.seg as keyof Settings, v = hit.dataset.v!;
       const val = k === 'motion' || k === 'shake' ? v : v === '1';
-      save({ ...s, [k]: val } as Settings);
-    }));
-    panel.querySelector('[data-reset]')?.addEventListener('click', () => (sfx('tap'), resetStep(1)));
-    panel.querySelector('[data-full]')?.addEventListener('click', () => (sfx('tap'), o.desktop?.toggleFullscreen()));
-    panel.querySelector('[data-keymap]')?.addEventListener('click', () => (sfx('tap'), keyMapPage(s, reopen('input'))));
-    panel.querySelector('[data-keybind]')?.addEventListener('click', () => (sfx('tap'), keyBindPage(o, reopen('input'))));
-    panel.querySelector('[data-guide]')?.addEventListener('click', () => (sfx('tap'), o.onGuide?.(reopen('game'))));
-    panel.querySelector('[data-glossary]')?.addEventListener('click', () => (sfx('tap'), o.onGlossary?.(reopen('game'))));
-    panel.querySelector('[data-credits]')?.addEventListener('click', () => (sfx('tap'), creditsPage(reopen('info'))));
-    panel.querySelector('[data-privacy]')?.addEventListener('click', () => (sfx('tap'), textReader({ title: T.privacy, head: `<span class="note">${esc(PRIVACY_URL ?? DEV_PAGE)}</span>`, paras: [...PRIVACY_KO] }, reopen('info'))));
-    panel.querySelector('[data-copy-url]')?.addEventListener('click', () => {
+      return save({ ...s, [k]: val } as Settings);
+    }
+    if (hit.matches('[data-reset]')) return void (sfx('tap'), resetStep(1));
+    if (hit.matches('[data-full]')) return void (sfx('tap'), o.desktop?.toggleFullscreen());
+    if (hit.matches('[data-keymap]')) return void (sfx('tap'), keyMapPage(s, reopen('input')));
+    if (hit.matches('[data-keybind]')) return void (sfx('tap'), keyBindPage(o, reopen('input')));
+    if (hit.matches('[data-guide]')) return void (sfx('tap'), o.onGuide?.(reopen('game')));
+    if (hit.matches('[data-glossary]')) return void (sfx('tap'), o.onGlossary?.(reopen('game')));
+    if (hit.matches('[data-credits]')) return void (sfx('tap'), creditsPage(reopen('info')));
+    if (hit.matches('[data-privacy]')) return void (sfx('tap'), textReader({ title: T.privacy, head: `<span class="note">${esc(PRIVACY_URL ?? DEV_PAGE)}</span>`, paras: [...PRIVACY_KO] }, reopen('info')));
+    if (hit.matches('[data-copy-url]')) {
       sfx('tap');
       if (!navigator.clipboard) return toast(T.copyFail);
       void navigator.clipboard.writeText(DEV_PAGE).then(() => toast(T.copied), () => toast(T.copyFail));
-    });
-  };
+    }
+  });
   /** 두 단계 확인 — 둘 다 뒤 막으로 닫히지 않는다 (되돌릴 수 없는 결정 대기) */
   const resetStep = (n: 1 | 2): void => {
     const t = n === 1 ? T.reset1 : T.reset2;
@@ -202,15 +206,6 @@ export const openSettings = (o: SettingsOpts, startTab: Tab = 'sound'): void => 
     });
   };
   draw();
-};
-
-/** 누른 단추를 다시 그린 뒤에도 같은 자리에 초점을 둔다 (키보드 · 게임패드) */
-const selectorOf = (el: HTMLElement): string => {
-  const row = el.closest<HTMLElement>('[data-vol]');
-  const own = ['data-up', 'data-down', 'data-mute', 'data-seg', 'data-set-tab', 'data-set-prev', 'data-set-next'].find((a) => el.hasAttribute(a))!;
-  const val = el.getAttribute(own);
-  const extra = own === 'data-seg' ? `[data-v="${el.dataset.v}"]` : '';
-  return `${row ? `[data-vol="${row.dataset.vol}"] ` : ''}[${own}${val ? `="${val}"` : ''}]${extra}`;
 };
 
 /** 키 · 패드 배치표 한 쪽 (L 창 · 표 셋 칸) — 바꿀 수 있는 행동은 지금 배치로. 칸이 낮으면 쪽으로 나눈다 (D-558: 아래 줄이 칸 밖에서 잘렸다) */
