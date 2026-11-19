@@ -3,7 +3,7 @@
 // rAF마다 ① 프레임 간격(평균 fps · 가장 긴 프레임 · 34ms/50ms 넘는 프레임 수) ② 지켜볼 요소(그리고 ::before · ::after)의 모습이
 // 바뀐 프레임 비율(= 프레임마다 움직이나, 계단이나)을 적고, CDP 화면 중계로 그려진 프레임을 받아 띠 그림을 남긴다.
 // 미리 `npm run build` · `npx vite preview --port 4355`. 사용:
-//   node tools/qa/motionpace.cjs <reveal|sweep|screen|boss|board|hit|all> [--url http://localhost:4355/] [--tag after] [--out <폴더>] [--cpu 4] [--light] [--q boardscale=2]
+//   node tools/qa/motionpace.cjs <reveal|sweep|screen|boss|board|hit|all> [--url http://localhost:4355/] [--tag after] [--out <폴더>] [--cpu 4] [--light] [--q boardscale=2] [--boss plate|inspect|magnet|alarm…]
 // 결과: <폴더>/motion-<tag>.json · <폴더>/strip-<장면>-<tag>/NNN.jpg
 const { chromium } = require(process.env.PW_PATH || 'playwright');
 const fs = require('fs');
@@ -18,6 +18,8 @@ const CPU = Number(opt('--cpu', 4));
 const W = Number(opt('--w', 915)), H = Number(opt('--h', 412)), DPR = Number(opt('--dpr', 2.625));
 const LIGHT = args.includes('--light');
 const Q = opt('--q', '');
+/** boss 장면의 반장 (D-647: 새 등장 효과 셋 — inspect · magnet · alarm) */
+const BOSS = opt('--boss', 'plate');
 const which = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')) || 'all';
 
 /** 페이지에 심는 측정기: rAF마다 모습 서명 + 프레임 시각 */
@@ -169,7 +171,7 @@ const summarize = (frames, sels) => {
     /** 반장 등장 (흰 장 · 띠 · 초상 · 이름) */
     boss: async () => {
       await boot();
-      await pg.evaluate(() => { void window.sliceApi.bossIntroOf('plate'); });
+      await pg.evaluate((r) => { void window.sliceApi.bossIntroOf(r); }, BOSS);
       await pg.waitForSelector('.bossfx', { timeout: 8000 });
       await throttle();
       return measure(['.bossfx .bf-port', '.bossfx .bf-bar', '.bossfx .bf-name', '.bossfx .bf-fx canvas', '.fx-flash'], 2600);

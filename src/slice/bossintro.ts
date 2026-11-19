@@ -6,7 +6,8 @@
  *  ⑥ 이름이 내리꽂히고 칭호 · 규칙(UI-21 수배판, D-400) · 아래 자막 띠 두 줄이 한 자씩 ⑦ 누르거나 5초 뒤 띠가 닫혔다 걷힌다.
  * 글 크기 (D-397): 막 꼬리표 12 · 이름 36 갈무리11 굵게 · 칭호 24 · 규칙 12 굵게 · 자막 15. 자막 띠 · ▼는 모든 컷과 같은 자리(uikit.cutChromeHtml).
  */
-import { bayer, FxCanvas, hex, Lights, P, PAL, Particles, Rng, WHITE } from '../view/pxfx';
+import { bayer, FxCanvas, hex, Lights, OUTLINE, P, PAL, Particles, Rng, WHITE, type Col, type Painter } from '../view/pxfx';
+import { BOSS_ENTRANCE, BOSS_LOOK } from '../data/boss-look';
 import { typeIn } from './fx3';
 import { impactFlash } from '../view/flash';
 import { calmMotion, reduceFlash } from '../prefs/motion';
@@ -30,15 +31,17 @@ export interface BossIntroOpts {
   sfx?: (k: string) => void;
 }
 
-const LOOK: Record<BossKey, { accent: string; seam: number }> = {
-  plate: { accent: '#ff8a2a', seam: 0 },
-  spawn: { accent: '#7fd45a', seam: 0 },
-  thorns: { accent: '#e8e4ec', seam: 0 },
-  gilded: { accent: '#f4c84a', seam: 0 },
-  inspect: { accent: '#9ee8f0', seam: 0 },
-  magnet: { accent: '#d08af0', seam: 0 },
-  alarm: { accent: '#ff6b6b', seam: 0 },
+const LOOK = BOSS_LOOK;
+/** 출렁 없는 지수형 곡선 (D-216): 터짐 = 빠르게→느리게, 모으기 = 느리게→빠르게 */
+const easeOut = (x: number): number => 1 - (1 - Math.min(1, Math.max(0, x))) ** 3;
+const easeIn = (x: number): number => Math.min(1, Math.max(0, x)) ** 3;
+/** 1도트 고리 (렌즈 테) — 둘레를 정수 도트로 */
+const ring = (p: Painter, cx: number, cy: number, r: number, c: Col, a = 1): void => {
+  const n = Math.max(12, Math.round(r * 7));
+  for (let i = 0; i < n; i++) p.put(Math.round(cx + Math.cos((i / n) * Math.PI * 2) * r), Math.round(cy + Math.sin((i / n) * Math.PI * 2) * r), c, a);
 };
+/** 쇳가루 한 알 (D-647 pull): 출발 자리 · 가운데로 가는 방향 · 출발/도착 거리 · 출발 시각 */
+interface Filing { ux: number; uy: number; d0: number; df: number; t0: number; c: Col }
 
 /**
  * 초상 가장자리를 베이어 디더로 깎는다 (그림 도트 단위): 왼쪽 band칸(배경과 만나는 경계) + 위 · 아래 vband칸(검은 막과 만나는 곳).
@@ -86,7 +89,9 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     const fx = new FxCanvas(Math.ceil(W / DOT), Math.ceil(H / DOT), DOT);
     el.querySelector('.bf-fx')!.appendChild(fx.canvas);
     const R = new Rng(o.rule.length * 31 + 7);
-    const ps = new Particles(R, () => Infinity, o.rule === 'spawn' ? [hex('#efffdc'), hex('#7fd45a'), hex('#3e8c3a')] : o.rule === 'inspect' ? [hex('#e8fbfc'), hex('#5fd4d8'), hex('#2e8a90')] : o.rule === 'magnet' ? [hex('#f2d4ff'), hex('#d08af0'), hex('#7e34a0')] : o.rule === 'thorns' ? [hex('#ffffff'), hex('#e8e4ec'), hex('#8a8794')] : o.rule === 'alarm' ? [hex('#ffc4c4'), hex('#ff6b6b'), hex('#c42430')] : undefined);
+    const ent = look.entrance;
+    const ramp = look.ramp?.map(hex);
+    const ps = new Particles(R, () => Infinity, ramp);
     const lights = new Lights();
     const barH = Math.round(H * 0.16);
     const port = el.querySelector<HTMLElement>('.bf-port')!;
@@ -180,6 +185,96 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
     // 경계선 FX (반장마다)
     let spawnAcc = 0;
     const seamY0 = (): number => seamTop / DOT, seamY1 = (): number => seamBot / DOT;
+    const SC = BOSS_ENTRANCE.scan, PU = BOSS_ENTRANCE.pull, SI = BOSS_ENTRANCE.siren;
+    /** 검수 렌즈 자리 (D-647 scan): 훑기마다 위→아래 · 아래→위 번갈아, 70%는 움직이고(빠르게→느리게) 나머지는 멈춰 도장 */
+    const lensAt = (t: number): { x: number; y: number; r: number; ph: number } | null => {
+      if (ent !== 'scan' || t < SC.start || !portW) return null;
+      const u = (t - SC.start) / SC.period, n = Math.floor(u), ph = u - n, e = easeOut(ph / 0.7);
+      const y0 = seamY0() + SC.lens, y1 = seamY1() - SC.lens;
+      return { x: Math.round(seamX / DOT), y: Math.round(n % 2 === 0 ? y0 + (y1 - y0) * e : y1 - (y1 - y0) * e), r: SC.lens, ph };
+    };
+    /** 쇳가루 (D-647 pull): 물결마다 per알 — 시드 난수라 매번 같은 모양 */
+    const filings: Filing[] = [];
+    if (ent === 'pull') {
+      const FR = new Rng(97);
+      const cols = ramp ?? [WHITE, WHITE, WHITE];
+      for (const w of PU.waves) for (let i = 0; i < PU.per; i++) {
+        const a = FR.range(0, Math.PI * 2);
+        filings.push({ ux: Math.cos(a), uy: Math.sin(a), d0: FR.range(PU.from[0], PU.from[1]), df: FR.range(PU.ring[0], PU.ring[1]), t0: w + FR.range(0, 0.22), c: FR.chance(0.3) ? cols[0] : cols[1] });
+      }
+    }
+    /** 검수: 렌즈 고리 + 오른쪽으로 뻗는 주사선(멀수록 디더로 성기게) + 지나온 잔상 두 줄 + 멈출 때 불량 도장 ✕ */
+    const drawScan = (p: Painter, t: number): void => {
+      const l = lensAt(t);
+      if (!l || !ramp) return;
+      const down = Math.floor((t - SC.start) / SC.period) % 2 === 0, back = down ? -1 : 1, moving = l.ph < 0.7;
+      for (let x = l.x + l.r + 1; x < l.x + l.r + SC.beam; x++) {
+        const far = (x - l.x - l.r) / SC.beam;
+        p.put(x, l.y, ramp[0], 0.85 - far * 0.75);
+        if (moving) { p.put(x, l.y + back, ramp[1], 0.5 - far * 0.45); p.put(x, l.y + back * 2, ramp[2], 0.3 - far * 0.28); }
+      }
+      p.glow(l.x, l.y, l.r + 4, ramp[1], 0.35);
+      ring(p, l.x, l.y, l.r + 1, OUTLINE);
+      ring(p, l.x, l.y, l.r, ramp[1]);
+      ring(p, l.x, l.y, l.r - 1, ramp[2]);
+      p.px(l.x - 2, l.y - 2, WHITE); p.px(l.x - 1, l.y - 2, ramp[0]); p.px(l.x - 2, l.y - 1, ramp[0]);
+      for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { p.px(l.x + dx * (l.r - 3), l.y + dy * (l.r - 3), ramp[2]); p.px(l.x + dx * (l.r - 4), l.y + dy * (l.r - 4), ramp[2]); }
+      // 불량 도장: 멈추는 순간 찍히고(크게 한 장 → 제 크기) 머문 뒤 디더로 빠진다
+      const st = l.ph - 0.7;
+      if (st >= 0 && st < SC.stampHold + SC.stampOut) {
+        const a = st < SC.stampHold ? 1 : 1 - (st - SC.stampHold) / SC.stampOut, big = st < 0.04 ? 1 : 0, n = 2 + big;
+        const cx = l.x + l.r + 5, cy = l.y - l.r + 1;
+        for (let i = -n; i <= n; i++) for (const [x, y] of [[cx + i, cy + i], [cx + i, cy - i]]) { p.put(x + 1, y, OUTLINE, a); p.put(x, y + 1, OUTLINE, a); }
+        for (let i = -n; i <= n; i++) { p.put(cx + i, cy + i, PAL.blood[5], a); p.put(cx + i, cy - i, PAL.blood[5], a); }
+      }
+    };
+    /** 자석: 쇳가루가 물러섰다(예비) 가운데로 빨려 들고(점점 빠르게) 붙어 1도트 튄다. 붙은 뭉치 위아래에 붉은 N · 푸른 S 극 빛 */
+    const drawPull = (p: Painter, t: number, sx: number): void => {
+      if (!ramp || !portW) return;
+      // 뭉치 자리: 경계선 녹은 띠 왼쪽(어두운 바탕) — 띠 디더 위에서는 쇳가루가 묻힌다
+      const cx = Math.round(sx) - PU.left, cy = Math.round((seamY0() + seamY1()) / 2);
+      let landed = 0;
+      for (const f of filings) {
+        const s = t - f.t0;
+        if (s < 0) continue;
+        let d: number, len = 1;
+        if (s < PU.wind) d = f.d0 + PU.back * easeOut(s / PU.wind);
+        else if (s < PU.wind + PU.snap) { const e = easeIn((s - PU.wind) / PU.snap); d = f.d0 + PU.back - (f.d0 + PU.back - f.df) * e; len = e > 0.3 ? 3 : 2; }
+        else { const b = s - PU.wind - PU.snap; d = b < 0.05 ? f.df - 1 : f.df; landed++; }
+        const x = Math.round(cx + f.ux * d), y = Math.round(cy + f.uy * d);
+        const x2 = Math.round(x + f.ux * len), y2 = Math.round(y + f.uy * len);
+        p.line(x + 1, y + 1, x2 + 1, y2 + 1, OUTLINE);
+        p.line(x, y, x2, y2, f.c);
+      }
+      if (landed) {
+        const k = Math.min(1, landed / PU.per);
+        p.glow(cx, cy - PU.ring[1] - 2, 6, PAL.blood[5], 0.4 * k);
+        p.glow(cx, cy + PU.ring[1] + 2, 6, hex('#38bdf8'), 0.4 * k);
+        p.px(cx, cy - PU.ring[1] - 2, PAL.blood[6]); p.px(cx, cy + PU.ring[1] + 2, hex('#bfefff'));
+      }
+    };
+    /** 경보: 경계선 위 경광등이 돌며 마주 보는 빛살 두 줄기를 쓴다 — 반 바퀴마다 붉은 ↔ 호박 (광과민: 화면 전체 번쩍임 없음, 빛살은 디더 반투명) */
+    const drawSiren = (p: Painter, t: number, sx: number): void => {
+      if (!ramp || !portW || t < SI.start) return;
+      const lx = Math.round(sx), ly = Math.round(seamY0() + SI.lampY);
+      const turn = (t - SI.start) * SI.rps, th = turn * Math.PI * 2, amber = Math.floor(turn * 2) % 2 === 1;
+      const c = amber ? ramp[1] : PAL.blood[5], hot = amber ? ramp[0] : PAL.blood[6];
+      for (const base of [th, th + Math.PI]) {
+        // 빛살이 화면 앞(아래)을 향할 때만 밝게 — 뒤로 돌면 등 안에 가려진다
+        const face = Math.max(0, Math.sin(base)) * 0.6 + 0.4;
+        for (let a = -SI.half; a <= SI.half; a += 0.02) {
+          const ux = Math.cos(base + a), uy = Math.sin(base + a) * 0.55, edge = 1 - Math.abs(a) / SI.half;
+          for (let r = 3; r < SI.len; r += 1) p.put(lx + ux * r, ly + uy * r, c, (0.55 - (r / SI.len) * 0.5) * edge * face);
+        }
+      }
+      // 등: 먹 테 · 갓(색) · 흰 심 · 아래 쇠 받침
+      p.rect(lx - 3, ly - 3, 7, 6, OUTLINE);
+      p.rect(lx - 2, ly - 2, 5, 4, c);
+      p.px(lx - 1, ly - 1, hot); p.px(lx, ly - 1, WHITE);
+      p.rect(lx - 4, ly + 3, 9, 2, OUTLINE);
+      p.rect(lx - 3, ly + 3, 7, 1, PAL.steel[4]);
+      p.glow(lx, ly, 9, c, 0.5);
+    };
     void fx.run(
       6000,
       (dt, t) => {
@@ -192,10 +287,15 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
           lights.add(sx, (seamY0() + seamY1()) / 2, 60, accent, 0.9, 0.6);
           for (let i = 0; i < 26; i++) { const y = R.range(seamY0(), seamY1()); ps.spawn(o.rule === 'thorns' ? P.SHARD : P.SPARK, sx + R.range(-2, 2), y, R.range(-120, -20), R.range(-60, 40), R.range(0.4, 0.9), o.rule === 'thorns' ? hex('#c42430') : accent, R.range(1, 2)); }
         }
-        spawnAcc += dt * (o.rule === 'plate' ? 70 : o.rule === 'spawn' ? 40 : 30);
+        spawnAcc += dt * (ent === 'fire' ? 70 : ent === 'spark' ? 40 : ent === 'scan' || ent === 'siren' ? 14 : ent === 'pull' ? 10 : 30);
         for (; spawnAcc > 1; spawnAcc--) {
           const y = R.range(seamY0(), seamY1()), x = sx + R.range(-6, 4);
-          if (o.rule === 'plate') {
+          if (ent === 'scan' || ent === 'pull' || ent === 'siren') {
+            // 새 반장 셋 (D-647): 경계선 입자는 조금만 — 주인공은 아래 그리기의 렌즈 · 쇳가루 · 경광등
+            if (ent === 'scan') { const l = lensAt(t); if (l) ps.spawn(P.MOTE, l.x + R.range(-l.r, l.r), l.y + R.range(-2, 2), R.range(-18, -4), R.range(-6, 6), R.range(0.4, 0.8), ramp![0], 0.6); }
+            else if (ent === 'pull') ps.spawn(P.MOTE, x + R.range(-12, 4), y, R.range(-4, 4), R.range(-6, 6), R.range(0.5, 1), ramp![1], 0.6);
+            else if (t >= SI.start) ps.spawn(P.SPARK, sx + R.range(-2, 2), seamY0() + SI.lampY + 2, R.range(-30, 30), R.range(-10, 20), R.range(0.25, 0.5), R.chance(0.5) ? ramp![1] : ramp![2], 1);
+          } else if (o.rule === 'plate') {
             // 경계선이 타오른다: 불 덩어리가 오르며 식고 연기가 되며 불씨가 흩날린다
             if (R.chance(0.55)) ps.spawn(P.FIRE, x, y, R.range(-8, 6), R.range(-30, -10), R.range(0.3, 0.6), 0, R.range(1.2, 2.6), 0, R.chance(0.25));
             else ps.spawn(P.EMBER, x, y, R.range(-30, 10), R.range(-50, -10), R.range(0.8, 1.6), WHITE, R.range(1, 2));
@@ -237,6 +337,9 @@ export const bossIntro = (o: BossIntroOpts): Promise<void> =>
             p.fade = 1;
             while (y < seamY1()) { const ny = y + r2.range(3, 7), nx = sx + r2.range(-4, 4); p.line(x, y, nx, ny, r2.chance(0.3) ? WHITE : PAL.toxic[6]); p.glow(nx, ny, 4, PAL.toxic[5], 0.25); x = nx; y = ny; }
           }
+          if (ent === 'scan') drawScan(p, t);
+          else if (ent === 'pull') drawPull(p, t, sx);
+          else if (ent === 'siren') drawSiren(p, t, sx);
         }
         ps.draw(p, 'back');
         ps.draw(p, 'front');
