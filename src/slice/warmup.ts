@@ -10,6 +10,7 @@
  */
 import { PRELOAD } from '../data/preload-list';
 import { PRELOAD_BUNDLED } from '../data/preload-bundled';
+import { afterQuiet } from './quiet';
 
 /** 묶음 안 큰 그림 (CSS가 쓰는 HUD 부품 등) — 작은 것은 CSS 안에 base64로 이미 들어 있다 (코드 리뷰 8: 예전 glob은 JS에도 한 벌 더 넣었다) */
 const BUNDLED = PRELOAD_BUNDLED;
@@ -60,16 +61,22 @@ const idle = (): Promise<void> =>
 /** 나중 묶음을 쉬는 틈마다 두 장씩 받는다 (대국 · 연출을 막지 않게) */
 const warmLater = async (urls: string[]): Promise<void> => {
   for (let i = 0; i < urls.length; i += 2) {
+    await afterQuiet();
     await idle();
     await Promise.all(urls.slice(i, i + 2).map(loadImg));
   }
 };
 
-/** 그림 묶음을 n장씩 나란히 받는다 (폰 메모리 · 디코딩이 한꺼번에 몰리지 않게) */
-const pool = (urls: string[], n: number, tick: () => void = () => undefined): Promise<unknown> => {
+/**
+ * 그림 묶음을 n장씩 나란히 받는다 (폰 메모리 · 디코딩이 한꺼번에 몰리지 않게).
+ * quiet = 조용한 구간(타이틀 베기 · 메뉴 펼침, quiet.ts)에는 다음 장을 받지 않는다 (D-676 — 뒤에서 받기가 메뉴 펼침 프레임을 먹었다)
+ */
+const pool = (urls: string[], n: number, tick: () => void = () => undefined, quiet = false): Promise<unknown> => {
   let i = 0;
   const worker = async (): Promise<void> => {
     while (i < urls.length) {
+      if (quiet) await afterQuiet();
+      if (i >= urls.length) return;
       await loadImg(urls[i++]);
       tick();
     }
@@ -96,7 +103,7 @@ export const warmup = async (onProgress: (k: number) => void, limit = 3000, heav
   await Promise.race([all, wait(limit)]);
   if (heavy.length) await Promise.race([Promise.all(heavy.map((h) => h.catch(() => undefined).then(tick))), wait(heavyLimit)]);
   // 타이틀이 뜨면 판 묶음(기물 · 칸 · UI)을 넷씩, 그다음 나머지를 쉬는 틈에
-  void all.then(() => pool([...BUNDLED, ...first.map(abs)], 4)).then(() => warmLater(later.map(abs)));
+  void all.then(() => pool([...BUNDLED, ...first.map(abs)], 4, undefined, true)).then(() => warmLater(later.map(abs)));
   // 두 화면 쉼 — 레이아웃이 다 그려진 뒤에 타이틀을 연다
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 };

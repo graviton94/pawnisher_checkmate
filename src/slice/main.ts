@@ -118,6 +118,8 @@ import { bestAction } from './bot';
 import { PLAYTEST_TEXT as PT, SURVEY } from '../data/playtest';
 import { IMPACT } from '../data/fx';
 import { warmup } from './warmup';
+import { afterQuiet, quietFor } from './quiet';
+import { menuArtReady, revealMenu, slideLogo, TITLE_MENU } from './titlemenu';
 import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
@@ -5527,16 +5529,23 @@ const opening = (): void => {
     im.onload = () => el.querySelector<HTMLElement>('.op-bg')!.style.setProperty('--img', `url(${im.src})`);
     im.src = 'scenes/prologue-00.png';
   })();
+  // 타이틀 베기가 도는 동안은 조용히 (D-676 — 뒤에서 그림 받기를 미룬다) · 메뉴 단추 그림은 지금 풀어 둔다
+  quietFor(2400);
+  void menuArtReady();
   void titleFx(el.querySelector<HTMLElement>('.tfx'));
   let stage: 'press' | 'menu' = 'press';
   el.addEventListener('click', () => {
     if (stage !== 'press') return;
     stage = 'menu';
-    track('app_open', { first: !m0.prologue, runs: m0.runs, elapsed_sec: Math.round((Date.now() - bootAt) / 1000) });
+    const at = Math.round((Date.now() - bootAt) / 1000);
+    // 기록은 펼침이 끝난 뒤 (D-676)
+    void afterQuiet().then(() => track('app_open', { first: !m0.prologue, runs: m0.runs, elapsed_sec: at }));
     sfx('submit');
     el.classList.add('busy');
     if (!m0.prologue) return void firstRun();
-    openMenu();
+    // 단추 그림이 풀릴 때까지 (보통 이미 끝났다 — 길어야 150ms)
+    quietFor(TITLE_MENU.menuMs + TITLE_MENU.rest + 150);
+    void Promise.race([menuArtReady(), new Promise((r) => window.setTimeout(r, 150))]).then(() => openMenu(true));
   });
   /** 처음 온 사람: 프롤로그 → 첫 대국 (도움말 켜짐). 안내서는 건너뛴다 — 판이 직접 가르친다 (D-232, 보고서 3: 60초 안에 첫 조작). 안내서는 메뉴 · ? 에 남는다 */
   const firstRun = async (): Promise<void> => {
@@ -5551,11 +5560,14 @@ const opening = (): void => {
    * 황동은 늘 하나 — 저장이 있으면 이어하기, 없으면 출하. 모드 · 왕관 · 난이도 · 오늘의 도전은 「출하」 → 출하 준비 창으로.
    * 왕관 부제(이야기 이름)는 보이지 않는다 (스포일러). 시험장 · 빌드 시험은 ?debug에서만 (D-286).
    */
-  const openMenu = (): void => {
-    el.classList.add('menu');
+  /** 메뉴 단추를 미리 짓는다 (D-676): 타이틀이 조용해진 뒤 숨긴 채(.pre) 배치 · 글꼴 · 그림까지 끝내 두면, 누르는 프레임에는 보이기 · 움직임만 남는다 */
+  let built = false;
+  const buildMenu = (): void => {
+    if (built || !el.isConnected) return;
+    built = true;
     const nav = el.querySelector<HTMLElement>('.op-menu')!;
+    nav.classList.add('op5', 'pre');
     nav.hidden = false;
-    nav.classList.add('op5');
     const sv = readSave(store), meta = readMeta(store), today = todayKey();
     const draw = (): void => {
       const dev = devQuery('debug');
@@ -5581,12 +5593,23 @@ const opening = (): void => {
       nav.querySelector('[data-lab-open]')?.addEventListener('click', labPick);
       nav.querySelector('[data-build-open]')?.addEventListener('click', buildPick);
     };
-    draw(); replay(nav, 'in');
+    draw();
   };
+  const openMenu = (animate: boolean): void => {
+    // 로고는 배치를 바꾸지 않고 transform 하나로 메뉴 자리에 (D-676 — 자리를 먼저 잰 뒤 화면을 바꾼다)
+    void slideLogo(el.querySelector<HTMLElement>('.op-logo')!, animate && !calmMotion());
+    buildMenu();
+    el.classList.add('menu');
+    const nav = el.querySelector<HTMLElement>('.op-menu')!;
+    nav.classList.remove('pre');
+    if (animate) void revealMenu(nav);
+  };
+  // 타이틀 베기가 끝나고 쉬는 틈에 미리 짓기 (처음 온 사람은 프롤로그로 가니 짓지 않는다)
+  if (m0.prologue) void afterQuiet().then(() => stage === 'press' && buildMenu());
   // 프롤로그를 본 사람이 출하를 끝내고 돌아오면(처음 화면) 바로 메뉴
   if (m0.prologue && sessionStorage.getItem('op-menu') === '1') {
     stage = 'menu';
-    openMenu();
+    openMenu(false);
   }
 };
 /** 오프닝 화면을 걷는다 (대국 · 지도로 들어갈 때) */

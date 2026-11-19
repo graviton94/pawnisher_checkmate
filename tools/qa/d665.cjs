@@ -158,7 +158,7 @@ const which = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWit
       if (row) {
         const b = await row.boundingBox();
         await shot('piles', { x: Math.max(0, b.x - 6), y: Math.max(0, b.y - 6), width: b.width + 12, height: b.height + 12 });
-        // D-676: 단추 폭 · 사이 틈 · 누름 칸(::before) · 문양 오른 끝 ↔ 소켓 왼 끝 여유
+        // D-677: 단추 폭 · 사이 틈 · 누름 칸(::before) · 문양 오른 끝 ↔ 소켓 왼 끝 여유
         log('PILES', await A(() => {
           const bs = [...document.querySelectorAll('#deckrow .pile-btn')];
           const row = document.querySelector('#deckrow').getBoundingClientRect();

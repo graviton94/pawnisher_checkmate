@@ -8,7 +8,7 @@ import { lessFlash, shakeMul } from '../prefs/fx';
 import { sfx, sfxFor } from '../audio/sfx';
 import { SFX_STING_DELAY } from '../data/sfx';
 import { sparksAt } from './uifx';
-import { bakeWaapi, clearDither, ditherTo, ease } from '../view/motion';
+import { bakeWaapi, clearWipe, ease, wipeTo } from '../view/motion';
 import { FLASH, SMOOTH } from '../data/motion';
 import { flashAt, impactFlash } from '../view/flash';
 import { viewH, viewW } from '../view/vz';
@@ -36,22 +36,22 @@ export const flashScreen = (a = 0.85, at?: Element | null): void => {
   else void impactFlash({ x: viewW() / 2, y: viewH() / 2, peak });
 };
 /**
- * 도트 퇴장 (D-193 → D-554): 사라지는 것은 모두 8×8 베이어 디더가 프레임마다 한 단씩(64단) 곡선으로 지워진다 — 투명 페이드 대신.
- * 옛 다섯 단(240ms) 계단은 뚝뚝 끊겼다 → 최소 SMOOTH.outMin(300ms). 끝나면 가면을 지우고 then (요소를 지우거나 숨기는 건 부른 쪽).
+ * 퇴장 (D-675 — 격자 디더 연출 전면 금지, D-554의 64단 베이어 디더를 대신): 프레임마다 가운데 가로줄로 닫히는 클립 와이프(가속 곡선).
+ * 투명 페이드 · 체크 무늬 없음. 최소 SMOOTH.outMin. 끝나면 클립을 지우고 then (요소를 지우거나 숨기는 건 부른 쪽).
  */
 export const pxOut = (el: HTMLElement | null, then?: () => void, ms = 240): void => {
   if (!el) return then?.();
   if (calm()) return then?.();
   el.classList.add('pxout');
-  void ditherTo(el, 1, 0, Math.max(ms, SMOOTH.outMin), ease.in).then(() => {
+  void wipeTo(el, 1, 0, Math.max(ms, SMOOTH.outMin), ease.in).then(() => {
     if (!el.classList.contains('pxout')) return;
     el.classList.remove('pxout');
-    clearDither(el);
+    clearWipe(el);
     then?.();
   });
 };
-/** 디더로 나타나기 (64단, 감속 곡선) — 계단 등장 대신 */
-export const pxIn = (el: HTMLElement | null, ms: number = SMOOTH.inMin): Promise<void> => (el && !calm() ? ditherTo(el, 0, 1, ms, ease.out) : Promise.resolve());
+/** 나타나기 (D-675): 가운데서 열리는 클립 와이프 (감속 곡선) — 디더 · 페이드 없이 */
+export const pxIn = (el: HTMLElement | null, ms: number = SMOOTH.inMin): Promise<void> => (el && !calm() ? wipeTo(el, 0, 1, ms, ease.out) : Promise.resolve());
 /** 흔들림 세 단계 (D-193): 약 4px/260ms · 중 7px/360ms · 강 12px/480ms — 판 밖은 모두 이것만 */
 /** 판 밖 흔들림 (D-214: 절반으로) — 픽셀 진폭 · ms */
 /** 화면 요소 흔들림 [px, ms] (2026-11-06: 세기를 줄였다 — 글 · 도장 · 전환이 다 떨려서 정신없었다) */
@@ -195,7 +195,7 @@ export const discardHand = async (hand: HTMLElement): Promise<void> => {
     const r = c.getBoundingClientRect();
     const dx = to.right - 40 - (r.left + r.width / 2);
     const dy = to.top + to.height / 2 - (r.top + r.height / 2);
-    c.animate(ditherKeyframes([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx / 2 + 30}px,${dy / 2 - 20}px) rotate(14deg)`, offset: 0.5 }, { transform: `translate(${dx}px,${dy}px) rotate(24deg) scale(0.3)`, opacity: 0 }]), { duration: 320, delay: i * 55, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' });
+    c.animate(cutKeyframes([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx / 2 + 30}px,${dy / 2 - 20}px) rotate(14deg)`, offset: 0.5 }, { transform: `translate(${dx}px,${dy}px) rotate(24deg) scale(0.3)`, opacity: 0 }]), { duration: 320, delay: i * 55, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' });
   });
   await wait(320 + cards.length * 55);
   // 적 차례 동안 새 손패는 덮어 둔다 (내 차례에 한 장씩 들어온다)
@@ -211,7 +211,7 @@ export const dealHand = (hand: HTMLElement): void => {
     const r = c.getBoundingClientRect();
     const dx = from.left + from.width / 2 - (r.left + r.width / 2);
     const dy = from.top + from.height / 2 - (r.top + r.height / 2);
-    c.animate(ditherKeyframes([{ transform: `translate(${dx}px,${dy}px) rotate(-12deg) scale(0.4,0.5)`, filter: 'sepia(1) brightness(0.55)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate(${dx / 2 + 40}px,${dy / 2}px) rotate(-5deg) scaleX(0.05)`, filter: 'sepia(1) brightness(0.55)', offset: 0.5 }, { transform: 'translateX(6px) scale(1.04,0.96)', filter: 'brightness(1.4)', offset: 0.82 }, { transform: 'none', filter: 'none' }]), { duration: 400, delay: i * 90, easing: 'cubic-bezier(.2,.9,.3,1.15)', fill: 'backwards' });
+    c.animate(cutKeyframes([{ transform: `translate(${dx}px,${dy}px) rotate(-12deg) scale(0.4,0.5)`, filter: 'sepia(1) brightness(0.55)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: `translate(${dx / 2 + 40}px,${dy / 2}px) rotate(-5deg) scaleX(0.05)`, filter: 'sepia(1) brightness(0.55)', offset: 0.5 }, { transform: 'translateX(6px) scale(1.04,0.96)', filter: 'brightness(1.4)', offset: 0.82 }, { transform: 'none', filter: 'none' }]), { duration: 400, delay: i * 90, easing: 'cubic-bezier(.2,.9,.3,1.15)', fill: 'backwards' });
     window.setTimeout(() => {
       const p = centerOf(c);
       sparksAt(p.x - p.w / 2 + 8, p.y, 3, 14);
@@ -262,7 +262,7 @@ export const stampFx = (s: HTMLElement): void => {
       d.style.setProperty('--ix', `${-Math.cos(a) * 40}px`);
       d.style.setProperty('--iy', `${-Math.sin(a) * 20}px`);
       document.body.appendChild(d);
-      d.animate(ditherKeyframes([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }]), { duration: 900, fill: 'forwards' });
+      d.animate(cutKeyframes([{ opacity: 1 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }]), { duration: 900, fill: 'forwards' });
       window.setTimeout(() => d.remove(), 900);
     }
   }, 150);
@@ -474,7 +474,7 @@ export const healFx = (el: HTMLElement | null, text: string): void => {
       pl.style.left = `${c.x - 24 + Math.random() * 48}px`;
       pl.style.top = `${c.y + 6}px`;
       document.body.appendChild(pl);
-      pl.animate(ditherKeyframes([{ transform: 'translateY(0) scale(.4)', opacity: 1 }, { transform: 'translateY(-26px) scale(1.3)', opacity: 1, offset: 0.4 }, { transform: 'translateY(-44px) scale(.6)', opacity: 0 }]), { duration: 700, easing: 'steps(10, jump-end)', fill: 'forwards' });
+      pl.animate(cutKeyframes([{ transform: 'translateY(0) scale(.4)', opacity: 1 }, { transform: 'translateY(-26px) scale(1.3)', opacity: 1, offset: 0.4 }, { transform: 'translateY(-44px) scale(.6)', opacity: 0 }]), { duration: 700, easing: 'steps(10, jump-end)', fill: 'forwards' });
       window.setTimeout(() => pl.remove(), 700);
     }, i * 70);
   badge(c.x, c.y - c.h / 2 - 6, text, true);
@@ -582,20 +582,20 @@ export const gradeReveal = (cards: HTMLElement[]): void => {
   });
 };
 
-/** 보이는 정도(0~1) → 16단 디더 가면 변수 (D-554 — 8×8 베이어, 칸 = 게임 도트. 옛 px0~px4 다섯 단을 대신한다) */
-const pxLv = (v: number): string => `var(--dq${Math.max(0, Math.min(SMOOTH.cssLevels, Math.round(v * SMOOTH.cssLevels)))})`;
-/** 보이는 정도(0~1)를 디더 마스크 조각으로 — Web Animations 키프레임에 펼쳐 쓴다 (D-538 → D-554, 투명도 대신) */
+/** 보이는 정도(0~1) → 가면 변수 (D-675: 보임 `none` · 숨김 빈 가면 두 값뿐 — 무늬 없음) */
+const pxLv = (v: number): string => (v >= 0.5 ? 'var(--dq16)' : 'var(--dq0)');
+/** 보이는 정도(0~1)를 가면 조각으로 — Web Animations 키프레임에 쓴다 (D-675: 한 번에 끊김) */
 export const pxMask = (v: number): Keyframe => ({ maskImage: pxLv(v), webkitMaskImage: pxLv(v) }) as Keyframe;
 
 /**
- * 도트 애니메이션 장치 (D-216 6 · D-538): 코드로 거는 Web Animations의 투명도 보간을 디더 마스크 계단으로 바꾼다 — 단순 페이드 금지.
- * 투명도가 바뀌는 구간마다 사이 단계(px1~px3)를 고르게 끼워, 0 → 1이 한 번에 뒤집히지 않고 디더 네 계단으로 지나간다.
+ * 도트 애니메이션 장치 (D-216 6 · D-538 → D-675): 코드로 거는 Web Animations의 투명도 보간을 「한 번에 끊김」으로 바꾼다 — 단순 페이드 금지,
+ * 격자 디더도 금지(D-675). 보임/숨김은 움직임(위치 · 크기) 키프레임 사이에서 0.5를 지나는 때 한 프레임에 바뀐다.
  * 이미 마스크로 모양을 내는 요소(아이콘 · 로고)는 그대로 둔다. main에서 한 번 부른다.
  */
 export const installPixelAnimate = (): void => {
   const orig = Element.prototype.animate;
   Element.prototype.animate = function (this: Element, kf: Keyframe[] | PropertyIndexedKeyframes | null, opts?: number | KeyframeAnimationOptions) {
-    if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') kf = ditherKeyframes(kf);
+    if (Array.isArray(kf) && kf.some((f) => f.opacity !== undefined) && getComputedStyle(this).maskImage === 'none') kf = cutKeyframes(kf);
     // 움직임은 정수 기기 픽셀 120Hz로 굽는다 (D-554 — 소수 위치를 지나며 도트가 번지지 않게)
     if (Array.isArray(kf) && opts && typeof opts === 'object') {
       const b = bakeWaapi(this, kf, opts, (k, o) => orig.call(this, k, o));
@@ -605,8 +605,8 @@ export const installPixelAnimate = (): void => {
   } as typeof Element.prototype.animate;
 };
 
-/** 투명도 키프레임 → 디더 마스크 계단 키프레임 (빠진 offset은 Web Animations처럼 고르게 채운다) */
-export const ditherKeyframes = (kf: Keyframe[]): Keyframe[] => {
+/** 투명도 키프레임 → 보임/숨김 끊김 키프레임 (D-675 — 옛 디더 계단). 빠진 offset은 Web Animations처럼 고르게 채운다 */
+export const cutKeyframes = (kf: Keyframe[]): Keyframe[] => {
   const n = kf.length;
   const off = kf.map((f, i) => (typeof f.offset === 'number' ? f.offset : i === 0 ? 0 : i === n - 1 ? 1 : NaN));
   for (let i = 1; i < n; i++)
@@ -617,16 +617,8 @@ export const ditherKeyframes = (kf: Keyframe[]): Keyframe[] => {
     }
   let last = 1;
   const vis = kf.map((f) => (f.opacity !== undefined ? (last = Number(f.opacity)) : last));
-  const out: Keyframe[] = [];
-  kf.forEach((f, i) => {
+  return kf.map((f, i) => {
     const { opacity: _o, ...rest } = f;
-    out.push({ ...rest, offset: off[i], ...pxMask(vis[i]) } as Keyframe);
-    const nv = vis[i + 1];
-    if (i < n - 1 && nv !== vis[i]) {
-      // 사이 단계 — 16단 중 지나는 칸 수만큼 고르게 (D-554: 옛 세 칸 → 프레임 수에 가깝게)
-      const k0 = Math.max(1, Math.round(Math.abs(nv - vis[i]) * SMOOTH.cssLevels));
-      for (let k = 1; k < k0; k++) out.push({ offset: off[i] + ((off[i + 1] - off[i]) * k) / k0, ...pxMask(vis[i] + ((nv - vis[i]) * k) / k0) } as Keyframe);
-    }
+    return { ...rest, offset: off[i], ...pxMask(vis[i]) } as Keyframe;
   });
-  return out;
 };
