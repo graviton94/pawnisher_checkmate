@@ -174,6 +174,12 @@ const GROUPS = [
     { name: 'title-press', assets: ['LD-02'], url: '?debug&opening', run: async ({ W, shot }) => { await W(1600); await shot('title-press'); } },
     { name: 'title-menu', assets: [], url: '?debug&opening', run: async ({ W, shot, tapAt }) => { await W(1200); await tapAt(VW / 2, VH * 0.72); await W(1400); await shot('title-menu'); } },
     { name: 'guide', assets: ['LD-01'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.guideMenu()); await W(1200); await shot('guide'); } },
+    // D-601: 목숨 장치 셋 쪽 (「분대와 목숨」) — 다음 단추로 그 쪽까지 넘긴다
+    { name: 'guide-life', assets: [], run: async ({ pg, A, W, shot }) => {
+      await A(() => window.sliceApi.guideMenu()); await W(1200);
+      for (let i = 0; i < 14 && !(await pg.getByText('분대와 목숨').first().isVisible().catch(() => false)); i++) { await pg.locator('.win [data-next]').last().click({ force: true, timeout: 3000 }).catch(() => {}); await W(500); }
+      await shot('guide-life');
+    } },
     { name: 'load-tip', assets: ['LD-01', 'LD-02'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.startAt(1, 'battle')); await W(1500); await A(() => window.sliceApi.tipNow('act')); await W(700); await shot('load-tip'); } },
   ]],
   ['prologue', '프롤로그 전 컷 (OP 새 컷 · 자막 판 · 화자 표지)', [
@@ -195,6 +201,8 @@ const GROUPS = [
       await A(() => { const a = window.sliceApi; a.richRun(); const q = a.squad(); q[1].quirk = 'stubborn'; q[1].doorsSpent = 1; q[1].hp = 20; q[2].cracked = true; q[2].hp = 9; });
       for (const act of [0, 1, 2, 3]) { await A((i) => { const a = window.sliceApi; a.setAct(i); a.map(2); }, act); await W(1000); await shot(`map-a${act + 1}`); }
     } },
+    // D-601: 머리 줄 톱니 칸(여벌 심장 · 되감기 — 옛 「부적」)
+    { name: 'map-cogs', assets: [], run: async ({ A, W, shot }) => { await A(() => { const a = window.sliceApi; a.richRun(); a.charmSet(1, 2); a.setAct(0); a.map(2); }); await W(1000); await shot('map-cogs'); } },
     { name: 'map-peek', assets: ['MP-01', 'MP-02'], run: async ({ pg, A, W, shot }) => {
       await A(() => { const a = window.sliceApi; a.richRun(); a.setAct(0); a.map(2); }); await W(1000);
       const slot = pg.locator('.map-roster .mr-slot').nth(2);
@@ -464,6 +472,17 @@ const GROUPS = [
   ]],
   ['glossary', '용어집', [
     { name: 'dict', assets: ['TI-01', 'TI-02'], run: async ({ A, W, shot }) => { await A(() => window.sliceApi.help('dict')); await W(1200); await shot('dict'); } },
+    // D-601: 목숨 셋(버팀 · 심장 톱니 · 되감기) · 합친 「표지」가 있는 쪽까지 넘긴다
+    { name: 'dict-life', assets: ['TI-01', 'TI-02'], run: async ({ pg, A, W, shot }) => {
+      await A(() => window.sliceApi.help('dict')); await W(1200);
+      for (let i = 0; i < 8; i++) {
+        const hit = await Promise.all(['되감기', '심장 톱니', '표지'].map((t) => pg.getByText(t, { exact: true }).first().isVisible().catch(() => false)));
+        if (hit.some(Boolean)) await shot(`dict-life-${i}`);
+        const nx = pg.getByRole('button', { name: '다음' }).last();
+        if (!(await nx.count()) || (await nx.isDisabled())) break;
+        await nx.click({ force: true }).catch(() => {}); await W(500);
+      }
+    } },
   ]],
 ];
 
