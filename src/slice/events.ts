@@ -284,15 +284,15 @@ export const SLICE_EVENTS: Record<SliceEventId, SliceEventDef> = {
   },
   pact: {
     title: '쇳물 앞의 거래',
-    text: '용광로가 가까워진다. 주인 없는 그림자가 쇳물 위에서 속삭인다. “하나를 바쳐라. 아니면 피로 서명해라.”',
+    text: '용광로가 가까워진다. 주인 없는 그림자가 쇳물 위에서 속삭인다. “하나를 바쳐라. 아니면 녹물로 서명해라.”',
     choices: [
       { label: '하나를 녹인다', desc: '분대원 하나 → 희귀 이상 부품', tones: ['loss', 'gain'], info: '폰과 킹은 바칠 수 없습니다.', blocked: (s) => (s.squad.some((u) => u.t !== 'K' && u.t !== 'P') ? null : '바칠 분대원이 없음'), apply: (s, rng) => {
         const u = pick(rng, s.squad.filter((x) => x.t !== 'K' && x.t !== 'P'))!;
         s.squad = s.squad.filter((x) => x !== u);
         return { text: `${josa(u.name, '이')} 쇳물 속으로 가라앉는다. 그림자가 무언가를 내민다.`, partPick: true, elite: true };
       } },
-      // D-459: 대가가 붙은 부품을 거래로 — 피의 계약 (모든 공격 ×1.4 · 턴 끝 킹 HP −4)
-      { label: '피로 서명한다', desc: '피의 계약 · 공격 ×1.4 · 킹 HP −4/턴', tones: ['neutral', 'gain', 'loss'], info: '부품 「피의 계약」을 받습니다. 부품 칸이 차 있으면 하나를 녹여야 합니다.', blocked: (s) => (hasPart(s, 'bloodPact') ? '이미 맺은 계약' : null), apply: () => ({ text: '킹이 붉은 종이에 서명한다. 쇳물이 한 번 끓어오른다.', givePart: 'bloodPact' }) },
+      // D-459: 대가가 붙은 부품을 거래로 — 녹물 서약 (옛 피의 계약, D-612) (모든 공격 ×1.4 · 턴 끝 킹 HP −4)
+      { label: '녹물로 서명한다', desc: '녹물 서약 · 공격 ×1.4 · 킹 HP −4/턴', tones: ['neutral', 'gain', 'loss'], info: '부품 「녹물 서약」을 받습니다. 부품 칸이 차 있으면 하나를 녹여야 합니다.', blocked: (s) => (hasPart(s, 'bloodPact') ? '이미 맺은 계약' : null), apply: () => ({ text: '킹이 녹물로 쇠판에 서명한다. 쇳물이 한 번 끓어오른다.', givePart: 'bloodPact' }) },
       leave('거절하기'),
     ],
   },

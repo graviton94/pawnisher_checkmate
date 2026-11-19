@@ -2054,14 +2054,14 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   burnFallen(b);
   // 속전 (D-520): 배치 턴(첫 coinGrace 턴)은 진공관을 태우지 않는다 — 10관 = 2턴부터 한 턴 한 관
   if (b.turn > SLICE.coinGrace) b.coins = Math.max(0, b.coins - 1);
-  // 피의 계약 (양날): 턴 끝마다 킹 HP −4 (쓰러지지는 않는다 — HP 1에서 멈춘다)
+  // 녹물 서약 (양날, 옛 피의 계약 — D-612): 턴 끝마다 킹 HP −4 (쓰러지지는 않는다 — HP 1에서 멈춘다)
   if (b.s.winner === null && has(b, 'bloodPact')) {
     const k = kingOf(b.s, 0);
     if (k) {
       const dmg = Math.min(PART_NUM.bloodCost, k.hp - 1);
       if (dmg > 0) {
         k.hp -= dmg;
-        events.push({ type: 'blast', pos: { x: k.x, y: k.y }, label: '피의 계약', hits: [{ targetId: k.id, damage: dmg, shieldAbsorbed: 0, hpAfter: k.hp, killed: false }] });
+        events.push({ type: 'blast', pos: { x: k.x, y: k.y }, label: '녹물 서약', hits: [{ targetId: k.id, damage: dmg, shieldAbsorbed: 0, hpAfter: k.hp, killed: false }] });
       }
     }
   }
@@ -2306,7 +2306,7 @@ export const crackOrScrap = (fallen: Squad[]): { back: Squad[]; scrapped: Squad[
   const back: Squad[] = [];
   const scrapped: Squad[] = [];
   for (const u of fallen) {
-    // 킹이 이기는 수와 함께 쓰러졌으면(가시 반격 · 자폭 · 피의 계약) HP 1로 버틴다 — 킹 없는 분대로 다음 대국이 깨지던 버그 (2026-11-05)
+    // 킹이 이기는 수와 함께 쓰러졌으면(가시 반격 · 자폭 · 녹물 서약) HP 1로 버틴다 — 킹 없는 분대로 다음 대국이 깨지던 버그 (2026-11-05)
     if (u.t === 'K') back.push({ ...u, hp: 1 });
     else if (u.cracked) scrapped.push(u);
     else back.push({ ...u, cracked: true, hp: Math.round(crewMaxHp(u) * REST.reviveHp) });
