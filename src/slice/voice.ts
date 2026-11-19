@@ -128,7 +128,7 @@ export const SUB_MIN_W = 456;
 /** 띠 몸 · 그 밖으로 튀어나온 이름표 · 초상 홈 — 띠 왼쪽 위 기준 상대 사각형들 (겹침은 조각마다 잰다) */
 const bandParts = (el: HTMLElement): DOMRect[] => {
   const o = layRect(el.getBoundingClientRect());
-  return [el, ...el.querySelectorAll<HTMLElement>('.who, .dl-name, .talk-face, .dl-face')].map((e) => layRect(e.getBoundingClientRect())).filter((q) => q.width && q.height).map((q) => new DOMRect(q.left - o.left, q.top - o.top, q.width, q.height));
+  return [el, ...el.querySelectorAll<HTMLElement>('.who, .dl-name, .talk-face, .dl-face, .talk-foot')].map((e) => layRect(e.getBoundingClientRect())).filter((q) => q.width && q.height).map((q) => new DOMRect(q.left - o.left, q.top - o.top, q.width, q.height));
 };
 const overlap = (a: DOMRect, q: DOMRect): number => Math.max(0, Math.min(a.right, q.right) - Math.max(a.left, q.left)) * Math.max(0, Math.min(a.bottom, q.bottom) - Math.max(a.top, q.top));
 /**
@@ -154,11 +154,11 @@ export const fitSubWidth = (el: HTMLElement, minW = 0): number => {
  * 가장 가까운 빈 자리(가로는 판 열 가운데 → 화면 왼쪽 · 오른쪽 끝)에 선다. 빈 자리가 없으면 가장 덜 가리는 자리. 겹치지 않았으면 true.
  * w = fitSubWidth로 맞춘 폭 (없으면 placeSub 폭).
  */
-export const placeSubAway = (el: HTMLElement, o: { focus: DOMRect | null; keep: DOMRect[]; minW?: number; w?: number }): boolean => {
+export const placeSubAway = (el: HTMLElement, o: { focus: DOMRect | null; keep: DOMRect[]; minW?: number; w?: number; soft?: DOMRect[] }): boolean => {
   const r0 = subAnchor(), r = r0 && layRect(r0);
   const H = viewH();
   const W = viewW();
-  o = { ...o, focus: o.focus && layRect(o.focus), keep: o.keep.map(layRect) };
+  o = { ...o, focus: o.focus && layRect(o.focus), keep: o.keep.map(layRect), soft: (o.soft ?? []).filter((q) => q.width && q.height).map(layRect) };
   if (o.w) {
     el.style.width = `${o.w}px`;
     const cx = r ? r.left + r.width / 2 : W / 2;
@@ -178,23 +178,33 @@ export const placeSubAway = (el: HTMLElement, o: { focus: DOMRect | null; keep: 
   const mid = r ? r.top + r.height / 2 : H / 2;
   const f = o.focus;
   const pref = f && f.top + f.height / 2 > mid ? yMin : yMax;
-  const xs = [...new Set([left0, 16 + lx, W - 16 - rx].map(Math.round))].filter((x) => x - lx >= 0 && x + rx <= W);
-  const cost = (x: number, y: number): number => parts.reduce((a, p) => a + o.keep.reduce((s, k) => s + overlap(new DOMRect(x + p.x, y + p.y, p.width, p.height), k), 0), 0);
+  // 가로 후보: 판 열 가운데 → 두 끝 → (무른 사각형이 있으면) 그 사이 24px 걸음 (D-597 — 두 끝이 태엽 · 턴 끝 계기를 덮었다)
+  const sweep: number[] = [];
+  if (o.soft?.length) for (let x = 16 + lx; x < W - 16 - rx; x += 24) sweep.push(x);
+  const xs = [...new Set([left0, 16 + lx, W - 16 - rx, ...sweep].map(Math.round))].filter((x) => x - lx >= 0 && x + rx <= W);
+  const cover = (x: number, y: number, ks: DOMRect[]): number => parts.reduce((a, p) => a + ks.reduce((s, k) => s + overlap(new DOMRect(x + p.x, y + p.y, p.width, p.height), k), 0), 0);
+  const cost = (x: number, y: number): number => cover(x, y, o.keep);
+  // 무른 사각형 (D-597): 기물 · HUD 계기 · 고를 카드처럼 덮지 않는 편이 좋은 곳 — 지킬 칸(keep) 다음으로 덜 덮는 자리를 고른다
+  const softCost = (x: number, y: number): number => (o.soft?.length ? cover(x, y, o.soft) : 0);
   const ys: number[] = [];
   for (let y = yMin; y < yMax; y += 4) ys.push(y);
   ys.push(yMax);
-  let best = { x: left0, y: pref, c: Infinity, d: Infinity };
+  let best = { x: left0, y: pref, c: Infinity, sc: Infinity, d: Infinity };
   for (const [xi, x] of xs.entries()) {
     for (const y of ys) {
       const c = cost(x, y);
-      // 같은 겹침이면: 바라는 끝에 가깝게 · 가로는 판 열 가운데 먼저
+      if (c > best.c) continue;
+      const sc = softCost(x, y);
+      // 같은 겹침이면: 무른 곳을 덜 덮게 → 바라는 끝에 가깝게 · 가로는 판 열 가운데 먼저
       const d = Math.abs(y - pref) + xi * 40;
-      if (c < best.c || (c === best.c && d < best.d)) best = { x, y, c, d };
+      if (c < best.c || sc < best.sc || (sc === best.sc && d < best.d)) best = { x, y, c, sc, d };
     }
   }
   el.style.left = `${best.x}px`;
   el.style.top = `${best.y}px`;
   el.dataset.side = best.y + bh / 2 < mid ? 'top' : 'bottom';
+  // 무른 곳을 덮은 넓이 (D-597 — 코치 띠가 두 줄을 한 줄로 줄일지 견준다)
+  el.dataset.soft = String(Number.isFinite(best.sc) ? Math.round(best.sc) : 0);
   return best.c === 0;
 };
 /** 대사 띠 속 (이름표 · 초상 홈 · 줄) — 바크 · 자막 띠가 같은 틀 */

@@ -29,6 +29,7 @@ import './card-f.css';
 import { cardOffers, chooseBuildPart, firstShopParts, kitOffers } from './build-offers';
 import { partStatuses, PART_STATE_LABEL, type PartStatus } from './part-state';
 import { cardState, condCell, condPieces } from './card-state';
+import { freshPanel, lockPanel, panelLocked, unlockPanel } from './panel-lock';
 import { BAND_ZONE, band, bindPick, bindWinHost, btnHtml, winHtml, btnRowHtml, clearPeeks, closeWin, coverArt, coverBg, cutChromeHtml, typeCutPages, dropWinDismiss, fitSlots, infoPeek, openWin, pickScreen, placeScreen, setBandAnchor, slotsHtml, stateBand, type CutLine, type PickItem, type WinBtn, type WinOpts } from './uikit';
 import { sfx } from '../audio/sfx';
 import { playMusic } from '../audio/music';
@@ -112,7 +113,7 @@ import { TUT } from '../data/tutorial';
 import { runTutorial, type TutStep } from './tutorial';
 import { telemetryAll, telemetryClear, telemetryFlush, telemetrySession, telemetryShed, telemetryStore, track as trackEvent } from './telemetry';
 import { commitRunEnd, fightPending, ftueMark, newerSaveFound, settledEnd, dailySeed, defaultStore, readMeta, readSave, setSaveGuard, todayKey, writeMeta, writeSave, type ActSnap, type Meta, type FightSave, type PendingReward, type RunSave, restoreDeck, resumeAt } from './save';
-import { BOSS_RISE_LABEL, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeOffer, sacrificeSwap, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
+import { BOSS_RISE_LABEL, tutorialMend, stallInfo, braceLeft, braceMax, repairOne, livesMax, refillBrace, livesOf, rewindCost, growCrew, depthAt, REST, intentRows, type IntentKind, type IntentRow, chainAdd, foeDmg, promotedIn, clutchBoost, kingDoomed, sacrificeCandidates, sacrificeOffer, sacrificeSwap, canPlay, crackOrScrap, spareSquad, mendSquad, crewMaxHp, fallenAfter, costOf, isInstant, cardCond, cardMoves, cardPieces, chainMult, dangerSquares, endTurn, intentHits, liveIntents, newSliceBattle, overhaulSquad, playCard, previewPlay, restSquad, rewind, squadAfter, type SliceBattle, type Squad } from './battle';
 import type { BattleState, BattleEvent } from '../engine';
 import { shapeHtml } from './shape';
 import { Rng } from '../engine/rng';
@@ -998,8 +999,6 @@ const coach = (): void => {
   }
   if (el.dataset.k !== key) {
     el.dataset.k = key;
-    el.querySelector('.vs-line')!.innerHTML = COACH_LINES[key].replace(/\n/g, '<br>');
-    el.dataset.w = String(fitSubWidth(el, SUB_MIN_W));
     replay(el, 'k-in');
   }
   placeCoach(el, key);
@@ -1020,10 +1019,43 @@ const placeCoach = (el: HTMLElement, key: keyof typeof COACH_LINES): void => {
   const end = key === 'end' ? $('btn-end').getBoundingClientRect() : null;
   // 카드를 고를 때: 손패와 목표(적 킹)를 가리지 않는다 — 「왼쪽 카드」 · 「목표는 적 킹」을 말하는 줄
   const foeK = b.s.pieces.find((p) => p.side === 1 && p.type === 'K' && p.hp > 0);
-  const pick = key === 'card' || key === 'cardAgain' ? [$('hand').getBoundingClientRect(), ...(foeK ? [tileRect(foeK)] : [])] : [];
-  const keep = [...cells.map(tileRect), ...(kr ? [kr] : []), ...(end ? [end] : []), ...pick];
+  const pick = key === 'card' || key === 'cardAgain' ? [$('hand').getBoundingClientRect()] : [];
+  // 목표(적 킹)는 어느 단계에서도 덮지 않는다 (D-597, 플레이 리뷰 P1-1 — 칸을 고를 때 띠가 적 킹 줄을 덮었다)
+  // 고른 기물도 지킨다 — 칸을 고르는 동안 띠가 움직일 기물을 덮었다
+  const moving = selPiece !== null ? b.s.pieces.find((p) => p.id === selPiece) : undefined;
+  const keep = [...cells.map(tileRect), ...(kr ? [kr] : []), ...(foeK ? [tileRect(foeK)] : []), ...(moving ? [tileRect(moving)] : []), ...(end ? [end] : []), ...pick];
   // 비켜 설 빈자리가 없으면(667 폭에서 고를 칸이 판 위아래에 흩어진 때) 그 단계에는 띠를 접는다 — 판이 먼저 (원칙 7). 칸을 고르면 다음 단계 띠가 선다
-  el.classList.toggle('away', !placeSubAway(el, { focus: tilesRect(cells) ?? kr, keep, w: Number(el.dataset.w) || undefined, minW: SUB_MIN_W }));
+  const soft = battleSoft();
+  const line = el.querySelector<HTMLElement>('.vs-line')!;
+  const full = COACH_LINES[key];
+  const put = (text: string): { ok: boolean; sc: number } => {
+    if (el.dataset.t !== text) {
+      el.dataset.t = text;
+      line.innerHTML = text.replace(/\n/g, '<br>');
+      el.dataset.w = String(fitSubWidth(el, SUB_MIN_W));
+    }
+    const ok = placeSubAway(el, { focus: tilesRect(cells) ?? kr, keep, soft, w: Number(el.dataset.w) || undefined, minW: SUB_MIN_W });
+    return { ok, sc: Number(el.dataset.soft) || 0 };
+  };
+  let at = put(full);
+  // D-597 (플레이 리뷰 P1-1, 667에서 더 심함): 두 줄 띠가 설 빈자리가 없으면(지킬 칸에 걸리거나 기물 · 계기를 덮으면) 첫 줄만 — 더 낫게 설 때만 줄인다
+  const short = full.split('\n')[0];
+  if ((!at.ok || at.sc > 0) && short !== full) {
+    const one = put(short);
+    if (one.ok && (!at.ok || one.sc < at.sc)) at = one;
+    else at = put(full);
+  }
+  el.classList.toggle('away', !at.ok);
+};
+/**
+ * 부관 띠가 되도록 덮지 않을 곳 (D-597, 플레이 리뷰 P1-1 — 띠가 적 킹 · 태엽 · 속전 칸을 덮었다):
+ * 판 위 살아 있는 기물 전부(적 킹은 두 번 — 목표라 더 무겁게) · 태엽 계기 · 턴 · 속전 · 반장 · 적의 수 · 손패 · 되감기 · 턴 끝.
+ */
+const battleSoft = (): DOMRect[] => {
+  const live = b.s.pieces.filter((p) => p.hp > 0 && p.body === undefined);
+  const foeK = live.filter((p) => p.side === 1 && p.type === 'K');
+  const hud = [...['vials', 'turn-label', 'coins', 'boss', 'intents', 'hand', 'btn-rewind', 'btn-end'].map((id) => document.getElementById(id)), document.querySelector<HTMLElement>('#right .gtop')].filter((e): e is HTMLElement => !!e && !e.hidden && !!e.offsetWidth).map((e) => e.getBoundingClientRect());
+  return [...live.map(tileRect), ...foeK.map(tileRect), ...hud];
 };
 const canPlay2 = (i: number): boolean => canPlay(b, i);
 
@@ -2188,9 +2220,9 @@ const startBattle = (def: BattleDef, silent = false): void => {
         const rule = def.bossRule ?? 'plate';
         const R0 = BOSS_RULES[rule];
         void ready.then(() => tutorial(`boss-${rule}`, [
-          { text: TUT.boss.meet(R0.name), target: () => $('board').querySelector('canvas') ?? $('board') },
+          { text: (rule === 'gilded' ? TUT.boss.meetFinal : TUT.boss.meet)(R0.name), target: () => $('board').querySelector('canvas') ?? $('board') },
           { text: R0.tell.replace(/([.!?])\s+/g, '$1\n'), target: () => $('board').querySelector('canvas') ?? $('board') },
-          { text: TUT.boss.badge, target: () => $('boss') },
+          { text: rule === 'gilded' ? TUT.boss.badgeFinal : TUT.boss.badge, target: () => $('boss') },
           // 2단계 예고 (D-383): 낮은 승급에서는 처음 만날 때 부관이 짚는다
           ...(asc <= BOSS_PHASE_TEXT.upTo ? [{ text: BOSS_PHASE_TEXT.start.replace(/([.!?])\s+/g, '$1\n'), target: () => $('boss') }] : []),
         ]));
@@ -2610,7 +2642,8 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
       <span class="tag ws-purse">나사 <b>${gold}</b></span>`,
   });
   // 같은 패널을 재사용해도 앞 사건의 결과/연출 상태를 다음 사건에 물려주지 않는다.
-  el.classList.remove('ws-done', 'ws-beat', 'locked');
+  el.classList.remove('ws-done', 'ws-beat');
+  unlockPanel(el);
   const art = el.querySelector<HTMLImageElement>('.ws-pic > img[data-cover]')!;
   // 장면 그림이 없는 사건은 공용 사건 배경 (D-260)
   art.addEventListener('error', () => (art.src = 'scenes/bg-event.png'), { once: true });
@@ -2679,14 +2712,15 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     void say('npc', line, who);
   }, 1000);
   const narr = m ? (m[1] + (m[3] ? ` ${m[3].trim()}` : '')).trim() : ev.text;
-  el.classList.add('locked');
+  lockPanel(el);
   void (async () => {
     await say('narr', narr);
     // 소개 대사: 사건 글 속 “ ” — 없으면 NPC의 첫 마디(hi)
     if (m) await say('npc', m[2]);
     else if (talk.hi) await say('npc', talk.hi);
     else if (ponder[0]) await say('npc', ponder[0], PAPER_KING_NAME);
-    el.classList.remove('locked');
+    // 화면이 이미 바뀌었으면 새 화면의 잠금을 건드리지 않는다 (새 화면은 freshPanel로 열린다)
+    if (alive()) unlockPanel(el);
     busy = false;
     lastAct = performance.now();
   })();
@@ -2732,13 +2766,15 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   leaveBtn?.addEventListener('click', () => {
     if (busy) return;
     busy = true;
-    el.classList.add('locked');
+    // 작별 대사 동안만 잠근다 — 떠날 때(대사가 실패해도) 반드시 풀고 다음 화면으로 (D-597 소프트락: 잠금이 다음 창에 남았다)
+    lockPanel(el);
     window.clearInterval(idle);
     sfx('tap');
     choicesEl.hidden = true;
     hint.hidden = true;
     leaveBtn.disabled = true;
-    void say('npc', talk.bye).then(() => alive() && window.setTimeout(advance, calmMs(700)));
+    const go = (): void => { unlockPanel(el); window.setTimeout(advance, calmMs(700)); };
+    void say('npc', talk.bye).then(go, go);
   });
   const purseHtml = (v: number, to?: number): string => `나사 <b>${v}</b>${to === undefined || to === v ? '' : ` → <b class="${to < v ? 'loss' : ''}">${to}</b>`}`;
   bindPick(el, {
@@ -2863,7 +2899,7 @@ const evCardPick = (panel: HTMLElement, ids: CommandId[], line: string): Promise
     const fitNow = (): void => fitSlots(row);
     fitNow();
     requestAnimationFrame(fitNow);
-    bindPick(ov, { onSelect: () => sfx('lift'), onPick: (k) => { ov.classList.add('locked'); sfx('stamp'); pxOut(ov, () => ov.remove(), 240); done(k as CommandId); } });
+    bindPick(ov, { onSelect: () => sfx('lift'), onPick: (k) => { lockPanel(ov); sfx('stamp'); pxOut(ov, () => ov.remove(), 240); done(k as CommandId); } });
   });
 
 /** 사건 결과 요약 한 줄 (D-263): 앞뒤 상태를 비교해 바뀐 것만 — 카드 · 분대원 · 나사 · 부품 */
@@ -3171,7 +3207,7 @@ const pickCardScreen = (title: string, say: string, ids: CommandId[], onPick: (i
     go: { label: verb },
     onSelect: () => sfx('lift'),
     // 다듬기는 화면 하나에 한 장 (#20): 잠금이 풀린 뒤 다음 화면이 뜨기 전 다시 누르면 같은 종류 두 장이 다 다듬어졌다
-    onPick: (id, slot) => { if (!$('overlay-panel').classList.contains('locked') && claimScreen(screenKey())) takeFx(slot, () => onPick(id as CommandId), true); },
+    onPick: (id, slot) => { if (!panelLocked($('overlay-panel')) && claimScreen(screenKey())) takeFx(slot, () => onPick(id as CommandId), true); },
   }).querySelector('[data-back]')!.addEventListener('click', back);
 };
 
@@ -3296,10 +3332,10 @@ const banner = (text: string, good: boolean): Promise<void> => koBanner(text, go
  */
 const takeFx = (slot: HTMLElement, then: () => void, keep = false): void => {
   const panel = $('overlay-panel');
-  if (panel.classList.contains('locked')) return;
+  if (panelLocked(panel)) return;
   // 확정은 화면 하나에 한 번 (기록-1): 잠금이 풀린 뒤 남은 창을 다시 눌러도 두 번 들어가지 않는다. keep(고물상 · 다듬기)은 여러 번 산다
   if (!keep && !claimScreen(screenKey())) return;
-  panel.classList.add('locked');
+  lockPanel(panel);
   sfx('rare');
   const face = slot.matches('.cf') ? slot : slot.querySelector<HTMLElement>(':scope > .cf');
   // 1.1.1 테스터: 고른 카드가 창에 가려진 레일로 작게 날아가고, 나머지는 검은 덩어리로 무너지며 받침 아래 줄만 남아 어색했다 →
@@ -3317,7 +3353,7 @@ const takeFx = (slot: HTMLElement, then: () => void, keep = false): void => {
     window.setTimeout(() => sparksAt(r.left + r.width / 2, r.top + r.height / 2, 14, 60), 160);
   }
   window.setTimeout(() => {
-    panel.classList.remove('locked');
+    unlockPanel(panel);
     then();
   }, 620);
 };
@@ -3341,6 +3377,8 @@ const openOverlay = (html: string, cls = ''): HTMLElement => {
   // 키트 창(openWin)이 아니면 막 · Esc 닫기와 틀 클래스를 걷는다 (D-391)
   if (!cls) dropWinDismiss();
   panel.classList.remove(...panelCls);
+  // 새 창은 앞 화면의 잠금을 물려받지 않는다 (D-597)
+  freshPanel(panel);
   panelCls = cls.split(' ').filter(Boolean);
   panel.classList.add(...panelCls);
   panel.innerHTML = html;
@@ -3390,6 +3428,7 @@ let debugRecruit = false;
 const closeOverlay = (): void => {
   clearPeeks();
   dropWinDismiss();
+  freshPanel($('overlay-panel'));
   if ($('overlay').hidden) return;
   modalOut($('overlay'), $('overlay-panel'), () => ($('overlay').hidden = true));
 };
@@ -3595,6 +3634,8 @@ const finishNow = (): void => {
       const rested = restSquad(survived, restHeal());
       // 원래 줄 순서대로 (돌아온 분대원은 HP 50%, 회복은 받지 않는다)
       squad = before.flatMap((u) => [...rested, ...back].filter((v) => v.serial === u.serial));
+      // 입문 시험대(drill) 피해는 출하로 이어지지 않는다 (D-597, 플레이 리뷰 P1-2: 시험대 C에서 마무리를 놓치면 첫 실전을 나이트 8/45로 시작했다)
+      if (cur.drill) squad = tutorialMend(before, squad);
     }
     // 유품 태엽: 고르게 하지 않는다 — 자동으로 나사가 되고 한 줄만 (D-155, 관리 피로 제로)
     const heirs = fallen.filter((c) => c.t !== 'K');
@@ -5137,7 +5178,7 @@ const tutMark = (part: string): void => {
 const tutorial = async (part: string, steps: TutStep[]): Promise<boolean> => {
   tutActive = true;
   document.querySelector('.coach-band')?.remove();
-  const done = await runTutorial(steps, { keep: () => { const k = myPiece('K'); return k ? [tileRect(k)] : []; }, pause: () => enemyTurn || document.body.classList.contains('rev-freeze') || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, skipAgain: TUT.skipAgain, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
+  const done = await runTutorial(steps, { keep: () => b.s.pieces.filter((p) => ((p.type === 'K' && p.body === undefined) || p.id === selPiece) && p.hp > 0).map(tileRect), soft: battleSoft, pause: () => enemyTurn || document.body.classList.contains('rev-freeze') || (busy && !document.body.classList.contains('between')), name: TUT.name, skip: TUT.skip, skipAgain: TUT.skipAgain, next: TUT.next, face: '<img src="ui/hud/adjutant.png" alt="" width="56" height="56">', tick: () => sfx('tap', 3) });
   tutActive = false;
   tutMark(part);
   track('tutorial', { part, completed: done });
