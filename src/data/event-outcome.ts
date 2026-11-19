@@ -5,7 +5,7 @@
  * 열쇠: `${선택지 번호}:${결과 칸}` — 결과 칸은 확률 선택이면 0(좋음) · 1 · 2, 아니면 0.
  * who가 없으면 사건의 NPC가 말한다. line이 없으면 대사 없이 상황 → 요약.
  */
-export interface Outcome { scene: string; line?: string; who?: string }
+export interface Outcome { scene: string; line?: string; who?: string; /** 말하는 쪽이 사건 그림 속 NPC가 아닐 때 대사 칸 얼굴 — 분대원 기물 얼굴(ui/hud/crew-*.png). 없으면 사건 그림 초점을 잘라 쓴다 (D-700: 갓 굳은 폰이 주물 틀 얼굴로 말하던 문제) */ face?: string }
 
 export const EVENT_OUTCOME: Record<string, Record<string, Outcome>> = {
   tinker: {
@@ -96,7 +96,7 @@ export const EVENT_OUTCOME: Record<string, Record<string, Outcome>> = {
     '1:0': { scene: '비숍이 소매에서 금박 명령서를 꺼낸다.', line: '“무르기는 없소. 금박은 벗겨지지 않으니.”' },
   },
   castMold: {
-    '0:0': { scene: '에이스의 몸에 쇳물을 덮어 본을 뜬다. 틀에서 그를 닮은 폰이 일어선다.', line: '“…저, 형님이랑 똑같이 생겼어요?”', who: '갓 굳은 폰' },
+    '0:0': { scene: '에이스의 몸에 쇳물을 덮어 본을 뜬다. 틀에서 그를 닮은 폰이 일어선다.', line: '“…저, 형님이랑 똑같이 생겼어요?”', who: '갓 굳은 폰', face: 'ui/hud/crew-P.png' },
   },
   crownAltar: {
     '0:0': { scene: '나사를 모두 접시에 쏟는다. 빛바랜 금박 아래에서 부품 하나가 빛난다.', line: '‘바친 만큼 돌려받았다.’' },
