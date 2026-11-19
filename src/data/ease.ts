@@ -11,6 +11,13 @@ export const EASE = {
   act1BossUpTo: 1,
   /** 원수가 서기 시작하는 막 (승급별) — 첫째 · 둘째 왕관은 2막부터, 그 위는 1막부터 */
   nemesisFromAct: [2, 2, 1],
+  /**
+   * 2막 일반 대국 덜어 내기 (D-660, 결정 2차 1가 — D-656): 첫째 · 둘째 왕관(승급 ≤ act2LightUpTo)의 2막 일반 대국(검문 · 반장 제외)은
+   * 적 폰을 act2Pawns기 덜 세운다(FOE.extraPawns 몫 + 편성 폰 하나). 보통 봇 2막에서 끝난 출하의 절반이 2막 일반 대국의 상처를 안고 반장에서 졌다.
+   * 측정(보통 봇 400출하): 폰 −1 = 2막 일반 대국 패배 15 → 15% · 남은 체력 0.30 → 0.31(효과 없음) / 폰 −2 = 15 → 10% · 0.30 → 0.41 / 지도 대국 칸 무게 ×0.5 = 15 → 12%.
+   */
+  act2LightUpTo: 1,
+  act2Pawns: 2,
 } as const;
 
 const at = <T>(list: readonly T[], asc: number): T => list[Math.max(0, Math.min(list.length - 1, asc))];

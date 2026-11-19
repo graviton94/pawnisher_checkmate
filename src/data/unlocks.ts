@@ -13,6 +13,8 @@ export const STARTER_PARTS: string[] = [
   // 기록 유물 2차 (D-384)
   'notches', 'aceBadge', 'heavyHand', 'scarPlate', 'cleanSheet', 'sergeant',
   'rookBolt', 'bishopLens', 'pawnPike', 'oath', 'horseshoe', 'magnet', 'assembly', 'drum', 'crown', 'throne', 'coil', 'echo', 'hammer', 'spare', 'tape', 'lance', 'spurs', 'barracks', 'banner', 'scepter', 'gilded', 'fuse', 'conductor', 'anvilPlate', 'chainShot', 'bloodPact', 'brittle', 'greed', 'whetstone',
+  // 축 규칙 부품 (D-662, 결정 12가 — 출시 전 지배 전략 완화): 처음부터 — 연쇄 · 황금 말고 고를 길
+  'leadSpur', 'pikeRow', 'shieldEdge', 'quench', 'ramRod', 'snareFork',
 ];
 /** 열리는 순서 — 카드 둘마다 부품 하나 */
 export const UNLOCK_ORDER: string[] = [

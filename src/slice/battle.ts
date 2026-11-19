@@ -155,6 +155,10 @@ export interface SliceBattle {
   bombRow: number | null;
   /** 묶인 적 — 핀 (D-281): 다음 적 차례에 못 움직인다 */
   pinned?: number[];
+  /** 홀로 남은 적 킹 (D-663): 호위가 다 쓰러진 턴 · 그때 내 분대 HP 합 · 쓰러진 수 — 화면 알림 · 측정 */
+  lone?: { turn: number; hp: number; falls: number };
+  /** 홀로 남은 적 킹 알림을 띄웠나 (D-663 — 대국마다 한 번) */
+  loneTold?: boolean;
   /** 디스커버드 (D-281): 다음 공격 카드 한 장의 배율 */
   nextMult?: number;
   /** 검수 반장: 불량 도장이 찍힌 내 기물 (공격 ×0.5) */
@@ -303,6 +307,13 @@ const calipersOn = (b: SliceBattle, p: Piece, to: Pos): boolean => has(b, 'calip
 const lastAxleOn = (b: SliceBattle, p: Piece): boolean => p.type === 'K' && has(b, 'lastAxle') && p.hp < p.maxHp * PART_NUM.lastAxleAt;
 /** 마지막 숨: 그 기물의 버팀이 하나 남은 동안 */
 const lastBreathOn = (b: SliceBattle, p: Piece): boolean => has(b, 'lastBreath') && p.side === 0 && (b.s.doorIds ?? []).filter((x) => x === p.id).length === 1;
+/** 선두 박차 (D-662): 이번 턴 아직 적을 친 적이 없으면 — 그 턴의 첫 공격 */
+const leadSpurOn = (b: SliceBattle, p: Piece): boolean => p.type === 'N' && p.side === 0 && has(b, 'leadSpur') && !(b.hitIds ?? []).length;
+/** 창끝 대열 (D-662): 폰이 내려앉을 칸 곁(여덟 칸)의 내 폰 수 */
+const pikeRowAdd = (b: SliceBattle, p: Piece, to: Pos): number =>
+  p.type === 'P' && has(b, 'pikeRow') ? PART_NUM.pikeRow * b.s.pieces.filter((q) => q.side === 0 && q.type === 'P' && q.id !== p.id && q.hp > 0 && Math.max(Math.abs(q.x - to.x), Math.abs(q.y - to.y)) === 1).length : 0;
+/** 방패 모서리 (D-662): 킹 공격이 방열판을 피해로 — 턴에 한 번 */
+const shieldEdgeOn = (b: SliceBattle, p: Piece): boolean => p.type === 'K' && p.side === 0 && has(b, 'shieldEdge') && !b.once.includes('shieldEdge');
 /** 반장 사냥꾼: 반장 대국인 동안 */
 const bossBaneOn = (b: SliceBattle): boolean => b.boss && has(b, 'bossBane');
 /** 왕의 분노 배율 (잃은 HP만큼, 최대 ×3) */
@@ -649,6 +660,16 @@ export interface FoeOpts {
   losing?: boolean;
 }
 
+/**
+ * 홀로 남은 적 킹 (D-663, 사용자 실기기: 「적 킹 혼자 남았을 때가 너무 파괴적 — 하나 잡는 데 소모 전력이 너무 많다」):
+ * 반장 · 거대 주물이 아닌 판에서 적이 킹 하나뿐이면 참. 이때 적 킹은 한 차례에 FOE_AI.loneActs번만 움직인다.
+ */
+export const loneFoeKing = (s: BattleState, boss = false): boolean => {
+  if (boss) return false;
+  const foes = s.pieces.filter((q) => q.side === 1 && q.hp > 0);
+  return foes.length === 1 && foes[0].type === 'K' && !foes[0].giant;
+};
+
 /** 적이 지고 있나 — 킹 말고 desperate기 이하가 남았거나 킹 HP가 절반 아래 */
 const foeLosing = (s: BattleState): boolean => {
   const k = kingOf(s, 1);
@@ -773,7 +794,8 @@ const extendPlan = (s0: BattleState, ap0: number, turn: number, boss: boolean, s
     for (const p of s.pieces.filter((q) => q.side === 1 && !skip.has(q.id) && !dead.has(q.id))) {
       const n = acted.get(p.id) ?? 0;
       const cost = SLICE.moveCost[p.type];
-      if (n >= (capture ? 1 : FOE_AI.perPiece) || cost > ap) continue;
+      // 홀로 남은 적 킹 (D-663): 두 번째 행동 없이 한 번만 — 마무리가 소모전이 되지 않게
+      if (n >= (capture ? 1 : p.type === 'K' && loneFoeKing(s, boss) ? FOE_AI.loneActs : FOE_AI.perPiece) || cost > ap) continue;
       const best = bestFor(s, p, undefined, turn, o);
       if (!best) continue;
       // 적도 플레이어와 같은 값표로 태엽을 쓴다 (D-202). 반장(적 킹)은 같은 태엽을 쓰되 먼저 고른다 (D-201)
@@ -1164,13 +1186,14 @@ export const previewPlay = (b: SliceBattle, i: number, pieceId: number, to?: Pos
       * (p.type === 'Q' && has(b, 'queenCrown') ? PART_NUM.queenCrown : 1)
       * (lastAxleOn(b, p) ? PART_NUM.lastAxle : 1)
       * (grazeOn(b, pieceId, to) && has(b, 'ventHole') ? PART_NUM.ventGraze / SLICE.grazeMult : 1)
-      * (bossBaneOn(b) ? PART_NUM.bossBane : 1);
+      * (bossBaneOn(b) ? PART_NUM.bossBane : 1)
+      * (leadSpurOn(b, p) ? PART_NUM.leadSpur : 1);
     const graze = (grazeOn(b, pieceId, to) ? SLICE.grazeMult : 1) * ((b.shocked ?? []).includes(pieceId) ? SLICE.shockMult : 1) * ((b.evaded ?? []).includes(pieceId) ? SLICE.evadeMult : 1) * (b.stampId === pieceId ? BOSS_NUM.stampMult : 1);
-    const shieldStrike = p.type === 'R' && c.who === 'R' && COMMANDS[baseOf(b.hand[i])].cost >= 2 && has(b, 'siegeLatch') && !b.once.includes(`siegeLatch:${pieceId}`) ? PART_NUM.siegeLatch : 0;
+    const shieldStrike = p.type === 'R' && c.who === 'R' && COMMANDS[baseOf(b.hand[i])].cost >= 2 && has(b, 'siegeLatch') && !b.once.includes(`siegeLatch:${pieceId}`) ? PART_NUM.siegeLatch : shieldEdgeOn(b, p) ? PART_NUM.shieldEdge : 0;
     const sim = simulate(s, [{ pieceId, to }], { freeAp: true, shieldStrike, firstMult: sealReady(b, pieceId) ? PART_NUM.relaySeal : 1, mult: (c.mult ?? 1) * chainMult(b.kills, b.parts) * rage * crown * perKill * graze, add: (c.add ?? 0) + chainAdd(b.kills, b.parts) + (has(b, 'whetstone') ? PART_NUM.whetAdd : 0) + (p.type === 'P' && has(b, 'pawnPike') ? PART_NUM.pikeAdd : 0) + (p.type === 'P' && has(b, 'oath') ? PART_NUM.oathAdd : 0) + (b.greedAdd ?? 0)
       // 부품 확장 2차 (D-287)
       + (p.type === 'N' && has(b, 'jumpSpring') ? PART_NUM.jumpSpring : 0) + (p.type === 'B' && has(b, 'stainedGlass') ? PART_NUM.stainedGlass : 0) + (has(b, 'redLine') ? PART_NUM.redLine : 0)
-      + (calipersOn(b, p, to) ? PART_NUM.calipers : 0) });
+      + (calipersOn(b, p, to) ? PART_NUM.calipers : 0) + pikeRowAdd(b, p, to) });
     if (!sim.ok) return null;
     if (c.push) applyPush(b, sim, pieceId);
     // 카드 각인은 이번 공격에만
@@ -1205,7 +1228,7 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     const grazed = grazeOn(b, pieceId, to);
     const sim = previewPlay(b, i, pieceId, to);
     if (!sim) return '갈 수 없는 칸입니다.';
-    if (sim.events.some((e) => e.type === 'attack' && e.shieldSpent)) b.once.push(`siegeLatch:${pieceId}`);
+    if (sim.events.some((e) => e.type === 'attack' && e.shieldSpent)) b.once.push(p.type === 'K' ? 'shieldEdge' : `siegeLatch:${pieceId}`);
     b.s = sim.state;
     // 순수 회피 보너스는 그 기물의 다음 공격 한 번에 쓰이고 사라진다
     const struck = sim.events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => before.pieces.find((q) => q.id === h.targetId)?.side === 1 && h.damage > 0));
@@ -1216,7 +1239,10 @@ export const playCard = (b: SliceBattle, i: number, pieceId?: number, to?: Pos):
     if (c.nextMult) b.nextMult = c.nextMult + (has(b, 'openGate') ? PART_NUM.openGate : 0);
     if (c.fork && has(b, 'forkGear') && forkOn(before, p, to)) { gained += PART_NUM.forkGearAp; events.push({ type: 'apGain', side: 0, amount: PART_NUM.forkGearAp }); }
     if ((c.axis === 'tactic' || c.axis2 === 'tactic') && has(b, 'gameRecord') && !b.once.includes('gameRecord')) { b.once.push('gameRecord'); drawCards(b, 1); }
-    if (c.stun) {
+    // 갈래 올가미 (D-662): 포크 칸이면 친 적을 모두 묶는다 — 턴에 한 번
+    const snare = !!c.fork && has(b, 'snareFork') && !b.once.includes('snareFork') && forkOn(before, p, to);
+    if (snare) b.once.push('snareFork');
+    if (c.stun || snare) {
       const ids = sim.events.flatMap((e) => (e.type === 'attack' || e.type === 'blast' ? e.hits.filter((h) => !h.killed && before.pieces.find((q) => q.id === h.targetId)?.side === 1 && before.pieces.find((q) => q.id === h.targetId)?.type !== 'K').map((h) => h.targetId) : []));
       b.pinned = [...new Set([...(b.pinned ?? []), ...ids])];
       for (const id of ids) { const q = findPiece(b.s, id); if (q) q.shield = 0; }
@@ -1603,6 +1629,19 @@ const applyPush = (b: SliceBattle, sim: { state: BattleState; events: BattleEven
       sim.events.push({ type: 'move', order: 0, pieceId: t.id, from: { x: t.x, y: t.y }, to });
       t.x = to.x;
       t.y = to.y;
+      // 쇠 밀대 (D-662): 빈 칸으로 밀어내도 밀린 적이 충돌 피해의 일부를 받는다
+      if (b.parts.includes('ramRod')) {
+        const d2 = Math.round(dmg * PART_NUM.ramRod);
+        const absorbed = Math.min(t.shield, d2);
+        t.shield -= absorbed;
+        t.hp = Math.max(0, t.hp - (d2 - absorbed));
+        sim.events.push({ type: 'blast', pos: { x: t.x, y: t.y }, label: '밀림!', hits: [{ targetId: t.id, damage: d2, shieldAbsorbed: absorbed, hpAfter: t.hp, killed: t.hp <= 0 }] });
+        if (t.hp <= 0) {
+          sim.removed.push(t);
+          if (t.type === 'K') s.winner = t.side === 1 ? 0 : 1;
+          s.pieces = livePieces(s.pieces);
+        }
+      }
       continue;
     }
     // 충돌: 밀린 적 + 부딪힌 기물
@@ -2013,7 +2052,13 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
   b.played = [];
   b.hand = [];
   const rustNow = stallDue(b);
-  const { events } = enemyPhase(b);
+  if (!b.lone && kingOf(b.s, 1) && b.s.pieces.every((q) => q.side !== 1 || q.type === 'K')) b.lone = { turn: b.turn, hp: b.s.pieces.filter((q) => q.side === 0).reduce((a, q) => a + Math.max(0, q.hp), 0), falls: b.falls.length };
+  // 담금질 통 (D-662): 턴을 끝낼 때 쌓인 연쇄를 킹 방열판으로 — 적 차례 전에
+  const quenched: BattleEvent[] = [];
+  const qk = has(b, 'quench') && b.kills > 0 ? kingOf(b.s, 0) : undefined;
+  if (qk) { const n = Math.min(PART_NUM.quenchCap, b.kills * PART_NUM.quench); qk.shield += n; quenched.push({ type: 'shield', pieceId: qk.id, amount: n }); }
+  const { events: foe } = enemyPhase(b);
+  const events = [...quenched, ...foe];
   // 판돈 「킹이 맞지 않는다」 (#12): 적 차례에 우리 킹에 닿은 공격 · 폭발 (방열판으로 막아도 맞은 것)
   const myKing = kingOf(before, 0);
   if (myKing && events.some((e) => (e.type === 'attack' || e.type === 'blast') && e.hits.some((h) => h.targetId === myKing.id && h.damage + h.shieldAbsorbed > 0))) b.kingHit = true;
@@ -2056,7 +2101,7 @@ export const endTurn = (b: SliceBattle, force = false): { events: BattleEvent[];
     // 무거운 플라이휠 (D-287): 남은 태엽 최대 2가 넘어간다
     b.ap = Math.min(SLICE.apCap, b.apMax + (gildedHit ? 1 : 0) + (has(b, 'flywheel') ? Math.min(PART_NUM.flywheel, Math.max(0, b.ap)) : 0));
     // 잔열 (D-282): 연쇄 절반이 남는다
-    b.kills = has(b, 'afterheat') ? Math.floor(b.kills * PART_NUM.afterheatKeep) : 0; // D-457: 절반 → 4분의 1
+    b.kills = has(b, 'afterheat') ? Math.min(PART_NUM.afterheatCap, Math.floor(b.kills * PART_NUM.afterheatKeep)) : 0; // D-457: 절반 → 4분의 1
     b.hitIds = [];
     // 땜질 도구함 (D-282 → D-299): 킹을 뺀 가장 다친(잃은 HP가 큰) 내 기물 toolboxN개 HP +toolbox — 킹을 고치면 출하 목숨 보험이 되어 힘 값이 양과 무관하게 튀었다
     if (has(b, 'toolbox'))

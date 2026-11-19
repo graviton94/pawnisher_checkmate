@@ -7,7 +7,7 @@ import { COND_TEXT } from '../data/hud';
 export type PartState = 'waiting' | 'ready' | 'spent';
 export interface PartStatus { state: PartState; detail: string }
 export const PART_STATE_LABEL: Record<PartState, string> = { waiting: '조건 대기', ready: '발동 가능', spent: '이번 턴 소진' };
-const TRACKED_PARTS = ['horseshoe','relayGear','relaySeal','sharedPlate','siegeLatch','gameRecord','pinNeedle','recoilSpring','whistle','queenFan','fuse','tally'] as const;
+const TRACKED_PARTS = ['horseshoe','relayGear','relaySeal','sharedPlate','siegeLatch','gameRecord','pinNeedle','recoilSpring','whistle','queenFan','fuse','tally','shieldEdge','snareFork'] as const;
 /** 상태(면) · 지속(동안) 부품 (D-592): 엔진 partCond로 지금 켜졌는지 본다 */
 export const STATE_PARTS = ['lastAxle', 'lastBreath', 'bossBane', 'vise', 'calipers', 'forkGear'] as const;
 

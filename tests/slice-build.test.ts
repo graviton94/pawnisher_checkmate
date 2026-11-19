@@ -37,10 +37,10 @@ describe('빌드 축 · 부품 (D-144)', () => {
     expect(typeof r1).toBe('object');
     expect(typeof rewind(r1 as SliceBattle)).toBe('string');
   });
-  it('증폭 코일: 연쇄마다 ×1.2, 최대 ×4 (D-454 · D-457 · D-542) — 기본 연쇄는 합 (D-205)', async () => {
+  it('증폭 코일: 연쇄마다 ×1.2, 최대 ×3 (D-454 · D-457 · D-542 · D-664) — 기본 연쇄는 합 (D-205)', async () => {
     const { chainAdd } = await import('../src/slice/battle');
     expect(chainMult(4, ['coil'])).toBeCloseTo(1.2 ** 4);
-    expect(chainMult(9, ['coil'])).toBe(4);
+    expect(chainMult(9, ['coil'])).toBe(3);
     expect(chainMult(6)).toBe(1);
     expect(chainAdd(6)).toBe(SLICE.chainCap * SLICE.chainAddPerKill);
     expect(chainAdd(6, ['coil'])).toBe(0);
@@ -283,7 +283,7 @@ describe('볼륨 — 카드 40 · 부품 24 (D-172)', () => {
     const { SLICE_PARTS } = await import('../src/slice/parts');
     expect(Object.keys(COMMANDS).filter((k) => !k.endsWith('+') && !k.endsWith('~')).length).toBe(93); // + 카드 확장 43 (D-281) · 쇳물 서약 (D-462, 종막 전용)
     expect(REWARD_COMMANDS.length).toBe(86); // + 연쇄 소모 3 (D-203) · 빌드 다양성 6 (D-217 4)
-    expect(Object.keys(SLICE_PARTS).length).toBe(84); // + 기록 유물 2차 여섯 (D-384) · 넷 (D-363) // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
+    expect(Object.keys(SLICE_PARTS).length).toBe(90); // + 축 규칙 부품 여섯 (D-662) // + 기록 유물 2차 여섯 (D-384) · 넷 (D-363) // + 닳은 숫돌 (D-205) · 작은 개척자의 맹세 (D-217)
   });
   it('양날: 깨지는 유리 심장(태엽 +1 · 최대 HP −20%) · 탐욕의 저울(나사 100마다 공격 +3, D-227) · 피의 계약(턴 끝 킹 −4)', () => {
     const b = mk(['brittle']);
