@@ -112,10 +112,12 @@ body.slice.lay-f #right > .actions { margin-top: 24px; } /* D-558: 「되감기�
 
 /* ---------- 손패 넘침 (검수 M4): 접힌 판(효과 줄 숨김) → 그래도 넘치면 칸 아래 「▼ N장 더」 띠 (철 판 · 1도트 테 · 12px 황동, 누름 48) ---------- */
 #hand.tight > .hc:not(.open):not(.armed):not(.lit) .hc-fx { display: none; } /* D-592: 조건 맞은 카드는 접혀도 까닭 한 줄을 남긴다 */
-#hand > .hand-more { position: sticky; bottom: 0; z-index: 3; flex: none; display: flex; align-items: center; justify-content: center; height: 28px; margin: 0; padding: 0; border: 0; background: #1c1b22; box-shadow: inset 0 calc(var(--px) * 1) 0 #56545e, 0 calc(var(--px) * -1) 0 #0b0b0e; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; cursor: pointer; }
-#hand > .hand-more::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 48px; }
-#hand > .hand-more:active { background: #0b0b0e; }
-body.kb-nav #hand > .hand-more:focus-visible { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * -1); }
+/* D-596: 띠는 보이는 28px 그대로, 누름 칸은 상자 자체가 48px — 위 20px은 비친 다음 카드 위(그 카드를 누르면 레일이 내려와 보인다). 레일 계산(fitHand · revealPick)도 48을 덮인 높이로 센다 */
+#hand > .hand-more { position: sticky; bottom: 0; z-index: 3; flex: none; display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: 48px; margin: 0; padding: 20px 0 0; border: 0; background: none; box-shadow: none; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; font-synthesis: none; cursor: pointer; }
+#hand > .hand-more::before { content: ''; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 28px; background: #1c1b22; box-shadow: inset 0 calc(var(--px) * 1) 0 #56545e, 0 calc(var(--px) * -1) 0 #0b0b0e; }
+#hand > .hand-more:active::before { background: #0b0b0e; }
+body.kb-nav #hand > .hand-more:focus-visible { outline: none; }
+body.kb-nav #hand > .hand-more:focus-visible::before { outline: calc(var(--px) * 1) solid var(--t-gold); outline-offset: calc(var(--px) * -1); }
 
 /* ---------- 카드 레일 화살 (검수 M4): 줄 양 끝 철 단추 48 ◀ ▶ — 그쪽에 카드가 더 있을 때만 ---------- */
 .rail-nav { position: absolute; z-index: 4; height: 0; pointer-events: none; }
