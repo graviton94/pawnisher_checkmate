@@ -1,0 +1,128 @@
+{
+ "pile-btn-idle": {
+  "pitch": 7.57,
+  "phase": [
+   1.51,
+   0.5
+  ],
+  "err": 7.96,
+  "size": [
+   88,
+   44
+  ],
+  "slice": {
+   "left": 14,
+   "right": 35,
+   "socket_from_right": [
+    32,
+    12,
+    20,
+    19
+   ]
+  },
+  "final": [
+   50,
+   44
+  ]
+ },
+ "pile-btn-down": {
+  "pitch": 7.57,
+  "phase": [
+   6.06,
+   0.0
+  ],
+  "err": 6.75,
+  "size": [
+   86,
+   40
+  ],
+  "slice": {
+   "left": 14,
+   "right": 35,
+   "socket_from_right": [
+    31,
+    14,
+    20,
+    19
+   ]
+  },
+  "final": [
+   50,
+   44
+  ]
+ },
+ "pile-btn-new": {
+  "pitch": 7.57,
+  "phase": [
+   7.07,
+   7.07
+  ],
+  "err": 9.2,
+  "size": [
+   88,
+   44
+  ],
+  "slice": {
+   "left": 14,
+   "right": 35,
+   "socket_from_right": [
+    31,
+    12,
+    19,
+    19
+   ]
+  },
+  "final": [
+   50,
+   44
+  ]
+ },
+ "pile-deck": {
+  "pitch": 7.57,
+  "phase": [
+   1.01,
+   1.01
+  ],
+  "err": 9.04,
+  "size": [
+   30,
+   27
+  ],
+  "final": [
+   30,
+   27
+  ]
+ },
+ "pile-crew": {
+  "pitch": 7.57,
+  "phase": [
+   4.04,
+   1.01
+  ],
+  "err": 12.26,
+  "size": [
+   30,
+   27
+  ],
+  "final": [
+   30,
+   27
+  ]
+ },
+ "pile-discard": {
+  "pitch": 7.57,
+  "phase": [
+   7.07,
+   1.01
+  ],
+  "err": 9.29,
+  "size": [
+   29,
+   29
+  ],
+  "final": [
+   29,
+   29
+  ]
+ }
+}

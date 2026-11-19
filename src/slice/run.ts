@@ -33,6 +33,8 @@ export interface BattleDef {
   reward: Reward;
   boss?: boolean;
   bossRule?: BossRule;
+  /** 막 번호 (D-640: 전투 바탕 battle-{막}.png — 종막은 3) */
+  act?: 1 | 2 | 3;
   /** 검문 판 (D-506: 바크 초상이 검문 적 킹으로) */
   check?: boolean;
   /** 승급 12: 적 하나가 정예 (왕관 · HP ×2) */
@@ -390,6 +392,7 @@ export const ftueRetry = (d: BattleDef): BattleDef => (d.ftue ? { ...d, ftue: fa
 /** 대국 하나 만들기 */
 export const battleFor = (act: 1 | 2 | 3, kind: 'battle' | 'check' | 'boss', rng: Rng, asc = 0, rule?: BossRule): BattleDef => {
   const d = battleBase(act, kind, rng, rule);
+  d.act = act;
   // 난이도 구조 (D-243): 막마다 판이 넓어지고 일반 · 검문 적 킹은 호위가 있는 동안 방열판을 두른다
   const [w, h] = SLICE.boardByAct[act - 1];
   d.w ??= w;
@@ -500,6 +503,7 @@ export const FINAL_BOSS = (asc = 0): BattleDef => ({
   atk: 0.85 * (asc >= 8 ? ASC_NUM.bossAtk / ASC_NUM.enemyAtk : 1), // D-358: 도금왕이 보통 봇 출하의 가장 큰 무덤(56%)
   w: 8,
   h: 7,
+  act: 3, // D-640: 종막 바탕은 3막 「검수」 바탕을 같이 쓴다
   title: '종막 — 도금왕',
   narr: `${asc > 0 ? GILDED_STORY.introLater : GILDED_STORY.intro}\n도금왕 “${GILDED_STORY.say(asc)}”`,
   tell: BOSS_RULES.gilded.tell,

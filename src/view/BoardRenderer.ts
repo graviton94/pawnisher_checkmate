@@ -282,6 +282,8 @@ class BoardScene extends Phaser.Scene {
   /** PC 정수 기물 칸으로 판을 키웠다 — 카메라 여유를 줄인다 (D-563) */
   private tightPad = false;
   dpr = 1;
+  /** 판 밖을 투명하게 (D-640 — 본편 전투 바탕) */
+  clearBg = false;
   state!: BattleState;
   private tilesG!: Phaser.GameObjects.Graphics;
   private marksG!: Phaser.GameObjects.Graphics;
@@ -471,7 +473,8 @@ class BoardScene extends Phaser.Scene {
     // 카메라 스크롤을 월드 정수로 내리는 roundPixels(pixelArt 기본)는 소수 줌(2.625)에서 칸 모서리를 픽셀 사이로 민다 — 끄고 moveCamera가 캔버스 픽셀에 맞춘다 (D-525)
     this.cameras.main.setRoundPixels(false);
     this.cameras.main.setZoom(this.dpr);
-    this.cameras.main.setBackgroundColor(C.bg);
+    // D-640: 본편(#board data-clear)은 판 밖을 비워 #app 뒤 막별 전투 바탕이 보이게 한다. 2.0은 그대로 먹색
+    this.cameras.main.setBackgroundColor(this.clearBg ? 'rgba(0,0,0,0)' : C.bg);
     this.tilesG = this.add.graphics().setDepth(0.1);
     this.tilesC = this.add.container(0, 0).setDepth(0);
     this.marksG = this.add.graphics().setDepth(1);
@@ -2371,6 +2374,7 @@ export class BoardRenderer implements BoardView {
     this.scene.fxHook = this.boardFx;
     this.scene.announce = announce;
     this.scene.dpr = dpr;
+    this.scene.clearBg = 'clear' in host.dataset;
     this.scene.input2 = input;
     // 보드 위 글자(피해 숫자·순번)가 대체 글꼴로 먼저 그려지지 않게 갈무리를 먼저 불러 둔다
     const fonts = Promise.all([document.fonts.load('12px Galmuri11'), document.fonts.load('700 12px Galmuri11'), document.fonts.load('15px Galmuri14')]).catch(() => undefined);
@@ -2380,6 +2384,7 @@ export class BoardRenderer implements BoardView {
       type: Phaser.AUTO,
       parent: host,
       backgroundColor: '#110F15',
+      transparent: this.scene.clearBg,
       scale: { mode: Phaser.Scale.NONE, width: w * dpr, height: h * dpr, zoom: 1 / dpr },
       scene: this.scene,
       banner: false,
