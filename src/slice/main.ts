@@ -2630,7 +2630,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
   hint.hidden = true;
   const alive = () => narrEl.isConnected;
   /** 서술(2인칭, 문장마다 줄바꿈 D-263) · NPC 대사(이름표 + 큰따옴표) · 독백(‘ ’, 이름표 없이) — 자리는 하나씩, 새 줄이 옛 줄을 갈아 쓴다 */
-  const say = async (kind: 'narr' | 'npc', text: string, who?: string): Promise<void> => {
+  const say = async (kind: 'narr' | 'npc', text: string, who?: string, face?: string): Promise<void> => {
     if (!text || !alive()) return;
     // 괄호로 쓴 물건 「대사」는 묘사(⑤)다 — 이름표 없이 서술 띠로 (한 덩이 = 한 목소리)
     if (kind === 'npc' && /^\(.*\)$/.test(text)) return say('narr', text.slice(1, -1));
@@ -2650,6 +2650,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
     sayEl.querySelector('.ws-face')?.remove();
     // 얼굴은 액자(.ws-face) 안 img — 기기 픽셀 정수배로 초점 자리만 보인다 (facesnap D-552 · 늘이지 않는다 D-386)
     if (king) sayEl.insertAdjacentHTML('afterbegin', `<span class="ws-face" aria-hidden="true">${((f) => portraitImg(f, '<img src="ui/hud/crew-K.png" alt="">').replace('<img ', `<img data-fs-focus="${f.at}" `))(PAPER_FACE[EVENT_PONDER_MOOD[id] ?? 'calm'])}</span>`);
+    else if (npcFace && face) sayEl.insertAdjacentHTML('afterbegin', `<span class="ws-face ws-npc ws-crew" aria-hidden="true"><img src="${face}" alt=""></span>`);
     else if (npcFace) sayEl.insertAdjacentHTML('afterbegin', `<span class="ws-face ws-npc" aria-hidden="true"><img src="${art.getAttribute('src')}" alt="" data-fs-focus="${Math.round(fx * 100)}% ${Math.round(fy * 100)}%"></span>`);
     replay(sayEl, 'in');
     sfx('tap', 4);
@@ -2844,7 +2845,7 @@ const eventScreen = (id: (typeof SLICE_EVENT_IDS)[number]): void => {
         if (good) sfx(out.partPick ? 'rare' : 'coin'); else sfx('hurt');
         const scene = (oc?.scene ?? out.text ?? '').replace(/^\((.*)\)$/, '$1');
         await typeIn(sumEl.querySelector<HTMLElement>('.ws-sum-n')!, scene.replace(/([.!?…])\s+(?=\S)/g, '$1\n'), 18, undefined, alive);
-        await say('npc', oc?.line ?? (good ? talk.win : talk.lose ?? talk.win), oc?.who);
+        await say('npc', oc?.line ?? (good ? talk.win : talk.lose ?? talk.win), oc?.who, oc?.face);
         finalGo(out.partPick ? EVENT_UI.pick : EVENT_UI.leave, after);
       })();
     },
