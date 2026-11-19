@@ -1842,6 +1842,19 @@ body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-l .ln-fx .n { display: inline;
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx .n-hit { color: #a8222e; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx .n-gain { color: #2a6a2e; }
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct .ln-fx .n-etc { color: #7a5214; }
+/* D-669 ① 시작 세트 압정 (D-594 남은 것): 설명지 위 끝 압정(틀 71 ~ 75도트)이 두 줄 묘사 첫 줄에 1도트 걸쳤다 — 시작 세트 화면은 시작 세트끼리만
+   한 줄에 서므로(섞인 줄 점선 맞춤과 상관없음) 설명지 칸을 1도트 내린다(76 ~ 110도트, 찢긴 끝 위). 줄어든 1도트는 조건/효과 행에서 덜어 낸다 */
+body.slice .cf.cf.cf.cf.cf.cf.cf.start-set > .cf-desc { top: 60.317% !important; height: 26.984% !important; }
+@container cf (max-width: 167.98px) { body.slice .cf.cf.cf.cf.cf.cf.cf.start-set > .cf-desc > .ct-s { --pb: 11px; } }
+@container cf (max-width: 165.98px) { body.slice .cf.cf.cf.cf.cf.cf.cf.start-set > .cf-desc > .ct-s { --pb: 10px; } }
+@container cf (max-width: 159.98px) { body.slice .cf.cf.cf.cf.cf.cf.cf.start-set > .cf-desc > .ct-s { --fg: 1px; --ra: 1px; --rb: 1px; --pn: 11px; } }
+/* D-669 ② 150px 아래 카드(사건 결과 1박 작은 분대원 카드 — 772×360 138px): 공통 칸(35도트 = 57.5px)이 격자(62px)보다 작아 위아래 2.25px 잘렸다.
+   분대원 틀은 종이가 71 ~ 110도트(압정 66 ~ 69 아래), 명령 틀은 74 ~ 111도트 — 작은 카드에서만 칸을 종이 끝까지 넓히고 묘사 두 줄 틈을 1px로 */
+@container cf (max-width: 149.98px) {
+  body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s { --fg: 1px; --pn: 11px; }
+  body.slice .cf.cf.cf.cf.cf.cf.cf.crew-card > .cf-desc { top: 56.349% !important; height: 30.952% !important; }
+  body.slice .cf.cf.cf.cf.cf.cf.cf.cmd > .cf-desc { top: 58.730% !important; height: 29.365% !important; }
+}
 /* 작은 단 조건 · 효과 = 갈무리9 10px(D-511 카드 맞춤 — 굵게 없음, 숫자는 색 + 부호) */
 body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-if, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-fx, body.slice .cf.cf.cf.cf.cf.cf.cf > .cf-desc > .ct-s .ln-fx .n { font: 400 10px/var(--pb) Galmuri9, Galmuri11, sans-serif !important; }
 /* 분대원 기록 줄(처치 · 피해 · 넘김)은 위 칸 묘사 자리 */
