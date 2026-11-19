@@ -90,4 +90,4 @@ export const CARD_SHEEN = { periodMs: 3600, passMs: 340, sparkFrameMs: 40, spark
  * peak = 가운데 덮는 비율(0~1, 0.5 = 체커 — 눈부신 흰 장 없음) · radius = 화면 짧은 변 대비 반지름.
  * 번쩍임 줄이기 · 움직임 줄이기면 그리지 않는다.
  */
-export const FLASH = { frames: 3, peak: 0.5, radius: 0.42, cardRadius: 1.15 } as const;
+export const FLASH = { frames: 3, peak: 0.5, radius: 0.42, cardRadius: 0.75 } as const;

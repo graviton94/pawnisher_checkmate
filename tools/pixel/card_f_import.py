@@ -738,7 +738,7 @@ def motion_css():
         w = Image.open(os.path.join(CARDS, f'fx-{g}-sweep.png')).width
         out.append(f"{cards}.g-{g} > .cf-sheen > i {{ position: absolute; left: 0; top: 0; height: 100%; width: {w / 84 * 100:.4f}%;"
                    f" background: url('../assets/ui/cards/fx-{g}-sweep.png') 0 0 / 100% 100% no-repeat; image-rendering: pixelated; transform: translate3d(-200%, 0, 0); will-change: transform; }}")
-    out.append(f"{cards}.g-gold::after {{ content: ''; position: absolute; inset: 0; z-index: 7; pointer-events: none; visibility: hidden;"
+    out.append(f"{cards}.g-gold::after {{ content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; border-image: none; z-index: 7; pointer-events: none; visibility: hidden;"
                f" background: url('../assets/ui/cards/fx-gold-spark.png') 0 0 / 600% 100% no-repeat; image-rendering: pixelated; }}")
     out.append(f"body.slice .cf.cf.cf.cf.cf:is(.cmd, .part-card, .crew-card).g-gold > .cf-win::after {{ content: ''; position: absolute; z-index: 2; pointer-events: none;"
                f" background: url('../assets/ui/cards/fx-ember.png') 0 0 / 600% 100% no-repeat; image-rendering: pixelated; animation: cfember {M['ember_ms']}ms steps(6, end) infinite; }}")
