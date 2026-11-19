@@ -10,12 +10,18 @@ export type SfxKind =
   // 옛 이름 (2.0 · 본편 공용)
   | 'lift' | 'land' | 'hit' | 'kill' | 'check' | 'submit' | 'threat' | 'win' | 'lose' | 'coin' | 'spend' | 'rare' | 'jackpot' | 'hurt' | 'loss' | 'stamp' | 'awaken' | 'tap'
   // D-540에서 더한 사건
-  | 'tick' | 'open' | 'close' | 'deny' | 'card' | 'cast' | 'burn' | 'crit' | 'kinghit' | 'parry' | 'stun' | 'push' | 'wind' | 'buy' | 'step' | 'slot' | 'boss' | 'phase';
+  | 'tick' | 'open' | 'close' | 'deny' | 'card' | 'cast' | 'burn' | 'crit' | 'kinghit' | 'parry' | 'stun' | 'push' | 'wind' | 'buy' | 'step' | 'slot' | 'boss' | 'phase'
+  // D-630에서 더한 사건 (무음이던 컷 전환 · 크레딧 · 승급 · 컷인 · 카드 날림 · 방열판 깨짐 · 승패 맺음)
+  | 'wipe' | 'melt' | 'page' | 'title' | 'reel' | 'promo' | 'forge' | 'crown' | 'throw' | 'slash' | 'fling' | 'vent' | 'fanfare' | 'dirge';
 
 export interface SfxDef {
   n: number;
   gain: number;
   jitter?: number;
+  /** 같은 소리가 이 시간(ms) 안에 다시 오면 건너뛴다 — 연달아 열리는 창 · 넘기는 쪽 · 날리는 카드가 따닥이지 않게 (D-630) */
+  gap?: number;
+  /** 움직임에 붙은 소리 — 움직임 줄이기(calmMotion)면 연출이 빠지므로 소리도 뺀다 (D-630) */
+  motion?: boolean;
 }
 
 export const SFX_BANK: Record<SfxKind, SfxDef> = {
@@ -60,7 +66,66 @@ export const SFX_BANK: Record<SfxKind, SfxDef> = {
   phase: { n: 1, gain: 0.8 }, // 반장 2단계 — 증기 기적 + 용광로
   win: { n: 1, gain: 0.75 }, // 승리 — 종 셋 + 증기
   lose: { n: 1, gain: 0.75 }, // 패배 — 태엽이 풀려 멎는다 + 조종
+  // D-630: 무음이던 사건
+  wipe: { n: 2, gain: 0.4, jitter: 0.4, gap: 250, motion: true }, // 컷 전환 — 먹 천이 쓸려 덮인다 + 걸쇠 똑
+  melt: { n: 1, gain: 0.5, gap: 250, motion: true }, // 쇳물 전환 — 국자에서 쏟아지는 쇳물
+  page: { n: 2, gain: 0.4, jitter: 0.4, gap: 120 }, // 종이 쪽 넘김 (컷 · 크레딧 장)
+  title: { n: 1, gain: 0.55, gap: 400 }, // 장 제목 카드 — 황동 명판 + 쥐어 막은 징
+  reel: { n: 1, gain: 0.5, gap: 600 }, // 크레딧 — 영사기 릴이 돈다
+  promo: { n: 1, gain: 0.6, gap: 150 }, // 판 위 승급 — 황동 고리 + 오르는 종 막대
+  forge: { n: 1, gain: 0.55, gap: 600 }, // 승급대 앞 — 용광로 울컥 + 먼 사슬
+  crown: { n: 1, gain: 0.75, gap: 600 }, // 왕관을 쓴다 — 무거운 금이 내려앉아 죈다
+  throw: { n: 1, gain: 0.7, gap: 600 }, // 왕관을 던진다 — 쇠 바닥에 튀며 구른다
+  slash: { n: 1, gain: 0.8, gap: 300, motion: true }, // 컷인 내리꽂힘 — 칼날 김 + 쇠판
+  fling: { n: 2, gain: 0.4, jitter: 0.6, gap: 70, motion: true }, // 명령서를 날린다 — 종이 휙
+  vent: { n: 1, gain: 0.7, gap: 80 }, // 방열판이 깨진다 — 쇠 날개 우두둑 + 김
+  fanfare: { n: 1, gain: 0.6, gap: 1500 }, // 승리 맺음 — 종 막대 넷 + 증기 기적 화음 (효과음, 음악 트랙 아님)
+  dirge: { n: 1, gain: 0.6, gap: 1500 }, // 패배 맺음 — 내려가는 낮은 종 + 멎는 톱니 + 김 한숨
 };
+
+/**
+ * 화면 사건 → 소리 (D-630). 무음이던 사건을 이름으로 묶어 두고 부르는 쪽은 `sfxFor('사건')`만 쓴다 —
+ * 테스트(tests/sfx-bank.test.ts)가 사건마다 소리 파일이 있고 실제로 불리는 곳이 있는지 본다.
+ */
+export const SFX_EVENTS = {
+  /** 컷신 장면 전환 (디더 · 조리개 · 사선 · 블라인드 · 철문 · 암전 · 백지) */
+  cutWipe: 'wipe',
+  /** 컷신 쇳물 전환 */
+  cutMelt: 'melt',
+  /** 컷신 종이 쪽 전환 */
+  cutPage: 'page',
+  /** 장 제목 카드가 선다 */
+  cutTitle: 'title',
+  /** 크레딧이 열린다 */
+  creditsOpen: 'reel',
+  /** 크레딧 장 넘김 (누름 · 저절로) */
+  creditsPage: 'page',
+  /** 판 위 폰 승급 */
+  boardPromote: 'promo',
+  /** 왕위 결정 화면(승급대)이 열린다 */
+  throneOpen: 'forge',
+  /** 왕관을 쓴다 */
+  throneCrown: 'crown',
+  /** 왕관을 던진다 (넷째 왕관) */
+  throneThrow: 'throw',
+  /** 반장 2단계 컷인 — 사선 베기가 내리꽂힌다 */
+  cutIn: 'slash',
+  /** 명령서 표가 손패에서 대상으로 날아간다 */
+  cardFling: 'fling',
+  /** 방열판이 다 깨진다 */
+  ventBreak: 'vent',
+  /** 창이 열린다 */
+  winOpen: 'open',
+  /** 창이 닫힌다 */
+  winClose: 'close',
+  /** 승리 띠 뒤 맺음 */
+  winSting: 'fanfare',
+  /** 패배 띠 뒤 맺음 */
+  loseSting: 'dirge',
+} as const satisfies Record<string, SfxKind>;
+export type SfxEvent = keyof typeof SFX_EVENTS;
+/** 승패 띠가 뜬 뒤 맺음 소리까지 (ms) — 띠 첫 소리(win · lose)의 종이 잦아든 뒤 */
+export const SFX_STING_DELAY = 640;
 
 /** 연쇄 음높이 (발라트로식): 순번 하나에 반음 하나, 이만큼까지 */
 export const SFX_COMBO_MAX = 9;

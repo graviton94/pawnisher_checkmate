@@ -15,7 +15,9 @@
     "review": "node tools/qa/fullrun.cjs",
     "build:native": "node tools/build-native.cjs",
     "android:sync": "npm run build:native && cap sync android",
-    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "android:aab": "npm run android:sync && cd android && ./gradlew bundleRelease",
+    "android:debug": "npm run android:sync && cd android && ./gradlew assembleDebug",
     "pc:dev": "npm run build && electron .",
     "pc:dist": "npm run build:native && electron-builder"
   },

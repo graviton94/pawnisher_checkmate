@@ -6,7 +6,7 @@ import { CARVES } from '../data/carves';
 import { FORMS, FORM_IDS } from '../data/forms';
 import { BOSS_ART_RULES, BOSS_BODY, bossArtFile, GIANT_ART_SPAN, RAID_TEXT } from '../data/giants';
 import { PRELOAD } from '../data/preload-list';
-import { sfx } from '../audio/sfx';
+import { sfx, sfxFor } from '../audio/sfx';
 import Phaser from 'phaser';
 import type { BoardModel, BoardView, LogEntry } from '../game/controller';
 import { CRUMBLE_MS, MOVE_TOTAL, drawCrumble, drawLandPuff, moveMotion, fxPower, impactFeedback, playAttackFx, type CrumbleCell, type Pose } from './attackFx';
@@ -2151,6 +2151,7 @@ class BoardScene extends Phaser.Scene {
         if (s) {
           s.glyph.setTexture(this.glyphKey(s.piece.id, e.to, s.piece.side));
           s.piece = { ...s.piece, type: e.to };
+          sfxFor('boardPromote');
         }
         continue;
       }
@@ -2250,6 +2251,12 @@ class BoardScene extends Phaser.Scene {
           // 타격 소리 (D-540): 내 킹이 맞으면 킹 피격 · 한 대에 HP 절반 넘게 깎이거나 배율이 붙으면 모루 일격 · 그 밖은 가벼운 쇠 소리
           const heavy = h.damage >= ts.piece.maxHp * 0.5 || (e.mult ?? 1) > 1.05;
           sfx(ts.piece.side === 0 && ts.piece.type === 'K' && h.damage > 0 ? 'kinghit' : heavy ? 'crit' : 'hit', this.combo++);
+          // 방열판이 다 깨지는 순간 (D-630): 판이 피해를 받아 0이 되면 쇠 날개 꺾임 + 김
+          if (h.shieldAbsorbed > 0 && ts.piece.shield > 0) {
+            const left = Math.max(0, ts.piece.shield - h.shieldAbsorbed);
+            ts.piece = { ...ts.piece, shield: left };
+            if (left === 0) sfxFor('ventBreak');
+          }
           this.applyHit(ts, h);
           // 쾌감 · 아픔 (D-104): 내 기물이 맞으면 화면 가장자리가 붉게 (피해 비율만큼), 쓰러지면 둔탁한 소리.
           // 처치는 아주 짧게 멈췄다 간다 (히트스톱)

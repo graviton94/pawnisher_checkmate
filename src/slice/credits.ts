@@ -1,6 +1,6 @@
 /** 출하 뒤 크레딧. 그림 · 이름 · 역할을 읽고 결과 장부로 간다. */
 import { calmMotion } from '../prefs/motion';
-import { sfx } from '../audio/sfx';
+import { sfx, sfxFor } from '../audio/sfx';
 import type { PieceType } from '../engine';
 import { CREDIT_TEXT, CREDITS, STUDIO_URL } from '../data/credits';
 import { PIECE_NAMES_KO } from '../data/pieces';
@@ -47,7 +47,7 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
       el.querySelector('.cr-count')!.textContent = `${i + 1} / ${pages.length}`;
       nextBtn.textContent = i === pages.length - 1 ? o.close ? '결과를 본다' : '마친다' : '다음';
       replay(page, 'in');
-      if (i < pages.length - 1) auto = window.setTimeout(() => { if (!closing && el.isConnected) { sfx('tap', 3); i++; show(); } }, hold());
+      if (i < pages.length - 1) auto = window.setTimeout(() => { if (!closing && el.isConnected) { sfxFor('creditsPage'); i++; show(); } }, hold());
     };
     const finish = (): void => {
       if (closing) return;
@@ -64,10 +64,10 @@ export const creditsScene = (crew: CreditMember[], meta: string, o: { record?: b
     };
     nextBtn.addEventListener('click', () => {
       if (closing) return;
-      sfx('tap', 3);
       if (++i >= pages.length) finish();
-      else show();
+      else (sfxFor('creditsPage'), show());
     });
     el.querySelector('[data-cr-result]')?.addEventListener('click', finish);
+    sfxFor('creditsOpen');
     show();
   });

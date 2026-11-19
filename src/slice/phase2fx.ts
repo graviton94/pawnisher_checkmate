@@ -10,6 +10,7 @@
  */
 import { calmMotion, reduceFlash } from '../prefs/motion';
 import { pxOut, shake } from './fx3';
+import { sfxFor } from '../audio/sfx';
 import { sparksAt } from './uifx';
 import { layRect, viewH, viewW } from '../view/vz';
 
@@ -60,6 +61,8 @@ export const p2Rise = async (o: { art: string; word: string; focus?: string; fac
     window.setTimeout(() => flash.remove(), 380);
   }
   root.classList.add('go');
+  // 사선 베기가 내리꽂히는 소리 (D-630) — 앞의 phase(기적 · 용광로)는 부르는 쪽이 낸다
+  sfxFor('cutIn');
   await wait(260);
   shake(document.getElementById('app'), 3);
   const s = root.querySelector('.p2-slash')!.getBoundingClientRect();
