@@ -164,6 +164,11 @@ export { setBoardTopInset } from './boardInset';
  * 그런 값이 없으면(2.625 같은 소수 배율) 기기 배율 그대로 그린다 — 예전에는 2로 그려 1.3125배로 늘리느라 줄이 한 픽셀씩 들쭉날쭉했다.
  */
 const renderScale = (dpr: number): number => {
+  // 측정 손잡이 (D-595, 개발 빌드만): ?boardscale=<나눌 정수> — 판 채우기 비용 비교용(2 = 기기 배율 절반 · ×2 정수 늘림). 출시 빌드에는 없다
+  if (import.meta.env.MODE !== 'release' && typeof location !== 'undefined') {
+    const m = Number(new URLSearchParams(location.search).get('boardscale'));
+    if (m >= 1 && m <= 4) return dpr / Math.round(m);
+  }
   if (dpr <= RENDER.dprCap) return dpr;
   for (let m = 2; dpr / m >= RENDER.dprMin; m++) if (dpr / m <= RENDER.dprCap) return dpr / m;
   return dpr;
@@ -2427,6 +2432,8 @@ export class BoardRenderer implements BoardView {
     window.addEventListener('resize', () => this.resize());
     // 판이 안 보이는 화면(지도 · 고물상 · 보상 · 사건)에서는 판 그리기를 멈춘다 (D-240)
     new MutationObserver(() => this.sleepIfHidden()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    const ov = document.getElementById('overlay');
+    if (ov) new MutationObserver(() => this.sleepIfHidden()).observe(ov, { attributes: true, attributeFilter: ['hidden'] });
     this.game.canvas.addEventListener('webglcontextrestored', () => this.scene.poke());
     this.installQuiet();
     // 타이틀 · 컷신이 덮은 뒤에 만들어져도 처음부터 잠든다 (클래스가 다시 바뀔 때까지 기다리지 않게)
@@ -2452,9 +2459,12 @@ export class BoardRenderer implements BoardView {
         const r = f.apply(this, a);
         if (r instanceof Promise) {
           this.inflight += 1;
+          // 창이 판을 덮어 잠든 동안 판 연출이 시작되면 깨운다 (끝나면 다시 잔다 — D-595)
+          this.sleepIfHidden();
           const done = (): void => {
             this.inflight -= 1;
             this.scene.poke();
+            this.sleepIfHidden();
           };
           r.then(done, done);
         }
@@ -2478,9 +2488,11 @@ export class BoardRenderer implements BoardView {
   private heat<T>(job: Promise<T>): Promise<T> {
     this.hot += 1;
     this.fpsLimit(0);
+    this.sleepIfHidden();
     return job.finally(() => {
       this.hot = Math.max(0, this.hot - 1);
       if (!this.hot) this.fpsLimit(RENDER.idleFps);
+      this.sleepIfHidden();
     });
   }
   private fpsLimit(n: number): void {
@@ -2495,7 +2507,11 @@ export class BoardRenderer implements BoardView {
     if (!loop) return;
     // 타이틀 · 컷신이 화면을 덮은 동안에도 멈춘다 (테스터: 타이틀 뒤에서 판이 돌아 로고 연출이 버벅였다)
     const cl = document.body.classList;
-    const hidden = cl.contains('between') || cl.contains('cover-op') || cl.contains('cover-pl');
+    // 창(#overlay — 보상 · 부품 고르기 · 덱 · 설정 …)이 판을 덮고 판 연출이 없으면 그리기를 멈춘다 (D-595: 측정 — 창 뒤에서 판이
+    // 초당 7~13장을 다시 그려 GPU를 차지했고, 창 안 카드 띠 · 드러내기가 5fps로 떨어졌다. 판은 마지막 그림을 그대로 보인다)
+    const ov = document.getElementById('overlay');
+    const covered = ((!!ov && !ov.hidden) || cl.contains('cover-fx')) && this.inflight === 0 && this.hot === 0;
+    const hidden = cl.contains('between') || cl.contains('cover-op') || cl.contains('cover-pl') || covered;
     if (hidden && loop.running) loop.sleep();
     else if (!hidden && !loop.running) (loop.wake(), this.scene.poke());
   }
