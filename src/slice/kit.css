@@ -662,6 +662,7 @@ body.kb-nav .ability-block:focus-visible { outline: 2px solid var(--t-gold); out
 /* 결과 1박 (evstage 오버레이, D-402): 창 안쪽 전체를 덮는다 — 바탕 = 사건 그림 덮기 + 2×2 먹 디더 · 가운데 확률 장치 · 카드 · 기물 · 지갑. 단추 없음(머물다 걷힘 · 누르면 바로) */
 .win-scene .ev-ov { position: absolute; inset: 0; z-index: 6; display: grid; grid-template-rows: minmax(0, 1fr); gap: var(--s2); padding: var(--s2); background: #0b0b0e; }
 .win-scene .ev-ov.out { animation: bfOut 300ms steps(1) forwards; }
+.win-scene .ev-ov > .tap-cue { position: absolute; z-index: 3; left: 0; right: 0; bottom: var(--s2); }
 .win-scene .ev-ov-bg { position: absolute; inset: 0; overflow: hidden; }
 /* 그림 끝 변은 디더로 녹인다 (D-398): 네 변 24도트 Bayer 먹 점 가면(tools/pixel/dither_edge.py) + 2×2 먹 디더 — 반투명 · 그라데이션 없음 */
 .win-scene .ev-ov-bg::after {
@@ -854,6 +855,8 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .vsub.coach-band.away { visibility: hidden; }
 .tut > .tut-skip { position: fixed; bottom: var(--Gy); left: var(--G); z-index: 2; pointer-events: auto; min-width: calc(var(--px) * 56); }
 .tut.paused > .tut-skip { visibility: hidden; }
+/* 전투 밖(영입 · 핵심 부품 · 지도) 건너뛰기 = 오른쪽 위 모서리 (D-597) — 화면의 왼쪽 아래 「건너뛴다」와 다른 자리 */
+.tut > .tut-skip.corner { top: var(--Gy); right: var(--G); bottom: auto; left: auto; }
 .tut .talk.on-sub .talk-foot { position: absolute; right: calc(var(--d) * 3); bottom: calc(var(--d) * -13); }
 @media (prefers-reduced-motion: reduce) { .tut .talk .talk-next { animation: none; } }
 
@@ -916,8 +919,15 @@ body.between #right .rmid, body.between #right .actions, body.between #vials, bo
 .cut-lines .side-gilded .cl-who { color: var(--t-gold); }
 .cut-lines em { font-style: normal; color: var(--em, var(--t-gold)); }
 .cut-lines em.wshake { display: inline-block; animation: wshake 420ms var(--decel); }
-.cut-next { position: absolute; z-index: 2; right: calc(var(--cap) * 10); top: 50%; margin-top: -6px; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
+/* D-594: 옛 2.0 style.css의 .cut-next(opacity 0 · bottom 8px — 2.0은 .on일 때만 보였다)가 본편에도 걸려 ▼가 한 번도 보이지 않았다 → 본편에서 덮는다 */
+.cut-next { position: absolute; z-index: 2; right: calc(var(--cap) * 10); top: 50%; bottom: auto; margin-top: -6px; opacity: 1; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; animation: kblink 1s steps(2, jump-none) infinite; }
 .cut-sub.typing .cut-next { visibility: hidden; }
+/* 넘김 표지 하나 (D-594 — 실기기: 먹 화면 가운데 글에 「누르면 넘어간다」가 보이지 않았다): 누르면 넘어가는 모든 화면이 같은 ▼ —
+   12px 갈무리11 굵게 · 황동(먹 컷은 마지막 줄 갈래 색) · 1초 두 박 계단 깜빡(kblink, 투명도 보간 없음) · 글이 다 서면 곧바로. 자리 = 글 단 끝(자막 띠 오른쪽 끝 · 먹 컷 글 단 아래 가운데 · 쪽지 · 결과 · 제목 카드 아래 가운데).
+   움직임 줄이기 = 멈춘 ▼ */
+.tap-cue { display: block; margin: 0; color: var(--t-gold); font: 700 12px/var(--lh-12) Galmuri11, sans-serif; text-align: center; pointer-events: none; animation: kblink 1s steps(2, jump-none) infinite; }
+.tap-cue.wait { visibility: hidden; animation: none; }
+@media (prefers-reduced-motion: reduce) { .tap-cue { animation: none; } }
 .kit .cut-skip.btn { position: absolute; z-index: 7; left: auto; top: auto; right: var(--G); bottom: var(--Gy); width: calc(var(--px) * 56); }
 /* 좁은 화면(< 900): 띠가 화면 폭을 쓰고 「건너뛴다」는 띠 바로 위 오른쪽 */
 @media (max-width: 899px) {
@@ -1397,10 +1407,16 @@ body.between .coach-band, body:has(#overlay:not([hidden])) .coach-band, body:has
 .win .gd3 > .inset { position: relative; border-width: 0; border-image: none; background: #0b0b0e; padding: calc(var(--px) * 5); }
 .win .gd3 > .inset::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-style: solid; border-width: calc(var(--px) * 10);
   border-image: url('../assets/ui/chrome/v2/guide-frame.png') 10 / calc(var(--px) * 10) round; image-rendering: pixelated; }
-/* 요령 한 줄 = 받은 LD-01 팁 쪽지 tip-slip 90×23 (찢어 붙인 종이 띠 · 왼쪽 렌치 홈 · 오른쪽 황동 테이프, 9-slice 위 5 · 오른 9 · 아래 5 · 왼 24) — 종이 위 먹 글씨 */
-.win .gd-text3 > p.up { box-sizing: border-box; margin: 0; padding: calc(var(--px) * 2) calc(var(--px) * 3) calc(var(--px) * 2) calc(var(--px) * 2); /* D-558: 찢긴 위아래 가장자리에서 글을 2도트 띄운다 */ border-style: solid; color: var(--t-ink);
-  border-width: calc(var(--px) * 5) calc(var(--px) * 9) calc(var(--px) * 5) calc(var(--px) * 24);
-  border-image: url('../assets/ui/chrome/v2/tip-slip.png') 5 9 5 24 fill / calc(var(--px) * 5) calc(var(--px) * 9) calc(var(--px) * 5) calc(var(--px) * 24) round stretch; image-rendering: pixelated; }
+/* 요령 한 줄 = 받은 LD-01 팁 쪽지 tip-slip 90×23 (찢어 붙인 종이 띠 · 왼쪽 렌치 홈 · 오른쪽 황동 테이프) — 종이 위 먹 글씨.
+   D-594 (실기기: 두 줄이면 렌치가 세로로 늘고 글이 종이 끝에 닿았다): 띠 몸은 9-slice 위 7 · 오른 9 · 아래 6 · 왼 24도트이고 가운데 줄은 열마다 한 무늬라
+   세로로 자라도 도트가 그대로다(loading_import.split_slip). 렌치(11×10) · 테이프(9×8)는 따로 잘라 기둥 가운데에 1도트 = --px 정수배로 얹는다(늘리지 않음, D-386).
+   글은 찢긴 종이 가장자리에서 위아래 3도트 · 렌치 홈 쪽 3도트 띄운다 */
+.win .gd-text3 > p.up { position: relative; box-sizing: border-box; margin: 0; padding: calc(var(--px) * 3) calc(var(--px) * 3) calc(var(--px) * 3) calc(var(--px) * 3); border-style: solid; color: var(--t-ink);
+  border-width: calc(var(--px) * 7) calc(var(--px) * 9) calc(var(--px) * 6) calc(var(--px) * 24);
+  border-image: url('../assets/ui/chrome/v2/tip-slip.png') 7 9 6 24 fill / calc(var(--px) * 7) calc(var(--px) * 9) calc(var(--px) * 6) calc(var(--px) * 24) round stretch; image-rendering: pixelated; }
+.win .gd-text3 > p.up::before, .win .gd-text3 > p.up::after { content: ''; position: absolute; top: 50%; pointer-events: none; background: no-repeat 0 0 / 100% 100%; image-rendering: pixelated; }
+.win .gd-text3 > p.up::before { left: calc(var(--px) * -19); width: calc(var(--px) * 11); height: calc(var(--px) * 10); margin-top: calc(var(--px) * -5); background-image: url('../assets/ui/chrome/v2/tip-wrench.png'); }
+.win .gd-text3 > p.up::after { right: calc(var(--px) * -9); width: calc(var(--px) * 9); height: calc(var(--px) * 8); margin-top: calc(var(--px) * -3); background-image: url('../assets/ui/chrome/v2/tip-tape.png'); }
 .ld-tip.win.ld-in { animation: m3in 400ms both; transform-origin: 50% 100%; }
 .ld-tip.win .ld-more { margin: 0; text-align: center; }
 /* 입문 시험대: 그 판의 생각에 필요한 HUD만 연다 — 나머지는 자리를 지킨 채 숨긴다(레이아웃이 흔들리지 않게).
@@ -1420,7 +1436,8 @@ body[data-drill='b'] #coins, body[data-drill='b'] #btn-rewind, body[data-drill='
 :is(.scr-pick, .scr-place) .scr-items.big { margin-top: -16px; padding-top: calc(var(--px) * 2); }
 :is(.scr-pick, .scr-place) .scr-items.big.is-rail { padding-bottom: 0; }
 :is(.scr-pick, .scr-place) .scr-items.big > .pick-item { gap: 2px; }
-:is(.scr-pick, .scr-place) .scr-items.big .slot-info { max-width: calc(var(--card-w) + var(--slot-gap, 16px)); margin: 0 calc(var(--slot-gap, 16px) / -2); line-height: 14px; min-height: var(--info-h, 14px); gap: 0; }
+/* D-594: 이웃 받침 줄과 8px 띄운다 (카드 폭 + 사이 폭 그대로면 한 줄짜리 둘이 이어 붙어 한 문장처럼 읽혔다) */
+:is(.scr-pick, .scr-place) .scr-items.big .slot-info { max-width: calc(var(--card-w) + var(--slot-gap, 16px) - 8px); margin: 0 calc((var(--slot-gap, 16px) - 8px) / -2); line-height: 14px; min-height: var(--info-h, 14px); gap: 0; }
 
 /* ---- 조건 표시 (D-592 발동 유형 — 보고서 2026-11-18-card-trigger-types 4장) ----
    상태(면) · 비례(당) 카드가 판 어디서든 맞으면: 황동 테 2px(장치 층) + 머리 줄 오른쪽 램프(ui/part-state/ready.png 빌림) + 효과 줄 자리에 까닭.

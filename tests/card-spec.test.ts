@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { allCardTexts, cardKey, cardRows, CARD_SPEC, specOver, type CardNature, type CardText } from '../src/slice/card-spec';
 import { budgetOver, cardTextHtml, fxHtml, numRole, ROW_FONT, rowPx } from '../src/slice/card-text';
-import { CARD_TEXT_PENDING, CARD_TIERS, FLAVOR_ON_CARD, parseCardText } from '../src/data/card-text';
+import { CARD_TEXT_GRID, CARD_TEXT_PENDING, CARD_TIERS, FLAVOR_ON_CARD, cardGridH, parseCardText } from '../src/data/card-text';
+import { CARD_W } from '../src/slice/uikit';
 import { COMMANDS } from '../src/slice/cards';
 import { SLICE_PARTS, type SlicePartId } from '../src/slice/parts';
 import { START_SETS, type StartSetId } from '../src/data/start-sets';
@@ -41,10 +42,20 @@ describe('카드 글 예산 (D-589)', () => {
     expect(ROW_FONT.s).toEqual({ say: 'g11', name: 'g11b', if: 'g9', fx: 'g9' });
     expect(ROW_FONT.l).toEqual({ say: 'g11', name: 'g11b', if: 'g11', fx: 'g11' });
   });
-  it('설명지 격자가 가장 좁은 공통 칸(카드 높이 59.5 ~ 87.3%) 안 — 두 단의 가장 작은 카드에서', () => {
-    for (const t of tiers) {
-      const { minW, pitch, rule } = CARD_TIERS[t];
-      expect(5 * pitch + rule).toBeLessThanOrEqual(Math.floor(minW * 1.5 * (0.87302 - 0.59524) + 0.5));
+  it('설명지 세로 격자가 공통 칸(카드 높이 59.5 ~ 87.3%) 안 — 격자마다 가장 작은 카드에서 (D-594)', () => {
+    for (const g of CARD_TEXT_GRID) expect(cardGridH(g), `from ${g.from}`).toBeLessThanOrEqual(g.from * 1.5 * (0.87302 - 0.59524));
+    // 카드 폭 하한(도트 정수배 뒤)이 첫 격자의 시작 폭과 같다 · 큰 단 격자는 큰 단 하한에서 시작
+    expect(CARD_W.min).toBe(CARD_TEXT_GRID[0].from);
+    expect(CARD_TEXT_GRID.some((g) => g.from === CARD_W.crisp)).toBe(true);
+    expect(CARD_TEXT_GRID.at(-1)!.from).toBe(CARD_TIERS.l.minW);
+  });
+  it('묘사 두 줄 · 점선 위아래에 틈이 있다 — 줄이 붙거나 점선에 닿지 않는다 (D-594)', () => {
+    for (const g of CARD_TEXT_GRID) {
+      expect(g.flavorGap).toBeGreaterThanOrEqual(2);
+      expect(g.ruleAbove).toBeGreaterThanOrEqual(g.from >= CARD_W.crisp ? 2 : 1);
+      expect(g.ruleBelow).toBeGreaterThanOrEqual(g.from >= CARD_W.crisp ? 2 : 1);
+      expect(g.line).toBeGreaterThanOrEqual(12);
+      expect(g.name).toBeGreaterThanOrEqual(12);
     }
   });
   it('행 폭: 큰 단은 작은 단보다 넓고, 성격마다 틀 비율 × 단의 가장 작은 폭', () => {

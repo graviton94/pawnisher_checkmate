@@ -23,15 +23,28 @@ export const CARD_TEXT_BUDGET = { flavor: 2, bottom: 3 } as const;
 
 /**
  * 설명지 글 크기 두 단 (D-589 — D-213 격자 안). 설명지 격자 = 위 칸 2행 · 점선 · 아래 칸 3행, 모든 틀이 담는 공통 칸(카드 높이 59.5 ~ 87.3% = 폭 × 0.4167) 안.
- *  - s(작은 카드, 폭 150 ~ 183px): 묘사 · [능력명] 갈무리11 12px, 조건 · 효과 갈무리9 10px(D-511 카드 맞춤 예외 그대로), 행 12px · 점선 2px = 62px(150px 칸 62.5).
- *    폭 166px 이상(덱 · 분대 · 작업대 168)은 행 13px · 점선 칸 4px(69px) — 글 · 예산은 같다(CSS만, `slice.css` D-589).
- *  - l(큰 카드, 폭 184px 이상 — 915 고물상 · 전리품, PC): 모든 줄 갈무리11 12px(효과 숫자 굵게), 행 14px · 점선 칸 4px(2px 선 + 위아래 1px) = 74px(184px 칸 76.7).
+ *  - s(작은 카드, 폭 150 ~ 183px): 묘사 · [능력명] 갈무리11 12px, 조건 · 효과 갈무리9 10px(D-511 카드 맞춤 예외 그대로). 행 폭 예산은 150px로 잰다(보수적).
+ *  - l(큰 카드, 폭 184px 이상 — 915 고물상 · 전리품, PC): 모든 줄 갈무리11 12px(효과 숫자 굵게).
  * 15px 본문(갈무리14)은 행이 18px라 다섯 행이 92px — 190px 카드 공통 칸(79px)에 들지 않는다. 그래서 큰 카드도 12px(보조 크기)에서 행 간격과 행 폭(글자 수)만 넓힌다.
  */
 export const CARD_TIERS = {
-  s: { minW: 150, pitch: 12, rule: 2 },
-  l: { minW: 184, pitch: 14, rule: 4 },
+  s: { minW: 150 },
+  l: { minW: 184 },
 } as const;
+/**
+ * 설명지 세로 격자 (D-594 — 실기기: 점선 아래 줄이 점선에 닿고, 두 줄 묘사가 서로 붙었다. D-589의 행 12 · 13 · 14px 고른 격자를 대신한다).
+ * 카드 폭 from(px) 이상에서 쓰는 값 — 묘사 행(line) 두 줄 사이 틈(flavorGap) · 점선(2px) 위아래 틈(ruleAbove · ruleBelow) · [능력명] 행(name) · 조건/효과 행(row).
+ * 합(높이) = 2 × line + flavorGap + ruleAbove + 2 + ruleBelow + name + 2 × row 가 그 폭의 공통 칸(폭 × 0.4167) 안 (tests/card-spec.test.ts).
+ * 카드 폭은 도트 정수배로 맞춘다(uikit.fitSlots, D-594 — 915 160 · 667 · 772 168 · 큰 줄 184 이상). 정수배가 높이에 들지 않는 줄만 150 ~ 159(첫 격자 — 틈 1px).
+ */
+export const CARD_TEXT_GRID = [
+  { from: 150, line: 12, flavorGap: 2, ruleAbove: 1, ruleBelow: 1, name: 12, row: 10 },
+  { from: 160, line: 12, flavorGap: 2, ruleAbove: 2, ruleBelow: 2, name: 12, row: 11 },
+  { from: 166, line: 12, flavorGap: 2, ruleAbove: 2, ruleBelow: 2, name: 12, row: 12 },
+  { from: 184, line: 12, flavorGap: 3, ruleAbove: 3, ruleBelow: 3, name: 13, row: 13 },
+] as const;
+/** 세로 격자 한 벌의 높이 (px) */
+export const cardGridH = (g: (typeof CARD_TEXT_GRID)[number]): number => 2 * g.line + g.flavorGap + g.ruleAbove + 2 + g.ruleBelow + g.name + 2 * g.row;
 export type CardTier = keyof typeof CARD_TIERS;
 
 /**

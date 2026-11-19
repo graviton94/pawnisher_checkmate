@@ -281,7 +281,10 @@ export const showTitle = async (host: HTMLElement, t: TitleCard, skip: Promise<u
   const root = host.closest<HTMLElement>('.prologue');
   root?.classList.add('titling');
   el.classList.add('in');
+  // 넘김 표지 (D-594): 차례로 다 선 뒤 아래 가운데 ▼ — 누르면 바로 넘어간다
+  const cue = window.setTimeout(() => el.isConnected && el.insertAdjacentHTML('beforeend', '<i class="tap-cue" aria-hidden="true">▼</i>'), calm() ? 0 : 800);
   await Promise.race([wait(calm() ? 1400 : FILM.titleHold), skip]);
+  window.clearTimeout(cue);
   // 걷힘: 64단 디더 (D-554 — 옛 네 장 220ms)
   if (!calm()) await ditherTo(el, 1, 0, FILM_MOTION.title.out, ease.in);
   el.remove();
