@@ -24,7 +24,22 @@ export const TOAST = { base: 1100, perChar: 45, max: 3200, queueMax: 3 };
  * turnHold = 적 차례가 끝나고 내 차례 띠까지 · afterMine = 내 카드 연출이 끝나고 손이 풀리기까지
  */
 /** enemyTempo (D-216 5): 적 차례 박자 ×1.25 — 적은 늘 한 명씩 차례대로 (D-217) */
-export const PACE = { fx: 0.8, hitGap: 320, enemyLead: 260, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 520, turnHold: 320, afterMine: 120, enemyTempo: 1.25 } as const;
+/** D-620 (사용자 결정 4나 — 넘기기 없이 빠르게): hitGap 320 → 50 · enemyLead 260 → 40 · enemyBannerHold 520 → 240 · turnHold 320 → 160 · afterMine 120 → 40 */
+export const PACE = { fx: 0.8, hitGap: 50, enemyLead: 40, tempoPerKill: 0.05, tempoKillsMax: 4, enemyBannerHold: 240, turnHold: 160, afterMine: 40, enemyTempo: 1.25 } as const;
+
+/**
+ * 수 하나의 박자 예산 (D-620, 사용자 결정 4나: 「적 연출 넘기기는 넣지 않는다 — 대신 내 수 ≤ 1.2초 · 적 수 ≤ 0.8초」).
+ * 측정 (tools/qa/battle-pace.cjs, 915×412 DPR 2.625): 내 수 중앙 2.53초 · 적 수 2.39초 · 적 차례 8.4초(최대 14초).
+ * 이동 · 공격 연출은 지금 길이(MOVE_MS · FX_MS)를 이 상한 안으로 **비율 그대로** 줄인다 — 예비 → 터짐 → 출렁(D-180) 모양과
+ * 프레임마다 정수 도트 위치(D-595)는 그대로, 시간만 짧아진다. 처치 무너짐은 다음 행동과 겹쳐 흐른다(D-538).
+ * move = 이동 한 번 · attack = 처치 없는 공격 · killFx = 처치가 있는 공격 연출 · kill = 공격 시작 → 다음 행동까지 처치 상한 · crumble = 무너짐
+ * target = 지킬 목표(시험 tests/pace.test.ts가 이 예산 합과 대조한다)
+ */
+export const BEAT = {
+  mine: { move: 300, attack: 480, killFx: 420, kill: 620, crumble: 300 },
+  foe: { move: 200, attack: 300, killFx: 280, kill: 420, crumble: 240 },
+  target: { mine: 1200, foeMove: 800 },
+} as const;
 
 /**
  * 부드러움은 프레임 수와 곡선에서 (D-554 — D-216 · D-538을 고친다, 소유자 피드백 「전환이 뚝뚝 끊긴다」).

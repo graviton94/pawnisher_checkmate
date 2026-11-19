@@ -68,7 +68,7 @@ export const FX_SHAKE = { damage: 4, ratio: 0.35, ms: 160, intensity: 0.003, kil
  */
 /** 흔들림 세기 = 기본 × (1 + 피해/최대 HP × k), 최대 maxMult 배 (옛 FX_CAMERA에서 남긴 몫) */
 export const FX_SHAKE_SCALE = { shakeByRatio: 2.2, shakeMaxMult: 2.6 };
-export const FX_BUDGET = { attack: 900, killFx: 640, crumble: 340, kill: 1000 };
+/* 옛 FX_BUDGET { attack 900 · killFx 640 · crumble 340 · kill 1000 }은 진영별 BEAT(src/data/motion.ts, D-620)가 대신한다 */
 
 /** 턴 합계 (D-073·D-074): 처치가 있거나 준 피해가 bigDamage 이상인 "큰 턴"만 판 가운데 크게, 나머지는 위쪽에 작게 */
 export const TURN_SUMMARY = { bigDamage: 40 };
