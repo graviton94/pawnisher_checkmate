@@ -31,12 +31,17 @@ export interface Settings {
   keyHints: boolean;
   /** 바꾼 키 (행동 → 키, 기본과 다른 것만 — keymap.cleanBinds가 검사) */
   keys: Record<string, string>;
+  /** 판 선명도 (D-665): 자동(첫 대국 몇 초를 재서 느린 기기만 빠름) · 선명(기기 해상도) · 빠름(절반 해상도 · 정수 2배 확대) */
+  boardRes: BoardResPref;
   /** 색 보조: 적 위협 칸 · 적 공격 범위에 빗금 도트, 적 HP 게이지에 체크 무늬 — 색만으로 가르지 않게 (D-539) */
   cbAid: boolean;
 }
 
 /** 화면 흔들림 단계 */
 export type ShakePref = 'off' | 'weak' | 'normal';
+/** 판 선명도 단계 (D-665) */
+export type BoardResPref = 'auto' | 'sharp' | 'fast';
+export const BOARD_RES_PREFS: readonly BoardResPref[] = ['auto', 'sharp', 'fast'];
 /** 흔들림 배율 (끔 0 · 약하게 0.5 · 보통 1) */
 export const SHAKE_MUL: Record<ShakePref, number> = { off: 0, weak: 0.5, normal: 1 };
 /** 컷신 자동 넘김: 한 쪽 글이 다 찍힌 뒤 기다리는 시간 (ms) — 읽는 시간 */
@@ -47,7 +52,7 @@ export const SETTINGS_KEY = 'pawnisher.settings';
 /** 크기 칸 수 (칸 하나 = 10%) — volume.ts */
 export { VOL_STEPS };
 /** 기본값: 크기 7칸 = 예전 고정 음량(효과음 0.5 · 음악 0.11)과 같은 소리. 위로 3칸 여유 */
-export const SETTINGS_DEFAULT: Settings = { v: 1, sfx: 7, sfxMute: false, music: 7, musicMute: false, motion: 'os', master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false, keys: {}, cbAid: false };
+export const SETTINGS_DEFAULT: Settings = { v: 1, sfx: 7, sfxMute: false, music: 7, musicMute: false, motion: 'os', master: VOL_STEPS, masterMute: false, bgMute: true, shake: 'normal', lessFlash: false, autoAdvance: false, keyHints: false, keys: {}, cbAid: false, boardRes: 'auto' };
 /** 진행 초기화가 지우는 열쇠: 이 앞머리로 시작하는 것 전부 + 아래 목록 (출하 저장 · 기록 · 도감 · 백업 사본 포함) */
 export const PROGRESS_PREFIX = 'pawnisher.slice.';
 export const PROGRESS_KEYS: readonly string[] = [
@@ -68,6 +73,10 @@ export const SETTINGS_KO = {
   shake: '화면 흔들림',
   shakeOpts: { off: '끔', weak: '약하게', normal: '보통' } as Record<ShakePref, string>,
   lessFlash: '번쩍임 줄이기',
+  /** 판 선명도 (D-665 · 결정 2가) — 설명은 ① 시스템 합니다체 */
+  boardRes: '판 선명도',
+  boardResOpts: { auto: '자동', sharp: '선명', fast: '빠름' } as Record<BoardResPref, string>,
+  boardResNote: '자동은 느린 기기에서 빠름으로 바꿉니다.',
   autoAdvance: '컷신 자동 넘김',
   /** 켬 · 끔 두 칸 */
   on: '켬',

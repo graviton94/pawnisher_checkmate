@@ -22,9 +22,12 @@ body.slice.lay-f #deckrow { gap: 2px; }
 #deckrow .pile-btn {
   --u: var(--px-detail, 1px);
   --pl: url('../assets/ui/chrome/v2/pile-btn-idle-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-idle-r.png');
-  position: relative; flex: 1 1 0; min-width: 0; box-sizing: border-box; margin: 0; padding: 0; border: 0;
+  position: relative; flex: 1 1 0; min-width: 0; box-sizing: border-box; margin: 0; padding: 0 calc(var(--u) * 34) 0 0; border: 0;
   height: calc(var(--u) * 44);
-  background: var(--pr) right top / calc(var(--u) * 35) 100% no-repeat, var(--pl) left top / calc(var(--u) * 134) 100% no-repeat;
+  /* D-669: 아래 겹(-l)은 오른 조각 왼 1열까지만(content-box — 오른 안쪽 여백 34도트를 뺀 칸) — 오른 조각의 투명한 둥근 모서리 밑으로
+     가운데 열 윗줄(밝은 테)이 비쳐 단추 오른 위 끝에 낱점이 튀어나왔다. 문양 · 수는 절대 자리라 여백과 상관없다 */
+  background: var(--pr) right top / calc(var(--u) * 35) 100% no-repeat border-box, var(--pl) left top / calc(var(--u) * 134) 100% no-repeat content-box;
+  background-origin: border-box, border-box;
   image-rendering: pixelated; color: var(--t-gold); cursor: pointer; font: 700 12px/12px Galmuri11, sans-serif;
 }
 #deckrow .pile-btn.is-new { --pl: url('../assets/ui/chrome/v2/pile-btn-new-l.png'); --pr: url('../assets/ui/chrome/v2/pile-btn-new-r.png'); }

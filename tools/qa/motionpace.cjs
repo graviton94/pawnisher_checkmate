@@ -3,7 +3,7 @@
 // rAF마다 ① 프레임 간격(평균 fps · 가장 긴 프레임 · 34ms/50ms 넘는 프레임 수) ② 지켜볼 요소(그리고 ::before · ::after)의 모습이
 // 바뀐 프레임 비율(= 프레임마다 움직이나, 계단이나)을 적고, CDP 화면 중계로 그려진 프레임을 받아 띠 그림을 남긴다.
 // 미리 `npm run build` · `npx vite preview --port 4355`. 사용:
-//   node tools/qa/motionpace.cjs <reveal|sweep|screen|boss|board|hit|title|all> [--tapAt 1200] [--url http://localhost:4355/] [--tag after] [--out <폴더>] [--cpu 4] [--light] [--q boardscale=2] [--boss plate|inspect|magnet|alarm…]
+//   node tools/qa/motionpace.cjs <reveal|sweep|screen|boss|board|hit|title|all> [--tapAt 1200] [--probe] [--url http://localhost:4355/] [--tag after] [--out <폴더>] [--cpu 4] [--light] [--q boardscale=2 | boardres=sharp|fast] [--boss plate|inspect|magnet|alarm…] [--early]
 // 결과: <폴더>/motion-<tag>.json · <폴더>/strip-<장면>-<tag>/NNN.jpg
 const { chromium } = require(process.env.PW_PATH || 'playwright');
 const fs = require('fs');
@@ -179,11 +179,18 @@ const summarize = (frames, sels) => {
     /** 전투 판: 봇이 카드 한 장(이동 · 공격 연출)을 쓰는 동안 — 판 캔버스 채우기 비용 (--q boardscale=2 와 비교) */
     board: async () => {
       await boot();
+      // --early: 대국을 세우기 전부터 느리게 — 판 선명도 「자동」 판정(판 세우기 동안 잰다, D-665)이 느린 기기로 보는지
+      if (args.includes('--early')) await throttle();
       await pg.evaluate(() => window.sliceApi.startAt(1, 'battle'));
       await pg.waitForTimeout(3000);
+      // 자동 판정은 판이 움직이는 프레임만 센다 — 한 수 더 두어 판정을 마치게 한 뒤 잰다
+      if (args.includes('--early')) { await pg.evaluate(() => window.sliceApi.botMove('greedy')); await pg.waitForTimeout(5000); }
       await throttle();
       await pg.evaluate(() => { void window.sliceApi.botMove('greedy'); });
-      return measure(['#board canvas'], 2500);
+      const r = await measure(['#board canvas'], 2500);
+      // 판 선명도 (D-665): 지금 캔버스 해상도 · 자동 판정 결과 (--q boardres=sharp|fast 로 비교)
+      r.res = await pg.evaluate(() => { const c = document.querySelector('#board canvas'); return { canvas: [c.width, c.height], css: [c.clientWidth, c.clientHeight], scale: +(c.width / c.clientWidth).toFixed(4), auto: window.__boardAuto ?? null, pref: localStorage.getItem('pawnisher.boardres.auto') }; });
+      return r;
     },
     /** 맞음 번쩍임: 분대원 첫 쓰러짐 — 번쩍 · 흔들림 · 톱니 */
     hit: async () => {
